@@ -30,7 +30,7 @@
 
 #define OS_STACK	1
 #define IPCOM_STACK	2
-//#define IF_IUSPV_SUPPORT //support sub interface, eg:0/1/1.22
+#define IF_IUSPV_SUPPORT //support sub interface, eg:0/1/1.22
 
 //#define _OS_DEBUG_
 //#define _OS_SHELL_DEBUG_

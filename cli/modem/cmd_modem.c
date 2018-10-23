@@ -15,6 +15,7 @@
  */
 
 
+
 #include "zebra.h"
 #include "log.h"
 #include "memory.h"
@@ -38,8 +39,7 @@
 #include "modem_pppd.h"
 #include "modem_serial.h"
 #include "modem_process.h"
-#include "modem_product.h"
-
+#include "modem_usb_driver.h"
 
 struct modem_vty_cb
 {
@@ -106,7 +106,7 @@ DEFUN (modem_channel_bind,
 	modem_t *modem = vty->index;
 	if(modem)
 	{
-		if(!modem_serial_lookup_api(argv[0]))
+		if(!modem_serial_lookup_api(argv[0], 0))
 		{
 			vty_out(vty, "Can not find modem channel name%s",VTY_NEWLINE);
 			return CMD_WARNING;
@@ -572,11 +572,12 @@ DEFUN (no_modem_network_set,
 
 DEFUN (modem_bind_interface_set,
 		modem_bind_interface_set_cmd,
-       "bind interface (serial|ethernet) " CMD_USP_STR,
+       "bind interface (serial|ethernet|wireless) " CMD_USP_STR,
 	   "bind configure\n"
        "Interface configure\n"
 	   "Serial interface\n"
 	   "Ethernet interface\n"
+	   "Wireless interface\n"
 	   CMD_USP_STR_HELP)
 {
 	modem_t *modem = vty->index;
@@ -590,7 +591,7 @@ DEFUN (modem_bind_interface_set,
 			return CMD_WARNING;
 		}
 
-		ifp = if_lookup_by_name(if_ifname_format(argv[0], argv[1]));
+/*		ifp = if_lookup_by_name(if_ifname_format(argv[0], argv[1]));
 
 		if(ifp && ifp->ll_type != ZEBRA_LLT_MODEM)
 		{
@@ -611,9 +612,16 @@ DEFUN (modem_bind_interface_set,
 		{
 			modem->ppp_serial = ifp;
 			return CMD_SUCCESS;
+		}*/
+		if(modem_lookup_by_interface(if_ifname_format(argv[0], argv[1])))
+		{
+			vty_out(vty, "This interface %s %s already binding%s", argv[0], argv[1], VTY_NEWLINE);
+			return CMD_WARNING;
 		}
+		if(modem_bind_interface_api(modem, if_ifname_format(argv[0], argv[1]), 1) == OK)
+			return CMD_SUCCESS;
 	}
-	else if(os_strstr(argv[0], "ethernet"))
+	else if(os_strstr(argv[0], "ethernet") || os_strstr(argv[0], "wireless"))
 	{
 		if(modem->eth0)
 		{
@@ -621,7 +629,7 @@ DEFUN (modem_bind_interface_set,
 			vty_out(vty, "This modem is already bind to interface %s%s", ifp1->name, VTY_NEWLINE);
 			return CMD_WARNING;
 		}
-
+/*
 		ifp = if_lookup_by_name(if_ifname_format(argv[0], argv[1]));
 
 		if(ifp && ifp->ll_type != ZEBRA_LLT_MODEM)
@@ -643,7 +651,14 @@ DEFUN (modem_bind_interface_set,
 		{
 			modem->eth0 = ifp;
 			return CMD_SUCCESS;
+		}*/
+		if(modem_lookup_by_interface(if_ifname_format(argv[0], argv[1])))
+		{
+			vty_out(vty, "This interface %s %s already binding%s", argv[0], argv[1], VTY_NEWLINE);
+			return CMD_WARNING;
 		}
+		if(modem_bind_interface_api(modem, if_ifname_format(argv[0], argv[1]), 1) == OK)
+			return CMD_SUCCESS;
 	}
 	return CMD_WARNING;
 }
@@ -665,18 +680,20 @@ DEFUN (modem_bind_interface_vals_set,
 		if(modem->ppp_serial)
 		{
 			struct interface *ifp1 = modem->ppp_serial;
-			vty_out(vty, "This modem is already bind to modem%s", ifp1->name, VTY_NEWLINE);
+			vty_out(vty, "This modem is already bind to interface %s%s", ifp1->name, VTY_NEWLINE);
 			return CMD_WARNING;
 		}
+		if(modem_lookup_by_interface(if_ifname_format("serial", argv[0])))
+/*		ifp = if_lookup_by_name(if_ifname_format("serial", argv[0]));
 
-		ifp = if_lookup_by_name(if_ifname_format("serial", argv[0]));
-
-		if(ifp && ifp->ll_type != ZEBRA_LLT_MODEM)
+		if(ifp && ifp->ll_type != ZEBRA_LLT_MODEM)*/
 		{
-			vty_out(vty, "Can not bind this interface %s %s%s", "serial", argv[0], VTY_NEWLINE);
+			vty_out(vty, "This interface %s %s already binding%s", "serial", argv[0], VTY_NEWLINE);
 			return CMD_WARNING;
 		}
-		if(!ifp)
+		if(modem_bind_interface_api(modem, if_ifname_format("serial", argv[0]), 1) == OK)
+			return CMD_SUCCESS;
+/*		if(!ifp)
 		{
 			if(modem_interface_add_api(if_ifname_format("serial", argv[0])) != OK)
 			{
@@ -690,25 +707,27 @@ DEFUN (modem_bind_interface_vals_set,
 		{
 			modem->ppp_serial = ifp;
 			return CMD_SUCCESS;
-		}
+		}*/
 	}
 	else if(os_strstr(argv[1], "dial"))
 	{
 		if(modem->dial_serial)
 		{
 			struct interface *ifp1 = modem->dial_serial;
-			vty_out(vty, "This modem is already bind to modem%s", ifp1->name, VTY_NEWLINE);
+			vty_out(vty, "This modem is already bind to interface %s%s", ifp1->name, VTY_NEWLINE);
 			return CMD_WARNING;
 		}
+		if(modem_lookup_by_interface(if_ifname_format("serial", argv[0])))
+/*		ifp = if_lookup_by_name(if_ifname_format("serial", argv[0]));
 
-		ifp = if_lookup_by_name(if_ifname_format("serial", argv[0]));
-
-		if(ifp && ifp->ll_type != ZEBRA_LLT_MODEM)
+		if(ifp && ifp->ll_type != ZEBRA_LLT_MODEM)*/
 		{
-			vty_out(vty, "Can not bind this interface %s %s%s","serial", argv[0], VTY_NEWLINE);
+			vty_out(vty, "This interface %s %s already binding%s", "serial", argv[0], VTY_NEWLINE);
 			return CMD_WARNING;
 		}
-		if(!ifp)
+		if(modem_bind_interface_api(modem, if_ifname_format("serial", argv[0]), 2) == OK)
+			return CMD_SUCCESS;
+/*		if(!ifp)
 		{
 			if(modem_interface_add_api(if_ifname_format("serial", argv[0])) != OK)
 			{
@@ -722,108 +741,130 @@ DEFUN (modem_bind_interface_vals_set,
 		{
 			modem->dial_serial = ifp;
 			return CMD_SUCCESS;
-		}
+		}*/
 	}
 	return CMD_WARNING;
 }
 
 DEFUN (modem_bind_interface_vale_set,
 		modem_bind_interface_vale_set_cmd,
-       "bind interface ethernet " CMD_USP_STR " (secondary|third)",
+       "bind interface (ethernet|wireless) " CMD_USP_STR " (secondary|third)",
 	   "bind configure\n"
        "Interface configure\n"
 	   "Ethernet interface\n"
+	   "Wireless interface\n"
 	   CMD_USP_STR_HELP
 	   "secondary interface\n"
 	   "third interface\n")
 {
 	modem_t *modem = vty->index;
 	struct interface *ifp = NULL;
-	if(os_strstr(argv[1], "secondly"))
+	if(os_strstr(argv[2], "secondly"))
 	{
 		if(modem->eth1)
 		{
 			struct interface *ifp1 = modem->eth1;
-			vty_out(vty, "This modem is already bind to modem%s", ifp1->name, VTY_NEWLINE);
+			vty_out(vty, "This modem is already bind to modem%s%s", ifp1->name, VTY_NEWLINE);
 			return CMD_WARNING;
 		}
 
-		ifp = if_lookup_by_name(if_ifname_format("ethernet", argv[0]));
+/*		ifp = if_lookup_by_name(if_ifname_format(argv[0], argv[1]));
 
 		if(ifp && ifp->ll_type != ZEBRA_LLT_MODEM)
 		{
-			vty_out(vty, "Can not bind this interface %s %s%s", "ethernet", argv[0], VTY_NEWLINE);
+			vty_out(vty, "Can not bind this interface %s %s%s", argv[0], argv[1], VTY_NEWLINE);
 			return CMD_WARNING;
 		}
 		if(!ifp)
 		{
-			if(modem_interface_add_api(if_ifname_format("ethernet", argv[0])) != OK)
+			if(modem_interface_add_api(if_ifname_format(argv[0], argv[1])) != OK)
 			{
-				vty_out(vty, "Can not bind to interface %s %s%s","ethernet", argv[0], VTY_NEWLINE);
+				vty_out(vty, "Can not bind to interface %s %s%s",argv[0], argv[1], VTY_NEWLINE);
 				return CMD_WARNING;
 			}
 		}
-		ifp = if_lookup_by_name(if_ifname_format("ethernet", argv[0]));
+		ifp = if_lookup_by_name(if_ifname_format(argv[0], argv[1]));
 
 		if(ifp && ifp->ll_type == ZEBRA_LLT_MODEM)
 		{
 			modem->eth1 = ifp;
 			return CMD_SUCCESS;
+		}*/
+		if(modem_lookup_by_interface(if_ifname_format(argv[0], argv[1])))
+		{
+			vty_out(vty, "This interface %s %s already binding%s", argv[0], argv[1], VTY_NEWLINE);
+			return CMD_WARNING;
 		}
+		if(modem_bind_interface_api(modem, if_ifname_format(argv[0], argv[1]), 2) == OK)
+			return CMD_SUCCESS;
 	}
-	else if(os_strstr(argv[1], "third"))
+	else if(os_strstr(argv[2], "third"))
 	{
 		if(modem->eth2)
 		{
 			struct interface *ifp1 = modem->eth2;
-			vty_out(vty, "This modem is already bind to modem%s", ifp1->name, VTY_NEWLINE);
+			vty_out(vty, "This modem is already bind to modem%s%s", ifp1->name, VTY_NEWLINE);
 			return CMD_WARNING;
 		}
 
-		ifp = if_lookup_by_name(if_ifname_format("ethernet", argv[0]));
+/*		ifp = if_lookup_by_name(if_ifname_format(argv[0], argv[1]));
 
 		if(ifp && ifp->ll_type != ZEBRA_LLT_MODEM)
 		{
-			vty_out(vty, "Can not bind this interface %s %s%s","ethernet", argv[0], VTY_NEWLINE);
+			vty_out(vty, "Can not bind this interface %s %s%s",argv[0], argv[1], VTY_NEWLINE);
 			return CMD_WARNING;
 		}
 		if(!ifp)
 		{
-			if(modem_interface_add_api(if_ifname_format("ethernet", argv[0])) != OK)
+			if(modem_interface_add_api(if_ifname_format(argv[0], argv[1])) != OK)
 			{
-				vty_out(vty, "Can not bind to interface %s %s%s","ethernet", argv[0], VTY_NEWLINE);
+				vty_out(vty, "Can not bind to interface %s %s%s",argv[0], argv[1], VTY_NEWLINE);
 				return CMD_WARNING;
 			}
 		}
-		ifp = if_lookup_by_name(if_ifname_format("ethernet", argv[0]));
+		ifp = if_lookup_by_name(if_ifname_format(argv[0], argv[1]));
 
 		if(ifp && ifp->ll_type == ZEBRA_LLT_MODEM)
 		{
 			modem->eth2 = ifp;
 			return CMD_SUCCESS;
+		}*/
+		if(modem_lookup_by_interface(if_ifname_format(argv[0], argv[1])))
+		{
+			vty_out(vty, "This interface %s %s already binding%s", argv[0], argv[1], VTY_NEWLINE);
+			return CMD_WARNING;
 		}
+		if(modem_bind_interface_api(modem, if_ifname_format(argv[0], argv[1]), 3) == OK)
+			return CMD_SUCCESS;
 	}
 	return CMD_WARNING;
 }
 
 DEFUN (no_modem_bind_interface_set,
 		no_modem_bind_interface_set_cmd,
-		"no bind interface (serial|ethernet)",
+		"no bind interface (serial|ethernet|wireless)",
 		NO_STR
 		"bind configure\n"
 		"Interface configure\n"
 		"Serial interface\n"
-		"Ethernet interface\n")
+		"Ethernet interface\n"
+		"Wireless interface\n")
 {
 	modem_t *modem = vty->index;
-	if(modem->eth0 == NULL)
+/*	if(modem->eth0 == NULL)
 	{
 		return CMD_SUCCESS;
+	}*/
+	if(os_strstr(argv[0], "serial") && modem->ppp_serial)
+	{
+		if(modem_unbind_interface_api(modem, TRUE, 1) == OK)
+			return CMD_SUCCESS;
 	}
-	if(os_strstr(argv[0], "serial"))
-		modem->ppp_serial = NULL;
-	else if(os_strstr(argv[0], "ethernet"))
-		modem->eth0 = NULL;
+	else if((os_strstr(argv[0], "ethernet")|| os_strstr(argv[0], "wireless")) && modem->eth0)
+	{
+		if(modem_unbind_interface_api(modem, FALSE, 1) == OK)
+			return CMD_SUCCESS;
+	}
 	return CMD_SUCCESS;
 }
 
@@ -840,49 +881,71 @@ DEFUN (no_modem_bind_interface_vals_set,
 	modem_t *modem = vty->index;
 	if(os_strstr(argv[0], "ppp"))
 	{
+		if(os_strstr(argv[0], "serial") && modem->ppp_serial)
+		{
+			if(modem_unbind_interface_api(modem, TRUE, 1) == OK)
+				return CMD_SUCCESS;
+		}
+/*
 		if(modem->ppp_serial == NULL)
 		{
 			return CMD_SUCCESS;
 		}
-		modem->ppp_serial = NULL;
+		modem->ppp_serial = NULL;*/
 	}
 	if(os_strstr(argv[0], "dial"))
 	{
-		if(modem->dial_serial == NULL)
+		if(os_strstr(argv[0], "serial") && modem->dial_serial)
+		{
+			if(modem_unbind_interface_api(modem, TRUE, 2) == OK)
+				return CMD_SUCCESS;
+		}
+/*		if(modem->dial_serial == NULL)
 		{
 			return CMD_SUCCESS;
 		}
-		modem->dial_serial = NULL;
+		modem->dial_serial = NULL;*/
 	}
 	return CMD_SUCCESS;
 }
 
 DEFUN (no_modem_bind_interface_vale_set,
 		no_modem_bind_interface_vale_set_cmd,
-		"no bind interface ethernet (secondary|third)",
+		"no bind interface (ethernet|wireless) (secondary|third)",
 		NO_STR
 		"bind configure\n"
 		"Interface configure\n"
 		"Ethernet interface\n"
+		"Wireless interface\n"
 		"secondary interface\n"
 		"third interface\n")
 {
 	modem_t *modem = vty->index;
-	if(os_strstr(argv[0], "secondary"))
+	if(os_strstr(argv[1], "secondary"))
 	{
-		if(modem->eth1 == NULL)
+		if((os_strstr(argv[0], "ethernet")|| os_strstr(argv[0], "wireless")) && modem->eth1)
+		{
+			if(modem_unbind_interface_api(modem, FALSE, 2) == OK)
+				return CMD_SUCCESS;
+		}
+/*		if(modem->eth1 == NULL)
 		{
 			return CMD_SUCCESS;
 		}
-		modem->eth1 = NULL;
+		modem->eth1 = NULL;*/
 	}
-	if(os_strstr(argv[0], "third"))
+	if(os_strstr(argv[1], "third"))
 	{
-		if(modem->eth2 == NULL)
+		if((os_strstr(argv[0], "ethernet")|| os_strstr(argv[0], "wireless")) && modem->eth2)
+		{
+			if(modem_unbind_interface_api(modem, FALSE, 3) == OK)
+				return CMD_SUCCESS;
+		}
+/*		if(modem->eth2 == NULL)
 		{
 			return CMD_SUCCESS;
 		}
-		modem->eth2 = NULL;
+		modem->eth2 = NULL;*/
 	}
 	return CMD_SUCCESS;
 }
@@ -892,6 +955,7 @@ static int modem_profile_write_cb(modem_t *modem, struct vty *vty)
 {
 	if(modem)
 	{
+		char *dial_string[] = {"auto", "dhcp", "qmi", "gobinet", "ppp", "unknown"};
 		if(os_strlen(modem->name))
 		{
 			modem_serial_t *serial = modem->serial;
@@ -899,7 +963,7 @@ static int modem_profile_write_cb(modem_t *modem, struct vty *vty)
 			vty_out(vty, "modem-profile %s%s", modem->name, VTY_NEWLINE);
 
 			if(modem->dialtype != MODEM_DIAL_NONE)
-				vty_out(vty, " modem dial-mode %s%s", modem_dial_string(modem->dialtype), VTY_NEWLINE);
+				vty_out(vty, " modem dial-mode %s%s", dial_string[modem->dialtype], VTY_NEWLINE);
 
 			switch(modem->ipstack)
 			{
@@ -935,25 +999,31 @@ static int modem_profile_write_cb(modem_t *modem, struct vty *vty)
 			if(modem->bSecondary)
 				vty_out(vty, " modem apn secondary%s", VTY_NEWLINE);
 
-			if(modem->eth0)
+			if(modem->dialtype != MODEM_DIAL_PPP)
 			{
-				struct interface *ifp = modem->eth0;
-				vty_out(vty, " bind interface %s%s", ifp->name, VTY_NEWLINE);
+				if(modem->eth0)
+				{
+					struct interface *ifp = modem->eth0;
+					vty_out(vty, " bind interface %s%s", ifp->name, VTY_NEWLINE);
+				}
+				if(modem->eth1)
+				{
+					struct interface *ifp = modem->eth1;
+					vty_out(vty, " bind interface %s secondary%s", ifp->name, VTY_NEWLINE);
+				}
+				if(modem->eth2)
+				{
+					struct interface *ifp = modem->eth2;
+					vty_out(vty, " bind interface %s third%s", ifp->name, VTY_NEWLINE);
+				}
 			}
-			if(modem->eth1)
+			else
 			{
-				struct interface *ifp = modem->eth1;
-				vty_out(vty, " bind interface %s secondary%s", ifp->name, VTY_NEWLINE);
-			}
-			if(modem->eth2)
-			{
-				struct interface *ifp = modem->eth2;
-				vty_out(vty, " bind interface %s third%s", ifp->name, VTY_NEWLINE);
-			}
-			if(modem->ppp_serial)
-			{
-				struct interface *ifp = modem->ppp_serial;
-				vty_out(vty, " bind interface %s%s", ifp->name, VTY_NEWLINE);
+				if(modem->ppp_serial)
+				{
+					struct interface *ifp = modem->ppp_serial;
+					vty_out(vty, " bind interface %s%s", ifp->name, VTY_NEWLINE);
+				}
 			}
 			if(modem->dial_serial)
 			{
@@ -972,6 +1042,8 @@ static int modem_profile_write_cb(modem_t *modem, struct vty *vty)
 
 static int modem_write_config(struct vty *vty)
 {
+	//vty_out(vty, "!%s", VTY_NEWLINE);
+	vty_out(vty, "!%s", VTY_NEWLINE);
 	modem_main_callback_api(modem_profile_write_cb, vty);
 	return CMD_SUCCESS;
 }
@@ -1013,30 +1085,36 @@ static int show_modem_information_one_cb(modem_t *modem, struct vty *vty)
 			{
 				vty_out(vty, " Bind Interface              : %s%s", ifp->name, VTY_NEWLINE);
 			}*/
-			if(modem->eth0)
+			if(modem->dialtype != MODEM_DIAL_PPP)
 			{
-				struct interface *ifp = modem->eth0;
-				vty_out(vty, "  Bind interface             :%s%s", ifp->name, VTY_NEWLINE);
+				if(modem->eth0)
+				{
+					struct interface *ifp = modem->eth0;
+					vty_out(vty, "  Bind interface             : %s%s", ifp->name, VTY_NEWLINE);
+				}
+				if(modem->eth1)
+				{
+					struct interface *ifp = modem->eth1;
+					vty_out(vty, "  Bind interface             : %s secondary%s", ifp->name, VTY_NEWLINE);
+				}
+				if(modem->eth2)
+				{
+					struct interface *ifp = modem->eth2;
+					vty_out(vty, "  Bind interface             : %s third%s", ifp->name, VTY_NEWLINE);
+				}
 			}
-			if(modem->eth1)
+			else
 			{
-				struct interface *ifp = modem->eth1;
-				vty_out(vty, "  Bind interface             :%s secondary%s", ifp->name, VTY_NEWLINE);
-			}
-			if(modem->eth2)
-			{
-				struct interface *ifp = modem->eth2;
-				vty_out(vty, "  Bind interface             :%s third%s", ifp->name, VTY_NEWLINE);
-			}
-			if(modem->ppp_serial)
-			{
-				struct interface *ifp = modem->ppp_serial;
-				vty_out(vty, "  Bind interface             :%s%s", ifp->name, VTY_NEWLINE);
+				if(modem->ppp_serial)
+				{
+					struct interface *ifp = modem->ppp_serial;
+					vty_out(vty, "  Bind interface             : %s%s", ifp->name, VTY_NEWLINE);
+				}
 			}
 			if(modem->dial_serial)
 			{
 				struct interface *ifp = modem->dial_serial;
-				vty_out(vty, "  Bind interface             :%s dial%s", ifp->name, VTY_NEWLINE);
+				vty_out(vty, "  Bind interface             : %s dial%s", ifp->name, VTY_NEWLINE);
 			}
 			vty_out(vty, "  state                      : %d%s", modem->state, VTY_NEWLINE);
 			vty_out(vty, "  newstate                   : %d%s", modem->newstate, VTY_NEWLINE);
@@ -1207,7 +1285,7 @@ DEFUN (modem_channel,
        "Specify the channel name\n")
 {
 	modem_serial_t *modem = NULL;
-	modem = modem_serial_lookup_api(argv[0]);
+	modem = modem_serial_lookup_api(argv[0], 0);
 	if(modem)
 	{
 		vty->index = modem;
@@ -1216,7 +1294,7 @@ DEFUN (modem_channel,
 	}
 	if(modem_serial_add_api (argv[0]) == OK)
 	{
-		vty->index = modem_serial_lookup_api(argv[0]);
+		vty->index = modem_serial_lookup_api(argv[0], 0);
 		vty->node = MODEM_CHANNEL_NODE;
 		return CMD_SUCCESS;
 	}
@@ -1232,7 +1310,7 @@ DEFUN (no_modem_channel,
        "Specify the channel name\n")
 {
 	modem_serial_t *modem = NULL;
-	modem = modem_serial_lookup_api(argv[0]);
+	modem = modem_serial_lookup_api(argv[0], 0);
 	if(!modem)
 	{
 		vty_out(vty, "Can not delete modem profile name%s",VTY_NEWLINE);
@@ -1246,6 +1324,114 @@ DEFUN (no_modem_channel,
 	return CMD_WARNING;
 }
 
+DEFUN (modem_hw_channel,
+		modem_hw_channel_cmd,
+       "hardware-channel <1-16>",
+	   "Hardware Channel\n"
+       "Specify the channel ID\n")
+{
+	modem_serial_t *serial = vty->index;
+	if(modem_serial_channel_api (serial->name, atoi(argv[0])) == OK)
+	{
+		return CMD_SUCCESS;
+	}
+	vty_out(vty, "Can not set modem hardware channel%s",VTY_NEWLINE);
+	return CMD_WARNING;
+}
+
+DEFUN (no_modem_hw_channel,
+		no_modem_hw_channel_cmd,
+       "no hardware-channel",
+	   NO_STR
+	   "Hardware Channel\n")
+{
+	modem_serial_t *serial = vty->index;
+	if(modem_serial_channel_api (serial->name, 0) == OK)
+	{
+		return CMD_SUCCESS;
+	}
+	vty_out(vty, "Can not delete modem hardware channel%s",VTY_NEWLINE);
+	return CMD_WARNING;
+}
+
+
+static int show_modem_channel_information_one_cb(modem_serial_t *channel, struct vty *vty)
+{
+	if(channel)
+	{
+		modem_client_t		*client = channel->client;
+		modem_driver_t		*driver = channel->driver;
+		modem_t 			*modem = channel->modem;
+
+		if(os_strlen(channel->name))
+		{
+			vty_out(vty, "Modem Channel                : %s%s", channel->name, VTY_NEWLINE);
+			vty_out(vty, "  Active                     : %s%s", channel->active? "ACTIVE":"INACTIVE", VTY_NEWLINE);
+
+			if(modem)
+			{
+				vty_out(vty, "   Modem Profile             : %s%s", modem->name, VTY_NEWLINE);
+			}
+			if(client)
+			{
+				vty_out(vty, "   Client Module             : %s%s", client->module_name, VTY_NEWLINE);
+				vty_out(vty, "     bus/device              : %x:%x%s", client->bus,client->device, VTY_NEWLINE);
+				vty_out(vty, "     vender/product          : %x:%x%s", client->vendor,client->product, VTY_NEWLINE);
+			}
+			if(driver)
+			{
+				vty_out(vty, "   Driver Module             : %s%s", driver->module_name, VTY_NEWLINE);
+				vty_out(vty, "     ID                      : %x%s", driver->id, VTY_NEWLINE);
+				vty_out(vty, "     bus/device              : %x:%x%s", driver->bus,client->device, VTY_NEWLINE);
+				vty_out(vty, "     vender/product          : %x:%x%s", driver->vendor,client->product, VTY_NEWLINE);
+			}
+		}
+	}
+	return CMD_SUCCESS;
+}
+
+static int show_modem_channel_information_cb(modem_serial_t *channel, struct modem_vty_cb *user)
+{
+	if(channel && user && user->vty)
+	{
+		if( os_strlen(channel->name) &&
+			os_strlen(user->name) &&
+			(strcmp(channel->name, user->name) == 0) )
+		{
+			show_modem_channel_information_one_cb(channel, user->vty);
+		}
+		else
+			show_modem_channel_information_one_cb(channel, user->vty);
+	}
+	return CMD_SUCCESS;
+}
+
+DEFUN (show_modem_channel,
+		show_modem_channel_cmd,
+       "show modem-channel",
+	   SHOW_STR
+	   "Modem channel\n")
+{
+	struct modem_vty_cb user;
+	os_memset(&user, 0, sizeof(user));
+	user.vty = vty;
+	if(argc == 1 && argv[0])
+	{
+		strcpy(user.name, argv[0]);
+	}
+	modem_serial_callback_api(show_modem_channel_information_cb, &user);
+	return CMD_SUCCESS;
+}
+
+ALIAS (show_modem_channel,
+		show_modem_channel_name_cmd,
+       "show modem-channel NAME",
+	   SHOW_STR
+	   "Modem channel\n"
+       "Specify the channel name\n");
+
+
+
 static int modem_channel_write_cb(modem_serial_t *serial, struct vty *vty)
 {
 	if(serial)
@@ -1253,7 +1439,8 @@ static int modem_channel_write_cb(modem_serial_t *serial, struct vty *vty)
 		if(os_strlen(serial->name))
 		{
 			vty_out(vty, "modem-channel %s%s", serial->name, VTY_NEWLINE);
-
+			if(serial->hw_channel)
+				vty_out(vty, " hardware-channel %d%s", serial->hw_channel, VTY_NEWLINE);
 			vty_out(vty, "!%s",VTY_NEWLINE);
 		}
 	}
@@ -1269,6 +1456,79 @@ static int modem_serial_write_cb(struct vty *vty)
 }
 
 
+
+static int show_modem_client_one_cb(modem_client_t *client, struct vty *vty)
+{
+	if (client)
+	{
+		modem_serial_t *serial = client->serial;
+		modem_t *modem = client->modem;
+		struct modem_driver *driver = client->driver;
+		vty_out(vty, "     module name             : %s%s", client->module_name, VTY_NEWLINE);
+		vty_out(vty, "     bus/device              : %x:%x%s", client->bus, client->device, VTY_NEWLINE);
+
+		if(driver)
+		{
+			vty_out(vty, "     Driver Name             : %s%s", driver->module_name, VTY_NEWLINE);
+			vty_out(vty, "      vender/product         : %x:%x%s", driver->vendor, driver->product, VTY_NEWLINE);
+		}
+		if(serial)
+		{
+			vty_out(vty, "     Modem Channel           : %s%s", serial->name, VTY_NEWLINE);
+		}
+		if(modem && os_strlen(modem->name))
+		{
+			vty_out(vty, "     Modem Profile           : %s%s", modem->name, VTY_NEWLINE);
+		}
+	}
+	return CMD_SUCCESS;
+}
+
+
+
+
+static int show_modem_client_cb(modem_client_t *client, struct modem_vty_cb *user)
+{
+	if(client && user && user->vty)
+	{
+		if( os_strlen(client->module_name) &&
+			os_strlen(user->name) &&
+			(strcmp(client->module_name, user->name) == 0) )
+		{
+			show_modem_client_one_cb(client, user->vty);
+		}
+		else
+			show_modem_client_one_cb(client, user->vty);
+	}
+	return CMD_SUCCESS;
+}
+
+
+
+DEFUN (show_modem_client,
+		show_modem_client_cmd,
+       "show modem-support",
+	   SHOW_STR
+	   "Modem support\n")
+{
+	struct modem_vty_cb user;
+	os_memset(&user, 0, sizeof(user));
+	user.vty = vty;
+	if(argc == 1 && argv[0])
+	{
+		strcpy(user.name, argv[0]);
+	}
+	modem_client_callback_api(show_modem_client_cb, &user);
+	return CMD_SUCCESS;
+}
+
+ALIAS (show_modem_client,
+		show_modem_client_name_cmd,
+       "show modem-support NAME",
+	   SHOW_STR
+	   "Modem support\n"
+       "Specify the module name\n");
+
 DEFUN (show_modem_usb_driver_param,
 		show_modem_usb_driver_param_cmd,
        "show modem-usb-driver",
@@ -1280,51 +1540,125 @@ DEFUN (show_modem_usb_driver_param,
 	return CMD_SUCCESS;
 }
 
-
-#ifdef __MODEM_DEBUG
-
-extern int modem_start;
-DEFUN (modem_start_test,
-		modem_start_test_cmd,
-       "modem-start-test",
-	   "Modem-start-test\n")
+DEFUN (modem_debug,
+		modem_debug_cmd,
+       "debug modem (client|atcmd|event|manage|driver)",
+	   DEBUG_STR
+	   "Modem configure\n"
+	   "Client module information\n"
+	   "ATCMD module information\n"
+	   "Event module information\n"
+	   "Manage module information\n"
+	   "Driver module information\n")
 {
-	modem_start = 1;
+	if(memcmp(argv[0], "client", 3) == 0)
+		MODEM_ON_DEBUG(CLIENT);
+	else if(memcmp(argv[0], "atcmd", 3) == 0)
+		MODEM_ON_DEBUG(ATCMD);
+	else if(memcmp(argv[0], "event", 3) == 0)
+		MODEM_ON_DEBUG(EVENT);
+	else if(memcmp(argv[0], "manage", 3) == 0)
+		MODEM_ON_DEBUG(MANAGE);
+	else if(memcmp(argv[0], "driver", 3) == 0)
+		MODEM_ON_DEBUG(DRIVER);
+	if(argc == 2)
+	{
+		if(memcmp(argv[1], "detail", 3) == 0)
+			MODEM_ON_DEBUG(DETAIL);
+	}
 	return CMD_SUCCESS;
 }
 
-DEFUN (modem_test,
-		modem_test_cmd,
-       "modem-test",
-       "syslog-debug\n"
-	   "dest")
+ALIAS (modem_debug,
+	modem_debug_detail_cmd,
+	"debug modem (client|atcmd|event|manage|driver) (detail|)",
+	DEBUG_STR
+	"Modem configure\n"
+	"Client module information\n"
+	"ATCMD module information\n"
+	"Event module information\n"
+	"Manage module information\n"
+	"Driver module information\n"
+	"Detail information\n");
+
+DEFUN (no_modem_debug,
+		no_modem_debug_cmd,
+       "no debug modem (client|atcmd|event|manage|driver)",
+	   NO_STR
+	   DEBUG_STR
+	   "Modem configure\n"
+	   "Client module information\n"
+	   "ATCMD module information\n"
+	   "Event module information\n"
+	   "Manage module information\n"
+	   "Driver module information\n")
 {
-	extern int modem_cmd_test(struct vty *vty);
-	modem_cmd_test(vty);
+	if(argc == 2)
+	{
+		if(memcmp(argv[1], "detail", 3) == 0)
+			MODEM_OFF_DEBUG(DETAIL);
+	}
+	else
+	{
+		if(memcmp(argv[0], "client", 3) == 0)
+			MODEM_OFF_DEBUG(CLIENT);
+		else if(memcmp(argv[0], "atcmd", 3) == 0)
+			MODEM_OFF_DEBUG(ATCMD);
+		else if(memcmp(argv[0], "event", 3) == 0)
+			MODEM_OFF_DEBUG(EVENT);
+		else if(memcmp(argv[0], "manage", 3) == 0)
+			MODEM_OFF_DEBUG(MANAGE);
+		else if(memcmp(argv[0], "driver", 3) == 0)
+			MODEM_OFF_DEBUG(DRIVER);
+	}
 	return CMD_SUCCESS;
 }
 
-DEFUN (modem_close,
-		modem_close_cmd,
-       "modem-close",
-       "syslog-debug\n"
-	   "dest")
+ALIAS (no_modem_debug,
+	no_modem_debug_detail_cmd,
+	"no debug modem (client|atcmd|event|manage|driver) (detail|)",
+	NO_STR
+	DEBUG_STR
+	"Modem configure\n"
+	"Client module information\n"
+	"ATCMD module information\n"
+	"Event module information\n"
+	"Manage module information\n"
+	"Driver module information\n"
+	"Detail information\n");
+
+
+int modem_debug_config(struct vty *vty)
 {
-	extern int modem_cmd_test_close();
-	modem_cmd_test_close();
+	if(MODEM_IS_DEBUG(DETAIL))
+	{
+		if(MODEM_IS_DEBUG(CLIENT))
+			vty_out(vty, "debug modem client detail%s", VTY_NEWLINE);
+		if(MODEM_IS_DEBUG(ATCMD))
+			vty_out(vty, "debug modem atcmd detail%s", VTY_NEWLINE);
+		if(MODEM_IS_DEBUG(EVENT))
+			vty_out(vty, "debug modem event detail%s", VTY_NEWLINE);
+		if(MODEM_IS_DEBUG(MANAGE))
+			vty_out(vty, "debug modem manage detail%s", VTY_NEWLINE);
+		if(MODEM_IS_DEBUG(DRIVER))
+			vty_out(vty, "debug modem driver detail%s", VTY_NEWLINE);
+	}
+	else
+	{
+		if(MODEM_IS_DEBUG(CLIENT))
+			vty_out(vty, "debug modem client%s", VTY_NEWLINE);
+		if(MODEM_IS_DEBUG(ATCMD))
+			vty_out(vty, "debug modem atcmd%s", VTY_NEWLINE);
+		if(MODEM_IS_DEBUG(EVENT))
+			vty_out(vty, "debug modem event%s", VTY_NEWLINE);
+		if(MODEM_IS_DEBUG(MANAGE))
+			vty_out(vty, "debug modem manage%s", VTY_NEWLINE);
+		if(MODEM_IS_DEBUG(DRIVER))
+			vty_out(vty, "debug modem driver%s", VTY_NEWLINE);
+	}
 	return CMD_SUCCESS;
 }
-DEFUN (modem_open,
-		modem_open_cmd,
-       "modem-open",
-       "syslog-debug\n"
-	   "dest")
-{
-	extern int modem_cmd_test_open();
-	modem_cmd_test_open();
-	return CMD_SUCCESS;
-}
-#endif
+
 
 static void cmd_modem_set_init (int node)
 {
@@ -1375,9 +1709,17 @@ static void cmd_modem_show_init (int node)
 {
 	install_element(node, &show_modem_profile_cmd);
 	install_element(node, &show_modem_profile_name_cmd);
-	install_element(node, &show_modem_usb_driver_param_cmd);
+
+	install_element(node, &show_modem_channel_cmd);
+	install_element(node, &show_modem_channel_name_cmd);
+
+	install_element(node, &show_modem_client_cmd);
+	install_element(node, &show_modem_client_name_cmd);
+
 	install_element(node, &show_modem_machine_state_cmd);
 	install_element(node, &show_modem_machine_state_detail_cmd);
+
+	install_element(node, &show_modem_usb_driver_param_cmd);
 }
 
 void cmd_modem_init (void)
@@ -1397,6 +1739,8 @@ void cmd_modem_init (void)
 	install_element(CONFIG_NODE, &modem_channel_cmd);
 	install_element(CONFIG_NODE, &no_modem_channel_cmd);
 
+	install_element(MODEM_CHANNEL_NODE, &modem_hw_channel_cmd);
+	install_element(MODEM_CHANNEL_NODE, &no_modem_hw_channel_cmd);
 
 	//cmd_modem_interface_init(INTERFACE_L3_NODE);
 	cmd_modem_interface_init(MODEM_PROFILE_NODE);
@@ -1406,13 +1750,19 @@ void cmd_modem_init (void)
 	cmd_modem_show_init(ENABLE_NODE);
 	cmd_modem_show_init(CONFIG_NODE);
 
-#ifdef __MODEM_DEBUG
-	install_element(ENABLE_NODE, &modem_start_test_cmd);
 
-	install_element(ENABLE_NODE, &modem_open_cmd);
-	install_element(ENABLE_NODE, &modem_close_cmd);
-	install_element(ENABLE_NODE, &modem_test_cmd);
-#endif
+	//debug
+	install_element(ENABLE_NODE, &modem_debug_cmd);
+	install_element(ENABLE_NODE, &modem_debug_detail_cmd);
+
+	install_element(ENABLE_NODE, &no_modem_debug_cmd);
+	install_element(ENABLE_NODE, &no_modem_debug_detail_cmd);
+
+	install_element(CONFIG_NODE, &modem_debug_cmd);
+	install_element(CONFIG_NODE, &modem_debug_detail_cmd);
+
+	install_element(CONFIG_NODE, &no_modem_debug_cmd);
+	install_element(CONFIG_NODE, &no_modem_debug_detail_cmd);
 }
 
 /*

@@ -62,22 +62,26 @@ typedef struct l2trunk_s
 	ifindex_t 		ifindex;
 
 	struct l2trunk_group_s *group;
-}l2trunk_t;
+}l2trunk_t;// port-channel member interface
 
 typedef struct l2trunk_group_s
 {
-	LIST			*trunkList;
-	u_int			trunkId;
-	trunk_type_t	type;
+	LIST				*trunkList;
+	u_int				trunkId;
+	trunk_type_t		type;
+	u_int				lacp_system_priority;
+	load_balance_t		load_balance;
+	struct Gl2trunk_s 	*global;
 
-	struct Gl2trunk_s *global;
-}l2trunk_group_t;
+	struct interface	*ifp;
+}l2trunk_group_t;// port-channel interface
 
 typedef struct Gl2trunk_s
 {
-	l2trunk_group_t	group[NSM_TRUNK_ID_MAX];
-	u_int			lacp_system_priority;
-	load_balance_t	load_balance;
+	//l2trunk_group_t	*group[NSM_TRUNK_ID_MAX];
+	l2trunk_group_t	*group;
+	//u_int			lacp_system_priority;
+	//load_balance_t	load_balance;
 	void		*mutex;
 	BOOL		enable;
 }Gl2trunk_t;
@@ -91,6 +95,8 @@ extern int nsm_trunk_exit();
 
 extern int nsm_trunk_enable(void);
 extern BOOL nsm_trunk_is_enable(void);
+
+extern l2trunk_group_t * nsm_port_channel_get(struct interface *ifp);
 
 extern BOOL l2trunk_lookup_api(u_int trunkid);
 extern int l2trunk_lookup_interface_count_api(u_int trunkid);

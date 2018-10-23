@@ -60,6 +60,7 @@ enum zebra_link_type
 	ZEBRA_LLT_BRIGDE,
 	ZEBRA_LLT_WIFI,
 	ZEBRA_LLT_MODEM,
+	ZEBRA_LLT_WIRELESS,
 };
 
 /*
@@ -85,8 +86,8 @@ enum zebra_link_type
 
 #define IF_MTU_DEFAULT		1500
 
-#define IF_DATA_LOCK()		if_data_lock()
-#define IF_DATA_UNLOCK()	if_data_unlock()
+#define IF_DATA_LOCK()		//if_data_lock()
+#define IF_DATA_UNLOCK()	//if_data_unlock()
 
 typedef enum
 {
@@ -110,8 +111,6 @@ struct if_stats
   unsigned long rx_dropped;   /* no space in linux buffers    */
   unsigned long tx_dropped;   /* no space available in linux  */
   unsigned long rx_multicast; /* multicast packets received   */
-  unsigned long rx_compressed;
-  unsigned long tx_compressed;
   unsigned long collisions;
 
   /* detailed rx_errors: */
@@ -127,6 +126,9 @@ struct if_stats
   unsigned long tx_fifo_errors;
   unsigned long tx_heartbeat_errors;
   unsigned long tx_window_errors;
+	/* for cslip etc */
+  unsigned long rx_compressed;
+  unsigned long tx_compressed;
 };
 
 
@@ -137,12 +139,13 @@ typedef enum if_type_s
 	IF_SERIAL,
 	IF_ETHERNET,
 	IF_GIGABT_ETHERNET,
+	IF_WIRELESS,	//wireless interface
 	IF_TUNNEL,
 	IF_LAG,
 	IF_BRIGDE,		//brigde interface
 	IF_VLAN,
 #ifdef CUSTOM_INTERFACE
-	IF_WIFI,		//wifi interface
+	IF_WIFI,		//wifi interface wireless
 	IF_MODEM,		//modem interface
 #endif
 	IF_MAX
@@ -192,7 +195,7 @@ struct interface
 #define IFINDEX_INTERNAL	0
 
   unsigned int uspv;
-  unsigned short encavlan;
+  unsigned short encavlan;		//子接口封装的VLAN ID
 
   char k_name[INTERFACE_NAMSIZ + 1];
   unsigned int k_name_hash;
@@ -237,13 +240,18 @@ struct interface
   struct list *connected;
   BOOL		dhcp;
   /* Daemon specific interface data pointer. */
-  void *info[ZLOG_MAX];
+  //void *info[ZLOG_MAX];
+  void *info[MODULE_MAX];
 
   /* Statistics fileds. */
-
   struct if_stats stats;
 
   vrf_id_t vrf_id;
+
+  unsigned int ifmember;
+#define IF_TRUNK_MEM     (1 << 0)
+#define IF_BRIDGE_MEM 	 (1 << 2)
+
 
   int count;
   int raw_status;
@@ -275,6 +283,7 @@ struct connected
 #define ZEBRA_IFA_SECONDARY    (1 << 0)
 #define ZEBRA_IFA_PEER         (1 << 1)
 #define ZEBRA_IFA_UNNUMBERED   (1 << 2)
+#define ZEBRA_IFA_DHCPC		   (1 << 3)
   /* N.B. the ZEBRA_IFA_PEER flag should be set if and only if
      a peer address has been configured.  If this flag is set,
      the destination field must contain the peer address.  
@@ -316,6 +325,16 @@ struct connected
 #define IF_IFINDEX_TYPE_SET(n)		IF_TYPE_SET(n)
 
 #define IF_IFINDEX_SET(t,uspv)		(IF_TYPE_SET(t)|(uspv) )
+
+#define IF_IFINDEX_PARENT_GET(n)	IF_TYPE_SET(IF_IFINDEX_TYPE_GET(n)) | \
+									IF_USPV_SET(IF_IFINDEX_UNIT_GET(n), \
+										IF_IFINDEX_SLOT_GET(n), \
+										IF_IFINDEX_PORT_GET(n), 0)
+
+#define IF_IFINDEX_ROOT_GET(n)		IF_IFINDEX_PARENT_GET(n)
+
+
+#define IF_IS_SUBIF_GET(n)			IF_ID_GET(n)
 
 
 /* Does the destination field contain a peer address? */
@@ -373,6 +392,8 @@ struct connected
 /* Prototypes. */
 extern struct list *if_list_get();
 extern int if_hook_add(int (*add_cb) (struct interface *), int (*del_cb) (struct interface *));
+extern int if_new_llc_type_mode(int llc, int mode);
+extern int if_make_llc_type(struct interface *ifp);
 extern int if_cmp_func (struct interface *, struct interface *);
 extern struct interface *if_create (const char *name, int namelen);
 extern struct interface *if_create_dynamic(const char *name, int namelen);
@@ -407,9 +428,16 @@ extern struct interface *if_lookup_by_name_len(const char *ifname,
 extern struct interface *if_lookup_by_name_len_vrf(const char *ifname,
                                 size_t namelen, vrf_id_t vrf_id);
 
+
+extern struct interface *if_lookup_by_encavlan(unsigned short encavlan);
+
 extern int if_count_lookup_type(if_type_t type);
 
 extern const char *if_enca_string(if_enca_t	enca);
+
+extern int if_name_set(struct interface *, const char *str);
+extern int if_kname_set(struct interface *, const char *str);
+
 /* Delete and free the interface structure: calls if_delete_retain and then
    deletes it from the interface list and frees the structure. */
 extern void if_delete (struct interface *);
@@ -422,6 +450,15 @@ extern int if_is_broadcast (struct interface *);
 extern int if_is_pointopoint (struct interface *);
 extern int if_is_multicast (struct interface *);
 extern int if_is_serial(struct interface *ifp);
+extern int if_is_ethernet(struct interface *ifp);
+extern int if_is_tunnel(struct interface *ifp);
+extern int if_is_lag(struct interface *ifp);
+extern int if_is_lag_member(struct interface *ifp);
+extern int if_is_vlan(struct interface *ifp);
+extern int if_is_brigde(struct interface *ifp);
+extern int if_is_brigde_member(struct interface *ifp);
+extern int if_is_loop(struct interface *ifp);
+extern int if_is_wireless(struct interface *ifp);
 extern int if_up (struct interface *ifp);
 extern int if_down (struct interface *ifp);
 
@@ -453,13 +490,15 @@ extern ifindex_t ifname2kernelifindex_vrf(const char *ifname, vrf_id_t vrf_id);
 extern ifindex_t ifindex2ifkernel(ifindex_t);
 extern ifindex_t ifkernel2ifindex(ifindex_t);
 
-extern const char *ifkernelindex2ifname(ifindex_t kifindex);
+//extern const char *ifkernelindex2ifname(ifindex_t kifindex);
 /* Please use ifname2ifindex instead of if_nametoindex where possible;
    ifname2ifindex uses internal interface info, whereas if_nametoindex must
    make a system call. */
 extern ifindex_t ifname2ifindex(const char *ifname);
 extern ifindex_t ifname2ifindex_vrf(const char *ifname, vrf_id_t vrf_id);
 extern unsigned int ifindex2vlan(ifindex_t ifindex);
+
+extern int if_list_each(int (*cb)(struct interface *ifp, void *pVoid), void *pVoid);
 
 /* Connected address functions. */
 extern struct connected *connected_new (void);
@@ -473,34 +512,6 @@ extern struct connected  *connected_delete_by_prefix (struct interface *,
 extern struct connected  *connected_lookup_address (struct interface *, 
                                              struct in_addr);
 extern struct connected *connected_check (struct interface *ifp, struct prefix *p);
-extern int connected_same (struct connected *ifc1, struct connected *ifc2);
-extern void connected_up_ipv4 (struct interface *, struct connected *);
-extern void connected_down_ipv4 (struct interface *, struct connected *);
-extern struct connected *connected_lookup(struct interface *, struct prefix *);
-
-#ifdef HAVE_IPV6
-extern void connected_up_ipv6 (struct interface *, struct connected *);
-extern void connected_down_ipv6 (struct interface *ifp, struct connected *);
-#endif /* HAVE_IPV6 */
-
-#ifdef USE_IPSTACK_KERNEL
-extern void
-connected_add_ipv4 (struct interface *ifp, int flags, struct in_addr *addr,
-		    u_char prefixlen, struct in_addr *broad,
-		    const char *label);
-extern void
-connected_delete_ipv4 (struct interface *ifp, int flags, struct in_addr *addr,
-		       u_char prefixlen, struct in_addr *broad);
-#ifdef HAVE_IPV6
-extern void
-connected_add_ipv6 (struct interface *ifp, int flags, struct in6_addr *address,
-		    u_char prefixlen, struct in6_addr *broad,
-		    const char *label);
-extern void
-connected_delete_ipv6 (struct interface *ifp, struct in6_addr *address,
-		       u_char prefixlen, struct in6_addr *broad);
-#endif /* HAVE_IPV6 */
-#endif
 
 extern int if_data_lock ();
 extern int if_data_unlock ();

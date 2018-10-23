@@ -36,6 +36,7 @@ install: $(LIBS)
 
 clean: objclean
 	@$(RM) $(LIB_DIR)/$(LIBS)
+	@$(RM) $(LIBS)
 
 objclean: 
 	@$(RM) $(OBJS_DIR)/*.o

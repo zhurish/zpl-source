@@ -31,27 +31,27 @@ int hal_trunk_enable(BOOL enable)
 {
 	if(sdk_trunk.sdk_trunk_enable_cb)
 		return sdk_trunk.sdk_trunk_enable_cb(enable);
-	return ERROR;
+	return OK;
 }
 
 int hal_trunk_mode(int mode)
 {
 	if(sdk_trunk.sdk_trunk_mode_cb)
 		return sdk_trunk.sdk_trunk_mode_cb(mode);
-	return ERROR;
+	return OK;
 }
 
 int hal_trunk_interface_enable(ifindex_t ifindex, int trunkid)
 {
 	if(sdk_trunk.sdk_trunk_add_cb)
 		return sdk_trunk.sdk_trunk_add_cb(ifindex, trunkid);
-	return ERROR;
+	return OK;
 }
 
 int hal_trunk_interface_disable(ifindex_t ifindex, int trunkid)
 {
 	if(sdk_trunk.sdk_trunk_del_cb)
 		return sdk_trunk.sdk_trunk_del_cb(ifindex, trunkid);
-	return ERROR;
+	return OK;
 }
 

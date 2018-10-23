@@ -592,7 +592,10 @@ void lstFree
 	while (p1 != NULL)
 	    {
 	    p2 = p1->next;
-	    free ((char *)p1);
+	    if(pList->free)
+	    	(pList->free) ((void *)p1);
+	    else
+	    	free ((char *)p1);
 	    p1 = p2;
 	    }
 	pList->count = 0;

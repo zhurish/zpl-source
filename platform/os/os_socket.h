@@ -8,7 +8,7 @@
 #ifndef __OS_SOCKET_H__
 #define __OS_SOCKET_H__
 
-#define OS_SOCKET_BASE	"/var/run"
+#define OS_SOCKET_BASE	DAEMON_VTY_DIR
 
 
 extern int sock_server_create(BOOL tcp, char *ipaddress, int port, int listennum);

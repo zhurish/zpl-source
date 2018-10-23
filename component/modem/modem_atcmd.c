@@ -18,7 +18,7 @@
 #include "modem_atcmd.h"
 #include "modem_client.h"
 #include "modem_driver.h"
-#include "modem_product.h"
+#include "modem_usb_driver.h"
 
 /*
  * AT
@@ -103,7 +103,7 @@ int modem_open_atcmd_set(modem_client_t *client)
 		return (client->driver->atcmd.md_open_cmd)(&client->driver, 1);
 	else
 	{
-		if (modem_attty(client, MODEM_TIMEOUT(5), "OK", "AT+CFUN=%d,1\r\n", 1)
+		if (modem_attty(client, MODEM_TIMEOUT(5), "OK", "AT+CFUN=%d,0\r\n", 1)
 				== RES_OK)
 		{
 			return OK;
@@ -575,11 +575,11 @@ int modem_IMSI_atcmd_get(modem_client_t *client)
 	if (modem_attty_respone(client, MODEM_TIMEOUT(5), NULL, 0,
 			"AT+CIMI\r\n") > RES_OK)
 	{
-		char tmp[512];
-		os_memset(tmp, 0, sizeof(tmp));
+		//char tmp[512];
+		//os_memset(tmp, 0, sizeof(tmp));
 		os_bzero(client->IMSI_number, sizeof(client->IMSI_number));
 		MODEM_CMD_DEBUG("AT+CIMI:%s", client->response->buf);
-		os_sscanf(client->response->buf, "%s %*s", client->IMSI_number, tmp);
+		os_sscanf(client->response->buf, "%s %*s", client->IMSI_number);
 		return OK;
 	}
 	return ERROR;

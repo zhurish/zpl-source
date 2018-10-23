@@ -77,7 +77,8 @@ typedef enum
   ZLOG_LDP,
   ZLOG_SNTP,
   ZLOG_IMISH,
-
+  ZLOG_WIFI,
+  ZLOG_MODEM,
   ZLOG_UTILS,
 
   ZLOG_MAX,

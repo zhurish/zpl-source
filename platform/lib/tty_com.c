@@ -277,6 +277,7 @@ int tty_com_read(struct tty_com *com, char *buf, int len)
 	int ret = read(com->fd, buf, len);
 	return ret;
 }
+
 /*
 int tty_com_update_option(struct tty_com *com)
 {

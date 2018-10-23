@@ -55,11 +55,17 @@ enum node_type
   AAA_NODE,			/* AAA node. */
   KEYCHAIN_NODE,		/* Key-chain node. */
   KEYCHAIN_KEY_NODE,		/* Key-chain key node. */
+  DHCPS_NODE,				/* DHDP server*/
+  LOOPBACK_INTERFACE_NODE,	/* Loopback Interface mode node. */
+
+  SERIAL_INTERFACE_NODE,	/* Serial Interface mode node. */
 
   INTERFACE_NODE,			/* L2 Interface mode node(default). */
+
   INTERFACE_L3_NODE,		/* Interface mode node. */
+  WIRELESS_INTERFACE_NODE,	/* Interface mode node. */
   TUNNEL_INTERFACE_NODE,	/* Tunnel Interface mode node. */
-  LOOPBACK_INTERFACE_NODE,	/* Loopback Interface mode node. */
+
   LAG_INTERFACE_NODE,		/* Lag Interface mode node. */
   LAG_INTERFACE_L3_NODE,	/* Lag L3 Interface mode node. */
 
@@ -68,7 +74,6 @@ enum node_type
   WIFI_INTERFACE_NODE,	/* Wifi Interface mode node. */
   MODEM_INTERFACE_NODE,		/* Modem Interface mode node. */
 #endif
-  SERIAL_INTERFACE_NODE,	/* Serial Interface mode node. */
 
   TRUNK_NODE,			/* Trunk group mode node. */
 
@@ -540,9 +545,10 @@ struct cmd_token
 #define CMD_INTERFACE_STR	"interface"
 #define CMD_INTERFACE_STR_HELP	INTERFACE_STR
 
-#define CMD_IF_USPV_STR		"(serial|ethernet|gigabitethernet|tunnel|brigde)"
+#define CMD_IF_USPV_STR		"(serial|ethernet|gigabitethernet|wireless|tunnel|brigde)"
 #define CMD_IF_USPV_STR_HELP	"Serial interface\n Ethernet interface\n" \
 								"GigabitEthernet interface\n" \
+								"Wireless interface\n"\
 								"Tunnel interface\n Brigde interface\n"
 
 #define CMD_USP_STR			"<unit/slot/port>"
@@ -551,6 +557,21 @@ struct cmd_token
 #define CMD_IF_MIP_STR		"(modem|wifi)"
 #define CMD_IF_MIP_STR_HELP	"Modem interface\n" "Wifi interface\n"
 #endif
+
+
+#define CMD_IF_VLAN_STR			"vlan <1-4094>"
+#define CMD_IF_VLAN_STR_HELP	"Super Vlan interface\n" \
+								"VLAN ID\n"
+
+#define CMD_IF_LOOP_STR			"loopback <1-1024>"
+#define CMD_IF_LOOP_STR_HELP	"Loopback interface\n" \
+								"Interface ID\n"
+
+#define CMD_IF_TRUNK_STR		"port-channel <1-64>"
+#define CMD_IF_TRUNK_STR_HELP	"Ethernet Channel of interface\n" \
+								"Channel ID\n"
+
+
 
 #define CMD_MAC_ADDRESS_STR	"mac-address-table"
 #define CMD_MAC_ADDRESS_STR_HELP	"mac-address-table\n"

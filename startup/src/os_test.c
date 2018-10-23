@@ -83,6 +83,64 @@ DEFUN (wifi_list,
 	//extern int wifi_show_interface(struct interface *ifp, struct vty *vty);
 	//wifi_show_interface(NULL, vty);
 	//wifi_show(vty);
+	//wifi_connect_show(vty);
+	return CMD_SUCCESS;
+}
+
+DEFUN (wifi_scan,
+		wifi_scan_cmd,
+       "wifi-scan",
+       "syslog-debug\n"
+	   "dest")
+{
+	//extern int wifi_show(struct vty *vty);
+	//extern int wifi_show_interface(struct interface *ifp, struct vty *vty);
+	//wifi_show_interface(NULL, vty);
+	//wifi_show(vty);
+	//wifi_scan_ap(vty);
+	iw_client_scan_test(vty);
+	return CMD_SUCCESS;
+}
+
+
+DEFUN (bond_test,
+		bond_test_cmd,
+       "bond-test",
+       "syslog-debug\n"
+	   "dest")
+{
+	_if_bond_test();
+	return CMD_SUCCESS;
+}
+
+DEFUN (os_process_test,
+		os_process_test_cmd,
+       "process-test (start|stop)",
+       "syslog-debug\n"
+	   "dest")
+{
+	static int taskid = 0;
+	if(memcmp(argv[0], "start", 3) == 0)
+	{
+		char *argve[] = {"call", "file", "/etc/ppp/peers/dial-auto", NULL};
+		taskid = os_process_register(PROCESS_START, "pppd", "pppd", TRUE, argve);
+		if(taskid)
+		{
+			vty_out(vty, "pppd task start OK(%d).%s", taskid, VTY_NEWLINE);
+		}
+		else
+			vty_out(vty, "pppd task start faile.%s", VTY_NEWLINE);
+	}
+	if(memcmp(argv[0], "stop", 3) == 0)
+	{
+		if(taskid)
+		{
+			os_process_action(PROCESS_STOP, "pppd", taskid);
+			taskid = 0;
+		}
+		else
+			vty_out(vty, "pppd task is not exist.%s", VTY_NEWLINE);
+	}
 	return CMD_SUCCESS;
 }
 
@@ -175,8 +233,13 @@ int os_test()
 	//syslogcLibInit ("127.0.0.1");
 	//modem_test_init();
 	install_element (ENABLE_NODE, &wifi_list_cmd);
+	install_element (ENABLE_NODE, &wifi_scan_cmd);
+
 	install_element (ENABLE_NODE, &sdk_test_cmd);
 	install_element (ENABLE_NODE, &syslog_debug_test_cmd);
+	install_element (ENABLE_NODE, &bond_test_cmd);
+	install_element (ENABLE_NODE, &os_process_test_cmd);
+
 #ifdef DOUBLE_PROCESS
 	install_element (ENABLE_NODE, &process_test_cmd);
 #endif

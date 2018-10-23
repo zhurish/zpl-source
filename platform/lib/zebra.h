@@ -591,6 +591,7 @@ typedef uint32_t route_tag_t;
 #include "os_job.h"
 #include "os_task.h"
 #include "os_time.h"
+#include "os_util.h"
 #endif
 
 #include "list.h"
@@ -602,6 +603,10 @@ typedef struct tlv_s
 	int 	len;
 	void	*data;
 }tlv_t;
+
+#ifndef NSM_MAC_MAX
+#define NSM_MAC_MAX	6
+#endif
 
 
 #endif /* _ZEBRA_H */

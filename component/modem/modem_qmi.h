@@ -9,7 +9,7 @@
 #define __MODEM_QMI_H__
 
 
-#define _MODEM_QMI_DEBUG
+//#define _MODEM_QMI_DEBUG
 //#define _MODEM_QMI_DEBUG
 
 extern int modem_qmi_start(modem_t *modem);

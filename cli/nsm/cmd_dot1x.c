@@ -571,10 +571,18 @@ static int _build_dot1x_interface_one(dot1x_t *pstNode, struct dot1x_user *user)
 
 static int build_dot1x_interface(struct vty *vty, struct interface *ifp)
 {
-	struct dot1x_user user;
-	user.vty = vty;
-	user.ifindex = ifp->ifindex;
-	return dot1x_callback_api((dot1x_cb)_build_dot1x_interface_one, &user);
+	if(ifp->if_type == IF_ETHERNET ||
+			ifp->if_type == IF_GIGABT_ETHERNET ||
+			ifp->if_type == IF_SERIAL ||
+			ifp->if_type == IF_LAG ||
+			ifp->if_type == IF_VLAN)
+	{
+		struct dot1x_user user;
+		user.vty = vty;
+		user.ifindex = ifp->ifindex;
+		return dot1x_callback_api((dot1x_cb)_build_dot1x_interface_one, &user);
+	}
+	return OK;
 }
 
 static int build_dot1x_config(struct vty *vty)

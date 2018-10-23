@@ -23,6 +23,7 @@
 
 static modem_main_process_t gModeProcess;
 
+static int modem_process_free(modem_process_t *node);
 
 int modem_process_init(void)
 {
@@ -33,6 +34,9 @@ int modem_process_init(void)
 	if(gModeProcess.list && gModeProcess.unlist && gModeProcess.ready)
 	{
 		gModeProcess.mutex = os_mutex_init();
+		gModeProcess.list->free = modem_process_free;
+		gModeProcess.unlist->free = modem_process_free;
+		gModeProcess.ready->free = modem_process_free;
 		lstInit(gModeProcess.list);
 		lstInit(gModeProcess.unlist);
 		lstInit(gModeProcess.ready);
@@ -84,6 +88,12 @@ int modem_process_exit(void)
 	return OK;
 }
 
+static int modem_process_free(modem_process_t *node)
+{
+	XFREE(MTYPE_MODEM, node);
+	node = NULL;
+	return OK;
+}
 
 static modem_process_t *modem_process_get(modem_event event, void *argv)
 {
@@ -161,7 +171,52 @@ static int modem_process_del_node(modem_process_t *node)
 	return ERROR;
 }
 
-
+static int modem_process_clean_api(modem_event event, void *argv)
+{
+	NODE index;
+	modem_process_t *pstNode = NULL;
+	if(lstCount(gModeProcess.ready))
+	{
+		for(pstNode = (modem_process_t *)lstFirst(gModeProcess.ready);
+				pstNode != NULL;  pstNode = (modem_process_t *)lstNext((NODE*)&index))
+		{
+			index = pstNode->node;
+			if(pstNode->argv == argv)
+			{
+				if(event == MODEM_EV_MAX)
+				{
+					modem_process_del_node(pstNode);
+				}
+				else if(event == pstNode->event)
+				{
+					modem_process_del_node(pstNode);
+				}
+			}
+		}
+	}
+	if(lstCount(gModeProcess.list))
+	{
+		for(pstNode = (modem_process_t *)lstFirst(gModeProcess.list);
+				pstNode != NULL;  pstNode = (modem_process_t *)lstNext((NODE*)&index))
+		{
+			index = pstNode->node;
+			if(pstNode->argv == argv)
+			{
+				if(event == MODEM_EV_MAX)
+				{
+					lstDelete(gModeProcess.list, (NODE*)pstNode);
+					lstAdd(gModeProcess.unlist, (NODE*)pstNode);
+				}
+				else if(event == pstNode->event)
+				{
+					lstDelete(gModeProcess.list, (NODE*)pstNode);
+					lstAdd(gModeProcess.unlist, (NODE*)pstNode);
+				}
+			}
+		}
+	}
+	return OK;
+}
 
 int modem_process_add_api(modem_event event, void *argv, BOOL lock)
 {
@@ -205,6 +260,29 @@ int modem_process_add_api(modem_event event, void *argv, BOOL lock)
 	return ret;
 }
 
+
+int modem_process_del_api(modem_event event, void *argv, BOOL lock)
+{
+	int ret = OK;
+	if(lock/*event == MODEM_EV_INSTER || event == MODEM_EV_REMOVE*/)
+	{
+		if(gModeProcess.mutex)
+			os_mutex_lock(gModeProcess.mutex, OS_WAIT_FOREVER);
+	}
+	if(argv)
+	{
+		gModeProcess.clean_argv = argv;
+		gModeProcess.clean = event;
+	}
+	if(lock/*event == MODEM_EV_INSTER || event == MODEM_EV_REMOVE*/)
+	{
+		if(gModeProcess.mutex)
+			os_mutex_unlock(gModeProcess.mutex);
+	}
+	return ret;
+}
+
+
 int modem_process_callback_api(modem_process_cb cb, void *pVoid)
 {
 	NODE index;
@@ -219,11 +297,24 @@ int modem_process_callback_api(modem_process_cb cb, void *pVoid)
 			index = pstNode->node;
 			if(cb && pstNode)
 			{
-				//MODEM_DEBUG("modem process event:%s",modem_event_string(pstNode->event));
 				(cb)(pstNode, pVoid);
 			}
 			modem_process_del_node(pstNode);
+			if(gModeProcess.clean != MODEM_EV_NONE && gModeProcess.clean_argv)
+			{
+				break;
+			}
 		}
+	}
+	if(gModeProcess.clean && gModeProcess.clean_argv)
+	{
+		modem_process_clean_api(gModeProcess.clean, gModeProcess.clean_argv);
+
+		gModeProcess.clean = MODEM_EV_NONE;
+
+		if(gModeProcess.mutex)
+			os_mutex_unlock(gModeProcess.mutex);
+		return OK;
 	}
 	if(lstCount(gModeProcess.list) !=  0)
 	{

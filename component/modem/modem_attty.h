@@ -16,11 +16,11 @@
 #define MODEM_TIMEOUT_MAX	(180)
 #define MODEM_TIMEOUT_S(n)	(n)
 
-#define __MODEM_TTY_DEBUG
+//#define __MODEM_TTY_DEBUG
 
 
-#define MD_NL			0X0A
-#define MD_CR			0X0D
+#define MD_NL			0X0A //\r
+#define MD_CR			0X0D //\n
 #define MD_CTRL_Z		26
 #define MD_CTRL_KEY1	'"'
 #define MD_SPACE		0X20
@@ -57,6 +57,10 @@ extern md_res_en modem_attty(modem_client_t *client,
 
 extern md_res_en modem_attty_respone(modem_client_t *client,
 		int timeout, char *buf, int size, const char *format, ...);
+
+
+extern md_res_en modem_attty_massage_respone(modem_client_t *client,
+		int timeout, const char *msg_cmd, const char *buf, int size);
 
 #ifdef __MODEM_TTY_DEBUG
 #define MODEM_TTY_DEBUG(fmt,...)	modem_debug_printf(stderr, __func__, __LINE__,fmt, ##__VA_ARGS__)

@@ -49,7 +49,7 @@ struct quagga_sigevent_master_t
 } sigmaster;
 
 #ifdef QUAGGA_SIGNAL_REAL_TIMER
-static int signal_pipe[2];
+static int signal_pipe = 0;
 
 static void real_time_signal_handler (pthread_t pid, int sig)
 {
@@ -58,23 +58,20 @@ static void real_time_signal_handler (pthread_t pid, int sig)
 	int *psig = (int *)(buf + sizeof(pthread_t));
 	*ppid = pid;
 	*psig = sig;
-	if (send (signal_pipe[1], buf, sizeof(pthread_t) + sizeof (sig), MSG_DONTWAIT) < 0)
-		zlog_err (ZLOG_DEFAULT, "Could not send signal: %s", strerror (errno));
+	if(signal_pipe)
+	{
+		if (write (signal_pipe, buf, sizeof(pthread_t) + sizeof (sig)) < 0)
+			zlog_err (ZLOG_DEFAULT, "Could not send signal(%d): %s", sig, strerror (errno));
+	}
 }
 
 /* Call this before doing anything else. Sets up the socket pair
  * and installs the signal handler */
 static void real_signal_setup(void)
 {
-	int i;
-	int flags;
-
-	socketpair (AF_UNIX, SOCK_STREAM, 0, signal_pipe);
-	/* Stop any scripts from inheriting us */
-	for (i = 0; i < 2; i++)
-		if ((flags = fcntl (signal_pipe[i], F_GETFD, 0)) < 0 ||
-			fcntl (signal_pipe[i], F_SETFD, flags | FD_CLOEXEC) < 0)
-			zlog_err (ZLOG_DEFAULT ,"fcntl: %s", strerror (errno));
+	signal_pipe = os_pipe_create("real-signal", O_RDWR);
+	if(signal_pipe)
+		os_set_nonblocking(signal_pipe);
 }
 /* Read a signal from the signal pipe. Returns 0 if there is
  * no signal, -1 on error (and sets errno appropriately), and
@@ -86,27 +83,21 @@ static int real_signal_read (int timeout)
 	pthread_t *pid = (pthread_t *)buf;
 	int *sig = (int *)(buf + sizeof(pthread_t));
 	fd_set rfds;
-	struct timeval tv;
 	struct quagga_signal_t *sighandle;
 	memset(buf, 0, sizeof(buf));
-	tv.tv_sec = timeout;
-	tv.tv_usec = 0;
 	FD_ZERO (&rfds);
-	FD_SET (signal_pipe[0], &rfds);
+	FD_SET (signal_pipe, &rfds);
 	while (1)
 	{
-		retval = select(signal_pipe[0] + 1, &rfds, NULL, NULL, &tv);
+		retval = os_select_wait(signal_pipe + 1, &rfds, NULL,  timeout);
+
 		if (retval == 0)
 			return 0;
-		else if (retval < 0)
-		{
-			if (errno == EINTR)
-				continue;
-		}
-		if (!FD_ISSET(signal_pipe[0], &rfds))
+
+		if (!FD_ISSET(signal_pipe, &rfds))
 			return 0;
 
-		if (read(signal_pipe[0], buf, sizeof(buf)) < 0)
+		if (read(signal_pipe, buf, sizeof(buf)) < 0)
 			return -1;
 
 		for (i = 0; i < sigmaster.sigc; i++)
@@ -134,7 +125,6 @@ quagga_signal_handler (int signo)
 	real_time_signal_handler (pthread_self(), signo);
 #else
   int i;
-  fprintf(stdout, "%s\r\n",__func__);
   struct quagga_signal_t *sig;
   sigmaster.tid = pthread_self();
   for (i = 0; i < sigmaster.sigc; i++)

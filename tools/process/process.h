@@ -8,6 +8,7 @@
 #ifndef __PROCESS_H__
 #define __PROCESS_H__
 
+#include "config.h"
 #include "os_list.h"
 #include "os_util.h"
 
@@ -27,8 +28,8 @@
 #define XMALLOC(n,m)	os_malloc((m))
 #define XSTRDUP(n,m)	os_strdup((m))
 
-
-#define PROCESS_LOG_BASE	"/var/log"
+#define PROCESS_LOG_BASE	DAEMON_LOG_FILE_DIR
+//#define PROCESS_LOG_BASE	"/var/log"
 
 
 typedef struct process_s

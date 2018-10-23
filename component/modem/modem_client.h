@@ -139,7 +139,8 @@ typedef struct modem_client_s
 
 	atcmd_request_t	 *atcmd;
 	atcmd_response_t *response;
-	//int				 at_state;
+	BOOL			bSms;
+
 }modem_client_t;
 
 

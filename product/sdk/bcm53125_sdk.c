@@ -1511,5 +1511,6 @@ int sdk_port_init()
 	//sdk_port.sdk_port_loop_cb) (ifindex_t, int);
 	//sdk_port.sdk_port_8021x_cb) (ifindex_t, int);
 	sdk_port.sdk_port_duplex_cb = sdk_port_duplex;//) (ifindex_t, int);
+	return OK;
 }
 

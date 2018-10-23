@@ -35,6 +35,7 @@
 #include "table.h"
 #include "vector.h"
 #include "vrf.h"
+#include "connected.h"
 #include <net/if_arp.h>
 
 static void *ifMutex = NULL;
@@ -44,6 +45,8 @@ struct if_master
 {
 	  int (*interface_add_cb) (struct interface *);
 	  int (*interface_delete_cb) (struct interface *);
+	  int llc;
+	  int mode;
 };
 
 struct if_master if_master =
@@ -77,6 +80,13 @@ int if_hook_add(int (*add_cb) (struct interface *), int (*del_cb) (struct interf
 {
 	if_master.interface_add_cb = add_cb;
 	if_master.interface_delete_cb = del_cb;
+	return OK;
+}
+
+int if_new_llc_type_mode(int llc, int mode)
+{
+	if_master.llc = llc;
+	if_master.mode = mode;
 	return OK;
 }
 
@@ -175,6 +185,7 @@ static int if_create_make_ifname(struct interface *ifp, const char *name, int na
 			ifp->if_type == IF_ETHERNET ||
 			ifp->if_type == IF_GIGABT_ETHERNET ||
 			ifp->if_type == IF_TUNNEL ||
+			ifp->if_type == IF_WIRELESS ||
 #ifdef CUSTOM_INTERFACE
 			ifp->if_type == IF_WIFI ||
 			ifp->if_type == IF_MODEM ||
@@ -199,7 +210,7 @@ static int if_create_make_ifname(struct interface *ifp, const char *name, int na
 	return OK;
 }
 
-static int if_make_llc_type(struct interface *ifp)
+int if_make_llc_type(struct interface *ifp)
 {
 	switch(ifp->if_type)
 	{
@@ -212,6 +223,11 @@ static int if_make_llc_type(struct interface *ifp)
 	case IF_GIGABT_ETHERNET:
 		ifp->ll_type = ZEBRA_LLT_GIETHER;
 		break;
+	case IF_WIRELESS:
+		ifp->ll_type = ZEBRA_LLT_WIRELESS;
+		ifp->if_mode = IF_MODE_L3;
+		break;
+
 	case IF_TUNNEL:
 		ifp->ll_type = ZEBRA_LLT_TUNNEL;
 		ifp->if_mode = IF_MODE_L3;
@@ -226,13 +242,14 @@ static int if_make_llc_type(struct interface *ifp)
 	case IF_LOOPBACK:
 		ifp->ll_type = ZEBRA_LLT_LOOPBACK;
 		ifp->if_mode = IF_MODE_L3;
+		ifp->flags |= IFF_LOOPBACK;
 		break;
 
 	case IF_BRIGDE:
 		ifp->ll_type = ZEBRA_LLT_BRIGDE;
 		ifp->if_mode = IF_MODE_L3;
 		break;
-	#ifdef CUSTOM_INTERFACE
+#ifdef CUSTOM_INTERFACE
 	case IF_WIFI:
 		ifp->ll_type = ZEBRA_LLT_WIFI;
 		ifp->if_mode = IF_MODE_L3;
@@ -241,9 +258,19 @@ static int if_make_llc_type(struct interface *ifp)
 		ifp->ll_type = ZEBRA_LLT_MODEM;
 		ifp->if_mode = IF_MODE_L3;
 		break;
-	#endif
+#endif
 	default:
 		break;
+	}
+	if(if_master.llc)
+	{
+		ifp->ll_type = if_master.llc;
+		if_master.llc = 0;
+	}
+	if(if_master.mode)
+	{
+		ifp->if_mode = if_master.mode;
+		if_master.mode = 0;
 	}
 	return OK;
 }
@@ -258,7 +285,13 @@ static int if_make_ifindex_type(struct interface *ifp)
 			|| ifp->if_type == IF_LOOPBACK)
 	{
 		ifp->ifindex |= if_loopback_ifindex_create(ifp->if_type, ifp->name);
+		//fprintf(stderr, "%s (%s):ifindex=0x%x", __func__,ifp->name, ifp->ifindex);
 	}
+
+	if( (ifp->if_type == IF_ETHERNET ||
+			ifp->if_type == IF_GIGABT_ETHERNET) &&
+			(IF_IS_SUBIF_GET(ifp->ifindex)) )
+		ifp->encavlan = IF_IFINDEX_ID_GET(ifp->ifindex);
 	return OK;
 }
 
@@ -612,6 +645,19 @@ unsigned int ifindex2vlan(ifindex_t ifindex) {
 	return ifp ? ifp->encavlan : IFINDEX_INTERNAL;
 }
 
+
+struct interface *if_lookup_by_encavlan(unsigned short encavlan)
+{
+	struct listnode *node;
+	struct interface *ifp;
+	if (!encavlan)
+		return NULL;
+	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp)) {
+		if ((ifp->encavlan == encavlan))
+			return ifp;
+	}
+	return NULL;
+}
 /* Lookup interface by IPv4 address. */
 struct interface *
 if_lookup_exact_address_vrf(struct in_addr src, vrf_id_t vrf_id) {
@@ -734,11 +780,26 @@ int if_up (struct interface *ifp)
 {
 	struct connected *connected;
 	struct listnode *node;
+	struct prefix *p;
+
+	/* Notify the protocol daemons. */
+	zebra_interface_up_update(ifp);
+
+	/* Install connected routes to the kernel. */
 	for (ALL_LIST_ELEMENTS_RO(ifp->connected, node, connected))
 	{
-		connected_up_ipv4(ifp, connected);
+		p = connected->address;
+
+		if (p->family == AF_INET)
+			connected_up_ipv4(ifp, connected);
+#ifdef HAVE_IPV6
+		else if (p->family == AF_INET6)
+			connected_up_ipv6(ifp, connected);
+#endif /* HAVE_IPV6 */
 	}
-	ifp->flags |= IFF_UP|IFF_RUNNING;
+	ifp->flags |= IFF_UP | IFF_RUNNING;
+	/* Examine all static routes. */
+	rib_update(ifp->vrf_id);
 	return OK;
 }
 
@@ -746,11 +807,24 @@ int if_down (struct interface *ifp)
 {
 	struct connected *connected;
 	struct listnode *node;
+	struct prefix *p;
+	/* Notify to the protocol daemons. */
+	zebra_interface_down_update (ifp);
+
+	/* Delete connected routes from the kernel. */
 	for (ALL_LIST_ELEMENTS_RO(ifp->connected, node, connected))
 	{
-		connected_down_ipv4(ifp, connected);
+		p = connected->address;
+		if (p->family == AF_INET)
+			connected_down_ipv4(ifp, connected);
+#ifdef HAVE_IPV6
+	    else if (p->family == AF_INET6)
+	    	connected_down_ipv6 (ifp, connected);
+#endif /* HAVE_IPV6 */
 	}
 	ifp->flags &= ~(IFF_UP|IFF_RUNNING);
+	/* Examine all static routes which direct to the interface. */
+	rib_update (ifp->vrf_id);
 	return OK;
 }
 /* Does interface up ? */
@@ -805,6 +879,101 @@ int if_is_serial(struct interface *ifp)
 	return 0;
 }
 
+int if_is_ethernet(struct interface *ifp)
+{
+	if(os_strstr(ifp->name, "ethernet"))
+		return 1;
+	if(ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET)
+		return 1;
+	return 0;
+}
+
+int if_is_tunnel(struct interface *ifp)
+{
+	if(os_strstr(ifp->name, "tunnel"))
+		return 1;
+	if(ifp->if_type == IF_TUNNEL)
+		return 1;
+	return 0;
+}
+
+int if_is_lag(struct interface *ifp)
+{
+	if(os_strstr(ifp->name, "port-channel"))
+		return 1;
+	if(ifp->if_type == IF_LAG)
+		return 1;
+	return 0;
+}
+
+int if_is_lag_member(struct interface *ifp)
+{
+	return CHECK_FLAG(ifp->ifmember, IF_TRUNK_MEM);
+}
+
+int if_is_vlan(struct interface *ifp)
+{
+	if(os_strstr(ifp->name, "vlan"))
+		return 1;
+	if(ifp->if_type == IF_VLAN)
+		return 1;
+	return 0;
+}
+
+int if_is_brigde(struct interface *ifp)
+{
+	if(ifp->if_type == IF_BRIGDE)
+		return 1;
+	return 0;
+}
+
+int if_is_brigde_member(struct interface *ifp)
+{
+	return CHECK_FLAG(ifp->ifmember, IF_BRIDGE_MEM);
+}
+
+
+int if_is_loop(struct interface *ifp)
+{
+	if(ifp->if_type == IF_LOOPBACK)
+		return 1;
+	return 0;
+}
+
+int if_is_wireless(struct interface *ifp)
+{
+	if(os_strstr(ifp->name, "wireless"))
+		return 1;
+	if(ifp->if_type == IF_WIRELESS)
+		return 1;
+	return 0;
+}
+
+
+int if_name_set(struct interface *ifp, const char *str)
+{
+	if(os_strlen(ifp->name) == 0)
+		os_strcpy(ifp->name, str);
+	ifp->name_hash = if_name_hash_make(ifp->name);
+	return OK;
+}
+
+int if_kname_set(struct interface *ifp, const char *str)
+{
+	char buf[INTERFACE_NAMSIZ + 1];
+	os_memset(buf, 0, sizeof(buf));
+	if(strlen(str))
+	{
+		os_strcpy(buf, str);
+		os_memset(ifp->k_name, 0, sizeof(ifp->k_name));
+		os_strcpy(ifp->k_name, buf);
+		ifp->k_name_hash = if_name_hash_make(ifp->k_name);
+		ifp->k_ifindex = pal_interface_ifindex(ifp->k_name);
+	}
+	else
+		ifp->k_name_hash = 0;
+	return OK;
+}
 
 const char *if_enca_string(if_enca_t	enca)
 {
@@ -856,9 +1025,23 @@ const char *if_enca_string(if_enca_t	enca)
 }
 
 
-
-
-
+int if_list_each(int (*cb)(struct interface *ifp, void *pVoid), void *pVoid)
+{
+	struct listnode *node;
+	struct interface *ifp;
+	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+	{
+		if (ifp)
+		{
+			if(cb)
+			{
+				if(OK != (cb)(ifp, pVoid))
+					break;
+			}
+		}
+	}
+	return OK;
+}
 
 
 
@@ -875,11 +1058,6 @@ void connected_free(struct connected *connected) {
 
 	if (connected->destination)
 		prefix_free(connected->destination);
-
-/*
-	if (connected->label)
-		XFREE(MTYPE_CONNECTED_LABEL, connected->label);
-*/
 
 	XFREE(MTYPE_CONNECTED, connected);
 }
@@ -900,18 +1078,20 @@ static int connected_same_prefix(struct prefix *p1, struct prefix *p2) {
 }
 
 struct connected *
-connected_delete_by_prefix(struct interface *ifp, struct prefix *p) {
+connected_delete_by_prefix (struct interface *ifp, struct prefix *p)
+{
 	struct listnode *node;
 	struct listnode *next;
 	struct connected *ifc;
 
 	/* In case of same prefix come, replace it with new one. */
-	for (node = listhead(ifp->connected); node; node = next) {
+	for (node = listhead(ifp->connected); node; node = next)
+	{
 		ifc = listgetdata(node);
 		next = node->next;
 
-		if (connected_same_prefix(ifc->address, p)) {
-			//zebra_interface_address_delete_update(ifp, ifc);
+		if (connected_same_prefix(ifc->address, p))
+		{
 			listnode_delete(ifp->connected, ifc);
 			return ifc;
 		}
@@ -934,19 +1114,20 @@ connected_lookup_address(struct interface *ifp, struct in_addr dst) {
 
 	match = NULL;
 
-	for (ALL_LIST_ELEMENTS_RO(ifp->connected, cnode, c)) {
+	for (ALL_LIST_ELEMENTS_RO(ifp->connected, cnode, c))
+	{
 		if (c->address && (c->address->family == AF_INET)
 				&& prefix_match(CONNECTED_PREFIX(c), &addr)
-				&& (!match
-						|| (c->address->prefixlen > match->address->prefixlen)))
+				&& (!match || (c->address->prefixlen > match->address->prefixlen)))
 			match = c;
 	}
 	return match;
 }
 
 struct connected *
-connected_add_by_prefix(struct interface *ifp, struct prefix *p,
-		struct prefix *destination) {
+connected_add_by_prefix (struct interface *ifp, struct prefix *p,
+                         struct prefix *destination)
+{
 	struct connected *ifc;
 
 	/* Allocate new connected address. */
@@ -958,11 +1139,12 @@ connected_add_by_prefix(struct interface *ifp, struct prefix *p,
 	memcpy(ifc->address, p, sizeof(struct prefix));
 
 	/* Fetch dest address */
-	if (destination) {
+	if (destination)
+	{
 		ifc->destination = prefix_new();
 		memcpy(ifc->destination, destination, sizeof(struct prefix));
 	}
-	//zebra_interface_address_add_update( ifp, ifc);
+
 	/* Add connected address to the interface. */
 	listnode_add(ifp->connected, ifc);
 	return ifc;
@@ -980,334 +1162,6 @@ connected_check(struct interface *ifp, struct prefix *p) {
 
 	return NULL;
 }
-
-struct connected *
-connected_lookup(struct interface *ifp, struct prefix *p) {
-	return connected_check(ifp, p);
-}
-
-/* Check if two ifc's describe the same address in the same state */
-int connected_same(struct connected *ifc1, struct connected *ifc2) {
-	if (ifc1->ifp != ifc2->ifp)
-		return 0;
-
-	if (ifc1->destination)
-		if (!ifc2->destination)
-			return 0;
-	if (ifc2->destination)
-		if (!ifc1->destination)
-			return 0;
-
-	if (ifc1->destination && ifc2->destination)
-		if (!prefix_same(ifc1->destination, ifc2->destination))
-			return 0;
-
-	if (ifc1->flags != ifc2->flags)
-		return 0;
-
-	if (ifc1->conf != ifc2->conf)
-		return 0;
-
-	return 1;
-}
-
-/* Called from if_up(). */
-void connected_up_ipv4(struct interface *ifp, struct connected *ifc) {
-	struct prefix_ipv4 p;
-
-	PREFIX_COPY_IPV4(&p, CONNECTED_PREFIX(ifc));
-
-	/* Apply mask to the network. */
-	apply_mask_ipv4(&p);
-
-	/* In case of connected address is 0.0.0.0/0 we treat it tunnel
-	 address. */
-	if (prefix_ipv4_any(&p))
-		return;
-
-	rib_add_ipv4(ZEBRA_ROUTE_CONNECT, 0, &p, NULL, NULL, ifp->ifindex,
-			ifp->vrf_id, RT_TABLE_MAIN, ifp->metric, 0, 0, SAFI_UNICAST);
-
-	rib_add_ipv4(ZEBRA_ROUTE_CONNECT, 0, &p, NULL, NULL, ifp->ifindex,
-			ifp->vrf_id, RT_TABLE_MAIN, ifp->metric, 0, 0, SAFI_MULTICAST);
-
-	rib_update(ifp->vrf_id);
-}
-
-void connected_down_ipv4(struct interface *ifp, struct connected *ifc) {
-	struct prefix_ipv4 p;
-
-/*
-	if (!CHECK_FLAG(ifc->conf, ZEBRA_IFC_REAL))
-		return;
-*/
-
-	PREFIX_COPY_IPV4(&p, CONNECTED_PREFIX(ifc));
-
-	/* Apply mask to the network. */
-	apply_mask_ipv4(&p);
-
-	/* In case of connected address is 0.0.0.0/0 we treat it tunnel
-	 address. */
-	if (prefix_ipv4_any(&p))
-		return;
-
-	/* Same logic as for connected_up_ipv4(): push the changes into the head. */
-	rib_delete_ipv4(ZEBRA_ROUTE_CONNECT, 0, &p, NULL, ifp->ifindex, ifp->vrf_id,
-	SAFI_UNICAST);
-
-	rib_delete_ipv4(ZEBRA_ROUTE_CONNECT, 0, &p, NULL, ifp->ifindex, ifp->vrf_id,
-	SAFI_MULTICAST);
-
-	rib_update(ifp->vrf_id);
-}
-
-#ifdef HAVE_IPV6
-void
-connected_up_ipv6 (struct interface *ifp, struct connected *ifc)
-{
-	struct prefix_ipv6 p;
-
-/*
-	if (! CHECK_FLAG (ifc->conf, ZEBRA_IFC_REAL))
-	return;
-*/
-
-	PREFIX_COPY_IPV6(&p, CONNECTED_PREFIX(ifc));
-
-	/* Apply mask to the network. */
-	apply_mask_ipv6 (&p);
-
-#ifndef LINUX
-	/* XXX: It is already done by rib_bogus_ipv6 within rib_add_ipv6 */
-	if (IN6_IS_ADDR_UNSPECIFIED (&p.prefix))
-	return;
-#endif
-
-	rib_add_ipv6 (ZEBRA_ROUTE_CONNECT, 0, &p, NULL, ifp->ifindex, ifp->vrf_id,
-			RT_TABLE_MAIN, ifp->metric, 0, 0, SAFI_UNICAST);
-
-	rib_update (ifp->vrf_id);
-}
-
-void
-connected_down_ipv6 (struct interface *ifp, struct connected *ifc)
-{
-	struct prefix_ipv6 p;
-
-/*
-	if (! CHECK_FLAG (ifc->conf, ZEBRA_IFC_REAL))
-	return;
-*/
-
-	PREFIX_COPY_IPV6(&p, CONNECTED_PREFIX(ifc));
-
-	apply_mask_ipv6 (&p);
-
-	if (IN6_IS_ADDR_UNSPECIFIED (&p.prefix))
-	return;
-
-	rib_delete_ipv6 (ZEBRA_ROUTE_CONNECT, 0, &p, NULL, ifp->ifindex, ifp->vrf_id,
-			SAFI_UNICAST);
-
-	rib_update (ifp->vrf_id);
-}
-#endif
-
-#ifdef USE_IPSTACK_KERNEL
-/* Add connected IPv4 route to the interface. */
-void
-connected_add_ipv4 (struct interface *ifp, int flags, struct in_addr *addr,
-		    u_char prefixlen, struct in_addr *broad,
-		    const char *label)
-{
-  struct prefix_ipv4 *p;
-  struct connected *ifc;
-
-  /* Make connected structure. */
-  ifc = connected_new ();
-  ifc->ifp = ifp;
-  ifc->flags = flags;
-  /* If we get a notification from the kernel,
-   * we can safely assume the address is known to the kernel */
-  //SET_FLAG(ifc->conf, ZEBRA_IFC_QUEUED);
-
-  /* Allocate new connected address. */
-  p = prefix_ipv4_new ();
-  p->family = AF_INET;
-  p->prefix = *addr;
-  p->prefixlen = prefixlen;
-  ifc->address = (struct prefix *) p;
-
-  /* If there is broadcast or peer address. */
-  if (broad)
-    {
-      p = prefix_ipv4_new ();
-      p->family = AF_INET;
-      p->prefix = *broad;
-      p->prefixlen = prefixlen;
-      ifc->destination = (struct prefix *) p;
-
-      /* validate the destination address */
-      if (CONNECTED_PEER(ifc))
-        {
-	  if (IPV4_ADDR_SAME(addr,broad))
-	    zlog_warn("warning: interface %s has same local and peer "
-		      "address %s, routing protocols may malfunction",
-		      ifp->name,inet_ntoa(*addr));
-        }
-      else
-        {
-	  if (broad->s_addr != ipv4_broadcast_addr(addr->s_addr,prefixlen))
-	    {
-	      char buf[2][INET_ADDRSTRLEN];
-	      struct in_addr bcalc;
-	      bcalc.s_addr = ipv4_broadcast_addr(addr->s_addr,prefixlen);
-	      zlog_warn("warning: interface %s broadcast addr %s/%d != "
-	       		"calculated %s, routing protocols may malfunction",
-	    		ifp->name,
-			inet_ntop (AF_INET, broad, buf[0], sizeof(buf[0])),
-			prefixlen,
-			inet_ntop (AF_INET, &bcalc, buf[1], sizeof(buf[1])));
-	    }
-        }
-
-    }
-  else
-    {
-      if (CHECK_FLAG(ifc->flags, ZEBRA_IFA_PEER))
-        {
-	  zlog_warn("warning: %s called for interface %s "
-		    "with peer flag set, but no peer address supplied",
-		    __func__, ifp->name);
-	  UNSET_FLAG(ifc->flags, ZEBRA_IFA_PEER);
-	}
-
-      /* no broadcast or destination address was supplied */
-      if ((prefixlen == IPV4_MAX_PREFIXLEN) && if_is_pointopoint(ifp))
-	zlog_warn("warning: PtP interface %s with addr %s/%d needs a "
-		  "peer address",ifp->name,inet_ntoa(*addr),prefixlen);
-    }
-
-  /* Label of this address. */
-  //if (label)
-  //  ifc->label = XSTRDUP (MTYPE_CONNECTED_LABEL, label);
-
-  /* For all that I know an IPv4 address is always ready when we receive
-   * the notification. So it should be safe to set the REAL flag here. */
-  //SET_FLAG(ifc->conf, ZEBRA_IFC_REAL);
-
-  //connected_update(ifp, ifc);
-}
-/* Delete connected IPv4 route to the interface. */
-
-void
-connected_delete_ipv4 (struct interface *ifp, int flags, struct in_addr *addr,
-		       u_char prefixlen, struct in_addr *broad)
-{
-  struct prefix_ipv4 p;
-  struct connected *ifc;
-
-  memset (&p, 0, sizeof (struct prefix_ipv4));
-  p.family = AF_INET;
-  p.prefix = *addr;
-  p.prefixlen = prefixlen;
-
-  ifc = connected_check (ifp, (struct prefix *) &p);
-  if (! ifc)
-    return;
-
-  //connected_withdraw (ifc);
-
-  rib_update(ifp->vrf_id);
-}
-#ifdef HAVE_IPV6
-/* Add connected IPv6 route to the interface. */
-void
-connected_add_ipv6 (struct interface *ifp, int flags, struct in6_addr *addr,
-		    u_char prefixlen, struct in6_addr *broad,
-		    const char *label)
-{
-  struct prefix_ipv6 *p;
-  struct connected *ifc;
-
-  /* Make connected structure. */
-  ifc = connected_new ();
-  ifc->ifp = ifp;
-  ifc->flags = flags;
-  /* If we get a notification from the kernel,
-   * we can safely assume the address is known to the kernel */
-  //SET_FLAG(ifc->conf, ZEBRA_IFC_QUEUED);
-
-  /* Allocate new connected address. */
-  p = prefix_ipv6_new ();
-  p->family = AF_INET6;
-  IPV6_ADDR_COPY (&p->prefix, addr);
-  p->prefixlen = prefixlen;
-  ifc->address = (struct prefix *) p;
-
-  /* If there is broadcast or peer address. */
-  if (broad)
-    {
-      if (IN6_IS_ADDR_UNSPECIFIED(broad))
-	zlog_warn("warning: %s called for interface %s with unspecified "
-		  "destination address; ignoring!", __func__, ifp->name);
-      else
-	{
-	  p = prefix_ipv6_new ();
-	  p->family = AF_INET6;
-	  IPV6_ADDR_COPY (&p->prefix, broad);
-	  p->prefixlen = prefixlen;
-	  ifc->destination = (struct prefix *) p;
-	}
-    }
-  if (CHECK_FLAG(ifc->flags, ZEBRA_IFA_PEER) && !ifc->destination)
-    {
-      zlog_warn("warning: %s called for interface %s "
-		"with peer flag set, but no peer address supplied",
-		__func__, ifp->name);
-      UNSET_FLAG(ifc->flags, ZEBRA_IFA_PEER);
-    }
-
-  /* Label of this address. */
-  //if (label)
-  //  ifc->label = XSTRDUP (MTYPE_CONNECTED_LABEL, label);
-
-  /* On Linux, we only get here when DAD is complete, therefore we can set
-   * ZEBRA_IFC_REAL.
-   *
-   * On BSD, there currently doesn't seem to be a way to check for completion of
-   * DAD, so we replicate the old behaviour and set ZEBRA_IFC_REAL, although DAD
-   * might still be running.
-   */
-  //SET_FLAG(ifc->conf, ZEBRA_IFC_REAL);
-  //connected_update(ifp, ifc);
-}
-
-
-void
-connected_delete_ipv6 (struct interface *ifp, struct in6_addr *address,
-		       u_char prefixlen, struct in6_addr *broad)
-{
-  struct prefix_ipv6 p;
-  struct connected *ifc;
-
-  memset (&p, 0, sizeof (struct prefix_ipv6));
-  p.family = AF_INET6;
-  memcpy (&p.prefix, address, sizeof (struct in6_addr));
-  p.prefixlen = prefixlen;
-
-  ifc = connected_check (ifp, (struct prefix *) &p);
-  if (! ifc)
-    return;
-
-  //connected_withdraw (ifc);
-
-  rib_update(ifp->vrf_id);
-}
-#endif /* HAVE_IPV6 */
-#endif
-
 
 /* Print if_addr structure. */
 static void __attribute__ ((unused))
@@ -1450,6 +1304,11 @@ if_link_type_str(enum zebra_link_type llt) {
 		llts(ZEBRA_LLT_LOOPBACK, "Loopback");
 		llts(ZEBRA_LLT_SIT, "IPv6-in-IPv4 SIT");
 		llts(ZEBRA_LLT_IPGRE, "GRE over IP");
+		llts(ZEBRA_LLT_IP6GRE, "GRE over IPV6");
+		llts(ZEBRA_LLT_BRIGDE, "Brigde");
+		llts(ZEBRA_LLT_WIFI, "Wifi");
+		llts(ZEBRA_LLT_MODEM, "Modem");
+		llts(ZEBRA_LLT_WIRELESS, "Wireless");
 		default:
 		zlog_warn (ZLOG_NSM, "Unknown value %d", llt);
 		return "Unknown type!";
@@ -1477,6 +1336,11 @@ netlink_to_zebra_link_type (unsigned int hwt)
     case ARPHRD_LOOPBACK: return ZEBRA_LLT_LOOPBACK;
     case ARPHRD_SIT: return ZEBRA_LLT_SIT;
     case ARPHRD_IPGRE: return ZEBRA_LLT_IPGRE;
+
+   // case ARPHRD_IEEE802: return ZEBRA_LLT_IPGRE;
+    case ARPHRD_IEEE80211: return ZEBRA_LLT_WIRELESS;
+   // case ARPHRD_IEEE802154: return ZEBRA_LLT_ZIGBEE;
+
 #ifdef ARPHRD_IP6GRE
     case ARPHRD_IP6GRE: return ZEBRA_LLT_IP6GRE;
 #endif

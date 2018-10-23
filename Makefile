@@ -25,7 +25,7 @@ TAGET=SWP-V$(PLVER)
 LIBS1 = $(shell $(CD) $(BASE_ROOT)/$(LIBDIR)/ && ls *.a)
 LIBS2 = $(subst .a,,$(LIBS1))
 LIBC += $(subst lib,-l,$(LIBS2))
-ifeq ($(BUILD_TYPE),ARM)
+ifneq ($(BUILD_TYPE),X86)
 LIBSO1 = $(shell $(CD) $(BASE_ROOT)/$(LIBDIR)/ && ls *.so)
 LIBSO2 = $(subst .so,,$(LIBSO1))
 LIBC += $(subst lib,-l,$(LIBSO2))
@@ -47,13 +47,13 @@ LIBC += $(subst lib,-l,$(IPLIBS2))
 CFLAGS += -L$(IPSTACK_LIBDIR)
 endif
 #
+#LDCLFLAG += -lssl
 #
 #
 export CFLAGS += -L$(BASE_ROOT)/$(LIBDIR)/ $(PLDEFINE) $(PLINCLUDE) $(PL_DEBUG) -g #-lcrypto
 #
 #
 %.o: %.c
-#	@$(CC) $(CFLAGS) $(LDCLFLAG)  $< -o $@ $(PLINCLUDE)
 	$(PL_OBJ_COMPILE)
 
 
@@ -63,13 +63,12 @@ OBJS = $(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(SOURCES)))
 #
 $(TAGET) : $(OBJS) $(BASE_ROOT)/$(LIBDIR)/*.a 
 	$(CC) $(OBJS) $(CFLAGS) -Xlinker "-(" $(LDCLFLAG) -Xlinker "-)" -o $(TAGET) 
-#	$(CC) $(OBJS) $(CFLAGS) -Xlinker "-(" $(LDCLFLAG) -Xlinker "-)" -o $(TAGET) 
-#	$(STRIP) $(TAGET)
 	$(CHMOD) a+x $(TAGET)
+#	$(STRIP) $(TAGET)
 #
 #
 #	
-.PHONY:	obj objclean clean install all lib rebuild dist demo usage help
+.PHONY:	obj objclean clean install all lib rebuild dist demo app usage help
 #
 help:usage
 #
@@ -80,10 +79,11 @@ usage:
 	@$(ECHO) "  clean      remove all"
 	@$(ECHO) "  objclean   remove all objects"
 	@$(ECHO) "  install    build all and install"
-	@$(ECHO) "  all        build all"
+	@$(ECHO) "  all        build all module"
 	@$(ECHO) "  lib        same as install"
 	@$(ECHO) "  rebuild    clean and install"
 	@$(ECHO) "  demo       build demo app"
+	@$(ECHO) "  app        build demo app"
 	@$(ECHO) "  usage      make usage"
 	@$(ECHO) "  help       make help"	
 	@$(ECHO) ""
@@ -92,25 +92,54 @@ usage:
 #
 objclean:  
 	${MAKE} -C  $(TOP_DIR)/make/ $@ 
+	@if test -f os_main.o ; \
+		then \
+		$(RM) os_main.o; \
+	fi
+	@if test -f $(TAGET) ; \
+		then \
+		$(RM) $(TAGET); \
+	fi
 
 clean: 
 	${MAKE} -C  $(TOP_DIR)/make/ $@ 
+	@if test -f os_main.o ; \
+		then \
+		$(RM) os_main.o; \
+	fi
+	@if test -f $(TAGET) ; \
+		then \
+		$(RM) $(TAGET); \
+	fi
 	
 obj:
 	${MAKE} -C  $(TOP_DIR)/make/ $@ 
 
-install: obj
+#install: obj
+install: 
 	${MAKE} -C  $(TOP_DIR)/make/ $@ 
 	
-all: install $(TAGET)
+#all: install $(TAGET)
+all: 
+	${MAKE} -C  $(TOP_DIR)/make/ $@ 
+#lib: install
+lib:
+	${MAKE} -C  $(TOP_DIR)/make/ $@ 
 	
-lib: install
-		
-	
-rebuild: clean all
+rebuild: clean all $(TAGET)
+
+app: demo
 
 demo: all
-
+	@if test -f os_main.o ; \
+		then \
+		$(RM) os_main.o; \
+	fi
+	@if test -f $(TAGET) ; \
+		then \
+		$(RM) $(TAGET); \
+	fi
+	${MAKE}
 #OBJDIR = debug/obj
 #LIBDIR = debug/lib
 #BINDIR = debug/bin

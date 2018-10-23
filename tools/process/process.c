@@ -286,6 +286,32 @@ int process_start(process_t *process)
 	return 0;
 }
 
+int process_deamon_start(process_t *process)
+{
+	process->active = TRUE;
+	if(process->active && process->pid == 0)
+	{
+		int i =0;
+		char 	argvs[P_PATH_MAX];
+		os_memset(argvs, 0, sizeof(argvs));
+		os_strcat(argvs, "nohup ");
+		os_strcat(argvs, process->process);
+		os_strcat(argvs, " ");
+		for(i = 0; i < P_ARGV_MAX; i++)
+		{
+			if(process->argv[i])
+			{
+				os_strcat(argvs, process->argv[i]);
+				os_strcat(argvs, " ");
+			}
+		}
+		super_system(argvs);
+		process_log_debug(" start deamon :%s execp: %s %s", process->name, process->process,
+				os_strlen(argvs) ? argvs:" ");
+		return 1;
+	}
+	return 0;
+}
 
 int process_stop(process_t *process)
 {
@@ -293,8 +319,8 @@ int process_stop(process_t *process)
 	if(process->active && process->pid)
 	{
 		process->active = FALSE;
+		child_process_kill(process->pid);
 		process->pid = 0;
-		child_process_destroy(process->pid);
 	}
 	return OK;
 }
@@ -303,7 +329,43 @@ int process_stop(process_t *process)
 int process_restart(process_t *process)
 {
 	process_stop(process);
-	return process_start(process);
+	//return process_start(process);
+	process->active = TRUE;
+	if(process->active && process->pid == 0)
+	{
+		int pid = 0;
+		//char *argv[] = {"-f", "-i", "eth0", "-s", "/usr/share/udhcpc/udhcpc.script", "-S", NULL};
+		pid = child_process_create();
+		if(pid == 0)
+		{
+			super_system_execvp(process->process, process->argv);
+		}
+		else
+		{
+			sleep(1);
+			if(pid)
+			{
+				int i =0;
+				char 	argvs[P_PATH_MAX];
+				os_memset(argvs, 0, sizeof(argvs));
+				for(i = 0; i < P_ARGV_MAX; i++)
+				{
+					if(process->argv[i])
+					{
+						os_strcat(argvs, process->argv[i]);
+						os_strcat(argvs, " ");
+					}
+				}
+				process_log_debug(" restart process :%s execp: %s %s", process->name, process->process,
+						os_strlen(argvs) ? argvs:" ");
+				process->pid = pid;
+				return pid;
+			}
+			else
+				process_log_err(" restart process :%s execp:%s", process->name, process->process);
+		}
+	}
+	return 0;
 }
 
 static int process_waitpid(process_t *process)
@@ -495,13 +557,30 @@ int process_handle(int fd, process_action action, process_head *head)
 		process_log_err("process handle, head is NULL");
 		return ERROR;
 	}
-
+	if(action == PROCESS_DEAMON)
+	{
+		lookup = process_get(head);
+		if(lookup)
+		{
+			pid = process_deamon_start(lookup);
+			if(pid)
+			{
+				//lookup->id = process_alloc_id();
+				process_log_debug("start deamon :%s deamon :%s", head->name, head->process);
+				os_process_action_respone(fd, 1);
+			}
+			else
+				os_process_action_respone(fd, 1);
+		}
+		return OK;
+	}
 	if(os_strlen(head->name))
 		lookup = process_lookup_api(head->name);
 	else if(head->id)
-		lookup = process_lookup_api(head->id);
+		lookup = process_lookup_id_api(head->id);
 	else
 	{
+		os_process_action_respone(fd, PROCESS_NONE);
 		process_log_err("process handle, no key to lookup");
 		return ERROR;
 	}
@@ -513,13 +592,13 @@ int process_handle(int fd, process_action action, process_head *head)
 			if(lookup)
 			{
 				os_process_action_respone(fd, lookup->id);
-				process_log_debug("echo process :%s execp:%s", lookup->name, lookup->process);
+				process_log_debug("echo process :%s execp :%s", lookup->name, lookup->process);
 			}
 			else
 			{
 				os_process_action_respone(fd, PROCESS_NONE);
 				if(os_strlen(head->name))
-					process_log_err("process :%s execp:%s is not exist.", head->name, head->process);
+					process_log_err("process :%s execp :%s is not exist.", head->name, head->process);
 				else
 					process_log_err("process id :%d is not exist.", head->id);
 			}
@@ -530,13 +609,16 @@ int process_handle(int fd, process_action action, process_head *head)
 				if(lookup->pid == PROCESS_NONE )
 				{
 					process_start(lookup);
-					process_log_debug("start process :%s execp:%s", lookup->name, lookup->process);
+					process_log_debug("start process :%s execp :%s", lookup->name, lookup->process);
 				}
 				else
 				{
-					process_log_warn("process :%s execp:%s is already start", lookup->name, lookup->process);
+					process_log_warn("process :%s execp :%s is already start", lookup->name, lookup->process);
 				}
-				os_process_action_respone(fd, lookup->id);
+				if(waitpid(lookup->pid, NULL, WNOHANG) > 0)
+					os_process_action_respone(fd, PROCESS_NONE);
+				else
+					os_process_action_respone(fd, lookup->id);
 			}
 			else
 			{
@@ -552,25 +634,33 @@ int process_handle(int fd, process_action action, process_head *head)
 					pid = process_start(process);
 					if(pid)
 					{
-						process->id = process_alloc_id();
-						if(process_add_api(process) == OK)
+						if(waitpid(pid, NULL, WNOHANG) > 0)
 						{
-							process_log_debug("start process :%s execp:%s", head->name, head->process);
-							os_process_action_respone(fd, process->id);
+							os_process_action_respone(fd, PROCESS_NONE);
+							process_free(process);
 						}
 						else
 						{
-							process_log_err("error start process :%s execp:%s", head->name, head->process);
-							process_stop(process);
-							os_process_action_respone(fd, PROCESS_NONE);
-							process_free(process);
+							process->id = process_alloc_id();
+							if(process_add_api(process) == OK)
+							{
+								process_log_debug("start process :%s execp :%s", head->name, head->process);
+								os_process_action_respone(fd, process->id);
+							}
+							else
+							{
+								process_log_err("error start process :%s execp :%s", head->name, head->process);
+								process_stop(process);
+								os_process_action_respone(fd, PROCESS_NONE);
+								process_free(process);
+							}
 						}
 					}
 					else
 					{
 						os_process_action_respone(fd, PROCESS_NONE);
 						process_free(process);
-						process_log_err("register process :%s execp:%s", head->name, head->process);
+						process_log_err("register process :%s execp :%s", head->name, head->process);
 					}
 				}
 			}
@@ -581,13 +671,13 @@ int process_handle(int fd, process_action action, process_head *head)
 				if(lookup->pid)
 				{
 					process_stop(lookup);
-					process_log_debug("stop process :%s execp:%s", lookup->name, lookup->process);
+					process_log_debug("stop process :%s execp :%s", lookup->name, lookup->process);
 					os_process_action_respone(fd, lookup->id);
 					process_del_api(lookup);
 				}
 				else
 				{
-					process_log_warn("process :%s execp:%s is already stop", lookup->name, lookup->process);
+					process_log_warn("process :%s execp :%s is already stop", lookup->name, lookup->process);
 					os_process_action_respone(fd, lookup->pid);
 					process_del_api(lookup);
 				}
@@ -596,7 +686,7 @@ int process_handle(int fd, process_action action, process_head *head)
 			{
 				os_process_action_respone(fd, PROCESS_NONE);
 				if(os_strlen(head->name))
-					process_log_err("process :%s execp:%s is not exist.", head->name, head->process);
+					process_log_err("process :%s execp :%s is not exist.", head->name, head->process);
 				else
 					process_log_err("process id :%d is not exist.", head->id);
 			}
@@ -614,20 +704,23 @@ int process_handle(int fd, process_action action, process_head *head)
 				}
 				if(pid)
 				{
-					os_process_action_respone(fd, lookup->id);
-					process_log_debug("restart process :%s execp:%s", lookup->name, lookup->process);
+					if(waitpid(lookup->pid, NULL, WNOHANG) > 0)
+						os_process_action_respone(fd, PROCESS_NONE);
+					else
+						os_process_action_respone(fd, lookup->id);
+					process_log_debug("restart process :%s execp :%s", lookup->name, lookup->process);
 				}
 				else
 				{
 					os_process_action_respone(fd, PROCESS_NONE);
-					process_log_err("error restart process :%s execp:%s", lookup->name, lookup->process);
+					process_log_err("error restart process :%s execp :%s", lookup->name, lookup->process);
 				}
 			}
 			else
 			{
 				os_process_action_respone(fd, PROCESS_NONE);
 				if(os_strlen(head->name))
-					process_log_err("process :%s execp:%s is not exist.", head->name, head->process);
+					process_log_err("process :%s execp :%s is not exist.", head->name, head->process);
 				else
 					process_log_err("process id :%d is not exist.", head->id);
 			}
@@ -636,13 +729,13 @@ int process_handle(int fd, process_action action, process_head *head)
 			if(lookup)
 			{
 				os_process_action_respone(fd, lookup->id);
-				process_log_debug("echo process :%s execp:%s", lookup->name, lookup->process);
+				process_log_debug("echo process :%s execp :%s", lookup->name, lookup->process);
 			}
 			else
 			{
 				os_process_action_respone(fd, PROCESS_NONE);
 				if(os_strlen(head->name))
-					process_log_err("process :%s execp:%s is not exist.", head->name, head->process);
+					process_log_err("process :%s execp :%s is not exist.", head->name, head->process);
 				else
 					process_log_err("process id :%d is not exist.", head->id);
 			}

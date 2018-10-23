@@ -24,14 +24,15 @@
 #include "modem_pppd.h"
 #include "modem_serial.h"
 #include "modem_process.h"
+#include "modem_usb_driver.h"
 #include "modem_product.h"
 
 
-
-int modem_debug = 0;
+int modem_debug_conf = 0;
 
 modem_main_t gModemmain;
 
+static int modem_main_cleanall(void);
 
 static int modem_main_list_init(void)
 {
@@ -46,12 +47,16 @@ static int modem_main_list_init(void)
 	return ERROR;
 }
 
-int modem_main_exit(void)
+
+static int modem_main_list_exit(void)
 {
 	if(gModemmain.list)
 	{
 		if(lstCount(gModemmain.list))
+		{
+			modem_main_cleanall();
 			lstFree(gModemmain.list);
+		}
 		XFREE(MTYPE_MODEM, gModemmain.list);
 	}
 	if(gModemmain.mutex)
@@ -99,7 +104,7 @@ static int modem_main_default_node(modem_t *modem)
 	modem->dedelay = MODEM_DECHK_TIME;
 	modem->detime_base = os_time (NULL);
 	modem->detime_axis = modem->detime_base;
-
+	modem->mutex = os_mutex_init();
 	return OK;
 }
 
@@ -130,14 +135,34 @@ static int modem_main_del_node(modem_t *node)
 	//modem_t *node = modem_main_lookup_node(client);
 	if(node)
 	{
+		if(node->mutex)
+			os_mutex_exit(node->mutex);
 		lstDelete(gModemmain.list, (NODE*)node);
 		//node->client = NULL;
+/*		if(node->mutex)
+			s_mutex_exit(node->mutex);*/
+		os_memset(node, 0, sizeof(modem_t));
 		XFREE(MTYPE_MODEM, node);
 		return OK;
 	}
 	return ERROR;
 }
 
+static int modem_main_cleanall(void)
+{
+	NODE index;
+	modem_t *pstNode = NULL;
+	for(pstNode = (modem_t *)lstFirst(gModemmain.list);
+			pstNode != NULL;  pstNode = (modem_t *)lstNext((NODE*)&index))
+	{
+		index = pstNode->node;
+		if(pstNode)
+		{
+			modem_main_del_node(pstNode);
+		}
+	}
+	return OK;
+}
 
 int modem_main_add_api(char *name)
 {
@@ -178,7 +203,7 @@ int modem_main_bind_api(char *name, char *serialname)
 	if(gModemmain.mutex)
 		os_mutex_lock(gModemmain.mutex, OS_WAIT_FOREVER);
 	modem = modem_main_lookup_node(name);
-	serial = modem_serial_lookup_api(serialname);
+	serial = modem_serial_lookup_api(serialname, 0);
 	if(modem && serial)
 	{
 		serial->modem = modem;
@@ -197,6 +222,11 @@ int modem_main_bind_api(char *name, char *serialname)
 		//modem->event = MODEM_EV_NONE;
 		modem->active = TRUE;
 		//modem->pppdActive = FALSE;
+		if(client && client->driver && client->driver->modem_driver_probe)
+		{
+			(client->driver->modem_driver_probe)(client->driver);
+			//modem_process_add_api(MODEM_EV_INSTER, modem, TRUE);
+		}
 	}
 	else
 		ret = ERROR;
@@ -216,6 +246,19 @@ int modem_main_unbind_api(char *name, char *serialname)
 	modem = modem_main_lookup_node(name);
 	if(modem)
 	{
+		if(modem->client)
+		{
+			modem_client_t * client = modem->client;
+			if(client && client->driver && client->driver->modem_driver_exit)
+			{
+				(client->driver->modem_driver_exit)(client->driver);
+				//modem_process_add_api(MODEM_EV_INSTER, modem, TRUE);
+			}
+			modem_process_del_api(MODEM_EV_MAX, modem, TRUE);
+			((modem_client_t *)modem->client)->modem = NULL;
+			//modem_event_remove(modem, MODEM_EV_REMOVE);
+			//modem_process_add_api(MODEM_EV_REMOVE, modem, TRUE);
+		}
 		serial = modem->serial;
 		if(serial)
 			serial->modem = NULL;
@@ -312,6 +355,21 @@ int modem_main_callback_api(modem_cb cb, void *pVoid)
 		os_mutex_unlock(gModemmain.mutex);
 	return OK;
 }
+
+int modem_main_lock(modem_t *modem)
+{
+	if(modem && modem->mutex)
+		os_mutex_lock(modem->mutex, OS_WAIT_FOREVER);
+	return OK;
+}
+
+
+int modem_main_unlock(modem_t *modem)
+{
+	if(modem && modem->mutex)
+		os_mutex_unlock(modem->mutex);
+	return OK;
+}
 /*************************************************************************/
 /*************************************************************************/
 /*************************************************************************/
@@ -335,28 +393,33 @@ int modem_main_trywait(int s)
 	return OK;
 }
 /*************************************************************************/
-int modem_interface_add(modem_t *modem, char *name)
+int modem_interface_update_kernel(modem_t *modem, char *name)
 {
 	if(modem && modem->eth0)
 	{
+		MODEM_DEBUG("modem update kernel interface %s -> %s", ((struct interface *)modem->eth0)->name, name);
+		nsm_pal_interface_up(modem->eth0);
 		nsm_interface_update_kernel(modem->eth0, name);
 	}
 	return OK;
 }
 
-int modem_serial_interface_add(modem_t *modem, char *name)
+int modem_serial_interface_update_kernel(modem_t *modem, char *name)
 {
 	if(modem && modem->ppp_serial)
 	{
+		MODEM_DEBUG("modem update kernel interface %s -> %s", ((struct interface *)modem->ppp_serial)->name, name);
+		nsm_pal_interface_up(modem->ppp_serial);
 		nsm_serial_interface_kernel(modem->ppp_serial, name);
 	}
 	return OK;
 }
 
-int modem_serial_devname_add(modem_t *modem, char *name)
+int modem_serial_devname_update_kernel(modem_t *modem, char *name)
 {
 	if(modem && modem->ppp_serial)
 	{
+		MODEM_DEBUG("modem update devname interface %s -> %s", ((struct interface *)modem->ppp_serial)->name, name);
 		nsm_serial_interface_devname(modem->ppp_serial, name);
 	}
 	return OK;
@@ -365,7 +428,7 @@ int modem_serial_devname_add(modem_t *modem, char *name)
 /*************************************************************************/
 int modem_main_init(void)
 {
-	modem_debug = 0XFFFFFFF;
+	modem_debug_conf = MODEM_DEBUG_ATCMD;//0XFFFFFFF;
 	modem_main_list_init();
 	modem_pppd_init();
 	modem_serial_init();
@@ -374,15 +437,31 @@ int modem_main_init(void)
 
 	modem_usb_driver_init();
 
+	modem_product_init();
+
 #if 1//def __MODEM_DEBUG
-	modem_serial_add_api("modem11388293");
+	modem_serial_add_api("quectelec20");
+#ifdef BUILD_X86
+	modem_serial_channel_api("quectelec20", 5);
+#else
+	modem_serial_channel_api("quectelec20", 1);
+#endif
 	modem_main_add_api("ec25");
-	modem_main_bind_api("ec25", "modem11388293");
-	modem_test_init();
+	modem_main_bind_api("ec25", "quectelec20");
 #endif
 	return OK;
 }
 
+int modem_main_exit(void)
+{
+	modem_main_list_exit();
+	modem_pppd_exit();
+	modem_serial_exit();
+	modem_client_exit();
+	modem_process_exit();
+	modem_usb_driver_exit();
+	return OK;
+}
 /*************************************************************************/
 /*************************************************************************/
 /*************************************************************************/

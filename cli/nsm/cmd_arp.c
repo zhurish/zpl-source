@@ -248,6 +248,20 @@ DEFUN (clear_ip_arp_add,
 		CMD_ARP_STR_HELP)
 {
 	int ret = ERROR;
+	if(argc == 0)
+	{
+		ret = ip_arp_cleanup_api(ARP_DYNAMIC, FALSE, 0);
+	}
+	else if(argc == 1)
+	{
+		//ret = ip_arp_cleanup_api(ARP_DYNAMIC, FALSE, 0);
+		vty_out(vty, "not implementation now%s",VTY_NEWLINE);
+	}
+	else if(argc > 2)
+	{
+		if(if_lookup_by_index(if_ifindex_make(argv[1], argv[2])))
+			ret = ip_arp_cleanup_api(ARP_DYNAMIC, FALSE, if_ifindex_make(argv[1], argv[2]));
+	}
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -367,8 +381,9 @@ static int show_nsm_ip_arp_table_one(ip_arp_t *node, struct arp_user *user)
 	os_memset(vrf, 0, sizeof(vrf));
 	os_memset(timeout, 0, sizeof(timeout));
 	os_memset(ifname, 0, sizeof(ifname));
-	sprintf(mac, "%02x%02x-%02x%02x-%02x%02x",node->mac[0],node->mac[1],node->mac[2],
-											 node->mac[3],node->mac[4],node->mac[5]);
+/*	sprintf(mac, "%02x%02x-%02x%02x-%02x%02x",node->mac[0],node->mac[1],node->mac[2],
+											 node->mac[3],node->mac[4],node->mac[5]);*/
+	sprintf(mac, "%s", if_mac_out_format(node->mac, NSM_MAC_MAX));
 
 	sprintf(ifname, "%s",ifindex2ifname(node->ifindex));
 	//Protocol	Address	Age (min)	Hardware Addr    Interface
@@ -382,7 +397,7 @@ static int show_nsm_ip_arp_table_one(ip_arp_t *node, struct arp_user *user)
 	{
 		int age = 0;
 		nsm_ip_arp_ageing_time_get_api(age);
-		sprintf(timeout, "%d/d",node->ttl, age);
+		sprintf(timeout, "%d/%d",node->ttl, age);
 	}
 	else
 	{
@@ -439,59 +454,11 @@ static int show_nsm_ip_arp_config(struct vty *vty, struct arp_user *user)
 }
 
 
-static int _nsm_ip_arp_table_config(ip_arp_t *node, struct arp_user *user)
-{
-	char mac[32], ip[16], ifname[32];
-	struct vty *vty = user->vty;
-	if(node->class  != MAC_STATIC)
-		return 0;
-	os_memset(mac, 0, sizeof(mac));
-	os_memset(ip, 0, sizeof(ip));
-	os_memset(ifname, 0, sizeof(ifname));
-	sprintf(mac, "%02x%02x-%02x%02x-%02x%02x",node->mac[0],node->mac[1],node->mac[2],
-											 node->mac[3],node->mac[4],node->mac[5]);
-
-	sprintf(ifname, "%s",ifindex2ifname(node->ifindex));
-	//ip arp 1.1.1.1 0000-1111-2222 interface gigabitethernet 0/1/1
-	//ip arp 1.1.1.1 0000-1111-2222
-
-	vty_out(vty, "ip arp %s %s %s %s", inet_ntoa(node->address.u.prefix4), mac, ifname, VTY_NEWLINE);
-/*	if(node->action == ARP_DYNAMIC)
-	{
-		vty_out(vty, "ip arp %s %s", mac, VTY_NEWLINE);
-	}
-	if(node->action == ARP_STATIC)
-	{
-		vty_out(vty, "mac-address-table %s forward interface %s %s %s", mac, ifname, vlan, VTY_NEWLINE);
-	}*/
-	return OK;
-}
-
-int nsm_ip_arp_config(struct vty *vty)
-{
-	struct arp_user user;
-	memset(&user, 0, sizeof(user));
-	user.vty = vty;
-	nsm_ip_arp_callback_api((ip_arp_cb)_nsm_ip_arp_table_config, &user);
-	return 1;
-}
-
-int nsm_ip_arp_ageing_config(struct vty *vty)
-{
-	int agtime = 0;
-	nsm_ip_arp_ageing_time_get_api(&agtime);
-	//ip arp ageing-time 33
-	vty_out(vty, "ip arp ageing-time %d %s", agtime, VTY_NEWLINE);
-	return 1;
-}
-
-
-
 
 void cmd_arp_init(void)
 {
 //	install_default(CONFIG_NODE);
-	reinstall_node(SERVICE_NODE, nsm_ip_arp_config);
+	//reinstall_node(SERVICE_NODE, nsm_ip_arp_config);
 
 	install_element(CONFIG_NODE, &ip_arp_add_cmd);
 	install_element(CONFIG_NODE, &ip_arp_add_interface_cmd);

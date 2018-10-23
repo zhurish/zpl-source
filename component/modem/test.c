@@ -18,9 +18,12 @@
 #include "modem_driver.h"
 #include "modem_pppd.h"
 
+
+#if 0
 struct tty_com ec20_attty =
 {
 	.devname = "/dev/ttyUSB2",
+	.speed	= 115200,
 	.databit = DATA_8BIT,
 	.stopbit = STOP_1BIT,
 	.parity = PARITY_NONE,
@@ -30,6 +33,7 @@ struct tty_com ec20_attty =
 struct tty_com ec20_pppd =
 {
 	.devname = "/dev/ttyUSB3",
+	.speed	= 115200,
 	.databit = DATA_8BIT,
 	.stopbit = STOP_1BIT,
 	.parity = PARITY_NONE,
@@ -58,12 +62,13 @@ static modem_driver_t ec20_driver =
 
 int modem_test_init()
 {
-	modem_driver_register(&ec20_driver);
+	//zlog_warn(ZLOG_MODEM, "----modem-channel profile : %s",modem_serial_channel_name(&ec20_driver));
+	return modem_driver_register(&ec20_driver);
 }
 
 
 
-
+#endif
 
 
 
@@ -149,3 +154,11 @@ int modem_cmd_test(struct vty *vty)
 	//vty_out(vty, "--> %s%s",buf, VTY_NEWLINE);
 	return 0;
 }
+
+
+
+
+
+
+
+

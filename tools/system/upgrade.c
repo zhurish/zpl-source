@@ -34,6 +34,7 @@
 #include <sys/socket.h>
 #include <linux/netlink.h>
 
+
 #define UEVENT_BUFFER_SIZE 2048
 
 int main(void)

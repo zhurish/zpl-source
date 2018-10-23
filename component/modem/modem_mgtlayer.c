@@ -22,13 +22,13 @@
 #include "modem_dhcp.h"
 #include "modem_pppd.h"
 #include "modem_qmi.h"
-#include "modem_product.h"
 #include "modem_control.h"
 #include "modem_usim.h"
 #include "modem_state.h"
 #include "modem_atcmd.h"
 #include "modem_mgtlayer.h"
-
+#include "modem_serial.h"
+#include "modem_usb_driver.h"
 
 
 
@@ -62,7 +62,7 @@ static int _modem_capability_init(modem_client_t *client)
 {
 	int ret = 0;
 	assert(client);
-
+	//return OK;
 	ret = modem_activity_atcmd_get(client);
 	if(ret == OK)
 	{
@@ -77,6 +77,7 @@ static int _modem_capability_init(modem_client_t *client)
 			}
 		}
 	}
+	//return OK;
 	//设置网络注册类型
 	if(!modem_bitmap_chk(&client->hw_state, MODEM_STATE_HW_CREG))
 	{
@@ -111,7 +112,8 @@ static int _modem_network_detection(modem_client_t *client)
 
 	if(_modem_signal_detection(client) != OK)// -->
 		return ERROR;
-
+/*	if( ((modem_t*)client->modem)->dialtype == MODEM_DIAL_PPP )
+		return OK;*/
 	if(modem_nwservingcell_atcmd_get(client) != OK)// -->
 		return ERROR;
 
@@ -221,7 +223,15 @@ int modem_mgtlayer_init(modem_t *modem)
  */
 int modem_mgtlayer_remove(modem_t *modem)
 {
+	if( modem->dialtype == MODEM_DIAL_PPP )
+		modem_pppd_disconnect(modem);
+	else
+		modem_dhcpc_exit(modem);
+
 	modem_mgtlayer_close(modem->client);
+
+	modem_serial_unbind_api(modem->serialname, ((modem_serial_t*)modem->serial)->hw_channel);
+
 	return OK;
 }
 
@@ -230,6 +240,10 @@ int modem_mgtlayer_remove(modem_t *modem)
  */
 int modem_mgtlayer_remove_usim(modem_t *modem)
 {
+	if( modem->dialtype == MODEM_DIAL_PPP )
+		modem_pppd_disconnect(modem);
+	else
+		modem_dhcpc_exit(modem);
 	return OK;
 }
 /*
@@ -254,7 +268,9 @@ int modem_mgtlayer_switch_usim(modem_t *modem)
 extern int modem_mgtlayer_network_setup(modem_t *modem)
 {
 	assert(modem);
-	return _modem_network_setup(modem->client);
+	if( modem->dialtype != MODEM_DIAL_PPP )
+		return _modem_network_setup(modem->client);
+	return OK;
 }
 
 /*
@@ -288,6 +304,8 @@ int modem_mgtlayer_network_unattach(modem_t *modem)
 		return modem_dhcpc_unattach(modem);
 	else if( modem->dialtype == MODEM_DIAL_GOBINET )
 		return modem_dhcpc_unattach(modem);
+	else if( modem->dialtype == MODEM_DIAL_PPP )
+		return modem_pppd_disconnect(modem);
 	return OK;
 }
 
@@ -305,7 +323,7 @@ int modem_mgtlayer_network_online(modem_t *modem)
 	else if( modem->dialtype == MODEM_DIAL_GOBINET )
 		return modem_dhcpc_start(modem);
 	else if( modem->dialtype == MODEM_DIAL_PPP )
-		return modem_pppd_connect(modem);
+		return OK;//return modem_pppd_connect(modem);
 	return ERROR;
 }
 
@@ -333,7 +351,20 @@ int modem_mgtlayer_network_offline(modem_t *modem)
 int modem_mgtlayer_network_detection(modem_t *modem)
 {
 	assert(modem);
-	return _modem_network_detection(modem->client);
+	modem->detime_axis = os_time (NULL);
+	if(modem->detime_axis >= (modem->detime_base + modem->dedelay))
+	{
+		modem->detime_base = os_time (NULL);
+		if( modem->dialtype == MODEM_DIAL_PPP )
+		{
+			if(modem_pppd_isconnect(modem))
+				;
+			if(modem_pppd_islinkup(modem))
+				;
+		}
+		return _modem_network_detection(modem->client);
+	}
+	return OK;
 }
 
 /*
@@ -366,6 +397,13 @@ int modem_mgtlayer_delay(modem_t *modem)
 			break;
 		}
 	}
+	if( modem->dialtype == MODEM_DIAL_PPP )
+	{
+		if(modem_pppd_isconnect(modem))
+			;
+		if(modem_pppd_islinkup(modem))
+			;
+	}
 	return OK;
 }
 
@@ -376,6 +414,7 @@ int modem_mgtlayer_redialog(modem_t *modem)
 {
 	return OK;
 }
+
 /*
  * 拨号
  */

@@ -31,7 +31,7 @@ enum parity_mode
 
 enum tty_data_bit
 {
-	DATA_5BIT = 1,
+	DATA_5BIT = 5,
 	DATA_6BIT,
 	DATA_7BIT,
 	DATA_8BIT,
@@ -58,6 +58,9 @@ struct tty_com
 
 	struct termios termios;
 	struct termios old_termios;
+
+	int	(*encapsulation)(char *, int, char *, int);
+	int	(*decapsulation)(char *, int, char *, int);
 };
 
 

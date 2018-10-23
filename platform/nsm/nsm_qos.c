@@ -37,7 +37,7 @@ int nsm_cos_to_dscp(int cos)
 
 static nsm_qos_t * _nsm_qos_get(struct interface *ifp)
 {
-	struct nsm_interface *nsm = ifp->info[ZLOG_NSM];
+	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	if(nsm)
 		return (nsm_qos_t *)(nsm->nsm_client[NSM_QOS]);
 	return NULL;
@@ -295,7 +295,9 @@ int nsm_qos_user_pri_map_priority_get_api(struct interface *ifp, nsm_qos_priorit
 
 static int nsm_qos_add_interface(struct interface *ifp)
 {
-	struct nsm_interface *nsm = ifp->info[ZLOG_NSM];
+	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
+	if(if_is_loop(ifp))
+		return OK;
 	nsm_qos_t *qos = nsm->nsm_client[NSM_QOS] = XMALLOC(MTYPE_QOS, sizeof(nsm_qos_t));
 	os_memset(nsm->nsm_client[NSM_QOS], 0, sizeof(nsm_qos_t));
 	qos->ifindex = ifp->ifindex;
@@ -305,9 +307,12 @@ static int nsm_qos_add_interface(struct interface *ifp)
 
 static int nsm_qos_del_interface(struct interface *ifp)
 {
-	struct nsm_interface *nsm = ifp->info[ZLOG_NSM];
+	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
+	if(if_is_loop(ifp))
+		return OK;
 	if(nsm->nsm_client[NSM_QOS])
 		XFREE(MTYPE_QOS, nsm->nsm_client[NSM_QOS]);
+	nsm->nsm_client[NSM_QOS] = NULL;
 	return OK;
 }
 
@@ -315,7 +320,7 @@ static int nsm_qos_del_interface(struct interface *ifp)
 static int nsm_qos_interface_config(struct vty *vty, struct interface *ifp)
 {
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
-	if(qos)
+	if(qos && !if_is_loop(ifp))
 	{
 		if(qos->qos_storm_enable)
 		{
@@ -392,8 +397,8 @@ static int nsm_qos_interface_config(struct vty *vty, struct interface *ifp)
 static int nsm_qos_client_init()
 {
 	struct nsm_client *nsm = nsm_client_new ();
-	nsm->interface_add_cb = nsm_qos_add_interface;
-	nsm->interface_delete_cb = nsm_qos_del_interface;
+	nsm->notify_add_cb = nsm_qos_add_interface;
+	nsm->notify_delete_cb = nsm_qos_del_interface;
 	nsm->interface_write_config_cb = nsm_qos_interface_config;
 	nsm_client_install (nsm, NSM_QOS);
 	return OK;
@@ -402,4 +407,12 @@ static int nsm_qos_client_init()
 int nsm_qos_init()
 {
 	return nsm_qos_client_init();
+}
+
+int nsm_qos_exit()
+{
+	struct nsm_client *nsm = nsm_client_lookup (NSM_QOS);
+	if(nsm)
+		nsm_client_free (nsm);
+	return OK;
 }

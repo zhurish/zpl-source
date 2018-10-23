@@ -3,6 +3,7 @@
 #include <dirent.h>
 #include "QMIThread.h"
 
+
 #define POLL_DATA_CALL_STATE_SECONDS 0 //poll data call state, for qmi ind maybe not work well
 
 char * qmichannel = NULL;

@@ -13,7 +13,7 @@ Copyright (C) 2011 by Qualcomm Technologies, Incorporated.  All Rights Reserved.
 #ifndef MPQCTL_H
 #define MPQCTL_H
 
-#include "../../tools/quectel-CM/MPQMI.h"
+#include "MPQMI.h"
 
 #pragma pack(push, 1)
 

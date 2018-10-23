@@ -15,6 +15,8 @@
 #include "os_util.h"
 #include "tty_com.h"
 #include "os_time.h"
+#include "os_ansync.h"
+
 
 #include "modem.h"
 #include "modem_client.h"
@@ -27,17 +29,15 @@
 
 #include "modem_dialog.h"
 #include "modem_message.h"
-#include "modem_product.h"
 #include "modem_driver.h"
 #include "modem_atcmd.h"
 #include "modem_usim.h"
 #include "modem_process.h"
+#include "modem_usb_driver.h"
 
 static int modem_task_id = 0;
 
-#ifdef __MODEM_DEBUG
-int modem_start = 0;
-#endif
+static os_ansync_lst * modem_ansync_lst = NULL;
 
 /*************************************************************************/
 /*
@@ -68,10 +68,8 @@ static int modem_main_handle(modem_t *modem, void *pVoid)
 static int modem_process_handle(modem_process_t *process, void *pVoid)
 {
 	assert(process);
-	//return modem_main_callback_api(modem_main_handle, process);
 	if(!process)
 		return ERROR;
-	//modem_process_t *inputprocess = (modem_process_t *)pVoid;
 	assert(process->argv);
 	modem_t	*modem = process->argv;
 
@@ -95,49 +93,114 @@ static int modem_process_handle(modem_process_t *process, void *pVoid)
 	return ERROR;
 }
 
-
-int modem_main_process(void *pVoid)
-{
-	return modem_process_callback_api(modem_process_handle, pVoid);
-}
-
-
 static int modem_main_task(void *argv)
 {
+	os_ansync_t *node;
 	os_sleep(5);
-	while(1)
+	while(!os_load_config_done())
 	{
-		modem_product_detection();
-#ifdef __MODEM_DEBUG
-		if(modem_start)
-#endif
-			modem_main_process(NULL);
-		modem_main_trywait(1);
+		os_sleep(1);
+	}
+	while(modem_ansync_lst)
+	{
+		while((node = os_ansync_fetch(modem_ansync_lst)))
+			os_ansync_execute(modem_ansync_lst, node, OS_ANSYNC_EXECUTE_NONE);
 	}
 	return 0;
 }
 
-int modem_module_init ()
-{
-	/* Make master thread emulator. */
-	master_thread[MODULE_MODEM] = thread_master_module_create (MODULE_MODEM);
-	master_thread[MODULE_MODEM];
-	modem_main_init();
-	return 0;
 
+int modem_ansync_add(int (*cb)(void *), int fd, char *name)
+{
+	if(modem_ansync_lst)
+	{
+		//OS_ANSYNC_DEBUG("%s(fd=%d)", name,fd);
+		return _os_ansync_register_api(modem_ansync_lst, OS_ANSYNC_INPUT, cb,
+			NULL, fd, name, __FILE__, __LINE__);
+	}
+	return ERROR;
+	//os_ansync_register_api(modem_ansync_lst, OS_ANSYNC_INPUT, c, NULL, v)
 }
 
-int modem_task_init ()
+int modem_ansync_del(int value)
 {
-	modem_task_id = os_task_create("modemTask", OS_TASK_DEFAULT_PRIORITY,
-	               0, modem_main_task, NULL, OS_TASK_DEFAULT_STACK);
-	if(modem_task_id)
-		return OK;
+	if(modem_ansync_lst)
+	{
+		//OS_ANSYNC_DEBUG("%s", name);
+		return _os_ansync_unregister_api(modem_ansync_lst, OS_ANSYNC_INPUT, NULL,
+			NULL, value);
+		//return os_ansync_del_api(modem_ansync_lst, value);
+	}
 	return ERROR;
+	//os_ansync_register_api(modem_ansync_lst, OS_ANSYNC_INPUT, c, NULL, v)
+}
 
+int modem_ansync_timer_add(int (*cb)(void *), int fd, char *name)
+{
+	if(modem_ansync_lst)
+	{
+		//OS_ANSYNC_DEBUG("%s", name);
+		return _os_ansync_register_api(modem_ansync_lst, OS_ANSYNC_TIMER, cb,
+			NULL, fd, name, __FILE__, __LINE__);
+	}
+	return ERROR;
+	//os_ansync_register_api(modem_ansync_lst, OS_ANSYNC_INPUT, c, NULL, v)
+}
+
+int modem_ansync_timer_del(void *value)
+{
+	if(modem_ansync_lst)
+	{
+		return _os_ansync_unregister_api(modem_ansync_lst, OS_ANSYNC_TIMER, NULL,
+				value, 0);
+		//return os_ansync_del_api(modem_ansync_lst, value);
+	}
+	return ERROR;
+}
+
+static int modem_timer_thread(void *argv)
+{
+	modem_product_detection();
+
+	return modem_process_callback_api(modem_process_handle, NULL);
+}
+
+int modem_module_init ()
+{
+	modem_main_init();
+	modem_ansync_lst = os_ansync_lst_create(MODULE_MODEM, 4);
+	if(modem_ansync_lst)
+	{
+		os_ansync_timeout_api(modem_ansync_lst, OS_ANSYNC_SEC(5));
+		modem_ansync_timer_add(modem_timer_thread, OS_ANSYNC_SEC(5), "modem_timer_thread");
+	}
+	return 0;
 }
 
 int modem_module_exit ()
 {
+	modem_main_exit();
+	os_ansync_lst_destroy(modem_ansync_lst);
 	return OK;
 }
+
+int modem_task_init ()
+{
+	if(modem_task_id == 0)
+		modem_task_id = os_task_create("modemTask", OS_TASK_DEFAULT_PRIORITY,
+	               0, modem_main_task, NULL, OS_TASK_DEFAULT_STACK);
+	if(modem_task_id)
+		return OK;
+	return ERROR;
+}
+
+
+int modem_task_exit ()
+{
+	if(modem_task_id == 0)
+		return OK;
+	os_task_destroy(modem_task_id);
+	modem_task_id = 0;
+	return OK;
+}
+

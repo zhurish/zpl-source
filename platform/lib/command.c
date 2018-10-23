@@ -82,7 +82,7 @@ print_version (const char *progname)
 {
   printf ("%s version %s\n", progname, QUAGGA_VERSION);
   printf ("%s\n", QUAGGA_COPYRIGHT);
-  printf ("configured with:\n\t%s\n", QUAGGA_CONFIG_ARGS);
+//  printf ("configured with:\n\t%s\n", QUAGGA_CONFIG_ARGS);
 }
 
 
@@ -1418,6 +1418,9 @@ cmd_matcher_read_keywords(struct cmd_matcher *matcher,
             case TOKEN_KEYWORD:
               assert(!"Keywords should never be nested.");
               break;
+            default:
+                assert(!"Keywords should never be nested.");
+                break;
             }
 
           if (MATCHER_ERROR(rv))
@@ -1589,6 +1592,9 @@ cmd_element_match(struct cmd_element *cmd_element,
           break;
         case TOKEN_KEYWORD:
           rv = cmd_matcher_match_keyword(&matcher, token, argc, argv);
+          break;
+        default:
+        	break;
         }
 
       if (MATCHER_ERROR(rv))

@@ -33,6 +33,7 @@
 #include "rib.h"
 #include "zserv.h"
 #include "router-id.h"
+
 struct zebra_t zebrad =
 {
   .rtm_table_default = 0,
@@ -42,13 +43,19 @@ static int nsm_task_id = 0;
 
 static int nsm_main_task(void *argv)
 {
+	os_start_running(zebrad.master, MODULE_NSM);
+#if 0
 	struct thread thread;
-	printf("%s\r\n",__func__);
 
+	while(!os_load_config_done())
+	{
+		os_sleep(1);
+	}
 	//os_log_reopen(ZLOG_NSM);
 	while (thread_fetch (zebrad.master, &thread))
 		thread_call (&thread);
 	/* Not reached... */
+#endif
 	return 0;
 }
 
@@ -112,6 +119,8 @@ int nsm_module_init ()
 	return 0;
 
 }
+
+
 
 int nsm_task_init ()
 {

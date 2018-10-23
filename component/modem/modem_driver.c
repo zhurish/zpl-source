@@ -34,7 +34,10 @@ int modem_driver_register(modem_driver_t *driver)
 		//os_memcpy(&client->driver, driver, sizeof(modem_driver_t));
 		client->driver = driver;
 		if(client->driver)
+		{
 			client->driver->client = client;
+			driver->client = client;
+		}
 		client->bus = driver->bus;
 		client->device = driver->device;
 		//client->vendor = driver->vendor;
@@ -47,6 +50,10 @@ int modem_driver_register(modem_driver_t *driver)
 
 		driver->id = MODEM_DRIVER_MOJR(0);
 
+		driver->modem_driver_init = modem_driver_init;
+		driver->modem_driver_probe = modem_driver_probe;
+		driver->modem_driver_exit = modem_driver_exit;
+		driver->modem_driver_reboot = modem_driver_reboot;
 		//os_memcpy(&client->attty, &driver->attty, sizeof(struct tty_com));
 
 		return modem_client_register_api(client);
@@ -59,7 +66,9 @@ int modem_driver_register(modem_driver_t *driver)
 int modem_driver_unregister(modem_driver_t *driver)
 {
 	assert(driver);
-	return modem_client_del_by_product_api(driver->vendor, driver->product);
+	assert(driver->client);
+	return modem_client_del_api(driver->client);
+	//return modem_client_del_by_product_api(driver->vendor, driver->product);
 }
 
 
@@ -87,32 +96,73 @@ int modem_driver_remove(int vendor, int product)
 	return OK;
 }
 
+int modem_driver_hw_channel(int vendor, int product, u_int8 *hw_channel)
+{
+	int channel = 0;
+	channel = modem_usb_driver_hardware_channel(vendor, product);
+	if(channel)
+	{
+		if(hw_channel)
+			*hw_channel = channel;
+		return OK;
+	}
+	return ERROR;
+}
 
 int modem_driver_inster(int vendor, int product)
 {
+	u_int8 hw_channel = 0;
 	modem_driver_t *driver = modem_driver_lookup(vendor, product);
 	modem_client_t *client = NULL;
 	if(!driver || !driver->client)
 	{
 		return ERROR;
 	}
-	if(MODEM_IS_DEBUG(DRIVER))
-		zlog_debug(ZLOG_MODEM, "Inster modem : %s %x %x ",
-				driver->module_name, driver->vendor, driver->product);
 
 	client = driver->client;
-	if(modem_serial_lookup_api(modem_serial_channel_name(driver)))
+
+	if(MODEM_IS_DEBUG(DRIVER))
+		zlog_debug(ZLOG_MODEM, "Inster modem : %s %x %x (%s)",
+				driver->module_name, driver->vendor, driver->product, client->module_name);
+
+	if(modem_driver_hw_channel(vendor, product, &hw_channel) == OK)
 	{
-		modem_serial_bind_api(modem_serial_channel_name(driver), client);
+		if(modem_serial_lookup_api(NULL/*modem_serial_channel_name(driver)*/, hw_channel))
+		{
+			modem_serial_bind_api(NULL/*modem_serial_channel_name(driver)*/, hw_channel, client);
+		}
+		else
+		{
+			//zlog_warn(ZLOG_MODEM, "Create modem-channel profile : %s",modem_serial_channel_name(driver));
+			if(modem_serial_add_api(modem_serial_channel_name(driver)) == OK)
+			{
+				modem_serial_channel_api(modem_serial_channel_name(driver), hw_channel);
+				modem_serial_bind_api(modem_serial_channel_name(driver), hw_channel, client);
+			}
+			else
+			{
+				if(modem_serial_lookup_api(modem_serial_channel_name(driver), 0))
+					zlog_warn(ZLOG_MODEM, "modem-channel profile '%s' is already exist.",
+							modem_serial_channel_name(driver));
+				else
+				//if(MODEM_IS_DEBUG(DRIVER))
+					zlog_warn(ZLOG_MODEM, "Can not create modem-channel profile for : %s %x %x (%s)",
+							driver->module_name, driver->vendor, driver->product, client->module_name);
+			}
+		}
+		if(client->modem)
+		{
+			if(os_strlen(driver->eth_name) && (((modem_t *)client->modem)->dialtype != MODEM_DIAL_PPP))
+				modem_interface_update_kernel(((modem_client_t *)client)->modem, driver->eth_name);
+			modem_event_add_api(((modem_client_t*)client)->modem, MODEM_EV_INSTER, TRUE);
+		}
+		return OK;
 	}
-	else
-	{
-		if(modem_serial_add_api(modem_serial_channel_name(driver)) == OK)
-			modem_serial_bind_api(modem_serial_channel_name(driver), client);
-	}
-	if(client->modem)
-		modem_event_add_api(((modem_client_t*)client)->modem, MODEM_EV_INSTER, TRUE);
-	return OK;
+	if(MODEM_IS_DEBUG(DRIVER))
+		zlog_err(ZLOG_MODEM, "Inster modem : %s %x %x (%s) can not find hw channel",
+				driver->module_name, driver->vendor, driver->product, client->module_name);
+
+	return ERROR;
 }
 
 
@@ -154,9 +204,9 @@ int modem_driver_tty_probe(modem_driver_t *driver, char *devname[])
 			{
 				os_memset(driver->pppd->devname, 0, sizeof(driver->pppd->devname));
 				os_strcpy(driver->pppd->devname, devname[i]);
-				if(driver->client)
+				if(driver->client && ((modem_client_t *)driver->client)->modem)
 				{
-					modem_serial_devname_add(((modem_client_t *)driver->client)->modem, driver->pppd->devname);
+					modem_serial_devname_update_kernel(((modem_client_t *)driver->client)->modem, driver->pppd->devname);
 				}
 			}
 			//MODEM_DR_DEBUG("%s pppd:%s",__func__, devname[i]);
@@ -177,28 +227,69 @@ int modem_driver_tty_probe(modem_driver_t *driver, char *devname[])
 	}
 	if(os_strlen(driver->eth_name))
 	{
-		if(driver->client)
+		if(driver->client && ((modem_client_t *)driver->client)->modem)
 		{
-			modem_interface_add(((modem_client_t *)driver->client)->modem, driver->eth_name);
+			modem_t *modem = ((modem_client_t *)driver->client)->modem;
+			if(modem->dialtype != MODEM_DIAL_PPP)
+				modem_interface_update_kernel(((modem_client_t *)driver->client)->modem, driver->eth_name);
 		}
 	}
 	return OK;
 }
 
 
-int modem_driver_probe(modem_driver_t *driver)
-{
-	assert(driver);
-/*	if(driver->md_probe)
-		return (driver->md_probe)(driver);*/
-	return OK;
-}
-
+/**********************************************************************/
 int modem_driver_init(modem_driver_t *driver)
 {
 	assert(driver);
 /*	if(driver->md_init)
 		return (driver->md_init)(driver);*/
+	return OK;
+}
+
+int modem_driver_probe(modem_driver_t *driver)
+{
+	assert(driver);
+
+	if(os_strlen(driver->eth_name))
+	{
+		if(driver->client && ((modem_client_t *)driver->client)->modem)
+		{
+			modem_t *modem = ((modem_client_t *)driver->client)->modem;
+			if(modem->dialtype != MODEM_DIAL_PPP)
+				modem_interface_update_kernel(((modem_client_t *)driver->client)->modem, driver->eth_name);
+		}
+	}
+	if(driver->pppd && os_strlen(driver->pppd->devname))
+	{
+		if(driver->client && ((modem_client_t *)driver->client)->modem)
+		{
+			modem_serial_devname_update_kernel(((modem_client_t *)driver->client)->modem, driver->pppd->devname);
+		}
+	}
+
+	if(driver->client && ((modem_client_t *)driver->client)->modem)
+	{
+		if(os_strlen(driver->eth_name) && (((modem_t *)((modem_client_t *)driver->client)->modem)->dialtype != MODEM_DIAL_PPP))
+			modem_interface_update_kernel(((modem_client_t *)driver->client)->modem, driver->eth_name);
+
+		modem_process_add_api(MODEM_EV_INSTER, ((modem_client_t *)driver->client)->modem, FALSE);
+	}
+
+	return OK;
+}
+
+int modem_driver_exit(modem_driver_t *driver)
+{
+	assert(driver);
+
+	if(driver->client)
+	{
+		modem_process_del_api(MODEM_EV_MAX, ((modem_client_t *)driver->client)->modem, TRUE);
+		((modem_client_t *)driver->client)->modem = NULL;
+	}
+/*	if(driver->md_probe)
+		return (driver->md_probe)(driver);*/
 	return OK;
 }
 

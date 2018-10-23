@@ -221,6 +221,24 @@ static int main_timer_thread(struct thread *thread)
 	//int sock = THREAD_FD(thread);
 	//ospf_thread_check();
 	thread_add_timer(thread->master, main_timer_thread, NULL, 1);
+	return 0;
+}
+
+static int os_base_dir_init(void)
+{
+	if(access(BASE_DIR, F_OK) != 0)
+	{
+		mkdir(BASE_DIR, 0644);
+		mkdir(SYSCONFDIR, 0644);			// /etc
+		mkdir(DAEMON_LOG_FILE_DIR, 0644);	// /log
+		mkdir(DAEMON_VTY_DIR, 0644);		// /var
+		mkdir(BASE_DIR"/run", 0644);		// /run
+
+		mkdir(SYSLIBDIR, 0644);	// /lib
+		mkdir(SYSSBINDIR, 0644);		// /sbin
+		mkdir(SYSBINDIR"/run", 0644);		// /bin
+	}
+	return 0;
 }
 
 
@@ -243,14 +261,19 @@ int main (int argc, char **argv)
 	main_data.daemon_mode = 0;
 	main_data.pid = 0;
 
-	//wifi_show(NULL);
 	/* preserve my name */
 	main_data.progname = ((p = strrchr (argv[0], '/')) ? ++p : argv[0]);
 
 	main_getopt (argc, argv);
 
+	os_base_dir_init();
+#ifdef DOUBLE_PROCESS
+	//os_process_start();
+#endif
+
 	os_start_init(main_data.progname, ZLOG_DEFAULT, main_data.daemon_mode);
 
+	zlog_set_level (ZLOG_DEST_STDOUT, LOG_DEBUG);
 	//unix_sock_client_create(TRUE, "ProcessMU");
 
 	os_ip_stack_init(8899);
@@ -287,6 +310,9 @@ int main (int argc, char **argv)
 		sleep(2);
 #endif
 	}
+#ifdef DOUBLE_PROCESS
+	os_process_stop();
+#endif
 	return 0;
 }
 

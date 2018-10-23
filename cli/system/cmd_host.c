@@ -68,6 +68,12 @@ static struct cmd_node config_node =
 	1
 };
 
+static struct cmd_node config_dhcp_node =
+{
+	DHCPS_NODE,
+	"%s(config-dhcp)# ",
+	1
+};
 struct cmd_node interface_node =
 {
 		INTERFACE_NODE,
@@ -77,6 +83,12 @@ struct cmd_node interface_node =
 struct cmd_node interface_l3_node =
 {
 		INTERFACE_L3_NODE,
+		"%s(config-if)# ",
+		1
+};
+struct cmd_node interface_wireless_node =
+{
+		WIRELESS_INTERFACE_NODE,
 		"%s(config-if)# ",
 		1
 };
@@ -95,13 +107,13 @@ struct cmd_node loopback_interface_node =
 struct cmd_node lag_interface_node =
 {
 		LAG_INTERFACE_NODE,
-		"%s(config-lag)# ",
+		"%s(config-port-channel)# ",
 		1
 };
 struct cmd_node lag_interface_l3_node =
 {
 		LAG_INTERFACE_L3_NODE,
-		"%s(config-lag)# ",
+		"%s(config-port-channel)# ",
 		1
 };
 
@@ -234,10 +246,13 @@ DEFUN (config_exit,
 		vty->node = ENABLE_NODE;
 		vty_config_unlock(vty);
 		break;
+	case DHCPS_NODE:
 	case MODEM_PROFILE_NODE:
 	case MODEM_CHANNEL_NODE:
 	case INTERFACE_NODE:
 	case INTERFACE_L3_NODE:		/* Interface mode node. */
+	case WIRELESS_INTERFACE_NODE:
+
 	case TUNNEL_INTERFACE_NODE:	/* Tunnel Interface mode node. */
 	case LOOPBACK_INTERFACE_NODE:	/* Loopback Interface mode node. */
 	case LAG_INTERFACE_NODE:		/* Lag Interface mode node. */
@@ -316,10 +331,12 @@ DEFUN (config_end,
 		/* Nothing to do. */
 		break;
 	case CONFIG_NODE:
+	case DHCPS_NODE:
 	case MODEM_PROFILE_NODE:
 	case MODEM_CHANNEL_NODE:
 	case INTERFACE_NODE:
 	case INTERFACE_L3_NODE:		/* Interface mode node. */
+	case WIRELESS_INTERFACE_NODE:
 	case TUNNEL_INTERFACE_NODE:	/* Tunnel Interface mode node. */
 	case LOOPBACK_INTERFACE_NODE:	/* Loopback Interface mode node. */
 	case LAG_INTERFACE_NODE:		/* Lag Interface mode node. */
@@ -455,7 +472,8 @@ DEFUN (config_write_file,
 	char *config_file_sav = NULL;
 	struct vty *file_vty;
 	/* Check and see if we are operating under vtysh configuration */
-	if (host.config == NULL) {
+	if (host.config == NULL)
+	{
 		vty_out(vty, "Can't save to configuration file, using vtysh.%s", VTY_NEWLINE);
 		return CMD_WARNING;
 	}
@@ -470,7 +488,8 @@ DEFUN (config_write_file,
 	free(config_file_sav);
 	sync();
 	fd = open(config_file, O_WRONLY | O_CREAT, CONFIGFILE_MASK);
-	if (fd < 0) {
+	if (fd < 0)
+	{
 		vty_out(vty, "Can't open configuration file %s%s", config_file,
 				VTY_NEWLINE);
 		return CMD_WARNING;
@@ -484,18 +503,21 @@ DEFUN (config_write_file,
 	/* Config file header print. */
 	vty_out(file_vty, "!\n! Zebra configuration saved from vty\n");
 	vty_out(file_vty, "!\n");
+	vty_out(file_vty, "!");
 	vty_time_print(file_vty, 1);
 	vty_out(file_vty, "!\n");
 
 	for (i = 0; i < vector_active(cmdvec); i++)
-		if ((node = vector_slot(cmdvec, i)) && node->func) {
+		if ((node = vector_slot(cmdvec, i)) && node->func)
+		{
 			if ((*node->func)(file_vty))
 				vty_out(file_vty, "!\n");
 		}
 	vty_out(file_vty, "end%s", VTY_NEWLINE);
 	vty_close(file_vty);
 	sync();
-	if (chmod(config_file, CONFIGFILE_MASK) != 0) {
+	if (chmod(config_file, CONFIGFILE_MASK) != 0)
+	{
 		vty_out(vty, "%% Can't chmod configuration file %s: %s (%d)%s",
 				config_file, safe_strerror(errno), errno, VTY_NEWLINE);
 		return CMD_WARNING;
@@ -533,19 +555,24 @@ DEFUN (config_write_terminal,
 	unsigned int i;
 	struct cmd_node *node;
 
-	if (vty->type == VTY_SHELL_SERV) {
+	if (vty->type == VTY_SHELL_SERV)
+	{
 		for (i = 0; i < vector_active(cmdvec); i++)
-			if ((node = vector_slot(cmdvec, i)) && node->func && node->vtysh) {
+			if ((node = vector_slot(cmdvec, i)) && node->func && node->vtysh)
+			{
 				if ((*node->func)(vty))
 					vty_out(vty, "!%s", VTY_NEWLINE);
 			}
-	} else {
+	}
+	else
+	{
 		vty_out(vty, "%sCurrent configuration:%s", VTY_NEWLINE,
 		VTY_NEWLINE);
 		vty_out(vty, "!%s", VTY_NEWLINE);
 
 		for (i = 0; i < vector_active(cmdvec); i++)
-			if ((node = vector_slot(cmdvec, i)) && node->func) {
+			if ((node = vector_slot(cmdvec, i)) && node->func)
+			{
 				if ((*node->func)(vty))
 					vty_out(vty, "!%s", VTY_NEWLINE);
 			}
@@ -571,7 +598,8 @@ DEFUN (show_startup_config,
 	FILE *confp;
 
 	confp = fopen(host.config, "r");
-	if (confp == NULL) {
+	if (confp == NULL)
+	{
 		vty_out(vty, "Can't open configuration file [%s]%s", host.config,
 				VTY_NEWLINE);
 		return CMD_WARNING;
@@ -1129,6 +1157,18 @@ config_write_host (struct vty *vty)
 }
 
 
+static int
+config_write_service (struct vty *vty)
+{
+	nsm_ip_arp_config(vty);
+	vty_out(vty, "!%s", VTY_NEWLINE);
+	nsm_ip_dns_host_config(vty);
+	vty_out(vty, "!%s", VTY_NEWLINE);
+	nsm_client_service_write_config (0, vty);
+	return 1;
+}
+
+
 static int _cmd_host_init(void)
 {
 	/*  install_node (&restricted_node, NULL);*/
@@ -1137,7 +1177,7 @@ static int _cmd_host_init(void)
 	install_node(&enable_node, NULL);
 	install_node(&auth_node, NULL);
 	install_node(&auth_enable_node, NULL);
-	install_node(&service_node, NULL);
+	install_node(&service_node, config_write_service);
 	install_node(&config_node, config_write_host);
 	install_node(&interface_node, NULL);
 	install_node(&interface_l3_node, NULL);
@@ -1148,13 +1188,17 @@ static int _cmd_host_init(void)
 	install_node(&serial_interface_node, NULL);
 	install_node(&trunk_group_node, NULL);
 	install_node(&brigde_interface_node, NULL);
+	install_node(&interface_wireless_node, NULL);
+
 #ifdef CUSTOM_INTERFACE
 	install_node(&wifi_interface_node, NULL);
 	install_node(&modem_interface_node, NULL);
 #endif
 	install_node(&modem_profile_node, NULL);
 	install_node(&modem_channel_node, NULL);
-
+#ifdef PL_DHCP_MODULE
+	install_node(&config_dhcp_node, NULL);
+#endif
 
 	install_default(VIEW_NODE);
 	install_default(CONFIG_NODE);

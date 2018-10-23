@@ -21,13 +21,14 @@
 
 
 //#define TTY_COM_FP
+#define AT_LEN_MAX(n)	(128 * (n))
 /*
  * 去掉 \r\n
  */
 static const char * atcmd_split(char *src, int len, int *out)
 {
 	char *p = src;
-	int i = 0, j = 0, slen = len;
+	int i = 0, j = 0, n = 1, slen = len;
 	char swapbuf[ATCMD_RESPONSE_MAX];
 	if(src == NULL || len <= 0 || len > ATCMD_RESPONSE_MAX)
 		return "CMD ERROR(NULL)";
@@ -54,12 +55,29 @@ static const char * atcmd_split(char *src, int len, int *out)
 		}
 		else if(p[i] == MD_NL && p[i+1] == MD_CR)
 		{
-			swapbuf[j++] = MD_SPACE;
-			i++;
+			if(os_strlen(swapbuf) > AT_LEN_MAX(n))
+			{
+				n++;
+				swapbuf[j++] = MD_CR;
+				i++;
+			}
+			else
+			{
+				swapbuf[j++] = MD_SPACE;
+				i++;
+			}
 		}
 		else if(p[i] == MD_NL || p[i] == MD_CR)
 		{
-			swapbuf[j++] = MD_SPACE;
+			if(os_strlen(swapbuf) > AT_LEN_MAX(n))
+			{
+				n++;
+				swapbuf[j++] = MD_CR;
+			}
+			else
+			{
+				swapbuf[j++] = MD_SPACE;
+			}
 		}
 	}
     i = strlen(swapbuf);
@@ -93,6 +111,18 @@ static const char * atcmd_split(char *src, int len, int *out)
 	if(out)
 		*out = j;
 	return (char*)src;
+}
+
+static BOOL atsms_finish(char *src, int len)
+{
+	int i = 0;
+	char *str = src;
+	for (i = 0; *str != '\0' && i < len; str++,i++)
+	{
+		if (((int) *str) == MD_CTRL_Z)
+			return TRUE;
+	}
+	return FALSE;
 }
 
 static int tty_attty_fdopen(struct tty_com *attty)
@@ -530,21 +560,33 @@ md_res_en modem_attty_write(modem_client_t *client, const char *format, ...)
     {
     	return RES_ERROR;
     }
+    if(!client->bSms)
+    	modem_main_lock(client->modem);
     os_memset(client->atcmd, 0, sizeof(atcmd_request_t));
     va_start (args, format);
     client->atcmd->len = vsnprintf (client->atcmd->buf, ATCMD_RESPONSE_MAX, format, args);
     va_end (args);
     if(client->atcmd->len <= 0)
+    {
+    	if(!client->bSms)
+    		modem_main_unlock(client->modem);
     	return RES_ERROR;
-
+    }
     client->atcmd->len = tty_com_write(client->attty, client->atcmd->buf, client->atcmd->len);
 
     if(client->atcmd->len <= 0)
     {
 		if(tty_attty_test_close(client->attty) != RES_OK)
+		{
+			modem_main_unlock(client->modem);
 			return RES_CLOSE;
+		}
     }
-
+    if(client->bSms)
+    {
+    	if(atsms_finish(client->atcmd->buf, client->atcmd->len))
+    		client->bSms = FALSE;
+    }
     if(client->atcmd->buf[client->atcmd->len-1] == '\n')
     	client->atcmd->buf[client->atcmd->len-1] = '\0';
     if(client->atcmd->buf[client->atcmd->len-2] == '\r')
@@ -552,7 +594,8 @@ md_res_en modem_attty_write(modem_client_t *client, const char *format, ...)
 
 	if(MODEM_IS_DEBUG(ATCMD))
 		zlog_debug(ZLOG_MODEM, " AT CMD: >>>>> :%s", client->atcmd->buf);
-
+	if(!client->bSms)
+		modem_main_unlock(client->modem);
 	return RES_OK;
 }
 
@@ -560,50 +603,70 @@ md_res_en modem_attty_write(modem_client_t *client, const char *format, ...)
 md_res_en modem_attty(modem_client_t *client,
 		int timeout, const char *waitkey, const char *format, ...)
 {
-	md_res_en res = 0;
+	md_res_en res = RES_ERROR;
     va_list args;
     assert (client);
     if(modem_attty_isclose(client) == RES_OK)
     {
     	return RES_ERROR;
     }
+    if(!client->bSms)
+    	modem_main_lock(client->modem);
     os_memset(client->atcmd, 0, sizeof(atcmd_request_t));
     va_start (args, format);
     client->atcmd->len = vsnprintf (client->atcmd->buf, ATCMD_RESPONSE_MAX, format, args);
     va_end (args);
     if(client->atcmd->len <= 0)
+    {
+    	if(!client->bSms)
+    		modem_main_unlock(client->modem);
     	return RES_ERROR;
-
+    }
     res = modem_attty_write_one(client);
     if( res != RES_OK)
     {
+    	if(!client->bSms)
+    		modem_main_unlock(client->modem);
     	return res;
+    }
+    if(client->bSms)
+    {
+    	if(atsms_finish(client->atcmd->buf, client->atcmd->len))
+    		client->bSms = FALSE;
     }
 	os_msleep(50);
     os_memset(client->response, 0, sizeof(atcmd_response_t));
     if(tty_attty_wait_response(client, timeout) > 0)
     {
     	if(waitkey && strstr(client->response->buf, waitkey))
-    		return RES_OK;
+    		res =  RES_OK;
     	if(strstr(client->response->buf, "OK"))
-    		return RES_OK;
+    		res =  RES_OK;
     	if(strstr(client->response->buf, ">"))
-    		return RES_OK;
+    	{
+    		client->bSms = TRUE;
+    		res =  RES_OK;
+    	}
     	if(strstr(client->response->buf, "ERROR"))
-    		return RES_ERROR;
+    		res =  RES_ERROR;
     }
     else
     {
 		if(tty_attty_test_close(client->attty) != RES_OK)
+		{
+			modem_main_unlock(client->modem);
 			return RES_CLOSE;
+		}
     }
-    return RES_ERROR;
+    if(!client->bSms)
+    	modem_main_unlock(client->modem);
+    return res;
 }
 
 md_res_en modem_attty_respone(modem_client_t *client,
 		int timeout, char *buf, int size, const char *format, ...)
 {
-	md_res_en res = 0;
+	md_res_en res = RES_ERROR;
     va_list args;
     //assert (buf);
     assert (client);
@@ -611,34 +674,111 @@ md_res_en modem_attty_respone(modem_client_t *client,
     {
     	return RES_ERROR;
     }
+    if(!client->bSms)
+    	modem_main_lock(client->modem);
     os_memset(client->atcmd, 0, sizeof(atcmd_request_t));
     va_start (args, format);
     client->atcmd->len = vsnprintf (client->atcmd->buf, ATCMD_RESPONSE_MAX, format, args);
     va_end (args);
     if(client->atcmd->len <= 0)
+    {
+    	if(!client->bSms)
+    		modem_main_unlock(client->modem);
     	return RES_ERROR;
-
+    }
     res = modem_attty_write_one(client);
     if( res != RES_OK)
     {
+    	if(!client->bSms)
+    		modem_main_unlock(client->modem);
     	return res;
     }
-
+    if(client->bSms)
+    {
+    	if(atsms_finish(client->atcmd->buf, client->atcmd->len))
+    		client->bSms = FALSE;
+    }
 	os_msleep(50);
     os_memset(client->response, 0, sizeof(atcmd_response_t));
     if(tty_attty_wait_response(client, timeout) > 0)
     {
     	if(buf && size)
     		os_memcpy(buf, client->response->buf, MIN(client->response->len, size));
+
+    	if(strstr(client->response->buf, ">"))
+    	{
+    		client->bSms = TRUE;
+    	}
+
+    	if(!client->bSms)
+    		modem_main_unlock(client->modem);
     	return client->response->len;
     }
     else
     {
 		if(tty_attty_test_close(client->attty) != RES_OK)
+		{
+			modem_main_unlock(client->modem);
 			return RES_CLOSE;
+		}
     }
-
+    if(!client->bSms)
+    	modem_main_unlock(client->modem);
     return RES_ERROR;
 }
 
-
+md_res_en modem_attty_massage_respone(modem_client_t *client,
+		int timeout, const char *msg_cmd, const char *buf, int size)
+{
+	//char msg_cmd[128];
+	md_res_en res = RES_ERROR;
+    assert (client);
+    assert (msg_cmd);
+    if(modem_attty_isclose(client) == RES_OK)
+    {
+    	return RES_ERROR;
+    }
+/*    os_memset(msg_cmd, 0, msg_cmd);
+    vsnprintf (msg_cmd, sizeof(msg_cmd), "AT+CMGS=\"%s\"", phone);*/
+    res = modem_attty(client, 5, NULL, msg_cmd);
+    if(res == RES_OK && client->bSms)
+    {
+    	//modem_main_lock(client->modem);
+        os_memset(client->atcmd, 0, sizeof(atcmd_request_t));
+        os_memcpy(client->atcmd->buf, buf, size);
+        client->atcmd->buf[size - 1] = MD_CTRL_Z;
+        client->atcmd->len = size + 1;
+    	res = modem_attty_write_one(client);
+        if(res == RES_OK)
+        {
+            os_memset(client->response, 0, sizeof(atcmd_response_t));
+            if(tty_attty_wait_response(client, timeout) > 0)
+            {
+            	if(strstr(client->response->buf, "OK"))
+            		res =  RES_OK;
+            	if(strstr(client->response->buf, "ERROR"))
+            		res =  RES_ERROR;
+            	modem_main_unlock(client->modem);
+            	client->bSms = FALSE;
+            }
+            else
+            {
+        		if(tty_attty_test_close(client->attty) != RES_OK)
+        		{
+        			modem_main_unlock(client->modem);
+        			return RES_CLOSE;
+        		}
+        		//modem_main_unlock(client->modem);
+        		return RES_ERROR;
+            }
+        }
+        else
+        {
+        	//modem_main_unlock(client->modem);
+        	return RES_ERROR;
+        }
+    }
+    else
+    	modem_main_unlock(client->modem);
+    return res;
+}

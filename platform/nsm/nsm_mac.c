@@ -25,10 +25,14 @@ static Gl2mac_t gMac;
 
 int nsm_mac_init(void)
 {
+	unsigned char kmac[NSM_MAC_MAX] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
 	gMac.macList = malloc(sizeof(LIST));
 	gMac.mutex = os_mutex_init();
 	lstInit(gMac.macList);
 
+	nsm_gmac_set_api(0, kmac, NSM_MAC_MAX);
+	nsm_gmac_set_api(1, kmac, NSM_MAC_MAX);
+	nsm_gmac_set_api(2, kmac, NSM_MAC_MAX);
 	//nsm_mac_create_api(1);
 	//l2mac_add_untag_port(1, ifindex_t ifindex);
 	return OK;
@@ -47,22 +51,22 @@ static int l2mac_cleanup(mac_type_t type, BOOL all, vlan_t vlan, ifindex_t ifind
 		if(pstNode && pstNode->ifindex == ifindex && pstNode->vlan == vlan && pstNode->type == type)
 		{
 			lstDelete(gMac.macList, (NODE*)pstNode);
-			XFREE(MTYPE_VLAN, pstNode);
+			XFREE(MTYPE_MAC, pstNode);
 		}
 		if(pstNode && pstNode->vlan == vlan && pstNode->type == type)
 		{
 			lstDelete(gMac.macList, (NODE*)pstNode);
-			XFREE(MTYPE_VLAN, pstNode);
+			XFREE(MTYPE_MAC, pstNode);
 		}
 		else if(pstNode && pstNode->ifindex == ifindex && pstNode->type == type)
 		{
 			lstDelete(gMac.macList, (NODE*)pstNode);
-			XFREE(MTYPE_VLAN, pstNode);
+			XFREE(MTYPE_MAC, pstNode);
 		}
 		else if(pstNode && all)
 		{
 			lstDelete(gMac.macList, (NODE*)pstNode);
-			XFREE(MTYPE_VLAN, pstNode);
+			XFREE(MTYPE_MAC, pstNode);
 		}
 	}
 	hal_mac_clr(ifindex, vlan);
@@ -75,8 +79,12 @@ static int l2mac_cleanup(mac_type_t type, BOOL all, vlan_t vlan, ifindex_t ifind
 int nsm_mac_exit(void)
 {
 	if(lstCount(gMac.macList))
+	{
 		l2mac_cleanup(0, TRUE, 0, 0);
-
+		lstFree(gMac.macList);
+		free(gMac.macList);
+		gMac.macList = NULL;
+	}
 	if(gMac.mutex)
 		os_mutex_exit(gMac.mutex);
 	return OK;
@@ -102,7 +110,7 @@ int nsm_mac_clean_vlan_api(mac_type_t type, vlan_t vlan)
 
 static int l2mac_add_node(l2mac_t *value)
 {
-	l2mac_t *node = XMALLOC(MTYPE_VLAN, sizeof(l2mac_t));
+	l2mac_t *node = XMALLOC(MTYPE_MAC, sizeof(l2mac_t));
 	if(node)
 	{
 		os_memset(node, 0, sizeof(l2mac_t));
@@ -210,7 +218,7 @@ int nsm_mac_del_api(l2mac_t *mac)
 		if(ret == OK)
 		{
 			lstDelete(gMac.macList, (NODE*)value);
-			XFREE(MTYPE_VLAN, value);
+			XFREE(MTYPE_MAC, value);
 			ret = OK;
 		}
 	}
@@ -262,6 +270,47 @@ int nsm_mac_ageing_time_get_api(int *ageing)
 		os_mutex_lock(gMac.mutex, OS_WAIT_FOREVER);
 	if(ageing)
 		*ageing = gMac.ageing_time;
+	ret = OK;
+	//TODO
+	if(gMac.mutex)
+		os_mutex_unlock(gMac.mutex);
+	return ret;
+}
+
+
+int nsm_gmac_set_api(int indx, mac_t *mac, int len)
+{
+	int ret = ERROR;
+	l2mac_t *value;
+	if(gMac.mutex)
+		os_mutex_lock(gMac.mutex, OS_WAIT_FOREVER);
+	if(indx == 0)
+		os_memcpy(gMac.gmac, mac, MIN(len, NSM_MAC_MAX));
+	else if(indx == 1)
+		os_memcpy(gMac.gmac1, mac, MIN(len, NSM_MAC_MAX));
+	else if(indx == 2)
+		os_memcpy(gMac.gmac2, mac, MIN(len, NSM_MAC_MAX));
+	ret = OK;
+	//TODO
+	if(gMac.mutex)
+		os_mutex_unlock(gMac.mutex);
+	return ret;
+}
+
+int nsm_gmac_get_api(int indx, mac_t *mac, int len)
+{
+	int ret = ERROR;
+	l2mac_t *value;
+	if(gMac.mutex)
+		os_mutex_lock(gMac.mutex, OS_WAIT_FOREVER);
+
+	if(indx == 0 && mac)
+		os_memcpy(mac, gMac.gmac, MIN(len, NSM_MAC_MAX));
+	else if(indx == 1 && mac)
+		os_memcpy(mac, gMac.gmac1, MIN(len, NSM_MAC_MAX));
+	else if(indx == 2 && mac)
+		os_memcpy(mac, gMac.gmac2, MIN(len, NSM_MAC_MAX));
+
 	ret = OK;
 	//TODO
 	if(gMac.mutex)

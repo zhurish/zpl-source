@@ -30,9 +30,10 @@ static modem_main_pppd_t gModepppd;
 /***********************************************************************/
 static int modem_pppd_create_action(modem_pppd_t *pppd);
 static int modem_pppd_delete_action(modem_pppd_t *pppd);
-static int modem_pppd_default(modem_pppd_t *pppd);
+static int modem_pppd_default(modem_t *modem, modem_pppd_t *pppd);
 static int modem_pppd_task_disconnect(modem_pppd_t *pppd);
 /***********************************************************************/
+static int modem_pppd_cleanall(void);
 /***********************************************************************/
 
 int modem_pppd_init(void)
@@ -53,7 +54,10 @@ int modem_pppd_exit(void)
 	if(gModepppd.list)
 	{
 		if(lstCount(gModepppd.list))
+		{
+			modem_pppd_cleanall();
 			lstFree(gModepppd.list);
+		}
 		XFREE(MTYPE_MODEM, gModepppd.list);
 	}
 	if(gModepppd.mutex)
@@ -90,7 +94,7 @@ static int modem_pppd_add_node(modem_t *modem)
 		if(node)
 		{
 			os_memset(node, 0, sizeof(modem_pppd_t));
-			modem_pppd_default(node);
+			modem_pppd_default(modem, node);
 			node->modem = modem;
 			modem->pppd = node;
 			lstAdd(gModepppd.list, (NODE*)node);
@@ -115,6 +119,24 @@ static int modem_pppd_del_node(modem_t *modem)
 	return ERROR;
 }
 
+static int modem_pppd_cleanall(void)
+{
+	NODE index;
+	modem_pppd_t *pstNode = NULL;
+	for(pstNode = (modem_pppd_t *)lstFirst(gModepppd.list);
+			pstNode != NULL;  pstNode = (modem_pppd_t *)lstNext((NODE*)&index))
+	{
+		index = pstNode->node;
+		if(pstNode)
+		{
+			lstDelete(gModepppd.list, (NODE*)pstNode);
+			pstNode->modem = NULL;
+			XFREE(MTYPE_MODEM, pstNode);
+			pstNode = NULL;
+		}
+	}
+	return OK;
+}
 
 int modem_pppd_add_api(modem_t *modem)
 {
@@ -159,12 +181,11 @@ int modem_pppd_del_api(modem_pppd_t *pppd)
 		{
 			if(modem_pppd_task_disconnect(pppd) == OK)
 			{
-				ret = modem_pppd_del_node(pppd->modem);
 				modem_pppd_delete_action(pppd);
+				ret = modem_pppd_del_node(pppd->modem);
 			}
 		}
 	}
-
 	if(gModepppd.mutex)
 		os_mutex_unlock(gModepppd.mutex);
 	return ret;
@@ -233,21 +254,21 @@ static const char * modem_pppd_atcmd_connect(modem_t *modem)
 		(client->driver->atcmd.md_pppd_connect)(client->driver, connect, sizeof(connect));
 	else
 		os_snprintf(connect, sizeof(connect),
-			"TIMEOUT 5\r\n"
-			"ABORT 'NO CARRIER'\r\n"
-			"ABORT 'ERROR'\r\n"
-			"ABORT 'NODIALTONE'\r\n"
-			"ABORT 'BUSY'\r\n"
-			"ABORT 'NO ANSWER'\r\n"
-			"'' \\rAT\r\n"
-			"OK \\rATZ\r\n"
-			"OK \\rAT+CSQ\r\n"
-			"OK \\r%s\r\n"
-			"OK-AT-OK %s\r\n"
-			"CONNECT \\d\\c\r\n"
-			"\r\n",
+			"TIMEOUT 5\n\n"
+			"ABORT 'NO CARRIER'\n\n"
+			"ABORT 'ERROR'\n\n"
+			"ABORT 'NODIALTONE'\n\n"
+			"ABORT 'BUSY'\n\n"
+			"ABORT 'NO ANSWER'\n\n"
+			"'' \\rAT\n\n"
+			"OK \\rATZ\n\n"
+			"OK \\rAT+CSQ\n\n"
+			"OK \\r%s\n\n"
+			"OK-AT-OK %s\n\n"
+			"CONNECT \\d\\c\n\n"
+			"\n\n",
 			apn ? apn:"AT+CGDCONT=1,,,,,",
-			svc ? svc:"ATDT%s*98*1");
+			svc ? svc:"ATDT*98*1#");
 
 	return connect;
 }
@@ -265,13 +286,13 @@ static const char * modem_pppd_atcmd_disconnect(modem_t *modem)
 		(client->driver->atcmd.md_pppd_connect)(client->driver, disconnect, sizeof(disconnect));
 	else
 		os_snprintf(disconnect, sizeof(disconnect),
-			"ABORT \"ERROR\"\r\n"
-			"ABORT \"NODIALTONE\"\r\n"
-			"SAY \"\\nSending break to the modem\\n\"\r\n"
-			"'' \"\\K\"\r\n"
-			"'' \"+++ATH\"\r\n"
-			"SAY \"\\nGoodbay\\n\"\r\n"
-			"\r\n");
+			"ABORT \"ERROR\"\n\n"
+			"ABORT \"NODIALTONE\"\n\n"
+			"SAY \"\\nSending break to the modem\\n\"\n\n"
+			"'' \"\\K\"\n\n"
+			"'' \"+++ATH\"\n\n"
+			"SAY \"\\nGoodbay\\n\"\n\n"
+			"\n\n");
 	return disconnect;
 }
 /***********************************************************************/
@@ -294,6 +315,7 @@ static int modem_pppd_create_connect(modem_pppd_t *pppd)
 			os_fprintf(fp, "%s", at_cmd);
 			fflush(fp);
 			fclose(fp);
+			MODEM_PPPD_DEBUG("PPPD create connect script");
 			return OK;
 		}
 	}
@@ -318,13 +340,14 @@ static int modem_pppd_create_disconnect(modem_pppd_t *pppd)
 			os_fprintf(fp, "%s", at_cmd);
 			fflush(fp);
 			fclose(fp);
+			MODEM_PPPD_DEBUG("PPPD create disconnect script");
 			return OK;
 		}
 	}
 	return ERROR;
 }
 
-static int modem_pppd_default(modem_pppd_t *pppd)
+static int modem_pppd_default(modem_t *modem, modem_pppd_t *pppd)
 {
 	assert(pppd);
 	/*
@@ -422,253 +445,282 @@ static int modem_pppd_default(modem_pppd_t *pppd)
 	pppd->pppd_options.chap_max_challenge;
 	pppd->pppd_options.chap_interval;// <n>
 #endif
+	if(modem)
+	{
+		//struct interface *ifp = modem->ppp_serial;
+		os_memset(pppd->dial_name, 0, sizeof(pppd->dial_name));
+		os_snprintf(pppd->dial_name, sizeof(pppd->dial_name), "%s-%s",
+				modem->name, modem_network_type_string(modem->network));
+
+		MODEM_PPPD_DEBUG("PPPD create dial script '%s'", pppd->dial_name);
+
+		os_memset(pppd->connect, 0, sizeof(pppd->connect));
+		os_snprintf(pppd->connect, sizeof(pppd->connect), "connect-%s", modem_network_type_string(modem->network));
+
+		os_memset(pppd->disconnect, 0, sizeof(pppd->disconnect));
+		os_snprintf(pppd->disconnect, sizeof(pppd->disconnect), "disconnect-%s", modem_network_type_string(modem->network));
+
+		os_memset(pppd->secrets, 0, sizeof(pppd->secrets));
+		os_snprintf(pppd->secrets, sizeof(pppd->secrets), "secrets-%s", modem_network_type_string(modem->network));
+
+		os_memset(pppd->option, 0, sizeof(pppd->option));
+		os_snprintf(pppd->option, sizeof(pppd->option), "option-%s", modem_network_type_string(modem->network));
+		return OK;
+	}
     return OK;
 }
 static int modem_pppd_create_options_prefile(void *fp, pppd_options_t *pppd)
 {
 	assert(fp);
 	assert(pppd);
-	os_fprintf(fp, "\r\n");
-	os_fprintf(fp, "# modem PPP option\r\n");
-	if(pppd->hide_password)
-		os_fprintf(fp, "hide-password\r\n");
-	if(pppd->show_password)
-		os_fprintf(fp, "show-password\r\n");
 
-	if(pppd->detach)
-		os_fprintf(fp, "nodetach\r\n");
+	os_fprintf(fp, "\n");
+	os_fprintf(fp, "# modem PPP option\n");
+	if(pppd->hide_password)
+		os_fprintf(fp, "hide-password\n");
+	if(pppd->show_password)
+		os_fprintf(fp, "show-password\n");
+
+	if(!pppd->detach)
+		os_fprintf(fp, "nodetach\n");
+/*
 	else
-		os_fprintf(fp, "detach\r\n");
+		os_fprintf(fp, "detach\n");
+*/
 
 	if(pppd->idle)
-		os_fprintf(fp, "idle %d\r\n", pppd->idle);
+		os_fprintf(fp, "idle %d\n", pppd->idle);
 
 	if(pppd->holdoff)
-		os_fprintf(fp, "holdoff %d\r\n", pppd->holdoff);
+		os_fprintf(fp, "holdoff %d\n", pppd->holdoff);
 
 	if(pppd->connect_delay)
-		os_fprintf(fp, "connect-delay %d\r\n", pppd->connect_delay);
+		os_fprintf(fp, "connect-delay %d\n", pppd->connect_delay);
 
 	if(pppd->active_filter)
-		os_fprintf(fp, "active-filter %d\r\n", pppd->active_filter);
+		os_fprintf(fp, "active-filter %d\n", pppd->active_filter);
 
 	if(pppd->persist)
-		os_fprintf(fp, "persist\r\n");
+		os_fprintf(fp, "persist\n");
 	else
-		os_fprintf(fp, "nopersist\r\n");
+		os_fprintf(fp, "nopersist\n");
 
 	if(pppd->maxfail)
-		os_fprintf(fp, "maxfail %d\r\n", pppd->maxfail);
+		os_fprintf(fp, "maxfail %d\n", pppd->maxfail);
 
 	if(pppd->noipx)
-		os_fprintf(fp, "noipx\r\n");
-	else
-		os_fprintf(fp, "ipx\r\n");
+		os_fprintf(fp, "noipx\n");
+	//else
+	//	os_fprintf(fp, "ipx\n");
 
 	if(pppd->ip)
-		os_fprintf(fp, "ip\r\n");
-	else
-		os_fprintf(fp, "-ip\r\n");
+		os_fprintf(fp, "ip\n");
+	//else
+	//	os_fprintf(fp, "-ip\n");
 
 	if(pppd->noip)
-		os_fprintf(fp, "noip\r\n");
-	else
-		os_fprintf(fp, "-noip\r\n");
+		os_fprintf(fp, "noip\n");
+	//else
+	//	os_fprintf(fp, "-noip\n");
 
 	if(pppd->mn)
-		os_fprintf(fp, "mn\r\n");
-	else
-		os_fprintf(fp, "-mn\r\n");
+		os_fprintf(fp, "mn\n");
+	//else
+	//	os_fprintf(fp, "-mn\n");
 
+/*
 	if(pppd->pc)
-		os_fprintf(fp, "pc\r\n");
+		os_fprintf(fp, "pc\n");
 	else
-		os_fprintf(fp, "-pc\r\n");
+		os_fprintf(fp, "-pc\n");
+*/
 
 	if(pppd->vj)
-		os_fprintf(fp, "vj\r\n");
+		os_fprintf(fp, "vj\n");
 	else
-		os_fprintf(fp, "novj\r\n");
+		os_fprintf(fp, "novj\n");
 
 	if(pppd->passive)
-		os_fprintf(fp, "passive\r\n");
+		os_fprintf(fp, "passive\n");
 
 	if(pppd->passive)
-		os_fprintf(fp, "passive\r\n");
+		os_fprintf(fp, "passive\n");
 
 	if(pppd->silent)
-		os_fprintf(fp, "silent\r\n");
+		os_fprintf(fp, "silent\n");
 
 	if(pppd->all)
-		os_fprintf(fp, "-all\r\n");
+		os_fprintf(fp, "-all\n");
 
 	if(pppd->ac)
-		os_fprintf(fp, "-ac\r\n");
+		os_fprintf(fp, "-ac\n");
 
 	if(pppd->am)
-		os_fprintf(fp, "-am\r\n");
+		os_fprintf(fp, "-am\n");
 
 	if(pppd->proxyarp)
-		os_fprintf(fp, "proxyarp\r\n");
+		os_fprintf(fp, "proxyarp\n");
 
 	if(pppd->login)
-		os_fprintf(fp, "login\r\n");
+		os_fprintf(fp, "login\n");
 
 	if(pppd->asyncmap)
-		os_fprintf(fp, "asyncmap\r\n");
+		os_fprintf(fp, "asyncmap\n");
 
 	if(pppd->auth)
-		os_fprintf(fp, "auth\r\n");
+		os_fprintf(fp, "auth\n");
 	else
-		os_fprintf(fp, "noauth\r\n");
+		os_fprintf(fp, "noauth\n");
 
+/*
 	if(pppd->xonxoff)
-		os_fprintf(fp, "xonxoff\r\n");
+		os_fprintf(fp, "xonxoff\n");
 	else
-		os_fprintf(fp, "-xonxoff\r\n");
+		os_fprintf(fp, "-xonxoff\n");
+*/
 
 	if(pppd->local)
-		os_fprintf(fp, "local\r\n");
-	else
-		os_fprintf(fp, "-local\r\n");
+		os_fprintf(fp, "local\n");
+	//else
+	//	os_fprintf(fp, "-local\n");
 
 	if(pppd->modem)
-		os_fprintf(fp, "modem\r\n");
-	else
-		os_fprintf(fp, "-modem\r\n");
+		os_fprintf(fp, "modem\n");
+	//else
+	//	os_fprintf(fp, "-modem\n");
 
 	if(pppd->lock)
-		os_fprintf(fp, "lock\r\n");
+		os_fprintf(fp, "lock\n");
 
 	if(pppd->debug)
 	{
-		os_fprintf(fp, "debug\r\n");
+		os_fprintf(fp, "debug\n");
 		if(strlen(pppd->logfile))
-			os_fprintf(fp, "logfile /var/log/%s\r\n",pppd->logfile);
+			os_fprintf(fp, "logfile /var/log/%s\n",pppd->logfile);
 	}
     //char crtscts[PPPD_OPTIONS_MAX];
         //使用硬件流控制来控制串口的数据流向，如RTS/CTS
     //char escape[PPPD_OPTIONS_MAX];
         //指定传输时，需要避免的某些字符
-	os_fprintf(fp, "\r\n");
-	os_fprintf(fp, "# modem IP option\r\n");
+	os_fprintf(fp, "\n");
+	os_fprintf(fp, "# modem IP option\n");
 	if(pppd->mru)
-		os_fprintf(fp, "mru %d\r\n", pppd->mru);
+		os_fprintf(fp, "mru %d\n", pppd->mru);
 	if(pppd->mtu)
-		os_fprintf(fp, "mtu %d\r\n", pppd->mtu);
+		os_fprintf(fp, "mtu %d\n", pppd->mtu);
 	if(pppd->netmask)
-		os_fprintf(fp, "netmask %d\r\n", pppd->netmask);
+		os_fprintf(fp, "netmask %d\n", pppd->netmask);
 
 	if(pppd->ms_dns[0])
-		os_fprintf(fp, "ms-dns %d\r\n", pppd->ms_dns[0]);
+		os_fprintf(fp, "ms-dns %d\n", pppd->ms_dns[0]);
 	if(pppd->ms_dns[1])
-		os_fprintf(fp, "ms-dns %d\r\n", pppd->ms_dns[1]);
+		os_fprintf(fp, "ms-dns %d\n", pppd->ms_dns[1]);
 	if(pppd->demand)
-		os_fprintf(fp, "demand %d\r\n", pppd->demand);
+		os_fprintf(fp, "demand %d\n", pppd->demand);
 
 	if(strlen(pppd->domain))
-		os_fprintf(fp, "domain %s\r\n",pppd->domain);
+		os_fprintf(fp, "domain %s\n",pppd->domain);
 
 	if(strlen(pppd->name))
-		os_fprintf(fp, "name %s\r\n",pppd->name);
+		os_fprintf(fp, "name %s\n",pppd->name);
 
 	if(strlen(pppd->usehostname))
-		os_fprintf(fp, "usehostname %s\r\n",pppd->usehostname);
+		os_fprintf(fp, "usehostname %s\n",pppd->usehostname);
 
 	if(strlen(pppd->remotename))
-		os_fprintf(fp, "remotename %s\r\n",pppd->remotename);
+		os_fprintf(fp, "remotename %s\n",pppd->remotename);
 
 	if(strlen(pppd->domain))
-		os_fprintf(fp, "domain %s\r\n",pppd->domain);
+		os_fprintf(fp, "domain %s\n",pppd->domain);
 
 	if(pppd->defaultroute)
-		os_fprintf(fp, "defaultroute\r\n");
+		os_fprintf(fp, "defaultroute\n");
 
 	if(pppd->usepeerdns)
-		os_fprintf(fp, "usepeerdns\r\n");
+		os_fprintf(fp, "usepeerdns\n");
 
 	if(pppd->noipdefault)
-		os_fprintf(fp, "noipdefault\r\n");
+		os_fprintf(fp, "noipdefault\n");
 
 
 	/*
 	 * LCP options
 	 */
-	os_fprintf(fp, "\r\n");
-	os_fprintf(fp, "# modem LCP option\r\n");
+	os_fprintf(fp, "\n");
+	os_fprintf(fp, "# modem LCP option\n");
 	if(pppd->lcp_echo_interval)
-		os_fprintf(fp, "lcp-echo-interval %d\r\n", pppd->lcp_echo_interval);
+		os_fprintf(fp, "lcp-echo-interval %d\n", pppd->lcp_echo_interval);
 
 	if(pppd->lcp_echo_failure)
-		os_fprintf(fp, "lcp-echo-failure %d\r\n", pppd->lcp_echo_failure);
+		os_fprintf(fp, "lcp-echo-failure %d\n", pppd->lcp_echo_failure);
 
 	if(pppd->lcp_restart)
-		os_fprintf(fp, "lcp-restart %d\r\n", pppd->lcp_restart);
+		os_fprintf(fp, "lcp-restart %d\n", pppd->lcp_restart);
 
 	if(pppd->lcp_max_configure)
-		os_fprintf(fp, "lcp-max-configure %d\r\n", pppd->lcp_max_configure);
+		os_fprintf(fp, "lcp-max-configure %d\n", pppd->lcp_max_configure);
 
 	if(pppd->lcp_max_terminate)
-		os_fprintf(fp, "lcp-max-terminate %d\r\n", pppd->lcp_max_terminate);
+		os_fprintf(fp, "lcp-max-terminate %d\n", pppd->lcp_max_terminate);
 
 	if(pppd->lcp_max_failure)
-		os_fprintf(fp, "lcp-max-failure %d\r\n", pppd->lcp_max_failure);
+		os_fprintf(fp, "lcp-max-failure %d\n", pppd->lcp_max_failure);
 
 
 
 	/*
 	 * IPCP options
 	 */
-	os_fprintf(fp, "\r\n");
-	os_fprintf(fp, "# modem IPCP option\r\n");
+	os_fprintf(fp, "\n");
+	os_fprintf(fp, "# modem IPCP option\n");
 	if(pppd->ipcp_restart)
-		os_fprintf(fp, "ipcp-restart %d\r\n", pppd->ipcp_restart);
+		os_fprintf(fp, "ipcp-restart %d\n", pppd->ipcp_restart);
 
 	if(pppd->ipcp_max_terminate)
-		os_fprintf(fp, "ipcp-max-terminate %d\r\n", pppd->ipcp_max_terminate);
+		os_fprintf(fp, "ipcp-max-terminate %d\n", pppd->ipcp_max_terminate);
 
 	if(pppd->ipcp_max_configure)
-		os_fprintf(fp, "ipcp-max-configure %d\r\n", pppd->ipcp_max_configure);
+		os_fprintf(fp, "ipcp-max-configure %d\n", pppd->ipcp_max_configure);
 
 	if(pppd->ipcp_accept_local)
-		os_fprintf(fp, "ipcp-accept-local\r\n");
+		os_fprintf(fp, "ipcp-accept-local\n");
 	if(pppd->ipcp_accept_remote)
-		os_fprintf(fp, "ipcp-accept-remote\r\n");
+		os_fprintf(fp, "ipcp-accept-remote\n");
 	/*
 	 * PAP options
 	 */
-	os_fprintf(fp, "\r\n");
-    os_fprintf(fp, "# modem PAP option\r\n");
+	os_fprintf(fp, "\n");
+    os_fprintf(fp, "# modem PAP option\n");
 	if(pppd->pap)
-		os_fprintf(fp, "+pap\r\n");
+		os_fprintf(fp, "+pap\n");
 	else
-		os_fprintf(fp, "-pap\r\n");
+		os_fprintf(fp, "-pap\n");
 
 	if(pppd->pap_restart)
-		os_fprintf(fp, "pap-restart %d\r\n", pppd->pap_restart);
+		os_fprintf(fp, "pap-restart %d\n", pppd->pap_restart);
 	if(pppd->pap_max_authreq)
-		os_fprintf(fp, "pap-max-authreq %d\r\n", pppd->pap_max_authreq);
+		os_fprintf(fp, "pap-max-authreq %d\n", pppd->pap_max_authreq);
 	if(pppd->pap_timeout)
-		os_fprintf(fp, "pap-timeout %d\r\n", pppd->pap_timeout);
+		os_fprintf(fp, "pap-timeout %d\n", pppd->pap_timeout);
 
 
 	/*
 	 * CHAP options
 	 */
-	os_fprintf(fp, "\r\n");
-    os_fprintf(fp, "# modem CHAP option\r\n");
+	os_fprintf(fp, "\n");
+    os_fprintf(fp, "# modem CHAP option\n");
 	if(pppd->chap)
-		os_fprintf(fp, "+chap\r\n");
+		os_fprintf(fp, "+chap\n");
 	else
-		os_fprintf(fp, "-chap\r\n");
+		os_fprintf(fp, "-chap\n");
 	if(pppd->chap_restart)
-		os_fprintf(fp, "chap-restart %d\r\n", pppd->chap_restart);
+		os_fprintf(fp, "chap-restart %d\n", pppd->chap_restart);
 	if(pppd->chap_max_challenge)
-		os_fprintf(fp, "chap-max-challenge %d\r\n", pppd->chap_max_challenge);
+		os_fprintf(fp, "chap-max-challenge %d\n", pppd->chap_max_challenge);
 	if(pppd->chap_interval)
-		os_fprintf(fp, "chap-interval %d\r\n", pppd->chap_interval);
+		os_fprintf(fp, "chap-interval %d\n", pppd->chap_interval);
 
-	os_fprintf(fp, "\r\n");
+	os_fprintf(fp, "\n");
 	return OK;
 }
 
@@ -711,6 +763,8 @@ static int modem_pppd_create_dial_name(modem_pppd_t *pppd)
 	FILE *fp = NULL;
 	char filepath[256];
 	assert(pppd);
+	assert(	pppd->modem);
+	assert(	((modem_t *)pppd->modem)->client);
 	os_memset(filepath, 0, sizeof(filepath));
 	os_snprintf(filepath, sizeof(filepath), "%s%s",MODEM_PPPD_PEERS_BASE, pppd->dial_name);
 	remove(filepath);
@@ -720,53 +774,65 @@ static int modem_pppd_create_dial_name(modem_pppd_t *pppd)
 		char filepath[256];
 		modem_t *modem = pppd->modem;
 		modem_client_t *client = NULL;
+		struct interface *ifp = modem->ppp_serial;
 		char *devname = NULL;
 		if(!modem)
 		{
 			fclose(fp);
 			return ERROR;
 		}
-#if 0
+#if 1
 		client = modem->client;
 		if(!client)
 		{
 			fclose(fp);
 			return ERROR;
 		}
-		os_fprintf(fp, "# modem options \r\n");
-		os_fprintf(fp, "# modem dev name\r\n");
-		devname = strrchr(client->pppd.devname, '/');
+		os_fprintf(fp, "# modem options \n");
+		os_fprintf(fp, "# modem dev name\n");
+		devname = strrchr(client->pppd->devname, '/');
 		if(devname)
 			devname++;
 		else
-			devname = client->pppd.devname;
-		os_fprintf(fp, "%s\r\n", devname);
-		os_fprintf(fp, "# modem dev baudrate\r\n");
-		os_fprintf(fp, "%d\r\n", client->pppd.speed);
+			devname = client->pppd->devname;
+		os_fprintf(fp, "%s\n", devname);
+		os_fprintf(fp, "# modem dev baudrate\n");
+		os_fprintf(fp, "%d\n", client->pppd->speed);
+
+		os_fprintf(fp, "# if name \n");
+		if(ifp && os_strlen(ifp->k_name))
+		{
+			os_fprintf(fp, "\nifname %s\n\n", ifp->k_name);
+			MODEM_PPPD_DEBUG("PPPD interface name '%s'", ifp->k_name);
+		}
+		else
+			MODEM_PPPD_DEBUG("PPPD interface name NULL");
 #endif
 		modem_pppd_create_options_prefile(fp, &pppd->pppd_options);
 
 		os_memset(filepath, 0, sizeof(filepath));
 		os_snprintf(filepath, sizeof(filepath), "%s%s%s",MODEM_PPPD_PEERS_BASE,
 				pppd->dial_name, MODEM_PPPD_CONNECT);
-		os_fprintf(fp, "connect '/usr/sbin/chat -s -v -f %s'\r\n", filepath);
+		os_fprintf(fp, "connect '/usr/sbin/chat -s -v -f %s'\n", filepath);
 
 		os_memset(filepath, 0, sizeof(filepath));
 		os_snprintf(filepath, sizeof(filepath), "%s%s%s",MODEM_PPPD_PEERS_BASE,
 				pppd->dial_name, MODEM_PPPD_DISCONNECT);
-		os_fprintf(fp, "disconnect '/usr/sbin/chat -s -v -f %s'\r\n", filepath);
+		os_fprintf(fp, "disconnect '/usr/sbin/chat -s -v -f %s'\n", filepath);
 
+/*
 		os_memset(filepath, 0, sizeof(filepath));
 		os_snprintf(filepath, sizeof(filepath), "%s%s%s",MODEM_PPPD_BASE,
 				pppd->dial_name, MODEM_PPPD_SECRETS);
-		os_fprintf(fp, "secrets '%s'\r\n", filepath);
+		os_fprintf(fp, "secrets '%s'\n", filepath);
 
 		os_memset(filepath, 0, sizeof(filepath));
 		os_snprintf(filepath, sizeof(filepath), "%s%s%s",MODEM_PPPD_BASE,
 				pppd->dial_name, MODEM_PPPD_OPTIONS);
-		os_fprintf(fp, "option '%s'\r\n", filepath);
+		os_fprintf(fp, "options '%s'\n", filepath);
+*/
 
-		os_fprintf(fp, "\r\n");
+		os_fprintf(fp, "\n");
 
 
 		fflush(fp);
@@ -819,7 +885,7 @@ static int modem_pppd_delete_action(modem_pppd_t *pppd)
 static int modem_pppd_task_connect(modem_pppd_t *pppd)
 {
 	assert(pppd);
-#if 1
+#ifndef DOUBLE_PROCESS
 	int pid = child_process_create();
 	if(pid < 0)
 	{
@@ -831,37 +897,120 @@ static int modem_pppd_task_connect(modem_pppd_t *pppd)
 		//char filepath[256];
 		//os_memset(filepath, 0, sizeof(filepath));
 		//os_snprintf(filepath, sizeof(filepath), "pppd call %s", pppd->dial_name);
-		char *exeargv[] = {"pppd", "call", pppd->dial_name, NULL};
+		char *exeargv[] = {"pppd", "call", pppd->dial_name,NULL};
 		exeargv[2] = pppd->dial_name;
 		super_system_execvp("pppd", exeargv);
 	}
 	else
 		pppd->taskid = pid;
 #else
-	char filepath[256];
-	os_memset(filepath, 0, sizeof(filepath));
-	os_snprintf(filepath, sizeof(filepath), "pppd call %s&", pppd->dial_name);
-	pppd->taskid = super_system(filepath);
+	char path[128];
+	//char *argve[] = {"call", "file", "/etc/ppp/peers/dial-auto", NULL};
+	char *argv[4] = {"call", "file", NULL, NULL};
+	memset(path, 0, sizeof(path));
+	snprintf(path, sizeof(path), "%s%s", MODEM_PPPD_PEERS_BASE, pppd->dial_name);
+
+	if(pppd->taskid)
+	{
+		if(os_process_action(PROCESS_LOOKUP, NULL, pppd->taskid))
+		{
+			return OK;
+		}
+	}
+	argv[2] = path;
+	MODEM_PPPD_DEBUG("PPPD connect on %s", ((modem_t *)pppd->modem)->name);
+	pppd->taskid = os_process_register(PROCESS_START, ((modem_t *)pppd->modem)->name, "pppd", TRUE, argv);
+	if(!pppd->taskid)
+		return ERROR;
 #endif
 	return OK;
 }
+/*
+call: unrecognized option 'dial-auto'
+pppd version 2.4.7
+Usage: call [ options ], where options are:
+        <device>        Communicate over the named device
+        <speed>         Set the baud rate to <speed>
+        <loc>:<rem>     Set the local and/or remote interface IP
+                        addresses.  Either one may be omitted.
+        asyncmap <n>    Set the desired async map to hex <n>
+        auth            Require authentication from peer
+        connect <p>     Invoke shell command <p> to set up the serial line
+        crtscts         Use hardware RTS/CTS flow control
+        defaultroute    Add default route through interface
+        file <f>        Take options from file <f>
+        modem           Use modem control lines
+        mru <n>         Set MRU value to <n> for negotiation
+See pppd(8) for more options.
 
+ */
 static int modem_pppd_task_disconnect(modem_pppd_t *pppd)
 {
+#ifndef DOUBLE_PROCESS
 	assert(pppd);
 	return child_process_destroy(pppd->taskid);
+#else
+/*	char path[128];
+	char *argv[] = {"call", pppd->dial_name, NULL};
+	memset(path, 0, sizeof(path));
+	snprintf(path, sizeof(path), "pppd");*/
+	if(pppd->taskid)
+	{
+		if(os_process_action(PROCESS_LOOKUP, NULL, pppd->taskid))
+		{
+			if(os_process_action(PROCESS_STOP, ((modem_t *)pppd->modem)->name, pppd->taskid))
+			{
+				pppd->taskid = 0;
+				return OK;
+			}
+		}
+		pppd->taskid = 0;
+		return OK;
+	}
+	return OK;
+#endif
 }
 /***********************************************************************/
 BOOL modem_pppd_isconnect(modem_t *modem)
 {
 	assert(modem);
+	struct interface *ifp = modem->ppp_serial;
 	modem_pppd_t *pppd = modem->pppd;
-	if(pppd)
+	if(pppd && ifp)
 	{
 		if(pppd->taskid)
 		{
+			//MODEM_DEBUG("modem_pppd_isconnect TRUE");
 			return TRUE;
 		}
+	}
+	//MODEM_DEBUG("modem_pppd_isconnect FALSE");
+	return FALSE;
+}
+
+BOOL modem_pppd_islinkup(modem_t *modem)
+{
+	assert(modem);
+	struct interface *ifp = modem->ppp_serial;
+	modem_pppd_t *pppd = modem->pppd;
+	if(pppd && ifp)
+	{
+		if(pppd->taskid)
+		{
+			if(pal_interface_ifindex(ifp->k_name))
+			{
+				//MODEM_DEBUG("modem_pppd_islinkup TRUE");
+				if(pppd->linkup == FALSE)
+				{
+					//MODEM_DEBUG("modem_pppd_islinkup UPDATE KERNEL");
+					modem_serial_interface_update_kernel(modem, ifp->k_name);
+					pppd->linkup = TRUE;
+				}
+				return TRUE;
+			}
+		}
+		//MODEM_DEBUG("modem_pppd_islinkup FALSE");
+		pppd->linkup = FALSE;
 	}
 	return FALSE;
 }
@@ -872,6 +1021,7 @@ int modem_pppd_connect(modem_t *modem)
 	modem_pppd_t *pppd = modem->pppd;
 	if(pppd)
 	{
+		modem_pppd_create_action(pppd);
 		if(pppd->taskid)
 		{
 			modem_pppd_task_disconnect(pppd);
@@ -879,8 +1029,9 @@ int modem_pppd_connect(modem_t *modem)
 		}
 		if(pppd->taskid == 0)
 		{
-			pppd->taskid = modem_pppd_task_connect(pppd);
-			return OK;
+			modem_pppd_task_connect(pppd);
+			if(pppd->taskid)
+				return OK;
 		}
 	}
 	return ERROR;
@@ -895,8 +1046,12 @@ int modem_pppd_disconnect(modem_t *modem)
 		if(pppd->taskid)
 		{
 			modem_pppd_task_disconnect(pppd);
-			pppd->taskid = 0;
-			return OK;
+			if(pppd->taskid == 0)
+			{
+				pppd->taskid = 0;
+				pppd->linkup = FALSE;
+				return OK;
+			}
 		}
 		else
 			return OK;

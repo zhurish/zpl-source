@@ -3210,7 +3210,7 @@ void ospf_dcn_if_neid_update(u_int uiNeid)
 	uint32_t count = 0;
 	uint8_t buf[512] = {0};
     octetstring octetStat;
-    char szcDevStr[64] = {0};
+    char szcDevStr[512] = {0};
 	u_int ulid = 0,ulIp = 0;
 	struct ospf_process *p_process = NULL;
     struct ospf_if *p_if = NULL;
@@ -3368,7 +3368,7 @@ void ospf_dcn_if_set(u_int ulPrid,u_int ulIp)
 	uint32_t count = 0;
 	uint8_t buf[512] = {0};
     octetstring octetStat;
-    char szcDevStr[64] = {0};
+    char szcDevStr[512] = {0};
 	u_int ulid = 0;
 	struct ospf_process *p_process = NULL;
     struct ospf_if *p_if = NULL;

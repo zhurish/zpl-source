@@ -22,9 +22,9 @@
 #include "modem_dhcp.h"
 #include "modem_pppd.h"
 #include "modem_qmi.h"
-#include "modem_product.h"
 #include "modem_control.h"
 #include "modem_usim.h"
 #include "modem_state.h"
 #include "modem_atcmd.h"
+#include "modem_usb_driver.h"
 

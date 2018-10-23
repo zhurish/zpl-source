@@ -5,8 +5,8 @@
  *      Author: zhurish
  */
 
-#ifndef PLATFORM_OS_OS_LIST_H_
-#define PLATFORM_OS_OS_LIST_H_
+#ifndef __OS_LIST_H__
+#define __OS_LIST_H__
 
 /* type definitions */
 
@@ -23,6 +23,7 @@ typedef struct			/* Header for a linked list. */
     {
     NODE node;			/* Header list node */
     int count;			/* Number of nodes in list */
+    int (*free)(void *);
     } LIST;
 
 /* END_HIDDEN */
@@ -52,4 +53,4 @@ extern void 	lstInit (LIST *pList);
 extern void 	lstInsert (LIST *pList, NODE *pPrev, NODE *pNode);
 
 
-#endif /* PLATFORM_OS_OS_LIST_H_ */
+#endif /* __OS_LIST_H__ */

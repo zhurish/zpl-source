@@ -30,11 +30,14 @@ OBJS += modem_dhcp.o
 OBJS += modem_qmi.o
 
 OBJS += modem_operators.o
+OBJS += modem_usb_driver.o
+
+
 OBJS += modem_atcmd.o
 OBJS += modem_product.o
 OBJS += modem_main.o
 #OBJS += cmd_modem.o
-OBJS += test.o
+#OBJS += test.o
 #############################################################################
 # LIB
 ###########################################################################

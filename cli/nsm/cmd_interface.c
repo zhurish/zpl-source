@@ -25,6 +25,8 @@
 #include "vrf.h"
 #include "interface.h"
 
+#include "nsm_dhcp.h"
+
 
 static int nsm_interface_cmd_node_get(struct interface *ifp)
 {
@@ -50,6 +52,8 @@ static int nsm_interface_cmd_node_get(struct interface *ifp)
 		else
 			node = INTERFACE_NODE;
 		break;
+	case IF_WIRELESS:
+		node = WIRELESS_INTERFACE_NODE;
 		break;
 	case IF_TUNNEL:
 		node = TUNNEL_INTERFACE_NODE;
@@ -142,30 +146,21 @@ DEFUN (nsm_interface,
 }
 
 
-
-DEFUN (nsm_interface_other,
-		nsm_interface_other_cmd,
-		"interface (loopback|vlan|lag) <1-1024>",
-		"Select an interface to configure\n"
-		"Loopback interface\n"
-		"Vlan interface\n"
-		"Lag interface\n"
-		"interface number\n")
+static int nsm_interface_other_create(int argc, char *name, char *uspv, struct vty *vty)
 {
-
 	int ret = 0;
 	struct interface *ifp;
-	if (argv[0] && argv[1])
+	if (name && uspv)
 	{
-		ifp = if_lookup_by_name (if_ifname_format(argv[0], argv[1]));
+		ifp = if_lookup_by_name (if_ifname_format(name, uspv));
 		if(!ifp)
 		{
-			if(nsm_interface_create_check_api(vty, argv[0], argv[1]) == FALSE)
+			if(nsm_interface_create_check_api(vty, name, uspv) == FALSE)
 				return CMD_WARNING;
-			ret = nsm_interface_create_api(if_ifname_format(argv[0], argv[1]));
+			ret = nsm_interface_create_api(if_ifname_format(name, uspv));
 			if(ret == OK)
 			{
-				ifp = if_lookup_by_name (if_ifname_format(argv[0], argv[1]));
+				ifp = if_lookup_by_name (if_ifname_format(name, uspv));
 				if(ifp)
 				{
 					vty->index = ifp;
@@ -184,22 +179,14 @@ DEFUN (nsm_interface_other,
 	return CMD_WARNING;
 }
 
-DEFUN (no_nsm_interface_other,
-		no_nsm_interface_other_cmd,
-		"no interface (loopback|vlan|lag) <1-1024>",
-		NO_STR
-		"Select an interface to configure\n"
-		"Loopback interface\n"
-		"Vlan interface\n"
-		"Lag interface\n"
-		"interface number\n")
+static int nsm_interface_other_destory(int argc, char *name, char *uspv, struct vty *vty)
 {
 	int ret = 0;
 	struct interface *ifp;
-	if (argv[0] && argv[1])
+	if (name && uspv)
 	{
-		ifp = if_lookup_by_name (if_ifname_format(argv[0], argv[1]));
-		if(!ifp)
+		ifp = if_lookup_by_name (if_ifname_format(name, uspv));
+		if(ifp)
 		{
 			ret = nsm_interface_delete_api(ifp);
 			return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -207,6 +194,64 @@ DEFUN (no_nsm_interface_other,
 	}
 	return CMD_WARNING;
 }
+
+DEFUN (nsm_interface_loopback,
+		nsm_interface_loopback_cmd,
+		"interface "CMD_IF_LOOP_STR,
+		"Select an interface to configure\n"
+		CMD_IF_VLAN_STR_HELP)
+{
+	return nsm_interface_other_create(2, "loopback", argv[0], vty);
+}
+
+DEFUN (no_nsm_interface_loopback,
+		no_nsm_interface_loopback_cmd,
+		"no interface "CMD_IF_LOOP_STR,
+		NO_STR
+		"Select an interface to configure\n"
+		CMD_IF_VLAN_STR_HELP)
+{
+	return nsm_interface_other_destory(2, "loopback", argv[0], vty);
+}
+
+DEFUN (nsm_interface_vlan,
+		nsm_interface_vlan_cmd,
+		"interface "CMD_IF_VLAN_STR,
+		"Select an interface to configure\n"
+		CMD_IF_VLAN_STR_HELP)
+{
+	return nsm_interface_other_create(2, "vlan", argv[0], vty);
+}
+
+DEFUN (no_nsm_interface_vlan,
+		no_nsm_interface_vlan_cmd,
+		"no interface "CMD_IF_VLAN_STR,
+		NO_STR
+		"Select an interface to configure\n"
+		CMD_IF_VLAN_STR_HELP)
+{
+	return nsm_interface_other_destory(2, "loopback", argv[0], vty);
+}
+
+DEFUN (nsm_interface_trunk,
+		nsm_interface_trunk_cmd,
+		"interface "CMD_IF_TRUNK_STR,
+		"Select an interface to configure\n"
+		CMD_IF_TRUNK_STR_HELP)
+{
+	return nsm_interface_other_create(2, "port-channel", argv[0], vty);
+}
+
+DEFUN (no_nsm_interface_trunk,
+		no_nsm_interface_trunk_cmd,
+		"no interface "CMD_IF_TRUNK_STR,
+		NO_STR
+		"Select an interface to configure\n"
+		CMD_IF_TRUNK_STR_HELP)
+{
+	return nsm_interface_other_destory(2, "loopback", argv[0], vty);
+}
+
 
 DEFUN (no_nsm_interface,
 		no_nsm_interface_cmd,
@@ -221,7 +266,7 @@ DEFUN (no_nsm_interface,
 	if (argv[0] && argv[1])
 	{
 		ifp = if_lookup_by_name (if_ifname_format(argv[0], argv[1]));
-		if(!ifp)
+		if(ifp)
 		{
 			ret = nsm_interface_delete_api(ifp);
 			return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -281,7 +326,7 @@ DEFUN_HIDDEN (hidden_no_nsm_interface,
 	if (argv[0])
 	{
 		ifp = if_lookup_by_name (argv[0]);
-		if(!ifp)
+		if(ifp)
 		{
 			ret = nsm_interface_delete_api(ifp);
 			return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -364,11 +409,16 @@ DEFUN (nsm_interface_switchport,
 	struct interface *ifp = vty->index;
 	if(ifp)
 	{
-		if(ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET)
+		if(ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET || ifp->if_type == IF_LAG)
 		{
 			ret = nsm_interface_mode_set_api(ifp, IF_MODE_ACCESS_L2);
 			if(ret == OK)
-				vty->node = INTERFACE_NODE;
+			{
+				if(ifp->if_type == IF_LAG)
+					vty->node = LAG_INTERFACE_NODE;
+				else
+					vty->node = INTERFACE_NODE;
+			}
 			return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 		}
 		else
@@ -388,11 +438,16 @@ DEFUN (no_nsm_interface_switchport,
 	struct interface *ifp = vty->index;
 	if(ifp)
 	{
-		if(ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET)
+		if(ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET || ifp->if_type == IF_LAG)
 		{
 			ret = nsm_interface_mode_set_api(ifp, IF_MODE_L3);
 			if(ret == OK)
-				vty->node = INTERFACE_L3_NODE;
+			{
+				if(ifp->if_type == IF_LAG)
+					vty->node = LAG_INTERFACE_L3_NODE;
+				else
+					vty->node = INTERFACE_L3_NODE;
+			}
 			return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 		}
 		else
@@ -1108,104 +1163,6 @@ DEFUN (no_nsm_interface_ipv6_address,
 }
 #endif /* HAVE_IPV6 */
 
-DEFUN (nsm_interface_ip_dhcp,
-		nsm_interface_ip_dhcp_cmd,
-		"ip address dhcp",
-		"Interface Internet Protocol config commands\n"
-		"Set the IP address of an interface\n"
-		"DHCP configure\n")
-{
-	int ret = 0;
-	BOOL mode = FALSE;
-	struct interface *ifp = (struct interface *) vty->index;
-	if(ifp)
-	{
-		if(nsm_interface_address_dhcp_get_api(ifp, &mode) != OK)
-		{
-			vty_out (vty, "%% Can not get interface dhcp mode %s", VTY_NEWLINE);
-			return CMD_WARNING;
-		}
-		if(mode == TRUE)
-			return CMD_SUCCESS;
-		ret = nsm_interface_address_dhcp_set_api(ifp, TRUE);
-		if(ret == ERROR)
-			vty_out (vty, "%% Can't set interface IP address dhcp.%s",VTY_NEWLINE);
-		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-	}
-	return CMD_WARNING;
-}
-
-DEFUN (no_nsm_interface_ip_dhcp,
-		no_nsm_interface_ip_dhcp_cmd,
-		"no ip address dhcp",
-		NO_STR
-		"Interface Internet Protocol config commands\n"
-		"Set the IP address of an interface\n"
-		"DHCP configure\n")
-{
-	int ret = 0;
-	BOOL mode = FALSE;
-	struct interface *ifp = (struct interface *) vty->index;
-	if(ifp)
-	{
-		if(nsm_interface_address_dhcp_get_api(ifp, &mode) != OK)
-		{
-			vty_out (vty, "%% Can not get interface dhcp mode %s", VTY_NEWLINE);
-			return CMD_WARNING;
-		}
-		if(mode == FALSE)
-			return CMD_SUCCESS;
-		ret = nsm_interface_address_dhcp_set_api(ifp, FALSE);
-		if(ret == ERROR)
-			vty_out (vty, "%% Can't set interface IP address dhcp.%s",VTY_NEWLINE);
-		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-	}
-	return CMD_WARNING;
-}
-
-DEFUN (nsm_interface_dhcp_option,
-		nsm_interface_dhcp_option_cmd,
-		"ip address dhcp option <1-255> STRING",
-		"Interface Internet Protocol config commands\n"
-		"Set the IP address of an interface\n"
-		"DHCP configure\n"
-		"DHCP option configure\n"
-		"DHCP option index\n"
-		"DHCP option value\n")
-{
-	int ret = 0;
-	struct interface *ifp = (struct interface *) vty->index;
-	if(ifp)
-	{
-		ret = nsm_interface_dhcp_option_set_api(ifp, TRUE, atoi(argv[0]), argv[1]);
-		if(ret == ERROR)
-			vty_out (vty, "%% Can't set interface IP address dhcp.%s",VTY_NEWLINE);
-		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-	}
-	return CMD_WARNING;
-}
-
-DEFUN (no_nsm_interface_dhcp_option,
-		no_nsm_interface_dhcp_option_cmd,
-		"no ip address dhcp option <1-255>",
-		NO_STR
-		"Interface Internet Protocol config commands\n"
-		"Set the IP address of an interface\n"
-		"DHCP configure\n"
-		"DHCP option configure\n"
-		"DHCP option index\n")
-{
-	int ret = 0;
-	struct interface *ifp = (struct interface *) vty->index;
-	if(ifp)
-	{
-		ret = nsm_interface_dhcp_option_set_api(ifp, FALSE, atoi(argv[0]), argv[1]);
-		if(ret == ERROR)
-			vty_out (vty, "%% Can't set interface IP address dhcp.%s",VTY_NEWLINE);
-		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-	}
-	return CMD_WARNING;
-}
 
 #ifdef USE_IPSTACK_KERNEL
 DEFUN_HIDDEN (nsm_interface_set_kernel,
@@ -1222,10 +1179,12 @@ DEFUN_HIDDEN (nsm_interface_set_kernel,
 		ret = if_slot_set_port_phy(ifp->ifindex, argv[0]);
 		if(ret == OK)
 		{
-			os_memset(ifp->k_name, 0, sizeof(ifp->k_name));
-			os_strcpy(ifp->k_name, argv[0]);
-			ifp->k_name_hash = if_name_hash_make(ifp->k_name);
+			if_kname_set(ifp, argv[0]);
 			SET_FLAG(ifp->status, ZEBRA_INTERFACE_ATTACH);
+
+			pal_interface_update_flag(ifp);
+			ifp->k_ifindex = pal_interface_ifindex(ifp->k_name);
+			pal_interface_get_lladdr(ifp);
 		}
 		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 	}
@@ -1244,8 +1203,9 @@ DEFUN_HIDDEN (no_nsm_interface_set_kernel,
 		ret = if_slot_set_port_phy(ifp->ifindex, NULL);
 		if(ret == OK)
 		{
-			os_memset(ifp->k_name, 0, sizeof(ifp->k_name));
+			if_kname_set(ifp, NULL);
 			UNSET_FLAG(ifp->status, ZEBRA_INTERFACE_ATTACH);
+			ifp->k_ifindex = 0;
 		}
 		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 	}
@@ -1266,13 +1226,7 @@ DEFUN_HIDDEN (show_interface_kernel,
 
 
 /* Show all interfaces to vty. */
-DEFUN (show_interface,
-		show_interface_one_cmd,
-		"show interface " CMD_IF_USPV_STR " "CMD_USP_STR,
-		SHOW_STR
-		"Interface status and configuration\n"
-		CMD_IF_USPV_STR_HELP
-		CMD_USP_STR_HELP)
+static int _show_interface_info(int argc, char *name, char *uspv, struct vty *vty)
 {
 	struct listnode *node;
 	struct interface *ifp;
@@ -1294,9 +1248,9 @@ DEFUN (show_interface,
 	{
 		BOOL brief = FALSE, head = TRUE;
 		//nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, BOOL status)
-		if(os_memcmp(argv[0], "brief", 3) == 0)
+		if(os_memcmp(name, "brief", 3) == 0)
 			brief = FALSE;
-		else if(os_memcmp(argv[0], "status", 3) == 0)
+		else if(os_memcmp(name, "status", 3) == 0)
 			brief = TRUE;
 		if_list = if_list_get();
 		if (if_list)
@@ -1311,10 +1265,10 @@ DEFUN (show_interface,
 	else if(argc == 2)
 	{
 		char *ifname = NULL;
-		ifname = if_ifname_format(argv[0], argv[1]);
+		ifname = if_ifname_format(name, uspv);
 		ifp = if_lookup_by_name(ifname);
 		if (ifp == NULL) {
-			vty_out(vty, "%% Can't find interface %s %s%s", argv[0], argv[1], VTY_NEWLINE);
+			vty_out(vty, "%% Can't find interface %s %s%s", name, uspv, VTY_NEWLINE);
 			return CMD_WARNING;
 		}
 		if (ifp)
@@ -1322,6 +1276,17 @@ DEFUN (show_interface,
 	}
 	IF_DATA_UNLOCK();
 	return CMD_SUCCESS;
+}
+
+DEFUN (show_interface,
+		show_interface_one_cmd,
+		"show interface " CMD_IF_USPV_STR " "CMD_USP_STR,
+		SHOW_STR
+		"Interface status and configuration\n"
+		CMD_IF_USPV_STR_HELP
+		CMD_USP_STR_HELP)
+{
+	return _show_interface_info( argc, argv[0], argv[1], vty);
 }
 
 ALIAS(show_interface,
@@ -1338,47 +1303,36 @@ ALIAS(show_interface,
 		SHOW_STR
 		"Interface status and configuration\n");
 
-DEFUN (show_interface_other,
-		show_interface_other_cmd,
-		"show interface (loopback|vlan|lag) <1-1024>",
+DEFUN (show_interface_loopback,
+		show_interface_loopback_cmd,
+		"show interface " CMD_IF_LOOP_STR,
 		SHOW_STR
 		"Select an interface to configure\n"
-		"Loopback interface\n"
-		"Vlan interface\n"
-		"Lag interface\n"
-		"interface number\n")
+		CMD_IF_LOOP_STR_HELP)
 {
-	struct listnode *node;
-	struct interface *ifp;
-	struct list *if_list = NULL;
-	IF_DATA_LOCK();
-	if(argc == 0)
-	{
-		if_list = if_list_get();
-		if (if_list)
-		{
-			for (ALL_LIST_ELEMENTS_RO(if_list, node, ifp))
-			{
-				if (ifp)
-					nsm_interface_show_api(vty, ifp);
-			}
-		}
-	}
-	else
-	{
-		char *ifname = NULL;
-		ifname = if_ifname_format(argv[0], argv[1]);
-		ifp = if_lookup_by_name(ifname);
-		if (ifp == NULL) {
-			vty_out(vty, "%% Can't find interface %s%s", argv[0], VTY_NEWLINE);
-			return CMD_WARNING;
-		}
-		if (ifp)
-			nsm_interface_show_api(vty, ifp);
-	}
-	IF_DATA_UNLOCK();
-	return CMD_SUCCESS;
+	return  _show_interface_info( 2, "loopback", argv[0], vty);
 }
+
+DEFUN(show_interface_vlan,
+		show_interface_vlan_cmd,
+		"show interface "CMD_IF_VLAN_STR,
+		SHOW_STR
+		"Interface status and configuration\n"
+		CMD_IF_VLAN_STR_HELP)
+{
+	return  _show_interface_info( 2, "vlan", argv[0], vty);
+}
+
+DEFUN(show_interface_trunk,
+		show_interface_trunk_cmd,
+		"show interface "CMD_IF_TRUNK_STR,
+		SHOW_STR
+		"Interface status and configuration\n"
+		CMD_IF_TRUNK_STR_HELP)
+{
+	return  _show_interface_info( 2, "port-channel", argv[0], vty);
+}
+
 #ifdef CUSTOM_INTERFACE
 ALIAS(show_interface,
 	show_wifi_interface_cmd,
@@ -1411,7 +1365,7 @@ DEFUN_HIDDEN (show_interface_all_debug,
 			struct connected *ifc;
 			struct prefix *p;
 
-			if_data = ifp->info[ZLOG_NSM];
+			if_data = ifp->info[MODULE_NSM];
 
 			vty_out(vty, "interface %s%s", ifp->name, VTY_NEWLINE);
 
@@ -1437,13 +1391,25 @@ DEFUN_HIDDEN (show_interface_all_debug,
 				if (ifp->mtu6 != IF_MTU_DEFAULT)
 					vty_out(vty, " mtu6 %d%s",ifp->mtu, VTY_NEWLINE);
 
-				if (ifp->bandwidth != 0)
-					vty_out(vty, " bandwidth %u%s", ifp->bandwidth, VTY_NEWLINE);
-				if (ifp->dhcp)
+				if(ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET)
 				{
-					vty_out(vty, " ip address dhcp%s", VTY_NEWLINE);
+					if (ifp->bandwidth != 0)
+						vty_out(vty, " bandwidth %u%s", ifp->bandwidth, VTY_NEWLINE);
+				}
+				if(ifp->if_type == IF_ETHERNET ||
+						ifp->if_type == IF_GIGABT_ETHERNET ||
+						ifp->if_type == IF_SERIAL)
+				{
+					if (ifp->if_enca != IF_ENCA_NONE)
+						vty_out(vty, " encapsulation %s%s", if_enca_string(ifp->if_enca),VTY_NEWLINE);
+				}
+#ifdef PL_DHCP_MODULE
+				if (ifp->dhcp && nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
+				{
+					nsm_interface_dhcp_config(vty, ifp);
 				}
 				else
+#endif
 				{
 					for (ALL_LIST_ELEMENTS_RO(ifp->connected, addrnode, ifc))
 					{
@@ -1459,6 +1425,14 @@ DEFUN_HIDDEN (show_interface_all_debug,
 						}
 					}
 				}
+#ifdef PL_DHCP_MODULE
+			if (ifp->dhcp &&
+					nsm_interface_dhcp_mode_get_api(ifp) != DHCP_CLIENT &&
+					nsm_interface_dhcp_mode_get_api(ifp) != DHCP_NONE)
+			{
+				nsm_interface_dhcp_config(vty, ifp);
+			}
+#endif
 			}
 			vty_out(vty, "!%s", VTY_NEWLINE);
 		}
@@ -1467,7 +1441,6 @@ DEFUN_HIDDEN (show_interface_all_debug,
 	return CMD_SUCCESS;
 }
 
-#if 0
 static int nsm_interface_loopback_config_write(struct vty *vty)
 {
 	struct listnode *node;
@@ -1484,13 +1457,13 @@ static int nsm_interface_loopback_config_write(struct vty *vty)
 			struct connected *ifc;
 			struct prefix *p;
 
-			if_data = ifp->info[ZLOG_NSM];
-			if(ifp->if_type == IF_LOOPBACK)
+			if_data = ifp->info[MODULE_NSM];
+			if (ifp->if_type == IF_LOOPBACK)
 			{
 				vty_out(vty, "interface %s%s", ifp->name, VTY_NEWLINE);
 
 				if (ifp->desc)
-					vty_out(vty, " description %s%s", ifp->desc,VTY_NEWLINE);
+					vty_out(vty, " description %s%s", ifp->desc, VTY_NEWLINE);
 
 				if (if_data)
 				{
@@ -1498,38 +1471,29 @@ static int nsm_interface_loopback_config_write(struct vty *vty)
 						vty_out(vty, " shutdown%s", VTY_NEWLINE);
 				}
 
-				nsm_client_interface_write_config(0, vty, ifp);
-				if(ifp->if_mode == IF_MODE_L3)
+				//nsm_client_interface_write_config(0, vty, ifp);
+				if (ifp->if_mode == IF_MODE_L3)
 				{
 #ifdef USE_IPSTACK_IPCOM
 					if (ifp->vrf_id != VRF_DEFAULT)
-						vty_out(vty, " ip forward vrf %s%s", vrf_vrfid2name(ifp->vrf_id), VTY_NEWLINE);
+					vty_out(vty, " ip forward vrf %s%s", vrf_vrfid2name(ifp->vrf_id), VTY_NEWLINE);
 #endif
 					if (ifp->mtu != IF_MTU_DEFAULT)
-						vty_out(vty, " mtu %d%s",ifp->mtu, VTY_NEWLINE);
+						vty_out(vty, " mtu %d%s", ifp->mtu, VTY_NEWLINE);
 					if (ifp->mtu6 != IF_MTU_DEFAULT)
-						vty_out(vty, " mtu6 %d%s",ifp->mtu, VTY_NEWLINE);
+						vty_out(vty, " mtu6 %d%s", ifp->mtu, VTY_NEWLINE);
 
-					if (ifp->bandwidth != 0)
-						vty_out(vty, " bandwidth %u%s", ifp->bandwidth, VTY_NEWLINE);
-					if (ifp->dhcp)
+					for (ALL_LIST_ELEMENTS_RO(ifp->connected, addrnode, ifc))
 					{
-						vty_out(vty, " ip address dhcp%s", VTY_NEWLINE);
-					}
-					else
-					{
-						for (ALL_LIST_ELEMENTS_RO(ifp->connected, addrnode, ifc))
+						if (CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED))
 						{
-							if (CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED))
-							{
-								char buf[INET6_ADDRSTRLEN];
-								p = ifc->address;
-								vty_out(vty, " ip%s address %s",
-										p->family == AF_INET ? "" : "v6",
-										prefix2str(p, buf, sizeof(buf)));
+							char buf[INET6_ADDRSTRLEN];
+							p = ifc->address;
+							vty_out(vty, " ip%s address %s",
+									p->family == AF_INET ? "" : "v6",
+									prefix2str(p, buf, sizeof(buf)));
 
-								vty_out(vty, "%s", VTY_NEWLINE);
-							}
+							vty_out(vty, "%s", VTY_NEWLINE);
 						}
 					}
 				}
@@ -1540,7 +1504,6 @@ static int nsm_interface_loopback_config_write(struct vty *vty)
 	IF_DATA_UNLOCK();
 	return 0;
 }
-#endif
 
 
 static int nsm_interface_config_write(struct vty *vty)
@@ -1559,7 +1522,11 @@ static int nsm_interface_config_write(struct vty *vty)
 			struct connected *ifc;
 			struct prefix *p;
 
-			if_data = ifp->info[ZLOG_NSM];
+			if(if_is_loop(ifp))
+				continue;
+			if(if_is_tunnel(ifp))
+				continue;
+			if_data = ifp->info[MODULE_NSM];
 
 			vty_out(vty, "interface %s%s", ifp->name, VTY_NEWLINE);
 
@@ -1580,18 +1547,25 @@ static int nsm_interface_config_write(struct vty *vty)
 					vty_out(vty, " mtu %d%s",ifp->mtu, VTY_NEWLINE);
 				if (ifp->mtu6 != IF_MTU_DEFAULT)
 					vty_out(vty, " mtu6 %d%s",ifp->mtu, VTY_NEWLINE);
-
-				if (ifp->bandwidth != 0)
-					vty_out(vty, " bandwidth %u%s", ifp->bandwidth, VTY_NEWLINE);
-
-				if (ifp->if_enca != IF_ENCA_NONE)
-					vty_out(vty, " encapsulation %s%s", if_enca_string(ifp->if_enca),VTY_NEWLINE);
-
-				if (ifp->dhcp)
+				if(ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET)
 				{
-					vty_out(vty, " ip address dhcp%s", VTY_NEWLINE);
+					if (ifp->bandwidth != 0)
+						vty_out(vty, " bandwidth %u%s", ifp->bandwidth, VTY_NEWLINE);
+				}
+				if(ifp->if_type == IF_ETHERNET ||
+						ifp->if_type == IF_GIGABT_ETHERNET ||
+						ifp->if_type == IF_SERIAL)
+				{
+					if (ifp->if_enca != IF_ENCA_NONE)
+						vty_out(vty, " encapsulation %s%s", if_enca_string(ifp->if_enca),VTY_NEWLINE);
+				}
+#ifdef PL_DHCP_MODULE
+				if (ifp->dhcp && nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
+				{
+					nsm_interface_dhcp_config(vty, ifp);
 				}
 				else
+#endif
 				{
 					for (ALL_LIST_ELEMENTS_RO(ifp->connected, addrnode, ifc))
 					{
@@ -1608,6 +1582,14 @@ static int nsm_interface_config_write(struct vty *vty)
 					}
 				}
 			}
+#ifdef PL_DHCP_MODULE
+			if (ifp->dhcp &&
+					nsm_interface_dhcp_mode_get_api(ifp) != DHCP_CLIENT &&
+					nsm_interface_dhcp_mode_get_api(ifp) != DHCP_NONE)
+			{
+				nsm_interface_dhcp_config(vty, ifp);
+			}
+#endif
 			if (if_data)
 			{
 				if (if_data->shutdown == IF_ZEBRA_SHUTDOWN_ON)
@@ -1629,7 +1611,9 @@ static void cmd_show_interface_init(int node)
 	install_element(node, &show_interface_one_cmd);
 	install_element(node, &show_interface_cmd);
 	install_element(node, &show_interface_brief_cmd);
-	install_element(node, &show_interface_other_cmd);
+	install_element(node, &show_interface_loopback_cmd);
+	install_element(node, &show_interface_vlan_cmd);
+	install_element(node, &show_interface_trunk_cmd);
 #ifdef CUSTOM_INTERFACE
 	install_element(node, &show_wifi_interface_cmd);
 #endif
@@ -1648,7 +1632,9 @@ static void cmd_base_interface_init(int node)
 	install_element(node, &no_nsm_interface_shutdown_cmd);
 
 	install_element(node, &nsm_interface_cmd);
-	install_element(node, &nsm_interface_other_cmd);
+	install_element(node, &nsm_interface_vlan_cmd);
+	install_element(node, &nsm_interface_loopback_cmd);
+	install_element(node, &nsm_interface_trunk_cmd);
 	install_element(node, &hidden_nsm_interface_cmd);
 
 	if(node != INTERFACE_NODE && node != LAG_INTERFACE_NODE)
@@ -1667,11 +1653,6 @@ static void cmd_base_interface_init(int node)
 		install_element(node, &no_nsm_interface_mtu_cmd);
 		install_element(node, &nsm_interface_metric_cmd);
 		install_element(node, &no_nsm_interface_metric_cmd);
-
-		install_element(node, &nsm_interface_ip_dhcp_cmd);
-		install_element(node, &no_nsm_interface_ip_dhcp_cmd);
-		install_element(node, &nsm_interface_dhcp_option_cmd);
-		install_element(node, &no_nsm_interface_dhcp_option_cmd);
 	}
 	if(node == SERIAL_INTERFACE_NODE)
 	{
@@ -1731,7 +1712,10 @@ static void cmd_custom_interface_init(int node)
 
 void cmd_interface_init(void)
 {
+	reinstall_node(LOOPBACK_INTERFACE_NODE, nsm_interface_loopback_config_write);
 	reinstall_node(INTERFACE_NODE, nsm_interface_config_write);
+	//reinstall_node(WIRELESS_INTERFACE_NODE, nsm_interface_config_write);
+
 	install_default(INTERFACE_NODE);
 	install_default(INTERFACE_L3_NODE);
 
@@ -1741,15 +1725,21 @@ void cmd_interface_init(void)
 	install_default(LAG_INTERFACE_L3_NODE);
 	install_default(BRIGDE_INTERFACE_NODE);
 	install_default(SERIAL_INTERFACE_NODE);
+	install_default(WIRELESS_INTERFACE_NODE);
+
 #ifdef CUSTOM_INTERFACE
 	install_default(WIFI_INTERFACE_NODE);
 	install_default(MODEM_INTERFACE_NODE);
 #endif
 
 	install_element(CONFIG_NODE, &nsm_interface_cmd);
-	install_element(CONFIG_NODE, &nsm_interface_other_cmd);
+	install_element(CONFIG_NODE, &nsm_interface_vlan_cmd);
+	install_element(CONFIG_NODE, &nsm_interface_loopback_cmd);
+	install_element(CONFIG_NODE, &nsm_interface_trunk_cmd);
 	install_element(CONFIG_NODE, &no_nsm_interface_cmd);
-	install_element(CONFIG_NODE, &no_nsm_interface_other_cmd);
+	install_element(CONFIG_NODE, &no_nsm_interface_vlan_cmd);
+	install_element(CONFIG_NODE, &no_nsm_interface_loopback_cmd);
+	install_element(CONFIG_NODE, &no_nsm_interface_trunk_cmd);
 	install_element(CONFIG_NODE, &hidden_nsm_interface_cmd);
 	install_element(CONFIG_NODE, &hidden_no_nsm_interface_cmd);
 #ifdef CUSTOM_INTERFACE
@@ -1765,6 +1755,7 @@ void cmd_interface_init(void)
 	cmd_base_interface_init(LAG_INTERFACE_L3_NODE);
 	cmd_base_interface_init(BRIGDE_INTERFACE_NODE);
 	cmd_base_interface_init(SERIAL_INTERFACE_NODE);
+	cmd_base_interface_init(WIRELESS_INTERFACE_NODE);
 
 	cmd_ethernet_interface_init(INTERFACE_NODE);
 	cmd_ethernet_interface_init(INTERFACE_L3_NODE);
@@ -1792,4 +1783,6 @@ void cmd_interface_init(void)
 	cmd_show_interface_init(LAG_INTERFACE_L3_NODE);
 	cmd_show_interface_init(BRIGDE_INTERFACE_NODE);
 	cmd_show_interface_init(SERIAL_INTERFACE_NODE);
+	cmd_show_interface_init(WIRELESS_INTERFACE_NODE);
+
 }

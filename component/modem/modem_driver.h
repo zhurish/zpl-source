@@ -102,11 +102,11 @@ typedef struct modem_driver
 	char			eth_name_sec[MODEM_DRIVER_NAME_MAX];
 
 	void			*client;
-/*
-	int				(*md_probe)(struct modem_driver *);
-	int				(*md_init)(struct modem_driver *);
-	int				(*md_reboot)(struct modem_driver *);
-*/
+
+	int				(*modem_driver_init)(struct modem_driver *);
+	int				(*modem_driver_probe)(struct modem_driver *);
+	int				(*modem_driver_exit)(struct modem_driver *);
+	int				(*modem_driver_reboot)(struct modem_driver *);
 
 	modem_cmd_t		atcmd;
 
@@ -124,8 +124,9 @@ extern int modem_driver_inster(int vendor, int product);
 extern int modem_driver_tty_probe(modem_driver_t *, char *devname[]);
 
 
-extern int modem_driver_probe(modem_driver_t *);
 extern int modem_driver_init(modem_driver_t *);
+extern int modem_driver_probe(modem_driver_t *);
+extern int modem_driver_exit(modem_driver_t *);
 extern int modem_driver_reboot(modem_driver_t *);
 
 

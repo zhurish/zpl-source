@@ -24,16 +24,14 @@
 
 #define MODEM_DEBUG_DETAIL  0X80000000
 
-#define MODEM_IS_DEBUG(n) (modem_debug & MODEM_DEBUG_ ## n)
-#define MODEM_ON_DEBUG(n) (modem_debug |= MODEM_DEBUG_ ## n)
-#define MODEM_OFF_DEBUG(n) (modem_debug &= ~MODEM_DEBUG_ ## n)
+#define MODEM_IS_DEBUG(n) (modem_debug_conf & MODEM_DEBUG_ ## n)
+#define MODEM_ON_DEBUG(n) (modem_debug_conf |= MODEM_DEBUG_ ## n)
+#define MODEM_OFF_DEBUG(n) (modem_debug_conf &= ~MODEM_DEBUG_ ## n)
 
 
 
 #define MODEM_STRING_MAX	64
-#define MTYPE_MODEM 		MTYPE_ZCLIENT
-#define MTYPE_MODEM_CLIENT	MTYPE_ZCLIENT
-#define ZLOG_MODEM			ZLOG_MASC
+
 
 
 #define MODEM_PRODUCT_NAME_MAX	64
@@ -101,8 +99,9 @@ typedef struct modem_s
 	void				*dhcp;			// point to modem_dhcp_t
 
 	char				serialname[MODEM_STRING_MAX];
-	void				*serial;		// point to modem-serial <name>
+	void				*serial;		// point to modem-serial
 	void				*client;		// point modem_client_t
+	void				*mutex;
 
 	void				*ppp_serial;
 	void				*dial_serial;
@@ -112,6 +111,8 @@ typedef struct modem_s
 	void				*eth1;
 	void				*eth2;
 	//void				*ifp;
+
+
 
 	int					pid[MODEM_DIAL_MAX+1];
 }modem_t;
@@ -124,7 +125,7 @@ typedef struct modem_main_s
 
 }modem_main_t;
 
-extern int modem_debug;
+extern int modem_debug_conf;
 
 extern modem_main_t gModemmain;
 
@@ -146,6 +147,9 @@ extern int modem_main_callback_api(modem_cb cb, void *pVoid);
 extern int modem_main_bind_api(char *name, char *serialname);
 extern int modem_main_unbind_api(char *name, char *serialname);
 
+extern int modem_main_lock(modem_t *modem);
+extern int modem_main_unlock(modem_t *modem);
+
 /*
 extern int modem_interface_bind_api(char *name, char *ifname);
 extern int modem_interface_unbind_api(char *name);
@@ -155,8 +159,11 @@ extern int modem_module_init(void);
 extern int modem_main_process(void *pVoid);
 
 
-extern int modem_interface_add(modem_t *modem, char *name);
-extern int modem_serial_interface_add(modem_t *modem, char *name);
+extern int modem_interface_update_kernel(modem_t *modem, char *name);
+extern int modem_serial_interface_update_kernel(modem_t *modem, char *name);
+extern int modem_serial_devname_update_kernel(modem_t *modem, char *name);
+
+
 
 #ifdef __MODEM_DEBUG
 extern void modem_debug_printf(void *fp,char *func, int line, const char *format, ...);

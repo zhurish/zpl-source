@@ -590,7 +590,7 @@ static int show_nsm_vlan_database_one(l2vlan_t *node, struct vlan_user *pVoid)
 {
 	int i = 0;
 	int frist = 0;
-	char vlan[16], name[32], state[16], stp[16], member1[64], member2[64], empty[64];
+	char vlan[16], name[32], state[16], stp[16], member1[64], member2[64], empty[128];
 	struct vty *vty = pVoid->vty;
 	memset(vlan, 0, sizeof(vlan));
 	memset(name, 0, sizeof(name));

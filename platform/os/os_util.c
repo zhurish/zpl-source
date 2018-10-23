@@ -156,6 +156,57 @@ int name2pid(const char *name)
 	return pid;
 }
 
+pid_t os_pid_set (const char *path)
+{
+	FILE *fp = NULL;
+	pid_t pid = 0;
+	mode_t oldumask = 0;
+
+	pid = getpid();
+
+	oldumask = umask(0777 & ~0644);
+	fp = fopen(path, "w");
+	if (fp != NULL)
+	{
+		fprintf(fp, "%d\n", (int) pid);
+		fclose(fp);
+		umask(oldumask);
+		return pid;
+	}
+	/* XXX Why do we continue instead of exiting?  This seems incompatible
+	 with the behavior of the fcntl version below. */
+	fprintf(stderr, "Can't fopen pid lock file %s (%s), continuing", path,
+			strerror(errno));
+	umask(oldumask);
+	return -1;
+}
+
+
+pid_t os_pid_get (const char *path)
+{
+	FILE *fp = NULL;
+	pid_t pid = 0;
+	mode_t oldumask = 0;
+	if (access(path, 0) == 0)
+	{
+		oldumask = umask(0777 & ~0644);
+		fp = fopen(path, "r");
+		if (fp != NULL)
+		{
+			fscanf(fp, "%d", &pid);
+			fclose(fp);
+			umask(oldumask);
+			return pid;
+		}
+		/* XXX Why do we continue instead of exiting?  This seems incompatible
+		 with the behavior of the fcntl version below. */
+		fprintf(stderr, "Can't fopen pid lock file %s (%s), continuing", path,
+				strerror(errno));
+		umask(oldumask);
+	}
+	return -1;
+}
+
 int child_process_create()
 {
 	pid_t pid = 0;
@@ -172,6 +223,34 @@ int child_process_destroy(int pid)
 	}
 	return OK;
 }
+
+int child_process_kill(int pid)
+{
+	if(pid)
+	{
+		kill(pid, SIGKILL);
+		waitpid(pid, NULL, 0);
+	}
+	return OK;
+}
+
+int child_process_wait(int pid, int wait)
+{
+	if(wait == 0)
+		return waitpid(pid, NULL, WNOHANG);
+	else
+		return waitpid(pid, NULL, 0);
+}
+/*
+int child_process_kill(int pid)
+{
+	if(pid)
+	{
+		kill(pid, SIGTERM);
+		waitpid(pid, NULL, 0);
+	}
+	return OK;
+}*/
 
 
 int os_write_string(const char *name, const char *string)
@@ -201,44 +280,44 @@ int os_read_string(const char *name, const char *string, int len)
 
 int os_set_nonblocking(int fd)
 {
-  int flags;
+	int flags;
 
-  /* According to the Single UNIX Spec, the return value for F_GETFL should
-     never be negative. */
-  if ((flags = fcntl(fd, F_GETFL)) < 0)
-    {
-	  fprintf(stdout, "fcntl(F_GETFL) failed for fd %d: %s",
-      		fd, strerror(errno));
-      return -1;
-    }
-  if (fcntl(fd, F_SETFL, (flags | O_NONBLOCK)) < 0)
-    {
-	  fprintf(stdout, "fcntl failed setting fd %d non-blocking: %s",
-      		fd, strerror(errno));
-      return -1;
-    }
-  return 0;
+	/* According to the Single UNIX Spec, the return value for F_GETFL should
+	 never be negative. */
+	if ((flags = fcntl(fd, F_GETFL)) < 0)
+	{
+		fprintf(stdout, "fcntl(F_GETFL) failed for fd %d: %s", fd,
+				strerror(errno));
+		return -1;
+	}
+	if (fcntl(fd, F_SETFL, (flags | O_NONBLOCK)) < 0)
+	{
+		fprintf(stdout, "fcntl failed setting fd %d non-blocking: %s", fd,
+				strerror(errno));
+		return -1;
+	}
+	return 0;
 }
 
 int os_set_blocking(int fd)
 {
-  int flags;
-  /* According to the Single UNIX Spec, the return value for F_GETFL should
-     never be negative. */
-  if ((flags = fcntl(fd, F_GETFL)) < 0)
-    {
-	  fprintf(stdout, "fcntl(F_GETFL) failed for fd %d: %s",
-      		fd, strerror(errno));
-      return -1;
-    }
-  flags &= ~O_NONBLOCK;
-  if (fcntl(fd, F_SETFL, (flags)) < 0)
-    {
-	  fprintf(stdout, "fcntl failed setting fd %d non-blocking: %s",
-      		fd, strerror(errno));
-      return -1;
-    }
-  return 0;
+	int flags;
+	/* According to the Single UNIX Spec, the return value for F_GETFL should
+	 never be negative. */
+	if ((flags = fcntl(fd, F_GETFL)) < 0)
+	{
+		fprintf(stdout, "fcntl(F_GETFL) failed for fd %d: %s", fd,
+				strerror(errno));
+		return -1;
+	}
+	flags &= ~O_NONBLOCK;
+	if (fcntl(fd, F_SETFL, (flags)) < 0)
+	{
+		fprintf(stdout, "fcntl failed setting fd %d non-blocking: %s", fd,
+				strerror(errno));
+		return -1;
+	}
+	return 0;
 }
 
 int os_pipe_create(char *name, int mode)
@@ -249,9 +328,12 @@ int os_pipe_create(char *name, int mode)
 	os_snprintf(path, sizeof(path), "%s/%s.pipe", OS_PIPE_BASE, name);
 	if(access(path, 0) != 0)
 	{
-	 if(mkfifo(path, 0655) != 0)
-		 return ERROR;
+		if(mkfifo(path, 0655) != 0)
+			return ERROR;
 	}
+/*	O_RDONLY 只读打开
+	O_WRONLY 只写打开
+	O_RDWR 可读可写打开*/
 	fd = open(path, mode|O_CREAT);
 	if(fd <= 0)
 	{
@@ -268,14 +350,15 @@ int os_pipe_close(int fd)
 	return OK;
 }
 
-int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, int timeout)
+int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, int timeout_ms)
 {
 	int num = 0;
-	struct timeval timer_wait = { .tv_sec = timeout, .tv_usec = 0 };
-	timer_wait.tv_sec = timeout;
+	struct timeval timer_wait = { .tv_sec = 1, .tv_usec = 0 };
+	timer_wait.tv_sec = timeout_ms/1000;
+	timer_wait.tv_usec = (timeout_ms%1000) * 1000;
 	while(1)
 	{
-		num = select(maxfd, rfdset, wfdset, NULL, timeout ? &timer_wait:NULL);
+		num = select(maxfd, rfdset, wfdset, NULL, timeout_ms ? &timer_wait:NULL);
 		if (num < 0)
 		{
 			if (errno == EINTR || errno == EAGAIN)
@@ -382,6 +465,7 @@ int os_stream_head_write(int fd, char *inbuf, int len)
 
 static int os_process_sock = 0;
 
+
 static int os_process_split(process_head *head, process_action action, char *name,
 		char *process, BOOL restart, char *argv[])
 {
@@ -433,7 +517,7 @@ int os_process_register(process_action action, char *name,
 		fd_set rfdset;
 		FD_ZERO(&rfdset);
 		FD_SET(os_process_sock, &rfdset);
-		num = os_select_wait(os_process_sock + 1, &rfdset, NULL, 5);
+		num = os_select_wait(os_process_sock + 1, &rfdset, NULL, 5000);
 		if(num)
 		{
 			int respone = 0;
@@ -499,7 +583,7 @@ int os_process_action(process_action action, char *name, int id)
 		fd_set rfdset;
 		FD_ZERO(&rfdset);
 		FD_SET(os_process_sock, &rfdset);
-		num = os_select_wait(os_process_sock + 1, &rfdset, NULL, 5);
+		num = os_select_wait(os_process_sock + 1, &rfdset, NULL, 5000);
 		if(num)
 		{
 			int respone = 0;
@@ -547,6 +631,27 @@ int os_process_action_respone(int fd, int respone)
 	if(fd)
 		return write(fd, &value, 4);
 	return ERROR;
+}
+
+int os_process_start()
+{
+	int os_process_id = 0;
+	os_process_id = child_process_create();
+	if(os_process_id == 0)
+	{
+		char *plogfile = DAEMON_LOG_FILE_DIR"/ProcessMU.log";
+		char *argvp[] = {"-D", "-d", "6", "-l", plogfile, NULL};
+		super_system_execvp("ProcessMU", argvp);
+	}
+	return 0;
+}
+
+int os_process_stop()
+{
+	int os_process_id = os_pid_get(BASE_DIR"/run/process.pid");
+	if(os_process_id > 0)
+		return child_process_destroy(os_process_id);
+	return 0;
 }
 
 #endif

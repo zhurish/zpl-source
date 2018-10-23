@@ -28,11 +28,13 @@ extern int modem_main_dial_get_api(modem_t *modem, modem_dial_type *type);
 extern int modem_main_network_set_api(modem_t *modem, modem_network_type profile);
 extern int modem_main_network_get_api(modem_t *modem, modem_network_type *profile);
 
+
+modem_t * modem_lookup_by_interface(char *name);
 extern int modem_interface_add_api(char *name);
-/*
-extern int modem_bind_interface_api(struct interface *ifp, char *name);
-extern int modem_unbind_interface_api(struct interface *ifp);
-*/
+
+extern int modem_bind_interface_api(modem_t *modem, char *name, int number);
+extern int modem_unbind_interface_api(modem_t *modem, BOOL ppp, int number);
+
 
 
 

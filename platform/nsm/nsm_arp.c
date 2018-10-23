@@ -23,6 +23,14 @@
 static Gip_arp_t gIparp;
 
 static int ip_arp_cleanup(arp_class_t type, BOOL all, ifindex_t ifindex, vrf_id_t id);
+static int ip_arp_dynamic_update(void *pVoid);
+
+#define ARP_DYNAMIC_INC(n)	(gIparp.dynamic_cnt) += (n)
+#define ARP_DYNAMIC_SUB(n)	(gIparp.dynamic_cnt) -= (n)
+
+#define ARP_STATIC_INC(n)	(gIparp.static_cnt) += (n)
+#define ARP_STATIC_SUB(n)	(gIparp.static_cnt) -= (n)
+
 
 int nsm_ip_arp_init(void)
 {
@@ -36,8 +44,12 @@ int nsm_ip_arp_init(void)
 int nsm_ip_arp_exit(void)
 {
 	if(lstCount(gIparp.arpList))
+	{
 		ip_arp_cleanup(0, TRUE, 0, 0);
-
+		lstFree(gIparp.arpList);
+		free(gIparp.arpList);
+		gIparp.arpList = NULL;
+	}
 	if(gIparp.mutex)
 		os_mutex_exit(gIparp.mutex);
 	return OK;
@@ -47,11 +59,21 @@ int nsm_ip_arp_exit(void)
 
 static int ip_arp_add_node(ip_arp_t *value)
 {
-	ip_arp_t *node = XMALLOC(MTYPE_VLAN, sizeof(ip_arp_t));
+	ip_arp_t *node = XMALLOC(MTYPE_ARP, sizeof(ip_arp_t));
 	if(node)
 	{
 		os_memset(node, 0, sizeof(ip_arp_t));
 		os_memcpy(node, value, sizeof(ip_arp_t));
+		node->ttl = NSM_ARP_TTL_DEFAULT;
+		if(node->class == ARP_DYNAMIC)
+		{
+			ARP_DYNAMIC_INC(1);
+			if(gIparp.dynamic_cnt == 1)
+				os_time_create_once(ip_arp_dynamic_update, NULL, 1);
+		}
+		else
+			ARP_STATIC_INC(1);
+
 		lstAdd(gIparp.arpList, (NODE *)node);
 		return OK;
 	}
@@ -62,6 +84,8 @@ static ip_arp_t * ip_arp_lookup_node(struct prefix *address)
 {
 	ip_arp_t *pstNode = NULL;
 	NODE index;
+	if(!lstCount(gIparp.arpList))
+		return NULL;
 	for(pstNode = (ip_arp_t *)lstFirst(gIparp.arpList);
 			pstNode != NULL;  pstNode = (ip_arp_t *)lstNext((NODE*)&index))
 	{
@@ -79,6 +103,8 @@ int nsm_ip_arp_callback_api(ip_arp_cb cb, void *pVoid)
 {
 	ip_arp_t *pstNode = NULL;
 	NODE index;
+	if(!lstCount(gIparp.arpList))
+		return OK;
 	if(gIparp.mutex)
 		os_mutex_lock(gIparp.mutex, OS_WAIT_FOREVER);
 	for(pstNode = (ip_arp_t *)lstFirst(gIparp.arpList);
@@ -114,19 +140,25 @@ int nsm_ip_arp_add_api(struct interface *ifp, struct prefix *address, char *mac)
 {
 	int ret = ERROR;
 	ip_arp_t value;
+	ip_arp_t *node = NULL;
 	if(gIparp.mutex)
 		os_mutex_lock(gIparp.mutex, OS_WAIT_FOREVER);
-	if(!ip_arp_lookup_node(address))
+	node = ip_arp_lookup_node(address);
+	if(!node)
 	{
 		prefix_copy (&value.address, address);
 		value.class = ARP_STATIC;
 		value.ifindex = ifp->ifindex;
-		if(pal_ip_stack_arp_add(ifp, address, mac) == OK)
+		if(pal_interface_arp_add(ifp, address, mac) == OK)
 		{
 			os_memcpy(value.mac, mac, NSM_MAC_MAX);
 			ret = ip_arp_add_node(&value);
 		}
 		//TODO
+	}
+	else
+	{
+		node->ttl = NSM_ARP_TTL_DEFAULT;
 	}
 	if(gIparp.mutex)
 		os_mutex_unlock(gIparp.mutex);
@@ -144,10 +176,11 @@ int nsm_ip_arp_del_api(struct interface *ifp, struct prefix *address)
 	value = ip_arp_lookup_node(address);
 	if(value && value->class == ARP_STATIC)
 	{
-		if(pal_ip_stack_arp_delete(ifp, value->address) == OK)
+		if(pal_interface_arp_delete(ifp, value->address) == OK)
 		{
+			ARP_STATIC_SUB(1);
 			lstDelete(gIparp.arpList, (NODE*)value);
-			XFREE(MTYPE_VLAN, value);
+			XFREE(MTYPE_ARP, value);
 			ret = OK;
 		}
 	}
@@ -320,6 +353,8 @@ static int ip_arp_cleanup(arp_class_t type, BOOL all, ifindex_t ifindex, vrf_id_
 	ip_arp_t *pstNode = NULL;
 	NODE index;
 	struct interface *ifp = NULL;
+	if(!lstCount(gIparp.arpList))
+		return OK;
 	if(ifindex)
 		ifp = if_lookup_by_index(ifp);
 	if(gIparp.mutex)
@@ -331,51 +366,92 @@ static int ip_arp_cleanup(arp_class_t type, BOOL all, ifindex_t ifindex, vrf_id_
 		//all dynamic arp on interface
 		if(ifindex && pstNode && pstNode->ifindex == ifindex && pstNode->class == type)
 		{
-			if(ifp)
+			if(pstNode->class == ARP_DYNAMIC)
 			{
-				if(pal_ip_stack_arp_delete(ifp, pstNode->address) == OK)
+				lstDelete(gIparp.arpList, (NODE*)pstNode);
+				XFREE(MTYPE_ARP, pstNode);
+				ARP_DYNAMIC_SUB(1);
+			}
+			else
+			{
+				ifp = if_lookup_by_index(pstNode->ifindex);
+				if(ifp)
 				{
-					lstDelete(gIparp.arpList, (NODE*)pstNode);
-					XFREE(MTYPE_VLAN, pstNode);
+					if(pal_interface_arp_delete(ifp, pstNode->address) == OK)
+					{
+						lstDelete(gIparp.arpList, (NODE*)pstNode);
+						XFREE(MTYPE_ARP, pstNode);
+						ARP_STATIC_SUB(1);
+					}
 				}
 			}
 		}
 		//all vrf
 		if(vrf && pstNode->vrfid == vrf)
 		{
-			ifp = if_lookup_by_index(pstNode->ifindex);
-			if(ifp)
+			if(pstNode->class == ARP_DYNAMIC)
 			{
-				if(pal_ip_stack_arp_delete(ifp, pstNode->address) == OK)
+				lstDelete(gIparp.arpList, (NODE*)pstNode);
+				XFREE(MTYPE_ARP, pstNode);
+				ARP_DYNAMIC_SUB(1);
+			}
+			else
+			{
+				ifp = if_lookup_by_index(pstNode->ifindex);
+				if(ifp)
 				{
-					lstDelete(gIparp.arpList, (NODE*)pstNode);
-					XFREE(MTYPE_VLAN, pstNode);
+					if(pal_interface_arp_delete(ifp, pstNode->address) == OK)
+					{
+						lstDelete(gIparp.arpList, (NODE*)pstNode);
+						XFREE(MTYPE_ARP, pstNode);
+						ARP_STATIC_SUB(1);
+					}
 				}
 			}
 		}
 		//all dynamic arp
 		if(type && pstNode->class == type)
 		{
-			ifp = if_lookup_by_index(pstNode->ifindex);
-			if(ifp)
+			if(pstNode->class == ARP_DYNAMIC)
 			{
-				if(pal_ip_stack_arp_delete(ifp, pstNode->address) == OK)
+				lstDelete(gIparp.arpList, (NODE*)pstNode);
+				XFREE(MTYPE_ARP, pstNode);
+				ARP_DYNAMIC_SUB(1);
+			}
+			else
+			{
+				ifp = if_lookup_by_index(pstNode->ifindex);
+				if(ifp)
 				{
-					lstDelete(gIparp.arpList, (NODE*)pstNode);
-					XFREE(MTYPE_VLAN, pstNode);
+					if(pal_interface_arp_delete(ifp, pstNode->address) == OK)
+					{
+						lstDelete(gIparp.arpList, (NODE*)pstNode);
+						XFREE(MTYPE_ARP, pstNode);
+						ARP_STATIC_SUB(1);
+					}
 				}
 			}
 		}
 		//all
 		else if(pstNode && all)
 		{
-			ifp = if_lookup_by_index(pstNode->ifindex);
-			if(ifp)
+			if(pstNode->class == ARP_DYNAMIC)
 			{
-				if(pal_ip_stack_arp_delete(ifp, pstNode->address) == OK)
+				lstDelete(gIparp.arpList, (NODE*)pstNode);
+				XFREE(MTYPE_ARP, pstNode);
+				ARP_DYNAMIC_SUB(1);
+			}
+			else
+			{
+				ifp = if_lookup_by_index(pstNode->ifindex);
+				if(ifp)
 				{
-					lstDelete(gIparp.arpList, (NODE*)pstNode);
-					XFREE(MTYPE_VLAN, pstNode);
+					if(pal_interface_arp_delete(ifp, pstNode->address) == OK)
+					{
+						lstDelete(gIparp.arpList, (NODE*)pstNode);
+						XFREE(MTYPE_ARP, pstNode);
+						ARP_STATIC_SUB(1);
+					}
 				}
 			}
 		}
@@ -394,17 +470,22 @@ int ip_arp_cleanup_api(arp_class_t type, BOOL all, ifindex_t ifindex)
 static int ip_arp_dynamic_add_cb(ip_arp_t *value)
 {
 	int ret = ERROR;
-	//ip_arp_t value;
+	ip_arp_t *node = NULL;
 	if(gIparp.mutex)
 		os_mutex_lock(gIparp.mutex, OS_WAIT_FOREVER);
-	if(!ip_arp_lookup_node(&value->address))
+	node = ip_arp_lookup_node(&value->address);
+	if(!node)
 	{
 		ret = ip_arp_add_node(value);
+	}
+	else
+	{
+		node->ttl = NSM_ARP_TTL_DEFAULT;
 	}
 	if(gIparp.mutex)
 		os_mutex_unlock(gIparp.mutex);
 	if(value)
-		XFREE(MTYPE_VLAN, value);
+		XFREE(MTYPE_ARP, value);
 	return ret;
 }
 
@@ -417,13 +498,14 @@ static int ip_arp_dynamic_del_cb(ip_arp_t *value)
 	pvalue = ip_arp_lookup_node(&value->address);
 	if(pvalue)
 	{
+		ARP_DYNAMIC_SUB(1);
 		lstDelete(gIparp.arpList, (NODE*)pvalue);
-		XFREE(MTYPE_VLAN, pvalue);
+		XFREE(MTYPE_ARP, pvalue);
 	}
 	if(gIparp.mutex)
 		os_mutex_unlock(gIparp.mutex);
 	if(value)
-		XFREE(MTYPE_VLAN, value);
+		XFREE(MTYPE_ARP, value);
 	return ret;
 }
 
@@ -434,3 +516,80 @@ int ip_arp_dynamic_cb(int action, void *pVoid)
 	else
 		return os_job_add(ip_arp_dynamic_del_cb, pVoid);
 }
+
+
+static int ip_arp_dynamic_ttl_update(ip_arp_t *value, void *pVoid)
+{
+	if(value && value->class == ARP_DYNAMIC)
+	{
+		value->ttl--;
+		if(value->ttl == 0)
+		{
+			ARP_DYNAMIC_SUB(1);
+			lstDelete(gIparp.arpList, (NODE*)value);
+			XFREE(MTYPE_ARP, value);
+		}
+	}
+	return OK;
+}
+
+static int ip_arp_dynamic_update(void *pVoid)
+{
+	nsm_ip_arp_callback_api(ip_arp_dynamic_ttl_update, NULL);
+	if(gIparp.dynamic_cnt == 0)
+		os_time_create_once(ip_arp_dynamic_update, pVoid, 1);
+	return OK;
+}
+
+
+
+static int _nsm_ip_arp_table_config(ip_arp_t *node, struct vty *vty)
+{
+	char mac[32], ip[128], ifname[32];
+	union prefix46constptr pu;
+	//struct vty *vty = user->vty;
+	if(node->class  != MAC_STATIC)
+		return 0;
+	os_memset(mac, 0, sizeof(mac));
+	os_memset(ip, 0, sizeof(ip));
+	os_memset(ifname, 0, sizeof(ifname));
+/*	sprintf(mac, "%02x%02x-%02x%02x-%02x%02x",node->mac[0],node->mac[1],node->mac[2],
+											 node->mac[3],node->mac[4],node->mac[5]);*/
+
+	sprintf(mac, "%s", if_mac_out_format(node->mac, NSM_MAC_MAX));
+	sprintf(ifname, "%s",ifindex2ifname(node->ifindex));
+	//ip arp 1.1.1.1 0000-1111-2222 interface gigabitethernet 0/1/1
+	//ip arp 1.1.1.1 0000-1111-2222
+
+	pu.p = &node->address;
+	prefix_2_address_str (pu, ip, sizeof(ip));
+
+	vty_out(vty, "ip arp %s %s %s %s", /*inet_ntoa(node->address.u.prefix4)*/ip, mac, ifname, VTY_NEWLINE);
+/*	if(node->action == ARP_DYNAMIC)
+	{
+		vty_out(vty, "ip arp %s %s", mac, VTY_NEWLINE);
+	}
+	if(node->action == ARP_STATIC)
+	{
+		vty_out(vty, "mac-address-table %s forward interface %s %s %s", mac, ifname, vlan, VTY_NEWLINE);
+	}*/
+	return OK;
+}
+
+int nsm_ip_arp_config(struct vty *vty)
+{
+	nsm_ip_arp_callback_api((ip_arp_cb)_nsm_ip_arp_table_config, vty);
+	return 1;
+}
+
+int nsm_ip_arp_ageing_config(struct vty *vty)
+{
+	int agtime = 0;
+	nsm_ip_arp_ageing_time_get_api(&agtime);
+	//ip arp ageing-time 33
+	vty_out(vty, "ip arp ageing-time %d %s", agtime, VTY_NEWLINE);
+	return 1;
+}
+
+
+//

@@ -342,8 +342,8 @@ static int nexthop_active_ipv4(struct rib *rib, struct nexthop *nexthop,
 		{
 			/* If the longest prefix match for the nexthop yields
 			 * a blackhole, mark it as inactive. */
-			if (CHECK_FLAG(match->flags,
-					ZEBRA_FLAG_BLACKHOLE) || CHECK_FLAG (match->flags, ZEBRA_FLAG_REJECT))
+			if (CHECK_FLAG(match->flags, ZEBRA_FLAG_BLACKHOLE) ||
+					CHECK_FLAG (match->flags, ZEBRA_FLAG_REJECT))
 				return 0;
 
 			if (match->type == ZEBRA_ROUTE_CONNECT)
@@ -359,8 +359,8 @@ static int nexthop_active_ipv4(struct rib *rib, struct nexthop *nexthop,
 			{
 				resolved = 0;
 				for (newhop = match->nexthop; newhop; newhop = newhop->next)
-					if (CHECK_FLAG(newhop->flags,
-							NEXTHOP_FLAG_FIB) && ! CHECK_FLAG (newhop->flags, NEXTHOP_FLAG_RECURSIVE))
+					if (CHECK_FLAG(newhop->flags, NEXTHOP_FLAG_FIB) &&
+							!CHECK_FLAG (newhop->flags, NEXTHOP_FLAG_RECURSIVE))
 					{
 						if (set)
 						{
@@ -939,29 +939,29 @@ static unsigned nexthop_active_check(struct route_node *rn, struct rib *rib,
 			UNSET_FLAG(nexthop->flags, NEXTHOP_FLAG_ACTIVE);
 		break;
 #ifdef HAVE_IPV6
-		case NEXTHOP_TYPE_IPV6:
+	case NEXTHOP_TYPE_IPV6:
 		family = AFI_IP6;
 		if (nexthop_active_ipv6 (rib, nexthop, set, rn))
-		SET_FLAG (nexthop->flags, NEXTHOP_FLAG_ACTIVE);
+			SET_FLAG (nexthop->flags, NEXTHOP_FLAG_ACTIVE);
 		else
-		UNSET_FLAG (nexthop->flags, NEXTHOP_FLAG_ACTIVE);
+			UNSET_FLAG (nexthop->flags, NEXTHOP_FLAG_ACTIVE);
 		break;
-		case NEXTHOP_TYPE_IPV6_IFINDEX:
+	case NEXTHOP_TYPE_IPV6_IFINDEX:
 		family = AFI_IP6;
 		if (IN6_IS_ADDR_LINKLOCAL (&nexthop->gate.ipv6))
 		{
 			ifp = if_lookup_by_index_vrf (nexthop->ifindex, rib->vrf_id);
 			if (ifp && if_is_operative(ifp))
-			SET_FLAG (nexthop->flags, NEXTHOP_FLAG_ACTIVE);
+				SET_FLAG (nexthop->flags, NEXTHOP_FLAG_ACTIVE);
 			else
-			UNSET_FLAG (nexthop->flags, NEXTHOP_FLAG_ACTIVE);
+				UNSET_FLAG (nexthop->flags, NEXTHOP_FLAG_ACTIVE);
 		}
 		else
 		{
 			if (nexthop_active_ipv6 (rib, nexthop, set, rn))
-			SET_FLAG (nexthop->flags, NEXTHOP_FLAG_ACTIVE);
+				SET_FLAG (nexthop->flags, NEXTHOP_FLAG_ACTIVE);
 			else
-			UNSET_FLAG (nexthop->flags, NEXTHOP_FLAG_ACTIVE);
+				UNSET_FLAG (nexthop->flags, NEXTHOP_FLAG_ACTIVE);
 		}
 		break;
 #endif

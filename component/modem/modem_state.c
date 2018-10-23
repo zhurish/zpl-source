@@ -70,6 +70,7 @@ const char *modem_dial_string(modem_dial_type type)
 	default:
 		break;
 	}
+	return "UNKNOW";
 }
 
 const char *modem_network_type_string(modem_network_type type)
@@ -115,6 +116,7 @@ const char *modem_network_type_string(modem_network_type type)
 	default:
 		break;
 	}
+	return "UNKNOW";
 }
 
 modem_network_type modem_network_type_get(const char * type)
@@ -195,6 +197,7 @@ int modem_network_type_id(modem_network_type type)
 	default:
 		break;
 	}
+	return 0;
 }
 /*
 AT+CSQ

@@ -5,14 +5,19 @@
  *      Author: zhurish
  */
 
-#ifndef PLATFORM_OS_OS_JOB_H_
-#define PLATFORM_OS_OS_JOB_H_
+#ifndef __OS_JOB_H__
+#define __OS_JOB_H__
 
+//#include "vty.h"
 
 extern int os_job_init();
 extern int os_job_exit();
-extern int os_job_finsh();
-extern int os_job_add(int (*job_entry)(void *), void *pVoid);
+extern int os_job_load();
 
+extern int os_job_show(void *);
 
-#endif /* PLATFORM_OS_OS_JOB_H_ */
+extern int os_job_add_entry(int (*job_entry)(void *), void *pVoid, char *func_name);
+
+#define os_job_add(f,p)		os_job_add_entry(f,p,#f)
+
+#endif /* __OS_JOB_H__ */

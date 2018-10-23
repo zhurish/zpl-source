@@ -9,10 +9,13 @@
 #include "log.h"
 #include "memory.h"
 #include "str.h"
+#include "prefix.h"
 #include "if.h"
+
 #include "os_list.h"
 #include "os_util.h"
 #include "tty_com.h"
+#include "nsm_dhcp.h"
 
 #include "modem.h"
 #include "modem_client.h"
@@ -23,10 +26,9 @@
 
 #include "modem_atcmd.h"
 
-
+#ifdef MODEM_DHCPC_PROCESS
 static int _dhcpc_start(int id, char *process, char *ifname)
 {
-#ifdef DOUBLE_PROCESS
 	MODEM_HDCP_DEBUG("dhcpc %d", id);
 	char name[64];
 	char *argv[] = {"-f", "-i", ifname, "-s", "/usr/share/udhcpc/udhcpc.script", "-S", NULL};
@@ -34,37 +36,40 @@ static int _dhcpc_start(int id, char *process, char *ifname)
 	os_snprintf(name, sizeof(name), "dhcpc%d", id);
 	return os_process_register(PROCESS_START, name,
 			process, FALSE, argv);
-#else
-	int id = 0;
-	char *argv[] = {"-f", "-i", ifname, "-s", "/usr/share/udhcpc/udhcpc.script", "-S", NULL};
-	if(!ifname)
-		return 0;
-	id = child_process_create();
-	if(id == 0)
-	{
-		//super_system_execvp(process, argv);
-		while(1)
-			os_sleep(10);
-	}
-	else
-	{
-		MODEM_HDCP_DEBUG("dhcpc %d", id);
-		return id;
-	}
-#endif
 	return OK;
 }
 
 static int _dhcpc_stop(int process)
 {
 	MODEM_HDCP_DEBUG(" dhcpc");
-#ifdef DOUBLE_PROCESS
 	return os_process_action(PROCESS_STOP, NULL, process);
-#else
-	return child_process_destroy(process);
-#endif
 }
 
+#else
+static int _dhcpc_start(modem_t *modem, struct interface *ifp)
+{
+	if(if_is_wireless(ifp))
+	{
+		if(nsm_interface_dhcp_mode_set_api(ifp, DHCP_CLIENT) == OK)
+			return nsm_interface_dhcpc_start(ifp, TRUE);
+		else
+			return ERROR;
+	}
+	else
+		return nsm_interface_dhcp_mode_set_api(ifp, DHCP_CLIENT);
+}
+
+static int _dhcpc_stop(modem_t *modem, struct interface *ifp)
+{
+	MODEM_HDCP_DEBUG(" dhcpc");
+	if(if_is_wireless(ifp))
+	{
+		return nsm_interface_dhcp_mode_set_api(ifp, DHCP_NONE);
+	}
+	else
+		return nsm_interface_dhcp_mode_set_api(ifp, DHCP_NONE);
+}
+#endif
 
 static int _modem_dhcp_nwcall(modem_client_t *client, BOOL enable)
 {
@@ -103,19 +108,21 @@ static int _modem_dhcpc_start(modem_client_t *client)
 	assert(client);
 	assert(client->modem);
 	modem = client->modem;
-#ifdef _MODEM_DHCPC_DEBUG
-	modem->pid[modem->dialtype] = _dhcpc_start(client->driver->id, "udhcpc", "ifname");
-#else
-	assert(modem->ifp);
-	ifp = modem->ifp;
-	modem->pid[modem->dialtype] = _dhcpc_start("udhcpc",
+#ifdef MODEM_DHCPC_PROCESS
+
+	assert(modem->eth0);
+	ifp = modem->eth0;
+	modem->pid[modem->dialtype] = _dhcpc_start(0, "udhcpc",
 			ifkernelindex2kernelifname(ifp->k_ifindex));
-#endif
 	if(modem->pid[modem->dialtype])
 	{
 		//modem->state = MODEM_STATE_NETWORK_ACTIVE;
 		return OK;
 	}
+#else
+	if(modem->eth0)
+		return _dhcpc_start(modem, modem->eth0);
+#endif
 	return ERROR;
 }
 
@@ -125,12 +132,17 @@ static int _modem_dhcpc_stop(modem_client_t *client)
 	assert(client);
 	assert(client->modem);
 	modem = client->modem;
+#ifdef MODEM_DHCPC_PROCESS
 	if(modem->pid[modem->dialtype])
 	{
 		_dhcpc_stop(modem->pid[modem->dialtype]);
 		modem->pid[modem->dialtype] = 0;
 	}
-	return OK;
+#else
+	if(modem->eth0)
+		return _dhcpc_stop(modem, modem->eth0);
+#endif
+	return ERROR;
 }
 
 
@@ -151,7 +163,7 @@ int modem_dhcpc_start(modem_t *modem)
 	assert(modem);
 	assert(modem->client);
 	if(modem->pid[modem->dialtype] == 0)
-		ret = _modem_dhcpc_start(modem->client);
+		;//ret = _modem_dhcpc_start(modem->client);
 	MODEM_HDCP_DEBUG("dhcpc start");
 	return ret;
 }

@@ -28,9 +28,9 @@
 #include <sys/socket.h>
 #include <stddef.h>
 
-#include "../../tools/quectel-CM/MPQMI.h"
-#include "../../tools/quectel-CM/MPQCTL.h"
-#include "../../tools/quectel-CM/MPQMUX.h"
+#include "MPQMI.h"
+#include "MPQCTL.h"
+#include "MPQMUX.h"
 
 #pragma pack(push, 1)
 

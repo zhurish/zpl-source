@@ -113,11 +113,11 @@ extern int nsm_interface_linkdetect_set_api(struct interface *ifp, nsm_linkdetec
 extern int nsm_interface_linkdetect_get_api(struct interface *ifp, nsm_linkdetect_en *linkdetect);
 extern int nsm_interface_address_set_api(struct interface *ifp, struct prefix *cp, int secondry);
 extern int nsm_interface_address_unset_api(struct interface *ifp, struct prefix *cp, int secondry);
-
-extern int nsm_interface_address_dhcp_set_api(struct interface *ifp, BOOL enable);
-extern int nsm_interface_address_dhcp_get_api(struct interface *ifp, BOOL *enable);
-extern int nsm_interface_dhcp_option_set_api(struct interface *ifp,  BOOL enable, int index, char *option);
-extern int nsm_interface_dhcp_option_get_api(struct interface *ifp,  int index, char *option);
+extern int nsm_interface_address_get_api(struct interface *ifp, struct prefix *address);
+extern int nsm_interface_ip_address_add(struct interface *ifp, struct prefix *cp,
+		int secondary, int value);
+extern int nsm_interface_ip_address_del(struct interface *ifp, struct prefix *cp,
+		int secondary, int value);
 
 extern int nsm_interface_statistics_get_api(struct interface *ifp, struct if_stats *stats);
 extern int nsm_interface_multicast_set_api(struct interface *ifp, BOOL enable);

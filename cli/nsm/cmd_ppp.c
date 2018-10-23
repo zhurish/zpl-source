@@ -41,7 +41,7 @@ DEFUN (ppp_authentication,
 		return CMD_SUCCESS;
 	VTY_GET_INTEGER ("vlan ID", ageing, argv[0]);
 
-	ret = nsm_mac_ageing_time_set_api(ageing);
+	//ret = nsm_mac_ageing_time_set_api(ageing);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -55,7 +55,7 @@ DEFUN (no_ppp_authentication,
 		"chap authentication configure\n")
 {
 	int ret = ERROR;
-	ret = nsm_mac_ageing_time_set_api(0);
+	//ret = nsm_mac_ageing_time_set_api(0);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -377,41 +377,66 @@ DEFUN (ppp_tcp_compress,
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
-DEFUN (no_ppp_compress,
-		no_ppp_compress_cmd,
-		"no compress",
+DEFUN (no_ppp_tcp_compress,
+		no_ppp_tcp_compress_cmd,
+		"ip tcp header-compress",
 		NO_STR
-		"ppp compress options\n")
+		"ppp compress options\n"
+		"predictor compress configure\n"
+		"stac compress configure\n")
 {
 	int ret = ERROR;
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
 
-DEFUN (ppp_clock_rate,
-		ppp_clock_rate_cmd,
-		"clock rate (2400|4800|9600|19200|57600|64000|115200)",
-		"clock configure\n"
-		"rate configure\n"
-		"rate 2400\n"
-		"rate 4800\n"
-		"rate 9600\n"
-		"rate 19200\n"
-		"rate 57600\n"
-		"rate 64000\n"
-		"rate 115200\n")
+static void cmd_base_ppp_init(int node)
 {
-	int ret = ERROR;
-	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+	install_element(node, &ppp_authentication_cmd);
+	install_element(node, &no_ppp_authentication_cmd);
+
+	install_element(node, &ppp_chap_username_cmd);
+	install_element(node, &no_ppp_chap_username_cmd);
+
+	install_element(node, &ppp_chap_password_cmd);
+	install_element(node, &no_ppp_chap_password_cmd);
+
+	install_element(node, &ppp_chap_direction_cmd);
+	install_element(node, &no_ppp_chap_direction_cmd);
+
+	install_element(node, &ppp_chap_refuse_cmd);
+	install_element(node, &ppp_chap_refuse_callin_cmd);
+	install_element(node, &no_ppp_chap_refuse_cmd);
+
+	install_element(node, &ppp_chap_wait_cmd);
+	install_element(node, &no_ppp_chap_wait_cmd);
+
+	install_element(node, &ppp_max_bad_auth_cmd);
+	install_element(node, &no_ppp_max_bad_auth_cmd);
+
+	install_element(node, &ppp_chap_splitnames_cmd);
+	install_element(node, &no_ppp_chap_splitnames_cmd);
+
+	install_element(node, &ppp_chap_ignoreus_cmd);
+	install_element(node, &no_ppp_chap_ignoreus_cmd);
+
+	install_element(node, &ppp_pap_username_cmd);
+	install_element(node, &no_ppp_pap_username_cmd);
+
+	install_element(node, &ppp_negotiation_timeout_cmd);
+	install_element(node, &no_ppp_negotiation_timeout_cmd);
+
+	install_element(node, &peer_default_address_cmd);
+	install_element(node, &no_peer_default_address_cmd);
+
+	install_element(node, &ppp_compress_cmd);
+	install_element(node, &no_ppp_compress_cmd);
+
+	install_element(node, &ppp_tcp_compress_cmd);
+	install_element(node, &no_ppp_tcp_compress_cmd);
 }
 
-DEFUN (no_ppp_clock_rate,
-		no_ppp_clock_rate_cmd,
-		"no clock rate",
-		NO_STR
-		"clock configure\n"
-		"rate configure\n")
+void cmd_ppp_init(void)
 {
-	int ret = ERROR;
-	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+	cmd_base_ppp_init(SERIAL_INTERFACE_NODE);
 }

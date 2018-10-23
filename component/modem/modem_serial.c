@@ -24,13 +24,14 @@
 #include "modem_driver.h"
 #include "modem_serial.h"
 
-#include "modem_product.h"
+#include "modem_usb_driver.h"
 
 
 
 static modem_serial_main gModemSerialmain;
 
-
+static int modem_serial_cleanall(void);
+//static u_int8 modem_channel_db[MODEM_CHANNEL_DB_MAX];
 
 int modem_serial_init(void)
 {
@@ -50,7 +51,10 @@ int modem_serial_exit(void)
 	if(gModemSerialmain.list)
 	{
 		if(lstCount(gModemSerialmain.list))
+		{
+			modem_serial_cleanall();
 			lstFree(gModemSerialmain.list);
+		}
 		XFREE(MTYPE_MODEM, gModemSerialmain.list);
 	}
 	if(gModemSerialmain.mutex)
@@ -59,21 +63,32 @@ int modem_serial_exit(void)
 }
 
 
-static modem_serial_t * modem_serial_lookup_node(const char *name)
+static modem_serial_t * modem_serial_lookup_node(const char *name, u_int8 hw_channel)
 {
 	NODE index;
 	modem_serial_t *pstNode = NULL;
-	assert(name);
+	//assert(name);
 	char pname[MODEM_STRING_MAX];
 	os_memset(pname, 0, MODEM_STRING_MAX);
-	os_strcpy(pname, name);
+	if(name)
+		os_strcpy(pname, name);
 	for(pstNode = (modem_serial_t *)lstFirst(gModemSerialmain.list);
 			pstNode != NULL;  pstNode = (modem_serial_t *)lstNext((NODE*)&index))
 	{
 		index = pstNode->node;
-		if(os_memcmp(pname, pstNode->name, MODEM_STRING_MAX) == 0)
+		if(name)
 		{
-			return pstNode;
+			if(os_memcmp(pname, pstNode->name, MODEM_STRING_MAX) == 0)
+			{
+				return pstNode;
+			}
+		}
+		else if(hw_channel)
+		{
+			if(pstNode->hw_channel == hw_channel)
+			{
+				return pstNode;
+			}
 		}
 	}
 	return NULL;
@@ -109,14 +124,32 @@ static int modem_serial_del_node(modem_serial_t *node)
 	return ERROR;
 }
 
+static int modem_serial_cleanall(void)
+{
+	NODE index;
+	modem_serial_t *pstNode = NULL;
+	for(pstNode = (modem_serial_t *)lstFirst(gModemSerialmain.list);
+			pstNode != NULL;  pstNode = (modem_serial_t *)lstNext((NODE*)&index))
+	{
+		index = pstNode->node;
+		if(pstNode)
+		{
+			lstDelete(gModemSerialmain.list, (NODE*)pstNode);
+			pstNode->modem = NULL;
+			XFREE(MTYPE_MODEM, pstNode);
+			pstNode = NULL;
+		}
+	}
+	return OK;
+}
 
 int modem_serial_add_api(const char *name)
 {
-	int ret = 0;
+	int ret = OK;
 	assert(name);
 	if(gModemSerialmain.mutex)
 		os_mutex_lock(gModemSerialmain.mutex, OS_WAIT_FOREVER);
-	if(!modem_serial_lookup_node(name))
+	if(!modem_serial_lookup_node(name, 0))
 		ret = modem_serial_add_node(name);
 	else
 		ret = ERROR;
@@ -132,21 +165,37 @@ int modem_serial_del_api(const char *name)
 	modem_serial_t *node = NULL;
 	if(gModemSerialmain.mutex)
 		os_mutex_lock(gModemSerialmain.mutex, OS_WAIT_FOREVER);
-	node = modem_serial_lookup_node(name);
+	node = modem_serial_lookup_node(name, 0);
 	ret = modem_serial_del_node(node);
 	if(gModemSerialmain.mutex)
 		os_mutex_unlock(gModemSerialmain.mutex);
 	return ret;
 }
 
-int modem_serial_bind_api(const char *name, void *client)
+
+int modem_serial_channel_api(const char *name, u_int8 hw_channel)
 {
 	int ret = 0;
-	assert(name);
 	modem_serial_t *node = NULL;
 	if(gModemSerialmain.mutex)
 		os_mutex_lock(gModemSerialmain.mutex, OS_WAIT_FOREVER);
-	node = modem_serial_lookup_node(name);
+	node = modem_serial_lookup_node(name, hw_channel);
+	if(node)
+	{
+		node->hw_channel = hw_channel;
+	}
+	if(gModemSerialmain.mutex)
+		os_mutex_unlock(gModemSerialmain.mutex);
+	return ret;
+}
+
+int modem_serial_bind_api(const char *name, u_int8 hw_channel, void *client)
+{
+	int ret = 0;
+	modem_serial_t *node = NULL;
+	if(gModemSerialmain.mutex)
+		os_mutex_lock(gModemSerialmain.mutex, OS_WAIT_FOREVER);
+	node = modem_serial_lookup_node(name, hw_channel);
 	if(node)
 	{
 		node->client = client;
@@ -157,6 +206,10 @@ int modem_serial_bind_api(const char *name, void *client)
 			modem_t *modem = node->modem;
 			modem->serial = node;
 			modem->client = node->client;
+		}
+		else
+		{
+
 		}
 		if(client)
 		{
@@ -169,16 +222,26 @@ int modem_serial_bind_api(const char *name, void *client)
 	return ret;
 }
 
-int modem_serial_unbind_api(const char *name)
+int modem_serial_unbind_api(const char *name, u_int8 hw_channel)
 {
 	int ret = 0;
-	assert(name);
 	modem_serial_t *node = NULL;
 	if(gModemSerialmain.mutex)
 		os_mutex_lock(gModemSerialmain.mutex, OS_WAIT_FOREVER);
-	node = modem_serial_lookup_node(name);
+	node = modem_serial_lookup_node(name, hw_channel);
 	if(node)
 	{
+		if(node->modem)
+		{
+			modem_t *modem = node->modem;
+			modem->serial = node;
+			modem->client = NULL;
+		}
+		if(node->client)
+		{
+			((modem_client_t *)node->client)->serial = NULL;
+			((modem_client_t *)node->client)->modem = NULL;
+		}
 		node->driver = NULL;
 		node->client = NULL;
 		node->active = FALSE;
@@ -233,13 +296,12 @@ int modem_serial_interface_unbind_api(const char *name)
 	return ret;
 }*/
 
-modem_serial_t * modem_serial_lookup_api(const char *name)
+modem_serial_t * modem_serial_lookup_api(const char *name, u_int8 hw_channel)
 {
 	modem_serial_t *node = NULL;
-	assert(name);
 	if(gModemSerialmain.mutex)
 		os_mutex_lock(gModemSerialmain.mutex, OS_WAIT_FOREVER);
-	node = modem_serial_lookup_node(name);
+	node = modem_serial_lookup_node(name, hw_channel);
 	if(gModemSerialmain.mutex)
 		os_mutex_unlock(gModemSerialmain.mutex);
 	return node;
@@ -271,9 +333,11 @@ const char *modem_serial_channel_name(modem_driver_t *input)
 {
 	modem_driver_t *driver = (modem_driver_t *)input;
 	static char format[MODEM_STRING_MAX];
+	//char tmp[MODEM_STRING_MAX];
 	assert(driver);
 	os_memset(format,0, sizeof(format));
-	//snprintf(format, sizeof(format), "modem%d%d", driver->bus, driver->device);
-	snprintf(format, sizeof(format), "modem%d%d", driver->vendor, driver->product);
-	return format;
+	//os_memset(tmp,0, sizeof(tmp));
+	os_strcpy(format, driver->module_name);
+	return strlwr(strchr_empty(format, ' '));
 }
+

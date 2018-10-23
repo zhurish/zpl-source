@@ -15,8 +15,8 @@
 #define _MODEM_PPPD_DEBUG
 
 #ifdef _MODEM_PPPD_DEBUG
-#define MODEM_PPPD_PEERS_BASE	"/tmp/ppp/peers/"
-#define MODEM_PPPD_BASE			"/tmp/ppp/"
+#define MODEM_PPPD_PEERS_BASE	"/etc/ppp/peers/"
+#define MODEM_PPPD_BASE			"/etc/ppp/"
 #else
 #define MODEM_PPPD_PEERS_BASE	"/etc/ppp/peers/"
 #define MODEM_PPPD_BASE			"/etc/ppp/"
@@ -195,6 +195,7 @@ typedef struct modem_pppd_s
 	char	secrets[MODEM_STRING_MAX];
 	char	option[MODEM_STRING_MAX];
 
+	BOOL	linkup;
 	int 	taskid;
 }modem_pppd_t;
 
@@ -219,8 +220,21 @@ extern int modem_pppd_update_api(modem_pppd_t *);
 extern int modem_pppd_set_api(modem_t *, pppd_options_t *);
 extern int modem_pppd_callback_api(modem_pppd_cb , void *);
 
-extern BOOL modem_pppd_isconnect(modem_t *modem);
+extern BOOL modem_pppd_islinkup(modem_t *);
+extern BOOL modem_pppd_isconnect(modem_t *);
 extern int modem_pppd_connect(modem_t *);
 extern int modem_pppd_disconnect(modem_t *);
+
+
+
+#ifdef _MODEM_PPPD_DEBUG
+#define MODEM_PPPD_DEBUG(fmt,...)	modem_debug_printf(stderr, __func__, __LINE__,fmt, ##__VA_ARGS__)
+#define MODEM_PPPD_WARN(fmt,...)		modem_debug_printf(stderr, __func__, __LINE__,fmt, ##__VA_ARGS__)
+#define MODEM_PPPD_ERROR(fmt,...)	modem_debug_printf(stderr, __func__, __LINE__,fmt, ##__VA_ARGS__)
+#else
+#define MODEM_PPPD_DEBUG(fmt,...)
+#define MODEM_PPPD_WARN(fmt,...)
+#define MODEM_PPPD_ERROR(fmt,...)
+#endif
 
 #endif /* __MODEM_PPPD_H__ */

@@ -20,7 +20,7 @@ extern int os_ip_stack_init(int localport);
 extern int os_log_start(module_t pro, char *logpipe);
 //extern int os_default_start(zlog_proto_t pro);
 extern int os_start_all_module();
-
+extern int os_exit_all_module();
 //extern int os_start_module (zlog_proto_t pro, char *config_file, void *argv);
 
 extern int os_start_pid(int pro, char *pid_file, int *pid);

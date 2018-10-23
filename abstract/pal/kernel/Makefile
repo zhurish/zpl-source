@@ -26,7 +26,6 @@ $(LIBS) : $(MODULE_OBJS)
 lib: $(LIBS)
 
 
-
 obj: $(MODULE_OBJS)
 
 install: $(LIBS)
@@ -36,6 +35,7 @@ install: $(LIBS)
 
 clean: objclean
 	@$(RM) $(LIB_DIR)/$(LIBS)
+	@$(RM) $(LIBS)
 
 objclean: 
 	@$(RM) $(OBJS_DIR)/*.o

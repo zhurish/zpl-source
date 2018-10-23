@@ -35,10 +35,10 @@ int nsm_ppp_interface_redisconnect(nsm_pppd_t *ppp, BOOL enable)
 int nsm_ppp_interface_enable(struct interface *ifp, BOOL enable)
 {
 	nsm_pppd_t *ppp = NULL;
-	struct nsm_interface *nsm = ifp->info[ZLOG_NSM];
+	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	if(!nsm->nsm_client[NSM_PPP])
 	{
-		nsm->nsm_client[NSM_PPP] = XMALLOC(NSM_PPP, sizeof(nsm_pppd_t));
+		nsm->nsm_client[NSM_PPP] = XMALLOC(MTYPE_PPP, sizeof(nsm_pppd_t));
 		zassert(nsm->nsm_client[NSM_PPP]);
 		os_memset(nsm->nsm_client[NSM_PPP], 0, sizeof(nsm_pppd_t));
 		ppp = nsm->nsm_client[NSM_PPP];
@@ -62,9 +62,11 @@ int nsm_ppp_interface_enable(struct interface *ifp, BOOL enable)
 
 static int nsm_ppp_add_interface(struct interface *ifp)
 {
-	struct nsm_interface *nsm = ifp->info[ZLOG_NSM];
+	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
+	if(!if_is_serial(ifp))
+		return OK;
 	if(!nsm->nsm_client[NSM_PPP])
-		nsm->nsm_client[NSM_PPP] = XMALLOC(NSM_PPP, sizeof(nsm_pppd_t));
+		nsm->nsm_client[NSM_PPP] = XMALLOC(MTYPE_PPP, sizeof(nsm_pppd_t));
 	zassert(nsm->nsm_client[NSM_PPP]);
 	os_memset(nsm->nsm_client[NSM_PPP], 0, sizeof(nsm_pppd_t));
 	return OK;
@@ -73,9 +75,12 @@ static int nsm_ppp_add_interface(struct interface *ifp)
 
 static int nsm_ppp_del_interface(struct interface *ifp)
 {
-	struct nsm_interface *nsm = ifp->info[ZLOG_NSM];
+	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
+	if(!if_is_serial(ifp))
+		return OK;
 	if(nsm->nsm_client[NSM_PPP])
-		XFREE(NSM_PPP, nsm->nsm_client[NSM_PPP]);
+		XFREE(MTYPE_PPP, nsm->nsm_client[NSM_PPP]);
+	nsm->nsm_client[NSM_PPP] = NULL;
 	return OK;
 }
 
@@ -89,8 +94,10 @@ static int nsm_ppp_interface_config(struct vty *vty, struct interface *ifp)
 	char tmpcli_str[256];
 	struct nsm_interface *nsm_ifp = NULL;
 	nsm_pppd_t *nsm_ppp = NULL;
+	if(!if_is_serial(ifp))
+		return OK;
 	memset(tmpcli_str, 0, sizeof(tmpcli_str));
-	nsm_ifp = (struct nsm_interface *)ifp->info[ZLOG_NSM];
+	nsm_ifp = (struct nsm_interface *)ifp->info[MODULE_NSM];
 	nsm_ppp = (nsm_pppd_t *)nsm_ifp->nsm_client[NSM_PPP];
 	if(!nsm_ppp)
 		return OK;
@@ -101,9 +108,17 @@ static int nsm_ppp_interface_config(struct vty *vty, struct interface *ifp)
 static int nsm_ppp_client_init()
 {
 	struct nsm_client *nsm = nsm_client_new ();
-	nsm->interface_add_cb = nsm_ppp_add_interface;
-	nsm->interface_delete_cb = nsm_ppp_del_interface;
+	nsm->notify_add_cb = nsm_ppp_add_interface;
+	nsm->notify_delete_cb = nsm_ppp_del_interface;
 	nsm->interface_write_config_cb = nsm_ppp_interface_config;
 	nsm_client_install (nsm, NSM_PPP);
+	return OK;
+}
+
+int nsm_ppp_client_exit()
+{
+	struct nsm_client *nsm = nsm_client_lookup (NSM_PPP);
+	if(nsm)
+		nsm_client_free (nsm);
 	return OK;
 }

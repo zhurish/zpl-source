@@ -58,7 +58,7 @@ static int _qmi_start( char *process, char *apn, char *user, char *passwd, char 
 		argv[i++] = "-f";
 		argv[i++] = "gobinet.log";
 	}
-
+#ifndef DOUBLE_PROCESS
 	id = child_process_create();
 	if(id == 0)
 	{
@@ -69,13 +69,29 @@ static int _qmi_start( char *process, char *apn, char *user, char *passwd, char 
 		MODEM_QMI_DEBUG("qmi %d", id);
 		return id;
 	}
+#else
+	char path[128];
+	memset(path, 0, sizeof(path));
+	snprintf(path, sizeof(path), "quectel-CM");
+	id = os_process_register(PROCESS_START, path, "quectel-CM", TRUE, argv);
+	if(id)
+		return id;
+#endif
 	return 0;
 }
 
 static int _qmi_stop(int process)
 {
+#ifndef DOUBLE_PROCESS
 	MODEM_QMI_DEBUG(" qmi");
 	return child_process_destroy(process);
+#else
+	if(os_process_action(PROCESS_STOP, "quectel-CM", process))
+	{
+		return OK;
+	}
+	return OK;
+#endif
 }
 
 
@@ -104,7 +120,8 @@ static int _modem_qmi_stop(modem_client_t *client)
 	modem = client->modem;
 	if(modem->pid[modem->dialtype])
 	{
-		_qmi_stop(modem->pid[modem->dialtype]);
+		if(_qmi_stop(modem->pid[modem->dialtype]) == OK)
+			modem->pid[modem->dialtype] = 0;
 	}
 	return OK;
 }

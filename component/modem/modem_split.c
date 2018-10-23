@@ -250,8 +250,12 @@ const char *modem_operator_svc_cmd(modem_t *modem)
 		break;
 	case OPERATOR_ATANDT:		//AT&T
 		break;
+	default:
+		break;
 	}
-	return (const char *)cmd;
+	if(os_strlen(cmd))
+		return (const char *)cmd;
+	return NULL;
 }
 
 

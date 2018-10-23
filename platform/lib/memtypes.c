@@ -21,6 +21,17 @@ struct memory_list memory_list_lib[] =
   { MTYPE_THREAD,		"Thread"			},
   { MTYPE_THREAD_MASTER,	"Thread master"			},
   { MTYPE_THREAD_STATS,		"Thread stats"			},
+  { MTYPE_ELOOP,		"Eloop"			},
+  { MTYPE_ELOOP_MASTER,	"Eloop master"			},
+  { MTYPE_ELOOP_STATS,		"Eloop stats"			},
+  { MTYPE_EPOLL,		"Epoll"			},
+  { MTYPE_EPOLL_MASTER,	"Epoll master"			},
+  { MTYPE_EPOLL_STATS,		"Epoll stats"			},
+  { MTYPE_EVENT,		"Event"			},
+  { MTYPE_EVENT_INFO,		"Event info"			},
+  { MTYPE_NSM,		"NSM"			},
+  { MTYPE_NSM_INFO,		"NSM info"			},
+  { MTYPE_NSM_CLIENT,		"NSM Client info"			},
   { MTYPE_VTY,			"VTY"				},
   { MTYPE_VTY_OUT_BUF,		"VTY output buffer"		},
   { MTYPE_VTY_HIST,		"VTY history"			},
@@ -28,11 +39,6 @@ struct memory_list memory_list_lib[] =
   { MTYPE_IF,			"Interface"			},
   { MTYPE_IF_DESC,			"Interface destination"	},
   { MTYPE_IF_HOOK,			"Interface Hook"			},
-  { MTYPE_VLAN,			"VLAN information"			},
-  { MTYPE_TRUNK,			"Trunk information"			},
-  { MTYPE_QOS,			"QOS information"			},
-  { MTYPE_DOT1X,			"DOT1X information"			},
-  { MTYPE_MIRROR,			"MIRROR information"			},
   { MTYPE_SECURITY,			"Security information"			},
   { MTYPE_CONNECTED,		"Connected" 			},
   { MTYPE_CONNECTED_LABEL,	"Connected interface label"	},
@@ -41,6 +47,9 @@ struct memory_list memory_list_lib[] =
   { MTYPE_STREAM,		"Stream"			},
   { MTYPE_STREAM_DATA,		"Stream data"			},
   { MTYPE_STREAM_FIFO,		"Stream FIFO"			},
+  { MTYPE_DATA,				"data"			},
+  { MTYPE_LOG,				"Log"			},
+  { MTYPE_LOG_DATA,				"Log data"			},
   { MTYPE_PREFIX,		"Prefix"			},
   { MTYPE_PREFIX_IPV4,		"Prefix IPv4"			},
   { MTYPE_PREFIX_IPV6,		"Prefix IPv6"			},
@@ -97,6 +106,8 @@ struct memory_list memory_list_zebra[] =
   { MTYPE_RIB_TABLE_INFO,	"RIB table info"		},
   { MTYPE_NETLINK_NAME,	"Netlink name"			},
   { MTYPE_RNH,		        "Nexthop tracking object"	},
+  { MTYPE_IP_DNS,			"IP DNS"				},
+  { MTYPE_IP_HOST,			"IP HOST"				},
   { -1, NULL },
 };
 
@@ -378,27 +389,61 @@ struct memory_list memory_list_lldp[] =
 #ifdef PL_MODEM_MODULE
 struct memory_list memory_list_modem[] =
 {
-  { MTYPE_RIP,                "RIP structure"			},
-  { MTYPE_RIP_INFO,           "RIP route info"			},
-  { MTYPE_RIP_INTERFACE,      "RIP interface"			},
-  { MTYPE_RIP_PEER,           "RIP peer"			},
-  { MTYPE_RIP_OFFSET_LIST,    "RIP offset list"			},
-  { MTYPE_RIP_DISTANCE,       "RIP distance"			},
+  { MTYPE_MODEM,             "MODEM structure"		},
+  { MTYPE_MODEM_CLIENT,      "MODEM Client info"	},
+  { MTYPE_MODEM_SERIAL,      "MODEM serial"			},
+  { MTYPE_MODEM_DRIVER,      "MODEM driver"			},
+  { MTYPE_MODEM_DATA,    	 "MODEM data"			},
   { -1, NULL }
 };
 #endif
 #ifdef PL_DHCP_MODULE
 struct memory_list memory_list_dhcp[] =
 {
-  { MTYPE_RIP,                "RIP structure"			},
-  { MTYPE_RIP_INFO,           "RIP route info"			},
-  { MTYPE_RIP_INTERFACE,      "RIP interface"			},
-  { MTYPE_RIP_PEER,           "RIP peer"			},
-  { MTYPE_RIP_OFFSET_LIST,    "RIP offset list"			},
-  { MTYPE_RIP_DISTANCE,       "RIP distance"			},
+  { MTYPE_DHCP,                "DHCP structure"				},
+  { MTYPE_DHCPC,                "DHCP Client structure"		},
+  { MTYPE_DHCPC_INFO,           "DHCP Client info"			},
+  { MTYPE_DHCPC_ADDR,           "DHCP Client address"		},
+  { MTYPE_DHCPS,                "DHCP Server structure"		},
+  { MTYPE_DHCPS_INFO,           "DHCP Server info"			},
+  { MTYPE_DHCPS_ADDR,           "DHCP Server address"		},
+  { MTYPE_DHCPS_POOL,           "DHCP Server address pool"	},
   { -1, NULL }
 };
 #endif
+
+#ifdef PL_WIFI_MODULE
+struct memory_list memory_list_wifi[] =
+{
+  { MTYPE_WIFI,              "WIFI structure"				},
+  { MTYPE_WIFI_DB,           "WIFI DB structure"			},
+  { MTYPE_WIFI_AP,           "WIFI AP info"			},
+  { MTYPE_WIFI_CLIENT,       "WIFI AP Client info"			},
+  { -1, NULL }
+};
+#endif
+
+struct memory_list memory_list_port[] =
+{
+	{ MTYPE_PORT,			"PHY PORT information"			},
+	{ MTYPE_MAC,			"MAC information"			},
+	{ MTYPE_ARP,			"ARP information"			},
+	{ MTYPE_ACL,			"ACL information"			},
+	{ MTYPE_PPP,			"PPP information"		},
+
+	{ MTYPE_PPPOE,			"PHY PORT information"			},
+	{ MTYPE_KERNEL,			"MAC information"			},
+	{ MTYPE_SERIAL,			"sSecurity information"			},
+
+	{ MTYPE_VLAN,			"VLAN information"			},
+	{ MTYPE_TRUNK,			"Trunk information"			},
+	{ MTYPE_QOS,			"QOS information"			},
+	{ MTYPE_DOT1X,			"DOT1X information"			},
+	{ MTYPE_MIRROR,			"MIRROR information"		},
+	{ -1, NULL },
+};
+
+
 struct mlist mlists[] __attribute__ ((unused)) = {
   { memory_list_lib,	"LIB"	},
   { memory_list_zebra,	"ZEBRA"	},
@@ -422,6 +467,16 @@ struct mlist mlists[] __attribute__ ((unused)) = {
 #ifdef ZEBRA_ROUTE_LLDP
   { memory_list_lldp,	"LLDP"	},
 #endif
+#ifdef PL_MODEM_MODULE
+  { memory_list_modem,	"MODEM"	},
+#endif
+#ifdef PL_DHCP_MODULE
+  { memory_list_dhcp,	"DHCP"	},
+#endif
+#ifdef PL_WIFI_MODULE
+  { memory_list_wifi,	"WIFI"	},
+#endif
+  { memory_list_port,	"PORT"	},
 /* 2016��6��27�� 21:07:44 zhurish: ��չ·��Э�����ӵ��ڴ���Ϣ */
   { NULL, NULL},
 };

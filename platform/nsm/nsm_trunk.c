@@ -22,60 +22,122 @@
 
 static Gl2trunk_t gtrunk;
 
+static l2trunk_group_t * l2trunk_group_lookup_node(u_int trunkid);
+static int _trunk_interface_show_one(struct vty *vty, struct interface *ifp);
 
+l2trunk_group_t * nsm_port_channel_get(struct interface *ifp)
+{
+	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
+	return (l2trunk_group_t *)nsm->nsm_client[NSM_TRUNK];
+}
+
+
+static int nsm_port_channel_add(struct interface *ifp)
+{
+	l2trunk_group_t * port_channel = NULL;
+	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
+	if(!if_is_lag(ifp))
+		return OK;
+
+	nsm_trunk_create_api(IF_IFINDEX_ID_GET(ifp->ifindex), TRUNK_STATIC);
+
+	port_channel = nsm->nsm_client[NSM_TRUNK] = l2trunk_group_lookup_node(IF_IFINDEX_ID_GET(ifp->ifindex));
+	if(!port_channel)
+		return ERROR;
+	port_channel->ifp = ifp;
+	return OK;
+}
+
+
+static int nsm_port_channel_del(struct interface *ifp)
+{
+	l2trunk_group_t * port_channel = NULL;
+	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
+	if(!if_is_lag(ifp))
+		return OK;
+	port_channel = nsm->nsm_client[NSM_TRUNK];
+	if(port_channel)
+	{
+		if(nsm_trunk_destroy_api(port_channel->trunkId) == ERROR)
+			return ERROR;
+		nsm->nsm_client[NSM_TRUNK] = NULL;
+	}
+	return OK;
+}
+
+static int nsm_port_channel_client_init()
+{
+	struct nsm_client *nsm = nsm_client_new ();
+	nsm->notify_add_cb = nsm_port_channel_add;
+	nsm->notify_delete_cb = nsm_port_channel_del;
+	nsm->interface_write_config_cb = _trunk_interface_show_one;//nsm_serial_interface_write_config;
+	nsm_client_install (nsm, NSM_TRUNK);
+	return OK;
+}
+
+static int nsm_port_channel_client_exit()
+{
+	struct nsm_client *nsm = nsm_client_lookup (NSM_TRUNK);
+	if(nsm)
+		nsm_client_free (nsm);
+	return OK;
+}
 
 int nsm_trunk_init()
 {
 	int i = 0;
 	os_memset(&gtrunk, 0, sizeof(Gl2trunk_t));
+	gtrunk.group = XMALLOC(MTYPE_TRUNK, sizeof(l2trunk_group_t) * NSM_TRUNK_ID_MAX);
+	if(!gtrunk.group)
+		return ERROR;
 	for(i = 0; i < NSM_TRUNK_ID_MAX; i++)
 	{
+		os_memset(&gtrunk.group[i], 0, sizeof(gtrunk.group[i]));
 		gtrunk.group[i].trunkList = malloc(sizeof(LIST));
 		gtrunk.group[i].global = &gtrunk;
-		gtrunk.lacp_system_priority = LACP_SYSTEM_PRIORITY_DEFAULT;
-		gtrunk.load_balance = LOAD_BALANCE_DEFAULT;
+		//gtrunk.lacp_system_priority = LACP_SYSTEM_PRIORITY_DEFAULT;
+		//gtrunk.load_balance = LOAD_BALANCE_DEFAULT;
 		lstInit(gtrunk.group[i].trunkList);
 	}
+	gtrunk.enable = TRUE;
 	gtrunk.mutex = os_mutex_init();
+	nsm_port_channel_client_init();
 	return OK;
 }
 
-/*static int l2trunk_cleanup(int all)
+static int l2trunk_cleanup(l2trunk_group_t *group)
 {
 	l2trunk_t *pstNode = NULL;
 	NODE index;
-	for(pstNode = (l2trunk_t *)lstFirst(gtrunk.trunkList);
+	for(pstNode = (l2trunk_t *)lstFirst(group->trunkList);
 			pstNode != NULL;  pstNode = (l2trunk_t *)lstNext((NODE*)&index))
 	{
 		index = pstNode->node;
 		if(pstNode)
 		{
-			if(all)
-			{
-				lstDelete(gtrunk.trunkList, (NODE*)pstNode);
-				XFREE(MTYPE_TRUNK, pstNode);
-			}
-			else if(pstNode->vlan != 1)
-			{
-				lstDelete(gtrunk.trunkList, (NODE*)pstNode);
-				XFREE(MTYPE_TRUNK, pstNode);
-			}
+			lstDelete(group->trunkList, (NODE*)pstNode);
+			XFREE(MTYPE_TRUNK, pstNode);
 		}
 	}
 	return OK;
-}*/
+}
 
 int nsm_trunk_exit()
 {
-/*	int i = 0;
+	int i = 0;
+	if(gtrunk.mutex)
+		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
+	nsm_port_channel_client_exit();
 	for(i = 0; i < NSM_TRUNK_ID_MAX; i++)
 	{
-		gtrunk.group[i].trunkList = malloc(sizeof(LIST));
-		lstInit(gtrunk.group[i].trunkList);
-	}*/
-/*	if(lstCount(gtrunk.trunkList))
-		l2trunk_cleanup(1);*/
-
+		if(lstCount(gtrunk.group[i].trunkList))
+			l2trunk_cleanup(&gtrunk.group[i]);
+		free(gtrunk.group[i].trunkList);
+		gtrunk.group[i].trunkList = NULL;
+	}
+	XFREE(MTYPE_TRUNK, gtrunk.group);
+	if(gtrunk.mutex)
+		os_mutex_unlock(gtrunk.mutex);
 	if(gtrunk.mutex)
 		os_mutex_exit(gtrunk.mutex);
 	return OK;
@@ -108,7 +170,7 @@ static l2trunk_group_t * l2trunk_group_lookup_node(u_int trunkid)
 	for(i = 0; i < NSM_TRUNK_ID_MAX; i++)
 	{
 		if(gtrunk.group[i].trunkId == trunkid)
-		return &(gtrunk.group[i]);
+			return &(gtrunk.group[i]);
 	}
 	return NULL;
 }
@@ -199,7 +261,7 @@ static l2trunk_t * l2trunk_lookup_port(ifindex_t ifindex)
 
 static int l2trunk_add_port(l2trunk_group_t *group, l2trunk_t *value)
 {
-	int i = 0;
+//	int i = 0;
 	if(hal_trunk_interface_enable(value->ifindex, group->trunkId) == OK)
 	{
 /*		l2trunk_t value;
@@ -227,16 +289,33 @@ static int l2trunk_del_port(l2trunk_group_t *group, l2trunk_t *value)
 
 BOOL l2trunk_lookup_api(u_int trunkid)
 {
-	if(l2trunk_group_lookup_node(trunkid))
+	if(gtrunk.mutex)
+		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
+	if(l2trunk_group_lookup_node(trunkid) != NULL)
+	{
+		if(gtrunk.mutex)
+			os_mutex_unlock(gtrunk.mutex);
 		return TRUE;
+	}
+	if(gtrunk.mutex)
+		os_mutex_unlock(gtrunk.mutex);
 	return FALSE;
 }
 
 int l2trunk_lookup_interface_count_api(u_int trunkid)
 {
+	if(gtrunk.mutex)
+		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
 	l2trunk_group_t *group = l2trunk_group_lookup_node(trunkid);
 	if(group)
-		return lstCount(group->trunkList);
+	{
+		int ret = lstCount(group->trunkList);
+		if(gtrunk.mutex)
+			os_mutex_unlock(gtrunk.mutex);
+		return ret;
+	}
+	if(gtrunk.mutex)
+		os_mutex_unlock(gtrunk.mutex);
 	return -1;
 }
 
@@ -256,6 +335,9 @@ int nsm_trunk_create_api(u_int trunkid, trunk_type_t type)
 			{
 				gtrunk.group[i].trunkId = trunkid;
 				gtrunk.group[i].type = type;
+				gtrunk.group[i].lacp_system_priority = LACP_SYSTEM_PRIORITY_DEFAULT;
+				gtrunk.group[i].load_balance = LOAD_BALANCE_DEFAULT;
+
 				//gtrunk.group[i].global = &gtrunk;
 				//gtrunk.group[i].lacp_system_priority = gtrunk.lacp_system_priority;
 				//gtrunk.group[i].load_balance = gtrunk.load_balance;
@@ -275,6 +357,12 @@ int nsm_trunk_destroy_api(u_int trunkid)
 	l2trunk_group_t *pstNode = NULL;
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
+	if(l2trunk_lookup_interface_count_api(trunkid) >= 1)
+	{
+		if(gtrunk.mutex)
+			os_mutex_unlock(gtrunk.mutex);
+		return ret;
+	}
 	pstNode = l2trunk_group_lookup_node(trunkid);
 	if(pstNode)
 	{
@@ -291,20 +379,34 @@ int nsm_trunk_destroy_api(u_int trunkid)
 
 BOOL l2trunk_lookup_interface_api(ifindex_t ifindex)
 {
-	if(l2trunk_lookup_port(ifindex))
+	if(gtrunk.mutex)
+		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
+	if(l2trunk_lookup_port(ifindex) != NULL)
+	{
+		if(gtrunk.mutex)
+			os_mutex_unlock(gtrunk.mutex);
 		return TRUE;
+	}
+	if(gtrunk.mutex)
+		os_mutex_unlock(gtrunk.mutex);
 	return FALSE;
 }
 
 int nsm_trunk_get_ID_interface_api(ifindex_t ifindex, u_int *trunkId)
 {
+	if(gtrunk.mutex)
+		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
 	l2trunk_t *pstNode = l2trunk_lookup_port(ifindex);
 	if(pstNode)
 	{
 		if(trunkId)
 			*trunkId = pstNode->trunkId;
+		if(gtrunk.mutex)
+			os_mutex_unlock(gtrunk.mutex);
 		return OK;
 	}
+	if(gtrunk.mutex)
+		os_mutex_unlock(gtrunk.mutex);
 	return -1;
 }
 
@@ -341,7 +443,7 @@ int nsm_trunk_add_interface_api(u_int trunkid, trunk_type_t type, trunk_mode_t m
 
 int nsm_trunk_del_interface_api(u_int trunkid, struct interface *ifp)
 {
-	int i = 0;
+	//int i = 0;
 	int ret = ERROR;
 	l2trunk_t *value;
 	if(gtrunk.mutex)
@@ -360,17 +462,26 @@ int nsm_trunk_del_interface_api(u_int trunkid, struct interface *ifp)
 int nsm_trunk_load_balance_api(u_int trunkid, load_balance_t mode)
 {
 	int ret = ERROR;
-	//l2trunk_group_t *value;
+	l2trunk_group_t *value;
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
 
-/*	value = l2trunk_group_lookup_node(trunkid);
+	value = l2trunk_group_lookup_node(trunkid);
 	if(value)
 	{
 		value->load_balance = mode;
-		ret = OK;
-	}*/
-	if(hal_trunk_mode(mode) == OK)
+		if(hal_trunk_mode(mode) == OK)
+		{
+			value->load_balance = mode;
+			if(mode == TRUNK_LOAD_BALANCE_NONE)
+				value->load_balance = LOAD_BALANCE_DEFAULT;
+
+			ret = OK;
+		}
+		else
+			ret = ERROR;
+	}
+/*	if(hal_trunk_mode(mode) == OK)
 	{
 		gtrunk.load_balance = mode;
 		if(mode == TRUNK_LOAD_BALANCE_NONE)
@@ -379,7 +490,7 @@ int nsm_trunk_load_balance_api(u_int trunkid, load_balance_t mode)
 		ret = OK;
 	}
 	else
-		ret = ERROR;
+		ret = ERROR;*/
 	if(gtrunk.mutex)
 		os_mutex_unlock(gtrunk.mutex);
 	return ret;
@@ -447,18 +558,23 @@ int nsm_trunk_lacp_timeout_api(ifindex_t ifindex, u_int timeout)
 int nsm_trunk_lacp_system_priority_api(u_int trunkid, u_int pri)
 {
 	int ret = ERROR;
-	//l2trunk_group_t *value;
+	l2trunk_group_t *value;
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
-/*	value = l2trunk_group_lookup_node(trunkid);
+	value = l2trunk_group_lookup_node(trunkid);
 	if(value)
 	{
 		value->lacp_system_priority = pri;
+		if(pri == 0)
+			value->lacp_system_priority = LACP_SYSTEM_PRIORITY_DEFAULT;
+
 		ret = OK;
-	}*/
+	}
+/*
 	gtrunk.lacp_system_priority = pri;
 	if(pri == 0)
 		gtrunk.lacp_system_priority = LACP_SYSTEM_PRIORITY_DEFAULT;
+*/
 
 	ret = OK;
 	if(gtrunk.mutex)
@@ -508,4 +624,58 @@ int nsm_trunk_callback_api(l2trunk_cb cb, void *pVoid)
 	if(gtrunk.mutex)
 		os_mutex_unlock(gtrunk.mutex);
 	return OK;
+}
+
+
+static int _trunk_interface_show_one(struct vty *vty, struct interface *ifp)
+{
+	if (if_is_lag(ifp))
+	{
+		const char *load[] = { "NONE", "dst-mac", "src-mac", "dst-src-mac", "dst-ip" };
+		if(gtrunk.mutex)
+			os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
+		l2trunk_group_t * trunk_group = nsm_port_channel_get(ifp);
+		if (trunk_group)
+		{
+
+			if (trunk_group->lacp_system_priority
+					!= LACP_SYSTEM_PRIORITY_DEFAULT)
+				vty_out(vty, " lacp system-priority %d%s",
+						trunk_group->lacp_system_priority, VTY_NEWLINE);
+			if (trunk_group->load_balance != LOAD_BALANCE_DEFAULT)
+				vty_out(vty, " port-channel load-balance %s%s",
+						load[trunk_group->load_balance], VTY_NEWLINE);
+		}
+		if(gtrunk.mutex)
+			os_mutex_unlock(gtrunk.mutex);
+	}
+	else if (if_is_ethernet(ifp))
+	{
+		if(gtrunk.mutex)
+			os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
+		l2trunk_t * trunk = l2trunk_lookup_port(ifp->ifindex);
+		if (trunk)
+		{
+			const char *mode[] = { "NONE", "active", "passive" };
+			if (trunk->type == TRUNK_STATIC)
+			{
+				vty_out(vty, " static-channel-group %d%s", trunk->trunkId,
+						VTY_NEWLINE);
+			}
+			else
+			{
+				vty_out(vty, " channel-group %d %s%s", trunk->trunkId,
+						mode[trunk->mode], VTY_NEWLINE);
+				if (trunk->lacp_port_priority != LACP_PORT_PRIORITY_DEFAULT)
+					vty_out(vty, " lacp port-priority %d%s",
+							trunk->lacp_port_priority, VTY_NEWLINE);
+				if (trunk->lacp_timeout != LACP_TIMEOUT_DEFAULT)
+					vty_out(vty, " lacp timeout %d%s", trunk->lacp_timeout,
+							VTY_NEWLINE);
+			}
+		}
+		if(gtrunk.mutex)
+			os_mutex_unlock(gtrunk.mutex);
+	}
+	return 0;
 }

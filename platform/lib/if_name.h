@@ -11,7 +11,7 @@
 #include "if.h"
 //#include "zebra.h"
 //#include "linklist.h"
-#define VTY_IUSP_DEBUG
+//#define VTY_IUSP_DEBUG
 
 extern const char *getkernelname(if_type_t	type);
 
@@ -42,12 +42,13 @@ extern ifindex_t if_ifindex_make(const char *ifname, const char *uspv);
 extern if_type_t if_iftype_make(const char *str);
 
 
+
 extern int if_uspv_type_setting(struct interface *ifp);
 
 
 extern int if_loopback_ifindex_create(if_type_t type, const char *name);
 
-
+extern char *if_mac_out_format(unsigned char *mac, int len);
 extern int vty_iusp_get (const char *str, int *uspv);
 extern int vty_mac_get (const char *str, unsigned char *mac);
 

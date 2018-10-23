@@ -45,7 +45,7 @@ DEFUN (channel_group,
 	u_int trunkid;
 	struct interface *ifp = vty->index;
 	trunk_type_t type = TRUNK_DYNAMIC;
-	trunk_mode_t mode;
+	trunk_mode_t mode = TRUNK_ACTIVE;
 	if (argc < 1)
 		return CMD_WARNING;
 
@@ -59,7 +59,8 @@ DEFUN (channel_group,
 
 	if(!l2trunk_lookup_api(trunkid))
 	{
-		ret = nsm_trunk_create_api(trunkid, type);
+		ret = ERROR;//nsm_trunk_create_api(trunkid, type);
+		vty_out(vty, "interface port-channel%d is not exist.%s",trunkid, VTY_NEWLINE);
 	}
 	else
 		ret = OK;
@@ -68,6 +69,7 @@ DEFUN (channel_group,
 		if(!l2trunk_lookup_interface_api(ifp->ifindex))
 		{
 			ret = nsm_trunk_add_interface_api(trunkid, type, mode, ifp);
+			return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 		}
 		else
 		{
@@ -108,7 +110,8 @@ DEFUN (channel_group_static,
 
 	if(!l2trunk_lookup_api(trunkid))
 	{
-		ret = nsm_trunk_create_api(trunkid, type);
+		ret = ERROR;//nsm_trunk_create_api(trunkid, type);
+		vty_out(vty, "interface port-channel%d is not exist.%s",trunkid, VTY_NEWLINE);
 	}
 	else
 		ret = OK;
@@ -117,6 +120,7 @@ DEFUN (channel_group_static,
 		if(!l2trunk_lookup_interface_api(ifp->ifindex))
 		{
 			ret = nsm_trunk_add_interface_api(trunkid, type, mode, ifp);
+			return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 		}
 		else
 		{
@@ -153,10 +157,10 @@ DEFUN (no_channel_group_static,
 	ret = nsm_trunk_del_interface_api(trunkid, ifp);
 	if(ret == OK)
 	{
-		if(l2trunk_lookup_interface_count_api(trunkid) <= 0)
+/*		if(l2trunk_lookup_interface_count_api(trunkid) <= 0)
 		{
 			ret = nsm_trunk_destroy_api(trunkid);
-		}
+		}*/
 	}
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -327,20 +331,20 @@ DEFUN (no_port_channel_load_balance,
 }
 
 
-
+/*
 static int _trunk_group_show_one(l2trunk_group_t *group, struct vty *vty)
 {
 	char *load[] = {"NONE", "dst-mac", "src-mac", "dst-src-mac", "dst-ip"};
 	static char flag = 0;
 	if(group)
 	{
-		if(/*group->trunkId && */flag == 0)
+		if(group->trunkId && flag == 0)
 		{
 			if(group->global->lacp_system_priority != LACP_SYSTEM_PRIORITY_DEFAULT)
-				vty_out(vty, "lacp system-priority %d%s",
+				vty_out(vty, " lacp system-priority %d%s",
 					group->global->lacp_system_priority, VTY_NEWLINE);
 			if(group->global->load_balance != LOAD_BALANCE_DEFAULT)
-				vty_out(vty, "port-channel load-balance %s%s",
+				vty_out(vty, " port-channel load-balance %s%s",
 						load[group->global->load_balance], VTY_NEWLINE);
 			flag = 1;
 		}
@@ -348,44 +352,12 @@ static int _trunk_group_show_one(l2trunk_group_t *group, struct vty *vty)
 	return 0;
 }
 
-
-static int _trunk_interface_show_one(l2trunk_t *trunk, struct trunk_user *user)
-{
-	struct vty *vty = user->vty;
-	char *mode[] = {"NONE", "active", "passive"};
-	if(trunk)
-	{
-		if(trunk->ifindex == user->ifindex)
-		{
-			if(trunk->type == TRUNK_STATIC)
-			{
-				vty_out(vty, " static-channel-group %d%s",
-						trunk->trunkId, VTY_NEWLINE);
-			}
-			else
-			{
-				vty_out(vty, " channel-group %d %s%s",
-						trunk->trunkId, mode[trunk->mode], VTY_NEWLINE);
-				if(trunk->lacp_port_priority != LACP_PORT_PRIORITY_DEFAULT)
-					vty_out(vty, " lacp port-priority %d%s",
-						trunk->lacp_port_priority, VTY_NEWLINE);
-				if(trunk->lacp_timeout != LACP_TIMEOUT_DEFAULT)
-					vty_out(vty, " lacp timeout %d%s",
-						trunk->lacp_timeout, VTY_NEWLINE);
-			}
-		}
-	}
-	return 0;
-}
-
-
 int build_trunk_global_config(struct vty *vty)
 {
 	if(nsm_trunk_is_enable())
 		nsm_trunk_group_callback_api((l2trunk_group_cb)_trunk_group_show_one, vty);
 	return 1;
 }
-
 
 int build_trunk_interface_config(struct vty *vty, struct interface *ifp)
 {
@@ -397,17 +369,47 @@ int build_trunk_interface_config(struct vty *vty, struct interface *ifp)
 	return 1;
 }
 
+*/
+
+static int cmd_trunk_interface_init(int node)
+{
+	install_element(node, &channel_group_cmd);
+	install_element(node, &channel_group_static_cmd);
+
+	install_element(node, &no_channel_group_static_cmd);
+	install_element(node, &no_channel_group_cmd);
+
+	install_element(node, &lacp_port_priority_cmd);
+	install_element(node, &no_lacp_port_priority_cmd);
+	return OK;
+}
+
+static int cmd_trunk_base_init(int node)
+{
+	install_element(node, &port_channel_load_balance_cmd);
+	install_element(node, &no_port_channel_load_balance_cmd);
+
+	install_element(node, &lacp_system_priority_cmd);
+	install_element(node, &no_lacp_system_priority_cmd);
+	return OK;
+}
 
 void cmd_trunk_init(void)
 {
-	struct nsm_client *nsm = nsm_client_new ();
+/*	struct nsm_client *nsm = nsm_client_new ();
 	nsm->write_config_cb = build_trunk_global_config;
 	nsm->interface_write_config_cb = build_trunk_interface_config;
-	nsm_client_install (nsm, NSM_TRUNK);
+	nsm_client_install (nsm, NSM_TRUNK);*/
 
 //	install_default(CONFIG_NODE);
-	//reinstall_node(SERVICE_NODE, nsm_ip_arp_config);
+	//reinstall_node(LAG_INTERFACE_NODE, build_trunk_global_config);
 
+	cmd_trunk_base_init(LAG_INTERFACE_NODE);
+	cmd_trunk_base_init(LAG_INTERFACE_L3_NODE);
+
+	cmd_trunk_interface_init(INTERFACE_NODE);
+	cmd_trunk_interface_init(INTERFACE_L3_NODE);
+/*
 	install_element(CONFIG_NODE, &port_channel_load_balance_cmd);
 	install_element(CONFIG_NODE, &no_port_channel_load_balance_cmd);
 
@@ -422,6 +424,7 @@ void cmd_trunk_init(void)
 
 	install_element(INTERFACE_NODE, &lacp_port_priority_cmd);
 	install_element(INTERFACE_NODE, &no_lacp_port_priority_cmd);
+*/
 
 /*	install_element(ENABLE_NODE, &show_ip_arp_cmd);
 	install_element(ENABLE_NODE, &show_ip_arp_detail_cmd);

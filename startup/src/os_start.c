@@ -28,49 +28,41 @@
 #include "os_start.h"
 
 
-//#include "pal.h"
 
 /* SIGHUP handler. */
 static void os_sighup(void)
 {
-	fprintf(stdout, "%s\r\n",__func__);
-	zlog_info(ZLOG_DEFAULT,"SIGHUP received");
+	zlog_notice(ZLOG_DEFAULT, "%s: SIGHUP received\r\n",__func__);
 
-	/* Reload of config file. */
-	vty_terminate();
-	vrf_terminate();
-	cmd_terminate();
-	//pthread_exit(NULL);
+	os_exit_all_module();
+
 	exit(0);
 }
 
 /* SIGINT handler. */
 static void os_sigint(void)
 {
-	fprintf(stdout, "%s\r\n",__func__);
-	zlog_notice(ZLOG_DEFAULT,"Terminating on signal");
-	vty_terminate();
-	vrf_terminate();
-	cmd_terminate();
-	//pthread_exit(NULL);
+	zlog_notice(ZLOG_DEFAULT, "%s: Terminating on signal\r\n",__func__);
+
+	os_exit_all_module();
+
 	exit(0);
 }
 
 /* SIGKILL handler. */
 static void os_sigkill(void)
 {
-	fprintf(stdout, "%s\r\n",__func__);
-	//zlog_notice ("SIGKILL on signal");
-	//vty_terminate ();
-	zlog_backtrace_sigsafe(LOG_DEBUG,"AAAAAAAA");
-	zlog_backtrace(LOG_DEBUG);
+	zlog_notice(ZLOG_DEFAULT, "%s\r\n",__func__);
+	os_exit_all_module();
+/*	zlog_backtrace_sigsafe(LOG_DEBUG,"AAAAAAAA");
+	zlog_backtrace(LOG_DEBUG);*/
+	exit(0);
 }
 
 /* SIGUSR1 handler. */
 static void os_sigusr1(void)
 {
 	fprintf(stdout, "%s\r\n",__func__);
-	zlog_rotate();
 }
 
 static struct quagga_signal_t os_signals[] =
@@ -117,10 +109,7 @@ int os_start_init(char *progname, module_t pro, int daemon_mode)
 	}
 
 	lstLibInit();
-#ifdef BUILD_ARM
-	/* privs initialise */
-	//zprivs_init(&os_privs);
-#endif
+
 	/* Vty related initialize. */
 	signal_init(array_size(os_signals), os_signals);
 
@@ -167,11 +156,28 @@ int os_start_all_module()
 	 */
 	os_module_task_init();
 	os_msleep(1000);
+
 #ifdef USE_IPSTACK_KERNEL
 	kernel_load_all();
 #endif
 	return OK;
 }
+
+
+
+int os_exit_all_module()
+{
+
+	os_module_task_exit();
+
+	os_module_exit();
+
+
+	os_module_cmd_exit();
+
+	return OK;
+}
+
 
 int os_start_pid(int pro, char *pid_file, int *pid)
 {
@@ -214,7 +220,7 @@ static int os_thread_start(void *m, module_t pro)
 	module_setup_task(master->module, os_task_id_self());
 	while(!os_load_config_done())
 	{
-		sleep(1);
+		os_sleep(1);
 	}
 	/* Output pid of zebra. */
 //	pid_output (pid_file);
@@ -248,7 +254,7 @@ static int os_eloop_start(void *m, module_t pro)
 	module_setup_task(master->module, os_task_id_self());
 	while(!os_load_config_done())
 	{
-		sleep(1);
+		os_sleep(1);
 	}
 	//master->ptid = os_task_pthread_self();
 	//master->taskId = os_task_id_self();

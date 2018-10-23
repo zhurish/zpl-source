@@ -907,6 +907,37 @@ prefix2str (union prefix46constptr pu, char *str, int size)
   return str;
 }
 
+const char *
+prefix_2_address_str (union prefix46constptr pu, char *str, int size)
+{
+	const struct prefix *p = pu.p;
+	char buf[INET6_ADDRSTRLEN];
+
+	if (p->family == AF_ETHERNET)
+	{
+		int i;
+		char *s = str;
+		assert(size > (3*ETHER_ADDR_LEN) + 1 /* slash */+ 3 /* plen */);
+		for (i = 0; i < ETHER_ADDR_LEN; ++i)
+		{
+			sprintf(s, "%02x", p->u.prefix_eth.octet[i]);
+			if (i < (ETHER_ADDR_LEN - 1))
+			{
+				*(s + 2) = ':';
+				s += 3;
+			}
+			else
+			{
+				s += 2;
+			}
+		}
+		return str;
+	}
+	inet_ntop(p->family, &p->u.prefix, buf, INET6_ADDRSTRLEN);
+	snprintf(str, size, "%s", buf);
+	return str;
+}
+
 struct prefix *
 prefix_new ()
 {
@@ -923,6 +954,10 @@ prefix_free (struct prefix *p)
   XFREE (MTYPE_PREFIX, p);
 }
 
+void prefix_zero (struct prefix *p)
+{
+	memset(p, 0, sizeof(struct prefix));
+}
 /* Utility function.  Check the string only contains digit
  * character.
  * FIXME str.[c|h] would be better place for this function. */

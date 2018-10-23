@@ -1,4 +1,4 @@
-#include "../../tools/quectel-CM/QMIThread.h"
+#include "QMIThread.h"
 static char line[1024];
 static pthread_mutex_t dumpQMIMutex = PTHREAD_MUTEX_INITIALIZER;
 #undef dbg

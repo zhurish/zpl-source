@@ -25,36 +25,11 @@
 #define ZEBRA_ROUTE_LLDP                 17
 #define ZEBRA_ROUTE_BFD                  18
 #define ZEBRA_ROUTE_LDP                  19
-#define ZEBRA_ROUTE_UTILS                20
-#define ZEBRA_ROUTE_MANAGE               21
-#define ZEBRA_ROUTE_SWITCH               22
-#define ZEBRA_ROUTE_OTHER                23
+#define ZEBRA_ROUTE_DHCP                 ZEBRA_ROUTE_KERNEL
+#define ZEBRA_ROUTE_UTILS                21
+#define ZEBRA_ROUTE_MANAGE               22
+#define ZEBRA_ROUTE_SWITCH               23
 #define ZEBRA_ROUTE_MAX                  24
-
-
-#define M2_ipRouteProto_netmgmt     ZEBRA_ROUTE_KERNEL
-#define M2_ipRouteProto_local       ZEBRA_ROUTE_STATIC
-#define M2_ipRouteProto_rip         ZEBRA_ROUTE_RIP
-#define M2_ipRouteProto_is_is       ZEBRA_ROUTE_ISIS
-#define M2_ipRouteProto_ospf        ZEBRA_ROUTE_OSPF
-#define M2_ipRouteProto_bgp         ZEBRA_ROUTE_BGP
-
-#define M2_ipRouteProto_es_is       ZEBRA_ROUTE_OTHER + 1
-#define M2_ipRouteProto_ciscoIgrp   ZEBRA_ROUTE_OTHER + 2
-#define M2_ipRouteProto_bbnSpfIgp   ZEBRA_ROUTE_OTHER + 3
-#define M2_ipRouteProto_arp         ZEBRA_ROUTE_OTHER + 4
-#define M2_ipRouteProto_icmp        ZEBRA_ROUTE_OTHER + 5
-#define M2_ipRouteProto_egp         ZEBRA_ROUTE_OTHER + 6
-#define M2_ipRouteProto_ggp         ZEBRA_ROUTE_OTHER + 7
-#define M2_ipRouteProto_hello       ZEBRA_ROUTE_OTHER + 8
-#define M2_ipRouteProto_other       ZEBRA_ROUTE_OTHER + 9
-
-
-#define M2_ipRouteProto_max         M2_ipRouteProto_other + 1
-
-#undef ZEBRA_ROUTE_MAX
-#define ZEBRA_ROUTE_MAX             M2_ipRouteProto_max
-
 
 #define SHOW_ROUTE_V4_HEADER \
   "Codes: K - kernel route, C - connected, S - static, R - RIP,%s" \
@@ -424,6 +399,7 @@ static const struct zebra_desc_table route_types[] = {
   DESC_ENTRY	(ZEBRA_ROUTE_LLDP,	 "lldp",	'L' ),
   DESC_ENTRY	(ZEBRA_ROUTE_BFD,	 "bfd",	'B' ),
   DESC_ENTRY	(ZEBRA_ROUTE_LDP,	 "ldp",	'l' ),
+  DESC_ENTRY	(ZEBRA_ROUTE_DHCP,	 "dhcp",	'D' ),
   DESC_ENTRY	(ZEBRA_ROUTE_UTILS,	 "utils",	'u' ),
   DESC_ENTRY	(ZEBRA_ROUTE_MANAGE,	 "manage",	'm' ),
   DESC_ENTRY	(ZEBRA_ROUTE_SWITCH,	 "switch",	's' ),

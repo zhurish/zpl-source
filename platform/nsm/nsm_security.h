@@ -47,8 +47,8 @@ typedef struct nsm_security_s
 
 
 
-
-
+extern int nsm_security_init();
+extern int nsm_security_exit();
 
 
 

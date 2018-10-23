@@ -61,13 +61,14 @@ ZEBRA_ROUTE_HSLS,       hsls,      hslsd,  'H', 0, 0, "HSLS"
 ZEBRA_ROUTE_OLSR,       olsr,      olsrd,  'o', 1, 0, "OLSR"
 ZEBRA_ROUTE_BABEL,      babel,     babeld, 'A', 1, 1, "Babel"
 ZEBRA_ROUTE_NHRP,       nhrp,      nhrpd,  'N', 1, 1, "NHRP"
-#扩展路由协议
+#锟斤拷展路锟斤拷协锟斤拷
 ZEBRA_ROUTE_VRRP,	 vrrp,		vrrpd,		'v', 0, 0, "VRRP" 
 ZEBRA_ROUTE_FRP,	 frp,		frpd,		'F', 1, 0, "FRP"  
 ZEBRA_ROUTE_LLDP,	 lldp,		lldpd,		'L', 0, 0, "LLDP" 
 ZEBRA_ROUTE_BFD,	 bfd,		bfdd,		'B', 0, 0, "BFD" 
 
 ZEBRA_ROUTE_LDP,	 ldp,		ldpd,		'l', 0, 0, "LDP" 
+ZEBRA_ROUTE_DHCP,	 dhcp,		dhcp,		'D', 0, 0, "DHCPC" 
 ZEBRA_ROUTE_UTILS,	 utils,		utilsd,		'u', 0, 0, "utils"
 ZEBRA_ROUTE_MANAGE,	 manage,	mgtd,		'm', 0, 0, "manage"
 ZEBRA_ROUTE_SWITCH,	 switch,	switchd,	's', 0, 0, "switch" 
@@ -88,12 +89,12 @@ ZEBRA_ROUTE_HSLS,   "Hazy-Sighted Link State Protocol (HSLS)"
 ZEBRA_ROUTE_OLSR,   "Optimised Link State Routing (OLSR)"
 ZEBRA_ROUTE_BABEL,  "Babel routing protocol (Babel)"
 ZEBRA_ROUTE_NHRP,   "Next Hop Resolution Protocol (NHRP)"
-#扩展路由协议
+#锟斤拷展路锟斤拷协锟斤拷
 ZEBRA_ROUTE_VRRP,	"Virtual Router Redundancy Protocol (VRRP)"
 ZEBRA_ROUTE_FRP,	"Fast and Reliable Routing Protocol (FRP)"
 ZEBRA_ROUTE_LLDP,	"Link Layer Discovery Protocol (LLDP)"
 ZEBRA_ROUTE_BFD,	"Bidirectional Forwarding Detection Protocol (BFD)"
-
+ZEBRA_ROUTE_DHCP,	"DHCP Protocol"
 ZEBRA_ROUTE_LDP,	"MPLS Label Distribution Protocol (LDP)"
 ZEBRA_ROUTE_UTILS,	 "Linux Kernel Tools Module"
 ZEBRA_ROUTE_MANAGE,	 "Device Management Unit Module"

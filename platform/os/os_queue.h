@@ -5,8 +5,8 @@
  *      Author: zhurish
  */
 
-#ifndef __OS_QUEUE_H_
-#define __OS_QUEUE_H_
+#ifndef __OS_QUEUE_H__
+#define __OS_QUEUE_H__
 
 
 #define OS_QUEUE_NAME_MAX	32
@@ -40,4 +40,4 @@ int os_queue_send(os_queue_t *queue, char *data, int len, int op);
 int os_queue_recv(os_queue_t *queue, char *name, int len, int timeout);
 int os_queue_delete(os_queue_t *queue);
 
-#endif /* __OS_QUEUE_H_ */
+#endif /* __OS_QUEUE_H__ */

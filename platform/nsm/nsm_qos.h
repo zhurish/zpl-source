@@ -195,7 +195,7 @@ extern int nsm_cos_to_dscp(int cos);
 
 
 extern int nsm_qos_init();
-
+extern int nsm_qos_exit();
 
 
 #endif /* __NSM_NSM_QOS_H_ */

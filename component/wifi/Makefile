@@ -3,6 +3,16 @@ include $(MAKE_DIR)/makelinux.mk
 include config.mk
 
 #OBJS = $(OSOBJ)
+# Version of the Wireless Tools
+WT_VERSION := $(shell sed -ne "/WT_VERSION/{s:\([^0-9]*\)::;p;q;}" < iwlib.h )
+
+# Version of Wireless Extensions.
+WE_VERSION := $(shell sed -ne "/WE_VERSION/{s:\([^0-9]*\)::;p;q;}" < iwlib.h )
+
+# Always use local header for wireless extensions
+WEXT_HEADER = wireless.$(WE_VERSION).h
+
+#CFLAGS +=-DWE_ESSENTIAL #-D__USE_GNU
 
 OBJS_DIR = $(BASE_ROOT)/$(OBJDIR)/$(MODULEDIR)
 SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
@@ -10,17 +20,22 @@ LIB_DIR = $(BASE_ROOT)/$(LIBDIR)
 
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
 
-
-$(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
+# It's a kind of magic...
+wireless.h:
+	cp $(WEXT_HEADER) wireless.h
+	
+	
+$(OBJS_DIR)/%.o: $(SRC_DIR)/%.c wireless.h
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
 	$(ECHO) CC '$(CFLAGS)' $@
 	@$(PL_OBJ_COMPILE)
+#
 
-$(LIBS) : $(MODULE_OBJS)
-	$(PL_MAKE_LIB) $(LIBS) $(MODULE_OBJS)
+$(LIBS) : $(MODULE_OBJS) 
+	$(PL_MAKE_LIB) $(LIBS) $(MODULE_OBJS) 
 
 
 lib: $(LIBS)
@@ -36,6 +51,7 @@ install: $(LIBS)
 
 clean: objclean
 	@$(RM) $(LIB_DIR)/$(LIBS)
+	@$(RM) $(LIBS)
 
 objclean: 
 	@$(RM) $(OBJS_DIR)/*.o

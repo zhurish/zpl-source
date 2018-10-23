@@ -22,9 +22,8 @@
 #include "modem_machine.h"
 #include "modem_dhcp.h"
 #include "modem_pppd.h"
-#include "modem_product.h"
-
 #include "modem_api.h"
+#include "modem_usb_driver.h"
 
 
 int modem_main_apn_set_api(modem_t *modem, char *apn)
@@ -202,7 +201,29 @@ int modem_main_dial_set_api(modem_t *modem, modem_dial_type type)
 		os_mutex_lock(gModemmain.mutex, OS_WAIT_FOREVER);
 	if(modem)
 	{
-		modem->dialtype = type;
+		if(modem->dialtype != type)
+		{
+			if(modem->dialtype == MODEM_DIAL_PPP && type != MODEM_DIAL_PPP)
+			{
+				if(modem->pppd && modem_pppd_del_api(modem->pppd) != OK)
+				{
+					if(gModemmain.mutex)
+						os_mutex_unlock(gModemmain.mutex);
+					return ERROR;
+				}
+				modem->dialtype = type;
+			}
+			if(modem->dialtype != MODEM_DIAL_PPP && type == MODEM_DIAL_PPP)
+			{
+				if(modem->pppd == NULL && modem_pppd_add_api(modem) != OK)
+				{
+					if(gModemmain.mutex)
+						os_mutex_unlock(gModemmain.mutex);
+					return ERROR;
+				}
+				modem->dialtype = type;
+			}
+		}
 	}
 	if(gModemmain.mutex)
 		os_mutex_unlock(gModemmain.mutex);
@@ -257,7 +278,6 @@ int modem_main_network_get_api(modem_t *modem, modem_network_type *profile)
 
 
 
-#if 0
 static modem_t * modem_lookup_by_ifp(struct interface *ifp)
 {
 	NODE index;
@@ -271,40 +291,109 @@ static modem_t * modem_lookup_by_ifp(struct interface *ifp)
 			pstNode != NULL;  pstNode = (modem_t *)lstNext((NODE*)&index))
 	{
 		index = pstNode->node;
-		if(pstNode && pstNode->ifp == ifp)
-			break;
+		if(if_is_serial(ifp))
+		{
+			if(pstNode && pstNode->ppp_serial == ifp)
+				break;
+			if(pstNode && pstNode->dial_serial == ifp)
+				break;
+			if(pstNode && pstNode->test_serial == ifp)
+				break;
+		}
+		else
+		{
+			if(pstNode && pstNode->eth0 == ifp)
+				break;
+			if(pstNode && pstNode->eth1 == ifp)
+				break;
+			if(pstNode && pstNode->eth2 == ifp)
+				break;
+		}
 	}
 	if(gModemmain.mutex)
 		os_mutex_unlock(gModemmain.mutex);
 	return pstNode;
 }
 
+
+modem_t * modem_lookup_by_interface(char *name)
+{
+	struct interface *ifp = NULL;
+	ifp = if_lookup_by_name(name);
+	if(ifp)
+		return modem_lookup_by_ifp(ifp);
+	return NULL;
+}
 /*
  * interface modem 0/1/1
  *  bind modem-profile <name>
  */
-int modem_bind_interface_api(struct interface *ifp, char *name)
+int modem_bind_interface_api(modem_t *modem, char *name, int number)
 {
-	int ret = 0;
-	modem_t *modem = NULL;
-	assert (ifp);
+	int ret = ERROR;
 	assert (name);
+	struct interface *ifp = NULL;
+	ifp = if_lookup_by_name(name);
+	if(!ifp)
+	{
+		if(modem_interface_add_api(name) == OK)
+		{
+			ifp = if_lookup_by_name(name);
+		}
+	}
+	if(!ifp)
+		return ERROR;
+
 	if(gModemmain.mutex)
 		os_mutex_lock(gModemmain.mutex, OS_WAIT_FOREVER);
-	if(modem_lookup_by_ifp(ifp))
-	{
-		if(gModemmain.mutex)
-			os_mutex_unlock(gModemmain.mutex);
-		return ERROR;
-	}
-	modem = modem_main_lookup_api(name);
 	if(modem)
 	{
-		modem->ifp = ifp;
-		if(if_is_pointopoint(ifp))
-			ret = modem_pppd_add_api(modem);// pppd
+		if(if_is_serial(ifp))
+		{
+			switch(number)
+			{
+			case 1:
+				modem->ppp_serial = ifp;
+				ret = modem_pppd_add_api(modem);
+				//ifp->ll_type = ZEBRA_LLT_MODEM;
+				break;
+			case 2:
+				modem->dial_serial = ifp;
+				//ifp->ll_type = ZEBRA_LLT_MODEM;
+				ret = OK;
+				break;
+			case 3:
+				modem->test_serial = ifp;
+				//ifp->ll_type = ZEBRA_LLT_MODEM;
+				ret = OK;
+				break;
+			default:
+				break;
+			}
+		}
 		else
-			;//dhcp
+		{
+			switch(number)
+			{
+			case 1:
+				modem->eth0 = ifp;
+				ifp->ll_type = ZEBRA_LLT_MODEM;
+				ret = OK;
+				break;
+			case 2:
+				modem->eth1 = ifp;
+				ifp->ll_type = ZEBRA_LLT_MODEM;
+				ret = OK;
+				break;
+			case 3:
+				modem->eth2 = ifp;
+				ifp->ll_type = ZEBRA_LLT_MODEM;
+				ret = OK;
+				break;
+			default:
+				break;
+			}
+		}
 	}
 	if(gModemmain.mutex)
 		os_mutex_unlock(gModemmain.mutex);
@@ -315,28 +404,79 @@ int modem_bind_interface_api(struct interface *ifp, char *name)
  * interface modem 0/1/1
  *  no bind modem-profile
  */
-int modem_unbind_interface_api(struct interface *ifp)
+int modem_unbind_interface_api(modem_t *modem, BOOL ppp, int number)
 {
-	modem_t *modem = NULL;
-	assert (ifp);
+	int ret = ERROR;
+	//assert (name);
+	struct interface *ifp = NULL;
+/*
+	ifp = if_lookup_by_name(name);
+	if(!ifp)
+	{
+		if(modem_interface_add_api(name) == OK)
+		{
+			ifp = if_lookup_by_name(name);
+		}
+	}
+	if(!ifp)
+		return ERROR;
+*/
+
 	if(gModemmain.mutex)
 		os_mutex_lock(gModemmain.mutex, OS_WAIT_FOREVER);
-	modem = modem_lookup_by_ifp(ifp);
 	if(modem)
 	{
-		if(if_is_pointopoint(ifp) && modem->pppd)
-			modem_pppd_del_api(modem->pppd);// pppd
-		modem->ifp = NULL;
-		//modem->event = MODEM_EV_INIT;
-		if(gModemmain.mutex)
-			os_mutex_unlock(gModemmain.mutex);
-		return OK;
+		switch(number)
+		{
+		case 1:
+			if(ppp && modem->ppp_serial)
+			{
+				ret = modem_pppd_del_api(modem);
+			}
+			if(!ppp && modem->eth0)
+			{
+				modem_mgtlayer_network_offline(modem);
+				if_make_llc_type(modem->eth0);
+				modem->eth0 = NULL;
+				ret = OK;
+			}
+			break;
+		case 2:
+			if(ppp && modem->dial_serial)
+			{
+				ret = modem_pppd_del_api(modem);
+			}
+			if(!ppp && modem->eth1)
+			{
+				modem_mgtlayer_network_offline(modem);
+				if_make_llc_type(modem->eth1);
+				modem->eth1 = NULL;
+				ret = OK;
+			}
+			break;
+		case 3:
+			modem->test_serial = NULL;
+			if(ppp && modem->test_serial)
+			{
+				ret = modem_pppd_del_api(modem);
+			}
+			if(!ppp && modem->eth2)
+			{
+				modem_mgtlayer_network_offline(modem);
+				if_make_llc_type(modem->eth2);
+				modem->eth2 = NULL;
+				ret = OK;
+			}
+			break;
+		default:
+			break;
+		}
 	}
 	if(gModemmain.mutex)
 		os_mutex_unlock(gModemmain.mutex);
-	return ERROR;
+	return OK;
 }
-#endif
+
 
 int modem_interface_add_api(char *name)
 {
@@ -344,14 +484,17 @@ int modem_interface_add_api(char *name)
 	struct interface *ifp = NULL;
 	ifp = if_lookup_by_name(name);
 	if(ifp && ifp->ll_type == ZEBRA_LLT_MODEM)
-		return ERROR;
+		return OK;
 	if(ifp && ifp->ll_type != ZEBRA_LLT_MODEM)
 		return ERROR;
+
+	if_new_llc_type_mode(ZEBRA_LLT_MODEM, IF_MODE_L3);
+
 	ifp = if_create_dynamic (name, strlen(name));
 	if(ifp)
 	{
-		ifp->ll_type = ZEBRA_LLT_MODEM;
-		ifp->if_mode = IF_MODE_L3;
+		//ifp->ll_type = ZEBRA_LLT_MODEM;
+		//ifp->if_mode = IF_MODE_L3;
 		//ifp->dynamic = TRUE;
 /*		if_manage_kernel_update(ifp);
 		zebra_interface_add_update(ifp);*/

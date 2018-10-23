@@ -15,6 +15,7 @@
 
 #define SYSLOG_CLIENT
 
+
 /*
  * have custom interface.
  * 	eg. interface (wifi/modem) <unit>/<slot>/<port>

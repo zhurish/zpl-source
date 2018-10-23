@@ -29,7 +29,7 @@ static int cli_telnet_task(void *argv)
 	module_setup_task(MODULE_TELNET, os_task_id_self());
 	while(!os_load_config_done())
 	{
-		sleep(1);
+		os_sleep(1);
 	}
 	eloop_start_running(NULL, MODULE_TELNET);
 	return 0;
@@ -40,11 +40,23 @@ static int cli_telnet_task_init ()
 	if(master_eloop[MODULE_TELNET] == NULL)
 		master_eloop[MODULE_TELNET] = eloop_master_module_create(MODULE_TELNET);
 	//master_thread[MODULE_TELNET] = thread_master_module_create(MODULE_TELNET);
-	telnet_task_id = os_task_create("telnetTask", OS_TASK_DEFAULT_PRIORITY,
+	if(telnet_task_id == 0)
+		telnet_task_id = os_task_create("telnetTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, cli_telnet_task, NULL, OS_TASK_DEFAULT_STACK);
 	if(telnet_task_id)
 		return OK;
 	return ERROR;
+}
+
+static int cli_telnet_task_exit ()
+{
+	if(telnet_task_id)
+		os_task_destroy(telnet_task_id);
+	telnet_task_id = 0;
+	if(master_eloop[MODULE_TELNET])
+		eloop_master_free(master_eloop[MODULE_TELNET]);
+	master_eloop[MODULE_TELNET] = NULL;
+	return OK;
 }
 
 static int cli_console_task(void *argv)
@@ -52,7 +64,7 @@ static int cli_console_task(void *argv)
 	module_setup_task(MODULE_CONSOLE, os_task_id_self());
 	while(!os_load_config_done())
 	{
-		sleep(1);
+		os_sleep(1);
 	}
 	os_start_running(NULL, MODULE_CONSOLE);
 	return 0;
@@ -63,12 +75,25 @@ static int cli_console_task_init ()
 	if(master_thread[MODULE_CONSOLE] == NULL)
 		master_thread[MODULE_CONSOLE] = thread_master_module_create(MODULE_CONSOLE);
 
-	console_task_id = os_task_create("consoleTask", OS_TASK_DEFAULT_PRIORITY,
+	if(console_task_id == 0)
+		console_task_id = os_task_create("consoleTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, cli_console_task, NULL, OS_TASK_DEFAULT_STACK);
 	if(console_task_id)
 		return OK;
 	return ERROR;
 }
+
+static int cli_console_task_exit ()
+{
+	if(console_task_id)
+		os_task_destroy(console_task_id);
+	console_task_id = 0;
+	if(master_thread[MODULE_CONSOLE])
+		thread_master_free(master_thread[MODULE_CONSOLE]);
+	master_thread[MODULE_CONSOLE] = NULL;
+	return OK;
+}
+
 
 
 int os_shell_start(char *shell_path, char *shell_addr, int shell_port, const char *tty)
@@ -142,17 +167,33 @@ int os_module_init(void)
 	nsm_dot1x_init();
 	nsm_mirror_init();
 	nsm_serial_client_init();
-	//ospf_module_init();
 
-	extern int pal_ip_stack_init();
-	pal_ip_stack_init();
-	//sleep(3);
+	nsm_ip_dns_init();
+	//ospf_module_init();
+	nsm_tunnel_client_init();
+	nsm_veth_client_init();
+	extern int pal_abstract_init();
+	pal_abstract_init();
+
+
+#ifdef PL_WIFI_MODULE
+	nsm_iw_client_init();
+#endif
+
+#ifdef PL_MODEM_MODULE
+	modem_module_init ();
+#endif
+
+#ifdef PL_DHCP_MODULE
+	nsm_dhcp_module_init ();
+#endif
+
+
+
+
 #ifdef PL_BSP_MODULE
 	bsp_usp_module_init();
 #endif
-	modem_module_init ();
-
-	dhcpc_module_init ();
 	sleep(1);
 	return OK;
 }
@@ -175,9 +216,13 @@ int os_module_task_init(void)
 #ifdef PL_OSPF_MODULE
 	//ospfd_task_init ();
 #endif
-
+#ifdef PL_MODEM_MODULE
 	modem_task_init ();
-	dhcpc_task_init ();
+#endif
+#ifdef PL_DHCP_MODULE
+	nsm_dhcp_task_init ();
+#endif
+
 	return OK;
 }
 
@@ -204,6 +249,7 @@ int os_module_cmd_init(int terminal)
 	cmd_arp_init();
 	cmd_vlan_init();
 	cmd_port_init();
+
 #ifdef PL_SERVICE_MODULE
 	cmd_sntpc_init();
 	cmd_sntps_init();
@@ -214,8 +260,23 @@ int os_module_cmd_init(int terminal)
 	cmd_dot1x_init ();
 	cmd_mirror_init();
 	zebra_debug_init ();
+	cmd_serial_init();
+	cmd_dns_init();
+	cmd_ppp_init();
+	cmd_tunnel_init();
+	cmd_bridge_init();
+#ifdef PL_WIFI_MODULE
+	cmd_wireless_init();
+#endif
 
+#ifdef PL_MODEM_MODULE
 	cmd_modem_init ();
+#endif
+#ifdef PL_DHCP_MODULE
+	cmd_dhcp_init();
+#endif
+
+
 #ifdef OS_START_TEST
 	/*
 	 * test module
@@ -227,3 +288,99 @@ int os_module_cmd_init(int terminal)
 }
 
 
+int os_module_exit(void)
+{
+	/* reverse access_list_init */
+	access_list_add_hook (NULL);
+	access_list_delete_hook (NULL);
+	access_list_reset ();
+
+	/* reverse prefix_list_init */
+	prefix_list_add_hook (NULL);
+	prefix_list_delete_hook (NULL);
+	prefix_list_reset ();
+
+	if_terminate() ;
+#ifdef PL_SERVICE_MODULE
+//	sntpsExit();
+//	sntpcExit();
+	syslogc_lib_uninit();
+#endif
+
+#ifdef PL_WIFI_MODULE
+	nsm_iw_client_exit();
+#endif
+
+#ifdef PL_MODEM_MODULE
+	modem_module_exit ();
+#endif
+
+#ifdef PL_DHCP_MODULE
+	nsm_dhcp_module_exit ();
+#endif
+
+#ifdef PL_NSM_MODULE
+	nsm_module_exit ();
+#endif
+#ifdef PL_OSPF_MODULE
+	//ospfd_module_exit();
+#endif
+
+	nsm_vlan_exit();
+	nsm_mac_exit();
+	nsm_ip_arp_exit();
+	nsm_qos_exit();
+	nsm_trunk_exit();
+	nsm_security_exit();
+	nsm_dos_exit();
+	nsm_dot1x_exit();
+	nsm_mirror_exit();
+	nsm_serial_client_exit();
+
+	nsm_ip_dns_exit();
+	//ospf_module_init();
+	nsm_tunnel_client_exit();
+	nsm_veth_client_exit();
+	//pal_abstract_exit();
+
+	return OK;
+}
+
+int os_module_task_exit(void)
+{
+#ifdef DOUBLE_PROCESS
+	os_process_stop();
+#endif
+
+#ifdef PL_OSPF_MODULE
+	//ospfd_task_init ();
+#endif
+#ifdef PL_MODEM_MODULE
+	//modem_task_exit ();
+#endif
+#ifdef PL_DHCP_MODULE
+	//nsm_dhcp_task_exit ();
+#endif
+
+#ifdef PL_NSM_MODULE
+	//nsm_task_exit ();
+#endif
+
+	os_time_exit();
+	os_job_exit();
+	cli_console_task_exit ();
+	cli_telnet_task_exit ();
+	os_task_exit();
+	return OK;
+}
+
+int os_module_cmd_exit(void)
+{
+	vrf_terminate();
+	vty_terminate ();
+	cmd_terminate ();
+
+	if (zlog_default)
+		closezlog (zlog_default);
+	return OK;
+}

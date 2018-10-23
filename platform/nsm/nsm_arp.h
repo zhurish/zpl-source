@@ -9,6 +9,7 @@
 #define __NSM_ARP_H_
 
 
+#define NSM_ARP_TTL_DEFAULT 30
 
 typedef enum arp_class_s
 {
@@ -38,6 +39,8 @@ typedef struct Gip_arp_s
 	int		grat_arp;		//gratuitous arp
 	LIST	*arpList;
 	void	*mutex;
+	int		dynamic_cnt;
+	int		static_cnt;
 }Gip_arp_t;
 
 typedef int (*ip_arp_cb)(ip_arp_t *, void *);
@@ -71,6 +74,9 @@ extern int nsm_ip_arp_proxy_local_get_api(int *ageing);
 
 
 extern int ip_arp_dynamic_cb(int action, void *pVoid);
+
+extern int nsm_ip_arp_config(struct vty *vty);
+extern int nsm_ip_arp_ageing_config(struct vty *vty);
 
 
 #endif /* __NSM_ARP_H_ */

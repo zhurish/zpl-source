@@ -16,6 +16,12 @@ OBJS	+= cmd_trunk.o
 OBJS	+= cmd_dos.o
 OBJS	+= cmd_dot1x.o
 OBJS	+= cmd_mirror.o
+OBJS	+= cmd_serial.o
+OBJS	+= cmd_ppp.o
+OBJS	+= cmd_tunnel.o
+OBJS	+= cmd_wireless.o
+OBJS	+= cmd_dns.o
+OBJS	+= cmd_bridge.o
 #############################################################################
 # LIB
 ###########################################################################

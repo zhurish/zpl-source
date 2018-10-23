@@ -126,15 +126,57 @@ strndup (const char *s, size_t maxlen)
 }
 #endif
 
+/*
+C库函数 int tolower(int c)转换给定的字母为小写。
+C库函数 int toupper(int c)转换给定的字母为大写。
+ */
 const char *strupr(char* src)
 {
-	while (*src != '\0')
+	char *p = src;
+	/*
+	 * a -> A
+	 */
+	while (*p != '\0')
 	{
-		if (*src >= 'a' && *src <= 'z')
+		if (*p >= 'a' && *p <= 'z')
+			//在ASCII表里大写字符的值比对应小写字符的值小32.
+			//*p -= 0x20; // 0x20的十进制就是32
+			*p -= 32;
+		p++;
+	}
+	return src;
+}
+
+const char *strlwr(char* src)
+{
+	char *p = src;
+	/*
+	 * A -> a
+	 */
+	while (*p != '\0')
+	{
+		if (*p >= 'A' && *p <= 'Z')
+			*p += 32;
+		p++;
+	}
+	return src;
+}
+
+const char *string_have_space(char* src)
+{
+	char *str = src;
+	for (; *str != '\0'; str++)
+		if (isspace ((int) *str))
+			return src;
+	return NULL;
+
+/*	while (*src != '\0')
+	{
+		if (isspace（*src) >= 'a' && *src <= 'z')
 			//在ASCII表里大写字符的值比对应小写字符的值小32.
 			//*p -= 0x20; // 0x20的十进制就是32
 			*src -= 32;
 		src++;
 	}
-	return src;
+	return src;*/
 }

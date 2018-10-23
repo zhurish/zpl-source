@@ -112,6 +112,8 @@ int modem_event_add_api(modem_t *modem, modem_event event, BOOL lock)
 		modem->event = event;
 		modem_process_add_api(event, modem, lock);
 	}
+	//else
+	//	modem_process_add_api(event, NULL, lock);
 	return OK;
 }
 
@@ -148,7 +150,7 @@ static int modem_event_start(modem_t *modem, modem_event event)
 			/*
 			 * 更新 邦定的client
 			 */
-			modem_serial_t * serial = modem_serial_lookup_api(modem->serialname);
+			modem_serial_t * serial = modem_serial_lookup_api(modem->serialname, 0);
 			if(serial)
 			{
 				if(serial->client)
@@ -217,7 +219,7 @@ modem_event modem_event_init(modem_t *modem, modem_event event)
 {
 	modem_event nextevent = MODEM_EV_NONE;
 	assert(modem);
-	MODEM_EV_DEBUG("Into %s",__func__);
+	//MODEM_EV_DEBUG("Into %s",__func__);
 	if(MODEM_IS_DEBUG(EVENT))
 		zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
 				modem_module_name(modem));
@@ -229,7 +231,7 @@ modem_event modem_event_init(modem_t *modem, modem_event event)
 		nextevent = MODEM_EV_INSTER_CARD;
 	}
 
-	MODEM_EV_DEBUG("Level %s",__func__);
+	//MODEM_EV_DEBUG("Level %s",__func__);
 	return nextevent;
 }
 
@@ -250,7 +252,11 @@ modem_event modem_event_remove(modem_t *modem, modem_event event)
 	 */
 	if(modem_mgtlayer_remove(modem) != OK)
 		nextevent = MODEM_EV_REMOVE;
-
+	else
+	{
+		modem->state = modem->newstate;
+		modem_process_del_api(MODEM_EV_MAX, modem, FALSE);
+	}
 	MODEM_EV_DEBUG("Level %s",__func__);
 	return nextevent;
 }
@@ -273,6 +279,7 @@ modem_event modem_event_card_remove(modem_t *modem, modem_event event)
 		nextevent = MODEM_EV_REMOVE_CARD;
 	else
 	{
+		modem->state = modem->newstate;
 		nextevent = MODEM_EV_NONE;
 	}
 	//modem_event_offline(modem, MODEM_EV_OFFLINE);
@@ -295,8 +302,10 @@ modem_event modem_event_card_inster(modem_t *modem, modem_event event)
 	if(modem_mgtlayer_inster_usim(modem) != OK)
 		nextevent = MODEM_EV_INSTER_CARD;//NO CARD redetection
 	else
+	{
+		modem->state = modem->newstate;
 		nextevent = MODEM_EV_NWSETUP;//CARD is ready, setup and active network
-
+	}
 	/*
 	 * Active network
 	 */
@@ -321,8 +330,10 @@ modem_event modem_event_card_switch(modem_t *modem, modem_event event)
 	if(modem_mgtlayer_switch_usim(modem) != OK)
 		nextevent = MODEM_EV_SWITCH_CARD;//NO CARD redetection
 	else
+	{
+		modem->state = modem->newstate;
 		nextevent = MODEM_EV_INSTER_CARD;//CARD is ready, setup and active network
-	 
+	}
 	/*
 	 * Active network
 	 */
@@ -345,8 +356,10 @@ modem_event modem_event_network_setup(modem_t *modem, modem_event event)
 	if(modem_mgtlayer_network_setup(modem) != OK)
 		nextevent = MODEM_EV_NWSETUP;
 	else
+	{
+		modem->state = modem->newstate;
 		nextevent = MODEM_EV_ATTACH;
-
+	}
 	MODEM_EV_DEBUG("Level %s",__func__);
 	return nextevent;
 }
@@ -367,12 +380,14 @@ modem_event modem_event_online(modem_t *modem, modem_event event)
 		nextevent = MODEM_EV_ONLINE;
 	else
 	{
+		modem->state = modem->newstate;
 		nextevent = MODEM_EV_DETECTION;
 		modem->uptime = os_time(NULL);		//network UP time
 	}
 	MODEM_EV_DEBUG("Level %s",__func__);
 	return nextevent;
 }
+
 
 /*
  *
@@ -390,8 +405,10 @@ modem_event modem_event_network_attach(modem_t *modem, modem_event event)
 	if(modem_mgtlayer_network_attach(modem) != OK)
 		nextevent = MODEM_EV_ATTACH;
 	else	
+	{
+		modem->state = modem->newstate;
 		nextevent = MODEM_EV_ONLINE;
-
+	}
 	MODEM_EV_DEBUG("Level %s",__func__);
 	return nextevent;
 }
@@ -410,7 +427,10 @@ modem_event modem_event_network_unattach(modem_t *modem, modem_event event)
 
 	if(modem_mgtlayer_network_unattach(modem) != OK)
 		nextevent = MODEM_EV_UNATTACH;
-
+	else
+	{
+		modem->state = modem->newstate;
+	}
 	MODEM_EV_DEBUG("Level %s",__func__);
 	return nextevent;
 }
@@ -431,6 +451,7 @@ modem_event modem_event_offline(modem_t *modem, modem_event event)
 		nextevent = MODEM_EV_ONLINE;
 	else
 	{
+		modem->state = modem->newstate;
 		modem->downtime = os_time(NULL);		//network DOWN time
 		nextevent = MODEM_EV_DELAY;
 	}
@@ -451,7 +472,10 @@ modem_event modem_event_delay(modem_t *modem, modem_event event)
 
 	if(modem_mgtlayer_delay(modem) != OK)
 		nextevent = MODEM_EV_NONE;
-
+	else
+	{
+		modem->state = modem->newstate;
+	}
 	MODEM_EV_DEBUG("Level %s",__func__);
 	return nextevent;
 }
@@ -467,7 +491,10 @@ modem_event modem_event_detection(modem_t *modem, modem_event event)
 
 	if(modem_mgtlayer_network_detection(modem) != OK)
 		nextevent = MODEM_EV_NONE;
-
+	else
+	{
+		modem->state = modem->newstate;
+	}
 	MODEM_EV_DEBUG("Level %s",__func__);
 	return nextevent;
 }
@@ -481,6 +508,8 @@ modem_event modem_event_reboot(modem_t *modem, modem_event event)
 	if(MODEM_IS_DEBUG(EVENT))
 		zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
 				modem_module_name(modem));
+
+	modem->state = modem->newstate;
 
 	MODEM_EV_DEBUG("Level %s",__func__);
 	return nextevent;
@@ -497,7 +526,10 @@ modem_event modem_event_dailog(modem_t *modem, modem_event event)
 
 	if(modem_mgtlayer_dialog(modem) != OK)
 		nextevent = MODEM_EV_DIALOG;
-
+	else
+	{
+		modem->state = modem->newstate;
+	}
 	MODEM_EV_DEBUG("Level %s",__func__);
 	return nextevent;
 }
@@ -513,7 +545,10 @@ modem_event modem_event_redailog(modem_t *modem, modem_event event)
 				
 	if(modem_mgtlayer_redialog(modem) != OK)
 		nextevent = MODEM_EV_REDIALOG;
-				
+	else
+	{
+		modem->state = modem->newstate;
+	}
 	MODEM_EV_DEBUG("Level %s",__func__);
 	return nextevent;
 }
@@ -529,7 +564,10 @@ modem_event modem_event_message(modem_t *modem, modem_event event)
 				
 	if(modem_mgtlayer_message(modem) != OK)
 		nextevent = MODEM_EV_REDIALOG;
-
+	else
+	{
+		modem->state = modem->newstate;
+	}
 	MODEM_EV_DEBUG("Level %s",__func__);
 	return nextevent;
 }
@@ -620,10 +658,12 @@ modem_event modem_event_process(modem_t *modem, modem_event event)
 		break;
 	}
 	modem_event_end(modem);
+	if( event != MODEM_EV_REMOVE)
+	{
+		modem_machine_state_action(modem);
 
-	modem_machine_state_action(modem);
-
-	if(nextevent != MODEM_EV_NONE)
-		modem_event_add_api(modem, nextevent, FALSE);
+		if(nextevent != MODEM_EV_NONE)
+			modem_event_add_api(modem, nextevent, FALSE);
+	}
 	return nextevent;
 }

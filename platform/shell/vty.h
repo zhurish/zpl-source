@@ -62,6 +62,7 @@ struct vty
 
   /* Failure count */
   int fail;
+  BOOL	reload;
 
   /* Output buffer. */
   struct buffer *obuf;
@@ -150,7 +151,7 @@ struct vty
 
   pid_t pid;
   pthread_t pthd;
-
+  BOOL detail;
 };
 
 #ifdef HAVE_ROUTE_OPTIMIZE
@@ -164,7 +165,7 @@ extern void (*vty_ctrl_cmd)(int ctrl, struct vty *vty);
 #define VTY_NEWLINE  ((vty->type == VTY_TERM) ? "\r\n" : "\n")
 
 /* Default time out value */
-#define VTY_TIMEOUT_DEFAULT 600
+#define VTY_TIMEOUT_DEFAULT 6000
 
 /* Vty read buffer size. */
 #define VTY_READ_BUFSIZ 512

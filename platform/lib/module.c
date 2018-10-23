@@ -8,7 +8,9 @@
 
 #include <zebra.h>
 #include "module.h"
-
+#include "thread.h"
+#include "eloop.h"
+#include "os_ansync.h"
 
 
 typedef struct module_str_s
@@ -29,6 +31,10 @@ static module_str_t module_string[] =
 	MODULE_ENTRY(CONSOLE),
 	MODULE_ENTRY(TELNET),
 	MODULE_ENTRY(NSM),			//route table manage
+	MODULE_ENTRY(MODEM),
+	MODULE_ENTRY(WIFI),
+	MODULE_ENTRY(DHCP),
+	MODULE_ENTRY(DHCPD),
 	MODULE_ENTRY(RIP),
 	MODULE_ENTRY(BGP),
 	MODULE_ENTRY(OSPF),
@@ -49,6 +55,7 @@ static module_str_t module_string[] =
 	MODULE_ENTRY(SNTP),
 	MODULE_ENTRY(IMISH),
 	MODULE_ENTRY(UTILS),
+	MODULE_ENTRY(KERNEL),
 	MODULE_ENTRY(MAX),
 };
 
@@ -121,5 +128,84 @@ int module_setup_task(int module, int taskid)
 			return 0;
 		}
 	}
+	return 0;
+}
+
+char *zlog_backtrace_module()
+{
+	static char backtrace_string[128];
+	os_memset(backtrace_string, 0, sizeof(backtrace_string));
+	os_snprintf(backtrace_string, sizeof(backtrace_string), "%s [%s]",
+			os_task_2_name(os_task_id_self()), module2name(task_module_self()));
+
+	return backtrace_string;
+}
+
+char *zlog_backtrace_funcname()
+{
+#ifdef OS_THREAD
+	struct thread *thread_current = thread_current_get();
+	if (thread_current)
+		return thread_current->funcname;
+	else
+#endif
+#ifdef ELOOP_THREAD
+	{
+		struct eloop *eloop = eloop_current_get();
+		if (eloop)
+			return eloop->funcname;
+	}
+#endif
+#ifdef OS_ANSYNC_GLOBAL_LIST
+	os_ansync_lst * gansync = os_ansync_global_lookup(os_task_id_self(), task_module_self());
+	if (gansync && gansync->os_ansync)
+		return gansync->os_ansync->entryname;
+#endif
+	return "NULL";
+}
+
+char *zlog_backtrace_schedfrom()
+{
+#ifdef OS_THREAD
+	struct thread *thread_current = thread_current_get();
+	if (thread_current)
+		return thread_current->schedfrom;
+	else
+#endif
+#ifdef ELOOP_THREAD
+	{
+		struct eloop *eloop = eloop_current_get();
+		if (eloop)
+			return eloop->schedfrom;
+	}
+#endif
+#ifdef OS_ANSYNC_GLOBAL_LIST
+	os_ansync_lst * gansync = os_ansync_global_lookup(os_task_id_self(), task_module_self());
+	if (gansync && gansync->os_ansync)
+		return gansync->os_ansync->filename;
+#endif
+	return "NULL";
+}
+
+int zlog_backtrace_schedfrom_line()
+{
+#ifdef OS_THREAD
+	struct thread *thread_current = thread_current_get();
+	if (thread_current)
+		return thread_current->schedfrom_line;
+	else
+#endif
+#ifdef ELOOP_THREAD
+	{
+		struct eloop *eloop = eloop_current_get();
+		if (eloop)
+			return eloop->schedfrom_line;
+	}
+#endif
+#ifdef OS_ANSYNC_GLOBAL_LIST
+	os_ansync_lst * gansync = os_ansync_global_lookup(os_task_id_self(), task_module_self());
+	if (gansync && gansync->os_ansync)
+		return gansync->os_ansync->line;
+#endif
 	return 0;
 }

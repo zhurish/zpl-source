@@ -66,8 +66,11 @@ struct nsm_client * nsm_client_new (void)
    Free zclient structure. */
 void nsm_client_free (struct nsm_client *client)
 {
-	listnode_delete (nsmlist, client);
-	XFREE (MTYPE_ZCLIENT, client);
+	if(client)
+	{
+		listnode_delete (nsmlist, client);
+		XFREE (MTYPE_ZCLIENT, client);
+	}
 }
 
 /* Initialize zebra client.  Argument redist_default is unwanted
@@ -77,6 +80,18 @@ void nsm_client_install (struct nsm_client *client, int module)
 	client->module = module;
 	listnode_add_sort(nsmlist, client);
 	//listnode_add (nsmlist, client);
+}
+
+struct nsm_client * nsm_client_lookup (int module)
+{
+	struct listnode *node = NULL;
+	struct nsm_client *client = NULL;
+	for (ALL_LIST_ELEMENTS_RO(nsmlist, node, client))
+	{
+		if(client->module == module)
+			return client;
+	}
+	return NULL;
 }
 
 void nsm_client_init (void)
@@ -106,6 +121,34 @@ int nsm_client_write_config (int module, struct vty *vty)
 			else
 			{
 				ret = (client->write_config_cb)(vty);
+				if(ret)
+					vty_out(vty, "!%s", VTY_NEWLINE);
+			}
+		}
+	}
+	return ret;
+}
+
+int nsm_client_service_write_config (int module, struct vty *vty)
+{
+	int ret = 0;
+	struct listnode *node;
+	struct nsm_client *client;
+	for (ALL_LIST_ELEMENTS_RO(nsmlist, node, client))
+	{
+		if(client->service_write_config_cb)
+		{
+			ret = 0;
+			if(module)
+			{
+				if(client->module == module)
+					ret = (client->service_write_config_cb)(vty);
+				if(ret)
+					vty_out(vty, "!%s", VTY_NEWLINE);
+			}
+			else
+			{
+				ret = (client->service_write_config_cb)(vty);
 				if(ret)
 					vty_out(vty, "!%s", VTY_NEWLINE);
 			}
@@ -156,159 +199,241 @@ int nsm_client_interface_write_config (int module, struct vty *vty, struct inter
 	return ret;
 }
 
-int nsm_client_interface_add(struct interface *ifp)
-{
-	int ret = 0;
-	struct listnode *node;
-	struct nsm_client *client;
-	ret = pal_ip_stack_create(ifp);
-	if(ret != OK)
-		return ret;
-	for (ALL_LIST_ELEMENTS_RO(nsmlist, node, client))
-	{
-		if(client->interface_add_cb)
-		{
-			ret |= (client->interface_add_cb)(ifp);
-		}
-	}
-	return ret;
-}
 
-int nsm_client_interface_delete (struct interface *ifp)
+int nsm_client_notify_interface_add(struct interface *ifp)
 {
 	int ret = 0;
 	struct listnode *node;
 	struct nsm_client *client;
 	for (ALL_LIST_ELEMENTS_RO(nsmlist, node, client))
 	{
-		if(client->interface_delete_cb)
+		if(client->notify_add_cb)
 		{
-			ret |= (client->interface_delete_cb)(ifp);
+			ret |= (client->notify_add_cb)(ifp);
 		}
 	}
-	ret = pal_ip_stack_destroy(ifp);
+	return ret;
+}
+
+int nsm_client_notify_interface_delete (struct interface *ifp)
+{
+	int ret = 0;
+	struct listnode *node;
+	struct nsm_client *client;
+	for (ALL_LIST_ELEMENTS_RO(nsmlist, node, client))
+	{
+		if(client->notify_delete_cb)
+		{
+			ret |= (client->notify_delete_cb)(ifp);
+		}
+	}
+	return ret;
+}
+
+int nsm_client_notify_interface_up (struct interface *ifp)
+{
+	int ret = 0;
+	struct listnode *node;
+	struct nsm_client *client;
+	for (ALL_LIST_ELEMENTS_RO(nsmlist, node, client))
+	{
+		if(client->notify_up_cb)
+		{
+			ret |= (client->notify_up_cb)(ifp);
+		}
+	}
+	return ret;
+}
+
+int nsm_client_notify_interface_down (struct interface *ifp)
+{
+	int ret = 0;
+	struct listnode *node;
+	struct nsm_client *client;
+	for (ALL_LIST_ELEMENTS_RO(nsmlist, node, client))
+	{
+		if(client->notify_down_cb)
+		{
+			ret |= (client->notify_down_cb)(ifp);
+		}
+	}
+	return ret;
+}
+
+int nsm_client_notify_interface_add_ip (struct interface *ifp, struct connected *ifc, int sec)
+{
+	int ret = 0;
+	struct listnode *node;
+	struct nsm_client *client;
+	for (ALL_LIST_ELEMENTS_RO(nsmlist, node, client))
+	{
+		if(client->notify_address_add_cb)
+		{
+			ret |= (client->notify_address_add_cb)(ifp, ifc, sec);
+		}
+	}
+	return ret;
+}
+
+int nsm_client_notify_interface_del_ip (struct interface *ifp, struct connected *ifc, int sec)
+{
+	int ret = 0;
+	struct listnode *node;
+	struct nsm_client *client;
+	for (ALL_LIST_ELEMENTS_RO(nsmlist, node, client))
+	{
+		if(client->notify_address_del_cb)
+		{
+			ret |= (client->notify_address_del_cb)(ifp, ifc, sec);
+		}
+	}
+	return ret;
+}
+
+int nsm_client_notify_parameter_change (struct interface *ifp)
+{
+	int ret = 0;
+	struct listnode *node;
+	struct nsm_client *client;
+	for (ALL_LIST_ELEMENTS_RO(nsmlist, node, client))
+	{
+		if(client->notify_parameter_change_cb)
+		{
+			ret |= (client->notify_parameter_change_cb)(ifp);
+		}
+	}
+	return ret;
+}
+
+
+int nsm_pal_interface_add(struct interface *ifp)
+{
+	int ret = 0;
+	if(os_strlen(ifp->k_name))
+	{
+		ret = pal_interface_create(ifp);
+		if(ret != OK)
+			return ret;
+	}
+	return ret;
+}
+
+int nsm_pal_interface_delete (struct interface *ifp)
+{
+	int ret = 0;
+	ret = pal_interface_destroy(ifp);
 	if(ret != OK)
 		return ret;
 	return ret;
 }
 
-int nsm_client_interface_up (struct interface *ifp)
+int nsm_pal_interface_up (struct interface *ifp)
 {
 	int ret = 0;
-	struct listnode *node;
-	struct nsm_client *client;
-	ret = pal_ip_stack_up(ifp);
+	ret = pal_interface_up(ifp);
 	if(ret != OK)
 		return ret;
 	ret = hal_port_up(ifp->ifindex);
 	if(ret != OK)
 		return ret;
-	for (ALL_LIST_ELEMENTS_RO(nsmlist, node, client))
-	{
-		if(client->interface_up_cb)
-		{
-			ret |= (client->interface_up_cb)(ifp);
-		}
-	}
 	return ret;
 }
 
-int nsm_client_interface_down (struct interface *ifp)
+int nsm_pal_interface_down (struct interface *ifp)
 {
 	int ret = 0;
-	struct listnode *node;
-	struct nsm_client *client;
 	ret = hal_port_down(ifp->ifindex);
 	if(ret != OK)
 		return ret;
-	for (ALL_LIST_ELEMENTS_RO(nsmlist, node, client))
-	{
-		if(client->interface_down_cb)
-		{
-			ret |= (client->interface_down_cb)(ifp);
-		}
-	}
-	ret = pal_ip_stack_down(ifp);
+	ret = pal_interface_down(ifp);
 	if(ret != OK)
 		return ret;
 	return ret;
 }
 
 
-int nsm_client_interface_mtu (struct interface *ifp, int mtu)
+int nsm_pal_interface_mtu (struct interface *ifp, int mtu)
 {
 	int ret = 0;
-	ret = pal_ip_stack_set_mtu(ifp, mtu);
+	ret = pal_interface_set_mtu(ifp, mtu);
 	if(ret != OK)
 		return ret;
 	ret = hal_port_mtu_set(ifp->ifindex, mtu);
 	return ret;
 }
 
-int nsm_client_interface_metric (struct interface *ifp, int metric)
+int nsm_pal_interface_metric (struct interface *ifp, int metric)
 {
 	int ret = 0;
 	ret = hal_port_metric_set(ifp->ifindex, metric);
 	return ret;
 }
 
-int nsm_client_interface_vrf (struct interface *ifp, int vrf)
+int nsm_pal_interface_vrf (struct interface *ifp, int vrf)
 {
 	int ret = 0;
-	ret = pal_ip_stack_set_vr(ifp, (vrf_id_t)vrf);
+	ret = pal_interface_set_vr(ifp, (vrf_id_t)vrf);
 	if(ret != OK)
 		return ret;
 	ret = hal_port_vrf_set(ifp->ifindex, vrf);
 	return ret;
 }
 
-int nsm_client_interface_multicast (struct interface *ifp, int multicast)
+int nsm_pal_interface_multicast (struct interface *ifp, int multicast)
 {
 	int ret = 0;
 	ret = hal_port_multicast_set(ifp->ifindex, multicast);
 	return ret;
 }
 
-int nsm_client_interface_bandwidth (struct interface *ifp, int bandwidth)
+int nsm_pal_interface_bandwidth (struct interface *ifp, int bandwidth)
 {
 	int ret = 0;
 	ret = hal_port_bandwidth_set(ifp->ifindex, bandwidth);
 	return ret;
 }
 
-int nsm_client_interface_set_address (struct interface *ifp, struct prefix *cp, int secondry)
+int nsm_pal_interface_set_address (struct interface *ifp, struct prefix *cp, int secondry)
 {
 	//printf("%s\r\n", __func__);
 	int ret = 0;
-	ret = pal_ip_stack_ipv4_add(ifp, cp);
+	ret = pal_interface_ipv4_add(ifp, cp);
 	if(ret != OK)
 		return ret;
 	//ret = hal_port_address_set(ifp->ifindex, cp, secondry);
 	return ret;
 }
 
-int nsm_client_interface_unset_address (struct interface *ifp, struct prefix *cp, int secondry)
+int nsm_pal_interface_unset_address (struct interface *ifp, struct prefix *cp, int secondry)
 {
 	int ret = 0;
 	//ret = hal_port_address_unset(ifp->ifindex, cp, secondry);
 	//if(ret != OK)
 	//	return ret;
-	ret = pal_ip_stack_ipv4_delete(ifp, cp);
+	ret = pal_interface_ipv4_delete(ifp, cp);
 	return ret;
 }
 
-int nsm_client_interface_mac (struct interface *ifp, unsigned char *mac, int len)
+int nsm_pal_interface_mac (struct interface *ifp, unsigned char *mac, int len)
 {
 	int ret = 0;
-	ret = pal_ip_stack_set_lladdr(ifp, mac, len);
+	ret = pal_interface_set_lladdr(ifp, mac, len);
 	if(ret != OK)
 		return ret;
 	//ret = hal_port_mac_set(ifp->ifindex, mac, len);
 	return ret;
 }
 
+int nsm_pal_interface_get_statistics (struct interface *ifp)
+{
+	int ret = 0;
+	ret = pal_interface_update_statistics(ifp);
+	if(ret != OK)
+		return ret;
+	return ret;
+}
 
-int nsm_client_interface_speed (struct interface *ifp,  int speed )
+int nsm_pal_interface_speed (struct interface *ifp,  int speed )
 {
 	int ret = 0;
 	ret = hal_port_speed_set(ifp->ifindex, speed);
@@ -317,7 +442,7 @@ int nsm_client_interface_speed (struct interface *ifp,  int speed )
 
 
 
-int nsm_client_interface_mode (struct interface *ifp, int mode)
+int nsm_pal_interface_mode (struct interface *ifp, int mode)
 {
 	int ret = 0;
 	ret = hal_port_mode_set(ifp->ifindex, mode);
@@ -325,43 +450,51 @@ int nsm_client_interface_mode (struct interface *ifp, int mode)
 }
 
 
-int nsm_client_interface_enca (struct interface *ifp, int mode, int value)
+int nsm_pal_interface_enca (struct interface *ifp, int mode, int value)
 {
 	int ret = 0;
-	//ret = hal_port_mode_set(ifp->ifindex, mode);
+	if(if_is_serial(ifp))
+		ret = nsm_serial_interface_enca_set_api(ifp, mode);
+	else if(if_is_ethernet(ifp) &&
+			IF_IS_SUBIF_GET(ifp->ifindex) &&
+			mode == IF_ENCA_DOT1Q &&
+			ifp->encavlan != value)
+	{
+		ret = nsm_veth_interface_vid_set_api(ifp, value);
+	}
 	return ret;
 }
 
 
-int nsm_client_interface_linkdetect (struct interface *ifp, int link)
+int nsm_pal_interface_linkdetect (struct interface *ifp, int link)
 {
 	int ret = 0;
 	ret = hal_port_linkdetect_set(ifp->ifindex, link);
 	return ret;
 }
 
-int nsm_client_interface_stp (struct interface *ifp,  int stp )
+int nsm_pal_interface_stp (struct interface *ifp,  int stp )
 {
 	int ret = 0;
 	ret = hal_port_stp_set(ifp->ifindex, stp);
 	return ret;
 }
 
-int nsm_client_interface_loop (struct interface *ifp,  int loop )
+int nsm_pal_interface_loop (struct interface *ifp,  int loop )
 {
 	int ret = 0;
 	ret = hal_port_loop_set(ifp->ifindex, loop);
 	return ret;
 }
 
-int nsm_client_interface_8021x (struct interface *ifp, int mode)
+int nsm_pal_interface_8021x (struct interface *ifp, int mode)
 {
 	int ret = 0;
 	ret = hal_port_8021x_set(ifp->ifindex, mode);
 	return ret;
 }
 
-int nsm_client_interface_duplex (struct interface *ifp, int duplex)
+int nsm_pal_interface_duplex (struct interface *ifp, int duplex)
 {
 	int ret = 0;
 	ret = hal_port_duplex_set(ifp->ifindex, duplex);

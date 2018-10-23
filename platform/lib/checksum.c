@@ -9,6 +9,17 @@
 #include <zebra.h>
 #include "checksum.h"
 
+#define POLYNOMIAL          0x1021
+#define INITIAL_REMAINDER   0xFFFF
+#define FINAL_XOR_VALUE     0x0000
+
+typedef unsigned short width_t;
+#define WIDTH (8 * sizeof(width_t))
+#define TOPBIT (1 << (WIDTH - 1))
+
+static width_t crcTable[256];
+static u_int8	crc_table_init = 0;
+
 int			/* return checksum in low-order 16 bits */
 in_cksum(void *parg, int nbytes)
 {
@@ -122,3 +133,64 @@ fletcher_checksum(u_char * buffer, const size_t len, const uint16_t offset)
 
   return checksum;
 }
+
+
+/**
+ * Initialize the CRC lookup table.
+ * This table is used by crcCompute() to make CRC computation faster.
+ */
+static void crcInit(void)
+{
+    width_t remainder;
+    width_t dividend;
+    int bit;
+    /* Perform binary long division, a bit at a time. */
+    for(dividend = 0; dividend < 256; dividend++)
+    {
+        /* Initialize the remainder.  */
+        remainder = dividend << (WIDTH - 8);
+        /* Shift and XOR with the polynomial.   */
+        for(bit = 0; bit < 8; bit++)
+        {
+            /* Try to divide the current data bit.  */
+            if(remainder & TOPBIT)
+            {
+                remainder = (remainder << 1) ^ POLYNOMIAL;
+            }
+            else
+            {
+                remainder = remainder << 1;
+            }
+        }
+        /* Save the result in the table. */
+        crcTable[dividend] = remainder;
+    }
+} /* crcInit() */
+
+
+/**
+ * Compute the CRC checksum of a binary message block.
+ * @para message, 用来计算的数据
+ * @para nBytes, 数据的长度
+ * @note This function expects that crcInit() has been called
+ *       first to initialize the CRC lookup table.
+ */
+u_int16_t crc_checksum(unsigned char * message, unsigned int nBytes)
+{
+    unsigned int offset;
+    unsigned char byte;
+    width_t remainder = INITIAL_REMAINDER;
+    if(crc_table_init == 0)
+    {
+    	crcInit();
+    	crc_table_init = 1;
+    }
+    /* Divide the message by the polynomial, a byte at a time. */
+    for( offset = 0; offset < nBytes; offset++)
+    {
+        byte = (remainder >> (WIDTH - 8)) ^ message[offset];
+        remainder = crcTable[byte] ^ (remainder << 8);
+    }
+    /* The final remainder is the CRC result. */
+    return (remainder ^ FINAL_XOR_VALUE);
+} /* crcCompute() */

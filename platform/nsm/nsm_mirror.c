@@ -41,8 +41,12 @@ int nsm_mirror_init(void)
 int nsm_mirror_exit(void)
 {
 	if(lstCount(gMirror.mirrorList))
+	{
 		mirror_cleanup(0, TRUE);
-
+		lstFree(gMirror.mirrorList);
+		free(gMirror.mirrorList);
+		gMirror.mirrorList = NULL;
+	}
 	if(gMirror.mutex)
 		os_mutex_exit(gMirror.mutex);
 	return OK;

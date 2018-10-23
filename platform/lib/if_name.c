@@ -41,7 +41,8 @@ struct if_name_mgt if_name_mgt[] =
 	{IF_LOOPBACK, 		"LOOP", "loopback",		"loopback"},
 	{IF_TUNNEL, 		"TUN", 	"tunnel",		"tunnel"},
 	{IF_VLAN, 			"VLAN", "vlan", 	"vlan"},
-	{IF_LAG, 			"LAG", 	"lag", 		"lag"},
+	{IF_LAG, 			"LAG", 	"lag", 		"port-channel"},
+	{IF_WIRELESS, 		"WIRE", 	"wireless", 	"wireless"},
 
 	{IF_BRIGDE, 		"BRIGDE","br-lan", 	"brigde"},
 #ifdef CUSTOM_INTERFACE
@@ -152,6 +153,8 @@ static const char * _if_name_make_argv(const char *ifname, const char *uspv)
 			|| type == IF_GIGABT_ETHERNET
 			|| type == IF_TUNNEL
 			|| type == IF_BRIGDE
+			|| type == IF_WIRELESS
+
 #ifdef CUSTOM_INTERFACE
 			|| type == IF_WIFI
 			|| type == IF_MODEM
@@ -185,9 +188,17 @@ const char * if_ifname_split(const char *name)
 	int n = 0;
 	static char buf[INTERFACE_NAMSIZ];
 	//p = strstr(name," ");
-	n = os_strcspn(name, " ");
+/*	n = os_strcspn(name, " ");
 	if(n && n != os_strlen(name))
-		return name;
+		return name;*/
+	if(!string_have_space(name))
+	{
+		if(os_strlen(name))
+			return name;
+		zlog_err(ZLOG_NSM,"if name split ERROR input=%s",name);
+		return NULL;
+	}
+
 	n = os_strcspn(name, "1234567890");
 	if(n && n < os_strlen(name))
 	{
@@ -211,11 +222,23 @@ ifindex_t if_ifindex_make(const char *ifname, const char *uspv)
 	type = if_iftype_make(ifname);
 	if(!uspv)
 	{
-		uspvstring = strstr(ifname, " ");
+		uspvstring = os_strstr(ifname, " ");
 		if(uspvstring)
 			uspvstring++;
+		else
+			uspvstring = uspv;
 	}
-	//if(type == IF_ETHERNET || type == IF_GIGABT_ETHERNET || type == IF_TUNNEL)
+	if( type == IF_SERIAL
+			|| type == IF_ETHERNET
+			|| type == IF_GIGABT_ETHERNET
+			|| type == IF_TUNNEL
+			|| type == IF_BRIGDE
+			|| type == IF_WIRELESS
+#ifdef CUSTOM_INTERFACE
+			|| type == IF_WIFI
+			|| type == IF_MODEM
+#endif
+			)
 	{
 		if(	vty_iusp_explain (uspvstring, &unit, &slot, &port, &id))
 		{
@@ -223,6 +246,16 @@ ifindex_t if_ifindex_make(const char *ifname, const char *uspv)
 			ifindex = IF_IFINDEX_SET(type, iuspv);
 			return ifindex;
 		}
+	}
+	else if(type == IF_VLAN || type == IF_LAG || type == IF_LOOPBACK)
+	{
+		if(all_digit(uspvstring))
+		{
+			id = os_atoi(uspvstring);
+			iuspv = IF_TYPE_SET(type) | IF_USPV_SET(unit, slot, port, id);
+			ifindex = IF_IFINDEX_SET(type, iuspv);
+		}
+		return ifindex;
 	}
 	return ifindex;
 }
@@ -241,6 +274,7 @@ static const char * if_ifname_make_by_ifindex(int abstract, ifindex_t ifindex)
 			IF_TYPE_GET(ifindex) == IF_ETHERNET ||
 			IF_TYPE_GET(ifindex) == IF_GIGABT_ETHERNET ||
 			IF_TYPE_GET(ifindex) == IF_TUNNEL ||
+			IF_TYPE_GET(ifindex) == IF_WIRELESS ||
 #ifdef CUSTOM_INTERFACE
 			IF_TYPE_GET(ifindex) == IF_WIFI ||
 			IF_TYPE_GET(ifindex) == IF_MODEM ||
@@ -302,6 +336,15 @@ if_type_t if_iftype_make(const char *str)
 	return type;
 }
 
+char *if_mac_out_format(unsigned char *mac, int len)
+{
+	static char buf[64];
+	os_memset(buf, 0, sizeof(buf));
+	os_snprintf(buf, sizeof(buf), "%02x%0x2-%02x%02x-%02x%02x",
+	        mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
+	return buf;
+}
+
 
 int if_uspv_type_setting(struct interface *ifp)
 {
@@ -321,7 +364,7 @@ int if_uspv_type_setting(struct interface *ifp)
 
 	if(ifp->if_type == IF_SERIAL || ifp->if_type == IF_ETHERNET ||
 			ifp->if_type == IF_GIGABT_ETHERNET || ifp->if_type == IF_TUNNEL ||
-			ifp->if_type == IF_BRIGDE
+			ifp->if_type == IF_BRIGDE || ifp->if_type == IF_WIRELESS
 #ifdef CUSTOM_INTERFACE
 			|| ifp->if_type == IF_WIFI || ifp->if_type == IF_MODEM
 #endif
@@ -500,7 +543,7 @@ int vty_iusp_get (const char *str, int *uspv)
 	if_type_t type = if_iftype_make(str);
 	if(type == IF_SERIAL || type == IF_ETHERNET ||
 			type == IF_GIGABT_ETHERNET || type == IF_TUNNEL ||
-			type == IF_BRIGDE
+			type == IF_BRIGDE || type == IF_WIRELESS
 #ifdef CUSTOM_INTERFACE
 			|| type == IF_WIFI || type == IF_MODEM
 #endif
@@ -566,16 +609,28 @@ int vty_mac_get (const char *str, unsigned char *mac)
 			break;
 	}
 #ifdef VTY_IUSP_DEBUG
-	fprintf(stderr,"input str:%s --> %02x%0x2-%02x%02x-%02x%02x\r\n",str,
-	        mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
+	//fprintf(stderr,"input str:%s --> %02x%0x2-%02x%02x-%02x%02x\r\n",str,
+	//        mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
 #endif
 	return 1;
 }
 
 
-
 int if_loopback_ifindex_create(if_type_t type, const char *name)
 {
+	int i = 0;
+	char strc[16];
+	memset(strc, 0, sizeof(strc));
+	char *str = name;
+	for (; *str != '\0'; str++)
+	{
+		if (isdigit ((int) *str))
+			strc[i++] = *str;
+	}
+	if(i != 0)
+		return atoi(strc);
+	return 0;
+/*
 	int i = 0;
 	char strc[16];
 	memset(strc, 0, sizeof(strc));
@@ -593,6 +648,7 @@ int if_loopback_ifindex_create(if_type_t type, const char *name)
 	if(strc[0]!=0)
 		return atoi(strc);
 	return 0;
+*/
 }
 
 

@@ -5,8 +5,8 @@
  *      Author: zhurish
  */
 
-#ifndef PLATFORM_OS_OS_MEMORY_H_
-#define PLATFORM_OS_OS_MEMORY_H_
+#ifndef __OS_MEMORY_H__
+#define __OS_MEMORY_H__
 
 #define os_malloc	malloc
 #define os_calloc	calloc
@@ -27,6 +27,7 @@
 #define os_strlen	strlen
 #define os_strspn	strspn
 #define os_strcspn	strcspn
+#define os_strchr	strchr
 
 #define os_strerror strerror
 
@@ -42,4 +43,4 @@
 #define os_atol 		atol
 //#define os_printf 		snprintf
 
-#endif /* PLATFORM_OS_OS_MEMORY_H_ */
+#endif /* __OS_MEMORY_H__ */

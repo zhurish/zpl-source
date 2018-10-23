@@ -33,6 +33,7 @@ install: $(TARGET)
 
 clean: objclean
 	@$(RM) ${DSTSBINDIR}/${TARGET}
+	@$(RM) $(TARGET)
 
 objclean: 
 	@$(RM) $(OBJS_DIR)/*.o

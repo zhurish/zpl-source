@@ -25,11 +25,12 @@
 
 
 
-#define VTY_IUSP_DEBUG
+//#define VTY_IUSP_DEBUG
 
 //extern int unit_slot_module_init();
 extern int bsp_usp_module_init();
 extern const int if_ifindex2phy(ifindex_t ifindex);
+
 #ifdef USE_IPSTACK_KERNEL
 extern ifindex_t ifindex_lookup_by_kname(const char *kname);
 extern const char * if_kernel_name_lookup(ifindex_t ifindex);

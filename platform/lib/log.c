@@ -47,7 +47,7 @@ struct zlog *zlog_default = NULL;
 
 static const char *zlog_proto_string[] = { "NONE", "DEFAULT", "CONSOLE", "TELNET",/*"ZEBRA",*/ "HAL", "PAL", "NSM", "RIP",
 		"BGP", "OSPF", "RIPNG", "BABEL", "OSPF6", "ISIS", "PIM", "MASC", "NHRP",
-		"HSLS", "OLSR", "VRRP", "FRP", "LLDP", "BFD", "LDP", "SNTP", "IMISH",
+		"HSLS", "OLSR", "VRRP", "FRP", "LLDP", "BFD", "LDP", "SNTP", "IMISH", "WIFI", "MODEM",
 		"UTILS", NULL, };
 
 static const char *zlog_priority[] = { "emergencies", "alerts", "critical", "errors",
@@ -411,61 +411,6 @@ static int open_crashlog(void) {
 }
 
 
-
-static char *thread_funcname()
-{
-#ifdef OS_THREAD
-	struct thread *thread_current = thread_current_get();
-	if (thread_current)
-		return thread_current->funcname;
-	else
-#endif
-#ifdef ELOOP_THREAD
-	{
-		struct eloop *eloop = eloop_current_get();
-		if (eloop)
-			return eloop->funcname;
-	}
-#endif
-	return "NULL";
-}
-static char *thread_schedfrom()
-{
-#ifdef OS_THREAD
-	struct thread *thread_current = thread_current_get();
-	if (thread_current)
-		return thread_current->schedfrom;
-	else
-#endif
-#ifdef ELOOP_THREAD
-	{
-		struct eloop *eloop = eloop_current_get();
-		if (eloop)
-			return eloop->schedfrom;
-	}
-#endif
-	return "NULL";
-}
-
-static int thread_schedfrom_line()
-{
-#ifdef OS_THREAD
-	struct thread *thread_current = thread_current_get();
-	if (thread_current)
-		return thread_current->schedfrom_line;
-	else
-#endif
-#ifdef ELOOP_THREAD
-	{
-		struct eloop *eloop = eloop_current_get();
-		if (eloop)
-			return eloop->schedfrom_line;
-	}
-#endif
-	return 0;
-}
-
-
 /* Note: the goal here is to use only async-signal-safe functions. */
 void zlog_signal(int signo, const char *action
 #ifdef SA_SIGINFO
@@ -539,11 +484,11 @@ void zlog_signal(int signo, const char *action
 	s = buf;
 	{
 		s = str_append(LOC, "in thread ");
-		s = str_append(LOC, thread_funcname());
+		s = str_append(LOC, zlog_backtrace_funcname());
 		s = str_append(LOC, " scheduled from ");
-		s = str_append(LOC, thread_schedfrom());
+		s = str_append(LOC, zlog_backtrace_schedfrom());
 		s = str_append(LOC, ":");
-		s = num_append(LOC, thread_schedfrom_line());
+		s = num_append(LOC, zlog_backtrace_schedfrom_line());
 		s = str_append(LOC, "\n");
 	}
 
@@ -575,7 +520,6 @@ void zlog_signal(int signo, const char *action
  Needs to be enhanced to support syslog logging. */
 void zlog_backtrace_sigsafe(int priority, void *program_counter)
 {
-#ifndef BUILD_STD_MUSL
 #ifdef HAVE_STACK_TRACE
 	static const char pclabel[] = "Program counter: ";
 	void *array[64];
@@ -657,7 +601,6 @@ void zlog_backtrace_sigsafe(int priority, void *program_counter)
 #undef DUMP
 #undef LOC
 #endif /* HAVE_STRACK_TRACE */
-#endif
 }
 
 void zlog_backtrace(int priority)
@@ -665,11 +608,9 @@ void zlog_backtrace(int priority)
 #ifndef HAVE_GLIBC_BACKTRACE
 	zlog(NULL, priority, "No backtrace available on this platform.");
 #else
-#ifndef BUILD_STD_MUSL
 	void *array[20];
 	int size, i;
 	char **strings;
-
 	size = backtrace(array, array_size(array));
 	if (size <= 0 || (size_t)size > array_size(array))
 	{
@@ -691,7 +632,6 @@ void zlog_backtrace(int priority)
 			zlog(ZLOG_DEFAULT, priority, "[bt %d] %s",i,strings[i]);
 		free(strings);
 	}
-#endif
 #endif /* HAVE_GLIBC_BACKTRACE */
 }
 
@@ -730,8 +670,8 @@ static void zlog_thread_info(int log_level)
 {
 	zlog(ZLOG_DEFAULT, log_level,
 		"Current thread/eloop function %s, scheduled from "
-				"file %s, line %u", thread_funcname(),
-				thread_schedfrom(), thread_schedfrom_line());
+				"file %s, line %u", zlog_backtrace_funcname(),
+				zlog_backtrace_schedfrom(), zlog_backtrace_schedfrom_line());
 }
 
 void _zlog_assert_failed(const char *assertion, const char *file,
@@ -793,7 +733,7 @@ openzlog(const char *progname, zlog_proto_t protocol, int syslog_flags,
 	zlog_default = zl;
 
 	zlog_buffer_reset ();
-	//zlog_set_level (NULL, ZLOG_DEST_STDOUT, zlog_default->default_lvl);
+	zlog_set_level (ZLOG_DEST_STDOUT, LOG_DEBUG);
 	return zl;
 }
 

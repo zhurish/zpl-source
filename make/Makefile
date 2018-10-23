@@ -70,7 +70,7 @@ endif
 	@$(ECHO) ""
 
 #
-rebuild:clean all
+#rebuild:clean all
 #
 #
 objclean:
@@ -83,7 +83,7 @@ obj:
 		$(MAKE) -C $$i obj || exit "$$?"; 	\
 	done
 	
-install: obj
+install: 
 	@for i in $(PLPRODS); do	\
 		$(MAKE) -C $$i install || exit "$$?"; 	\
 	done
@@ -93,10 +93,19 @@ clean:
 		$(MAKE) -C $$i clean || exit "$$?"; 	\
 	done
 
-demo: obj
+demo: 	
+	@for i in $(PLPRODS); do	\
+		$(MAKE) -C $$i demo || exit "$$?"; 	\
+	done
 
-lib: obj
+lib: 
+	@for i in $(PLPRODS); do	\
+		$(MAKE) -C $$i lib || exit "$$?"; 	\
+	done
 		
-all: install
+all: 
+	@for i in $(PLPRODS); do	\
+		$(MAKE) -C $$i all || exit "$$?"; 	\
+	done
 	
 rebuild: clean all

@@ -9,7 +9,7 @@
 #define __OS_UTIL_H__
 
 
-#define OS_PIPE_BASE	"/var/run"
+#define OS_PIPE_BASE	SYSRUNDIR
 
 
 //#define DOUBLE_PROCESS
@@ -25,6 +25,7 @@ typedef enum p_action
 {
 	PROCESS_NONE = 0,
 	PROCESS_ECHO,
+	PROCESS_DEAMON,
 	PROCESS_START,
 	PROCESS_STOP,
 	PROCESS_RESTART,
@@ -52,6 +53,10 @@ typedef struct process_head_s
 extern int os_process_register(process_action action, char *name, char *process, BOOL restart, char *argv[]);
 extern int os_process_action(process_action action, char *name, int id);
 extern int os_process_action_respone(int fd, int respone);
+
+extern int os_process_start();
+extern int os_process_stop();
+
 #endif
 
 
@@ -64,8 +69,13 @@ extern int super_input_system(const char *cmd, char *input);
 extern char * pid2name(int pid);
 extern int name2pid(const char *name);
 
+extern pid_t os_pid_set (const char *path);
+extern pid_t os_pid_get (const char *path);
+
 extern int child_process_create();
 extern int child_process_destroy(int pid);
+extern int child_process_kill(int pid);
+extern int child_process_wait(int pid, int wait);
 
 extern int super_system_execvp(const char *cmd, char **input);
 
@@ -77,7 +87,8 @@ extern int os_set_nonblocking(int fd);
 extern int os_set_blocking(int fd);
 extern int os_pipe_create(char *name, int mode);
 extern int os_pipe_close(int fd);
-extern int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, int timeout);
+
+extern int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, int timeout_ms);
 
 
 extern int os_stream_write(int fd, char *inbuf, int len);

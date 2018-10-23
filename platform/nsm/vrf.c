@@ -290,6 +290,7 @@ vrf_disable (struct vrf *vrf)
 	zlog_info(ZLOG_NSM, "VRF %u is to be disabled.", vrf->vrf_id);
 	if (vrf_master.vrf_disable_hook)
 		(*vrf_master.vrf_disable_hook)(vrf->vrf_id, &vrf->info);
+	return OK;
 }
 
 
@@ -412,7 +413,7 @@ int nsm_vrf_set_vrfid (struct vrf *vrf, vrf_id_t vrf_id)
 	  zvrf = vrf->info;
 	  zvrf->vrf_id = vrf_id;
       if(vrf_id)
-    	  pal_ip_stack_create_vr(vrf_id);
+    	  pal_create_vr(vrf_id);
 	  if(vrfMutex)
 		  os_mutex_unlock(vrfMutex);
 	  return 0;
@@ -432,7 +433,7 @@ nsm_vrf_new (vrf_id_t vrf_id, void **info)
       *info = (void *)zvrf;
       router_id_init (zvrf);
       if(vrf_id)
-    	  pal_ip_stack_create_vr(vrf_id);
+    	  pal_create_vr(vrf_id);
     }
 
   return 0;
@@ -461,7 +462,7 @@ nsm_vrf_disable (vrf_id_t vrf_id, void **info)
 
   list_delete_all_node (zvrf->rid_all_sorted_list);
   list_delete_all_node (zvrf->rid_lo_sorted_list);
-  pal_ip_stack_delete_vr(vrf_id);
+  pal_delete_vr(vrf_id);
   return 0;
 }
 

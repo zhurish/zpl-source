@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#include "../../tools/quectel-CM/QMIThread.h"
+#include "QMIThread.h"
 
 #ifdef CONFIG_GOBINET
 

@@ -230,12 +230,14 @@ extern const char *prefix_family_str (const struct prefix *);
 extern int prefix_blen (const struct prefix *);
 extern int str2prefix (const char *, struct prefix *);
 extern const char *prefix2str (union prefix46constptr, char *, int);
+extern const char *prefix_2_address_str (union prefix46constptr , char *, int );
 extern int prefix_match (const struct prefix *, const struct prefix *);
 extern int prefix_same (const struct prefix *, const struct prefix *);
 extern int prefix_cmp (const struct prefix *, const struct prefix *);
 extern int prefix_common_bits (const struct prefix *, const struct prefix *);
 extern void prefix_copy (struct prefix *dest, const struct prefix *src);
 extern void apply_mask (struct prefix *);
+extern void prefix_zero (struct prefix *);
 
 extern struct prefix *sockunion2prefix (const union sockunion *dest,
                                         const union sockunion *mask);

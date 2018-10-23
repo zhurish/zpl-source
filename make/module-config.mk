@@ -73,6 +73,10 @@ PLPRODS += $(ABSTRACT_ROOT)/hal
 
 PLINCLUDE += -I$(ABSTRACT_ROOT)/pal/kernel
 PLINCLUDE += -I$(ABSTRACT_ROOT)/hal
+ifeq ($(strip $(USE_IPROUTE2)),true)
+PLPRODS += $(ABSTRACT_ROOT)/pal/kernel/iproute
+PLDEFINE += -DPL_IPROUTE2_MODULE
+endif
 endif
 
 
@@ -95,21 +99,38 @@ endif
 
 ifeq ($(strip $(MODULE_DHCP)),true)
 ifeq ($(strip $(MODULE_COMPONENT)),true)
-DHCP_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(DHCPDIR)
-PLPRODS += $(DHCP_ROOT)
-PLINCLUDE += -I$(DHCP_ROOT)
+DHCPC_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(DHCPCDIR)
+PLPRODS += $(DHCPC_ROOT)
+PLINCLUDE += -I$(DHCPC_ROOT)
+
+DHCPD_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(DHCPDDIR)
+PLPRODS += $(DHCPD_ROOT)
+PLINCLUDE += -I$(DHCPD_ROOT)
+
+PLDEFINE += -DPL_DHCPC_MODULE
+PLDEFINE += -DPL_DHCPD_MODULE
+
 PLDEFINE += -DPL_DHCP_MODULE 
 endif
 endif
 
+ifeq ($(strip $(MODULE_SQLITE)),true)
+#ifeq ($(strip $(MODULE_COMPONENT)),true)
+SQLITE_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(SQLITEDIR)
+PLPRODS += $(SQLITE_ROOT)
+PLINCLUDE += -I$(SQLITE_ROOT)
+PLDEFINE += -DPL_SQLITE_MODULE
+#endif
+endif
 
 ifeq ($(strip $(MODULE_WIFI)),true)
 ifeq ($(strip $(MODULE_COMPONENT)),true)
 WIFI_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(WIFIDIR)
 PLPRODS += $(WIFI_ROOT)
 PLINCLUDE += -I$(WIFI_ROOT)
-PLINCLUDE += -I$(WIFI_ROOT)/includes
+
 PLDEFINE += -DPL_WIFI_MODULE
+
 endif
 endif
 
@@ -147,5 +168,9 @@ PLINCLUDE += -I$(CLI_ROOT)/system
 ifeq ($(strip $(MODULE_MODEM)),true)
 PLPRODS += $(CLI_ROOT)/modem
 PLINCLUDE += -I$(CLI_ROOT)/modem
+endif
+ifeq ($(strip $(MODULE_DHCP)),true)
+PLPRODS += $(CLI_ROOT)/dhcp
+PLINCLUDE += -I$(CLI_ROOT)/dhcp
 endif
 endif

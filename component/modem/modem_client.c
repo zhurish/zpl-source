@@ -30,6 +30,7 @@ int modem_client_init(void)
 	if(gModemClient.list)
 	{
 		gModemClient.mutex = os_mutex_init();
+		gModemClient.list->free = modem_client_free;
 		lstInit(gModemClient.list);
 		return OK;
 	}

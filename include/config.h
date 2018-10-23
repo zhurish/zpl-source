@@ -4,30 +4,28 @@
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
-#define USE_IPSTACK_KERNEL
+//#define USE_IPSTACK_KERNEL
 	//USE_IPSTACK_KERNEL
 
 #ifndef BASE_DIR
-#ifdef BUILD_ARM
-#define BASE_DIR	"/home/zhurish/app"
-#else
+#ifdef BUILD_X86
 #define BASE_DIR	"/home/zhurish/workspace/app"
+#else
+#define BASE_DIR	"/tmp/app"
 #endif
 #endif
+
+
 /* bfdd vty socket */
 /* #undef BFD_VTYSH_PATH */
 #define SYSCONFDIR BASE_DIR "/etc"
-/* bgpd vty socket */
-#define BGP_VTYSH_PATH BASE_DIR "/var/bgpd.vty"
-
-/* Mask for config files */
-#define CONFIGFILE_MASK 0664
-
-/* Consumed Time Check */
-#define CONSUMED_TIME_CHECK 5000000
+#define SYSLIBDIR BASE_DIR "/lib"
+#define SYSSBINDIR BASE_DIR "/sbin"
+#define SYSBINDIR BASE_DIR "/bin"
+#define SYSRUNDIR BASE_DIR "/run"
 
 /* default daemon app root dir */
-#define DAEMON_CONFIG_DIR BASE_DIR ""
+#define DAEMON_CONFIG_DIR SYSCONFDIR
 
 /* default daemon logmsg directory */
 #define DAEMON_LOG_FILE_DIR BASE_DIR "/log"
@@ -35,14 +33,25 @@
 /* daemon vty directory */
 #define DAEMON_VTY_DIR BASE_DIR "/var"
 
+/* daemon vty directory */
+#define DAEMON_ENV_DIR BASE_DIR "/run"
+
+
+#include "config_env.h"
+
+
+/* Mask for config files */
+#define CONFIGFILE_MASK 0664
+
+/* Consumed Time Check */
+#define CONSUMED_TIME_CHECK 5000000
+
 /* Build for development */
 /* #undef DEV_BUILD */
 
 /* Disable BGP installation to zebra */
 #define DISABLE_BGP_ANNOUNCE 0
 
-/* frpd vty socket */
-#define FRP_VTYSH_PATH BASE_DIR "/var/frpd.vty"
 
 /* include git version info */
 /* #undef GIT_VERSION */
@@ -72,7 +81,7 @@
 /* #undef HAVE_BSD_STRUCT_IP_MREQ_HACK */
 
 /* capabilities */
-#ifndef BUILD_ARM
+#ifdef BUILD_X86
 #define HAVE_CAPABILITIES 1
 #endif
 /* Define to 1 if your system has a working `chown' function. */
@@ -173,7 +182,7 @@
 #define HAVE_INTTYPES_H 1
 
 /* IPv6 */
-//#define HAVE_IPV6 1
+#define HAVE_IPV6 1
 
 /* Have IP_PKTINFO */
 #define HAVE_IP_PKTINFO 1
@@ -191,7 +200,7 @@
 /* #undef HAVE_KVM_H */
 
 /* Capabilities */
-#ifndef BUILD_ARM
+#ifdef BUILD_X86
 #define HAVE_LCAPS 1
 #endif
 /* Define to 1 if you have the `crypt' library (-lcrypt). */
@@ -659,14 +668,8 @@
 /* Define to 1 if the system has the type `_Bool'. */
 #define HAVE__BOOL 1
 
-/* default oem file */
-#define HOST_DEFAULT_OEM_FILE BASE_DIR "/etc/oem.bin"
-
 /* Enable IMI module shell to Routting Protocol */
 #define IMISH_IMI_MODULE 65530
-
-/* IMI Mdoule socket */
-#define IMISH_UNIX_PATH BASE_DIR "/var/imi-cli.vty"
 
 /* selected method for isis, == one of the constants */
 #define ISIS_METHOD ISIS_METHOD_PFPACKET
@@ -680,20 +683,11 @@
 /* constant value for isis method pfpacket */
 #define ISIS_METHOD_PFPACKET 1
 
-/* isisd vty socket */
-#define ISIS_VTYSH_PATH BASE_DIR "/var/isisd.vty"
-
 /* KAME IPv6 */
 /* #undef KAME */
 
-/* ldpd vty socket */
-#define LDP_VTYSH_PATH BASE_DIR "/var/ldpd.vty"
-
 /* Linux IPv6 stack */
 #define LINUX_IPV6 1
-
-/* lldpd vty socket */
-#define LLDP_VTYSH_PATH BASE_DIR "/var/lldpd.vty"
 
 /* Mask for log files */
 #define LOGFILE_MASK 0664
@@ -702,15 +696,8 @@
    slash. */
 #define LSTAT_FOLLOWS_SLASHED_SYMLINK 1
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
-#define LT_OBJDIR ".libs/"
-
 /* Maximum number of paths for a route */
 #define MULTIPATH_NUM 1
-
-/* nhrpd vty socket */
-#define NHRP_VTYSH_PATH BASE_DIR "/var/nhrpd.vty"
 
 /* Define to 1 if your C compiler doesn't accept -c and -o together. */
 /* #undef NO_MINUS_C_MINUS_O */
@@ -737,17 +724,8 @@
 /* Define to the version of this OEM package. */
 #define OEM_VERSION "V0.0.0.9"
 
-/* olsrd vty socket */
-#define OLSR_VTYSH_PATH BASE_DIR "/var/olsrd.vty"
-
 /* OpenBSD */
 /* #undef OPEN_BSD */
-
-/* ospf6d vty socket */
-#define OSPF6_VTYSH_PATH BASE_DIR "/var/ospf6d.vty"
-
-/* ospfd vty socket */
-#define OSPF_VTYSH_PATH BASE_DIR "/var/ospfd.vty"
 
 /* Name of package */
 #define PACKAGE "quagga"
@@ -773,63 +751,6 @@
 /* Have openpam_ttyconv */
 /* #undef PAM_CONV_FUNC */
 
-/* bfdd PID */
-/* #undef PATH_BFDD_PID */
-
-/* bgpd PID */
-#define PATH_BGPD_PID BASE_DIR "/var/bgpd.pid"
-
-/* frpd PID */
-#define PATH_FRPD_PID BASE_DIR "/var/frpd.pid"
-
-/* IMI Mdoule PID */
-#define PATH_IMISH_PID BASE_DIR "/var/imi-cli.pid"
-
-/* isisd PID */
-#define PATH_ISISD_PID BASE_DIR "/var/isisd.pid"
-
-/* ldpd PID */
-#define PATH_LDPD_PID BASE_DIR "/var/ldpd.pid"
-
-/* lldpd PID */
-#define PATH_LLDPD_PID BASE_DIR "/var/lldpd.pid"
-
-/* nhrpd PID */
-#define PATH_NHRPD_PID BASE_DIR "/var/nhrpd.pid"
-
-/* olsrd PID */
-#define PATH_OLSRD_PID BASE_DIR "/var/olsrd.pid"
-
-/* ospf6d PID */
-#define PATH_OSPF6D_PID BASE_DIR "/var/ospf6d.pid"
-
-/* ospfd PID */
-#define PATH_OSPFD_PID BASE_DIR "/var/ospfd.pid"
-
-/* pimd PID */
-#define PATH_PIMD_PID BASE_DIR "/var/pimd.pid"
-
-/* ripd PID */
-#define PATH_RIPD_PID BASE_DIR "/var/ripd.pid"
-
-/* ripngd PID */
-#define PATH_RIPNGD_PID BASE_DIR "/var/ripngd.pid"
-
-/* utils PID */
-#define PATH_UTILS_PID BASE_DIR "/var/utils.pid"
-
-/* vrrpd PID */
-#define PATH_VRRPD_PID BASE_DIR "/var/vrrpd.pid"
-
-/* watchquagga PID */
-#define PATH_WATCHQUAGGA_PID BASE_DIR "/var/watchquagga.pid"
-
-/* zebra PID */
-#define PATH_ZEBRA_PID BASE_DIR "/var/zebra.pid"
-
-/* pimd vty socket */
-#define PIM_VTYSH_PATH BASE_DIR "/var/pimd.vty"
-
 /* Quagga Group */
 #define QUAGGA_GROUP "zhurish"
 
@@ -838,12 +759,6 @@
 
 /* Quagga User */
 #define QUAGGA_USER "zhurish"
-
-/* ripng vty socket */
-#define RIPNG_VTYSH_PATH BASE_DIR "/var/ripngd.vty"
-
-/* rip vty socket */
-#define RIP_VTYSH_PATH BASE_DIR "/var/ripd.vty"
 
 /* Define to the type of arg 1 for `select'. */
 #define SELECT_TYPE_ARG1 int
@@ -911,15 +826,8 @@
 # define __EXTENSIONS__ 1
 #endif
 
-
-/* utils vty socket */
-#define UTILS_VTYSH_PATH BASE_DIR "/var/utils.vty"
-
 /* Version number of package */
 #define VERSION "1.2.0"
-
-/* vrrpd vty socket */
-#define VRRP_VTYSH_PATH BASE_DIR "/var/vrrpd.vty"
 
 /* VTY shell */
 #define VTYSH /**/
@@ -939,11 +847,6 @@
 # endif
 #endif
 
-/* zebra api socket */
-#define ZEBRA_SERV_PATH BASE_DIR "/var/zserv.api"
-
-/* zebra vty socket */
-#define ZEBRA_VTYSH_PATH BASE_DIR "/var/zebra.vty"
 
 /* Enable large inode numbers on Mac OS X 10.5.  */
 #ifndef _DARWIN_USE_64_BIT_INODE

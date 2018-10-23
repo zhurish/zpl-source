@@ -9,8 +9,9 @@
 #define __MODEM_DHCP_H__
 
 
-#define _MODEM_DHCPC_DEBUG
-#define _MODEM_DHCP_DEBUG
+//#define _MODEM_DHCPC_DEBUG
+//#define _MODEM_DHCP_DEBUG
+//#define MODEM_DHCPC_PROCESS
 
 extern int modem_dhcpc_attach(modem_t *modem);
 extern int modem_dhcpc_start(modem_t *modem);

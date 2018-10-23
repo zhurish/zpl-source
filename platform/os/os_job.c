@@ -6,12 +6,14 @@
  */
 
 #include "zebra.h"
-
+#include "vty.h"
 #include "os_list.h"
 #include "os_memory.h"
 #include "os_sem.h"
 #include "os_task.h"
 #include "os_job.h"
+
+#define OS_JOB_NAME_MAX 128
 
 typedef struct os_job_s
 {
@@ -19,6 +21,8 @@ typedef struct os_job_s
 	int 	t_id;
 	int		(*job_entry)(void *);
 	void	*pVoid;
+	char    entry_name[OS_JOB_NAME_MAX];
+	int		cnt;
 }os_job_t;
 
 static LIST *job_list = NULL;
@@ -89,14 +93,14 @@ int os_job_exit()
 	return OK;
 }
 
-int os_job_finsh()
+int os_job_load()
 {
 	if(job_task_id)
 		return OK;
 	return ERROR;
 }
 
-static os_job_t * os_job_entry_create(int	(*job_entry)(void *), void *pVoid)
+static os_job_t * os_job_entry_create(int	(*job_entry)(void *), void *pVoid, char *entry_name)
 {
 	os_job_t *t = NULL;
 	if(job_unused_list)
@@ -108,6 +112,8 @@ static os_job_t * os_job_entry_create(int	(*job_entry)(void *), void *pVoid)
 		t->t_id = (int)t;
 		t->pVoid = pVoid;
 		t->job_entry = job_entry;
+		os_memset(t->entry_name, 0, sizeof(t->entry_name));
+		os_strcpy(t->entry_name, entry_name);
 		return t;
 	}
 	return NULL;
@@ -115,9 +121,9 @@ static os_job_t * os_job_entry_create(int	(*job_entry)(void *), void *pVoid)
 
 
 
-int os_job_add(int (*job_entry)(void *), void *pVoid)
+int os_job_add_entry(int (*job_entry)(void *), void *pVoid, char *entry_name)
 {
-	os_job_t * t = os_job_entry_create(job_entry, pVoid);
+	os_job_t * t = os_job_entry_create(job_entry, pVoid, entry_name);
 	if(t)
 	{
 		if(job_mutex)
@@ -132,35 +138,96 @@ int os_job_add(int (*job_entry)(void *), void *pVoid)
 	return ERROR;
 }
 
+/*int os_job_add(int (*job_entry)(void *), void *pVoid)
+{
+	os_job_t * t = os_job_entry_create(job_entry, pVoid);
+	if(t)
+	{
+		if(job_mutex)
+			os_mutex_lock(job_mutex, OS_WAIT_FOREVER);
+		if(job_list)
+			lstAdd(job_list, (NODE *)t);
+		if(job_mutex)
+			os_mutex_unlock(job_mutex);
+		os_sem_give(job_sem);
+		return t->t_id;
+	}
+	return ERROR;
+}*/
+
 
 
 static int os_job_task(void)
 {
-	NODE *node;
+	NODE node;
 	os_job_t *t;
+	while(!os_load_config_done())
+	{
+		os_sleep(1);
+	}
 	while(1)
 	{
 		os_sem_take(job_sem, OS_WAIT_FOREVER);
 
 		if(job_mutex)
 			os_mutex_lock(job_mutex, OS_WAIT_FOREVER);
-		for(node = lstFirst(job_list); node; node = lstNext(node))
+		for(t = lstFirst(job_list); t != NULL; t = lstNext(&node))
 		{
-			if(node)
+			if(t)
 			{
-				t = (os_job_t *)node;
+				node = t->node;
 
 				if(t && t->job_entry)
 				{
+					if(job_mutex)
+						os_mutex_unlock(job_mutex);
 					(t->job_entry)(t->pVoid);
+					t->cnt++;
+					if(job_mutex)
+						os_mutex_lock(job_mutex, OS_WAIT_FOREVER);
 				}
-				lstDelete(job_list, node);
+				lstDelete(job_list, t);
 				if(job_unused_list)
-					lstAdd(job_unused_list, node);
+					lstAdd(job_unused_list, t);
 			}
 		}
 		if(job_mutex)
 			os_mutex_unlock(job_mutex);
 	}
+	return OK;
+}
+
+int os_job_show(void *pvoid)
+{
+	int i = 0;
+	NODE *node;
+	os_job_t *t;
+	struct vty *vty = (struct vty *)pvoid;
+	if (job_mutex)
+		os_mutex_lock(job_mutex, OS_WAIT_FOREVER);
+	if(lstCount(job_list) || lstCount(job_unused_list) )
+	{
+		vty_out(vty, "%-4s %-4s %-6s %-16s %s", "----", "----", "------", "----------------", VTY_NEWLINE);
+		vty_out(vty, "%-4s %-4s %-6s %-16s %s", "ID", "CNT", "STATE", "NAME", VTY_NEWLINE);
+		vty_out(vty, "%-4s %-4s %-6s %-16s %s", "----", "----", "------", "----------------", VTY_NEWLINE);
+	}
+	for (node = lstFirst(job_list); node != NULL; node = lstNext(node))
+	{
+		t = (os_job_t *) node;
+		if (node)
+		{
+			vty_out(vty, "%-4d  %-4d %-6s %s%s", i++, t->cnt, "READY", t->entry_name, VTY_NEWLINE);
+		}
+	}
+	for (node = lstFirst(job_unused_list); node != NULL; node = lstNext(node))
+	{
+		t = (os_job_t *) node;
+		if (node)
+		{
+			vty_out(vty, "%-4d  %-4d %-6s %s%s", i++, t->cnt, "READY", t->entry_name, VTY_NEWLINE);
+		}
+	}
+	if (job_mutex)
+		os_mutex_unlock(job_mutex);
 	return OK;
 }

@@ -54,27 +54,55 @@ int host_config_init(char *motd)
 int host_config_exit(void)
 {
 	if (host.name)
+	{
 		XFREE(MTYPE_HOST, host.name);
-
+		host.name = NULL;
+	}
 	if (host.vty_accesslist_name)
+	{
 		XFREE(MTYPE_VTY, host.vty_accesslist_name);
+		host.vty_accesslist_name = NULL;
+	}
 	if (host.vty_ipv6_accesslist_name)
+	{
 		XFREE(MTYPE_VTY, host.vty_ipv6_accesslist_name);
-
+		host.vty_ipv6_accesslist_name = NULL;
+	}
 	if (host.logfile)
+	{
 		XFREE(MTYPE_HOST, host.logfile);
+		host.logfile = NULL;
+	}
 	if (host.motdfile)
+	{
 		XFREE(MTYPE_HOST, host.motdfile);
+		host.motdfile = NULL;
+	}
 	if (host.config)
+	{
 		XFREE(MTYPE_HOST, host.config);
+		host.config = NULL;
+	}
 	if (host.default_config)
+	{
 		XFREE(MTYPE_HOST, host.default_config);
+		host.default_config = NULL;
+	}
 	if (host.factory_config)
+	{
 		XFREE(MTYPE_HOST, host.factory_config);
+		host.factory_config = NULL;
+	}
 	if (host.cli_mutx)
+	{
 		os_mutex_exit(host.cli_mutx);
+		host.cli_mutx = NULL;
+	}
 	if (host.mutx)
+	{
 		os_mutex_exit(host.mutx);
+		host.mutx = NULL;
+	}
 	return OK;
 }
 

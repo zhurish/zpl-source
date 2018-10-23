@@ -51,7 +51,7 @@ export OBJDUMP=objdump
 export RANLIB=ranlib
 endif
 #
-ifeq ($(BUILD_TYPE),ARM)
+ifneq ($(BUILD_TYPE),X86)
 ifeq ($(CROSS_COMPILE),)
 $(error CROSS_COMPILE is not define)
 endif
@@ -69,46 +69,36 @@ export OBJDUMP=$(CROSS_COMPILE)objdump
 export RANLIB=$(CROSS_COMPILE)ranlib
 
 PL_CFLAGS += -L$(CROSS_COMPILE_ROOT)/lib -L$(CROSS_COMPILE_ROOT)/usr/lib
-PL_CFLAGS += -DBUILD_ARM
+PL_CFLAGS += -DBUILD_$(BUILD_TYPE)
 
 endif
 #
 #
 #
+ifeq ($(ARCH_BIT),64)
+PL_CFLAGS += -m64
+else
+ifneq ($(BUILD_TYPE),X86)
+#PL_CFLAGS += -m32
+endif
+endif
 #
 #
 ifeq ($(BUILD_DEBUG),NO)
-RELEASEDIR = debug
-ifeq ($(BUILD_TYPE),ARM)
-OBJDIR = $(RELEASEDIR)/armobj
-LIBDIR = $(RELEASEDIR)/armlib
-BINDIR = $(RELEASEDIR)/bin
-SBINDIR = $(RELEASEDIR)/sbin
-ETCDIR = $(RELEASEDIR)/etc
-PL_CFLAGS += -s
-else
+RELEASEDIR = release
 OBJDIR = $(RELEASEDIR)/obj
 LIBDIR = $(RELEASEDIR)/lib
 BINDIR = $(RELEASEDIR)/bin
 SBINDIR = $(RELEASEDIR)/sbin
 ETCDIR = $(RELEASEDIR)/etc
 PL_CFLAGS += -s
-endif
 else
 RELEASEDIR = debug
-ifeq ($(BUILD_TYPE),ARM)
-OBJDIR = $(RELEASEDIR)/armobj
-LIBDIR = $(RELEASEDIR)/armlib
-BINDIR = $(RELEASEDIR)/bin
-SBINDIR = $(RELEASEDIR)/sbin
-ETCDIR = $(RELEASEDIR)/etc
-else
 OBJDIR = $(RELEASEDIR)/obj
 LIBDIR = $(RELEASEDIR)/lib
 BINDIR = $(RELEASEDIR)/bin
 SBINDIR = $(RELEASEDIR)/sbin
 ETCDIR = $(RELEASEDIR)/etc
-endif
 endif
 #
 #
@@ -137,7 +127,7 @@ PLINCLUDE += -I$(PLBASE)/include
 #
 #C_TYPE=MUSL
 #ifeq ($(C_TYPE),MUSL)
-PL_CFLAGS += -DBUILD_STD_MUSL
+#PL_CFLAGS += -DBUILD_STD_MUSL
 #endif
 #
 #
@@ -182,11 +172,34 @@ endif
 #
 #
 #
-PL_LDLIBS += -lpthread -lrt -rdynamic -lm -lcrypt -ldl #-lnl 
+PL_LDLIBS += -lpthread -lrt -rdynamic -lm -lcrypt -ldl -lgcc_s
+
+ifeq ($(strip $(MODULE_WIFI_SRC)),true)
+#PL_LDLIBS += -lnl-3 -lnl-genl-3
+endif
+
 #
-PL_CFLAGS += -Wall -fsigned-char -O2 -Wnested-externs -Wmissing-prototypes \
-			 -Wredundant-decls -Wcast-align -Wunreachable-code -Wshadow
-PL_CFLAGS += -fmessage-length=0
+ifeq ($(BUILD_TYPE),X86)
+ifeq ($(strip $(MODULE_SQLITE)),true)
+PL_LDLIBS += -lsqlite3
+endif
+endif
+#
+PL_CFLAGS += -fsigned-char -O2  
+#
+# WANRING
+#	
+PL_CFLAGS += -Wall -Wextra -Wnested-externs -Wmissing-prototypes \
+			 -Wredundant-decls -Wcast-align -Wunreachable-code -Wshadow	\
+			 -Wimplicit-function-declaration -Wimplicit	-Wreturn-type -Wunused \
+			 -Wswitch -Wformat -Wuninitialized -Wchar-subscripts  \
+			 -Wpointer-arith -Wwrite-strings -Wstrict-prototypes
+# -Werror=implicit-function-declaration -Werror=switch
+PL_CFLAGS += -Werror=return-type -Werror=format-extra-args 
+#			  -Werror=overlength-strings 
+#			 -Werror=switch-default -Werror=missing-format-attribute
+#			 
+PL_CFLAGS += -fmessage-length=0 -Wcast-align
 #PL_CFLAGS += -Werror
 #
 

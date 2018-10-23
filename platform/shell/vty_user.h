@@ -77,6 +77,10 @@ extern int vty_user_delete(struct vty *vty, char *name, BOOL password, BOOL enab
 extern int vty_user_change(struct vty *vty, char *name);
 
 
+extern BOOL md5_encrypt_empty(unsigned char *ecrypt);
+//extern int encrypt_XCH(unsigned char *pass, unsigned char *password);
+extern int md5_encrypt_password(char *password, unsigned char *ecrypt);
+
 extern int vty_user_init(void);
 
 

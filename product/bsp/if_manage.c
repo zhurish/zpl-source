@@ -61,6 +61,7 @@ static struct unit_slot_port iusp_table[] =
 	{.type = IF_VLAN, .unit = 0, .slot = 1, .port = 0 },
 	{.type = IF_LAG, .unit = 0, .slot = 1, .port = 0 },
 	{.type = IF_BRIGDE, .unit = 0, .slot = 1, .port = 0 },
+	{.type = IF_WIRELESS, .unit = 0, .slot = 0, .port = 1 },
 #ifdef CUSTOM_INTERFACE
 	{.type = IF_WIFI, .unit = 0, .slot = 1, .port = 1 },
 	{.type = IF_MODEM, .unit = 0, .slot = 1, .port = 1 },
@@ -316,7 +317,7 @@ int if_slot_set_port_phy(ifindex_t ifindex, char *name)
 int if_slot_show_port_phy(struct vty *vty)
 {
 	int i = 0, j = 0;
-	static char head = 0;
+	char head = 0;
 	for(i = 0; i < OS_SLOT_MAX; i++)
 	{
 		for(j = 0; j < OS_SLOT_HY_MAX; j++)
@@ -332,6 +333,7 @@ int if_slot_show_port_phy(struct vty *vty)
 			}
 		}
 	}
+	//head = 1;
 	return 0;
 }
 #endif
@@ -353,6 +355,8 @@ static int if_unit_slot_port(int type, int u, int s, int p)
 			sprintf(name,"ethernet %d/%d/%d",u,s,i);
 		else if(type == IF_GIGABT_ETHERNET)
 			sprintf(name,"gigabitethernet %d/%d/%d",u,s,i);
+		else if(type == IF_WIRELESS)
+			sprintf(name,"wireless %d/%d/%d",u,s,i);
 		else if(type == IF_TUNNEL)
 			sprintf(name,"tunnel %d/%d/%d",u,s,i);
 		else if(type == IF_BRIGDE)
@@ -368,7 +372,7 @@ static int if_unit_slot_port(int type, int u, int s, int p)
 		else if(type == IF_VLAN)
 			sprintf(name,"vlan%d",i);
 		else if(type == IF_LAG)
-			sprintf(name,"lag%d",i);
+			sprintf(name,"port-channel%d",i);
 
 		if(os_strlen(name))
 			if_create (name, strlen(name));
@@ -397,12 +401,7 @@ int bsp_usp_module_init()
 }
 
 
-int if_manage_kernel_update (struct interface *ifp)
-{
-	if(os_strlen(ifp->k_name))
-		pal_ip_stack_update_flag(ifp);
-	return 0;
-}
+
 
 #if 0
 static int _bsp_create_serial_interface(char *kname)

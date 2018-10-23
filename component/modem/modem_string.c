@@ -32,7 +32,7 @@ const char * strchr_empty(char *src, const char em)
 	assert(src);
 	atcmd_response_t response;
 	int i = 0, j = 0, count = os_strlen(src);
-	os_memset(&response, 0, sizeof(response));
+	os_memset(&response, '\0', sizeof(response));
 	response.len = count;
 
 	for(i = 0; i < count; i++)
@@ -48,6 +48,7 @@ const char * strchr_empty(char *src, const char em)
 	os_memset(src, 0, response.len);
 	response.len = j;
 	os_memcpy(src, response.buf, response.len);
+	src[response.len] = '\0';
 	return (char*)src;
 }
 

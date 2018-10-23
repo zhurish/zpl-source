@@ -277,7 +277,7 @@ void vty_time_print(struct vty *vty, int cr)
 {
 	char buf[QUAGGA_TIMESTAMP_LEN];
 
-	if (quagga_timestamp(0, buf, sizeof(buf)) == 0)
+	if (quagga_timestamp(ZLOG_TIMESTAMP_DATE, buf, sizeof(buf)) == 0)
 	{
 		zlog(ZLOG_DEFAULT, LOG_INFO, "quagga_timestamp error");
 		return;
@@ -420,6 +420,7 @@ static void vty_auth(struct vty *vty, char *buf)
 					vty_out(vty, "%% Bad passwords, too many failures!%s",
 							VTY_NEWLINE);
 					vty->status = VTY_CLOSE;
+					vty->reload = TRUE;
 				}
 			}
 			break;
@@ -814,10 +815,12 @@ static void vty_end_config(struct vty *vty)
 		/* Nothing to do. */
 		break;
 	case CONFIG_NODE:
+	case DHCPS_NODE:
 	case MODEM_PROFILE_NODE:
 	case MODEM_CHANNEL_NODE:
 	case INTERFACE_NODE:
 	case INTERFACE_L3_NODE: /* Interface mode node. */
+	case WIRELESS_INTERFACE_NODE:
 	case TUNNEL_INTERFACE_NODE: /* Tunnel Interface mode node. */
 	case LOOPBACK_INTERFACE_NODE: /* Loopback Interface mode node. */
 	case LAG_INTERFACE_NODE: /* Lag Interface mode node. */
@@ -1243,10 +1246,12 @@ static void vty_stop_input(struct vty *vty)
 		/* Nothing to do. */
 		break;
 	case CONFIG_NODE:
+	case DHCPS_NODE:
 	case MODEM_PROFILE_NODE:
 	case MODEM_CHANNEL_NODE:
 	case INTERFACE_NODE:
 	case INTERFACE_L3_NODE: /* Interface mode node. */
+	case WIRELESS_INTERFACE_NODE:
 	case TUNNEL_INTERFACE_NODE: /* Tunnel Interface mode node. */
 	case LOOPBACK_INTERFACE_NODE: /* Loopback Interface mode node. */
 	case LAG_INTERFACE_NODE: /* Lag Interface mode node. */
@@ -1846,7 +1851,7 @@ static int vty_read(struct thread *thread)
 		{
 			if (ERRNO_IO_RETRY(errno))
 			{
-				vty_event(VTY_READ, vty_sock, vty);
+				vty_event(VTY_READ, vty->fd/*vty_sock*/, vty);
 				return 0;
 			}
 			vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
@@ -2191,7 +2196,7 @@ static int vty_flush_handle(struct vty *vty, int vty_sock)
 	case BUFFER_ERROR:
 		vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
 		zlog_warn(ZLOG_DEFAULT,
-				"buffer_flush failed on vty client fd %d, closing", vty->fd);
+				"buffer_flush failed on vty client fd %d, closing", vty->wfd);
 		buffer_reset(vty->obuf);
 		vty_close(vty);
 		return 0;
@@ -2209,7 +2214,7 @@ static int vty_flush_handle(struct vty *vty, int vty_sock)
 		/* There is more data waiting to be written. */
 		vty->status = VTY_MORE;
 		if (vty->lines == 0)
-			vty_event(VTY_WRITE, vty_sock, vty);
+			vty_event(VTY_WRITE, vty->wfd/*vty_sock*/, vty);
 		break;
 	}
 
@@ -2274,7 +2279,7 @@ static int vty_flush(struct thread *thread)
 		/* There is more data waiting to be written. */
 		vty->status = VTY_MORE;
 		if (vty->lines == 0)
-		vty_event (VTY_WRITE, vty_sock, vty);
+		vty_event (VTY_WRITE, vty->wfd/*vty_sock*/, vty);
 		break;
 	}
 #endif
@@ -2438,7 +2443,7 @@ static int vty_console_accept(struct thread *thread)
 	vty_prompt(vty);
 	/* Add read/write thread. */
 
-	vty_event(VTY_WRITE, vty->fd, vty);
+	vty_event(VTY_WRITE, vty->wfd, vty);
 	vty_event(VTY_READ, vty->fd, vty);
 	//vty_event(VTY_WRITE, STDOUT_FILENO, vty);
 	//vty_event(VTY_READ, STDIN_FILENO, vty);
@@ -2545,7 +2550,8 @@ int vty_console(const char *tty, void (*atclose)())
 	/* always have console vty in a known _unchangeable_ state, don't want config
 	 * to have any effect here to make sure scripting this works as intended */
 	vty_tty_console.console->node = USER_NODE;  //ENABLE_NODE;
-	vty_tty_console.console->v_timeout = 120;
+	//vty_tty_console.console->v_timeout = 120;
+	host_config_get_api(API_GET_VTY_TIMEOUT_CMD, &vty_tty_console.console->v_timeout);
 	//vty->v_timeout = host.vty_timeout_val;
 	strcpy(vty_tty_console.console->address, "console");
 
@@ -2819,14 +2825,14 @@ vtysh_accept (struct thread *thread)
 static int
 vtysh_flush(struct vty *vty)
 {
-	switch (buffer_flush_available(vty->obuf, vty->wfd, 0))
+	switch (buffer_flush_available(vty->obuf, vty->wfd, vty->fd_type))
 	{
 		case BUFFER_PENDING:
 		vty_event(VTYSH_WRITE, vty->wfd, vty);
 		break;
 		case BUFFER_ERROR:
 		vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
-		zlog_warn(ZLOG_DEFAULT, "%s: write error to fd %d, closing", __func__, vty->fd);
+		zlog_warn(ZLOG_DEFAULT, "%s: write error to fd %d, closing", __func__, vty->wfd);
 		buffer_reset(vty->obuf);
 		vty_close(vty);
 		return -1;
@@ -2959,6 +2965,14 @@ void vty_close(struct vty *vty)
 {
 	int i;
 	int type = 0;
+	if (vty_tty_console.console == vty)
+	{
+		if(vty->reload == TRUE)
+		{
+			vty_console_reset();
+			return;
+		}
+	}
 	if (vty->fd_type == OS_STACK || vty->type == VTY_FILE)
 	{
 		/* Cancel threads.*/
@@ -2984,25 +2998,31 @@ void vty_close(struct vty *vty)
 		type = IPCOM_STACK;
 	}
 	/* Flush buffer. */
-	if(vty->type != VTY_FILE)
-		buffer_flush_all(vty->obuf, vty->wfd, type);
+	//if(vty->type != VTY_FILE)
+	buffer_flush_all(vty->obuf, vty->wfd, type);
 
 	/* Free input buffer. */
 	buffer_free(vty->obuf);
 
 	/* Free command history. */
-	if(vty->type != VTY_FILE)
+	//if(vty->type != VTY_FILE)
 	{
 		for (i = 0; i < VTY_MAXHIST; i++)
 			if (vty->hist[i])
 				XFREE(MTYPE_VTY_HIST, vty->hist[i]);
 	}
 	/* Unset vector. */
-	if(vty->type != VTY_FILE)
-		vector_unset(vtyvec, vty->fd);
+	//if(vty->type != VTY_FILE)
+	vector_unset(vtyvec, vty->fd);
+
 	/* Close socket. */
 	if (vty_tty_console.console == vty)
-		vty_console_close(0);
+	{
+		if(vty->reload == TRUE)
+			;//vty_console_reset();
+		else
+			vty_console_close(0);
+	}
 	else
 	{
 		if (vty->fd_type == IPCOM_STACK)
@@ -3126,8 +3146,8 @@ static void vty_read_file(FILE *confp)
 		vty_config_unlock(vty);
 		/* OK free vty. */
 		XFREE(MTYPE_VTY, vty);
-#endif
 		exit(1);
+#endif
 	}
 #if 1
 	vty_close(vty);
@@ -3369,12 +3389,12 @@ static void vty_event(enum vtyevent event, int sock, struct vty *vty)
 					sock);
 
 			/* Time out treatment. */
-			if (vty->v_timeout)
+			//if (vty->v_timeout)
 			{
 				if (vty->t_timeout)
 					thread_cancel(vty->t_timeout);
 				vty->t_timeout = thread_add_timer(thread_master,
-						vty_console_timeout, vty, vty->v_timeout);
+						vty_console_timeout, vty, vty->v_timeout ? vty->v_timeout:host.vty_timeout_val);
 			}
 		}
 		else
@@ -3382,12 +3402,12 @@ static void vty_event(enum vtyevent event, int sock, struct vty *vty)
 			vty->t_read = eloop_add_read(eloop_master, vty_read, vty, sock);
 
 			/* Time out treatment. */
-			if (vty->v_timeout)
+			//if (vty->v_timeout)
 			{
 				if (vty->t_timeout)
 					eloop_cancel(vty->t_timeout);
 				vty->t_timeout = eloop_add_timer(eloop_master, vty_timeout, vty,
-						vty->v_timeout);
+						vty->v_timeout ? vty->v_timeout:host.vty_timeout_val);
 			}
 		}
 		break;
@@ -3413,10 +3433,10 @@ static void vty_event(enum vtyevent event, int sock, struct vty *vty)
 				thread_cancel(vty->t_timeout);
 				vty->t_timeout = NULL;
 			}
-			if (vty->v_timeout)
+			//if (vty->v_timeout)
 			{
 				vty->t_timeout = thread_add_timer(thread_master,
-						vty_console_timeout, vty, vty->v_timeout);
+						vty_console_timeout, vty, vty->v_timeout ? vty->v_timeout:host.vty_timeout_val);
 			}
 		}
 		else
@@ -3426,10 +3446,10 @@ static void vty_event(enum vtyevent event, int sock, struct vty *vty)
 				eloop_cancel(vty->t_timeout);
 				vty->t_timeout = NULL;
 			}
-			if (vty->v_timeout)
+			//if (vty->v_timeout)
 			{
 				vty->t_timeout = eloop_add_timer(eloop_master, vty_timeout, vty,
-						vty->v_timeout);
+						vty->v_timeout ? vty->v_timeout:host.vty_timeout_val);
 			}
 		}
 		break;
@@ -3461,7 +3481,7 @@ int exec_timeout(struct vty *vty, const char *min_str, const char *sec_str)
 	if (sec_str)
 		timeout += strtol(sec_str, NULL, 10);
 
-	host.vty_timeout_val = timeout;
+	//host.vty_timeout_val = timeout;
 	vty->v_timeout = timeout;
 	vty_event(VTY_TIMEOUT_RESET, 0, vty);
 	if (host.mutx)

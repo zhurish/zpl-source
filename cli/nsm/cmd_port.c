@@ -79,8 +79,8 @@ DEFUN (no_switchport_mode,
 
 int nsm_port_interface_config(struct vty *vty, struct interface *ifp)
 {
-	struct nsm_interface *nsm = ifp->info[ZLOG_NSM];
-	if(nsm)
+	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
+	if(nsm && if_is_ethernet(ifp))
 	{
 		switch (nsm->duplex)
 		{
@@ -149,8 +149,8 @@ int nsm_port_interface_config(struct vty *vty, struct interface *ifp)
 void cmd_port_init (void)
 {
 	struct nsm_client *nsm = nsm_client_new ();
-	nsm->interface_add_cb = NULL;
-	nsm->interface_delete_cb = NULL;
+	nsm->notify_add_cb = NULL;
+	nsm->notify_delete_cb = NULL;
 	nsm->interface_write_config_cb = nsm_port_interface_config;
 	nsm_client_install (nsm, NSM_PORT);
 

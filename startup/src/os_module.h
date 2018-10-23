@@ -23,5 +23,8 @@ extern int os_module_task_init(void);
 extern int os_module_cmd_init(int terminal);
 
 
+extern int os_module_exit(void);
+extern int os_module_task_exit(void);
+extern int os_module_cmd_exit(void);
 
 #endif /* __OS_MODULE_H_ */

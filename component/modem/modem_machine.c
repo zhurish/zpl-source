@@ -44,7 +44,7 @@ static modem_machine_action modem_machine_tbl[MODEM_MACHINE_STATE_MAX][MODEM_MAC
 	},
 	{
 		{MDMS(NO_SIGNAL),		MDMS(NONE),				MODEM_EV_NONE},
-		{MDMS(NO_SIGNAL),		MDMS(NO_USIM_CARD),		MODEM_EV_NONE},
+		{MDMS(NO_SIGNAL),		MDMS(NO_USIM_CARD),		MODEM_EV_REMOVE_CARD},
 		{MDMS(NO_SIGNAL),		MDMS(NO_SIGNAL),		MODEM_EV_NONE},
 		{MDMS(NO_SIGNAL),		MDMS(NO_ADDR),		MODEM_EV_NONE},
 		{MDMS(NO_SIGNAL),		MDMS(NO_SERVICE),		MODEM_EV_NONE},
@@ -52,7 +52,7 @@ static modem_machine_action modem_machine_tbl[MODEM_MACHINE_STATE_MAX][MODEM_MAC
 	},
 	{
 		{MDMS(NO_ADDR),		MDMS(NONE),				MODEM_EV_NONE},
-		{MDMS(NO_ADDR),		MDMS(NO_USIM_CARD),		MODEM_EV_NONE},
+		{MDMS(NO_ADDR),		MDMS(NO_USIM_CARD),		MODEM_EV_REMOVE_CARD},
 		{MDMS(NO_ADDR),		MDMS(NO_SIGNAL),		MODEM_EV_NONE},
 		{MDMS(NO_ADDR),		MDMS(NO_ADDR),		MODEM_EV_NONE},
 		{MDMS(NO_ADDR),		MDMS(NO_SERVICE),		MODEM_EV_NONE},
@@ -60,7 +60,7 @@ static modem_machine_action modem_machine_tbl[MODEM_MACHINE_STATE_MAX][MODEM_MAC
 	},
 	{
 		{MDMS(NO_SERVICE),		MDMS(NONE),				MODEM_EV_NONE},
-		{MDMS(NO_SERVICE),		MDMS(NO_USIM_CARD),		MODEM_EV_NONE},
+		{MDMS(NO_SERVICE),		MDMS(NO_USIM_CARD),		MODEM_EV_REMOVE_CARD},
 		{MDMS(NO_SERVICE),		MDMS(NO_SIGNAL),		MODEM_EV_NONE},
 		{MDMS(NO_SERVICE),		MDMS(NO_ADDR),		MODEM_EV_NONE},
 		{MDMS(NO_SERVICE),		MDMS(NO_SERVICE),		MODEM_EV_NONE},
@@ -68,7 +68,7 @@ static modem_machine_action modem_machine_tbl[MODEM_MACHINE_STATE_MAX][MODEM_MAC
 	},
 	{
 		{MDMS(NETWORK_ACTIVE),		MDMS(NONE),				MODEM_EV_NONE},
-		{MDMS(NETWORK_ACTIVE),		MDMS(NO_USIM_CARD),		MODEM_EV_OFFLINE},
+		{MDMS(NETWORK_ACTIVE),		MDMS(NO_USIM_CARD),		MODEM_EV_REMOVE_CARD},
 		{MDMS(NETWORK_ACTIVE),		MDMS(NO_SIGNAL),		MODEM_EV_OFFLINE},
 		{MDMS(NETWORK_ACTIVE),		MDMS(NO_ADDR),		MODEM_EV_OFFLINE},
 		{MDMS(NETWORK_ACTIVE),		MDMS(NO_SERVICE),		MODEM_EV_OFFLINE},
@@ -122,12 +122,21 @@ int	modem_machine_state_action(modem_t *modem)
 			modem_machine_state_string(modem->state), modem_machine_state_string(modem->newstate));
 
 	if(modem->state != MDMS(NETWORK_ACTIVE) && modem->newstate == MDMS(NETWORK_ACTIVE))
+	{
+		modem->delay = MODEM_DELAY_CHK_TIME;
+		modem->dedelay = MODEM_DELAY_CHK_TIME;
 		modem_event_add_api(modem, MODEM_EV_DELAY, FALSE);
+	}
+	if(modem->state == MDMS(NETWORK_ACTIVE) && modem->newstate != MDMS(NETWORK_ACTIVE))
+	{
+		modem->delay = MODEM_DELAY_CHK_TIME;
+		modem->dedelay = MODEM_DECHK_TIME;
+	}
 
 	if(event != MODEM_EV_NONE)
 	{
 		modem_event_add_api(modem, event, FALSE);
-		modem->state = modem->newstate;
+		//modem->state = modem->newstate;
 
 		MODEM_DEBUG("event > %s",modem_event_string(event));
 	}
@@ -136,7 +145,6 @@ int	modem_machine_state_action(modem_t *modem)
 
 	return OK;
 }
-
 
 int modem_machine_state_set(modem_t *modem, modem_machine newstate)
 {
@@ -165,6 +173,11 @@ static modem_machine modem_machine_state_update(modem_t *modem)
 			|| MODEM_SIGNAL_GET(client->signal_state, MODEM_STATE_SIGNAL_LOSS)
 			|| MODEM_SIGNAL_GET(client->signal_state, MODEM_STATE_BITERR_HIGH) )
 		return MDMS(NO_SIGNAL);
+
+/*
+	if( modem->dialtype == MODEM_DIAL_PPP )
+		return MODEM_MACHINE_STATE_NETWORK_ACTIVE;
+*/
 
 	if(!client->prefix.family)
 		return MDMS(NO_ADDR);

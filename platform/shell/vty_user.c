@@ -25,7 +25,7 @@ char * vty_user_setting (struct vty *vty, const char *name)
 		return NULL;
 	if(os_strlen(name) > VTY_USERNAME_MAX)
 	{
-		vty_out(vty, "ERROR: username is too long.", VTY_NEWLINE);
+		vty_out(vty, "ERROR: username is too long.%s", VTY_NEWLINE);
 		return NULL;
 	}
 	if(vty->username)
@@ -95,7 +95,7 @@ static struct vty_user * vty_user_lookup (const char *name)
 	return NULL;
 }
 
-static BOOL md5_encrypt_empty(unsigned char *ecrypt)
+BOOL md5_encrypt_empty(unsigned char *ecrypt)
 {
     if(os_memcmp(ecrypt,"*#@",3) == 0)
     {
@@ -112,6 +112,14 @@ static int encrypt_XCH(unsigned char *pass, unsigned char *password)
 	//可打印字符（0x20-0x7E）
 	for(i = 0; i < MD5_PASSWORD_MAX; i++)
 	{
+		if(pass[i] < 0x21)
+			password[i] = pass[i] + 0x21 + i;
+		if(pass[i] > 0x7E)
+			password[i] = pass[i] - 0x7E + i;
+
+		if(pass[i] == 0x20)
+			password[i] = pass[i] + 0x20 + i;
+
 		if(pass[i] == '%')
 			password[i] = '*';
 		else if(pass[i] == '?')
@@ -122,15 +130,31 @@ static int encrypt_XCH(unsigned char *pass, unsigned char *password)
 				pass[i] == 0x22 || pass[i] == 0x27 ||
 				pass[i] == 0x25 || pass[i] == 0x2e)
 			password[i] = 0x30 + i;
-		else if ((pass[i] >= 0x20) && (pass[i] <= 0x7E))
+		else if ((pass[i] >= 0x21) && (pass[i] <= 0x7E))
 			password[i] = pass[i];
 		else
-			password[i] = 0x20 + i;
+			password[i] = 0x21 + i;
+
+		if(password[i] < 0x21)
+			password[i] = password[i] + 0x21;
+		if(password[i] > 0x7E)
+			password[i] = password[i] - 0x7E;
+		if(password[i] == ' ')
+			password[i] = password[i] + i;
+	}
+	for(i = 0; i < MD5_PASSWORD_MAX; i++)
+	{
+		if(password[i] < 0x21)
+			password[i] = password[i] + 0x21 + i;
+		if(password[i] > 0x7E)
+			password[i] = password[i] - 0x7E + i;
+		if(password[i] == ' ')
+			password[i] = password[i] + i;
 	}
 	return OK;
 }
 
-static int md5_encrypt_password(char *password, unsigned char *ecrypt)
+int md5_encrypt_password(char *password, unsigned char *ecrypt)
 {
     int i;
     unsigned char decrypt[MD5_PASSWORD_MAX];

@@ -5,8 +5,8 @@
  *      Author: zhurish
  */
 
-#ifndef PLATFORM_OS_OS_TASK_H_
-#define PLATFORM_OS_OS_TASK_H_
+#ifndef __OS_TASK_H__
+#define __OS_TASK_H__
 
 #define TASK_NAME_MAX	32
 #define TASK_COUNT_MAX	64
@@ -106,6 +106,9 @@ extern int os_task_priority_get(unit32 TaskID, int *Priority);
 extern int os_task_yield ( void );
 extern int os_task_delay(int ticks);
 
+extern int os_task_supend(unit32 TaskID);
+extern int os_task_resume(unit32 TaskID);
+
 extern unit32 os_task_entry_create(char *name, int pri, int op,
                          task_entry entry, void *pVoid,
                          char *func_name, int stacksize);
@@ -117,4 +120,4 @@ extern int os_task_destroy(unit32 taskId);
 //#define os_task_destroy(i)	os_task_entry_create(i)
 
 
-#endif /* PLATFORM_OS_OS_TASK_H_ */
+#endif /* __OS_TASK_H__ */

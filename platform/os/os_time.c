@@ -8,7 +8,7 @@
 
 
 #include "zebra.h"
-
+//#include "vty.h"
 #include "os_list.h"
 //#include "os_log.h"
 #include "os_sem.h"
@@ -18,6 +18,7 @@
 
 
 static LIST *time_list = NULL;
+static LIST *time_unuse_list = NULL;
 static os_sem_t *time_sem = NULL;
 static os_mutex_t *time_mutex = NULL;
 static struct timeval min_interval;
@@ -156,6 +157,31 @@ os_gettime (enum os_clkid clkid, struct timeval *tv)
     }
 }
 
+
+struct timeval os_time_min(struct timeval a, struct timeval b)
+{
+	unsigned int ma = 0, mb = 0;
+	ma = a.tv_sec * TIMER_SECOND_MICRO + a.tv_usec;
+	mb = b.tv_sec * TIMER_SECOND_MICRO + b.tv_usec;
+
+	if(ma > mb)
+		return b;
+	else
+		return a;
+}
+
+struct timeval os_time_max(struct timeval a, struct timeval b)
+{
+	unsigned int ma = 0, mb = 0;
+	ma = a.tv_sec * TIMER_SECOND_MICRO + a.tv_usec;
+	mb = b.tv_sec * TIMER_SECOND_MICRO + b.tv_usec;
+
+	if(ma > mb)
+		return a;
+	else
+		return b;
+}
+
 /* time_t value in terms of stabilised absolute time.
  * replacement for POSIX time()
  */
@@ -168,8 +194,59 @@ os_time (time_t *t)
   if (t)
     *t = tv.tv_sec;
   return tv.tv_sec;*/
-  return time(NULL);
+  return time(t);
 }
+
+
+char *os_time_out (char *fmt, time_t t)
+{
+	int len = 0;
+	struct tm *tm;
+	static char data[128];
+	time_t clock = t;
+	os_memset(data, 0, sizeof(data));
+	//UTC :Wed Apr 18 05:19:00 UTC 2018
+	if(os_strstr(fmt, "bsd"))
+	{
+		tm = localtime(&clock);
+		len = strftime(data, sizeof(data), "%b %e %T",tm);
+	}
+	else if(os_strstr(fmt, "/"))
+	{
+		tm = localtime(&clock);
+		len = strftime(data, sizeof(data), "%Y/%m/%d %H:%M:%S",tm);
+	}
+	else if(os_strstr(fmt, "short"))
+	{
+		tm = localtime(&clock);
+		len = strftime(data, sizeof(data), "%m/%d %H:%M:%S",tm);
+	}
+	else if(os_strstr(fmt, "iso"))
+	{
+		tm = gmtime(&clock);
+		len = strftime(data, sizeof(data), "%Y-%m-%dT%H:%M:%S+08:00",tm);
+	}
+	else if(os_strstr(fmt, "rfc3164"))
+	{
+		tm = localtime(&clock);
+		len = strftime(data, sizeof(data), "%b %d %T",tm);
+	}
+	else if(os_strstr(fmt, "rfc3339"))
+	{
+		tm = gmtime(&clock);
+		len = strftime(data, sizeof(data), "%Y-%m-%dT%H:%M:%S-08:00",tm);
+	}
+	if(len > 0)
+		return data;
+	return "UNKNOWN";
+}
+
+
+
+
+
+
+
 
 
 int os_time_init()
@@ -184,6 +261,17 @@ int os_time_init()
 		}
 		else
 			return ERROR;
+		time_unuse_list = os_malloc(sizeof(LIST));
+		if(time_unuse_list)
+		{
+			lstInit(time_unuse_list);
+		}
+		else
+		{
+			os_free(time_unuse_list);
+			return ERROR;
+		}
+
 	}
 	if(time_mutex == NULL)
 	{
@@ -220,26 +308,62 @@ int os_time_exit()
 		lstFree(time_list);
 		time_list = NULL;
 	}
+	if(time_unuse_list)
+	{
+		lstFree(time_unuse_list);
+		time_unuse_list = NULL;
+	}
 	memset(&min_interval, 0, sizeof(struct timeval));
 	return OK;
 }
 
-int os_time_finsh()
+int os_time_load()
 {
 	if(time_task_id)
 		return OK;
 	return ERROR;
 }
 
-static os_time_t * os_time_entry_create(int	(*time_entry)(void *), void *pVoid, int msec)
+static os_time_t * os_time_get_node()
 {
-	os_time_t *t = os_malloc(sizeof(os_time_t));
+	NODE *node;
+	os_time_t *t = NULL;
+	if(time_mutex)
+		os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
+	for(node = lstFirst(time_unuse_list); node != NULL; node = lstNext(node))
+	{
+		t = (os_time_t *)node;
+		if(node && t->state == OS_TIMER_FALSE)
+		{
+			break;
+		}
+	}
+	if(time_mutex)
+		os_mutex_unlock(time_mutex);
+	if(t)
+		lstDelete (time_unuse_list, (NODE *)t);
+	return t;
+}
+
+static os_time_t * os_time_entry_create(os_time_type type, int	(*time_entry)(void *),
+		void *pVoid, int msec, char *func_name)
+{
+	os_time_t *t = os_time_get_node();
+	if(t == NULL)
+	{
+		t = os_malloc(sizeof(os_time_t));
+		if(t)
+			os_memset(t, 0, sizeof(os_time_t));
+	}
 	if(t)
 	{
 		t->t_id = (int)t;
 		t->msec = msec;
 		t->pVoid = pVoid;
 		t->time_entry = time_entry;
+		t->type = type;
+		os_memset(t->entry_name, 0, sizeof(t->entry_name));
+		os_strcpy(t->entry_name, func_name);
 		//t->interval
 		return t;
 	}
@@ -258,7 +382,7 @@ static int os_time_interval_update(os_time_t *t)
 
 static void os_time_interrupt(int signo)
 {
-	if(time_sem)
+	if(time_sem && signo == SIGALRM)
 		os_sem_give(time_sem);
 //	OS_DEBUG("%s:\r\n",__func__);
 	return;
@@ -290,7 +414,7 @@ static int os_time_interrupt_setting(struct timeval *interval, struct timeval *n
 /*
  * get min timeval
  */
-static int os_time_min(struct timeval *a,struct timeval *b)
+static int os_time_min_interval(struct timeval *a,struct timeval *b)
 {
 	min_interval.tv_sec = min(a->tv_sec, b->tv_sec);
 	if(a->tv_sec > b->tv_sec)
@@ -310,61 +434,272 @@ static int os_time_min(struct timeval *a,struct timeval *b)
 	return 0;
 }
 
-
-int os_time_create(int (*time_entry)(void *), void *pVoid, int msec)
+static int os_time_interval_refresh(os_time_t *t, int msec, BOOL add)
 {
-	//int imsec = 0;
 	struct timeval now;
-	//os_time_t *node;
-	os_time_t * t = os_time_entry_create(time_entry, pVoid,  msec);
+	if(add == FALSE)
+	{
+		os_gettime (OS_CLK_REALTIME, &now);
+		if(msec)
+		{
+			t->interval.tv_sec = now.tv_sec + msec/TIMER_MSEC_MICRO;
+			t->interval.tv_usec = now.tv_usec + (msec%TIMER_MSEC_MICRO)*TIMER_MSEC_MICRO;
+		}
+		os_time_min_interval(&t->interval, &min_interval);
+		os_time_interrupt_setting(&min_interval, &now);
+	}
+	else
+	{
+		os_gettime (OS_CLK_REALTIME, &now);
+		t->interval.tv_sec = now.tv_sec + msec/TIMER_MSEC_MICRO;
+		t->interval.tv_usec = now.tv_usec + (msec%TIMER_MSEC_MICRO)*TIMER_MSEC_MICRO;
+		//if(t->node.previous == NULL)
+		lstAdd(time_list, (NODE *)t);
+		t->state = OS_TIMER_TRUE;
+		if(min_interval.tv_sec == 0 && min_interval.tv_sec == min_interval.tv_usec)
+			os_memcpy(&min_interval, &t->interval, sizeof(struct timeval));
+		else
+			os_time_min_interval(&t->interval, &min_interval);
+		os_time_interrupt_setting(&min_interval, &now);
+	}
+	return OK;
+}
+
+#if 1
+int os_time_create_entry(os_time_type type, int (*time_entry)(void *),
+		void *pVoid, int msec, char *func_name)
+{
+	os_time_t * t = os_time_entry_create(type, time_entry, pVoid,  msec, func_name);
 	if(t)
 	{
 		if(time_mutex)
 			os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
-		os_gettime (OS_CLK_REALTIME, &now);
-		t->interval.tv_sec = now.tv_sec + msec/TIMER_MSEC_MICRO;
-		t->interval.tv_usec = now.tv_usec + (msec%TIMER_MSEC_MICRO)*TIMER_MSEC_MICRO;
-
-		lstAdd(time_list, (NODE *)t);
-		//lstInsert (pList, pList->TAIL, pNode);
-		if(min_interval.tv_sec == 0 && min_interval.tv_sec == min_interval.tv_usec)
-			os_memcpy(&min_interval, &t->interval, sizeof(struct timeval));
-		else
-			os_time_min(&t->interval, &min_interval);
-		os_time_interrupt_setting(&min_interval, &now);
+		os_time_interval_refresh(t,  msec, TRUE);
 		if(time_mutex)
 			os_mutex_unlock(time_mutex);
 		return t->t_id;
 	}
 	return ERROR;
 }
+#else
+static int os_time_create(int (*time_entry)(void *), void *pVoid, int msec)
+{
+	//int imsec = 0;
+	//struct timeval now;
+	//os_time_t *node;
+	os_time_t * t = os_time_entry_create(time_entry, pVoid,  msec);
+	if(t)
+	{
+		if(time_mutex)
+			os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
+/*		os_gettime (OS_CLK_REALTIME, &now);
+		t->interval.tv_sec = now.tv_sec + msec/TIMER_MSEC_MICRO;
+		t->interval.tv_usec = now.tv_usec + (msec%TIMER_MSEC_MICRO)*TIMER_MSEC_MICRO;
 
+		lstAdd(time_list, (NODE *)t);
+
+		if(min_interval.tv_sec == 0 && min_interval.tv_sec == min_interval.tv_usec)
+			os_memcpy(&min_interval, &t->interval, sizeof(struct timeval));
+		else
+			os_time_min(&t->interval, &min_interval);
+		os_time_interrupt_setting(&min_interval, &now);*/
+		os_time_interval_refresh(t,  msec, TRUE);
+		if(time_mutex)
+			os_mutex_unlock(time_mutex);
+		return t->t_id;
+	}
+	return ERROR;
+}
+#endif
+
+
+os_time_t *os_time_lookup(int id)
+{
+	NODE node;
+	os_time_t *t;
+	if(time_mutex)
+		os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
+	for(t = (os_time_t *)lstFirst(time_list); t != NULL; t = (os_time_t *)lstNext(&node))
+	{
+		node = t->node;
+		if(t && t->t_id && t->t_id == id && t->state != OS_TIMER_FALSE)
+		{
+			break;
+		}
+	}
+	if(!t)
+	{
+		for(t = (os_time_t *)lstFirst(time_unuse_list); t != NULL; t = (os_time_t *)lstNext(&node))
+		{
+			node = t->node;
+			if(t && t->t_id && t->t_id == id && t->state != OS_TIMER_FALSE)
+			{
+				break;
+			}
+		}
+	}
+	if(time_mutex)
+		os_mutex_unlock(time_mutex);
+	return t;
+}
+/*
 static int os_time_entry_destroy(os_time_t *t)
 {
 	if(t)
 		os_free(t);
 	return OK;
 }
+*/
 
 
 int os_time_destroy(int id)
 {
-	struct timeval now;
-	os_time_t *t = (os_time_t *)id;
+	//struct timeval now;
+	os_time_t *t = os_time_lookup(id);//(os_time_t *)id;
 	if(t)
 	{
 		if(time_mutex)
 			os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
-		os_gettime (OS_CLK_REALTIME, &now);
-		os_time_min(&t->interval, &min_interval);
-		os_time_interrupt_setting(&min_interval, &now);
-		os_time_entry_destroy(t);
+		t->state = OS_TIMER_FALSE;
+		lstDelete (time_list, (NODE *)t);
+		os_time_interval_refresh(t,  0, FALSE);
+/*		os_gettime (OS_CLK_REALTIME, &now);
+		os_time_min_interval(&t->interval, &min_interval);
+		os_time_interrupt_setting(&min_interval, &now);*/
+		t->t_id = 0;
+		lstAdd(time_unuse_list, (NODE *)t);
+		//os_time_entry_destroy(t);
 		if(time_mutex)
 			os_mutex_unlock(time_mutex);
+		return OK;
 	}
+	return ERROR;
+}
+
+int os_time_cancel(int id)
+{
+	os_time_t *t = os_time_lookup(id);//(os_time_t *)id;
+	if(t)
+	{
+		if(time_mutex)
+			os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
+		t->state = OS_TIMER_CANCEL;
+		lstDelete (time_list, (NODE *)t);
+		lstAdd(time_unuse_list, (NODE *)t);
+		os_time_interval_refresh(t,  0, FALSE);
+		if(time_mutex)
+			os_mutex_unlock(time_mutex);
+		return OK;
+	}
+	return ERROR;
+}
+
+int os_time_restart(int id, int msec)
+{
+	os_time_t *t = os_time_lookup(id);//(os_time_t *)id;
+	if(t && t->time_entry)
+	{
+		if(time_mutex)
+			os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
+		t->state = OS_TIMER_TRUE;
+		os_time_interval_refresh(t,  msec, FALSE);
+		lstDelete(time_unuse_list, (NODE *)t);
+		lstAdd (time_list, (NODE *)t);
+		if(time_mutex)
+			os_mutex_unlock(time_mutex);
+		return OK;
+	}
+	return ERROR;
+}
+
+
+int os_timer_show(int (*show)(void *, char *fmt,...), void *pVoid)
+{
+	int i = 0;
+	NODE *node;
+	os_time_t *t;
+	if (time_mutex)
+		os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
+	if(lstCount(time_list) && show )
+	{
+		(show)(pVoid, "%-4s %-8s %-8s %s %s", "----", "--------", "----------", "----------------", "\r\n");
+		(show)(pVoid, "%-4s %-8s %-8s %s %s", "ID", "TYPE", "INTERVAL", "NAME", "\r\n");
+		(show)(pVoid, "%-4s %-8s %-8s %s %s", "----", "--------", "----------", "----------------", "\r\n");
+	}
+	for (node = lstFirst(time_list); node != NULL; node = lstNext(node))
+	{
+		t = (os_time_t *) node;
+		if (node && show)
+		{
+			(show)(pVoid, "%-4d  %-8s %-8d %s%s", i++, (t->type == OS_TIMER_ONCE) ? "ONCE":"DEFAULT",
+					t->msec, t->entry_name, "\r\n");
+		}
+	}
+	if (time_mutex)
+		os_mutex_unlock(time_mutex);
 	return OK;
 }
 
+#if 1
+
+static int os_time_task(void)
+{
+	int flag = 0;
+	NODE node;
+	os_time_t *t;
+	struct timeval now;
+	while(!os_load_config_done())
+	{
+		os_sleep(1);
+	}
+	while(1)
+	{
+		os_sem_take(time_sem, OS_WAIT_FOREVER);
+		if(time_mutex)
+			os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
+
+		os_gettime (OS_CLK_REALTIME, &now);
+		for(t = (os_time_t *)lstFirst(time_list); t != NULL; t = (os_time_t *)lstNext(&node))
+		{
+			node = t->node;
+			if(t && t->state != OS_TIMER_FALSE)
+			{
+				if(os_timeval_cmp (t->interval, now))
+				{
+					if(t->time_entry)
+					{
+						(t->time_entry)(t->pVoid);
+					}
+					if(t->type == OS_TIMER_ONCE)
+					{
+						t->msec = 0X0FFFFFFF;
+						t->state = OS_TIMER_FALSE;
+						t->t_id = 0;
+						lstDelete (time_list, (NODE *)t);
+						lstAdd(time_unuse_list, (NODE *)t);
+					}
+					os_time_interval_update(t);
+					if(flag == 0)
+					{
+						flag = 1;
+						os_memcpy(&min_interval, &t->interval, sizeof(struct timeval));
+						//os_time_min_interval(&t->interval, &min_interval);
+					}
+					else
+						os_time_min_interval(&t->interval, &min_interval);
+				}
+				else
+					os_time_min_interval(&t->interval, &min_interval);
+			}
+		}
+		flag = 0;
+		os_time_interrupt_setting(&min_interval, &now);
+		if(time_mutex)
+			os_mutex_unlock(time_mutex);
+	}
+	return 0;
+}
+#else
 static int os_time_task(void)
 {
 	int flag = 0;
@@ -378,30 +713,36 @@ static int os_time_task(void)
 		if(time_mutex)
 			os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
 		os_gettime (OS_CLK_REALTIME, &now);
-		for(node = lstFirst(time_list); node; node = lstNext(node))
+		for(node = lstFirst(time_list); node != NULL; node = lstNext(node))
 		{
-			if(node)
+			t = (os_time_t *)node;
+			if(node && t->state)
 			{
-				t = (os_time_t *)node;
 				if(os_timeval_cmp (t->interval, now))
 				{
 					if(t->time_entry)
 					{
 						(t->time_entry)(t->pVoid);
 					}
+					if(t->type == OS_TIMER_ONCE)
+					{
+						t->msec = 0X0FFFFFFF;
+						t->state = OS_TIMER_FALSE;
+						lstDelete (time_list, (NODE *)t);
+						lstAdd(time_unuse_list, (NODE *)t);
+					}
 					os_time_interval_update(t);
 					if(flag == 0)
 					{
 						flag = 1;
 						os_memcpy(&min_interval, &t->interval, sizeof(struct timeval));
-						//os_time_min(&t->interval, &min_interval);
+						//os_time_min_interval(&t->interval, &min_interval);
 					}
 					else
-						os_time_min(&t->interval, &min_interval);
-
+						os_time_min_interval(&t->interval, &min_interval);
 				}
 				else
-						os_time_min(&t->interval, &min_interval);
+					os_time_min_interval(&t->interval, &min_interval);
 			}
 		}
 		flag = 0;
@@ -410,3 +751,4 @@ static int os_time_task(void)
 			os_mutex_unlock(time_mutex);
 	}
 }
+#endif

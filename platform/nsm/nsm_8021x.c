@@ -38,10 +38,16 @@ int nsm_dot1x_init(void)
 int nsm_dot1x_exit(void)
 {
 	if(lstCount(gDot1x_t.dot1xList))
+	{
 		dot1x_cleanup(0, TRUE);
+		lstFree(gDot1x_t.dot1xList);
+		free(gDot1x_t.dot1xList);
+		gDot1x_t.dot1xList = NULL;
+	}
 
 	if(gDot1x_t.mutex)
 		os_mutex_exit(gDot1x_t.mutex);
+
 	return OK;
 }
 
@@ -76,7 +82,7 @@ static int dot1x_nsm_client_setup(ifindex_t ifindex, void *p)
 	struct interface *ifp = if_lookup_by_index(ifindex);
 	if(ifp)
 	{
-		struct nsm_interface *nsm = ifp->info[ZLOG_NSM];
+		struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 		if(nsm)
 			nsm->nsm_client[NSM_DOT1X] = p;
 	}

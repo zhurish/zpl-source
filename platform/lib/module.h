@@ -19,7 +19,9 @@ typedef enum
   MODULE_TELNET,		//telnet
   MODULE_NSM,			//route table manage
   MODULE_MODEM,			//MODEM
+  MODULE_WIFI,			//wifi
   MODULE_DHCP,			//MODEM
+  MODULE_DHCPD,			//DHCPD
   MODULE_RIP,
   MODULE_BGP,
   MODULE_OSPF,
@@ -40,6 +42,7 @@ typedef enum
   MODULE_SNTP,
   MODULE_IMISH,
   MODULE_UTILS,
+  MODULE_KERNEL,		//Kernel
   MODULE_MAX,
 } module_t;
 
@@ -50,6 +53,13 @@ extern int module2task(int module);
 extern int task2module(int taskid);
 extern int task_module_self(void);
 extern int module_setup_task(int module, int taskid);
+
+
+extern char *zlog_backtrace_module();
+extern char *zlog_backtrace_funcname();
+extern char *zlog_backtrace_schedfrom();
+extern int zlog_backtrace_schedfrom_line();
+
 
 
 #endif /* __LIB_MODULE_H__ */
