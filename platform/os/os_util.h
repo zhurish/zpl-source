@@ -100,4 +100,34 @@ extern int os_stream_head_read(int fd, char *inbuf, int len);
 extern int os_register_signal(int sig, void (*handler)(int));
 
 
+/*
+ * FILE SIZE
+ */
+extern const char * os_file_size(long long len);
+
+//extern const char * os_stream_size(long long len);
+
+/*
+ * URL
+ */
+
+typedef struct os_url_s
+{
+	char 		*proto;
+	char 		*host;
+	u_int16		port;
+	char 		*user;
+	char 		*pass;
+	char 		*path;
+	char 		*filename;
+}os_url_t;
+
+extern int os_url_split(const char * URL, os_url_t *spliurl);
+extern int os_url_free(os_url_t *spliurl);
+
+/*
+ * thread
+ */
+extern int os_thread_once(int (*entry)(void *), void *p);
+
 #endif /* __OS_UTIL_H__ */

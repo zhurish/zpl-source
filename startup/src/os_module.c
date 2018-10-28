@@ -41,7 +41,7 @@ static int cli_telnet_task_init ()
 		master_eloop[MODULE_TELNET] = eloop_master_module_create(MODULE_TELNET);
 	//master_thread[MODULE_TELNET] = thread_master_module_create(MODULE_TELNET);
 	if(telnet_task_id == 0)
-		telnet_task_id = os_task_create("telnetTask", OS_TASK_DEFAULT_PRIORITY,
+		telnet_task_id = os_task_create("telnetdTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, cli_telnet_task, NULL, OS_TASK_DEFAULT_STACK);
 	if(telnet_task_id)
 		return OK;
@@ -103,8 +103,8 @@ int os_shell_start(char *shell_path, char *shell_addr, int shell_port, const cha
 	//cli_console_task_init ();
 	//cli_telnet_task_init ();
 	/* Print banner. */
-	//zlog_notice("Zebra %s starting: vty@%d", QUAGGA_VERSION, shell_port);
-	fprintf(stdout,"Zebra %s starting: vty@%d\r\n", QUAGGA_VERSION, shell_port);
+	zlog_notice(ZLOG_DEFAULT, "Zebra %s starting: vty@%d", OEM_VERSION, shell_port);
+	//fprintf(stdout,"Zebra %s starting: vty@%d\r\n", QUAGGA_VERSION, shell_port);
 	return OK;
 }
 
@@ -175,6 +175,7 @@ int os_module_init(void)
 	extern int pal_abstract_init();
 	pal_abstract_init();
 
+	systools_module_init();
 
 #ifdef PL_WIFI_MODULE
 	nsm_iw_client_init();
@@ -222,6 +223,8 @@ int os_module_task_init(void)
 #ifdef PL_DHCP_MODULE
 	nsm_dhcp_task_init ();
 #endif
+
+	systools_task_init();
 
 	return OK;
 }
@@ -276,6 +279,7 @@ int os_module_cmd_init(int terminal)
 	cmd_dhcp_init();
 #endif
 
+	systools_cmd_init();
 
 #ifdef OS_START_TEST
 	/*
@@ -299,6 +303,8 @@ int os_module_exit(void)
 	prefix_list_add_hook (NULL);
 	prefix_list_delete_hook (NULL);
 	prefix_list_reset ();
+
+	systools_module_exit();
 
 	if_terminate() ;
 #ifdef PL_SERVICE_MODULE
@@ -365,7 +371,7 @@ int os_module_task_exit(void)
 #ifdef PL_NSM_MODULE
 	//nsm_task_exit ();
 #endif
-
+	systools_task_exit();
 	os_time_exit();
 	os_job_exit();
 	cli_console_task_exit ();

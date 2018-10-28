@@ -16,6 +16,10 @@ extern int modem_qmi_start(modem_t *modem);
 extern int modem_qmi_stop(modem_t *modem);
 extern int modem_qmi_exit(modem_t *modem);
 
+extern BOOL modem_qmi_isconnect(modem_t *modem);
+extern BOOL modem_qmi_islinkup(modem_t *modem);
+
+
 #ifdef _MODEM_QMI_DEBUG
 #define MODEM_QMI_DEBUG(fmt,...)	modem_debug_printf(stderr, __func__, __LINE__,fmt, ##__VA_ARGS__)
 #else

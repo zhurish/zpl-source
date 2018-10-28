@@ -82,7 +82,7 @@ struct nsm_client
 
 
 
-extern struct nsm_client *nsm_client_new ();
+extern struct nsm_client *nsm_client_new (void);
 extern void nsm_client_install (struct nsm_client *, int);
 extern struct nsm_client * nsm_client_lookup (int module);
 extern void nsm_client_init (void);
@@ -119,8 +119,10 @@ extern int nsm_pal_interface_multicast (struct interface *ifp, int multicast);
 
 extern int nsm_pal_interface_bandwidth (struct interface *ifp, int bandwidth);
 extern int nsm_pal_interface_speed (struct interface *ifp, int );
+extern int nsm_pal_interface_get_statistics (struct interface *ifp);
 
 //hal
+extern int nsm_pal_interface_enca (struct interface *ifp, int mode, int value);
 extern int nsm_pal_interface_mode (struct interface *ifp, int mode);
 extern int nsm_pal_interface_metric (struct interface *ifp, int metric);
 extern int nsm_pal_interface_linkdetect (struct interface *ifp, int link);

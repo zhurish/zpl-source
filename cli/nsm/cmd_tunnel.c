@@ -462,7 +462,7 @@ static void cmd_tunnel_interface_init(int node)
 }
 
 
-void cmd_tunnel_init(int node)
+void cmd_tunnel_init()
 {
 	reinstall_node(TUNNEL_INTERFACE_NODE, nsm_interface_tunnel_config_write);
 	cmd_tunnel_interface_init(TUNNEL_INTERFACE_NODE);

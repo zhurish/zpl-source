@@ -723,9 +723,8 @@ static void cmd_show_dhcpc_init(int node)
 
 }
 
-void cmd_dhcp_init(void)
+void cmd_dhcpc_init(void)
 {
-	cmd_dhcps_init();
 	//cmd_base_interface_dhcpc_init(TUNNEL_INTERFACE_NODE);
 	//cmd_base_interface_dhcpc_init(LOOPBACK_INTERFACE_NODE);
 	//cmd_base_interface_dhcpc_init(LAG_INTERFACE_NODE);
@@ -741,4 +740,10 @@ void cmd_dhcp_init(void)
 
 	install_element(ENABLE_NODE, &nsm_debug_dhcp_client_cmd);
 	install_element(CONFIG_NODE, &no_nsm_debug_dhcp_client_cmd);
+}
+
+void cmd_dhcp_init(void)
+{
+	cmd_dhcpc_init();
+	cmd_dhcps_init();
 }

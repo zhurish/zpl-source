@@ -83,5 +83,7 @@ extern int nsm_tunnel_tos_get_api(struct interface *ifp, int *tos);
 
 extern int nsm_tunnel_make_iphdr(nsm_tunnel_t *tunnel, struct iphdr *iph);
 
+extern void cmd_tunnel_init();
+
 
 #endif /* __NSM_TUNNEL_H__ */

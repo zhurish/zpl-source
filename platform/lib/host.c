@@ -338,3 +338,357 @@ host_config_get_api (int cmd, void *pVoid)
 		os_mutex_unlock(host.mutx);
 	return ret;
 }
+
+
+static int host_system_cpu_get(struct host_system *host_system)
+{
+	FILE *f = NULL;
+	char buf[1024];
+	f = fopen("/proc/cpuinfo", "r");
+	if (f)
+	{
+		char *s = NULL;
+		memset(buf, 0, sizeof(buf));
+		while (fgets(buf, sizeof(buf), f))
+		{
+			/* work backwards to ignore trailling isspace() */
+			for (s = buf + strlen(buf); (s > buf) && isspace((int) *(s - 1)); s--)
+				;
+			*s = '\0';
+#ifdef BUILD_X86
+			if(strstr(buf, "processor"))
+				host_system->process++;
+
+			if(strstr(buf, "model name"))
+			{
+				s = strstr(buf, ":");
+				s++;
+				while(s && isspace((int) *(s)))
+					s++;
+				if(host_system->model_name == NULL && s)
+					host_system->model_name = strdup(s);
+			}
+			if(strstr(buf, "MHz"))
+			{
+				s = strstr(buf, ":");
+				s++;
+				while(s && isspace((int) *(s)))
+					s++;
+				if(host_system->freq == 0.0 && s)
+				{
+					sscanf(s, "%f", &host_system->freq);
+				}
+			}
+#else
+			if(strstr(buf, "processor"))
+				host_system->process++;
+
+			if(strstr(buf, "system"))
+			{
+				s = strstr(buf, ":");
+				s++;
+				while(s && isspace((int) *(s)))
+					s++;
+				if(host_system->system_type == NULL && s)
+					host_system->system_type = strdup((s));
+			}
+			if(strstr(buf, "model"))
+			{
+				s = strstr(buf, ":");
+				s++;
+				while(s && isspace((int) *(s)))
+					s++;
+				if(host_system->cpu_model == NULL && s)
+					host_system->cpu_model = strdup((s));
+			}
+			if(strstr(buf, "BogoMIPS"))
+			{
+				s = strstr(buf, ":");
+				s++;
+				while(s && isspace((int) *(s)))
+					s++;
+				if(host_system->freq == 0.0 && s)
+				{
+					host_system->freq = atof(s);
+					//sscanf(s, "%f", &host_system->freq);
+				}
+			}
+			if(strstr(buf, "ASEs"))
+			{
+				s = strstr(buf, ":");
+				s++;
+				while(s && isspace((int) *(s)))
+					s++;
+				if(host_system->ase == NULL && s)
+					host_system->ase = strdup((s));
+			}
+#endif
+			memset(buf, 0, sizeof(buf));
+		}
+		fclose(f);
+	}
+	return OK;
+}
+
+
+static int host_system_mem_get(struct host_system *host_system)
+{
+/*	MemTotal:       11831640 kB
+	MemFree:          932640 kB*/
+	FILE *f = NULL;
+	char buf[1024];
+	f = fopen("/proc/meminfo", "r");
+	if (f)
+	{
+		int off = 0;
+		char *s = NULL;
+		memset(buf, 0, sizeof(buf));
+		while (fgets(buf, sizeof(buf), f))
+		{
+			/* work backwards to ignore trailling isspace() */
+			for (s = buf + strlen(buf); (s > buf) && isspace((int) *(s - 1)); s--)
+				;
+			*s = '\0';
+			if(strstr(buf, "MemTotal"))
+			{
+				off = strcspn(buf, "0123456789");
+				if(host_system->mem_total == 0 && off)
+				{
+					sscanf(buf + off, "%d", &host_system->mem_total);
+				}
+			}
+
+			if(strstr(buf, "MemFree"))
+			{
+				off = strcspn(buf, "0123456789");
+				if(host_system->mem_free == 0 && off)
+				{
+					sscanf(buf + off, "%d", &host_system->mem_free);
+				}
+			}
+			memset(buf, 0, sizeof(buf));
+		}
+		fclose(f);
+	}
+	return OK;
+}
+
+static int host_system_information_free(struct host_system *host_system)
+{
+	host_system->process = 0;
+	host_system->freq = 0.0;
+#ifdef BUILD_X86
+	if(host_system->model_name)
+	{
+		free(host_system->model_name);
+		host_system->model_name = NULL;
+	}
+#else
+	if(host_system->system_type)
+	{
+		free(host_system->system_type);
+		host_system->system_type = NULL;
+	}
+	if(host_system->cpu_model)
+	{
+		free(host_system->cpu_model);
+		host_system->cpu_model = NULL;
+	}
+	if(host_system->ase)
+	{
+		free(host_system->ase);
+		host_system->ase = NULL;
+	}
+#endif
+	host_system->mem_total = 0;
+	host_system->mem_free = 0;
+	host_system->mem_uses = 0;
+	os_memset(&host_system->s_info, 0, sizeof(struct sysinfo));
+	return OK;
+}
+
+int host_system_information_get(struct host_system *host_system)
+{
+	host_system_information_free(host_system);
+	host_system_cpu_get(host_system);
+	host_system_mem_get(host_system);
+	sysinfo(&host_system->s_info);
+	return OK;
+}
+
+
+#if 0
+static unsigned long long scale(struct globals *g, unsigned long d)
+{
+	return ((unsigned long long)d * g->mem_unit) >> G_unit_steps;
+}
+int free_main(int argc UNUSED_PARAM, char **argv IF_NOT_DESKTOP(UNUSED_PARAM))
+{
+	struct globals G;
+	struct sysinfo info;
+	unsigned long long cached;
+
+#if ENABLE_DESKTOP
+	G.unit_steps = 10;
+	if (argv[1] && argv[1][0] == '-') {
+		switch (argv[1][1]) {
+		case 'b':
+			G.unit_steps = 0;
+			break;
+		case 'k': /* 2^10 */
+			/* G.unit_steps = 10; - already is */
+			break;
+		case 'm': /* 2^(2*10) */
+			G.unit_steps = 20;
+			break;
+		case 'g': /* 2^(3*10) */
+			G.unit_steps = 30;
+			break;
+		default:
+			bb_show_usage();
+		}
+	}
+#endif
+	printf("       %11s%11s%11s%11s%11s%11s\n"
+	"Mem:   ",
+		"total",
+		"used",
+		"free",
+		"shared", "buffers", "cached" /* swap and total don't have these columns */
+	);
+
+	sysinfo(&info);
+	/* Kernels prior to 2.4.x will return info.mem_unit==0, so cope... */
+	G.mem_unit = (info.mem_unit ? info.mem_unit : 1);
+	/* Extract cached from /proc/meminfo and convert to mem_units */
+	cached = ((unsigned long long) parse_cached_kb() * 1024) / G.mem_unit;
+
+#define FIELDS_6 "%11llu%11llu%11llu%11llu%11llu%11llu\n"
+#define FIELDS_3 (FIELDS_6 + 3*6)
+#define FIELDS_2 (FIELDS_6 + 4*6)
+
+	printf(FIELDS_6,
+		scale(&G, info.totalram),                //total
+		scale(&G, info.totalram - info.freeram), //used
+		scale(&G, info.freeram),                 //free
+		scale(&G, info.sharedram),               //shared
+		scale(&G, info.bufferram),               //buffers
+		scale(&G, cached)                        //cached
+	);
+	/* Show alternate, more meaningful busy/free numbers by counting
+	 * buffer cache as free memory. */
+	printf("-/+ buffers/cache:");
+	cached += info.freeram;
+	cached += info.bufferram;
+	printf(FIELDS_2,
+		scale(&G, info.totalram - cached), //used
+		scale(&G, cached)                  //free
+	);
+#if BB_MMU
+	printf("Swap:  ");
+	printf(FIELDS_3,
+		scale(&G, info.totalswap),                 //total
+		scale(&G, info.totalswap - info.freeswap), //used
+		scale(&G, info.freeswap)                   //free
+	);
+#endif
+	return EXIT_SUCCESS;
+}
+#endif
+
+int show_host_system_information(struct host_system *host_system, struct vty *vty)
+{
+#ifdef BUILD_X86
+	if(host_system->model_name)
+	{
+		vty_out(vty, " CPU Type      : %s%s", host_system->model_name, VTY_NEWLINE);
+	}
+#else
+	if(host_system->system_type)
+	{
+		vty_out(vty, " CPU Type      : %s%s", host_system->system_type, VTY_NEWLINE);
+	}
+	if(host_system->cpu_model)
+	{
+		vty_out(vty, " CPU Model     : %s%s", host_system->cpu_model, VTY_NEWLINE);
+	}
+	if(host_system->ase)
+	{
+		vty_out(vty, " CPU ASE       : %s%s", host_system->ase, VTY_NEWLINE);
+	}
+#endif
+	vty_out(vty, " Processor     : %d%s", host_system->process, VTY_NEWLINE);
+	vty_out(vty, " CPU FREQ      : %.2f MHz%s", host_system->freq, VTY_NEWLINE);
+
+	//KB >> 10
+	//MB >> 20
+	//GB >> 30
+	host_system->mem_total = host_system->s_info.totalram >> 10;//               //total
+	host_system->mem_uses = (host_system->s_info.totalram - host_system->s_info.freeram) >> 10; //used
+	host_system->mem_free = host_system->s_info.freeram >> 10;                 //free
+
+	vty_out(vty, " MEM Total     : %d KB%s", host_system->mem_total, VTY_NEWLINE);
+	vty_out(vty, " MEM Free      : %d KB%s", host_system->mem_free, VTY_NEWLINE);
+	vty_out(vty, " MEM Uses      : %d KB%s", host_system->mem_uses, VTY_NEWLINE);
+	return OK;
+}
+
+/*
+root@OpenWrt:/tmp/test# cat /proc/cpuinfo
+system type             : MediaTek MT7688 ver:1 eco:2
+machine                 : Mediatek MT7628AN evaluation board
+processor               : 0
+cpu model               : MIPS 24KEc V5.5
+BogoMIPS                : 385.84
+wait instruction        : yes
+microsecond timers      : yes
+tlb_entries             : 32
+extra interrupt vector  : yes
+hardware watchpoint     : yes, count: 4, address/irw mask: [0x0ffc, 0x0ffc, 0x0ffb, 0x0ffb]
+isa                     : mips1 mips2 mips32r1 mips32r2
+ASEs implemented        : mips16 dsp
+shadow register sets    : 1
+kscratch registers      : 0
+package                 : 0
+core                    : 0
+VCED exceptions         : not available
+VCEI exceptions         : not available
+
+root@OpenWrt:/tmp/test#
+root@OpenWrt:/tmp/test# cat /proc/meminfo
+MemTotal:         122524 kB
+MemFree:           64384 kB
+MemAvailable:      56616 kB
+Buffers:            4908 kB
+Cached:            30800 kB
+SwapCached:            0 kB
+Active:            16280 kB
+Inactive:          24908 kB
+Active(anon):       5608 kB
+Inactive(anon):     5716 kB
+Active(file):      10672 kB
+Inactive(file):    19192 kB
+Unevictable:           0 kB
+Mlocked:               0 kB
+SwapTotal:             0 kB
+SwapFree:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:          5520 kB
+Mapped:             5940 kB
+Shmem:              5844 kB
+Slab:               9464 kB
+SReclaimable:       3752 kB
+SUnreclaim:         5712 kB
+KernelStack:         472 kB
+PageTables:          408 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:       61260 kB
+Committed_AS:     101412 kB
+VmallocTotal:    1048372 kB
+VmallocUsed:           0 kB
+VmallocChunk:          0 kB
+root@OpenWrt:/tmp/test#
+*/

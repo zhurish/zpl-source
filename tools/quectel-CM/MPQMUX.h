@@ -2910,4 +2910,9 @@ typedef struct _QMUX_MSG
 
 #pragma pack(pop)
 
+extern void dump_tlv(PQCQMUX_MSG_HDR pQMUXMsgHdr);
+extern void dump_ctl(PQCQMICTL_MSG_HDR CTLHdr);
+extern int dump_qmux(QMI_SERVICE_TYPE serviceType, PQCQMUX_HDR QMUXHdr);
+
+
 #endif // MPQMUX_H

@@ -126,7 +126,36 @@ static int _modem_qmi_stop(modem_client_t *client)
 	return OK;
 }
 
+BOOL modem_qmi_isconnect(modem_t *modem)
+{
+	assert(modem);
+	if(modem->pid[modem->dialtype])
+	{
+		return TRUE;
+	}
+	return FALSE;
+}
 
+BOOL modem_qmi_islinkup(modem_t *modem)
+{
+	assert(modem);
+	struct interface *ifp = modem->eth0;
+	if(modem && ifp)
+	{
+		if(modem->pid[modem->dialtype])
+		{
+			if(pal_interface_ifindex(ifp->k_name))
+			{
+				if(if_is_running(ifp))
+				{
+					modem_serial_interface_update_kernel(modem, ifp->k_name);
+				}
+				return TRUE;
+			}
+		}
+	}
+	return FALSE;
+}
 
 
 int modem_qmi_start(modem_t *modem)

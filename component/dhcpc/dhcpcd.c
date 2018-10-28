@@ -160,7 +160,7 @@ static void
 usage(void)
 {
 
-printf("usage: "PACKAGE"\t[-aABbDdEGgHJKkLnpqTVw]\n"
+printf("usage: "DHCPC_PACKAGE"\t[-aABbDdEGgHJKkLnpqTVw]\n"
 	"\t\t[-C, --nohook hook] [-c, --script script]\n"
 	"\t\t[-e, --env value] [-F, --fqdn FQDN] [-f, --config file]\n"
 	"\t\t[-h, --hostname hostname] [-I, --clientid clientid]\n"
@@ -173,10 +173,10 @@ printf("usage: "PACKAGE"\t[-aABbDdEGgHJKkLnpqTVw]\n"
 	"\t\t[-W, --whitelist address[/cidr]] [-y, --reboot seconds]\n"
 	"\t\t[-X, --blacklist address[/cidr]] [-Z, --denyinterfaces pattern]\n"
 	"\t\t[-z, --allowinterfaces pattern] [interface] [...]\n"
-	"       "PACKAGE"\t-k, --release [interface]\n"
-	"       "PACKAGE"\t-U, --dumplease interface\n"
-	"       "PACKAGE"\t-v, --version\n"
-	"       "PACKAGE"\t-x, --exit [interface]\n");
+	"       "DHCPC_PACKAGE"\t-k, --release [interface]\n"
+	"       "DHCPC_PACKAGE"\t-U, --dumplease interface\n"
+	"       "DHCPC_PACKAGE"\t-v, --version\n"
+	"       "DHCPC_PACKAGE"\t-x, --exit [interface]\n");
 }
 #endif
 
@@ -2270,7 +2270,7 @@ dhcpc_main(int argc, char **argv)
 	size_t len;
 	struct timespec ts;*/
 
-	dhcp_syslog(LOG_INFO, "version " VERSION " starting");
+	dhcp_syslog(LOG_INFO, "version " DHCPC_VERSION " starting");
 
 	//if_options = read_config(cffile, NULL, NULL, NULL);
 	//opt = add_options(if_options, argc, argv);

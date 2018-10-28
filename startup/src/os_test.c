@@ -15,7 +15,7 @@
 #include "prefix.h"
 #include "sigevent.h"
 #include "sockunion.h"
-#include "version.h"
+//#include "version.h"
 #include "vrf.h"
 #include "filter.h"
 #include "plist.h"
@@ -98,7 +98,7 @@ DEFUN (wifi_scan,
 	//wifi_show_interface(NULL, vty);
 	//wifi_show(vty);
 	//wifi_scan_ap(vty);
-	iw_client_scan_test(vty);
+	//iw_client_scan_test(vty);
 	return CMD_SUCCESS;
 }
 
@@ -192,7 +192,46 @@ DEFUN (process_test,
 #endif
 
 
+#ifdef OS_TIMER_TEST
 
+DEFUN (timet_test,
+		timet_test_cmd,
+       "timer-test <1-6000000000>",
+       "timer-test\n"
+	   "value msec\n")
+{
+	if(argc == 2)
+		timer_test(atoi(argv[0]), 1);
+	else
+		timer_test(atoi(argv[0]), 0);
+	return CMD_SUCCESS;
+}
+
+
+ALIAS(timet_test,
+		timet_test_once_cmd,
+		"timer-test <1-6000000000> (once|)",
+		"timer-test\n"
+		"value msec\n");
+
+DEFUN (timet_test_exit,
+		timet_test_exit_cmd,
+       "timer-test-exit",
+       "timer-test\n")
+{
+	if(argc == 1)
+		timer_test_exit(1);
+	else
+		timer_test_exit(0);
+	return CMD_SUCCESS;
+}
+
+ALIAS(timet_test_exit,
+		timet_test_exit_once_cmd,
+		"timer-test (once|)",
+		"timer-test\n"
+		"once msec\n");
+#endif
 
 int os_test()
 {
@@ -242,6 +281,12 @@ int os_test()
 
 #ifdef DOUBLE_PROCESS
 	install_element (ENABLE_NODE, &process_test_cmd);
+#endif
+#ifdef OS_TIMER_TEST
+	install_element (ENABLE_NODE, &timet_test_cmd);
+	install_element (ENABLE_NODE, &timet_test_once_cmd);
+	install_element (ENABLE_NODE, &timet_test_exit_cmd);
+	install_element (ENABLE_NODE, &timet_test_exit_once_cmd);
 #endif
 	return 0;
 }

@@ -820,13 +820,13 @@ read_config(const char *file,
 	if (uname(&utn) == 0)
 		ifo->vendorclassid[0] = snprintf((char *)ifo->vendorclassid + 1,
 		    VENDORCLASSID_MAX_LEN,
-	            "%s-%s:%s-%s:%s%s%s", PACKAGE, VERSION,
+	            "%s-%s:%s-%s:%s%s%s", DHCPC_PACKAGE, DHCPC_VERSION,
 		    utn.sysname, utn.release, utn.machine,
 		    platform ? ":" : "", platform ? platform : "");
 	else
 #endif
 		ifo->vendorclassid[0] = snprintf((char *)ifo->vendorclassid + 1,
-		    VENDORCLASSID_MAX_LEN, "%s-%s", PACKAGE, VERSION);
+		    VENDORCLASSID_MAX_LEN, "%s-%s", DHCPC_PACKAGE, DHCPC_VERSION);
 
 	/* Parse our options file */
 	f = fopen(file ? file : CONFIG, "r");
@@ -953,7 +953,7 @@ struct if_options * if_options_default()
 		ifo->hostname[0] = '\0';
 
 	ifo->vendorclassid[0] = snprintf((char *)ifo->vendorclassid + 1,
-		    VENDORCLASSID_MAX_LEN, "%s-%s", PACKAGE, VERSION);
+		    VENDORCLASSID_MAX_LEN, "%s-%s", DHCPC_PACKAGE, DHCPC_VERSION);
 
 	add_option_mask(ifo->requestmask, DHO_SUBNETMASK);
 	add_option_mask(ifo->requestmask, DHO_ROUTER);

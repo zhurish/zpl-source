@@ -315,7 +315,7 @@ extern void avl_insert_here(avl_tree_t *tree, void *new_data, void *here,
 extern void *avl_first(avl_tree_t *tree);
 extern void *avl_next(avl_tree_t *tree, void *node);
 extern void *avl_last(avl_tree_t *tree);
-
+extern void *avl_prev(avl_tree_t *tree, void *node);
 
 /*
  * This will only by used via AVL_NEXT() or AVL_PREV()

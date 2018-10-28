@@ -121,8 +121,8 @@ enum
 
 extern int vty_show_sntps_server(struct vty *vty);
 
-extern int sntps_server_set_api(struct vty *, int cmd, const char *value);
-extern int sntps_server_get_api(struct vty *, int cmd, const char *value);
+extern int sntp_server_set_api(struct vty *, int cmd, const char *value);
+extern int sntp_server_get_api(struct vty *, int cmd, const char *value);
 
 #endif
 

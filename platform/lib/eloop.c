@@ -1094,10 +1094,10 @@ void eloop_call(struct eloop *eloop)
 		 * Whinge about it now, so we're aware this is yet another task
 		 * to fix.
 		 */
-		zlog_warn(ZLOG_DEFAULT,
-				"SLOW THREAD: task %s (%lx) ran for %lums (cpu time %lums)",
+/*		zlog_warn(ZLOG_DEFAULT,
+				"SLOW ELOOP: task %s (%lx) ran for %lums (cpu time %lums)",
 				eloop->funcname, (unsigned long) eloop->func, realtime / 1000,
-				cputime / 1000);
+				cputime / 1000);*/
 	}
 #endif /* CONSUMED_TIME_CHECK */
 }

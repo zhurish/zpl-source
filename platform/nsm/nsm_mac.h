@@ -84,4 +84,10 @@ extern int nsm_mac_ageing_time_get_api(int *ageing);
 extern int nsm_gmac_set_api(int, mac_t *mac, int len);
 extern int nsm_gmac_get_api(int, mac_t *mac, int len);
 
+
+extern int nsm_mac_address_table_config(struct vty *vty);
+extern int nsm_mac_address_table_ageing_config(struct vty *vty);
+extern void cmd_mac_init(void);
+
+
 #endif /* __NSM_MAC_H__ */

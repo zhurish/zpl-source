@@ -189,7 +189,7 @@ int os_start_pid(int pro, char *pid_file, int *pid)
 	if (pid)
 		*pid = getpid();
 
-	zlog_notice(ZLOG_DEFAULT,"Zebra %s starting pid:%d", QUAGGA_VERSION, getpid());
+	zlog_notice(ZLOG_DEFAULT,"Zebra %s starting pid:%d", OEM_VERSION, getpid());
 	return OK;
 }
 

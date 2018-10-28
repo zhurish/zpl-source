@@ -27,26 +27,26 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define PACKAGE			"dhcpcd"
-#define VERSION			"5.5.6"
+#define DHCPC_PACKAGE			"dhcpcd"
+#define DHCPC_VERSION			"5.5.6"
 
 #ifndef CONFIG
-# define CONFIG			DAEMON_VTY_DIR "/" PACKAGE ".conf"
+# define CONFIG			DAEMON_VTY_DIR "/" DHCPC_PACKAGE ".conf"
 #endif
 #ifndef SCRIPT
-# define SCRIPT			DAEMON_VTY_DIR "/" PACKAGE "-run-hooks"
+# define SCRIPT			DAEMON_VTY_DIR "/" DHCPC_PACKAGE "-run-hooks"
 #endif
 #ifndef DUID
-# define DUID			DAEMON_VTY_DIR "/" PACKAGE ".duid"
+# define DUID			DAEMON_VTY_DIR "/" DHCPC_PACKAGE ".duid"
 #endif
 #ifndef LEASEFILE
-# define LEASEFILE		DAEMON_VTY_DIR "/" PACKAGE "-%s.lease"
+# define LEASEFILE		DAEMON_VTY_DIR "/" DHCPC_PACKAGE "-%s.lease"
 #endif
 #ifndef PIDFILE
-# define PIDFILE		DAEMON_VTY_DIR "/" PACKAGE "%s%s.pid"
+# define PIDFILE		DAEMON_VTY_DIR "/" DHCPC_PACKAGE "%s%s.pid"
 #endif
 #ifndef CONTROLSOCKET
-# define CONTROLSOCKET		DAEMON_VTY_DIR "/" PACKAGE ".sock"
+# define CONTROLSOCKET		DAEMON_VTY_DIR "/" DHCPC_PACKAGE ".sock"
 #endif
 
 #endif

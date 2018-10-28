@@ -193,6 +193,29 @@ COS值		0		1		2		3		4		5		6		7
 extern int nsm_dscp_to_cos(int dscp);
 extern int nsm_cos_to_dscp(int cos);
 
+extern int nsm_qos_storm_enable_set_api(struct interface *ifp);
+extern BOOL nsm_qos_storm_enable_get_api(struct interface *ifp);
+
+extern int nsm_qos_storm_set_api(struct interface *ifp, u_int qos_unicast,
+		u_int qos_multicast, u_int qos_broadcast);
+extern int nsm_qos_storm_get_api(struct interface *ifp, u_int *qos_unicast,
+		u_int *qos_multicast, u_int *qos_broadcast);
+extern int nsm_qos_rate_set_api(struct interface *ifp, nsm_qos_dir_e qos_dir,
+		nsm_qos_limit_t *rate);
+extern int nsm_qos_rate_get_api(struct interface *ifp, nsm_qos_dir_e qos_dir,
+		nsm_qos_limit_t *rate);
+extern int nsm_qos_trust_set_api(struct interface *ifp, nsm_qos_trust_e trust);
+extern int nsm_qos_trust_get_api(struct interface *ifp, nsm_qos_trust_e *trust);
+extern int nsm_qos_class_set_api(struct interface *ifp, nsm_qos_queue_e queue, nsm_qos_class_e class);
+extern int nsm_qos_class_get_api(struct interface *ifp, nsm_qos_queue_e queue, nsm_qos_class_e *class);
+extern int nsm_qos_priority_map_queue_set_api(struct interface *ifp, nsm_qos_queue_e queue, nsm_qos_priority_e pri);
+extern int nsm_qos_priority_map_queue_get_api(struct interface *ifp, nsm_qos_queue_e queue, nsm_qos_priority_e *pri);
+extern int nsm_qos_map_type_set_api(struct interface *ifp, nsm_qos_map_e type);
+extern int nsm_qos_map_type_get_api(struct interface *ifp, nsm_qos_map_e *type);
+extern int nsm_qos_user_pri_map_priority_set_api(struct interface *ifp, nsm_qos_priority_e priority, nsm_qos_map_t map);
+extern int nsm_qos_user_pri_map_priority_get_api(struct interface *ifp, nsm_qos_priority_e priority, nsm_qos_map_t *map);
+
+
 
 extern int nsm_qos_init();
 extern int nsm_qos_exit();

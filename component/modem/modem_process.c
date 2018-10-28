@@ -187,7 +187,7 @@ static int modem_process_clean_api(modem_event event, void *argv)
 				{
 					modem_process_del_node(pstNode);
 				}
-				else if(event == pstNode->event)
+				else if(event >= pstNode->event)
 				{
 					modem_process_del_node(pstNode);
 				}
@@ -207,7 +207,7 @@ static int modem_process_clean_api(modem_event event, void *argv)
 					lstDelete(gModeProcess.list, (NODE*)pstNode);
 					lstAdd(gModeProcess.unlist, (NODE*)pstNode);
 				}
-				else if(event == pstNode->event)
+				else if(event >= pstNode->event)
 				{
 					lstDelete(gModeProcess.list, (NODE*)pstNode);
 					lstAdd(gModeProcess.unlist, (NODE*)pstNode);
@@ -271,8 +271,15 @@ int modem_process_del_api(modem_event event, void *argv, BOOL lock)
 	}
 	if(argv)
 	{
-		gModeProcess.clean_argv = argv;
-		gModeProcess.clean = event;
+		if(lock)
+		{
+			modem_process_clean_api(event, argv);
+		}
+		else
+		{
+			gModeProcess.clean_argv = argv;
+			gModeProcess.clean = event;
+		}
 	}
 	if(lock/*event == MODEM_EV_INSTER || event == MODEM_EV_REMOVE*/)
 	{

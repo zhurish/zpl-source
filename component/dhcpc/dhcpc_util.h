@@ -34,12 +34,26 @@ extern void sort_interfaces(void);
 extern size_t get_duid(unsigned char *duid, struct dhcpc_interface *iface);
 
 
-extern int getifssid(const char *ifname, char *ssid);
+//extern int getifssid(const char *ifname, char *ssid);
 
 extern char *hardware_platform(void);
 extern int check_ipv6(const char *);
 
 extern int closefrom(int);
+
+extern int atoint(const char *s);
+extern ssize_t parse_string_hwaddr(char *sbuf, ssize_t slen, const char *str, int clid);
+extern ssize_t dhcpc_parse_string(char *sbuf, ssize_t slen, const char *str);
+extern int parse_addr(struct in_addr *addr, struct in_addr *net, const char *arg);
+
+/*extern void init_state(struct dhcpc_interface *iface);
+extern void if_reboot(struct dhcpc_interface *iface);
+extern void stop_interface(struct dhcpc_interface *iface);*/
+extern void cleanup(void);
+extern int dhcpc_hostname(char *name, int len);
+
+
+extern int dhcpc_main(int argc, char **argv);
 
 
 #endif

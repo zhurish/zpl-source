@@ -8,7 +8,7 @@
 #ifndef __MODEM_API_H__
 #define __MODEM_API_H__
 
-
+extern int modem_main_change_set_api(modem_t *modem, modem_event event);
 
 extern int modem_main_apn_set_api(modem_t *modem, char *apn);
 extern int modem_main_svc_set_api(modem_t *modem, char *svc);

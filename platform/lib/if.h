@@ -516,4 +516,7 @@ extern struct connected *connected_check (struct interface *ifp, struct prefix *
 extern int if_data_lock ();
 extern int if_data_unlock ();
 
+extern enum zebra_link_type netlink_to_zebra_link_type (unsigned int hwt);
+
+
 #endif /* _ZEBRA_IF_H */

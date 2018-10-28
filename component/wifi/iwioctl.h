@@ -34,6 +34,9 @@ typedef struct iw_tmp_s
 }iw_tmp_t;
 
 
+extern const char *wifi_file_path(void);
+extern const char * kname2ifname(const char *kname);
+
 
 extern int iw_printf(const char *format, ...);
 extern int iw_fprintf(void *fp, const char *format, ...);

@@ -106,6 +106,13 @@ extern int requestGetProfile(PROFILE_T *profile);
 extern int requestBaseBandVersion(const char **pp_reversion);
 extern int requestGetIPAddress(IPV4_T *pIpv4);
 
+extern int requestGetPINStatus(SIM_Status *pSIMStatus);
+extern int requestGetHomeNetwork(USHORT *p_mcc, USHORT *p_mnc, USHORT *p_sid, USHORT *p_nid);
+
+PQMI_TLV_HDR GetTLV (PQCQMUX_MSG_HDR pQMUXMsgHdr, int TLVType);
+
+unsigned long ifc_get_addr(const char *ifname);
+
 extern FILE *logfilefp;
 extern int debug_qmi;
 extern char * qmichannel;

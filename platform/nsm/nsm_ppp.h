@@ -178,7 +178,7 @@ typedef struct nsm_pppd_s
 
 
 
-
+void cmd_ppp_init(void);
 
 
 

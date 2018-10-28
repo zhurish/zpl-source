@@ -32,8 +32,10 @@ static int modem_pppd_create_action(modem_pppd_t *pppd);
 static int modem_pppd_delete_action(modem_pppd_t *pppd);
 static int modem_pppd_default(modem_t *modem, modem_pppd_t *pppd);
 static int modem_pppd_task_disconnect(modem_pppd_t *pppd);
+static int modem_pppd_task_connect(modem_pppd_t *pppd);
 /***********************************************************************/
 static int modem_pppd_cleanall(void);
+static int modem_pppd_restart(modem_pppd_t *pppd);
 /***********************************************************************/
 
 int modem_pppd_init(void)
@@ -65,7 +67,6 @@ int modem_pppd_exit(void)
 	return OK;
 }
 
-
 static modem_pppd_t * modem_pppd_lookup_node(modem_t *modem)
 {
 	NODE index;
@@ -83,7 +84,6 @@ static modem_pppd_t * modem_pppd_lookup_node(modem_t *modem)
 	}
 	return NULL;
 }
-
 
 static int modem_pppd_add_node(modem_t *modem)
 {
@@ -112,6 +112,10 @@ static int modem_pppd_del_node(modem_t *modem)
 	if(node)
 	{
 		lstDelete(gModepppd.list, (NODE*)node);
+		if(node->modem)
+		{
+			((modem_t *)node->modem)->pppd = NULL;
+		}
 		node->modem = NULL;
 		XFREE(MTYPE_MODEM, node);
 		return OK;
@@ -130,6 +134,19 @@ static int modem_pppd_cleanall(void)
 		if(pstNode)
 		{
 			lstDelete(gModepppd.list, (NODE*)pstNode);
+			if(pstNode->t_time)
+			{
+				if(os_time_lookup(pstNode->t_time))
+				{
+					os_time_destroy(pstNode->t_time);
+				}
+			}
+			if(pstNode->taskid)
+				modem_pppd_task_disconnect(pstNode);
+			if(pstNode->modem)
+			{
+				((modem_t *)pstNode->modem)->pppd = NULL;
+			}
 			pstNode->modem = NULL;
 			XFREE(MTYPE_MODEM, pstNode);
 			pstNode = NULL;
@@ -193,11 +210,19 @@ int modem_pppd_del_api(modem_pppd_t *pppd)
 
 int modem_pppd_update_api(modem_pppd_t *pppd)
 {
+	u_int32 checksum = 0;
 	int ret = ERROR;
 	assert(pppd);
 	if(gModepppd.mutex)
 		os_mutex_lock(gModepppd.mutex, OS_WAIT_FOREVER);
-	ret = modem_pppd_create_action(pppd);
+	checksum = crc_checksum(pppd, sizeof(modem_pppd_t));
+	if(pppd->checksum != checksum)
+	{
+		ret = modem_pppd_create_action(pppd);
+		modem_pppd_restart(pppd);
+	}
+	else
+		ret = OK;
 	if(gModepppd.mutex)
 		os_mutex_unlock(gModepppd.mutex);
 	return ret;
@@ -236,6 +261,42 @@ int modem_pppd_callback_api(modem_pppd_cb cb, void *pVoid)
 }
 
 /***********************************************************************/
+static int modem_pppd_restart_thread(modem_pppd_t *pppd)
+{
+	if(pppd && pppd->modem)
+	{
+		if(modem_pppd_isconnect(pppd->modem))
+		{
+			modem_pppd_task_disconnect(pppd);
+			if(pppd->taskid == 0)
+			{
+				pppd->taskid = 0;
+				pppd->linkup = FALSE;
+			}
+			modem_pppd_task_connect(pppd);
+		}
+		pppd->t_time = 0;
+		return OK;
+	}
+	return OK;
+}
+
+
+static int modem_pppd_restart(modem_pppd_t *pppd)
+{
+	if(pppd->t_time)
+	{
+		if(os_time_lookup(pppd->t_time))
+		{
+			os_time_cancel(pppd->t_time);
+			os_time_restart(pppd->t_time, 10000);
+			return OK;
+		}
+	}
+	pppd->t_time = os_time_create_once(modem_pppd_restart_thread, pppd, 10000);
+	return OK;
+}
+
 /***********************************************************************/
 static const char * modem_pppd_atcmd_connect(modem_t *modem)
 {
@@ -295,6 +356,7 @@ static const char * modem_pppd_atcmd_disconnect(modem_t *modem)
 			"\n\n");
 	return disconnect;
 }
+
 /***********************************************************************/
 /***********************************************************************/
 static int modem_pppd_create_connect(modem_pppd_t *pppd)

@@ -54,5 +54,6 @@ extern int nsm_bridge_interface_forward_delay_set_api(struct interface *bridge, 
 extern int nsm_bridge_client_init();
 extern int nsm_bridge_client_exit();
 
+extern void cmd_bridge_init(void);
 
 #endif /* __NSM_BRIDGE_H__ */

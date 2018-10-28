@@ -215,7 +215,7 @@ extern int iw_ap_connect_callback_api(iw_ap_t *, int (*cb)(iw_ap_connect_t *, vo
 
 extern int iw_ap_connect_show(iw_ap_t *iw_ap, struct vty *vty, BOOL detail);
 
-
+extern int iw_ap_config(iw_ap_t *iw_ap, struct vty *vty);
 
 
 #endif /* __IW_AP_H__ */

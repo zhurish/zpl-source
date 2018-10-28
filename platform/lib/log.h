@@ -248,6 +248,8 @@ extern int zlog_facility_match(const char *str) ;
 extern int zlog_priority_match(const char *s);
 extern const char *zlog_priority_name(int level);
 
+extern const char * zlog_proto_names(zlog_proto_t module);
+
 /* For hackey message lookup and check */
 #define LOOKUP_DEF(x, y, def) mes_lookup(x, x ## _max, y, def, #x)
 #define LOOKUP(x, y) LOOKUP_DEF(x, y, "(no item found)")

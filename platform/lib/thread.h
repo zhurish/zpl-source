@@ -25,7 +25,7 @@
 
 
 #include "zebra.h"
-
+#include "vty.h"
 
 /* Linked list of thread. */
 struct thread_list
@@ -245,7 +245,7 @@ extern struct thread_master * master_thread[];
 extern struct thread *thread_current_get();
 //extern struct timeval recent_relative_time (void);
 
-
+extern int cpu_thread_show(struct thread_master *m, struct vty *vty);
 
 
 #endif /* _ZEBRA_THREAD_H */

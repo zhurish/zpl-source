@@ -8,6 +8,9 @@
 #ifndef __OS_TIME_H__
 #define __OS_TIME_H__
 
+
+//#define OS_TIMER_TEST
+
 #define OS_TIMER_NAME_MAX	128
 //10ms is one tick
 //#define os_system_tick()	(jiffies)
@@ -30,6 +33,10 @@ struct os_time_stats
 #define TIMER_SECOND_MICRO 1000000L
 #define TIMER_MSEC_MICRO 1000L
 
+#define TIMER_USEC(n) (n)*TIMER_SECOND_MICRO
+#define TIMER_MSEC(n) (n)*TIMER_MSEC_MICRO
+
+
 extern time_t os_time (time_t *t);
 extern time_t quagga_time(time_t *t);
 extern int os_gettime (enum os_clkid clkid, struct timeval *tv);
@@ -51,7 +58,10 @@ extern int os_sleep(unsigned int);
 
 extern char *os_time_out (char *fmt, time_t t);
 
+extern const char *os_build_time2date(char *str);
+extern const char *os_date2build_time(char *str);
 
+#define OS_TIMER_FOREVER 0X0FFFFFFF
 
 typedef enum
 {
@@ -78,6 +88,7 @@ extern int os_time_init();
 extern int os_time_exit();
 extern int os_time_load();
 
+extern int os_time_clean(BOOL all);
 extern os_time_t *os_time_lookup(int id);
 
 extern int os_time_destroy(int id);

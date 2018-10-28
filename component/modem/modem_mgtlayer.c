@@ -351,10 +351,10 @@ int modem_mgtlayer_network_offline(modem_t *modem)
 int modem_mgtlayer_network_detection(modem_t *modem)
 {
 	assert(modem);
-	modem->detime_axis = os_time (NULL);
+/*	modem->detime_axis = os_time (NULL);
 	if(modem->detime_axis >= (modem->detime_base + modem->dedelay))
 	{
-		modem->detime_base = os_time (NULL);
+		modem->detime_base = os_time (NULL);*/
 		if( modem->dialtype == MODEM_DIAL_PPP )
 		{
 			if(modem_pppd_isconnect(modem))
@@ -363,7 +363,7 @@ int modem_mgtlayer_network_detection(modem_t *modem)
 				;
 		}
 		return _modem_network_detection(modem->client);
-	}
+//	}
 	return OK;
 }
 
@@ -372,12 +372,12 @@ int modem_mgtlayer_network_detection(modem_t *modem)
  */
 int modem_mgtlayer_delay(modem_t *modem)
 {
-	modem->time_axis = os_time (NULL);
+/*	modem->time_axis = os_time (NULL);
 	if(modem->time_axis >= (modem->time_base + modem->delay))
-	{
+	{*/
 		//modem_machine_state_action(modem);
 		modem_machine_state(modem);
-		modem->time_base = os_time (NULL);
+		//modem->time_base = os_time (NULL);
 
 		switch(modem->state)
 		{
@@ -396,7 +396,7 @@ int modem_mgtlayer_delay(modem_t *modem)
 		default:
 			break;
 		}
-	}
+	//}
 	if( modem->dialtype == MODEM_DIAL_PPP )
 	{
 		if(modem_pppd_isconnect(modem))

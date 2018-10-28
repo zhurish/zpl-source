@@ -47,8 +47,8 @@ struct memory_list memory_list_lib[] =
   { MTYPE_STREAM,		"Stream"			},
   { MTYPE_STREAM_DATA,		"Stream data"			},
   { MTYPE_STREAM_FIFO,		"Stream FIFO"			},
-  { MTYPE_DATA,				"data"			},
-  { MTYPE_LOG,				"Log"			},
+  { MTYPE_DATA,				"Data information"			},
+  { MTYPE_LOG,				"Log information"			},
   { MTYPE_LOG_DATA,				"Log data"			},
   { MTYPE_PREFIX,		"Prefix"			},
   { MTYPE_PREFIX_IPV4,		"Prefix IPv4"			},
@@ -433,7 +433,7 @@ struct memory_list memory_list_port[] =
 
 	{ MTYPE_PPPOE,			"PHY PORT information"			},
 	{ MTYPE_KERNEL,			"MAC information"			},
-	{ MTYPE_SERIAL,			"sSecurity information"			},
+	{ MTYPE_SERIAL,			"Serial information"			},
 
 	{ MTYPE_VLAN,			"VLAN information"			},
 	{ MTYPE_TRUNK,			"Trunk information"			},

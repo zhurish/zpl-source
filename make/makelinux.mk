@@ -49,6 +49,7 @@ export STRIP=strip
 export OBJCOPY=objcopy
 export OBJDUMP=objdump
 export RANLIB=ranlib
+PL_CFLAGS += -DBUILD_$(BUILD_TYPE)
 endif
 #
 ifneq ($(BUILD_TYPE),X86)
@@ -76,10 +77,10 @@ endif
 #
 #
 ifeq ($(ARCH_BIT),64)
-PL_CFLAGS += -m64
+PLOS_CFLAGS += -m64
 else
 ifneq ($(BUILD_TYPE),X86)
-#PL_CFLAGS += -m32
+#PLOS_CFLAGS += -m32
 endif
 endif
 #
@@ -91,7 +92,7 @@ LIBDIR = $(RELEASEDIR)/lib
 BINDIR = $(RELEASEDIR)/bin
 SBINDIR = $(RELEASEDIR)/sbin
 ETCDIR = $(RELEASEDIR)/etc
-PL_CFLAGS += -s
+PLOS_CFLAGS += -s
 else
 RELEASEDIR = debug
 OBJDIR = $(RELEASEDIR)/obj
@@ -156,18 +157,18 @@ endif
 #
 #
 ifeq ($(BUILD_DEBUG),YES)
-PL_CFLAGS +=  -g
+PLOS_CFLAGS +=  -g
 endif
 #
 #
-VERSION = 0.0.0.2
 #
-BUILD_TIME=$(shell date -u "+%y%m%d-%H%M%S")
+BUILD_TIME=$(shell date -u "+%Y%m%d%H%M%S")
 #
-PLVER = $(VERSION)-$(BUILD_TIME).bin
 #
 ifeq ($(BUILD_DEBUG),YES)
 PLVER = $(VERSION).bin
+else
+PLVER = $(VERSION)-$(BUILD_TIME).bin
 endif
 #
 #
@@ -185,24 +186,27 @@ PL_LDLIBS += -lsqlite3
 endif
 endif
 #
-PL_CFLAGS += -fsigned-char -O2  
+PLOS_CFLAGS += -fsigned-char -O2  
 #
 # WANRING
 #	
-PL_CFLAGS += -Wall -Wextra -Wnested-externs -Wmissing-prototypes \
+PLOS_CFLAGS += -Wall -Wextra -Wnested-externs -Wmissing-prototypes \
 			 -Wredundant-decls -Wcast-align -Wunreachable-code -Wshadow	\
 			 -Wimplicit-function-declaration -Wimplicit	-Wreturn-type -Wunused \
 			 -Wswitch -Wformat -Wuninitialized -Wchar-subscripts  \
 			 -Wpointer-arith -Wwrite-strings -Wstrict-prototypes
+			 
+			 
 # -Werror=implicit-function-declaration -Werror=switch
-PL_CFLAGS += -Werror=return-type -Werror=format-extra-args 
-#			  -Werror=overlength-strings 
-#			 -Werror=switch-default -Werror=missing-format-attribute
+PLOS_CFLAGS += -Werror=return-type -Werror=format-extra-args -Werror=missing-prototypes \
+			  -Werror=unreachable-code
+#			 -Werror=switch-default -Werror=missing-format-attribute 
+#				-Werror=overlength-strings -Werror=cast-align  \
 #			 
-PL_CFLAGS += -fmessage-length=0 -Wcast-align
-#PL_CFLAGS += -Werror
+PLOS_CFLAGS += -fmessage-length=0 -Wcast-align
+#PLOS_CFLAGS += -Werror
 #
-
+PL_CFLAGS += -DBUILD_VERSION=\"$(VERSION)\" -DBUILD_TIME=\"$(BUILD_TIME)\"
 #
 #
 export DSTBINDIR = $(BASE_ROOT)/$(BINDIR)
@@ -221,7 +225,7 @@ PLINCLUDE += $(PLLIBINCLUDE)
 #
 PL_DEBUG += $(PLDEFINE) $(EXTRA_DEFINE) 
 #
-export CFLAGS =  $(PL_CFLAGS) $(PL_DEBUG) -fPIC $(PLINCLUDE)
+export CFLAGS =  $(PL_CFLAGS) $(PL_DEBUG) $(PLOS_CFLAGS) -fPIC $(PLINCLUDE)
 export LDCLFLAG = $(PL_LDLIBS) 
 #
 #

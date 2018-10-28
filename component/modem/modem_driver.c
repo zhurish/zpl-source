@@ -285,7 +285,7 @@ int modem_driver_exit(modem_driver_t *driver)
 
 	if(driver->client)
 	{
-		modem_process_del_api(MODEM_EV_MAX, ((modem_client_t *)driver->client)->modem, TRUE);
+		modem_event_del_api(((modem_client_t *)driver->client)->modem, MODEM_EV_MAX, TRUE);
 		((modem_client_t *)driver->client)->modem = NULL;
 	}
 /*	if(driver->md_probe)

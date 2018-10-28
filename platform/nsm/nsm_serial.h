@@ -68,4 +68,7 @@ extern int nsm_serial_slip_encapsulation(char *input, int inlen, char *output, i
 extern int nsm_serial_slip_decapsulation(char *input, int inlen, char *output, int outlen);
 
 
+extern void cmd_serial_init(void);
+
+
 #endif /* __NSM_SERIAL_H__ */

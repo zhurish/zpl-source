@@ -20,7 +20,7 @@
 #include "prefix.h"
 #include "sigevent.h"
 #include "thread.h"
-#include "version.h"
+//#include "version.h"
 #include "vrf.h"
 #include "os_start.h"
 #include "os_module.h"
@@ -109,7 +109,7 @@ usage (char *progname, int status)
       printf ("-v, --version      Print program version\n"\
 	      "-h, --help         Display this help and exit\n"\
 	      "\n"\
-	      "Report bugs to %s\n", ZEBRA_BUG_ADDRESS);
+	      "Report bugs to %s\n", OEM_BUG_ADDRESS);
     }
 
   exit (status);
@@ -226,7 +226,7 @@ static int main_timer_thread(struct thread *thread)
 
 static int os_base_dir_init(void)
 {
-	if(access(BASE_DIR, F_OK) != 0)
+	//if(access(BASE_DIR, F_OK) != 0)
 	{
 		mkdir(BASE_DIR, 0644);
 		mkdir(SYSCONFDIR, 0644);			// /etc

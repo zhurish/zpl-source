@@ -49,17 +49,17 @@ typedef struct Gmirror_s
 
 typedef int (*mirror_cb)(nsm_mirror_t *, void *);
 
-int nsm_mirror_init();
-int nsm_mirror_exit();
-int nsm_mirror_global_enable(BOOL enable);
-BOOL nsm_mirror_global_is_enable();
+extern int nsm_mirror_init(void);
+extern int nsm_mirror_exit(void );
+extern int nsm_mirror_global_enable(BOOL enable);
+extern BOOL nsm_mirror_global_is_enable();
 
-BOOL nsm_mirror_is_enable_api(ifindex_t ifindex);
+extern BOOL nsm_mirror_is_enable_api(ifindex_t ifindex);
 
 //mirror destination
-int nsm_mirror_destination_set_api(ifindex_t ifindex, BOOL enable);
-int nsm_mirror_destination_get_api(ifindex_t ifindex, BOOL *enable);
-BOOL nsm_mirror_is_destination_api(ifindex_t ifindex);
+extern int nsm_mirror_destination_set_api(ifindex_t ifindex, BOOL enable);
+extern int nsm_mirror_destination_get_api(ifindex_t ifindex, BOOL *enable);
+extern BOOL nsm_mirror_is_destination_api(ifindex_t ifindex);
 
 // mirror source
 /*int nsm_mirror_mode_set_api(BOOL mac);
@@ -68,15 +68,16 @@ int nsm_mirror_mode_get_api(BOOL *mac);
 int nsm_mirror_source_mac_set_api(BOOL enable, u_char *mac, mirror_dir_en dir);
 int nsm_mirror_source_mac_get_api(BOOL *enable, u_char *mac, mirror_dir_en *dir);
 */
-int nsm_mirror_source_set_api(ifindex_t ifindex, BOOL enable, mirror_dir_en dir);
-int nsm_mirror_source_get_api(ifindex_t ifindex, BOOL *enable, mirror_dir_en *dir);
-BOOL nsm_mirror_is_source_api();
+extern int nsm_mirror_source_set_api(ifindex_t ifindex, BOOL enable, mirror_dir_en dir);
+extern int nsm_mirror_source_get_api(ifindex_t ifindex, BOOL *enable, mirror_dir_en *dir);
+extern BOOL nsm_mirror_is_source_api();
 
-int nsm_mirror_source_mac_filter_set_api(BOOL enable, u_char *mac, BOOL dst,  mirror_dir_en dir);
-//int nsm_mirror_source_mac_filter_set_api(BOOL enable, u_char *mac, mirror_dir_en dir, BOOL dst);
-int nsm_mirror_source_mac_filter_get_api(mirror_dir_en dir, BOOL *enable, u_char *mac, BOOL *dst);
+extern int nsm_mirror_source_mac_filter_set_api(BOOL enable, u_char *mac, BOOL dst,  mirror_dir_en dir);
+//extern int nsm_mirror_source_mac_filter_set_api(BOOL enable, u_char *mac, mirror_dir_en dir, BOOL dst);
+extern int nsm_mirror_source_mac_filter_get_api(mirror_dir_en dir, BOOL *enable, u_char *mac, BOOL *dst);
 
-int mirror_callback_api(mirror_cb cb, void *pVoid);
+extern int mirror_callback_api(mirror_cb cb, void *pVoid);
 
+extern void cmd_mirror_init(void);
 
 #endif /* __NSM_MIRROR_H__ */

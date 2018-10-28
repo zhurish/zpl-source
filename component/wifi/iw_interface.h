@@ -44,5 +44,7 @@ extern int nsm_iw_channel_freq_show(struct interface *ifp, struct vty *vty);
 extern int nsm_iw_capabilities_show(struct interface *ifp, struct vty *vty);
 extern int nsm_iw_ap_info_show(struct interface *ifp, struct vty *vty);
 
+extern void cmd_wireless_init(void);
+
 
 #endif /* __NSM_IW_H__ */

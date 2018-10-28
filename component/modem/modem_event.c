@@ -24,13 +24,16 @@
 #include "modem_control.h"
 #include "modem_mgtlayer.h"
 
-struct modem_event_client
+/*
+struct modem_event_action
 {
 	int				flag;
 	modem_event 	event;
+	modem_t			*modem;
 	modem_client_t	*client;
 	void			*pVoid;
 };
+*/
 
 
 const char *modem_event_string(modem_event event)
@@ -117,6 +120,59 @@ int modem_event_add_api(modem_t *modem, modem_event event, BOOL lock)
 	return OK;
 }
 
+/*
+ *添加事件
+ */
+int modem_event_del_api(modem_t *modem, modem_event event, BOOL lock)
+{
+	assert(modem);
+	if(modem)
+	{
+		//modem_client_t	*client = modem->client;
+		//if(client)
+		//	client->event = event;
+		modem_process_del_api(event, modem, lock);
+	}
+	//else
+	//	modem_process_add_api(event, NULL, lock);
+	return OK;
+}
+
+static int modem_event_reload_thread(modem_t *modem)
+{
+	if(modem && modem->event)
+	{
+		modem_event_del_api(modem, MODEM_EV_MAX, TRUE);
+		modem_event_add_api(modem, modem->a_event, TRUE);
+		modem->state = MODEM_MACHINE_STATE_NONE;
+		MODEM_EV_DEBUG("Into %s",__func__);
+		if(MODEM_IS_DEBUG(EVENT))
+			zlog_debug(ZLOG_MODEM, "Handle %s on time delay thread.", modem_event_string(modem->a_event));
+		modem->t_time = 0;
+		modem->a_event = MODEM_EV_NONE;
+		return OK;
+	}
+	return OK;
+}
+
+
+int modem_event_reload(modem_t *modem, modem_event event, BOOL lock)
+{
+	if(modem->t_time)
+	{
+		if(os_time_lookup(modem->t_time))
+		{
+			os_time_cancel(modem->t_time);
+			os_time_restart(modem->t_time, 10000);
+			return OK;
+		}
+	}
+/*	if(MODEM_IS_DEBUG(EVENT))
+		zlog_debug(ZLOG_MODEM, "modem add event %s.", modem_event_string(modem->a_event));*/
+	modem->a_event = event;
+	modem->t_time = os_time_create_once(modem_event_reload_thread, modem, 10000);
+	return OK;
+}
 
 /*
  * 事件调度开始
@@ -255,7 +311,7 @@ modem_event modem_event_remove(modem_t *modem, modem_event event)
 	else
 	{
 		modem->state = modem->newstate;
-		modem_process_del_api(MODEM_EV_MAX, modem, FALSE);
+		modem_event_del_api(modem, MODEM_EV_MAX, FALSE);
 	}
 	MODEM_EV_DEBUG("Level %s",__func__);
 	return nextevent;
@@ -465,18 +521,23 @@ modem_event modem_event_delay(modem_t *modem, modem_event event)
 {
 	modem_event nextevent = MODEM_EV_DELAY;
 	assert(modem);
-	MODEM_EV_DEBUG("Into %s",__func__);
-	if(MODEM_IS_DEBUG(EVENT))
-		zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
-				modem_module_name(modem));
-
-	if(modem_mgtlayer_delay(modem) != OK)
-		nextevent = MODEM_EV_NONE;
-	else
+	modem->time_axis = os_time (NULL);
+	if(modem->time_axis >= (modem->time_base + modem->delay))
 	{
-		modem->state = modem->newstate;
+		modem->time_base = modem->time_axis;
+		MODEM_EV_DEBUG("Into %s",__func__);
+		if(MODEM_IS_DEBUG(EVENT))
+			zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
+					modem_module_name(modem));
+
+		if(modem_mgtlayer_delay(modem) != OK)
+			nextevent = MODEM_EV_NONE;
+		else
+		{
+			modem->state = modem->newstate;
+		}
+		MODEM_EV_DEBUG("Level %s",__func__);
 	}
-	MODEM_EV_DEBUG("Level %s",__func__);
 	return nextevent;
 }
 
@@ -484,18 +545,23 @@ modem_event modem_event_detection(modem_t *modem, modem_event event)
 {
 	modem_event nextevent = MODEM_EV_DETECTION;
 	assert(modem);
-	MODEM_EV_DEBUG("Into %s",__func__);
-	if(MODEM_IS_DEBUG(EVENT))
-		zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
-				modem_module_name(modem));
-
-	if(modem_mgtlayer_network_detection(modem) != OK)
-		nextevent = MODEM_EV_NONE;
-	else
+	modem->detime_axis = os_time (NULL);
+	if(modem->detime_axis >= (modem->detime_base + modem->dedelay))
 	{
-		modem->state = modem->newstate;
+		modem->detime_base = modem->detime_axis;
+		MODEM_EV_DEBUG("Into %s",__func__);
+		if(MODEM_IS_DEBUG(EVENT))
+			zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
+					modem_module_name(modem));
+
+		if(modem_mgtlayer_network_detection(modem) != OK)
+			nextevent = MODEM_EV_NONE;
+		else
+		{
+			modem->state = modem->newstate;
+		}
+		MODEM_EV_DEBUG("Level %s",__func__);
 	}
-	MODEM_EV_DEBUG("Level %s",__func__);
 	return nextevent;
 }
 

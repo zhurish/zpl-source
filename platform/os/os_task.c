@@ -503,7 +503,7 @@ static int os_task_refresh_time(void *argv)
 {
 //	if(os_job_finsh() == OK)
 	{
-		NODE *node;
+		NODE *node = NULL;
 		os_task_t *task;
 		if (os_task_list == NULL)
 			return ERROR;
@@ -929,8 +929,9 @@ static int os_task_show_head(struct vty *vty, int detail)
 	return 0;
 }
 
-static int os_task_show_detail(struct vty *vty, os_task_t *task, int detail)
+static int os_task_show_detail(void *p, os_task_t *task, int detail)
 {
+	struct vty *vty = (struct vty *)p;
 	extern int vty_out(struct vty *, const char *, ...);
 	char taskId[16];
 	char pri[16];
@@ -975,10 +976,10 @@ static int os_task_show_detail(struct vty *vty, os_task_t *task, int detail)
 	return 0;
 }
 
-int os_task_show(struct vty *vty, char *task_name, int detail)
+int os_task_show(void *vty, char *task_name, int detail)
 {
 //	unit32 task_id = 0;
-	NODE *node;
+	NODE *node = NULL;
 	os_task_t *task = NULL;
 	if (os_task_list == NULL)
 		return ERROR;
@@ -1001,8 +1002,10 @@ int os_task_show(struct vty *vty, char *task_name, int detail)
 	}
 	if (task_mutex)
 		os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+
 	node = lstFirst(os_task_list);
-	os_task_show_head(vty, detail);
+	if(node)
+		os_task_show_head(vty, detail);
 	while (node)
 	{
 		if (node)
@@ -1012,6 +1015,18 @@ int os_task_show(struct vty *vty, char *task_name, int detail)
 		}
 		node = lstNext(node);
 	}
+
+/*	node = lstFirst(os_task_list);
+	os_task_show_head(vty, detail);
+	while (node)
+	{
+		if (node)
+		{
+			task = (os_task_t *) node;
+			os_task_show_detail(vty, task, detail);
+		}
+		node = lstNext(node);
+	}*/
 	if (task_mutex)
 		os_mutex_unlock(task_mutex);
 	return 0;
@@ -1031,6 +1046,7 @@ DEFUN (show_process,
 		os_task_show(vty, NULL, 0);
 	return CMD_SUCCESS;
 }
+
 
 DEFUN (show_process_detail,
 		show_process_detail_cmd,

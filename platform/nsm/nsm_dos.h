@@ -75,5 +75,8 @@ typedef int (*l2dos_cb)(Gl2dos_t *, void *);
 
 int nsm_dos_callback_api(l2dos_cb, void *);
 
+void cmd_dos_init (void);
+
+
 
 #endif /* __NSM_DOS_H__ */

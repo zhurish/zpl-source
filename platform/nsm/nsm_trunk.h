@@ -119,5 +119,7 @@ extern int nsm_trunk_group_callback_api(l2trunk_group_cb cb, void *pVoid);
 extern int nsm_trunk_callback_api(l2trunk_cb cb, void *pVoid);
 
 
+extern void cmd_trunk_init(void);
+
 
 #endif /* __NSM_TRUNK_H__ */

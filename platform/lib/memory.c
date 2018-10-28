@@ -423,8 +423,10 @@ DEFUN (show_memory,
   return CMD_SUCCESS;
 }
 #endif
-int vty_show_memory_cmd(struct vty *vty)
+
+int vty_show_memory_cmd(void *p)
 {
+  struct vty *vty = (struct vty *)p;
   struct mlist *ml;
   int needsep = 0;
 

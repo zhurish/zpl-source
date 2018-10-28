@@ -27,4 +27,6 @@ extern char *strstr_last(const char *dest,const char *src);
 
 extern int buffer_isempty(char *dest, int len);
 
+extern char *os_strstr_last(const char *dest,const char *src);
+
 #endif /* __MODEM_STRING_H__ */

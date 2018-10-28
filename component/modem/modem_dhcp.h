@@ -14,9 +14,16 @@
 //#define MODEM_DHCPC_PROCESS
 
 extern int modem_dhcpc_attach(modem_t *modem);
-extern int modem_dhcpc_start(modem_t *modem);
 extern int modem_dhcpc_unattach(modem_t *modem);
+
+extern BOOL modem_dhcpc_isconnect(modem_t *modem);
+extern BOOL modem_dhcpc_islinkup(modem_t *modem);
+extern int modem_dhcpc_start(modem_t *modem);
 extern int modem_dhcpc_exit(modem_t *modem);
+
+
+
+
 
 #ifdef _MODEM_DHCP_DEBUG
 #define MODEM_HDCP_DEBUG(fmt,...)	modem_debug_printf(stderr, __func__, __LINE__,fmt, ##__VA_ARGS__)

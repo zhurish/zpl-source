@@ -52,6 +52,9 @@ extern int _ipkernel_bond_create(struct interface *ifp);
 extern int _ipkernel_bond_delete(struct interface *ifp);
 
 
+extern int os_vrf_stack_init();
+
+
 #else
 /* Prototypes. */
 extern void ifreq_set_name (struct ifreq *, struct interface *);

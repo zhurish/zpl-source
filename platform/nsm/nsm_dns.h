@@ -137,5 +137,9 @@ extern int nsm_dns_domain_name_del_api(BOOL secondly);
 extern int nsm_ip_dns_host_show(struct vty *vty);
 extern int nsm_ip_dns_host_config(struct vty *vty);
 
+extern int nsm_dns_debug_write(struct vty *vty);
+
+extern void cmd_dns_init(void);
+
 
 #endif /* __NSM_DNS_H__ */

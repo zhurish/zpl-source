@@ -13,7 +13,7 @@
 #include "modem_machine.h"
 
 
-#define __MODEM_DEBUG
+//#define __MODEM_DEBUG
 
 #define MODEM_DEBUG_DRIVER  1
 #define MODEM_DEBUG_CLIENT  2
@@ -54,12 +54,10 @@ typedef struct modem_s
 {
 	NODE				node;
 	char				name[MODEM_STRING_MAX];
-
+	BOOL				bSecondary;
 	BOOL				active;
 	modem_dial_type		dialtype;
 	modem_stack_type	ipstack;
-
-	BOOL				bSecondary;
 
 	char				apn[MODEM_STRING_MAX];
 
@@ -72,28 +70,6 @@ typedef struct modem_s
 	char				puk[MODEM_STRING_MAX];
 
 	modem_network_type	network;
-
-	modem_machine		state;
-	modem_machine		newstate;
-
-	modem_event			event;
-	modem_event			nextevent;
-
-	int					uptime;		//network UP time
-	int					downtime;	//network DOWN time
-
-	/*
-	 * for detection event
-	 */
-	int					dedelay;
-	int					detime_base;
-	int					detime_axis;
-	/*
-	 * for delay event
-	 */
-	int					delay;
-	int					time_base;
-	int					time_axis;
 
 	void				*pppd;			// point to modem_pppd_t
 	void				*dhcp;			// point to modem_dhcp_t
@@ -110,9 +86,33 @@ typedef struct modem_s
 	void				*eth0;
 	void				*eth1;
 	void				*eth2;
-	//void				*ifp;
+
+	modem_machine		state;
+	modem_machine		newstate;
+
+	modem_event			event;
+	modem_event			nextevent;
+
+	u_int32				uptime;		//network UP time
+	u_int32				downtime;	//network DOWN time
+
+	/*
+	 * for detection event
+	 */
+	u_int32				dedelay;
+	u_int32				detime_base;
+	u_int32				detime_axis;
+	/*
+	 * for delay event
+	 */
+	u_int32				delay;
+	u_int32				time_base;
+	u_int32				time_axis;
 
 
+	modem_event			a_event;
+	u_int32				t_time;
+	u_int32				checksum;
 
 	int					pid[MODEM_DIAL_MAX+1];
 }modem_t;
@@ -162,6 +162,19 @@ extern int modem_main_process(void *pVoid);
 extern int modem_interface_update_kernel(modem_t *modem, char *name);
 extern int modem_serial_interface_update_kernel(modem_t *modem, char *name);
 extern int modem_serial_devname_update_kernel(modem_t *modem, char *name);
+
+
+
+
+extern int modem_ansync_add(int (*cb)(void *), int fd, char *name);
+extern int modem_ansync_del(int value);
+extern int modem_ansync_timer_add(int (*cb)(void *), int fd, char *name);
+extern int modem_ansync_timer_del(void *value);
+/*
+ * CMD
+ */
+extern void cmd_modem_init (void);
+extern int modem_debug_config(struct vty *vty);
 
 
 

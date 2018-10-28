@@ -396,23 +396,124 @@ DEFUN (show_version,
 		show_version_cmd,
 		"show version",
 		SHOW_STR
-		"Displays zebra version\n")
+		"Displays version\n")
 {
-	int ret = -1;
-	if (ret == -1) {
-		vty_out(vty, " Hello this is %s (version:%s).%s", OEM_PACKAGE_NAME,
-				OEM_VERSION, VTY_NEWLINE);
-		vty_out(vty, " %s%s", OEM_PACKAGE_COPYRIGHT, VTY_NEWLINE);
-		vty_out(vty, " Design it Base on (%s).%s", OEM_PACKAGE_BASE,
-				VTY_NEWLINE);
-		if ((GIT_SUFFIX) && (strlen(GIT_SUFFIX) > 2))
-			vty_out(vty, " Git suffex:%s%s Git info:%s%s", GIT_SUFFIX,
-					VTY_NEWLINE, GIT_INFO, VTY_NEWLINE);
-	}
-	vty_out(vty, " It't make: %s %s .%s", __DATE__, __TIME__, VTY_NEWLINE);
+	vty_out(vty, "%s", VTY_NEWLINE);
+	vty_out(vty, " DeviceName    : %s%s", OEM_DEVICE_NAME, VTY_NEWLINE);
+	vty_out(vty, " HW Version    : %s%s", OEM_HW_VERSION, VTY_NEWLINE);
 
+	vty_out(vty, " Software      : %s%s", OEM_PACKAGE_NAME, VTY_NEWLINE);
+	vty_out(vty, " Version       : %s%s", OEM_VERSION, VTY_NEWLINE);
+	vty_out(vty, " Copyright     : %s%s", OEM_PACKAGE_COPYRIGHT, VTY_NEWLINE);
+	//vty_out(vty, " Base          : %s(V%x.%x.%x)%s", OEM_PACKAGE_BASE,
+	//			(OEM_PACKAGE_VERSION >> 16) & 0xFF,
+	//			(OEM_PACKAGE_VERSION >> 8) & 0xFF,
+	//			(OEM_PACKAGE_VERSION) & 0xFF,
+	//			VTY_NEWLINE);
+
+	vty_out(vty, " BugReport     : %s%s", OEM_PACKAGE_BUGREPORT, VTY_NEWLINE);
+	//vty_out(vty, " Git Release   : %s%s", OEM_GIT_RELEASE, VTY_NEWLINE);
+	//vty_out(vty, " Git Commit    : %s%s", OEM_GIT_COMMIT, VTY_NEWLINE);
+	//vty_out(vty, " Version       : %s%s", OEM_VERSION, VTY_NEWLINE);
+#ifdef BUILD_TIME
+	//20181024160232
+	vty_out(vty, " Build Time    : %s .%s", os_build_time2date(BUILD_TIME), VTY_NEWLINE);
+#else
+#ifdef OEM_MAKE_DATE
+	//20181024160232
+	vty_out(vty, " Build Time    : %s .%s", os_build_time2date(OEM_MAKE_DATE), VTY_NEWLINE);
+#else
+	vty_out(vty, " Build Time    : %s %s .%s", __DATE__, __TIME__, VTY_NEWLINE);
+#endif /* OEM_MAKE_DATE */
+#endif /* BUILD_TIME */
+
+#if 0
+	vty_out(vty, " Hello this is \"%s\" (version:%s).%s", OEM_PACKAGE_NAME,
+				OEM_VERSION, VTY_NEWLINE);
+	vty_out(vty, " %s%s", OEM_PACKAGE_COPYRIGHT, VTY_NEWLINE);
+	vty_out(vty, " Design it Base on (%s).%s", OEM_PACKAGE_BASE,
+				VTY_NEWLINE);
+	if ((GIT_SUFFIX) && (strlen(GIT_SUFFIX) > 2))
+		vty_out(vty, " Git suffex : %s%s Git info:%s%s", GIT_SUFFIX,
+					VTY_NEWLINE, GIT_INFO, VTY_NEWLINE);
+#ifdef BUILD_TIME
+	//20181024160232
+	vty_out(vty, " It't make: %s.%s", os_build_time2date(BUILD_TIME), VTY_NEWLINE);
+#else
+#ifdef OEM_MAKE_DATE
+	//20181024160232
+	vty_out(vty, " It't make: %s.%s", os_build_time2date(OEM_MAKE_DATE), VTY_NEWLINE);
+#else
+	vty_out(vty, " It't make: %s %s.%s", __DATE__, __TIME__, VTY_NEWLINE);
+#endif /* OEM_MAKE_DATE */
+#endif /* BUILD_TIME */
+#endif
+	vty_out(vty, "%s", VTY_NEWLINE);
 	return CMD_SUCCESS;
 }
+
+DEFUN_HIDDEN (show_hidden_version,
+		show_hidden_version_cmd,
+		"show version-hidden",
+		SHOW_STR
+		"Displays detail version\n")
+{
+	vty_out(vty, "%s", VTY_NEWLINE);
+	vty_out(vty, " DeviceName    : %s%s", OEM_DEVICE_NAME, VTY_NEWLINE);
+	vty_out(vty, " HW Version    : %s%s", OEM_HW_VERSION, VTY_NEWLINE);
+
+	vty_out(vty, " Software      : %s%s", OEM_PACKAGE_NAME, VTY_NEWLINE);
+	vty_out(vty, " Version       : %s%s", OEM_VERSION, VTY_NEWLINE);
+	vty_out(vty, " Copyright     : %s%s", OEM_PACKAGE_COPYRIGHT, VTY_NEWLINE);
+	vty_out(vty, " Base          : %s(V%x.%x.%x)%s", OEM_PACKAGE_BASE,
+				(OEM_PACKAGE_VERSION >> 16) & 0xFF,
+				(OEM_PACKAGE_VERSION >> 8) & 0xFF,
+				(OEM_PACKAGE_VERSION) & 0xFF,
+				VTY_NEWLINE);
+
+	vty_out(vty, " BugReport     : %s%s", OEM_PACKAGE_BUGREPORT, VTY_NEWLINE);
+	vty_out(vty, " Git Release   : %s%s", OEM_GIT_RELEASE, VTY_NEWLINE);
+	vty_out(vty, " Git Commit    : %s%s", OEM_GIT_COMMIT, VTY_NEWLINE);
+	vty_out(vty, " Git Version   : %s%s", GIT_VERSION, VTY_NEWLINE);
+#ifdef BUILD_TIME
+	//20181024160232
+	vty_out(vty, " Build Time    : %s .%s", os_build_time2date(BUILD_TIME), VTY_NEWLINE);
+#else
+#ifdef OEM_MAKE_DATE
+	//20181024160232
+	vty_out(vty, " Build Time    : %s .%s", os_build_time2date(OEM_MAKE_DATE), VTY_NEWLINE);
+#else
+	vty_out(vty, " Build Time    : %s %s .%s", __DATE__, __TIME__, VTY_NEWLINE);
+#endif /* OEM_MAKE_DATE */
+#endif /* BUILD_TIME */
+	vty_out(vty, "%s", VTY_NEWLINE);
+	return CMD_SUCCESS;
+}
+
+DEFUN (show_system,
+		show_system_cmd,
+		"show system",
+		SHOW_STR
+		"Displays system information\n")
+{
+	struct host_system host_system;
+	vty_out(vty, "%s", VTY_NEWLINE);
+	memset(&host_system, 0, sizeof(struct host_system));
+	host_system_information_get(&host_system);
+	show_host_system_information(&host_system, vty);
+	vty_out(vty, "%s", VTY_NEWLINE);
+	return CMD_SUCCESS;
+}
+
+/*
+ALIAS(show_system,
+		show_system_detail_cmd,
+		"show system (detail|)",
+		SHOW_STR
+		"Displays System information\n"
+		"Displays Detail information\n");
+*/
+
 
 /* Help display function for all node. */
 DEFUN (config_help,
@@ -1169,7 +1270,7 @@ config_write_service (struct vty *vty)
 }
 
 
-static int _cmd_host_init(void)
+static int _cmd_host_base_init(int terminal)
 {
 	/*  install_node (&restricted_node, NULL);*/
 	install_node(&user_node, NULL);
@@ -1206,6 +1307,10 @@ static int _cmd_host_init(void)
 	install_default_basic(CONFIG_NODE);
 	/* Each node's basic commands. */
 	install_element(VIEW_NODE, &show_version_cmd);
+	install_element(VIEW_NODE, &show_hidden_version_cmd);
+	install_element(VIEW_NODE, &show_system_cmd);
+	//install_element(VIEW_NODE, &show_system_detail_cmd);
+
 
 	install_element(VIEW_NODE, &config_enable_cmd);
 	install_element(VIEW_NODE, &config_terminal_length_cmd);
@@ -1254,5 +1359,5 @@ static int _cmd_host_init(void)
 
 int cmd_host_init(int terminal)
 {
-	return _cmd_host_init();
+	return _cmd_host_base_init(terminal);
 }

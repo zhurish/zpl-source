@@ -34,7 +34,7 @@ typedef struct //modem_machine_action
 	//int		(*action)(modem_t *, modem_event );
 }modem_machine_action;
 
-
+extern const char *modem_machine_state_string(modem_machine state);
 extern int	modem_machine_state_action(modem_t *modem);
 extern int modem_machine_state_set(modem_t *modem, modem_machine newstate);
 extern modem_machine modem_machine_state_get(modem_t *modem);

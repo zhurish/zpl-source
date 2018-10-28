@@ -10,7 +10,7 @@
 #include "zebra.h"
 //#include "vty.h"
 #include "os_list.h"
-//#include "os_log.h"
+#include "log.h"
 #include "os_sem.h"
 #include "os_task.h"
 #include "os_time.h"
@@ -21,7 +21,7 @@ static LIST *time_list = NULL;
 static LIST *time_unuse_list = NULL;
 static os_sem_t *time_sem = NULL;
 static os_mutex_t *time_mutex = NULL;
-static struct timeval min_interval;
+static struct timeval min_interval;//, min_interval_once;
 static unit32 time_task_id = 0;
 static int os_time_task(void);
 //static struct timeval os_time_msec;
@@ -306,14 +306,17 @@ int os_time_exit()
 	if(time_list)
 	{
 		lstFree(time_list);
+		os_free(time_list);
 		time_list = NULL;
 	}
 	if(time_unuse_list)
 	{
 		lstFree(time_unuse_list);
+		os_free(time_unuse_list);
 		time_unuse_list = NULL;
 	}
 	memset(&min_interval, 0, sizeof(struct timeval));
+	//memset(&min_interval_once, 0, sizeof(struct timeval));
 	return OK;
 }
 
@@ -322,6 +325,41 @@ int os_time_load()
 	if(time_task_id)
 		return OK;
 	return ERROR;
+}
+
+int os_time_clean(BOOL all)
+{
+	NODE node;
+	os_time_t *t = NULL;
+	if(time_mutex)
+		os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
+	for(t = (os_time_t *)lstFirst(time_list); t != NULL; t = (os_time_t *)lstNext(&node))
+	{
+		node = t->node;
+		if(t)
+		{
+			lstDelete (time_list, (NODE *)t);
+			if(!all)
+				lstAdd (time_unuse_list, (NODE *)t);
+			else
+				os_free(t);
+		}
+	}
+	if(all)
+	{
+		for(t = (os_time_t *)lstFirst(time_list); t != NULL; t = (os_time_t *)lstNext(&node))
+		{
+			node = t->node;
+			if(t)
+			{
+				lstDelete (time_unuse_list, (NODE *)t);
+				os_free(t);
+			}
+		}
+	}
+	if(time_mutex)
+		os_mutex_unlock(time_mutex);
+	return t;
 }
 
 static os_time_t * os_time_get_node()
@@ -338,10 +376,10 @@ static os_time_t * os_time_get_node()
 			break;
 		}
 	}
-	if(time_mutex)
-		os_mutex_unlock(time_mutex);
 	if(t)
 		lstDelete (time_unuse_list, (NODE *)t);
+	if(time_mutex)
+		os_mutex_unlock(time_mutex);
 	return t;
 }
 
@@ -357,6 +395,7 @@ static os_time_t * os_time_entry_create(os_time_type type, int	(*time_entry)(voi
 	}
 	if(t)
 	{
+		os_memset(t, 0, sizeof(os_time_t));
 		t->t_id = (int)t;
 		t->msec = msec;
 		t->pVoid = pVoid;
@@ -403,6 +442,15 @@ static int os_time_interrupt_setting(struct timeval *interval, struct timeval *n
 	tick.it_value.tv_sec = msec/TIMER_MSEC_MICRO;//interval->tv_sec;
 	tick.it_value.tv_usec = (msec%TIMER_MSEC_MICRO)*TIMER_MSEC_MICRO;//interval->tv_usec;
 #endif
+	if(tick.it_value.tv_sec == 0 && tick.it_value.tv_usec <= TIMER_MSEC(1))
+	{
+		min_interval.tv_sec = tick.it_value.tv_sec = now->tv_sec + OS_TIMER_FOREVER;
+	}
+#ifdef OS_TIMER_TEST
+	fprintf(stdout, "%s time=%u.%u\n", __func__, tick.it_value.tv_sec,
+			(tick.it_value.tv_usec)/1000);
+	//zlog_debug(ZLOG_NSM, "%s time=%u.%u", __func__,tick.it_value.tv_sec, tick.it_value.tv_usec/1000);
+#endif
 //	OS_DEBUG("%s:%d.%d sec\r\n",__func__, tick.it_value.tv_sec, tick.it_value.tv_usec/TIMER_MSEC_MICRO);
 	//After first, the Interval time for clock
 	tick.it_interval.tv_sec = 0;
@@ -440,6 +488,14 @@ static int os_time_interval_refresh(os_time_t *t, int msec, BOOL add)
 	if(add == FALSE)
 	{
 		os_gettime (OS_CLK_REALTIME, &now);
+		if(msec == OS_TIMER_FOREVER)
+		{
+			if(os_timeval_cmp (min_interval, t->interval) == 0)
+			{
+				min_interval.tv_sec = now.tv_sec + OS_TIMER_FOREVER;
+				//os_time_min_interval(&t->interval, &min_interval);
+			}
+		}
 		if(msec)
 		{
 			t->interval.tv_sec = now.tv_sec + msec/TIMER_MSEC_MICRO;
@@ -516,7 +572,7 @@ static int os_time_create(int (*time_entry)(void *), void *pVoid, int msec)
 os_time_t *os_time_lookup(int id)
 {
 	NODE node;
-	os_time_t *t;
+	os_time_t *t = NULL;
 	if(time_mutex)
 		os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
 	for(t = (os_time_t *)lstFirst(time_list); t != NULL; t = (os_time_t *)lstNext(&node))
@@ -562,7 +618,7 @@ int os_time_destroy(int id)
 			os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
 		t->state = OS_TIMER_FALSE;
 		lstDelete (time_list, (NODE *)t);
-		os_time_interval_refresh(t,  0, FALSE);
+		os_time_interval_refresh(t,  OS_TIMER_FOREVER, FALSE);
 /*		os_gettime (OS_CLK_REALTIME, &now);
 		os_time_min_interval(&t->interval, &min_interval);
 		os_time_interrupt_setting(&min_interval, &now);*/
@@ -586,7 +642,7 @@ int os_time_cancel(int id)
 		t->state = OS_TIMER_CANCEL;
 		lstDelete (time_list, (NODE *)t);
 		lstAdd(time_unuse_list, (NODE *)t);
-		os_time_interval_refresh(t,  0, FALSE);
+		os_time_interval_refresh(t,  OS_TIMER_FOREVER, FALSE);
 		if(time_mutex)
 			os_mutex_unlock(time_mutex);
 		return OK;
@@ -613,7 +669,7 @@ int os_time_restart(int id, int msec)
 }
 
 
-int os_timer_show(int (*show)(void *, char *fmt,...), void *pVoid)
+int os_time_show(int (*show)(void *, char *fmt,...), void *pVoid)
 {
 	int i = 0;
 	NODE *node;
@@ -664,7 +720,7 @@ static int os_time_task(void)
 			node = t->node;
 			if(t && t->state != OS_TIMER_FALSE)
 			{
-				if(os_timeval_cmp (t->interval, now))
+				if(os_timeval_cmp (now, t->interval))
 				{
 					if(t->time_entry)
 					{
@@ -672,7 +728,7 @@ static int os_time_task(void)
 					}
 					if(t->type == OS_TIMER_ONCE)
 					{
-						t->msec = 0X0FFFFFFF;
+						t->msec = OS_TIMER_FOREVER;
 						t->state = OS_TIMER_FALSE;
 						t->t_id = 0;
 						lstDelete (time_list, (NODE *)t);
@@ -750,5 +806,129 @@ static int os_time_task(void)
 		if(time_mutex)
 			os_mutex_unlock(time_mutex);
 	}
+}
+#endif
+
+/*
+ * 20181024160232  -> 2018/10/24 16:02:32
+ */
+const char *os_build_time2date(char *str)
+{
+	int i = 0, j = 0;
+	static char buf[64];
+	char *p = str;
+	memset(buf, 0, sizeof(buf));
+	while (*p != '\0')
+	{
+		if (j==4 || j==6)
+		{
+			buf[i++] = '/';
+			buf[i++] = *p;
+		}
+		else if (j==10 || j==12)
+		{
+			buf[i++] = ':';
+			buf[i++] = *p;
+		}
+		else if (j==8)
+		{
+			buf[i++] = ' ';
+			buf[i++] = *p;
+		}
+		else
+			buf[i++] = *p;
+		p++;
+		j++;
+	}
+	return buf;
+}
+
+/*
+ * 2018/10/24 16:02:32 -> 20181024160232
+ */
+const char *os_date2build_time(char *str)
+{
+	int i = 0;
+	static char buf[64];
+	char *p = str;
+	memset(buf, 0, sizeof(buf));
+	while (*p != '\0')
+	{
+		if (*p == '/' || *p <= ':'  || *p <= ' ')
+			;
+		else
+			buf[i++] = *p;
+		p++;
+	}
+	return buf;
+}
+
+#ifdef OS_TIMER_TEST
+
+static u_int32 t_time_test = 0, t_time_test1 = 0;
+static int timer_test_handle(void *p)
+{
+	struct timeval now;
+	os_gettime (OS_CLK_REALTIME, &now);
+	fprintf(stdout, "%s time=%u.%u msec\n", __func__,now.tv_sec, now.tv_sec/1000);
+	//zlog_debug(ZLOG_NSM, "%s time=%u.%u msec", __func__,now.tv_sec, now.tv_sec/1000);
+	t_time_test = 0;
+	return OK;
+}
+
+int timer_test(int time, int type)
+{
+	static char clean_flag = 0;
+	struct timeval now;
+	os_gettime (OS_CLK_REALTIME, &now);
+	if(clean_flag == 0)
+	{
+		os_time_clean(FALSE);
+		clean_flag = 1;
+	}
+	if(type)
+	{
+		if(t_time_test)
+		{
+			if(os_time_lookup(t_time_test))
+			{
+				os_time_cancel(t_time_test);
+				os_time_restart(t_time_test, time);
+				fprintf(stdout, "%s time=%u.%u msec\n", __func__,now.tv_sec, now.tv_sec/1000);
+				return OK;
+			}
+		}
+		fprintf(stdout, "%s time=%u.%u msec\n", __func__,now.tv_sec, now.tv_sec/1000);
+		t_time_test = os_time_create_once(timer_test_handle, NULL, time);
+	}
+	else
+	{
+		fprintf(stdout, "%s time=%u.%u msec\n", __func__,now.tv_sec, now.tv_sec/1000);
+		t_time_test1 = os_time_create(timer_test_handle, NULL, time);
+	}
+	return OK;
+}
+
+int timer_test_exit(int type)
+{
+	if(type)
+	{
+		if(t_time_test)
+		{
+			if(os_time_lookup(t_time_test))
+				os_time_destroy(t_time_test);
+			t_time_test = 0;
+		}
+	}
+	else
+	{
+		if(t_time_test1)
+		{
+			if(os_time_lookup(t_time_test1))
+				os_time_destroy(t_time_test1);
+			t_time_test1 = 0;
+		}
+	}
+	return OK;
 }
 #endif

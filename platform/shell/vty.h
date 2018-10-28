@@ -149,13 +149,22 @@ struct vty
   char	prompt[64];
   char *username;
 
+  int	(*shell_ctrl_cmd)(struct vty *, int , void *);
+  void *ctrl;
+
+  BOOL	cancel;
+
+  BOOL	ansync;
+
   pid_t pid;
   pthread_t pthd;
+
+
   BOOL detail;
 };
 
 #ifdef HAVE_ROUTE_OPTIMIZE
-extern void (*vty_ctrl_cmd)(int ctrl, struct vty *vty);
+//extern void (*vty_ctrl_cmd)(int ctrl, struct vty *vty);
 #endif
 
 /* Integrated configuration file. */
@@ -289,9 +298,21 @@ extern int vty_config_unlock (struct vty *);
 extern int vty_shell (struct vty *);
 extern int vty_shell_serv (struct vty *);
 extern void vty_hello (struct vty *);
+extern int vty_ansync_enable(struct vty *vty, BOOL enable);
 
+extern void vty_self_insert(struct vty *vty, char c);
 /* Send a fixed-size message to all vty terminal monitors; this should be
    an async-signal-safe function. */
 extern void vty_log_fixed (char *buf, size_t len);
+extern int vty_getc_input(struct vty *vty);
+
+extern int vty_command(struct vty *vty, char *buf);
+extern int vty_execute(struct vty *vty);
+
+extern int vty_console(const char *tty, void (*atclose)());
+extern int exec_timeout(struct vty *vty, const char *min_str, const char *sec_str);
+
+extern int vty_cancel(struct vty *vty, int close);
+extern int vty_recovery(struct vty *vty, int close);
 
 #endif /* _ZEBRA_VTY_H */

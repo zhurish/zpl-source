@@ -105,7 +105,7 @@ int name2pid(const char *name)
 	i = 0;
 	pnlen = strlen(name);
 	/* Open the /proc directory. */
-	dir = opendir("/proc");
+	dir = opendir(PROC_BASE);
 	if (!dir)
 	{
 		printf("cannot open /proc");
@@ -155,6 +155,9 @@ int name2pid(const char *name)
 	closedir(dir);
 	return pid;
 }
+
+#undef PROC_BASE
+
 
 pid_t os_pid_set (const char *path)
 {
@@ -674,4 +677,172 @@ int os_register_signal(int sig, void (*handler)(int))
 	return (0);
 }
 
-#undef PROC_BASE
+
+#define KB_SIZE_MASK	(0X000003FF)
+
+const char * os_file_size(long long len)
+{
+	int glen = 0, mlen = 0, klen = 0;
+	static char buf[64];
+	memset(buf, 0, sizeof(buf));
+	glen = (len >> 30) & KB_SIZE_MASK;
+	mlen = (len >> 20) & KB_SIZE_MASK;
+	klen = (len >> 10) & KB_SIZE_MASK;
+	if(glen > 0)
+	{
+		snprintf(buf, sizeof(buf), "%d.%d G",glen, mlen);
+	}
+	else if(mlen > 0)
+	{
+		snprintf(buf, sizeof(buf), "%d.%d M",mlen, klen);
+	}
+	else if(klen > 0)
+	{
+		snprintf(buf, sizeof(buf), "%d.%d K",klen, (len) & KB_SIZE_MASK);
+	}
+	else
+	{
+		snprintf(buf, sizeof(buf), "%d Byte",len);
+	}
+	return buf;
+}
+
+/*const char * os_stream_size(long long len)
+{
+	return os_file_size(len);
+}*/
+
+#undef KB_SIZE_MASK
+
+
+
+/*
+ * tftp://1.1.1.1:80/file
+ * ftp://1.1.1.1:80/file
+ * ftp://user:password@1.1.1.1:80/file
+ */
+int os_url_split(const char * URL, os_url_t *spliurl)
+{
+	char tmp[128];
+	if(URL == NULL || !spliurl)
+		return ERROR;
+	char *url_dup = URL;
+	char *p_slash = NULL;
+	p_slash = strstr(url_dup, "@");
+	if(p_slash)
+	{
+		p_slash = strstr(url_dup, "://");
+		if(p_slash)
+		{
+			memset(tmp, 0, sizeof(tmp));
+			sscanf(url_dup, "%[^:]", tmp);
+			spliurl->proto = strdup(tmp);
+
+			p_slash += 3;
+		}
+		else
+			p_slash = url_dup;
+
+		memset(tmp, 0, sizeof(tmp));
+		sscanf(p_slash, "%[^:]", tmp);
+		spliurl->user = strdup(tmp);
+
+		p_slash = strstr(p_slash, ":");
+		p_slash++;
+		if(*p_slash == '@')
+			p_slash++;
+		else
+		{
+			memset(tmp, 0, sizeof(tmp));
+			sscanf(p_slash, "%[^@]", tmp);
+			spliurl->pass = strdup(tmp);
+			p_slash = strstr(p_slash, "@");
+			p_slash++;
+		}
+	}
+	else
+	{
+		p_slash = strstr(url_dup, "://");
+		if(p_slash)
+		{
+			memset(tmp, 0, sizeof(tmp));
+			sscanf(url_dup, "%[^:]", tmp);
+			spliurl->proto = strdup(tmp);
+
+			p_slash += 3;
+		}
+		else
+			p_slash = url_dup;
+	}
+	if(strstr(p_slash, ":"))
+	{
+		memset(tmp, 0, sizeof(tmp));
+		sscanf(p_slash, "%[^:]", tmp);
+		spliurl->host = strdup(tmp);
+		p_slash = strstr(p_slash, ":");
+		p_slash++;
+		spliurl->port = atoi(p_slash);
+		p_slash = strstr(p_slash, "/");
+	}
+	else
+	{
+		memset(tmp, 0, sizeof(tmp));
+		sscanf(p_slash, "%[^/]", tmp);
+		spliurl->host = strdup(tmp);
+		p_slash += strlen(spliurl->host);
+	}
+	if(p_slash && strlen(p_slash))
+	{
+		spliurl->filename = strdup(p_slash);
+		if(spliurl->proto && spliurl->host && spliurl->filename)
+			return OK;
+		return ERROR;
+	}
+	return ERROR;
+}
+
+int os_url_free(os_url_t *spliurl)
+{
+	if(!spliurl)
+		return ERROR;
+	if(spliurl->proto)
+	{
+		free(spliurl->proto);
+		spliurl->proto = NULL;
+	}
+	if(spliurl->host)
+	{
+		free(spliurl->host);
+		spliurl->host = NULL;
+	}
+	if(spliurl->path)
+	{
+		free(spliurl->path);
+		spliurl->path = NULL;
+	}
+	if(spliurl->filename)
+	{
+		free(spliurl->filename);
+		spliurl->filename = NULL;
+	}
+	if(spliurl->user)
+	{
+		free(spliurl->user);
+		spliurl->user = NULL;
+	}
+	if(spliurl->pass)
+	{
+		free(spliurl->pass);
+		spliurl->pass = NULL;
+	}
+	return OK;
+}
+
+int os_thread_once(int (*entry)(void *), void *p)
+{
+	int td_thread = 0;
+	if (pthread_create(&td_thread, NULL,
+			entry, (void *) p) == 0)
+		return td_thread;
+	return ERROR;
+}

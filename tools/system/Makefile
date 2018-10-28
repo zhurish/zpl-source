@@ -10,6 +10,10 @@ SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
 
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
 
+LDCLFLAG = $(PL_LDLIBS) -L$(DSTLIBDIR) -los 
+#CFLAGS += -g
+
+
 $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
@@ -20,7 +24,8 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 
 
 $(TARGET): $(MODULE_OBJS)
-	$(CC) $(MODULE_OBJS) $(CFLAGS) -o $(TARGET) 
+	$(CC) $(MODULE_OBJS) $(CFLAGS) $(LDCLFLAG) -o $(TARGET) 
+#	$(CC) $(MODULE_OBJS) $(CFLAGS) -o $(TARGET) 
 
 lib: $(MODULE_OBJS)
 

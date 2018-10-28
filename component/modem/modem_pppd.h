@@ -12,7 +12,7 @@
 #include "modem.h"
 
 
-#define _MODEM_PPPD_DEBUG
+//#define _MODEM_PPPD_DEBUG
 
 #ifdef _MODEM_PPPD_DEBUG
 #define MODEM_PPPD_PEERS_BASE	"/etc/ppp/peers/"
@@ -182,21 +182,24 @@ typedef struct pppd_options_s
 
 typedef struct modem_pppd_s
 {
-	NODE	node;
-	BOOL	active;
-	void	*modem;
+	NODE			node;
+	BOOL			active;
+	void			*modem;
 
 	// PPPD options
-	pppd_options_t pppd_options;
+	pppd_options_t 	pppd_options;
 
-	char	dial_name[MODEM_STRING_MAX];
-	char	connect[MODEM_STRING_MAX];
-	char	disconnect[MODEM_STRING_MAX];
-	char	secrets[MODEM_STRING_MAX];
-	char	option[MODEM_STRING_MAX];
+	char			dial_name[MODEM_STRING_MAX];
+	char			connect[MODEM_STRING_MAX];
+	char			disconnect[MODEM_STRING_MAX];
+	char			secrets[MODEM_STRING_MAX];
+	char			option[MODEM_STRING_MAX];
 
-	BOOL	linkup;
-	int 	taskid;
+	u_int32			checksum;
+	u_int32			t_time;
+
+	BOOL			linkup;
+	int 			taskid;
 }modem_pppd_t;
 
 

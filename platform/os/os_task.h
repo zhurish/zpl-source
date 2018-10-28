@@ -119,5 +119,8 @@ extern int os_task_destroy(unit32 taskId);
 #define os_task_create(n,p,o,f,a,s)	os_task_entry_create(n,p,o,f,a,#f,s)
 //#define os_task_destroy(i)	os_task_entry_create(i)
 
+extern int cmd_os_init();
+extern int os_task_show(void *vty, char *task_name, int detail);
+
 
 #endif /* __OS_TASK_H__ */

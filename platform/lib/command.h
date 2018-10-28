@@ -647,7 +647,7 @@ extern void cmd_init (int);
 extern void cmd_terminate (void);
 extern vector cmd_node_vector (vector v, enum node_type ntype);
 extern void install_default_basic (enum node_type node);
-
+extern char * zencrypt (const char *passwd);
 /* Export typical functions. */
 extern struct cmd_element config_end_cmd;
 extern struct cmd_element config_exit_cmd;

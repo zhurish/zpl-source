@@ -129,6 +129,6 @@ extern int nsm_interface_trunk_allowed_vlan_list_api(int add, struct interface *
 
 
 
-
+extern void cmd_vlan_init (void);
 
 #endif /* __NSM_VLAN_H__ */

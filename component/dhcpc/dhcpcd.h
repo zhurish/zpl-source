@@ -186,5 +186,7 @@ extern void close_sockets(struct dhcpc_interface *);
 extern void drop_dhcp(struct dhcpc_interface *, const char *);
 extern void drop_interface(struct dhcpc_interface *, const char *);
 extern int select_profile(struct dhcpc_interface *, const char *);
-
+extern void init_state(struct dhcpc_interface *iface);
+extern void if_reboot(struct dhcpc_interface *iface);
+extern void stop_interface(struct dhcpc_interface *iface);
 #endif

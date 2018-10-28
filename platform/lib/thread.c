@@ -1120,10 +1120,10 @@ void thread_call(struct thread *thread)
 		 * Whinge about it now, so we're aware this is yet another task
 		 * to fix.
 		 */
-		zlog_warn(ZLOG_DEFAULT,
+/*		zlog_warn(ZLOG_DEFAULT,
 				"SLOW THREAD: task %s (%lx) ran for %lums (cpu time %lums)",
 				thread->funcname, (unsigned long) thread->func, realtime / 1000,
-				cputime / 1000);
+				cputime / 1000);*/
 	}
 #endif /* CONSUMED_TIME_CHECK */
 }
@@ -1595,6 +1595,7 @@ static int cpu_thread_pqueue_show(struct pqueue *m, struct vty *vty)
 	}
 	return 0;
 }
+
 int cpu_thread_show(struct thread_master *m, struct vty *vty)
 {
 	//int i = 0;

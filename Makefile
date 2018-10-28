@@ -19,7 +19,7 @@ include make/makelinux.mk
 #
 #
 #
-TAGET=SWP-V$(PLVER)
+TAGET=SWP-$(PLVER)
 #
 #
 LIBS1 = $(shell $(CD) $(BASE_ROOT)/$(LIBDIR)/ && ls *.a)
@@ -50,7 +50,8 @@ endif
 #LDCLFLAG += -lssl
 #
 #
-export CFLAGS += -L$(BASE_ROOT)/$(LIBDIR)/ $(PLDEFINE) $(PLINCLUDE) $(PL_DEBUG) -g #-lcrypto
+export CFLAGS += -L$(BASE_ROOT)/$(LIBDIR)/ 
+#$(PLDEFINE) $(PLINCLUDE) $(PL_DEBUG) -g #-lcrypto
 #
 #
 %.o: %.c
@@ -65,6 +66,9 @@ $(TAGET) : $(OBJS) $(BASE_ROOT)/$(LIBDIR)/*.a
 	$(CC) $(OBJS) $(CFLAGS) -Xlinker "-(" $(LDCLFLAG) -Xlinker "-)" -o $(TAGET) 
 	$(CHMOD) a+x $(TAGET)
 #	$(STRIP) $(TAGET)
+	install -d ${BINDIR}
+	install -m 755 ${TAGET} ${BINDIR} 
+	#$(CP) $(TAGET) $(BINDIR)/
 #
 #
 #	
@@ -140,16 +144,10 @@ demo: all
 		$(RM) $(TAGET); \
 	fi
 	${MAKE}
-#OBJDIR = debug/obj
-#LIBDIR = debug/lib
-#BINDIR = debug/bin
-#SBINDIR = debug/sbin
-#ETCDIR = debug/etc
+#
+#
 dist: all
 	@$(ECHO) 'packet...'
-	@./tools/build.sh $(ARCH_TYPE) $(TAGET)
-	#@$(CD) $(RELEASEDIR) && $(TAR) -zcvf $(TAGET).tar.gz --exclude=$(LIBDIR)/*.a $(LIBDIR) $(ETCDIR) $(SBINDIR) $(BINDIR) && $(MV) $(TAGET).tar.gz ../$(TAGET).tar.gz
-
-#	${MAKE}	
+	@$(CD) make; ./packet.sh $(TAGET)	
 	
 	

@@ -66,8 +66,34 @@ extern int modem_IMEI_atcmd_get(modem_client_t *client);
 
 extern int modem_nwcell_atcmd_set(modem_client_t *client, BOOL enable);
 
+extern int modem_echo_atcmd_set(modem_client_t *client, BOOL enable);
+extern int modem_swreset_atcmd_set(modem_client_t *client);
+extern int modem_reboot_atcmd_set(modem_client_t *client);
+extern int modem_save_atcmd_set(modem_client_t *client);
+extern int modem_open_atcmd_set(modem_client_t *client);
+extern int modem_activity_atcmd_get(modem_client_t *client);
+extern int modem_gprsattach_atcmd_set(modem_client_t *client);
+extern int modem_nwscanmode_atcmd_set(modem_client_t *client);
+extern int modem_nwscanseq_atcmd_set(modem_client_t *client);
+extern int modem_roamservice_atcmd_set(modem_client_t *client);
+extern int modem_servicedomain_atcmd_set(modem_client_t *client);
+extern int modem_nwband_atcmd_set(modem_client_t *client);
+extern int modem_hsdpacat_atcmd_set(modem_client_t *client);
+extern int modem_hsupacat_atcmd_set(modem_client_t *client);
+extern int modem_sgsn_atcmd_set(modem_client_t *client);
+extern int modem_tdscsq_atcmd_set(modem_client_t *client);
+extern int modem_nwpdp_atcmd_set(modem_client_t *client);
+extern int modem_nwpdp_atcmd_enable(modem_client_t *client, BOOL enable);
+extern int modem_nwinfo_atcmd_get(modem_client_t *client);
+extern int modem_nwaddr_atcmd_get(modem_client_t *client);
+extern int modem_nwservingcell_atcmd_get(modem_client_t *client);
+extern int modem_nwreq_addr_atcmd_get(modem_client_t *client);
+extern int modem_IMSI_atcmd_get(modem_client_t *client);
+extern int modem_CCID_atcmd_get(modem_client_t *client);
+extern int modem_cell_information_atcmd_set(modem_client_t *client);
+extern int modem_cell_information_atcmd_get(modem_client_t *client);
 
-
+extern int modem_operator_atcmd_get(modem_client_t *client);
 
 
 

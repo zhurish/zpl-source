@@ -171,7 +171,9 @@ extern int nsm_interface_dhcpc_client_show(struct interface *ifp, struct vty *vt
 #endif
 
 
-
+extern void cmd_dhcp_init(void);
+extern void cmd_dhcps_init(void);
+extern void cmd_dhcpc_init(void);
 
 extern int nsm_dhcp_module_init ();
 extern int nsm_dhcp_module_exit ();

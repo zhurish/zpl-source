@@ -146,6 +146,36 @@ static int _modem_dhcpc_stop(modem_client_t *client)
 }
 
 
+BOOL modem_dhcpc_isconnect(modem_t *modem)
+{
+	assert(modem);
+	if(modem->pid[modem->dialtype])
+	{
+		return TRUE;
+	}
+	return FALSE;
+}
+
+BOOL modem_dhcpc_islinkup(modem_t *modem)
+{
+	assert(modem);
+	struct interface *ifp = modem->eth0;
+	if(modem && ifp)
+	{
+		if(modem->pid[modem->dialtype])
+		{
+			if(pal_interface_ifindex(ifp->k_name))
+			{
+				if(if_is_running(ifp))
+				{
+					//modem_serial_interface_update_kernel(modem, ifp->k_name);
+				}
+				return TRUE;
+			}
+		}
+	}
+	return FALSE;
+}
 
 int modem_dhcpc_attach(modem_t *modem)
 {
@@ -157,18 +187,6 @@ int modem_dhcpc_attach(modem_t *modem)
 	return ret;
 }
 
-int modem_dhcpc_start(modem_t *modem)
-{
-	int ret = OK;
-	assert(modem);
-	assert(modem->client);
-	if(modem->pid[modem->dialtype] == 0)
-		;//ret = _modem_dhcpc_start(modem->client);
-	MODEM_HDCP_DEBUG("dhcpc start");
-	return ret;
-}
-
-
 int modem_dhcpc_unattach(modem_t *modem)
 {
 	int ret = 0;
@@ -176,6 +194,17 @@ int modem_dhcpc_unattach(modem_t *modem)
 	assert(modem->client);
 	ret = _modem_dhcp_nwcall(modem->client, FALSE);
 	MODEM_HDCP_DEBUG("dhcpc stop dial");
+	return ret;
+}
+
+int modem_dhcpc_start(modem_t *modem)
+{
+	int ret = OK;
+	assert(modem);
+	assert(modem->client);
+	if(modem->pid[modem->dialtype] == 0)
+		ret = _modem_dhcpc_start(modem->client);
+	MODEM_HDCP_DEBUG("dhcpc start");
 	return ret;
 }
 

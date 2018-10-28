@@ -24,6 +24,7 @@
 
 
 #include "zebra.h"
+#include "vty.h"
 
 #define ELOOP_THREAD
 
@@ -237,5 +238,8 @@ extern unsigned long eloop_consumed_time(struct timeval *after, struct timeval *
 extern struct eloop_master * master_eloop[];
 extern struct eloop *eloop_current_get();
 //extern struct timeval eloop_recent_relative_time (void);
+
+extern int cpu_eloop_show(struct eloop_master *m, struct vty *vty);
+
 
 #endif /* _ELOOP_H */

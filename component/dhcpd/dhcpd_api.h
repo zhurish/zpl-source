@@ -38,12 +38,12 @@ extern int dhcps_task_exit ();
 
 
 
+extern const char *itoa(int value, int base);
+extern int dhcpd_service_is_enable(void);
 
-
-
-
-
-
+extern struct interface  * dhcpd_interface_lookup_api(int ifindex);
+extern int dhcpd_interface_add_api(int ifindex);
+extern int dhcpd_interface_del_api(int ifindex);
 
 
 

@@ -23,6 +23,10 @@ extern int dhcpd_subnet_address_range(struct subnet *subnet, struct iaddr *start
 
 extern struct host_decl * dhcpd_host_decl_create(struct group *group, char *name, unsigned char *mac, struct iaddr *address, int num);
 
+extern int dhcpd_host_decl_destroy(struct group *group, unsigned char *mac, int len);
+extern int dhcpd_option55_set(struct group *group, unsigned char *optionkey, int len);
+
+
 
 
 extern int dhcpd_bootp_lease_set(struct group *group, int val);
@@ -74,7 +78,9 @@ extern void convert_num(unsigned char *buf, char *str, int base, int size);
 
 
 
-
+extern long long
+strtonum(const char *numstr, long long minval, long long maxval,
+    const char **errstrp);
 
 
 

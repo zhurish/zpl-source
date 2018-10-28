@@ -702,63 +702,14 @@
 /* Define to 1 if your C compiler doesn't accept -c and -o together. */
 /* #undef NO_MINUS_C_MINUS_O */
 
-/* this OEM auther name */
-#define OEM_PACKAGE_AUTHER "zhurish"
-
-/* this OEM base of Quagga version */
-#define OEM_PACKAGE_BASE PACKAGE_STRING
-
-/* Define to the address where bug reports for this OEM package should be
-   sent. */
-#define OEM_PACKAGE_BUGREPORT "zhurish@163.com"
-
-/* this copyright for OEM version */
-#define OEM_PACKAGE_COPYRIGHT "Copyright 2016/03/03 - 2017/04/15 zhurish(zhurish@163.com) et al."
-
-/* Name of OEM package */
-#define OEM_PACKAGE_NAME "routing-plaform"
-
-/* this OEM base on Quagga version number(xx.xx.00) */
-#define OEM_PACKAGE_VERSION (0x00010200)
-
-/* Define to the version of this OEM package. */
-#define OEM_VERSION "V0.0.0.9"
-
 /* OpenBSD */
 /* #undef OPEN_BSD */
-
-/* Name of package */
-#define PACKAGE "quagga"
-
-/* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "https://bugzilla.quagga.net"
-
-/* Define to the full name of this package. */
-#define PACKAGE_NAME "Quagga"
-
-/* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Quagga 1.2.0"
-
-/* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "quagga"
-
-/* Define to the home page for this package. */
-#define PACKAGE_URL ""
-
-/* Define to the version of this package. */
-#define PACKAGE_VERSION "1.2.0"
 
 /* Have openpam_ttyconv */
 /* #undef PAM_CONV_FUNC */
 
-/* Quagga Group */
-#define QUAGGA_GROUP "zhurish"
-
 /* Hide deprecated interfaces */
 #define QUAGGA_NO_DEPRECATED_INTERFACES 1
-
-/* Quagga User */
-#define QUAGGA_USER "zhurish"
 
 /* Define to the type of arg 1 for `select'. */
 #define SELECT_TYPE_ARG1 int
@@ -826,8 +777,6 @@
 # define __EXTENSIONS__ 1
 #endif
 
-/* Version number of package */
-#define VERSION "1.2.0"
 
 /* VTY shell */
 #define VTYSH /**/
@@ -916,4 +865,6 @@
 /* Define to empty if the keyword `volatile' does not work. Warning: valid
    code using `volatile' can become incorrect without. Disable with care. */
 /* #undef volatile */
-#define OEM_BASE_VERSION(a,b,c)	((a)<<16)|((b)<<8)|(c)
+
+
+#include "oem_config.h"

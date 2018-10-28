@@ -93,4 +93,8 @@ extern unsigned long mtype_stats_alloc (int);
 /* Human friendly string for given byte count */
 #define MTYPE_MEMSTR_LEN 20
 extern const char *mtype_memstr (char *, size_t, unsigned long);
+
+extern void cmd_memory_init (void);
+extern int vty_show_memory_cmd(void *vty);
+
 #endif /* _ZEBRA_MEMORY_H */

@@ -70,6 +70,7 @@ extern int process_del_api(process_t *process);
 
 extern process_t * process_lookup_api(char *name);
 extern process_t * process_lookup_pid_api(int pid);
+extern process_t * process_lookup_id_api(int id);
 
 extern int process_callback_api(process_cb cb, void *pVoid);
 
@@ -78,6 +79,7 @@ extern int process_callback_api(process_cb cb, void *pVoid);
 extern int process_restart(process_t *process);
 extern int process_stop(process_t *process);
 extern int process_start(process_t *process);
+extern int process_deamon_start(process_t *process);
 extern int process_waitpid_api();
 
 extern process_t * process_get(process_head *head);

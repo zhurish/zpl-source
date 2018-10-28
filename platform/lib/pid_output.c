@@ -23,7 +23,7 @@
 #include <fcntl.h>
 #include "zebra.h"
 #include "log.h"
-#include "version.h"
+#include "daemon.h"
 
 
 #define PIDFILE_MASK 0644

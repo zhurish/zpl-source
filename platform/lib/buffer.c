@@ -28,16 +28,7 @@
 #include "network.h"
 #include "buffer.h"
 #include "vty.h"
-/* Buffer master. */
-struct buffer
-{
-	/* Data list. */
-	struct buffer_data *head;
-	struct buffer_data *tail;
 
-	/* Size of each buffer_data chunk. */
-	size_t size;
-};
 
 /* Data container. */
 struct buffer_data
@@ -54,6 +45,16 @@ struct buffer_data
 	unsigned char data[]; /* real dimension is buffer->size */
 };
 
+/* Buffer master. */
+struct buffer
+{
+	/* Data list. */
+	struct buffer_data *head;
+	struct buffer_data *tail;
+
+	/* Size of each buffer_data chunk. */
+	size_t size;
+};
 /* It should always be true that: 0 <= sp <= cp <= size */
 
 /* Default buffer size (used if none specified).  It is rounded up to the
@@ -403,7 +404,7 @@ buffer_status_t buffer_flush_available(struct buffer *b, int fd, int type)
 #endif
 #define MAX_FLUSH 131072
 
-	struct buffer_data *d;
+	struct buffer_data *d = NULL;
 	int written = 0;
 	struct iovec iov[MAX_CHUNKS];
 	size_t iovcnt = 0;

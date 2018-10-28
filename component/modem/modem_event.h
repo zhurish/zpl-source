@@ -10,7 +10,7 @@
 
 //#include "modem.h"
 
-#define __MODEM_EVENT_DEBUG
+//#define __MODEM_EVENT_DEBUG
 
 typedef struct modem_s modem_t;
 
@@ -58,6 +58,9 @@ typedef enum modem_event_s
 
 
 extern int modem_event_add_api(modem_t *, modem_event, BOOL );
+extern int modem_event_del_api(modem_t *, modem_event, BOOL );
+extern int modem_event_reload(modem_t *, modem_event, BOOL );
+
 
 extern const char *modem_event_string(modem_event );
 extern modem_event modem_event_inster(modem_t *, modem_event );
@@ -69,6 +72,18 @@ extern modem_event modem_event_online(modem_t *, modem_event );
 extern modem_event modem_event_offline(modem_t *, modem_event );
 extern modem_event modem_event_delay(modem_t *, modem_event );
 extern modem_event modem_event_detection(modem_t *, modem_event );
+
+extern modem_event modem_event_init(modem_t *, modem_event );
+extern modem_event modem_event_network_setup(modem_t *, modem_event );
+
+extern modem_event modem_event_network_attach(modem_t *, modem_event );
+extern modem_event modem_event_network_unattach(modem_t *, modem_event );
+extern modem_event modem_event_reboot(modem_t *, modem_event );
+extern modem_event modem_event_dailog(modem_t *, modem_event );
+
+extern modem_event modem_event_redailog(modem_t *, modem_event );
+extern modem_event modem_event_message(modem_t *, modem_event );
+
 
 
 extern modem_event modem_event_process(modem_t *, modem_event );

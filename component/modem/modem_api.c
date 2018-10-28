@@ -26,6 +26,23 @@
 #include "modem_usb_driver.h"
 
 
+
+int modem_main_change_set_api(modem_t *modem, modem_event event)
+{
+	if(!modem)
+		return OK;
+	char *start = &modem->dialtype;
+	char *end = &modem->eth2;
+	u_int32 checksum = crc_checksum(start, end - start + sizeof(void));
+	if(modem->checksum != checksum)
+	{
+		modem->checksum = checksum;
+		modem_event_reload(modem, event, TRUE );
+	}
+	return OK;
+}
+
+
 int modem_main_apn_set_api(modem_t *modem, char *apn)
 {
 	assert (modem);
@@ -41,6 +58,7 @@ int modem_main_apn_set_api(modem_t *modem, char *apn)
 		else
 			os_memset(modem->apn, 0, sizeof(modem->apn));
 	}
+	modem_main_change_set_api(modem, MODEM_EV_INSTER_CARD);
 	if(gModemmain.mutex)
 		os_mutex_unlock(gModemmain.mutex);
 	return OK;
@@ -55,6 +73,7 @@ int modem_main_ip_set_api(modem_t *modem, modem_stack_type type)
 	{
 		modem->ipstack = type;
 	}
+	modem_main_change_set_api(modem, MODEM_EV_INSTER_CARD);
 	if(gModemmain.mutex)
 		os_mutex_unlock(gModemmain.mutex);
 	return OK;
@@ -118,6 +137,7 @@ int modem_main_svc_set_api(modem_t *modem, char *svc)
 		else
 			os_memset(modem->svc, 0, sizeof(modem->svc));
 	}
+	modem_main_change_set_api(modem, MODEM_EV_INSTER_CARD);
 	if(gModemmain.mutex)
 		os_mutex_unlock(gModemmain.mutex);
 	return OK;
@@ -139,6 +159,7 @@ int modem_main_pin_set_api(modem_t *modem, char *pin)
 		else
 			os_memset(modem->pin, 0, sizeof(modem->pin));
 	}
+	modem_main_change_set_api(modem, MODEM_EV_INSTER_CARD);
 	if(gModemmain.mutex)
 		os_mutex_unlock(gModemmain.mutex);
 	return OK;
@@ -159,6 +180,7 @@ int modem_main_puk_set_api(modem_t *modem, char *puk)
 		else
 			os_memset(modem->puk, 0, sizeof(modem->puk));
 	}
+	modem_main_change_set_api(modem, MODEM_EV_INSTER_CARD);
 	if(gModemmain.mutex)
 		os_mutex_unlock(gModemmain.mutex);
 	return OK;
@@ -174,6 +196,7 @@ int modem_main_profile_set_api(modem_t *modem, int profile)
 	{
 		modem->profile = profile;
 	}
+	modem_main_change_set_api(modem, MODEM_EV_INSTER_CARD);
 	if(gModemmain.mutex)
 		os_mutex_unlock(gModemmain.mutex);
 	return OK;
@@ -211,6 +234,8 @@ int modem_main_dial_set_api(modem_t *modem, modem_dial_type type)
 						os_mutex_unlock(gModemmain.mutex);
 					return ERROR;
 				}
+				if(modem->pppd)
+					modem->pppd = NULL;
 				modem->dialtype = type;
 			}
 			if(modem->dialtype != MODEM_DIAL_PPP && type == MODEM_DIAL_PPP)
@@ -225,6 +250,7 @@ int modem_main_dial_set_api(modem_t *modem, modem_dial_type type)
 			}
 		}
 	}
+	modem_main_change_set_api(modem, MODEM_EV_INSTER_CARD);
 	if(gModemmain.mutex)
 		os_mutex_unlock(gModemmain.mutex);
 	return OK;
@@ -255,6 +281,7 @@ int modem_main_network_set_api(modem_t *modem, modem_network_type profile)
 	{
 		modem->network = profile;
 	}
+	modem_main_change_set_api(modem, MODEM_EV_INSTER_CARD);
 	if(gModemmain.mutex)
 		os_mutex_unlock(gModemmain.mutex);
 	return OK;
@@ -395,6 +422,7 @@ int modem_bind_interface_api(modem_t *modem, char *name, int number)
 			}
 		}
 	}
+	modem_main_change_set_api(modem, MODEM_EV_INSTER_CARD);
 	if(gModemmain.mutex)
 		os_mutex_unlock(gModemmain.mutex);
 	return OK;
@@ -472,6 +500,7 @@ int modem_unbind_interface_api(modem_t *modem, BOOL ppp, int number)
 			break;
 		}
 	}
+	modem_main_change_set_api(modem, MODEM_EV_INSTER_CARD);
 	if(gModemmain.mutex)
 		os_mutex_unlock(gModemmain.mutex);
 	return OK;

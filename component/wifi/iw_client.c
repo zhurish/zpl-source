@@ -1436,24 +1436,3 @@ int iw_client_exit(iw_client_t *iw_client)
                     IE: Unknown: 7F080000000000000040
                     IE: Unknown: DD180050F2020101000003A4000027A4000042435E0062322F00
  */
-int iw_client_scan_test(struct vty *vty)
-{
-	struct interface *ifp = if_lookup_by_name("wireless 0/0/1");
-	if(ifp)
-	{
-		//strcpy(ifp->k_name, "wlp3s0");
-		int ret = if_slot_set_port_phy(ifp->ifindex, "wlan0");
-		if(ret == OK)
-		{
-			if_kname_set(ifp, "wlan0");
-			SET_FLAG(ifp->status, ZEBRA_INTERFACE_ATTACH);
-
-			pal_interface_update_flag(ifp);
-			ifp->k_ifindex = pal_interface_ifindex(ifp->k_name);
-			pal_interface_get_lladdr(ifp);
-		}
-		iw_client_dev_scan_ap_show(ifp, vty, 0);
-	}
-	//testvty = vty;
-	return 0;
-}

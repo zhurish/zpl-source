@@ -164,6 +164,8 @@ extern void nsm_vrf_init (void);
 
 /* Create a socket serving for the given VRF */
 //extern int vrf_socket (int, int, int, vrf_id_t);
+extern int vrf_socket(int domain, int type, int protocol, vrf_id_t vrf_id);
+
 
 #endif /*_ZEBRA_VRF_H*/
 

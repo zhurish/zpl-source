@@ -95,6 +95,9 @@ struct nsm_interface
 
 };
 
+extern void nsm_interface_init(void);
+extern void cmd_interface_init(void);
+
 
 
 extern BOOL nsm_interface_create_check_api(struct vty *vty, const char *ifname, const char *uspv);
@@ -142,4 +145,7 @@ extern int nsm_interface_update_kernel(struct interface *ifp, char *kname);
 extern void nsm_interface_show_api(struct vty *vty, struct interface *ifp);
 extern void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, BOOL status, BOOL *head);
 
+
+extern int nsm_port_interface_config(struct vty *vty, struct interface *ifp);
+extern void cmd_port_init (void);
 #endif /* _ZEBRA_INTERFACE_H */

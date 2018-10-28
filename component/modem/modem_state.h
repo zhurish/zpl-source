@@ -30,7 +30,7 @@ extern const char *modem_network_type_string(modem_network_type type);
 
 extern int modem_network_type_id(modem_network_type type);
 
-
+extern modem_network_type modem_network_type_get(const char * type);
 
 extern int modem_signal_state_update(modem_client_t *client);
 extern modem_signal_state modem_signal_state_get(modem_client_t *client);

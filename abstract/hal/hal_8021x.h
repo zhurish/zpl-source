@@ -26,7 +26,13 @@ typedef struct sdk_8021x_s
 }sdk_8021x_t;
 
 
+extern int hal_8021x_interface_enable(ifindex_t ifindex, BOOL enable);
 
+extern int hal_8021x_state(ifindex_t ifindex, u_int value);
+
+extern int hal_8021x_mode(ifindex_t ifindex, u_int value);
+
+extern int hal_8021x_auth_bypass(ifindex_t ifindex, u_int value);
 
 
 #endif /* __HAL_8021X_H__ */

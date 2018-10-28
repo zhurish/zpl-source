@@ -78,5 +78,7 @@ extern int ip_arp_dynamic_cb(int action, void *pVoid);
 extern int nsm_ip_arp_config(struct vty *vty);
 extern int nsm_ip_arp_ageing_config(struct vty *vty);
 
+extern void cmd_arp_init(void);
+
 
 #endif /* __NSM_ARP_H_ */

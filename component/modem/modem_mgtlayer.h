@@ -41,6 +41,8 @@ extern int modem_mgtlayer_inster_usim(modem_t *modem);
  */
 extern int modem_mgtlayer_switch_usim(modem_t *modem);
 
+extern int modem_mgtlayer_usim_detection(modem_t *modem);
+extern int modem_mgtlayer_signal_detection(modem_t *modem);
 /*
  * 网络参数初始化，APN，Profile等信息
  */

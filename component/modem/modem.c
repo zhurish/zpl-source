@@ -138,6 +138,8 @@ static int modem_main_del_node(modem_t *node)
 		if(node->mutex)
 			os_mutex_exit(node->mutex);
 		lstDelete(gModemmain.list, (NODE*)node);
+		modem_mgtlayer_remove(node);
+		//modem_dhcpc_exit(node);
 		//node->client = NULL;
 /*		if(node->mutex)
 			s_mutex_exit(node->mutex);*/
@@ -254,7 +256,7 @@ int modem_main_unbind_api(char *name, char *serialname)
 				(client->driver->modem_driver_exit)(client->driver);
 				//modem_process_add_api(MODEM_EV_INSTER, modem, TRUE);
 			}
-			modem_process_del_api(MODEM_EV_MAX, modem, TRUE);
+			modem_event_del_api(modem, MODEM_EV_MAX, TRUE);
 			((modem_client_t *)modem->client)->modem = NULL;
 			//modem_event_remove(modem, MODEM_EV_REMOVE);
 			//modem_process_add_api(MODEM_EV_REMOVE, modem, TRUE);
@@ -356,6 +358,7 @@ int modem_main_callback_api(modem_cb cb, void *pVoid)
 	return OK;
 }
 
+
 int modem_main_lock(modem_t *modem)
 {
 	if(modem && modem->mutex)
@@ -454,11 +457,11 @@ int modem_main_init(void)
 
 int modem_main_exit(void)
 {
-	modem_main_list_exit();
+	modem_process_exit();
 	modem_pppd_exit();
+	modem_main_list_exit();
 	modem_serial_exit();
 	modem_client_exit();
-	modem_process_exit();
 	modem_usb_driver_exit();
 	return OK;
 }

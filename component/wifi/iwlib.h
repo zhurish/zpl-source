@@ -296,6 +296,9 @@ typedef struct iw_modul_descr
 /*
  * All the functions in iwcommon.c
  */
+extern int iwlist_main(int argc, char ** argv);
+extern int iw_main(int argc, char ** argv);
+
 extern int iwlist_detail_set(int value);
 extern int iwlist_detail_get();
 /* ---------------------- SOCKET SUBROUTINES -----------------------*/
@@ -491,6 +494,8 @@ extern int
 
 extern int iw_is_connect(char *ifname, unsigned char *bssid);
 extern int iw_kernel_mode(char *ifname, int *mode);
+extern int iw_start_scan(char * ifname, wireless_scan_head *context);
+extern int iw_free_scan(wireless_scan_head *context);
 /**************************** VARIABLES ****************************/
 
 /* Modes as human readable strings */

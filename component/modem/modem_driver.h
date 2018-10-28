@@ -123,6 +123,7 @@ extern int modem_driver_inster(int vendor, int product);
 
 extern int modem_driver_tty_probe(modem_driver_t *, char *devname[]);
 
+extern int modem_driver_hw_channel(int vendor, int product, u_int8 *hw_channel);
 
 extern int modem_driver_init(modem_driver_t *);
 extern int modem_driver_probe(modem_driver_t *);

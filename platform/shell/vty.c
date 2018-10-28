@@ -51,10 +51,10 @@ static void vty_event(enum vtyevent, int, struct vty *);
 extern struct host host;
 
 /* Vector which store each vty structure. */
-vector vtyvec;
+vector vtyvec = NULL;
 /* Master of the threads. */
-static struct thread_master *thread_master;
-static struct eloop_master *eloop_master;
+static struct thread_master *thread_master = NULL;
+static struct eloop_master *eloop_master = NULL;
 
 struct tty_console
 {
@@ -100,35 +100,13 @@ struct tty_console vty_tty_console;
 /* Restrict unauthenticated logins? */
 /*static const u_char restricted_mode_default = 0;
  static u_char restricted_mode = 0;*/
-int vty_out_to_all_terminal( const char *format, ...)
-{
-    int i = 0,len=0;
-    struct vty*vty;
-    va_list args;
-    char cszBuffer[1024] = {0};
-
-    if (!vtyvec)
-        return -1;
-
-    /* Try to write to initial buffer.  */
-    va_start (args, format);
-    len = vsprintf (cszBuffer, format, args);
-    va_end (args);
-
-    for (i = 0; i < vector_active (vtyvec); i++)
-    {
-        if ((vty = vector_slot (vtyvec, i)) != NULL)
-        {
-            vty_out(vty,"%s%s", cszBuffer, VTY_NEWLINE);
-        }
-    }
-
-    return len;
-}
 /* Integrated configuration file path */
 //char integrate_default[] = SYSCONFDIR INTEGRATE_DEFAULT_CONFIG;
 int do_log_commands = 0;
-void (*vty_ctrl_cmd)(int ctrl, struct vty *vty);
+static void (*vty_ctrl_cmd)(int ctrl, struct vty *vty) = NULL;
+
+static int vty_flush_handle(struct vty *vty, int vty_sock);
+
 
 static void vty_buf_assert(struct vty *vty)
 {
@@ -193,7 +171,15 @@ int vty_out(struct vty *vty, const char *format, ...)
 		/* When initial buffer is enough to store all output.  */
 		if (!p)
 			p = buf;
-
+		if(vty->ansync)
+		{
+			if (vty->fd_type == IPCOM_STACK)
+				ip_write(vty->wfd, p, len);
+			else
+				write(vty->wfd, p, len);
+			//vty_flush_handle(vty, vty->fd);
+		}
+		else
 		/* Pointer p must point out buffer. */
 		buffer_put(vty->obuf, (u_char *) p, len);
 
@@ -537,11 +523,14 @@ int vty_command(struct vty *vty, char *buf)
 #ifdef CONSUMED_TIME_CHECK
 		os_get_relative(&after);
 		if ((realtime = thread_consumed_time(&after, &before, &cputime)) >
-		CONSUMED_TIME_CHECK)
+			CONSUMED_TIME_CHECK)
+		{
 			/* Warn about CPU hog that must be fixed. */
-			zlog_warn(ZLOG_DEFAULT,
+			if(!(strstr(buf, "tftp") || strstr(buf, "ftp") || strstr(buf, "ping")))
+				zlog_warn(ZLOG_DEFAULT,
 					"SLOW COMMAND: command took %lums (cpu time %lums): %s",
 					realtime / 1000, cputime / 1000, buf);
+		}
 	}
 #endif /* CONSUMED_TIME_CHECK */
 
@@ -1742,10 +1731,16 @@ static int vty_read_handle(struct vty *vty, unsigned char *buf, int len)
 			}
 			continue;
 		}
-
-		if (vty_ctrl_cmd != NULL)
-			(vty_ctrl_cmd)(buf[i], vty);
-
+		if(vty->shell_ctrl_cmd)
+		{
+			if (vty->shell_ctrl_cmd != NULL)
+				(vty->shell_ctrl_cmd)(vty, buf[i], vty->ctrl);
+		}
+		else
+		{
+			if (vty_ctrl_cmd != NULL)
+				(vty_ctrl_cmd)(buf[i], vty);
+		}
 		switch (buf[i])
 		{
 		case CONTROL('A'):
@@ -1835,13 +1830,13 @@ static int vty_read_handle(struct vty *vty, unsigned char *buf, int len)
 }
 
 #if 1
-static int vty_read(struct thread *thread)
+static int vty_read(struct eloop *thread)
 {
 	int i;
 	int nbytes;
 	unsigned char buf[VTY_READ_BUFSIZ];
-	int vty_sock = THREAD_FD(thread);
-	struct vty *vty = THREAD_ARG(thread);
+	int vty_sock = ELOOP_FD(thread);
+	struct vty *vty = ELOOP_ARG(thread);
 	vty->t_read = NULL;
 	nbytes = ip_read(vty->fd, buf, VTY_READ_BUFSIZ);
 	/* Read raw data from socket */
@@ -2057,9 +2052,16 @@ vty_read (struct thread *thread)
 			continue;
 		}
 
-		if (vty_ctrl_cmd != NULL)
-		(vty_ctrl_cmd)(buf[i], vty);
-
+		if(vty->shell_ctrl_cmd)
+		{
+			if (vty->shell_ctrl_cmd != NULL)
+				(vty->shell_ctrl_cmd)(vty, buf[i]);
+		}
+		else
+		{
+			if (vty_ctrl_cmd != NULL)
+				(vty_ctrl_cmd)(buf[i], vty);
+		}
 		switch (buf[i])
 		{
 			case CONTROL('A'):
@@ -2221,13 +2223,13 @@ static int vty_flush_handle(struct vty *vty, int vty_sock)
 	return 0;
 }
 
-static int vty_flush(struct thread *thread)
+static int vty_flush(struct eloop *thread)
 {
 	//int erase;
 	//int type = 0;
 	//buffer_status_t flushrc;
-	int vty_sock = THREAD_FD(thread);
-	struct vty *vty = THREAD_ARG(thread);
+	int vty_sock = ELOOP_FD(thread);
+	struct vty *vty = ELOOP_ARG(thread);
 
 	vty->t_write = NULL;
 	vty_flush_handle(vty, vty_sock);
@@ -2408,6 +2410,7 @@ static int vty_console_wait(struct thread *thread)
 	{
 		if (vty_tty_console.t_wait)
 			thread_cancel(vty_tty_console.t_wait);
+		vty_tty_console.t_wait = NULL;
 		if (thread_master)
 			vty_tty_console.t_wait = thread_add_timer(thread_master,
 					vty_console_wait, vty, 1);
@@ -2465,6 +2468,9 @@ static void vty_console_close(int close)
 			if (vty_tty_console.console->t_timeout)
 				thread_cancel(vty_tty_console.console->t_timeout);
 
+			vty_tty_console.console->t_read = NULL;
+			vty_tty_console.console->t_write = NULL;
+			vty_tty_console.console->t_timeout = NULL;
 			/* Flush buffer. */
 			buffer_flush_all(vty_tty_console.console->obuf,
 					vty_tty_console.console->wfd, OS_STACK);
@@ -2982,7 +2988,9 @@ void vty_close(struct vty *vty)
 			thread_cancel(vty->t_write);
 		if (vty->t_timeout)
 			thread_cancel(vty->t_timeout);
-
+		vty->t_read = NULL;
+		vty->t_write = NULL;
+		vty->t_timeout = NULL;
 		type = OS_STACK;
 	}
 	else
@@ -2994,7 +3002,9 @@ void vty_close(struct vty *vty)
 			eloop_cancel(vty->t_write);
 		if (vty->t_timeout)
 			eloop_cancel(vty->t_timeout);
-
+		vty->t_read = NULL;
+		vty->t_write = NULL;
+		vty->t_timeout = NULL;
 		type = IPCOM_STACK;
 	}
 	/* Flush buffer. */
@@ -3183,7 +3193,7 @@ static int host_config_default(char *password, char *defult_config)
 		//exit(0);
 	}
 	if (host.name == NULL)  //
-		host.name = XSTRDUP(MTYPE_HOST, QUAGGA_PROGNAME);
+		host.name = XSTRDUP(MTYPE_HOST, OEM_PROGNAME);
 	if (host.mutx)
 		os_mutex_unlock(host.mutx);
 
@@ -3363,7 +3373,14 @@ int vty_config_unlock(struct vty *vty)
 static void vty_event(enum vtyevent event, int sock, struct vty *vty)
 {
 	struct eloop *vty_serv_thread;
-
+	if(vty && vty->cancel)
+	{
+		if(event == VTY_SERV || event == VTYSH_SERV ||
+				event == VTY_STDIO_WAIT || event == VTY_STDIO_ACCEPT)
+			;
+		else
+			return;
+	}
 	switch (event)
 	{
 	case VTY_SERV:
@@ -3385,14 +3402,14 @@ static void vty_event(enum vtyevent event, int sock, struct vty *vty)
 	case VTY_READ:
 		if (vty->fd_type == OS_STACK || vty->type == VTY_FILE)
 		{
-			vty->t_read = thread_add_read(thread_master, vty_console_read, vty,
-					sock);
+			vty->t_read = thread_add_read(thread_master, vty_console_read, vty, sock);
 
 			/* Time out treatment. */
 			//if (vty->v_timeout)
 			{
 				if (vty->t_timeout)
 					thread_cancel(vty->t_timeout);
+				vty->t_timeout = NULL;
 				vty->t_timeout = thread_add_timer(thread_master,
 						vty_console_timeout, vty, vty->v_timeout ? vty->v_timeout:host.vty_timeout_val);
 			}
@@ -3406,6 +3423,7 @@ static void vty_event(enum vtyevent event, int sock, struct vty *vty)
 			{
 				if (vty->t_timeout)
 					eloop_cancel(vty->t_timeout);
+				vty->t_timeout = NULL;
 				vty->t_timeout = eloop_add_timer(eloop_master, vty_timeout, vty,
 						vty->v_timeout ? vty->v_timeout:host.vty_timeout_val);
 			}
@@ -3511,6 +3529,7 @@ void vty_reset()
 		if ((vty_serv_thread = vector_slot(host.Vvty_serv_thread, i)) != NULL)
 		{
 			eloop_cancel(vty_serv_thread);
+			vty_serv_thread = NULL;
 			vector_slot (host.Vvty_serv_thread, i) = NULL;
 			close(i);
 		}
@@ -3531,6 +3550,56 @@ void vty_reset()
 	}
 	if (host.mutx)
 		os_mutex_unlock(host.mutx);
+}
+
+int vty_cancel(struct vty *vty, int close)
+{
+	if(close == 1)
+	{
+		if (vty->fd_type == OS_STACK || vty->type == VTY_FILE)
+		{
+			/* Cancel threads.*/
+			if (vty->t_read)
+				thread_cancel(vty->t_read);
+			if (vty->t_write)
+				thread_cancel(vty->t_write);
+			if (vty->t_timeout)
+				thread_cancel(vty->t_timeout);
+			vty->t_read = NULL;
+			vty->t_write = NULL;
+			vty->t_timeout = NULL;
+		}
+		else
+		{
+			/* Cancel threads.*/
+			if (vty->t_read)
+				eloop_cancel(vty->t_read);
+			if (vty->t_write)
+				eloop_cancel(vty->t_write);
+			if (vty->t_timeout)
+				eloop_cancel(vty->t_timeout);
+			vty->t_read = NULL;
+			vty->t_write = NULL;
+			vty->t_timeout = NULL;
+		}
+		vector_unset(vtyvec, vty->fd);
+		vty->cancel = TRUE;
+	}
+	return OK;
+}
+
+int vty_recovery(struct vty *vty, int close)
+{
+	if(close == 1)
+	{
+		if(vty->cancel)
+		{
+			vty->cancel = FALSE;
+			vector_set_index(vtyvec, vty->fd, vty);
+			vty_event(VTY_READ, vty->fd, vty);
+		}
+	}
+	return OK;
 }
 
 static void vty_save_cwd(void)
@@ -3564,6 +3633,12 @@ int vty_shell(struct vty *vty)
 int vty_shell_serv(struct vty *vty)
 {
 	return vty->type == VTY_SHELL_SERV ? 1 : 0;
+}
+
+int vty_ansync_enable(struct vty *vty, BOOL enable)
+{
+	vty->ansync = enable;
+	return OK;
 }
 
 void vty_init_vtysh()

@@ -18,6 +18,7 @@ extern int modem_register_state(modem_client_t *client, int code);
 
 extern int modem_pin_state_split(modem_client_t *client, char *buf);
 
+extern int modem_qnwinfo_split(modem_client_t *client, char *buf);
 
 extern const char *modem_pdp_cmd(modem_t *modem);
 

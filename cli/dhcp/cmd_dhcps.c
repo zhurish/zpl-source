@@ -633,13 +633,11 @@ static void cmd_base_dhcps_init(int node)
 
 static void cmd_show_dhcps_init(int node)
 {
-
 /*	install_element(node, &nsm_show_dhcp_client_cmd);
 	install_element(node, &nsm_show_dhcp_client_interface_cmd);
 
 	install_element(node, &nsm_show_dhcp_client_detail_cmd);
 	install_element(node, &nsm_show_dhcp_client_detail_interface_cmd);*/
-
 }
 
 void cmd_dhcps_init(void)

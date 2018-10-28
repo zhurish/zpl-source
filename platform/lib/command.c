@@ -70,9 +70,9 @@ enum matcher_rv
 /* Default motd string. */
 const char *default_motd =
 "\r\n\
-Hello, this is " QUAGGA_PROGNAME " (version " QUAGGA_VERSION ").\r\n\
-" QUAGGA_COPYRIGHT "\r\n\
-" GIT_INFO "\r\n";
+Hello, this is " OEM_PACKAGE_BASE " (version " OEM_VERSION ").\r\n\
+" OEM_PACKAGE_COPYRIGHT "\r\n\
+" "\r\n";
 
 
 
@@ -80,8 +80,8 @@ Hello, this is " QUAGGA_PROGNAME " (version " QUAGGA_VERSION ").\r\n\
 void
 print_version (const char *progname)
 {
-  printf ("%s version %s\n", progname, QUAGGA_VERSION);
-  printf ("%s\n", QUAGGA_COPYRIGHT);
+  printf ("%s version %s\n", progname, OEM_VERSION);
+  printf ("%s\n", OEM_PACKAGE_COPYRIGHT);
 //  printf ("configured with:\n\t%s\n", QUAGGA_CONFIG_ARGS);
 }
 
@@ -1658,6 +1658,10 @@ cmd_vector_filter(vector commands,
   for (i = 0; i < vector_active (commands); i++)
     if ((cmd_element = vector_slot (commands, i)) != NULL)
       {
+#ifdef HAVE_ROUTE_OPTIMIZE
+        if(cmd_element->attr == CMD_ATTR_HIDDEN)
+      	  ;//continue;
+#endif//HAVE_ROUTE_OPTIMIZE
         vector_set_index(*matches, i, NULL);
         matcher_rv = cmd_element_match(cmd_element, filter,
                                        vline, index,

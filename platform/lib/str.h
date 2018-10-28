@@ -29,5 +29,9 @@ extern size_t strnlen(const char *s, size_t maxlen);
 extern char * strndup (const char *, size_t);
 #endif
 
+extern const char *strupr(char* src);
+extern const char *strlwr(char* src);
+extern const char *string_have_space(char* src);
+
 #endif /* _ZEBRA_STR_H */
 
