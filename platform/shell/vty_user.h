@@ -5,11 +5,13 @@
  *      Author: zhurish
  */
 
-#ifndef LIB_VTY_USER_H_
-#define LIB_VTY_USER_H_
+#ifndef __LIB_VTY_USER_H__
+#define __LIB_VTY_USER_H__
 
-
+#include "zebra.h"
+#include "vty.h"
 #include "md5.h"
+
 //#define VTY_USER_DEBUG
 
 #define VTY_USERNAME_DEFAULT	"admin"
@@ -51,35 +53,35 @@ struct vty_user
 
 
 
-struct vty;
 
 //extern struct vty_user * vty_user_lookup (const char *name);
+extern char * vty_user_setting (struct vty *, const char *);
 
-extern char * vty_user_setting (struct vty *vty, const char *name);
-extern int vty_user_getting_authen_type (struct vty *vty, char *name);
-extern int vty_user_setting_authen_type (struct vty *vty, char *name, int authen_type);
-extern int vty_user_getting_privilege (struct vty *vty, char *name);
-extern int vty_user_setting_privilege (struct vty *vty, char *name, int privilege);
-extern int vty_user_encrypt_enable (BOOL encrypt);
+extern int vty_user_getting_authen_type (struct vty *, char *);
+extern int vty_user_setting_authen_type (struct vty *, char *, int );
+extern int vty_user_getting_privilege (struct vty *, char *);
+extern int vty_user_setting_privilege (struct vty *, char *, int );
+extern int vty_user_encrypt_enable (BOOL );
 
-extern BOOL vty_user_enable_password (struct vty *vty, const char *name);
+extern BOOL vty_user_enable_password (struct vty *, const char *);
 
+extern int user_authentication (char *, char *);
 //authentication authorization accounting
-extern int vty_user_authentication (struct vty *vty, char *password);
-extern int vty_user_authorization (struct vty *vty, char *cmd);
-extern int vty_user_accounting_start (struct vty *vty);
-extern int vty_user_accounting_stop (struct vty *vty);
+extern int vty_user_authentication (struct vty *, char *);
+extern int vty_user_authorization (struct vty *, char *);
+extern int vty_user_accounting_start (struct vty *);
+extern int vty_user_accounting_stop (struct vty *);
 
-extern int vty_user_config_write (struct vty *vty);
+extern int vty_user_config_write (struct vty *);
 
-extern int vty_user_create(struct vty *vty, char *name, char *password, BOOL enable, BOOL encrypt);
-extern int vty_user_delete(struct vty *vty, char *name, BOOL password, BOOL enable);
-extern int vty_user_change(struct vty *vty, char *name);
+extern int vty_user_create(struct vty *, char *, char *, BOOL , BOOL );
+extern int vty_user_delete(struct vty *, char *, BOOL , BOOL );
+extern int vty_user_change(struct vty *, char *);
 
 
-extern BOOL md5_encrypt_empty(unsigned char *ecrypt);
+extern BOOL md5_encrypt_empty(unsigned char *);
 //extern int encrypt_XCH(unsigned char *pass, unsigned char *password);
-extern int md5_encrypt_password(char *password, unsigned char *ecrypt);
+extern int md5_encrypt_password(char *, unsigned char *);
 
 extern int vty_user_init(void);
 
@@ -91,4 +93,4 @@ extern int vty_user_init(void);
 #endif
 
 
-#endif /* LIB_VTY_USER_H_ */
+#endif /* __LIB_VTY_USER_H__ */

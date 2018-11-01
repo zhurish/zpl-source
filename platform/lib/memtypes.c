@@ -322,6 +322,7 @@ struct memory_list memory_list_vtysh[] =
   { MTYPE_VTYSH_CONFIG_LINE,	"Vtysh configuration line"	},
   { -1, NULL },
 };
+
 /* 2016��6��27�� 21:07:44 zhurish: ��չ·��Э�����ӵ��ڴ���Ϣ */
 #ifdef ZEBRA_ROUTE_OLSR 
 struct memory_list memory_list_olsr[] =
@@ -443,6 +444,17 @@ struct memory_list memory_list_port[] =
 	{ -1, NULL },
 };
 
+struct memory_list memory_list_ssh[] =
+{
+  { MTYPE_SSH,			"SSH information"	},
+  { MTYPE_SSHD,			"SSHD information"	},
+
+  { MTYPE_SSH_CLIENT,	"SSH Client information"	},
+  { MTYPE_SSH_SCP,		"SSH SCP information"	},
+  { MTYPE_SSH_SFTP,		"SSH SFTP information"	},
+  { -1, NULL },
+};
+
 
 struct mlist mlists[] __attribute__ ((unused)) = {
   { memory_list_lib,	"LIB"	},
@@ -477,6 +489,9 @@ struct mlist mlists[] __attribute__ ((unused)) = {
   { memory_list_wifi,	"WIFI"	},
 #endif
   { memory_list_port,	"PORT"	},
+
+  { memory_list_ssh,	"SSH"	},
+
 /* 2016��6��27�� 21:07:44 zhurish: ��չ·��Э�����ӵ��ڴ���Ϣ */
   { NULL, NULL},
 };

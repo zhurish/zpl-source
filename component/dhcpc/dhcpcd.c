@@ -912,8 +912,8 @@ configure_interface1(struct dhcpc_interface *iface)
 int
 select_profile(struct dhcpc_interface *iface, const char *profile)
 {
-	struct if_options *ifo;
-	int ret;
+	struct if_options *ifo = NULL;
+	int ret = 0;
 
 	ret = 0;
 	//ifo = read_config(cffile, iface->name, iface->ssid, profile);

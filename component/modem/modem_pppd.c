@@ -380,6 +380,8 @@ static int modem_pppd_create_connect(modem_pppd_t *pppd)
 			MODEM_PPPD_DEBUG("PPPD create connect script");
 			return OK;
 		}
+		fflush(fp);
+		fclose(fp);
 	}
 	return ERROR;
 }
@@ -405,6 +407,8 @@ static int modem_pppd_create_disconnect(modem_pppd_t *pppd)
 			MODEM_PPPD_DEBUG("PPPD create disconnect script");
 			return OK;
 		}
+		fflush(fp);
+		fclose(fp);
 	}
 	return ERROR;
 }
@@ -815,7 +819,8 @@ static int modem_pppd_create_secrets(modem_pppd_t *pppd)
 	fp = fopen(filepath, "w+");
 	if(fp)
 	{
-
+		fflush(fp);
+		fclose(fp);
 	}
 	return ERROR;
 }

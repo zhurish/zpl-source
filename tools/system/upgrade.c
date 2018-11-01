@@ -34,12 +34,12 @@ static void _usage (char *progname, int status)
     fprintf (stderr, "Try `%s --help' for more information.\n", progname);
   else
     {
-      printf ("Usage : %s [OPTION...]\n\n"\
+      printf ("Usage : %s [OPTION...]\n\n" \
 	      "-s, --server     tftp server address\n"\
 	      "-f, --file  		file name\n"\
 	      "-r, --reboot    	Set reboot flag\n"\
 	      "-h, --help       Display this help and exit\n"\
-	      "\n");
+	      "\n", progname);
     }
   exit (status);
 }
@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
 	{
 		if(access(file, 0) != 0)
 		{
-			fprintf(stdout, " file %s is not exist.\n");
+			fprintf(stdout, " file %s is not exist.\n", file);
 			return -1;
 		}
 		memset(cmd, 0, sizeof(cmd));

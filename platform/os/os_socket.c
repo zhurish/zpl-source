@@ -18,11 +18,11 @@
 
 
 
-int sock_server_create(BOOL tcp, char *ipaddress, int port, int listennum)
+int sock_create(BOOL tcp)
 {
-	int rc, ret;
-	struct sockaddr_in serv;
-	int flag = 1;
+	int rc = 0;//, ret;
+	//struct sockaddr_in serv;
+	//int flag = 1;
 
 	/* socket creation */
 	rc = socket(AF_INET, tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
@@ -32,12 +32,19 @@ int sock_server_create(BOOL tcp, char *ipaddress, int port, int listennum)
 		return ERROR;
 	}
 
-	if (setsockopt(rc, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int)) < 0)
+/*	if (setsockopt(rc, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int)) < 0)
 	{
 		fprintf(stderr, "cannot SO_REUSEADDR socket\n");
 		close(rc);
 		return ERROR;
-	}
+	}*/
+	return rc;
+}
+
+int sock_bind(int sock, char *ipaddress, int port)
+{
+	struct sockaddr_in serv;
+	int ret = 0, flag = 1;
 	/* bind local server port */
 	serv.sin_family = AF_INET;
 	if (ipaddress)
@@ -46,26 +53,28 @@ int sock_server_create(BOOL tcp, char *ipaddress, int port, int listennum)
 		serv.sin_addr.s_addr = htonl(INADDR_ANY);
 	serv.sin_port = htons(port);
 
-	ret = bind(rc, (struct sockaddr *) &serv, sizeof(serv));
+	ret = bind(sock, (struct sockaddr *) &serv, sizeof(serv));
 	if (ret < 0)
 	{
 		fprintf(stderr, "cannot bind port number %d(%s) \n", port,
 				strerror(errno));
-		close(rc);
 		return ERROR;;
 	}
-	if (!tcp)
+	return OK;
+}
+
+int sock_listen(int sock, int listennum)
+{
+	struct sockaddr_in serv;
+	int ret = 0;
+	ret = listen(sock, listennum);
+	if (ret < 0)
 	{
-		ret = listen(rc, listennum);
-		if (ret < 0)
-		{
-			fprintf(stderr, "cannot listen port number %d(%s) \n", port,
-					strerror(errno));
-			close(rc); /* Avoid sd leak. */
-			return ERROR;;
-		}
+		fprintf(stderr, "cannot listen %s \n",
+				strerror(errno));
+		return ERROR;;
 	}
-	return rc;
+	return OK;
 }
 
 int sock_accept (int accept_sock, void *p)
@@ -86,6 +95,9 @@ int sock_accept (int accept_sock, void *p)
 	return sock;
 }
 
+
+
+
 int tcp_sock_state (int sock)
 {
 	int client_len;
@@ -100,26 +112,11 @@ int tcp_sock_state (int sock)
 	return client.tcpi_state;
 }
 
-int sock_client_create(BOOL tcp, char *ipaddress, int port)
+int sock_connect(int sock, char *ipaddress, int port)
 {
-	int rc, ret;
-	int flag = 1;
+	int ret = 0;
 
-	/* socket creation */
-	rc = socket(AF_INET, tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
-	if (rc < 0)
-	{
-		fprintf(stderr, "cannot open socket\n");
-		return ERROR;
-	}
-
-	/*	if (setsockopt(rc, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int)) < 0)
-	 {
-	 fprintf(stderr,"cannot SO_REUSEADDR socket\n");
-	 close(rc);
-	 return ERROR;
-	 }*/
-	if (tcp || ipaddress)
+	if (ipaddress)
 	{
 		struct sockaddr_in serv;
 		/* bind local server port */
@@ -127,17 +124,88 @@ int sock_client_create(BOOL tcp, char *ipaddress, int port)
 		serv.sin_addr.s_addr = inet_addr(ipaddress);
 		serv.sin_port = htons(port);
 
-		ret = connect(rc, (struct sockaddr *) &serv, sizeof(serv));
+		ret = connect(sock, (struct sockaddr *) &serv, sizeof(serv));
 		if (ret < 0)
 		{
 			fprintf(stderr, "cannot connect to %s:%d(%s) \n", ipaddress, port,
 					strerror(errno));
-			close(rc);
 			return ERROR;;
 		}
+		return OK;
 	}
-	return rc;
+	return ERROR;
 }
+
+int sock_connect_timeout(int sock, char *ipaddress, int port, int timeout_ms)
+{
+	int ret = 0;
+
+	if (ipaddress)
+	{
+	    fd_set writefds;
+	    int sockerror = 0;
+	    socklen_t length = sizeof( sockerror );
+		struct sockaddr_in serv;
+		/* bind local server port */
+		serv.sin_family = AF_INET;
+		serv.sin_addr.s_addr = inet_addr(ipaddress);
+		serv.sin_port = htons(port);
+		if(os_get_blocking(sock) == 1)
+			os_set_nonblocking(sock);
+		ret = connect(sock, (struct sockaddr *) &serv, sizeof(serv));
+		if (ret < 0)
+		{
+		    //unblock mode --> connect return immediately! ret = -1 & errno=EINPROGRESS
+		    if ( errno != EINPROGRESS )
+		    {
+		        printf( "unblock connect failed!\n" );
+		        return ERROR;
+		    }
+		    else if (errno == EINPROGRESS)
+		    {
+		        printf( "unblock mode socket is connecting...\n" );
+		    }
+			fprintf(stderr, "cannot connect to %s:%d(%s) \n", ipaddress, port,
+					strerror(errno));
+			return ERROR;;
+		}
+	    FD_ZERO( &writefds );
+	    FD_SET( sock, &writefds );
+		ret = os_select_wait(sock+1, NULL, &writefds, timeout_ms);
+	    //use select to check write event, if the socket is writable, then
+	    //connect is complete successfully!
+		if(ret == 0)
+		{
+	        printf( "connect timeout\n" );
+	        return ERROR;
+		}
+		if(ret < 0)
+		{
+	        printf( "connect error %s\n" ,strerror(errno));
+	        return ERROR;
+		}
+	    if ( ! FD_ISSET( sock, &writefds  ) )
+	    {
+	        printf( "no events on sockfd found\n" );
+	        return ERROR;
+	    }
+	    if( getsockopt( sock, SOL_SOCKET, SO_ERROR, &sockerror, &length ) < 0 )
+	    {
+	        printf( "get socket option failed\n" );
+	        return ERROR;
+	    }
+
+	    if( sockerror != 0 )
+	    {
+	        printf( "connection failed after select with the error: %d \n", sockerror );
+	        return ERROR;
+	    }
+		return OK;
+	}
+	return ERROR;
+}
+
+
 
 int sock_client_write(int fd, char *ipaddress, int port, char *buf, int len)
 {
@@ -161,6 +229,9 @@ int sock_client_write(int fd, char *ipaddress, int port, char *buf, int len)
 	}
 	return ret;
 }
+
+
+
 
 int unix_sock_server_create(BOOL tcp, const char *name)
 {
@@ -329,3 +400,4 @@ int unix_sock_client_write(int fd, char *name, char *buf, int len)
 	}
 	return ret;
 }
+

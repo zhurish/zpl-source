@@ -80,28 +80,27 @@ extern "C" {
 typedef struct pingStat                         /* PING_STAT */
     {
     int                 pingFd;                 /* socket file descriptor */
-    //char                toHostName [MAXHOSTNAMELEN + 2];/* name to ping */
+    char                toHostName [MAXHOSTNAMELEN + 2];/* name to ping */
     char                toInetName [INET_ADDR_LEN];/* IP addr to ping */
     ifindex_t			ifindex;
     char                *bufTx;                 /* transmit buffer */
     char                *bufRx;                 /* receive buffer */
-    u_int16				rxmaxlen;
-    struct icmp *       pBufIcmp;               /* ptr to icmp */
+    struct icmp         *pBufIcmp;               /* ptr to icmp */
     struct timeval		*pBufTime;               /* ptr to time */
+    u_int16				rxmaxlen;
     u_int16             dataLen;                /* size of data portion */
     int                 numPacket;              /* total # of packets to send */
     u_int32             numTx;                  /* number of packets sent */
     u_int32             numRx;                  /* number of packets received */
     u_int32             idRx;                   /* id of Rx task */
-    //int               clkTick;                /* sys clock ticks per second */
     u_int32             tMin;                   /* min RT time (ms) */
     u_int32             tMax;                   /* max RT time (ms) */
     u_int32             tSum;                   /* sum of all times */
     u_int32             flags;                  /* option flags */
     u_int32             timing;                 /* flag to do timing */
-    u_int16 			_pingTxLen; /* size of icmp echo packet */
-    u_int8 				_pingTxInterval; /* packet interval in seconds */
-    u_int8 				_pingTxTmo; /* packet timeout in seconds */
+    u_int16 			pingTxLen; /* size of icmp echo packet */
+    u_int8 				pingTxInterval; /* packet interval in seconds */
+    u_int8 				pingTxTmo; /* packet timeout in seconds */
     u_int8              maxttl;
     struct vty			*vty;
     BOOL				quit;

@@ -42,8 +42,21 @@ extern "C" {
 #include <config.h>
 
 #define FTPD_BASEDIR_DEFAULT	BASE_DIR"/ftpboot"
-/* function declarations */
 
+
+/*
+#define FTPD_DEBUG_LOGIN	1
+#define FTPD_DEBUG_DATA		2
+*/
+#define FTPD_DEBUG_CMD		4
+
+#define FTPD_DEBUG_EVENT	8
+//#define FTPD_DEBUG_DEFAIL	0X10
+
+#define FTPD_IS_DEBUG(n)		(ftpd_config.ftpdDebug & FTPD_DEBUG_ ## n)
+
+
+/* function declarations */
 
 extern int 	ftpdInit (void	*, void *);
 extern int 	ftpdDelete (void);

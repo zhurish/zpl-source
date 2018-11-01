@@ -50,7 +50,7 @@ extern "C" {
 #define TRACEROUTE_MINPACKET		64	/* min packet size */
 #define TRACEROUTE_MAXPACKET		65536	/* max packet size */
 #define TRACEROUTE_INTERVAL           1       /* default packet interval in seconds */
-#define TRACEROUTE_TMO		1	/* default packet timeout in seconds */
+#define TRACEROUTE_TMO		5	/* default packet timeout in seconds */
 #define TRACEROUTE_MAXTTL	30
 
 
@@ -83,6 +83,7 @@ typedef struct tracerouteStat                         /* TRACEROUTE_STAT */
     {
     int                 tracerouteFd;                 /* socket file descriptor */
     char                toInetName [INET_ADDR_LEN];/* IP addr to traceroute */
+    char                toHostName [MAXHOSTNAMELEN];/* IP addr to traceroute */
     ifindex_t			ifindex;
     char                *bufTx;                 /* transmit buffer */
     char                *bufRx;                 /* receive buffer */

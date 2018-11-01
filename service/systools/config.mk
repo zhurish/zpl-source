@@ -13,6 +13,7 @@ OBJS	+= ftpdLib.o
 
 
 OBJS	+= telnetcLib.o
+#OBJS	+= telnetdLib.o
 
 OBJS	+= pingLib.o
 OBJS	+= tracerouteLib.o

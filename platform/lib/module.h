@@ -17,6 +17,7 @@ typedef enum
   MODULE_JOB,		//Default
   MODULE_CONSOLE,		//Console
   MODULE_TELNET,		//telnet
+  MODULE_SSH,		//telnet
   MODULE_NSM,			//route table manage
   MODULE_MODEM,			//MODEM
   MODULE_WIFI,			//wifi

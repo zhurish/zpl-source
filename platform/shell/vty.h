@@ -25,7 +25,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "log.h"
 #include "sockunion.h"
 #include "thread.h"
-#include "vty_user.h"
+//#include "vty_user.h"
 
 #define VTY_MAXHIST 20
 #define VTY_BUFSIZ 4096
@@ -152,6 +152,11 @@ struct vty
   int	(*shell_ctrl_cmd)(struct vty *, int , void *);
   void *ctrl;
 
+  BOOL	ssh_enable;
+  int	(*ssh_close)(struct vty *);
+  void	*ssh;
+
+
   BOOL	cancel;
 
   BOOL	ansync;
@@ -275,44 +280,72 @@ do {                                                                          \
 extern char integrate_default[];
 
 /* Prototypes. */
-extern void vty_init (void *, void *);
-extern void vty_init_vtysh (void);
-extern void vty_terminate (void);
-extern void vty_reset (void);
+
 extern struct vty *vty_new (void);
-extern int vty_stdio (const char *, void (*atclose)(void));
-extern int vty_out (struct vty *, const char *, ...) PRINTF_ATTRIBUTE(2, 3);
-//extern void vty_read_config (char *, char *);
-extern void vty_load_config (char *);
-extern void vty_time_print (struct vty *, int);
-extern void vty_serv_init (const char *, unsigned short, const char *, const char *);
-extern void vty_close (struct vty *);
-extern char *vty_get_cwd (void);
-extern void vty_log (const char *level, const char *proto, 
-                     const char *fmt, zlog_timestamp_t , va_list);
-extern void vty_trap_log (const char *level, const char *proto_str,
-	 const char *format, zlog_timestamp_t ctl, va_list);
+extern int vty_free(struct vty *vty);
+extern struct vty *vty_new_init(int vty_sock);
 
-extern int vty_config_lock (struct vty *);
-extern int vty_config_unlock (struct vty *);
-extern int vty_shell (struct vty *);
-extern int vty_shell_serv (struct vty *);
-extern void vty_hello (struct vty *);
-extern int vty_ansync_enable(struct vty *vty, BOOL enable);
+extern int vty_cancel(struct vty *vty, int close);
+extern int vty_recovery(struct vty *vty, int close);
 
-extern void vty_self_insert(struct vty *vty, char c);
-/* Send a fixed-size message to all vty terminal monitors; this should be
-   an async-signal-safe function. */
-extern void vty_log_fixed (char *buf, size_t len);
-extern int vty_getc_input(struct vty *vty);
+extern int exec_timeout(struct vty *vty, const char *min_str, const char *sec_str);
 
 extern int vty_command(struct vty *vty, char *buf);
 extern int vty_execute(struct vty *vty);
 
-extern int vty_console(const char *tty, void (*atclose)());
-extern int exec_timeout(struct vty *vty, const char *min_str, const char *sec_str);
+extern int vty_getc_input(struct vty *vty);
+extern int vty_read_handle(struct vty *vty, unsigned char *buf, int len);
 
-extern int vty_cancel(struct vty *vty, int close);
-extern int vty_recovery(struct vty *vty, int close);
+extern int vty_out (struct vty *, const char *, ...) PRINTF_ATTRIBUTE(2, 3);
+extern void vty_close (struct vty *);
+
+extern int vty_config_lock (struct vty *);
+extern int vty_config_unlock (struct vty *);
+
+extern void vty_time_print (struct vty *, int);
+extern struct vty * vty_lookup(int sock);
+
+extern void vty_hello (struct vty *);
+extern int vty_ansync_enable(struct vty *vty, BOOL enable);
+
+extern void vty_self_insert(struct vty *vty, char c);
+
+extern int vty_shell (struct vty *);
+extern int vty_shell_serv (struct vty *);
+
+
+
+extern int vty_write_hello(struct vty *vty);
+extern int vty_stdio (const char *, void (*atclose)(void));
+extern int vty_console(const char *tty, void (*atclose)());
+
+
+extern void vty_init (void *, void *);
+extern void vty_init_vtysh (void);
+extern void vty_terminate (void);
+extern void vty_reset (void);
+
+extern void vty_serv_init (const char *, unsigned short, const char *, const char *);
+
+
+extern void vty_load_config (char *);
+
+
+extern void vty_log (const char *level, const char *proto, 
+                     const char *fmt, zlog_timestamp_t , va_list);
+extern void vty_trap_log (const char *level, const char *proto_str,
+	 const char *format, zlog_timestamp_t ctl, va_list);
+extern void vty_log_fixed (char *buf, size_t len);
+
+
+extern char *vty_get_cwd (void);
+
+
+
+
+
+#ifdef VTYSH
+extern int vty_sshd_init(int sock, struct vty *vty);
+#endif /* VTYSH */
 
 #endif /* _ZEBRA_VTY_H */

@@ -483,7 +483,7 @@ int tftpCopy(char * pHost, /* host name or address	*/
 	}
 	if(status == ERROR)
 	{
-		systools_printf("tftp CMD is not define.");
+		systools_printf("TFTP CMD is not define.");
 	}
 	else
 		tftpInfoShow(pTftpDesc);
@@ -517,7 +517,7 @@ TFTP_DESC * tftpInit(void)
 	if ((pTftpDesc->sock = socket(AF_INET, SOCK_DGRAM, 0)) == ERROR)
 	{
 		free((char *) pTftpDesc);
-		systools_error("tftp socket create failed: %s", strerror(errno));
+		systools_error("TFTP  socket create failed: %s", strerror(errno));
 		return (NULL);
 	}
 
@@ -528,7 +528,7 @@ TFTP_DESC * tftpInit(void)
 	if (bind(pTftpDesc->sock, (const struct sockaddr *) &localAddr,
 			sizeof(struct sockaddr_in)) == ERROR)
 	{
-		systools_error("tftp socket bind failed: %s", strerror(errno));
+		systools_error("TFTP  socket bind failed: %s", strerror(errno));
 		free((char *) pTftpDesc);
 		close(pTftpDesc->sock);
 		return (NULL);
@@ -594,7 +594,7 @@ static int tftpModeSet(TFTP_DESC * pTftpDesc, /* TFTP descriptor 	*/
 			bzero(pTftpDesc->mode, sizeof(pTftpDesc->mode));
 			strcpy(pTftpDesc->mode, pTftpModes->m_mode);
 			if (tftpDebug)
-				systools_debug("mode set to %s.\r\n", pTftpDesc->mode);
+				systools_debug("TFTP mode set to %s.\r\n", pTftpDesc->mode);
 			return (OK);
 		}
 	}
@@ -667,7 +667,7 @@ static int tftpPeerSet(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
     	{
 			pTftpDesc->connected = FALSE;
 
-			systools_error("tftpPeerSet %s: unknown host.", pHostname);
+			systools_error("TFTP %s: unknown host.", pHostname);
 #ifdef TFTPC_DEBUG
 			systools_printf("tftpPeerSet %s: unknown host.\r\n", pHostname);
 #endif
@@ -684,7 +684,7 @@ static int tftpPeerSet(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
 	pTftpDesc->connected = TRUE;
 
 	if (tftpDebug)
-		systools_debug("Connected to %s [%d]", pHostname,
+		systools_debug("TFTP Connected to %s [%d]", pHostname,
 				ntohs(pTftpDesc->serverPort));
 	return (OK);
 }
@@ -735,7 +735,7 @@ int tftpPut(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 	pTftpDesc->tftp_size = 0;
 	if (!pTftpDesc->connected) /* must be connected */
 	{
-		systools_error("tftpPut: No target machine specified.");
+		systools_error("TFTP  PUT No target machine specified.");
 #ifdef TFTPC_DEBUG
 		systools_printf("tftpPut: No target machine specified.\r\n");
 #endif
@@ -751,7 +751,7 @@ int tftpPut(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 	block = 0;
 
 	if (tftpDebug)
-		systools_debug("putting to %s:%s [%s]", pTftpDesc->serverName,
+		systools_debug("TFTP putting to %s:%s [%s]", pTftpDesc->serverName,
 				pFilename, pTftpDesc->mode);
 
 	/*
@@ -766,7 +766,7 @@ int tftpPut(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 		size = tftpRequestCreate(&tftpMsg, TFTP_WRQ, pFilename,
 				pTftpDesc->mode);
 		if (tftpDebug)
-			systools_debug("Sending WRQ to port %d", pTftpDesc->serverPort);
+			systools_debug("TFTP Sending WRQ to port %d", pTftpDesc->serverPort);
 
 		if ((tftpSend(pTftpDesc, &tftpMsg, size, &tftpAck, TFTP_ACK, block,
 				&port) == ERROR))
@@ -794,7 +794,7 @@ int tftpPut(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 			(void) tftpSend(pTftpDesc, &tftpMsg, size, (TFTP_MSG *) NULL, 0, 0,
 					(int *) NULL);
 			close(fd);
-			systools_error("tftpPut: Error occurred while reading the file: %s", strerror(errno));
+			systools_error("TFTP PUT: Error occurred while reading the file: %s", strerror(errno));
 #ifdef TFTPC_DEBUG
 			systools_printf("tftpPut: Error occurred while reading the file.\r\n");
 #endif
@@ -900,7 +900,7 @@ int tftpGet(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 	block = 1;
 
 	if (tftpDebug)
-		systools_debug("getting from %s:%s [%s]", pTftpDesc->serverName,
+		systools_debug("TFTP getting from %s:%s [%s]", pTftpDesc->serverName,
 				pFilename, pTftpDesc->mode);
 
 	/*
@@ -934,7 +934,7 @@ int tftpGet(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 
 		if (sizeReply == ERROR) /* if error then bail */
 		{
-			systools_error("tftpGet: Error occurred while transferring the file: %s", strerror(errno));
+			systools_error("TFTP GET Error occurred while transferring the file: %s", strerror(errno));
 #ifdef TFTPC_DEBUG
 			systools_printf(
 					"tftpGet: Error occurred while transferring the file.\r\n");
@@ -972,7 +972,7 @@ int tftpGet(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 				if ((numBytes = write(fd, pBuffer, sizeReply - bytesWritten))
 						<= 0)
 				{
-					systools_error("tftpGet: Error occurred while writing to the file: %s", strerror(errno));
+					systools_error("TFTP GET Error occurred while writing to the file: %s", strerror(errno));
 					errorVal = ERROR;
 					break;
 				}
@@ -984,7 +984,7 @@ int tftpGet(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 			sizeMsg = tftpErrorCreate(&tftpMsg, EUNDEF);
 			(void) tftpSend(pTftpDesc, &tftpMsg, sizeMsg, (TFTP_MSG *) NULL, 0,
 					0, (int *) NULL);
-			systools_error("tftpGet: Error occurred while writing the file: %s", strerror(errno));
+			systools_error("TFTP GET Error occurred while writing the file: %s", strerror(errno));
 #ifdef TFTPC_DEBUG
 			systools_printf("tftpGet: Error occurred while writing the file.\r\n");
 #endif
@@ -1180,7 +1180,7 @@ int tftpSend(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
 						(const struct sockaddr *) &pTftpDesc->serverAddr,
 						sizeof (struct sockaddr_in)) != sizeMsg)
 		{
-			systools_error("tftpSend: Error occurred while sendto %s:%d: %s",
+			systools_error("TFTP Send: Error occurred while sendto %s:%d: %s",
 					inet_ntoa(pTftpDesc->serverAddr.sin_addr),
 					ntohs(pTftpDesc->serverAddr.sin_port), strerror(errno));
 			return (ERROR);
@@ -1193,7 +1193,7 @@ int tftpSend(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
 					sizeof(struct sockaddr_in));
 			if (num < 0)
 			{
-				systools_error("tftpSend: Error occurred while sendto %s:%d: %s",
+				systools_error("TFTP Send: Error occurred while sendto %s:%d: %s",
 						inet_ntoa(pTftpDesc->serverAddr.sin_addr),
 						ntohs(pTftpDesc->serverAddr.sin_port), strerror(errno));
 				switch (errno)
@@ -1211,13 +1211,13 @@ int tftpSend(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
 					/* else FALLTHROUGH */
 					break;
 				default:
-					systools_error("message transmit failed.");
+					systools_error("TFTP message transmit failed.");
 					return (ERROR);
 				}
 			}
 			else if (num != sizeMsg)
 			{
-				systools_error("incomplete message transmit.");
+				systools_error("TFTP incomplete message transmit.");
 				return (ERROR);
 			}
 			break;
@@ -1242,7 +1242,7 @@ int tftpSend(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
 				if (timeWait >= maxWait) /* return error, if waited */
 				/* for too long 	   */
 				{
-					systools_error("Transfer Timed Out.");
+					systools_error("Tftp send Transfer Timed Out.");
 #ifdef TFTPC_DEBUG
 					systools_printf("Transfer Timed Out.\r\n");
 #endif
@@ -1265,7 +1265,7 @@ int tftpSend(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
 					sizeof(TFTP_MSG), 0, (const struct sockaddr *) &peer,
 					&peerlen)) == ERROR)
 			{
-				systools_error("tftpSend: Error occurred while recvfrom %s:%d: %s",
+				systools_error("Tftp send occurred while recvfrom %s:%d: %s",
 										inet_ntoa(pTftpDesc->serverAddr.sin_addr),
 										ntohs(pTftpDesc->serverAddr.sin_port), strerror(errno));
 				return (ERROR);
@@ -1277,7 +1277,7 @@ int tftpSend(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
 
 			if (ntohs(pTftpReply->th_opcode) == TFTP_ERROR)
 			{
-				systools_error("tftpSend: Error code %d: %s",
+				systools_error("Tftp send: Error code %d: %s",
 						ntohs(pTftpReply->th_error), pTftpReply->th_errMsg);
 #ifdef TFTPC_DEBUG
 				systools_printf("Error code %d: %s\r\n",

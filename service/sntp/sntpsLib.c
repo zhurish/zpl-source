@@ -168,9 +168,9 @@ static INT8 sntpsLog2Get
     ULONG inval 	/* input value for calculation */
     )
 {
-	int loop;
-	int floor; /* Nearest power of two for smaller value */
-	int limit; /* Nearest power of two for larger value */
+	u_int32 loop;
+	u_int32 floor; /* Nearest power of two for smaller value */
+	u_int32 limit; /* Nearest power of two for larger value */
 	int result;
 	ULONG mask; /* Bitmask for log2 calculation */
 

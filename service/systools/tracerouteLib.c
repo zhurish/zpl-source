@@ -191,7 +191,7 @@ static int traceroute_thread(TRACEROUTE_STAT * pPS)
 
 	//strcpy(pPS->toHostName, host); /* save host name */
 
-	pPS->dataLen = 60 - 8; /* compute size of data */
+	pPS->dataLen = pPS->tracerouteTxLen - 8; /* compute size of data */
 
 	/* open raw socket for ICMP communication */
 
@@ -205,27 +205,44 @@ static int traceroute_thread(TRACEROUTE_STAT * pPS)
 
 	pPS->pBufIcmp->icmp_type = ICMP_ECHO; /* set up Tx buffer */
 	pPS->pBufIcmp->icmp_code = 0;
-	pPS->pBufIcmp->icmp_id = pPS->idRx & 0xffff;
+	pPS->pBufIcmp->icmp_id = htons(pPS->idRx & 0xffff);
 
 	for (ix = sizeof(struct timeval); ix < pPS->dataLen; ix++) /* skip 4 bytes for time */
 		pPS->bufTx[8 + ix] = ix;
 
-	vty_out(vty, " traceroute to %s (%s), %d hops max, %d byte packets",
-			pPS->toInetName, pPS->toInetName, pPS->maxttl, pPS->tracerouteTxLen);
-	//traceroute to 14.215.177.38 (14.215.177.38), 30 hops max, 60 byte packets
-	while (ttl < pPS->maxttl)
+/*
+	vty_out(vty, " dataLen           = %d %s", pPS->dataLen, VTY_NEWLINE);
+	vty_out(vty, " rxmaxlen          = %d %s", pPS->rxmaxlen, VTY_NEWLINE);
+	vty_out(vty, " tracerouteTxLen   = %d %s", pPS->tracerouteTxLen, VTY_NEWLINE);
+	vty_out(vty, " tracerouteTxTmo   = %d %s", pPS->tracerouteTxTmo, VTY_NEWLINE);
+	vty_out(vty, " maxttl            = %d %s", pPS->maxttl, VTY_NEWLINE);
+*/
+
+	vty_out(vty, " traceroute to %s (%s), %d hops max, %d byte packets%s",
+			pPS->toHostName, pPS->toInetName, pPS->maxttl, pPS->dataLen, VTY_NEWLINE);
+	/*
+	* traceroute to 14.215.177.38 (14.215.177.38), 30 hops max, 60 byte packets
+	*/
+	while (ttl <= pPS->maxttl)
 	{
+send_next:
+
 		if(from.sin_addr.s_addr == to.sin_addr.s_addr)
 			break;
-send_next:
-		ttl++;
-		setsockopt(pPS->tracerouteFd, IPPROTO_IP, IP_TTL, &ttl, sizeof(int));
+		if(ttl > pPS->maxttl)
+			break;
 
+		//vty_out(vty, " ttl = %d maxttl = %d %s", ttl, pPS->maxttl, VTY_NEWLINE);
+
+		setsockopt(pPS->tracerouteFd, IPPROTO_IP, IP_TTL, &ttl, sizeof(int));
 		vty_out(vty, " %d ", ttl);
 
+		ttl++;
+		os_sleep(TRACEROUTE_INTERVAL);
 		for (num = 0; num < 3; num++)
 		{
 			os_gettime(OS_CLK_REALTIME, pPS->pBufTime); /* load current tick count */
+			memcpy(&now, pPS->pBufTime, sizeof(struct timeval));
 			pPS->pBufIcmp->icmp_seq = seq++; /* increment seq number */
 			pPS->pBufIcmp->icmp_cksum = 0;
 			pPS->pBufIcmp->icmp_cksum = in_cksum((u_short *) pPS->pBufIcmp,
@@ -237,16 +254,16 @@ send_next:
 			{
 				if (pPS->flags & TRACEROUTE_OPT_DEBUG)
 					vty_out(vty, "%s traceroute: wrote %s %d chars, ret=%d%s",
-							VTY_NEWLINE, pPS->toInetName, pPS->tracerouteTxLen, ix,
+							VTY_NEWLINE, pPS->toHostName, pPS->tracerouteTxLen, ix,
 							VTY_NEWLINE);
 				if (ix < 0)
 				{
 					if (errno == ENETUNREACH)
 						vty_out(vty, "%s traceroute %s Network is unreachable%s",
-								VTY_NEWLINE, pPS->toInetName, VTY_NEWLINE);
+								VTY_NEWLINE, pPS->toHostName, VTY_NEWLINE);
 					else if (errno == EHOSTUNREACH)
 						vty_out(vty, "%s traceroute %s No route to host%s",
-								VTY_NEWLINE, pPS->toInetName, VTY_NEWLINE);
+								VTY_NEWLINE, pPS->toHostName, VTY_NEWLINE);
 					goto release;
 				}
 			}
@@ -259,6 +276,9 @@ check_fd_again: /* Wait for ICMP reply */
 					NULL, &tracerouteTmo);
 			if (sel == ERROR)
 			{
+				if (errno == EINTR)
+					goto check_fd_again;
+
 				if (!(pPS->flags & TRACEROUTE_OPT_SILENT))
 					vty_out(vty, "%s traceroute: ERROR%s", VTY_NEWLINE, VTY_NEWLINE);
 				goto release;
@@ -300,9 +320,12 @@ check_fd_again: /* Wait for ICMP reply */
 					goto check_fd_again;
 				break; /* goto release */
 			}
-			os_gettime(OS_CLK_REALTIME, &now);
+			//vty_out(vty, " recvfrom %s%s", inet_ntoa(from.sin_addr), VTY_NEWLINE);
+
 			if (tracerouteRxPrint(pPS, ix, &from, now, num) == ERROR)
 				goto check_fd_again;
+			//else
+			//	goto send_next;
 		}
 	}
 release:
@@ -339,7 +362,10 @@ int traceroute(struct vty *vty, char * host, int maxttl, int len, u_int32 option
 	}
 	memset(pPS->bufTx, 0, pPS->rxmaxlen);
 	pPS->flags = options;
-	pPS->tracerouteTxTmo = TRACEROUTE_TMO + 1; /* packet timeout in seconds */
+	pPS->tracerouteTxTmo = TRACEROUTE_TMO; /* packet timeout in seconds */
+	pPS->tracerouteTxLen = len;
+	pPS->tracerouteTxLen = max(pPS->tracerouteTxLen, TRACEROUTE_MINPACKET); /* sanity check global */
+	pPS->tracerouteTxLen = min(pPS->tracerouteTxLen, TRACEROUTE_MAXPACKET); /* sanity check global */
     pPS->ifindex = 0;
     pPS->maxttl = maxttl;
     if(maxttl == 0)
@@ -351,13 +377,16 @@ int traceroute(struct vty *vty, char * host, int maxttl, int len, u_int32 option
     	hoste = gethostbyname(host);
     	if (hoste && hoste->h_addr_list[0])
     	{
-    		addr.s_addr = hoste->h_addr_list[0];
+    		//addr.s_addr = hoste->h_addr_list[0];
+    		addr = *(struct in_addr*)hoste->h_addr_list[0];
     		sprintf(pPS->toInetName, "%s", inet_ntoa(addr));
+			strcpy(pPS->toHostName, host);
     	}
 	}
     else
     {
     	strcpy(pPS->toInetName, host);
+    	strcpy(pPS->toHostName, host);
     }
 
     vty_ansync_enable(vty, TRUE);
@@ -390,16 +419,16 @@ int traceroute(struct vty *vty, char * host, int maxttl, int len, u_int32 option
 static int tracerouteRxPrint(TRACEROUTE_STAT * pPS, /* traceroute stats structure */
 		int len, /* Rx message length */
 		struct sockaddr_in *from, /* Rx message address */
-		struct timeval now, int cnt)
+		struct timeval send, int cnt)
 {
 	struct ip * ip = (struct ip *) pPS->bufRx;
-	long * lp = (long *) pPS->bufRx;
 	struct icmp * icp = NULL;
-	int ix = 0;
 	int hlen = 0;
 	int triptime = 0;
-	struct timeval *ti = NULL;
+	struct timeval now;
 	struct vty *vty = pPS->vty;
+
+	os_gettime(OS_CLK_REALTIME, &now);
 
 	hlen = ip->ip_hl << 2;
 
@@ -413,37 +442,45 @@ static int tracerouteRxPrint(TRACEROUTE_STAT * pPS, /* traceroute stats structur
 
 	len -= hlen; /* strip IP header */
 	icp = (struct icmp *) (pPS->bufRx + hlen);
-	ti = (struct timeval *) (pPS->bufRx + hlen + 8);
-#if 0
-	if (icp->icmp_type != ICMP_TIME_EXCEEDED) /* right message ? */
+	if (icp->icmp_type == ICMP_TIME_EXCEEDED || icp->icmp_type == ICMP_TIMXCEED_INTRANS)
 	{
-		if (pPS->flags & TRACEROUTE_OPT_DEBUG) /* debug odd message */
+		ip = &icp->icmp_ip;
+		hlen = ip->ip_hl << 2;
+		if(ip->ip_p == IPPROTO_ICMP)
 		{
-			vty_out(vty,"%d bytes from %s: ", len, inet_ntoa(from->sin_addr));
-			//icp->icmp_type = min(icp->icmp_type, ICMP_TYPENUM);
-			vty_out(vty,"icmp_type=%d%s", icp->icmp_type, VTY_NEWLINE);
-			for (ix = 0; ix < 12; ix++)
-			vty_out(vty,"x%2.2lx: x%8.8lx%s", (ix * sizeof(long)),
-					*lp++, VTY_NEWLINE);
-
-			vty_out(vty,"icmp_code=%d%s", icp->icmp_code,VTY_NEWLINE);
+			//struct icmp *hicmp;
+			icp = (struct icmp *)((unsigned char *)ip + hlen);
+			if (ntohs(icp->icmp_id) != (pPS->idRx & 0xffff))
+			{
+				return ERROR;
+			}
+			if (cnt == 0)
+			{
+				vty_out(vty, " %s", inet_ntoa(from->sin_addr));
+				vty_out(vty, " (%s) ", inet_ntoa(from->sin_addr));
+			}
+			triptime = os_timeval_elapsed(now, send) / 1000;
+			vty_out(vty, " %d ms", triptime);
+			if (cnt == 2)
+				vty_out(vty, " %s", VTY_NEWLINE);
+			return (OK);
 		}
-		return (ERROR);
+/*		if(ip->ip_p == IPPROTO_UDP)
+		{
+			icp = (struct icmp *)((unsigned char *)ip + hlen);
+			if (ntohs(icp->icmp_id) != (pPS->idRx & 0xffff))
+			{
+				return ERROR;
+			}
+			vty_out(vty, " %s", inet_ntoa(from->sin_addr));
+			vty_out(vty, " (%s) ", inet_ntoa(from->sin_addr));
+			triptime = os_timeval_elapsed(now, *ti) / 1000;
+			vty_out(vty, " %d ms", triptime);
+			if (cnt == 2)
+				vty_out(vty, " %s", VTY_NEWLINE);
+		}*/
 	}
-#endif
-	/* check if the received reply is ours. */
-	if (icp->icmp_id != (pPS->idRx & 0xffff))
-	{
-		return (ERROR); /* wasn't our ECHO */
-	}
-
-	vty_out(vty, " %s (%s) ", pPS->toInetName, inet_ntoa(from->sin_addr));
-	triptime = os_timeval_elapsed(now, *ti) / 1000;
-	vty_out(vty, " %d ms", triptime);
-	if (cnt == 2)
-		vty_out(vty, " %s", VTY_NEWLINE);
-
-	return (OK);
+	return (ERROR);
 }
 
 /*******************************************************************************

@@ -178,7 +178,10 @@ PL_LDLIBS += -lpthread -lrt -rdynamic -lm -lcrypt -ldl -lgcc_s
 ifeq ($(strip $(MODULE_WIFI_SRC)),true)
 #PL_LDLIBS += -lnl-3 -lnl-genl-3
 endif
-
+ifeq ($(strip $(MODULE_SSH)),true)
+#PL_LDLIBS += -lutil -lcrypto -lrt
+#-lz -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err
+endif
 #
 ifeq ($(BUILD_TYPE),X86)
 ifeq ($(strip $(MODULE_SQLITE)),true)
@@ -221,18 +224,30 @@ export DSTLIBDIR = $(BASE_ROOT)/$(LIBDIR)
 #-include $(foreach prod,$(PLPRODS),$(prod)/gmake/$(firstword $(subst -,$(empty) $(empty),$(notdir $(prod)))).mk)
 #
 #
+# gcc的 -MMD 选项可以自动生成带有依赖规则的.d文件，为创建头文件依赖带来了方便
+#
+#
 PLINCLUDE += $(PLLIBINCLUDE)
 #
 PL_DEBUG += $(PLDEFINE) $(EXTRA_DEFINE) 
-#
-export CFLAGS =  $(PL_CFLAGS) $(PL_DEBUG) $(PLOS_CFLAGS) -fPIC $(PLINCLUDE)
+# -MMD -MP 
+export CFLAGS = -MMD -MP $(PL_CFLAGS) $(PL_DEBUG) $(PLOS_CFLAGS) -fPIC $(PLINCLUDE)
 export LDCLFLAG = $(PL_LDLIBS) 
 #
 #
 #
 #
 #
+#$(OBJS_DIR)/%.d: $(SRC_DIR)/%.c
+#	@set -e; \
+#	rm -f $@; \
+#	$(CC) -MM $(PLINCLUDE) $< > $@.$$$$; \
+#	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+#	rm -f $@.$$$$
+	
+#-include $(OBJS:.o=.d)
 
+	
 #
 #
 #
@@ -240,6 +255,7 @@ export LDCLFLAG = $(PL_LDLIBS)
 #%.o: %.c iw.h nl80211.h
 #	@$(NQ) ' CC  $(CFLAGS)' $@
 #	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
+#   $(CC) -MM $(CFLAGS) $< > $@.
 	
 PL_OBJ_COMPILE = @$(CC) -fPIC $(CFLAGS) $(LDCLFLAG) -c  $< -o $@ $(PLINCLUDE)
 PL_LIB_COMPILE = $(CC) -fPIC $(CFLAGS) $(LDCLFLAG) $^ -o $@ $(PLINCLUDE)
@@ -248,6 +264,7 @@ PL_MAKE_LIBSO = $(CC) -shared -o
 PL_MAKE_LIB = @$(AR) -rs
 #
 #
+
 #
 #
 #

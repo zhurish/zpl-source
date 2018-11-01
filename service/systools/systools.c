@@ -54,9 +54,15 @@ int systools_printf(const char *format, ...)
 }
 
 
+const char *ftpd_hostname()
+{
+	return "VxWorks 5.5";
+}
 
-
-
+static int ftpd_loginVerify(char *user, char *pass)
+{
+	return user_authentication(user, pass);
+}
 
 static int systools_task(void *argv)
 {
@@ -97,8 +103,9 @@ int systools_module_init ()
 		master_eloop[MODULE_UTILS] = eloop_master_module_create(MODULE_UTILS);
 
 	ftpLibInit(5);
-	ftpdInit (master_eloop[MODULE_UTILS], NULL);
+	ftpdInit (master_eloop[MODULE_UTILS], ftpd_loginVerify);
 	tftpdInit(master_eloop[MODULE_UTILS], NULL);
+
 	return OK;
 }
 

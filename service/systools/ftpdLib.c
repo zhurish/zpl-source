@@ -308,7 +308,7 @@ static char *messages [] =
     "Data connection error",
     "Directory non existent or syntax error",
     "Local resource failure: %s",
-    "VxWorks (%s) FTP server ready",
+    "%s FTP server ready",
     "Password required",
     "User logged in",
     "Bye...see you later",
@@ -396,7 +396,6 @@ static void dataError (FTPD_SESSION_DATA *pSlot);
 static void fileError (FTPD_SESSION_DATA *pSlot);
 static void transferOkay (FTPD_SESSION_DATA *pSlot);
 
-static int fdprintf(int fd, const char *format, ...);
 /*******************************************************************************
 *
 * ftpdTask - FTP server daemon task
@@ -540,17 +539,16 @@ static int ftpdTask (struct eloop *thread)
 
 	((FTPD_CONFIG *)ELOOP_ARG(thread))->aceppt_thread = eloop_add_read(thread->master, ftpdTask, ELOOP_ARG(thread), sock);
 
-	systools_debug("waiting for a new client connection...");
-
 	newSock = accept(sock, (struct sockaddr *) &addr, &addrLen);
 	if (newSock < 0)
 	{
-		systools_debug("cannot accept a new connection");
+		systools_error("FTPD cannot accept a new connection");
 		return ERROR;
 	}
 	setsockopt(newSock, SOL_SOCKET, SO_KEEPALIVE, (char *) &on, sizeof(on));
 
-	systools_debug("accepted a new client connection from %s\n",
+	if(FTPD_IS_DEBUG(EVENT))
+		systools_debug("FTPD accepted a new client connection from %s\n",
 			inet_ntoa(addr.sin_addr));
 
 	/* Create a new session entry for this connection, if possible. */
@@ -561,7 +559,7 @@ static int ftpdTask (struct eloop *thread)
 		/* Send transient failure report to client. */
 		ftpdCmdSend(pSlot, newSock, 421,
 				"Session limit reached, closing control connection");
-		systools_debug("cannot get a new connection slot");
+		systools_error("FTPD cannot get a new connection session");
 		close(newSock);
 		return ERROR;
 	}
@@ -637,7 +635,7 @@ int ftpdInit
 
 
 	ftpd_config.init = TRUE;
-	systools_debug("ftpdTask created");
+
 	return (OK);
 }
 
@@ -925,6 +923,8 @@ static void ftpdSessionDelete
 	 * signal to the shutdown routine, whether or not the shutdown flag was
 	 * detected during normal processing.
 	 */
+	if(FTPD_IS_DEBUG(EVENT))
+		systools_debug("FTPD delete session : %s", inet_ntoa(pSlot->peerAddr.sin_addr));
 /*	if(pSlot->taskid)
 		os_task_destroy(pSlot->taskid);*/
 	pSlot->taskid = 0;
@@ -984,21 +984,21 @@ static int ftpdWorkTask
     FTPD_SESSION_DATA   *pSlot  /* pointer to the active slot to be handled */
     )
 {
-	register int sock; /* command socket descriptor */
-	register char *pBuf; /* pointer to session specific buffer */
+	register int sock = 0; /* command socket descriptor */
+	register char *pBuf = NULL; /* pointer to session specific buffer */
 	struct sockaddr_in passiveAddr; /* socket address in passive mode */
-	register char *dirName; /* directory name place holder */
-	register int numRead;
+	register char *dirName = NULL; /* directory name place holder */
+	register int numRead = 0;
 	int addrLen = sizeof(passiveAddr); /* for getpeername */
 	int portNum[6]; /* used for "%d,%d,%d,%d,%d,%d" */
-	u_long value;
-	char *pTail;
+	u_long value = 0;
+	char *pTail = NULL;
 	char newPath[MAX_FILENAME_LENGTH];
 	char curDirName[MAX_FILENAME_LENGTH];
-	char *pFileName;
-	FILE *inStream;
-	FILE *outStream;
-	char *upperCommand; /* convert command to uppercase */
+	char *pFileName = NULL;
+	FILE *inStream = NULL;
+	FILE *outStream = NULL;
+	char *upperCommand = NULL; /* convert command to uppercase */
 
 	pBuf = &pSlot->buf[0]; /* use session specific buffer area */
 	sock = pSlot->cmdSock;
@@ -1014,7 +1014,7 @@ static int ftpdWorkTask
 	}
 
 	/* tell the client we're ready to rock'n'roll */
-	if (ftpdCmdSend(pSlot, sock, 220, messages[MSG_SERVER_READY], "sadsad") == ERROR)
+	if (ftpdCmdSend(pSlot, sock, 220, messages[MSG_SERVER_READY], ftpd_hostname()) == ERROR)
 	{
 		ftpdSessionDelete(pSlot);
 		return (ERROR);
@@ -1023,7 +1023,7 @@ static int ftpdWorkTask
 	while (1)
 	{
 
-		os_sleep(1); /* time share among same priority tasks */
+		os_msleep(500); /* time share among same priority tasks */
 
 		/* Check error in writting to the control socket */
 
@@ -1050,7 +1050,7 @@ static int ftpdWorkTask
 
 		while (1)
 		{
-			os_sleep(1); /* time share among same priority tasks */
+			os_msleep(100); /* time share among same priority tasks */
 
 			if ((numRead = read(sock, pBuf, 1)) <= 0)
 			{
@@ -1102,7 +1102,8 @@ static int ftpdWorkTask
 				upperCommand++)
 			*upperCommand = toupper(*upperCommand);
 
-		systools_debug("read command %s\n", pBuf);
+		if(FTPD_IS_DEBUG(CMD))
+			systools_debug("FTPD recv command %s\n", pBuf);
 
 		/*
 		 * Send an abort message to the client if a server
@@ -1130,6 +1131,9 @@ static int ftpdWorkTask
 
 			pSlot->status &= ~FTPD_USER_OK;
 
+			if(FTPD_IS_DEBUG(EVENT))
+				systools_debug("FTPD Password required on %s ", inet_ntoa(pSlot->peerAddr.sin_addr));
+
 			if (ftpdCmdSend(pSlot, sock, 331, messages[MSG_PASSWORD_REQUIRED]) == ERROR)
 			{
 				ftpdSessionDelete(pSlot);
@@ -1146,6 +1150,9 @@ static int ftpdWorkTask
 			{
 				if ((ftpd_config.loginVerifyRtn)(pSlot->user, pBuf + 5) != OK)
 				{
+					if(FTPD_IS_DEBUG(EVENT))
+						systools_debug("FTPD User login failed on %s ", inet_ntoa(pSlot->peerAddr.sin_addr));
+
 					if (ftpdCmdSend(pSlot, sock, 530,
 							messages[MSG_USER_LOGIN_FAILED])
 							== ERROR)
@@ -1157,6 +1164,8 @@ static int ftpdWorkTask
 					continue;
 				}
 			}
+			if(FTPD_IS_DEBUG(EVENT))
+				systools_debug("FTPD User login successful on %s ", inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			pSlot->status |= FTPD_USER_OK;
 			if (ftpdCmdSend(pSlot, sock, 230, messages[MSG_USER_LOGGED_IN]) == ERROR)
@@ -1169,7 +1178,8 @@ static int ftpdWorkTask
 		else if (strncmp(pBuf, "QUIT", 4) == 0)
 		{
 			/* sayonara */
-
+			if(FTPD_IS_DEBUG(EVENT))
+				systools_debug("FTPD User logout on %s ", inet_ntoa(pSlot->peerAddr.sin_addr));
 			ftpdCmdSend(pSlot, sock, 221, messages[MSG_SEE_YOU_LATER]);
 			ftpdSessionDelete(pSlot);
 			return OK;
@@ -1206,6 +1216,8 @@ static int ftpdWorkTask
 		else if ((pSlot->status & FTPD_USER_OK) == 0) /* validated yet? */
 		{
 			/* user is not validated yet.  tell him to log in first */
+			if(FTPD_IS_DEBUG(EVENT))
+				systools_debug("FTPD USER and PASS required on %s ", inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			if (ftpdCmdSend(pSlot, sock, 530, messages[MSG_USER_PASS_REQ]) == ERROR)
 
@@ -1222,6 +1234,8 @@ static int ftpdWorkTask
 		if (strncmp(pBuf, "LIST", 4) == 0 || strncmp(pBuf, "NLST", 4) == 0)
 		{
 			int retVal;
+			if(FTPD_IS_DEBUG(EVENT))
+				systools_debug("FTPD LIST cmd on %s ", inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			/* client wants to list out the contents of a directory */
 
@@ -1244,7 +1258,7 @@ static int ftpdWorkTask
 			else
 				dirName = &pBuf[5];
 
-			systools_debug("LIST %s\n", dirName);
+			//systools_debug("LIST %s\n", dirName);
 
 			/* get a new data socket connection for the transmission of
 			 * the directory listing data
@@ -1253,7 +1267,6 @@ static int ftpdWorkTask
 			if (ftpdDataConnGet(pSlot) == ERROR)
 			{
 				if (ftpdCmdSend(pSlot, sock, 426, messages[MSG_DATA_CONN_ERROR]) == ERROR)
-
 				{
 					ftpdSessionDelete(pSlot);
 					return (ERROR);
@@ -1308,7 +1321,9 @@ static int ftpdWorkTask
 			else
 				pFileName = &pBuf[5];
 
-			systools_debug("RETR %s\n", pFileName);
+			if(FTPD_IS_DEBUG(EVENT))
+				systools_debug("FTPD read file (%s) on %s ", pFileName, inet_ntoa(pSlot->peerAddr.sin_addr));
+
 
 			if ((inStream = fopen(pFileName, "r")) == NULL)
 			{
@@ -1347,7 +1362,10 @@ static int ftpdWorkTask
 			else
 				pFileName = &pBuf[5];
 
-			systools_debug("STOR %s\n", pFileName);
+			if(FTPD_IS_DEBUG(EVENT))
+				systools_debug("FTPD write file (%s) on %s ", pFileName, inet_ntoa(pSlot->peerAddr.sin_addr));
+
+			//systools_debug("STOR %s\n", pFileName);
 
 			if ((outStream = fopen(pFileName, "w")) == NULL)
 			{
@@ -1374,8 +1392,8 @@ static int ftpdWorkTask
 
 			/* there is no default device for the specified directory */
 
-/*
-			if (iosDevFind(dirName, (const char **) &pTail) == NULL)
+
+			if (access(dirName, 0) != 0)
 			{
 				if (ftpdCmdSend(pSlot, sock, 501, messages[MSG_DIR_NOT_PRESENT]) == ERROR)
 
@@ -1385,20 +1403,16 @@ static int ftpdWorkTask
 				}
 				continue;
 			}
-*/
+
 
 			/* dirName doesn't start with a device name, prepend old path */
+			/* it starts with a dev name */
+			strcpy(newPath, dirName);/* use the whole thing */
 
-			if (dirName == pTail)
-			{
-				(void) strcpy(curDirName, pSlot->curDirName);
-				//(void) pathCat(curDirName, dirName, newPath);
-			}
-			else
-				/* it starts with a dev name */
-				(void) strcpy(newPath, dirName);/* use the whole thing */
+			chdir(newPath); /* condense ".." shit */
 
-			//pathCondense(newPath); /* condense ".." shit */
+			if(FTPD_IS_DEBUG(EVENT))
+				systools_debug("FTPD change DIR (-> %s) on %s ", newPath, inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			/* remember where we are */
 
@@ -1417,6 +1431,8 @@ static int ftpdWorkTask
 		else if (strncmp(pBuf, "TYPE", 4) == 0)
 		{
 			/* we only support BINARY and ASCII representation types */
+			if(FTPD_IS_DEBUG(EVENT))
+				systools_debug("FTPD SET TYPE on %s ", inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			if (pBuf[5] == 'I' || pBuf[5] == 'i' || pBuf[5] == 'L'
 					|| pBuf[5] == 'l')
@@ -1564,6 +1580,8 @@ static int ftpdWorkTask
 			 * for us to make a connection to its data connection
 			 * socket
 			 */
+			if(FTPD_IS_DEBUG(EVENT))
+				systools_debug("FTPD Connect to client (PASV TYPE) on %s ", inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			ftpdSockFree(&pSlot->dataSock);
 
@@ -1681,8 +1699,8 @@ static int ftpdWorkTask
 			}
 			else
 				pFileName = &pBuf[5];
-
-			systools_debug("DELE %s\n", pFileName);
+			if(FTPD_IS_DEBUG(EVENT))
+				systools_debug("FTPD DELETE File (%s) on %s ", pFileName, inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			if (remove(pFileName) != OK)
 			{
@@ -2113,9 +2131,6 @@ static void ftpdDataStreamSend
 				fileError(pSlot);
 				return;
 			}
-
-			systools_debug("read %d bytes, wrote %d bytes\n", cnt, retval);
-
 			dataError(pSlot);
 			return;
 		}
@@ -2124,6 +2139,9 @@ static void ftpdDataStreamSend
 	}
 	else
 		unImplementedType(pSlot); /* invalide representation type */
+
+	if(FTPD_IS_DEBUG(EVENT))
+		systools_debug("FTPD transferred %d bytes", pSlot->byteCount);
 }
 
 /*******************************************************************************
@@ -2298,6 +2316,9 @@ static void ftpdDataStreamReceive
 	}
 	else
 		unImplementedType(pSlot); /* invalid representation type */
+
+	if(FTPD_IS_DEBUG(EVENT))
+		systools_debug("FTPD receive %d bytes", pSlot->byteCount);
 }
 
 /*******************************************************************************
@@ -2333,9 +2354,6 @@ static void ftpdSockFree
 		 */
 
 		shutdown(*pSock, 2);
-
-		if (ftpd_config.ftpdDebug & 0x01)
-			systools_debug("ftpdLib: (%d) Closing sock %d\n", __LINE__, *pSock);
 
 		(void) close(*pSock);
 		*pSock = FTPD_SOCK_FREE;
@@ -2612,33 +2630,18 @@ static int ftpdCmdSend
 
     buflen = strlen (buf);
 
+	if(FTPD_IS_DEBUG(CMD))
+		systools_debug("FTPD send command %s\n", buf);
+
     if ( write (controlSock, buf, buflen) != buflen )
-        {
+    {
         if (pSlot != NULL)
             pSlot->cmdSockError = ERROR;
-        systools_debug ("sent %s Failed on write\n", buf);
+        systools_error ("FTPD sent %s Failed on write\n", buf);
         return (ERROR);    /* Write Error */
-        }
+    }
 
-    systools_debug ("sent %s\n", buf);
     return (OK);			/* Command Sent Successfully */
     }
 
-static int fdprintf
-    (
-    int fd,       /* fd of control connection socket */
-	const char *format, ...
-    )
-    {
-		va_list args;
-		char buf[1024];
-		int len = 0;
-		memset(buf, 0, sizeof(buf));
-		va_start(args, format);
-		len = vsnprintf(buf, sizeof(buf), format, args);
-		va_end(args);
 
-		if(len <= 0)
-			return ERROR;
-		return write(fd, buf, len);
-    }

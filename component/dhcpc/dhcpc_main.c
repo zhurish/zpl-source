@@ -916,8 +916,8 @@ static int dhcpc_task(void *arg)
 /*
  * dhcpcd -b -d -h ada
  */
-	int argc;
-	char **argv[] = {"-b", "-d", "-h", "router"};
+	int argc = 0;
+	char **argv[] = {"-b", "-d", "-h", "router", NULL};
 	os_sleep(5);
 	while(1)
 	{

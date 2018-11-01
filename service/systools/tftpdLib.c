@@ -684,9 +684,10 @@ static int tftpdTask( struct eloop *thread)
 	/*
 	 * Get a reply descriptor.  This will pend until one is available.
 	 */
-	clientSocket = sock_server_create(FALSE, NULL, 0, 0);
+	clientSocket = sock_create(FALSE);
 	if(clientSocket <= 0)
 		return ERROR;
+	sock_bind(clientSocket, NULL, 0);
 	pReplyDesc = tftpdDescriptorCreate(&tftpdDesc, TRUE, clientSocket, clientAddr.sin_port, &clientAddr);
 	if (pReplyDesc == NULL)
 	{

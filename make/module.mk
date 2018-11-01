@@ -15,7 +15,8 @@ _MODULELIST = \
 	MODULE_TOOLS.true \
 	MODULE_DHCP.true \
 	MODULE_SQLITE.false \
-	MODULE_SYSTOOLS.true
+	MODULE_SYSTOOLS.true \
+	MODULE_SSH.true
 #
 #
 #
@@ -53,7 +54,8 @@ PlatformModule = \
 	DHCPCDIR.dhcpc \
 	DHCPDDIR.dhcpd \
 	SQLITEDIR.sqlite \
-	SYSTOOLSDIR.systools
+	SYSTOOLSDIR.systools \
+	OPENSSHDIR.ssh
 ###
 # By default we choose the lexically last Platform component version in hopes
 # that it is the most recent. The directory macros (e.g. IPCOMDIR) may of

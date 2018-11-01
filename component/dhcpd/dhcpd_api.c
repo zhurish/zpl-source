@@ -35,9 +35,9 @@ const char *itoa(int value, int base)
 	static char buf[128];
 	memset(buf, 0, sizeof(buf));
 	if(base == 0 || base == 10)
-		sprintf("%d", value);
+		snprintf(buf, sizeof(buf), "%d", value);
 	else if(base == 16)
-		sprintf("%x", value);
+		snprintf(buf, sizeof(buf), "%x", value);
 	return buf;
 }
 

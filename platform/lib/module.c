@@ -30,6 +30,7 @@ static module_str_t module_string[] =
 	MODULE_ENTRY(JOB),
 	MODULE_ENTRY(CONSOLE),
 	MODULE_ENTRY(TELNET),
+	MODULE_ENTRY(SSH),
 	MODULE_ENTRY(NSM),			//route table manage
 	MODULE_ENTRY(MODEM),
 	MODULE_ENTRY(WIFI),

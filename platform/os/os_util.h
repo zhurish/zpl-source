@@ -83,6 +83,7 @@ extern int super_system_execvp(const char *cmd, char **input);
 extern int os_write_string(const char *name, const char *string);
 extern int os_read_string(const char *name, const char *string, int len);
 
+extern int os_get_blocking(int fd);
 extern int os_set_nonblocking(int fd);
 extern int os_set_blocking(int fd);
 extern int os_pipe_create(char *name, int mode);
@@ -129,5 +130,13 @@ extern int os_url_free(os_url_t *spliurl);
  * thread
  */
 extern int os_thread_once(int (*entry)(void *), void *p);
+
+
+
+extern int fdprintf ( int fd, const char *format, ...);
+
+extern int hostname_ipv4_address(char *hostname, struct in_addr *addr);
+extern int hostname_ipv6_address(char *hostname, struct in6_addr *addr);
+
 
 #endif /* __OS_UTIL_H__ */

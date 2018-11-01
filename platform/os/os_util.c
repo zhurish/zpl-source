@@ -281,9 +281,25 @@ int os_read_string(const char *name, const char *string, int len)
 	return ERROR;
 }
 
+int os_get_blocking(int fd)
+{
+	int flags = 0;
+
+	/* According to the Single UNIX Spec, the return value for F_GETFL should
+	 never be negative. */
+	if ((flags = fcntl(fd, F_GETFL)) < 0)
+	{
+		fprintf(stdout, "fcntl(F_GETFL) failed for fd %d: %s", fd,
+				strerror(errno));
+		return -1;
+	}
+	if(flags & O_NONBLOCK)
+		return 0;
+	return 1;
+}
 int os_set_nonblocking(int fd)
 {
-	int flags;
+	int flags = 0;
 
 	/* According to the Single UNIX Spec, the return value for F_GETFL should
 	 never be negative. */
@@ -304,7 +320,7 @@ int os_set_nonblocking(int fd)
 
 int os_set_blocking(int fd)
 {
-	int flags;
+	int flags = 0;
 	/* According to the Single UNIX Spec, the return value for F_GETFL should
 	 never be negative. */
 	if ((flags = fcntl(fd, F_GETFL)) < 0)
@@ -791,6 +807,7 @@ int os_url_split(const char * URL, os_url_t *spliurl)
 		spliurl->host = strdup(tmp);
 		p_slash += strlen(spliurl->host);
 	}
+	p_slash++;
 	if(p_slash && strlen(p_slash))
 	{
 		spliurl->filename = strdup(p_slash);
@@ -845,4 +862,63 @@ int os_thread_once(int (*entry)(void *), void *p)
 			entry, (void *) p) == 0)
 		return td_thread;
 	return ERROR;
+}
+
+
+int fdprintf
+    (
+    int fd,       /* fd of control connection socket */
+	const char *format, ...
+    )
+    {
+		va_list args;
+		char buf[1024];
+		int len = 0;
+		memset(buf, 0, sizeof(buf));
+		va_start(args, format);
+		len = vsnprintf(buf, sizeof(buf), format, args);
+		va_end(args);
+
+		if(len <= 0)
+			return ERROR;
+		return write(fd, buf, len);
+    }
+
+
+int hostname_ipv4_address(char *hostname, struct in_addr *addr)
+{
+	if(!addr)
+		return ERROR;
+	if(inet_aton (hostname, addr) == 0)
+	{
+		struct hostent * hoste = NULL;
+		hoste = gethostbyname(hostname);
+		if (hoste && hoste->h_addr_list && hoste->h_addrtype == AF_INET)
+		{
+			memcpy(addr, (struct in_addr*)hoste->h_addr_list[0], sizeof(struct in_addr));
+			return OK;
+		}
+		return ERROR;
+	}
+	return OK;
+}
+
+int hostname_ipv6_address(char *hostname, struct in6_addr *addr)
+{
+	if(!addr)
+		return ERROR;
+	if(inet_pton (AF_INET6, hostname, addr) == 0)
+	{
+		struct hostent * hoste = NULL;
+		hoste = gethostbyname(hostname);
+		if (hoste && hoste->h_addr_list && hoste->h_addrtype == AF_INET)
+		{
+			memcpy(addr, (struct in6_addr*)hoste->h_addr_list[0], sizeof(struct in6_addr));
+			//addr = *(struct in6_addr*)hoste->h_addr_list[0];
+			return OK;
+		}
+		return ERROR;
+	}
+	//addr->s_addr = inet6_addr(hostname);
+	return OK;
 }

@@ -86,6 +86,7 @@ void dbg_time (const char *fmt, ...) {
     if (logfilefp) {
         fprintf(logfilefp, "%s\n", line);
     }
+    va_end(args);
     pthread_mutex_unlock(&printfMutex);
 }
 

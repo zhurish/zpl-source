@@ -131,7 +131,7 @@ int vty_out(struct vty *vty, const char *format, ...)
 	int size = 1024;
 	char buf[1024];
 	char *p = NULL;
-
+	os_bzero(buf, sizeof(buf));
 	if (vty_shell(vty))
 	{
 		va_start(args, format);
@@ -171,13 +171,13 @@ int vty_out(struct vty *vty, const char *format, ...)
 		/* When initial buffer is enough to store all output.  */
 		if (!p)
 			p = buf;
+
 		if(vty->ansync)
 		{
 			if (vty->fd_type == IPCOM_STACK)
 				ip_write(vty->wfd, p, len);
 			else
 				write(vty->wfd, p, len);
-			//vty_flush_handle(vty, vty->fd);
 		}
 		else
 		/* Pointer p must point out buffer. */
@@ -384,6 +384,18 @@ vty_new()
 	return new;
 }
 
+int vty_free(struct vty *vty)
+{
+	if(vty)
+	{
+		if(vty->obuf)
+			buffer_free(vty->obuf);
+		if(vty->buf)
+			XFREE(MTYPE_VTY, vty->buf);
+		XFREE(MTYPE_VTY, vty);
+	}
+	return OK;
+}
 /* Authentication of vty */
 static void vty_auth(struct vty *vty, char *buf)
 {
@@ -526,7 +538,8 @@ int vty_command(struct vty *vty, char *buf)
 			CONSUMED_TIME_CHECK)
 		{
 			/* Warn about CPU hog that must be fixed. */
-			if(!(strstr(buf, "tftp") || strstr(buf, "ftp") || strstr(buf, "ping")))
+			if(!(strstr(buf, "tftp") || strstr(buf, "ftp") ||
+					strstr(buf, "ping") || strstr(buf, "traceroute")))
 				zlog_warn(ZLOG_DEFAULT,
 					"SLOW COMMAND: command took %lums (cpu time %lums): %s",
 					realtime / 1000, cputime / 1000, buf);
@@ -1621,7 +1634,7 @@ int vty_getc_input(struct vty *vty)
 	}
 }
 
-static int vty_read_handle(struct vty *vty, unsigned char *buf, int len)
+int vty_read_handle(struct vty *vty, unsigned char *buf, int len)
 {
 	int i;
 	int nbytes = len;
@@ -1838,6 +1851,7 @@ static int vty_read(struct eloop *thread)
 	int vty_sock = ELOOP_FD(thread);
 	struct vty *vty = ELOOP_ARG(thread);
 	vty->t_read = NULL;
+	os_bzero(buf, sizeof(buf));
 	nbytes = ip_read(vty->fd, buf, VTY_READ_BUFSIZ);
 	/* Read raw data from socket */
 	if (nbytes <= 0)
@@ -2300,7 +2314,7 @@ static int vty_console_flush(struct thread *thread)
 	return 0;
 }
 /* allocate and initialise vty */
-static struct vty *
+struct vty *
 vty_new_init(int vty_sock)
 {
 	struct vty *vty;
@@ -2323,7 +2337,6 @@ vty_new_init(int vty_sock)
 	vty->iac = 0;
 	vty->iac_sb_in_progress = 0;
 	vty->sb_len = 0;
-	//if(vty_sock <= 3)
 	vty->fd_type = OS_STACK;
 	return vty;
 }
@@ -2372,6 +2385,22 @@ vty_create(int vty_sock, union sockunion *su)
 	vty_event(VTY_READ, vty_sock, vty);
 
 	return vty;
+}
+
+
+int vty_write_hello(struct vty *vty)
+{
+	vty_hello(vty);
+	/* Setting up terminal. */
+/*	vty_will_echo(vty);
+	vty_will_suppress_go_ahead(vty);
+
+	vty_dont_linemode(vty);
+	vty_do_window_size(vty);*/
+	/* vty_dont_lflow_ahead (vty); */
+
+	vty_prompt(vty);
+	return OK;
 }
 
 /* create vty for console */
@@ -2864,7 +2893,7 @@ vtysh_read (struct thread *thread)
 	sock = THREAD_FD (thread);
 	vty = THREAD_ARG (thread);
 	vty->t_read = NULL;
-
+	os_bzero(buf, sizeof(buf));
 	if ((nbytes = ip_read (sock, buf, VTY_READ_BUFSIZ)) <= 0)
 	{
 		if (nbytes < 0)
@@ -2902,7 +2931,7 @@ vtysh_read (struct thread *thread)
 	for (p = buf; p < buf+nbytes; p++)
 	{
 		vty->buf[vty->length++] = *p;
-		if (*p == '\0')
+		if (*p == '\0' || *p == '\r' || *p == '\n')
 		{
 
 			/* Pass this line to parser. */
@@ -2915,10 +2944,16 @@ vtysh_read (struct thread *thread)
 			printf ("result: %d\n", ret);
 			printf ("vtysh node: %d\n", vty->node);
 #endif /* VTYSH_DEBUG */
-
-			header[3] = ret;
-			buffer_put(vty->obuf, header, 4);
-
+			if(vty->ssh_enable)
+			{
+/*				if(vty->ssh_write)
+					(vty->ssh_write)(vty, buf, len);*/
+			}
+			else
+			{
+				header[3] = ret;
+				buffer_put(vty->obuf, header, 4);
+			}
 			if (!vty->t_write && (vtysh_flush(vty) < 0))
 			/* Try to flush results; exit if a write error occurs. */
 			return 0;
@@ -2939,6 +2974,89 @@ vtysh_write (struct thread *thread)
 	vty->t_write = NULL;
 	vtysh_flush(vty);
 	return 0;
+}
+
+static int vty_sshd_read (struct thread *thread)
+{
+	int ret;
+	int sock;
+	int nbytes;
+	struct vty *vty;
+	unsigned char buf[VTY_READ_BUFSIZ];
+	unsigned char *p = NULL;
+	sock = THREAD_FD (thread);
+	vty = THREAD_ARG (thread);
+	vty->t_read = NULL;
+	os_bzero(buf, sizeof(buf));
+	if ((nbytes = ip_read (sock, buf, VTY_READ_BUFSIZ)) <= 0)
+	{
+		if (nbytes < 0)
+		{
+			if (ERRNO_IO_RETRY(errno))
+			{
+				vty_event (VTYSH_READ, sock, vty);
+				return 0;
+			}
+			vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
+			zlog_warn(ZLOG_DEFAULT, "%s: read failed on vtysh client fd %d, closing: %s",
+					__func__, sock, safe_strerror(errno));
+		}
+		buffer_reset(vty->obuf);
+		vty_close (vty);
+		return 0;
+	}
+
+	if (vty->length + nbytes >= vty->max)
+	{
+		/* Clear command line buffer. */
+		vty->cp = vty->length = 0;
+		vty_clear_buf (vty);
+		vty_out (vty, "%% Command is too long.%s", VTY_NEWLINE);
+		goto out;
+	}
+
+	vty_read_handle(vty, buf, nbytes);
+
+	/* Check status. */
+	if (vty->status == VTY_CLOSE)
+	{
+		vty_close(vty);
+		return 0;
+	}
+	else
+	{
+		//if (!vty->t_write && (vtysh_flush(vty) < 0))
+		vtysh_flush(vty);
+		//vty_event(VTY_WRITE, vty->wfd, vty);
+		//vty_event(VTY_READ, vty->fd, vty);
+	}
+#if 0
+	for (p = buf; p < buf+nbytes; p++)
+	{
+		vty->buf[vty->length++] = *p;
+		if (*p == '\0' || *p == '\r' || *p == '\n')
+		{
+			/* Pass this line to parser. */
+			ret = vty_execute (vty);
+			/* Note that vty_execute clears the command buffer and resets
+			 vty->length to 0. */
+			if (!vty->t_write && (vtysh_flush(vty) < 0))
+			/* Try to flush results; exit if a write error occurs. */
+			return 0;
+		}
+	}
+#endif
+out:
+	vty->t_read = thread_add_read(thread_master, vty_sshd_read, vty, sock);
+	//vty_event (VTYSH_READ, sock, vty);
+	return 0;
+}
+
+int vty_sshd_init(int sock, struct vty *vty)
+{
+	vty->t_read = thread_add_read(thread_master, vty_sshd_read, vty, sock);
+	//vty_event (VTYSH_READ, sock, vty);
+	return OK;
 }
 
 #endif /* VTYSH */
@@ -2971,6 +3089,7 @@ void vty_close(struct vty *vty)
 {
 	int i;
 	int type = 0;
+
 	if (vty_tty_console.console == vty)
 	{
 		if(vty->reload == TRUE)
@@ -3006,6 +3125,30 @@ void vty_close(struct vty *vty)
 		vty->t_write = NULL;
 		vty->t_timeout = NULL;
 		type = IPCOM_STACK;
+	}
+	if(vty->ssh_enable)
+	{
+		/* Flush buffer. */
+		buffer_flush_all(vty->obuf, vty->wfd, type);
+		buffer_free(vty->obuf);
+		/* Free command history. */
+		for (i = 0; i < VTY_MAXHIST; i++)
+			if (vty->hist[i])
+				XFREE(MTYPE_VTY_HIST, vty->hist[i]);
+		/* Unset vector. */
+		vector_unset(vtyvec, vty->fd);
+
+		if (vty->buf)
+			XFREE(MTYPE_VTY, vty->buf);
+
+		/* Check configure. */
+		vty_config_unlock(vty);
+
+		if(vty->ssh_close)
+			(vty->ssh_close)(vty);
+		/* OK free vty. */
+		XFREE(MTYPE_VTY, vty);
+		return;
 	}
 	/* Flush buffer. */
 	//if(vty->type != VTY_FILE)
@@ -3600,6 +3743,19 @@ int vty_recovery(struct vty *vty, int close)
 		}
 	}
 	return OK;
+}
+
+struct vty * vty_lookup(int sock)
+{
+	unsigned int i;
+	struct vty *vty = NULL;
+	for (i = 0; i < vector_active(vtyvec); i++)
+		if ((vty = vector_slot(vtyvec, i)) != NULL)
+		{
+			if (vty->fd == sock)
+				return vty;
+		}
+	return NULL;
 }
 
 static void vty_save_cwd(void)

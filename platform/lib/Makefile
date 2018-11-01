@@ -23,6 +23,7 @@ BUILT_SOURCES = memtypes.h route_types.h
 # gitversion.h
 	
 	
+-include $(MODULE_OBJS:.o=.d)
 	
 $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \
@@ -61,7 +62,7 @@ clean: objclean
 	@$(RM) $(LIBS)
 
 objclean: 
-	@$(RM) $(OBJS_DIR)/*.o
+	@$(RM) $(OBJS_DIR)/*
 
 all: lib install
 

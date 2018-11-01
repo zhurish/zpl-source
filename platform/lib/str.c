@@ -45,11 +45,13 @@
 int
 snprintf(char *str, size_t size, const char *format, ...)
 {
+  int len = 0;
   va_list args;
 
   va_start (args, format);
-
-  return vsprintf (str, format, args);
+  len = vsprintf (str, format, args);
+  va_end(ac);
+  return len;
 }
 #endif
 

@@ -1658,10 +1658,6 @@ cmd_vector_filter(vector commands,
   for (i = 0; i < vector_active (commands); i++)
     if ((cmd_element = vector_slot (commands, i)) != NULL)
       {
-#ifdef HAVE_ROUTE_OPTIMIZE
-        if(cmd_element->attr == CMD_ATTR_HIDDEN)
-      	  ;//continue;
-#endif//HAVE_ROUTE_OPTIMIZE
         vector_set_index(*matches, i, NULL);
         matcher_rv = cmd_element_match(cmd_element, filter,
                                        vline, index,
@@ -2332,7 +2328,9 @@ cmd_complete_command_real (vector vline, struct vty *vty, int *status, int islib
   int lcd;
   vector matches = NULL;
   vector match_vector;
-
+#ifdef HAVE_ROUTE_OPTIMIZE
+  struct cmd_element *cmd_element = NULL;
+#endif//HAVE_ROUTE_OPTIMIZE
   if (vector_active (vline) == 0)
     {
       vector_free (cmd_vector);
@@ -2388,6 +2386,14 @@ cmd_complete_command_real (vector vline, struct vty *vty, int *status, int islib
 
   /* Build the possible list of continuations into a list of completions */
   for (i = 0; i < vector_active (matches); i++)
+  {
+#ifdef HAVE_ROUTE_OPTIMIZE
+	  if ((cmd_element = vector_slot (cmd_vector, i)) != NULL)
+		{
+	        if(cmd_element->attr == CMD_ATTR_HIDDEN)
+	      	  continue;
+		}
+#endif//HAVE_ROUTE_OPTIMIZE
     if ((match_vector = vector_slot (matches, i)))
       {
 	const char *string;
@@ -2403,7 +2409,7 @@ cmd_complete_command_real (vector vline, struct vty *vty, int *status, int islib
                                       strdup (string) /* rl freed */));
             }
       }
-
+  }
   /* We don't need cmd_vector any more. */
   vector_free (cmd_vector);
   cmd_matches_free(&matches);

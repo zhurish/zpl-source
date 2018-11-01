@@ -4,6 +4,7 @@
  *  Created on: Nov 27, 2016
  *      Author: zhurish
  */
+
 #include "zebra.h"
 #include "command.h"
 #include "hash.h"
@@ -13,10 +14,8 @@
 #include "host.h"
 #include "vty.h"
 
-
 #include "vty_user.h"
 
-extern struct host host;
 
 
 char * vty_user_setting (struct vty *vty, const char *name)
@@ -467,6 +466,44 @@ int vty_user_authentication (struct vty *vty, char *password)
 	if (host.mutx)
 		os_mutex_unlock(host.mutx);
 	return CMD_WARNING;
+}
+
+int user_authentication (char *username, char *password)
+{
+	unsigned char *passwd = NULL;
+	int fail = ERROR;
+	unsigned char encrypt[VTY_PASSWORD_MAX];
+	struct vty_user * user = NULL;
+	if (host.mutx)
+		os_mutex_lock(host.mutx, OS_WAIT_FOREVER);
+	user = vty_user_lookup (username);
+	if(user)
+	{
+		if (user->encrypt)
+			passwd = user->password_encrypt;
+		else
+			passwd = user->password;
+		if (passwd)
+		{
+			if (user->encrypt)
+			{
+				os_memset(encrypt, 0, sizeof(encrypt));
+				md5_encrypt_password(password, encrypt);
+				fail = memcmp (encrypt, passwd, VTY_PASSWORD_MAX);
+			}
+			else
+				fail = strcmp (password, passwd);
+		}
+		else
+		{
+			if (host.mutx)
+				os_mutex_unlock(host.mutx);
+			return ERROR;
+		}
+	}
+	if (host.mutx)
+		os_mutex_unlock(host.mutx);
+	return fail;
 }
 
 int vty_user_authorization (struct vty *vty, char *cmd)

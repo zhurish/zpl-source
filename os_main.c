@@ -283,6 +283,7 @@ int main (int argc, char **argv)
 
 
 	os_start_all_module();
+
 	//os_start_module (ZLOG_DEFAULT, main_data.config_file, NULL);
 
 	os_start_pid(MODULE_DEFAULT, main_data.pid_file, &main_data.pid);

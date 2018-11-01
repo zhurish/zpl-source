@@ -189,7 +189,7 @@ int os_module_init(void)
 	nsm_dhcp_module_init ();
 #endif
 
-
+	sshd_module_init();
 
 
 #ifdef PL_BSP_MODULE
@@ -226,6 +226,7 @@ int os_module_task_init(void)
 
 	systools_task_init();
 
+	sshd_enable(NULL, 2222);
 	return OK;
 }
 
@@ -349,6 +350,8 @@ int os_module_exit(void)
 	nsm_veth_client_exit();
 	//pal_abstract_exit();
 
+	sshd_module_exit();
+
 	return OK;
 }
 
@@ -376,6 +379,8 @@ int os_module_task_exit(void)
 	os_job_exit();
 	cli_console_task_exit ();
 	cli_telnet_task_exit ();
+	sshd_module_task_exit();
+
 	os_task_exit();
 	return OK;
 }

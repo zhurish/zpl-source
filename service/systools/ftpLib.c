@@ -434,7 +434,7 @@ int ftpCommandEnhanced
 
     if((len < 0) || (len >= (FTP_CMD_BUFFER_LENGTH - 2)))
         {
-        zlog_err (ZLOG_NSM, "command exceeds maximum size of %d",
+        zlog_err (ZLOG_NSM, "FTP command exceeds maximum size of %d",
 		 FTP_CMD_BUFFER_LENGTH - 3);
         return(ERROR);
         }
@@ -448,7 +448,7 @@ int ftpCommandEnhanced
 
     if (write(ctrlSock, buffer, len) < len)
         {
-        zlog_err (ZLOG_NSM, "writing to control socket");
+        zlog_err (ZLOG_NSM, "FTP writing to control socket");
         return(ERROR);
         }
 
@@ -580,7 +580,7 @@ int ftpXfer
 	{
 	/* Detected an error during command establishment */
 
-        zlog_err (ZLOG_NSM, "during command establishment");
+        zlog_err (ZLOG_NSM, "FTP during command establishment");
 
         close (ctrlSock);
         return (ERROR);
@@ -596,7 +596,7 @@ int ftpXfer
 	if (ftpCommand (ctrlSock, cmd, filename) != FTP_COMPLETE)
 	    {
             /* FTP command error. */
-            zlog_err (ZLOG_NSM, "during command");
+            zlog_err (ZLOG_NSM, "FTP during command");
 
             close (ctrlSock);
             return (ERROR);
@@ -624,16 +624,16 @@ int ftpXfer
 
         if ((dataSock = ftpDataConnInitPassiveMode (ctrlSock)) != ERROR)
             {
-            zlog_info (ZLOG_NSM, "mode succeeded.");
+            zlog_info (ZLOG_NSM, "FTP mode succeeded.");
             dataSockPassive = TRUE; /* We need not listen() on the socket */
             }
         else
             {
-            zlog_info (ZLOG_NSM, "PASV mode failed. Trying older PORT connect.");
+            zlog_info (ZLOG_NSM, "FTP PASV mode failed. Trying older PORT connect.");
 
             if ((dataSock = ftpDataConnInit (ctrlSock)) == ERROR)
                 {
-                zlog_err (ZLOG_NSM, "trying another port");
+                zlog_err (ZLOG_NSM, "FTP trying another port");
                 close (ctrlSock);
                 return (ERROR);
                 } 
@@ -659,7 +659,7 @@ int ftpXfer
                 {
             	if(strlen(cmdResultErr))
             		systools_printf("FTP Server : %s\r\n", cmdResultErr);
-                zlog_err (ZLOG_NSM, "response 0x%08x - aborting transfer.", cmdResult);
+                zlog_err (ZLOG_NSM, "FTP response 0x%08x - aborting transfer.", cmdResult);
                 close (ctrlSock);
                 return (ERROR);
                 }
@@ -669,16 +669,16 @@ int ftpXfer
             	if(strlen(cmdResultErr))
             		systools_printf("FTP Server : %s\r\n", cmdResultErr);
                 zlog_err (ZLOG_NSM,
-                		"calling user-supplied applette to see if 0x%08x"
+                		"FTP calling user-supplied applette to see if 0x%08x"
                 		" FTP_TRANSIENT is fatal for this command.", cmdResult);
                 if ((* ftpc_config._func_ftpTransientFatal) (cmdResult) == TRUE)
                     {
-                    zlog_err (ZLOG_NSM, "applette says 0x%08x IS fatal", cmdResult);
+                    zlog_err (ZLOG_NSM, "FTP applette says 0x%08x IS fatal", cmdResult);
                     close (ctrlSock);
                     return (ERROR);
                     }
 
-                zlog_info (ZLOG_NSM, "applette says 0x%08x is NOT fatal", cmdResult);
+                zlog_info (ZLOG_NSM, "FTP applette says 0x%08x is NOT fatal", cmdResult);
                 }
 
             if ((ftpReply = (cmdResult/100)) == FTP_TRANSIENT)
@@ -691,7 +691,7 @@ int ftpXfer
                 if (retryCount < ftpc_config.ftplTransientMaxRetryCount)
                     {
                     ++retryCount;
-                    zlog_warn (ZLOG_NSM,"reply was %d - FTP_PRELIM - #%d attempt in %d ticks.",
+                    zlog_warn (ZLOG_NSM,"FTP reply was %d - FTP_PRELIM - #%d attempt in %d ticks.",
                     		cmdResult, retryCount, ftpc_config.ftplTransientRetryInterval);
                     if (ftpc_config.ftplTransientRetryInterval)
                         os_sleep (ftpc_config.ftplTransientRetryInterval);
@@ -703,7 +703,7 @@ int ftpXfer
                 		systools_printf("FTP Server : %s\r\n", cmdResultErr);
                 /* Too many retries,  close socket and return failure */
                 zlog_err (ZLOG_NSM, "reply was %d - FTP_PRELIM - "
-                		"attempt limit (%d) exceeded.",
+                		"FTP attempt limit (%d) exceeded.",
                            cmdResult, ftpc_config.ftplTransientMaxRetryCount);
                 close (ctrlSock);
                 return (ERROR);
@@ -716,7 +716,7 @@ int ftpXfer
             /* At this point do a select on the data & control socket */
 
             zlog_info (ZLOG_NSM ,
-		      "cmdResult:%d dataSock:%d ctrlSock:%d",
+		      "FTP cmdResult:%d dataSock:%d ctrlSock:%d",
 		      cmdResult, dataSock, ctrlSock);
 
             FD_ZERO (&readFds);
@@ -727,7 +727,7 @@ int ftpXfer
 
             if (select (width, &readFds, NULL, NULL, NULL) == ERROR)
                 {
-                zlog_err (ZLOG_NSM, "in select()");
+                zlog_err (ZLOG_NSM, "FTP in select()");
                 close (dataSock);
                 close (ctrlSock);
                 return (ERROR);
@@ -742,14 +742,14 @@ int ftpXfer
                 {
                 close (dataSock);
 
-                zlog_warn (ZLOG_NSM, "Control socket ready but data socket is not");
+                zlog_warn (ZLOG_NSM, "FTP Control socket ready but data socket is not");
 
                 if ((ftpReply = ftpReplyGet (ctrlSock, FALSE)) == FTP_TRANSIENT)
                     continue; /* Try another port */
 
                 /* Regardless of response close sockets */
 
-                zlog_err (ZLOG_NSM, "sending QUIT command to host.");
+                zlog_err (ZLOG_NSM, "FTP sending QUIT command to host.");
                 (void) ftpCommand (ctrlSock, "QUIT");
                 close (ctrlSock);
                 return (ERROR);
@@ -769,7 +769,7 @@ int ftpXfer
 
         if ((dataSock = ftpDataConnGet (dataSock)) == ERROR)
             {
-            zlog_err (ZLOG_NSM, "in ftpDataConnGet()");
+            zlog_err (ZLOG_NSM, "FTP in ftpDataConnGet()");
             close (ctrlSock);
             return (ERROR);
             }
@@ -905,7 +905,7 @@ int ftpReplyGetEnhanced
 
         if (num  ==  0)             /* select timed out */
             {
-            zlog_err (ZLOG_NSM, "Timeout %lu sec.", replyTimeOut.tv_sec);
+            zlog_err (ZLOG_NSM, "FTP Timeout %lu sec.", replyTimeOut.tv_sec);
             return(ERROR);
             }
 	    	    
@@ -979,7 +979,7 @@ int ftpReplyGetEnhanced
     /* return error if we read failed */
     if(eof < 0)
         {
-        zlog_err (ZLOG_NSM, "read failed");
+        zlog_err (ZLOG_NSM, "FTP read failed");
         return (ERROR);
         }
     
@@ -987,7 +987,7 @@ int ftpReplyGetEnhanced
 
     if ((eof == 0) && !expecteof)
         {
-        zlog_err (ZLOG_NSM, "unexpected eof");
+        zlog_err (ZLOG_NSM, "FTP unexpected eof");
         return (ERROR);
         }
     
@@ -1034,7 +1034,7 @@ int ftpHookup
     ctrlSock = socket (AF_INET, SOCK_STREAM, 0);
     if (ctrlSock < 0)
         {
-        zlog_err (ZLOG_NSM, "Failed to get socket.");
+        zlog_err (ZLOG_NSM, "FTP Failed to get socket.");
         return (ERROR);
         }
 
@@ -1049,7 +1049,7 @@ int ftpHookup
     if (setsockopt (ctrlSock, SOL_SOCKET, SO_LINGER, (char*)&optVal, 
             sizeof (optVal)) == ERROR)  
         {
-        zlog_err (ZLOG_NSM, "setsockopt SO_LINGER");
+        zlog_err (ZLOG_NSM, "FTP setsockopt SO_LINGER");
         close (ctrlSock);
         return (ERROR);
         }
@@ -1064,7 +1064,7 @@ int ftpHookup
     if (setsockopt (ctrlSock, SOL_SOCKET, SO_KEEPALIVE, (char*)&ctrlOptval,
 	            sizeof (ctrlOptval)) == ERROR)
 	{
-        zlog_err (ZLOG_NSM , "setsockopt SO_KEEPALIVE");
+        zlog_err (ZLOG_NSM , "FTP setsockopt SO_KEEPALIVE");
 	close(ctrlSock);
 	return (ERROR);
 	}
@@ -1079,7 +1079,7 @@ int ftpHookup
 
     if (bind (ctrlSock, (struct sockaddr *)&ctrlAddr, sizeof (ctrlAddr)) < 0)
         {
-        zlog_err (ZLOG_NSM, "in bind()");
+        zlog_err (ZLOG_NSM, "FTP in bind()");
         close (ctrlSock);
         return (ERROR);
         }
@@ -1091,7 +1091,7 @@ int ftpHookup
 #ifdef OLD_STYLE_FTP
     if (connect (ctrlSock, (struct sockaddr *)&ctrlAddr, sizeof (ctrlAddr)) < 0)
         { 
-        zlog_err (ZLOG_NSM, "connect()");
+        zlog_err (ZLOG_NSM, "FTP connect()");
         close (ctrlSock);
         return (ERROR);
         }
@@ -1114,7 +1114,7 @@ int ftpHookup
                         }
                     /* else FALLTHROUGH */
                 default:
-                    zlog_err (ZLOG_NSM, "connect()");
+                    zlog_err (ZLOG_NSM, "FTP connect()");
                     close (ctrlSock);
                     return (ERROR);
                 }
@@ -1127,7 +1127,7 @@ int ftpHookup
     /* read startup message from server */
     if (ftpReplyGet (ctrlSock, FALSE) != FTP_COMPLETE)
         {
-        zlog_err (ZLOG_NSM, "did not get the expected reply");
+        zlog_err (ZLOG_NSM, "FTP did not get the expected reply");
         close (ctrlSock);
         return (ERROR);
         }
@@ -1174,7 +1174,7 @@ int ftpLogin
 
     if (n != FTP_COMPLETE)
         {
-        zlog_err (ZLOG_NSM, "incomplete login");
+        zlog_err (ZLOG_NSM, "FTP incomplete login");
         return (ERROR);
         }
 
@@ -1237,7 +1237,7 @@ int ftpDataConnInitPassiveMode
     len = sizeof (ctrlAddr);
     if (getsockname (ctrlSock, (struct sockaddr *)&ctrlAddr, &len) < 0)
         {
-        zlog_err (ZLOG_NSM, "in getsockname()");
+        zlog_err (ZLOG_NSM, "FTP in getsockname()");
         return (ERROR);
         }
 
@@ -1250,7 +1250,7 @@ int ftpDataConnInitPassiveMode
 
         if(ftpPasvReplyParse (pasvReplyString, 0, 0, 0, 0, &portMsb, &portLsb) == ERROR)
             {
-            zlog_err (ZLOG_NSM, "ftpPasvReplyParse() failed.");
+            zlog_err (ZLOG_NSM, "FTP ftpPasvReplyParse() failed.");
             return (ERROR);
             }
 
@@ -1263,7 +1263,7 @@ int ftpDataConnInitPassiveMode
         dataSock = socket (AF_INET, SOCK_STREAM, 0);
         if (dataSock < 0)
             {
-            zlog_err (ZLOG_NSM, "socket() failed");
+            zlog_err (ZLOG_NSM, "FTP socket() failed");
             return (ERROR);
             }
 
@@ -1277,7 +1277,7 @@ int ftpDataConnInitPassiveMode
         len = sizeof (SOCKADDR_IN);
         if (getpeername (ctrlSock, (struct sockaddr *)&ctrlAddr, &len) < 0)
             {
-            zlog_err (ZLOG_NSM, "getpeername() failed");
+            zlog_err (ZLOG_NSM, "FTP getpeername() failed");
             close (dataSock);
             return (ERROR);
             }
@@ -1289,7 +1289,7 @@ int ftpDataConnInitPassiveMode
         if (connect (dataSock, (struct sockaddr *)&dataAddr, sizeof (dataAddr)) < 0)
             { 
             zlog_err (ZLOG_NSM,
-		     "connect() failed. sock:%d sockMsb:%d sockLsb:%d",
+		     "FTP connect() failed. sock:%d sockMsb:%d sockLsb:%d",
 		     hostDataPort, portMsb, portLsb);
             close (dataSock);
             return (ERROR);
@@ -1298,7 +1298,7 @@ int ftpDataConnInitPassiveMode
         else 
             {
             zlog_info (ZLOG_NSM,
-		      "passive connect to host:%#x port:%d sock:%d",
+		      "FTP passive connect to host:%#x port:%d sock:%d",
 		      dataAddr.sin_addr.s_addr, hostDataPort, dataSock);
             return (dataSock);
             }
@@ -1307,7 +1307,7 @@ int ftpDataConnInitPassiveMode
     else /* We have failed PASV mode */
         {
         zlog_err (ZLOG_NSM,
-		 "Host failed to respond correctly to PASV command");
+		 "FTP Host failed to respond correctly to PASV command");
 
         return (ERROR);
         }
@@ -1404,14 +1404,13 @@ int ftpDataConnInit
         {
         if (result == FTP_PRELIM)
             {
-            zlog_info (ZLOG_NSM, "Got FTP_PRELIM.");
+            zlog_info (ZLOG_NSM, "FTP Got FTP_PRELIM.");
             }
 
         if (result != FTP_COMPLETE && result != FTP_PRELIM)
             {
             zlog_err (ZLOG_NSM,
-		       "reply was %d - not FTP_COMPLETE or FTP_PRELIM.",
-		       result);
+		       "FTP reply was %d - not FTP_COMPLETE or FTP_PRELIM.",result);
             close (dataSock);
             return (ERROR);
             }
@@ -1503,7 +1502,7 @@ int ftpDataConnGet
         {
         if (rc  ==  0)                /* select timed out */
              {
-             zlog_err (ZLOG_NSM, "select timeout after %lu sec.", replyTime.tv_sec);
+             zlog_err (ZLOG_NSM, "FTP select timeout after %lu sec.", replyTime.tv_sec);
              }
         return (ERROR);
         }       
@@ -1544,7 +1543,7 @@ int ftpLs
     		ftpc_config.loginPassword, "", "NLST",
 			dirName, "", &cntrlSock, &dataSock) != OK)
         {
-        zlog_err (ZLOG_NSM, "Can't open directory \"%s\"", dirName);
+        zlog_err (ZLOG_NSM, "FTP Can't open directory \"%s\"", dirName);
         return (ERROR);
         }
 
@@ -1789,7 +1788,7 @@ static int ftpPasvReplyParse
     /* Sanity check: Check for '227' at the beginning of the reply */
     if (strstr (responseString, "227") == NULL)
         {
-        zlog_err (ZLOG_NSM, "PASV response without '227'");
+        zlog_err (ZLOG_NSM, "FTP PASV response without '227'");
         return (ERROR);
         }
  
@@ -1797,7 +1796,7 @@ static int ftpPasvReplyParse
 
     if (index == NULL)
         {
-        zlog_err (ZLOG_NSM, "PASV response without '('");
+        zlog_err (ZLOG_NSM, "FTP PASV response without '('");
         return (ERROR);
         }
 
@@ -1811,7 +1810,7 @@ static int ftpPasvReplyParse
             &tmpArg5,
             &tmpArg6) != 6)
         {
-        zlog_err (ZLOG_NSM, "PASV response with invalid address or port");
+        zlog_err (ZLOG_NSM, "FTP PASV response with invalid address or port");
         return (ERROR);
         }
 
@@ -1961,7 +1960,7 @@ int ftp_upload(void *v, char *hostName, int port, char *path, char *fileName, ch
 	fd = open(localfileName, O_RDONLY);
 	if (fd <= 0)
 	{
-		systools_printf("TFTP transfer failed: %s", strerror(errno));
+		systools_printf("FTP transfer failed: %s", strerror(errno));
 		close (cntrlSock);
 		close (dataSock);
 		close(fd);

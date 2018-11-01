@@ -62,6 +62,10 @@ SOURCES = $(wildcard *.c *.cpp)
 OBJS = $(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(SOURCES)))
 #
 #
+-include $(OBJS:.o=.d)
+#
+#
+#
 $(TAGET) : $(OBJS) $(BASE_ROOT)/$(LIBDIR)/*.a 
 	$(CC) $(OBJS) $(CFLAGS) -Xlinker "-(" $(LDCLFLAG) -Xlinker "-)" -o $(TAGET) 
 	$(CHMOD) a+x $(TAGET)
@@ -100,6 +104,10 @@ objclean:
 		then \
 		$(RM) os_main.o; \
 	fi
+	@if test -f os_main.d ; \
+		then \
+		$(RM) os_main.d; \
+	fi
 	@if test -f $(TAGET) ; \
 		then \
 		$(RM) $(TAGET); \
@@ -111,6 +119,10 @@ clean:
 		then \
 		$(RM) os_main.o; \
 	fi
+	@if test -f os_main.d ; \
+		then \
+		$(RM) os_main.d; \
+	fi	
 	@if test -f $(TAGET) ; \
 		then \
 		$(RM) $(TAGET); \
@@ -139,6 +151,10 @@ demo: all
 		then \
 		$(RM) os_main.o; \
 	fi
+	@if test -f os_main.d ; \
+		then \
+		$(RM) os_main.d; \
+	fi	
 	@if test -f $(TAGET) ; \
 		then \
 		$(RM) $(TAGET); \

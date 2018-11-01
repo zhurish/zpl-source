@@ -116,8 +116,8 @@ tree_cache(struct tree *tree)
 struct tree *
 tree_const(unsigned char *data, int len)
 {
-	unsigned char *d;
-	struct tree *nt;
+	unsigned char *d = NULL;
+	struct tree *nt = NULL;
 
 	d = calloc(1, len);
 	nt = calloc(1, sizeof(struct tree));

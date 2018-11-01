@@ -37,7 +37,7 @@ process_usage (char *progname, int status)
 	      "-l, --log file  		Set log file name\n"\
 	      "-d, --debug level    Set log level\n"\
 	      "-h, --help         Display this help and exit\n"\
-	      "\n");
+	      "\n", progname);
     }
 
   exit (status);

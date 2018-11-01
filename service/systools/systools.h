@@ -16,14 +16,16 @@
 #define MAX_LOGIN_NAME_LEN 	128
 #define MAX_DIR_NAME_LEN 	128
 
-#define systools_debug(fmt,...)	zlog_debug(ZLOG_NSM, fmt, ##__VA_ARGS__)
-#define systools_warn(fmt,...)		zlog_warn(ZLOG_NSM, fmt, ##__VA_ARGS__)
-#define systools_error(fmt,...)	zlog_err(ZLOG_NSM, fmt, ##__VA_ARGS__)
+#define systools_debug(fmt,...)	zlog_debug(ZLOG_UTILS, fmt, ##__VA_ARGS__)
+#define systools_warn(fmt,...)		zlog_warn(ZLOG_UTILS, fmt, ##__VA_ARGS__)
+#define systools_error(fmt,...)	zlog_err(ZLOG_UTILS, fmt, ##__VA_ARGS__)
 
 
 extern int systools_set(void *vty);
 
 extern int systools_printf(const char *format, ...);
+
+extern const char *ftpd_hostname();
 
 extern int systools_task_init ();
 extern int systools_task_exit ();

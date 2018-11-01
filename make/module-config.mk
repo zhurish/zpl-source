@@ -123,6 +123,28 @@ PLDEFINE += -DPL_DHCP_MODULE
 endif
 endif
 
+ifeq ($(strip $(MODULE_SSH)),true)
+ifeq ($(strip $(MODULE_COMPONENT)),true)
+OPENSSH_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(OPENSSHDIR)
+PLPRODS += $(OPENSSH_ROOT)
+PLINCLUDE += -I$(OPENSSH_ROOT)
+PLINCLUDE += -I$(OPENSSH_ROOT)/include
+ifeq ($(BUILD_TYPE),X86)
+PLINCLUDE += -I$(OPENSSH_ROOT)/include
+PL_LDLIBS += -lutil -lssl -lcrypto -lz
+endif
+ifeq ($(BUILD_TYPE),MIPS)
+PLINCLUDE += -I$(PLBASE)/externsions/openssl/mipsl/include
+PL_CFLAGS += -L$(PLBASE)/externsions/openssl/mipsl/lib 
+PL_CFLAGS += -I$(PLBASE)/externsions/zlib/zlib/include
+PL_CFLAGS += -L$(PLBASE)/externsions/zlib/zlib/lib
+PL_LDLIBS += -lutil -lssl -lcrypto -lz
+endif
+PLDEFINE += -DPL_OPENSSH_MODULE
+endif
+endif
+
+
 ifeq ($(strip $(MODULE_SQLITE)),true)
 #ifeq ($(strip $(MODULE_COMPONENT)),true)
 SQLITE_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(SQLITEDIR)

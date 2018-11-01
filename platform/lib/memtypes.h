@@ -322,6 +322,11 @@ enum
   MTYPE_QOS,
   MTYPE_DOT1X,
   MTYPE_MIRROR,
+  MTYPE_SSH,
+  MTYPE_SSHD,
+  MTYPE_SSH_CLIENT,
+  MTYPE_SSH_SCP,
+  MTYPE_SSH_SFTP,
   MTYPE_MAX,
 };
 
@@ -344,6 +349,7 @@ extern struct memory_list memory_list_modem[];
 extern struct memory_list memory_list_dhcp[];
 extern struct memory_list memory_list_wifi[];
 extern struct memory_list memory_list_port[];
+extern struct memory_list memory_list_ssh[];
 
 #endif /* _QUAGGA_MEMTYPES_H */
 

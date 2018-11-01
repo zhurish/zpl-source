@@ -184,7 +184,7 @@ static int ping_thread(PING_STAT * pPS)
 	pPS->tMin = 999999999; /* init min rt time */
 	//pPS->flags = options; /* save flags field */
 
-	pingTmo.tv_sec = pPS->_pingTxTmo;
+	pingTmo.tv_sec = pPS->pingTxTmo;
 	pingTmo.tv_usec = 0;
 
 	pPS->pBufIcmp = (struct icmp *) pPS->bufTx; /* pointer to icmp header out */
@@ -199,7 +199,7 @@ static int ping_thread(PING_STAT * pPS)
 
 	//strcpy(pPS->toHostName, host); /* save host name */
 
-	pPS->dataLen = pPS->_pingTxLen - 8; /* compute size of data */
+	pPS->dataLen = pPS->pingTxLen - 8; /* compute size of data */
 
 	/* open raw socket for ICMP communication */
 
@@ -213,7 +213,7 @@ static int ping_thread(PING_STAT * pPS)
 
 	if (!(pPS->flags & PING_OPT_SILENT) && pPS->numPacket != 1)
 	{
-		vty_out(vty,"PING %s", pPS->toInetName); /* print out dest info */
+		vty_out(vty,"PING %s (%s)", pPS->toHostName, pPS->toInetName); /* print out dest info */
 		vty_out(vty,": %d data bytes%s", pPS->dataLen, VTY_NEWLINE);
 	}
 	if(pPS->maxttl)
@@ -223,7 +223,7 @@ static int ping_thread(PING_STAT * pPS)
 	}
 	pPS->pBufIcmp->icmp_type = ICMP_ECHO; /* set up Tx buffer */
 	pPS->pBufIcmp->icmp_code = 0;
-	pPS->pBufIcmp->icmp_id = pPS->idRx & 0xffff;
+	pPS->pBufIcmp->icmp_id = htons(pPS->idRx & 0xffff);
 
 	for (ix = sizeof(struct timeval); ix < pPS->dataLen; ix++) /* skip 4 bytes for time */
 		pPS->bufTx[8 + ix] = ix;
@@ -239,16 +239,16 @@ static int ping_thread(PING_STAT * pPS)
 		pPS->pBufIcmp->icmp_seq = pPS->numTx++; /* increment seq number */
 		pPS->pBufIcmp->icmp_cksum = 0;
 		pPS->pBufIcmp->icmp_cksum = in_cksum((u_short *) pPS->pBufIcmp,
-				pPS->_pingTxLen);
+				pPS->pingTxLen);
 		/* transmit ICMP packet */
 
-		if ((ix = sendto(pPS->pingFd, (char *) pPS->pBufIcmp, pPS->_pingTxLen, 0,
+		if ((ix = sendto(pPS->pingFd, (char *) pPS->pBufIcmp, pPS->pingTxLen, 0,
 				(struct sockaddr *) &to, sizeof(struct sockaddr)))
-				!= pPS->_pingTxLen)
+				!= pPS->pingTxLen)
 		{
 			if (pPS->flags & PING_OPT_DEBUG)
 				vty_out(vty,"ping: wrote %s %d chars, ret=%d%s", pPS->toInetName,
-						pPS->_pingTxLen, ix, VTY_NEWLINE);
+						pPS->pingTxLen, ix, VTY_NEWLINE);
 			if(ix < 0)
 			{
 				if(errno == ENETUNREACH)
@@ -310,7 +310,7 @@ check_fd_again: /* Wait for ICMP reply */
 			goto check_fd_again;
 
 		//vty_out(vty, "=========> %d %d %s", pPS->numRx, pPS->numPacket, VTY_NEWLINE);
-		os_sleep(pPS->_pingTxInterval);
+		os_sleep(pPS->pingTxInterval);
 	}
 
 	if (pPS->numRx > 0)
@@ -363,11 +363,11 @@ int ping(struct vty *vty, char * host, int numPackets, int len, u_int32 options)
 	}
 	memset(pPS->bufTx, 0, pPS->rxmaxlen);
 	pPS->flags = options;
-	pPS->_pingTxLen = len;
-	pPS->_pingTxLen = max(pPS->_pingTxLen, PING_MINPACKET); /* sanity check global */
-	pPS->_pingTxLen = min(pPS->_pingTxLen, PING_MAXPACKET); /* sanity check global */
-	pPS->_pingTxInterval = PING_INTERVAL; /* packet interval in seconds */
-	pPS->_pingTxTmo = PING_TMO + 1; /* packet timeout in seconds */
+	pPS->pingTxLen = len;
+	pPS->pingTxLen = max(pPS->pingTxLen, PING_MINPACKET); /* sanity check global */
+	pPS->pingTxLen = min(pPS->pingTxLen, PING_MAXPACKET); /* sanity check global */
+	pPS->pingTxInterval = PING_INTERVAL; /* packet interval in seconds */
+	pPS->pingTxTmo = PING_TMO + 1; /* packet timeout in seconds */
 	pPS->numPacket = numPackets;
     pPS->ifindex = 0;
     pPS->numRx = 0;
@@ -379,13 +379,16 @@ int ping(struct vty *vty, char * host, int numPackets, int len, u_int32 options)
     	hoste = gethostbyname(host);
     	if (hoste && hoste->h_addr_list[0])
     	{
-    		addr.s_addr = hoste->h_addr_list[0];
+    		addr = *(struct in_addr*)hoste->h_addr_list[0];//hoste->h_addr_list[0];
     		sprintf(pPS->toInetName, "%s", inet_ntoa(addr));
+			strcpy(pPS->toHostName, host);
+			//vty_out(vty, "PING -----> %s (%s)%s", pPS->toHostName, pPS->toInetName, VTY_NEWLINE);
     	}
 	}
     else
     {
     	strcpy(pPS->toInetName, host);
+		strcpy(pPS->toHostName, host);
     }
 
     vty_ansync_enable(vty, TRUE);
@@ -462,7 +465,7 @@ static int pingRxPrint(PING_STAT * pPS, /* ping stats structure */
 	}
 
 	/* check if the received reply is ours. */
-	if (icp->icmp_id != (pPS->idRx & 0xffff))
+	if (ntohs(icp->icmp_id) != (pPS->idRx & 0xffff))
 	{
 		return (ERROR); /* wasn't our ECHO */
 	}

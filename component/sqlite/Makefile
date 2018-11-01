@@ -22,6 +22,9 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 	$(ECHO) CC '$(CFLAGS)' $@
 	@$(PL_OBJ_COMPILE)
 
+-include $(MODULE_OBJS:.o=.d)
+-include $(MODULE_BOBJS:.o=.d)
+
 $(LIBS) : $(MODULE_OBJS)
 	$(PL_MAKE_LIB) $(LIBS) $(MODULE_OBJS)
 
@@ -62,7 +65,7 @@ clean: objclean
 	@$(RM) $(LIBS) $(LIBDS) $(SQLBIN)
 
 objclean: 
-	@$(RM) $(OBJS_DIR)/*.o
+	@$(RM) $(OBJS_DIR)/*
 
 all: lib install taget
 

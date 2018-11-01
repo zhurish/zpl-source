@@ -210,8 +210,9 @@ static int ifname_to_phyid(char *name)
 //iwconfig wlan0 bit {N[k|M|G]|auto|fixed
 //dev <devname> set mcast_rate <rate in Mbps>
 //dev <devname> set power_save <on|off>
-//dev <devname> set bitrates [legacy-<2.4|5> <legacy rate in Mbps>*] [ht-mcs-<2.4|5> <MCS index>*] [vht-mcs-<2.4|5> <NSS:MCSx,MCSy... | \
-	NSS:MCSx-MCSy>*] [sgi-2.4|lgi-2.4] [sgi-5|lgi-5]
+//dev <devname> set bitrates [legacy-<2.4|5> <legacy rate in Mbps>*]
+//	[ht-mcs-<2.4|5> <MCS index>*] [vht-mcs-<2.4|5> <NSS:MCSx,MCSy... |
+//	NSS:MCSx-MCSy>*] [sgi-2.4|lgi-2.4] [sgi-5|lgi-5]
 
 int iw_dev_mode_set(struct interface *ifp, char * value)
 {

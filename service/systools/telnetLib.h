@@ -59,6 +59,23 @@ extern "C" {
 #define PTY_DEVICE_NAME_MAX_LEN 128 /* The maximum string length of a pty device */
 #define TELNET_BUF_SIZE     512       /* size of scratch buffer */
 
+typedef struct
+    {
+    int         socket;              /* socket connection */
+    int         ptyFd;             /* input to command interpreter */
+
+    BOOL        loggedIn;            /* Has shell been started on this slot? */
+    BOOL        shuttingDown;        /* Is session shutting down? */
+
+	BOOL 		raw;			/* TRUE = raw mode enabled */
+	BOOL 		echo;		/* TRUE = echo enabled */
+    u_int8 		myOpts[256];	/* current option settings - this side */
+	u_int8 		remOpts[256];	/* current option settings - other side */
+
+    void		*master;
+    void		*t_lread;
+    void		*t_rread;
+    } TELNETD_SESSION_DATA;
 
 
 typedef struct 
@@ -172,7 +189,20 @@ typedef struct
 
 /* function declarations */
 
+/*
+ * client
+ */
 extern int telnet(struct vty *vty, char * pHostName, int port);
+
+
+/*
+ * server
+ */
+extern int telnetdInit(int numClients, void *master);
+
+extern int telnetdStart(char *address, int port);
+extern void telnetdExit(void);
+
 
 #ifdef __cplusplus
 }

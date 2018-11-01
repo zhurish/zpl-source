@@ -22,6 +22,7 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 	$(ECHO) CC '$(CFLAGS)' $@
 	@$(PL_OBJ_COMPILE)
 
+-include $(MODULE_OBJS:.o=.d)
 
 $(TARGET): $(MODULE_OBJS)
 	$(CC) $(MODULE_OBJS) $(CFLAGS) $(LDCLFLAG) -o $(TARGET) 
@@ -41,7 +42,7 @@ clean: objclean
 	@$(RM) $(TARGET)
 
 objclean: 
-	@$(RM) $(OBJS_DIR)/*.o
+	@$(RM) $(OBJS_DIR)/*
 
 all: obj install 
 

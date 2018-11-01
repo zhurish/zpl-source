@@ -999,7 +999,8 @@ int zlog_get_file(const char *filename, int *log_level)
 	return OK;
 }
 
-int zlog_close_file() {
+int zlog_close_file()
+{
 
 	char filetmp[256];
 	if (zlog_default == NULL)
