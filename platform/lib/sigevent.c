@@ -80,7 +80,7 @@ static int real_signal_read (int timeout)
 {
 	int i = 0, retval = 0;
 	char buf[128];
-	pthread_t *pid = (pthread_t *)buf;
+	//pthread_t *pid = (pthread_t *)buf;
 	int *sig = (int *)(buf + sizeof(pthread_t));
 	fd_set rfds;
 	struct quagga_signal_t *sighandle;

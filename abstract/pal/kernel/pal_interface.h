@@ -42,6 +42,7 @@ typedef struct pal_stack_s
 	int (*ip_stack_ipv6_delete)(struct interface *ifp,struct connected *, int);
 
 	//ip arp
+	int (*ip_stack_arp_get)(struct interface *ifp, struct prefix *address, unsigned char *mac);
 	int (*ip_stack_arp_add)(struct interface *ifp, struct prefix *address, unsigned char *mac);
 	int (*ip_stack_arp_delete)(struct interface *ifp, struct prefix *address);
 	int (*ip_stack_arp_request)(struct interface *ifp, struct prefix *address);

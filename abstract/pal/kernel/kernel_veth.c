@@ -111,7 +111,7 @@ static int _ipkernel_veth_create (nsm_veth_t *kifp)
 static int _ipkernel_veth_destroy (nsm_veth_t *kifp)
 {
 
-	struct ifreq ifr;
+	//struct ifreq ifr;
 	struct interface *ifp;
 	if(!kifp)
 		return -1;
@@ -154,7 +154,7 @@ static int ip_vlan_delete(const char *name, int vid)
 	return ret;
 }
 
-
+#if 0
 static int ip_vlan_name_type(int type)
 {
 	int ret = -1;
@@ -192,7 +192,7 @@ static int ip_vlan_ingress(const char *vname, int skb_priority, int vlan_qos)
 	ret = if_ioctl(SIOCSIFVLAN, &v_req);
 	return ret;
 }
-
+#endif
 
 static int _ipkernel_vlan_create (nsm_veth_t *kifp)
 {

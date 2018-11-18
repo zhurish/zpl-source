@@ -1859,7 +1859,7 @@ zebra_event (enum event event, int sock, struct zserv *client)
       break;
     }
 }
-
+#if 0
 #define ZEBRA_TIME_BUF 32
 static char *
 zserv_time_buf(time_t *time1, char *buf, int buflen)
@@ -1979,7 +1979,7 @@ zebra_show_client_brief (struct vty *vty, struct zserv *client)
 	   client->v6_route_del_cnt, VTY_NEWLINE);
 
 }
-
+#endif
 #if 0
 /* Display default rtm_table for all clients. */
 DEFUN (show_table,

@@ -7,14 +7,12 @@
 
 #define DHCPC_THREAD
 
+/*
 #define	NDEBUG
 #define	THERE_IS_NO_FORK
-//#define	_GNU_SOURCE
-/*
 #define	_FILE_OFFSET_BITS 64
 #define	_LARGEFILE_SOURCE
 #define	_LARGEFILE64_SOURCE
-*/
 #define	INET
 #define	ARP
 #define	ARPING
@@ -23,6 +21,8 @@
 #define	DHCP6
 #define	AUTH
 #define	NO_SIGNALS
+*/
+
 #define	__linux__ 1
 
 #ifdef BASE_DIR

@@ -21,7 +21,7 @@
 #include "modem_attty.h"
 #include "modem_message.h"
 
-
+#if 0
 /*
  * AT+CMGF
  * set Message Format
@@ -143,3 +143,4 @@ static int modem_sms_read_set(modem_client_t *client)
 	}
 	return ERROR;
 }
+#endif

@@ -156,7 +156,9 @@ struct dhcpc_interface {
 	void	*t_v6_start;
 #endif
 	void	*t_event;
+#ifdef INET6
 	void	*t_v6_event;
+#endif
 	void	*t_chk;
 };
 TAILQ_HEAD(if_head, dhcpc_interface);

@@ -226,7 +226,7 @@ int nsm_ip_arp_ageing_time_set_api(int ageing)
 int nsm_ip_arp_ageing_time_get_api(int *ageing)
 {
 	int ret = ERROR;
-	ip_arp_t *value;
+	//ip_arp_t *value;
 	if(gIparp.mutex)
 		os_mutex_lock(gIparp.mutex, OS_WAIT_FOREVER);
 	if(ageing)
@@ -253,7 +253,7 @@ int nsm_ip_arp_timeout_set_api(int ageing)
 int nsm_ip_arp_timeout_get_api(int *ageing)
 {
 	int ret = ERROR;
-	ip_arp_t *value;
+	//ip_arp_t *value;
 	if(gIparp.mutex)
 		os_mutex_lock(gIparp.mutex, OS_WAIT_FOREVER);
 	if(ageing)
@@ -281,7 +281,7 @@ int nsm_ip_arp_retry_interval_set_api(int ageing)
 int nsm_ip_arp_retry_interval_get_api(int *ageing)
 {
 	int ret = ERROR;
-	ip_arp_t *value;
+	//ip_arp_t *value;
 	if(gIparp.mutex)
 		os_mutex_lock(gIparp.mutex, OS_WAIT_FOREVER);
 	if(ageing)
@@ -308,7 +308,7 @@ int nsm_ip_arp_proxy_set_api(int ageing)
 int nsm_ip_arp_proxy_get_api(int *ageing)
 {
 	int ret = ERROR;
-	ip_arp_t *value;
+	//ip_arp_t *value;
 	if(gIparp.mutex)
 		os_mutex_lock(gIparp.mutex, OS_WAIT_FOREVER);
 	if(ageing)
@@ -336,7 +336,7 @@ int nsm_ip_arp_proxy_local_set_api(int ageing)
 int nsm_ip_arp_proxy_local_get_api(int *ageing)
 {
 	int ret = ERROR;
-	ip_arp_t *value;
+	//ip_arp_t *value;
 	if(gIparp.mutex)
 		os_mutex_lock(gIparp.mutex, OS_WAIT_FOREVER);
 	if(ageing)

@@ -581,7 +581,7 @@ DEFUN (modem_bind_interface_set,
 	   CMD_USP_STR_HELP)
 {
 	modem_t *modem = vty->index;
-	struct interface *ifp = NULL;
+	//struct interface *ifp = NULL;
 	if(os_strstr(argv[0], "serial"))
 	{
 		if(modem->ppp_serial)
@@ -674,7 +674,7 @@ DEFUN (modem_bind_interface_vals_set,
 		"dial interface\n")
 {
 	modem_t *modem = vty->index;
-	struct interface *ifp = NULL;
+	//struct interface *ifp = NULL;
 	if(os_strstr(argv[1], "ppp"))
 	{
 		if(modem->ppp_serial)
@@ -758,7 +758,7 @@ DEFUN (modem_bind_interface_vale_set,
 	   "third interface\n")
 {
 	modem_t *modem = vty->index;
-	struct interface *ifp = NULL;
+	//struct interface *ifp = NULL;
 	if(os_strstr(argv[2], "secondly"))
 	{
 		if(modem->eth1)

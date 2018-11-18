@@ -353,7 +353,7 @@ static int sntpsMsgSend (struct sntp_server *server)
 {
 	SNTP_PACKET sntpReply;
 	int result;
-	int optval;
+	//int optval;
 	//short interval;
 	SNTP_TIMESTAMP refTime;
 //	int sntpSocket;

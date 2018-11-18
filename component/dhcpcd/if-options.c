@@ -659,7 +659,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 	int e, i, t;
 	long l;
 	unsigned long u;
-	char *p = NULL, *bp, *fp, *np, **nconf;
+	char *p = NULL, *bp, *fp, *np;//, **nconf;
 	ssize_t s;
 	struct in_addr addr, addr2;
 	in_addr_t *naddr;
@@ -669,7 +669,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 	struct dhcp_opt **dop, *ndop;
 	size_t *dop_len, dl, odl;
 	struct vivco *vivco;
-	struct group *grp;
+	//struct group *grp;
 #ifdef AUTH
 	struct token *token;
 #endif
@@ -2793,7 +2793,7 @@ add_options(struct dhcpcd_ctx *ctx, const char *ifname,
 void
 free_options(struct dhcpcd_ctx *ctx, struct if_options *ifo)
 {
-	size_t i;
+	//size_t i;
 	struct dhcp_opt *opt;
 	struct vivco *vo;
 #ifdef AUTH

@@ -263,7 +263,7 @@ static int if_slot_kernel_update()
 
 static int if_slot_kernel_read()
 {
-	int i = 0;
+	//int i = 0;
 	char buf[512];
 	ifindex_t ifindex;
 	char kname[64], name[128];

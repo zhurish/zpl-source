@@ -528,7 +528,7 @@ DEFUN (nsm_interface_ip_dhcp_server,
 		"DHCP server\n")
 {
 	int ret = 0;
-	BOOL mode = FALSE;
+	//BOOL mode = FALSE;
 	struct interface *ifp = (struct interface *) vty->index;
 	if(ifp)
 	{
@@ -567,7 +567,7 @@ DEFUN (no_nsm_interface_ip_dhcp_server,
 		"DHCP server\n")
 {
 	int ret = 0;
-	BOOL mode = FALSE;
+	//BOOL mode = FALSE;
 	struct interface *ifp = (struct interface *) vty->index;
 	if(ifp)
 	{

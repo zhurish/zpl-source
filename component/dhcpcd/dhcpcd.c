@@ -70,15 +70,18 @@
 struct dhcpcd_ctx dhcpcd_ctx;
 static void dhcpcd_handlelink(void *arg);
 
-static void dhcpcd_v6_startinterface(void *arg);
+
 static void dhcpcd_v4_drop(struct dhcpc_interface *ifp, int stop);
-static void dhcpcd_v6_drop(struct dhcpc_interface *ifp, int stop);
 static void stop_v4_interface(struct dhcpc_interface *ifp);
-static void stop_v6_interface(struct dhcpc_interface *ifp);
 static void if_v4_reboot(struct dhcpc_interface *ifp);
-static void if_v6_reboot(struct dhcpc_interface *ifp);
 static void dhcpcd_v4_ifrenew(struct dhcpc_interface *ifp);
+#ifdef INET6
+static void dhcpcd_v6_startinterface(void *arg);
+static void dhcpcd_v6_drop(struct dhcpc_interface *ifp, int stop);
+static void stop_v6_interface(struct dhcpc_interface *ifp);
+static void if_v6_reboot(struct dhcpc_interface *ifp);
 static void dhcpcd_v6_ifrenew(struct dhcpc_interface *ifp);
+#endif
 
 static void free_globals(struct dhcpcd_ctx *ctx)
 {
@@ -380,9 +383,11 @@ static void configure_interface(struct dhcpc_interface *ifp,
 	if (old != 0 && ifp->options->mtime != old)
 	{
 		logwarnx("%s: confile file changed, expiring leases", ifp->name);
-		if(	IF_IS_V6ACTIVE(ifp->active) && dhcp_state(ifp) > DHS_INIT)
+#ifdef INET6
+		if(	IF_IS_V6ACTIVE(ifp->active) && dhcp6_state(ifp) > DH6S_INIT)
 			dhcpcd_v6_drop(ifp, 0);
-		if(	IF_IS_ACTIVE(ifp->active) && dhcp6_state(ifp) > DH6S_INIT)
+#endif
+		if(	IF_IS_ACTIVE(ifp->active) && dhcp_state(ifp) > DHS_INIT)
 			dhcpcd_v4_drop(ifp, 0);
 		//dhcpcd_drop(ifp, DHCP_CMD_BOTH, 0);
 	}
@@ -470,11 +475,15 @@ void dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier,
 			arp_drop(ifp);
 #endif
 			dhcp_abort(ifp);
+#ifdef INET6
 			if(	IF_IS_V6ACTIVE(ifp->active))
 				ipv6nd_expire(ifp, 0);
+#endif
 #else
+#ifdef INET6
 			if(	IF_IS_V6ACTIVE(ifp->active))
 				dhcpcd_v6_drop(ifp, 0);
+#endif
 			if(	IF_IS_ACTIVE(ifp->active))
 				dhcpcd_v4_drop(ifp, 0);
 #endif
@@ -501,8 +510,10 @@ void dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier,
 				if (ifp->ssid_len != olen ||
 						memcmp(ifp->ssid, ossid, ifp->ssid_len))
 				{
+#ifdef INET6
 					if(	IF_IS_V6ACTIVE(ifp->active))
 						dhcpcd_v6_drop(ifp, 0);
+#endif
 					if(	IF_IS_ACTIVE(ifp->active))
 						dhcpcd_v4_drop(ifp, 0);
 				}
@@ -518,11 +529,13 @@ void dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier,
 				ipv6nd_expire(ifp, RTR_CARRIER_EXPIRE);
 #endif
 			/* RFC4941 Section 3.5 */
+#ifdef INET6
 			if(	IF_IS_V6ACTIVE(ifp->active))
 			{
 				ipv6_gentempifid(ifp);
 				dhcpcd_v6_startinterface(ifp);
 			}
+#endif
 			if(	IF_IS_ACTIVE(ifp->active))
 				dhcpcd_startinterface(ifp);
 		}
@@ -570,8 +583,8 @@ static void dhcpcd_startinterface_check(void *arg)
 void dhcpcd_activateinterface(struct dhcpc_interface *ifp,
 		unsigned long long options)
 {
-
-	if(options & (DHCPCD_IPV6 | DHCPCD_DHCP6) == (DHCPCD_IPV6 | DHCPCD_DHCP6))
+#ifdef INET6
+	if((options & (DHCPCD_IPV6 | DHCPCD_DHCP6)) == (DHCPCD_IPV6 | DHCPCD_DHCP6))
 	{
 		if(!IF_IS_V6ACTIVE(ifp->active))
 		{
@@ -581,6 +594,7 @@ void dhcpcd_activateinterface(struct dhcpc_interface *ifp,
 		}
 	}
 	else
+#endif
 	{
 		if(!IF_IS_ACTIVE(ifp->active))
 		{
@@ -622,12 +636,14 @@ static void dhcpcd_linkoverflow(struct dhcpcd_ctx *ctx)
 	/* Punt departed interfaces */
 	TAILQ_FOREACH_SAFE(ifp, ctx->ifaces, next, ifn)
 	{
+#ifdef INET6
 		if(	IF_IS_V6ACTIVE(ifp->active))
 		{
 			logdebugx("%s: v6 interface departed", ifp->name);
 			ifp->options->options |= DHCPCD_DEPARTED;
 			stop_v6_interface(ifp);
 		}
+#endif
 		if(	IF_IS_ACTIVE(ifp->active))
 		{
 			logdebugx("%s: interface departed", ifp->name);
@@ -712,7 +728,7 @@ void dhcpcd_startinterface(void *arg)
 	}
 #endif
 }
-
+#ifdef INET6
 static void dhcpcd_v6_startinterface(void *arg)
 {
 	struct dhcpc_interface *ifp = arg;
@@ -804,7 +820,7 @@ static void dhcpcd_v6_startinterface(void *arg)
 			ifp->state = DHCP_STATE_RUNNING;
 	}
 }
-
+#endif
 static void dhcpcd_v4_drop(struct dhcpc_interface *ifp, int stop)
 {
 #ifdef IPV4LL
@@ -820,7 +836,7 @@ static void dhcpcd_v4_drop(struct dhcpc_interface *ifp, int stop)
 	UNUSED(stop);
 #endif
 }
-
+#ifdef INET6
 static void dhcpcd_v6_drop(struct dhcpc_interface *ifp, int stop)
 {
 #ifdef DHCP6
@@ -835,7 +851,7 @@ static void dhcpcd_v6_drop(struct dhcpc_interface *ifp, int stop)
 	UNUSED(stop);
 #endif
 }
-
+#endif
 
 static void stop_v4_interface(struct dhcpc_interface *ifp)
 {
@@ -868,6 +884,7 @@ static void stop_v4_interface(struct dhcpc_interface *ifp)
 		ifp->state = DHCP_STATE_INIT;
 	}
 }
+#ifdef INET6
 static void stop_v6_interface(struct dhcpc_interface *ifp)
 {
 	struct dhcpcd_ctx *ctx;
@@ -899,7 +916,7 @@ static void stop_v6_interface(struct dhcpc_interface *ifp)
 		ifp->state = DHCP_STATE_INIT;
 	}
 }
-
+#endif
 static void if_v4_reboot(struct dhcpc_interface *ifp)
 {
 	unsigned long long oldopts;
@@ -912,6 +929,7 @@ static void if_v4_reboot(struct dhcpc_interface *ifp)
 	dhcp_reboot_newopts(ifp, oldopts);
 }
 
+#ifdef INET6
 static void if_v6_reboot(struct dhcpc_interface *ifp)
 {
 	//unsigned long long oldopts;
@@ -925,7 +943,7 @@ static void if_v6_reboot(struct dhcpc_interface *ifp)
 
 	//dhcpcd_prestartinterface(ifp);
 }
-
+#endif
 static void dhcpcd_v4_ifrenew(struct dhcpc_interface *ifp)
 {
 	ifp->t_event = NULL;
@@ -939,7 +957,7 @@ static void dhcpcd_v4_ifrenew(struct dhcpc_interface *ifp)
 	}
 	dhcp_renew(ifp);
 }
-
+#ifdef INET6
 static void dhcpcd_v6_ifrenew(struct dhcpc_interface *ifp)
 {
 	ifp->t_v6_event = NULL;
@@ -957,7 +975,7 @@ static void dhcpcd_v6_ifrenew(struct dhcpc_interface *ifp)
 		ipv6nd_startrs(ifp);
 	dhcp6_renew(ifp);
 }
-
+#endif
 
 static void dhcpcd_v4_add(struct dhcpc_interface *ifp)
 {
@@ -971,7 +989,7 @@ static void dhcpcd_v4_add(struct dhcpc_interface *ifp)
 	}
 //	/dhcpcd_startinterface(ifp);
 }
-
+#ifdef INET6
 static void dhcpcd_v6_add(struct dhcpc_interface *ifp)
 {
 	ifp->t_v6_event = NULL;
@@ -983,7 +1001,7 @@ static void dhcpcd_v6_add(struct dhcpc_interface *ifp)
 		dhcpcd_v6_startinterface(ifp);
 	}
 }
-
+#endif
 static void dhcpcd_v4_del(struct dhcpc_interface *ifp)
 {
 	ifp->t_event = NULL;
@@ -1000,7 +1018,7 @@ static void dhcpcd_v4_del(struct dhcpc_interface *ifp)
 		if_free(ifp);
 	}
 }
-
+#ifdef INET6
 static void dhcpcd_v6_del(struct dhcpc_interface *ifp)
 {
 	ifp->t_v6_event = NULL;
@@ -1016,7 +1034,7 @@ static void dhcpcd_v6_del(struct dhcpc_interface *ifp)
 		if_free(ifp);
 	}
 }
-
+#endif
 void dhcpcd_event_interface(struct dhcpc_interface *ifp,
 		DHCP_EVENT_CMD event, BOOL ipv6)
 {
@@ -1025,6 +1043,7 @@ void dhcpcd_event_interface(struct dhcpc_interface *ifp,
 	case DHCP_EVENT_NONE:
 		break;
 	case DHCP_EVENT_ADD:
+#ifdef INET6
 		if(ipv6)
 		{
 			if(ifp->t_v6_event)
@@ -1032,6 +1051,7 @@ void dhcpcd_event_interface(struct dhcpc_interface *ifp,
 			ifp->t_v6_event = eloop_timeout_add_sec(ifp->ctx->eloop, 1, dhcpcd_v6_add, ifp);
 		}
 		else
+#endif
 		{
 			if(ifp->t_event)
 				eloop_timeout_cancel(ifp->ctx->eloop, ifp->t_event);
@@ -1039,6 +1059,7 @@ void dhcpcd_event_interface(struct dhcpc_interface *ifp,
 		}
 		break;
 	case DHCP_EVENT_DEL:
+#ifdef INET6
 		if(ipv6)
 		{
 			if(ifp->t_v6_event)
@@ -1046,6 +1067,7 @@ void dhcpcd_event_interface(struct dhcpc_interface *ifp,
 			ifp->t_v6_event = eloop_timeout_add_sec(ifp->ctx->eloop, 1, dhcpcd_v6_del, ifp);
 		}
 		else
+#endif
 		{
 			if(ifp->t_event)
 				eloop_timeout_cancel(ifp->ctx->eloop, ifp->t_event);
@@ -1053,6 +1075,7 @@ void dhcpcd_event_interface(struct dhcpc_interface *ifp,
 		}
 		break;
 	case DHCP_EVENT_START:
+#ifdef INET6
 		if(ipv6)
 		{
 			if(ifp->t_v6_event)
@@ -1060,6 +1083,7 @@ void dhcpcd_event_interface(struct dhcpc_interface *ifp,
 			ifp->t_v6_event = eloop_timeout_add_sec(ifp->ctx->eloop, 1, dhcpcd_v6_startinterface, ifp);
 		}
 		else
+#endif
 		{
 			if(ifp->t_event)
 				eloop_timeout_cancel(ifp->ctx->eloop, ifp->t_event);
@@ -1067,6 +1091,7 @@ void dhcpcd_event_interface(struct dhcpc_interface *ifp,
 		}
 		break;
 	case DHCP_EVENT_STOP:
+#ifdef INET6
 		if(ipv6)
 		{
 			if(ifp->t_v6_event)
@@ -1074,6 +1099,7 @@ void dhcpcd_event_interface(struct dhcpc_interface *ifp,
 			ifp->t_v6_event = eloop_timeout_add_sec(ifp->ctx->eloop, 1, stop_v6_interface, ifp);
 		}
 		else
+#endif
 		{
 			if(ifp->t_event)
 				eloop_timeout_cancel(ifp->ctx->eloop, ifp->t_event);
@@ -1081,6 +1107,7 @@ void dhcpcd_event_interface(struct dhcpc_interface *ifp,
 		}
 		break;
 	case DHCP_EVENT_REBOOT:
+#ifdef INET6
 		if(ipv6)
 		{
 			if(ifp->t_v6_event)
@@ -1088,6 +1115,7 @@ void dhcpcd_event_interface(struct dhcpc_interface *ifp,
 			ifp->t_v6_event = eloop_timeout_add_sec(ifp->ctx->eloop, 1, if_v6_reboot, ifp);
 		}
 		else
+#endif
 		{
 			if(ifp->t_event)
 				eloop_timeout_cancel(ifp->ctx->eloop, ifp->t_event);
@@ -1095,6 +1123,7 @@ void dhcpcd_event_interface(struct dhcpc_interface *ifp,
 		}
 		break;
 	case DHCP_EVENT_RENEW:
+#ifdef INET6
 		if(ipv6)
 		{
 			if(ifp->t_v6_event)
@@ -1102,6 +1131,7 @@ void dhcpcd_event_interface(struct dhcpc_interface *ifp,
 			ifp->t_v6_event = eloop_timeout_add_sec(ifp->ctx->eloop, 1, dhcpcd_v6_ifrenew, ifp);
 		}
 		else
+#endif
 		{
 			if(ifp->t_event)
 				eloop_timeout_cancel(ifp->ctx->eloop, ifp->t_event);
@@ -1246,7 +1276,7 @@ int dhcpcd_main(void *p)
 {
 	//struct dhcpcd_ctx ctx;
 	struct dhcpc_interface *ifp;
-	struct if_options *ifo;
+	//struct if_options *ifo;
 	/*	struct dhcpc_interface *ifp;
 	 uint16_t family = 0;*/
 	int i;

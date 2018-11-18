@@ -155,7 +155,7 @@ static int encrypt_XCH(unsigned char *pass, unsigned char *password)
 
 int md5_encrypt_password(char *password, unsigned char *ecrypt)
 {
-    int i;
+    //int i;
     unsigned char decrypt[MD5_PASSWORD_MAX];
     unsigned char md5ecrypt[MD5_PASSWORD_MAX];
     if(md5_encrypt_empty(password))

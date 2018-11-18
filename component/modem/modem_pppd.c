@@ -838,7 +838,7 @@ static int modem_pppd_create_dial_name(modem_pppd_t *pppd)
 	fp = fopen(filepath, "w+");
 	if(fp)
 	{
-		char filepath[256];
+		//char filepath[256];
 		modem_t *modem = pppd->modem;
 		modem_client_t *client = NULL;
 		struct interface *ifp = modem->ppp_serial;

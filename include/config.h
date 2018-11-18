@@ -182,8 +182,9 @@
 #define HAVE_INTTYPES_H 1
 
 /* IPv6 */
+#ifdef BUILD_IPV6
 #define HAVE_IPV6 1
-
+#endif
 /* Have IP_PKTINFO */
 #define HAVE_IP_PKTINFO 1
 
@@ -256,7 +257,7 @@
 
 /* Define to 1 if you have the <netdb.h> header file. */
 #define HAVE_NETDB_H 1
-
+#ifdef BUILD_IPV6
 /* Define to 1 if you have the <netinet6/in6.h> header file. */
 /* #undef HAVE_NETINET6_IN6_H */
 
@@ -271,7 +272,7 @@
 
 /* Define to 1 if you have the <netinet/in6_var.h> header file. */
 /* #undef HAVE_NETINET_IN6_VAR_H */
-
+#endif
 /* Define to 1 if you have the <netinet/in.h> header file. */
 #define HAVE_NETINET_IN_H 1
 

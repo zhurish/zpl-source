@@ -17,12 +17,14 @@
 *.so.*
 *.bak
 *.Po
+*.d
 *~
 *.m4
 *.libs/*
 *.deps/*
 pkg/
-
+debug/*
+externsions/*
 RemoteSystemsTempFiles/*
 .metadata/*
 .settings/*

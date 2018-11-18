@@ -29,6 +29,8 @@
 #include "prefix.h"
 #include "log.h"
 
+//#pragma  GCC diagnostic ignored error "-Werror=pointer-arith"
+
 /* Tests whether a position is valid */ 
 #define GETP_VALID(S,G) \
   ((G) <= (S)->endp)

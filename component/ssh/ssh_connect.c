@@ -24,7 +24,7 @@
 
 
 
-ssh_session ssh_connect_api(struct vty *vty, const char *host, int port,
+ssh_session ssh_connect_api(struct vty *vty, const char *remotehost, int port,
 		const char *user, char *password)
 {
 	ssh_session session;
@@ -53,7 +53,7 @@ ssh_session ssh_connect_api(struct vty *vty, const char *host, int port,
 		}
 	}
 
-	if (ssh_options_set(session, SSH_OPTIONS_HOST, host) < 0)
+	if (ssh_options_set(session, SSH_OPTIONS_HOST, remotehost) < 0)
 	{
 		ssh_free(session);
 		return NULL;
@@ -101,7 +101,7 @@ ssh_session ssh_connect_api(struct vty *vty, const char *host, int port,
 	return NULL;
 }
 
-ssh_session ssh_client_connect_api(ssh_session session, struct vty *vty, const char *host, int port,
+ssh_session ssh_client_connect_api(ssh_session session, struct vty *vty, const char *remotehost, int port,
 		const char *user, char *password)
 {
 	//ssh_session session;
@@ -130,7 +130,7 @@ ssh_session ssh_client_connect_api(ssh_session session, struct vty *vty, const c
 		}
 	}
 
-	if (ssh_options_set(session, SSH_OPTIONS_HOST, host) < 0)
+	if (ssh_options_set(session, SSH_OPTIONS_HOST, remotehost) < 0)
 	{
 		ssh_free(session);
 		return NULL;

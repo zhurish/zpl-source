@@ -193,7 +193,7 @@ int modem_machine_state(modem_t *modem)
 	modem_machine newstate = MODEM_MACHINE_STATE_NONE;
 	assert(modem);
 	assert(modem->client);
-	modem_client_t *client = modem->client;
+	//modem_client_t *client = modem->client;
 	newstate = modem_machine_state_update(modem);
 
 	modem_machine_state_set(modem,  newstate);

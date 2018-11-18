@@ -186,7 +186,6 @@ struct thread_master *thread_master_module_create(int module)
 	int i = 0;
 	if (os_mt_init == 0)
 	{
-		int i = 0;
 		for (i = 0; i < MODULE_MAX; i++)
 		{
 			master_thread[i] = NULL;

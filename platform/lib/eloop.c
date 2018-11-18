@@ -143,7 +143,6 @@ struct eloop_master *eloop_master_module_create(int module)
 	int i = 0;
 	if (os_mt_init == 0)
 	{
-		int i = 0;
 		for (i = 0; i < MODULE_MAX; i++)
 		{
 			master_eloop[i] = NULL;
@@ -834,7 +833,7 @@ eloop_fetch(struct eloop_master *m, struct eloop *fetch)
 	struct timeval timer_val = { .tv_sec = 1, .tv_usec = TIMER_SECOND_MICRO };
 	struct timeval timer_val_bg;
 	struct timeval *timer_wait = &timer_val;
-	struct timeval *timer_wait_bg;
+	//struct timeval *timer_wait_bg;
 
 	//extern void * vty_eloop_master ();
 	//m->ptid = os_task_pthread_self ();

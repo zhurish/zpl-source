@@ -26,9 +26,9 @@
 struct if_name_mgt
 {
 	if_type_t	type;
-	const *aname;
-	const *kname;
-	const *name;
+	const char *aname;
+	const char *kname;
+	const char *name;
 };
 
 

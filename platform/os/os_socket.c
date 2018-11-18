@@ -44,7 +44,7 @@ int sock_create(BOOL tcp)
 int sock_bind(int sock, char *ipaddress, int port)
 {
 	struct sockaddr_in serv;
-	int ret = 0, flag = 1;
+	int ret = 0;//, flag = 1;
 	/* bind local server port */
 	serv.sin_family = AF_INET;
 	if (ipaddress)
@@ -65,7 +65,7 @@ int sock_bind(int sock, char *ipaddress, int port)
 
 int sock_listen(int sock, int listennum)
 {
-	struct sockaddr_in serv;
+	//struct sockaddr_in serv;
 	int ret = 0;
 	ret = listen(sock, listennum);
 	if (ret < 0)

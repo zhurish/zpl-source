@@ -761,9 +761,9 @@ if_lookup_prefix(struct prefix *prefix) {
 int if_count_lookup_type(if_type_t type)
 {
 	struct listnode *node;
-	struct listnode *cnode;
+	//struct listnode *cnode;
 	struct interface *ifp;
-	struct connected *c;
+	//struct connected *c;
 	int count = 0;
 	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
 	{

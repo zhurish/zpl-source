@@ -131,7 +131,7 @@ static int _modem_dhcp_nwcall(modem_client_t *client, BOOL enable)
 static int _modem_dhcpc_start(modem_client_t *client)
 {
 	modem_t *modem = NULL;
-	struct interface *ifp = NULL;
+	//struct interface *ifp = NULL;
 	assert(client);
 	assert(client->modem);
 	modem = client->modem;

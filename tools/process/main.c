@@ -26,10 +26,10 @@ extern int debug;
 static int signo_act = 0;
 /* Help information display. */
 static void
-process_usage (char *progname, int status)
+process_usage (char *prog_name, int status)
 {
   if (status != 0)
-    fprintf (stderr, "Try `%s --help' for more information.\n", progname);
+    fprintf (stderr, "Try `%s --help' for more information.\n", prog_name);
   else
     {
       printf ("Usage : %s [OPTION...]\n\n"\
@@ -37,7 +37,7 @@ process_usage (char *progname, int status)
 	      "-l, --log file  		Set log file name\n"\
 	      "-d, --debug level    Set log level\n"\
 	      "-h, --help         Display this help and exit\n"\
-	      "\n", progname);
+	      "\n", prog_name);
     }
 
   exit (status);
@@ -95,7 +95,7 @@ static int get_getopt(int argc, char **argv)
 static int process_manage_unit(int fd, process_head *head, int *errnum)
 {
 
-	int num = 0, len = 0;
+	int /*num = 0, */len = 0;
 	int offset = 0;
 	char buf[1024];
 	os_memset(buf, 0, sizeof(buf));
@@ -166,12 +166,12 @@ static void os_sigusr1(void)
 	//fprintf(stdout, "%s\r\n",__func__);
 }
 
-static void os_sigchld(void)
+/*static void os_sigchld(void)
 {
 	signo_act = SIGCHLD;
-/*	waitpid(-1, NULL, 0);
-	process_log_debug( "%s\r\n",__func__);*/
-}
+	waitpid(-1, NULL, 0);
+	process_log_debug( "%s\r\n",__func__);
+}*/
 
 static int os_sig_handle(int n)
 {

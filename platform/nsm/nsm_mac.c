@@ -251,7 +251,7 @@ int nsm_mac_get_api(mac_t *mac, vlan_t vlan, l2mac_t *gmac)
 int nsm_mac_ageing_time_set_api(int ageing)
 {
 	int ret = ERROR;
-	l2mac_t *value;
+	//l2mac_t *value;
 	if(gMac.mutex)
 		os_mutex_lock(gMac.mutex, OS_WAIT_FOREVER);
 	gMac.ageing_time = ageing;
@@ -265,7 +265,7 @@ int nsm_mac_ageing_time_set_api(int ageing)
 int nsm_mac_ageing_time_get_api(int *ageing)
 {
 	int ret = ERROR;
-	l2mac_t *value;
+	//l2mac_t *value;
 	if(gMac.mutex)
 		os_mutex_lock(gMac.mutex, OS_WAIT_FOREVER);
 	if(ageing)
@@ -281,7 +281,7 @@ int nsm_mac_ageing_time_get_api(int *ageing)
 int nsm_gmac_set_api(int indx, mac_t *mac, int len)
 {
 	int ret = ERROR;
-	l2mac_t *value;
+	//l2mac_t *value;
 	if(gMac.mutex)
 		os_mutex_lock(gMac.mutex, OS_WAIT_FOREVER);
 	if(indx == 0)
@@ -300,7 +300,7 @@ int nsm_gmac_set_api(int indx, mac_t *mac, int len)
 int nsm_gmac_get_api(int indx, mac_t *mac, int len)
 {
 	int ret = ERROR;
-	l2mac_t *value;
+	//l2mac_t *value;
 	if(gMac.mutex)
 		os_mutex_lock(gMac.mutex, OS_WAIT_FOREVER);
 

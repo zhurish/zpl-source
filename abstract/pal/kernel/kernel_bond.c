@@ -105,6 +105,7 @@ struct ad_info {
 
 #endif
 
+#if 0
 static int _if_bond_add_slave(struct interface *ifp, struct interface *slave)
 {
 	struct ifreq ifr;
@@ -145,6 +146,8 @@ static int _if_bond_slave_active(struct interface *ifp, struct interface *slave)
 	    return -1;
 	return 0;
 }
+#endif
+
 
 int _ipkernel_bond_create(struct interface *ifp)
 {

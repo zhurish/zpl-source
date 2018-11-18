@@ -118,7 +118,7 @@ DEFUN (no_monitor_session_source,
 		if(ifindex)
 		{
 			BOOL enable = FALSE;
-			mirror_dir_en odir= MIRROR_NONE;
+			//mirror_dir_en odir= MIRROR_NONE;
 			ret = nsm_mirror_source_get_api(ifindex, &enable, &dir);
 			if(ret == OK && enable)
 			{

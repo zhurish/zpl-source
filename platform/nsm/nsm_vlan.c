@@ -912,7 +912,7 @@ int nsm_interface_access_vlan_get_api(struct interface *ifp, vlan_t *vlan)
 int nsm_interface_trunk_add_allowed_vlan_api(struct interface *ifp, vlan_t vlan)
 {
 	int ret = ERROR;
-	int i =0;
+	//int i =0;
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];

@@ -743,7 +743,7 @@ void kernel_open(struct nsm_vrf *zvrf)
 
 void kernel_load_all()
 {
-	int ret = 0;
+	//int ret = 0;
 	struct nsm_vrf *zvrf;
 	vrf_iter_t iter;
 

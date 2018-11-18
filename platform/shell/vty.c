@@ -1898,10 +1898,10 @@ int vty_read_handle(struct vty *vty, unsigned char *buf, int len)
 #if 1
 static int vty_read(struct eloop *thread)
 {
-	int i;
+	//int i;
 	int nbytes;
 	unsigned char buf[VTY_READ_BUFSIZ];
-	int vty_sock = ELOOP_FD(thread);
+	//int vty_sock = ELOOP_FD(thread);
 	struct vty *vty = ELOOP_ARG(thread);
 	vty->t_read = NULL;
 	os_bzero(buf, sizeof(buf));
@@ -1939,10 +1939,10 @@ static int vty_read(struct eloop *thread)
 
 static int vty_console_read(struct thread *thread)
 {
-	int i;
+	//int i;
 	int nbytes;
 	unsigned char buf[VTY_READ_BUFSIZ];
-	int vty_sock = THREAD_FD(thread);
+	//int vty_sock = THREAD_FD(thread);
 	struct vty *vty = THREAD_ARG(thread);
 	vty->t_read = NULL;
 	nbytes = read(vty->fd, buf, VTY_READ_BUFSIZ);
@@ -1953,7 +1953,7 @@ static int vty_console_read(struct thread *thread)
 		{
 			if (ERRNO_IO_RETRY(errno))
 			{
-				vty_event(VTY_READ, vty_sock, vty);
+				vty_event(VTY_READ, vty->fd, vty);
 				return 0;
 			}
 			vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
@@ -3031,12 +3031,12 @@ vtysh_write (struct thread *thread)
 
 static int vty_sshd_read (struct thread *thread)
 {
-	int ret;
+	//int ret;
 	int sock;
 	int nbytes;
 	struct vty *vty;
 	unsigned char buf[VTY_READ_BUFSIZ];
-	unsigned char *p = NULL;
+	//unsigned char *p = NULL;
 	sock = THREAD_FD (thread);
 	vty = THREAD_ARG (thread);
 	vty->t_read = NULL;

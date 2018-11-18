@@ -98,7 +98,7 @@ static void if_addr_wakeup (struct interface *ifp)
 	struct listnode *node, *nnode;
 	struct connected *ifc;
 	struct prefix *p;
-	int ret;
+	//int ret;
 
 	for (ALL_LIST_ELEMENTS(ifp->connected, node, nnode, ifc))
 	{
@@ -602,7 +602,7 @@ int nsm_interface_delete_api(struct interface *ifp)
 
 static int nsm_interface_ip_address_install(struct interface *ifp, struct prefix_ipv4 *cp)
 {
-	int ret;
+	//int ret;
 	struct nsm_interface *if_data;
 	struct connected *ifc;
 	struct prefix_ipv4 *p1, *p2;
@@ -667,10 +667,10 @@ static int nsm_interface_ip_address_install(struct interface *ifp, struct prefix
 
 static int nsm_interface_ip_address_uninstall(struct interface *ifp, struct prefix_ipv4 *cp)
 {
-	int ret;
+	//int ret;
 	struct nsm_interface *if_data;
 	struct connected *ifc;
-	struct prefix_ipv4 *p;
+	//struct prefix_ipv4 *p;
 	if_data = ifp->info[MODULE_NSM];
 
 	/* Check current interface address. */
@@ -736,7 +736,7 @@ nsm_interface_ipv6_address_install (struct interface *ifp,
 {
 	struct nsm_interface *if_data;
 	struct connected *ifc;
-	struct prefix_ipv6 *p1, *p2;
+	struct prefix_ipv6 *p1;//, *p2;
 	int ret;
 
 	if_data = ifp->info[MODULE_NSM];
@@ -797,7 +797,7 @@ nsm_interface_ipv6_address_uninstall (struct interface *ifp,
 		struct prefix_ipv6 *cp, int secondry)
 {
 	struct connected *ifc;
-	int ret;
+	//int ret;
 	/* Check current interface address. */
 	ifc = connected_check (ifp, (struct prefix *) cp);
 	if (! ifc)
@@ -853,7 +853,7 @@ nsm_interface_ipv6_address_uninstall (struct interface *ifp,
 int nsm_interface_ip_address_add(struct interface *ifp, struct prefix *cp,
 		int secondary, int value)
 {
-	int ret;
+	//int ret;
 	struct nsm_interface *if_data;
 	struct connected *ifc;
 	struct prefix_ipv4 *p1, *p2;
@@ -892,9 +892,10 @@ int nsm_interface_ip_address_add(struct interface *ifp, struct prefix *cp,
 
 		if(cp->family == AF_INET)
 			connected_up_ipv4(ifp, ifc);
+#ifdef HAVE_IPV6
 		else
 			connected_up_ipv6(ifp, ifc);
-
+#endif
 		nsm_client_notify_interface_add_ip(ifp, ifc, 0);
 		zebra_interface_address_add_update (ifp, ifc);
 		/* Add to linked list. */
@@ -910,11 +911,11 @@ int nsm_interface_ip_address_add(struct interface *ifp, struct prefix *cp,
 int nsm_interface_ip_address_del(struct interface *ifp, struct prefix *cp,
 		int secondary, int value)
 {
-	int ret;
-	struct nsm_interface *if_data;
+	//int ret;
+	//struct nsm_interface *if_data;
 	struct connected *ifc;
-	struct prefix_ipv4 *p;
-	if_data = ifp->info[MODULE_NSM];
+	//struct prefix_ipv4 *p;
+	//if_data = ifp->info[MODULE_NSM];
 
 	/* Check current interface address. */
 	ifc = connected_check(ifp, (struct prefix *) cp);
@@ -932,9 +933,10 @@ int nsm_interface_ip_address_del(struct interface *ifp, struct prefix *cp,
 
 	if(cp->family == AF_INET)
 		connected_down_ipv4(ifp, ifc);
+#ifdef HAVE_IPV6
 	else
 		connected_down_ipv6 (ifp, ifc);
-
+#endif
 	UNSET_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED);
 
 	if (CHECK_FLAG (ifp->status, ZEBRA_INTERFACE_ACTIVE))

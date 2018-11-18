@@ -145,11 +145,11 @@ static int ssh_write_local_file(ssh_session session, ssh_scp scp, struct ssh_scp
 
 static int ssh_upload_files(ssh_session session, struct ssh_scp_connect *src, char *localfile)
 {
-	int size = 0;
-	char buffer[2048];
-	int mode = 0;
-	char *filename;
-	int r= 0, total = 0, w = 0;
+	//int size = 0;
+	//char buffer[2048];
+	//int mode = 0;
+	//char *filename;
+	//int r= 0, total = 0, w = 0;
 	ssh_scp scp = ssh_scp_new(session, SSH_SCP_WRITE | SSH_SCP_RECURSIVE, src->path);
 	if (ssh_scp_init(scp) != SSH_OK)
 	{
@@ -185,10 +185,10 @@ static int ssh_upload_files(ssh_session session, struct ssh_scp_connect *src, ch
 static int ssh_download_files(ssh_session session, struct ssh_scp_connect *src, char *localfile)
 {
 	int size = 0;
-	char buffer[2048];
+	//char buffer[2048];
 	int mode = 0;
 	char *filename;
-	int r= 0, total = 0, w = 0;
+	int r= 0;//, total = 0, w = 0;
 	ssh_scp scp = ssh_scp_new(session, SSH_SCP_READ | SSH_SCP_RECURSIVE, src->path);
 	if (ssh_scp_init(scp) != SSH_OK)
 	{

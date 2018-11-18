@@ -72,7 +72,7 @@ static const struct facility_map {
 
 static int zlog_buffer_format(struct zlog *zl, zlog_buffer_t *buffer,
 		int module, int level, char *format, va_list args);
-static int zlog_check_file (void);
+//static int zlog_check_file (void);
 
 const char *
 zlog_facility_name(int facility) {
@@ -1002,7 +1002,7 @@ int zlog_get_file(const char *filename, int *log_level)
 int zlog_close_file()
 {
 
-	char filetmp[256];
+	//char filetmp[256];
 	if (zlog_default == NULL)
 		return 0;
 
@@ -1066,7 +1066,7 @@ static int zlog_file_move(const char *src, const char *dest)
 	out = fopen(dest, "w+");
 	if(in == NULL || out == NULL)
 		return ERROR;
-	while(len = fread(buff, 1, sizeof(buff), in))
+	while((len = fread(buff, 1, sizeof(buff), in)))
 	{
 		fwrite(buff,1,len,out);
 	}
@@ -1115,6 +1115,7 @@ int zlog_file_save (void)
 	return OK;
 }
 /* Check log filesize. */
+#if 0
 static int zlog_check_file (void)
 {
 	struct stat fsize;
@@ -1170,6 +1171,7 @@ static int zlog_check_file (void)
 		os_mutex_unlock(zlog_default->mutex);
 	return OK;
 }
+#endif
 /******************************************************/
 /*static int zlog_buffer_insert_one(zlog_buffer_t *buffer, int module, int level, int len, const char *log)
 {

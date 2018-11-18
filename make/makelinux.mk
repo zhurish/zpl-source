@@ -22,6 +22,8 @@ BUILD_TYPE	=$(ARCH_TYPE)
 BUILD_DEBUG	=$(ARCH_DEBUG)
 #
 #
+#BUILD_IPV6	= false
+BUILD_IPV6	= true
 #
 #
 #
@@ -173,6 +175,12 @@ endif
 #
 #
 #
+ifeq ($(strip $(BUILD_IPV6)),true)
+PL_CFLAGS += -DBUILD_IPV6
+endif
+#
+#
+#
 PL_LDLIBS += -lpthread -lrt -rdynamic -lm -lcrypt -ldl -lgcc_s
 
 ifeq ($(strip $(MODULE_WIFI_SRC)),true)
@@ -202,7 +210,12 @@ PLOS_CFLAGS += -Wall -Wextra -Wnested-externs -Wmissing-prototypes \
 			 
 # -Werror=implicit-function-declaration -Werror=switch
 PLOS_CFLAGS += -Werror=return-type -Werror=format-extra-args -Werror=missing-prototypes \
-			  -Werror=unreachable-code
+			  -Werror=unreachable-code -Werror=unused-function -Werror=unused-variable \
+			  -Werror=unused-value -Werror=implicit-int \
+			  -Werror=parentheses -Werror=shadow 
+			  #-Werror=pointer-arith 
+			  #-Werror=cast-qual 
+			  #-Werror=redundant-decls -Werror=format -Werror=missingbraces
 #			 -Werror=switch-default -Werror=missing-format-attribute 
 #				-Werror=overlength-strings -Werror=cast-align  \
 #			 

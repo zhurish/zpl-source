@@ -995,7 +995,7 @@ static int ip_dns_job_work(void *p)
 		{
 			if(tmp && tmp->next && tmp->next == job)
 			{
-				ip_dns_job_t *tmp1 = job->next;
+				//ip_dns_job_t *tmp1 = job->next;
 				tmp->next = job->next;
 				break;
 			}

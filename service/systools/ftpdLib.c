@@ -992,9 +992,9 @@ static int ftpdWorkTask
 	int addrLen = sizeof(passiveAddr); /* for getpeername */
 	int portNum[6]; /* used for "%d,%d,%d,%d,%d,%d" */
 	u_long value = 0;
-	char *pTail = NULL;
+	//char *pTail = NULL;
 	char newPath[MAX_FILENAME_LENGTH];
-	char curDirName[MAX_FILENAME_LENGTH];
+	//char curDirName[MAX_FILENAME_LENGTH];
 	char *pFileName = NULL;
 	FILE *inStream = NULL;
 	FILE *outStream = NULL;

@@ -246,7 +246,7 @@ int syslogcMdataSend
  *
  * RETURNS: OK or ERROR
  */
-
+#if 0
 static int syslogcBinDataSend(struct syslog_client *client, unsigned char * pData, /* point to the data stream */
 int len, /* length of the data stream */
 char * pMsgId, /* The message ID string, optional. */
@@ -262,7 +262,7 @@ unsigned long serverIpAddr /* binary server IP address in network byte order,
 	return syslogMsgSend(client, (void *) pData, len, pMsgId, code, serverIpAddr,
 			BDATA_TYPE);
 }
-
+#endif
 /******************************************************************************
  *
  * syslogcStringSend - send a string of character data to the syslog server

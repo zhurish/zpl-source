@@ -81,7 +81,7 @@ static socket_t bind_socket(ssh_bind sshbind, const char *hostname,
 #endif
     int opt = 1;
     socket_t s;
-    int rc;
+    //int rc;
 #ifndef SSH_BASE_EX
     ZERO_STRUCT(hints);
 
@@ -251,7 +251,7 @@ static int ssh_bind_import_keys(ssh_bind sshbind) {
 
 void ssh_bind_key_free(ssh_bind sshbind)
 {
-  int i;
+  //int i;
 
   if (sshbind == NULL) {
     return;
@@ -429,7 +429,7 @@ void ssh_bind_free(ssh_bind sshbind){
 }
 
 void ssh_bind_close(ssh_bind sshbind){
-  int i;
+  //int i;
 
   if (sshbind == NULL) {
     return;

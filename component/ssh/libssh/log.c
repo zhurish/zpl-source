@@ -120,7 +120,7 @@ void _ssh_debug_log(int verbosity,
     char buffer[1024];
     va_list va;
 
-    if ((verbosity & 0xff <= ssh_get_log_level()) &&
+    if (((verbosity & 0xff) <= ssh_get_log_level()) &&
     		(ssh_get_log_module() & (verbosity & 0xff00)))
     {
         va_start(va, format);
@@ -139,7 +139,7 @@ void ssh_log(ssh_session session,
 {
   char buffer[1024];
   va_list va;
-  if ((verbosity & 0xff <= session->common.log_verbosity) &&
+  if (((verbosity & 0xff) <= session->common.log_verbosity) &&
   		(ssh_get_log_module() & (verbosity & 0xff00)))
   {
   //if (verbosity <= session->common.log_verbosity) {
@@ -163,7 +163,7 @@ void ssh_log_common(struct ssh_common_struct *common,
 {
     char buffer[1024];
     va_list va;
-    if ((verbosity & 0xff <= common->log_verbosity) &&
+    if (((verbosity & 0xff) <= common->log_verbosity) &&
     		(ssh_get_log_module() & (verbosity & 0xff00)))
     {
     //if (verbosity <= common->log_verbosity) {

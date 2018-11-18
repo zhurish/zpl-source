@@ -263,12 +263,16 @@ static int _dhcpd_option_num_split(int code, char *input, unsigned char *output,
 					*len = 1;
 				break;
 			case 'f': /* Boolean flag. */
-				if (!strcasecmp(tokval, "true") || !strcasecmp(tokval, "on"))
+				if ((!strcasecmp(tokval, "true") || !strcasecmp(tokval, "on")))
+				{
 					if(output)
 						output[0] = 1;
-				else if (!strcasecmp(tokval, "false") || !strcasecmp(tokval, "off"))
+				}
+				else if ((!strcasecmp(tokval, "false") || !strcasecmp(tokval, "off")))
+				{
 					if(output)
 						output[0] = 0;
+				}
 				else
 				{
 					parse_warn("expecting boolean.");
@@ -773,7 +777,7 @@ int dhcpd_option_set(struct group *group, char *optionname,
 
 int dhcpd_option55_set(struct group *group, unsigned char *optionkey, int len)
 {
-	char *fmt = NULL;
+	//char *fmt = NULL;
 	struct universe *universe = NULL;
 	struct dhcpd_option *option = NULL;
 	/*
@@ -832,7 +836,7 @@ int dhcpd_option55_set(struct group *group, unsigned char *optionkey, int len)
 
 int dhcpd_option_unset(struct group *group, char *optionname)
 {
-	char *fmt = NULL;
+	//char *fmt = NULL;
 	struct universe *universe = NULL;
 	struct dhcpd_option *option = NULL;
 	/*
@@ -1074,7 +1078,7 @@ struct class * dhcpd_class_decl_create(struct group *group, int type, char *val)
 struct shared_network * dhcpd_shared_network_decl_create(struct group *group,
 		char *name)
 {
-	char *n = NULL;
+	//char *n = NULL;
 	struct shared_network *share = NULL;
 	//int declaration = 0;
 
@@ -1099,7 +1103,7 @@ struct shared_network * dhcpd_shared_network_decl_create(struct group *group,
 
 int dhcpd_shared_network_decl_destroy(char *name)
 {
-	char *n = NULL;
+	//char *n = NULL;
 	struct shared_network *share = NULL;
 	//int declaration = 0;
 	share = find_shared_network(name);
@@ -1389,7 +1393,7 @@ int dhcpd_interface_refresh(void)
 
 static int dhcpd_interface_init(struct interface_info * iface)
 {
-	struct iaddr addr;
+	//struct iaddr addr;
 	struct prefix address;
 	struct interface * ifp = NULL;
 

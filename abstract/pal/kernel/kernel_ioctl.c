@@ -101,7 +101,7 @@ if_ioctl_ipv6 (u_long request, caddr_t buffer)
 }
 #endif /* HAVE_IPV6 */
 
-
+#if 0
 static int
 if_get_ifindex (char *name)
 {
@@ -115,7 +115,7 @@ if_get_ifindex (char *name)
   return if_nametoindex(name);
 #endif /* SIOCGIFINDEX */
 }
-
+#endif
 /*
  * get interface metric
  *   -- if value is not avaliable set -1

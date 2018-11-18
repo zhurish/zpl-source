@@ -237,7 +237,7 @@ static int modem_event_end(modem_t *modem)
 	//MODEM_EV_DEBUG("Into %s",__func__);
 	if(modem)
 	{
-		modem_client_t	*client = modem->client;
+		//modem_client_t	*client = modem->client;
 		//if(client)
 		//	client->event = 0;
 	}
@@ -296,7 +296,7 @@ modem_event modem_event_init(modem_t *modem, modem_event event)
  */
 modem_event modem_event_remove(modem_t *modem, modem_event event)
 {
-	modem_serial_t *serial = NULL;
+	//modem_serial_t *serial = NULL;
 	modem_event nextevent = MODEM_EV_NONE;
 	assert(modem);
 	MODEM_EV_DEBUG("Into %s",__func__);

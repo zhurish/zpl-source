@@ -207,7 +207,7 @@ static int sshd_start(ssh_config_t *sshconfig)
 static int ssh_ctl_thread(socket_t fd, int revents, void *userdata)
 {
     char buf[64];
-    int n = -1, ret = 0;
+    int n = -1;//, ret = 0;
     int	*cmd = (int*)buf;
     os_bzero(buf, sizeof(buf));
     ssh_config_t *ssh = (ssh_config_t *)userdata;

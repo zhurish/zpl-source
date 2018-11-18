@@ -328,9 +328,11 @@ static int kernel_arp_gratuitousarp_enable(int enable)
 
 int ip_arp_stack_init()
 {
-	int sock = 0;
+
 	extern pal_stack_t pal_stack;
 	//arp
+	//
+	pal_stack.ip_stack_arp_get = kernel_arp_get;
 	pal_stack.ip_stack_arp_add = kernel_arp_set;
 	pal_stack.ip_stack_arp_delete = kernel_arp_del;
 	pal_stack.ip_stack_arp_request = kernel_arp_request;
@@ -339,12 +341,12 @@ int ip_arp_stack_init()
 	pal_stack.ip_stack_arp_age_timeout = NULL;
 	pal_stack.ip_stack_arp_retry_interval = NULL;
 
-/*
+
+ 	int sock = 0;
 	sock = kernel_arp_init();
 
 	if(master_eloop[MODULE_KERNEL])
 		eloop_add_read(master_eloop[MODULE_KERNEL], kernel_arp_thread, NULL, sock);
-*/
 
 	return OK;
 }

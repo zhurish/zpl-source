@@ -133,7 +133,7 @@ int nsm_bridge_interface_stp_set_api(struct interface *bridge, BOOL stp)
 {
 	if(if_is_brigde(bridge))
 	{
-		int ret = -1;
+		//int ret = -1;
 		nsm_bridge_t * bri = nsm_bridge_get(bridge);
 		if(bri)
 		{
@@ -148,7 +148,7 @@ int nsm_bridge_interface_max_age_set_api(struct interface *bridge, int max_age)
 {
 	if(if_is_brigde(bridge))
 	{
-		int ret = -1;
+		//int ret = -1;
 		nsm_bridge_t * bri = nsm_bridge_get(bridge);
 		if(bri)
 		{
@@ -163,7 +163,7 @@ int nsm_bridge_interface_hello_time_set_api(struct interface *bridge, int hello_
 {
 	if(if_is_brigde(bridge))
 	{
-		int ret = -1;
+		//int ret = -1;
 		nsm_bridge_t * bri = nsm_bridge_get(bridge);
 		if(bri)
 		{
@@ -178,7 +178,7 @@ int nsm_bridge_interface_forward_delay_set_api(struct interface *bridge, int for
 {
 	if(if_is_brigde(bridge))
 	{
-		int ret = -1;
+		//int ret = -1;
 		nsm_bridge_t * bri = nsm_bridge_get(bridge);
 		if(bri)
 		{

@@ -444,7 +444,7 @@ buffer_status_t buffer_flush_available(struct buffer *b, int fd, int type)
 	/* Free printed buffer data. */
 	while (written > 0)
 	{
-		struct buffer_data *d = NULL;
+		//struct buffer_data *d = NULL;
 		if (!(d = b->head))
 		{
 			zlog_err(ZLOG_DEFAULT,

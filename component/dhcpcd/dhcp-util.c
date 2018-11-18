@@ -76,7 +76,7 @@ if_carrier(struct dhcpc_interface *difp)
 int
 if_setflag(struct dhcpc_interface *difp, short flag)
 {
-	int ret = 1;
+	//int ret = 1;
 	struct interface *ifp = if_lookup_by_kernel_index (difp->index);
 	if(ifp)
 	{
@@ -112,7 +112,7 @@ if_domtu(const struct dhcpc_interface *difp, short int mtu)
 unsigned short
 if_vlanid(const struct dhcpc_interface *difp)
 {
-	int ret = 1;
+	//int ret = 1;
 	struct interface *ifp = if_lookup_by_kernel_index (difp->index);
 	if(ifp)
 	{
@@ -390,7 +390,7 @@ static char * dhcpc_client_state(enum DHS state)
 
 int dhcpc_interface_config(struct interface *ifp, struct vty *vty)
 {
-	int i = 0;
+	//int i = 0;
 	if(!ifp->k_ifindex)
 		return OK;
 	struct dhcpc_interface * iface = nsm_dhcp_interface_get_pravite(ifp, DHCP_CLIENT);

@@ -287,7 +287,7 @@ int sdk_vlan_init()
 	return OK;
 }
 
-
+#if 0
 
 /*
  * QINQ
@@ -1514,3 +1514,4 @@ int sdk_port_init()
 	return OK;
 }
 
+#endif

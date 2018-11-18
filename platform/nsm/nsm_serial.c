@@ -169,7 +169,7 @@ int nsm_serial_interface_devname(struct interface *ifp, char * devname)
 	{
 		if(devname)
 		{
-			char *p, *k;
+			char *p;//, *k;
 			os_memset(serial->serial.devname, 0, sizeof(serial->serial.devname));
 			p = devname;
 			while(p)

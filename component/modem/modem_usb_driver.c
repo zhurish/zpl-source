@@ -425,7 +425,7 @@ static int modem_usb_driver_update_ttl(void)
  */
 static int modem_proc_usb_driver_devname_update(char * input)
 {
-	int i = 0, j = 0;
+	int i = 0;//, j = 0;
 	assert(input);
 	char devname0[USB_SERIAL_NAME_MAX];
 	modem_driver_t *modem_driver = NULL;
@@ -436,7 +436,7 @@ static int modem_proc_usb_driver_devname_update(char * input)
 			os_strlen("usbserinfo:1.0 driver:2.0"))
 	{
 		char *vendorstr, *productstr;
-		char tmp[64];
+		//char tmp[64];
 		vendorstr = os_strstr(input, "vendor");
 		productstr = os_strstr(input, "product");
 		if(vendorstr && productstr)
@@ -492,7 +492,7 @@ static int modem_proc_usb_driver_product(char * input, modem_usb_driver *driver)
 	if(os_strlen(input) >=
 			os_strlen("usbserinfo:1.0 driver:2.0"))
 	{
-		char *vendor, *product, tmp[64];
+		char *vendor, *product;//, tmp[64];
 		vendor = os_strstr(input, "vendor");
 		product = os_strstr(input, "product");
 		if(vendor && product)
@@ -1148,7 +1148,7 @@ static int usb_event_socket_handle(int timeout)
 
 static int usb_event_socket_read(void *pVoid)
 {
-	int rcvlen, ret;
+	int rcvlen;//, ret;
 	char buf[UEVENT_BUFFER_SIZE] = { 0 };
 	int fd = OS_ANSYNC_FD(pVoid);
 try_agent:

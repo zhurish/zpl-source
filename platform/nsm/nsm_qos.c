@@ -267,7 +267,7 @@ int nsm_qos_user_pri_map_priority_set_api(struct interface *ifp, nsm_qos_priorit
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if(qos)
 	{
-		nsm_qos_queue_e i = 0;
+		//nsm_qos_queue_e i = 0;
 		qos->qos_map_enable = FALSE;
 		qos->qos_map[priority] = map;
 		return OK;

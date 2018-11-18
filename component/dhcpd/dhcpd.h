@@ -603,7 +603,7 @@ extern struct subnet *find_grouped_subnet(struct shared_network *,
 extern struct subnet *find_subnet(struct iaddr);
 extern void enter_shared_network(struct shared_network *);
 extern struct shared_network *find_shared_network(char *name);
-extern free_shared_network(struct shared_network *share);
+extern int free_shared_network(struct shared_network *share);
 
 extern int subnet_inner_than(struct subnet *, struct subnet *, int);
 extern void enter_subnet(struct subnet *);

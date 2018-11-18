@@ -61,7 +61,7 @@ static int modem_cpin_lock_atcmd_get(modem_client_t *client, BOOL *enable)
 
 }
 
-static int modem_cpin_lock_atcmd_set(modem_client_t *client, BOOL enable, char *pin)
+/*static int modem_cpin_lock_atcmd_set(modem_client_t *client, BOOL enable, char *pin)
 {
 	assert(client);
 	if (modem_attty(client, MODEM_TIMEOUT(5), "OK", "AT+CLCK=\"SC\",%d,\"%s\"",
@@ -82,7 +82,7 @@ static int modem_cpin_passwd_atcmd_set(modem_client_t *client, char *old, char *
 		return OK;
 	}
 	return ERROR;
-}
+}*/
 
 
 static int modem_cpin_pin_atcmd_set(modem_client_t *client, char *pin)
@@ -191,7 +191,7 @@ static int modem_sim_pin_control(modem_t *modem)
 
 int modem_usim_detection(modem_t *modem)
 {
-	int ret = OK;
+	//int ret = OK;
 	modem_client_t *client = NULL;
 	assert(modem);
 	if(!modem || !modem->client)

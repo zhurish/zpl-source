@@ -145,7 +145,7 @@ udpsock_startup(struct in_addr bindaddr)
 
 static void udpsock_handler(struct protocol *protocol)
 {
-	int			 sockio;
+	//int			 sockio;
 	/* Header and data both require alignment. */
 	//char cbuf [CMSG_SPACE(SOPT_SIZE_CMSG_IFINDEX_IPV4())];
 	char cbuf [256];

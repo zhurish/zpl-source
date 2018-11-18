@@ -146,7 +146,7 @@ int modem_qnwinfo_split(modem_client_t *client, char *buf)
 		//+QNWINFO: "TDD LTE","46000","LTE BAND 38",38098  OK
 		//+QNWINFO: TDD LTE,46000,LTE BAND 41,40936  OK
 		int oper = 0;
-		char tmp[64];
+		//char tmp[64];
 		strchr_empty(buf, '"');
 
 		os_sscanf(buf,"%*[^ ] %[^,],%x,%[^,],%d", client->nw_act, &oper,

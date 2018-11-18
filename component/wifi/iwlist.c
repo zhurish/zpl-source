@@ -1125,16 +1125,18 @@ int count) /* Args count */
 static int print_freq_info(int skfd, char * ifname, char * args[], /* Command line args */
 int count) /* Args count */
 {
-	struct iwreq wrq;
+	//struct iwreq wrq;
 	struct iw_range range;
 	double freq;
 	int k;
-	int channel;
+	//int channel;
 	char buffer[128]; /* Temporary buffer */
 
 	/* Avoid "Unused parameter" warning */
+/*
 	args = args;
 	count = count;
+*/
 
 	/* Get list of frequencies / channels */
 	if (iw_get_range_info(skfd, ifname, &range) < 0)

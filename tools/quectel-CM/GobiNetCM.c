@@ -49,11 +49,11 @@ int GobiNetSendQMI(PQCQMIMSG pRequest) {
     return ret;
 }
 
-static int GobiNetGetClientID(const char *qmichannel, UCHAR QMIType) {
+static int GobiNetGetClientID(const char *qmi_channel, UCHAR QMIType) {
     int ClientId;
-    ClientId = open(qmichannel, O_RDWR | O_NONBLOCK | O_NOCTTY);
+    ClientId = open(qmi_channel, O_RDWR | O_NONBLOCK | O_NOCTTY);
     if (ClientId == -1) {
-        dbg_time("failed to open %s, errno: %d (%s)", qmichannel, errno, strerror(errno));
+        dbg_time("failed to open %s, errno: %d (%s)", qmi_channel, errno, strerror(errno));
         return -1;
     }
     if (ioctl(ClientId, IOCTL_QMI_GET_SERVICE_FILE, QMIType) != 0) {

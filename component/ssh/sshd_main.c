@@ -218,7 +218,7 @@ static struct vty * sshd_shell_new(int vty_sock)
 
 static int sshd_shell_create(sshd_client_t *sshclient, ssh_session sseion)
 {
-	int n = 0;
+	//int n = 0;
 	struct sockaddr_in * client_address;
 	int socket[2] = { 0, 0 };
 

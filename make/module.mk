@@ -51,7 +51,7 @@ PlatformModule = \
 	WIFIDIR.wifi \
 	MODEMDIR.modem \
 	TOOLSDIR.tools \
-	DHCPCDIR.dhcpc \
+	DHCPCDDIR.dhcpcd \
 	DHCPDDIR.dhcpd \
 	SQLITEDIR.sqlite \
 	SYSTOOLSDIR.systools \

@@ -438,7 +438,7 @@ int modem_unbind_interface_api(modem_t *modem, BOOL ppp, int number)
 {
 	int ret = ERROR;
 	//assert (name);
-	struct interface *ifp = NULL;
+	//struct interface *ifp = NULL;
 /*
 	ifp = if_lookup_by_name(name);
 	if(!ifp)
@@ -511,7 +511,7 @@ int modem_unbind_interface_api(modem_t *modem, BOOL ppp, int number)
 
 int modem_interface_add_api(char *name)
 {
-	int i = 0;
+	//int i = 0;
 	struct interface *ifp = NULL;
 	ifp = if_lookup_by_name(name);
 	if(ifp && ifp->ll_type == ZEBRA_LLT_MODEM)

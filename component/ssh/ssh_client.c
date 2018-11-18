@@ -29,9 +29,9 @@ static int ssh_client_auth_callback(const char *prompt, char *buf, size_t len,
     struct vty *vty = (struct vty *)userdata;
     if(vty)
     {
-    	int len = ssh_getpass(vty->fd, prompt, buf, len, echo, verify);
+    	int slen = ssh_getpass(vty->fd, prompt, buf, len, echo, verify);
     	vty_out(vty, "get password:%s%s", buf, VTY_NEWLINE);
-    	return len;
+    	return slen;
     	//return ssh_getpass(vty->fd, prompt, buf, len, echo, verify);
     }
     return -1;
@@ -228,12 +228,12 @@ static void ssh_client_shell(ssh_session session)
 }
 
 
-int ssh_client(struct vty *vty, char *host, int port, char *user, char *pasword)
+int ssh_client(struct vty *vty, char *remotehost, int port, char *user, char *pasword)
 {
     ssh_session session;
 	vty_ansync_enable(vty, TRUE);
 	vty_cancel(vty);
-	vty_out(vty, "%sTrying %s...%s", VTY_NEWLINE, host, VTY_NEWLINE);
+	vty_out(vty, "%sTrying %s...%s", VTY_NEWLINE, remotehost, VTY_NEWLINE);
 	session = ssh_new();
 	if(!session)
 	{
@@ -245,7 +245,7 @@ int ssh_client(struct vty *vty, char *host, int port, char *user, char *pasword)
 	ssh_client_auth_cb.userdata = vty;
     ssh_callbacks_init(&ssh_client_auth_cb);
     ssh_set_callbacks(session, &ssh_client_auth_cb);
-    if(ssh_client_connect_api(session, vty, host,  port, user, pasword))
+    if(ssh_client_connect_api(session, vty, remotehost,  port, user, pasword))
     {
 		if(os_task_create("ssh-client", OS_TASK_DEFAULT_PRIORITY,
 				   0, ssh_client_shell, session, OS_TASK_DEFAULT_STACK) > 0)

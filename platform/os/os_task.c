@@ -706,7 +706,7 @@ int os_task_destroy(unit32 taskId)
 
 static int os_task_tcb_create(os_task_t *task)
 {
-	int time_slice = 0;
+	//int time_slice = 0;
 	pthread_mutexattr_t attr;
 	//pthread_condattr_t 	cat;
 

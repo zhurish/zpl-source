@@ -69,7 +69,7 @@ static int nsm_veth_del_interface(struct interface *ifp)
 
 int nsm_veth_interface_vid_set_api(struct interface *ifp, int vlan)
 {
-	nsm_veth_t * veth = NULL;
+	//nsm_veth_t * veth = NULL;
 	if(if_is_serial(ifp) || (if_is_ethernet(ifp) && IF_ID_GET(ifp->ifindex)))
 	{
 		nsm_veth_t * veth = nsm_veth_get(ifp);

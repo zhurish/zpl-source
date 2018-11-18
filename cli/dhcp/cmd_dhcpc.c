@@ -37,7 +37,7 @@ DEFUN (nsm_interface_ip_dhcp,
 		"DHCP configure\n")
 {
 	int ret = 0;
-	BOOL mode = FALSE;
+	//BOOL mode = FALSE;
 	struct interface *ifp = (struct interface *) vty->index;
 	if(ifp)
 	{
@@ -75,7 +75,7 @@ DEFUN (no_nsm_interface_ip_dhcp,
 		"DHCP configure\n")
 {
 	int ret = 0;
-	BOOL mode = FALSE;
+	//BOOL mode = FALSE;
 	struct interface *ifp = (struct interface *) vty->index;
 	if(ifp)
 	{
@@ -555,7 +555,7 @@ DEFUN (nsm_debug_dhcp_client,
 	"DHCP packet\n"
 	"DHCP all\n")
 {
-	int ret = 0;
+	//int ret = 0;
 	struct interface *ifp = (struct interface *) vty->index;
 	if(ifp)
 	{
@@ -579,7 +579,7 @@ DEFUN (no_nsm_debug_dhcp_client,
 	"DHCP packet\n"
 	"DHCP all\n")
 {
-	int ret = 0;
+	//int ret = 0;
 	struct interface *ifp = (struct interface *) vty->index;
 	if(ifp)
 	{

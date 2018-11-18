@@ -98,7 +98,7 @@ static int _qmi_stop(int process)
 static int _modem_qmi_start(modem_client_t *client)
 {
 	modem_t *modem = NULL;
-	struct interface *ifp = NULL;
+	//struct interface *ifp = NULL;
 	assert(client);
 	assert(client->modem);
 	modem = client->modem;

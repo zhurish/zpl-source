@@ -395,7 +395,7 @@ int nsm_iw_client_init()
 	nsm->interface_write_config_cb = nsm_iw_write_config_interface;
 	nsm_client_install (nsm, NSM_WIFI);
 #ifdef IW_ONCE_TASK
-	//iw_task_start();
+	iw_task_start();
 #endif
 	return OK;
 }

@@ -209,20 +209,21 @@ static int main_getopt(int argc, char **argv)
 	}
 	return OK;
 }
+/*
 static int os_privs_high()
 {
-/*	if ( os_privs.change (ZPRIVS_RAISE) )
+	if ( os_privs.change (ZPRIVS_RAISE) )
 		fprintf (stdout, "%s: could not raise privs, %s",
-				   __func__,os_strerror (errno) );*/
+				   __func__,os_strerror (errno) );
 	return 0;
 }
 static int os_privs_low()
 {
-/*	if ( os_privs.change (ZPRIVS_LOWER) )
+	if ( os_privs.change (ZPRIVS_LOWER) )
 		fprintf (stdout, "%s: could not lower privs, %s",
-				   __func__,os_strerror (errno) );*/
+				   __func__,os_strerror (errno) );
 	return 0;
-}
+}*/
 
 static int main_timer_thread(struct thread *thread)
 {

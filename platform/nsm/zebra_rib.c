@@ -896,8 +896,8 @@ static unsigned nexthop_active_check(struct route_node *rn, struct rib *rib,
 	rib_table_info_t *info = rn->table->info;
 	struct interface *ifp;
 	route_map_result_t ret = RMAP_MATCH;
-	extern char *proto_rm[AFI_MAX][ZEBRA_ROUTE_MAX + 1];
-	struct route_map *rmap;
+	//extern char *proto_rm[AFI_MAX][ZEBRA_ROUTE_MAX + 1];
+	//struct route_map *rmap;
 	int family;
 
 	family = 0;
@@ -1036,7 +1036,7 @@ static int nexthop_active_update(struct route_node *rn, struct rib *rib,
 }
 
 
-static int rib_table_rib_debug(struct route_node *rn, struct rib *rib)
+/*static int rib_table_rib_debug(struct route_node *rn, struct rib *rib)
 {
 	int recursing;
 	struct nexthop *nexthop = NULL, *tnexthop = NULL;
@@ -1061,7 +1061,8 @@ static int rib_table_rib_debug(struct route_node *rn, struct rib *rib)
 		}
 	}
 	return OK;
-}
+}*/
+
 static int rib_update_kernel(struct route_node *rn, struct rib *old,
 		struct rib *new)
 {

@@ -680,7 +680,7 @@ int os_process_stop()
 
 int os_register_signal(int sig, void (*handler)(int))
 {
-	struct sigaction sa, osa;
+	struct sigaction sa;//, osa;
 
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = handler;

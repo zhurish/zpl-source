@@ -201,7 +201,7 @@ check_proc_int(const char *path)
 	fclose(fp);
 	return i;
 }
-#endif
+
 static ssize_t
 write_path(const char *path, const char *val)
 {
@@ -215,6 +215,7 @@ write_path(const char *path, const char *val)
 	fclose(fp);
 	return r;
 }
+#endif
 #ifndef DHCPC_THREAD
 int
 if_dhcpc_init(struct dhcpc_interface *ifp)
@@ -1671,13 +1672,15 @@ if_disable_autolinklocal(struct dhcpcd_ctx *ctx, unsigned int ifindex)
 #endif
 }
 
-static const char *prefix = "/proc/sys/net/ipv6/conf";
+//static const char *prefix = "/proc/sys/net/ipv6/conf";
 
 void
 if_setup_inet6(const struct dhcpc_interface *ifp)
 {
+/*
 	int ra;
 	char path[256];
+*/
 
 	/* The kernel cannot make stable private addresses. */
 	if (if_disable_autolinklocal(ifp->ctx, ifp->index) == -1)
