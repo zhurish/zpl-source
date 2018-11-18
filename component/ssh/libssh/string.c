@@ -57,7 +57,7 @@ struct ssh_string_struct *ssh_string_new(size_t size) {
       return NULL;
   }
 
-  str = malloc(sizeof(struct ssh_string_struct) + size);
+  str = ssh_malloc(sizeof(struct ssh_string_struct) + size);
   if (str == NULL) {
     return NULL;
   }
@@ -186,7 +186,7 @@ char *ssh_string_to_char(struct ssh_string_struct *s) {
     return NULL;
   }
 
-  new = malloc(len + 1);
+  new = ssh_malloc(len + 1);
   if (new == NULL) {
     return NULL;
   }

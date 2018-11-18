@@ -68,6 +68,7 @@ extern struct mlist mlists[];
 /* Prototypes of memory function. */
 extern void *zmalloc (int type, size_t size);
 extern void *zzcalloc (int type, size_t size);
+extern void *z_zcalloc (int type, int n, size_t size);
 extern void *zrealloc (int type, void *ptr, size_t size);
 extern void  zfree (int type, void *ptr);
 extern char *zstrdup (int type, const char *str);

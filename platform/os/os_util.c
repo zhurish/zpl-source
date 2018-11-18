@@ -380,6 +380,7 @@ int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, int timeout_ms)
 		num = select(maxfd, rfdset, wfdset, NULL, timeout_ms ? &timer_wait:NULL);
 		if (num < 0)
 		{
+			fprintf(stdout, "%s (errno=%d -> %s)", __func__, errno, strerror(errno));
 			if (errno == EINTR || errno == EAGAIN)
 				continue;
 /*			if (errno == EPIPE || errno == EBADF || errno == EIO ECONNRESET ECONNABORTED ENETRESET ECONNREFUSED)
@@ -679,10 +680,12 @@ int os_process_stop()
 
 int os_register_signal(int sig, void (*handler)(int))
 {
-	struct sigaction sa;
+	struct sigaction sa, osa;
 
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = handler;
+
+	//sigaction(sig, NULL, &osa);
 
 	if (sigfillset(&sa.sa_mask) != 0 ||
 	    sigaction(sig, &sa, NULL) < 0)
@@ -734,9 +737,237 @@ const char * os_file_size(long long len)
 
 /*
  * tftp://1.1.1.1:80/file
- * ftp://1.1.1.1:80/file
+ * tftp://1.1.1.1/file
+ * tftp://1.1.1.1:80:/file
+ * tftp://1.1.1.1:/file
+ * ftp://user@1.1.1.1:80/file
  * ftp://user:password@1.1.1.1:80/file
+ * ftp://user@1.1.1.1/file
+ * ftp://user:password@1.1.1.1/file
+ *
+ * scp://user@1.1.1.1:80/file
+ * scp://user:password@1.1.1.1:80/file
+ * scp://user@1.1.1.1/file
+ * scp://user:password@1.1.1.1/file
+ *
+ * scp://user@1.1.1.1:80:/file
+ * scp://user:password@1.1.1.1:80:/file
+ * scp://user@1.1.1.1:/file
+ * scp://user:password@1.1.1.1:/file
+ *
+ * ssh://user@1.1.1.1:80
+ * ssh://user:password@1.1.1.1:80
+ * ssh://user@1.1.1.1
+ * ssh://user:password@1.1.1.1
+ *
+ * scp  global@194.169.13.45:/home/global/workspace/test/ipran_u3-20180609.tar.bz2
+ * scp -P 9225 root@183.63.84.114:/root/ipran_u3-w.tat.bz ./
+ *
  */
+int os_url_split(const char * URL, os_url_t *spliurl)
+{
+	char tmp[128];
+	char buf[128];
+	if(URL == NULL || !spliurl)
+		return ERROR;
+	char *url_dup = URL;
+	char *p_slash = NULL, *p = NULL;
+
+	p_slash = strstr(url_dup, "://");
+
+	if(!p_slash)
+		return ERROR;
+	memset(tmp, 0, sizeof(tmp));
+	sscanf(url_dup, "%[^:]", tmp);
+	spliurl->proto = strdup(tmp);
+	p_slash += 3;
+
+	if(!p_slash)
+	{
+		return ERROR;
+	}
+
+	if(!strstr(p_slash, "@"))
+	{
+split_agent:
+		p = strstr(p_slash, ":/");
+		if(p)
+		{
+			p++;
+			spliurl->filename = strdup(p);
+			memset(buf, 0, sizeof(buf));
+			strncpy(buf, p_slash, p - p_slash);
+			p_slash = buf;
+			p = strstr(p_slash, ":");
+			if(p)
+			{
+				memset(tmp, 0, sizeof(tmp));
+				sscanf(p_slash, "%[^:]", tmp);
+				spliurl->host = strdup(tmp);
+				p++;
+				//port
+				spliurl->port = atoi(p);
+			}
+			else
+			{
+				spliurl->host = strdup(p_slash);
+			}
+		}
+		else
+		{
+			p = strstr(p_slash, ":");
+			if(p)
+			{
+				memset(tmp, 0, sizeof(tmp));
+				sscanf(p_slash, "%[^:]", tmp);
+				spliurl->host = strdup(tmp);
+				p++;
+				//port
+				spliurl->port = atoi(p);
+				p_slash = strstr(p, "/");
+				if(p_slash)
+					p_slash++;
+			}
+			else
+			{
+				p = strstr(p_slash, "/");
+				if(p)
+				{
+					memset(tmp, 0, sizeof(tmp));
+					sscanf(p_slash, "%[^/]", tmp);
+					spliurl->host = strdup(tmp);
+					p_slash = p + 1;
+				}
+				else
+				{
+					//for ssh
+					spliurl->host = strdup(p_slash);
+					p_slash = NULL;
+				}
+			}
+			if(p_slash)
+				spliurl->filename = strdup(p_slash);
+		}
+	}
+	else
+	{
+		url_dup = p = strstr(p_slash, "@");
+		if(p)
+		{
+			memset(buf, 0, sizeof(buf));
+			strncpy(buf, p_slash, p - p_slash);
+			p_slash = buf;
+			p = strstr(p_slash, ":");
+			if(p)
+			{
+				memset(tmp, 0, sizeof(tmp));
+				sscanf(p_slash, "%[^:]", tmp);
+				spliurl->user = strdup(tmp);
+				p++;
+				//pass
+				spliurl->pass = strdup(p);
+			}
+			else
+			{
+				spliurl->user = strdup(p_slash);
+			}
+
+			p_slash = url_dup + 1;
+			if(p_slash)
+				goto split_agent;
+/*			if(p_slash && !strstr(spliurl->proto, "ssh"))
+				goto split_agent;
+			if(strstr(spliurl->proto, "ssh"))
+			{
+
+			}*/
+		}
+	}
+	if(strstr(spliurl->proto, "ssh"))
+	{
+		if(spliurl->proto && spliurl->host)
+			return OK;
+		return ERROR;
+	}
+	if(spliurl->proto && spliurl->host && spliurl->filename)
+		return OK;
+	return ERROR;
+}
+
+#if 0
+static int os_url_debug_test(char *URL)
+{
+	os_url_t spliurl;
+	memset(&spliurl, 0, sizeof(os_url_t));
+	if (os_url_split(URL, &spliurl) != OK)
+	{
+		//os_url_free(&spliurl);
+		//return -1;
+	}
+	fprintf(stdout, "===================================================\n");
+	fprintf(stdout, "URL            :%s\n", URL);
+	if(spliurl.proto)
+	{
+		fprintf(stdout, " proto         :%s\n", spliurl.proto);
+	}
+	if(spliurl.host)
+	{
+		fprintf(stdout, " host          :%s\n", spliurl.host);
+	}
+	if(spliurl.port)
+	{
+		fprintf(stdout, " port          :%d\n", spliurl.port);
+	}
+	if(spliurl.path)
+	{
+		fprintf(stdout, " path          :%s\n", spliurl.path);
+	}
+	if(spliurl.filename)
+	{
+		fprintf(stdout, " filename      :%s\n", spliurl.filename);
+	}
+	if(spliurl.user)
+	{
+		fprintf(stdout, " user          :%s\n", spliurl.user);
+	}
+	if(spliurl.pass)
+	{
+		fprintf(stdout, " pass          :%s\n", spliurl.pass);
+	}
+	fprintf(stdout, "===================================================\n");
+	os_url_free(&spliurl);
+	return OK;
+}
+
+int os_url_test()
+{
+	os_url_debug_test("tftp://1.1.1.1:80/file");
+	os_url_debug_test("tftp://1.1.1.1/file");
+	os_url_debug_test("tftp://1.1.1.1:80:/file");
+	os_url_debug_test("tftp://1.1.1.1:/file");
+	os_url_debug_test("ftp://user@1.1.1.1:80/file");
+	os_url_debug_test("ftp://user:password@1.1.1.1:80/file");
+	os_url_debug_test("ftp://user@1.1.1.1/file");
+	os_url_debug_test("ftp://user:password@1.1.1.1/file");
+	os_url_debug_test("scp://user@1.1.1.1:80/file");
+	os_url_debug_test("scp://user:password@1.1.1.1:80/file");
+	os_url_debug_test("scp://user@1.1.1.1/file");
+	os_url_debug_test("scp://user:password@1.1.1.1/file");
+	os_url_debug_test("scp://user@1.1.1.1:80:/file");
+	os_url_debug_test("scp://user:password@1.1.1.1:80:/file");
+	os_url_debug_test("scp://user@1.1.1.1:/file");
+	os_url_debug_test("scp://user:password@1.1.1.1:/file");
+
+	os_url_debug_test("ssh://user@1.1.1.1:80");
+	os_url_debug_test("ssh://user:password@1.1.1.1:80");
+	os_url_debug_test("ssh://user@1.1.1.1");
+	os_url_debug_test("ssh://user:password@1.1.1.1");
+	//proto://[user[:password@]] ip [:port][:][/file]
+	exit(0);
+	return 0;
+}
+#endif
+#if 0
 int os_url_split(const char * URL, os_url_t *spliurl)
 {
 	char tmp[128];
@@ -744,6 +975,9 @@ int os_url_split(const char * URL, os_url_t *spliurl)
 		return ERROR;
 	char *url_dup = URL;
 	char *p_slash = NULL;
+	if(!strstr(url_dup, "://"))
+		return ERROR;
+
 	p_slash = strstr(url_dup, "@");
 	if(p_slash)
 	{
@@ -759,21 +993,39 @@ int os_url_split(const char * URL, os_url_t *spliurl)
 		else
 			p_slash = url_dup;
 
-		memset(tmp, 0, sizeof(tmp));
-		sscanf(p_slash, "%[^:]", tmp);
-		spliurl->user = strdup(tmp);
 
-		p_slash = strstr(p_slash, ":");
-		p_slash++;
-		if(*p_slash == '@')
+		if(strstr(p_slash, ":"))
+		{
+			memset(tmp, 0, sizeof(tmp));
+			sscanf(p_slash, "%[^:]", tmp);
+			spliurl->user = strdup(tmp);
+
+			p_slash = strstr(p_slash, ":");
 			p_slash++;
+			if(*p_slash == '@')
+				p_slash++;
+			else
+			{
+				memset(tmp, 0, sizeof(tmp));
+				sscanf(p_slash, "%[^@]", tmp);
+				spliurl->pass = strdup(tmp);
+				p_slash = strstr(p_slash, "@");
+				p_slash++;
+			}
+		}
 		else
 		{
 			memset(tmp, 0, sizeof(tmp));
 			sscanf(p_slash, "%[^@]", tmp);
-			spliurl->pass = strdup(tmp);
+			spliurl->user = strdup(tmp);
 			p_slash = strstr(p_slash, "@");
 			p_slash++;
+
+/*			memset(tmp, 0, sizeof(tmp));
+			sscanf(p_slash, "%[^@]", tmp);
+			spliurl->pass = strdup(tmp);
+			p_slash = strstr(p_slash, "@");
+			p_slash++;*/
 		}
 	}
 	else
@@ -802,22 +1054,40 @@ int os_url_split(const char * URL, os_url_t *spliurl)
 	}
 	else
 	{
-		memset(tmp, 0, sizeof(tmp));
-		sscanf(p_slash, "%[^/]", tmp);
-		spliurl->host = strdup(tmp);
-		p_slash += strlen(spliurl->host);
+		if(p_slash && strstr(p_slash, "/"))
+		{
+			memset(tmp, 0, sizeof(tmp));
+			sscanf(p_slash, "%[^/]", tmp);
+			spliurl->host = strdup(tmp);
+			p_slash += strlen(spliurl->host);
+		}
+		else if(p_slash)
+		{
+			spliurl->host = strdup(p_slash);
+			//p_slash += strlen(spliurl->host);
+			p_slash = NULL;
+		}
 	}
-	p_slash++;
-	if(p_slash && strlen(p_slash))
+	if(strstr(spliurl->proto, "ssh"))
 	{
-		spliurl->filename = strdup(p_slash);
-		if(spliurl->proto && spliurl->host && spliurl->filename)
+		if(spliurl->proto && spliurl->host)
 			return OK;
 		return ERROR;
 	}
+	if(p_slash && strstr(p_slash, "/"))
+	{
+		p_slash++;
+		if(p_slash && strlen(p_slash))
+		{
+			spliurl->filename = strdup(p_slash);
+			if(spliurl->proto && spliurl->host && spliurl->filename)
+				return OK;
+			return ERROR;
+		}
+	}
 	return ERROR;
 }
-
+#endif
 int os_url_free(os_url_t *spliurl)
 {
 	if(!spliurl)

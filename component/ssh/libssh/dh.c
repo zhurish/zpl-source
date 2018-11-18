@@ -650,7 +650,7 @@ int make_sessionid(ssh_session session) {
     case SSH_KEX_DH_GROUP14_SHA1:
         session->next_crypto->digest_len = SHA_DIGEST_LENGTH;
         session->next_crypto->mac_type = SSH_MAC_SHA1;
-        session->next_crypto->secret_hash = malloc(session->next_crypto->digest_len);
+        session->next_crypto->secret_hash = ssh_malloc(session->next_crypto->digest_len);
         if (session->next_crypto->secret_hash == NULL) {
             ssh_set_error_oom(session);
             goto error;
@@ -662,7 +662,7 @@ int make_sessionid(ssh_session session) {
     case SSH_KEX_CURVE25519_SHA256_LIBSSH_ORG:
         session->next_crypto->digest_len = SHA256_DIGEST_LENGTH;
         session->next_crypto->mac_type = SSH_MAC_SHA256;
-        session->next_crypto->secret_hash = malloc(session->next_crypto->digest_len);
+        session->next_crypto->secret_hash = ssh_malloc(session->next_crypto->digest_len);
         if (session->next_crypto->secret_hash == NULL) {
             ssh_set_error_oom(session);
             goto error;
@@ -676,7 +676,7 @@ int make_sessionid(ssh_session session) {
      * but complement existing session id.
      */
     if (!session->next_crypto->session_id) {
-        session->next_crypto->session_id = malloc(session->next_crypto->digest_len);
+        session->next_crypto->session_id = ssh_malloc(session->next_crypto->digest_len);
         if (session->next_crypto->session_id == NULL) {
             ssh_set_error_oom(session);
             goto error;
@@ -685,7 +685,7 @@ int make_sessionid(ssh_session session) {
                 session->next_crypto->digest_len);
     }
 #ifdef DEBUG_CRYPTO
-    printf("Session hash: \n");
+    ssh_printf(NULL, "Session hash: \n");
     ssh_print_hexa("secret hash", session->next_crypto->secret_hash, session->next_crypto->digest_len);
     ssh_print_hexa("session id", session->next_crypto->session_id, session->next_crypto->digest_len);
 #endif
@@ -768,7 +768,7 @@ static int generate_one_key(ssh_string k,
   ssh_mac_final(*output, ctx);
 
   while(requested_size > size) {
-    tmp = realloc(*output, size + crypto->digest_len);
+    tmp = ssh_realloc(*output, size + crypto->digest_len);
     if (tmp == NULL) {
       return -1;
     }
@@ -800,12 +800,12 @@ int generate_session_keys(ssh_session session) {
     goto error;
   }
 
-  crypto->encryptIV = malloc(crypto->digest_len);
-  crypto->decryptIV = malloc(crypto->digest_len);
-  crypto->encryptkey = malloc(crypto->digest_len);
-  crypto->decryptkey = malloc(crypto->digest_len);
-  crypto->encryptMAC = malloc(crypto->digest_len);
-  crypto->decryptMAC = malloc(crypto->digest_len);
+  crypto->encryptIV = ssh_malloc(crypto->digest_len);
+  crypto->decryptIV = ssh_malloc(crypto->digest_len);
+  crypto->encryptkey = ssh_malloc(crypto->digest_len);
+  crypto->decryptkey = ssh_malloc(crypto->digest_len);
+  crypto->encryptMAC = ssh_malloc(crypto->digest_len);
+  crypto->decryptMAC = ssh_malloc(crypto->digest_len);
   if(crypto->encryptIV == NULL || crypto->decryptIV == NULL ||
       crypto->encryptkey == NULL || crypto->decryptkey == NULL ||
       crypto->encryptMAC == NULL || crypto->decryptMAC == NULL){
@@ -913,7 +913,7 @@ int ssh_get_pubkey_hash(ssh_session session, unsigned char **hash) {
     return SSH_ERROR;
   }
 
-  h = malloc(sizeof(unsigned char) * MD5_DIGEST_LEN);
+  h = ssh_malloc(sizeof(unsigned char) * MD5_DIGEST_LEN);
   if (h == NULL) {
     return SSH_ERROR;
   }
@@ -1020,7 +1020,7 @@ int ssh_get_publickey_hash(const ssh_key key,
         {
             SHACTX ctx;
 
-            h = malloc(SHA_DIGEST_LEN);
+            h = ssh_malloc(SHA_DIGEST_LEN);
             if (h == NULL) {
                 rc = -1;
                 goto out;
@@ -1028,7 +1028,7 @@ int ssh_get_publickey_hash(const ssh_key key,
 
             ctx = sha1_init();
             if (ctx == NULL) {
-                free(h);
+                SAFE_FREE(h);
                 rc = -1;
                 goto out;
             }
@@ -1043,7 +1043,7 @@ int ssh_get_publickey_hash(const ssh_key key,
         {
             SHA256CTX ctx;
 
-            h = malloc(SHA256_DIGEST_LEN);
+            h = ssh_malloc(SHA256_DIGEST_LEN);
             if (h == NULL) {
                 rc = -1;
                 goto out;
@@ -1051,7 +1051,7 @@ int ssh_get_publickey_hash(const ssh_key key,
 
             ctx = sha256_init();
             if (ctx == NULL) {
-                free(h);
+                SAFE_FREE(h);
                 rc = -1;
                 goto out;
             }
@@ -1066,7 +1066,7 @@ int ssh_get_publickey_hash(const ssh_key key,
         {
             MD5CTX ctx;
 
-            h = malloc(MD5_DIGEST_LEN);
+            h = ssh_malloc(MD5_DIGEST_LEN);
             if (h == NULL) {
                 rc = -1;
                 goto out;
@@ -1074,7 +1074,7 @@ int ssh_get_publickey_hash(const ssh_key key,
 
             ctx = ssh_md5_init();
             if (ctx == NULL) {
-                free(h);
+                SAFE_FREE(h);
                 rc = -1;
                 goto out;
             }
@@ -1151,7 +1151,7 @@ char *ssh_get_hexa(const unsigned char *what, size_t len) {
     return NULL;
   }
 
-  hexa = malloc(hlen + 1);
+  hexa = ssh_malloc(hlen + 1);
   if (hexa == NULL) {
     return NULL;
   }
@@ -1225,7 +1225,7 @@ char *ssh_get_fingerprint_hash(enum ssh_publickey_hash_type type,
     }
     str_len += 1 + strlen(fingerprint) + 1;
 
-    str = malloc(str_len);
+    str = ssh_malloc(str_len);
     if (str == NULL) {
         SAFE_FREE(fingerprint);
         return NULL;
@@ -1265,7 +1265,7 @@ void ssh_print_hash(enum ssh_publickey_hash_type type,
         return;
     }
 
-    fprintf(ssh_stderr, "%s\n", fingerprint);
+    ssh_printf(NULL, "%s\n", fingerprint);
 
     SAFE_FREE(fingerprint);
 }
@@ -1285,9 +1285,9 @@ void ssh_print_hexa(const char *descr, const unsigned char *what, size_t len) {
     if (hexa == NULL) {
       return;
     }
-    printf("%s: %s\n", descr, hexa);
+    ssh_printf(NULL, "%s: %s\n", descr, hexa);
 
-    free(hexa);
+    SAFE_FREE(hexa);
 }
 
 /** @} */

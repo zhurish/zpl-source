@@ -75,7 +75,7 @@ int ssh_options_copy(ssh_session src, ssh_session *dest) {
     }
 
     if (src->opts.username) {
-        new->opts.username = strdup(src->opts.username);
+        new->opts.username = ssh_strdup(src->opts.username);
         if (new->opts.username == NULL) {
             ssh_free(new);
             return -1;
@@ -83,7 +83,7 @@ int ssh_options_copy(ssh_session src, ssh_session *dest) {
     }
 
     if (src->opts.host) {
-        new->opts.host = strdup(src->opts.host);
+        new->opts.host = ssh_strdup(src->opts.host);
         if (new->opts.host == NULL) {
             ssh_free(new);
             return -1;
@@ -98,7 +98,7 @@ int ssh_options_copy(ssh_session src, ssh_session *dest) {
             char *id;
             int rc;
 
-            id = strdup((char *) it->data);
+            id = ssh_strdup((char *) it->data);
             if (id == NULL) {
                 ssh_free(new);
                 return -1;
@@ -106,7 +106,7 @@ int ssh_options_copy(ssh_session src, ssh_session *dest) {
 
             rc = ssh_list_append(new->opts.identity, id);
             if (rc < 0) {
-                free(id);
+                SAFE_FREE(id);
                 ssh_free(new);
                 return -1;
             }
@@ -115,7 +115,7 @@ int ssh_options_copy(ssh_session src, ssh_session *dest) {
     }
 
     if (src->opts.sshdir) {
-        new->opts.sshdir = strdup(src->opts.sshdir);
+        new->opts.sshdir = ssh_strdup(src->opts.sshdir);
         if (new->opts.sshdir == NULL) {
             ssh_free(new);
             return -1;
@@ -123,7 +123,7 @@ int ssh_options_copy(ssh_session src, ssh_session *dest) {
     }
 
     if (src->opts.knownhosts) {
-        new->opts.knownhosts = strdup(src->opts.knownhosts);
+        new->opts.knownhosts = ssh_strdup(src->opts.knownhosts);
         if (new->opts.knownhosts == NULL) {
             ssh_free(new);
             return -1;
@@ -132,7 +132,7 @@ int ssh_options_copy(ssh_session src, ssh_session *dest) {
 
     for (i = 0; i < 10; i++) {
         if (src->opts.wanted_methods[i]) {
-            new->opts.wanted_methods[i] = strdup(src->opts.wanted_methods[i]);
+            new->opts.wanted_methods[i] = ssh_strdup(src->opts.wanted_methods[i]);
             if (new->opts.wanted_methods[i] == NULL) {
                 ssh_free(new);
                 return -1;
@@ -141,7 +141,7 @@ int ssh_options_copy(ssh_session src, ssh_session *dest) {
     }
 
     if (src->opts.ProxyCommand) {
-        new->opts.ProxyCommand = strdup(src->opts.ProxyCommand);
+        new->opts.ProxyCommand = ssh_strdup(src->opts.ProxyCommand);
         if (new->opts.ProxyCommand == NULL) {
             ssh_free(new);
             return -1;
@@ -172,7 +172,7 @@ int ssh_options_set_algo(ssh_session session, int algo,
   }
 
   SAFE_FREE(session->opts.wanted_methods[algo]);
-  session->opts.wanted_methods[algo] = strdup(list);
+  session->opts.wanted_methods[algo] = ssh_strdup(list);
   if (session->opts.wanted_methods[algo] == NULL) {
     ssh_set_error_oom(session);
     return -1;
@@ -397,7 +397,7 @@ int ssh_options_set(ssh_session session, enum ssh_options_e type,
                 ssh_set_error_invalid(session);
                 return -1;
             } else {
-                q = strdup(value);
+                q = ssh_strdup(value);
                 if (q == NULL) {
                     ssh_set_error_oom(session);
                     return -1;
@@ -408,7 +408,7 @@ int ssh_options_set(ssh_session session, enum ssh_options_e type,
 
                 if (p) {
                     *p = '\0';
-                    session->opts.host = strdup(p + 1);
+                    session->opts.host = ssh_strdup(p + 1);
                     if (session->opts.host == NULL) {
                         SAFE_FREE(q);
                         ssh_set_error_oom(session);
@@ -416,7 +416,7 @@ int ssh_options_set(ssh_session session, enum ssh_options_e type,
                     }
 
                     SAFE_FREE(session->opts.username);
-                    session->opts.username = strdup(q);
+                    session->opts.username = ssh_strdup(q);
                     SAFE_FREE(q);
                     if (session->opts.username == NULL) {
                         ssh_set_error_oom(session);
@@ -447,7 +447,7 @@ int ssh_options_set(ssh_session session, enum ssh_options_e type,
                 ssh_set_error_invalid(session);
                 return -1;
             } else {
-                q = strdup(v);
+                q = ssh_strdup(v);
                 if (q == NULL) {
                     ssh_set_error_oom(session);
                     return -1;
@@ -488,7 +488,7 @@ int ssh_options_set(ssh_session session, enum ssh_options_e type,
                 return -1;
             }
 
-            q = strdup(v);
+            q = ssh_strdup(v);
             if (q == NULL) {
                 return -1;
             }
@@ -509,7 +509,7 @@ int ssh_options_set(ssh_session session, enum ssh_options_e type,
                 ssh_set_error_invalid(session);
                 return -1;
             } else { /* username provided */
-                session->opts.username = strdup(value);
+                session->opts.username = ssh_strdup(value);
                 if (session->opts.username == NULL) {
                     ssh_set_error_oom(session);
                     return -1;
@@ -520,7 +520,7 @@ int ssh_options_set(ssh_session session, enum ssh_options_e type,
             v = value;
             SAFE_FREE(session->opts.sshdir);
             if (v == NULL) {
-                session->opts.sshdir = ssh_path_expand_tilde("~/.ssh");
+                session->opts.sshdir = ssh_path_expand_tilde(SSH_BASE_DIR);//("~/.ssh");
                 if (session->opts.sshdir == NULL) {
                     return -1;
                 }
@@ -542,13 +542,13 @@ int ssh_options_set(ssh_session session, enum ssh_options_e type,
                 ssh_set_error_invalid(session);
                 return -1;
             }
-            q = strdup(v);
+            q = ssh_strdup(v);
             if (q == NULL) {
                 return -1;
             }
             rc = ssh_list_prepend(session->opts.identity, q);
             if (rc < 0) {
-                free(q);
+                SAFE_FREE(q);
                 return -1;
             }
             break;
@@ -566,7 +566,7 @@ int ssh_options_set(ssh_session session, enum ssh_options_e type,
                 ssh_set_error_invalid(session);
                 return -1;
             } else {
-                session->opts.knownhosts = strdup(v);
+                session->opts.knownhosts = ssh_strdup(v);
                 if (session->opts.knownhosts == NULL) {
                     ssh_set_error_oom(session);
                     return -1;
@@ -651,7 +651,7 @@ int ssh_options_set(ssh_session session, enum ssh_options_e type,
                 ssh_set_error_invalid(session);
                 return -1;
             } else {
-                q = strdup(v);
+                q = ssh_strdup(v);
                 if (q == NULL) {
                     ssh_set_error_oom(session);
                     return -1;
@@ -811,7 +811,7 @@ int ssh_options_set(ssh_session session, enum ssh_options_e type,
                 /* Setting the command to 'none' disables this option. */
                 rc = strcasecmp(v, "none");
                 if (rc != 0) {
-                    q = strdup(v);
+                    q = ssh_strdup(v);
                     if (q == NULL) {
                         return -1;
                     }
@@ -826,7 +826,7 @@ int ssh_options_set(ssh_session session, enum ssh_options_e type,
                 return -1;
             } else {
                 SAFE_FREE(session->opts.gss_server_identity);
-                session->opts.gss_server_identity = strdup(v);
+                session->opts.gss_server_identity = ssh_strdup(v);
                 if (session->opts.gss_server_identity == NULL) {
                     ssh_set_error_oom(session);
                     return -1;
@@ -840,7 +840,7 @@ int ssh_options_set(ssh_session session, enum ssh_options_e type,
                 return -1;
             } else {
                 SAFE_FREE(session->opts.gss_client_identity);
-                session->opts.gss_client_identity = strdup(v);
+                session->opts.gss_client_identity = ssh_strdup(v);
                 if (session->opts.gss_client_identity == NULL) {
                     ssh_set_error_oom(session);
                     return -1;
@@ -980,7 +980,7 @@ int ssh_options_get(ssh_session session, enum ssh_options_e type, char** value)
     if (src == NULL) {
         return SSH_ERROR;
     }
-    *value = strdup(src);
+    *value = ssh_strdup(src);
     if (*value == NULL) {
         ssh_set_error_oom(session);
         return SSH_ERROR;
@@ -1076,14 +1076,14 @@ int ssh_options_getopt(ssh_session session, int *argcptr, char **argv) {
         {
           char opt[3]="- ";
           opt[1] = optopt;
-          tmp = realloc(save, (current + 1) * sizeof(char*));
+          tmp = ssh_realloc(save, (current + 1) * sizeof(char*));
           if (tmp == NULL) {
             SAFE_FREE(save);
             ssh_set_error_oom(session);
             return -1;
           }
           save = tmp;
-          save[current] = strdup(opt);
+          save[current] = ssh_strdup(opt);
           if (save[current] == NULL) {
             SAFE_FREE(save);
             ssh_set_error_oom(session);
@@ -1097,7 +1097,7 @@ int ssh_options_getopt(ssh_session session, int *argcptr, char **argv) {
     } /* switch */
   } /* while */
   opterr = saveopterr;
-  tmp = realloc(save, (current + (argc - optind)) * sizeof(char*));
+  tmp = ssh_realloc(save, (current + (argc - optind)) * sizeof(char*));
   if (tmp == NULL) {
     SAFE_FREE(save);
     ssh_set_error_oom(session);
@@ -1105,7 +1105,7 @@ int ssh_options_getopt(ssh_session session, int *argcptr, char **argv) {
   }
   save = tmp;
   while (optind < argc) {
-      tmp = realloc(save, (current + 1) * sizeof(char*));
+      tmp = ssh_realloc(save, (current + 1) * sizeof(char*));
       if (tmp == NULL) {
           SAFE_FREE(save);
           ssh_set_error_oom(session);
@@ -1236,7 +1236,7 @@ int ssh_options_parse_config(ssh_session session, const char *filename) {
   }
 
 out:
-  free(expanded_filename);
+  SAFE_FREE(expanded_filename);
   return r;
 }
 
@@ -1267,7 +1267,7 @@ int ssh_options_apply(ssh_session session) {
     if (tmp == NULL) {
         return -1;
     }
-    free(session->opts.knownhosts);
+    SAFE_FREE(session->opts.knownhosts);
     session->opts.knownhosts = tmp;
 
     if (session->opts.ProxyCommand != NULL) {
@@ -1275,7 +1275,7 @@ int ssh_options_apply(ssh_session session) {
         if (tmp == NULL) {
             return -1;
         }
-        free(session->opts.ProxyCommand);
+        SAFE_FREE(session->opts.ProxyCommand);
         session->opts.ProxyCommand = tmp;
     }
 
@@ -1287,7 +1287,7 @@ int ssh_options_apply(ssh_session session) {
         if (tmp == NULL) {
             return -1;
         }
-        free(id);
+        SAFE_FREE(id);
         it->data = tmp;
     }
 
@@ -1308,7 +1308,7 @@ static int ssh_bind_set_key(ssh_bind sshbind, char **key_loc,
         return -1;
     } else {
         SAFE_FREE(*key_loc);
-        *key_loc = strdup(value);
+        *key_loc = ssh_strdup(value);
         if (*key_loc == NULL) {
             ssh_set_error_oom(sshbind);
             return -1;
@@ -1462,7 +1462,7 @@ int ssh_bind_options_set(ssh_bind sshbind, enum ssh_bind_options_e type,
         return -1;
       } else {
         SAFE_FREE(sshbind->bindaddr);
-        sshbind->bindaddr = strdup(value);
+        sshbind->bindaddr = ssh_strdup(value);
         if (sshbind->bindaddr == NULL) {
           ssh_set_error_oom(sshbind);
           return -1;
@@ -1482,7 +1482,7 @@ int ssh_bind_options_set(ssh_bind sshbind, enum ssh_bind_options_e type,
       if (value == NULL) {
         sshbind->bindport = 22 & 0xffff;
       } else {
-        q = strdup(value);
+        q = ssh_strdup(value);
         if (q == NULL) {
           ssh_set_error_oom(sshbind);
           return -1;
@@ -1509,7 +1509,7 @@ int ssh_bind_options_set(ssh_bind sshbind, enum ssh_bind_options_e type,
       if (value == NULL) {
       	ssh_set_log_level(0);
       } else {
-        q = strdup(value);
+        q = ssh_strdup(value);
         if (q == NULL) {
           ssh_set_error_oom(sshbind);
           return -1;
@@ -1547,7 +1547,7 @@ int ssh_bind_options_set(ssh_bind sshbind, enum ssh_bind_options_e type,
         return -1;
       } else {
         SAFE_FREE(sshbind->banner);
-        sshbind->banner = strdup(value);
+        sshbind->banner = ssh_strdup(value);
         if (sshbind->banner == NULL) {
           ssh_set_error_oom(sshbind);
           return -1;

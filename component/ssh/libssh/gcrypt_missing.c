@@ -53,7 +53,7 @@ char *my_gcry_bn2dec(bignum bn) {
   size = gcry_mpi_get_nbits(bn) * 3;
   rsize = size / 10 + size / 1000 + 2;
 
-  ret = malloc(rsize + 1);
+  ret = ssh_malloc(rsize + 1);
   if (ret == NULL) {
     return NULL;
   }

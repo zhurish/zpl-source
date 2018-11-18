@@ -119,7 +119,27 @@ static os_job_t * os_job_entry_create(int	(*job_entry)(void *), void *pVoid, cha
 	return NULL;
 }
 
+int os_job_del(int (*job_entry)(void *), void *pVoid)
+{
+	NODE node;
+	os_job_t *t;
+	if (job_mutex)
+		os_mutex_lock(job_mutex, OS_WAIT_FOREVER);
 
+	for(t = (os_job_t *)lstFirst(job_list); t != NULL; t = (os_job_t *)lstNext(&node))
+	{
+		node = t->node;
+		if(t && t->job_entry == job_entry && t->pVoid == pVoid)
+		{
+			lstDelete (job_list, (NODE *)t);
+			lstAdd (job_unused_list, (NODE *)t);
+			break;
+		}
+	}
+	if(job_mutex)
+		os_mutex_unlock(job_mutex);
+	return OK;
+}
 
 int os_job_add_entry(int (*job_entry)(void *), void *pVoid, char *entry_name)
 {

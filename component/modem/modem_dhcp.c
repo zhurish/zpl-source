@@ -48,26 +48,53 @@ static int _dhcpc_stop(int process)
 #else
 static int _dhcpc_start(modem_t *modem, struct interface *ifp)
 {
-	if(if_is_wireless(ifp))
+	if(/*if_is_wireless(ifp) && */ifp->k_ifindex)
 	{
-		if(nsm_interface_dhcp_mode_set_api(ifp, DHCP_CLIENT) == OK)
-			return nsm_interface_dhcpc_start(ifp, TRUE);
-		else
-			return ERROR;
+#ifdef PL_DHCPC_MODULE
+		nsm_dhcp_type type = nsm_interface_dhcp_mode_get_api(ifp);
+		switch(type)
+		{
+		case DHCP_NONE:
+			if(nsm_interface_dhcp_mode_set_api(ifp, DHCP_CLIENT) == OK)
+			{
+				os_msleep(10);
+				if(!nsm_interface_dhcpc_is_running(ifp))
+					return nsm_interface_dhcpc_start(ifp, TRUE);
+			}
+			break;
+		case DHCP_CLIENT:
+			if(!nsm_interface_dhcpc_is_running(ifp))
+				return nsm_interface_dhcpc_start(ifp, TRUE);
+			break;
+		case DHCP_SERVER:
+			break;
+		case DHCP_RELAY:
+			break;
+		}
+		return ERROR;
+#endif
 	}
-	else
-		return nsm_interface_dhcp_mode_set_api(ifp, DHCP_CLIENT);
+/*	else if(ifp->k_ifindex)
+		return nsm_interface_dhcp_mode_set_api(ifp, DHCP_CLIENT);*/
+	return ERROR;
 }
 
 static int _dhcpc_stop(modem_t *modem, struct interface *ifp)
 {
 	MODEM_HDCP_DEBUG(" dhcpc");
-	if(if_is_wireless(ifp))
-	{
+#ifdef PL_DHCPC_MODULE
+	nsm_dhcp_type type = nsm_interface_dhcp_mode_get_api(ifp);
+	if(type == DHCP_CLIENT)
 		return nsm_interface_dhcp_mode_set_api(ifp, DHCP_NONE);
-	}
-	else
-		return nsm_interface_dhcp_mode_set_api(ifp, DHCP_NONE);
+#endif
+		//return nsm_interface_dhcpc_start(ifp, FALSE);
+	//if(/*if_is_wireless(ifp) && */ifp->k_ifindex)
+	//{
+	//	return nsm_interface_dhcp_mode_set_api(ifp, DHCP_NONE);
+	//}
+/*	else if(ifp->k_ifindex)
+		return nsm_interface_dhcp_mode_set_api(ifp, DHCP_NONE);*/
+	return ERROR;
 }
 #endif
 
@@ -183,7 +210,7 @@ int modem_dhcpc_attach(modem_t *modem)
 	assert(modem);
 	assert(modem->client);
 	ret = _modem_dhcp_nwcall(modem->client, TRUE);
-	MODEM_HDCP_DEBUG("dhcpc start dial");
+	//MODEM_HDCP_DEBUG("dhcpc start dial");
 	return ret;
 }
 
@@ -193,7 +220,7 @@ int modem_dhcpc_unattach(modem_t *modem)
 	assert(modem);
 	assert(modem->client);
 	ret = _modem_dhcp_nwcall(modem->client, FALSE);
-	MODEM_HDCP_DEBUG("dhcpc stop dial");
+	//MODEM_HDCP_DEBUG("dhcpc stop dial");
 	return ret;
 }
 
@@ -204,7 +231,9 @@ int modem_dhcpc_start(modem_t *modem)
 	assert(modem->client);
 	if(modem->pid[modem->dialtype] == 0)
 		ret = _modem_dhcpc_start(modem->client);
-	MODEM_HDCP_DEBUG("dhcpc start");
+	if(ret == OK)
+		modem->pid[modem->dialtype] = 1;
+	//MODEM_HDCP_DEBUG("dhcpc start");
 	return ret;
 }
 

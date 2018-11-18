@@ -26,6 +26,7 @@
 
 #include "nsm_dhcp.h"
 
+#ifdef PL_DHCPD_MODULE
 
 DEFUN (ip_dhcp_pool,
 		ip_dhcp_pool_cmd,
@@ -659,3 +660,4 @@ void cmd_dhcps_init(void)
 	cmd_base_interface_dhcpd_init(LAG_INTERFACE_L3_NODE);
 	cmd_base_interface_dhcpd_init(WIRELESS_INTERFACE_NODE);
 }
+#endif

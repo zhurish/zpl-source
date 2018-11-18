@@ -29,6 +29,8 @@
 
 #define IW_DEBUG(n)		iw_debug_conf & IW_DEBUG_ ## n
 
+#define IW_DEBUG_ON(n)		iw_debug_conf |= IW_DEBUG_ ## n
+#define IW_DEBUG_OFF(n)		iw_debug_conf &= ~( IW_DEBUG_ ## n )
 
 //iw: managed, ibss, monitor, mesh, wds
 //iwconfig: managed|ad-hoc|master|...

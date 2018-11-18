@@ -78,6 +78,8 @@ extern int vty_user_create(struct vty *, char *, char *, BOOL , BOOL );
 extern int vty_user_delete(struct vty *, char *, BOOL , BOOL );
 extern int vty_user_change(struct vty *, char *);
 
+extern char * vty_user_get(struct vty *);
+
 
 extern BOOL md5_encrypt_empty(unsigned char *);
 //extern int encrypt_XCH(unsigned char *pass, unsigned char *password);

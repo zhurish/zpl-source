@@ -26,6 +26,7 @@
 
 #include "nsm_dhcp.h"
 
+#ifdef PL_DHCPC_MODULE
 //#include "nsm_dhcp.h"
 
 DEFUN (nsm_interface_ip_dhcp,
@@ -742,8 +743,16 @@ void cmd_dhcpc_init(void)
 	install_element(CONFIG_NODE, &no_nsm_debug_dhcp_client_cmd);
 }
 
+#endif
+
+#ifdef PL_DHCP_MODULE
 void cmd_dhcp_init(void)
 {
+#ifdef PL_DHCPC_MODULE
 	cmd_dhcpc_init();
+#endif
+#ifdef PL_DHCPC_MODULE
 	cmd_dhcps_init();
+#endif
 }
+#endif

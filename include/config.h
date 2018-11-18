@@ -131,19 +131,19 @@
 #define HAVE_FTRUNCATE 1
 
 /* Define to 1 if you have the `getaddrinfo' function. */
-#define HAVE_GETADDRINFO 1
+//#define HAVE_GETADDRINFO 1
 
 /* Define to 1 if you have the `getcwd' function. */
 #define HAVE_GETCWD 1
 
 /* Define to 1 if you have the `getgrouplist' function. */
-#define HAVE_GETGROUPLIST 1
+//#define HAVE_GETGROUPLIST 1
 
 /* Define to 1 if you have the `gethostbyname' function. */
 #define HAVE_GETHOSTBYNAME 1
 
 /* Define to 1 if you have the `getifaddrs' function. */
-#define HAVE_GETIFADDRS 1
+//#define HAVE_GETIFADDRS 1
 
 /* Define to 1 if you have the `getpagesize' function. */
 #define HAVE_GETPAGESIZE 1

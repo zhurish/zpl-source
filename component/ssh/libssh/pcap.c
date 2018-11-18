@@ -127,7 +127,7 @@ struct ssh_pcap_file_struct {
 ssh_pcap_file ssh_pcap_file_new(void) {
     struct ssh_pcap_file_struct *pcap;
 
-    pcap = (struct ssh_pcap_file_struct *) malloc(sizeof(struct ssh_pcap_file_struct));
+    pcap = (struct ssh_pcap_file_struct *) ssh_malloc(sizeof(struct ssh_pcap_file_struct));
     if (pcap == NULL) {
         return NULL;
     }
@@ -268,7 +268,7 @@ void ssh_pcap_file_free(ssh_pcap_file pcap){
  */
 
 ssh_pcap_context ssh_pcap_context_new(ssh_session session){
-	ssh_pcap_context ctx = (struct ssh_pcap_context_struct *) malloc(sizeof(struct ssh_pcap_context_struct));
+	ssh_pcap_context ctx = (struct ssh_pcap_context_struct *) ssh_malloc(sizeof(struct ssh_pcap_context_struct));
 	if(ctx==NULL){
 		ssh_set_error_oom(session);
 		return NULL;

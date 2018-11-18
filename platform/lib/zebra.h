@@ -56,6 +56,9 @@ typedef int socklen_t;
 #include <pwd.h>
 #include <grp.h>
 
+#include "pthread.h"
+#include "semaphore.h"
+
 #ifdef HAVE_STROPTS_H
 #include <stropts.h>
 #endif /* HAVE_STROPTS_H */
@@ -352,6 +355,12 @@ struct in_pktinfo
   struct in_addr ipi_spec_dst;
   struct in_addr ipi_addr;
 };
+
+/*struct in6_pktinfo
+  {
+    struct in6_addr ipi6_addr;
+    unsigned int ipi6_ifindex;
+  };*/
 #endif
 
 /* 

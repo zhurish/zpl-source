@@ -37,7 +37,7 @@ struct ssh_mac_ctx_struct {
 };
 
 static int alloc_key(struct ssh_cipher_struct *cipher) {
-    cipher->key = malloc(cipher->keylen);
+    cipher->key = ssh_malloc(cipher->keylen);
     if (cipher->key == NULL) {
       return -1;
     }
@@ -150,7 +150,7 @@ void md5_final(unsigned char *md, MD5CTX c) {
 }
 
 ssh_mac_ctx ssh_mac_ctx_init(enum ssh_mac_e type){
-  ssh_mac_ctx ctx = malloc(sizeof(struct ssh_mac_ctx_struct));
+  ssh_mac_ctx ctx = ssh_malloc(sizeof(struct ssh_mac_ctx_struct));
   if (ctx == NULL) {
     return NULL;
   }

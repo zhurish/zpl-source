@@ -55,7 +55,7 @@ PlatformModule = \
 	DHCPDDIR.dhcpd \
 	SQLITEDIR.sqlite \
 	SYSTOOLSDIR.systools \
-	OPENSSHDIR.ssh
+	LIBSSHDIR.ssh
 ###
 # By default we choose the lexically last Platform component version in hopes
 # that it is the most recent. The directory macros (e.g. IPCOMDIR) may of

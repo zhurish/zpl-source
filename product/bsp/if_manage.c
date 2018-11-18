@@ -70,7 +70,7 @@ static struct unit_slot_port iusp_table[] =
 
 #ifdef USE_IPSTACK_KERNEL
 
-static struct slot_port_phy phy_table[OS_SLOT_MAX][OS_SLOT_HY_MAX * MODEM_PHY_MAX + WIFI_PHY_MAX] =
+static struct slot_port_phy phy_table[OS_SLOT_MAX][OS_SLOT_HY_MAX + MODEM_PHY_MAX + WIFI_PHY_MAX] =
 {
 	{
 		{.ifindex = 0, .kifindex = 0, .kname = "eth" },
@@ -285,12 +285,14 @@ static int if_slot_kernel_read()
 				if(p)
 				{
 					os_memcpy(name, s, p - s);
-					ifindex = ifname2ifindex(name);
+					//ifindex = ifname2ifindex(name);
+					p++;
+					ifindex = atoi(p);
 				}
-				else
+/*				else
 				{
 					ifindex = atoi(s);
-				}
+				}*/
 				if(ifindex)
 					if_slot_kernel_add( ifindex, kname);
 			}

@@ -39,6 +39,8 @@ static LIBSSH_THREAD  int _ssh_loglevel = 0;
 static LIBSSH_THREAD  ssh_logging_callback _ssh_logcb = NULL;
 static LIBSSH_THREAD  void *_ssh_loguserdata = NULL;
 
+static LIBSSH_THREAD  int _ssh_logmodule = 0x0100;
+
 /**
  * @defgroup libssh_log The SSH logging functions.
  * @ingroup libssh
@@ -83,12 +85,12 @@ static void ssh_log_stderr(int verbosity,
 
     rc = current_timestring(1, date, sizeof(date));
     if (rc == 0) {
-        fprintf(ssh_stderr, "[%s, %d] %s:", date, verbosity, function);
+        fprintf(stderr, "[%s, 0x%x] %s:", date, verbosity, function);
     } else {
-        fprintf(ssh_stderr, "[%d] %s", verbosity, function);
+        fprintf(stderr, "[0x%x] %s", verbosity, function);
     }
 
-    fprintf(ssh_stderr, "  %s\n", buffer);
+    fprintf(stderr, "  %s\n", buffer);
 }
 
 void ssh_log_function(int verbosity,
@@ -101,7 +103,7 @@ void ssh_log_function(int verbosity,
 
         snprintf(buf, sizeof(buf), "%s: %s", function, buffer);
 
-        log_fn(verbosity,
+        log_fn(verbosity & 0xff,
                function,
                buf,
                ssh_get_log_userdata());
@@ -118,7 +120,8 @@ void _ssh_debug_log(int verbosity,
     char buffer[1024];
     va_list va;
 
-    //if (verbosity <= ssh_get_log_level())
+    if ((verbosity & 0xff <= ssh_get_log_level()) &&
+    		(ssh_get_log_module() & (verbosity & 0xff00)))
     {
         va_start(va, format);
         vsnprintf(buffer, sizeof(buffer), format, va);
@@ -136,8 +139,10 @@ void ssh_log(ssh_session session,
 {
   char buffer[1024];
   va_list va;
-
-  if (verbosity <= session->common.log_verbosity) {
+  if ((verbosity & 0xff <= session->common.log_verbosity) &&
+  		(ssh_get_log_module() & (verbosity & 0xff00)))
+  {
+  //if (verbosity <= session->common.log_verbosity) {
     va_start(va, format);
     vsnprintf(buffer, sizeof(buffer), format, va);
     va_end(va);
@@ -158,8 +163,10 @@ void ssh_log_common(struct ssh_common_struct *common,
 {
     char buffer[1024];
     va_list va;
-
-    if (verbosity <= common->log_verbosity) {
+    if ((verbosity & 0xff <= common->log_verbosity) &&
+    		(ssh_get_log_module() & (verbosity & 0xff00)))
+    {
+    //if (verbosity <= common->log_verbosity) {
         va_start(va, format);
         vsnprintf(buffer, sizeof(buffer), format, va);
         va_end(va);
@@ -194,6 +201,20 @@ int ssh_set_log_level(int level) {
  */
 int ssh_get_log_level(void) {
   return _ssh_loglevel;
+}
+
+int ssh_set_log_module(int level) {
+  if (level < 0) {
+    return SSH_ERROR;
+  }
+
+  _ssh_logmodule = level;
+
+  return SSH_OK;
+}
+
+int ssh_get_log_module(void) {
+  return _ssh_logmodule;
 }
 
 int ssh_set_log_callback(ssh_logging_callback cb) {

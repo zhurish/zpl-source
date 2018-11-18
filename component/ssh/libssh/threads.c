@@ -121,7 +121,7 @@ static int libcrypto_thread_init(void){
 	int i;
 	if(user_callbacks == &ssh_threads_noop)
 		return SSH_OK;
-	libcrypto_mutexes=malloc(sizeof(void *) * n);
+	libcrypto_mutexes=ssh_malloc(sizeof(void *) * n);
 	if (libcrypto_mutexes == NULL)
 		return SSH_ERROR;
 	for (i=0;i<n;++i){

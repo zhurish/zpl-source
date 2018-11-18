@@ -260,7 +260,7 @@ eloop_trim_head(struct eloop_list *list)
 /* Return remain time in second. */
 unsigned long eloop_timer_remain_second(struct eloop *eloop)
 {
-	os_get_relative(&eloop->master->relative_time);
+	os_get_monotonic(&eloop->master->relative_time);
 
 	if (eloop->u.sands.tv_sec - eloop->master->relative_time.tv_sec > 0)
 		return eloop->u.sands.tv_sec - eloop->master->relative_time.tv_sec;
@@ -270,7 +270,7 @@ unsigned long eloop_timer_remain_second(struct eloop *eloop)
 
 struct timeval eloop_timer_remain(struct eloop *eloop)
 {
-	os_get_relative(&eloop->master->relative_time);
+	os_get_monotonic(&eloop->master->relative_time);
 	return os_timeval_subtract(eloop->u.sands, eloop->master->relative_time);
 }
 
@@ -426,7 +426,7 @@ funcname_eloop_add_timer_timeval(struct eloop_master *m,
 
 	/* Do we need jitter here? */
 
-	os_get_relative(&m->relative_time);
+	os_get_monotonic(&m->relative_time);
 	alarm_time.tv_sec = m->relative_time.tv_sec + time_relative->tv_sec;
 	alarm_time.tv_usec = m->relative_time.tv_usec + time_relative->tv_usec;
 
@@ -876,7 +876,7 @@ eloop_fetch(struct eloop_master *m, struct eloop *fetch)
 		/* Calculate select wait timer if nothing else to do */
 		if (m->ready.count == 0)
 		{
-			os_get_relative(&m->relative_time);
+			os_get_monotonic(&m->relative_time);
 			timer_wait = eloop_timer_wait(&m->timer, &timer_val_bg);
 			//timer_wait_bg = eloop_timer_wait (m->background, &timer_val_bg);
 
@@ -922,7 +922,7 @@ eloop_fetch(struct eloop_master *m, struct eloop *fetch)
 		}
 		if (m->mutex)
 			os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
-		os_get_relative(&m->relative_time);
+		os_get_monotonic(&m->relative_time);
 		eloop_timer_process(&m->timer, &m->relative_time);
 		if (m->mutex)
 			os_mutex_unlock(m->mutex);
@@ -976,7 +976,7 @@ unsigned long eloop_consumed_time(struct timeval *now, struct timeval *start,
 int eloop_should_yield(struct eloop *eloop)
 {
 
-	os_get_relative(&eloop->master->relative_time);
+	os_get_monotonic(&eloop->master->relative_time);
 	unsigned long t = os_timeval_elapsed(eloop->master->relative_time,
 			eloop->real);
 	return ((t > ELOOP_YIELD_TIME_SLOT) ? t : 0);
@@ -984,7 +984,7 @@ int eloop_should_yield(struct eloop *eloop)
 
 void eloop_getrusage(struct timeval *real)
 {
-	os_get_relative(real);
+	os_get_monotonic(real);
 }
 
 struct eloop *eloop_current_get()

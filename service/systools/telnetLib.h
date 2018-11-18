@@ -80,13 +80,16 @@ typedef struct
 
 typedef struct 
      {
-     int    state;
+	 char	hostname[64];
+     u_char state;
 #define SCTD_EMPTY 1
 #define SCTD_USED  2
-     int    localFd;                 /* local host's socket */
+     int    loutfd;                 /* local host's socket */
+     int	linfd;
      int    hostFd;                  /* remote host's socket */
      BOOL   echoIsDone;              /* TRUE when echo transaction complete */
      BOOL   sgaIsDone;               /* TRUE when SGA transaction complete */
+     BOOL	connect;
      int    hostStreamState;         /* state of host input stream */
      char   cmd;
      int    saveOpts;

@@ -67,7 +67,7 @@ int packet_decrypt(ssh_session session, void *data,uint32_t len) {
     ssh_set_error(session, SSH_FATAL, "Cryptographic functions must be set on at least one blocksize (received %d)",len);
     return SSH_ERROR;
   }
-  out = malloc(len);
+  out = ssh_malloc(len);
   if (out == NULL) {
     return -1;
   }
@@ -102,7 +102,7 @@ unsigned char *packet_encrypt(ssh_session session, void *data, uint32_t len) {
       ssh_set_error(session, SSH_FATAL, "Cryptographic functions must be set on at least one blocksize (received %d)",len);
       return NULL;
   }
-  out = malloc(len);
+  out = ssh_malloc(len);
   if (out == NULL) {
     return NULL;
   }
@@ -129,7 +129,7 @@ unsigned char *packet_encrypt(ssh_session session, void *data, uint32_t len) {
 #ifdef DEBUG_CRYPTO
     ssh_print_hexa("mac: ",data,hmac_digest_len(type));
     if (finallen != hmac_digest_len(type)) {
-      printf("Final len is %d\n",finallen);
+      ssh_printf(NULL, "Final len is %d\n",finallen);
     }
     ssh_print_hexa("Packet hmac", session->current_crypto->hmacbuf, hmac_digest_len(type));
 #endif

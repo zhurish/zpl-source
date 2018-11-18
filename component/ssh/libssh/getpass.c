@@ -50,7 +50,7 @@ static int ssh_gets(const char *prompt, char *buf, size_t len, int verify) {
     char *ptr = NULL;
     int ok = 0;
 
-    tmp = malloc(len);
+    tmp = ssh_malloc(len);
     if (tmp == NULL) {
         return 0;
     }
@@ -59,20 +59,20 @@ static int ssh_gets(const char *prompt, char *buf, size_t len, int verify) {
     /* read the password */
     while (!ok) {
         if (buf[0] != '\0') {
-            fprintf(ssh_stdout, "%s[%s] ", prompt, buf);
+            fprintf(stdout, "%s[%s] ", prompt, buf);
         } else {
-            fprintf(ssh_stdout, "%s", prompt);
+            fprintf(stdout, "%s", prompt);
         }
-        fflush(ssh_stdout);
-        if (fgets(tmp, len, ssh_stdin) == NULL) {
-            free(tmp);
+        fflush(stdout);
+        if (fgets(tmp, len, stdin) == NULL) {
+            SAFE_FREE(tmp);
             return 0;
         }
 
         if ((ptr = strchr(tmp, '\n'))) {
             *ptr = '\0';
         }
-        fprintf(ssh_stdout, "\n");
+        fprintf(stdout, "\n");
 
         if (*tmp) {
             strncpy(buf, tmp, len);
@@ -81,29 +81,29 @@ static int ssh_gets(const char *prompt, char *buf, size_t len, int verify) {
         if (verify) {
             char *key_string;
 
-            key_string = malloc(len);
+            key_string = ssh_malloc(len);
             if (key_string == NULL) {
                 break;
             }
 	          memset(key_string, '\0', len);
 
-            fprintf(ssh_stdout, "\nVerifying, please re-enter. %s", prompt);
-            fflush(ssh_stdout);
-            if (! fgets(key_string, len, ssh_stdin)) {
+            fprintf(stdout, "\nVerifying, please re-enter. %s", prompt);
+            fflush(stdout);
+            if (! fgets(key_string, len, stdin)) {
                 memset(key_string, '\0', len);
                 SAFE_FREE(key_string);
-                clearerr(ssh_stdin);
+                clearerr(stdin);
                 continue;
             }
             if ((ptr = strchr(key_string, '\n'))) {
                 *ptr = '\0';
             }
-            fprintf(ssh_stdout, "\n");
+            fprintf(stdout, "\n");
             if (strcmp(buf, key_string)) {
-            	fprintf(ssh_stdout, "\n\07\07Mismatch - try again\n");
+            	fprintf(stdout, "\n\07\07Mismatch - try again\n");
                 memset(key_string, '\0', len);
                 SAFE_FREE(key_string);
-                fflush(ssh_stdout);
+                fflush(stdout);
                 continue;
             }
             memset(key_string, '\0', len);
@@ -112,17 +112,17 @@ static int ssh_gets(const char *prompt, char *buf, size_t len, int verify) {
         ok = 1;
     }
     memset(tmp, '\0', len);
-    free(tmp);
+    SAFE_FREE(tmp);
 
     return ok;
 }
 #else
-static int ssh_gets(FILE *out, FILE *in, const char *prompt, char *buf, size_t len, int verify) {
+static int ssh_gets(int fd, const char *prompt, char *buf, size_t len, int verify) {
     char *tmp;
     char *ptr = NULL;
     int ok = 0;
 
-    tmp = malloc(len);
+    tmp = ssh_malloc(len);
     if (tmp == NULL) {
         return 0;
     }
@@ -131,20 +131,20 @@ static int ssh_gets(FILE *out, FILE *in, const char *prompt, char *buf, size_t l
     /* read the password */
     while (!ok) {
         if (buf[0] != '\0') {
-            fprintf(out, "%s[%s] ", prompt, buf);
+            ssh_printf(NULL, "%s[%s] ", prompt, buf);
         } else {
-            fprintf(out, "%s", prompt);
+        	ssh_printf(NULL, "%s", prompt);
         }
-        fflush(out);
-        if (fgets(tmp, len, in) == NULL) {
-            free(tmp);
+
+        if (!ssh_get_input(fd, tmp, len)) {
+            SAFE_FREE(tmp);
             return 0;
         }
 
         if ((ptr = strchr(tmp, '\n'))) {
             *ptr = '\0';
         }
-        fprintf(out, "\n");
+        ssh_printf(NULL, "\n");
 
         if (*tmp) {
             strncpy(buf, tmp, len);
@@ -153,15 +153,14 @@ static int ssh_gets(FILE *out, FILE *in, const char *prompt, char *buf, size_t l
         if (verify) {
             char *key_string;
 
-            key_string = malloc(len);
+            key_string = ssh_malloc(len);
             if (key_string == NULL) {
                 break;
             }
 	          memset(key_string, '\0', len);
 
-            fprintf(out, "\nVerifying, please re-enter. %s", prompt);
-            fflush(out);
-            if (! fgets(key_string, len, in)) {
+	          ssh_printf(NULL, "\nVerifying, please re-enter. %s", prompt);
+            if (! ssh_get_input(fd, key_string, len)) {
                 memset(key_string, '\0', len);
                 SAFE_FREE(key_string);
                 //clearerr(in);
@@ -170,12 +169,11 @@ static int ssh_gets(FILE *out, FILE *in, const char *prompt, char *buf, size_t l
             if ((ptr = strchr(key_string, '\n'))) {
                 *ptr = '\0';
             }
-            fprintf(out, "\n");
+            ssh_printf(NULL, "\n");
             if (strcmp(buf, key_string)) {
-            	fprintf(out, "\n\07\07Mismatch - try again\n");
+            	ssh_printf(NULL, "\n\07\07Mismatch - try again\n");
                 memset(key_string, '\0', len);
                 SAFE_FREE(key_string);
-                fflush(out);
                 continue;
             }
             memset(key_string, '\0', len);
@@ -184,7 +182,7 @@ static int ssh_gets(FILE *out, FILE *in, const char *prompt, char *buf, size_t l
         ok = 1;
     }
     memset(tmp, '\0', len);
-    free(tmp);
+    SAFE_FREE(tmp);
 
     return ok;
 }
@@ -207,7 +205,7 @@ int ssh_getpass(const char *prompt,
         return -1;
     }
 
-    /* get ssh_stdin and mode */
+    /* get stdin and mode */
     h = GetStdHandle(STD_INPUT_HANDLE);
     if (!GetConsoleMode(h, &mode)) {
         return -1;
@@ -359,41 +357,19 @@ int ssh_getpass(const char *prompt,
 }
 #else
 
-int ssh_getpass(void *out, void *in, const char *prompt,
+int ssh_getpass(int fd, const char *prompt,
                 char *buf,
                 size_t len,
                 int echo,
                 int verify) {
     int ok = 0;
-    int fd = fileno(in), flags = 0;
 
     /* fgets needs at least len - 1 */
     if (prompt == NULL || buf == NULL || len < 2 || fd < 0) {
         return -1;
     }
 
-	if ((flags = fcntl(fd, F_GETFL)) < 0)
-	{
-		return -1;
-	}
-    /* disable nonblocking I/O */
-
-	if(!(flags & O_NONBLOCK))
-	{
-		if (fcntl(fd, F_SETFL, (flags & (~O_NONBLOCK))) < 0)
-		{
-			return -1;
-		}
-	}
-    ok = ssh_gets(out, in, prompt, buf, len, verify);
-
-    /* close fd */
-	if(!(flags & O_NONBLOCK)) {
-		if (fcntl(fd, F_SETFL, (flags | (O_NONBLOCK))) < 0)
-		{
-			return -1;
-		}
-    }
+    ok = ssh_gets(fd, prompt, buf, len, verify);
 
     if (!ok) {
         memset (buf, '\0', len);

@@ -37,7 +37,8 @@ int modem_main_change_set_api(modem_t *modem, modem_event event)
 	if(modem->checksum != checksum)
 	{
 		modem->checksum = checksum;
-		modem_event_reload(modem, event, TRUE );
+		if(modem_machine_state_get(modem) >= MODEM_MACHINE_STATE_NETWORK_ACTIVE)
+			modem_event_reload(modem, event, TRUE );
 	}
 	return OK;
 }
@@ -422,6 +423,7 @@ int modem_bind_interface_api(modem_t *modem, char *name, int number)
 			}
 		}
 	}
+	modem_bind_interface_update(modem);
 	modem_main_change_set_api(modem, MODEM_EV_INSTER_CARD);
 	if(gModemmain.mutex)
 		os_mutex_unlock(gModemmain.mutex);

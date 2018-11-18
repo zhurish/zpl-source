@@ -28,6 +28,8 @@ int ssh_set_log_level(int level)
 int ssh_set_log_callback(ssh_logging_callback cb)
 int ssh_set_log_userdata(void *data)
 */
+static struct vty *ssh_vty = NULL;
+
 void ssh_log_callback_func(int priority,
         const char *function,
         const char *buffer,
@@ -58,6 +60,7 @@ void ssh_log_callback_func(int priority,
 	}
 }
 
+/*
 #ifdef SSH_STD_REDIST
 FILE * _ssh_stdout()
 {
@@ -72,7 +75,9 @@ FILE * _ssh_stdin()
 	return (FILE *)stdin;
 }
 #endif
+*/
 
+/*
 FILE * ssh_stdin_get(ssh_session session)
 {
 	if(!session)
@@ -87,15 +92,68 @@ FILE * ssh_stdin_get(ssh_session session)
     else
     	return _ssh_stdin();
 }
+*/
 
-int ssh_printf(ssh_session session, const char *fmt,...)
+int ssh_stdin_get(ssh_session session)
 {
+    struct vty * vty = NULL;
 	if(!session)
 	{
 		//printf();
-		return OK;
+		vty = ssh_vty;
 	}
-    struct vty * vty = ssh_get_session_private(session);
+	else
+	{
+		vty = ssh_get_session_private(session);
+	}
+    if(vty)
+    {
+    	return vty->fd;
+    }
+    return -1;
+}
+
+int ssh_get_input(int fd, char *buf, int len)
+{
+	int c = 0, i = 0;
+	while(1)
+	{
+		c = vty_getc_input(ssh_vty);
+		if(c == '\r' || c == '\n')
+		{
+			buf[i++] = '\n';
+			break;
+		}
+		else
+		{
+			if(i < len)
+				buf[i++] = c;
+			else
+				return 0;
+		}
+	}
+	return i;
+}
+
+int ssh_stdout_set(void *v)
+{
+	ssh_vty = v;
+	return OK;
+}
+
+int ssh_printf(ssh_session session, const char *fmt,...)
+{
+    struct vty * vty = NULL;
+	if(!session)
+	{
+		//printf();
+		vty = ssh_vty;
+	}
+	else
+	{
+		vty = ssh_get_session_private(session);
+		ssh_vty = vty;
+	}
     if(vty)
     {
     	int len = 0;
@@ -111,5 +169,21 @@ int ssh_printf(ssh_session session, const char *fmt,...)
         	vty_out(vty, "%s%s", buffer, VTY_NEWLINE);
         return OK;
     }
+    else
+    {
+    	int len = 0;
+        char buffer[1024];
+        memset(buffer, 0, sizeof(buffer));
+        va_list va;
+        va_start(va, fmt);
+        len = vsnprintf(buffer, sizeof(buffer), fmt, va);
+        va_end(va);
+    	zlog_debug(ZLOG_UTILS, "SSH %s", buffer);
+    }
     return OK;
+}
+
+BOOL sshd_acl_action(ssh_config_t *ssh, ssh_session session)
+{
+	return TRUE;
 }

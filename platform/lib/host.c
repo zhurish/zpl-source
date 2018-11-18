@@ -127,7 +127,11 @@ host_config_get (void)
 	return host.config;
 }
 
-
+const char *
+host_name_get (void)
+{
+	return host.name;
+}
 
 int
 host_config_set_api (int cmd, void *pVoid)

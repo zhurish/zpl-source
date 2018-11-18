@@ -29,7 +29,7 @@ typedef struct ip_dns_job_s
 	void *p;
 }ip_dns_job_t;
 
-u_int8 _dns_debug = 0;
+u_int8 _dns_debug = IP_DNS_DEBUG|IP_DNS_EVENT_DEBUG;
 static Gip_dns_t gIpdns;
 
 static ip_dns_job_t *head_list = NULL;
@@ -280,9 +280,11 @@ int nsm_ip_dns_add(struct prefix *address, ip_dns_opt_t *opt,  BOOL	secondly, dn
 			memcpy(&value.data.dns_opt, opt, sizeof(ip_dns_opt_t));
 		}
 		ret = ip_dns_add_node(&value);
+		//ip_dns_add_job(IP_DNS_ADD_DYNAMIC, NULL);
 	}
 	if(gIpdns.mutex)
 		os_mutex_unlock(gIpdns.mutex);
+
 	return ret;
 }
 
@@ -452,10 +454,10 @@ int nsm_ip_host_del(struct prefix *address, dns_class_t type)
 			pu.p = &value->address;
 			prefix_2_address_str (pu, buf, sizeof(buf));
 			if((value->type == IP_DNS_DYNAMIC || value->type == IP_DNS_STATIC))
-				zlog_debug(ZLOG_NSM, "add DNS Server %s on %s", buf,
+				zlog_debug(ZLOG_NSM, "del DNS Server %s on %s", buf,
 					ifindex2ifname(value->_dns_ifindex));
 			else
-				zlog_debug(ZLOG_NSM, "add host name %s <-> %s", buf,
+				zlog_debug(ZLOG_NSM, "del host name %s <-> %s", buf,
 					value->_host_name);
 		}
 
@@ -688,9 +690,13 @@ static int ip_dns_static_update_interface(ip_dns_t *value)
 
 static int ip_dns_static_check_active(ip_dns_t *value)
 {
+	struct interface *ifp = NULL;
 	if(value->_dns_ifindex)
+		ifp = if_lookup_by_index(value->_dns_ifindex);
+	else
+		ifp = if_lookup_prefix(&value->address);
 	{
-		struct interface *ifp = if_lookup_prefix(&value->address);
+		//struct interface *ifp = if_lookup_prefix(&value->address);
 		if(ifp)
 		{
 			BOOL old = value->_dns_active;
@@ -711,8 +717,9 @@ static int ip_dns_static_check_active(ip_dns_t *value)
 						ifindex2ifname(value->_dns_ifindex),
 						old ? "UP":"DOWN", value->_dns_active ? "UP":"DOWN");
 			}
+			return OK;
 		}
-		return OK;
+		//return OK;
 	}
 	return ERROR;
 }
@@ -768,22 +775,26 @@ static int ip_dns_choose_best(ip_dns_t *value)
 		{
 			if(value->_dns_secondly)
 			{
-				if(gIpdns.dns2 && gIpdns.dns2->type == IP_DNS_STATIC)
+				if(!gIpdns.dns2)
+					gIpdns.dns2 = value;
+				if(gIpdns.dns2 && gIpdns.dns2 != value && gIpdns.dns2->type == IP_DNS_STATIC)
 				{
 					ip_dns_choose_best_metric(value);
 				}
-				if(gIpdns.dns2 && gIpdns.dns2->type == IP_DNS_DYNAMIC)
+				if(gIpdns.dns2 && gIpdns.dns2 != value && gIpdns.dns2->type == IP_DNS_DYNAMIC)
 				{
 					gIpdns.dns2 = value;
 				}
 			}
 			else
 			{
-				if(gIpdns.dns1 && gIpdns.dns1->type == IP_DNS_STATIC)
+				if(!gIpdns.dns1)
+					gIpdns.dns1 = value;
+				if(gIpdns.dns1 && gIpdns.dns1 != value && gIpdns.dns1->type == IP_DNS_STATIC)
 				{
 					ip_dns_choose_best_metric(value);
 				}
-				if(gIpdns.dns1 && gIpdns.dns1->type == IP_DNS_DYNAMIC)
+				if(gIpdns.dns1 && gIpdns.dns1 != value && gIpdns.dns1->type == IP_DNS_DYNAMIC)
 				{
 					gIpdns.dns1 = value;
 				}
@@ -793,22 +804,26 @@ static int ip_dns_choose_best(ip_dns_t *value)
 		{
 			if(value->_dns_secondly)
 			{
-				if(gIpdns.dns2 && gIpdns.dns2->type == IP_DNS_DYNAMIC)
+				if(!gIpdns.dns2)
+					gIpdns.dns2 = value;
+				if(gIpdns.dns2 && gIpdns.dns2 != value && gIpdns.dns2->type == IP_DNS_DYNAMIC)
 				{
 					ip_dns_choose_best_metric(value);
 				}
-				if(gIpdns.dns2 && gIpdns.dns2->type == IP_DNS_STATIC)
+				if(gIpdns.dns2 && gIpdns.dns2 != value && gIpdns.dns2->type == IP_DNS_STATIC)
 				{
 					//gIpdns.dns2 = value;
 				}
 			}
 			else
 			{
-				if(gIpdns.dns1 && gIpdns.dns1->type == IP_DNS_DYNAMIC)
+				if(!gIpdns.dns1)
+					gIpdns.dns1 = value;
+				if(gIpdns.dns1 && gIpdns.dns1 != value && gIpdns.dns1->type == IP_DNS_DYNAMIC)
 				{
 					ip_dns_choose_best_metric(value);
 				}
-				if(gIpdns.dns1 && gIpdns.dns1->type == IP_DNS_STATIC)
+				if(gIpdns.dns1 && gIpdns.dns1 != value && gIpdns.dns1->type == IP_DNS_STATIC)
 				{
 					//gIpdns.dns1 = value;
 				}
@@ -875,7 +890,6 @@ static int ip_dns_active_process_update(dns_cmd_t cmd, void *p)
 
 static int ip_dns_inactive_process_update(dns_cmd_t cmd, void *p)
 {
-
 	NODE index;
 	ip_dns_t *pstNode = NULL;
 	for(pstNode = (ip_dns_t *)lstFirst(gIpdns.dnsList);
@@ -992,6 +1006,8 @@ static int ip_dns_job_work(void *p)
 	free_list = job;
 	free_list->next = tmp;
 
+	job->p = NULL;
+	job->cmd = IP_DNS_EV_NONE;
 	if(gIpdns.mutex)
 		os_mutex_unlock(gIpdns.mutex);
 	return OK;

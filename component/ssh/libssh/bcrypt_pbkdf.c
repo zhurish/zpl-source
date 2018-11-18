@@ -121,7 +121,7 @@ bcrypt_pbkdf(const char *pass, size_t passlen, const uint8_t *salt, size_t saltl
 	if (passlen == 0 || saltlen == 0 || keylen == 0 ||
 	    keylen > sizeof(out) * sizeof(out) || saltlen > 1<<20)
 		return -1;
-	if ((countsalt = calloc(1, saltlen + 4)) == NULL)
+	if ((countsalt = ssh_calloc(1, saltlen + 4)) == NULL)
 		return -1;
 	stride = (keylen + sizeof(out) - 1) / sizeof(out);
 	amt = (keylen + stride - 1) / stride;
@@ -174,7 +174,7 @@ bcrypt_pbkdf(const char *pass, size_t passlen, const uint8_t *salt, size_t saltl
 
 	/* zap */
 	BURN_BUFFER(out, sizeof(out));
-	free(countsalt);
+	SAFE_FREE(countsalt);
 
 	return 0;
 }

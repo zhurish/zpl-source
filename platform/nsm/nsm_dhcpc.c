@@ -29,10 +29,6 @@
 
 #ifdef PL_DHCPC_MODULE
 
-
-#endif
-
-
 int nsm_interface_dhcpc_enable(struct interface *ifp, BOOL enable)
 {
 	if(enable)
@@ -50,11 +46,24 @@ int nsm_interface_dhcpc_start(struct interface *ifp, BOOL enable)
 		if(dhcp && dhcp->running != enable)
 		{
 			dhcp->running = enable;
-			dhcpc_interface_start_api(ifp,  enable);
+			ret = dhcpc_interface_start_api(ifp,  enable);
 		}
 	}
-	ret = OK;
+	//ret = OK;
 	return ret;
+}
+
+BOOL nsm_interface_dhcpc_is_running(struct interface *ifp)
+{
+	if(ifp->dhcp == TRUE)
+	{
+		nsm_dhcp_ifp_t *dhcp = nsm_dhcp_get(ifp);
+		if(dhcp)
+		{
+			return dhcp->running;
+		}
+	}
+	return FALSE;
 }
 
 int nsm_interface_dhcpc_option(struct interface *ifp, BOOL enable, int index, char *option)
@@ -77,3 +86,6 @@ int nsm_interface_dhcpc_client_show(struct interface *ifp, struct vty *vty, BOOL
 	else
 		return dhcpc_client_interface_show(ifp, vty);
 }
+
+
+#endif

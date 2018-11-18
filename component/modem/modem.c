@@ -396,13 +396,32 @@ int modem_main_trywait(int s)
 	return OK;
 }
 /*************************************************************************/
+/*************************************************************************/
+static int modem_interface_system_up(BOOL up,  char *name)
+{
+	char cmd[128];
+	memset(cmd, 0, sizeof(cmd));
+	sprintf(cmd, "ifconfig %s %s", name, up ? "up":"down");
+	super_system(cmd);
+	return OK;
+}
+/*************************************************************************/
 int modem_interface_update_kernel(modem_t *modem, char *name)
 {
 	if(modem && modem->eth0)
 	{
-		MODEM_DEBUG("modem update kernel interface %s -> %s", ((struct interface *)modem->eth0)->name, name);
+		struct interface *ifp = modem->eth0;
+		MODEM_DEBUG("modem update kernel interface %s -> %s", ifp->name, name);
+		modem_interface_system_up(TRUE, name);
+		if_kname_set(modem->eth0, name);
+		//((struct interface *)modem->eth0)->k_ifindex = pal_interface_ifindex(name);
 		nsm_pal_interface_up(modem->eth0);
 		nsm_interface_update_kernel(modem->eth0, name);
+		if(!(ifp->flags & IFF_NOARP))
+		{
+			ifp->flags |= IFF_NOARP;
+			pal_interface_update_flag(ifp, ifp->flags);
+		}
 	}
 	return OK;
 }
@@ -412,6 +431,9 @@ int modem_serial_interface_update_kernel(modem_t *modem, char *name)
 	if(modem && modem->ppp_serial)
 	{
 		MODEM_DEBUG("modem update kernel interface %s -> %s", ((struct interface *)modem->ppp_serial)->name, name);
+		modem_interface_system_up(TRUE, name);
+		if_kname_set(modem->ppp_serial, name);
+		//((struct interface *)modem->eth0)->k_ifindex = pal_interface_ifindex(name);
 		nsm_pal_interface_up(modem->ppp_serial);
 		nsm_serial_interface_kernel(modem->ppp_serial, name);
 	}
@@ -424,6 +446,34 @@ int modem_serial_devname_update_kernel(modem_t *modem, char *name)
 	{
 		MODEM_DEBUG("modem update devname interface %s -> %s", ((struct interface *)modem->ppp_serial)->name, name);
 		nsm_serial_interface_devname(modem->ppp_serial, name);
+	}
+	return OK;
+}
+/*************************************************************************/
+/*************************************************************************/
+int modem_bind_interface_update(modem_t *modem)
+{
+	modem_client_t *client = NULL;
+	if(!modem)
+		return ERROR;
+	client = modem->client;
+	switch(modem->dialtype)
+	{
+	case MODEM_DIAL_NONE:
+	case MODEM_DIAL_DHCP:
+	case MODEM_DIAL_QMI:
+	case MODEM_DIAL_GOBINET:
+		if(modem->eth0 && strlen(client->driver->eth_name))
+			modem_interface_update_kernel(modem, client->driver->eth_name);
+		break;
+	case MODEM_DIAL_PPP:
+		if(modem->ppp_serial && strlen(client->driver->eth_name))
+			modem_serial_interface_update_kernel(modem, client->driver->eth_name);
+
+		if(modem->ppp_serial && strlen(client->driver->pppd->devname))
+			modem_serial_devname_update_kernel(modem, client->driver->pppd->devname);
+
+		break;
 	}
 	return OK;
 }

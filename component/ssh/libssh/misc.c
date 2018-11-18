@@ -102,7 +102,7 @@ char *ssh_get_user_home_dir(void) {
   char *szPath = NULL;
 
   if (SHGetSpecialFolderPathA(NULL, tmp, CSIDL_PROFILE, TRUE)) {
-    szPath = malloc(strlen(tmp) + 1);
+    szPath = ssh_malloc(strlen(tmp) + 1);
     if (szPath == NULL) {
       return NULL;
     }
@@ -146,7 +146,7 @@ char *ssh_get_local_username(void) {
     /* get the size */
     GetUserName(NULL, &size);
 
-    user = (char *) malloc(size);
+    user = (char *) ssh_malloc(size);
     if (user == NULL) {
         return NULL;
     }
@@ -207,6 +207,10 @@ int ssh_is_ipaddr(const char *str) {
 #endif /* NSS_BUFLEN_PASSWD */
 
 char *ssh_get_user_home_dir(void) {
+#ifdef SSH_BASE_EX
+    char *szPath;
+    szPath = ssh_strdup(SSH_BASE_DIR);
+#else
   char *szPath = NULL;
   struct passwd pwd;
   struct passwd *pwdbuf;
@@ -222,11 +226,11 @@ char *ssh_get_user_home_dir(void) {
       memset(buf, 0, sizeof(buf));
       snprintf(buf, sizeof(buf), "%s", szPath);
 
-      return strdup(buf);
+      return ssh_strdup(buf);
   }
 
-  szPath = strdup(pwd.pw_dir);
-
+  szPath = ssh_strdup(pwd.pw_dir);
+#endif
   return szPath;
 }
 
@@ -240,6 +244,10 @@ int ssh_file_readaccess_ok(const char *file) {
 }
 
 char *ssh_get_local_username(void) {
+#ifdef SSH_BASE_EX
+    char *name;
+    name = ssh_strdup(vty_user_get(NULL));
+#else
     struct passwd pwd;
     struct passwd *pwdbuf;
     char buf[NSS_BUFLEN_PASSWD];
@@ -251,12 +259,12 @@ char *ssh_get_local_username(void) {
         return NULL;
     }
 
-    name = strdup(pwd.pw_name);
+    name = ssh_strdup(pwd.pw_name);
 
     if (name == NULL) {
         return NULL;
     }
-
+#endif
     return name;
 }
 
@@ -297,7 +305,7 @@ char *ssh_lowercase(const char* str) {
     return NULL;
   }
 
-  new = strdup(str);
+  new = ssh_strdup(str);
   if (new == NULL) {
     return NULL;
   }
@@ -316,7 +324,7 @@ char *ssh_hostport(const char *host, int port){
         return NULL;
     /* 3 for []:, 5 for 65536 and 1 for nul */
     len=strlen(host) + 3 + 5 + 1;
-    dest=malloc(len);
+    dest=ssh_malloc(len);
     if(dest==NULL)
         return NULL;
     snprintf(dest,len,"[%s]:%d",host,port);
@@ -337,12 +345,12 @@ char *ssh_hostport(const char *host, int port){
  *
  * @code
  *  if (ssh_version(SSH_VERSION_INT(0,2,1)) == NULL) {
- *    fprintf(ssh_stderr, "libssh version is too old!\n");
+ *    ssh_printf(NULL, "libssh version is too old!\n");
  *    exit(1);
  *  }
  *
  *  if (debug) {
- *    printf("libssh %s\n", ssh_version(0));
+ *    ssh_printf(NULL, "libssh %s\n", ssh_version(0));
  *  }
  * @endcode
  */
@@ -356,7 +364,7 @@ const char *ssh_version(int req_version) {
 }
 
 struct ssh_list *ssh_list_new(void) {
-  struct ssh_list *ret=malloc(sizeof(struct ssh_list));
+  struct ssh_list *ret=ssh_malloc(sizeof(struct ssh_list));
   if(!ret)
     return NULL;
   ret->root=ret->end=NULL;
@@ -391,7 +399,7 @@ struct ssh_iterator *ssh_list_find(const struct ssh_list *list, void *value){
 }
 
 static struct ssh_iterator *ssh_iterator_new(const void *data){
-  struct ssh_iterator *iterator=malloc(sizeof(struct ssh_iterator));
+  struct ssh_iterator *iterator=ssh_malloc(sizeof(struct ssh_iterator));
   if(!iterator)
     return NULL;
   iterator->next=NULL;
@@ -502,7 +510,7 @@ char *ssh_dirname (const char *path) {
   size_t len;
 
   if (path == NULL || *path == '\0') {
-    return strdup(".");
+    return ssh_strdup(".");
   }
 
   len = strlen(path);
@@ -512,22 +520,22 @@ char *ssh_dirname (const char *path) {
 
   /* We have only slashes */
   if (len == 0) {
-    return strdup("/");
+    return ssh_strdup("/");
   }
 
   /* goto next slash */
   while(len > 0 && path[len - 1] != '/') --len;
 
   if (len == 0) {
-    return strdup(".");
+    return ssh_strdup(".");
   } else if (len == 1) {
-    return strdup("/");
+    return ssh_strdup("/");
   }
 
   /* Remove slashes again */
   while(len > 0 && path[len - 1] == '/') --len;
 
-  new = malloc(len + 1);
+  new = ssh_malloc(len + 1);
   if (new == NULL) {
     return NULL;
   }
@@ -558,7 +566,7 @@ char *ssh_basename (const char *path) {
   size_t len;
 
   if (path == NULL || *path == '\0') {
-    return strdup(".");
+    return ssh_strdup(".");
   }
 
   len = strlen(path);
@@ -567,7 +575,7 @@ char *ssh_basename (const char *path) {
 
   /* We have only slashes */
   if (len == 0) {
-    return strdup("/");
+    return ssh_strdup("/");
   }
 
   while(len > 0 && path[len - 1] != '/') --len;
@@ -578,10 +586,10 @@ char *ssh_basename (const char *path) {
 
     while(len > 0 && s[len - 1] == '/') --len;
   } else {
-    return strdup(path);
+    return ssh_strdup(path);
   }
 
-  new = malloc(len + 1);
+  new = ssh_malloc(len + 1);
   if (new == NULL) {
     return NULL;
   }
@@ -591,7 +599,19 @@ char *ssh_basename (const char *path) {
 
   return new;
 }
-
+#ifdef SSH_BASE_EX
+int ssh_gethostname (const char *path, int size)
+{
+	char *buf = host_name_get();
+	if(buf)
+	{
+		strncpy(path, buf, min(size, strlen(buf)));
+		return 0;
+	}
+	return -1;
+	//return gethostname(path, size);
+}
+#endif
 /**
  * @brief Attempts to create a directory with the given pathname.
  *
@@ -629,7 +649,7 @@ char *ssh_path_expand_tilde(const char *d) {
     size_t lh = 0;
 
     if (d[0] != '~') {
-        return strdup(d);
+        return ssh_strdup(d);
     }
     d++;
 
@@ -637,7 +657,7 @@ char *ssh_path_expand_tilde(const char *d) {
     p = strchr(d, '/');
     if (p != NULL && p > d) {
 #ifdef _WIN32
-        return strdup(d);
+        return ssh_strdup(d);
 #else
         struct passwd *pw;
         size_t s = p - d;
@@ -653,7 +673,7 @@ char *ssh_path_expand_tilde(const char *d) {
             return NULL;
         }
         ld = strlen(p);
-        h = strdup(pw->pw_dir);
+        h = ssh_strdup(pw->pw_dir);
 #endif
     } else {
         ld = strlen(d);
@@ -665,7 +685,7 @@ char *ssh_path_expand_tilde(const char *d) {
     }
     lh = strlen(h);
 
-    r = malloc(ld + lh + 1);
+    r = ssh_malloc(ld + lh + 1);
     if (r == NULL) {
         SAFE_FREE(h);
         return NULL;
@@ -695,7 +715,7 @@ char *ssh_path_expand_escape(ssh_session session, const char *s) {
 
     if (strlen(r) > MAX_BUF_SIZE) {
         ssh_set_error(session, SSH_FATAL, "string to expand too long");
-        free(r);
+        SAFE_FREE(r);
         return NULL;
     }
 
@@ -707,7 +727,7 @@ char *ssh_path_expand_escape(ssh_session session, const char *s) {
             buf[i] = *p;
             i++;
             if (i >= MAX_BUF_SIZE) {
-                free(r);
+            	SAFE_FREE(r);
                 return NULL;
             }
             buf[i] = '\0';
@@ -721,40 +741,40 @@ char *ssh_path_expand_escape(ssh_session session, const char *s) {
 
         switch (*p) {
             case 'd':
-                x = strdup(session->opts.sshdir);
+                x = ssh_strdup(session->opts.sshdir);
                 break;
             case 'u':
                 x = ssh_get_local_username();
                 break;
             case 'l':
-                if (gethostname(host, sizeof(host) == 0)) {
-                    x = strdup(host);
+                if (ssh_gethostname(host, sizeof(host) == 0)) {
+                    x = ssh_strdup(host);
                 }
                 break;
             case 'h':
-                x = strdup(session->opts.host);
+                x = ssh_strdup(session->opts.host);
                 break;
             case 'r':
-                x = strdup(session->opts.username);
+                x = ssh_strdup(session->opts.username);
                 break;
             case 'p':
                 if (session->opts.port < 65536) {
                     char tmp[6];
 
                     snprintf(tmp, sizeof(tmp), "%u", session->opts.port);
-                    x = strdup(tmp);
+                    x = ssh_strdup(tmp);
                 }
                 break;
             default:
                 ssh_set_error(session, SSH_FATAL,
                         "Wrong escape sequence detected");
-                free(r);
+                SAFE_FREE(r);
                 return NULL;
         }
 
         if (x == NULL) {
             ssh_set_error_oom(session);
-            free(r);
+            SAFE_FREE(r);
             return NULL;
         }
 
@@ -762,8 +782,8 @@ char *ssh_path_expand_escape(ssh_session session, const char *s) {
         if (i >= MAX_BUF_SIZE) {
             ssh_set_error(session, SSH_FATAL,
                     "String too long");
-            free(x);
-            free(r);
+            SAFE_FREE(x);
+            SAFE_FREE(r);
             return NULL;
         }
         l = strlen(buf);
@@ -772,8 +792,8 @@ char *ssh_path_expand_escape(ssh_session session, const char *s) {
         SAFE_FREE(x);
     }
 
-    free(r);
-    return strdup(buf);
+    SAFE_FREE(r);
+    return ssh_strdup(buf);
 #undef MAX_BUF_SIZE
 }
 
@@ -965,7 +985,7 @@ int ssh_timeout_elapsed(struct ssh_timestamp *ts, int timeout) {
                   * -2 means user-defined timeout as available in
                   * session->timeout, session->timeout_usec.
                   */
-            fprintf(ssh_stderr, "ssh_timeout_elapsed called with -2. this needs to "
+            ssh_printf(NULL, "ssh_timeout_elapsed called with -2. this needs to "
                             "be fixed. please set a breakpoint on %s:%d and "
                             "fix the caller\n", __FILE__, __LINE__);
         case -1: /* -1 means infinite timeout */
@@ -1037,7 +1057,7 @@ char *strndup(const char *s, size_t n)
         return NULL;
     }
 
-    x = malloc(n + 1);
+    x = ssh_malloc(n + 1);
     if (x == NULL) {
         return NULL;
     }

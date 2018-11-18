@@ -138,7 +138,7 @@ static int ecdh_build_k(ssh_session session) {
       return -1;
   }
 
-  buffer = malloc(len);
+  buffer = ssh_malloc(len);
   if (buffer == NULL) {
       EC_POINT_clear_free(pubkey);
       return -1;
@@ -151,12 +151,12 @@ static int ecdh_build_k(ssh_session session) {
                         NULL);
   EC_POINT_clear_free(pubkey);
   if (rc <= 0) {
-      free(buffer);
+      SAFE_FREE(buffer);
       return -1;
   }
 
   bignum_bin2bn(buffer, len, session->next_crypto->k);
-  free(buffer);
+  SAFE_FREE(buffer);
 
   EC_KEY_free(session->next_crypto->ecdh_privkey);
   session->next_crypto->ecdh_privkey = NULL;

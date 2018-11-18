@@ -9,7 +9,8 @@
 #define __OS_TIME_H__
 
 
-//#define OS_TIMER_TEST
+#define OS_TIMER_TEST
+#define OS_TIMER_POSIX
 
 #define OS_TIMER_NAME_MAX	128
 //10ms is one tick
@@ -38,7 +39,8 @@ struct os_time_stats
 
 
 extern time_t os_time (time_t *t);
-extern time_t quagga_time(time_t *t);
+extern time_t os_monotonic_time (void);
+//extern time_t quagga_time(time_t *t);
 extern int os_gettime (enum os_clkid clkid, struct timeval *tv);
 
 
@@ -46,8 +48,9 @@ extern struct timeval os_timeval_adjust (struct timeval a);
 extern struct timeval os_timeval_subtract (struct timeval a, struct timeval b);
 extern int os_timeval_cmp (struct timeval a, struct timeval b);
 extern int os_gettimeofday (struct timeval *tv);
-extern int os_get_relative (struct timeval *tv);
-extern void os_real_stabilised (struct timeval *tv);
+extern int os_get_realtime (struct timeval *tv);
+extern int os_get_monotonic (struct timeval *tv);
+//extern void os_real_stabilised (struct timeval *tv);
 extern unsigned int os_timeval_elapsed (struct timeval a, struct timeval b);
 
 extern struct timeval os_time_min(struct timeval a, struct timeval b);
@@ -57,6 +60,7 @@ extern int os_msleep(unsigned int);
 extern int os_sleep(unsigned int);
 
 extern char *os_time_out (char *fmt, time_t t);
+extern char *os_time_string(time_t tInput);
 
 extern const char *os_build_time2date(char *str);
 extern const char *os_date2build_time(char *str);
@@ -110,5 +114,9 @@ extern int os_time_create_entry(os_time_type type, int (*time_entry)(void *),
 #define quagga_time os_time
 #define quagga_gettime os_gettime
 
+#ifdef OS_TIMER_TEST
+extern int timer_test(int time, int type);
+extern int timer_test_exit(int type);
+#endif
 
 #endif /* __OS_TIME_H__ */

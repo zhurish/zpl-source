@@ -734,6 +734,7 @@ int iw_client_dev_connect(struct interface *ifp, iw_client_ap_t *ap, char *ssid,
 	}
 	return -1;
 }
+
 #ifndef PL_DHCPC_MODULE
 int iw_client_dev_start_dhcpc(struct interface *ifp)
 {

@@ -137,7 +137,7 @@ static int server_set_kex(ssh_session session) {
     if ((wanted = session->opts.wanted_methods[i]) == NULL) {
       wanted = ssh_kex_get_supported_method(i);
     }
-    server->methods[i] = strdup(wanted);
+    server->methods[i] = ssh_strdup(wanted);
     if (server->methods[i] == NULL) {
       for (j = 0; j < i; j++) {
         SAFE_FREE(server->methods[j]);
@@ -450,7 +450,7 @@ static void ssh_server_connection_callback(ssh_session session){
                 if (session->next_crypto == NULL) {
                   goto error;
                 }
-			session->next_crypto->session_id = malloc(session->current_crypto->digest_len);
+			session->next_crypto->session_id = ssh_malloc(session->current_crypto->digest_len);
 			if (session->next_crypto->session_id == NULL) {
 			  ssh_set_error_oom(session);
 			  goto error;
@@ -515,7 +515,7 @@ static int callback_receive_banner(const void *data, size_t len, void *user) {
         if (buffer[i] == '\n') {
             buffer[i]='\0';
 
-            str = strdup(buffer);
+            str = ssh_strdup(buffer);
             /* number of bytes read */
             ret = i + 1;
             session->clientbanner = str;
@@ -929,14 +929,14 @@ int ssh_message_auth_interactive_request(ssh_message msg, const char *name,
     ssh_kbdint_clean(msg->session->kbdint);
   }
 
-  msg->session->kbdint->name = strdup(name);
+  msg->session->kbdint->name = ssh_strdup(name);
   if(msg->session->kbdint->name == NULL) {
       ssh_set_error_oom(msg->session);
       ssh_kbdint_free(msg->session->kbdint);
       msg->session->kbdint = NULL;
       return SSH_PACKET_USED;
   }
-  msg->session->kbdint->instruction = strdup(instruction);
+  msg->session->kbdint->instruction = ssh_strdup(instruction);
   if(msg->session->kbdint->instruction == NULL) {
       ssh_set_error_oom(msg->session);
       ssh_kbdint_free(msg->session->kbdint);
@@ -946,7 +946,7 @@ int ssh_message_auth_interactive_request(ssh_message msg, const char *name,
 
   msg->session->kbdint->nprompts = num_prompts;
   if(num_prompts > 0) {
-    msg->session->kbdint->prompts = malloc(num_prompts * sizeof(char *));
+    msg->session->kbdint->prompts = ssh_malloc(num_prompts * sizeof(char *));
     if (msg->session->kbdint->prompts == NULL) {
       msg->session->kbdint->nprompts = 0;
       ssh_set_error_oom(msg->session);
@@ -954,7 +954,7 @@ int ssh_message_auth_interactive_request(ssh_message msg, const char *name,
       msg->session->kbdint = NULL;
       return SSH_ERROR;
     }
-    msg->session->kbdint->echo = malloc(num_prompts * sizeof(unsigned char));
+    msg->session->kbdint->echo = ssh_malloc(num_prompts * sizeof(unsigned char));
     if (msg->session->kbdint->echo == NULL) {
       ssh_set_error_oom(msg->session);
       ssh_kbdint_free(msg->session->kbdint);
@@ -963,7 +963,7 @@ int ssh_message_auth_interactive_request(ssh_message msg, const char *name,
     }
     for (i = 0; i < num_prompts; i++) {
       msg->session->kbdint->echo[i] = echo[i];
-      msg->session->kbdint->prompts[i] = strdup(prompts[i]);
+      msg->session->kbdint->prompts[i] = ssh_strdup(prompts[i]);
       if (msg->session->kbdint->prompts[i] == NULL) {
         ssh_set_error_oom(msg->session);
         msg->session->kbdint->nprompts = i;

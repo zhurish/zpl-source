@@ -652,7 +652,7 @@ report(uint32_t data[], uint16_t len)
 {
 	uint16_t i;
 	for (i = 0; i < len; i += 2)
-		printf("Block %0hd: %08lx %08lx.\n",
+		ssh_printf(NULL, "Block %0hd: %08lx %08lx.\n",
 		    i / 2, data[i], data[i + 1]);
 }
 void
@@ -677,13 +677,13 @@ main(void)
 	blf_enc(&c, data, 5);
 	blf_dec(&c, data, 1);
 	blf_dec(&c, data + 2, 4);
-	printf("Should read as 0 - 9.\n");
+	ssh_printf(NULL, "Should read as 0 - 9.\n");
 	report(data, 10);
 
 	/* Second test */
 	blf_key(&c, (uint8_t *) key2, strlen(key2));
 	blf_enc(&c, data2, 1);
-	printf("\nShould read as: 0x324ed0fe 0xf413a203.\n");
+	ssh_printf(NULL, "\nShould read as: 0x324ed0fe 0xf413a203.\n");
 	report(data2, 2);
 	blf_dec(&c, data2, 1);
 	report(data2, 2);

@@ -338,9 +338,9 @@ if_type_t if_iftype_make(const char *str)
 
 char *if_mac_out_format(unsigned char *mac, int len)
 {
-	static char buf[64];
+	static char buf[32];
 	os_memset(buf, 0, sizeof(buf));
-	os_snprintf(buf, sizeof(buf), "%02x%0x2-%02x%02x-%02x%02x",
+	os_snprintf(buf, sizeof(buf), "%02x%02x-%02x%02x-%02x%02x",
 	        mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
 	return buf;
 }

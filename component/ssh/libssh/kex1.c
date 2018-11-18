@@ -100,7 +100,7 @@ static int build_session_id1(ssh_session session, ssh_string servern,
   md5_update(md5,session->next_crypto->server_kex.cookie,8);
   if(session->next_crypto->session_id != NULL)
       SAFE_FREE(session->next_crypto->session_id);
-  session->next_crypto->session_id = malloc(MD5_DIGEST_LEN);
+  session->next_crypto->session_id = ssh_malloc(MD5_DIGEST_LEN);
   if(session->next_crypto->session_id == NULL){
       ssh_set_error_oom(session);
       return SSH_ERROR;
@@ -223,10 +223,10 @@ static ssh_string encrypt_session_key(ssh_session session, ssh_public_key srvkey
           SAFE_FREE(session->next_crypto->encryptIV);
   if(session->next_crypto->decryptIV != NULL)
           SAFE_FREE(session->next_crypto->decryptIV);
-  session->next_crypto->encryptkey = malloc(32);
-  session->next_crypto->decryptkey = malloc(32);
-  session->next_crypto->encryptIV = malloc(32);
-  session->next_crypto->decryptIV = malloc(32);
+  session->next_crypto->encryptkey = ssh_malloc(32);
+  session->next_crypto->decryptkey = ssh_malloc(32);
+  session->next_crypto->encryptIV = ssh_malloc(32);
+  session->next_crypto->decryptIV = ssh_malloc(32);
   if(session->next_crypto->encryptkey == NULL ||
           session->next_crypto->decryptkey == NULL ||
           session->next_crypto->encryptIV == NULL ||

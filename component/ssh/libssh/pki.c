@@ -122,7 +122,7 @@ const char *ssh_pki_key_ecdsa_name(const ssh_key key)
  * @returns an empty ssh_key handle, or NULL on error.
  */
 ssh_key ssh_key_new (void) {
-  ssh_key ptr = malloc (sizeof (struct ssh_key_struct));
+  ssh_key ptr = ssh_malloc (sizeof (struct ssh_key_struct));
   if (ptr == NULL) {
       return NULL;
   }
@@ -331,7 +331,7 @@ ssh_signature ssh_signature_new(void)
 {
     struct ssh_signature_struct *sig;
 
-    sig = malloc(sizeof(struct ssh_signature_struct));
+    sig = ssh_malloc(sizeof(struct ssh_signature_struct));
     if (sig == NULL) {
         return NULL;
     }
@@ -475,8 +475,8 @@ int ssh_pki_import_privkey_file(const char *filename,
 
     file = fopen(filename, "rb");
     if (file == NULL) {
-        ssh_pki_log("Error opening %s: %s",
-                    filename, strerror(errno));
+        //ssh_pki_log("Error opening %s: %s",
+        //            filename, strerror(errno));
         return SSH_EOF;
     }
 
@@ -500,7 +500,7 @@ int ssh_pki_import_privkey_file(const char *filename,
         return SSH_ERROR;
     }
 
-    key_buf = malloc(sb.st_size + 1);
+    key_buf = ssh_malloc(sb.st_size + 1);
     if (key_buf == NULL) {
         fclose(file);
         ssh_pki_log("Out of memory!");
@@ -608,7 +608,7 @@ ssh_public_key ssh_pki_convert_key_to_publickey(const ssh_key key) {
         return NULL;
     }
 
-    pub = malloc(sizeof(struct ssh_public_key_struct));
+    pub = ssh_malloc(sizeof(struct ssh_public_key_struct));
     if (pub == NULL) {
         ssh_key_free(tmp);
         return NULL;
@@ -631,7 +631,7 @@ ssh_public_key ssh_pki_convert_key_to_publickey(const ssh_key key) {
 ssh_private_key ssh_pki_convert_key_to_privatekey(const ssh_key key) {
     ssh_private_key privkey;
 
-    privkey = malloc(sizeof(struct ssh_private_key_struct));
+    privkey = ssh_malloc(sizeof(struct ssh_private_key_struct));
     if (privkey == NULL) {
         ssh_key_free(key);
         return NULL;
@@ -795,7 +795,7 @@ static int pki_import_pubkey_buffer(ssh_buffer buffer,
                 goto fail;
             }
 
-            key->ed25519_pubkey = malloc(ED25519_PK_LEN);
+            key->ed25519_pubkey = ssh_malloc(ED25519_PK_LEN);
             if (key->ed25519_pubkey == NULL) {
                 ssh_string_burn(pubkey);
                 ssh_string_free(pubkey);
@@ -957,8 +957,8 @@ int ssh_pki_import_pubkey_file(const char *filename, ssh_key *pkey)
 
     file = fopen(filename, "rb");
     if (file == NULL) {
-        ssh_pki_log("Error opening %s: %s",
-                    filename, strerror(errno));
+        //ssh_pki_log("Error opening %s: %s",
+        //            filename, strerror(errno));
         return SSH_EOF;
     }
 
@@ -980,7 +980,7 @@ int ssh_pki_import_pubkey_file(const char *filename, ssh_key *pkey)
         return SSH_ERROR;
     }
 
-    key_buf = malloc(sb.st_size + 1);
+    key_buf = ssh_malloc(sb.st_size + 1);
     if (key_buf == NULL) {
         fclose(file);
         ssh_pki_log("Out of memory!");
@@ -1045,6 +1045,7 @@ int ssh_pki_generate(enum ssh_keytypes_e type, int parameter,
     key->type = type;
     key->type_c = ssh_key_type_to_char(type);
     key->flags = SSH_KEY_FLAG_PRIVATE | SSH_KEY_FLAG_PUBLIC;
+    key->enca_size = parameter;
 
     switch(type){
         case SSH_KEYTYPE_RSA:
@@ -1209,15 +1210,15 @@ int ssh_pki_export_pubkey_file(const ssh_key key,
         return SSH_ERROR;
     }
 
-    rc = gethostname(host, sizeof(host));
+    rc = ssh_gethostname(host, sizeof(host));
     if (rc < 0) {
-        free(user);
+        SAFE_FREE(user);
         return SSH_ERROR;
     }
 
     rc = ssh_pki_export_pubkey_base64(key, &b64_key);
     if (rc < 0) {
-        free(user);
+        SAFE_FREE(user);
         return SSH_ERROR;
     }
 
@@ -1227,8 +1228,8 @@ int ssh_pki_export_pubkey_file(const ssh_key key,
                   b64_key,
                   user,
                   host);
-    free(user);
-    free(b64_key);
+    SAFE_FREE(user);
+    SAFE_FREE(b64_key);
     if (rc < 0) {
         return SSH_ERROR;
     }

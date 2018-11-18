@@ -63,7 +63,7 @@ ssh_session ssh_new(void) {
   char *id = NULL;
   int rc;
 
-  session = malloc(sizeof (struct ssh_session_struct));
+  session = ssh_malloc(sizeof (struct ssh_session_struct));
   if (session == NULL) {
     return NULL;
   }
@@ -118,7 +118,7 @@ ssh_session ssh_new(void) {
       goto err;
     }
 
-    id = strdup("%d/id_ed25519");
+    id = ssh_strdup("%d/id_ed25519");
     if (id == NULL) {
       goto err;
     }
@@ -128,7 +128,7 @@ ssh_session ssh_new(void) {
     }
 
 #ifdef HAVE_ECC
-    id = strdup("%d/id_ecdsa");
+    id = ssh_strdup("%d/id_ecdsa");
     if (id == NULL) {
       goto err;
     }
@@ -138,7 +138,7 @@ ssh_session ssh_new(void) {
     }
 #endif
 
-    id = strdup("%d/id_rsa");
+    id = ssh_strdup("%d/id_rsa");
     if (id == NULL) {
       goto err;
     }
@@ -147,7 +147,7 @@ ssh_session ssh_new(void) {
       goto err;
     }
 
-    id = strdup("%d/id_dsa");
+    id = ssh_strdup("%d/id_dsa");
     if (id == NULL) {
       goto err;
     }
@@ -156,7 +156,7 @@ ssh_session ssh_new(void) {
       goto err;
     }
 
-    id = strdup("%d/identity");
+    id = ssh_strdup("%d/identity");
     if (id == NULL) {
       goto err;
     }
@@ -168,7 +168,7 @@ ssh_session ssh_new(void) {
     return session;
 
 err:
-    free(id);
+    SAFE_FREE(id);
     ssh_free(session);
     return NULL;
 }
@@ -957,14 +957,14 @@ void * ssh_get_session_private(ssh_session session) {
     return NULL;
   }
 
-  return (session->userdata);
+  return (session->session_callbacks.userdata);
 }
 
 int ssh_set_session_private(ssh_session session, void *p) {
   if (session == NULL) {
     return -1;
   }
-  session->userdata = p;
+  session->session_callbacks.userdata = p;
   return 0;
 }
 
@@ -981,7 +981,7 @@ int ssh_set_session_timeout_cb(ssh_session session, int (*func)(ssh_session, voi
   if (session == NULL) {
     return -1;
   }
-  session->session_timeout = func;
+  session->session_callbacks.session_connect_timeout = func;
   return 0;
 }
 

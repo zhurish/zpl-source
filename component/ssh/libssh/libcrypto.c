@@ -76,7 +76,7 @@ struct ssh_mac_ctx_struct {
 };
 
 static int alloc_key(struct ssh_cipher_struct *cipher) {
-    cipher->key = malloc(cipher->keylen);
+    cipher->key = ssh_malloc(cipher->keylen);
     if (cipher->key == NULL) {
       return -1;
     }
@@ -93,7 +93,7 @@ void ssh_reseed(void){
 }
 
 SHACTX sha1_init(void) {
-  SHACTX c = malloc(sizeof(*c));
+  SHACTX c = ssh_malloc(sizeof(*c));
   if (c == NULL) {
     return NULL;
   }
@@ -170,7 +170,7 @@ void evp_final(EVPCTX ctx, unsigned char *md, unsigned int *mdlen)
 #endif
 
 SHA256CTX sha256_init(void){
-  SHA256CTX c = malloc(sizeof(*c));
+  SHA256CTX c = ssh_malloc(sizeof(*c));
   if (c == NULL) {
     return NULL;
   }
@@ -193,7 +193,7 @@ void sha256(unsigned char *digest, int len, unsigned char *hash) {
 }
 
 SHA384CTX sha384_init(void){
-  SHA384CTX c = malloc(sizeof(*c));
+  SHA384CTX c = ssh_malloc(sizeof(*c));
   if (c == NULL) {
     return NULL;
   }
@@ -216,7 +216,7 @@ void sha384(unsigned char *digest, int len, unsigned char *hash) {
 }
 
 SHA512CTX sha512_init(void){
-  SHA512CTX c = malloc(sizeof(*c));
+  SHA512CTX c = ssh_malloc(sizeof(*c));
   if (c == NULL) {
     return NULL;
   }
@@ -239,7 +239,7 @@ void sha512(unsigned char *digest, int len, unsigned char *hash) {
 }
 
 MD5CTX ssh_md5_init(void) {
-  MD5CTX c = malloc(sizeof(*c));
+  MD5CTX c = ssh_malloc(sizeof(*c));
   if (c == NULL) {
     return NULL;
   }
@@ -259,7 +259,7 @@ void md5_final(unsigned char *md, MD5CTX c) {
 }
 
 ssh_mac_ctx ssh_mac_ctx_init(enum ssh_mac_e type){
-  ssh_mac_ctx ctx = malloc(sizeof(struct ssh_mac_ctx_struct));
+  ssh_mac_ctx ctx = ssh_malloc(sizeof(struct ssh_mac_ctx_struct));
   if (ctx == NULL) {
     return NULL;
   }

@@ -39,86 +39,83 @@
 
 #include "zebra.h"
 
-
-#define SSH_SHELL_PROXY_ENABLE
-
-
-
-#ifndef KEYS_FOLDER
-#ifdef _WIN32
-#define KEYS_FOLDER
-#else
 #ifdef BUILD_X86
 #define KEYS_FOLDER 		"/home/zhurish/.ssh/"
-#else
-#define KEYS_FOLDER 		"/root/.ssh/"
-#endif
-#endif
-#endif
-
 #define USER 				"zhurish"
 #define PASS 				"centos"
+#else
+#define KEYS_FOLDER 		"/root/.ssh/"
+#define USER 				"root"
+#define PASS 				"123456"
+#endif
+
 #define BUF_SIZE 			2048
 #define SESSION_END 		(SSH_CLOSED | SSH_CLOSED_ERROR)
 #define SFTP_SERVER_PATH 	"/usr/lib/sftp-server"
 
+//#define SSH_SCPD_ENABLE
 
 
-typedef struct ssh_config_s
+#include "ssh_api.h"
+
+
+/*typedef struct sshd_s
 {
 	BOOL			init;
 	BOOL			quit;
+	BOOL			running;
 	int				sshd_taskid;
     ssh_bind 		sshbind;
     ssh_event 		event;
-}ssh_config_t;
+}sshd_t;*/
 
 
-/* A userdata struct for channel. */
-struct channel_data_struct {
-	struct vty *vty;
-    struct winsize *winsize;
-};
-
-
-/* A userdata struct for session. */
-struct session_data_struct {
-    /* Pointer to the channel the session will allocate. */
-    ssh_channel channel;
-    int auth_attempts;
-    int authenticated;
-};
-
-
-typedef struct ssh_config_client_s
+struct scpd_data
 {
-    ssh_config_t		*config;
+	int 	mode;
+	char	 *filename;
+    socket_t input;
+    socket_t output;
+    ssh_scp	 scp;
+};
+
+typedef struct sshd_client_s
+{
+	ssh_config_t		*config;
     ssh_session 		session;
 
+    struct ssh_channel_callbacks_struct ssh_channel_cb;
+
+    struct ssh_server_callbacks_struct 	ssh_server_cb;
+
+    struct winsize 		winsize;
+
+    ssh_channel 		channel;
+
+    int 				auth_attempts;
+    int 				authenticated;
+
+    enum
+	{
+    	SSH_C_NONE,
+		SSH_C_SHELL,
+		SSH_C_SCP,
+		SSH_C_SFTP
+	} type;
+
     struct vty 			*vty;
-
-#ifndef SSH_SHELL_PROXY_ENABLE
-    int					timeval;
-#else
     int 				sock;
+#ifdef SSH_SCPD_ENABLE
+    struct scpd_data	scp_data;
 #endif
+}sshd_client_t;
 
-    struct winsize wsize;
-
-    /* Our struct holding information about the channel. */
-    struct channel_data_struct cdata;
-
-    /* Our struct holding information about the session. */
-    struct session_data_struct sdata;
-
-    struct ssh_channel_callbacks_struct channel_cb;
-
-    struct ssh_server_callbacks_struct server_cb;
-
-}ssh_config_client_t;
+//extern sshd_t sshd_config;
 
 
-
+extern int sshd_accept(socket_t fd, int revents, void *userdata);
+extern int sshd_task(void *argv);
+/*
 extern int sshd_enable(char *address, int port);
 extern int sshd_disable();
 
@@ -128,7 +125,11 @@ extern int sshd_module_exit();
 
 extern int sshd_module_task_init ();
 extern int sshd_module_task_exit ();
-
+*/
+/*
+ * ssh server close will call
+ */
+//extern void sshd_session_userdata_close(ssh_session session);
 
 
 #endif /* COMPONENT_SSH_SSHD_MAIN_H_ */

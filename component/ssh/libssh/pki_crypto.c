@@ -1193,7 +1193,7 @@ static ssh_string _RSA_do_sign(const unsigned char *digest,
     unsigned int slen;
     int ok;
 
-    sig = malloc(RSA_size(privkey));
+    sig = ssh_malloc(RSA_size(privkey));
     if (sig == NULL) {
         return NULL;
     }

@@ -230,7 +230,7 @@ SSH_PACKET_CALLBACK(ssh_packet_newkeys){
       ssh_set_error_oom(session);
       goto error;
     }
-    session->next_crypto->session_id = malloc(session->current_crypto->digest_len);
+    session->next_crypto->session_id = ssh_malloc(session->current_crypto->digest_len);
     if (session->next_crypto->session_id == NULL) {
       ssh_set_error_oom(session);
       goto error;

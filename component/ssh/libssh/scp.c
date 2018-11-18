@@ -58,7 +58,7 @@
  * @returns             A ssh_scp handle, NULL if the creation was impossible.
  */
 ssh_scp ssh_scp_new(ssh_session session, int mode, const char *location){
-  ssh_scp scp=malloc(sizeof(struct ssh_scp_struct));
+  ssh_scp scp=ssh_malloc(sizeof(struct ssh_scp_struct));
   if(scp == NULL){
     ssh_set_error(session,SSH_FATAL,"Error allocating memory for ssh_scp");
     return NULL;
@@ -69,7 +69,7 @@ ssh_scp ssh_scp_new(ssh_session session, int mode, const char *location){
     ssh_scp_free(scp);
     return NULL;
   }
-  scp->location=strdup(location);
+  scp->location=ssh_strdup(location);
   if (scp->location == NULL) {
     ssh_set_error(session,SSH_FATAL,"Error allocating memory for ssh_scp");
     ssh_scp_free(scp);
@@ -409,13 +409,13 @@ int ssh_scp_response(ssh_scp scp, char **response){
 		ssh_set_error(scp->session,SSH_REQUEST_DENIED, "SCP: Warning: status code 1 received: %s", msg);
 		SSH_LOG(SSH_LOG_RARE,"SCP: Warning: status code 1 received: %s", msg);
 		if(response)
-			*response=strdup(msg);
+			*response=ssh_strdup(msg);
 		return 1;
 	}
 	if(code == 2){
 		ssh_set_error(scp->session,SSH_FATAL, "SCP: Error: status code 2 received: %s", msg);
 		if(response)
-			*response=strdup(msg);
+			*response=ssh_strdup(msg);
 		return 2;
 	}
 	/* Not reached */
@@ -555,12 +555,12 @@ int ssh_scp_pull_request(ssh_scp scp)
   int err = 0;
   if(scp==NULL)
       return SSH_ERROR;
-  tmpbuf = malloc(MAX_BUF_SIZE);
+  tmpbuf = ssh_malloc(MAX_BUF_SIZE);
   if(tmpbuf==NULL)
       return SSH_ERROR;
   memset(tmpbuf, 0, MAX_BUF_SIZE);
   if(scp->state != SSH_SCP_READ_INITED){
-    ssh_set_error(scp->session,SSH_FATAL,"ssh_scp_pull_request called under invalid state");
+    ssh_set_error(scp->session,SSH_FATAL,"ssh_scp_pull_request called under invalid state(%d)",scp->state);
     return SSH_ERROR;
   }
   err=ssh_scp_read_string(scp,tmpbuf,MAX_BUF_SIZE);
@@ -585,7 +585,7 @@ int ssh_scp_pull_request(ssh_scp scp)
         goto error;
       *p='\0';
       p++;
-      //mode=strdup(&tmpbuf[1]);
+      //mode=ssh_strdup(&tmpbuf[1]);
       scp->request_mode=ssh_scp_integer_mode(&tmpbuf[1]);
       tmp=p;
       p=strchr(p,' ');
@@ -594,7 +594,7 @@ int ssh_scp_pull_request(ssh_scp scp)
       *p=0;
       size = strtoull(tmp,NULL,10);
       p++;
-      name=strdup(p);
+      name=ssh_strdup(p);
       SAFE_FREE(scp->request_name);
       scp->request_name=name;
       if(tmpbuf[0]=='C'){
@@ -616,7 +616,7 @@ int ssh_scp_pull_request(ssh_scp scp)
     	ssh_set_error(scp->session,SSH_REQUEST_DENIED,"SCP: Warning: %s",&tmpbuf[1]);
     	scp->request_type=SSH_SCP_REQUEST_WARNING;
     	SAFE_FREE(scp->warning);
-    	scp->warning=strdup(&tmpbuf[1]);
+    	scp->warning=ssh_strdup(&tmpbuf[1]);
     	return scp->request_type;
     case 0x2:
     	ssh_set_error(scp->session,SSH_FATAL,"SCP: Error: %s",&tmpbuf[1]);
@@ -815,13 +815,13 @@ int ssh_scp_integer_mode(const char *mode){
  *
  * @param[in]  mode     The mode to convert, e.g. 420 or 0644.
  *
- * @returns             A pointer to a malloc'ed string containing the scp mode,
+ * @returns             A pointer to a ssh_malloc'ed string containing the scp mode,
  *                      e.g. "0644".
  */
 char *ssh_scp_string_mode(int mode){
 	char buffer[16];
 	snprintf(buffer,sizeof(buffer),"%.4o",mode);
-	return strdup(buffer);
+	return ssh_strdup(buffer);
 }
 
 /**

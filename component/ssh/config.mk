@@ -113,10 +113,17 @@ LIBSSHOBJS += pthread.o
 PLDEFINE +=-DHAVE_PTHREAD
 endif 
 
-OBJS += sshd_main.o
-OBJS += ssh_connect.o
-OBJS += ssh_scp.o
+
 OBJS += ssh_util.o
+OBJS += ssh_connect.o
+OBJS += ssh_keymgt.o
+OBJS += ssh_authentication.o
+OBJS += ssh_client.o
+OBJS += ssh_sftp.o
+OBJS += ssh_sftpd.o
+OBJS += ssh_scp.o
+OBJS += sshd_main.o
+OBJS += ssh_api.o
 #############################################################################
 # LIB
 ###########################################################################

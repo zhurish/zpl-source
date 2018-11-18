@@ -306,7 +306,7 @@ static int os_ansync_del_node(os_ansync_lst *lst, os_ansync_t *value)
 				lst->timeout = os_time_min(lst->timeout, value->interval);
 */
 /*			struct timeval	interval;
-			os_gettime (OS_CLK_REALTIME, &interval);
+			os_gettime (OS_CLK_MONOTONIC, &interval);
 			//删除定时事件，更新最小时间轴
 			if(os_timeval_cmp(lst->timeout, interval) > 0)
 			{
@@ -376,6 +376,7 @@ static int os_ansync_min_timer_refresh(os_ansync_lst *lst)
 		{
 			lst->timeout.tv_sec = pstNode->timeout.tv_sec;
 			lst->timeout.tv_usec = pstNode->timeout.tv_usec;
+			os_timeval_adjust(lst->timeout);
 			break;
 		}
 	}
@@ -506,13 +507,15 @@ int _os_ansync_register_api(os_ansync_lst *lst, os_ansync_type type, os_ansync_c
 			node->fd = value;
 		else if(type == OS_ANSYNC_TIMER || type == OS_ANSYNC_TIMER_ONCE)
 		{
-			os_gettime (OS_CLK_REALTIME, &node->timeout);
+			os_gettime (OS_CLK_MONOTONIC, &node->timeout);
 			//设置定时时间轴
 			node->timeout.tv_sec += value/OS_ANSYNC_MSEC_MICRO;
 			node->timeout.tv_usec += (value%OS_ANSYNC_MSEC_MICRO)*OS_ANSYNC_MSEC_MICRO;
+			os_timeval_adjust(node->timeout);
 			//设置定时间隔
 			node->interval = value;
 			OS_ANSYNC_DEBUG("os ansync register %d msec(timer):%s:%d", node->interval, func_name, line);
+			//zlog_debug(6, "os ansync register %d (%d)msec(timer):%s:%d", node->interval, node->timeout.tv_sec, func_name, line);
 		}
 		node->type 		= type;
 		node->ansync_cb = cb;
@@ -704,23 +707,26 @@ static int os_ansync_timer_helper(os_ansync_lst *lst, struct timeval *wait_tv)
 			//检测是否有定时事件需要执行
 			if(os_timeval_cmp(*wait_tv, pstNode->timeout) >= 0)
 			{
+				//if(lst->taskid == os_task_lookup_by_name("dhcpcTask"))
+				//	zlog_debug(6, "os_ansync_timer_helper : %s now=%d msec :%d", pstNode->entryname, wait_tv->tv_sec, pstNode->timeout.tv_sec);
 				//OS_ANSYNC_DEBUG("io timer %s", pstNode->entryname);
 				pstNode->state = OS_ANSYNC_STATE_READY;
 				//lstDelete(lst->list, (NODE *)pstNode);
 				//lstAdd(lst->unuselist, (NODE *)pstNode);
 				if(pstNode->type == OS_ANSYNC_TIMER)
 				{
-					os_gettime (OS_CLK_REALTIME, &pstNode->timeout);
+					os_gettime (OS_CLK_MONOTONIC, &pstNode->timeout);
 					//更新定时期下次定时时间
 					pstNode->timeout.tv_sec += pstNode->interval/OS_ANSYNC_MSEC_MICRO;
 					pstNode->timeout.tv_usec += (pstNode->interval%OS_ANSYNC_MSEC_MICRO)*OS_ANSYNC_MSEC_MICRO;
-
+					os_timeval_adjust(pstNode->timeout);
 					OS_ANSYNC_DEBUG("os ansync update nest %d msec(timer):%s:%d", OS_ANSYNC_TVTOMSEC(pstNode->timeout), pstNode->entryname, pstNode->line);
 				}
 				else if(pstNode->type == OS_ANSYNC_TIMER_ONCE)
 				{
 					pstNode->timeout.tv_sec = OS_EVENTS_TIMER_INTERVAL_MAX;
 					pstNode->timeout.tv_usec = OS_EVENTS_TIMER_INTERVAL_MAX;
+					os_timeval_adjust(pstNode->timeout);
 				}
 			}
 /*			//更新下一个定时时间
@@ -789,12 +795,21 @@ os_ansync_t *os_ansync_fetch(os_ansync_lst *lst)
 		if(node)
 			return node;
 
-		os_gettime (OS_CLK_REALTIME, &wait_tv);
-		os_ansync_min_timer_refresh(lst);
-		if(os_timeval_cmp(wait_tv, lst->timeout) >= 0)
+		os_gettime (OS_CLK_MONOTONIC, &wait_tv);
+		if(os_ansync_min_timer_refresh(lst) == OK)
 		{
-			lst->timeout.tv_sec = wait_tv.tv_sec + OS_EVENTS_TIMER_DEFAULT/OS_ANSYNC_MSEC_MICRO;
+			if(os_timeval_cmp(wait_tv, lst->timeout) >= 0)
+			{
+				lst->timeout.tv_sec = wait_tv.tv_sec + OS_EVENTS_TIMER_DEFAULT/OS_ANSYNC_MSEC_MICRO;
+				lst->timeout.tv_usec = wait_tv.tv_usec;
+				os_timeval_adjust(lst->timeout);
+			}
+		}
+		else
+		{
+			lst->timeout.tv_sec = wait_tv.tv_sec + 2;
 			lst->timeout.tv_usec = wait_tv.tv_usec;
+			os_timeval_adjust(lst->timeout);
 		}
 		lst->timeout = os_timeval_subtract(lst->timeout, wait_tv);
 		lst->interval = OS_ANSYNC_TVTOMSEC(lst->timeout);
@@ -804,7 +819,7 @@ os_ansync_t *os_ansync_fetch(os_ansync_lst *lst)
 		num = epoll_wait(lst->epoll_fd, lst->events, lst->max_fd, lst->interval);
 		if (num < 0)
 		{
-			if (errno == EINTR || errno == EAGAIN)
+			if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
 				continue;
 			if (errno == EBADF || errno == EFAULT || errno == EINVAL)
 				return NULL;
@@ -812,7 +827,7 @@ os_ansync_t *os_ansync_fetch(os_ansync_lst *lst)
 		}
 		else if (num == 0)
 		{
-			os_gettime (OS_CLK_REALTIME, &wait_tv);
+			os_gettime (OS_CLK_MONOTONIC, &wait_tv);
 			os_ansync_timer_helper(lst, &wait_tv);
 			node = os_ansync_run(lst);
 			if(node)
@@ -872,6 +887,12 @@ int os_ansync_execute(os_ansync_lst *lst, os_ansync_t *value, os_ansync_exe exe)
 		{
 			if(lst->mutex)
 				os_mutex_lock(lst->mutex, OS_WAIT_FOREVER);
+
+			os_gettime (OS_CLK_MONOTONIC, &value->timeout);
+			//更新定时期下次定时时间
+			value->timeout.tv_sec += value->interval/OS_ANSYNC_MSEC_MICRO;
+			value->timeout.tv_usec += (value->interval%OS_ANSYNC_MSEC_MICRO)*OS_ANSYNC_MSEC_MICRO;
+			os_timeval_adjust(value->timeout);
 			os_ansync_add_node_sort(lst, value);
 			if(lst->mutex)
 				os_mutex_unlock(lst->mutex);

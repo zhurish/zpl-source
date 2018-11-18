@@ -83,7 +83,7 @@ ssh_channel ssh_channel_new(ssh_session session) {
       return NULL;
   }
 
-  channel = malloc(sizeof(struct ssh_channel_struct));
+  channel = ssh_malloc(sizeof(struct ssh_channel_struct));
   if (channel == NULL) {
     ssh_set_error_oom(session);
     return NULL;
@@ -1175,6 +1175,11 @@ int ssh_channel_close(ssh_channel channel){
   if(rc == SSH_ERROR)
     goto error;
 
+  if(ssh_callbacks_exists(channel->callbacks, channel_close_exit_function)) {
+	  channel->callbacks->channel_close_exit_function(channel->session,
+	      channel,
+	      channel->callbacks->userdata);
+  }
   return rc;
 error:
   ssh_buffer_reinit(session->out_buffer);
@@ -1853,7 +1858,7 @@ static char *generate_cookie(void) {
     s[i*2+1] = hex[rnd[i] >> 4];
   }
   s[32] = '\0';
-  return strdup(s);
+  return ssh_strdup(s);
 }
 
 /**
@@ -2377,7 +2382,7 @@ error:
    }
 
    while ((rc = channel_read(channel, buffer, sizeof(buffer), 0)) > 0) {
-       if (fwrite(buffer, 1, rc, ssh_stdout) != (unsigned int) rc) {
+       if (fwrite(buffer, 1, rc, stdout) != (unsigned int) rc) {
            return -1;
        }
    }
@@ -2679,11 +2684,11 @@ int ssh_channel_read_timeout(ssh_channel channel,
    * We may have problem if the window is too small to accept as much data
    * as asked
    */
-  SSH_LOG(SSH_LOG_PACKET,
-      "Read (%d) buffered : %d bytes. Window: %d",
-      count,
-      ssh_buffer_get_rest_len(stdbuf),
-      channel->local_window);
+/*
+  ssh_printf(NULL, "Read (%d) buffered : %d bytes. Window: %d\n", count, ssh_buffer_get_rest_len(stdbuf), channel->local_window);
+  SSH_LOG(SSH_LOG_PACKET, "Read (%d) buffered : %d bytes. Window: %d\n", count,
+      ssh_buffer_get_rest_len(stdbuf), channel->local_window);
+*/
 
   if (count > ssh_buffer_get_rest_len(stdbuf) + channel->local_window) {
     if (grow_window(session, channel, count - ssh_buffer_get_rest_len(stdbuf)) < 0) {
@@ -3074,18 +3079,18 @@ int ssh_channel_select(ssh_channel *readchans, ssh_channel *writechans,
   }
 
   /* Prepare the outgoing temporary arrays */
-  rchans = malloc(sizeof(ssh_channel ) * (count_ptrs(readchans) + 1));
+  rchans = ssh_malloc(sizeof(ssh_channel ) * (count_ptrs(readchans) + 1));
   if (rchans == NULL) {
     return SSH_ERROR;
   }
 
-  wchans = malloc(sizeof(ssh_channel ) * (count_ptrs(writechans) + 1));
+  wchans = ssh_malloc(sizeof(ssh_channel ) * (count_ptrs(writechans) + 1));
   if (wchans == NULL) {
     SAFE_FREE(rchans);
     return SSH_ERROR;
   }
 
-  echans = malloc(sizeof(ssh_channel ) * (count_ptrs(exceptchans) + 1));
+  echans = ssh_malloc(sizeof(ssh_channel ) * (count_ptrs(exceptchans) + 1));
   if (echans == NULL) {
     SAFE_FREE(rchans);
     SAFE_FREE(wchans);
@@ -3437,6 +3442,23 @@ error:
 
 #endif
 
+int ssh_channel_clean(ssh_session session)
+{
+	ssh_channel channels = NULL;
+    struct ssh_iterator *iterator = NULL;
+    iterator = ssh_list_get_iterator(session->channels);
+    while(iterator != NULL) {
+    	channels = (ssh_channel)iterator->data;
+        if(channels)
+        {
+        	ssh_channel_close(channels);
+        	ssh_channel_free(channels);
+        	channels = NULL;
+        }
+        iterator = iterator->next;
+    }
+    return SSH_OK;
+}
 /* @} */
 
 /* vim: set ts=4 sw=4 et cindent: */

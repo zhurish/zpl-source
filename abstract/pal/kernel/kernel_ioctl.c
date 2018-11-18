@@ -700,7 +700,10 @@ static int if_set_down(struct interface *ifp)
 	return if_unset_flags(ifp, IFF_UP|IFF_RUNNING);
 }
 
-
+static int if_update_flags(struct interface *ifp, int flag)
+{
+	return if_set_flags(ifp, flag);
+}
 
 
 #if 0
@@ -939,7 +942,7 @@ static int _ipkernel_destroy(struct interface *ifp)
 			return ERROR;
 		}
 
-		if(pal_interface_update_flag(ifp) != OK)
+		if(pal_interface_refresh_flag(ifp) != OK)
 		{
 			zlog_err(ZLOG_PAL, "Unable to get L3 interface  flags %s(%s).",
 					ifp->name, safe_strerror(errno));
@@ -992,7 +995,7 @@ static int _ipkernel_change(struct interface *ifp)
 			return ERROR;
 		}
 
-		if(pal_interface_update_flag(ifp) != OK)
+		if(pal_interface_refresh_flag(ifp) != OK)
 		{
 			zlog_err(ZLOG_PAL, "Unable to get L3 interface  flags %s(%s).",
 					ifp->name, safe_strerror(errno));
@@ -1026,7 +1029,7 @@ static int _ipkernel_set_vlan(struct interface *ifp, int vlan)
 						return ERROR;
 					}
 
-					if(pal_interface_update_flag(ifp) != OK)
+					if(pal_interface_refresh_flag(ifp) != OK)
 					{
 						zlog_err(ZLOG_PAL, "Unable to get L3 interface  flags %s(%s).",
 								ifp->name, safe_strerror(errno));
@@ -1051,7 +1054,8 @@ int ip_ifp_stack_init()
 	//interface
 	pal_stack.ip_stack_up = if_set_up;
 	pal_stack.ip_stack_down = if_set_down;
-	pal_stack.ip_stack_update_flag = if_get_flags;
+	pal_stack.ip_stack_update_flag = if_update_flags;
+	pal_stack.ip_stack_refresh_flag = if_get_flags;
 	pal_stack.ip_stack_ifindex = if_nametoindex;//if_get_ifindex;
 	pal_stack.ip_stack_set_vr = NULL;
 	pal_stack.ip_stack_set_mtu = if_set_mtu;

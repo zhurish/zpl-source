@@ -27,6 +27,7 @@
 #include "zclient.h"
 #include "nsm_dhcp.h"
 
+#ifdef PL_DHCPD_MODULE
 #include "dhcpd_api.h"
 
 
@@ -771,3 +772,5 @@ int nsm_interface_dhcps_enable(ifindex_t kifindex, BOOL enable)
 	else
 		return dhcpd_interface_del_api(kifindex);
 }
+
+#endif

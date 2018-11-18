@@ -27,7 +27,7 @@
 #include "nsm_dhcp.h"
 
 
-#ifdef PL_DHCPC_MODULE
+#ifdef PL_DHCP_MODULE
 
 nsm_dhcp_ifp_t *nsm_dhcp_get(struct interface *ifp)
 {
@@ -241,23 +241,34 @@ int nsm_dhcp_module_init ()
 	nsm_dhcp_client_init();
 #ifdef PL_DHCPD_MODULE
 	nsm_dhcps_init();
-#endif
-	dhcpc_module_init ();
 	dhcps_module_init ();
+#endif
+#ifdef PL_DHCPC_MODULE
+
+	dhcpc_module_init ();
+#endif
 	return OK;
 }
 
 int nsm_dhcp_task_init ()
 {
+#ifdef PL_DHCPC_MODULE
 	dhcpc_task_init ();
+#endif
+#ifdef PL_DHCPD_MODULE
 	dhcps_task_init ();
+#endif
 	return OK;
 }
 
 int nsm_dhcp_task_exit ()
 {
+#ifdef PL_DHCPC_MODULE
 	dhcpc_task_exit ();
+#endif
+#ifdef PL_DHCPD_MODULE
 	dhcps_task_exit ();
+#endif
 	return OK;
 }
 
@@ -266,9 +277,11 @@ int nsm_dhcp_module_exit ()
 	struct nsm_client *nsm = nsm_client_lookup (NSM_DHCP);
 	if(nsm)
 		nsm_client_free (nsm);
+#ifdef PL_DHCPC_MODULE
 	dhcpc_module_exit ();
-	dhcps_module_exit ();
+#endif
 #ifdef PL_DHCPD_MODULE
+	dhcps_module_exit ();
 	nsm_dhcps_exit();
 #endif
 	return OK;

@@ -191,6 +191,58 @@ int vty_out(struct vty *vty, const char *format, ...)
 	return len;
 }
 
+int vty_sync_out(struct vty *vty, const char *format, ...)
+{
+	va_list args;
+	int len = 0;
+	int size = 1024;
+	char buf[1024];
+	char *p = NULL;
+	os_bzero(buf, sizeof(buf));
+	if (vty_shell(vty))
+	{
+		va_start(args, format);
+		vprintf(format, args);
+		va_end(args);
+	}
+	else
+	{
+		/* Try to write to initial buffer.  */
+		va_start(args, format);
+		len = vsnprintf(buf, sizeof(buf), format, args);
+		va_end(args);
+		/* Initial buffer is not enough.  */
+		if (len < 0 || len >= size)
+		{
+			while (1)
+			{
+				if (len > -1)
+					size = len + 1;
+				else
+					size = size * 2;
+				p = XREALLOC(MTYPE_VTY_OUT_BUF, p, size);
+				if (!p)
+					return -1;
+				va_start(args, format);
+				len = vsnprintf(p, size, format, args);
+				va_end(args);
+				if (len > -1 && len < size)
+					break;
+			}
+		}
+		/* When initial buffer is enough to store all output.  */
+		if (!p)
+			p = buf;
+		if (vty->fd_type == IPCOM_STACK)
+			ip_write(vty->wfd, p, len);
+		else
+			write(vty->wfd, p, len);
+		if (p != buf)
+			XFREE(MTYPE_VTY_OUT_BUF, p);
+	}
+	return len;
+}
+
 static int vty_log_out(struct vty *vty, const char *level,
 		const char *proto_str, const char *format, zlog_timestamp_t ctl,
 		va_list va)
@@ -482,7 +534,7 @@ int vty_command(struct vty *vty, char *buf)
 		snprintf(vty_str, sizeof(vty_str), "vty[??]@%s", vty->address);
 		if (vty)
 			for (i = 0; i < vector_active(vtyvec); i++)
-				if (vty == vector_slot(vtyvec, i))
+				if (vty == vector_slot(vtyvec, i) && (!vty->cancel))
 				{
 					snprintf(vty_str, sizeof(vty_str), "vty[%d]@%s", i,
 							vty->address);
@@ -521,7 +573,7 @@ int vty_command(struct vty *vty, char *buf)
 		struct timeval after;
 		unsigned long realtime, cputime;
 
-		os_get_relative(&before);
+		os_get_monotonic(&before);
 #endif /* CONSUMED_TIME_CHECK */
 
 		ret = cmd_execute_command(vline, vty, NULL, 0);
@@ -533,13 +585,14 @@ int vty_command(struct vty *vty, char *buf)
 			protocolname = zlog_proto_names(ZLOG_NONE);
 
 #ifdef CONSUMED_TIME_CHECK
-		os_get_relative(&after);
+		os_get_monotonic(&after);
 		if ((realtime = thread_consumed_time(&after, &before, &cputime)) >
 			CONSUMED_TIME_CHECK)
 		{
 			/* Warn about CPU hog that must be fixed. */
 			if(!(strstr(buf, "tftp") || strstr(buf, "ftp") ||
-					strstr(buf, "ping") || strstr(buf, "traceroute")))
+					strstr(buf, "ping") || strstr(buf, "traceroute") ||
+					strstr(buf, "scp")))
 				zlog_warn(ZLOG_DEFAULT,
 					"SLOW COMMAND: command took %lums (cpu time %lums): %s",
 					realtime / 1000, cputime / 1000, buf);
@@ -3146,6 +3199,7 @@ void vty_close(struct vty *vty)
 
 		if(vty->ssh_close)
 			(vty->ssh_close)(vty);
+
 		/* OK free vty. */
 		XFREE(MTYPE_VTY, vty);
 		return;
@@ -3419,7 +3473,7 @@ void vty_log(const char *level, const char *proto_str, const char *format,
 
 	for (i = 0; i < vector_active(vtyvec); i++)
 		if ((vty = vector_slot(vtyvec, i)) != NULL)
-			if (vty->monitor)
+			if (vty->monitor && !(vty->cancel))
 			{
 				va_list ac;
 				va_copy(ac, va);
@@ -3439,7 +3493,7 @@ void vty_trap_log(const char *level, const char *proto_str, const char *format,
 
 	for (i = 0; i < vector_active(vtyvec); i++)
 		if ((vty = vector_slot(vtyvec, i)) != NULL)
-			if (vty->trapping)
+			if (vty->trapping && (!vty->cancel))
 			{
 				va_list ac;
 				va_copy(ac, va);
@@ -3481,7 +3535,9 @@ void vty_log_fixed(char *buf, size_t len)
 
 	for (i = 0; i < vector_active(vtyvec); i++)
 	{
-		if (((vty = vector_slot(vtyvec, i)) != NULL) && (vty->trapping || vty->monitor))
+		if (((vty = vector_slot(vtyvec, i)) != NULL) &&
+				(vty->trapping || vty->monitor) &&
+				!(vty->cancel))
 		{
 			/* N.B. We don't care about the return code, since process is
 			 most likely just about to die anyway. */
@@ -3695,9 +3751,9 @@ void vty_reset()
 		os_mutex_unlock(host.mutx);
 }
 
-int vty_cancel(struct vty *vty, int close)
+int vty_cancel(struct vty *vty)
 {
-	if(close == 1)
+	if(vty)
 	{
 		if (vty->fd_type == OS_STACK || vty->type == VTY_FILE)
 		{
@@ -3725,20 +3781,20 @@ int vty_cancel(struct vty *vty, int close)
 			vty->t_write = NULL;
 			vty->t_timeout = NULL;
 		}
-		vector_unset(vtyvec, vty->fd);
+		//vector_unset(vtyvec, vty->fd);
 		vty->cancel = TRUE;
 	}
 	return OK;
 }
 
-int vty_recovery(struct vty *vty, int close)
+int vty_resume(struct vty *vty)
 {
-	if(close == 1)
+	if(vty)
 	{
 		if(vty->cancel)
 		{
 			vty->cancel = FALSE;
-			vector_set_index(vtyvec, vty->fd, vty);
+			//vector_set_index(vtyvec, vty->fd, vty);
 			vty_event(VTY_READ, vty->fd, vty);
 		}
 	}

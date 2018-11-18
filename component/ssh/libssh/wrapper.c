@@ -92,7 +92,7 @@ const char *ssh_hmac_type_to_string(enum ssh_hmac_e hmac_type)
 static struct ssh_cipher_struct *cipher_new(int offset) {
   struct ssh_cipher_struct *cipher = NULL;
 
-  cipher = malloc(sizeof(struct ssh_cipher_struct));
+  cipher = ssh_malloc(sizeof(struct ssh_cipher_struct));
   if (cipher == NULL) {
     return NULL;
   }
@@ -133,7 +133,7 @@ static void cipher_free(struct ssh_cipher_struct *cipher) {
 struct ssh_crypto_struct *crypto_new(void) {
    struct ssh_crypto_struct *crypto;
 
-  crypto = malloc(sizeof(struct ssh_crypto_struct));
+  crypto = ssh_malloc(sizeof(struct ssh_crypto_struct));
   if (crypto == NULL) {
     return NULL;
   }

@@ -48,12 +48,12 @@
 
 static int ssh_pthread_mutex_init (void **priv){
   int err = 0;
-  *priv = malloc (sizeof (pthread_mutex_t));
+  *priv = ssh_malloc (sizeof (pthread_mutex_t));
   if (*priv==NULL)
     return ENOMEM;
   err = pthread_mutex_init (*priv, NULL);
   if (err != 0){
-    free (*priv);
+    SAFE_FREE (*priv);
     *priv=NULL;
   }
   return err;
@@ -61,7 +61,7 @@ static int ssh_pthread_mutex_init (void **priv){
 
 static int ssh_pthread_mutex_destroy (void **lock) {
   int err = pthread_mutex_destroy (*lock);
-  free (*lock);
+  SAFE_FREE (*lock);
   *lock=NULL;
   return err;
 }

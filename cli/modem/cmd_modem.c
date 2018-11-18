@@ -1050,9 +1050,10 @@ static int modem_write_config(struct vty *vty)
 
 
 
-static int show_modem_information_one_cb(modem_t *modem, struct vty *vty)
+static int show_modem_information_one_cb(modem_t *modem, struct modem_vty_cb *user)
 {
-	if(modem)
+	struct vty *vty = user->vty;
+	if(modem && vty)
 	{
 		modem_serial_t *serial = modem->serial;
 		//struct interface *ifp = modem->ifp;
@@ -1119,24 +1120,30 @@ static int show_modem_information_one_cb(modem_t *modem, struct vty *vty)
 			vty_out(vty, "  state                      : %d%s", modem->state, VTY_NEWLINE);
 			vty_out(vty, "  newstate                   : %d%s", modem->newstate, VTY_NEWLINE);
 
-			vty_out(vty, "  detection delay            : %d%s", modem->dedelay, VTY_NEWLINE);
-			vty_out(vty, "  check delay                : %d%s", modem->delay, VTY_NEWLINE);
-
-
-			vty_out(vty, "  state                      : %d%s", modem->state, VTY_NEWLINE);
+			if(user->detail)
+			{
+				vty_out(vty, "  detection delay            : %d%s", modem->dedelay, VTY_NEWLINE);
+				vty_out(vty, "  check delay                : %d%s", modem->delay, VTY_NEWLINE);
+			}
+			//vty_out(vty, "  state                      : %d%s", modem->state, VTY_NEWLINE);
 			if(serial)
 			{
+				vty_out(vty, "   -------------             : %s", VTY_NEWLINE);
 				vty_out(vty, "   Modem Channel             : %s%s", serial->name, VTY_NEWLINE);
+				vty_out(vty, "   HW Channel                : %d%s", serial->hw_channel, VTY_NEWLINE);
 			}
 			if(modem->client)
 			{
 				modem_client_t *client = modem->client;
-				vty_out(vty, "     bus/device              : %x:%x%s", client->bus,client->device, VTY_NEWLINE);
+				vty_out(vty, "    ------------             : %s", VTY_NEWLINE);
+				vty_out(vty, "    Modem Client             : %s%s", client->module_name, VTY_NEWLINE);
+				if(user->detail)
+					vty_out(vty, "     bus/device              : %x:%x%s", client->bus, client->device, VTY_NEWLINE);
 				vty_out(vty, "     vender/product          : %x:%x%s",
 						client->vendor,client->product, VTY_NEWLINE);
 
 				vty_out(vty, "     factory/product         : %s/%s%s",
-						client->factory_name,client->product_name,VTY_NEWLINE);
+						client->factory_name, client->product_name,VTY_NEWLINE);
 				vty_out(vty, "     ID/version              : %s/%s%s",
 						client->product_iden,client->version,VTY_NEWLINE);
 
@@ -1156,17 +1163,40 @@ static int show_modem_information_one_cb(modem_t *modem, struct vty *vty)
 				vty_out(vty, "     Biterr                  : %d%s", client->bit_error,VTY_NEWLINE);
 				//modem_activity_en	activity;
 				if(client->attty)
-					vty_out(vty, "      AT device              : %s%s", client->attty->devname,VTY_NEWLINE);
+					vty_out(vty, "     AT device               : %s%s", client->attty->devname,VTY_NEWLINE);
 				if(client->pppd)
-					vty_out(vty, "      PPPD device            : %s%s", client->pppd->devname,VTY_NEWLINE);
-				if(client->driver && client->driver->dialog)
-					vty_out(vty, "       Dialog                : %s%s", client->driver->dialog->devname,VTY_NEWLINE);
-				if(client->driver && client->driver->attty)
-					vty_out(vty, "       AT device             : %s%s", client->driver->attty->devname,VTY_NEWLINE);
-				if(client->driver && client->driver->pppd)
-					vty_out(vty, "       PPPD device           : %s%s", client->driver->pppd->devname,VTY_NEWLINE);
-				if(client->driver && client->driver->usetty)
-					vty_out(vty, "       Use device            : %s%s", client->driver->usetty->devname,VTY_NEWLINE);
+					vty_out(vty, "     PPPD device             : %s%s", client->pppd->devname,VTY_NEWLINE);
+
+				if(client->driver)
+				{
+					vty_out(vty, "       ------------          : %s", VTY_NEWLINE);
+					vty_out(vty, "       Driver Name           : %s%s", client->driver->module_name,VTY_NEWLINE);
+					if(user->detail)
+					{
+						vty_out(vty, "       Driver ID             : %x%s", client->driver->id,VTY_NEWLINE);
+						vty_out(vty, "       Driver BUS            : %x%s", client->driver->bus,VTY_NEWLINE);
+						vty_out(vty, "       Driver Device         : %d%s", client->driver->device,VTY_NEWLINE);
+					}
+					vty_out(vty, "       Driver Vendor         : %x%s", client->driver->vendor,VTY_NEWLINE);
+					vty_out(vty, "       Driver Product        : %x%s", client->driver->product,VTY_NEWLINE);
+					if(user->detail)
+					{
+						vty_out(vty, "       Driver NUM            : %d%s", client->driver->ttyidmax,VTY_NEWLINE);
+					}
+					if(strlen(client->driver->eth_name))
+						vty_out(vty, "       Driver ETH            : %s%s", client->driver->eth_name,VTY_NEWLINE);
+					if(strlen(client->driver->eth_name_sec))
+						vty_out(vty, "       Driver ETH(SEC)       : %s%s", client->driver->eth_name_sec,VTY_NEWLINE);
+
+					if(client->driver && client->driver->dialog)
+						vty_out(vty, "       Dialog                : %s%s", client->driver->dialog->devname,VTY_NEWLINE);
+					if(client->driver && client->driver->attty)
+						vty_out(vty, "       AT device             : %s%s", client->driver->attty->devname,VTY_NEWLINE);
+					if(client->driver && client->driver->pppd)
+						vty_out(vty, "       PPPD device           : %s%s", client->driver->pppd->devname,VTY_NEWLINE);
+					if(client->driver && client->driver->usetty)
+						vty_out(vty, "       Use device            : %s%s", client->driver->usetty->devname,VTY_NEWLINE);
+				}
 			}
 		}
 	}
@@ -1184,10 +1214,10 @@ static int show_modem_information_cb(modem_t *modem, struct modem_vty_cb *user)
 			os_strlen(user->name) &&
 			(strcmp(modem->name, user->name) == 0) )
 		{
-			show_modem_information_one_cb(modem, user->vty);
+			show_modem_information_one_cb(modem, user);
 		}
 		else
-			show_modem_information_one_cb(modem, user->vty);
+			show_modem_information_one_cb(modem, user);
 	}
 	return CMD_SUCCESS;
 }
@@ -1203,9 +1233,15 @@ DEFUN (show_modem_profile,
 	struct modem_vty_cb user;
 	os_memset(&user, 0, sizeof(user));
 	user.vty = vty;
-	if(argc == 1 && argv[0])
+	if(argc >= 1 && argv[0])
 	{
-		strcpy(user.name, argv[0]);
+		if(strstr(argv[0], "detail"))
+			strcpy(user.name, argv[0]);
+		else
+			user.detail = TRUE;
+
+		if(argc == 2)
+			user.detail = TRUE;
 	}
 	modem_main_callback_api(show_modem_information_cb, &user);
 	return CMD_SUCCESS;
@@ -1218,6 +1254,21 @@ ALIAS (show_modem_profile,
 	   "Modem profile\n"
        "Specify the profile name\n");
 
+
+ALIAS (show_modem_profile,
+		show_modem_profile_detail_cmd,
+       "show modem-profile (detail|)",
+	   SHOW_STR
+	   "Modem profile\n"
+       "Detail information\n");
+
+ALIAS (show_modem_profile,
+		show_modem_profile_name_detail_cmd,
+       "show modem-profile NAME (detail|)",
+	   SHOW_STR
+	   "Modem profile\n"
+       "Specify the profile name\n"
+	   "Detail information\n");
 
 static int show_modem_machine_state_cb(modem_t *modem, struct modem_vty_cb *user)
 {
@@ -1355,9 +1406,10 @@ DEFUN (no_modem_hw_channel,
 }
 
 
-static int show_modem_channel_information_one_cb(modem_serial_t *channel, struct vty *vty)
+static int show_modem_channel_information_one_cb(modem_serial_t *channel, struct modem_vty_cb *user)
 {
-	if(channel)
+	struct vty *vty = user->vty;
+	if(channel && vty)
 	{
 		modem_client_t		*client = channel->client;
 		modem_driver_t		*driver = channel->driver;
@@ -1366,6 +1418,7 @@ static int show_modem_channel_information_one_cb(modem_serial_t *channel, struct
 		if(os_strlen(channel->name))
 		{
 			vty_out(vty, "Modem Channel                : %s%s", channel->name, VTY_NEWLINE);
+			vty_out(vty, " HW Channel                  : %d%s", channel->hw_channel, VTY_NEWLINE);
 			vty_out(vty, "  Active                     : %s%s", channel->active? "ACTIVE":"INACTIVE", VTY_NEWLINE);
 
 			if(modem)
@@ -1377,13 +1430,70 @@ static int show_modem_channel_information_one_cb(modem_serial_t *channel, struct
 				vty_out(vty, "   Client Module             : %s%s", client->module_name, VTY_NEWLINE);
 				vty_out(vty, "     bus/device              : %x:%x%s", client->bus,client->device, VTY_NEWLINE);
 				vty_out(vty, "     vender/product          : %x:%x%s", client->vendor,client->product, VTY_NEWLINE);
+				if(user->detail)
+				{
+					vty_out(vty, "     factory/product         : %s/%s%s",
+							client->factory_name, client->product_name,VTY_NEWLINE);
+					vty_out(vty, "     ID/version              : %s/%s%s",
+							client->product_iden,client->version,VTY_NEWLINE);
+
+					vty_out(vty, "     AT ECHO                 : %s%s", client->echo ? "on":"off",VTY_NEWLINE);
+
+					vty_out(vty, "     IMEI                    : %s%s", client->IMEI_number,VTY_NEWLINE);
+					vty_out(vty, "     CCID                    : %s%s", client->CCID_number,VTY_NEWLINE);
+					vty_out(vty, "     IMSI                    : %s%s", client->IMSI_number,VTY_NEWLINE);
+					//vty_out(vty, "     IMEI                    : %s%s", client->IMEI_number,VTY_NEWLINE);
+
+					vty_out(vty, "     LAC                     : %s%s", client->LAC,VTY_NEWLINE);
+					vty_out(vty, "     CI                      : %s%s", client->CI,VTY_NEWLINE);
+					vty_out(vty, "     ACT                     : %s%s", client->nw_act,VTY_NEWLINE);
+					vty_out(vty, "     BAND                    : %s%s", client->nw_band, VTY_NEWLINE);
+					vty_out(vty, "     Channel                 : %d%s", client->nw_channel,VTY_NEWLINE);
+					vty_out(vty, "     Signal                  : %d%s", client->signal,VTY_NEWLINE);
+					vty_out(vty, "     Biterr                  : %d%s", client->bit_error,VTY_NEWLINE);
+				}
+				//modem_activity_en	activity;
+				if(client->attty)
+					vty_out(vty, "     AT device               : %s%s", client->attty->devname,VTY_NEWLINE);
+				if(client->pppd)
+					vty_out(vty, "     PPPD device             : %s%s", client->pppd->devname,VTY_NEWLINE);
+
 			}
 			if(driver)
 			{
 				vty_out(vty, "   Driver Module             : %s%s", driver->module_name, VTY_NEWLINE);
+/*
 				vty_out(vty, "     ID                      : %x%s", driver->id, VTY_NEWLINE);
 				vty_out(vty, "     bus/device              : %x:%x%s", driver->bus,client->device, VTY_NEWLINE);
 				vty_out(vty, "     vender/product          : %x:%x%s", driver->vendor,client->product, VTY_NEWLINE);
+*/
+
+				//vty_out(vty, "       Driver Name           : %s%s", driver->module_name,VTY_NEWLINE);
+				if(user->detail)
+				{
+					vty_out(vty, "       Driver ID             : %x%s", driver->id,VTY_NEWLINE);
+					vty_out(vty, "       Driver BUS            : %x%s", driver->bus,VTY_NEWLINE);
+					vty_out(vty, "       Driver Device         : %d%s", driver->device,VTY_NEWLINE);
+				}
+				vty_out(vty, "       Driver Vendor         : %x%s", driver->vendor,VTY_NEWLINE);
+				vty_out(vty, "       Driver Product        : %x%s", driver->product,VTY_NEWLINE);
+				if(user->detail)
+				{
+					vty_out(vty, "       Driver NUM            : %d%s", driver->ttyidmax,VTY_NEWLINE);
+				}
+				if(strlen(driver->eth_name))
+					vty_out(vty, "       Driver ETH            : %s%s", driver->eth_name,VTY_NEWLINE);
+				if(strlen(driver->eth_name_sec))
+					vty_out(vty, "       Driver ETH(SEC)       : %s%s", driver->eth_name_sec,VTY_NEWLINE);
+
+				if(driver && driver->dialog)
+					vty_out(vty, "       Dialog                : %s%s", driver->dialog->devname,VTY_NEWLINE);
+				if(driver && driver->attty)
+					vty_out(vty, "       AT device             : %s%s", driver->attty->devname,VTY_NEWLINE);
+				if(driver && driver->pppd)
+					vty_out(vty, "       PPPD device           : %s%s", driver->pppd->devname,VTY_NEWLINE);
+				if(driver && driver->usetty)
+					vty_out(vty, "       Use device            : %s%s", driver->usetty->devname,VTY_NEWLINE);
 			}
 		}
 	}
@@ -1398,10 +1508,10 @@ static int show_modem_channel_information_cb(modem_serial_t *channel, struct mod
 			os_strlen(user->name) &&
 			(strcmp(channel->name, user->name) == 0) )
 		{
-			show_modem_channel_information_one_cb(channel, user->vty);
+			show_modem_channel_information_one_cb(channel, user);
 		}
 		else
-			show_modem_channel_information_one_cb(channel, user->vty);
+			show_modem_channel_information_one_cb(channel, user);
 	}
 	return CMD_SUCCESS;
 }
@@ -1415,9 +1525,15 @@ DEFUN (show_modem_channel,
 	struct modem_vty_cb user;
 	os_memset(&user, 0, sizeof(user));
 	user.vty = vty;
-	if(argc == 1 && argv[0])
+	if(argc >= 1 && argv[0])
 	{
-		strcpy(user.name, argv[0]);
+		if(strstr(argv[0], "detail"))
+			strcpy(user.name, argv[0]);
+		else
+			user.detail = TRUE;
+
+		if(argc == 2)
+			user.detail = TRUE;
 	}
 	modem_serial_callback_api(show_modem_channel_information_cb, &user);
 	return CMD_SUCCESS;
@@ -1430,6 +1546,20 @@ ALIAS (show_modem_channel,
 	   "Modem channel\n"
        "Specify the channel name\n");
 
+ALIAS (show_modem_channel,
+		show_modem_channel_detail_cmd,
+       "show modem-channel (detail|)",
+	   SHOW_STR
+	   "Modem channel\n"
+	   "Detail information\n");
+
+ALIAS (show_modem_channel,
+		show_modem_channel_name_detail_cmd,
+       "show modem-channel NAME (detail|)",
+	   SHOW_STR
+	   "Modem channel\n"
+       "Specify the channel name\n"
+	   "Detail information\n");
 
 
 static int modem_channel_write_cb(modem_serial_t *serial, struct vty *vty)
@@ -1457,9 +1587,10 @@ static int modem_serial_write_cb(struct vty *vty)
 
 
 
-static int show_modem_client_one_cb(modem_client_t *client, struct vty *vty)
+static int show_modem_client_one_cb(modem_client_t *client, struct modem_vty_cb *user)
 {
-	if (client)
+	struct vty *vty = user->vty;
+	if (client && vty)
 	{
 		modem_serial_t *serial = client->serial;
 		modem_t *modem = client->modem;
@@ -1469,8 +1600,43 @@ static int show_modem_client_one_cb(modem_client_t *client, struct vty *vty)
 
 		if(driver)
 		{
+/*
 			vty_out(vty, "     Driver Name             : %s%s", driver->module_name, VTY_NEWLINE);
 			vty_out(vty, "      vender/product         : %x:%x%s", driver->vendor, driver->product, VTY_NEWLINE);
+*/
+			vty_out(vty, "   Driver Module             : %s%s", driver->module_name, VTY_NEWLINE);
+/*
+			vty_out(vty, "     ID                      : %x%s", driver->id, VTY_NEWLINE);
+			vty_out(vty, "     bus/device              : %x:%x%s", driver->bus,client->device, VTY_NEWLINE);
+			vty_out(vty, "     vender/product          : %x:%x%s", driver->vendor,client->product, VTY_NEWLINE);
+*/
+
+			//vty_out(vty, "       Driver Name           : %s%s", client->driver->module_name,VTY_NEWLINE);
+			if(user->detail)
+			{
+				vty_out(vty, "       Driver ID             : %x%s", client->driver->id,VTY_NEWLINE);
+				vty_out(vty, "       Driver BUS            : %x%s", client->driver->bus,VTY_NEWLINE);
+				vty_out(vty, "       Driver Device         : %d%s", client->driver->device,VTY_NEWLINE);
+			}
+			vty_out(vty, "       Driver Vendor         : %x%s", client->driver->vendor,VTY_NEWLINE);
+			vty_out(vty, "       Driver Product        : %x%s", client->driver->product,VTY_NEWLINE);
+			if(user->detail)
+			{
+				vty_out(vty, "       Driver NUM            : %d%s", client->driver->ttyidmax,VTY_NEWLINE);
+			}
+			if(strlen(client->driver->eth_name))
+				vty_out(vty, "       Driver ETH            : %s%s", client->driver->eth_name,VTY_NEWLINE);
+			if(strlen(client->driver->eth_name_sec))
+				vty_out(vty, "       Driver ETH(SEC)       : %s%s", client->driver->eth_name_sec,VTY_NEWLINE);
+
+			if(client->driver && client->driver->dialog)
+				vty_out(vty, "       Dialog                : %s%s", client->driver->dialog->devname,VTY_NEWLINE);
+			if(client->driver && client->driver->attty)
+				vty_out(vty, "       AT device             : %s%s", client->driver->attty->devname,VTY_NEWLINE);
+			if(client->driver && client->driver->pppd)
+				vty_out(vty, "       PPPD device           : %s%s", client->driver->pppd->devname,VTY_NEWLINE);
+			if(client->driver && client->driver->usetty)
+				vty_out(vty, "       Use device            : %s%s", client->driver->usetty->devname,VTY_NEWLINE);
 		}
 		if(serial)
 		{
@@ -1495,10 +1661,10 @@ static int show_modem_client_cb(modem_client_t *client, struct modem_vty_cb *use
 			os_strlen(user->name) &&
 			(strcmp(client->module_name, user->name) == 0) )
 		{
-			show_modem_client_one_cb(client, user->vty);
+			show_modem_client_one_cb(client, user);
 		}
 		else
-			show_modem_client_one_cb(client, user->vty);
+			show_modem_client_one_cb(client, user);
 	}
 	return CMD_SUCCESS;
 }
@@ -1514,9 +1680,15 @@ DEFUN (show_modem_client,
 	struct modem_vty_cb user;
 	os_memset(&user, 0, sizeof(user));
 	user.vty = vty;
-	if(argc == 1 && argv[0])
+	if(argc >= 1 && argv[0])
 	{
-		strcpy(user.name, argv[0]);
+		if(strstr(argv[0], "detail"))
+			strcpy(user.name, argv[0]);
+		else
+			user.detail = TRUE;
+
+		if(argc == 2)
+			user.detail = TRUE;
 	}
 	modem_client_callback_api(show_modem_client_cb, &user);
 	return CMD_SUCCESS;
@@ -1529,16 +1701,44 @@ ALIAS (show_modem_client,
 	   "Modem support\n"
        "Specify the module name\n");
 
+
+ALIAS (show_modem_client,
+		show_modem_client_detail_cmd,
+       "show modem-support (detail|)",
+	   SHOW_STR
+	   "Modem support\n"
+	   "Detail information\n");
+
+ALIAS (show_modem_client,
+		show_modem_client_name_detail_cmd,
+       "show modem-support NAME",
+	   SHOW_STR
+	   "Modem support\n"
+       "Specify the module name\n"
+	   "Detail information\n");
+
+
 DEFUN (show_modem_usb_driver_param,
 		show_modem_usb_driver_param_cmd,
        "show modem-usb-driver",
 	   SHOW_STR
-	   "Modem usb driver\n"
-       "Specify the profile name\n")
+	   "Modem USB Driver Information\n")
 {
 	show_modem_usb_driver(vty);
 	return CMD_SUCCESS;
 }
+
+DEFUN (show_modem_usb_key,
+		show_modem_usb_key_cmd,
+       "show modem-usb-key",
+	   SHOW_STR
+	   "Modem USB key Information\n")
+{
+	show_modem_usb_key_driver(vty);
+	return CMD_SUCCESS;
+}
+
+
 
 DEFUN (modem_debug,
 		modem_debug_cmd,
@@ -1710,16 +1910,26 @@ static void cmd_modem_show_init (int node)
 	install_element(node, &show_modem_profile_cmd);
 	install_element(node, &show_modem_profile_name_cmd);
 
+	install_element(node, &show_modem_profile_detail_cmd);
+	install_element(node, &show_modem_profile_name_detail_cmd);
+
 	install_element(node, &show_modem_channel_cmd);
 	install_element(node, &show_modem_channel_name_cmd);
 
+	install_element(node, &show_modem_channel_detail_cmd);
+	install_element(node, &show_modem_channel_name_detail_cmd);
+
 	install_element(node, &show_modem_client_cmd);
 	install_element(node, &show_modem_client_name_cmd);
+
+	install_element(node, &show_modem_client_detail_cmd);
+	install_element(node, &show_modem_client_name_detail_cmd);
 
 	install_element(node, &show_modem_machine_state_cmd);
 	install_element(node, &show_modem_machine_state_detail_cmd);
 
 	install_element(node, &show_modem_usb_driver_param_cmd);
+	install_element(node, &show_modem_usb_key_cmd);
 }
 
 void cmd_modem_init (void)

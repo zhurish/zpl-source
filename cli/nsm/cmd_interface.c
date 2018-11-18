@@ -1219,6 +1219,24 @@ DEFUN_HIDDEN (show_interface_kernel,
 		"Interface status and configuration\n"
 		"Kernel Interface\n")
 {
+	struct listnode *node = NULL;
+	struct interface *ifp = NULL;
+	struct list *if_list = NULL;
+	vty_out(vty, " %-20s %-16s %s", "Interface","kernel",VTY_NEWLINE);
+	if(argc == 0)
+	{
+		if_list = if_list_get();
+		if (if_list)
+		{
+			for (ALL_LIST_ELEMENTS_RO(if_list, node, ifp))
+			{
+				if (ifp)
+				{
+					vty_out(vty, " %-20s %-16s %s", ifp->name, ifp->k_name, VTY_NEWLINE);
+				}
+			}
+		}
+	}
 	if_slot_show_port_phy(vty);
 	return CMD_SUCCESS;
 }

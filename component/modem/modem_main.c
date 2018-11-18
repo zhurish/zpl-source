@@ -37,7 +37,7 @@
 
 static int modem_task_id = 0;
 
-static os_ansync_lst * modem_ansync_lst = NULL;
+os_ansync_lst * modem_ansync_lst = NULL;
 
 /*************************************************************************/
 /*
@@ -74,7 +74,7 @@ static int modem_process_handle(modem_process_t *process, void *pVoid)
 	modem_t	*modem = process->argv;
 
 
-	if(modem->active && process->event)
+	if(modem->active && !modem->proxy && process->event)
 	{
 		modem_event	event = process->event;
 		process->event = MODEM_EV_NONE;

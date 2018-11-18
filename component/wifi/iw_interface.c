@@ -154,7 +154,7 @@ static int nsm_iw_create_interface(struct interface *ifp)
 	int kmode = 0;
 	iw_t * iw = NULL;
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	if(if_is_wireless(ifp) && ifp->ll_type == ZEBRA_LLT_WIRELESS)
+	if(nsm && if_is_wireless(ifp) && ifp->ll_type == ZEBRA_LLT_WIRELESS)
 	{
 		if(!nsm->nsm_client[NSM_WIFI])
 			nsm->nsm_client[NSM_WIFI] = XMALLOC(MTYPE_WIFI, sizeof(iw_t));
@@ -211,7 +211,7 @@ static int nsm_iw_create_interface(struct interface *ifp)
 
 static int nsm_iw_delete_interface(struct interface *ifp)
 {
-	if(if_is_wireless(ifp) && ifp->ll_type == ZEBRA_LLT_WIRELESS)
+	if(ifp && if_is_wireless(ifp) && ifp->ll_type == ZEBRA_LLT_WIRELESS)
 	{
 		iw_t * iw = nsm_iw_get(ifp);
 		if(iw)
@@ -284,17 +284,16 @@ static int nsm_iw_write_config_client(struct vty *vty, iw_t * iw)
 
 			//vty_out(vty, " ap-name %s", (iw->private.client.cu.SSID));
 
-			if (os_strlen(iw->private.client.cu.password))
+			if (os_strlen(iw->private.client.cu.encrypt_password))
 				vty_out(vty, " authentication password %s%s", (iw->private.client.cu.encrypt_password), VTY_NEWLINE);
 			//else
 			//	vty_out(vty, "%s", VTY_NEWLINE);
-
-
-			if (os_strlen(iw->private.client.scan_max))
-				vty_out(vty, " scan-num %d%s", (iw->private.client.scan_max), VTY_NEWLINE);
-			if (os_strlen(iw->private.client.scan_interval))
-				vty_out(vty, " scan-interval %d%s", (iw->private.client.scan_interval), VTY_NEWLINE);
 		}
+
+		if ((iw->private.client.scan_max))
+			vty_out(vty, " scan-num %d%s", (iw->private.client.scan_max), VTY_NEWLINE);
+		if ((iw->private.client.scan_interval))
+			vty_out(vty, " scan-interval %d%s", (iw->private.client.scan_interval), VTY_NEWLINE);
 		//vty_out(vty, " scan-interval %d%s", (iw->private.ap.SSID));
 	}
 	return OK;
@@ -302,7 +301,7 @@ static int nsm_iw_write_config_client(struct vty *vty, iw_t * iw)
 
 static int nsm_iw_write_config_interface(struct vty *vty, struct interface *ifp)
 {
-	if(if_is_wireless(ifp) && ifp->ll_type == ZEBRA_LLT_WIRELESS)
+	if(ifp && if_is_wireless(ifp) && ifp->ll_type == ZEBRA_LLT_WIRELESS)
 	{
 		iw_t * iw = nsm_iw_get(ifp);
 		if(iw)
@@ -336,6 +335,20 @@ static int nsm_iw_write_config_interface(struct vty *vty, struct interface *ifp)
 	return OK;
 }
 
+int nsm_iw_debug_write_config(struct vty *vty)
+{
+	if (IW_DEBUG(EVENT))
+		vty_out(vty, "debug wireless event %s%s", IW_DEBUG(DETAIL)? "detail":" ", VTY_NEWLINE);
+	if (IW_DEBUG(DB))
+		vty_out(vty, "debug wireless db %s%s", IW_DEBUG(DETAIL)? "detail":" ", VTY_NEWLINE);
+	if (IW_DEBUG(SCAN))
+		vty_out(vty, "debug wireless scan %s%s", IW_DEBUG(DETAIL)? "detail":" ", VTY_NEWLINE);
+	if (IW_DEBUG(AP))
+		vty_out(vty, "debug wireless ap %s%s", IW_DEBUG(DETAIL)? "detail":" ", VTY_NEWLINE);
+	if (IW_DEBUG(AP_ACCEPT))
+		vty_out(vty, "debug wireless ap-accept %s%s", IW_DEBUG(DETAIL)? "detail":" ", VTY_NEWLINE);
+	return OK;
+}
 
 #ifdef IW_ONCE_TASK
 static int iw_task(void *p)
@@ -382,7 +395,7 @@ int nsm_iw_client_init()
 	nsm->interface_write_config_cb = nsm_iw_write_config_interface;
 	nsm_client_install (nsm, NSM_WIFI);
 #ifdef IW_ONCE_TASK
-	iw_task_start();
+	//iw_task_start();
 #endif
 	return OK;
 }

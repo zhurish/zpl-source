@@ -131,7 +131,7 @@ static void if_addr_wakeup (struct interface *ifp)
 					//if_set_flags(ifp, IFF_UP | IFF_RUNNING);
 					//if_refresh(ifp);
 					nsm_pal_interface_up(ifp);
-					pal_interface_update_flag(ifp);
+					pal_interface_refresh_flag(ifp);
 					//ifp->k_ifindex = pal_interface_ifindex(ifp->k_name);
 				}
 				if(nsm_pal_interface_set_address(ifp, ifc, 0) != OK)
@@ -157,7 +157,7 @@ static void if_addr_wakeup (struct interface *ifp)
 					//if_set_flags(ifp, IFF_UP | IFF_RUNNING);
 					//if_refresh(ifp);
 					nsm_pal_interface_up(ifp);
-					pal_interface_update_flag(ifp);
+					pal_interface_refresh_flag(ifp);
 					//ifp->k_ifindex = pal_interface_ifindex(ifp->k_name);
 				}
 				if(nsm_pal_interface_set_address(ifp, ifc, 0) != OK)
@@ -405,8 +405,8 @@ static int nsm_interface_new_hook(struct interface *ifp)
 	if(ret == OK && os_strlen(ifp->k_name))
 	{
 		SET_FLAG(ifp->status, ZEBRA_INTERFACE_ATTACH);
-		pal_interface_update_flag(ifp);
 		ifp->k_ifindex = pal_interface_ifindex(ifp->k_name);
+		pal_interface_refresh_flag(ifp);
 		pal_interface_get_lladdr(ifp);
 	}
 	return OK;
@@ -419,8 +419,7 @@ int nsm_interface_update_kernel(struct interface *ifp, char *kname)
 	{
 		if_kname_set(ifp, kname);
 		SET_FLAG(ifp->status, ZEBRA_INTERFACE_ATTACH);
-		pal_interface_update_flag(ifp);
-		ifp->k_ifindex = pal_interface_ifindex(ifp->k_name);
+		pal_interface_refresh_flag(ifp);
 		pal_interface_get_lladdr(ifp);
 		return OK;
 	}
@@ -645,7 +644,7 @@ static int nsm_interface_ip_address_install(struct interface *ifp, struct prefix
 		/* Some system need to up the interface to set IP address. */
 		if (!if_is_up(ifp)) {
 			nsm_pal_interface_up(ifp);
-			pal_interface_update_flag(ifp);
+			pal_interface_refresh_flag(ifp);
 		}
 		if(nsm_pal_interface_set_address(ifp, ifc, 0) != OK)
 		{
@@ -772,7 +771,7 @@ nsm_interface_ipv6_address_install (struct interface *ifp,
 		if (! if_is_up (ifp))
 		{
 			nsm_pal_interface_up(ifp);
-			pal_interface_update_flag(ifp);
+			pal_interface_refresh_flag(ifp);
 		}
 		ret = nsm_pal_interface_set_address (ifp, ifc, secondary);
 		if (ret < 0)
@@ -1067,7 +1066,7 @@ int nsm_interface_up_set_api(struct interface *ifp)
 		if(ret == OK)
 		{
 			if_addr_wakeup(ifp);
-			pal_interface_update_flag(ifp);
+			pal_interface_refresh_flag(ifp);
 			if_up(ifp);
 			zif->shutdown = IF_ZEBRA_SHUTDOWN_OFF;
 			nsm_client_notify_interface_up(ifp);
@@ -1092,7 +1091,7 @@ int nsm_interface_down_set_api(struct interface *ifp)
 		ret = nsm_pal_interface_down(ifp);
 		if(ret == OK)
 		{
-			pal_interface_update_flag(ifp);
+			pal_interface_refresh_flag(ifp);
 			if_down(ifp);
 			zif->shutdown = IF_ZEBRA_SHUTDOWN_ON;
 			zebra_interface_down_update(ifp);

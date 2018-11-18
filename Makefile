@@ -69,10 +69,8 @@ OBJS = $(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(SOURCES)))
 $(TAGET) : $(OBJS) $(BASE_ROOT)/$(LIBDIR)/*.a 
 	$(CC) $(OBJS) $(CFLAGS) -Xlinker "-(" $(LDCLFLAG) -Xlinker "-)" -o $(TAGET) 
 	$(CHMOD) a+x $(TAGET)
-#	$(STRIP) $(TAGET)
 	install -d ${BINDIR}
 	install -m 755 ${TAGET} ${BINDIR} 
-	#$(CP) $(TAGET) $(BINDIR)/
 #
 #
 #	

@@ -39,7 +39,7 @@ static z_stream *initcompress(ssh_session session, int level) {
   z_stream *stream = NULL;
   int status;
 
-  stream = malloc(sizeof(z_stream));
+  stream = ssh_malloc(sizeof(z_stream));
   if (stream == NULL) {
     return NULL;
   }
@@ -128,7 +128,7 @@ static z_stream *initdecompress(ssh_session session) {
   z_stream *stream = NULL;
   int status;
 
-  stream = malloc(sizeof(z_stream));
+  stream = ssh_malloc(sizeof(z_stream));
   if (stream == NULL) {
     return NULL;
   }

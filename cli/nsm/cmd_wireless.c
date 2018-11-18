@@ -1330,6 +1330,82 @@ security-policy wpa2
 wpa2 authentication-method psk { pass-phrase | hex } cipher cipher-key encryption-method ccmp
 */
 
+DEFUN (debug_wireless_set,
+		debug_wireless_set_cmd,
+		"debug wireless (event|db|scan|ap|ap-accept)",
+		DEBUG_STR
+		"Wireless configure\n"
+		"Event information\n"
+		"DB information\n"
+		"Scan information\n"
+		"AP information\n"
+		"AP-Accept information\n")
+{
+	if (strstr(argv[0], "event"))
+		IW_DEBUG_ON(EVENT);
+	else if (strstr(argv[0], "db"))
+		IW_DEBUG_ON(DB);
+	else if (strstr(argv[0], "scan"))
+		IW_DEBUG_ON(SCAN);
+	else if (strstr(argv[0], "ap"))
+		IW_DEBUG_ON(AP);
+	else if (strstr(argv[0], "accept"))
+		IW_DEBUG_ON(AP_ACCEPT);
+	if (argc == 2 && strstr(argv[1], "detail"))
+		IW_DEBUG_ON(DETAIL);
+	return CMD_SUCCESS;
+}
+
+ALIAS (debug_wireless_set,
+		debug_wireless_set_detail_cmd,
+		"debug wireless (event|db|scan|ap|ap-accept) (detail|)",
+		DEBUG_STR
+		"Wireless configure\n"
+		"Event information\n"
+		"DB information\n"
+		"Scan information\n"
+		"AP information\n"
+		"AP-Accept information\n");
+
+
+DEFUN (no_debug_wireless_set,
+		no_debug_wireless_set_cmd,
+		"no debug wireless (event|db|scan|ap|ap-accept)",
+		NO_STR
+		DEBUG_STR
+		"Wireless configure\n"
+		"Event information\n"
+		"DB information\n"
+		"Scan information\n"
+		"AP information\n"
+		"AP-Accept information\n")
+{
+	if (strstr(argv[0], "event"))
+		IW_DEBUG_OFF(EVENT);
+	else if (strstr(argv[0], "db"))
+		IW_DEBUG_OFF(DB);
+	else if (strstr(argv[0], "scan"))
+		IW_DEBUG_OFF(SCAN);
+	else if (strstr(argv[0], "ap"))
+		IW_DEBUG_OFF(AP);
+	else if (strstr(argv[0], "accept"))
+		IW_DEBUG_OFF(AP_ACCEPT);
+	if (argc == 2 && strstr(argv[1], "detail"))
+		IW_DEBUG_OFF(DETAIL);
+	return CMD_SUCCESS;
+}
+
+ALIAS (no_debug_wireless_set,
+		no_debug_wireless_set_detail_cmd,
+		"no debug wireless (event|db|scan|ap|ap-accept) (detail|)",
+		NO_STR
+		DEBUG_STR
+		"Wireless configure\n"
+		"Event information\n"
+		"DB information\n"
+		"Scan information\n"
+		"AP information\n"
+		"AP-Accept information\n");
 
 
 static void cmd_base_wireless_show_init(int node)
@@ -1431,4 +1507,16 @@ void cmd_wireless_init(void)
 	cmd_base_wireless_show_init(ENABLE_NODE);
 	cmd_base_wireless_show_init(CONFIG_NODE);
 	cmd_base_wireless_show_init(WIRELESS_INTERFACE_NODE);
+
+	install_element(ENABLE_NODE, &debug_wireless_set_cmd);
+	install_element(ENABLE_NODE, &debug_wireless_set_detail_cmd);
+
+	install_element(ENABLE_NODE, &no_debug_wireless_set_cmd);
+	install_element(ENABLE_NODE, &no_debug_wireless_set_detail_cmd);
+
+	install_element(CONFIG_NODE, &debug_wireless_set_cmd);
+	install_element(CONFIG_NODE, &debug_wireless_set_detail_cmd);
+
+	install_element(CONFIG_NODE, &no_debug_wireless_set_cmd);
+	install_element(CONFIG_NODE, &no_debug_wireless_set_detail_cmd);
 }

@@ -525,6 +525,10 @@ typedef void (*ssh_channel_close_callback) (ssh_session session,
                                             ssh_channel channel,
                                             void *userdata);
 
+//@brief SSH channel close callback. Called when a channel is closed by local
+typedef void (*ssh_channel_close_exit_callback) (ssh_session session,
+                                            ssh_channel channel,
+                                            void *userdata);
 /**
  * @brief SSH channel signal callback. Called when a channel has received a signal
  * @param session Current session handler
@@ -743,6 +747,8 @@ struct ssh_channel_callbacks_struct {
    * (like sftp).
    */
   ssh_channel_subsystem_request_callback channel_subsystem_request_function;
+
+  ssh_channel_close_exit_callback channel_close_exit_function;
 };
 
 typedef struct ssh_channel_callbacks_struct *ssh_channel_callbacks;
@@ -844,6 +850,15 @@ LIBSSH_API int ssh_set_log_callback(ssh_logging_callback cb);
  * @return The pointer the the callback or NULL if none set.
  */
 LIBSSH_API ssh_logging_callback ssh_get_log_callback(void);
+
+
+struct ssh_session_callbacks_struct {
+  void 	*userdata;
+  int 	(*session_close_function) (ssh_session , void *);
+  int	(*session_connect_timeout)(ssh_session, void *, int);
+};
+typedef struct ssh_session_callbacks_struct ssh_session_callbacks;
+
 
 /** @} */
 #ifdef __cplusplus

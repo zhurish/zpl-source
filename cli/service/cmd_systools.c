@@ -1,5 +1,5 @@
 /*
- * cmd_tftp.c
+ * cmd_systools.c
  *
  *  Created on: Oct 25, 2018
  *      Author: zhurish
@@ -35,7 +35,7 @@ DEFUN (tftp_copy_download,
 	    "copy url-string URL FILE",
 		"Copy configure\n"
 		"URL format txt\n"
-		"Remove URL Argument (tftp://1.1.1.1:80/file)\n"
+		"Remove URL Argument ([tftp|ftp|scp|sftp]://[user[:password@]] ip [:port][:][/file])\n"
 		"Local file name\n")
 {
 	int ret = CMD_SUCCESS;
@@ -64,8 +64,13 @@ DEFUN (tftp_copy_download,
 		else if(strstr(spliurl.proto,"ftp"))
 			ret = ftp_download(vty, spliurl.host, spliurl.port, spliurl.path, spliurl.filename,
 					spliurl.user, spliurl.pass, localfileName);
+#ifdef PL_SSH_MODULE
 		else if(strstr(spliurl.proto,"scp"))
-			ret = do_ssh_copy(vty, TRUE, url, localfileName);
+			ret = ssh_scp_download(vty, TRUE, url, localfileName);
+			//ret = do_ssh_copy(vty, TRUE, url, localfileName);
+		else if(strstr(spliurl.proto,"sftp"))
+			ret = sftp_action(vty, TRUE, url, localfileName);
+#endif
 		else
 		{
 			vty_out(vty, " URL protocol '%s' is not support%s", spliurl.proto, VTY_NEWLINE);
@@ -94,7 +99,7 @@ DEFUN (tftp_copy_upload,
 		"Copy configure\n"
 		"Local file name\n"
 		"URL format txt\n"
-		"Remove URL Argument (tftp://1.1.1.1:80/file)\n")
+		"Remove URL Argument ([tftp|ftp|scp|sftp]://[user[:password@]] ip [:port][:][/file])\n")
 {
 	int ret = CMD_SUCCESS;
 	os_url_t spliurl;
@@ -122,8 +127,13 @@ DEFUN (tftp_copy_upload,
 		else if(strstr(spliurl.proto,"ftp"))
 			ret = ftp_upload(vty, spliurl.host, spliurl.port, spliurl.path, spliurl.filename,
 					spliurl.user, spliurl.pass, localfileName);
+#ifdef PL_SSH_MODULE
 		else if(strstr(spliurl.proto,"scp"))
-			ret = do_ssh_copy(vty, FALSE, url, localfileName);
+			ret = ssh_scp_upload(vty, FALSE, url, localfileName);
+			//ret = do_ssh_copy(vty, FALSE, url, localfileName);
+		else if(strstr(spliurl.proto,"sftp"))
+			ret = sftp_action(vty, FALSE, url, localfileName);
+#endif
 		else
 		{
 			vty_out(vty, " URL protocol '%s' is not support%s", spliurl.proto, VTY_NEWLINE);
@@ -255,10 +265,62 @@ DEFUN (telnet_client,
 		"telnet client\n"
 		CMD_KEY_IPV4_HELP)
 {
-	if(telnet(vty, argv[0], 0) == OK)
-		return CMD_SUCCESS;
+	if(argc == 1)
+	{
+		if(telnet(vty, argv[0], 0) == OK)
+			return CMD_SUCCESS;
+	}
+	else if(argc == 2)
+	{
+		if(telnet(vty, argv[0], atoi(argv[1])) == OK)
+			return CMD_SUCCESS;
+	}
 	return CMD_WARNING;
 }
+
+ALIAS (telnet_client,
+		telnet_client_port_cmd,
+	    "telnet "CMD_KEY_IPV4 " <1-65535>",
+		"telnet client\n"
+		CMD_KEY_IPV4_HELP
+		"telnet server port\n");
+
+#ifdef PL_SSH_MODULE
+DEFUN (ssh_client_opt,
+		ssh_client_opt_cmd,
+	    "ssh URL",
+		"SSH configure\n"
+		"Remove URL Argument (ssh://user[:password@] ip [:port])\n")
+{
+	int ret = CMD_SUCCESS;
+	os_url_t spliurl;
+	char *url = NULL;
+	url = argv[0];
+
+	memset(&spliurl, 0, sizeof(os_url_t));
+
+	if(os_url_split(url, &spliurl) == OK)
+	{
+		if(strstr(spliurl.proto,"ssh"))
+			ret = ssh_client(vty, spliurl.host, spliurl.port, spliurl.user, spliurl.pass);
+		else
+		{
+			vty_out(vty, " URL protocol '%s' is not support%s", spliurl.proto, VTY_NEWLINE);
+			os_url_free(&spliurl);
+			return CMD_WARNING;
+		}
+	}
+	else
+	{
+		vty_out(vty, "URL format is warning.%s", VTY_NEWLINE);
+		os_url_free(&spliurl);
+		return CMD_WARNING;
+	}
+	os_url_free(&spliurl);
+	return CMD_SUCCESS;
+}
+#endif
+
 
 
 DEFUN (ping_start,
@@ -283,7 +345,7 @@ ALIAS (ping_start,
 		CMD_KEY_IPV4_HELP
 		"Host name\n"
 		"count packet configure\n"
-		"count value\n")
+		"count value\n");
 
 DEFUN (ping_len_start,
 		ping_start_len_cmd,
@@ -430,6 +492,10 @@ int systools_cmd_init()
 
 
 	install_element (ENABLE_NODE, &telnet_client_cmd);
+	install_element (ENABLE_NODE, &telnet_client_port_cmd);
+#ifdef PL_SSH_MODULE
+	install_element (ENABLE_NODE, &ssh_client_opt_cmd);
+#endif
 
 	install_element (ENABLE_NODE, &ping_start_cmd);
 	install_element (ENABLE_NODE, &ping_start_cnt_cmd);

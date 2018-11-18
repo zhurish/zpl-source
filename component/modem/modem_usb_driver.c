@@ -37,7 +37,7 @@ static int usb_event_socket_handle(int timeout);
 static modem_usb_driver musb_driver[MODEM_USB_DRIVER_MAX];
 static int usb_driver_startup_init = 0;
 
-static char *usbkey_channel[USB_KEY_CHANNEL_MAX] =
+static const char *usbkey_channel[USB_KEY_CHANNEL_MAX] =
 {
 	"none",
 	"2-1:1",
@@ -336,6 +336,19 @@ int show_modem_usb_driver(struct vty *vty)
 	return ERROR;
 }
 
+int show_modem_usb_key_driver(struct vty *vty)
+{
+	int i = 0;
+	assert(vty);
+	for(i = 0; i < USB_KEY_CHANNEL_MAX; i++)
+	{
+		if(i == 0)
+			vty_out(vty, " USB HW Channel Information:%s", VTY_NEWLINE);
+		vty_out(vty, " HW Channel    %d : %s%s", i, usbkey_channel[i], VTY_NEWLINE);
+		//vty_out(vty, " TTY	:%s", VTY_NEWLINE);
+	}
+	return OK;
+}
 
 static int modem_usb_driver_tty_probe(modem_usb_driver *driver)
 {
@@ -353,7 +366,10 @@ static int modem_usb_driver_tty_probe(modem_usb_driver *driver)
 		devname[i] = driver->devname[i].devname;
 	}
 	if(os_strlen(driver->netdevname))
+	{
+		os_memset(modem_driver->eth_name, 0, sizeof(modem_driver->eth_name));
 		os_strcpy(modem_driver->eth_name, driver->netdevname);
+	}
 	modem_driver_tty_probe(modem_driver, devname);
 	return OK;
 }

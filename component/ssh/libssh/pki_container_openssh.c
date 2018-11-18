@@ -102,8 +102,8 @@ static int pki_openssh_import_privkey_blob(ssh_buffer key_blob_buffer,
             ssh_pki_log("Invalid ed25519 key len");
             goto fail;
         }
-        key->ed25519_privkey = malloc(ED25519_SK_LEN);
-        key->ed25519_pubkey = malloc(ED25519_PK_LEN);
+        key->ed25519_privkey = ssh_malloc(ED25519_SK_LEN);
+        key->ed25519_pubkey = ssh_malloc(ED25519_PK_LEN);
         if(key->ed25519_privkey == NULL || key->ed25519_pubkey == NULL){
             goto fail;
         }
@@ -304,7 +304,7 @@ ssh_key ssh_pki_openssh_privkey_import(const char *text_key,
         SSH_LOG(SSH_LOG_WARN, "Not an OpenSSH private key (no footer)");
         goto error;
     }
-    base64 = malloc(end - ptr + 1);
+    base64 = ssh_malloc(end - ptr + 1);
     if (base64 == NULL){
         goto error;
     }

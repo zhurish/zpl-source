@@ -325,42 +325,42 @@ int os_sem_give(os_sem_t * sem)
 
 os_sem_t * os_sem_init()
 {
-	os_sem_t *sem = os_malloc(sizeof(os_sem_t));
-	if(sem)
+	os_sem_t *ossem = os_malloc(sizeof(os_sem_t));
+	if(ossem)
 	{
-		if(sem_init(&sem->sem, 0, 0) == 0)
-			return sem;
+		if(sem_init(&ossem->sem, 0, 0) == 0)
+			return ossem;
 		else
 		{
-			os_free(sem);
+			os_free(ossem);
 			return NULL;
 		}
 	}
 	return NULL;
 }
 
-int os_sem_give(os_sem_t *sem)
+int os_sem_give(os_sem_t *ossem)
 {
-	if(sem)
-		return sem_post(&sem->sem);
+	if(ossem)
+		return sem_post(&ossem->sem);
 	return ERROR;
 }
 
-int os_sem_take(os_sem_t *sem, int wait)
+int os_sem_take(os_sem_t *ossem, int wait)
 {
-	if(sem == NULL)
+	if(ossem == NULL)
 		return ERROR;
 	if(wait == OS_WAIT_NO)
-		return sem_trywait(&sem->sem);
+		return sem_trywait(&ossem->sem);
 	else if(wait == OS_WAIT_FOREVER)
-		return sem_wait(&sem->sem);
+		return sem_wait(&ossem->sem);
 	else
 	{
 		int ret = 0;
 		struct timespec value;
 		value.tv_sec=time(NULL) + wait;
 
-		while ((ret = sem_timedwait(&sem->sem, &value)) == -1 && errno == EINTR)
+		while ((ret = sem_timedwait(&ossem->sem, &value)) == -1 && errno == EINTR)
 			continue;
 		/* Restart if interrupted by handler */
 		//if(sem_timedwait (&sem->sem, &value)==0)
@@ -373,24 +373,24 @@ int os_sem_take(os_sem_t *sem, int wait)
 	return ERROR;
 }
 
-int os_sem_exit(os_sem_t *sem)
+int os_sem_exit(os_sem_t *ossem)
 {
-	if(sem)
-		return sem_destroy(&sem->sem);
+	if(ossem)
+		return sem_destroy(&ossem->sem);
 	return ERROR;
 }
 
 
 os_mutex_t * os_mutex_init()
 {
-	os_mutex_t *mutex = os_malloc(sizeof(os_mutex_t));
-	if(mutex)
+	os_mutex_t *osmutex = os_malloc(sizeof(os_mutex_t));
+	if(osmutex)
 	{
-		if(pthread_mutex_init(&mutex->mutex, NULL) == 0)
-			return mutex;
+		if(pthread_mutex_init(&osmutex->mutex, NULL) == 0)
+			return osmutex;
 		else
 		{
-			os_free(mutex);
+			os_free(osmutex);
 			return NULL;
 		}
 	}
@@ -398,28 +398,28 @@ os_mutex_t * os_mutex_init()
 }
 
 
-int os_mutex_unlock(os_mutex_t *mutex)
+int os_mutex_unlock(os_mutex_t *osmutex)
 {
-	if(mutex)
-		return pthread_mutex_unlock(&mutex->mutex);
+	if(osmutex)
+		return pthread_mutex_unlock(&osmutex->mutex);
 	return ERROR;
 }
 
-int os_mutex_lock(os_mutex_t *mutex, int wait)
+int os_mutex_lock(os_mutex_t *osmutex, int wait)
 {
-	if(mutex == NULL)
+	if(osmutex == NULL)
 		return ERROR;
 	if(wait == OS_WAIT_NO)
-		return pthread_mutex_trylock(&mutex->mutex);
+		return pthread_mutex_trylock(&osmutex->mutex);
 	else if(wait == OS_WAIT_FOREVER)
-		return pthread_mutex_lock(&mutex->mutex);
+		return pthread_mutex_lock(&osmutex->mutex);
 	else
 	{
 		int ret = 0;
 		struct timespec value;
 		value.tv_sec=time(NULL) + wait;
 
-		while ((ret = pthread_mutex_timedlock(&mutex->mutex, &value)) == -1 && errno == EINTR)
+		while ((ret = pthread_mutex_timedlock(&osmutex->mutex, &value)) == -1 && errno == EINTR)
 			continue;
 		/* Restart if interrupted by handler */
 		//if(sem_timedwait (&sem->sem, &value)==0)
@@ -432,10 +432,10 @@ int os_mutex_lock(os_mutex_t *mutex, int wait)
 	return ERROR;
 }
 
-int os_mutex_exit(os_mutex_t *mutex)
+int os_mutex_exit(os_mutex_t *osmutex)
 {
-	if(mutex)
-		return pthread_mutex_destroy(&mutex->mutex);
+	if(osmutex)
+		return pthread_mutex_destroy(&osmutex->mutex);
 	return ERROR;
 }
 

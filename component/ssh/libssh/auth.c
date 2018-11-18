@@ -760,7 +760,7 @@ void ssh_agent_state_free(void *data) {
     if (state) {
         ssh_string_free_char(state->comment);
         ssh_key_free(state->pubkey);
-        free (state);
+        SAFE_FREE (state);
     }
 }
 
@@ -798,7 +798,7 @@ int ssh_userauth_agent(ssh_session session,
         return SSH_AUTH_DENIED;
     }
     if (!session->agent_state){
-        session->agent_state = malloc(sizeof(struct ssh_agent_state_struct));
+        session->agent_state = ssh_malloc(sizeof(struct ssh_agent_state_struct));
         if (!session->agent_state){
             ssh_set_error_oom(session);
             return SSH_AUTH_ERROR;
@@ -936,7 +936,7 @@ int ssh_userauth_publickey_auto(ssh_session session,
     }
     if (!session->auth_auto_state){
         session->auth_auto_state =
-                malloc(sizeof(struct ssh_auth_auto_state_struct));
+                ssh_malloc(sizeof(struct ssh_auth_auto_state_struct));
         if (!session->auth_auto_state){
             ssh_set_error_oom(session);
             return SSH_AUTH_ERROR;
@@ -1231,7 +1231,7 @@ int ssh_userauth_agent_pubkey(ssh_session session,
 ssh_kbdint ssh_kbdint_new(void) {
     ssh_kbdint kbd;
 
-    kbd = calloc(1, sizeof(struct ssh_kbdint_struct));
+    kbd = ssh_calloc(1, sizeof(struct ssh_kbdint_struct));
     if (kbd == NULL) {
         return NULL;
     }
@@ -1480,7 +1480,7 @@ SSH_PACKET_CALLBACK(ssh_packet_userauth_info_request) {
 
   session->kbdint->nprompts = nprompts;
   session->kbdint->nanswers = nprompts;
-  session->kbdint->prompts = malloc(nprompts * sizeof(char *));
+  session->kbdint->prompts = ssh_malloc(nprompts * sizeof(char *));
   if (session->kbdint->prompts == NULL) {
     session->kbdint->nprompts = 0;
     ssh_set_error_oom(session);
@@ -1491,7 +1491,7 @@ SSH_PACKET_CALLBACK(ssh_packet_userauth_info_request) {
   }
   memset(session->kbdint->prompts, 0, nprompts * sizeof(char *));
 
-  session->kbdint->echo = malloc(nprompts);
+  session->kbdint->echo = ssh_malloc(nprompts);
   if (session->kbdint->echo == NULL) {
     session->kbdint->nprompts = 0;
     ssh_set_error_oom(session);
@@ -1757,7 +1757,7 @@ int ssh_userauth_kbdint_setanswer(ssh_session session, unsigned int i,
   }
 
   if (session->kbdint->answers == NULL) {
-    session->kbdint->answers = malloc(sizeof(char*) * session->kbdint->nprompts);
+    session->kbdint->answers = ssh_malloc(sizeof(char*) * session->kbdint->nprompts);
     if (session->kbdint->answers == NULL) {
       ssh_set_error_oom(session);
       return -1;
@@ -1770,7 +1770,7 @@ int ssh_userauth_kbdint_setanswer(ssh_session session, unsigned int i,
     SAFE_FREE(session->kbdint->answers[i]);
   }
 
-  session->kbdint->answers[i] = strdup(answer);
+  session->kbdint->answers[i] = ssh_strdup(answer);
   if (session->kbdint->answers[i] == NULL) {
     ssh_set_error_oom(session);
     return -1;

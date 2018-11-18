@@ -299,6 +299,21 @@ static void md5_calc(const uint8_t *b64, md5_ctxt * ctxt)
 	ctxt->md5_std += D;
 }
 
+void	MD5_Init(MD5_CTX *context)
+{
+	md5_init(context);
+}
+
+void	MD5_Update(MD5_CTX *context, const unsigned char *buf, size_t len)
+{
+	md5_loop(context, buf, len);
+}
+
+void	MD5_Final(unsigned char *buf, MD5_CTX *context)
+{
+	md5_pad(context);
+	md5_result(buf, context);
+}
 /* From RFC 2104 */
 void
 hmac_md5(text, text_len, key, key_len, digest)

@@ -153,7 +153,7 @@ int modem_qnwinfo_split(modem_client_t *client, char *buf)
 				client->nw_band, &client->nw_channel);
 		client->operator = oper;
 
-		MODEM_DEBUG("split :%s,%x,%s,%d", client->nw_act, client->operator, client->nw_band, client->nw_channel);
+		//MODEM_DEBUG("split :%s,%x,%s,%d", client->nw_act, client->operator, client->nw_band, client->nw_channel);
 		//strchr_empty(client->nw_band, ' ');
 		//strchr_empty_step(client->nw_act, ' ', 1);
 /*

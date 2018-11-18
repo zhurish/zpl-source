@@ -44,6 +44,7 @@ struct ssh_key_struct {
     int flags;
     const char *type_c; /* Don't free it ! it is static */
     int ecdsa_nid;
+    int	enca_size;
 #ifdef HAVE_LIBGCRYPT
     gcry_sexp_t dsa;
     gcry_sexp_t rsa;

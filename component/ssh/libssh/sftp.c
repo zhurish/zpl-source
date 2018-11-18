@@ -73,7 +73,7 @@ static void status_msg_free(sftp_status_message status);
 static sftp_ext sftp_ext_new(void) {
   sftp_ext ext;
 
-  ext = malloc(sizeof(struct sftp_ext_struct));
+  ext = ssh_malloc(sizeof(struct sftp_ext_struct));
   if (ext == NULL) {
     return NULL;
   }
@@ -108,7 +108,7 @@ sftp_session sftp_new(ssh_session session){
     return NULL;
   }
 
-  sftp = malloc(sizeof(struct sftp_session_struct));
+  sftp = ssh_malloc(sizeof(struct sftp_session_struct));
   if (sftp == NULL) {
     ssh_set_error_oom(session);
 
@@ -157,7 +157,7 @@ sftp_session sftp_new_channel(ssh_session session, ssh_channel channel){
     return NULL;
   }
 
-  sftp = malloc(sizeof(struct sftp_session_struct));
+  sftp = ssh_malloc(sizeof(struct sftp_session_struct));
   if (sftp == NULL) {
     ssh_set_error_oom(session);
 
@@ -183,7 +183,7 @@ sftp_session sftp_new_channel(ssh_session session, ssh_channel channel){
 sftp_session sftp_server_new(ssh_session session, ssh_channel chan){
   sftp_session sftp = NULL;
 
-  sftp = malloc(sizeof(struct sftp_session_struct));
+  sftp = ssh_malloc(sizeof(struct sftp_session_struct));
   if (sftp == NULL) {
     ssh_set_error_oom(session);
     return NULL;
@@ -317,7 +317,7 @@ sftp_packet sftp_packet_read(sftp_session sftp) {
   size_t size;
   int r, s;
 
-  packet = malloc(sizeof(struct sftp_packet_struct));
+  packet = ssh_malloc(sizeof(struct sftp_packet_struct));
   if (packet == NULL) {
     ssh_set_error_oom(sftp->session);
     return NULL;
@@ -407,7 +407,7 @@ int sftp_get_error(sftp_session sftp) {
 static sftp_message sftp_message_new(sftp_session sftp){
   sftp_message msg = NULL;
 
-  msg = malloc(sizeof(struct sftp_message_struct));
+  msg = ssh_malloc(sizeof(struct sftp_message_struct));
   if (msg == NULL) {
     ssh_set_error_oom(sftp->session);
     return NULL;
@@ -508,7 +508,7 @@ void sftp_packet_free(sftp_packet packet) {
   }
 
   ssh_buffer_free(packet->payload);
-  free(packet);
+  SAFE_FREE(packet);
 }
 
 /* Initialize the sftp session with the server. */
@@ -573,7 +573,7 @@ int sftp_init(sftp_session sftp) {
         ext_name, ext_data);
 
     count++;
-    tmp = realloc(sftp->ext->name, count * sizeof(char *));
+    tmp = ssh_realloc(sftp->ext->name, count * sizeof(char *));
     if (tmp == NULL) {
       ssh_set_error_oom(sftp->session);
       SAFE_FREE(ext_name);
@@ -583,7 +583,7 @@ int sftp_init(sftp_session sftp) {
     tmp[count - 1] = ext_name;
     sftp->ext->name = tmp;
 
-    tmp = realloc(sftp->ext->data, count * sizeof(char *));
+    tmp = ssh_realloc(sftp->ext->data, count * sizeof(char *));
     if (tmp == NULL) {
       ssh_set_error_oom(sftp->session);
       SAFE_FREE(ext_name);
@@ -672,7 +672,7 @@ int sftp_extension_supported(sftp_session sftp, const char *name,
 static sftp_request_queue request_queue_new(sftp_message msg) {
   sftp_request_queue queue = NULL;
 
-  queue = malloc(sizeof(struct sftp_request_queue_struct));
+  queue = ssh_malloc(sizeof(struct sftp_request_queue_struct));
   if (queue == NULL) {
     ssh_set_error_oom(msg->sftp->session);
     return NULL;
@@ -775,7 +775,7 @@ static sftp_status_message parse_status_msg(sftp_message msg){
     return NULL;
   }
 
-  status = malloc(sizeof(struct sftp_status_message_struct));
+  status = ssh_malloc(sizeof(struct sftp_status_message_struct));
   if (status == NULL) {
     ssh_set_error_oom(msg->sftp->session);
     return NULL;
@@ -803,9 +803,9 @@ static sftp_status_message parse_status_msg(sftp_message msg){
       return NULL;
   }
   if (status->errormsg == NULL)
-    status->errormsg = strdup("No error message in packet");
+    status->errormsg = ssh_strdup("No error message in packet");
   if (status->langmsg == NULL)
-    status->langmsg = strdup("");
+    status->langmsg = ssh_strdup("");
   if (status->errormsg == NULL || status->langmsg == NULL) {
     ssh_set_error_oom(msg->sftp->session);
     status_msg_free(status);
@@ -834,7 +834,7 @@ static sftp_file parse_handle_msg(sftp_message msg){
     return NULL;
   }
 
-  file = malloc(sizeof(struct sftp_file_struct));
+  file = ssh_malloc(sizeof(struct sftp_file_struct));
   if (file == NULL) {
     ssh_set_error_oom(msg->sftp->session);
     return NULL;
@@ -919,16 +919,16 @@ sftp_dir sftp_opendir(sftp_session sftp, const char *path){
       file = parse_handle_msg(msg);
       sftp_message_free(msg);
       if (file != NULL) {
-        dir = malloc(sizeof(struct sftp_dir_struct));
+        dir = ssh_malloc(sizeof(struct sftp_dir_struct));
         if (dir == NULL) {
           ssh_set_error_oom(sftp->session);
-          free(file);
+          SAFE_FREE(file);
           return NULL;
         }
         ZERO_STRUCTP(dir);
 
         dir->sftp = sftp;
-        dir->name = strdup(path);
+        dir->name = ssh_strdup(path);
         if (dir->name == NULL) {
           SAFE_FREE(dir);
           SAFE_FREE(file);
@@ -963,7 +963,7 @@ static sftp_attributes sftp_parse_attr_4(sftp_session sftp, ssh_buffer buf,
   /* unused member variable */
   (void) expectnames;
 
-  attr = malloc(sizeof(struct sftp_attributes_struct));
+  attr = ssh_malloc(sizeof(struct sftp_attributes_struct));
   if (attr == NULL) {
     ssh_set_error_oom(sftp->session);
     return NULL;
@@ -1159,7 +1159,7 @@ static char *sftp_parse_longname(const char *longname,
 
     /* There is no strndup on windows */
     len = q - p + 1;
-    x = malloc(len);
+    x = ssh_malloc(len);
     if (x == NULL) {
       return NULL;
     }
@@ -1189,7 +1189,7 @@ static sftp_attributes sftp_parse_attr_3(sftp_session sftp, ssh_buffer buf,
     sftp_attributes attr;
     int rc;
 
-    attr = malloc(sizeof(struct sftp_attributes_struct));
+    attr = ssh_malloc(sizeof(struct sftp_attributes_struct));
     if (attr == NULL) {
         ssh_set_error_oom(sftp->session);
         return NULL;
@@ -1978,7 +1978,7 @@ ssize_t sftp_write(sftp_file file, const void *buf, size_t count) {
     ssh_buffer_free(buffer);
     return -1;
   }
-  packetlen=buffer_get_rest_len(buffer);
+  packetlen=ssh_buffer_get_rest_len(buffer);
   len = sftp_packet_write(file->sftp, SSH_FXP_WRITE, buffer);
   ssh_buffer_free(buffer);
   if (len < 0) {
@@ -2674,7 +2674,7 @@ static sftp_statvfs_t sftp_parse_statvfs(sftp_session sftp, ssh_buffer buf) {
   sftp_statvfs_t  statvfs;
   int rc;
 
-  statvfs = malloc(sizeof(struct sftp_statvfs_struct));
+  statvfs = ssh_malloc(sizeof(struct sftp_statvfs_struct));
   if (statvfs == NULL) {
     ssh_set_error_oom(sftp->session);
     return NULL;

@@ -800,6 +800,7 @@ static int iw_client_try_connect(iw_client_t *iw_client, iw_client_ap_t *ap, int
 	return ERROR;
 }
 
+
 static int iw_client_connect(iw_client_t *iw_client, iw_client_ap_t *ap, u_int8 *bssid)
 {
 	int count = 10;

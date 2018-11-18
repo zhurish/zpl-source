@@ -1,6 +1,16 @@
 #ifndef __LIBSSH_CONFIG_H__
 #define __LIBSSH_CONFIG_H__
 
+#include "config.h"
+#include "zebra.h"
+#include "memory.h"
+#include "memtypes.h"
+/*
+#include "vector.h"
+#include "host.h"
+#include "vty.h"
+#include "vty_user.h"
+*/
 
 /* Name of package */
 #define PACKAGE "libssh"
@@ -24,15 +34,8 @@
 
 #define SSH_STD_REDIST
 
-#ifndef SSH_STD_REDIST
-#define ssh_stdin		stdin
-#define ssh_stdout		stdout
-#define ssh_stderr		stderr
-#else
-#define ssh_stdin		_ssh_stdin()
-#define ssh_stdout		_ssh_stdout()
-#define ssh_stderr		_ssh_stderr()
-#endif
+#define SSH_BASE_EX
+#define SSH_BASE_DIR	BASE_DIR
 
 /************************** HEADER FILES *************************/
 
@@ -132,7 +135,7 @@
 #define HAVE_CFMAKERAW 1
 
 /* Define to 1 if you have the `getaddrinfo' function. */
-#define HAVE_GETADDRINFO 1
+//#define HAVE_GETADDRINFO 1
 
 /* Define to 1 if you have the `poll' function. */
 #define HAVE_POLL 1

@@ -344,7 +344,7 @@ thread_trim_head(struct thread_list *list)
 /* Return remain time in second. */
 unsigned long thread_timer_remain_second(struct thread *thread)
 {
-	os_get_relative(&thread->master->relative_time);
+	os_get_monotonic(&thread->master->relative_time);
 
 	if (thread->u.sands.tv_sec - thread->master->relative_time.tv_sec > 0)
 		return thread->u.sands.tv_sec - thread->master->relative_time.tv_sec;
@@ -354,7 +354,7 @@ unsigned long thread_timer_remain_second(struct thread *thread)
 
 struct timeval thread_timer_remain(struct thread *thread)
 {
-	os_get_relative(&thread->master->relative_time);
+	os_get_monotonic(&thread->master->relative_time);
 	return os_timeval_subtract(thread->u.sands, thread->master->relative_time);
 }
 
@@ -494,7 +494,7 @@ funcname_thread_add_timer_timeval(struct thread_master *m,
 
 	/* Do we need jitter here? */
 
-	os_get_relative(&m->relative_time);
+	os_get_monotonic(&m->relative_time);
 	alarm_time.tv_sec = m->relative_time.tv_sec + time_relative->tv_sec;
 	alarm_time.tv_usec = m->relative_time.tv_usec + time_relative->tv_usec;
 
@@ -894,7 +894,7 @@ thread_fetch(struct thread_master *m, struct thread *fetch)
 		/* Calculate select wait timer if nothing else to do */
 		if (m->ready.count == 0)
 		{
-			os_get_relative(&m->relative_time);
+			os_get_monotonic(&m->relative_time);
 			timer_wait = thread_timer_wait(m->timer, &timer_val);
 			timer_wait_bg = thread_timer_wait(m->background, &timer_val_bg);
 
@@ -949,7 +949,7 @@ thread_fetch(struct thread_master *m, struct thread *fetch)
 		}
 		if (m->mutex)
 			os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
-		os_get_relative(&m->relative_time);
+		os_get_monotonic(&m->relative_time);
 		thread_timer_process(m->timer, &m->relative_time);
 		if (m->mutex)
 			os_mutex_unlock(m->mutex);
@@ -1003,7 +1003,7 @@ unsigned long thread_consumed_time(struct timeval *now, struct timeval *start,
  than calling getrusage. */
 int thread_should_yield(struct thread *thread)
 {
-	os_get_relative(&thread->master->relative_time);
+	os_get_monotonic(&thread->master->relative_time);
 	unsigned long t = os_timeval_elapsed(thread->master->relative_time,
 			thread->real);
 	return ((t > THREAD_YIELD_TIME_SLOT) ? t : 0);
@@ -1011,7 +1011,7 @@ int thread_should_yield(struct thread *thread)
 
 void thread_getrusage(struct timeval *real)
 {
-	os_get_relative(real);
+	os_get_monotonic(real);
 }
 
 struct thread *thread_current_get()

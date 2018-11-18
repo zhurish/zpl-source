@@ -77,6 +77,8 @@ extern int host_config_exit(void);
 extern const char *host_config_get (void);
 extern void host_config_set (char *);
 
+const char * host_name_get (void);
+
 enum
 {
 	API_SET_NONE_CMD,

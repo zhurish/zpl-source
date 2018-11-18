@@ -17,7 +17,9 @@ typedef struct pal_stack_s
 	int (*ip_stack_change)(struct interface *ifp);
 	int (*ip_stack_up)(struct interface *ifp);
 	int (*ip_stack_down)(struct interface *ifp);
-	int (*ip_stack_update_flag)(struct interface *ifp);
+	int (*ip_stack_refresh_flag)(struct interface *ifp);
+	int (*ip_stack_update_flag)(struct interface *ifp, int flags);
+
 	int (*ip_stack_ifindex)(char *name);
 	int (*ip_stack_set_vr)(struct interface *ifp, vrf_id_t vrf_id);
 	int (*ip_stack_set_mtu)(struct interface *ifp, int mtu);
@@ -67,7 +69,8 @@ extern int pal_interface_change(struct interface *ifp);
 
 extern int pal_interface_up(struct interface *ifp);
 extern int pal_interface_down(struct interface *ifp);
-extern int pal_interface_update_flag(struct interface *ifp);
+extern int pal_interface_refresh_flag(struct interface *ifp);
+extern int pal_interface_update_flag(struct interface *ifp, int flags);
 extern int pal_interface_ifindex(char *k_name);
 
 extern int pal_interface_set_vr(struct interface *ifp, vrf_id_t vrf_id);

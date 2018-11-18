@@ -56,6 +56,7 @@ enum node_type
   KEYCHAIN_NODE,		/* Key-chain node. */
   KEYCHAIN_KEY_NODE,		/* Key-chain key node. */
   DHCPS_NODE,				/* DHDP server*/
+
   LOOPBACK_INTERFACE_NODE,	/* Loopback Interface mode node. */
 
   SERIAL_INTERFACE_NODE,	/* Serial Interface mode node. */

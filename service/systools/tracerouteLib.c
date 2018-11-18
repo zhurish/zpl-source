@@ -241,7 +241,7 @@ send_next:
 		os_sleep(TRACEROUTE_INTERVAL);
 		for (num = 0; num < 3; num++)
 		{
-			os_gettime(OS_CLK_REALTIME, pPS->pBufTime); /* load current tick count */
+			os_gettime(OS_CLK_MONOTONIC, pPS->pBufTime); /* load current tick count */
 			memcpy(&now, pPS->pBufTime, sizeof(struct timeval));
 			pPS->pBufIcmp->icmp_seq = seq++; /* increment seq number */
 			pPS->pBufIcmp->icmp_cksum = 0;
@@ -428,7 +428,7 @@ static int tracerouteRxPrint(TRACEROUTE_STAT * pPS, /* traceroute stats structur
 	struct timeval now;
 	struct vty *vty = pPS->vty;
 
-	os_gettime(OS_CLK_REALTIME, &now);
+	os_gettime(OS_CLK_MONOTONIC, &now);
 
 	hlen = ip->ip_hl << 2;
 

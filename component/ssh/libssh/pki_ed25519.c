@@ -30,12 +30,12 @@ int pki_key_generate_ed25519(ssh_key key)
 {
     int rc;
 
-    key->ed25519_privkey = malloc(sizeof (ed25519_privkey));
+    key->ed25519_privkey = ssh_malloc(sizeof (ed25519_privkey));
     if (key->ed25519_privkey == NULL) {
         goto error;
     }
 
-    key->ed25519_pubkey = malloc(sizeof (ed25519_pubkey));
+    key->ed25519_pubkey = ssh_malloc(sizeof (ed25519_pubkey));
     if (key->ed25519_pubkey == NULL) {
         goto error;
     }
@@ -63,7 +63,7 @@ int pki_ed25519_sign(const ssh_key privkey,
     uint8_t *buffer;
     unsigned long long dlen = 0;
 
-    buffer = malloc(hlen + ED25519_SIG_LEN);
+    buffer = ssh_malloc(hlen + ED25519_SIG_LEN);
     if (buffer == NULL) {
         return SSH_ERROR;
     }
@@ -76,7 +76,7 @@ int pki_ed25519_sign(const ssh_key privkey,
     if (rc != 0) {
         goto error;
     }
-    sig->ed25519_sig = malloc(ED25519_SIG_LEN);
+    sig->ed25519_sig = ssh_malloc(ED25519_SIG_LEN);
     if (sig->ed25519_sig == NULL) {
         goto error;
     }
@@ -109,12 +109,12 @@ int pki_ed25519_verify(const ssh_key pubkey,
         return SSH_ERROR;
     }
 
-    buffer = malloc(hlen + ED25519_SIG_LEN);
+    buffer = ssh_malloc(hlen + ED25519_SIG_LEN);
     if (buffer == NULL) {
         return SSH_ERROR;
     }
 
-    buffer2 = malloc(hlen + ED25519_SIG_LEN);
+    buffer2 = ssh_malloc(hlen + ED25519_SIG_LEN);
     if (buffer2 == NULL) {
         goto error;
     }
@@ -204,7 +204,7 @@ int pki_ed25519_key_dup(ssh_key new, const ssh_key key)
     }
 
     if (key->ed25519_privkey != NULL) {
-        new->ed25519_privkey = malloc(ED25519_SK_LEN);
+        new->ed25519_privkey = ssh_malloc(ED25519_SK_LEN);
         if (new->ed25519_privkey == NULL) {
             return SSH_ERROR;
         }
@@ -212,7 +212,7 @@ int pki_ed25519_key_dup(ssh_key new, const ssh_key key)
     }
 
     if (key->ed25519_pubkey != NULL) {
-        new->ed25519_pubkey = malloc(ED25519_PK_LEN);
+        new->ed25519_pubkey = ssh_malloc(ED25519_PK_LEN);
         if (new->ed25519_pubkey == NULL) {
             SAFE_FREE(new->ed25519_privkey);
             return SSH_ERROR;
@@ -297,7 +297,7 @@ int pki_ed25519_sig_from_blob(ssh_signature sig, ssh_string sig_blob)
         return SSH_ERROR;
     }
 
-    sig->ed25519_sig = malloc(ED25519_SIG_LEN);
+    sig->ed25519_sig = ssh_malloc(ED25519_SIG_LEN);
     if (sig->ed25519_sig == NULL){
         return SSH_ERROR;
     }

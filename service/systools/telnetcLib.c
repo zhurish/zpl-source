@@ -179,7 +179,7 @@ static int telnetHostInputParse
                 {
                 /* pass character to stdout */
 
-                bytesWritten = write (session->localFd, &ch, 1);
+                bytesWritten = write (session->loutfd, &ch, 1);
 
                 if (bytesWritten != 1)
                     {
@@ -200,7 +200,7 @@ static int telnetHostInputParse
                 {
                 /* pass character to stdout */
 
-                bytesWritten = write (session->localFd, &ch, 1);
+                bytesWritten = write (session->loutfd, &ch, 1);
 
                 if (bytesWritten != 1)
                     {
@@ -345,21 +345,43 @@ static int telnetHostInputParse
 
 static int telnetTask(TELNETC_SESSION_DATA *session)
 {
-	int status = ERROR;
 	int width = 0;
 	int bytesRead = 0;
 	int bytesWritten = 0;
 	char ch = 0;
 	int i = 0;
 	fd_set readFds;
+	struct vty *vty = session->vty;
+	while(session->connect != TRUE)
+	{
+		if(session->state == SCTD_EMPTY)
+			return telnetExit(session);
+		os_msleep(10);
+	}
+	vty_out(vty, "Connected to %s.%s", session->hostname, VTY_NEWLINE);
+	vty_out(vty, "Exit character is '%s'.%s", TELNET_ESC_STRING, VTY_NEWLINE);
+	/* send our DO commands to host */
+	session->echoIsDone = FALSE;
+	if (telnetCmdSend((char) DO, (char) TELOPT_ECHO, session) == ERROR)
+	{
+		return telnetExit(session);
+	}
+	session->sgaIsDone = FALSE;
+	if (telnetCmdSend((char) DO, (char) TELOPT_SGA, session) == ERROR)
+	{
+		return telnetExit(session);
+	}
+	session->hostStreamState = TELNET_STATE_NORMAL;
 
 	while (1)
 	{
+		if(session->state == SCTD_EMPTY)
+			return telnetExit(session);
 		FD_ZERO(&readFds);
 		//if (session->echoIsDone && session->sgaIsDone)
-		FD_SET(session->localFd, &readFds);
+		FD_SET(session->linfd, &readFds);
 		FD_SET(session->hostFd, &readFds);
-		width = max(session->localFd, session->hostFd) + 1;
+		width = max(session->linfd, session->hostFd) + 1;
 		/* wait for input */
 		//fprintf(stdout, "%s wait for input\r\n", __func__);
 		if (select(width, &readFds, NULL, NULL, NULL) == ERROR)
@@ -370,13 +392,13 @@ static int telnetTask(TELNETC_SESSION_DATA *session)
 
 		/* process stdin stream */
 
-		if (FD_ISSET(session->localFd, &readFds))
+		if (FD_ISSET(session->linfd, &readFds))
 		{
 			/* process stdin stream and get bytes from stdin */
 			if (session->echoIsDone && session->sgaIsDone)
 			{
 				memset(session->pBuf, 0, sizeof(session->pBuf));
-				bytesRead = read(session->localFd, session->pBuf,
+				bytesRead = read(session->linfd, session->pBuf,
 						sizeof(session->pBuf));
 			}
 			else
@@ -454,15 +476,6 @@ int telnet(struct vty *vty, char * pHostName, int port)
 	int status = ERROR;
 	//char pHostIpDottedName[128];
 	struct sockaddr_in hostSockAddr;
-/*
-	int width;
-	int bytesRead;
-	int bytesWritten;
-	char ch;
-	int i;
-	struct timeval tv;
-	struct fd_set readFds;
-*/
 
 	TELNETC_SESSION_DATA *session = NULL;
 
@@ -473,7 +486,10 @@ int telnet(struct vty *vty, char * pHostName, int port)
 	/* make sure the maximum allowed connection is not reached */
 
 	session->state = SCTD_USED;
-
+	session->linfd = vty->fd;
+	session->loutfd = vty->wfd;
+	session->vty = vty;
+	strcpy(session->hostname, pHostName);
 	/* get the 32-bit version of the host IP address */
 
 	if (pHostName == NULL)
@@ -483,16 +499,12 @@ int telnet(struct vty *vty, char * pHostName, int port)
 	}
 
 	/* set port to default (23) if zero */
-
-	if (port == 0)
-		port = TELNET_PORT;
-
-	//bzero ((char *) &hints, sizeof (struct addrinfo));
+	bzero ((char *) &hostSockAddr, sizeof (struct sockaddr_in));
 
 	/* establish TCP/IP connection to host */
 	vty_ansync_enable(vty, TRUE);
-	vty_cancel(vty, 1);
-	vty_out(vty, "%sTrying %s...%s", VTY_NEWLINE, pHostName, VTY_NEWLINE);
+
+	vty_out(vty, "%sTrying %s...%s", VTY_NEWLINE, session->hostname, VTY_NEWLINE);
 
 	session->hostFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
@@ -508,8 +520,20 @@ int telnet(struct vty *vty, char * pHostName, int port)
 	tv.tv_usec = 0;
 */
 	hostSockAddr.sin_family = AF_INET;
-	hostSockAddr.sin_addr.s_addr = inet_addr(pHostName);
-	hostSockAddr.sin_port = htons(port);
+	hostSockAddr.sin_addr.s_addr = inet_addr(session->hostname);
+	if(port)
+		hostSockAddr.sin_port = htons(port);
+	else
+		hostSockAddr.sin_port = htons(TELNET_PORT);
+
+	if(os_task_create("telnet-client", OS_TASK_DEFAULT_PRIORITY,
+               0, telnetTask, session, OS_TASK_DEFAULT_STACK) <= 0)
+	{
+		vty_ansync_enable(vty, FALSE);
+		telnetExit(session);
+		return ERROR;
+	}
+
 
 	status = connect(session->hostFd, (struct sockaddr *) &hostSockAddr,
 			sizeof(struct sockaddr));
@@ -517,133 +541,14 @@ int telnet(struct vty *vty, char * pHostName, int port)
 	if (status != OK)
 	{
 		vty_ansync_enable(vty, FALSE);
-		//log_err (TELNET_LOG | LOG_ERRNO, "connect failure.");
-		return telnetExit(session);
+		session->state = SCTD_EMPTY;
+		return ERROR;
 	}
-
-	/* indicate success */
-
-	session->localFd = vty->fd;
-	session->vty = vty;
-
-	vty_out(vty, "Connected to %s.%s", pHostName, VTY_NEWLINE);
-	vty_out(vty, "Exit character is '%s'.%s", TELNET_ESC_STRING, VTY_NEWLINE);
-
-	/* send our DO commands to host */
-	session->echoIsDone = FALSE;
-	if (telnetCmdSend((char) DO, (char) TELOPT_ECHO, session) == ERROR)
-	{
-		vty_ansync_enable(vty, FALSE);
-		return telnetExit(session);
-	}
-	session->sgaIsDone = FALSE;
-	if (telnetCmdSend((char) DO, (char) TELOPT_SGA, session) == ERROR)
-	{
-		vty_ansync_enable(vty, FALSE);
-		return telnetExit(session);
-	}
-	/* set the stream state */
-	session->hostStreamState = TELNET_STATE_NORMAL;
-
-	/* minimize work for select */
-	//width = session->hostFd + 1;
-	if(os_task_create("telnetc", OS_TASK_DEFAULT_PRIORITY,
-               0, telnetTask, session, OS_TASK_DEFAULT_STACK) > 0)
-	{
-		vty_ansync_enable(vty, FALSE);
-		return OK;
-	}
-	vty_ansync_enable(vty, FALSE);
-	return ERROR;
-#if 0
-	while (1)
-	{
-		FD_ZERO(&readFds);
-		//if (session->echoIsDone && session->sgaIsDone)
-		FD_SET(session->localFd, &readFds);
-		FD_SET(session->hostFd, &readFds);
-		width = max(session->localFd, session->hostFd) + 1;
-		/* wait for input */
-
-		if (select(width, &readFds, NULL, NULL, NULL) == ERROR)
-		{
-			//log_err (TELNET_LOG | LOG_ERRNO, "select() failure.");
-			return telnetExit(session);
-		}
-
-		/* process stdin stream */
-
-		if (FD_ISSET(session->localFd, &readFds))
-		{
-			/* process stdin stream and get bytes from stdin */
-			if (session->echoIsDone && session->sgaIsDone)
-			{
-				bytesRead = read(session->localFd, session->pBuf,
-						sizeof(session->pBuf));
-			}
-			else
-				continue;
-
-			if ((bytesRead == ERROR) || (bytesRead == 0))
-			{
-				//log_err (TELNET_LOG | LOG_ERRNO, "stdin read() failure.");
-				return telnetExit(session);
-			}
-
-			/* write bytes to host watching for escape key */
-
-			for (i = 0; i < bytesRead; i++)
-			{
-				ch = session->pBuf[i];
-
-				if (ch == TELNET_ESC_CHAR)
-				{
-					/* user wants to break connection */
-					return telnetExit(session);
-				}
-
-				bytesWritten = write(session->hostFd, &ch, 1);
-
-				if (bytesWritten != 1)
-				{
-					//log_err (TELNET_LOG | LOG_ERRNO, "write() failure.");
-					return telnetExit(session);
-				}
-			}
-		}
-
-		/* process host stream */
-
-		if (FD_ISSET(session->hostFd, &readFds))
-		{
-			/* get bytes from the host */
-
-			bytesRead = read(session->hostFd, session->pBuf,
-					sizeof(session->pBuf));
-
-			if (bytesRead == 0)
-			{
-				/* host broke connection (e.g., user types "logout") */
-
-				return telnetExit(session);
-			}
-
-			if (bytesRead == ERROR)
-			{
-				//log_err (TELNET_LOG | LOG_ERRNO, "host stram read() failure.");
-				return telnetExit(session);
-			}
-
-			/* write bytes to stdout watching for commands */
-
-			for (i = 0; i < bytesRead; i++)
-			{
-				if (telnetHostInputParse(session->pBuf[i], sSlot) == ERROR)
-					return telnetExit(session);
-			}
-		}
-	}
-#endif
+	vty_cancel(vty);
+/*	vty_out(vty, "Connected to %s.%s", pHostName, VTY_NEWLINE);
+	vty_out(vty, "Exit character is '%s'.%s", TELNET_ESC_STRING, VTY_NEWLINE);*/
+	session->connect = TRUE;
+	return OK;
 	/* NOT REACHED */
 }
 /*****************************************************************************
@@ -667,7 +572,8 @@ static int telnetExit
     )
     {
     int retVal = OK;
-	write(session->localFd, "Connection closed by foreign host.\r\n",
+    if(session->loutfd)
+    	write(session->loutfd, "Connection closed by foreign host.\r\n",
 			strlen("Connection closed by foreign host.\r\n"));
     if (session->hostFd != ERROR)
 	{
@@ -676,8 +582,10 @@ static int telnetExit
 	}
     if(session->vty)
     {
-    	vty_recovery(session->vty, 1);
-    	write(session->localFd, "\r\n",strlen("\r\n"));
+    	vty_ansync_enable(session->vty, FALSE);
+    	vty_resume(session->vty);
+    	if(session->loutfd)
+    		write(session->loutfd, "\r\n",strlen("\r\n"));
     }
     free(session);
     return (retVal);

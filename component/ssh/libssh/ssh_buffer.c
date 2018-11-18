@@ -59,15 +59,15 @@ static void ssh_buffer_verify(ssh_buffer buf){
   if(buf->data == NULL)
     return;
   if(buf->used > buf->allocated){
-    fprintf(ssh_stderr,"Buffer error : allocated %u, used %u\n",buf->allocated, buf->used);
+	ssh_printf(NULL,"Buffer error : allocated %u, used %u\n",buf->allocated, buf->used);
     doabort=1;
   }
   if(buf->pos > buf->used){
-    fprintf(ssh_stderr,"Buffer error : position %u, used %u\n",buf->pos, buf->used);
+	ssh_printf(NULL,"Buffer error : position %u, used %u\n",buf->pos, buf->used);
     doabort=1;
   }
   if(buf->pos > buf->allocated){
-      fprintf(ssh_stderr,"Buffer error : position %u, allocated %u\n",buf->pos, buf->allocated);
+	  ssh_printf(NULL,"Buffer error : position %u, allocated %u\n",buf->pos, buf->allocated);
       doabort=1;
   }
   if(doabort)
@@ -84,7 +84,7 @@ static void ssh_buffer_verify(ssh_buffer buf){
  * @return A newly initialized SSH buffer, NULL on error.
  */
 struct ssh_buffer_struct *ssh_buffer_new(void) {
-  struct ssh_buffer_struct *buf = malloc(sizeof(struct ssh_buffer_struct));
+  struct ssh_buffer_struct *buf = ssh_malloc(sizeof(struct ssh_buffer_struct));
 
   if (buf == NULL) {
     return NULL;
@@ -141,7 +141,7 @@ static int realloc_buffer(struct ssh_buffer_struct *buffer, size_t needed) {
   }
   needed = smallest;
   if (buffer->secure){
-	  new = malloc(needed);
+	  new = ssh_malloc(needed);
 	  if (new == NULL) {
 		  return -1;
       }
@@ -149,7 +149,7 @@ static int realloc_buffer(struct ssh_buffer_struct *buffer, size_t needed) {
 	  BURN_BUFFER(buffer->data, buffer->used);
 	  SAFE_FREE(buffer->data);
   } else {
-	  new = realloc(buffer->data, needed);
+	  new = ssh_realloc(buffer->data, needed);
 	  if (new == NULL) {
 		  buffer->data = NULL;
 		  return -1;
@@ -956,7 +956,7 @@ int ssh_buffer_unpack_va(struct ssh_buffer_struct *buffer,
                 break;
             }
 
-            *o.cstring = malloc(len + 1);
+            *o.cstring = ssh_malloc(len + 1);
             if (*o.cstring == NULL){
                 rc = SSH_ERROR;
                 break;
@@ -986,7 +986,7 @@ int ssh_buffer_unpack_va(struct ssh_buffer_struct *buffer,
             o.data = va_arg(ap, void **);
             count++;
 
-            *o.data = malloc(len);
+            *o.data = ssh_malloc(len);
             if(*o.data == NULL){
                 rc = SSH_ERROR;
                 break;

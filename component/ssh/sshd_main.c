@@ -15,265 +15,184 @@
 #include "sshd_main.h"
 #include "ssh_util.h"
 
-static ssh_config_t sshd_config;
-
-
-
-#ifndef SSH_SHELL_PROXY_ENABLE
-static int sshd_shell_flush(struct vty *vty)
-{
-	int ret = 0;
-	ret = buffer_flush_available(vty->obuf, vty->wfd, vty->fd_type);
-	while(ret == BUFFER_PENDING)
-		ret = buffer_flush_available(vty->obuf, vty->wfd, vty->fd_type);
-	if(ret == BUFFER_ERROR)
-	{
-		vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
-		zlog_warn(ZLOG_DEFAULT, "%s: write error to fd %d, closing", __func__, vty->wfd);
-		buffer_reset(vty->obuf);
-		vty_close(vty);
-		return ERROR;
-	}
-	zlog_debug(ZLOG_UTILS, "into:%s", "sshd_vty_flush");
-	return 0;
-}
-
-static int sshd_shell_execute (struct vty *vty, unsigned char buf[], int nbytes)
-{
-	unsigned char *p;
-
-	if (vty->length + nbytes >= vty->max)
-	{
-		/* Clear command line buffer. */
-		vty->cp = vty->length = 0;
-
-		memset(vty->buf, 0, vty->max);
-		vty_out (vty, "%% Command is too long.%s", VTY_NEWLINE);
-		return 0;
-	}
-
-	for (p = buf; p < buf+nbytes; p++)
-	{
-		vty->buf[vty->length++] = *p;
-		if (*p == '\0' || *p == '\r' || *p == '\n')
-		{
-			vty_execute (vty);
-			sshd_shell_flush(vty);
-			return 0;
-		}
-	}
-	return 0;
-}
-#endif
 
 static int sshd_shell_output(socket_t fd, int revents, void *userdata)
 {
     char buf[4096];
-    int n = -1;
+    int n = -1, ret = 0;
     os_bzero(buf, sizeof(buf));
-    ssh_channel channel = (ssh_channel) userdata;
-	//zlog_debug(ZLOG_UTILS, "start:%s", buf);
+    sshd_client_t * client = (ssh_channel) userdata;
+    //ssh_channel channel = (ssh_channel) userdata;
     if ((revents & POLLIN) != 0) {
         n = read(fd, buf, sizeof(buf));
         if (n > 0) {
-        	if(channel != NULL)
-        		ssh_channel_write(channel, buf, n);
+        	if(client != NULL && client->channel)
+        		ret = ssh_channel_write(client->channel, buf, n);
+        	if(ret < 0)
+        		return SSH_ERROR;
+        	else if (ret == 0)
+        		return SSH_ERROR;
+        	return ret;
+        }
+        if(n <= 0)
+        {
+        	//ssh_event_remove_fd(fd);
+        	if(client->config->event)
+        		ssh_event_remove_fd(client->config->event, fd);
+        	close(fd);
+        	client->sock = 0;
+        	return -1;
         }
     }
-	zlog_debug(ZLOG_UTILS, "end:%s", buf);
     return n;
 }
 
-
-static int sshd_shell_close(struct vty *vty)
+static int sshd_shell_input(sshd_client_t *client, char *buf, int len)
 {
-	ssh_config_client_t *sshclient = NULL;
+	int ret = 0;
+	if(client && client->sock)
+	{
+		ret = write(client->sock, buf, len);
+		if(ret < 0)
+		{
+			if (!ERRNO_IO_RETRY(errno))
+			{
+				return SSH_ERROR;
+			}
+		}
+		return ret ? ret:SSH_ERROR;
+	}
+	return SSH_ERROR;
+}
+
+/*
+ * close VTY will be call
+ */
+static int sshd_close(struct vty *vty)
+{
+	sshd_client_t *sshclient = NULL;
 	sshclient = vty->ssh;
 	if(sshclient)
 	{
-		int n = 0;
-		//ssh_channel_send_eof(sshclient->sdata.channel);
-		ssh_channel_close(sshclient->sdata.channel);
+	    zlog_debug(ZLOG_UTILS, "%s :", __func__);
 
-		/* Wait up to 5 seconds for the client to terminate the session. */
-/*		for (n = 0; n < 50 && (ssh_get_status(sshclient->session) & SESSION_END) == 0; n++)
-		{
-			ssh_event_dopoll(sshclient->config->event, 100);
-		}*/
+	    vty->ssh = NULL;
+        vty->ssh_enable = FALSE;
+        if(sshclient->sock)
+        	close(sshclient->sock);
+    	sshclient->sock = 0;
+    	if(vty->wfd)
+    		close(vty->wfd);
+        vty->wfd = 0;
+
+	    ssh_event_remove_session(sshclient->config->event, sshclient->session);
+
+		ssh_channel_close(sshclient->channel);
+
         ssh_disconnect(sshclient->session);
         ssh_free(sshclient->session);
+
         XFREE(MTYPE_SSH_CLIENT, sshclient);
         sshclient = NULL;
-        vty->ssh = NULL;
-        vty->ssh_enable = FALSE;
-#ifndef SSH_SHELL_PROXY_ENABLE
-        os_pipe_close(vty->wfd);
-        vty->wfd = 0;
-#endif
 	}
 	return 0;
 }
 
-#ifndef SSH_SHELL_PROXY_ENABLE
-static int sshd_shell_timeout(ssh_session session, void *userdata, int timev)
+/*
+ * ssh close on exp will call
+ */
+static void sshd_shell_close(ssh_session session,
+        ssh_channel channel,
+        void *userdata)
 {
-	struct vty *vty = NULL;
-	ssh_config_client_t *sshclient = userdata;
-	if(!sshclient)
-		return 0;
-	vty = sshclient->vty;
-	if(vty && sshclient->timeval && sshclient->timeval <= timev)
+    sshd_client_t *sshclient = (sshd_client_t *)userdata;
+    zlog_debug(ZLOG_UTILS, "%s :", __func__);
+
+    //ssh_event_remove_session(client->config->event, client->session);
+	if(sshclient)
 	{
-		vty->t_timeout = NULL;
-		vty->v_timeout = 0;
-		buffer_reset(vty->obuf);
-		vty_out(vty, "%s%sVty connection is timed out.%s%s",
-				VTY_NEWLINE, VTY_NEWLINE,
-				VTY_NEWLINE, VTY_NEWLINE);
-		vty->status = VTY_CLOSE;
-		vty_close(vty);
+		if(sshclient->sock)
+		{
+			ssh_event_remove_fd(sshclient->config->event, sshclient->sock);
+        	close(sshclient->sock);
+        	sshclient->sock = 0;
+		}
+	    if(sshclient && sshclient->type == SSH_C_SHELL && sshclient->vty)
+	    {
+	    	sshclient->vty->ssh_close = NULL;
+	    	vty_close(sshclient->vty);
+	    	sshclient->vty->ssh = NULL;
+	    	if(sshclient->vty->wfd)
+	    		close(sshclient->vty->wfd);
+	    	sshclient->vty->wfd = 0;
+	    }
+#ifdef SSH_SCPD_ENABLE
+	    if(sshclient && sshclient->type == SSH_C_SCP)
+	    {
+	    	ssh_scpd_exit(sshclient);
+	    	if(sshclient->scp_data.filename)
+	    		free(sshclient->scp_data.filename);
+	    	sshclient->scp_data.filename = NULL;
+
+	    	if(sshclient->scp_data.scp)
+	    		free(sshclient->scp_data.scp);
+	    	sshclient->scp_data.scp = NULL;
+
+	    	if(sshclient->scp_data.input)
+	    		close(sshclient->scp_data.input);
+	    	sshclient->scp_data.input = 0;
+	    	sshclient->scp_data.output = 0;
+	    }
+#endif
+        XFREE(MTYPE_SSH_CLIENT, sshclient);
 	}
-	return 0;
 }
+
+/*
+ * ssh server close will call
+ */
+static void sshd_session_userdata_close(ssh_session session, sshd_client_t *sshclient)
+{
+	//sshd_client_t *sshclient = NULL;
+	//sshclient = ssh_get_session_private(session);
+	if(sshclient)
+	{
+		if(sshclient->sock)
+		{
+			ssh_event_remove_fd(sshclient->config->event, sshclient->sock);
+        	close(sshclient->sock);
+        	sshclient->sock = 0;
+		}
+	    if(sshclient && sshclient->type == SSH_C_SHELL && sshclient->vty)
+	    {
+	    	sshclient->vty->ssh_close = NULL;
+	    	vty_close(sshclient->vty);
+	    	sshclient->vty->ssh = NULL;
+	    	if(sshclient->vty->wfd)
+	    		close(sshclient->vty->wfd);
+	    	sshclient->vty->wfd = 0;
+	    }
+#ifdef SSH_SCPD_ENABLE
+	    if(sshclient && sshclient->type == SSH_C_SCP)
+	    {
+	    	ssh_scpd_exit(sshclient);
+	    	if(sshclient->scp_data.filename)
+	    		free(sshclient->scp_data.filename);
+	    	sshclient->scp_data.filename = NULL;
+
+	    	if(sshclient->scp_data.scp)
+	    		free(sshclient->scp_data.scp);
+	    	sshclient->scp_data.scp = NULL;
+
+	    	if(sshclient->scp_data.input)
+	    		close(sshclient->scp_data.input);
+	    	sshclient->scp_data.input = 0;
+	    	sshclient->scp_data.output = 0;
+	    }
 #endif
-
-
-static void set_default_keys(ssh_bind sshbind,
-                             int rsa_already_set,
-                             int dsa_already_set,
-                             int ecdsa_already_set) {
-    if (!rsa_already_set) {
-        ssh_bind_options_set(sshbind, SSH_BIND_OPTIONS_RSAKEY,
-                             KEYS_FOLDER "ssh_host_rsa_key");
-        //ssh_bind_options_set(sshbind, SSH_BIND_OPTIONS_RSAKEY,
-        //                     KEYS_FOLDER "id_rsa");
-    }
-    if (!dsa_already_set) {
-        ssh_bind_options_set(sshbind, SSH_BIND_OPTIONS_DSAKEY,
-                             KEYS_FOLDER "ssh_host_dsa_key");
-    }
-    if (!ecdsa_already_set) {
-        ssh_bind_options_set(sshbind, SSH_BIND_OPTIONS_ECDSAKEY,
-                             KEYS_FOLDER "ssh_host_ecdsa_key");
-    }
+        XFREE(MTYPE_SSH_CLIENT, sshclient);
+	}
 }
-
-
-
-static int data_function(ssh_session session, ssh_channel channel, void *data,
-                         uint32_t len, int is_stderr, void *userdata) {
-    struct channel_data_struct *cdata = (struct channel_data_struct *) userdata;
-    ssh_config_client_t * client = ssh_get_session_private(session);
-    (void) session;
-    (void) channel;
-    (void) is_stderr;
-    char *buf = (char *)data;
-    if (len == 0 || !cdata->vty) {
-        return 0;
-    }
-    if(ssh_channel_is_open(channel))
-    {
-    	zlog_debug(ZLOG_UTILS, "data_function :%s(%x->%d)", buf, buf[0],len);
-#ifndef SSH_SHELL_PROXY_ENABLE
-    	sshd_shell_execute(cdata->vty, buf, len);
-
-    	client->timeval = cdata->vty->v_timeout + os_time(NULL);
-
-    	if (cdata->vty->status == VTY_CLOSE)
-    	{
-    		vty_close(cdata->vty);
-    		return SSH_ERROR;
-    	}
-    	return len;//write(cdata->child_stdin, (char *) data, len);
-#else
-    	int ret = 0;
-    	if(client && client->sock)
-    	ret = write(client->sock, (char *) data, len);
-    	if(ret < 0)
-    	{
-//#define ERRNO_IO_RETRY(EN) \
-//	(((EN) == EAGAIN) || ((EN) == EWOULDBLOCK) || ((EN) == EINTR))
-    		if (!ERRNO_IO_RETRY(errno))
-    		{
-    		    ssh_channel_send_eof(channel);
-    		    ssh_channel_close(channel);
-				return SSH_ERROR;
-    		}
-    	}
-    	return ret;
-#endif
-    }
-    return SSH_ERROR;
-}
-
-
-static int pty_request(ssh_session session, ssh_channel channel,
-                       const char *term, int cols, int rows, int py, int px,
-                       void *userdata) {
-    struct channel_data_struct *cdata = (struct channel_data_struct *)userdata;
-
-    (void) session;
-    (void) channel;
-    (void) term;
-
-    cdata->winsize->ws_row = rows;
-    cdata->winsize->ws_col = cols;
-    cdata->winsize->ws_xpixel = px;
-    cdata->winsize->ws_ypixel = py;
-    zlog_debug(ZLOG_UTILS, "pty_request :");
-    return SSH_OK;
-}
-
-static int pty_resize(ssh_session session, ssh_channel channel, int cols,
-                      int rows, int py, int px, void *userdata) {
-    struct channel_data_struct *cdata = (struct channel_data_struct *)userdata;
-
-    (void) session;
-    (void) channel;
-
-    cdata->winsize->ws_row = rows;
-    cdata->winsize->ws_col = cols;
-    cdata->winsize->ws_xpixel = px;
-    cdata->winsize->ws_ypixel = py;
-    zlog_debug(ZLOG_UTILS, "pty_resize :");
-    return SSH_OK;
-}
-
-
-static int shell_request(ssh_session session, ssh_channel channel,
-                         void *userdata) {
-    struct channel_data_struct *cdata = (struct channel_data_struct *) userdata;
-
-    (void) session;
-    (void) channel;
-
-    return SSH_OK;
-}
-
-static int auth_password(ssh_session session, const char *user,
-                         const char *pass, void *userdata) {
-    struct session_data_struct *sdata = (struct session_data_struct *) userdata;
-
-    (void) session;
-    zlog_debug(ZLOG_UTILS, "auth_password : %s -> %s", user, pass);
-    if (strcmp(user, USER) == 0 && strcmp(pass, PASS) == 0) {
-        sdata->authenticated = 1;
-        return SSH_AUTH_SUCCESS;
-    }
-
-    sdata->auth_attempts++;
-    return SSH_AUTH_DENIED;
-}
-
-static ssh_channel channel_open(ssh_session session, void *userdata) {
-    struct session_data_struct *sdata = (struct session_data_struct *) userdata;
-
-    sdata->channel = ssh_channel_new(session);
-    return sdata->channel;
-}
-
-
-
 
 static struct vty * sshd_shell_new(int vty_sock)
 {
@@ -286,151 +205,44 @@ static struct vty * sshd_shell_new(int vty_sock)
 	vty->type = VTY_TERM;
 	vty->node = ENABLE_NODE;
 	vty->ssh_enable = TRUE;
-	vty->ssh_close = sshd_shell_close;
+	vty->ssh_close = sshd_close;
 
 	host_config_get_api(API_GET_VTY_TIMEOUT_CMD, &vty->v_timeout);
 
 	host_config_get_api(API_GET_LINES_CMD, &vty->lines);
-#ifndef SSH_SHELL_PROXY_ENABLE
-	if(vty->wfd <= 0)
-	{
-		vty_close(vty);
-		return NULL;
-	}
-#else
+
 	vty_sshd_init(vty->fd, vty);
-#endif
 	return vty;
 }
 
 
-static int sshd_userdata_set(ssh_config_client_t *client, ssh_bind 	sshbind, ssh_session sseion)
-{
-	//client->sshbind = sshbind;
-	client->session = sseion;
-
-	client->wsize.ws_row = 0;
-    client->wsize.ws_col = 0;
-	client->wsize.ws_xpixel = 0;
-	client->wsize.ws_ypixel = 0;
-
-	//client->cdata.event = NULL;
-	client->cdata.winsize = &client->wsize;
-
-	client->sdata.channel = NULL;
-	client->sdata.auth_attempts = 0;
-	client->sdata.authenticated = 0;
-
-    client->channel_cb.userdata = &client->cdata;
-	client->channel_cb.channel_pty_request_function = pty_request;
-	client->channel_cb.channel_pty_window_change_function = pty_resize;
-	client->channel_cb.channel_shell_request_function = shell_request;
-	client->channel_cb.channel_exec_request_function = NULL;
-	client->channel_cb.channel_data_function = data_function;
-	client->channel_cb.channel_subsystem_request_function = NULL;
-
-    client->server_cb.userdata = &client->sdata;
-	client->server_cb.auth_password_function = auth_password;
-	client->server_cb.channel_open_request_session_function = channel_open;
-
-    ssh_callbacks_init(&client->server_cb);
-    ssh_callbacks_init(&client->channel_cb);
-
-    ssh_set_server_callbacks(client->session, &client->server_cb);
-
-    if (ssh_handle_key_exchange(client->session) != SSH_OK)
-    {
-        return SSH_ERROR;
-    }
-
-    ssh_set_auth_methods(client->session, SSH_AUTH_METHOD_PASSWORD);
-#ifndef SSH_SHELL_PROXY_ENABLE
-    ssh_set_session_timeout_cb(client->session, sshd_shell_timeout);
-#endif
-    return SSH_OK;
-}
-
-
-static int sshd_key_authenticate(ssh_config_client_t *client, ssh_event event)
-{
-	int n = 0;
-    n = 0;
-    ssh_event_add_session(event, client->session);
-    while (client->sdata.authenticated == 0 || client->sdata.channel == NULL) {
-        /* If the user has used up all attempts, or if he hasn't been able to
-         * authenticate in 10 seconds (n * 100ms), disconnect. */
-        if (client->sdata.auth_attempts >= 3 || n >= 100) {
-        	zlog_debug(ZLOG_UTILS, "%s : too mush time", __func__);
-            return SSH_ERROR;
-        }
-
-        if (ssh_event_dopoll(event, 100) == SSH_ERROR) {
-            zlog_debug(ZLOG_UTILS, "%s : %s", __func__, ssh_get_error(client->session));
-            return SSH_ERROR;
-        }
-        n++;
-    }
-    ssh_set_channel_callbacks(client->sdata.channel, &client->channel_cb);
-    return SSH_OK;
-}
-
-
-static int sshd_shell_create(ssh_config_t *ssh, ssh_session sseion)
+static int sshd_shell_create(sshd_client_t *sshclient, ssh_session sseion)
 {
 	int n = 0;
 	struct sockaddr_in * client_address;
-#ifdef SSH_SHELL_PROXY_ENABLE
 	int socket[2] = { 0, 0 };
-#endif
-	ssh_config_client_t *sshclient = NULL;
-	sshclient = XMALLOC(MTYPE_SSH_CLIENT, sizeof(ssh_config_client_t));
+
 	if(!sshclient)
 		return SSH_ERROR;
 
-	memset(sshclient, 0, sizeof(ssh_config_client_t));
-
-	ssh_set_session_private(sseion, sshclient);
-
-	n = sshd_userdata_set(sshclient, ssh->sshbind,  sseion);
-	if(n != SSH_OK)
-	{
-        XFREE(MTYPE_SSH_CLIENT, sshclient);
-        sshclient = NULL;
-		return SSH_ERROR;
-	}
-	n = sshd_key_authenticate(sshclient, ssh->event);
-	if(n != SSH_OK)
-	{
-        XFREE(MTYPE_SSH_CLIENT, sshclient);
-        sshclient = NULL;
-		return SSH_ERROR;
-	}
-#ifdef SSH_SHELL_PROXY_ENABLE
     if(socketpair (AF_UNIX, SOCK_STREAM, 0, socket) == 0)
     {
     	sshclient->sock = socket[1];
     }
     else
     {
-        XFREE(MTYPE_SSH_CLIENT, sshclient);
-        sshclient = NULL;
 		return SSH_ERROR;
     }
 	ssh_socket_set_nonblocking(socket[0]);
 	ssh_socket_set_nonblocking(socket[1]);
-#endif
 
-#ifdef SSH_SHELL_PROXY_ENABLE
 	sshclient->vty = sshd_shell_new(socket[0]);
-#else
-	sshclient->vty = sshd_shell_new(ssh_get_fd(sshclient->session));
-#endif
+	zlog_debug(ZLOG_UTILS, "%s :", __func__);
 	if(!sshclient->vty)
 	{
+		sshclient->sock = 0;
     	close(socket[0]);
     	close(socket[1]);
-        XFREE(MTYPE_SSH_CLIENT, sshclient);
-        sshclient = NULL;
 		return SSH_ERROR;
 	}
 
@@ -445,43 +257,384 @@ static int sshd_shell_create(ssh_config_t *ssh, ssh_session sseion)
 			strcpy(sshclient->vty->address, buf);
 		}
 	}
-	ssh_socket_set_nonblocking(ssh_get_fd(sshclient->session));
-
 	sshclient->vty->ssh = sshclient;
-	sshclient->cdata.vty = sshclient->vty;
-#ifndef SSH_SHELL_PROXY_ENABLE
-	sshclient->timeval = sshclient->vty->v_timeout + os_time(NULL);
-	ssh_event_add_fd(ssh->event, sshclient->vty->wfd, POLLIN, sshd_shell_output,
-			sshclient->sdata.channel);
-#else
-	ssh_event_add_fd(ssh->event, sshclient->sock, POLLIN, sshd_shell_output,
-			sshclient->sdata.channel);
-#endif
 
-#ifndef SSH_SHELL_PROXY_ENABLE
+	ssh_event_add_fd(sshclient->config->event, sshclient->sock, POLLIN, sshd_shell_output,
+			sshclient);
+	sshclient->type = SSH_C_SHELL;
 	vty_write_hello(sshclient->vty);
-	sshd_shell_flush(sshclient->vty);
-#else
-	vty_write_hello(sshclient->vty);
-#endif
 	return SSH_OK;
+}
+
+static int sshd_shell_window_open(ssh_session session, ssh_channel channel,
+                       const char *term, int cols, int rows, int py, int px,
+                       void *userdata) {
+    sshd_client_t *client = (sshd_client_t *)userdata;
+
+    (void) session;
+    (void) channel;
+    (void) term;
+    client->winsize.ws_row = rows;
+    client->winsize.ws_col = cols;
+    client->winsize.ws_xpixel = px;
+    client->winsize.ws_ypixel = py;
+    zlog_debug(ZLOG_UTILS, "%s :", __func__);
+
+    return SSH_OK;
+}
+
+static int sshd_shell_window_change(ssh_session session, ssh_channel channel, int cols,
+                      int rows, int py, int px, void *userdata) {
+	sshd_client_t *client = (sshd_client_t *)userdata;
+
+    (void) session;
+    (void) channel;
+
+    client->winsize.ws_row = rows;
+    client->winsize.ws_col = cols;
+    client->winsize.ws_xpixel = px;
+    client->winsize.ws_ypixel = py;
+    zlog_debug(ZLOG_UTILS, "%s :", __func__);
+    return SSH_OK;
+}
+
+
+static int sshd_shell_request(ssh_session session, ssh_channel channel,
+                         void *userdata) {
+	sshd_client_t *client = (sshd_client_t *)userdata;
+    (void) session;
+    (void) channel;
+
+    if(!client->config->shell_enable)
+    	return SSH_ERROR;
+    sshd_shell_create(client, session);
+
+	if(sshd_shell_input(client, "\n", 1) == SSH_ERROR)
+	{
+		ssh_channel_send_eof(channel);
+		ssh_channel_close(channel);
+        if(client->sock)
+        	close(client->sock);
+        client->sock = 0;
+		return SSH_ERROR;
+	}
+    zlog_debug(ZLOG_UTILS, "%s :", __func__);
+    return SSH_OK;
 }
 
 
 
-static int sshd_accept(socket_t fd, int revents, void *userdata)
+/*
+static int sshd_scp_thread(sshd_client_t *client)
+{
+	char *buf = NULL;
+	int len = 0;
+	while(1)
+	{
+		extern int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, int timeout_ms);
+	}
+}
+*/
+
+#ifdef SSH_SCPD_ENABLE
+static int sshd_exec_request(ssh_session session, ssh_channel channel,
+                        const char *command, void *userdata)
+{
+	sshd_client_t *client = (sshd_client_t *)userdata;
+
+    (void) session;
+    (void) channel;
+    //scp -f /tmp/resolv.conf
+    zlog_debug(ZLOG_UTILS, "%s : %s", __func__, command);
+    if(strstr(command, "scp"))
+    {
+    	client->type = SSH_C_SCP;
+    	ssh_scpd_init(client, command);
+    }
+    return SSH_OK;
+}
+
+static int sshd_subsystem_request(ssh_session session, ssh_channel channel,
+                             const char *subsystem, void *userdata) {
+    /* subsystem requests behave simillarly to exec requests. */
+
+	zlog_debug(ZLOG_UTILS, "sshd_subsystem_request:%s", subsystem);
+#ifdef SSH_OPENSSH_TOOL
+    if (strcmp(subsystem, "sftp") == 0) {
+        return sshd_exec_request(session, channel, SFTP_SERVER_PATH, userdata);
+    }
+#else
+    return SSH_OK;
+#endif
+    return SSH_ERROR;
+}
+#endif
+
+static int sshd_auth_password(ssh_session session, const char *user,
+                         const char *pass, void *userdata) {
+	sshd_client_t *client = (sshd_client_t *)userdata;
+
+    (void) session;
+    zlog_debug(ZLOG_UTILS, "auth_password : %s -> %s", user, pass);
+    //return SSH_AUTH_SUCCESS;
+
+    //if (strcmp(user, USER) == 0 && strcmp(pass, PASS) == 0)
+    if(user_authentication(user, pass) == OK)
+    {
+    	client->authenticated = 1;
+    	zlog_debug(ZLOG_UTILS, "auth_password : SSH_AUTH_SUCCESS");
+        return SSH_AUTH_SUCCESS;
+    }
+
+    client->auth_attempts++;
+    return SSH_AUTH_DENIED;
+}
+
+/*static int auth_gssapi_mic(ssh_session session, const char *user, const char *principal, void *userdata){
+    ssh_gssapi_creds creds = ssh_gssapi_get_creds(session);
+    (void)userdata;
+    printf("Authenticating user %s with gssapi principal %s\n",user, principal);
+    if (creds != NULL)
+        printf("Received some gssapi credentials\n");
+    else
+        printf("Not received any forwardable creds\n");
+    printf("authenticated\n");
+    authenticated = 1;
+    return SSH_AUTH_SUCCESS;
+}*/
+
+static ssh_channel sshd_channel_open(ssh_session session, void *userdata) {
+	sshd_client_t *client = (sshd_client_t *)userdata;
+
+	client->channel = ssh_channel_new(session);
+    return client->channel;
+}
+
+
+
+static int sshd_data_function(ssh_session session, ssh_channel channel, void *data,
+                         uint32_t len, int is_stderr, void *userdata) {
+	sshd_client_t *client = (sshd_client_t *)userdata;
+    (void) session;
+    (void) channel;
+    (void) is_stderr;
+    char *buf = (char *)data;
+    if (len == 0 || !client/* || !client->vty*/) {
+        return 0;
+    }
+    if(ssh_channel_is_open(channel))
+    {
+    	int ret = 0;
+    	zlog_debug(ZLOG_UTILS, "data_function :%s(%x->%d)", buf, buf[0],len);
+    	ret = sshd_shell_input(client, (char *) data, len);
+    	if(ret == SSH_ERROR)
+    	{
+    		ssh_channel_send_eof(channel);
+    		ssh_channel_close(channel);
+            if(client->sock)
+            	close(client->sock);
+            client->sock = 0;
+    		return SSH_ERROR;
+    	}
+    	return ret;
+    }
+    if(client->sock)
+    	close(client->sock);
+    client->sock = 0;
+    return SSH_ERROR;
+}
+
+
+static int sshd_userdata_set(sshd_client_t *client, ssh_config_t *ssh, ssh_session sseion)
+{
+	int auth_methods = 0;
+	client->config = ssh;
+	client->session = sseion;
+
+	client->winsize.ws_row = 0;
+    client->winsize.ws_col = 0;
+	client->winsize.ws_xpixel = 0;
+	client->winsize.ws_ypixel = 0;
+
+	client->channel = NULL;
+	client->auth_attempts = 0;
+	client->authenticated = 0;
+
+    client->ssh_channel_cb.userdata = client;
+    client->ssh_channel_cb.channel_data_function = sshd_data_function;
+    client->ssh_channel_cb.channel_eof_function = NULL;
+    client->ssh_channel_cb.channel_close_function = sshd_shell_close;
+
+    client->ssh_channel_cb.channel_signal_function = NULL;
+    client->ssh_channel_cb.channel_exit_status_function = NULL;
+    client->ssh_channel_cb.channel_exit_signal_function = NULL;
+    client->ssh_channel_cb.channel_pty_request_function = sshd_shell_window_open;
+    client->ssh_channel_cb.channel_shell_request_function = sshd_shell_request;
+    client->ssh_channel_cb.channel_auth_agent_req_function = NULL;
+    client->ssh_channel_cb.channel_x11_req_function = NULL;
+    client->ssh_channel_cb.channel_pty_window_change_function = sshd_shell_window_change;
+#ifdef SSH_SCPD_ENABLE
+    client->ssh_channel_cb.channel_exec_request_function = sshd_exec_request;
+    client->ssh_channel_cb.channel_env_request_function = NULL;
+    client->ssh_channel_cb.channel_subsystem_request_function = sshd_subsystem_request;
+#endif
+    //client->ssh_channel_cb.channel_close_exit_function = sshd_session_userdata_close;
+
+    client->ssh_server_cb.userdata = client;
+    client->ssh_server_cb.auth_password_function = sshd_auth_password;
+    client->ssh_server_cb.auth_none_function = NULL;
+    client->ssh_server_cb.auth_gssapi_mic_function = NULL;//auth_gssapi_mic;
+    client->ssh_server_cb.auth_pubkey_function = NULL;
+    client->ssh_server_cb.service_request_function = NULL;
+    client->ssh_server_cb.channel_open_request_session_function = sshd_channel_open;
+    client->ssh_server_cb.gssapi_select_oid_function = NULL;
+    client->ssh_server_cb.gssapi_accept_sec_ctx_function = NULL;
+    client->ssh_server_cb.gssapi_verify_mic_function = NULL;
+
+    sseion->session_callbacks.session_close_function = sshd_session_userdata_close;
+    sseion->session_callbacks.userdata = client;
+
+    ssh_callbacks_init(&client->ssh_server_cb);
+    ssh_callbacks_init(&client->ssh_channel_cb);
+
+    ssh_set_server_callbacks(client->session, &client->ssh_server_cb);
+
+    if (ssh_handle_key_exchange(client->session) != SSH_OK)
+    {
+        return SSH_ERROR;
+    }
+    switch(ssh->auth_type)
+    {
+    case SSH_AUTH_NONE:
+       	auth_methods = SSH_AUTH_METHOD_NONE;
+    	break;
+    case SSH_AUTH_AUTO:
+        auth_methods = SSH_AUTH_METHOD_PASSWORD | SSH_AUTH_METHOD_PUBLICKEY |
+        		SSH_AUTH_METHOD_HOSTBASED | SSH_AUTH_METHOD_INTERACTIVE;
+    	break;
+    case SSH_AUTH_PASSWORD:
+    	auth_methods = SSH_AUTH_METHOD_PASSWORD;
+    	break;
+    case SSH_AUTH_PUBLIC_KEY:
+    	auth_methods = SSH_AUTH_METHOD_PUBLICKEY;
+    	break;
+    case SSH_AUTH_RSA:
+     	auth_methods = SSH_AUTH_METHOD_PUBLICKEY;
+    	break;
+    case SSH_AUTH_HOSTBASE:
+     	auth_methods = SSH_AUTH_METHOD_HOSTBASED;
+    	break;	//host
+    case SSH_AUTH_KB:
+     	auth_methods = SSH_AUTH_METHOD_INTERACTIVE;
+    	break;		//keyboard
+    case SSH_AUTH_GSSAPI:
+     	auth_methods = SSH_AUTH_METHOD_GSSAPI_MIC;
+    	break;
+    default:
+        auth_methods = SSH_AUTH_METHOD_PASSWORD | SSH_AUTH_METHOD_PUBLICKEY |
+        		SSH_AUTH_METHOD_HOSTBASED | SSH_AUTH_METHOD_INTERACTIVE;
+    	break;
+    }
+    ssh_set_auth_methods(client->session, auth_methods);
+
+    return SSH_OK;
+}
+
+
+static int sshd_key_authenticate(sshd_client_t *client, ssh_event event)
+{
+	//int n = 0;
+    //n = 0;
+    ssh_event_add_session(event, client->session);
+    while (client->authenticated == 0 || client->channel == NULL) {
+        /* If the user has used up all attempts, or if he hasn't been able to
+         * authenticate in 10 seconds (n * 100ms), disconnect. */
+        if (client->auth_attempts >= client->config->auth_retries/* ||
+        		n >= 3*/) {
+        	ssh_event_remove_session(event, client->session);
+        	zlog_debug(ZLOG_UTILS, "%s : too mush time", __func__);
+            return SSH_ERROR;
+        }
+
+        if (ssh_event_dopoll(event, client->config->auth_waitting * 1000) == SSH_ERROR) {
+        	ssh_event_remove_session(event, client->session);
+            zlog_debug(ZLOG_UTILS, "%s : %s", __func__, ssh_get_error(client->session));
+            return SSH_ERROR;
+        }
+        //n++;
+    }
+    ssh_set_channel_callbacks(client->channel, &client->ssh_channel_cb);
+    return SSH_OK;
+}
+
+
+static int sshd_client_create(ssh_config_t *ssh, ssh_session sseion)
+{
+	int n = 0;
+	sshd_client_t *sshclient = NULL;
+	sshclient = XMALLOC(MTYPE_SSH_CLIENT, sizeof(sshd_client_t));
+	if(!sshclient)
+		return SSH_ERROR;
+
+	memset(sshclient, 0, sizeof(sshd_client_t));
+
+	ssh_set_session_private(sseion, sshclient);
+	if(ssh->ssh_version)
+	{
+		int value = 1;
+		if(ssh->ssh_version == 1)
+			ssh_options_set(sseion, SSH_OPTIONS_SSH1, &value);
+		if(ssh->ssh_version == 2)
+			ssh_options_set(sseion, SSH_OPTIONS_SSH2, &value);
+		if(ssh->ssh_version == 3)
+		{
+			ssh_options_set(sseion, SSH_OPTIONS_SSH1, &value);
+			ssh_options_set(sseion, SSH_OPTIONS_SSH2, &value);
+		}
+	}
+	n = sshd_userdata_set(sshclient, ssh,  sseion);
+	if(n != SSH_OK)
+	{
+		ssh_set_session_private(sseion, NULL);
+        XFREE(MTYPE_SSH_CLIENT, sshclient);
+        sshclient = NULL;
+		return SSH_ERROR;
+	}
+	n = sshd_key_authenticate(sshclient, ssh->event);
+	if(n != SSH_OK)
+	{
+		//ssh_event_remove_session(ssh->event, sseion);
+		ssh_set_session_private(sseion, NULL);
+        XFREE(MTYPE_SSH_CLIENT, sshclient);
+        sshclient = NULL;
+		return SSH_ERROR;
+	}
+	ssh_socket_set_nonblocking(ssh_get_fd(sshclient->session));
+
+	//sshd_shell_create(sshclient, sshclient->session);
+	return SSH_OK;
+}
+
+int sshd_accept(socket_t fd, int revents, void *userdata)
 {
 	ssh_session session = NULL;
 	ssh_config_t *ssh_config = userdata;
     session = ssh_new();
     if (session == NULL) {
-        fprintf(ssh_stderr, "Failed to allocate session\n");
+    	ssh_printf(NULL, "Failed to allocate session\n");
         return ERROR;
     }
     /* Blocks until there is a new incoming connection. */
     if(ssh_bind_accept(ssh_config->sshbind, session) != SSH_ERROR)
     {
-        if(sshd_shell_create(ssh_config, session) != SSH_OK)
+    	//TODO check ACL
+    	if(!sshd_acl_action(ssh_config, session))
+    	{
+        	ssh_disconnect(session);
+            ssh_free(session);
+            return SSH_ERROR;
+    	}
+        if(sshd_client_create(ssh_config, session) != SSH_OK)
         {
         	ssh_disconnect(session);
             ssh_free(session);
@@ -498,121 +651,48 @@ static int sshd_accept(socket_t fd, int revents, void *userdata)
 }
 
 
-int sshd_enable(char *address, int port)
-{
-	int local_port = port;
-    if(!sshd_config.init)
-    	sshd_module_init();
-
-    if(port)
-    	ssh_bind_options_set(sshd_config.sshbind, SSH_BIND_OPTIONS_BINDPORT, &local_port);
-
-    if(address)
-    	ssh_bind_options_set(sshd_config.sshbind, SSH_BIND_OPTIONS_BINDADDR, address);
-
-    set_default_keys(sshd_config.sshbind, 0, 1, 1);
-
-    if(ssh_bind_listen(sshd_config.sshbind) < 0) {
-        fprintf(ssh_stderr, "%s\n", ssh_get_error(sshd_config.sshbind));
-        return 1;
-    }
-    ssh_socket_set_nonblocking(ssh_bind_get_fd(sshd_config.sshbind));
-    ssh_event_add_fd(sshd_config.event,
-		  ssh_bind_get_fd(sshd_config.sshbind), POLLIN, sshd_accept, &sshd_config);
-
-    sshd_module_task_init ();
-
-    return OK;
-}
-
-int sshd_disable()
-{
-	sshd_config.quit = TRUE;
-	return OK;
-}
-
-int sshd_module_init()
-{
-	memset(&sshd_config, 0, sizeof(sshd_config));
-    ssh_init();
-    ssh_set_log_level(7);
-    ssh_set_log_callback(ssh_log_callback_func);
-    sshd_config.sshbind = ssh_bind_new();
-    sshd_config.event = ssh_event_new();
-    sshd_config.init = TRUE;
-    return OK;
-}
-
-int sshd_module_exit()
-{
-    ssh_event_free(sshd_config.event);
-    ssh_bind_free(sshd_config.sshbind);
-    ssh_finalize();
-    sshd_config.init = FALSE;
-    return OK;
-}
 
 
-
-static int sshd_module_task(void *argv)
+int sshd_task(void *argv)
 {
 	int ret = 0;
 	int waittime = 2;
-#ifndef SSH_SHELL_PROXY_ENABLE
-	int timev = 0;
-#endif
-	ssh_config_t *ssh_config = argv;
+
+	ssh_config_t *sshd = argv;
 	while(!os_load_config_done())
 	{
 		os_sleep(1);
 	}
 	while(1)
 	{
-		if(ssh_config->quit)
+		if(sshd->quit)
 			break;
-		ret = ssh_event_dopoll(ssh_config->event, waittime);
-		if (ret == SSH_ERROR)
+		//if(sshd->running)
 		{
-			break;
+			ret = ssh_event_dopoll(sshd->event, waittime);
+			if (ret == SSH_ERROR)
+			{
+				break;
+			}
+			if (ret == SSH_AGAIN)//timeout
+			{
+			}
 		}
-		if (ret == SSH_AGAIN)//timeout
+/*		else
 		{
-#ifndef SSH_SHELL_PROXY_ENABLE
-			timev = os_time(NULL);
-			ssh_handle_session_timeout(ssh_config->event, timev);
-#endif
-		}
+			os_sleep(1);
+		}*/
 	}
-	ssh_config->quit = FALSE;
-	if(!ssh_config->event)
+	sshd->quit = FALSE;
+	if(!sshd->event)
 		return OK;
-	if(ssh_event_session_count(ssh_config->event))
+	if(ssh_event_session_count(sshd->event))
 	{
 
 	}
-	sshd_module_exit();
+	ssh_module_exit();
 	return 0;
 }
-
-int sshd_module_task_init ()
-{
-	if(sshd_config.sshd_taskid == 0)
-		sshd_config.sshd_taskid = os_task_create("sshdTask", OS_TASK_DEFAULT_PRIORITY,
-	               0, sshd_module_task, &sshd_config, OS_TASK_DEFAULT_STACK);
-	if(sshd_config.sshd_taskid)
-		return OK;
-	return ERROR;
-}
-
-int sshd_module_task_exit ()
-{
-	sshd_config.quit = TRUE;
-/*	if(sshd_config.sshd_taskid)
-		os_task_destroy(sshd_config.sshd_taskid);*/
-	sshd_config.sshd_taskid = 0;
-	return OK;
-}
-
 
 
 

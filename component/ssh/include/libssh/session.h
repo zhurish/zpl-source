@@ -200,8 +200,9 @@ struct ssh_session_struct {
     /* counters */
     ssh_counter socket_counter;
     ssh_counter raw_counter;
-    int		(*session_timeout)(struct ssh_session_struct *, void *, int);
-    void	*userdata;
+
+    ssh_session_callbacks session_callbacks;
+
 	struct sockaddr_in client_address;
 };
 

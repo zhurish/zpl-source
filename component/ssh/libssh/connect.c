@@ -84,7 +84,7 @@
 #include "libssh/poll.h"
 
 #ifndef HAVE_GETADDRINFO
-#error "Your system must have getaddrinfo()"
+//#error "Your system must have getaddrinfo()"
 #endif
 
 #ifdef _WIN32

@@ -29,7 +29,7 @@ typedef struct iw_s
 }iw_t;
 
 
-extern int nsm_iw_client_exit();
+extern int nsm_iw_client_init();
 extern int nsm_iw_client_exit();
 
 extern iw_t * nsm_iw_get(struct interface *ifp);
@@ -43,6 +43,8 @@ extern int nsm_iw_channel_freq_show(struct interface *ifp, struct vty *vty);
 
 extern int nsm_iw_capabilities_show(struct interface *ifp, struct vty *vty);
 extern int nsm_iw_ap_info_show(struct interface *ifp, struct vty *vty);
+
+extern int nsm_iw_debug_write_config(struct vty *vty);
 
 extern void cmd_wireless_init(void);
 

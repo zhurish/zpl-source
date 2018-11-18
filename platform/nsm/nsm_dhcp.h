@@ -8,10 +8,12 @@
 #ifndef __NSM_DHCP_H__
 #define __NSM_DHCP_H__
 
+/*
 #define PL_DHCP_MODULE
 #define PL_DHCPC_MODULE
 #define PL_DHCPD_MODULE
 #define PL_DHCPR_MODULE
+*/
 
 #ifdef PL_DHCP_MODULE
 
@@ -27,7 +29,7 @@ typedef enum
 	DHCPC_CLIENT_START_IF,
 	DHCPC_CLIENT_STOP_IF,
 	DHCPC_CLIENT_RESTART_IF,
-
+	DHCPC_CLIENT_RENEW_IF,
 	DHCPC_CLIENT_FREE_IF,
 
 	DHCPC_CLIENT_ADD_OPTION_IF,
@@ -156,6 +158,8 @@ extern int nsm_dhcps_get_api(nsm_dhcps_t *dhcps, int cmd, void *val);
 extern int nsm_dhcps_write_config(struct vty *vty);
 
 extern int nsm_interface_dhcps_enable(ifindex_t kifindex, BOOL enable);
+
+extern void cmd_dhcps_init(void);
 #endif
 
 
@@ -163,17 +167,19 @@ extern int nsm_interface_dhcps_enable(ifindex_t kifindex, BOOL enable);
 
 extern int nsm_interface_dhcpc_enable(struct interface *ifp, BOOL enable);
 extern int nsm_interface_dhcpc_start(struct interface *ifp, BOOL enable);
+extern BOOL nsm_interface_dhcpc_is_running(struct interface *ifp);
 extern int nsm_interface_dhcpc_option(struct interface *ifp,  BOOL enable, int index, char *option);
 
 extern int nsm_interface_dhcpc_write_config(struct interface *ifp, struct vty *vty);
 extern int nsm_interface_dhcpc_client_show(struct interface *ifp, struct vty *vty, BOOL detail);
 
+extern void cmd_dhcpc_init(void);
 #endif
 
 
 extern void cmd_dhcp_init(void);
-extern void cmd_dhcps_init(void);
-extern void cmd_dhcpc_init(void);
+
+
 
 extern int nsm_dhcp_module_init ();
 extern int nsm_dhcp_module_exit ();

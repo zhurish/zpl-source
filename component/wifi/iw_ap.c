@@ -968,7 +968,7 @@ int iw_ap_config(iw_ap_t *iw_ap, struct vty *vty)
 		iw_ap->auth == IW_ENCRY_WPA2_PSK ||		//= 2 WPA2-PSK CCMP/AUTO
 		iw_ap->auth == IW_ENCRY_WPA2WPA_PSK)
 	{
-		if (os_strlen(iw_ap->password[0].password))
+		if (os_strlen(iw_ap->password[0].encrypt_password))
 			vty_out(vty, " authentication password %s%s", iw_ap->password[0].encrypt_password, VTY_NEWLINE);
 	}
 
@@ -978,7 +978,7 @@ int iw_ap_config(iw_ap_t *iw_ap, struct vty *vty)
 
 		//vty_out(vty, " ap-password %d%s", iw_ap->wep_key, VTY_NEWLINE);
 
-		if (os_strlen(iw_ap->password[0].password))
+		if (os_strlen(iw_ap->password[0].encrypt_password))
 			vty_out(vty, " authentication password %s%s", iw_ap->password[0].encrypt_password, VTY_NEWLINE);
 
 /*		if (os_strlen(iw_ap->password[1].password))
@@ -1056,7 +1056,7 @@ int iw_ap_config(iw_ap_t *iw_ap, struct vty *vty)
 
 	//vty_out(vty," ap-password %d%s", iw_ap->channel, VTY_NEWLINE);
 
-	if(lstCount(iw_ap->mac_list))
+	if(iw_ap->mac_list && lstCount(iw_ap->mac_list))
 	{
 		for(pstNode = (iw_ap_mac_t *)lstFirst(iw_ap->mac_list);
 				pstNode != NULL;  pstNode = (iw_ap_mac_t *)lstNext((NODE*)&index))
@@ -1070,7 +1070,7 @@ int iw_ap_config(iw_ap_t *iw_ap, struct vty *vty)
 			}
 		}
 	}
-	if(lstCount(iw_ap->dmac_list))
+	if(iw_ap->dmac_list && lstCount(iw_ap->dmac_list))
 	{
 		for(pstNode = (iw_ap_mac_t *)lstFirst(iw_ap->dmac_list);
 				pstNode != NULL;  pstNode = (iw_ap_mac_t *)lstNext((NODE*)&index))

@@ -141,7 +141,7 @@ void ssh_socket_cleanup(void) {
 ssh_socket ssh_socket_new(ssh_session session) {
   ssh_socket s;
 
-  s = malloc(sizeof(struct ssh_socket_struct));
+  s = ssh_malloc(sizeof(struct ssh_socket_struct));
   if (s == NULL) {
     ssh_set_error_oom(session);
     return NULL;
@@ -220,9 +220,12 @@ int ssh_socket_pollcallback(struct ssh_poll_handle_struct *p, socket_t fd,
                             int revents, void *v_s) {
     ssh_socket s = (ssh_socket)v_s;
     char buffer[MAX_BUF_SIZE];
-    int r;
-    int err = 0;
-    socklen_t errlen = sizeof(err);
+    int r = 0;
+    int err_val = 0;
+    socklen_t errlen = sizeof(err_val);
+    if(!p || !s)
+    	return -1;
+
     /* Do not do anything if this socket was already closed */
     if (!ssh_socket_is_open(s)) {
         return -1;
@@ -231,14 +234,14 @@ int ssh_socket_pollcallback(struct ssh_poll_handle_struct *p, socket_t fd,
         /* Check if we are in a connecting state */
         if (s->state == SSH_SOCKET_CONNECTING) {
             s->state = SSH_SOCKET_ERROR;
-            r = getsockopt(fd, SOL_SOCKET, SO_ERROR, (char *)&err, &errlen);
+            r = getsockopt(fd, SOL_SOCKET, SO_ERROR, (char *)&err_val, &errlen);
             if (r < 0) {
-                err = errno;
+                err_val = errno;
             }
-            s->last_errno = err;
+            s->last_errno = err_val;
             ssh_socket_close(s);
             if (s->callbacks && s->callbacks->connected) {
-                s->callbacks->connected(SSH_SOCKET_CONNECTED_ERROR, err,
+                s->callbacks->connected(SSH_SOCKET_CONNECTED_ERROR, err_val,
                                         s->callbacks->userdata);
             }
             return -1;

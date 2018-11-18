@@ -205,8 +205,8 @@ extern void ssh_log_function(int verbosity,
                       const char *function,
                       const char *buffer);
 
-//#define SSH_LOG(priority, ...)	_ssh_debug_log(priority, __func__, ##__VA_ARGS__)
-#define SSH_LOG(priority, ...)
+#define SSH_LOG(priority, ...)	_ssh_debug_log(priority, __func__, ##__VA_ARGS__)
+//#define SSH_LOG(priority, ...)
 
 
 
@@ -271,8 +271,15 @@ extern int match_hostname(const char *host, const char *pattern, unsigned int le
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #endif
 
+
+#define ssh_malloc(n)		zmalloc(MTYPE_SSH, (n))
+#define ssh_calloc(s,n)		z_zcalloc(MTYPE_SSH, (s), (n))
+#define ssh_realloc(p, n)	zrealloc(MTYPE_SSH, (p), (n))
+#define ssh_strdup(n)	zstrdup(MTYPE_SSH, (n))
+
+
 /** Free memory space */
-#define SAFE_FREE(x) do { if ((x) != NULL) {free(x); x=NULL;} } while(0)
+#define SAFE_FREE(x) do { if ((x) != NULL) {zfree(MTYPE_SSH, x); x=NULL;} } while(0)
 
 /** Zero a structure */
 #define ZERO_STRUCT(x) memset((char *)&(x), 0, sizeof(x))

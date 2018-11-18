@@ -768,7 +768,7 @@ static int os_task_entry_start(os_task_t *task)
 	if (task_mutex)
 		os_mutex_unlock(task_mutex);
 
-	pthread_exit(0);
+	//pthread_exit(0);
 	return 0;
 }
 
@@ -873,7 +873,7 @@ unit32 os_task_entry_create(char *name, int pri, int op, task_entry entry,
 		//int pthread_setname_np(pthread_t thread, const char *name);
 		//int pthread_getname_np(pthread_t thread,
 		//                              char *name, size_t len);
-		extern struct zebra_privs_t os_privs;
+		//extern struct zebra_privs_t os_privs;
 		int ret = 0;
 
 		ret = pthread_setname_np(task->td_thread, task->td_name);

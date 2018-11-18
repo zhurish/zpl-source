@@ -23,6 +23,9 @@ OBJS += modem_mgtlayer.o
 OBJS += modem_split.o
 OBJS += modem_string.o
 
+OBJS += modem_proxy.o
+
+
 OBJS += modem_usim.o
 OBJS += modem_dialog.o
 OBJS += modem_pppd.o

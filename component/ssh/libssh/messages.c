@@ -64,7 +64,7 @@
  */
 
 static ssh_message ssh_message_new(ssh_session session){
-  ssh_message msg = malloc(sizeof(struct ssh_message_struct));
+  ssh_message msg = ssh_malloc(sizeof(struct ssh_message_struct));
   if (msg == NULL) {
     return NULL;
   }
@@ -811,7 +811,7 @@ SSH_PACKET_CALLBACK(ssh_packet_userauth_request){
     	 goto error;
      }
      SSH_LOG(SSH_LOG_PACKET, "gssapi: %d OIDs", n_oid);
-     oids = calloc(n_oid, sizeof(ssh_string));
+     oids = ssh_calloc(n_oid, sizeof(ssh_string));
      if (oids == NULL){
     	 ssh_set_error_oom(session);
     	 goto error;
@@ -960,7 +960,7 @@ SSH_PACKET_CALLBACK(ssh_packet_userauth_info_response){
   }
   session->kbdint->nanswers = nanswers;
 
-  session->kbdint->answers = calloc(1, nanswers * sizeof(char *));
+  session->kbdint->answers = ssh_calloc(1, nanswers * sizeof(char *));
   if (session->kbdint->answers == NULL) {
     session->kbdint->nanswers = 0;
     ssh_set_error_oom(session);

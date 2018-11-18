@@ -102,6 +102,20 @@ zzcalloc (int type, size_t size)
   return memory;
 }
 
+void *
+z_zcalloc (int type, int n, size_t size)
+{
+  void *memory;
+
+  memory = calloc (n, size);
+
+  if (memory == NULL)
+    zerror ("calloc", type, size);
+  os_memset(memory, 0, size);
+  alloc_inc (type);
+  //mstat[type].alloc++;
+  return memory;
+}
 /* 
  * Given a pointer returned by zmalloc or zzcalloc, free it and
  * return a pointer to a new size, basically acting like realloc().

@@ -192,9 +192,10 @@ LIBSSH_API int ssh_handle_key_exchange(ssh_session session);
  * @param  ssh_bind_o     The ssh server bind to free.
  */
 LIBSSH_API void ssh_bind_free(ssh_bind ssh_bind_o);
-
+LIBSSH_API void ssh_bind_close(ssh_bind sshbind);
 LIBSSH_API void ssh_set_auth_methods(ssh_session session, int auth_methods);
 
+LIBSSH_API void ssh_bind_key_free(ssh_bind sshbind);
 /**********************************************************
  * SERVER MESSAGING
  **********************************************************/

@@ -727,6 +727,68 @@ md_res_en modem_attty_respone(modem_client_t *client,
     return RES_ERROR;
 }
 
+
+md_res_en modem_attty_proxy_respone(modem_client_t *client,
+		int timeout, char *buf, int size, const char *format, int len)
+{
+	md_res_en res = RES_ERROR;
+    //assert (buf);
+    assert (client);
+    if(modem_attty_isclose(client) == RES_OK)
+    {
+    	return RES_ERROR;
+    }
+    if(!client->bSms)
+    	modem_main_lock(client->modem);
+    os_memset(client->atcmd, 0, sizeof(atcmd_request_t));
+    client->atcmd->len = len;
+    os_memcpy(client->atcmd->buf, format, client->atcmd->len);
+    if(client->atcmd->len <= 0)
+    {
+    	if(!client->bSms)
+    		modem_main_unlock(client->modem);
+    	return RES_ERROR;
+    }
+    res = modem_attty_write_one(client);
+    if( res != RES_OK)
+    {
+    	if(!client->bSms)
+    		modem_main_unlock(client->modem);
+    	return res;
+    }
+    if(client->bSms)
+    {
+    	if(atsms_finish(client->atcmd->buf, client->atcmd->len))
+    		client->bSms = FALSE;
+    }
+	os_msleep(50);
+    os_memset(client->response, 0, sizeof(atcmd_response_t));
+    if(tty_attty_wait_response(client, timeout) > 0)
+    {
+    	if(buf && size)
+    		os_memcpy(buf, client->response->buf, MIN(client->response->len, size));
+
+    	if(strstr(client->response->buf, ">"))
+    	{
+    		client->bSms = TRUE;
+    	}
+
+    	if(!client->bSms)
+    		modem_main_unlock(client->modem);
+    	return client->response->len;
+    }
+    else
+    {
+		if(tty_attty_test_close(client->attty) != RES_OK)
+		{
+			modem_main_unlock(client->modem);
+			return RES_CLOSE;
+		}
+    }
+    if(!client->bSms)
+    	modem_main_unlock(client->modem);
+    return RES_ERROR;
+}
 md_res_en modem_attty_massage_respone(modem_client_t *client,
 		int timeout, const char *msg_cmd, const char *buf, int size)
 {

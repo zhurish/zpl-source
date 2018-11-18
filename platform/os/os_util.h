@@ -104,6 +104,14 @@ extern int os_register_signal(int sig, void (*handler)(int));
 /*
  * FILE SIZE
  */
+#define MPLS_1_M(n)	(n << 20)
+#define MPLS_1_K(n)	(n << 10)
+
+#define MPLS_X_B(n)	(n)
+#define MPLS_X_K(n)	(n >> 10)
+#define MPLS_X_M(n)	(n >> 20)
+#define MPLS_X_G(n)	(n >> 30)
+
 extern const char * os_file_size(long long len);
 
 //extern const char * os_stream_size(long long len);
@@ -124,8 +132,9 @@ typedef struct os_url_s
 }os_url_t;
 
 extern int os_url_split(const char * URL, os_url_t *spliurl);
+//extern int os_url_show(os_url_t *spliurl);
 extern int os_url_free(os_url_t *spliurl);
-
+//extern int os_url_test();
 /*
  * thread
  */

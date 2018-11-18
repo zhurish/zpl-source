@@ -141,7 +141,7 @@ static char **tokenize(const char *chain){
     char *tmp;
     char *ptr;
 
-    tmp = strdup(chain);
+    tmp = ssh_strdup(chain);
     if (tmp == NULL) {
       return NULL;
     }
@@ -154,7 +154,7 @@ static char **tokenize(const char *chain){
         ptr++;
     }
     /* now n contains the number of tokens, the first possibly empty if the list was empty too e.g. "" */
-    tokens=malloc(sizeof(char *) * (n+1) ); /* +1 for the null */
+    tokens=ssh_malloc(sizeof(char *) * (n+1) ); /* +1 for the null */
     if (tokens == NULL) {
       SAFE_FREE(tmp);
       return NULL;
@@ -179,7 +179,7 @@ char **space_tokenize(const char *chain){
     char *tmp;
     char *ptr;
 
-    tmp = strdup(chain);
+    tmp = ssh_strdup(chain);
     if (tmp == NULL) {
       return NULL;
     }
@@ -198,7 +198,7 @@ char **space_tokenize(const char *chain){
         ptr++;
     }
     /* now n contains the number of tokens, the first possibly empty if the list was empty too e.g. "" */
-    tokens = malloc(sizeof(char *) * (n + 1)); /* +1 for the null */
+    tokens = ssh_malloc(sizeof(char *) * (n + 1)); /* +1 for the null */
     if (tokens == NULL) {
       SAFE_FREE(tmp);
       return NULL;
@@ -237,7 +237,7 @@ const char *ssh_kex_get_description(uint32_t algo) {
 
 /* find_matching gets 2 parameters : a list of available objects (available_d), separated by colons,*/
 /* and a list of preferred objects (preferred_d) */
-/* it will return a strduped pointer on the first preferred object found in the available objects list */
+/* it will return a ssh_strduped pointer on the first preferred object found in the available objects list */
 
 char *ssh_find_matching(const char *available_d, const char *preferred_d){
     char ** tok_available, **tok_preferred;
@@ -264,7 +264,7 @@ char *ssh_find_matching(const char *available_d, const char *preferred_d){
       for(i_avail=0; tok_available[i_avail]; ++i_avail){
         if(strcmp(tok_available[i_avail],tok_preferred[i_pref]) == 0){
           /* match */
-          ret=strdup(tok_available[i_avail]);
+          ret=ssh_strdup(tok_available[i_avail]);
           /* free the tokens */
           SAFE_FREE(tok_available[0]);
           SAFE_FREE(tok_preferred[0]);
@@ -528,7 +528,7 @@ static char *ssh_client_select_hostkeys(ssh_session session){
 
 	if(strlen(methods_buffer) > 0){
 		SSH_LOG(SSH_LOG_DEBUG, "Changing host key method to \"%s\"", methods_buffer);
-		return strdup(methods_buffer);
+		return ssh_strdup(methods_buffer);
 	} else {
 		SSH_LOG(SSH_LOG_DEBUG, "No supported kex method for existing key in known_hosts file");
 		return NULL;
@@ -558,7 +558,7 @@ int set_client_kex(ssh_session session){
         wanted = session->opts.wanted_methods[i];
         if (wanted == NULL)
             wanted = default_methods[i];
-        client->methods[i] = strdup(wanted);
+        client->methods[i] = ssh_strdup(wanted);
     }
 
     return SSH_OK;
@@ -580,7 +580,7 @@ int ssh_kex_select_methods (ssh_session session){
             return SSH_ERROR;
         } else if ((i >= SSH_LANG_C_S) && (session->next_crypto->kex_methods[i] == NULL)) {
             /* we can safely do that for languages */
-            session->next_crypto->kex_methods[i] = strdup("");
+            session->next_crypto->kex_methods[i] = ssh_strdup("");
         }
     }
     if(strcmp(session->next_crypto->kex_methods[SSH_KEX], "diffie-hellman-group1-sha1") == 0){
@@ -662,7 +662,7 @@ int verify_existing_algo(int algo, const char *name){
         return -1;
     ptr=ssh_find_matching(supported_methods[algo],name);
     if(ptr){
-        free(ptr);
+        SAFE_FREE(ptr);
         return 1;
     }
     return 0;

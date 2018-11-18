@@ -28,6 +28,42 @@ DEFUN (show_memory,
   return vty_show_memory_cmd(vty);
 }
 
+DEFUN (show_system_clock,
+		show_system_clock_cmd,
+		"show system clock",
+		SHOW_STR
+		"Displays system information\n"
+		"Displays Clock information\n")
+{
+	vty_out(vty, "%s", VTY_NEWLINE);
+	vty_out(vty, "system current time  : %s %s", os_time_out("/",os_time (NULL)), VTY_NEWLINE);
+	vty_out(vty, "system running time  : %s %s", os_time_string(os_monotonic_time ()), VTY_NEWLINE);
+	vty_out(vty, "system hw-clock time : %s %s", os_time_out("/",os_monotonic_time ()), VTY_NEWLINE);
+
+	if(argc == 1)
+	{
+		struct timeval tv;
+		vty_out(vty, "os time              : %u %s", os_time (NULL), VTY_NEWLINE);
+		vty_out(vty, "os monotonic time    : %u %s", os_monotonic_time (), VTY_NEWLINE);
+		os_gettimeofday (&tv);
+		vty_out(vty, "os timeofday         : %u.%u %s", tv.tv_sec, tv.tv_usec/1000, VTY_NEWLINE);
+		os_get_realtime (&tv);
+		vty_out(vty, "os realtime          : %u.%u %s", tv.tv_sec, tv.tv_usec/1000, VTY_NEWLINE);
+		os_get_monotonic (&tv);
+		vty_out(vty, "os monotonic         : %u.%u %s", tv.tv_sec, tv.tv_usec/1000, VTY_NEWLINE);
+	}
+	vty_out(vty, "%s", VTY_NEWLINE);
+	return CMD_SUCCESS;
+}
+
+ALIAS_HIDDEN(show_system_clock,
+		show_system_clock_detal_cmd,
+		"show system clock (detail|)",
+		SHOW_STR
+		"Displays system information\n"
+		"Displays Clock information\n"
+		"Dtail information\n");
+
 
 void
 cmd_memory_init (void)
@@ -35,4 +71,6 @@ cmd_memory_init (void)
 /*  install_element (RESTRICTED_NODE, &show_memory_cmd);*/
 
   install_element (VIEW_NODE, &show_memory_cmd);
+  install_element (VIEW_NODE, &show_system_clock_cmd);
+  install_element (VIEW_NODE, &show_system_clock_detal_cmd);
 }

@@ -13,8 +13,8 @@
 #define IP_DNS_METRIC_STATIC_DEFAULT 1
 
 
-#define IP_DNS_DEBUG	1
-#define IP_DNS_EVENT_DEBUG	2
+#define IP_DNS_DEBUG		0x01
+#define IP_DNS_EVENT_DEBUG	0x02
 
 #define NSM_DNS_DEBUG_ON(n) 	(_dns_debug |= (n))
 #define NSM_DNS_DEBUG_OFF(n) 	(_dns_debug &= ~(n))
@@ -23,6 +23,7 @@
 
 typedef enum
 {
+	IP_DNS_EV_NONE = 0,
 	IP_DNS_UP_IF,
 	IP_DNS_DOWN_IF,
 

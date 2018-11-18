@@ -59,6 +59,9 @@ extern md_res_en modem_attty_respone(modem_client_t *client,
 		int timeout, char *buf, int size, const char *format, ...);
 
 
+extern md_res_en modem_attty_proxy_respone(modem_client_t *client,
+		int timeout, char *buf, int size, const char *format, int len);
+
 extern md_res_en modem_attty_massage_respone(modem_client_t *client,
 		int timeout, const char *msg_cmd, const char *buf, int size);
 

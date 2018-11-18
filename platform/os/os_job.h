@@ -20,4 +20,8 @@ extern int os_job_add_entry(int (*job_entry)(void *), void *pVoid, char *func_na
 
 #define os_job_add(f,p)		os_job_add_entry(f,p,#f)
 
+
+extern int os_job_del(int (*job_entry)(void *), void *pVoid);
+
+
 #endif /* __OS_JOB_H__ */

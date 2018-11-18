@@ -196,7 +196,7 @@ static int ssh_config_parse_line(ssh_session session, const char *line,
   size_t len;
   int i;
 
-  x = s = strdup(line);
+  x = s = ssh_strdup(line);
   if (s == NULL) {
     ssh_set_error_oom(session);
     return -1;
@@ -251,10 +251,10 @@ static int ssh_config_parse_line(ssh_session session, const char *line,
       if (p && *parsing) {
         char *z = ssh_path_expand_escape(session, p);
         if (z == NULL) {
-            z = strdup(p);
+            z = ssh_strdup(p);
         }
         ssh_options_set(session, SSH_OPTIONS_HOST, z);
-        free(z);
+        SAFE_FREE(z);
       }
       break;
     case SOC_PORT:
@@ -300,7 +300,7 @@ static int ssh_config_parse_line(ssh_session session, const char *line,
       p = ssh_config_get_str_tok(&s, NULL);
       if (p && *parsing) {
         char *a, *b;
-        b = strdup(p);
+        b = ssh_strdup(p);
         if (b == NULL) {
           SAFE_FREE(x);
           ssh_set_error_oom(session);

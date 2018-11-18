@@ -113,6 +113,17 @@ DEFUN (bond_test,
 	return CMD_SUCCESS;
 }
 
+DEFUN (dhcp_test,
+		dhcp_test_cmd,
+       "dhcp-test",
+       "syslog-debug\n"
+	   "dest")
+{
+	dhcpc_enable_test();
+	return CMD_SUCCESS;
+}
+
+
 DEFUN (os_process_test,
 		os_process_test_cmd,
        "process-test (start|stop)",
@@ -268,11 +279,15 @@ int os_test()
 	//nsm_main (0, NULL);
 //	unit_slot_module_init();
 
+	//dhcpc_module_init();
+
 	//extern int syslogcLibInit (char * pServer);
 	//syslogcLibInit ("127.0.0.1");
 	//modem_test_init();
 	install_element (ENABLE_NODE, &wifi_list_cmd);
 	install_element (ENABLE_NODE, &wifi_scan_cmd);
+
+	install_element (ENABLE_NODE, &dhcp_test_cmd);
 
 	install_element (ENABLE_NODE, &sdk_test_cmd);
 	install_element (ENABLE_NODE, &syslog_debug_test_cmd);

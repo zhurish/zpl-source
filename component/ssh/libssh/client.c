@@ -125,7 +125,7 @@ static int callback_receive_banner(const void *data, size_t len, void *user)
             /* The server MAY send other lines of data... */
             cmp = strncmp(buffer, "SSH-", 4);
             if (cmp == 0) {
-                str = strdup(buffer);
+                str = ssh_strdup(buffer);
                 if (str == NULL) {
                     return SSH_ERROR;
                 }
@@ -184,13 +184,13 @@ int ssh_send_banner(ssh_session session, int server)
     if (server == 1) {
         if (session->opts.custombanner == NULL){
             len = strlen(banner);
-            session->serverbanner = strdup(banner);
+            session->serverbanner = ssh_strdup(banner);
             if (session->serverbanner == NULL) {
                 goto end;
             }
         } else {
             len = strlen(session->opts.custombanner);
-            session->serverbanner = malloc(len + 8 + 1);
+            session->serverbanner = ssh_malloc(len + 8 + 1);
             if(session->serverbanner == NULL) {
                 goto end;
             }
@@ -206,7 +206,7 @@ int ssh_send_banner(ssh_session session, int server)
                  session->serverbanner,
                  terminator);
     } else {
-        session->clientbanner = strdup(banner);
+        session->clientbanner = ssh_strdup(banner);
         if (session->clientbanner == NULL) {
             goto end;
         }
@@ -665,7 +665,7 @@ char *ssh_get_issue_banner(ssh_session session) {
  * int openssh = ssh_get_openssh_version();
  *
  * if (openssh == SSH_INT_VERSION(6, 1, 0)) {
- *     printf("Version match!\m");
+ *     ssh_printf(NULL, "Version match!\m");
  * }
  * @endcode
  */
@@ -705,6 +705,11 @@ void ssh_disconnect(ssh_session session) {
     packet_send(session);
     ssh_socket_close(session->socket);
   }
+
+  if(session->session_callbacks.session_close_function)
+	  (session->session_callbacks.session_close_function)(session,
+			  session->session_callbacks.userdata);
+
 error:
   session->alive = 0;
   if (session->socket != NULL){

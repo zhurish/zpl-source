@@ -43,6 +43,8 @@
 #define _LIBZEBRA_MD5_H_
 
 #define MD5_BUFLEN	64
+#define MD5_DIGEST_LENGTH 16
+
 
 typedef struct {
 	union {
@@ -82,11 +84,18 @@ do {				\
 	md5_result((x), (y));	\
 } while (0)
 
+
+void	MD5_Init(MD5_CTX *);
+void	MD5_Update(MD5_CTX *, const unsigned char *, size_t);
+void	MD5_Final(unsigned char *, MD5_CTX *);
+
+
 /* From RFC 2104 */
 void hmac_md5(unsigned char* text, int text_len, unsigned char* key,
               int key_len, uint8_t *digest);
+
+
 #ifndef USE_IPSTACK_KERNEL
-#define MD5_DIGEST_LENGTH 16
 unsigned char *MD5(const unsigned char *d, size_t n, unsigned char *md);
 #endif
 #endif /* ! _LIBZEBRA_MD5_H_*/

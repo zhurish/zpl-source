@@ -792,6 +792,16 @@ int vty_user_change(struct vty *vty, char *name)
 
 }
 
+char * vty_user_get(struct vty *vty)
+{
+	if(vty)
+	{
+		return vty->username;
+	}
+	return VTY_USERNAME_DEFAULT;
+}
+
+
 int vty_user_init(void)
 {
 	struct vty_user * user = NULL;

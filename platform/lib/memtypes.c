@@ -451,7 +451,10 @@ struct memory_list memory_list_ssh[] =
 
   { MTYPE_SSH_CLIENT,	"SSH Client information"	},
   { MTYPE_SSH_SCP,		"SSH SCP information"	},
-  { MTYPE_SSH_SFTP,		"SSH SFTP information"	},
+  { MTYPE_SSH_BUF,		"SSH Buffer information"	},
+  { MTYPE_SSH_DATA,		"SSH Data information"	},
+  { MTYPE_SSH_KEY,		"SSH Key information"	},
+  { MTYPE_SSH_MSG,		"SSH Msg information"	},
   { -1, NULL },
 };
 

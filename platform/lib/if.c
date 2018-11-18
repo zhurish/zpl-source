@@ -454,7 +454,7 @@ if_lookup_by_index_vrf(ifindex_t ifindex, vrf_id_t vrf_id) {
 	struct interface *ifp;
 
 	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp)) {
-		if ((ifp->ifindex == ifindex) && (ifp->vrf_id == vrf_id))
+		if ((ifp->ifindex && ifp->ifindex == ifindex) && (ifp->vrf_id == vrf_id))
 			return ifp;
 	}
 	return NULL;
@@ -466,7 +466,7 @@ if_lookup_by_index(ifindex_t ifindex) {
 	struct interface *ifp;
 
 	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp)) {
-		if (ifp->ifindex == ifindex)
+		if (ifp->ifindex && ifp->ifindex == ifindex)
 			return ifp;
 	}
 	return NULL;
@@ -504,7 +504,7 @@ if_lookup_by_kernel_index_vrf(ifindex_t kifindex, vrf_id_t vrf_id) {
 	struct listnode *node;
 	struct interface *ifp;
 	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp)) {
-		if (ifp->k_ifindex == kifindex && (ifp->vrf_id == vrf_id))
+		if (ifp->k_ifindex &&  ifp->k_ifindex == kifindex && (ifp->vrf_id == vrf_id))
 			return ifp;
 	}
 	return NULL;
@@ -515,7 +515,7 @@ if_lookup_by_kernel_index(ifindex_t kifindex) {
 	struct listnode *node;
 	struct interface *ifp;
 	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp)) {
-		if (ifp->k_ifindex == kifindex)
+		if (ifp->k_ifindex && ifp->k_ifindex == kifindex)
 			return ifp;
 	}
 	return NULL;
@@ -960,10 +960,10 @@ int if_name_set(struct interface *ifp, const char *str)
 
 int if_kname_set(struct interface *ifp, const char *str)
 {
-	char buf[INTERFACE_NAMSIZ + 1];
-	os_memset(buf, 0, sizeof(buf));
 	if(strlen(str))
 	{
+		char buf[INTERFACE_NAMSIZ + 1];
+		os_memset(buf, 0, sizeof(buf));
 		os_strcpy(buf, str);
 		os_memset(ifp->k_name, 0, sizeof(ifp->k_name));
 		os_strcpy(ifp->k_name, buf);
@@ -971,7 +971,11 @@ int if_kname_set(struct interface *ifp, const char *str)
 		ifp->k_ifindex = pal_interface_ifindex(ifp->k_name);
 	}
 	else
+	{
+		os_memset(ifp->k_name, 0, sizeof(ifp->k_name));
 		ifp->k_name_hash = 0;
+		ifp->k_ifindex = 0;
+	}
 	return OK;
 }
 

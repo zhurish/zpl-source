@@ -43,7 +43,7 @@
   #if __GNUC__ >= 4 && !defined(__OS2__)
     #define LIBSSH_API __attribute__((visibility("default")))
   #else
-    #define LIBSSH_API
+    #define LIBSSH_API extern
   #endif
 #endif
 
@@ -277,19 +277,19 @@ enum ssh_keycmp_e {
 enum {
 	/** No logging at all
 	 */
-	SSH_LOG_NOLOG=0,
+	SSH_LOG_NOLOG = 0x00,
 	/** Only warnings
 	 */
-	SSH_LOG_WARNING,
+	SSH_LOG_WARNING = 0x0105,
 	/** High level protocol information
 	 */
-	SSH_LOG_PROTOCOL,
+	SSH_LOG_PROTOCOL = 0x0206,
 	/** Lower level protocol infomations, packet level
 	 */
-	SSH_LOG_PACKET,
+	SSH_LOG_PACKET = 0x0407,
 	/** Every function path
 	 */
-	SSH_LOG_FUNCTIONS
+	SSH_LOG_FUNCTIONS = 0x0807
 };
 /** @} */
 #define SSH_LOG_RARE SSH_LOG_WARNING
@@ -303,14 +303,16 @@ enum {
 
 /** No logging at all */
 #define SSH_LOG_NONE 0
+/** Show only error */
+#define SSH_LOG_ERROR 4
 /** Show only warnings */
-#define SSH_LOG_WARN 1
+#define SSH_LOG_WARN 5
 /** Get some information what's going on */
-#define SSH_LOG_INFO 2
+#define SSH_LOG_INFO 6
 /** Get detailed debuging information **/
-#define SSH_LOG_DEBUG 3
+#define SSH_LOG_DEBUG 7
 /** Get trace output, packet information, ... */
-#define SSH_LOG_TRACE 4
+#define SSH_LOG_TRACE 8
 
 /** @} */
 
@@ -419,6 +421,9 @@ LIBSSH_API void ssh_disconnect(ssh_session session);
 LIBSSH_API char *ssh_dirname (const char *path);
 LIBSSH_API int ssh_finalize(void);
 
+#ifdef SSH_BASE_EX
+LIBSSH_API int ssh_gethostname (const char *path, int size);
+#endif
 /* REVERSE PORT FORWARDING */
 LIBSSH_API ssh_channel ssh_channel_accept_forward(ssh_session session,
                                                   int timeout_ms,
@@ -430,8 +435,7 @@ LIBSSH_API int ssh_channel_listen_forward(ssh_session session,
                                           const char *address,
                                           int port,
                                           int *bound_port);
-LIBSSH_API void * ssh_get_session_private(ssh_session session);
-LIBSSH_API int ssh_set_session_private(ssh_session session, void *p);
+
 LIBSSH_API void ssh_free(ssh_session session);
 LIBSSH_API const char *ssh_get_disconnect_message(ssh_session session);
 LIBSSH_API const char *ssh_get_error(void *error);
@@ -472,6 +476,8 @@ LIBSSH_API int ssh_is_server_known(ssh_session session);
 /* LOGGING */
 LIBSSH_API int ssh_set_log_level(int level);
 LIBSSH_API int ssh_get_log_level(void);
+LIBSSH_API int ssh_set_log_module(int level);
+LIBSSH_API int ssh_get_log_module(void);
 LIBSSH_API void *ssh_get_log_userdata(void);
 LIBSSH_API int ssh_set_log_userdata(void *data);
 LIBSSH_API void _ssh_debug_log(int verbosity,
@@ -653,7 +659,7 @@ LIBSSH_API void ssh_string_free_char(char *s);
 LIBSSH_API int ssh_getpass(const char *prompt, char *buf, size_t len, int echo,
     int verify);
 #else
-LIBSSH_API int ssh_getpass(void *out, void *in, const char *prompt, char *buf, size_t len, int echo,
+LIBSSH_API int ssh_getpass(int fd, const char *prompt, char *buf, size_t len, int echo,
     int verify);
 #endif
 typedef int (*ssh_event_callback)(socket_t fd, int revents, void *userdata);
@@ -680,6 +686,15 @@ LIBSSH_API int ssh_set_session_timeout_cb(ssh_session session, int (*func)(ssh_s
 LIBSSH_API int ssh_set_session_private(ssh_session session, void *p);
 LIBSSH_API void * ssh_get_session_private(ssh_session session);
 LIBSSH_API void * ssh_get_session_client_address(ssh_session session);
+
+/*
+ * clean session on event
+ */
+LIBSSH_API int ssh_session_clean(ssh_event event);
+/*
+ * clean channel on session
+ */
+LIBSSH_API int ssh_channel_clean(ssh_session session);
 
 #ifndef LIBSSH_LEGACY_0_4
 #include "libssh/legacy.h"

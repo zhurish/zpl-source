@@ -44,7 +44,7 @@ sftp_client_message sftp_get_client_message(sftp_session sftp) {
   ssh_buffer payload;
   int rc;
 
-  msg = malloc(sizeof (struct sftp_client_message_struct));
+  msg = ssh_malloc(sizeof (struct sftp_client_message_struct));
   if (msg == NULL) {
     ssh_set_error_oom(session);
     return NULL;
@@ -228,8 +228,8 @@ const char *sftp_client_message_get_filename(sftp_client_message msg){
 }
 
 void sftp_client_message_set_filename(sftp_client_message msg, const char *newname){
-	free(msg->filename);
-	msg->filename = strdup(newname);
+	SAFE_FREE(msg->filename);
+	msg->filename = ssh_strdup(newname);
 }
 
 const char *sftp_client_message_get_data(sftp_client_message msg){
@@ -457,7 +457,7 @@ ssh_string sftp_handle_alloc(sftp_session sftp, void *info) {
   int i;
 
   if (sftp->handles == NULL) {
-    sftp->handles = malloc(sizeof(void *) * SFTP_HANDLES);
+    sftp->handles = ssh_malloc(sizeof(void *) * SFTP_HANDLES);
     if (sftp->handles == NULL) {
       return NULL;
     }

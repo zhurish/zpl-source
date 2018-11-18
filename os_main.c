@@ -59,6 +59,14 @@ static char *zserv_path = NULL;
 static int vty_port = ZEBRA_VTY_PORT;
 static int daemon_mode = 0;
 static pid_t pid;
+
+
+gdbserver 1.1.1.2:50000 SWP-V0.0.1.bin
+
+/opt/toolchain/toolchain-mipsel_24kc_gcc-7.3.0_glibc/bin/mipsel-openwrt-linux-gdb SWP-V0.0.1.bin
+target remote 1.1.1.1:50000
+c
+
 */
 
 #ifndef BUILD_MAIN
@@ -270,6 +278,8 @@ int main (int argc, char **argv)
 #ifdef DOUBLE_PROCESS
 	//os_process_start();
 #endif
+
+	//os_url_test();
 
 	os_start_init(main_data.progname, ZLOG_DEFAULT, main_data.daemon_mode);
 

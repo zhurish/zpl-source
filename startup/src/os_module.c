@@ -178,7 +178,7 @@ int os_module_init(void)
 	systools_module_init();
 
 #ifdef PL_WIFI_MODULE
-	nsm_iw_client_init();
+	//nsm_iw_client_init();
 #endif
 
 #ifdef PL_MODEM_MODULE
@@ -189,8 +189,9 @@ int os_module_init(void)
 	nsm_dhcp_module_init ();
 #endif
 
-	sshd_module_init();
-
+#ifdef PL_SSH_MODULE
+	ssh_module_init();
+#endif
 
 #ifdef PL_BSP_MODULE
 	bsp_usp_module_init();
@@ -225,8 +226,9 @@ int os_module_task_init(void)
 #endif
 
 	systools_task_init();
-
-	sshd_enable(NULL, 2222);
+#ifdef PL_SSH_MODULE
+	ssh_module_task_init();
+#endif
 	return OK;
 }
 
@@ -281,7 +283,9 @@ int os_module_cmd_init(int terminal)
 #endif
 
 	systools_cmd_init();
-
+#ifdef PL_SSH_MODULE
+	ssh_cmd_init();
+#endif
 #ifdef OS_START_TEST
 	/*
 	 * test module
@@ -349,9 +353,9 @@ int os_module_exit(void)
 	nsm_tunnel_client_exit();
 	nsm_veth_client_exit();
 	//pal_abstract_exit();
-
-	sshd_module_exit();
-
+#ifdef PL_SSH_MODULE
+	ssh_module_exit();
+#endif
 	return OK;
 }
 
@@ -379,8 +383,9 @@ int os_module_task_exit(void)
 	os_job_exit();
 	cli_console_task_exit ();
 	cli_telnet_task_exit ();
-	sshd_module_task_exit();
-
+#ifdef PL_SSH_MODULE
+	ssh_module_task_exit();
+#endif
 	os_task_exit();
 	return OK;
 }

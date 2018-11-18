@@ -86,6 +86,8 @@ reallocarray(void *optr, size_t nmemb, size_t size)
 		errno = ENOMEM;
 		return NULL;
 	}
+	if(!optr)
+		return malloc(size * nmemb);
 	return realloc(optr, size * nmemb);
 }
 

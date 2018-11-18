@@ -72,13 +72,17 @@
 
 static socket_t bind_socket(ssh_bind sshbind, const char *hostname,
     int port) {
+#ifndef SSH_BASE_EX
     char port_c[6];
     struct addrinfo *ai;
     struct addrinfo hints;
+#else
+    struct sockaddr_in serv;
+#endif
     int opt = 1;
     socket_t s;
     int rc;
-
+#ifndef SSH_BASE_EX
     ZERO_STRUCT(hints);
 
     hints.ai_flags = AI_PASSIVE;
@@ -101,38 +105,58 @@ static socket_t bind_socket(ssh_bind sshbind, const char *hostname,
         freeaddrinfo (ai);
         return -1;
     }
-
+#else
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (s == SSH_INVALID_SOCKET) {
+        ssh_set_error(sshbind, SSH_FATAL, "%s", strerror(errno));
+        return -1;
+    }
+#endif
     if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
                    (char *)&opt, sizeof(opt)) < 0) {
         ssh_set_error(sshbind,
                       SSH_FATAL,
                       "Setting socket options failed: %s",
                       strerror(errno));
+#ifndef SSH_BASE_EX
         freeaddrinfo (ai);
+#endif
         CLOSE_SOCKET(s);
         return -1;
     }
-
+#ifndef SSH_BASE_EX
     if (bind(s, ai->ai_addr, ai->ai_addrlen) != 0) {
+#else
+    serv.sin_family = AF_INET;
+    if (hostname)
+    	serv.sin_addr.s_addr = inet_addr(hostname);
+    else
+    	serv.sin_addr.s_addr = htonl(INADDR_ANY);
+    serv.sin_port = htons(port);
+    if (bind(s, (struct sockaddr *) &serv, sizeof(serv)) != 0) {
+#endif
         ssh_set_error(sshbind,
                       SSH_FATAL,
                       "Binding to %s:%d: %s",
                       hostname,
                       port,
                       strerror(errno));
+#ifndef SSH_BASE_EX
         freeaddrinfo (ai);
+#endif
         CLOSE_SOCKET(s);
         return -1;
     }
-
+#ifndef SSH_BASE_EX
     freeaddrinfo (ai);
+#endif
     return s;
 }
 
 ssh_bind ssh_bind_new(void) {
   ssh_bind ptr;
 
-  ptr = malloc(sizeof(struct ssh_bind_struct));
+  ptr = ssh_malloc(sizeof(struct ssh_bind_struct));
   if (ptr == NULL) {
     return NULL;
   }
@@ -223,6 +247,29 @@ static int ssh_bind_import_keys(ssh_bind sshbind) {
   }
 
   return SSH_OK;
+}
+
+void ssh_bind_key_free(ssh_bind sshbind)
+{
+  int i;
+
+  if (sshbind == NULL) {
+    return;
+  }
+
+  SAFE_FREE(sshbind->dsakey);
+  SAFE_FREE(sshbind->rsakey);
+  SAFE_FREE(sshbind->ecdsakey);
+  SAFE_FREE(sshbind->ed25519key);
+
+  ssh_key_free(sshbind->dsa);
+  sshbind->dsa = NULL;
+  ssh_key_free(sshbind->rsa);
+  sshbind->rsa = NULL;
+  ssh_key_free(sshbind->ecdsa);
+  sshbind->ecdsa = NULL;
+  ssh_key_free(sshbind->ed25519);
+  sshbind->ed25519 = NULL;
 }
 
 int ssh_bind_listen(ssh_bind sshbind) {
@@ -381,6 +428,19 @@ void ssh_bind_free(ssh_bind sshbind){
   SAFE_FREE(sshbind);
 }
 
+void ssh_bind_close(ssh_bind sshbind){
+  int i;
+
+  if (sshbind == NULL) {
+    return;
+  }
+
+  if (sshbind->bindfd >= 0) {
+      CLOSE_SOCKET(sshbind->bindfd);
+  }
+  sshbind->bindfd = SSH_INVALID_SOCKET;
+}
+
 int ssh_bind_accept_fd(ssh_bind sshbind, ssh_session session, socket_t fd){
     int i, rc;
 
@@ -395,7 +455,7 @@ int ssh_bind_accept_fd(ssh_bind sshbind, ssh_session session, socket_t fd){
     /* copy options */
     for (i = 0; i < 10; i++) {
       if (sshbind->wanted_methods[i]) {
-        session->opts.wanted_methods[i] = strdup(sshbind->wanted_methods[i]);
+        session->opts.wanted_methods[i] = ssh_strdup(sshbind->wanted_methods[i]);
         if (session->opts.wanted_methods[i] == NULL) {
           return SSH_ERROR;
         }
@@ -406,7 +466,7 @@ int ssh_bind_accept_fd(ssh_bind sshbind, ssh_session session, socket_t fd){
       session->opts.bindaddr = NULL;
     else {
       SAFE_FREE(session->opts.bindaddr);
-      session->opts.bindaddr = strdup(sshbind->bindaddr);
+      session->opts.bindaddr = ssh_strdup(sshbind->bindaddr);
       if (session->opts.bindaddr == NULL) {
         return SSH_ERROR;
       }
@@ -414,7 +474,7 @@ int ssh_bind_accept_fd(ssh_bind sshbind, ssh_session session, socket_t fd){
 
     session->common.log_verbosity = sshbind->common.log_verbosity;
     if(sshbind->banner != NULL)
-    	session->opts.custombanner = strdup(sshbind->banner);
+    	session->opts.custombanner = ssh_strdup(sshbind->banner);
     ssh_socket_free(session->socket);
     session->socket = ssh_socket_new(session);
     if (session->socket == NULL) {

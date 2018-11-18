@@ -235,7 +235,7 @@ static int ping_thread(PING_STAT * pPS)
 			break;
 		if(pPS->numRx == pPS->numPacket)
 			break;
-		os_gettime(OS_CLK_REALTIME, pPS->pBufTime); /* load current tick count */
+		os_gettime(OS_CLK_MONOTONIC, pPS->pBufTime); /* load current tick count */
 		pPS->pBufIcmp->icmp_seq = pPS->numTx++; /* increment seq number */
 		pPS->pBufIcmp->icmp_cksum = 0;
 		pPS->pBufIcmp->icmp_cksum = in_cksum((u_short *) pPS->pBufIcmp,
@@ -305,7 +305,7 @@ check_fd_again: /* Wait for ICMP reply */
 				goto check_fd_again;
 			break; /* goto release */
 		}
-		os_gettime(OS_CLK_REALTIME, &now);
+		os_gettime(OS_CLK_MONOTONIC, &now);
 		if (pingRxPrint(pPS, ix, &from, now) == ERROR)
 			goto check_fd_again;
 

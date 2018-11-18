@@ -75,6 +75,7 @@ extern int modem_usb_driver_hardware_channel(int vendor, int product);
 //extern int modem_usb_driver_detection(modem_usb_driver *driver);
 
 extern int show_modem_usb_driver(struct vty *vty);
+extern int show_modem_usb_key_driver(struct vty *vty);
 
 extern int modem_product_detection(void);
 

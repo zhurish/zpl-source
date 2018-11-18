@@ -285,8 +285,8 @@ extern struct vty *vty_new (void);
 extern int vty_free(struct vty *vty);
 extern struct vty *vty_new_init(int vty_sock);
 
-extern int vty_cancel(struct vty *vty, int close);
-extern int vty_recovery(struct vty *vty, int close);
+extern int vty_cancel(struct vty *vty);
+extern int vty_resume(struct vty *vty);
 
 extern int exec_timeout(struct vty *vty, const char *min_str, const char *sec_str);
 
@@ -297,6 +297,7 @@ extern int vty_getc_input(struct vty *vty);
 extern int vty_read_handle(struct vty *vty, unsigned char *buf, int len);
 
 extern int vty_out (struct vty *, const char *, ...) PRINTF_ATTRIBUTE(2, 3);
+extern int vty_sync_out(struct vty *vty, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
 extern void vty_close (struct vty *);
 
 extern int vty_config_lock (struct vty *);

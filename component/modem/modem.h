@@ -13,7 +13,7 @@
 #include "modem_machine.h"
 
 
-//#define __MODEM_DEBUG
+#define __MODEM_DEBUG
 
 #define MODEM_DEBUG_DRIVER  1
 #define MODEM_DEBUG_CLIENT  2
@@ -56,6 +56,7 @@ typedef struct modem_s
 	char				name[MODEM_STRING_MAX];
 	BOOL				bSecondary;
 	BOOL				active;
+	BOOL				proxy;
 	modem_dial_type		dialtype;
 	modem_stack_type	ipstack;
 
@@ -108,6 +109,8 @@ typedef struct modem_s
 	u_int32				delay;
 	u_int32				time_base;
 	u_int32				time_axis;
+
+	void				*proxy_data;
 
 
 	modem_event			a_event;
@@ -163,6 +166,8 @@ extern int modem_interface_update_kernel(modem_t *modem, char *name);
 extern int modem_serial_interface_update_kernel(modem_t *modem, char *name);
 extern int modem_serial_devname_update_kernel(modem_t *modem, char *name);
 
+
+extern int modem_bind_interface_update(modem_t *modem);
 
 
 

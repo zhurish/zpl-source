@@ -74,6 +74,7 @@ static struct cmd_node config_dhcp_node =
 	"%s(config-dhcp)# ",
 	1
 };
+
 struct cmd_node interface_node =
 {
 		INTERFACE_NODE,

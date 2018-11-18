@@ -27,22 +27,29 @@ static int kernel_task_id = 0;
 
 int pal_interface_up(struct interface *ifp)
 {
-	if(pal_stack.ip_stack_up && ifp->k_ifindex)
+	if(pal_stack.ip_stack_up/* && ifp->k_ifindex*/)
 		return pal_stack.ip_stack_up(ifp);
     return OK;
 }
 
 int pal_interface_down(struct interface *ifp)
 {
-	if(pal_stack.ip_stack_down && ifp->k_ifindex)
+	if(pal_stack.ip_stack_down/* && ifp->k_ifindex*/)
 		return pal_stack.ip_stack_down(ifp);
     return OK;
 }
 
-int pal_interface_update_flag(struct interface *ifp)
+int pal_interface_update_flag(struct interface *ifp, int flags)
 {
-	if(pal_stack.ip_stack_update_flag && ifp->k_ifindex)
-		return pal_stack.ip_stack_update_flag(ifp);
+	if(pal_stack.ip_stack_update_flag/* && ifp->k_ifindex*/)
+		return pal_stack.ip_stack_update_flag(ifp, flags);
+    return OK;
+}
+
+int pal_interface_refresh_flag(struct interface *ifp)
+{
+	if(pal_stack.ip_stack_refresh_flag/* && ifp->k_ifindex*/)
+		return pal_stack.ip_stack_refresh_flag(ifp);
     return OK;
 }
 
