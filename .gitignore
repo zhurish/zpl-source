@@ -24,7 +24,6 @@
 *.deps/*
 pkg/
 debug/*
-externsions/*
 RemoteSystemsTempFiles/*
 .metadata/*
 .settings/*

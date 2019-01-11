@@ -1,0 +1,10 @@
+prefix=/home/zhurish/application/linphone/_install
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: BCUnit
+Description: C Unit Testing Framework
+Version: 3.0-1
+Libs: -L${libdir} -lbcunit
+Cflags: -I${includedir}
