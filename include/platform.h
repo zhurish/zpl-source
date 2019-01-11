@@ -10,8 +10,10 @@
 
 
 
+/*
 #define OS_UNIT_MAX	1
 #define OS_SLOT_MAX	1
+*/
 
 #define SYSLOG_CLIENT
 

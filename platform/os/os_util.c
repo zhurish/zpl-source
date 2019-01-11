@@ -380,7 +380,7 @@ int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, int timeout_ms)
 		num = select(maxfd, rfdset, wfdset, NULL, timeout_ms ? &timer_wait:NULL);
 		if (num < 0)
 		{
-			fprintf(stdout, "%s (errno=%d -> %s)", __func__, errno, strerror(errno));
+			//fprintf(stdout, "%s (errno=%d -> %s)", __func__, errno, strerror(errno));
 			if (errno == EINTR || errno == EAGAIN)
 				continue;
 /*			if (errno == EPIPE || errno == EBADF || errno == EIO ECONNRESET ECONNABORTED ENETRESET ECONNREFUSED)

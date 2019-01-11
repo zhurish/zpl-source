@@ -19,12 +19,14 @@
 #define VERSION "0.7.7"
 
 /* #undef LOCALEDIR */
+/*
 #define DATADIR "/usr/share/libssh"
 #define LIBDIR "/usr/lib"
 #define PLUGINDIR "/usr/lib/libssh-4"
 #define SYSCONFDIR "/usr/etc"
 #define BINARYDIR "/home/zhurish/workspace/SWPlatform/component/ssh/libssh-0.7.7"
 #define SOURCEDIR "/home/zhurish/workspace/SWPlatform/component/ssh/libssh-0.7.7"
+*/
 
 
 #define MAX_PACKET_LEN 		4096*2
@@ -40,7 +42,7 @@
 /************************** HEADER FILES *************************/
 
 /* Define to 1 if you have the <argp.h> header file. */
-#define HAVE_ARGP_H 1
+//#define HAVE_ARGP_H 1
 
 /* Define to 1 if you have the <aprpa/inet.h> header file. */
 #define HAVE_ARPA_INET_H 1

@@ -23,18 +23,23 @@
 
 static LIST *time_list = NULL;
 static LIST *time_unuse_list = NULL;
+
 static os_sem_t *time_sem = NULL;
 static os_mutex_t *time_mutex = NULL;
-static struct timeval min_interval;//, min_interval_once;
+
+#ifdef OS_TIMER_POSIX
+static os_time_t *current_time = NULL;
+#else
+static int	inter_value = 10;
+#endif
 static unit32 time_task_id = 0;
+
 #ifdef OS_TIMER_POSIX
 static timer_t os_timerid = 0;
-#endif
 static void os_time_interrupt(int signo);
+#endif
 static int os_time_task(void);
-//static struct timeval os_time_msec;
-/* Adjust so that tv_usec is in the range [0,TIMER_SECOND_MICRO).
-   And change negative values to 0. */
+
 
 
 int os_system_tick()
@@ -191,6 +196,59 @@ os_gettime (enum os_clkid clkid, struct timeval *tv)
     }
 }
 
+/*
+ * 20181024160232  -> 2018/10/24 16:02:32
+ */
+const char *os_build_time2date(char *str)
+{
+	int i = 0, j = 0;
+	static char buf[64];
+	char *p = str;
+	memset(buf, 0, sizeof(buf));
+	while (*p != '\0')
+	{
+		if (j==4 || j==6)
+		{
+			buf[i++] = '/';
+			buf[i++] = *p;
+		}
+		else if (j==10 || j==12)
+		{
+			buf[i++] = ':';
+			buf[i++] = *p;
+		}
+		else if (j==8)
+		{
+			buf[i++] = ' ';
+			buf[i++] = *p;
+		}
+		else
+			buf[i++] = *p;
+		p++;
+		j++;
+	}
+	return buf;
+}
+
+/*
+ * 2018/10/24 16:02:32 -> 20181024160232
+ */
+const char *os_date2build_time(char *str)
+{
+	int i = 0;
+	static char buf[64];
+	char *p = str;
+	memset(buf, 0, sizeof(buf));
+	while (*p != '\0')
+	{
+		if (*p == '/' || *p <= ':'  || *p <= ' ')
+			;
+		else
+			buf[i++] = *p;
+		p++;
+	}
+	return buf;
+}
 
 struct timeval os_time_min(struct timeval a, struct timeval b)
 {
@@ -316,36 +374,30 @@ char *os_time_string(time_t tInput)
 
 
 
-#ifdef OS_TIMER_POSIX
-static int os_posix_timer_init()
+
+
+
+
+
+/*
+ * os time module
+ */
+
+static int os_timer_timeval (struct timeval *tv)
 {
-	struct sigevent evp;
-	memset(&evp, 0, sizeof(struct sigevent));
-#define OS_POSIX_SIGNAL
-#ifdef OS_POSIX_SIGNAL
-	//evp.sigev_signo = SIGUSR2;
-	evp.sigev_notify = SIGEV_SIGNAL;
-#else
-	evp.sigev_value.sival_int = 111; 				//也是标识定时器的，这和timerid有什么区别？回调函数可以获得
-	evp.sigev_notify = SIGEV_THREAD; 				//线程通知的方式，派驻新线程
-	evp.sigev_notify_function = os_time_interrupt;	//线程函数地址
-#endif
-	if (timer_create(CLOCK_MONOTONIC, &evp, &os_timerid) == -1)
-	{
-		return ERROR;
-	}
-#ifdef OS_POSIX_SIGNAL
-//	os_register_signal(SIGUSR2, os_time_interrupt);
-	os_register_signal(SIGALRM, os_time_interrupt);
-
-	//signal(SIGUSR2, os_time_interrupt);
-#endif
-	return OK;
+  os_get_monotonic (tv);
+  os_timeval_adjust(*tv);
+  return 0;
 }
-#endif
 
-
-
+static int os_time_compar(os_time_t *new, os_time_t *old)
+{
+	//lstAddSort
+	if(os_timeval_cmp(new->interval, old->interval) < 0)
+		return -1;
+	else
+		return 1;
+}
 
 int os_time_init()
 {
@@ -355,6 +407,7 @@ int os_time_init()
 		if(time_list)
 		{
 			lstInit(time_list);
+			lstSortInit(time_list, os_time_compar);
 			time_sem = os_sem_init();
 		}
 		else
@@ -375,9 +428,6 @@ int os_time_init()
 	{
 		time_mutex = os_mutex_init();
 	}
-#ifdef OS_TIMER_POSIX
-	os_posix_timer_init();
-#endif
 	time_task_id = os_task_create("timeTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, os_time_task, NULL, OS_TASK_DEFAULT_STACK);
 	if(time_task_id)
@@ -421,8 +471,6 @@ int os_time_exit()
 		os_free(time_unuse_list);
 		time_unuse_list = NULL;
 	}
-	memset(&min_interval, 0, sizeof(struct timeval));
-	//memset(&min_interval_once, 0, sizeof(struct timeval));
 	return OK;
 }
 
@@ -453,7 +501,7 @@ int os_time_clean(BOOL all)
 	}
 	if(all)
 	{
-		for(t = (os_time_t *)lstFirst(time_list); t != NULL; t = (os_time_t *)lstNext(&node))
+		for(t = (os_time_t *)lstFirst(time_unuse_list); t != NULL; t = (os_time_t *)lstNext(&node))
 		{
 			node = t->node;
 			if(t)
@@ -489,6 +537,10 @@ static os_time_t * os_time_get_node()
 	return t;
 }
 
+
+
+
+
 static os_time_t * os_time_entry_create(os_time_type type, int	(*time_entry)(void *),
 		void *pVoid, int msec, char *func_name)
 {
@@ -509,175 +561,185 @@ static os_time_t * os_time_entry_create(os_time_type type, int	(*time_entry)(voi
 		t->type = type;
 		os_memset(t->entry_name, 0, sizeof(t->entry_name));
 		os_strcpy(t->entry_name, func_name);
-		//t->interval
 		return t;
 	}
 	return NULL;
 }
 
 
+/*
+ *设置定时中断点
+ */
 static int os_time_interval_update(os_time_t *t)
 {
+//#ifdef OS_TIMER_POSIX
 	t->interval.tv_sec += t->msec/TIMER_MSEC_MICRO;
 	t->interval.tv_usec += (t->msec%TIMER_MSEC_MICRO)*TIMER_MSEC_MICRO;
+	os_timeval_adjust(t->interval);
+//#endif
 	return OK;
 }
 
 
-
+#ifdef OS_TIMER_POSIX
 static void os_time_interrupt(int signo)
 {
-#ifdef OS_TIMER_POSIX
 	if(time_sem && signo == SIGUSR2)
 		os_sem_give(time_sem);
-#else
-	if(time_sem && signo == SIGALRM)
-		os_sem_give(time_sem);
-#endif
-	fprintf(stdout,"%s:\r\n",__func__);
+	//fprintf(stdout,"%s:\r\n",__func__);
+	current_time = NULL;
 	//OS_DEBUG("%s:\r\n",__func__);
 	return;
 }
 
-static int os_time_interrupt_setting(struct timeval *interval, struct timeval *now)
-{
 #ifdef OS_TIMER_POSIX
-	struct itimerspec tick;
-	//struct itimerval tick;
-	struct timeval it_value;
-	memset(&tick, 0, sizeof(tick));
-	it_value = os_timeval_subtract (*interval, *now);
+#if 0
+/*******************************************************************************
+*
+* timer_connect - connect a user routine to the timer signal
+*
+* This routine sets the specified <routine> to be invoked with <arg> when
+* fielding a signal indicated by the timer's <evp> signal number which is
+* setup via the timer_create() routine.  If a signal number is not specified,
+* i.e. if the <evp> parameter that is passed to timer_create() is NULL, the
+* default signal (SIGALRM) will be used instead.
+*
+* The caller of timer_connect() must be the same task which called
+* timer_create() associated with the <timerid> in order to field the signal.
+* Calling timer_connect() from a task other than the caller timer_create ()
+* will have undefined results.
+*
+* The signal handling routine should be declared as:
+*
+* \cs
+*     void my_handler
+*         (
+*         timer_t timerid,     /@ expired timer ID @/
+*         int     arg          /@ user argument    @/
+*         )
+* \ce
+*
+* NOTE
+* This is a non-POSIX API.
+*
+* RETURNS: 0 (OK), or -1 (ERROR) if the timer is invalid or cannot bind the
+* signal handler.
+*
+* ERRNO:
+* \is
+* \i EINVAL
+* \ie
+*/
 
-	tick.it_value.tv_sec = it_value.tv_sec;
-	tick.it_value.tv_nsec = it_value.tv_usec * 1000;
-	if(tick.it_value.tv_sec == 0 && tick.it_value.tv_nsec <= TIMER_MSEC(1))
+int timer_connect
+    (
+    timer_t     timerid,	/* timer ID      */
+    VOIDFUNCPTR routine,	/* user routine  */
+    int         arg		/* user argument */
+    )
+    {
+    static struct sigaction timerSig;
+
+    if (intContext ())
+	return (ERROR);
+
+    if (timerid == NULL)
 	{
-		min_interval.tv_sec = tick.it_value.tv_sec = now->tv_sec + OS_TIMER_FOREVER;
+	errno = EINVAL;
+	return (ERROR);
 	}
-#ifdef OS_TIMER_TEST
-	fprintf(stdout, "%s time=%u.%u\n", __func__, tick.it_value.tv_sec,
-			(tick.it_value.tv_nsec)/1000000);
-	//zlog_debug(ZLOG_NSM, "%s time=%u.%u", __func__,tick.it_value.tv_sec, tick.it_value.tv_usec/1000);
+
+    if (timerSig.sa_handler == 0)
+	{
+	/* just the first time */
+	timerSig.sa_handler = (void (*)(int))timerConHandler;
+	(void) sigemptyset (&timerSig.sa_mask);
+	timerSig.sa_flags = 0;	/* !SA_SIGINFO: cause timerid to be passed */
+	}
+
+    timerid->routine = routine;
+    timerid->arg     = arg;
+
+    timerid->sevent.sigev_value.sival_ptr = timerid;	/* !SA_SIGINFO */
+
+    if (sigaction (timerid->sevent.sigev_signo, &timerSig, NULL) == ERROR)
+	return (ERROR);
+    else
+	return (OK);
+    }
 #endif
-//	OS_DEBUG("%s:%d.%d sec\r\n",__func__, tick.it_value.tv_sec, tick.it_value.tv_usec/TIMER_MSEC_MICRO);
-	//After first, the Interval time for clock
+static int timer_connect(timer_t timerid, int (*routine)(void *p))
+{
+	struct sigevent evp;
+	memset(&evp, 0, sizeof(struct sigevent));
+
+	evp.sigev_signo = SIGUSR2;
+	evp.sigev_notify = SIGEV_SIGNAL;
+
+	if (timer_create(CLOCK_MONOTONIC, &evp, &os_timerid) == -1)
+	{
+		return ERROR;
+	}
+	os_register_signal(SIGUSR2, os_time_interrupt);
+//	os_register_signal(SIGALRM, os_time_interrupt);
+
+	//signal(SIGUSR2, os_time_interrupt);
+	return OK;
+}
+#endif /* OS_TIMER_POSIX */
+
+static int os_time_interrupt_setting(int msec)
+{
+	struct itimerspec tick;
+	memset(&tick, 0, sizeof(tick));
+
+	tick.it_value.tv_sec = msec / 1000;
+	tick.it_value.tv_nsec = (msec % 1000) * 1000 * 1000;
+
 	tick.it_interval.tv_sec = 0;
 	tick.it_interval.tv_nsec = 0;
+
+
+	if(tick.it_value.tv_sec == 0 && tick.it_value.tv_nsec <= TIMER_MSEC(1))
+	{
+		tick.it_value.tv_nsec = TIMER_MSEC(1) * 1000000;
+	}
+#ifdef OS_TIMER_TEST
+	//fprintf(stdout, "%s time=%u.%u\n", __func__, tick.it_value.tv_sec,
+	//		(tick.it_value.tv_nsec)/1000000);
+	//zlog_debug(ZLOG_NSM, "%s time=%u.%u", __func__,tick.it_value.tv_sec, tick.it_value.tv_usec/1000);
+#endif
+	timer_connect(0, NULL);
+//	OS_DEBUG("%s:%d.%d sec\r\n",__func__, tick.it_value.tv_sec, tick.it_value.tv_usec/TIMER_MSEC_MICRO);
+	//After first, the Interval time for clock
+
 	if(os_timerid)
 		timer_settime(os_timerid, 0, &tick, NULL);
 	return OK;
-#else
-	struct itimerval tick;
-	struct timeval it_value;
-	signal(SIGALRM, os_time_interrupt);
-	memset(&tick, 0, sizeof(tick));
-	it_value = os_timeval_subtract (*interval, *now);
-	//Timeout to run first time
-#if 1
-	tick.it_value.tv_sec = it_value.tv_sec;
-	tick.it_value.tv_usec = it_value.tv_usec;
-#else
-	tick.it_value.tv_sec = msec/TIMER_MSEC_MICRO;//interval->tv_sec;
-	tick.it_value.tv_usec = (msec%TIMER_MSEC_MICRO)*TIMER_MSEC_MICRO;//interval->tv_usec;
-#endif
-	if(tick.it_value.tv_sec == 0 && tick.it_value.tv_usec <= TIMER_MSEC(1))
-	{
-		min_interval.tv_sec = tick.it_value.tv_sec = now->tv_sec + OS_TIMER_FOREVER;
-	}
-#ifdef OS_TIMER_TEST
-	fprintf(stdout, "%s time=%u.%u\n", __func__, tick.it_value.tv_sec,
-			(tick.it_value.tv_usec)/1000);
-	//zlog_debug(ZLOG_NSM, "%s time=%u.%u", __func__,tick.it_value.tv_sec, tick.it_value.tv_usec/1000);
-#endif
-//	OS_DEBUG("%s:%d.%d sec\r\n",__func__, tick.it_value.tv_sec, tick.it_value.tv_usec/TIMER_MSEC_MICRO);
-	//After first, the Interval time for clock
-	tick.it_interval.tv_sec = 0;
-	tick.it_interval.tv_usec = 0;
-
-	return setitimer(ITIMER_REAL, &tick, NULL);
-#endif
 }
+#endif
 
-/*
- * get min timeval
- */
-static int os_time_min_interval(struct timeval *a,struct timeval *b)
-{
-	min_interval.tv_sec = min(a->tv_sec, b->tv_sec);
-	if(a->tv_sec > b->tv_sec)
-	{
-		min_interval.tv_sec = b->tv_sec;
-		min_interval.tv_usec = b->tv_usec;
-	}
-	else if(a->tv_sec == b->tv_sec)
-	{
-		min_interval.tv_usec = min(a->tv_usec, b->tv_usec);
-	}
-	else if(a->tv_sec < b->tv_sec)
-	{
-		min_interval.tv_sec = a->tv_sec;
-		min_interval.tv_usec = a->tv_usec;
-	}
-	return 0;
-}
 
-static int os_time_interval_refresh(os_time_t *t, int msec, BOOL add)
+static int os_time_interval_refresh()
 {
-	struct timeval now;
-	if(add == FALSE)
+#ifdef OS_TIMER_POSIX
+	os_time_t *to = NULL;
+	to = (os_time_t *)lstFirst(time_list);
+	//if(to == current_time)
+	//	return OK;
+	//else
 	{
-		os_gettime (OS_CLK_MONOTONIC, &now);
-		if(msec == OS_TIMER_FOREVER)
-		{
-			NODE node;
-			os_time_t *to = NULL;
-			for(to = (os_time_t *)lstFirst(time_list); to != NULL; to = (os_time_t *)lstNext(&node))
-			{
-				node = to->node;
-				if(to && to->state == OS_TIMER_TRUE)
-				{
-					os_time_min_interval(&to->interval, &min_interval);
-				}
-			}
-			t->interval.tv_sec = now.tv_sec + OS_TIMER_FOREVER;
-/*			if(os_timeval_cmp (min_interval, t->interval) == 0)
-			{
-				t->interval.tv_sec = now.tv_sec + OS_TIMER_FOREVER;
-				//min_interval.tv_sec = now.tv_sec + OS_TIMER_FOREVER;
-				//os_time_min_interval(&t->interval, &min_interval);
-			}
-			else
-			{
-				os_time_min_interval(&t->interval, &min_interval);
-			}*/
-		}
-		else //if(msec)
-		{
-			t->interval.tv_sec = now.tv_sec + msec/TIMER_MSEC_MICRO;
-			t->interval.tv_usec = now.tv_usec + (msec%TIMER_MSEC_MICRO)*TIMER_MSEC_MICRO;
-		}
-		if(t->state == OS_TIMER_TRUE)
-			os_time_min_interval(&t->interval, &min_interval);
-		os_time_interrupt_setting(&min_interval, &now);
+		current_time = to;
+		//struct timeval now;
+		//os_timer_timeval(&now);
+		if(current_time)
+			os_time_interrupt_setting(current_time->msec);
 	}
-	else
-	{
-		os_gettime (OS_CLK_MONOTONIC, &now);
-		t->interval.tv_sec = now.tv_sec + msec/TIMER_MSEC_MICRO;
-		t->interval.tv_usec = now.tv_usec + (msec%TIMER_MSEC_MICRO)*TIMER_MSEC_MICRO;
-		//if(t->node.previous == NULL)
-		lstAdd(time_list, (NODE *)t);
-		t->state = OS_TIMER_TRUE;
-		if(min_interval.tv_sec == 0 && min_interval.tv_sec == min_interval.tv_usec)
-			os_memcpy(&min_interval, &t->interval, sizeof(struct timeval));
-		else
-			os_time_min_interval(&t->interval, &min_interval);
-		os_time_interrupt_setting(&min_interval, &now);
-	}
+#endif
 	return OK;
 }
 
-#if 1
+
 int os_time_create_entry(os_time_type type, int (*time_entry)(void *),
 		void *pVoid, int msec, char *func_name)
 {
@@ -686,43 +748,25 @@ int os_time_create_entry(os_time_type type, int (*time_entry)(void *),
 	{
 		if(time_mutex)
 			os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
-		os_time_interval_refresh(t,  msec, TRUE);
-		if(time_mutex)
-			os_mutex_unlock(time_mutex);
-		return t->t_id;
-	}
-	return ERROR;
-}
-#else
-static int os_time_create(int (*time_entry)(void *), void *pVoid, int msec)
-{
-	//int imsec = 0;
-	//struct timeval now;
-	//os_time_t *node;
-	os_time_t * t = os_time_entry_create(time_entry, pVoid,  msec);
-	if(t)
-	{
-		if(time_mutex)
-			os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
-/*		os_gettime (OS_CLK_MONOTONIC, &now);
-		t->interval.tv_sec = now.tv_sec + msec/TIMER_MSEC_MICRO;
-		t->interval.tv_usec = now.tv_usec + (msec%TIMER_MSEC_MICRO)*TIMER_MSEC_MICRO;
 
-		lstAdd(time_list, (NODE *)t);
+		os_timer_timeval(&t->interval);
+		os_time_interval_update(t);
+		t->state = OS_TIMER_TRUE;
+		lstAddSort(time_list, (NODE *)t);
 
-		if(min_interval.tv_sec == 0 && min_interval.tv_sec == min_interval.tv_usec)
-			os_memcpy(&min_interval, &t->interval, sizeof(struct timeval));
-		else
-			os_time_min(&t->interval, &min_interval);
-		os_time_interrupt_setting(&min_interval, &now);*/
-		os_time_interval_refresh(t,  msec, TRUE);
-		if(time_mutex)
-			os_mutex_unlock(time_mutex);
-		return t->t_id;
-	}
-	return ERROR;
-}
+		os_time_interval_refresh();
+#ifdef OS_TIMER_TEST
+	fprintf(stdout, "%s time=%u.%u\n", __func__, t->interval.tv_sec,
+			(t->interval.tv_usec)/1000);
+	//zlog_debug(ZLOG_NSM, "%s time=%u.%u", __func__,tick.it_value.tv_sec, tick.it_value.tv_usec/1000);
 #endif
+		if(time_mutex)
+			os_mutex_unlock(time_mutex);
+		return t->t_id;
+	}
+	return ERROR;
+}
+
 
 
 os_time_t *os_time_lookup(int id)
@@ -754,33 +798,25 @@ os_time_t *os_time_lookup(int id)
 		os_mutex_unlock(time_mutex);
 	return t;
 }
-/*
-static int os_time_entry_destroy(os_time_t *t)
-{
-	if(t)
-		os_free(t);
-	return OK;
-}
-*/
 
 
 int os_time_destroy(int id)
 {
-	//struct timeval now;
 	os_time_t *t = os_time_lookup(id);//(os_time_t *)id;
 	if(t)
 	{
+		if(t->state == OS_TIMER_FALSE)
+			return OK;
 		if(time_mutex)
 			os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
+
+		if(t->state == OS_TIMER_TRUE)
+			lstDelete (time_list, (NODE *)t);
 		t->state = OS_TIMER_FALSE;
-		lstDelete (time_list, (NODE *)t);
-		os_time_interval_refresh(t,  OS_TIMER_FOREVER, FALSE);
-/*		os_gettime (OS_CLK_MONOTONIC, &now);
-		os_time_min_interval(&t->interval, &min_interval);
-		os_time_interrupt_setting(&min_interval, &now);*/
+
 		t->t_id = 0;
 		lstAdd(time_unuse_list, (NODE *)t);
-		//os_time_entry_destroy(t);
+		os_time_interval_refresh();
 		if(time_mutex)
 			os_mutex_unlock(time_mutex);
 		return OK;
@@ -793,12 +829,14 @@ int os_time_cancel(int id)
 	os_time_t *t = os_time_lookup(id);//(os_time_t *)id;
 	if(t)
 	{
+		if(t->state == OS_TIMER_CANCEL)
+			return OK;
 		if(time_mutex)
 			os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
 		t->state = OS_TIMER_CANCEL;
 		lstDelete (time_list, (NODE *)t);
 		lstAdd(time_unuse_list, (NODE *)t);
-		os_time_interval_refresh(t,  OS_TIMER_FOREVER, FALSE);
+		os_time_interval_refresh();
 		if(time_mutex)
 			os_mutex_unlock(time_mutex);
 		return OK;
@@ -811,12 +849,22 @@ int os_time_restart(int id, int msec)
 	os_time_t *t = os_time_lookup(id);//(os_time_t *)id;
 	if(t && t->time_entry)
 	{
+		if(t->state == OS_TIMER_TRUE)
+			return OK;
 		if(time_mutex)
 			os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
-		t->state = OS_TIMER_TRUE;
-		os_time_interval_refresh(t,  msec, FALSE);
+
 		lstDelete(time_unuse_list, (NODE *)t);
-		lstAdd (time_list, (NODE *)t);
+
+		os_timer_timeval(&t->interval);
+
+		os_time_interval_update(t);
+		t->state = OS_TIMER_TRUE;
+		//lstAdd (time_list, (NODE *)t);
+		lstAddSort(time_list, (NODE *)t);
+
+		os_time_interval_refresh();
+
 		if(time_mutex)
 			os_mutex_unlock(time_mutex);
 		return OK;
@@ -852,14 +900,14 @@ int os_time_show(int (*show)(void *, char *fmt,...), void *pVoid)
 	return OK;
 }
 
-#if 1
-
 static int os_time_task(void)
 {
-	int flag = 0;
+	//int flag = 0;
 	NODE node;
 	os_time_t *t;
+
 	struct timeval now;
+
 	while(!os_load_config_done())
 	{
 		os_sleep(1);
@@ -870,7 +918,8 @@ static int os_time_task(void)
 		if(time_mutex)
 			os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
 
-		os_gettime (OS_CLK_MONOTONIC, &now);
+		os_timer_timeval(&now);
+
 		for(t = (os_time_t *)lstFirst(time_list); t != NULL; t = (os_time_t *)lstNext(&node))
 		{
 			node = t->node;
@@ -890,134 +939,27 @@ static int os_time_task(void)
 						lstDelete (time_list, (NODE *)t);
 						lstAdd(time_unuse_list, (NODE *)t);
 					}
-					os_time_interval_update(t);
-					if(flag == 0)
-					{
-						flag = 1;
-						os_memcpy(&min_interval, &t->interval, sizeof(struct timeval));
-						//os_time_min_interval(&t->interval, &min_interval);
-					}
 					else
-						os_time_min_interval(&t->interval, &min_interval);
+					{
+						os_time_interval_update(t);
+						lstDelete (time_list, (NODE *)t);
+						lstAddSort(time_list, (NODE *)t);
+					}
 				}
 				else
-					os_time_min_interval(&t->interval, &min_interval);
+				{
+
+				}
 			}
 		}
-		flag = 0;
-		os_time_interrupt_setting(&min_interval, &now);
+		os_time_interval_refresh();
+
 		if(time_mutex)
 			os_mutex_unlock(time_mutex);
 	}
 	return 0;
 }
-#else
-static int os_time_task(void)
-{
-	int flag = 0;
-	NODE *node;
-	os_time_t *t;
-	struct timeval now;
-	while(1)
-	{
-		os_sem_take(time_sem, OS_WAIT_FOREVER);
-		//printf("%s: time_sem = %s\r\n", __func__,time_sem ? "full":"none");
-		if(time_mutex)
-			os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
-		os_gettime (OS_CLK_MONOTONIC, &now);
-		for(node = lstFirst(time_list); node != NULL; node = lstNext(node))
-		{
-			t = (os_time_t *)node;
-			if(node && t->state)
-			{
-				if(os_timeval_cmp (t->interval, now))
-				{
-					if(t->time_entry)
-					{
-						(t->time_entry)(t->pVoid);
-					}
-					if(t->type == OS_TIMER_ONCE)
-					{
-						t->msec = 0X0FFFFFFF;
-						t->state = OS_TIMER_FALSE;
-						lstDelete (time_list, (NODE *)t);
-						lstAdd(time_unuse_list, (NODE *)t);
-					}
-					os_time_interval_update(t);
-					if(flag == 0)
-					{
-						flag = 1;
-						os_memcpy(&min_interval, &t->interval, sizeof(struct timeval));
-						//os_time_min_interval(&t->interval, &min_interval);
-					}
-					else
-						os_time_min_interval(&t->interval, &min_interval);
-				}
-				else
-					os_time_min_interval(&t->interval, &min_interval);
-			}
-		}
-		flag = 0;
-		os_time_interrupt_setting(&min_interval, &now);
-		if(time_mutex)
-			os_mutex_unlock(time_mutex);
-	}
-}
-#endif
 
-/*
- * 20181024160232  -> 2018/10/24 16:02:32
- */
-const char *os_build_time2date(char *str)
-{
-	int i = 0, j = 0;
-	static char buf[64];
-	char *p = str;
-	memset(buf, 0, sizeof(buf));
-	while (*p != '\0')
-	{
-		if (j==4 || j==6)
-		{
-			buf[i++] = '/';
-			buf[i++] = *p;
-		}
-		else if (j==10 || j==12)
-		{
-			buf[i++] = ':';
-			buf[i++] = *p;
-		}
-		else if (j==8)
-		{
-			buf[i++] = ' ';
-			buf[i++] = *p;
-		}
-		else
-			buf[i++] = *p;
-		p++;
-		j++;
-	}
-	return buf;
-}
-
-/*
- * 2018/10/24 16:02:32 -> 20181024160232
- */
-const char *os_date2build_time(char *str)
-{
-	int i = 0;
-	static char buf[64];
-	char *p = str;
-	memset(buf, 0, sizeof(buf));
-	while (*p != '\0')
-	{
-		if (*p == '/' || *p <= ':'  || *p <= ' ')
-			;
-		else
-			buf[i++] = *p;
-		p++;
-	}
-	return buf;
-}
 
 #ifdef OS_TIMER_TEST
 
@@ -1025,7 +967,7 @@ static u_int32 t_time_test = 0, t_time_test1 = 0;
 static int timer_test_handle(void *p)
 {
 	struct timeval now;
-	os_gettime (OS_CLK_MONOTONIC, &now);
+	os_timer_timeval(&now);
 	fprintf(stdout, "%s time=%u.%u msec\n", __func__,now.tv_sec, now.tv_sec/1000);
 	//zlog_debug(ZLOG_NSM, "%s time=%u.%u msec", __func__,now.tv_sec, now.tv_sec/1000);
 	t_time_test = 0;
@@ -1036,7 +978,7 @@ int timer_test(int time, int type)
 {
 	static char clean_flag = 0;
 	struct timeval now;
-	os_gettime (OS_CLK_MONOTONIC, &now);
+	os_timer_timeval(&now);
 	if(clean_flag == 0)
 	{
 		os_time_clean(FALSE);

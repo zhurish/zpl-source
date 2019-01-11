@@ -130,13 +130,13 @@ static int kernel_arp_init()
 #ifdef IP_RECVIF
 	onoff = 1;
 	if (setsockopt(skfd, IPPROTO_IP, IP_RECVIF, &onoff, sizeof(onoff)) != 0)
-		dhcpd_error("setsocketopt IP_RECVIF failed for udp: %s",
+		zlog_warn(ZLOG_PAL, "setsocketopt IP_RECVIF failed for udp: %s",
 		    strerror(errno));
 #endif
 #if defined (IP_PKTINFO)
 	onoff = 1;
 	if (setsockopt (skfd, IPPROTO_IP, IP_PKTINFO, &onoff, sizeof (onoff)) != 0)
-		dhcpd_error("setsocketopt IP_PKTINFO failed for udp: %s",
+		zlog_warn(ZLOG_PAL, "setsocketopt IP_PKTINFO failed for udp: %s",
 		    strerror(errno));
 #endif
 	return skfd;
@@ -202,7 +202,7 @@ static int kernel_arp_recv(int	sock)
 		return -1;
 	}
 	if (ss.ss_family != AF_INET) {
-		zlog_warn(ZLOG_PAL, "received ARP message is not AF_INET");
+		//zlog_warn(ZLOG_PAL, "received ARP message is not AF_INET");
 		return -1;
 	}
 	for (cm = (struct cmsghdr *)CMSG_FIRSTHDR(&m);

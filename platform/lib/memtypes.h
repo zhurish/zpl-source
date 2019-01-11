@@ -330,6 +330,12 @@ enum
   MTYPE_SSH_DATA,
   MTYPE_SSH_KEY,
   MTYPE_SSH_MSG,
+  MTYPE_VOIP,
+  MTYPE_VOIP_SESSION,
+  MTYPE_VOIP_CHANNEL,
+  MTYPE_VOIP_RNG,
+  MTYPE_VOIP_DATA,
+  MTYPE_VOIP_RAW_DATA,
   MTYPE_MAX,
 };
 
@@ -353,6 +359,7 @@ extern struct memory_list memory_list_dhcp[];
 extern struct memory_list memory_list_wifi[];
 extern struct memory_list memory_list_port[];
 extern struct memory_list memory_list_ssh[];
+extern struct memory_list memory_list_voip[];
 
 #endif /* _QUAGGA_MEMTYPES_H */
 

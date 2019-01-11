@@ -245,7 +245,8 @@ typedef int socklen_t;
 
 #ifdef USE_IPSTACK_KERNEL
 #include "ip_os_sock.h"
-#else
+#endif
+#ifdef USE_IPCOM_STACK
 #include "ipnet_config.h"
 #include "ipcom_sock.h"
 #include "ipnet_eth.h"

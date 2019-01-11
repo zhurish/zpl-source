@@ -257,7 +257,7 @@ int vty_user_getting_privilege (struct vty *vty, char *name)
 		user = vty_user_lookup (lname);
 		if(user)
 		{
-			vty_out(vty, "%s 0:%s %s",__func__,lname, VTY_NEWLINE);
+			//vty_out(vty, "%s 0:%s %s",__func__,lname, VTY_NEWLINE);
 			if (host.mutx)
 				os_mutex_unlock(host.mutx);
 			return user->privilege;
@@ -274,7 +274,7 @@ int vty_user_getting_privilege (struct vty *vty, char *name)
 
 	if (host.mutx)
 		os_mutex_unlock(host.mutx);
-	vty_out(vty, "%s:vty->user is NULL %s",__func__, VTY_NEWLINE);
+	//vty_out(vty, "%s:vty->user is NULL %s",__func__, VTY_NEWLINE);
 	return ENABLE_LEVEL;
 }
 
@@ -403,7 +403,7 @@ int vty_user_authentication (struct vty *vty, char *password)
 			case AUTH_NODE:
 				if(user->authen_type == AUTHEN_LOCAL)
 				{
-					vty_out (vty,"%s loging authenticated%s",user->username,VTY_NEWLINE);
+					//vty_out (vty,"%s loging authenticated%s",user->username,VTY_NEWLINE);
 					if (user->encrypt)
 						passwd = user->password_encrypt;
 					else
@@ -414,13 +414,13 @@ int vty_user_authentication (struct vty *vty, char *password)
 			case AUTH_ENABLE_NODE:
 				if(user->authen_type == AUTHEN_LOCAL)
 				{
-					vty_out (vty,"%s enable %s authenticated%s",user->username,user->encrypt? "encrypt":" ",VTY_NEWLINE);
+					//vty_out (vty,"%s enable %s authenticated%s",user->username,user->encrypt? "encrypt":" ",VTY_NEWLINE);
 					if (user->encrypt)
 						passwd = user->enable_encrypt;
 					else
 						passwd = user->enable;
 					//next_node = ENABLE_NODE;
-					vty_out (vty,"%s:%s=%s%s",user->username,user->enable,user->enable_encrypt,VTY_NEWLINE);
+					//vty_out (vty,"%s:%s=%s%s",user->username,user->enable,user->enable_encrypt,VTY_NEWLINE);
 				}
 				break;
 			default:
@@ -452,7 +452,7 @@ int vty_user_authentication (struct vty *vty, char *password)
 				//vty->user = user;//vty_user_lookup (vty->username);
 				if (host.mutx)
 					os_mutex_unlock(host.mutx);
-				vty_out(vty, "%s:vty->user %s %s",__func__, user->username,VTY_NEWLINE);
+				//vty_out(vty, "%s:vty->user %s %s",__func__, user->username,VTY_NEWLINE);
 				return CMD_SUCCESS;
 			}
 			else

@@ -458,6 +458,18 @@ struct memory_list memory_list_ssh[] =
   { -1, NULL },
 };
 
+#ifdef PL_VOIP_MODULE
+struct memory_list memory_list_voip[] =
+{
+  { MTYPE_VOIP,			"VOIP information"	},
+  { MTYPE_VOIP_SESSION,			"VOIP Session information"	},
+  { MTYPE_VOIP_CHANNEL,		"VOIP Channel information"	},
+  { MTYPE_VOIP_RNG,			"VOIP Rng information"	},
+  { MTYPE_VOIP_DATA,			"VOIP Data information"	},
+  { MTYPE_VOIP_RAW_DATA,		"VOIP Raw Data information"	},
+  { -1, NULL },
+};
+#endif
 
 struct mlist mlists[] __attribute__ ((unused)) = {
   { memory_list_lib,	"LIB"	},
@@ -494,7 +506,9 @@ struct mlist mlists[] __attribute__ ((unused)) = {
   { memory_list_port,	"PORT"	},
 
   { memory_list_ssh,	"SSH"	},
-
+#ifdef PL_VOIP_MODULE
+  { memory_list_voip,	"VOIP"	},
+#endif
 /* 2016��6��27�� 21:07:44 zhurish: ��չ·��Э�����ӵ��ڴ���Ϣ */
   { NULL, NULL},
 };

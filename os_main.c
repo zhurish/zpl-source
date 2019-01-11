@@ -84,6 +84,7 @@ struct option longopts[] =
   { "help",        no_argument,       NULL, 'h'},
   { "vty_addr",    required_argument, NULL, 'A'},
   { "vty_port",    required_argument, NULL, 'P'},
+  { "tty",    required_argument, NULL, 't'},
 #ifdef HAVE_NETLINK
   { "nl-bufsize",  required_argument, NULL, 's'},
 #endif /* HAVE_NETLINK */
@@ -109,6 +110,7 @@ usage (char *progname, int status)
 	      "-z, --socket       Set path of zebra socket\n"\
 	      "-A, --vty_addr     Set vty's bind address\n"\
 	      "-P, --vty_port     Set vty's port number\n"\
+	      "-t, --tty          Set tty for shell\n"\
 	      "-u, --user         User to run as\n"\
 	      "-g, --group	  Group to run as\n", progname);
 #ifdef HAVE_NETLINK
@@ -129,9 +131,9 @@ static int main_getopt(int argc, char **argv)
 	{
 	      int opt;
 #ifdef HAVE_NETLINK
-	      opt = getopt_long (argc, argv, "df:i:z:hA:P:p:ru:g:vs", longopts, 0);
+	      opt = getopt_long (argc, argv, "df:i:z:hA:P:t:ru:g:vs", longopts, 0);
 #else
-	      opt = getopt_long (argc, argv, "df:i:z:hA:P:p:ru:g:vC", longopts, 0);
+	      opt = getopt_long (argc, argv, "df:i:z:hA:P:t:ru:g:vC", longopts, 0);
 #endif /* HAVE_NETLINK */
 
 	      if (opt == EOF)
@@ -189,7 +191,7 @@ static int main_getopt(int argc, char **argv)
 	      case 'g':
 	    	  os_privs.group = optarg;
 	    	  break;*/
-	      case 'p':
+	      case 't':
 	    	  if(main_data.tty)
 	    		  free(main_data.tty);
 	    	  main_data.tty = strdup(optarg);
@@ -238,23 +240,39 @@ static int os_base_dir_init(void)
 	//if(access(BASE_DIR, F_OK) != 0)
 	{
 		mkdir(BASE_DIR, 0644);
-		mkdir(SYSCONFDIR, 0644);			// /etc
-		mkdir(DAEMON_LOG_FILE_DIR, 0644);	// /log
-		mkdir(DAEMON_VTY_DIR, 0644);		// /var
-		mkdir(BASE_DIR"/run", 0644);		// /run
-
-		mkdir(SYSLIBDIR, 0644);	// /lib
+		mkdir(SYSCONFDIR, 0644);		// /etc
+		mkdir(SYSLIBDIR, 0644);			// /lib
 		mkdir(SYSSBINDIR, 0644);		// /sbin
-		mkdir(SYSBINDIR"/run", 0644);		// /bin
+		mkdir(SYSLIBDIR, 0644);			// /bin
+		mkdir(SYSRUNDIR, 0644);			// /run
+		mkdir(SYSLOGDIR, 0644);			// /log
+		mkdir(SYSVARDIR, 0644);			// /var
+		mkdir(SYSTMPDIR, 0644);			// /tmp
+	}
+	if(access(SYS_REAL_DIR, F_OK) != 0)
+	{
+		mkdir(SYS_REAL_DIR, 0644);		// /app
+	}
+
+	if(access(SYSCONF_REAL_DIR, F_OK) != 0)
+	{
+		mkdir(SYSCONF_REAL_DIR, 0644);		// /app/etc
 	}
 	return 0;
 }
 
+static int os_base_dir_load(void)
+{
+	//cp -arf /app/etc/* /tmp/app/etc/
+	super_system("cp -arf " SYSCONF_REAL_DIR"/*" " " SYSCONFDIR"/");
+	return 0;
+}
 
 /* Main startup routine. */
 int main (int argc, char **argv)
 {
 	char *p;
+	extern int console_enable;
 	/* Set umask before anything for security */
 	umask (0027);
 
@@ -273,6 +291,8 @@ int main (int argc, char **argv)
 	/* preserve my name */
 	main_data.progname = ((p = strrchr (argv[0], '/')) ? ++p : argv[0]);
 
+	//voip_test();
+
 	main_getopt (argc, argv);
 
 	os_base_dir_init();
@@ -280,8 +300,11 @@ int main (int argc, char **argv)
 	//os_process_start();
 #endif
 
-	//os_url_test();
+	os_base_dir_load();
 
+	if(main_data.tty)
+		console_enable = 1;
+	console_enable = 1;
 	os_start_init(main_data.progname, ZLOG_DEFAULT, main_data.daemon_mode);
 
 	zlog_set_level (ZLOG_DEST_STDOUT, LOG_DEBUG);
@@ -289,8 +312,7 @@ int main (int argc, char **argv)
 
 	os_ip_stack_init(8899);
 
-	os_log_start(MODULE_DEFAULT, "/var/run/log.pipe");
-
+	os_log_start(MODULE_DEFAULT,  NULL);
 
 
 	os_start_all_module();

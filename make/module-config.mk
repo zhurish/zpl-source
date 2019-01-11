@@ -58,10 +58,10 @@ endif
 ifeq ($(strip $(MODULE_PRODUCT)),true)
 PRODUCT_ROOT=$(PLBASE)/$(PRODUCTDIR)
 PLPRODS += $(PRODUCT_ROOT)/bsp
-PLPRODS += $(PRODUCT_ROOT)/sdk
+#PLPRODS += $(PRODUCT_ROOT)/sdk
 
 PLINCLUDE += -I$(PRODUCT_ROOT)/bsp
-PLINCLUDE += -I$(PRODUCT_ROOT)/sdk
+#PLINCLUDE += -I$(PRODUCT_ROOT)/sdk
 
 PLDEFINE += -DPL_BSP_MODULE
 endif
@@ -79,6 +79,8 @@ ABSTRACT_ROOT=$(PLBASE)/$(ABSTRACTDIR)
 
 PLPRODS += $(ABSTRACT_ROOT)/pal/kernel
 PLPRODS += $(ABSTRACT_ROOT)/hal
+PLDEFINE += -DPL_HAL_MODULE
+
 
 PLINCLUDE += -I$(ABSTRACT_ROOT)/pal/kernel
 PLINCLUDE += -I$(ABSTRACT_ROOT)/hal
@@ -137,8 +139,8 @@ endif
 ifeq ($(BUILD_TYPE),MIPS)
 PLINCLUDE += -I$(PLBASE)/externsions/openssl/mipsl/include
 PL_CFLAGS += -L$(PLBASE)/externsions/openssl/mipsl/lib 
-PL_CFLAGS += -I$(PLBASE)/externsions/zlib/zlib/include
-PL_CFLAGS += -L$(PLBASE)/externsions/zlib/zlib/lib
+PL_CFLAGS += -I$(PLBASE)/externsions/zlib/mipsl/zlib/include
+PL_CFLAGS += -L$(PLBASE)/externsions/zlib/mipsl/zlib/lib
 PL_LDLIBS += -lutil -lssl -lcrypto -lz
 endif
 PLDEFINE += -DPL_SSH_MODULE
@@ -172,8 +174,8 @@ TOOLS_ROOT=$(PLBASE)/$(TOOLSDIR)
 PLPRODS += $(TOOLS_ROOT)/system
 PLINCLUDE += -I$(TOOLS_ROOT)/system
 
-PLPRODS += $(TOOLS_ROOT)/quectel-CM
-PLINCLUDE += -I$(TOOLS_ROOT)/quectel-CM
+#PLPRODS += $(TOOLS_ROOT)/quectel-CM
+#PLINCLUDE += -I$(TOOLS_ROOT)/quectel-CM
 
 PLPRODS += $(TOOLS_ROOT)/process
 PLINCLUDE += -I$(TOOLS_ROOT)/process
@@ -183,8 +185,69 @@ PLDEFINE += -DDOUBLE_PROCESS
 endif
 
 
+ifeq ($(strip $(MODULE_VOIP)),true)
+ifeq ($(strip $(MODULE_COMPONENT)),true)
+VOIP_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(VOIPDIR)
+PLPRODS += $(VOIP_ROOT)
+PLINCLUDE += -I$(VOIP_ROOT)
+
+PLDEFINE += -DPL_VOIP_MODULE
+EXTRA_DEFINE += -DVOIP_CARDS_DEBUG
+ifeq ($(BUILD_TYPE),MIPS)
+
+PLINCLUDE += -I$(PLBASE)/externsions/mediastream/include
+PL_CFLAGS += -L$(PLBASE)/externsions/mediastream/lib 
+PL_LDLIBS += -lortp -lbctoolbox -lbcunit -lmbedtls -lmbedx509 -lmbedcrypto -lmediastreamer_base \
+				-lmediastreamer_voip -lstdc++ -lspeex -lspeexdsp
+
+PLDEFINE += -DPL_VOIP_MEDIASTREAM
+#PLINCLUDE += -I$(PLBASE)/externsions/ortp/mips/include
+#PL_CFLAGS += -L$(PLBASE)/externsions/ortp/mips/lib 
+#PL_LDLIBS += -lortp
+
+#PLINCLUDE += -I$(PLBASE)/externsions/opencore-amr/mips/include
+#PL_CFLAGS += -L$(PLBASE)/externsions/opencore-amr/mips/lib 
+#PL_LDLIBS += -lopencore-amrwb -lopencore-amrnb
+
+PL_LDLIBS += -lasound 
+else
+#
+# ortp ,opencore-amr shuld be install on X86 system
+#
+#PLINCLUDE += -I$(PLBASE)/externsions/ortp/x86/include
+#PL_CFLAGS += -L$(PLBASE)/externsions/ortp/x86/lib 
+#PL_LDLIBS += -lortp
+
+#PLINCLUDE += -I$(PLBASE)/externsions/opencore-amr/x86/include
+#PL_CFLAGS += -L$(PLBASE)/externsions/opencore-amr/x86/lib 
+#PL_LDLIBS += -lopencore-amrwb -lopencore-amrnb
+
+#PL_LDLIBS += -lasound -lportaudio
+endif
+
+endif
+endif
 
 
+
+ifeq ($(strip $(MODULE_APP)),true)
+APP_ROOT=$(PLBASE)/$(APPDIR)
+PLPRODS += $(APP_ROOT)
+
+PLINCLUDE += -I$(APP_ROOT)
+
+
+PLDEFINE += -DPL_APP_MODULE
+EXTRA_DEFINE += -DAPP_X5BA_MODULE -DX5_B_A_DEBUG
+
+
+#PLPRODS += $(APP_ROOT)/service
+#PLPRODS += $(APP_ROOT)/system
+
+#PLINCLUDE += -I$(APP_ROOT)/nsm
+#PLINCLUDE += -I$(APP_ROOT)/service
+#PLINCLUDE += -I$(APP_ROOT)/system
+endif
 
 
 ifeq ($(strip $(MODULE_CLI)),true)
@@ -204,5 +267,16 @@ endif
 ifeq ($(strip $(MODULE_DHCP)),true)
 PLPRODS += $(CLI_ROOT)/dhcp
 PLINCLUDE += -I$(CLI_ROOT)/dhcp
+endif
+
+
+ifeq ($(strip $(MODULE_VOIP)),true)
+PLPRODS += $(CLI_ROOT)/voip
+PLINCLUDE += -I$(CLI_ROOT)/voip
+endif
+
+ifeq ($(strip $(MODULE_APP)),true)
+PLPRODS += $(CLI_ROOT)/app
+PLINCLUDE += -I$(CLI_ROOT)/app
 endif
 endif

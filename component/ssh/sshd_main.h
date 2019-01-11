@@ -44,7 +44,7 @@
 #define USER 				"zhurish"
 #define PASS 				"centos"
 #else
-#define KEYS_FOLDER 		"/root/.ssh/"
+#define KEYS_FOLDER 		"/etc/ssh/"
 #define USER 				"root"
 #define PASS 				"123456"
 #endif

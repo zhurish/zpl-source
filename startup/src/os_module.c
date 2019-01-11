@@ -19,7 +19,7 @@
 
 
 
-
+int console_enable = 0;
 
 static int telnet_task_id = 0;
 static int console_task_id = 0;
@@ -150,6 +150,9 @@ int os_module_init(void)
 #ifdef PL_NSM_MODULE
 	nsm_module_init ();
 #endif
+
+	nsm_template_init();
+
 #ifdef PL_OSPF_MODULE
 	//ospfd_module_init();
 #endif
@@ -193,6 +196,15 @@ int os_module_init(void)
 	ssh_module_init();
 #endif
 
+#ifdef PL_VOIP_MODULE
+	voip_module_init();
+#endif
+
+#ifdef APP_X5BA_MODULE
+	x5_b_a_module_init(NULL, 0);
+#endif
+
+
 #ifdef PL_BSP_MODULE
 	bsp_usp_module_init();
 #endif
@@ -200,12 +212,14 @@ int os_module_init(void)
 	return OK;
 }
 
+
+
 int os_module_task_init(void)
 {
 	//printf("%s\r\n",__func__);
 	sleep(2);
-
-	cli_console_task_init ();
+	if(console_enable)
+		cli_console_task_init ();
 	cli_telnet_task_init ();
 
 #ifdef PL_NSM_MODULE
@@ -229,6 +243,16 @@ int os_module_task_init(void)
 #ifdef PL_SSH_MODULE
 	ssh_module_task_init();
 #endif
+
+
+#ifdef PL_VOIP_MODULE
+	voip_module_task_init();
+#endif
+
+#ifdef APP_X5BA_MODULE
+	x5_b_a_module_task_init();
+#endif
+
 	return OK;
 }
 
@@ -286,6 +310,16 @@ int os_module_cmd_init(int terminal)
 #ifdef PL_SSH_MODULE
 	ssh_cmd_init();
 #endif
+
+#ifdef PL_VOIP_MODULE
+	cmd_voip_init();
+#endif
+
+#ifdef PL_APP_MODULE
+	cmd_app_init();
+#endif
+
+
 #ifdef OS_START_TEST
 	/*
 	 * test module
@@ -337,6 +371,8 @@ int os_module_exit(void)
 	//ospfd_module_exit();
 #endif
 
+	nsm_template_exit();
+
 	nsm_vlan_exit();
 	nsm_mac_exit();
 	nsm_ip_arp_exit();
@@ -356,6 +392,15 @@ int os_module_exit(void)
 #ifdef PL_SSH_MODULE
 	ssh_module_exit();
 #endif
+
+#ifdef PL_VOIP_MODULE
+	voip_module_exit();
+#endif
+
+#ifdef APP_X5BA_MODULE
+	x5_b_a_module_exit();
+#endif
+
 	return OK;
 }
 
@@ -381,11 +426,21 @@ int os_module_task_exit(void)
 	systools_task_exit();
 	os_time_exit();
 	os_job_exit();
-	cli_console_task_exit ();
+	if(console_enable)
+		cli_console_task_exit ();
 	cli_telnet_task_exit ();
 #ifdef PL_SSH_MODULE
 	ssh_module_task_exit();
 #endif
+
+#ifdef PL_VOIP_MODULE
+	voip_module_task_exit();
+#endif
+
+#ifdef APP_X5BA_MODULE
+	x5_b_a_module_task_exit();
+#endif
+
 	os_task_exit();
 	return OK;
 }

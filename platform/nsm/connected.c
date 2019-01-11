@@ -259,8 +259,10 @@ connected_add_ipv4 (struct interface *ifp, int flags, struct in_addr *addr,
 			zlog_warn(ZLOG_NSM, "warning: PtP interface %s with addr %s/%d needs a "
 					"peer address", ifp->name, inet_ntoa(*addr), prefixlen);
 	}
+#ifdef PL_DHCP_MODULE
 	if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 		SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
+#endif
 	/* Label of this address. */
 	//if (label)
 	//  ifc->label = XSTRDUP (MTYPE_CONNECTED_LABEL, label);
@@ -357,8 +359,10 @@ connected_add_ipv6 (struct interface *ifp, int flags, struct in6_addr *addr,
 				ifp->name);
 		UNSET_FLAG(ifc->flags, ZEBRA_IFA_PEER);
 	}
+#ifdef PL_DHCP_MODULE
 	if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 		SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
+#endif
 	/* Label of this address. */
 	//if (label)
 	//  ifc->label = XSTRDUP (MTYPE_CONNECTED_LABEL, label);

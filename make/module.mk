@@ -11,12 +11,14 @@ _MODULELIST = \
 	MODULE_ABSTRACT.true \
 	MODULE_COMPONENT.true \
 	MODULE_WIFI.true \
-	MODULE_MODEM.true \
+	MODULE_MODEM.false \
 	MODULE_TOOLS.true \
-	MODULE_DHCP.true \
+	MODULE_DHCP.false \
 	MODULE_SQLITE.false \
 	MODULE_SYSTOOLS.true \
-	MODULE_SSH.true
+	MODULE_SSH.true \
+	MODULE_VOIP.true \
+	MODULE_APP.true 
 #
 #
 #
@@ -55,7 +57,9 @@ PlatformModule = \
 	DHCPDDIR.dhcpd \
 	SQLITEDIR.sqlite \
 	SYSTOOLSDIR.systools \
-	LIBSSHDIR.ssh
+	LIBSSHDIR.ssh \
+	VOIPDIR.voip \
+	APPDIR.application
 ###
 # By default we choose the lexically last Platform component version in hopes
 # that it is the most recent. The directory macros (e.g. IPCOMDIR) may of

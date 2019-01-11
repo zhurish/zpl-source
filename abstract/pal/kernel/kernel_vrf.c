@@ -25,7 +25,6 @@
 #ifdef HAVE_NETNS
 #undef  _GNU_SOURCE
 #define _GNU_SOURCE
-
 #include <sched.h>
 #endif
 
@@ -110,7 +109,7 @@ vrf_netns_pathname(const char *name)
 
 	if (!result)
 	{
-		zlog_err(ZLOG_PAL, "Invalid pathname: %s%s", safe_strerror(errno));
+		zlog_err(ZLOG_PAL, "Invalid pathname: %s", safe_strerror(errno));
 		return NULL;
 	}
 	return pathname;

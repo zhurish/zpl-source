@@ -35,8 +35,9 @@
 #include "nsm_client.h"
 
 #include "pal_interface.h"
+#ifdef PL_HAL_MODULE
 #include "hal_port.h"
-
+#endif
 static struct list *nsmlist;
 
 

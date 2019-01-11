@@ -18,11 +18,14 @@
 #include "table.h"
 #include "buffer.h"
 #include "str.h"
+
+#include "product.h"
 //#include "net/if_arp.h"
 
 
-#define OS_SLOT_MAX 	1
-#define OS_SLOT_HY_MAX 	5
+/*
+
+*/
 
 struct unit_slot_port
 {
@@ -42,7 +45,7 @@ struct slot_port_phy
 #endif
 
 #ifdef USE_IPSTACK_KERNEL
-#define SLOT_PORT_CONF	"/etc/plat.conf"
+//#define SLOT_PORT_CONF	"/etc/plat.conf"
 struct slot_port_phy
 {
 	ifindex_t ifindex;
@@ -53,8 +56,15 @@ struct slot_port_phy
 
 static struct unit_slot_port iusp_table[] =
 {
-	{.type = IF_SERIAL, .unit = 0, .slot = 0, .port = 3 },
+#ifdef PRODUCT_X5_B_BOARD
+	{.type = IF_SERIAL, .unit = 0, .slot = 0, .port = 0 },
 	{.type = IF_ETHERNET, .unit = 0, .slot = 0, .port = 3 },
+#endif
+#ifdef PRODUCT_BOJING_BOARD
+	{.type = IF_SERIAL, .unit = 0, .slot = 0, .port = 0 },
+	{.type = IF_ETHERNET, .unit = 0, .slot = 0, .port = 3 },
+#endif
+
 	{.type = IF_GIGABT_ETHERNET, .unit = 0, .slot = 0, .port = 0 },
 	{.type = IF_LOOPBACK, .unit = 0, .slot = 1, .port = 1 },
 	{.type = IF_TUNNEL, .unit = 0, .slot = 1, .port = 0 },
@@ -289,10 +299,11 @@ static int if_slot_kernel_read()
 					p++;
 					ifindex = atoi(p);
 				}
-/*				else
+				else if(s)
 				{
-					ifindex = atoi(s);
-				}*/
+					ifindex = ifname2ifindex(s);
+					//ifindex = atoi(s);
+				}
 				if(ifindex)
 					if_slot_kernel_add( ifindex, kname);
 			}

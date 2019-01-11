@@ -680,7 +680,7 @@ static void kernel_nl_open(struct nsm_vrf *zvrf)
 					zvrf->netlink.name, safe_strerror(errno));
 
 		/* Set receive buffer size if it's set from command line */
-		nl_rcvbuf.p = XMALLOC(MTYPE_STREAM, NL_PKT_BUF_SIZE);
+		nl_rcvbuf.p = XMALLOC(MTYPE_STREAM, NL_PKT_BUF_SIZE + 16);
 		nl_rcvbuf.size = NL_PKT_BUF_SIZE;
 
 		netlink_install_filter(zvrf->netlink.sock, zvrf->netlink.snl.nl_pid);

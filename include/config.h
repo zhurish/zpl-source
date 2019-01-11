@@ -1,6 +1,6 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
-
+//#include <features.h>
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
@@ -15,26 +15,31 @@
 #endif
 #endif
 
+#define SYS_REAL_DIR		"/app"
+#define SYSCONF_REAL_DIR 	SYS_REAL_DIR "/etc"
 
 /* bfdd vty socket */
 /* #undef BFD_VTYSH_PATH */
-#define SYSCONFDIR BASE_DIR "/etc"
-#define SYSLIBDIR BASE_DIR "/lib"
-#define SYSSBINDIR BASE_DIR "/sbin"
-#define SYSBINDIR BASE_DIR "/bin"
-#define SYSRUNDIR BASE_DIR "/run"
+#define SYSCONFDIR 	BASE_DIR "/etc"
+#define SYSLIBDIR 	BASE_DIR "/lib"
+#define SYSSBINDIR 	BASE_DIR "/sbin"
+#define SYSBINDIR 	BASE_DIR "/bin"
+#define SYSRUNDIR 	BASE_DIR "/run"
+#define SYSLOGDIR 	BASE_DIR "/log"
+#define SYSVARDIR 	BASE_DIR "/var"
+#define SYSTMPDIR 	BASE_DIR "/tmp"
 
 /* default daemon app root dir */
 #define DAEMON_CONFIG_DIR SYSCONFDIR
 
 /* default daemon logmsg directory */
-#define DAEMON_LOG_FILE_DIR BASE_DIR "/log"
+#define DAEMON_LOG_FILE_DIR SYSLOGDIR
 
 /* daemon vty directory */
-#define DAEMON_VTY_DIR BASE_DIR "/var"
+#define DAEMON_VTY_DIR SYSVARDIR
 
 /* daemon vty directory */
-#define DAEMON_ENV_DIR BASE_DIR "/run"
+#define DAEMON_ENV_DIR SYSRUNDIR
 
 
 #include "config_env.h"
@@ -152,8 +157,9 @@
 #define HAVE_GETTIMEOFDAY 1
 
 /* Glibc backtrace */
+#ifndef __UCLIBC__
 #define HAVE_GLIBC_BACKTRACE /**/
-
+#endif
 /* GNU regexp library */
 #define HAVE_GNU_REGEX /**/
 
@@ -288,9 +294,10 @@
 /* netlink */
 #define HAVE_NETLINK /**/
 
+#ifndef __UCLIBC__
 /* Have netns */
 #define HAVE_NETNS /**/
-
+#endif
 /* Define to 1 if you have the <net/if_dl.h> header file. */
 /* #undef HAVE_NET_IF_DL_H */
 
@@ -354,9 +361,10 @@
 /* Define to 1 if you have the `select' function. */
 #define HAVE_SELECT 1
 
+#ifndef __UCLIBC__
 /* Define to 1 if you have the `setns' function. */
 #define HAVE_SETNS /**/
-
+#endif
 /* Define to 1 if you have the <signal.h> header file. */
 #define HAVE_SIGNAL_H 1
 
@@ -374,10 +382,10 @@
 
 /* getpflags */
 /* #undef HAVE_SOLARIS_CAPABILITIES */
-
+#ifndef __UCLIBC__
 /* Stack symbol decoding */
 #define HAVE_STACK_TRACE /**/
-
+#endif
 /* Define to 1 if `stat' has the bug that it succeeds when given the
    zero-length file name argument. */
 /* #undef HAVE_STAT_EMPTY_STRING_BUG */

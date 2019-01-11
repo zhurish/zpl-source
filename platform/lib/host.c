@@ -20,6 +20,15 @@
 
 struct host host;
 
+
+int host_sysconfig_sync()
+{
+	//cp -arf /app/etc/* /tmp/app/etc/
+	super_system("cp -arf" " "SYSCONFDIR"/default-config.cfg " SYSCONF_REAL_DIR"/*");
+	return OK;
+}
+
+
 int host_config_init(char *motd)
 {
 	os_memset(&host, 0, sizeof(host));

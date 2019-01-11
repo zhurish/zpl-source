@@ -654,9 +654,10 @@ static int nsm_interface_ip_address_install(struct interface *ifp, struct prefix
 			//		safe_strerror(errno), VTY_NEWLINE);
 			return ERROR;
 		}
+#ifdef PL_DHCP_MODULE
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
-
+#endif
 		connected_up_ipv4(ifp, ifc);
 		nsm_client_notify_interface_add_ip(ifp, ifc, 0);
 		zebra_interface_address_add_update (ifp, ifc);
@@ -782,8 +783,10 @@ nsm_interface_ipv6_address_install (struct interface *ifp,
 			connected_free(ifc);
 			return CMD_WARNING;
 		}
+#ifdef PL_DHCP_MODULE
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
+#endif
 		connected_up_ipv6 (ifp, ifc);
 		nsm_client_notify_interface_add_ip(ifp, ifc, secondary);
 		zebra_interface_address_add_update (ifp, ifc);
@@ -883,9 +886,10 @@ int nsm_interface_ip_address_add(struct interface *ifp, struct prefix *cp,
 		}
 		if (!CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED))
 			SET_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED);
+#ifdef PL_DHCP_MODULE
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
-
+#endif
 		/* Secondary. */
 		if (secondary)
 			SET_FLAG (ifc->flags, ZEBRA_IFA_SECONDARY);

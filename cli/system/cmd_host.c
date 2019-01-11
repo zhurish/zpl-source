@@ -17,6 +17,7 @@
 #include "vty.h"
 #include "vty_user.h"
 #include "host.h"
+#include "template.h"
 
 #define CMD_HOST_DEBUG
 
@@ -68,13 +69,44 @@ static struct cmd_node config_node =
 	1
 };
 
+static struct cmd_node template_node =
+{
+	TEMPLATE_NODE,
+	"%s(config-%s)# ",
+	1
+};
+
+#ifdef PL_DHCP_MODULE
 static struct cmd_node config_dhcp_node =
 {
 	DHCPS_NODE,
 	"%s(config-dhcp)# ",
 	1
 };
+#endif
+#ifdef PL_VOIP_MODULE
+static struct cmd_node config_voip_node =
+{
+	VOIP_SERVICE_NODE,
+	"%s(config-voip)# ",
+	1
+};
+static struct cmd_node config_sip_node =
+{
+	SIP_SERVICE_NODE,
+	"%s(config-sip)# ",
+	1
+};
+#endif
 
+#ifdef PL_APP_MODULE
+static struct cmd_node config_app_templates_node =
+{
+	APP_TEMPLATES_NODE,
+	"%s(config-templates-%s)# ",
+	1
+};
+#endif
 struct cmd_node interface_node =
 {
 		INTERFACE_NODE,
@@ -247,7 +279,15 @@ DEFUN (config_exit,
 		vty->node = ENABLE_NODE;
 		vty_config_unlock(vty);
 		break;
+#ifdef PL_VOIP_MODULE
+	case VOIP_SERVICE_NODE:
+	case SIP_SERVICE_NODE:
+#endif
+#ifdef PL_APP_MODULE
+	case APP_TEMPLATES_NODE:
+#endif
 	case DHCPS_NODE:
+	case TEMPLATE_NODE:
 	case MODEM_PROFILE_NODE:
 	case MODEM_CHANNEL_NODE:
 	case INTERFACE_NODE:
@@ -259,6 +299,7 @@ DEFUN (config_exit,
 	case LAG_INTERFACE_NODE:		/* Lag Interface mode node. */
 	case LAG_INTERFACE_L3_NODE:	/* Lag L3 Interface mode node. */
 	case SERIAL_INTERFACE_NODE:
+	case BRIGDE_INTERFACE_NODE:
 #ifdef CUSTOM_INTERFACE
 	case WIFI_INTERFACE_NODE:
 	case MODEM_INTERFACE_NODE:
@@ -331,8 +372,16 @@ DEFUN (config_end,
 		/*    case RESTRICTED_NODE:*/
 		/* Nothing to do. */
 		break;
+#ifdef PL_VOIP_MODULE
+	case VOIP_SERVICE_NODE:
+	case SIP_SERVICE_NODE:
+#endif
+#ifdef PL_APP_MODULE
+	case APP_TEMPLATES_NODE:
+#endif
 	case CONFIG_NODE:
 	case DHCPS_NODE:
+	case TEMPLATE_NODE:
 	case MODEM_PROFILE_NODE:
 	case MODEM_CHANNEL_NODE:
 	case INTERFACE_NODE:
@@ -343,6 +392,7 @@ DEFUN (config_end,
 	case LAG_INTERFACE_NODE:		/* Lag Interface mode node. */
 	case LAG_INTERFACE_L3_NODE:	/* Lag L3 Interface mode node. */
 	case SERIAL_INTERFACE_NODE:
+	case BRIGDE_INTERFACE_NODE:
 #ifdef CUSTOM_INTERFACE
 	case WIFI_INTERFACE_NODE:
 	case MODEM_INTERFACE_NODE:
@@ -626,6 +676,7 @@ DEFUN (config_write_file,
 	}
 	vty_out(vty, "Configuration saved to %s%s", config_file, VTY_NEWLINE);
 	vty_out(vty, "[OK]%s", VTY_NEWLINE);
+	host_sysconfig_sync();
 	return CMD_SUCCESS;
 }
 
@@ -1292,6 +1343,8 @@ static int _cmd_host_base_init(int terminal)
 	install_node(&brigde_interface_node, NULL);
 	install_node(&interface_wireless_node, NULL);
 
+	install_node(&template_node, nsm_template_write_config);
+
 #ifdef CUSTOM_INTERFACE
 	install_node(&wifi_interface_node, NULL);
 	install_node(&modem_interface_node, NULL);
@@ -1301,11 +1354,22 @@ static int _cmd_host_base_init(int terminal)
 #ifdef PL_DHCP_MODULE
 	install_node(&config_dhcp_node, NULL);
 #endif
+#ifdef PL_VOIP_MODULE
+	install_node(&config_voip_node, NULL);
+	install_node(&config_sip_node, NULL);
+#endif
+#ifdef PL_APP_MODULE
+	install_node(&config_app_templates_node, NULL);
+#endif
 
 	install_default(VIEW_NODE);
 	install_default(CONFIG_NODE);
 	install_default_basic(VIEW_NODE);
 	install_default_basic(CONFIG_NODE);
+
+	install_default(TEMPLATE_NODE);
+	install_default_basic(TEMPLATE_NODE);
+
 	/* Each node's basic commands. */
 	install_element(VIEW_NODE, &show_version_cmd);
 	install_element(VIEW_NODE, &show_hidden_version_cmd);

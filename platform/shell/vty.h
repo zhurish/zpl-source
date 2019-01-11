@@ -147,6 +147,7 @@ struct vty
   char address[SU_ADDRSTRLEN];
 
   char	prompt[64];
+  char	subprompt[64];
   char *username;
 
   int	(*shell_ctrl_cmd)(struct vty *, int , void *);

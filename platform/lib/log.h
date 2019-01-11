@@ -23,10 +23,15 @@
 #ifndef _ZEBRA_LOG_H
 #define _ZEBRA_LOG_H
 
+#include <config.h>
 #include <syslog.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
+
+
+
+#define ZLOG_TASK_ENABLE
 
 //#define SYSLOG_CLIENT
 #ifdef SYSLOG_CLIENT
@@ -79,8 +84,10 @@ typedef enum
   ZLOG_IMISH,
   ZLOG_WIFI,
   ZLOG_MODEM,
+  ZLOG_APP,
+  ZLOG_VOIP,
+  ZLOG_SOUND,
   ZLOG_UTILS,
-
   ZLOG_MAX,
 } zlog_proto_t;
 
@@ -90,8 +97,8 @@ typedef enum
 #define LOG_MSG_SIZE	1024
 #define LOG_FILE_CHK_TIME	10
 
-#define ZLOG_REAL_PATH		"/home/"
-#define ZLOG_VIRTUAL_PATH 	"/var/log/"
+#define ZLOG_REAL_PATH		SYS_REAL_DIR"/log/"
+#define ZLOG_VIRTUAL_PATH 	DAEMON_LOG_FILE_DIR"/"
 
 #define ZLOG_FILE_DEFAULT 	"sw-log.log"
 
@@ -159,8 +166,21 @@ struct zlog
   zlog_buffer_t	log_buffer;
 
   void *mutex;
+#ifdef ZLOG_TASK_ENABLE
+  int	taskid;
+  int	lfd;
+  FILE  *lfp;
+#endif
 };
-
+#ifdef ZLOG_TASK_ENABLE
+typedef struct zlog_hdr_s
+{
+	int 	module;
+	int 	priority;
+	int		len;
+	char 	logbuf[LOG_MSG_SIZE];
+}zlog_hdr_t;
+#endif
 
 
 typedef int(*zlog_buffer_cb)(zbuffer_t *, void *pVoid);
@@ -219,7 +239,7 @@ extern int zlog_get_file_size (int *filesize);
 extern int zlog_reset_file (BOOL bOpen);
 extern int zlog_close_file();
 extern int zlog_file_save (void);
-//extern int zlog_check_file (void);
+extern int zlog_check_file (void);
 
 
 extern int zlog_set_buffer_size (int size);

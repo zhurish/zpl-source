@@ -26,7 +26,7 @@
 
 #include <thread.h>
 
-#define QUAGGA_SIGNAL_REAL_TIMER
+//#define QUAGGA_SIGNAL_REAL_TIMER
 
 #define QUAGGA_SIGNAL_TIMER_INTERVAL 2L
 

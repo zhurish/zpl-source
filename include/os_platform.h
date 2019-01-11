@@ -115,6 +115,8 @@ enum
   TIMEOUT  = 1,
   CTRL_X  = 2,
   ERROR = -1,
+  EXIST		= -100,
+  NOTEXIST  = -101,
 };
 
 #define OS_WAIT_NO	0

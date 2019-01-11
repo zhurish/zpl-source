@@ -71,7 +71,7 @@ struct host_system
 };
 /* struct host global, ick */
 extern struct host host;
-
+extern int host_sysconfig_sync();
 extern int host_config_init(char *motd);
 extern int host_config_exit(void);
 extern const char *host_config_get (void);

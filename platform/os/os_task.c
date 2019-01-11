@@ -43,7 +43,9 @@ int os_task_init()
 		if (os_task_list)
 		{
 			os_memset(&total_cpu, 0, sizeof(total_cpu));
+#ifndef __UCLIBC__
 			total_cpu.cpu = get_nprocs();
+#endif
 			lstInit(os_task_list);
 			return OK;
 		}
@@ -424,8 +426,10 @@ static int os_task_refresh_total_cpu(struct os_task_history *hist)
 	os_memset(path, 0, sizeof(path));
 	os_memset(buf, 0, sizeof(buf));
 	sprintf(path, "/proc/stat");
+#ifndef __UCLIBC__
 	if (hist->cpu == 0)
 		hist->cpu = get_nprocs();
+#endif
 	fp = fopen(path, "r");
 	if (fp)
 	{
@@ -459,8 +463,10 @@ static int os_task_refresh_cpu(os_task_t *task)
 	int ret = 0;
 	os_memset(path, 0, sizeof(path));
 	os_memset(buf, 0, sizeof(buf));
+#ifndef __UCLIBC__
 	if (task->hist.cpu == 0)
 		task->hist.cpu = get_nprocs();
+#endif
 	if (task->td_tid)
 		sprintf(path, "/proc/%d/task/%d/stat", task->td_pid, task->td_tid);
 	else
@@ -869,6 +875,7 @@ unit32 os_task_entry_create(char *name, int pri, int op, task_entry entry,
 		return ERROR;
 	if (os_task_tcb_start(task) == OK)
 	{
+#ifndef __UCLIBC__
 		//prctl(PR_SET_NAME,"THREAD2");
 		//int pthread_setname_np(pthread_t thread, const char *name);
 		//int pthread_getname_np(pthread_t thread,
@@ -881,7 +888,7 @@ unit32 os_task_entry_create(char *name, int pri, int op, task_entry entry,
 		if (ret != OK)
 			zlog_err(ZLOG_DEFAULT, "%s: could not lower privs, %s", __func__,
 					os_strerror(errno));
-
+#endif
 		OS_DEBUG("\r\ncreate task:%s(%u %u->%u:ret=%d) pid=%d\r\n",task->td_name,
 				task->td_thread,(unit32)task,task->td_id,ret,getpid());
 		/*		fprintf(stdout,"\r\ncreate task:%s(%u %u->%u:ret=%d) pid=%d\r\n",task->td_name,

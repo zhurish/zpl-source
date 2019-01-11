@@ -113,6 +113,7 @@ DEFUN (bond_test,
 	return CMD_SUCCESS;
 }
 
+#ifdef PL_DHCP_MODULE
 DEFUN (dhcp_test,
 		dhcp_test_cmd,
        "dhcp-test",
@@ -122,7 +123,7 @@ DEFUN (dhcp_test,
 	dhcpc_enable_test();
 	return CMD_SUCCESS;
 }
-
+#endif
 
 DEFUN (os_process_test,
 		os_process_test_cmd,
@@ -286,9 +287,9 @@ int os_test()
 	//modem_test_init();
 	install_element (ENABLE_NODE, &wifi_list_cmd);
 	install_element (ENABLE_NODE, &wifi_scan_cmd);
-
+#ifdef PL_DHCP_MODULE
 	install_element (ENABLE_NODE, &dhcp_test_cmd);
-
+#endif
 	install_element (ENABLE_NODE, &sdk_test_cmd);
 	install_element (ENABLE_NODE, &syslog_debug_test_cmd);
 	install_element (ENABLE_NODE, &bond_test_cmd);

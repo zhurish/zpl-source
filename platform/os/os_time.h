@@ -13,8 +13,7 @@
 #define OS_TIMER_POSIX
 
 #define OS_TIMER_NAME_MAX	128
-//10ms is one tick
-//#define os_system_tick()	(jiffies)
+
 #define os_system_rate()	(100)
 
 extern int os_system_tick();
@@ -80,7 +79,9 @@ typedef struct os_time_s
 	int		(*time_entry)(void *);
 	void	*pVoid;
 	unsigned long msec;
+
 	struct timeval interval;
+	int		timer_ttl;
 
 	os_time_type type;
 	enum {OS_TIMER_FALSE, OS_TIMER_TRUE, OS_TIMER_CANCEL} state;

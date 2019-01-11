@@ -46,17 +46,26 @@ enum node_type
   VRF_NODE,			/* VRF node. */
   SERVICE_NODE, 		/* Service node. */
 
-/* 2016锟斤拷6锟斤拷27锟斤拷 21:01:23 zhurish: 使锟斤拷IMI Module统一CLI锟斤拷锟斤拷锟斤拷锟斤拷时锟斤拷锟斤拷锟斤拷执锟斤拷linux锟节核碉拷元锟斤拷锟斤拷锟斤拷诘锟� */
+/* 2016閿熸枻鎷�6閿熸枻鎷�27閿熸枻鎷� 21:01:23 zhurish: 浣块敓鏂ゆ嫹IMI Module缁熶竴CLI閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鏃堕敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鎵ч敓鏂ゆ嫹linux閿熻妭鏍哥鎷峰厓閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷疯瘶閿燂拷 */
 #ifdef IMISH_IMI_MODULE  
   LINUX_SHELL_NODE,			/* IMI Module protocol node. */
 #endif//IMISH_IMI_MODULE   
-/* 2016锟斤拷6锟斤拷27锟斤拷 21:01:23  zhurish: 使锟斤拷IMI Module统一CLI锟斤拷锟斤拷锟斤拷锟斤拷时锟斤拷锟斤拷锟斤拷执锟斤拷linux锟节核碉拷元锟斤拷锟斤拷锟斤拷诘锟� */
+/* 2016閿熸枻鎷�6閿熸枻鎷�27閿熸枻鎷� 21:01:23  zhurish: 浣块敓鏂ゆ嫹IMI Module缁熶竴CLI閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鏃堕敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鎵ч敓鏂ゆ嫹linux閿熻妭鏍哥鎷峰厓閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷疯瘶閿燂拷 */
   DEBUG_NODE,			/* Debug node. */
   AAA_NODE,			/* AAA node. */
   KEYCHAIN_NODE,		/* Key-chain node. */
   KEYCHAIN_KEY_NODE,		/* Key-chain key node. */
   DHCPS_NODE,				/* DHDP server*/
 
+  TEMPLATE_NODE,				/* templates server*/
+
+#ifdef PL_APP_MODULE
+  APP_TEMPLATES_NODE,		/* APP templates node. */
+#endif
+#ifdef PL_VOIP_MODULE
+  VOIP_SERVICE_NODE,
+  SIP_SERVICE_NODE,
+#endif
   LOOPBACK_INTERFACE_NODE,	/* Loopback Interface mode node. */
 
   SERIAL_INTERFACE_NODE,	/* Serial Interface mode node. */

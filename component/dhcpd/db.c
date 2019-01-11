@@ -93,7 +93,7 @@ static sqlite3 *db_sql_init()
 		HOST CHAR(48) \
 		)";
 
-	result = sqlite3_open("/home/zhurish/workspace/SWPlatform/debug/sbin/abcd.db", &db);
+	result = sqlite3_open(SYSCONFDIR"/abcd.db", &db);
 	if (result != SQLITE_OK)
 	{
 		printf("database open fail!\n");

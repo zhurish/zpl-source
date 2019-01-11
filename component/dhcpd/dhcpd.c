@@ -74,7 +74,7 @@ u_int16_t client_port = 0;*/
 int log_perror = 0;*/
 char *path_dhcpd_db = _PATH_DHCPD_DB;
 #ifdef DHCPD_CONF_DEBUG
-char *path_dhcpd_conf = "/home/zhurish/workspace/SWPlatform/component/dhcpd/dhcpd.conf";//_PATH_DHCPD_CONF;
+char *path_dhcpd_conf = SYSCONFDIR"/dhcpd.conf";//_PATH_DHCPD_CONF;
 #endif
 /*struct passwd *pw = NULL;
 

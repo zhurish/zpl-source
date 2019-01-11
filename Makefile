@@ -1,13 +1,10 @@
 #
 #
 #
-#TOP_DIR =$(PWD)
-TOP_DIR=/home/zhurish/workspace/SWPlatform
+export TOP_DIR =$(shell pwd)
+#TOP_DIR=/home/zhurish/workspace/SWPlatform
 #
 #
-#
-export MAKE_DIR
-export BASE_ROOT
 #
 #
 #
@@ -50,9 +47,9 @@ endif
 #LDCLFLAG += -lssl
 #
 #
-export CFLAGS += -L$(BASE_ROOT)/$(LIBDIR)/ 
+export CFLAGS += -L$(BASE_ROOT)/$(LIBDIR)/  
 #$(PLDEFINE) $(PLINCLUDE) $(PL_DEBUG) -g #-lcrypto
-#
+# $(PL_CFLAGS)
 #
 %.o: %.c
 	$(PL_OBJ_COMPILE)
@@ -70,7 +67,15 @@ $(TAGET) : $(OBJS) $(BASE_ROOT)/$(LIBDIR)/*.a
 	$(CC) $(OBJS) $(CFLAGS) -Xlinker "-(" $(LDCLFLAG) -Xlinker "-)" -o $(TAGET) 
 	$(CHMOD) a+x $(TAGET)
 	install -d ${BINDIR}
-	install -m 755 ${TAGET} ${BINDIR} 
+	install -m 755 ${TAGET} ${BINDIR}
+	$(STRIP) $(BINDIR)/$(TAGET) 
+	install -d ${DSTETCDIR} 
+	install -m 755 setup-sound.sh ${DSTETCDIR} 	
+	install -m 755 startup/etc/plat.conf ${DSTETCDIR}
+	#install -m 755 startup/etc/default-config.cfg ${DSTETCDIR}
+	install -m 755 startup/etc/phonedbtest.cfg ${DSTETCDIR}		
+	install -m 755 startup/etc/remote-test.txt ${DSTETCDIR}		
+	install -m 755 startup/etc/volume_setup.sh ${DSTETCDIR}	
 #
 #
 #	

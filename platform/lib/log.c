@@ -47,7 +47,7 @@ struct zlog *zlog_default = NULL;
 
 static const char *zlog_proto_string[] = { "NONE", "DEFAULT", "CONSOLE", "TELNET",/*"ZEBRA",*/ "HAL", "PAL", "NSM", "RIP",
 		"BGP", "OSPF", "RIPNG", "BABEL", "OSPF6", "ISIS", "PIM", "MASC", "NHRP",
-		"HSLS", "OLSR", "VRRP", "FRP", "LLDP", "BFD", "LDP", "SNTP", "IMISH", "WIFI", "MODEM",
+		"HSLS", "OLSR", "VRRP", "FRP", "LLDP", "BFD", "LDP", "SNTP", "IMISH", "WIFI", "MODEM", "APP", "VOIP", "SOUND",
 		"UTILS", NULL, };
 
 static const char *zlog_priority[] = { "emergencies", "alerts", "critical", "errors",
@@ -187,6 +187,262 @@ static void time_print(FILE *fp, zlog_timestamp_t ctl)
 		fprintf(fp, "%s ", data);
 }
 
+#ifdef ZLOG_TASK_ENABLE
+/* va_list version of zlog. */
+static void vzlog_output(struct zlog *zl, int module, int priority, const char *format,
+		va_list args) {
+	int protocol = 0;
+	int original_errno = errno;
+
+	/* If zlog is not specified, use default one. */
+	if (zl == NULL)
+		zl = zlog_default;
+	if (zl->mutex)
+		os_mutex_lock(zl->mutex, OS_WAIT_FOREVER);
+	if (module != ZLOG_NONE) {
+		protocol = zl->protocol;
+		zl->protocol = module;
+	}
+	/* When zlog_default is also NULL, use stderr for logging. */
+	if (zl == NULL) {
+		time_print(stderr, zl->timestamp);
+		fprintf(stderr, "%s: ", "unknown");
+		vfprintf(stderr, format, args);
+		fprintf(stderr, "\n");
+		fflush(stderr);
+
+		/* In this case we return at here. */
+		errno = original_errno;
+		if (module != ZLOG_NONE) {
+			zl->protocol = protocol;
+		}
+		if (zl->mutex)
+			os_mutex_unlock(zl->mutex);
+		return;
+	}
+
+	/* Syslog output */
+	if (priority <= zl->maxlvl[ZLOG_DEST_SYSLOG]) {
+		va_list ac;
+		va_copy(ac, args);
+#ifndef SYSLOG_CLIENT
+		vsyslog(priority | zlog_default->facility, format, ac);
+#else
+		vsysclog(priority, format, args);
+#endif
+		va_end(ac);
+	}
+
+	/* File output. */
+	if ((priority <= zl->maxlvl[ZLOG_DEST_FILE]) && zl->fp) {
+		va_list ac;
+		time_print(zl->fp, zl->timestamp);
+		if (zl->record_priority)
+			fprintf(zl->fp, "%s: ", zlog_priority[priority]);
+		fprintf(zl->fp, "%s: ", zlog_proto_string[zl->protocol]);
+		va_copy(ac, args);
+		vfprintf(zl->fp, format, ac);
+		va_end(ac);
+		fprintf(zl->fp, "\n");
+		fflush(zl->fp);
+	}
+
+	/* stdout output. */
+	if (priority <= zl->maxlvl[ZLOG_DEST_STDOUT]) {
+		va_list ac;
+		time_print(stdout, zl->timestamp);
+		if (zl->record_priority)
+			fprintf(stdout, "%s: ", zlog_priority[priority]);
+		fprintf(stdout, "%s: ", zlog_proto_string[zl->protocol]);
+		va_copy(ac, args);
+		vfprintf(stdout, format, ac);
+		va_end(ac);
+		fprintf(stdout, "\n");
+		fflush(stdout);
+	}
+	/* logbuff output. */
+	if (priority <= zl->maxlvl[ZLOG_DEST_BUFFER]) {
+
+		zlog_buffer_format(zl, &zl->log_buffer,
+					 module, priority, format,  args);
+	}
+	/* Terminal monitor. */
+	if (priority <= zl->maxlvl[ZLOG_DEST_MONITOR])
+	{
+		vty_log((zl->record_priority ? zlog_priority[priority] : NULL),
+				zlog_proto_string[zl->protocol], format, zl->timestamp, args);
+	}
+	//trapping
+	if (priority == zl->trap_lvl)
+		vty_trap_log((zl->record_priority ? zlog_priority[priority] : NULL),
+				zlog_proto_string[zl->protocol], format, zl->timestamp, args);
+
+	if (module != ZLOG_NONE) {
+		zl->protocol = protocol;
+	}
+	errno = original_errno;
+	if (zl->mutex)
+		os_mutex_unlock(zl->mutex);
+}
+
+static void zlog_out(int module, int priority, const char *format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	vzlog_output(zlog_default, module, priority, format, args);
+	va_end(args);
+}
+
+void vzlog(struct zlog *zl, int module, int priority, const char *format,
+		va_list args)
+{
+	int protocol = 0;
+
+	/* If zlog is not specified, use default one. */
+	if (zl == NULL)
+		zl = zlog_default;
+
+	if (zl->mutex)
+		os_mutex_lock(zl->mutex, OS_WAIT_FOREVER);
+	if (module != ZLOG_NONE)
+	{
+		protocol = zl->protocol;
+		zl->protocol = module;
+	}
+	if (zl == NULL)
+	{
+		time_print(stderr, zl->timestamp);
+		fprintf(stderr, "%s: ", "unknown");
+		vfprintf(stderr, format, args);
+		fprintf(stderr, "\n");
+		fflush(stderr);
+
+		if (module != ZLOG_NONE) {
+			zl->protocol = protocol;
+		}
+		if (zl->mutex)
+			os_mutex_unlock(zl->mutex);
+		return;
+	}
+	if (priority <= zl->maxlvl[ZLOG_DEST_SYSLOG] ||
+			priority <= zl->maxlvl[ZLOG_DEST_BUFFER] ||
+			((priority <= zl->maxlvl[ZLOG_DEST_FILE]) && zl->fp) ||
+			priority <= zl->maxlvl[ZLOG_DEST_MONITOR] ||
+			priority == zl->trap_lvl ||
+			priority <= zl->maxlvl[ZLOG_DEST_STDOUT])
+	{
+		va_list ac;
+		zlog_hdr_t loghdr;
+		memset(&loghdr, 0, sizeof(loghdr));
+		loghdr.module = module;
+		loghdr.priority = priority;
+		//loghdr.len;
+		//loghdr.logbuf[LOG_MSG_SIZE];
+
+		va_copy(ac, args);
+		loghdr.len = vsnprintf(loghdr.logbuf, sizeof(loghdr.logbuf), format, ac);
+		va_end(ac);
+		if(zl->lfd)
+			write(zl->lfd, &loghdr, sizeof(loghdr));
+	}
+	if (zl->mutex)
+		os_mutex_unlock(zl->mutex);
+	return ;
+}
+
+static int zlog_task(struct zlog *zl)
+{
+	int retval = 0, interval = 0;
+	fd_set rfds;
+	zlog_hdr_t loghdr;
+	os_sleep(1);
+	memset(&loghdr, 0, sizeof(loghdr));
+	FD_ZERO (&rfds);
+	//FD_SET (zl->lfd, &rfds);
+	while (1)
+	{
+		if(zl->lfd == 0)
+		{
+			os_sleep(1);
+			continue;
+		}
+/*		if(zl->lfd == -1)
+		{
+			break;
+		}*/
+		FD_SET (zl->lfd, &rfds);
+
+		retval = os_select_wait(zl->lfd + 1, &rfds, NULL,  1);
+
+		interval++;
+
+		if(interval >= 10)
+		{
+			interval = 0;
+			zlog_check_file();
+		}
+
+		if (retval == 0)
+			continue;
+
+		if (!FD_ISSET(zl->lfd, &rfds))
+			continue;
+		memset(&loghdr, 0, sizeof(loghdr));
+		if (read(zl->lfd, &loghdr, sizeof(loghdr)) < 0)
+		{
+			if (errno == EPIPE || errno == EBADF || errno == EIO /*ECONNRESET ECONNABORTED ENETRESET ECONNREFUSED*/)
+			{
+				close(zl->lfd);
+				zl->lfd = os_pipe_create("zlog.p", O_RDWR);
+				if(zl->lfd)
+				{
+					os_set_nonblocking(zl->lfd);
+				}
+				continue;
+			}
+			continue;
+		}
+		if(loghdr.len)
+			zlog_out(loghdr.module, loghdr.priority, loghdr.logbuf);
+	}
+	return OK;
+}
+
+static int zlog_task_init(struct zlog *zl)
+{
+	if(zl->lfd)
+	{
+		close(zl->lfd);
+		zl->lfd = 0;
+	}
+	zl->lfd = os_pipe_create("zlog.p", O_RDWR);
+	if(zl->lfd)
+	{
+		os_set_nonblocking(zl->lfd);
+	}
+	if(zl->taskid)
+		return OK;
+	zl->taskid = os_task_create("logTask", OS_TASK_DEFAULT_PRIORITY,
+	               0, zlog_task, zl, OS_TASK_DEFAULT_STACK);
+	return OK;
+}
+
+static int zlog_task_exit(struct zlog *zl)
+{
+
+	if(zl->taskid)
+	{
+		os_task_destroy(zl->taskid);
+		zl->taskid = 0;
+	}
+	if(zl->lfd)
+	{
+		close(zl->lfd);
+		zl->lfd = 0;
+	}
+	return OK;
+}
+#else
 /* va_list version of zlog. */
 void vzlog(struct zlog *zl, int module, int priority, const char *format,
 		va_list args) {
@@ -283,7 +539,7 @@ void vzlog(struct zlog *zl, int module, int priority, const char *format,
 	if (zl->mutex)
 		os_mutex_unlock(zl->mutex);
 }
-
+#endif
 
 static char *
 str_append(char *dst, int len, const char *src) {
@@ -734,6 +990,9 @@ openzlog(const char *progname, zlog_proto_t protocol, int syslog_flags,
 
 	zlog_buffer_reset ();
 	zlog_set_level (ZLOG_DEST_STDOUT, LOG_DEBUG);
+#ifdef ZLOG_TASK_ENABLE
+	zlog_task_init(zlog_default);
+#endif
 	return zl;
 }
 
@@ -747,6 +1006,9 @@ void closezlog(struct zlog *zl) {
 		free(zl->filename);
 	if (zl->mutex)
 		os_mutex_exit(zl->mutex);
+#ifdef ZLOG_TASK_ENABLE
+	zlog_task_exit(zlog_default);
+#endif
 	XFREE(MTYPE_ZLOG, zl);
 #ifdef SYSLOG_CLIENT
 	syslogc_lib_uninit();
@@ -1115,8 +1377,8 @@ int zlog_file_save (void)
 	return OK;
 }
 /* Check log filesize. */
-#if 0
-static int zlog_check_file (void)
+#if 1
+int zlog_check_file (void)
 {
 	struct stat fsize;
 	char filetmp[256];

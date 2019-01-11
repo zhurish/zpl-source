@@ -871,6 +871,14 @@ static void vty_end_config(struct vty *vty)
 		break;
 	case CONFIG_NODE:
 	case DHCPS_NODE:
+	case TEMPLATE_NODE:
+#ifdef PL_VOIP_MODULE
+	case VOIP_SERVICE_NODE:
+	case SIP_SERVICE_NODE:
+#endif
+#ifdef PL_APP_MODULE
+	case APP_TEMPLATES_NODE:
+#endif
 	case MODEM_PROFILE_NODE:
 	case MODEM_CHANNEL_NODE:
 	case INTERFACE_NODE:
@@ -1302,6 +1310,14 @@ static void vty_stop_input(struct vty *vty)
 		break;
 	case CONFIG_NODE:
 	case DHCPS_NODE:
+	case TEMPLATE_NODE:
+#ifdef PL_VOIP_MODULE
+	case VOIP_SERVICE_NODE:
+	case SIP_SERVICE_NODE:
+#endif
+#ifdef PL_APP_MODULE
+	case APP_TEMPLATES_NODE:
+#endif
 	case MODEM_PROFILE_NODE:
 	case MODEM_CHANNEL_NODE:
 	case INTERFACE_NODE:
@@ -1566,9 +1582,9 @@ static void vty_ctrl_default(int ctrl, struct vty *vty)
 #define CONTROL(X)  ((X) - '@')
 #endif
 
-	//执锟斤拷ctrl + c锟斤拷氐锟斤拷锟斤拷锟�
-	//pid_t pid;//锟斤拷前锟斤拷锟斤拷锟斤拷锟叫的斤拷锟斤拷
-	//pthread_t pthd;//锟斤拷前锟斤拷锟斤拷锟斤拷锟叫碉拷锟竭筹拷
+	//鎵ч敓鏂ゆ嫹ctrl + c閿熸枻鎷锋皭閿熸枻鎷烽敓鏂ゆ嫹閿燂拷
+	//pid_t pid;//閿熸枻鎷峰墠閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鍙殑鏂ゆ嫹閿熸枻鎷�
+	//pthread_t pthd;//閿熸枻鎷峰墠閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鍙鎷烽敓绔鎷�
 //	if( (vty->pid == 0)&&(vty->pthd == 0) )
 //		return 0;
 	switch (ctrl)
@@ -3131,7 +3147,8 @@ void vty_serv_init(const char *addr, unsigned short port, const char *path, cons
 #ifdef VTYSH
 	vty_serv_un (path);
 #endif /* VTYSH */
-	vty_console(tty, NULL);
+//	if(tty)
+		vty_console(tty, NULL);
 }
 
 /* Close vty interface.  Warning: call this only from functions that
@@ -3866,6 +3883,7 @@ void * vty_thread_master()
 void vty_init(void *m1, void *m2)
 {
 	/* For further configuration read, preserve current directory. */
+	memset(&vty_tty_console, 0, sizeof(vty_tty_console));
 	vty_save_cwd();
 
 	vtyvec = vector_init(VECTOR_MIN_SIZE);
