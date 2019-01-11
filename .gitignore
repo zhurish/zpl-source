@@ -11,10 +11,7 @@
 *.o
 *.lo
 *.Plo
-*.a
 *.la
-*.so
-*.so.*
 *.bak
 *.Po
 *.d
