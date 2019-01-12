@@ -73,7 +73,7 @@ DEFUN (no_ip_voip_service,
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
-/*
+
 DEFUN (ip_voip_payload,
 		ip_voip_payload_cmd,
 		"ip voip payload <0-256>",
@@ -83,12 +83,8 @@ DEFUN (ip_voip_payload,
 		"payload index\n")
 {
 	int ret = ERROR;
-	if(!voip_stream->enable)
-		ret = voip_enable_set_api(TRUE);
-	else
-		ret = OK;
-	if(ret == OK)
-		vty->node = VOIP_SERVICE_NODE;
+	if(voip_stream->enable)
+		ret = voip_stream_payload_type_api(voip_stream, NULL, atoi(argv[0]));
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -102,22 +98,162 @@ DEFUN (no_ip_voip_payload,
 {
 	int ret = ERROR;
 	if(voip_stream->enable)
-		ret = voip_enable_set_api(FALSE);
-	else
-		ret = OK;
-	if(ret == OK)
-		vty->node = VOIP_SERVICE_NODE;
+		ret = voip_stream_payload_type_api(voip_stream, NULL, VOIP_RTP_PAYLOAD_DEFAULT);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
-extern int voip_stream_payload_type_api(voip_stream_t* out, char *name, int payload);
-extern int voip_stream_echo_canceller_api(voip_stream_t* out, BOOL enable, int ec_tail, int ec_delay, int ec_framesize);
-extern int voip_stream_echo_limiter_api(voip_stream_t* out, BOOL enable, float force, float speed, int sustain, float thres, float transmit);
-extern int voip_stream_bitrate_api(voip_stream_t* out, int bitrate);
-extern int voip_stream_jitter_api(voip_stream_t* out, int jitter);
-extern int voip_stream_disable_rtcp_api(voip_stream_t* out);
-extern int voip_stream_disable_avpf_api(voip_stream_t* out);
-extern int voip_stream_noise_gate_api(voip_stream_t* out, BOOL enable, float ng_floorgain, float ng_threshold);
-*/
+
+DEFUN (ip_voip_echo_canceller,
+		ip_voip_echo_canceller_cmd,
+		"ip voip echo canceller",
+		IP_STR
+		"VOIP Protocol\n"
+		"Payload configure\n"
+		"payload index\n")
+{
+	int ret = ERROR;
+	if(voip_stream->enable)
+	{
+		ret = voip_stream_echo_canceller_api(voip_stream, TRUE, 0, 0, 0);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (no_ip_voip_echo_canceller,
+		no_ip_voip_echo_canceller_cmd,
+		"no ip voip echo canceller",
+		NO_STR
+		IP_STR
+		"VOIP Protocol\n"
+		"Payload configure\n")
+{
+	int ret = ERROR;
+	if(voip_stream->enable)
+		ret = voip_stream_echo_canceller_api(voip_stream, FALSE, 0, 0, 0);
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (ip_voip_echo_limiter,
+		ip_voip_echo_limiter_cmd,
+		"ip voip echo limiter",
+		IP_STR
+		"VOIP Protocol\n"
+		"Payload configure\n"
+		"payload index\n")
+{
+	int ret = ERROR;
+	if(voip_stream->enable)
+	{
+		ret = voip_stream_echo_limiter_api(voip_stream, TRUE, 0.0, 0.0, 0, 0.0, 0.0);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (no_ip_voip_echo_limiter,
+		no_ip_voip_echo_limiter_cmd,
+		"no ip voip echo limiter",
+		NO_STR
+		IP_STR
+		"VOIP Protocol\n"
+		"Payload configure\n")
+{
+	int ret = ERROR;
+	if(voip_stream->enable)
+		ret = voip_stream_echo_limiter_api(voip_stream, FALSE, 0.0, 0.0, 0, 0.0, 0.0);
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+
+DEFUN (ip_voip_bitrate,
+		ip_voip_bitrate_cmd,
+		"ip voip bitrate <64-10000000>",
+		IP_STR
+		"VOIP Protocol\n"
+		"Payload configure\n"
+		"payload index\n")
+{
+	int ret = ERROR;
+	if(voip_stream->enable)
+	{
+		ret = voip_stream_bitrate_api(voip_stream, atoi(argv[0]));
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (no_ip_voip_bitrate,
+		no_ip_voip_bitrate_cmd,
+		"no ip voip bitrate",
+		NO_STR
+		IP_STR
+		"VOIP Protocol\n"
+		"Payload configure\n")
+{
+	int ret = ERROR;
+	if(voip_stream->enable)
+		ret = voip_stream_bitrate_api(voip_stream, 0);
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (ip_voip_jitter,
+		ip_voip_jitter_cmd,
+		"ip voip jitter <0-1000>",
+		IP_STR
+		"VOIP Protocol\n"
+		"Payload configure\n"
+		"payload index\n")
+{
+	int ret = ERROR;
+	if(voip_stream->enable)
+	{
+		ret = voip_stream_jitter_api(voip_stream, atoi(argv[0]));
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (no_ip_voip_jitter,
+		no_ip_voip_jitter_cmd,
+		"no ip voip jitter",
+		NO_STR
+		IP_STR
+		"VOIP Protocol\n"
+		"Payload configure\n")
+{
+	int ret = ERROR;
+	if(voip_stream->enable)
+		ret = voip_stream_jitter_api(voip_stream, 0);
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (ip_voip_noise_gate,
+		ip_voip_noise_gate_cmd,
+		"ip voip noise gate",
+		IP_STR
+		"VOIP Protocol\n"
+		"Payload configure\n"
+		"payload index\n")
+{
+	int ret = ERROR;
+	if(voip_stream->enable)
+	{
+		ret = voip_stream_noise_gate_api(voip_stream, TRUE, 0, 0);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (no_ip_voip_noise_gate,
+		no_ip_voip_noise_gate_cmd,
+		"no ip voip noise gate",
+		NO_STR
+		IP_STR
+		"VOIP Protocol\n"
+		"Payload configure\n")
+{
+	int ret = ERROR;
+	if(voip_stream->enable)
+		ret = voip_stream_noise_gate_api(voip_stream, FALSE, 0, 0);
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+
 
 /*
  * RTP Module
@@ -544,6 +680,26 @@ static void cmd_voip_base_init(int node)
 	 */
 	install_element(node, &ip_voip_port_cmd);
 	install_element(node, &no_ip_voip_port_cmd);
+	/*
+	 * voip
+	 */
+	install_element(node, &ip_voip_payload_cmd);
+	install_element(node, &no_ip_voip_payload_cmd);
+
+	install_element(node, &ip_voip_echo_canceller_cmd);
+	install_element(node, &no_ip_voip_echo_canceller_cmd);
+
+	install_element(node, &ip_voip_echo_limiter_cmd);
+	install_element(node, &no_ip_voip_echo_limiter_cmd);
+
+	install_element(node, &ip_voip_bitrate_cmd);
+	install_element(node, &no_ip_voip_bitrate_cmd);
+
+	install_element(node, &ip_voip_jitter_cmd);
+	install_element(node, &no_ip_voip_jitter_cmd);
+
+	install_element(node, &ip_voip_noise_gate_cmd);
+	install_element(node, &no_ip_voip_noise_gate_cmd);
 
 	/*
 	 * ring

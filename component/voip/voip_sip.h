@@ -27,19 +27,26 @@
 #define SIP_DATA_MAX		128
 
 #define SIP_ENABLE_DEFAULT			TRUE
-#define SIP_PORT_DEFAULT			512
-#define SIP_PORT_SEC_DEFAULT		513
-#define SIP_PROXY_PORT_DEFAULT		512
-#define SIP_PROXY_PORT_SEC_DEFAULT	513
+#define SIP_PORT_DEFAULT			5060
+#define SIP_PORT_SEC_DEFAULT		5060
+#define SIP_PROXY_PORT_DEFAULT		5060
+#define SIP_PROXY_PORT_SEC_DEFAULT	5060
 #define SIP_TIME_DEFAULT			TRUE
 #define SIP_RING_DEFAULT			1
 #define SIP_REGINTER_DEFAULT		8
-#define SIP_HOSTPART_DEFAULT		"aaaa"
+#define SIP_HOSTPART_DEFAULT		"tslsmart"
 #define SIP_INTERVAL_DEFAULT		8
-#define SIP_DIALPLAN_DEFAULT		"bbbbb"
+#define SIP_DIALPLAN_DEFAULT		"tslsmart"
+#define SIP_REALM_DEFAULT			"tslsmart"
 #define SIP_ENCRYPT_DEFAULT			TRUE
 #define SIP_DIS_NAME_DEFAULT		TRUE
 #define SIP_100_REL_DEFAULT			TRUE
+
+#define SIP_PHONE_DEFAULT			"tslsmart"
+#define SIP_USERNAME_DEFAULT		"tslsmart"
+#define SIP_PASSWORD_DEFAULT		"tslsmart123456!"
+#define SIP_DTMF_DEFAULT			"rfc2833"
+
 
 typedef struct voip_sip_s
 {
@@ -74,6 +81,7 @@ typedef struct voip_sip_s
 	BOOL				sip_encrypt;				//����ע������
 
 
+	void				*t_event;
 } voip_sip_t;
 
 
@@ -185,7 +193,7 @@ typedef struct
     unsigned char name[48];  /*被叫名称*/
     unsigned char name_num;  /*被叫名称长度*/
     unsigned int  rtp_port;  /*本地rtp端口*/
-    unsigned char rtp_addr;  /*本地RTP地址*/
+    unsigned char rtp_addr[64];  /*本地RTP地址*/
     unsigned char codec;     /*优先使用的codec*/
 }MSG_CAL_ACT;
 
@@ -195,7 +203,7 @@ typedef struct
     unsigned char uid;       /* uid = 1*/
     unsigned char senid;     /* senid = 1*/
     unsigned int  rtp_port;  /*远端rtp端口*/
-    unsigned char rtp_addr;  /*远端RTP地址*/
+    unsigned char rtp_addr[64];  /*远端RTP地址*/
     unsigned char codec;     /*远端使用的codec*/
 }MSG_REMOT_ALERT;
 
@@ -205,7 +213,7 @@ typedef struct
     unsigned char uid;       /* uid = 1*/
     unsigned char senid;     /* senid = 1*/
     unsigned int  rtp_port;  /*远端rtp端口*/
-    unsigned char rtp_addr;  /*远端RTP地址*/
+    unsigned char rtp_addr[64];  /*远端RTP地址*/
     unsigned char codec;     /*远端使用的codec*/
 }MSG_REMOT_ANSWER;
 
@@ -275,12 +283,14 @@ extern voip_state_t voip_sip_state_get_api();
 extern int voip_sip_ctl_module_init();
 extern int voip_sip_ctl_module_exit();
 
+/*
 extern int voip_sip_register(char *phone, char *user, char *password, BOOL enable);
 extern int voip_sip_call(char *phone, char *user, char *password, int timeoutms, BOOL start);
+*/
 
-extern int voip_sip_register_start(voip_sip_ctl_t *sipctl, BOOL reg);
-extern int voip_sip_call_start(voip_sip_ctl_t *sipctl, char *phone);
-extern int voip_sip_call_stop(voip_sip_ctl_t *sipctl);
+extern int voip_sip_register_start(BOOL reg);
+extern int voip_sip_call_start(char *phone);
+extern int voip_sip_call_stop();
 
 /*
  * cmd module

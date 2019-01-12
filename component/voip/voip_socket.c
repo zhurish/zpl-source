@@ -193,7 +193,6 @@ static int voip_socket_read_eloop(struct eloop *eloop)
 
 
 
-
 static int _voip_socket_init(voip_socket_t *vsocket)
 {
 	int fd = unix_sock_server_create(FALSE, "voipEvent");

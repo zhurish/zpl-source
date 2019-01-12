@@ -124,12 +124,15 @@ int voip_create_stream_and_start_api(voip_stream_remote_t *config)
 
 	voip_stream_remote_address_port_api(voip_stream, config->r_rtp_address, config->r_rtp_port);
 
-	voip_stream_payload_type_api(voip_stream, NULL, 8);
+	voip_stream_payload_type_api(voip_stream, NULL, voip_stream->payload);
 
-	voip_stream_echo_canceller_api(voip_stream, TRUE, 0, 0, 0);
-	voip_stream_echo_limiter_api(voip_stream, TRUE, 0.0, 0.0, 0, 0.0, 0.0);
+	voip_stream_echo_canceller_api(voip_stream, voip_stream->echo_canceller, voip_stream->ec_tail,
+			voip_stream->ec_delay, voip_stream->ec_framesize);
+	voip_stream_echo_limiter_api(voip_stream, voip_stream->echo_limiter, voip_stream->el_force,
+			voip_stream->el_speed, voip_stream->el_sustain, voip_stream->el_thres, voip_stream->el_transmit);
 
-	voip_stream_noise_gate_api(voip_stream, TRUE, 0.0, 0.0);
+	voip_stream_noise_gate_api(voip_stream, voip_stream->noise_gate,
+			voip_stream->ng_floorgain, voip_stream->ng_threshold);
 
 	return voip_stream_start_api(voip_stream);
 }

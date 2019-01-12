@@ -24,6 +24,7 @@
 
 #include "voip_def.h"
 #include "voip_event.h"
+#include "voip_socket.h"
 #include "voip_sip.h"
 #include "voip_stream.h"
 
@@ -63,8 +64,11 @@ static int voip_sip_config_default(voip_sip_t *sip)
 	sip->sip_dis_name = SIP_DIS_NAME_DEFAULT;				//����display name
 	//sip->sip_local_number[SIP_NUMBER_MAX];	//���ñ��غ���
 	//sip->sip_user[SIP_DATA_MAX];
-	//sip->sip_password[SIP_DATA_MAX];				//��������
-	//sip->sip_realm[SIP_DATA_MAX];					//����realm
+	//sip->sip_password[SIP_DATA_MAX];
+	strcpy(sip->sip_local_number, SIP_PHONE_DEFAULT);
+	strcpy(sip->sip_user, SIP_USERNAME_DEFAULT);
+	strcpy(sip->sip_password, SIP_PASSWORD_DEFAULT);
+	strcpy(sip->sip_realm, SIP_HOSTPART_DEFAULT);					//����realm
 	strcpy(sip->sip_dialplan, SIP_DIALPLAN_DEFAULT);				//����dialplan
 	sip->sip_encrypt = SIP_ENCRYPT_DEFAULT;				//����ע������
 
@@ -105,6 +109,7 @@ int voip_sip_server_set_api(u_int32 ip, u_int16 port, BOOL sec)
 	{
 		voip_sip_config.sip_server = ip;
 		voip_sip_config.sip_port = port ? port:SIP_PORT_DEFAULT;
+		voip_sip_config_update_api(&voip_sip_config);
 	}
 	return OK;
 }
@@ -180,6 +185,7 @@ int voip_sip_password_set_api(char * value)
 	memset(voip_sip_config.sip_password, 0, sizeof(voip_sip_config.sip_password));
 	if(value)
 		strcpy(voip_sip_config.sip_password, value);
+	voip_sip_config_update_api(&voip_sip_config);
 	return OK;
 }
 
@@ -188,6 +194,7 @@ int voip_sip_user_set_api(char * value)
 	memset(voip_sip_config.sip_user, 0, sizeof(voip_sip_config.sip_user));
 	if(value)
 		strcpy(voip_sip_config.sip_user, value);
+	voip_sip_config_update_api(&voip_sip_config);
 	return OK;
 }
 
@@ -196,6 +203,7 @@ int voip_sip_realm_set_api(char * value)
 	memset(voip_sip_config.sip_realm, 0, sizeof(voip_sip_config.sip_realm));
 	if(value)
 		strcpy(voip_sip_config.sip_realm, value);
+	voip_sip_config_update_api(&voip_sip_config);
 	return OK;
 }
 
@@ -226,17 +234,30 @@ local_ip = 0.0.0.0
 local_port = 5060
 dtmf = rfc2833
 */
-int voip_sip_config_update_api(voip_sip_t *sip)
+static int voip_sip_config_update_thread(struct eloop *eloop)
 {
+	voip_sip_t *sip = ELOOP_ARG(eloop);
 	FILE *fp = fopen(SIP_CONFIG_FILE, "w+");
 	if(fp)
 	{
 		fprintf(fp, "[sip_config]\n");
 		fprintf(fp, "server_ip = %s\n", inet_address(sip->sip_server));
 		fprintf(fp, "server_port = %d\n", sip->sip_port);
-		fprintf(fp, "user_name = %s\n", sip->sip_user);
-		fprintf(fp, "passwd = %s\n", sip->sip_password);
-		fprintf(fp, "realm = %d\n", sip->sip_realm);
+		if(strlen(sip->sip_user))
+			fprintf(fp, "user_name = %s\n", sip->sip_user);
+		else
+			fprintf(fp, "user_name = %s\n", SIP_USERNAME_DEFAULT);
+
+		if(strlen(sip->sip_password))
+			fprintf(fp, "passwd = %s\n", sip->sip_password);
+		else
+			fprintf(fp, "passwd = %s\n", SIP_PASSWORD_DEFAULT);
+
+		if(strlen(sip->sip_realm))
+			fprintf(fp, "realm = %s\n", sip->sip_realm);
+		else
+			fprintf(fp, "realm = %s\n", SIP_REALM_DEFAULT);
+
 		fprintf(fp, "local_ip = %s\n", inet_address(0));
 		fprintf(fp, "local_port = %d\n", sip->sip_local_port);
 		fprintf(fp, "dtmf = %d\n", "rfc2833");
@@ -247,6 +268,25 @@ int voip_sip_config_update_api(voip_sip_t *sip)
 	return ERROR;
 }
 
+
+int voip_sip_config_update_api(voip_sip_t *sip)
+{
+	//struct eloop eloop;
+	//eloop.arg = sip;
+	//voip_sip_config_update_thread(&eloop);
+	if(voip_socket.master)
+	{
+		eloop_cancel(sip->t_event);
+		sip->t_event = eloop_add_timer(voip_socket.master, voip_sip_config_update_thread, sip, 1);
+	}
+	return OK;
+}
+
+
+
+
+
+
 int voip_sip_write_config(struct vty *vty)
 {
 	voip_sip_t *sip = &voip_sip_config;
@@ -256,6 +296,9 @@ int voip_sip_write_config(struct vty *vty)
 
 		if(strlen(sip->sip_local_number))
 			vty_out(vty, " ip sip local-phone %s%s", sip->sip_local_number, VTY_NEWLINE);
+
+		if(strlen(sip->sip_user))
+			vty_out(vty, " ip sip username %s%s", sip->sip_user, VTY_NEWLINE);
 
 		if(strlen(sip->sip_password))
 			vty_out(vty, " ip sip password %s%s", sip->sip_password, VTY_NEWLINE);
@@ -326,6 +369,9 @@ int voip_sip_show_config(struct vty *vty, BOOL detail)
 		vty_out(vty, "SIP Service :%s", VTY_NEWLINE);
 		vty_out(vty, " local-phone          : %s%s",
 				strlen(sip->sip_local_number)? sip->sip_local_number:" ", VTY_NEWLINE);
+
+		vty_out(vty, " username             : %s%s",
+				strlen(sip->sip_user)? sip->sip_user:" ", VTY_NEWLINE);
 
 		vty_out(vty, " password             : %s%s",
 				strlen(sip->sip_password)? sip->sip_password:" ", VTY_NEWLINE);
@@ -609,14 +655,17 @@ static int voip_sip_call_ring(voip_sip_ctl_t *sipctl, char *buf, int len)
 	if(hdr->type == SIP_REMOTE_RING_MSG)
 	{
 		//if(ack->rlt == SIP_REGISTER_OK)
-		voip_stream_remote_address_port_api(voip_stream, ack->rtp_addr, ack->rtp_port);
-		voip_stream_payload_type_api(voip_stream, NULL, ack->codec);
-
+		if(ack->rtp_port)
+		{
+			voip_stream_remote_address_port_api(voip_stream, ack->rtp_addr, ack->rtp_port);
+			voip_stream_payload_type_api(voip_stream, NULL, ack->codec);
+		}
 		voip_state_set(VOIP_STATE_CALLING);
 			return OK;
 	}
 	return ERROR;
 }
+
 //被叫摘机
 static int voip_sip_call_picking(voip_sip_ctl_t *sipctl, char *buf, int len)
 {
@@ -625,12 +674,14 @@ static int voip_sip_call_picking(voip_sip_ctl_t *sipctl, char *buf, int len)
 	ack = (MSG_REMOT_ANSWER *)SIP_MSG_OFFSET(buf);
 	if(hdr->type == SIP_REMOTE_PICKING_MSG)
 	{
-		voip_stream_remote_address_port_api(voip_stream, ack->rtp_addr, ack->rtp_port);
-		voip_stream_payload_type_api(voip_stream, NULL, ack->codec);
-
+		if(ack->rtp_port && strlen(ack->rtp_addr))
+		{
+			voip_stream_remote_address_port_api(voip_stream, ack->rtp_addr, ack->rtp_port);
+			voip_stream_payload_type_api(voip_stream, NULL, ack->codec);
+		}
 		//if(ack->rlt == SIP_REGISTER_OK)
 		voip_state_set(VOIP_STATE_CALL_SUCCESS);
-			return OK;
+		return OK;
 	}
 	return ERROR;
 }
@@ -699,6 +750,7 @@ static int voip_sip_read_handle(voip_sip_ctl_t *sipctl, char *buf, int len)
 	}
 	return ret;
 }
+
 /*
  * CTL ---> SIP
  */
@@ -714,26 +766,26 @@ static int voip_sip_hdr_make(voip_sip_ctl_t *sipctl, int type, char *buf, int le
 }
 
 
-int voip_sip_register_start(voip_sip_ctl_t *sipctl, BOOL reg)
+int voip_sip_register_start(BOOL reg)
 {
 	MSG_REG_ACT *act;
-	sipctl->send_cmd	=	SIP_REGISTER_MSG;
-	sipctl->ack_cmd		=	SIP_REGISTER_ACK_MSG;
-	memset(sipctl->sbuf, 0, sizeof(sipctl->sbuf));
-	act = (MSG_REG_ACT *)SIP_MSG_OFFSET(sipctl->sbuf);
+	voip_sip_ctl.send_cmd	=	SIP_REGISTER_MSG;
+	voip_sip_ctl.ack_cmd		=	SIP_REGISTER_ACK_MSG;
+	memset(voip_sip_ctl.sbuf, 0, sizeof(voip_sip_ctl.sbuf));
+	act = (MSG_REG_ACT *)SIP_MSG_OFFSET(voip_sip_ctl.sbuf);
 	act->act = reg;
-	sipctl->slen = voip_sip_hdr_make(sipctl, SIP_REGISTER_MSG, sipctl->sbuf, sizeof(MSG_REG_ACT));
-	return voip_sip_write_and_wait_respone(sipctl, SIP_CTL_TIMEOUT);
+	voip_sip_ctl.slen = voip_sip_hdr_make(&voip_sip_ctl, SIP_REGISTER_MSG, voip_sip_ctl.sbuf, sizeof(MSG_REG_ACT));
+	return voip_sip_write_and_wait_respone(&voip_sip_ctl, SIP_CTL_TIMEOUT);
 }
 
 
-int voip_sip_call_start(voip_sip_ctl_t *sipctl, char *phone)
+int voip_sip_call_start(char *phone)
 {
 	MSG_CAL_ACT *act;
-	sipctl->send_cmd	=	SIP_CALL_MSG;
-	sipctl->ack_cmd		=	SIP_REMOTE_RING_MSG | SIP_REMOTE_PICKING_MSG | SIP_CALL_ERROR_MSG;
-	memset(sipctl->sbuf, 0, sizeof(sipctl->sbuf));
-	act = (MSG_CAL_ACT *)SIP_MSG_OFFSET(sipctl->sbuf);
+	voip_sip_ctl.send_cmd	=	SIP_CALL_MSG;
+	voip_sip_ctl.ack_cmd		=	SIP_REMOTE_RING_MSG | SIP_REMOTE_PICKING_MSG | SIP_CALL_ERROR_MSG;
+	memset(voip_sip_ctl.sbuf, 0, sizeof(voip_sip_ctl.sbuf));
+	act = (MSG_CAL_ACT *)SIP_MSG_OFFSET(voip_sip_ctl.sbuf);
 	act->uid 		= 1;
 	act->senid 		= 1;
 	strcpy(act->digit, phone); /* 被叫号码*/
@@ -741,25 +793,25 @@ int voip_sip_call_start(voip_sip_ctl_t *sipctl, char *phone)
 	//act->name[48];  /*被叫名称*/
 	//act->name_num;  /*被叫名称长度*/
 	act->rtp_port 	= htonl(voip_stream->l_rtp_port);  /*本地rtp端口*/
-	act->rtp_addr	= 0;  /*本地RTP地址*/
+	//act->rtp_addr	= 0;  /*本地RTP地址*/
 	act->codec		= voip_stream->payload;     /*优先使用的codec*/
-	sipctl->slen = voip_sip_hdr_make(sipctl, SIP_CALL_MSG, sipctl->sbuf, sizeof(MSG_CAL_ACT));
-	return voip_sip_write_and_wait_respone(sipctl, SIP_CTL_TIMEOUT);
+	voip_sip_ctl.slen = voip_sip_hdr_make(&voip_sip_ctl, SIP_CALL_MSG, voip_sip_ctl.sbuf, sizeof(MSG_CAL_ACT));
+	return voip_sip_write_and_wait_respone(&voip_sip_ctl, SIP_CTL_TIMEOUT);
 }
 
 
 
-int voip_sip_call_stop(voip_sip_ctl_t *sipctl)
+int voip_sip_call_stop()
 {
 	MSG_LOCAL_BYE *act;
-	sipctl->send_cmd	=	SIP_LOCAL_STOP_MSG;
-	//sipctl->ack_cmd		=	SIP_REMOTE_RING_MSG | SIP_REMOTE_PICKING_MSG | SIP_CALL_ERROR_MSG;
-	memset(sipctl->sbuf, 0, sizeof(sipctl->sbuf));
-	act = (MSG_LOCAL_BYE *)SIP_MSG_OFFSET(sipctl->sbuf);
+	voip_sip_ctl.send_cmd	=	SIP_LOCAL_STOP_MSG;
+	//voip_sip_ctl.ack_cmd		=	SIP_REMOTE_RING_MSG | SIP_REMOTE_PICKING_MSG | SIP_CALL_ERROR_MSG;
+	memset(voip_sip_ctl.sbuf, 0, sizeof(voip_sip_ctl.sbuf));
+	act = (MSG_LOCAL_BYE *)SIP_MSG_OFFSET(voip_sip_ctl.sbuf);
 	act->uid 		= 1;
 	act->senid 		= 1;
-	sipctl->slen = voip_sip_hdr_make(sipctl, SIP_LOCAL_STOP_MSG, sipctl->sbuf, sizeof(MSG_LOCAL_BYE));
-	return voip_sip_write_and_wait_respone(sipctl, SIP_CTL_TIMEOUT);
+	voip_sip_ctl.slen = voip_sip_hdr_make(&voip_sip_ctl, SIP_LOCAL_STOP_MSG, voip_sip_ctl.sbuf, sizeof(MSG_LOCAL_BYE));
+	return voip_sip_write_and_wait_respone(&voip_sip_ctl, SIP_CTL_TIMEOUT);
 }
 
 
@@ -782,6 +834,7 @@ voip_state_t voip_sip_state_get_api()
 
 
 
+/*
 int voip_sip_register(char *phone, char *user, char *password, BOOL enable)
 {
 	return voip_sip_write_and_wait_respone(&voip_sip_ctl, SIP_CTL_TIMEOUT);
@@ -796,6 +849,7 @@ int voip_sip_call(char *phone, char *user, char *password, int timeoutms, BOOL s
 	return voip_sip_write_and_wait_respone(&voip_sip_ctl,  timeoutms);
 #endif
 }
+*/
 
 
 

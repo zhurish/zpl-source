@@ -36,14 +36,15 @@ voip_call_t voip_call;
 static voip_stream_remote_t stream_remote_test;
 #endif
 
-
+/*
+ * stop call event handle
+ */
 int voip_app_ev_stop_call(event_node_t *ev)
 {
 	if(voip_state_get() > VOIP_STATE_NONE)
 	{
 		//sip call
-		if(voip_sip_call( NULL, voip_sip_config.sip_user,
-				voip_sip_config.sip_password, SIP_CTL_TIMEOUT, FALSE) != OK)
+		if(voip_sip_call_stop() != OK)
 			return ERROR;
 		voip_stream_stop_api();
 		return OK;
@@ -52,7 +53,9 @@ int voip_app_ev_stop_call(event_node_t *ev)
 		return OK;
 }
 
-
+/*
+ * start call event handle
+ */
 int voip_app_ev_start_call(event_node_t *ev)
 {
 	int ret = 0;
@@ -68,9 +71,7 @@ int voip_app_ev_start_call(event_node_t *ev)
 		//sip call
 		if(VOIP_APP_DEBUG(EVENT))
 			zlog_debug(ZLOG_VOIP, "start call %s", room->data);
-
-		if(voip_sip_call(out.phone, voip_sip_config.sip_user,
-				voip_sip_config.sip_password, SIP_CTL_TIMEOUT, TRUE) != OK)
+		if(voip_sip_call_start(out.phone) != OK)
 		{
 			x5_b_a_call_result_api(x5_b_a_mgt, E_CALL_RESULT_UNREGISTER);
 			return ERROR;
@@ -100,6 +101,13 @@ int voip_app_ev_start_call(event_node_t *ev)
 	}
 	return ERROR;
 }
+
+
+
+
+
+
+
 
 
 

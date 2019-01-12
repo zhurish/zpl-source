@@ -22,11 +22,11 @@ amixer cset numid=91 1
 amixer cset numid=7 1 1
 
 # record
-amixer cset numid=45 1
+#amixer cset numid=45 1
 
-amixer cset numid=3 2
+#amixer cset numid=3 2
 
-amixer cset numid=101 0
+#amixer cset numid=101 0
 
 #amixer cset numid=100 0
 
