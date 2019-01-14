@@ -21,6 +21,7 @@
 #include "voip_state.h"
 #include "voip_app.h"
 
+/*
 voip_state_t voip_state_get()
 {
 	return voip_call.state;
@@ -31,3 +32,4 @@ int voip_state_set(voip_state_t state)
 	voip_call.state = state;
 	return OK;
 }
+*/

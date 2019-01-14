@@ -9,21 +9,30 @@
 #define __VOIP_VOLUME_H__
 
 
+#define _VOIP_VOLUME_DEBUG(fmt,...)		zlog_debug(ZLOG_VOIP, fmt, ##__VA_ARGS__)
+
 
 #define VOIP_VOLUME_USE_SHELL
 
 enum
 {
-	VOIP_OUT_VOLUME			= 0,
-	VOIP_OUT_STEREO_VOLUME	= 60,
+	VOIP_OUT_VOLUME			= 0,//80,
+	VOIP_OUT_STEREO_VOLUME	= 0,
 	VOIP_OUT_MONO_VOLUME	= 0,
 
-	VOIP_IN_VOLUME			= 0,
-	VOIP_IN_ADC_VOLUME		= 60,
+	VOIP_IN_VOLUME			= 0,//80,
+	VOIP_IN_ADC_VOLUME		= 0,
 	VOIP_IN_MONO_VOLUME		= 0,
 	VOIP_IN_BOOST_VOLUME	= 0,
 	VOIP_IN_BOOST_GAIN_VOLUME	= 0,
 };
+
+typedef enum
+{
+	VOIP_VOLUME_ALL,
+	VOIP_VOLUME_PLAYBACK,
+	VOIP_VOLUME_CAPTURE,
+}voip_volume_mode;
 
 typedef struct voip_volume_s
 {
@@ -41,6 +50,8 @@ typedef struct voip_volume_s
 	u_int8		in_boost_gain;
 
 	BOOL		isconfig;
+	BOOL		p_isopen;
+	BOOL		c_isopen;
 } voip_volume_t;
 
 
@@ -49,11 +60,14 @@ extern int voip_volume_module_exit();
 
 extern int voip_volume_apply();
 
+extern int voip_volume_open_api(voip_volume_mode mode);
+extern int voip_volume_close_api(voip_volume_mode mode);
 /*
  * open power amplifier
  */
 extern int voip_volume_power(BOOL enable);
 extern int voip_volume_ispower(void);
+
 
 /*
  * Playback

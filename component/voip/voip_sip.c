@@ -402,6 +402,24 @@ int voip_sip_show_config(struct vty *vty, BOOL detail)
 		vty_out(vty, "SIP Service is not enable%s", VTY_NEWLINE);
 	return OK;
 }
+
+
+/*
+100试呼叫（Trying）
+180振铃（Ringing）
+181呼叫正在前转（Call is Being Forwarded）
+200成功响应（OK）
+302临时迁移（Moved Temporarily）
+400错误请求（Bad Request）
+401未授权（Unauthorized）
+403禁止（Forbidden）
+404用户不存在（Not Found）
+408请求超时（Request Timeout）
+480暂时无人接听（Temporarily Unavailable）
+486线路忙（Busy Here）
+504服务器超时（Server Time-out）
+600全忙（Busy Everywhere）
+ */
 /*
  * event socket (SIP)
  */
@@ -476,6 +494,7 @@ static int voip_sip_socket_accept_eloop(struct eloop *eloop)
 			close(sipctl->sock);
 		}
 		sipctl->sock = client;
+		sipctl->wfd = client;
 		sipctl->t_read = eloop_add_read(sipctl->master, voip_sip_socket_read_eloop, sipctl, client);
 	}
 	else
@@ -491,7 +510,10 @@ static int voip_sip_socket_init(voip_sip_ctl_t *sipctl)
 		if(sipctl->tcpMode)
 			sipctl->accept = fd;
 		else
+		{
 			sipctl->sock = fd;
+			sipctl->wfd = unix_sock_client_create(sipctl->tcpMode, "sip");
+		}
 		os_set_nonblocking(fd);
 		if(sipctl->master)
 		{
@@ -513,6 +535,11 @@ static int voip_sip_socket_exit(voip_sip_ctl_t *sipctl)
 	{
 		eloop_cancel(sipctl->t_accept);
 		sipctl->t_accept = NULL;
+		if(sipctl->accept)
+		{
+			close(sipctl->accept);
+			sipctl->accept = 0;
+		}
 	}
 	if(sipctl && sipctl->t_read)
 	{
@@ -537,7 +564,18 @@ static int voip_sip_socket_exit(voip_sip_ctl_t *sipctl)
 	if(sipctl)
 	{
 		if(sipctl->sock)
+		{
 			close(sipctl->sock);
+			sipctl->sock = 0;
+		}
+		if(!sipctl->tcpMode)
+		{
+			if(sipctl->wfd)
+				close(sipctl->wfd);
+			sipctl->wfd = 0;
+		}
+		else
+			sipctl->wfd = 0;
 		memset(sipctl->buf, 0, sizeof(sipctl->buf));
 		return OK;
 	}
@@ -547,8 +585,8 @@ static int voip_sip_socket_exit(voip_sip_ctl_t *sipctl)
 
 static int voip_sip_send_msg(voip_sip_ctl_t *sipctl)
 {
-	if(sipctl && sipctl->sock)
-		write(sipctl->sock, sipctl->sbuf, sipctl->slen);
+	if(sipctl && sipctl->wfd)
+		write(sipctl->wfd, sipctl->sbuf, sipctl->slen);
 	return OK;
 }
 
@@ -626,6 +664,26 @@ static int voip_sip_write_and_wait_respone(voip_sip_ctl_t *sipctl, int timeoutms
 	return ret;
 }
 
+sip_register_state_t voip_sip_register_state_get_api()
+{
+	return voip_sip_ctl.reg_state;
+}
+
+sip_call_error_t voip_sip_call_error_get_api()
+{
+	return voip_sip_ctl.call_error;
+}
+
+sip_call_state_t voip_sip_call_state_get_api()
+{
+	return voip_sip_ctl.call_state;
+}
+
+sip_stop_state_t voip_sip_stop_state_get_api()
+{
+	return voip_sip_ctl.stop_state;
+}
+
 /*
  * SIP ---> CTL
  */
@@ -638,10 +696,10 @@ static int voip_sip_register_ack(voip_sip_ctl_t *sipctl, char *buf, int len)
 	{
 		if(ack->rlt == SIP_REGISTER_OK)
 		{
-			voip_state_set(VOIP_STATE_REGISTER_SUCCESS);
+			sipctl->reg_state = (VOIP_SIP_REGISTER_SUCCESS);
 			return OK;
 		}
-		voip_state_set(VOIP_STATE_REGISTER_FAILED);
+		sipctl->reg_state = (VOIP_SIP_REGISTER_FAILED);
 	}
 	return ERROR;
 }
@@ -660,8 +718,8 @@ static int voip_sip_call_ring(voip_sip_ctl_t *sipctl, char *buf, int len)
 			voip_stream_remote_address_port_api(voip_stream, ack->rtp_addr, ack->rtp_port);
 			voip_stream_payload_type_api(voip_stream, NULL, ack->codec);
 		}
-		voip_state_set(VOIP_STATE_CALLING);
-			return OK;
+		sipctl->call_state = (VOIP_SIP_CALL_RINGING);
+		return OK;
 	}
 	return ERROR;
 }
@@ -680,7 +738,7 @@ static int voip_sip_call_picking(voip_sip_ctl_t *sipctl, char *buf, int len)
 			voip_stream_payload_type_api(voip_stream, NULL, ack->codec);
 		}
 		//if(ack->rlt == SIP_REGISTER_OK)
-		voip_state_set(VOIP_STATE_CALL_SUCCESS);
+		sipctl->call_state = (VOIP_SIP_CALL_PICKUP);
 		return OK;
 	}
 	return ERROR;
@@ -695,7 +753,8 @@ static int voip_sip_call_error(voip_sip_ctl_t *sipctl, char *buf, int len)
 	if(hdr->type == SIP_CALL_ERROR_MSG)
 	{
 		//if(ack->rlt == SIP_REGISTER_OK)
-		voip_state_set(VOIP_STATE_CALL_FAILED);
+		sipctl->call_state = (VOIP_SIP_CALL_ERROR);
+		sipctl->call_error = 0;
 			return OK;
 	}
 	return ERROR;
@@ -710,8 +769,8 @@ static int voip_sip_call_stop_by_remote(voip_sip_ctl_t *sipctl, char *buf, int l
 	if(hdr->type == SIP_REMOTE_STOP_MSG)
 	{
 		//if(ack->rlt == SIP_REGISTER_OK)
-		voip_state_set(VOIP_STATE_BYE);
-
+		sipctl->stop_state = (VOIP_SIP_REMOTE_STOP);
+		sipctl->call_state = VOIP_SIP_CALL_IDLE;
 			return OK;
 	}
 	return ERROR;
@@ -810,6 +869,8 @@ int voip_sip_call_stop()
 	act = (MSG_LOCAL_BYE *)SIP_MSG_OFFSET(voip_sip_ctl.sbuf);
 	act->uid 		= 1;
 	act->senid 		= 1;
+	voip_sip_ctl.stop_state = (VOIP_SIP_LOCAL_STOP);
+	voip_sip_ctl.call_state = VOIP_SIP_CALL_IDLE;
 	voip_sip_ctl.slen = voip_sip_hdr_make(&voip_sip_ctl, SIP_LOCAL_STOP_MSG, voip_sip_ctl.sbuf, sizeof(MSG_LOCAL_BYE));
 	return voip_sip_write_and_wait_respone(&voip_sip_ctl, SIP_CTL_TIMEOUT);
 }
@@ -827,10 +888,12 @@ int voip_sip_call_stop()
 /*
  * SIP state Module
  */
+/*
 voip_state_t voip_sip_state_get_api()
 {
 	return VOIP_STATE_CALL_SUCCESS;
 }
+*/
 
 
 

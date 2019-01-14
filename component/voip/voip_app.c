@@ -41,12 +41,13 @@ static voip_stream_remote_t stream_remote_test;
  */
 int voip_app_ev_stop_call(event_node_t *ev)
 {
-	if(voip_state_get() > VOIP_STATE_NONE)
+	if(voip_sip_call_state_get_api() != VOIP_SIP_CALL_IDLE)
 	{
 		//sip call
 		if(voip_sip_call_stop() != OK)
 			return ERROR;
-		voip_stream_stop_api();
+		if(voip_sip_call_state_get_api() >= VOIP_SIP_TALK)
+			voip_stream_stop_api();
 		return OK;
 	}
 	else
@@ -71,13 +72,23 @@ int voip_app_ev_start_call(event_node_t *ev)
 		//sip call
 		if(VOIP_APP_DEBUG(EVENT))
 			zlog_debug(ZLOG_VOIP, "start call %s", room->data);
-		if(voip_sip_call_start(out.phone) != OK)
+		if(voip_sip_register_state_get_api() != VOIP_SIP_REGISTER_SUCCESS)
 		{
 			x5_b_a_call_result_api(x5_b_a_mgt, E_CALL_RESULT_UNREGISTER);
 			return ERROR;
 		}
+		if(voip_sip_call_state_get_api() != VOIP_SIP_CALL_IDLE)
+		{
+			x5_b_a_call_result_api(x5_b_a_mgt, E_CALL_RESULT_ONLINE);
+			return ERROR;
+		}
+		if(voip_sip_call_start(out.phone) != OK)
+		{
+			return ERROR;
+		}
 		x5_b_a_call_result_api(x5_b_a_mgt, E_CALL_RESULT_CALLING);
-		if(voip_sip_state_get_api() == VOIP_STATE_CALL_SUCCESS)
+
+		if(voip_sip_call_state_get_api() == VOIP_SIP_CALL_SUCCESS)
 		{
 			//V_APP_DEBUG("-----------%s:voip_create_stream_and_start", __func__);
 #ifdef VOIP_APP_DEBUG
@@ -103,7 +114,18 @@ int voip_app_ev_start_call(event_node_t *ev)
 }
 
 
-
+/*
+ * register event handle
+ */
+int voip_app_ev_register(event_node_t *ev)
+{
+	//sip register
+	BOOL *enable = (BOOL *)ev->data;
+	if(voip_sip_register_start(enable) != OK)
+		return ERROR;
+	//voip_stream_stop_api();
+	return OK;
+}
 
 
 

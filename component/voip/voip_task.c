@@ -20,11 +20,10 @@
 #include "voip_task.h"
 #include "voip_event.h"
 #include "voip_stream.h"
+#include "voip_volume.h"
+
 
 voip_task_t	voip_task;
-
-
-
 
 
 
@@ -40,36 +39,80 @@ static int voip_main_task(voip_task_t *task)
 	while(!task->enable)
 	{
 		os_sleep(1);
-/*		n++;
-		if(n == 8)
-			voip_test();*/
 	}
 	while(task->enable)
 	{
+#if 0
 		if(task->active)
 		{
-			//voip_volume_apply();
 			if(access("/app/etc/volume_setup.sh", F_OK) == 0)
 			{
 				super_system("cd /app/etc/; chmod +x volume_setup.sh");
 				super_system("cd /app/etc/;./volume_setup.sh");
 			}
-#ifdef PL_VOIP_MEDIASTREAM_TEST
-			setup_media_streams(task->pVoid);
-#else
-			voip_stream_setup_api(task->pVoid);
-#endif
-			voip_stream_running_api(task->pVoid);
-			if(task->pVoid)
+			if(task->stream) // voip stream
 			{
 #ifdef PL_VOIP_MEDIASTREAM_TEST
-				clear_mediastreams(task->pVoid);
+				setup_media_streams(task->pVoid);
 #else
-				voip_stream_clear_api(task->pVoid);
+				voip_stream_setup_api(task->pVoid);
 #endif
+				voip_stream_running_api(task->pVoid);
+				if(task->pVoid)
+				{
+#ifdef PL_VOIP_MEDIASTREAM_TEST
+					clear_mediastreams(task->pVoid);
+#else
+					voip_stream_clear_api(task->pVoid);
+#endif
+				}
 			}
-			//break;
+			else	//ring
+			{
+				if(voip_call_ring_active_api())
+				{
+					voip_call_ring_running(task->pVoid);
+				}
+			}
 		}
+#else
+		if(task->active)
+		{
+			if(task->stream) // voip stream
+			{
+				if(access("/app/etc/volume_setup.sh", F_OK) == 0)
+				{
+					super_system("cd /app/etc/; chmod +x volume_setup.sh");
+					super_system("cd /app/etc/;./volume_setup.sh");
+				}
+				//voip_volume_open_api(VOIP_VOLUME_ALL);
+#ifdef PL_VOIP_MEDIASTREAM_TEST
+				setup_media_streams(task->pVoid);
+#else
+				voip_stream_setup_api(task->pVoid);
+#endif
+				voip_stream_running_api(task->pVoid);
+				if(task->pVoid)
+				{
+#ifdef PL_VOIP_MEDIASTREAM_TEST
+					clear_mediastreams(task->pVoid);
+#else
+					voip_stream_clear_api(task->pVoid);
+#endif
+				}
+				voip_volume_close_api(VOIP_VOLUME_ALL);
+			}
+			else	//ring
+			{
+				if(voip_call_ring_active_api())
+				{
+					voip_volume_open_api(VOIP_VOLUME_PLAYBACK);
+					voip_call_ring_running(task->pVoid);
+					voip_volume_close_api(VOIP_VOLUME_PLAYBACK);
+				}
+			}
+		}
+#endif
 		else
 		{
 			os_sleep(1);

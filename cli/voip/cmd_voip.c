@@ -104,72 +104,396 @@ DEFUN (no_ip_voip_payload,
 
 DEFUN (ip_voip_echo_canceller,
 		ip_voip_echo_canceller_cmd,
-		"ip voip echo canceller",
+		"ip voip echo-canceller",
 		IP_STR
 		"VOIP Protocol\n"
-		"Payload configure\n"
-		"payload index\n")
+		"Echo Canceller configure\n")
 {
 	int ret = ERROR;
 	if(voip_stream->enable)
 	{
-		ret = voip_stream_echo_canceller_api(voip_stream, TRUE, 0, 0, 0);
+		if(argc == 0)
+			ret = voip_stream_echo_canceller_api(voip_stream, TRUE, voip_stream->ec_tail,
+					voip_stream->ec_delay, voip_stream->ec_framesize);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
+
+DEFUN(ip_voip_echo_canceller_delay,
+		ip_voip_echo_canceller_delay_cmd,
+		"ip voip echo-canceller delay <0-1000>",
+		IP_STR
+		"VOIP Protocol\n"
+		"Echo Canceller configure\n"
+		"Echo canceller delay configure\n"
+		"Echo canceller delay value in ms\n")
+{
+	int ret = ERROR;
+	int ec_delay = 0;
+	if(voip_stream->enable)
+	{
+		ec_delay = atoi(argv[0]);
+		ret = voip_stream_echo_canceller_api(voip_stream, TRUE, voip_stream->ec_tail,
+				ec_delay, voip_stream->ec_framesize);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN(ip_voip_echo_canceller_tail,
+		ip_voip_echo_canceller_tail_cmd,
+		"ip voip echo-canceller tail <0-1000>",
+		IP_STR
+		"VOIP Protocol\n"
+		"Echo Canceller configure\n"
+		"Echo canceller tail length configure\n"
+		"Echo canceller tail length value in ms\n")
+{
+	int ret = ERROR;
+	int ec_tail = 0;
+
+	if(voip_stream->enable)
+	{
+		ec_tail = atoi(argv[0]);
+		ret = voip_stream_echo_canceller_api(voip_stream, TRUE, ec_tail,
+					voip_stream->ec_delay, voip_stream->ec_framesize);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN(ip_voip_echo_canceller_framesize,
+		ip_voip_echo_canceller_framesize_cmd,
+		"ip voip echo-canceller framesize <0-1000>",
+		IP_STR
+		"VOIP Protocol\n"
+		"Echo Canceller configure\n"
+		"Echo canceller framesize configure\n"
+		"Echo canceller framesize value in samples\n")
+{
+	int ret = ERROR;
+	int ec_framesize = 0;
+	if(voip_stream->enable)
+	{
+		ec_framesize = atoi(argv[0]);
+		ret = voip_stream_echo_canceller_api(voip_stream, TRUE, voip_stream->ec_tail,
+					voip_stream->ec_delay, ec_framesize);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
 
 DEFUN (no_ip_voip_echo_canceller,
 		no_ip_voip_echo_canceller_cmd,
-		"no ip voip echo canceller",
+		"no ip voip echo-canceller",
 		NO_STR
 		IP_STR
 		"VOIP Protocol\n"
-		"Payload configure\n")
+		"Echo Canceller configure\n")
 {
 	int ret = ERROR;
 	if(voip_stream->enable)
-		ret = voip_stream_echo_canceller_api(voip_stream, FALSE, 0, 0, 0);
+		ret = voip_stream_echo_canceller_api(voip_stream, FALSE, voip_stream->ec_tail,
+				voip_stream->ec_delay, voip_stream->ec_framesize);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
-DEFUN (ip_voip_echo_limiter,
-		ip_voip_echo_limiter_cmd,
-		"ip voip echo limiter",
+DEFUN(no_ip_voip_echo_canceller_delay,
+		no_ip_voip_echo_canceller_delay_cmd,
+		"no ip voip echo-canceller delay",
+		NO_STR
 		IP_STR
 		"VOIP Protocol\n"
-		"Payload configure\n"
-		"payload index\n")
+		"Echo Canceller configure\n"
+		"Echo canceller delay configure\n")
 {
 	int ret = ERROR;
 	if(voip_stream->enable)
 	{
-		ret = voip_stream_echo_limiter_api(voip_stream, TRUE, 0.0, 0.0, 0, 0.0, 0.0);
+		ret = voip_stream_echo_canceller_api(voip_stream, TRUE, voip_stream->ec_tail,
+				0, voip_stream->ec_framesize);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
-DEFUN (no_ip_voip_echo_limiter,
-		no_ip_voip_echo_limiter_cmd,
-		"no ip voip echo limiter",
+DEFUN(no_ip_voip_echo_canceller_tail,
+		no_ip_voip_echo_canceller_tail_cmd,
+		"no ip voip echo-canceller tail",
 		NO_STR
 		IP_STR
 		"VOIP Protocol\n"
-		"Payload configure\n")
+		"Echo Canceller configure\n"
+		"Echo canceller tail length configure\n")
 {
 	int ret = ERROR;
 	if(voip_stream->enable)
-		ret = voip_stream_echo_limiter_api(voip_stream, FALSE, 0.0, 0.0, 0, 0.0, 0.0);
+	{
+		ret = voip_stream_echo_canceller_api(voip_stream, TRUE, 0,
+					voip_stream->ec_delay, voip_stream->ec_framesize);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN(no_ip_voip_echo_canceller_framesize,
+		no_ip_voip_echo_canceller_framesize_cmd,
+		"no ip voip echo-canceller framesize",
+		NO_STR
+		IP_STR
+		"VOIP Protocol\n"
+		"Echo Canceller configure\n"
+		"Echo canceller framesize configure\n")
+{
+	int ret = ERROR;
+	if(voip_stream->enable)
+	{
+		ret = voip_stream_echo_canceller_api(voip_stream, TRUE, voip_stream->ec_tail,
+					voip_stream->ec_delay, 0);
+	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
 
-DEFUN (ip_voip_bitrate,
-		ip_voip_bitrate_cmd,
-		"ip voip bitrate <64-10000000>",
+DEFUN (ip_voip_echo_limiter,
+		ip_voip_echo_limiter_cmd,
+		"ip voip echo-limiter",
 		IP_STR
 		"VOIP Protocol\n"
-		"Payload configure\n"
-		"payload index\n")
+		"Echo Limiter configure\n")
+{
+	int ret = ERROR;
+	if(voip_stream->enable)
+	{
+		ret = voip_stream_echo_limiter_api(voip_stream, TRUE, voip_stream->el_force,
+				voip_stream->el_speed,
+				voip_stream->el_sustain, voip_stream->el_thres, voip_stream->el_transmit);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (ip_voip_echo_limiter_force,
+		ip_voip_echo_limiter_force_cmd,
+		"ip voip echo-limiter force VALUE",
+		IP_STR
+		"VOIP Protocol\n"
+		"Echo Limiter configure\n"
+		"The proportional coefficient controlling the mic attenuation\n"
+		"Value<0-1>\n")
+{
+	int ret = ERROR;
+	float force = 0.0;
+	if(voip_stream->enable)
+	{
+		force = atof(argv[0]);
+		ret = voip_stream_echo_limiter_api(voip_stream, TRUE, force, voip_stream->el_speed,
+				voip_stream->el_sustain, voip_stream->el_thres, voip_stream->el_transmit);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (ip_voip_echo_limiter_thres,
+		ip_voip_echo_limiter_thres_cmd,
+		"ip voip echo-limiter thres VALUE",
+		IP_STR
+		"VOIP Protocol\n"
+		"Echo Limiter configure\n"
+		"Threshold above which the system becomes active\n"
+		"Value<0-1>\n")
+{
+	int ret = ERROR;
+	float thres = 0.0;
+	if(voip_stream->enable)
+	{
+		thres = atof(argv[0]);
+		ret = voip_stream_echo_limiter_api(voip_stream, TRUE, voip_stream->el_force,
+				voip_stream->el_speed,
+				voip_stream->el_sustain, thres, voip_stream->el_transmit);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (ip_voip_echo_limiter_speed,
+		ip_voip_echo_limiter_speed_cmd,
+		"ip voip echo-limiter speed VALUE",
+		IP_STR
+		"VOIP Protocol\n"
+		"Echo Limiter configure\n"
+		"gain changes are smoothed with a coefficent\n"
+		"Value<0-1>\n")
+{
+	int ret = ERROR;
+	float speed = 0.0;
+	if(voip_stream->enable)
+	{
+		speed = atof(argv[0]);
+		ret = voip_stream_echo_limiter_api(voip_stream, TRUE, voip_stream->el_force,
+				speed,
+				voip_stream->el_sustain, voip_stream->el_thres, voip_stream->el_transmit);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (ip_voip_echo_limiter_transmit,
+		ip_voip_echo_limiter_transmit_cmd,
+		"ip voip echo-limiter transmit-thres VALUE",
+		IP_STR
+		"VOIP Protocol\n"
+		"Echo Limiter configure\n"
+		"TO BE DOCUMENTED\n"
+		"Value<0-1>\n")
+{
+	int ret = ERROR;
+	float el_transmit = 0.0;
+	if(voip_stream->enable)
+	{
+		el_transmit = atof(argv[0]);
+		ret = voip_stream_echo_limiter_api(voip_stream, TRUE, voip_stream->el_force,
+				voip_stream->el_speed,
+				voip_stream->el_sustain, voip_stream->el_thres, el_transmit);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (ip_voip_echo_limiter_sustain,
+		ip_voip_echo_limiter_sustain_cmd,
+		"ip voip echo-limiter sustain <0-65535>",
+		IP_STR
+		"VOIP Protocol\n"
+		"Echo Limiter configure\n"
+		"TO BE DOCUMENTED\n"
+		"Value\n")
+{
+	int ret = ERROR;
+	int sustain = 0;
+	if(voip_stream->enable)
+	{
+		sustain = atoi(argv[0]);
+		ret = voip_stream_echo_limiter_api(voip_stream, TRUE, voip_stream->el_force,
+				voip_stream->el_speed,
+				sustain, voip_stream->el_thres, voip_stream->el_transmit);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+
+DEFUN (no_ip_voip_echo_limiter,
+		no_ip_voip_echo_limiter_cmd,
+		"no ip voip echo-limiter",
+		NO_STR
+		IP_STR
+		"VOIP Protocol\n"
+		"Echo Limiter configure\n")
+{
+	int ret = ERROR;
+	if(voip_stream->enable)
+		ret = voip_stream_echo_limiter_api(voip_stream, FALSE, voip_stream->el_force,
+				voip_stream->el_speed,
+				voip_stream->el_sustain, voip_stream->el_thres, voip_stream->el_transmit);
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (no_ip_voip_echo_limiter_force,
+		no_ip_voip_echo_limiter_force_cmd,
+		"no ip voip echo-limiter force",
+		NO_STR
+		IP_STR
+		"VOIP Protocol\n"
+		"Echo Limiter configure\n"
+		"The proportional coefficient controlling the mic attenuation\n")
+{
+	int ret = ERROR;
+	if(voip_stream->enable)
+	{
+		ret = voip_stream_echo_limiter_api(voip_stream, TRUE, 0.0, voip_stream->el_speed,
+				voip_stream->el_sustain, voip_stream->el_thres, voip_stream->el_transmit);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (no_ip_voip_echo_limiter_thres,
+		no_ip_voip_echo_limiter_thres_cmd,
+		"no ip voip echo-limiter thres",
+		NO_STR
+		IP_STR
+		"VOIP Protocol\n"
+		"Echo Limiter configure\n"
+		"Threshold above which the system becomes active\n")
+{
+	int ret = ERROR;
+	float thres = 0.0;
+	if(voip_stream->enable)
+	{
+		ret = voip_stream_echo_limiter_api(voip_stream, TRUE, voip_stream->el_force,
+				voip_stream->el_speed,
+				voip_stream->el_sustain, thres, voip_stream->el_transmit);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (no_ip_voip_echo_limiter_speed,
+		no_ip_voip_echo_limiter_speed_cmd,
+		"no ip voip echo-limiter speed",
+		NO_STR
+		IP_STR
+		"VOIP Protocol\n"
+		"Echo Limiter configure\n"
+		"gain changes are smoothed with a coefficent\n")
+{
+	int ret = ERROR;
+	float speed = 0.0;
+	if(voip_stream->enable)
+	{
+		ret = voip_stream_echo_limiter_api(voip_stream, TRUE, voip_stream->el_force,
+				speed,
+				voip_stream->el_sustain, voip_stream->el_thres, voip_stream->el_transmit);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (no_ip_voip_echo_limiter_transmit,
+		no_ip_voip_echo_limiter_transmit_cmd,
+		"no ip voip echo-limiter transmit-thres",
+		NO_STR
+		IP_STR
+		"VOIP Protocol\n"
+		"Echo Limiter configure\n"
+		"TO BE DOCUMENTED\n")
+{
+	int ret = ERROR;
+	float el_transmit = 0.0;
+	if(voip_stream->enable)
+	{
+		ret = voip_stream_echo_limiter_api(voip_stream, TRUE, voip_stream->el_force,
+				voip_stream->el_speed,
+				voip_stream->el_sustain, voip_stream->el_thres, el_transmit);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (no_ip_voip_echo_limiter_sustain,
+		no_ip_voip_echo_limiter_sustain_cmd,
+		"no ip voip echo-limiter sustain",
+		NO_STR
+		IP_STR
+		"VOIP Protocol\n"
+		"Echo Limiter configure\n"
+		"TO BE DOCUMENTED\n")
+{
+	int ret = ERROR;
+	int sustain = 0;
+	if(voip_stream->enable)
+	{
+		ret = voip_stream_echo_limiter_api(voip_stream, TRUE, voip_stream->el_force,
+				voip_stream->el_speed,
+				sustain, voip_stream->el_thres, voip_stream->el_transmit);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (ip_voip_bitrate,
+		ip_voip_bitrate_cmd,
+		"ip voip bitrate <16-10000000>",
+		IP_STR
+		"VOIP Protocol\n"
+		"Bitrate configure\n"
+		"Bitrate Value\n")
 {
 	int ret = ERROR;
 	if(voip_stream->enable)
@@ -185,7 +509,7 @@ DEFUN (no_ip_voip_bitrate,
 		NO_STR
 		IP_STR
 		"VOIP Protocol\n"
-		"Payload configure\n")
+		"Bitrate configure\n")
 {
 	int ret = ERROR;
 	if(voip_stream->enable)
@@ -198,8 +522,8 @@ DEFUN (ip_voip_jitter,
 		"ip voip jitter <0-1000>",
 		IP_STR
 		"VOIP Protocol\n"
-		"Payload configure\n"
-		"payload index\n")
+		"Jitter configure\n"
+		"Jitter value\n")
 {
 	int ret = ERROR;
 	if(voip_stream->enable)
@@ -215,7 +539,7 @@ DEFUN (no_ip_voip_jitter,
 		NO_STR
 		IP_STR
 		"VOIP Protocol\n"
-		"Payload configure\n")
+		"Jitter configure\n")
 {
 	int ret = ERROR;
 	if(voip_stream->enable)
@@ -225,35 +549,108 @@ DEFUN (no_ip_voip_jitter,
 
 DEFUN (ip_voip_noise_gate,
 		ip_voip_noise_gate_cmd,
-		"ip voip noise gate",
+		"ip voip noise-gate",
 		IP_STR
 		"VOIP Protocol\n"
-		"Payload configure\n"
-		"payload index\n")
+		"Noise configure\n"
+		"Noise Gate\n")
 {
 	int ret = ERROR;
 	if(voip_stream->enable)
 	{
-		ret = voip_stream_noise_gate_api(voip_stream, TRUE, 0, 0);
+		ret = voip_stream_noise_gate_api(voip_stream, TRUE, voip_stream->ng_floorgain, voip_stream->ng_threshold);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (ip_voip_noise_gate_floorgain,
+		ip_voip_noise_gate_floorgain_cmd,
+		"ip voip noise-gate floorgain VALUE",
+		IP_STR
+		"VOIP Protocol\n"
+		"Noise Gate configure\n"
+		"gain applied to the signal when its energy is below the threshold\n"
+		"Value<0-1>\n")
+{
+	int ret = ERROR;
+	float ng_floorgain = 0.0;
+	if(voip_stream->enable)
+	{
+		ng_floorgain = atof(argv[0]);
+		ret = voip_stream_noise_gate_api(voip_stream, TRUE, ng_floorgain, voip_stream->ng_threshold);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (ip_voip_noise_gate_threshold,
+		ip_voip_noise_gate_threshold_cmd,
+		"ip voip noise-gate threshold VALUE",
+		IP_STR
+		"VOIP Protocol\n"
+		"Noise Gate configure\n"
+		"Noise Gate threshold\n"
+		"Value<0-1>\n")
+{
+	int ret = ERROR;
+	float ng_threshold = 0.0;
+	if(voip_stream->enable)
+	{
+		ng_threshold = atof(argv[0]);
+		ret = voip_stream_noise_gate_api(voip_stream, TRUE, voip_stream->ng_floorgain, ng_threshold);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
 DEFUN (no_ip_voip_noise_gate,
 		no_ip_voip_noise_gate_cmd,
-		"no ip voip noise gate",
+		"no ip voip noise-gate",
 		NO_STR
 		IP_STR
 		"VOIP Protocol\n"
-		"Payload configure\n")
+		"Noise configure\n"
+		"Noise Gate\n")
 {
 	int ret = ERROR;
 	if(voip_stream->enable)
-		ret = voip_stream_noise_gate_api(voip_stream, FALSE, 0, 0);
+		ret = voip_stream_noise_gate_api(voip_stream, FALSE, voip_stream->ng_floorgain, voip_stream->ng_threshold);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
+DEFUN (no_ip_voip_noise_gate_floorgain,
+		no_ip_voip_noise_gate_floorgain_cmd,
+		"ip voip noise-gate floorgain",
+		NO_STR
+		IP_STR
+		"VOIP Protocol\n"
+		"Noise Gate configure\n"
+		"gain applied to the signal when its energy is below the threshold\n")
+{
+	int ret = ERROR;
+	float ng_floorgain = 0.0;
+	if(voip_stream->enable)
+	{
+		ret = voip_stream_noise_gate_api(voip_stream, TRUE, ng_floorgain, voip_stream->ng_threshold);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
 
+DEFUN (no_ip_voip_noise_gate_threshold,
+		no_ip_voip_noise_gate_threshold_cmd,
+		"ip voip noise-gate threshold",
+		NO_STR
+		IP_STR
+		"VOIP Protocol\n"
+		"Noise Gate configure\n"
+		"Noise Gate threshold\n")
+{
+	int ret = ERROR;
+	float ng_threshold = 0.0;
+	if(voip_stream->enable)
+	{
+		ret = voip_stream_noise_gate_api(voip_stream, TRUE, voip_stream->ng_floorgain, ng_threshold);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
 
 /*
  * RTP Module
@@ -689,8 +1086,33 @@ static void cmd_voip_base_init(int node)
 	install_element(node, &ip_voip_echo_canceller_cmd);
 	install_element(node, &no_ip_voip_echo_canceller_cmd);
 
+	install_element(node, &ip_voip_echo_canceller_delay_cmd);
+	install_element(node, &no_ip_voip_echo_canceller_delay_cmd);
+
+	install_element(node, &ip_voip_echo_canceller_tail_cmd);
+	install_element(node, &no_ip_voip_echo_canceller_tail_cmd);
+
+	install_element(node, &ip_voip_echo_canceller_framesize_cmd);
+	install_element(node, &no_ip_voip_echo_canceller_framesize_cmd);
+
+
 	install_element(node, &ip_voip_echo_limiter_cmd);
 	install_element(node, &no_ip_voip_echo_limiter_cmd);
+
+	install_element(node, &ip_voip_echo_limiter_speed_cmd);
+	install_element(node, &no_ip_voip_echo_limiter_speed_cmd);
+
+	install_element(node, &ip_voip_echo_limiter_thres_cmd);
+	install_element(node, &no_ip_voip_echo_limiter_thres_cmd);
+
+	install_element(node, &ip_voip_echo_limiter_force_cmd);
+	install_element(node, &no_ip_voip_echo_limiter_force_cmd);
+
+	install_element(node, &ip_voip_echo_limiter_transmit_cmd);
+	install_element(node, &no_ip_voip_echo_limiter_transmit_cmd);
+
+	install_element(node, &ip_voip_echo_limiter_sustain_cmd);
+	install_element(node, &no_ip_voip_echo_limiter_sustain_cmd);
 
 	install_element(node, &ip_voip_bitrate_cmd);
 	install_element(node, &no_ip_voip_bitrate_cmd);
@@ -701,6 +1123,11 @@ static void cmd_voip_base_init(int node)
 	install_element(node, &ip_voip_noise_gate_cmd);
 	install_element(node, &no_ip_voip_noise_gate_cmd);
 
+	install_element(node, &ip_voip_noise_gate_floorgain_cmd);
+	install_element(node, &no_ip_voip_noise_gate_floorgain_cmd);
+
+	install_element(node, &ip_voip_noise_gate_threshold_cmd);
+	install_element(node, &no_ip_voip_noise_gate_threshold_cmd);
 	/*
 	 * ring
 	 */

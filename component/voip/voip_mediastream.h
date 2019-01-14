@@ -96,8 +96,10 @@ typedef struct _mediastream_global {
 	char * video_display_filter;
 	FILE * logfile;
 	bool_t enable_speaker;
-	int	ctlfd;
-	FILE * ctlfp;
+
+	int		ctlfd;
+	FILE 	*ctlfp;
+	BOOL	initialization;
 } mediastream_global;
 
 

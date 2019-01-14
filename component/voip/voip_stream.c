@@ -463,33 +463,35 @@ int voip_stream_write_config(struct vty *vty)
 		{
 			vty_out(vty, " ip voip echo-canceller %s", VTY_NEWLINE);
 			if(voip_stream->ec_tail)
-				vty_out(vty, " ip voip ec-tail %d%s", voip_stream->ec_tail, VTY_NEWLINE);
+				vty_out(vty, " ip voip echo-canceller tail %d%s", voip_stream->ec_tail, VTY_NEWLINE);
 			if(voip_stream->ec_delay)
-				vty_out(vty, " ip voip ec-delay %d%s", voip_stream->ec_delay, VTY_NEWLINE);
+				vty_out(vty, " ip voip echo-canceller delay %d%s", voip_stream->ec_delay, VTY_NEWLINE);
 			if(voip_stream->ec_framesize)
-				vty_out(vty, " ip voip ec-framesize %d%s", voip_stream->ec_framesize, VTY_NEWLINE);
+				vty_out(vty, " ip voip echo-canceller framesize %d%s", voip_stream->ec_framesize, VTY_NEWLINE);
 		}
 		//echo limiter
 		if(voip_stream->echo_limiter)
 		{
 			vty_out(vty, " ip voip echo-limiter %s", VTY_NEWLINE);
-			if(voip_stream->el_force)
-				vty_out(vty, " ip voip el-force %d%s", voip_stream->el_force, VTY_NEWLINE);
-			if(voip_stream->el_speed)
-				vty_out(vty, " ip voip el-thres %d%s", voip_stream->el_thres, VTY_NEWLINE);
-			if(voip_stream->el_transmit)
-				vty_out(vty, " ip voip el-transmit-thres %d%s", voip_stream->el_transmit, VTY_NEWLINE);
+			if(voip_stream->el_force > 0.0)
+				vty_out(vty, " ip voip echo-limiter force %.2f%s", voip_stream->el_force, VTY_NEWLINE);
+			if(voip_stream->el_speed > 0.0)
+				vty_out(vty, " ip voip echo-limiter speed %.2f%s", voip_stream->el_speed, VTY_NEWLINE);
+			if(voip_stream->el_thres > 0.0)
+				vty_out(vty, " ip voip echo-limiter thres %.2f%s", voip_stream->el_thres, VTY_NEWLINE);
+			if(voip_stream->el_transmit > 0.0)
+				vty_out(vty, " ip voip echo-limiter transmit-thres %.2f%s", voip_stream->el_transmit, VTY_NEWLINE);
 			if(voip_stream->el_sustain)
-				vty_out(vty, " ip voip el-sustain %d%s", voip_stream->el_transmit, VTY_NEWLINE);
+				vty_out(vty, " ip voip echo-limiter sustain %d%s", voip_stream->el_sustain, VTY_NEWLINE);
 		}
 		//echo limiter
 		if(voip_stream->noise_gate)
 		{
 			vty_out(vty, " ip voip noise-gate %s", VTY_NEWLINE);
-			if(voip_stream->ng_floorgain)
-				vty_out(vty, " ip voip ng-floorgain %d%s", voip_stream->ng_floorgain, VTY_NEWLINE);
-			if(voip_stream->ng_threshold)
-				vty_out(vty, " ip voip ng-threshold %d%s", voip_stream->ng_threshold, VTY_NEWLINE);
+			if(voip_stream->ng_floorgain > 0.0)
+				vty_out(vty, " ip voip noise-gate floorgain %.2f%s", voip_stream->ng_floorgain, VTY_NEWLINE);
+			if(voip_stream->ng_threshold > 0.0)
+				vty_out(vty, " ip voip noise-gate threshold %.2f%s", voip_stream->ng_threshold, VTY_NEWLINE);
 		}
 	}
 	return OK;
@@ -505,6 +507,7 @@ int voip_stream_start_api(voip_stream_t *args)
 		voip_task.pVoid = voip_stream_init_default();
 	voip_task.enable = TRUE;
 	voip_task.active = TRUE;
+	voip_task.stream = TRUE;
 	return OK;
 }
 
@@ -518,6 +521,7 @@ int voip_stream_shell_start_api(int argc, char * argv[])
 	}
 	voip_task.enable = TRUE;
 	voip_task.active = TRUE;
+	voip_task.stream = TRUE;
 	return OK;
 }
 
@@ -526,6 +530,7 @@ int voip_stream_stop_api(void)
 {
 	//int n= 1;
 	voip_task.active = FALSE;
+	voip_task.stream = FALSE;
 	voip_socket_quit(&voip_socket);
 	return OK;
 }

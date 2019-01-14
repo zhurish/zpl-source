@@ -76,6 +76,7 @@ $(TAGET) : $(OBJS) $(BASE_ROOT)/$(LIBDIR)/*.a
 	install -m 755 startup/etc/phonedbtest.cfg ${DSTETCDIR}		
 	install -m 755 startup/etc/remote-test.txt ${DSTETCDIR}		
 	install -m 755 startup/etc/volume_setup.sh ${DSTETCDIR}	
+	install -m 755 startup/etc/ringback.wav ${DSTETCDIR}	
 #
 #
 #	

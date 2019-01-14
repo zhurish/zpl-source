@@ -85,12 +85,54 @@ typedef struct voip_sip_s
 } voip_sip_t;
 
 
-typedef struct voip_sip_state_s
+
+typedef enum sip_register_state_s
 {
-	voip_state_t state;
-}voip_sip_state_t;
+	//注册状态
+	VOIP_SIP_UNREGISTER,			//未注册
+	VOIP_SIP_REGISTER_FAILED,		//注册失败
+	VOIP_SIP_REGISTER_SUCCESS,
 
+}sip_register_state_t;
 
+typedef enum sip_call_state_s
+{
+	//呼叫状态
+	VOIP_SIP_CALL_IDLE,
+	VOIP_SIP_CALL_ERROR,			//呼叫出错
+	VOIP_SIP_CALL_FAILED = VOIP_SIP_CALL_ERROR,			//呼叫失败
+	VOIP_SIP_CALL_RINGING,			//呼叫振铃
+	VOIP_SIP_CALL_PICKUP,			//呼叫摘机
+	VOIP_SIP_CALL_SUCCESS = VOIP_SIP_CALL_PICKUP,			//呼叫成功
+
+	VOIP_SIP_TALK,					//通话中
+}sip_call_state_t;
+
+typedef enum sip_call_error_s
+{
+	VOIP_SIP_TRYING_100,			//100试呼叫（Trying）
+	VOIP_SIP_RINGING_180,			//180振铃（Ringing）
+	VOIP_SIP_FORWARD_181,			//181呼叫正在前转（Call is Being Forwarded）
+	VOIP_SIP_ACK_200,				//200成功响应（OK）
+	VOIP_SIP_MOVETMP_320,			//302临时迁移（Moved Temporarily）
+	VOIP_SIP_BAD_REQUEST_400,		//400错误请求（Bad Request）
+	VOIP_SIP_UNAUTHORIZED_401,		//401未授权（Unauthorized）
+	VOIP_SIP_FORBIDDEN_403,			//403禁止（Forbidden）
+	VOIP_SIP_NOTFOUND_404,			//404用户不存在（Not Found）
+	VOIP_SIP_REQUEST_TIMEOUT_408,	//408请求超时（Request Timeout）
+	VOIP_SIP_UNAVAILABLE_480,		//480暂时无人接听（Temporarily Unavailable）
+	VOIP_SIP_BUSY_HERE_486,			//486线路忙（Busy Here）
+	VOIP_SIP_SERVER_TIMEOUT_504,	//504服务器超时（Server Time-out）
+	VOIP_SIP_BUSY_EVERYWHERE_600,	//600全忙（Busy Everywhere）
+
+}sip_call_error_t;
+
+typedef enum sip_stop_state_s
+{
+	//挂机状态
+	VOIP_SIP_REMOTE_STOP,			//远端挂机
+	VOIP_SIP_LOCAL_STOP,			//本端挂机
+}sip_stop_state_t;
 
 typedef struct voip_sip_ctl_s
 {
@@ -104,13 +146,17 @@ typedef struct voip_sip_ctl_s
 	void		*t_write;
 	void		*t_event;
 	void		*t_time;
+	void		*t_regtime;
 
 	u_int8		buf[1024];
 	u_int16		len;
 	u_int8		sbuf[1024];
 	u_int16		slen;
 
-	voip_sip_state_t	state;
+	sip_register_state_t	reg_state;
+	sip_call_state_t		call_state;
+	sip_call_error_t		call_error;
+	sip_stop_state_t		stop_state;
 
 	u_int32		send_cmd;
 	u_int32		ack_cmd;
@@ -272,9 +318,11 @@ extern int voip_sip_config_update_api(voip_sip_t *sip);
 /*
  * SIP state Module
  */
-//extern int voip_sip_call_state_get_api(int *value);
-extern voip_state_t voip_sip_state_get_api();
+extern sip_register_state_t voip_sip_register_state_get_api();
+extern sip_call_error_t voip_sip_call_error_get_api();
 
+extern sip_call_state_t voip_sip_call_state_get_api();
+extern sip_stop_state_t voip_sip_stop_state_get_api();
 
 /*
  * SIP event Module (sock)

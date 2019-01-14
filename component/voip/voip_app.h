@@ -41,7 +41,7 @@ typedef struct voip_position_room_s
 typedef struct voip_call_s
 {
 	voip_position_room_t *room;
-	voip_state_t		state;
+	//voip_state_t		state;
 
 	int		debug;
 }voip_call_t;
@@ -52,6 +52,8 @@ extern voip_call_t voip_call;
 
 extern int voip_app_ev_stop_call(event_node_t *ev);
 extern int voip_app_ev_start_call(event_node_t *ev);
+extern int voip_app_ev_register(event_node_t *ev);
+
 
 #ifdef VOIP_APP_DEBUG
 extern int voip_app_call_test(BOOL enable, char *address, int port, int lport);

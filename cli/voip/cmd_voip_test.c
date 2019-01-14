@@ -198,6 +198,7 @@ DEFUN (voip_startup_test,
 {
 	int ret = ERROR;
 	{
+		voip_call_ring_stop_api();
 		ret = _voip_startup_test(NULL);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -268,6 +269,21 @@ ALIAS(voip_call_test,
 		"Local Port configure\n"
 		"port value\n");
 
+
+
+DEFUN (_voip_ring_test,
+		_voip_ring_test_cmd,
+		"voip ring test",
+		"VOIP Configure\n"
+		"Stop Configure\n")
+{
+	int ret = ERROR;
+	{
+		ret = voip_call_ring_start_api();
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
 #endif
 
 
@@ -295,5 +311,6 @@ void cmd_voip_test_init(int node)
 
 #ifdef VOIP_STARTUP_TEST
 	install_element(node, &voip_startup_test_cmd);
+	install_element(node, &_voip_ring_test_cmd);
 #endif
 }

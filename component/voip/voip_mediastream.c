@@ -110,6 +110,7 @@ static const char *usage="mediastream --local <port>\n"
 								"[ --recv_fmtp <fmtpline passed to decoder> ]\n"
 								"[ --freeze-on-error (for video, stop upon decoding error until next valid frame) ]\n"
 								"[ --height <pixels> ]\n"
+		//stun:stun.l.google.com:19302
 								"[ --ice-local-candidate <ip:port:[host|srflx|prflx|relay]> ]\n"
 								"[ --ice-remote-candidate <ip:port:[host|srflx|prflx|relay]> ]\n"
 								"[ --infile <input wav file> specify a wav file to be used for input, instead of soundcard ]\n"
@@ -251,6 +252,7 @@ bool_t mediastream_parse_args(int argc, char** argv, mediastream_global* out) {
 				ms_warning("Ignore ICE local candidate \"%s\" (maximum %d candidates allowed)\n",argv[i],MEDIASTREAM_MAX_ICE_CANDIDATES);
 				continue;
 			}
+			//stun:stun.l.google.com:19302
 			candidate=&out->ice_local_candidates[out->ice_local_candidates_nb];
 			if (!parse_ice_addr(argv[i],candidate->type,sizeof(candidate->type),candidate->ip,sizeof(candidate->ip),&candidate->port)) {
 				ms_error("Failed to parse ICE local candidates '%s'\n", argv[i]);
@@ -568,79 +570,67 @@ int mediastream_set_ctlfd(mediastream_global *args, int fd)
 
 int mediastream_hw_init(mediastream_global *args)
 {
-#if 0//ndef PL_VOIP_MEDIASTREAM_TEST
 	MSFactory *factory;
-
 	ortp_init();
-
 	if (args->logfile)
 		bctbx_set_log_file(args->logfile);
-	bctbx_set_log_handler(md_stream_BctbxLogFunc);
-	//ortp_set_log_level_mask("VOIP", ORTP_WARNING|ORTP_ERROR|ORTP_FATAL);
 
 	if (args->is_verbose) {
 		bctbx_set_log_level(BCTBX_LOG_DOMAIN, BCTBX_LOG_DEBUG);
 	} else {
-		bctbx_set_log_level(BCTBX_LOG_DOMAIN, BCTBX_LOG_WARNING|BCTBX_LOG_MESSAGE);
+		bctbx_set_log_level(BCTBX_LOG_DOMAIN, BCTBX_LOG_ERROR/*BCTBX_LOG_MESSAGE*/);
 	}
 
 	args->factory = factory = ms_factory_new_with_voip();
 
-	rtp_profile_set_payload(&av_profile,110,&payload_type_speex_nb);
-	rtp_profile_set_payload(&av_profile,111,&payload_type_speex_wb);
-	rtp_profile_set_payload(&av_profile,112,&payload_type_ilbc);
-	rtp_profile_set_payload(&av_profile,113,&payload_type_amr);
-	//rtp_profile_set_payload(&av_profile,114,args->custom_pt);
-	rtp_profile_set_payload(&av_profile,115,&payload_type_lpc1015);
-#ifdef VIDEO_ENABLED
-	cam=ms_web_cam_new(ms_mire_webcam_desc_get());
-	if (cam) ms_web_cam_manager_add_cam(ms_factory_get_web_cam_manager(factory), cam);
-	cam=NULL;
-
-	rtp_profile_set_payload(&av_profile,26,&payload_type_jpeg);
-	rtp_profile_set_payload(&av_profile,98,&payload_type_h263_1998);
-	rtp_profile_set_payload(&av_profile,97,&payload_type_theora);
-	rtp_profile_set_payload(&av_profile,99,&payload_type_mp4v);
-	rtp_profile_set_payload(&av_profile,100,&payload_type_x_snow);
-	rtp_profile_set_payload(&av_profile,102,&payload_type_h264);
-	rtp_profile_set_payload(&av_profile,103,&payload_type_vp8);
-
-	args->video=NULL;
-#endif
-#endif
 	if(!args->ctlfd)
 	{
 		args->ctlfd = os_pipe_create("mdctl", O_RDWR);
 		if(args->ctlfd)
 		{
-			//voip_event.fd = args->ctlfd;
 			args->ctlfp = fdopen(args->ctlfd, "r+");
+			args->initialization = TRUE;
 			return OK;
 		}
 		return ERROR;
 	}
+	args->initialization = TRUE;
 	return OK;
 }
 
 int mediastream_hw_exit(mediastream_global *args)
 {
-/*
-#ifndef PL_VOIP_MEDIASTREAM_TEST
+	if (args->bw_controller){
+		ms_bandwidth_controller_destroy(args->bw_controller);
+	}
+
+	if (args->audio) {
+		audio_stream_stop(args->audio);
+	}
+#ifdef VIDEO_ENABLED
+	if (args->video) {
+		if (args->video->ms.ice_check_list) ice_check_list_destroy(args->video->ms.ice_check_list);
+		video_stream_stop(args->video);
+		ms_factory_log_statistics(args->video->ms.factory);
+	}
+#endif
+	if (args->ice_session) ice_session_destroy(args->ice_session);
+	ortp_ev_queue_destroy(args->q);
+
 	rtp_profile_destroy(args->profile);
+
 	if (args->logfile)
 		fclose(args->logfile);
 	args->logfile = NULL;
-#endif
-*/
+
+	ms_factory_destroy(args->factory);
+
 	if(args->ctlfd)
 		close(args->ctlfd);
 	args->ctlfd = 0;
 	args->ctlfp = NULL;
-/*
-#ifndef PL_VOIP_MEDIASTREAM_TEST
-	ms_factory_destroy(args->factory);
-#endif
-*/
+	args->initialization = FALSE;
+	//free(args);
 	return OK;
 }
 
@@ -660,17 +650,22 @@ void mediastream_setup(mediastream_global* args) {
 #endif
 
 	MSFactory *factory;
-	ortp_init();
-	if (args->logfile)
-		bctbx_set_log_file(args->logfile);
+	if(!args->initialization)
+	{
+		ortp_init();
+		if (args->logfile)
+			bctbx_set_log_file(args->logfile);
 
-	if (args->is_verbose) {
-		bctbx_set_log_level(BCTBX_LOG_DOMAIN, BCTBX_LOG_DEBUG);
-	} else {
-		bctbx_set_log_level(BCTBX_LOG_DOMAIN, BCTBX_LOG_ERROR/*BCTBX_LOG_MESSAGE*/);
+		if (args->is_verbose) {
+			bctbx_set_log_level(BCTBX_LOG_DOMAIN, BCTBX_LOG_DEBUG);
+		} else {
+			bctbx_set_log_level(BCTBX_LOG_DOMAIN, BCTBX_LOG_ERROR/*BCTBX_LOG_MESSAGE*/);
+		}
+
+		args->factory = factory = ms_factory_new_with_voip();
 	}
-
-	args->factory = factory = ms_factory_new_with_voip();
+	else
+		factory = args->factory;
 
 #if TARGET_OS_IPHONE || defined(__ANDROID__)
 #if TARGET_OS_IPHONE || (defined(HAVE_X264) && defined(VIDEO_ENABLED))
@@ -792,7 +787,7 @@ void mediastream_setup(mediastream_global* args) {
 			ELControlMic,
 			ELControlFull*/
 			audio_stream_enable_echo_limiter(args->audio, ELControlFull);
-			audio_stream_enable_noise_gate(args->audio, 1);
+			//audio_stream_enable_noise_gate(args->audio, 1);
 			audio_stream_enable_echo_canceller(args->audio, 1);
 			if(args->ec_len_ms || args->ec_delay_ms || args->ec_framesize)
 				audio_stream_set_echo_canceller_params(args->audio,args->ec_len_ms,args->ec_delay_ms,args->ec_framesize);
@@ -1062,7 +1057,7 @@ void mediastream_running(mediastream_global* args) {
 	while(cond)
 	{
 		int n;
-		voip_state_set(VOIP_STATE_TALK);
+		//voip_state_set(VOIP_STATE_TALK);
 		for(n=0;n<500 && cond;++n){
 			mediastream_tool_iterate(args);
 #if defined(VIDEO_ENABLED)
@@ -1120,10 +1115,9 @@ void mediastream_clear(mediastream_global* args) {
 	if (args->logfile)
 		fclose(args->logfile);
 	args->logfile = NULL;
-/*	if(args->ctlfd)
-		close(args->ctlfd);
-	args->ctlfd = 0;*/
+
 	ms_factory_destroy(args->factory);
+	args->initialization = FALSE;
 }
 
 // ANDROID JNI WRAPPER

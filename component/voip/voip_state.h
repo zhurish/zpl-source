@@ -8,16 +8,19 @@
 #ifndef __VOIP_STATE_H__
 #define __VOIP_STATE_H__
 
-
+/*
 typedef enum voip_state_s
 {
 	VOIP_STATE_NONE,
 	//注册状态
+	VOIP_STATE_UNREGISTER,			//未注册
 	VOIP_STATE_REGISTER_FAILED,		//注册失败
 	VOIP_STATE_REGISTER_TIMEOUT,	//注册超时
 	VOIP_STATE_REGISTER_ERROR,		//注册错误
 	VOIP_STATE_REGISTER_SUCCESS,
+
 	//呼叫状态
+	VOIP_STATE_CALL_IDLE,		//空闲
 	VOIP_STATE_CALL_FAILED,		//呼叫失败
 	VOIP_STATE_CALL_TIMEOUT,	//呼叫超时
 	VOIP_STATE_CALL_NORESPONE,	//呼叫无人接听
@@ -32,7 +35,9 @@ typedef enum voip_state_s
 }voip_state_t;
 
 
+
 extern voip_state_t voip_state_get();
 extern int voip_state_set(voip_state_t state);
+*/
 
 #endif /* __VOIP_STATE_H__ */

@@ -14,6 +14,7 @@ typedef struct voip_task_s
 	int 	taskid;
 	BOOL	enable;
 	BOOL	active;
+	BOOL	stream;		//voip stream or ring
 	void 	*pVoid;
 	void 	*pVoid1;
 	void 	*pVoid2;
