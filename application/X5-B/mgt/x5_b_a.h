@@ -22,15 +22,23 @@ enum E_OPEN_RESULT
 	E_OPEN_RESULT_FAIL,
 };
 
-enum E_CALL_RESULT
+/*enum E_CALL_RESULT
 {
 	E_CALL_RESULT_NO_SUCH_ROOM,		//û����������
 	E_CALL_RESULT_UNREGISTER,		//û��ע��
 	E_CALL_RESULT_OUTLINE,			//�豸����
 	E_CALL_RESULT_CALLING,			//��ʼ����
 	E_CALL_RESULT_ONLINE,			//ͨ����
-};
+};*/
 
+enum E_CALL_RESULT
+{
+	E_CALL_RESULT_UNREGISTER,		//号码未注册
+	E_CALL_RESULT_CALLING,			//呼叫中
+	E_CALL_RESULT_TALKLING,			//通话中
+	E_CALL_RESULT_STOP,				//ͨ挂断
+	E_CALL_RESULT_FAIL,				//ͨ拨号失败
+};
 
 enum E_CMD
 {

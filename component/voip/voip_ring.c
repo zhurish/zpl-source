@@ -41,6 +41,7 @@ int voip_call_ring_module_init()
 	{
 		call_ring_session.f = voip_stream_lookup_factory_api(voip_task.pVoid);
 	}
+	call_ring_session.mutex = os_mutex_init();
 	return OK;
 }
 
@@ -70,6 +71,7 @@ int voip_call_ring_get_api(int *id)
 	return OK;
 }
 
+#if 0
 static int _voip_call_ring_stop(struct ring_session *s)
 {
 #ifdef PL_VOIP_MEDIASTREAM
@@ -147,6 +149,8 @@ int voip_call_ring_stop(int id)
 	return _voip_call_ring_stop(&call_ring_session);
 }
 
+#endif
+
 int voip_call_ring_running(void *pVoid)
 {
 #ifdef PL_VOIP_MEDIASTREAM
@@ -170,15 +174,37 @@ int voip_call_ring_running(void *pVoid)
 	{
 		while(call_ring_session.start)
 		{
+			if(call_ring_session.mutex)
+			{
+				os_mutex_lock(call_ring_session.mutex, OS_WAIT_FOREVER);
+			}
+			zlog_debug(ZLOG_VOIP," call remote start ringing");
 			call_ring_session.r=ring_start(call_ring_session.f, VOIP_CALL_RING_DEFAULT,
 					1000, call_ring_session.sc);
-			ms_sleep(20);
+			//ms_sleep(20);
 			if(!call_ring_session.start)
+			{
+				if(call_ring_session.mutex)
+				{
+					os_mutex_unlock(call_ring_session.mutex);
+				}
 				break;
+			}
+			if(call_ring_session.mutex)
+			{
+				os_mutex_unlock(call_ring_session.mutex);
+			}
+			zlog_debug(ZLOG_VOIP, " call remote is ringing");
+			zlog_debug(ZLOG_VOIP," call remote stop ringing");
 			ms_sleep(30);
-			ring_stop(call_ring_session.r);
-			call_ring_session.r = NULL;
+/*			ring_stop(call_ring_session.r);
+			call_ring_session.r = NULL;*/
+
 		}
+	}
+	if(call_ring_session.mutex)
+	{
+		os_mutex_lock(call_ring_session.mutex, OS_WAIT_FOREVER);
 	}
 	if(call_ring_session.r)
 		ring_stop(call_ring_session.r);
@@ -186,24 +212,51 @@ int voip_call_ring_running(void *pVoid)
 	call_ring_session.r = NULL;
 	ms_snd_card_destroy(call_ring_session.sc);
 	call_ring_session.sc = NULL;
+	if(call_ring_session.mutex)
+	{
+		os_mutex_unlock(call_ring_session.mutex);
+	}
 #endif
 	return OK;
 }
 
 int voip_call_ring_start_api()
 {
+	if(call_ring_session.mutex)
+	{
+		os_mutex_lock(call_ring_session.mutex, OS_WAIT_FOREVER);
+	}
 	call_ring_session.start = TRUE;
 	voip_task.enable = TRUE;
 	voip_task.active = TRUE;
 	voip_task.stream = FALSE;
+	zlog_debug(ZLOG_VOIP,"%s\r\n", __func__);
+	if(call_ring_session.mutex)
+	{
+		os_mutex_unlock(call_ring_session.mutex);
+	}
 	return OK;
 }
 
 int voip_call_ring_stop_api()
 {
+	if(call_ring_session.mutex)
+	{
+		os_mutex_lock(call_ring_session.mutex, OS_WAIT_FOREVER);
+	}
 	call_ring_session.start = FALSE;
 	voip_task.active = FALSE;
 	voip_task.stream = FALSE;
+	if(call_ring_session.r)
+	{
+		ring_stop(call_ring_session.r);
+		call_ring_session.r = NULL;
+	}
+	if(call_ring_session.mutex)
+	{
+		os_mutex_unlock(call_ring_session.mutex);
+	}
+	zlog_debug(ZLOG_VOIP,"%s\r\n", __func__);
 	return OK;
 }
 

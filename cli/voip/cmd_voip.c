@@ -732,7 +732,7 @@ DEFUN (voip_ring_test,
 		return CMD_WARNING;
 	}
 	//ret = voip_call_ring_stop(atoi(argv[0]));
-	ret = voip_call_ring_start(atoi(argv[0]));
+	//ret = voip_call_ring_start(atoi(argv[0]));
 	//ring_test();
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -1046,7 +1046,7 @@ static int voip_show_config(struct vty *vty, int detail)
 	{
 		vty_out(vty, " Service VOIP:%s", VTY_NEWLINE);
 		voip_stream_show_config(vty);
-		voip_volume_show_config(vty, 0);
+		//voip_volume_show_config(vty, 0);
 	}
 	return 1;
 }

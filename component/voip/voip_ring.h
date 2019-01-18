@@ -22,6 +22,7 @@ struct ring_session
 	void 	*sc;	//MSSndCard
 	BOOL	use;
 	BOOL	start;
+	void	*mutex;
 };
 
 extern int voip_call_ring_lookup_api(int id);

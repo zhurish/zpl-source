@@ -231,7 +231,19 @@ int sock_client_write(int fd, char *ipaddress, int port, char *buf, int len)
 }
 
 
-
+int unix_sockpair_create(BOOL tcp, int *rfd, int *wfd)
+{
+	int fd[2];
+	if(socketpair (AF_UNIX, tcp ? SOCK_STREAM : SOCK_DGRAM, 0, fd) == 0)
+	{
+		if(rfd)
+			*rfd = fd[0];
+		if(wfd)
+			*wfd = fd[1];
+		return OK;
+	}
+	return ERROR;
+}
 
 int unix_sock_server_create(BOOL tcp, const char *name)
 {

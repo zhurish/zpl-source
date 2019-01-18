@@ -3,7 +3,7 @@ include $(MAKE_DIR)/makelinux.mk
 
 include config.mk
 
-TARGET = upgrade
+TARGET = app-upgrade
 
 OBJS_DIR = $(BASE_ROOT)/$(OBJDIR)/$(MODULEDIR)
 SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)

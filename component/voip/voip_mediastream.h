@@ -98,11 +98,20 @@ typedef struct _mediastream_global {
 	bool_t enable_speaker;
 
 	int		ctlfd;
-	FILE 	*ctlfp;
+	//FILE 	*ctlfp;
 	BOOL	initialization;
+	BOOL	running;
 } mediastream_global;
 
-
+#pragma pack(1)
+typedef struct _mediastream_hdr
+{
+	u_int8 		type;
+	u_int8 		magic;
+	u_int16 	len;
+	u_int8		data[256];
+} mediastream_hdr;
+#pragma pack(0)
 
 extern bool_t mediastream_parse_args(int argc, char** argv, mediastream_global* out);
 extern mediastream_global* mediastream_init_default(void);
@@ -111,12 +120,11 @@ extern void mediastream_setup(mediastream_global* args);
 extern void mediastream_running(mediastream_global* args);
 extern void mediastream_clear(mediastream_global* args);
 extern void *mediastream_lookup_factory(mediastream_global *args);
+extern int mediastream_stop_force();
 
 extern int mediastream_hw_init(mediastream_global *args);
 extern int mediastream_hw_exit(mediastream_global *args);
 
-extern int mediastream_get_ctlfd(mediastream_global *args);
-extern int mediastream_set_ctlfd(mediastream_global *args, int fd);
 
 #ifdef PL_VOIP_MEDIASTREAM_TEST
 extern void setup_media_streams(mediastream_global* args);

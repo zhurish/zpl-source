@@ -38,6 +38,8 @@ typedef struct event_node_s
 	int			(*ev_cb)(event_node_t *);
 	void		*pVoid;
 	u_int8		data[1024];
+
+	char 		entry_name[128];
 }event_node_t;
 
 typedef struct voip_event_s
@@ -59,9 +61,16 @@ extern int voip_event_task_init();
 extern int voip_event_task_exit();
 
 
+#define voip_event_node_register(c,p,d,l)	_voip_event_node_register(c,p,d,l,#c)
+
+//extern int voip_event_node_register(int (*cb)(event_node_t *), void *pVoid, char *buf, int len);
+/*
+extern int voip_event_node_del(event_node_t *node);
+extern int voip_event_node_unregister(int (*cb)(event_node_t *), void *pVoid);
+*/
 
 extern int voip_event_node_add(event_node_t *node);
-extern int voip_event_node_register(int (*cb)(event_node_t *), void *pVoid, char *buf, int len);
+extern int _voip_event_node_register(int (*cb)(event_node_t *), void *pVoid, char *buf, int len, char *funcname);
 extern int voip_event_node_del(event_node_t *node);
 extern int voip_event_node_unregister(int (*cb)(event_node_t *), void *pVoid);
 

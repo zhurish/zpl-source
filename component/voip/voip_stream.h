@@ -17,10 +17,11 @@
 #define VOIP_STREAM_DEBUG_TEST
 
 #define VOIP_RTP_PORT_DEFAULT 		5550
-#define VOIP_RTP_PAYLOAD_DEFAULT 	8
+#define VOIP_RTP_PAYLOAD_DEFAULT 	0
 
 #define VOIP_RTP_ADDRSS_MAX 	64
 #define VOIP_RTP_PAYLOAD_NAME_MAX 	64
+
 
 typedef struct voip_stream_s
 {
@@ -116,11 +117,11 @@ extern void *voip_lookup_stream_api();
 extern int voip_stream_start_api(voip_stream_t *args);
 extern int voip_stream_shell_start_api(int argc, char * argv[]);
 extern int voip_stream_stop_api(void);
+extern int voip_stream_stop_force_api(void);
 
 extern int voip_stream_remote_get_api(voip_stream_remote_t* args);
 
 extern int voip_stream_ctlfd_get_api(void);
-extern int voip_stream_ctlfd_set_api(int fd);
 
 extern BOOL voip_stream_is_enable();
 extern int voip_stream_write_config(struct vty *vty);

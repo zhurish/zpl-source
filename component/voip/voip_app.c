@@ -43,7 +43,7 @@ int voip_app_ev_stop_call(event_node_t *ev)
 {
 	if(voip_sip_call_state_get_api() != VOIP_SIP_CALL_IDLE)
 	{
-		//sip call
+		x5_b_a_call_result_api(x5_b_a_mgt, E_CALL_RESULT_STOP);
 		if(voip_sip_call_stop() != OK)
 			return ERROR;
 		if(voip_sip_call_state_get_api() >= VOIP_SIP_TALK)
@@ -54,55 +54,118 @@ int voip_app_ev_stop_call(event_node_t *ev)
 		return OK;
 }
 
+int voip_app_ev_start_stream(event_node_t *ev)
+{
+	int ret = 0;
+	voip_stream_remote_t *remote = (voip_stream_remote_t *)ev->data;
+	//if(voip_sip_call_state_get_api() >= VOIP_SIP_CALL_RINGING)
+	{
+		x5_b_a_call_result_api(x5_b_a_mgt, E_CALL_RESULT_TALKLING);
+		zlog_debug(ZLOG_VOIP,"-----------%s:voip_create_stream_and_start %s:%d(sip state=%d)",
+				__func__, remote->r_rtp_address, remote->r_rtp_port, voip_sip_call_state_get_api());
+		ret = voip_create_stream_and_start_api(remote);
+	}
+	return ret;
+}
+
 /*
  * start call event handle
  */
+#if 1
+int voip_app_ev_start_call(event_node_t *ev)
+{
+	int ret = OK;
+	strcpy(voip_call.phone, ev->data);
+	//V_APP_DEBUG("-----------%s: room=0x%x", __func__, *num);
+	if(VOIP_APP_DEBUG(EVENT))
+		zlog_debug(ZLOG_VOIP, "start call '%s'", voip_call.phone);
+
+	if(ret == OK)
+	{
+		//sip call
+/*
+		if(VOIP_APP_DEBUG(EVENT))
+			zlog_debug(ZLOG_VOIP, "start call %s", voip_call.phone);
+*/
+
+		if(voip_sip_register_state_get_api() != VOIP_SIP_REGISTER_SUCCESS)
+		{
+			x5_b_a_call_result_api(x5_b_a_mgt, E_CALL_RESULT_UNREGISTER);
+			zlog_debug(ZLOG_VOIP, "call error, phone ‘%s’ is not register ", voip_call.phone);
+			return ERROR;
+		}
+
+		if(voip_sip_call_state_get_api() != VOIP_SIP_CALL_IDLE)
+		{
+			zlog_debug(ZLOG_VOIP, "call error, phone ‘%s’ is talking ", voip_call.phone);
+			x5_b_a_call_result_api(x5_b_a_mgt, E_CALL_RESULT_TALKLING);
+			return ERROR;
+		}
+		if(VOIP_APP_DEBUG(EVENT))
+			zlog_debug(ZLOG_VOIP, "start call %s", voip_call.phone);
+
+		if(voip_sip_call_start(voip_call.phone) != OK)
+		{
+			x5_b_a_call_result_api(x5_b_a_mgt, E_CALL_RESULT_FAIL);
+			zlog_debug(ZLOG_VOIP, "call error, phone ‘%s’ ", voip_call.phone);
+
+			return ERROR;
+		}
+		if(VOIP_APP_DEBUG(EVENT))
+			zlog_debug(ZLOG_VOIP, "start calling %s", voip_call.phone);
+
+		x5_b_a_call_result_api(x5_b_a_mgt, E_CALL_RESULT_CALLING);
+		return OK;
+	}
+	else
+	{
+		return ERROR;
+	}
+	return ERROR;
+}
+
+#else
+
 int voip_app_ev_start_call(event_node_t *ev)
 {
 	int ret = 0;
-	u_int32 *num = (u_int32 *)ev->data;
-	x5_b_room_position_t *room = ev->data;
-	voip_position_room_t out;
-	V_APP_DEBUG("-----------%s: room=0x%x", __func__, *num);
+	strcpy(voip_call.phone, ev->data);
+	//V_APP_DEBUG("-----------%s: room=0x%x", __func__, *num);
 	if(VOIP_APP_DEBUG(EVENT))
-		zlog_debug(ZLOG_VOIP, "start call '%s'", room->data);
-	ret = voip_estate_mgt_get_phone_number(room, &out);
+		zlog_debug(ZLOG_VOIP, "start call '%s'", voip_call.phone);
+
 	if(ret == OK)
 	{
 		//sip call
 		if(VOIP_APP_DEBUG(EVENT))
-			zlog_debug(ZLOG_VOIP, "start call %s", room->data);
-		if(voip_sip_register_state_get_api() != VOIP_SIP_REGISTER_SUCCESS)
+			zlog_debug(ZLOG_VOIP, "start call %s", voip_call.phone);
+
+/*		if(voip_sip_register_state_get_api() != VOIP_SIP_REGISTER_SUCCESS)
 		{
 			x5_b_a_call_result_api(x5_b_a_mgt, E_CALL_RESULT_UNREGISTER);
+			zlog_debug(ZLOG_VOIP, "call error, phone ‘%s’ is not register ", voip_call.phone);
 			return ERROR;
 		}
+
 		if(voip_sip_call_state_get_api() != VOIP_SIP_CALL_IDLE)
 		{
+			zlog_debug(ZLOG_VOIP, "call error, phone ‘%s’ is talking ", voip_call.phone);
 			x5_b_a_call_result_api(x5_b_a_mgt, E_CALL_RESULT_ONLINE);
 			return ERROR;
 		}
-		if(voip_sip_call_start(out.phone) != OK)
+
+		if(voip_sip_call_start(voip_call.phone) != OK)
 		{
+			zlog_debug(ZLOG_VOIP, "call error, phone ‘%s’ ", voip_call.phone);
 			return ERROR;
-		}
+		}*/
 		x5_b_a_call_result_api(x5_b_a_mgt, E_CALL_RESULT_CALLING);
 
-		if(voip_sip_call_state_get_api() == VOIP_SIP_CALL_SUCCESS)
+		if(os_read_string("/app/etc/remote-test.txt",stream_remote_test.r_rtp_address, sizeof(stream_remote_test.r_rtp_address)) == OK)
 		{
-			//V_APP_DEBUG("-----------%s:voip_create_stream_and_start", __func__);
-#ifdef VOIP_APP_DEBUG
-			if(voip_dbtest_isenable())
-			{
-				voip_dbtest_getremote(room->data, stream_remote_test.r_rtp_address, &stream_remote_test.r_rtp_port);
-			}
+			stream_remote_test.r_rtp_port = 5555;
+			voip_stream->l_rtp_port = 5555;
 			ret = voip_create_stream_and_start_api(&stream_remote_test);
-#else
-			voip_stream_remote_t remote;
-			ret = voip_stream_remote_get_api(&remote);
-			if(ret == OK)
-				ret = voip_create_stream_and_start_api(&remote);
-#endif
 		}
 		return ret;
 	}
@@ -112,6 +175,7 @@ int voip_app_ev_start_call(event_node_t *ev)
 	}
 	return ERROR;
 }
+#endif
 
 
 /*

@@ -25,7 +25,7 @@
 #include "libssh/libssh.h"
 
 
-#define SSH_PORT_DEFAULT		22
+#define SSH_PORT_DEFAULT		4022
 #define SSH_KEY_FILENAME_MAX	64
 #define SSH_KEY_NAME_MAX		32
 #define SSH_KEY_MAX				8

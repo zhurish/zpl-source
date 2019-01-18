@@ -11,6 +11,10 @@
 #include "voip_state.h"
 #include "voip_event.h"
 
+
+#define VOIP_APP_GET_PHONE
+//#define VOIP_APP_GET_ROOM
+
 #define V_APP_DEBUG(fmt,...)		zlog_debug(ZLOG_VOIP, fmt, ##__VA_ARGS__)
 
 #define VOIP_APP_DEBUG
@@ -31,19 +35,13 @@
 
 
 
-typedef struct voip_position_room_s
+typedef struct voip_call_s
 {
+	BOOL		talking;
 	u_int8		building;
 	u_int16		room_number;
 	char 		phone[VOIP_PHONE_MAX];
-}voip_position_room_t;
-
-typedef struct voip_call_s
-{
-	voip_position_room_t *room;
-	//voip_state_t		state;
-
-	int		debug;
+	int			debug;
 }voip_call_t;
 
 
@@ -52,6 +50,9 @@ extern voip_call_t voip_call;
 
 extern int voip_app_ev_stop_call(event_node_t *ev);
 extern int voip_app_ev_start_call(event_node_t *ev);
+
+extern int voip_app_ev_start_stream(event_node_t *ev);
+
 extern int voip_app_ev_register(event_node_t *ev);
 
 

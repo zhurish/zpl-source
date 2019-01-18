@@ -372,7 +372,7 @@ static int zlog_task(struct zlog *zl)
 		}*/
 		FD_SET (zl->lfd, &rfds);
 
-		retval = os_select_wait(zl->lfd + 1, &rfds, NULL,  1);
+		retval = os_select_wait(zl->lfd + 1, &rfds, NULL,  5000);
 
 		interval++;
 

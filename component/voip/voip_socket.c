@@ -56,10 +56,21 @@ int voip_socket_module_exit(void)
 
 static int voip_socket_send_cmd(voip_socket_t *socket, char *data, int len)
 {
+	voip_socket_hdr hdr;
 	if(socket->sock)
 	{
-		if(write(socket->sock, data, len) == len)
+		memset(&hdr, 0, sizeof(hdr));
+
+		hdr.type = 0;
+		hdr.magic = 0;
+		hdr.len = htons(MIN(len, 256));
+		memcpy(hdr.data, data, MIN(len, 256));
+
+		if(write(socket->sock, &hdr, sizeof(hdr)) == sizeof(hdr))
 			return OK;
+
+/*		if(write(socket->sock, data, len) == len)
+			return OK;*/
 	}
 	zlog_err(ZLOG_VOIP, "mediastream's poll() returned %s",strerror(errno));
 	return ERROR;
@@ -195,6 +206,17 @@ static int voip_socket_read_eloop(struct eloop *eloop)
 
 static int _voip_socket_init(voip_socket_t *vsocket)
 {
+#if 1
+	if(unix_sockpair_create(TRUE, &vsocket->mdctl, &vsocket->sock) == OK)
+	{
+		os_set_nonblocking(vsocket->sock);
+		os_set_nonblocking(vsocket->mdctl);
+		if(vsocket->master)
+			vsocket->t_read = eloop_add_read(vsocket->master, voip_socket_read_eloop, vsocket, vsocket->sock);
+		zlog_debug(ZLOG_VOIP, "Create unix socket for stream controls(%d:%d)", vsocket->mdctl, vsocket->sock);
+		return OK;
+	}
+#else
 	int fd = unix_sock_server_create(FALSE, "voipEvent");
 	if(fd)
 	{
@@ -205,6 +227,7 @@ static int _voip_socket_init(voip_socket_t *vsocket)
 		//vsocket->t_thread = eloop_add_timer(vsocket->master, x5_b_a_timer_eloop, vsocket, vsocket->interval);
 		return OK;
 	}
+#endif
 	return ERROR;
 }
 
@@ -237,8 +260,16 @@ static int _voip_socket_exit(voip_socket_t *vsocket)
 	}
 	if(vsocket)
 	{
+		if(vsocket->mdctl)
+		{
+			close(vsocket->mdctl);
+			vsocket->mdctl = 0;
+		}
 		if(vsocket->sock)
+		{
 			close(vsocket->sock);
+			vsocket->sock = 0;
+		}
 		memset(vsocket->buf, 0, sizeof(vsocket->buf));
 		return OK;
 	}

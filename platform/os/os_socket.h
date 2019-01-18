@@ -28,4 +28,8 @@ extern int unix_sock_client_write(int fd, char *name, char *buf, int len);
 
 extern int tcp_sock_state (int sock);
 
+
+extern int unix_sockpair_create(BOOL tcp, int *rfd, int *wfd);
+
+
 #endif /* __OS_SOCKET_H__ */

@@ -17,6 +17,6 @@ chmod +x SWP-V0.0.1.bin
 #./volume_setup.sh
 
 cd /app
-sleep 5
+sleep 8
 ./SWP-V0.0.1.bin -t /dev/ttyS1 -d
 

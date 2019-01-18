@@ -80,12 +80,12 @@ static int voip_main_task(voip_task_t *task)
 		{
 			if(task->stream) // voip stream
 			{
-				if(access("/app/etc/volume_setup.sh", F_OK) == 0)
+/*				if(access("/app/etc/volume_setup.sh", F_OK) == 0)
 				{
 					super_system("cd /app/etc/; chmod +x volume_setup.sh");
 					super_system("cd /app/etc/;./volume_setup.sh");
-				}
-				//voip_volume_open_api(VOIP_VOLUME_ALL);
+				}*/
+				voip_volume_open_api(VOIP_VOLUME_ALL);
 #ifdef PL_VOIP_MEDIASTREAM_TEST
 				setup_media_streams(task->pVoid);
 #else

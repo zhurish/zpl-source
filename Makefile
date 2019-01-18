@@ -73,10 +73,18 @@ $(TAGET) : $(OBJS) $(BASE_ROOT)/$(LIBDIR)/*.a
 	install -m 755 setup-sound.sh ${DSTETCDIR} 	
 	install -m 755 startup/etc/plat.conf ${DSTETCDIR}
 	#install -m 755 startup/etc/default-config.cfg ${DSTETCDIR}
-	install -m 755 startup/etc/phonedbtest.cfg ${DSTETCDIR}		
+	install -m 755 startup/etc/phonedbtest.cfg ${DSTETCDIR}	
+	install -m 755 startup/etc/update-app.sh ${DSTETCDIR}
+	install -m 755 startup/etc/x5b-app.sh ${DSTETCDIR}
+	install -m 755 startup/etc/ringback.wav ${DSTETCDIR}	
+	#sip
+	install -m 755 startup/etc/sip.cfg ${DSTETCDIR}
+	install -m 755 startup/etc/TimerMgr ${BINDIR}
+	install -m 755 startup/etc/VmrMgr ${BINDIR}
+	#test	
 	install -m 755 startup/etc/remote-test.txt ${DSTETCDIR}		
 	install -m 755 startup/etc/volume_setup.sh ${DSTETCDIR}	
-	install -m 755 startup/etc/ringback.wav ${DSTETCDIR}	
+	$(CP) $(TAGET) /home/zhurish/Downloads/tftpboot/
 #
 #
 #	

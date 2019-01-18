@@ -926,8 +926,8 @@ static int os_task_show_head(struct vty *vty, int detail)
 //vty_out(vty, "Runtime(ms)   Invoked Avg uSec Max uSecs Avg uSec Max uSecs  Type  Thread%s",VTY_NEWLINE);
 
 	if (detail)
-		vty_out(vty, "  %-16s %-12s %-20s %-4s %-8s %-6s %-8s %-8s%s",
-				"taskNmae", "taskId", "entry", "pri", "tacksize", "state",
+		vty_out(vty, "  %-16s %-12s %-20s %-8s %-4s %-8s %-6s %-8s %-8s%s",
+				"taskNmae", "taskId", "entry", "LVPID","pri", "tacksize", "state",
 				"Real", "Total", VTY_NEWLINE);
 	else
 		vty_out(vty, "  %-16s %-12s %-20s %-4s %-8s %-6s %-8s %-8s%s",
@@ -945,6 +945,7 @@ static int os_task_show_detail(void *p, os_task_t *task, int detail)
 	char tacksize[16];
 	char state[16];
 	char real[16];
+	char lvpid[16];
 	char total[16];
 	os_memset(taskId, 0, sizeof(taskId));
 	os_memset(pri, 0, sizeof(pri));
@@ -952,7 +953,7 @@ static int os_task_show_detail(void *p, os_task_t *task, int detail)
 	os_memset(state, 0, sizeof(state));
 	os_memset(real, 0, sizeof(real));
 	os_memset(total, 0, sizeof(total));
-
+	os_memset(lvpid, 0, sizeof(lvpid));
 	os_task_refresh_total_cpu(&total_cpu);
 	os_task_refresh_cpu(task);
 	os_task_state_to_string(task->state, state);
@@ -977,7 +978,16 @@ static int os_task_show_detail(void *p, os_task_t *task, int detail)
 	else
 		sprintf(total, "%s", "0.00%");
 
-	vty_out(vty, "  %-16s %-12s %-20s %-4s %-8s %-6s %-8s %-8s%s",
+	if(detail)
+	{
+
+		sprintf(lvpid, "%d", task->td_tid);
+		vty_out(vty, "  %-16s %-12s %-20s %-8s %-4s %-8s %-6s %-8s %-8s%s",
+			task->td_name, taskId, task->td_entry_name, lvpid, pri, tacksize, state,
+			real, total, VTY_NEWLINE);
+	}
+	else
+		vty_out(vty, "  %-16s %-12s %-20s %-4s %-8s %-6s %-8s %-8s%s",
 			task->td_name, taskId, task->td_entry_name, pri, tacksize, state,
 			real, total, VTY_NEWLINE);
 	return 0;

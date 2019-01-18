@@ -20,11 +20,14 @@
 #include "voip_sip.h"
 #include "voip_task.h"
 #include "voip_api.h"
+#include "voip_app.h"
 #include "voip_stream.h"
 #include "voip_dbtest.h"
 
 int voip_module_init()
 {
+	memset(&voip_call, 0, sizeof(voip_call));
+	voip_call.debug = 0xffff;
 	/*
 	 * SIP 配置单元初始化
 	 */
@@ -118,8 +121,14 @@ int voip_remote_rtp_set_api(u_int32 ip, u_int16 port)
 
 int voip_create_stream_and_start_api(voip_stream_remote_t *config)
 {
+
 	if(!voip_stream->l_rtp_port)
 		voip_stream->l_rtp_port = VOIP_RTP_PORT_DEFAULT;
+
+	zlog_debug(ZLOG_VOIP,"-----------%s 192.168.2.100:%d -> %s:%d",
+			__func__, voip_stream->l_rtp_port, config->r_rtp_address, config->r_rtp_port);
+
+
 	voip_stream_local_port_api(voip_stream, voip_stream->l_rtp_port);
 
 	voip_stream_remote_address_port_api(voip_stream, config->r_rtp_address, config->r_rtp_port);

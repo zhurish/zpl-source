@@ -8,6 +8,16 @@
 #ifndef __VOIP_SOCKET_H__
 #define __VOIP_SOCKET_H__
 
+#pragma pack(1)
+typedef struct _voip_socket_hdr
+{
+	u_int8 		type;
+	u_int8 		magic;
+	u_int16 	len;
+	u_int8		data[256];
+} voip_socket_hdr;
+#pragma pack(0)
+
 
 typedef struct voip_socket_s
 {
@@ -26,6 +36,7 @@ typedef struct voip_socket_s
 	u_int8		sbuf[1024];
 	u_int16		slen;
 
+	int			mdctl;		//mediastream control socket
 }voip_socket_t;
 
 extern voip_socket_t voip_socket;

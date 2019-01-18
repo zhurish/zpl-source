@@ -354,6 +354,7 @@ int voip_estate_mgt_local_port_set_api(u_int16 port)
 /*
  * manage
  */
+/*
 int voip_estate_mgt_get_phone_number(x5_b_room_position_t *room, voip_position_room_t *out)
 {
 #ifdef VOIP_ESTATE_MGT_LOOPBACK
@@ -390,6 +391,7 @@ int voip_estate_mgt_get_phone_number(x5_b_room_position_t *room, voip_position_r
 	return OK;
 #endif
 }
+*/
 
 int voip_estate_mgt_get_room_position(voip_estate_mgt_t *estate_mgt, char *position, int len)
 {

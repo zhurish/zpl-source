@@ -27,38 +27,40 @@ voip_volume_t voip_volume;
 
 
 #ifdef VOIP_VOLUME_USE_SHELL
+#define VOIP_NOHUP 	" >/dev/null 2>&1"
+
 /*
  * playback
  */
 static int voip_volume_playback_init()
 {
-	super_system("amixer cset numid=82 1");		//Stereo DAC MIXR DAC L1 Switch
-	super_system("amixer cset numid=83 1");		//Stereo DAC MIXL DAC L1 Switch
-	super_system("amixer cset numid=63 1");		//OUT MIXR DAC R1 Switch
-	super_system("amixer cset numid=67 1");		//OUT MIXL DAC L1 Switch
+	super_system("amixer cset numid=82 1" VOIP_NOHUP);		//Stereo DAC MIXR DAC L1 Switch
+	super_system("amixer cset numid=83 1" VOIP_NOHUP);		//Stereo DAC MIXL DAC L1 Switch
+	super_system("amixer cset numid=63 1" VOIP_NOHUP);		//OUT MIXR DAC R1 Switch
+	super_system("amixer cset numid=67 1" VOIP_NOHUP);		//OUT MIXL DAC L1 Switch
 
-	super_system("amixer cset numid=52 1");		//LOUT MIX OUTMIX L Switch
-	super_system("amixer cset numid=53 1");		//LOUT MIX OUTMIX R Switch
-	super_system("amixer cset numid=93 1");		//DAC1 MIXL DAC1 Switch
-	super_system("amixer cset numid=91 1");		//DAC1 MIXR DAC1 Switch
+	super_system("amixer cset numid=52 1" VOIP_NOHUP);		//LOUT MIX OUTMIX L Switch
+	super_system("amixer cset numid=53 1" VOIP_NOHUP);		//LOUT MIX OUTMIX R Switch
+	super_system("amixer cset numid=93 1" VOIP_NOHUP);		//DAC1 MIXL DAC1 Switch
+	super_system("amixer cset numid=91 1" VOIP_NOHUP);		//DAC1 MIXR DAC1 Switch
 
-	super_system("amixer cset numid=7 1 1");	//OUT Playback Switch
+	super_system("amixer cset numid=7 1 1" VOIP_NOHUP);	//OUT Playback Switch
 	return OK;
 }
 
 static int voip_volume_playback_exit()
 {
-	super_system("amixer cset numid=82 0");		//Stereo DAC MIXR DAC L1 Switch
-	super_system("amixer cset numid=83 0");		//Stereo DAC MIXL DAC L1 Switch
-	super_system("amixer cset numid=63 0");		//OUT MIXR DAC R1 Switch
-	super_system("amixer cset numid=67 0");		//OUT MIXL DAC L1 Switch
+	super_system("amixer cset numid=82 0" VOIP_NOHUP);		//Stereo DAC MIXR DAC L1 Switch
+	super_system("amixer cset numid=83 0" VOIP_NOHUP);		//Stereo DAC MIXL DAC L1 Switch
+	super_system("amixer cset numid=63 0" VOIP_NOHUP);		//OUT MIXR DAC R1 Switch
+	super_system("amixer cset numid=67 0" VOIP_NOHUP);		//OUT MIXL DAC L1 Switch
 
-	super_system("amixer cset numid=52 0");		//LOUT MIX OUTMIX L Switch
-	super_system("amixer cset numid=53 0");		//LOUT MIX OUTMIX R Switch
-	super_system("amixer cset numid=93 0");		//DAC1 MIXL DAC1 Switch
-	super_system("amixer cset numid=91 0");		//DAC1 MIXR DAC1 Switch
+	super_system("amixer cset numid=52 0" VOIP_NOHUP);		//LOUT MIX OUTMIX L Switch
+	super_system("amixer cset numid=53 0" VOIP_NOHUP);		//LOUT MIX OUTMIX R Switch
+	super_system("amixer cset numid=93 0" VOIP_NOHUP);		//DAC1 MIXL DAC1 Switch
+	super_system("amixer cset numid=91 0" VOIP_NOHUP);		//DAC1 MIXR DAC1 Switch
 
-	super_system("amixer cset numid=7 0 0");	//OUT Playback Switch
+	super_system("amixer cset numid=7 0 0" VOIP_NOHUP);	//OUT Playback Switch
 	return OK;
 }
 
@@ -75,7 +77,7 @@ static int voip_volume_playback_volume_init(int out, int dac, int mono)
 		v = (float)((float)out)/100 * 39;
 		_VOIP_VOLUME_DEBUG("=======%s:out=%.2f", __func__,v);
 		//v=30.0;
-		sprintf(cmd, "amixer cset numid=8 %d %d", (int)v, (int)v);
+		sprintf(cmd, "amixer cset numid=8 %d %d" VOIP_NOHUP, (int)v, (int)v);
 		super_system(cmd);
 	}
 	if(dac >= 0)
@@ -83,7 +85,7 @@ static int voip_volume_playback_volume_init(int out, int dac, int mono)
 		v = (float)((float)dac)/100 * 175;
 		_VOIP_VOLUME_DEBUG("=======%s:dac=%.2f", __func__,v);
 		//v=150.0;
-		sprintf(cmd, "amixer cset numid=10 %d %d", (int)v, (int)v);
+		sprintf(cmd, "amixer cset numid=10 %d %d" VOIP_NOHUP, (int)v, (int)v);
 		super_system(cmd);
 	}
 	if(mono >= 0)
@@ -91,7 +93,7 @@ static int voip_volume_playback_volume_init(int out, int dac, int mono)
 		v = (float)((float)mono)/100 * 175;
 		_VOIP_VOLUME_DEBUG("=======%s:mono=%.2f", __func__,v);
 		//v=150.0;
-		sprintf(cmd, "amixer cset numid=11 %d %d", (int)v, (int)v);
+		sprintf(cmd, "amixer cset numid=11 %d %d" VOIP_NOHUP, (int)v, (int)v);
 		super_system(cmd);
 	}
 	//super_system("amixer cset numid=8 1 1");	//OUT Playback Volume 0-39
@@ -102,22 +104,22 @@ static int voip_volume_playback_volume_init(int out, int dac, int mono)
 
 static int voip_volume_dsp_init()
 {
-	if(access("/app/etc/dsp", F_OK) == 0)
+	//if(access("/app/etc/dsp", F_OK) == 0)
 	{
-		super_system("amixer cset numid=45 1");
-		super_system("amixer cset numid=3 2");
-		super_system("amixer cset numid=101 0");
-		super_system("amixer cset numid=100 0");
+		super_system("amixer cset numid=45 1" VOIP_NOHUP);
+		super_system("amixer cset numid=3 2" VOIP_NOHUP);
+		super_system("amixer cset numid=101 0" VOIP_NOHUP);
+		//super_system("amixer cset numid=100 0");
 	}
 	return OK;
 }
 
 static int voip_volume_dsp_exit()
 {
-	if(access("/app/etc/dsp", F_OK) == 0)
+	//if(access("/app/etc/dsp", F_OK) == 0)
 	{
-		super_system("amixer cset numid=45 0");
-		super_system("amixer cset numid=3 0");
+		super_system("amixer cset numid=45 0" VOIP_NOHUP);
+		super_system("amixer cset numid=3 0" VOIP_NOHUP);
 	}
 	return OK;
 }
@@ -134,23 +136,24 @@ static int voip_volume_capture_init()
 	super_system("amixer cset numid=100 0");		//DSP DL Mux
 */
 
-	super_system("amixer cset numid=112 1");		//Sto1 ADC MIXL ADC1 Switch
-	super_system("amixer cset numid=110 1");		//Sto1 ADC MIXR ADC1 Switch
-	super_system("amixer cset numid=128 1");		//RECMIXR BST2 Switch
-	super_system("amixer cset numid=131 1");		//RECMIXL BST2 Switch
+	super_system("amixer cset numid=112 1" VOIP_NOHUP);		//Sto1 ADC MIXL ADC1 Switch
+	super_system("amixer cset numid=110 1" VOIP_NOHUP);		//Sto1 ADC MIXR ADC1 Switch
+	super_system("amixer cset numid=128 1" VOIP_NOHUP);		//RECMIXR BST2 Switch
+	super_system("amixer cset numid=131 1" VOIP_NOHUP);		//RECMIXL BST2 Switch
 
-	super_system("amixer cset numid=17 1 1");	//ADC Capture Switch
+	super_system("amixer cset numid=17 1 1" VOIP_NOHUP);	//ADC Capture Switch
+	super_system("amixer cset numid=18 100 100" VOIP_NOHUP);	//ADC Capture Switch
 	return OK;
 }
 
 static int voip_volume_capture_exit()
 {
-	super_system("amixer cset numid=112 0");		//Sto1 ADC MIXL ADC1 Switch
-	super_system("amixer cset numid=110 0");		//Sto1 ADC MIXR ADC1 Switch
-	super_system("amixer cset numid=128 0");		//RECMIXR BST2 Switch
-	super_system("amixer cset numid=131 0");		//RECMIXL BST2 Switch
+	super_system("amixer cset numid=112 0" VOIP_NOHUP);		//Sto1 ADC MIXL ADC1 Switch
+	super_system("amixer cset numid=110 0" VOIP_NOHUP);		//Sto1 ADC MIXR ADC1 Switch
+	super_system("amixer cset numid=128 0" VOIP_NOHUP);		//RECMIXR BST2 Switch
+	super_system("amixer cset numid=131 0" VOIP_NOHUP);		//RECMIXL BST2 Switch
 
-	super_system("amixer cset numid=17 0 0");	//ADC Capture Switch
+	super_system("amixer cset numid=17 0 0" VOIP_NOHUP);	//ADC Capture Switch
 	return OK;
 }
 
@@ -160,11 +163,11 @@ static int voip_volume_capture_boost_init(int value)
 	{
 		char cmd[128];
 		memset(cmd, 0, sizeof(cmd));
-		sprintf(cmd, "amixer cset numid=14 %d", value);
+		sprintf(cmd, "amixer cset numid=14 %d" VOIP_NOHUP, value);
 		super_system(cmd);
 
 		memset(cmd, 0, sizeof(cmd));
-		sprintf(cmd, "amixer cset numid=15 %d", value);
+		sprintf(cmd, "amixer cset numid=15 %d" VOIP_NOHUP, value);
 		super_system(cmd);
 	}
 	//super_system("amixer cset numid=14 7");		//IN1 Boost Volume 0-8
@@ -182,7 +185,7 @@ static int voip_volume_capture_volume_init(int inv, int adc, int mono)
 		v = (float)((float)inv)/100 * 31;
 		_VOIP_VOLUME_DEBUG("=======%s:inv=%.2f", __func__,v);
 		//v=30.0;
-		sprintf(cmd, "amixer cset numid=16 %d %d", (int)v, (int)v);
+		sprintf(cmd, "amixer cset numid=16 %d %d" VOIP_NOHUP, (int)v, (int)v);
 		super_system(cmd);
 	}
 	if(adc >= 0)
@@ -190,7 +193,7 @@ static int voip_volume_capture_volume_init(int inv, int adc, int mono)
 		v = (float)((float)adc)/100 * 127;
 		_VOIP_VOLUME_DEBUG("=======%s:adc=%.2f", __func__,v);
 		//v=120.0;
-		sprintf(cmd, "amixer cset numid=18 %d %d", (int)v, (int)v);
+		sprintf(cmd, "amixer cset numid=18 %d %d" VOIP_NOHUP, (int)v, (int)v);
 		super_system(cmd);
 	}
 	if(mono >= 0)
@@ -198,7 +201,7 @@ static int voip_volume_capture_volume_init(int inv, int adc, int mono)
 		v = (float)((float)mono)/100 * 127;
 		_VOIP_VOLUME_DEBUG("=======%s:mono=%.2f", __func__,v);
 		//v=120.0;
-		sprintf(cmd, "amixer cset numid=19 %d %d", (int)v, (int)v);
+		sprintf(cmd, "amixer cset numid=19 %d %d" VOIP_NOHUP, (int)v, (int)v);
 		super_system(cmd);
 	}
 
@@ -214,11 +217,11 @@ static int voip_volume_capture_boost_gain_init(int value)
 	{
 		char cmd[128];
 		memset(cmd, 0, sizeof(cmd));
-		sprintf(cmd, "amixer cset numid=21 %d", value);
+		sprintf(cmd, "amixer cset numid=21 %d" VOIP_NOHUP, value);
 		super_system(cmd);
 
 		memset(cmd, 0, sizeof(cmd));
-		sprintf(cmd, "amixer cset numid=22 %d", value);
+		sprintf(cmd, "amixer cset numid=22 %d" VOIP_NOHUP, value);
 		super_system(cmd);
 	}
 	//super_system("amixer cset numid=21 3");		//STO1 ADC Boost Gain Volume 0-3
@@ -253,7 +256,7 @@ int voip_volume_module_init()
 
 	os_time_create_once(voip_volume_apply_time, NULL, 9000);
 #ifdef VOIP_STARTUP_TEST
-	os_time_create_once( _voip_startup_test, NULL, 9000);
+	//os_time_create_once( _voip_startup_test, NULL, 9000);
 #endif
 	//voip_volume_apply();
 	return OK;
@@ -302,12 +305,12 @@ static int _voip_cards_power_amplifier(voip_volume_t *volume, BOOL enable)
 	if(enable)
 	{
 		volume->power = TRUE;
-		super_system("echo 1 > /sys/class/leds/lm4890:status/brightness");
+		super_system("echo 1 > /sys/class/leds/lm4890:status/brightness" VOIP_NOHUP);
 	}
 	else
 	{
 		volume->power = FALSE;
-		super_system("echo 0 > /sys/class/leds/lm4890:status/brightness");
+		super_system("echo 0 > /sys/class/leds/lm4890:status/brightness" VOIP_NOHUP);
 	}
 	return OK;
 }

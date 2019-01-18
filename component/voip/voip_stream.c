@@ -254,26 +254,7 @@ int voip_stream_noise_gate_api(voip_stream_t* out, BOOL enable, float ng_floorga
 
 int voip_stream_ctlfd_get_api(void)
 {
-#ifdef PL_VOIP_MEDIASTREAM
-	if(voip_stream)
-		return mediastream_get_ctlfd(voip_stream->mediastream);
-	else
-		return 0;
-#else
-	return 0;
-#endif
-}
-
-int voip_stream_ctlfd_set_api(int fd)
-{
-#ifdef PL_VOIP_MEDIASTREAM
-	if(voip_stream)
-		return mediastream_set_ctlfd(voip_stream->mediastream, fd);
-	else
-		return ERROR;
-#else
-	return ERROR;
-#endif
+	return voip_socket.mdctl;
 }
 
 void voip_stream_setup_api(voip_stream_t* args)
@@ -301,7 +282,7 @@ void voip_stream_running_api(voip_stream_t* args)
 void voip_stream_clear_api(voip_stream_t* args)
 {
 #ifdef PL_VOIP_MEDIASTREAM
-	return mediastream_running(args->mediastream);
+	return mediastream_clear(args->mediastream);
 #else
 	return;
 #endif
@@ -421,15 +402,15 @@ int voip_stream_show_config(struct vty *vty)
 
 		//echo limiter
 		vty_out(vty, " voip stream echo-limiter           : %s%s", voip_stream->echo_limiter ? "TRUE":"FALSE", VTY_NEWLINE);
-		vty_out(vty, " voip stream el-force               : %d%s", voip_stream->el_force, VTY_NEWLINE);
-		vty_out(vty, " voip stream el-thres               : %d%s", voip_stream->el_thres, VTY_NEWLINE);
-		vty_out(vty, " voip stream el-transmit-thres      : %d%s", voip_stream->el_transmit, VTY_NEWLINE);
+		vty_out(vty, " voip stream el-force               : %0.2f%s", voip_stream->el_force, VTY_NEWLINE);
+		vty_out(vty, " voip stream el-thres               : %0.2f%s", voip_stream->el_thres, VTY_NEWLINE);
+		vty_out(vty, " voip stream el-transmit-thres      : %0.2f%s", voip_stream->el_transmit, VTY_NEWLINE);
 		vty_out(vty, " voip stream el-sustain             : %d%s", voip_stream->el_sustain, VTY_NEWLINE);
 		vty_out(vty, " voip stream noise-gate             : %s%s", voip_stream->noise_gate ? "TRUE":"FALSE", VTY_NEWLINE);
-		vty_out(vty, " voip stream ng-floorgain           : %d%s", voip_stream->ng_floorgain, VTY_NEWLINE);
-		vty_out(vty, " voip stream ng-threshold           : %d%s", voip_stream->ng_threshold, VTY_NEWLINE);
+		vty_out(vty, " voip stream ng-floorgain           : %0.2f%s", voip_stream->ng_floorgain, VTY_NEWLINE);
+		vty_out(vty, " voip stream ng-threshold           : %0.2f%s", voip_stream->ng_threshold, VTY_NEWLINE);
 #ifdef PL_VOIP_MEDIASTREAM
-		voip_mediastream_show_config(voip_stream->mediastream, vty);
+	//	voip_mediastream_show_config(voip_stream->mediastream, vty);
 #endif
 	}
 	return OK;
@@ -534,6 +515,18 @@ int voip_stream_stop_api(void)
 	voip_socket_quit(&voip_socket);
 	return OK;
 }
+
+int voip_stream_stop_force_api(void)
+{
+	//int n= 1;
+	voip_task.active = FALSE;
+	voip_task.stream = FALSE;
+#ifdef PL_VOIP_MEDIASTREAM
+	mediastream_stop_force();
+#endif
+	return OK;
+}
+
 
 #ifdef VOIP_STREAM_DEBUG_TEST
 /*

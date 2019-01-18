@@ -73,8 +73,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #ifdef PL_VOIP_MEDIASTREAM
 
-static int cond=1;
 
+static int mediastream_running_flag = 1;
 
 // HELPER METHODS
 //static void stop_handler(int signum);
@@ -148,7 +148,7 @@ static const char *usage="mediastream --local <port>\n"
 
 mediastream_global* mediastream_init_default(void) {
 	mediastream_global* args = (mediastream_global*)ms_malloc0(sizeof(mediastream_global));
-	cond = 1;
+	mediastream_running_flag = 1;
 	args->localport=0;
 	args->remoteport=0;
 	args->payload=0;
@@ -555,18 +555,6 @@ void *mediastream_lookup_factory(mediastream_global *args)
 	return args->factory;
 }
 
-int mediastream_get_ctlfd(mediastream_global *args)
-{
-	return args->ctlfd;
-}
-
-int mediastream_set_ctlfd(mediastream_global *args, int fd)
-{
-	if(args->ctlfd)
-		close(args->ctlfd);
-	args->ctlfd = fd;
-	return 0;
-}
 
 int mediastream_hw_init(mediastream_global *args)
 {
@@ -585,16 +573,20 @@ int mediastream_hw_init(mediastream_global *args)
 
 	if(!args->ctlfd)
 	{
-		args->ctlfd = os_pipe_create("mdctl", O_RDWR);
+		//args->ctlfd = os_pipe_create("mdctl", O_RDWR);
+		args->ctlfd = voip_stream_ctlfd_get_api();
 		if(args->ctlfd)
 		{
-			args->ctlfp = fdopen(args->ctlfd, "r+");
+			//args->ctlfp = fdopen(args->ctlfd, "r+");
 			args->initialization = TRUE;
+			args->running = FALSE;
 			return OK;
 		}
+		args->running = FALSE;
 		return ERROR;
 	}
 	args->initialization = TRUE;
+	args->running = FALSE;
 	return OK;
 }
 
@@ -625,23 +617,23 @@ int mediastream_hw_exit(mediastream_global *args)
 
 	ms_factory_destroy(args->factory);
 
-	if(args->ctlfd)
-		close(args->ctlfd);
 	args->ctlfd = 0;
-	args->ctlfp = NULL;
+	//args->ctlfp = NULL;
 	args->initialization = FALSE;
+	args->running = FALSE;
 	//free(args);
 	return OK;
 }
 
-/*int stop_ctl(int signum)
+int mediastream_stop_force()
 {
-	cond--;
-	if (cond<0) {
-		ms_error("Brutal exit (%d)\n", cond);
+	while(mediastream_running_flag)
+	{
+		mediastream_running_flag--;
+		ms_usleep(10);
 	}
-	return cond;
-}*/
+	return mediastream_running_flag;
+}
 
 void mediastream_setup(mediastream_global* args) {
 	/*create the rtp session */
@@ -650,6 +642,10 @@ void mediastream_setup(mediastream_global* args) {
 #endif
 
 	MSFactory *factory;
+
+	if(args->running == TRUE)
+		return;
+
 	if(!args->initialization)
 	{
 		ortp_init();
@@ -966,6 +962,8 @@ void mediastream_setup(mediastream_global* args) {
 	ice_session_choose_default_remote_candidates(args->ice_session);
 	ice_session_start_connectivity_checks(args->ice_session);
 
+	mediastream_running_flag = 1;
+
 	if (args->netsim.enabled){
 		rtp_session_enable_network_simulation(args->session,&args->netsim);
 	}
@@ -973,16 +971,144 @@ void mediastream_setup(mediastream_global* args) {
 
 
 static void mediastream_tool_iterate(mediastream_global* args) {
+#if 1
+	mediastream_hdr hdr;
 	struct pollfd pfd;
 	int err;
+	int ctlfd = voip_stream_ctlfd_get_api();
+	if (args->interactive)
+	{
+		if(ctlfd == 0)
+		{
+			ms_usleep(10000);
+			return;
+		}
+		if(ctlfd != args->ctlfd)
+		{
+			args->ctlfd = ctlfd;
+		}
+		pfd.fd=args->ctlfd;
+		pfd.events=POLLIN;
+		pfd.revents=0;
 
+		err=poll(&pfd,1,10);
+
+		if (err==1 && (pfd.revents & POLLIN))
+		{
+			zlog_debug(ZLOG_VOIP, "media stream controls sock can read sock=%d", args->ctlfd);
+			memset(&hdr, 0, sizeof(hdr));
+			char *commands = hdr.data;
+			int intarg;
+			commands[127]='\0';
+			ms_sleep(1);  /* ensure following text be printed after ortp messages */
+			if (args->eq)
+				ms_message("\nPlease enter equalizer requests, such as 'eq active 1', 'eq active 0', 'eq 1200 0.1 200'\n");
+
+			//if (fgets(commands,sizeof(commands)-1,args->ctlfp)!=NULL)
+			if (read(args->ctlfd, &hdr, sizeof(hdr)))
+			{
+				MSEqualizerGain d = {0};
+				int active;
+#ifdef VOIP_MEDIASTRREM_CTL_DEBUG
+				zlog_debug(ZLOG_VOIP, " GET CMD(%d byte):%s", ntohs(hdr.len), commands);
+#endif
+				if (sscanf(commands,"eq active %i",&active)==1)
+				{
+					audio_stream_enable_equalizer(args->audio, args->audio->eq_loc, active);
+					ms_message("OK\n");
+				}
+				else if (sscanf(commands,"eq %f %f %f",&d.frequency,&d.gain,&d.width)==3)
+				{
+					audio_stream_equalizer_set_gain(args->audio, args->audio->eq_loc, &d);
+					ms_message("OK\n");
+				}
+				else if (sscanf(commands,"eq %f %f",&d.frequency,&d.gain)==2)
+				{
+					audio_stream_equalizer_set_gain(args->audio, args->audio->eq_loc, &d);
+					ms_message("OK\n");
+				}
+				else if (strstr(commands,"dump"))
+				{
+					int n=0,i;
+					float *t;
+					MSFilter *equalizer = NULL;
+					if(args->audio->eq_loc == MSEqualizerHP)
+					{
+						equalizer = args->audio->spk_equalizer;
+					}
+					else if(args->audio->eq_loc == MSEqualizerMic)
+					{
+						equalizer = args->audio->mic_equalizer;
+					}
+					if(equalizer)
+					{
+						ms_filter_call_method(equalizer,MS_EQUALIZER_GET_NUM_FREQUENCIES,&n);
+						t=(float*)alloca(sizeof(float)*n);
+						ms_filter_call_method(equalizer,MS_EQUALIZER_DUMP_STATE,t);
+						for(i=0;i<n;++i)
+						{
+							if (fabs(t[i]-1)>0.01)
+							{
+								ms_message("%i:%f:0 ",(i*args->pt->clock_rate)/(2*n),t[i]);
+							}
+						}
+					}
+					ms_message("\nOK\n");
+				}
+				else if (sscanf(commands,"lossrate %i",&intarg)==1)
+				{
+					args->netsim.enabled=TRUE;
+					args->netsim.loss_rate=intarg;
+					rtp_session_enable_network_simulation(args->session,&args->netsim);
+				}
+				else if (sscanf(commands,"bandwidth %i",&intarg)==1)
+				{
+					args->netsim.enabled=TRUE;
+					args->netsim.max_bandwidth=intarg;
+					rtp_session_enable_network_simulation(args->session,&args->netsim);
+				}
+				else if (strstr(commands,"quit"))
+				{
+					mediastream_running_flag = 0;
+					zlog_debug(ZLOG_VOIP, "quit from mediastream");
+				}
+				else
+					ms_warning("Cannot understand this.\n");
+			}
+		}
+		else if (err==-1 && errno!=EINTR)
+		{
+#ifdef VOIP_MEDIASTRREM_CTL_DEBUG
+			zlog_debug(ZLOG_VOIP, "mediastream's poll() returned %s",strerror(errno));
+#endif
+			ms_fatal("mediastream's poll() returned %s",strerror(errno));
+		}
+	}
+	else
+	{
+		ms_usleep(10000);
+	}
+#else
+	struct pollfd pfd;
+	int err;
+	int ctlfd = voip_stream_ctlfd_get_api();
 	if (args->interactive){
+		if(ctlfd == 0)
+		{
+			ms_usleep(10000);
+			return;
+		}
+		if(ctlfd != args->ctlfd)
+		{
+			args->ctlfd = ctlfd;
+		}
 		pfd.fd=args->ctlfd;
 		pfd.events=POLLIN;
 		pfd.revents=0;
 
 		err=poll(&pfd,1,10);
 		if (err==1 && (pfd.revents & POLLIN)){
+			zlog_debug(ZLOG_VOIP, "media stream controls sock can read sock=%d", args->ctlfd);
 			char commands[128];
 			int intarg;
 			commands[127]='\0';
@@ -1033,7 +1159,7 @@ static void mediastream_tool_iterate(mediastream_global* args) {
 					args->netsim.max_bandwidth=intarg;
 					rtp_session_enable_network_simulation(args->session,&args->netsim);
 				}else if (strstr(commands,"quit")){
-					cond=0;
+					mediastream_running_flag=0;
 				}else ms_warning("Cannot understand this.\n");
 			}
 		}else if (err==-1 && errno!=EINTR){
@@ -1045,20 +1171,23 @@ static void mediastream_tool_iterate(mediastream_global* args) {
 	}else{
 		ms_usleep(10000);
 	}
+#endif
 }
 
-void mediastream_running(mediastream_global* args) {
+void mediastream_running(mediastream_global* args)
+{
+	int n;
 	rtp_session_register_event_queue(args->session,args->q);
 
 #if TARGET_OS_IPHONE
 	if (args->video) ms_set_video_stream(args->video); /*for IOS*/
 #endif
 
-	while(cond)
+	while(mediastream_running_flag)
 	{
-		int n;
-		//voip_state_set(VOIP_STATE_TALK);
-		for(n=0;n<500 && cond;++n){
+		args->running = TRUE;
+
+		for(n=0;n<500 && mediastream_running_flag;++n){
 			mediastream_tool_iterate(args);
 #if defined(VIDEO_ENABLED)
 			if (args->video) video_stream_iterate(args->video);
@@ -1069,7 +1198,7 @@ void mediastream_running(mediastream_global* args) {
 		if (args->session){
 			float audio_load = 0;
 			float video_load = 0;
-
+			//zlog_debug(ZLOG_VOIP, "---%s: INTO mediastream", __func__);
 			ms_message("Bandwidth usage: download=%f kbits/sec, upload=%f kbits/sec\n",
 				rtp_session_get_recv_bandwidth(args->session)*1e-3,
 				rtp_session_get_send_bandwidth(args->session)*1e-3);
@@ -1087,9 +1216,15 @@ void mediastream_running(mediastream_global* args) {
 			ms_message("Quality indicator : %f\n",args->audio ? audio_stream_get_quality_rating(args->audio) : media_stream_get_quality_rating((MediaStream*)args->video));
 		}
 	}
+	zlog_debug(ZLOG_VOIP, "---%s: quit from mediastream", __func__);
 }
 
 void mediastream_clear(mediastream_global* args) {
+
+	zlog_debug(ZLOG_VOIP, "---%s", __func__);
+
+	if(args->running == FALSE)
+		return;
 	ms_message("stopping all...\n");
 	ms_message("Average quality indicator: %f",args->audio ? audio_stream_get_average_quality_rating(args->audio) : -1);
 
@@ -1111,13 +1246,13 @@ void mediastream_clear(mediastream_global* args) {
 	ortp_ev_queue_destroy(args->q);
 
 	rtp_profile_destroy(args->profile);
-
-	if (args->logfile)
+	args->running = FALSE;
+/*	if (args->logfile)
 		fclose(args->logfile);
 	args->logfile = NULL;
 
-	ms_factory_destroy(args->factory);
-	args->initialization = FALSE;
+	ms_factory_destroy(args->factory);*/
+	//args->initialization = TRUE;
 }
 
 // ANDROID JNI WRAPPER
@@ -1250,6 +1385,8 @@ static rcalgo parse_rc_algo(const char *algo){
 
 #ifdef PL_VOIP_MEDIASTREAM_TEST
 void clear_mediastreams(mediastream_global* args) {
+	if(args->running == FALSE)
+		return;
 	ms_message("stopping all...\n");
 	ms_message("Average quality indicator: %f",args->audio ? audio_stream_get_average_quality_rating(args->audio) : -1);
 
@@ -1271,14 +1408,13 @@ void clear_mediastreams(mediastream_global* args) {
 	ortp_ev_queue_destroy(args->q);
 
 	rtp_profile_destroy(args->profile);
-
-	if (args->logfile)
+	args->running = FALSE;
+/*	if (args->logfile)
 		fclose(args->logfile);
 	args->logfile = NULL;
-	if(args->ctlfd)
-		close(args->ctlfd);
+
 	args->ctlfd = 0;
-	ms_factory_destroy(args->factory);
+	ms_factory_destroy(args->factory);*/
 }
 
 

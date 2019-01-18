@@ -708,8 +708,29 @@ DEFUN (show_ip_sip_server,
 }
 
 
-
-
+DEFUN (sip_test_cmd,
+		sip_test_cmd_cmd,
+		"sip-test (register-start|register-stop|call-stop|STRING)",
+		"SIP configure\n"
+		"encrypt\n")
+{
+	//int ret = ERROR;
+	//if(argc == 1)
+	//{
+		if(strstr(argv[0], "retister-start"))
+			voip_sip_register_start(TRUE);
+		else if(strstr(argv[0], "retister-start"))
+			voip_sip_register_start(FALSE);
+		else if(strstr(argv[0], "call-stop"))
+			voip_sip_call_stop(FALSE);
+	//}
+	//else
+	//{
+		else
+			voip_sip_call_start(argv[0]);
+	//}
+	return  CMD_SUCCESS;
+}
 
 
 
@@ -780,6 +801,7 @@ static void cmd_base_sip_init(int node)
 static void cmd_show_sip_init(int node)
 {
 	install_element(node, &show_ip_sip_server_cmd);
+	install_element(node, &sip_test_cmd_cmd);
 }
 
 void cmd_sip_init(void)

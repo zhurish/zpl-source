@@ -1,8 +1,14 @@
 #!/bin/sh
 
-# aplay
-echo 1 > /sys/class/leds/lm4890\:status/brightness
 
+#DSP
+amixer cset numid=45 1
+
+amixer cset numid=3 2
+
+amixer cset numid=101 0
+
+# aplay
 amixer cset numid=83 1
 
 amixer cset numid=82 1
@@ -20,6 +26,7 @@ amixer cset numid=93 1
 amixer cset numid=91 1
 
 amixer cset numid=7 1 1
+echo 1 > /sys/class/leds/lm4890\:status/brightness
 
 # record
 #amixer cset numid=45 1

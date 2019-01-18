@@ -24,7 +24,7 @@ struct host host;
 int host_sysconfig_sync()
 {
 	//cp -arf /app/etc/* /tmp/app/etc/
-	super_system("cp -arf" " "SYSCONFDIR"/default-config.cfg " SYSCONF_REAL_DIR"/*");
+	super_system("cp -a "SYSCONFDIR"/default-config.cfg " SYSCONF_REAL_DIR"/default-config.cfg");
 	return OK;
 }
 

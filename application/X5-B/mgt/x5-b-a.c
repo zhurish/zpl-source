@@ -81,7 +81,7 @@ static int x5_b_a_hex_debug(x5_b_a_mgt_t *mgt, char *hdr, int rx)
 		if(i%6 == 0)
 			strcat(buf, " ");
 		if(i%12 == 0)
-			strcat(buf, "\n");
+			strcat(buf, "\r\n");
 		strcat(buf, tmp);
 	}
 	zlog_debug(ZLOG_APP, "%s : %s", hdr, buf);
@@ -252,12 +252,12 @@ static int x5_b_a_read_tlv_handle(x5_b_a_mgt_t *mgt, os_tlv_t *tlv)
 	switch(tlv->tag)
 	{
 	case E_CMD_KEEPALIVE:
-		if(tlv->len != E_CMD_ACK_LEN)
+/*		if(tlv->len != E_CMD_ACK_LEN)
 		{
 			if(X5_B_ESP32_DEBUG(EVENT))
 				zlog_warn(ZLOG_APP, "ACK msg (seqnum=%d) len error", mgt->seqnum);
 		}
-		else
+		else*/
 		{
 			ret = OK;
 			mgt->state ++;
@@ -266,12 +266,12 @@ static int x5_b_a_read_tlv_handle(x5_b_a_mgt_t *mgt, os_tlv_t *tlv)
 		}
 		break;
 	case E_CMD_ACK:
-		if(tlv->len != E_CMD_ACK_LEN)
+/*		if(tlv->len != E_CMD_ACK_LEN)
 		{
 			if(X5_B_ESP32_DEBUG(EVENT))
 				zlog_warn(ZLOG_APP, "ACK msg (seqnum=%d) len error", mgt->seqnum);
 		}
-		else
+		else*/
 		{
 			ret = OK;
 			if(X5_B_ESP32_DEBUG(EVENT))
@@ -279,12 +279,12 @@ static int x5_b_a_read_tlv_handle(x5_b_a_mgt_t *mgt, os_tlv_t *tlv)
 		}
 		break;
 	case E_CMD_RESULT:
-		if(tlv->len != E_CMD_RESULT_LEN)
+/*		if(tlv->len != E_CMD_RESULT_LEN)
 		{
 			if(X5_B_ESP32_DEBUG(EVENT))
 				zlog_warn(ZLOG_APP, "OPEN RESULT msg (seqnum=%d) len error", mgt->seqnum);
 		}
-		else
+		else*/
 		{
 			x5_b_a_ack_send(mgt, mgt->seqnum);
 			ret = OK;
@@ -316,7 +316,7 @@ static int x5_b_a_read_tlv_handle(x5_b_a_mgt_t *mgt, os_tlv_t *tlv)
 				mgt->room.data[i] = tlv->val.pval[i];
 			}
 			//memcpy(&mgt->room, tlv->val.pval, tlv->len);
-			//zlog_debug(ZLOG_APP, "START CALLING msg (seqnum=%d) %s OK", mgt->seqnum, tlv->val.pval);
+			//zlog_debug(ZLOG_APP, "START CALLING msg (seqnum=%d) %s OK", mgt->seqnum, mgt->room.data);
 			x5_b_a_ack_send(mgt, mgt->seqnum);
 			x5_b_start_call(TRUE, &mgt->room);
 			ret = OK;
@@ -325,12 +325,12 @@ static int x5_b_a_read_tlv_handle(x5_b_a_mgt_t *mgt, os_tlv_t *tlv)
 		}
 		break;
 	case E_CMD_STOP_CALLING:
-		if(tlv->len != E_CMD_STOP_CALLING_LEN)
+/*		if(tlv->len != E_CMD_STOP_CALLING_LEN)
 		{
 			if(X5_B_ESP32_DEBUG(EVENT))
 				zlog_warn(ZLOG_APP, "STOP CALLING msg (seqnum=%d) len error", mgt->seqnum);
 		}
-		else
+		else*/
 		{
 			x5_b_a_ack_send(mgt, mgt->seqnum);
 			x5_b_start_call(FALSE, &mgt->room);
@@ -340,12 +340,12 @@ static int x5_b_a_read_tlv_handle(x5_b_a_mgt_t *mgt, os_tlv_t *tlv)
 		}
 		break;
 	case E_CMD_ON_LINE:
-		if(tlv->len != E_CMD_ON_LINE_LEN)
+/*		if(tlv->len != E_CMD_ON_LINE_LEN)
 		{
 			if(X5_B_ESP32_DEBUG(EVENT))
 				zlog_warn(ZLOG_APP, "ON LINE msg (seqnum=%d) len error", mgt->seqnum);
 		}
-		else
+		else*/
 		{
 			ret = OK;
 			if(X5_B_ESP32_DEBUG(EVENT))
@@ -367,12 +367,12 @@ static int x5_b_a_read_tlv_handle(x5_b_a_mgt_t *mgt, os_tlv_t *tlv)
 */
 
 	case E_CMD_DOOR_TYPE:
-		if(tlv->len != E_CMD_DOOR_TYPE_LEN)
+/*		if(tlv->len != E_CMD_DOOR_TYPE_LEN)
 		{
 			if(X5_B_ESP32_DEBUG(EVENT))
 				zlog_warn(ZLOG_APP, "DOOR TYPE msg (seqnum=%d) len error", mgt->seqnum);
 		}
-		else
+		else*/
 		{
 			x5_b_a_ack_send(mgt, mgt->seqnum);
 			ret = OK;
@@ -381,12 +381,12 @@ static int x5_b_a_read_tlv_handle(x5_b_a_mgt_t *mgt, os_tlv_t *tlv)
 		}
 		break;
 	case E_CMD_KEY:
-		if(tlv->len != E_CMD_KEY_LEN)
+/*		if(tlv->len != E_CMD_KEY_LEN)
 		{
 			if(X5_B_ESP32_DEBUG(EVENT))
 				zlog_warn(ZLOG_APP, "KEY msg (seqnum=%d) len error", mgt->seqnum);
 		}
-		else
+		else*/
 		{
 			mgt->keyval.keyval[mgt->keyval.keynum++] = tlv->val.val32;
 			x5_b_a_ack_send(mgt, mgt->seqnum);
@@ -396,12 +396,12 @@ static int x5_b_a_read_tlv_handle(x5_b_a_mgt_t *mgt, os_tlv_t *tlv)
 		}
 		break;
 	case E_CMD_FACTORY_MODE:
-		if(tlv->len != E_CMD_FACTORY_MODE_LEN)
+/*		if(tlv->len != E_CMD_FACTORY_MODE_LEN)
 		{
 			if(X5_B_ESP32_DEBUG(EVENT))
 				zlog_warn(ZLOG_APP, "FACTORY MODE msg (seqnum=%d) len error", mgt->seqnum);
 		}
-		else
+		else*/
 		{
 			memcpy(&mgt->fact, tlv->val.pval, tlv->len);
 			ret = x5_b_x5_b_factory_set(&mgt->fact);
@@ -436,12 +436,12 @@ static int x5_b_a_read_handle(x5_b_a_mgt_t *mgt)
 	}
 	crc1 =  Data_CRC16Check (mgt->buf,  mgt->len - 2);
 	crc = (u_int16 *)&mgt->buf[mgt->len - 2];
-	if(*crc != htons(crc1))
+/*	if(*crc != htons(crc1))
 	{
 		if(X5_B_ESP32_DEBUG(EVENT))
-			zlog_warn(ZLOG_APP, "CRC CHECK (%d != %d)", crc, crc1);
+			zlog_warn(ZLOG_APP, "CRC CHECK (%x != %x)", crc, crc1);
 		return ERROR;
-	}
+	}*/
 	len = ntohl(hdr->total_len) - 4;
 	offset += sizeof(x5_b_a_hdr_t);
 	mgt->seqnum = hdr->seqnum;
@@ -474,14 +474,14 @@ static int x5_b_a_timer_eloop(struct eloop *eloop)
 	if(mgt->state)
 		mgt->state--;
 	//zlog_debug(ZLOG_APP, "x5_b_a_timer_eloop OK");
-	//if(mgt->state > 0)
+	if(/*mgt->state > */0)
 	{
 		x5_b_a_hdr_make(mgt);
 		x5_b_a_keepalive_make(mgt, 0);
 		x5_b_a_crc_make(mgt);
-		if(X5_B_ESP32_DEBUG(EVENT))
-			zlog_debug(ZLOG_APP, "KEEPALIVE MSG to %s:%d %d byte", mgt->remote_address,
-						mgt->remote_port, mgt->slen);
+		//if(X5_B_ESP32_DEBUG(EVENT))
+		//	zlog_debug(ZLOG_APP, "KEEPALIVE MSG to %s:%d %d byte", mgt->remote_address,
+		//				mgt->remote_port, mgt->slen);
 		x5_b_a_send_msg(mgt);
 	}
 	mgt->t_thread = eloop_add_timer(mgt->master, x5_b_a_timer_eloop, mgt, mgt->interval);
@@ -721,10 +721,13 @@ int x5_b_a_module_init(char *remote, u_int16 port)
 		if(remote)
 			x5_b_a_mgt->remote_address = strdup(remote);
 		else
-			x5_b_a_mgt->remote_address = strdup("171.167.189.2");
+			x5_b_a_mgt->remote_address = strdup("10.10.10.2");
 		x5_b_a_mgt->remote_port = port ? port : X5_B_A_PORT_DEFAULT;
 
 		x5_b_a_mgt->interval = X5_B_A_INTERVAL_DEFAULT;
+
+		X5_B_ESP32_DEBUG_ON(EVENT);
+		X5_B_ESP32_DEBUG_ON(RECV);
 		voip_estate_mgt_init();
 	}
 	//x5_b_a_socket_init(x5_b_a_mgt);

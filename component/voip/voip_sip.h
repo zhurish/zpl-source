@@ -15,12 +15,42 @@
 #include "voip_state.h"
 #include "voip_app.h"
 
+
+#define SIP_CTL_MSGQ
+//#define SIP_CTL_SOCKET
+//#define SIP_CTL_PIPE
+//#define SIP_CTL_SYNC
+
+
+#ifdef SIP_CTL_MSGQ
+#define SIP_CTL_MSGQ_KEY	0X6000
+#define SIP_CTL_LMSGQ_KEY	0X30000
+#endif
+
+
 //#define SIP_CONFIG_FILE		SYSCONFDIR"/voip_cfg.txt"
-#define SIP_CONFIG_FILE		SYSCONF_REAL_DIR"/voip_cfg.txt"
+#define SIP_CONFIG_FILE		SYSCONF_REAL_DIR"/sip.cfg"
 
 
 #define SIP_CTL_TIMEOUT		5
 #define VOIP_SIP_EVENT_LOOPBACK
+
+
+
+#define _SIP_CTL_DEBUG
+
+#define SIP_CTL_DEBUG_RECV		0x0001
+#define SIP_CTL_DEBUG_SEND		0x0002
+#define SIP_CTL_DEBUG_DETAIL	0x0004
+#define SIP_CTL_DEBUG_EVENT		0x0008
+#define SIP_CTL_DEBUG_MSGQ		0x0010
+
+#define SIP_CTL_DEBUG(n)		(SIP_CTL_DEBUG_ ## n & voip_sip_ctl.debug)
+#define SIP_CTL_DEBUG_ON(n)		(voip_sip_ctl.debug |= SIP_CTL_DEBUG_ ## n)
+#define SIP_CTL_DEBUG_OFF(n)	(voip_sip_ctl.debug &= ~SIP_CTL_DEBUG_ ## n)
+
+
+
 
 
 #define SIP_NUMBER_MAX		16
@@ -42,9 +72,9 @@
 #define SIP_DIS_NAME_DEFAULT		TRUE
 #define SIP_100_REL_DEFAULT			TRUE
 
-#define SIP_PHONE_DEFAULT			"tslsmart"
-#define SIP_USERNAME_DEFAULT		"tslsmart"
-#define SIP_PASSWORD_DEFAULT		"tslsmart123456!"
+#define SIP_PHONE_DEFAULT			"0003"
+#define SIP_USERNAME_DEFAULT		"0003"
+#define SIP_PASSWORD_DEFAULT		"0003"
 #define SIP_DTMF_DEFAULT			"rfc2833"
 
 
@@ -67,18 +97,18 @@ typedef struct voip_sip_s
 
 	u_int16				sip_ring;					//��������
 
-	u_int16				sip_register_interval;		//����ע������
+	u_int16				sip_register_interval;		//
 
-	u_int8				sip_hostpart[SIP_DATA_MAX];				//����hostpart
-	u_int16				sip_interval;				//��������
-	BOOL				sip_100_rel;				//����100rel�Ƿ�ǿ��ʹ��
-	BOOL				sip_dis_name;				//����display name
-	u_int8				sip_local_number[SIP_NUMBER_MAX];	//���ñ��غ���
+	u_int8				sip_hostpart[SIP_DATA_MAX];	//热线
+	u_int16				sip_interval;				//
+	BOOL				sip_100_rel;				//
+	BOOL				sip_dis_name;				//display name
+	u_int8				sip_local_number[SIP_NUMBER_MAX];	//
 	u_int8				sip_user[SIP_DATA_MAX];
-	u_int8				sip_password[SIP_DATA_MAX];				//��������
-	u_int8				sip_realm[SIP_DATA_MAX];					//����realm
-	u_int8				sip_dialplan[SIP_DATA_MAX];				//����dialplan
-	BOOL				sip_encrypt;				//����ע������
+	u_int8				sip_password[SIP_DATA_MAX];				//
+	u_int8				sip_realm[SIP_DATA_MAX];					//realm
+	u_int8				sip_dialplan[SIP_DATA_MAX];				//dialplan
+	BOOL				sip_encrypt;				//
 
 
 	void				*t_event;
@@ -137,6 +167,7 @@ typedef enum sip_stop_state_s
 typedef struct voip_sip_ctl_s
 {
 	void		*master;
+#ifdef SIP_CTL_SOCKET
 	BOOL		tcpMode;
 	int			sock;
 	int			accept;
@@ -144,10 +175,16 @@ typedef struct voip_sip_ctl_s
 	void		*t_accept;
 	void		*t_read;
 	void		*t_write;
+#endif
+
+#ifdef SIP_CTL_MSGQ
+	int			taskid;
+	int			rq;
+	int			wq;
+#endif
 	void		*t_event;
 	void		*t_time;
 	void		*t_regtime;
-
 	u_int8		buf[1024];
 	u_int16		len;
 	u_int8		sbuf[1024];
@@ -160,6 +197,8 @@ typedef struct voip_sip_ctl_s
 
 	u_int32		send_cmd;
 	u_int32		ack_cmd;
+
+	u_int32		debug;
 }voip_sip_ctl_t;
 
 
@@ -178,18 +217,34 @@ dtmf = rfc2833
 #define VOIP_SIP_SRCID	6
 #define VOIP_SIP_DSTID	8
 
+
+#define   MSG_TOLINECTL_SETUP        0x00b00001
+#define   MSG_TOLINECTL_RELEASE      0x00b00002
+#define   MSG_TOLINECTL_RMACK        0x00b00003
+#define   MSG_TOLINECTL_RMRPLYERR    0x00b00004
+#define   MSG_TOLINECTL_RMRPLY18X    0x00b00005
+#define   MSG_TOLINECTL_RMANSWER200  0x00b00006
+#define   MSG_TOLINECTL_REGISTER     0x00b00007
+
+#define   MSG_FRLINECTL_LOINVITE     0x00b00008
+#define   MSG_FRLINECTL_LOBYE        0x00b00009
+
 enum
 {
 	SIP_REGISTER_MSG = 1,
-	SIP_REGISTER_ACK_MSG = 2,
+	SIP_REGISTER_ACK_MSG = MSG_TOLINECTL_REGISTER,
 
-	SIP_CALL_MSG = 3,
-	SIP_REMOTE_RING_MSG = 4,
-	SIP_REMOTE_PICKING_MSG,
+	SIP_CALL_MSG = MSG_FRLINECTL_LOINVITE,
+	SIP_REMOTE_RING_MSG = MSG_TOLINECTL_RMRPLY18X,
+	SIP_REMOTE_PICKING_MSG = MSG_TOLINECTL_RMANSWER200,
+	SIP_REMOTE_ACK_MSG = MSG_TOLINECTL_RMACK,
 	SIP_CALL_ERROR_MSG,
-	SIP_REMOTE_STOP_MSG,
-	SIP_LOCAL_STOP_MSG,
+	SIP_REMOTE_STOP_MSG = MSG_TOLINECTL_RELEASE,
+	SIP_LOCAL_STOP_MSG = MSG_FRLINECTL_LOBYE,
+
+	SIP_REMOTE_INFO_MSG = 0x00b0000a,
 };
+
 
 enum
 {
@@ -204,17 +259,45 @@ enum
 };
 
 
-#define SIP_MSG_OFFSET(n)		(n) + sizeof(MSG_HDR_T)
-#define SIP_MSG_LEN(n)			(n) + sizeof(MSG_HDR_T)
+#define SIP_MSG_OFFSET(n)		((n) + sizeof(MSG_HDR_T))
+#define SIP_MSG_LEN(n)			((n) + sizeof(MSG_HDR_T))
 
 #pragma pack(1)
+
+#define VOS_MSG_HDR_MAGIC    (0xaabbccdd)
+#define SIP_MSG_HDR_MAGIC	VOS_MSG_HDR_MAGIC
+
+#if 0
 typedef struct
 {
+	u_int32         magic;
+	u_int32      	priority;  /* Priority must be the first 4-byte */
+	u_int32         srcApplId; /* VOS_APPL_ID */
+	u_int32    		type;
+    u_int32         srcMsgQKey;
+    BOOL            sync;      /* Sync or async message */
+    u_int32         len;       /* the length of the message, including the message hdr */
+    u_int32         tick;
+} SIP_MSG_HDR_T;
+#endif
+
+typedef struct
+{
+#if 0
     unsigned char    srcApplId;  /*源进程号  VOIP--6，linectl---8*/
     unsigned char    dstAppId;   /*目的进程号*/
-    unsigned char    type;     /*消息类型 1--注册；2--注册返回，3--*/
+    unsigned char    type;     	/*消息类型 1--注册；2--注册返回，3--*/
     BOOL             sync;      /* 是否是同步消息 */
     u_int32          len;       /* 消息长度，包含消息头 */
+#endif
+	u_int32         magic;
+	u_int32      	priority;  /* Priority must be the first 4-byte */
+	u_int32         srcApplId; /* VOS_APPL_ID */
+	u_int32    		type;
+    u_int32         srcMsgQKey;
+    BOOL            sync;      /* Sync or async message */
+    u_int32         len;       /* the length of the message, including the message hdr */
+    u_int32         tick;
 }MSG_HDR_T;
 
 /*type = 1,注册，linectl---->voip*/
@@ -226,6 +309,7 @@ typedef struct
 /*type = 2,注册结果返回，voip---->linectl*/
 typedef struct
 {
+    unsigned char uid;
     unsigned char rlt;    /*1---注册成功；0---注册失败*/
 }MSG_REG_RLT;
 
@@ -263,6 +347,16 @@ typedef struct
     unsigned char codec;     /*远端使用的codec*/
 }MSG_REMOT_ANSWER;
 
+typedef struct
+{
+    unsigned char uid;       /* uid = 1*/
+    unsigned char senid;     /* senid = 1*/
+    unsigned int  rtp_port;  /*Ô¶¶Ërtp¶Ë¿Ú*/
+    unsigned char rtp_addr[64];  /*Ô¶¶ËRTPµØÖ·*/
+    unsigned char codec;     /*Ô¶¶ËÊ¹ÓÃµÄcodec*/
+}MSG_REMOT_ACK;
+
+
 /*type = 6,呼叫出错4XX，voip---->linectl*/
 typedef struct
 {
@@ -284,6 +378,13 @@ typedef struct
     unsigned char uid;       /* uid = 1*/
     unsigned char senid;     /* senid = 1*/
 }MSG_LOCAL_BYE;
+
+typedef struct
+{
+    unsigned char uid;       /* uid = 1*/
+    unsigned char senid;     /* senid = 1*/
+	unsigned char content[1];   /*按键号码*/
+}MSG_SIP_INFO;
 
 #pragma pack(0)
 
@@ -323,6 +424,8 @@ extern sip_call_error_t voip_sip_call_error_get_api();
 
 extern sip_call_state_t voip_sip_call_state_get_api();
 extern sip_stop_state_t voip_sip_stop_state_get_api();
+
+int voip_sip_read_handle(voip_sip_ctl_t *sipctl, char *buf, int len);
 
 /*
  * SIP event Module (sock)
