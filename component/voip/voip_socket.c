@@ -41,14 +41,14 @@ int voip_socket_module_init(void)
 		master_eloop[MODULE_VOIP] = eloop_master_module_create(MODULE_VOIP);
 	voip_socket.master = master_eloop[MODULE_VOIP];
 	_voip_socket_init(&voip_socket);
-	voip_sip_ctl_module_init();
+	//voip_sip_ctl_module_init();
 	return OK;
 }
 
 int voip_socket_module_exit(void)
 {
 	_voip_socket_exit(&voip_socket);
-	voip_sip_ctl_module_exit();
+	//voip_sip_ctl_module_exit();
 	memset(&voip_socket, 0, sizeof(voip_socket));
 	return OK;
 }

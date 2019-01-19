@@ -48,7 +48,10 @@ typedef struct voip_call_s
 
 extern voip_call_t voip_call;
 
-extern int voip_app_ev_stop_call(event_node_t *ev);
+extern int voip_app_ev_local_stop_call(event_node_t *ev);
+extern int voip_app_ev_remote_stop_call(event_node_t *ev);
+
+
 extern int voip_app_ev_start_call(event_node_t *ev);
 
 extern int voip_app_ev_start_stream(event_node_t *ev);

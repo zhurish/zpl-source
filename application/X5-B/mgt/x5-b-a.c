@@ -202,6 +202,15 @@ static int x5_b_a_keepalive_make(x5_b_a_mgt_t *mgt, int res)
 	return (len);
 }
 
+static int x5_b_a_open_make(x5_b_a_mgt_t *mgt, int res)
+{
+	u_int32 val = (u_int32)res;
+	int len = os_tlv_set_integer(mgt->sbuf + mgt->offset, E_CMD_KEEPALIVE, E_CMD_KEEPALIVE_LEN, &val);
+	mgt->offset += len;
+	//zlog_debug(ZLOG_APP, "%s ", __func__);
+	return (len);
+}
+
 static int x5_b_a_ack_send(x5_b_a_mgt_t *mgt, int seqnum)
 {
 	x5_b_a_hdr_make(mgt);
@@ -243,6 +252,17 @@ static int x5_b_a_call_result_send(x5_b_a_mgt_t *mgt, int res)
 int x5_b_a_call_result_api(x5_b_a_mgt_t *mgt, int res)
 {
 	return x5_b_a_call_result_send(mgt, res);
+}
+
+int x5_b_a_open_door_api(x5_b_a_mgt_t *mgt, int res)
+{
+	x5_b_a_hdr_make(mgt);
+	x5_b_a_open_make(mgt, res);
+	x5_b_a_crc_make(mgt);
+	if(X5_B_ESP32_DEBUG(EVENT))
+		zlog_debug(ZLOG_APP, "OPEN CMD MSG to %s:%d %d byte", mgt->remote_address,
+				mgt->remote_port, mgt->slen);
+	return x5_b_a_send_msg(mgt);
 }
 
 static int x5_b_a_read_tlv_handle(x5_b_a_mgt_t *mgt, os_tlv_t *tlv)
@@ -318,7 +338,7 @@ static int x5_b_a_read_tlv_handle(x5_b_a_mgt_t *mgt, os_tlv_t *tlv)
 			//memcpy(&mgt->room, tlv->val.pval, tlv->len);
 			//zlog_debug(ZLOG_APP, "START CALLING msg (seqnum=%d) %s OK", mgt->seqnum, mgt->room.data);
 			x5_b_a_ack_send(mgt, mgt->seqnum);
-			x5_b_start_call(TRUE, &mgt->room);
+			x5b_app_start_call(TRUE, &mgt->room);
 			ret = OK;
 			if(X5_B_ESP32_DEBUG(EVENT))
 				zlog_debug(ZLOG_APP, "START CALLING msg (seqnum=%d) room=%s OK", mgt->seqnum, mgt->room.data);
@@ -333,7 +353,7 @@ static int x5_b_a_read_tlv_handle(x5_b_a_mgt_t *mgt, os_tlv_t *tlv)
 		else*/
 		{
 			x5_b_a_ack_send(mgt, mgt->seqnum);
-			x5_b_start_call(FALSE, &mgt->room);
+			x5b_app_start_call(FALSE, &mgt->room);
 			ret = OK;
 			if(X5_B_ESP32_DEBUG(EVENT))
 				zlog_debug(ZLOG_APP, "STOP CALLING msg (seqnum=%d) OK", mgt->seqnum);
@@ -404,7 +424,7 @@ static int x5_b_a_read_tlv_handle(x5_b_a_mgt_t *mgt, os_tlv_t *tlv)
 		else*/
 		{
 			memcpy(&mgt->fact, tlv->val.pval, tlv->len);
-			ret = x5_b_x5_b_factory_set(&mgt->fact);
+			ret = x5b_app_factory_set(&mgt->fact);
 			x5_b_a_ack_send(mgt, mgt->seqnum);
 			ret = OK;
 			if(X5_B_ESP32_DEBUG(EVENT))

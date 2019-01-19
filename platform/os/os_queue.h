@@ -33,11 +33,16 @@ typedef struct os_queue
 
 }os_queue_t;
 
-os_queue_t *os_queue_create(int max, int size);
-int os_queue_name(os_queue_t *queue, char *name);
+
+extern int os_msgq_init();
+extern int os_msgq_exit();
+
+
+extern os_queue_t *os_queue_create(int max, int size);
+extern int os_queue_name(os_queue_t *queue, char *name);
 //int os_queue_info(os_queue_t *queue, char *name);
-int os_queue_send(os_queue_t *queue, char *data, int len, int op);
-int os_queue_recv(os_queue_t *queue, char *name, int len, int timeout);
-int os_queue_delete(os_queue_t *queue);
+extern int os_queue_send(os_queue_t *queue, char *data, int len, int op);
+extern int os_queue_recv(os_queue_t *queue, char *name, int len, int timeout);
+extern int os_queue_delete(os_queue_t *queue);
 
 #endif /* __OS_QUEUE_H__ */

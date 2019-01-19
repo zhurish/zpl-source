@@ -69,6 +69,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "voip_util.h"
 #include "voip_state.h"
 #include "voip_socket.h"
+#include "voip_sip.h"
 #include "voip_mediastream.h"
 
 #ifdef PL_VOIP_MEDIASTREAM
@@ -1119,7 +1120,7 @@ static void mediastream_tool_iterate(mediastream_global* args) {
 				MSEqualizerGain d = {0};
 				int active;
 #ifdef VOIP_MEDIASTRREM_CTL_DEBUG
-				zlog_debug(ZLOG_VOIP, " GET CMD:%s", commands);
+				zlog_debug(ZLOG_VOIP, "GET CMD:%s", commands);
 #endif
 				if (sscanf(commands,"eq active %i",&active)==1){
 					audio_stream_enable_equalizer(args->audio, args->audio->eq_loc, active);
@@ -1186,7 +1187,7 @@ void mediastream_running(mediastream_global* args)
 	while(mediastream_running_flag)
 	{
 		args->running = TRUE;
-
+		voip_sip_call_state_set_api(VOIP_SIP_TALK);
 		for(n=0;n<500 && mediastream_running_flag;++n){
 			mediastream_tool_iterate(args);
 #if defined(VIDEO_ENABLED)
@@ -1216,15 +1217,16 @@ void mediastream_running(mediastream_global* args)
 			ms_message("Quality indicator : %f\n",args->audio ? audio_stream_get_quality_rating(args->audio) : media_stream_get_quality_rating((MediaStream*)args->video));
 		}
 	}
-	zlog_debug(ZLOG_VOIP, "---%s: quit from mediastream", __func__);
+	//zlog_debug(ZLOG_VOIP, "---%s: quit from mediastream", __func__);
 }
 
 void mediastream_clear(mediastream_global* args) {
 
-	zlog_debug(ZLOG_VOIP, "---%s", __func__);
+	//zlog_debug(ZLOG_VOIP, "---%s", __func__);
 
 	if(args->running == FALSE)
 		return;
+	voip_sip_call_state_set_api(VOIP_SIP_CALL_IDLE);
 	ms_message("stopping all...\n");
 	ms_message("Average quality indicator: %f",args->audio ? audio_stream_get_average_quality_rating(args->audio) : -1);
 

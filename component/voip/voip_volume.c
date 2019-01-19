@@ -234,7 +234,7 @@ static int voip_volume_capture_boost_gain_init(int value)
 
 static int voip_volume_apply_time(void *p)
 {
-	zlog_debug(ZLOG_VOIP,"%s", __func__);
+	_VOIP_VOLUME_DEBUG("%s", __func__);
 	//voip_volume_apply();
 	return OK;
 }
@@ -300,17 +300,83 @@ int voip_volume_apply()
 /*
  * Playback
  */
+#include <math.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+//#include <asm/page.h>
+
+
+#define AMP_GPIO_CTL_BASE 0X10000000
+
+static int amp_gpio_ioctl(int value)
+{
+	int gpio_fd = 0;
+	unsigned int tmp = 0;
+	unsigned char *gpio_map = NULL;
+
+	gpio_fd = open("/dev/mem", O_RDWR);
+	if (gpio_fd == -1)
+	{
+		zlog_debug(ZLOG_VOIP, "can't open /dev/mem.(%s)", strerror(errno));
+		return ERROR;
+	}
+	gpio_map = (unsigned char *) mmap(NULL, 1024, PROT_READ | PROT_WRITE,
+			MAP_FILE | MAP_SHARED, gpio_fd, AMP_GPIO_CTL_BASE);
+
+	if (gpio_map == MAP_FAILED)
+	{
+		zlog_debug(ZLOG_VOIP, "can't gpio fd = %d(%s)", gpio_fd, strerror(errno));
+		close(gpio_fd);
+		return ERROR;
+	}
+	//0X10000600
+	//GPIO_CTRL_0 = (volatile unsigned int *) (gpio_map);
+	 tmp = *(volatile unsigned int *)(gpio_map + 0X600);
+     tmp |=  (1u << 11);
+     *(volatile unsigned int *)(gpio_map + 0X600) = tmp;
+
+	//0X10000620
+	//GPIO_DATA_0 = (volatile unsigned int *) (gpio_map + 0X20);
+	//0X10000630
+	//GPIO_DSET_0 = (volatile unsigned int *) (gpio_map + 0X30);
+	//0X10000640
+	//GPIO_DCLR_0 = (volatile unsigned int *) (gpio_map + 0X40);
+
+	tmp = (1u << 11);
+	if (value)
+		*(volatile unsigned int *)(gpio_map + 0X630) = tmp;
+	else
+		*(volatile unsigned int *)(gpio_map + 0X640) = tmp;
+
+	munmap(gpio_map, 1024);
+	if (gpio_fd != 0x0) {
+		close(gpio_fd);
+	}
+	return OK;
+}
+
 static int _voip_cards_power_amplifier(voip_volume_t *volume, BOOL enable)
 {
+	char buf[64];
+	memset(buf, 0, sizeof(buf));
 	if(enable)
 	{
 		volume->power = TRUE;
-		super_system("echo 1 > /sys/class/leds/lm4890:status/brightness" VOIP_NOHUP);
+		//super_system("echo 1 > /sys/class/leds/lm4890:status/brightness" VOIP_NOHUP);
+		//super_system("echo 1 > /sys/class/leds/lm4890:status/brightness" VOIP_NOHUP);
+		//super_system("echo 1 > /sys/class/leds/lm4890:status/brightness" VOIP_NOHUP);
+		//super_output_system("cat /sys/class/leds/lm4890:status/brightness", buf, sizeof(buf));
+		amp_gpio_ioctl(1);
+		//zlog_debug(ZLOG_VOIP, "======%s open(%s)", __func__, buf);
 	}
 	else
 	{
 		volume->power = FALSE;
-		super_system("echo 0 > /sys/class/leds/lm4890:status/brightness" VOIP_NOHUP);
+		//super_system("echo 0 > /sys/class/leds/lm4890:status/brightness" VOIP_NOHUP);
+
+		//super_output_system("cat /sys/class/leds/lm4890:status/brightness", buf, sizeof(buf));
+		amp_gpio_ioctl(0);
+		//zlog_debug(ZLOG_VOIP, "======%s close(%s)", __func__, buf);
 	}
 	return OK;
 }
@@ -515,12 +581,14 @@ int voip_volume_open_api(voip_volume_mode mode)
 	{
 		if(!voip_volume.c_isopen)
 		{
+			zlog_debug(ZLOG_VOIP, "======%s capture open", __func__);
 			voip_volume_dsp_init();
 			voip_capture_open_api(TRUE);
 			voip_volume.c_isopen = TRUE;
 		}
 		if(!voip_volume.p_isopen)
 		{
+			_VOIP_VOLUME_DEBUG( "======%s playback open", __func__);
 			voip_volume_power(TRUE);
 			voip_volume.p_isopen = TRUE;
 			voip_playback_open_api(TRUE);
@@ -531,6 +599,7 @@ int voip_volume_open_api(voip_volume_mode mode)
 	{
 		if(!voip_volume.p_isopen)
 		{
+			_VOIP_VOLUME_DEBUG( "======%s capture open", __func__);
 			voip_volume_power(TRUE);
 			voip_volume.p_isopen = TRUE;
 			voip_playback_open_api(TRUE);
@@ -541,6 +610,7 @@ int voip_volume_open_api(voip_volume_mode mode)
 	{
 		if(!voip_volume.c_isopen)
 		{
+			_VOIP_VOLUME_DEBUG( "======%s capture open", __func__);
 			voip_volume_dsp_init();
 			voip_capture_open_api(TRUE);
 			voip_volume.c_isopen = TRUE;
@@ -555,12 +625,14 @@ int voip_volume_close_api(voip_volume_mode mode)
 	{
 		if(voip_volume.c_isopen)
 		{
+			_VOIP_VOLUME_DEBUG( "======%s capture close", __func__);
 			voip_volume_dsp_exit();
 			voip_capture_open_api(FALSE);
 			voip_volume.c_isopen = FALSE;
 		}
 		if(voip_volume.p_isopen)
 		{
+			_VOIP_VOLUME_DEBUG( "======%s playback close", __func__);
 			voip_volume_power(FALSE);
 			voip_volume.p_isopen = FALSE;
 			voip_playback_open_api(FALSE);
@@ -571,6 +643,7 @@ int voip_volume_close_api(voip_volume_mode mode)
 	{
 		if(voip_volume.p_isopen)
 		{
+			_VOIP_VOLUME_DEBUG( "======%s playback close", __func__);
 			voip_volume_power(FALSE);
 			voip_volume.p_isopen = FALSE;
 			voip_playback_open_api(FALSE);
@@ -581,6 +654,7 @@ int voip_volume_close_api(voip_volume_mode mode)
 	{
 		if(voip_volume.c_isopen)
 		{
+			_VOIP_VOLUME_DEBUG( "======%s capture close", __func__);
 			voip_volume_dsp_exit();
 			voip_capture_open_api(FALSE);
 			voip_volume.c_isopen = FALSE;

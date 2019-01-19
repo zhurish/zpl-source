@@ -8,6 +8,25 @@
 #include "os_sem.h"
 #include "os_queue.h"
 
+#include <sys/ipc.h>
+#include <sys/msg.h>
+
+static int _os_msgq_id = -1;
+
+
+int os_msgq_init()
+{
+	key_t key = ftok(".",100);
+	_os_msgq_id = msgget(key,IPC_CREAT|0600);
+	return OK;
+}
+
+int os_msgq_exit()
+{
+	if(_os_msgq_id >= 0)
+		msgctl(_os_msgq_id, IPC_RMID, NULL);
+	return OK;
+}
 
 os_queue_t *os_queue_create(int max, int size)
 {

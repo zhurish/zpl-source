@@ -81,11 +81,13 @@ int voip_module_task_init()
 	 */
 	voip_event_task_init();
 	voip_socket_task_init();
+	voip_sip_module_task_init();
 	return OK;
 }
 
 int voip_module_task_exit()
 {
+	voip_sip_module_task_exit();
 	voip_event_task_exit();
 	voip_socket_task_exit();
 	voip_task_module_exit();
@@ -125,9 +127,8 @@ int voip_create_stream_and_start_api(voip_stream_remote_t *config)
 	if(!voip_stream->l_rtp_port)
 		voip_stream->l_rtp_port = VOIP_RTP_PORT_DEFAULT;
 
-	zlog_debug(ZLOG_VOIP,"-----------%s 192.168.2.100:%d -> %s:%d",
-			__func__, voip_stream->l_rtp_port, config->r_rtp_address, config->r_rtp_port);
-
+	//zlog_debug(ZLOG_VOIP,"-----------%s 192.168.2.100:%d -> %s:%d",
+	//		__func__, voip_stream->l_rtp_port, config->r_rtp_address, config->r_rtp_port);
 
 	voip_stream_local_port_api(voip_stream, voip_stream->l_rtp_port);
 

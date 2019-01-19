@@ -22,14 +22,11 @@ enum E_OPEN_RESULT
 	E_OPEN_RESULT_FAIL,
 };
 
-/*enum E_CALL_RESULT
+enum E_OPEN_CMD
 {
-	E_CALL_RESULT_NO_SUCH_ROOM,		//û����������
-	E_CALL_RESULT_UNREGISTER,		//û��ע��
-	E_CALL_RESULT_OUTLINE,			//�豸����
-	E_CALL_RESULT_CALLING,			//��ʼ����
-	E_CALL_RESULT_ONLINE,			//ͨ����
-};*/
+	E_OPEN_DOOR_OK,
+	E_OPEN_DOOR_ACK,
+};
 
 enum E_CALL_RESULT
 {
@@ -53,6 +50,8 @@ enum E_CMD
 	E_CMD_KEY = 0X08,
 	E_CMD_FACTORY_MODE = 0X09,
 
+	E_CMD_OPEN_DOOR = 0X10,
+
 	E_CMD_KEEPALIVE,
 };
 
@@ -69,6 +68,8 @@ enum E_CMD_LEN
 	E_CMD_DOOR_TYPE_LEN = 4,
 	E_CMD_KEY_LEN = 4,
 	E_CMD_FACTORY_MODE_LEN = 128,
+
+	E_CMD_OPEN_DOOR_LEN = 4,
 
 	E_CMD_KEEPALIVE_LEN = 4,
 };
@@ -98,15 +99,6 @@ typedef struct x5_b_key_val_s
 	u_int8 keynum;
 	u_int32 keyval[512];
 } x5_b_key_val_t;
-
-
-/*
-typedef struct x5_b_factory_data_s
-{
-	u_int8 data[128];
-} x5_b_factory_data_t;
-*/
-
 
 typedef struct x5_b_room_position_s
 {
@@ -198,6 +190,8 @@ extern int x5_b_a_module_task_exit();
 
 extern int x5_b_a_show_state(struct vty *vty);
 extern int x5_b_a_show_config(struct vty *vty);
+
+extern int x5_b_a_open_door_api(x5_b_a_mgt_t *mgt, int res);
 
 
 #ifdef X5_B_A_DEBUG

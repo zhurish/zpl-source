@@ -28,32 +28,17 @@
 #include "voip_sip.h"
 #include "voip_stream.h"
 
-#ifdef SIP_CTL_MSGQ
-#include <sys/ipc.h>
-#include <sys/msg.h>
-#endif
 
 voip_sip_t voip_sip_config;
-static voip_sip_ctl_t voip_sip_ctl;
-#ifdef SIP_CTL_SOCKET
-static int voip_sip_socket_init(voip_sip_ctl_t *sipctl);
-static int voip_sip_socket_exit(voip_sip_ctl_t *sipctl);
-static int voip_sip_read_handle(voip_sip_ctl_t *sipctl, char *buf, int len);
-#endif
+voip_sip_ctl_t voip_sip_ctl;
 
 #ifdef SIP_CTL_MSGQ
-static int sip_msgq_create_read(int msgKey);
-static int sip_msgq_create_write(int msgKey);
-/*static int sip_msgq_fflush(int msgId);
-static int sip_msgq_buffsize(int msgId, int qBytes);*/
-static int sip_msgq_delete(int msgId);
-static int sip_msgq_recv(int msgId, void* pMsgHdr, int uiMaxBytes, int msgType, int wait);
-static int sip_msgq_send(int msgQId, char* pMsg, int len);
 static int voip_sip_msgq_init(voip_sip_ctl_t *sipctl);
 static int voip_sip_msgq_exit(voip_sip_ctl_t *sipctl);
-static int sip_msgq_task_init(voip_sip_ctl_t *sipctl);
-static int sip_msgq_task_exit(voip_sip_ctl_t *sipctl);
 #endif
+static int voip_sip_ctl_state(struct vty *vty);
+
+
 
 static int voip_sip_config_default(voip_sip_t *sip)
 {
@@ -95,6 +80,7 @@ static int voip_sip_config_default(voip_sip_t *sip)
 
 int voip_sip_module_init()
 {
+	voip_sip_ctl_module_init();
 	os_memset(&voip_sip_config, 0, sizeof(voip_sip_config));
 	voip_sip_config_default(&voip_sip_config);
 	return OK;
@@ -102,8 +88,25 @@ int voip_sip_module_init()
 
 int voip_sip_module_exit()
 {
+	voip_sip_ctl_module_exit();
 	os_memset(&voip_sip_config, 0, sizeof(voip_sip_config));
 	voip_sip_config_default(&voip_sip_config);
+	return OK;
+}
+
+int voip_sip_module_task_init()
+{
+#ifdef SIP_CTL_MSGQ
+	sip_ctl_msgq_task_init(&voip_sip_ctl);
+#endif
+	return OK;
+}
+
+int voip_sip_module_task_exit()
+{
+#ifdef SIP_CTL_MSGQ
+	sip_ctl_msgq_task_exit(&voip_sip_ctl);
+#endif
 	return OK;
 }
 
@@ -111,6 +114,7 @@ int voip_sip_enable(BOOL enable, u_int16 port)
 {
 	voip_sip_config.sip_enable = enable;
 	voip_sip_config.sip_local_port = port ? port:SIP_PORT_DEFAULT;
+	voip_sip_config_update_api(&voip_sip_config);
 	return OK;
 }
 
@@ -162,6 +166,7 @@ int voip_sip_ring_set_api(u_int16 value)
 int voip_sip_register_interval_set_api(u_int16 value)
 {
 	voip_sip_config.sip_register_interval = value ? value:SIP_REGINTER_DEFAULT;
+	voip_sip_config_update_api(&voip_sip_config);
 	return OK;
 }
 
@@ -243,14 +248,16 @@ int voip_sip_encrypt_set_api(BOOL value)
 /*
  *
 [sip_config]
-server_ip = 192.168.1.23
+server_ip = 192.168.2.252
 server_port = 5060
-user_name = 333
-passwd = 123456
-realm = test
-local_ip = 0.0.0.0
+user_name = 1003
+passwd = 0003
+realm =
+local_ip = 192.168.2.100
 local_port = 5060
 dtmf = rfc2833
+reg_expire = 1200
+rtp_port = 5555
 */
 static int voip_sip_config_update_thread(struct eloop *eloop)
 {
@@ -428,6 +435,8 @@ int voip_sip_show_config(struct vty *vty, BOOL detail)
 		vty_out(vty, " sip encrypt          : %s%s", sip->sip_encrypt ? "TRUE":"FALSE", VTY_NEWLINE);
 		vty_out(vty, " sip dialplan         : %s%s", strlen(sip->sip_dialplan)? sip->sip_dialplan:" ", VTY_NEWLINE);
 		vty_out(vty, " sip realm            : %s%s", strlen(sip->sip_realm)? sip->sip_realm:" ", VTY_NEWLINE);
+
+		voip_sip_ctl_state(vty);
 	}
 	else
 		vty_out(vty, "SIP Service is not enable%s", VTY_NEWLINE);
@@ -455,12 +464,73 @@ int voip_sip_show_config(struct vty *vty, BOOL detail)
  * event socket (SIP)
  */
 
+static int voip_sip_ctl_state(struct vty *vty)
+{
+	switch(voip_sip_ctl.reg_state)
+	{
+	case VOIP_SIP_UNREGISTER:
+		vty_out(vty, " sip register state   : %s%s", "unregister", VTY_NEWLINE);
+		break;
+	case VOIP_SIP_REGISTER_FAILED:
+		vty_out(vty, " sip register state   : %s%s", "failed", VTY_NEWLINE);
+		break;
+	case VOIP_SIP_REGISTER_SUCCESS:
+		vty_out(vty, " sip register state   : %s%s", "success", VTY_NEWLINE);
+		break;
+	default:
+		break;
+	}
+	switch(voip_sip_ctl.call_state)
+	{
+	case VOIP_SIP_CALL_IDLE:
+		vty_out(vty, " sip call state       : %s%s", "IDLE", VTY_NEWLINE);
+		break;
+	case VOIP_SIP_CALL_FAILED:
+		vty_out(vty, " sip call state       : %s%s", "Failed", VTY_NEWLINE);
+		break;
+	case VOIP_SIP_CALL_RINGING:
+		vty_out(vty, " sip call state       : %s%s", "Ringing", VTY_NEWLINE);
+		break;
+	case VOIP_SIP_CALL_PICKUP:
+		vty_out(vty, " sip call state       : %s%s", "Pickup", VTY_NEWLINE);
+		break;
+	case VOIP_SIP_TALK:
+		vty_out(vty, " sip call state       : %s%s", "Talking", VTY_NEWLINE);
+		break;
+	default:
+		break;
+	}
+	switch(voip_sip_ctl.call_error)
+	{
+	case VOIP_SIP_UNREGISTER:
+		vty_out(vty, " sip register state   : %s%s", "unregister", VTY_NEWLINE);
+		break;
+	case VOIP_SIP_REGISTER_FAILED:
+		vty_out(vty, " sip register state   : %s%s", "failed", VTY_NEWLINE);
+		break;
+	case VOIP_SIP_REGISTER_SUCCESS:
+		vty_out(vty, " sip register state   : %s%s", "success", VTY_NEWLINE);
+		break;
+	default:
+		break;
+	}
+	switch(voip_sip_ctl.stop_state)
+	{
+	case VOIP_SIP_REMOTE_STOP:
+		vty_out(vty, " sip call stop state  : %s%s", "remote", VTY_NEWLINE);
+		break;
+	case VOIP_SIP_LOCAL_STOP:
+		vty_out(vty, " sip call stop state  : %s%s", "local", VTY_NEWLINE);
+		break;
+	default:
+		break;
+	}
+	return OK;
+}
+
 int voip_sip_ctl_module_init()
 {
 	os_memset(&voip_sip_ctl, 0, sizeof(voip_sip_ctl));
-#ifdef SIP_CTL_SOCKET
-	voip_sip_ctl.tcpMode = TRUE;
-#endif
 
 	if(master_eloop[MODULE_VOIP] == NULL)
 		master_eloop[MODULE_VOIP] = eloop_master_module_create(MODULE_VOIP);
@@ -469,202 +539,33 @@ int voip_sip_ctl_module_init()
 #ifdef SIP_CTL_MSGQ
 	voip_sip_msgq_init(&voip_sip_ctl);
 #endif
-	voip_sip_ctl.debug = 0xffff;
-#ifdef SIP_CTL_SOCKET
-	return voip_sip_socket_init(&voip_sip_ctl);
-#endif
-#ifdef SIP_CTL_MSGQ
-	return sip_msgq_task_init(&voip_sip_ctl);
-#endif
+
+	//voip_sip_ctl.debug = 0xffff;
+	voip_sip_ctl.debug = SIP_CTL_DEBUG_EVENT|
+	SIP_CTL_DEBUG_STATE|
+	SIP_CTL_DEBUG_MSGQ;
 	return OK;
 }
 
 int voip_sip_ctl_module_exit()
 {
 #ifdef SIP_CTL_MSGQ
-	sip_msgq_task_exit(&voip_sip_ctl);
-#endif
-#ifdef SIP_CTL_SOCKET
-	voip_sip_socket_exit(&voip_sip_ctl);
-#endif
-#ifdef SIP_CTL_MSGQ
+//	sip_msgq_task_exit(&voip_sip_ctl);
 	voip_sip_msgq_exit(&voip_sip_ctl);
 #endif
 	os_memset(&voip_sip_ctl, 0, sizeof(voip_sip_ctl));
 	return OK;
 }
 
-#ifdef SIP_CTL_SOCKET
-static int voip_sip_socket_read_eloop(struct eloop *eloop)
-{
-	voip_sip_ctl_t *sipctl = ELOOP_ARG(eloop);
-	int sock = ELOOP_FD(eloop);
-	//ELOOP_VAL(X)
-	sipctl->t_read = NULL;
-	memset(sipctl->buf, 0, sizeof(sipctl->buf));
 
-	int len = read(sock, sipctl->buf, sizeof(sipctl->buf));
-	if (len <= 0)
-	{
-		if (len < 0)
-		{
-			if (ERRNO_IO_RETRY(errno))
-			{
-				//return 0;
-				//mgt->reset_thread = eloop_add_timer_msec(mgt->master, x5_b_a_reset_eloop, mgt, 100);
-				return OK;
-			}
-			else
-			{
-
-			}
-		}
-	}
-	else
-	{
-		if(SIP_CTL_DEBUG(RECV))
-		{
-			zlog_debug(ZLOG_VOIP, "RECV MSG %d byte", len);
-		}
-		sipctl->len = len;
-		voip_sip_read_handle(sipctl, sipctl->buf, len);
-	}
-	sipctl->t_read = eloop_add_read(sipctl->master, voip_sip_socket_read_eloop, sipctl, sock);
-	return OK;
-}
-
-static int voip_sip_socket_accept_eloop(struct eloop *eloop)
-{
-	voip_sip_ctl_t *sipctl = ELOOP_ARG(eloop);
-	int sock = ELOOP_FD(eloop);
-	int client = 0;
-	client = unix_sock_accept (sock, NULL);
-	sipctl->t_accept = eloop_add_read(sipctl->master,
-		voip_sip_socket_accept_eloop, sipctl, sock);
-
-	if(client)
-	{
-		os_set_nonblocking(client);
-		if(sipctl->sock)
-		{
-			close(sipctl->sock);
-		}
-		sipctl->sock = client;
-		sipctl->wfd = client;
-		sipctl->t_read = eloop_add_read(sipctl->master, voip_sip_socket_read_eloop, sipctl, client);
-	}
-	else
-		return ERROR;
-	return OK;
-}
-
-static int voip_sip_socket_init(voip_sip_ctl_t *sipctl)
-{
-	int fd = unix_sock_server_create(sipctl->tcpMode, "voipSip");
-	if(fd)
-	{
-		if(sipctl->tcpMode)
-			sipctl->accept = fd;
-		else
-		{
-			sipctl->sock = fd;
-			sipctl->wfd = unix_sock_client_create(sipctl->tcpMode, "sip");
-		}
-		os_set_nonblocking(fd);
-		if(sipctl->master)
-		{
-			if(sipctl->tcpMode)
-				sipctl->t_accept = eloop_add_read(sipctl->master,
-					voip_sip_socket_accept_eloop, sipctl, fd);
-			else
-				sipctl->t_read = eloop_add_read(sipctl->master, voip_sip_socket_read_eloop, sipctl, fd);
-		}
-		//sipctl->t_thread = eloop_add_timer(sipctl->master, x5_b_a_timer_eloop, sipctl, sipctl->interval);
-		return OK;
-	}
-	return ERROR;
-}
-#endif
 
 #ifdef SIP_CTL_MSGQ
 static int voip_sip_msgq_init(voip_sip_ctl_t *sipctl)
 {
-	sipctl->rq = -1;
-	sipctl->wq = -1;
-	//sipctl->rq = sip_msgq_create(SIP_CTL_LMSGQ_KEY, FALSE);
-/*	if(sipctl->rq < 0)
-		return ERROR;*/
-/*	if(sipctl->rq < 0)
-		sip_msgq_fflush(sipctl->rq);
-	*/
-	//sipctl->wq = sip_msgq_create(SIP_CTL_MSGQ_KEY, TRUE);
-/*
-	if(sipctl->wq < 0)
-		return ERROR;
-*/
-	//zlog_debug(ZLOG_VOIP, "Create MSGQ (rq key=%d:%d wq key=%d:%d)", SIP_CTL_LMSGQ_KEY, sipctl->rq, SIP_CTL_MSGQ_KEY, sipctl->wq);
-	//printf("Create MSGQ (rq key=%d:%d wq key=%d:%d)", SIP_CTL_LMSGQ_KEY, sipctl->rq, SIP_CTL_MSGQ_KEY, sipctl->wq);
-//	sip_msgq_buffsize(sipctl->rq, 4096);
-	return ERROR;
+	sip_ctl_msgq_init(sipctl);
+	return OK;
 }
-#endif
 
-#ifdef SIP_CTL_SOCKET
-static int voip_sip_socket_exit(voip_sip_ctl_t *sipctl)
-{
-	if(sipctl && sipctl->t_accept)
-	{
-		eloop_cancel(sipctl->t_accept);
-		sipctl->t_accept = NULL;
-		if(sipctl->accept)
-		{
-			close(sipctl->accept);
-			sipctl->accept = 0;
-		}
-	}
-	if(sipctl && sipctl->t_read)
-	{
-		eloop_cancel(sipctl->t_read);
-		sipctl->t_read = NULL;
-	}
-	if(sipctl && sipctl->t_write)
-	{
-		eloop_cancel(sipctl->t_write);
-		sipctl->t_write = NULL;
-	}
-	if(sipctl && sipctl->t_event)
-	{
-		eloop_cancel(sipctl->t_event);
-		sipctl->t_event = NULL;
-	}
-	if(sipctl && sipctl->t_time)
-	{
-		eloop_cancel(sipctl->t_time);
-		sipctl->t_time = NULL;
-	}
-	if(sipctl)
-	{
-		if(sipctl->sock)
-		{
-			close(sipctl->sock);
-			sipctl->sock = 0;
-		}
-		if(!sipctl->tcpMode)
-		{
-			if(sipctl->wfd)
-				close(sipctl->wfd);
-			sipctl->wfd = 0;
-		}
-		else
-			sipctl->wfd = 0;
-		memset(sipctl->buf, 0, sizeof(sipctl->buf));
-		return OK;
-	}
-	return ERROR;
-}
-#endif
-
-#ifdef SIP_CTL_MSGQ
 static int voip_sip_msgq_exit(voip_sip_ctl_t *sipctl)
 {
 	if(sipctl && sipctl->t_event)
@@ -678,10 +579,7 @@ static int voip_sip_msgq_exit(voip_sip_ctl_t *sipctl)
 		sipctl->t_time = NULL;
 	}
 
-	sip_msgq_delete(sipctl->wq);
-	sip_msgq_delete(sipctl->rq);
-	sipctl->rq = -1;
-	sipctl->wq = -1;
+	sip_ctl_msgq_exit(sipctl);
 
 	if(sipctl)
 	{
@@ -693,17 +591,13 @@ static int voip_sip_msgq_exit(voip_sip_ctl_t *sipctl)
 #endif
 
 
-static int voip_sip_send_msg(voip_sip_ctl_t *sipctl)
+static int voip_sip_write_msg(voip_sip_ctl_t *sipctl, int timeoutms)
 {
 #ifdef SIP_CTL_MSGQ
-	if(sipctl && (sipctl->wq < 0))
-		sipctl->wq = sip_msgq_create_write(SIP_CTL_MSGQ_KEY);
-	if(sipctl && (sipctl->wq >= 0))
+	if(sipctl)
 	{
-		printf("%s : key=%d id=%d\n", __func__, SIP_CTL_MSGQ_KEY, sipctl->wq);
-		sip_msgq_send(sipctl->wq, sipctl->sbuf, sipctl->slen);
+		return sip_ctl_msgq_send(sipctl, sipctl->sbuf, sipctl->slen);
 	}
-	return OK;
 #else
 	if(SIP_CTL_DEBUG(SEND))
 	{
@@ -714,107 +608,6 @@ static int voip_sip_send_msg(voip_sip_ctl_t *sipctl)
 #endif
 	return ERROR;
 }
-
-#ifdef SIP_CTL_SOCKET
-static int voip_sip_wait_read_msg(voip_sip_ctl_t *sipctl, int timeoutms)
-{
-	int len = 0, maxfd = 0, num = 0;
-	fd_set rfdset;
-	FD_ZERO(&rfdset);
-
-	FD_SET(sipctl->sock, &rfdset);
-	maxfd = sipctl->sock;
-	memset(sipctl->buf, 0, sizeof(sipctl->buf));
-r_again:
-	FD_SET(sipctl->sock, &rfdset);
-	num = os_select_wait(maxfd + 1, &rfdset, NULL, timeoutms);
-	if(num > 0)
-	{
-		//process_log_debug("start unix_sock_accept %s", progname);
-		if(FD_ISSET(sipctl->sock, &rfdset))
-		{
-			FD_CLR(sipctl->sock, &rfdset);
-			len = read(sipctl->sock, sipctl->buf, sizeof(sipctl->buf));
-			if(len)
-			{
-				if(SIP_CTL_DEBUG(RECV))
-				{
-					zlog_debug(ZLOG_VOIP, "RECV MSG %d byte", sipctl->slen);
-				}
-				sipctl->len = len;
-				voip_sip_read_handle(sipctl, sipctl->buf, len);
-			}
-			else
-			{
-				if (ERRNO_IO_RETRY(errno))
-				{
-					if(SIP_CTL_DEBUG(EVENT))
-					{
-						zlog_debug(ZLOG_VOIP, "RECV MSG AGAIN %s", strerror(errno));
-					}
-					//return 0;
-					//mgt->t_reset = eloop_add_timer_msec(mgt->master, x5_b_a_reset_eloop, mgt, 100);
-					goto r_again;
-				}
-				else
-				{
-					if(SIP_CTL_DEBUG(EVENT))
-					{
-						zlog_debug(ZLOG_VOIP, "RECV MSG ERROR %s", strerror(errno));
-					}
-					return ERROR;
-				}
-			}
-		}
-	}
-	else if(num < 0)
-	{
-		//continue;
-		return ERROR;
-	}
-	else
-	{
-		//timeout
-		return -1;
-	}
-	return OK;
-}
-#ifdef SIP_CTL_SYNC
-static int voip_sip_write_and_wait_respone(voip_sip_ctl_t *sipctl, int timeoutms)
-{
-	int rep = 0,ret = 0;
-	if(sipctl->t_read)
-	{
-		eloop_cancel(sipctl->t_read);
-		sipctl->t_read = NULL;
-		rep = 1;
-	}
-	ret = voip_sip_send_msg(sipctl);
-	if(ret > 0)
-		ret = voip_sip_wait_read_msg(sipctl, timeoutms);
-	if(rep)
-	{
-		sipctl->t_read = eloop_add_read(sipctl->master,
-				voip_sip_socket_read_eloop, sipctl, sipctl->sock);
-	}
-	return ret;
-}
-#else
-static int voip_sip_write_msg(voip_sip_ctl_t *sipctl, int timeoutms)
-{
-	int ret = 0;
-	ret = voip_sip_send_msg(sipctl);
-	return ret;
-}
-#endif
-#else
-static int voip_sip_write_msg(voip_sip_ctl_t *sipctl, int timeoutms)
-{
-	int ret = 0;
-	ret = voip_sip_send_msg(sipctl);
-	return ret;
-}
-#endif
 
 
 
@@ -833,6 +626,12 @@ sip_call_state_t voip_sip_call_state_get_api()
 	return voip_sip_ctl.call_state;
 }
 
+int voip_sip_call_state_set_api(sip_call_state_t state)
+{
+	voip_sip_ctl.call_state = state;
+	return OK;
+}
+
 sip_stop_state_t voip_sip_stop_state_get_api()
 {
 	return voip_sip_ctl.stop_state;
@@ -847,17 +646,21 @@ static int voip_sip_register_ack(voip_sip_ctl_t *sipctl, char *buf, int len)
 	MSG_REG_RLT *ack;
 	ack = (MSG_REG_ACT *)SIP_MSG_OFFSET(buf);
 
-	if(SIP_CTL_DEBUG(RECV) && SIP_CTL_DEBUG(DETAIL))
+	if(SIP_CTL_DEBUG(EVENT))
 	{
-		zlog_debug(ZLOG_VOIP, "RECV MSG TYPE=%x register ack state=%x ---> VOIP_SIP_REGISTER_SUCCESS", hdr->type, ack->rlt);
+		zlog_debug(ZLOG_VOIP, "SIP module recv register ack msg");
 	}
 	if(hdr->type == SIP_REGISTER_ACK_MSG)
 	{
 		if(ack->rlt == SIP_REGISTER_OK)
 		{
+			if(SIP_CTL_DEBUG(STATE))
+				zlog_debug(ZLOG_VOIP, "SIP module state change to register success");
 			sipctl->reg_state = (VOIP_SIP_REGISTER_SUCCESS);
 			return OK;
 		}
+		if(SIP_CTL_DEBUG(STATE))
+			zlog_debug(ZLOG_VOIP, "SIP module state change to register failed");
 		sipctl->reg_state = (VOIP_SIP_REGISTER_FAILED);
 	}
 	return ERROR;
@@ -867,25 +670,28 @@ static int voip_sip_register_ack(voip_sip_ctl_t *sipctl, char *buf, int len)
 static int voip_sip_call_ring(voip_sip_ctl_t *sipctl, char *buf, int len)
 {
 	MSG_HDR_T *hdr = (	MSG_HDR_T *)buf;
-	MSG_REMOT_ALERT *ack = (MSG_REMOT_ALERT *)(buf + sizeof(MSG_HDR_T));
-	//ack = (MSG_REMOT_ALERT *)SIP_MSG_OFFSET(buf);
-	if(SIP_CTL_DEBUG(RECV) && SIP_CTL_DEBUG(DETAIL))
+	MSG_REMOT_ALERT *ack = (MSG_REMOT_ALERT *)SIP_MSG_OFFSET(buf);
+	if(SIP_CTL_DEBUG(EVENT))
 	{
-		zlog_debug(ZLOG_VOIP, "RECV MSG TYPE=%x ringing ack %s:%d codes:%d ", hdr->type, ack->rtp_addr, ack->rtp_port, ack->codec);
+		if(SIP_CTL_DEBUG(DETAIL))
+			zlog_debug(ZLOG_VOIP, "SIP module recv ringing ack msg remote %s:%d codes:%d ",
+					ack->rtp_addr, ack->rtp_port, ack->codec);
+		else
+			zlog_debug(ZLOG_VOIP, "SIP module recv ringing ack msg");
 	}
+
 	if(hdr->type == SIP_REMOTE_RING_MSG)
 	{
-		//if(ack->rlt == SIP_REGISTER_OK)
 		if(ack->rtp_port)
 		{
 			voip_stream->r_rtp_port = ack->rtp_port;
 			if(strlen(ack->rtp_addr))
 				os_strcpy(voip_stream->r_rtp_address, ack->rtp_addr);
 			voip_stream->payload = ack->codec;
-			//voip_stream_remote_address_port_api(voip_stream, ack->rtp_addr, ack->rtp_port);
-			//voip_stream_payload_type_api(voip_stream, NULL, ack->codec);
 		}
-		//voip_call_ring_start_api();
+		if(SIP_CTL_DEBUG(STATE))
+			zlog_debug(ZLOG_VOIP, "SIP module state change to ringing");
+
 		sipctl->call_state = (VOIP_SIP_CALL_RINGING);
 		return OK;
 	}
@@ -896,12 +702,14 @@ static int voip_sip_call_ring(voip_sip_ctl_t *sipctl, char *buf, int len)
 static int voip_sip_call_picking(voip_sip_ctl_t *sipctl, char *buf, int len)
 {
 	MSG_HDR_T *hdr = (	MSG_HDR_T *)buf;
-	//MSG_REMOT_ANSWER *ack;
-	MSG_REMOT_ANSWER *ack = (MSG_REMOT_ANSWER *)(buf + sizeof(MSG_HDR_T));
-	//ack = (MSG_REMOT_ANSWER *)SIP_MSG_OFFSET(buf);
-	if(SIP_CTL_DEBUG(RECV) && SIP_CTL_DEBUG(DETAIL))
+	MSG_REMOT_ANSWER *ack = (MSG_REMOT_ANSWER *)SIP_MSG_OFFSET(buf);
+	if(SIP_CTL_DEBUG(EVENT))
 	{
-		zlog_debug(ZLOG_VOIP, "RECV MSG TYPE=%x picking ack %s:%d codes:%d ", hdr->type, ack->rtp_addr, ack->rtp_port, ack->codec);
+		if(SIP_CTL_DEBUG(DETAIL))
+			zlog_debug(ZLOG_VOIP, "SIP module recv picking ack msg remote %s:%d codes:%d ",
+					ack->rtp_addr, ack->rtp_port, ack->codec);
+		else
+			zlog_debug(ZLOG_VOIP, "SIP module recv picking ack msg");
 	}
 	if(hdr->type == SIP_REMOTE_PICKING_MSG)
 	{
@@ -917,10 +725,12 @@ static int voip_sip_call_picking(voip_sip_ctl_t *sipctl, char *buf, int len)
 			memset(&remote, 0, sizeof(remote));
 			remote.r_rtp_port = ack->rtp_port;
 			strcpy(remote.r_rtp_address, voip_stream->r_rtp_address);
-			//strcpy(remote.r_rtp_address, "192.168.2.202");
+			if(SIP_CTL_DEBUG(EVENT))
+				zlog_debug(ZLOG_VOIP, "SIP module get remote address information and create voip stream");
 			voip_event_node_register(voip_app_ev_start_stream, NULL, &remote, sizeof(voip_stream_remote_t));
 		}
-		//if(ack->rlt == SIP_REGISTER_OK)
+		if(SIP_CTL_DEBUG(STATE))
+			zlog_debug(ZLOG_VOIP, "SIP module state change to picking");
 		sipctl->call_state = (VOIP_SIP_CALL_PICKUP);
 		return OK;
 	}
@@ -932,29 +742,35 @@ static int voip_sip_call_ack(voip_sip_ctl_t *sipctl, char *buf, int len)
 	MSG_HDR_T *hdr = (	MSG_HDR_T *)buf;
 	MSG_REMOT_ACK *ack;
 	ack = (MSG_REMOT_ACK *)(buf + sizeof(MSG_HDR_T));
-	if(SIP_CTL_DEBUG(RECV) && SIP_CTL_DEBUG(DETAIL))
+	if(SIP_CTL_DEBUG(EVENT))
 	{
-		zlog_debug(ZLOG_VOIP, "RECV MSG TYPE=%x ack %s:%d codes:%d ", hdr->type, ack->rtp_addr, ack->rtp_port, ack->codec);
+		if(SIP_CTL_DEBUG(DETAIL))
+			zlog_debug(ZLOG_VOIP, "SIP module recv call ack msg remote %s:%d codes:%d ",
+					ack->rtp_addr, ack->rtp_port, ack->codec);
+		else
+			zlog_debug(ZLOG_VOIP, "SIP module recv call ack msg");
 	}
+
 	if(hdr->type == SIP_REMOTE_ACK_MSG)
 	{
 		if(ack->rtp_port && strlen(ack->rtp_addr))
 		{
-			//voip_call_ring_stop_api();
 			voip_stream->r_rtp_port = ack->rtp_port;
 			if(strlen(ack->rtp_addr))
-				os_strcpy(voip_stream->r_rtp_address, ack->rtp_addr);
+				memcpy(voip_stream->r_rtp_address, ack->rtp_addr, 64);
 			voip_stream->payload = ack->codec;
 
 			voip_stream_remote_t remote;
 			memset(&remote, 0, sizeof(remote));
 			remote.r_rtp_port = ack->rtp_port;
-			strcpy(remote.r_rtp_address, ack->rtp_addr);
-			//strcpy(remote.r_rtp_address, "192.168.2.202");
+			strcpy(remote.r_rtp_address, voip_stream->r_rtp_address);
+			if(SIP_CTL_DEBUG(EVENT))
+				zlog_debug(ZLOG_VOIP, "SIP module get remote address information and create voip stream");
 			voip_event_node_register(voip_app_ev_start_stream, NULL, &remote, sizeof(voip_stream_remote_t));
 		}
-		//if(ack->rlt == SIP_REGISTER_OK)
-		sipctl->call_state = (VOIP_SIP_CALL_PICKUP);
+		if(SIP_CTL_DEBUG(STATE))
+			zlog_debug(ZLOG_VOIP, "SIP module state change to picking");
+		sipctl->call_state = (VOIP_SIP_CALL_SUCCESS);
 		return OK;
 	}
 	return ERROR;
@@ -966,13 +782,17 @@ static int voip_sip_call_error(voip_sip_ctl_t *sipctl, char *buf, int len)
 	MSG_HDR_T *hdr = (	MSG_HDR_T *)buf;
 	MSG_REMOT_ERROR *ack;
 	ack = (MSG_REMOT_ERROR *)SIP_MSG_OFFSET(buf);
-	if(SIP_CTL_DEBUG(RECV) && SIP_CTL_DEBUG(DETAIL))
+	if(SIP_CTL_DEBUG(EVENT))
 	{
-		zlog_debug(ZLOG_VOIP, "RECV MSG TYPE=%x call errno %x", hdr->type, ack->cause);
+		if(SIP_CTL_DEBUG(DETAIL))
+			zlog_debug(ZLOG_VOIP, "SIP module recv error ack msg cause:%d ",ack->cause);
+		else
+			zlog_debug(ZLOG_VOIP, "SIP module recv error ack msg");
 	}
 	if(hdr->type == SIP_CALL_ERROR_MSG)
 	{
-		//if(ack->rlt == SIP_REGISTER_OK)
+		if(SIP_CTL_DEBUG(STATE))
+			zlog_debug(ZLOG_VOIP, "SIP module state change to error");
 		sipctl->call_state = (VOIP_SIP_CALL_ERROR);
 		sipctl->call_error = ack->cause;
 		return OK;
@@ -986,17 +806,16 @@ static int voip_sip_call_stop_by_remote(voip_sip_ctl_t *sipctl, char *buf, int l
 	MSG_HDR_T *hdr = (	MSG_HDR_T *)buf;
 	MSG_REMOT_BYE *ack;
 	ack = (MSG_REMOT_BYE *)SIP_MSG_OFFSET(buf);
-	if(SIP_CTL_DEBUG(RECV) && SIP_CTL_DEBUG(DETAIL))
+	if(SIP_CTL_DEBUG(EVENT))
 	{
-		zlog_debug(ZLOG_VOIP, "RECV MSG TYPE=%x stop by remote", hdr->type);
+		zlog_debug(ZLOG_VOIP, "SIP module recv stop msg");
 	}
 	if(hdr->type == SIP_REMOTE_STOP_MSG)
 	{
-		//if(ack->rlt == SIP_REGISTER_OK)
+		if(SIP_CTL_DEBUG(STATE))
+			zlog_debug(ZLOG_VOIP, "SIP module state change to stop/idle");
 		sipctl->stop_state = (VOIP_SIP_REMOTE_STOP);
-		//voip_event_node_register(voip_app_ev_stop_call, NULL, NULL, 0);
-		voip_stream_stop_api();
-		//sipctl->call_state = VOIP_SIP_CALL_IDLE;
+		voip_event_node_register(voip_app_ev_remote_stop_call, NULL, NULL, 0);
 		return OK;
 	}
 	return ERROR;
@@ -1007,19 +826,30 @@ static int voip_sip_call_remote_info(voip_sip_ctl_t *sipctl, char *buf, int len)
 	MSG_HDR_T *hdr = (	MSG_HDR_T *)buf;
 	MSG_SIP_INFO *ack;
 	ack = (MSG_SIP_INFO *)SIP_MSG_OFFSET(buf);
-	if(SIP_CTL_DEBUG(RECV) && SIP_CTL_DEBUG(DETAIL))
+	if(SIP_CTL_DEBUG(EVENT))
 	{
-		zlog_debug(ZLOG_VOIP, "RECV MSG TYPE=%x call num %d '%c' %s", hdr->type, (int)ack->content[0], ack->content[0], ack->content);
+		if(SIP_CTL_DEBUG(DETAIL))
+			zlog_debug(ZLOG_VOIP, "SIP module recv request info msg cause:'%c'",ack->content[0]);
+		else
+			zlog_debug(ZLOG_VOIP, "SIP module recv request info msg");
 	}
 	if(hdr->type == SIP_REMOTE_INFO_MSG)
 	{
+		if(ack->content[0] == '#')
+		{
+			//action, open door
+			if(SIP_CTL_DEBUG(STATE))
+				zlog_debug(ZLOG_VOIP, "SIP module recv request info and open door");
+			x5b_app_open_door_api(0);
+			return OK;
+		}
 		return OK;
 	}
 	return ERROR;
 }
 
 
-int voip_sip_read_handle(voip_sip_ctl_t *sipctl, char *buf, int len)
+int voip_sip_respone_handle(voip_sip_ctl_t *sipctl, char *buf, int len)
 {
 	int ret = ERROR;
 	MSG_HDR_T *hdr = (	MSG_HDR_T *)buf;
@@ -1055,7 +885,10 @@ int voip_sip_read_handle(voip_sip_ctl_t *sipctl, char *buf, int len)
 		break;
 
 	default:
-		zlog_err(ZLOG_VOIP, "RECV MSG TYPE=%x ", hdr->type);
+		//if(SIP_CTL_DEBUG(EVENT))
+		{
+			zlog_warn(ZLOG_VOIP, "SIP module recv MSG TYPE = %x", hdr->type);
+		}
 		break;
 	}
 	return ret;
@@ -1067,12 +900,7 @@ int voip_sip_read_handle(voip_sip_ctl_t *sipctl, char *buf, int len)
 static int voip_sip_hdr_make(voip_sip_ctl_t *sipctl, int type, char *buf, int len)
 {
 	MSG_HDR_T *hdr = (	MSG_HDR_T *)buf;
-#if 0
-	hdr->srcApplId 	= VOIP_SIP_SRCID;  /*源进程号  VOIP--6，linectl---8*/
-	hdr->dstAppId 	= VOIP_SIP_DSTID;   /*目的进程号*/
-	hdr->type		= type;     /*消息类型 1--注册；2--注册返回，3--*/
-	hdr->sync		= TRUE;      /* 是否是同步消息 */
-#else
+
 	hdr->magic		= 1;//SIP_MSG_HDR_MAGIC;
 	hdr->priority	= 1;  /* Priority must be the first 4-byte */
 	hdr->srcApplId	= VOIP_SIP_SRCID; /* VOS_APPL_ID */
@@ -1082,7 +910,6 @@ static int voip_sip_hdr_make(voip_sip_ctl_t *sipctl, int type, char *buf, int le
 	hdr->len		= 0;       /* the length of the message, including the message hdr */
 	hdr->tick		= 0;
 	hdr->magic		= hdr->priority;
-#endif
 	hdr->len		= (SIP_MSG_LEN(len));       /* 消息长度，包含消息头 */
 	return SIP_MSG_LEN(len);
 }
@@ -1097,9 +924,10 @@ int voip_sip_register_start(BOOL reg)
 	act = (MSG_REG_ACT *)SIP_MSG_OFFSET(voip_sip_ctl.sbuf);
 	act->act = reg;
 	voip_sip_ctl.slen = voip_sip_hdr_make(&voip_sip_ctl, SIP_REGISTER_MSG, voip_sip_ctl.sbuf, sizeof(MSG_REG_ACT));
-	if(SIP_CTL_DEBUG(RECV) && SIP_CTL_DEBUG(DETAIL))
+
+	if(SIP_CTL_DEBUG(SEND))
 	{
-		zlog_debug(ZLOG_VOIP, "SEND Register MSG %s (%d byte)", reg ? "Start":"Stop",voip_sip_ctl.slen);
+		zlog_warn(ZLOG_VOIP, "SIP module Register MSG %s", reg ? "Start":"Stop");
 	}
 #ifdef SIP_CTL_SYNC
 	return voip_sip_write_and_wait_respone(&voip_sip_ctl, SIP_CTL_TIMEOUT);
@@ -1131,10 +959,12 @@ int voip_sip_call_start(char *phone)
 
 	act->uid 		= 1;
 	act->senid 		= 1;
-	strcpy(act->digit, "1001"); /* 被叫号码*/
-	act->digit_num = strlen("1001"); /*被叫号码长度*/
-	strcpy(act->name, "1001"); /* 被叫号码*/
-	act->name_num = strlen("1001"); /*被叫号码长度*/
+/*
+	strcpy(act->digit, "1001");  被叫号码
+	act->digit_num = strlen("1001"); 被叫号码长度
+	strcpy(act->name, "1001");  被叫号码
+	act->name_num = strlen("1001"); 被叫号码长度
+*/
 
 	strcpy(act->digit, phone); /* 被叫号码*/
 	act->digit_num = strlen(phone); /*被叫号码长度*/
@@ -1147,9 +977,13 @@ int voip_sip_call_start(char *phone)
 	//act->rtp_addr	= 0;  /*本地RTP地址*/
 	act->codec		= 8;//voip_stream->payload;     /*优先使用的codec*/
 	voip_sip_ctl.slen = hdr->len;
-	if(SIP_CTL_DEBUG(RECV) && SIP_CTL_DEBUG(DETAIL))
+
+	if(SIP_CTL_DEBUG(SEND))
 	{
-		zlog_debug(ZLOG_VOIP, "SEND Call MSG start @%s (%d byte)", phone,voip_sip_ctl.slen);
+		if(SIP_CTL_DEBUG(DETAIL))
+			zlog_debug(ZLOG_VOIP, "SIP module Call MSG @%s name:%s", phone, phone);
+		else
+			zlog_warn(ZLOG_VOIP, "SIP module Call MSG @%s", phone);
 	}
 #ifdef SIP_CTL_SYNC
 	return voip_sip_write_and_wait_respone(&voip_sip_ctl, SIP_CTL_TIMEOUT);
@@ -1172,11 +1006,12 @@ int voip_sip_call_stop()
 	voip_sip_ctl.stop_state = (VOIP_SIP_LOCAL_STOP);
 	voip_sip_ctl.call_state = VOIP_SIP_CALL_IDLE;
 	voip_sip_ctl.slen = voip_sip_hdr_make(&voip_sip_ctl, SIP_LOCAL_STOP_MSG, voip_sip_ctl.sbuf, sizeof(MSG_LOCAL_BYE));
-	if(SIP_CTL_DEBUG(RECV) && SIP_CTL_DEBUG(DETAIL))
+
+	if(SIP_CTL_DEBUG(SEND))
 	{
-		zlog_debug(ZLOG_VOIP, "SEND Call MSG stop (%d byte)",voip_sip_ctl.slen);
+		zlog_warn(ZLOG_VOIP, "SIP module stop Call MSG");
 	}
-	voip_event_node_register(voip_app_ev_stop_call, NULL, NULL, 0);
+	//voip_event_node_register(voip_app_ev_stop_call, NULL, NULL, 0);
 #ifdef SIP_CTL_SYNC
 	return voip_sip_write_and_wait_respone(&voip_sip_ctl, SIP_CTL_TIMEOUT);
 #else
@@ -1206,251 +1041,6 @@ voip_state_t voip_sip_state_get_api()
 
 
 
-/*
-int voip_sip_register(char *phone, char *user, char *password, BOOL enable)
-{
-	return voip_sip_write_and_wait_respone(&voip_sip_ctl, SIP_CTL_TIMEOUT);
-}
 
 
-int voip_sip_call(char *phone, char *user, char *password, int timeoutms, BOOL start)
-{
-#ifdef VOIP_SIP_EVENT_LOOPBACK
-	return OK;
-#else
-	return voip_sip_write_and_wait_respone(&voip_sip_ctl,  timeoutms);
-#endif
-}
-*/
-
-#ifdef SIP_CTL_MSGQ
-
-static int sip_msgq_create_read(int msgKey)
-{
-    int msgId;
-    // make applId as msg key
-    if ((msgId = msgget(msgKey, (S_IRUSR|S_IWUSR|IPC_CREAT/*|IPC_EXCL*/))) == -1)
-    {
-        if ((msgId = msgget(msgKey, S_IRUSR|S_IWUSR)) == -1)
-        {
-            zlog_err(ZLOG_VOIP,"sip_msgq_create_read Error:%s ", strerror(errno));
-            return ERROR;
-        }
-        else
-        {
-        }
-    }
-	//if(SIP_CTL_DEBUG(MSGQ) && SIP_CTL_DEBUG(DETAIL))
-	{
-		zlog_debug(ZLOG_VOIP, "sip_msgq_create_read read msgq@%d on :%d", msgId, msgKey);
-	}
-    return msgId;
-}
-
-static int sip_msgq_create_write(int msgKey)
-{
-    int msgId;
-    // make applId as msg key
-    if ((msgId = msgget(msgKey, S_IRUSR|S_IWUSR)) == -1)
-    {
-        zlog_err(ZLOG_VOIP,"sip_msgq_create_write Error:%s ", strerror(errno));
-        return ERROR;
-    }
-	//if(SIP_CTL_DEBUG(MSGQ) && SIP_CTL_DEBUG(DETAIL))
-	{
-		zlog_debug(ZLOG_VOIP, "sip_msgq_create_write write msgq@%d on :%d", msgId, msgKey);
-	}
-    return msgId;
-}
-/*static int sip_msgq_fflush(int msgId)
-{
-	char buf[1024];
-	while(1)
-	{
-		if(msgrcv(msgId, buf, sizeof(buf), 0, IPC_NOWAIT) == -1)
-		{
-		//	if(errno == ENOMSG)
-				return OK;
-		}
-	}
-	return OK;
-}*/
-
-/*static int sip_msgq_buffsize(int msgId, int qBytes)
-{
-    struct msqid_ds msg_stat;
-    qBytes = (qBytes&(~0x3ff)) + 0x400;
-    if( 0 != msgctl(msgId, IPC_STAT, &msg_stat) )
-    {
-    	 zlog_err(ZLOG_VOIP,"sip_msgq_create IPC_STAT Error:%s", strerror(errno));
-        return ERROR;
-    }
-    msg_stat.msg_qbytes = qBytes;
-    if( 0 != msgctl(msgId, IPC_SET, &msg_stat) )
-    {
-         zlog_err(ZLOG_VOIP,"sip_msgq_create IPC_SET Error:%s", strerror(errno));
-        return ERROR;
-    }
-    if( 0 != msgctl(msgId, IPC_STAT, &msg_stat) )
-    {
-         zlog_err(ZLOG_VOIP,"sip_msgq_create IPC_STAT Error:%s", strerror(errno));
-        return ERROR;
-    }
-    if ( msg_stat.msg_qbytes == qBytes )
-    {
-         zlog_err(ZLOG_VOIP," msg queue size %d\r\n",qBytes);
-    }
-	if(SIP_CTL_DEBUG(MSGQ) && SIP_CTL_DEBUG(DETAIL))
-	{
-		zlog_debug(ZLOG_VOIP, "set msgq@%d buffer size %d", msgId, qBytes);
-	}
-    return OK;
-}*/
-
-static int sip_msgq_delete(int msgId)
-{
-    if( 0 != msgctl(msgId, IPC_RMID, NULL))
-    {
-        zlog_err(ZLOG_VOIP,"sip_msgq_delete Error:%s", strerror(errno));
-        return ERROR;
-    }
-	if(SIP_CTL_DEBUG(MSGQ) && SIP_CTL_DEBUG(DETAIL))
-	{
-		zlog_debug(ZLOG_VOIP, "sip_msgq_delete msgq@%d",msgId);
-	}
-    return OK;
-}
-
-static int sip_msgq_recv(int msgId, void* pMsgHdr, int uiMaxBytes, int msgType, int wait)
-{
-    int size;
-    if(ERROR == (size = msgrcv(msgId, pMsgHdr, uiMaxBytes, msgType, 0)))
-    {
-        return ERROR;
-    }
-    if (0 == size)
-    {
-        return ERROR;
-    }
-    return size;
-}
-
-static int x5_b_a_hex_debug(char *hdr, char *aa, int len, int rx)
-{
-	char buf[1560];
-	char tmp[16];
-	u_int8 *p = aa;
-	int i = 0;
-	return 0;
-	//int len = len;
-	p = (u_int8 *)aa;
-	memset(buf, 0, sizeof(buf));
-	for(i = 0; i < len; i++)
-	{
-		memset(tmp, 0, sizeof(tmp));
-		sprintf(tmp, "0x%02x ", p[i]);
-		if(i%6 == 0)
-			strcat(buf, " ");
-		if(i%12 == 0)
-			strcat(buf, "\r\n");
-		strcat(buf, tmp);
-	}
-	zlog_debug(ZLOG_VOIP, "%s : %s", hdr, buf);
-	return OK;
-}
-
-static int sip_msgq_send(int msgQId, char* pMsg, int len)
-{
-	int tryCounter = 0;
-	if(SIP_CTL_DEBUG(MSGQ) && SIP_CTL_DEBUG(DETAIL))
-	{
-		zlog_debug(ZLOG_VOIP, "send msg to msgq@%d buffer size %d", msgQId, len);
-		//x5_b_a_hex_debug("SEND", pMsg, len, 0);
-	}
-	while (1)
-	{
-		if(msgsnd(msgQId, pMsg, len - 4, IPC_NOWAIT) < 0)
-		{
-			if (((EINTR == errno)||(EAGAIN == errno)) && (tryCounter < 5))
-			{
-				tryCounter++;
-				os_msleep(10+10*tryCounter);
-				continue;
-			}
-	     	zlog_debug(ZLOG_VOIP, "send msg to msgq : %s", strerror(errno));
-			return ERROR;
-		}
-		else
-		{
-			return OK;
-		}
-	}
-    return OK;
-}
-
-static int sip_msgq_task(void *p)
-{
-	char buf[1024];
-	int ret = 0;
-	voip_sip_ctl_t *sipctl = (voip_sip_ctl_t *)p;
-
-	while(!os_load_config_done())
-	{
-		os_sleep(1);
-	}
-	sipctl->rq = sip_msgq_create_read(SIP_CTL_LMSGQ_KEY);
-
-	while(1)
-	{
-		sipctl->rq = 32769;
-		printf( "RECV MSGQ ID %d\n", sipctl->rq);
-		ret = sip_msgq_recv(sipctl->rq, buf, sizeof(buf), -2, 1);
-		if(ret > 0)
-		{
-			if(SIP_CTL_DEBUG(MSGQ) && SIP_CTL_DEBUG(DETAIL))
-			{
-				printf("recv msg from msgq@%d buffer len %d\n", sipctl->rq, ret);
-				x5_b_a_hex_debug("RECV", buf, ret, 0);
-			}
-			printf( "befor voip_sip_read_handle\n");
-			voip_sip_read_handle(sipctl, buf, ret);
-			printf("after voip_sip_read_handle\n");
-		}
-		else
-		{
-			if(errno == EINTR || errno == EAGAIN)
-			{
-				os_msleep(100);
-				continue;
-			}
-			sleep(1);
-			printf("sip_msgq_task\n");
-		}
-	}
-	return ERROR;
-}
-
-
-static int sip_msgq_task_init(voip_sip_ctl_t *sipctl)
-{
-	if(sipctl->taskid)
-		return OK;
-	sipctl->taskid = os_task_create("sipMsgQ", OS_TASK_DEFAULT_PRIORITY,
-	               0, sip_msgq_task, &sipctl, OS_TASK_DEFAULT_STACK);
-	if(sipctl->taskid)
-		return OK;
-	return ERROR;
-}
-
-
-static int sip_msgq_task_exit(voip_sip_ctl_t *sipctl)
-{
-	if(sipctl->taskid)
-	{
-		if(os_task_destroy(sipctl->taskid)==OK)
-			sipctl->taskid = 0;
-	}
-	return OK;
-}
-#endif
 

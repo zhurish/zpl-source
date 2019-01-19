@@ -43,7 +43,8 @@
 #define SIP_CTL_DEBUG_SEND		0x0002
 #define SIP_CTL_DEBUG_DETAIL	0x0004
 #define SIP_CTL_DEBUG_EVENT		0x0008
-#define SIP_CTL_DEBUG_MSGQ		0x0010
+#define SIP_CTL_DEBUG_STATE		0x0010
+#define SIP_CTL_DEBUG_MSGQ		0x0020
 
 #define SIP_CTL_DEBUG(n)		(SIP_CTL_DEBUG_ ## n & voip_sip_ctl.debug)
 #define SIP_CTL_DEBUG_ON(n)		(voip_sip_ctl.debug |= SIP_CTL_DEBUG_ ## n)
@@ -72,8 +73,8 @@
 #define SIP_DIS_NAME_DEFAULT		TRUE
 #define SIP_100_REL_DEFAULT			TRUE
 
-#define SIP_PHONE_DEFAULT			"0003"
-#define SIP_USERNAME_DEFAULT		"0003"
+#define SIP_PHONE_DEFAULT			"1003"
+#define SIP_USERNAME_DEFAULT		"1003"
 #define SIP_PASSWORD_DEFAULT		"0003"
 #define SIP_DTMF_DEFAULT			"rfc2833"
 
@@ -179,8 +180,8 @@ typedef struct voip_sip_ctl_s
 
 #ifdef SIP_CTL_MSGQ
 	int			taskid;
-	int			rq;
-	int			wq;
+	int			sip_rqueue;
+	int			sip_wqueue;
 #endif
 	void		*t_event;
 	void		*t_time;
@@ -267,29 +268,8 @@ enum
 #define VOS_MSG_HDR_MAGIC    (0xaabbccdd)
 #define SIP_MSG_HDR_MAGIC	VOS_MSG_HDR_MAGIC
 
-#if 0
 typedef struct
 {
-	u_int32         magic;
-	u_int32      	priority;  /* Priority must be the first 4-byte */
-	u_int32         srcApplId; /* VOS_APPL_ID */
-	u_int32    		type;
-    u_int32         srcMsgQKey;
-    BOOL            sync;      /* Sync or async message */
-    u_int32         len;       /* the length of the message, including the message hdr */
-    u_int32         tick;
-} SIP_MSG_HDR_T;
-#endif
-
-typedef struct
-{
-#if 0
-    unsigned char    srcApplId;  /*源进程号  VOIP--6，linectl---8*/
-    unsigned char    dstAppId;   /*目的进程号*/
-    unsigned char    type;     	/*消息类型 1--注册；2--注册返回，3--*/
-    BOOL             sync;      /* 是否是同步消息 */
-    u_int32          len;       /* 消息长度，包含消息头 */
-#endif
 	u_int32         magic;
 	u_int32      	priority;  /* Priority must be the first 4-byte */
 	u_int32         srcApplId; /* VOS_APPL_ID */
@@ -389,11 +369,13 @@ typedef struct
 #pragma pack(0)
 
 extern voip_sip_t voip_sip_config;
-
+extern voip_sip_ctl_t voip_sip_ctl;
 
 extern int voip_sip_module_init();
 extern int voip_sip_module_exit();
 
+extern int voip_sip_module_task_exit();
+extern int voip_sip_module_task_exit();
 /*
  * SIP config Module
  */
@@ -423,9 +405,10 @@ extern sip_register_state_t voip_sip_register_state_get_api();
 extern sip_call_error_t voip_sip_call_error_get_api();
 
 extern sip_call_state_t voip_sip_call_state_get_api();
+extern int voip_sip_call_state_set_api(sip_call_state_t );
 extern sip_stop_state_t voip_sip_stop_state_get_api();
 
-int voip_sip_read_handle(voip_sip_ctl_t *sipctl, char *buf, int len);
+extern int voip_sip_respone_handle(voip_sip_ctl_t *sipctl, char *buf, int len);
 
 /*
  * SIP event Module (sock)
@@ -442,6 +425,15 @@ extern int voip_sip_call(char *phone, char *user, char *password, int timeoutms,
 extern int voip_sip_register_start(BOOL reg);
 extern int voip_sip_call_start(char *phone);
 extern int voip_sip_call_stop();
+
+
+#ifdef SIP_CTL_MSGQ
+extern int sip_ctl_msgq_init(voip_sip_ctl_t *sipctl);
+extern int sip_ctl_msgq_exit(voip_sip_ctl_t *sipctl);
+extern int sip_ctl_msgq_task_init(voip_sip_ctl_t *sipctl);
+extern int sip_ctl_msgq_task_exit(voip_sip_ctl_t *sipctl);
+extern int sip_ctl_msgq_send(voip_sip_ctl_t *sipctl, char* pMsg, int len);
+#endif
 
 /*
  * cmd module

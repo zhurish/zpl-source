@@ -38,7 +38,7 @@ typedef struct event_node_s
 	int			(*ev_cb)(event_node_t *);
 	void		*pVoid;
 	u_int8		data[1024];
-
+	u_int8		dlen;
 	char 		entry_name[128];
 }event_node_t;
 

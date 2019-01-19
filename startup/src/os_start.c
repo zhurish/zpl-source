@@ -33,7 +33,7 @@
 static void os_sighup(void)
 {
 	zlog_notice(ZLOG_DEFAULT, "%s: SIGHUP received\r\n",__func__);
-
+	os_msgq_exit();
 	os_exit_all_module();
 
 	exit(0);
@@ -43,7 +43,7 @@ static void os_sighup(void)
 static void os_sigint(void)
 {
 	zlog_notice(ZLOG_DEFAULT, "%s: Terminating on signal\r\n",__func__);
-
+	os_msgq_exit();
 	os_exit_all_module();
 
 	exit(0);
@@ -53,6 +53,7 @@ static void os_sigint(void)
 static void os_sigkill(void)
 {
 	zlog_notice(ZLOG_DEFAULT, "%s\r\n",__func__);
+	os_msgq_exit();
 	os_exit_all_module();
 /*	zlog_backtrace_sigsafe(LOG_DEBUG,"AAAAAAAA");
 	zlog_backtrace(LOG_DEBUG);*/
@@ -96,7 +97,6 @@ static struct quagga_signal_t os_signals[] =
 };
 
 
-
 int os_start_init(char *progname, module_t pro, int daemon_mode)
 {
 	/* Make master thread emulator. */
@@ -109,7 +109,7 @@ int os_start_init(char *progname, module_t pro, int daemon_mode)
 	}
 
 	lstLibInit();
-
+	os_msgq_init();
 	/* Vty related initialize. */
 	signal_init(array_size(os_signals), os_signals);
 
@@ -168,7 +168,7 @@ int os_start_all_module()
 int os_exit_all_module()
 {
 
-	os_module_task_exit();
+	//os_module_task_exit();
 
 	os_module_exit();
 

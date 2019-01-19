@@ -32,7 +32,7 @@
 #include "voip_api.h"
 
 
-static int x5_b_x5_b_local_address_set(char *address)
+static int x5b_app_local_address_set(char *address)
 {
 	int ret = 0;
 	struct prefix cp;
@@ -52,7 +52,7 @@ static int x5_b_x5_b_local_address_set(char *address)
 }
 
 
-int x5_b_x5_b_factory_set(x5_b_factory_data_t *data)
+int x5b_app_factory_set(x5_b_factory_data_t *data)
 {
 	//data->local_address;			//����IP��ַ��IP/DHCP��
 	int ret = 0;
@@ -64,11 +64,11 @@ int x5_b_x5_b_factory_set(x5_b_factory_data_t *data)
 	ret |= voip_local_rtp_set_api(0, ntohs(data->rtp_local_port));
 //	ret |= voip_local_rtcp_set_api(0, ntohs(data->rtcp_local_port));
 
-	ret |= x5_b_x5_b_local_address_set(inet_address(ntohl(data->local_address)));
+	ret |= x5b_app_local_address_set(inet_address(ntohl(data->local_address)));
 	return ret;
 }
 
-int x5_b_start_call(BOOL start, x5_b_room_position_t *room)
+int x5b_app_start_call(BOOL start, x5_b_room_position_t *room)
 {
 /*	event_node_t node;
 	memset(&node, 0, sizeof(node));
@@ -77,7 +77,28 @@ int x5_b_start_call(BOOL start, x5_b_room_position_t *room)
 	if(room)
 		memcpy(node.sbuf, room, sizeof(x5_b_room_position_t));
 	event_node_add(&node);*/
-	voip_event_node_register(start ? voip_app_ev_start_call:voip_app_ev_stop_call, NULL, room, sizeof(x5_b_room_position_t));
+	voip_event_node_register(start ? voip_app_ev_start_call:voip_app_ev_local_stop_call, NULL, room, sizeof(x5_b_room_position_t));
 	return OK;
 }
 
+int x5b_app_call_result_api(int res)
+{
+	if(x5_b_a_mgt)
+		return x5_b_a_call_result_api(x5_b_a_mgt, res);
+	return ERROR;
+}
+
+int x5b_app_open_result_api(int res)
+{
+	if(x5_b_a_mgt)
+		return x5_b_a_open_result_api(x5_b_a_mgt, res);
+	return ERROR;
+}
+
+
+int x5b_app_open_door_api(int res)
+{
+	if(x5_b_a_mgt)
+		return x5_b_a_open_door_api(x5_b_a_mgt, res);
+	return ERROR;
+}

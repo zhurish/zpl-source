@@ -71,11 +71,15 @@ static event_node_t * voip_event_node_get_empty(voip_event_t *event)
 	if(!node)
 	{
 		node = malloc(sizeof(event_node_t));
-		if(node)
-			memset(node, 0, sizeof(event_node_t));
+		if(!node)
+			return NULL;
 	}
 	else
 		lstDelete(&event->event_unlst, (NODE *) node);
+
+	if(node)
+		memset(node, 0, sizeof(event_node_t));
+
 	if(event->mutex)
 		os_mutex_unlock(event->mutex);
 	return node;
@@ -128,8 +132,11 @@ int _voip_event_node_register(int (*cb)(event_node_t *), void *pVoid, char *buf,
 		pnode->pVoid = pVoid;
 		if(funcname)
 			strncpy(pnode->entry_name, funcname, MIN(strlen(funcname), 128));
-		if(buf)
+		if(buf && len)
+		{
 			memcpy(pnode->data, buf, len);
+			pnode->dlen = len;
+		}
 		//V_APP_DEBUG("-------------%s", __func__);
 		_voip_event_node_add(&voip_event, pnode);
 		os_sem_give(voip_event.sem);
@@ -181,7 +188,7 @@ static int _voip_event_node_process(voip_event_t *event, event_node_t *pnode)
 		if (lookup && lookup->ev_cb)
 		{
 			(lookup->ev_cb)(lookup);
-			V_APP_DEBUG("-------------%s:%s", __func__, lookup->entry_name);
+			//V_APP_DEBUG("-------------%s:%s", __func__, lookup->entry_name);
 			lstDelete (&event->event_lst, (NODE *)lookup);
 			lstAdd (&event->event_unlst, (NODE *)lookup);
 		}
@@ -214,7 +221,7 @@ static int voip_event_task(voip_event_t *event)
 		//os_sem_give(voip_event.sem);
 		if(event->sem)
 			os_sem_take(event->sem, OS_WAIT_FOREVER);
-		zlog_debug(ZLOG_VOIP, "-------------%s", __func__);
+		//zlog_debug(ZLOG_VOIP, "-------------%s", __func__);
 		if(lstCount(&event->event_lst))
 			_voip_event_node_process(event, NULL);
 	}

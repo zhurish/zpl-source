@@ -18,6 +18,7 @@
 
 #include "voip_def.h"
 #include "voip_task.h"
+#include "voip_sip.h"
 #include "voip_stream.h"
 #include "voip_socket.h"
 
@@ -375,7 +376,6 @@ int voip_stream_show_config(struct vty *vty)
 {
 	if(voip_stream)
 	{
-
 		vty_out(vty, " voip stream                        : %s%s", voip_stream->enable ? "ENABLE":"DISABLE", VTY_NEWLINE);
 		vty_out(vty, " voip stream rtp-port               : %d%s", voip_stream->l_rtp_port, VTY_NEWLINE);
 		vty_out(vty, " voip stream payload                : %d%s", voip_stream->payload, VTY_NEWLINE);
@@ -384,8 +384,12 @@ int voip_stream_show_config(struct vty *vty)
 
 		if(strlen(voip_stream->r_rtp_address))
 		{
-			vty_out(vty, " voip stream remote                 : %s:%d%s",
+			if(voip_sip_call_state_get_api() >= VOIP_SIP_CALL_RINGING)
+				vty_out(vty, " voip stream remote                 : %s:%d%s",
 					voip_stream->r_rtp_address, voip_stream->r_rtp_port, VTY_NEWLINE);
+			else
+				vty_out(vty, " voip stream remote                 : %s:%d%s",
+					"0.0.0.0", 0, VTY_NEWLINE);
 		}
 		vty_out(vty, " voip stream bitrate                : %d%s", voip_stream->bitrate, VTY_NEWLINE);
 
