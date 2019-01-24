@@ -31,10 +31,11 @@
 
 voip_sip_t voip_sip_config;
 voip_sip_ctl_t voip_sip_ctl;
-
+#ifdef PL_EXSIP_MODULE
 #ifdef SIP_CTL_MSGQ
 static int voip_sip_msgq_init(voip_sip_ctl_t *sipctl);
 static int voip_sip_msgq_exit(voip_sip_ctl_t *sipctl);
+#endif
 #endif
 static int voip_sip_ctl_state(struct vty *vty);
 
@@ -80,7 +81,9 @@ static int voip_sip_config_default(voip_sip_t *sip)
 
 int voip_sip_module_init()
 {
+#ifdef PL_EXSIP_MODULE
 	voip_sip_ctl_module_init();
+#endif
 	os_memset(&voip_sip_config, 0, sizeof(voip_sip_config));
 	voip_sip_config_default(&voip_sip_config);
 	return OK;
@@ -88,7 +91,9 @@ int voip_sip_module_init()
 
 int voip_sip_module_exit()
 {
+#ifdef PL_EXSIP_MODULE
 	voip_sip_ctl_module_exit();
+#endif
 	os_memset(&voip_sip_config, 0, sizeof(voip_sip_config));
 	voip_sip_config_default(&voip_sip_config);
 	return OK;
@@ -96,16 +101,20 @@ int voip_sip_module_exit()
 
 int voip_sip_module_task_init()
 {
+#ifdef PL_EXSIP_MODULE
 #ifdef SIP_CTL_MSGQ
 	sip_ctl_msgq_task_init(&voip_sip_ctl);
+#endif
 #endif
 	return OK;
 }
 
 int voip_sip_module_task_exit()
 {
+#ifdef PL_EXSIP_MODULE
 #ifdef SIP_CTL_MSGQ
 	sip_ctl_msgq_task_exit(&voip_sip_ctl);
+#endif
 #endif
 	return OK;
 }
@@ -535,11 +544,11 @@ int voip_sip_ctl_module_init()
 	if(master_eloop[MODULE_VOIP] == NULL)
 		master_eloop[MODULE_VOIP] = eloop_master_module_create(MODULE_VOIP);
 	voip_sip_ctl.master = master_eloop[MODULE_VOIP];
-
+#ifdef PL_EXSIP_MODULE
 #ifdef SIP_CTL_MSGQ
 	voip_sip_msgq_init(&voip_sip_ctl);
 #endif
-
+#endif
 	//voip_sip_ctl.debug = 0xffff;
 	voip_sip_ctl.debug = SIP_CTL_DEBUG_EVENT|
 	SIP_CTL_DEBUG_STATE|
@@ -549,16 +558,18 @@ int voip_sip_ctl_module_init()
 
 int voip_sip_ctl_module_exit()
 {
+#ifdef PL_EXSIP_MODULE
 #ifdef SIP_CTL_MSGQ
 //	sip_msgq_task_exit(&voip_sip_ctl);
 	voip_sip_msgq_exit(&voip_sip_ctl);
+#endif
 #endif
 	os_memset(&voip_sip_ctl, 0, sizeof(voip_sip_ctl));
 	return OK;
 }
 
 
-
+#ifdef PL_EXSIP_MODULE
 #ifdef SIP_CTL_MSGQ
 static int voip_sip_msgq_init(voip_sip_ctl_t *sipctl)
 {
@@ -590,7 +601,6 @@ static int voip_sip_msgq_exit(voip_sip_ctl_t *sipctl)
 }
 #endif
 
-
 static int voip_sip_write_msg(voip_sip_ctl_t *sipctl, int timeoutms)
 {
 #ifdef SIP_CTL_MSGQ
@@ -608,7 +618,7 @@ static int voip_sip_write_msg(voip_sip_ctl_t *sipctl, int timeoutms)
 #endif
 	return ERROR;
 }
-
+#endif
 
 
 sip_register_state_t voip_sip_register_state_get_api()
@@ -929,10 +939,14 @@ int voip_sip_register_start(BOOL reg)
 	{
 		zlog_warn(ZLOG_VOIP, "SIP module Register MSG %s", reg ? "Start":"Stop");
 	}
+#ifdef PL_EXSIP_MODULE
 #ifdef SIP_CTL_SYNC
 	return voip_sip_write_and_wait_respone(&voip_sip_ctl, SIP_CTL_TIMEOUT);
 #else
 	return voip_sip_write_msg(&voip_sip_ctl, SIP_CTL_TIMEOUT);
+#endif
+#else
+	return OK;
 #endif
 }
 
@@ -985,10 +999,14 @@ int voip_sip_call_start(char *phone)
 		else
 			zlog_warn(ZLOG_VOIP, "SIP module Call MSG @%s", phone);
 	}
+#ifdef PL_EXSIP_MODULE
 #ifdef SIP_CTL_SYNC
 	return voip_sip_write_and_wait_respone(&voip_sip_ctl, SIP_CTL_TIMEOUT);
 #else
 	return voip_sip_write_msg(&voip_sip_ctl, SIP_CTL_TIMEOUT);
+#endif
+#else
+	return OK;
 #endif
 }
 
@@ -1012,10 +1030,14 @@ int voip_sip_call_stop()
 		zlog_warn(ZLOG_VOIP, "SIP module stop Call MSG");
 	}
 	//voip_event_node_register(voip_app_ev_stop_call, NULL, NULL, 0);
+#ifdef PL_EXSIP_MODULE
 #ifdef SIP_CTL_SYNC
 	return voip_sip_write_and_wait_respone(&voip_sip_ctl, SIP_CTL_TIMEOUT);
 #else
 	return voip_sip_write_msg(&voip_sip_ctl, SIP_CTL_TIMEOUT);
+#endif
+#else
+	return OK;
 #endif
 }
 

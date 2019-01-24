@@ -229,6 +229,21 @@ endif
 endif
 
 
+ifeq ($(strip $(MODULE_OSIP)),true)
+OSIP_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(OSIPDIR)
+PLPRODS += $(OSIP_ROOT)/libosip/src/osip2
+PLPRODS += $(OSIP_ROOT)/libosip/src/osipparser2
+PLPRODS += $(OSIP_ROOT)/libexosip/src
+
+PLINCLUDE += -I$(OSIP_ROOT)/libosip/include
+PLINCLUDE += -I$(OSIP_ROOT)/libexosip/include
+
+PLINCLUDE += -I$(OSIP_ROOT)
+PLDEFINE += -DPL_OSIP_MODULE
+endif
+ifeq ($(strip $(MODULE_EXSIP)),true)
+PLDEFINE += -DPL_EXSIP_MODULE
+endif
 
 ifeq ($(strip $(MODULE_APP)),true)
 APP_ROOT=$(PLBASE)/$(APPDIR)

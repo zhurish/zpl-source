@@ -2,16 +2,20 @@
 
 cd ../
 
-if test -d ".git"; then
+VER_FILE=include/gitversion.h
 
-	VER_FILE=include/gitversion.h
+if test -d ".git"; then
 
 	VER=`git log -1 --format=%s | awk '{print $1}'`
 	COMMIT=`git log -1 --format=\"%H\"`
 	RELEASE=`cat .git/HEAD | awk -F / '{print $3}'`
 	DATE=`date '+%Y%m%d%H%M%S'`
 	#RELEASE=`expr substr $RELEASE 1 4`
-
+	
+	if test -f $VER_FILE; then
+		touch $VER_FILE
+	fi
+	
 	if grep GIT_VER $VER_FILE >/dev/null 2>&1; then
 		# VER change
         VAL=`grep GIT_VERSION $VER_FILE | awk '{print $3}'` 
@@ -53,6 +57,37 @@ else # .git
 	#define GIT_COMMIT 		\"00000000\" 
 	#define MAKE_DATE		\"$DATE\" >> $VER_FILE"
 fi # .git
+
+
+BOARD_FILE=make/board.cfg
+
+VAL=`grep VERSION $BOARD_FILE | awk '{print $3}'` 
+
+if test "X" == "$1X" ;then
+	NVER=${VER}
+else
+	NVER=$1
+fi
+
+if test ! "X$VAL" == "X$NVER" ;then
+	sed -i 's/VERSION.*$/VERSION = '$NVER'/g' $BOARD_FILE
+fi
+
+
+#
+# make and setup startup shell
+#
+#START_APPSH=./startup/etc/x5b-app.sh
+#echo "#!/bin/sh" > $START_APPSH
+#echo "mkdir /tmp/tmp -p" >> $START_APPSH
+#echo "cd /app" >> $START_APPSH
+#echo "chmod +x SWP-${VER}.bin" >> $START_APPSH
+#echo "sleep 5" >> $START_APPSH
+#echo "./TimerMgr &" >> $START_APPSH
+#echo "sleep 1" >> $START_APPSH
+#echo "./SWP-${VER}.bin -t /dev/ttyS1 -d" >> $START_APPSH
+#echo "sleep 2" >> $START_APPSH
+#echo "./VmrMgr &" >> $START_APPSH
 
 echo "$VER"
 

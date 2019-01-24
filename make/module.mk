@@ -17,6 +17,8 @@ _MODULELIST = \
 	MODULE_SQLITE.false \
 	MODULE_SYSTOOLS.true \
 	MODULE_SSH.true \
+	MODULE_OSIP.false \
+	MODULE_EXSIP.true \
 	MODULE_VOIP.true \
 	MODULE_APP.true 
 #
@@ -58,6 +60,7 @@ PlatformModule = \
 	SQLITEDIR.sqlite \
 	SYSTOOLSDIR.systools \
 	LIBSSHDIR.ssh \
+	OSIPDIR.osip \
 	VOIPDIR.voip \
 	APPDIR.application
 ###

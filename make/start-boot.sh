@@ -1,18 +1,29 @@
 #!/bin/sh
 
 #
-# ./start-boot.sh /tmp/app SWP-V0.0.0.1.tar.bz2 SWP-V0.0.0.1.bin
 #
-echo "loading $2 to $1 $3"
+#
+if test "X" == "$1X" ;then
+	TTYDEV=/dev/ttyS0
+else
+	TTYDEV=$1
+fi
 
-mkdir $1 -p
 
-cp /mnt/$2 /$1 -arf
+BINFILE=SWP-V0.0.0.11.bin
 
-cd $1
+mkdir /tmp/tmp -p
 
-tar -jxvf $2
+cd /app
 
-cd bin
+if test "TAGET" == "${BINFILE}X" ;then
+	echo "Can not execule '${BINFILE}' and startup Application."
+fi
 
-./$3 -d
+chmod +x $BINFILE
+sync
+
+echo "boot '$BINFILE -t $TTYDEV -d', Please waitting ... "
+
+./$BINFILE -t /dev/ttyS1 -d
+

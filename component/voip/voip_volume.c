@@ -23,6 +23,18 @@
 #include "voip_api.h"
 
 
+#include <math.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+//#include <asm/page.h>
+
+
+#define AMP_GPIO_CTL_BASE 		0X10000000
+#define AMP_GPIO_PIN 	 	 	11
+#define AMP_GPIO_ON 			1
+#define AMP_GPIO_OFF 			0
+
+
 voip_volume_t voip_volume;
 
 
@@ -232,12 +244,6 @@ static int voip_volume_capture_boost_gain_init(int value)
 #endif
 
 
-static int voip_volume_apply_time(void *p)
-{
-	_VOIP_VOLUME_DEBUG("%s", __func__);
-	//voip_volume_apply();
-	return OK;
-}
 
 int voip_volume_module_init()
 {
@@ -254,7 +260,7 @@ int voip_volume_module_init()
 	voip_volume.in_boost	= VOIP_IN_BOOST_VOLUME;
 	voip_volume.in_boost_gain = VOIP_IN_BOOST_GAIN_VOLUME;
 
-	os_time_create_once(voip_volume_apply_time, NULL, 9000);
+//	os_time_create_once(voip_volume_apply_time, NULL, 9000);
 #ifdef VOIP_STARTUP_TEST
 	//os_time_create_once( _voip_startup_test, NULL, 9000);
 #endif
@@ -268,6 +274,7 @@ int voip_volume_module_exit()
 	return OK;
 }
 
+#if 0
 int voip_volume_apply()
 {
 	if(!voip_volume.isconfig)
@@ -293,46 +300,39 @@ int voip_volume_apply()
 	}
 	return OK;
 }
-
+#endif
 
 
 
 /*
  * Playback
  */
-#include <math.h>
-#include <sys/mman.h>
-#include <fcntl.h>
-//#include <asm/page.h>
 
-
-#define AMP_GPIO_CTL_BASE 0X10000000
-
-static int amp_gpio_ioctl(int value)
+static int amp_gpio_ioctl(int pin, int value)
 {
-	int gpio_fd = 0;
+	int memfd = 0;
 	unsigned int tmp = 0;
 	unsigned char *gpio_map = NULL;
 
-	gpio_fd = open("/dev/mem", O_RDWR);
-	if (gpio_fd == -1)
+	memfd = open("/dev/mem", O_RDWR);
+	if (memfd == -1)
 	{
 		zlog_debug(ZLOG_VOIP, "can't open /dev/mem.(%s)", strerror(errno));
 		return ERROR;
 	}
 	gpio_map = (unsigned char *) mmap(NULL, 1024, PROT_READ | PROT_WRITE,
-			MAP_FILE | MAP_SHARED, gpio_fd, AMP_GPIO_CTL_BASE);
+			MAP_FILE | MAP_SHARED, memfd, AMP_GPIO_CTL_BASE);
 
 	if (gpio_map == MAP_FAILED)
 	{
-		zlog_debug(ZLOG_VOIP, "can't gpio fd = %d(%s)", gpio_fd, strerror(errno));
-		close(gpio_fd);
+		zlog_debug(ZLOG_VOIP, "can't gpio fd = %d(%s)", memfd, strerror(errno));
+		close(memfd);
 		return ERROR;
 	}
 	//0X10000600
 	//GPIO_CTRL_0 = (volatile unsigned int *) (gpio_map);
 	 tmp = *(volatile unsigned int *)(gpio_map + 0X600);
-     tmp |=  (1u << 11);
+     tmp |=  (1u << pin);
      *(volatile unsigned int *)(gpio_map + 0X600) = tmp;
 
 	//0X10000620
@@ -342,15 +342,15 @@ static int amp_gpio_ioctl(int value)
 	//0X10000640
 	//GPIO_DCLR_0 = (volatile unsigned int *) (gpio_map + 0X40);
 
-	tmp = (1u << 11);
+	tmp = (1u << pin);
 	if (value)
 		*(volatile unsigned int *)(gpio_map + 0X630) = tmp;
 	else
 		*(volatile unsigned int *)(gpio_map + 0X640) = tmp;
 
 	munmap(gpio_map, 1024);
-	if (gpio_fd != 0x0) {
-		close(gpio_fd);
+	if (memfd != 0x0) {
+		close(memfd);
 	}
 	return OK;
 }
@@ -366,7 +366,7 @@ static int _voip_cards_power_amplifier(voip_volume_t *volume, BOOL enable)
 		//super_system("echo 1 > /sys/class/leds/lm4890:status/brightness" VOIP_NOHUP);
 		//super_system("echo 1 > /sys/class/leds/lm4890:status/brightness" VOIP_NOHUP);
 		//super_output_system("cat /sys/class/leds/lm4890:status/brightness", buf, sizeof(buf));
-		amp_gpio_ioctl(1);
+		amp_gpio_ioctl(AMP_GPIO_PIN, AMP_GPIO_ON);
 		//zlog_debug(ZLOG_VOIP, "======%s open(%s)", __func__, buf);
 	}
 	else
@@ -375,7 +375,7 @@ static int _voip_cards_power_amplifier(voip_volume_t *volume, BOOL enable)
 		//super_system("echo 0 > /sys/class/leds/lm4890:status/brightness" VOIP_NOHUP);
 
 		//super_output_system("cat /sys/class/leds/lm4890:status/brightness", buf, sizeof(buf));
-		amp_gpio_ioctl(0);
+		amp_gpio_ioctl(AMP_GPIO_PIN, AMP_GPIO_OFF);
 		//zlog_debug(ZLOG_VOIP, "======%s close(%s)", __func__, buf);
 	}
 	return OK;

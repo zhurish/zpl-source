@@ -24,8 +24,12 @@
 #include "voip_stream.h"
 #include "voip_dbtest.h"
 
+
 int voip_module_init()
 {
+#ifdef PL_OSIP_MODULE
+	voip_osip_module_init();
+#endif
 	memset(&voip_call, 0, sizeof(voip_call));
 	voip_call.debug = 0xffff;
 	/*

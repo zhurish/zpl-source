@@ -58,7 +58,7 @@ typedef struct voip_volume_s
 extern int voip_volume_module_init();
 extern int voip_volume_module_exit();
 
-extern int voip_volume_apply();
+//extern int voip_volume_apply();
 
 extern int voip_volume_open_api(voip_volume_mode mode);
 extern int voip_volume_close_api(voip_volume_mode mode);

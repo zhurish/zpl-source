@@ -23,7 +23,12 @@ OBJS += voip_stream.o
 OBJS += voip_mediastream.o
 OBJS += voip_dbtest.o
 OBJS += voip_sip.o
+ifeq ($(strip $(MODULE_EXSIP)),true)
 OBJS += voip_sip_ctl.o
+endif
+ifeq ($(strip $(MODULE_OSIP)),true)
+OBJS += voip_osip.o
+endif
 #############################################################################
 # LIB
 ###########################################################################

@@ -7,6 +7,22 @@ export TOP_DIR =$(shell pwd)
 #
 #
 #
+#prepare:
+#	cd make;./version.sh $(TAGET)
+#
+#
+#export GITVERSION=$(shell cd make;./version.sh)
+#
+#GITVER_FILE=include/gitversion.h
+#include/gitversion.h: 
+#$(GITVER_FILE):
+#	@/bin/sh $(TOP_DIR)/make/version.sh
+	#/usr/bin/perl $(SRC_DIR)/route_types.pl < $(SRC_DIR)/route_types.txt > $@
+#
+#
+#
+#
+#
 #
 include make/makelinux.mk
 #
@@ -14,9 +30,13 @@ include make/makelinux.mk
 #
 #
 #
-#
-#
 TAGET=SWP-$(PLVER)
+#
+#
+#
+#
+#
+#
 #
 #
 LIBS1 = $(shell $(CD) $(BASE_ROOT)/$(LIBDIR)/ && ls *.a)
@@ -70,21 +90,11 @@ $(TAGET) : $(OBJS) $(BASE_ROOT)/$(LIBDIR)/*.a
 	install -m 755 ${TAGET} ${BINDIR}
 	$(STRIP) $(BINDIR)/$(TAGET) 
 	install -d ${DSTETCDIR} 
-	install -m 755 setup-sound.sh ${DSTETCDIR} 	
+	cd make;./setup.sh $(TAGET)
+	install -m 755 make/start-boot.sh ${DSTETCDIR}  	
 	install -m 755 startup/etc/plat.conf ${DSTETCDIR}
 	#install -m 755 startup/etc/default-config.cfg ${DSTETCDIR}
-	install -m 755 startup/etc/phonedbtest.cfg ${DSTETCDIR}	
-	install -m 755 startup/etc/update-app.sh ${DSTETCDIR}
-	install -m 755 startup/etc/x5b-app.sh ${DSTETCDIR}
-	install -m 755 startup/etc/ringback.wav ${DSTETCDIR}	
-	#sip
-	install -m 755 startup/etc/sip.cfg ${DSTETCDIR}
-	install -m 755 startup/etc/TimerMgr ${BINDIR}
-	install -m 755 startup/etc/VmrMgr ${BINDIR}
-	#test	
-	install -m 755 startup/etc/remote-test.txt ${DSTETCDIR}		
-	install -m 755 startup/etc/volume_setup.sh ${DSTETCDIR}	
-	$(CP) $(TAGET) /home/zhurish/Downloads/tftpboot/
+	#$(CP) $(TAGET) /home/zhurish/Downloads/tftpboot/
 #
 #
 #	
