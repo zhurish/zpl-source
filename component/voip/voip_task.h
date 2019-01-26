@@ -19,6 +19,7 @@ typedef struct voip_task_s
 	void 	*pVoid1;
 	void 	*pVoid2;
 	void 	*pVoid3;
+	void	*sem;
 }voip_task_t;
 
 extern voip_task_t	voip_task;

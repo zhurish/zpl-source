@@ -90,21 +90,11 @@ ALIAS(voip_start_stream_test,
 
 DEFUN (voip_stop_stream_test,
 		voip_stop_stream_test_cmd,
-		"voip stream-test stop "CMD_KEY_IPV4,
+		"voip stream-test stop",
 		"VOIP Configure\n"
-		"Stop Configure\n"
-		CMD_KEY_IPV4_HELP)
+		"Stop Configure\n")
 {
 	int ret = ERROR;
-	struct prefix address;
-	prefix_zero(&address);
-	ret = str2prefix_ipv4 (argv[0], (struct prefix_ipv4 *)&address);
-	if (ret <= 0)
-	{
-		vty_out (vty, "%% Malformed address %s", VTY_NEWLINE);
-		return CMD_WARNING;
-	}
-	if(argc == 1)
 	{
 		ret = voip_stream_stop_api();
 	}
@@ -167,21 +157,11 @@ ALIAS(voip_start_test,
 
 DEFUN (voip_stop_test,
 		voip_stop_test_cmd,
-		"voip stop "CMD_KEY_IPV4,
+		"voip stop",
 		"VOIP Configure\n"
-		"Stop Configure\n"
-		CMD_KEY_IPV4_HELP)
+		"Stop Configure\n")
 {
 	int ret = ERROR;
-	struct prefix address;
-	prefix_zero(&address);
-	ret = str2prefix_ipv4 (argv[0], (struct prefix_ipv4 *)&address);
-	if (ret <= 0)
-	{
-		vty_out (vty, "%% Malformed address %s", VTY_NEWLINE);
-		return CMD_WARNING;
-	}
-	if(argc == 1)
 	{
 		ret = voip_stream_stop_api();
 	}
@@ -273,13 +253,16 @@ ALIAS(voip_call_test,
 
 DEFUN (_voip_ring_test,
 		_voip_ring_test_cmd,
-		"voip ring test",
+		"voip ring-test (start|stop)",
 		"VOIP Configure\n"
 		"Stop Configure\n")
 {
 	int ret = ERROR;
 	{
-		ret = voip_call_ring_start_api();
+		if(strstr(argv[0], "start"))
+			ret = voip_call_ring_start_api();
+		else
+			ret =voip_call_ring_stop_api();
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }

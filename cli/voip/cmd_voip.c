@@ -670,7 +670,7 @@ DEFUN (ip_voip_port,
 
 DEFUN (no_ip_voip_port,
 		no_ip_voip_port_cmd,
-		"no ip void port",
+		"no ip voip port",
 		NO_STR
 		IP_STR
 		"RTP port\n")
@@ -686,7 +686,7 @@ DEFUN (no_ip_voip_port,
 /*
  * Ring Module
  */
-
+#if 0
 DEFUN (voip_ring_set,
 		voip_ring_set_cmd,
 		"voip call-ring <1-16>",
@@ -736,7 +736,7 @@ DEFUN (voip_ring_test,
 	//ring_test();
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
-
+#endif
 
 /*
  * statistics Module
@@ -1131,8 +1131,8 @@ static void cmd_voip_base_init(int node)
 	/*
 	 * ring
 	 */
-	install_element(node, &voip_ring_set_cmd);
-	install_element(node, &no_voip_ring_set_cmd);
+/*	install_element(node, &voip_ring_set_cmd);
+	install_element(node, &no_voip_ring_set_cmd);*/
 
 
 	/*
@@ -1175,7 +1175,7 @@ static void cmd_voip_other_init(int node)
 */
 	install_element(node, &debug_voip_stream_cmd);
 
-	install_element(node, &voip_ring_test_cmd);
+	//install_element(node, &voip_ring_test_cmd);
 /*
 #ifdef VOIP_APP_DEBUG
 	install_element(node, &voip_call_test_cmd);

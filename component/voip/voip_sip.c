@@ -72,7 +72,7 @@ static int voip_sip_config_default(voip_sip_t *sip)
 	strcpy(sip->sip_local_number, SIP_PHONE_DEFAULT);
 	strcpy(sip->sip_user, SIP_USERNAME_DEFAULT);
 	strcpy(sip->sip_password, SIP_PASSWORD_DEFAULT);
-	strcpy(sip->sip_realm, SIP_HOSTPART_DEFAULT);					//����realm
+	//strcpy(sip->sip_realm, SIP_HOSTPART_DEFAULT);					//����realm
 	strcpy(sip->sip_dialplan, SIP_DIALPLAN_DEFAULT);				//����dialplan
 	sip->sip_encrypt = SIP_ENCRYPT_DEFAULT;				//����ע������
 
@@ -254,6 +254,18 @@ int voip_sip_encrypt_set_api(BOOL value)
 	return OK;
 }
 
+
+int voip_sip_local_address_set_api(u_int32 address)
+{
+	voip_sip_config.sip_local_address = address;
+	return OK;
+}
+
+int voip_sip_local_port_set_api(u_int16 port)
+{
+	voip_sip_config.sip_local_port = port;
+	return OK;
+}
 /*
  *
 [sip_config]
@@ -272,6 +284,8 @@ static int voip_sip_config_update_thread(struct eloop *eloop)
 {
 	voip_sip_t *sip = ELOOP_ARG(eloop);
 	FILE *fp = fopen(SIP_CONFIG_FILE, "w+");
+	sip->t_event = NULL;
+	//zlog_debug(ZLOG_VOIP, "---------%s");
 	if(fp)
 	{
 		super_system("killall -9 VmrMgr");
@@ -294,9 +308,9 @@ static int voip_sip_config_update_thread(struct eloop *eloop)
 			fprintf(fp, "realm = \n");
 			//fprintf(fp, "realm = %s\n", SIP_REALM_DEFAULT);
 
-		fprintf(fp, "local_ip = %s\n", ("192.168.2.100"));
+		fprintf(fp, "local_ip = %s\n", inet_address(sip->sip_local_address));
 		fprintf(fp, "local_port = %d\n", sip->sip_local_port);
-		fprintf(fp, "dtmf = %d\n", "rfc2833");
+		fprintf(fp, "dtmf = %s\n", "rfc2833");
 
 		fprintf(fp, "reg_expire = %d\n", sip->sip_register_interval);
 		fprintf(fp, "rtp_port = %d\n", voip_stream->l_rtp_port);
@@ -308,7 +322,7 @@ static int voip_sip_config_update_thread(struct eloop *eloop)
 		if(child_process_create() == 0)
 		{
 			chdir("/app");
-			super_system_execvp("./VmrMgr", NULL);
+			super_system_execvp("./VmrMgr >> /dev/null 2>&1", NULL);
 		}
 		return OK;
 	}
@@ -321,10 +335,13 @@ int voip_sip_config_update_api(voip_sip_t *sip)
 	//struct eloop eloop;
 	//eloop.arg = sip;
 	//voip_sip_config_update_thread(&eloop);
+	//return OK;
 	if(voip_socket.master)
 	{
-		eloop_cancel(sip->t_event);
-		sip->t_event = eloop_add_timer(voip_socket.master, voip_sip_config_update_thread, sip, 1);
+		if(sip->t_event)
+			eloop_cancel(sip->t_event);
+		sip->t_event = eloop_add_timer(voip_socket.master, voip_sip_config_update_thread, sip, 5);
+		//voip_socket_sync_cmd();
 	}
 	return OK;
 }
@@ -353,22 +370,25 @@ int voip_sip_write_config(struct vty *vty)
 		if(sip->sip_local_port != SIP_PORT_DEFAULT)
 			vty_out(vty, " ip sip local-port %d%s", (sip->sip_local_port), VTY_NEWLINE);
 
+		if(sip->sip_local_address != 0)
+			vty_out(vty, " ip sip local-address %s%s", inet_address(sip->sip_local_address), VTY_NEWLINE);
+
 		if(sip->sip_server)
-			vty_out(vty, " ip sip-server %s%s", inet_address(sip->sip_server), VTY_NEWLINE);
+			vty_out(vty, " ip sip server %s%s", inet_address(sip->sip_server), VTY_NEWLINE);
 		if(sip->sip_server_sec)
-			vty_out(vty, " ip sip-server %s secondary%s", inet_address(sip->sip_server_sec), VTY_NEWLINE);
+			vty_out(vty, " ip sip server %s secondary%s", inet_address(sip->sip_server_sec), VTY_NEWLINE);
 		if(sip->sip_proxy_server)
-			vty_out(vty, " ip sip-proxy-server %s%s", inet_address(sip->sip_proxy_server), VTY_NEWLINE);
+			vty_out(vty, " ip sip proxy-server %s%s", inet_address(sip->sip_proxy_server), VTY_NEWLINE);
 		if(sip->sip_proxy_server_sec)
-			vty_out(vty, " ip sip-proxy-server %s secondary%s", inet_address(sip->sip_proxy_server_sec), VTY_NEWLINE);
+			vty_out(vty, " ip sip proxy-server %s secondary%s", inet_address(sip->sip_proxy_server_sec), VTY_NEWLINE);
 		if(sip->sip_port != SIP_PORT_DEFAULT)
-			vty_out(vty, " ip sip-server port %d%s", (sip->sip_port), VTY_NEWLINE);
+			vty_out(vty, " ip sip server port %d%s", (sip->sip_port), VTY_NEWLINE);
 		if(sip->sip_port_sec != SIP_PORT_SEC_DEFAULT)
-			vty_out(vty, " ip sip-server port %d secondary%s", (sip->sip_port_sec), VTY_NEWLINE);
+			vty_out(vty, " ip sip server port %d secondary%s", (sip->sip_port_sec), VTY_NEWLINE);
 		if(sip->sip_proxy_port != SIP_PROXY_PORT_DEFAULT)
-			vty_out(vty, " ip sip-proxy-server port %d%s", (sip->sip_proxy_port), VTY_NEWLINE);
+			vty_out(vty, " ip sip proxy-server port %d%s", (sip->sip_proxy_port), VTY_NEWLINE);
 		if(sip->sip_proxy_port_sec != SIP_PROXY_PORT_SEC_DEFAULT)
-			vty_out(vty, " ip sip-proxy-server port %d secondary%s", (sip->sip_proxy_port_sec), VTY_NEWLINE);
+			vty_out(vty, " ip sip proxy-server port %d secondary%s", (sip->sip_proxy_port_sec), VTY_NEWLINE);
 
 		if(sip->sip_time_sync != SIP_TIME_DEFAULT)
 			vty_out(vty, " ip sip time-sync%s", VTY_NEWLINE);
@@ -422,8 +442,8 @@ int voip_sip_show_config(struct vty *vty, BOOL detail)
 
 		vty_out(vty, " password             : %s%s",
 				strlen(sip->sip_password)? sip->sip_password:" ", VTY_NEWLINE);
-		vty_out(vty, " sip loal-port        : %d%s", (sip->sip_local_port), VTY_NEWLINE);
-
+		vty_out(vty, " sip local-port       : %d%s", (sip->sip_local_port), VTY_NEWLINE);
+		vty_out(vty, " sip local-address    : %s%s", inet_address(sip->sip_local_address), VTY_NEWLINE);
 		vty_out(vty, " sip-server           : %s%s", inet_address(sip->sip_server), VTY_NEWLINE);
 		vty_out(vty, " sip-server           : %s secondary%s", inet_address(sip->sip_server_sec), VTY_NEWLINE);
 		vty_out(vty, " sip-proxy-server     : %s%s", inet_address(sip->sip_proxy_server), VTY_NEWLINE);
@@ -701,7 +721,7 @@ static int voip_sip_call_ring(voip_sip_ctl_t *sipctl, char *buf, int len)
 		}
 		if(SIP_CTL_DEBUG(STATE))
 			zlog_debug(ZLOG_VOIP, "SIP module state change to ringing");
-
+		voip_call_ring_start_api();
 		sipctl->call_state = (VOIP_SIP_CALL_RINGING);
 		return OK;
 	}
@@ -725,7 +745,7 @@ static int voip_sip_call_picking(voip_sip_ctl_t *sipctl, char *buf, int len)
 	{
 		if(ack->rtp_port && strlen(ack->rtp_addr))
 		{
-			//voip_call_ring_stop_api();
+			voip_call_ring_stop_api();
 			voip_stream->r_rtp_port = ack->rtp_port;
 			if(strlen(ack->rtp_addr))
 				memcpy(voip_stream->r_rtp_address, ack->rtp_addr, 64);

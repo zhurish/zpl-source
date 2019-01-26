@@ -32,7 +32,7 @@ voip_socket_t voip_socket;
 static int _voip_socket_init(voip_socket_t *vsocket);
 static int _voip_socket_exit(voip_socket_t *vsocket);
 static int voip_socket_read_eloop(struct eloop *eloop);
-
+static int voip_socket_timer_eloop(struct eloop *eloop);
 
 int voip_socket_module_init(void)
 {
@@ -130,7 +130,9 @@ static int voip_socket_task(voip_socket_t *socket)
 		if(n == 8)
 			voip_test();*/
 	}
-	if(socket->master)
+	if(socket->master && !socket->t_time)
+		socket->t_read = eloop_add_timer(socket->master, voip_socket_timer_eloop, socket, 10);
+	if(socket->master && !socket->t_read)
 		socket->t_read = eloop_add_read(socket->master, voip_socket_read_eloop, socket, socket->sock);
 	while(socket->enable)
 	{
@@ -151,7 +153,10 @@ int voip_socket_task_init()
 	voip_socket.taskid = os_task_create("voipSocket", OS_TASK_DEFAULT_PRIORITY,
 	               0, voip_socket_task, &voip_socket, OS_TASK_DEFAULT_STACK);
 	if(voip_socket.taskid)
+	{
+		voip_socket.enable = TRUE;
 		return OK;
+	}
 	return ERROR;
 }
 
@@ -166,7 +171,13 @@ int voip_socket_task_exit()
 	return OK;
 }
 
-
+static int voip_socket_timer_eloop(struct eloop *eloop)
+{
+	voip_socket_t *vsocket = ELOOP_ARG(eloop);
+	//zlog_debug(ZLOG_VOIP, "voip_socket_timer_eloop");
+	vsocket->t_time = eloop_add_timer(vsocket->master, voip_socket_timer_eloop, vsocket, 5);
+	return OK;
+}
 
 
 static int voip_socket_read_eloop(struct eloop *eloop)
@@ -212,7 +223,10 @@ static int _voip_socket_init(voip_socket_t *vsocket)
 		os_set_nonblocking(vsocket->sock);
 		os_set_nonblocking(vsocket->mdctl);
 		if(vsocket->master)
+		{
+			vsocket->t_time = eloop_add_timer(vsocket->master, voip_socket_timer_eloop, vsocket, 5);
 			vsocket->t_read = eloop_add_read(vsocket->master, voip_socket_read_eloop, vsocket, vsocket->sock);
+		}
 		zlog_debug(ZLOG_VOIP, "Create unix socket for stream controls(%d:%d)", vsocket->mdctl, vsocket->sock);
 		return OK;
 	}
@@ -276,3 +290,18 @@ static int _voip_socket_exit(voip_socket_t *vsocket)
 	return ERROR;
 }
 
+int voip_socket_sync_cmd()
+{
+	voip_socket_hdr hdr;
+	if(voip_socket.mdctl)
+	{
+		memset(&hdr, 0, sizeof(hdr));
+		hdr.type = 0;
+		hdr.magic = 0;
+		hdr.len = 256;
+		if(write(voip_socket.mdctl, &hdr, sizeof(hdr)) == sizeof(hdr))
+			return OK;
+	}
+	//zlog_err(ZLOG_VOIP, "mediastream's poll() returned %s",strerror(errno));
+	return ERROR;
+}

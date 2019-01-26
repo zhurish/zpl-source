@@ -10,7 +10,7 @@ else
 fi
 
 
-BINFILE=SWP-V0.0.0.11.bin
+BINFILE=TAGET
 
 mkdir /tmp/tmp -p
 
@@ -26,4 +26,6 @@ sync
 echo "boot '$BINFILE -t $TTYDEV -d', Please waitting ... "
 
 ./$BINFILE -t /dev/ttyS1 -d
+
+#exit 0
 

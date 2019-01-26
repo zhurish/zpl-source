@@ -29,7 +29,7 @@
 
 
 //#define SIP_CONFIG_FILE		SYSCONFDIR"/voip_cfg.txt"
-#define SIP_CONFIG_FILE		SYSCONF_REAL_DIR"/sip.cfg"
+#define SIP_CONFIG_FILE		SYSCONF_REAL_DIR"/sip-tmp.cfg"
 
 
 #define SIP_CTL_TIMEOUT		5
@@ -64,7 +64,7 @@
 #define SIP_PROXY_PORT_SEC_DEFAULT	5060
 #define SIP_TIME_DEFAULT			TRUE
 #define SIP_RING_DEFAULT			1
-#define SIP_REGINTER_DEFAULT		8
+#define SIP_REGINTER_DEFAULT		1200
 #define SIP_HOSTPART_DEFAULT		"tslsmart"
 #define SIP_INTERVAL_DEFAULT		8
 #define SIP_DIALPLAN_DEFAULT		"tslsmart"
@@ -93,6 +93,7 @@ typedef struct voip_sip_s
 	u_int16				sip_proxy_port_sec;			//��ѡ����������˿ں�
 
 	u_int16				sip_local_port;				//���ñ���SIP�������˿ں�
+	u_int32				sip_local_address;
 
 	BOOL				sip_time_sync;				//ʱ���Ƿ�ͬ��
 
@@ -396,6 +397,8 @@ extern int voip_sip_realm_set_api(char * value);
 extern int voip_sip_dialplan_set_api(u_int8 * value);
 extern int voip_sip_encrypt_set_api(BOOL value);
 
+extern int voip_sip_local_address_set_api(u_int32 address);
+extern int voip_sip_local_port_set_api(u_int16 port);
 
 extern int voip_sip_config_update_api(voip_sip_t *sip);
 /*

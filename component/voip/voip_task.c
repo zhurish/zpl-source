@@ -42,40 +42,8 @@ static int voip_main_task(voip_task_t *task)
 	}
 	while(task->enable)
 	{
-#if 0
-		if(task->active)
-		{
-			if(access("/app/etc/volume_setup.sh", F_OK) == 0)
-			{
-				super_system("cd /app/etc/; chmod +x volume_setup.sh");
-				super_system("cd /app/etc/;./volume_setup.sh");
-			}
-			if(task->stream) // voip stream
-			{
-#ifdef PL_VOIP_MEDIASTREAM_TEST
-				setup_media_streams(task->pVoid);
-#else
-				voip_stream_setup_api(task->pVoid);
-#endif
-				voip_stream_running_api(task->pVoid);
-				if(task->pVoid)
-				{
-#ifdef PL_VOIP_MEDIASTREAM_TEST
-					clear_mediastreams(task->pVoid);
-#else
-					voip_stream_clear_api(task->pVoid);
-#endif
-				}
-			}
-			else	//ring
-			{
-				if(voip_call_ring_active_api())
-				{
-					voip_call_ring_running(task->pVoid);
-				}
-			}
-		}
-#else
+		if(task->sem)
+			os_sem_take(task->sem, OS_WAIT_FOREVER);
 		if(task->active)
 		{
 			if(task->stream) // voip stream
@@ -108,11 +76,11 @@ static int voip_main_task(voip_task_t *task)
 				{
 					voip_volume_open_api(VOIP_VOLUME_PLAYBACK);
 					voip_call_ring_running(task->pVoid);
-					voip_volume_close_api(VOIP_VOLUME_PLAYBACK);
+					if(!task->stream)
+						voip_volume_close_api(VOIP_VOLUME_PLAYBACK);
 				}
 			}
 		}
-#endif
 		else
 		{
 			os_sleep(1);
@@ -135,6 +103,9 @@ static int voip_main_task(voip_task_t *task)
 
 int voip_task_module_init()
 {
+	voip_task.enable = TRUE;
+	if(voip_task.sem == NULL)
+		voip_task.sem = os_sem_init();
 	if(voip_task.taskid)
 		return OK;
 	voip_task.taskid = os_task_create("voipTask", OS_TASK_DEFAULT_PRIORITY,
@@ -147,6 +118,12 @@ int voip_task_module_init()
 
 int voip_task_module_exit()
 {
+	voip_task.enable = FALSE;
+	if(voip_task.sem)
+	{
+		if(os_sem_exit(voip_task.sem)==OK)
+			voip_task.sem = NULL;
+	}
 	if(voip_task.taskid)
 	{
 		if(os_task_destroy(voip_task.taskid)==OK)

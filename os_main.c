@@ -26,6 +26,7 @@
 #include "os_module.h"
 #include "platform/nsm/filter.h"
 #include "platform/nsm/plist.h"
+
 //extern struct zebra_privs_t os_privs;
 //extern struct quagga_signal_t os_signals[];
 
@@ -301,6 +302,17 @@ int main (int argc, char **argv)
 #endif
 
 	os_base_dir_load();
+
+/*	if(child_process_create() == 0)
+	{
+		chdir("/app");
+		super_system_execvp("./TimerMgr", NULL);
+	}
+	if(child_process_create() == 0)
+	{
+		chdir("/app");
+		super_system_execvp("./VmrMgr", NULL);
+	}*/
 
 	if(main_data.tty)
 		console_enable = 1;

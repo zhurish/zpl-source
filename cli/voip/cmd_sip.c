@@ -31,12 +31,50 @@
 /*
  * SIP Module
  */
+
+
+DEFUN (ip_sip_local_address,
+		ip_sip_local_address_cmd,
+		"ip sip local-address "CMD_KEY_IPV4,
+		IP_STR
+		"SIP Configure\n"
+		"Local Address\n"
+		CMD_KEY_IPV4_HELP)
+{
+	int ret = ERROR;
+	struct prefix address;
+	prefix_zero(&address);
+	ret = str2prefix_ipv4 (argv[0], (struct prefix_ipv4 *)&address);
+	if (ret <= 0)
+	{
+		vty_out (vty, "%% Malformed address %s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	ret = voip_sip_local_address_set_api(ntohl(address.u.prefix4.s_addr));
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (no_ip_sip_local_address,
+		no_ip_sip_local_address_cmd,
+		"no ip sip local-address",
+		NO_STR
+		IP_STR
+		"SIP Configure\n"
+		"Local Address\n")
+{
+	int ret = 0;
+	ret = voip_sip_local_address_set_api(0);
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+
 //server ip
 DEFUN (ip_sip_server,
 		ip_sip_server_cmd,
-		"ip sip-server "CMD_KEY_IPV4,
+		"ip sip server "CMD_KEY_IPV4,
 		IP_STR
-		"SIP server configure\n"
+		"SIP Configure\n"
+		"Server configure\n"
 		CMD_KEY_IPV4_HELP)
 {
 	int ret = ERROR;
@@ -57,18 +95,20 @@ DEFUN (ip_sip_server,
 
 ALIAS(ip_sip_server,
 		ip_sip_server_sec_cmd,
-		"ip sip-server "CMD_KEY_IPV4 "(secondary|)",
+		"ip sip server "CMD_KEY_IPV4 "(secondary|)",
 		IP_STR
-		"SIP server configure\n"
+		"SIP Configure\n"
+		"Server configure\n"
 		CMD_KEY_IPV4_HELP
 		"secondary server\n");
 
 DEFUN (no_ip_sip_server,
 		no_ip_sip_server_cmd,
-		"no ip sip-server",
+		"no ip sip server",
 		NO_STR
 		IP_STR
-		"SIP server configure\n")
+		"SIP Configure\n"
+		"Server configure\n")
 {
 	int ret = 0;
 	if(argc == 1)
@@ -80,19 +120,21 @@ DEFUN (no_ip_sip_server,
 
 ALIAS(no_ip_sip_server,
 		no_ip_sip_server_sec_cmd,
-		"no ip sip-server (secondary|)",
+		"no ip sip server (secondary|)",
 		NO_STR
 		IP_STR
-		"SIP server configure\n"
+		"SIP Configure\n"
+		"Server configure\n"
 		"secondary  server\n");
 
 
 //server port
 DEFUN (ip_sip_server_port,
 		ip_sip_server_port_cmd,
-		"ip sip-server port <256-65535>",
+		"ip sip server port <256-65535>",
 		IP_STR
-		"SIP server configure\n"
+		"SIP Configure\n"
+		"Server configure\n"
 		"SIP server port configure\n"
 		CMD_KEY_IPV4_HELP)
 {
@@ -113,19 +155,21 @@ DEFUN (ip_sip_server_port,
 
 ALIAS(ip_sip_server_port,
 		ip_sip_server_port_sec_cmd,
-		"ip sip-server port (secondary|)",
+		"ip sip server port (secondary|)",
 		IP_STR
-		"SIP server configure\n"
+		"SIP Configure\n"
+		"Server configure\n"
 		"SIP server port configure\n"
 		CMD_KEY_IPV4_HELP
 		"secondary server\n");
 
 DEFUN (no_ip_sip_server_port,
 		no_ip_sip_server_port_cmd,
-		"no ip sip-server port",
+		"no ip sip server port",
 		NO_STR
 		IP_STR
-		"SIP server configure\n"
+		"SIP Configure\n"
+		"Server configure\n"
 		"SIP server port configure\n")
 {
 	int ret = 0;
@@ -138,10 +182,11 @@ DEFUN (no_ip_sip_server_port,
 
 ALIAS(no_ip_sip_server_port,
 		no_ip_sip_server_port_sec_cmd,
-		"no ip sip-server port (secondary|)",
+		"no ip sip server port (secondary|)",
 		NO_STR
 		IP_STR
-		"SIP server configure\n"
+		"SIP Configure\n"
+		"Server configure\n"
 		"SIP server port configure\n"
 		"secondary server\n");
 
@@ -149,9 +194,10 @@ ALIAS(no_ip_sip_server_port,
 //proxy server ip
 DEFUN (ip_sip_proxy_server,
 		ip_sip_proxy_server_cmd,
-		"ip sip-proxy-server "CMD_KEY_IPV4,
+		"ip sip proxy-server "CMD_KEY_IPV4,
 		IP_STR
-		"SIP proxy server configure\n"
+		"SIP Configure\n"
+		"Proxy Server configure\n"
 		CMD_KEY_IPV4_HELP)
 {
 	int ret = ERROR;
@@ -172,18 +218,20 @@ DEFUN (ip_sip_proxy_server,
 
 ALIAS(ip_sip_proxy_server,
 		ip_sip_proxy_server_sec_cmd,
-		"ip sip-proxy-server "CMD_KEY_IPV4 "(secondary|)",
+		"ip sip proxy-server "CMD_KEY_IPV4 "(secondary|)",
 		IP_STR
-		"SIP proxy server configure\n"
+		"SIP Configure\n"
+		"Proxy Server configure\n"
 		CMD_KEY_IPV4_HELP
 		"secondary server\n");
 
 DEFUN (no_ip_sip_proxy_server,
 		no_ip_sip_proxy_server_cmd,
-		"no ip sip-proxy-server",
+		"no ip sip proxy-server",
 		NO_STR
 		IP_STR
-		"SIP proxy server configure\n")
+		"SIP Configure\n"
+		"Proxy Server configure\n")
 {
 	int ret = 0;
 	if(argc == 1)
@@ -195,19 +243,21 @@ DEFUN (no_ip_sip_proxy_server,
 
 ALIAS(no_ip_sip_proxy_server,
 		no_ip_sip_proxy_server_sec_cmd,
-		"no ip sip-proxy-server (secondary|)",
+		"no ip sip proxy-server (secondary|)",
 		NO_STR
 		IP_STR
-		"SIP proxy server configure\n"
+		"SIP Configure\n"
+		"Proxy Server configure\n"
 		"secondary  server\n");
 
 
 //proxy server port
 DEFUN (ip_sip_proxy_server_port,
 		ip_sip_proxy_server_port_cmd,
-		"ip sip-proxy-server port <256-65535>",
+		"ip sip proxy-server port <256-65535>",
 		IP_STR
-		"SIP proxy server configure\n"
+		"SIP Configure\n"
+		"Proxy Server configure\n"
 		"SIP proxy server port configure\n"
 		CMD_KEY_IPV4_HELP)
 {
@@ -228,19 +278,21 @@ DEFUN (ip_sip_proxy_server_port,
 
 ALIAS(ip_sip_proxy_server_port,
 		ip_sip_proxy_server_port_sec_cmd,
-		"ip sip-proxy-server port (secondary|)",
+		"ip sip proxy-server port (secondary|)",
 		IP_STR
-		"SIP proxy server configure\n"
+		"SIP Configure\n"
+		"Proxy Server configure\n"
 		"SIP proxy server port configure\n"
 		CMD_KEY_IPV4_HELP
 		"secondary server\n");
 
 DEFUN (no_ip_sip_proxy_server_port,
 		no_ip_sip_proxy_server_port_cmd,
-		"no ip sip-proxy-server port",
+		"no ip sip proxy-server port",
 		NO_STR
 		IP_STR
-		"SIP proxy server configure\n"
+		"SIP Configure\n"
+		"Proxy Server configure\n"
 		"SIP proxy server port configure\n")
 {
 	int ret = 0;
@@ -253,10 +305,11 @@ DEFUN (no_ip_sip_proxy_server_port,
 
 ALIAS(no_ip_sip_proxy_server_port,
 		no_ip_sip_proxy_server_port_sec_cmd,
-		"no ip sip-proxy-server port (secondary|)",
+		"no ip sip proxy-server port (secondary|)",
 		NO_STR
 		IP_STR
-		"SIP proxy server configure\n"
+		"SIP Configure\n"
+		"Proxy Server configure\n"
 		"SIP proxy server port configure\n"
 		"secondary server\n");
 
@@ -265,9 +318,10 @@ ALIAS(no_ip_sip_proxy_server_port,
 
 DEFUN (ip_sip_enable,
 		ip_sip_enable_cmd,
-		"ip sip-server (enable|disable)",
+		"ip sip server (enable|disable)",
 		IP_STR
-		"SIP server configure\n"
+		"SIP Configure\n"
+		"Server configure\n"
 		"Enable\n"
 		"Disable\n")
 {
@@ -736,6 +790,10 @@ DEFUN (sip_test_cmd,
 
 static void cmd_base_sip_init(int node)
 {
+
+	install_element(node, &ip_sip_local_address_cmd);
+	install_element(node, &no_ip_sip_local_address_cmd);
+
 	install_element(node, &ip_sip_server_cmd);
 	install_element(node, &no_ip_sip_server_cmd);
 	install_element(node, &ip_sip_server_sec_cmd);

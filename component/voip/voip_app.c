@@ -52,10 +52,10 @@ int voip_app_ev_local_stop_call(event_node_t *ev)
 			return ERROR;
 
 		if(VOIP_APP_DEBUG(EVENT))
-			zlog_debug(ZLOG_VOIP, "app send call stop state to ESP");
-		x5b_app_call_result_api(E_CALL_RESULT_STOP);
+			zlog_debug(ZLOG_VOIP, "app send call stop state to ESP(%d)", voip_sip_call_state_get_api());
+		//x5b_app_call_result_api(E_CALL_RESULT_STOP);
 
-		if(voip_sip_call_state_get_api() >= VOIP_SIP_TALK)
+		//if(voip_sip_call_state_get_api() >= VOIP_SIP_TALK)
 		{
 			if(VOIP_APP_DEBUG(EVENT))
 				zlog_debug(ZLOG_VOIP, "app stop voip stream and set call state to IDLE");

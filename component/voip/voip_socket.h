@@ -46,6 +46,8 @@ extern int voip_socket_module_exit(void);
 extern int voip_socket_task_init();
 extern int voip_socket_task_exit();
 
+
+extern int voip_socket_sync_cmd();
 /*
  * control mediastream
  */

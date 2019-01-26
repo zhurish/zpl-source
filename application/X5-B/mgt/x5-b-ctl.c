@@ -77,7 +77,8 @@ int x5b_app_start_call(BOOL start, x5_b_room_position_t *room)
 	if(room)
 		memcpy(node.sbuf, room, sizeof(x5_b_room_position_t));
 	event_node_add(&node);*/
-	voip_event_node_register(start ? voip_app_ev_start_call:voip_app_ev_local_stop_call, NULL, room, sizeof(x5_b_room_position_t));
+	voip_event_node_register(start ? voip_app_ev_start_call:voip_app_ev_local_stop_call,
+			NULL, room, sizeof(x5_b_room_position_t));
 	return OK;
 }
 

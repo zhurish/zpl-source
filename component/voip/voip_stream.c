@@ -493,6 +493,8 @@ int voip_stream_start_api(voip_stream_t *args)
 	voip_task.enable = TRUE;
 	voip_task.active = TRUE;
 	voip_task.stream = TRUE;
+	if(voip_task.sem)
+		os_sem_give(voip_task.sem);
 	return OK;
 }
 
@@ -507,6 +509,8 @@ int voip_stream_shell_start_api(int argc, char * argv[])
 	voip_task.enable = TRUE;
 	voip_task.active = TRUE;
 	voip_task.stream = TRUE;
+	if(voip_task.sem)
+		os_sem_give(voip_task.sem);
 	return OK;
 }
 

@@ -20,6 +20,14 @@ int os_tlv_set_string(char *input, tag_t tag, len_t len, void * val)
 	return (sizeof(tag_t) + sizeof(len_t) + strlen(val));
 }
 
+/*int os_tlv_set_value(char *input, tag_t tag, len_t len, void * val, int vlen)
+{
+	os_tlv_t *tlv = (os_tlv_t *)input;
+	tlv->tag = htonl(tag);
+	tlv->len = htonl(len);
+	memcpy(tlv->val.pval, val, vlen);
+	return (sizeof(tag_t) + sizeof(len_t) + vlen);
+}*/
 
 int os_tlv_set_integer(char *input, tag_t tag, len_t len, void * val)
 {
@@ -46,7 +54,7 @@ int os_tlv_set_integer(char *input, tag_t tag, len_t len, void * val)
 	default:
 		{
 			//tlv->len = htonl(len);
-			memcpy(tlv->val.pval, val, strlen(val));
+			memcpy(tlv->val.pval, val, len);
 		}
 		break;
 	}

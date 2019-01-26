@@ -8,6 +8,10 @@
 #ifndef _VOIP_RING_H_
 #define _VOIP_RING_H_
 
+
+#define RING_JOB_ENABLE
+
+
 struct ring_sound
 {
 	char id;
@@ -17,20 +21,23 @@ struct ring_sound
 struct ring_session
 {
 	char 	id;
-	void 	*r;	//RingStream
-	void 	*f;	//MSFactory
-	void 	*sc;	//MSSndCard
+	void 	*RingStream;//RingStream
+	void 	*factory;	//MSFactory
+	void 	*sndcard;	//MSSndCard
 	BOOL	use;
 	BOOL	start;
 	void	*mutex;
 };
 
+
 extern int voip_call_ring_lookup_api(int id);
 extern int voip_call_ring_set_api(int id);
 extern int voip_call_ring_get_api(int *id);
 
+/*
 extern int voip_call_ring_start(int id);
 extern int voip_call_ring_stop(int id);
+*/
 
 extern int voip_call_ring_module_init();
 
@@ -39,6 +46,7 @@ extern int voip_call_ring_running(void *pVoid);
 extern int voip_call_ring_start_api();
 extern int voip_call_ring_stop_api();
 extern BOOL voip_call_ring_active_api();
+
 
 #ifdef PL_VOIP_MEDIASTREAM
 extern int ring_test();

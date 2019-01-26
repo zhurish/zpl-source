@@ -202,14 +202,14 @@ static int x5_b_a_keepalive_make(x5_b_a_mgt_t *mgt, int res)
 	return (len);
 }
 
-static int x5_b_a_open_make(x5_b_a_mgt_t *mgt, int res)
+/*static int x5_b_a_open_make(x5_b_a_mgt_t *mgt, int res)
 {
 	u_int32 val = (u_int32)res;
 	int len = os_tlv_set_integer(mgt->sbuf + mgt->offset, E_CMD_KEEPALIVE, E_CMD_KEEPALIVE_LEN, &val);
 	mgt->offset += len;
 	//zlog_debug(ZLOG_APP, "%s ", __func__);
 	return (len);
-}
+}*/
 
 static int x5_b_a_ack_send(x5_b_a_mgt_t *mgt, int seqnum)
 {
@@ -219,6 +219,22 @@ static int x5_b_a_ack_send(x5_b_a_mgt_t *mgt, int seqnum)
 	if(X5_B_ESP32_DEBUG(EVENT))
 		zlog_debug(ZLOG_APP, "ACK MSG to %s:%d %d byte(seqnum=%d)", mgt->remote_address,
 				mgt->remote_port, mgt->slen, seqnum);
+	return x5_b_a_send_msg(mgt);
+}
+
+static int x5_b_a_ack_version(x5_b_a_mgt_t *mgt)
+{
+	x5_b_a_hdr_make(mgt);
+	x5_b_version_t ver;
+	memset(&ver, '\0', sizeof(ver));
+	strcpy(ver.hw, "V1.0.0.2");
+	strcpy(ver.hw, "V1.0.0.3");
+	int len = os_tlv_set_integer(mgt->sbuf + mgt->offset, E_CMD_VERSION, E_CMD_VERSION_LEN, &ver);
+	mgt->offset += len;
+	x5_b_a_crc_make(mgt);
+	if(X5_B_ESP32_DEBUG(EVENT))
+		zlog_debug(ZLOG_APP, "SEND VERSION to %s:%d %d byte", mgt->remote_address,
+				mgt->remote_port, mgt->slen);
 	return x5_b_a_send_msg(mgt);
 }
 
@@ -256,13 +272,14 @@ int x5_b_a_call_result_api(x5_b_a_mgt_t *mgt, int res)
 
 int x5_b_a_open_door_api(x5_b_a_mgt_t *mgt, int res)
 {
-	x5_b_a_hdr_make(mgt);
+	return x5_b_a_open_result_api(mgt, res);
+/*	x5_b_a_hdr_make(mgt);
 	x5_b_a_open_make(mgt, res);
 	x5_b_a_crc_make(mgt);
 	if(X5_B_ESP32_DEBUG(EVENT))
 		zlog_debug(ZLOG_APP, "OPEN CMD MSG to %s:%d %d byte", mgt->remote_address,
 				mgt->remote_port, mgt->slen);
-	return x5_b_a_send_msg(mgt);
+	return x5_b_a_send_msg(mgt);*/
 }
 
 static int x5_b_a_read_tlv_handle(x5_b_a_mgt_t *mgt, os_tlv_t *tlv)
@@ -282,9 +299,13 @@ static int x5_b_a_read_tlv_handle(x5_b_a_mgt_t *mgt, os_tlv_t *tlv)
 			ret = OK;
 			mgt->state ++;
 			if(X5_B_ESP32_DEBUG(EVENT))
-				zlog_debug(ZLOG_APP, "ACK msg (seqnum=%d) OK", mgt->seqnum);
+				zlog_debug(ZLOG_APP, "KEEPALIVE msg (seqnum=%d) OK", mgt->seqnum);
 		}
 		break;
+	case E_CMD_VERSION:
+		x5_b_a_ack_version(mgt);
+		break;
+
 	case E_CMD_ACK:
 /*		if(tlv->len != E_CMD_ACK_LEN)
 		{
@@ -315,6 +336,9 @@ static int x5_b_a_read_tlv_handle(x5_b_a_mgt_t *mgt, os_tlv_t *tlv)
 				else
 					zlog_debug(ZLOG_APP, "Door is open failure ");
 			}
+			/*
+			 * aplay sound
+			 */
 			//zlog_debug(ZLOG_APP, "OPEN RESULT msg (seqnum=%d) OK", mgt->s_seqnum);
 		}
 		break;
@@ -741,7 +765,7 @@ int x5_b_a_module_init(char *remote, u_int16 port)
 		if(remote)
 			x5_b_a_mgt->remote_address = strdup(remote);
 		else
-			x5_b_a_mgt->remote_address = strdup("10.10.10.2");
+			x5_b_a_mgt->remote_address = strdup(X5_B_A_ADDRESS_DEFAULT);
 		x5_b_a_mgt->remote_port = port ? port : X5_B_A_PORT_DEFAULT;
 
 		x5_b_a_mgt->interval = X5_B_A_INTERVAL_DEFAULT;
@@ -871,6 +895,20 @@ int call_recv_test()
 	}
 	return OK;
 }
+
+int call_stop_test()
+{
+	u_int8 buf[] = {0x7e,0x00,0x00,0x00,0x00,0x0c,0x00,0x00,0x00,0x03,0x00,0x00,0x00,
+			0x04,0x31,0x30,0x30,0x31,0x1b,0x9e};
+	if(x5_b_a_mgt)
+	{
+		x5_b_a_mgt->len = sizeof(buf);
+		memcpy(x5_b_a_mgt->buf, buf, sizeof(buf));
+		x5_b_a_read_handle(x5_b_a_mgt);
+	}
+	return OK;
+}
+
 int call_result_test(int res)
 {
 	if(x5_b_a_mgt)

@@ -14,7 +14,9 @@
 #define X5_B_A_PORT_DEFAULT			9527
 #define X5_B_A_BUF_DEFAULT			1024
 #define X5_B_A_INTERVAL_DEFAULT		5
-#define X5_B_A_HDR_MAKR		0X7E
+#define X5_B_A_HDR_MAKR				0X7E
+
+#define X5_B_A_ADDRESS_DEFAULT		"10.10.10.101"
 
 enum E_OPEN_RESULT
 {
@@ -52,6 +54,8 @@ enum E_CMD
 
 	E_CMD_OPEN_DOOR = 0X10,
 
+	E_CMD_VERSION = 0X0b,
+
 	E_CMD_KEEPALIVE,
 };
 
@@ -70,7 +74,7 @@ enum E_CMD_LEN
 	E_CMD_FACTORY_MODE_LEN = 128,
 
 	E_CMD_OPEN_DOOR_LEN = 4,
-
+	E_CMD_VERSION_LEN = 22,
 	E_CMD_KEEPALIVE_LEN = 4,
 };
 
@@ -124,6 +128,13 @@ typedef struct x5_b_factory_data_s
 	u_int8 	phone_number[6];		//���غ��룬ÿ������λռ��4bit��
 
 } x5_b_factory_data_t;
+
+typedef struct x5_b_version_s
+{
+	u_int8 hw[11];
+	u_int8 sw[11];
+} x5_b_version_t;
+
 
 
 typedef struct x5_b_a_mgt_s
