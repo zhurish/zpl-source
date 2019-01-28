@@ -386,6 +386,7 @@ static int nsm_interface_new_hook(struct interface *ifp)
 	UNSET_FLAG(ifp->status, ZEBRA_INTERFACE_LINKDETECTION);
 	ifp->info[MODULE_NSM] = nsm_interface;
 
+
 #ifdef USE_IPSTACK_KERNEL
 	if(ifp->dynamic == FALSE && if_kernel_name_lookup(ifp->ifindex))
 	{

@@ -879,6 +879,8 @@ static int _ipkernel_create(struct interface *ifp)
 			nsm_bridge_t * bridge = nsm_bridge_get(ifp);
 			if (bridge)
 			{
+				bridge->add_member_cb = _ipkernel_bridge_add_interface;
+				bridge->del_member_cb = _ipkernel_bridge_del_interface;
 				ret = _ipkernel_bridge_create(bridge);
 			}
 		}

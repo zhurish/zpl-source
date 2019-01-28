@@ -42,15 +42,11 @@ struct slot_port_phy
   int port;
   int phy;
 };
-#endif
-
-#ifdef USE_IPSTACK_KERNEL
-//#define SLOT_PORT_CONF	"/etc/plat.conf"
+#else
 struct slot_port_phy
 {
 	ifindex_t ifindex;
 	ifindex_t kifindex;
-	char	kname[64];
 };
 #endif
 
@@ -58,7 +54,7 @@ static struct unit_slot_port iusp_table[] =
 {
 #ifdef PRODUCT_X5_B_BOARD
 	{.type = IF_SERIAL, .unit = 0, .slot = 0, .port = 0 },
-	{.type = IF_ETHERNET, .unit = 0, .slot = 0, .port = 3 },
+	{.type = IF_ETHERNET, .unit = 0, .slot = 0, .port = 2 },
 #endif
 #ifdef PRODUCT_BOJING_BOARD
 	{.type = IF_SERIAL, .unit = 0, .slot = 0, .port = 0 },
@@ -83,11 +79,11 @@ static struct unit_slot_port iusp_table[] =
 static struct slot_port_phy phy_table[OS_SLOT_MAX][OS_SLOT_HY_MAX + MODEM_PHY_MAX + WIFI_PHY_MAX] =
 {
 	{
-		{.ifindex = 0, .kifindex = 0, .kname = "eth" },
-		{.ifindex = 0, .kifindex = 0, .kname = "eth" },
-		{.ifindex = 0, .kifindex = 0, .kname = "eth" },
-		{.ifindex = 0, .kifindex = 0, .kname = "eth" },
-		{.ifindex = 0, .kifindex = 0, .kname = "eth" },
+		{.ifindex = 0, .kifindex = 0 },
+		{.ifindex = 0, .kifindex = 0 },
+		{.ifindex = 0, .kifindex = 0 },
+		{.ifindex = 0, .kifindex = 0 },
+		{.ifindex = 0, .kifindex = 0 },
 	},
 };
 #else
@@ -155,6 +151,7 @@ const int if_ifindex2phy(ifindex_t ifindex)
 
 const char * if_kernel_name_lookup(ifindex_t ifindex)
 {
+	char buf[64];
 	int i = 0, j = 0;
 	for(i = 0; i < OS_SLOT_MAX; i++)
 	{
@@ -162,7 +159,7 @@ const char * if_kernel_name_lookup(ifindex_t ifindex)
 		{
 			if( (phy_table[i][j].ifindex == ifindex) )
 			{
-				return phy_table[i][j].kname;
+				return if_indextoname(phy_table[i][j].kifindex, buf);
 			}
 		}
 	}
@@ -176,7 +173,7 @@ ifindex_t ifindex_lookup_by_kname(const char *kname)
 	{
 		for(j = 0; j < OS_SLOT_HY_MAX; j++)
 		{
-			if(strcmp(phy_table[i][j].kname, kname) == 0)
+			if(phy_table[i][j].kifindex == if_nametoindex(kname))
 			{
 				return phy_table[i][j].ifindex;
 			}
@@ -213,10 +210,13 @@ static int if_slot_kernel_add(ifindex_t ifindex, char *name)
 				if( (phy_table[i][j].ifindex == 0) )
 				{
 					phy_table[i][j].ifindex = ifindex;
-					os_memset(phy_table[i][j].kname, 0, sizeof(phy_table[i][j].kname));
-					os_strcpy(phy_table[i][j].kname, name);
-					if(os_strlen(name))
+					//os_memset(phy_table[i][j].kname, 0, sizeof(phy_table[i][j].kname));
+
+					if(if_nametoindex(name))
+					{
+						//os_strcpy(phy_table[i][j].kname, name);
 						phy_table[i][j].kifindex = if_nametoindex(name);
+					}
 					return 0;
 				}
 			}
@@ -237,7 +237,7 @@ static int if_slot_kernel_del(ifindex_t ifindex)
 				if( (phy_table[i][j].ifindex == ifindex) )
 				{
 					phy_table[i][j].ifindex = 0;
-					os_memset(phy_table[i][j].kname, 0, sizeof(phy_table[i][j].kname));
+					//os_memset(phy_table[i][j].kname, 0, sizeof(phy_table[i][j].kname));
 					phy_table[i][j].kifindex = 0;
 					return 0;
 				}
@@ -249,6 +249,7 @@ static int if_slot_kernel_del(ifindex_t ifindex)
 
 static int if_slot_kernel_update()
 {
+	char buf[64];
 	int i = 0, j = 0;
 	remove(SLOT_PORT_CONF);
 	FILE *fp = fopen(SLOT_PORT_CONF, "w+");
@@ -260,8 +261,10 @@ static int if_slot_kernel_update()
 			{
 				if( (phy_table[i][j].ifindex) )
 				{
-					fprintf(fp, "%s:%s=%u\n", phy_table[i][j].kname,
-							ifindex2ifname(phy_table[i][j].ifindex), phy_table[i][j].ifindex);
+					memset(buf, 0, sizeof(buf));
+					if(if_indextoname(phy_table[i][j].kifindex, buf))
+						fprintf(fp, "%s:%s\n",
+								if_ifname_make(phy_table[i][j].ifindex), buf);
 				}
 			}
 		}
@@ -280,7 +283,7 @@ static int if_slot_kernel_read()
 	FILE *fp = fopen(SLOT_PORT_CONF, "r");
 	if (fp)
 	{
-		char *s, *p;
+		char *s = NULL;//, *p;
 		os_memset(buf, 0, sizeof(buf));
 		while (fgets(buf, sizeof(buf), fp))
 		{
@@ -289,21 +292,10 @@ static int if_slot_kernel_read()
 			s = strstr(buf, ":");
 			if(s)
 			{
-				os_memcpy(kname, buf, s - buf);
+				os_memcpy(name, buf, s - buf);
 				s++;
-				p = strstr(s, "=");
-				if(p)
-				{
-					os_memcpy(name, s, p - s);
-					//ifindex = ifname2ifindex(name);
-					p++;
-					ifindex = atoi(p);
-				}
-				else if(s)
-				{
-					ifindex = ifname2ifindex(s);
-					//ifindex = atoi(s);
-				}
+				os_strcpy(kname, s);
+				ifindex = if_ifindex_make(name);
 				if(ifindex)
 					if_slot_kernel_add( ifindex, kname);
 			}
@@ -329,6 +321,7 @@ int if_slot_set_port_phy(ifindex_t ifindex, char *name)
 
 int if_slot_show_port_phy(struct vty *vty)
 {
+	char buf[512];
 	int i = 0, j = 0;
 	char head = 0;
 	for(i = 0; i < OS_SLOT_MAX; i++)
@@ -342,7 +335,10 @@ int if_slot_show_port_phy(struct vty *vty)
 					head = 1;
 					vty_out(vty, " %-20s %-16s %s", "Interface","kernel",VTY_NEWLINE);
 				}
-				vty_out(vty, " %-20s %-16s %s", ifindex2ifname(phy_table[i][j].ifindex), phy_table[i][j].kname, VTY_NEWLINE);
+				memset(buf, 0, sizeof(buf));
+				if(if_indextoname(phy_table[i][j].kifindex, buf))
+					vty_out(vty, " %-20s %-16s %s", ifindex2ifname(phy_table[i][j].ifindex),
+							buf, VTY_NEWLINE);
 			}
 		}
 	}
@@ -397,7 +393,12 @@ static int if_unit_slot(void)
 {
 	int i = 0;
 #ifdef USE_IPSTACK_KERNEL
-	if_slot_kernel_read();
+	//if(i)
+		if_slot_kernel_read();
+	if_slot_kernel_add(if_ifindex_make("ethernet 0/0/1", NULL), "eth0.1");
+	if_slot_kernel_add(if_ifindex_make("ethernet 0/0/2", NULL), "eth0.2");
+	if_slot_kernel_add(if_ifindex_make("wireless 0/0/1", NULL), "ra0");
+	if_slot_kernel_add(if_ifindex_make("brigde 0/0/1", NULL), "br-lan");
 #endif
 	for(i = 0; i < array_size(iusp_table); i++)
 	{

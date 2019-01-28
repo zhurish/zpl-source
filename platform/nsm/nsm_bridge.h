@@ -37,6 +37,11 @@ typedef struct nsm_bridge_s
 	int 				hello_time;
 	int 				forward_delay;
 	ifindex_t			member[BRIDGE_MEMBER_MAX];
+
+
+	int (*add_member_cb)(struct nsm_bridge_s *br, int ifindex);
+	int (*del_member_cb)(struct nsm_bridge_s *br, int ifindex);
+
 } nsm_bridge_t;
 
 

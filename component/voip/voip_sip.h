@@ -29,7 +29,7 @@
 
 
 //#define SIP_CONFIG_FILE		SYSCONFDIR"/voip_cfg.txt"
-#define SIP_CONFIG_FILE		SYSCONF_REAL_DIR"/sip-tmp.cfg"
+#define SIP_CONFIG_FILE		SYSCONF_REAL_DIR"/sip.cfg"
 
 
 #define SIP_CTL_TIMEOUT		5
@@ -183,6 +183,8 @@ typedef struct voip_sip_ctl_s
 	int			taskid;
 	int			sip_rqueue;
 	int			sip_wqueue;
+	int			t_pid;
+	int			m_pid;
 #endif
 	void		*t_event;
 	void		*t_time;
@@ -436,6 +438,9 @@ extern int sip_ctl_msgq_exit(voip_sip_ctl_t *sipctl);
 extern int sip_ctl_msgq_task_init(voip_sip_ctl_t *sipctl);
 extern int sip_ctl_msgq_task_exit(voip_sip_ctl_t *sipctl);
 extern int sip_ctl_msgq_send(voip_sip_ctl_t *sipctl, char* pMsg, int len);
+#ifdef DOUBLE_PROCESS
+extern int voip_sip_process_init(voip_sip_ctl_t *sipctl);
+#endif
 #endif
 
 /*

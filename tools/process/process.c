@@ -150,7 +150,7 @@ static int process_add_node(process_t *process)
 					os_strcat(argvs, " ");
 				}
 			}
-			process_log_debug(" add process :%s execp: %s %s", process->name, process->process,
+			process_log_debug("add process :%s execp: %s %s", process->name, process->process,
 					os_strlen(argvs) ? argvs:" ");
 			lstAdd(gProcessMain.list, (NODE*)process);
 			return OK;
@@ -172,7 +172,7 @@ static int process_del_node(process_t *node)
 			if(node->argv[i])
 				XFREE(MTYPE_LINK_NODE, node->argv[i]);
 		}
-		process_log_debug(" del process :%s execp:%s", node->name, node->process);
+		process_log_debug("del process :%s execp:%s", node->name, node->process);
 		XFREE(MTYPE_THREAD, node);
 		return OK;
 	}
@@ -274,13 +274,13 @@ int process_start(process_t *process)
 						os_strcat(argvs, " ");
 					}
 				}
-				process_log_debug(" start process :%s execp: %s %s", process->name, process->process,
+				process_log_debug("start process :%s execp: %s %s", process->name, process->process,
 						os_strlen(argvs) ? argvs:" ");
 				process->pid = pid;
 				return pid;
 			}
 			else
-				process_log_err(" start process :%s execp:%s", process->name, process->process);
+				process_log_err("start process :%s execp:%s", process->name, process->process);
 		}
 	}
 	return 0;
@@ -306,7 +306,7 @@ int process_deamon_start(process_t *process)
 			}
 		}
 		super_system(argvs);
-		process_log_debug(" start deamon :%s execp: %s %s", process->name, process->process,
+		process_log_debug("start deamon :%s execp: %s %s", process->name, process->process,
 				os_strlen(argvs) ? argvs:" ");
 		return 1;
 	}
@@ -315,7 +315,7 @@ int process_deamon_start(process_t *process)
 
 int process_stop(process_t *process)
 {
-	process_log_debug(" stop process :%s execp:%s", process->name, process->process);
+	process_log_debug("stop process :%s execp:%s", process->name, process->process);
 	if(process->active && process->pid)
 	{
 		process->active = FALSE;
@@ -356,13 +356,13 @@ int process_restart(process_t *process)
 						os_strcat(argvs, " ");
 					}
 				}
-				process_log_debug(" restart process :%s execp: %s %s", process->name, process->process,
+				process_log_debug("restart process :%s execp: %s %s", process->name, process->process,
 						os_strlen(argvs) ? argvs:" ");
 				process->pid = pid;
 				return pid;
 			}
 			else
-				process_log_err(" restart process :%s execp:%s", process->name, process->process);
+				process_log_err("restart process :%s execp:%s", process->name, process->process);
 		}
 	}
 	return 0;
@@ -377,7 +377,7 @@ static int process_waitpid(process_t *process)
 	{
 		if ((WTERMSIG(status) != SIGKILL && WTERMSIG(status) != SIGTERM))
 		{
-			process_log_warn(" exit process(signal=%d) :%s execp:%s", WTERMSIG(status),
+			process_log_warn("exit process(signal=%d) :%s execp:%s", WTERMSIG(status),
 					process->name, process->process);
 			process->pid = 0;
 			if(process->restart && process->active)
@@ -385,7 +385,7 @@ static int process_waitpid(process_t *process)
 		}
 		else
 		{
-			process_log_warn(" exit process(signal=%d) :%s execp:%s", WTERMSIG(status),
+			process_log_warn("exit process(signal=%d) :%s execp:%s", WTERMSIG(status),
 					process->name, process->process);
 		}
 	}
@@ -644,7 +644,7 @@ int process_handle(int fd, process_action action, process_head *head)
 							process->id = process_alloc_id();
 							if(process_add_api(process) == OK)
 							{
-								process_log_debug("start process :%s execp :%s", head->name, head->process);
+								//process_log_debug("start process :%s execp :%s", head->name, head->process);
 								os_process_action_respone(fd, process->id);
 							}
 							else

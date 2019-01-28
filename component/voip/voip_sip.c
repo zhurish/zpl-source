@@ -258,12 +258,14 @@ int voip_sip_encrypt_set_api(BOOL value)
 int voip_sip_local_address_set_api(u_int32 address)
 {
 	voip_sip_config.sip_local_address = address;
+	voip_sip_config_update_api(&voip_sip_config);
 	return OK;
 }
 
 int voip_sip_local_port_set_api(u_int16 port)
 {
 	voip_sip_config.sip_local_port = port;
+	voip_sip_config_update_api(&voip_sip_config);
 	return OK;
 }
 /*
@@ -280,6 +282,7 @@ dtmf = rfc2833
 reg_expire = 1200
 rtp_port = 5555
 */
+
 static int voip_sip_config_update_thread(struct eloop *eloop)
 {
 	voip_sip_t *sip = ELOOP_ARG(eloop);
@@ -288,7 +291,13 @@ static int voip_sip_config_update_thread(struct eloop *eloop)
 	//zlog_debug(ZLOG_VOIP, "---------%s");
 	if(fp)
 	{
+#ifdef DOUBLE_PROCESS
+		char argv[5] = {NULL};
+		if(voip_sip_ctl.m_pid)
+			os_process_action(PROCESS_STOP, "VmrMgr", voip_sip_ctl.m_pid);
+#else
 		super_system("killall -9 VmrMgr");
+#endif
 		fprintf(fp, "[sip_config]\n");
 		fprintf(fp, "server_ip = %s\n", inet_address(sip->sip_server));
 		fprintf(fp, "server_port = %d\n", sip->sip_port);
@@ -317,13 +326,20 @@ static int voip_sip_config_update_thread(struct eloop *eloop)
 
 		fflush(fp);
 		fclose(fp);
-
-		//super_system("killall -9 VmrMgr");
+#ifdef DOUBLE_PROCESS
+		argv[0] = "/app/VmrMgr";
+		argv[1] = ">>";
+		argv[2] = "/dev/null";
+		argv[3] = "2>&1";
+		argv[4] = NULL;
+		voip_sip_ctl.m_pid = os_process_register(PROCESS_START, "VmrMgr", "/app/VmrMgr", TRUE, NULL);
+#else
 		if(child_process_create() == 0)
 		{
 			chdir("/app");
 			super_system_execvp("./VmrMgr >> /dev/null 2>&1", NULL);
 		}
+#endif
 		return OK;
 	}
 	return ERROR;
@@ -346,7 +362,27 @@ int voip_sip_config_update_api(voip_sip_t *sip)
 	return OK;
 }
 
+#ifdef SIP_CTL_MSGQ
+#ifdef DOUBLE_PROCESS
+int voip_sip_process_init(voip_sip_ctl_t *sipctl)
+{
+/*
+	char argv[5] = {NULL};
 
+	argv[0] = "/app/TimerMgr";
+	argv[1] = ">>";
+	argv[2] = "/dev/null";
+	argv[3] = "2>&1";
+	argv[4] = NULL;
+*/
+	//sipctl->t_pid = os_process_register(PROCESS_START, "TimerMgr", "/app/TimerMgr", TRUE, NULL);
+	//sleep(1);
+	//argv[0] = "/app/VmrMgr";
+	sipctl->m_pid = os_process_register(PROCESS_START, "VmrMgr", "/app/VmrMgr", TRUE, NULL);
+	return OK;
+}
+#endif
+#endif
 
 
 
@@ -444,15 +480,15 @@ int voip_sip_show_config(struct vty *vty, BOOL detail)
 				strlen(sip->sip_password)? sip->sip_password:" ", VTY_NEWLINE);
 		vty_out(vty, " sip local-port       : %d%s", (sip->sip_local_port), VTY_NEWLINE);
 		vty_out(vty, " sip local-address    : %s%s", inet_address(sip->sip_local_address), VTY_NEWLINE);
-		vty_out(vty, " sip-server           : %s%s", inet_address(sip->sip_server), VTY_NEWLINE);
-		vty_out(vty, " sip-server           : %s secondary%s", inet_address(sip->sip_server_sec), VTY_NEWLINE);
-		vty_out(vty, " sip-proxy-server     : %s%s", inet_address(sip->sip_proxy_server), VTY_NEWLINE);
-		vty_out(vty, " sip-proxy-server     : %s secondary%s", inet_address(sip->sip_proxy_server_sec), VTY_NEWLINE);
-		vty_out(vty, " sip-server port      : %d%s", (sip->sip_port), VTY_NEWLINE);
-		vty_out(vty, " sip-server port      : %d secondary%s", (sip->sip_port_sec), VTY_NEWLINE);
+		vty_out(vty, " sip server           : %s%s", inet_address(sip->sip_server), VTY_NEWLINE);
+		vty_out(vty, " sip server           : %s secondary%s", inet_address(sip->sip_server_sec), VTY_NEWLINE);
+		vty_out(vty, " sip proxy-server     : %s%s", inet_address(sip->sip_proxy_server), VTY_NEWLINE);
+		vty_out(vty, " sip proxy-server     : %s secondary%s", inet_address(sip->sip_proxy_server_sec), VTY_NEWLINE);
+		vty_out(vty, " sip server port      : %d%s", (sip->sip_port), VTY_NEWLINE);
+		vty_out(vty, " sip server port      : %d secondary%s", (sip->sip_port_sec), VTY_NEWLINE);
 
-		vty_out(vty, " sip-proxy-server port: %d%s", (sip->sip_proxy_port), VTY_NEWLINE);
-		vty_out(vty, " sip-proxy-server port: %d secondary%s", (sip->sip_proxy_port_sec), VTY_NEWLINE);
+		vty_out(vty, " sip proxy-server port: %d%s", (sip->sip_proxy_port), VTY_NEWLINE);
+		vty_out(vty, " sip proxy-server port: %d secondary%s", (sip->sip_proxy_port_sec), VTY_NEWLINE);
 		vty_out(vty, " sip time-sync        : %s%s", sip->sip_time_sync ? "TRUE":"FALSE",VTY_NEWLINE);
 		vty_out(vty, " sip ring             : %d%s", sip->sip_ring ,VTY_NEWLINE);
 
@@ -532,13 +568,13 @@ static int voip_sip_ctl_state(struct vty *vty)
 	switch(voip_sip_ctl.call_error)
 	{
 	case VOIP_SIP_UNREGISTER:
-		vty_out(vty, " sip register state   : %s%s", "unregister", VTY_NEWLINE);
+		vty_out(vty, " sip error state      : %s%s", "unregister", VTY_NEWLINE);
 		break;
 	case VOIP_SIP_REGISTER_FAILED:
-		vty_out(vty, " sip register state   : %s%s", "failed", VTY_NEWLINE);
+		vty_out(vty, " sip error state      : %s%s", "failed", VTY_NEWLINE);
 		break;
 	case VOIP_SIP_REGISTER_SUCCESS:
-		vty_out(vty, " sip register state   : %s%s", "success", VTY_NEWLINE);
+		vty_out(vty, " sip error state      : %s%s", "success", VTY_NEWLINE);
 		break;
 	default:
 		break;

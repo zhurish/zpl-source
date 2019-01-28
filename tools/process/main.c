@@ -233,7 +233,7 @@ int main(int argc, char *argv[])
 	os_register_signal(SIGUSR1, os_sigusr1);
 	//os_register_signal(SIGCHLD, os_sigchld);
 	open_log(logfile ? logfile:"process.log");
-
+	debug = 7;
 	if(sock == 0)
 	{
 		sock = unix_sock_server_create(TRUE, PROCESS_MGT_UNIT_NAME);

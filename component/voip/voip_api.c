@@ -109,6 +109,7 @@ int voip_local_rtp_set_api(u_int32 ip, u_int16 port)
 {
 	//voip_config.l_rtp_port = port;
 	voip_stream_local_port_api(voip_stream, port);
+	voip_sip_config_update_api(&voip_sip_config);
 	return OK;
 }
 

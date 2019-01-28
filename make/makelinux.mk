@@ -86,7 +86,8 @@ PL_CFLAGS += -DUSE_IPSTACK_KERNEL
 endif
 #
 #
-BUILD_TIME=$(shell date -u "+%Y%m%d%H%M%S")
+#BUILD_TIME=$(shell date -u "+%Y%m%d%H%M%S")
+BUILD_TIME=$(shell date "+%Y%m%d%H%M%S")
 #
 #
 ifeq ($(BUILD_DEBUG),YES)
@@ -125,7 +126,7 @@ PLOS_CFLAGS += -MMD -MP -Wall -Wextra -Wnested-externs -Wmissing-prototypes \
 PLOS_CFLAGS += -Werror=return-type -Werror=format-extra-args -Werror=missing-prototypes \
 			  -Werror=unreachable-code -Werror=unused-function -Werror=unused-variable \
 			  -Werror=unused-value -Werror=implicit-int \
-			  -Werror=parentheses -Werror=shadow 
+			  -Werror=parentheses -Werror=shadow -Werror=char-subscripts
 			  #-Werror=pointer-arith 
 			  #-Werror=cast-qual 
 			  #-Werror=redundant-decls -Werror=format -Werror=missingbraces

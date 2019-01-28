@@ -197,10 +197,12 @@ static int sip_ctl_msgq_task(void *p)
 	{
 		os_sleep(1);
 	}
-
 	if(sipctl->sip_rqueue < 0)
 		sipctl->sip_rqueue = sip_ctl_msgq_create_read(SIP_CTL_LMSGQ_KEY);
-
+#ifdef DOUBLE_PROCESS
+	voip_sip_process_init(sipctl);
+	//os_time_create_once(voip_sip_process_init, sipctl, 1000);
+#endif
 	while(1)
 	{
 /*

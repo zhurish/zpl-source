@@ -39,7 +39,7 @@ static int nsm_bridge_member_lookup(nsm_bridge_t *bridge, ifindex_t ifindex)
 
 static int nsm_bridge_member_add(nsm_bridge_t *bridge, ifindex_t ifindex)
 {
-	int i = 0;
+	int ret = 0, i = 0;
 	i = nsm_bridge_member_lookup(bridge, ifindex);
 	if(i)
 		return ERROR;
@@ -47,6 +47,10 @@ static int nsm_bridge_member_add(nsm_bridge_t *bridge, ifindex_t ifindex)
 	{
 		if(bridge->member[i] == 0)
 		{
+			if(bridge->add_member_cb)
+				ret = bridge->add_member_cb(bridge, ifindex);
+			if(ret)
+				return 0;
 			bridge->member[i] = ifindex;
 			return 1;
 		}
@@ -56,7 +60,7 @@ static int nsm_bridge_member_add(nsm_bridge_t *bridge, ifindex_t ifindex)
 
 static int nsm_bridge_member_del(nsm_bridge_t *bridge, ifindex_t ifindex)
 {
-	int i = 0;
+	int ret = 0,i = 0;
 	i = nsm_bridge_member_lookup(bridge, ifindex);
 	if(i == 0)
 		return ERROR;
@@ -64,6 +68,10 @@ static int nsm_bridge_member_del(nsm_bridge_t *bridge, ifindex_t ifindex)
 	{
 		if(bridge->member[i] == ifindex)
 		{
+			if(bridge->del_member_cb)
+				ret = bridge->del_member_cb(bridge, ifindex);
+			if(ret)
+				return 0;
 			bridge->member[i] = 0;
 			return 1;
 		}
@@ -87,11 +95,36 @@ static int nsm_bridge_member_del_all(nsm_bridge_t *bridge)
 	return 0;
 }
 
+static int nsm_bridge_interface_add_check(BOOL add, struct interface *ifp)
+{
+	if(add)
+	{
+		if(if_is_brigde(ifp) || if_is_ethernet(ifp))
+		{
+			if(!if_is_lag_member(ifp) && !if_is_brigde_member(ifp))
+				return 1;
+		}
+		return 0;
+	}
+	else
+	{
+		if(if_is_brigde(ifp) || if_is_ethernet(ifp))
+		{
+			if(if_is_brigde_member(ifp))
+				return 1;
+		}
+		return 0;
+	}
+	return 0;
+}
+
 int nsm_bridge_add_interface_api(struct interface *bridge, struct interface *ifp)
 {
-	if(if_is_brigde(ifp))
+	if(if_is_brigde(bridge))
 	{
 		int ret = -1;
+		if(!nsm_bridge_interface_add_check(TRUE, ifp))
+			return ERROR;
 		nsm_bridge_t * bri = nsm_bridge_get(bridge);
 		if(bri)
 			ret = nsm_bridge_member_add(bri, ifp->ifindex);
@@ -110,9 +143,11 @@ int nsm_bridge_add_interface_api(struct interface *bridge, struct interface *ifp
 
 int nsm_bridge_del_interface_api(struct interface *bridge, struct interface *ifp)
 {
-	if(if_is_brigde(ifp))
+	if(if_is_brigde(bridge))
 	{
 		int ret = -1;
+		if(!nsm_bridge_interface_add_check(FALSE, ifp))
+			return ERROR;
 		nsm_bridge_t * bri = nsm_bridge_get(bridge);
 		if(bri)
 			ret = nsm_bridge_member_del(bri, ifp->ifindex);
