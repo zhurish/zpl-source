@@ -56,7 +56,7 @@ enum E_CMD
 
 	E_CMD_VERSION = 0X0b,
 
-	E_CMD_KEEPALIVE,
+	E_CMD_KEEPALIVE = 0x0a,
 };
 
 

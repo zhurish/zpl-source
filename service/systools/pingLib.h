@@ -49,8 +49,8 @@ extern "C" {
 /* defines */
 #define PING_MINPACKET		64	/* min packet size */
 #define PING_MAXPACKET		65536	/* max packet size */
-#define PING_INTERVAL           1       /* default packet interval in seconds */
-#define PING_TMO		1	/* default packet timeout in seconds */
+#define PING_INTERVAL           2       /* default packet interval in seconds */
+#define PING_TMO		2	/* default packet timeout in seconds */
 
 #ifndef MAXHOSTNAMELEN
 #define MAXHOSTNAMELEN 	64    

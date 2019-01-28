@@ -27,6 +27,7 @@ struct ring_session
 	BOOL	use;
 	BOOL	start;
 	void	*mutex;
+	void	*t_timer;
 };
 
 

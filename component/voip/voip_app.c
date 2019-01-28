@@ -43,6 +43,10 @@ int voip_app_ev_local_stop_call(event_node_t *ev)
 {
 	if(VOIP_APP_DEBUG(EVENT))
 		zlog_debug(ZLOG_VOIP, "app stop call by local");
+
+	if(voip_call_ring_active_api())
+		voip_call_ring_stop_api();
+
 	if(voip_sip_call_state_get_api() != VOIP_SIP_CALL_IDLE)
 	{
 		if(VOIP_APP_DEBUG(EVENT))
@@ -70,6 +74,9 @@ int voip_app_ev_local_stop_call(event_node_t *ev)
 
 int voip_app_ev_remote_stop_call(event_node_t *ev)
 {
+	if(voip_call_ring_active_api())
+		voip_call_ring_stop_api();
+
 	if(voip_sip_call_state_get_api() != VOIP_SIP_CALL_IDLE)
 	{
 		if(VOIP_APP_DEBUG(EVENT))

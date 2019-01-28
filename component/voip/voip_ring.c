@@ -6,12 +6,25 @@
  */
 
 #include <zebra.h>
+#include "memory.h"
+#include "log.h"
+#include "memory.h"
+#include "str.h"
+#include "linklist.h"
+#include "prefix.h"
+#include "table.h"
+#include "vector.h"
+#include "eloop.h"
+#include "network.h"
+#include "vty.h"
 
 #include "voip_def.h"
 #include "voip_task.h"
 #include "voip_ring.h"
 #include "voip_volume.h"
 #include "voip_stream.h"
+#include "voip_socket.h"
+#include "application.h"
 
 #ifdef PL_VOIP_MEDIASTREAM
 #include <mediastreamer2/mscommon.h>
@@ -156,6 +169,35 @@ int voip_call_ring_running(void *pVoid)
 	return OK;
 }
 
+static int voip_call_ring_timer_thread(struct eloop *eloop)
+{
+	//voip_sip_t *sip = ELOOP_ARG(eloop);
+	if(voip_call_ring_active_api())
+	{
+		voip_call_ring_stop_api();
+		x5b_app_call_result_api(E_CALL_RESULT_FAIL);
+	}
+	return OK;
+}
+
+
+static int voip_call_ring_timer_chk_api()
+{
+	//struct eloop eloop;
+	//eloop.arg = sip;
+	//voip_sip_config_update_thread(&eloop);
+	//return OK;
+	if(voip_socket.master)
+	{
+		if(RingSession.t_timer)
+			eloop_cancel(RingSession.t_timer);
+		RingSession.t_timer = eloop_add_timer(voip_socket.master,
+				voip_call_ring_timer_thread, NULL, 30);
+		//voip_socket_sync_cmd();
+	}
+	return OK;
+}
+
 
 int voip_call_ring_start_api()
 {
@@ -174,6 +216,7 @@ int voip_call_ring_start_api()
 	{
 		os_mutex_unlock(RingSession.mutex);
 	}
+	voip_call_ring_timer_chk_api();
 	return OK;
 }
 

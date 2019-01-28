@@ -201,6 +201,7 @@ static int if_slot_kernel_lookup(ifindex_t ifindex)
 static int if_slot_kernel_add(ifindex_t ifindex, char *name)
 {
 	int i = 0, j = 0;
+	zlog_debug(ZLOG_DEFAULT, "=======%s: IFINDEX=%x  %s", __func__, ifindex, name);
 	if(if_slot_kernel_lookup(ifindex) == 0)
 	{
 		for(i = 0; i < OS_SLOT_MAX; i++)

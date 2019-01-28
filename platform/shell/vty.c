@@ -3147,7 +3147,7 @@ void vty_serv_init(const char *addr, unsigned short port, const char *path, cons
 #ifdef VTYSH
 	vty_serv_un (path);
 #endif /* VTYSH */
-//	if(tty)
+	//if(tty)
 		vty_console(tty, NULL);
 }
 

@@ -1,4 +1,4 @@
-#define GIT_VERSION	"V0.0.0.13"
+#define GIT_VERSION	"V0.0.0.15"
 #define GIT_RELEASE	"master"
-#define GIT_COMMIT	"d84d52877b9ab99192e61aa2b3abd5c250522d1e"
-#define MAKE_DATE	"20190127222304"
+#define GIT_COMMIT	"a1d7d71c9f0cccb556de65dc8bd37f5a341611ed"
+#define MAKE_DATE	"20190129003255"

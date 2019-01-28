@@ -112,8 +112,9 @@ typedef struct voip_sip_s
 	u_int8				sip_dialplan[SIP_DATA_MAX];				//dialplan
 	BOOL				sip_encrypt;				//
 
-
+	BOOL				sip_old_address;
 	void				*t_event;
+	void				*t_check;
 } voip_sip_t;
 
 
@@ -403,6 +404,9 @@ extern int voip_sip_local_address_set_api(u_int32 address);
 extern int voip_sip_local_port_set_api(u_int16 port);
 
 extern int voip_sip_config_update_api(voip_sip_t *sip);
+
+extern int voip_sip_dhcp_chk(int ifkindex, void *address);
+
 /*
  * SIP state Module
  */

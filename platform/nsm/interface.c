@@ -393,7 +393,7 @@ static int nsm_interface_new_hook(struct interface *ifp)
 		if_kname_set(ifp, if_kernel_name_lookup(ifp->ifindex));
 	}
 #endif
-	if(!os_strlen(ifp->k_name))
+	if(ret > 0/*!os_strlen(ifp->k_name)*/)
 	{
 		if(nsm_interface_kname_set(ifp) == OK)
 			nsm_interface_kmac_set(ifp);

@@ -25,9 +25,13 @@
 
 const char *inet_address(u_int32 ip)
 {
+	static char buf[64];
+	memset(buf, 0, sizeof(buf));
 	struct in_addr address;
 	address.s_addr = htonl(ip);
-	return inet_ntoa(address);
+	//return inet_ntoa(address);
+	snprintf(buf, sizeof(buf), "%s", inet_ntoa(address));
+	return buf;
 }
 
 u_int32 string_to_hex(char * room)

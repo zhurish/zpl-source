@@ -27,7 +27,7 @@
 #include "voip_socket.h"
 #include "voip_sip.h"
 #include "voip_stream.h"
-
+#include "application.h"
 
 voip_sip_t voip_sip_config;
 voip_sip_ctl_t voip_sip_ctl;
@@ -48,6 +48,8 @@ static int voip_sip_config_default(voip_sip_t *sip)
 	//sip->sip_server_sec;				//SIP���÷�������ַ
 	//sip->sip_proxy_server;			//�����������ַ
 	//sip->sip_proxy_server_sec;		//��ѡ�����������ַ
+	sip->sip_server = ntohl(inet_addr("192.168.2.252"));
+	sip->sip_local_address = ntohl(inet_addr("192.168.2.100"));
 
 	sip->sip_port		= SIP_PORT_DEFAULT;					//SIP�������˿ں�
 	sip->sip_port_sec	= SIP_PORT_SEC_DEFAULT;				//SIP���÷������˿ں�
@@ -361,6 +363,253 @@ int voip_sip_config_update_api(voip_sip_t *sip)
 	}
 	return OK;
 }
+/*
+static int voip_sip_dhcp_chk_thread(struct eloop *eloop)
+{
+	u_int32		wan_address = 0;
+	voip_sip_t *sip = ELOOP_ARG(eloop);
+
+	if(sip->sip_old_address != wan_address)
+	{
+		struct eloop neweloop;
+		sip->sip_old_address = wan_address;
+		sip->sip_local_address = wan_address;
+		neweloop.arg = sip;
+		voip_sip_config_update_thread(&neweloop);
+	}
+	sip->t_check = eloop_add_timer(voip_socket.master, voip_sip_dhcp_chk_thread, sip, 5);
+	return OK;
+}
+*/
+
+/*  Description:  get the card infomation
+ *  Author     :  roczhou
+ *  Return     :  G3_SUCCEED  ---succeed--
+ *                G3_ERROR_SYSTEM  ---system error---  */
+#if 0
+int interface_get( char *card, char *ip, int ip_len, char *mask, int mask_len, char *mac, int mac_len )
+{
+    register int fd;
+    struct ifreq ifr;
+    int ret;
+
+    if ( NULL == card )
+    {
+        return ERROR;
+    }
+
+    ret = Ok;
+
+    // Create socket for get the interface infomation
+    if ( ( fd = socket( AF_INET, SOCK_DGRAM, 0 ) ) >= 0 )
+    {
+        memset( &ifr, 0, sizeof(ifr) );
+        strncpy( ifr.ifr_name, card, sizeof(ifr.ifr_name) );
+        ifr.ifr_addr.sa_family = AF_INET;
+        if ( NULL != ip )
+        {
+            // get the addrress info
+            if ( 0 == ioctl(fd, SIOCGIFADDR, &ifr ) )
+            {
+                struct sockaddr_in *asin = ( ( struct sockaddr_in* ) &ifr.ifr_addr );
+                inet_ntop( AF_INET, &asin->sin_addr, ip, ip_len-1 );
+                ip[ip_len-1] = '\0';
+            }
+            else
+            {
+                ret = ERROR;
+                //msg( M_ERROR, "Cannot get the interface(%s) address", ifr.ifr_name );
+            }
+        }
+        if ( NULL != mask )
+        {
+            // get the netmask info
+            if ( 0 == ioctl( fd, SIOCGIFNETMASK, &ifr ) )
+            {
+                struct sockaddr_in *asin = ( ( struct sockaddr_in* ) &ifr.ifr_netmask );
+                inet_ntop( AF_INET, &asin->sin_addr, mask, mask_len-1 );
+                mask[mask_len-1] = '\0';
+            }
+            else
+            {
+                ret = ERROR;
+                //msg( M_ERROR, "Cannot get the interface(%s) netmask", ifr.ifr_name );
+            }
+        }
+        if ( NULL != mac )
+        {
+            // get the mac address
+            if ( 0 == ioctl( fd, SIOCGIFHWADDR, &ifr ) )
+            {
+                snprintf( mac, mac_len-1, "%2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X",
+                    (ifr.ifr_hwaddr.sa_data[0])&0xFF,
+                    (ifr.ifr_hwaddr.sa_data[1])&0xFF,
+                    (ifr.ifr_hwaddr.sa_data[2])&0xFF,
+                    (ifr.ifr_hwaddr.sa_data[3])&0xFF,
+                    (ifr.ifr_hwaddr.sa_data[4])&0xFF,
+                    (ifr.ifr_hwaddr.sa_data[5])&0xFF
+                );
+                mac[mac_len-1] = '\0';
+            }
+            else
+            {
+                //msg( M_ERROR, "Cannot get the interface(%s) mac address", ifr.ifr_name );
+                ret = ERROR;
+            }
+        }
+        close (fd);
+    }
+    else
+    {
+       // msg( M_ERROR, "create a socket(get interface(%s) address) error", ifr.ifr_name );
+        ret = ERROR;
+    }
+    return ret;
+}
+#endif
+static int interface_get_ip( char *card, unsigned long *ip, unsigned long *mask, char *mac, int mac_len )
+ {
+	register int fd;
+	struct ifreq ifr;
+	int ret;
+
+	if (NULL == card) {
+		return ERROR;
+	}
+	ret = OK;
+
+	// Create socket for get the interface infomation
+	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) >= 0) {
+		memset(&ifr, 0, sizeof(ifr));
+		strncpy(ifr.ifr_name, card, sizeof(ifr.ifr_name));
+		ifr.ifr_addr.sa_family = AF_INET;
+		if (NULL != ip) {
+			// get the addrress info
+			if (0 == ioctl(fd, SIOCGIFADDR, &ifr)) {
+				struct sockaddr_in *asin = ((struct sockaddr_in*) &ifr.ifr_addr);
+				//inet_ntop( AF_INET, &asin->sin_addr, ip, ip_len-1 );
+				*((unsigned long*) ip) = ntohl(asin->sin_addr.s_addr);
+			} else {
+				ret = ERROR;
+				//msg( M_ERROR, "Cannot get the interface(%s) address", ifr.ifr_name );
+			}
+		}
+		if (NULL != mask) {
+			// get the netmask info
+			if (0 == ioctl(fd, SIOCGIFNETMASK, &ifr)) {
+				struct sockaddr_in *asin =
+						((struct sockaddr_in*) &ifr.ifr_netmask);
+
+				*((unsigned long*) mask) = ntohl(asin->sin_addr.s_addr);
+
+				//inet_ntop(AF_INET, &asin->sin_addr, mask, mask_len - 1);
+				//mask[mask_len - 1] = '\0';
+			} else {
+				ret = ERROR;
+				//msg( M_ERROR, "Cannot get the interface(%s) netmask", ifr.ifr_name );
+			}
+		}
+		if (NULL != mac) {
+			// get the mac address
+			if (0 == ioctl(fd, SIOCGIFHWADDR, &ifr)) {
+				snprintf(mac, mac_len - 1,
+						"%2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X",
+						(ifr.ifr_hwaddr.sa_data[0]) & 0xFF,
+						(ifr.ifr_hwaddr.sa_data[1]) & 0xFF,
+						(ifr.ifr_hwaddr.sa_data[2]) & 0xFF,
+						(ifr.ifr_hwaddr.sa_data[3]) & 0xFF,
+						(ifr.ifr_hwaddr.sa_data[4]) & 0xFF,
+						(ifr.ifr_hwaddr.sa_data[5]) & 0xFF);
+				mac[mac_len - 1] = '\0';
+			} else {
+				//msg( M_ERROR, "Cannot get the interface(%s) mac address", ifr.ifr_name );
+				ret = ERROR;
+			}
+		}
+		close(fd);
+	} else {
+		//msg( M_ERROR, "create a socket(get interface(%s) address) error", ifr.ifr_name );
+		ret = ERROR;
+	}
+	return ret;
+}
+
+int voip_sip_dhcp_chk(int ifkindex, void *address)
+{
+	struct in_addr * addr = (struct in_addr * )address;
+	u_int32		wan_address = 0;
+	if(if_nametoindex("eth0.2") == ifkindex)
+	{
+		wan_address = ntohl(inet_addr(address));
+		wan_address = ntohl(addr->s_addr);
+		if(voip_sip_config.sip_old_address != wan_address)
+		{
+			//struct eloop neweloop;
+			voip_sip_config.sip_old_address = wan_address;
+			voip_sip_config.sip_local_address = wan_address;
+			//neweloop.arg = sip;
+			voip_sip_config_update_api(&voip_sip_config);
+			//voip_sip_config_update_thread(&neweloop);
+		}
+	}
+	if(wan_address)
+	{
+		unsigned long ip = 0;
+		unsigned long mask = 0;
+		char mac[64];
+		interface_get_ip("eth0.2", &ip, &mask, mac, sizeof(mac) );
+	}
+	return OK;
+}
+
+static int voip_ip_address_chk(struct eloop *eloop)
+{
+
+	voip_sip_t *sip = ELOOP_ARG(eloop);
+	u_int32		wan_address = 0;
+	sip->t_check = NULL;
+	//if(if_nametoindex("eth0.2") == ifkindex)
+	{
+		unsigned long mask = 0;
+		char mac[64];
+		interface_get_ip("eth0.2", &wan_address, &mask, mac, sizeof(mac) );
+		zlog_debug(ZLOG_VOIP, "====== get eth0.2 ip address:%s 0x%x", inet_address(wan_address), mask);
+
+/*
+		if(voip_sip_config.sip_old_address == 0)
+			voip_sip_config.sip_old_address = wan_address;
+*/
+		if(voip_sip_config.sip_old_address == 0 || voip_sip_config.sip_old_address != wan_address)
+		{
+			zlog_debug(ZLOG_VOIP, "====== eth0.2 ip address:%s ---> %s",inet_address(voip_sip_config.sip_old_address), inet_address(wan_address));
+			voip_sip_config.sip_old_address = wan_address;
+			voip_sip_config.sip_local_address = wan_address;
+			//neweloop.arg = sip;
+			voip_sip_config_update_api(&voip_sip_config);
+			//mkdir("/www/adm", 0755);
+			os_write_string("/www/adm/status.shtml", inet_address(wan_address));
+			//voip_sip_config_update_thread(&neweloop);
+		}
+	}
+	sip->t_check = eloop_add_timer(voip_socket.master, voip_ip_address_chk, sip, 5);
+	return OK;
+}
+
+
+static int voip_sip_chk_api(voip_sip_t *sip)
+{
+	//struct eloop eloop;
+	//eloop.arg = sip;
+	//voip_sip_config_update_thread(&eloop);
+	//return OK;
+	if(voip_socket.master)
+	{
+		if(sip->t_check)
+			eloop_cancel(sip->t_check);
+		sip->t_check = eloop_add_timer(voip_socket.master, voip_ip_address_chk, sip, 10);
+	}
+	return OK;
+}
 
 #ifdef SIP_CTL_MSGQ
 #ifdef DOUBLE_PROCESS
@@ -605,6 +854,10 @@ int voip_sip_ctl_module_init()
 	voip_sip_msgq_init(&voip_sip_ctl);
 #endif
 #endif
+
+	voip_socket.master = voip_sip_ctl.master;
+
+	voip_sip_chk_api(&voip_sip_config);
 	//voip_sip_ctl.debug = 0xffff;
 	voip_sip_ctl.debug = SIP_CTL_DEBUG_EVENT|
 	SIP_CTL_DEBUG_STATE|
@@ -861,6 +1114,8 @@ static int voip_sip_call_error(voip_sip_ctl_t *sipctl, char *buf, int len)
 			zlog_debug(ZLOG_VOIP, "SIP module state change to error");
 		sipctl->call_state = (VOIP_SIP_CALL_ERROR);
 		sipctl->call_error = ack->cause;
+		voip_call_ring_stop_api();
+		x5b_app_call_result_api(E_CALL_RESULT_FAIL);
 		return OK;
 	}
 	return ERROR;

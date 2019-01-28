@@ -518,7 +518,7 @@ static int x5_b_a_timer_eloop(struct eloop *eloop)
 	if(mgt->state)
 		mgt->state--;
 	//zlog_debug(ZLOG_APP, "x5_b_a_timer_eloop OK");
-	if(/*mgt->state > */0)
+	//if(/*mgt->state > */0)
 	{
 		x5_b_a_hdr_make(mgt);
 		x5_b_a_keepalive_make(mgt, 0);

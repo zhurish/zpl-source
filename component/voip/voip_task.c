@@ -35,7 +35,7 @@ static int voip_main_task(voip_task_t *task)
 	{
 		os_sleep(1);
 	}
-
+	os_task_priority_set(voip_task.taskid, 50);
 	while(!task->enable)
 	{
 		os_sleep(1);
