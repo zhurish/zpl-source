@@ -349,7 +349,7 @@ char *if_mac_out_format(unsigned char *mac, int len)
 int if_uspv_type_setting(struct interface *ifp)
 {
 	//int iuspv = 0;
-	char *str;
+	char *str = NULL;
 	int unit = 0, slot = 0, port = 0, id = 0;
 	if(ifp == NULL || ifp->name == NULL)
 	{
@@ -404,6 +404,7 @@ static int vty_iusp_explain (const char *string, int *unit, int *slot, int *port
 		zlog_err(ZLOG_NSM,"if iusp format ERROR input is NULL");
 		return 0;
 	}
+	os_memset(buf, 0, sizeof(buf));
 	str = string;
 	while(string)
 	{
@@ -466,6 +467,7 @@ static int vty_iusp_explain (const char *string, int *unit, int *slot, int *port
 		    return 0;
 		}
 		len = p - v;
+		os_memset(buf, 0, sizeof(buf));
 		strncpy (buf, v, len);
 		if(slot)
 			*slot = atoi (buf);
@@ -476,6 +478,7 @@ static int vty_iusp_explain (const char *string, int *unit, int *slot, int *port
 		if(p)
 		{
 			len = p - v;
+			os_memset(buf, 0, sizeof(buf));
 			strncpy (buf, v, len);
 			if(port)
 				*port = atoi (buf);
@@ -507,6 +510,7 @@ static int vty_iusp_explain (const char *string, int *unit, int *slot, int *port
 		if(p)
 		{
 			len = p - v;
+			os_memset(buf, 0, sizeof(buf));
 			strncpy (buf, v, len);
 			if(port)
 				*port = atoi (buf);
@@ -576,6 +580,7 @@ int vty_mac_get (const char *str, unsigned char *mac)
 		zlog_err(ZLOG_NSM,"mac address format ERROR input NULL");
 		return 0;
 	}
+	os_memset(buf, 0, sizeof(buf));
 	count = strspn(str,base2);
 	if(count != strlen(str))
 	{

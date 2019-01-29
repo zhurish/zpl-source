@@ -39,7 +39,7 @@ static int voip_sip_msgq_exit(voip_sip_ctl_t *sipctl);
 #endif
 static int voip_sip_ctl_state(struct vty *vty);
 
-
+static int voip_sip_config_load(voip_sip_t *sip);
 
 static int voip_sip_config_default(voip_sip_t *sip)
 {
@@ -88,6 +88,8 @@ int voip_sip_module_init()
 #endif
 	os_memset(&voip_sip_config, 0, sizeof(voip_sip_config));
 	voip_sip_config_default(&voip_sip_config);
+
+	voip_sip_config_load(&voip_sip_config);
 	return OK;
 }
 
@@ -284,6 +286,121 @@ dtmf = rfc2833
 reg_expire = 1200
 rtp_port = 5555
 */
+static char *is_empty_char(char *input)
+{
+	int i = strlen(input);
+	char *s = input;
+	while(s[i++] != ' ')
+		break;
+	return (input + i);
+}
+
+static int voip_sip_config_load(voip_sip_t *sip)
+{
+	char buf[512];
+	FILE *fp = fopen(SIP_CONFIG_FILE, "w+");
+	if(fp)
+	{
+		char *s = NULL, *p = NULL;
+		os_memset(buf, 0, sizeof(buf));
+		while (fgets(buf, sizeof(buf), fp))
+		{
+			s = strstr(buf, "server_ip");
+			if(s)
+			{
+				s = strstr(s, "=");
+				if(s)
+				{
+					p = is_empty_char(++s);
+					if(p)
+						sip->sip_server = ntohl(inet_addr(p));
+				}
+			}
+			s = strstr(buf, "user_name");
+			if(s)
+			{
+				s = strstr(s, "=");
+				if(s)
+				{
+					p = is_empty_char(++s);
+					if(p)
+					{
+						memset(sip->sip_local_number, 0, sizeof(sip->sip_local_number));
+						strcpy(sip->sip_local_number , p);
+					}
+				}
+			}
+			s = strstr(buf, "passwd");
+			if(s)
+			{
+				s = strstr(s, "=");
+				if(s)
+				{
+					p = is_empty_char(++s);
+					if(p)
+					{
+						memset(sip->sip_password, 0, sizeof(sip->sip_password));
+						strcpy(sip->sip_password , p);
+					}
+				}
+			}
+/*			s = strstr(buf, "dtmf");
+			if(s)
+			{
+				s = strstr(s, "=");
+				if(s)
+				{
+					p = is_empty_char(s);
+					if(p)
+					{
+						memset(sip->sip_password, 0, sizeof(sip->sip_password));
+						strcpy(sip->sip_password , p);
+					}
+				}
+			}*/
+
+			s = strstr(buf, "server_port");
+			if(s)
+			{
+				s = strstr(s, "=");
+				if(s)
+				{
+					sip->sip_port = atoi(++s);
+				}
+			}
+			s = strstr(buf, "local_port");
+			if(s)
+			{
+				s = strstr(s, "=");
+				if(s)
+				{
+					sip->sip_local_port = atoi(++s);
+				}
+			}
+			s = strstr(buf, "reg_expire");
+			if(s)
+			{
+				s = strstr(s, "=");
+				if(s)
+				{
+					sip->sip_register_interval = atoi(++s);
+				}
+			}
+			s = strstr(buf, "rtp_port");
+			if(s)
+			{
+				s = strstr(s, "=");
+				if(s)
+				{
+					voip_stream->l_rtp_port = atoi(++s);
+				}
+			}
+		}
+		fclose(fp);
+		return OK;
+	}
+	return ERROR;
+}
 
 static int voip_sip_config_update_thread(struct eloop *eloop)
 {
@@ -573,7 +690,7 @@ static int voip_ip_address_chk(struct eloop *eloop)
 		unsigned long mask = 0;
 		char mac[64];
 		interface_get_ip("eth0.2", &wan_address, &mask, mac, sizeof(mac) );
-		zlog_debug(ZLOG_VOIP, "====== get eth0.2 ip address:%s 0x%x", inet_address(wan_address), mask);
+		//zlog_debug(ZLOG_VOIP, "====== get eth0.2 ip address:%s 0x%x", inet_address(wan_address), mask);
 
 /*
 		if(voip_sip_config.sip_old_address == 0)
@@ -581,13 +698,15 @@ static int voip_ip_address_chk(struct eloop *eloop)
 */
 		if(voip_sip_config.sip_old_address == 0 || voip_sip_config.sip_old_address != wan_address)
 		{
-			zlog_debug(ZLOG_VOIP, "====== eth0.2 ip address:%s ---> %s",inet_address(voip_sip_config.sip_old_address), inet_address(wan_address));
+			zlog_debug(ZLOG_VOIP, "====== eth0.2 ip address:%s ---> %s",
+					inet_address(voip_sip_config.sip_old_address), inet_address(wan_address));
 			voip_sip_config.sip_old_address = wan_address;
 			voip_sip_config.sip_local_address = wan_address;
 			//neweloop.arg = sip;
 			voip_sip_config_update_api(&voip_sip_config);
 			//mkdir("/www/adm", 0755);
 			os_write_string("/www/adm/status.shtml", inet_address(wan_address));
+			chmod("/www/adm/status.shtml", S_IRWXU|S_IRWXG|S_IRWXO);
 			//voip_sip_config_update_thread(&neweloop);
 		}
 	}

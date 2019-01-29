@@ -86,8 +86,7 @@ int voip_call_ring_get_api(int *id)
 }
 
 
-#define PL_VOIP_MEDIASTREAM
-
+//#define PL_VOIP_MEDIASTREAM
 
 int voip_call_ring_running(void *pVoid)
 {

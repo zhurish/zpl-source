@@ -157,7 +157,7 @@ const char * if_kernel_name_lookup(ifindex_t ifindex)
 	{
 		for(j = 0; j < OS_SLOT_HY_MAX; j++)
 		{
-			if( (phy_table[i][j].ifindex == ifindex) )
+			if( (phy_table[i][j].ifindex != 0) && (phy_table[i][j].ifindex == ifindex) )
 			{
 				return if_indextoname(phy_table[i][j].kifindex, buf);
 			}
@@ -173,7 +173,7 @@ ifindex_t ifindex_lookup_by_kname(const char *kname)
 	{
 		for(j = 0; j < OS_SLOT_HY_MAX; j++)
 		{
-			if(phy_table[i][j].kifindex == if_nametoindex(kname))
+			if((phy_table[i][j].kifindex != 0) && phy_table[i][j].kifindex == if_nametoindex(kname))
 			{
 				return phy_table[i][j].ifindex;
 			}
@@ -189,7 +189,7 @@ static int if_slot_kernel_lookup(ifindex_t ifindex)
 	{
 		for(j = 0; j < OS_SLOT_HY_MAX; j++)
 		{
-			if( (phy_table[i][j].ifindex == ifindex) )
+			if( (phy_table[i][j].ifindex != 0) && (phy_table[i][j].ifindex == ifindex) )
 			{
 				return 1;
 			}
@@ -201,7 +201,7 @@ static int if_slot_kernel_lookup(ifindex_t ifindex)
 static int if_slot_kernel_add(ifindex_t ifindex, char *name)
 {
 	int i = 0, j = 0;
-	zlog_debug(ZLOG_DEFAULT, "=======%s: IFINDEX=%x  %s", __func__, ifindex, name);
+	zlog_debug(ZLOG_DEFAULT, "=======%s: IFINDEX=%x  %s->%d", __func__, ifindex, name, if_nametoindex(name));
 	if(if_slot_kernel_lookup(ifindex) == 0)
 	{
 		for(i = 0; i < OS_SLOT_MAX; i++)
@@ -213,9 +213,10 @@ static int if_slot_kernel_add(ifindex_t ifindex, char *name)
 					phy_table[i][j].ifindex = ifindex;
 					//os_memset(phy_table[i][j].kname, 0, sizeof(phy_table[i][j].kname));
 
-					if(if_nametoindex(name))
+					//if(if_nametoindex(name))
 					{
 						//os_strcpy(phy_table[i][j].kname, name);
+						zlog_debug(ZLOG_DEFAULT, "=======%s: IFINDEX=%s  %s", __func__, if_ifname_make(ifindex), name);
 						phy_table[i][j].kifindex = if_nametoindex(name);
 					}
 					return 0;
@@ -396,10 +397,10 @@ static int if_unit_slot(void)
 #ifdef USE_IPSTACK_KERNEL
 	//if(i)
 		if_slot_kernel_read();
-	if_slot_kernel_add(if_ifindex_make("ethernet 0/0/1", NULL), "eth0.1");
+/*	if_slot_kernel_add(if_ifindex_make("ethernet 0/0/1", NULL), "eth0.1");
 	if_slot_kernel_add(if_ifindex_make("ethernet 0/0/2", NULL), "eth0.2");
 	if_slot_kernel_add(if_ifindex_make("wireless 0/0/1", NULL), "ra0");
-	if_slot_kernel_add(if_ifindex_make("brigde 0/0/1", NULL), "br-lan");
+	if_slot_kernel_add(if_ifindex_make("brigde 0/0/1", NULL), "br-lan");*/
 #endif
 	for(i = 0; i < array_size(iusp_table); i++)
 	{
