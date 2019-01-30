@@ -312,6 +312,8 @@ if_create_vrf_dynamic(const char *name, int namelen, vrf_id_t vrf_id)
 
 	if(if_create_make_ifname(ifp, name,  namelen) != OK)
 	{
+		zlog_err(ZLOG_NSM, "if_create(%s): corruption detected  %u!", name, namelen);
+
 		XFREE(MTYPE_IF, ifp);
 		IF_DATA_UNLOCK();
 		return NULL;

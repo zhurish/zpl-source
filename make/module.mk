@@ -20,7 +20,8 @@ _MODULELIST = \
 	MODULE_OSIP.false \
 	MODULE_EXSIP.true \
 	MODULE_VOIP.true \
-	MODULE_APP.true 
+	MODULE_APP.true \
+	MODULE_UCI.true 
 #
 #
 #

@@ -139,6 +139,7 @@ typedef struct x5_b_version_s
 
 typedef struct x5_b_a_mgt_s
 {
+	int		enable;
 	int		task_id;
 	void	*master;
 	int		r_fd;

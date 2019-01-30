@@ -185,6 +185,15 @@ PLDEFINE += -DDOUBLE_PROCESS
 endif
 
 
+ifeq ($(strip $(MODULE_UCI)),true)
+PLINCLUDE += -I$(PLBASE)/externsions/uci/mips/include
+PL_CFLAGS += -L$(PLBASE)/externsions/uci/mips/lib 
+#PL_CFLAGS += -L$(PLBASE)/externsions/uci/mips/lib/lua
+PL_LDLIBS += -luci			
+PLDEFINE += -DPL_OPENWRT_UCI				
+endif
+
+
 ifeq ($(strip $(MODULE_VOIP)),true)
 ifeq ($(strip $(MODULE_COMPONENT)),true)
 VOIP_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(VOIPDIR)

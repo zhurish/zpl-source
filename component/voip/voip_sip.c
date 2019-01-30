@@ -89,6 +89,9 @@ int voip_sip_module_init()
 	os_memset(&voip_sip_config, 0, sizeof(voip_sip_config));
 	voip_sip_config_default(&voip_sip_config);
 
+	//voip_sip_t sipconfig;
+	//voip_sip_config_load(&voip_sip_config);
+	//if(sipconfig.sip_enable == 4)
 	voip_sip_config_load(&voip_sip_config);
 	return OK;
 }
@@ -286,22 +289,24 @@ dtmf = rfc2833
 reg_expire = 1200
 rtp_port = 5555
 */
-static char *is_empty_char(char *input)
+/*static char *is_empty_char(char *input)
 {
 	int i = strlen(input);
 	char *s = input;
 	while(s[i++] != ' ')
 		break;
 	return (input + i);
-}
+}*/
 
 static int voip_sip_config_load(voip_sip_t *sip)
 {
 	char buf[512];
-	FILE *fp = fopen(SIP_CONFIG_FILE, "w+");
+	char tmp[128];
+	FILE *fp = fopen(SIP_CONFIG_FILE, "r");
 	if(fp)
 	{
-		char *s = NULL, *p = NULL;
+		char *s = NULL;
+		//char *p = NULL;
 		os_memset(buf, 0, sizeof(buf));
 		while (fgets(buf, sizeof(buf), fp))
 		{
@@ -311,9 +316,11 @@ static int voip_sip_config_load(voip_sip_t *sip)
 				s = strstr(s, "=");
 				if(s)
 				{
-					p = is_empty_char(++s);
-					if(p)
-						sip->sip_server = ntohl(inet_addr(p));
+					s++;
+					memset(tmp, 0, sizeof(tmp));
+					sscanf(s, "%s", tmp);
+					sip->sip_server = ntohl(inet_addr(tmp));
+					zlog_debug(ZLOG_VOIP, "----%s: server_ip=%s", __func__, tmp);
 				}
 			}
 			s = strstr(buf, "user_name");
@@ -322,12 +329,12 @@ static int voip_sip_config_load(voip_sip_t *sip)
 				s = strstr(s, "=");
 				if(s)
 				{
-					p = is_empty_char(++s);
-					if(p)
-					{
-						memset(sip->sip_local_number, 0, sizeof(sip->sip_local_number));
-						strcpy(sip->sip_local_number , p);
-					}
+					s++;
+					memset(tmp, 0, sizeof(tmp));
+					sscanf(s, "%s", tmp);
+					memset(sip->sip_user, 0, sizeof(sip->sip_user));
+					strcpy(sip->sip_user, tmp);
+					zlog_debug(ZLOG_VOIP, "----%s: user_name=%s", __func__, tmp);
 				}
 			}
 			s = strstr(buf, "passwd");
@@ -336,29 +343,14 @@ static int voip_sip_config_load(voip_sip_t *sip)
 				s = strstr(s, "=");
 				if(s)
 				{
-					p = is_empty_char(++s);
-					if(p)
-					{
-						memset(sip->sip_password, 0, sizeof(sip->sip_password));
-						strcpy(sip->sip_password , p);
-					}
+					s++;
+					memset(tmp, 0, sizeof(tmp));
+					sscanf(s, "%s", tmp);
+					memset(sip->sip_password, 0, sizeof(sip->sip_password));
+					strcpy(sip->sip_password, tmp);
+					zlog_debug(ZLOG_VOIP, "----%s: sip_password=%s", __func__, tmp);
 				}
 			}
-/*			s = strstr(buf, "dtmf");
-			if(s)
-			{
-				s = strstr(s, "=");
-				if(s)
-				{
-					p = is_empty_char(s);
-					if(p)
-					{
-						memset(sip->sip_password, 0, sizeof(sip->sip_password));
-						strcpy(sip->sip_password , p);
-					}
-				}
-			}*/
-
 			s = strstr(buf, "server_port");
 			if(s)
 			{
@@ -366,6 +358,7 @@ static int voip_sip_config_load(voip_sip_t *sip)
 				if(s)
 				{
 					sip->sip_port = atoi(++s);
+					zlog_debug(ZLOG_VOIP, "----%s: server_port=%d", __func__, sip->sip_port);
 				}
 			}
 			s = strstr(buf, "local_port");
@@ -375,6 +368,7 @@ static int voip_sip_config_load(voip_sip_t *sip)
 				if(s)
 				{
 					sip->sip_local_port = atoi(++s);
+					zlog_debug(ZLOG_VOIP, "----%s: local_port=%d", __func__, sip->sip_local_port);
 				}
 			}
 			s = strstr(buf, "reg_expire");
@@ -384,17 +378,19 @@ static int voip_sip_config_load(voip_sip_t *sip)
 				if(s)
 				{
 					sip->sip_register_interval = atoi(++s);
+					zlog_debug(ZLOG_VOIP, "----%s: reg_expire=%d", __func__, sip->sip_register_interval);
 				}
 			}
-			s = strstr(buf, "rtp_port");
+/*			s = strstr(buf, "rtp_port");
 			if(s)
 			{
 				s = strstr(s, "=");
 				if(s)
 				{
 					voip_stream->l_rtp_port = atoi(++s);
+					zlog_debug(ZLOG_VOIP, "----%s: rtp=%d", __func__, voip_stream->l_rtp_port);
 				}
-			}
+			}*/
 		}
 		fclose(fp);
 		return OK;
@@ -405,9 +401,11 @@ static int voip_sip_config_load(voip_sip_t *sip)
 static int voip_sip_config_update_thread(struct eloop *eloop)
 {
 	voip_sip_t *sip = ELOOP_ARG(eloop);
+	//return OK;
 	FILE *fp = fopen(SIP_CONFIG_FILE, "w+");
 	sip->t_event = NULL;
 	//zlog_debug(ZLOG_VOIP, "---------%s");
+	//return OK;
 	if(fp)
 	{
 #ifdef DOUBLE_PROCESS

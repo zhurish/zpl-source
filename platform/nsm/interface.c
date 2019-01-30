@@ -390,6 +390,7 @@ static int nsm_interface_new_hook(struct interface *ifp)
 #ifdef USE_IPSTACK_KERNEL
 	if(ifp->dynamic == FALSE && if_kernel_name_lookup(ifp->ifindex))
 	{
+		zlog_debug(ZLOG_NSM, "=====%s: %s -> %s",__func__, ifp->name, if_kernel_name_lookup(ifp->ifindex));
 		if_kname_set(ifp, if_kernel_name_lookup(ifp->ifindex));
 	}
 #endif

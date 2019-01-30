@@ -15,6 +15,9 @@ OSOBJ	+= os_tlv.o
 OSOBJ	+= os_socket.o
 OSOBJ	+= cJSON.o
 OSOBJ	+= os_queue.o
+ifeq ($(strip $(MODULE_UCI)),true)
+OSOBJ	+= os_uci.o				
+endif
 #############################################################################
 # LIB
 ###########################################################################

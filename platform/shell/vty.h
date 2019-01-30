@@ -180,7 +180,7 @@ struct vty
 #define VTY_NEWLINE  ((vty->type == VTY_TERM) ? "\r\n" : "\n")
 
 /* Default time out value */
-#define VTY_TIMEOUT_DEFAULT 6000
+#define VTY_TIMEOUT_DEFAULT 600
 
 /* Vty read buffer size. */
 #define VTY_READ_BUFSIZ 512

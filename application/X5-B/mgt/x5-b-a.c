@@ -36,7 +36,7 @@ x5_b_a_mgt_t *x5_b_a_mgt = NULL;
 
 static int x5_b_a_socket_init(x5_b_a_mgt_t *mgt);
 static int x5_b_a_socket_exit(x5_b_a_mgt_t *mgt);
-
+static int x5_b_a_c_enable_load(x5_b_a_mgt_t *mgt);
 
 uint16_t Data_CRC16Check ( uint8_t * data, uint16_t leng )  // crc ��λ��ǰ
 {
@@ -575,12 +575,16 @@ static int x5_b_a_read_eloop(struct eloop *eloop)
 
 static int x5_b_a_mgt_task(void *argv)
 {
+	x5_b_a_mgt_t *mgt = (x5_b_a_mgt_t *)argv;
 	module_setup_task(MODULE_APP_START, os_task_id_self());
 	while(!os_load_config_done())
 	{
 		os_sleep(1);
 	}
-
+	if(!mgt->enable)
+	{
+		os_sleep(5);
+	}
 	eloop_start_running(master_eloop[MODULE_APP_START], MODULE_APP_START);
 	return OK;
 }
@@ -591,6 +595,11 @@ static int x5_b_a_task_init (x5_b_a_mgt_t *mgt)
 	if(master_eloop[MODULE_APP_START] == NULL)
 		master_eloop[MODULE_APP_START] = eloop_master_module_create(MODULE_APP_START);
 	//master_thread[MODULE_TELNET] = thread_master_module_create(MODULE_TELNET);
+	mgt->enable = TRUE;
+	x5_b_a_c_enable_load(mgt);
+	//if(mgt->enable != TRUE)
+	//	return OK;
+	mgt->enable = TRUE;
 	mgt->task_id = os_task_create("appmgtTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, x5_b_a_mgt_task, mgt, OS_TASK_DEFAULT_STACK);
 	if(mgt->task_id)
@@ -880,6 +889,29 @@ int x5_b_a_show_state(struct vty *vty)
 	return OK;
 }
 
+static int x5_b_a_c_enable_load(x5_b_a_mgt_t *mgt)
+{
+	int cnt = 0;
+	char buf[512];
+	super_system("swconfig dev switch0 show | grep link:up > /tmp/phy_status");
+	FILE *fp = fopen("/tmp/phy_status", "w+");
+	if(fp)
+	{
+		os_memset(buf, 0, sizeof(buf));
+		while (fgets(buf, sizeof(buf), fp))
+		{
+			if(strstr(buf, "link:up"))
+			{
+				cnt++;
+			}
+		}
+		fclose(fp);
+		if(cnt >= 4)
+			mgt->enable = FALSE;
+		return OK;
+	}
+	return ERROR;
+}
 
 #ifdef X5_B_A_DEBUG
 

@@ -66,7 +66,7 @@ static struct unit_slot_port iusp_table[] =
 	{.type = IF_TUNNEL, .unit = 0, .slot = 1, .port = 0 },
 	{.type = IF_VLAN, .unit = 0, .slot = 1, .port = 0 },
 	{.type = IF_LAG, .unit = 0, .slot = 1, .port = 0 },
-	{.type = IF_BRIGDE, .unit = 0, .slot = 1, .port = 0 },
+	{.type = IF_BRIGDE, .unit = 0, .slot = 0, .port = 1 },
 	{.type = IF_WIRELESS, .unit = 0, .slot = 0, .port = 1 },
 #ifdef CUSTOM_INTERFACE
 	{.type = IF_WIFI, .unit = 0, .slot = 1, .port = 1 },
@@ -151,7 +151,7 @@ const int if_ifindex2phy(ifindex_t ifindex)
 
 const char * if_kernel_name_lookup(ifindex_t ifindex)
 {
-	char buf[64];
+	static char buf[64];
 	int i = 0, j = 0;
 	for(i = 0; i < OS_SLOT_MAX; i++)
 	{
@@ -159,7 +159,12 @@ const char * if_kernel_name_lookup(ifindex_t ifindex)
 		{
 			if( (phy_table[i][j].ifindex != 0) && (phy_table[i][j].ifindex == ifindex) )
 			{
-				return if_indextoname(phy_table[i][j].kifindex, buf);
+				memset(buf, 0, sizeof(buf));
+				//return if_indextoname(phy_table[i][j].kifindex, buf);
+				//zlog_debug(ZLOG_DEFAULT,"+++++++%s: %x -> %d", __func__, ifindex, phy_table[i][j].kifindex);
+				if(if_indextoname(phy_table[i][j].kifindex, buf))
+					return buf;
+				return NULL;
 			}
 		}
 	}
@@ -216,7 +221,8 @@ static int if_slot_kernel_add(ifindex_t ifindex, char *name)
 					//if(if_nametoindex(name))
 					{
 						//os_strcpy(phy_table[i][j].kname, name);
-						zlog_debug(ZLOG_DEFAULT, "=======%s: IFINDEX=%s  %s", __func__, if_ifname_make(ifindex), name);
+						zlog_debug(ZLOG_DEFAULT, "=======%s: IFINDEX=%s  %s", __func__,
+								if_ifname_make(ifindex), name);
 						phy_table[i][j].kifindex = if_nametoindex(name);
 					}
 					return 0;
@@ -285,7 +291,8 @@ static int if_slot_kernel_read()
 	FILE *fp = fopen(SLOT_PORT_CONF, "r");
 	if (fp)
 	{
-		char *s = NULL;//, *p;
+		char *s = NULL;
+		int n = 0;//, *p;
 		os_memset(buf, 0, sizeof(buf));
 		while (fgets(buf, sizeof(buf), fp))
 		{
@@ -296,7 +303,12 @@ static int if_slot_kernel_read()
 			{
 				os_memcpy(name, buf, s - buf);
 				s++;
-				os_strcpy(kname, s);
+				n = strspn(s, "qwertyuiopasdfghjklzxcvbnm.1234567890");
+				if(strstr(s, "-"))
+					os_strcpy(kname, "br-lan");
+				else
+					os_strncpy(kname, s, n);
+				//kname[strlen(kname)-1] = '\0';
 				ifindex = if_ifindex_make(name);
 				if(ifindex)
 					if_slot_kernel_add( ifindex, kname);
@@ -330,7 +342,7 @@ int if_slot_show_port_phy(struct vty *vty)
 	{
 		for(j = 0; j < OS_SLOT_HY_MAX; j++)
 		{
-			if( (phy_table[i][j].ifindex) )
+			if( (phy_table[i][j].ifindex != 0) )
 			{
 				if(head == 0)
 				{
@@ -395,12 +407,12 @@ static int if_unit_slot(void)
 {
 	int i = 0;
 #ifdef USE_IPSTACK_KERNEL
-	//if(i)
+	if(i)
 		if_slot_kernel_read();
-/*	if_slot_kernel_add(if_ifindex_make("ethernet 0/0/1", NULL), "eth0.1");
+	if_slot_kernel_add(if_ifindex_make("ethernet 0/0/1", NULL), "eth0.1");
 	if_slot_kernel_add(if_ifindex_make("ethernet 0/0/2", NULL), "eth0.2");
 	if_slot_kernel_add(if_ifindex_make("wireless 0/0/1", NULL), "ra0");
-	if_slot_kernel_add(if_ifindex_make("brigde 0/0/1", NULL), "br-lan");*/
+	if_slot_kernel_add(if_ifindex_make("brigde 0/0/1", NULL), "br-lan");
 #endif
 	for(i = 0; i < array_size(iusp_table); i++)
 	{
