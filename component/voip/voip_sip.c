@@ -1127,7 +1127,7 @@ static int voip_sip_call_ring(voip_sip_ctl_t *sipctl, char *buf, int len)
 		}
 		if(SIP_CTL_DEBUG(STATE))
 			zlog_debug(ZLOG_VOIP, "SIP module state change to ringing");
-		voip_call_ring_start_api();
+		//voip_call_ring_start_api();
 		sipctl->call_state = (VOIP_SIP_CALL_RINGING);
 		return OK;
 	}
@@ -1151,7 +1151,7 @@ static int voip_sip_call_picking(voip_sip_ctl_t *sipctl, char *buf, int len)
 	{
 		if(ack->rtp_port && strlen(ack->rtp_addr))
 		{
-			voip_call_ring_stop_api();
+			//voip_call_ring_stop_api();
 			voip_stream->r_rtp_port = ack->rtp_port;
 			if(strlen(ack->rtp_addr))
 				memcpy(voip_stream->r_rtp_address, ack->rtp_addr, 64);
@@ -1231,7 +1231,7 @@ static int voip_sip_call_error(voip_sip_ctl_t *sipctl, char *buf, int len)
 			zlog_debug(ZLOG_VOIP, "SIP module state change to error");
 		sipctl->call_state = (VOIP_SIP_CALL_ERROR);
 		sipctl->call_error = ack->cause;
-		voip_call_ring_stop_api();
+		//voip_call_ring_stop_api();
 		x5b_app_call_result_api(E_CALL_RESULT_FAIL);
 		return OK;
 	}
