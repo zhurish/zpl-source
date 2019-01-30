@@ -143,19 +143,19 @@ int os_start_all_module()
 	 * all module start:
 	 */
 	os_module_init();
-	os_msleep(1000);
+	os_msleep(500);
 
 	/*
 	 * install all CMD
 	 */
 	os_module_cmd_init(1);
-	os_msleep(1000);
+	os_msleep(500);
 
 	/*
 	 * start all task
 	 */
 	os_module_task_init();
-	os_msleep(1000);
+	os_msleep(500);
 
 #ifdef USE_IPSTACK_KERNEL
 	kernel_load_all();

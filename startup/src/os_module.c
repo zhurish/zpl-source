@@ -217,7 +217,8 @@ int os_module_init(void)
 int os_module_task_init(void)
 {
 	//printf("%s\r\n",__func__);
-	sleep(2);
+	//sleep(2);
+	os_msleep(500);
 	if(console_enable)
 		cli_console_task_init ();
 	cli_telnet_task_init ();

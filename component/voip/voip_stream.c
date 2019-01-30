@@ -282,6 +282,7 @@ void voip_stream_running_api(voip_stream_t* args)
 
 void voip_stream_clear_api(voip_stream_t* args)
 {
+	voip_stream_stop_flag_api();
 #ifdef PL_VOIP_MEDIASTREAM
 	return mediastream_clear(args->mediastream);
 #else
@@ -518,8 +519,8 @@ int voip_stream_shell_start_api(int argc, char * argv[])
 int voip_stream_stop_api(void)
 {
 	//int n= 1;
-	voip_task.active = FALSE;
-	voip_task.stream = FALSE;
+	//voip_task.active = FALSE;
+	//voip_task.stream = FALSE;
 	voip_socket_quit(&voip_socket);
 	return OK;
 }
@@ -527,14 +528,20 @@ int voip_stream_stop_api(void)
 int voip_stream_stop_force_api(void)
 {
 	//int n= 1;
-	voip_task.active = FALSE;
-	voip_task.stream = FALSE;
+	//voip_task.active = FALSE;
+	//voip_task.stream = FALSE;
 #ifdef PL_VOIP_MEDIASTREAM
 	mediastream_stop_force();
 #endif
 	return OK;
 }
 
+int voip_stream_stop_flag_api(void)
+{
+	//voip_task.active = FALSE;
+	voip_task.stream = FALSE;
+	return OK;
+}
 
 #ifdef VOIP_STREAM_DEBUG_TEST
 /*

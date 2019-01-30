@@ -285,6 +285,14 @@ int x5_b_a_open_door_api(x5_b_a_mgt_t *mgt, int res)
 static int x5_b_a_read_tlv_handle(x5_b_a_mgt_t *mgt, os_tlv_t *tlv)
 {
 	int ret = ERROR;
+	if(tlv->tag != E_CMD_KEEPALIVE)
+	{
+		if(mgt->state < 1)
+		{
+			//zlog_warn(ZLOG_APP, " X5B > A keepalive state = %d");
+			//return OK;
+		}
+	}
 	//zlog_warn(ZLOG_APP, "x5_b_a_read_tlv_handle");
 	switch(tlv->tag)
 	{
@@ -298,8 +306,8 @@ static int x5_b_a_read_tlv_handle(x5_b_a_mgt_t *mgt, os_tlv_t *tlv)
 		{
 			ret = OK;
 			mgt->state ++;
-			if(X5_B_ESP32_DEBUG(EVENT))
-				zlog_debug(ZLOG_APP, "KEEPALIVE msg (seqnum=%d) OK", mgt->seqnum);
+			//if(X5_B_ESP32_DEBUG(EVENT))
+			//	zlog_debug(ZLOG_APP, "KEEPALIVE msg (seqnum=%d) OK", mgt->seqnum);
 		}
 		break;
 	case E_CMD_VERSION:
@@ -779,8 +787,8 @@ int x5_b_a_module_init(char *remote, u_int16 port)
 
 		x5_b_a_mgt->interval = X5_B_A_INTERVAL_DEFAULT;
 
-		X5_B_ESP32_DEBUG_ON(EVENT);
-		X5_B_ESP32_DEBUG_ON(RECV);
+		//X5_B_ESP32_DEBUG_ON(EVENT);
+		//X5_B_ESP32_DEBUG_ON(RECV);
 		voip_estate_mgt_init();
 	}
 	//x5_b_a_socket_init(x5_b_a_mgt);

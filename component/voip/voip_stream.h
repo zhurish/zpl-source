@@ -118,6 +118,7 @@ extern int voip_stream_start_api(voip_stream_t *args);
 extern int voip_stream_shell_start_api(int argc, char * argv[]);
 extern int voip_stream_stop_api(void);
 extern int voip_stream_stop_force_api(void);
+extern int voip_stream_stop_flag_api(void);
 
 extern int voip_stream_remote_get_api(voip_stream_remote_t* args);
 

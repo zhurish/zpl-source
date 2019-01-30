@@ -1010,6 +1010,11 @@ static void mediastream_tool_iterate(mediastream_global* args) {
 			{
 				MSEqualizerGain d = {0};
 				int active;
+
+				if(mediastream_running_flag == 0)
+				{
+					return;
+				}
 #ifdef VOIP_MEDIASTRREM_CTL_DEBUG
 				zlog_debug(ZLOG_VOIP, " GET CMD(%d byte):%s", ntohs(hdr.len), commands);
 #endif
@@ -1195,6 +1200,8 @@ void mediastream_running(mediastream_global* args)
 #endif
 			if (args->audio) audio_stream_iterate(args->audio);
 		}
+		if(mediastream_running_flag == 0)
+			break;
 		rtp_stats_display(rtp_session_get_stats(args->session),"RTP stats");
 		if (args->session){
 			float audio_load = 0;
