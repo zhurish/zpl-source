@@ -88,6 +88,8 @@ static void parse_events(RtpSession *session, OrtpEvQueue *q);
 static bool_t parse_window_ids(const char *ids, int* video_id, int* preview_id);
 static rcalgo parse_rc_algo(const char *algo);
 
+static int mediastream_tool_iterate_flush(mediastream_global* args);
+
 #if 0
 static const char *usage="mediastream --local <port>\n"
 								"--remote <ip:port> \n"
@@ -963,6 +965,8 @@ void mediastream_setup(mediastream_global* args) {
 	ice_session_choose_default_remote_candidates(args->ice_session);
 	ice_session_start_connectivity_checks(args->ice_session);
 
+	mediastream_tool_iterate_flush(args);
+
 	mediastream_running_flag = 1;
 
 	if (args->netsim.enabled){
@@ -970,6 +974,35 @@ void mediastream_setup(mediastream_global* args) {
 	}
 }
 
+
+static int mediastream_tool_iterate_flush(mediastream_global* args)
+{
+	mediastream_hdr hdr;
+	struct pollfd pfd;
+	int err;
+	int ctlfd = voip_stream_ctlfd_get_api();
+	if(ctlfd <= 3)
+		return OK;
+	while (args->interactive)
+	{
+		if(ctlfd != args->ctlfd)
+		{
+			args->ctlfd = ctlfd;
+		}
+		pfd.fd=args->ctlfd;
+		pfd.events=POLLIN;
+		pfd.revents=0;
+		err=poll(&pfd, 1, 1);
+		if (err==1 && (pfd.revents & POLLIN))
+		{
+			memset(&hdr, 0, sizeof(hdr));
+			read(args->ctlfd, &hdr, sizeof(hdr));
+		}
+		if(err <= 0)
+			return OK;
+	}
+	return OK;
+}
 
 static void mediastream_tool_iterate(mediastream_global* args) {
 #if 1
