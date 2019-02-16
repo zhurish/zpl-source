@@ -8,7 +8,7 @@
 #ifndef __VOIP_SIP_H__
 #define __VOIP_SIP_H__
 
-#include "config.h"
+#include "plconfig.h"
 
 #include "voip_def.h"
 #include "voip_event.h"

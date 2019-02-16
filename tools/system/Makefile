@@ -10,7 +10,7 @@ SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
 
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
 
-LDCLFLAG = $(PL_LDLIBS) -L$(DSTLIBDIR) -los 
+LDCLFLAG = $(PLOS_LDLIBS) -L$(DSTLIBDIR) -los 
 #CFLAGS += -g
 
 

@@ -102,13 +102,13 @@ extern "C" {
  * @param ff The element to work on.
  */
   int osip_fifo_size (osip_fifo_t * ff);
-#ifndef OSIP_MONOTHREAD
+//#ifndef OSIP_MONOTHREAD
 /**
  * Get an element from a fifo or block until one is added.
  * @param ff The element to work on.
  */
   void *osip_fifo_get (osip_fifo_t * ff);
-#endif
+//#endif
 /**
  * Try to get an element from a fifo, but do not block if there is no element.
  * @param ff The element to work on.

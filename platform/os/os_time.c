@@ -570,17 +570,6 @@ static os_time_t * os_time_entry_create(os_time_type type, int	(*time_entry)(voi
 /*
  *设置定时中断点
  */
-static int os_time_interval_update(os_time_t *t)
-{
-//#ifdef OS_TIMER_POSIX
-	t->interval.tv_sec += t->msec/TIMER_MSEC_MICRO;
-	t->interval.tv_usec += (t->msec%TIMER_MSEC_MICRO)*TIMER_MSEC_MICRO;
-	os_timeval_adjust(t->interval);
-//#endif
-	return OK;
-}
-
-
 #ifdef OS_TIMER_POSIX
 static void os_time_interrupt(int signo)
 {
@@ -688,6 +677,25 @@ static int timer_connect(timer_t timerid, int (*routine)(void *p))
 }
 #endif /* OS_TIMER_POSIX */
 
+static int os_time_interval_update(os_time_t *t)
+{
+//#ifdef OS_TIMER_POSIX
+	t->interval.tv_sec += t->msec/TIMER_MSEC_MICRO;
+	t->interval.tv_usec += (t->msec%TIMER_MSEC_MICRO)*TIMER_MSEC_MICRO;
+	os_timeval_adjust(t->interval);
+//#endif
+	return OK;
+}
+
+static u_long os_time_interrupt_interval_get(os_time_t *t)
+{
+	struct timeval current_tv;
+	os_timer_timeval (&current_tv);
+	current_tv = os_timeval_subtract (t->interval, current_tv);
+	return (((current_tv.tv_sec) * TIMER_SECOND_MICRO)
+		  + (current_tv.tv_usec))/TIMER_MSEC_MICRO;
+}
+
 static int os_time_interrupt_setting(int msec)
 {
 	struct itimerspec tick;
@@ -733,7 +741,13 @@ static int os_time_interval_refresh()
 		//struct timeval now;
 		//os_timer_timeval(&now);
 		if(current_time)
-			os_time_interrupt_setting(current_time->msec);
+		{
+			u_long inter_time = os_time_interrupt_interval_get(current_time);
+			if(inter_time > 0)
+				os_time_interrupt_setting(inter_time/*current_time->msec*/);
+			else
+				os_time_interrupt_setting(current_time->msec);
+		}
 	}
 #endif
 	return OK;
@@ -756,8 +770,8 @@ int os_time_create_entry(os_time_type type, int (*time_entry)(void *),
 
 		os_time_interval_refresh();
 #ifdef OS_TIMER_TEST
-	fprintf(stdout, "%s time=%u.%u\n", __func__, t->interval.tv_sec,
-			(t->interval.tv_usec)/1000);
+	fprintf(stdout, "%s time=%u.%u\n", __func__, t->interval.tv_sec*TIMER_MSEC_MICRO,
+			(t->interval.tv_usec)/TIMER_MSEC_MICRO);
 	//zlog_debug(ZLOG_NSM, "%s time=%u.%u", __func__,tick.it_value.tv_sec, tick.it_value.tv_usec/1000);
 #endif
 		if(time_mutex)
@@ -968,7 +982,7 @@ static int timer_test_handle(void *p)
 {
 	struct timeval now;
 	os_timer_timeval(&now);
-	fprintf(stdout, "%s time=%u.%u msec\n", __func__,now.tv_sec, now.tv_sec/1000);
+	fprintf(stdout, "%s time=%u.%u msec\n", __func__,now.tv_sec*TIMER_MSEC_MICRO, now.tv_sec/TIMER_MSEC_MICRO);
 	//zlog_debug(ZLOG_NSM, "%s time=%u.%u msec", __func__,now.tv_sec, now.tv_sec/1000);
 	t_time_test = 0;
 	return OK;
@@ -992,16 +1006,16 @@ int timer_test(int time, int type)
 			{
 				os_time_cancel(t_time_test);
 				os_time_restart(t_time_test, time);
-				fprintf(stdout, "%s time=%u.%u msec\n", __func__,now.tv_sec, now.tv_sec/1000);
+				fprintf(stdout, "%s time=%u.%u msec\n", __func__,now.tv_sec*TIMER_MSEC_MICRO, now.tv_sec/TIMER_MSEC_MICRO);
 				return OK;
 			}
 		}
-		fprintf(stdout, "%s time=%u.%u msec\n", __func__,now.tv_sec, now.tv_sec/1000);
+		fprintf(stdout, "%s time=%u.%u msec\n", __func__,now.tv_sec*TIMER_MSEC_MICRO, now.tv_sec/TIMER_MSEC_MICRO);
 		t_time_test = os_time_create_once(timer_test_handle, NULL, time);
 	}
 	else
 	{
-		fprintf(stdout, "%s time=%u.%u msec\n", __func__,now.tv_sec, now.tv_sec/1000);
+		fprintf(stdout, "%s time=%u.%u msec\n", __func__,now.tv_sec*TIMER_MSEC_MICRO, now.tv_sec/TIMER_MSEC_MICRO);
 		t_time_test1 = os_time_create(timer_test_handle, NULL, time);
 	}
 	return OK;

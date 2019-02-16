@@ -23,7 +23,7 @@
 #ifndef _ZEBRA_LOG_H
 #define _ZEBRA_LOG_H
 
-#include <config.h>
+#include <plconfig.h>
 #include <syslog.h>
 #include <stdio.h>
 #include <stdlib.h>

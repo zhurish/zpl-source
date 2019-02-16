@@ -345,7 +345,7 @@ int main (int argc, char **argv)
 
 
 	thread_add_timer(master_thread[MODULE_DEFAULT], main_timer_thread, NULL, 1);
-
+	pjmain(1, NULL);
 	//os_start_running(NULL, MODULE_DEFAULT);
 
 	while(1)

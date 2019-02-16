@@ -82,6 +82,9 @@ OBJS = $(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(SOURCES)))
 -include $(OBJS:.o=.d)
 #
 #
+#				
+#
+#
 #
 $(TAGET) : $(OBJS) $(BASE_ROOT)/$(LIBDIR)/*.a 
 	$(CC) $(OBJS) $(CFLAGS) -Xlinker "-(" $(LDCLFLAG) -Xlinker "-)" -o $(TAGET) 

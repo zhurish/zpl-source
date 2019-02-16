@@ -109,7 +109,7 @@ PLOS_CFLAGS += -D__UCLIBC__
 endif
 #
 #
-PL_LDLIBS += -lpthread -lrt -rdynamic -lm -lcrypt -ldl -lgcc_s
+PLOS_LDLIBS += -lpthread -lrt -rdynamic -lm -lcrypt -ldl -lgcc_s
 #
 PLOS_CFLAGS += -fsigned-char -O2  
 #
@@ -159,7 +159,7 @@ PLINCLUDE += $(PLLIBINCLUDE)
 PL_DEBUG += $(PLDEFINE) $(EXTRA_DEFINE) 
 # -MMD -MP 
 export CFLAGS += $(PLOS_CFLAGS) $(PL_CFLAGS) $(PL_DEBUG) -fPIC $(PLINCLUDE)
-export LDCLFLAG += $(PL_LDLIBS) 
+export LDCLFLAG += $(PLOS_LDLIBS) $(PL_LDLIBS) 
 #
 #
 #

@@ -10,7 +10,7 @@ else
 fi
 
 
-BINFILE=TAGET
+BINFILE=SWP-V0.0.0.20.bin
 
 mkdir /tmp/tmp -p
 

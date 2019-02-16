@@ -48,7 +48,6 @@ int ssh_module_init()
 {
 	int socket[2] = { 0, 0 };
 	memset(&ssh_config, 0, sizeof(ssh_config));
-	return OK;
     ssh_init();
     ssh_set_log_level(7);
     ssh_set_log_callback(ssh_log_callback_func);
@@ -91,7 +90,6 @@ int ssh_module_exit()
 
 int ssh_module_task_init ()
 {
-	return OK;
 	if(ssh_config.sshd_taskid == 0)
 		ssh_config.sshd_taskid = os_task_create("sshdTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, sshd_task, &ssh_config, OS_TASK_DEFAULT_STACK);

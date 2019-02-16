@@ -28,8 +28,9 @@
 
 #include "x5_b_a.h"
 #include "estate_mgt.h"
+#ifdef PL_VOIP_MODULE
 #include "voip_dbtest.h"
-
+#endif
 voip_estate_mgt_t gestate_mgt;
 
 
@@ -125,7 +126,7 @@ static int voip_estate_mgt_write_and_wait_respone(voip_estate_mgt_t *estate_mgt,
 		estate_mgt->t_read = eloop_add_read(estate_mgt->master,
 				voip_estate_mgt_socket_read_eloop, estate_mgt, estate_mgt->sock);
 	}
-	V_APP_DEBUG("-----------%s:", __func__);
+	//V_APP_DEBUG("-----------%s:", __func__);
 	return ret;
 }
 
@@ -395,7 +396,6 @@ int voip_estate_mgt_get_phone_number(x5_b_room_position_t *room, voip_position_r
 
 int voip_estate_mgt_get_room_position(voip_estate_mgt_t *estate_mgt, char *position, int len)
 {
-	V_APP_DEBUG("-----------%s:", __func__);
 	return voip_estate_mgt_write_and_wait_respone(&gestate_mgt, VOIP_ESTATE_MGT_TIMEOUT);
 }
 

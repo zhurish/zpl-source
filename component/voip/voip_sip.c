@@ -397,7 +397,7 @@ static int voip_sip_config_load(voip_sip_t *sip)
 	}
 	return ERROR;
 }
-
+#if 0
 static int voip_sip_config_update_thread(struct eloop *eloop)
 {
 	voip_sip_t *sip = ELOOP_ARG(eloop);
@@ -461,7 +461,7 @@ static int voip_sip_config_update_thread(struct eloop *eloop)
 	}
 	return ERROR;
 }
-
+#endif
 
 int voip_sip_config_update_api(voip_sip_t *sip)
 {
@@ -469,13 +469,13 @@ int voip_sip_config_update_api(voip_sip_t *sip)
 	//eloop.arg = sip;
 	//voip_sip_config_update_thread(&eloop);
 	//return OK;
-	if(voip_socket.master)
+/*	if(voip_socket.master)
 	{
 		if(sip->t_event)
 			eloop_cancel(sip->t_event);
 		sip->t_event = eloop_add_timer(voip_socket.master, voip_sip_config_update_thread, sip, 5);
 		//voip_socket_sync_cmd();
-	}
+	}*/
 	return OK;
 }
 /*
@@ -677,6 +677,7 @@ int voip_sip_dhcp_chk(int ifkindex, void *address)
 	return OK;
 }
 
+#if 0
 static int voip_ip_address_chk(struct eloop *eloop)
 {
 
@@ -708,10 +709,10 @@ static int voip_ip_address_chk(struct eloop *eloop)
 			//voip_sip_config_update_thread(&neweloop);
 		}
 	}
-	sip->t_check = eloop_add_timer(voip_socket.master, voip_ip_address_chk, sip, 5);
+	//sip->t_check = eloop_add_timer(voip_socket.master, voip_ip_address_chk, sip, 5);
 	return OK;
 }
-
+#endif
 
 static int voip_sip_chk_api(voip_sip_t *sip)
 {
@@ -719,12 +720,12 @@ static int voip_sip_chk_api(voip_sip_t *sip)
 	//eloop.arg = sip;
 	//voip_sip_config_update_thread(&eloop);
 	//return OK;
-	if(voip_socket.master)
+/*	if(voip_socket.master)
 	{
 		if(sip->t_check)
 			eloop_cancel(sip->t_check);
 		sip->t_check = eloop_add_timer(voip_socket.master, voip_ip_address_chk, sip, 10);
-	}
+	}*/
 	return OK;
 }
 
@@ -972,7 +973,7 @@ int voip_sip_ctl_module_init()
 #endif
 #endif
 
-	voip_socket.master = voip_sip_ctl.master;
+	//voip_socket.master = voip_sip_ctl.master;
 
 	voip_sip_chk_api(&voip_sip_config);
 	//voip_sip_ctl.debug = 0xffff;

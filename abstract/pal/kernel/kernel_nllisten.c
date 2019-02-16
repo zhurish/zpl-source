@@ -40,8 +40,6 @@
 #include "debug.h"
 
 #include "kernel_netlink.h"
-#include "voip_sip.h"
-
 
 extern struct zebra_t zebrad;
 
@@ -164,11 +162,8 @@ static int netlink_interface_addr(struct sockaddr_nl *snl, struct nlmsghdr *h,
 	if (ifa->ifa_family == AF_INET)
 	{
 		if (h->nlmsg_type == RTM_NEWADDR)
-		{
 			connected_add_ipv4(ifp, flags, (struct in_addr *) addr,
 					ifa->ifa_prefixlen, (struct in_addr *) broad, label);
-			//voip_sip_dhcp_chk(ifa->ifa_index, addr);
-		}
 		else
 		{
 			connected_delete_ipv4(ifp, flags, (struct in_addr *) addr,

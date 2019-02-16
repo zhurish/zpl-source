@@ -168,7 +168,7 @@ int voip_call_ring_running(void *pVoid)
 	return OK;
 }
 
-static int voip_call_ring_timer_thread(struct eloop *eloop)
+/*static int voip_call_ring_timer_thread(struct eloop *eloop)
 {
 	//voip_sip_t *sip = ELOOP_ARG(eloop);
 	if(voip_call_ring_active_api())
@@ -177,7 +177,7 @@ static int voip_call_ring_timer_thread(struct eloop *eloop)
 		x5b_app_call_result_api(E_CALL_RESULT_FAIL);
 	}
 	return OK;
-}
+}*/
 
 
 static int voip_call_ring_timer_chk_api()
@@ -186,12 +186,12 @@ static int voip_call_ring_timer_chk_api()
 	//eloop.arg = sip;
 	//voip_sip_config_update_thread(&eloop);
 	//return OK;
-	if(voip_socket.master)
+	//if(voip_socket.master)
 	{
 		if(RingSession.t_timer)
 			eloop_cancel(RingSession.t_timer);
-		RingSession.t_timer = eloop_add_timer(voip_socket.master,
-				voip_call_ring_timer_thread, NULL, 30);
+/*		RingSession.t_timer = eloop_add_timer(voip_socket.master,
+				voip_call_ring_timer_thread, NULL, 30);*/
 		//voip_socket_sync_cmd();
 	}
 	return OK;

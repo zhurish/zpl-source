@@ -134,14 +134,14 @@ PLINCLUDE += -I$(LIBSSH_ROOT)
 PLINCLUDE += -I$(LIBSSH_ROOT)/include
 ifeq ($(BUILD_TYPE),X86)
 PLINCLUDE += -I$(LIBSSH_ROOT)/include
-PL_LDLIBS += -lutil -lssl -lcrypto -lz
+PLOS_LDLIBS += -lutil -lssl -lcrypto -lz
 endif
 ifeq ($(BUILD_TYPE),MIPS)
 PLINCLUDE += -I$(PLBASE)/externsions/openssl/mipsl/include
 PL_CFLAGS += -L$(PLBASE)/externsions/openssl/mipsl/lib 
 PL_CFLAGS += -I$(PLBASE)/externsions/zlib/mipsl/zlib/include
 PL_CFLAGS += -L$(PLBASE)/externsions/zlib/mipsl/zlib/lib
-PL_LDLIBS += -lutil -lssl -lcrypto -lz
+PLOS_LDLIBS += -lutil -lssl -lcrypto -lz
 endif
 PLDEFINE += -DPL_SSH_MODULE
 endif
@@ -186,11 +186,12 @@ endif
 
 
 ifeq ($(strip $(MODULE_UCI)),true)
+ifeq ($(BUILD_OPENWRT),true)
 PLINCLUDE += -I$(PLBASE)/externsions/uci/mips/include
 PL_CFLAGS += -L$(PLBASE)/externsions/uci/mips/lib 
-#PL_CFLAGS += -L$(PLBASE)/externsions/uci/mips/lib/lua
 PL_LDLIBS += -luci			
-PLDEFINE += -DPL_OPENWRT_UCI				
+PLDEFINE += -DPL_OPENWRT_UCI
+endif				
 endif
 
 
@@ -218,7 +219,7 @@ PLDEFINE += -DPL_VOIP_MEDIASTREAM
 #PL_CFLAGS += -L$(PLBASE)/externsions/opencore-amr/mips/lib 
 #PL_LDLIBS += -lopencore-amrwb -lopencore-amrnb
 
-PL_LDLIBS += -lasound 
+PLOS_LDLIBS += -lasound 
 else
 #
 # ortp ,opencore-amr shuld be install on X86 system
@@ -248,10 +249,33 @@ PLINCLUDE += -I$(OSIP_ROOT)/libosip/include
 PLINCLUDE += -I$(OSIP_ROOT)/libexosip/include
 
 PLINCLUDE += -I$(OSIP_ROOT)
-PLDEFINE += -DPL_OSIP_MODULE
+PLDEFINE += -DPL_OSIP_MODULE -DOSIP_MONOTHREAD -D__linux
+PLOS_LDLIBS += -lresolv
 endif
+
 ifeq ($(strip $(MODULE_EXSIP)),true)
 PLDEFINE += -DPL_EXSIP_MODULE
+endif
+
+ifeq ($(strip $(MODULE_PJSIP)),true)
+ifeq ($(strip $(MODULE_COMPONENT)),true)
+PJSIP_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(PJSIPDIR)
+
+#PLPRODS += $(PLBASE)/externsions/pjproject-2.8
+#PLINCLUDE += -I$(PLBASE)/externsions/pjproject-2.8
+
+
+PLPRODS += $(PJSIP_ROOT)
+PLINCLUDE += -I$(PJSIP_ROOT)
+
+PLDEFINE += -DPL_PJSIP_MODULE
+
+PLINCLUDE += -I$(PLBASE)/externsions/pjproject-2.8/_install/include
+PL_CFLAGS += -L$(PLBASE)/externsions/pjproject-2.8/_install/lib 
+PL_LDLIBS += -lpj -lpjlib-util -lpjmedia -lpjmedia-audiodev -lpjmedia-codec\
+			 -lpjmedia-videodev -lpjnath -lpjsip -lpjsip-simple -lpjsip-ua \
+			 -lpjsua -lsrtp -lgsmcodec -lspeex -lilbccodec -lg7221codec -lyuv
+endif
 endif
 
 ifeq ($(strip $(MODULE_APP)),true)
@@ -260,17 +284,9 @@ PLPRODS += $(APP_ROOT)
 
 PLINCLUDE += -I$(APP_ROOT)
 
-
 PLDEFINE += -DPL_APP_MODULE
 EXTRA_DEFINE += -DAPP_X5BA_MODULE -DX5_B_A_DEBUG
 
-
-#PLPRODS += $(APP_ROOT)/service
-#PLPRODS += $(APP_ROOT)/system
-
-#PLINCLUDE += -I$(APP_ROOT)/nsm
-#PLINCLUDE += -I$(APP_ROOT)/service
-#PLINCLUDE += -I$(APP_ROOT)/system
 endif
 
 

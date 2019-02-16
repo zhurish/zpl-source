@@ -94,6 +94,34 @@ typedef unsigned short u_short;
 typedef unsigned int u_int;
 #endif
 
+#ifndef s_int8
+typedef signed char s_int8;
+#endif
+
+#ifndef s_int16
+typedef signed short s_int16;
+#endif
+
+#ifndef s_int32
+typedef signed int s_int32;
+#endif
+
+#ifndef s_long
+typedef signed long s_long;
+#endif
+
+#ifndef s_char
+typedef signed char s_char;
+#endif
+
+#ifndef s_short
+typedef signed short s_short;
+#endif
+
+#ifndef s_int
+typedef signed int s_int;
+#endif
+
 #ifndef llong
 typedef long long llong;
 #endif

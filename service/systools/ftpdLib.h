@@ -39,7 +39,7 @@ modification history
 extern "C" {
 #endif
 
-#include <config.h>
+#include <plconfig.h>
 
 #define FTPD_BASEDIR_DEFAULT	BASE_DIR"/ftpboot"
 

@@ -8,7 +8,7 @@
 #ifndef __PROCESS_H__
 #define __PROCESS_H__
 
-#include "config.h"
+#include "plconfig.h"
 #include "os_list.h"
 #include "os_util.h"
 

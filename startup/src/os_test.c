@@ -245,6 +245,95 @@ ALIAS(timet_test_exit,
 		"once msec\n");
 #endif
 
+#ifdef PL_OPENWRT_UCI
+DEFUN (uci_get_test_cmd,
+		uci_get_test_cmd_cmd,
+       "uci-test (get-string|get-integer) NAME",
+       "uco-test\n")
+{
+	char value[64];
+	int valu = 0;
+	char *lstv[8];
+	if(strstr(argv[0], "string"))
+		os_uci_get_string(argv[1], value);
+	else
+		os_uci_get_list(argv[1], lstv, &valu);
+	if(strstr(argv[0], "string"))
+		vty_out(vty, "get %s %s", argv[1], value);
+	else
+	{
+		int i = 0;
+		for(i = 0; i < valu; i++)
+			vty_out(vty, "get %s:%s", argv[1], lstv[i]);
+	}
+	return CMD_SUCCESS;
+}
+
+DEFUN (uci_set_test_cmd,
+		uci_set_test_cmd_cmd,
+       "uci-test (set-string|set-integer) NAME VALUE",
+       "uco-test\n")
+{
+	if(strstr(argv[0], "string"))
+		os_uci_set_string(argv[1], argv[2]);
+	else
+		os_uci_set_integer(argv[1], atoi(argv[2]));
+	return CMD_SUCCESS;
+}
+
+DEFUN (uci_list_test_cmd,
+		uci_list_test_cmd_cmd,
+       "uci-test (add-list|del-list) NAME VALUE",
+       "uco-test\n")
+{
+	if(strstr(argv[0], "add"))
+		os_uci_list_add(argv[1], argv[2]);
+	else
+		os_uci_list_del(argv[1], (argv[2]));
+	return CMD_SUCCESS;
+}
+
+DEFUN (uci_section_test_cmd,
+		uci_section_test_cmd_cmd,
+       "uci-test section NAME VALUE",
+       "uco-test\n")
+{
+	os_uci_section_add(argv[1], argv[2]);
+	return CMD_SUCCESS;
+}
+
+DEFUN (uci_del_test_cmd,
+		uci_del_test_cmd_cmd,
+       "uci-test del NAME OP VALUE",
+       "uco-test\n")
+{
+	if(argc == 3)
+			os_uci_del(argv[0], argv[1], argv[2]);
+	else if(argc == 2)
+			os_uci_del(argv[0], argv[1], NULL);
+	else if(argc == 1)
+			os_uci_del(argv[0], NULL, NULL);
+	return CMD_SUCCESS;
+}
+
+ALIAS(uci_del_test_cmd,
+		uci_del_test_vv_cmd,
+       "uci-test del NAME OP",
+       "uco-test\n");
+
+
+DEFUN (uci_commit_test_cmd,
+		uci_commit_test_cmd_cmd,
+       "uci-test del NAME OP VALUE",
+       "uco-test\n")
+{
+	os_uci_commit(argv[0]);
+	return CMD_SUCCESS;
+}
+#endif
+
+
+
 int os_test()
 {
 	//modem_pppd_test();
@@ -303,6 +392,15 @@ int os_test()
 	install_element (ENABLE_NODE, &timet_test_once_cmd);
 	install_element (ENABLE_NODE, &timet_test_exit_cmd);
 	install_element (ENABLE_NODE, &timet_test_exit_once_cmd);
+#endif
+#ifdef PL_OPENWRT_UCI
+	install_element (ENABLE_NODE, &uci_get_test_cmd_cmd);
+	install_element (ENABLE_NODE, &uci_set_test_cmd_cmd);
+	install_element (ENABLE_NODE, &uci_list_test_cmd_cmd);
+	install_element (ENABLE_NODE, &uci_section_test_cmd_cmd);
+	install_element (ENABLE_NODE, &uci_del_test_cmd_cmd);
+	install_element (ENABLE_NODE, &uci_del_test_vv_cmd);
+	install_element (ENABLE_NODE, &uci_commit_test_cmd_cmd);
 #endif
 	return 0;
 }

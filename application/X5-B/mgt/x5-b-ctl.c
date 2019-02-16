@@ -25,12 +25,26 @@
 
 #include "x5_b_a.h"
 #include "x5_b_ctl.h"
+#ifdef PL_VOIP_MODULE
 #include "voip_def.h"
 #include "voip_sip.h"
 #include "voip_ring.h"
 #include "voip_app.h"
 #include "voip_api.h"
+#endif
 
+#ifndef PL_VOIP_MODULE
+static const char *inet_address(u_int32 ip)
+{
+	static char buf[64];
+	memset(buf, 0, sizeof(buf));
+	struct in_addr address;
+	address.s_addr = htonl(ip);
+	//return inet_ntoa(address);
+	snprintf(buf, sizeof(buf), "%s", inet_ntoa(address));
+	return buf;
+}
+#endif
 
 static int x5b_app_local_address_set(char *address)
 {
@@ -51,11 +65,11 @@ static int x5b_app_local_address_set(char *address)
 	return ERROR;
 }
 
-
 int x5b_app_factory_set(x5_b_factory_data_t *data)
 {
 	//data->local_address;			//����IP��ַ��IP/DHCP��
 	int ret = 0;
+#ifdef PL_VOIP_MODULE
 	ret |= voip_sip_server_set_api(ntohl(data->sip_server), ntohs(data->sip_port), FALSE);
 	ret |= voip_sip_proxy_server_set_api(ntohl(data->sip_proxy_server), ntohs(data->sip_proxy_port), FALSE);
 	ret |= voip_sip_enable(TRUE, ntohs(data->sip_local_port));
@@ -63,8 +77,9 @@ int x5b_app_factory_set(x5_b_factory_data_t *data)
 
 	ret |= voip_local_rtp_set_api(0, ntohs(data->rtp_local_port));
 //	ret |= voip_local_rtcp_set_api(0, ntohs(data->rtcp_local_port));
-
+#endif
 	ret |= x5b_app_local_address_set(inet_address(ntohl(data->local_address)));
+
 	return ret;
 }
 
@@ -79,8 +94,10 @@ int x5b_app_start_call(BOOL start, x5_b_room_position_t *room)
 	event_node_add(&node);*/
 	if(room && strlen(room->data) >= 4)
 	{
+#ifdef PL_VOIP_MODULE
 		voip_event_node_register(start ? voip_app_ev_start_call:voip_app_ev_local_stop_call,
 				NULL, room, sizeof(x5_b_room_position_t));
+#endif
 		return OK;
 	}
 	return ERROR;

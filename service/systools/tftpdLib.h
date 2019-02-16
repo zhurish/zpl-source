@@ -35,7 +35,7 @@ modification history
 extern "C" {
 #endif
 
-#include <config.h>
+#include <plconfig.h>
 #include <tftpLib.h>
 
 

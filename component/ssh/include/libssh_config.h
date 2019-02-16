@@ -1,7 +1,7 @@
 #ifndef __LIBSSH_CONFIG_H__
 #define __LIBSSH_CONFIG_H__
 
-#include "config.h"
+#include "plconfig.h"
 #include "zebra.h"
 #include "memory.h"
 #include "memtypes.h"

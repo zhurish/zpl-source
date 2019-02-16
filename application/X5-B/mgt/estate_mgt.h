@@ -9,8 +9,9 @@
 #define __VOIP_ESTATE_MGT_H__
 
 #include "x5_b_a.h"
+#ifdef PL_VOIP_MODULE
 #include "voip_app.h"
-
+#endif
 
 //#define VOIP_ESTATE_MGT_LOOPBACK
 

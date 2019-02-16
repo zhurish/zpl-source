@@ -17,8 +17,9 @@ _MODULELIST = \
 	MODULE_SQLITE.false \
 	MODULE_SYSTOOLS.true \
 	MODULE_SSH.true \
-	MODULE_OSIP.false \
-	MODULE_EXSIP.true \
+	MODULE_PJSIP.true \
+	MODULE_OSIP.true \
+	MODULE_EXSIP.false \
 	MODULE_VOIP.true \
 	MODULE_APP.true \
 	MODULE_UCI.true 
@@ -38,6 +39,19 @@ endef
 #
 #
 $(foreach IModule,$(_MODULELIST), $(eval $(call _MODULE_DEF,$(IModule))))
+#
+#
+#
+#
+ifeq ($(strip $(MODULE_PJSIP)),true)
+MODULE_VOIP=false
+MODULE_OSIP=false
+MODULE_EXSIP=false
+endif
+#
+ifeq ($(strip $(MODULE_OSIP)),true)
+MODULE_EXSIP=false
+endif
 #
 #
 #
@@ -62,6 +76,7 @@ PlatformModule = \
 	SYSTOOLSDIR.systools \
 	LIBSSHDIR.ssh \
 	OSIPDIR.osip \
+	PJSIPDIR.pjsip \
 	VOIPDIR.voip \
 	APPDIR.application
 ###
