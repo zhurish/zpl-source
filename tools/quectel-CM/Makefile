@@ -4,7 +4,7 @@ include $(MAKE_DIR)/makelinux.mk
 
 
 TARGET = quectel-CM
-CFLAGS += -lpthread
+PLCFLAGS += -lpthread
 
 
 MODULEDIR = tools/quectel-CM
@@ -24,14 +24,14 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	$(ECHO) CC '$(CFLAGS)' $@
+	@$(PL_ECHO_CC)
 	@$(PL_OBJ_COMPILE)
 	
 	
 -include $(MODULE_OBJS:.o=.d)
 
 $(TARGET): $(MODULE_OBJS)
-	$(CC) $(MODULE_OBJS) $(CFLAGS) -o $(TARGET) 
+	$(CC) $(MODULE_OBJS) $(PLCFLAGS) -o $(TARGET) 
 
 lib: $(TARGET)
 #$(MODULE_OBJS)

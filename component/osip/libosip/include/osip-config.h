@@ -96,28 +96,28 @@
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
-#define LT_OBJDIR ".libs/"
+#define OSIP_LT_OBJDIR ".libs/"
 
 /* Name of package */
-#define PACKAGE "libosip2"
+#define OSIP_PACKAGE "libosip2"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT ""
+#define OSIP_PACKAGE_BUGREPORT ""
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME "libosip2"
+#define OSIP_PACKAGE_NAME "libosip2"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libosip2 5.0.0"
+#define OSIP_PACKAGE_STRING "libosip2 5.0.0"
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "libosip2"
+#define OSIP_PACKAGE_TARNAME "libosip2"
 
 /* Define to the home page for this package. */
-#define PACKAGE_URL ""
+#define OSIP_PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "5.0.0"
+#define OSIP_PACKAGE_VERSION "5.0.0"
 
 /* Define to necessary symbol if this constant uses a non-standard name on
    your system. */
@@ -127,4 +127,4 @@
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "5.0.0"
+#define OSIP_VERSION "5.0.0"

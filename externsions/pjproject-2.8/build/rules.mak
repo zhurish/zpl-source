@@ -125,10 +125,13 @@ $(subst /,$(HOST_PSEP),$(BINDIR)/$(EXE)): $(OBJDIRS) $(OBJS) $($(APP)_EXTRA_DEP)
 	$(LD) $(LDOUT)$(subst /,$(HOST_PSEP),$(BINDIR)/$(EXE)) \
 	    $(subst /,$(HOST_PSEP),$(OBJS)) $($(APP)_LDFLAGS)
 endif
-
+ifneq ($(CROSS_COMPILE),)
 $(OBJDIR)/$(app).o: $(OBJDIRS) $(OBJS)
 	$(CROSS_COMPILE)ld -r -o $@ $(OBJS)
-
+else
+$(OBJDIR)/$(app).o: $(OBJDIRS) $(OBJS)
+	$(LD) -r -o $@ $(OBJS)
+endif
 $(OBJDIR)/$(app).ko: $(OBJDIR)/$(app).o
 	@echo Creating kbuild Makefile...
 	@echo "# Our module name:" > $(OBJDIR)/Makefile

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<body class="lang_en logged-in node-system-system">
+<div class="main">
+	<div style="display: none;" class="loading"><span>
+	<div class="loading-img"></div>Loading...</span></div>
+	<div class="main-right">
+		<div class="darkMask" style="display: none;"></div>
+		<div id="maincontent">
+			<div class="container">
+				<noscript>
+					<div class="alert-message warning">
+						<h4>JavaScript required!</h4>
+						<p>You must enable JavaScript in your browser or LuCI will not work properly.</p>
+					</div>
+				</noscript>
+				<style type="text/css">
+					span:target {
+						color: blue;
+						text-decoration: underline;
+					}
+				</style>
+				<h2 name="content">System Status</h2>
+				<ul class="cbi-tabmenu">
+					<li class="cbi-tab-disabled"><a href="system-user.html">IPv4 Firewall</a></li>
+					<li class="cbi-tab"><a href="system-user.html">IPv6 Firewall</a></li>
+				</ul>
+
+				<div id="cbi-tabmenu-maincontent" class="cbi-map" style="position: relative">
+					<form method="post" action="/cgi-bin/luci/admin/status/iptables_action" style="position: absolute; right: 0">
+						<input type="hidden" name="token" value="44953f37b970bcfe65e893d757b30b11" size="0">
+						<input type="hidden" name="family" value="6" size="0">
+						<input type="submit" class="cbi-button" name="zero" value="Reset Counters" size="0">
+						<input type="submit" class="cbi-button" name="restart" value="Restart Firewall" size="0">
+					</form>
+					<div class="cbi-section">
+							<h3>Table: Filter</h3>
+								<em>No chains in this table</em>
+							<br><br>
+							<h3>Table: Mangle</h3>
+								<em>No chains in this table</em>
+							<br><br>
+							<h3>Table: Raw</h3>
+								<em>No chains in this table</em>
+							<br><br>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+</html>

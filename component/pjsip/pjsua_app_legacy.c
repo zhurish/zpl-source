@@ -1608,7 +1608,7 @@ static void ui_dump_configuration()
     char settings[2000];
     int len;
 
-    len = write_settings(&app_config, settings, sizeof(settings));
+    //len = write_settings(&app_config, settings, sizeof(settings));
     if (len < 1)
 	PJ_LOG(1,(THIS_FILE, "Error: not enough buffer"));
     else
@@ -1621,7 +1621,7 @@ static void ui_write_settings(const char *filename)
     char settings[2000];
     int len;
 
-    len = write_settings(&app_config, settings, sizeof(settings));
+    //len = write_settings(&app_config, settings, sizeof(settings));
     if (len < 1)
 	PJ_LOG(1,(THIS_FILE, "Error: not enough buffer"));
     else {

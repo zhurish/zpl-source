@@ -58,7 +58,7 @@ DEFUN (nsm_interface_ip_dhcp,
 		}
 */
 
-		ret = nsm_interface_dhcp_mode_set_api(ifp, DHCP_CLIENT);
+		ret = nsm_interface_dhcp_mode_set_api(ifp, DHCP_CLIENT, NULL);
 		if(ret == ERROR)
 			vty_out (vty, "%% Can not enable dhcp client on this interface%s",VTY_NEWLINE);
 		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -93,7 +93,7 @@ DEFUN (no_nsm_interface_ip_dhcp,
 			return CMD_WARNING;
 		}
 
-		ret = nsm_interface_dhcp_mode_set_api(ifp, DHCP_NONE);
+		ret = nsm_interface_dhcp_mode_set_api(ifp, DHCP_NONE, NULL);
 		if(ret == ERROR)
 			vty_out (vty, "%% Can not disable dhcp client on this interface%s",VTY_NEWLINE);
 		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;

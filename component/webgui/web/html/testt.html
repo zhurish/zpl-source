@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="initial-scale=1.0">
+	<link rel="stylesheet" href="/css/layout.css">
+<style>
+ul
+{
+	list-style-type:none;
+	margin:0;
+	padding:0;
+    position: fixed;
+    overflow: auto;
+    /*height: 100%; 全屏高度 
+    overflow: auto; 如果导航栏选项多，允许滚动 */
+}
+
+li a, .dropdown-menu-btn
+{
+	display:inline-block;
+	font-weight:bold;
+	color:#FFFFFF;
+	text-align:center;
+	text-decoration:none;
+	text-transform:uppercase;
+}
+/*鼠标移动到选项上修改背景颜色*/
+li a:hover, .dropdown-menu:hover, .dropdown-menu-btn {
+    background-color:#4CAF50;
+}
+
+li a.active {
+    color: white;
+    background-color: #4CAF50;
+}
+
+.dropdown-menu {
+    display:inline-block;
+}
+  
+.dropdown-menu-content {
+    display:none;
+    position:absolute;
+    background-color:#FFD700;
+    min-width:160px;
+    box-shadow:0px 8px 16px 0px rgba(0,0,0,0.2);
+}
+  
+.dropdown-menu-content a {
+    padding:12px 16px;
+    text-decoration:none;
+    display:block;
+}
+  
+.dropdown-menu-content a:hover {
+	background-color:#FFD700
+}
+  
+.dropdown-menu:hover .dropdown-menu-content {
+    display:block;
+}
+</style>	
+</head>
+<body>
+
+<div class="header">
+	<h1 class = "center" >Switch Platform</h1>
+</div>
+
+<div class="nav">
+	<ul>
+		<li><a href="#Navigation">Navigation</a></li>
+		<li><a href="#Network">Network</a></li>
+		<li><a href="#Wireless">Wireless</a></li>
+		<li><a href="#Application">Application</a></li>
+		  <div class="dropdown-menu">
+			<li><a href="#" class="dropdown-menu-btn">System</a></li>
+		    <div class="dropdown-menu-content">
+				<li><a href="upload.html">Upload</a></li>
+		    </div>
+		  </div>		
+		<li><a href="#Status">Status</a></li>
+		<li><a href="#about">About</a></li>
+	</ul>
+</div>
+
+<div class="section">
+<h2>London</h2>
+<p>
+London is the capital city of England. It is the most populous city in the United Kingdom,with a metropolitan area of over 13 million inhabitants.
+</p>
+<p>
+Standing on the River Thames, London has been a major settlement for two millennia,its history going back to its founding by the Romans, who named it Londinium.
+</p>
+</div>
+
+<div class="footer">
+Copyright ? W3Schools.com
+</div>
+
+</body>
+</html>

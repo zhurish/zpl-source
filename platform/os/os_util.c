@@ -34,11 +34,17 @@ int super_system(const char *cmd)
 
 int super_output_system(const char *cmd, char *output, int len)
 {
-	FILE * fp = 0;
+	FILE * fp = NULL;
 	fp = popen(cmd, "r");
 	if(fp)
 	{
-		if(fread(output, len, 1, fp))
+		int offset = 0;
+		while(fgets(output + offset, len - offset, fp) != NULL)
+		{
+		   //printf("%s", output);
+		   offset += strlen(output);
+		}
+		//if(fread(output, len, 1, fp))
 		{
 			pclose(fp);
 			return OK;
@@ -52,7 +58,7 @@ int super_output_system(const char *cmd, char *output, int len)
 
 int super_input_system(const char *cmd, char *input)
 {
-	FILE * fp = 0;
+	FILE * fp = NULL;
 	fp = popen(cmd, "w");
 	if(fp)
 	{
@@ -256,12 +262,13 @@ int child_process_kill(int pid)
 }*/
 
 
-int os_write_string(const char *name, const char *string)
+int os_write_file(const char *name, const char *string, int len)
 {
 	FILE *fp = fopen(name, "w");
 	if(fp)
 	{
-		fprintf(fp, "%s\n", string);
+		//fprintf(fp, "%s\n", string);
+		fwrite(string, len, 1, fp);
 		fflush(fp);
 		fclose(fp);
 		return OK;
@@ -269,12 +276,12 @@ int os_write_string(const char *name, const char *string)
 	return ERROR;
 }
 
-int os_read_string(const char *name, const char *string, int len)
+int os_read_file(const char *name, const char *string, int len)
 {
 	FILE *fp = fopen(name, "r");
 	if(fp)
 	{
-		fread(string, 1, len, fp);
+		fread(string, len, 1, fp);
 		fclose(fp);
 		return OK;
 	}
@@ -289,7 +296,7 @@ int os_get_blocking(int fd)
 	 never be negative. */
 	if ((flags = fcntl(fd, F_GETFL)) < 0)
 	{
-		fprintf(stdout, "fcntl(F_GETFL) failed for fd %d: %s", fd,
+		fprintf(stdout, "fcntl(F_GETFL) failed for fd %d get-blocking : %s", fd,
 				strerror(errno));
 		return -1;
 	}
@@ -305,13 +312,13 @@ int os_set_nonblocking(int fd)
 	 never be negative. */
 	if ((flags = fcntl(fd, F_GETFL)) < 0)
 	{
-		fprintf(stdout, "fcntl(F_GETFL) failed for fd %d: %s", fd,
+		fprintf(stdout, "fcntl(F_GETFL) failed for fd %d set-nonblocking: %s", fd,
 				strerror(errno));
 		return -1;
 	}
 	if (fcntl(fd, F_SETFL, (flags | O_NONBLOCK)) < 0)
 	{
-		fprintf(stdout, "fcntl failed setting fd %d non-blocking: %s", fd,
+		fprintf(stdout, "fcntl failed setting fd %d set-nonblocking: %s", fd,
 				strerror(errno));
 		return -1;
 	}
@@ -325,7 +332,7 @@ int os_set_blocking(int fd)
 	 never be negative. */
 	if ((flags = fcntl(fd, F_GETFL)) < 0)
 	{
-		fprintf(stdout, "fcntl(F_GETFL) failed for fd %d: %s", fd,
+		fprintf(stdout, "fcntl(F_GETFL) failed for fd %d set-blocking: %s", fd,
 				strerror(errno));
 		return -1;
 	}
@@ -353,7 +360,7 @@ int os_pipe_create(char *name, int mode)
 /*	O_RDONLY 只读打开
 	O_WRONLY 只写打开
 	O_RDWR 可读可写打开*/
-	fd = open(path, mode|O_CREAT);
+	fd = open(path, mode|O_CREAT, 0644);
 	if(fd <= 0)
 	{
 		fprintf(stdout,"can not open file %s(%s)", path, strerror(errno));
@@ -382,7 +389,10 @@ int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, int timeout_ms)
 		{
 			//fprintf(stdout, "%s (errno=%d -> %s)", __func__, errno, strerror(errno));
 			if (errno == EINTR || errno == EAGAIN)
+			{
+				//fprintf(stdout, "%s (errno=%d -> %s)", __func__, errno, strerror(errno));
 				continue;
+			}
 /*			if (errno == EPIPE || errno == EBADF || errno == EIO ECONNRESET ECONNABORTED ENETRESET ECONNREFUSED)
 			{
 				return RES_CLOSE;
@@ -391,7 +401,7 @@ int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, int timeout_ms)
 		}
 		else if (num == 0)
 		{
-			return 0;
+			return OS_TIMEOUT;
 		}
 		return num;
 	}
@@ -399,284 +409,55 @@ int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, int timeout_ms)
 }
 
 
-int os_stream_read(int fd, char *outbuf, int len)
-{
-	int offset = 0;
-	int ret = 0;
-	while(1)
-	{
-		ret = read(fd, outbuf + offset, len - offset);
-		if(ret)
-		{
-			offset += ret;
-			if(offset == len)
-				return ret;
-		}
-		if(ret < 0)
-			return ret;
-	}
-}
-
-int os_stream_write(int fd, char *inbuf, int len)
+int os_write_timeout(int fd, char *buf, int len, int timeout_ms)
 {
 	int ret = 0;
-	int offset = 0;
-	while(1)
+	fd_set writefds;
+	FD_ZERO(&writefds);
+	FD_SET(fd, &writefds);
+	ret = os_select_wait(fd + 1, NULL, &writefds, timeout_ms);
+	if (ret == OS_TIMEOUT)
 	{
-		ret = write(fd, inbuf + offset, len - offset);
-		if(ret)
-		{
-			offset += ret;
-			if(offset == len)
-				return ret;
-		}
-		if(ret < 0)
-			return ret;
+		printf("os_select_wait timeout on write\n");
+		return OS_TIMEOUT;
 	}
-	return ERROR;
-}
-
-int os_stream_head_read(int fd, char *outbuf, int len)
-{
-	int offset = 0;
-	int ret = 0, head = len;
-	char buf[4096];
-	head = sizeof(buf);
-	os_memset(buf, 0, sizeof(buf));
-	while(1)
+	if (ret < 0)
 	{
-		ret = read(fd, buf, 2);
-		if(ret)
-		{
-			offset += ret;
-
-			if(offset == 2)
-			{
-				head = buf[0] << 8 | buf[1];
-				break;
-			}
-		}
-		if(ret < 0)
-			return ret;
-	}
-	os_memset(buf, 0, sizeof(buf));
-	head = MIN(head, sizeof(buf));
-	if(os_stream_read(fd, buf, head) == head)
-	{
-		os_memcpy(outbuf, buf, MIN(head, len));
-		return head;
-	}
-	return ERROR;
-}
-
-int os_stream_head_write(int fd, char *inbuf, int len)
-{
-	char buf[4096];
-	os_memset(buf, 0, sizeof(buf));
-	os_memcpy(buf + 2, inbuf, MIN(len, sizeof(buf)));
-	buf[0] = len >> 8;
-	buf[0] = len & 0xff;
-	return os_stream_write(fd, buf,  len + 2);
-}
-
-
-
-#ifdef DOUBLE_PROCESS
-
-static int os_process_sock = 0;
-
-
-static int os_process_split(process_head *head, process_action action, char *name,
-		char *process, BOOL restart, char *argv[])
-{
-	int i = 0;
-	head->action = action;
-	head->restart = restart;
-	if(name)
-		os_strcpy(head->name, name);
-	if(process)
-		os_strcpy(head->process, process);
-	if(argv)
-	{
-		for(i = 0; ; i++)
-		{
-			if(argv[i])
-			{
-				os_strcat(head->argvs, argv[i]);
-				if(argv[i+1])
-					os_strcat(head->argvs, " ");
-			}
-			else
-				break;
-		}
-	}
-	return OK;
-}
-
-int os_process_register(process_action action, char *name,
-		char *process, BOOL restart, char *argv[])
-{
-	int ret = 0;
-	process_head head;
-	if(os_process_sock == 0)
-	{
-		os_process_sock = unix_sock_client_create(TRUE, PROCESS_MGT_UNIT_NAME);
-	}
-	if(os_process_sock <= 0)
+		printf("connect error %s\n", strerror(errno));
 		return ERROR;
-	os_memset(&head, 0, sizeof(head));
-	os_process_split(&head,  action, name,
-			process,  restart, argv);
-	errno = 0;
-	ret = write(os_process_sock, &head, sizeof(process_head));
-	//ret = os_stream_head_write(fd, &head, sizeof(process_head));
-	//zlog_debug(ZLOG_NSM, "%s:name:%s(%d byte(%s))",__func__, head.name, ret, strerror(errno));
-	if( ret == sizeof(process_head))
-	{
-		int num = 0;
-		fd_set rfdset;
-		FD_ZERO(&rfdset);
-		FD_SET(os_process_sock, &rfdset);
-		num = os_select_wait(os_process_sock + 1, &rfdset, NULL, 5000);
-		if(num)
-		{
-			int respone = 0;
-			if(FD_ISSET(os_process_sock, &rfdset))
-			{
-				if(read(os_process_sock, &respone, 4) == 4)
-					return respone;
-				if (errno == EPIPE || errno == EBADF || errno == EIO || errno == ECONNRESET
-						|| errno == ECONNABORTED || errno == ENETRESET || errno == ECONNREFUSED)
-				{
-					ip_close(os_process_sock);
-					os_process_sock = 0;
-				}
-			}
-			return ERROR;
-		}
-		else if(num < 0)
-		{
-			ip_close(os_process_sock);
-			os_process_sock = 0;
-			return ERROR;
-		}
-		else
-		{
-			fprintf(stdout,"wait respone timeout (%s)", strerror(errno));
-			return OK;
-		}
 	}
-	if(ret < 0)
+	if (!FD_ISSET(fd, &writefds))
 	{
-		if (errno == EPIPE || errno == EBADF || errno == EIO || errno == ECONNRESET
-				|| errno == ECONNABORTED || errno == ENETRESET || errno == ECONNREFUSED)
-		{
-			ip_close(os_process_sock);
-			os_process_sock = 0;
-		}
+		printf("no events on sockfd found\n");
+		return ERROR;
 	}
-	fprintf(stdout,"can not write (%s)", strerror(errno));
-	return ret;
+	return write(fd, buf, len);
 }
 
-int os_process_action(process_action action, char *name, int id)
+int os_read_timeout(int fd, char *buf, int len, int timeout_ms)
 {
 	int ret = 0;
-	process_head head;
-	if(os_process_sock == 0)
+	fd_set readfds;
+	FD_ZERO(&readfds);
+	FD_SET(fd, &readfds);
+	ret = os_select_wait(fd + 1, &readfds, NULL, timeout_ms);
+	if (ret == OS_TIMEOUT)
 	{
-		os_process_sock = unix_sock_client_create(TRUE, PROCESS_MGT_UNIT_NAME);
-	}
-	if(os_process_sock <= 0)
+		printf("os_select_wait timeout on read\n");
 		return ERROR;
-	os_memset(&head, 0, sizeof(head));
-	os_process_split(&head,  action, name,
-			NULL,  FALSE, NULL);
-	head.id = id;
-	errno = 0;
-	ret = write(os_process_sock, &head, sizeof(process_head));
-	//ret = os_stream_head_write(fd, &head, sizeof(process_head));
-	//zlog_debug(ZLOG_NSM, "%s:name:%s(%d byte(%s))",__func__, head.name, ret, strerror(errno));
-	if( ret == sizeof(process_head))
-	{
-		int num = 0;
-		fd_set rfdset;
-		FD_ZERO(&rfdset);
-		FD_SET(os_process_sock, &rfdset);
-		num = os_select_wait(os_process_sock + 1, &rfdset, NULL, 5000);
-		if(num)
-		{
-			int respone = 0;
-			if(FD_ISSET(os_process_sock, &rfdset))
-			{
-				if(read(os_process_sock, &respone, 4) == 4)
-					return respone;
-				if (errno == EPIPE || errno == EBADF || errno == EIO || errno == ECONNRESET
-						|| errno == ECONNABORTED || errno == ENETRESET || errno == ECONNREFUSED)
-				{
-					ip_close(os_process_sock);
-					os_process_sock = 0;
-				}
-			}
-			return ERROR;
-		}
-		else if(num < 0)
-		{
-			ip_close(os_process_sock);
-			os_process_sock = 0;
-			return ERROR;
-		}
-		else
-		{
-			fprintf(stdout,"wait respone timeout (%s)", strerror(errno));
-			return OK;
-		}
 	}
-	if(ret < 0)
+	if (ret < 0)
 	{
-		if (errno == EPIPE || errno == EBADF || errno == EIO || errno == ECONNRESET
-				|| errno == ECONNABORTED || errno == ENETRESET || errno == ECONNREFUSED)
-		{
-			ip_close(os_process_sock);
-			os_process_sock = 0;
-		}
+		printf("connect error %s\n", strerror(errno));
+		return ERROR;
 	}
-	fprintf(stdout,"can not write (%s)", strerror(errno));
-	return ret;
-}
-
-int os_process_action_respone(int fd, int respone)
-{
-	int value = respone;
-	if(fd)
-		return write(fd, &value, 4);
-	return ERROR;
-}
-
-int os_process_start()
-{
-	int os_process_id = 0;
-	os_process_id = child_process_create();
-	if(os_process_id == 0)
+	if (!FD_ISSET(fd, &readfds))
 	{
-		char *plogfile = DAEMON_LOG_FILE_DIR"/ProcessMU.log";
-		char *argvp[] = {"-D", "-d", "6", "-l", plogfile, NULL};
-		super_system_execvp("ProcessMU", argvp);
+		printf("no events on sockfd found\n");
+		return ERROR;
 	}
-	return 0;
+	return read(fd, buf, len);
 }
-
-int os_process_stop()
-{
-	int os_process_id = os_pid_get(BASE_DIR"/run/process.pid");
-	if(os_process_id > 0)
-		return child_process_destroy(os_process_id);
-	return 0;
-}
-
-#endif
-
-
 
 int os_register_signal(int sig, void (*handler)(int))
 {
@@ -697,9 +478,21 @@ int os_register_signal(int sig, void (*handler)(int))
 }
 
 
+int os_file_size (const char *filename)
+{
+	struct stat fsize;
+	if (access (filename, F_OK) >= 0)
+	{
+		memset (&fsize, 0, sizeof(fsize));
+		if(stat (filename, &fsize) == 0)
+			return fsize.st_size;
+	}
+	return ERROR;
+}
+
 #define KB_SIZE_MASK	(0X000003FF)
 
-const char * os_file_size(long long len)
+const char * os_file_size_string(long long len)
 {
 	int glen = 0, mlen = 0, klen = 0;
 	static char buf[64];
@@ -1192,3 +985,199 @@ int hostname_ipv6_address(char *hostname, struct in6_addr *addr)
 	//addr->s_addr = inet6_addr(hostname);
 	return OK;
 }
+
+
+#ifdef DOUBLE_PROCESS
+
+static int os_process_sock = 0;
+
+
+static int os_process_split(process_head *head, process_action action, char *name,
+		char *process, BOOL restart, char *argv[])
+{
+	int i = 0;
+	head->action = action;
+	head->restart = restart;
+	if(name)
+		os_strcpy(head->name, name);
+	if(process)
+		os_strcpy(head->process, process);
+	if(argv)
+	{
+		for(i = 0; ; i++)
+		{
+			if(argv[i])
+			{
+				os_strcat(head->argvs, argv[i]);
+				if(argv[i+1])
+					os_strcat(head->argvs, " ");
+			}
+			else
+				break;
+		}
+	}
+	return OK;
+}
+
+int os_process_register(process_action action, char *name,
+		char *process, BOOL restart, char *argv[])
+{
+	int ret = 0;
+	process_head head;
+	if(os_process_sock == 0)
+	{
+		os_process_sock = unix_sock_client_create(TRUE, PROCESS_MGT_UNIT_NAME);
+	}
+	if(os_process_sock <= 0)
+		return ERROR;
+	os_memset(&head, 0, sizeof(head));
+	os_process_split(&head,  action, name,
+			process,  restart, argv);
+	errno = 0;
+	ret = write(os_process_sock, &head, sizeof(process_head));
+	//ret = os_stream_head_write(fd, &head, sizeof(process_head));
+	//zlog_debug(ZLOG_NSM, "%s:name:%s(%d byte(%s))",__func__, head.name, ret, strerror(errno));
+	if( ret == sizeof(process_head))
+	{
+		int num = 0;
+		fd_set rfdset;
+		FD_ZERO(&rfdset);
+		FD_SET(os_process_sock, &rfdset);
+		num = os_select_wait(os_process_sock + 1, &rfdset, NULL, 5000);
+		if(num)
+		{
+			int respone = 0;
+			if(FD_ISSET(os_process_sock, &rfdset))
+			{
+				if(read(os_process_sock, &respone, 4) == 4)
+					return respone;
+				if (errno == EPIPE || errno == EBADF || errno == EIO || errno == ECONNRESET
+						|| errno == ECONNABORTED || errno == ENETRESET || errno == ECONNREFUSED)
+				{
+					ip_close(os_process_sock);
+					os_process_sock = 0;
+				}
+			}
+			return ERROR;
+		}
+		else if(num < 0)
+		{
+			ip_close(os_process_sock);
+			os_process_sock = 0;
+			return ERROR;
+		}
+		else
+		{
+			fprintf(stdout,"wait respone timeout (%s)", strerror(errno));
+			return OK;
+		}
+	}
+	if(ret < 0)
+	{
+		if (errno == EPIPE || errno == EBADF || errno == EIO || errno == ECONNRESET
+				|| errno == ECONNABORTED || errno == ENETRESET || errno == ECONNREFUSED)
+		{
+			ip_close(os_process_sock);
+			os_process_sock = 0;
+		}
+	}
+	fprintf(stdout,"can not write (%s)", strerror(errno));
+	return ret;
+}
+
+int os_process_action(process_action action, char *name, int id)
+{
+	int ret = 0;
+	process_head head;
+	if(os_process_sock == 0)
+	{
+		os_process_sock = unix_sock_client_create(TRUE, PROCESS_MGT_UNIT_NAME);
+	}
+	if(os_process_sock <= 0)
+		return ERROR;
+	os_memset(&head, 0, sizeof(head));
+	os_process_split(&head,  action, name,
+			NULL,  FALSE, NULL);
+	head.id = id;
+	errno = 0;
+	ret = write(os_process_sock, &head, sizeof(process_head));
+	//ret = os_stream_head_write(fd, &head, sizeof(process_head));
+	//zlog_debug(ZLOG_NSM, "%s:name:%s(%d byte(%s))",__func__, head.name, ret, strerror(errno));
+	if( ret == sizeof(process_head))
+	{
+		int num = 0;
+		fd_set rfdset;
+		FD_ZERO(&rfdset);
+		FD_SET(os_process_sock, &rfdset);
+		num = os_select_wait(os_process_sock + 1, &rfdset, NULL, 5000);
+		if(num)
+		{
+			int respone = 0;
+			if(FD_ISSET(os_process_sock, &rfdset))
+			{
+				if(read(os_process_sock, &respone, 4) == 4)
+					return respone;
+				if (errno == EPIPE || errno == EBADF || errno == EIO || errno == ECONNRESET
+						|| errno == ECONNABORTED || errno == ENETRESET || errno == ECONNREFUSED)
+				{
+					ip_close(os_process_sock);
+					os_process_sock = 0;
+				}
+			}
+			return ERROR;
+		}
+		else if(num < 0)
+		{
+			ip_close(os_process_sock);
+			os_process_sock = 0;
+			return ERROR;
+		}
+		else
+		{
+			fprintf(stdout,"wait respone timeout (%s)", strerror(errno));
+			return OK;
+		}
+	}
+	if(ret < 0)
+	{
+		if (errno == EPIPE || errno == EBADF || errno == EIO || errno == ECONNRESET
+				|| errno == ECONNABORTED || errno == ENETRESET || errno == ECONNREFUSED)
+		{
+			ip_close(os_process_sock);
+			os_process_sock = 0;
+		}
+	}
+	fprintf(stdout,"can not write (%s)", strerror(errno));
+	return ret;
+}
+
+int os_process_action_respone(int fd, int respone)
+{
+	int value = respone;
+	if(fd)
+		return write(fd, &value, 4);
+	return ERROR;
+}
+
+int os_process_start()
+{
+	int os_process_id = 0;
+	os_process_id = child_process_create();
+	if(os_process_id == 0)
+	{
+		char *plogfile = DAEMON_LOG_FILE_DIR"/ProcessMU.log";
+		char *argvp[] = {"-D", "-d", "6", "-l", plogfile, NULL};
+		super_system_execvp("ProcessMU", argvp);
+	}
+	return 0;
+}
+
+int os_process_stop()
+{
+	int os_process_id = os_pid_get(BASE_DIR"/run/process.pid");
+	if(os_process_id > 0)
+		return child_process_destroy(os_process_id);
+	return 0;
+}
+
+#endif

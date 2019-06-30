@@ -293,7 +293,7 @@ extern "C" {
  */
   int eXosip_reset_transports (struct eXosip_t *excontext);
 
-
+  int eXosip_free_transports (struct eXosip_t *excontext);
 /**
  * Listen on a specified socket.
  * 

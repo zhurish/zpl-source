@@ -559,6 +559,21 @@ done:
   return ret;
 }
 
+int ether_aton_r (const void *addrptr, struct ethaddr *ether)
+{
+	unsigned int a[6], i = 0;
+	if (sscanf(addrptr, "%2x:%2x:%2x:%2x:%2x:%2x", a + 0, a + 1, a + 2, a + 3,
+			a + 4, a + 5) != 6)
+	{
+		return ERROR;
+	}
+	for (i = 0; i < 6; ++i)
+	{
+		ether->octet[i] = a[i] & 0xff;
+	}
+	return OK;
+}
+
 /* Convert masklen into IP address's netmask (network byte order). */
 void
 masklen2ip (const int masklen, struct in_addr *netmask)
@@ -1102,4 +1117,36 @@ prefix_check_addr (struct prefix *p)
     }
 #endif /* HAVE_IPV6 */
   return 1;
+}
+
+const char *inet_address(u_int32 ip)
+{
+	static char buf[64];
+	memset(buf, 0, sizeof(buf));
+	struct in_addr address;
+	address.s_addr = htonl(ip);
+	//return inet_ntoa(address);
+	snprintf(buf, sizeof(buf), "%s", inet_ntoa(address));
+	return buf;
+}
+
+const char *inet_ethernet(u_int8 *mac)
+{
+	static char buf[64];
+	memset(buf, 0, sizeof(buf));
+	snprintf(buf, sizeof(buf), "%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	return buf;
+}
+
+
+u_int32 get_hostip_byname(char *hostname)
+{
+	struct in_addr addre;
+	struct hostent *h = NULL;
+	if((h=gethostbyname(hostname))==NULL)
+	{
+		return ERROR;
+	}
+	addre = *((struct in_addr *)h->h_addr);
+	return ntohl(addre.s_addr);
 }

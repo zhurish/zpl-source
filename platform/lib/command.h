@@ -61,6 +61,9 @@ enum node_type
 
 #ifdef PL_APP_MODULE
   APP_TEMPLATES_NODE,		/* APP templates node. */
+#ifdef APP_X5BA_MODULE
+  APP_X5BA_NODE,
+#endif
 #endif
 #ifdef PL_VOIP_MODULE
   VOIP_SERVICE_NODE,
@@ -605,12 +608,6 @@ struct cmd_token
 
 #define CMD_ARP_STR			"arp"
 #define CMD_ARP_STR_HELP	"arp\n"
-
-
-#define CONF_BACKUP_EXT ".sav"
-#define STARTUP_CONFIG_FILE	SYSCONFDIR "/startup-config.cfg"
-#define DEFAULT_CONFIG_FILE	SYSCONFDIR "/default-config.cfg"
-#define FACTORY_CONFIG_FILE	SYSCONFDIR "/factory-config.cfg"
 
 
 /* IPv4 only machine should not accept IPv6 address for peer's IP

@@ -1842,7 +1842,7 @@ static pj_status_t telnet_start(cli_telnet_fe *fe)
 
     if (fe->own_ioqueue) {
         /* Create our own worker thread */
-        status = pj_thread_create(fe->pool, "worker_telnet_fe",
+        status = pj_thread_create(fe->pool, "worker_telnet",
                                   &poll_worker_thread, fe, 0, 0,
                                   &fe->worker_thread);
         if (status != PJ_SUCCESS)

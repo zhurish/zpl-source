@@ -15,7 +15,7 @@
 #define SQLITE_ENABLE_FTS5 1
 #define SQLITE_ENABLE_JSON1 1
 #define SQLITE_ENABLE_RTREE 1
-//#define SQLITE_HAVE_ZLIB 1
+#define SQLITE_HAVE_ZLIB 1
 
 /*
 #define SQLITE_ENABLE_EXPLAIN_COMMENTS 1
@@ -29,16 +29,16 @@
 //#define SQLITE_OS_UNIX 1
 
 
-#define PACKAGE_NAME "sqlite"
-#define PACKAGE_TARNAME "sqlite"
-#define PACKAGE_VERSION "3.25.1"
-#define PACKAGE_STRING "sqlite 3.25.1"
-#define PACKAGE_BUGREPORT "http://www.sqlite.org"
-#define PACKAGE_URL " "
-#define PACKAGE "sqlite"
-#define VERSION "3.25.1"
+#define SQLITE_PACKAGE_NAME "sqlite"
+#define SQLITE_PACKAGE_TARNAME "sqlite"
+#define SQLITE_PACKAGE_VERSION "3.25.1"
+#define SQLITE_PACKAGE_STRING "sqlite 3.25.1"
+#define SQLITE_PACKAGE_BUGREPORT "http://www.sqlite.org"
+#define SQLITE_PACKAGE_URL " "
+#define SQLITE_PACKAGE "sqlite"
+#define SQLITE_VERSION "3.25.1"
 
-#define LT_OBJDIR ".libs/"
+#define SQLITE_LT_OBJDIR ".libs/"
 
 
 #define STDC_HEADERS       1

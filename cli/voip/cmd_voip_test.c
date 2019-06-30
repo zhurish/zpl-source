@@ -22,24 +22,25 @@
 #include "vrf.h"
 #include "interface.h"
 
-#include "voip_def.h"
+#ifdef PL_VOIP_MODULE
+#ifdef PL_PJSIP_MODULE
+#include "voip_app.h"
+#endif
+#ifdef PL_OSIP_MODULE
+#include "voip_app.h"
 #include "voip_api.h"
-#include "voip_sip.h"
-#include "voip_ring.h"
-#include "voip_statistics.h"
-#include "voip_volume.h"
-#include "voip_stream.h"
 
 
 
-#ifdef VOIP_STREAM_DEBUG_TEST
+
+#ifdef VOIP_STREAM_RAW
 /*
  * Stream Module test
  */
-DEFUN (voip_start_stream_test,
-		voip_start_stream_test_cmd,
-		"voip stream-test start "CMD_KEY_IPV4,
-		"VOIP Configure\n"
+DEFUN (media_start_test,
+		media_start_test_cmd,
+		"media start "CMD_KEY_IPV4,
+		"Media Configure\n"
 		"Start Configure\n"
 		CMD_KEY_IPV4_HELP)
 {
@@ -68,19 +69,19 @@ DEFUN (voip_start_stream_test,
 }
 
 
-ALIAS(voip_start_stream_test,
-		voip_start_stream_test_port_cmd,
-		"voip stream-test start "CMD_KEY_IPV4 " port <1-65535>",
-		"VOIP Configure\n"
+ALIAS(media_start_test,
+		media_start_test_port_cmd,
+		"media start "CMD_KEY_IPV4 " port <1-65535>",
+		"Media Configure\n"
 		"Start Configure\n"
 		CMD_KEY_IPV4_HELP
 		"Port configure\n"
 		"port value\n");
 
-ALIAS(voip_start_stream_test,
-		voip_start_stream_test_port_local_cmd,
-		"voip stream-test start "CMD_KEY_IPV4 " port <1-65535> localport <1-65535>",
-		"VOIP Configure\n"
+ALIAS(media_start_test,
+		media_start_test_port_local_cmd,
+		"media start "CMD_KEY_IPV4 " port <1-65535> localport <1-65535>",
+		"Media Configure\n"
 		"Start Configure\n"
 		CMD_KEY_IPV4_HELP
 		"Port configure\n"
@@ -88,10 +89,10 @@ ALIAS(voip_start_stream_test,
 		"Local Port configure\n"
 		"port value\n");
 
-DEFUN (voip_stop_stream_test,
-		voip_stop_stream_test_cmd,
-		"voip stream-test stop",
-		"VOIP Configure\n"
+DEFUN (media_stop_test,
+		media_stop_test_cmd,
+		"media stop",
+		"Media Configure\n"
 		"Stop Configure\n")
 {
 	int ret = ERROR;
@@ -100,200 +101,99 @@ DEFUN (voip_stop_stream_test,
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
+
+#endif
 #endif
 
-#ifdef VOIP_STREAM_API_DEBUG_TEST
-DEFUN (voip_start_test,
-		voip_start_test_cmd,
-		"voip start "CMD_KEY_IPV4,
-		"VOIP Configure\n"
+DEFUN (app_start_test,
+		app_start_test_cmd,
+		"call start NUMBER",
+		"Call Configure\n"
 		"Start Configure\n"
-		CMD_KEY_IPV4_HELP)
+		"Phone Number\n")
 {
 	int ret = ERROR;
-	struct prefix address;
-	prefix_zero(&address);
-	ret = str2prefix_ipv4 (argv[0], (struct prefix_ipv4 *)&address);
-	if (ret <= 0)
-	{
-		vty_out (vty, "%% Malformed address %s", VTY_NEWLINE);
-		return CMD_WARNING;
-	}
 	if(argc == 1)
 	{
-		ret = _voip_start_api_shell(argv[0], 0, 0);
+		//extern int voip_app_start_call_event_cli_web(app_call_source_t source, u_int8 building,
+		//		u_int8 unit, u_int16 room, char *number);
+
+		ret = voip_app_start_call_event_cli_web(APP_CALL_ID_CLI, 0, 0, 0, argv[0]);
 	}
 	else if(argc == 2)
 	{
-		ret = _voip_start_api_shell(argv[0], 0, atoi(argv[1]));
+		ret = voip_app_start_call_event_cli_web(APP_CALL_ID_CLI, 0, 0, atoi(argv[0]), argv[1]);
 	}
 	else if(argc == 3)
 	{
-		ret = _voip_start_api_shell(argv[0], atoi(argv[2]), atoi(argv[1]));
+		ret = voip_app_start_call_event_cli_web(APP_CALL_ID_CLI, atoi(argv[0]), 0, atoi(argv[1]), argv[2]);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
-
-ALIAS(voip_start_test,
-		voip_start_test_port_cmd,
-		"voip start "CMD_KEY_IPV4 " port <1-65535>",
-		"VOIP Configure\n"
+ALIAS(app_start_test,
+		app_start_test_room_cmd,
+		"call start room <1-65530> NUMBER",
+		"Call Configure\n"
 		"Start Configure\n"
-		CMD_KEY_IPV4_HELP
-		"Port configure\n"
-		"port value\n");
+		"Room Number\n"
+		"Phone Number\n");
 
-ALIAS(voip_start_test,
-		voip_start_test_port_local_cmd,
-		"voip start "CMD_KEY_IPV4 " port <1-65535> localport <1-65535>",
-		"VOIP Configure\n"
+ALIAS(app_start_test,
+		app_start_test_building_cmd,
+		"call start building <1-256> room <1-65530> NUMBER",
+		"Call Configure\n"
 		"Start Configure\n"
-		CMD_KEY_IPV4_HELP
-		"Port configure\n"
-		"port value\n"
-		"Local Port configure\n"
-		"port value\n");
+		"Building Number\n"
+		"Room Number\n"
+		"Phone Number\n");
 
-DEFUN (voip_stop_test,
-		voip_stop_test_cmd,
-		"voip stop",
-		"VOIP Configure\n"
+DEFUN (app_stop_test,
+		app_stop_test_cmd,
+		"call stop",
+		"Call Configure\n"
 		"Stop Configure\n")
 {
 	int ret = ERROR;
 	{
-		ret = voip_stream_stop_api();
+		ret = voip_app_stop_call_event_cli_web(NULL);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
-#endif
 
-#ifdef VOIP_STARTUP_TEST
-DEFUN (voip_startup_test,
-		voip_startup_test_cmd,
-		"voip startup test",
-		"VOIP Configure\n"
+
+DEFUN (app_stop_phone_test,
+		app_stop_phone_test_cmd,
+		"call-phone NUM",
+		"Call Configure\n"
 		"Stop Configure\n")
 {
 	int ret = ERROR;
 	{
-		voip_call_ring_stop_api();
-		ret = _voip_startup_test(NULL);
+		voip_event_t ev;
+		memset(&ev, 0, sizeof(voip_event_t));
+		strcpy(ev.data, argv[0]);
+		ev.dlen = strlen(ev.data);
+		ret = voip_app_start_call_event_ui_phone(&ev);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
-#endif
-
-
-#ifdef VOIP_APP_DEBUG
-DEFUN (voip_call_test,
-		voip_call_test_cmd,
-		"voip call (start|stop) "CMD_KEY_IPV4,
-		"VOIP Configure\n"
-		"Call Configure\n"
-		"Start Configure\n"
-		"Stop Configure\n"
-		CMD_KEY_IPV4_HELP)
-{
-	int ret = ERROR;
-	BOOL enable = TRUE;
-	struct prefix address;
-	prefix_zero(&address);
-	ret = str2prefix_ipv4 (argv[1], (struct prefix_ipv4 *)&address);
-	if (ret <= 0)
-	{
-		vty_out (vty, "%% Malformed address %s", VTY_NEWLINE);
-		return CMD_WARNING;
-	}
-	if(strstr(argv[0], "start"))
-		enable = TRUE;
-	else
-		enable = FALSE;
-	if(argc == 2)
-	{
-		ret = voip_app_call_test(enable, argv[1], 0, 0);
-	}
-	else if(argc == 3)
-	{
-		ret = voip_app_call_test(enable, argv[1], atoi(argv[2]), 0);
-	}
-	else if(argc == 4)
-	{
-		ret = voip_app_call_test(enable, argv[1], atoi(argv[2]), atoi(argv[3]));
-	}
-	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-}
-
-ALIAS(voip_call_test,
-		voip_call_test_port_cmd,
-		"voip call (start|stop) "CMD_KEY_IPV4 " port <1-65535>",
-		"VOIP Configure\n"
-		"Call Configure\n"
-		"Start Configure\n"
-		"Stop Configure\n"
-		CMD_KEY_IPV4_HELP
-		"Port configure\n"
-		"port value\n");
-
-ALIAS(voip_call_test,
-		voip_call_test_port_local_cmd,
-		"voip call (start|stop) "CMD_KEY_IPV4 " port <1-65535> localport <1-65535>",
-		"VOIP Configure\n"
-		"Call Configure\n"
-		"Start Configure\n"
-		"Stop Configure\n"
-		CMD_KEY_IPV4_HELP
-		"Port configure\n"
-		"port value\n"
-		"Local Port configure\n"
-		"port value\n");
-
-
-
-DEFUN (_voip_ring_test,
-		_voip_ring_test_cmd,
-		"voip ring-test (start|stop)",
-		"VOIP Configure\n"
-		"Stop Configure\n")
-{
-	int ret = ERROR;
-	{
-		if(strstr(argv[0], "start"))
-			ret = voip_call_ring_start_api();
-		else
-			ret =voip_call_ring_stop_api();
-	}
-	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-}
-
-#endif
-
 
 
 void cmd_voip_test_init(int node)
 {
-#ifdef VOIP_STREAM_DEBUG_TEST
-	install_element(node, &voip_start_stream_test_cmd);
-	install_element(node, &voip_start_stream_test_port_cmd);
-	install_element(node, &voip_start_stream_test_port_local_cmd);
-	install_element(node, &voip_stop_stream_test_cmd);
+#ifdef PL_OSIP_MODULE
+#ifdef VOIP_STREAM_RAW
+	install_element(node, &media_start_test_cmd);
+	install_element(node, &media_start_test_port_cmd);
+	install_element(node, &media_start_test_port_local_cmd);
+	install_element(node, &media_stop_test_cmd);
 #endif
-#ifdef VOIP_STREAM_API_DEBUG_TEST
-	install_element(node, &voip_start_test_cmd);
-	install_element(node, &voip_start_test_port_cmd);
-	install_element(node, &voip_start_test_port_local_cmd);
-	install_element(node, &voip_stop_test_cmd);
 #endif
-
-#ifdef VOIP_APP_DEBUG
-	install_element(node, &voip_call_test_cmd);
-	install_element(node, &voip_call_test_port_cmd);
-	install_element(node, &voip_call_test_port_local_cmd);
-#endif
-
-#ifdef VOIP_STARTUP_TEST
-	install_element(node, &voip_startup_test_cmd);
-	install_element(node, &_voip_ring_test_cmd);
-#endif
+	install_element(node, &app_start_test_cmd);
+	install_element(node, &app_start_test_room_cmd);
+	install_element(node, &app_start_test_building_cmd);
+	install_element(node, &app_stop_test_cmd);
+	install_element(node, &app_stop_phone_test_cmd);
 }
+#endif

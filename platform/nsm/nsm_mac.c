@@ -69,7 +69,9 @@ static int l2mac_cleanup(mac_type_t type, BOOL all, vlan_t vlan, ifindex_t ifind
 			XFREE(MTYPE_MAC, pstNode);
 		}
 	}
+#ifdef PL_HAL_MODULE
 	hal_mac_clr(ifindex, vlan);
+#endif
 	if(gMac.mutex)
 		os_mutex_unlock(gMac.mutex);
 	return OK;
@@ -193,7 +195,11 @@ int nsm_mac_add_api(l2mac_t *mac)
 	value = l2mac_lookup_node(mac->mac, mac->vlan);
 	if(!value)
 	{
+#ifdef PL_HAL_MODULE
 		ret = hal_mac_add(mac->ifindex, mac->vlan, mac->mac, 0);
+#else
+		ret = OK;
+#endif
 		if(ret == OK)
 			ret = l2mac_add_node(mac);
 		//TODO
@@ -214,7 +220,11 @@ int nsm_mac_del_api(l2mac_t *mac)
 	value = l2mac_lookup_node(mac->mac, mac->vlan);
 	if(value)
 	{
+#ifdef PL_HAL_MODULE
 		ret = hal_mac_del(value->ifindex, value->vlan, value->mac, 0);
+#else
+		ret = OK;
+#endif
 		if(ret == OK)
 		{
 			lstDelete(gMac.macList, (NODE*)value);
@@ -256,7 +266,11 @@ int nsm_mac_ageing_time_set_api(int ageing)
 		os_mutex_lock(gMac.mutex, OS_WAIT_FOREVER);
 	gMac.ageing_time = ageing;
 	//TODO
+#ifdef PL_HAL_MODULE
 	ret = hal_mac_age(gMac.ageing_time);
+#else
+	ret = OK;
+#endif
 	if(gMac.mutex)
 		os_mutex_unlock(gMac.mutex);
 	return ret;

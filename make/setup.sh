@@ -12,8 +12,8 @@ if test "X" == "$1X" ;then
 	exit 0
 fi
 
-sed -i 's/BINFILE=TAGET.*$/BINFILE='$1'/g' $BOOT_FILE
+sed -i 's/BINFILE=TARGET.*$/BINFILE='$1'/g' $BOOT_FILE
 
-#BOOT_FILE=../../default/x5b-app.sh
-#sed -i 's/TAGET/'$1'/g' $BOOT_FILE
+BOOT_FILE=../../default/x5b-app.sh
+sed -i 's/TARGET/'$1'/g' $BOOT_FILE
 

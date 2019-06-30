@@ -138,7 +138,7 @@ static void if_addr_wakeup (struct interface *ifp)
 				//ret = if_set_prefix(ifp, ifc);
 				//if (ret < 0)
 				{
-					zlog_warn("Can't set interface's address: %s",
+					zlog_warn(ZLOG_NSM, "Can't set interface's address: %s",
 							safe_strerror(errno));
 					continue;
 				}
@@ -164,7 +164,7 @@ static void if_addr_wakeup (struct interface *ifp)
 				//ret = if_prefix_add_ipv6(ifp, ifc);
 				//if (ret < 0)
 				{
-					zlog_warn("Can't set interface's address: %s",
+					zlog_warn(ZLOG_NSM,"Can't set interface's address: %s",
 							safe_strerror(errno));
 					continue;
 				}
@@ -390,7 +390,7 @@ static int nsm_interface_new_hook(struct interface *ifp)
 #ifdef USE_IPSTACK_KERNEL
 	if(ifp->dynamic == FALSE && if_kernel_name_lookup(ifp->ifindex))
 	{
-		zlog_debug(ZLOG_NSM, "=====%s: %s -> %s",__func__, ifp->name, if_kernel_name_lookup(ifp->ifindex));
+		//zlog_debug(ZLOG_NSM, "=====%s: %s -> %s",__func__, ifp->name, if_kernel_name_lookup(ifp->ifindex));
 		if_kname_set(ifp, if_kernel_name_lookup(ifp->ifindex));
 	}
 #endif
@@ -998,8 +998,7 @@ int nsm_interface_mode_get_api(struct interface *ifp, if_mode_t *mode)
 	IF_DATA_LOCK();
 	if(mode)
 	{
-		if(mode)
-			*mode = ifp->if_mode;
+		*mode = ifp->if_mode;
 	}
 	IF_DATA_UNLOCK();
 	return OK;
@@ -1052,10 +1051,9 @@ int nsm_interface_enca_get_api(struct interface *ifp, if_enca_t *enca, int *valu
 	IF_DATA_LOCK();
 	if(enca)
 	{
-		if(enca)
-			*enca = ifp->if_enca;
+		*enca = ifp->if_enca;
 		if(value)
-			*enca = ifp->encavlan;
+			*value = ifp->encavlan;
 	}
 	IF_DATA_UNLOCK();
 	return OK;

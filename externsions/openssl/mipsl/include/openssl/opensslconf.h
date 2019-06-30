@@ -11,6 +11,12 @@ extern "C" {
 #ifndef OPENSSL_NO_CAMELLIA
 # define OPENSSL_NO_CAMELLIA
 #endif
+#ifndef OPENSSL_NO_COMP
+# define OPENSSL_NO_COMP
+#endif
+#ifndef OPENSSL_NO_DTLS
+# define OPENSSL_NO_DTLS
+#endif
 #ifndef OPENSSL_NO_EC2M
 # define OPENSSL_NO_EC2M
 #endif
@@ -22,6 +28,9 @@ extern "C" {
 #endif
 #ifndef OPENSSL_NO_GMP
 # define OPENSSL_NO_GMP
+#endif
+#ifndef OPENSSL_NO_HEARTBEATS
+# define OPENSSL_NO_HEARTBEATS
 #endif
 #ifndef OPENSSL_NO_IDEA
 # define OPENSSL_NO_IDEA
@@ -50,6 +59,9 @@ extern "C" {
 #ifndef OPENSSL_NO_SCTP
 # define OPENSSL_NO_SCTP
 #endif
+#ifndef OPENSSL_NO_SEED
+# define OPENSSL_NO_SEED
+#endif
 #ifndef OPENSSL_NO_SHA0
 # define OPENSSL_NO_SHA0
 #endif
@@ -59,8 +71,14 @@ extern "C" {
 #ifndef OPENSSL_NO_SSL2
 # define OPENSSL_NO_SSL2
 #endif
+#ifndef OPENSSL_NO_SSL2_METHOD
+# define OPENSSL_NO_SSL2_METHOD
+#endif
 #ifndef OPENSSL_NO_SSL3
 # define OPENSSL_NO_SSL3
+#endif
+#ifndef OPENSSL_NO_SSL3_METHOD
+# define OPENSSL_NO_SSL3_METHOD
 #endif
 #ifndef OPENSSL_NO_STORE
 # define OPENSSL_NO_STORE
@@ -70,6 +88,12 @@ extern "C" {
 #endif
 #ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
 # define OPENSSL_NO_WEAK_SSL_CIPHERS
+#endif
+#ifndef OPENSSL_NO_WHIRLPOOL
+# define OPENSSL_NO_WHIRLPOOL
+#endif
+#ifndef OPENSSL_NO_WHRLPOOL
+# define OPENSSL_NO_WHRLPOOL
 #endif
 
 #endif /* OPENSSL_DOING_MAKEDEPEND */
@@ -95,6 +119,12 @@ extern "C" {
 # if defined(OPENSSL_NO_CAMELLIA) && !defined(NO_CAMELLIA)
 #  define NO_CAMELLIA
 # endif
+# if defined(OPENSSL_NO_COMP) && !defined(NO_COMP)
+#  define NO_COMP
+# endif
+# if defined(OPENSSL_NO_DTLS) && !defined(NO_DTLS)
+#  define NO_DTLS
+# endif
 # if defined(OPENSSL_NO_EC2M) && !defined(NO_EC2M)
 #  define NO_EC2M
 # endif
@@ -106,6 +136,9 @@ extern "C" {
 # endif
 # if defined(OPENSSL_NO_GMP) && !defined(NO_GMP)
 #  define NO_GMP
+# endif
+# if defined(OPENSSL_NO_HEARTBEATS) && !defined(NO_HEARTBEATS)
+#  define NO_HEARTBEATS
 # endif
 # if defined(OPENSSL_NO_IDEA) && !defined(NO_IDEA)
 #  define NO_IDEA
@@ -134,6 +167,9 @@ extern "C" {
 # if defined(OPENSSL_NO_SCTP) && !defined(NO_SCTP)
 #  define NO_SCTP
 # endif
+# if defined(OPENSSL_NO_SEED) && !defined(NO_SEED)
+#  define NO_SEED
+# endif
 # if defined(OPENSSL_NO_SHA0) && !defined(NO_SHA0)
 #  define NO_SHA0
 # endif
@@ -143,8 +179,14 @@ extern "C" {
 # if defined(OPENSSL_NO_SSL2) && !defined(NO_SSL2)
 #  define NO_SSL2
 # endif
+# if defined(OPENSSL_NO_SSL2_METHOD) && !defined(NO_SSL2_METHOD)
+#  define NO_SSL2_METHOD
+# endif
 # if defined(OPENSSL_NO_SSL3) && !defined(NO_SSL3)
 #  define NO_SSL3
+# endif
+# if defined(OPENSSL_NO_SSL3_METHOD) && !defined(NO_SSL3_METHOD)
+#  define NO_SSL3_METHOD
 # endif
 # if defined(OPENSSL_NO_STORE) && !defined(NO_STORE)
 #  define NO_STORE
@@ -154,6 +196,12 @@ extern "C" {
 # endif
 # if defined(OPENSSL_NO_WEAK_SSL_CIPHERS) && !defined(NO_WEAK_SSL_CIPHERS)
 #  define NO_WEAK_SSL_CIPHERS
+# endif
+# if defined(OPENSSL_NO_WHIRLPOOL) && !defined(NO_WHIRLPOOL)
+#  define NO_WHIRLPOOL
+# endif
+# if defined(OPENSSL_NO_WHRLPOOL) && !defined(NO_WHRLPOOL)
+#  define NO_WHRLPOOL
 # endif
 #endif
 

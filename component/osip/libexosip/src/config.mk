@@ -4,7 +4,7 @@
 #
 MODULEDIR = component/osip/libexosip/src
 #
-PLINCLUDE += -I$(OSIP_ROOT)/libexosip/include
+PLM_INCLUDE += -I$(OSIP_ROOT)/libexosip/include
 #
 #
 #OS

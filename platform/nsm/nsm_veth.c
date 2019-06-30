@@ -75,7 +75,9 @@ int nsm_veth_interface_vid_set_api(struct interface *ifp, int vlan)
 		nsm_veth_t * veth = nsm_veth_get(ifp);
 		if(veth)
 		{
+#ifdef PL_HAL_MODULE
 			if(pal_interface_vlan_set(ifp, vlan) == OK)
+#endif
 			{
 				veth->vlanid = vlan;
 				return OK;

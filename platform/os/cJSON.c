@@ -32,6 +32,9 @@
 #include <ctype.h>
 #include "cJSON.h"
 
+extern void *cjson_malloc (size_t size);
+extern void cjson_free (void *ptr);
+
 static const char *ep;
 
 const char *cJSON_GetErrorPtr(void) {return ep;}
@@ -43,8 +46,8 @@ static int cJSON_strcasecmp(const char *s1,const char *s2)
 	return tolower(*(const unsigned char *)s1) - tolower(*(const unsigned char *)s2);
 }
 
-static void *(*cJSON_malloc)(size_t sz) = malloc;
-static void (*cJSON_free)(void *ptr) = free;
+static void *(*cJSON_malloc)(size_t sz) = cjson_malloc;
+static void (*cJSON_free)(void *ptr) = cjson_free;
 
 static char* cJSON_strdup(const char* str)
 {
@@ -120,7 +123,8 @@ typedef struct {char *buffer; int length; int offset; } printbuffer;
 
 static char* ensure(printbuffer *p,int needed)
 {
-	char *newbuffer;int newsize;
+	char *newbuffer  = NULL;
+	int newsize = 0;
 	if (!p || !p->buffer) return 0;
 	needed+=p->offset;
 	if (needed<=p->length) return p->buffer+p->offset;
@@ -137,7 +141,7 @@ static char* ensure(printbuffer *p,int needed)
 
 static int update(printbuffer *p)
 {
-	char *str;
+	char *str = NULL;
 	if (!p || !p->buffer) return 0;
 	str=p->buffer+p->offset;
 	return p->offset+strlen(str);
@@ -146,7 +150,7 @@ static int update(printbuffer *p)
 /* Render the number nicely from the given item into a string. */
 static char *print_number(cJSON *item,printbuffer *p)
 {
-	char *str=0;
+	char *str = NULL;
 	double d=item->valuedouble;
 	if (d==0)
 	{

@@ -40,7 +40,7 @@
 #define RING_CNT	    3
 #define RING_INTERVAL	    3000
 
-#define current_acc	pjsua_acc_get_default()
+//#define current_acc	pjsua_acc_get_default()
 
 #ifdef STEREO_DEMO
 static void stereo_demo();
@@ -57,8 +57,8 @@ static pj_status_t app_init();
 static pj_status_t app_destroy();
 
 static pjsua_app_cfg_t app_cfg;
-pj_str_t		    uri_arg;
-pj_bool_t		    app_running	= PJ_FALSE;
+//pj_str_t		    uri_arg;
+//pj_bool_t		    app_running	= PJ_FALSE;
 
 /*****************************************************************************
  * Configuration manipulation
@@ -142,7 +142,7 @@ static void call_timeout_callback(pj_timer_heap_t *timer_heap,
     pjsip_generic_string_hdr warn;
     pj_str_t hname = pj_str("Warning");
     pj_str_t hvalue = pj_str("399 pjsua \"Call duration exceeded\"");
-
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     PJ_UNUSED_ARG(timer_heap);
 
     if (call_id == PJSUA_INVALID_ID) {
@@ -161,6 +161,7 @@ static void call_timeout_callback(pj_timer_heap_t *timer_heap,
 			 app_config.duration, call_id));
     entry->id = PJSUA_INVALID_ID;
     pjsua_call_hangup(call_id, 200, NULL, &msg_data_);
+    pjsip_app_call_timeout_callback(&app_config.cbtbl, call_id, NULL, 0);
 }
 
 /*
@@ -173,6 +174,7 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
     PJ_UNUSED_ARG(e);
 
     pjsua_call_get_info(call_id, &call_info);
+
 
     if (call_info.state == PJSIP_INV_STATE_DISCONNECTED) {
 
@@ -194,6 +196,11 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
 	if (app_config.auto_play_hangup)
 	    pjsua_player_set_pos(app_config.wav_id, 0);
 
+	fprintf(stdout, "Call %d is DISCONNECTED [reason=%d (%.*s)]",
+		  call_id,
+		  call_info.last_status,
+		  (int)call_info.last_status_text.slen,
+		  call_info.last_status_text.ptr);
 
 	PJ_LOG(3,(THIS_FILE, "Call %d is DISCONNECTED [reason=%d (%.*s)]", 
 		  call_id,
@@ -201,7 +208,7 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
 		  (int)call_info.last_status_text.slen,
 		  call_info.last_status_text.ptr));
 
-	if (call_id == current_call) {
+	if (call_id == app_config.current_call) {
 	    find_next_call();
 	}
 
@@ -265,10 +272,13 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
 		      call_info.state_text.ptr));
 	}
 
-	if (current_call==PJSUA_INVALID_ID)
-	    current_call = call_id;
-
+	if (app_config.current_call==PJSUA_INVALID_ID)
+	    app_config.current_call = call_id;
     }
+	pjsip_app_call_state_callback(&app_config.cbtbl, call_id, NULL, call_info.state);
+	fprintf(stdout, "===========%s=======%s(call_id=%d state=%d current_call=%d)\r\n",THIS_FILE, __func__,
+			call_id, call_info.state, app_config.current_call);
+
 }
 
 /**
@@ -281,11 +291,11 @@ static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 
     PJ_UNUSED_ARG(acc_id);
     PJ_UNUSED_ARG(rdata);
-
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     pjsua_call_get_info(call_id, &call_info);
 
-    if (current_call==PJSUA_INVALID_ID)
-	current_call = call_id;
+    if (app_config.current_call==PJSUA_INVALID_ID)
+	app_config.current_call = call_id;
 
 #ifdef USE_GUI
     if (!showNotification(call_id))
@@ -353,6 +363,8 @@ static void on_call_generic_media_state(pjsua_call_info *ci, unsigned mi,
 
     PJ_UNUSED_ARG(has_error);
 
+	fprintf(stdout, "===========%s=======%s(state=%s)\r\n", THIS_FILE, __func__, status_name[ci->media[mi].status]);
+
     pj_assert(ci->media[mi].status <= PJ_ARRAY_SIZE(status_name));
     pj_assert(PJSUA_CALL_MEDIA_ERROR == 4);
 
@@ -369,6 +381,8 @@ static void on_call_audio_state(pjsua_call_info *ci, unsigned mi,
 
     /* Stop ringback */
     ring_stop(ci->id);
+
+	fprintf(stdout, "===========%s=======%s(state=%d)\r\n", THIS_FILE, __func__, ci->media[mi].status);
 
     /* Connect ports appropriately when media status is ACTIVE or REMOTE HOLD,
      * otherwise we should NOT connect the ports.
@@ -454,6 +468,8 @@ static void on_call_audio_state(pjsua_call_info *ci, unsigned mi,
 	    if (!disconnect_mic)
 		pjsua_conf_connect(0, call_conf_slot);
 
+	    pjsip_app_call_state_callback(&app_config.cbtbl, 0, NULL, PJ_TRUE);
+
 	    /* Automatically record conversation, if desired */
 	    if (app_config.auto_rec && app_config.rec_port != PJSUA_INVALID_ID)
 	    {
@@ -470,7 +486,7 @@ static void on_call_video_state(pjsua_call_info *ci, unsigned mi,
 {
     if (ci->media_status != PJSUA_CALL_MEDIA_ACTIVE)
 	return;
-
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     arrange_window(ci->media[mi].stream.vid.win_in);
 
     PJ_UNUSED_ARG(has_error);
@@ -488,6 +504,7 @@ static void on_call_media_state(pjsua_call_id call_id)
     pj_bool_t has_error = PJ_FALSE;
 
     pjsua_call_get_info(call_id, &call_info);
+	fprintf(stdout, "===========%s=======%s(call_id=%d state=%d)\r\n", THIS_FILE, __func__, call_id, call_info.state);
 
     for (mi=0; mi<call_info.media_cnt; ++mi) {
 	on_call_generic_media_state(&call_info, mi, &has_error);
@@ -543,15 +560,16 @@ static void call_on_dtmf_callback2(pjsua_call_id call_id,
     char method[16];
 
     duration[0] = '\0';
-
     switch (info->method) {
     case PJSUA_DTMF_METHOD_RFC2833:
 	pj_ansi_snprintf(method, sizeof(method), "RFC2833");
+	pjsip_app_dtmf_recv_callback(&app_config.cbtbl, call_id, NULL, info->digit);
 	break;
     case PJSUA_DTMF_METHOD_SIP_INFO:
 	pj_ansi_snprintf(method, sizeof(method), "SIP INFO");
 	pj_ansi_snprintf(duration, sizeof(duration), ":duration(%d)", 
 			 info->duration);
+	pjsip_app_dtmf_recv_callback(&app_config.cbtbl, call_id, NULL, info->digit);
 	break;
     };    
     PJ_LOG(3,(THIS_FILE, "Incoming DTMF on call %d: %c%s, using %s method", 
@@ -566,7 +584,7 @@ static pjsip_redirect_op call_on_redirected(pjsua_call_id call_id,
 					    const pjsip_event *e)
 {
     PJ_UNUSED_ARG(e);
-
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     if (app_config.redir_op == PJSIP_REDIRECT_PENDING) {
 	char uristr[PJSIP_MAX_URL_SIZE];
 	int len;
@@ -592,7 +610,17 @@ static pjsip_redirect_op call_on_redirected(pjsua_call_id call_id,
 static void on_reg_state(pjsua_acc_id acc_id)
 {
     PJ_UNUSED_ARG(acc_id);
-
+	PJ_LOG(5,(THIS_FILE, "===================Reg state changed (on_reg_state)%d", acc_id));
+    // Log already written.
+    //pjsua_acc_set_online_status(acc_id, info->renew ? PJ_TRUE:PJ_FALSE);
+    pjsip_app_register_state_callback(&app_config.cbtbl, acc_id, NULL, 0);
+}
+static void on_reg_state2(pjsua_acc_id acc_id, pjsua_reg_info *info)
+{
+    PJ_UNUSED_ARG(acc_id);
+	printf("===================Reg state changed (on_reg_state2)%d\r\n", acc_id);
+    //pjsua_acc_set_online_status(acc_id, info->renew ? PJ_TRUE:PJ_FALSE);
+    pjsip_app_register_state_callback(&app_config.cbtbl, acc_id, NULL, info->renew ? PJ_TRUE:PJ_FALSE);
     // Log already written.
 }
 
@@ -609,6 +637,7 @@ static void on_incoming_subscribe(pjsua_acc_id acc_id,
 				  pjsua_msg_data *msg_data_)
 {
     /* Just accept the request (the default behavior) */
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     PJ_UNUSED_ARG(acc_id);
     PJ_UNUSED_ARG(srv_pres);
     PJ_UNUSED_ARG(buddy_id);
@@ -627,7 +656,7 @@ static void on_buddy_state(pjsua_buddy_id buddy_id)
 {
     pjsua_buddy_info info;
     pjsua_buddy_get_info(buddy_id, &info);
-
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     PJ_LOG(3,(THIS_FILE, "%.*s status is %.*s, subscription state is %s "
 			 "(last termination reason code=%d %.*s)",
 	      (int)info.uri.slen,
@@ -651,7 +680,7 @@ static void on_buddy_evsub_state(pjsua_buddy_id buddy_id,
     char event_info[80];
 
     PJ_UNUSED_ARG(sub);
-
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     event_info[0] = '\0';
 
     if (event->type == PJSIP_EVENT_TSX_STATE &&
@@ -684,7 +713,7 @@ static void on_pager(pjsua_call_id call_id, const pj_str_t *from,
     PJ_UNUSED_ARG(to);
     PJ_UNUSED_ARG(contact);
     PJ_UNUSED_ARG(mime_type);
-
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     PJ_LOG(3,(THIS_FILE,"MESSAGE from %.*s: %.*s (%.*s)",
 	      (int)from->slen, from->ptr,
 	      (int)text->slen, text->ptr,
@@ -702,7 +731,7 @@ static void on_typing(pjsua_call_id call_id, const pj_str_t *from,
     PJ_UNUSED_ARG(call_id);
     PJ_UNUSED_ARG(to);
     PJ_UNUSED_ARG(contact);
-
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     PJ_LOG(3,(THIS_FILE, "IM indication: %.*s %s",
 	      (int)from->slen, from->ptr,
 	      (is_typing?"is typing..":"has stopped typing")));
@@ -718,6 +747,7 @@ static void on_call_transfer_status(pjsua_call_id call_id,
 				    pj_bool_t final,
 				    pj_bool_t *p_cont)
 {
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     PJ_LOG(3,(THIS_FILE, "Call %d: transfer status=%d (%.*s) %s",
 	      call_id, status_code,
 	      (int)status_text->slen, status_text->ptr,
@@ -740,7 +770,7 @@ static void on_call_replaced(pjsua_call_id old_call_id,
 			     pjsua_call_id new_call_id)
 {
     pjsua_call_info old_ci, new_ci;
-
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     pjsua_call_get_info(old_call_id, &old_ci);
     pjsua_call_get_info(new_call_id, &new_ci);
 
@@ -758,6 +788,7 @@ static void on_call_replaced(pjsua_call_id old_call_id,
  */
 static void on_nat_detect(const pj_stun_nat_detect_result *res)
 {
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     if (res->status != PJ_SUCCESS) {
 	pjsua_perror(THIS_FILE, "NAT detection failed", res->status);
     } else {
@@ -774,7 +805,7 @@ static void on_mwi_info(pjsua_acc_id acc_id, pjsua_mwi_info *mwi_info)
     pj_str_t body;
     
     PJ_LOG(3,(THIS_FILE, "Received MWI for acc %d:", acc_id));
-
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     if (mwi_info->rdata->msg_info.ctype) {
 	const pjsip_ctype_hdr *ctype = mwi_info->rdata->msg_info.ctype;
 
@@ -805,7 +836,7 @@ static void on_transport_state(pjsip_transport *tp,
 			       const pjsip_transport_state_info *info)
 {
     char host_port[128];
-
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     pj_addr_str_print(&tp->remote_name.host, 
 		      tp->remote_name.port, host_port, sizeof(host_port), 1);
     switch (state) {
@@ -884,6 +915,7 @@ static void on_transport_state(pjsip_transport *tp,
 static void on_ice_transport_error(int index, pj_ice_strans_op op,
 				   pj_status_t status, void *param)
 {
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     PJ_UNUSED_ARG(op);
     PJ_UNUSED_ARG(param);
     PJ_PERROR(1,(THIS_FILE, status,
@@ -896,7 +928,7 @@ static void on_ice_transport_error(int index, pj_ice_strans_op op,
 static pj_status_t on_snd_dev_operation(int operation)
 {
     int cap_dev, play_dev;
-
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     pjsua_get_snd_dev(&cap_dev, &play_dev);
     PJ_LOG(3,(THIS_FILE, "Turning sound device %d %d %s", cap_dev, play_dev,
     	      (operation? "ON":"OFF")));
@@ -909,7 +941,7 @@ static void on_call_media_event(pjsua_call_id call_id,
                                 pjmedia_event *event)
 {
     char event_name[5];
-
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     PJ_LOG(5,(THIS_FILE, "Event %s",
 	      pjmedia_fourcc_name(event->type, event_name)));
 
@@ -957,7 +989,7 @@ static pjmedia_transport* on_create_media_transport(pjsua_call_id call_id,
 {
     pjmedia_transport *adapter;
     pj_status_t status;
-
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     /* Create the adapter */
     status = pjmedia_tp_adapter_create(pjsua_get_pjmedia_endpt(),
                                        NULL, base_tp,
@@ -982,7 +1014,7 @@ static pj_status_t on_playfile_done(pjmedia_port *port, void *usr_data)
 
     PJ_UNUSED_ARG(port);
     PJ_UNUSED_ARG(usr_data);
-
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     /* Just rewind WAV when it is played outside of call */
     if (pjsua_call_get_count() == 0) {
 	pjsua_player_set_pos(app_config.wav_id, 0);
@@ -1009,7 +1041,7 @@ static void hangup_timeout_callback(pj_timer_heap_t *timer_heap,
 {
     PJ_UNUSED_ARG(timer_heap);
     PJ_UNUSED_ARG(entry);
-
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     app_config.auto_hangup_timer.id = 0;
     pjsua_call_hangup_all();
 }
@@ -1025,7 +1057,7 @@ static void simple_registrar(pjsip_rx_data *rdata)
     unsigned cnt = 0;
     pjsip_generic_string_hdr *srv;
     pj_status_t status;
-
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     status = pjsip_endpt_create_response(pjsua_get_pjsip_endpt(),
 					 rdata, 200, NULL, &tdata);
     if (status != PJ_SUCCESS)
@@ -1078,7 +1110,7 @@ static pj_bool_t default_mod_on_rx_request(pjsip_rx_data *rdata)
     pjsip_tx_data *tdata;
     pjsip_status_code status_code;
     pj_status_t status;
-
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     /* Don't respond to ACK! */
     if (pjsip_method_cmp(&rdata->msg_info.msg->line.req.method,
 			 &pjsip_ack_method) == 0)
@@ -1205,21 +1237,22 @@ void legacy_on_stopped(pj_bool_t restart)
  * Public API
  */
 
-int stdout_refresh_proc(void *arg)
+int log_refresh_proc(void *arg)
 {
-    extern char *stdout_refresh_text;
+    //extern char *stdout_refresh_text;
 
     PJ_UNUSED_ARG(arg);
 
     /* Set thread to lowest priority so that it doesn't clobber
      * stdout output
      */
+	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
     pj_thread_set_prio(pj_thread_this(), 
 		       pj_thread_get_prio_min(pj_thread_this()));
 
-    while (!stdout_refresh_quit) {
-	pj_thread_sleep(stdout_refresh * 1000);
-	puts(stdout_refresh_text);
+    while (!app_config.log_refresh_quit) {
+	pj_thread_sleep(app_config.log_refresh * 1000);
+	puts("STDOUT_REFRESH");
 	fflush(stdout);
     }
 
@@ -1237,25 +1270,27 @@ static pj_status_t app_init()
     /** Create pjsua **/
     status = pjsua_create();
     if (status != PJ_SUCCESS)
-	return status;
+    	return status;
 
     /* Create pool for application */
     app_config.pool = pjsua_pool_create("pjsua-app", 1000, 1000);
     tmp_pool = pjsua_pool_create("tmp-pjsua", 1000, 1000);;
 
     /* Init CLI & its FE settings */
-    if (!app_running) {
-	pj_cli_cfg_default(&app_config.cli_cfg.cfg);
-	pj_cli_telnet_cfg_default(&app_config.cli_cfg.telnet_cfg);
-	pj_cli_console_cfg_default(&app_config.cli_cfg.console_cfg);
-	app_config.cli_cfg.telnet_cfg.on_started = cli_on_started;
+    if (!app_config.app_running) {
+		pj_cli_cfg_default(&app_config.cli_cfg.cfg);
+		pj_cli_telnet_cfg_default(&app_config.cli_cfg.telnet_cfg);
+		pj_cli_console_cfg_default(&app_config.cli_cfg.console_cfg);
+		pj_cli_socket_cfg_default(&app_config.cli_cfg.socket_cfg);
+		app_config.cli_cfg.telnet_cfg.on_started = cli_on_started;
     }
 
     /** Parse args **/
-    status = load_config(app_cfg.argc, app_cfg.argv, &uri_arg);
+    //status = load_config(app_cfg.argc, app_cfg.argv, &uri_arg);
+    status = pjsip_load_config();
     if (status != PJ_SUCCESS) {
-	pj_pool_release(tmp_pool);
-	return status;
+		pj_pool_release(tmp_pool);
+		return status;
     }
 
     /* Initialize application callbacks */
@@ -1265,6 +1300,7 @@ static pj_status_t app_init()
     app_config.cfg.cb.on_dtmf_digit2 = &call_on_dtmf_callback2;
     app_config.cfg.cb.on_call_redirected = &call_on_redirected;
     app_config.cfg.cb.on_reg_state = &on_reg_state;
+    app_config.cfg.cb.on_reg_state2 = &on_reg_state2;
     app_config.cfg.cb.on_incoming_subscribe = &on_incoming_subscribe;
     app_config.cfg.cb.on_buddy_state = &on_buddy_state;
     app_config.cfg.cb.on_buddy_evsub_state = &on_buddy_evsub_state;
@@ -1554,7 +1590,7 @@ static pj_status_t app_init()
 	}
 
 	//pjsua_acc_set_transport(aid, transport_id);
-	pjsua_acc_set_online_status(current_acc, PJ_TRUE);
+	pjsua_acc_set_online_status(current_acc, PJ_FALSE);
 
 	if (app_config.udp_cfg.port == 0) {
 	    pjsua_transport_info ti;
@@ -1599,7 +1635,7 @@ static pj_status_t app_init()
 	}
 
 	//pjsua_acc_set_transport(aid, transport_id);
-	pjsua_acc_set_online_status(current_acc, PJ_TRUE);
+	pjsua_acc_set_online_status(current_acc, PJ_FALSE);
 
 	if (app_config.udp_cfg.port == 0) {
 	    pjsua_transport_info ti;
@@ -1632,7 +1668,7 @@ static pj_status_t app_init()
 	    pjsua_acc_modify(aid, &acc_cfg);
 	}
 
-	pjsua_acc_set_online_status(current_acc, PJ_TRUE);
+	pjsua_acc_set_online_status(current_acc, PJ_FALSE);
 
     }
 
@@ -1664,7 +1700,7 @@ static pj_status_t app_init()
 	}
 
 	//pjsua_acc_set_transport(aid, transport_id);
-	pjsua_acc_set_online_status(current_acc, PJ_TRUE);
+	pjsua_acc_set_online_status(current_acc, PJ_FALSE);
     }
 
 
@@ -1701,7 +1737,7 @@ static pj_status_t app_init()
 	    pjsua_acc_modify(acc_id, &acc_cfg);
 	}
 
-	pjsua_acc_set_online_status(acc_id, PJ_TRUE);
+	pjsua_acc_set_online_status(acc_id, PJ_FALSE);
     }
 
     /* Add TLS IPv6 transport unless it's disabled. */
@@ -1732,7 +1768,7 @@ static pj_status_t app_init()
 	}
 
 	//pjsua_acc_set_transport(aid, transport_id);
-	pjsua_acc_set_online_status(current_acc, PJ_TRUE);
+	pjsua_acc_set_online_status(current_acc, PJ_FALSE);
     }
 
 #endif
@@ -1747,7 +1783,7 @@ static pj_status_t app_init()
     /* Add accounts */
     for (i=0; i<app_config.acc_cnt; ++i) {
 	app_config.acc_cfg[i].rtp_cfg = app_config.rtp_cfg;
-	app_config.acc_cfg[i].reg_retry_interval = 300;
+	//app_config.acc_cfg[i].reg_retry_interval = 300;
 	app_config.acc_cfg[i].reg_first_retry_interval = 60;
 
 	app_config_init_video(&app_config.acc_cfg[i]);
@@ -1755,7 +1791,7 @@ static pj_status_t app_init()
 	status = pjsua_acc_add(&app_config.acc_cfg[i], PJ_TRUE, NULL);
 	if (status != PJ_SUCCESS)
 	    goto on_error;
-	pjsua_acc_set_online_status(current_acc, PJ_TRUE);
+	pjsua_acc_set_online_status(current_acc, PJ_FALSE);
     }
 
     /* Add buddies */
@@ -1804,11 +1840,13 @@ static pj_status_t app_init()
 	if (status != PJ_SUCCESS)
 	    goto on_error;
     }
+    pjsua_conf_adjust_rx_level(0, app_config.mic_level);
+    pjsua_conf_adjust_tx_level(0, app_config.speaker_level);
 
     /* Init call setting */
-    pjsua_call_setting_default(&call_opt);
-    call_opt.aud_cnt = app_config.aud_cnt;
-    call_opt.vid_cnt = app_config.vid.vid_cnt;
+    pjsua_call_setting_default(&app_config.call_opt);
+    app_config.call_opt.aud_cnt = app_config.aud_cnt;
+    app_config.call_opt.vid_cnt = app_config.vid.vid_cnt;
 
     pj_pool_release(tmp_pool);
     return PJ_SUCCESS;
@@ -1835,17 +1873,23 @@ pj_status_t pjsua_app_init(const pjsua_app_cfg_t *cfg)
     return status;
 }
 
+int pjsua_app_restart(void)
+{
+	app_config.app_cli_running = FALSE;
+	return 0;
+}
+
 pj_status_t pjsua_app_run(pj_bool_t wait_telnet_cli)
 {
-    pj_thread_t *stdout_refresh_thread = NULL;
+    pj_thread_t *log_refresh_thread = NULL;
     pj_status_t status;
 
     /* Start console refresh thread */
-    if (stdout_refresh > 0) {
-	pj_thread_create(app_config.pool, "stdout", &stdout_refresh_proc,
-			 NULL, 0, 0, &stdout_refresh_thread);
+    if (app_config.log_refresh > 0) {
+	pj_thread_create(app_config.pool, "stdout", &log_refresh_proc,
+			 NULL, 0, 0, &log_refresh_thread);
     }
-
+    app_config.current_call = PJSUA_INVALID_ID;
     status = pjsua_start();
     if (status != PJ_SUCCESS)
 	goto on_return;
@@ -1862,31 +1906,35 @@ pj_status_t pjsua_app_run(pj_bool_t wait_telnet_cli)
 	}    
     }
 
-    /* If user specifies URI to call, then call the URI */
+/*     If user specifies URI to call, then call the URI
     if (uri_arg.slen) {
-	pjsua_call_setting_default(&call_opt);
-	call_opt.aud_cnt = app_config.aud_cnt;
-	call_opt.vid_cnt = app_config.vid.vid_cnt;
+	pjsua_call_setting_default(&app_config.call_opt);
+	app_config.call_opt.aud_cnt = app_config.aud_cnt;
+	app_config.call_opt.vid_cnt = app_config.vid.vid_cnt;
 
-	pjsua_call_make_call(current_acc, &uri_arg, &call_opt, NULL, 
+	pjsua_call_make_call(current_acc, &uri_arg, &app_config.call_opt, NULL,
 			     NULL, NULL);
-    }   
+    } */
+	app_config.app_cli_running = PJ_TRUE;
+    app_config.app_running = PJ_TRUE;
 
-    app_running = PJ_TRUE;
+    //os_time_create_once(pl_app_restart, &app_config, 30000);
 
     if (app_config.use_cli)
 	cli_main(wait_telnet_cli);	
-    else
-	legacy_main();
+    //else
+	//legacy_main();
 
     status = PJ_SUCCESS;
-
+    PJ_LOG(5, ("main", "--------------pjsua_app_run exit-----------"));
 on_return:
-    if (stdout_refresh_thread) {
-	stdout_refresh_quit = PJ_TRUE;
-	pj_thread_join(stdout_refresh_thread);
-	pj_thread_destroy(stdout_refresh_thread);
-	stdout_refresh_quit = PJ_FALSE;
+    if (log_refresh_thread) {
+    	app_config.log_refresh_quit = PJ_TRUE;
+    printf("======================================================0\r\n");
+	pj_thread_join(log_refresh_thread);
+	printf("======================================================1\r\n");
+	pj_thread_destroy(log_refresh_thread);
+	app_config.log_refresh_quit = PJ_FALSE;
     }
     return status;
 }
@@ -1983,6 +2031,7 @@ pj_status_t pjsua_app_destroy()
     
     return status;
 }
+
 
 /** ======================= **/
 

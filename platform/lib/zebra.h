@@ -177,6 +177,7 @@ typedef int socklen_t;
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
+#include <netinet/if_ether.h>
 
 #ifdef HAVE_NET_NETOPT_H
 #include <net/netopt.h>
@@ -200,6 +201,7 @@ typedef int socklen_t;
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 #include <linux/filter.h>
+#include <linux/if_packet.h>
 #else
 #define RT_TABLE_MAIN		0
 #endif /* HAVE_NETLINK */
@@ -602,6 +604,7 @@ typedef uint32_t route_tag_t;
 #include "os_task.h"
 #include "os_time.h"
 #include "os_util.h"
+#include "os_tlv.h"
 #endif
 
 #include "list.h"

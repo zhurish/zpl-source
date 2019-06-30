@@ -47,7 +47,7 @@ struct zlog *zlog_default = NULL;
 
 static const char *zlog_proto_string[] = { "NONE", "DEFAULT", "CONSOLE", "TELNET",/*"ZEBRA",*/ "HAL", "PAL", "NSM", "RIP",
 		"BGP", "OSPF", "RIPNG", "BABEL", "OSPF6", "ISIS", "PIM", "MASC", "NHRP",
-		"HSLS", "OLSR", "VRRP", "FRP", "LLDP", "BFD", "LDP", "SNTP", "IMISH", "WIFI", "MODEM", "APP", "VOIP", "SOUND",
+		"HSLS", "OLSR", "VRRP", "FRP", "LLDP", "BFD", "LDP", "SNTP", "IMISH", "DHCP", "WIFI", "MODEM", "SIP", "APP", "VOIP", "SOUND",
 		"UTILS", NULL, };
 
 static const char *zlog_priority[] = { "emergencies", "alerts", "critical", "errors",
@@ -72,8 +72,11 @@ static const struct facility_map {
 
 static int zlog_buffer_format(struct zlog *zl, zlog_buffer_t *buffer,
 		int module, int level, char *format, va_list args);
-//static int zlog_check_file (void);
 
+static int zlog_check_file (struct zlog *zl);
+#ifdef ZLOG_TESTING_ENABLE
+static int zlog_testing_check_file (struct zlog *zl);
+#endif
 const char *
 zlog_facility_name(int facility) {
 	const struct facility_map *fm;
@@ -118,10 +121,13 @@ const char * zlog_proto_names(zlog_proto_t module) {
 
 /* For time string format. */
 
-size_t quagga_timestamp(zlog_timestamp_t timestamp, char *buf, size_t buflen) {
+size_t quagga_timestamp(zlog_timestamp_t timestamp, char *buf, size_t buflen)
+{
 
-	time_t clock;
-	struct tm *tm;
+#if 0
+	time_t clock = 0;
+	struct tm tm;
+	struct tm *ptm = NULL;
 	char data[128];
 	int len = 0;
 	clock = os_time(NULL);
@@ -133,41 +139,79 @@ size_t quagga_timestamp(zlog_timestamp_t timestamp, char *buf, size_t buflen) {
 		break;
 		//UTC :Wed Apr 18 05:19:00 UTC 2018
 	case ZLOG_TIMESTAMP_BSD:
-		tm = localtime(&clock);
-		len = strftime(data, sizeof(data), "%b %e %T",tm);
+		localtime_r(&clock, &tm);
+		len = strftime(data, sizeof(data), "%b %e %T", &tm);
 		break;
 	case ZLOG_TIMESTAMP_DATE:
-		tm = localtime(&clock);
-		len = strftime(data, sizeof(data), "%Y/%m/%d %H:%M:%S",tm);
+		localtime_r(&clock, &tm);
+		len = strftime(data, sizeof(data), "%Y/%m/%d %H:%M:%S", &tm);
 		break;
 	case ZLOG_TIMESTAMP_SHORT:
-		tm = localtime(&clock);
-		len = strftime(data, sizeof(data), "%m/%d %H:%M:%S",tm);
+		localtime_r(&clock, &tm);
+		len = strftime(data, sizeof(data), "%m/%d %H:%M:%S", &tm);
 		break;
 	case ZLOG_TIMESTAMP_ISO:
-		tm = gmtime(&clock);
-		len = strftime(data, sizeof(data), "%Y-%m-%dT%H:%M:%S+08:00",tm);
+		ptm = gmtime(&clock);
+		len = strftime(data, sizeof(data), "%Y-%m-%dT%H:%M:%S+08:00", ptm);
 		break;
 
 	case ZLOG_TIMESTAMP_RFC3164:
 		//Mmm dd hh:mm:ss
 		//Oct 11 22:14:15
 		//1990 Oct 22 10:52:01 TZ-6
-		tm = localtime(&clock);
-		len = strftime(data, sizeof(data), "%b %d %T",tm);
+		localtime_r(&clock, &tm);
+		len = strftime(data, sizeof(data), "%b %d %T", &tm);
 		break;
 		//rfc2822
 		//Mon, 07 Aug 2006 12:34:56 -0600
 	case ZLOG_TIMESTAMP_RFC3339:
-		tm = gmtime(&clock);
-		len = strftime(data, sizeof(data), "%Y-%m-%dT%H:%M:%S-08:00",tm);
+		ptm = gmtime(&clock);
+		len = strftime(data, sizeof(data), "%Y-%m-%dT%H:%M:%S-08:00", ptm);
 		break;
 	default:
 		return 0;
 	}
 	//char * asctime(const struct tm * timeptr);
 	//char * ctime(const time_t *timer);
+#else
+	int len = 0;
+	char data[128];
+	time_t clock = os_time(NULL);;
+	os_memset(data, 0, sizeof(data));
+	switch(timestamp)
+	{
+	case ZLOG_TIMESTAMP_NONE:
+		return 0;
+		break;
+		//UTC :Wed Apr 18 05:19:00 UTC 2018
+	case ZLOG_TIMESTAMP_BSD:
+		len = snprintf(data, sizeof(data), "%s", os_time_fmt ("bsd", clock));
+		break;
+	case ZLOG_TIMESTAMP_DATE:
+		len = snprintf(data, sizeof(data), "%s", os_time_fmt ("date", clock));
+		break;
+	case ZLOG_TIMESTAMP_SHORT:
+		len = snprintf(data, sizeof(data), "%s", os_time_fmt ("short", clock));
+		break;
+	case ZLOG_TIMESTAMP_ISO:
+		len = snprintf(data, sizeof(data), "%s", os_time_fmt ("iso", clock));
+		break;
 
+	case ZLOG_TIMESTAMP_RFC3164:
+		//Mmm dd hh:mm:ss
+		//Oct 11 22:14:15
+		//1990 Oct 22 10:52:01 TZ-6
+		len = snprintf(data, sizeof(data), "%s", os_time_fmt ("rfc3164", clock));
+		break;
+		//rfc2822
+		//Mon, 07 Aug 2006 12:34:56 -0600
+	case ZLOG_TIMESTAMP_RFC3339:
+		len = snprintf(data, sizeof(data), "%s", os_time_fmt ("rfc3339", clock));
+		break;
+	default:
+		return 0;
+	}
+#endif
 	if(buf)
 	{
 		os_memcpy(buf, data, MIN(buflen, len));
@@ -179,13 +223,98 @@ size_t quagga_timestamp(zlog_timestamp_t timestamp, char *buf, size_t buflen) {
 }
 
 /* Utility routine for current time printing. */
-static void time_print(FILE *fp, zlog_timestamp_t ctl)
+void time_print(FILE *fp, zlog_timestamp_t ctl)
 {
 	char data[128];
 	os_memset(data, 0, sizeof(data));
 	if(quagga_timestamp(ctl, data, sizeof(data)))
 		fprintf(fp, "%s ", data);
 }
+
+static int zlog_depth_debug_detail(FILE *fp, char *buf, int depth, const char *file,
+		const char *func, const int line)
+{
+	if(depth != ZLOG_DEPTH_NONE)
+	{
+		if(file)
+		{
+			char *bk = strrchr(file, '/');
+			if(buf)
+			{
+				int offset = 0;
+				if(depth == ZLOG_DEPTH_LEVEL1)
+				{
+					if(bk)
+						sprintf(buf, "(%s ", ++bk);
+					else
+						sprintf(buf, "(%s ", file);
+					offset = strlen(buf);
+					sprintf(buf + offset, "line %d:)", line);
+					return strlen(buf);
+				}
+				else if(depth == ZLOG_DEPTH_LEVEL2)
+				{
+					if(bk)
+						sprintf(buf, "[LWP=%d](%s ", os_task_gettid(), ++bk);
+					else
+						sprintf(buf, "[LWP=%d](%s ", os_task_gettid(), file);
+					offset = strlen(buf);
+					sprintf(buf + offset, "line %d:)", line);
+					return strlen(buf);
+				}
+				else if(depth == ZLOG_DEPTH_LEVEL3)
+				{
+					if(bk)
+						sprintf(buf, "%s(%s ", os_task_self_name_alisa(), ++bk);
+					else
+						sprintf(buf, "%s(%s ", os_task_self_name_alisa(), file);
+
+					if(func)
+					{
+						strcat(buf, "->");
+						strcat(buf, func);
+					}
+					offset = strlen(buf);
+					sprintf(buf + offset, " line %d:)", line);
+					return strlen(buf);
+				}
+				return 0;
+			}
+			if(fp)
+			{
+				if(depth == ZLOG_DEPTH_LEVEL1)
+				{
+					if(bk)
+						fprintf(fp, "(%s ", ++bk);
+					else
+						fprintf(fp, "(%s ", file);
+					fprintf(fp, "line %d:)", line);
+				}
+				else if(depth == ZLOG_DEPTH_LEVEL2)
+				{
+					if(bk)
+						fprintf(fp, "[LWP=%d](%s ", os_task_gettid(), ++bk);
+					else
+						fprintf(fp, "[LWP=%d](%s ", os_task_gettid(), file);
+					fprintf(fp, "line %d:)", line);
+				}
+				else if(depth == ZLOG_DEPTH_LEVEL3)
+				{
+					if(bk)
+						fprintf(fp, "%s(%s ", os_task_self_name_alisa(), ++bk);
+					else
+						fprintf(fp, "%s(%s ", os_task_self_name_alisa(), file);
+
+					if(func)
+						fprintf(fp, "->%s ", func);
+					fprintf(fp, "line %d:)", line);
+				}
+			}
+		}
+	}
+	return 0;
+}
+
 
 #ifdef ZLOG_TASK_ENABLE
 /* va_list version of zlog. */
@@ -197,38 +326,49 @@ static void vzlog_output(struct zlog *zl, int module, int priority, const char *
 	/* If zlog is not specified, use default one. */
 	if (zl == NULL)
 		zl = zlog_default;
+	
+		/* When zlog_default is also NULL, use stderr for logging. */
+	if (zl == NULL) {
+		time_print(stderr, ZLOG_TIMESTAMP_DATE);
+		fprintf(stderr, "%s: ", "unknown");
+		vfprintf(stderr, format, args);
+		fprintf(stderr, "\r\n");
+		fflush(stderr);
+
+		/* In this case we return at here. */
+		errno = original_errno;
+		return;
+	}
+	
 	if (zl->mutex)
 		os_mutex_lock(zl->mutex, OS_WAIT_FOREVER);
 	if (module != ZLOG_NONE) {
 		protocol = zl->protocol;
 		zl->protocol = module;
 	}
-	/* When zlog_default is also NULL, use stderr for logging. */
-	if (zl == NULL) {
-		time_print(stderr, zl->timestamp);
-		fprintf(stderr, "%s: ", "unknown");
-		vfprintf(stderr, format, args);
-		fprintf(stderr, "\n");
-		fflush(stderr);
-
-		/* In this case we return at here. */
-		errno = original_errno;
-		if (module != ZLOG_NONE) {
-			zl->protocol = protocol;
-		}
-		if (zl->mutex)
-			os_mutex_unlock(zl->mutex);
-		return;
+#ifdef ZLOG_TESTING_ENABLE
+	if (zl->testing && (priority <= zl->testlog.priority) && zl->testlog.fp)
+	{
+		va_list ac;
+		time_print(zl->testlog.fp, zl->timestamp);
+		fprintf(zl->testlog.fp, "%s: ", zlog_priority[priority]);
+		fprintf(zl->testlog.fp, "%s: ", zlog_proto_string[zl->protocol]);
+		va_copy(ac, args);
+		vfprintf(zl->testlog.fp, format, ac);
+		va_end(ac);
+		fprintf(zl->testlog.fp, "\n");
+		fflush(zl->testlog.fp);
+		zl->testlog.file_check_interval++;
 	}
-
+#endif
 	/* Syslog output */
 	if (priority <= zl->maxlvl[ZLOG_DEST_SYSLOG]) {
 		va_list ac;
 		va_copy(ac, args);
 #ifndef SYSLOG_CLIENT
-		vsyslog(priority | zlog_default->facility, format, ac);
+		vsyslog(priority | zl->facility, format, ac);
 #else
-		vsysclog(priority, format, args);
+		vsysclog(priority, zl->facility, format, args);
 #endif
 		va_end(ac);
 	}
@@ -243,8 +383,9 @@ static void vzlog_output(struct zlog *zl, int module, int priority, const char *
 		va_copy(ac, args);
 		vfprintf(zl->fp, format, ac);
 		va_end(ac);
-		fprintf(zl->fp, "\n");
+		fprintf(zl->fp, "\r\n");
 		fflush(zl->fp);
+		zl->file_check_interval++;
 	}
 
 	/* stdout output. */
@@ -257,7 +398,7 @@ static void vzlog_output(struct zlog *zl, int module, int priority, const char *
 		va_copy(ac, args);
 		vfprintf(stdout, format, ac);
 		va_end(ac);
-		fprintf(stdout, "\n");
+		fprintf(stdout, "\r\n");
 		fflush(stdout);
 	}
 	/* logbuff output. */
@@ -285,15 +426,16 @@ static void vzlog_output(struct zlog *zl, int module, int priority, const char *
 		os_mutex_unlock(zl->mutex);
 }
 
-static void zlog_out(int module, int priority, const char *format, ...)
+static void zlog_out(struct zlog *zl, int module, int priority, const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);
-	vzlog_output(zlog_default, module, priority, format, args);
+	vzlog_output(zl, module, priority, format, args);
 	va_end(args);
 }
 
-void vzlog(struct zlog *zl, int module, int priority, const char *format,
+void pl_vzlog(const char *file, const char *func, const int line,
+		struct zlog *zl, int module, int priority, const char *format,
 		va_list args)
 {
 	int protocol = 0;
@@ -301,7 +443,17 @@ void vzlog(struct zlog *zl, int module, int priority, const char *format,
 	/* If zlog is not specified, use default one. */
 	if (zl == NULL)
 		zl = zlog_default;
+	if (zl == NULL)
+	{
+		time_print(stderr, ZLOG_TIMESTAMP_DATE);
+		fprintf(stderr, "%s: ", "unknown");
+		zlog_depth_debug_detail(stderr, NULL, ZLOG_DEPTH_LEVEL2, file, func, line);
 
+		vfprintf(stderr, format, args);
+		fprintf(stderr, "\r\n");
+		fflush(stderr);
+		return;
+	}
 	if (zl->mutex)
 		os_mutex_lock(zl->mutex, OS_WAIT_FOREVER);
 	if (module != ZLOG_NONE)
@@ -309,38 +461,28 @@ void vzlog(struct zlog *zl, int module, int priority, const char *format,
 		protocol = zl->protocol;
 		zl->protocol = module;
 	}
-	if (zl == NULL)
-	{
-		time_print(stderr, zl->timestamp);
-		fprintf(stderr, "%s: ", "unknown");
-		vfprintf(stderr, format, args);
-		fprintf(stderr, "\n");
-		fflush(stderr);
-
-		if (module != ZLOG_NONE) {
-			zl->protocol = protocol;
-		}
-		if (zl->mutex)
-			os_mutex_unlock(zl->mutex);
-		return;
-	}
 	if (priority <= zl->maxlvl[ZLOG_DEST_SYSLOG] ||
 			priority <= zl->maxlvl[ZLOG_DEST_BUFFER] ||
 			((priority <= zl->maxlvl[ZLOG_DEST_FILE]) && zl->fp) ||
 			priority <= zl->maxlvl[ZLOG_DEST_MONITOR] ||
 			priority == zl->trap_lvl ||
+#ifdef ZLOG_TESTING_ENABLE
+			(zl->testing && (priority <= zl->testlog.priority) && zl->testlog.fp) ||
+#endif
 			priority <= zl->maxlvl[ZLOG_DEST_STDOUT])
 	{
+		int offset = 0;
 		va_list ac;
 		zlog_hdr_t loghdr;
 		memset(&loghdr, 0, sizeof(loghdr));
 		loghdr.module = module;
 		loghdr.priority = priority;
-		//loghdr.len;
+		loghdr.len = 0;
 		//loghdr.logbuf[LOG_MSG_SIZE];
+		offset = zlog_depth_debug_detail(NULL, loghdr.logbuf, zl->depth_debug, file, func, line);
 
 		va_copy(ac, args);
-		loghdr.len = vsnprintf(loghdr.logbuf, sizeof(loghdr.logbuf), format, ac);
+		loghdr.len += vsnprintf(loghdr.logbuf + offset, sizeof(loghdr.logbuf) - offset, format, ac);
 		va_end(ac);
 		if(zl->lfd)
 			write(zl->lfd, &loghdr, sizeof(loghdr));
@@ -350,9 +492,10 @@ void vzlog(struct zlog *zl, int module, int priority, const char *format,
 	return ;
 }
 
+
 static int zlog_task(struct zlog *zl)
 {
-	int retval = 0, interval = 0;
+	int retval = 0;
 	fd_set rfds;
 	zlog_hdr_t loghdr;
 	os_sleep(1);
@@ -374,36 +517,50 @@ static int zlog_task(struct zlog *zl)
 
 		retval = os_select_wait(zl->lfd + 1, &rfds, NULL,  5000);
 
-		interval++;
-
-		if(interval >= 10)
+		if(zl->file_check_interval >= 50 && zl->fp)
 		{
-			interval = 0;
-			zlog_check_file();
+			zl->file_check_interval = 0;
+			zlog_check_file(zl);
 		}
-
-		if (retval == 0)
-			continue;
-
-		if (!FD_ISSET(zl->lfd, &rfds))
-			continue;
-		memset(&loghdr, 0, sizeof(loghdr));
-		if (read(zl->lfd, &loghdr, sizeof(loghdr)) < 0)
+#ifdef ZLOG_TESTING_ENABLE
+		if(zl->testlog.file_check_interval >= 50 && zl->testlog.fp)
 		{
-			if (errno == EPIPE || errno == EBADF || errno == EIO /*ECONNRESET ECONNABORTED ENETRESET ECONNREFUSED*/)
+			zl->testlog.file_check_interval = 0;
+			zlog_testing_check_file(zl);
+		}
+#endif
+		if (retval == OS_TIMEOUT)
+			continue;
+		if (retval < 0)
+		{
+			close(zl->lfd);
+			zl->lfd = os_pipe_create("zlog.p", O_RDWR);
+			if(zl->lfd > 0)
 			{
-				close(zl->lfd);
-				zl->lfd = os_pipe_create("zlog.p", O_RDWR);
-				if(zl->lfd)
+				os_set_nonblocking(zl->lfd);
+				continue;
+			}
+		}
+		if (FD_ISSET(zl->lfd, &rfds))
+		{
+			memset(&loghdr, 0, sizeof(loghdr));
+			if (read(zl->lfd, &loghdr, sizeof(loghdr)) < 0)
+			{
+				if (errno == EPIPE || errno == EBADF || errno == EIO /*ECONNRESET ECONNABORTED ENETRESET ECONNREFUSED*/)
 				{
-					os_set_nonblocking(zl->lfd);
+					close(zl->lfd);
+					zl->lfd = os_pipe_create("zlog.p", O_RDWR);
+					if(zl->lfd > 0)
+					{
+						os_set_nonblocking(zl->lfd);
+					}
+					continue;
 				}
 				continue;
 			}
-			continue;
+			if(loghdr.len)
+				zlog_out(zl, loghdr.module, loghdr.priority, loghdr.logbuf);
 		}
-		if(loghdr.len)
-			zlog_out(loghdr.module, loghdr.priority, loghdr.logbuf);
 	}
 	return OK;
 }
@@ -416,7 +573,7 @@ static int zlog_task_init(struct zlog *zl)
 		zl->lfd = 0;
 	}
 	zl->lfd = os_pipe_create("zlog.p", O_RDWR);
-	if(zl->lfd)
+	if(zl->lfd > 0)
 	{
 		os_set_nonblocking(zl->lfd);
 	}
@@ -444,11 +601,11 @@ static int zlog_task_exit(struct zlog *zl)
 }
 #else
 /* va_list version of zlog. */
-void vzlog(struct zlog *zl, int module, int priority, const char *format,
+void vzlog(const char *file, const char *func, const int line,
+		struct zlog *zl, int module, int priority, const char *format,
 		va_list args) {
 	int protocol = 0;
 	int original_errno = errno;
-
 	/* If zlog is not specified, use default one. */
 	if (zl == NULL)
 		zl = zlog_default;
@@ -462,6 +619,7 @@ void vzlog(struct zlog *zl, int module, int priority, const char *format,
 	if (zl == NULL) {
 		time_print(stderr, zl->timestamp);
 		fprintf(stderr, "%s: ", "unknown");
+		zlog_depth_debug_detail(stderr, NULL, ZLOG_DEPTH_LEVEL2, file, func, line);
 		vfprintf(stderr, format, args);
 		fprintf(stderr, "\n");
 		fflush(stderr);
@@ -475,7 +633,27 @@ void vzlog(struct zlog *zl, int module, int priority, const char *format,
 			os_mutex_unlock(zl->mutex);
 		return;
 	}
-
+#ifdef ZLOG_TESTING_ENABLE
+	if (zl->testing && (priority <= zl->testlog.priority) && zl->testlog.fp)
+	{
+		va_list ac;
+		time_print(zl->testlog.fp, zl->timestamp);
+		fprintf(zl->testlog.fp, "%s: ", zlog_priority[priority]);
+		fprintf(zl->testlog.fp, "%s: ", zlog_proto_string[zl->protocol]);
+		zlog_depth_debug_detail(zl->testlog.fp, NULL, zl->depth_debug, file, func, line);
+		va_copy(ac, args);
+		vfprintf(zl->testlog.fp, format, ac);
+		va_end(ac);
+		fprintf(zl->testlog.fp, "\n");
+		fflush(zl->testlog.fp);
+		zl->testlog.file_check_interval++;
+		if(zl->testlog.file_check_interval >= 50 && zl->testlog.fp)
+		{
+			zl->testlog.file_check_interval = 0;
+			zlog_testing_check_file();
+		}
+	}
+#endif
 	/* Syslog output */
 	if (priority <= zl->maxlvl[ZLOG_DEST_SYSLOG]) {
 		va_list ac;
@@ -483,7 +661,7 @@ void vzlog(struct zlog *zl, int module, int priority, const char *format,
 #ifndef SYSLOG_CLIENT
 		vsyslog(priority | zlog_default->facility, format, ac);
 #else
-		vsysclog(priority, format, args);
+		vsysclog(priority, zl->facility, format, args);
 #endif
 		va_end(ac);
 	}
@@ -495,11 +673,18 @@ void vzlog(struct zlog *zl, int module, int priority, const char *format,
 		if (zl->record_priority)
 			fprintf(zl->fp, "%s: ", zlog_priority[priority]);
 		fprintf(zl->fp, "%s: ", zlog_proto_string[zl->protocol]);
+		zlog_depth_debug_detail(zl->fp, NULL, zl->depth_debug, file, func, line);
 		va_copy(ac, args);
 		vfprintf(zl->fp, format, ac);
 		va_end(ac);
 		fprintf(zl->fp, "\n");
 		fflush(zl->fp);
+		zl->file_check_interval++;
+		if(zl->file_check_interval >= 50 && zl->fp)
+		{
+			zl->file_check_interval = 0;
+			zlog_check_file();
+		}
 	}
 
 	/* stdout output. */
@@ -509,6 +694,7 @@ void vzlog(struct zlog *zl, int module, int priority, const char *format,
 		if (zl->record_priority)
 			fprintf(stdout, "%s: ", zlog_priority[priority]);
 		fprintf(stdout, "%s: ", zlog_proto_string[zl->protocol]);
+		zlog_depth_debug_detail(stdout, NULL, zl->depth_debug, file, func, line);
 		va_copy(ac, args);
 		vfprintf(stdout, format, ac);
 		va_end(ac);
@@ -524,7 +710,11 @@ void vzlog(struct zlog *zl, int module, int priority, const char *format,
 	/* Terminal monitor. */
 	if (priority <= zl->maxlvl[ZLOG_DEST_MONITOR])
 	{
-		vty_log((zl->record_priority ? zlog_priority[priority] : NULL),
+		if(zl->depth_debug != ZLOG_DEPTH_NONE)
+			vty_log_debug((zl->record_priority ? zlog_priority[priority] : NULL),
+				zlog_proto_string[zl->protocol], format, zl->timestamp, args, file, func, line);
+		else
+			vty_log((zl->record_priority ? zlog_priority[priority] : NULL),
 				zlog_proto_string[zl->protocol], format, zl->timestamp, args);
 	}
 	//trapping
@@ -675,12 +865,16 @@ void zlog_signal(int signo, const char *action
 		) {
 	time_t now;
 	char buf[sizeof("DEFAULT: Received signal S at T (si_addr 0xP, PC 0xP); aborting...")
-			+ 100];
+			+ 200];
 	char *s = buf;
 	char *msgstart = buf;
 #define LOC s,buf+sizeof(buf)-s
 
 	time(&now);
+	s = str_append(LOC, "(");
+	s = str_append(LOC, os_task_self_name_alisa());
+	s = str_append(LOC, ")");
+
 	if (zlog_default) {
 		s = str_append(LOC, zlog_proto_string[zlog_default->protocol]);
 		*s++ = ':';
@@ -738,16 +932,6 @@ void zlog_signal(int signo, const char *action
 			);
 
 	s = buf;
-	{
-		s = str_append(LOC, "in thread ");
-		s = str_append(LOC, zlog_backtrace_funcname());
-		s = str_append(LOC, " scheduled from ");
-		s = str_append(LOC, zlog_backtrace_schedfrom());
-		s = str_append(LOC, ":");
-		s = num_append(LOC, zlog_backtrace_schedfrom_line());
-		s = str_append(LOC, "\n");
-	}
-
 
 #define DUMP(FD) write(FD, buf, s-buf);
 	/* If no file logging configured, try to write to fallback log file. */
@@ -780,7 +964,7 @@ void zlog_backtrace_sigsafe(int priority, void *program_counter)
 	static const char pclabel[] = "Program counter: ";
 	void *array[64];
 	int size;
-	char buf[100];
+	char buf[200];
 	char *s, **bt = NULL;
 #define LOC s,buf+sizeof(buf)-s
 
@@ -891,10 +1075,44 @@ void zlog_backtrace(int priority)
 #endif /* HAVE_GLIBC_BACKTRACE */
 }
 
-void zlog(int module, int priority, const char *format, ...) {
+
+void pl_zlog(const char *file, const char *func, const int line, int module, int priority, const char *format, ...)
+{
 	va_list args;
 	va_start(args, format);
-	vzlog(zlog_default, module, priority, format, args);
+	pl_vzlog(file, func, line, zlog_default, module, priority, format, args);
+	va_end(args);
+}
+
+#define ZLOG_FUNC(FUNCNAME,PRIORITY) \
+void \
+FUNCNAME(const char *file, const char *func, const int line, int module, const char *format, ...) \
+{ \
+  va_list args; \
+  va_start(args, format); \
+  pl_vzlog (file, func, line, zlog_default, module, PRIORITY, format, args); \
+  va_end(args); \
+}
+
+ZLOG_FUNC(pl_zlog_err, LOG_ERR)
+
+ZLOG_FUNC(pl_zlog_warn, LOG_WARNING)
+
+ZLOG_FUNC(pl_zlog_info, LOG_INFO)
+
+ZLOG_FUNC(pl_zlog_notice, LOG_NOTICE)
+
+ZLOG_FUNC(pl_zlog_debug, LOG_DEBUG)
+
+ZLOG_FUNC(pl_zlog_trap, LOG_TRAP)
+
+#undef ZLOG_FUNC
+
+#if 0
+void pl_zlog(int module, int priority, const char *format, ...) {
+	va_list args;
+	va_start(args, format);
+	pl_vzlog(zlog_default, module, priority, format, args);
 	va_end(args);
 }
 
@@ -904,24 +1122,26 @@ FUNCNAME(int module, const char *format, ...) \
 { \
   va_list args; \
   va_start(args, format); \
-  vzlog (zlog_default, module, PRIORITY, format, args); \
+  pl_vzlog (zlog_default, module, PRIORITY, format, args); \
   va_end(args); \
 }
 
-ZLOG_FUNC(zlog_err, LOG_ERR)
+ZLOG_FUNC(pl_zlog_err, LOG_ERR)
 
-ZLOG_FUNC(zlog_warn, LOG_WARNING)
+ZLOG_FUNC(pl_zlog_warn, LOG_WARNING)
 
-ZLOG_FUNC(zlog_info, LOG_INFO)
+ZLOG_FUNC(pl_zlog_info, LOG_INFO)
 
-ZLOG_FUNC(zlog_notice, LOG_NOTICE)
+ZLOG_FUNC(pl_zlog_notice, LOG_NOTICE)
 
-ZLOG_FUNC(zlog_debug, LOG_DEBUG)
+ZLOG_FUNC(pl_zlog_debug, LOG_DEBUG)
 
-ZLOG_FUNC(zlog_trap, LOG_TRAP)
+ZLOG_FUNC(pl_zlog_trap, LOG_TRAP)
 
 #undef ZLOG_FUNC
+#endif
 
+/*
 static void zlog_thread_info(int log_level)
 {
 	zlog(ZLOG_DEFAULT, log_level,
@@ -929,6 +1149,7 @@ static void zlog_thread_info(int log_level)
 				"file %s, line %u", zlog_backtrace_funcname(),
 				zlog_backtrace_schedfrom(), zlog_backtrace_schedfrom_line());
 }
+*/
 
 void _zlog_assert_failed(const char *assertion, const char *file,
 		unsigned int line, const char *function)
@@ -942,7 +1163,7 @@ void _zlog_assert_failed(const char *assertion, const char *file,
 			"Assertion `%s' failed in file %s, line %u, function %s", assertion,
 			file, line, (function ? function : "?"));
 	zlog_backtrace(LOG_CRIT);
-	zlog_thread_info(LOG_CRIT);
+	//zlog_thread_info(LOG_CRIT);
 	abort();
 }
 
@@ -960,7 +1181,8 @@ openzlog(const char *progname, zlog_proto_t protocol, int syslog_flags,
 	zl->protocol = protocol;
 	zl->facility = syslog_facility;
 	zl->syslog_options = syslog_flags;
-
+	zl->filesize = ZLOG_FILE_SIZE;
+	zl->record_priority = TRUE;
 	/* Set default logging levels. */
 	for (i = 0; i < array_size(zl->maxlvl); i++)
 	{
@@ -993,6 +1215,14 @@ openzlog(const char *progname, zlog_proto_t protocol, int syslog_flags,
 #ifdef ZLOG_TASK_ENABLE
 	zlog_task_init(zlog_default);
 #endif
+	zl->depth_debug = ZLOG_DEPTH_DEBUG_DEFAULT;
+#ifdef ZLOG_TESTING_ENABLE
+	zl->testing = FALSE;
+	zl->testlog.priority = LOG_WARNING;
+	zl->testlog.fp = NULL;
+	zl->testlog.filesize = 8;
+	zl->testlog.file_check_interval = 0;
+#endif
 	return zl;
 }
 
@@ -1006,6 +1236,15 @@ void closezlog(struct zlog *zl) {
 		free(zl->filename);
 	if (zl->mutex)
 		os_mutex_exit(zl->mutex);
+#ifdef ZLOG_TESTING_ENABLE
+	if(zl->testlog.fp)
+	{
+		fflush(zl->testlog.fp);
+		fclose(zl->testlog.fp);
+		zl->testlog.fp = NULL;
+	}
+#endif
+
 #ifdef ZLOG_TASK_ENABLE
 	zlog_task_exit(zlog_default);
 #endif
@@ -1052,6 +1291,9 @@ void zlog_set_facility(int facility) {
 	if (zlog_default->mutex)
 		os_mutex_lock(zlog_default->mutex, OS_WAIT_FOREVER);
 	zlog_default->facility = facility;
+#ifdef SYSLOG_CLIENT
+	syslogc_facility_set(zlog_default->facility);
+#endif
 	if (zlog_default->mutex)
 		os_mutex_unlock(zlog_default->mutex);
 }
@@ -1143,12 +1385,9 @@ void zlog_get_level(zlog_dest_t dest, int *log_level)
 }
 
 
-
-
 /* Reset opend file. */
-int zlog_reset_file(int bOpen)
+int zlog_reset_file(BOOL bOpen)
 {
-
 	char filetmp[256];
 	if (zlog_default == NULL)
 		return 0;
@@ -1165,19 +1404,22 @@ int zlog_reset_file(int bOpen)
 		fclose(zlog_default->fp);
 		zlog_default->fp = NULL;
 	}
-	memset (filetmp, 0, sizeof(filetmp));
-	sprintf (filetmp, "%s%s", ZLOG_VIRTUAL_PATH, zlog_default->filename);
-	if (access (filetmp, F_OK) >= 0)
+	if(bOpen)
 	{
-		remove(filetmp);
-		sync();
-	}
-	memset (filetmp, 0, sizeof(filetmp));
-	sprintf (filetmp, "%s%s", ZLOG_REAL_PATH, zlog_default->filename);
-	if (access (filetmp, F_OK) >= 0)
-	{
-		remove(filetmp);
-		sync();
+		memset (filetmp, 0, sizeof(filetmp));
+		sprintf (filetmp, "%s%s", ZLOG_VIRTUAL_PATH, zlog_default->filename);
+		if (access (filetmp, F_OK) >= 0)
+		{
+			remove(filetmp);
+			sync();
+		}
+		memset (filetmp, 0, sizeof(filetmp));
+		sprintf (filetmp, "%s%s", ZLOG_REAL_PATH, zlog_default->filename);
+		if (access (filetmp, F_OK) >= 0)
+		{
+			remove(filetmp);
+			sync();
+		}
 	}
 	if (zlog_default->mutex)
 		os_mutex_unlock(zlog_default->mutex);
@@ -1318,6 +1560,121 @@ zlog_get_file_size (int *filesize)
 	return OK;
 }
 
+#ifdef ZLOG_TESTING_ENABLE
+
+int zlog_testing_enable (BOOL enable)
+{
+	if (zlog_default == NULL)
+		return 0;
+	if (zlog_default->mutex)
+		os_mutex_lock(zlog_default->mutex, OS_WAIT_FOREVER);
+	zlog_default->testing = enable;
+	if(enable == FALSE)
+	{
+		if(zlog_default->testlog.fp)
+		{
+			fflush(zlog_default->testlog.fp);
+			fclose(zlog_default->testlog.fp);
+			zlog_default->testlog.fp = NULL;
+		}
+	}
+	if (zlog_default->mutex)
+		os_mutex_unlock(zlog_default->mutex);
+	return OK;
+}
+
+BOOL zlog_testing_enabled (void)
+{
+	if (zlog_default == NULL)
+		return 0;
+	return zlog_default->testing;
+}
+
+int zlog_testing_priority (int priority)
+{
+	if (zlog_default == NULL)
+		return 0;
+	if (zlog_default->mutex)
+		os_mutex_lock(zlog_default->mutex, OS_WAIT_FOREVER);
+	zlog_default->testlog.priority = priority;
+	if (zlog_default->mutex)
+		os_mutex_unlock(zlog_default->mutex);
+	return OK;
+}
+
+int zlog_testing_file (char * filename)
+{
+	char filetmp[256];
+	if (zlog_default == NULL)
+		return 0;
+	if (zlog_default->mutex)
+		os_mutex_lock(zlog_default->mutex, OS_WAIT_FOREVER);
+
+	if(zlog_default->testlog.filename)
+	{
+		if(zlog_default->testlog.fp)
+		{
+			fclose(zlog_default->testlog.fp);
+			zlog_default->testlog.fp = NULL;
+		}
+		memset(filetmp, 0, sizeof(filetmp));
+		sprintf (filetmp, "%s%s", ZLOG_VIRTUAL_PATH, zlog_default->testlog.filename);
+		remove(filetmp);
+		sync();
+		free(zlog_default->testlog.filename);
+		zlog_default->testlog.filename = NULL;
+		if(filename == NULL)
+		{
+			if (zlog_default->mutex)
+				os_mutex_unlock(zlog_default->mutex);
+			return OK;
+		}
+	}
+	if(filename)
+	{
+		zlog_default->testlog.filename = strdup(filename);
+
+		memset(filetmp, 0, sizeof(filetmp));
+		sprintf (filetmp, "%s%s", ZLOG_VIRTUAL_PATH, filename);
+
+		zlog_default->testlog.fp = fopen(filetmp, "a+");
+	}
+	if (zlog_default->mutex)
+		os_mutex_unlock(zlog_default->mutex);
+	if(filename && zlog_default->testlog.fp)
+		return OK;
+	return ERROR;
+}
+static int zlog_testing_check_file (struct zlog *zl)
+{
+	struct stat fsize;
+	char filetmp[256];
+	if (zlog_default == NULL)
+		return ERROR;
+	memset (filetmp, 0, sizeof(filetmp));
+	if(!zl->testlog.filename)
+		return ERROR;
+	if (zl->mutex)
+		os_mutex_lock(zl->mutex, OS_WAIT_FOREVER);
+	sprintf (filetmp, "%s%s", ZLOG_VIRTUAL_PATH, zl->testlog.filename);
+	if (access (filetmp, F_OK) >= 0)
+	{
+		memset (&fsize, 0, sizeof(fsize));
+		(void) stat (filetmp, &fsize);
+		zlog_debug(ZLOG_DEFAULT, "========%s:%d %d", __func__, fsize.st_size, zl->testlog.filesize * ZLOG_1M);
+		if (fsize.st_size < (zl->testlog.filesize * ZLOG_1M))
+		{
+			if (zl->mutex)
+				os_mutex_unlock(zl->mutex);
+			return OK;
+		}
+		fseek(zl->testlog.fp, 0, SEEK_SET);
+	}
+	if (zl->mutex)
+		os_mutex_unlock(zl->mutex);
+	return OK;
+}
+#endif
 
 static int zlog_file_move(const char *src, const char *dest)
 {
@@ -1358,82 +1715,93 @@ int zlog_file_save (void)
 			fflush (zlog_default->fp);
 			fclose (zlog_default->fp);
 		}
-		sprintf (filereal, "%s%s", ZLOG_REAL_PATH, zlog_default->filename);
-
-		if (access (filereal, F_OK) >= 0)
+#ifdef ZLOG_TESTING_ENABLE
+		if(zlog_default->testing == FALSE)
+#endif
 		{
-			sprintf (filereal2, "%s%s.old", ZLOG_REAL_PATH, zlog_default->filename);
-			if (access (filereal2, F_OK) >= 0)
-				remove(filereal2);
-			sync();
-			zlog_file_move(filereal, filereal2);
+			sprintf (filereal, "%s%s", ZLOG_REAL_PATH, zlog_default->filename);
+
+			if (access (filereal, F_OK) >= 0)
+			{
+				sprintf (filereal2, "%s%s.old", ZLOG_REAL_PATH, zlog_default->filename);
+				if (access (filereal2, F_OK) >= 0)
+					remove(filereal2);
+				sync();
+				zlog_file_move(filereal, filereal2);
+			}
+			zlog_file_move(filetmp, filereal);
+			remove(filetmp);
 		}
-		zlog_file_move(filetmp, filereal);
-		remove(filetmp);
 		sync();
 	}
 	if (zlog_default->mutex)
 		os_mutex_unlock(zlog_default->mutex);
 	return OK;
 }
+
 /* Check log filesize. */
-#if 1
-int zlog_check_file (void)
+static int zlog_check_file (struct zlog *zl)
 {
 	struct stat fsize;
 	char filetmp[256];
-	char filereal[256];
-	char filereal2[256];
 	if (zlog_default == NULL)
 		return ERROR;
 	memset (filetmp, 0, sizeof(filetmp));
-	memset (filereal, 0, sizeof(filereal));
-	if (zlog_default->mutex)
-		os_mutex_lock(zlog_default->mutex, OS_WAIT_FOREVER);
-	sprintf (filetmp, "%s%s", ZLOG_VIRTUAL_PATH, zlog_default->filename);
+	//memset (filereal, 0, sizeof(filereal));
+	if (zl->mutex)
+		os_mutex_lock(zl->mutex, OS_WAIT_FOREVER);
+	sprintf (filetmp, "%s%s", ZLOG_VIRTUAL_PATH, zl->filename);
 	if (access (filetmp, F_OK) >= 0)
 	{
 		memset (&fsize, 0, sizeof(fsize));
 		(void) stat (filetmp, &fsize);
 
-		if (fsize.st_size < (zlog_default->filesize * ZLOG_1M))
+		zlog_debug(ZLOG_DEFAULT, "========%s:%d %d", __func__, fsize.st_size, zl->filesize * ZLOG_1M);
+		if (fsize.st_size < (zl->filesize * ZLOG_1M))
 		{
-			if (zlog_default->mutex)
-				os_mutex_unlock(zlog_default->mutex);
+			if (zl->mutex)
+				os_mutex_unlock(zl->mutex);
 			return OK;
 		}
-		if (zlog_default->fp)
+		if (zl->fp)
 		{
-			fflush (zlog_default->fp);
-			fclose (zlog_default->fp);
+			fflush (zl->fp);
+			fclose (zl->fp);
 		}
-		sprintf (filereal, "%s%s", ZLOG_REAL_PATH, zlog_default->filename);
-
-		if (access (filereal, F_OK) >= 0)
+#ifdef ZLOG_TESTING_ENABLE
+		if(zl->testing == FALSE)
+#endif
 		{
-			sprintf (filereal2, "%s%s.old", ZLOG_REAL_PATH, zlog_default->filename);
-			if (access (filereal2, F_OK) >= 0)
-				remove(filereal2);
-			sync();
-			zlog_file_move(filereal, filereal2);
-		}
+			char filereal[256];
+			char filereal2[256];
+			memset (filereal, 0, sizeof(filereal));
+			memset (filereal2, 0, sizeof(filereal2));
+			sprintf (filereal, "%s%s", ZLOG_REAL_PATH, zl->filename);
 
-		zlog_file_move(filetmp, filereal);
-		remove(filetmp);
+			if (access (filereal, F_OK) >= 0)
+			{
+				sprintf (filereal2, "%s%s.old", ZLOG_REAL_PATH, zl->filename);
+				if (access (filereal2, F_OK) >= 0)
+					remove(filereal2);
+				sync();
+				zlog_file_move(filereal, filereal2);
+			}
+			zlog_file_move(filetmp, filereal);
+			remove(filetmp);
+		}
 		sync();
-		zlog_default->fp = fopen (filetmp, "a");
-		if (zlog_default->fp == NULL)
+		zl->fp = fopen (filetmp, "a");
+		if (zl->fp == NULL)
 		{
-			if (zlog_default->mutex)
-				os_mutex_unlock(zlog_default->mutex);
+			if (zl->mutex)
+				os_mutex_unlock(zl->mutex);
 			return ERROR;
 		}
 	}
-	if (zlog_default->mutex)
-		os_mutex_unlock(zlog_default->mutex);
+	if (zl->mutex)
+		os_mutex_unlock(zl->mutex);
 	return OK;
 }
-#endif
 /******************************************************/
 /*static int zlog_buffer_insert_one(zlog_buffer_t *buffer, int module, int level, int len, const char *log)
 {
@@ -1472,7 +1840,7 @@ static int zlog_buffer_format(struct zlog *zl, zlog_buffer_t *buffer,
 	va_copy(ac, args);
 	len += vsprintf(buffer->buffer[index].log + len, format, ac);
 	va_end(ac);
-	len += sprintf(buffer->buffer[index].log + len, "\n");
+	len += sprintf(buffer->buffer[index].log + len, "\r\n");
 
 	buffer->buffer[index].module = module;
 	buffer->buffer[index].level = level;
@@ -1540,11 +1908,16 @@ int zlog_buffer_save(void)
 		os_mutex_lock(zlog_default->mutex, OS_WAIT_FOREVER);
 	if(zlog_default->maxlvl[ZLOG_DEST_BUFFER])
 	{
-		sprintf (filereal, "%s%s", ZLOG_REAL_PATH, zlog_default->filename);
-
-		//if(zlog_default->fp)
-		//	vos_wdog_cancel(zlog_default->zlog_wdog);
-
+#ifdef ZLOG_TESTING_ENABLE
+		if(zlog_default->testing == FALSE)
+		{
+			sprintf (filereal, "%s%s", ZLOG_REAL_PATH, zlog_default->filename);
+		}
+		else
+#endif
+		{
+			sprintf (filereal, "%s%s", ZLOG_VIRTUAL_PATH, zlog_default->filename);
+		}
 		fp = fopen (filereal, "a");
 		if (fp == NULL)
 		{
@@ -1617,6 +1990,7 @@ int zlog_buffer_callback_api (zlog_buffer_cb cb, void *pVoid)
 	return OK;
 }
 
+
 /* Reopen log file. */
 int zlog_rotate()
 {
@@ -1633,15 +2007,19 @@ int zlog_rotate()
 	level = zlog_default->maxlvl[ZLOG_DEST_FILE];
 	zlog_default->maxlvl[ZLOG_DEST_FILE] = ZLOG_DISABLED;
 
-	if (zlog_default->filename) {
+	if (zlog_default->filename)
+	{
+		char filetmp[128];
 		mode_t oldumask;
 		int save_errno;
-
+		memset(filetmp, 0, sizeof(filetmp));
+		snprintf (filetmp, sizeof(filetmp), "%s%s", ZLOG_VIRTUAL_PATH, zlog_default->filename);
 		oldumask = umask(0777 & ~LOGFILE_MASK);
-		zlog_default->fp = fopen(zlog_default->filename, "a");
+		zlog_default->fp = fopen(filetmp, "a");
 		save_errno = errno;
 		umask(oldumask);
-		if (zlog_default->fp == NULL) {
+		if (zlog_default->fp == NULL)
+		{
 			zlog_err(ZLOG_DEFAULT,
 					"Log rotate failed: cannot open file %s for append: %s",
 					zlog_default->filename, safe_strerror(save_errno));

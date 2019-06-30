@@ -19,7 +19,11 @@ LIB_DIR = $(BASE_ROOT)/$(LIBDIR)
 
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
 
-
+ifneq ($(TOBJS),)
+TARGET = auddemo
+TMODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(TOBJS))
+endif
+PLCFLAGS +=-DPJ_AUTOCONF=1 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1
 #CFLAGS += -UHAVE_CONFIG_H
 # It's a kind of magic...
 #
@@ -34,7 +38,7 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	$(ECHO) CC '$(CFLAGS)' $@
+	@$(PL_ECHO_CC)
 	@$(PL_OBJ_COMPILE)
 #
 
@@ -44,7 +48,12 @@ $(LIBS) : $(MODULE_OBJS)
 #	$(MAKE) -C $(PLBASE)/externsions/pjproject-2.8 install
 	$(PL_MAKE_LIB) $(LIBS) $(MODULE_OBJS) 
 
-	
+ifneq ($(TOBJS),)
+LDCLFLAG = $(PLOS_LDLIBS) -L$(DSTULIBDIR) $(PL_LDLIBS) 
+
+$(TARGET): $(TMODULE_OBJS)
+	$(CC) $(TMODULE_OBJS) $(CFLAGS) $(LDCLFLAG) -o $(TARGET) 
+endif		
 #include $(MAKE_DIR)/make.mk
 
 #lib: $(LIBS)
@@ -59,7 +68,19 @@ $(LIBS) : $(MODULE_OBJS)
 lib: $(LIBS)
 
 
+ifneq ($(TOBJS),)
+obj: $(MODULE_OBJS) $(MODULE_LIBOBJS) $(TMODULE_OBJS)
 
+install: $(LIBS) $(TARGET)
+	install -d $(LIB_DIR)
+	install -m 755 $(LIBS) $(LIB_DIR)
+#	$(STRIP) $(LIB_DIR)/$(LIBS)
+#	install -m 755 lib*.so $(LIB_DIR)
+#	install -m 755 lib*.so.* $(LIB_DIR)
+	install -d ${DSTSBINDIR}
+	install -m 755 ${TARGET} ${DSTSBINDIR} 
+	#$(STRIP) ${DSTSBINDIR}/${TARGET}
+else
 obj: $(MODULE_OBJS) $(MODULE_LIBOBJS)
 
 install: $(LIBS)
@@ -67,9 +88,8 @@ install: $(LIBS)
 	install -m 755 $(LIBS) $(LIB_DIR)
 #	$(STRIP) $(LIB_DIR)/$(LIBS)
 #	install -m 755 lib*.so $(LIB_DIR)
-#	install -m 755 lib*.so.* $(LIB_DIR)
-
-
+#	install -m 755 lib*.so.* $(LIB_DIR)	
+endif
 
 clean: objclean
 	@$(RM) $(LIB_DIR)/$(LIBS)

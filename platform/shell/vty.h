@@ -157,6 +157,14 @@ struct vty
   int	(*ssh_close)(struct vty *);
   void	*ssh;
 
+  enum
+  {
+	  VTY_LOGIN_STDIN,
+	  VTY_LOGIN_CONSOLE,
+	  VTY_LOGIN_TELNET,
+	  VTY_LOGIN_SSH,
+	  VTY_LOGIN_SH
+  } login_type;
 
   BOOL	cancel;
 
@@ -167,6 +175,9 @@ struct vty
 
 
   BOOL detail;
+  BOOL res0;
+  BOOL res1;
+  void		*priv;
 };
 
 #ifdef HAVE_ROUTE_OPTIMIZE
@@ -293,6 +304,7 @@ extern int exec_timeout(struct vty *vty, const char *min_str, const char *sec_st
 
 extern int vty_command(struct vty *vty, char *buf);
 extern int vty_execute(struct vty *vty);
+extern int vty_execute_shell(const char *cmd);
 
 extern int vty_getc_input(struct vty *vty);
 extern int vty_read_handle(struct vty *vty, unsigned char *buf, int len);
@@ -314,15 +326,16 @@ extern void vty_self_insert(struct vty *vty, char c);
 
 extern int vty_shell (struct vty *);
 extern int vty_shell_serv (struct vty *);
-
+extern int vty_is_console(struct vty *vty);
 
 
 extern int vty_write_hello(struct vty *vty);
-extern int vty_stdio (const char *, void (*atclose)(void));
-extern int vty_console(const char *tty, void (*atclose)());
+//extern int vty_stdio_init (const char *, void (*atclose)(void));
+extern int vty_console_init(const char *tty, void (*atclose)());
 
 
 extern void vty_init (void *, void *);
+extern void vty_tty_init(char *tty);
 extern void vty_init_vtysh (void);
 extern void vty_terminate (void);
 extern void vty_reset (void);
@@ -335,6 +348,9 @@ extern void vty_load_config (char *);
 
 extern void vty_log (const char *level, const char *proto, 
                      const char *fmt, zlog_timestamp_t , va_list);
+extern void vty_log_debug(const char *level, const char *proto_str, const char *format,
+		zlog_timestamp_t ctl, va_list va, const char *file, const char *func, const int line);
+
 extern void vty_trap_log (const char *level, const char *proto_str,
 	 const char *format, zlog_timestamp_t ctl, va_list);
 extern void vty_log_fixed (char *buf, size_t len);

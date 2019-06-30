@@ -18,6 +18,8 @@
 #include "telnetLib.h"
 #include "tracerouteLib.h"
 
+#include "uci_ubus.h"
+
 static struct vty *tftp_vty = NULL;
 
 static int sys_task_id = 0;
@@ -66,20 +68,20 @@ static int ftpd_loginVerify(char *user, char *pass)
 
 static int systools_task(void *argv)
 {
-	module_setup_task(MODULE_TELNET, os_task_id_self());
+	module_setup_task(MODULE_UTILS, os_task_id_self());
 	while(!os_load_config_done())
 	{
 		os_sleep(1);
 	}
-	eloop_start_running(NULL, MODULE_TELNET);
+	eloop_start_running(NULL, MODULE_UTILS);
 	return 0;
 }
 
 int systools_task_init ()
 {
-	if(master_eloop[MODULE_TELNET] == NULL)
-		master_eloop[MODULE_TELNET] = eloop_master_module_create(MODULE_TELNET);
-	//master_thread[MODULE_TELNET] = thread_master_module_create(MODULE_TELNET);
+	if(master_eloop[MODULE_UTILS] == NULL)
+		master_eloop[MODULE_UTILS] = eloop_master_module_create(MODULE_UTILS);
+	//master_thread[MODULE_UTILS] = thread_master_module_create(MODULE_UTILS);
 	if(sys_task_id == 0)
 		sys_task_id = os_task_create("sysTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, systools_task, NULL, OS_TASK_DEFAULT_STACK);
@@ -105,7 +107,9 @@ int systools_module_init ()
 	ftpLibInit(5);
 	ftpdInit (master_eloop[MODULE_UTILS], ftpd_loginVerify);
 	tftpdInit(master_eloop[MODULE_UTILS], NULL);
-
+#ifdef PL_OPENWRT_UCI
+	uci_ubus_init(master_eloop[MODULE_UTILS]);
+#endif
 	return OK;
 }
 
@@ -114,7 +118,9 @@ int systools_module_exit ()
 	ftpdDisable();
 	tftpdUnInit();
 
-
+#ifdef PL_OPENWRT_UCI
+	uci_ubus_exit();
+#endif
 	if(master_eloop[MODULE_UTILS])
 		eloop_master_free(master_eloop[MODULE_UTILS]);
 	master_eloop[MODULE_UTILS] = NULL;

@@ -50,7 +50,7 @@ snprintf(char *str, size_t size, const char *format, ...)
 
   va_start (args, format);
   len = vsprintf (str, format, args);
-  va_end(ac);
+  va_end(args);
   return len;
 }
 #endif
@@ -183,3 +183,347 @@ const char *string_have_space(char* src)
 	return src;*/
 }
 
+int all_space (const char *str)
+{
+  for (; *str != '\0'; str++)
+    if (!isspace ((int) *str))
+      return 0;
+  return 1;
+}
+
+const char *itoa(int value, int base)
+{
+	static char buf[64];
+	memset(buf, 0, sizeof(buf));
+	if(base == 0 || base == 10)
+		snprintf(buf, sizeof(buf), "%d", value);
+	else if(base == 16)
+		snprintf(buf, sizeof(buf), "%x", value);
+	return buf;
+}
+
+const char *itof(float value)
+{
+	static char buf[64];
+	memset(buf, 0, sizeof(buf));
+	snprintf(buf, sizeof(buf), "%f", value);
+	return buf;
+}
+
+
+
+/* Validate a hex character */
+BOOL is_hex (char c)
+{
+  return (((c >= '0') && (c <= '9')) ||
+	  ((c >= 'A') && (c <= 'F')) || ((c >= 'a') && (c <= 'f')));
+}
+
+u_int32 string_to_hex(char * room)
+{
+	zassert(room != NULL);
+	return strtol(room, NULL, 16);
+}
+
+char * hex_to_string(u_int32 hex)
+{
+	static char buf[64];
+	memset(buf, 0, sizeof(buf));
+	snprintf(buf, sizeof(buf), "%x", hex);
+	return buf;
+}
+
+u_int8 atoascii(int a)
+{
+	return ((a) - 0x30);
+}
+
+
+
+int strchr_count(char *src, const char em)
+{
+	char *p = src;
+	assert(src);
+	int i = 0, j = 0, count = os_strlen(src);
+	for(i = 0; i < count; i++)
+	{
+		if(p[i] == em)
+		{
+			j++;
+		}
+	}
+	return j;
+}
+
+int strchr_step(char *src, const char em, int step)
+{
+	char *p = src;
+	assert(src);
+	int i = 0, j = 0, count = os_strlen(src);
+	for(i = 0; i < count; i++)
+	{
+		if(p[i] == em)
+		{
+			j++;
+			if(j == step)
+				break;
+		}
+	}
+	return (i < count)? i:0;
+}
+
+int strchr_next(char *src, const char em)
+{
+	char *p = src;
+	assert(src);
+	int i = 0, count = os_strlen(src);
+	for(i = 0; i < count; i++)
+	{
+		if(p[i] == em)
+		{
+			if(i != 0)
+				break;
+		}
+	}
+	return i;
+}
+
+char *os_strstr_last(const char *dest,const char *src)
+{
+	const char *ret=NULL;
+	static char *last = NULL;
+	assert(dest);
+	assert(src);
+	if(*src == '\0')
+		return (char *)dest;
+	while((ret = os_strstr(dest,src)))
+	{
+		last=ret;
+		dest=ret+1;
+	}
+	return (char *)last;
+}
+
+
+int str_isempty(char *dest, int len)
+{
+	char buf[2048];
+	os_memset(buf, 0, sizeof(buf));
+	if(os_memcmp(buf, dest, MIN(len, sizeof(buf))) == 0)
+		return 1;
+	return 0;
+}
+
+
+
+
+
+/*
+ *
+ *  DHCPD
+ */
+u_int32_t
+getULong(unsigned char *buf)
+{
+	u_int32_t ibuf;
+
+	memcpy(&ibuf, buf, sizeof(ibuf));
+	return (ntohl(ibuf));
+}
+
+u_int16_t
+getUShort(unsigned char *buf)
+{
+	u_int16_t ibuf;
+
+	memcpy(&ibuf, buf, sizeof(ibuf));
+	return (ntohs(ibuf));
+}
+
+void
+putULong(unsigned char *obuf, u_int32_t val)
+{
+	u_int32_t tmp = htonl(val);
+
+	memcpy(obuf, &tmp, sizeof(tmp));
+}
+
+void
+putLong(unsigned char *obuf, int32_t val)
+{
+	int32_t tmp = htonl(val);
+
+	memcpy(obuf, &tmp, sizeof(tmp));
+}
+
+void
+putUShort(unsigned char *obuf, unsigned int val)
+{
+	u_int16_t tmp = htons(val);
+
+	memcpy(obuf, &tmp, sizeof(tmp));
+}
+
+void
+putShort(unsigned char *obuf, int val)
+{
+	int16_t tmp = htons(val);
+
+	memcpy(obuf, &tmp, sizeof(tmp));
+}
+
+void
+convert_num(unsigned char *buf, char *str, int base, int size)
+{
+	int negative = 0, tval, max;
+	u_int32_t val = 0;
+	char *ptr = str;
+
+	if (*ptr == '-') {
+		negative = 1;
+		ptr++;
+	}
+
+	/* If base wasn't specified, figure it out from the data. */
+	if (!base) {
+		if (ptr[0] == '0') {
+			if (ptr[1] == 'x') {
+				base = 16;
+				ptr += 2;
+			} else if (isascii((unsigned char)ptr[1]) &&
+			    isdigit((unsigned char)ptr[1])) {
+				base = 8;
+				ptr += 1;
+			} else
+				base = 10;
+		} else
+			base = 10;
+	}
+
+	do {
+		tval = *ptr++;
+		/* XXX assumes ASCII... */
+		if (tval >= 'a')
+			tval = tval - 'a' + 10;
+		else if (tval >= 'A')
+			tval = tval - 'A' + 10;
+		else if (tval >= '0')
+			tval -= '0';
+		else {
+			//dhcpd_warning("Bogus number: %s.", str);
+			break;
+		}
+		if (tval >= base) {
+			//dhcpd_warning("Bogus number: %s: digit %d not in base %d",
+			//    str, tval, base);
+			break;
+		}
+		val = val * base + tval;
+	} while (*ptr);
+
+	if (negative)
+		max = (1 << (size - 1));
+	else
+		max = (1 << (size - 1)) + ((1 << (size - 1)) - 1);
+	if (val > max) {
+		switch (base) {
+		case 8:
+			//dhcpd_warning("value %s%o exceeds max (%d) for precision.",
+			//    negative ? "-" : "", val, max);
+			break;
+		case 16:
+			//dhcpd_warning("value %s%x exceeds max (%d) for precision.",
+			//    negative ? "-" : "", val, max);
+			break;
+		default:
+			//dhcpd_warning("value %s%u exceeds max (%d) for precision.",
+			//    negative ? "-" : "", val, max);
+			break;
+		}
+	}
+
+	if (negative) {
+		switch (size) {
+		case 8:
+			*buf = -(unsigned long)val;
+			break;
+		case 16:
+			putShort(buf, -(unsigned long)val);
+			break;
+		case 32:
+			putLong(buf, -(unsigned long)val);
+			break;
+		default:
+			//dhcpd_warning("Unexpected integer size: %d", size);
+			break;
+		}
+	} else {
+		switch (size) {
+		case 8:
+			*buf = (u_int8_t)val;
+			break;
+		case 16:
+			putUShort(buf, (u_int16_t)val);
+			break;
+		case 32:
+			putULong(buf, val);
+			break;
+		default:
+			//zlog_warning("Unexpected integer size: %d", size);
+			break;
+		}
+	}
+}
+
+
+
+#include "errno.h"
+#define INVALID 	1
+#define TOOSMALL 	2
+#define TOOLARGE 	3
+
+#ifndef LLONG_MIN
+#define LLONG_MIN -9223372036854775808
+#endif
+#ifndef LLONG_MAX
+#define LLONG_MAX 9223372036854775807
+#endif
+
+long long
+strtonum(const char *numstr, long long minval, long long maxval,
+    const char **errstrp)
+{
+	long long ll = 0;
+	char *ep;
+	int error = 0;
+	struct errval {
+		const char *errstr;
+		int err;
+	} ev[4] = {
+		{ NULL,		0 },
+		{ "invalid",	EINVAL },
+		{ "too small",	ERANGE },
+		{ "too large",	ERANGE },
+	};
+
+	ev[0].err = errno;
+	errno = 0;
+	if (minval > maxval)
+		error = INVALID;
+	else {
+		ll = strtoll(numstr, &ep, 10);
+		if (numstr == ep || *ep != '\0')
+			error = INVALID;
+		else if ((ll == LLONG_MIN && errno == ERANGE) || ll < minval)
+			error = TOOSMALL;
+		else if ((ll == LLONG_MAX && errno == ERANGE) || ll > maxval)
+			error = TOOLARGE;
+	}
+	if (errstrp != NULL)
+		*errstrp = ev[error].errstr;
+	errno = ev[error].err;
+	if (error)
+		ll = 0;
+
+	return (ll);
+}

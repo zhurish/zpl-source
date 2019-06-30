@@ -1116,7 +1116,7 @@ static pj_status_t bb10_stream_start (pjmedia_aud_stream *s)
 
     if (stream->param.dir & PJMEDIA_DIR_CAPTURE) {
         status = pj_thread_create (stream->pool,
-				   "bb10sound_playback",
+				   "bb10sound_capture",
 				   ca_thread_func,
 				   stream,
 				   0,

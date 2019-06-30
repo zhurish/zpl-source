@@ -245,6 +245,7 @@ extern struct prefix *sockunion2hostprefix (const union sockunion *, struct pref
 extern void prefix2sockunion (const struct prefix *, union sockunion *);
 
 extern int str2prefix_eth (const char *, struct prefix_eth *);
+extern int ether_aton_r (const void *addrptr, struct ethaddr *ether);
 
 extern struct prefix_ipv4 *prefix_ipv4_new (void);
 extern void prefix_ipv4_free (struct prefix_ipv4 *);
@@ -299,5 +300,8 @@ static inline int ipv4_martian (struct in_addr *addr)
 }
 
 extern int prefix_check_addr (struct prefix *p);
+extern const char *inet_address(u_int32 ip);
+extern const char *inet_ethernet(u_int8 *mac);
+extern u_int32 get_hostip_byname(char *hostname);
 
 #endif /* _ZEBRA_PREFIX_H */

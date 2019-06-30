@@ -35,12 +35,12 @@ void displayWindow(pjsua_vid_win_id wid);
 static char some_buf[SOME_BUF_SIZE];
 
 /** Variable definition **/
-int		    stdout_refresh = -1;
-pj_bool_t	    stdout_refresh_quit = PJ_FALSE;
-pjsua_call_id	    current_call = PJSUA_INVALID_ID;
+//int		    stdout_refresh = -1;
+//pj_bool_t	    stdout_refresh_quit = PJ_FALSE;
+//pjsua_call_id	    current_call = PJSUA_INVALID_ID;
 pjsua_app_config    app_config;
-pjsua_call_setting  call_opt;
-pjsua_msg_data	    msg_data;
+//pjsua_call_setting  call_opt;
+//pjsua_msg_data	    msg_data;
 
 int my_atoi(const char *cs)
 {
@@ -67,21 +67,21 @@ pj_bool_t find_next_call()
     int i, max;
 
     max = pjsua_call_get_max_count();
-    for (i=current_call+1; i<max; ++i) {
+    for (i=app_config.current_call+1; i<max; ++i) {
 	if (pjsua_call_is_active(i)) {
-	    current_call = i;
+	    app_config.current_call = i;
 	    return PJ_TRUE;
 	}
     }
 
-    for (i=0; i<current_call; ++i) {
+    for (i=0; i<app_config.current_call; ++i) {
 	if (pjsua_call_is_active(i)) {
-	    current_call = i;
+	    app_config.current_call = i;
 	    return PJ_TRUE;
 	}
     }
 
-    current_call = PJSUA_INVALID_ID;
+    app_config.current_call = PJSUA_INVALID_ID;
     return PJ_FALSE;
 }
 
@@ -90,24 +90,28 @@ pj_bool_t find_prev_call()
     int i, max;
 
     max = pjsua_call_get_max_count();
-    for (i=current_call-1; i>=0; --i) {
+    for (i=app_config.current_call-1; i>=0; --i) {
 	if (pjsua_call_is_active(i)) {
-	    current_call = i;
+	    app_config.current_call = i;
 	    return PJ_TRUE;
 	}
     }
 
-    for (i=max-1; i>current_call; --i) {
+    for (i=max-1; i>app_config.current_call; --i) {
 	if (pjsua_call_is_active(i)) {
-	    current_call = i;
+	    app_config.current_call = i;
 	    return PJ_TRUE;
 	}
     }
 
-    current_call = PJSUA_INVALID_ID;
+    app_config.current_call = PJSUA_INVALID_ID;
     return PJ_FALSE;
 }
 
+pjsua_call_id find_current_call()
+{
+	return app_config.current_call;
+}
 /*
  * Send arbitrary request to remote host
  */

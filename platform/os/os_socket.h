@@ -21,6 +21,11 @@ extern int sock_connect_timeout(int sock, char *ipaddress, int port, int timeout
 
 extern int sock_client_write(int fd, char *ipaddress, int port, char *buf, int len);
 
+extern int raw_sock_create(int style, int protocol);
+extern int raw_sock_bind(int fd, int family, int protocol, int ifindex);
+extern int raw_sock_sendto(int fd, int family, int protocol, int ifindex,
+		u_int8 *dstmac, const char *data, int len);
+
 extern int unix_sock_server_create(BOOL tcp, const char *name);
 extern int unix_sock_accept (int accept_sock, void *p);
 extern int unix_sock_client_create (BOOL tcp, const char *name);

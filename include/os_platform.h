@@ -32,6 +32,9 @@
 #define IPCOM_STACK	2
 #define IF_IUSPV_SUPPORT //support sub interface, eg:0/1/1.22
 
+
+//#define OS_PL_LOG_DEBUG_DETIAL
+
 //#define _OS_DEBUG_
 //#define _OS_SHELL_DEBUG_
 //#define _OS_DEBUG_
@@ -78,6 +81,11 @@ typedef unsigned short u_int16;
 typedef unsigned int u_int32;
 #endif
 
+#ifndef u_int64
+//typedef unsigned long long int u_int64;
+typedef __uint64_t u_int64;
+#endif
+
 #ifndef u_long
 typedef unsigned long u_long;
 #endif
@@ -106,6 +114,11 @@ typedef signed short s_int16;
 typedef signed int s_int32;
 #endif
 
+#ifndef s_int64
+//typedef long long int s_int64;
+typedef __int64_t s_int64;
+#endif
+
 #ifndef s_long
 typedef signed long s_long;
 #endif
@@ -130,21 +143,35 @@ typedef long long llong;
 typedef unsigned long long u_llong;
 #endif
 
-enum {
+#ifndef s_float
+typedef float s_float;
+#endif
+
+#ifndef s_double
+typedef double s_double;
+#endif
+
+
+//#ifndef HAVE_OS_TRUE
+typedef enum {
   TRUE  = 1,
   FALSE = 0,
-} ;
+} BOOL;
+//#endif
 
-typedef int BOOL;
+//typedef int BOOL;
 
 enum
 {
   OK  = 0,
-  TIMEOUT  = 1,
-  CTRL_X  = 2,
   ERROR = -1,
-  EXIST		= -100,
-  NOTEXIST  = -101,
+//#ifndef HAVE_OS_TIMEOUT
+  OS_TIMEOUT  = -2,
+//#endif
+  OS_CTRL_X  = -3,
+  OS_TRY_AGAIN  = -4,
+  OS_EXIST		= -100,
+  OS_NOTEXIST  = -101,
 };
 
 #define OS_WAIT_NO	0

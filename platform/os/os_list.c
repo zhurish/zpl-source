@@ -142,12 +142,12 @@ void lstInit
     pList->TAIL  = NULL;
     pList->count = 0;
     }
-void lstInitFree (LIST *pList, int(*free)(void *))
+void lstInitFree (LIST *pList, int(*freecb)(void *))
 {
     pList->HEAD	 = NULL;
     pList->TAIL  = NULL;
     pList->count = 0;
-    pList->free = free;
+    pList->free = freecb;
 }
 
 void lstSortInit (LIST *pList, int(*cmp)(void *, void *))
@@ -413,56 +413,66 @@ void lstAddSort
     FAST NODE *pNode    /* pointer to node to be inserted */
     )
 {
-	FAST NODE *pPrev = pList->TAIL;
-	FAST NODE *pNext;
-
-	if (pPrev == NULL)
-	{ /* new node is to be first in list */
-		pNext = pList->HEAD;
-		pList->HEAD = pNode;
-	}
-	else
+	if(pList->cmp == NULL || pList->count == 0)
 	{
-		if (pList->cmp)
-		{
-			for (pNext = pList->HEAD; pNext; pNext = pNext->next)
-			{
-				if ((*pList->cmp)(pNode, pNext) < 0)
-				{
-					lstInsert(pList, pNext->previous, pNode);
-					return;
-/*					pNode->next = pNext;
-					pNode->previous = pNext->previous;
+		lstInsert (pList, pList->TAIL, pNode);
+		return;
+	}
+	if (pList->cmp)
+	{
+		FAST NODE *pPrev = pList->TAIL;
+		FAST NODE *pNext;
 
-					if (pNext->previous)
-						pNext->previous->next = pNode;
-					else
-						pList->HEAD = pNode;
-					pNext->previous = pNode;
-					pList->count++;
-					return;*/
-				}
+		if (pPrev)
+		{
+			if ((*pList->cmp)(pNode, pPrev) > 0)
+			{
+				lstInsert(pList, pPrev, pNode);
+				return;
 			}
 		}
-		else
+		if (pList->HEAD)
 		{
-			/* make prev node point fwd to new */
-			pNext = pPrev->next;
-			pPrev->next = pNode;
+			if ((*pList->cmp)(pNode, pList->HEAD) < 0)
+			{
+	/*			pNext = pList->HEAD;
+				pList->HEAD = pNode;
+
+				if (pNext == NULL)
+					pList->TAIL = pNode;
+				else
+					pNext->previous = pNode;
+
+				pNode->next = pNext;
+				pNode->previous = pPrev;
+				pList->count++;*/
+				lstInsert(pList, NULL, pNode);
+				return;
+			}
 		}
+		for (pNext = pList->HEAD; pNext; pNext = pNext->next)
+		{
+			if ((*pList->cmp)(pNode, pNext) < 0)
+			{
+				//if(pNext->previous)
+					lstInsert(pList, pNext->previous, pNode);
+				//else
+
+				return;
+				/*					pNode->next = pNext;
+				 pNode->previous = pNext->previous;
+
+				 if (pNext->previous)
+				 pNext->previous->next = pNode;
+				 else
+				 pList->HEAD = pNode;
+				 pNext->previous = pNode;
+				 pList->count++;
+				 return;*/
+			}
+		}
+		lstInsert(pList, pList->TAIL, pNode);
 	}
-
-	if (pNext == NULL)
-		pList->TAIL = pNode; /* new node is to be last in list */
-	else
-		pNext->previous = pNode; /* make next node point back to new */
-
-	/* set pointers in new node, and update node count */
-
-	pNode->next = pNext;
-	pNode->previous = pPrev;
-
-	pList->count++;
 }
 /************************************************************************
 *

@@ -9,10 +9,16 @@
 #define __OS_TIME_H__
 
 
-#define OS_TIMER_TEST
+//#define OS_TIMER_TEST
 #define OS_TIMER_POSIX
 
 #define OS_TIMER_NAME_MAX	128
+
+
+#define OS_SEC_MIN_V(n)		(60)*(n)
+#define OS_SEC_HOU_V(n)		(3600)*(n)
+#define OS_SEC_DAY_V(n)		(86400)*(n)
+
 
 #define os_system_rate()	(100)
 
@@ -36,7 +42,7 @@ struct os_time_stats
 #define TIMER_USEC(n) (n)*TIMER_SECOND_MICRO
 #define TIMER_MSEC(n) (n)*TIMER_MSEC_MICRO
 
-
+extern int os_system_time_base(char *dt);
 extern time_t os_time (time_t *t);
 extern time_t os_monotonic_time (void);
 //extern time_t quagga_time(time_t *t);
@@ -49,16 +55,21 @@ extern int os_timeval_cmp (struct timeval a, struct timeval b);
 extern int os_gettimeofday (struct timeval *tv);
 extern int os_get_realtime (struct timeval *tv);
 extern int os_get_monotonic (struct timeval *tv);
+extern int os_get_monotonic_msec ();
 //extern void os_real_stabilised (struct timeval *tv);
 extern unsigned int os_timeval_elapsed (struct timeval a, struct timeval b);
 
 extern struct timeval os_time_min(struct timeval a, struct timeval b);
 extern struct timeval os_time_max(struct timeval a, struct timeval b);
+extern u_int32 os_timestamp_spilt(time_t t,  char *input);
 
+extern int os_usleep(unsigned int us);
 extern int os_msleep(unsigned int);
 extern int os_sleep(unsigned int);
+extern void os_msleep_interrupt (int mseconds);
+extern void os_usleep_interrupt (int useconds);
 
-extern char *os_time_out (char *fmt, time_t t);
+extern char *os_time_fmt (char *fmt, time_t t);
 extern char *os_time_string(time_t tInput);
 
 extern const char *os_build_time2date(char *str);
@@ -78,10 +89,10 @@ typedef struct os_time_s
 	int 	t_id;
 	int		(*time_entry)(void *);
 	void	*pVoid;
-	unsigned long msec;
+	unsigned int msec;
 
-	struct timeval interval;
-	int		timer_ttl;
+	//struct timeval interval;
+	unsigned int interrupt_timestamp;
 
 	os_time_type type;
 	enum {OS_TIMER_FALSE, OS_TIMER_TRUE, OS_TIMER_CANCEL} state;

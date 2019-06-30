@@ -52,7 +52,7 @@ ifreq_set_name (struct ifreq *ifreq, struct interface *ifp)
 int
 if_ioctl (u_long request, caddr_t buffer)
 {
-	int sock;
+	int sock = 0;
 	int ret = -1;
 
 	sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -78,7 +78,7 @@ if_ioctl (u_long request, caddr_t buffer)
 int
 if_ioctl_ipv6 (u_long request, caddr_t buffer)
 {
-	int sock;
+	int sock = 0;
 	int ret = -1;
 
 	sock = socket(AF_INET6, SOCK_DGRAM, 0);

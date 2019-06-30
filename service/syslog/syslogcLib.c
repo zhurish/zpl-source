@@ -911,7 +911,7 @@ static int syslogc_format(struct syslog_client *client, int pri, char * pStr, in
 		code, client->address.s_addr);
 }
 
-int vsysclog (int priority, char *format, va_list arglist)
+int vsysclog (int priority, int facility, char *format, va_list arglist)
 {
 	int len = 0;
 	char log_msg[SYSLOG_MSG_MAX_LEN];
@@ -920,6 +920,7 @@ int vsysclog (int priority, char *format, va_list arglist)
 		return ERROR;
 	if(syslog_client->enable == FALSE)
 		return ERROR;
+	syslog_client->facility = facility;
     va_copy(ac, arglist);
     len = vsnprintf (log_msg, SYSLOG_MSG_MAX_LEN, format, ac);
     //vfprintf (stdout, format, ac);
@@ -928,7 +929,7 @@ int vsysclog (int priority, char *format, va_list arglist)
     return OK;
 }
 
-int syslogc_out(int priority, char * pStr, int len)
+int syslogc_out(int priority, int facility, char * pStr, int len)
 {
 	if(!syslog_client)
 		return ERROR;
@@ -938,6 +939,7 @@ int syslogc_out(int priority, char * pStr, int len)
 		return ERROR;
 	if(syslog_client->connect == FALSE)
 		return ERROR;
+	syslog_client->facility = facility;
 	return syslogc_format(syslog_client, priority, pStr, len);
 }
 #endif

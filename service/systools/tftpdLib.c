@@ -927,7 +927,7 @@ static int tftpdFileWrite
     else
     	snprintf(filepath, sizeof(filepath), "%s/%s", TFTPD_BASEDIR_DEFAULT, pReplyDesc->fileName);
 
-    requestFd = open (pReplyDesc->fileName, O_WRONLY | O_CREAT | O_TRUNC, 0);
+    requestFd = open (pReplyDesc->fileName, O_WRONLY | O_CREAT | O_TRUNC, CONFIGFILE_MASK);
 
     if (requestFd == ERROR)
 	{

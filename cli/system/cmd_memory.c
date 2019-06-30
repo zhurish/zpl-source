@@ -36,9 +36,9 @@ DEFUN (show_system_clock,
 		"Displays Clock information\n")
 {
 	vty_out(vty, "%s", VTY_NEWLINE);
-	vty_out(vty, "system current time  : %s %s", os_time_out("/",os_time (NULL)), VTY_NEWLINE);
+	vty_out(vty, "system current time  : %s %s", os_time_fmt("/",os_time (NULL)), VTY_NEWLINE);
 	vty_out(vty, "system running time  : %s %s", os_time_string(os_monotonic_time ()), VTY_NEWLINE);
-	vty_out(vty, "system hw-clock time : %s %s", os_time_out("/",os_monotonic_time ()), VTY_NEWLINE);
+	vty_out(vty, "system hw-clock time : %s %s", os_time_fmt("/",os_monotonic_time ()), VTY_NEWLINE);
 
 	if(argc == 1)
 	{

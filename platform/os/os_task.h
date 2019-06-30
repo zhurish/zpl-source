@@ -10,20 +10,23 @@
 
 #define TASK_NAME_MAX	32
 #define TASK_COUNT_MAX	64
-
+#define TASK_CBTBL_MAX	16
 
 #define OS_TASK_TICK_MSEC 		(10 * 1000000)
 
-#define OS_TASK_MAX_PRIORITY 	(255)
+#define OS_TASK_MAX_PRIORITY 	(256)
+#define OS_TASK_STACK_MIN		(1024 * 4)
+#define OS_TASK_STACK_MAX		(1024 * 1024)
 
+/* option */
 #define OS_TASK_TIME_SLICED    	(0x00000001)
 #define OS_TASK_DELETE_SAFE    	(0x00000002)
 #define OS_TASK_DELETED        	(0x00000004)
 
+/* default value */
 #define OS_TASK_DEFAULT_STACK		(1024 * 32)
-#define OS_TASK_STACK_MIN			(1024 * 4)
 #define OS_TASK_DEFAULT_SLICE		(1)
-#define OS_TASK_DEFAULT_PRIORITY	(255)
+#define OS_TASK_DEFAULT_PRIORITY	OS_TASK_MAX_PRIORITY-1
 
 
 #define OS_TASK_DEBUG
@@ -52,12 +55,21 @@ struct os_task_history
 	int cpu;
 };
 
+typedef int(*os_task_cb)(void *);
+typedef struct os_task_cb_tbl
+{
+	os_task_cb 	cb_start;
+	os_task_cb 	cb_stop;
+	void 		*pVoid;
+}os_task_cb_tbl_t;
+
 typedef struct os_task_s
 {
 	NODE		node;
-	unit32	td_id;		/* task id */
+	BOOL		active;
+	unit32		td_id;		/* task id */
 	char 		td_name[TASK_NAME_MAX];	/* name of task */
-	unit32	td_name_key;
+	unit32		td_name_key;
 	pthread_t 	td_thread; /* POSIX thread ID */
 
 	pid_t		td_pid;/* kernel process ID */
@@ -83,20 +95,25 @@ typedef struct os_task_s
 
 	enum os_task_state state;
 	struct os_task_history hist;
+
+	void 		*priv;
 }os_task_t;
 
 //typedef os_task_t * os_task_pt;
 
 
 
-#define OS_TASK_DEFAULT_PRIORITY	(255)
 
 extern int os_task_init();
 extern int os_task_exit();
+extern int os_task_cb_install(os_task_cb_tbl_t *cb);
 
+extern os_task_t * os_task_tcb_get(unit32 id, pthread_t pid);
+extern os_task_t * os_task_tcb_self(void);
 extern pthread_t os_task_pthread_self( void);
 extern unit32 os_task_id_self( void);
 extern int os_task_gettid( void);
+extern const char * os_task_self_name_alisa(void);
 
 extern int os_task_name_get( unit32 task_id, char *task_name);
 extern char * os_task_2_name( unit32 task_id);
@@ -109,18 +126,32 @@ extern int os_task_delay(int ticks);
 extern int os_task_supend(unit32 TaskID);
 extern int os_task_resume(unit32 TaskID);
 
-extern unit32 os_task_entry_create(char *name, int pri, int op,
-                         task_entry entry, void *pVoid,
-                         char *func_name, int stacksize);
+extern int os_task_priv_set(unit32 TaskID, pthread_t td_thread, void *priv);
+extern void * os_task_priv_get(unit32 TaskID, pthread_t td_thread);
+
+extern int os_task_refresh_id(unit32 td_thread);
+extern int os_task_del(unit32 td_thread);
+extern int os_task_foreach(os_task_cb cb, void *p);
 
 extern int os_task_entry_destroy(os_task_t *task);
 extern int os_task_destroy(unit32 taskId);
 
+extern unit32 os_task_entry_create(char *name, int pri, int op,
+                         task_entry entry, void *pVoid,
+                         char *func_name, int stacksize);
+
 #define os_task_create(n,p,o,f,a,s)	os_task_entry_create(n,p,o,f,a,#f,s)
 //#define os_task_destroy(i)	os_task_entry_create(i)
+
+extern unit32 os_task_entry_add(char *name, int pri, int op,
+                         task_entry entry, void *pVoid,
+                         char *func_name, int stacksize, unit32 td_thread);
+
+#define os_task_add(n,p,o,f,a,s,i)	os_task_entry_add(n,p,o,f,a,#f,s,i)
+#define os_task_add_name(n,p,o,f,e,a,s,i)	os_task_entry_add(n,p,o,f,a,e,s,i)
 
 extern int cmd_os_init();
 extern int os_task_show(void *vty, char *task_name, int detail);
 
-
+extern void os_log(char *file, const char *format, ...);
 #endif /* __OS_TASK_H__ */

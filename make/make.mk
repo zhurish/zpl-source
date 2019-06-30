@@ -22,7 +22,7 @@ clean: objclean
 	@$(RM) $(LIBS)
 
 objclean: 
-	@$(RM) $(OBJS_DIR)/*
+	@$(RM) $(OBJS_DIR)/* -rf
 
 all: lib install
 

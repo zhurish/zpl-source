@@ -124,7 +124,9 @@ static int kernel_arp_init()
 	skfd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ARP));
 	if (skfd < 0)
 	{
-		printf("socket() failed! \n");
+		zlog_err(ZLOG_PAL, "Can't open %s socket: %s", "arp socket",
+				strerror(errno));
+		//printf("socket() failed! \n");
 		return -1;
 	}
 #ifdef IP_RECVIF
@@ -262,22 +264,23 @@ static int kernel_arp_request(struct interface *ifp, struct prefix *address)
 	struct in_addr saddr;
 	struct sockaddr_ll sll;
 
-	int skfd;
+	int skfd = 0;
 	int n = 0, len = 0;
 
 	unsigned char buf[1024];
 
 	//daddr.s_addr = 0xffffffff;
-	/*伪造 源IP*/
+	/* 伪造 源IP */
 	saddr.s_addr = address->u.prefix4.s_addr;
 
 	memset(buf, 0x00, sizeof(buf));
 
-	/*创建原始套接字*/
+	/* 创建原始套接字 */
 	skfd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ARP));
 	if (skfd < 0)
 	{
-		printf("socket() failed! \n");
+		zlog_err(ZLOG_PAL, "Can't open %s socket: %s", "arp socket",
+				strerror(errno));
 		return -1;
 	}
 
@@ -286,13 +289,13 @@ static int kernel_arp_request(struct interface *ifp, struct prefix *address)
 	sll.sll_family	= PF_PACKET;
 	sll.sll_protocol = htons(ETH_P_ARP/*ETH_P_ALL*/);
 
-	/*构造以太报文*/
+	/* 构造以太报文 */
 	eth = (struct ether_header*)buf;
 	eth->ether_type = htons(ETHERTYPE_ARP);
 	memset(eth->ether_dhost, 0xff, ETH_ALEN);
 	memcpy(eth->ether_shost, ifp->hw_addr, ifp->hw_addr_len);
 
-	/*构造ARP报文*/
+	/* 构造ARP报文 */
 	arp = (struct ether_arp*)(buf + sizeof(struct ether_header));
 	arp->arp_hrd = htons(ARPHRD_ETHER);
 	arp->arp_pro = htons(ETHERTYPE_IP);
@@ -301,8 +304,7 @@ static int kernel_arp_request(struct interface *ifp, struct prefix *address)
 	arp->arp_op = htons(ARPOP_REQUEST);
 	memcpy(arp->arp_sha, ifp->hw_addr, ifp->hw_addr_len);
 	memcpy(arp->arp_spa, &saddr.s_addr, 4);
-	/*
-	    memcpy(arp->arp_tha, dmac, ETH_ALEN);*/
+	/* memcpy(arp->arp_tha, dmac, ETH_ALEN);*/
 	memset(arp->arp_tpa, 0, 4);
 	len = sizeof(struct ether_header) + sizeof(struct ether_arp);
 	if(len < 128)
@@ -310,11 +312,11 @@ static int kernel_arp_request(struct interface *ifp, struct prefix *address)
 	n = sendto(skfd, buf, len, 0, (struct sockaddr*)&sll, sizeof(struct sockaddr_ll));
 	if (n < 0)
 	{
-		printf("sendto() failed!\n");
+		zlog_warn(ZLOG_PAL, "send a ARP message failed: %s", strerror(errno));
 	}
 	else
 	{
-		printf("sendto() n = %d \n", n);
+		//printf("sendto() n = %d \n", n);
 	}
 	close(skfd);
 	return 0;

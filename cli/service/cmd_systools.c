@@ -17,7 +17,7 @@
 #include "table.h"
 #include "vty.h"
 #include "os_util.h"
-
+#include "xyz_modem.h"
 #include "systools.h"
 #include "ftpdLib.h"
 #include "ftpLib.h"
@@ -26,8 +26,10 @@
 #include "pingLib.h"
 #include "telnetLib.h"
 #include "tracerouteLib.h"
-
+#include "tty_com.h"
+#ifdef PL_SSH_MODULE
 #include "ssh_api.h"
+#endif
 
 
 DEFUN (tftp_copy_download,
@@ -452,7 +454,7 @@ ALIAS (traceroute_len_start,
 		"size packet configure\n"
 		"size value\n"
 		"TTL configure\n"
-		"TTL value\n")
+		"TTL value\n");
 
 DEFUN (traceroute_ttl_len_start,
 		traceroute_start_ttl_len_cmd,
@@ -474,6 +476,55 @@ DEFUN (traceroute_ttl_len_start,
 		return CMD_SUCCESS;
 	return CMD_WARNING;
 }
+
+DEFUN_HIDDEN (load_image_xyz_modem,
+		load_image_xyz_modem_cmd,
+	    "load image (xmodem|ymodem)",
+		"Load configure\n"
+		"Image configure\n"
+		"Xmodem mode\n"
+		"Ymodem mode\n")
+{
+	int ret = 0, mode = 2;
+	xyz_modem_t xyz;
+	memset(&xyz, 0, sizeof(xyz));
+	if(strstr(argv[0], "xmodem"))
+		mode = 1;
+	else if(strstr(argv[0], "ymodem"))
+		mode = 2;
+
+	if(!vty_is_console(vty) && argc == 1)
+	{
+		vty_out(vty, "##This command can only be used on a serial port%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	xyz.sequm = 0;
+	xyz.vty = vty;
+	if(argc == 1)
+		xyz.fd = vty->fd;
+	else
+	{
+		xyz.show_debug = vty_sync_out;
+	}
+	ret = xyz_modem_load(&xyz, mode, (argc == 2) ? argv[1]:NULL);
+	if(ret > 0)
+	{
+		vty_out(vty, "## Total Size %d Bytes%s", ret, VTY_NEWLINE);
+		return CMD_SUCCESS;
+	}
+	return CMD_WARNING;
+}
+
+ALIAS_HIDDEN (load_image_xyz_modem,
+	load_image_xyz_modem_dev_cmd,
+	"load image (xmodem|ymodem) DEVNAME",
+	"Load configure\n"
+	"Image configure\n"
+	"Xmodem mode\n"
+	"Ymodem mode\n"
+	"tty Device name\n");
+
+
 
 
 int systools_cmd_init()
@@ -510,6 +561,7 @@ int systools_cmd_init()
 	install_element (ENABLE_NODE, &traceroute_start_len_ttl_cmd);
 	install_element (ENABLE_NODE, &traceroute_start_ttl_len_cmd);
 
-
+	install_element (ENABLE_NODE, &load_image_xyz_modem_cmd);
+	install_element (ENABLE_NODE, &load_image_xyz_modem_dev_cmd);
 	return 0;
 }

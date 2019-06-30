@@ -4,6 +4,7 @@
 typedef u_int8_t u8;
 typedef u_int16_t u16;
 typedef uint32_t u32;
+typedef uint64_t u64;
 
 #define ETH_ALEN	6
 

@@ -226,7 +226,7 @@ static int modem_usb_driver_lookup_ttyusb(modem_usb_driver *driver, char *devnam
 	tmp.flag = 1;
 	for(j = 0; j < TTY_USB_MAX; j++)
 	{
-		 //if(!buffer_isempty(&driver->devname[j], sizeof(driver->devname[j])))
+		 //if(!str_isempty(&driver->devname[j], sizeof(driver->devname[j])))
 		 if((driver->devname[j].flag))
 		 {
 			 if(os_strncmp(driver->devname[j].devname, tmp.devname, sizeof(tmp.devname)) == 0)
@@ -674,7 +674,7 @@ static int modem_sys_usb_detection_devname(modem_usb_driver *driver)
 
 						//MODEM_DR_DEBUG("%s\n", path);
 
-						if (os_read_string(path, vender, sizeof(vender)) == OK)
+						if (os_read_file(path, vender, sizeof(vender)) == OK)
 						{
 							driver->vendor = strtoul(vender, NULL, 16);
 							//MODEM_DR_DEBUG("vendor=%x\n", driver->vendor);
@@ -684,7 +684,7 @@ static int modem_sys_usb_detection_devname(modem_usb_driver *driver)
 						os_memset(vender, 0, sizeof(vender));
 						snprintf(path, sizeof(path), "%s/%s", path1, "idProduct");
 
-						if (os_read_string(path, vender, sizeof(vender)) == OK)
+						if (os_read_file(path, vender, sizeof(vender)) == OK)
 						{
 							driver->product = strtoul(vender, NULL, 16);
 							//MODEM_DR_DEBUG("product=%x\n", driver->product);
@@ -696,7 +696,7 @@ static int modem_sys_usb_detection_devname(modem_usb_driver *driver)
 
 							//: /sys/devices/platform/101c0000.ehci/usb2/2-1/2-1:1.0/ttyUSB0
 							//: /sys/devices/pci0000:00/0000:00:14.0/usb2/2-2/2-2:1.0/ttyUSB0
-							if(buffer_isempty(musb_driver[i].usbkey, sizeof(musb_driver[i].usbkey)))
+							if(str_isempty(musb_driver[i].usbkey, sizeof(musb_driver[i].usbkey)))
 							{
 								modem_usb_key_detection(fullpath, musb_driver[i].usbkey);
 /*								char *brk = os_strstr(fullpath, 'usb');
@@ -717,7 +717,7 @@ static int modem_sys_usb_detection_devname(modem_usb_driver *driver)
 									}
 								}*/
 							}
-							if(buffer_isempty(musb_driver[i].netdevname, sizeof(musb_driver[i].netdevname)))
+							if(str_isempty(musb_driver[i].netdevname, sizeof(musb_driver[i].netdevname)))
 							{
 								modem_sys_usb_detection_netdevname(&musb_driver[i], musb_driver[i].usbkey);
 							}
@@ -852,7 +852,7 @@ static int usb_vendor_product_read(modem_usb_driver *driver, char *buf, int len)
 
 				snprintf(path, sizeof(path), "/sys/%s/%s", path1, "idVendor");
 
-				if(os_read_string(path, vender, sizeof(vender)) == OK)
+				if(os_read_file(path, vender, sizeof(vender)) == OK)
 				{
 					driver->vendor = strtoul(vender, NULL, 16);
 				}
@@ -861,7 +861,7 @@ static int usb_vendor_product_read(modem_usb_driver *driver, char *buf, int len)
 				os_memset(vender, 0, sizeof(vender));
 				snprintf(path, sizeof(path), "/sys/%s/%s", path1, "idProduct");
 
-				if(os_read_string(path, vender, sizeof(vender)) == OK)
+				if(os_read_file(path, vender, sizeof(vender)) == OK)
 				{
 					driver->product = strtoul(vender, NULL, 16);
 				}
@@ -936,7 +936,7 @@ static int usb_event_del_detection(char *buf, int len)
 			usb_event_key_detection(&driver, buf, len);
 			//MODEM_DR_DEBUG("usbkey:(%s)\n", driver.usbkey);
 
-			if(!buffer_isempty(driver.usbkey, sizeof(driver.usbkey)))
+			if(!str_isempty(driver.usbkey, sizeof(driver.usbkey)))
 			//if(os_strlen(driver.usbkey))
 			{
 				int in = modem_usb_driver_usbkey_lookup(driver.usbkey);
@@ -988,7 +988,7 @@ static int usb_event_handle_finsh_one(modem_usb_driver *driver)
 	else if(driver->change == USB_EVENT_ADD)
 	{
 		if( driver->devcnt >= 3 &&
-				!buffer_isempty(driver->netdevname, sizeof(driver->netdevname)) &&
+				!str_isempty(driver->netdevname, sizeof(driver->netdevname)) &&
 				//os_strlen(driver->netdevname) &&
 				driver->vendor &&
 				driver->product)

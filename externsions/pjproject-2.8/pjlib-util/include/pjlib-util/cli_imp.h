@@ -65,7 +65,8 @@ typedef enum pj_cli_front_end_type
     PJ_CLI_CONSOLE_FRONT_END,	/**< Console front end.	*/
     PJ_CLI_TELNET_FRONT_END,	/**< Telnet front end.	*/
     PJ_CLI_HTTP_FRONT_END,	/**< HTTP front end.	*/
-    PJ_CLI_GUI_FRONT_END	/**< GUI front end.	*/
+    PJ_CLI_GUI_FRONT_END,	/**< GUI front end.	*/
+    PJ_CLI_SOCKET_FRONT_END	/**< SOCKET front end.	*/
 } pj_cli_front_end_type;
 
 

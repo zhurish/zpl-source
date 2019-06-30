@@ -24,6 +24,7 @@ static LIST *os_task_list = NULL;
 static os_mutex_t *task_mutex = NULL;
 static int os_moniter_id = 0;
 struct os_task_history total_cpu;
+struct os_task_cb_tbl cb_tbl[TASK_CBTBL_MAX];
 
 #ifndef USE_IPSTACK_KERNEL
 extern int ipcom_os_task_tcb_entry_create_cb(char *name, int pid,
@@ -31,8 +32,38 @@ extern int ipcom_os_task_tcb_entry_create_cb(char *name, int pid,
 extern int ipcom_os_task_tcb_entry_delete_cb(int pid);
 #endif
 
+#define OS_TACK_TMP_LOG	"/tmp/app/log/ostask.log"
+
+static int os_log_file_printf(FILE *fp, const char *buf, va_list args)
+{
+	if(fp)
+	{
+		vfprintf(fp, buf, args);
+		fprintf(fp, "\n");
+		fflush(fp);
+	}
+	return OK;
+}
+
+void os_log(char *file, const char *format, ...)
+{
+	FILE *fp = fopen(file, "a+");
+	if(fp)
+	{
+		va_list args;
+		va_start(args, format);
+		os_log_file_printf(fp, format, args);
+		//vzlog(zlog_default, module, priority, format, args);
+		va_end(args);
+		fclose(fp);
+	}
+}
+
+
 int os_task_init()
 {
+	remove(OS_TACK_TMP_LOG);
+	sync();
 	if (task_mutex == NULL)
 	{
 		task_mutex = os_mutex_init();
@@ -42,8 +73,9 @@ int os_task_init()
 		os_task_list = os_malloc(sizeof(LIST));
 		if (os_task_list)
 		{
+			os_memset(cb_tbl, 0, sizeof(cb_tbl));
 			os_memset(&total_cpu, 0, sizeof(total_cpu));
-#ifndef __UCLIBC__
+#ifndef HAVE_GET_NPROCS
 			total_cpu.cpu = get_nprocs();
 #endif
 			lstInit(os_task_list);
@@ -69,10 +101,51 @@ int os_task_exit()
 	return OK;
 }
 
+
+
+static int os_task_cb_start(os_task_t *task)
+{
+	int i = 0;
+	for(i = 0; i < TASK_CBTBL_MAX; i++)
+	{
+		if(cb_tbl[i].cb_start)
+			cb_tbl[i].cb_start(task);
+	}
+	return OK;
+}
+
+static int os_task_cb_stop(os_task_t *task)
+{
+	int i = 0;
+	for(i = 0; i < TASK_CBTBL_MAX; i++)
+	{
+		if(cb_tbl[i].cb_stop)
+			cb_tbl[i].cb_stop(task);
+	}
+	return OK;
+}
+
+int os_task_cb_install(os_task_cb_tbl_t *cb)
+{
+	int i = 0;
+	for(i = 0; i < TASK_CBTBL_MAX; i++)
+	{
+		if(cb_tbl[i].cb_start == NULL && cb_tbl[i].cb_stop == NULL)
+		{
+			cb_tbl[i].cb_start = cb->cb_start;
+			cb_tbl[i].cb_stop = cb->cb_stop;
+			cb_tbl[i].pVoid = cb->pVoid;
+			return OK;
+		}
+	}
+	return ERROR;
+}
+
+
 static os_task_t * os_task_lookup(unit32 id, pthread_t pid)
 {
-	NODE *node;
-	os_task_t *task;
+	NODE *node = NULL;
+	os_task_t *task = NULL;
 	if (os_task_list == NULL)
 		return NULL;
 	if (task_mutex)
@@ -150,6 +223,27 @@ unit32 os_task_lookup_by_name(char *task_name)
 	return ERROR;
 }
 
+os_task_t * os_task_tcb_self(void)
+{
+	os_task_t *task = os_task_lookup(0, os_task_pthread_self());
+	if (task)
+	{
+		return task;
+	}
+	return NULL;
+}
+
+os_task_t * os_task_tcb_get(unit32 id, pthread_t pid)
+{
+	os_task_t *task = os_task_lookup(id, pid);
+	if (task)
+	{
+		return task;
+	}
+	return NULL;
+}
+
+
 pthread_t os_task_pthread_self(void)
 {
 	return pthread_self();
@@ -187,6 +281,37 @@ int os_task_gettid(void)
 	return syscall(SYS_gettid);
 }
 
+const char * os_task_self_name_alisa(void)
+{
+	NODE *node = NULL;
+	os_task_t *task = NULL;
+	static char name[TASK_NAME_MAX * 2];
+	os_memset(name, 0, sizeof(name));
+	if (os_task_list == NULL)
+		return "unknown";
+	if (task_mutex)
+		os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+	node = lstFirst(os_task_list);
+	while (node)
+	{
+		if (node)
+		{
+			task = (os_task_t *) node;
+			if (task->td_tid == syscall(SYS_gettid))
+			{
+				snprintf(name, sizeof(name), "%s[LWP:%d]", task->td_name, task->td_tid);
+				if (task_mutex)
+					os_mutex_unlock(task_mutex);
+				return name;
+			}
+		}
+		node = lstNext(node);
+	}
+	if (task_mutex)
+		os_mutex_unlock(task_mutex);
+	return "unknown";
+}
+
 int os_task_name_get(unit32 task_id, char *task_name)
 {
 	os_task_t *task = (os_task_t *) task_id;
@@ -220,14 +345,18 @@ int os_task_priority_set(unit32 TaskID, int Priority)
 {
 	int policy; //,pri;
 	struct sched_param sp;
+	if(Priority >= OS_TASK_MAX_PRIORITY || Priority < 0)
+		return ERROR;
 	os_task_t *osapiTask = (os_task_t *) TaskID;
+	if(osapiTask && !osapiTask->active)
+		return OK;
 	if (osapiTask)
 	{
 		if (task_mutex)
 			os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
 		pthread_mutex_lock(&(osapiTask->td_mutex));
 //		pri = osapiTask->td_priority;
-
+		osapiTask->td_old_priority = osapiTask->td_priority;
 		if (Priority == OS_TASK_DEFAULT_PRIORITY)
 		{
 			policy = SCHED_OTHER;
@@ -242,8 +371,8 @@ int os_task_priority_set(unit32 TaskID, int Priority)
 
 			osapiTask->td_priority = policy;
 		}
-		osapiTask->td_priority = Priority;
-		osapiTask->td_old_priority = policy;
+		//osapiTask->td_priority = Priority;
+		//osapiTask->td_old_priority = policy;
 		sp.sched_priority = osapiTask->td_priority;
 		pthread_mutex_unlock(&(osapiTask->td_mutex));
 		if (task_mutex)
@@ -426,7 +555,7 @@ static int os_task_refresh_total_cpu(struct os_task_history *hist)
 	os_memset(path, 0, sizeof(path));
 	os_memset(buf, 0, sizeof(buf));
 	sprintf(path, "/proc/stat");
-#ifndef __UCLIBC__
+#ifndef HAVE_GET_NPROCS
 	if (hist->cpu == 0)
 		hist->cpu = get_nprocs();
 #endif
@@ -463,7 +592,7 @@ static int os_task_refresh_cpu(os_task_t *task)
 	int ret = 0;
 	os_memset(path, 0, sizeof(path));
 	os_memset(buf, 0, sizeof(buf));
-#ifndef __UCLIBC__
+#ifndef HAVE_GET_NPROCS
 	if (task->hist.cpu == 0)
 		task->hist.cpu = get_nprocs();
 #endif
@@ -522,7 +651,7 @@ static int os_task_refresh_time(void *argv)
 			if (node)
 			{
 				task = (os_task_t *) node;
-				if (task->td_tid != 0)
+				if (task && task->td_tid != 0)
 				{
 					os_task_refresh_cpu(task);
 				}
@@ -634,11 +763,18 @@ static int os_task_finsh_job(void)
 static int os_task_tcb_entry_destroy(os_task_t *task)
 {
 	//sem_destroy(&(task->td_sem));
-	pthread_mutex_destroy(&(task->td_mutex));
-	pthread_cond_destroy(&(task->td_control));
-	pthread_attr_destroy(&(task->td_attr));
+	if(task->active)
+	{
+		pthread_mutex_destroy(&(task->td_mutex));
+		pthread_cond_destroy(&(task->td_control));
+		pthread_attr_destroy(&(task->td_attr));
+	}
 	//pthread_spin_destroy(&(task->td_spinlock));
 	//pthread_spin_destroy(&(task->td_param));
+	if(task->priv)
+	{
+		free(task->priv);
+	}
 	os_free(task);
 	return OK;
 }
@@ -673,14 +809,22 @@ int os_task_entry_destroy(os_task_t *task)
 
 		if (task_mutex)
 			os_mutex_unlock(task_mutex);
-		pthread_exit(0);
+		os_task_cb_stop(task);
+		if(task->active)
+		{
+			os_task_tcb_entry_destroy(task);
+			pthread_exit(0);
+		}
 	}
 	else
 	{
 		if (task_mutex)
 			os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
-		pthread_cancel(task->td_thread);
-		pthread_join(task->td_thread, (void **) NULL);
+		if(task->active)
+		{
+			pthread_cancel(task->td_thread);
+			pthread_join(task->td_thread, (void **) NULL);
+		}
 		if (os_task_list == NULL)
 		{
 			if (task_mutex)
@@ -688,6 +832,7 @@ int os_task_entry_destroy(os_task_t *task)
 			return ERROR;
 		}
 		lstDelete(os_task_list, (NODE *) task);
+		os_task_cb_stop(task);
 		os_task_tcb_entry_destroy(task);
 		if (lstCount(os_task_list) == 0)
 		{
@@ -710,9 +855,11 @@ int os_task_destroy(unit32 taskId)
 	return ERROR;
 }
 
-static int os_task_tcb_create(os_task_t *task)
+static int os_task_tcb_create(os_task_t *task, BOOL active)
 {
 	//int time_slice = 0;
+	if(active == FALSE)
+		return OK;
 	pthread_mutexattr_t attr;
 	//pthread_condattr_t 	cat;
 
@@ -733,6 +880,7 @@ static int os_task_tcb_create(os_task_t *task)
 	if (task->td_priority == OS_TASK_DEFAULT_PRIORITY)
 	{
 		pthread_attr_setschedpolicy(&(task->td_attr), SCHED_OTHER);
+		task->td_param.sched_priority = 0;
 	}
 	else
 	{
@@ -743,12 +891,10 @@ static int os_task_tcb_create(os_task_t *task)
 		else
 			policy = SCHED_FIFO;
 		pthread_attr_setschedpolicy(&(task->td_attr), policy);
+		task->td_param.sched_priority = task->td_priority;
 	}
-	task->td_param.sched_priority = task->td_priority;
 	pthread_attr_setschedparam(&(task->td_attr), &(task->td_param));
-
 	pthread_attr_setstacksize(&(task->td_attr), task->td_stack_size);
-
 	return OK;
 }
 
@@ -756,6 +902,9 @@ static int os_task_tcb_create(os_task_t *task)
 static int os_task_entry_start(os_task_t *task)
 {
 	usleep(100000);
+	os_log(OS_TACK_TMP_LOG, "os task create task:%s(%u->LWP=%u)\r\n", task->td_name, task->td_thread,
+			(pid_t) syscall(SYS_gettid));
+
 	printf("\r\ncreate task:%s(%u->LWP=%u)\r\n", task->td_name, task->td_thread,
 			(pid_t) syscall(SYS_gettid));
 
@@ -804,8 +953,20 @@ static int os_task_tcb_start(os_task_t *task)
 #endif
 
 static os_task_t * os_task_tcb_entry_create(char *name, int pri, int op,
-		task_entry entry, void *pVoid, char *func_name, int stacksize)
+		task_entry entry, void *pVoid, char *func_name, int stacksize, BOOL active)
 {
+	if(pri > OS_TASK_MAX_PRIORITY || pri < 0)
+		return NULL;
+
+	if(!name || strlen(name) >= TASK_NAME_MAX)
+		return NULL;
+
+	if(!func_name || strlen(func_name) >= 2*TASK_NAME_MAX)
+		return NULL;
+
+	if(stacksize > OS_TASK_STACK_MAX || stacksize < 0)
+		return NULL;
+
 	os_task_t *task = os_malloc(sizeof(os_task_t));
 	if (task)
 	{
@@ -834,7 +995,7 @@ static os_task_t * os_task_tcb_entry_create(char *name, int pri, int op,
 
 		task->td_entry = entry;
 		task->pVoid = pVoid;
-
+		task->active = active;
 		os_strcpy(task->td_entry_name, func_name);
 
 		if (task_mutex)
@@ -843,8 +1004,10 @@ static os_task_t * os_task_tcb_entry_create(char *name, int pri, int op,
 		if (task_mutex)
 			os_mutex_unlock(task_mutex);
 
-		if (os_task_tcb_create(task) == OK)
+		if (os_task_tcb_create(task, active) == OK)
 		{
+			if(active)
+				os_task_cb_start(task);
 			return task;
 		}
 		else
@@ -870,12 +1033,12 @@ unit32 os_task_entry_create(char *name, int pri, int op, task_entry entry,
 		void *pVoid, char *func_name, int stacksize)
 {
 	os_task_t * task = os_task_tcb_entry_create(name, pri, op, entry, pVoid,
-			func_name, stacksize);
+			func_name, stacksize, TRUE);
 	if (task == NULL)
 		return ERROR;
 	if (os_task_tcb_start(task) == OK)
 	{
-#ifndef __UCLIBC__
+#ifdef HAVE_PTHREAD_SETNAME_NP
 		//prctl(PR_SET_NAME,"THREAD2");
 		//int pthread_setname_np(pthread_t thread, const char *name);
 		//int pthread_getname_np(pthread_t thread,
@@ -911,6 +1074,157 @@ unit32 os_task_entry_create(char *name, int pri, int op, task_entry entry,
 		return OK;
 	}
 	return ERROR;
+}
+
+
+
+unit32 os_task_entry_add(char *name, int pri, int op,
+                         task_entry entry, void *pVoid,
+                         char *func_name, int stacksize, unit32 td_thread)
+{
+	os_task_t * task = os_task_tcb_entry_create(name, pri, op, entry, pVoid,
+			func_name, stacksize, FALSE);
+	if (task == NULL)
+	{
+		return ERROR;
+	}
+	task->td_thread = td_thread;
+	//task->active = FALSE;
+	task->td_id = (unit32)task;
+#ifndef OS_TASK_DEBUG
+	os_task_finsh_job();
+#endif
+	if (os_time_load() == OK)
+	{
+		if (os_moniter_id == 0)
+		{
+			os_task_moniter_init();
+		}
+	}
+	printf("\r\ncreate task:%s(%u %u->%u) pid=%d\r\n",task->td_name,
+				task->td_thread,(unit32)task,task->td_id,getpid());
+	return task->td_id;
+}
+
+int os_task_priv_set(unit32 TaskID, pthread_t td_thread, void *priv)
+{
+	if(TaskID > 0)
+	{
+		os_task_t *osapiTask = (os_task_t *) TaskID;
+		if (osapiTask)
+		{
+			if (task_mutex)
+				os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+			osapiTask->priv = priv;
+			if (task_mutex)
+				os_mutex_unlock(task_mutex);
+			return (OK);
+		}
+	}
+	else
+	{
+		os_task_t *task = os_task_lookup(0, td_thread);
+		if (task)
+		{
+			if (task_mutex)
+				os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+			task->priv = priv;
+			if (task_mutex)
+				os_mutex_unlock(task_mutex);
+			return (OK);
+		}
+	}
+	return ERROR;
+}
+
+void * os_task_priv_get(unit32 TaskID, pthread_t td_thread)
+{
+	os_task_t *task = NULL;
+	void *priv = NULL;
+	if(TaskID > 0)
+	{
+		task = (os_task_t *) TaskID;
+		if (task)
+		{
+			if (task_mutex)
+				os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+			priv = task->priv;
+			if (task_mutex)
+				os_mutex_unlock(task_mutex);
+			return (priv);
+		}
+	}
+	else
+	{
+		task = os_task_lookup(0, td_thread);
+		if (task)
+		{
+			if (task_mutex)
+				os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+			priv = task->priv;
+			if (task_mutex)
+				os_mutex_unlock(task_mutex);
+			return (priv);
+		}
+	}
+	return NULL;
+}
+
+int os_task_del(unit32 td_thread)
+{
+	os_task_t *task = os_task_lookup(0, td_thread);
+	if (task)
+		return os_task_entry_destroy(task);
+	return ERROR;
+}
+
+int os_task_refresh_id(unit32 td_thread)
+{
+	os_task_t *task = os_task_lookup(0, td_thread);
+	if(task)
+	{
+		if (task_mutex)
+			os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+
+		task->td_pid = getpid();/* kernel process ID */
+		task->td_tid = os_task_gettid();/* kernel LWP ID */
+
+		if (task_mutex)
+			os_mutex_unlock(task_mutex);
+	}
+	return OK;
+}
+
+int os_task_foreach(os_task_cb cb, void *p)
+{
+	NODE *node = NULL;
+	os_task_t *task = NULL;
+	if (os_task_list == NULL)
+		return NULL;
+	if (task_mutex)
+		os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+	node = lstFirst(os_task_list);
+	while (node)
+	{
+		if (node)
+		{
+			task = (os_task_t *) node;
+			if (task)
+			{
+				if(cb && p)
+					(cb)(p);
+				else
+				{
+					if(cb)
+						(cb)(task);
+				}
+			}
+		}
+		node = lstNext(node);
+	}
+	if (task_mutex)
+		os_mutex_unlock(task_mutex);
+	return OK;
 }
 
 /*
@@ -1163,3 +1477,56 @@ int cmd_os_init()
 #endif
 	return 0;
 }
+
+/*
+linux内核的三种 调度策略 ：
+SCHED_OTHER 分时调度策略，（默认的）
+SCHED_FIFO实时调度策略，先到先服务
+SCHED_RR实时调度策略，时间片轮转
+      实时进程将得到优先调用，实时进程根据实时优先级决定调度权值，分时进程则通过nice和counter值决定权值，
+      	  nice越小，counter越大，被调度的概率越大，也就是曾经使用了cpu最少的进程将会得到优先调度。
+SHCED_RR和SCHED_FIFO的不同：
+
+      当采用SHCED_RR策略的进程的时间片用完，系统将重新分配时间片，并置于就绪队列尾。放在队列尾保证了所有具有相同优先级的RR任务的调度公平。
+
+         SCHED_FIFO一旦占用cpu则一直运行。一直运行直到有 更高优先级任务到达或自己放弃 。
+         如果有相同优先级的实时进程（根据优先级计算的调度权值是一样的）已经准备好，FIFO时必须等待该进程主动放弃后才可以运行
+         	 这个优先级相同的任务。而RR可以让每个任务都执行一段时间。
+
+相同点：
+
+RR和FIFO都只用于实时任务。
+创建时优先级大于0(1-99)。
+按照可抢占优先级调度算法进行。
+就绪态的实时任务立即抢占非实时任务。
+当所有任务都采用分时调度策略时（SCHED_OTHER）：
+1.创建任务指定采用分时调度策略，并指定优先级nice值(-20~19)。
+2.将根据每个任务的nice值确定在cpu上的执行时间( counter )。
+3.如果没有等待资源，则将该任务加入到就绪队列中。
+4.调度程序遍历就绪队列中的任务，通过对每个任务动态优先级的计算(counter+20-nice)结果，选择计算结果最大的一个去运行，
+	当这个时间片用完后(counter减至0)或者主动放弃cpu时，该任务将被放在就绪队列末尾(时间片用完)或等待队列(因等待资源而放弃cpu)中。
+5.此时调度程序重复上面计算过程，转到第4步。
+6.当调度程序发现所有就绪任务计算所得的权值都为不大于0时，重复第2步。
+
+当所有任务都采用FIFO调度策略时（SCHED_FIFO）：
+1.创建进程时指定采用FIFO，并设置实时优先级rt_priority(1-99)。
+2.如果没有等待资源，则将该任务加入到就绪队列中。
+3.调度程序遍历就绪队列，根据实时优先级计算调度权值,选择权值最高的任务使用cpu， 该FIFO任务将一直占有cpu直到
+	有优先级更高的任务就绪(即使优先级相同也不行)或者主动放弃(等待资源)。
+4.调度程序发现有优先级更高的任务到达(高优先级任务可能被中断或定时器任务唤醒，再或被当前运行的任务唤醒，等等)，
+	则调度程序立即在当前任务堆栈中保存当前cpu寄存器的所有数据，重新从高优先级任务的堆栈中加载寄存器数据到cpu，
+		此时高优先级的任务开始运行。重复第3步。
+5.如果当前任务因等待资源而主动放弃cpu使用权，则该任务将从就绪队列中删除，加入等待队列，此时重复第3步。
+当所有任务都采用RR调度策略（SCHED_RR）时：
+1.创建任务时指定调度参数为RR， 并设置任务的实时优先级和nice值(nice值将会转换为该任务的时间片的长度)。
+2.如果没有等待资源，则将该任务加入到就绪队列中。
+3.调度程序遍历就绪队列，根据实时优先级计算调度权值,选择权值最高的任务使用cpu。
+4. 如果就绪队列中的RR任务时间片为0，则会根据nice值设置该任务的时间片，同时将该任务放入就绪队列的末尾 。重复步骤3。
+5.当前任务由于等待资源而主动退出cpu，则其加入等待队列中。重复步骤3。
+系统中既有分时调度，又有时间片轮转调度和先进先出调度：
+1.RR调度和FIFO调度的进程属于实时进程，以分时调度的进程是非实时进程。
+2. 当实时进程准备就绪后，如果当前cpu正在运行非实时进程，则实时进程立即抢占非实时进程 。
+3. RR进程和FIFO进程都采用实时优先级做为调度的权值标准，RR是FIFO的一个延伸。FIFO时，如果两个进程的优先级一样，
+	则这两个优先级一样的进程具体执行哪一个是由其在队列中的未知决定的，这样导致一些不公正性(优先级是一样的，为什么要让你一直运行?),
+		如果将两个优先级一样的任务的调度策略都设为RR,则保证了这两个任务可以循环执行，保证了公平。
+ */

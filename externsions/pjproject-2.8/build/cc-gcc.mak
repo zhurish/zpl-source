@@ -1,9 +1,13 @@
+ifneq ($(CROSS_COMPILE),)
 export CC = $(CROSS_COMPILE)gcc -c
 export AR = $(CROSS_COMPILE)ar rv 
 export LD = $(CROSS_COMPILE)gcc
 export LDOUT = -o 
 export RANLIB = $(CROSS_COMPILE)ranlib
-
+else
+export LDOUT = -o 
+export LD = $(CC)
+endif
 export OBJEXT := .o
 export LIBEXT := .a
 export LIBEXT2 :=

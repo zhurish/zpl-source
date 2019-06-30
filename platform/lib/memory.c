@@ -156,6 +156,14 @@ zfree (int type, void *ptr)
     }
 }
 
+void *cjson_malloc (size_t size)
+{
+	return zmalloc(MTYPE_CJSON, size);
+}
+void cjson_free (void *ptr)
+{
+	zfree(MTYPE_CJSON, ptr);
+}
 /*
  * Duplicate a string, counting memory usage by type.
  * Effects: The string is duplicated, and the return value must
@@ -319,11 +327,11 @@ log_memstats_stderr (const char *prefix)
           {
             if (!i)
               fprintf (stderr,
-                       "%s: memstats: Current memory utilization in module %s:\n",
+                       "%s: memstats: Current memory utilization in module %s:\r\n",
                        prefix,
                        ml->name);
             fprintf (stderr,
-                     "%s: memstats:  %-30s: %10ld%s\n",
+                     "%s: memstats:  %-30s: %10ld%s\r\n",
                      prefix,
                      m->format,
                      mstat[m->index].alloc,
@@ -335,11 +343,11 @@ log_memstats_stderr (const char *prefix)
   if (j)
     fprintf (stderr,
              "%s: memstats: NOTE: If configuration exists, utilization may be "
-             "expected.\n",
+             "expected.\r\n",
              prefix);
   else
     fprintf (stderr,
-             "%s: memstats: No remaining tracked memory utilization.\n",
+             "%s: memstats: No remaining tracked memory utilization.\r\n",
              prefix);
 }
 

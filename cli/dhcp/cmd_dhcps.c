@@ -550,7 +550,7 @@ DEFUN (nsm_interface_ip_dhcp_server,
 			return CMD_WARNING;
 		}
 */
-		ret = nsm_interface_dhcp_mode_set_api(ifp, DHCP_SERVER);
+		ret = nsm_interface_dhcp_mode_set_api(ifp, DHCP_SERVER, NULL);
 		if(ret == ERROR)
 			vty_out (vty, "%% Can not enable dhcp server on this interface%s",VTY_NEWLINE);
 		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -580,11 +580,50 @@ DEFUN (no_nsm_interface_ip_dhcp_server,
 			return CMD_WARNING;
 		}
 
-		ret = nsm_interface_dhcp_mode_set_api(ifp, DHCP_NONE);
+		ret = nsm_interface_dhcp_mode_set_api(ifp, DHCP_NONE, NULL);
 		if(ret == ERROR)
 			vty_out (vty, "%% Can not disable dhcp server on this interface%s",VTY_NEWLINE);
 		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 	}
+	return CMD_WARNING;
+}
+
+DEFUN (show_dhcps_lease,
+		show_dhcps_lease_cmd,
+		"show ip dhcp lease [NAME]",
+		SHOW_STR
+		"Interface Internet Protocol config commands\n"
+		"DHCP configure\n"
+		"Lease Information\n"
+		"Dhcp Pool name\n")
+{
+	nsm_dhcps_lease_show(vty, NULL, (argc == 1)? argv[0]:NULL, TRUE);
+	return CMD_SUCCESS;
+}
+
+
+DEFUN (show_dhcps_lease_interface,
+		show_dhcps_lease_interface_cmd,
+		"show ip dhcp lease interface " CMD_IF_USPV_STR " "CMD_USP_STR,
+		SHOW_STR
+		"Interface Internet Protocol config commands\n"
+		"DHCP configure\n"
+		"Lease Information\n"
+		"Select an interface to configure\n"
+		CMD_IF_USPV_STR_HELP
+		CMD_USP_STR_HELP)
+{
+	struct interface *ifp;
+	if (argv[0] && argv[1])
+	{
+		ifp = if_lookup_by_name (if_ifname_format(argv[0], argv[1]));
+		if(ifp)
+		{
+			nsm_dhcps_lease_show(vty, ifp, NULL, TRUE);
+			return CMD_SUCCESS;
+		}
+	}
+	vty_out (vty, "%% Can not lookup this interface%s",VTY_NEWLINE);
 	return CMD_WARNING;
 }
 
@@ -634,6 +673,8 @@ static void cmd_base_dhcps_init(int node)
 
 static void cmd_show_dhcps_init(int node)
 {
+	install_element(node, &show_dhcps_lease_cmd);
+	install_element(node, &show_dhcps_lease_interface_cmd);
 /*	install_element(node, &nsm_show_dhcp_client_cmd);
 	install_element(node, &nsm_show_dhcp_client_interface_cmd);
 

@@ -85,6 +85,7 @@ enum
   MTYPE_VRF_NAME,
   MTYPE_VRF_BITMAP,
   MTYPE_IF_LINK_PARAMS,
+  MTYPE_CJSON,
   MTYPE_RTADV_PREFIX,
   MTYPE_ZEBRA_VRF,
   MTYPE_NEXTHOP,
@@ -305,6 +306,9 @@ enum
   MTYPE_DHCPS_INFO,
   MTYPE_DHCPS_ADDR,
   MTYPE_DHCPS_POOL,
+  MTYPE_DHCPR,
+  MTYPE_DHCPR_INFO,
+  MTYPE_DHCPR_ADDR,
   MTYPE_WIFI,
   MTYPE_WIFI_DB,
   MTYPE_WIFI_AP,
@@ -331,11 +335,25 @@ enum
   MTYPE_SSH_KEY,
   MTYPE_SSH_MSG,
   MTYPE_VOIP,
+  MTYPE_VOIP_TOP,
+  MTYPE_VOIP_EVENT,
+  MTYPE_VOIP_MEDIA,
   MTYPE_VOIP_SESSION,
-  MTYPE_VOIP_CHANNEL,
-  MTYPE_VOIP_RNG,
+  MTYPE_VOIP_REMOTE,
+  MTYPE_VOIP_DBTEST,
+  MTYPE_VOIP_VOLUME,
+  MTYPE_VOIP_RING,
+  MTYPE_VOIP_APP,
+  MTYPE_VOIP_SIP,
+  MTYPE_VOIP_SIP_CALL,
   MTYPE_VOIP_DATA,
-  MTYPE_VOIP_RAW_DATA,
+  MTYPE_VOIP_TMP,
+  MTYPE_WEB,
+  MTYPE_WEB_AUTH,
+  MTYPE_WEB_ROUTE,
+  MTYPE_WEB_DOC,
+  MTYPE_WEB_DATA,
+  MTYPE_WEB_TMP,
   MTYPE_MAX,
 };
 
@@ -360,6 +378,7 @@ extern struct memory_list memory_list_wifi[];
 extern struct memory_list memory_list_port[];
 extern struct memory_list memory_list_ssh[];
 extern struct memory_list memory_list_voip[];
+extern struct memory_list memory_list_web[];
 
 #endif /* _QUAGGA_MEMTYPES_H */
 

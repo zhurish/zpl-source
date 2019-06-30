@@ -10,9 +10,12 @@
 
 
 #ifdef APP_X5BA_MODULE
-#include "X5-B/mgt/x5_b_a.h"
+
+#include "X5-B/mgt/x5_b_app.h"
+#include "X5-B/mgt/x5_b_cmd.h"
 #include "X5-B/mgt/x5_b_ctl.h"
-#include "X5-B/mgt/estate_mgt.h"
+#include "X5-B/mgt/x5b_dbase.h"
+#include "X5-B/mgt/x5b_facecard.h"
 #endif
 
 extern void cmd_app_init(void);

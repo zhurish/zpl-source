@@ -8,26 +8,43 @@
 	//USE_IPSTACK_KERNEL
 
 #ifndef BASE_DIR
-#ifdef BUILD_X86
-#define BASE_DIR	"/home/zhurish/workspace/app"
-#else
 #define BASE_DIR	"/tmp/app"
-#endif
+
 #endif
 
+#ifdef BUILD_X86
+#define SYS_REAL_DIR		"/home/zhurish/workspace/SWPlatform/debug"
+#define SYSCONF_REAL_DIR 	SYS_REAL_DIR "/etc"
+#else
+#ifdef BUILD_OPENWRT
 #define SYS_REAL_DIR		"/app"
 #define SYSCONF_REAL_DIR 	SYS_REAL_DIR "/etc"
+#else
+#define SYS_REAL_DIR		"/home/app"
+#define SYSCONF_REAL_DIR 	SYS_REAL_DIR "/etc"
+#endif
+#endif
 
-/* bfdd vty socket */
-/* #undef BFD_VTYSH_PATH */
-#define SYSCONFDIR 	BASE_DIR "/etc"
-#define SYSLIBDIR 	BASE_DIR "/lib"
-#define SYSSBINDIR 	BASE_DIR "/sbin"
-#define SYSBINDIR 	BASE_DIR "/bin"
-#define SYSRUNDIR 	BASE_DIR "/run"
-#define SYSLOGDIR 	BASE_DIR "/log"
-#define SYSVARDIR 	BASE_DIR "/var"
-#define SYSTMPDIR 	BASE_DIR "/tmp"
+//#ifdef BUILD_OPENWRT
+//#define SYSCONFDIR 		"/etc/app"
+//#else
+//#define SYSCONFDIR 		BASE_DIR "/etc"
+#define SYSCONFDIR 		SYSCONF_REAL_DIR	//flash的etc 目录
+#define RSYSLOGDIR 		SYS_REAL_DIR "/log"	//flash的log 目录
+#define RSYSWWWDIR 		SYS_REAL_DIR "/www"	//flash的www 目录
+#define SYSWEBDIR 		SYSCONF_REAL_DIR "/web"	//flash的/etc/web 目录
+//#endif
+
+#define PLSYSCONFDIR 	BASE_DIR "/etc"	//缓存目录
+#define SYSLIBDIR 		BASE_DIR "/lib"
+#define SYSSBINDIR 		BASE_DIR "/sbin"
+#define SYSBINDIR 		BASE_DIR "/bin"
+#define SYSRUNDIR 		BASE_DIR "/run"
+#define SYSLOGDIR 		BASE_DIR "/log"
+#define SYSVARDIR 		BASE_DIR "/var"
+#define SYSTMPDIR 		BASE_DIR "/tmp"
+#define SYSWWWDIR 		BASE_DIR "/www"
+#define SYSWWWCACHEDIR 		BASE_DIR "/www/cache"
 
 /* default daemon app root dir */
 #define DAEMON_CONFIG_DIR SYSCONFDIR
@@ -41,6 +58,24 @@
 /* daemon vty directory */
 #define DAEMON_ENV_DIR SYSRUNDIR
 
+
+#define CONF_BACKUP_EXT ".sav"
+
+#ifdef BUILD_OPENWRT
+#define STARTUP_CONFIG_FILE	SYSCONFDIR "/startup-config.cfg"
+#define DEFAULT_CONFIG_FILE	SYSCONFDIR "/default-config.cfg"
+#define FACTORY_CONFIG_FILE	SYSCONFDIR "/factory-config.cfg"
+#else
+#ifdef BUILD_X86
+#define STARTUP_CONFIG_FILE	PLSYSCONFDIR "/startup-config.cfg"
+#define DEFAULT_CONFIG_FILE	PLSYSCONFDIR "/default-config.cfg"
+#define FACTORY_CONFIG_FILE	PLSYSCONFDIR "/factory-config.cfg"
+#else
+#define STARTUP_CONFIG_FILE	SYSCONFDIR "/startup-config.cfg"
+#define DEFAULT_CONFIG_FILE	SYSCONFDIR "/default-config.cfg"
+#define FACTORY_CONFIG_FILE	SYSCONFDIR "/factory-config.cfg"
+#endif
+#endif
 
 #include "config_env.h"
 
@@ -57,7 +92,10 @@
 /* Disable BGP installation to zebra */
 #define DISABLE_BGP_ANNOUNCE 0
 
-
+#define HAVE_GET_NPROCS /* get_nprocs */
+#ifndef __UCLIBC__
+#define HAVE_PTHREAD_SETNAME_NP /* pthread_setname_np */
+#endif
 /* include git version info */
 /* #undef GIT_VERSION */
 
@@ -157,7 +195,9 @@
 #define HAVE_GETTIMEOFDAY 1
 
 /* Glibc backtrace */
-#ifndef __UCLIBC__
+#ifdef __UCLIBC__
+#define HAVE_ULIBC_BACKTRACE /**/
+#else
 #define HAVE_GLIBC_BACKTRACE /**/
 #endif
 /* GNU regexp library */
@@ -224,6 +264,7 @@
 
 /* Define to 1 if you have the `resolv' library (-lresolv). */
 /* #undef HAVE_LIBRESOLV */
+#define HAVE_LIBRESOLV 1
 
 /* Define to 1 if you have the `socket' library (-lsocket). */
 /* #undef HAVE_LIBSOCKET */
@@ -382,7 +423,10 @@
 
 /* getpflags */
 /* #undef HAVE_SOLARIS_CAPABILITIES */
-#ifndef __UCLIBC__
+#ifdef __UCLIBC__
+/* Stack symbol decoding */
+//#define HAVE_STACK_TRACE /**/
+#else
 /* Stack symbol decoding */
 #define HAVE_STACK_TRACE /**/
 #endif

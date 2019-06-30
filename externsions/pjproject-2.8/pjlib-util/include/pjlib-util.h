@@ -71,6 +71,7 @@
 #include <pjlib-util/cli.h>
 #include <pjlib-util/cli_console.h>
 #include <pjlib-util/cli_telnet.h>
+#include <pjlib-util/cli_socket.h>
 
 #endif	/* __PJLIB_UTIL_H__ */
 

@@ -91,6 +91,7 @@ struct memory_list memory_list_lib[] =
   { MTYPE_VRF_NAME,		"VRF name"			},
   { MTYPE_VRF_BITMAP,		"VRF bit-map"			},
   { MTYPE_IF_LINK_PARAMS,       "Informational Link Parameters" },
+  { MTYPE_CJSON,       "cJSON" },
   { -1, NULL },
 };
 
@@ -409,6 +410,9 @@ struct memory_list memory_list_dhcp[] =
   { MTYPE_DHCPS_INFO,           "DHCP Server info"			},
   { MTYPE_DHCPS_ADDR,           "DHCP Server address"		},
   { MTYPE_DHCPS_POOL,           "DHCP Server address pool"	},
+  { MTYPE_DHCPR,                "DHCP Relay structure"		},
+  { MTYPE_DHCPR_INFO,           "DHCP Relay info"			},
+  { MTYPE_DHCPR_ADDR,           "DHCP Relay address"		},
   { -1, NULL }
 };
 #endif
@@ -461,12 +465,35 @@ struct memory_list memory_list_ssh[] =
 #ifdef PL_VOIP_MODULE
 struct memory_list memory_list_voip[] =
 {
-  { MTYPE_VOIP,			"VOIP information"	},
-  { MTYPE_VOIP_SESSION,			"VOIP Session information"	},
-  { MTYPE_VOIP_CHANNEL,		"VOIP Channel information"	},
-  { MTYPE_VOIP_RNG,			"VOIP Rng information"	},
-  { MTYPE_VOIP_DATA,			"VOIP Data information"	},
-  { MTYPE_VOIP_RAW_DATA,		"VOIP Raw Data information"	},
+  { MTYPE_VOIP,				"VOIP information"	},
+  { MTYPE_VOIP_TOP,			"VOIP Top information"	},
+  { MTYPE_VOIP_EVENT,		"VOIP Event information"	},
+  { MTYPE_VOIP_MEDIA,		"VOIP Media information"	},
+  { MTYPE_VOIP_SESSION,		"VOIP Session information"	},
+  { MTYPE_VOIP_REMOTE,		"VOIP Remote information"	},
+  { MTYPE_VOIP_DBTEST,		"VOIP Dbtest information"	},
+  { MTYPE_VOIP_VOLUME,		"VOIP Volume information"	},
+  { MTYPE_VOIP_RING,		"VOIP Ring information"	},
+  { MTYPE_VOIP_APP,			"VOIP App information"	},
+
+  { MTYPE_VOIP_SIP,			"VOIP SIP information"	},
+  { MTYPE_VOIP_SIP_CALL,	"VOIP SIP Call information"	},
+  { MTYPE_VOIP_DATA,		"VOIP Data information"	},
+  { MTYPE_VOIP_TMP,			"VOIP Tmp information"	},
+  { -1, NULL },
+};
+
+#endif
+
+#ifdef PL_WEBGUI_MODULE
+struct memory_list memory_list_web[] =
+{
+  { MTYPE_WEB,			"WEB information"	},
+  { MTYPE_WEB_AUTH,		"WEB Auth information"	},
+  { MTYPE_WEB_ROUTE,	"WEB Route information"	},
+  { MTYPE_WEB_DOC,		"WEB Documents information"	},
+  { MTYPE_WEB_DATA,		"WEB Data information"	},
+  { MTYPE_WEB_TMP,		"WEB Tmp information"	},
   { -1, NULL },
 };
 #endif
@@ -508,6 +535,10 @@ struct mlist mlists[] __attribute__ ((unused)) = {
   { memory_list_ssh,	"SSH"	},
 #ifdef PL_VOIP_MODULE
   { memory_list_voip,	"VOIP"	},
+#endif
+
+#ifdef PL_WEBGUI_MODULE
+  { memory_list_web,	"WEBGUI"	},
 #endif
 /* 2016��6��27�� 21:07:44 zhurish: ��չ·��Э�����ӵ��ڴ���Ϣ */
   { NULL, NULL},

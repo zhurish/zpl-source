@@ -146,11 +146,36 @@ static int initialized;
     static void *tls[MAX_THREADS];
 #endif
 
+struct pj_task_cb_t
+{
+	int(*pj_task_add_cb)(char *,int, int, void*, void*, int, int, void *);
+	int(*pj_task_del_cb)(int);
+	int(*pj_task_run_cb)(int);
+	void *(*pj_task_self_cb)(int);
+};
+
+struct pj_task_cb_t pj_task_cb = 
+{
+	.pj_task_add_cb = NULL,
+	.pj_task_del_cb = NULL,
+	.pj_task_run_cb = NULL,
+	.pj_task_self_cb = NULL,
+};
+
 static unsigned atexit_count;
 static void (*atexit_func[32])(void);
 
 static pj_status_t init_mutex(pj_mutex_t *mutex, const char *name, int type);
 
+
+PJ_DEF(int) pj_task_cb_init(void *add, void *del, void *run, void *self)
+{
+	pj_task_cb.pj_task_add_cb = add;
+	pj_task_cb.pj_task_del_cb = del;
+	pj_task_cb.pj_task_run_cb = run;
+	pj_task_cb.pj_task_self_cb = self;
+	return PJ_SUCCESS;
+}
 /*
  * pj_init(void).
  * Init PJLIB!
@@ -486,7 +511,50 @@ PJ_DEF(pj_status_t) pj_thread_register ( const char *cstr_thread_name,
     return PJ_SUCCESS;
 #endif
 }
+/*
+ * pj_thread_register(..)
+ */
+PJ_DEF(pj_thread_t *) pj_thread_register_malloc (int id, const char *cstr_thread_name)
+{
+#if PJ_HAS_THREADS
+    char stack_ptr;
+    //pj_status_t rc;
+    pj_thread_t *thread = NULL;
+    pj_str_t thread_name = pj_str((char*)cstr_thread_name);
+    thread = malloc(sizeof(struct pj_thread_t));
+    if(thread == NULL)
+    	return NULL;
+    /* Initialize and set the thread entry. */
+    pj_bzero(thread, sizeof(struct pj_thread_t));
+    thread->thread = id;
+    thread->signature1 = SIGNATURE1;
+    thread->signature2 = SIGNATURE2;
 
+    if(cstr_thread_name && pj_strlen(&thread_name) < sizeof(thread->obj_name)-1)
+    	pj_ansi_snprintf(thread->obj_name, sizeof(thread->obj_name),
+			 cstr_thread_name, thread->thread);
+    else
+    	pj_ansi_snprintf(thread->obj_name, sizeof(thread->obj_name),
+			 "thr%p", (void*)thread->thread);
+
+/*    rc = pj_thread_local_set(thread_tls_id, thread);
+    if (rc != PJ_SUCCESS) {
+	free(thread);
+	return NULL;
+    }*/
+
+#if defined(PJ_OS_HAS_CHECK_STACK) && PJ_OS_HAS_CHECK_STACK!=0
+    thread->stk_start = &stack_ptr;
+    thread->stk_size = 0xFFFFFFFFUL;
+    thread->stk_max_usage = 0;
+#else
+    PJ_UNUSED_ARG(stack_ptr);
+#endif
+    return thread;
+#else
+    return NULL;
+#endif
+}
 /*
  * pj_thread_init(void)
  */
@@ -522,7 +590,7 @@ static void *thread_main(void *param)
 #if defined(PJ_OS_HAS_CHECK_STACK) && PJ_OS_HAS_CHECK_STACK!=0
     rec->stk_start = (char*)&rec;
 #endif
-
+    sleep(1);
     /* Set current thread id. */
     rc = pj_thread_local_set(thread_tls_id, rec);
     if (rc != PJ_SUCCESS) {
@@ -534,6 +602,9 @@ static void *thread_main(void *param)
 	pj_mutex_lock(rec->suspended_mutex);
 	pj_mutex_unlock(rec->suspended_mutex);
     }
+
+	if (pj_task_cb.pj_task_run_cb)
+		(pj_task_cb.pj_task_run_cb)(pthread_self());
 
     PJ_LOG(6,(rec->obj_name, "Thread started"));
 
@@ -631,10 +702,15 @@ PJ_DEF(pj_status_t) pj_thread_create( pj_pool_t *pool,
     /* Create the thread. */
     rec->proc = proc;
     rec->arg = arg;
+    PJ_LOG(5, (rec->obj_name, "--------------Thread created-----------%s", thread_name));
+    __PJSIP_DEBUG("--------------Thread created-----------%s\r\n", thread_name);
     rc = pthread_create( &rec->thread, &thread_attr, &thread_main, rec);
     if (rc != 0) {
 	return PJ_RETURN_OS_ERROR(rc);
     }
+
+	if (pj_task_cb.pj_task_add_cb)
+		(pj_task_cb.pj_task_add_cb)(rec->obj_name, 255, 0, thread_main, arg, stack_size, rec->thread, rec);
 
     *ptr_thread = rec;
 
@@ -653,7 +729,8 @@ PJ_DEF(const char*) pj_thread_get_name(pj_thread_t *p)
 {
 #if PJ_HAS_THREADS
     pj_thread_t *rec = (pj_thread_t*)p;
-
+    if(!p)
+    	return "tmp";
     PJ_CHECK_STACK();
     PJ_ASSERT_RETURN(p, "");
 
@@ -672,9 +749,10 @@ PJ_DEF(pj_status_t) pj_thread_resume(pj_thread_t *p)
 
     PJ_CHECK_STACK();
     PJ_ASSERT_RETURN(p, PJ_EINVAL);
-
-    rc = pj_mutex_unlock(p->suspended_mutex);
-
+    if(p->suspended_mutex)
+    	rc = pj_mutex_unlock(p->suspended_mutex);
+    else
+    	rc = PJ_SUCCESS;
     return rc;
 }
 
@@ -685,6 +763,13 @@ PJ_DEF(pj_thread_t*) pj_thread_this(void)
 {
 #if PJ_HAS_THREADS
     pj_thread_t *rec = (pj_thread_t*)pj_thread_local_get(thread_tls_id);
+
+    if (rec == NULL)
+    {
+		if (pj_task_cb.pj_task_self_cb)
+			rec = (pj_task_cb.pj_task_self_cb)(0);
+    }
+
 
     if (rec == NULL) {
 	pj_assert(!"Calling pjlib from unknown/external thread. You must "
@@ -706,19 +791,55 @@ PJ_DEF(pj_thread_t*) pj_thread_this(void)
 }
 
 /*
- * pj_thread_join()
+ * pj_thread_kill()
  */
-PJ_DEF(pj_status_t) pj_thread_join(pj_thread_t *p)
+PJ_DEF(pj_status_t) pj_thread_kill(pj_thread_t *p)
 {
 #if PJ_HAS_THREADS
     pj_thread_t *rec = (pj_thread_t *)p;
-    void *ret;
+    //void *ret;
     int result;
 
     PJ_CHECK_STACK();
 
     if (p == pj_thread_this())
 	return PJ_ECANCELLED;
+
+    PJ_LOG(6, (pj_thread_this()->obj_name, "Joining thread %s", p->obj_name));
+    result = pthread_cancel(rec->thread);
+
+    if (result == 0)
+	return PJ_SUCCESS;
+    else {
+	/* Calling pj_thread_kill() on a thread that no longer exists and
+	 * getting back ESRCH isn't an error (in this context).
+	 * Thanks Phil Torre <ptorre@zetron.com>.
+	 */
+	return result==ESRCH ? PJ_SUCCESS : PJ_RETURN_OS_ERROR(result);
+    }
+#else
+    PJ_CHECK_STACK();
+    pj_assert(!"No multithreading support!");
+    return PJ_EINVALIDOP;
+#endif
+}
+/*
+ * pj_thread_join()
+ */
+PJ_DEF(pj_status_t) pj_thread_join(pj_thread_t *p)
+{
+#if PJ_HAS_THREADS
+    pj_thread_t *rec = (pj_thread_t *)p;
+    void *ret = NULL;
+    int result;
+
+    PJ_CHECK_STACK();
+
+    if (p == pj_thread_this())
+	return PJ_ECANCELLED;
+
+	if (pj_task_cb.pj_task_del_cb)
+		(pj_task_cb.pj_task_del_cb)(rec->thread);
 
     PJ_LOG(6, (pj_thread_this()->obj_name, "Joining thread %s", p->obj_name));
     result = pthread_join( rec->thread, &ret);
@@ -745,6 +866,9 @@ PJ_DEF(pj_status_t) pj_thread_join(pj_thread_t *p)
 PJ_DEF(pj_status_t) pj_thread_destroy(pj_thread_t *p)
 {
     PJ_CHECK_STACK();
+
+	if (p && pj_task_cb.pj_task_del_cb)
+		(pj_task_cb.pj_task_del_cb)(p->thread);
 
     /* Destroy mutex used to suspend thread */
     if (p->suspended_mutex) {

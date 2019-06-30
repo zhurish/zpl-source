@@ -232,7 +232,7 @@ static int os_mutex_sem_lock(os_mutex_t * mutex, int wait)
 				if(ret == 0)
 					return OK;
 				else if(errno == ETIMEDOUT)
-					return TIMEOUT;//timeout
+					return OS_TIMEOUT;//timeout
 			}
 			return ERROR;
 		}
@@ -252,7 +252,7 @@ static int os_mutex_sem_lock(os_mutex_t * mutex, int wait)
 				if(ret == 0)
 					return OK;
 				else if(errno == ETIMEDOUT)
-					return TIMEOUT;
+					return OS_TIMEOUT;
 			}
 			return ERROR;
 		}
@@ -368,7 +368,7 @@ int os_sem_take(os_sem_t *ossem, int wait)
 		if(ret == 0)
 			return OK;
 		else if(errno == ETIMEDOUT)
-			return TIMEOUT;
+			return OS_TIMEOUT;
 	}
 	return ERROR;
 }
@@ -427,7 +427,7 @@ int os_mutex_lock(os_mutex_t *osmutex, int wait)
 		if(ret == 0)
 			return OK;
 		else if(errno == ETIMEDOUT)
-			return TIMEOUT;
+			return OS_TIMEOUT;
 	}
 	return ERROR;
 }

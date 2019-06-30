@@ -102,8 +102,9 @@ typedef struct nsm_dhcps_s
 	BOOL			active;
 
 	void			*pool;
+#ifndef PL_UDHCP_MODULE
 	void			*subnet;
-
+#endif
 	struct interface	*ifp;
 }nsm_dhcps_t;
 
@@ -134,7 +135,7 @@ typedef struct nsm_dhcp_ifp_s
 extern nsm_dhcp_ifp_t *nsm_dhcp_get(struct interface *ifp);
 
 extern nsm_dhcp_type nsm_interface_dhcp_mode_get_api(struct interface *ifp);
-extern int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type);
+extern int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type, char *name);
 
 
 extern int nsm_dhcp_interface_set_pravite(struct interface *ifp, nsm_dhcp_type type, void *pVoid);
@@ -156,8 +157,9 @@ extern int nsm_dhcps_unset_api(nsm_dhcps_t *dhcps, int cmd);
 extern int nsm_dhcps_get_api(nsm_dhcps_t *dhcps, int cmd, void *val);
 
 extern int nsm_dhcps_write_config(struct vty *vty);
+extern int nsm_dhcps_lease_show(struct vty *vty, struct interface *ifp, char *poolname, BOOL detail);
 
-extern int nsm_interface_dhcps_enable(ifindex_t kifindex, BOOL enable);
+extern int nsm_interface_dhcps_enable(nsm_dhcps_t *pool, ifindex_t kifindex, BOOL enable);
 
 extern void cmd_dhcps_init(void);
 #endif

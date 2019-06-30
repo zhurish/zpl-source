@@ -1,0 +1,13 @@
+<%
+local uci = require "luci.model.uci"
+local testing = uci.cursor()
+local start_d = testing:get("userauth","db","start_date")
+if not start_d then
+start_d = os.date("%Y-%m-%dT%H:%M", os.time())
+end
+%>
+<%+cbi/valueheader%>
+	<div class="cbi-value-field">
+	<input data-update="change" id="start_date" name="start_date" type="datetime-local" class="cbi-input-text" value="<%=start_d%>">
+	</div>
+<%+cbi/valuefooter%>		

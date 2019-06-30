@@ -1628,7 +1628,7 @@ _tcp_tl_is_connected (int sock)
                   i = send (reserved->socket_tab[pos].socket, (const void *) message, length, 0);
                   osip_free (message);
                   if (i > 0) {
-                    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip: Keep Alive sent on TCP!\n"));
+                    ;//OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip: Keep Alive sent on TCP!\n"));
                   }
                 }
                 else {

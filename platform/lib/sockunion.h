@@ -102,6 +102,10 @@ extern int sockunion_accept (int sock, union sockunion *);
 extern int sockunion_stream_socket (union sockunion *);
 extern int sockopt_reuseaddr (int);
 extern int sockopt_reuseport (int);
+extern int sockopt_int(int fd, int level, int optname, int optval);
+extern int sockopt_broadcast(int fd);
+extern int sockopt_keepalive(int fd);
+extern int sockopt_bindtodevice(int fd, const char *iface);
 extern int sockopt_v6only (int family, int sock);
 extern int sockunion_bind (int sock, union sockunion *, 
                            unsigned short, union sockunion *);

@@ -36,12 +36,12 @@ typedef struct pjsua_app_cfg_t
     /**
      * The number of runtime arguments passed to the application.
      */
-    int       argc;
+    //int       argc;
 
     /**
      * The array of arguments string passed to the application. 
      */
-    char    **argv;
+    //char    **argv;
 
     /** 
      * Tell app that CLI (and pjsua) is (re)started.
@@ -62,6 +62,12 @@ typedef struct pjsua_app_cfg_t
      * the basic configuration provided by pjsua. 
      */
     void (*on_config_init)(pjsua_app_config *cfg);
+
+
+    pj_bool_t	    running;
+    pj_status_t	    receive_end_sig;
+    pj_thread_t	    *sig_thread;
+    pj_bool_t 		restart;
 } pjsua_app_cfg_t;
 
 /**
@@ -82,9 +88,10 @@ pj_status_t pjsua_app_run(pj_bool_t wait_telnet_cli);
  * This will destroy/cleanup the application library.
  */
 pj_status_t pjsua_app_destroy();
+int pjsua_app_restart(void);
 
-int stdout_refresh_proc(void *arg);
-int pjmain(int argc, char *argv[]);
+int log_refresh_proc(void *arg);
+
 PJ_END_DECL
     
 #endif	/* __PJSUA_APP_H__ */

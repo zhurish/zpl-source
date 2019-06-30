@@ -828,7 +828,7 @@ static int iw_client_connect(iw_client_t *iw_client, iw_client_ap_t *ap, u_int8 
 			else
 			{
 				//nsm_interface_address_dhcpc_set_api
-				if(nsm_interface_dhcp_mode_set_api(ifp, DHCP_CLIENT) == OK)
+				if(nsm_interface_dhcp_mode_set_api(ifp, DHCP_CLIENT, NULL) == OK)
 					return nsm_interface_dhcpc_start(ifp, TRUE);
 			}
 #else

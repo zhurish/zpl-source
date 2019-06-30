@@ -19,8 +19,9 @@
 #include "os_list.h"
 
 #include "nsm_dos.h"
+#ifdef PL_HAL_MODULE
 #include "hal_dos.h"
-
+#endif
 static Gl2dos_t gdos;
 
 
@@ -60,7 +61,11 @@ int nsm_dos_enable_api(dos_type_en type)
 	int ret = ERROR;
 	if(gdos.mutex)
 		os_mutex_lock(gdos.mutex, OS_WAIT_FOREVER);
+#ifdef PL_HAL_MODULE
 	ret = hal_dos_enable(TRUE, type);
+#else
+	ret = OK;
+#endif
 	if(ret == OK)
 	{
 		switch(type)
@@ -116,7 +121,11 @@ int nsm_dos_disable_api(dos_type_en type)
 	int ret = ERROR;
 	if(gdos.mutex)
 		os_mutex_lock(gdos.mutex, OS_WAIT_FOREVER);
+#ifdef PL_HAL_MODULE
 	ret = hal_dos_enable(FALSE, type);
+#else
+	ret = OK;
+#endif
 	if(ret == OK)
 	{
 		switch(type)
@@ -173,7 +182,9 @@ int nsm_dos_tcp_hdr_min(u_int size)
 	int ret = OK;
 	if(gdos.mutex)
 		os_mutex_lock(gdos.mutex, OS_WAIT_FOREVER);
+#ifdef PL_HAL_MODULE
 	if(hal_dos_tcp_hdr_size(size) == OK)
+#endif
 		gdos.tcp_hdr_min = size;
 	if(gdos.mutex)
 		os_mutex_unlock(gdos.mutex);
@@ -185,7 +196,9 @@ int nsm_dos_icmpv4_max(u_int size)
 	int ret = OK;
 	if(gdos.mutex)
 		os_mutex_lock(gdos.mutex, OS_WAIT_FOREVER);
+#ifdef PL_HAL_MODULE
 	if(hal_dos_icmp_size(FALSE, size) == OK)
+#endif
 		gdos.icmpv4_max = size;
 	if(gdos.mutex)
 		os_mutex_unlock(gdos.mutex);
@@ -197,7 +210,9 @@ int nsm_dos_icmpv6_max(u_int size)
 	int ret = OK;
 	if(gdos.mutex)
 		os_mutex_lock(gdos.mutex, OS_WAIT_FOREVER);
+#ifdef PL_HAL_MODULE
 	if(hal_dos_icmp_size(TRUE, size) == OK)
+#endif
 		gdos.icmpv6_max = size;
 	if(gdos.mutex)
 		os_mutex_unlock(gdos.mutex);

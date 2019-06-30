@@ -223,6 +223,8 @@ PJ_DECL(pj_status_t) pj_thread_register ( const char *thread_name,
 					  pj_thread_desc desc,
 					  pj_thread_t **thread);
 
+PJ_DEF(int) pj_task_cb_init(void *add, void *del, void *run, void *self);
+PJ_DEF(pj_thread_t *) pj_thread_register_malloc (int id, const char *cstr_thread_name);
 /**
  * Check if this thread has been registered to PJLIB.
  *
@@ -308,6 +310,19 @@ PJ_DECL(pj_status_t) pj_thread_resume(pj_thread_t *thread);
  * @return Thread handle of current thread.
  */
 PJ_DECL(pj_thread_t*) pj_thread_this(void);
+
+/**
+ * cancel thread, and block the caller thread until the specified thread exits.
+ * If it is called from within the thread itself, it will return immediately
+ * with failure status.
+ * If the specified thread has already been dead, or it does not exist,
+ * the function will return immediately with successful status.
+ *
+ * @param thread    The thread handle.
+ *
+ * @return PJ_SUCCESS on success.
+ */
+PJ_DEF(pj_status_t) pj_thread_kill(pj_thread_t *thread);
 
 /**
  * Join thread, and block the caller thread until the specified thread exits.

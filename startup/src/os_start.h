@@ -15,9 +15,12 @@
 
 extern struct zebra_privs_t os_privs;
 
-extern int os_start_init(char *progname, module_t pro, int daemon_mode);
+extern int os_base_init(void);
+extern int os_base_load(void);
+
+extern int os_start_init(char *progname, module_t pro, int daemon_mode, char *tty);
 extern int os_ip_stack_init(int localport);
-extern int os_log_start(module_t pro, char *logpipe);
+extern int os_start_early(module_t pro, char *logpipe);
 //extern int os_default_start(zlog_proto_t pro);
 extern int os_start_all_module();
 extern int os_exit_all_module();

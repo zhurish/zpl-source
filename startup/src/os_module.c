@@ -181,7 +181,7 @@ int os_module_init(void)
 	systools_module_init();
 
 #ifdef PL_WIFI_MODULE
-	//nsm_iw_client_init();
+	nsm_iw_client_init();
 #endif
 
 #ifdef PL_MODEM_MODULE
@@ -196,12 +196,16 @@ int os_module_init(void)
 	ssh_module_init();
 #endif
 
-#ifdef PL_VOIP_MODULE
+#ifdef PL_OSIP_MODULE
 	voip_module_init();
 #endif
 
-#ifdef APP_X5BA_MODULE
-	x5_b_a_module_init(NULL, 0);
+#ifdef PL_PJSIP_MODULE
+	pl_pjsip_module_init();
+#endif
+
+#ifdef PL_WEBGUI_MODULE
+	webgui_module_init();
 #endif
 
 
@@ -246,12 +250,16 @@ int os_module_task_init(void)
 #endif
 
 
-#ifdef PL_VOIP_MODULE
+#ifdef PL_OSIP_MODULE
 	voip_module_task_init();
 #endif
 
-#ifdef APP_X5BA_MODULE
-	x5_b_a_module_task_init();
+#ifdef PL_PJSIP_MODULE
+	pl_pjsip_module_task_init();
+#endif
+
+#ifdef PL_WEBGUI_MODULE
+	webgui_module_task_init();
 #endif
 
 	return OK;
@@ -264,6 +272,7 @@ int os_module_cmd_init(int terminal)
 	cmd_host_init(terminal);
 	cmd_log_init();
 	cmd_os_init();
+	cmd_nvram_env_init();
 	cmd_os_thread_init();
 	cmd_os_eloop_init();
 	cmd_memory_init();
@@ -314,6 +323,10 @@ int os_module_cmd_init(int terminal)
 
 #ifdef PL_VOIP_MODULE
 	cmd_voip_init();
+#endif
+
+#ifdef PL_WEBGUI_MODULE
+	//webgui_module_task_init();
 #endif
 
 #ifdef PL_APP_MODULE
@@ -394,12 +407,16 @@ int os_module_exit(void)
 	ssh_module_exit();
 #endif
 
-#ifdef PL_VOIP_MODULE
+#ifdef PL_OSIP_MODULE
 	voip_module_exit();
 #endif
 
-#ifdef APP_X5BA_MODULE
-	x5_b_a_module_exit();
+#ifdef PL_PJSIP_MODULE
+	pl_pjsip_module_exit();
+#endif
+
+#ifdef PL_WEBGUI_MODULE
+	webgui_module_exit();
 #endif
 
 	return OK;
@@ -424,6 +441,11 @@ int os_module_task_exit(void)
 #ifdef PL_NSM_MODULE
 	//nsm_task_exit ();
 #endif
+
+#ifdef PL_WEBGUI_MODULE
+	webgui_module_task_exit();
+#endif
+
 	systools_task_exit();
 	os_time_exit();
 	os_job_exit();
@@ -434,13 +456,14 @@ int os_module_task_exit(void)
 	ssh_module_task_exit();
 #endif
 
-#ifdef PL_VOIP_MODULE
+#ifdef PL_OSIP_MODULE
 	voip_module_task_exit();
 #endif
 
-#ifdef APP_X5BA_MODULE
-	x5_b_a_module_task_exit();
+#ifdef PL_PJSIP_MODULE
+	pl_pjsip_module_task_exit();
 #endif
+
 
 	os_task_exit();
 	return OK;

@@ -1234,7 +1234,7 @@ DEFUN_HIDDEN (show_interface_kernel,
 			{
 				if (ifp)
 				{
-					vty_out(vty, " %-20s %-16s %s", ifp->name, ifp->k_name, VTY_NEWLINE);
+					vty_out(vty, " %-20s %-16s->%d %s", ifp->name, ifp->k_name, ifp->k_ifindex, VTY_NEWLINE);
 				}
 			}
 		}

@@ -1065,7 +1065,7 @@ static int tftpInfoShow(TFTP_DESC * pTftpDesc /* TFTP descriptor */
 	}
 
 	systools_printf("TFTP Transfer size : %s in %d seconds to %s\r\n",
-			os_file_size(pTftpDesc->tftp_size),
+			os_file_size_string(pTftpDesc->tftp_size),
 			tftp_end_time - pTftpDesc->tftp_start_time,
 			pTftpDesc->serverName);
 
@@ -1789,7 +1789,7 @@ int tftp_download(void *v, char *hostName, int port, char *fileName, char *usr,
 
 	systools_set(v);
 
-	fd = open(localfileName, O_RDWR | O_CREAT);
+	fd = open(localfileName, O_RDWR|O_CREAT, CONFIGFILE_MASK);
 	if (fd <= 0)
 	{
 		systools_error("TFTP transfer failed: %s", strerror(errno));

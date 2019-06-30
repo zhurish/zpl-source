@@ -16,6 +16,8 @@
 #define IW_CLIENT_DB_FILE	SYSCONFDIR"/.iw-client.db"
 #define IW_CLIENT_DB_OLD_FILE	SYSCONFDIR"/.iw-client.db.old"
 
+#define IW_SYSCONFDIR	BASE_DIR "/etc"
+
 #define IW_ONCE_TASK
 
 

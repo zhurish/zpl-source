@@ -28,7 +28,7 @@ endif
 #
 #
 #
-.PHONY:	obj all demo lib clean rebuild install help usage objclean
+.PHONY:	obj all demo lib clean rebuild install help usage objclean objlibclean
 #
 #
 help:usage
@@ -48,18 +48,22 @@ usage:
 	@$(ECHO) "Configuration:"
 	@$(ECHO) "  PLOBJDIR   = $(PLOBJDIR)"
 	@$(ECHO) "  PLPRODOBJ  = $(PLPRODOBJ)"
-	@$(ECHO) "  PLLIB      = $(PL_LDLIBS)"
-	@$(ECHO) "  PLCFLAGS   = $(PL_CFLAGS)"	
+	@$(ECHO) "  PLLIB      = $(PLLDLIBS)"
+	@$(ECHO) "  PLLDFLAGS  = $(PLLDFLAGS)"
+	@$(ECHO) "  PLCFLAGS   = $(PLCFLAGS)"	
+	@$(ECHO) "  PLCPPFLAGS = $(PLCPPFLAGS)"	
+	@$(ECHO) "  PLASFLAGS  = $(PLASFLAGS)"	
+	@$(ECHO) "  PLDEFINE   = $(PLDEFINE)"	
+	@$(ECHO) "  PLINCLUDE  = $(PLINCLUDE)"				
 ifeq ($(BUILD_DEBUG),YES)
-	@$(ECHO) "  PLDEBUG    = $(PL_DEBUG)"
+	@$(ECHO) "  PLDEBUG    = $(PLDEBUG)"
 endif
 	@$(ECHO) ""
 	@$(ECHO) "Products:"
 
 	@$(PLVERB)for prod in $(PLPRODS); do \
-	if [ -d $$prod ]; then $(ECHO) "  $$prod"; fi; \
+		$(ECHO) "  $$prod"; \
         done
-
 	@$(ECHO) "Targets:"
 	@$(ECHO) "  all        build all"
 	@$(ECHO) "  clean      remove all"
@@ -73,9 +77,14 @@ endif
 #rebuild:clean all
 #
 #
-objclean:
+objlibclean:
 	@for i in $(PLPRODS); do	\
-		$(MAKE) -C $$i objclean || exit "$$?"; 	\
+		$(RM) $$i/*.a; 	\
+	done
+#
+objclean: 
+	@for i in $(PLPRODS); do	\
+		$(MAKE) -C $$i objclean; 	\
 	done
 #
 obj:
@@ -90,7 +99,7 @@ install:
 #
 clean: 
 	@for i in $(PLPRODS); do	\
-		$(MAKE) -C $$i clean || exit "$$?"; 	\
+		$(MAKE) -C $$i clean; 	\
 	done
 
 demo: 	

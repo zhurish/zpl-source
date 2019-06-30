@@ -620,6 +620,16 @@ eXosip_reset_transports (struct eXosip_t *excontext)
   return i;
 }
 
+int eXosip_free_transports (struct eXosip_t *excontext)
+{
+  int i = OSIP_WRONG_STATE;
+  if (excontext->eXtl_transport.tl_free)
+    i = excontext->eXtl_transport.tl_free (excontext);
+  if(i == 0)
+	  excontext->eXtl_transport.enabled = 0;
+  return i;
+}
+
 struct eXosip_t *
 eXosip_malloc (void)
 {

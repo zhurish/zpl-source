@@ -32,39 +32,54 @@
 /* SIGHUP handler. */
 static void os_sighup(void)
 {
-	zlog_notice(ZLOG_DEFAULT, "%s: SIGHUP received\r\n",__func__);
-	os_msgq_exit();
-	os_exit_all_module();
+	vty_terminate();
+	os_log("/app/signo.log", "%s:%d",__func__, os_task_gettid());
+	//zlog_notice(ZLOG_DEFAULT, "%s: SIGHUP received\r\n",__func__);
+	//os_msgq_exit();
+	//os_exit_all_module();
 
-	exit(0);
+	_exit(0);
 }
 
 /* SIGINT handler. */
 static void os_sigint(void)
 {
-	zlog_notice(ZLOG_DEFAULT, "%s: Terminating on signal\r\n",__func__);
-	os_msgq_exit();
-	os_exit_all_module();
+	vty_terminate();
+	os_log("/app/signo.log", "%s:%d",__func__, os_task_gettid());
+	//zlog_notice(ZLOG_DEFAULT, "%s: Terminating on signal\r\n",__func__);
+	//os_msgq_exit();
+	//os_exit_all_module();
 
-	exit(0);
+
+	_exit(0);
 }
 
 /* SIGKILL handler. */
 static void os_sigkill(void)
 {
+	vty_terminate();
+	os_log("/app/signo.log", "%s:%d",__func__, os_task_gettid());
 	zlog_notice(ZLOG_DEFAULT, "%s\r\n",__func__);
-	os_msgq_exit();
-	os_exit_all_module();
-/*	zlog_backtrace_sigsafe(LOG_DEBUG,"AAAAAAAA");
-	zlog_backtrace(LOG_DEBUG);*/
+	//os_msgq_exit();
+	//os_exit_all_module();
+	zlog_backtrace_sigsafe(LOG_DEBUG,"AAAAAAAA");
+	zlog_backtrace(LOG_DEBUG);
 	exit(0);
 }
 
 /* SIGUSR1 handler. */
 static void os_sigusr1(void)
 {
+	os_log("/app/signo.log", "%s:%d",__func__, os_task_gettid());
 	fprintf(stdout, "%s\r\n",__func__);
 }
+
+/* SIGCHLD handler. */
+/*static void os_sighld(void)
+{
+	os_log("/app/signo.log", "%s:%d",__func__, os_task_gettid());
+	fprintf(stdout, "%s\r\n",__func__);
+}*/
 
 static struct quagga_signal_t os_signals[] =
 {
@@ -85,9 +100,17 @@ static struct quagga_signal_t os_signals[] =
 		.handler = &os_sigint,
 	},
 	{
-		.signal = SIGSEGV,
+		.signal = SIGKILL,
 	 	.handler = &os_sigkill,
 	},
+/*	{
+		.signal = SIGSEGV,
+	 	.handler = &os_sigkill,
+	},*/
+/*	{
+		.signal = SIGCHLD,
+	 	.handler = &os_sighld,
+	},*/
 /*
  {
  .signal = SIGKILL,
@@ -96,32 +119,103 @@ static struct quagga_signal_t os_signals[] =
  */
 };
 
-
-int os_start_init(char *progname, module_t pro, int daemon_mode)
+static int os_base_dir_init(void)
 {
-	/* Make master thread emulator. */
-	master_thread[pro] = thread_master_module_create(pro);
+	if(access(BASE_DIR, F_OK) != 0)
+		mkdir(BASE_DIR, 0644);
 
+	if(access(RSYSLOGDIR, F_OK) != 0)
+		mkdir(RSYSLOGDIR, 0644);		// /etc
+
+	if(access(PLSYSCONFDIR, F_OK) != 0)
+		mkdir(PLSYSCONFDIR, 0644);		// /etc
+	if(access(SYSCONFDIR, F_OK) != 0)
+		mkdir(SYSCONFDIR, 0644);		// /etc/app
+	if(access(SYSLIBDIR, F_OK) != 0)
+		mkdir(SYSLIBDIR, 0644);			// /lib
+	if(access(SYSSBINDIR, F_OK) != 0)
+		mkdir(SYSSBINDIR, 0644);		// /sbin
+	if(access(SYSBINDIR, F_OK) != 0)
+		mkdir(SYSBINDIR, 0644);			// /bin
+	if(access(SYSRUNDIR, F_OK) != 0)
+		mkdir(SYSRUNDIR, 0644);			// /run
+	if(access(SYSLOGDIR, F_OK) != 0)
+		mkdir(SYSLOGDIR, 0644);			// /log
+	if(access(SYSVARDIR, F_OK) != 0)
+		mkdir(SYSVARDIR, 0644);			// /var
+	if(access(SYSTMPDIR, F_OK) != 0)
+		mkdir(SYSTMPDIR, 0644);			// /tmp
+
+	if(access(SYSWWWDIR, F_OK) != 0)
+		mkdir(SYSWWWDIR, 0644);			// /www
+	if(access(SYSWWWCACHEDIR, F_OK) != 0)
+		mkdir(SYSWWWCACHEDIR, 0644);			// /www/cache
+
+	if(access(BASE_DIR"/img", F_OK) != 0)
+		mkdir(BASE_DIR"/img", 0644);
+
+	return 0;
+}
+
+static int os_base_dir_load(void)
+{
+#ifdef BUILD_OPENWRT
+	if(access(DEFAULT_CONFIG_FILE, F_OK) != 0)
+		super_system("cp -af " SYSCONF_REAL_DIR"/default-config.cfg  " DEFAULT_CONFIG_FILE);
+#else
+#ifdef BUILD_X86
+	if(access(DEFAULT_CONFIG_FILE, F_OK) != 0)
+		super_system("cp -af " SYSCONFDIR"/default-config.cfg  " DEFAULT_CONFIG_FILE);
+	super_system("cp -arf " SYSCONFDIR"/*" " " PLSYSCONFDIR"/");
+#endif
+#endif
+
+#ifdef PL_WEBGUI_MODULE
+	super_system("cp -arf " RSYSWWWDIR"/*" " " SYSWWWDIR"/");
+#endif
+	return 0;
+}
+
+
+int os_base_init(void)
+{
+	lstLibInit();
+	os_nvram_env_init();
+	os_base_dir_init();
+	return OK;
+}
+
+int os_base_load(void)
+{
+	os_base_dir_load();
+	return OK;
+}
+
+int os_start_init(char *progname, module_t pro, int daemon_mode, char *tty)
+{
 	/* Daemonize. */
 	if (daemon_mode && daemon(0, 0) < 0) {
 		printf("Zebra daemon failed: %s", strerror(errno));
 		exit(1);
 	}
 
-	lstLibInit();
-	os_msgq_init();
+	/* Make master thread emulator. */
+	master_thread[pro] = thread_master_module_create(pro);
+
 	/* Vty related initialize. */
+	remove("/app/signo.log");
 	signal_init(array_size(os_signals), os_signals);
 
 	if (os_task_init() == ERROR)
 		return ERROR;
 
 	openzlog (progname, pro, LOG_LOCAL7, 0);
+	vty_tty_init(tty);
 	return OK;
 }
 
 
-int os_log_start(module_t pro, char *logpipe)
+int os_start_early(module_t pro, char *logpipe)
 {
 	master_thread[pro] = thread_master_module_create(pro);
 
@@ -139,6 +233,8 @@ int os_log_start(module_t pro, char *logpipe)
 
 int os_start_all_module()
 {
+
+	os_ip_stack_init(8899);
 	/*
 	 * all module start:
 	 */
@@ -199,6 +295,7 @@ int os_load_config(char *config)
 	vty_load_config(config);
 //	sleep(1);
 	host.load = LOAD_DONE;
+	signal_init(array_size(os_signals), os_signals);
 	return OK;
 }
 

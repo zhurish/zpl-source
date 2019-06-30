@@ -3230,9 +3230,11 @@ unsigned long rib_score_proto(u_char proto)
 /* Close RIB and clean up kernel routes. */
 void rib_close_table(struct route_table *table)
 {
-	struct route_node *rn;
+	struct route_node *rn = NULL;
+	zassert(table != NULL);
+	zassert(table->info != NULL);
 	rib_table_info_t *info = table->info;
-	struct rib *rib;
+	struct rib *rib = NULL;
 
 	if (table)
 	{

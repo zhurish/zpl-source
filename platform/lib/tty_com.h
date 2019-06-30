@@ -63,7 +63,7 @@ struct tty_com
 	int	(*decapsulation)(char *, int, char *, int);
 };
 
-
+extern BOOL tty_iscom(struct tty_com *com);
 extern int tty_com_open(struct tty_com *com);
 extern int tty_com_close(struct tty_com *com);
 extern int tty_com_update_option(struct tty_com *com);

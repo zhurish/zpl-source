@@ -44,8 +44,15 @@ typedef struct os_tlv_s
 extern int os_tlv_set_string(char *input, tag_t tag, len_t len, void * val);
 extern int os_tlv_set_integer(char *input, tag_t tag, len_t len, void * val);
 extern int os_tlv_set_zero(char *input, tag_t tag, len_t len);
+extern int os_tlv_set_octet(char *input, tag_t tag, len_t len, void * val);
+
 extern int os_tlv_get(char *input, os_tlv_t *tlv);
-extern int os_tlv_value_get(char *input, os_tlv_t *tlv);
+extern int os_tlv_value_get(char *input, os_tlv_t *tlv, int len);
+
+extern int os_tlv_get_integer(os_tlv_t *tlv, u_int32 *out);
+extern int os_tlv_get_short(os_tlv_t *tlv, u_int16 *out);
+extern int os_tlv_get_byte(os_tlv_t *tlv, u_int8 *out);
+
 
 #ifdef __cplusplus
 

@@ -18,8 +18,9 @@
 #include "os_list.h"
 
 #include "nsm_vlan.h"
+#ifdef PL_HAL_MODULE
 #include "hal_vlan.h"
-
+#endif
 static Gl2vlan_t gvlan;
 
 static int nsm_vlan_client_init();
@@ -157,7 +158,9 @@ int nsm_vlan_enable(void)
 	int ret = 0;
 	if(gvlan.mutex)
 		os_mutex_lock(gvlan.mutex, OS_WAIT_FOREVER);
+#ifdef PL_HAL_MODULE
 	ret = hal_vlan_enable(TRUE);
+#endif
 	if(ret == OK)
 		gvlan.enable = TRUE;
 	if(gvlan.mutex)
@@ -358,8 +361,11 @@ int nsm_vlan_create_api(vlan_t vlan)
 	value.vlan = vlan;
 	if(gvlan.mutex)
 		os_mutex_lock(gvlan.mutex, OS_WAIT_FOREVER);
-
+#ifdef PL_HAL_MODULE
 	ret = hal_vlan_create(vlan);
+#else
+	ret = OK;
+#endif
 	if(ret == OK)
 		ret = l2vlan_add_node(&value);
 	if(gvlan.mutex)
@@ -377,7 +383,11 @@ int nsm_vlan_destroy_api(vlan_t vlan)
 	value = l2vlan_lookup_node(vlan);
 	if(value)
 	{
+#ifdef PL_HAL_MODULE
 		ret = hal_vlan_destroy(vlan);
+#else
+		ret = OK;
+#endif
 		if(ret == OK)
 		{
 			lstDelete(gvlan.vlanList, (NODE*)value);
@@ -408,7 +418,11 @@ int nsm_vlan_batch_create_api(vlan_t minvlan, vlan_t maxvlan)
 			value.minvlan = minvlan;
 			value.maxvlan = maxvlan;
 		}
+#ifdef PL_HAL_MODULE
 		ret = hal_vlan_create(i);
+#else
+		ret = OK;
+#endif
 		if(ret == OK)
 			ret = l2vlan_add_node(&value);
 		if(ret != OK)
@@ -431,7 +445,11 @@ int nsm_vlan_batch_destroy_api(vlan_t minvlan, vlan_t maxvlan)
 		value = l2vlan_lookup_node(i);
 		if(value)
 		{
+#ifdef PL_HAL_MODULE
 			ret = hal_vlan_destroy(value->vlan);
+#else
+			ret = OK;
+#endif
 			if(ret == OK)
 			{
 				lstDelete(gvlan.vlanList, (NODE*)value);
@@ -657,7 +675,11 @@ int nsm_interface_add_untag_vlan_api(vlan_t vlan, struct interface *ifp)
 	{
 		if(l2vlan_lookup_port(value,  ifp->ifindex, VLAN_UNTAG) == ERROR)
 		{
+#ifdef PL_HAL_MODULE
 			ret = hal_vlan_add_untag_port(ifp->ifindex, value->vlan);
+#else
+			ret = OK;
+#endif
 			if(ret == OK)
 				ret = l2vlan_add_port(value,  ifp->ifindex, VLAN_UNTAG);
 		}
@@ -680,7 +702,11 @@ int nsm_interface_del_untag_vlan_api(vlan_t vlan, struct interface *ifp)
 	{
 		if(l2vlan_lookup_port(value,  ifp->ifindex, VLAN_UNTAG) == OK)
 		{
+#ifdef PL_HAL_MODULE
 			ret = hal_vlan_del_untag_port(ifp->ifindex, value->vlan);
+#else
+			ret = OK;
+#endif
 			if(ret == OK)
 				ret = l2vlan_del_port(value,  ifp->ifindex, VLAN_UNTAG);
 		}
@@ -720,7 +746,11 @@ int nsm_interface_add_tag_vlan_api(vlan_t vlan, struct interface *ifp)
 	{
 		if(l2vlan_lookup_port(value,  ifp->ifindex, VLAN_TAG) != OK)
 		{
+#ifdef PL_HAL_MODULE
 			ret = hal_vlan_add_tag_port(ifp->ifindex, value->vlan);
+#else
+			ret = OK;
+#endif
 			if(ret == OK)
 				ret = l2vlan_add_port(value,  ifp->ifindex, VLAN_TAG);
 		}
@@ -742,7 +772,11 @@ int nsm_interface_del_tag_vlan_api(vlan_t vlan, struct interface *ifp)
 	{
 		if(l2vlan_lookup_port(value,  ifp->ifindex, VLAN_TAG) == OK)
 		{
+#ifdef PL_HAL_MODULE
 			ret = hal_vlan_del_tag_port(ifp->ifindex, value->vlan);
+#else
+			ret = OK;
+#endif
 			if(ret == OK)
 				ret = l2vlan_del_port(value,  ifp->ifindex, VLAN_TAG);
 		}
@@ -788,13 +822,21 @@ int nsm_interface_native_vlan_set_api(struct interface *ifp, vlan_t vlan)
 		{
 			if(vlan)
 			{
+#ifdef PL_HAL_MODULE
 				ret = hal_port_add_native_vlan(ifp->ifindex, vlan);
+#else
+				ret = OK;
+#endif
 				if(ret == OK)
 					nsm_vlan->native = vlan;
 			}
 			else
 			{
+#ifdef PL_HAL_MODULE
 				ret = hal_port_del_native_vlan(ifp->ifindex, nsm_vlan->native);
+#else
+				ret = OK;
+#endif
 				if(ret == OK)
 					nsm_vlan->native = vlan;
 			}
@@ -925,7 +967,11 @@ int nsm_interface_trunk_add_allowed_vlan_api(struct interface *ifp, vlan_t vlan)
 		{
 			if(nsm_vlan->trunk_allowed[vlan].vlan == 0)
 			{
+#ifdef PL_HAL_MODULE
 				ret = hal_port_add_allowed_tag_vlan(ifp->ifindex, vlan);
+#else
+				ret = OK;
+#endif
 				if(ret == OK)
 				{
 					nsm_vlan->trunk_allowed[vlan].vlan = vlan;
@@ -960,7 +1006,11 @@ int nsm_interface_trunk_del_allowed_vlan_api(struct interface *ifp, vlan_t vlan)
 		{
 			if(nsm_vlan->trunk_allowed[vlan].vlan)
 			{
+#ifdef PL_HAL_MODULE
 				ret = hal_port_del_allowed_tag_vlan(ifp->ifindex, vlan);
+#else
+				ret = OK;
+#endif
 				if(ret == OK)
 				{
 					//nsm_interface_del_tag_vlan_api(vlan,  ifp);
@@ -996,7 +1046,11 @@ int nsm_interface_trunk_add_allowed_batch_vlan_api(struct interface *ifp, vlan_t
 	{
 		if(nsm_vlan->trunk_allowed[i].vlan == 0)
 		{
+#ifdef PL_HAL_MODULE
 			ret |= hal_port_add_allowed_tag_vlan(ifp->ifindex, i);
+#else
+			ret = OK;
+#endif
 			if(ret == OK)
 			{
 					nsm_vlan->trunk_allowed[i].vlan = i;
@@ -1026,7 +1080,11 @@ int nsm_interface_trunk_del_allowed_batch_vlan_api(struct interface *ifp, vlan_t
 	{
 		if(nsm_vlan->trunk_allowed[i].vlan)
 		{
+#ifdef PL_HAL_MODULE
 			ret |= hal_port_add_allowed_tag_vlan(ifp->ifindex, i);
+#else
+			ret = OK;
+#endif
 			if(ret == OK)
 			{
 				//nsm_vlan->allowed_max = MIN(nsm_vlan->allowed_max, nsm_vlan->trunk_allowed[i].maxvlan);

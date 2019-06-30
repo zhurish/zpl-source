@@ -1,11 +1,48 @@
 ##
 #
-
+#PLOS_CFLAGS		C 系统FLAGS
+#PLEX_CFLAGS		C 第三方库FLAGS
+#PL_CFLAGS			C 平台FLAGS
+#
+#PLOS_CPPFLAGS		C++ 系统FLAGS
+#PLEX_CPPFLAGS		C++ 第三方库FLAGS
+#PL_CPPFLAGS		C++ 平台FLAGS
+#
+#PLOS_ASFLAGS		汇编 系统FLAGS
+#PLEX_ASFLAGS		汇编 第三方库FLAGS
+#PL_ASFLAGS			汇编 平台FLAGS
+#
+#PLOS_LDFLAGS		系统库目录
+#PLEX_LDFLAGS		第三方库目录
+#PL_LDFLAGS			平台库目录
+#
+#PLOS_LDLIBS		系统库
+#PLEX_LDLIBS		第三方库
+#PL_LDLIBS			平台库
+#
+#PLOS_DEFINE		系统定义
+#PLEX_DEFINE		第三方定义
+#PL_DEFINE			平台库定义
+#
+#PLOS_INCLUDE		系统头文件
+#PLEX_INCLUDE		第三方头文件
+#PL_INCLUDE			平台库头文件
+#
+#PL_CFLAGS			C 平台FLAGS
+#
+#PLM_CPPFLAGS		模块系统FLAGS
+#PLM_ASFLAGS		模块汇编 系统FLAGS
+#PLM_LDFLAGS		模块库目录
+#PLM_LDLIBS			模块库
+#PLM_DEFINE			模块定义
+#PLM_INCLUDE		模块头文件
+#
 #
 ifneq ($(TOP_DIR),)
 ROOT_DIR = $(TOP_DIR)
 else
-ROOT_DIR = /home/zhurish/workspace/SWPlatform
+ROOT_DIR = $(shell pwd)
+#/home/zhurish/workspace/SWPlatform
 endif
 
 BASE_ROOT = $(ROOT_DIR)
@@ -15,6 +52,17 @@ export BASE_ROOT = $(ROOT_DIR)
 #
 #
 include $(MAKE_DIR)/board.cfg
+#
+#
+#
+ECHO = echo
+CD = cd
+RM = rm
+MV = mv
+CP = cp
+CHMOD = chmod
+MKDIR = mkdir
+TAR = tar
 #
 #
 BUILD_TYPE	=$(ARCH_TYPE)
@@ -38,10 +86,10 @@ endif
 #
 ifeq ($(BUILD_OPENWRT),true)
 include $(MAKE_DIR)/openwrt.mk
-PL_CFLAGS += -DBUILD_OPENWRT
+PLOS_DEFINE += -DBUILD_OPENWRT
 else
 include $(MAKE_DIR)/linux.mk
-PL_CFLAGS += -DBUILD_LINUX
+PLOS_DEFINE += -DBUILD_LINUX
 endif
 #
 #
@@ -52,7 +100,10 @@ LIBDIR = $(RELEASEDIR)/lib
 BINDIR = $(RELEASEDIR)/bin
 SBINDIR = $(RELEASEDIR)/sbin
 ETCDIR = $(RELEASEDIR)/etc
+ULIBDIR = $(RELEASEDIR)/usr/lib
+WWWDIR = $(RELEASEDIR)/www
 PLOS_CFLAGS += -s
+PLOS_MAP =
 else
 RELEASEDIR = debug
 OBJDIR = $(RELEASEDIR)/obj
@@ -60,29 +111,25 @@ LIBDIR = $(RELEASEDIR)/lib
 BINDIR = $(RELEASEDIR)/bin
 SBINDIR = $(RELEASEDIR)/sbin
 ETCDIR = $(RELEASEDIR)/etc
+ULIBDIR = $(RELEASEDIR)/usr/lib
+WWWDIR = $(RELEASEDIR)/www
+#ULIBDIR = $(RELEASEDIR)/www/spool
+#ULIBDIR = $(RELEASEDIR)/www/spool/cache
+PLOS_MAP = -Wl,-Map,target-app.map
 endif
 #
-#
-ECHO = echo
-CD = cd
-RM = rm
-MV = mv
-CP = cp
-CHMOD = chmod
-MKDIR = mkdir
-TAR = tar
-#
+PL_LDFLAGS += -L$(BASE_ROOT)/$(LIBDIR) -L$(BASE_ROOT)/$(ULIBDIR)
 #
 #
 ifeq ($(BUILD_DEBUG),YES)
-PLOS_CFLAGS +=  -g
+PL_CFLAGS +=  -g
 endif
 #
 #
 ifeq ($(USE_IPCOM_STACK),true)
-PL_CFLAGS += -DUSE_IPCOM_STACK
+PLOS_DEFINE += -DUSE_IPCOM_STACK
 else
-PL_CFLAGS += -DUSE_IPSTACK_KERNEL
+PLOS_DEFINE += -DUSE_IPSTACK_KERNEL
 endif
 #
 #
@@ -99,23 +146,26 @@ endif
 #
 #
 ifeq ($(strip $(BUILD_IPV6)),true)
-PL_CFLAGS += -DBUILD_IPV6
+PLOS_DEFINE += -DBUILD_IPV6
 endif
 #
 #
 #
-ifeq ($(ARCH_TYPE),MIPS)
+ifeq ($(GCC_TYPE),UCLIBC)
 PLOS_CFLAGS += -D__UCLIBC__
 endif
 #
 #
 PLOS_LDLIBS += -lpthread -lrt -rdynamic -lm -lcrypt -ldl -lgcc_s
 #
-PLOS_CFLAGS += -fsigned-char -O2  
+#
+#PLOS_LDLIBS += -std=c99 
+PLOS_CFLAGS += -std=gnu99 
+#
 #
 # WANRING
 #	
-PLOS_CFLAGS += -MMD -MP -Wall -Wextra -Wnested-externs -Wmissing-prototypes \
+PLOS_CFLAGS += -MMD -MP -Wfatal-errors -Wall -Wextra -Wnested-externs -Wmissing-prototypes \
 			 -Wredundant-decls -Wcast-align -Wunreachable-code -Wshadow	\
 			 -Wimplicit-function-declaration -Wimplicit	-Wreturn-type -Wunused \
 			 -Wswitch -Wformat -Wuninitialized -Wchar-subscripts  \
@@ -125,24 +175,36 @@ PLOS_CFLAGS += -MMD -MP -Wall -Wextra -Wnested-externs -Wmissing-prototypes \
 # -Werror=implicit-function-declaration -Werror=switch
 PLOS_CFLAGS += -Werror=return-type -Werror=format-extra-args -Werror=missing-prototypes \
 			  -Werror=unreachable-code -Werror=unused-function -Werror=unused-variable \
-			  -Werror=unused-value -Werror=implicit-int \
-			  -Werror=parentheses -Werror=shadow -Werror=char-subscripts
+			  -Werror=unused-value -Werror=implicit-int  \
+			  -Werror=parentheses -Werror=shadow -Werror=char-subscripts  \
+			  -Werror=invalid-memory-model -Werror=sizeof-pointer-memaccess \
+			  -Werror=shadow -Werror=overflow
+			  #-Werror=sign-compare 有符号和无符号参数比较
+			  #-Werror=format-overflow
+			  #-Werror=shift-count-overflow
 			  #-Werror=pointer-arith 
+			  #sequence-point:违反顺序点的代码,比如 a[i] = c[i++];
 			  #-Werror=cast-qual 
 			  #-Werror=redundant-decls -Werror=format -Werror=missingbraces
 #			 -Werror=switch-default -Werror=missing-format-attribute 
 #				-Werror=overlength-strings -Werror=cast-align  \
 #			 
 PLOS_CFLAGS += -fmessage-length=0 -Wcast-align
+#
+PLOS_CFLAGS += -fsigned-char -O0 -g2 -ggdb
+#
 #PLOS_CFLAGS += -Werror
 #
-PL_CFLAGS += -DBUILD_VERSION=\"$(VERSION)\" -DBUILD_TIME=\"$(BUILD_TIME)\"
+PLOS_DEFINE += -DBUILD_VERSION=\"$(VERSION)\" -DBUILD_TIME=\"$(BUILD_TIME)\"
 #
 #
 export DSTBINDIR = $(BASE_ROOT)/$(BINDIR)
 export DSTSBINDIR = $(BASE_ROOT)/$(SBINDIR)
 export DSTETCDIR = $(BASE_ROOT)/$(ETCDIR)
 export DSTLIBDIR = $(BASE_ROOT)/$(LIBDIR)
+export DSTULIBDIR = $(BASE_ROOT)/$(ULIBDIR)
+export DSTWWWDIR = $(BASE_ROOT)/$(WWWDIR)
+
 #
 #
 #
@@ -154,46 +216,47 @@ export DSTLIBDIR = $(BASE_ROOT)/$(LIBDIR)
 # gcc的 -MMD 选项可以自动生成带有依赖规则的.d文件，为创建头文件依赖带来了方便
 #
 #
-PLINCLUDE += $(PLLIBINCLUDE)
 #
-PL_DEBUG += $(PLDEFINE) $(EXTRA_DEFINE) 
-# -MMD -MP 
-export CFLAGS += $(PLOS_CFLAGS) $(PL_CFLAGS) $(PL_DEBUG) -fPIC $(PLINCLUDE)
-export LDCLFLAG += $(PLOS_LDLIBS) $(PL_LDLIBS) 
+export PLCFLAGS = $(PLOS_CFLAGS) $(PLEX_CFLAGS) $(PL_CFLAGS) $(PLM_CFLAGS)
+#
+export PLCPPFLAGS = $(PLOS_CPPFLAGS) $(PLEX_CPPFLAGS) $(PL_CPPFLAGS) $(PLM_CPPFLAGS)
+#
+export PLASFLAGS = $(PLOS_ASFLAGS) $(PLEX_ASFLAGS) $(PL_ASFLAGS) $(PLM_ASFLAGS)
+#
+export PLLDFLAGS = $(PLOS_LDFLAGS) $(PLEX_LDFLAGS) $(PL_LDFLAGS) $(PLM_LDFLAGS)
+#
+export PLLDLIBS = $(PLOS_LDLIBS) $(PLEX_LDLIBS) $(PL_LDLIBS) $(PLM_LDLIBS)
+#
+export PLINCLUDE = $(PLOS_INCLUDE) $(PLEX_INCLUDE) $(PL_INCLUDE) $(PLM_INCLUDE)
+#
+export PLDEFINE = $(PLOS_DEFINE) $(PLEX_DEFINE) $(PL_DEFINE) $(PLM_DEFINE)
+#
+export PLDEBUG = $(PL_DEBUG)
+#
+# 
+# 
+#export PLCFLAGS += $(PLOS_CFLAGS) $(PLEX_CFLAGS) $(PL_CFLAGS) $(PL_DEBUG) -fPIC $(PLINCLUDE)
+#export PLLDCLFLAG += $(PLOS_LDFLAGS) $(PLEX_LDFLAGS) $(PL_LDFLAGS) $(PLOS_LDLIBS) $(PLEX_LDLIBS) $(PL_LDLIBS) 
 #
 #
 #
 #
 #
-#$(OBJS_DIR)/%.d: $(SRC_DIR)/%.c
-#	@set -e; \
-#	rm -f $@; \
-#	$(CC) -MM $(PLINCLUDE) $< > $@.$$$$; \
-#	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
-#	rm -f $@.$$$$
-	
-#-include $(OBJS:.o=.d)
-
-	
+PL_ECHO_CC = $(ECHO) CC '$(PLDEFINE) $(PLDEBUG) $(PLCFLAGS) $(PLLDFLAGS) $(PLINCLUDE)' $@
+PL_ECHO_CPP = $(ECHO) CXX '$(PLDEFINE) $(PLDEBUG) $(PLCPPFLAGS) $(PLLDFLAGS) $(PLINCLUDE)' $@
+PL_ECHO_AS = $(ECHO) AS '$(PLDEFINE) $(PLDEBUG) $(PLASFLAGS) $(PLLDFLAGS)' $@
 #
 #
-#
-# $(CC) $(OBJS) $(CFLAGS)
-#%.o: %.c iw.h nl80211.h
-#	@$(NQ) ' CC  $(CFLAGS)' $@
-#	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
-#   $(CC) -MM $(CFLAGS) $< > $@.
-	
-PL_OBJ_COMPILE = @$(CC) -fPIC $(CFLAGS) $(LDCLFLAG) -c  $< -o $@ $(PLINCLUDE)
-PL_LIB_COMPILE = $(CC) -fPIC $(CFLAGS) $(LDCLFLAG) $^ -o $@ $(PLINCLUDE)
+PL_OBJ_COMPILE = @$(CC) -fPIC $(PLDEFINE) $(PLDEBUG) $(PLCFLAGS) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
+PL_LIB_COMPILE = $(CC) -fPIC $(PLDEFINE) $(PLDEBUG) $(PLCFLAGS) $(PLLDFLAGS) $^ -o $@ $(PLINCLUDE)
 #
 PL_MAKE_LIBSO = $(CC) -shared -o 
-
-PL_CXX_OBJ_COMPILE = @$(CXX) -fPIC $(CFLAGS) $(LDCLFLAG) -c  $< -o $@ $(PLINCLUDE)
-PL_CXX_LIB_COMPILE = $(CXX) -fPIC $(CFLAGS) $(LDCLFLAG) $^ -o $@ $(PLINCLUDE)
+#
+PL_CXX_OBJ_COMPILE = @$(CXX) -fPIC $(PLDEFINE) $(PLDEBUG) $(PLCPPFLAGS) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
+PL_CXX_LIB_COMPILE = $(CXX) -fPIC $(PLDEFINE) $(PLDEBUG) $(PLCPPFLAGS) $(PLLDFLAGS) $^ -o $@ $(PLINCLUDE)
 #
 PL_CXX_MAKE_LIBSO = $(CXX) -shared -o 
-
+#
 PL_MAKE_LIB = @$(AR) -rs
 #
 #

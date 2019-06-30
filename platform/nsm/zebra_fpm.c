@@ -1146,7 +1146,7 @@ zfpm_write_cb (struct thread *thread)
 static int
 zfpm_connect_cb (struct thread *t)
 {
-  int sock, ret;
+  int sock = 0, ret = 0;
   struct sockaddr_in serv;
 
   assert (zfpm_g->t_connect);

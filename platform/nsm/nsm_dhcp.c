@@ -137,7 +137,7 @@ nsm_dhcp_type nsm_interface_dhcp_mode_get_api(struct interface *ifp)
 }
 
 
-int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type)
+int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type, char *name)
 {
 	nsm_dhcp_ifp_t *nsm_dhcp = NULL;
 	nsm_dhcp = nsm_dhcp_get(ifp);
@@ -164,13 +164,27 @@ int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type)
 #ifdef PL_DHCPC_MODULE
 			if(nsm_dhcp->type == DHCP_NONE && type == DHCP_SERVER)
 			{
-				nsm_interface_dhcps_enable(ifp->k_ifindex, TRUE);
-				ifp->dhcp = TRUE;
+				nsm_dhcps_t * pool = nsm_dhcps_lookup_api(name);
+				if(pool)
+				{
+					nsm_interface_dhcps_enable(pool, ifp->ifindex, TRUE);
+					nsm_dhcp->server = pool;
+					ifp->dhcp = TRUE;
+				}
+				else
+					return ERROR;
 			}
 			if(nsm_dhcp->type == DHCP_SERVER && type == DHCP_NONE)
 			{
-				nsm_interface_dhcps_enable(ifp->k_ifindex, FALSE);
-				ifp->dhcp = FALSE;
+				nsm_dhcps_t * pool = nsm_dhcps_lookup_api(name);
+				if(pool)
+				{
+					nsm_interface_dhcps_enable(pool, ifp->ifindex, FALSE);
+					nsm_dhcp->server = pool;
+					ifp->dhcp = FALSE;
+				}
+				else
+					return ERROR;
 			}
 #endif
 #ifdef PL_DHCPC_MODULE
@@ -234,18 +248,23 @@ static int nsm_dhcp_client_init()
 	return OK;
 }
 
-
-
 int nsm_dhcp_module_init ()
 {
 	nsm_dhcp_client_init();
 #ifdef PL_DHCPD_MODULE
 	nsm_dhcps_init();
+#ifdef PL_UDHCP_MODULE
+	udhcp_module_init();
+#else
 	dhcps_module_init ();
 #endif
+#endif
 #ifdef PL_DHCPC_MODULE
-
+#ifdef PL_UDHCP_MODULE
+	udhcp_module_init();
+#else
 	dhcpc_module_init ();
+#endif
 #endif
 	return OK;
 }
@@ -253,10 +272,18 @@ int nsm_dhcp_module_init ()
 int nsm_dhcp_task_init ()
 {
 #ifdef PL_DHCPC_MODULE
+#ifdef PL_UDHCP_MODULE
+	udhcp_module_task_init();
+#else
 	dhcpc_task_init ();
 #endif
+#endif
 #ifdef PL_DHCPD_MODULE
+#ifdef PL_UDHCP_MODULE
+	udhcp_module_task_init();
+#else
 	dhcps_task_init ();
+#endif
 #endif
 	return OK;
 }
@@ -264,10 +291,18 @@ int nsm_dhcp_task_init ()
 int nsm_dhcp_task_exit ()
 {
 #ifdef PL_DHCPC_MODULE
+#ifdef PL_UDHCP_MODULE
+	udhcp_module_task_exit ();
+#else
 	dhcpc_task_exit ();
 #endif
+#endif
 #ifdef PL_DHCPD_MODULE
+#ifdef PL_UDHCP_MODULE
+	udhcp_module_task_exit ();
+#else
 	dhcps_task_exit ();
+#endif
 #endif
 	return OK;
 }
@@ -278,10 +313,18 @@ int nsm_dhcp_module_exit ()
 	if(nsm)
 		nsm_client_free (nsm);
 #ifdef PL_DHCPC_MODULE
+#ifdef PL_UDHCP_MODULE
+	udhcp_module_exit();
+#else
 	dhcpc_module_exit ();
 #endif
+#endif
 #ifdef PL_DHCPD_MODULE
+#ifdef PL_UDHCP_MODULE
+	udhcp_module_exit();
+#else
 	dhcps_module_exit ();
+#endif
 	nsm_dhcps_exit();
 #endif
 	return OK;

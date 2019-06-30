@@ -538,7 +538,11 @@ funcname_eloop_add_event(struct eloop_master *m, int (*func)(struct eloop *),
 void eloop_cancel(struct eloop *eloop)
 {
 	struct eloop_list *list = NULL;
-	if (eloop->master->mutex)
+	if(!eloop->master)
+	{
+		return;
+	}
+	if (eloop->master && eloop->master->mutex)
 		os_mutex_lock(eloop->master->mutex, OS_WAIT_FOREVER);
 	switch (eloop->type)
 	{
@@ -588,7 +592,7 @@ void eloop_cancel(struct eloop *eloop)
 
 	eloop->type = ELOOP_UNUSED;
 	eloop_add_unuse(eloop->master, eloop);
-	if (eloop->master->mutex)
+	if (eloop->master && eloop->master->mutex)
 		os_mutex_unlock(eloop->master->mutex);
 }
 
@@ -788,7 +792,7 @@ static unsigned int eloop_timer_process(struct eloop_list *list,
 	struct eloop *next;
 	unsigned int ready = 0;
 
-	for (thread = list->head; thread; thread = next)
+	for (thread = list->head; thread != NULL; thread = next)
 	{
 		next = thread->next;
 		if (thread)
@@ -844,7 +848,7 @@ eloop_fetch(struct eloop_master *m, struct eloop *fetch)
 		int num = 0;
 
 		/* Signals pre-empt everything */
-		quagga_sigevent_process();
+		//quagga_sigevent_process();
 
 		/* Drain the ready queue of already scheduled jobs, before scheduling
 		 * more.
@@ -1054,6 +1058,8 @@ void eloop_call(struct eloop *eloop)
 	 * Callers submitting 'dummy eloops' hence must take care that
 	 * eloop->cpu is NULL
 	 */
+	 if(eloop == NULL)
+		 return;
 	if (eloop && eloop->add_type == ELOOP_EVENT)
 		;  //	  OS_DEBUG("%s:%s\r\n",__func__,eloop->funcname);
 	if (!eloop->hist)

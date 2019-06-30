@@ -188,8 +188,8 @@ zclient_socket(void)
 static int
 zclient_socket_un (const char *path)
 {
-  int ret;
-  int sock, len;
+  int ret = 0;
+  int sock = 0, len = 0;
   struct sockaddr_un addr;
 
   sock = socket (AF_UNIX, SOCK_STREAM, 0);

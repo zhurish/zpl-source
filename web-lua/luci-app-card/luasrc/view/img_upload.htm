@@ -1,0 +1,35 @@
+<%+cbi/valueheader%>
+	<label class="cbi-value-title" for="img_upload_file">Face ID Img</label>
+	<input class="cbi-input-file" style="width: 400px" onchange="getPic()" type="file" id="img_upload_file" name="img_upload_file" />
+	<script type="text/javascript">
+	function getPic(){
+		var info=event.target.files[0];
+		//console.log(info);	
+		if (info.size > 1024*1024*1)
+		{
+			alert(" image file size Must be smaller than 1M!");
+			$("#img_upload_file").val("");
+			return false;
+		}	
+		if (info.size <= 0)
+		{
+			alert(" image file size error!");
+			$("#img_upload_file").val("");
+			return false;
+		}
+
+		if (info.type != "image/jpeg")
+		{
+			alert(" image type error! only accept jpeg format");
+			$("#img_upload_file").val("");
+			return false;
+		}
+		if (info.name.length >= 31)
+		{
+			alert(" error, image file name is too long!");
+			$("#img_upload_file").val("");
+			return false;
+		}				
+	}
+	</script>
+<%+cbi/valuefooter%>

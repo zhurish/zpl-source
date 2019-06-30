@@ -599,6 +599,10 @@ void thread_cancel(struct thread *thread)
 {
 	struct thread_list *list = NULL;
 	struct pqueue *queue = NULL;
+	if(!thread->master)
+	{
+		return;
+	}
 	//struct thread **thread_array = NULL;
 	if (thread->master->mutex)
 		os_mutex_lock(thread->master->mutex, OS_WAIT_FOREVER);
@@ -863,7 +867,7 @@ thread_fetch(struct thread_master *m, struct thread *fetch)
 	while (1)
 	{
 		/* Signals pre-empt everything */
-		quagga_sigevent_process ();
+		//quagga_sigevent_process ();
 		/* Drain the ready queue of already scheduled jobs, before scheduling
 		 * more.
 		 */
@@ -1080,6 +1084,8 @@ void thread_call(struct thread *thread)
 	 * Callers submitting 'dummy threads' hence must take care that
 	 * thread->cpu is NULL
 	 */
+	 if(thread == NULL)
+		 return;
 	if (thread && thread->add_type == THREAD_EVENT)
 		;      //	  OS_DEBUG("%s:%s\r\n",__func__,thread->funcname);
 	if (!thread->hist)

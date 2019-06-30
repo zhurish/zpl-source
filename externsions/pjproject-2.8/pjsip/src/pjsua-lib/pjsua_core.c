@@ -90,6 +90,7 @@ PJ_DEF(void) pjsua_logging_config_default(pjsua_logging_config *cfg)
 #if (defined(PJ_WIN32) && PJ_WIN32 != 0) || (defined(PJ_WIN64) && PJ_WIN64 != 0)
     cfg->decor |= PJ_LOG_HAS_COLOR;
 #endif
+    cfg->decor = pj_log_get_decor();
 }
 
 PJ_DEF(void) pjsua_logging_config_dup(pj_pool_t *pool,

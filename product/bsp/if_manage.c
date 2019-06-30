@@ -206,7 +206,7 @@ static int if_slot_kernel_lookup(ifindex_t ifindex)
 static int if_slot_kernel_add(ifindex_t ifindex, char *name)
 {
 	int i = 0, j = 0;
-	zlog_debug(ZLOG_DEFAULT, "=======%s: IFINDEX=%x  %s->%d", __func__, ifindex, name, if_nametoindex(name));
+	//zlog_debug(ZLOG_DEFAULT, "=======%s: IFINDEX=%x  %s->%d", __func__, ifindex, name, if_nametoindex(name));
 	if(if_slot_kernel_lookup(ifindex) == 0)
 	{
 		for(i = 0; i < OS_SLOT_MAX; i++)
@@ -221,8 +221,8 @@ static int if_slot_kernel_add(ifindex_t ifindex, char *name)
 					//if(if_nametoindex(name))
 					{
 						//os_strcpy(phy_table[i][j].kname, name);
-						zlog_debug(ZLOG_DEFAULT, "=======%s: IFINDEX=%s  %s", __func__,
-								if_ifname_make(ifindex), name);
+						//zlog_debug(ZLOG_DEFAULT, "=======%s: IFINDEX=%s  %s", __func__,
+						//		if_ifname_make(ifindex), name);
 						phy_table[i][j].kifindex = if_nametoindex(name);
 					}
 					return 0;
@@ -364,6 +364,7 @@ int if_slot_show_port_phy(struct vty *vty)
 
 static int if_unit_slot_port(int type, int u, int s, int p)
 {
+	struct interface * ifp = NULL;
 	int i = 0;
 	char name[64];//[ethernet|gigabitethernet|tunnel|loopback]
 	if(p == 0)
@@ -398,7 +399,12 @@ static int if_unit_slot_port(int type, int u, int s, int p)
 			sprintf(name,"port-channel%d",i);
 
 		if(os_strlen(name))
-			if_create (name, strlen(name));
+			ifp = if_create (name, strlen(name));
+
+		if(strstr(name, "ethernet 0/0/1"))
+		{
+			if_kname_set(ifp, "enp0s25");
+		}
 	}
 	return OK;
 }

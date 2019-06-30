@@ -77,9 +77,9 @@ int os_queue_name(os_queue_t *queue, char *name)
 int os_queue_send(os_queue_t *queue, char *data, int len, int op)
 {
 	queue_t *queue_add = NULL;
-	if(!queue || (len > queue->size) || !data)
+	if(!queue || ((u_int)len > queue->size) || !data)
 		return ERROR;
-	while(lstCount(&queue->list) == queue->max)
+	while((u_int)lstCount(&queue->list) == queue->max)
 	{
 		if(op != OS_WAIT_FOREVER)
 			break;
@@ -134,7 +134,7 @@ int os_queue_recv(os_queue_t *queue, char *data, int len, int timeout)
 {
 	int rlen = 0;
 	queue_t *queue_add = NULL;
-	if(!queue || (len > queue->size) || !data)
+	if(!queue || ((u_int)len > queue->size) || !data)
 		return ERROR;
 	if(queue->sem)
 		os_sem_take(queue->sem, timeout);

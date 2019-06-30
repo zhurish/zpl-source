@@ -1,3 +1,4 @@
+export PJDIR := $(shell pwd)
 include build.mak
 include build/host-$(HOST_NAME).mak
 -include user.mak
@@ -6,11 +7,18 @@ include version.mak
 LIB_DIRS = pjlib/build pjlib-util/build pjnath/build third_party/build pjmedia/build pjsip/build
 DIRS = $(LIB_DIRS) pjsip-apps/build $(EXTRA_DIRS)
 
+
+ifeq ($(PJSHARE_ENABLE),true)
+PL_LDLIB_DIR = $(DSTULIBDIR)
+else
+PL_LDLIB_DIR = $(DSTLIBDIR)
+endif
+
 ifdef MINSIZE
 MAKE_FLAGS := MINSIZE=1
 endif
 
-all clean dep depend print:
+dep:
 	for dir in $(DIRS); do \
 		if $(MAKE) $(MAKE_FLAGS) -C $$dir $@; then \
 		    true; \
@@ -18,6 +26,24 @@ all clean dep depend print:
 		    exit 1; \
 		fi; \
 	done
+	
+all: dep
+	for dir in $(DIRS); do \
+		if $(MAKE) $(MAKE_FLAGS) -C $$dir $@; then \
+		    true; \
+		else \
+		    exit 1; \
+		fi; \
+	done
+	
+#all dep depend print:dep
+#	for dir in $(DIRS); do \
+#		if $(MAKE) $(MAKE_FLAGS) -C $$dir $@; then \
+#		    true; \
+#		else \
+#		    exit 1; \
+#		fi; \
+#	done
 
 distclean realclean:
 	for dir in $(DIRS); do \
@@ -31,11 +57,19 @@ distclean realclean:
 	$(HOST_RM) config.status
 
 clean:
+	rm -rf $(PL_LDLIB_DIR)
 	for dir in $(DIRS); do \
-		if $(MAKE) $(MAKE_FLAGS) -C $$dir $@; then \
-		    true; \
-		fi; \
+		$(MAKE) $(MAKE_FLAGS) -C $$dir clean; \
 	done
+	for dir in $(DIRS); do \
+		rm -rf $$dir/output/*; \
+	done	
+	for d in pjlib pjlib-util pjnath pjmedia pjsip; do \
+		rm -rf $$d/lib/*; \
+	done
+	rm -rf third_party/lib/*;
+	$(MAKE) $(MAKE_FLAGS) distclean;
+	
 lib:
 	for dir in $(LIB_DIRS); do \
 		if $(MAKE) $(MAKE_FLAGS) -C $$dir lib; then \
@@ -46,7 +80,7 @@ lib:
 	done; \
 
 
-.PHONY: lib doc clean
+.PHONY: lib doc clean all dep
 
 doc:
 	@if test \( ! "$(WWWDIR)" == "" \) -a \( ! -d $(WWWDIR)/pjlib/docs/html \) ; then \
@@ -126,8 +160,9 @@ install:
 	mkdir -p $(DESTDIR)$(libdir)/
 #	cp -af $(APP_LIB_FILES) $(DESTDIR)$(libdir)/
 	cp -af $(APP_LIBXX_FILES) $(DESTDIR)$(libdir)/
-	#mkdir -p $(BASE_ROOT)/$(LIBDIR)
-	#cp -af $(APP_LIBXX_FILES) $(BASE_ROOT)/$(LIBDIR)
+	
+	mkdir -p $(PL_LDLIB_DIR)
+	cp -af $(APP_LIBXX_FILES) $(PL_LDLIB_DIR)
 	
 	mkdir -p $(DESTDIR)$(includedir)/
 	for d in pjlib pjlib-util pjnath pjmedia pjsip; do \

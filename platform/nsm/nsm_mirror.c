@@ -195,7 +195,9 @@ int nsm_mirror_destination_set_api(ifindex_t ifindex, BOOL enable)
 			value.ifindex = ifindex;
 			value.mirror_dst = TRUE;
 			value.enable = TRUE;
+#ifdef PL_HAL_MODULE
 			if(hal_mirror_enable(ifindex, value.enable) == OK)
+#endif
 				ret = mirror_add_node(&value);
 		}
 		else
@@ -208,12 +210,16 @@ int nsm_mirror_destination_set_api(ifindex_t ifindex, BOOL enable)
 			mirror->ifindex = ifindex;
 			mirror->mirror_dst = TRUE;
 			mirror->enable = TRUE;
+#ifdef PL_HAL_MODULE
 			if(hal_mirror_enable(ifindex, mirror->enable) == OK)
+#endif
 				ret = OK;
 		}
 		else
 		{
+#ifdef PL_HAL_MODULE
 			if(hal_mirror_enable(ifindex, FALSE) == OK)
+#endif
 				ret = mirror_del_node(mirror);
 		}
 	}
@@ -367,7 +373,9 @@ int nsm_mirror_source_set_api(ifindex_t ifindex, BOOL enable, mirror_dir_en dir)
 			value.mirror_dst = FALSE;
 			value.enable = TRUE;
 			value.dir = dir;
+#ifdef PL_HAL_MODULE
 			if(hal_mirror_source_enable(ifindex, NULL, dir, TRUE) == OK)
+#endif
 				ret = mirror_add_node(&value);
 		}
 		else
@@ -381,12 +389,16 @@ int nsm_mirror_source_set_api(ifindex_t ifindex, BOOL enable, mirror_dir_en dir)
 			mirror->mirror_dst = FALSE;
 			mirror->enable = TRUE;
 			mirror->dir = dir;
+#ifdef PL_HAL_MODULE
 			if(hal_mirror_source_enable(ifindex, NULL, dir, TRUE) == OK)
+#endif
 				ret = OK;
 		}
 		else
 		{
+#ifdef PL_HAL_MODULE
 			if(hal_mirror_source_enable(ifindex, NULL, dir, FALSE) == OK)
+#endif
 				ret = mirror_del_node(mirror);
 		}
 	}
@@ -462,7 +474,9 @@ int nsm_mirror_source_mac_filter_set_api(BOOL enable, u_char *mac, BOOL dst,  mi
 				gMirror.egress_dst = dst;
 				os_memcpy(gMirror.egress_mac, mac, NSM_MAC_MAX);
 			}
+#ifdef PL_HAL_MODULE
 			if(hal_mirror_source_filter_enable(TRUE, dst, mac, dir) == OK)
+#endif
 				ret = OK;
 		}
 		else
@@ -479,7 +493,9 @@ int nsm_mirror_source_mac_filter_set_api(BOOL enable, u_char *mac, BOOL dst,  mi
 				gMirror.egress_dst = FALSE;
 				os_memset(gMirror.egress_mac, 0, NSM_MAC_MAX);
 			}
+#ifdef PL_HAL_MODULE
 			if(hal_mirror_source_filter_enable(FALSE, dst, NULL, dir) == OK)
+#endif
 				ret = OK;
 		}
 	}

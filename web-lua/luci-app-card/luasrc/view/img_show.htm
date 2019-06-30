@@ -1,0 +1,55 @@
+<%+cbi/valueheader%>
+	<input class="cbi-button cbi-input-apply" type="button" name="cbid.table.load_img" id="cbid.table.load_img" 
+	value="IMG" size="0" onclick="getUserId(this)">
+	<style media="screen" type="text/css">
+	    .model {
+	      display: none;
+	      position: fixed;
+	      top: 0;
+	      left: 0;
+	      right: 0;
+	      bottom: 0;
+	      background-color: rgba(0, 0, 0, 0.5);
+	    }
+	    .view {
+	      position: absolute;
+	      top: 50%;
+	      left: 50%;
+	      transform: translate(-50%, -50%);
+	    }
+	    .close {
+	      position: absolute;
+	      top: 50%;
+	      right: 50%;
+	      color: red;
+	    }    
+	</style>
+	<div class="model">
+	    <div class="view">
+	      <a href="javascript:" class="close" onclick="closeModel()">X</a>  
+	      <img id="face_img_show" src="/app/aa.jpg">
+	    </div>
+	</div>
+	<script type="text/javascript">
+		var stxhr = new XHR();
+        function getUserId(self){
+			var userId=$(self).parent().parent().prevAll()[5].innerText;
+			var imgSrc=$(self).parent().parent().prevAll()[0].innerText;
+			console.log(userId,imgSrc);
+			stxhr.post('<%=url('admin/card')%>/img_show' + '/' + userId, { token: '<%=token%>' },
+				function(x)
+				{
+					console.log(x);
+					if (x.responseText != "ERROR")
+					{
+						document.getElementById("face_img_show").src = x.responseText;
+						$(".model").css("display", "block");
+					}
+				}
+			);
+		}
+	    function closeModel(event) {
+	      $(".model").css("display", "none");
+	    }
+	  </script>
+<%+cbi/valuefooter%>

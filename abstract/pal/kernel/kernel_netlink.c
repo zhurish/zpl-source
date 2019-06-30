@@ -445,11 +445,13 @@ int netlink_parse_info(
 			}
 
 			/* OK we got netlink message. */
+/*
 			if (IS_ZEBRA_DEBUG_KERNEL)
 				zlog_debug(ZLOG_PAL,
 						"netlink_parse_info: %s type %s(%u), seq=%u, pid=%u",
 						nl->name, lookup(nlmsg_str, h->nlmsg_type),
 						h->nlmsg_type, h->nlmsg_seq, h->nlmsg_pid);
+*/
 
 			/* skip unsolicited messages originating from command socket
 			 * linux sets the originators port-id for {NEW|DEL}ADDR messages,
@@ -459,7 +461,7 @@ int netlink_parse_info(
 					&& (h->nlmsg_type != RTM_NEWADDR
 							&& h->nlmsg_type != RTM_DELADDR))
 			{
-				if (IS_ZEBRA_DEBUG_KERNEL)
+				//if (IS_ZEBRA_DEBUG_KERNEL)
 					zlog_debug(ZLOG_PAL,
 							"netlink_parse_info: %s packet comes from %s",
 							zvrf->netlink_cmd.name, nl->name);
@@ -467,6 +469,12 @@ int netlink_parse_info(
 			}
 			if(filter)
 			{
+/*
+				zlog_debug(ZLOG_PAL,
+						"netlink_parse_info: %s type %s(%u), seq=%u, pid=%u",
+						nl->name, lookup(nlmsg_str, h->nlmsg_type),
+						h->nlmsg_type, h->nlmsg_seq, h->nlmsg_pid);
+*/
 				error = (*filter)(&snl, h, zvrf->vrf_id);
 				if (error < 0)
 				{
@@ -744,7 +752,7 @@ void kernel_open(struct nsm_vrf *zvrf)
 void kernel_load_all()
 {
 	//int ret = 0;
-	struct nsm_vrf *zvrf;
+	struct nsm_vrf *zvrf = NULL;
 	vrf_iter_t iter;
 
 	for (iter = vrf_first(); iter != VRF_ITER_INVALID; iter = vrf_next(iter))
@@ -752,6 +760,9 @@ void kernel_load_all()
 		if ((zvrf = vrf_iter2info(iter)) != NULL)
 		{
 			kernel_open(zvrf);
+
+			kernel_interface_load(zvrf);
+			kernel_route_table_load(zvrf);
 		}
 	}
 	return;

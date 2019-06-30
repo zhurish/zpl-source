@@ -6,23 +6,24 @@ _MODULELIST = \
 	MODULE_SERVICE.true \
 	MODULE_STARTUP.true \
 	MODULE_PRODUCT.true \
+	MODULE_BCM53125.false \
 	MODULE_CLI.true \
 	MODULE_OSPF.false \
 	MODULE_ABSTRACT.true \
 	MODULE_COMPONENT.true \
 	MODULE_WIFI.true \
-	MODULE_MODEM.false \
+	MODULE_MODEM.true \
 	MODULE_TOOLS.true \
 	MODULE_DHCP.false \
+	MODULE_UDHCP.true \
 	MODULE_SQLITE.false \
 	MODULE_SYSTOOLS.true \
 	MODULE_SSH.true \
 	MODULE_PJSIP.true \
-	MODULE_OSIP.true \
-	MODULE_EXSIP.false \
-	MODULE_VOIP.true \
+	MODULE_OSIP.false \
 	MODULE_APP.true \
-	MODULE_UCI.true 
+	MODULE_UCI.true \
+	MODULE_WEB.false 	
 #
 #
 #
@@ -44,14 +45,22 @@ $(foreach IModule,$(_MODULELIST), $(eval $(call _MODULE_DEF,$(IModule))))
 #
 #
 ifeq ($(strip $(MODULE_PJSIP)),true)
-MODULE_VOIP=false
 MODULE_OSIP=false
-MODULE_EXSIP=false
 endif
 #
 ifeq ($(strip $(MODULE_OSIP)),true)
-MODULE_EXSIP=false
+MODULE_PJSIP=false
 endif
+#
+#
+ifeq ($(strip $(MODULE_UDHCP)),true)
+MODULE_DHCP=false
+endif
+#
+ifeq ($(strip $(MODULE_DHCP)),true)
+MODULE_UDHCP=false
+endif
+#
 #
 #
 #
@@ -72,13 +81,14 @@ PlatformModule = \
 	TOOLSDIR.tools \
 	DHCPCDDIR.dhcpcd \
 	DHCPDDIR.dhcpd \
+	UDHCPDIR.udhcp \
 	SQLITEDIR.sqlite \
 	SYSTOOLSDIR.systools \
 	LIBSSHDIR.ssh \
 	OSIPDIR.osip \
 	PJSIPDIR.pjsip \
-	VOIPDIR.voip \
-	APPDIR.application
+	APPDIR.application \
+	WEBDIR.webgui
 ###
 # By default we choose the lexically last Platform component version in hopes
 # that it is the most recent. The directory macros (e.g. IPCOMDIR) may of

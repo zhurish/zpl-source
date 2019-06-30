@@ -70,7 +70,7 @@ static void real_time_signal_handler (pthread_t pid, int sig)
 static void real_signal_setup(void)
 {
 	signal_pipe = os_pipe_create("real-signal", O_RDWR);
-	if(signal_pipe)
+	if(signal_pipe > 0)
 		os_set_nonblocking(signal_pipe);
 }
 /* Read a signal from the signal pipe. Returns 0 if there is
@@ -91,7 +91,7 @@ static int real_signal_read (int timeout)
 	{
 		retval = os_select_wait(signal_pipe + 1, &rfds, NULL,  timeout);
 
-		if (retval == 0)
+		if (retval == OS_TIMEOUT)
 			return 0;
 
 		if (!FD_ISSET(signal_pipe, &rfds))
@@ -166,8 +166,10 @@ quagga_sigevent_process (void)
     }
 #endif /* SIGEVENT_BLOCK_SIGNALS */
 
+/*
   if(sigmaster.tid != pthread_self())
 	  return 0;
+*/
 
   if (sigmaster.caught > 0)
     {
@@ -285,6 +287,7 @@ exit_handler(int signo
 #endif
 	    )
 {
+	printf("%s:============+++++++++++++++++++++===========signo=%d\r\n", __func__, signo);
   zlog_signal(signo, "exiting..."
 #ifdef SA_SIGINFO
 	      , siginfo, program_counter(context)
@@ -300,6 +303,7 @@ core_handler(int signo
 #endif
 	    )
 {
+	printf("%s:==========+++++++++++++++++++++++++=========signo=%d\r\n", __func__, signo);
   zlog_signal(signo, "aborting..."
 #ifdef SA_SIGINFO
 	      , siginfo, program_counter(context)
@@ -422,7 +426,11 @@ signal_init (int sigc,
     {
       sig = &signals[i];
       if ( signal_set (sig->signal) < 0 )
-        exit (-1);
+      {
+    	  fprintf(stdout, "Unable to set signal handler for signal %d: %s\r\n",
+    			  sig->signal,safe_strerror(errno));
+    	  //exit (-1);
+      }
       i++;
     }
 

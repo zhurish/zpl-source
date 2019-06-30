@@ -54,9 +54,9 @@ DEFUN (syslog_debug_test,
 	   "dest")
 {
 	char *message;
-	extern int syslogc_out(int priority, char * pStr, int len);
+	extern int syslogc_out(int priority, int ffacility, char * pStr, int len);
 	message = argv_concat(argv, argc, 0);
-	syslogc_out(LOG_DEBUG, message, os_strlen(message));
+	syslogc_out(LOG_DEBUG, 7, message, os_strlen(message));
 	return CMD_SUCCESS;
 }
 
@@ -66,9 +66,11 @@ DEFUN (sdk_test,
        "syslog-debug\n"
 	   "dest")
 {
+#ifdef PL_HAL_MODULE
 	ifindex_t ifindex = atoi(argv[0]);
 	int value = atoi(argv[0]);
 	hal_port_speed_set( ifindex,  value);
+#endif
 	//hal_port_duplex_set(ifindex_t ifindex, int value);
 	return CMD_SUCCESS;
 }
@@ -248,23 +250,31 @@ ALIAS(timet_test_exit,
 #ifdef PL_OPENWRT_UCI
 DEFUN (uci_get_test_cmd,
 		uci_get_test_cmd_cmd,
-       "uci-test (get-string|get-integer) NAME",
+       "uci-test (get-string|get-integer|get-list) NAME",
        "uco-test\n")
 {
 	char value[64];
 	int valu = 0;
 	char *lstv[8];
+
+	vty_out(vty, "uci_get_test_cmd_cmd :%s %s %s", argv[0], argv[1], VTY_NEWLINE);
+
 	if(strstr(argv[0], "string"))
 		os_uci_get_string(argv[1], value);
+	else if(strstr(argv[0], "integer"))
+		os_uci_get_integer("sip_config.sip.localport", &valu);
 	else
 		os_uci_get_list(argv[1], lstv, &valu);
+
 	if(strstr(argv[0], "string"))
-		vty_out(vty, "get %s %s", argv[1], value);
+		vty_out(vty, "get-string: %s=%s%s", argv[1], value, VTY_NEWLINE);
+	else if(strstr(argv[0], "integer"))
+		vty_out(vty, "get-integer: %s=%d%s", argv[1], valu, VTY_NEWLINE);
 	else
 	{
 		int i = 0;
 		for(i = 0; i < valu; i++)
-			vty_out(vty, "get %s:%s", argv[1], lstv[i]);
+			vty_out(vty, "get-list: %s=%s%s", argv[1], lstv[i],VTY_NEWLINE);
 	}
 	return CMD_SUCCESS;
 }
@@ -308,11 +318,11 @@ DEFUN (uci_del_test_cmd,
        "uco-test\n")
 {
 	if(argc == 3)
-			os_uci_del(argv[0], argv[1], argv[2]);
+			os_uci_del(argv[0], argv[1], argv[2], NULL);
 	else if(argc == 2)
-			os_uci_del(argv[0], argv[1], NULL);
+			os_uci_del(argv[0], argv[1], NULL, NULL);
 	else if(argc == 1)
-			os_uci_del(argv[0], NULL, NULL);
+			os_uci_del(argv[0], NULL, NULL, NULL);
 	return CMD_SUCCESS;
 }
 
@@ -324,7 +334,7 @@ ALIAS(uci_del_test_cmd,
 
 DEFUN (uci_commit_test_cmd,
 		uci_commit_test_cmd_cmd,
-       "uci-test del NAME OP VALUE",
+       "uci-test commit NAME",
        "uco-test\n")
 {
 	os_uci_commit(argv[0]);

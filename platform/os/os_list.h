@@ -54,7 +54,7 @@ extern void 	lstInit (LIST *pList);
 extern void 	lstInsert (LIST *pList, NODE *pPrev, NODE *pNode);
 
 extern void 	lstSortInit (LIST *pList, int(*cmp)(void *, void *));
-extern void 	lstInitFree (LIST *pList, int(*free)(void *));
+extern void 	lstInitFree (LIST *pList, int(*freecb)(void *));
 extern void 	lstAddSort (LIST *pList, NODE *pNode);
 
 #endif /* __OS_LIST_H__ */

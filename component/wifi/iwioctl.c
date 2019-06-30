@@ -157,7 +157,7 @@ int iw_fprintf(void *fp, const char *format, ...)
 		va_start(args, format);
 		len = vsnprintf(buf, sizeof(buf), format, args);
 		va_end(args);
-		zlog_err(ZLOG_WIFI, buf);
+		zlog_err(ZLOG_WIFI, "%s",buf);
 	}
 	else
 	{
@@ -629,7 +629,7 @@ static int iw_client_dev_connect_script(struct interface *ifp, iw_client_ap_t *a
 	FILE *fp = NULL;
 	char path[256];
 	memset(path, 0, sizeof(path));
-	snprintf(path, sizeof(path), "%s/wpa_supplicant.%s", SYSCONFDIR, ifp->k_name);
+	snprintf(path, sizeof(path), "%s/wpa_supplicant.%s", IW_SYSCONFDIR, ifp->k_name);
 	fp = fopen(path,"w+");
 	if(fp)
 	{
@@ -710,7 +710,7 @@ int iw_client_dev_connect(struct interface *ifp, iw_client_ap_t *ap, char *ssid,
 	memset(pidpath, 0, sizeof(pidpath));
 	snprintf(pidpath, sizeof(pidpath), "%s/wpa_supplicant-%s.pid",DAEMON_VTY_DIR, ifp->k_name);
 	memset(confpath, 0, sizeof(confpath));
-	snprintf(confpath, sizeof(confpath), "%s/wpa_supplicant.%s", SYSCONFDIR,ifp->k_name);
+	snprintf(confpath, sizeof(confpath), "%s/wpa_supplicant.%s", IW_SYSCONFDIR,ifp->k_name);
 	pid = os_pid_get(pidpath);
 	if(pid > 0)
 	{

@@ -195,7 +195,8 @@ static int main_getopt(int argc, char **argv)
 	      case 't':
 	    	  if(main_data.tty)
 	    		  free(main_data.tty);
-	    	  main_data.tty = strdup(optarg);
+	    	  //main_data.tty = strdup("/dev/ttyS0");
+	    	  main_data.tty = (optarg);
 	    	  break;
 
 	      case 'v':
@@ -228,46 +229,14 @@ static int os_privs_low()
 	return 0;
 }*/
 
-static int main_timer_thread(struct thread *thread)
+/*static int main_timer_thread(struct thread *thread)
 {
 	//int sock = THREAD_FD(thread);
 	//ospf_thread_check();
-	thread_add_timer(thread->master, main_timer_thread, NULL, 1);
+	//thread_add_timer(thread->master, main_timer_thread, NULL, 1);
 	return 0;
-}
+}*/
 
-static int os_base_dir_init(void)
-{
-	//if(access(BASE_DIR, F_OK) != 0)
-	{
-		mkdir(BASE_DIR, 0644);
-		mkdir(SYSCONFDIR, 0644);		// /etc
-		mkdir(SYSLIBDIR, 0644);			// /lib
-		mkdir(SYSSBINDIR, 0644);		// /sbin
-		mkdir(SYSLIBDIR, 0644);			// /bin
-		mkdir(SYSRUNDIR, 0644);			// /run
-		mkdir(SYSLOGDIR, 0644);			// /log
-		mkdir(SYSVARDIR, 0644);			// /var
-		mkdir(SYSTMPDIR, 0644);			// /tmp
-	}
-	if(access(SYS_REAL_DIR, F_OK) != 0)
-	{
-		mkdir(SYS_REAL_DIR, 0644);		// /app
-	}
-
-	if(access(SYSCONF_REAL_DIR, F_OK) != 0)
-	{
-		mkdir(SYSCONF_REAL_DIR, 0644);		// /app/etc
-	}
-	return 0;
-}
-
-static int os_base_dir_load(void)
-{
-	//cp -arf /app/etc/* /tmp/app/etc/
-	super_system("cp -arf " SYSCONF_REAL_DIR"/*" " " SYSCONFDIR"/");
-	return 0;
-}
 
 /* Main startup routine. */
 int main (int argc, char **argv)
@@ -288,7 +257,7 @@ int main (int argc, char **argv)
 	main_data.vty_port = ZEBRA_VTY_PORT;
 	main_data.daemon_mode = 0;
 	main_data.pid = 0;
-
+	main_data.tty = NULL;
 	/* preserve my name */
 	main_data.progname = ((p = strrchr (argv[0], '/')) ? ++p : argv[0]);
 
@@ -296,13 +265,15 @@ int main (int argc, char **argv)
 
 	main_getopt (argc, argv);
 
-	os_base_dir_init();
-#ifdef DOUBLE_PROCESS
-	//os_process_start();
-#endif
+/*	if(os_nvram_voip_is_enable() == 0)
+	{
+		fprintf(stdout, "voip is disable\r\n");
+		return 0;
+	}*/
 
-	os_base_dir_load();
+	os_base_init();
 
+	os_base_load();
 /*	if(child_process_create() == 0)
 	{
 		chdir("/app");
@@ -313,19 +284,20 @@ int main (int argc, char **argv)
 		chdir("/app");
 		super_system_execvp("./VmrMgr", NULL);
 	}*/
+	//printf("%s : %s=%s", __func__, "openwrt", os_nvram_env_lookup("openwrt"));
 
 	if(main_data.tty)
 		console_enable = 1;
 	console_enable = 1;
-	os_start_init(main_data.progname, ZLOG_DEFAULT, main_data.daemon_mode);
+
+
+	//b53125_mdio_probe();
+
+	os_start_init(main_data.progname, ZLOG_DEFAULT, main_data.daemon_mode, main_data.tty);
 
 	zlog_set_level (ZLOG_DEST_STDOUT, LOG_DEBUG);
-	//unix_sock_client_create(TRUE, "ProcessMU");
 
-	os_ip_stack_init(8899);
-
-	os_log_start(MODULE_DEFAULT,  NULL);
-
+	os_start_early(MODULE_DEFAULT,  NULL);
 
 	os_start_all_module();
 
@@ -342,10 +314,10 @@ int main (int argc, char **argv)
 	 * load config file
 	 */
 	os_load_config (main_data.config_file);
+	zlog_notice(ZLOG_DEFAULT, "Zebra os_load_config");
 
+	//thread_add_timer(master_thread[MODULE_DEFAULT], main_timer_thread, NULL, 1);
 
-	thread_add_timer(master_thread[MODULE_DEFAULT], main_timer_thread, NULL, 1);
-	pjmain(1, NULL);
 	//os_start_running(NULL, MODULE_DEFAULT);
 
 	while(1)
@@ -353,7 +325,9 @@ int main (int argc, char **argv)
 #ifdef QUAGGA_SIGNAL_REAL_TIMER
 		real_sigevent_process (2);
 #else
-		sleep(2);
+		quagga_sigevent_process();
+		os_msleep_interrupt(2000);
+		//sleep(2);
 #endif
 	}
 #ifdef DOUBLE_PROCESS

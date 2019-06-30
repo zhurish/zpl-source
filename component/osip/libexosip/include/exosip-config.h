@@ -114,28 +114,28 @@
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
-#define LT_OBJDIR ".libs/"
+#define EXOSIP_LT_OBJDIR ".libs/"
 
 /* Name of package */
-#define PACKAGE "libexosip2"
+#define EXOSIP_PACKAGE "libexosip2"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT ""
+#define EXOSIP_PACKAGE_BUGREPORT ""
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME "libeXosip2"
+#define EXOSIP_PACKAGE_NAME "libeXosip2"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libeXosip2 5.0.0"
+#define EXOSIP_PACKAGE_STRING "libeXosip2 5.0.0"
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "libexosip2"
+#define EXOSIP_PACKAGE_TARNAME "libexosip2"
 
 /* Define to the home page for this package. */
-#define PACKAGE_URL ""
+#define EXOSIP_PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "5.0.0"
+#define EXOSIP_PACKAGE_VERSION "5.0.0"
 
 /* Define to necessary symbol if this constant uses a non-standard name on
    your system. */
@@ -148,4 +148,4 @@
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "5.0.0"
+#define EXOSIP_VERSION "5.0.0"

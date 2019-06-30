@@ -10,7 +10,7 @@ else
 fi
 
 
-BINFILE=SWP-V0.0.0.20.bin
+BINFILE=TARGET
 
 mkdir /tmp/tmp -p
 

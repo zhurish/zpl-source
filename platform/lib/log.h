@@ -32,6 +32,7 @@
 
 
 #define ZLOG_TASK_ENABLE
+#define ZLOG_TESTING_ENABLE
 
 //#define SYSLOG_CLIENT
 #ifdef SYSLOG_CLIENT
@@ -82,8 +83,10 @@ typedef enum
   ZLOG_LDP,
   ZLOG_SNTP,
   ZLOG_IMISH,
+  ZLOG_DHCP,
   ZLOG_WIFI,
   ZLOG_MODEM,
+  ZLOG_SIP,
   ZLOG_APP,
   ZLOG_VOIP,
   ZLOG_SOUND,
@@ -97,7 +100,7 @@ typedef enum
 #define LOG_MSG_SIZE	1024
 #define LOG_FILE_CHK_TIME	10
 
-#define ZLOG_REAL_PATH		SYS_REAL_DIR"/log/"
+#define ZLOG_REAL_PATH		RSYSLOGDIR"/"
 #define ZLOG_VIRTUAL_PATH 	DAEMON_LOG_FILE_DIR"/"
 
 #define ZLOG_FILE_DEFAULT 	"sw-log.log"
@@ -146,6 +149,17 @@ typedef struct zlog_buffer_s
 	zbuffer_t 	*buffer;
 }zlog_buffer_t;
 
+#ifdef ZLOG_TESTING_ENABLE
+typedef struct zlog_testing_s
+{
+	char 	*filename;
+	int		priority;
+	FILE 	*fp;
+	int 	filesize;
+	int 	file_check_interval;
+}zlog_testing_t;
+#endif
+
 struct zlog 
 {
   const char *ident;	/* daemon name (first arg to openlog) */
@@ -157,6 +171,7 @@ struct zlog
   FILE *fp;
   char *filename;
   int filesize;
+  int file_check_interval;
   int facility;		/* as per syslog facility */
   int record_priority;	/* should messages logged through stdio include the
   			   priority of the message? */
@@ -166,10 +181,22 @@ struct zlog
   zlog_buffer_t	log_buffer;
 
   void *mutex;
+  enum
+  {
+	  ZLOG_DEPTH_NONE,		//not enable
+	  ZLOG_DEPTH_LEVEL1,	//FILE LINE
+	  ZLOG_DEPTH_LEVEL2,	//LWP FILE LINE
+	  ZLOG_DEPTH_LEVEL3,	//LWP(name) FILE FUNC LINE
+  }depth_debug;
+#define ZLOG_DEPTH_DEBUG_DEFAULT ZLOG_DEPTH_LEVEL2
 #ifdef ZLOG_TASK_ENABLE
   int	taskid;
   int	lfd;
   FILE  *lfp;
+#endif
+#ifdef ZLOG_TESTING_ENABLE
+  BOOL	testing;
+  zlog_testing_t testlog;
 #endif
 };
 #ifdef ZLOG_TASK_ENABLE
@@ -185,8 +212,6 @@ typedef struct zlog_hdr_s
 
 typedef int(*zlog_buffer_cb)(zbuffer_t *, void *pVoid);
 
-extern void vzlog(struct zlog *zl, int module, int priority, const char *format,
-		va_list args);
 /* Message structure. */
 struct message
 {
@@ -211,6 +236,42 @@ extern void closezlog (struct zlog *zl);
 #define PRINTF_ATTRIBUTE(a,b)
 #endif /* __GNUC__ */
 
+
+
+
+extern void pl_vzlog(const char *file, const char *func, const int line, struct zlog *zl, int module, int priority, const char *format,
+		va_list args);
+/* Generic function for zlog. */
+extern void pl_zlog (const char *file, const char *func, const int line, int module, int priority, const char *format, ...)
+  PRINTF_ATTRIBUTE(6, 7);
+
+/* Handy zlog functions. */
+extern void pl_zlog_err (const char *file, const char *func, const int line, int module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
+extern void pl_zlog_warn (const char *file, const char *func, const int line, int module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
+extern void pl_zlog_info (const char *file, const char *func, const int line, int module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
+extern void pl_zlog_notice (const char *file, const char *func, const int line, int module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
+extern void pl_zlog_debug (const char *file, const char *func, const int line, int module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
+extern void pl_zlog_trap (const char *file, const char *func, const int line, int module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
+
+
+#define vzlog(obj, module, pri, format, arg) 		pl_vzlog (__FILE__, __FUNCTION__, __LINE__, obj, module, pri, format, arg)
+#define vzlog_other(obj, module, pri, format, arg) 		pl_vzlog (NULL, NULL, NULL, obj, module, pri, format, arg)
+#define zlog(module, pri, format, ...) 				pl_zlog (__FILE__, __FUNCTION__, __LINE__, module, pri, format, ##__VA_ARGS__)
+#define zlog_other(module, pri, format, ...) 		pl_zlog (NULL, NULL, NULL, module, pri, format, ##__VA_ARGS__)
+
+#define zlog_err(module, format, ...) 				pl_zlog_err (__FILE__, __FUNCTION__, __LINE__, module, format, ##__VA_ARGS__)
+#define zlog_warn(module, format, ...) 				pl_zlog_warn (__FILE__, __FUNCTION__, __LINE__, module, format, ##__VA_ARGS__)
+#define zlog_info(module, format, ...) 				pl_zlog_info (__FILE__, __FUNCTION__, __LINE__, module, format, ##__VA_ARGS__)
+#define zlog_notice(module, format, ...) 			pl_zlog_notice (__FILE__, __FUNCTION__, __LINE__, module, format, ##__VA_ARGS__)
+#define zlog_debug(module, format, ...) 			pl_zlog_debug (__FILE__, __FUNCTION__, __LINE__, module, format, ##__VA_ARGS__)
+#define zlog_trap(module, format, ...) 				pl_zlog_trap (__FILE__, __FUNCTION__, __LINE__, module, format, ##__VA_ARGS__)
+
+
+#if 0
+
+extern void vzlog(struct zlog *zl, int module, int priority, const char *format,
+		va_list args);
+
 /* Generic function for zlog. */
 extern void zlog (int module, int priority, const char *format, ...)
   PRINTF_ATTRIBUTE(3, 4);
@@ -222,8 +283,7 @@ extern void zlog_info (int module, const char *format, ...) PRINTF_ATTRIBUTE(2, 
 extern void zlog_notice (int module, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
 extern void zlog_debug (int module, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
 extern void zlog_trap (int module, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
-
-//extern void zlog_thread_info (int log_level);
+#endif
 
 /* Set logging level for the given destination.  If the log_level
    argument is ZLOG_DISABLED, then the destination is disabled.
@@ -239,9 +299,13 @@ extern int zlog_get_file_size (int *filesize);
 extern int zlog_reset_file (BOOL bOpen);
 extern int zlog_close_file();
 extern int zlog_file_save (void);
-extern int zlog_check_file (void);
-
-
+//extern int zlog_check_file (void);
+#ifdef ZLOG_TESTING_ENABLE
+extern int zlog_testing_enable (BOOL);
+extern BOOL zlog_testing_enabled (void);
+extern int zlog_testing_file (char * file);
+extern int zlog_testing_priority (int priority);
+#endif
 extern int zlog_set_buffer_size (int size);
 extern int zlog_get_buffer_size (int *size);
 extern int zlog_buffer_reset(void);
@@ -307,6 +371,8 @@ extern void zlog_backtrace_sigsafe(int priority, void *program_counter);
 #define QUAGGA_TIMESTAMP_LEN 40
 extern size_t quagga_timestamp(zlog_timestamp_t timestamp /* # subsecond digits */,
 			       char *buf, size_t buflen);
+
+extern void time_print(FILE *fp, zlog_timestamp_t ctl);
 
 extern void zlog_hexdump(void *mem, unsigned int len);
 

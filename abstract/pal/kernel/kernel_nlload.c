@@ -147,7 +147,7 @@ static int netlink_interface_address_load(struct sockaddr_nl *snl, struct nlmsgh
 	if (h->nlmsg_pid == snl->nl_pid)
 	{
 		zlog_err(ZLOG_PAL,
-				"netlink_interface_addr Ignoring message from pid (self):%u",
+				"netlink_interface_address_load Ignoring message from pid (self):%u",
 				h->nlmsg_pid);
 		return 0;
 	}
@@ -157,9 +157,13 @@ static int netlink_interface_address_load(struct sockaddr_nl *snl, struct nlmsgh
 	ifp = if_lookup_by_kernel_index_vrf(ifa->ifa_index, vrf_id);
 	if (ifp == NULL)
 	{
+		char kbuf[64];
+		memset(kbuf, 0, sizeof(kbuf));
+		if_indextoname(ifa->ifa_index, kbuf);
+
 		zlog_err(ZLOG_PAL,
-				"netlink_interface_addr can't find interface by index %d vrf %u",
-				ifa->ifa_index, vrf_id);
+				"netlink_interface_addr can't find interface by index %d(%s) vrf %u",
+				ifa->ifa_index, kbuf, vrf_id);
 		return -1;
 	}
 

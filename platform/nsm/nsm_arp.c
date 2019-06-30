@@ -149,7 +149,9 @@ int nsm_ip_arp_add_api(struct interface *ifp, struct prefix *address, char *mac)
 		prefix_copy (&value.address, address);
 		value.class = ARP_STATIC;
 		value.ifindex = ifp->ifindex;
+#ifdef PL_HAL_MODULE
 		if(pal_interface_arp_add(ifp, address, mac) == OK)
+#endif
 		{
 			os_memcpy(value.mac, mac, NSM_MAC_MAX);
 			ret = ip_arp_add_node(&value);
@@ -176,7 +178,9 @@ int nsm_ip_arp_del_api(struct interface *ifp, struct prefix *address)
 	value = ip_arp_lookup_node(address);
 	if(value && value->class == ARP_STATIC)
 	{
+#ifdef PL_HAL_MODULE
 		if(pal_interface_arp_delete(ifp, value->address) == OK)
+#endif
 		{
 			ARP_STATIC_SUB(1);
 			lstDelete(gIparp.arpList, (NODE*)value);
@@ -377,7 +381,9 @@ static int ip_arp_cleanup(arp_class_t type, BOOL all, ifindex_t ifindex, vrf_id_
 				ifp = if_lookup_by_index(pstNode->ifindex);
 				if(ifp)
 				{
+#ifdef PL_HAL_MODULE
 					if(pal_interface_arp_delete(ifp, pstNode->address) == OK)
+#endif
 					{
 						lstDelete(gIparp.arpList, (NODE*)pstNode);
 						XFREE(MTYPE_ARP, pstNode);
@@ -400,7 +406,9 @@ static int ip_arp_cleanup(arp_class_t type, BOOL all, ifindex_t ifindex, vrf_id_
 				ifp = if_lookup_by_index(pstNode->ifindex);
 				if(ifp)
 				{
+#ifdef PL_HAL_MODULE
 					if(pal_interface_arp_delete(ifp, pstNode->address) == OK)
+#endif
 					{
 						lstDelete(gIparp.arpList, (NODE*)pstNode);
 						XFREE(MTYPE_ARP, pstNode);
@@ -423,7 +431,9 @@ static int ip_arp_cleanup(arp_class_t type, BOOL all, ifindex_t ifindex, vrf_id_
 				ifp = if_lookup_by_index(pstNode->ifindex);
 				if(ifp)
 				{
+#ifdef PL_HAL_MODULE
 					if(pal_interface_arp_delete(ifp, pstNode->address) == OK)
+#endif
 					{
 						lstDelete(gIparp.arpList, (NODE*)pstNode);
 						XFREE(MTYPE_ARP, pstNode);
@@ -446,7 +456,9 @@ static int ip_arp_cleanup(arp_class_t type, BOOL all, ifindex_t ifindex, vrf_id_
 				ifp = if_lookup_by_index(pstNode->ifindex);
 				if(ifp)
 				{
+#ifdef PL_HAL_MODULE
 					if(pal_interface_arp_delete(ifp, pstNode->address) == OK)
+#endif
 					{
 						lstDelete(gIparp.arpList, (NODE*)pstNode);
 						XFREE(MTYPE_ARP, pstNode);

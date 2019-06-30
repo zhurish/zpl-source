@@ -1880,7 +1880,7 @@ int ftp_download(void *v, char *hostName, int port, char *path, char *fileName, 
 		systools_set(NULL);
 		return (ERROR);
 	}
-	fd = open(localfileName, O_RDWR | O_CREAT);
+	fd = open(localfileName, O_RDWR | O_CREAT, CONFIGFILE_MASK);
 	if (fd <= 0)
 	{
 		systools_error("FTP transfer failed: %s", strerror(errno));

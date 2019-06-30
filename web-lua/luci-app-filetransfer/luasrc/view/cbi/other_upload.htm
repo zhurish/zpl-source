@@ -1,0 +1,29 @@
+<%+cbi/valueheader%>
+	<label class="cbi-value-title" for="upload_file"><%:Choose local file:%></label>
+	<input class="cbi-input-file" style="width: 400px" type="file" onchange="getfilesize()" id="upload_file" name="upload_file" />
+	<input type="submit" id="apply-id" class="cbi-button cbi-input-apply" name="upload" value="<%:UpLoad%>" disabled />
+	<script type="text/javascript">
+	function getfilesize(){
+		var info=event.target.files[0];	
+		if (info.size > 1024*1024*5)
+		{
+			alert(" Upload file size Must be smaller than 5M!");
+			$("#upload_file").val("");
+			return false;
+		}	
+		if (info.size <= 0)
+		{
+			alert(" Upload file size error!");
+			$("#upload_file").val("");
+			return false;
+		}
+		if (info.name.length >= 64)
+		{
+			alert(" error, file name is too long!");
+			$("#upload_file").val("");
+			return false;
+		}	
+		$("#apply-id").attr("disabled",false);		
+	}
+	</script>
+<%+cbi/valuefooter%>

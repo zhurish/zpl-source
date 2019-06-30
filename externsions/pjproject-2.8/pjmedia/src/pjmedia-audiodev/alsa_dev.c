@@ -47,12 +47,12 @@
 #define MAX_MIX_NAME_LEN                64 
 
 /* Set to 1 to enable tracing */
-#if 0
-#	define TRACE_(expr)		PJ_LOG(5,expr)
+#if 1
+#	define TRACE_(expr)		PJ_LOG(2,expr)
 #else
 #	define TRACE_(expr)
 #endif
-
+//TRACE_((THIS_FILE, "add_dev (%s): Enter", dev_name));
 /*
  * Factory prototypes
  */
@@ -111,8 +111,8 @@ struct alsa_stream
     void		*user_data;
     pjmedia_aud_param	 param;		/* Running parameter 		*/
     int                  rec_id;      	/* Capture device id		*/
-    int                  quit;
-
+    pj_bool_t            pb_quit;
+    pj_bool_t            ca_quit;
     /* Playback */
     snd_pcm_t		*pb_pcm;
     snd_pcm_uframes_t    pb_frames; 	/* samples_per_frame		*/
@@ -498,7 +498,7 @@ static int pb_thread_func (void *arg)
 
     snd_pcm_prepare (pcm);
 
-    while (!stream->quit) {
+    while (!stream->pb_quit) {
 	pjmedia_frame frame;
 
 	frame.type = PJMEDIA_FRAME_TYPE_AUDIO;
@@ -508,7 +508,7 @@ static int pb_thread_func (void *arg)
 	frame.bit_info = 0;
 
 	result = stream->pb_cb (user_data, &frame);
-	if (result != PJ_SUCCESS || stream->quit)
+	if (result != PJ_SUCCESS || stream->pb_quit)
 	    break;
 
 	if (frame.type != PJMEDIA_FRAME_TYPE_AUDIO)
@@ -524,7 +524,7 @@ static int pb_thread_func (void *arg)
 
 	tstamp.u64 += nframes;
     }
-
+    __PJSIP_DEBUG( "pb_thread_func: Stopped\r\n");
     snd_pcm_drain (pcm);
     TRACE_((THIS_FILE, "pb_thread_func: Stopped"));
     return PJ_SUCCESS;
@@ -545,22 +545,38 @@ static int ca_thread_func (void *arg)
     struct sched_param param;
     pthread_t* thid;
 
-    thid = (pthread_t*) pj_thread_get_os_handle (pj_thread_this());
-    param.sched_priority = sched_get_priority_max (SCHED_RR);
-    PJ_LOG (5,(THIS_FILE, "ca_thread_func(%u): Set thread priority "
-		          "for audio capture thread.",
-		          (unsigned)syscall(SYS_gettid)));
-    result = pthread_setschedparam (*thid, SCHED_RR, &param);
-    if (result) {
-	if (result == EPERM)
-	    PJ_LOG (5,(THIS_FILE, "Unable to increase thread priority, "
-				  "root access needed."));
-	else
-	    PJ_LOG (5,(THIS_FILE, "Unable to increase thread priority, "
-				  "error: %d",
-				  result));
+    if(getenv("PJSIP_CA_SCHED"))
+    {
+    	char *value = getenv("PJSIP_CA_SCHED");
+    	char *valueint = getenv("PJSIP_CA_SCHED_PRI");
+        thid = (pthread_t*) pj_thread_get_os_handle (pj_thread_this());
+    	if(value)
+    	{
+    		if(strstr(value, "SCHED_RR") || strstr(value, "SCHED_FIFO"))
+    		{
+    			if(valueint)
+    				param.sched_priority = atoi(valueint);
+    			else
+    			{
+    				//param.sched_priority = (sched_get_priority_max (SCHED_RR) + sched_get_priority_min (SCHED_RR))/2;
+    				param.sched_priority = sched_get_priority_min (SCHED_RR);
+    			}
+    			if(strstr(value, "SCHED_RR"))
+    				result = pthread_setschedparam (*thid, SCHED_RR, &param);
+    			else
+    				result = pthread_setschedparam (*thid, SCHED_FIFO, &param);
+    			if (result)
+    			{
+    				if (result == EPERM)
+    					PJ_LOG (5,(THIS_FILE, "Unable to increase thread priority, "
+    						"root access needed."));
+    				else
+    					PJ_LOG (5,(THIS_FILE, "Unable to increase thread priority, "
+    						"error: %d", result));
+    			}
+    		}
+    	}
     }
-
     pj_bzero (buf, size);
     tstamp.u64 = 0;
 
@@ -569,7 +585,7 @@ static int ca_thread_func (void *arg)
 
     snd_pcm_prepare (pcm);
 
-    while (!stream->quit) {
+    while (!stream->ca_quit) {
 	pjmedia_frame frame;
 
 	pj_bzero (buf, size);
@@ -581,7 +597,7 @@ static int ca_thread_func (void *arg)
 	} else if (result < 0) {
 	    PJ_LOG (4,(THIS_FILE, "ca_thread_func: error reading data!"));
 	}
-	if (stream->quit)
+	if (stream->ca_quit)
 	    break;
 
 	frame.type = PJMEDIA_FRAME_TYPE_AUDIO;
@@ -591,12 +607,13 @@ static int ca_thread_func (void *arg)
 	frame.bit_info = 0;
 
 	result = stream->ca_cb (user_data, &frame);
-	if (result != PJ_SUCCESS || stream->quit)
+	if (result != PJ_SUCCESS || stream->ca_quit)
 	    break;
 
 	tstamp.u64 += nframes;
     }
     snd_pcm_drain (pcm);
+    __PJSIP_DEBUG( "ca_thread_func: Stopped\r\n");
     TRACE_((THIS_FILE, "ca_thread_func: Stopped"));
 
     return PJ_SUCCESS;
@@ -864,7 +881,8 @@ static pj_status_t alsa_factory_create_stream(pjmedia_aud_dev_factory *f,
     stream->user_data = user_data;
     stream->pb_cb     = play_cb;
     stream->ca_cb     = rec_cb;
-    stream->quit      = 0;
+    stream->pb_quit      = PJ_FALSE;
+    stream->ca_quit      = PJ_FALSE;
     pj_memcpy(&stream->param, param, sizeof(*param));
 
     /* Init playback */
@@ -985,11 +1003,41 @@ static pj_status_t alsa_stream_start (pjmedia_aud_stream *s)
 {
     struct alsa_stream *stream = (struct alsa_stream*)s;
     pj_status_t status = PJ_SUCCESS;
-
-    stream->quit = 0;
+#if 1
+    stream->ca_quit = PJ_FALSE;
+    if (stream->param.dir & PJMEDIA_DIR_CAPTURE) {
+	status = pj_thread_create (stream->pool,
+				   "alsa_capture",
+				   ca_thread_func,
+				   stream,
+				   0, //ZERO,
+				   0,
+				   &stream->ca_thread);
+	if (status != PJ_SUCCESS)
+	    return status;
+    }
+    stream->pb_quit = PJ_FALSE;
     if (stream->param.dir & PJMEDIA_DIR_PLAYBACK) {
 	status = pj_thread_create (stream->pool,
-				   "alsasound_playback",
+				   "alsa_playback",
+				   pb_thread_func,
+				   stream,
+				   0, //ZERO,
+				   0,
+				   &stream->pb_thread);
+	if (status != PJ_SUCCESS) {
+	    stream->ca_quit = PJ_TRUE;
+	    pj_thread_kill(stream->ca_thread);
+	    pj_thread_join(stream->ca_thread);
+	    pj_thread_destroy(stream->ca_thread);
+	    stream->ca_thread = NULL;
+	}
+    }
+#else
+    stream->pb_quit = PJ_FALSE;
+    if (stream->param.dir & PJMEDIA_DIR_PLAYBACK) {
+	status = pj_thread_create (stream->pool,
+				   "alsa_playback",
 				   pb_thread_func,
 				   stream,
 				   0, //ZERO,
@@ -998,23 +1046,23 @@ static pj_status_t alsa_stream_start (pjmedia_aud_stream *s)
 	if (status != PJ_SUCCESS)
 	    return status;
     }
-
+    stream->ca_quit = PJ_FALSE;
     if (stream->param.dir & PJMEDIA_DIR_CAPTURE) {
 	status = pj_thread_create (stream->pool,
-				   "alsasound_playback",
+				   "alsa_capture",
 				   ca_thread_func,
 				   stream,
 				   0, //ZERO,
 				   0,
 				   &stream->ca_thread);
 	if (status != PJ_SUCCESS) {
-	    stream->quit = PJ_TRUE;
+	    stream->pb_quit = PJ_TRUE;
 	    pj_thread_join(stream->pb_thread);
 	    pj_thread_destroy(stream->pb_thread);
 	    stream->pb_thread = NULL;
 	}
     }
-
+#endif
     return status;
 }
 
@@ -1024,30 +1072,41 @@ static pj_status_t alsa_stream_stop (pjmedia_aud_stream *s)
 {
     struct alsa_stream *stream = (struct alsa_stream*)s;
 
-    stream->quit = 1;
-
-    if (stream->pb_thread) {
-	TRACE_((THIS_FILE,
-		   "alsa_stream_stop(%u): Waiting for playback to stop.",
-		   (unsigned)syscall(SYS_gettid)));
-	pj_thread_join (stream->pb_thread);
-	TRACE_((THIS_FILE,
-		   "alsa_stream_stop(%u): playback stopped.",
-		   (unsigned)syscall(SYS_gettid)));
-	pj_thread_destroy(stream->pb_thread);
-	stream->pb_thread = NULL;
-    }
-
+    stream->ca_quit = PJ_TRUE;
     if (stream->ca_thread) {
+    	__PJSIP_DEBUG( "alsa_stream_stop(%u): Waiting for capture to stop.\r\n",
+   			   (unsigned)syscall(SYS_gettid));
 	TRACE_((THIS_FILE,
 		   "alsa_stream_stop(%u): Waiting for capture to stop.",
 		   (unsigned)syscall(SYS_gettid)));
+	pj_thread_kill(stream->ca_thread);
 	pj_thread_join (stream->ca_thread);
+	__PJSIP_DEBUG( "alsa_stream_stop(%u): capture stopped.\r\n",
+ 			   (unsigned)syscall(SYS_gettid));
 	TRACE_((THIS_FILE,
 		   "alsa_stream_stop(%u): capture stopped.",
 		   (unsigned)syscall(SYS_gettid)));
 	pj_thread_destroy(stream->ca_thread);
 	stream->ca_thread = NULL;
+    }
+
+    stream->pb_quit = PJ_TRUE;
+
+    if (stream->pb_thread) {
+    	__PJSIP_DEBUG( "alsa_stream_stop(%u): Waiting for playback to stop.\r\n",
+    			   (unsigned)syscall(SYS_gettid));
+	TRACE_((THIS_FILE,
+		   "alsa_stream_stop(%u): Waiting for playback to stop.",
+		   (unsigned)syscall(SYS_gettid)));
+	pj_thread_kill(stream->pb_thread);
+	pj_thread_join (stream->pb_thread);
+	TRACE_((THIS_FILE,
+		   "alsa_stream_stop(%u): playback stopped.",
+		   (unsigned)syscall(SYS_gettid)));
+  	 __PJSIP_DEBUG( "alsa_stream_stop(%u): playback stopped.\r\n",
+  			   (unsigned)syscall(SYS_gettid));
+	pj_thread_destroy(stream->pb_thread);
+	stream->pb_thread = NULL;
     }
 
     return PJ_SUCCESS;

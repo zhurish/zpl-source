@@ -580,17 +580,27 @@ PJ_INLINE(pjsua_im_data*) pjsua_im_data_dup(pj_pool_t *pool,
 
 #if 1
 
+#ifdef _PJSIP_LOCK_DEBUG
+#define __PJSIP_LOCK_DEBUG(fmt,...)		printf(fmt, ##__VA_ARGS__)
+#else
+#define __PJSIP_LOCK_DEBUG(fmt,...)
+#endif
+
 PJ_INLINE(void) PJSUA_LOCK()
 {
     pj_mutex_lock(pjsua_var.mutex);
     pjsua_var.mutex_owner = pj_thread_this();
     ++pjsua_var.mutex_nesting_level;
+    __PJSIP_LOCK_DEBUG("=========%s=============%d(%s)\r\n", __func__, pjsua_var.mutex_nesting_level, pj_thread_get_name(pjsua_var.mutex_owner));
 }
 
 PJ_INLINE(void) PJSUA_UNLOCK()
 {
     if (--pjsua_var.mutex_nesting_level == 0)
-	pjsua_var.mutex_owner = NULL;
+    {
+    	__PJSIP_LOCK_DEBUG("=========%s=============%d(%s)\r\n", __func__, pjsua_var.mutex_nesting_level, pj_thread_get_name(pjsua_var.mutex_owner));
+    	pjsua_var.mutex_owner = NULL;
+    }
     pj_mutex_unlock(pjsua_var.mutex);
 }
 
@@ -601,13 +611,18 @@ PJ_INLINE(pj_status_t) PJSUA_TRY_LOCK()
     if (status == PJ_SUCCESS) {
 	pjsua_var.mutex_owner = pj_thread_this();
 	++pjsua_var.mutex_nesting_level;
+	__PJSIP_LOCK_DEBUG("=========%s=============%d(%s)\r\n", __func__, pjsua_var.mutex_nesting_level, pj_thread_get_name(pjsua_var.mutex_owner));
     }
     return status;
 }
 
 PJ_INLINE(pj_bool_t) PJSUA_LOCK_IS_LOCKED()
 {
-    return pjsua_var.mutex_owner == pj_thread_this();
+#ifdef __PJSIP_LOCK_DEBUG
+	if(pjsua_var.mutex_owner)
+		__PJSIP_LOCK_DEBUG("=========%s=============%d(%s)\r\n", __func__, pjsua_var.mutex_nesting_level, pj_thread_get_name(pjsua_var.mutex_owner));
+#endif
+	return pjsua_var.mutex_owner == pj_thread_this();
 }
 
 #else

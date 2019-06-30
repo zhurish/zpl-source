@@ -239,6 +239,8 @@
 #   define PJ_M_MIPS		1
 #   define PJ_M_NAME		"mips"
 #   define PJ_HAS_PENTIUM	0
+#   define PJ_IS_LITTLE_ENDIAN	1
+#   define PJ_IS_BIG_ENDIAN	0
 #   if !PJ_IS_LITTLE_ENDIAN && !PJ_IS_BIG_ENDIAN
 #   	error Endianness must be declared for this processor
 #   endif
@@ -1359,6 +1361,13 @@ PJ_DECL(const char*) pj_get_version(void);
  * Dump configuration to log with verbosity equal to info(3).
  */
 PJ_DECL(void) pj_dump_config(void);
+
+#define _PJSIP_DEBUG
+#ifdef _PJSIP_DEBUG
+#define __PJSIP_DEBUG(fmt,...)		printf(fmt, ##__VA_ARGS__)
+#else
+#define __PJSIP_DEBUG(fmt,...)
+#endif
 
 PJ_END_DECL
 

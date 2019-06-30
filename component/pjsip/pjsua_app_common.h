@@ -20,7 +20,9 @@
 #define __PJSUA_APP_COMMON_H__
 
 #include <pjsua-lib/pjsua.h>
-
+#include "pjsua_app_cb.h"
+#include <zebra.h>
+#include <log.h>
 PJ_BEGIN_DECL
 
 #define current_acc	pjsua_acc_get_default()
@@ -28,7 +30,11 @@ PJ_BEGIN_DECL
 #define PJSUA_APP_NO_LIMIT_DURATION	(int)0x7FFFFFFF
 #define PJSUA_APP_MAX_AVI		4
 #define PJSUA_APP_NO_NB			-2
-
+struct pl_pjsip_thread_t
+{
+	pj_thread_t	  *pl_thread_t;
+	pj_thread_desc pl_thread_desc;
+};
 typedef struct input_result
 {
     int	  nb_result;
@@ -56,7 +62,8 @@ typedef struct app_vid
 /* Enumeration of CLI frontends */
 typedef enum {
     CLI_FE_CONSOLE	    = 1,
-    CLI_FE_TELNET	    = 2
+    CLI_FE_TELNET	    = 2,
+    CLI_FE_SOCKET	    = 4,
 } CLI_FE;
 
 /** CLI config **/
@@ -67,6 +74,7 @@ typedef struct cli_cfg_t
     pj_cli_cfg		    cfg;
     pj_cli_telnet_cfg	    telnet_cfg;
     pj_cli_console_cfg	    console_cfg;
+    pj_cli_socket_cfg	    socket_cfg;
 } cli_cfg_t;
 
 /* Pjsua application data */
@@ -157,9 +165,24 @@ typedef struct pjsua_app_config
     /* CLI setting */
     pj_bool_t		    use_cli;
     cli_cfg_t		    cli_cfg;
+
+
+    pjsip_callback_tbl	cbtbl;
+
+    pjsua_call_id	    current_call;
+
+    pjsua_call_setting	call_opt;
+    pjsua_msg_data	    msg_data;
+    pj_bool_t			app_running;
+    pj_bool_t			log_refresh_quit;
+    int					log_refresh;
+    pj_bool_t			app_cli_running;
+
 } pjsua_app_config;
 
 /** Extern variable declaration **/
+extern pjsua_app_config	    app_config;
+/*
 extern pjsua_call_id	    current_call;
 extern pjsua_app_config	    app_config;
 extern int		    stdout_refresh;
@@ -167,13 +190,17 @@ extern pj_bool_t	    stdout_refresh_quit;
 extern pjsua_call_setting   call_opt;
 extern pjsua_msg_data	    msg_data;
 extern pj_bool_t	    app_running;
+*/
+
+
 
 int my_atoi(const char *cs);
 pj_bool_t find_next_call();
 pj_bool_t find_prev_call();
+pjsua_call_id find_current_call();
 void send_request(char *cstr_method, const pj_str_t *dst_uri);
 void log_call_dump(int call_id);
-int write_settings(pjsua_app_config *cfg, char *buf, pj_size_t max);
+//int write_settings(pjsua_app_config *cfg, char *buf, pj_size_t max);
 void app_config_init_video(pjsua_acc_config *acc_cfg);
 void arrange_window(pjsua_vid_win_id wid);
 
@@ -182,7 +209,7 @@ pj_bool_t is_cli_inited();
 
 /** Defined in pjsua_config.c **/
 /** This is to load the configuration **/
-pj_status_t load_config(int argc, char **argv, pj_str_t *uri_arg);
+//pj_status_t load_config(int argc, char **argv, pj_str_t *uri_arg);
 
 /** Pjsua app callback **/
 /** This callback is called when CLI is started. **/
@@ -197,6 +224,9 @@ void legacy_on_stopped(pj_bool_t restart);
 /** Pjsua cli method **/
 pj_status_t cli_init();
 pj_status_t cli_main(pj_bool_t wait_telnet_cli);
+
+extern int pj_cli_execute_cmd(char *cmd);
+
 void cli_destroy();
 void cli_get_info(char *info, pj_size_t size); 
 

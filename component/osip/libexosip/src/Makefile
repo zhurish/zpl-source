@@ -8,7 +8,7 @@ SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
 LIB_DIR = $(BASE_ROOT)/$(LIBDIR)
 
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
-CFLAGS += -DENABLE_TRACE -D__linux
+PLCFLAGS += -DENABLE_TRACE -D__linux
 # It's a kind of magic...
 	
 $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c 
@@ -16,7 +16,7 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	$(ECHO) CC '$(CFLAGS)' $@
+	@$(PL_ECHO_CC)
 	@$(PL_OBJ_COMPILE)
 #
 

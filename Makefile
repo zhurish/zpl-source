@@ -49,9 +49,10 @@ LIBC += $(subst lib,-l,$(LIBSO2))
 endif
 #
 #
-LDCLFLAG += $(LIBC)
+#PL_LDCLFLAG=$(PLOS_LDLIBS) $(PLEX_LDLIBS) $(PL_LDLIBS) 
+PLLDLIBS += $(LIBC)
 #
-PLINCLUDE += -I$(BASE_ROOT)/include
+#PLINCLUDE += -I$(BASE_ROOT)/include
 #
 #PLINCLUDE += $(IPSTACK_INCLUDE)
 #IPSTACK_LIBDIR
@@ -59,15 +60,22 @@ PLINCLUDE += -I$(BASE_ROOT)/include
 ifeq ($(USE_IPCOM_STACK),true)
 IPLIBS1 = $(shell $(CD) $(IPSTACK_LIBDIR)/ && ls *.a)
 IPLIBS2 = $(subst .a,,$(IPLIBS1))
-LIBC += $(subst lib,-l,$(IPLIBS2))
+IPLIBC += $(subst lib,-l,$(IPLIBS2))
 
-CFLAGS += -L$(IPSTACK_LIBDIR)
+PLLDFLAGS += -L$(IPSTACK_LIBDIR)
 endif
 #
-#LDCLFLAG += -lssl
 #
 #
-export CFLAGS += -L$(BASE_ROOT)/$(LIBDIR)/  
+#ULIBSOFILE = $(shell $(CD) $(BASE_ROOT)/$(ULIBDIR)/ && ls *.so)
+#ULIBSOFILE += $(shell $(CD) $(BASE_ROOT)/$(ULIBDIR)/ && ls *.so*)
+#
+#
+#
+PLLDLIBS += $(IPLIBC)
+#
+#
+#export PLLDCLFLAG += -L$(BASE_ROOT)/$(LIBDIR)/  
 #$(PLDEFINE) $(PLINCLUDE) $(PL_DEBUG) -g #-lcrypto
 # $(PL_CFLAGS)
 #
@@ -85,25 +93,29 @@ OBJS = $(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(SOURCES)))
 #				
 #
 #
+#	
+.PHONY:	obj objclean clean install all lib rebuild dist demo app target usage help
 #
-$(TAGET) : $(OBJS) $(BASE_ROOT)/$(LIBDIR)/*.a 
-	$(CC) $(OBJS) $(CFLAGS) -Xlinker "-(" $(LDCLFLAG) -Xlinker "-)" -o $(TAGET) 
+#
+target : $(OBJS) $(BASE_ROOT)/$(LIBDIR)/*.a 
+	$(CC) -o $(TAGET) $(OBJS) $(PLDEFINE) $(PLCFLAGS) $(PLLDFLAGS) $(PLINCLUDE) -Xlinker "-(" $(PLLDLIBS) -Xlinker "-)" $(PLOS_MAP)
 	$(CHMOD) a+x $(TAGET)
-	install -d ${BINDIR}
-	install -m 755 ${TAGET} ${BINDIR}
-	$(STRIP) $(BINDIR)/$(TAGET) 
-	install -d ${DSTETCDIR} 
-	cd make;./setup.sh $(TAGET)
-	install -m 755 make/start-boot.sh ${DSTETCDIR}  	
-	install -m 755 startup/etc/plat.conf ${DSTETCDIR}
+	#$(STRIP) $(TAGET)
+	
+#	
+#	install -d ${BINDIR}
+#	install -m 755 ${TAGET} ${BINDIR}
+#	$(STRIP) $(BINDIR)/$(TAGET) 
+#	install -d ${DSTETCDIR} 
+#	cd make;./setup.sh $(TAGET)
+#	install -m 755 make/start-boot.sh ${DSTETCDIR}  	
+#	install -m 755 startup/etc/plat.conf ${DSTETCDIR}
 	#install -m 755 startup/etc/default-config.cfg ${DSTETCDIR}
 	#$(CP) $(TAGET) /home/zhurish/Downloads/tftpboot/
 #
 #
-#	
-.PHONY:	obj objclean clean install all lib rebuild dist demo app usage help
-#
 help:usage
+#
 #
 usage:
 	@$(ECHO) ""
@@ -120,6 +132,7 @@ usage:
 	@$(ECHO) "  usage      make usage"
 	@$(ECHO) "  help       make help"	
 	@$(ECHO) ""
+	${MAKE} -C  $(TOP_DIR)/make/ $@ 
 #
 #
 #
@@ -159,6 +172,19 @@ obj:
 #install: obj
 install: 
 	${MAKE} -C  $(TOP_DIR)/make/ $@ 
+	install -d ${BINDIR}
+	install -m 755 ${TAGET} ${BINDIR}
+	#$(STRIP) $(BINDIR)/$(TAGET) 
+	
+	#install -d ${DSTULIBDIR}
+	#$(CP) $(ULIBSOFILE) ${DSTULIBDIR}
+	
+	install -d ${DSTETCDIR}
+	cd make;./setup.sh $(TAGET)
+	install -m 755 make/start-boot.sh ${DSTETCDIR}  	
+	install -m 755 startup/etc/plat.conf ${DSTETCDIR}
+	#install -m 755 startup/etc/default-config.cfg ${DSTETCDIR}
+	#$(CP) $(TAGET) /home/zhurish/Downloads/tftpboot/
 	
 #all: install $(TAGET)
 all: 
@@ -184,7 +210,7 @@ demo: all
 		then \
 		$(RM) $(TAGET); \
 	fi
-	${MAKE}
+	${MAKE} target
 #
 #
 dist: all

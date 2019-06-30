@@ -455,8 +455,10 @@ getsockopt_ipv4_ifindex (struct msghdr *msgh)
   pktinfo = 
     (struct in_pktinfo *)getsockopt_cmsg_data (msgh, IPPROTO_IP, IP_PKTINFO);
   /* XXX Can pktinfo be NULL?  Clean up post 0.98. */
-  ifindex = pktinfo->ipi_ifindex;
-  
+  if(pktinfo)
+	  ifindex = pktinfo->ipi_ifindex;
+  else
+    ifindex = 0;
 #elif defined(IP_RECVIF)
 
   /* retrieval based on IP_RECVIF */
@@ -502,6 +504,7 @@ getsockopt_ipv4_ifindex (struct msghdr *msgh)
   ifindex = 0;
 
 #endif /* IP_PKTINFO */ 
+  //zlog_debug(ZLOG_DEFAULT, "kernel %s->%d",ifkernelindex2kernelifname(ifindex),ifindex);
   return ifkernel2ifindex(ifindex);
 }
 
@@ -523,6 +526,18 @@ getsockopt_ifindex (int af, struct msghdr *msgh)
         zlog_warn (ZLOG_DEFAULT, "getsockopt_ifindex: unknown address family %d", af);
         return 0;
     }
+}
+
+int
+setsockopt_ipv4_multicast_loop(int sock, int opt)
+{
+  int ret;
+  int optval = opt;
+  ret = ip_setsockopt (sock, IPPROTO_IP, IP_MULTICAST_LOOP, &optval, sizeof (optval));
+  if (ret < 0)
+    zlog_warn (ZLOG_DEFAULT, "Can't set IP_MULTICAST_LOOP option for fd %d to %#x: %s",
+	       sock, opt, safe_strerror(errno));
+  return ret;
 }
 
 /* swab iph between order system uses for IP_HDRINCL and host order */

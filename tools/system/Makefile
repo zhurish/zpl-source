@@ -3,12 +3,14 @@ include $(MAKE_DIR)/makelinux.mk
 
 include config.mk
 
-TARGET = app-upgrade
+UPGREATE_TARGET = app-upgrade
+NVRAMENV_TARGET = nvramenv
 
 OBJS_DIR = $(BASE_ROOT)/$(OBJDIR)/$(MODULEDIR)
 SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
 
-MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
+upgrade_MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(upgrade_OBJS))
+nvramenv_MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(nvramenv_OBJS))
 
 LDCLFLAG = $(PLOS_LDLIBS) -L$(DSTLIBDIR) -los 
 #CFLAGS += -g
@@ -19,28 +21,35 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	$(ECHO) CC '$(CFLAGS)' $@
+	@$(PL_ECHO_CC)
 	@$(PL_OBJ_COMPILE)
 
--include $(MODULE_OBJS:.o=.d)
+-include $(upgrade_MODULE_OBJS:.o=.d)
 
-$(TARGET): $(MODULE_OBJS)
-	$(CC) $(MODULE_OBJS) $(CFLAGS) $(LDCLFLAG) -o $(TARGET) 
-#	$(CC) $(MODULE_OBJS) $(CFLAGS) -o $(TARGET) 
+$(UPGREATE_TARGET): $(upgrade_MODULE_OBJS)
+	$(CC) $(upgrade_MODULE_OBJS) $(PLCFLAGS) $(LDCLFLAG) -o $(UPGREATE_TARGET) 
+$(NVRAMENV_TARGET): $(nvramenv_MODULE_OBJS)
+	$(CC) $(nvramenv_MODULE_OBJS) $(PLCFLAGS) $(LDCLFLAG) -o $(NVRAMENV_TARGET) 
+ 
 
-lib: $(MODULE_OBJS)
+lib: $(upgrade_MODULE_OBJS) $(nvramenv_MODULE_OBJS)
 
-obj: $(MODULE_OBJS)
+obj: $(upgrade_MODULE_OBJS) $(nvramenv_MODULE_OBJS)
 
-install: $(TARGET)
+install: $(UPGREATE_TARGET) $(NVRAMENV_TARGET)
 	install -d ${DSTSBINDIR}
-	install -m 755 ${TARGET} ${DSTSBINDIR} 
-	$(STRIP) ${DSTSBINDIR}/${TARGET}
+	install -m 755 ${UPGREATE_TARGET} ${DSTSBINDIR} 
+	$(STRIP) ${DSTSBINDIR}/${UPGREATE_TARGET}
+	install -m 755 ${NVRAMENV_TARGET} ${DSTSBINDIR} 
+	$(STRIP) ${DSTSBINDIR}/${NVRAMENV_TARGET}
+	
 
 clean: objclean
-	@$(RM) ${DSTSBINDIR}/${TARGET}
-	@$(RM) $(TARGET)
-
+	@$(RM) ${DSTSBINDIR}/${UPGREATE_TARGET}
+	@$(RM) $(UPGREATE_TARGET)
+	@$(RM) ${DSTSBINDIR}/${NVRAMENV_TARGET}
+	@$(RM) $(NVRAMENV_TARGET)
+	
 objclean: 
 	@$(RM) $(OBJS_DIR)/*
 

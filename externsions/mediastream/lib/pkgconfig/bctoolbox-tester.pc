@@ -1,9 +1,0 @@
-# This is a comment
-prefix=/home/zhurish/application/linphone/_install
-exec_prefix=/home/zhurish/application/linphone/_install
-Name:  bctoolbox-tester
-Description: A common set of tester wrappers used by Belledonne Communications's softwares
-Requires.private: 
-Version: 0.5.1
-Libs: -L${exec_prefix}/lib -lbctoolbox-tester
-Cflags: -I/home/zhurish/application/linphone/_install/include

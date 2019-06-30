@@ -16,7 +16,7 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	$(ECHO) CC '$(CFLAGS)' $@
+	@$(PL_ECHO_CC)
 	@$(PL_OBJ_COMPILE)
 
 $(LIBS) : $(MODULE_OBJS)

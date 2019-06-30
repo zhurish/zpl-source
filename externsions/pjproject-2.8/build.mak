@@ -1,29 +1,39 @@
 -include $(MAKE_DIR)/makelinux.mk
-export PJDIR := /home/zhurish/workspace/SWPlatform/externsions/pjproject-2.8
+#export PJDIR := $(shell pwd)
+#/home/zhurish/workspace/SWPlatform/externsions/pjproject-2.8
 include $(PJDIR)/version.mak
 export PJ_DIR := $(PJDIR)
 
 # build.mak.  Generated from build.mak.in by configure.
-export MACHINE_NAME := auto
-export OS_NAME := auto
-export HOST_NAME := unix
-export CC_NAME := gcc
-export TARGET_ARCH := 
-export TARGET_NAME := linux
-ifeq ($(ARCH_TYPE),X86)
-export CROSS_COMPILE := 
+export MACHINE_NAME = auto
+export OS_NAME = auto
+export HOST_NAME = unix
+export CC_NAME = gcc
+ifeq ($(ARCH_TYPE),MIPS)
+export TARGET_ARCH = mipsel-openwrt-linux-gnu
+else
+export TARGET_ARCH = 
 endif
-export LINUX_POLL := epoll 
-export SHLIB_SUFFIX := so
 
-export prefix := /home/zhurish/workspace/SWPlatform/externsions/pjproject-2.8/_install
+export TARGET_NAME = linux
+ifeq ($(ARCH_TYPE),X86)
+export CROSS_COMPILE = 
+endif
+export LINUX_POLL = epoll 
+export SHLIB_SUFFIX = so
+
+export prefix := $(PJDIR)/_install
 export exec_prefix := ${prefix}
 export includedir := ${prefix}/include
 export libdir := ${exec_prefix}/lib
 
+SSL_LDFLAGS = $(PLEX_LDFLAGS)
+
+
+
 LIB_SUFFIX := $(TARGET_NAME).a
 
-ifeq (1,1)
+ifeq ($(PJSHARE_ENABLE),true)
 export PJ_SHARED_LIBRARIES := 1
 endif
 
@@ -40,10 +50,11 @@ export APP_THIRD_PARTY_EXT :=
 export APP_THIRD_PARTY_LIBS :=
 export APP_THIRD_PARTY_LIB_FILES :=
 
-ifneq (0,0)
+#ifneq (0,0)
 # External SRTP library
-APP_THIRD_PARTY_EXT += -l
-else
+#APP_THIRD_PARTY_EXT += -l
+#else
+ifeq ($(PJMEDIA_SRTP_ENABLE),true)
 APP_THIRD_PARTY_LIB_FILES += $(PJ_DIR)/third_party/lib/libsrtp-$(LIB_SUFFIX)
 ifeq ($(PJ_SHARED_LIBRARIES),)
 APP_THIRD_PARTY_LIBS += -lsrtp-$(TARGET_NAME)
@@ -53,7 +64,7 @@ APP_THIRD_PARTY_LIB_FILES += $(PJ_DIR)/third_party/lib/libsrtp.$(SHLIB_SUFFIX).$
 endif
 endif
 
-ifeq (none,libresample)
+ifeq ($(PJMEDIA_RESAMPLE_ENABLE),true)
 APP_THIRD_PARTY_LIB_FILES += $(PJ_DIR)/third_party/lib/libresample-$(LIB_SUFFIX)
 ifeq ($(PJ_SHARED_LIBRARIES),)
 ifeq (,1)
@@ -69,11 +80,12 @@ APP_THIRD_PARTY_LIB_FILES += $(PJ_DIR)/third_party/lib/libresample.$(SHLIB_SUFFI
 endif
 endif
 
-ifneq (,1)
-ifeq (0,1)
+#ifneq (,1)
+#ifeq (0,1)
 # External GSM library
-APP_THIRD_PARTY_EXT += -lgsm
-else
+#APP_THIRD_PARTY_EXT += -lgsm
+#else
+ifeq ($(PJMEDIA_GSM_ENABLE),true)
 APP_THIRD_PARTY_LIB_FILES += $(PJ_DIR)/third_party/lib/libgsmcodec-$(LIB_SUFFIX)
 ifeq ($(PJ_SHARED_LIBRARIES),)
 APP_THIRD_PARTY_LIBS += -lgsmcodec-$(TARGET_NAME)
@@ -82,12 +94,13 @@ APP_THIRD_PARTY_LIBS += -lgsmcodec
 APP_THIRD_PARTY_LIB_FILES += $(PJ_DIR)/third_party/lib/libgsmcodec.$(SHLIB_SUFFIX).$(PJ_VERSION_MAJOR) $(PJ_DIR)/third_party/lib/libgsmcodec.$(SHLIB_SUFFIX)
 endif
 endif
-endif
+#endif
 
-ifneq (,1)
-ifeq (0,1)
-APP_THIRD_PARTY_EXT += -lspeex -lspeexdsp
-else
+#ifneq (,1)
+#ifeq (0,1)
+#APP_THIRD_PARTY_EXT += -lspeex -lspeexdsp
+#else
+ifeq ($(PJMEDIA_SPEEX_ENABLE),true)
 APP_THIRD_PARTY_LIB_FILES += $(PJ_DIR)/third_party/lib/libspeex-$(LIB_SUFFIX)
 ifeq ($(PJ_SHARED_LIBRARIES),)
 APP_THIRD_PARTY_LIBS += -lspeex-$(TARGET_NAME)
@@ -96,9 +109,10 @@ APP_THIRD_PARTY_LIBS += -lspeex
 APP_THIRD_PARTY_LIB_FILES += $(PJ_DIR)/third_party/lib/libspeex.$(SHLIB_SUFFIX).$(PJ_VERSION_MAJOR) $(PJ_DIR)/third_party/lib/libspeex.$(SHLIB_SUFFIX)
 endif
 endif
-endif
+#endif
 
-ifneq (,1)
+#ifneq (,1)
+ifeq ($(PJMEDIA_ILBC_ENABLE),true)
 APP_THIRD_PARTY_LIB_FILES += $(PJ_DIR)/third_party/lib/libilbccodec-$(LIB_SUFFIX)
 ifeq ($(PJ_SHARED_LIBRARIES),)
 APP_THIRD_PARTY_LIBS += -lilbccodec-$(TARGET_NAME)
@@ -108,7 +122,8 @@ APP_THIRD_PARTY_LIB_FILES += $(PJ_DIR)/third_party/lib/libilbccodec.$(SHLIB_SUFF
 endif
 endif
 
-ifneq (,1)
+#ifneq (,1)
+ifeq ($(PJMEDIA_G722_ENABLE),true)
 APP_THIRD_PARTY_LIB_FILES += $(PJ_DIR)/third_party/lib/libg7221codec-$(LIB_SUFFIX)
 ifeq ($(PJ_SHARED_LIBRARIES),)
 APP_THIRD_PARTY_LIBS += -lg7221codec-$(TARGET_NAME)
@@ -118,15 +133,18 @@ APP_THIRD_PARTY_LIB_FILES += $(PJ_DIR)/third_party/lib/libg7221codec.$(SHLIB_SUF
 endif
 endif
 
-ifeq (0,1)
+#ifeq (0,1)
 # External PA
-APP_THIRD_PARTY_EXT += -lportaudio
-endif
+#APP_THIRD_PARTY_EXT += -lportaudio
+#endif
 
-ifneq (,1)
-ifeq (0,1)
-APP_THIRD_PARTY_EXT += -lyuv
-else
+
+ifeq ($(PJMEDIA_VIDEODEV_ENABLE),true)
+#ifneq (,1)
+#ifeq (0,1)
+#APP_THIRD_PARTY_EXT += -lyuv
+#else
+ifeq ($(PJMEDIA_YUV_ENABLE),true)
 APP_THIRD_PARTY_LIB_FILES += $(PJ_DIR)/third_party/lib/libyuv-$(LIB_SUFFIX)
 ifeq ($(PJ_SHARED_LIBRARIES),)
 APP_THIRD_PARTY_LIBS += -lyuv-$(TARGET_NAME)
@@ -135,6 +153,7 @@ APP_THIRD_PARTY_LIBS += -lyuv
 APP_THIRD_PARTY_LIB_FILES += $(PJ_DIR)/third_party/lib/libyuv.$(SHLIB_SUFFIX).$(PJ_VERSION_MAJOR) $(PJ_DIR)/third_party/lib/libyuv.$(SHLIB_SUFFIX)
 endif
 endif
+#endif
 endif
 
 ifneq (1,1)
@@ -199,14 +218,15 @@ PJ_VIDEO_LDFLAGS += $(SDL_LDFLAGS) $(FFMPEG_LDFLAGS) $(V4L2_LDFLAGS) \
 export APP_CC := $(CC)
 export APP_CXX := $(CXX)
 export APP_CFLAGS := -DPJ_AUTOCONF=1\
-	-O2 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1 -fPIC\
+	-O0 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1 -fPIC\
 	$(PJ_VIDEO_CFLAGS) \
 	-I$(PJDIR)/pjlib/include\
 	-I$(PJDIR)/pjlib-util/include\
 	-I$(PJDIR)/pjnath/include\
 	-I$(PJDIR)/pjmedia/include\
-	-I$(PJDIR)/pjsip/include
-export APP_CXXFLAGS := -g -O2 $(APP_CFLAGS)
+	-I$(PJDIR)/pjsip/include $(PLOS_CFLAGS) $(PL_DEFINE) $(PLOS_INCLUDE) $(PL_INCLUDE)
+
+export APP_CXXFLAGS := -g -O0 $(APP_CFLAGS) $(PLOS_CFLAGS)
 export APP_LDFLAGS := -L$(PJDIR)/pjlib/lib\
 	-L$(PJDIR)/pjlib-util/lib\
 	-L$(PJDIR)/pjnath/lib\
@@ -214,7 +234,7 @@ export APP_LDFLAGS := -L$(PJDIR)/pjlib/lib\
 	-L$(PJDIR)/pjsip/lib\
 	-L$(PJDIR)/third_party/lib\
 	$(PJ_VIDEO_LDFLAGS) \
-	
+	$(PLOS_LDFLAGS) $(SSL_LDFLAGS)
 export APP_LDXXFLAGS := $(APP_LDFLAGS)
 
 export APP_LIB_FILES := \
@@ -293,10 +313,14 @@ export APP_LDLIBS := $(PJSUA_LIB_LDLIB) \
 	$(APP_THIRD_PARTY_LIBS)\
 	$(APP_THIRD_PARTY_EXT)\
 	$(PJLIB_LDLIB) \
-	-luuid -lm -lrt -lpthread  -lasound
+	-lm -lrt -lpthread -lasound
 export APP_LDXXLIBS := $(PJSUA2_LIB_LDLIB) \
 	-lstdc++ \
 	$(APP_LDLIBS)
+
+ifeq ($(PJMEDIA_SRTP_ENABLE),true)
+export APP_LDLIBS += -lssl -lcrypto
+endif
 
 # Here are the variabels to use if application is using the library
 # from within the source distribution
@@ -313,9 +337,9 @@ export PJ_LIBXX_FILES := $(APP_LIBXX_FILES)
 
 # And here are the variables to use if application is using the
 # library from the install location (i.e. --prefix)
-export PJ_INSTALL_DIR := /home/zhurish/workspace/SWPlatform/externsions/pjproject-2.8/_install
+export PJ_INSTALL_DIR := $(PJDIR)/_install
 export PJ_INSTALL_INC_DIR := ${prefix}/include
 export PJ_INSTALL_LIB_DIR := ${exec_prefix}/lib
-export PJ_INSTALL_CFLAGS := -I$(PJ_INSTALL_INC_DIR) -DPJ_AUTOCONF=1 -O2 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1 -fPIC
-export PJ_INSTALL_CXXFLAGS := -g -O2 $(PJ_INSTALL_CFLAGS)
+export PJ_INSTALL_CFLAGS := -I$(PJ_INSTALL_INC_DIR) -DPJ_AUTOCONF=1 -O0 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1 -fPIC
+export PJ_INSTALL_CXXFLAGS := -g -O0 $(PJ_INSTALL_CFLAGS)
 export PJ_INSTALL_LDFLAGS := -L$(PJ_INSTALL_LIB_DIR) $(APP_LDLIBS)

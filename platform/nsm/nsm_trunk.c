@@ -18,8 +18,9 @@
 #include "os_list.h"
 
 #include "nsm_trunk.h"
+#ifdef PL_HAL_MODULE
 #include "hal_trunk.h"
-
+#endif
 static Gl2trunk_t gtrunk;
 
 static l2trunk_group_t * l2trunk_group_lookup_node(u_int trunkid);
@@ -149,7 +150,11 @@ int nsm_trunk_enable(void)
 	int ret = 0;
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
+#ifdef PL_HAL_MODULE
 	ret = hal_trunk_enable(TRUE);
+#else
+	ret = OK;
+#endif
 	if(ret == OK)
 		gtrunk.enable = TRUE;
 	if(gtrunk.mutex)
@@ -262,7 +267,11 @@ static l2trunk_t * l2trunk_lookup_port(ifindex_t ifindex)
 static int l2trunk_add_port(l2trunk_group_t *group, l2trunk_t *value)
 {
 //	int i = 0;
+#ifdef PL_HAL_MODULE
 	if(hal_trunk_interface_enable(value->ifindex, group->trunkId) == OK)
+#else
+	if(1)
+#endif
 	{
 /*		l2trunk_t value;
 		value.ifindex = ifindex;
@@ -276,7 +285,11 @@ static int l2trunk_add_port(l2trunk_group_t *group, l2trunk_t *value)
 
 static int l2trunk_del_port(l2trunk_group_t *group, l2trunk_t *value)
 {
+#ifdef PL_HAL_MODULE
 	if(hal_trunk_interface_disable(value->ifindex, group->trunkId) == OK)
+#else
+	if(1)
+#endif
 	{
 /*		l2trunk_t value;
 		value.ifindex = ifindex;
@@ -470,7 +483,11 @@ int nsm_trunk_load_balance_api(u_int trunkid, load_balance_t mode)
 	if(value)
 	{
 		value->load_balance = mode;
+#ifdef PL_HAL_MODULE
 		if(hal_trunk_mode(mode) == OK)
+#else
+		if(1)
+#endif
 		{
 			value->load_balance = mode;
 			if(mode == TRUNK_LOAD_BALANCE_NONE)

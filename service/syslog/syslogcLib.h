@@ -168,8 +168,8 @@ extern int syslogc_mode_get(int *);
 extern int syslogc_facility_set(int );
 extern int syslogc_facility_get(int *);
 
-extern int vsysclog (int , char *, va_list );
-extern int syslogc_out(int , char * , int );
+extern int vsysclog (int , int, char *, va_list );
+extern int syslogc_out(int , int, char * , int );
 /*
 extern int syslogcLibInit (char *);
 //extern STATUS syslogcMdataSend(M_BLK_ID,int,char *, UINT16,ULONG);

@@ -96,6 +96,8 @@ extern ifindex_t getsockopt_ifindex (int, struct msghdr *);
 /* swab the fields in iph between the host order and system order expected 
  * for IP_HDRINCL.
  */
+extern int setsockopt_ipv4_multicast_loop(int sock, int opt);
+
 extern void sockopt_iphdrincl_swab_htosys (struct ip *iph);
 extern void sockopt_iphdrincl_swab_systoh (struct ip *iph);
 

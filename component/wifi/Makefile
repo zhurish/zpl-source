@@ -30,7 +30,7 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c wireless.h
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	$(ECHO) CC '$(CFLAGS)' $@
+	@$(PL_ECHO_CC)
 	@$(PL_OBJ_COMPILE)
 #
 

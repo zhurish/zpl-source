@@ -155,11 +155,12 @@ DEFUN (config_log_file,
 		"Logging filename\n")
 {
 	int level = zlog_default->default_lvl[ZLOG_DEST_FILE];
-	if(argc == 1)
+	if(argc == 2)
 	{
-		if ((level = zlog_priority_match(argv[0])) == ZLOG_DISABLED)
+		if ((level = zlog_priority_match(argv[1])) == ZLOG_DISABLED)
 			return CMD_ERR_NO_MATCH;
 	}
+	zlog_set_file(argv[0], level);
 	zlog_set_level( ZLOG_DEST_FILE, level);
 	return CMD_SUCCESS;
 }
@@ -209,6 +210,7 @@ DEFUN (no_config_log_file,
 			return CMD_WARNING;
 		}
 	}
+	zlog_set_level(ZLOG_DEST_FILE, ZLOG_DISABLED);
 	return CMD_SUCCESS;
 }
 
@@ -460,10 +462,7 @@ DEFUN (config_log_facility,
 
 	if ((facility = zlog_facility_match(argv[0])) < 0)
 		return CMD_ERR_NO_MATCH;
-	zlog_default->facility = facility;
-#ifdef SYSLOG_CLIENT
-	syslogc_facility_set(zlog_default->facility);
-#endif
+	zlog_set_facility(facility);
 	return CMD_SUCCESS;
 }
 
@@ -475,10 +474,8 @@ DEFUN (no_config_log_facility,
 		"Reset syslog facility to default (daemon)\n"
 		"Syslog facility\n")
 {
-	zlog_default->facility = LOG_DAEMON;
-#ifdef SYSLOG_CLIENT
-	syslogc_facility_set(zlog_default->facility);
-#endif
+	zlog_set_facility(LOG_LOCAL7);
+	//zlog_default->facility = LOG_DAEMON;
 	return CMD_SUCCESS;
 }
 
@@ -577,6 +574,171 @@ DEFUN (no_config_log_timestamp,
 	return CMD_SUCCESS;
 }
 
+
+
+
+#ifdef ZLOG_TESTING_ENABLE
+
+DEFUN (config_log_testing,
+		config_log_testing_cmd,
+		"log testing",
+		"Logging control\n"
+		"Logging to Testing\n")
+{
+	int level = LOG_DEBUG;
+	if(argc == 1)
+	{
+		if ((level = zlog_priority_match(argv[0])) == ZLOG_DISABLED)
+			return CMD_ERR_NO_MATCH;
+	}
+	if(!zlog_testing_enabled())
+		zlog_testing_enable(TRUE);
+	zlog_testing_priority(level);
+	return CMD_SUCCESS;
+}
+
+ALIAS (config_log_testing,
+		config_log_testing_level_cmd,
+		"log testing "LOG_LEVELS,
+		"Logging control\n"
+		"Logging to Testing\n"
+		LOG_LEVEL_DESC);
+
+
+DEFUN (no_config_log_testing,
+		no_config_log_testing_cmd,
+		"no log testing",
+		NO_STR
+		"Logging control\n"
+		"Logging to Testing\n")
+{
+	if(argc == 1)
+		zlog_testing_priority(LOG_DEBUG);
+	else
+	{
+		zlog_testing_priority(LOG_ERR);
+		zlog_testing_enable(FALSE);
+	}
+	return CMD_SUCCESS;
+}
+
+ALIAS(no_config_log_testing,
+		no_config_log_testing_level_cmd,
+		"no log testing "LOG_LEVELS,
+		NO_STR
+		"Logging control\n"
+		"Logging to Testing\n"
+		LOG_LEVEL_DESC)
+
+DEFUN (config_log_testing_file,
+		config_log_testing_file_cmd,
+		"log testing file FILENAME",
+		"Logging control\n"
+		"Logging to Testing\n"
+		"Logging to file\n"
+		"Logging filename\n")
+{
+	int level = LOG_DEBUG;
+	if(argc == 2)
+	{
+		if ((level = zlog_priority_match(argv[1])) == ZLOG_DISABLED)
+			return CMD_ERR_NO_MATCH;
+	}
+	if(!zlog_testing_enabled())
+		zlog_testing_enable(TRUE);
+	zlog_testing_priority(level);
+	zlog_testing_file(argv[0]);
+	return CMD_SUCCESS;
+}
+
+ALIAS (config_log_testing_file,
+		config_log_testing_file_level_cmd,
+		"log testing file FILENAME "LOG_LEVELS,
+		"Logging control\n"
+		"Logging to Testing\n"
+		"Logging to file\n"
+		"Logging filename\n"
+		LOG_LEVEL_DESC);
+
+DEFUN (no_config_log_testing_file,
+		no_config_log_testing_file_cmd,
+		"no log testing file [FILENAME]",
+		NO_STR
+		"Logging control\n"
+		"Logging to Testing\n"
+		"Cancel logging to file\n"
+		"Logging file name\n")
+{
+	if(argc == 2)
+	{
+		zlog_testing_file(NULL);
+		zlog_testing_priority(LOG_DEBUG);
+		zlog_testing_enable(FALSE);
+	}
+	else
+	{
+		zlog_testing_file(NULL);
+		zlog_testing_priority(LOG_DEBUG);
+		zlog_testing_enable(FALSE);
+	}
+	return CMD_SUCCESS;
+}
+
+ALIAS(no_config_log_testing_file,
+		no_config_log_testing_file_level_cmd,
+		"no log testing file FILENAME " LOG_LEVELS,
+		NO_STR
+		"Logging control\n"
+		"Logging to Testing\n"
+		"Cancel logging to file\n"
+		"Logging file name\n"
+		LOG_LEVEL_DESC)
+
+
+DEFUN (show_config_log_testing_file,
+		show_config_log_file_testing_cmd,
+		"show logging testing file",
+		SHOW_STR
+		"Logging control\n"
+		"Logging to Testing\n"
+		"log file information\n")
+{
+	FILE *fp = NULL;
+	char filetmp[256];
+	char buf[4096];
+	if (zlog_default == NULL || !zlog_default->testlog.filename)
+		return CMD_WARNING;
+	if (zlog_default->mutex)
+		os_mutex_lock(zlog_default->mutex, OS_WAIT_FOREVER);
+
+	memset(filetmp, 0, sizeof(filetmp));
+	sprintf(filetmp, "%s%s", ZLOG_VIRTUAL_PATH, zlog_default->testlog.filename);
+	fp = fopen (filetmp, "r");
+
+	if (fp)
+	{
+		while (fgets(buf, sizeof(buf), fp))
+		{
+			char *s;
+			/* work backwards to ignore trailling isspace() */
+			for (s = buf + strlen(buf); (s > buf) && isspace((int) *(s - 1)); s--)
+				;
+			*s = '\0';
+			vty_out(vty, "%s%s", buf, VTY_NEWLINE);
+		}
+		fclose(fp);
+	}
+	if (zlog_default->mutex)
+		os_mutex_unlock(zlog_default->mutex);
+	return CMD_SUCCESS;
+}
+#endif
+
+
+
+
+
+
 DEFUN (show_logging,
 		show_logging_cmd,
 		"show logging",
@@ -653,6 +815,17 @@ DEFUN (show_logging,
 	else if(zl->timestamp == ZLOG_TIMESTAMP_RFC3339)
 		vty_out(vty, "Timestamp           : rfc3339%s",VTY_NEWLINE);
 
+#ifdef ZLOG_TESTING_ENABLE
+	if(zl->testing)
+	{
+		vty_out(vty, "Testing logging     : ");
+		vty_out(vty, "level %s, filename %s",
+					zlog_priority_name(zl->testlog.priority), zl->testlog.filename);
+		vty_out(vty, ", size %d M",zl->testlog.filesize);
+		vty_out(vty, "%s", VTY_NEWLINE);
+
+	}
+#endif
 	return CMD_SUCCESS;
 }
 
@@ -663,29 +836,29 @@ static int show_logbuffer_module_level(zbuffer_t *pstBuf, void *pVoid)
 	{
 		if ((pstBuf->level == pUser->priority) && pUser->priority)
 		{
-			vty_out (pUser->vty, pstBuf->log);
+			vty_out (pUser->vty, "%s", pstBuf->log);
 			return CMD_SUCCESS;
 		}
 	}
 	if ((pstBuf->level == pUser->priority) && pUser->priority)
 	{
-		vty_out (pUser->vty, pstBuf->log);
+		vty_out (pUser->vty, "%s", pstBuf->log);
 		return CMD_SUCCESS;
 	}
 	if ((pstBuf->module == pUser->module) && pUser->module)
 	{
-		vty_out (pUser->vty, pstBuf->log);
+		vty_out (pUser->vty, "%s", pstBuf->log);
 		return CMD_SUCCESS;
 	}
 	if(pUser->size)
 	{
-		vty_out (pUser->vty, pstBuf->log);
+		vty_out (pUser->vty, "%s", pstBuf->log);
 		pUser->total++;
 		if(pUser->size == pUser->total)
 			return CMD_WARNING;
 		return CMD_SUCCESS;
 	}
-	vty_out (pUser->vty, pstBuf->log);
+	vty_out (pUser->vty, "%s", pstBuf->log);
 	return CMD_SUCCESS;
 }
 
@@ -866,6 +1039,18 @@ int cmd_log_init()
 	install_element(CONFIG_NODE, &no_syslog_host_cmd);
 	install_element(CONFIG_NODE, &syslog_mode_cmd);
 	install_element(CONFIG_NODE, &no_syslog_mode_cmd);
+#endif
+
+#ifdef ZLOG_TESTING_ENABLE
+	install_element(CONFIG_NODE, &config_log_testing_cmd);
+	install_element(CONFIG_NODE, &config_log_testing_level_cmd);
+	install_element(CONFIG_NODE, &no_config_log_testing_cmd);
+	install_element(CONFIG_NODE, &no_config_log_testing_level_cmd);
+	install_element(CONFIG_NODE, &config_log_testing_file_cmd);
+	install_element(CONFIG_NODE, &config_log_testing_file_level_cmd);
+	install_element(CONFIG_NODE, &no_config_log_testing_file_cmd);
+	install_element(CONFIG_NODE, &no_config_log_testing_file_level_cmd);
+	install_element(VIEW_NODE, &show_config_log_file_testing_cmd);
 #endif
 	return OK;
 }

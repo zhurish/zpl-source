@@ -3,7 +3,7 @@
 ###########################################################################
 MODULEDIR = platform/lib
 #lib
-OBJS	+= avl.o
+#OBJS	+= avl.o
 OBJS	+= list.o
 OBJS	+= rbtree.o
 OBJS	+= buffer.o
@@ -52,6 +52,7 @@ OBJS	+= host.o
 OBJS	+= module.o
 OBJS	+= bitmap.o
 OBJS	+= tty_com.o
+OBJS	+= xyz_modem.o
 #############################################################################
 # LIB
 ###########################################################################

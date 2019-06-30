@@ -454,6 +454,57 @@ sockopt_reuseport (int sock)
 }
 #endif /* 0 */
 
+
+int sockopt_int(int fd, int level, int optname, int optval)
+{
+	return ip_setsockopt(fd, level, optname, &optval, sizeof(int));
+}
+
+static int sockopt_SOL_SOCKET_int(int fd, int optname, int optval)
+{
+	return sockopt_int(fd, SOL_SOCKET, optname, optval);
+}
+
+static int sockopt_SOL_SOCKET_1(int fd, int optname)
+{
+	return sockopt_SOL_SOCKET_int(fd, optname, 1);
+}
+
+int sockopt_broadcast(int fd)
+{
+	return sockopt_SOL_SOCKET_1(fd, SO_BROADCAST);
+}
+
+int sockopt_keepalive(int fd)
+{
+	return sockopt_SOL_SOCKET_1(fd, SO_KEEPALIVE);
+}
+
+#ifdef SO_BINDTODEVICE
+int sockopt_bindtodevice(int fd, const char *iface)
+{
+	int r;
+	struct ifreq ifr;
+	strcpy(ifr.ifr_name, iface);
+	/* NB: passing (iface, strlen(iface) + 1) does not work!
+	 * (maybe it works on _some_ kernels, but not on 2.6.26)
+	 * Actually, ifr_name is at offset 0, and in practice
+	 * just giving char[IFNAMSIZ] instead of struct ifreq works too.
+	 * But just in case it's not true on some obscure arch... */
+	r = setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr));
+	if (r)
+		zlog (ZLOG_DEFAULT, LOG_WARNING, "can't bind to interface %s", iface);
+	return r;
+}
+#else
+int sockopt_bindtodevice(int fd,
+		const char *iface)
+{
+	zlog (ZLOG_DEFAULT, LOG_WARNING, "SO_BINDTODEVICE is not supported on this system");
+	return -1;
+}
+#endif
+
 int
 sockopt_ttl (int family, int sock, int ttl)
 {

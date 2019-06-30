@@ -278,6 +278,14 @@ int tty_com_read(struct tty_com *com, char *buf, int len)
 	return ret;
 }
 
+BOOL tty_iscom(struct tty_com *com)
+{
+	if(strstr(com->devname, "ttyS"))
+		return TRUE;
+	else if(strstr(com->devname, "ttyUSB"))
+		return TRUE;
+	return FALSE;
+}
 /*
 int tty_com_update_option(struct tty_com *com)
 {

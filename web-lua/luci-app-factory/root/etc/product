@@ -1,0 +1,7 @@
+config product 'global'
+        option type 'X5CM'
+        option dbase '1'
+        option voip '1'
+        option thlog_max '2000'
+        option location 'Unit'
+        option customizer 'Secom'

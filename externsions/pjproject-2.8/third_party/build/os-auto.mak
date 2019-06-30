@@ -65,11 +65,13 @@ ifeq (none,libresample)
 DIRS += resample
 endif
 
+ifeq ($(PJMEDIA_VIDEODEV_ENABLE),true)
 ifneq (,1)
 ifeq (0,1)
 # External yuv
 else
 DIRS += yuv
+endif
 endif
 endif
 

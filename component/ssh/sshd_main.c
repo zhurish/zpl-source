@@ -204,6 +204,7 @@ static struct vty * sshd_shell_new(int vty_sock)
 
 	vty->type = VTY_TERM;
 	vty->node = ENABLE_NODE;
+	vty->login_type = VTY_LOGIN_SSH;
 	vty->ssh_enable = TRUE;
 	vty->ssh_close = sshd_close;
 

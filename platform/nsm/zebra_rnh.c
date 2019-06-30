@@ -139,7 +139,7 @@ zebra_delete_rnh (struct rnh *rnh)
   if (IS_ZEBRA_DEBUG_NHT)
     {
       char buf[INET6_ADDRSTRLEN];
-      zlog_debug("delete rnh %s", rnh_str(rnh, buf, INET6_ADDRSTRLEN));
+      zlog_debug(ZLOG_NSM,"delete rnh %s", rnh_str(rnh, buf, INET6_ADDRSTRLEN));
     }
 
   list_free(rnh->client_list);
@@ -420,8 +420,8 @@ copy_state (struct rnh *rnh, struct rib *rib)
 static int
 compare_state (struct rib *r1, struct rib *r2)
 {
-  struct nexthop *nh1;
-  struct nexthop *nh2;
+  struct nexthop *nh1 = NULL;
+  struct nexthop *nh2 = NULL;
   u_char found_nh = 0;
 
   if (!r1 && !r2)

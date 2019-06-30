@@ -140,7 +140,7 @@ int sock_connect_timeout(int sock, char *ipaddress, int port, int timeout_ms)
 {
 	int ret = 0;
 
-	if (ipaddress)
+	if (ipaddress && sock > 0)
 	{
 	    fd_set writefds;
 	    int sockerror = 0;
@@ -174,10 +174,10 @@ int sock_connect_timeout(int sock, char *ipaddress, int port, int timeout_ms)
 		ret = os_select_wait(sock+1, NULL, &writefds, timeout_ms);
 	    //use select to check write event, if the socket is writable, then
 	    //connect is complete successfully!
-		if(ret == 0)
+		if(ret == OS_TIMEOUT)
 		{
-	        printf( "connect timeout\n" );
-	        return ERROR;
+	        printf( "connect timeout:%s\n", ipaddress);
+	        return OS_TIMEOUT;
 		}
 		if(ret < 0)
 		{
@@ -231,6 +231,59 @@ int sock_client_write(int fd, char *ipaddress, int port, char *buf, int len)
 }
 
 
+int raw_sock_create(int style, int protocol)
+{
+	int fd = 0;
+	if ((fd = socket(AF_PACKET, style, htons(protocol))) < 0)
+	{
+		fprintf(stderr, "failed to open raw socket (%s)", strerror(errno));
+		return (-1);
+	}
+	return fd;
+}
+
+int raw_sock_bind(int fd, int family, int protocol, int ifindex)
+{
+	int ret = 0;
+	struct sockaddr_ll sock;
+	memset(&sock, 0, sizeof(sock)); /* let's be deterministic */
+	sock.sll_family = family;
+	sock.sll_protocol = htons(protocol);
+	sock.sll_ifindex = ifindex;
+	//zlog_debug(ZLOG_DHCP, "Can not bind raw socket(%s)", strerror(errno));
+	/*sock.sll_hatype = ARPHRD_???;*/
+	/*sock.sll_pkttype = PACKET_???;*/
+	/*sock.sll_halen = ???;*/
+	/*sock.sll_addr[8] = ???;*/
+	ret = bind(fd, (struct sockaddr *) &sock, sizeof(sock));
+	if(ret == 0)
+		return OK;
+	return ERROR;
+}
+
+int raw_sock_sendto(int fd, int family, int protocol, int ifindex,
+		u_int8 *dstmac, const char *data, int len)
+{
+	struct sockaddr_ll dest_sll;
+
+	int result = -1;
+
+	memset(&dest_sll, 0, sizeof(dest_sll));
+
+	dest_sll.sll_family = family;
+	dest_sll.sll_protocol = htons(protocol);
+	dest_sll.sll_ifindex = (ifindex);
+	/*dest_sll.sll_hatype = ARPHRD_???;*/
+	/*dest_sll.sll_pkttype = PACKET_???;*/
+	dest_sll.sll_halen = 6;
+	memcpy(dest_sll.sll_addr, dstmac, 6);
+
+	result = sendto(fd, data, len, /*flags:*/ 0,
+			(struct sockaddr *) &dest_sll, sizeof(dest_sll));
+	return result;
+}
+
+
 int unix_sockpair_create(BOOL tcp, int *rfd, int *wfd)
 {
 	int fd[2];
@@ -247,8 +300,8 @@ int unix_sockpair_create(BOOL tcp, int *rfd, int *wfd)
 
 int unix_sock_server_create(BOOL tcp, const char *name)
 {
-	int ret;
-	int sock, len;
+	int ret = 0;
+	int sock = 0, len = 0;
 	char path[128];
 	mode_t old_mask;
 	struct sockaddr_un serv;
@@ -302,8 +355,8 @@ int unix_sock_server_create(BOOL tcp, const char *name)
 
 int unix_sock_accept (int accept_sock, void *p)
 {
-	int sock;
-	int client_len;
+	int sock = 0;
+	int client_len = 0;
 	struct sockaddr_un client;
 
 	memset (&client, 0, sizeof (struct sockaddr_un));

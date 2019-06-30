@@ -55,7 +55,7 @@ static int _dhcpc_start(modem_t *modem, struct interface *ifp)
 		switch(type)
 		{
 		case DHCP_NONE:
-			if(nsm_interface_dhcp_mode_set_api(ifp, DHCP_CLIENT) == OK)
+			if(nsm_interface_dhcp_mode_set_api(ifp, DHCP_CLIENT, NULL) == OK)
 			{
 				os_msleep(10);
 				if(!nsm_interface_dhcpc_is_running(ifp))
@@ -85,7 +85,7 @@ static int _dhcpc_stop(modem_t *modem, struct interface *ifp)
 #ifdef PL_DHCPC_MODULE
 	nsm_dhcp_type type = nsm_interface_dhcp_mode_get_api(ifp);
 	if(type == DHCP_CLIENT)
-		return nsm_interface_dhcp_mode_set_api(ifp, DHCP_NONE);
+		return nsm_interface_dhcp_mode_set_api(ifp, DHCP_NONE, NULL);
 #endif
 		//return nsm_interface_dhcpc_start(ifp, FALSE);
 	//if(/*if_is_wireless(ifp) && */ifp->k_ifindex)

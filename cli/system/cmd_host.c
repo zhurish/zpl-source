@@ -285,6 +285,9 @@ DEFUN (config_exit,
 #endif
 #ifdef PL_APP_MODULE
 	case APP_TEMPLATES_NODE:
+#ifdef APP_X5BA_MODULE
+	case APP_X5BA_NODE:
+#endif
 #endif
 	case DHCPS_NODE:
 	case TEMPLATE_NODE:
@@ -378,6 +381,9 @@ DEFUN (config_end,
 #endif
 #ifdef PL_APP_MODULE
 	case APP_TEMPLATES_NODE:
+#ifdef APP_X5BA_MODULE
+	case APP_X5BA_NODE:
+#endif
 #endif
 	case CONFIG_NODE:
 	case DHCPS_NODE:
@@ -1129,7 +1135,7 @@ DEFUN (no_system_description,
 DEFUN (show_commandtree,
 		show_commandtree_cmd,
 		"show commandtree",
-		NO_STR
+		SHOW_STR
 		"Show command tree\n")
 {
 	/* TBD */
@@ -1153,6 +1159,16 @@ DEFUN (show_commandtree,
 	}
 
 	vector_free(cmd_vector);
+	return CMD_SUCCESS;
+}
+
+DEFUN (show_time_queues,
+		show_time_queues_cmd,
+		"show time-queues",
+		SHOW_STR
+		"Show Time Queues\n")
+{
+	os_time_show(vty_out, vty);
 	return CMD_SUCCESS;
 }
 
@@ -1417,6 +1433,7 @@ static int _cmd_host_base_init(int terminal)
 	install_element(CONFIG_NODE, &no_service_terminal_length_cmd);
 
 	install_element(VIEW_NODE, &show_work_queues_cmd);
+	install_element(VIEW_NODE, &show_time_queues_cmd);
 
 	install_element(CONFIG_NODE, &show_commandtree_cmd);
 	return OK;

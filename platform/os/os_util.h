@@ -80,9 +80,6 @@ extern int child_process_wait(int pid, int wait);
 extern int super_system_execvp(const char *cmd, char **input);
 
 
-extern int os_write_string(const char *name, const char *string);
-extern int os_read_string(const char *name, const char *string, int len);
-
 extern int os_get_blocking(int fd);
 extern int os_set_nonblocking(int fd);
 extern int os_set_blocking(int fd);
@@ -92,11 +89,12 @@ extern int os_pipe_close(int fd);
 extern int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, int timeout_ms);
 
 
-extern int os_stream_write(int fd, char *inbuf, int len);
-extern int os_stream_read(int fd, char *inbuf, int len);
+extern int os_write_file(const char *name, const char *string, int len);
+extern int os_read_file(const char *name, const char *string, int len);
 
-extern int os_stream_head_write(int fd, char *inbuf, int len);
-extern int os_stream_head_read(int fd, char *inbuf, int len);
+extern int os_write_timeout(int fd, char *buf, int len, int timeout_ms);
+extern int os_read_timeout(int fd, char *buf, int len, int timeout_ms);
+
 
 extern int os_register_signal(int sig, void (*handler)(int));
 
@@ -112,7 +110,8 @@ extern int os_register_signal(int sig, void (*handler)(int));
 #define MPLS_X_M(n)	(n >> 20)
 #define MPLS_X_G(n)	(n >> 30)
 
-extern const char * os_file_size(long long len);
+extern int os_file_size (const char *filename);
+extern const char * os_file_size_string(long long len);
 
 //extern const char * os_stream_size(long long len);
 

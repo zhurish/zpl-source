@@ -1,0 +1,26 @@
+<%+cbi/valueheader%>
+<%
+local uci = require "luci.model.uci"
+local testing = uci.cursor()
+
+function capture_file()
+  local en_tmp = testing:get("voipconfig","testing","capturefile")
+  if en_tmp then
+    return true
+  else
+    return false
+  end 
+end
+%>
+	<style>
+		line{
+		display:inline;
+		padding-left:50px;
+		}
+	</style>
+	<% if capture_file() then %>
+	<line><input type="submit" class="cbi-button cbi-input-download" id="download" name="download" value="Download"/></line>	
+	<% else %>
+    <line><input type="submit" class="cbi-button" id="download" name="download" value="Download" disabled="true"/></line>
+ 	<% end %>   
+<%+cbi/valuefooter%>
