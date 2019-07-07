@@ -15,8 +15,14 @@
 *.bak
 *.Po
 *.d
+*.a
+*.la
+*.so
+*.so.*
+*.depend
 *~
 *.m4
+*_install/*
 *.libs/*
 *.deps/*
 pkg/

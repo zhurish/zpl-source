@@ -33,6 +33,10 @@ include make/makelinux.mk
 TAGET=SWP-$(PLVER)
 #
 #
+#PLOS_MAP = -Wl,-Map,target-app.map
+ifneq ($(PLOS_MAP),)
+PLOS_MAP = -Wl,-Map,$(TAGET).map
+endif
 #
 #
 #

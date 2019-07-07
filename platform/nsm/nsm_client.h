@@ -110,8 +110,8 @@ extern int nsm_pal_interface_delete (struct interface *ifp);
 extern int nsm_pal_interface_up (struct interface *ifp);
 extern int nsm_pal_interface_down (struct interface *ifp);
 
-extern int nsm_pal_interface_set_address (struct interface *ifp, struct prefix *cp, int secondry);
-extern int nsm_pal_interface_unset_address (struct interface *ifp, struct prefix *cp, int secondry);
+extern int nsm_pal_interface_set_address (struct interface *ifp, struct connected *cp, int secondry);
+extern int nsm_pal_interface_unset_address (struct interface *ifp, struct connected *cp, int secondry);
 extern int nsm_pal_interface_mac (struct interface *ifp, unsigned char *mac, int len);
 extern int nsm_pal_interface_mtu (struct interface *ifp, int mtu);
 extern int nsm_pal_interface_vrf (struct interface *ifp, int vrf);

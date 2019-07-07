@@ -1816,7 +1816,7 @@ static pj_status_t app_init()
     /* Optionally set codec orders */
     for (i=0; i<app_config.codec_cnt; ++i) {
 	pjsua_codec_set_priority(&app_config.codec_arg[i],
-				 (pj_uint8_t)(PJMEDIA_CODEC_PRIO_NORMAL+i+9));
+				 (pj_uint8_t)((PJMEDIA_CODEC_PRIO_NORMAL + app_config.codec_cnt + 1) - i));
 #if PJSUA_HAS_VIDEO
 	pjsua_vid_codec_set_priority(&app_config.codec_arg[i],
 				   (pj_uint8_t)(PJMEDIA_CODEC_PRIO_NORMAL+i+9));

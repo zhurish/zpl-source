@@ -28,7 +28,7 @@ endif
 #
 #
 #
-.PHONY:	obj all demo lib clean rebuild install help usage objclean objlibclean
+.PHONY:	obj all demo lib clean rebuild install help usage objclean
 #
 #
 help:usage
@@ -77,12 +77,7 @@ endif
 #rebuild:clean all
 #
 #
-objlibclean:
-	@for i in $(PLPRODS); do	\
-		$(RM) $$i/*.a; 	\
-	done
-#
-objclean: 
+objclean:
 	@for i in $(PLPRODS); do	\
 		$(MAKE) -C $$i objclean; 	\
 	done

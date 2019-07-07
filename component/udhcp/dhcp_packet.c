@@ -18,7 +18,7 @@
 #if ENABLE_UDHCPC || ENABLE_UDHCPD
 void FAST_FUNC udhcp_header_init(struct dhcp_packet *packet, char type)
 {
-	memset(packet, 0, sizeof(*packet));
+	memset(packet, 0, sizeof(struct dhcp_packet));
 	packet->op = BOOTREQUEST; /* if client to a server */
 	switch (type) {
 	case DHCPOFFER:
@@ -164,7 +164,8 @@ int FAST_FUNC udhcp_send_raw_packet(int fd, struct dhcp_packet *dhcp_pkt,
 
 	memset(&dest_sll, 0, sizeof(dest_sll));
 	memset(&packet, 0, offsetof(struct ip_udp_dhcp_packet, data));
-	packet.data = *dhcp_pkt; /* struct copy */
+	//packet.data = *dhcp_pkt; /* struct copy */
+	memcpy(&packet.data, dhcp_pkt, sizeof(struct dhcp_packet));
 
 	dest_sll.sll_family = AF_PACKET;
 	dest_sll.sll_protocol = htons(ETH_P_IP);

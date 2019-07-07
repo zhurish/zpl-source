@@ -648,6 +648,21 @@ static int nsm_interface_ip_address_install(struct interface *ifp, struct prefix
 			nsm_pal_interface_up(ifp);
 			pal_interface_refresh_flag(ifp);
 		}
+#ifdef PL_DHCP_MODULE
+		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
+			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
+		else
+		{
+			if(nsm_pal_interface_set_address(ifp, ifc, 0) != OK)
+			{
+				listnode_delete(ifp->connected, ifc);
+				connected_free(ifc);
+				//vty_out(vty, "%% Can't set interface IP address: %s.%s",
+				//		safe_strerror(errno), VTY_NEWLINE);
+				return ERROR;
+			}
+		}
+#else
 		if(nsm_pal_interface_set_address(ifp, ifc, 0) != OK)
 		{
 			listnode_delete(ifp->connected, ifc);
@@ -656,9 +671,6 @@ static int nsm_interface_ip_address_install(struct interface *ifp, struct prefix
 			//		safe_strerror(errno), VTY_NEWLINE);
 			return ERROR;
 		}
-#ifdef PL_DHCP_MODULE
-		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
-			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
 #endif
 		connected_up_ipv4(ifp, ifc);
 		nsm_client_notify_interface_add_ip(ifp, ifc, 0);
@@ -707,6 +719,20 @@ static int nsm_interface_ip_address_uninstall(struct interface *ifp, struct pref
 
 	if(ifc->raw_status == 0)
 	{
+#ifdef PL_DHCP_MODULE
+		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
+			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
+		else
+		{
+			if(nsm_pal_interface_unset_address(ifp, ifc, 0) != OK)
+			{
+				//printf("%s:nsm_pal_interface_unset_address\n",__func__);
+				//vty_out(vty, "%% Can't unset interface IP address: %s.%s",
+				//		safe_strerror(errno), VTY_NEWLINE);
+				return ERROR;
+			}
+		}
+#else
 		if(nsm_pal_interface_unset_address(ifp, ifc, 0) != OK)
 		{
 			//printf("%s:nsm_pal_interface_unset_address\n",__func__);
@@ -714,6 +740,7 @@ static int nsm_interface_ip_address_uninstall(struct interface *ifp, struct pref
 			//		safe_strerror(errno), VTY_NEWLINE);
 			return ERROR;
 		}
+#endif
 		//zebra_interface_address_delete_update(ifp, ifc);
 		connected_down_ipv4(ifp, ifc);
 
@@ -776,6 +803,22 @@ nsm_interface_ipv6_address_install (struct interface *ifp,
 			nsm_pal_interface_up(ifp);
 			pal_interface_refresh_flag(ifp);
 		}
+#ifdef PL_DHCP_MODULE
+		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
+			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
+		else
+		{
+			ret = nsm_pal_interface_set_address (ifp, ifc, secondary);
+			if (ret < 0)
+			{
+				//vty_out (vty, "%% Can't set interface IP address: %s.%s",
+				//		safe_strerror(errno), VTY_NEWLINE);
+				listnode_delete(ifp->connected, ifc);
+				connected_free(ifc);
+				return CMD_WARNING;
+			}
+		}
+#else
 		ret = nsm_pal_interface_set_address (ifp, ifc, secondary);
 		if (ret < 0)
 		{
@@ -785,9 +828,6 @@ nsm_interface_ipv6_address_install (struct interface *ifp,
 			connected_free(ifc);
 			return CMD_WARNING;
 		}
-#ifdef PL_DHCP_MODULE
-		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
-			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
 #endif
 		connected_up_ipv6 (ifp, ifc);
 		nsm_client_notify_interface_add_ip(ifp, ifc, secondary);
@@ -833,12 +873,28 @@ nsm_interface_ipv6_address_uninstall (struct interface *ifp,
 
 	if(ifc->raw_status == 0)
 	{
+#ifdef PL_DHCP_MODULE
+		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
+			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
+		else
+		{
+			if(nsm_pal_interface_unset_address(ifp, ifc, secondry) != OK)
+			{
+				//printf("%s:nsm_pal_interface_unset_address\n",__func__);
+				//vty_out(vty, "%% Can't unset interface IP address: %s.%s",
+				//		safe_strerror(errno), VTY_NEWLINE);
+				return ERROR;
+			}
+		}
+#else
 		if(nsm_pal_interface_unset_address(ifp, ifc, secondry) != OK)
 		{
+			//printf("%s:nsm_pal_interface_unset_address\n",__func__);
 			//vty_out(vty, "%% Can't unset interface IP address: %s.%s",
 			//		safe_strerror(errno), VTY_NEWLINE);
 			return ERROR;
 		}
+#endif
 		connected_down_ipv6 (ifp, ifc);
 
 		UNSET_FLAG (ifc->conf, ZEBRA_IFC_CONFIGURED);

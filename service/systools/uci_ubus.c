@@ -12,42 +12,6 @@
 
 #ifdef PL_OPENWRT_UCI
 #if 1//def BUILD_OPENWRT
-/*#include <libubus.h>
-#include <libubox/blobmsg.h>
-
-
-int uci_ubus_cb_install(uci_ubus_cb *cb)
-{
-	return OK;
-}
-
-int uci_ubus_cb_uninstall(uci_ubus_cb *cb)
-{
-	return OK;
-}
-
-int uci_ubus_debug(BOOL enable)
-{
-	return OK;
-}
-
-int uci_ubus_init(void *m)
-{
-	return OK;
-}
-
-int uci_ubus_reset(void)
-{
-	return OK;
-}
-
-int uci_ubus_exit(void)
-{
-	return OK;
-}*/
-
-//#else /* BUILD_OPENWRT */
-
 #include "os_uci.h"
 #include "uci_ubus.h"
 

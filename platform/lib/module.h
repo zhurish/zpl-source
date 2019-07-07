@@ -21,7 +21,7 @@ typedef enum
   MODULE_NSM,			//route table manage
   MODULE_MODEM,			//MODEM
   MODULE_WIFI,			//wifi
-  MODULE_DHCP,			//MODEM
+  MODULE_DHCP,			//DHCP
   MODULE_DHCPD,			//DHCPD
   MODULE_RIP,
   MODULE_BGP,

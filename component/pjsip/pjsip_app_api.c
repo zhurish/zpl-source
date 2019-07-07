@@ -117,8 +117,10 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 	sip->sip_quality = PJSUA_DEFAULT_CODEC_QUALITY;							//Specify media quality (0-10, default=2)
 	sip->sip_ptime = PJSUA_DEFAULT_AUDIO_FRAME_PTIME;								//Override codec ptime to MSEC (default=specific)
 	sip->sip_no_vad = FALSE;												//Disable VAD/silence detector (default=vad enabled)
-	sip->sip_echo_tail = 0;//PJSUA_DEFAULT_EC_TAIL_LEN;							//Set echo canceller tail length
-	sip->sip_echo_mode = PJSIP_ECHO_SPEEX;//PJSIP_ECHO_DEFAULT;//PJSIP_ECHO_DISABLE;							//Select echo canceller algorithm (0=default, 1=speex, 2=suppressor, 3=WebRtc)
+	sip->sip_echo_tail = PJSUA_DEFAULT_EC_TAIL_LEN;							//Set echo canceller tail length
+	sip->sip_echo_mode = PJSIP_ECHO_SPEEX;//PJSIP_ECHO_DEFAULT;//PJSIP_ECHO_DISABLE;	//Select echo canceller algorithm (0=default, 1=speex, 2=suppressor, 3=WebRtc)
+	sip->sip_echo_mode = PJSIP_ECHO_SUPPRESSER;
+	sip->sip_echo_mode = PJSIP_ECHO_WEBRTXC;
 	sip->sip_ilbc_mode = PJSUA_DEFAULT_ILBC_MODE;							//Set iLBC codec mode (20 or 30, default is 20)
 	sip->sip_capture_lat = PJMEDIA_SND_DEFAULT_REC_LATENCY;						//Audio capture latency, in ms
 	sip->sip_playback_lat = PJMEDIA_SND_DEFAULT_PLAY_LATENCY;						//Audio capture latency, in ms
@@ -184,12 +186,14 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 	strcpy(pl_pjsip->dicodec[3].payload_name, "iLBC/8000");
 	pl_pjsip->dicodec[3].is_active = TRUE;
 
+#ifdef BUILD_X86
 	strcpy(sip->sip_user.sip_user, "100");
 	strcpy(sip->sip_user.sip_password, "100");
 	strcpy(sip->sip_server.sip_address, "192.168.0.103");
 
 	strcpy(sip->sip_local.sip_address, "192.168.0.102");
 	sip->sip_local.state = PJSIP_STATE_CONNECT_LOCAL;
+#endif
 /*
 	pl_pjsip_username(&app_config, "100");//Set authentication username
 	pl_pjsip_password(&app_config, "100");//Set authentication password
@@ -656,8 +660,11 @@ int pl_pjsip_local_address_set_api(s_int8 *address)
 		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
 	//pl_pjsip->sip_local.sip_port = port ? port:PJSIP_PORT_DEFAULT;
 	memset(pl_pjsip->sip_local.sip_address, 0, sizeof(pl_pjsip->sip_local.sip_address));
-	strcpy(pl_pjsip->sip_local.sip_address, address);
-	pl_pjsip->sip_local.state = PJSIP_STATE_CONNECT_LOCAL;
+	if(address)
+	{
+		strcpy(pl_pjsip->sip_local.sip_address, address);
+		pl_pjsip->sip_local.state = PJSIP_STATE_CONNECT_LOCAL;
+	}
 	if(pl_pjsip->mutex)
 		os_mutex_unlock(pl_pjsip->mutex);
 	return OK;
@@ -669,7 +676,11 @@ int pl_pjsip_local_address_get_api(s_int8 *address)
 	if(pl_pjsip->mutex)
 		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
 	if(address)
+	{
+		//memset(pl_pjsip->sip_local.sip_address, 0, sizeof(pl_pjsip->sip_local.sip_address));
 		strcpy(address, pl_pjsip->sip_local.sip_address);
+		//pl_pjsip->sip_local.state = PJSIP_STATE_CONNECT_LOCAL;
+	}
 	if(pl_pjsip->mutex)
 		os_mutex_unlock(pl_pjsip->mutex);
 	return OK;
@@ -681,6 +692,13 @@ int pl_pjsip_source_interface_set_api(u_int32 ifindex)
 	if(pl_pjsip->mutex)
 		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
 	pl_pjsip->sip_source_interface = ifindex;
+	u_int32 address = voip_get_address(pl_pjsip->sip_source_interface);
+	if(address)
+	{
+		memset(pl_pjsip->sip_local.sip_address, 0, sizeof(pl_pjsip->sip_local.sip_address));
+		strcpy(pl_pjsip->sip_local.sip_address, inet_address(address));
+		pl_pjsip->sip_local.state = PJSIP_STATE_CONNECT_LOCAL;
+	}
 	//voip_pl_pjsip_update_api(pl_pjsip);
 	if(pl_pjsip->mutex)
 		os_mutex_unlock(pl_pjsip->mutex);
@@ -1660,15 +1678,23 @@ int pl_pjsip_neg_timeout_get_api(u_int16 *sip_neg_timeout)
 /***************************************************************************/
 //Audio Options:
 
-int pl_pjsip_codec_default_set_api(char * sip_codec)
+int pl_pjsip_codec_default_set_api(char * sip_codec, int indx)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
 		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	memset(pl_pjsip->sip_codec, 0, sizeof(pl_pjsip->sip_codec));
 	if(sip_codec)
 	{
-		strcpy(pl_pjsip->sip_codec, sip_codec);
+		memset(pl_pjsip->sip_codec.payload_name, 0, sizeof(pl_pjsip->sip_codec.payload_name));
+		strcpy(pl_pjsip->sip_codec.payload_name, sip_codec);
+		pl_pjsip->sip_codec.is_active = TRUE;
+		pl_pjsip->sip_codec.payload = indx;
+	}
+	else
+	{
+		memset(pl_pjsip->sip_codec.payload_name, 0, sizeof(pl_pjsip->sip_codec.payload_name));
+		pl_pjsip->sip_codec.is_active = FALSE;
+		pl_pjsip->sip_codec.payload = 0;
 	}
 	if(pl_pjsip->mutex)
 		os_mutex_unlock(pl_pjsip->mutex);
@@ -3194,7 +3220,43 @@ int pl_pjsip_app_start_call(int accid, char *num, int *callid)
 {
 	char cmd[512];
 	memset(cmd, 0, sizeof(cmd));
-	snprintf(cmd, sizeof(cmd), "call new sip:%s@192.168.0.103", num);
+	if(!pl_pjsip)
+		return ERROR;
+	if(pl_pjsip->mutex)
+		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+
+	if(pl_pjsip->sip_user.sip_state == PJSIP_STATE_REGISTER_SUCCESS &&
+			pl_pjsip->sip_user.register_svr &&
+			strlen(pl_pjsip->sip_user.register_svr->sip_address))
+	{
+		if(pl_pjsip->sip_user.register_svr->sip_port == PJSIP_PORT_DEFAULT)
+			snprintf(cmd, sizeof(cmd), "call new sip:%s@%s",
+					pl_pjsip->sip_user.register_svr->sip_address, num);
+		else
+			snprintf(cmd, sizeof(cmd), "call new sip:%s@%s:%d",
+					pl_pjsip->sip_user.register_svr->sip_address,
+					pl_pjsip->sip_user.register_svr->sip_port, num);
+	}
+	else if(pl_pjsip->sip_user_sec.sip_state == PJSIP_STATE_REGISTER_SUCCESS &&
+			pl_pjsip->sip_user_sec.register_svr &&
+			strlen(pl_pjsip->sip_user_sec.register_svr->sip_address))
+	{
+		if(pl_pjsip->sip_user_sec.register_svr->sip_port == PJSIP_PORT_DEFAULT)
+			snprintf(cmd, sizeof(cmd), "call new sip:%s@%s",
+					pl_pjsip->sip_user_sec.register_svr->sip_address, num);
+		else
+			snprintf(cmd, sizeof(cmd), "call new sip:%s@%s:%d",
+					pl_pjsip->sip_user_sec.register_svr->sip_address,
+					pl_pjsip->sip_user_sec.register_svr->sip_port, num);
+	}
+	else
+	{
+		if(pl_pjsip->mutex)
+			os_mutex_unlock(pl_pjsip->mutex);
+		return ERROR;
+	}
+	if(pl_pjsip->mutex)
+		os_mutex_unlock(pl_pjsip->mutex);
 	if(app_config.current_call != PJSUA_INVALID_ID)
 		return ERROR;
 	voip_volume_control_api(TRUE);
@@ -3410,11 +3472,11 @@ static int pl_pjsip_account_options_write_config(pl_pjsip_t *sip, struct vty *vt
 		vty_out(vty, " ip sip username %s%s", sip->sip_user.sip_user,
 				VTY_NEWLINE);
 	}
-	if (strlen(sip->sip_user.sip_phone))
+/*	if (strlen(sip->sip_user.sip_phone))
 	{
 		vty_out(vty, " ip sip local-phone %s%s", sip->sip_user.sip_phone,
 				VTY_NEWLINE);
-	}
+	}*/
 	if (strlen(sip->sip_user.sip_password))
 		vty_out(vty, " ip sip password %s%s", sip->sip_user.sip_password,
 				VTY_NEWLINE);
@@ -3425,9 +3487,11 @@ static int pl_pjsip_account_options_write_config(pl_pjsip_t *sip, struct vty *vt
 			vty_out(vty, " ip sip username %s secondary%s",
 					sip->sip_user_sec.sip_user, VTY_NEWLINE);
 
+/*
 		if (strlen(sip->sip_user_sec.sip_phone))
 			vty_out(vty, " ip sip local-phone %s secondary%s",
 					sip->sip_user_sec.sip_phone, VTY_NEWLINE);
+*/
 
 		if (strlen(sip->sip_user_sec.sip_password))
 			vty_out(vty, " ip sip password %s secondary%s",
@@ -3466,7 +3530,7 @@ static int pl_pjsip_account_options_write_config(pl_pjsip_t *sip, struct vty *vt
 
 	if (sip->sip_proxy_enable)
 	{
-		vty_out(vty, " ip sip proxy enable%s", VTY_NEWLINE);
+		//vty_out(vty, " ip sip proxy enable%s", VTY_NEWLINE);
 
 		if (strlen(sip->sip_proxy.sip_address))
 			vty_out(vty, " ip sip proxy-server %s%s",
@@ -3503,7 +3567,7 @@ static int pl_pjsip_account_options_write_config(pl_pjsip_t *sip, struct vty *vt
 		vty_out(vty, " ip sip dtmf-type inband%s", VTY_NEWLINE);
 
 	if (sip->sip_expires && sip->sip_expires != PJSIP_EXPIRES_DEFAULT)
-		vty_out(vty, " ip sip expires %d%s", sip->sip_expires, VTY_NEWLINE);
+		vty_out(vty, " ip sip register-interval %d%s", sip->sip_expires, VTY_NEWLINE);
 
 	if (sip->sip_100_rel != PJSIP_100_REL_DEFAULT)
 		vty_out(vty, " ip sip rel-100%s", VTY_NEWLINE);
@@ -3551,20 +3615,20 @@ static int pl_pjsip_account_options_write_config(pl_pjsip_t *sip, struct vty *vt
 		vty_out(vty, " ip sip reg-proxy all%s", VTY_NEWLINE);
 
 	if (sip->sip_publish)
-		vty_out(vty, " ip sip publish%s", VTY_NEWLINE);
+		vty_out(vty, " ip sip enable publish%s", VTY_NEWLINE);
 	if (sip->sip_mwi)
-		vty_out(vty, " ip sip mwi%s", VTY_NEWLINE);
+		vty_out(vty, " ip sip enable mwi%s", VTY_NEWLINE);
 	if (sip->sip_ims_enable)
-		vty_out(vty, " ip sip ims%s", VTY_NEWLINE);
+		vty_out(vty, " ip sip enable ims%s", VTY_NEWLINE);
 
 	if (sip->sip_srtp_mode == PJSIP_SRTP_DISABLE)
-		vty_out(vty, " ip sip srtp disabled%s", VTY_NEWLINE);
+		vty_out(vty, " ip sip srtp mode disabled%s", VTY_NEWLINE);
 	else if (sip->sip_srtp_mode == PJSIP_SRTP_OPTIONAL)
-		vty_out(vty, " ip sip srtp optional%s", VTY_NEWLINE);
+		vty_out(vty, " ip sip srtp mode optional%s", VTY_NEWLINE);
 	else if (sip->sip_srtp_mode == PJSIP_SRTP_MANDATORY)
-		vty_out(vty, " ip sip srtp mandatory%s", VTY_NEWLINE);
+		vty_out(vty, " ip sip srtp mode mandatory%s", VTY_NEWLINE);
 	else if (sip->sip_srtp_mode == PJSIP_SRTP_OPTIONAL_DUP)
-		vty_out(vty, " ip sip srtp optional-duplicating%s", VTY_NEWLINE);
+		vty_out(vty, " ip sip srtp mode optional-duplicating%s", VTY_NEWLINE);
 	if (sip->sip_srtp_mode != PJSIP_SRTP_DISABLE)
 	{
 		if (sip->sip_srtp_secure == PJSIP_SRTP_SEC_NO)
@@ -3610,10 +3674,10 @@ static int pl_pjsip_transport_options_write_config(pl_pjsip_t *sip, struct vty *
 	zassert(vty != NULL);
 	//Transport Options:
 	if(sip->sip_ipv6_enable)
-		vty_out(vty, " ip sip ipv6 enable%s", VTY_NEWLINE);
+		vty_out(vty, " ip sip ipv6 enabled%s", VTY_NEWLINE);
 
 	if(sip->sip_set_qos)
-		vty_out(vty, " ip sip tagging-qos enable%s", VTY_NEWLINE);
+		vty_out(vty, " ip sip tagging-qos enabled%s", VTY_NEWLINE);
 
 	if(sip->sip_noudp)
 		vty_out(vty, " ip sip transport udp disabled%s", VTY_NEWLINE);
@@ -3646,6 +3710,7 @@ static int pl_pjsip_tls_options_write_config(pl_pjsip_t *sip, struct vty *vty, B
 	zassert(sip != NULL);
 	zassert(vty != NULL);
 	//TLS Options:
+#if defined(PJSIP_HAS_TLS_TRANSPORT) && (PJSIP_HAS_TLS_TRANSPORT != 0)
 	if(sip->sip_tls_enable)
 		vty_out(vty, " ip sip tls enable%s", VTY_NEWLINE);
 	if(strlen(sip->sip_tls_ca_file))
@@ -3667,11 +3732,12 @@ static int pl_pjsip_tls_options_write_config(pl_pjsip_t *sip, struct vty *vty, B
 	if(sip->sip_tls_verify_client.sip_port && sip->sip_tls_verify_client.sip_port != PJSIP_PORT_DEFAULT)
 		vty_out(vty, " ip sip verify-client port %d%s", (sip->sip_tls_verify_client.sip_port), VTY_NEWLINE);
 
-	if(sip->sip_neg_timeout)
-		vty_out(vty, " ip sip tls negotiation timeout %d%s", sip->sip_neg_timeout, VTY_NEWLINE);
-
 	if(strlen(sip->sip_tls_cipher))
 		vty_out(vty, " ip sip tls-cipher %s%s", sip->sip_tls_cipher, VTY_NEWLINE);
+#endif
+	if(sip->sip_neg_timeout)
+		vty_out(vty, " ip sip negotiation timeout %d%s", sip->sip_neg_timeout, VTY_NEWLINE);
+
 	return OK;
 }
 
@@ -3688,16 +3754,18 @@ static int pl_pjsip_audio_options_write_config(pl_pjsip_t *sip, struct vty *vty,
 	if(sip->sip_snd_clock_rate != PJSIP_DEFAULT_CLOCK_RATE)
 		vty_out(vty, " ip sip snd-clock-rate %d%s", sip->sip_snd_clock_rate, VTY_NEWLINE);
 
+/*
 	if(sip->sip_stereo)
 		vty_out(vty, " ip sip stereo enable%s", VTY_NEWLINE);
 	if(sip->sip_audio_null)
 		vty_out(vty, " ip sip audio-null%s", VTY_NEWLINE);
+*/
 
 	if(strlen(sip->sip_play_file))
-		vty_out(vty, " ip sip play-file %s%s", sip->sip_play_file, VTY_NEWLINE);
+		vty_out(vty, " ip sip auto-play-file %s%s", sip->sip_play_file, VTY_NEWLINE);
 
 	if(strlen(sip->sip_play_tone))
-		vty_out(vty, " ip sip play-tones %s%s", sip->sip_play_tone, VTY_NEWLINE);
+		vty_out(vty, " ip sip auto-play-tones %s%s", sip->sip_play_tone, VTY_NEWLINE);
 
 	if(sip->sip_auto_play)
 		vty_out(vty, " ip sip auto-play enable%s", VTY_NEWLINE);
@@ -3729,6 +3797,7 @@ static int pl_pjsip_audio_options_write_config(pl_pjsip_t *sip, struct vty *vty,
 		vty_out(vty, " ip sip ilbc fps %d%s", sip->sip_ilbc_mode, VTY_NEWLINE);
 	//u_int32				sip_capture_dev;
 	//u_int32				sip_playback_dev;
+#if 0
 	if(sip->sip_capture_lat != PJMEDIA_SND_DEFAULT_REC_LATENCY)
 		vty_out(vty, " ip sip capture latency %d%s", sip->sip_capture_lat, VTY_NEWLINE);
 	if(sip->sip_playback_lat != PJMEDIA_SND_DEFAULT_PLAY_LATENCY)
@@ -3741,6 +3810,7 @@ static int pl_pjsip_audio_options_write_config(pl_pjsip_t *sip, struct vty *vty,
 
 	if(sip->sip_notones)
 		vty_out(vty, " ip sip audible tones disabled%s", VTY_NEWLINE);
+#endif
 	return OK;
 }
 
@@ -3807,8 +3877,8 @@ static int pl_pjsip_media_transport_options_write_config(pl_pjsip_t *sip, struct
 	if(strlen(sip->sip_turn_password))
 		vty_out(vty, " ip sip turn password %s%s", sip->sip_turn_password, VTY_NEWLINE);
 
-	if(sip->sip_rtcp_mux)
-		vty_out(vty, " ip sip rtp-multiplexing %d%s", sip->sip_rtcp_mux, VTY_NEWLINE);
+/*	if(sip->sip_rtcp_mux)
+		vty_out(vty, " ip sip rtp-multiplexing %d%s", sip->sip_rtcp_mux, VTY_NEWLINE);*/
 	return OK;
 }
 
@@ -3839,11 +3909,13 @@ static int pl_pjsip_user_agent_options_write_config(pl_pjsip_t *sip, struct vty 
 	if(sip->sip_norefersub)
 		vty_out(vty, " ip sip refer subscription disabled%s", VTY_NEWLINE);
 
+/*
 	if(sip->sip_use_compact_form)
 		vty_out(vty, " ip sip message min-size %d%s", sip->sip_use_compact_form, VTY_NEWLINE);
 
 	if(sip->sip_no_force_lr)
 		vty_out(vty, " ip sip force-lr%s", VTY_NEWLINE);
+*/
 
 	if(sip->sip_accept_redirect == PJSIP_ACCEPT_REDIRECT_REJECT)
 		vty_out(vty, " ip sip redirect method redirect%s", VTY_NEWLINE);
@@ -3862,61 +3934,61 @@ static int pl_pjsip_account_options_show(pl_pjsip_t *sip, struct vty *vty, BOOL 
 	zassert(vty != NULL);
 	char buftmp[4096];
 	int i = 0;
-	vty_out(vty, " sip username         : %s%s",
+	vty_out(vty, " sip username                 : %s%s",
 			strlen(sip->sip_user.sip_user)? sip->sip_user.sip_user:" ", VTY_NEWLINE);
-	vty_out(vty, " sip local-phone      : %s%s",
+	vty_out(vty, " sip local-phone              : %s%s",
 			strlen(sip->sip_user.sip_phone)? sip->sip_user.sip_phone:" ", VTY_NEWLINE);
-	vty_out(vty, " sip password         : %s%s",
+	vty_out(vty, " sip password                 : %s%s",
 			strlen(sip->sip_user.sip_password)? sip->sip_user.sip_password:" ", VTY_NEWLINE);
 
-	vty_out(vty, " sip username         : %s secondary%s",
+	vty_out(vty, " sip username                 : %s secondary%s",
 			strlen(sip->sip_user_sec.sip_user)? sip->sip_user_sec.sip_user:" ", VTY_NEWLINE);
 
-	vty_out(vty, " sip local-phone      : %s secondary%s",
+	vty_out(vty, " sip local-phone              : %s secondary%s",
 			strlen(sip->sip_user_sec.sip_phone)? sip->sip_user_sec.sip_phone:" ", VTY_NEWLINE);
 
-	vty_out(vty, " sip password         : %s secondary%s",
+	vty_out(vty, " sip password                 : %s secondary%s",
 			strlen(sip->sip_user_sec.sip_password)? sip->sip_user_sec.sip_password:" ", VTY_NEWLINE);
 
-	vty_out(vty, " sip local-port       : %d%s", (sip->sip_local.sip_port), VTY_NEWLINE);
-	vty_out(vty, " sip local-address    : %s%s", (sip->sip_local.sip_address), VTY_NEWLINE);
-	vty_out(vty, " sip source-interface : %s%s", if_ifname_make(sip->sip_source_interface), VTY_NEWLINE);
-	vty_out(vty, " sip server           : %s%s", (sip->sip_server.sip_address), VTY_NEWLINE);
-	vty_out(vty, " sip server port      : %d%s", (sip->sip_server.sip_port), VTY_NEWLINE);
-	vty_out(vty, " sip server           : %s secondary%s",(sip->sip_server_sec.sip_address), VTY_NEWLINE);
-	vty_out(vty, " sip server port      : %d secondary%s", (sip->sip_server_sec.sip_port), VTY_NEWLINE);
+	vty_out(vty, " sip local-port               : %d%s", (sip->sip_local.sip_port), VTY_NEWLINE);
+	vty_out(vty, " sip local-address            : %s%s", (sip->sip_local.sip_address), VTY_NEWLINE);
+	vty_out(vty, " sip source-interface         : %s%s", if_ifname_make(sip->sip_source_interface), VTY_NEWLINE);
+	vty_out(vty, " sip server                   : %s%s", (sip->sip_server.sip_address), VTY_NEWLINE);
+	vty_out(vty, " sip server port              : %d%s", (sip->sip_server.sip_port), VTY_NEWLINE);
+	vty_out(vty, " sip server                   : %s secondary%s",(sip->sip_server_sec.sip_address), VTY_NEWLINE);
+	vty_out(vty, " sip server port              : %d secondary%s", (sip->sip_server_sec.sip_port), VTY_NEWLINE);
 
-	vty_out(vty, " sip proxy            : %s%s", sip->sip_proxy_enable ? "TRUE":"FALSE", VTY_NEWLINE);
-	vty_out(vty, " sip proxy-server     : %s%s", (sip->sip_proxy.sip_address), VTY_NEWLINE);
-	vty_out(vty, " sip proxy-server port: %d%s", (sip->sip_proxy.sip_port), VTY_NEWLINE);
-	vty_out(vty, " sip proxy-server     : %s secondary%s", (sip->sip_proxy_sec.sip_address), VTY_NEWLINE);
-	vty_out(vty, " sip proxy-server port: %d secondary%s", (sip->sip_proxy_sec.sip_port), VTY_NEWLINE);
+	vty_out(vty, " sip proxy                    : %s%s", sip->sip_proxy_enable ? "TRUE":"FALSE", VTY_NEWLINE);
+	vty_out(vty, " sip proxy-server             : %s%s", (sip->sip_proxy.sip_address), VTY_NEWLINE);
+	vty_out(vty, " sip proxy-server port        : %d%s", (sip->sip_proxy.sip_port), VTY_NEWLINE);
+	vty_out(vty, " sip proxy-server             : %s secondary%s", (sip->sip_proxy_sec.sip_address), VTY_NEWLINE);
+	vty_out(vty, " sip proxy-server port        : %d secondary%s", (sip->sip_proxy_sec.sip_port), VTY_NEWLINE);
 	if (sip->sip_reg_proxy == PJSIP_REGISTER_NONE)
-		vty_out(vty, " sip reg-proxy        : disable%s", VTY_NEWLINE);
+		vty_out(vty, " sip reg-proxy                : disable%s", VTY_NEWLINE);
 	else if (sip->sip_reg_proxy == PJSIP_REGISTER_NO_PROXY)
-		vty_out(vty, " sip reg-proxy        : none%s", VTY_NEWLINE);
+		vty_out(vty, " sip reg-proxy                : none%s", VTY_NEWLINE);
 	else if (sip->sip_reg_proxy == PJSIP_REGISTER_OUTBOUND_PROXY)
-		vty_out(vty, " sip reg-proxy        : outbound%s", VTY_NEWLINE);
+		vty_out(vty, " sip reg-proxy                : outbound%s", VTY_NEWLINE);
 	else if (sip->sip_reg_proxy == PJSIP_REGISTER_ACC_ONLY)
-		vty_out(vty, " sip reg-proxy        : acc%s", VTY_NEWLINE);
+		vty_out(vty, " sip reg-proxy                : acc%s", VTY_NEWLINE);
 	else if (sip->sip_reg_proxy == PJSIP_REGISTER_ALL)
-		vty_out(vty, " sip reg-proxy        : all%s", VTY_NEWLINE);
+		vty_out(vty, " sip reg-proxy                : all%s", VTY_NEWLINE);
 
 	if(sip->proto == PJSIP_PROTO_UDP)
-		vty_out(vty, " sip transport        : udp%s", VTY_NEWLINE);
+		vty_out(vty, " sip transport                : udp%s", VTY_NEWLINE);
 	else if(sip->proto == PJSIP_PROTO_TCP)
-		vty_out(vty, " sip transport        : tcp%s", VTY_NEWLINE);
+		vty_out(vty, " sip transport                : tcp%s", VTY_NEWLINE);
 	else if(sip->proto == PJSIP_PROTO_TLS)
-		vty_out(vty, " sip transport        : tls%s", VTY_NEWLINE);
+		vty_out(vty, " sip transport                : tls%s", VTY_NEWLINE);
 	else if(sip->proto == PJSIP_PROTO_DTLS)
-		vty_out(vty, " sip transport        : dtls%s", VTY_NEWLINE);
+		vty_out(vty, " sip transport                : dtls%s", VTY_NEWLINE);
 
 	if(sip->dtmf == PJSIP_DTMF_INFO)
-		vty_out(vty, " sip dtmf-type        : sip-info%s", VTY_NEWLINE);
+		vty_out(vty, " sip dtmf-type                : sip-info%s", VTY_NEWLINE);
 	else if(sip->dtmf == PJSIP_DTMF_RFC2833)
-		vty_out(vty, " sip dtmf-type        : rfc2833%s", VTY_NEWLINE);
+		vty_out(vty, " sip dtmf-type                : rfc2833%s", VTY_NEWLINE);
 	else if(sip->dtmf == PJSIP_DTMF_INBAND)
-		vty_out(vty, " sip dtmf-type        : inband%s", VTY_NEWLINE);
+		vty_out(vty, " sip dtmf-type                : inband%s", VTY_NEWLINE);
 
 	memset(buftmp, 0, sizeof(buftmp));
 	for(i = 0; i < PJSIP_CODEC_MAX; i++)
@@ -3926,8 +3998,8 @@ static int pl_pjsip_account_options_show(pl_pjsip_t *sip, struct vty *vty, BOOL 
 			strcat(buftmp, pl_pjsip->codec[i].payload_name);
 			strcat(buftmp, " ");
 		}
-		vty_out(vty, " sip codec            : %s%s", strlwr(buftmp), VTY_NEWLINE);
 	}
+	vty_out(vty, " sip codec                    : %s%s", strlwr(buftmp), VTY_NEWLINE);
 	memset(buftmp, 0, sizeof(buftmp));
 	for(i = 0; i < PJSIP_CODEC_MAX; i++)
 	{
@@ -3936,52 +4008,51 @@ static int pl_pjsip_account_options_show(pl_pjsip_t *sip, struct vty *vty, BOOL 
 			strcat(buftmp, pl_pjsip->dicodec[i].payload_name);
 			strcat(buftmp, " ");
 		}
-		vty_out(vty, " sip discodec         : %s%s", buftmp, VTY_NEWLINE);
 	}
-
+	vty_out(vty, " sip discodec                 : %s%s", buftmp, VTY_NEWLINE);
 	//vty_out(vty, " sip time-sync        : %s%s", sip->sip_time_sync ? "TRUE":"FALSE",VTY_NEWLINE);
 	//vty_out(vty, " sip ring             : %d%s", sip->sip_ring ,VTY_NEWLINE);
 
-	vty_out(vty, " sip expires          : %d%s", sip->sip_expires, VTY_NEWLINE);
-	vty_out(vty, " sip publish          : %s%s", sip->sip_publish? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip mwi              : %s%s", sip->sip_mwi? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip rel-100          : %s%s", sip->sip_100_rel ? "TRUE":"FALSE", VTY_NEWLINE);
-	vty_out(vty, " sip ims              : %s%s", sip->sip_ims_enable? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip rereg-delay      : %d%s", sip->sip_rereg_delay, VTY_NEWLINE);
-	vty_out(vty, " sip realm            : %s%s", strlen(sip->sip_realm)? sip->sip_realm:" ", VTY_NEWLINE);
+	vty_out(vty, " sip expires                  : %d%s", sip->sip_expires, VTY_NEWLINE);
+	vty_out(vty, " sip publish                  : %s%s", sip->sip_publish? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip mwi                      : %s%s", sip->sip_mwi? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip rel-100                  : %s%s", sip->sip_100_rel ? "TRUE":"FALSE", VTY_NEWLINE);
+	vty_out(vty, " sip ims                      : %s%s", sip->sip_ims_enable? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip rereg-delay              : %d%s", sip->sip_rereg_delay, VTY_NEWLINE);
+	vty_out(vty, " sip realm                    : %s%s", strlen(sip->sip_realm)? sip->sip_realm:" ", VTY_NEWLINE);
 
 	if (sip->sip_srtp_mode == PJSIP_SRTP_DISABLE)
-		vty_out(vty, " sip srtp             : disabled%s", VTY_NEWLINE);
+		vty_out(vty, " sip srtp                     : disabled%s", VTY_NEWLINE);
 	else if (sip->sip_srtp_mode == PJSIP_SRTP_OPTIONAL)
-		vty_out(vty, " sip srtp             : optional%s", VTY_NEWLINE);
+		vty_out(vty, " sip srtp                     : optional%s", VTY_NEWLINE);
 	else if (sip->sip_srtp_mode == PJSIP_SRTP_MANDATORY)
-		vty_out(vty, " sip srtp             : mandatory%s", VTY_NEWLINE);
+		vty_out(vty, " sip srtp                     : mandatory%s", VTY_NEWLINE);
 	else if (sip->sip_srtp_mode == PJSIP_SRTP_OPTIONAL_DUP)
-		vty_out(vty, " sip srtp             : optional-duplicating%s", VTY_NEWLINE);
+		vty_out(vty, " sip srtp                     : optional-duplicating%s", VTY_NEWLINE);
 
 	if (sip->sip_srtp_secure == PJSIP_SRTP_SEC_NO)
-		vty_out(vty, " sip srtp secure      : none%s", VTY_NEWLINE);
+		vty_out(vty, " sip srtp secure              : none%s", VTY_NEWLINE);
 	else if (sip->sip_srtp_secure == PJSIP_SRTP_SEC_TLS)
-		vty_out(vty, " sip srtp secure      : tls%s", VTY_NEWLINE);
+		vty_out(vty, " sip srtp secure              : tls%s", VTY_NEWLINE);
 	else if (sip->sip_srtp_secure == PJSIP_SRTP_SEC_SIPS)
-		vty_out(vty, " sip srtp secure      : sips%s", VTY_NEWLINE);
+		vty_out(vty, " sip srtp secure              : sips%s", VTY_NEWLINE);
 
 	if (sip->sip_timer == PJSIP_SRTP_SEC_NO)
-		vty_out(vty, " sip session-timers   : inactive%s", VTY_NEWLINE);
+		vty_out(vty, " sip session-timers           : inactive%s", VTY_NEWLINE);
 	else if (sip->sip_timer == PJSIP_SRTP_SEC_TLS)
-		vty_out(vty, " sip session-timers   : optional%s", VTY_NEWLINE);
+		vty_out(vty, " sip session-timers           : optional%s", VTY_NEWLINE);
 	else if (sip->sip_timer == PJSIP_SRTP_SEC_SIPS)
-		vty_out(vty, " sip session-timers   : mandatory%s", VTY_NEWLINE);
+		vty_out(vty, " sip session-timers           : mandatory%s", VTY_NEWLINE);
 	else if (sip->sip_timer == PJSIP_TIMER_ALWAYS)
-		vty_out(vty, " sip session-timers   : always%s", VTY_NEWLINE);
+		vty_out(vty, " sip session-timers           : always%s", VTY_NEWLINE);
 
 	vty_out(vty, " sip session-timers expiration-period: %d%s",
 				sip->sip_timer_sec, VTY_NEWLINE);
 
-	vty_out(vty, " sip outbound reg-id  : %d%s", sip->sip_outb_rid,VTY_NEWLINE);
+	vty_out(vty, " sip outbound reg-id          : %d%s", sip->sip_outb_rid,VTY_NEWLINE);
 
-	vty_out(vty, " sip auto update nat  : %s%s", sip->sip_auto_update_nat? "TRUE":"FALSE", VTY_NEWLINE);
-	vty_out(vty, " sip stun             : %s%s", sip->sip_stun_disable? "TRUE":"FALSE", VTY_NEWLINE); //Disable STUN for this account
+	vty_out(vty, " sip auto update nat          : %s%s", sip->sip_auto_update_nat? "TRUE":"FALSE", VTY_NEWLINE);
+	vty_out(vty, " sip stun                     : %s%s", sip->sip_stun_disable? "TRUE":"FALSE", VTY_NEWLINE); //Disable STUN for this account
 	return OK;
 }
 
@@ -3991,16 +4062,16 @@ static int pl_pjsip_transport_options_show(pl_pjsip_t *sip, struct vty *vty, BOO
 	zassert(vty != NULL);
 	//Transport Options:
 	//vty_out(vty, " sip expires          : %d%s", sip->sip_expires, VTY_NEWLINE);
-	vty_out(vty, " sip ipv6             : %s%s", sip->sip_ipv6_enable? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip tagging-qos      : %s%s", sip->sip_set_qos? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip transport udp    : %s%s", sip->sip_noudp? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip transport tcp    : %s%s", sip->sip_notcp? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip nameserver       : %s%s", (sip->sip_nameserver.sip_address), VTY_NEWLINE);
-	vty_out(vty, " sip nameserver port  : %d%s", (sip->sip_nameserver.sip_port), VTY_NEWLINE);
-	vty_out(vty, " sip outbound         : %s%s", (sip->sip_outbound.sip_address), VTY_NEWLINE);
-	vty_out(vty, " sip outbound port    : %d%s", (sip->sip_outbound.sip_port), VTY_NEWLINE);
-	vty_out(vty, " sip stun-server      : %s%s", (sip->sip_stun_server.sip_address), VTY_NEWLINE);
-	vty_out(vty, " sip stun-server port : %d%s", (sip->sip_stun_server.sip_port), VTY_NEWLINE);
+	vty_out(vty, " sip ipv6                     : %s%s", sip->sip_ipv6_enable? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip tagging-qos              : %s%s", sip->sip_set_qos? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip transport udp            : %s%s", sip->sip_noudp? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip transport tcp            : %s%s", sip->sip_notcp? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip nameserver               : %s%s", (sip->sip_nameserver.sip_address), VTY_NEWLINE);
+	vty_out(vty, " sip nameserver port          : %d%s", (sip->sip_nameserver.sip_port), VTY_NEWLINE);
+	vty_out(vty, " sip outbound                 : %s%s", (sip->sip_outbound.sip_address), VTY_NEWLINE);
+	vty_out(vty, " sip outbound port            : %d%s", (sip->sip_outbound.sip_port), VTY_NEWLINE);
+	vty_out(vty, " sip stun-server              : %s%s", (sip->sip_stun_server.sip_address), VTY_NEWLINE);
+	vty_out(vty, " sip stun-server port         : %d%s", (sip->sip_stun_server.sip_port), VTY_NEWLINE);
 	return OK;
 }
 
@@ -4009,17 +4080,17 @@ static int pl_pjsip_tls_options_show(pl_pjsip_t *sip, struct vty *vty, BOOL deta
 	zassert(sip != NULL);
 	zassert(vty != NULL);
 	//TLS Options:
-	vty_out(vty, " sip tls              : %s%s", sip->sip_tls_enable? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip tls-ca-file      : %s%s", sip->sip_tls_ca_file, VTY_NEWLINE);
-	vty_out(vty, " sip tls-cert-file    : %s%s", sip->sip_tls_cert_file, VTY_NEWLINE);
-	vty_out(vty, " sip tls-private-file :%s%s", sip->sip_tls_privkey_file, VTY_NEWLINE);
-	vty_out(vty, " sip tls-password     : %s%s", sip->sip_tls_password, VTY_NEWLINE);
-	vty_out(vty, " sip verify-server    : %s%s", (sip->sip_tls_verify_server.sip_address), VTY_NEWLINE);
-	vty_out(vty, " sip verify-server port: %d%s", (sip->sip_tls_verify_server.sip_port), VTY_NEWLINE);
-	vty_out(vty, " sip verify-client    : %s%s", (sip->sip_tls_verify_client.sip_address), VTY_NEWLINE);
-	vty_out(vty, " sip verify-client port: %d%s", (sip->sip_tls_verify_client.sip_port), VTY_NEWLINE);
-	vty_out(vty, " sip tls negotiation timeout: %d%s", sip->sip_neg_timeout, VTY_NEWLINE);
-	vty_out(vty, " sip tls-cipher       : %s%s", sip->sip_tls_cipher, VTY_NEWLINE);
+	vty_out(vty, " sip tls                      : %s%s", sip->sip_tls_enable? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip tls-ca-file              : %s%s", sip->sip_tls_ca_file, VTY_NEWLINE);
+	vty_out(vty, " sip tls-cert-file            : %s%s", sip->sip_tls_cert_file, VTY_NEWLINE);
+	vty_out(vty, " sip tls-private-file         :%s%s", sip->sip_tls_privkey_file, VTY_NEWLINE);
+	vty_out(vty, " sip tls-password             : %s%s", sip->sip_tls_password, VTY_NEWLINE);
+	vty_out(vty, " sip verify-server            : %s%s", (sip->sip_tls_verify_server.sip_address), VTY_NEWLINE);
+	vty_out(vty, " sip verify-server port       : %d%s", (sip->sip_tls_verify_server.sip_port), VTY_NEWLINE);
+	vty_out(vty, " sip verify-client            : %s%s", (sip->sip_tls_verify_client.sip_address), VTY_NEWLINE);
+	vty_out(vty, " sip verify-client port       : %d%s", (sip->sip_tls_verify_client.sip_port), VTY_NEWLINE);
+	vty_out(vty, " sip tls negotiation timeout  : %d%s", sip->sip_neg_timeout, VTY_NEWLINE);
+	vty_out(vty, " sip tls-cipher               : %s%s", sip->sip_tls_cipher, VTY_NEWLINE);
 	return OK;
 }
 
@@ -4031,37 +4102,37 @@ static int pl_pjsip_audio_options_show(pl_pjsip_t *sip, struct vty *vty, BOOL de
 /*	char				sip_codec[PJSIP_DATA_MAX];
 	char				sip_discodec[PJSIP_DATA_MAX];*/
 	//vty_out(vty, " sip tls              : %s%s", sip->sip_tls_enable? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip clock-rate       : %d%s", sip->sip_clock_rate, VTY_NEWLINE);
-	vty_out(vty, " sip snd-clock-rate   : %d%s", sip->sip_snd_clock_rate, VTY_NEWLINE);
-	vty_out(vty, " sip stereo           : %s%s", sip->sip_stereo? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip audio-null       : %s%s", sip->sip_audio_null? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip clock-rate               : %d%s", sip->sip_clock_rate, VTY_NEWLINE);
+	vty_out(vty, " sip snd-clock-rate           : %d%s", sip->sip_snd_clock_rate, VTY_NEWLINE);
+	vty_out(vty, " sip stereo                   : %s%s", sip->sip_stereo? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip audio-null               : %s%s", sip->sip_audio_null? "TRUE":"FALSE",VTY_NEWLINE);
 
-	vty_out(vty, " sip play-file        : %s%s", sip->sip_play_file, VTY_NEWLINE);
-	vty_out(vty, " sip play-tones       : %s%s", sip->sip_play_tone, VTY_NEWLINE);
-	vty_out(vty, " sip auto-play        : %s%s", sip->sip_auto_play? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip auto-loop        : %s%s", sip->sip_auto_loop? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip auto-confured    : %s%s", sip->sip_auto_conf? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip vad-silence      : %s%s", sip->sip_no_vad? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip rec-file         : %s%s", sip->sip_rec_file, VTY_NEWLINE);
-	vty_out(vty, " sip media-quality    : %d%s", sip->sip_quality, VTY_NEWLINE);
-	vty_out(vty, " sip codec-ptime      : %d%s", sip->sip_ptime, VTY_NEWLINE);
-	vty_out(vty, " sip echo canceller tail: %d%s", sip->sip_echo_tail, VTY_NEWLINE);
+	vty_out(vty, " sip play-file                : %s%s", sip->sip_play_file, VTY_NEWLINE);
+	vty_out(vty, " sip play-tones               : %s%s", sip->sip_play_tone, VTY_NEWLINE);
+	vty_out(vty, " sip auto-play                : %s%s", sip->sip_auto_play? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip auto-loop                : %s%s", sip->sip_auto_loop? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip auto-confured            : %s%s", sip->sip_auto_conf? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip vad-silence              : %s%s", sip->sip_no_vad? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip rec-file                 : %s%s", sip->sip_rec_file, VTY_NEWLINE);
+	vty_out(vty, " sip media-quality            : %d%s", sip->sip_quality, VTY_NEWLINE);
+	vty_out(vty, " sip codec-ptime              : %d%s", sip->sip_ptime, VTY_NEWLINE);
+	vty_out(vty, " sip echo canceller tail      : %d%s", sip->sip_echo_tail, VTY_NEWLINE);
 
 	if(sip->sip_echo_mode == PJSIP_ECHO_DEFAULT)
-		vty_out(vty, " sip echo mode        : default%s", VTY_NEWLINE);
+		vty_out(vty, " sip echo mode                : default%s", VTY_NEWLINE);
 	else if(sip->sip_echo_mode == PJSIP_ECHO_SPEEX)
-		vty_out(vty, " sip echo mode        : speex%s", VTY_NEWLINE);
+		vty_out(vty, " sip echo mode                : speex%s", VTY_NEWLINE);
 	else if(sip->sip_echo_mode == PJSIP_ECHO_SUPPRESSER)
-		vty_out(vty, " sip echo mode        : suppressor%s", VTY_NEWLINE);
+		vty_out(vty, " sip echo mode                : suppressor%s", VTY_NEWLINE);
 	else if(sip->sip_echo_mode == PJSIP_ECHO_WEBRTXC)
-		vty_out(vty, " sip echo mode        : webrtc%s", VTY_NEWLINE);
+		vty_out(vty, " sip echo mode                : webrtc%s", VTY_NEWLINE);
 
-	vty_out(vty, " sip ilbc fps         : %d%s", sip->sip_ilbc_mode, VTY_NEWLINE);
-	vty_out(vty, " sip capture latency  : %d%s", sip->sip_capture_lat, VTY_NEWLINE);
-	vty_out(vty, " sip playback latency : %d%s", sip->sip_playback_lat, VTY_NEWLINE);
-	vty_out(vty, " sip auto-close delay : %d%s", sip->sip_snd_auto_close, VTY_NEWLINE);
-	vty_out(vty, " sip jitter max-size  : %d%s", sip->sip_jb_max_size, VTY_NEWLINE);//Specify jitter buffer maximum size, in frames (default=-1)");
-	vty_out(vty, " sip audible tones    : %s%s", sip->sip_notones? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip ilbc fps                 : %d%s", sip->sip_ilbc_mode, VTY_NEWLINE);
+	vty_out(vty, " sip capture latency          : %d%s", sip->sip_capture_lat, VTY_NEWLINE);
+	vty_out(vty, " sip playback latency         : %d%s", sip->sip_playback_lat, VTY_NEWLINE);
+	vty_out(vty, " sip auto-close delay         : %d%s", sip->sip_snd_auto_close, VTY_NEWLINE);
+	vty_out(vty, " sip jitter max-size          : %d%s", sip->sip_jb_max_size, VTY_NEWLINE);//Specify jitter buffer maximum size, in frames (default=-1)");
+	vty_out(vty, " sip audible tones            : %s%s", sip->sip_notones? "TRUE":"FALSE",VTY_NEWLINE);
 
 	return OK;
 }
@@ -4072,9 +4143,9 @@ static int pl_pjsip_video_options_show(pl_pjsip_t *sip, struct vty *vty, BOOL de
 	zassert(sip != NULL);
 	zassert(vty != NULL);
 	//Video Options:
-	vty_out(vty, " sip video            : %s%s", sip->sip_video? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip video play-file  : %s%s", sip->sip_play_avi, VTY_NEWLINE);
-	vty_out(vty, " sip video auto-play  : %s%s", sip->sip_auto_play_avi? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip video                    : %s%s", sip->sip_video? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip video play-file          : %s%s", sip->sip_play_avi, VTY_NEWLINE);
+	vty_out(vty, " sip video auto-play          : %s%s", sip->sip_auto_play_avi? "TRUE":"FALSE",VTY_NEWLINE);
 #endif
 	return OK;
 }
@@ -4086,27 +4157,27 @@ static int pl_pjsip_media_transport_options_show(pl_pjsip_t *sip, struct vty *vt
 	zassert(vty != NULL);
 	//Media Transport Options:
 
-	vty_out(vty, " sip ice              : %s%s", sip->sip_ice? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip ice regular      : %d%s", sip->sip_ice_regular, VTY_NEWLINE);
-	vty_out(vty, " sip ice max-host     : %d%s", sip->sip_ice_max_host, VTY_NEWLINE);
-	vty_out(vty, " sip ice notcp        : %s%s", sip->sip_ice_nortcp? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip ice                      : %s%s", sip->sip_ice? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip ice regular              : %d%s", sip->sip_ice_regular, VTY_NEWLINE);
+	vty_out(vty, " sip ice max-host             : %d%s", sip->sip_ice_max_host, VTY_NEWLINE);
+	vty_out(vty, " sip ice notcp                : %s%s", sip->sip_ice_nortcp? "TRUE":"FALSE",VTY_NEWLINE);
 
-	vty_out(vty, " sip rtp port         : %d%s", sip->sip_rtp_port, VTY_NEWLINE);
-	vty_out(vty, " sip drop rx-rtp      : %d%s", sip->sip_rx_drop_pct, VTY_NEWLINE);
-	vty_out(vty, " sip drop tx-rtp      : %d%s", sip->sip_rx_drop_pct, VTY_NEWLINE);
-	vty_out(vty, " sip turn             : %s%s", sip->sip_turn? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip turn-server      : %s%s", (sip->sip_turn_srv.sip_address), VTY_NEWLINE);
-	vty_out(vty, " sip turn-server port : %d%s", (sip->sip_turn_srv.sip_port), VTY_NEWLINE);
-	vty_out(vty, " sip turn-tcp         : %s%s", sip->sip_turn_tcp? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip rtp port                 : %d%s", sip->sip_rtp_port, VTY_NEWLINE);
+	vty_out(vty, " sip drop rx-rtp              : %d%s", sip->sip_rx_drop_pct, VTY_NEWLINE);
+	vty_out(vty, " sip drop tx-rtp              : %d%s", sip->sip_rx_drop_pct, VTY_NEWLINE);
+	vty_out(vty, " sip turn                     : %s%s", sip->sip_turn? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip turn-server              : %s%s", (sip->sip_turn_srv.sip_address), VTY_NEWLINE);
+	vty_out(vty, " sip turn-server port         : %d%s", (sip->sip_turn_srv.sip_port), VTY_NEWLINE);
+	vty_out(vty, " sip turn-tcp                 : %s%s", sip->sip_turn_tcp? "TRUE":"FALSE",VTY_NEWLINE);
 
-	vty_out(vty, " sip turn username    : %s%s", sip->sip_turn_user, VTY_NEWLINE);
-	vty_out(vty, " sip turn password    : %s%s", sip->sip_turn_password, VTY_NEWLINE);
-	vty_out(vty, " sip rtp-multiplexing : %s%s", sip->sip_rtcp_mux? "TRUE":"FALSE", VTY_NEWLINE);
+	vty_out(vty, " sip turn username            : %s%s", sip->sip_turn_user, VTY_NEWLINE);
+	vty_out(vty, " sip turn password            : %s%s", sip->sip_turn_password, VTY_NEWLINE);
+	vty_out(vty, " sip rtp-multiplexing         : %s%s", sip->sip_rtcp_mux? "TRUE":"FALSE", VTY_NEWLINE);
 
 	if(sip->sip_srtp_keying == PJSIP_SRTP_KEYING_SDES)
-		vty_out(vty, " sip srtp keying      : sdes%s", VTY_NEWLINE);
+		vty_out(vty, " sip srtp keying              : sdes%s", VTY_NEWLINE);
 	else if(sip->sip_srtp_keying == PJSIP_SRTP_KEYING_DTLS)
-		vty_out(vty, " sip srtp keying      : dtls%s", VTY_NEWLINE);
+		vty_out(vty, " sip srtp keying              : dtls%s", VTY_NEWLINE);
 	return OK;
 }
 
@@ -4117,24 +4188,24 @@ static int pl_pjsip_user_agent_options_show(pl_pjsip_t *sip, struct vty *vty, BO
 	//Buddy List (can be more than one):
 	//void				*buddy_list;
 	//User Agent options:
-	vty_out(vty, " sip auto-answer-code : %d%s", sip->sip_auto_answer_code, VTY_NEWLINE);
-	vty_out(vty, " sip max calls        : %d%s", sip->sip_max_calls, VTY_NEWLINE);
-	vty_out(vty, " sip max threads      : %d%s", sip->sip_thread_max, VTY_NEWLINE);
+	vty_out(vty, " sip auto-answer-code         : %d%s", sip->sip_auto_answer_code, VTY_NEWLINE);
+	vty_out(vty, " sip max calls                : %d%s", sip->sip_max_calls, VTY_NEWLINE);
+	vty_out(vty, " sip max threads              : %d%s", sip->sip_thread_max, VTY_NEWLINE);
 	if(sip->sip_duration == PJSUA_APP_NO_LIMIT_DURATION)
-		vty_out(vty, " sip max call duration: no-limit%s", VTY_NEWLINE);
+		vty_out(vty, " sip max call duration        : no-limit%s", VTY_NEWLINE);
 	else
-		vty_out(vty, " sip max call duration: %d%s", sip->sip_duration, VTY_NEWLINE);
-	vty_out(vty, " sip refer subscription: %s%s", sip->sip_norefersub? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip message min-size : %d%s", sip->sip_use_compact_form, VTY_NEWLINE);
-	vty_out(vty, " sip force-lr         : %s%s", sip->sip_no_force_lr? "TRUE":"FALSE",VTY_NEWLINE);
+		vty_out(vty, " sip max call duration        : %d%s", sip->sip_duration, VTY_NEWLINE);
+	vty_out(vty, " sip refer subscription       : %s%s", sip->sip_norefersub? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip message min-size         : %d%s", sip->sip_use_compact_form, VTY_NEWLINE);
+	vty_out(vty, " sip force-lr                 : %s%s", sip->sip_no_force_lr? "TRUE":"FALSE",VTY_NEWLINE);
 	if(sip->sip_accept_redirect == PJSIP_ACCEPT_REDIRECT_REJECT)
-		vty_out(vty, " sip redirect method  : redirect%s", VTY_NEWLINE);
+		vty_out(vty, " sip redirect method          : redirect%s", VTY_NEWLINE);
 	else if(sip->sip_accept_redirect == PJSIP_ACCEPT_REDIRECT_FOLLOW)
-		vty_out(vty, " sip redirect method  : follow%s", VTY_NEWLINE);
+		vty_out(vty, " sip redirect method          : follow%s", VTY_NEWLINE);
 	else if(sip->sip_accept_redirect == PJSIP_ACCEPT_REDIRECT_FOLLOW_REPLACE)
-		vty_out(vty, " sip redirect method  : follow-replace%s", VTY_NEWLINE);
+		vty_out(vty, " sip redirect method          : follow-replace%s", VTY_NEWLINE);
 	else if(sip->sip_accept_redirect == PJSIP_ACCEPT_REDIRECT_ASK)
-		vty_out(vty, " sip redirect method  : ask%s", VTY_NEWLINE);
+		vty_out(vty, " sip redirect method          : ask%s", VTY_NEWLINE);
 	return OK;
 }
 /***************************************************************************/

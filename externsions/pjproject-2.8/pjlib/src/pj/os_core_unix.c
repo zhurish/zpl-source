@@ -838,7 +838,7 @@ PJ_DEF(pj_status_t) pj_thread_join(pj_thread_t *p)
     if (p == pj_thread_this())
 	return PJ_ECANCELLED;
 
-	if (pj_task_cb.pj_task_del_cb)
+	if (pj_task_cb.pj_task_del_cb && rec->thread)
 		(pj_task_cb.pj_task_del_cb)(rec->thread);
 
     PJ_LOG(6, (pj_thread_this()->obj_name, "Joining thread %s", p->obj_name));
@@ -867,7 +867,7 @@ PJ_DEF(pj_status_t) pj_thread_destroy(pj_thread_t *p)
 {
     PJ_CHECK_STACK();
 
-	if (p && pj_task_cb.pj_task_del_cb)
+	if (p && pj_task_cb.pj_task_del_cb && p->thread)
 		(pj_task_cb.pj_task_del_cb)(p->thread);
 
     /* Destroy mutex used to suspend thread */

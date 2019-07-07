@@ -84,5 +84,8 @@ char*  hex2bin(char *dst, const char *str, int count);
 
 
 int udhcp_interface_mac(int ifindex, uint32_t *nip, uint8_t *mac);
+int dhcp_client_lease_set(void *ifter);
+int dhcp_client_lease_unset(void *ifter);
+void udhcp_run_script(void *p, const char *name);
 
 #endif /* __UDHCP_UTIL_H__ */

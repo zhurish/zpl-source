@@ -1247,17 +1247,25 @@ config_write_host (struct vty *vty)
 		if(zlog_default->log_buffer.max_size != ZLOG_BUFF_SIZE)
 			vty_out(vty, "log buffer size %d%s", zlog_default->log_buffer.max_size, VTY_NEWLINE);
 	}
-	if (zlog_default->maxlvl[ZLOG_DEST_SYSLOG] != ZLOG_DISABLED) {
+	if (zlog_default->maxlvl[ZLOG_DEST_SYSLOG] != ZLOG_DISABLED)
+	{
 		vty_out(vty, "log syslog");
 		if (zlog_default->maxlvl[ZLOG_DEST_SYSLOG] != zlog_default->default_lvl[ZLOG_DEST_SYSLOG])
 			vty_out(vty, " %s",
 					zlog_priority_name(zlog_default->maxlvl[ZLOG_DEST_SYSLOG]));
 		vty_out(vty, "%s", VTY_NEWLINE);
-#ifdef SYSLOG_CLIENT
+	}
+#ifdef PL_SYSLOG_MODULE
 		if (syslogc_is_enable()) {
 			int port = 0;
 			char log_host[32];
+			memset(log_host, 0, sizeof(log_host));
 			if (syslogc_host_config_get(log_host, &port, NULL) == 0) {
+				if(syslogc_is_dynamics())
+				{
+					memset(log_host, 0, sizeof(log_host));
+					sprintf(log_host, "dynamics");
+				}
 				if (port == SYSLOGC_DEFAULT_PORT)
 					vty_out(vty, "syslog host %s%s", log_host, VTY_NEWLINE);
 				else
@@ -1270,7 +1278,6 @@ config_write_host (struct vty *vty)
 			}
 		}
 #endif
-	}
 
 	if (zlog_default->facility != LOG_DAEMON)
 		vty_out(vty, "log facility %s%s", zlog_facility_name(zlog_default->facility),

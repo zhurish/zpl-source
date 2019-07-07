@@ -1,4 +1,8 @@
 
+ifeq ($(strip $(MODULE_CLI)),true)
+CLI_ROOT=$(PLBASE)/$(CLIDIR)
+endif
+
 
 ifeq ($(strip $(MODULE_PLATFORM)),true)
 PLATFORM_ROOT=$(PLBASE)/$(PLATFORMDIR)
@@ -15,7 +19,12 @@ PL_INCLUDE += -I$(PLATFORM_ROOT)/nsm
 PL_DEFINE	+= -DPL_NSM_MODULE
 PL_DEFINE	+= -DVTY_STDIO_MODULE
 PL_DEFINE	+= -DVTY_CONSOLE_MODULE
+
+PLCLI_DIR += $(CLI_ROOT)/nsm
+PLCLI_DIR += $(CLI_ROOT)/system
+
 endif #($(strip $(MODULE_PLATFORM)),true)
+
 
 ifeq ($(strip $(MODULE_L2PROTOCOL)),true)
 
@@ -31,20 +40,65 @@ endif #($(strip $(MODULE_L2PROTOCOL)),true)
 
 ifeq ($(strip $(MODULE_SERVICE)),true)
 SERVICE_ROOT=$(PLBASE)/$(SERVICEDIR)
+PLCLI_DIR += $(CLI_ROOT)/service
+
+ifeq ($(strip $(MODULE_SNTPC)),true)
 PLPRODS += $(SERVICE_ROOT)/sntp
-PLPRODS += $(SERVICE_ROOT)/syslog
-
 PL_INCLUDE += -I$(SERVICE_ROOT)/sntp
-PL_INCLUDE += -I$(SERVICE_ROOT)/syslog
+PL_DEFINE += -DPL_SNTPC_MODULE
+endif
 
-PL_DEFINE += -DPL_SERVICE_MODULE -DSYSLOG_CLIENT
+ifeq ($(strip $(MODULE_SNTPS)),true)
+ifneq ($(strip $(MODULE_SNTPC)),true)
+PLPRODS += $(SERVICE_ROOT)/sntp
+PL_INCLUDE += -I$(SERVICE_ROOT)/sntp
+endif
+PL_DEFINE += -DPL_SNTPS_MODULE
+endif
+
+ifeq ($(strip $(MODULE_SYSLOG)),true)
+PLPRODS += $(SERVICE_ROOT)/syslog
+PL_INCLUDE += -I$(SERVICE_ROOT)/syslog
+PL_DEFINE += -DPL_SYSLOG_MODULE
+endif
+#PL_DEFINE += -DPL_SERVICE_MODULE 
 endif #($(strip $(MODULE_SERVICE)),true)
 
 ifeq ($(strip $(MODULE_SYSTOOLS)),true)
 SYSTOOLS_ROOT=$(SERVICE_ROOT)/$(SYSTOOLSDIR)
 PLPRODS += $(SERVICE_ROOT)/$(SYSTOOLSDIR)
 PL_INCLUDE += -I$(SERVICE_ROOT)/$(SYSTOOLSDIR)
-PL_DEFINE += -DPL_SYSTOOLS_MODULE
+ifneq ($(strip $(MODULE_SERVICE)),true)
+PLCLI_DIR += $(CLI_ROOT)/service
+endif
+
+ifeq ($(strip $(MODULE_TFTPC)),true)
+PL_DEFINE += -DPL_TFTPC_MODULE
+endif
+ifeq ($(strip $(MODULE_TFTPD)),true)
+PL_DEFINE += -DPL_TFTPD_MODULE
+endif
+ifeq ($(strip $(MODULE_FTPC)),true)
+PL_DEFINE += -DPL_FTPC_MODULE
+endif
+ifeq ($(strip $(MODULE_FTPD)),true)
+PL_DEFINE += -DPL_FTPD_MODULE
+endif
+ifeq ($(strip $(MODULE_TELNET)),true)
+PL_DEFINE += -DPL_TELNET_MODULE
+endif
+ifeq ($(strip $(MODULE_TELNETD)),true)
+PL_DEFINE += -DPL_TELNETD_MODULE
+endif
+ifeq ($(strip $(MODULE_PING)),true)
+PL_DEFINE += -DPL_PING_MODULE
+endif
+ifeq ($(strip $(MODULE_TRACEROUTE)),true)
+PL_DEFINE += -DPL_TRACEROUTE_MODULE
+endif
+ifeq ($(strip $(MODULE_UBUS)),true)
+PL_DEFINE += -DPL_UBUS_MODULE
+endif
 endif #($(strip $(MODULE_SYSTOOLS)),true)
 
 ifeq ($(strip $(MODULE_STARTUP)),true)
@@ -79,27 +133,29 @@ endif
 ifeq ($(strip $(MODULE_ABSTRACT)),true)
 ABSTRACT_ROOT=$(PLBASE)/$(ABSTRACTDIR)
 
+ifeq ($(strip $(MODULE_PAL_KERNEL)),true)
 PLPRODS += $(ABSTRACT_ROOT)/pal/kernel
 PL_INCLUDE += -I$(ABSTRACT_ROOT)/pal/kernel
 PL_DEFINE += -DPL_PAL_MODULE
-ifeq ($(strip $(USE_IPROUTE2)),true)
-PLPRODS += $(ABSTRACT_ROOT)/pal/kernel/iproute
-PL_DEFINE += -DPL_IPROUTE2_MODULE
-endif #($(strip $(USE_IPROUTE2)),true)
+endif
+ifeq ($(strip $(MODULE_PAL_IPCOM)),true)
+ifneq ($(strip $(MODULE_PAL_KERNEL)),true)
+PL_DEFINE += -DPL_PAL_MODULE
+endif
+PLPRODS += $(ABSTRACT_ROOT)/pal/ipstack
+PL_INCLUDE += -I$(ABSTRACT_ROOT)/pal/ipstack
+endif
 
-ifeq ($(strip $(MODULE_BCM53125)),true)
+ifeq ($(strip $(MODULE_HAL)),true)
 PLPRODS += $(ABSTRACT_ROOT)/hal
 PL_INCLUDE += -I$(ABSTRACT_ROOT)/hal
 PL_DEFINE += -DPL_HAL_MODULE
-endif #($(strip $(MODULE_BCM53125)),true)
+endif #($(strip $(MODULE_HAL)),true)
 endif #ifeq ($(strip $(MODULE_ABSTRACT)),true)
-
 
 
 ifeq ($(strip $(MODULE_COMPONENT)),true)
 COMPONENT_ROOT=$(PLBASE)/$(COMPONENTDIR)
-#PLPRODS += $(COMPONENT_ROOT)
-#PL_INCLUDE += -I$(COMPONENT_ROOT)
 endif
 
 
@@ -109,6 +165,9 @@ MODEM_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(MODEMDIR)
 PLPRODS += $(MODEM_ROOT)
 PL_INCLUDE += -I$(MODEM_ROOT)
 PL_DEFINE += -DPL_MODEM_MODULE
+
+PLCLI_DIR += $(CLI_ROOT)/modem
+
 endif
 endif
 
@@ -127,6 +186,8 @@ PL_DEFINE += -DPL_DHCP_MODULE
 PL_DEFINE += -DPL_DHCPC_MODULE
 PL_DEFINE += -DPL_DHCPD_MODULE
 
+PLCLI_DIR += $(CLI_ROOT)/dhcp
+
 endif
 endif
 
@@ -141,6 +202,9 @@ PL_DEFINE += -DPL_UDHCP_MODULE
 PL_DEFINE += -DPL_DHCP_MODULE
 PL_DEFINE += -DPL_DHCPC_MODULE
 PL_DEFINE += -DPL_DHCPD_MODULE
+
+PLCLI_DIR += $(CLI_ROOT)/dhcp
+
 endif
 endif
 
@@ -253,6 +317,8 @@ EXTRA_DEFINE += -DVOIP_CARDS_DEBUG
 
 PLOS_LDLIBS += -lresolv -lasound -lutil -lssl -lcrypto -lz
 
+PLCLI_DIR += $(CLI_ROOT)/voip
+
 endif #($(strip $(MODULE_OSIP)),true)
 
 
@@ -285,10 +351,14 @@ export PJMEDIA_GSM_ENABLE = true
 export PJMEDIA_SPEEX_ENABLE = true
 export PJMEDIA_ILBC_ENABLE = true
 export PJMEDIA_G722_ENABLE = true
+export PJMEDIA_WEBRTC_ENABLE = true
+
+export PJMEDIA_AUDIO_ALSA = true
+export PJMEDIA_AUDIO_PORTAUDIO = false
 
 PL_LDLIBS += -lpj -lpjlib-util -lpjsip 
 			 
-PL_LDLIBS += -luuid -lasound
+PLOS_LDLIBS += -luuid -lasound
 	
 ifeq ($(PJSHARE_ENABLE),true)			 
 ifeq ($(PJMEDIA_ENABLE),true)
@@ -333,7 +403,19 @@ endif
 ifeq ($(PJMEDIA_G722_ENABLE),true)
 PL_LDLIBS += -lg7221codec
 endif
+ifeq ($(PJMEDIA_WEBRTC_ENABLE),true)
+PL_LDLIBS += -lwebrtc
 endif
+endif
+
+ifeq ($(PJMEDIA_AUDIO_PORTAUDIO),true)
+PLOS_LDLIBS += -lportaudio
+endif
+
+#./configure  --prefix=/home/zhurish/workspace/home-work/pjproject-2.8-x86/_install
+# --enable-epoll --enable-sound --enable-video --enable-speex-aec --enable-g711-codec
+# --enable-l16-codec --enable-gsm-codec --enable-g722-codec --enable-g7221-codec 
+#--enable-speex-codec --enable-ilbc-codec --enable-v4l2 --disable-ipp --enable-libwebrtc
 #PL_LDFLAGS += -L$(PLBASE)/externsions/pjproject-2.8/_install/lib 
 #PL_LDFLAGS += -L$(PLBASE)/externsions/pjproject-2.8/third_party/lib 
 #PL_LDLIBS += -lpj -lpjlib-util -lpjmedia -lpjmedia-audiodev -lpjmedia-codec\
@@ -341,6 +423,9 @@ endif
 			 -lpjsua -lsrtp -lgsmcodec -lspeex -lilbccodec -lg7221codec 
 			 
 #PL_LDLIBS += -luuid -lasound
+
+PLCLI_DIR += $(CLI_ROOT)/voip
+
 endif #($(strip $(MODULE_COMPONENT)),true)
 endif #($(strip $(MODULE_PJSIP)),true)
 
@@ -354,48 +439,10 @@ PL_INCLUDE += -I$(APP_ROOT)
 PL_DEFINE += -DPL_APP_MODULE
 PLM_DEFINE += -DAPP_X5BA_MODULE 
 PL_DEBUG = -DX5_B_A_DEBUG
-
+PLCLI_DIR += $(CLI_ROOT)/app
 endif
 
 
 ifeq ($(strip $(MODULE_CLI)),true)
-CLI_ROOT=$(PLBASE)/$(CLIDIR)
-PLPRODS += $(CLI_ROOT)/nsm
-PLPRODS += $(CLI_ROOT)/service
-PLPRODS += $(CLI_ROOT)/system
-
-PL_INCLUDE += -I$(CLI_ROOT)/nsm
-PL_INCLUDE += -I$(CLI_ROOT)/service
-PL_INCLUDE += -I$(CLI_ROOT)/system
-
-ifeq ($(strip $(MODULE_MODEM)),true)
-PLPRODS += $(CLI_ROOT)/modem
-PL_INCLUDE += -I$(CLI_ROOT)/modem
-endif
-ifeq ($(strip $(MODULE_DHCP)),true)
-PLPRODS += $(CLI_ROOT)/dhcp
-PL_INCLUDE += -I$(CLI_ROOT)/dhcp
-endif
-
-ifeq ($(strip $(MODULE_UDHCP)),true)
-PLPRODS += $(CLI_ROOT)/dhcp
-PL_INCLUDE += -I$(CLI_ROOT)/dhcp
-endif
-
-ifeq ($(strip $(MODULE_PJSIP)),true)
-PLPRODS += $(CLI_ROOT)/voip
-PL_INCLUDE += -I$(CLI_ROOT)/voip
-endif
-
-ifeq ($(strip $(MODULE_OSIP)),true)
-ifneq ($(strip $(MODULE_PJSIP)),true)
-PLPRODS += $(CLI_ROOT)/voip
-PL_INCLUDE += -I$(CLI_ROOT)/voip
-endif
-endif
-
-ifeq ($(strip $(MODULE_APP)),true)
-PLPRODS += $(CLI_ROOT)/app
-PL_INCLUDE += -I$(CLI_ROOT)/app
-endif
+PLPRODS += $(PLCLI_DIR)
 endif

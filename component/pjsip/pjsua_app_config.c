@@ -1820,14 +1820,15 @@ int pl_pjsip_proxy(pjsua_app_config *cfg, char * lval)
 		return ERROR;
 	}
 	//cur_acc->proxy[cur_acc->proxy_cnt++] = pj_str(pj_optarg);
-	if (cur_acc->proxy[cur_acc->proxy_cnt++].slen)
+	if (cur_acc->proxy[cur_acc->proxy_cnt].slen)
 	{
-		free(cur_acc->proxy[cur_acc->proxy_cnt++].ptr);
-		cur_acc->proxy[cur_acc->proxy_cnt++].ptr = NULL;
-		cur_acc->proxy[cur_acc->proxy_cnt++].slen = 0;
+		free(cur_acc->proxy[cur_acc->proxy_cnt].ptr);
+		cur_acc->proxy[cur_acc->proxy_cnt].ptr = NULL;
+		cur_acc->proxy[cur_acc->proxy_cnt].slen = 0;
 	}
-	cur_acc->proxy[cur_acc->proxy_cnt++].ptr = strdup(lval);
-	cur_acc->proxy[cur_acc->proxy_cnt++].slen = strlen(lval);
+	cur_acc->proxy[cur_acc->proxy_cnt].ptr = strdup(lval);
+	cur_acc->proxy[cur_acc->proxy_cnt].slen = strlen(lval);
+	cur_acc->proxy_cnt++;
 	return OK;
 }
 
@@ -1842,14 +1843,15 @@ int pl_pjsip_outbound_proxy(pjsua_app_config *cfg, char * lval)
 		return ERROR;
 	}
 	//cur_acc->proxy[cur_acc->proxy_cnt++] = pj_str(pj_optarg);
-	if (cfg->cfg.outbound_proxy[cfg->cfg.outbound_proxy_cnt++].slen)
+	if (cfg->cfg.outbound_proxy[cfg->cfg.outbound_proxy_cnt].slen)
 	{
-		free(cfg->cfg.outbound_proxy[cfg->cfg.outbound_proxy_cnt++].ptr);
-		cfg->cfg.outbound_proxy[cfg->cfg.outbound_proxy_cnt++].ptr = NULL;
-		cfg->cfg.outbound_proxy[cfg->cfg.outbound_proxy_cnt++].slen = 0;
+		free(cfg->cfg.outbound_proxy[cfg->cfg.outbound_proxy_cnt].ptr);
+		cfg->cfg.outbound_proxy[cfg->cfg.outbound_proxy_cnt].ptr = NULL;
+		cfg->cfg.outbound_proxy[cfg->cfg.outbound_proxy_cnt].slen = 0;
 	}
-	cfg->cfg.outbound_proxy[cfg->cfg.outbound_proxy_cnt++].ptr = strdup(lval);
-	cfg->cfg.outbound_proxy[cfg->cfg.outbound_proxy_cnt++].slen = strlen(lval);
+	cfg->cfg.outbound_proxy[cfg->cfg.outbound_proxy_cnt].ptr = strdup(lval);
+	cfg->cfg.outbound_proxy[cfg->cfg.outbound_proxy_cnt].slen = strlen(lval);
+	cfg->cfg.outbound_proxy_cnt++;
 	return OK;
 }
 
@@ -2244,7 +2246,6 @@ int pl_pjsip_credential(pjsua_app_config *cfg, int credential)
 int pl_pjsip_nameserver(pjsua_app_config *cfg, char * lval)
 {
 	//pjsua_acc_config *cur_acc;
-	cfg->cfg.nameserver_count++;
 	if (cfg->cfg.nameserver_count > PJ_ARRAY_SIZE(cfg->cfg.nameserver))
 	{
 		PJ_LOG(1, (THIS_FILE, "Error: too many nameservers"));
@@ -2259,6 +2260,7 @@ int pl_pjsip_nameserver(pjsua_app_config *cfg, char * lval)
 	}
 	cfg->cfg.nameserver[cfg->cfg.nameserver_count].ptr = strdup(lval);
 	cfg->cfg.nameserver[cfg->cfg.nameserver_count].slen = strlen(lval);
+	cfg->cfg.nameserver_count++;
 	return OK;
 }
 
@@ -2280,7 +2282,6 @@ int pl_pjsip_stunserver(pjsua_app_config *cfg, char * lval)
 	}
 	cfg->cfg.stun_host.ptr = strdup(lval);
 	cfg->cfg.stun_host.slen = strlen(lval);
-	cfg->cfg.stun_srv_cnt++;
 	if (cfg->cfg.stun_srv[cfg->cfg.stun_srv_cnt].slen)
 	{
 		free(cfg->cfg.stun_srv[cfg->cfg.stun_srv_cnt].ptr);
@@ -2289,6 +2290,7 @@ int pl_pjsip_stunserver(pjsua_app_config *cfg, char * lval)
 	}
 	cfg->cfg.stun_srv[cfg->cfg.stun_srv_cnt].ptr = strdup(lval);
 	cfg->cfg.stun_srv[cfg->cfg.stun_srv_cnt].slen = strlen(lval);
+	cfg->cfg.stun_srv_cnt++;
 	return OK;
 }
 
@@ -2356,7 +2358,6 @@ int pl_pjsip_auto_config(pjsua_app_config *cfg, BOOL enable)
 
 int pl_pjsip_play_file(pjsua_app_config *cfg, char * lval)
 {
-	cfg->wav_count++;
 	if (cfg->wav_files[cfg->wav_count].slen)
 	{
 		free(cfg->wav_files[cfg->wav_count].ptr);
@@ -2365,6 +2366,7 @@ int pl_pjsip_play_file(pjsua_app_config *cfg, char * lval)
 	}
 	cfg->wav_files[cfg->wav_count].ptr = strdup(lval);
 	cfg->wav_files[cfg->wav_count].slen = strlen(lval);
+	cfg->wav_count++;
 	return OK;
 }
 
@@ -2623,18 +2625,23 @@ int pl_pjsip_rtp_port(pjsua_app_config *cfg, int port)
 
 int pl_pjsip_dis_codec(pjsua_app_config *cfg, char *lval)
 {
-	cfg->codec_dis_cnt++;
-	pj_str_clr(&cfg->codec_dis[cfg->codec_dis_cnt]);
+/*	pj_str_clr(&cfg->codec_dis[cfg->codec_dis_cnt]);
 	pj_str_set(&cfg->codec_dis[cfg->codec_dis_cnt], lval);
+	cfg->codec_dis_cnt++;*/
+	cfg->codec_dis[cfg->codec_dis_cnt] = pj_str(lval);
+	cfg->codec_dis_cnt++;
 	//cfg->codec_dis[cfg->codec_dis_cnt++] = inde;
 	return OK;
 }
 
 int pl_pjsip_add_codec(pjsua_app_config *cfg, char *lval)
 {
-	cfg->codec_cnt++;
-	pj_str_clr(&cfg->codec_arg[cfg->codec_cnt]);
+/*	pj_str_clr(&cfg->codec_arg[cfg->codec_cnt]);
 	pj_str_set(&cfg->codec_arg[cfg->codec_cnt], lval);
+	cfg->codec_cnt++;
+*/
+	cfg->codec_arg[cfg->codec_cnt] = pj_str(lval);
+	cfg->codec_cnt++;
 	//cfg->codec_arg[cfg->codec_cnt++] = inde;
 	return OK;
 }
@@ -2964,8 +2971,9 @@ int pl_pjsip_play_avi(pjsua_app_config *cfg, char * lval)
 
 	//cur_acc->vid_rend_dev = cfg->vid.vrender_dev = value;
 
-	pj_str_clr(&cfg->avi[cfg->avi_cnt++].path);
-	pj_str_set(&cfg->avi[cfg->avi_cnt++].path, lval);
+	pj_str_clr(&cfg->avi[cfg->avi_cnt].path);
+	pj_str_set(&cfg->avi[cfg->avi_cnt].path, lval);
+	cfg->avi_cnt++;
 	return OK;
 }
 
@@ -3041,7 +3049,8 @@ void pjsip_default_config()
 	cfg->rec_id = PJSUA_INVALID_ID;
 	cfg->wav_port = PJSUA_INVALID_ID;
 	cfg->rec_port = PJSUA_INVALID_ID;
-	cfg->mic_level = cfg->speaker_level = 1.0;
+	cfg->speaker_level = 1.0;
+	cfg->mic_level = 1.5;
 	cfg->capture_dev = PJSUA_INVALID_ID;
 	cfg->playback_dev = PJSUA_INVALID_ID;
 	cfg->capture_lat = PJMEDIA_SND_DEFAULT_REC_LATENCY;

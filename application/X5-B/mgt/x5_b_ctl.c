@@ -499,7 +499,7 @@ int x5b_app_local_register_info_get(x5b_app_phone_register_ack_t *info)
 		info->proxy_port = htons(pl_pjsip->sip_proxy.sip_port);
 		info->proto = pl_pjsip->proto;
 		info->dtmf		= pl_pjsip->dtmf - 1;
-		info->codec = pl_pjsip->payload;
+		info->codec = pl_pjsip->sip_codec.payload;
 		return OK;
 	}
 #endif

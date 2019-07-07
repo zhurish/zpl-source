@@ -1,3 +1,4 @@
+#include ../../build.mak
 
 ifneq (,1)
 ifeq (0,1)
@@ -75,10 +76,31 @@ endif
 endif
 endif
 
-ifneq (1,1)
+ifeq ($(PJMEDIA_WEBRTC_ENABLE),true)
+ifeq ($(BUILD_TYPE),X86)
+DIRS += webrtc
+WEBRTC_OTHER_CFLAGS = -fexceptions -DWEBRTC_POSIX=1 
+    WEBRTC_SRC = \
+	      modules/audio_processing/aecm/aecm_core_c.o                \
+	      modules/audio_processing/ns/nsx_core_c.o                   \
+	      modules/audio_processing/aec/aec_rdft_sse2.o	         \
+    	      modules/audio_processing/aec/aec_core_sse2.o		 \
+    	      system_wrappers/source/cpu_features.o
+#common_audio/signal_processing/complex_fft.o
+endif
+ifeq ($(BUILD_TYPE),MIPS)
+DIRS += webrtc
+WEBRTC_OTHER_CFLAGS = -fexceptions -DWEBRTC_POSIX=1 
+WEBRTC_SRC = \
+	      modules/audio_processing/aecm/aecm_core_c.o                \
+	      modules/audio_processing/ns/nsx_core_c.o
+endif
+endif
+
+#ifneq (1,1)
 ifeq (0,1)
 # External webrtc
-else
+#else
 DIRS += webrtc
 WEBRTC_OTHER_CFLAGS = -fexceptions -DWEBRTC_POSIX=1 
 ifneq ($(findstring sse2,),)
@@ -88,6 +110,7 @@ ifneq ($(findstring sse2,),)
 	      modules/audio_processing/aecm/aecm_core_c.o	         \
 	      modules/audio_processing/ns/nsx_core_c.o	                 \
 	      system_wrappers/source/cpu_features.o
+	WEBRTC_OTHER_CFLAGS += -DWEBRTC_HAS_SSE2
 else ifneq ($(findstring neon,),)
     WEBRTC_SRC = \
        	      modules/audio_processing/aec/aec_core_neon.o               \
@@ -118,4 +141,4 @@ else # Generic fixed point
 	      common_audio/signal_processing/complex_fft.o
 endif
 endif
-endif
+#endif

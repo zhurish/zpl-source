@@ -8,7 +8,7 @@
 #ifndef __PJSIP_APP_API_H__
 #define __PJSIP_APP_API_H__
 
-#include "pjsua.h"
+#include "pjsua_app_common.h"
 
 #define PJSIP_NUMBER_MAX		32
 #define PJSIP_USERNAME_MAX		32
@@ -16,7 +16,7 @@
 #define PJSIP_ADDRESS_MAX		32
 #define PJSIP_FILE_MAX			64
 #define PJSIP_DATA_MAX			128
-#define PJSIP_CODEC_MAX			PJSUA_MAX_CALLS
+#define PJSIP_CODEC_MAX			PJSUA_APP_CODEC_MAX
 
 
 #define PJSIP_ENABLE_DEFAULT			TRUE
@@ -310,8 +310,6 @@ typedef struct pl_pjsip_s
 
 
 	//Audio Options:
-	char				sip_codec[PJSIP_DATA_MAX];
-	/*	char				sip_discodec[PJSIP_DATA_MAX];*/
 	u_int16				sip_clock_rate;
 	u_int16				sip_snd_clock_rate;
 	BOOL				sip_stereo;
@@ -378,9 +376,12 @@ typedef struct pl_pjsip_s
 												//	2: follow + replace To header (default), 3: ask
 
 	pjsip_dtmf_t			dtmf;
+	/*char				sip_codec[PJSIP_DATA_MAX];
+	char				sip_discodec[PJSIP_DATA_MAX];*/
+	pjsip_codec_t			sip_codec;	//default sip codec
 	pjsip_codec_t			codec[PJSIP_CODEC_MAX];
 	pjsip_codec_t			dicodec[PJSIP_CODEC_MAX];
-	u_int16				payload;
+	//u_int16				payload;
 	//char				payload_name[PJSIP_NUMBER_MAX];
 
 	int (*app_dtmf_cb)(int , int);
@@ -513,6 +514,7 @@ int pl_pjsip_stun_server_set_api(char * address, u_int16 port);
 int pl_pjsip_stun_server_get_api(char * address, u_int16 *port);
 /***************************************************************************/
 //TLS Options:
+#if defined(PJSIP_HAS_TLS_TRANSPORT) && (PJSIP_HAS_TLS_TRANSPORT != 0)
 int pl_pjsip_tls_set_api(BOOL enable);
 int pl_pjsip_tls_get_api(BOOL *enable);
 
@@ -536,14 +538,14 @@ int pl_pjsip_tls_verify_client_get_api(char * address, u_int16 *port);
 
 int pl_pjsip_tls_cipher_set_api(char * cipher);
 int pl_pjsip_tls_cipher_get_api(char * cipher);
-
+#endif
 int pl_pjsip_neg_timeout_set_api(u_int16 sip_neg_timeout);
 int pl_pjsip_neg_timeout_get_api(u_int16 *sip_neg_timeout);
 /***************************************************************************/
 //Audio Options:
 int pl_pjsip_codec_add_api(char * sip_codec);
 int pl_pjsip_codec_del_api(char * sip_codec);
-int pl_pjsip_codec_default_set_api(char * sip_codec);
+int pl_pjsip_codec_default_set_api(char * sip_codec, int indx);
 
 int pl_pjsip_discodec_add_api(char * sip_discodec);
 int pl_pjsip_discodec_del_api(char * sip_discodec);

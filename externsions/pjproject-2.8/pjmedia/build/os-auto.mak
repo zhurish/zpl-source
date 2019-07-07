@@ -48,8 +48,15 @@ export LDFLAGS += $(SDL_LDFLAGS) $(FFMPEG_LDFLAGS) $(V4L2_LDFLAGS) \
 #   - alsa:		Unix ALSA (alsa_dev.c)
 #   - null:	    	Null sound device (nullsound.c)
 #   - external:		Link with no sounddev (app will provide)
+#
+#AC_PJMEDIA_SND=$(PL_PJMEDIA_SND)
 AC_PJMEDIA_SND=alsa
-
+ifeq (&(PJMEDIA_AUDIO_ALSA),true)
+AC_PJMEDIA_SND=alsa
+endif
+ifeq (&(PJMEDIA_AUDIO_PORTAUDIO),true)
+AC_PJMEDIA_SND=portaudio
+endif
 #
 # Codecs
 #
@@ -178,9 +185,10 @@ endif
 #
 # PortAudio
 #
-ifeq (0,1)
+ifneq ($(findstring portaudio,$(AC_PJMEDIA_SND)),)
 # External PA
 export CFLAGS += -DPJMEDIA_AUDIO_DEV_HAS_PORTAUDIO=1 \
+		 -DPJMEDIA_AUDIO_DEV_HAS_ALSA=0 \
 		 -DPJMEDIA_AUDIO_DEV_HAS_WMME=0
 endif
 

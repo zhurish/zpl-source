@@ -18,7 +18,7 @@ extern "C" {
 #endif
 
 //#include "vxWorks.h"
-#ifdef SYSLOG_CLIENT
+#ifdef PL_SYSLOG_MODULE
 /* syslog port */
 
 #define SYSLOGC_DEFAULT_PORT   514
@@ -139,7 +139,7 @@ struct syslog_client
 	int port;
 	struct in_addr address;
 	char  address_string[DFT_HOST_NAME_LEN];
-
+	BOOL		dynamics;
 	char  *hostname;//[DFT_HOST_NAME_LEN];
 	char  *processname;//[DFT_HOST_NAME_LEN];
 
@@ -160,9 +160,13 @@ extern int syslogc_lib_init(void *, char *);
 extern int syslogc_lib_uninit(void);
 extern int syslogc_host_config_set(char *, int, int );
 extern int syslogc_host_config_get(char *, int *, int *);
+
 extern int syslogc_enable(char *);
 extern BOOL syslogc_is_enable(void);
 extern int syslogc_disable(void);
+extern int syslogc_is_dynamics(void);
+extern int syslogc_dynamics_enable(void);
+extern int syslogc_dynamics_disable(void);
 extern int syslogc_mode_set(int );
 extern int syslogc_mode_get(int *);
 extern int syslogc_facility_set(int );

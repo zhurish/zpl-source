@@ -964,4 +964,14 @@ int nsm_dhcps_lease_show(struct vty *vty, struct interface *ifp, char *poolname,
 	return OK;
 #endif
 }
+
+int nsm_dhcps_pool_show(struct vty *vty, BOOL detail)
+{
+#ifdef PL_UDHCP_MODULE
+	return dhcp_pool_show(vty, detail);
+#else
+	return OK;
+#endif
+}
+
 #endif

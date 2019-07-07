@@ -54,7 +54,7 @@ SEE ALSO: clockLib, RFC 1769
 #include "sockunion.h"
 #include "str.h"
 #include "table.h"
-
+#include "eloop.h"
 #include "vty.h"
 
 #include "sntpcLib.h"
@@ -320,7 +320,7 @@ static int sntp_read(struct thread *thread)
 	struct sntp_client *client;
 	client = THREAD_ARG (thread);
 	//sock = THREAD_FD (thread);
-	client->t_read = thread_add_read (sntp_client->master, sntp_read, client, client->sock);
+	client->t_read = eloop_add_read (sntp_client->master, sntp_read, client, client->sock);
 	ret = sntp_socket_read(client);
 	if(ret == OK)
 	{
@@ -355,8 +355,8 @@ static int sntp_time(struct thread *thread)
 {
 	struct sntp_client *client;
 	client = THREAD_ARG (thread);
-	client->t_time = thread_add_timer (sntp_client->master, sntp_time, client, client->sntpc_interval);
-	client->t_write = thread_add_write (sntp_client->master, sntp_write, client, client->sock);
+	client->t_time = eloop_add_timer (sntp_client->master, sntp_time, client, client->sntpc_interval);
+	client->t_write = eloop_add_write (sntp_client->master, sntp_write, client, client->sock);
 	return OK;
 }
 /*******************************************************************************/
@@ -387,10 +387,10 @@ static int sntpcEnable(u_short port, char *ip, int time_interval, int type, int 
 		{
 			if(sntp_client->type != SNTP_PASSIVE)
 			{
-				sntp_client->t_time = thread_add_timer (sntp_client->master, sntp_time, sntp_client, sntp_client->sntpc_interval);
-				sntp_client->t_write = thread_add_write (sntp_client->master, sntp_write, sntp_client, sntp_client->sock);
+				sntp_client->t_time = eloop_add_timer (sntp_client->master, sntp_time, sntp_client, sntp_client->sntpc_interval);
+				sntp_client->t_write = eloop_add_write (sntp_client->master, sntp_write, sntp_client, sntp_client->sock);
 			}
-			sntp_client->t_read = thread_add_read (sntp_client->master, sntp_read, sntp_client, sntp_client->sock);
+			sntp_client->t_read = eloop_add_read (sntp_client->master, sntp_read, sntp_client, sntp_client->sock);
 		}
 		return (OK);
 	}
@@ -403,11 +403,11 @@ static int sntpcDisable(void)
 	{
 		sntp_client->enable = 0;
 		if(sntp_client->t_time)
-			thread_cancel(sntp_client->t_time);
+			eloop_cancel(sntp_client->t_time);
 		if(sntp_client->t_read)
-			thread_cancel(sntp_client->t_read);
+			eloop_cancel(sntp_client->t_read);
 		if(sntp_client->t_write)
-			thread_cancel(sntp_client->t_write);
+			eloop_cancel(sntp_client->t_write);
 		sntp_socket_close(sntp_client);
 		//os_memset(sntp_client, 0, sizeof(struct sntp_client));
 		return (OK);
@@ -436,6 +436,33 @@ int sntpc_server_address(struct in_addr *address)
 		return ERROR;
 	if(address)
 		*address = sntp_client->address;
+	return OK;
+}
+
+int sntpc_is_dynamics(void)
+{
+	if(sntp_client == NULL)
+		return ERROR;
+	return sntp_client->dynamics;
+}
+
+int sntpc_dynamics_enable(void)
+{
+	if(sntp_client == NULL)
+		return ERROR;
+	if(!sntp_client->dynamics)
+		sntp_client->address.s_addr = 0;
+	sntp_client->dynamics = TRUE;
+	return OK;
+}
+
+int sntpc_dynamics_disable(void)
+{
+	if(sntp_client == NULL)
+		return ERROR;
+	if(sntp_client->dynamics)
+		sntp_client->address.s_addr = 0;
+	sntp_client->dynamics = FALSE;
 	return OK;
 }
 
@@ -753,8 +780,9 @@ int vty_show_sntpc_client(struct vty *vty)
 }
 
 #ifndef SNTPC_CLI_ENABLE
-int sntpc_client_set_api(struct vty *vty, int cmd, const char *value)
+static int sntpc_client_set_api_hw(struct vty *vty, int cmd, const char *value, BOOL dynamics)
 {
+
 	int ret = CMD_WARNING;
 	char *argv[2] = {NULL, NULL};
 	int *intValue = (int *)value;
@@ -776,7 +804,12 @@ int sntpc_client_set_api(struct vty *vty, int cmd, const char *value)
 		break;
 	case API_SNTPC_SET_ADDRESS:
 		if(argv[0])
-			sntp_client->address.s_addr = inet_addr(argv[0]);
+		{
+			if(strstr(argv[0], "."))
+				sntp_client->address.s_addr = inet_addr(argv[0]);
+			sntp_client->dynamics = dynamics;
+			ret = CMD_SUCCESS;
+		}
 		else
 			ret = CMD_WARNING;
 		break;
@@ -785,12 +818,14 @@ int sntpc_client_set_api(struct vty *vty, int cmd, const char *value)
 			sntp_client->sntpcPort =  (*intValue);
 		else
 			sntp_client->sntpcPort =  (SNTPC_SERVER_PORT);
+		ret = CMD_SUCCESS;
 		break;
 	case API_SNTPC_SET_INTERVAL:
 		if(intValue && (*intValue))
 			sntp_client->sntpc_interval = (*intValue);
 		else
 			sntp_client->sntpc_interval = LOCAL_UPDATE_GMT;
+		ret = CMD_SUCCESS;
 		break;
 	case API_SNTPC_SET_VERSION:
 		if(argv[0])
@@ -816,7 +851,7 @@ int sntpc_client_set_api(struct vty *vty, int cmd, const char *value)
 			sntp_client->time_debug = 1;
 		else
 			sntp_client->time_debug = 0;
-		ret = OK;
+		ret = CMD_SUCCESS;
 		break;
 	default:
 		break;
@@ -825,11 +860,22 @@ int sntpc_client_set_api(struct vty *vty, int cmd, const char *value)
 		os_mutex_unlock(sntp_client->mutex);
 	return ret;
 }
+int sntpc_client_set_api(struct vty *vty, int cmd, const char *value)
+{
+	return sntpc_client_set_api_hw(vty,  cmd, value,  FALSE);
+}
 
-int sntpc_client_get_api(struct vty *vty, int cmd, const char *value)
+int sntpc_client_dynamics_set_api(struct vty *vty, int cmd, const char *value)
+{
+	return sntpc_client_set_api_hw(vty,  cmd, value,  TRUE);
+}
+
+static int sntpc_client_get_api_hw(struct vty *vty, int cmd, const char *value, BOOL dynamics)
 {
 	int ret = ERROR;
 	int *intValue = (int *)value;
+	if(sntp_client->dynamics != dynamics)
+		return ret;
 	if(sntp_client->mutex)
 		os_mutex_lock(sntp_client->mutex, OS_WAIT_FOREVER);
 	switch(cmd)
@@ -841,7 +887,9 @@ int sntpc_client_get_api(struct vty *vty, int cmd, const char *value)
 		break;
 	case API_SNTPC_SET_ADDRESS:
 		if(intValue)
+		{
 			*intValue = ntohl(sntp_client->address.s_addr);
+		}
 		ret = OK;
 		break;
 	case API_SNTPC_SET_PORT:
@@ -882,6 +930,17 @@ int sntpc_client_get_api(struct vty *vty, int cmd, const char *value)
 		os_mutex_unlock(sntp_client->mutex);
 	return ret;
 }
+
+int sntpc_client_get_api(struct vty *vty, int cmd, const char *value)
+{
+	return sntpc_client_get_api_hw(vty,  cmd, value, FALSE);
+}
+
+int sntpc_client_dynamics_get_api(struct vty *vty, int cmd, const char *value)
+{
+	return sntpc_client_get_api_hw(vty,  cmd, value, TRUE);
+}
+
 #endif
 
 int sntpc_config(struct vty *vty)
@@ -901,11 +960,20 @@ int sntpc_config(struct vty *vty)
 			os_mutex_unlock(sntp_client->mutex);
 		return CMD_SUCCESS;
 	}
-	vty_out(vty, "sntp server %s",inet_ntoa(sntp_client->address));
+	if(sntp_client->dynamics == FALSE)
+	{
+		vty_out(vty, "sntp server %s",inet_ntoa(sntp_client->address));
 
-	if(sntp_client->sntpcPort != SNTPC_SERVER_PORT)
-		vty_out(vty, " port %d", sntp_client->sntpcPort);
+		if(sntp_client->sntpcPort != SNTPC_SERVER_PORT)
+			vty_out(vty, " port %d", sntp_client->sntpcPort);
+	}
+	else
+	{
+		vty_out(vty, "sntp server dynamics");
 
+		if(sntp_client->sntpcPort != SNTPC_SERVER_PORT)
+			vty_out(vty, " port %d", sntp_client->sntpcPort);
+	}
 	if(sntp_client->sntpc_interval != LOCAL_UPDATE_GMT)
 		vty_out(vty, " interval %d", sntp_client->sntpc_interval);
 

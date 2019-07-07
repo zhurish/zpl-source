@@ -84,15 +84,6 @@ endif
 endif
 
 #
-ifeq ($(BUILD_OPENWRT),true)
-include $(MAKE_DIR)/openwrt.mk
-PLOS_DEFINE += -DBUILD_OPENWRT
-else
-include $(MAKE_DIR)/linux.mk
-PLOS_DEFINE += -DBUILD_LINUX
-endif
-#
-#
 ifeq ($(BUILD_DEBUG),NO)
 RELEASEDIR = release
 OBJDIR = $(RELEASEDIR)/obj
@@ -115,8 +106,20 @@ ULIBDIR = $(RELEASEDIR)/usr/lib
 WWWDIR = $(RELEASEDIR)/www
 #ULIBDIR = $(RELEASEDIR)/www/spool
 #ULIBDIR = $(RELEASEDIR)/www/spool/cache
-PLOS_MAP = -Wl,-Map,target-app.map
+#PLOS_MAP = -Wl,-Map,target-app.map
+PLOS_MAP = -Wl,-Map,
 endif
+#
+#
+ifeq ($(BUILD_OPENWRT),true)
+include $(MAKE_DIR)/openwrt.mk
+PLOS_DEFINE += -DBUILD_OPENWRT
+else
+include $(MAKE_DIR)/linux.mk
+PLOS_DEFINE += -DBUILD_LINUX
+endif
+#
+
 #
 PL_LDFLAGS += -L$(BASE_ROOT)/$(LIBDIR) -L$(BASE_ROOT)/$(ULIBDIR)
 #

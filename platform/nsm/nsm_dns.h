@@ -92,6 +92,8 @@ typedef struct Gip_dns_s
 	void			*mutex;
 	char 			domain_name1[IP_DNS_NAME_MAX];
 	char 			domain_name2[IP_DNS_NAME_MAX];
+	BOOL			domain_dynamic1;
+	BOOL			domain_dynamic2;
 	ip_dns_t		*dns1;
 	ip_dns_t		*dns2;
 	ip_dns_t		*dns3;
@@ -133,7 +135,7 @@ extern int nsm_ip_host_callback_api(ip_host_cb cb, void *pVoid);
 
 extern int nsm_dns_domain_name_add_api(char *name, BOOL secondly);
 extern int nsm_dns_domain_name_del_api(BOOL secondly);
-
+extern int nsm_dns_domain_name_dynamic_api(BOOL dynamic, BOOL secondly);
 
 extern int nsm_ip_dns_host_show(struct vty *vty);
 extern int nsm_ip_dns_host_config(struct vty *vty);

@@ -8,17 +8,36 @@
 #include "vty.h"
 #include "eloop.h"
 
-
 #include "systools.h"
-#include "ftpdLib.h"
-#include "ftpLib.h"
-#include "tftpdLib.h"
-#include "tftpLib.h"
-#include "pingLib.h"
-#include "telnetLib.h"
-#include "tracerouteLib.h"
 
+#ifdef PL_TFTPC_MODULE
+#include "tftpLib.h"
+#endif
+#ifdef PL_TFTPD_MODULE
+#include "tftpdLib.h"
+#endif
+#ifdef PL_FTPC_MODULE
+#include "ftpLib.h"
+#endif
+#ifdef PL_FTPD_MODULE
+#include "ftpdLib.h"
+#endif
+#ifdef PL_TELNET_MODULE
+#include "telnetLib.h"
+#endif
+#ifdef PL_TELNETD_MODULE
+#include "telnetLib.h"
+#endif
+#ifdef PL_PING_MODULE
+#include "pingLib.h"
+#endif
+#ifdef PL_TRACEROUTE_MODULE
+#include "tracerouteLib.h"
+#endif
+#ifdef PL_UBUS_MODULE
 #include "uci_ubus.h"
+#endif
+
 
 static struct vty *tftp_vty = NULL;
 
@@ -55,7 +74,7 @@ int systools_printf(const char *format, ...)
 	return len;
 }
 
-
+#ifdef PL_FTPD_MODULE
 const char *ftpd_hostname()
 {
 	return "VxWorks 5.5";
@@ -65,6 +84,7 @@ static int ftpd_loginVerify(char *user, char *pass)
 {
 	return user_authentication(user, pass);
 }
+#endif
 
 static int systools_task(void *argv)
 {
@@ -103,23 +123,46 @@ int systools_module_init ()
 {
 	if(master_eloop[MODULE_UTILS] == NULL)
 		master_eloop[MODULE_UTILS] = eloop_master_module_create(MODULE_UTILS);
-
-	ftpLibInit(5);
-	ftpdInit (master_eloop[MODULE_UTILS], ftpd_loginVerify);
+#ifdef PL_TFTPC_MODULE
+#endif
+#ifdef PL_TFTPD_MODULE
 	tftpdInit(master_eloop[MODULE_UTILS], NULL);
+#endif
+#ifdef PL_FTPC_MODULE
+	ftpLibInit(5);
+#endif
+#ifdef PL_FTPD_MODULE
+	ftpdInit (master_eloop[MODULE_UTILS], ftpd_loginVerify);
+#endif
+#ifdef PL_TELNET_MODULE
+#endif
+#ifdef PL_TELNETD_MODULE
+#endif
+#ifdef PL_PING_MODULE
+#endif
+#ifdef PL_TRACEROUTE_MODULE
+#endif
+#ifdef PL_UBUS_MODULE
 #ifdef PL_OPENWRT_UCI
 	uci_ubus_init(master_eloop[MODULE_UTILS]);
 #endif
+#endif
+
 	return OK;
 }
 
 int systools_module_exit ()
 {
+#ifdef PL_FTPD_MODULE
 	ftpdDisable();
+#endif
+#ifdef PL_TFTPD_MODULE
 	tftpdUnInit();
-
+#endif
+#ifdef PL_UBUS_MODULE
 #ifdef PL_OPENWRT_UCI
 	uci_ubus_exit();
+#endif
 #endif
 	if(master_eloop[MODULE_UTILS])
 		eloop_master_free(master_eloop[MODULE_UTILS]);

@@ -62,6 +62,9 @@ typedef struct client_lease
 	u_int32 	lease_ntp1;
 	u_int32 	lease_ntp2;
 
+	u_int32 	lease_sip1;
+	u_int32 	lease_sip2;
+
 	u_int8 		lease_ttl;
 	u_int16 	lease_mtu;
 
@@ -91,10 +94,11 @@ typedef struct client_interface_s {
 	uint8_t				opt_mask[256];      /* Bitmask of options to send (-O option) */
 	dhcp_option_set_t	options[256];
 
+	uint32_t			instance;
 	void				*master;
 	void				*r_thread;	//read thread
 	void				*t_thread;	//time thread,
-
+	void				*d_thread;	//discover thread,
 	u_int32				first_secs;
 	u_int32				last_secs;
 
@@ -139,8 +143,8 @@ extern client_interface_t * dhcp_client_lookup_interface(dhcp_global_t*config, u
 extern int dhcp_client_add_interface(dhcp_global_t*config, u_int32 ifindex);
 extern int dhcp_client_del_interface(dhcp_global_t*config, u_int32 ifindex);
 extern int dhcp_client_interface_clean(void);
-extern int dhcp_client_interface_option_set(client_interface_t * ifter, uint8_t code, uint8_t *str, int len);
-extern int dhcp_client_interface_request_set(client_interface_t * ifter, uint8_t code, BOOL enable);
+extern int dhcp_client_interface_option_set(client_interface_t * ifter, uint16_t code, uint8_t *str, int len);
+extern int dhcp_client_interface_request_set(client_interface_t * ifter, uint16_t code, BOOL enable);
 /************************************************************************************/
 
 

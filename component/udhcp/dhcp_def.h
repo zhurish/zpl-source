@@ -204,6 +204,14 @@ enum {
 #define DHCP_MINTYPE DHCPDISCOVER
 #define DHCP_MAXTYPE DHCPINFORM
 
+
+#define OPTION_61_MAC           1
+#define OPTION_61_UUID          0x02
+#define OPTION_61_IAID          0xFF
+/*0x01代表后面是硬件地址，
+    0xff表示IAID，
+    0x0002表示后面是DUID*/
+
 struct dhcp_optflag {
 	uint8_t flags;
 	uint8_t code;

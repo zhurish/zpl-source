@@ -47,7 +47,9 @@ extern RftSub128 bitrv2_128;
 
 // entry points
 void aec_rdft_init(void);
+//#if defined(WEBRTC_HAS_SSE2)
 void aec_rdft_init_sse2(void);
+//#endif
 void aec_rdft_forward_128(float* a);
 void aec_rdft_inverse_128(float* a);
 

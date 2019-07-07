@@ -38,7 +38,7 @@
 #include "host.h"
 #include "syslogcLib.h"
 
-#ifdef SYSLOG_CLIENT
+#ifdef PL_SYSLOG_MODULE
 /* typedefs */
 
 /* locals */
@@ -778,6 +778,33 @@ int syslogc_disable(void)
 	return OK;
 }
 
+int syslogc_is_dynamics(void)
+{
+	if(syslog_client == NULL)
+		return ERROR;
+	return syslog_client->dynamics;
+}
+
+int syslogc_dynamics_enable(void)
+{
+	if(syslog_client == NULL)
+		return ERROR;
+	if(!syslog_client->dynamics)
+		os_memset(syslog_client->address_string, 0, sizeof(syslog_client->address_string));
+	syslog_client->dynamics = TRUE;
+	return OK;
+}
+
+int syslogc_dynamics_disable(void)
+{
+	if(syslog_client == NULL)
+		return ERROR;
+	if(syslog_client->dynamics)
+		os_memset(syslog_client->address_string, 0, sizeof(syslog_client->address_string));
+	syslog_client->dynamics = FALSE;
+	return OK;
+}
+
 int syslogc_host_config_set(char *address_string, int port, int facility)
 {
 	if(!syslog_client)
@@ -817,7 +844,7 @@ int syslogc_host_config_get(char *hostname, int *port, int *facility)
 		os_mutex_lock(syslog_client->mutx, OS_WAIT_FOREVER);
 	if(port)
 		*port = syslog_client->port;
-	if(hostname)
+	if(hostname && os_strlen(syslog_client->address_string))
 		os_strncpy(hostname, syslog_client->address_string,
 				MIN(os_strlen(syslog_client->address_string), DFT_HOST_NAME_LEN));
 	if(facility)

@@ -56,7 +56,9 @@ typedef struct AecCore AecCore;
 AecCore* WebRtcAec_CreateAec();  // Returns NULL on error.
 void WebRtcAec_FreeAec(AecCore* aec);
 int WebRtcAec_InitAec(AecCore* aec, int sampFreq);
+//#if defined(WEBRTC_HAS_SSE2)
 void WebRtcAec_InitAec_SSE2(void);
+//#endif
 #if defined(MIPS_FPU_LE)
 void WebRtcAec_InitAec_mips(void);
 #endif

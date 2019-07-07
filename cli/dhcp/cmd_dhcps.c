@@ -627,6 +627,18 @@ DEFUN (show_dhcps_lease_interface,
 	return CMD_WARNING;
 }
 
+DEFUN (show_dhcps_pool,
+		show_dhcps_pool_cmd,
+		"show ip dhcp pool",
+		SHOW_STR
+		"Interface Internet Protocol config commands\n"
+		"DHCP configure\n"
+		"Dhcp Pool\n")
+{
+	nsm_dhcps_pool_show(vty, TRUE);
+	return CMD_SUCCESS;
+}
+
 
 static void cmd_base_interface_dhcpd_init(int node)
 {
@@ -675,6 +687,8 @@ static void cmd_show_dhcps_init(int node)
 {
 	install_element(node, &show_dhcps_lease_cmd);
 	install_element(node, &show_dhcps_lease_interface_cmd);
+	install_element(node, &show_dhcps_pool_cmd);
+
 /*	install_element(node, &nsm_show_dhcp_client_cmd);
 	install_element(node, &nsm_show_dhcp_client_interface_cmd);
 

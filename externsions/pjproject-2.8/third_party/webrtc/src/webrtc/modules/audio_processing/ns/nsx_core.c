@@ -580,7 +580,7 @@ static void WebRtcNsx_InitMips(void) {
 }
 #endif
 
-void WebRtcNsx_CalcParametricNoiseEstimate(NoiseSuppressionFixedC* inst,
+static void WebRtcNsx_CalcParametricNoiseEstimate(NoiseSuppressionFixedC* inst,
                                            int16_t pink_noise_exp_avg,
                                            int32_t pink_noise_num_avg,
                                            int freq_index,
@@ -815,7 +815,7 @@ int WebRtcNsx_set_policy_core(NoiseSuppressionFixedC* inst, int mode) {
 // thresholds and weights are extracted every window
 // flag 0 means update histogram only, flag 1 means compute the thresholds/weights
 // threshold and weights are returned in: inst->priorModelPars
-void WebRtcNsx_FeatureParameterExtraction(NoiseSuppressionFixedC* inst,
+static void WebRtcNsx_FeatureParameterExtraction(NoiseSuppressionFixedC* inst,
                                           int flag) {
   uint32_t tmpU32;
   uint32_t histIndex;
@@ -1016,7 +1016,7 @@ void WebRtcNsx_FeatureParameterExtraction(NoiseSuppressionFixedC* inst,
 // Compute spectral flatness on input spectrum
 // magn is the magnitude spectrum
 // spectral flatness is returned in inst->featureSpecFlat
-void WebRtcNsx_ComputeSpectralFlatness(NoiseSuppressionFixedC* inst,
+static void WebRtcNsx_ComputeSpectralFlatness(NoiseSuppressionFixedC* inst,
                                        uint16_t* magn) {
   uint32_t tmpU32;
   uint32_t avgSpectralFlatnessNum, avgSpectralFlatnessDen;
@@ -1085,7 +1085,7 @@ void WebRtcNsx_ComputeSpectralFlatness(NoiseSuppressionFixedC* inst,
 // magn_tmp is the input spectrum
 // the reference/template spectrum is  inst->magn_avg_pause[i]
 // returns (normalized) spectral difference in inst->featureSpecDiff
-void WebRtcNsx_ComputeSpectralDifference(NoiseSuppressionFixedC* inst,
+static void WebRtcNsx_ComputeSpectralDifference(NoiseSuppressionFixedC* inst,
                                          uint16_t* magnIn) {
   // This is to be calculated:
   // avgDiffNormMagn = var(magnIn) - cov(magnIn, magnAvgPause)^2 / var(magnAvgPause)
@@ -1179,7 +1179,7 @@ void WebRtcNsx_ComputeSpectralDifference(NoiseSuppressionFixedC* inst,
 }
 
 // Transform input (speechFrame) to frequency domain magnitude (magnU16)
-void WebRtcNsx_DataAnalysis(NoiseSuppressionFixedC* inst,
+static void WebRtcNsx_DataAnalysis(NoiseSuppressionFixedC* inst,
                             short* speechFrame,
                             uint16_t* magnU16) {
   uint32_t tmpU32no1;
@@ -1417,7 +1417,7 @@ void WebRtcNsx_DataAnalysis(NoiseSuppressionFixedC* inst,
   }
 }
 
-void WebRtcNsx_DataSynthesis(NoiseSuppressionFixedC* inst, short* outFrame) {
+static void WebRtcNsx_DataSynthesis(NoiseSuppressionFixedC* inst, short* outFrame) {
   int32_t energyOut;
 
   int16_t realImag_buff[ANAL_BLOCKL_MAX * 2 + 16];

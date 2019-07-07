@@ -94,6 +94,15 @@ int pl_pjsip_module_init()
 	return OK;
 }
 
+#ifdef PL_OPENWRT_UCI
+int pl_pjsip_module_reload()
+{
+	voip_uci_sip_config_load(pl_pjsip);
+	voip_stream_config_load(pl_pjsip);
+	return OK;
+}
+#endif
+
 int pl_pjsip_module_exit()
 {
 /*	if(!voip_global_enabled())

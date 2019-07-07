@@ -2,7 +2,7 @@
 # DEFINE
 ###########################################################################
 MODULEDIR = abstract/pal/kernel
-
+ifeq ($(strip $(MODULE_PAL_KERNEL)),true)
 OBJS	+= kernel_ioctl.o
 OBJS	+= kernel_arp.o
 OBJS	+= kernel_tunnel.o
@@ -18,6 +18,7 @@ OBJS	+= kernel_nllisten.o
 OBJS	+= kernel_nliface.o
 OBJS	+= kernel_nlload.o
 OBJS	+= pal_interface.o
+endif
 #############################################################################
 # LIB
 ###########################################################################

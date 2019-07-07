@@ -123,6 +123,10 @@
 } while (0)
 #endif
 
+# define move_get_unaligned32(v, u32p) do { \
+	uint32_t *p = (uint32_t *)(v); \
+	u32p = *p; \
+} while (0)
 /* Useful for defeating gcc's alignment of "char message[]"-like data */
 #if !defined(__s390__)
     /* on s390[x], non-word-aligned data accesses require larger code */
@@ -166,8 +170,9 @@
 #define ENABLE_FEATURE_UDHCPD_BASE_IP_ON_MAC 0
 
 #define CONFIG_UDHCPC_SLACK_FOR_BUGGY_SERVERS 0
-#define CONFIG_UDHCPC_DEFAULT_SCRIPT	"dhcp.script"
-
+//#define CONFIG_UDHCPC_DEFAULT_SCRIPT	"dhcp.script"
+#define CONFIG_UDHCPC_DEFAULT_SCRIPT 	"/usr/share/udhcpc/dhcp.script"
+//#define CONFIG_UDHCPC_DEFAULT_SCRIPT 	"/usr/share/udhcpc/default.script"
 
 
 

@@ -654,7 +654,7 @@ int WebRtcAecm_ProcessFrame(AecmCore* aecm,
 //
 // Return: - Filtered value.
 //
-int16_t WebRtcAecm_AsymFilt(const int16_t filtOld, const int16_t inVal,
+static int16_t WebRtcAecm_AsymFilt(const int16_t filtOld, const int16_t inVal,
                             const int16_t stepSizePos,
                             const int16_t stepSizeNeg)
 {

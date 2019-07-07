@@ -1528,7 +1528,7 @@ static int x5b_sip_load_from_json(char *input)
 		us = pj_tmp->valuestring;
 		if(us)
 		{
-			pl_pjsip_codec_default_set_api(us);
+			pl_pjsip_codec_default_set_api(us, 0);
 		}
 	}
 	pj_tmp = cJSON_GetObjectItem (pItem, "dtmf");

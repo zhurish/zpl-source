@@ -107,7 +107,7 @@ pjmedia_aud_unregister_factory(pjmedia_aud_dev_factory_create_func_ptr adf);
 PJ_END_DECL
 
 pjmedia_aud_dev_factory* pjmedia_alsa_factory(pj_pool_factory *pf);
-
+pjmedia_aud_dev_factory* pjmedia_pa_factory(pj_pool_factory *pf);
 
 #endif	/* __PJMEDIA_AUDIODEV_AUDIODEV_H__ */
 

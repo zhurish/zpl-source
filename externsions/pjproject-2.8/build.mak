@@ -3,7 +3,16 @@
 #/home/zhurish/workspace/SWPlatform/externsions/pjproject-2.8
 include $(PJDIR)/version.mak
 export PJ_DIR := $(PJDIR)
-
+#
+#
+ifeq (&(PJMEDIA_AUDIO_ALSA),true)
+export PL_PJMEDIA_SND = alsa
+endif
+ifeq (&(PJMEDIA_AUDIO_PORTAUDIO),true)
+export PL_PJMEDIA_SND = portaudio
+endif
+#
+#
 # build.mak.  Generated from build.mak.in by configure.
 export MACHINE_NAME = auto
 export OS_NAME = auto
@@ -156,10 +165,12 @@ endif
 #endif
 endif
 
-ifneq (1,1)
-ifeq (0,1)
-APP_THIRD_PARTY_EXT += -lwebrtc
-else
+
+ifeq ($(PJMEDIA_WEBRTC_ENABLE),true)
+#ifneq (1,1)
+#ifeq (0,1)
+#APP_THIRD_PARTY_EXT += -lwebrtc
+#else
 APP_THIRD_PARTY_LIB_FILES += $(PJ_DIR)/third_party/lib/libwebrtc-$(LIB_SUFFIX)
 ifeq ($(PJ_SHARED_LIBRARIES),)
 APP_THIRD_PARTY_LIBS += -lwebrtc-$(TARGET_NAME)
@@ -168,7 +179,7 @@ APP_THIRD_PARTY_LIBS += -lwebrtc
 APP_THIRD_PARTY_LIB_FILES += $(PJ_DIR)/third_party/lib/libwebrtc.$(SHLIB_SUFFIX).$(PJ_VERSION_MAJOR) $(PJ_DIR)/third_party/lib/libwebrtc.$(SHLIB_SUFFIX)
 endif
 endif
-endif
+#endif
 
 
 # Additional flags

@@ -92,7 +92,7 @@ static int netlink_interface_addr(struct sockaddr_nl *snl, struct nlmsghdr *h,
 					ifa->ifa_index, vrf_id);
 			return -1;
 		}
-		zlog_debug(ZLOG_PAL, "find interface %s index %d ", ifa->ifa_index, ifkname);
+		zlog_debug(ZLOG_PAL, "find interface %s index %d ", ifkname, ifa->ifa_index);
 
 		ifp = if_lookup_by_kernel_name_vrf(ifkname, vrf_id);
 		if (ifp == NULL)

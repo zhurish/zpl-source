@@ -12,21 +12,6 @@
 #ifdef PL_OPENWRT_UCI
 #if 1//def  BUILD_OPENWRT
 
-/*
-typedef int	(*uci_ubus_cb)(char *, int);
-
-extern int uci_ubus_cb_install(uci_ubus_cb *cb);
-extern int uci_ubus_cb_uninstall(uci_ubus_cb *cb);
-
-extern int uci_ubus_debug(BOOL enable);
-
-extern int uci_ubus_init(void *m);
-extern int uci_ubus_reset(void);
-extern int uci_ubus_exit(void);
-*/
-
-//#else /* BUILD_OPENWRT */
-
 #define UCI_UBUS_BUF_MAX	1024
 #define UCI_UBUS_CB_MAX		16
 #define UCI_UBUS_UDP_PORT	65530

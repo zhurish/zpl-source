@@ -227,7 +227,7 @@ static int udhcpc_send_discover(client_interface_t *inter,
 	if(inter->state.mode == DHCP_RAW_MODE)
 		return udhcpc_raw_packet_bcast(inter->sock, &packet,
 			INADDR_ANY, inter->ifindex);
-	return ERROR;
+	return OK;
 }
 
 /* Broadcast a DHCP request message */
@@ -323,6 +323,7 @@ static int udhcpc_send_renew(client_interface_t *inter, uint32_t server,
 		return udhcpc_packet_bcast_ucast(inter->sock, &packet, ciaddr, server, inter->ifindex);
 	else
 		return udhcpc_packet_bcast_ucast(inter->udp_sock, &packet, ciaddr, server, inter->ifindex);
+//	udhcp_run_script(&packet, state == REQUESTING ? "bound" : "renew");
 }
 
 #if ENABLE_FEATURE_UDHCPC_ARPING
@@ -384,6 +385,7 @@ static int udhcpc_send_release(client_interface_t *inter, uint32_t server,
 	else
 		return udhcpc_packet_bcast_ucast(inter->udp_sock, &packet, ciaddr, server, inter->ifindex);
 	//return udhcpc_packet_bcast_ucast(inter->sock, &packet, ciaddr, server, inter->ifindex);
+	//udhcp_run_script(NULL, "deconfig");
 }
 
 static int udhcpc_send_inform(client_interface_t *inter, uint32_t server,
@@ -423,7 +425,7 @@ static int udhcpc_client_socket(int ifindex)
 		if(udhcp_client_socket_bind( fd,  ifindex) == OK)
 		{
 			udhcp_client_socket_filter( fd,  68);
-			zlog_err(ZLOG_DHCP, "created raw socket");
+			zlog_debug(ZLOG_DHCP, "created raw socket");
 			return fd;
 		}
 		zlog_err(ZLOG_DHCP, "Can not bind raw socket(%s)", strerror(errno));
@@ -514,16 +516,19 @@ static int udhcp_client_explain_lease(struct dhcp_packet *packet,
 	temp = (const char*)udhcp_get_option(packet, DHCP_ROUTER, &optlen);
 	if (temp)
 	{
-		udhcp_str2nip(temp, &ifter->lease.lease_gateway);
+		move_get_unaligned32(temp, ifter->lease.lease_gateway);
 		if(optlen > 4)
-			udhcp_str2nip(temp + 4, &ifter->lease.lease_gateway2);
+			move_get_unaligned32(temp + 4, ifter->lease.lease_gateway2);
 	}
 	temp = (const char*)udhcp_get_option(packet, DHCP_DNS_SERVER, &optlen);
 	if (temp)
 	{
-		udhcp_str2nip(temp, &ifter->lease.lease_dns1);
+		move_get_unaligned32(temp, ifter->lease.lease_dns1);
 		if(optlen > 4)
-			udhcp_str2nip(temp + 4, &ifter->lease.lease_dns2);
+			move_get_unaligned32(temp + 4, ifter->lease.lease_dns2);
+/*		udhcp_str2nip(temp, &ifter->lease.lease_dns1);
+		if(optlen > 4)
+			udhcp_str2nip(temp + 4, &ifter->lease.lease_dns2);*/
 	}
 	temp = udhcp_get_option(packet, DHCP_LEASE_TIME, NULL);
 	if (!temp) {
@@ -542,25 +547,34 @@ static int udhcp_client_explain_lease(struct dhcp_packet *packet,
 	temp = (const char*)udhcp_get_option(packet, DHCP_TIME_SERVER, &optlen);
 	if (temp)
 	{
-		udhcp_str2nip(temp, &ifter->lease.lease_timer1);
+		move_get_unaligned32(temp, ifter->lease.lease_timer1);
 		if(optlen > 4)
-			udhcp_str2nip(temp + 4, &ifter->lease.lease_timer2);
+			move_get_unaligned32(temp + 4, ifter->lease.lease_timer2);
+/*		udhcp_str2nip(temp, &ifter->lease.lease_timer1);
+		if(optlen > 4)
+			udhcp_str2nip(temp + 4, &ifter->lease.lease_timer2);*/
 	}
 
 	temp = (const char*)udhcp_get_option(packet, DHCP_LOG_SERVER, &optlen);
 	if (temp)
 	{
-		udhcp_str2nip(temp, &ifter->lease.lease_log1);
+		move_get_unaligned32(temp, ifter->lease.lease_log1);
 		if(optlen > 4)
-			udhcp_str2nip(temp + 4, &ifter->lease.lease_log2);
+			move_get_unaligned32(temp + 4, ifter->lease.lease_log2);
+/*		udhcp_str2nip(temp, &ifter->lease.lease_log1);
+		if(optlen > 4)
+			udhcp_str2nip(temp + 4, &ifter->lease.lease_log2);*/
 	}
 
 	temp = (const char*)udhcp_get_option(packet, DHCP_NTP_SERVER, &optlen);
 	if (temp)
 	{
-		udhcp_str2nip(temp, &ifter->lease.lease_ntp1);
+		move_get_unaligned32(temp, ifter->lease.lease_ntp1);
 		if(optlen > 4)
-			udhcp_str2nip(temp + 4, &ifter->lease.lease_ntp2);
+			move_get_unaligned32(temp + 4, ifter->lease.lease_ntp2);
+/*		udhcp_str2nip(temp, &ifter->lease.lease_ntp1);
+		if(optlen > 4)
+			udhcp_str2nip(temp + 4, &ifter->lease.lease_ntp2);*/
 	}
 	dhcp_option_get_8bit(packet->options, DHCP_IP_TTL, &ifter->lease.lease_ttl);
 	dhcp_option_get_8bit(packet->options, DHCP_MTU, &ifter->lease.lease_mtu);
@@ -617,7 +631,7 @@ static int udhcp_client_send_handle(client_interface_t * ifter, int event)
 			if(ifter->t_thread)
 				eloop_cancel(ifter->t_thread);
 			ifter->state.xid = udhcpc_get_xid();
-			ifter->t_thread = eloop_add_timer(ifter->master, udhcpc_discover_event, ifter,
+			ifter->d_thread = eloop_add_timer(ifter->master, udhcpc_discover_event, ifter,
 					ifter->state.dis_timeout + 5);
 		}
 		break;
@@ -677,10 +691,39 @@ static int udhcpc_discover_event(struct eloop *eloop)
 	ifter = ELOOP_ARG(eloop);
 	if(ifter == NULL)
 		return OK;
-	ifter->t_thread = NULL;
+	ifter->d_thread = NULL;
+
+
 	udhcp_client_send_handle(ifter, DHCP_INIT);
-	ifter->t_thread = eloop_add_timer(eloop->master, udhcpc_discover_event, ifter,
-			ifter->state.dis_timeout);
+
+	if(ifter->master && !ifter->d_thread)
+		ifter->d_thread = eloop_add_timer(ifter->master, udhcpc_discover_event, ifter, ifter->state.dis_timeout);
+/*
+	if(ifter->state.dis_cnt < ifter->state.dis_retries)
+	{
+		if (ifter->state.dis_cnt == 0)
+			ifter->state.xid = udhcpc_get_xid();
+		udhcpc_send_discover(ifter, ifter->lease.lease_address);
+		ifter->state.dis_cnt++;
+
+	}
+	else
+	{
+		ifter->state.state = DHCP_INIT;
+		ifter->state.dis_cnt = 0;
+		ifter->state.renew_timeout1 = 0;
+		ifter->state.renew_timeout2 = 0;
+		ifter->state.xid = 0;
+		ifter->state.read_bytes = 0;
+
+		memset(&ifter->lease, 0, sizeof(ifter->lease));
+
+		if(ifter->t_thread)
+			eloop_cancel(ifter->t_thread);
+		ifter->state.xid = udhcpc_get_xid();
+		ifter->d_thread = eloop_add_timer(ifter->master, udhcpc_discover_event, ifter,
+				ifter->state.dis_timeout + 5);
+	}*/
 	return OK;
 }
 
@@ -699,7 +742,7 @@ static int udhcpc_stop(client_interface_t * ifter)
 	return OK;
 }
 
-static int udhcpc_timeout_event(struct eloop *eloop)
+/*static int udhcpc_timeout_event(struct eloop *eloop)
 {
 	client_interface_t * ifter = NULL;
 	ifter = ELOOP_ARG(eloop);
@@ -707,14 +750,15 @@ static int udhcpc_timeout_event(struct eloop *eloop)
 		return OK;
 	ifter->t_thread = NULL;
 
+	dhcp_client_lease_unset(ifter);
 	udhcpc_stop(ifter);
 
 	udhcpc_state_mode_change(ifter, DHCP_RAW_MODE);
-
-	ifter->t_thread = eloop_add_timer(eloop->master, udhcpc_discover_event, ifter,
+	if(ifter->master)
+		ifter->t_thread = eloop_add_timer(ifter->master, udhcpc_discover_event, ifter,
 			ifter->state.dis_timeout + 5);
 	return OK;
-}
+}*/
 
 
 static int udhcpc_rebinding_event(struct eloop *eloop)
@@ -725,8 +769,8 @@ static int udhcpc_rebinding_event(struct eloop *eloop)
 		return OK;
 	ifter->t_thread = NULL;
 	udhcp_client_send_handle(ifter, DHCP_REBINDING);
-
-	ifter->t_thread = eloop_add_timer(eloop->master, udhcpc_timeout_event, ifter,
+	if(ifter->master && !ifter->d_thread)
+		ifter->d_thread = eloop_add_timer(ifter->master, udhcpc_discover_event, ifter,
 		ifter->lease.expires - ifter->state.renew_timeout2);
 
 	return OK;
@@ -741,8 +785,8 @@ static int udhcpc_renew_event(struct eloop *eloop)
 		return OK;
 	ifter->t_thread = NULL;
 	udhcp_client_send_handle(ifter, DHCP_RENEWING);
-
-	ifter->t_thread = eloop_add_timer(eloop->master, udhcpc_rebinding_event, ifter,
+	if(ifter->master)
+		ifter->t_thread = eloop_add_timer(ifter->master, udhcpc_rebinding_event, ifter,
 		ifter->state.renew_timeout2 - ifter->state.renew_timeout1);
 
 	return OK;
@@ -824,8 +868,14 @@ static int udhcp_client_recv_handle(struct dhcp_packet *packet,
 	switch (message)
 	{
 	case DHCPOFFER:
+
+		if(ifter->d_thread)
+		{
+			eloop_cancel(ifter->d_thread);
+			ifter->d_thread = NULL;
+		}
+		//udhcpc_time_cancel(ifter);
 		udhcp_client_explain_lease(packet, ifter);
-		udhcpc_time_cancel(ifter);
 		ifter->state.state = DHCP_REQUESTING;
 		udhcp_client_send_handle(ifter, DHCP_REQUESTING/*DHCPREQUEST*/);
 		break;
@@ -840,6 +890,8 @@ static int udhcp_client_recv_handle(struct dhcp_packet *packet,
 			ifter->state.state = DHCP_BOUND;
 			ifter->t_thread = eloop_add_timer(ifter->master, udhcpc_renew_event, ifter,
 				ifter->lease.expires - ifter->state.renew_timeout1);
+			zlog_debug(ZLOG_DHCP, "udhcp_client_recv_handle DHCP_REQUESTING ACK and dhcp_client_lease_set");
+			dhcp_client_lease_set(ifter);
 		}
 		else if(ifter->state.state == DHCP_RENEWING)
 		{
@@ -848,6 +900,8 @@ static int udhcp_client_recv_handle(struct dhcp_packet *packet,
 			ifter->state.state = DHCP_BOUND;
 			ifter->t_thread = eloop_add_timer(ifter->master, udhcpc_renew_event, ifter,
 				ifter->lease.expires - ifter->state.renew_timeout1);
+			zlog_debug(ZLOG_DHCP, "udhcp_client_recv_handle DHCP_RENEWING ACK and dhcp_client_lease_set");
+			dhcp_client_lease_set(ifter);
 		}
 		else if(ifter->state.state == DHCP_REBINDING)
 		{
@@ -856,24 +910,30 @@ static int udhcp_client_recv_handle(struct dhcp_packet *packet,
 			ifter->state.state = DHCP_BOUND;
 			ifter->t_thread = eloop_add_timer(ifter->master, udhcpc_renew_event, ifter,
 				ifter->lease.expires - ifter->state.renew_timeout1);
+			zlog_debug(ZLOG_DHCP, "udhcp_client_recv_handle DHCP_REBINDING ACK and dhcp_client_lease_set");
+			dhcp_client_lease_set(ifter);
 		}
+
+		//udhcp_run_script(&packet, state == REQUESTING ? "bound" : "renew");
 		udhcpc_state_mode_change(ifter, DHCP_UDP_MODE);
 		break;
 
 	case DHCPNAK:
 		{
-			zlog_err(ZLOG_DHCP, "received %s", "DHCP NAK");
+			zlog_debug(ZLOG_DHCP, "received %s", "DHCP NAK");
 /*			udhcpc_time_cancel(ifter);
 			ifter->state.state = DHCP_INIT;
 			ifter->lease.lease_address = 0;
 			ifter->state.dis_cnt = 0;
 			udhcpc_state_mode_change(ifter, DHCP_RAW_MODE);
 			*/
+			zlog_debug(ZLOG_DHCP, "received %s and dhcp_client_lease_unset", "DHCP NAK");
+			dhcp_client_lease_unset(ifter);
 			udhcpc_stop(ifter);
 
 			udhcpc_state_mode_change(ifter, DHCP_RAW_MODE);
 
-			ifter->t_thread = eloop_add_timer(ifter->master, udhcpc_discover_event, ifter,
+			ifter->d_thread = eloop_add_timer(ifter->master, udhcpc_discover_event, ifter,
 					ifter->state.dis_timeout + 5);
 		}
 		break;
@@ -993,14 +1053,15 @@ static int udhcpc_read_thread(struct eloop *eloop)
 		if (bytes < 0) {
 			/* bytes can also be -2 ("bad packet data") */
 			if (bytes == -1 && errno != EINTR) {
-
+				zlog_err(ZLOG_DHCP, "received error %s and dhcp_client_lease_unset", strerror(errno));
+				dhcp_client_lease_unset(ifter);
 				udhcpc_stop(ifter);
 				ifter->state.mode = DHCP_UDP_MODE;
 				close(sock);
 				ifter->sock = 0;
 				udhcpc_state_mode_change(ifter, DHCP_RAW_MODE);
 
-				ifter->t_thread = eloop_add_timer(ifter->master, udhcpc_discover_event, ifter,
+				ifter->d_thread = eloop_add_timer(ifter->master, udhcpc_discover_event, ifter,
 						ifter->state.dis_timeout + 5);
 
 				return ERROR;
@@ -1018,7 +1079,7 @@ static int udhcpc_read_thread(struct eloop *eloop)
 				dhcp_global_config.client_sock = ifter->udp_sock = 0;
 				ifter->udp_sock = dhcp_global_config.client_sock = udhcp_udp_socket(dhcp_global_config.client_port);
 				//udhcpc_state_mode_change(ifter, DHCP_RAW_MODE);
-				ifter->t_thread = eloop_add_timer(ifter->master, udhcpc_discover_event, ifter,
+				ifter->d_thread = eloop_add_timer(ifter->master, udhcpc_discover_event, ifter,
 						ifter->state.dis_timeout + 5);
 
 				return ERROR;
@@ -1054,6 +1115,9 @@ static int dhcp_client_interface_option_default(client_interface_t *ifter)
 	dhcp_option_add(ifter->options,  DHCP_CLIENT_ID, ifter->client_mac,  ETHER_ADDR_LEN);
 	if(host_name_get())
 		dhcp_option_add(ifter->options,  DHCP_HOST_NAME, host_name_get(),  strlen(host_name_get()));
+
+	if(IF_VLAN_GET(ifter->ifindex) > 0)
+		dhcp_option_add_32bit(ifter->options,  DHCP_VLAN_ID, IF_VLAN_GET(ifter->ifindex));
 
 	return OK;
 }
@@ -1117,11 +1181,11 @@ int dhcp_client_add_interface(dhcp_global_t*config, u_int32 ifindex)
 		{
 			lstAdd(&config->client_list, ifter);
 			ifter->state.mode = DHCP_RAW_MODE;
-			if(ifter->t_thread == NULL)
-				ifter->t_thread = eloop_add_timer(ifter->master, udhcpc_discover_event, ifter, 2);
+			if(ifter->d_thread == NULL)
+				ifter->d_thread = eloop_add_timer(ifter->master, udhcpc_discover_event, ifter, 2);
 
 			if(ifter->r_thread == NULL)
-				ifter->r_thread = eloop_add_read(dhcp_global_config.eloop_master, udhcpc_read_thread,
+				ifter->r_thread = eloop_add_read(ifter->master, udhcpc_read_thread,
 						ifter, ifter->sock);
 			return OK;
 		}
@@ -1143,6 +1207,8 @@ int dhcp_client_del_interface(dhcp_global_t*config, u_int32 ifindex) {
 			close(ifter->sock);
 			ifter->sock = 0;
 		}
+		zlog_debug(ZLOG_DHCP, "dhcp_client_del_interface and dhcp_client_lease_unset");
+		dhcp_client_lease_unset(ifter);
 		lstDelete(&config->client_list, ifter);
 		XFREE(MTYPE_DHCPC_INFO, ifter);
 		return OK;
@@ -1150,13 +1216,22 @@ int dhcp_client_del_interface(dhcp_global_t*config, u_int32 ifindex) {
 	return ERROR;
 }
 
-int dhcp_client_interface_option_set(client_interface_t * ifter, uint8_t code, uint8_t *str, int len)
+int dhcp_client_interface_option_set(client_interface_t * ifter, uint16_t code, uint8_t *str, int len)
 {
-	dhcp_option_add(ifter->options,  code, str,  len);
+	if(code > DHCP_OPTION_MAX)
+	{
+		if(code == 255+'m')
+		{
+			ifter->instance = atoi(str);
+			return OK;
+		}
+		return ERROR;
+	}
+	dhcp_option_add(ifter->options,  (uint8_t)code, str,  len);
 	return OK;
 }
 
-int dhcp_client_interface_request_set(client_interface_t * ifter, uint8_t code, BOOL enable)
+int dhcp_client_interface_request_set(client_interface_t * ifter, uint16_t code, BOOL enable)
 {
 	ifter->opt_mask[code] = enable;
 	return OK;
@@ -1187,6 +1262,8 @@ int dhcp_client_interface_clean(void)
 				close(pstNode->sock);
 				pstNode->sock = 0;
 			}
+			zlog_debug(ZLOG_DHCP, "dhcp_client_interface_clean and dhcp_client_lease_unset");
+			dhcp_client_lease_unset(pstNode);
 			dhcp_option_clean(pstNode->options);
 			XFREE(MTYPE_DHCPC_INFO, pstNode);
 		}

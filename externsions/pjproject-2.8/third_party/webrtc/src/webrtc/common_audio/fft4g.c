@@ -287,7 +287,7 @@ Appendix :
 */
 
 #include <stddef.h>
-
+#include "fft4g.h"
 static void makewt(size_t nw, size_t *ip, float *w);
 static void makect(size_t nc, size_t *ip, float *c);
 static void bitrv2(size_t n, size_t *ip, float *a);

@@ -30,6 +30,9 @@ PJ_BEGIN_DECL
 #define PJSUA_APP_NO_LIMIT_DURATION	(int)0x7FFFFFFF
 #define PJSUA_APP_MAX_AVI		4
 #define PJSUA_APP_NO_NB			-2
+#define PJSUA_APP_CODEC_MAX		PJMEDIA_CODEC_MGR_MAX_CODECS
+#define PJSUA_APP_TONES_MAX		32
+
 struct pl_pjsip_thread_t
 {
 	pj_thread_t	  *pl_thread_t;
@@ -106,15 +109,15 @@ typedef struct pjsua_app_config
     /* Compatibility with older pjsua */
 
     unsigned		    codec_cnt;
-    pj_str_t		    codec_arg[32];
+    pj_str_t		    codec_arg[PJSUA_APP_CODEC_MAX];
     unsigned		    codec_dis_cnt;
-    pj_str_t                codec_dis[32];
+    pj_str_t                codec_dis[PJSUA_APP_CODEC_MAX];
     pj_bool_t		    null_audio;
     unsigned		    wav_count;
-    pj_str_t		    wav_files[32];
+    pj_str_t		    wav_files[PJSUA_APP_TONES_MAX];
     unsigned		    tone_count;
-    pjmedia_tone_desc	    tones[32];
-    pjsua_conf_port_id	    tone_slots[32];
+    pjmedia_tone_desc	    tones[PJSUA_APP_TONES_MAX];
+    pjsua_conf_port_id	    tone_slots[PJSUA_APP_TONES_MAX];
     pjsua_player_id	    wav_id;
     pjsua_conf_port_id	    wav_port;
     pj_bool_t		    auto_play;

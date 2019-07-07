@@ -140,13 +140,18 @@ int os_module_init(void)
 {
 	os_default_start();
 
-#ifdef PL_SERVICE_MODULE
 	if(master_eloop[MODULE_NSM] == NULL)
 		master_eloop[MODULE_NSM] = eloop_master_module_create(MODULE_NSM);
+#ifdef PL_SNTPS_MODULE
 	sntpsInit(master_eloop[MODULE_NSM]);
+#endif
+#ifdef PL_SNTPC_MODULE
 	sntpcInit(master_eloop[MODULE_NSM]);
+#endif
+#ifdef PL_SYSLOG_MODULE
 	syslogc_lib_init(master_eloop[MODULE_NSM], NULL);
 #endif
+
 #ifdef PL_NSM_MODULE
 	nsm_module_init ();
 #endif
@@ -175,9 +180,10 @@ int os_module_init(void)
 	//ospf_module_init();
 	nsm_tunnel_client_init();
 	nsm_veth_client_init();
+#ifdef PL_PAL_MODULE
 	extern int pal_abstract_init();
 	pal_abstract_init();
-
+#endif
 	systools_module_init();
 
 #ifdef PL_WIFI_MODULE
@@ -245,6 +251,7 @@ int os_module_task_init(void)
 #endif
 
 	systools_task_init();
+
 #ifdef PL_SSH_MODULE
 	ssh_module_task_init();
 #endif
@@ -290,11 +297,15 @@ int os_module_cmd_init(int terminal)
 	cmd_vlan_init();
 	cmd_port_init();
 
-#ifdef PL_SERVICE_MODULE
+
+#ifdef PL_SNTPC_MODULE
 	cmd_sntpc_init();
-	cmd_sntps_init();
-	//service_module_cmd_init();
 #endif
+#ifdef PL_SNTPS_MODULE
+	cmd_sntps_init();
+#endif
+	//service_module_cmd_init();
+
 	cmd_trunk_init();
 	cmd_dos_init ();
 	cmd_dot1x_init ();
@@ -305,6 +316,7 @@ int os_module_cmd_init(int terminal)
 	cmd_ppp_init();
 	cmd_tunnel_init();
 	cmd_bridge_init();
+
 #ifdef PL_WIFI_MODULE
 	cmd_wireless_init();
 #endif
@@ -360,7 +372,7 @@ int os_module_exit(void)
 	systools_module_exit();
 
 	if_terminate() ;
-#ifdef PL_SERVICE_MODULE
+#ifdef PL_SYSLOG_MODULE
 //	sntpsExit();
 //	sntpcExit();
 	syslogc_lib_uninit();

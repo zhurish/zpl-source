@@ -375,33 +375,68 @@ ALIAS(no_config_log_syslog,
 		"Logging to syslog\n"
 		LOG_LEVEL_DESC)
 
-#ifdef SYSLOG_CLIENT
+#ifdef PL_SYSLOG_MODULE
 
 DEFUN (syslog_host,
 		syslog_host_cmd,
-		"syslog host A.B.C.D",
+		"syslog host (A.B.C.D|dynamics)",
 		"Syslog logging control\n"
 		"syslog host configure\n"
-		"Specify by IPv4 address(e.g. 0.0.0.0)\n")
+		"Specify by IPv4 address(e.g. 0.0.0.0)\n"
+		"sntp server dynamics\n")
 {
 	int port = SYSLOGC_DEFAULT_PORT;
 	if (argc == 2)
 		port = atoi(argv[1]);
-	if (syslogc_is_enable()) {
-		syslogc_host_config_set(argv[0], port, zlog_default->facility);
+	if (syslogc_is_enable())
+	{
+		if(strstr(argv[0], "."))
+		{
+			if(syslogc_is_dynamics())
+			{
+				syslogc_dynamics_disable();
+			}
+			syslogc_host_config_set(argv[0], port, zlog_default->facility);
+		}
+		else
+		{
+			if(!syslogc_is_dynamics())
+			{
+				syslogc_dynamics_enable();
+			}
+			syslogc_host_config_set(NULL, port, zlog_default->facility);
+		}
 	} else {
 		syslogc_enable(host.name);
-		syslogc_host_config_set(argv[0], port, zlog_default->facility);
+		if(strstr(argv[0], "."))
+		{
+			if(syslogc_is_dynamics())
+			{
+				syslogc_dynamics_disable();
+			}
+			syslogc_host_config_set(argv[0], port, zlog_default->facility);
+		}
+		else
+		{
+			if(!syslogc_is_dynamics())
+			{
+				syslogc_dynamics_enable();
+			}
+			syslogc_host_config_set(NULL, port, zlog_default->facility);
+		}
+		//syslogc_host_config_set(argv[0], port, zlog_default->facility);
 	}
 	return CMD_SUCCESS;
 }
 
 ALIAS(syslog_host,
 		syslog_host_port_cmd,
-		"syslog host A.B.C.D port <100-65536>",
+		"syslog host (A.B.C.D|dynamics) port <100-65536>",
 		"Syslog logging control\n"
 		"syslog host configure\n"
 		"Specify by IPv4 address(e.g. 0.0.0.0)\n"
+		"sntp server dynamics\n"
+		"sntp server dynamics\n"
 		"syslog server UDP port\n"
 		"Specify by UDP port(e.g. 514)\n")
 
@@ -1033,7 +1068,7 @@ int cmd_log_init()
 	install_element(CONFIG_NODE, &config_log_timestamp_cmd);
 	install_element(CONFIG_NODE, &no_config_log_timestamp_cmd);
 
-#ifdef SYSLOG_CLIENT
+#ifdef PL_SYSLOG_MODULE
 	install_element(CONFIG_NODE, &syslog_host_cmd);
 	install_element(CONFIG_NODE, &syslog_host_port_cmd);
 	install_element(CONFIG_NODE, &no_syslog_host_cmd);

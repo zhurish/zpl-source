@@ -570,13 +570,50 @@ int voip_volume_close_api(voip_volume_mode mode)
 	}
 	return OK;
 }
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
+static int voip_volume_open_new_api(voip_volume_mode mode)
+{
+	super_system("/app/etc/amixer-setup.sh" VOIP_NOHUP);		//
+	super_system("/app/etc/amixer-setup.sh" VOIP_NOHUP);		//
+	super_system("/app/etc/amixer-setup.sh" VOIP_NOHUP);		//
+	super_system("/app/etc/amixer-setup.sh" VOIP_NOHUP);		//
 
+	/*
+	 * numid=20,iface=MIXER,name='TxDP Capture Volume'
+	 * numid=21,iface=MIXER,name='STO1 ADC Boost Gain Volume'
+	 * numid=15,iface=MIXER,name='IN2 Boost Volume'
+	 * numid=14,iface=MIXER,name='IN1 Boost Volume'
+	 * numid=16,iface=MIXER,name='IN Capture Volume'
+	 * numid=18,iface=MIXER,name='ADC Capture Volume'
+	 * amixer-setup.sh
+	 */
+
+	return OK;
+}
+static int voip_volume_close_new_api(voip_volume_mode mode)
+{
+	//ADC Capture Switch
+	super_system("amixer cset numid=17 0 0" VOIP_NOHUP);
+
+	super_system("amixer cset numid=3 0" VOIP_NOHUP);
+	//OUT Playback Switch
+	super_system("amixer cset numid=7 0 0" VOIP_NOHUP);
+	return OK;
+}
+#endif
 int voip_volume_control_api(BOOL enable)
 {
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
+	if(enable)
+		return voip_volume_open_new_api(VOIP_VOLUME_ALL);
+	else
+		return voip_volume_close_new_api(VOIP_VOLUME_ALL);
+#else
 	if(enable)
 		return voip_volume_open_api(VOIP_VOLUME_ALL);
 	else
 		return voip_volume_close_api(VOIP_VOLUME_ALL);
+#endif
 }
 
 int voip_volume_show_config(struct vty *vty, int detail)

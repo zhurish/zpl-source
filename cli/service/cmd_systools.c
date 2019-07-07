@@ -19,18 +19,40 @@
 #include "os_util.h"
 #include "xyz_modem.h"
 #include "systools.h"
-#include "ftpdLib.h"
-#include "ftpLib.h"
-#include "tftpdLib.h"
+
+#ifdef PL_TFTPC_MODULE
 #include "tftpLib.h"
-#include "pingLib.h"
+#endif
+#ifdef PL_TFTPD_MODULE
+#include "tftpdLib.h"
+#endif
+#ifdef PL_FTPC_MODULE
+#include "ftpLib.h"
+#endif
+#ifdef PL_FTPD_MODULE
+#include "ftpdLib.h"
+#endif
+#ifdef PL_TELNET_MODULE
 #include "telnetLib.h"
+#endif
+#ifdef PL_TELNETD_MODULE
+#include "telnetLib.h"
+#endif
+#ifdef PL_PING_MODULE
+#include "pingLib.h"
+#endif
+#ifdef PL_TRACEROUTE_MODULE
 #include "tracerouteLib.h"
+#endif
+
 #include "tty_com.h"
+
+
 #ifdef PL_SSH_MODULE
 #include "ssh_api.h"
 #endif
 
+#ifdef PL_TFTPC_MODULE
 
 DEFUN (tftp_copy_download,
 		tftp_copy_download_cmd,
@@ -199,8 +221,9 @@ DEFUN (no_tftp_server_enable,
 		return CMD_SUCCESS;
 	return CMD_WARNING;
 }
+#endif
 
-
+#ifdef PL_FTPD_MODULE
 DEFUN (ftp_server_enable,
 		ftp_server_enable_cmd,
 	    "ftp server enable",
@@ -258,9 +281,9 @@ DEFUN (no_ftp_server_enable,
 		return CMD_SUCCESS;
 	return CMD_WARNING;
 }
+#endif
 
-
-
+#ifdef PL_TELNET_MODULE
 DEFUN (telnet_client,
 		telnet_client_cmd,
 	    "telnet "CMD_KEY_IPV4,
@@ -322,9 +345,9 @@ DEFUN (ssh_client_opt,
 	return CMD_SUCCESS;
 }
 #endif
+#endif
 
-
-
+#ifdef PL_PING_MODULE
 DEFUN (ping_start,
 		ping_start_cmd,
 	    "ping ("CMD_KEY_IPV4"|HOSTNAME)",
@@ -398,9 +421,9 @@ DEFUN (ping_len_cnt_start,
 		return CMD_SUCCESS;
 	return CMD_WARNING;
 }
+#endif
 
-
-
+#ifdef PL_TRACEROUTE_MODULE
 DEFUN (traceroute_start,
 		traceroute_start_cmd,
 	    "traceroute ("CMD_KEY_IPV4"|HOSTNAME)",
@@ -476,6 +499,7 @@ DEFUN (traceroute_ttl_len_start,
 		return CMD_SUCCESS;
 	return CMD_WARNING;
 }
+#endif
 
 DEFUN_HIDDEN (load_image_xyz_modem,
 		load_image_xyz_modem_cmd,
@@ -529,37 +553,51 @@ ALIAS_HIDDEN (load_image_xyz_modem,
 
 int systools_cmd_init()
 {
+
+#ifdef PL_TFTPC_MODULE
 	install_element (ENABLE_NODE, &tftp_copy_download_cmd);
 	install_element (ENABLE_NODE, &tftp_copy_upload_cmd);
 
 	install_element (CONFIG_NODE, &tftp_server_enable_cmd);
 	install_element (CONFIG_NODE, &tftp_server_address_cmd);
 	install_element (CONFIG_NODE, &no_tftp_server_enable_cmd);
+#endif
+#ifdef PL_TFTPD_MODULE
 
+#endif
+#ifdef PL_FTPC_MODULE
+
+#endif
+#ifdef PL_FTPD_MODULE
 	install_element (CONFIG_NODE, &ftp_server_enable_cmd);
 	install_element (CONFIG_NODE, &ftp_server_address_cmd);
 	install_element (CONFIG_NODE, &ftp_server_port_cmd);
 	install_element (CONFIG_NODE, &no_ftp_server_enable_cmd);
-
-
+#endif
+#ifdef PL_TELNET_MODULE
 	install_element (ENABLE_NODE, &telnet_client_cmd);
 	install_element (ENABLE_NODE, &telnet_client_port_cmd);
 #ifdef PL_SSH_MODULE
 	install_element (ENABLE_NODE, &ssh_client_opt_cmd);
 #endif
 
+#endif
+#ifdef PL_TELNETD_MODULE
+#endif
+#ifdef PL_PING_MODULE
 	install_element (ENABLE_NODE, &ping_start_cmd);
 	install_element (ENABLE_NODE, &ping_start_cnt_cmd);
 	install_element (ENABLE_NODE, &ping_start_len_cmd);
 	install_element (ENABLE_NODE, &ping_start_len_cnt_cmd);
 	install_element (ENABLE_NODE, &ping_start_cnt_len_cmd);
-
-
+#endif
+#ifdef PL_TRACEROUTE_MODULE
 	install_element (ENABLE_NODE, &traceroute_start_cmd);
 	install_element (ENABLE_NODE, &traceroute_start_ttl_cmd);
 	install_element (ENABLE_NODE, &traceroute_start_len_cmd);
 	install_element (ENABLE_NODE, &traceroute_start_len_ttl_cmd);
 	install_element (ENABLE_NODE, &traceroute_start_ttl_len_cmd);
+#endif
 
 	install_element (ENABLE_NODE, &load_image_xyz_modem_cmd);
 	install_element (ENABLE_NODE, &load_image_xyz_modem_dev_cmd);

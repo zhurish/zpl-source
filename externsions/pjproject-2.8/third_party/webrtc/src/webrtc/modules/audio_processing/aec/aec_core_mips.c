@@ -24,7 +24,7 @@ static const int flagHbandCn = 1; // flag for adding comfort noise in H band
 extern const float WebRtcAec_weightCurve[65];
 extern const float WebRtcAec_overDriveCurve[65];
 
-void WebRtcAec_ComfortNoise_mips(AecCore* aec,
+static void WebRtcAec_ComfortNoise_mips(AecCore* aec,
                                  float efw[2][PART_LEN1],
                                  complex_t* comfortNoiseHband,
                                  const float* noisePow,
@@ -320,7 +320,7 @@ void WebRtcAec_ComfortNoise_mips(AecCore* aec,
   }
 }
 
-void WebRtcAec_FilterFar_mips(AecCore* aec, float yf[2][PART_LEN1]) {
+static void WebRtcAec_FilterFar_mips(AecCore* aec, float yf[2][PART_LEN1]) {
   int i;
   for (i = 0; i < aec->num_partitions; i++) {
     int xPos = (i + aec->xfBufBlockPos) * PART_LEN1;
@@ -432,7 +432,7 @@ void WebRtcAec_FilterFar_mips(AecCore* aec, float yf[2][PART_LEN1]) {
   }
 }
 
-void WebRtcAec_FilterAdaptation_mips(AecCore* aec,
+static void WebRtcAec_FilterAdaptation_mips(AecCore* aec,
                                      float* fft,
                                      float ef[2][PART_LEN1]) {
   int i;
@@ -632,7 +632,7 @@ void WebRtcAec_FilterAdaptation_mips(AecCore* aec,
   }
 }
 
-void WebRtcAec_OverdriveAndSuppress_mips(AecCore* aec,
+static void WebRtcAec_OverdriveAndSuppress_mips(AecCore* aec,
                                          float hNl[PART_LEN1],
                                          const float hNlFb,
                                          float efw[2][PART_LEN1]) {
@@ -699,7 +699,7 @@ void WebRtcAec_OverdriveAndSuppress_mips(AecCore* aec,
   }
 }
 
-void WebRtcAec_ScaleErrorSignal_mips(AecCore* aec, float ef[2][PART_LEN1]) {
+static void WebRtcAec_ScaleErrorSignal_mips(AecCore* aec, float ef[2][PART_LEN1]) {
   const float mu = aec->extended_filter_enabled ? kExtendedMu : aec->normal_mu;
   const float error_threshold = aec->extended_filter_enabled
                                     ? kExtendedErrorThreshold

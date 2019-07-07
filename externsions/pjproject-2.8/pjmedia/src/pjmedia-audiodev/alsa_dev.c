@@ -229,6 +229,7 @@ static pj_status_t add_dev (struct alsa_factory *af, const char *dev_name)
 	TRACE_((THIS_FILE, "Try to open the device for playback - success"));
 	snd_pcm_close (pcm);
     } else {
+    	__PJSIP_DEBUG("Try to open the device for playback - failure\r\n");
 	TRACE_((THIS_FILE, "Try to open the device for playback - failure"));
     }
 
@@ -238,11 +239,14 @@ static pj_status_t add_dev (struct alsa_factory *af, const char *dev_name)
 	TRACE_((THIS_FILE, "Try to open the device for capture - success"));
 	snd_pcm_close (pcm);
     } else {
+    	__PJSIP_DEBUG("Try to open the device for capture - failure\r\n");
 	TRACE_((THIS_FILE, "Try to open the device for capture - failure"));
     }
 
     /* Check if the device could be opened in playback or capture mode */
     if (pb_result<0 && ca_result<0) {
+    	__PJSIP_DEBUG("Unable to open sound device %s, setting "
+	        	   "in/out channel count to 0\r\n", dev_name);
 	TRACE_((THIS_FILE, "Unable to open sound device %s, setting "
 	        	   "in/out channel count to 0", dev_name));
 	/* Set I/O channel counts to 0 to indicate unavailable device */
@@ -271,7 +275,7 @@ static pj_status_t add_dev (struct alsa_factory *af, const char *dev_name)
     ++af->dev_cnt;
 
     PJ_LOG (5,(THIS_FILE, "Added sound device %s", adi->name));
-
+    __PJSIP_DEBUG("Added sound device %s\r\n", adi->name);
     return PJ_SUCCESS;
 }
 
@@ -306,6 +310,7 @@ static void get_mixer_name(struct alsa_factory *af)
 	{
 	    pj_ansi_strncpy(af->pb_mixer_name, snd_mixer_selem_get_name(elem),
 	    		    sizeof(af->pb_mixer_name));
+	    __PJSIP_DEBUG("Playback mixer name: %s\r\n", af->pb_mixer_name);
 	    TRACE_((THIS_FILE, "Playback mixer name: %s", af->pb_mixer_name));
 	    break;
 	}
@@ -371,7 +376,7 @@ static pj_status_t alsa_factory_refresh(pjmedia_aud_dev_factory *f)
     int err;
 
     TRACE_((THIS_FILE, "pjmedia_snd_init: Enumerate sound devices"));
-
+    __PJSIP_DEBUG("pjmedia_snd_init: Enumerate sound devices\r\n");
     if (af->pool != NULL) {
 	pj_pool_release(af->pool);
 	af->pool = NULL;
@@ -410,7 +415,7 @@ static pj_status_t alsa_factory_refresh(pjmedia_aud_dev_factory *f)
     err = snd_device_name_free_hint((void**)hints);
 
     PJ_LOG(4,(THIS_FILE, "ALSA driver found %d devices", af->dev_cnt));
-
+    __PJSIP_DEBUG("ALSA driver found %d devices\r\n", af->dev_cnt);
     return PJ_SUCCESS;
 }
 
@@ -521,7 +526,6 @@ static int pb_thread_func (void *arg)
 	} else if (result < 0) {
 	    PJ_LOG (4,(THIS_FILE, "pb_thread_func: error writing data!"));
 	}
-
 	tstamp.u64 += nframes;
     }
     __PJSIP_DEBUG( "pb_thread_func: Stopped\r\n");
@@ -529,7 +533,6 @@ static int pb_thread_func (void *arg)
     TRACE_((THIS_FILE, "pb_thread_func: Stopped"));
     return PJ_SUCCESS;
 }
-
 
 
 static int ca_thread_func (void *arg)
@@ -549,22 +552,32 @@ static int ca_thread_func (void *arg)
     {
     	char *value = getenv("PJSIP_CA_SCHED");
     	char *valueint = getenv("PJSIP_CA_SCHED_PRI");
+
+    	__PJSIP_DEBUG("ca_thread_func(): set PJSIP_CA_SCHED=%s %s\r\n", value, valueint ? valueint:" ");
+
         thid = (pthread_t*) pj_thread_get_os_handle (pj_thread_this());
     	if(value)
     	{
-    		if(strstr(value, "SCHED_RR") || strstr(value, "SCHED_FIFO"))
+    		if(strstr(value, "RR") || strstr(value, "FIFO"))
     		{
     			if(valueint)
     				param.sched_priority = atoi(valueint);
     			else
     			{
-    				//param.sched_priority = (sched_get_priority_max (SCHED_RR) + sched_get_priority_min (SCHED_RR))/2;
-    				param.sched_priority = sched_get_priority_min (SCHED_RR);
+    				param.sched_priority = (sched_get_priority_max (SCHED_RR) + sched_get_priority_min (SCHED_RR))/2;
+    				//param.sched_priority = sched_get_priority_min (SCHED_RR);
+    				param.sched_priority = sched_get_priority_max (SCHED_RR);
     			}
-    			if(strstr(value, "SCHED_RR"))
+    			if(strstr(value, "RR"))//SCHED_RR SCHED_FIFO
+    			{
+    				__PJSIP_DEBUG("ca_thread_func(): set SCHED_RR pri=%d\r\n", param.sched_priority);
     				result = pthread_setschedparam (*thid, SCHED_RR, &param);
+    			}
     			else
+    			{
+    				__PJSIP_DEBUG("ca_thread_func(): set SCHED_FIFO pri=%d\r\n", param.sched_priority);
     				result = pthread_setschedparam (*thid, SCHED_FIFO, &param);
+    			}
     			if (result)
     			{
     				if (result == EPERM)
@@ -582,23 +595,41 @@ static int ca_thread_func (void *arg)
 
     TRACE_((THIS_FILE, "ca_thread_func(%u): Started",
 	    (unsigned)syscall(SYS_gettid)));
-
+    __PJSIP_DEBUG("ca_thread_func(%u): Started\r\n",
+	    (unsigned)syscall(SYS_gettid));
     snd_pcm_prepare (pcm);
 
     while (!stream->ca_quit) {
 	pjmedia_frame frame;
 
 	pj_bzero (buf, size);
+
 	result = snd_pcm_readi (pcm, buf, nframes);
-	if (result == -EPIPE) {
-	    PJ_LOG (4,(THIS_FILE, "ca_thread_func: overrun!"));
-	    snd_pcm_prepare (pcm);
-	    continue;
-	} else if (result < 0) {
-	    PJ_LOG (4,(THIS_FILE, "ca_thread_func: error reading data!"));
-	}
+
 	if (stream->ca_quit)
 	    break;
+
+	if (result == -EPIPE) {
+/*	    PJ_LOG (4,(THIS_FILE, "ca_thread_func: overrun!"));*/
+	    __PJSIP_DEBUG( "ca_thread_func: overrun\r\n");
+	    snd_pcm_prepare (pcm);
+	    continue;
+	}
+	else if (result == -ESTRPIPE)
+	{
+		int res = 0;
+	    PJ_LOG (4,(THIS_FILE, "ca_thread_func: Suspended!"));
+	    __PJSIP_DEBUG( "ca_thread_func: Suspended\r\n");
+		while ((res = snd_pcm_resume(pcm)) == -EAGAIN)
+			sleep(1);	/* wait until suspend flag is released */
+		if (res < 0)
+			snd_pcm_prepare (pcm);
+	    continue;
+	}
+	else if (result < 0) {
+	    PJ_LOG (4,(THIS_FILE, "ca_thread_func: error reading data!"));
+	    __PJSIP_DEBUG( "ca_thread_func: error reading data!(%s)\r\n", strerror(errno));
+	}
 
 	frame.type = PJMEDIA_FRAME_TYPE_AUDIO;
 	frame.buf = (void*) buf;
@@ -636,6 +667,8 @@ static pj_status_t open_playback (struct alsa_stream* stream,
     /* Open PCM for playback */
     PJ_LOG (5,(THIS_FILE, "open_playback: Open playback device '%s'",
 	       stream->af->devs[param->play_id].name));
+    __PJSIP_DEBUG("open_playback: Open playback device '%s'\r\n",
+	       stream->af->devs[param->play_id].name);
     result = snd_pcm_open (&stream->pb_pcm,
 			   stream->af->devs[param->play_id].name,
 			   SND_PCM_STREAM_PLAYBACK,
@@ -738,6 +771,7 @@ static pj_status_t open_playback (struct alsa_stream* stream,
 }
 
 
+//#define ALSE_DEV_CAP_DEBUG
 static pj_status_t open_capture (struct alsa_stream* stream,
 			         const pjmedia_aud_param *param)
 {
@@ -747,13 +781,19 @@ static pj_status_t open_capture (struct alsa_stream* stream,
     unsigned int rate;
     snd_pcm_uframes_t tmp_buf_size;
     snd_pcm_uframes_t tmp_period_size;
-
+#ifdef ALSE_DEV_CAP_DEBUG
+    unsigned period_time, buffer_time;
+#endif
     if (param->rec_id < 0 || param->rec_id >= stream->af->dev_cnt)
 	return PJMEDIA_EAUD_INVDEV;
 
     /* Open PCM for capture */
     PJ_LOG (5,(THIS_FILE, "open_capture: Open capture device '%s'",
 	       stream->af->devs[param->rec_id].name));
+
+    __PJSIP_DEBUG("open_capture: Open capture device '%s'\r\n",
+   	       stream->af->devs[param->rec_id].name);
+
     result = snd_pcm_open (&stream->ca_pcm,
 		            stream->af->devs[param->rec_id].name,
 			   SND_PCM_STREAM_CAPTURE,
@@ -775,22 +815,27 @@ static pj_status_t open_capture (struct alsa_stream* stream,
     switch (param->bits_per_sample) {
     case 8:
 	TRACE_((THIS_FILE, "open_capture: set format SND_PCM_FORMAT_S8"));
+	__PJSIP_DEBUG("open_capture: SND_PCM_FORMAT_S8\r\n");
 	format = SND_PCM_FORMAT_S8;
 	break;
     case 16:
 	TRACE_((THIS_FILE, "open_capture: set format SND_PCM_FORMAT_S16_LE"));
+	__PJSIP_DEBUG("open_capture: SND_PCM_FORMAT_S16_LE\r\n");
 	format = SND_PCM_FORMAT_S16_LE;
 	break;
     case 24:
 	TRACE_((THIS_FILE, "open_capture: set format SND_PCM_FORMAT_S24_LE"));
+	__PJSIP_DEBUG("open_capture: SND_PCM_FORMAT_S24_LE\r\n");
 	format = SND_PCM_FORMAT_S24_LE;
 	break;
     case 32:
 	TRACE_((THIS_FILE, "open_capture: set format SND_PCM_FORMAT_S32_LE"));
+	__PJSIP_DEBUG("open_capture: SND_PCM_FORMAT_S32_LE\r\n");
 	format = SND_PCM_FORMAT_S32_LE;
 	break;
     default:
 	TRACE_((THIS_FILE, "open_capture: set format SND_PCM_FORMAT_S16_LE"));
+	__PJSIP_DEBUG("open_capture: SND_PCM_FORMAT_S16_LE\r\n");
 	format = SND_PCM_FORMAT_S16_LE;
 	break;
     }
@@ -801,12 +846,14 @@ static pj_status_t open_capture (struct alsa_stream* stream,
 	    param->channel_count));
     snd_pcm_hw_params_set_channels (stream->ca_pcm, params,
 				    param->channel_count);
+    __PJSIP_DEBUG("open_capture: set channels: %d\r\n",
+	    param->channel_count);
 
     /* Set clock rate */
     rate = param->clock_rate;
     TRACE_((THIS_FILE, "open_capture: set clock rate: %d", rate));
     snd_pcm_hw_params_set_rate_near (stream->ca_pcm, params, &rate, NULL);
-    TRACE_((THIS_FILE, "open_capture: clock rate set to: %d", rate));
+    __PJSIP_DEBUG("open_capture: set clock rate: %d\r\n", rate);
 
     /* Set period size to samples_per_frame frames. */
     stream->ca_frames = (snd_pcm_uframes_t) param->samples_per_frame /
@@ -814,18 +861,35 @@ static pj_status_t open_capture (struct alsa_stream* stream,
     TRACE_((THIS_FILE, "open_capture: set period size: %d",
 	    stream->ca_frames));
     tmp_period_size = stream->ca_frames;
+#ifndef ALSE_DEV_CAP_DEBUG
     snd_pcm_hw_params_set_period_size_near (stream->ca_pcm, params,
 					    &tmp_period_size, NULL);
+#else// ALSE_DEV_CAP_DEBUG
+    period_time = 128000;
+    snd_pcm_hw_params_set_period_time_near(stream->ca_pcm, params,
+    							     &period_time, 0);
+#endif
     TRACE_((THIS_FILE, "open_capture: period size set to: %d",
 	    tmp_period_size));
-
+    __PJSIP_DEBUG("open_capture: set period size: %d\r\n",
+    		tmp_period_size);
     /* Set the sound device buffer size and latency */
     if (param->flags & PJMEDIA_AUD_DEV_CAP_INPUT_LATENCY)
 	tmp_buf_size = (rate / 1000) * param->input_latency_ms;
     else
 	tmp_buf_size = (rate / 1000) * PJMEDIA_SND_DEFAULT_REC_LATENCY;
+
+    tmp_buf_size = tmp_buf_size * 4;
+#ifndef ALSE_DEV_CAP_DEBUG
     snd_pcm_hw_params_set_buffer_size_near (stream->ca_pcm, params,
 					    &tmp_buf_size);
+#else
+    buffer_time = 512000;
+    snd_pcm_hw_params_set_buffer_time_near(stream->ca_pcm, params,
+    							     &buffer_time, 0);
+#endif
+    __PJSIP_DEBUG("open_capture: buffer size set to: %d\r\n",
+	    (int)tmp_buf_size);
     stream->param.input_latency_ms = tmp_buf_size / (rate / 1000);
 
     /* Set our buffer */
@@ -844,6 +908,18 @@ static pj_status_t open_capture (struct alsa_stream* stream,
 	snd_pcm_close (stream->ca_pcm);
 	return PJMEDIA_EAUD_SYSERR;
     }
+
+	snd_pcm_hw_params_get_buffer_size(params, &tmp_buf_size);
+	snd_pcm_hw_params_get_period_size(params, &tmp_period_size, 0);
+    __PJSIP_DEBUG("open_capture: buffer size set: %d period_size %d\r\n",
+	    (int)tmp_buf_size,  (int)tmp_period_size);
+
+    __PJSIP_DEBUG("Opened device alsa(%s) for capture, sample rate=%d"
+	       ", ch=%d, bits=%d, period size=%d frames, latency=%d ms\r\n",
+	       stream->af->devs[param->rec_id].name,
+	       rate, param->channel_count,
+	       param->bits_per_sample, stream->ca_frames,
+	       (int)stream->param.input_latency_ms);
 
     PJ_LOG (5,(THIS_FILE, "Opened device alsa(%s) for capture, sample rate=%d"
 	       ", ch=%d, bits=%d, period size=%d frames, latency=%d ms",
@@ -1098,7 +1174,7 @@ static pj_status_t alsa_stream_stop (pjmedia_aud_stream *s)
 	TRACE_((THIS_FILE,
 		   "alsa_stream_stop(%u): Waiting for playback to stop.",
 		   (unsigned)syscall(SYS_gettid)));
-	pj_thread_kill(stream->pb_thread);
+	//pj_thread_kill(stream->pb_thread);
 	pj_thread_join (stream->pb_thread);
 	TRACE_((THIS_FILE,
 		   "alsa_stream_stop(%u): playback stopped.",

@@ -509,11 +509,32 @@ int nsm_dns_domain_name_del_api(BOOL secondly)
 	{
 		os_memset(gIpdns.domain_name2, 0, sizeof(gIpdns.domain_name2));
 		ip_dns_start_job(IP_DNS_DEL_DOMAIN, NULL);
+		gIpdns.domain_dynamic2 = FALSE;
 	}
 	else
 	{
 		os_memset(gIpdns.domain_name1, 0, sizeof(gIpdns.domain_name1));
 		ip_dns_start_job(IP_DNS_DEL_DOMAIN, NULL);
+		gIpdns.domain_dynamic1 = FALSE;
+	}
+	if(gIpdns.mutex)
+		os_mutex_unlock(gIpdns.mutex);
+	return ret;
+}
+
+int nsm_dns_domain_name_dynamic_api(BOOL dynamic, BOOL secondly)
+{
+	int ret = ERROR;
+
+	if(gIpdns.mutex)
+		os_mutex_lock(gIpdns.mutex, OS_WAIT_FOREVER);
+	if(secondly)
+	{
+		gIpdns.domain_dynamic2 = dynamic;
+	}
+	else
+	{
+		gIpdns.domain_dynamic1 = dynamic;
 	}
 	if(gIpdns.mutex)
 		os_mutex_unlock(gIpdns.mutex);
@@ -530,10 +551,10 @@ int nsm_ip_dns_host_config(struct vty *vty)
 	if(gIpdns.mutex)
 		os_mutex_lock(gIpdns.mutex, OS_WAIT_FOREVER);
 
-	if(strlen(gIpdns.domain_name1))
+	if(strlen(gIpdns.domain_name1) && !gIpdns.domain_dynamic1)
 		vty_out(vty, "dns domain %s%s", gIpdns.domain_name1, VTY_NEWLINE);
 
-	if(strlen(gIpdns.domain_name2))
+	if(strlen(gIpdns.domain_name2) && !gIpdns.domain_dynamic2)
 		vty_out(vty, "dns domain %s%s", gIpdns.domain_name2, VTY_NEWLINE);
 
 	if(!lstCount(gIpdns.dnsList))
@@ -566,7 +587,7 @@ int nsm_ip_dns_host_config(struct vty *vty)
 		index = pstNode->node;
 		if(pstNode)
 		{
-			if(/*pstNode->type == IP_DNS_DYNAMIC || */pstNode->type == IP_DNS_STATIC)
+			if(/*pstNode->type == IP_DNS_DYNAMIC || */pstNode->type == IP_DNS_STATIC && ifindex2ifname(pstNode->_dns_ifindex))
 			{
 				memset(buf, 0, sizeof(buf));
 				pu.p = &pstNode->address;
@@ -593,7 +614,9 @@ int nsm_ip_dns_host_show(struct vty *vty)
 		os_mutex_lock(gIpdns.mutex, OS_WAIT_FOREVER);
 
 	vty_out(vty, "Current config  : %s", VTY_NEWLINE);
-	vty_out(vty, " DNS domain           : %s %s %s", gIpdns.domain_name1, gIpdns.domain_name2, VTY_NEWLINE);
+	vty_out(vty, " DNS domain(%s %s)          : %s %s %s", gIpdns.domain_dynamic1 ? "D":"S",
+			gIpdns.domain_dynamic2 ? "D":"S",
+			gIpdns.domain_name1, gIpdns.domain_name2, VTY_NEWLINE);
 	if(gIpdns.dns1)
 	{
 		pu.p = &gIpdns.dns1->address;
@@ -626,7 +649,7 @@ int nsm_ip_dns_host_show(struct vty *vty)
 			pstNode != NULL;  pstNode = (ip_dns_t *)lstNext((NODE*)&index))
 	{
 		index = pstNode->node;
-		if(pstNode)
+		if(pstNode && ifindex2ifname(pstNode->_dns_ifindex))
 		{
 			if(pstNode->type == IP_DNS_DYNAMIC || pstNode->type == IP_DNS_STATIC)
 			{

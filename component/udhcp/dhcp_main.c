@@ -110,12 +110,13 @@ int udhcp_read_thread(struct eloop *eloop)
 
 static int udhcp_task_main(void *p)
 {
-	dhcp_pool_t *pool = NULL;
+	//dhcp_pool_t *pool = NULL;
+	dhcp_global_t *config = (dhcp_global_t *) p;
 	module_setup_task(MODULE_DHCPD, os_task_id_self());
 	while (!os_load_config_done()) {
 		os_sleep(1);
 	}
-	os_sleep(5);
+/*	os_sleep(5);
 	struct interface * ifp = if_lookup_by_name("ethernet 0/0/2");
 	if (ifp) {
 		pool = dhcpd_pool_lookup("test");
@@ -123,7 +124,7 @@ static int udhcp_task_main(void *p)
 		dhcpd_pool_add_interface(pool, ifp->ifindex);
 	}
 	dhcpd_lease_load();
-	os_sleep(1);
+	os_sleep(1);*/
 	zlog_debug(ZLOG_DHCP, "---------udhcpd_main");
 
 	//config->global->sock
@@ -143,7 +144,7 @@ static int udhcp_task_main(void *p)
 			zlog_debug(ZLOG_DHCP, "read -> udhcpd_main");
 		}
 	}*/
-	eloop_start_running(NULL, MODULE_DHCPD);
+	eloop_start_running(config->eloop_master, MODULE_DHCPD);
 	return 0;
 }
 
@@ -153,8 +154,9 @@ int udhcp_module_init()
 	//int server_socket = 0;
 	//unsigned num_ips = 0;
 	//struct option_set *option = NULL;
-	dhcp_pool_t *pool = NULL;
+	//dhcp_pool_t *pool = NULL;
 	dhcpd_config_init(&dhcp_global_config);
+#if 0
 	pool = dhcpd_pool_create("test");
 	if (pool) {
 		dhcpd_pool_set_address_range(pool, inet_addr("10.10.10.1"), inet_addr("10.10.10.253"));
@@ -192,6 +194,7 @@ int udhcp_module_init()
 		/**********************************************************************/
 		/**********************************************************************/
 	}
+#endif
 	/*
 	option = udhcp_find_option(pool->options, DHCP_LEASE_TIME);
 	pool->max_lease_sec = DEFAULT_LEASE_TIME;
@@ -222,7 +225,7 @@ int udhcp_module_task_init()
 {
 	if(dhcp_global_config.task_id == 0)
 		dhcp_global_config.task_id = os_task_create("udhcpTask", OS_TASK_DEFAULT_PRIORITY, 0,
-			udhcp_task_main, NULL,
+			udhcp_task_main, &dhcp_global_config,
 			OS_TASK_DEFAULT_STACK);
 	if(dhcp_global_config.task_id)
 		return OK;

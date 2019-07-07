@@ -158,7 +158,7 @@ extern int nsm_dhcps_get_api(nsm_dhcps_t *dhcps, int cmd, void *val);
 
 extern int nsm_dhcps_write_config(struct vty *vty);
 extern int nsm_dhcps_lease_show(struct vty *vty, struct interface *ifp, char *poolname, BOOL detail);
-
+extern int nsm_dhcps_pool_show(struct vty *vty, BOOL detail);
 extern int nsm_interface_dhcps_enable(nsm_dhcps_t *pool, ifindex_t kifindex, BOOL enable);
 
 extern void cmd_dhcps_init(void);

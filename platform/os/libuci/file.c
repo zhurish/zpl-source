@@ -769,8 +769,8 @@ static void uci_file_commit(struct uci_context *ctx, struct uci_package **packag
 		if (!uci_load_delta(ctx, p, true))
 			goto done;
 	}
-
-	if (!mktemp(filename))
+	if (!mkstemp(filename))
+	//if (!mktemp(filename))
 		*filename = 0;
 
 	if (!*filename) {

@@ -13,14 +13,20 @@
 #endif
 
 #ifdef BUILD_X86
+#ifndef SYS_REAL_DIR
 #define SYS_REAL_DIR		"/home/zhurish/workspace/SWPlatform/debug"
+#endif
 #define SYSCONF_REAL_DIR 	SYS_REAL_DIR "/etc"
 #else
 #ifdef BUILD_OPENWRT
+#ifndef SYS_REAL_DIR
 #define SYS_REAL_DIR		"/app"
+#endif
 #define SYSCONF_REAL_DIR 	SYS_REAL_DIR "/etc"
 #else
+#ifndef SYS_REAL_DIR
 #define SYS_REAL_DIR		"/home/app"
+#endif
 #define SYSCONF_REAL_DIR 	SYS_REAL_DIR "/etc"
 #endif
 #endif

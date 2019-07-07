@@ -147,22 +147,22 @@ DEFUN (no_nsm_interface_dhcp_option,
 }
 */
 
-
 DEFUN (nsm_dhcp_client_request,
 	nsm_dhcp_client_request_cmd,
-	"dhcp client request (router|static-route|classless-static-route|classless-static-route-ms|"
-		"tftp-server-address|dns-nameserver|domain-name|vendor-specific)",
+	"dhcp client request (router|static-route|time-server|log-server|ntp-server|sip-server|"
+		"tftp-server-address|dns-nameserver|domain-name)",
 	"DHCP Protocol config commands\n"
 	"DHCP client\n"
 	"DHCP request configure\n"
 	"Router (option 3)\n"
 	"Static route (option 33)\n"
-	"Classless static route (option 121)\n"
-	"Classless static route ms (option 249)\n"
+	"Time server (option 4)\n"
+	"Log server (option 7)\n"
+	"Ntp server (option 0x2a)\n"
+	"Sip server (option 0x78)\n"
 	"TFTP Server Address (option 150)\n"
 	"DNS Name server (option 6)\n"
-	"Domain Name (option 15)\n"
-	"Spcific Vendor (option 43)\n")
+	"Domain Name (option 15)\n")
 {
 	int ret = 0, option = 0;
 	struct interface *ifp = (struct interface *) vty->index;
@@ -170,19 +170,19 @@ DEFUN (nsm_dhcp_client_request,
 	{
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 		{
-			if(os_strlen(argv[0]) > 8)
+			if(os_strlen(argv[0]) > 16)
 			{
 				if(os_strncmp(argv[0], "tftp-server-address", 6) == 0)
 				{
 					option = 150;
 				}
-				else
+/*				else
 				{
 					if(os_strlen(argv[0]) == os_strlen("classless-static-route"))
 						option = 121;
 					else if(os_strlen(argv[0]) > os_strlen("classless-static-route"))
 						option = 249;
-				}
+				}*/
 			}
 			else if(os_strlen(argv[0]) > 8)
 			{
@@ -199,7 +199,17 @@ DEFUN (nsm_dhcp_client_request,
 					option = 3;
 				else if(os_strncmp(argv[0], "static-route", 6) == 0)
 					option = 33;
+				else if(os_strncmp(argv[0], "time-server", 6) == 0)
+					option = 4;
+				else if(os_strncmp(argv[0], "log-server", 6) == 0)
+					option = 7;
+				else if(os_strncmp(argv[0], "ntp-server", 6) == 0)
+					option = 0x2a;
+				else if(os_strncmp(argv[0], "sip-server", 6) == 0)
+					option = 0x78;
 			}
+
+
 			if(option)
 			{
 				ret = nsm_interface_dhcpc_option(ifp, TRUE, option, NULL);
@@ -220,20 +230,21 @@ DEFUN (nsm_dhcp_client_request,
 
 DEFUN (no_nsm_dhcp_client_request,
 	no_nsm_dhcp_client_request_cmd,
-	"no dhcp client request (router|static-route|classless-static-route|classless-static-route-ms|"
-		"tftp-server-address|dns-nameserver|domain-name|vendor-specific)",
+	"no dhcp client request (router|static-route|time-server|log-server|ntp-server|sip-server|"
+		"tftp-server-address|dns-nameserver|domain-name)",
 	NO_STR
 	"DHCP Protocol config commands\n"
 	"DHCP client\n"
 	"DHCP request configure\n"
 	"Router (option 3)\n"
 	"Static route (option 33)\n"
-	"Classless static route (option 121)\n"
-	"Classless static route ms (option 249)\n"
+	"Time server (option 4)\n"
+	"Log server (option 7)\n"
+	"Ntp server (option 0x2a)\n"
+	"Sip server (option 0x78)\n"
 	"TFTP Server Address (option 150)\n"
 	"DNS Name server (option 6)\n"
-	"Domain Name (option 15)\n"
-	"Spcific Vendor (option 43)\n")
+	"Domain Name (option 15)\n")
 {
 	int ret = 0, option = 0;
 	struct interface *ifp = (struct interface *) vty->index;
@@ -241,19 +252,19 @@ DEFUN (no_nsm_dhcp_client_request,
 	{
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 		{
-			if(os_strlen(argv[0]) > 8)
+			if(os_strlen(argv[0]) > 16)
 			{
 				if(os_strncmp(argv[0], "tftp-server-address", 6) == 0)
 				{
 					option = 150;
 				}
-				else
+/*				else
 				{
 					if(os_strlen(argv[0]) == os_strlen("classless-static-route"))
 						option = 121;
 					else if(os_strlen(argv[0]) > os_strlen("classless-static-route"))
 						option = 249;
-				}
+				}*/
 			}
 			else if(os_strlen(argv[0]) > 8)
 			{
@@ -270,6 +281,14 @@ DEFUN (no_nsm_dhcp_client_request,
 					option = 3;
 				else if(os_strncmp(argv[0], "static-route", 6) == 0)
 					option = 33;
+				else if(os_strncmp(argv[0], "time-server", 6) == 0)
+					option = 4;
+				else if(os_strncmp(argv[0], "log-server", 6) == 0)
+					option = 7;
+				else if(os_strncmp(argv[0], "ntp-server", 6) == 0)
+					option = 0x2a;
+				else if(os_strncmp(argv[0], "sip-server", 6) == 0)
+					option = 0x78;
 			}
 			if(option)
 			{

@@ -21,4 +21,6 @@ int dhcpc_interface_option_api(struct interface *ifp, BOOL enable, int index, ch
 int dhcpc_interface_config(struct interface *ifp, struct vty *vty);
 int dhcpc_interface_lease_show(struct vty *vty, struct interface *ifp, BOOL detail);
 
+int dhcp_pool_show(struct vty *vty, BOOL detail);
+
 #endif /* __DHCP_API_H__ */

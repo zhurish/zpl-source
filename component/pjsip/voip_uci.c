@@ -37,7 +37,10 @@ BOOL voip_global_enabled()
 {
 	int enable = 0;
 #ifdef PL_OPENWRT_UCI
-	os_uci_get_integer("product.global.voip", &enable);
+	if(os_uci_get_integer("product.global.voip", &enable) != OK)
+		enable = TRUE;
+#else
+	enable = TRUE;
 #endif
 	return (BOOL)enable;
 }

@@ -214,6 +214,9 @@ static int pjmain(void *p)
 	{
 		os_sleep(1);
 	}
+#ifdef PL_OPENWRT_UCI
+	pl_pjsip_module_reload();
+#endif
 	cfg.running = PJ_TRUE;
 	pj_task_cb_init(pl_pjsip_task_add, os_task_del, os_task_refresh_id, pl_pjsip_task_self);
 

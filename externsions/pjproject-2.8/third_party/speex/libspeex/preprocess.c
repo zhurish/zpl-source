@@ -514,7 +514,7 @@ EXPORT SpeexPreprocessState *speex_preprocess_state_init(int frame_size, int sam
    }
    /*st->loudness = pow(AMP_SCALE*st->agc_level,LOUDNESS_EXP);*/
    st->loudness = 1e-15;
-   st->agc_gain = 1;
+   st->agc_gain = 0.2/*1*/;
    st->max_gain = 30;
    st->max_increase_step = exp(0.11513f * 12.*st->frame_size / st->sampling_rate);
    st->max_decrease_step = exp(-0.11513f * 40.*st->frame_size / st->sampling_rate);

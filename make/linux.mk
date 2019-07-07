@@ -18,6 +18,8 @@ export OBJCOPY=objcopy
 export OBJDUMP=objdump
 export RANLIB=ranlib
 PLOS_DEFINE += -DBUILD_$(BUILD_TYPE)
+PLOS_DEFINE += -DSYS_REAL_DIR=\"$(BASE_ROOT)/$(RELEASEDIR)\"
+
 endif
 #
 ifneq ($(BUILD_TYPE),X86)
@@ -40,7 +42,6 @@ export RANLIB=$(CROSS_COMPILE)ranlib
 PLOS_CFLAGS += -I$(CROSS_COMPILE_ROOT)/include -I$(CROSS_COMPILE_ROOT)/usr/include 
 PLOS_LDFLAGS += -L$(CROSS_COMPILE_ROOT)/lib -L$(CROSS_COMPILE_ROOT)/usr/lib
 PLOS_DEFINE += -DBUILD_$(BUILD_TYPE)
-
 endif
 #
 #

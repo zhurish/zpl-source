@@ -3,8 +3,12 @@
 ###########################################################################
 MODULEDIR = service/sntp
 #OS
+ifeq ($(strip $(MODULE_SNTPC)),true)
 OBJS	+= sntpcLib.o
+endif
+ifeq ($(strip $(MODULE_SNTPS)),true)
 OBJS	+= sntpsLib.o
+endif
 
 #############################################################################
 # LIB

@@ -964,7 +964,7 @@ static int modem_pppd_task_connect(modem_pppd_t *pppd)
 		//char filepath[256];
 		//os_memset(filepath, 0, sizeof(filepath));
 		//os_snprintf(filepath, sizeof(filepath), "pppd call %s", pppd->dial_name);
-		char *exeargv[] = {"pppd", "call", pppd->dial_name,NULL};
+		char *exeargv[] = {"pppd", "call", pppd->dial_name, NULL};
 		exeargv[2] = pppd->dial_name;
 		super_system_execvp("pppd", exeargv);
 	}

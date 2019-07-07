@@ -157,7 +157,9 @@ extern int pl_pjsip_module_init();
 extern int pl_pjsip_module_exit();
 extern int pl_pjsip_module_task_init();
 extern int pl_pjsip_module_task_exit();
-
+#ifdef PL_OPENWRT_UCI
+extern int pl_pjsip_module_reload();
+#endif
 extern voip_app_state_t voip_app_state_get(voip_app_t *osip);
 extern int voip_app_state_set(voip_app_t *osip, voip_app_state_t state);
 

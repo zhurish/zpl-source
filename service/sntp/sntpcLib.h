@@ -50,6 +50,7 @@ struct sntp_client
     u_short sntpcPort;
     u_short sntpc_interval;
     struct in_addr address;
+    BOOL		dynamics;
 
     struct timespec sntpTime;	/* storage for retrieved time value */
 
@@ -82,6 +83,9 @@ extern int sntpc_debug_config(struct vty *);
 extern int sntpc_is_sync(void);
 extern int sntpc_server_address(struct in_addr *);
 
+extern int sntpc_is_dynamics(void);
+extern int sntpc_dynamics_enable(void);
+extern int sntpc_dynamics_disable(void);
 
 //#define SNTPC_CLI_ENABLE
 #ifndef SNTPC_CLI_ENABLE
@@ -111,7 +115,9 @@ enum
 extern int vty_show_sntpc_client(struct vty *vty);
 
 extern int sntpc_client_set_api(struct vty *, int cmd, const char *value);
+extern int sntpc_client_dynamics_set_api(struct vty *, int cmd, const char *value);
 extern int sntpc_client_get_api(struct vty *, int cmd, const char *value);
+extern int sntpc_client_dynamics_get_api(struct vty *vty, int cmd, const char *value);
 
 #endif
 

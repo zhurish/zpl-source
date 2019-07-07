@@ -408,24 +408,24 @@ int nsm_pal_interface_bandwidth (struct interface *ifp, int bandwidth)
 	return ret;
 }
 
-int nsm_pal_interface_set_address (struct interface *ifp, struct prefix *cp, int secondry)
+int nsm_pal_interface_set_address (struct interface *ifp, struct connected *ifc, int secondry)
 {
 	//printf("%s\r\n", __func__);
 	int ret = 0;
-	ret = pal_interface_ipv4_add(ifp, cp);
+	ret = pal_interface_ipv4_add(ifp, ifc);
 	if(ret != OK)
 		return ret;
 	//ret = hal_port_address_set(ifp->ifindex, cp, secondry);
 	return ret;
 }
 
-int nsm_pal_interface_unset_address (struct interface *ifp, struct prefix *cp, int secondry)
+int nsm_pal_interface_unset_address (struct interface *ifp, struct connected *ifc, int secondry)
 {
 	int ret = 0;
 	//ret = hal_port_address_unset(ifp->ifindex, cp, secondry);
 	//if(ret != OK)
 	//	return ret;
-	ret = pal_interface_ipv4_delete(ifp, cp);
+	ret = pal_interface_ipv4_delete(ifp, ifc);
 	return ret;
 }
 

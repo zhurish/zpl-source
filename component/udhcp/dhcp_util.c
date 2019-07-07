@@ -5,7 +5,20 @@
  *      Author: zhurish
  */
 
+#include "zebra.h"
+#include "memory.h"
+#include "prefix.h"
+#include "log.h"
+
+#include "nsm_dns.h"
+#include "rib.h"
+
+
 #include "dhcp_def.h"
+#include "dhcp_lease.h"
+#include "dhcp_util.h"
+#include "dhcp_main.h"
+#include "dhcpc.h"
 #include "dhcp_util.h"
 
 const uint8_t DHCP_MAC_BCAST_ADDR[6] ALIGN2 = {
@@ -344,4 +357,579 @@ void* FAST_FUNC xmemdup(const void *s, int n)
 		return memcpy(p, s, n);
 	return NULL;
 }
+*/
+static int dhcp_client_lease_set_kernel(client_interface_t *ifter, client_lease_t *lease)
+{
+	int ret = 0;
+	struct interface * ifp = if_lookup_by_index (ifter->ifindex);
+	struct prefix cp;
+	struct in_addr gate;
+	struct connected *ifc;
+	char tmp[128], tmp1[128];
+	memset(tmp, 0, sizeof(tmp));
+	memset(tmp1, 0, sizeof(tmp1));
+
+	sprintf(tmp1, "%s", inet_address(ntohl(lease->lease_address)));
+	netmask_str2prefix_str (tmp1, inet_address(ntohl(lease->lease_netmask)), tmp);
+	memset(&cp, 0, sizeof(struct prefix));
+	if(str2prefix_ipv4 (tmp, (struct prefix_ipv4 *)&cp) <= 0)
+	{
+		return ERROR;
+	}
+	ifc = connected_check(ifp, (struct prefix *)&cp);
+	if (!ifc)
+	{
+		struct prefix_ipv4 *p1, *p2;
+		ifc = connected_new();
+		ifc->ifp = ifp;
+		/* Address. */
+		p1 = prefix_new();
+		p1->family = cp.family;
+
+		prefix_copy ((struct prefix *)p1, (struct prefix *)&cp);
+		ifc->address = (struct prefix *) p1;
+		if(p1->family == AF_INET)
+		{
+			/* Broadcast. */
+			if (p1->prefixlen <= IPV4_MAX_PREFIXLEN - 2)
+			{
+				p2 = prefix_new();
+				p1->family = cp.family;
+				prefix_copy ((struct prefix *)p2, (struct prefix *)&cp);
+				p2->prefix.s_addr = ipv4_broadcast_addr(p2->prefix.s_addr, p2->prefixlen);
+				ifc->destination = (struct prefix *) p2;
+			}
+		}
+		SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
+		ret = nsm_pal_interface_set_address (ifp, ifc, 0);
+		if(ret != OK)
+			return ERROR;
+	}
+	else
+		return ERROR;
+
+	if(lease->lease_dns1)
+	{
+		struct prefix dnscp;
+		ip_dns_opt_t dnsopt;
+		memset(&dnscp, 0, sizeof(struct prefix));
+		memset(&dnsopt, 0, sizeof(ip_dns_opt_t));
+		dnscp.family = AF_INET;
+		dnscp.prefixlen = IPV4_MAX_PREFIXLEN;
+		dnscp.u.prefix4.s_addr = lease->lease_dns1;
+		dnsopt.ifindex = ifter->ifindex;
+		dnsopt.vrfid = ifp->vrf_id;
+
+		nsm_ip_dns_add(&dnscp, &dnsopt, FALSE, IP_DNS_DYNAMIC);
+
+		if(lease->lease_dns2)
+		{
+			memset(&dnscp, 0, sizeof(struct prefix));
+			memset(&dnsopt, 0, sizeof(ip_dns_opt_t));
+			dnscp.family = AF_INET;
+			dnscp.prefixlen = IPV4_MAX_PREFIXLEN;
+			dnscp.u.prefix4.s_addr = lease->lease_dns2;
+			dnsopt.ifindex = ifter->ifindex;
+			dnsopt.vrfid = ifp->vrf_id;
+			nsm_ip_dns_add(&dnscp, &dnsopt, FALSE, IP_DNS_DYNAMIC);
+		}
+	}
+	if(strlen(lease->domain_name))
+	{
+		nsm_dns_domain_name_add_api(lease->domain_name, FALSE);
+		nsm_dns_domain_name_dynamic_api(TRUE, FALSE);
+	}
+	memset(&cp, 0, sizeof(struct prefix));
+	cp.family = AF_INET;
+	cp.prefixlen = 0;
+	cp.u.prefix4.s_addr = 0;
+	gate.s_addr = lease->lease_gateway;
+	rib_add_ipv4 (ZEBRA_ROUTE_DHCP, 0, &cp,
+				 &gate, NULL,
+				 ifter->ifindex, ifp->vrf_id, 0,
+				 ifter->instance, 0, 0, SAFI_UNICAST);
+
+	if(lease->lease_gateway2)
+	{
+		gate.s_addr = lease->lease_gateway2;
+		rib_add_ipv4 (ZEBRA_ROUTE_DHCP, 0, &cp,
+					 &gate, NULL,
+					 ifter->ifindex, ifp->vrf_id, 0,
+					 ifter->instance + 1, 0, 0, SAFI_UNICAST);
+	}
+	return OK;
+}
+
+static int dhcp_client_lease_unset_kernel(client_interface_t *ifter, client_lease_t *lease)
+{
+	int ret = 0;
+	struct interface * ifp = if_lookup_by_index (ifter->ifindex);
+	struct prefix cp;
+	struct connected *ifc;
+	struct in_addr gate;
+	char tmp[128], tmp1[128];
+	memset(tmp, 0, sizeof(tmp));
+	memset(tmp1, 0, sizeof(tmp1));
+
+	memset(&cp, 0, sizeof(struct prefix));
+	cp.family = AF_INET;
+	cp.prefixlen = 0;
+	cp.u.prefix4.s_addr = 0;
+	gate.s_addr = lease->lease_gateway;
+	rib_delete_ipv4 (ZEBRA_ROUTE_DHCP, 0, &cp,
+				 &gate,
+				 ifter->ifindex, ifp->vrf_id, SAFI_UNICAST);
+
+	if(lease->lease_gateway2)
+	{
+		gate.s_addr = lease->lease_gateway2;
+		rib_delete_ipv4 (ZEBRA_ROUTE_DHCP, 0, &cp,
+					 &gate,
+					 ifter->ifindex, ifp->vrf_id, SAFI_UNICAST);
+	}
+
+	if(lease->lease_dns1)
+	{
+		struct prefix dnscp;
+		ip_dns_opt_t dnsopt;
+		memset(&dnscp, 0, sizeof(struct prefix));
+		memset(&dnsopt, 0, sizeof(ip_dns_opt_t));
+		dnscp.family = AF_INET;
+		dnscp.prefixlen = IPV4_MAX_PREFIXLEN;
+		dnscp.u.prefix4.s_addr = lease->lease_dns1;
+		dnsopt.ifindex = ifter->ifindex;
+		dnsopt.vrfid = ifp->vrf_id;
+
+		nsm_ip_dns_add_api(&dnscp, FALSE);
+
+		if(lease->lease_dns2)
+		{
+			memset(&dnscp, 0, sizeof(struct prefix));
+			memset(&dnsopt, 0, sizeof(ip_dns_opt_t));
+			dnscp.family = AF_INET;
+			dnscp.prefixlen = IPV4_MAX_PREFIXLEN;
+			dnscp.u.prefix4.s_addr = lease->lease_dns2;
+			dnsopt.ifindex = ifter->ifindex;
+			dnsopt.vrfid = ifp->vrf_id;
+			nsm_ip_dns_add_api(&dnscp, FALSE);
+		}
+	}
+	nsm_dns_domain_name_del_api(FALSE);
+
+
+	sprintf(tmp1, "%s", inet_address(ntohl(lease->lease_address)));
+	netmask_str2prefix_str (tmp1, inet_address(ntohl(lease->lease_netmask)), tmp);
+	memset(&cp, 0, sizeof(struct prefix));
+	if(str2prefix_ipv4 (tmp, (struct prefix_ipv4 *)&cp) <= 0)
+	{
+		return ERROR;
+	}
+	ifc = connected_check(ifp, (struct prefix *)&cp);
+	if (!ifc)
+	{
+		struct prefix_ipv4 *p1, *p2;
+		ifc = connected_new();
+		ifc->ifp = ifp;
+		/* Address. */
+		p1 = prefix_new();
+		p1->family = cp.family;
+
+		prefix_copy ((struct prefix *)p1, (struct prefix *)&cp);
+		ifc->address = (struct prefix *) p1;
+		if(p1->family == AF_INET)
+		{
+			/* Broadcast. */
+			if (p1->prefixlen <= IPV4_MAX_PREFIXLEN - 2)
+			{
+				p2 = prefix_new();
+				p1->family = cp.family;
+				prefix_copy ((struct prefix *)p2, (struct prefix *)&cp);
+				p2->prefix.s_addr = ipv4_broadcast_addr(p2->prefix.s_addr, p2->prefixlen);
+				ifc->destination = (struct prefix *) p2;
+			}
+		}
+		SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
+		ret = nsm_pal_interface_unset_address (ifp, ifc, 0);
+		if(ret != OK)
+			return ERROR;
+	}
+	else
+		return ERROR;
+	return OK;
+}
+
+int dhcp_client_lease_set(void *p)
+{
+	client_interface_t *ifter = p;
+	return dhcp_client_lease_set_kernel(ifter, &ifter->lease);
+}
+
+int dhcp_client_lease_unset(void *p)
+{
+	client_interface_t *ifter = p;
+	return dhcp_client_lease_unset_kernel(ifter, &ifter->lease);
+}
+#if 0
+#!/bin/sh
+[ -z "$1" ] && echo "Error: should be run by udhcpc" && exit 1
+
+set_classless_routes() {
+	local max=128
+	local type
+	while [ -n "$1" -a -n "$2" -a $max -gt 0 ]; do
+		[ ${1##*/} -eq 32 ] && type=host || type=net
+		echo "udhcpc: adding route for $type $1 via $2"
+		route add -$type "$1" gw "$2" dev "$interface"
+		max=$(($max-1))
+		shift 2
+	done
+}
+
+setup_interface() {
+	echo "udhcpc: ifconfig $interface $ip netmask ${subnet:-255.255.255.0} broadcast ${broadcast:-+}"
+	ifconfig $interface $ip netmask ${subnet:-255.255.255.0} broadcast ${broadcast:-+}
+
+	[ -n "$router" ] && [ "$router" != "0.0.0.0" ] && [ "$router" != "255.255.255.255" ] && {
+		echo "udhcpc: setting default routers: $router"
+
+		local valid_gw=""
+		for i in $router ; do
+			route add default gw $i dev $interface
+			valid_gw="${valid_gw:+$valid_gw|}$i"
+		done
+
+		eval $(route -n | awk '
+			/^0.0.0.0\W{9}('$valid_gw')\W/ {next}
+			/^0.0.0.0/ {print "route del -net "$1" gw "$2";"}
+		')
+	}
+
+	# CIDR STATIC ROUTES (rfc3442)
+	[ -n "$staticroutes" ] && set_classless_routes $staticroutes
+	[ -n "$msstaticroutes" ] && set_classless_routes $msstaticroutes
+}
+
+
+applied=
+case "$1" in
+	deconfig)
+		ifconfig "$interface" 0.0.0.0
+	;;
+	renew)
+		setup_interface update
+	;;
+	bound)
+		setup_interface ifup
+	;;
+esac
+
+# user rules
+[ -f /etc/udhcpc.user ] && . /etc/udhcpc.user
+
+exit 0
+
+/* put all the parameters into the environment */
+static char **fill_envp(struct dhcp_packet *packet)
+{
+	int envc;
+	int i;
+	char **envp, **curr;
+	const char *opt_name;
+	uint8_t *temp;
+	uint8_t overload = 0;
+
+#define BITMAP unsigned
+#define BBITS (sizeof(BITMAP) * 8)
+#define BMASK(i) (1 << (i & (sizeof(BITMAP) * 8 - 1)))
+#define FOUND_OPTS(i) (found_opts[(unsigned)i / BBITS])
+	BITMAP found_opts[256 / BBITS];
+
+	memset(found_opts, 0, sizeof(found_opts));
+
+	/* We need 6 elements for:
+	 * "interface=IFACE"
+	 * "ip=N.N.N.N" from packet->yiaddr
+	 * "siaddr=IP" from packet->siaddr_nip (unless 0)
+	 * "boot_file=FILE" from packet->file (unless overloaded)
+	 * "sname=SERVER_HOSTNAME" from packet->sname (unless overloaded)
+	 * terminating NULL
+	 */
+	envc = 6;
+	/* +1 element for each option, +2 for subnet option: */
+	if (packet) {
+		/* note: do not search for "pad" (0) and "end" (255) options */
+//TODO: change logic to scan packet _once_
+		for (i = 1; i < 255; i++) {
+			temp = udhcp_get_option(packet, i);
+			if (temp) {
+				if (i == DHCP_OPTION_OVERLOAD)
+					overload |= *temp;
+				else if (i == DHCP_SUBNET)
+					envc++; /* for $mask */
+				envc++;
+				/*if (i != DHCP_MESSAGE_TYPE)*/
+				FOUND_OPTS(i) |= BMASK(i);
+			}
+		}
+	}
+	curr = envp = xzalloc(sizeof(envp[0]) * envc);
+
+	*curr = xasprintf("interface=%s", client_config.interface);
+	putenv(*curr++);
+
+	if (!packet)
+		return envp;
+
+	/* Export BOOTP fields. Fields we don't (yet?) export:
+	 * uint8_t op;      // always BOOTREPLY
+	 * uint8_t htype;   // hardware address type. 1 = 10mb ethernet
+	 * uint8_t hlen;    // hardware address length
+	 * uint8_t hops;    // used by relay agents only
+	 * uint32_t xid;
+	 * uint16_t secs;   // elapsed since client began acquisition/renewal
+	 * uint16_t flags;  // only one flag so far: bcast. Never set by server
+	 * uint32_t ciaddr; // client IP (usually == yiaddr. can it be different
+	 *                  // if during renew server wants to give us different IP?)
+	 * uint32_t gateway_nip; // relay agent IP address
+	 * uint8_t chaddr[16]; // link-layer client hardware address (MAC)
+	 * TODO: export gateway_nip as $giaddr?
+	 */
+	/* Most important one: yiaddr as $ip */
+	*curr = xmalloc(sizeof("ip=255.255.255.255"));
+	sprint_nip(*curr, "ip=", (uint8_t *) &packet->yiaddr);
+	putenv(*curr++);
+	if (packet->siaddr_nip) {
+		/* IP address of next server to use in bootstrap */
+		*curr = xmalloc(sizeof("siaddr=255.255.255.255"));
+		sprint_nip(*curr, "siaddr=", (uint8_t *) &packet->siaddr_nip);
+		putenv(*curr++);
+	}
+	if (!(overload & FILE_FIELD) && packet->file[0]) {
+		/* watch out for invalid packets */
+		*curr = xasprintf("boot_file=%."DHCP_PKT_FILE_LEN_STR"s", packet->file);
+		putenv(*curr++);
+	}
+	if (!(overload & SNAME_FIELD) && packet->sname[0]) {
+		/* watch out for invalid packets */
+		*curr = xasprintf("sname=%."DHCP_PKT_SNAME_LEN_STR"s", packet->sname);
+		putenv(*curr++);
+	}
+
+	/* Export known DHCP options */
+	opt_name = dhcp_option_strings;
+	i = 0;
+	while (*opt_name) {
+		uint8_t code = dhcp_optflags[i].code;
+		BITMAP *found_ptr = &FOUND_OPTS(code);
+		BITMAP found_mask = BMASK(code);
+		if (!(*found_ptr & found_mask))
+			goto next;
+		*found_ptr &= ~found_mask; /* leave only unknown options */
+		temp = udhcp_get_option(packet, code);
+		*curr = xmalloc_optname_optval(temp, &dhcp_optflags[i], opt_name);
+		putenv(*curr++);
+		if (code == DHCP_SUBNET) {
+			/* Subnet option: make things like "$ip/$mask" possible */
+			uint32_t subnet;
+			move_from_unaligned32(subnet, temp);
+			*curr = xasprintf("mask=%u", mton(subnet));
+			putenv(*curr++);
+		}
+ next:
+		opt_name += strlen(opt_name) + 1;
+		i++;
+	}
+	/* Export unknown options */
+	for (i = 0; i < 256;) {
+		BITMAP bitmap = FOUND_OPTS(i);
+		if (!bitmap) {
+			i += BBITS;
+			continue;
+		}
+		if (bitmap & BMASK(i)) {
+			unsigned len, ofs;
+
+			temp = udhcp_get_option(packet, i);
+			/* udhcp_get_option returns ptr to data portion,
+			 * need to go back to get len
+			 */
+			len = temp[-OPT_DATA + OPT_LEN];
+			*curr = xmalloc(sizeof("optNNN=") + 1 + len*2);
+			ofs = sprintf(*curr, "opt%u=", i);
+			*bin2hex(*curr + ofs, (void*) temp, len) = '\0';
+			putenv(*curr++);
+		}
+		i++;
+	}
+
+	return envp;
+}
+#endif
+
+/* really simple implementation, just count the bits */
+static int mton(uint32_t mask)
+{
+	int i = 0;
+	mask = ntohl(mask); /* 111110000-like bit pattern */
+	while (mask) {
+		i++;
+		mask <<= 1;
+	}
+	return i;
+}
+
+static char ** dhcpc_setenv(client_interface_t *ifter)
+{
+	char tmp[128];
+	char **envp = NULL, **curr = NULL;
+	client_lease_t *lease = &ifter->lease;
+	curr = envp = malloc(sizeof(envp[0]) * 32);
+
+	memset(tmp, 0, sizeof(tmp));
+	snprintf(tmp, sizeof(tmp), "interface=%s", ifindex2ifname(ifter->ifindex));
+	*curr = strdup(tmp);
+	putenv(*curr++);
+
+	memset(tmp, 0, sizeof(tmp));
+	snprintf(tmp, sizeof(tmp), "ip=%s", inet_address(ntohl(lease->lease_address)));
+	*curr = strdup(tmp);
+	putenv(*curr++);
+
+	if(lease->lease_netmask)
+	{
+		memset(tmp, 0, sizeof(tmp));
+		snprintf(tmp, sizeof(tmp), "mask=%u", mton(lease->lease_netmask));
+		*curr = strdup(tmp);
+		putenv(*curr++);
+	}
+	if (lease->siaddr_nip)
+	{
+		memset(tmp, 0, sizeof(tmp));
+		snprintf(tmp, sizeof(tmp), "siaddr=%s", inet_address(ntohl(lease->siaddr_nip)));
+		*curr = strdup(tmp);
+		putenv(*curr++);
+	}
+
+	if(lease->lease_broadcast)
+	{
+		memset(tmp, 0, sizeof(tmp));
+		snprintf(tmp, sizeof(tmp), "broadcast=%s", inet_address(ntohl(lease->lease_broadcast)));
+		*curr = strdup(tmp);
+		putenv(*curr++);
+	}
+
+	if(lease->lease_gateway)
+	{
+		memset(tmp, 0, sizeof(tmp));
+		snprintf(tmp, sizeof(tmp), "router=%s", inet_address(ntohl(lease->lease_gateway)));
+		if(lease->lease_gateway2)
+		{
+			snprintf(tmp + strlen(tmp), sizeof(tmp) - strlen(tmp), " %s", inet_address(ntohl(lease->lease_gateway2)));
+		}
+		*curr = strdup(tmp);
+		putenv(*curr++);
+	}
+
+	if(lease->lease_dns1)
+	{
+		memset(tmp, 0, sizeof(tmp));
+		snprintf(tmp, sizeof(tmp), "dns=%s", inet_address(ntohl(lease->lease_dns1)));
+		if(lease->lease_dns2)
+		{
+			snprintf(tmp + strlen(tmp), sizeof(tmp) - strlen(tmp), " %s", inet_address(ntohl(lease->lease_dns2)));
+		}
+		*curr = strdup(tmp);
+		putenv(*curr++);
+	}
+
+	if(strlen(lease->domain_name))
+	{
+		memset(tmp, 0, sizeof(tmp));
+		snprintf(tmp, sizeof(tmp), "domain=%s", ((lease->domain_name)));
+		*curr = strdup(tmp);
+		putenv(*curr++);
+	}
+	//routes
+	//static_route_list
+	return envp;
+}
+
+static void dhcpc_unsetenv(const char *var)
+{
+	char onstack[128]; /* smaller stack setup code on x86 */
+	char *tp = NULL;
+
+	tp = strchr(var, '=');
+	if (tp)
+	{
+		unsigned sz = tp - var;
+		if (sz < sizeof(onstack))
+		{
+			((char*)mempcpy(onstack, var, sz))[0] = '\0';
+			tp = NULL;
+			var = onstack;
+			unsetenv(var);
+			return;
+		}
+/*		else
+		{
+			var = tp = xstrndup(var, sz);
+		}*/
+	}
+	unsetenv(var);
+	//free(tp);
+}
+
+/* Call a script with a par file and env vars */
+void udhcp_run_script(void *p, const char *name)
+{
+	int pid = 0;
+	char **envp = NULL, **curr = NULL;
+	char *argv[3] = { NULL, NULL, NULL };
+	client_interface_t *ifter = (client_interface_t *)p;
+	if(!ifter)
+		return;
+	envp = dhcpc_setenv(ifter);
+
+	/* call script */
+	argv[0] = (char*) CONFIG_UDHCPC_DEFAULT_SCRIPT;
+	argv[1] = (char*) name;
+	argv[2] = NULL;
+
+	//spawn_and_wait(argv);
+	pid = child_process_create();
+	if(pid < 0)
+	{
+		  zlog_warn(ZLOG_DEFAULT, "Can't create child process (%s), continuing", safe_strerror(errno));
+		  return ;
+	}
+	else if(pid == 0)
+	{
+		super_system_execvp(CONFIG_UDHCPC_DEFAULT_SCRIPT, argv);
+	}
+	else
+	{
+		child_process_wait(pid, 0);
+		for (curr = envp; *curr; curr++)
+		{
+			dhcpc_unsetenv(*curr);
+		}
+		free(envp);
+	}
+}
+
+
+/*
+int nsm_pal_interface_set_address (struct interface *ifp, struct prefix *cp, int secondry);
+int nsm_pal_interface_unset_address (struct interface *ifp, struct prefix *cp, int secondry);
+extern int nsm_ip_dns_add(struct prefix *address, ip_dns_opt_t *, BOOL	secondly, dns_class_t type);
+extern int nsm_ip_dns_del(struct prefix *address, dns_class_t type);
+extern int rib_add_ipv4 (int type, int flags, struct prefix_ipv4 *p,
+			 struct in_addr *gate, struct in_addr *src,
+			 ifindex_t ifindex, vrf_id_t vrf_id, int table_id,
+			 u_int32_t, u_int32_t, u_char, safi_t);
+
+extern int rib_delete_ipv4 (int type, int flags, struct prefix_ipv4 *p,
+		            struct in_addr *gate, ifindex_t ifindex,
+		            vrf_id_t, safi_t safi);
 */

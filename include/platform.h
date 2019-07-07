@@ -15,7 +15,7 @@
 #define OS_SLOT_MAX	1
 */
 
-#define SYSLOG_CLIENT
+//#define SYSLOG_CLIENT
 
 
 /*

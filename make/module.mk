@@ -4,12 +4,18 @@ _MODULELIST = \
 	MODULE_PLATFORM.true \
 	MODULE_L2PROTOCOL.false \
 	MODULE_SERVICE.true \
+	MODULE_SNTPC.true \
+	MODULE_SNTPS.true \
+	MODULE_SYSLOG.true \
 	MODULE_STARTUP.true \
 	MODULE_PRODUCT.true \
 	MODULE_BCM53125.false \
 	MODULE_CLI.true \
 	MODULE_OSPF.false \
 	MODULE_ABSTRACT.true \
+	MODULE_HAL.true \
+	MODULE_PAL_KERNEL.true \
+	MODULE_PAL_IPCOM.false \
 	MODULE_COMPONENT.true \
 	MODULE_WIFI.true \
 	MODULE_MODEM.true \
@@ -18,6 +24,15 @@ _MODULELIST = \
 	MODULE_UDHCP.true \
 	MODULE_SQLITE.false \
 	MODULE_SYSTOOLS.true \
+	MODULE_FTPD.true \
+	MODULE_FTPC.true \
+	MODULE_TFTPD.true \
+	MODULE_TFTPC.true \
+	MODULE_TELNET.true \
+	MODULE_TELNETD.false \
+	MODULE_PING.true \
+	MODULE_TRACEROUTE.true \
+	MODULE_UBUS.true \
 	MODULE_SSH.true \
 	MODULE_PJSIP.true \
 	MODULE_OSIP.false \
@@ -43,6 +58,16 @@ $(foreach IModule,$(_MODULELIST), $(eval $(call _MODULE_DEF,$(IModule))))
 #
 #
 #
+#
+ifeq ($(strip $(MODULE_PAL_KERNEL)),true)
+MODULE_PAL_IPCOM=false
+MODULE_ABSTRACT=true
+endif
+#
+ifeq ($(strip $(MODULE_PAL_IPCOM)),true)
+MODULE_PAL_KERNEL=false
+MODULE_ABSTRACT=true
+endif
 #
 ifeq ($(strip $(MODULE_PJSIP)),true)
 MODULE_OSIP=false

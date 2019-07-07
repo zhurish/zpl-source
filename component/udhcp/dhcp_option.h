@@ -37,6 +37,7 @@ extern int dhcp_option_flags(uint8_t code);
  * for dhcp pool option handle
  */
 extern int dhcp_option_add(dhcp_option_set_t *option_tbl, uint8_t code, const uint8_t *opt, int len);
+extern int dhcp_option_add_hex(dhcp_option_set_t *option_tbl, uint8_t code, const uint32_t value, int len);
 extern int dhcp_option_del(dhcp_option_set_t *option_tbl, uint8_t code);
 extern int dhcp_option_clean(dhcp_option_set_t *option_tbl);
 extern int dhcp_option_lookup(dhcp_option_set_t *option_tbl, uint8_t code);
@@ -63,10 +64,10 @@ extern int dhcp_option_packet_set_value(char *data, int len, uint8_t code, uint3
 extern int udhcp_add_simple_option(struct dhcp_packet *packet, uint8_t code, uint32_t value);
 extern int udhcp_add_simple_option_value(struct dhcp_packet *packet, uint8_t code, uint32_t oplen, uint8_t *opt);
 
-#define dhcp_option_add_8bit(t, c, v)		dhcp_option_add(t, c, v, 1)
-#define dhcp_option_add_16bit(t, c, v)		dhcp_option_add(t, c, v, 2)
-#define dhcp_option_add_32bit(t, c, v)		dhcp_option_add(t, c, v, 4)
-#define dhcp_option_add_address(t, c, v)	dhcp_option_add(t, c, v, 4)
+#define dhcp_option_add_8bit(t, c, v)		dhcp_option_add_hex(t, c, v, 1)
+#define dhcp_option_add_16bit(t, c, v)		dhcp_option_add_hex(t, c, v, 2)
+#define dhcp_option_add_32bit(t, c, v)		dhcp_option_add_hex(t, c, v, 4)
+#define dhcp_option_add_address(t, c, v)	dhcp_option_add_hex(t, c, v, 4)
 #define dhcp_option_add_string(t, c, v, l)	dhcp_option_add(t, c, v, l)
 
 #define dhcp_option_get_8bit(d, c, v)		dhcp_option_get_simple(d, v, c, 1)

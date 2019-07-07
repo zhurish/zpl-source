@@ -17,10 +17,9 @@
 
 #include "vty.h"
 
+
+#ifdef PL_SNTPS_MODULE
 #include "sntpsLib.h"
-#include "sntpcLib.h"
-
-
 #ifndef SNTPS_CLI_ENABLE
 
 DEFUN (sntps_server_enable,
@@ -191,16 +190,18 @@ DEFUN (show_sntps_server,
 }
 
 #endif
+#endif
 
-
-
+#ifdef PL_SNTPC_MODULE
+#include "sntpcLib.h"
 #ifndef SNTPC_CLI_ENABLE
 DEFUN (sntp_enable,
 		sntp_enable_cmd,
-	    "sntp server A.B.C.D",
+	    "sntp server (A.B.C.D|dynamics)",
 		"sntp protocol configure\n"
 		"sntp server configure\n"
-		"sntp server ip address format A.B.C.D \n")
+		"sntp server ip address format A.B.C.D \n"
+		"sntp server dynamics\n")
 {
 	int ret = 0;
 	int port = SNTPC_SERVER_PORT;
@@ -220,28 +221,40 @@ DEFUN (sntp_enable,
 	if(ret == 0)
 	{
 		int enable = 1;
-		ret = sntpc_client_set_api(vty, API_SNTPC_SET_ADDRESS, argv[0]);
-		if(ret == OK)
+		if(strstr(argv[0], "."))
+		{
+			if(sntpc_is_dynamics())
+				sntpc_dynamics_disable();
+			ret = sntpc_client_set_api(vty, API_SNTPC_SET_ADDRESS, argv[0]);
+			if(ret == OK)
+				return sntpc_client_set_api(vty, API_SNTPC_SET_ENABLE, &enable);
+		}
+		else
+		{
+			sntpc_dynamics_enable();
 			return sntpc_client_set_api(vty, API_SNTPC_SET_ENABLE, &enable);
+		}
 	}
 	return CMD_WARNING;
 }
 
 ALIAS(sntp_enable,
 		sntp_enable_port_cmd,
-		"sntp server A.B.C.D port <100-65536>",
+		"sntp server (A.B.C.D|dynamics) port <100-65536>",
 		"sntp protocol configure\n"
 		"sntp server configure\n"
 		"sntp server ip address format A.B.C.D \n"
+		"sntp server dynamics\n"
 		"sntp server port configure\n"
 		"udp port of sntp server\n")
 
 ALIAS(sntp_enable,
 		sntp_enable_port_interval_cmd,
-	    "sntp server A.B.C.D port <100-65536> interval <30-3600>",
+	    "sntp server (A.B.C.D|dynamics) port <100-65536> interval <30-3600>",
 		"sntp protocol configure\n"
 		"sntp server configure\n"
 		"sntp server ip address format A.B.C.D \n"
+		"sntp server dynamics\n"
 		"sntp server port configure\n"
 		"udp port of sntp server\n"
 		"sntp server send request interval\n"
@@ -386,9 +399,9 @@ int cmd_sntpc_init()
 #endif
 	return 0;
 }
+#endif
 
-
-
+#ifdef PL_SNTPS_MODULE
 int cmd_sntps_init()
 {
 #ifndef SNTPS_CLI_ENABLE
@@ -418,3 +431,4 @@ int cmd_sntps_init()
 #endif
 	return 0;
 }
+#endif

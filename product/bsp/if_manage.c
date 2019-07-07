@@ -401,10 +401,10 @@ static int if_unit_slot_port(int type, int u, int s, int p)
 		if(os_strlen(name))
 			ifp = if_create (name, strlen(name));
 
-		if(strstr(name, "ethernet 0/0/1"))
+/*		if(strstr(name, "ethernet 0/0/1"))
 		{
 			if_kname_set(ifp, "enp0s25");
-		}
+		}*/
 	}
 	return OK;
 }

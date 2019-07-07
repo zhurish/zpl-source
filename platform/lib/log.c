@@ -365,7 +365,7 @@ static void vzlog_output(struct zlog *zl, int module, int priority, const char *
 	if (priority <= zl->maxlvl[ZLOG_DEST_SYSLOG]) {
 		va_list ac;
 		va_copy(ac, args);
-#ifndef SYSLOG_CLIENT
+#ifndef PL_SYSLOG_MODULE
 		vsyslog(priority | zl->facility, format, ac);
 #else
 		vsysclog(priority, zl->facility, format, args);
@@ -658,7 +658,7 @@ void vzlog(const char *file, const char *func, const int line,
 	if (priority <= zl->maxlvl[ZLOG_DEST_SYSLOG]) {
 		va_list ac;
 		va_copy(ac, args);
-#ifndef SYSLOG_CLIENT
+#ifndef PL_SYSLOG_MODULE
 		vsyslog(priority | zlog_default->facility, format, ac);
 #else
 		vsysclog(priority, zl->facility, format, args);
@@ -1199,7 +1199,7 @@ openzlog(const char *progname, zlog_proto_t protocol, int syslog_flags,
 	zl->trap_lvl = LOG_TRAP;
 
 	openlog(progname, syslog_flags, zl->facility);
-#ifdef SYSLOG_CLIENT
+#ifdef PL_SYSLOG_MODULE
 	syslogc_lib_init(NULL, progname);
 #endif
 	//zl->maxlvl[ZLOG_DEST_STDOUT] = zl->default_lvl;
@@ -1249,7 +1249,7 @@ void closezlog(struct zlog *zl) {
 	zlog_task_exit(zlog_default);
 #endif
 	XFREE(MTYPE_ZLOG, zl);
-#ifdef SYSLOG_CLIENT
+#ifdef PL_SYSLOG_MODULE
 	syslogc_lib_uninit();
 #endif
 }
@@ -1291,7 +1291,7 @@ void zlog_set_facility(int facility) {
 	if (zlog_default->mutex)
 		os_mutex_lock(zlog_default->mutex, OS_WAIT_FOREVER);
 	zlog_default->facility = facility;
-#ifdef SYSLOG_CLIENT
+#ifdef PL_SYSLOG_MODULE
 	syslogc_facility_set(zlog_default->facility);
 #endif
 	if (zlog_default->mutex)
