@@ -1,0 +1,142 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <!-- private Styles-->
+    <link href="../css/complex-menu.css" rel="stylesheet" />
+
+    <!-- jQuery Js -->
+    <script src="../js/jquery-2.1.1.min.js"></script>
+    <!-- Bootstrap Js -->
+    <script src="../js/bootstrap.min.js"></script>
+    <script src="../js/xhr.js"></script>
+    <script src="../js/data-type.js"></script>
+
+    <title>menu</title>
+</head>
+
+<body class="menu-body">
+    <div>
+		<script type="text/javascript">
+		var webtype = "homewifi";
+		var ostype = "openwrt";
+		var have_switch = true;
+		var have_dns = false;
+		var have_dhcp = true;
+		var have_sip = true;
+		var have_wireless = true;
+
+			function web_define() {
+				$.get("/goform/web-define", function (data, status) {
+				console.log("==============");
+				console.log(data);
+				var data_json = JSON.parse(data);
+				$.each(data_json, function (index, info) {							
+					webtype = info.web;
+					ostype = info.os;
+					have_switch = info.switch;
+					have_dns = info.dns;
+					have_dhcp = info.dhcp;
+					have_sip = info.sip;
+					have_wireless = info.wireless;
+					});
+				});
+			}
+			web_define();
+        </script>
+        <ul class="nav">
+            <li class="slide">
+                <a class="menu active" href="javascript:">Status <b class="caret"></b></a>
+                <ul class="slide-menu active" style="display: block;">
+                    <li class="active"><a href="systemview.html" target="showframe">systemview</a></li>
+                    <li><a href="netstatus.html" target="showframe">netstatus</a></li>
+                    <li><a href="syslog.html" target="showframe">syslog</a></li>
+                </ul>
+            </li>
+
+            <li class="slide">
+                <a class="menu" href="javascript:">System <b class="caret"></b></a>
+                <ul class="slide-menu">
+                    <li><a href="system.html" target="showframe">system</a></li>
+                    <li><a href="admin.html" target="showframe">admin</a></li>
+                    <li><a href="factory.html" target="showframe">factory</a></li>
+                    <li><a href="filesystem.html" target="showframe">filesystem</a></li>
+                </ul>
+            </li>
+
+            <li class="slide">
+                <a class="menu" href="javascript:">Network <b class="caret"></b></a>
+                <ul class="slide-menu">
+               	  <script type="text/javascript">
+               	console.log("have_switch:"+have_switch);
+               	  if(have_switch == true)
+               		document.write("<li><a href=\"switch.html\" target=\"showframe\">switch</a></li>");
+                    </script>
+                    <li><a href="network.html" target="showframe">network</a></li>
+                    <script type="text/javascript">
+               	  if(have_switch == true)
+               		document.write("<li><a href=\"wireless.html\" target=\"showframe\">wireless</a></li>");
+                    </script>
+                    <!-- li><a href="wireless.html" target="showframe">wireless</a></li -->
+                    <!-- li><a href="dhcp.html" target="showframe">dhcp</a></li -->
+                    <script type="text/javascript">
+               	  if(have_switch == true)
+               		document.write("<li><a href=\"dhcp.html\" target=\"showframe\">dhcp</a></li>");
+                    </script>
+                    <li><a href="route.html" target="showframe">route</a></li>
+                    <li><a href="firewall.html" target="showframe">firewall</a></li>
+                    <li><a href="nat.html" target="showframe">NAT</a></li>
+                     <script type="text/javascript">
+                     if(have_dns == true)
+                    			document.write("<li><a href=\"dns.html\" target=\"showframe\">DNS</a></li>");
+                    	</script>
+                </ul>
+            </li>
+
+            <li class="slide">
+                <a class="menu" href="javascript:">Service <b class="caret"></b></a>
+                <ul class="slide-menu">
+                    <script type="text/javascript">
+               	  if(have_switch == true)
+               		document.write("<li><a href=\"sip.html\" target=\"showframe\">sip</a></li>");
+                    </script>
+                    <!-- li><a href="sip.html" target="showframe">sip</a></li -->
+                </ul>
+            </li>
+            /ul>
+            <li class="topslide">
+                <a style="text-decoration: none;" href="about.html" target="showframe">About</a>
+            </li>
+            <li class="topslide">
+                <a style="text-decoration: none;" href="/action/logout" target="showframe">Logout</a>
+                <!--a style="text-decoration: none;" href="javascript:" onclick="logout_submit()" target="showframe">Logout</a-->
+            </li>
+            <script type="text/javascript">
+                function logout_submit() {
+                    var argv;
+                    var stxhr = new XHR();
+                    argv = "ACTION=system&BTNID=logout";
+                    stxhr.post("/goform/logout", argv,
+                        function (x) {
+                            console.log(x);
+                        },
+                        3
+                    );
+                }
+            </script>
+            <script src="../js/complex-menu.js"></script>
+            <!--控制js-->
+            <script type="text/javascript">
+                window.onload = function () {
+                    var mainshow = get_cookie("headershow");
+                    if (mainshow != "") {
+                        document.getElementById("headershow").src = mainshow;
+                    }
+                }
+            </script>
+    </div>
+</body>
+
+</html>

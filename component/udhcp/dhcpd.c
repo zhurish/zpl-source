@@ -217,7 +217,7 @@ static struct dyn_lease *dhcpd_find_lease_by_nip(dhcp_pool_t *config, uint32_t n
 			LEASE_DYNAMIC, nip);
 }
 
-static dhcpd_is_nip_reserved(dhcp_pool_t *config, uint32_t nip) {
+static dyn_lease_t * dhcpd_is_nip_reserved(dhcp_pool_t *config, uint32_t nip) {
 	return dhcp_lease_lookup_by_lease_address(&config->dhcp_lease_list,
 			LEASE_STATIC, nip);
 }

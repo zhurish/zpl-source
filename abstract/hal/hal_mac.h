@@ -13,11 +13,12 @@
 
 typedef struct sdk_mac_s
 {
-	int (*sdk_mac_age_cb) (int);
-	int (*sdk_mac_add_cb) (ifindex_t, vlan_t, mac_t *, int);
-	int (*sdk_mac_del_cb) (ifindex_t, vlan_t, mac_t *, int);
-	int (*sdk_mac_clr_cb) (ifindex_t, vlan_t);
-	int (*sdk_mac_read_cb) (ifindex_t, vlan_t);
+	int (*sdk_mac_age_cb) (void *, int);
+	int (*sdk_mac_add_cb) (void *, ifindex_t, vlan_t, mac_t *, int);
+	int (*sdk_mac_del_cb) (void *, ifindex_t, vlan_t, mac_t *, int);
+	int (*sdk_mac_clr_cb) (void *, ifindex_t, vlan_t);
+	int (*sdk_mac_read_cb) (void *, ifindex_t, vlan_t);
+	void *sdk_driver;
 }sdk_mac_t;
 
 

@@ -182,6 +182,12 @@ static inline int b53125_##type_op_size(struct b53125_device *dev, u8 page,	\
 	return ret;							\
 }
 
+/*static inline int b53125_read8(struct b53125_device *dev, u8 page, u8 reg, u8 *val)
+{
+	int ret;
+	ret = dev->ops->read8(dev, page, reg, val);
+	return ret;
+}*/
 b53_build_op(read8, u8 *);
 b53_build_op(read16, u16 *);
 b53_build_op(read32, u32 *);
@@ -239,13 +245,14 @@ static inline void u64_to_ether_addr(u64 u, u8 *addr)
 }
 
 
-extern struct b53125_device *b53_device;
+//extern struct b53125_device *b53_device;
 
-extern int b53125_mdio_probe();
+extern struct b53125_device * b53125_mdio_probe();
+extern int b53125_config_init(struct b53125_device *dev);
 
 /*******global *******/
 void b53_brcm_hdr_setup(struct b53125_device *dev, BOOL enable, int port);
-int b53125_switch_mode(struct b53125_device *dev, BOOL manege);
+int b53125_switch_manege(struct b53125_device *dev, BOOL manege);
 int b53125_switch_forwarding(struct b53125_device *dev, BOOL enable);
 int b53125_multicast_flood(struct b53125_device *dev, BOOL enable);
 int b53125_unicast_flood(struct b53125_device *dev, BOOL enable);
@@ -254,7 +261,7 @@ int b53125_multicast_learning(struct b53125_device *dev, BOOL enable);
 int b53125_puase_frame_detection(struct b53125_device *dev, BOOL enable);
 int b53125_enable_bpdu(struct b53125_device *dev, BOOL enable);
 int b53125_aging_time(struct b53125_device *dev, int agetime);
-int b53125_imp_mode(struct b53125_device *dev, BOOL enable);
+int b53125_imp_port_enable(struct b53125_device *dev);
 
 /******* IMP PORT *******/
 int b53125_imp_enable(struct b53125_device *dev, BOOL enable);
@@ -272,24 +279,25 @@ int b53125_pasue_receive_enable(struct b53125_device *dev, int port, BOOL enable
 
 
 int b53125_bpdu_forward(struct b53125_device *dev, u8 *mac, BOOL enable);
-int b53125_unicast_map(struct b53125_device *dev, int port, BOOL enable);
-int b53125_multicast_map(struct b53125_device *dev, int port, BOOL enable);
-int b53125_ip_multicast_map(struct b53125_device *dev, int port, BOOL enable);
+int b53125_unknow_unicast_forward_port(struct b53125_device *dev, int port, BOOL enable);
+int b53125_unknow_multicast_forward_port(struct b53125_device *dev, int port, BOOL enable);
+int b53125_unknow_ipmulticast_forward_port(struct b53125_device *dev, int port, BOOL enable);
 
 int b53125_pause_pass_rx(struct b53125_device *dev, int port, BOOL enable);
 int b53125_pause_pass_tx(struct b53125_device *dev, int port, BOOL enable);
 int b53125_enable_learning(struct b53125_device *dev, int port, BOOL enable);
 int b53125_software_learning(struct b53125_device *dev, int port, BOOL enable);
 
-int b53125_port_state_override_speed(struct b53125_device *dev, int port, int speed);
-int b53125_port_state_override_duplex(struct b53125_device *dev, int port, int duplex);
-int b53125_port_state_override_flow(struct b53125_device *dev, int port, int flow);
-int b53125_port_state_override_link_force(struct b53125_device *dev, int port, int link);
+int b53125_port_set_speed(struct b53125_device *dev, int port, int speed);
+int b53125_port_set_duplex(struct b53125_device *dev, int port, int duplex);
+int b53125_port_set_flow(struct b53125_device *dev, int port, int flow);
+int b53125_port_set_link_force(struct b53125_device *dev, int port, int link);
 
 
 
-BOOL b53125_port_link(struct b53125_device *dev, int port);
-
+BOOL b53125_port_get_link(struct b53125_device *dev, int port);
+u_int b53125_port_get_speed(struct b53125_device *dev, int port);
+u_int b53125_port_get_duplex(struct b53125_device *dev, int port);
 /******* qos *******/
 
 int b53125_qos_aggreation_mode(struct b53125_device *dev, BOOL enable);
@@ -346,6 +354,7 @@ int b53125_add_vlan_entry(struct b53125_device *dev, u16 vid);
 int b53125_del_vlan_entry(struct b53125_device *dev, u16 vid);
 int b53125_add_vlan_port(struct b53125_device *dev, u16 vid, int port, BOOL tag);
 int b53125_del_vlan_port(struct b53125_device *dev, u16 vid, int port, BOOL tag);
+int b53125_port_vlan(struct b53125_device *dev, int port, BOOL enable);
 int b53125_port_pvid(struct b53125_device *dev, u16 vid, int port, int pri);
 int b53125_vlan_double_tagging_tpid(struct b53125_device *dev, u16 tpid);
 int b53125_ISP_port(struct b53125_device *dev, int port, BOOL enable);
@@ -393,5 +402,18 @@ int b53125_dos_icmpv6_fragment_drop(struct b53125_device *dev, BOOL enable);
 int b53125_dos_icmpv4_longping_drop(struct b53125_device *dev, BOOL enable);
 int b53125_dos_icmpv6_longping_drop(struct b53125_device *dev, BOOL enable);
 
+
+/******* EAP *******/
+int b53125_eap_enable(struct b53125_device *dev, BOOL enable);
+int b53125_eap_ip_address_bypass_enable(struct b53125_device *dev, BOOL enable);
+int b53125_eap_mult_address_bypass_enable(struct b53125_device *dev, BOOL enable, u32 address);
+int b53125_eap_ip_address_set(struct b53125_device *dev, int index, u32 address, u32 mask);
+int b53125_eap_mode_set(struct b53125_device *dev, int port, u32 mode);
+int b53125_eap_blk_mode_set(struct b53125_device *dev, int port, u32 mode);
+
+
+
+int b53125_phy_loopback(struct b53125_device *dev, int port, BOOL enable);
+int b53125_snooping_enable(struct b53125_device *dev, int type, BOOL enable);
 /*********************************************************************************/
 #endif /* __B53_MDIO_H__ */

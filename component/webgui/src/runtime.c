@@ -225,9 +225,9 @@ static void callEvent(int id)
 {
     Callback    *cp;
 
-    assert(0 <= id && id < callbackMax);
+    web_assert(0 <= id && id < callbackMax);
     cp = callbacks[id];
-    assert(cp);
+    web_assert(cp);
 
     (cp->routine)(cp->arg, cp->id);
 }
@@ -314,7 +314,7 @@ PUBLIC char *sfmt(cchar *format, ...)
     va_list     ap;
     char        *result;
 
-    assert(format);
+    web_assert(format);
 
     va_start(ap, format);
     result = sprintfCore(NULL, -1, format, ap);
@@ -331,8 +331,8 @@ PUBLIC char *fmt(char *buf, ssize bufsize, cchar *format, ...)
     va_list     ap;
     char        *result;
 
-    assert(buf);
-    assert(format);
+    web_assert(buf);
+    web_assert(format);
 
     if (bufsize <= 0) {
         return 0;
@@ -349,7 +349,7 @@ PUBLIC char *fmt(char *buf, ssize bufsize, cchar *format, ...)
  */
 PUBLIC char *sfmtv(cchar *fmt, va_list arg)
 {
-    assert(fmt);
+    web_assert(fmt);
     return sprintfCore(NULL, -1, fmt, arg);
 }
 
@@ -361,10 +361,10 @@ static int getState(char c, int state)
     if (c < ' ' || c > 'z') {
         chrClass = CLASS_NORMAL;
     } else {
-        assert((c - ' ') < (int) sizeof(classMap));
+        web_assert((c - ' ') < (int) sizeof(classMap));
         chrClass = classMap[(c - ' ')];
     }
-    assert((chrClass * STATE_COUNT + state) < (int) sizeof(stateMap));
+    web_assert((chrClass * STATE_COUNT + state) < (int) sizeof(stateMap));
     state = stateMap[chrClass * STATE_COUNT + state];
     return state;
 }
@@ -383,7 +383,7 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list args)
         spec = "";
     }
     if (buf != 0) {
-        assert(maxsize > 0);
+        web_assert(maxsize > 0);
         fmt.buf = (uchar*) buf;
         fmt.endbuf = &fmt.buf[maxsize];
         fmt.growBy = -1;
@@ -1214,7 +1214,7 @@ PUBLIC int wallocHandle(void *mapArg)
     int     handle, len, memsize, incr;
 
     map = (void***) mapArg;
-    assert(map);
+    web_assert(map);
 
     if (*map == NULL) {
         incr = H_INCR;
@@ -1271,12 +1271,12 @@ PUBLIC int wfreeHandle(void *mapArg, int handle)
     int     len;
 
     map = (void***) mapArg;
-    assert(map);
+    web_assert(map);
     mp = &((*(ssize**)map)[-H_OFFSET]);
-    assert(mp[H_LEN] >= H_INCR);
+    web_assert(mp[H_LEN] >= H_INCR);
 
-    assert(mp[handle + H_OFFSET]);
-    assert(mp[H_USED]);
+    web_assert(mp[handle + H_OFFSET]);
+    web_assert(mp[H_USED]);
     mp[handle + H_OFFSET] = 0;
     if (--(mp[H_USED]) == 0) {
         wfree((void*) mp);
@@ -1312,8 +1312,8 @@ PUBLIC int wallocObject(void *listArg, int *max, int size)
     int     id;
 
     list = (void***) listArg;
-    assert(list);
-    assert(max);
+    web_assert(list);
+    web_assert(max);
 
     if ((id = wallocHandle(list)) < 0) {
         return -1;
@@ -1323,7 +1323,7 @@ PUBLIC int wallocObject(void *listArg, int *max, int size)
             wfreeHandle(list, id);
             return -1;
         }
-        assert(cp);
+        web_assert(cp);
         memset(cp, 0, size);
         (*list)[id] = (void*) cp;
     }
@@ -1343,7 +1343,7 @@ PUBLIC int bufCreate(WebsBuf *bp, int initSize, int maxsize)
 {
     int increment;
 
-    assert(bp);
+    web_assert(bp);
 
     if (initSize <= 0) {
         initSize = ME_GOAHEAD_LIMIT_BUFFER;
@@ -1351,7 +1351,7 @@ PUBLIC int bufCreate(WebsBuf *bp, int initSize, int maxsize)
     if (maxsize == 0) {
         maxsize = initSize;
     }
-    assert(initSize >= 0);
+    web_assert(initSize >= 0);
     memset(bp, 0, sizeof(WebsBuf));
 
     increment = getBinBlockSize(initSize);
@@ -1374,8 +1374,8 @@ PUBLIC int bufCreate(WebsBuf *bp, int initSize, int maxsize)
  */
 PUBLIC void bufFree(WebsBuf *bp)
 {
-    assert(bp);
-    assert(bp->buflen == (bp->endbuf - bp->buf));
+    web_assert(bp);
+    web_assert(bp->buflen == (bp->endbuf - bp->buf));
 
     if (bp == NULL) {
         return;
@@ -1392,8 +1392,8 @@ PUBLIC void bufFree(WebsBuf *bp)
  */
 PUBLIC ssize bufLen(WebsBuf *bp)
 {
-    assert(bp);
-    assert(bp->buflen == (bp->endbuf - bp->buf));
+    web_assert(bp);
+    web_assert(bp->buflen == (bp->endbuf - bp->buf));
 
     if (bp->servp > bp->endp) {
         return bp->buflen + bp->endp - bp->servp;
@@ -1408,7 +1408,7 @@ PUBLIC ssize bufLen(WebsBuf *bp)
  */
 PUBLIC char *bufStart(WebsBuf *bp)
 {
-    assert(bp);
+    web_assert(bp);
     return bp->servp;
 }
 
@@ -1420,8 +1420,8 @@ PUBLIC int bufGetc(WebsBuf *bp)
 {
     char    c, *cp;
 
-    assert(bp);
-    assert(bp->buflen == (bp->endbuf - bp->buf));
+    web_assert(bp);
+    web_assert(bp->buflen == (bp->endbuf - bp->buf));
 
     if (bp->servp == bp->endp) {
         return -1;
@@ -1445,8 +1445,8 @@ PUBLIC int bufPutc(WebsBuf *bp, char c)
 {
     char *cp;
 
-    assert(bp);
-    assert(bp->buflen == (bp->endbuf - bp->buf));
+    web_assert(bp);
+    web_assert(bp->buflen == (bp->endbuf - bp->buf));
 
     if ((bufRoom(bp) < (int) sizeof(char)) && !bufGrow(bp, 0)) {
         return -1;
@@ -1468,8 +1468,8 @@ PUBLIC int bufInsertc(WebsBuf *bp, char c)
 {
     char *cp;
 
-    assert(bp);
-    assert(bp->buflen == (bp->endbuf - bp->buf));
+    web_assert(bp);
+    web_assert(bp->buflen == (bp->endbuf - bp->buf));
 
     if (bufRoom(bp) < (int) sizeof(char) && !bufGrow(bp, 0)) {
         return -1;
@@ -1490,8 +1490,8 @@ PUBLIC ssize bufPut(WebsBuf *bp, cchar *fmt, ...)
     char        *str;
     ssize       rc;
 
-    assert(bp);
-    assert(bp->buflen == (bp->endbuf - bp->buf));
+    web_assert(bp);
+    web_assert(bp->buflen == (bp->endbuf - bp->buf));
 
     if (fmt == 0) {
         return 0;
@@ -1515,9 +1515,9 @@ PUBLIC ssize bufPutStr(WebsBuf *bp, cchar *str)
 {
     ssize   rc;
 
-    assert(bp);
-    assert(str);
-    assert(bp->buflen == (bp->endbuf - bp->buf));
+    web_assert(bp);
+    web_assert(str);
+    web_assert(bp->buflen == (bp->endbuf - bp->buf));
 
     rc = bufPutBlk(bp, str, strlen(str) * sizeof(char));
     if (rc) {
@@ -1532,8 +1532,8 @@ PUBLIC ssize bufPutStr(WebsBuf *bp, cchar *str)
  */
 PUBLIC void bufAddNull(WebsBuf *bp)
 {
-    assert(bp);
-    assert(bp->buflen == (bp->endbuf - bp->buf));
+    web_assert(bp);
+    web_assert(bp->buflen == (bp->endbuf - bp->buf));
 
     if (bufRoom(bp) < (int) sizeof(char)) {
         bufGrow(bp, 0);
@@ -1551,8 +1551,8 @@ PUBLIC int bufGetcA(WebsBuf *bp)
 {
     uchar   c;
 
-    assert(bp);
-    assert(bp->buflen == (bp->endbuf - bp->buf));
+    web_assert(bp);
+    web_assert(bp->buflen == (bp->endbuf - bp->buf));
 
     if (bp->servp == bp->endp) {
         return -1;
@@ -1572,8 +1572,8 @@ PUBLIC int bufGetcA(WebsBuf *bp)
  */
 PUBLIC int bufPutcA(WebsBuf *bp, char c)
 {
-    assert(bp);
-    assert(bp->buflen == (bp->endbuf - bp->buf));
+    web_assert(bp);
+    web_assert(bp->buflen == (bp->endbuf - bp->buf));
 
     if (bufRoom(bp) == 0 && !bufGrow(bp)) {
         return -1;
@@ -1591,8 +1591,8 @@ PUBLIC int bufPutcA(WebsBuf *bp, char c)
  */
 PUBLIC int bufInsertcA(WebsBuf *bp, char c)
 {
-    assert(bp);
-    assert(bp->buflen == (bp->endbuf - bp->buf));
+    web_assert(bp);
+    web_assert(bp->buflen == (bp->endbuf - bp->buf));
 
     if (bufRoom(bp) == 0 && !bufGrow(bp)) {
         return -1;
@@ -1612,9 +1612,9 @@ PUBLIC int bufPutStrA(WebsBuf *bp, char *str)
 {
     int     rc;
 
-    assert(bp);
-    assert(str);
-    assert(bp->buflen == (bp->endbuf - bp->buf));
+    web_assert(bp);
+    web_assert(str);
+    web_assert(bp->buflen == (bp->endbuf - bp->buf));
 
     rc = (int) bufPutBlk(bp, str, strlen(str));
     bp->endp[0] = '\0';
@@ -1630,10 +1630,10 @@ PUBLIC ssize bufPutBlk(WebsBuf *bp, cchar *buf, ssize size)
 {
     ssize   this, added;
 
-    assert(bp);
-    assert(bp->buflen == (bp->endbuf - bp->buf));
-    assert(buf);
-    assert(0 <= size);
+    web_assert(bp);
+    web_assert(bp->buflen == (bp->endbuf - bp->buf));
+    web_assert(buf);
+    web_assert(0 <= size);
 
     /*
         Loop adding the maximum bytes we can add in a single straight line copy
@@ -1667,10 +1667,10 @@ PUBLIC ssize bufGetBlk(WebsBuf *bp, char *buf, ssize size)
 {
     ssize   this, bytes_read;
 
-    assert(bp);
-    assert(bp->buflen == (bp->endbuf - bp->buf));
-    assert(buf);
-    assert(0 <= size && size < bp->buflen);
+    web_assert(bp);
+    web_assert(bp->buflen == (bp->endbuf - bp->buf));
+    web_assert(buf);
+    web_assert(0 <= size && size < bp->buflen);
 
     /*
         Loop getting the maximum bytes we can get in a single straight line copy
@@ -1704,8 +1704,8 @@ PUBLIC ssize bufRoom(WebsBuf *bp)
 {
     ssize   space, in_a_line;
 
-    assert(bp);
-    assert(bp->buflen == (bp->endbuf - bp->buf));
+    web_assert(bp);
+    web_assert(bp->buflen == (bp->endbuf - bp->buf));
 
     space = bp->buflen - RINGQ_LEN(bp) - 1;
     in_a_line = bp->endbuf - bp->endp;
@@ -1722,8 +1722,8 @@ PUBLIC ssize bufGetBlkMax(WebsBuf *bp)
 {
     ssize   len, in_a_line;
 
-    assert(bp);
-    assert(bp->buflen == (bp->endbuf - bp->buf));
+    web_assert(bp);
+    web_assert(bp->buflen == (bp->endbuf - bp->buf));
 
     len = RINGQ_LEN(bp);
     in_a_line = bp->endbuf - bp->servp;
@@ -1737,9 +1737,9 @@ PUBLIC ssize bufGetBlkMax(WebsBuf *bp)
  */
 PUBLIC void bufAdjustEnd(WebsBuf *bp, ssize size)
 {
-    assert(bp);
-    assert(bp->buflen == (bp->endbuf - bp->buf));
-    assert(0 <= size && size < bp->buflen);
+    web_assert(bp);
+    web_assert(bp->buflen == (bp->endbuf - bp->buf));
+    web_assert(0 <= size && size < bp->buflen);
 
     bp->endp += size;
     if (bp->endp >= bp->endbuf) {
@@ -1760,9 +1760,9 @@ PUBLIC void bufAdjustEnd(WebsBuf *bp, ssize size)
  */
 PUBLIC void bufAdjustStart(WebsBuf *bp, ssize size)
 {
-    assert(bp);
-    assert(bp->buflen == (bp->endbuf - bp->buf));
-    assert(0 <= size && size < bp->buflen);
+    web_assert(bp);
+    web_assert(bp->buflen == (bp->endbuf - bp->buf));
+    web_assert(0 <= size && size < bp->buflen);
 
     bp->servp += size;
     if (bp->servp >= bp->endbuf) {
@@ -1783,8 +1783,8 @@ PUBLIC void bufAdjustStart(WebsBuf *bp, ssize size)
  */
 PUBLIC void bufFlush(WebsBuf *bp)
 {
-    assert(bp);
-    assert(bp->servp);
+    web_assert(bp);
+    web_assert(bp->servp);
 
     if (bp->buf) {
         bp->servp = bp->buf;
@@ -1837,7 +1837,7 @@ PUBLIC bool bufGrow(WebsBuf *bp, ssize room)
     char    *newbuf;
     ssize   len;
 
-    assert(bp);
+    web_assert(bp);
 
     if (room == 0) {
         if (bp->maxsize >= 0 && bp->buflen >= bp->maxsize) {
@@ -1892,7 +1892,7 @@ WebsHash hashCreate(int size)
     if (size < 0) {
         size = WEBS_SMALL_HASH;
     }
-    assert(size > 2);
+    web_assert(size > 2);
 
     /*
         Create a new handle for this symbol table
@@ -1912,7 +1912,7 @@ WebsHash hashCreate(int size)
     if (sd >= symMax) {
         symMax = sd + 1;
     }
-    assert(0 <= sd && sd < symMax);
+    web_assert(0 <= sd && sd < symMax);
     sym[sd] = tp;
 
     /*
@@ -1924,7 +1924,7 @@ WebsHash hashCreate(int size)
         wfree(tp);
         return -1;
     }
-    assert(tp->hash_table);
+    web_assert(tp->hash_table);
     memset(tp->hash_table, 0, tp->size * sizeof(WebsKey*));
     return sd;
 }
@@ -1943,9 +1943,9 @@ PUBLIC void hashFree(WebsHash sd)
     if (sd < 0) {
         return;
     }
-    assert(0 <= sd && sd < symMax);
+    web_assert(0 <= sd && sd < symMax);
     tp = sym[sd];
-    assert(tp);
+    web_assert(tp);
 
     /*
         Free all symbols in the hash table, then the hash table itself.
@@ -1975,12 +1975,12 @@ WebsKey *hashFirst(WebsHash sd)
     WebsKey     *sp;
     int         i;
 
-    assert(0 <= sd && sd < symMax);
+    web_assert(0 <= sd && sd < symMax);
     if (sd < 0 || sd >=symMax) {
         return 0;
     }
     tp = sym[sd];
-    assert(tp);
+    web_assert(tp);
 
     /*
         Find the first symbol in the hashtable and return a pointer to it.
@@ -2003,12 +2003,12 @@ WebsKey *hashNext(WebsHash sd, WebsKey *last)
     WebsKey     *sp;
     int         i;
 
-    assert(0 <= sd && sd < symMax);
+    web_assert(0 <= sd && sd < symMax);
     if (sd < 0) {
         return 0;
     }
     tp = sym[sd];
-    assert(tp);
+    web_assert(tp);
     if (last == 0) {
         return hashFirst(sd);
     }
@@ -2033,7 +2033,7 @@ WebsKey *hashLookup(WebsHash sd, cchar *name)
     WebsKey     *sp;
     char        *cp;
 
-    assert(0 <= sd && sd < symMax);
+    web_assert(0 <= sd && sd < symMax);
     if (sd < 0 || (tp = sym[sd]) == NULL) {
         return NULL;
     }
@@ -2076,10 +2076,10 @@ WebsKey *hashEnter(WebsHash sd, cchar *name, WebsValue v, int arg)
     char        *cp;
     int         hindex;
 
-    assert(name);
-    assert(0 <= sd && sd < symMax);
+    web_assert(name);
+    web_assert(0 <= sd && sd < symMax);
     tp = sym[sd];
-    assert(tp);
+    web_assert(tp);
 
     /*
         Calculate the first daisy-chain from the hash table. If non-zero, then we have daisy-chain, so scan it and look
@@ -2152,10 +2152,10 @@ PUBLIC int hashDelete(WebsHash sd, cchar *name)
     char        *cp;
     int         hindex;
 
-    assert(name && *name);
-    assert(0 <= sd && sd < symMax);
+    web_assert(name && *name);
+    web_assert(0 <= sd && sd < symMax);
     tp = sym[sd];
-    assert(tp);
+    web_assert(tp);
 
     /*
         Calculate the first daisy-chain from the hash table. If non-zero, then we have daisy-chain, so scan it and look
@@ -2196,7 +2196,7 @@ PUBLIC int hashDelete(WebsHash sd, cchar *name)
  */
 static WebsKey *hash(HashTable *tp, cchar *name)
 {
-    assert(tp);
+    web_assert(tp);
 
     return tp->hash_table[hashIndex(tp, name)];
 }
@@ -2211,7 +2211,7 @@ static int hashIndex(HashTable *tp, cchar *name)
     uint        sum;
     int         i;
 
-    assert(tp);
+    web_assert(tp);
     /*
         Add in each character shifted up progressively by 7 bits. The shift amount is rounded so as to not shift too
         far. It thus cycles with each new cycle placing character shifted up by one bit.
@@ -2233,7 +2233,7 @@ static int isPrime(int n)
 {
     int     i, max;
 
-    assert(n > 0);
+    web_assert(n > 0);
 
     max = n / 2;
     for (i = 2; i <= max; i++) {
@@ -2252,7 +2252,7 @@ static int calcPrime(int size)
 {
     int count;
 
-    assert(size > 0);
+    web_assert(size > 0);
 
     for (count = size; count > 0; count--) {
         if (isPrime(count)) {
@@ -2541,9 +2541,9 @@ PUBLIC ssize scopy(char *dest, ssize destMax, cchar *src)
 {
     ssize      len;
 
-    assert(src);
-    assert(dest);
-    assert(0 < dest && destMax < MAXINT);
+    web_assert(src);
+    web_assert(dest);
+    web_assert(0 < dest && destMax < MAXINT);
 
     len = slen(src);
     if (destMax <= len) {
@@ -2562,11 +2562,11 @@ PUBLIC ssize sncopy(char *dest, ssize destMax, cchar *src, ssize count)
 {
     ssize      len;
 
-    assert(dest);
-    assert(src);
-    assert(src != dest);
-    assert(0 <= count && count < MAXINT);
-    assert(0 < destMax && destMax < MAXINT);
+    web_assert(dest);
+    web_assert(src);
+    web_assert(src != dest);
+    web_assert(0 <= count && count < MAXINT);
+    web_assert(0 < destMax && destMax < MAXINT);
 
     //  OPT need snlen(src, count);
     len = slen(src);
@@ -2606,7 +2606,7 @@ PUBLIC int sncmp(cchar *s1, cchar *s2, ssize n)
 {
     int     rc;
 
-    assert(0 <= n && n < MAXINT);
+    web_assert(0 <= n && n < MAXINT);
 
     if (s1 == 0 && s2 == 0) {
         return 0;
@@ -2637,7 +2637,7 @@ PUBLIC int sncaselesscmp(cchar *s1, cchar *s2, ssize n)
 {
     int     rc;
 
-    assert(0 <= n && n < MAXINT);
+    web_assert(0 <= n && n < MAXINT);
 
     if (s1 == 0) {
         return -1;

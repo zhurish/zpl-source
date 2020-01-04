@@ -41,7 +41,7 @@ typedef struct nsm_bridge_s
 
 	int (*add_member_cb)(struct nsm_bridge_s *br, int ifindex);
 	int (*del_member_cb)(struct nsm_bridge_s *br, int ifindex);
-
+	int (*get_member_cb)(struct nsm_bridge_s *br, int ifindex[]);
 } nsm_bridge_t;
 
 
@@ -49,7 +49,7 @@ extern nsm_bridge_t * nsm_bridge_get(struct interface *ifp);
 
 extern int nsm_bridge_add_interface_api(struct interface *bridge, struct interface *ifp);
 extern int nsm_bridge_del_interface_api(struct interface *bridge, struct interface *ifp);
-
+extern int nsm_bridge_update_member_api(struct interface *bridge);
 
 extern int nsm_bridge_interface_stp_set_api(struct interface *bridge, BOOL stp);
 extern int nsm_bridge_interface_max_age_set_api(struct interface *bridge, int max_age);

@@ -11,6 +11,7 @@
 #include <sys/prctl.h>
 #include <sys/syscall.h>
 #include <dirent.h>
+#include <sys/resource.h>
 #include "command.h"
 
 #include "os_job.h"
@@ -22,48 +23,90 @@
 
 static LIST *os_task_list = NULL;
 static os_mutex_t *task_mutex = NULL;
-static int os_moniter_id = 0;
+static u_int32 os_moniter_id = 0;
 struct os_task_history total_cpu;
-struct os_task_cb_tbl cb_tbl[TASK_CBTBL_MAX];
+static BOOL os_entry_running = FALSE;
 
-#ifndef USE_IPSTACK_KERNEL
-extern int ipcom_os_task_tcb_entry_create_cb(char *name, int pid,
-		char *func_name);
-extern int ipcom_os_task_tcb_entry_delete_cb(int pid);
+typedef struct os_task_hook_tbl
+{
+	os_task_hook 	cb_create;
+	os_task_hook 	cb_start;
+	os_task_hook 	cb_destroy;
+}os_task_hook_tbl_t;
+
+static os_task_hook_tbl_t hook_tbl[TASK_CBTBL_MAX];
+
+
+#ifdef OS_TASK_DEBUG_LOG
+#define OS_TACK_TMP_LOG	"/tmp/app/log/ostask.log"
 #endif
 
-#define OS_TACK_TMP_LOG	"/tmp/app/log/ostask.log"
-
-static int os_log_file_printf(FILE *fp, const char *buf, va_list args)
+int os_limit_stack_size(int size)
 {
-	if(fp)
+	struct rlimit limit;
+	if(getrlimit(RLIMIT_STACK, &limit) != 0)
 	{
-		vfprintf(fp, buf, args);
-		fprintf(fp, "\n");
-		fflush(fp);
+		printf("%s get RLIMIT_STACK :%s\r\n", __func__, strerror(errno));
+		return ERROR;
+	}
+	if((uint)size < limit.rlim_cur)
+		return ERROR;
+	limit.rlim_cur = size;
+	if((uint)size > limit.rlim_max)
+		limit.rlim_max = size;
+	if(setrlimit(RLIMIT_STACK, &limit) != 0)
+	{
+		printf("%s set RLIMIT_STACK :%s\r\n", __func__, strerror(errno));
+		return ERROR;
 	}
 	return OK;
 }
 
-void os_log(char *file, const char *format, ...)
+int os_limit_core_size(int size)
 {
-	FILE *fp = fopen(file, "a+");
-	if(fp)
+	struct rlimit limit;
+	if(getrlimit(RLIMIT_CORE, &limit) != 0)
 	{
-		va_list args;
-		va_start(args, format);
-		os_log_file_printf(fp, format, args);
-		//vzlog(zlog_default, module, priority, format, args);
-		va_end(args);
-		fclose(fp);
+		printf("%s get RLIMIT_CORE :%s\r\n", __func__, strerror(errno));
+		return ERROR;
 	}
+	if((uint)size < limit.rlim_cur)
+		return ERROR;
+	limit.rlim_cur = size;
+	if((uint)size > limit.rlim_max)
+		limit.rlim_max = size;
+	if(setrlimit(RLIMIT_CORE, &limit) != 0)
+	{
+		printf("%s set RLIMIT_CORE :%s\r\n", __func__, strerror(errno));
+		return ERROR;
+	}
+	return OK;
+}
+
+/*
+static int os_task_waitting_signal(void)
+{
+	while(os_entry_running != TRUE)
+	{
+		os_msleep(1000);
+	}
+	return OK;
+}
+*/
+
+int os_task_give_broadcast(void)
+{
+	os_entry_running = TRUE;
+	return OK;
 }
 
 
 int os_task_init()
 {
+#ifdef OS_TASK_DEBUG_LOG
 	remove(OS_TACK_TMP_LOG);
 	sync();
+#endif
 	if (task_mutex == NULL)
 	{
 		task_mutex = os_mutex_init();
@@ -73,7 +116,7 @@ int os_task_init()
 		os_task_list = os_malloc(sizeof(LIST));
 		if (os_task_list)
 		{
-			os_memset(cb_tbl, 0, sizeof(cb_tbl));
+			os_memset(hook_tbl, 0, sizeof(hook_tbl));
 			os_memset(&total_cpu, 0, sizeof(total_cpu));
 #ifndef HAVE_GET_NPROCS
 			total_cpu.cpu = get_nprocs();
@@ -101,55 +144,183 @@ int os_task_exit()
 	return OK;
 }
 
-
-
-static int os_task_cb_start(os_task_t *task)
+int os_task_sigmask(int sigc, int signo[], sigset_t *mask)
 {
 	int i = 0;
-	for(i = 0; i < TASK_CBTBL_MAX; i++)
+	if(sigc)
 	{
-		if(cb_tbl[i].cb_start)
-			cb_tbl[i].cb_start(task);
-	}
-	return OK;
-}
-
-static int os_task_cb_stop(os_task_t *task)
-{
-	int i = 0;
-	for(i = 0; i < TASK_CBTBL_MAX; i++)
-	{
-		if(cb_tbl[i].cb_stop)
-			cb_tbl[i].cb_stop(task);
-	}
-	return OK;
-}
-
-int os_task_cb_install(os_task_cb_tbl_t *cb)
-{
-	int i = 0;
-	for(i = 0; i < TASK_CBTBL_MAX; i++)
-	{
-		if(cb_tbl[i].cb_start == NULL && cb_tbl[i].cb_stop == NULL)
+		sigemptyset(mask);
+		for(i = 0; i < sigc; i++)
 		{
-			cb_tbl[i].cb_start = cb->cb_start;
-			cb_tbl[i].cb_stop = cb->cb_stop;
-			cb_tbl[i].pVoid = cb->pVoid;
+			sigaddset(mask, signo[i]);
+		}
+	}
+	return pthread_sigmask(SIG_SETMASK, mask, NULL);
+}
+
+int os_task_sigexecute(int sigc, int signo[], sigset_t *mask)
+{
+	int i = 0;
+	if(sigc)
+	{
+		sigfillset(mask);
+		for(i = 0; i < sigc; i++)
+		{
+			sigdelset(mask, signo[i]);
+		}
+	}
+	return pthread_sigmask(SIG_SETMASK, mask, NULL);
+}
+
+int os_task_sigmaskall()
+{
+	sigset_t mask;
+	sigfillset(&mask);
+	return pthread_sigmask(SIG_SETMASK, &mask, NULL);
+}
+
+static int _os_task_create_callback(os_task_t *task)
+{
+	int i = 0;
+	for(i = 0; i < TASK_CBTBL_MAX; i++)
+	{
+		if(hook_tbl[i].cb_create)
+			hook_tbl[i].cb_create(task);
+	}
+	return OK;
+}
+
+static int _os_task_start_callback(os_task_t *task)
+{
+	int i = 0;
+	for(i = 0; i < TASK_CBTBL_MAX; i++)
+	{
+		if(hook_tbl[i].cb_start)
+			hook_tbl[i].cb_start(task);
+	}
+	return OK;
+}
+
+static int _os_task_destroy_callback(os_task_t *task)
+{
+	int i = 0;
+	for(i = 0; i < TASK_CBTBL_MAX; i++)
+	{
+		if(hook_tbl[i].cb_destroy)
+			hook_tbl[i].cb_destroy(task);
+	}
+	return OK;
+}
+
+int os_task_add_start_hook(os_task_hook *cb)
+{
+	int i = 0;
+	for(i = 0; i < TASK_CBTBL_MAX; i++)
+	{
+		if(hook_tbl[i].cb_start == NULL)
+		{
+			hook_tbl[i].cb_start = cb;
+			//cb_tbl[i].cb_create = cb->cb_create;
+			//cb_tbl[i].cb_destroy = cb->cb_destroy;
+			//cb_tbl[i].pVoid = cb->pVoid;
+			return OK;
+		}
+	}
+	return ERROR;
+}
+int os_task_add_create_hook(os_task_hook *cb)
+{
+	int i = 0;
+	for(i = 0; i < TASK_CBTBL_MAX; i++)
+	{
+		if(hook_tbl[i].cb_create == NULL)
+		{
+			//cb_tbl[i].cb_start = cb->cb_start;
+			hook_tbl[i].cb_create = cb;
+			//cb_tbl[i].cb_destroy = cb->cb_destroy;
+			//cb_tbl[i].pVoid = cb->pVoid;
+			return OK;
+		}
+	}
+	return ERROR;
+}
+int os_task_add_destroy_hook(os_task_hook *cb)
+{
+		int i = 0;
+	for(i = 0; i < TASK_CBTBL_MAX; i++)
+	{
+		if(hook_tbl[i].cb_destroy == NULL/* && cb_tbl[i].cb_stop == NULL*/)
+		{
+			//cb_tbl[i].cb_start = cb->cb_start;
+			//cb_tbl[i].cb_create = cb->cb_create;
+			hook_tbl[i].cb_destroy = cb;
+			//cb_tbl[i].pVoid = cb->pVoid;
 			return OK;
 		}
 	}
 	return ERROR;
 }
 
+int os_task_del_start_hook(os_task_hook *cb)
+{
+	int i = 0;
+	for(i = 0; i < TASK_CBTBL_MAX; i++)
+	{
+		if(hook_tbl[i].cb_start == cb && cb)
+		{
+			hook_tbl[i].cb_start = NULL;
+			//cb_tbl[i].cb_create = cb->cb_create;
+			//cb_tbl[i].cb_destroy = cb->cb_destroy;
+			//cb_tbl[i].pVoid = cb->pVoid;
+			return OK;
+		}
+	}
+	return ERROR;
+}
+int os_task_del_create_hook(os_task_hook *cb)
+{
+	int i = 0;
+	for(i = 0; i < TASK_CBTBL_MAX; i++)
+	{
+		if(hook_tbl[i].cb_create == cb && cb)
+		{
+			//cb_tbl[i].cb_start = cb->cb_start;
+			hook_tbl[i].cb_create = NULL;
+			//cb_tbl[i].cb_destroy = cb->cb_destroy;
+			//cb_tbl[i].pVoid = cb->pVoid;
+			return OK;
+		}
+	}
+	return ERROR;
+}
+int os_task_del_destroy_hook(os_task_hook *cb)
+{
+		int i = 0;
+	for(i = 0; i < TASK_CBTBL_MAX; i++)
+	{
+		if(hook_tbl[i].cb_destroy == cb && cb/* && cb_tbl[i].cb_stop == NULL*/)
+		{
+			//cb_tbl[i].cb_start = cb->cb_start;
+			//cb_tbl[i].cb_create = cb->cb_create;
+			hook_tbl[i].cb_destroy = NULL;
+			//cb_tbl[i].pVoid = cb->pVoid;
+			return OK;
+		}
+	}
+	return ERROR;
+}
 
-static os_task_t * os_task_lookup(unit32 id, pthread_t pid)
+static os_task_t * os_task_lookup(unit32 id, pthread_t pid, BOOL mutex)
 {
 	NODE *node = NULL;
 	os_task_t *task = NULL;
 	if (os_task_list == NULL)
 		return NULL;
-	if (task_mutex)
-		os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+	if(mutex)
+	{
+		if (task_mutex)
+			os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+	}
 	node = lstFirst(os_task_list);
 	while (node)
 	{
@@ -158,22 +329,31 @@ static os_task_t * os_task_lookup(unit32 id, pthread_t pid)
 			task = (os_task_t *) node;
 			if ((id != 0) && id == task->td_id)
 			{
-				if (task_mutex)
-					os_mutex_unlock(task_mutex);
+				if(mutex)
+				{
+					if (task_mutex)
+						os_mutex_unlock(task_mutex);
+				}
 				return task;
 			}
 			else if (((pthread_t) pid != 0)
 					&& (pthread_t) pid == (pthread_t) task->td_thread)
 			{
-				if (task_mutex)
-					os_mutex_unlock(task_mutex);
+				if(mutex)
+				{
+					if (task_mutex)
+						os_mutex_unlock(task_mutex);
+				}
 				return task;
 			}
 		}
 		node = lstNext(node);
 	}
-	if (task_mutex)
-		os_mutex_unlock(task_mutex);
+	if(mutex)
+	{
+		if (task_mutex)
+			os_mutex_unlock(task_mutex);
+	}
 	return NULL;
 }
 
@@ -225,7 +405,7 @@ unit32 os_task_lookup_by_name(char *task_name)
 
 os_task_t * os_task_tcb_self(void)
 {
-	os_task_t *task = os_task_lookup(0, os_task_pthread_self());
+	os_task_t *task = os_task_lookup(0, os_task_pthread_self(), TRUE);
 	if (task)
 	{
 		return task;
@@ -235,7 +415,7 @@ os_task_t * os_task_tcb_self(void)
 
 os_task_t * os_task_tcb_get(unit32 id, pthread_t pid)
 {
-	os_task_t *task = os_task_lookup(id, pid);
+	os_task_t *task = os_task_lookup(id, pid, TRUE);
 	if (task)
 	{
 		return task;
@@ -251,7 +431,7 @@ pthread_t os_task_pthread_self(void)
 
 unit32 os_task_id_self(void)
 {
-	os_task_t *task = os_task_lookup(0, os_task_pthread_self());
+	os_task_t *task = os_task_lookup(0, os_task_pthread_self(), TRUE);
 	if (task)
 	{
 		return task->td_id;
@@ -492,6 +672,9 @@ static int os_task_state_to_string(enum os_task_state st, char *state)
 	{
 		switch (st)
 		{
+		case OS_STATE_CREATE: //C
+			strcat(state, "C");
+			break;
 		case OS_STATE_READY: //R
 			strcat(state, "R");
 			break;
@@ -527,7 +710,9 @@ static int os_task_string_to_state(char *state, enum os_task_state *st)
 	{
 		if (st)
 		{
-			if (os_strstr(state, "R"))
+			if (os_strstr(state, "C"))
+				*st = OS_STATE_CREATE;
+			else if (os_strstr(state, "R"))
 				*st = OS_STATE_READY;
 			else if (os_strstr(state, "R"))
 				*st = OS_STATE_RUNNING;
@@ -580,7 +765,9 @@ static int os_task_refresh_total_cpu(struct os_task_history *hist)
 		fclose(fp);
 	}
 	else
+	{
 		printf("can't open path:%s\r\n", path);
+	}
 	return 0;
 }
 
@@ -630,7 +817,10 @@ static int os_task_refresh_cpu(os_task_t *task)
 		fclose(fp);
 	}
 	else
-		printf("can't open path:%s\r\n", path);
+	{
+		if(task->state > OS_STATE_CREATE)
+			task->state = OS_STATE_DEAD;
+	}
 	return 0;
 }
 
@@ -638,25 +828,40 @@ static int os_task_refresh_time(void *argv)
 {
 //	if(os_job_finsh() == OK)
 	{
-		NODE *node = NULL;
-		os_task_t *task;
+		NODE node;
+		os_task_t *task = NULL;
 		if (os_task_list == NULL)
 			return ERROR;
 		os_task_refresh_total_cpu(&total_cpu);
 		if (task_mutex)
 			os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
-		node = lstFirst(os_task_list);
-		while (node)
+		task = lstFirst(os_task_list);
+
+		for(task = (os_task_t *)lstFirst(os_task_list);
+				task != NULL;
+				task = (os_task_t *)lstNext(&node))
 		{
-			if (node)
+			node = task->node;
+
+			if( task->state == OS_STATE_ZOMBIE ||
+				task->state == OS_STATE_DEAD )
 			{
-				task = (os_task_t *) node;
-				if (task && task->td_tid != 0)
-				{
-					os_task_refresh_cpu(task);
-				}
+				if (task_mutex)
+					os_mutex_unlock(task_mutex);
+				os_task_entry_destroy(task);
+				if (task_mutex)
+					os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
 			}
-			node = lstNext(node);
+
+			if (task && task->td_tid != 0)
+			{
+				os_task_refresh_cpu(task);
+			}
+			if (task && task->td_tid == 0)
+			{
+				if(task->state > OS_STATE_CREATE)
+					task->state = OS_STATE_ZOMBIE;
+			}
 		}
 		if (task_mutex)
 			os_mutex_unlock(task_mutex);
@@ -773,7 +978,8 @@ static int os_task_tcb_entry_destroy(os_task_t *task)
 	//pthread_spin_destroy(&(task->td_param));
 	if(task->priv)
 	{
-		free(task->priv);
+		//free(task->priv);
+		task->priv = NULL;
 	}
 	os_free(task);
 	return OK;
@@ -781,11 +987,11 @@ static int os_task_tcb_entry_destroy(os_task_t *task)
 
 int os_task_entry_destroy(os_task_t *task)
 {
-#ifndef USE_IPSTACK_KERNEL
-	ipcom_os_task_tcb_entry_delete_cb(task->td_thread);
-#endif
+	//fprintf(stdout, "=======>%s: name=%s tid=%d td_thread=%d self=%d\r\n",
+	//		__func__, task->td_name, task->td_tid, task->td_thread, pthread_self());
 	if (task->td_thread == pthread_self())
 	{
+		BOOL	active = task->active;
 		/*
 		 if (pthread_mutex_lock(&zombie_tasks_lock) != 0)
 		 {
@@ -806,18 +1012,21 @@ int os_task_entry_destroy(os_task_t *task)
 				os_time_destroy(os_moniter_id);
 			}
 		}
-
+		_os_task_destroy_callback(task);
+		os_task_tcb_entry_destroy(task);
 		if (task_mutex)
 			os_mutex_unlock(task_mutex);
-		os_task_cb_stop(task);
-		if(task->active)
+		if(active)
 		{
-			os_task_tcb_entry_destroy(task);
 			pthread_exit(0);
 		}
 	}
 	else
 	{
+		if (os_task_list == NULL)
+		{
+			return ERROR;
+		}
 		if (task_mutex)
 			os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
 		if(task->active)
@@ -825,14 +1034,8 @@ int os_task_entry_destroy(os_task_t *task)
 			pthread_cancel(task->td_thread);
 			pthread_join(task->td_thread, (void **) NULL);
 		}
-		if (os_task_list == NULL)
-		{
-			if (task_mutex)
-				os_mutex_unlock(task_mutex);
-			return ERROR;
-		}
 		lstDelete(os_task_list, (NODE *) task);
-		os_task_cb_stop(task);
+		_os_task_destroy_callback(task);
 		os_task_tcb_entry_destroy(task);
 		if (lstCount(os_task_list) == 0)
 		{
@@ -898,22 +1101,28 @@ static int os_task_tcb_create(os_task_t *task, BOOL active)
 	return OK;
 }
 
-#ifdef OS_TASK_DEBUG
+
 static int os_task_entry_start(os_task_t *task)
 {
 	usleep(100000);
+#ifdef OS_TASK_DEBUG_LOG
 	os_log(OS_TACK_TMP_LOG, "os task create task:%s(%u->LWP=%u)\r\n", task->td_name, task->td_thread,
 			(pid_t) syscall(SYS_gettid));
-
-	printf("\r\ncreate task:%s(%u->LWP=%u)\r\n", task->td_name, task->td_thread,
+#endif
+	printf("\r\ncreate task:%s(%lu->LWP=%u)\r\n", task->td_name, task->td_thread,
 			(pid_t) syscall(SYS_gettid));
-
+	os_task_sigmaskall();
 	task->td_tid = os_task_gettid();
+	_os_task_start_callback(task);
+
+	//os_task_waitting_signal();
+
 	task->td_entry(task->pVoid);
 
 	if (task_mutex)
 		os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
 	lstDelete(os_task_list, (NODE *) task);
+	_os_task_destroy_callback(task);
 	os_task_tcb_entry_destroy(task);
 	if (lstCount(os_task_list) == 0)
 	{
@@ -927,30 +1136,19 @@ static int os_task_entry_start(os_task_t *task)
 	return 0;
 }
 
-static int os_task_tcb_start(os_task_t *task)
+static int os_task_tcb_active(os_task_t *task)
 {
 	if (pthread_create(&(task->td_thread), &(task->td_attr),
 			os_task_entry_start, (void *) task) == 0)
 	{
 		pthread_detach(task->td_thread);
 //		pthread_attr_destroy(&(task->td_attr));
-#ifndef USE_IPSTACK_KERNEL
-		ipcom_os_task_tcb_entry_create_cb(task->td_name, task->td_thread,
-				task->td_entry_name);
-#endif
 		OS_DEBUG("%s:\r\n",__func__);
 //		pthread_exit (0);
 		return OK;
 	}
 	return ERROR;
 }
-#else
-static int os_task_tcb_start(os_task_t *task)
-{
-	return pthread_create(&(task->td_thread), &(task->td_attr),
-			task->td_entry, (void *)task->pVoid);
-}
-#endif
 
 static os_task_t * os_task_tcb_entry_create(char *name, int pri, int op,
 		task_entry entry, void *pVoid, char *func_name, int stacksize, BOOL active)
@@ -997,6 +1195,7 @@ static os_task_t * os_task_tcb_entry_create(char *name, int pri, int op,
 		task->pVoid = pVoid;
 		task->active = active;
 		os_strcpy(task->td_entry_name, func_name);
+		task->state = OS_STATE_CREATE;
 
 		if (task_mutex)
 			os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
@@ -1006,8 +1205,8 @@ static os_task_t * os_task_tcb_entry_create(char *name, int pri, int op,
 
 		if (os_task_tcb_create(task, active) == OK)
 		{
-			if(active)
-				os_task_cb_start(task);
+			//if(active)
+			_os_task_create_callback(task);
 			return task;
 		}
 		else
@@ -1036,7 +1235,7 @@ unit32 os_task_entry_create(char *name, int pri, int op, task_entry entry,
 			func_name, stacksize, TRUE);
 	if (task == NULL)
 		return ERROR;
-	if (os_task_tcb_start(task) == OK)
+	if (os_task_tcb_active(task) == OK)
 	{
 #ifdef HAVE_PTHREAD_SETNAME_NP
 		//prctl(PR_SET_NAME,"THREAD2");
@@ -1101,7 +1300,7 @@ unit32 os_task_entry_add(char *name, int pri, int op,
 			os_task_moniter_init();
 		}
 	}
-	printf("\r\ncreate task:%s(%u %u->%u) pid=%d\r\n",task->td_name,
+	OS_DEBUG("\r\nadd task:%s(%u %u->%u) pid=%d\r\n",task->td_name,
 				task->td_thread,(unit32)task,task->td_id,getpid());
 	return task->td_id;
 }
@@ -1123,7 +1322,7 @@ int os_task_priv_set(unit32 TaskID, pthread_t td_thread, void *priv)
 	}
 	else
 	{
-		os_task_t *task = os_task_lookup(0, td_thread);
+		os_task_t *task = os_task_lookup(0, td_thread, TRUE);
 		if (task)
 		{
 			if (task_mutex)
@@ -1156,7 +1355,7 @@ void * os_task_priv_get(unit32 TaskID, pthread_t td_thread)
 	}
 	else
 	{
-		task = os_task_lookup(0, td_thread);
+		task = os_task_lookup(0, td_thread, TRUE);
 		if (task)
 		{
 			if (task_mutex)
@@ -1172,7 +1371,7 @@ void * os_task_priv_get(unit32 TaskID, pthread_t td_thread)
 
 int os_task_del(unit32 td_thread)
 {
-	os_task_t *task = os_task_lookup(0, td_thread);
+	os_task_t *task = os_task_lookup(0, td_thread, TRUE);
 	if (task)
 		return os_task_entry_destroy(task);
 	return ERROR;
@@ -1180,30 +1379,47 @@ int os_task_del(unit32 td_thread)
 
 int os_task_refresh_id(unit32 td_thread)
 {
-	os_task_t *task = os_task_lookup(0, td_thread);
+	if (task_mutex)
+		os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+	os_task_t *task = os_task_lookup(0, td_thread, FALSE);
 	if(task)
 	{
-		if (task_mutex)
-			os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
-
 		task->td_pid = getpid();/* kernel process ID */
 		task->td_tid = os_task_gettid();/* kernel LWP ID */
-
-		if (task_mutex)
-			os_mutex_unlock(task_mutex);
+		os_task_refresh_cpu(task);
+		//if(task->state > OS_STATE_CREATE)
 	}
+	if (task_mutex)
+		os_mutex_unlock(task_mutex);
 	return OK;
 }
 
-int os_task_foreach(os_task_cb cb, void *p)
+int os_task_foreach(os_task_hook cb, void *p)
 {
-	NODE *node = NULL;
+	NODE node;
 	os_task_t *task = NULL;
 	if (os_task_list == NULL)
 		return NULL;
 	if (task_mutex)
 		os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
-	node = lstFirst(os_task_list);
+
+	for(task = (os_task_t *)lstFirst(os_task_list);
+			task != NULL;
+			task = (os_task_t *)lstNext(&node))
+	{
+		node = task->node;
+		if (task)
+		{
+			if(cb && p)
+				(cb)(p);
+			else
+			{
+				if(cb)
+					(cb)(task);
+			}
+		}
+	}
+/*	node = lstFirst(os_task_list);
 	while (node)
 	{
 		if (node)
@@ -1221,7 +1437,7 @@ int os_task_foreach(os_task_cb cb, void *p)
 			}
 		}
 		node = lstNext(node);
-	}
+	}*/
 	if (task_mutex)
 		os_mutex_unlock(task_mutex);
 	return OK;
@@ -1268,8 +1484,18 @@ static int os_task_show_detail(void *p, os_task_t *task, int detail)
 	os_memset(real, 0, sizeof(real));
 	os_memset(total, 0, sizeof(total));
 	os_memset(lvpid, 0, sizeof(lvpid));
+
 	os_task_refresh_total_cpu(&total_cpu);
-	os_task_refresh_cpu(task);
+
+	if (task->td_tid != 0)
+	{
+		os_task_refresh_cpu(task);
+	}
+	else
+	{
+		if(task->state > OS_STATE_CREATE)
+			task->state = OS_STATE_ZOMBIE;
+	}
 	os_task_state_to_string(task->state, state);
 
 	sprintf(taskId, "%u", task->td_id);

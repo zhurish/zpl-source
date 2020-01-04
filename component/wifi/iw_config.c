@@ -8,7 +8,7 @@
 #include "iw_config.h"
 
 
-int	iw_debug_conf = IW_DEBUG_EVENT|IW_DEBUG_DB|IW_DEBUG_SCAN|IW_DEBUG_AP|IW_DEBUG_AP_ACCEPT|IW_DEBUG_DETAIL;
+int	iw_debug_conf = 0;//IW_DEBUG_EVENT;//|IW_DEBUG_DB|IW_DEBUG_SCAN|IW_DEBUG_AP|IW_DEBUG_AP_ACCEPT|IW_DEBUG_DETAIL;
 
 char * iw_mode_string(iw_mode_t mode)
 {
@@ -120,7 +120,7 @@ char * iw_auth_string(iw_authentication_t mode)
 		return "wpa2-psk";
 		break;
 	case IW_ENCRY_WPA2WPA_PSK:
-		return "wpa2wpa-psk";
+		return "wpa-wpa2-psk";
 		break;
 	default:
 		return "Unknown";

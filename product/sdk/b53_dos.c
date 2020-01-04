@@ -7,10 +7,12 @@
 
 
 #include <zebra.h>
+#include "nsm_dos.h"
+#include "hal_dos.h"
+
 #include "b53_mdio.h"
 #include "b53_regs.h"
-#include "b53_driver.h"
-
+#include "sdk_driver.h"
 
 /*************************************************************************/
 int b53125_dos_icmpv6_longping_drop(struct b53125_device *dev, BOOL enable)
@@ -235,4 +237,8 @@ int b53125_dos_disable_lean(struct b53125_device *dev, BOOL enable)
 	ret |= b53125_write8(dev, B53_DOS_PAGE, B53_DOS_DIS_LEARN_CTL, port_ctrl);
 	return ret;
 }
+
+/*************************************************************************/
+/*************************************************************************/
+
 

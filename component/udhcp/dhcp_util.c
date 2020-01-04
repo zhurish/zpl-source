@@ -368,7 +368,8 @@ static int dhcp_client_lease_set_kernel(client_interface_t *ifter, client_lease_
 	char tmp[128], tmp1[128];
 	memset(tmp, 0, sizeof(tmp));
 	memset(tmp1, 0, sizeof(tmp1));
-
+	if(!lease->lease_address)
+		return ERROR;
 	sprintf(tmp1, "%s", inet_address(ntohl(lease->lease_address)));
 	netmask_str2prefix_str (tmp1, inet_address(ntohl(lease->lease_netmask)), tmp);
 	memset(&cp, 0, sizeof(struct prefix));
@@ -399,6 +400,10 @@ static int dhcp_client_lease_set_kernel(client_interface_t *ifter, client_lease_
 				p2->prefix.s_addr = ipv4_broadcast_addr(p2->prefix.s_addr, p2->prefixlen);
 				ifc->destination = (struct prefix *) p2;
 			}
+		}
+		if (DHCPC_DEBUG_ISON(KERNEL))
+		{
+			zlog_debug(ZLOG_DHCP," dhcp set kernel ip address %s on interface %s", tmp, ifindex2ifname(ifter->ifindex));
 		}
 		SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
 		ret = nsm_pal_interface_set_address (ifp, ifc, 0);
@@ -420,6 +425,11 @@ static int dhcp_client_lease_set_kernel(client_interface_t *ifter, client_lease_
 		dnsopt.ifindex = ifter->ifindex;
 		dnsopt.vrfid = ifp->vrf_id;
 
+		if (DHCPC_DEBUG_ISON(KERNEL))
+		{
+			zlog_debug(ZLOG_DHCP," dhcp set kernel dns %s ", inet_address(ntohl(lease->lease_dns1)));
+		}
+
 		nsm_ip_dns_add(&dnscp, &dnsopt, FALSE, IP_DNS_DYNAMIC);
 
 		if(lease->lease_dns2)
@@ -436,26 +446,37 @@ static int dhcp_client_lease_set_kernel(client_interface_t *ifter, client_lease_
 	}
 	if(strlen(lease->domain_name))
 	{
+		if (DHCPC_DEBUG_ISON(KERNEL))
+		{
+			zlog_debug(ZLOG_DHCP," dhcp set kernel domain name %s ", lease->domain_name);
+		}
 		nsm_dns_domain_name_add_api(lease->domain_name, FALSE);
 		nsm_dns_domain_name_dynamic_api(TRUE, FALSE);
 	}
-	memset(&cp, 0, sizeof(struct prefix));
-	cp.family = AF_INET;
-	cp.prefixlen = 0;
-	cp.u.prefix4.s_addr = 0;
-	gate.s_addr = lease->lease_gateway;
-	rib_add_ipv4 (ZEBRA_ROUTE_DHCP, 0, &cp,
-				 &gate, NULL,
-				 ifter->ifindex, ifp->vrf_id, 0,
-				 ifter->instance, 0, 0, SAFI_UNICAST);
+	if(lease->lease_gateway)
+	{
+		memset(&cp, 0, sizeof(struct prefix));
+		cp.family = AF_INET;
+		cp.prefixlen = 0;
+		cp.u.prefix4.s_addr = 0;
+		gate.s_addr = lease->lease_gateway;
+		rib_add_ipv4 (ZEBRA_ROUTE_DHCP, 0, &cp,
+					 &gate, NULL,
+					 ifter->ifindex, ifp->vrf_id, 0,
+					 ifter->instance + 1000, 0, 0, SAFI_UNICAST);
 
+		if (DHCPC_DEBUG_ISON(KERNEL))
+		{
+			zlog_debug(ZLOG_DHCP," dhcp set kernel gateway %s ", inet_address(ntohl(lease->lease_gateway)));
+		}
+	}
 	if(lease->lease_gateway2)
 	{
 		gate.s_addr = lease->lease_gateway2;
 		rib_add_ipv4 (ZEBRA_ROUTE_DHCP, 0, &cp,
 					 &gate, NULL,
 					 ifter->ifindex, ifp->vrf_id, 0,
-					 ifter->instance + 1, 0, 0, SAFI_UNICAST);
+					 ifter->instance + 1000, 0, 0, SAFI_UNICAST);
 	}
 	return OK;
 }
@@ -470,16 +491,21 @@ static int dhcp_client_lease_unset_kernel(client_interface_t *ifter, client_leas
 	char tmp[128], tmp1[128];
 	memset(tmp, 0, sizeof(tmp));
 	memset(tmp1, 0, sizeof(tmp1));
-
-	memset(&cp, 0, sizeof(struct prefix));
-	cp.family = AF_INET;
-	cp.prefixlen = 0;
-	cp.u.prefix4.s_addr = 0;
-	gate.s_addr = lease->lease_gateway;
-	rib_delete_ipv4 (ZEBRA_ROUTE_DHCP, 0, &cp,
-				 &gate,
-				 ifter->ifindex, ifp->vrf_id, SAFI_UNICAST);
-
+	if(lease->lease_gateway)
+	{
+		memset(&cp, 0, sizeof(struct prefix));
+		cp.family = AF_INET;
+		cp.prefixlen = 0;
+		cp.u.prefix4.s_addr = 0;
+		gate.s_addr = lease->lease_gateway;
+		rib_delete_ipv4 (ZEBRA_ROUTE_DHCP, 0, &cp,
+					 &gate,
+					 ifter->ifindex, ifp->vrf_id, SAFI_UNICAST);
+		if (DHCPC_DEBUG_ISON(KERNEL))
+		{
+			zlog_debug(ZLOG_DHCP," dhcp unset kernel gateway %s ", inet_address(ntohl(lease->lease_gateway)));
+		}
+	}
 	if(lease->lease_gateway2)
 	{
 		gate.s_addr = lease->lease_gateway2;
@@ -500,8 +526,11 @@ static int dhcp_client_lease_unset_kernel(client_interface_t *ifter, client_leas
 		dnsopt.ifindex = ifter->ifindex;
 		dnsopt.vrfid = ifp->vrf_id;
 
-		nsm_ip_dns_add_api(&dnscp, FALSE);
-
+		nsm_ip_dns_del(&dnscp, IP_DNS_DYNAMIC);
+		if (DHCPC_DEBUG_ISON(KERNEL))
+		{
+			zlog_debug(ZLOG_DHCP," dhcp set kernel dns %s ", inet_address(ntohl(lease->lease_dns1)));
+		}
 		if(lease->lease_dns2)
 		{
 			memset(&dnscp, 0, sizeof(struct prefix));
@@ -511,47 +540,53 @@ static int dhcp_client_lease_unset_kernel(client_interface_t *ifter, client_leas
 			dnscp.u.prefix4.s_addr = lease->lease_dns2;
 			dnsopt.ifindex = ifter->ifindex;
 			dnsopt.vrfid = ifp->vrf_id;
-			nsm_ip_dns_add_api(&dnscp, FALSE);
+			nsm_ip_dns_del(&dnscp, IP_DNS_DYNAMIC);
 		}
 	}
 	nsm_dns_domain_name_del_api(FALSE);
 
-
-	sprintf(tmp1, "%s", inet_address(ntohl(lease->lease_address)));
-	netmask_str2prefix_str (tmp1, inet_address(ntohl(lease->lease_netmask)), tmp);
-	memset(&cp, 0, sizeof(struct prefix));
-	if(str2prefix_ipv4 (tmp, (struct prefix_ipv4 *)&cp) <= 0)
+	if(lease->lease_address)
 	{
-		return ERROR;
-	}
-	ifc = connected_check(ifp, (struct prefix *)&cp);
-	if (!ifc)
-	{
-		struct prefix_ipv4 *p1, *p2;
-		ifc = connected_new();
-		ifc->ifp = ifp;
-		/* Address. */
-		p1 = prefix_new();
-		p1->family = cp.family;
-
-		prefix_copy ((struct prefix *)p1, (struct prefix *)&cp);
-		ifc->address = (struct prefix *) p1;
-		if(p1->family == AF_INET)
+		sprintf(tmp1, "%s", inet_address(ntohl(lease->lease_address)));
+		netmask_str2prefix_str (tmp1, inet_address(ntohl(lease->lease_netmask)), tmp);
+		memset(&cp, 0, sizeof(struct prefix));
+		if(str2prefix_ipv4 (tmp, (struct prefix_ipv4 *)&cp) <= 0)
 		{
-			/* Broadcast. */
-			if (p1->prefixlen <= IPV4_MAX_PREFIXLEN - 2)
-			{
-				p2 = prefix_new();
-				p1->family = cp.family;
-				prefix_copy ((struct prefix *)p2, (struct prefix *)&cp);
-				p2->prefix.s_addr = ipv4_broadcast_addr(p2->prefix.s_addr, p2->prefixlen);
-				ifc->destination = (struct prefix *) p2;
-			}
-		}
-		SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
-		ret = nsm_pal_interface_unset_address (ifp, ifc, 0);
-		if(ret != OK)
 			return ERROR;
+		}
+		ifc = connected_check(ifp, (struct prefix *)&cp);
+		if (!ifc)
+		{
+			struct prefix_ipv4 *p1, *p2;
+			ifc = connected_new();
+			ifc->ifp = ifp;
+			/* Address. */
+			p1 = prefix_new();
+			p1->family = cp.family;
+
+			prefix_copy ((struct prefix *)p1, (struct prefix *)&cp);
+			ifc->address = (struct prefix *) p1;
+			if(p1->family == AF_INET)
+			{
+				/* Broadcast. */
+				if (p1->prefixlen <= IPV4_MAX_PREFIXLEN - 2)
+				{
+					p2 = prefix_new();
+					p1->family = cp.family;
+					prefix_copy ((struct prefix *)p2, (struct prefix *)&cp);
+					p2->prefix.s_addr = ipv4_broadcast_addr(p2->prefix.s_addr, p2->prefixlen);
+					ifc->destination = (struct prefix *) p2;
+				}
+			}
+			if (DHCPC_DEBUG_ISON(KERNEL))
+			{
+				zlog_debug(ZLOG_DHCP," dhcp unset kernel ip address %s on interface %s", tmp, ifindex2ifname(ifter->ifindex));
+			}
+			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
+			ret = nsm_pal_interface_unset_address (ifp, ifc, 0);
+			if(ret != OK)
+				return ERROR;
+		}
 	}
 	else
 		return ERROR;

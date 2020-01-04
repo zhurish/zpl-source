@@ -32,9 +32,9 @@ static bool jstHandler(Webs *wp)
     ssize           len;
     int             rc, jid;
 
-    assert(websValid(wp));
-    assert(wp->filename && *wp->filename);
-    assert(wp->ext && *wp->ext);
+    web_assert(websValid(wp));
+    web_assert(wp->filename && *wp->filename);
+    web_assert(wp->ext && *wp->ext);
 
     buf = 0;
     if ((jid = jsOpenEngine(wp->vars, websJstFunctions)) < 0) {
@@ -198,10 +198,10 @@ PUBLIC int websJstWrite(int jid, Webs *wp, int argc, char **argv)
 {
     int     i;
 
-    assert(websValid(wp));
+    web_assert(websValid(wp));
 
     for (i = 0; i < argc; ) {
-        assert(argv);
+        web_assert(argv);
         if (websWriteBlock(wp, argv[i], strlen(argv[i])) < 0) {
             return -1;
         }
@@ -240,7 +240,7 @@ static char *strtokcmp(char *s1, char *s2)
 
 static char *skipWhite(char *s)
 {
-    assert(s);
+    web_assert(s);
 
     if (s == NULL) {
         return s;

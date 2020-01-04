@@ -56,6 +56,11 @@ static struct unit_slot_port iusp_table[] =
 	{.type = IF_SERIAL, .unit = 0, .slot = 0, .port = 0 },
 	{.type = IF_ETHERNET, .unit = 0, .slot = 0, .port = 2 },
 #endif
+#ifdef PRODUCT_V9_BOARD
+	{.type = IF_SERIAL, .unit = 0, .slot = 0, .port = 0 },
+	{.type = IF_ETHERNET, .unit = 0, .slot = 0, .port = 3 },
+#endif
+
 #ifdef PRODUCT_BOJING_BOARD
 	{.type = IF_SERIAL, .unit = 0, .slot = 0, .port = 0 },
 	{.type = IF_ETHERNET, .unit = 0, .slot = 0, .port = 3 },
@@ -66,8 +71,14 @@ static struct unit_slot_port iusp_table[] =
 	{.type = IF_TUNNEL, .unit = 0, .slot = 1, .port = 0 },
 	{.type = IF_VLAN, .unit = 0, .slot = 1, .port = 0 },
 	{.type = IF_LAG, .unit = 0, .slot = 1, .port = 0 },
+#ifdef PRODUCT_X5_B_BOARD
 	{.type = IF_BRIGDE, .unit = 0, .slot = 0, .port = 1 },
 	{.type = IF_WIRELESS, .unit = 0, .slot = 0, .port = 1 },
+#endif
+#ifdef PRODUCT_X5_B_BOARD
+	{.type = IF_BRIGDE, .unit = 0, .slot = 0, .port = 1 },
+	{.type = IF_WIRELESS, .unit = 0, .slot = 0, .port = 0 },
+#endif
 #ifdef CUSTOM_INTERFACE
 	{.type = IF_WIFI, .unit = 0, .slot = 1, .port = 1 },
 	{.type = IF_MODEM, .unit = 0, .slot = 1, .port = 1 },
@@ -206,7 +217,7 @@ static int if_slot_kernel_lookup(ifindex_t ifindex)
 static int if_slot_kernel_add(ifindex_t ifindex, char *name)
 {
 	int i = 0, j = 0;
-	//zlog_debug(ZLOG_DEFAULT, "=======%s: IFINDEX=%x  %s->%d", __func__, ifindex, name, if_nametoindex(name));
+	//printf("=======%s: IFINDEX=%x  %s->%d\r\n", __func__, ifindex, name, if_nametoindex(name));
 	if(if_slot_kernel_lookup(ifindex) == 0)
 	{
 		for(i = 0; i < OS_SLOT_MAX; i++)
@@ -271,8 +282,10 @@ static int if_slot_kernel_update()
 				{
 					memset(buf, 0, sizeof(buf));
 					if(if_indextoname(phy_table[i][j].kifindex, buf))
-						fprintf(fp, "%s:%s\n",
-								if_ifname_make(phy_table[i][j].ifindex), buf);
+					{
+						char *p = if_ifname_make(phy_table[i][j].ifindex);
+						fprintf(fp, "%s:%s\n", p, buf);
+					}
 				}
 			}
 		}
@@ -309,8 +322,11 @@ static int if_slot_kernel_read()
 				else
 					os_strncpy(kname, s, n);
 				//kname[strlen(kname)-1] = '\0';
-				ifindex = if_ifindex_make(name);
-				if(ifindex)
+	
+				//os_msleep(1);
+				ifindex = if_ifindex_make(name, NULL);
+				//printf("========================%s========================%s(%d)-->%s\r\n", __func__, name, ifindex, kname);
+				if(ifindex != 0)
 					if_slot_kernel_add( ifindex, kname);
 			}
 		}
@@ -347,6 +363,7 @@ int if_slot_show_port_phy(struct vty *vty)
 				if(head == 0)
 				{
 					head = 1;
+					vty_out(vty, " Slot Port Phy: %s",VTY_NEWLINE);
 					vty_out(vty, " %-20s %-16s %s", "Interface","kernel",VTY_NEWLINE);
 				}
 				memset(buf, 0, sizeof(buf));
@@ -411,14 +428,14 @@ static int if_unit_slot_port(int type, int u, int s, int p)
 
 static int if_unit_slot(void)
 {
-	int i = 0;
+	int i = 1;
 #ifdef USE_IPSTACK_KERNEL
 	if(i)
 		if_slot_kernel_read();
-	if_slot_kernel_add(if_ifindex_make("ethernet 0/0/1", NULL), "eth0.1");
-	if_slot_kernel_add(if_ifindex_make("ethernet 0/0/2", NULL), "eth0.2");
-	if_slot_kernel_add(if_ifindex_make("wireless 0/0/1", NULL), "ra0");
-	if_slot_kernel_add(if_ifindex_make("brigde 0/0/1", NULL), "br-lan");
+	//if_slot_kernel_add(if_ifindex_make("ethernet 0/0/1", NULL), "eth0.1");
+	//if_slot_kernel_add(if_ifindex_make("ethernet 0/0/2", NULL), "eth0.2");
+	//if_slot_kernel_add(if_ifindex_make("wireless 0/0/1", NULL), "ra0");
+	//if_slot_kernel_add(if_ifindex_make("brigde 0/0/1", NULL), "br-lan");
 #endif
 	for(i = 0; i < array_size(iusp_table); i++)
 	{

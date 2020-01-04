@@ -302,6 +302,7 @@ static inline int ipv4_martian (struct in_addr *addr)
 extern int prefix_check_addr (struct prefix *p);
 extern const char *inet_address(u_int32 ip);
 extern const char *inet_ethernet(u_int8 *mac);
+extern const char *cli_inet_ethernet(u_int8 *mac);
 extern u_int32 get_hostip_byname(char *hostname);
 
 #endif /* _ZEBRA_PREFIX_H */

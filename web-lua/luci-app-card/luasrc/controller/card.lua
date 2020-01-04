@@ -5,7 +5,7 @@ function index()
   local page
   entry({"admin", "card"}, alias("admin", "card", "card"), _("Card-FaceID"), 36).index = true 
   entry({"admin", "card", "faceconfig"}, cbi("admin_card/face"), _("Face Recognition"), 1).sysauth="root"   
-  entry({"admin", "card", "userauth"}, cbi("admin_card/userauth"), _("UserAuth Configure"), 3)
+  --entry({"admin", "card", "userauth"}, cbi("admin_card/userauth"), _("UserAuth Configure"), 3)
   --entry({"admin", "card", "makefacecard"}, cbi("admin_card/makefacecard"), _("Face-Card Configure"), 3)
   --entry({"admin", "card", "cardconfig"}, cbi("admin_card/card"), _("Face-Card Information"), 3)  
     --page = node("admin", "card", "cardconfig")

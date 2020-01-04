@@ -56,7 +56,7 @@ extern int dhcp_lease_del_address(LIST *lst, u_int32 lease_address);
 extern int dhcp_lease_del(LIST *lst, dyn_lease_t *pstNode);
 extern int dhcp_lease_clean(LIST *lst);
 extern dyn_lease_t *dhcp_lease_lookup_expired_lease(LIST *lst);
-
+extern int dhcpd_lease_foreach(int(*cb)(dyn_lease_t *, void *p), void *p);
 extern int dhcpd_lease_save();
 extern int dhcpd_lease_load();
 

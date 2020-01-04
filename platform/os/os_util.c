@@ -18,6 +18,33 @@
 
 #define PROC_BASE "/proc"
 
+
+static int os_log_file_printf(FILE *fp, const char *buf, va_list args)
+{
+	if(fp)
+	{
+		vfprintf(fp, buf, args);
+		fprintf(fp, "\n");
+		fflush(fp);
+	}
+	return OK;
+}
+
+void os_log(char *file, const char *format, ...)
+{
+	FILE *fp = fopen(file, "a+");
+	if(fp)
+	{
+		va_list args;
+		va_start(args, format);
+		os_log_file_printf(fp, format, args);
+		//vzlog(zlog_default, module, priority, format, args);
+		va_end(args);
+		fclose(fp);
+	}
+}
+
+
 int super_system(const char *cmd)
 {
 	int ret = 0;
@@ -459,7 +486,11 @@ int os_read_timeout(int fd, char *buf, int len, int timeout_ms)
 	return read(fd, buf, len);
 }
 
-int os_register_signal(int sig, void (*handler)(int))
+int os_register_signal(int sig, void (*handler)(int
+#ifdef SA_SIGINFO
+	     , siginfo_t *siginfo, void *context
+#endif
+		))
 {
 	struct sigaction sa;//, osa;
 
@@ -467,6 +498,13 @@ int os_register_signal(int sig, void (*handler)(int))
 	sa.sa_handler = handler;
 
 	//sigaction(sig, NULL, &osa);
+#ifdef SA_SIGINFO
+	sa.sa_sigaction = handler;
+	sa.sa_flags = SA_SIGINFO;
+#else
+	sa.sa_handler = handler;
+	sa.sa_flags = 0;
+#endif
 
 	if (sigfillset(&sa.sa_mask) != 0 ||
 	    sigaction(sig, &sa, NULL) < 0)
@@ -477,6 +515,12 @@ int os_register_signal(int sig, void (*handler)(int))
 	return (0);
 }
 
+/*
+int os_register_signal(int sig)
+{
+
+}
+*/
 
 int os_file_size (const char *filename)
 {
@@ -492,9 +536,9 @@ int os_file_size (const char *filename)
 
 #define KB_SIZE_MASK	(0X000003FF)
 
-const char * os_file_size_string(long long len)
+const char * os_file_size_string(u_int len)
 {
-	int glen = 0, mlen = 0, klen = 0;
+	u_int glen = 0, mlen = 0, klen = 0;
 	static char buf[64];
 	memset(buf, 0, sizeof(buf));
 	glen = (len >> 30) & KB_SIZE_MASK;
@@ -510,7 +554,7 @@ const char * os_file_size_string(long long len)
 	}
 	else if(klen > 0)
 	{
-		snprintf(buf, sizeof(buf), "%d.%d K",klen, (len) & KB_SIZE_MASK);
+		snprintf(buf, sizeof(buf), "%u.%u K",klen, (len) & KB_SIZE_MASK);
 	}
 	else
 	{

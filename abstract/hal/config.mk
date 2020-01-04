@@ -14,6 +14,10 @@ OBJS	+= hal_mirror.o
 OBJS	+= hal_misc.o
 OBJS	+= hal_mstp.o
 OBJS	+= hal_trunk.o
+OBJS	+= hal_qos.o
+
+OBJS	+= hal_driver.o
+OBJS	+= hal_test.o
 endif
 #############################################################################
 # LIB

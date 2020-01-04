@@ -208,20 +208,24 @@ PUBLIC_DATA int logLevel;
 
 
 #if DOXYGEN
-#undef assert
+#undef web_assert
 /**
     Assure that an assert condition is true
     @param cond Boolean result of a conditional test
     @stability Stable
  */
-extern void assert(bool cond);
+extern void web_assert(bool cond);
+
 #elif ME_GOAHEAD_DEBUG
-    #define assert(C)       if (C) ; else assertError(WEBS_L, "%s", #C)
-    PUBLIC void assertError(WEBS_ARGS_DEC, char *fmt, ...);
+    #define web_assert(C)       if (C) \
+								; \
+							else \
+								assertError(WEBS_L, "%s", #C)
 #else
-    #define assert(C)       if (1) ; else {}
+    #define web_assert(C)       if (1) ; else {}
 #endif
 
+PUBLIC void assertError(WEBS_ARGS_DEC, char *fmt, ...);
 /**
     Callback for emitting trace log output
     @param level Integer between 0 and 9. Zero is the lowest trace level used for the most important messages.
@@ -317,7 +321,7 @@ PUBLIC void logmsgProc(int level, cchar *fmt, ...);
 PUBLIC void traceProc(int level, cchar *fmt, ...);
 
 #else /*! ME_GOAHEAD_LOGGING */
-    #define assert(C) if (1) ; else {}
+    #define web_assert(C) if (1) ; else {}
     #define error(l, ...) if (1) ; else {}
     #define trace(l, ...) if (1) ; else {}
     #define logOpen() if (1) ; else {}
@@ -1793,7 +1797,8 @@ typedef struct WebsUpload {
     @stability Stable
  */
 PUBLIC void websUploadOpen(void);
-
+PUBLIC void websUploadSetDir(char *dirb);
+PUBLIC char * websUploadGetDir();
 /**
     Get the hash of uploaded files for the request
     @param wp Webs request object
@@ -1987,6 +1992,18 @@ typedef struct Webs {
     char            *uploadVar;         /**< Current upload form variable name */
 #endif
     void            *ssl;               /**< SSL context */
+
+#if ME_GOAHEAD_AUTO_LOGIN
+/*	char 			*web_login_html;
+	char 			*web_main_html;
+	char 			*web_logout_html;*/
+#endif
+    void			*pArgv;				/* private argv */
+    void			*pArgv1;				/* private argv */
+    void			*pArgv2;				/* private argv */
+    int				pIndex;
+    int				pIndex1;
+    int				pIndex2;
 } Webs;
 
 #if ME_GOAHEAD_LEGACY
@@ -2997,6 +3014,7 @@ PUBLIC void websSetEnv(Webs *wp);
     @stability Stable
  */
 PUBLIC void websSetFormVars(Webs *wp);
+PUBLIC void websSetJsonVars(Webs *wp);
 
 /**
     Define the host name for the server
@@ -3889,7 +3907,9 @@ PUBLIC bool websVerifyPasswordFromFile(Webs *wp);
  */
 PUBLIC bool websVerifyPasswordFromPam(Webs *wp);
 #endif
-
+#if ME_GOAHEAD_AUTO_LOGIN
+PUBLIC void websSetAutoLoginHtml(int type, char *html);
+#endif
 #endif /* ME_GOAHEAD_AUTH */
 /************************************** Sessions *******************************/
 /**

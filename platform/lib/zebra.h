@@ -605,6 +605,7 @@ typedef uint32_t route_tag_t;
 #include "os_time.h"
 #include "os_util.h"
 #include "os_tlv.h"
+#include "cJSON.h"
 #endif
 
 #include "list.h"

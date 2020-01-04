@@ -14,13 +14,11 @@
 	<meta name="theme-color" content="#0099CC">
 	<meta name="msapplication-tap-highlight" content="no">
 	<meta name="msapplication-TileColor" content="#0099CC">
-
 	<meta name="application-name" content="OpenWrt - LuCI">
 	<meta name="apple-mobile-web-app-title" content="OpenWrt - LuCI">
 	<meta name="msapplication-TileImage" content="/res/logo.png">
 	<link rel="icon" href="/res/logo.png" sizes="144x144">
 	<link rel="apple-touch-icon-precomposed" href="/res/logo.png" sizes="144x144">
-
 	<link rel="stylesheet" href="/css/cascade.css">
 	<link rel="shortcut icon" href="/res/favicon.ico">
 	<script src="/js/cbi.js"></script>
@@ -32,7 +30,7 @@
 	<div class="fill">
 		<div class="container">
 			<span class="showSide"></span>
-			<a class="brand" href="#">OpenWrt</a>
+			<img class="logo" src="/res/logo.png">
 			<div class="pull-right">
 				<span id="xhr_poll_status" style="display:none" onclick="XHR.running() ? XHR.halt() : XHR.run()">
 					<span class="label success" id="xhr_poll_status_on">
@@ -52,7 +50,6 @@
 			Loading...
 		</span>
 	</div>
-	<div class="main-left"></div>
 	<div class="main-right">
 		<div class="darkMask" style="display: none;"></div>
 		<div id="maincontent">

@@ -1,0 +1,255 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta content="" name="description" />
+	<meta content="webthemez" name="author" />
+	<!--meta http-equiv="refresh" content="30"-->
+	<!-- Bootstrap Styles-->
+	<link href="../css/bootstrap.min.css" rel="stylesheet" />
+
+	<!-- private Styles-->
+	<link href="../css/private.css" rel="stylesheet" />
+
+	<!-- jQuery Js -->
+	<script src="../js/jquery-2.1.1.min.js"></script>
+	<!-- Bootstrap Js -->
+	<script src="../js/bootstrap.min.js"></script>
+	<script src="../js/xhr.js"></script>
+	<script src="../js/data-type.js"></script>
+
+	<title>admin</title>
+</head>
+
+<body class="body-bg-img">
+	<div id="maincontent" class="container">
+		<!-- SNTP设置 -->
+		<fieldset class="fieldset-margin fieldset-background">
+			<form class="form-horizontal form-margin" role="form" name="setsntp" action="" accept-charset="UTF-8"
+				method="POST">
+				<legend class="legend-text-align">FTP设置</legend>
+
+				<div class="form-group">
+					<label for="ftp_enable" class="col-sm-3 control-label">FTP</label>
+					<div class="checkbox col-sm-4">
+						<input type="checkbox" name="ftp_enable" id="ftp_enable" value="ftp_enable"
+							onclick="ftp_enable_check(this)">
+					</div>
+				</div>
+				<div class="form-group ">
+					<label for="ftp_address" class="col-sm-3 control-label">FTP地址</label>
+					<div class="col-sm-4">
+						<input type="text" minlength="6" maxlength="32" class="form-control" name="ftp_address"
+							id="ftp_address" onchange="ftp_ip_check()" required placeholder="请输入FTP服务器地址或者IP地址">
+					</div>
+				</div>
+
+				<div class="form-group ">
+					<label for="ftp_dir" class="col-sm-3 control-label">FTP上传目录</label>
+					<div class="col-sm-4">
+						<input type="text" minlength="6" maxlength="32" class="form-control" name="ftp_dir"
+							id="ftp_dir" required placeholder="请输入FTP服务器地址或者IP地址">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="username" class="col-sm-3 control-label">用户名</label>
+					<div class="col-sm-4">
+
+						<input type="text" minlength="6" maxlength="32" class="form-control" name="username"
+							id="username" value="" onchange="username_check()" required placeholder="请输入用户名">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="password" class="col-sm-3 control-label">密码</label>
+					<div class="col-sm-4">
+						<input type="password" minlength="6" maxlength="32" class="form-control" name="password"
+							id="password" value="" onchange="password_check()" required placeholder="请输入密码">
+					</div>
+				</div>
+
+				<div class="form-group show">
+					<div class="col-sm-4 control-label">
+						<button type="button" class="btn btn-cencel" name="ftp_cencel" id="ftp_cencel"
+							onclick="ftp_oncencel()"><span class="glyphicon glyphicon-remove"
+								style="margin-right:10px;"></span>取消</button>
+					</div>
+					<div class="col-sm-4 control-label">
+						<button type="button" class="btn btn-submit" name="ftp_submit" id="ftp_submit"
+							onclick="ftp_onsubmit()"><span class="glyphicon glyphicon-send"
+								style="margin-right:10px;"></span>确定</button>
+					</div>
+				</div>
+				<div id="ftp_waiting" class="alert alert-success hiden">
+					<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+							style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+				</div>
+				<div id="ftp_error" class="alert alert-warning hiden">
+					<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+				</div>
+				<script type="text/javascript">
+
+					function ftp_ip_check() {
+						var ftp_ip = $('#ftp_address');
+						var ip = ftp_ip.val();
+						if (ip != "") {
+							if (checkipv4(ip) == true || hostname(ip) == true) {
+								check_ok_show(ftp_ip);
+							}
+							else {
+								check_err_show(ftp_ip);
+							}
+						}
+					}
+					//$('#ftp_syncinterval').change(function() 
+					function ftp_dir_check() {
+						if (document.getElementById("ftp_syncinterval").value != "") {
+							var syncinterval = $('#ftp_syncinterval');
+							var sync_val = syncinterval.val();
+							if (sync_val > 3600 || sync_val < 60) {
+								//syncinterval.parent().next().next().css("display", "block");
+								var chkok = syncinterval.parent().next();
+								var chkerr = syncinterval.parent().next().next();
+								chkok.css("display", "none");
+								chkerr.css("display", "block");
+							}
+							else {
+								var chkok = syncinterval.parent().next();
+								var chkerr = syncinterval.parent().next().next();
+								chkok.css("display", "block");
+								chkerr.css("display", "none");
+							}
+						}
+					}//);
+
+					function ftp_oncencel() {
+						document.getElementById("ftp_address").value = "";
+						//document.getElementById("ftp_timezone").value = "";
+						document.getElementById("ftp_syncinterval").value = "";
+						check_okerr_hiden($('#ftp_address'));
+						check_okerr_hiden($('#ftp_syncinterval'));
+					}
+
+					function ftp_onaction(op) {
+						var argv;
+						var stxhr = new XHR();
+						if (op == "GET") {
+							argv = "ACTION=GET";
+						}
+						else {
+							if (document.getElementById("ftp_enable").checked) {
+								argv = "ACTION=SET&ftp_enable=true";
+								argv += "&ftp_address=" + document.getElementById("ftp_address").value + "&ftp_timezone="
+									+ document.getElementById("ftp_timezone").value;
+
+								if (document.getElementById("ftp_syncinterval").value != "") {
+									argv += "&ftp_syncinterval=" + document.getElementById("ftp_syncinterval").value;
+								}
+							}
+							else {
+								argv = "ACTION=SET&ftp_enable=false";
+							}
+
+							$("#ftp_waiting").css("display", "block");
+							setTimeout(function () { $("#ftp_waiting").css("display", "none") }, 5000);
+						}
+						stxhr.post("/goform/setsntp", argv,
+							function (x, json) {
+								console.log(x);
+								console.log(json);
+								if (json == null) {
+									if (x.responseText == "ERROR") {
+										if (op != "GET") {
+											clearTimeout();
+											$("#ftp_waiting").css("display", "none");
+											$("#ftp_error").css("display", "block");
+											setTimeout(function () { $("#ftp_error").css("display", "none") }, 3000);
+										}
+										else {
+											//document.getElementById("ftp_enable").checked = false;
+										}
+									}
+									else {
+										if (x.responseText == "OK") {
+											clearTimeout();
+											$("#ftp_waiting").css("display", "none");
+											$("#ftp_error").css("display", "none");
+										}
+										//document.getElementById("ftp_enable").checked = true;
+									}
+								}
+								else {
+									if (json.response == "OK") {
+										if (op != "GET") {
+											clearTimeout();
+											$("#ftp_waiting").css("display", "none");
+											$("#ftp_error").css("display", "none");
+										}
+										document.getElementById("ftp_enable").checked = json.ftp_enable;
+										document.getElementById("ftp_address").value = json.ftp_address;
+										//document.getElementById("ftp_timezone").value = json.ftp_timezone;
+										for (var i = 0, count = document.getElementById("ftp_timezone").options.length; i < count; i++) {
+											if (document.getElementById("ftp_timezone").options[i].value == json.ftp_timezone) {
+												//select.selectedIndex = i;
+												document.getElementById("ftp_timezone").options[i].selected = true;
+												break;
+											}
+										}
+										document.getElementById("ftp_syncinterval").value = json.ftp_syncinterval;
+										if (op != "GET") {
+											check_okerr_hiden($('#ftp_address'));
+											check_okerr_hiden($('#ftp_syncinterval'));
+										}
+									}
+								}
+							},
+							3000
+						);
+					}
+
+					//button 按钮，结合onclick事件，验证和提交表单
+					function ftp_onsubmit() {
+						if (document.setsntp.ftp_address.value == "" ||
+							document.setsntp.ftp_address.value.length > 32 ||
+							document.setsntp.ftp_address.value.length < 6) {
+							check_err_show($('#ftp_address'));
+							return false;
+						}
+						if (document.setsntp.ftp_syncinterval.value == "" ||
+							(document.setsntp.ftp_syncinterval.value > 3600 ||
+								document.setsntp.ftp_syncinterval.value < 60)) {
+							check_err_show($('#ftp_syncinterval'));
+							return false;
+						}
+
+						ftp_onaction("SET");
+					}
+
+					function ftp_enable_check(self) {
+						var value = self.checked;
+						if (value == true) {
+							check_okerr_hiden($('#ftp_address'));
+							check_okerr_hiden($('#ftp_syncinterval'));
+							document.getElementById("ftp_address").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("ftp_timezone").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("ftp_syncinterval").parentNode.parentNode.setAttribute("class", "form-group show");
+							//document.getElementById("ftp_cencel").parentNode.parentNode.setAttribute("class", "form-group show");
+						}
+						else {
+							check_okerr_hiden($('#ftp_address'));
+							check_okerr_hiden($('#ftp_syncinterval'));
+							document.getElementById("ftp_address").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							document.getElementById("ftp_timezone").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							document.getElementById("ftp_syncinterval").parentNode.parentNode.setAttribute("class", "form-group hiden");
+						}
+					}				
+				</script>
+			</form>
+		</fieldset>
+	</div>
+</body>
+
+</html>

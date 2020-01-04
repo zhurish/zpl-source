@@ -29,9 +29,9 @@ static bool fileHandler(Webs *wp)
     ssize           nchars;
     int             code;
 
-    assert(websValid(wp));
-    assert(wp->method);
-    assert(wp->filename && wp->filename[0]);
+    web_assert(websValid(wp));
+    web_assert(wp->method);
+    web_assert(wp->filename && wp->filename[0]);
 
 #if !ME_ROM
     if (smatch(wp->method, "DELETE")) {
@@ -114,8 +114,8 @@ static void fileWriteEvent(Webs *wp)
     ssize   len, wrote;
     int     err;
 
-    assert(wp);
-    assert(websValid(wp));
+    web_assert(wp);
+    web_assert(websValid(wp));
 
     if ((buf = walloc(ME_GOAHEAD_LIMIT_BUFFER)) == NULL) {
         websError(wp, HTTP_CODE_INTERNAL_SERVER_ERROR, "Cannot get memory");
@@ -149,9 +149,9 @@ PUBLIC bool websProcessPutData(Webs *wp)
 {
     ssize   nbytes;
 
-    assert(wp);
-    assert(wp->putfd >= 0);
-    assert(wp->input.buf);
+    web_assert(wp);
+    web_assert(wp->putfd >= 0);
+    web_assert(wp->input.buf);
 
     nbytes = bufLen(&wp->input);
     wp->putLen += nbytes;
@@ -203,7 +203,7 @@ PUBLIC char *websGetDocuments(void)
  */
 PUBLIC void websSetIndex(cchar *page)
 {
-    assert(page && *page);
+    web_assert(page && *page);
 
     if (websIndex) {
         wfree(websIndex);
@@ -217,7 +217,7 @@ PUBLIC void websSetIndex(cchar *page)
  */
 PUBLIC void websSetDocuments(cchar *dir)
 {
-    assert(dir && *dir);
+    web_assert(dir && *dir);
     if (websDocuments) {
         wfree(websDocuments);
     }

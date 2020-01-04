@@ -293,12 +293,39 @@ int nsm_ip_dns_add_api(struct prefix *address, BOOL	secondly)
 	return nsm_ip_dns_add(address, NULL, secondly, IP_DNS_STATIC);
 }
 
+int nsm_ip_dns_get_api(ifindex_t ifindex, struct prefix *address, BOOL	secondly)
+{
+	ip_dns_t *pstNode = NULL;
+	NODE index;
+	if(!lstCount(gIpdns.dnsList))
+		return ERROR;
+	if(gIpdns.mutex)
+		os_mutex_lock(gIpdns.mutex, OS_WAIT_FOREVER);
+	for(pstNode = (ip_dns_t *)lstFirst(gIpdns.dnsList);
+			pstNode != NULL;  pstNode = (ip_dns_t *)lstNext((NODE*)&index))
+	{
+		index = pstNode->node;
+		if(pstNode->_dns_secondly == secondly && ifindex == pstNode->_dns_ifindex)
+		{
+			if(address)
+				memcpy(address, &pstNode->address, sizeof(struct prefix));
+			if(gIpdns.mutex)
+				os_mutex_unlock(gIpdns.mutex);
+			return OK;
+		}
+		//if(ifindex == pstNode->_dns_ifindex && (pstNode->type == type))
+	}
+	if(gIpdns.mutex)
+		os_mutex_unlock(gIpdns.mutex);
+	return ERROR;
+}
+
 int nsm_ip_dns_del_by_ifindex(ifindex_t ifindex, dns_class_t type)
 {
 	ip_dns_t *pstNode = NULL;
 	NODE index;
 	if(!lstCount(gIpdns.dnsList))
-		return NULL;
+		return ERROR;
 	if(gIpdns.mutex)
 		os_mutex_lock(gIpdns.mutex, OS_WAIT_FOREVER);
 	for(pstNode = (ip_dns_t *)lstFirst(gIpdns.dnsList);
@@ -573,7 +600,7 @@ int nsm_ip_dns_host_config(struct vty *vty)
 					&& strlen(pstNode->_host_name))
 			{
 				memset(buf, 0, sizeof(buf));
-				sprintf(buf, "%s", if_mac_out_format(pstNode->address.u.prefix_eth.octet, NSM_MAC_MAX));
+				sprintf(buf, "%s", cli_inet_ethernet(pstNode->address.u.prefix_eth.octet));
 /*				pu.p = &pstNode->address;
 				prefix_2_address_str (pu, buf, sizeof(buf));*/
 				vty_out(vty, "ip host %s %s%s", buf,
@@ -964,7 +991,7 @@ static int ip_dns_job_work(void *p)
 
 	if((_dns_debug & IP_DNS_EVENT_DEBUG))
 	{
-		zlog_debug(ZLOG_NSM, "start running work job %d # %u", job->cmd, job->p);
+		zlog_debug(ZLOG_NSM, "start running work job %d # %p", job->cmd, job->p);
 	}
 
 	switch(job->cmd)
@@ -995,7 +1022,7 @@ static int ip_dns_job_work(void *p)
 	{
 		if((_dns_debug & IP_DNS_EVENT_DEBUG))
 		{
-			zlog_debug(ZLOG_NSM, "add/update DNS Server under work job %d # %u", job->cmd, job->p);
+			zlog_debug(ZLOG_NSM, "add/update DNS Server under work job %d # %p", job->cmd, job->p);
 		}
 		ip_dns_kernel_add(gIpdns.domain_name1, gIpdns.domain_name2,
 			gIpdns.dns1, gIpdns.dns2, gIpdns.dns3);
@@ -1004,7 +1031,7 @@ static int ip_dns_job_work(void *p)
 	{
 		if((_dns_debug & IP_DNS_EVENT_DEBUG))
 		{
-			zlog_debug(ZLOG_NSM, "delete DNS Server under work job %d # %u", job->cmd, job->p);
+			zlog_debug(ZLOG_NSM, "delete DNS Server under work job %d # %p", job->cmd, job->p);
 		}
 		ip_dns_kernel_del();
 	}
@@ -1070,7 +1097,7 @@ static int ip_dns_start_job(dns_cmd_t cmd, void *p)
 		}
 		if((_dns_debug & IP_DNS_EVENT_DEBUG))
 		{
-			zlog_debug(ZLOG_NSM, "add work job %d # %u", node->cmd, node->p);
+			zlog_debug(ZLOG_NSM, "add work job %d # %p", node->cmd, node->p);
 		}
 		os_job_add(ip_dns_job_work, node);
 		return OK;

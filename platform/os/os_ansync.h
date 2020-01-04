@@ -92,7 +92,7 @@ typedef struct
 	int 	max_fd;
 	struct epoll_event *events;
 	os_ansync_t		*os_ansync;
-
+	BOOL	bquit;
 }os_ansync_lst;
 
 #define OS_ANSYNC_FD(n)		(((os_ansync_t *)(n))->fd)
@@ -118,6 +118,9 @@ extern os_ansync_t *os_ansync_fetch(os_ansync_lst *lst);
 extern int os_ansync_execute(os_ansync_lst *lst, os_ansync_t *value, os_ansync_exe exe);
 
 extern int os_ansync_main(os_ansync_lst *lst, os_ansync_exe exe);
+
+extern int os_ansync_fetch_quit (os_ansync_lst *);
+extern int os_ansync_fetch_wait (os_ansync_lst *);
 
 
 #define os_ansync_add(l, t, c, p, v)	_os_ansync_register_api(l, t, c, p, v, #c, __FILE__, __LINE__)

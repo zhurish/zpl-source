@@ -33,7 +33,13 @@ static unit32 time_task_id = 0;
 
 #ifdef OS_TIMER_POSIX
 static timer_t os_timerid = 0;
-static void os_time_interrupt(int signo);
+#ifndef OS_SIGNAL_SIGWAIT
+static void os_time_interrupt(int signo
+#ifdef SA_SIGINFO
+	     , siginfo_t *siginfo, void *context
+#endif
+);
+#endif
 #endif
 static int os_time_task(void);
 
@@ -362,7 +368,7 @@ u_int32 os_timestamp_spilt(time_t t,  char *input)
 	tm_tmp.tm_year = 0;
 	memset(&tm_tmp, 0, sizeof(struct tm));
 	brk = input;
-	while(i < strlen(brk))
+	while((uint)i < strlen(brk))
 	{
 		if(brk[i] == 'T')
 			brk[i] = ' ';
@@ -704,7 +710,8 @@ static os_time_t * os_time_entry_create(os_time_type type, int	(*time_entry)(voi
 	if(t)
 	{
 		os_memset(t, 0, sizeof(os_time_t));
-		t->t_id = (int)t;
+		t->t_id = (u_int32)t;
+		//t->t_id = (int)os_get_monotonic_msec ();
 		t->msec = msec;
 		t->pVoid = pVoid;
 		t->time_entry = time_entry;
@@ -721,8 +728,17 @@ static os_time_t * os_time_entry_create(os_time_type type, int	(*time_entry)(voi
  *设置定时中断点
  */
 #ifdef OS_TIMER_POSIX
-static void os_time_interrupt(int signo)
+#ifndef OS_SIGNAL_SIGWAIT
+static void os_time_interrupt(int signo
+#ifdef SA_SIGINFO
+	     , siginfo_t *siginfo, void *context
+#endif
+)
 {
+#ifdef SA_SIGINFO
+	//fprintf(stdout,"____%s_____:PID=%d UID=%d si_addr=%p\r\n",__func__,
+	//		siginfo->si_pid, siginfo->si_uid, siginfo->si_addr);
+#endif
 	if(time_sem && signo == SIGUSR2)
 		os_sem_give(time_sem);
 	//fprintf(stdout,"%s:\r\n",__func__);
@@ -730,6 +746,7 @@ static void os_time_interrupt(int signo)
 	//OS_DEBUG("%s:\r\n",__func__);
 	return;
 }
+#endif
 
 static int timer_connect(timer_t timerid, int (*routine)(void *p))
 {
@@ -737,13 +754,19 @@ static int timer_connect(timer_t timerid, int (*routine)(void *p))
 	memset(&evp, 0, sizeof(struct sigevent));
 
 	evp.sigev_signo = SIGUSR2;
+#ifndef OS_SIGNAL_SIGWAIT
 	evp.sigev_notify = SIGEV_SIGNAL;
-
+#else
+	evp.sigev_notify = SIGEV_THREAD_ID;
+	evp._sigev_un._tid = os_task_gettid();
+#endif
 	if (timer_create(CLOCK_MONOTONIC, &evp, &os_timerid) == -1)
 	{
 		return ERROR;
 	}
+#ifndef OS_SIGNAL_SIGWAIT
 	os_register_signal(SIGUSR2, os_time_interrupt);
+#endif
 //	os_register_signal(SIGALRM, os_time_interrupt);
 
 	//signal(SIGUSR2, os_time_interrupt);
@@ -793,7 +816,9 @@ static int os_time_interrupt_setting(int msec)
 	//		(tick.it_value.tv_nsec)/1000000);
 	//zlog_debug(ZLOG_NSM, "%s time=%u.%u", __func__,tick.it_value.tv_sec, tick.it_value.tv_usec/1000);
 #endif
+#ifndef OS_SIGNAL_SIGWAIT
 	timer_connect(0, NULL);
+#endif
 //	OS_DEBUG("%s:%d.%d sec\r\n",__func__, tick.it_value.tv_sec, tick.it_value.tv_usec/TIMER_MSEC_MICRO);
 	//After first, the Interval time for clock
 
@@ -829,7 +854,7 @@ static int os_time_interval_refresh()
 }
 
 
-int os_time_create_entry(os_time_type type, int (*time_entry)(void *),
+u_int32 os_time_create_entry(os_time_type type, int (*time_entry)(void *),
 		void *pVoid, int msec, char *func_name)
 {
 	os_time_t * t = os_time_entry_create(type, time_entry, pVoid,  msec, func_name);
@@ -848,7 +873,7 @@ int os_time_create_entry(os_time_type type, int (*time_entry)(void *),
 #ifdef OS_TIMER_TEST
 /*	fprintf(stdout, "%s time=%u.%u\n", __func__, t->interval.tv_sec*TIMER_MSEC_MICRO,
 			(t->interval.tv_usec)/TIMER_MSEC_MICRO);*/
-	fprintf(stdout, "%s time=%u.%u\n", __func__, t->interrupt_timestamp/TIMER_MSEC_MICRO,
+	fprintf(stdout, "%s time=%lu.%lu\n", __func__, t->interrupt_timestamp/TIMER_MSEC_MICRO,
 			(t->interrupt_timestamp)%TIMER_MSEC_MICRO);
 
 	//zlog_debug(ZLOG_NSM, "%s time=%u.%u", __func__,tick.it_value.tv_sec, tick.it_value.tv_usec/1000);
@@ -857,12 +882,13 @@ int os_time_create_entry(os_time_type type, int (*time_entry)(void *),
 			os_mutex_unlock(time_mutex);
 		return t->t_id;
 	}
-	return ERROR;
+	return (u_int32)0;
+	//return (u_int32)ERROR;
 }
 
 
 
-os_time_t *os_time_lookup(int id)
+os_time_t *os_time_lookup(u_int32 id)
 {
 	NODE node;
 	os_time_t *t = NULL;
@@ -871,7 +897,7 @@ os_time_t *os_time_lookup(int id)
 	for(t = (os_time_t *)lstFirst(time_list); t != NULL; t = (os_time_t *)lstNext(&node))
 	{
 		node = t->node;
-		if(t && t->t_id && t->t_id == id && t->state != OS_TIMER_FALSE)
+		if(t && t->t_id > 0 && t->t_id == id && t->state != OS_TIMER_FALSE)
 		{
 			break;
 		}
@@ -881,7 +907,7 @@ os_time_t *os_time_lookup(int id)
 		for(t = (os_time_t *)lstFirst(time_unuse_list); t != NULL; t = (os_time_t *)lstNext(&node))
 		{
 			node = t->node;
-			if(t && t->t_id && t->t_id == id && t->state != OS_TIMER_FALSE)
+			if(t && t->t_id > 0 && t->t_id == id && t->state != OS_TIMER_FALSE)
 			{
 				break;
 			}
@@ -893,7 +919,7 @@ os_time_t *os_time_lookup(int id)
 }
 
 
-int os_time_destroy(int id)
+int os_time_destroy(u_int32 id)
 {
 	os_time_t *t = os_time_lookup(id);//(os_time_t *)id;
 	if(t)
@@ -906,7 +932,7 @@ int os_time_destroy(int id)
 		if(t->state == OS_TIMER_TRUE)
 			lstDelete (time_list, (NODE *)t);
 		t->state = OS_TIMER_FALSE;
-		zlog_debug(ZLOG_DEFAULT, "%s:%s", __func__, t->entry_name);
+		zlog_debug(ZLOG_DEFAULT, "=========================%s:%s", __func__, t->entry_name);
 		t->t_id = 0;
 		lstAdd(time_unuse_list, (NODE *)t);
 		os_time_interval_refresh();
@@ -917,7 +943,7 @@ int os_time_destroy(int id)
 	return ERROR;
 }
 
-int os_time_cancel(int id)
+int os_time_cancel(u_int32 id)
 {
 	os_time_t *t = os_time_lookup(id);//(os_time_t *)id;
 	if(t)
@@ -938,7 +964,7 @@ int os_time_cancel(int id)
 	return ERROR;
 }
 
-int os_time_restart(int id, int msec)
+int os_time_restart(u_int32 id, int msec)
 {
 	os_time_t *t = os_time_lookup(id);//(os_time_t *)id;
 	if(t && t->time_entry)
@@ -1002,14 +1028,37 @@ static int os_time_task(void)
 	os_time_t *t;
 	unsigned int interrupt_timestamp = 0;
 	//struct timeval now;
-
+#ifdef OS_SIGNAL_SIGWAIT
+	int signum = 0, err = 0;
+	sigset_t	set;
+#endif
 	while(!os_load_config_done())
 	{
 		os_sleep(1);
 	}
+#ifdef OS_SIGNAL_SIGWAIT
+	int signo_tbl[] = {SIGUSR2};
+	os_task_sigexecute(1, signo_tbl, &set);
+	timer_connect(0, NULL);
+#endif
 	while(1)
 	{
+#ifdef OS_SIGNAL_SIGWAIT
+		err = sigwait(&set, &signum);
+		if(err != 0)
+		{
+			zlog_debug(ZLOG_DEFAULT, "=========================%s:%s(SIGUSR2=%d, signum=%d)",
+					__func__, strerror(errno),SIGUSR2, signum);
+			continue;
+		}
+		zlog_debug(ZLOG_DEFAULT, "=========================%s SIGUSR2=%d, signum=%d",
+				__func__, SIGUSR2, signum);
+		//if(time_sem && signum == SIGUSR2)
+		//	os_sem_give(time_sem);
+		current_time = NULL;
+#else
 		os_sem_take(time_sem, OS_WAIT_FOREVER);
+#endif
 		if(time_mutex)
 			os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
 
@@ -1083,7 +1132,7 @@ static int timer_test_handle(void *p)
 {
 	struct timeval now;
 	os_timer_timeval(&now);
-	fprintf(stdout, "%s time=%u.%u msec\n", __func__,now.tv_sec*TIMER_MSEC_MICRO, now.tv_sec/TIMER_MSEC_MICRO);
+	fprintf(stdout, "%s time=%lu.%lu msec\n", __func__,now.tv_sec*TIMER_MSEC_MICRO, now.tv_sec/TIMER_MSEC_MICRO);
 	//zlog_debug(ZLOG_NSM, "%s time=%u.%u msec", __func__,now.tv_sec, now.tv_sec/1000);
 	t_time_test = 0;
 	return OK;
@@ -1107,16 +1156,16 @@ int timer_test(int time, int type)
 			{
 				os_time_cancel(t_time_test);
 				os_time_restart(t_time_test, time);
-				fprintf(stdout, "%s time=%u.%u msec\n", __func__,now.tv_sec*TIMER_MSEC_MICRO, now.tv_sec/TIMER_MSEC_MICRO);
+				fprintf(stdout, "%s time=%lu.%lu msec\n", __func__,now.tv_sec*TIMER_MSEC_MICRO, now.tv_sec/TIMER_MSEC_MICRO);
 				return OK;
 			}
 		}
-		fprintf(stdout, "%s time=%u.%u msec once\n", __func__,now.tv_sec*TIMER_MSEC_MICRO, now.tv_sec/TIMER_MSEC_MICRO);
+		fprintf(stdout, "%s time=%lu.%lu msec once\n", __func__,now.tv_sec*TIMER_MSEC_MICRO, now.tv_sec/TIMER_MSEC_MICRO);
 		t_time_test = os_time_create_once(timer_test_handle, NULL, time);
 	}
 	else
 	{
-		fprintf(stdout, "%s time=%u.%u msec\n", __func__,now.tv_sec*TIMER_MSEC_MICRO, now.tv_sec/TIMER_MSEC_MICRO);
+		fprintf(stdout, "%s time=%lu.%lu msec\n", __func__,now.tv_sec*TIMER_MSEC_MICRO, now.tv_sec/TIMER_MSEC_MICRO);
 		t_time_test1 = os_time_create(timer_test_handle, NULL, time);
 	}
 	return OK;
@@ -1145,6 +1194,578 @@ int timer_test_exit(int type)
 	return OK;
 }
 #endif
+
+
+int os_time_set_api(int timesp)
+{
+	struct timespec sntpTime; /* storage for retrieved time value */
+	int local_timesp = 0, value = 0;
+	sntpTime.tv_sec = sntpTime.tv_nsec = rand();
+
+	local_timesp = os_time(NULL);
+
+	value = timesp - local_timesp;
+	if (abs(value) <= 5)
+	{
+		return OK;
+	}
+	sntpTime.tv_sec = timesp;
+	value = 5;
+	while (value)
+	{
+		errno = 0;
+		if (clock_settime(CLOCK_REALTIME, &sntpTime) != 0)//SET SYSTEM LOCAL TIME
+		{
+			value--;
+		}
+		else
+		{
+			break;
+		}
+	}
+	if (value > 0)
+	{
+		sync();
+		return OK;
+	}
+	else
+		return ERROR;
+}
+
+int os_timezone_set_api(int tizone, char *timzstr)
+{
+	if(timzstr)
+	{
+		if(setenv("TZ", timzstr, 1) == 0)
+		{
+			tzset();
+			return OK;
+		}
+	}
+	else
+	{
+		char tizmp[64];
+		memset(tizmp, 0, sizeof(tizmp));
+		if(tizone == 0)
+		{
+			sprintf(tizmp, "%s", "UTC");
+		}
+		else if(tizone > 0)
+		{
+			sprintf(tizmp, "GMT-%d", tizone);
+		}
+		else if(tizone < 0)
+		{
+			sprintf(tizmp, "GMT+%d", tizone);
+		}
+		if(setenv("TZ", tizmp, 1) == 0)
+		{
+			tzset();
+			return OK;
+		}
+	}
+	return ERROR;
+}
+
+
+
+struct time_zone
+{
+	char *time_zone;
+	int	offset;
+}time_zone_tbl[] =
+{
+	{ "UTC", 0 },
+	{ "Africa/Abidjan", 0 },
+	{ "Africa/Accra", 0 },
+	{ "Africa/Addis Ababa", -3 },
+	{ "Africa/Algiers", -1 },
+	{ "Africa/Asmara", -3 },
+	{ "Africa/Bamako", 0 },
+	{ "Africa/Bangui", -1 },
+	{ "Africa/Banjul", 0 },
+	{ "Africa/Bissau", 0 },
+	{ "Africa/Blantyre", -2 },
+	{ "Africa/Brazzaville", -1 },
+	{ "Africa/Bujumbura", -2 },
+		{ "Africa/Cairo", -2 },
+		{ "Africa/Ceuta", -2 },
+		{ "Africa/Conakry", 0 },
+		{ "Africa/Dakar", 0 },
+		{ "Africa/Dar es Salaam", -3 },
+		{ "Africa/Djibouti", 03 },
+		{ "Africa/Douala", -2 },
+		{ "Africa/Freetown", 0 },
+		{ "Africa/Gaborone", -2 },
+		{ "Africa/Harare", -2 },
+		{ "Africa/Johannesburg", -2 },
+		{ "Africa/Juba", -3 },
+		{ "Africa/Kampala", -3 },
+		{ "Africa/Khartoum", -2 },
+		{ "Africa/Kigali", -2 },
+		{ "Africa/Kinshasa", -1 },
+		{ "Africa/Lagos", -1 },
+		{ "Africa/Libreville", -1 },
+		{ "Africa/Lome", 0 },
+		{ "Africa/Luanda", -1 },
+		{ "Africa/Lubumbashi", -2 },
+		{ "Africa/Lusaka", -2 },
+		{ "Africa/Malabo", -1 },
+		{ "Africa/Maputo", -2 },
+		{ "Africa/Maseru", -2 },
+		{ "Africa/Mbabane", -2 },
+		{ "Africa/Mogadishu", -3 },
+		{ "Africa/Monrovia", 0 },
+		{ "Africa/Nairobi", -3 },
+		{ "Africa/Ndjamena", -1 },
+		{ "Africa/Niamey", -1 },
+		{ "Africa/Nouakchott", 0 },
+		{ "Africa/Ouagadougou", 0 },
+		{ "Africa/Porto-Novo", -1 },
+		{ "Africa/Sao Tome", 0 },
+		{ "Africa/Tripoli", -2 },
+		{ "Africa/Tunis", -1 },
+		{ "Africa/Windhoek", -2 },
+		{ "America/Adak", 0 },
+		{ "America/Anchorage", 0 },
+		{ "America/Anguilla", 4 },
+		{ "America/Antigua", 4 },
+		{ "America/Araguaina", 3 },
+		{ "America/Argentina/Buenos Aires", 3 },
+		{ "America/Argentina/Catamarca", 3 },
+		{ "America/Argentina/Cordoba", 3 },
+		{ "America/Argentina/Jujuy", 3 },
+		{ "America/Argentina/La Rioja", 3 },
+		{ "America/Argentina/Mendoza", 3 },
+		{ "America/Argentina/Rio Gallegos", 3 },
+		{ "America/Argentina/Salta", 3 },
+		{ "America/Argentina/San Juan", 3 },
+		{ "America/Argentina/San Luis", 3 },
+		{ "America/Argentina/Tucuman", 3 },
+		{ "America/Argentina/Ushuaia", 3 },
+		{ "America/Aruba", 4 },
+		{ "America/Asuncion", 4 },
+		{ "America/Atikokan", 5 },
+		{ "America/Bahia", 3 },
+		{ "America/Bahia Banderas", 5 },
+		{ "America/Barbados", 4 },
+		{ "America/Belem", 3 },
+		{ "America/Belize", 6 },
+		{ "America/Blanc-Sablon", 4 },
+		{ "America/Boa Vista", 4 },
+		{ "America/Bogota", 5 },
+		{ "America/Boise", 3 },
+		{ "America/Cambridge Bay", 3 },
+		{ "America/Campo Grande", 1 },
+		{ "America/Cancun", 5 },
+		{ "America/Caracas", 4 },
+		{ "America/Cayenne", 3 },
+		{ "America/Cayman", 5 },
+		{ "America/Chicago", 5 },
+		{ "America/Chihuahua", 0 },
+		{ "America/Costa Rica", 6 },
+		{ "America/Creston", 7 },
+		{ "America/Cuiaba", 4 },
+		{ "America/Curacao", 4 },
+		{ "America/Danmarkshavn", 0 },
+		{ "America/Dawson", 3 },
+		{ "America/Dawson Creek", 7 },
+		{ "America/Denver", 6 },
+		{ "America/Detroit", 4 },
+		{ "America/Dominica", 4 },
+		{ "America/Edmonton", 6 },
+		{ "America/Eirunepe", 5 },
+		{ "America/El Salvador", 6 },
+		{ "America/Fort Nelson", 7 },
+		{ "America/Fortaleza", 3 },
+		{ "America/Glace Bay", 3 },
+		{ "America/Godthab", 3 },
+		{ "America/Goose Bay", 3 },
+		{ "America/Grand Turk", 4 },
+		{ "America/Grenada", 4 },
+		{ "America/Guadeloupe", 4 },
+		{ "America/Guatemala", 6 },
+		{ "America/Guayaquil", 5 },
+		{ "America/Guyana", 4 },
+		{ "America/Halifax", 4 },
+		{ "America/Havana", 5 },
+		{ "America/Hermosillo", 7 },
+		{ "America/Indiana/Indianapolis", 5 },
+		{ "America/Indiana/Knox", 6 },
+		{ "America/Indiana/Marengo", 5 },
+		{ "America/Indiana/Petersburg", 5 },
+		{ "America/Indiana/Tell City", 6 },
+		{ "America/Indiana/Vevay", 5 },
+		{ "America/Indiana/Vincennes", 5 },
+		{ "America/Indiana/Winamac", 5 },
+		{ "America/Inuvik", 7 },
+		{ "America/Iqaluit", 5 },
+		{ "America/Jamaica", 5 },
+		{ "America/Juneau", 8 },
+		{ "America/Kentucky/Louisville", 5 },
+		{ "America/Kentucky/Monticello", 5 },
+		{ "America/Kralendijk", 4 },
+		{ "America/La Paz", 4 },
+		{ "America/Lima", 5 },
+		{ "America/Los Angeles", 7 },
+		{ "America/Lower Princes", 4 },
+		{ "America/Maceio", 3 },
+		{ "America/Managua", 6 },
+		{ "America/Manaus", 4 },
+		{ "America/Marigot", 4 },
+		{ "America/Martinique", 4 },
+		{ "America/Matamoros", 6 },
+		{ "America/Mazatlan", 7 },
+		{ "America/Menominee", 6 },
+		{ "America/Merida", 6 },
+		{ "America/Metlakatla", 8 },
+		{ "America/Mexico City", 6 },
+		{ "America/Miquelon", 3 },
+		{ "America/Moncton", 4 },
+		{ "America/Monterrey", 6 },
+		{ "America/Montevideo", 3 },
+		{ "America/Montserrat", 4 },
+		{ "America/Nassau", 5 },
+		{ "America/New York", 5 },
+		{ "America/Nipigon", 5 },
+		{ "America/Nome", 8 },
+		{ "America/Noronha", 2 },
+		{ "America/North Dakota/Beulah", 6 },
+		{ "America/North Dakota/Center", 6 },
+		{ "America/North Dakota/New Salem", 6 },
+		{ "America/Ojinaga", 6 },
+		{ "America/Panama", 5 },
+		{ "America/Pangnirtung", 5 },
+		{ "America/Paramaribo", 3 },
+		{ "America/Phoenix", 7 },
+		{ "America/Port of Spain", 4 },
+		{ "America/Port-au-Prince", 5 },
+		{ "America/Porto Velho", 4 },
+		{ "America/Puerto Rico", 4 },
+		{ "America/Punta Arenas", 3 },
+		{ "America/Rainy River", 6 },
+		{ "America/Rankin Inlet", 6 },
+		{ "America/Recife", 3 },
+		{ "America/Regina", 6 },
+		{ "America/Resolute", 6 },
+		{ "America/Rio Branco", 5 },
+		{ "America/Santarem", 3 },
+		{ "America/Santiago", 4 },
+		{ "America/Santo Domingo", 4 },
+		{ "America/Sao Paulo", 3 },
+		{ "America/Scoresbysund", 1 },
+		{ "America/Sitka", 8 },
+		{ "America/St Barthelemy", 4 },
+		{ "America/St Johns", 3 },
+		{ "America/St Kitts", 4 },
+		{ "America/St Lucia", 4 },
+		{ "America/St Thomas", 4 },
+		{ "America/St Vincent", 4 },
+		{ "America/Swift Current", 6 },
+		{ "America/Tegucigalpa", 6 },
+		{ "America/Thule", 4 },
+		{ "America/Thunder Bay", 5 },
+		{ "America/Tijuana", 7 },
+		{ "America/Toronto", 5 },
+		{ "America/Tortola", 4 },
+		{ "America/Vancouver", 7 },
+		{ "America/Whitehorse", 7 },
+		{ "America/Winnipeg", 6 },
+		{ "America/Yakutat", 8 },
+		{ "America/Yellowknife", 6 },
+		{ "Antarctica/Casey", 8 },
+		{ "Antarctica/Davis", 7 },
+		{ "Antarctica/DumontDUrville", 10 },
+		{ "Antarctica/Macquarie",11 },
+		{ "Antarctica/Mawson", 5 },
+		{ "Antarctica/McMurdo", -12 },
+		{ "Antarctica/Palmer", 3 },
+		{ "Antarctica/Rothera", 3 },
+		{ "Antarctica/Syowa", 3 },
+		{ "Antarctica/Troll", -2 },
+		{ "Antarctica/Vostok", -6 },
+		{ "Arctic/Longyearbyen", -2 },
+		{ "Asia/Aden", -3 },
+		{ "Asia/Almaty", -6 },
+		{ "Asia/Amman", -2 },
+		{ "Asia/Anadyr", -12 },
+		{ "Asia/Aqtau", -5 },
+		{ "Asia/Aqtobe", -5 },
+		{ "Asia/Ashgabat", -5 },
+		{ "Asia/Atyrau", -5 },
+		{ "Asia/Baghdad", -3 },
+		{ "Asia/Bahrain", -3 },
+		{ "Asia/Baku", -4 },
+		{ "Asia/Bangkok", -7 },
+		{ "Asia/Barnaul", -7 },
+		{ "Asia/Beirut", -3 },
+		{ "Asia/Bishkek", -6 },
+		{ "Asia/Brunei", -8 },
+		{ "Asia/Chita", -9 },
+		{ "Asia/Choibalsan", -8 },
+		{ "Asia/Colombo", -5 },
+		{ "Asia/Damascus", -3 },
+		{ "Asia/Dhaka", -6 },
+		{ "Asia/Dili", -9 },
+		{ "Asia/Dubai", -4 },
+		{ "Asia/Dushanbe", -5 },
+		{ "Asia/Famagusta", -3 },
+		{ "Asia/Gaza", -3 },
+		{ "Asia/Hebron", -3 },
+		{ "Asia/Ho Chi Minh", -7 },
+		{ "Asia/Hong Kong", -8 },
+		{ "Asia/Hovd", -7 },
+		{ "Asia/Irkutsk", -8 },
+		{ "Asia/Jakarta", -7 },
+		{ "Asia/Jayapura", -9 },
+		{ "Asia/Jerusalem", 0 },
+		{ "Asia/Kabul", -4 },
+		{ "Asia/Kamchatka", -12 },
+		{ "Asia/Karachi", -5 },
+		{ "Asia/Kathmandu", -5 },
+		{ "Asia/Khandyga", -9 },
+		{ "Asia/Kolkata", -5 },
+		{ "Asia/Krasnoyarsk", -7 },
+		{ "Asia/Kuala Lumpur", -8 },
+		{ "Asia/Kuching", -8 },
+		{ "Asia/Kuwait", -3 },
+		{ "Asia/Macau", -8 },
+		{ "Asia/Magadan",-11 },
+		{ "Asia/Makassar", -8 },
+		{ "Asia/Manila", -8 },
+		{ "Asia/Muscat", -4 },
+		{ "Asia/Nicosia", -3 },
+		{ "Asia/Novokuznetsk", -7 },
+		{ "Asia/Novosibirsk", -7 },
+		{ "Asia/Omsk", -6 },
+		{ "Asia/Oral", -5 },
+		{ "Asia/Phnom Penh", -7 },
+		{ "Asia/Pontianak", -7 },
+		{ "Asia/Pyongyang", -9 },
+		{ "Asia/Qatar", -3 },
+		{ "Asia/Qostanay", -6 },
+		{ "Asia/Qyzylorda", -5 },
+		{ "Asia/Riyadh", -3 },
+		{ "Asia/Sakhalin",-11 },
+		{ "Asia/Samarkand", -5 },
+		{ "Asia/Seoul", -9 },
+		{ "Asia/Shanghai", -8 },
+		{ "Asia/Singapore", -8 },
+		{ "Asia/Srednekolymsk",-11 },
+		{ "Asia/Taipei", -8 },
+		{ "Asia/Tashkent", -5 },
+		{ "Asia/Tbilisi", -4 },
+		{ "Asia/Tehran", -3 },
+		{ "Asia/Thimphu", -6 },
+		{ "Asia/Tokyo", -9 },
+		{ "Asia/Tomsk", -7 },
+		{ "Asia/Ulaanbaatar", -8 },
+		{ "Asia/Urumqi", -6 },
+		{ "Asia/Ust-Nera", -10 },
+		{ "Asia/Vientiane", -7 },
+		{ "Asia/Vladivostok", -10 },
+		{ "Asia/Yakutsk", -9 },
+		{ "Asia/Yangon", -6 },
+		{ "Asia/Yekaterinburg", -5 },
+		{ "Asia/Yerevan", -4 },
+		{ "Atlantic/Azores", 0 },
+		{ "Atlantic/Bermuda", 3 },
+		{ "Atlantic/Canary", -1 },
+		{ "Atlantic/Cape Verde", 3 },
+		{ "Atlantic/Faroe", -1 },
+		{ "Atlantic/Madeira", -1 },
+		{ "Atlantic/Reykjavik", 0 },
+		{ "Atlantic/South Georgia", 2 },
+		{ "Atlantic/St Helena", 0 },
+		{ "Atlantic/Stanley", -3 },
+		{ "Australia/Adelaide", -9 },
+		{ "Australia/Brisbane", -10 },
+		{ "Australia/Broken Hill", -9 },
+		{ "Australia/Currie", -10 },
+		{ "Australia/Darwin", -9 },
+		{ "Australia/Eucla", -8 },
+		{ "Australia/Hobart", -10 },
+		{ "Australia/Lindeman", -10 },
+		{ "Australia/Lord Howe", -10 },
+		{ "Australia/Melbourne", -10 },
+		{ "Australia/Perth", -8 },
+		{ "Australia/Sydney", -10 },
+		{ "Etc/GMT", 0 },
+		{ "Etc/GMT+1", 1 },
+		{ "Etc/GMT+2", 2 },
+		{ "Etc/GMT+3", 3 },
+		{ "Etc/GMT+4", 4 },
+		{ "Etc/GMT+5", 5 },
+		{ "Etc/GMT+6", 6 },
+		{ "Etc/GMT+7", 7 },
+		{ "Etc/GMT+8", 8 },
+		{ "Etc/GMT+9", 9 },
+		{ "Etc/GMT+10", 10 },
+		{ "Etc/GMT+11", 11 },
+		{ "Etc/GMT+12", 12 },
+
+		{ "Etc/GMT-1", -1 },
+		{ "Etc/GMT-2", -2 },
+		{ "Etc/GMT-3", -3 },
+		{ "Etc/GMT-4", -4 },
+		{ "Etc/GMT-5", -5 },
+		{ "Etc/GMT-6", -6 },
+		{ "Etc/GMT-7", -7 },
+		{ "Etc/GMT-8", -8 },
+		{ "Etc/GMT-9", -9 },
+		{ "Etc/GMT-10", -10 },
+		{ "Etc/GMT-11", -11 },
+		{ "Etc/GMT-12", -12 },
+		{ "Europe/Amsterdam", 2 },
+		{ "Europe/Andorra", 2 },
+		{ "Europe/Astrakhan", 4 },
+		{ "Europe/Athens", 3 },
+		{ "Europe/Belgrade", 2 },
+		{ "Europe/Berlin", 2 },
+		{ "Europe/Bratislava", 2 },
+		{ "Europe/Brussels", 2 },
+		{ "Europe/Bucharest", 3 },
+		{ "Europe/Budapest", 2 },
+		{ "Europe/Busingen", 2 },
+		{ "Europe/Chisinau", 3 },
+		{ "Europe/Copenhagen", 2 },
+		{ "Europe/Dublin", 2 },
+		{ "Europe/Gibraltar", 2 },
+		{ "Europe/Guernsey", -1 },
+		{ "Europe/Helsinki", 3 },
+		{ "Europe/Isle of Man", -1 },
+		{ "Europe/Istanbul", -3 },
+		{ "Europe/Jersey", -1 },
+		{ "Europe/Kaliningrad", -2 },
+		{ "Europe/Kiev", 3 },
+		{ "Europe/Kirov", -3 },
+		{ "Europe/Lisbon", -1 },
+		{ "Europe/Ljubljana", -2 },
+		{ "Europe/London", -1 },
+		{ "Europe/Luxembourg", -2 },
+		{ "Europe/Madrid", -2 },
+		{ "Europe/Malta", -2 },
+		{ "Europe/Mariehamn", 3 },
+		{ "Europe/Minsk", -3 },
+		{ "Europe/Monaco", -2 },
+		{ "Europe/Moscow", -3 },
+		{ "Europe/Oslo", -2 },
+		{ "Europe/Paris", -2 },
+		{ "Europe/Podgorica", -2 },
+		{ "Europe/Prague", -2 },
+		{ "Europe/Riga", 3 },
+		{ "Europe/Rome", -2 },
+		{ "Europe/Samara", -4 },
+		{ "Europe/San Marino", -2 },
+		{ "Europe/Sarajevo", -2 },
+		{ "Europe/Saratov", -4 },
+		{ "Europe/Simferopol", -3 },
+		{ "Europe/Skopje", -2 },
+		{ "Europe/Sofia", 3 },
+		{ "Europe/Stockholm", -2 },
+		{ "Europe/Tallinn", 3 },
+		{ "Europe/Tirane", -2 },
+		{ "Europe/Ulyanovsk", -4 },
+		{ "Europe/Uzhgorod", 3 },
+		{ "Europe/Vaduz", -2 },
+		{ "Europe/Vatican", -2 },
+		{ "Europe/Vienna", -2 },
+		{ "Europe/Vilnius", 3 },
+		{ "Europe/Volgograd", -4 },
+		{ "Europe/Warsaw", -2 },
+		{ "Europe/Zagreb", -2 },
+		{ "Europe/Zaporozhye", 3 },
+		{ "Europe/Zurich", -2 },
+		{ "Indian/Antananarivo", -3 },
+		{ "Indian/Chagos", -6 },
+		{ "Indian/Christmas", -7 },
+		{ "Indian/Cocos", -6 },
+		{ "Indian/Comoro", -3 },
+		{ "Indian/Kerguelen", -5 },
+		{ "Indian/Mahe", -4 },
+		{ "Indian/Maldives", -5 },
+		{ "Indian/Mauritius", -4 },
+		{ "Indian/Mayotte", -3 },
+		{ "Indian/Reunion", -4 },
+		{ "Pacific/Apia", -12 },
+		{ "Pacific/Auckland", -12 },
+		{ "Pacific/Bougainville",-11 },
+		{ "Pacific/Chatham", -12 },
+		{ "Pacific/Chuuk", -10 },
+		{ "Pacific/Easter", -6 },
+		{ "Pacific/Efate",-11 },
+		{ "Pacific/Enderbury", -13 },
+		{ "Pacific/Fakaofo", -13 },
+		{ "Pacific/Fiji", -12 },
+		{ "Pacific/Funafuti", -12 },
+		{ "Pacific/Galapagos", 6 },
+		{ "Pacific/Gambier", 9 },
+		{ "Pacific/Guadalcanal",-11 },
+		{ "Pacific/Guam", 10 },
+		{ "Pacific/Honolulu", 10 },
+		{ "Pacific/Kiritimati", -14 },
+		{ "Pacific/Kosrae",-11 },
+		{ "Pacific/Kwajalein", -12 },
+		{ "Pacific/Majuro", -12 },
+		{ "Pacific/Marquesas", 9 },
+		{ "Pacific/Midway", 11 },
+		{ "Pacific/Nauru", -12 },
+		{ "Pacific/Niue", 11 },
+		{ "Pacific/Norfolk",-11 },
+		{ "Pacific/Noumea",-11 },
+		{ "Pacific/Pago Pago", 11 },
+		{ "Pacific/Palau", -9 },
+		{ "Pacific/Pitcairn", 8 },
+		{ "Pacific/Pohnpei",-11 },
+		{ "Pacific/Port Moresby", -10 },
+		{ "Pacific/Rarotonga", 10 },
+		{ "Pacific/Saipan", 10 },
+		{ "Pacific/Tahiti", 10 },
+		{ "Pacific/Tarawa", -12 },
+		{ "Pacific/Tongatapu", -13 },
+		{ "Pacific/Wake", -12 },
+		{ "Pacific/Wallis", -12 },
+};
+
+
+int os_timezone_offset_api(char * res)
+{
+	int i = 0;
+	char tmp[128];
+	int	 ret = 0;
+	if(res)
+	{
+		for(i = 0; i < sizeof(time_zone_tbl)/sizeof(time_zone_tbl[0]); i++)
+		{
+			if(strcmp(time_zone_tbl[i].time_zone, res) == 0)
+			{
+				return time_zone_tbl[i].offset;
+			}
+		}
+	}
+	else
+	{
+		memset(tmp, 0, sizeof(tmp));
+#ifdef PL_OPENWRT_UCI
+		ret |= os_uci_get_string("system.@system[0].zonename", tmp);
+#else
+		ret = OK;
+		strcpy(tmp, "Etc/GMT-8");
+#endif
+		if(ret != OK)
+		{
+			return 0;
+		}
+		for(i = 0; i < sizeof(time_zone_tbl)/sizeof(time_zone_tbl[0]); i++)
+		{
+			if(strcmp(time_zone_tbl[i].time_zone, tmp) == 0)
+			{
+				return time_zone_tbl[i].offset;
+			}
+		}
+	}
+	return 0;
+}
 
 
 #if 0

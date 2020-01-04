@@ -19,7 +19,7 @@ function logfile_rows()
 end
 
 
-m = SimpleForm("APP system", "Show App System Log", translate("Show Application System Log"))
+m = SimpleForm("appsystem", "App System Log", translate("Application System Log"))
 m.rmempty = true
 m.reset = false
 m.submit = false

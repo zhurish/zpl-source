@@ -16,8 +16,9 @@
 #include "eloop.h"
 #include "os_start.h"
 #include "os_module.h"
-
-
+#ifdef PL_APP_MODULE
+#include "application.h"
+#endif
 
 int console_enable = 0;
 
@@ -161,9 +162,6 @@ int os_module_init(void)
 #ifdef PL_OSPF_MODULE
 	//ospfd_module_init();
 #endif
-#ifdef PL_PAL_MODULE
-	//pal_api_init();
-#endif
 
 	nsm_vlan_init();
 	nsm_mac_init();
@@ -211,9 +209,20 @@ int os_module_init(void)
 #endif
 
 #ifdef PL_WEBGUI_MODULE
-	webgui_module_init();
+	web_app_module_init();
 #endif
 
+#ifdef PL_MQTT_MODULE
+	mqtt_module_init();
+#endif
+
+#ifdef PL_HAL_MODULE
+	hal_module_init();
+#endif
+
+#ifdef PL_APP_MODULE
+	app_module_init();
+#endif
 
 #ifdef PL_BSP_MODULE
 	bsp_usp_module_init();
@@ -266,9 +275,17 @@ int os_module_task_init(void)
 #endif
 
 #ifdef PL_WEBGUI_MODULE
-	webgui_module_task_init();
+	web_app_module_task_init();
 #endif
 
+#ifdef PL_APP_MODULE
+	app_module_task_init();
+#endif
+
+
+#ifdef PL_MQTT_MODULE
+
+#endif
 	return OK;
 }
 
@@ -316,6 +333,8 @@ int os_module_cmd_init(int terminal)
 	cmd_ppp_init();
 	cmd_tunnel_init();
 	cmd_bridge_init();
+	cmd_security_init();
+
 
 #ifdef PL_WIFI_MODULE
 	cmd_wireless_init();
@@ -338,11 +357,15 @@ int os_module_cmd_init(int terminal)
 #endif
 
 #ifdef PL_WEBGUI_MODULE
-	//webgui_module_task_init();
+	cmd_webserver_init();
 #endif
 
 #ifdef PL_APP_MODULE
 	cmd_app_init();
+#endif
+
+#ifdef PL_MQTT_MODULE
+
 #endif
 
 
@@ -352,6 +375,9 @@ int os_module_cmd_init(int terminal)
 	 */
 	extern int os_test ();
 	os_test ();
+#ifdef PL_HAL_MODULE
+	hal_test_init();
+#endif
 #endif
 	return OK;
 }
@@ -397,6 +423,13 @@ int os_module_exit(void)
 	//ospfd_module_exit();
 #endif
 
+#ifdef PL_APP_MODULE
+	app_module_exit();
+#endif
+
+#ifdef PL_MQTT_MODULE
+
+#endif
 	nsm_template_exit();
 
 	nsm_vlan_exit();
@@ -428,7 +461,7 @@ int os_module_exit(void)
 #endif
 
 #ifdef PL_WEBGUI_MODULE
-	webgui_module_exit();
+	web_app_module_exit();
 #endif
 
 	return OK;
@@ -455,9 +488,16 @@ int os_module_task_exit(void)
 #endif
 
 #ifdef PL_WEBGUI_MODULE
-	webgui_module_task_exit();
+	web_app_module_task_exit();
 #endif
 
+#ifdef PL_APP_MODULE
+	app_module_task_exit();
+#endif
+
+#ifdef PL_MQTT_MODULE
+
+#endif
 	systools_task_exit();
 	os_time_exit();
 	os_job_exit();

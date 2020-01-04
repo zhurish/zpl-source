@@ -10,6 +10,9 @@
 
 #include "pjsua_app_common.h"
 
+//#define PL_PJSIP_CALL_SHELL		1
+//#define PL_PJSIP_CLI_SHELL		1
+
 #define PJSIP_NUMBER_MAX		32
 #define PJSIP_USERNAME_MAX		32
 #define PJSIP_PASSWORD_MAX		32
@@ -29,6 +32,10 @@
 #define PJSIP_DEFAULT_CLOCK_RATE		8000
 #define PJSIP_RTP_PORT_DEFAULT			8888
 
+#ifdef PJSUA_DEFAULT_CLOCK_RATE
+#undef PJSUA_DEFAULT_CLOCK_RATE
+#define PJSUA_DEFAULT_CLOCK_RATE PJSIP_DEFAULT_CLOCK_RATE
+#endif
 
 typedef enum pjsip_dtmf_s
 {
@@ -117,6 +124,7 @@ typedef enum pjsip_accept_redirect_s
 
 typedef enum pjsip_register_state_s
 {
+	PJSIP_STATE_UNKNOW,
 	PJSIP_STATE_UNREGISTER,
 	PJSIP_STATE_REGISTER_FAILED,
 	PJSIP_STATE_REGISTER_SUCCESS,
@@ -384,6 +392,10 @@ typedef struct pl_pjsip_s
 	//u_int16				payload;
 	//char				payload_name[PJSIP_NUMBER_MAX];
 
+
+	int						debug_level;
+	BOOL					debug_detail;
+
 	int (*app_dtmf_cb)(int , int);
 
 	void				*pjsip;
@@ -441,13 +453,16 @@ int pl_pjsip_dtmf_get_api(pjsip_dtmf_t *dtmf);
 int pl_pjsip_username_set_api(s_int8 *user, s_int8 *pass, BOOL sec);
 int pl_pjsip_username_get_api(s_int8 *user, s_int8 *pass, BOOL sec);
 
+int pl_pjsip_phonenumber_set_api(s_int8 *sip_phone, BOOL sec);
+int pl_pjsip_phonenumber_get_api(s_int8 *sip_phone, BOOL sec);
+
 int pl_pjsip_expires_set_api(u_int16 sip_expires);
 int pl_pjsip_expires_get_api(u_int16 *sip_expires);
 
 int pl_pjsip_100rel_set_api(BOOL sip_100_rel);
 int pl_pjsip_100rel_get_api(BOOL *sip_100_rel);
 
-int pl_pjsip_realm_set_api(char realm);
+int pl_pjsip_realm_set_api(char *realm);
 int pl_pjsip_realm_get_api(char *realm);
 
 /*
@@ -545,7 +560,7 @@ int pl_pjsip_neg_timeout_get_api(u_int16 *sip_neg_timeout);
 //Audio Options:
 int pl_pjsip_codec_add_api(char * sip_codec);
 int pl_pjsip_codec_del_api(char * sip_codec);
-int pl_pjsip_codec_default_set_api(char * sip_codec, int indx);
+int pl_pjsip_codec_default_set_api(char * sip_codec);
 
 int pl_pjsip_discodec_add_api(char * sip_discodec);
 int pl_pjsip_discodec_del_api(char * sip_discodec);
@@ -698,10 +713,14 @@ int pl_pjsip_no_force_lr_get_api(u_int16 *value);
 int pl_pjsip_accept_redirect_set_api(pjsip_accept_redirect_t value);
 int pl_pjsip_accept_redirect_get_api(pjsip_accept_redirect_t *value);
 /************************************************************************/
+int pl_pjsip_debug_level_set_api(int level);
+int pl_pjsip_debug_level_get_api(int *level);
+int pl_pjsip_debug_detail_set_api(BOOL enable);
+int pl_pjsip_debug_detail_get_api(BOOL *enable);
 /************************************************************************/
 int pl_pjsip_account_set_api(int id, void *p);
 int pl_pjsip_account_get_api(int id, pjsip_username_t *p);
-
+BOOL pl_pjsip_isregister_api(void);
 /************************************************************************/
 /************************************************************************/
 int pl_pjsip_app_add_acc(char *sip_url, char *sip_srv, char *realm,
@@ -716,7 +735,7 @@ int pl_pjsip_app_list_acc(int accid);
 /************************************************************************/
 int pl_pjsip_app_start_call(int accid, char *num, int *callid);
 int pl_pjsip_app_stop_call(int callid, BOOL all);
-int pl_pjsip_app_answer_call(char *num, int *callid);
+int pl_pjsip_app_answer_call(int callid, int st_code);
 int pl_pjsip_app_hold_call(int callid);
 int pl_pjsip_app_reinvite_call(int callid);
 int pl_pjsip_app_dtmf_call(int callid, int type, int code);

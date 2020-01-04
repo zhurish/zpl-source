@@ -1179,12 +1179,15 @@ DEFUN_HIDDEN (nsm_interface_set_kernel,
 		ret = if_slot_set_port_phy(ifp->ifindex, argv[0]);
 		if(ret == OK)
 		{
+			/*
 			if_kname_set(ifp, argv[0]);
 			SET_FLAG(ifp->status, ZEBRA_INTERFACE_ATTACH);
 
 			pal_interface_update_flag(ifp);
 			ifp->k_ifindex = pal_interface_ifindex(ifp->k_name);
-			pal_interface_get_lladdr(ifp);
+			pal_interface_get_lladdr(ifp);*/
+			ret = nsm_interface_update_kernel(ifp, argv[0]);
+			SET_FLAG(ifp->status, ZEBRA_INTERFACE_ATTACH);
 		}
 		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 	}

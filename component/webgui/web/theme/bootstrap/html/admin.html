@@ -1,0 +1,436 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta content="" name="description" />
+	<meta content="webthemez" name="author" />
+	<!--meta http-equiv="refresh" content="30"-->
+	<!-- Bootstrap Styles-->
+	<link href="../css/bootstrap.min.css" rel="stylesheet" />
+
+	<!-- private Styles-->
+	<link href="../css/private.css" rel="stylesheet" />
+
+	<!-- jQuery Js -->
+	<script src="../js/jquery-2.1.1.min.js"></script>
+	<!-- Bootstrap Js -->
+	<script src="../js/bootstrap.min.js"></script>
+	<script src="../js/xhr.js"></script>
+	<script src="../js/data-type.js"></script>
+
+	<title>admin</title>
+</head>
+
+<body class="body-bg-img">
+	<div id="maincontent" class="container">
+		<!-- 修改当前用户密码 -->
+		<fieldset class="fieldset-margin fieldset-background">
+			<form class="form-horizontal form-margin" role="form" name="changepasswod" action="" accept-charset="UTF-8"
+				method="POST">
+				<legend class="legend-text-align">修改用户密码</legend>
+				<div class="form-group">
+					<label for="old_password" class="col-sm-3 control-label">原密码</label>
+						<div class="input-group col-sm-4">
+							<span class="input-group-addon" >
+								<span class="glyphicon glyphicon-lock"></span>
+							</span>
+						<input type="password" minlength="6" maxlength="32" class="form-control" name="old_password"
+							id="old_password" onchange="password_old_check()" required placeholder="请输入原密码">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="new_password" class="col-sm-3 control-label">新密码</label>
+					<div class="input-group col-sm-4">
+						<span class="input-group-addon" >
+							<span class="glyphicon glyphicon-lock"></span>
+						</span>
+						<input type="password" minlength="6" maxlength="32" class="form-control" name="new_password"
+							id="new_password" onchange="password_new_check()" required placeholder="请输入密码">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="conf_password" class="col-sm-3 control-label">确认密码</label>
+					<div class="input-group col-sm-4">
+						<span class="input-group-addon" >
+							<span class="glyphicon glyphicon-lock"></span>
+						</span>
+						<input type="password" minlength="6" maxlength="32" class="form-control" name="conf_password"
+							id="conf_password" onchange="conf_password_check()" required placeholder="请确认密码">
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="col-xs-4 control-label">
+						<button type="button" class="btn btn-cencel" name="changepasswod_cencel"
+							id="changepasswod_cencel" onclick="admin_cencel()"><span class="glyphicon glyphicon-remove"
+								style="margin-right:10px;"></span>取消</button>
+					</div>
+					<div class="col-xs-4 control-label">
+						<button type="button" class="btn btn-submit" name="changepasswod_submit"
+							id="changepasswod_submit" onclick="admin_submit()"><span class="glyphicon glyphicon-send"
+							style="margin-right:10px;"></span>确定</button>
+					</div>
+				</div>
+				<div id="change_waiting" class="alert alert-success hiden">
+						<strong><img src="../res/icons/loading.gif" alt="Waiting..." style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+					</div>
+					<div id="change_error" class="alert alert-warning hiden">
+						<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+				</div>
+				<script type="text/javascript">
+
+					function password_old_check() {
+						if (document.changepasswod.old_password.value == "" ||
+							document.changepasswod.old_password.value.length < 6 ||
+							(!checkpassword(document.changepasswod.old_password.value))) {
+							check_err_show($('#old_password'));
+							return false;
+						}
+						else {
+							check_ok_show($('#old_password'));
+							return true;
+						}
+					}
+
+					function password_new_check() {
+						if (document.changepasswod.new_password.value == "" ||
+							document.changepasswod.new_password.value.length < 6 ||
+							(!checkpassword(document.changepasswod.new_password.value))) {
+							check_err_show($('#new_password'));
+							return false;
+						}
+						else {
+							check_ok_show($('#new_password'));
+							return true;
+						}
+					}
+					function conf_password_check() {
+						if (document.changepasswod.conf_password.value == "" ||
+							document.changepasswod.conf_password.value.length < 6 ||
+							document.changepasswod.new_password.value != document.changepasswod.conf_password.value ||
+							(!checkpassword(document.changepasswod.conf_password.value))) {
+							check_err_show($('#conf_password'));
+							return false;
+						}
+						else {
+							check_ok_show($('#conf_password'));
+							return true;
+						}
+					}
+					function admin_cencel() {
+						document.getElementById("old_password").value = "";
+						document.getElementById("new_password").value = "";
+						document.getElementById("conf_password").value = "";
+					}
+					//button 按钮，结合onclick事件，验证和提交表单
+					function admin_submit() {
+						if (document.changepasswod.old_password.value == "" ||
+							document.changepasswod.old_password.value.length < 6 ||
+							(!checkpassword(document.changepasswod.old_password.value))) {
+							check_err_show($('#old_password'));
+							return false;
+						}
+						if (document.changepasswod.new_password.value == "" ||
+							document.changepasswod.new_password.value.length < 6 ||
+							(!checkpassword(document.changepasswod.new_password.value))) {
+							check_err_show($('#new_password'));
+							return false;
+						}
+						if (document.changepasswod.conf_password.value == "" ||
+							document.changepasswod.conf_password.value.length < 6 ||
+							document.changepasswod.new_password.value != document.changepasswod.conf_password.value ||
+							(!checkpassword(document.changepasswod.conf_password.value))) {
+							check_err_show($('#conf_password'));
+							return false;
+						}
+
+						{
+							///goform/changepasswod     
+							var argv;
+							var stxhr = new XHR();
+							//document.getElementById("username").value = name;
+							argv = "oldpassword=" + document.getElementById("old_password").value + "&newpassword="
+								+ document.getElementById("new_password").value + "&password="
+								+ document.getElementById("conf_password").value;
+							//document.getElementById("user_level").value = level;
+							$("#change_waiting").css("display", "block");
+							setTimeout(function(){$("#change_waiting").css("display", "none")},5000);
+							stxhr.post("/goform/changepasswod", argv,
+								function (x) {
+									console.log(x);
+									if (x.responseText == "OK") {
+										clearTimeout();
+										$("#change_waiting").css("display", "none");
+										//$("#add_waiting").css("display", "none");
+										document.getElementById("old_password").value = "";
+										document.getElementById("new_password").value = "";
+										document.getElementById("conf_password").value = "";
+									}
+									else if (x.responseText != "OK") {
+										clearTimeout();
+										$("#change_waiting").css("display", "none");
+										$("#change_error").css("display", "block");
+										setTimeout(function () { $("#change_error").css("display", "none") }, 3000);
+									}
+									//if(x.status == 404)
+								},
+								3000
+							);
+						}
+					}
+				</script>
+			</form>
+		</fieldset>
+
+		<fieldset class="fieldset-margin fieldset-background">
+			<table class="table table-condensed">
+				<caption class="tbl-text-align bold">用户信息</caption>
+				<thead>
+					<tr>
+						<th>用户名</th>
+						<th>权限级别</th>
+						<th>编辑</th>
+						<th>删除</th>
+					</tr>
+				</thead>
+				<tbody id="usertbl">
+					<script type="text/javascript">
+
+						function username_tbl() {
+							var utbl = "";
+							$.get("/goform/username-tbl", function (data, status) {
+								//console.log(data);
+								var data_json = JSON.parse(data);
+								$.each(data_json, function (index, info) {
+									utbl += "<tr>\n";
+									utbl += "<td>" + info.username + "</td>\n";
+									utbl += "<td>" + info.level + "</td>\n";
+
+									utbl += "<td>\
+                	<div class=\"col-sm-push-3 control-label\">\
+						  <button type=\"button\" class=\"btn btn-edit\" name=\"edit\" id=\"edit\" onclick=\"admin_edit(this)\">\
+								<span class=\"glyphicon glyphicon-edit\"\
+								style=\"margin-right:10px;\"></span>编辑</button>\
+			    	</div>\
+                </td>\
+     			<td>\
+                	<div class=\"col-sm-push-3 control-label\">\
+						  <button type=\"button\" class=\"btn btn-danger\" name=\"delete\" id=\"delete\" onclick=\"admin_delete(this)\">\
+								<span class=\"glyphicon glyphicon-trash\"\
+								style=\"margin-right:10px;\"></span>删除</button>\
+			    	</div>\
+                </td>";
+									utbl += "</tr>";
+								});
+
+								$("#usertbl").html(utbl);
+							});
+						}
+						username_tbl();
+					</script>
+
+				</tbody>
+			</table>
+
+			<form class="form-horizontal form-margin show" role="form" name="adminuser" action="" accept-charset="UTF-8"
+				method="POST">
+				<div class="form-group">
+					<div class="col-xs-4 control-label">
+						<button type="button" class="btn btn-add" name="user_add" id="user_add"
+							onclick="admin_add()"><span class="glyphicon glyphicon-plus"
+							style="margin-right:10px;"></span>增加</button> 
+					</div>
+				</div>
+				<div id="userconfig" class="hiden">
+					<legend class="legend-text-align">用户配置</legend>
+					<div class="form-group">
+						<label for="username" class="col-sm-3 control-label">用户名称</label>
+						<div class="input-group col-sm-4">
+								<span class="input-group-addon" >
+									<span class="glyphicon glyphicon-user"></span>
+								</span>
+							<input type="text" minlength="6" maxlength="32" class="form-control" name="username"
+								id="username" value="" onchange="username_check()" required placeholder="请输入用户名">
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="password" class="col-sm-3 control-label">用户密码</label>
+						<div class="input-group col-sm-4">
+							<span class="input-group-addon" >
+								<span class="glyphicon glyphicon-lock"></span>
+							</span>
+							<input type="password" minlength="6" maxlength="32" class="form-control" name="password"
+								id="password" value="" onchange="password_check()" required placeholder="请输入密码">
+						</div>
+					</div>
+					<div class="form-group show">
+						<label for="user_level" class="col-sm-3 control-label">用户权限</label>
+						<div class="input-group col-sm-4">
+								<span class="input-group-addon" >
+									<span class="glyphicon glyphicon-flag"></span>
+								</span>
+							<select class="form-control" name="user_level" id="user_level">
+								<option value="manage">manage</option>
+								<option selected="selected" value="user">user</option>
+								<option value="view">view</option>
+							</select>
+						</div>
+					</div>
+					<div class="form-group">
+						<div class="col-xs-4 control-label">
+							<button type="button" class="btn btn-cencel" name="user_cencel" id="user_cencel"
+								onclick="admin_cencel()"><span class="glyphicon glyphicon-remove"
+								style="margin-right:10px;"></span>取消</button>
+						</div>
+						<div class="col-xs-4 control-label">
+							<button type="button" class="btn btn-submit" name="user_submit" id="user_submit"
+								onclick="admin_submit()"><span class="glyphicon glyphicon-send"
+								style="margin-right:10px;"></span>确定</button>
+						</div>
+					</div>
+					<div id="handle_waiting" class="alert alert-success hiden">
+						<strong><img src="../res/icons/loading.gif" alt="Waiting..." style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+					</div>
+					<div id="handle_error" class="alert alert-warning hiden">
+						<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+					</div>
+					<script type="text/javascript">
+
+						function admin_edit(obj) {
+							var name = $(obj).parent().parent().prevAll()[1].innerText;
+							var level = $(obj).parent().parent().prevAll()[0].innerText;
+							console.log(name, level);
+
+							document.getElementById("username").value = name;
+							document.getElementById("password").value = "";
+							document.getElementById("userconfig").setAttribute("class", "show");
+							check_okerr_hiden($('#username'));
+							check_okerr_hiden($('#password'));
+						}
+
+						function admin_delete(obj) {
+							var argv = "username=";
+							var stxhr = new XHR();
+							var name = $(obj).parent().parent().prevAll()[2].innerText;
+							//var level=$(obj).parent().parent().prevAll()[0].innerText;
+							console.log(name);
+							//document.getElementById("username").value = name;
+							argv = "ACTION=usertbl&BTNID=" + obj.id + "&" + argv + name;
+
+							$("#handle_waiting").css("display", "block");
+							setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
+							stxhr.post("/goform/button_onclick", argv,
+								function (x) {
+									console.log(x);
+									if (x.responseText == "ERROR") {
+										$("#handle_waiting").css("display", "none");
+										$("#handle_error").css("display", "block");
+										clearTimeout();
+										setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+									}
+									else if (x.responseText == "OK") {
+										$("#handle_waiting").css("display", "none");
+										clearTimeout();
+										username_tbl();
+									}
+								},
+								3000
+							);
+						}
+
+						function admin_add() {
+							document.getElementById("userconfig").setAttribute("class", "show");
+							check_okerr_hiden($('#username'));
+							check_okerr_hiden($('#password'));
+							document.adminuser.username.value = "";
+							document.adminuser.password.value = "";
+						}
+
+						function username_check() {
+							if (document.adminuser.username.value == "" || document.adminuser.username.value.length > 32 ||
+								document.adminuser.username.value.length < 6 ||
+								(!checkusername(document.adminuser.username.value))) {
+								check_err_show($('#username'));
+								return false;
+							}
+							else {
+								check_ok_show($('#username'));
+								return true;
+							}
+						}
+						function password_check() {
+							if (document.adminuser.password.value == "" || document.adminuser.password.value.length > 32 ||
+								document.adminuser.password.value.length < 6 ||
+								(!checkpassword(document.adminuser.password.value))) {
+								check_err_show($('#password'));
+								return false;
+							}
+							else {
+								check_ok_show($('#password'));
+								return true;
+							}
+						}
+
+
+						function admin_cencel() {
+							document.getElementById("username").value = "";
+							document.getElementById("password").value = "";
+							check_okerr_hiden($('#username'));
+							check_okerr_hiden($('#password'));
+
+						}
+						//button 按钮，结合onclick事件，验证和提交表单
+						function admin_submit() {
+							//判断用户名是否为空
+							if (document.adminuser.username.value == "" || document.adminuser.password.value == "") {
+								document.getElementById("username").value = "";
+								document.getElementById("password").value = "";
+								check_okerr_hiden($('#username'));
+								check_okerr_hiden($('#password'));
+								return false;
+							}
+							else if (password_check() == false || username_check() == false) {
+								document.getElementById("username").value = "";
+								document.getElementById("password").value = "";
+								return false;
+							}
+							else {
+								var argv;
+								var stxhr = new XHR();
+								//document.getElementById("username").value = name;
+								argv = "username=" + document.getElementById("username").value + "&password="
+									+ document.getElementById("password").value + "&user_level="
+									+ document.getElementById("user_level").value;
+								//document.getElementById("user_level").value = level;
+								$("#handle_waiting").css("display", "block");
+								setTimeout(function(){$("#handle_waiting").css("display", "none")}, 5000);
+								stxhr.post("/goform/adminuser", argv,
+									function (x) {
+										console.log(x);
+										if (x.responseText == "OK") {
+											clearTimeout();
+											$("#handle_waiting").css("display", "none");
+											//$("#handle_waiting").css("display", "none");
+											username_tbl();
+										}
+										else if (x.responseText != "OK") {
+											clearTimeout();
+											$("#handle_waiting").css("display", "none");
+											$("#handle_error").css("display", "block");
+											setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+										}
+										//if(x.status == 404)
+									},
+									3000
+								);
+							}
+						}
+					</script>
+				</div>
+			</form>
+		</fieldset>
+	</div>
+</body>
+</html>

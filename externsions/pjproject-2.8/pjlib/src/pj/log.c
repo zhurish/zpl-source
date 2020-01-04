@@ -54,7 +54,7 @@ static pj_log_func *log_writer = &pj_log_write;
 			    | PJ_LOG_HAS_COLOR
 #endif
 			    ;*/
-static unsigned log_decor = PJ_LOG_HAS_NEWLINE | PJ_LOG_HAS_INDENT |
+static unsigned log_decor = PJ_LOG_HAS_NEWLINE | PJ_LOG_HAS_CR | PJ_LOG_HAS_INDENT |
 		PJ_LOG_HAS_THREAD_SWC | PJ_LOG_HAS_SENDER |
 		PJ_LOG_HAS_THREAD_ID
 #if (defined(PJ_WIN32) && PJ_WIN32!=0) || \
@@ -388,26 +388,12 @@ PJ_DEF(void) pj_log( const char *sender, int level,
 	*pre++ = '.';
 	pre += pj_utoa_pad(ptime.msec, pre, 3, '0');
     }
-    if (log_decor & PJ_LOG_HAS_SENDER) {
-	enum { SENDER_WIDTH = PJ_LOG_SENDER_WIDTH };
-	pj_size_t sender_len = strlen(sender);
-	if (pre!=log_buffer) *pre++ = ' ';
-	if (sender_len <= SENDER_WIDTH) {
-	    while (sender_len < SENDER_WIDTH)
-		*pre++ = ' ', ++sender_len;
-	    while (*sender)
-		*pre++ = *sender++;
-	} else {
-	    int i;
-	    for (i=0; i<SENDER_WIDTH; ++i)
-		*pre++ = *sender++;
-	}
-    }
+
     if (log_decor & PJ_LOG_HAS_THREAD_ID) {
 	enum { THREAD_WIDTH = PJ_LOG_THREAD_WIDTH };
 	const char *thread_name = pj_thread_get_name(pj_thread_this());
 	pj_size_t thread_len = strlen(thread_name);
-	*pre++ = ' ';
+	*pre++ = '[';
 	if (thread_len <= THREAD_WIDTH) {
 	    while (thread_len < THREAD_WIDTH)
 		*pre++ = ' ', ++thread_len;
@@ -418,6 +404,7 @@ PJ_DEF(void) pj_log( const char *sender, int level,
 	    for (i=0; i<THREAD_WIDTH; ++i)
 		*pre++ = *thread_name++;
 	}
+	*pre++ = ']';
     }
 
     if (log_decor != 0 && log_decor != PJ_LOG_HAS_NEWLINE)
@@ -433,6 +420,23 @@ PJ_DEF(void) pj_log( const char *sender, int level,
 	}
     } else if (log_decor & PJ_LOG_HAS_SPACE) {
 	*pre++ = ' ';
+    }
+
+    if (log_decor & PJ_LOG_HAS_SENDER) {
+	enum { SENDER_WIDTH = PJ_LOG_SENDER_WIDTH };
+	pj_size_t sender_len = strlen(sender);
+	if (pre!=log_buffer) *pre++ = '(';
+	if (sender_len <= SENDER_WIDTH) {
+	    while (sender_len < SENDER_WIDTH)
+		*pre++ = ' ', ++sender_len;
+	    while (*sender)
+		*pre++ = *sender++;
+	} else {
+	    int i;
+	    for (i=0; i<SENDER_WIDTH; ++i)
+		*pre++ = *sender++;
+	}
+	*pre++ = ')';
     }
 
 #if PJ_LOG_ENABLE_INDENT

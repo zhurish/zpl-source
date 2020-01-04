@@ -168,24 +168,25 @@ install:
 	for d in pjlib pjlib-util pjnath pjmedia pjsip; do \
 		cp -RLf $$d/include/* $(DESTDIR)$(includedir)/; \
 	done
-	mkdir -p $(DESTDIR)$(libdir)/pkgconfig
-	sed -e "s!@PREFIX@!$(prefix)!" libpjproject.pc.in | \
-		sed -e "s!@INCLUDEDIR@!$(includedir)!" | \
-		sed -e "s!@LIBDIR@!$(libdir)!" | \
-		sed -e "s/@PJ_VERSION@/$(PJ_VERSION)/" | \
-		sed -e "s!@PJ_LDLIBS@!!" | \
-		sed -e "s!@PJ_LDXXLIBS@!$(PJ_LDXXLIBS)!" | \
-		sed -e "s!@PJ_INSTALL_CFLAGS@!!" | \
-		sed -e "s!@PJ_INSTALL_CXXFLAGS@!$(PJ_INSTALL_CXXFLAGS)!" > $(DESTDIR)/$(libdir)/pkgconfig/libpjproject.pc
+	#mkdir -p $(DESTDIR)$(libdir)/pkgconfig
+	#sed -e "s!@PREFIX@!$(prefix)!" libpjproject.pc.in | \
+	#	sed -e "s!@INCLUDEDIR@!$(includedir)!" | \
+	#	sed -e "s!@LIBDIR@!$(libdir)!" | \
+	#	sed -e "s/@PJ_VERSION@/$(PJ_VERSION)/" | \
+	#	sed -e "s!@PJ_LDLIBS@!!" | \
+	#	sed -e "s!@PJ_LDXXLIBS@!$(PJ_LDXXLIBS)!" | \
+	#	sed -e "s!@PJ_INSTALL_CFLAGS@!!" | \
+	#	sed -e "s!@PJ_INSTALL_CXXFLAGS@!$(PJ_INSTALL_CXXFLAGS)!" > $(DESTDIR)/$(libdir)/pkgconfig/libpjproject.pc
 
 uninstall:
-	$(RM) $(DESTDIR)$(libdir)/pkgconfig/libpjproject.pc
-	rmdir $(DESTDIR)$(libdir)/pkgconfig 2> /dev/null || true
+	#$(RM) $(DESTDIR)$(libdir)/pkgconfig/libpjproject.pc
+	#rmdir $(DESTDIR)$(libdir)/pkgconfig 2> /dev/null || true
 	for d in pjlib pjlib-util pjnath pjmedia pjsip; do \
 		for f in $$d/include/*; do \
-			$(RM) -r "$(DESTDIR)$(includedir)/`basename $$f`"; \
+			$(RM) -r "$(DESTDIR)$(includedir)/`basename $$f`" || true; \
 		done; \
 	done
 	rmdir $(DESTDIR)$(includedir) 2> /dev/null || true
-	$(RM) $(addprefix $(DESTDIR)$(libdir)/,$(notdir $(APP_LIB_FILES)))
+	#$(RM) $(addprefix $(DESTDIR)$(libdir)/,$(notdir $(APP_LIB_FILES)))
+	$(RM) $(addprefix $(DESTDIR)$(libdir)/,$(notdir $(APP_LIBXX_FILES)))
 	rmdir $(DESTDIR)$(libdir) 2> /dev/null || true

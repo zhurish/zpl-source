@@ -17,7 +17,9 @@ OBJS	+= kernel_nlroute.o
 OBJS	+= kernel_nllisten.o
 OBJS	+= kernel_nliface.o
 OBJS	+= kernel_nlload.o
-OBJS	+= pal_interface.o
+OBJS	+= kernel_firewalld.o
+OBJS	+= kernel_driver.o
+OBJS	+= pal_driver.o
 endif
 #############################################################################
 # LIB

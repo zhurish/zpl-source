@@ -1138,6 +1138,13 @@ const char *inet_ethernet(u_int8 *mac)
 	return buf;
 }
 
+const char *cli_inet_ethernet(u_int8 *mac)
+{
+	static char buf[64];
+	memset(buf, 0, sizeof(buf));
+	snprintf(buf, sizeof(buf), "%02x%02x-%02x%02x-%02x%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	return buf;
+}
 
 u_int32 get_hostip_byname(char *hostname)
 {

@@ -19,6 +19,9 @@
 #include "network.h"
 #include "vty.h"
 
+#include "x5_b_global.h"
+#ifdef X5B_APP_DATABASE
+
 #ifdef PL_VOIP_MODULE
 #include "voip_app.h"
 #endif
@@ -544,6 +547,37 @@ int voip_dbase_del_room(u_int8 building, u_int8 unit, u_int16 room_number)
 	int ret = voip_dbase_del_one_room( building, unit, room_number);
 	if(ret == OK)
 		ret = voip_dbase_update_save();
+	if(dbase_mutex)
+		os_mutex_unlock(dbase_mutex);
+	return ERROR;
+}
+
+int voip_dbase_del_user(char *user_id)
+{
+	int ret = ERROR;
+	//u_int8 building;
+	//u_int8 unit;
+	//u_int16 room_number;
+	voip_dbase_t * dbase = NULL;
+	if(user_id)
+	{
+		dbase = voip_dbase_node_lookup_by_username(NULL, user_id);
+		if(dbase == NULL)
+			return ERROR;
+	}
+	if(dbase_mutex)
+		os_mutex_lock(dbase_mutex, OS_WAIT_FOREVER);
+	if(dbase)
+	{
+		ret = voip_dbase_del_phonenumber(dbase, NULL, NULL, user_id);
+		if(ret == OK)
+		{
+			ret = voip_dbase_update_save();
+			if(dbase_mutex)
+				os_mutex_unlock(dbase_mutex);
+			return ret;
+		}
+	}
 	if(dbase_mutex)
 		os_mutex_unlock(dbase_mutex);
 	return ERROR;
@@ -1676,5 +1710,5 @@ int voip_ubus_dbase_sync(int cmd)
 	return OK;
 }
 
-
+#endif
 

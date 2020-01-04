@@ -20,7 +20,7 @@
 #define UPLOAD_CONTENT_END       5   /* End of multipart message */
 
 static char *uploadDir;
-
+static char *_upload_dir = NULL;
 /*********************************** Forwards *********************************/
 
 static void defineUploadVars(Webs *wp);
@@ -124,7 +124,7 @@ PUBLIC bool websProcessUploadData(Webs *wp)
             }
             *nextTok++ = '\0';
             nbytes = nextTok - line;
-            assert(nbytes > 0);
+            web_assert(nbytes > 0);
             websConsumeInput(wp, nbytes);
             strim(line, "\r", WEBS_TRIM_END);
         }
@@ -407,7 +407,7 @@ static char *getBoundary(Webs *wp, char *buf, ssize bufLen)
     char    *cp, *endp;
     char    first;
 
-    assert(buf);
+    web_assert(buf);
 
     first = *wp->boundary;
     cp = buf;
@@ -452,18 +452,50 @@ WebsHash websGetUpload(Webs *wp)
 
 PUBLIC void websUploadOpen(void)
 {
-    uploadDir = ME_GOAHEAD_UPLOAD_DIR;
-    if (*uploadDir == '\0') {
-#if ME_WIN_LIKE
-        uploadDir = getenv("TEMP");
-#else
-        uploadDir = "/tmp";
-#endif
-    }
+	if(_upload_dir)
+		uploadDir = _upload_dir;
+	else
+	{
+		uploadDir = ME_GOAHEAD_UPLOAD_DIR;
+		if (*uploadDir == '\0') {
+	#if ME_WIN_LIKE
+			uploadDir = getenv("TEMP");
+	#else
+			uploadDir = "/tmp";
+	#endif
+		}
+	}
     trace(4, "Upload directory is %s", uploadDir);
     websDefineHandler("upload", 0, uploadHandler, 0, 0);
 }
 
+
+PUBLIC void websUploadSetDir(char *dirb)
+{
+	if(_upload_dir)
+	{
+		free(_upload_dir);
+		_upload_dir = NULL;
+		uploadDir = ME_GOAHEAD_UPLOAD_DIR;
+		if (*uploadDir == '\0') {
+	#if ME_WIN_LIKE
+			uploadDir = getenv("TEMP");
+	#else
+			uploadDir = "/tmp";
+	#endif
+		}
+	}
+	if(dirb)
+	{
+		_upload_dir = strdup(dirb);
+	}
+}
+
+
+PUBLIC char * websUploadGetDir()
+{
+	return _upload_dir;
+}
 #endif /* ME_GOAHEAD_UPLOAD */
 
 /*

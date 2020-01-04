@@ -45,7 +45,9 @@ ifneq ($(TARGET_CFLAGS),)
 PLOS_CFLAGS += $(TARGET_CFLAGS) 
 PLOS_CPPFLAGS += $(TARGET_CXXFLAGS) $(TARGET_CPPFLAGS)
 PLOS_ASFLAGS += $(TARGET_ASFLAGS) 
-PLOS_LDFLAGS += $(TARGET_LDFLAGS) -luci
+PLOS_LDFLAGS += $(TARGET_LDFLAGS) -luci -lssp 
+#-lubacktrace
+PLOS_CFLAGS += -fstack-protector-all -fstack-protector
 endif
 
 ifneq ($(CROSS_COMPILE_ROOT),)
@@ -53,7 +55,7 @@ PLOS_CFLAGS += -I$(CROSS_COMPILE_ROOT)/include -I$(CROSS_COMPILE_ROOT)/usr/inclu
 PLOS_LDFLAGS += -L$(CROSS_COMPILE_ROOT)/lib -L$(CROSS_COMPILE_ROOT)/usr/lib 
 endif
 
-
+#PLOS_CFLAGS += -mips32
 #endif
 #
 #

@@ -7,10 +7,11 @@
 
 #include <zebra.h>
 
+#include "hal_driver.h"
 
 #include "b53_mdio.h"
 #include "b53_regs.h"
-#include "b53_driver.h"
+#include "sdk_driver.h"
 
 
 void b53_brcm_hdr_setup(struct b53125_device *dev, BOOL enable, int port)
@@ -55,15 +56,16 @@ void b53_brcm_hdr_setup(struct b53125_device *dev, BOOL enable, int port)
 	/* Enable transmission of Broadcom tags from the switch (CPU RX) to
 	 * allow delivering frames to the per-port net_devices
 	 */
-	b53_read16(dev, B53_MGMT_PAGE, B53_BRCM_HDR_TX_DIS, &reg);
+	b53125_read16(dev, B53_MGMT_PAGE, B53_BRCM_HDR_TX_DIS, &reg);
 	if (enable)
 		reg &= ~BIT(port);
 	else
 		reg |= BIT(port);
-	b53_write16(dev, B53_MGMT_PAGE, B53_BRCM_HDR_TX_DIS, reg);
+	b53125_write16(dev, B53_MGMT_PAGE, B53_BRCM_HDR_TX_DIS, reg);
 }
 
-int b53125_switch_mode(struct b53125_device *dev, BOOL manege)
+//设置管理非管理功能
+int b53125_switch_manege(struct b53125_device *dev, BOOL manege)
 {
 	int ret = 0;
 	u8 mgmt;
@@ -78,6 +80,7 @@ int b53125_switch_mode(struct b53125_device *dev, BOOL manege)
 	return OK;
 }
 
+//禁止使能交换转发功能
 int b53125_switch_forwarding(struct b53125_device *dev, BOOL enable)
 {
 	int ret = 0;
@@ -90,28 +93,35 @@ int b53125_switch_forwarding(struct b53125_device *dev, BOOL enable)
 	ret |= b53125_write8(dev, B53_CTRL_PAGE, B53_SWITCH_MODE, mgmt);
 	if(ret == ERROR)
 		return ERROR;
+	/* Include IMP port in dumb forwarding mode
+	 */
+	b53125_read8(dev, B53_CTRL_PAGE, B53_SWITCH_CTRL, &mgmt);
+	mgmt |= B53_MII_DUMB_FWDG_EN;
+	b53125_write8(dev, B53_CTRL_PAGE, B53_SWITCH_CTRL, mgmt);
+
 	return OK;
 }
 
 /*************************************************************************/
+//禁止使能多播泛洪
 int b53125_multicast_flood(struct b53125_device *dev, BOOL enable)
 {
 	int ret = 0;
 	u8 reg = 0;
 	ret |= b53125_read8(dev, B53_CTRL_PAGE, B53_IP_MULTICAST_CTRL, &reg);
 	reg &= ~ (B53_MC_FWD_EN);
-	reg |= enable ? B53_MC_FWD_EN:0;
+	reg |= enable ? 0:B53_MC_FWD_EN;
 	ret |= b53125_write8(dev, B53_CTRL_PAGE, B53_IP_MULTICAST_CTRL, reg);
 	return ret;
 }
-
+//禁止使能单播泛洪
 int b53125_unicast_flood(struct b53125_device *dev, BOOL enable)
 {
 	int ret = 0;
 	u8 reg = 0;
 	ret |= b53125_read8(dev, B53_CTRL_PAGE, B53_IP_MULTICAST_CTRL, &reg);
 	reg &= ~ (B53_UC_FWD_EN);
-	reg |= enable ? B53_UC_FWD_EN:0;
+	reg |= enable ? 0:B53_UC_FWD_EN;
 	ret |= b53125_write8(dev, B53_CTRL_PAGE, B53_IP_MULTICAST_CTRL, reg);
 	return ret;
 }
@@ -128,6 +138,7 @@ int b53125_range_error(struct b53125_device *dev, BOOL enable)
 }
 
 /*************************************************************************/
+//禁止使能学习多播报文源MAC地址
 int b53125_multicast_learning(struct b53125_device *dev, BOOL enable)
 {
 	int ret = 0;
@@ -154,6 +165,7 @@ int b53125_puase_frame_detection(struct b53125_device *dev, BOOL enable)
 }
 
 /*************************************************************************/
+//禁止使能BPDU报文进入CPU
 int b53125_enable_bpdu(struct b53125_device *dev, BOOL enable)
 {
 	int ret = 0;
@@ -168,6 +180,7 @@ int b53125_enable_bpdu(struct b53125_device *dev, BOOL enable)
 	return ret;
 }
 /*************************************************************************/
+//设置MAC地址表有效期
 int b53125_aging_time(struct b53125_device *dev, int agetime)
 {
 	int ret = 0;
@@ -177,8 +190,8 @@ int b53125_aging_time(struct b53125_device *dev, int agetime)
 	return ret;
 }
 
-
-int b53125_imp_mode(struct b53125_device *dev, BOOL enable)
+//设置IMP接口模式（在managed mode模式下有效）
+int b53125_imp_port_enable(struct b53125_device *dev)
 {
 	int ret = 0;
 	u8 mgmt;

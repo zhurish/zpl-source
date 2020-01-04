@@ -24,7 +24,7 @@ extern int voip_ubus_uci_update_cb(char *buf, int len);
 
 extern BOOL voip_global_enabled();
 
-extern int voip_status_register_api(BOOL reg);
+extern int voip_status_register_api(int reg);
 extern int voip_status_register_main_api(BOOL reg);
 extern int voip_status_talk_api(BOOL reg);
 extern int voip_status_enable_api(BOOL reg);

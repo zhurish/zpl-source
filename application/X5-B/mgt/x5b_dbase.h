@@ -12,6 +12,7 @@
 #include "zebra.h"
 //#include "voip_app.h"
 //#include "voip_sip.h"
+#ifdef X5B_APP_DATABASE
 
 #define APP_USERNAME_MAX		32
 #define APP_ID_MAX				32
@@ -81,6 +82,7 @@ extern voip_dbase_t * voip_dbase_node_lookup_by_username(char *username, char *u
 extern voip_dbase_t * voip_dbase_lookup_by_room(u_int8 building, u_int8 unit, u_int16 room_number);
 extern int voip_dbase_add_room(u_int8 building, u_int8 unit, u_int16 room_number);
 extern int voip_dbase_del_room(u_int8 building, u_int8 unit, u_int16 room_number);
+extern int voip_dbase_del_user(char *user_id);
 extern int voip_dbase_add_room_phone(u_int8 building, u_int8 unit, u_int16 room_number, char *phone, char *username, char *user_id);
 extern int voip_dbase_del_room_phone(u_int8 building, u_int8 unit, u_int16 room_number, char *phone, char *username, char *user_id);
 extern int voip_dbase_update_room_phone(u_int8 building, u_int8 unit, u_int16 room_number, char *phone, char *username, char *user_id);
@@ -119,7 +121,7 @@ extern int show_voip_card_info(struct vty *vty);
 extern int voip_card_web_select_all(void);
 
 extern int card_id_string_to_hex(const char *id, int len, u_int8 *cardNumber);
-
+#endif
 #endif /* __X5B_DBASE_H__ */
 
 

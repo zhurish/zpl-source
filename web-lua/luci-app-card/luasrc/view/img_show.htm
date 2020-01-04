@@ -33,7 +33,7 @@
 	<script type="text/javascript">
 		var stxhr = new XHR();
         function getUserId(self){
-			var userId=$(self).parent().parent().prevAll()[5].innerText;
+			var userId=$(self).parent().parent().prevAll()[6].innerText;
 			var imgSrc=$(self).parent().parent().prevAll()[0].innerText;
 			console.log(userId,imgSrc);
 			stxhr.post('<%=url('admin/card')%>/img_show' + '/' + userId, { token: '<%=token%>' },

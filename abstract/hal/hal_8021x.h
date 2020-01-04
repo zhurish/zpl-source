@@ -14,15 +14,17 @@
 typedef struct sdk_8021x_s
 {
 	//8021x
-	int (*sdk_8021x_enable_cb) (ifindex_t, BOOL);
-	int (*sdk_8021x_state_cb) (ifindex_t, u_int);
-	int (*sdk_8021x_mode_cb) (ifindex_t, u_int);
-	int (*sdk_8021x_auth_bypass_cb) (ifindex_t, u_int);
+	int (*sdk_8021x_enable_cb) (void *, ifindex_t, BOOL);
+	int (*sdk_8021x_state_cb) (void *, ifindex_t, u_int);
+	int (*sdk_8021x_mode_cb) (void *, ifindex_t, u_int);
+	int (*sdk_8021x_auth_bypass_cb) (void *, ifindex_t, u_int);
 
 /*	int (*sdk_8021x_dstmac_cb) (ifindex_t, u_char *mac);
 	int (*sdk_8021x_address_cb) (u_int index, u_int address, u_int mask);
 	int (*sdk_8021x_mult_address_cb) (u_int index, BOOL);
 	int (*sdk_8021x_mode_cb) (u_int index, BOOL);*/
+
+	void *sdk_driver;
 }sdk_8021x_t;
 
 

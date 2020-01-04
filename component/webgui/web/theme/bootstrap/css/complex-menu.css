@@ -1,0 +1,144 @@
+/* CSS Document */
+
+body {
+    margin: 0;
+	/*background-image:url('../res/mub.jpg');*/
+}
+
+.menu-body {
+    background-color: "#EBC79E";
+	/*background-image:url('../res/mub.jpg');	*/
+}
+
+/* 导航 */
+.nav {
+	margin-top: 0.5rem;
+	width: 100%;
+	/*background-color: #FFF;*/
+}
+
+.nav>li a {
+    color: white;
+    display: block;
+    padding: 4px 8px;
+	    width: 100%;	
+}
+
+.nav>li:nth-last-child(1) {
+    margin-top: 2rem;
+    font-size: 1.2rem;
+}
+
+.nav>li {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+	
+	list-style-type: none;
+	/*background-color: #FFF;*/
+	width: 100%;
+	font-style: normal;		
+}
+
+.nav>.slide {
+    padding: 0;
+}
+.nav>.slide>ul {
+    display: none;
+	    width: 100%;
+}
+
+.nav>.slide>.menu {
+    display: block;
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    cursor: default;
+    font-size: 1.15rem;
+}
+
+.nav>li:hover, .nav>.slide>.menu:hover {
+    background: #555;
+	color: white;
+}
+
+.nav>.slide:hover {
+    background: none;
+}
+
+.nav>.slide>.slide-menu>li {
+    padding: 0;/*0.4rem 2rem;*/
+	list-style-type: none;
+	/*background-color: #FFF;*/
+	width: 100%;
+	font-style: normal;	
+}
+
+.nav>.slide>.slide-menu>.active {
+    background-color: #4CAF50;
+}
+
+.nav>.slide>.slide-menu>li>a {
+    text-decoration: none;
+   /*white-space: nowrap;*/
+}
+
+.nav>.slide>.slide-menu>.active>a {
+	color: white;
+}
+
+.nav>.slide>.slide-menu>li:hover {
+    background: #555;
+	color: white;
+}
+
+.nav>.slide>.slide-menu>.active:hover {
+    background-color: #4CAF50;
+    cursor: hand;
+}
+
+.nav>.slide>.slide-menu>.show-slide {
+	display: block;
+}
+
+.hiden-slide {
+	display: none;
+}
+
+.show-slide {
+	display: block;
+}
+/*
+li {
+	list-style-type: none;
+	background-color: #FFF;
+	width: 100%;
+	font-style: normal;
+}
+*/
+.nav>.topslide {
+    padding: 0;
+    text-decoration:none;
+}
+
+.nav>.topslide:hover {
+    background: #555;
+	color: white;
+}
+.nav>.topslide>.topactive {
+    background-color: #4CAF50;
+}
+
+.nav>.topslide>.topactive:hover {
+    background-color: #4CAF50;
+    cursor: hand;
+}
+
+.caret {
+	display:inline-block;
+	width:0;
+	height:0;
+	margin-left:2px;
+	vertical-align:middle;
+	border-top:4px solid;
+	border-right:4px solid transparent;
+	border-left:4px solid transparent
+}

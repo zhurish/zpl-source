@@ -18,31 +18,30 @@
 #include "os_list.h"
 
 #include "nsm_client.h"
+#include "nsm_dos.h"
 
 #include "hal_dos.h"
-
-sdk_dos_t sdk_dos;
-
+#include "hal_driver.h"
 
 
-int hal_dos_enable(BOOL enable, int type)
+int hal_dos_enable(BOOL enable, dos_type_en type)
 {
-	if(sdk_dos.sdk_dos_enable_cb)
-		return sdk_dos.sdk_dos_enable_cb(enable, type);
+	if(hal_driver && hal_driver->dos_tbl && hal_driver->dos_tbl->sdk_dos_enable_cb)
+		return hal_driver->dos_tbl->sdk_dos_enable_cb(hal_driver->driver, enable, type);
 	return ERROR;
 }
 
 int hal_dos_tcp_hdr_size(int size)
 {
-	if(sdk_dos.sdk_dos_tcp_hdr_size_cb)
-		return sdk_dos.sdk_dos_tcp_hdr_size_cb(size);
+	if(hal_driver && hal_driver->dos_tbl && hal_driver->dos_tbl->sdk_dos_tcp_hdr_size_cb)
+		return hal_driver->dos_tbl->sdk_dos_tcp_hdr_size_cb(hal_driver->driver, size);
 	return ERROR;
 }
 
 int hal_dos_icmp_size(BOOL ipv6, int size)
 {
-	if(sdk_dos.sdk_dos_icmp_size_cb)
-		return sdk_dos.sdk_dos_icmp_size_cb(ipv6, size);
+	if(hal_driver && hal_driver->dos_tbl && hal_driver->dos_tbl->sdk_dos_icmp_size_cb)
+		return hal_driver->dos_tbl->sdk_dos_icmp_size_cb(hal_driver->driver, ipv6, size);
 	return ERROR;
 }
 

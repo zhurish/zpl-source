@@ -21,29 +21,28 @@
 #include "nsm_client.h"
 
 #include "hal_mirror.h"
-
-sdk_mirror_t sdk_mirror;
-
+#include "hal_driver.h"
 
 
 int hal_mirror_enable(ifindex_t ifindex, BOOL enable)
 {
-	if(sdk_mirror.sdk_mirror_enable_cb)
-		return sdk_mirror.sdk_mirror_enable_cb(ifindex, enable);
+	if(hal_driver && hal_driver->mirror_tbl && hal_driver->mirror_tbl->sdk_mirror_enable_cb)
+		return hal_driver->mirror_tbl->sdk_mirror_enable_cb(hal_driver->driver, ifindex, enable);
 	return ERROR;
 }
 
-int hal_mirror_source_enable(ifindex_t ifindex, int mode, BOOL enable)
+int hal_mirror_source_enable(ifindex_t ifindex, BOOL enable, hal_mirror_mode_t mode, hal_mirror_type_t type)
 {
-	if(sdk_mirror.sdk_mirror_source_enable_cb)
-		return sdk_mirror.sdk_mirror_source_enable_cb(enable, ifindex, mode);
+	if(hal_driver && hal_driver->mirror_tbl && hal_driver->mirror_tbl->sdk_mirror_source_enable_cb)
+		return hal_driver->mirror_tbl->sdk_mirror_source_enable_cb(hal_driver->driver, enable, ifindex, mode, type);
 	return ERROR;
 }
 
 
-int hal_mirror_source_filter_enable(BOOL enable, BOOL dst, mac_t *mac, int mode)
+int hal_mirror_source_filter_enable(BOOL enable, hal_mirror_filter_t filter, hal_mirror_type_t type, mac_t *mac, mac_t *mac1)
 {
-	if(sdk_mirror.sdk_mirror_source_filter_enable_cb)
-		return sdk_mirror.sdk_mirror_source_filter_enable_cb(enable, dst, mac, mode);
+	if(hal_driver && hal_driver->mirror_tbl && hal_driver->mirror_tbl->sdk_mirror_source_filter_enable_cb)
+		return hal_driver->mirror_tbl->sdk_mirror_source_filter_enable_cb(hal_driver->driver, enable,
+				filter, type, mac, mac1);
 	return ERROR;
 }

@@ -65,17 +65,17 @@ static unsigned dump_media_stat(const char *indent,
 	media_duration.msec = 1;
 
     len = pj_ansi_snprintf(p, end-p,
-	   "%s     RX %s last update:%s\n"
-	   "%s        total %spkt %sB (%sB +IP hdr) @avg=%sbps/%sbps\n"
-	   "%s        pkt loss=%d (%3.1f%%), discrd=%d (%3.1f%%), dup=%d (%2.1f%%), reord=%d (%3.1f%%)\n"
-	   "%s              (msec)    min     avg     max     last    dev\n"
-	   "%s        loss period: %7.3f %7.3f %7.3f %7.3f %7.3f\n"
-	   "%s        jitter     : %7.3f %7.3f %7.3f %7.3f %7.3f\n"
+	   "%s     RX %s last update:%s\r\n"
+	   "%s        total %spkt %sB (%sB +IP hdr) @avg=%sbps/%sbps\r\n"
+	   "%s        pkt loss=%d (%3.1f%%), discrd=%d (%3.1f%%), dup=%d (%2.1f%%), reord=%d (%3.1f%%)\r\n"
+	   "%s              (msec)    min     avg     max     last    dev\r\n"
+	   "%s        loss period: %7.3f %7.3f %7.3f %7.3f %7.3f\r\n"
+	   "%s        jitter     : %7.3f %7.3f %7.3f %7.3f %7.3f\r\n"
 #if defined(PJMEDIA_RTCP_STAT_HAS_RAW_JITTER) && PJMEDIA_RTCP_STAT_HAS_RAW_JITTER!=0
-	   "%s        raw jitter : %7.3f %7.3f %7.3f %7.3f %7.3f\n"
+	   "%s        raw jitter : %7.3f %7.3f %7.3f %7.3f %7.3f\r\n"
 #endif
 #if defined(PJMEDIA_RTCP_STAT_HAS_IPDV) && PJMEDIA_RTCP_STAT_HAS_IPDV!=0
-	   "%s        IPDV       : %7.3f %7.3f %7.3f %7.3f %7.3f\n"
+	   "%s        IPDV       : %7.3f %7.3f %7.3f %7.3f %7.3f\r\n"
 #endif
 	   "%s",
 	   indent,
@@ -147,12 +147,12 @@ static unsigned dump_media_stat(const char *indent,
     }
 
     len = pj_ansi_snprintf(p, end-p,
-	   "%s     TX %s last update:%s\n"
-	   "%s        total %spkt %sB (%sB +IP hdr) @avg=%sbps/%sbps\n"
-	   "%s        pkt loss=%d (%3.1f%%), dup=%d (%3.1f%%), reorder=%d (%3.1f%%)\n"
-	   "%s              (msec)    min     avg     max     last    dev \n"
-	   "%s        loss period: %7.3f %7.3f %7.3f %7.3f %7.3f\n"
-	   "%s        jitter     : %7.3f %7.3f %7.3f %7.3f %7.3f\n",
+	   "%s     TX %s last update:%s\r\n"
+	   "%s        total %spkt %sB (%sB +IP hdr) @avg=%sbps/%sbps\r\n"
+	   "%s        pkt loss=%d (%3.1f%%), dup=%d (%3.1f%%), reorder=%d (%3.1f%%)\r\n"
+	   "%s              (msec)    min     avg     max     last    dev \r\n"
+	   "%s        loss period: %7.3f %7.3f %7.3f %7.3f %7.3f\r\n"
+	   "%s        jitter     : %7.3f %7.3f %7.3f %7.3f %7.3f\r\n",
 	   indent,
 	   tx_info,
 	   last_update,
@@ -193,7 +193,7 @@ static unsigned dump_media_stat(const char *indent,
     p += len;
 
     len = pj_ansi_snprintf(p, end-p,
-	   "%s     RTT msec      : %7.3f %7.3f %7.3f %7.3f %7.3f\n",
+	   "%s     RTT msec      : %7.3f %7.3f %7.3f %7.3f %7.3f\r\n",
 	   indent,
 	   stat->rtt.min / 1000.0,
 	   stat->rtt.mean / 1000.0,
@@ -257,7 +257,7 @@ static void dump_media_session(const char *indent,
 	    (!call_med->strm.a.stream && !call_med->strm.v.stream))
 	{
 	    len = pj_ansi_snprintf(p, end-p,
-		      "%s  #%d %s deactivated\n",
+		      "%s  #%d %s deactivated\r\n",
 		      indent, i, media_type_str);
 	    if (len < 1 || len >= end-p) {
 		*p = '\0';
@@ -356,7 +356,7 @@ static void dump_media_session(const char *indent,
 	}
 
 	len = pj_ansi_snprintf(p, end-p,
-		  "%s  #%d %s%s, %s, peer=%s\n",
+		  "%s  #%d %s%s, %s, peer=%s\r\n",
 		  indent,
 		  call_med->idx,
 		  media_type_str,
@@ -390,6 +390,7 @@ static void dump_media_session(const char *indent,
 					       policy_name);
 			if (len > 0 && len < end-p) {
 			    p += len;
+			    *p++ = '\r';
 			    *p++ = '\n';
 			    *p = '\0';
 			}
@@ -408,6 +409,7 @@ static void dump_media_session(const char *indent,
 					       ii->comp_cnt);
 			if (len > 0 && len < end-p) {
 			    p += len;
+			    *p++ = '\r';
 			    *p++ = '\n';
 			    *p = '\0';
 			}
@@ -427,7 +429,7 @@ static void dump_media_session(const char *indent,
 			    else
 				strcpy(addr2, "0.0.0.0:0");
 			    len = pj_ansi_snprintf(p, end-p,
-			                           "   %s     [%d]: L:%s (%c) --> R:%s (%c)\n",
+			                           "   %s     [%d]: L:%s (%c) --> R:%s (%c)\r\n",
 			                           indent, jj,
 			                           addr1, type1[0],
 			                           addr2, type2[0]);
@@ -467,7 +469,7 @@ static void dump_media_session(const char *indent,
 
 #   define VALIDATE_PRINT_BUF() \
 	if (len < 1 || len >= end-p) { *p = '\0'; return; } \
-	p += len; *p++ = '\n'; *p = '\0'
+	p += len; *p++ = '\r'; *p++ = '\n'; *p = '\0'
 
 
 	if (call_med->type == PJMEDIA_TYPE_AUDIO) {
@@ -498,7 +500,7 @@ static void dump_media_session(const char *indent,
 	    clock_rate = info.fmt.clock_rate;
 	    pj_gettimeofday(&now);
 
-	    len = pj_ansi_snprintf(p, end-p, "\n%s  Extended reports:", indent);
+	    len = pj_ansi_snprintf(p, end-p, "\r\n%s  Extended reports:", indent);
 	    VALIDATE_PRINT_BUF();
 
 	    /* Statistics Summary */
@@ -554,11 +556,11 @@ static void dump_media_session(const char *indent,
 	    }
 
 	    len = pj_ansi_snprintf(p, end-p,
-		    "%s     RX last update: %s\n"
-		    "%s        begin seq=%d, end seq=%d\n"
-		    "%s        pkt loss=%s, dup=%s\n"
-		    "%s              (msec)    min     avg     max     dev\n"
-		    "%s        jitter     : %s\n"
+		    "%s     RX last update: %s\r\n"
+		    "%s        begin seq=%d, end seq=%d\r\n"
+		    "%s        pkt loss=%s, dup=%s\r\n"
+		    "%s              (msec)    min     avg     max     dev\r\n"
+		    "%s        jitter     : %s\r\n"
 		    "%s        toh        : %s",
 		    indent, last_update,
 		    indent,
@@ -619,11 +621,11 @@ static void dump_media_session(const char *indent,
 	    }
 
 	    len = pj_ansi_snprintf(p, end-p,
-		    "%s     TX last update: %s\n"
-		    "%s        begin seq=%d, end seq=%d\n"
-		    "%s        pkt loss=%s, dup=%s\n"
-		    "%s              (msec)    min     avg     max     dev\n"
-		    "%s        jitter     : %s\n"
+		    "%s     TX last update: %s\r\n"
+		    "%s        begin seq=%d, end seq=%d\r\n"
+		    "%s        pkt loss=%s, dup=%s\r\n"
+		    "%s              (msec)    min     avg     max     dev\r\n"
+		    "%s        jitter     : %s\r\n"
 		    "%s        toh        : %s",
 		    indent, last_update,
 		    indent,
@@ -691,15 +693,15 @@ static void dump_media_session(const char *indent,
 	    }
 
 	    len = pj_ansi_snprintf(p, end-p,
-		    "%s     RX last update: %s\n"
-		    "%s        packets    : loss rate=%d (%.2f%%), discard rate=%d (%.2f%%)\n"
-		    "%s        burst      : density=%d (%.2f%%), duration=%d%s\n"
-		    "%s        gap        : density=%d (%.2f%%), duration=%d%s\n"
-		    "%s        delay      : round trip=%d%s, end system=%d%s\n"
-		    "%s        level      : signal=%s%s, noise=%s%s, RERL=%s%s\n"
-		    "%s        quality    : R factor=%s, ext R factor=%s\n"
-		    "%s                     MOS LQ=%s, MOS CQ=%s\n"
-		    "%s        config     : PLC=%s, JB=%s, JB rate=%s, Gmin=%d\n"
+		    "%s     RX last update: %s\r\n"
+		    "%s        packets    : loss rate=%d (%.2f%%), discard rate=%d (%.2f%%)\r\n"
+		    "%s        burst      : density=%d (%.2f%%), duration=%d%s\r\n"
+		    "%s        gap        : density=%d (%.2f%%), duration=%d%s\r\n"
+		    "%s        delay      : round trip=%d%s, end system=%d%s\r\n"
+		    "%s        level      : signal=%s%s, noise=%s%s, RERL=%s%s\r\n"
+		    "%s        quality    : R factor=%s, ext R factor=%s\r\n"
+		    "%s                     MOS LQ=%s, MOS CQ=%s\r\n"
+		    "%s        config     : PLC=%s, JB=%s, JB rate=%s, Gmin=%d\r\n"
 		    "%s        JB delay   : cur=%d%s, max=%d%s, abs max=%d%s",
 		    indent,
 		    last_update,
@@ -791,15 +793,15 @@ static void dump_media_session(const char *indent,
 	    }
 
 	    len = pj_ansi_snprintf(p, end-p,
-		    "%s     TX last update: %s\n"
-		    "%s        packets    : loss rate=%d (%.2f%%), discard rate=%d (%.2f%%)\n"
-		    "%s        burst      : density=%d (%.2f%%), duration=%d%s\n"
-		    "%s        gap        : density=%d (%.2f%%), duration=%d%s\n"
-		    "%s        delay      : round trip=%d%s, end system=%d%s\n"
-		    "%s        level      : signal=%s%s, noise=%s%s, RERL=%s%s\n"
-		    "%s        quality    : R factor=%s, ext R factor=%s\n"
-		    "%s                     MOS LQ=%s, MOS CQ=%s\n"
-		    "%s        config     : PLC=%s, JB=%s, JB rate=%s, Gmin=%d\n"
+		    "%s     TX last update: %s\r\n"
+		    "%s        packets    : loss rate=%d (%.2f%%), discard rate=%d (%.2f%%)\r\n"
+		    "%s        burst      : density=%d (%.2f%%), duration=%d%s\r\n"
+		    "%s        gap        : density=%d (%.2f%%), duration=%d%s\r\n"
+		    "%s        delay      : round trip=%d%s, end system=%d%s\r\n"
+		    "%s        level      : signal=%s%s, noise=%s%s, RERL=%s%s\r\n"
+		    "%s        quality    : R factor=%s, ext R factor=%s\r\n"
+		    "%s                     MOS LQ=%s, MOS CQ=%s\r\n"
+		    "%s        config     : PLC=%s, JB=%s, JB rate=%s, Gmin=%d\r\n"
 		    "%s        JB delay   : cur=%d%s, max=%d%s, abs max=%d%s",
 		    indent,
 		    last_update,
@@ -983,6 +985,7 @@ PJ_DEF(pj_status_t) pjsua_call_dump( pjsua_call_id call_id,
 
     if (len > 0 && len < end-p) {
 	p += len;
+	*p++ = '\r';
 	*p++ = '\n';
 	*p = '\0';
     }

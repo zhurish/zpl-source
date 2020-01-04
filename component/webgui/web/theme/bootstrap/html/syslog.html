@@ -1,0 +1,66 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta content="" name="description" />
+    <meta content="webthemez" name="author" />
+    <!--meta http-equiv="refresh" content="30"-->
+    <!-- Bootstrap Styles-->
+    <link href="../css/bootstrap.min.css" rel="stylesheet" />
+    <!-- private Styles-->
+    <link href="../css/private.css" rel="stylesheet" />
+    <!-- jQuery Js -->
+    <script src="../js/jquery-2.1.1.min.js"></script>
+    <!-- Bootstrap Js -->
+    <script src="../js/bootstrap.min.js"></script>
+    <script src="../js/xhr.js"></script>
+    <script src="../js/data-type.js"></script>
+
+    <title>Status</title>
+</head>
+
+<body class="body-bg-img">
+    <div id="maincontent" class="container">
+        <fieldset class="fieldset-margin fieldset-background">
+            <div id="syslog" class="show">
+                <legend class="legend-text-align bold">Syslog
+                    <!--form class="form-inline form-margin show" method="POST" action="/action/download">
+                        <div class="form-group">
+                            <div class="col-xs-4 control-label">
+                                <button type="submit" class="btn btn-submit" name="btn-syslog" id="btn-syslog"
+                                    value="导出">
+                                    <span class="glyphicon glyphicon-download" style="margin-right:10px;"></span> 导出 </button>
+                            </div>
+                            <input type="text" class="sr-only" name="syslog" id="syslog"
+                                value="syslog.log">
+                        </div>
+                    </form-->
+                    <form class="form-inline form-margin show" method="POST" action="/action/download">
+                        <div class="form-group">
+                            <div class="col-xs-4 control-label">
+                                <button type="submit" class="btn btn-submit" name="btn-syslog" id="btn-syslog"
+                                    value="导出">
+                                    <span class="glyphicon glyphicon-download" style="margin-right:10px;"></span> 导出
+                                </button>
+                            </div>
+                            <!-- 用于 表单后台区分文件路径 -->
+                            <input type="text" class="sr-only" name="ID" id="ID" value="syslog">
+                            <!-- 用于 表单后台确定文件名称 -->
+                            <input type="text" class="sr-only" name="filename" id="filename" value="syslog.log">
+                        </div>
+                    </form>
+
+                </legend>
+                <div class="form-group">
+                    <% jst_syslog("/app/etc/thlog.log"); %>
+                    <!--textarea class="form-control" rows="3"></textarea-->
+                </div>
+            </div>
+        </fieldset>
+    </div>
+</body>
+
+</html>

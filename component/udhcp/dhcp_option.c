@@ -623,7 +623,7 @@ static int dhcp_option_overload_get(char *data, int len)
 	offset = msg->len + OPT_DATA;
 	while(1)
 	{
-		msg = (dhcp_option_set_t *)(data + offset);
+		msg = (dhcp_option_hdr_t *)(data + offset);
 		if(msg->code == DHCP_OPTION_OVERLOAD)
 		{
 			return msg->val.val8;
@@ -703,7 +703,7 @@ int dhcp_option_message_type_get(char *data, int len)
 	offset = msg->len + OPT_DATA;
 	while(1)
 	{
-		msg = (dhcp_option_set_t *)(data + offset);
+		msg = (dhcp_option_hdr_t *)(data + offset);
 		if(msg->code == DHCP_MESSAGE_TYPE)
 		{
 /*			if(optlen)
@@ -756,7 +756,7 @@ int dhcp_option_get_simple(const char *data, u_int32 *output, uint8_t code, uint
 	offset = msg->len + OPT_DATA;
 	while(1)
 	{
-		msg = (dhcp_option_set_t *)(data + offset);
+		msg = (dhcp_option_hdr_t *)(data + offset);
 		if(msg->code == code)
 		{
 			if(optlen == 1 && output)

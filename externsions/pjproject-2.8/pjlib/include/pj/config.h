@@ -262,6 +262,14 @@
     /*
      * ARM, bi-endian, so raise error if endianness is not configured
      */
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+#   define PJ_IS_LITTLE_ENDIAN	1
+#   define PJ_IS_BIG_ENDIAN	0
+#endif
+#if __BYTE_ORDER == __BIG_ENDIAN
+#   define PJ_IS_LITTLE_ENDIAN	0
+#   define PJ_IS_BIG_ENDIAN	1
+#endif
 #   if !PJ_IS_LITTLE_ENDIAN && !PJ_IS_BIG_ENDIAN
 #   	error Endianness must be declared for this processor
 #   endif
@@ -1362,7 +1370,7 @@ PJ_DECL(const char*) pj_get_version(void);
  */
 PJ_DECL(void) pj_dump_config(void);
 
-#define _PJSIP_DEBUG
+//#define _PJSIP_DEBUG
 #ifdef _PJSIP_DEBUG
 #define __PJSIP_DEBUG(fmt,...)		printf(fmt, ##__VA_ARGS__)
 #else

@@ -25,9 +25,9 @@
 #include "nsm_tunnel.h"
 #include "nsm_bridge.h"
 
-#include "pal_interface.h"
 #include "kernel_ioctl.h"
 
+#include "pal_driver.h"
 
 #include <netinet/if_ether.h>
 #include <net/if_arp.h>

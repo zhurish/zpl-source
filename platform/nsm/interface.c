@@ -294,7 +294,7 @@ static int nsm_interface_kname_set(struct interface *ifp)
 						IF_IFINDEX_SLOT_GET(ifp->ifindex), IF_IFINDEX_PORT_GET(ifp->ifindex),
 						IF_IFINDEX_VLAN_GET(ifp->ifindex));
 		}
-
+		//nsm_interface_hw_update_api(ifp);
 		break;
 	case IF_LOOPBACK:
 	case IF_VLAN:
@@ -423,6 +423,7 @@ int nsm_interface_update_kernel(struct interface *ifp, char *kname)
 		SET_FLAG(ifp->status, ZEBRA_INTERFACE_ATTACH);
 		pal_interface_refresh_flag(ifp);
 		pal_interface_get_lladdr(ifp);
+		nsm_interface_hw_update_api(ifp);
 		return OK;
 	}
 	return ERROR;
@@ -571,6 +572,16 @@ static int nsm_interface_delete(struct interface *ifp)
 		return OK;
 	}
 	return ERROR;
+}
+
+int nsm_interface_update_api(struct interface *ifp)
+{
+	return nsm_client_notify_interface_update (ifp);
+}
+
+int nsm_interface_hw_update_api(struct interface *ifp)
+{
+	return nsm_client_notify_interface_update (ifp);
 }
 
 int nsm_interface_create_api(const char *ifname)
@@ -1403,7 +1414,7 @@ int nsm_interface_mtu_set_api(struct interface *ifp, int mtu)
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	IF_DATA_LOCK();
-	if(ifp->mtu != mtu)
+	if(ifp->mtu != (uint)mtu)
 	{
 		if(if_is_tunnel(ifp))
 			ret = nsm_tunnel_mtu_set_api(ifp, (int)mtu);

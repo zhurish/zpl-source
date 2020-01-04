@@ -6,10 +6,9 @@
 
 //#define USE_IPSTACK_KERNEL
 	//USE_IPSTACK_KERNEL
-
+#undef BASE_DIR
 #ifndef BASE_DIR
 #define BASE_DIR	"/tmp/app"
-
 #endif
 
 #ifdef BUILD_X86
@@ -51,6 +50,9 @@
 #define SYSTMPDIR 		BASE_DIR "/tmp"
 #define SYSWWWDIR 		BASE_DIR "/www"
 #define SYSWWWCACHEDIR 		BASE_DIR "/www/cache"
+#define SYSTFTPBOOTDIR 		BASE_DIR "/tftpboot"
+#define SYSUPLOADDIR 		SYSTFTPBOOTDIR
+
 
 /* default daemon app root dir */
 #define DAEMON_CONFIG_DIR SYSCONFDIR

@@ -145,7 +145,7 @@ static int sshd_stop(ssh_config_t *sshconfig)
 	//ssh_config.running = FALSE;
 	//close all channel
 	//close all session
-	zlog_debug(ZLOG_UTILS, "%ss", __func__);
+	zlog_debug(ZLOG_UTILS, "%s", __func__);
 	ssh_event_remove_fd(sshconfig->event,
 			  ssh_bind_get_fd(sshconfig->sshbind));
 
@@ -175,7 +175,7 @@ static int sshd_start(ssh_config_t *sshconfig)
 	if(sshconfig->event == NULL)
 		sshconfig->event = ssh_event_new();
 
-	zlog_debug(ZLOG_UTILS, "%ss", __func__);
+	zlog_debug(ZLOG_UTILS, "%s", __func__);
 
     if(sshconfig->bindport)
     	ssh_bind_options_set(sshconfig->sshbind, SSH_BIND_OPTIONS_BINDPORT, &sshconfig->bindport);

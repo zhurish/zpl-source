@@ -13,22 +13,30 @@
 
 int os_tlv_set_string(char *input, tag_t tag, len_t len, void * val)
 {
-	os_tlv_t *tlv = (os_tlv_t *)input;
-	tlv->tag = htonl(tag);
-	tlv->len = htonl(len);
-	tlv->val.pval = (unsigned char *)(input + sizeof(tag_t) + sizeof(len_t));
-	memcpy(tlv->val.pval, (char *)val, MIN(strlen(val), len));
-	return (sizeof(tag_t) + sizeof(len_t) + len);
+	if(val && len)
+	{
+		os_tlv_t *tlv = (os_tlv_t *)input;
+		tlv->tag = htonl(tag);
+		tlv->len = htonl(len);
+		tlv->val.pval = (unsigned char *)(input + sizeof(tag_t) + sizeof(len_t));
+		memcpy(tlv->val.pval, (char *)val, MIN(strlen(val), len));
+		return (sizeof(tag_t) + sizeof(len_t) + len);
+	}
+	return 0;
 }
 
 int os_tlv_set_octet(char *input, tag_t tag, len_t len, void * val)
 {
-	os_tlv_t *tlv = (os_tlv_t *)input;
-	tlv->tag = htonl(tag);
-	tlv->len = htonl(len);
-	tlv->val.pval = (unsigned char *)(input + sizeof(tag_t) + sizeof(len_t));
-	memcpy(tlv->val.pval, (char *)val, len);
-	return (sizeof(tag_t) + sizeof(len_t) + len);
+	if(val && len)
+	{
+		os_tlv_t *tlv = (os_tlv_t *)input;
+		tlv->tag = htonl(tag);
+		tlv->len = htonl(len);
+		tlv->val.pval = (unsigned char *)(input + sizeof(tag_t) + sizeof(len_t));
+		memcpy(tlv->val.pval, (char *)val, len);
+		return (sizeof(tag_t) + sizeof(len_t) + len);
+	}
+	return 0;
 }
 
 /*int os_tlv_set_value(char *input, tag_t tag, len_t len, void * val, int vlen)
@@ -43,6 +51,8 @@ int os_tlv_set_octet(char *input, tag_t tag, len_t len, void * val)
 int os_tlv_set_integer(char *input, tag_t tag, len_t len, void * val)
 {
 	os_tlv_t *tlv = (os_tlv_t *)input;
+	if(!val || !len)
+		return 0;
 	tlv->tag = htonl(tag);
 	tlv->len = htonl(len);
 	//tlv->val.pval = (unsigned char *)(input + sizeof(tag_t) + sizeof(len_t));

@@ -22,11 +22,11 @@ end
 
 
 function voip_app_start() 
-	sys.call("/app/etc/x5b-app.sh start >/dev/null")                                                                               
+  sys.call("/app/etc/x5b-app.sh start >/dev/null")                                                                               
 end
 
 function voip_app_stop()                                              
-	sys.call("/app/etc/x5b-app.sh stop >/dev/null")                      
+  sys.call("/app/etc/x5b-app.sh stop >/dev/null")                      
 end
 end -- fs.access("/app/etc/x5b-app.sh") then
 
@@ -34,10 +34,10 @@ end -- fs.access("/app/etc/x5b-app.sh") then
 
 
 function factory_get_system_mac()   
-  --	   
+  --     
   -- WLAN, WIFI 4; LAN 0x28; WAN 0x2e;    
   --                                                                                         
-  local mval = io.popen("hexdump -v -n 6 -s 0x04 -e '5/1 \"%02x:\" 1/1 \"%02x\"' /dev/mtd2", "r")
+  local mval = io.popen("hexdump -v -n 6 -s 0x2e -e '5/1 \"%02x:\" 1/1 \"%02x\"' /dev/mtd2", "r")
   --local mval = nil                         
   if mval then                                                                                                      
     local mvalue = mval:read("*l")                                                                         
@@ -49,6 +49,14 @@ function factory_get_system_mac()
   end                                                                                                                                                                 
   return nil                                    
 end
+
+function factory_get_serial()
+  if fs.access("/etc/.serial_no") then
+    return fs.readfile("/etc/.serial_no") or ""
+  else
+    return ""
+  end  
+end 
 
 --[[
 if fs.access("/app/etc/x5b-app.sh") then
@@ -127,6 +135,27 @@ m2 = SimpleForm("Product Configure", "Product Global Configure", translate("Prod
 m2.rmempty = true
 s = m2:section(SimpleSection, nil, nil)
 ]]
+serial = s:option(Value, "serial", translate("Serial Num"))
+serial.rmempty = true
+serial.default=factory_get_serial()
+function serial.write(self, section, value)           
+  value = value:gsub("\r\n", "\n")                   
+  if value then 
+    testing:set("product","global","serial", value) 
+    testing:commit("product")  
+    if fs.access("/usr/bin/mac-tools") then                                                                
+      sys.call("mac-tools -s %s >/dev/null" % value)
+    end  
+    --sys.call("echo \"%s\" >/tmp/mac.txt"% value)     
+  end                                                 
+end
+
+function serial.cfgvalue()
+  local l_tmp =  testing:get("product","global","serial")
+  return l_tmp or "" 
+  --local l_tmp =  factory_get_system_mac()
+  --return l_tmp or "" 
+end
 
 mac = s:option(Value, "macaddress", translate("<abbr title=\"System Mac Address\">SYS Mac-Address</abbr>"))
 mac.datatype = "macaddr"
@@ -148,7 +177,7 @@ function mac.cfgvalue()
   return l_tmp or "" 
 end
  
--- product
+-- product 设备类型
 product = s:option(ListValue, "product", translate("Product Type"))
 product.rmempty = false
 product.default='X5BM'
@@ -168,27 +197,26 @@ function product.cfgvalue()
   return l_tmp or "" 
 end
 
--- product location
-product_location = s:option(ListValue, "location", translate("Location Type"))
-product_location.rmempty = false
-product_location.default='Unit'
-product_location:value("Unit",translate("Unit"))
-product_location:value("Wall",translate("Wall"))
-product_location:value("Building",translate("Building"))
-product_location:value("Company",translate("Company"))
+-- product scene 安装场景
+product_scene = s:option(ListValue, "scene", translate("Application Scene"))
+product_scene.rmempty = false
+product_scene.default='Housing'
+product_scene:value("Housing",translate("Housing"))--小区
+product_scene:value("Bussiness",translate("Bussiness"))--办公场景
+product_scene:value("Commercial",translate("Commercial"))--商业楼宇场景
 --product_location:value("Building",translate("Building"))
 
 
-function product_location.write(self, section, value)           
+function product_scene.write(self, section, value)           
   value = value:gsub("\r\n", "\n")                   
   if value then 
-    testing:set("product","global","location", value) 
+    testing:set("product","global","scene", value) 
     testing:commit("product") 
   end                                                
 end
 
-function product_location.cfgvalue()
-  local l_tmp =  testing:get("product","global","location")
+function product_scene.cfgvalue()
+  local l_tmp =  testing:get("product","global","scene")
   return l_tmp or "" 
 end
 
@@ -214,29 +242,50 @@ function customizer.cfgvalue()
   return l_tmp or "" 
 end
 
-
-thlog_max = s:option(Value, "thlog_max", translate("Max LOG Number"))
-thlog_max.rmempty = false
-thlog_max.default='2000'
-thlog_max.datatype = "range(64,9000)"
-
-function thlog_max.write(self, section, value)           
+-- product location 安装地址
+product_location = s:option(Value, "location", translate("Installation Location"))
+product_location.rmempty = false
+product_location.maxlength=32
+function product_location.write(self, section, value)           
   value = value:gsub("\r\n", "\n")                   
   if value then 
-    testing:set("product","global","thlog_max", value) 
+    testing:set("product","global","location", value) 
     testing:commit("product") 
   end                                                
 end
 
-function thlog_max.cfgvalue()
-  local l_tmp =  testing:get("product","global","thlog_max")
+function product_location.cfgvalue()
+  local l_tmp =  testing:get("product","global","location")
+  return l_tmp or "" 
+end
+
+--小区场景下的安装位置
+housing_location = s:option(ListValue, "housing_location", translate("Housing Location"))
+housing_location.rmempty = false
+housing_location.default='Unit'
+housing_location:value("Unit",translate("Unit"))
+housing_location:value("Wall",translate("Wall"))
+housing_location:value("Building",translate("Building"))
+housing_location:depends("scene", "Housing")
+
+
+function housing_location.write(self, section, value)           
+  value = value:gsub("\r\n", "\n")                   
+  if value then 
+    testing:set("product","global","housing_location", value) 
+    testing:commit("product") 
+  end                                                
+end
+
+function housing_location.cfgvalue()
+  local l_tmp =  testing:get("product","global","housing_location")
   return l_tmp or "" 
 end
 
 device_name = s:option(Value, "device_name", translate("Device Name"))
 device_name.rmempty = true
 device_name.maxlength=32
-device_name:depends("customizer", "Huifu")
+--device_name:depends("customizer", "Huifu")
 
 function device_name.write(self, section, value)           
   value = value:gsub("\r\n", "\n")                   
@@ -254,7 +303,7 @@ end
 server_address = s:option(Value, "server_address", translate("Server Address"))
 server_address.rmempty = true
 server_address.datatype = "ip4addr"
-server_address:depends("customizer", "Huifu")
+--server_address:depends("customizer", "Huifu")
 
 function server_address.write(self, section, value)           
   value = value:gsub("\r\n", "\n")                   
@@ -274,7 +323,7 @@ direction.rmempty = true
 direction.default='out'
 direction:value("out",translate("out"))
 direction:value("in",translate("in"))
-direction:depends("customizer", "Huifu")
+--direction:depends("customizer", "Huifu")
 
 function direction.write(self, section, value)           
   value = value:gsub("\r\n", "\n")                   
@@ -290,6 +339,62 @@ function direction.cfgvalue()
 end
 
 
+thlog_max = s:option(Value, "thlog_max", translate("Max Log Number"))
+thlog_max.rmempty = false
+thlog_max.default='2000'
+thlog_max.datatype = "range(64,9000)"
+
+function thlog_max.write(self, section, value)           
+  value = value:gsub("\r\n", "\n")                   
+  if value then 
+    testing:set("product","global","thlog_max", value) 
+    testing:commit("product") 
+  end                                                
+end
+
+function thlog_max.cfgvalue()
+  local l_tmp =  testing:get("product","global","thlog_max")
+  return l_tmp or "" 
+end
+
+--使能蓝牙功能
+bluetooth = s:option(Flag, "bluetooth", translate("Bluetooth Enable"))
+bluetooth.rmempty = false
+bluetooth.default = false
+
+function bluetooth.write(self, section, value)           
+  value = value:gsub("\r\n", "\n")                   
+  if value then 
+    testing:set("product","global","bluetooth", value) 
+    testing:commit("product") 
+  end                                                
+end
+
+function bluetooth.cfgvalue()
+  local l_tmp =  testing:get("product","global","bluetooth")
+  return l_tmp or "" 
+end
+
+--使能NFC功能
+nfc = s:option(Flag, "nfc", translate("NFC Enable"))
+nfc.rmempty = false
+nfc.default = false
+
+function nfc.write(self, section, value)           
+  value = value:gsub("\r\n", "\n")                   
+  if value then 
+    testing:set("product","global","nfc", value) 
+    testing:commit("product") 
+  end                                                
+end
+
+function nfc.cfgvalue()
+  local l_tmp =  testing:get("product","global","nfc")
+  return l_tmp or "" 
+end
+  
+  
+  
 local apply=luci.http.formvalue("cbi.apply")
 
 if apply then

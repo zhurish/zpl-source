@@ -38,7 +38,7 @@
 #include "redistribute.h"
 #include "interface.h"
 #include "debug.h"
-
+#include "nsm_hook.h"
 #include "kernel_netlink.h"
 
 extern struct zebra_t zebrad;
@@ -176,8 +176,10 @@ static int netlink_interface_addr(struct sockaddr_nl *snl, struct nlmsghdr *h,
 	if (ifa->ifa_family == AF_INET)
 	{
 		if (h->nlmsg_type == RTM_NEWADDR)
+		{
 			connected_add_ipv4(ifp, flags, (struct in_addr *) addr,
 					ifa->ifa_prefixlen, (struct in_addr *) broad, label);
+		}
 		else
 		{
 			connected_delete_ipv4(ifp, flags, (struct in_addr *) addr,
@@ -188,14 +190,36 @@ static int netlink_interface_addr(struct sockaddr_nl *snl, struct nlmsghdr *h,
 	if (ifa->ifa_family == AF_INET6)
 	{
 		if (h->nlmsg_type == RTM_NEWADDR)
+		{
 			connected_add_ipv6(ifp, flags, (struct in6_addr *) addr,
 					ifa->ifa_prefixlen, (struct in6_addr *) broad, label);
+		}
 		else
+		{
 			connected_delete_ipv6(ifp, (struct in6_addr *) addr,
 					ifa->ifa_prefixlen, (struct in6_addr *) broad);
+		}
 	}
 #endif /* HAVE_IPV6 */
-
+	if (ifa->ifa_family == AF_INET
+#ifdef HAVE_IPV6
+			|| ifa->ifa_family == AF_INET6
+#endif /* HAVE_IPV6 */
+			)
+	{
+		if (ifp && h->nlmsg_type == RTM_NEWADDR)
+		{
+			//nsm_client_notify_parameter_change(ifp);
+			//nsm_hook_execute (NSM_HOOK_IP_DEL, ifp, ifc, FALSE);
+			nsm_hook_execute (NSM_HOOK_IFP_CHANGE, ifp, NULL, TRUE);
+		}
+		else if(ifp)
+		{
+			//nsm_client_notify_parameter_change(ifp);
+			//nsm_hook_execute (NSM_HOOK_IP_DEL, ifp, ifc, FALSE);
+			nsm_hook_execute (NSM_HOOK_IFP_CHANGE, ifp, NULL, FALSE);
+		}
+	}
 	return 0;
 }
 

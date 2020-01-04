@@ -468,7 +468,7 @@ PUBLIC int sslUpgrade(Webs *wp)
     WebsSocket      *sptr;
     BIO             *bio;
 
-    assert(wp);
+    web_assert(wp);
 
     sptr = socketPtr(wp->sid);
     if ((wp->ssl = SSL_new(sslctx)) == 0) {
@@ -633,8 +633,8 @@ static int sslSetCertFile(char *certFile)
     char    *buf;
     int     rc;
 
-    assert(sslctx);
-    assert(certFile);
+    web_assert(sslctx);
+    web_assert(certFile);
 
     rc = -1;
     bio = 0;
@@ -683,8 +683,8 @@ static int sslSetKeyFile(char *keyFile)
     char    *buf;
     int     rc;
 
-    assert(sslctx);
-    assert(keyFile);
+    web_assert(sslctx);
+    web_assert(keyFile);
 
     key = 0;
     bio = 0;

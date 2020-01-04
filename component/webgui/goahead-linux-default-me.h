@@ -94,7 +94,7 @@
     #define ME_GOAHEAD_AUTH_STORE "file"
 #endif
 #ifndef ME_GOAHEAD_AUTO_LOGIN
-    #define ME_GOAHEAD_AUTO_LOGIN 0
+    #define ME_GOAHEAD_AUTO_LOGIN 1
 #endif
 #ifndef ME_GOAHEAD_CGI
     #define ME_GOAHEAD_CGI 1
@@ -148,7 +148,7 @@
     #define ME_GOAHEAD_LIMIT_PASSWORD 32
 #endif
 #ifndef ME_GOAHEAD_LIMIT_POST
-    #define ME_GOAHEAD_LIMIT_POST 16384
+    #define ME_GOAHEAD_LIMIT_POST 204800000
 #endif
 #ifndef ME_GOAHEAD_LIMIT_PUT
     #define ME_GOAHEAD_LIMIT_PUT 204800000
@@ -234,9 +234,11 @@
 #ifndef ME_GOAHEAD_UPLOAD
     #define ME_GOAHEAD_UPLOAD 1
 #endif
+
 #ifndef ME_GOAHEAD_UPLOAD_DIR
-    #define ME_GOAHEAD_UPLOAD_DIR "/home/zhurish/Downloads/tftpboot"
+    #define ME_GOAHEAD_UPLOAD_DIR "/tmp/tftpboot"
 #endif
+
 #ifndef ME_GOAHEAD_XFRAME_HEADER
     #define ME_GOAHEAD_XFRAME_HEADER "SAMEORIGIN"
 #endif

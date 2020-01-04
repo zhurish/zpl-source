@@ -71,6 +71,9 @@
 /* Broadcast Storm Suppression Register */
 #define B53_BROADCAST_STROM_PAGE			0x41
 
+/* EAP Register */
+#define B53_EAP_PAGE			0x42
+
 /* MSPT Register */
 #define B53_MSTP_PAGE			0x43
 
@@ -329,6 +332,26 @@
 /* Revision ID register (8 bit) */
 #define B53_REV_ID			0x40
 
+/* High-Level Protocol Control Register (32 bit) */
+#define B53_HIGH_LEVEL_CTL			0x50
+#define   B53_MLD_QRY_FWD_MODE		BIT(18)
+#define   B53_MLD_QRY_EN			BIT(17)
+#define   B53_MLD_RPTDONE_FWD_MODE	BIT(16)
+#define   B53_MLD_RPTDONE_EN		BIT(15)
+#define   B53_IGMP_UKN_FWD_MODE		BIT(14)
+#define   B53_IGMP_UKN_EN			BIT(13)
+#define   B53_IGMP_QRY_FWD_MODE		BIT(12)
+#define   B53_IGMP_QRY_EN			BIT(11)
+#define   B53_IGMP_RPTLVE_FWD_MODE	BIT(10)
+#define   B53_IGMP_RPTLVE_EN		BIT(9)
+#define   B53_IGMP_DIP_EN			BIT(8)
+#define   B53_ICMPV6_FWD_MODE		BIT(5)
+#define   B53_ICMPV6_EN				BIT(4)
+#define   B53_ICMPV4_EN				BIT(3)
+#define   B53_DHCP_EN				BIT(2)
+#define   B53_RARP_EN				BIT(1)
+#define   B53_ARP_EN				BIT(0)
+
 /* Broadcom header RX control (16 bit) */
 #define B53_BRCM_HDR_RX_DIS		0x60
 
@@ -437,6 +460,15 @@
 /* Join all VLANs register (16 bit) */
 #define B53_JOIN_ALL_VLAN_EN		0x50
 
+
+
+/* PHY Registers */
+/* MII Control Registers */
+#define B53_MII_CTL			0x00
+#define B53_MII_STAT		0x02
+#define 	B53_INTERNAL_LOOPBACK		BIT(14)
+#define 	B53_AUTO_NEGOTIATION		BIT(12)
+#define 	B53_DUPLEX_MODE				BIT(8)
 /*************************************************************************
  * 802.1Q Page Registers
  *************************************************************************/
@@ -658,6 +690,36 @@
 #define B53_JUMBO_MAX_SIZE_63XX		0x08
 #define   JMS_MIN_SIZE			1518
 #define   JMS_MAX_SIZE			9724
+
+/* EAP Global Register */
+#define B53_EAP_GLOBAL			0x00
+#define 	B53_EAP_RARP_EN		BIT(6)
+#define 	B53_EAP_BPDU_EN		BIT(5)
+#define 	B53_EAP_RMC_EN		BIT(4)
+#define 	B53_EAP_DHCP_EN		BIT(3)
+#define 	B53_EAP_ARP_EN		BIT(2)
+#define 	B53_EAP_2DIP_EN		BIT(1)
+
+/* EAP Multiport Address Register */
+#define B53_EAP_MULT_ADDR		0x01
+#define 	B53_EAP_MPORT(n)	BIT((n))
+
+/* EAP Destnation IP Address Register */
+#define B53_EAP_DST_IP_ADDR0		0x02
+#define B53_EAP_DST_IP_ADDR1		0x0A
+#define 	B53_EAP_DIP_ADD			32
+#define 	B53_EAP_DMSK_ADD		0
+
+
+/* EAP Port Register */
+#define B53_EAP_PORT_ADDR		0x20
+#define 	B53_EAP_PORT(n)		(0x20 + 8*(n))
+#define 	B53_EAP_MODE		51
+#define 	B53_EAP_MODE_MASK	3
+#define 	B53_EAP_BLK_MODE	49
+#define 	B53_EAP_BLK_MODE_M	3
+#define 	B53_EAP_DA_EN		48
+
 
 
 /* MSPT Control Register */

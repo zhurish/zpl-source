@@ -159,11 +159,12 @@ PLOS_CFLAGS += -D__UCLIBC__
 endif
 #
 #
-PLOS_LDLIBS += -lpthread -lrt -rdynamic -lm -lcrypt -ldl -lgcc_s
+PLOS_LDLIBS += -lpthread -lrt -rdynamic -lm -lcrypt -ldl -lgcc_s -lstdc++
 #
 #
 #PLOS_LDLIBS += -std=c99 
-PLOS_CFLAGS += -std=gnu99 
+PLOS_CFLAGS += -std=gnu99 -fgnu89-inline
+PLOS_CPPFLAGS += -std=c++11 -Wno-write-strings
 #
 #
 # WANRING
@@ -174,23 +175,34 @@ PLOS_CFLAGS += -MMD -MP -Wfatal-errors -Wall -Wextra -Wnested-externs -Wmissing-
 			 -Wswitch -Wformat -Wuninitialized -Wchar-subscripts  \
 			 -Wpointer-arith -Wwrite-strings -Wstrict-prototypes
 			 
-			 
+PLOS_CPPFLAGS += -MMD -MP -Wfatal-errors -Wall -Wextra -Wnested-externs -Wmissing-prototypes \
+			 -Wredundant-decls -Wcast-align -Wunreachable-code -Wshadow	\
+			 -Wimplicit-function-declaration -Wimplicit	-Wreturn-type -Wunused \
+			 -Wswitch -Wformat -Wuninitialized -Wchar-subscripts  \
+			 -Wpointer-arith -Wwrite-strings -Wstrict-prototypes
+			 			 
 # -Werror=implicit-function-declaration -Werror=switch
 PLOS_CFLAGS += -Werror=return-type -Werror=format-extra-args -Werror=missing-prototypes \
 			  -Werror=unreachable-code -Werror=unused-function -Werror=unused-variable \
-			  -Werror=unused-value -Werror=implicit-int  \
-			  -Werror=parentheses -Werror=shadow -Werror=char-subscripts  \
+			  -Werror=unused-value -Werror=implicit-int -Werror=missing-parameter-type\
+			  -Werror=parentheses -Werror=shadow -Werror=char-subscripts -Werror=parentheses  \
 			  -Werror=invalid-memory-model -Werror=sizeof-pointer-memaccess \
-			  -Werror=shadow -Werror=overflow
+			  -Werror=shadow -Werror=overflow -Werror=overlength-strings -Werror=format-security \
+			  -Werror=unsafe-loop-optimizations -Werror=init-self 
+			  #-Werror=stack-protector 
+			  #-Werror=suggest-attribute=format -Werror=missing-format-attribute
 			  #-Werror=sign-compare 有符号和无符号参数比较
 			  #-Werror=format-overflow
 			  #-Werror=shift-count-overflow
 			  #-Werror=pointer-arith 
 			  #sequence-point:违反顺序点的代码,比如 a[i] = c[i++];
 			  #-Werror=cast-qual 
+			  #-Werror=type-limits 参数类型限制
+			  #-Werror=float-equal 对浮点数使用等号，这是不安全的
 			  #-Werror=redundant-decls -Werror=format -Werror=missingbraces
 #			 -Werror=switch-default -Werror=missing-format-attribute 
-#				-Werror=overlength-strings -Werror=cast-align  \
+#				-Werror=overlength-strings -Werror=cast-align 
+#PLOS_CPPFLAGS
 #			 
 PLOS_CFLAGS += -fmessage-length=0 -Wcast-align
 #

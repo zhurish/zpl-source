@@ -17,5 +17,6 @@ int pjsip_module_exit();
 
 int pjsip_module_task_init();
 int pjsip_module_task_exit();
+int pjsip_media_wait_quit(void);
 
 #endif /* __PJSIP_MAIN_H__ */

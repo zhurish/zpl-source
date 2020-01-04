@@ -16,9 +16,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-
+#include <unistd.h>
+#include <fcntl.h>
 #include <pjlib-util/cli_imp.h>
 #include <pjlib-util/cli_socket.h>
+#include <pj/sock_select.h>
 #include <pj/activesock.h>
 #include <pj/assert.h>
 #include <pj/errno.h>
@@ -50,7 +52,30 @@ typedef struct cli_socket_fe
     unsigned		    buf_len;
 } cli_socket_fe;
 
-static int poll_worker_thread(void *p);
+
+static int socket_worker_thread(void *p);
+
+
+static int cli_set_nonblocking(int fd)
+{
+	int flags = 0;
+
+	/* According to the Single UNIX Spec, the return value for F_GETFL should
+	 never be negative. */
+	if ((flags = fcntl(fd, F_GETFL)) < 0)
+	{
+		fprintf(stdout, "fcntl(F_GETFL) failed for fd %d set-nonblocking: %s", fd,
+				strerror(errno));
+		return -1;
+	}
+	if (fcntl(fd, F_SETFL, (flags | O_NONBLOCK)) < 0)
+	{
+		fprintf(stdout, "fcntl failed setting fd %d set-nonblocking: %s", fd,
+				strerror(errno));
+		return -1;
+	}
+	return 0;
+}
 
 static void cli_socket_quit(pj_cli_front_end *fe, pj_cli_sess *req)
 {
@@ -64,26 +89,50 @@ static void cli_socket_quit(pj_cli_front_end *fe, pj_cli_sess *req)
     }
 }
 
-static void cli_socket_destroy(pj_cli_front_end *fe)
+static void cli_socket_front_destroy(pj_cli_front_end *fe)
 {
 	cli_socket_fe * cfe = (cli_socket_fe *)fe;
 
     pj_assert(cfe);
-
+    if(cfe->mutex)
+    	pj_mutex_lock (cfe->mutex);
     if (cfe->input_thread)
         cfe->thread_quit = PJ_TRUE;
-
+    if(cfe->mutex)
+    	pj_mutex_unlock (cfe->mutex);
     if (cfe->input_thread)
+    {
         pj_thread_join(cfe->input_thread);
-
-    pj_list_erase(cfe->sess);
+        //pj_thread_destroy(cfe->input_thread);
+        //cfe->input_thread = NULL;
+    }
+    if(cfe->mutex)
+    	pj_mutex_lock (cfe->mutex);
+    //pj_list_erase(cfe->sess);
+	if(cfe->sess)
+	{
+		cfe->sess = NULL;
+	}
     if (cfe->cfg->rfd != PJ_INVALID_SOCKET)
+    {
         pj_sock_close(cfe->cfg->rfd);
+        cfe->cfg->rfd = PJ_INVALID_SOCKET;
+    }
     if (cfe->cfg->wfd != PJ_INVALID_SOCKET)
+    {
         pj_sock_close(cfe->cfg->wfd);
+        cfe->cfg->wfd = PJ_INVALID_SOCKET;
+    }
     if (cfe->input_thread) {
         pj_thread_destroy(cfe->input_thread);
-	cfe->input_thread = NULL;
+        cfe->input_thread = NULL;
+    }
+
+    if (cfe->mutex)
+    {
+    	pj_mutex_unlock (cfe->mutex);
+        pj_mutex_destroy(cfe->mutex);
+        cfe->mutex = NULL;
     }
     pj_pool_release(cfe->pool);
 }
@@ -114,6 +163,8 @@ static void cli_socket_exec_result(pj_cli_sess *sess, int result)
 			{
 				fe->cfg->rfd = fd[0];
 				fe->cfg->wfd = fd[1];
+				cli_set_nonblocking(fe->cfg->rfd);
+				cli_set_nonblocking(fe->cfg->wfd);
 				return ;
 			}
 			return ;
@@ -167,11 +218,13 @@ static pj_status_t cli_socket_start(cli_socket_fe *fe)
 	{
 		fe->cfg->rfd = fd[0];
 		fe->cfg->wfd = fd[1];
+		cli_set_nonblocking(fe->cfg->rfd);
+		cli_set_nonblocking(fe->cfg->wfd);
 	}
 	else
 		return -1;
     if (!fe->input_thread) {
-        status = pj_thread_create(fe->pool, "worker_socket", &poll_worker_thread, fe,
+        status = pj_thread_create(fe->pool, "worker_socket", &socket_worker_thread, fe,
                                   0, 0, &fe->input_thread);
         if (status != PJ_SUCCESS)
         {
@@ -198,16 +251,47 @@ on_exit:
     return status;
 }
 
-static int poll_worker_thread(void *p)
+static int socket_worker_thread(void *p)
 {
+    pj_fd_set_t rfds;
+    pj_time_val timeout;
 	cli_socket_fe *fe = (cli_socket_fe *) p;
 	pj_size_t input_len = 0;
 	pj_str_t input_str;
+	int n = 0;
 	char *recv_buf = fe->buf;
 	//pj_bool_t is_valid = PJ_TRUE;
-
+    PJ_FD_ZERO(&rfds);
+    PJ_FD_SET(fe->cfg->rfd, &rfds);
+    timeout.sec = 1;
+    timeout.msec = 0;
 	while (!fe->thread_quit)
 	{
+		pj_mutex_lock (fe->mutex);
+		if (fe->thread_quit)
+		{
+			pj_mutex_unlock (fe->mutex);
+			fprintf(stdout, "==================%s=============thread_quit\r\n", __func__);
+			break;
+		}
+		pj_mutex_unlock (fe->mutex);
+	    n = pj_sock_select(fe->cfg->rfd + 1, &rfds, NULL, NULL, &timeout);
+	    if (n < 0)
+	    {
+	    	fprintf(stdout, "==================%s=============pj_sock_select(%s)\r\n", __func__, strerror(errno));
+	    	goto socket_thread_exit;
+	    }
+	    if (n == 0)
+		{
+			//fprintf(stdout, "==================%s=============\r\n", __func__);
+	    	continue;
+		}
+	    if (!PJ_FD_ISSET(fe->cfg->rfd, &rfds))
+	    {
+	    	fprintf(stdout, "==================%s=============PJ_FD_ISSET(%s)\r\n", __func__, strerror(errno));
+	    	goto socket_thread_exit;
+	    }
+
 		memset(recv_buf, 0, sizeof(fe->buf));
 		fe->buf_len = read(fe->cfg->rfd, recv_buf, sizeof(fe->buf));
 /*		if (fgets(recv_buf, fe->input.maxlen, stdin) == NULL)
@@ -230,6 +314,7 @@ static int poll_worker_thread(void *p)
 			{
 				printf("==========%s============:reset\r\n", __func__);
 				int fd[2];
+				pj_mutex_lock (fe->mutex);
 			    if (fe->cfg->rfd != PJ_INVALID_SOCKET)
 			        pj_sock_close(fe->cfg->rfd);
 			    if (fe->cfg->wfd != PJ_INVALID_SOCKET)
@@ -239,11 +324,17 @@ static int poll_worker_thread(void *p)
 				{
 					fe->cfg->rfd = fd[0];
 					fe->cfg->wfd = fd[1];
+					cli_set_nonblocking(fe->cfg->rfd);
+					cli_set_nonblocking(fe->cfg->wfd);
+					pj_mutex_unlock (fe->mutex);
 					continue;
 				}
-				return -1;
+				pj_mutex_unlock (fe->mutex);
+			 	fprintf(stdout, "==================%s=============read(%s)\r\n", __func__, strerror(errno));
+				goto socket_thread_exit;
 			}
 		}
+		pj_mutex_lock (fe->mutex);
 		input_str.ptr = recv_buf;
 		input_str.slen = pj_ansi_strlen(recv_buf);
 		pj_strrtrim(&input_str);
@@ -254,6 +345,8 @@ static int poll_worker_thread(void *p)
 
 		if (fe->thread_quit)
 		{
+			fprintf(stdout, "==================%s=============thread_quit 1==\r\n", __func__);
+			pj_mutex_unlock (fe->mutex);
 			break;
 		}
 		input_len = pj_ansi_strlen(fe->buf);
@@ -267,8 +360,67 @@ static int poll_worker_thread(void *p)
 		{
 			cli_socket_exec(fe->sess);
 		}
+		pj_mutex_unlock (fe->mutex);
 	}
+socket_thread_exit:
+	fprintf(stdout, "==================%s=============socket_thread_exit\r\n", __func__);
+    //pj_list_erase(fe->sess);
 	return 0;
+	if(fe->mutex)
+		pj_mutex_lock (fe->mutex);
+	if(fe->sess)
+	{
+		fe->sess = NULL;
+	}
+    if (fe->cfg->rfd != PJ_INVALID_SOCKET)
+    {
+        pj_sock_close(fe->cfg->rfd);
+        fe->cfg->rfd = PJ_INVALID_SOCKET;
+    }
+    if (fe->cfg->wfd != PJ_INVALID_SOCKET)
+    {
+        pj_sock_close(fe->cfg->wfd);
+        fe->cfg->wfd = PJ_INVALID_SOCKET;
+    }
+/*    if (fe->input_thread) {
+        pj_thread_destroy(fe->input_thread);
+        fe->input_thread = NULL;
+    }*/
+    if (fe->mutex)
+    {
+    	pj_mutex_unlock (fe->mutex);
+        pj_mutex_destroy(fe->mutex);
+        fe->mutex = NULL;
+    }
+    pj_pool_release(fe->pool);
+	return 0;
+}
+
+pj_status_t cli_socket_destroy(void *ife)
+{
+	cli_socket_fe *fe = ife;
+    pj_pool_t *pool = NULL;
+	fe->thread_quit = PJ_TRUE;
+	if (fe->input_thread)
+	{
+		pj_thread_join (fe->input_thread);
+		pj_thread_destroy (fe->input_thread);
+		fe->input_thread = NULL;
+	}
+
+	if (fe->base.op && fe->base.op->on_destroy)
+	{
+		(fe->base.op->on_destroy) (fe);
+	}
+	if (fe->mutex)
+	{
+		pj_mutex_destroy (fe->mutex);
+		fe->mutex = NULL;
+	}
+	pool = fe->pool;
+	fe->pool = NULL;
+	pj_pool_release(pool);
+	return PJ_SUCCESS;
 }
 
 
@@ -312,13 +464,19 @@ PJ_DEF(pj_status_t) pj_cli_socket_create(pj_cli_t *cli,
     fe->base.type = PJ_CLI_SOCKET_FRONT_END;
     //fe->base.op->on_write_log = &console_write_log;
     fe->base.op->on_quit = &cli_socket_quit;
-    fe->base.op->on_destroy = &cli_socket_destroy;
+    fe->base.op->on_destroy = &cli_socket_front_destroy;
     fe->pool = pool;
     fe->sess = sess;
     fe->cfg = param;
 
+    if (pj_mutex_create_recursive(pool, "mutex_socket_fe", &fe->mutex) != PJ_SUCCESS)
+    {
+        pj_pool_release(fe->pool);
+        return PJ_EINVAL;
+    }
     if(cli_socket_start(fe) != PJ_SUCCESS)
     {
+    	pj_mutex_destroy (fe->mutex);
         pj_pool_release(fe->pool);
         return PJ_EINVAL;
     }

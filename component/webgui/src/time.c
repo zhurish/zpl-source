@@ -251,7 +251,7 @@ static int getNumOrSym(char **token, int sep, int kind, int *isAlpah)
     char    *cp;
     int     num;
 
-    assert(token && *token);
+    web_assert(token && *token);
 
     if (*token == 0) {
         return 0;

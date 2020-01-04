@@ -20,14 +20,42 @@
 #include "eloop.h"
 #include "network.h"
 #include "vty.h"
-
+#include "nsm_hook.h"
 
 pl_pjsip_t *pl_pjsip = NULL;
 
 
+static int pl_pjsip_source_change(struct interface *ifp, BOOL change)
+{
+	if(pl_pjsip && ifp && ifp->ifindex > 0 && ifp->ifindex == pl_pjsip->sip_source_interface)
+	{
+		if(change)
+		{
+			u_int32 address = voip_get_address(pl_pjsip->sip_source_interface);
+			if(address)
+			{
+				memset(pl_pjsip->sip_local.sip_address, 0, sizeof(pl_pjsip->sip_local.sip_address));
+				strcpy(pl_pjsip->sip_local.sip_address, inet_address(address));
+				pl_pjsip->sip_local.state = PJSIP_STATE_CONNECT_LOCAL;
+				//pl_pjsip_bound_address(&app_config, pl_pjsip->sip_local.sip_address);
+			}
+			pjsua_app_restart();
+		}
+		else
+		{
+			memset(pl_pjsip->sip_local.sip_address, 0, sizeof(pl_pjsip->sip_local.sip_address));
+			//pl_pjsip_bound_address(&app_config, pl_pjsip->sip_local.sip_address);
+		}
+	}
+	return OK;
+}
+
 static int pl_pjsip_config_default(pl_pjsip_t *sip)
 {
 	zassert(sip != NULL);
+
+	nsm_hook_install (NSM_HOOK_IFP_CHANGE, pl_pjsip_source_change);
+
 	sip->sip_enable		= PJSIP_ENABLE_DEFAULT;
 	sip->sip_server.sip_port = PJSIP_PORT_DEFAULT;
 	sip->sip_server_sec.sip_port = PJSIP_PORT_DEFAULT;
@@ -108,7 +136,7 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 	//char				sip_play_tone[PJSIP_DATA_MAX];
 	sip->sip_auto_play = FALSE;
 	sip->sip_auto_loop = FALSE;
-	sip->sip_auto_conf = FALSE;
+	sip->sip_auto_conf = TRUE;
 
 
 
@@ -118,13 +146,13 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 	sip->sip_ptime = PJSUA_DEFAULT_AUDIO_FRAME_PTIME;								//Override codec ptime to MSEC (default=specific)
 	sip->sip_no_vad = FALSE;												//Disable VAD/silence detector (default=vad enabled)
 	sip->sip_echo_tail = PJSUA_DEFAULT_EC_TAIL_LEN;							//Set echo canceller tail length
-	sip->sip_echo_mode = PJSIP_ECHO_SPEEX;//PJSIP_ECHO_DEFAULT;//PJSIP_ECHO_DISABLE;	//Select echo canceller algorithm (0=default, 1=speex, 2=suppressor, 3=WebRtc)
-	sip->sip_echo_mode = PJSIP_ECHO_SUPPRESSER;
+	//sip->sip_echo_mode = PJSIP_ECHO_SPEEX;//PJSIP_ECHO_DEFAULT;//PJSIP_ECHO_DISABLE;	//Select echo canceller algorithm (0=default, 1=speex, 2=suppressor, 3=WebRtc)
+	//sip->sip_echo_mode = PJSIP_ECHO_SUPPRESSER;
 	sip->sip_echo_mode = PJSIP_ECHO_WEBRTXC;
 	sip->sip_ilbc_mode = PJSUA_DEFAULT_ILBC_MODE;							//Set iLBC codec mode (20 or 30, default is 20)
 	sip->sip_capture_lat = PJMEDIA_SND_DEFAULT_REC_LATENCY;						//Audio capture latency, in ms
 	sip->sip_playback_lat = PJMEDIA_SND_DEFAULT_PLAY_LATENCY;						//Audio capture latency, in ms
-	sip->sip_snd_auto_close = 1;						//Auto close audio device when idle for N secs (default=1)
+	sip->sip_snd_auto_close = 0;						//Auto close audio device when idle for N secs (default=1)
 																//		Specify N=-1 to disable this feature. Specify N=0 for instant close when unused.
 	sip->sip_notones = FALSE;//回铃音							//Disable audible tones
 	sip->sip_jb_max_size = -1;						//指定最大值抖动缓冲(帧，默认= 1)Specify jitter buffer maximum size, in frames (default=-1)");
@@ -168,6 +196,10 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 	sip->sip_accept_redirect = PJSIP_REDIRECT_ACCEPT_REPLACE;	//Specify how to handle call redirect (3xx) response.
 												//	0: reject, 1: follow automatically,
 												//	2: follow + replace To header (default), 3: ask
+
+/*	strcpy(pl_pjsip->sip_codec.payload_name, "PCMU");
+	pl_pjsip->sip_codec.is_active = TRUE;
+
 	strcpy(pl_pjsip->codec[0].payload_name, "PCMU");
 	pl_pjsip->codec[0].is_active = TRUE;
 	strcpy(pl_pjsip->codec[1].payload_name, "PCMA");
@@ -184,7 +216,16 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 	strcpy(pl_pjsip->dicodec[2].payload_name, "speex/32000");
 	pl_pjsip->dicodec[2].is_active = TRUE;
 	strcpy(pl_pjsip->dicodec[3].payload_name, "iLBC/8000");
-	pl_pjsip->dicodec[3].is_active = TRUE;
+	pl_pjsip->dicodec[3].is_active = TRUE;*/
+
+	pl_pjsip_codec_default_set_api("pcmu");
+	pl_pjsip_codec_add_api("pcmu");
+	pl_pjsip_codec_add_api("pcma");
+	pl_pjsip_codec_add_api("gsm");
+	pl_pjsip_codec_add_api("g722");
+	pl_pjsip_discodec_add_api("speex-nb");
+	pl_pjsip_discodec_add_api("speex-wb");
+	pl_pjsip_discodec_add_api("ilbc");
 
 #ifdef BUILD_X86
 	strcpy(sip->sip_user.sip_user, "100");
@@ -194,6 +235,9 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 	strcpy(sip->sip_local.sip_address, "192.168.0.102");
 	sip->sip_local.state = PJSIP_STATE_CONNECT_LOCAL;
 #endif
+
+	sip->debug_level = LOG_ERR;
+	sip->debug_detail = FALSE;
 /*
 	pl_pjsip_username(&app_config, "100");//Set authentication username
 	pl_pjsip_password(&app_config, "100");//Set authentication password
@@ -688,11 +732,13 @@ int pl_pjsip_local_address_get_api(s_int8 *address)
 
 int pl_pjsip_source_interface_set_api(u_int32 ifindex)
 {
+	u_int32 address = 0;
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
 		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
 	pl_pjsip->sip_source_interface = ifindex;
-	u_int32 address = voip_get_address(pl_pjsip->sip_source_interface);
+	if(pl_pjsip->sip_source_interface)
+		address = voip_get_address(pl_pjsip->sip_source_interface);
 	if(address)
 	{
 		memset(pl_pjsip->sip_local.sip_address, 0, sizeof(pl_pjsip->sip_local.sip_address));
@@ -855,6 +901,61 @@ int pl_pjsip_username_get_api(s_int8 *user, s_int8 *pass, BOOL sec)
 	return OK;
 }
 
+
+int pl_pjsip_phonenumber_set_api(s_int8 *sip_phone, BOOL sec)
+{
+	zassert(pl_pjsip != NULL);
+	if(pl_pjsip->mutex)
+		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	if(sec)
+	{
+		memset(pl_pjsip->sip_user_sec.sip_phone, 0, sizeof(pl_pjsip->sip_user_sec.sip_phone));
+		if(sip_phone)
+		{
+			strcpy(pl_pjsip->sip_user_sec.sip_phone, sip_phone);
+			if(strlen(pl_pjsip->sip_user.sip_phone))
+				pl_pjsip->sip_user_cnt = 2;
+			else
+				pl_pjsip->sip_user_cnt = 1;
+		}
+	}
+	else
+	{
+		memset(pl_pjsip->sip_user.sip_phone, 0, sizeof(pl_pjsip->sip_user.sip_phone));
+		if(sip_phone)
+		{
+			strcpy(pl_pjsip->sip_user.sip_phone, sip_phone);
+			if(strlen(pl_pjsip->sip_user_sec.sip_phone))
+				pl_pjsip->sip_user_cnt = 2;
+			else
+				pl_pjsip->sip_user_cnt = 1;
+		}
+	}
+	if(pl_pjsip->mutex)
+		os_mutex_unlock(pl_pjsip->mutex);
+	return OK;
+}
+
+int pl_pjsip_phonenumber_get_api(s_int8 *sip_phone, BOOL sec)
+{
+	zassert(pl_pjsip != NULL);
+	if(pl_pjsip->mutex)
+		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	if(sec)
+	{
+		if(sip_phone)
+			strcpy(sip_phone, pl_pjsip->sip_user_sec.sip_phone);
+	}
+	else
+	{
+		if(sip_phone)
+			strcpy(sip_phone, pl_pjsip->sip_user.sip_phone);
+	}
+	if(pl_pjsip->mutex)
+		os_mutex_unlock(pl_pjsip->mutex);
+	return OK;
+}
+
 int pl_pjsip_expires_set_api(u_int16 sip_expires)
 {
 	zassert(pl_pjsip != NULL);
@@ -901,7 +1002,7 @@ int pl_pjsip_100rel_get_api(BOOL *sip_100_rel)
 	return OK;
 }
 
-int pl_pjsip_realm_set_api(char realm)
+int pl_pjsip_realm_set_api(char *realm)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1678,17 +1779,24 @@ int pl_pjsip_neg_timeout_get_api(u_int16 *sip_neg_timeout)
 /***************************************************************************/
 //Audio Options:
 
-int pl_pjsip_codec_default_set_api(char * sip_codec, int indx)
+int pl_pjsip_codec_default_set_api(char * sip_codec)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
 		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
 	if(sip_codec)
 	{
-		memset(pl_pjsip->sip_codec.payload_name, 0, sizeof(pl_pjsip->sip_codec.payload_name));
-		strcpy(pl_pjsip->sip_codec.payload_name, sip_codec);
-		pl_pjsip->sip_codec.is_active = TRUE;
-		pl_pjsip->sip_codec.payload = indx;
+		int val = codec_payload_index(sip_codec);
+		if(codec_payload_name(val))
+		{
+			memset(pl_pjsip->sip_codec.payload_name, 0, sizeof(pl_pjsip->sip_codec.payload_name));
+			strcpy(pl_pjsip->sip_codec.payload_name, codec_payload_name(val));
+			pl_pjsip->sip_codec.is_active = TRUE;
+			pl_pjsip->sip_codec.payload = val;
+			if(pl_pjsip->mutex)
+				os_mutex_unlock(pl_pjsip->mutex);
+			return OK;
+		}
 	}
 	else
 	{
@@ -2925,6 +3033,114 @@ static int pl_pjsip_url_get_id(char *url, char *id, char *ip, int *port)
 	}
 	return OK;
 }
+/********************************** debug log ************************************/
+int pl_pjsip_debug_level_set_api(int level)
+{
+	/*	static const char *ltexts[] = { "FATAL:", "ERROR:", " WARN:",
+				      " INFO:", "DEBUG:", "TRACE:", "DETRC:"};*/
+	int inlevel = 0;
+	switch(level)
+	{
+	case LOG_TRAP:
+		inlevel = 6;
+		break;
+	case LOG_DEBUG:
+		inlevel = 4;
+		break;
+	case LOG_INFO:
+		inlevel = 3;
+		break;
+	case LOG_NOTICE:
+		inlevel = 5;
+		break;
+	case LOG_WARNING:
+		inlevel = 2;
+		break;
+	case LOG_ERR:
+		inlevel = 1;
+		break;
+	//case LOG_CRIT:
+	default:
+		inlevel = 0;
+		break;
+	}
+	pl_pjsip->debug_level = level;
+	pl_pjsip_log_level(&app_config, inlevel);
+	return OK;
+}
+
+int pl_pjsip_debug_level_get_api(int *level)
+{
+/*	int outlevel = pj_log_get_level();
+	switch(outlevel)
+	{
+	case (6):
+		outlevel = LOG_TRAP;
+		break;
+	case 4:
+		outlevel = LOG_DEBUG;
+		break;
+	case 3:
+		outlevel = LOG_INFO;
+		break;
+	case 5:
+		outlevel = LOG_NOTICE;
+		break;
+	case 2:
+		outlevel = LOG_WARNING;
+		break;
+	case 1:
+		outlevel = LOG_ERR;
+		break;
+	case 0:
+		outlevel = LOG_CRIT;
+		break;
+	}
+	if(level)
+		*level = outlevel;*/
+	if(level)
+		*level = pl_pjsip->debug_level;
+	return OK;
+}
+int pl_pjsip_debug_detail_set_api(BOOL enable)
+{
+	if(enable)
+	{
+		unsigned int opt = pj_log_get_decor();
+		opt |=  PJ_LOG_HAS_LEVEL_TEXT|
+				PJ_LOG_HAS_SENDER|
+				PJ_LOG_HAS_THREAD_ID|
+				PJ_LOG_HAS_INDENT;
+		pj_log_set_decor(opt);
+	}
+	else
+	{
+		unsigned int opt = pj_log_get_decor();
+		opt &= ~(PJ_LOG_HAS_LEVEL_TEXT|
+				PJ_LOG_HAS_SENDER|
+				PJ_LOG_HAS_THREAD_ID|
+				PJ_LOG_HAS_INDENT);
+		pj_log_set_decor(opt);
+	}
+	pl_pjsip->debug_detail = enable;
+/*	pj_log_set_decor(PJ_LOG_HAS_NEWLINE|PJ_LOG_HAS_INDENT|PJ_LOG_HAS_THREAD_SWC|
+			PJ_LOG_HAS_SENDER|PJ_LOG_HAS_THREAD_ID);*/
+	return OK;
+}
+int pl_pjsip_debug_detail_get_api(BOOL *enable)
+{
+	if(enable)
+	{
+		*enable = pl_pjsip->debug_detail;
+/*		unsigned int opt = pj_log_get_decor();
+		if(opt & PJ_LOG_HAS_SENDER)
+			*enable = TRUE;
+		else
+			*enable = FALSE;*/
+	}
+	return OK;
+}
+/***************************************************************************/
 /***************************************************************************/
 int pl_pjsip_account_set_api(int id, void *p)
 {
@@ -2945,7 +3161,7 @@ int pl_pjsip_account_set_api(int id, void *p)
 		//sip:100@192.168.0.103:5060
 		pl_pjsip_url_get_id(info->acc_uri.ptr, user_tmp.sip_user, srv_tmp.sip_address, &srv_tmp.sip_port);
 
-		printf("==============%s============(%s-%s-%d)\r\n", __func__, user_tmp.sip_user, srv_tmp.sip_address, srv_tmp.sip_port);
+		//printf("==============%s============(%s-%s-%d)\r\n", __func__, user_tmp.sip_user, srv_tmp.sip_address, srv_tmp.sip_port);
 		//printf("==============%s============(%d:%d)(%s)\r\n", __func__, id, info->id, info->acc_uri.ptr);
 
 		if(strlen(user_tmp.sip_user) && strlen(srv_tmp.sip_address))
@@ -2985,7 +3201,7 @@ int pl_pjsip_account_set_api(int id, void *p)
 
 		if(sip_user)
 		{
-			if(info->online_status)
+			if(/*info->online_status && */info->expires > 0)
 				sip_user->sip_state = PJSIP_STATE_REGISTER_SUCCESS;
 			else
 				sip_user->sip_state = PJSIP_STATE_REGISTER_FAILED;
@@ -2998,7 +3214,7 @@ int pl_pjsip_account_set_api(int id, void *p)
 		}
 		if(sip_srv)
 		{
-			if(info->online_status)
+			if(!info->online_status)
 				sip_srv->state = PJSIP_STATE_CONNECT_FAILED;
 			else
 			{
@@ -3022,22 +3238,80 @@ int pl_pjsip_account_get_api(int id, pjsip_username_t *p)
 		os_mutex_unlock(pl_pjsip->mutex);
 	return OK;
 }
+BOOL pl_pjsip_isregister_api(void)
+{
+	BOOL reg = FALSE;
+	zassert(pl_pjsip != NULL);
+	if(pl_pjsip->mutex)
+		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+/*
+	pjsip_username_t	sip_user;
+	pjsip_username_t	sip_user_sec;
+	u_int16				sip_user_cnt;
+	pjsip_server_t		sip_server;
+	pjsip_server_t		sip_server_sec;
+*/
+#ifndef BUILD_X86
+	if(x5b_app_port_status_get() == FALSE)
+	{
+		if(pl_pjsip->mutex)
+			os_mutex_unlock(pl_pjsip->mutex);
+		return reg;
+	}
+#endif
+	if((strlen(pl_pjsip->sip_user.sip_phone)||
+			strlen(pl_pjsip->sip_user.sip_user)) &&
+			pl_pjsip->sip_user.register_svr &&
+			pl_pjsip->sip_user.is_current)
+	{
+		if(pl_pjsip->sip_user.sip_state == PJSIP_STATE_REGISTER_SUCCESS/* &&
+				pl_pjsip->sip_user.register_svr->state*/)
+		{
+			reg = TRUE;
+		}
+	}
+	else if((strlen(pl_pjsip->sip_user_sec.sip_phone)||
+			strlen(pl_pjsip->sip_user_sec.sip_user)) &&
+			pl_pjsip->sip_user_sec.register_svr &&
+			pl_pjsip->sip_user_sec.is_current)
+	{
+		if(pl_pjsip->sip_user_sec.sip_state == PJSIP_STATE_REGISTER_SUCCESS)
+		{
+			reg = TRUE;
+		}
+	}
+
+	if(pl_pjsip->mutex)
+		os_mutex_unlock(pl_pjsip->mutex);
+	return reg;
+}
 /***************************************************************************/
 int pl_pjsip_payload_name_add_api(char * value)
 {
-	int i = 0;
+	int i = 0, val = 0;
 	zassert(value != NULL);
 	zassert(pl_pjsip != NULL);
-	if(voip_sip_payload_index(value) < 0)
+	val = codec_payload_index(value);
+	if(val < 0 || !codec_payload_name(val))
 		return ERROR;
 	if(pl_pjsip->mutex)
 		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
 	for(i = 0; i < PJSIP_CODEC_MAX; i++)
 	{
+		if(pl_pjsip->codec[i].is_active && pl_pjsip->codec[i].payload == val)
+		{
+			if(pl_pjsip->mutex)
+				os_mutex_unlock(pl_pjsip->mutex);
+			return OK;
+		}
+	}
+	for(i = 0; i < PJSIP_CODEC_MAX; i++)
+	{
 		if(!pl_pjsip->codec[i].is_active)
 		{
 			memset(pl_pjsip->codec[i].payload_name, 0, sizeof(pl_pjsip->codec[i].payload_name));
-			strcpy(pl_pjsip->codec[i].payload_name, value);
+			strcpy(pl_pjsip->codec[i].payload_name, codec_payload_name(val));
+			pl_pjsip->codec[i].payload = val;
 			pl_pjsip->codec[i].is_active = TRUE;
 			if(pl_pjsip->mutex)
 				os_mutex_unlock(pl_pjsip->mutex);
@@ -3051,20 +3325,23 @@ int pl_pjsip_payload_name_add_api(char * value)
 
 int pl_pjsip_payload_name_del_api(char * value)
 {
-	int i = 0;
+	int i = 0, val = 0;
 	zassert(value != NULL);
 	zassert(pl_pjsip != NULL);
-	if(voip_sip_payload_index(value) < 0)
+	val = codec_payload_index(value);
+	if(val < 0 || !codec_payload_name(val))
 		return ERROR;
 	if(pl_pjsip->mutex)
 		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
 	for(i = 0; i < PJSIP_CODEC_MAX; i++)
 	{
 		if(pl_pjsip->codec[i].is_active &&
-				strcasecmp(pl_pjsip->codec[i].payload_name, value) == 0	)
+				pl_pjsip->codec[i].payload == val
+				/*strcasecmp(pl_pjsip->codec[i].payload_name, value) == 0*/	)
 		{
 			memset(pl_pjsip->codec[i].payload_name, 0, sizeof(pl_pjsip->codec[i].payload_name));
 			pl_pjsip->codec[i].is_active = FALSE;
+			pl_pjsip->codec[i].payload = 0;
 			if(pl_pjsip->mutex)
 				os_mutex_unlock(pl_pjsip->mutex);
 			return OK;
@@ -3077,19 +3354,31 @@ int pl_pjsip_payload_name_del_api(char * value)
 
 int pl_pjsip_dis_payload_name_add_api(char * value)
 {
-	int i = 0;
+	int i = 0, val = 0;
 	zassert(value != NULL);
 	zassert(pl_pjsip != NULL);
-	if(voip_sip_payload_index(value) < 0)
+	val = codec_payload_index(value);
+	if(val < 0 || !codec_payload_name(val))
 		return ERROR;
 	if(pl_pjsip->mutex)
 		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
 	for(i = 0; i < PJSIP_CODEC_MAX; i++)
 	{
+		if(pl_pjsip->dicodec[i].is_active && pl_pjsip->dicodec[i].payload == val)
+		{
+			if(pl_pjsip->mutex)
+				os_mutex_unlock(pl_pjsip->mutex);
+			return OK;
+		}
+	}
+	for(i = 0; i < PJSIP_CODEC_MAX; i++)
+	{
 		if(!pl_pjsip->dicodec[i].is_active)
 		{
 			memset(pl_pjsip->dicodec[i].payload_name, 0, sizeof(pl_pjsip->dicodec[i].payload_name));
-			strcpy(pl_pjsip->dicodec[i].payload_name, value);
+			//strcpy(pl_pjsip->dicodec[i].payload_name, value);
+			strcpy(pl_pjsip->codec[i].payload_name, codec_payload_name(val));
+			pl_pjsip->dicodec[i].payload = val;
 			pl_pjsip->dicodec[i].is_active = TRUE;
 			if(pl_pjsip->mutex)
 				os_mutex_unlock(pl_pjsip->mutex);
@@ -3103,20 +3392,23 @@ int pl_pjsip_dis_payload_name_add_api(char * value)
 
 int pl_pjsip_dis_payload_name_del_api(char * value)
 {
-	int i = 0;
+	int i = 0, val = 0;
 	zassert(value != NULL);
 	zassert(pl_pjsip != NULL);
-	if(voip_sip_payload_index(value) < 0)
+	val = codec_payload_index(value);
+	if(val < 0 || !codec_payload_name(val))
 		return ERROR;
 	if(pl_pjsip->mutex)
 		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
 	for(i = 0; i < PJSIP_CODEC_MAX; i++)
 	{
 		if(pl_pjsip->dicodec[i].is_active &&
-				strcasecmp(pl_pjsip->dicodec[i].payload_name, value) == 0	)
+				pl_pjsip->dicodec[i].payload == val
+				/*strcasecmp(pl_pjsip->dicodec[i].payload_name, value) == 0*/ )
 		{
 			memset(pl_pjsip->dicodec[i].payload_name, 0, sizeof(pl_pjsip->dicodec[i].payload_name));
 			pl_pjsip->dicodec[i].is_active = FALSE;
+			pl_pjsip->dicodec[i].payload = 0;
 			if(pl_pjsip->mutex)
 				os_mutex_unlock(pl_pjsip->mutex);
 			return OK;
@@ -3131,6 +3423,7 @@ int pl_pjsip_dis_payload_name_del_api(char * value)
 int pl_pjsip_app_add_acc(char *sip_url, char *sip_srv, char *realm,
 		char *user, char *pass, int *accid)
 {
+#ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
 	memset(cmd, 0, sizeof(cmd));
 	//acc add sip:102@192.168.0.103 sip:192.168.0.103 * 102 102
@@ -3141,11 +3434,39 @@ int pl_pjsip_app_add_acc(char *sip_url, char *sip_srv, char *realm,
 	{
 		return OK;
 	}
+#else
+    pjsua_acc_config acc_cfg;
+    pj_status_t status;
+	char cmd[128], tmp[128];
+	memset(cmd, 0, sizeof(cmd));
+	memset(tmp, 0, sizeof(tmp));
+    pjsua_acc_config_default(&acc_cfg);
+	snprintf(cmd, sizeof(cmd), "sip:%s@%s", user, sip_url);
+	snprintf(tmp, sizeof(tmp), "sip:%s", sip_srv);
+    acc_cfg.id = pj_str(cmd);
+    acc_cfg.reg_uri = pj_str(tmp);
+    acc_cfg.cred_count = 1;
+    acc_cfg.cred_info[0].scheme = pj_str("Digest");
+    acc_cfg.cred_info[0].realm = pj_str(realm);
+    acc_cfg.cred_info[0].username = pj_str(user);
+    acc_cfg.cred_info[0].data_type = 0;
+    acc_cfg.cred_info[0].data = pj_str(pass);
+
+    acc_cfg.rtp_cfg = app_config.rtp_cfg;
+    app_config_init_video(&acc_cfg);
+
+    status = pjsua_acc_add(&acc_cfg, PJ_TRUE, NULL);
+    if (status != PJ_SUCCESS) {
+    	return ERROR;
+    }
+    return OK;
+#endif
 	return ERROR;
 }
 
 int pl_pjsip_app_del_acc(int accid)
 {
+#ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
 	memset(cmd, 0, sizeof(cmd));
 	//acc del 1
@@ -3154,12 +3475,24 @@ int pl_pjsip_app_del_acc(int accid)
 	{
 		return OK;
 	}
+#else
+    pj_status_t status;
+    if (!pjsua_acc_is_valid(accid))
+    {
+    	return ERROR;
+    }
+    status = pjsua_acc_del(accid);
+    if (status != PJ_SUCCESS) {
+    	return ERROR;
+    }
+#endif
 	return ERROR;
 }
 
 int pl_pjsip_app_mod_acc(int accid, char *sip_url, char *sip_srv, char *realm,
 		char *user, char *pass)
 {
+#ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
 	memset(cmd, 0, sizeof(cmd));
 	//acc mod 0 sip:100@192.168.0.103 sip:192.168.0.103 * 100 100
@@ -3170,11 +3503,14 @@ int pl_pjsip_app_mod_acc(int accid, char *sip_url, char *sip_srv, char *realm,
 	{
 		return OK;
 	}
+#else
+#endif
 	return ERROR;
 }
 
 int pl_pjsip_app_select_acc(int accid, int type)
 {
+#ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
 	memset(cmd, 0, sizeof(cmd));
 	if(type == 1)
@@ -3185,11 +3521,24 @@ int pl_pjsip_app_select_acc(int accid, int type)
 	{
 		return OK;
 	}
+#else
+    pj_status_t status;
+    if (pjsua_acc_is_valid(accid))
+    {
+    	status = pjsua_acc_set_default(accid);
+        if (status != PJ_SUCCESS) {
+        	return ERROR;
+        }
+        return OK;
+    }
+    return ERROR;
+#endif
 	return ERROR;
 }
 
 int pl_pjsip_app_reg_acc(BOOL reg)
 {
+#ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
 	memset(cmd, 0, sizeof(cmd));
 	if(reg)
@@ -3200,11 +3549,16 @@ int pl_pjsip_app_reg_acc(BOOL reg)
 	{
 		return OK;
 	}
+#else
+	if(pjsua_acc_is_valid(current_acc))
+		return pjsua_acc_set_registration(current_acc, reg);
+#endif
 	return ERROR;
 }
 
 int pl_pjsip_app_list_acc(int accid)
 {
+#ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
 	memset(cmd, 0, sizeof(cmd));
 	snprintf(cmd, sizeof(cmd), "acc show");
@@ -3212,16 +3566,69 @@ int pl_pjsip_app_list_acc(int accid)
 	{
 		return OK;
 	}
+#else
+	pjsua_acc_id acc_ids[16];
+	unsigned count = PJ_ARRAY_SIZE(acc_ids);
+	int i;
+	//static const pj_str_t header = { "Account list:\n", 15 };
+	pjsua_enum_accs (acc_ids, &count);
+
+	for (i = 0; i < (int) count; ++i)
+	{
+		char acc_info[80];
+		char out_str[160];
+		pjsua_acc_info info;
+
+		pjsua_acc_get_info (acc_ids[i], &info);
+
+		if (app_config.cbtbl.cli_account_state_get)
+			(app_config.cbtbl.cli_account_state_get) (acc_ids[i], &info);
+
+		if (!info.has_registration)
+		{
+			pj_ansi_snprintf (acc_info, sizeof(acc_info), "%.*s",
+							  (int) info.status_text.slen,
+							  info.status_text.ptr);
+
+		}
+		else
+		{
+			pj_ansi_snprintf (acc_info, sizeof(acc_info),
+							  "%d/%.*s (expires=%d)", info.status,
+							  (int) info.status_text.slen, info.status_text.ptr,
+							  info.expires);
+
+		}
+
+		pj_ansi_snprintf (out_str, sizeof(out_str), " %c[%2d] %.*s: %s\n",
+						  (acc_ids[i] == current_acc ? '*' : ' '), acc_ids[i],
+						  (int) info.acc_uri.slen, info.acc_uri.ptr, acc_info);
+		//pj_cli_sess_write_msg (cval->sess, out_str, pj_ansi_strlen (out_str));
+
+		pj_bzero (out_str, sizeof(out_str));
+		pj_ansi_snprintf (out_str, sizeof(out_str),
+						  "       Online status: %.*s\n",
+						  (int) info.online_status_text.slen,
+						  info.online_status_text.ptr);
+
+		//pj_cli_sess_write_msg (cval->sess, out_str, pj_ansi_strlen (out_str));
+	}
+	return PJ_SUCCESS;
+#endif
 	return ERROR;
 }
 
-#if 1
+
 int pl_pjsip_app_start_call(int accid, char *num, int *callid)
 {
+#ifndef PL_PJSIP_CALL_SHELL
+	pj_str_t call_uri_arg;
+#endif
 	char cmd[512];
-	memset(cmd, 0, sizeof(cmd));
+	memset(cmd, '\0', sizeof(cmd));
 	if(!pl_pjsip)
 		return ERROR;
+	//zlog_debug(ZLOG_VOIP, "========%s->os_mutex_lock", __func__);
 	if(pl_pjsip->mutex)
 		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
 
@@ -3229,25 +3636,49 @@ int pl_pjsip_app_start_call(int accid, char *num, int *callid)
 			pl_pjsip->sip_user.register_svr &&
 			strlen(pl_pjsip->sip_user.register_svr->sip_address))
 	{
+#ifdef PL_PJSIP_CALL_SHELL
 		if(pl_pjsip->sip_user.register_svr->sip_port == PJSIP_PORT_DEFAULT)
 			snprintf(cmd, sizeof(cmd), "call new sip:%s@%s",
-					pl_pjsip->sip_user.register_svr->sip_address, num);
+					num, pl_pjsip->sip_user.register_svr->sip_address);
 		else
 			snprintf(cmd, sizeof(cmd), "call new sip:%s@%s:%d",
+					num,
 					pl_pjsip->sip_user.register_svr->sip_address,
-					pl_pjsip->sip_user.register_svr->sip_port, num);
+					pl_pjsip->sip_user.register_svr->sip_port);
+#else
+		if(pl_pjsip->sip_user.register_svr->sip_port == PJSIP_PORT_DEFAULT)
+			snprintf(cmd, sizeof(cmd), "sip:%s@%s",
+					num, pl_pjsip->sip_user.register_svr->sip_address);
+		else
+			snprintf(cmd, sizeof(cmd), "sip:%s@%s:%d",
+					num,
+					pl_pjsip->sip_user.register_svr->sip_address,
+					pl_pjsip->sip_user.register_svr->sip_port);
+#endif
 	}
 	else if(pl_pjsip->sip_user_sec.sip_state == PJSIP_STATE_REGISTER_SUCCESS &&
 			pl_pjsip->sip_user_sec.register_svr &&
 			strlen(pl_pjsip->sip_user_sec.register_svr->sip_address))
 	{
+#ifdef PL_PJSIP_CALL_SHELL
 		if(pl_pjsip->sip_user_sec.register_svr->sip_port == PJSIP_PORT_DEFAULT)
 			snprintf(cmd, sizeof(cmd), "call new sip:%s@%s",
-					pl_pjsip->sip_user_sec.register_svr->sip_address, num);
+					num, pl_pjsip->sip_user_sec.register_svr->sip_address);
 		else
 			snprintf(cmd, sizeof(cmd), "call new sip:%s@%s:%d",
+					num,
 					pl_pjsip->sip_user_sec.register_svr->sip_address,
-					pl_pjsip->sip_user_sec.register_svr->sip_port, num);
+					pl_pjsip->sip_user_sec.register_svr->sip_port);
+#else
+		if(pl_pjsip->sip_user_sec.register_svr->sip_port == PJSIP_PORT_DEFAULT)
+			snprintf(cmd, sizeof(cmd), "sip:%s@%s",
+					num, pl_pjsip->sip_user_sec.register_svr->sip_address);
+		else
+			snprintf(cmd, sizeof(cmd), "sip:%s@%s:%d",
+					num,
+					pl_pjsip->sip_user_sec.register_svr->sip_address,
+					pl_pjsip->sip_user_sec.register_svr->sip_port);
+#endif
 	}
 	else
 	{
@@ -3259,22 +3690,44 @@ int pl_pjsip_app_start_call(int accid, char *num, int *callid)
 		os_mutex_unlock(pl_pjsip->mutex);
 	if(app_config.current_call != PJSUA_INVALID_ID)
 		return ERROR;
+	//zlog_debug(ZLOG_VOIP, "========%s->voip_volume_control_api", __func__);
 	voip_volume_control_api(TRUE);
+	//zlog_debug(ZLOG_VOIP, "========%s-> enter pl_pjsip_app_start_call", __func__);
+
+#ifndef PL_PJSIP_CALL_SHELL
+	//char *pj_call_str = (char *)(cmd + 9);
+	call_uri_arg = pj_str(cmd);
+	//call_uri_arg = pj_str("sip:1003@192.168.3.254");
+/*	pjsua_call_setting_default(&app_config.call_opt);
+	app_config.call_opt.aud_cnt = app_config.aud_cnt;
+	app_config.call_opt.vid_cnt = app_config.vid.vid_cnt;*/
+	if(pjsua_call_make_call(current_acc/*current_acc*/, &call_uri_arg,
+				NULL/*&app_config.call_opt*/, NULL, NULL, &app_config.current_call) == PJ_SUCCESS)
+	{
+		if(callid)
+			*callid = app_config.current_call;
+		//zlog_debug(ZLOG_VOIP, "========%s-> level pl_pjsip_app_start_call", __func__);
+		return OK;
+	}
+#else
 	if(pj_cli_execute_cmd(cmd) == PJ_SUCCESS)
 	{
 		if(callid)
 			*callid = app_config.current_call;
 		return OK;
 	}
+#endif
 /*
  * handle SIGUSR2 nostop noprint
 */
+	//zlog_debug(ZLOG_VOIP, "========%s-> level pl_pjsip_app_start_call", __func__);
 	voip_volume_control_api(FALSE);
 	return ERROR;
 }
 
 int pl_pjsip_app_stop_call(int callid, BOOL all)
 {
+#ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
 	memset(cmd, 0, sizeof(cmd));
 	snprintf(cmd, sizeof(cmd), "call hangup");
@@ -3286,47 +3739,9 @@ int pl_pjsip_app_stop_call(int callid, BOOL all)
 		voip_volume_control_api(FALSE);
 		return OK;
 	}
-	voip_volume_control_api(FALSE);
-	return ERROR;
-}
 #else
-int pl_pjsip_app_start_call(int accid, char *num, int *callid)
-{
-    //If user specifies URI to call, then call the URI
-	//uri_arg;// = uri_arg;
-	pjsua_call_id call_id = 0;
-	//pjsua_acc_id acc_id;
-	pj_str_t		    uri_arg;
-    if (accid == PJSUA_INVALID_ID)
-    {
-    	return ERROR;
-    }
-	pj_str_clr(&uri_arg);
-	pj_str_set(&uri_arg, num);
-    if (uri_arg.slen)
-    {
-		pjsua_call_setting_default(&app_config.call_opt);
-		app_config.call_opt.aud_cnt = app_config.aud_cnt;
-		app_config.call_opt.vid_cnt = app_config.vid.vid_cnt;
-		if(pjsua_call_make_call(accid/*current_acc*/, &uri_arg,
-				&app_config.call_opt, NULL, NULL, &call_id) == PJ_SUCCESS)
-		{
-			app_config.current_call = call_id;
-			if(callid)
-				*callid = call_id;
-			return OK;
-		}
-    }
-    return ERROR;
-}
-
-/* Hangup call */
-int pl_pjsip_app_stop_call(int callid, BOOL all)
-{
     if (app_config.current_call == PJSUA_INVALID_ID)
     {
-    	//static const pj_str_t err_msg = {"No current call\n", 17};
-    	//pj_cli_sess_write_msg(cval->sess, err_msg.ptr, err_msg.slen);
     	return ERROR;
     }
     else
@@ -3335,6 +3750,7 @@ int pl_pjsip_app_stop_call(int callid, BOOL all)
 		if (all)
 		{
 			pjsua_call_hangup_all();
+			//voip_volume_control_api(FALSE);
 			return OK;
 		}
 		else
@@ -3344,30 +3760,150 @@ int pl_pjsip_app_stop_call(int callid, BOOL all)
 			else
 				ret = pjsua_call_hangup(app_config.current_call, 0, NULL, NULL);
 			if(ret == PJ_SUCCESS)
+			{
+				//voip_volume_control_api(FALSE);
 				return OK;
-			return ERROR;
+			}
 		}
     }
-    return ERROR;
+#endif
+	//voip_volume_control_api(FALSE);
+	return ERROR;
+}
+/* Make multi call */
+#if 0
+int pl_pjsip_app_start_multi_call(int accid, char *num, int *callid)
+//static pj_status_t cmd_make_multi_call(pj_cli_cmd_val *cval)
+{
+	struct input_result result;
+	char dest[64] = { 0 };
+	char out_str[128];
+	int i, count;
+	pj_str_t tmp = pj_str(dest);
+
+	pj_ansi_snprintf(out_str, sizeof(out_str),
+			"(You currently have %d calls)\n", pjsua_call_get_count());
+
+	count = 3;								//(int)pj_strtol(&cval->argv[1]);
+	if (count < 1)
+		return PJ_SUCCESS;
+
+	pj_strncpy_with_null(&tmp, &cval->argv[2], sizeof(dest));
+
+	/* input destination. */
+	get_input_url(tmp.ptr, tmp.slen, cval, &result);
+	if (result.nb_result != PJSUA_APP_NO_NB)
+	{
+		pjsua_buddy_info binfo;
+		if (result.nb_result == -1 || result.nb_result == 0)
+		{
+			/*	    static const pj_str_t err_msg =
+			 {"You can't do that with make call!\n", 35};
+			 pj_cli_sess_write_msg(cval->sess, err_msg.ptr, err_msg.slen);*/
+			return PJ_SUCCESS;
+		}
+		pjsua_buddy_get_info(result.nb_result - 1, &binfo);
+		pj_strncpy(&tmp, &binfo.uri, sizeof(dest));
+	}
+	else
+	{
+		tmp = pj_str(result.uri_result);
+	}
+
+	for (i = 0; i < count; ++i)
+	{
+		pj_status_t status;
+		status = pjsua_call_make_call(current_acc, &tmp, &app_config.call_opt,
+				NULL, NULL, NULL);
+		if (status != PJ_SUCCESS)
+			break;
+	}
+	return PJ_SUCCESS;
 }
 #endif
 /***************************************************************************/
-int pl_pjsip_app_answer_call(char *num, int *callid)
+int pl_pjsip_app_answer_call(int callid, int st_code)
 {
+#ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
 	memset(cmd, 0, sizeof(cmd));
 	snprintf(cmd, sizeof(cmd), "call answer 200 sip:%s@192.168.0.102", num);
 	if(pj_cli_execute_cmd(cmd) == PJ_SUCCESS)
 	{
 		if(callid)
-			*callid = app_config.current_call;
+		*callid = app_config.current_call;
 		return OK;
 	}
+#else
+	pjsua_call_info call_info;
+	if ((st_code < 100) || (st_code > 699))
+		return ERROR;
+	if (app_config.current_call != PJSUA_INVALID_ID)
+	{
+		pjsua_call_get_info(app_config.current_call, &call_info);
+	}
+	else
+	{
+		/* Make compiler happy */
+		call_info.role = PJSIP_ROLE_UAC;
+		call_info.state = PJSIP_INV_STATE_DISCONNECTED;
+	}
+
+	if (app_config.current_call == PJSUA_INVALID_ID
+			|| call_info.role != PJSIP_ROLE_UAS
+			|| call_info.state >= PJSIP_INV_STATE_CONNECTING)
+	{
+		return ERROR;
+	}
+	else
+	{
+		char contact[120];
+		pj_str_t hname =
+		{ "Contact", 7 };
+		pj_str_t hvalue;
+		pjsip_generic_string_hdr hcontact;
+
+		pjsua_msg_data_init(&app_config.msg_data);
+
+		if (st_code / 100 == 3)
+		{
+			/*			 if (cval->argc < 3)
+			 {
+			 static const pj_str_t err_msg = {"Enter URL to be put in Contact\n",  32};
+			 return PJ_SUCCESS;
+			 }*/
+
+			hvalue = pj_str(contact);
+			pjsip_generic_string_hdr_init2(&hcontact, &hname, &hvalue);
+
+			pj_list_push_back(&app_config.msg_data.hdr_list, &hcontact);
+		}
+
+		/*
+		 * Must check again!
+		 * Call may have been disconnected while we're waiting for
+		 * keyboard input.
+		 */
+		if (app_config.current_call == PJSUA_INVALID_ID)
+		{
+			//static const pj_str_t err_msg =
+			//		{ "Call has been disconnected\n", 28 };
+			//pj_cli_sess_write_msg(cval->sess, err_msg.ptr, err_msg.slen);
+			return ERROR;
+		}
+
+		if (pjsua_call_answer2(app_config.current_call, &app_config.call_opt,
+				st_code, NULL, &app_config.msg_data) == PJ_SUCCESS)
+			return OK;
+	}
+	return ERROR;
+#endif
 	return ERROR;
 }
 
 int pl_pjsip_app_hold_call(int callid)
 {
+#ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
 	memset(cmd, 0, sizeof(cmd));
 	snprintf(cmd, sizeof(cmd), "call hold");
@@ -3375,11 +3911,25 @@ int pl_pjsip_app_hold_call(int callid)
 	{
 		return OK;
 	}
+#else
+    if (callid != PJSUA_INVALID_ID)
+    {
+    	if(pjsua_call_set_hold(callid, NULL) == PJ_SUCCESS)
+    		return OK;
+    }
+    else
+    {
+    	//PJ_LOG(3,(THIS_FILE, "No current call"));
+    	return ERROR;
+    }
+    return PJ_SUCCESS;
+#endif
 	return ERROR;
 }
 
 int pl_pjsip_app_reinvite_call(int callid)
 {
+#ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
 	memset(cmd, 0, sizeof(cmd));
 	snprintf(cmd, sizeof(cmd), "call reinvite");
@@ -3387,36 +3937,149 @@ int pl_pjsip_app_reinvite_call(int callid)
 	{
 		return OK;
 	}
+#else
+	if (callid != PJSUA_INVALID_ID)
+	{
+		/*
+		 * re-INVITE
+		 */
+		app_config.call_opt.flag |= PJSUA_CALL_UNHOLD;
+		if(pjsua_call_reinvite2 (callid, &app_config.call_opt, NULL) == PJ_SUCCESS)
+			return OK;
+	}
+	else
+	{
+		//PJ_LOG(3,(THIS_FILE, "No current call"));
+		return ERROR;
+	}
+	return PJ_SUCCESS;
+#endif
 	return ERROR;
 }
 
 int pl_pjsip_app_dtmf_call(int callid, int type, int code)
 {
+#ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
 	memset(cmd, 0, sizeof(cmd));
 	if(type == 1)
-		snprintf(cmd, sizeof(cmd), "call d_2833 %c", code);
+	snprintf(cmd, sizeof(cmd), "call d_2833 %c", code);
 	else
-		snprintf(cmd, sizeof(cmd), "call d_info %c", code);
+	snprintf(cmd, sizeof(cmd), "call d_info %c", code);
 	if(pj_cli_execute_cmd(cmd) == PJ_SUCCESS)
 	{
 		return OK;
 	}
+#else
+	if (app_config.current_call == PJSUA_INVALID_ID)
+	{
+		return ERROR;
+	}
+	if (type == 1)
+	{
+		char body[64];
+		int call = app_config.current_call;
+		pj_status_t status;
+		pj_str_t dtmf_digi = pj_str("INFO");
+		memset(body, 0, sizeof(body));
+
+		pj_ansi_snprintf(body, sizeof(body), "%c",code);
+
+		dtmf_digi = pj_str(body);
+
+		if (!pjsua_call_has_media(app_config.current_call))
+		{
+			//PJ_LOG(3, (THIS_FILE, "Media is not established yet!"));
+			return ERROR;
+		}
+		if (call != app_config.current_call)
+		{
+			//static const pj_str_t err_msg =
+			//		{ "Call has been disconnected\n", 28 };
+			//pj_cli_sess_write_msg(cval->sess, err_msg.ptr, err_msg.slen);
+			return ERROR;
+		}
+
+		status = pjsua_call_dial_dtmf(app_config.current_call, &dtmf_digi);
+		if (status != PJ_SUCCESS)
+		{
+			// pjsua_perror(THIS_FILE, "Unable to send DTMF", status);
+			return ERROR;
+		}
+		return PJ_SUCCESS;
+	}
+	else
+	{
+		char body[64];
+		const pj_str_t SIP_INFO = pj_str("INFO");
+		int call = app_config.current_call;
+		pj_status_t status;
+
+		if (call != app_config.current_call)
+		{
+			return ERROR;
+		}
+
+		pjsua_msg_data_init(&app_config.msg_data);
+		app_config.msg_data.content_type = pj_str("application/dtmf-relay");
+
+		pj_ansi_snprintf(body, sizeof(body), "Signal=%c\n"
+				"Duration=160", code);
+
+		app_config.msg_data.msg_body = pj_str(body);
+
+		status = pjsua_call_send_request(app_config.current_call, &SIP_INFO,
+				&app_config.msg_data);
+		if (status != PJ_SUCCESS)
+		{
+			return ERROR;
+		}
+		return PJ_SUCCESS;
+	}
+	return PJ_SUCCESS;
+#endif
 	return ERROR;
 }
 
 int pl_pjsip_app_select_call(int callid, int type)
 {
+#ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
 	memset(cmd, 0, sizeof(cmd));
 	if(type == 1)
-		snprintf(cmd, sizeof(cmd), "call next");
+	snprintf(cmd, sizeof(cmd), "call next");
 	else
-		snprintf(cmd, sizeof(cmd), "call previous");
+	snprintf(cmd, sizeof(cmd), "call previous");
 	if(pj_cli_execute_cmd(cmd) == PJ_SUCCESS)
 	{
 		return OK;
 	}
+#else
+	/*
+	 * Cycle next/prev dialog.
+	 */
+	if (type == 1)
+	{
+		find_next_call ();
+	}
+	else
+	{
+		find_prev_call ();
+	}
+
+	if (app_config.current_call != PJSUA_INVALID_ID)
+	{
+		pjsua_call_info call_info;
+
+		if(pjsua_call_get_info (app_config.current_call, &call_info) == PJ_SUCCESS)
+			return OK;
+	}
+	else
+	{
+		return ERROR;
+	}
+	return PJ_SUCCESS;
+#endif
 	return ERROR;
 }
 /***************************************************************************/
@@ -3464,6 +4127,7 @@ BOOL pl_pjsip_active_standby_get_api()
 /***************************************************************************/
 static int pl_pjsip_account_options_write_config(pl_pjsip_t *sip, struct vty *vty, BOOL detail, BOOL bwrt)
 {
+	int i = 0;
 	zassert(sip != NULL);
 	zassert(vty != NULL);
 	//char buftmp[128];
@@ -3575,29 +4239,32 @@ static int pl_pjsip_account_options_write_config(pl_pjsip_t *sip, struct vty *vt
 	if (strlen(sip->sip_realm))
 		vty_out(vty, " ip sip realm %s%s", sip->sip_realm, VTY_NEWLINE);
 
+	if (strlen(pl_pjsip->sip_codec.payload_name))
+		vty_out(vty, " ip sip default codec %s%s", codec_cmdname(pl_pjsip->sip_codec.payload), VTY_NEWLINE);
+
 /*
 	if (sip->sip_reg_timeout)
 		vty_out(vty, " ip sip reg-timeout %d%s", sip->sip_reg_timeout,
 				VTY_NEWLINE);
 */
-/*	for(i = 0; i < PJSIP_CODEC_MAX; i++)
+	for(i = 0; i < PJSIP_CODEC_MAX; i++)
 	{
 		if(pl_pjsip->codec[i].is_active)
 		{
-			memset(buftmp, 0, sizeof(buftmp));
-			snprintf(buftmp, sizeof(buftmp), "%s", pl_pjsip->codec[i].payload_name);
-			vty_out(vty, " ip sip codec %s%s", strlwr(buftmp), VTY_NEWLINE);
+			//memset(buftmp, 0, sizeof(buftmp));
+			//snprintf(buftmp, sizeof(buftmp), "%s", pl_pjsip->codec[i].payload_name);
+			vty_out(vty, " ip sip codec %s%s", codec_cmdname(pl_pjsip->codec[i].payload), VTY_NEWLINE);
 		}
 	}
 	for(i = 0; i < PJSIP_CODEC_MAX; i++)
 	{
 		if(pl_pjsip->dicodec[i].is_active)
 		{
-			memset(buftmp, 0, sizeof(buftmp));
-			snprintf(buftmp, sizeof(buftmp), "%s", pl_pjsip->dicodec[i].payload_name);
-			vty_out(vty, " ip sip discodec %s%s", strlwr(buftmp), VTY_NEWLINE);
+			//memset(buftmp, 0, sizeof(buftmp));
+			//snprintf(buftmp, sizeof(buftmp), "%s", pl_pjsip->dicodec[i].payload_name);
+			//vty_out(vty, " ip sip discodec %s%s", codec_cmdname(pl_pjsip->dicodec[i].payload), VTY_NEWLINE);
 		}
-	}*/
+	}
 
 	if (sip->sip_rereg_delay && sip->sip_rereg_delay != PJSUA_REG_RETRY_INTERVAL)
 		vty_out(vty, " ip sip rereg-delay %d%s", sip->sip_rereg_delay,
@@ -3990,6 +4657,8 @@ static int pl_pjsip_account_options_show(pl_pjsip_t *sip, struct vty *vty, BOOL 
 	else if(sip->dtmf == PJSIP_DTMF_INBAND)
 		vty_out(vty, " sip dtmf-type                : inband%s", VTY_NEWLINE);
 
+	vty_out(vty, " sip default codec            : %s%s", strlwr(pl_pjsip->sip_codec.payload_name), VTY_NEWLINE);
+
 	memset(buftmp, 0, sizeof(buftmp));
 	for(i = 0; i < PJSIP_CODEC_MAX; i++)
 	{
@@ -4314,7 +4983,7 @@ int pl_pjsip_write_config(void *p)
 		pl_pjsip_video_options_write_config(sip, vty, FALSE, TRUE);
 		pl_pjsip_media_transport_options_write_config(sip, vty, FALSE, TRUE);
 		pl_pjsip_user_agent_options_write_config(sip, vty, FALSE, TRUE);
-
+		voip_volume_write_config(vty);
 		vty_out(vty, "!%s",VTY_NEWLINE);
 	}
 	if(pl_pjsip->mutex)
@@ -4340,6 +5009,8 @@ int pl_pjsip_show_config(void *p, BOOL detail)
 		pl_pjsip_video_options_show(sip, vty, FALSE, TRUE);
 		pl_pjsip_media_transport_options_show(sip, vty, FALSE, TRUE);
 		pl_pjsip_user_agent_options_show(sip, vty, FALSE, TRUE);
+
+		voip_volume_show_config(vty, FALSE);
 		vty_out(vty, "%s",VTY_NEWLINE);
 	}
 	else

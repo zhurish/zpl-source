@@ -24,11 +24,12 @@ $(foreach objdir,$(PLPRODS_OBJ), $(eval $(call _MODULE_OBJ,$(objdir))))
 endif
 #
 #
+
 #
 #
 #
 #
-.PHONY:	obj all demo lib clean rebuild install help usage objclean
+.PHONY:	obj all demo lib clean rebuild install help usage objclean packet
 #
 #
 help:usage
@@ -91,8 +92,14 @@ install:
 	@for i in $(PLPRODS); do	\
 		$(MAKE) -C $$i install || exit "$$?"; 	\
 	done
+	install -d ${DSTETCDIR}
+	install -m 755 upgradeapp.sh ${DSTETCDIR} 
+
 #
 clean: 
+	@for i in $(PLEX_DIR); do	\
+		$(MAKE) -C $$i clean; 	\
+	done
 	@for i in $(PLPRODS); do	\
 		$(MAKE) -C $$i clean; 	\
 	done
@@ -103,13 +110,27 @@ demo:
 	done
 
 lib: 
+	@for i in $(PLEX_DIR); do	\
+		$(MAKE) -C $$i all; 	\
+		$(MAKE) -C $$i install; 	\
+	done
 	@for i in $(PLPRODS); do	\
 		$(MAKE) -C $$i lib || exit "$$?"; 	\
 	done
 		
 all: 
+	@for i in $(PLEX_DIR); do	\
+		$(MAKE) -C $$i all; 	\
+		$(MAKE) -C $$i install; 	\
+	done
 	@for i in $(PLPRODS); do	\
 		$(MAKE) -C $$i all || exit "$$?"; 	\
 	done
 	
 rebuild: clean all
+
+packet:
+	$(CD) $(RELEASEDIR); $(MKDIR) install; $(CP) -arf sbin install/; \
+		$(CP) -arf bin install/; $(CP) -arf etc install/ $(CP) -arf lib install/; \
+		$(CP) -arf usr install/;$(CP) -arf www install/; \
+		$(TAR) -zcvf install.tar.gz sbin bin etc lib usr

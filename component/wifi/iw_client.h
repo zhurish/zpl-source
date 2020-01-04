@@ -85,6 +85,7 @@ typedef struct iw_client_s
 
 extern int iw_client_init(iw_client_t *, ifindex_t ifindex);
 extern int iw_client_exit(iw_client_t *);
+extern int iw_client_enable(iw_client_t *iw_client, BOOL enable);
 
 extern int iw_client_task_start(iw_client_t *iw_client);
 extern int iw_client_task_exit(iw_client_t *iw_client);
@@ -100,13 +101,14 @@ extern int iw_client_connect_exit(iw_client_t *);
 extern int iw_client_connect_api(iw_client_t *iw_client, BOOL auto_connect);
 extern int iw_client_disconnect_api(iw_client_t *iw_client);
 
-//show current connect information
+//show current connect information 显示当前连接的wifi
 extern int iw_client_connect_ap_show(iw_client_t *iw_client, struct vty *vty);
-
+//显示扫描的wifi
 extern int iw_client_scan_ap_show(iw_client_t *iw_client, struct vty *vty);
 extern int iw_client_station_dump_show(iw_client_t *iw_client, struct vty *vty);
 
 extern int iw_client_connect_interval_api(iw_client_t *iw_client, int connect_interval);
+//扫描附近wifi时间间隔
 extern int iw_client_scan_interval_api(iw_client_t *iw_client, int scan_interval);
 extern int iw_client_scan_max_api(iw_client_t *iw_client, int scan_max);
 /*
@@ -121,11 +123,12 @@ extern int iw_client_db_callback_api(iw_client_t *, int (*cb)(iw_client_db_t *, 
 /*
  * AP scan
  */
-extern int iw_client_ap_show(iw_client_t *, struct vty *vty, BOOL all);
+//显示附近wifi
+extern int iw_client_neighbor_show(iw_client_t *, struct vty *vty, BOOL all);
 extern int iw_client_ap_set_api(iw_client_t *, u_int8 *bssid, iw_client_ap_t *ap);
 extern int iw_client_ap_del_api(iw_client_t *, u_int8 *bssid, char *ssid);
 extern iw_client_ap_t * iw_client_ap_lookup_api(iw_client_t *, u_int8 *bssid, char *ssid);
-extern int iw_client_ap_callback_api(iw_client_t *, int (*cb)(iw_client_ap_t *, void *), void *pVoid);
+extern int iw_client_neighbor_callback_api(iw_client_t *, int (*cb)(iw_client_ap_t *, void *), void *pVoid);
 
 extern int iw_client_scan_start(iw_client_t *);
 extern int iw_client_scan_exit(iw_client_t *);

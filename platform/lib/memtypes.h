@@ -26,6 +26,8 @@ enum
   MTYPE_NSM,
   MTYPE_NSM_INFO,
   MTYPE_NSM_CLIENT,
+  MTYPE_HOOK,
+  MTYPE_NSM_HOOK,
   MTYPE_VTY,
   MTYPE_VTY_OUT_BUF,
   MTYPE_VTY_HIST,
@@ -313,6 +315,10 @@ enum
   MTYPE_WIFI_DB,
   MTYPE_WIFI_AP,
   MTYPE_WIFI_CLIENT,
+  MTYPE_FIREWALL,
+  MTYPE_FIREWALL_ZONE,
+  MTYPE_FIREWALL_RULE,
+  MTYPE_FIREWALL_TABLE,
   MTYPE_PORT,
   MTYPE_MAC,
   MTYPE_ARP,
@@ -354,6 +360,14 @@ enum
   MTYPE_WEB_DOC,
   MTYPE_WEB_DATA,
   MTYPE_WEB_TMP,
+  MTYPE_VIDEO,
+  MTYPE_VIDEO_TOP,
+  MTYPE_VIDEO_STREAM,
+  MTYPE_VIDEO_MEDIA,
+  MTYPE_VIDEO_SESSION,
+  MTYPE_VIDEO_DATA,
+  MTYPE_VIDEO_SDK,
+  MTYPE_VIDEO_TMP,
   MTYPE_MAX,
 };
 
@@ -375,10 +389,12 @@ extern struct memory_list memory_list_lldp[];
 extern struct memory_list memory_list_modem[];
 extern struct memory_list memory_list_dhcp[];
 extern struct memory_list memory_list_wifi[];
+extern struct memory_list memory_list_firewall[];
 extern struct memory_list memory_list_port[];
 extern struct memory_list memory_list_ssh[];
 extern struct memory_list memory_list_voip[];
 extern struct memory_list memory_list_web[];
+extern struct memory_list memory_list_video[];
 
 #endif /* _QUAGGA_MEMTYPES_H */
 

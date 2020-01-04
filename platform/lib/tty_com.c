@@ -17,10 +17,24 @@
 
 #include "tty_com.h"
 
+
+/* SLIP特殊字符 */
+#define TTY_COM_SLIP_END 0XC0     /*标明包结束*/
+#define TTY_COM_SLIP_ESC 0XDB     /*标明字节填充*/
+#define TTY_COM_SLIP_ESC_END 0XDC /*ESC ESC_END用于包中数据和和END相同时的转意字符*/
+#define TTY_COM_SLIP_ESC_ESC 0XDD /*ESC ESC_ESC用于包中数据和和ESC相同时的转意字符*/
+
+/* SLIP protocol characters. */
+#define TTY_COM_END             0300		/* indicates end of frame	*/
+#define TTY_COM_ESC             0333		/* indicates byte stuffing	*/
+#define TTY_COM_ESC_END         0334		/* ESC ESC_END means END 'data'	*/
+#define TTY_COM_ESC_ESC         0335		/* ESC ESC_ESC means ESC 'data'	*/
+
+
 struct tty_speed_table
 {
-	int speed;
-	int p;
+	uint speed;
+	uint p;
 };
 
 struct tty_speed_table speed_table[] =
@@ -38,7 +52,7 @@ struct tty_speed_table speed_table[] =
 
 static int _tty_com_speed(struct tty_com *com)
 {
-	int i = 0;
+	u_int i = 0;
 	for(i = 0; i < array_size(speed_table); i++)
 	{
 		if(com->speed == speed_table[i].speed)
@@ -266,15 +280,45 @@ int tty_com_update_option(struct tty_com *com)
 int tty_com_write(struct tty_com *com, char *buf, int len)
 {
 	int ret = 0;
-	tcflush(com->fd, TCIOFLUSH);
-	ret = write(com->fd, buf, len);
+	//tcflush(com->fd, TCIOFLUSH);
+	tcflush(com->fd, TCIFLUSH);
+	if(com->mode == TTY_COM_MODE_SLIP)
+		ret = tty_com_slip_write (com, buf,  len);
+	else if(com->mode == TTY_COM_MODE_RAW)
+		ret = write(com->fd, buf, len);
 	tcdrain(com->fd);
 	return ret;
 }
 
 int tty_com_read(struct tty_com *com, char *buf, int len)
 {
-	int ret = read(com->fd, buf, len);
+	int ret = 0;
+	if(com->mode == TTY_COM_MODE_SLIP)
+		ret = tty_com_slip_read (com, buf,  len);
+	else if(com->mode == TTY_COM_MODE_RAW)
+		ret = read(com->fd, buf, len);
+	return ret;
+}
+
+int tty_com_putc(struct tty_com *com, unsigned char c)
+{
+	int ret = 0;
+	char ic = c;
+	//tcflush(com->fd, TCIOFLUSH);
+	ret = write(com->fd, &ic, 1);
+	tcdrain(com->fd);
+	return ret;
+}
+
+int tty_com_getc(struct tty_com *com, unsigned char *c)
+{
+	unsigned char oc = 0;
+	int ret = read(com->fd, &oc, 1);
+	if(ret == 1)
+	{
+		if(c)
+			*c = oc;
+	}
 	return ret;
 }
 
@@ -286,8 +330,265 @@ BOOL tty_iscom(struct tty_com *com)
 		return TRUE;
 	return FALSE;
 }
+
+BOOL tty_isopen(struct tty_com *com)
+{
+	if(com->fd > 0)
+		return TRUE;
+	return FALSE;
+}
+
 /*
 int tty_com_update_option(struct tty_com *com)
 {
 	return _tty_com_option(com);
 }*/
+
+
+int tty_com_slip_write (struct tty_com *com, char *p, int len)
+{
+	int slen = len;
+	unsigned char sc = 0;
+	/*发送一个END字符*/
+	tty_com_putc (com, TTY_COM_SLIP_END);
+
+	/*发送包内的数据*/
+	for(slen = 0; slen < len; slen++)
+	{
+		sc = p[slen];
+		switch (sc)
+		{
+			/*如果需要转意，则进行相应的处理*/
+			case TTY_COM_SLIP_END:
+				tty_com_putc (com, TTY_COM_SLIP_ESC);
+				tty_com_putc (com, TTY_COM_SLIP_ESC_END);
+				break;
+			case TTY_COM_SLIP_ESC:
+				tty_com_putc (com, TTY_COM_SLIP_ESC);
+				tty_com_putc (com, TTY_COM_SLIP_ESC_ESC);
+				break;
+
+				/*如果不需要转意，则直接发送*/
+			default:
+				tty_com_putc (com, sc);
+				break;
+		}
+	}
+	/*通知接收方发送结束*/
+	tty_com_putc (com, TTY_COM_SLIP_END);
+	return len;
+}
+
+/* RECV_PACKET:接收包数据，存储于P位置，如果接收到的数据大于LEN，则被截断，函数返回接收到的字节数*/
+int tty_com_slip_read (struct tty_com *com, char *p, int len)
+{
+	unsigned char c = 0;
+	int received = 0;
+	while (1)
+	{
+		/*接收字符*/
+		if (tty_com_getc (com, &c) == 1)
+		{
+			switch (c)
+			{
+					/*如果接收到END，包数据结束，如果包内没有数据，直接抛弃*/
+				case TTY_COM_SLIP_END:
+					if (received)
+					{
+						if(received <= len)
+							return received;
+						return ERROR;
+					}
+					else
+						break;
+
+					/*下面的代码用于处理转意字符*/
+				case TTY_COM_SLIP_ESC:
+					if (tty_com_getc (com, &c) == 1)
+					{
+						switch (c)
+						{
+							case TTY_COM_SLIP_ESC_END:
+								c = TTY_COM_SLIP_END;
+								if (received < len)
+								{
+									p[received++] = c;
+								}
+								break;
+							case TTY_COM_SLIP_ESC_ESC:
+								c = TTY_COM_SLIP_ESC;
+								if (received < len)
+								{
+									p[received++] = c;
+								}
+								break;
+							default:
+								break;
+						}
+					}
+					break;
+				default:
+					if (received < len)
+					{
+						p[received++] = c;
+					}
+					else
+						return ERROR;
+					break;
+			}
+		}
+	}
+	return ERROR;
+}
+
+
+
+int tty_com_slip_encapsulation(struct tty_slip *sl, unsigned char *s, int len)
+{
+	unsigned char c;
+	sl->sliplen = 0;
+	/*
+	 * Send an initial END character to flush out any
+	 * data that may have accumulated in the receiver
+	 * due to line noise.
+	 */
+	sl->slipbuf[sl->sliplen++] = TTY_COM_END;
+	/*
+	 * For each byte in the packet, send the appropriate
+	 * character sequence, according to the SLIP protocol.
+	 */
+	while (len-- > 0)
+	{
+		if((sl->sliplen + 2) >= sl->buffsize)
+			return ERROR;
+		switch (c = *s++)
+		{
+		case TTY_COM_END:
+			sl->slipbuf[sl->sliplen++] = TTY_COM_ESC;
+			sl->slipbuf[sl->sliplen++] = TTY_COM_ESC_END;
+			break;
+		case TTY_COM_ESC:
+			sl->slipbuf[sl->sliplen++] = TTY_COM_ESC;
+			sl->slipbuf[sl->sliplen++] = TTY_COM_ESC_ESC;
+			break;
+		default:
+			sl->slipbuf[sl->sliplen++] = c;
+			break;
+		}
+	}
+	sl->slipbuf[sl->sliplen++] = TTY_COM_END;
+	return sl->sliplen;
+}
+
+int tty_com_slip_decapsulation(struct tty_slip *sl, unsigned char *s, int len)
+{
+	unsigned char c = 0, flags = 0;
+	sl->sliplen = 0;
+	RESET_FLAG(sl->flags);
+	while (len-- > 0)
+	{
+		flags = 0;
+		switch (c = *s++)
+		{
+		case TTY_COM_END:
+			if (!CHECK_FLAG(sl->flags, TTY_COM_SLF_ERROR) && (sl->sliplen > 2))
+			{
+				UNSET_FLAG(sl->flags, TTY_COM_SLF_ESCAPE);
+				return sl->sliplen;
+			}
+			flags = 0;
+			break;
+
+		case TTY_COM_ESC:
+			SET_FLAG(sl->flags, TTY_COM_SLF_ESCAPE);
+			flags = 0;
+			break;
+
+		case TTY_COM_ESC_ESC:
+			if (CHECK_FLAG(sl->flags, TTY_COM_SLF_ESCAPE))
+			{
+				UNSET_FLAG(sl->flags, TTY_COM_SLF_ESCAPE);
+				c = TTY_COM_ESC;
+				flags = 1;
+			}
+			break;
+
+		case TTY_COM_ESC_END:
+			if (CHECK_FLAG(sl->flags, TTY_COM_SLF_ESCAPE))
+			{
+				UNSET_FLAG(sl->flags, TTY_COM_SLF_ESCAPE);
+				c = TTY_COM_END;
+				flags = 1;
+			}
+			break;
+
+		default:
+			flags = 1;
+			//sl->slipbuf[sl->sliplen++] = c;
+			break;
+		}
+		if (!CHECK_FLAG(sl->flags, TTY_COM_SLF_ERROR) && (flags == 1))
+		{
+			if (sl->sliplen < sl->buffsize)
+			{
+				sl->slipbuf[sl->sliplen++] = c;
+			}
+			else
+			{
+				SET_FLAG(sl->flags, TTY_COM_SLF_ERROR);
+				return ERROR;
+			}
+		}
+	}
+	return ERROR;
+}
+
+
+
+int tty_com_slip_decode_byte(struct tty_slip *sl, unsigned char s)
+{
+	unsigned char c = s;
+	switch (s)
+	{
+	case TTY_COM_END:
+		if (!CHECK_FLAG(sl->flags, TTY_COM_SLF_ERROR) && (sl->sliplen > 2))
+		{
+			UNSET_FLAG(sl->flags, TTY_COM_SLF_ESCAPE);
+			return sl->sliplen;
+		}
+		return OK;
+
+	case TTY_COM_ESC:
+		SET_FLAG(sl->flags, TTY_COM_SLF_ESCAPE);
+		return OK;
+
+	case TTY_COM_ESC_ESC:
+		if (CHECK_FLAG(sl->flags, TTY_COM_SLF_ESCAPE))
+		{
+			UNSET_FLAG(sl->flags, TTY_COM_SLF_ESCAPE);
+			c = TTY_COM_ESC;
+		}
+		break;
+	case TTY_COM_ESC_END:
+		if (CHECK_FLAG(sl->flags, TTY_COM_SLF_ESCAPE))
+		{
+			UNSET_FLAG(sl->flags, TTY_COM_SLF_ESCAPE);
+			c = TTY_COM_END;
+		}
+		break;
+	default:
+		break;
+	}
+	if (!CHECK_FLAG(sl->flags, TTY_COM_SLF_ERROR))
+	{
+		if (sl->sliplen < sl->buffsize)
+		{
+			sl->slipbuf[sl->sliplen++] = c;
+			return OK;
+		}
+		SET_FLAG(sl->flags, TTY_COM_SLF_ERROR);
+		return ERROR;
+	}
+	return ERROR;
+}
+

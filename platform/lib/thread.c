@@ -171,7 +171,7 @@ thread_master_create()
 	}*/
 
 	//rv->ptid = os_task_pthread_self ();
-
+	rv->bquit = FALSE;
 	/* Initialize the timer queues */
 	rv->timer = pqueue_create();
 	rv->background = pqueue_create();
@@ -197,7 +197,7 @@ struct thread_master *thread_master_module_create(int module)
 
 	for (i = 0; i < MODULE_MAX; i++)
 	{
-		if (master_thread[i] && master_thread[i]->module == module)
+		if (master_thread[i] && master_thread[i]->module == (u_int)module)
 			return master_thread[i];
 	}
 	struct thread_master * m = thread_master_create();
@@ -629,6 +629,9 @@ void thread_cancel(struct thread *thread)
 		queue = thread->master->background;
 		break;
 	default:
+		zlog_debug(ZLOG_DEFAULT, "asdddddddd thread->type=%d", thread->type);
+		if (thread->master->mutex)
+			os_mutex_unlock(thread->master->mutex);
 		return;
 		break;
 	}
@@ -649,6 +652,8 @@ void thread_cancel(struct thread *thread)
 	}*/
 	else
 	{
+		if (thread->master->mutex)
+			os_mutex_unlock(thread->master->mutex);
 		assert(!"Thread should be either in queue or list or array!");
 	}
 
@@ -844,6 +849,27 @@ static unsigned int thread_process(struct thread_list *list)
 	return ready;
 }
 
+int thread_fetch_quit (struct thread_master *m)
+{
+	if(m)
+	{
+		m->bquit = TRUE;
+	}
+	return OK;
+}
+
+int thread_wait_quit (struct thread_master *m)
+{
+	if(m)
+	{
+		while(m->bquit)
+		{
+			os_msleep(50);
+		}
+	}
+	return OK;
+}
+
 /* Fetch next ready thread. */
 struct thread *
 thread_fetch(struct thread_master *m, struct thread *fetch)
@@ -879,6 +905,12 @@ thread_fetch(struct thread_master *m, struct thread *fetch)
 		if (thread != NULL)
 			return thread_run(m, thread, fetch);
 
+		if(m->bquit)
+		{
+			fetch = NULL;
+			m->bquit = FALSE;
+			return NULL;
+		}
 		/* To be fair to all kinds of threads, and avoid starvation, we
 		 * need to be careful to consider all thread types for scheduling
 		 * in each quanta. I.e. we should not return early from here on.

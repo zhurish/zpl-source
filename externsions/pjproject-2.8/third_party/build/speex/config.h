@@ -4,6 +4,7 @@
 #if !defined(PJ_HAS_FLOATING_POINT) || PJ_HAS_FLOATING_POINT==0
 #   define FIXED_POINT
 #   define USE_KISS_FFT
+#error "=================================================================="
 #else 
 #   define FLOATING_POINT
 #   define USE_SMALLFT

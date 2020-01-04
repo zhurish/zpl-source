@@ -24,7 +24,8 @@ char * vty_user_setting (struct vty *vty, const char *name)
 		return NULL;
 	if(os_strlen(name) > VTY_USERNAME_MAX)
 	{
-		vty_out(vty, "ERROR: username is too long.%s", VTY_NEWLINE);
+		if(vty)
+			vty_out(vty, "ERROR: username is too long.%s", VTY_NEWLINE);
 		return NULL;
 	}
 	if(vty->username)
@@ -312,7 +313,8 @@ int vty_user_setting_privilege (struct vty *vty, char *name, int privilege)
 	}*/
 	if (host.mutx)
 		os_mutex_unlock(host.mutx);
-	vty_out(vty,"%s:Can't find user '%s'%s",__func__,name,VTY_NEWLINE);
+	if(vty)
+		vty_out(vty,"%s:Can't find user '%s'%s",__func__,name,VTY_NEWLINE);
 	return CMD_WARNING;
 }
 
@@ -329,7 +331,8 @@ int vty_user_getting_authen_type (struct vty *vty, char *name)
 		user = vty_user_lookup (lname);
 		if(user)
 		{
-			vty_out(vty, "%s 0:%s %s",__func__,name, VTY_NEWLINE);
+			if(vty)
+				vty_out(vty, "%s 0:%s %s",__func__,name, VTY_NEWLINE);
 			if (host.mutx)
 				os_mutex_unlock(host.mutx);
 			return user->authen_type;
@@ -341,7 +344,8 @@ int vty_user_getting_authen_type (struct vty *vty, char *name)
 			os_mutex_unlock(host.mutx);
 		return vty->user->authen_type;
 	}*/
-	vty_out(vty, "%s:vty->user is NULL %s",__func__, VTY_NEWLINE);
+	if(vty)
+		vty_out(vty, "%s:vty->user is NULL %s",__func__, VTY_NEWLINE);
 	if (host.mutx)
 		os_mutex_unlock(host.mutx);
 	return ENABLE_LEVEL;
@@ -381,7 +385,8 @@ int vty_user_setting_authen_type (struct vty *vty, char *name, int authen_type)
 	}*/
 	if (host.mutx)
 		os_mutex_unlock(host.mutx);
-	vty_out(vty,"%s:Can't find user '%s'%s",__func__,name,VTY_NEWLINE);
+	if(vty)
+		vty_out(vty,"%s:Can't find user '%s'%s",__func__,name,VTY_NEWLINE);
 	return CMD_WARNING;
 }
 
@@ -584,7 +589,8 @@ int vty_user_create(struct vty *vty, char *name, char *password, BOOL enable, BO
 		{
 			if (host.mutx)
 				os_mutex_unlock(host.mutx);
-			vty_out(vty,"user '%s' is already exist%s",password,VTY_NEWLINE);
+			if(vty)
+				vty_out(vty,"user '%s' is already exist%s",password,VTY_NEWLINE);
 			return CMD_WARNING;
 		}
 		/*
@@ -613,7 +619,7 @@ int vty_user_create(struct vty *vty, char *name, char *password, BOOL enable, BO
 				if(md5_encrypt_empty(user->enable_encrypt))
 					os_memset(user->enable_encrypt, 0, sizeof(user->enable_encrypt));
 
-				if(encrypt)
+				if(encrypt && vty)
 					vty_out(vty,"setting enable password encrypt for username %s %s", user->username, VTY_NEWLINE);
 				//user->enable = XSTRDUP (MTYPE_HOST, password);
 				user->enable = XSTRDUP (MTYPE_HOST,  (password));
@@ -632,7 +638,7 @@ int vty_user_create(struct vty *vty, char *name, char *password, BOOL enable, BO
 
 				if(md5_encrypt_empty(user->password_encrypt))
 					os_memset(user->enable_encrypt, 0, sizeof(user->enable_encrypt));
-				if(encrypt)
+				if(encrypt && vty)
 					vty_out(vty,"setting password encrypt for username %s %s", user->username, VTY_NEWLINE);
 
 				user->password = XSTRDUP (MTYPE_HOST,  (password));
@@ -660,7 +666,7 @@ int vty_user_create(struct vty *vty, char *name, char *password, BOOL enable, BO
 			if(md5_encrypt_empty(user->enable_encrypt))
 				os_memset(user->enable_encrypt, 0, sizeof(user->enable_encrypt));
 				//XFREE(MTYPE_HOST, user->enable_encrypt);
-			if(encrypt)
+			if(encrypt && vty)
 				vty_out(vty,"setting enable password encrypt for username %s %s", user->username, VTY_NEWLINE);
 
 			user->enable = XSTRDUP (MTYPE_HOST,  (password));
@@ -679,7 +685,7 @@ int vty_user_create(struct vty *vty, char *name, char *password, BOOL enable, BO
 			if(md5_encrypt_empty(user->password_encrypt))
 				os_memset(user->password_encrypt, 0, sizeof(user->password_encrypt));
 
-			if(encrypt)
+			if(encrypt && vty)
 				vty_out(vty,"setting password encrypt for username %s %s", user->username, VTY_NEWLINE);
 
 			user->password = XSTRDUP (MTYPE_HOST,  (password));
@@ -693,7 +699,8 @@ int vty_user_create(struct vty *vty, char *name, char *password, BOOL enable, BO
 	}
 	if (host.mutx)
 		os_mutex_unlock(host.mutx);
-	vty_out(vty,"%s:Can't find user '%s'%s",__func__,name,VTY_NEWLINE);
+	if(vty)
+		vty_out(vty,"%s:Can't find user '%s'%s",__func__,name,VTY_NEWLINE);
 	return CMD_WARNING;
 }
 
@@ -763,7 +770,8 @@ int vty_user_delete(struct vty *vty, char *name, BOOL password, BOOL enable)
 	}
 	if (host.mutx)
 		os_mutex_unlock(host.mutx);
-	vty_out(vty,"%s:Can't find user '%s'%s",__func__,lname,VTY_NEWLINE);
+	if(vty)
+		vty_out(vty,"%s:Can't find user '%s'%s",__func__,lname,VTY_NEWLINE);
 	return CMD_WARNING;
 }
 
@@ -787,9 +795,52 @@ int vty_user_change(struct vty *vty, char *name)
 	}
 	if (host.mutx)
 		os_mutex_unlock(host.mutx);
-	vty_out(vty, "Can't find user '%s'%s", name, VTY_NEWLINE);
+	if(vty)
+		vty_out(vty, "Can't find user '%s'%s", name, VTY_NEWLINE);
 	return CMD_WARNING;
 
+}
+
+int vty_user_foreach (int (*cb)(void *user, void *p), void *p)
+{
+	struct listnode *node;
+	struct vty_user *user;
+	if(host.userlist == NULL)
+		return 0;
+	if (host.mutx)
+		os_mutex_lock(host.mutx, OS_WAIT_FOREVER);
+
+	for (ALL_LIST_ELEMENTS_RO (host.userlist, node, user))
+	{
+		if(user)
+		{
+			if(cb)
+				(cb)(user, p);
+/*			if((user->password == NULL) && !md5_encrypt_empty(user->password_encrypt))
+				vty_out(vty,"username %s%s", user->username, VTY_NEWLINE);
+			else
+			{
+				if(user->encrypt && md5_encrypt_empty(user->password_encrypt))
+					vty_out(vty,"username %s password %s%s", user->username,
+							(user->password_encrypt), VTY_NEWLINE);
+				else if(user->password)
+					vty_out(vty,"username %s password %s%s", user->username,
+								user->password, VTY_NEWLINE);
+			}
+			if(user->encrypt && md5_encrypt_empty(user->enable_encrypt))
+				vty_out(vty,"username %s enable password %s%s", user->username,
+						(user->enable_encrypt), VTY_NEWLINE);
+			else if(user->enable)
+				vty_out(vty,"username %s enable password %s%s", user->username,
+							user->enable, VTY_NEWLINE);
+			if(user->privilege)
+				vty_out(vty,"username %s privilege %d%s", user->username, user->privilege, VTY_NEWLINE);*/
+
+		}
+	}
+	if (host.mutx)
+		os_mutex_unlock(host.mutx);
+	return CMD_SUCCESS;
 }
 
 char * vty_user_get(struct vty *vty)

@@ -16,7 +16,7 @@
  */
 static bool optionsHandler(Webs *wp)
 {
-    assert(wp);
+    web_assert(wp);
 
 #if !ME_GOAHEAD_STEALTH
     if (smatch(wp->method, "OPTIONS")) {

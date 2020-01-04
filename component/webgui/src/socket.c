@@ -107,7 +107,7 @@ PUBLIC int socketListen(cchar *ip, int port, SocketAccept accept, int flags)
         return -1;
     }
     sp = socketList[sid];
-    assert(sp);
+    web_assert(sp);
 
     /*
         Change null IP address to be an IPv6 endpoint if the system is dual-stack. That way we can listen on
@@ -198,7 +198,7 @@ PUBLIC int socketConnect(char *ip, int port, int flags)
         return -1;
     }
     sp = socketList[sid];
-    assert(sp);
+    web_assert(sp);
 
     if (socketInfo(ip, port, &family, &protocol, &addr, &addrlen) < 0) {
         return -1;
@@ -293,7 +293,7 @@ static void socketAccept(WebsSocket *sp)
     char                    ipbuf[1024];
     int                     port, nid;
 
-    assert(sp);
+    web_assert(sp);
 
     /*
         Accept the connection and prevent inheriting by children (F_SETFD)
@@ -317,7 +317,7 @@ static void socketAccept(WebsSocket *sp)
     if ((nsp = socketList[nid]) == 0) {
         return;
     }
-    assert(nsp);
+    web_assert(nsp);
     nsp->sock = newSock;
     nsp->flags &= ~SOCKET_LISTENING;
     socketSetBlock(nid, (nsp->flags & SOCKET_BLOCK));
@@ -342,7 +342,7 @@ PUBLIC void socketRegisterInterest(int sid, int handlerMask)
 {
     WebsSocket  *sp;
 
-    assert(socketPtr(sid));
+    web_assert(socketPtr(sid));
     sp = socketPtr(sid);
     sp->handlerMask = handlerMask;
     if (sp->flags & SOCKET_BUFFERED_READ) {
@@ -361,7 +361,7 @@ PUBLIC int socketWaitForEvent(WebsSocket *sp, int handlerMask)
 {
     int mask;
 
-    assert(sp);
+    web_assert(sp);
 
     mask = sp->handlerMask;
     sp->handlerMask |= handlerMask;
@@ -427,7 +427,7 @@ PUBLIC int socketSelect(int sid, int timeout)
         if ((sp = socketList[sid]) == NULL) {
             continue;
         }
-        assert(sp);
+        web_assert(sp);
         /*
             Set the appropriate bit in the ready masks for the sp->sock.
          */
@@ -541,7 +541,7 @@ PUBLIC int socketSelect(int sid, int timeout)
                 continue;
             }
         }
-        assert(sp);
+        web_assert(sp);
         /*
             Initialize the ready masks and compute the mask offsets.
          */
@@ -635,7 +635,7 @@ static void socketDoEvent(WebsSocket *sp)
 {
     int     sid;
 
-    assert(sp);
+    web_assert(sp);
 
     sid = sp->sid;
     if (sp->currentEvents & SOCKET_READABLE) {
@@ -670,7 +670,7 @@ PUBLIC int socketSetBlock(int sid, int on)
     int         oldBlock;
 
     if ((sp = socketPtr(sid)) == NULL) {
-        assert(0);
+        web_assert(0);
         return 0;
     }
     oldBlock = (sp->flags & SOCKET_BLOCK);
@@ -733,7 +733,7 @@ PUBLIC int socketSetNoDelay(int sid, bool on)
     int         oldDelay;
 
     if ((sp = socketPtr(sid)) == NULL) {
-        assert(0);
+        web_assert(0);
         return 0;
     }
     oldDelay = sp->flags & SOCKET_NODELAY;
@@ -811,8 +811,8 @@ PUBLIC ssize socketRead(int sid, void *buf, ssize bufsize)
     ssize       pbytes;
     int         errCode;
 
-    assert(buf);
-    assert(bufsize > 0);
+    web_assert(buf);
+    web_assert(bufsize > 0);
 
     if ((sp = socketPtr(sid)) == NULL) {
         return -1;
@@ -969,11 +969,11 @@ PUBLIC void socketFree(int sid)
 WebsSocket *socketPtr(int sid)
 {
     if (sid < 0 || sid >= socketMax || socketList[sid] == NULL) {
-        assert(NULL);
+        web_assert(NULL);
         errno = EBADF;
         return NULL;
     }
-    assert(socketList[sid]);
+    web_assert(socketList[sid]);
     return socketList[sid];
 }
 
@@ -1036,7 +1036,7 @@ PUBLIC int socketGetBlock(int sid)
     WebsSocket    *sp;
 
     if ((sp = socketPtr(sid)) == NULL) {
-        assert(0);
+        web_assert(0);
         return 0;
     }
     return (sp->flags & SOCKET_BLOCK);
@@ -1048,7 +1048,7 @@ PUBLIC int socketGetMode(int sid)
     WebsSocket    *sp;
 
     if ((sp = socketPtr(sid)) == NULL) {
-        assert(0);
+        web_assert(0);
         return 0;
     }
     return sp->flags;
@@ -1060,7 +1060,7 @@ PUBLIC void socketSetMode(int sid, int mode)
     WebsSocket    *sp;
 
     if ((sp = socketPtr(sid)) == NULL) {
-        assert(0);
+        web_assert(0);
         return;
     }
     sp->flags = mode;
@@ -1090,7 +1090,7 @@ PUBLIC int socketInfo(cchar *ip, int port, int *family, int *protocol, struct so
     char                portBuf[16];
     int                 v6;
 
-    assert(addr);
+    web_assert(addr);
     memset((char*) &hints, '\0', sizeof(hints));
 
     /*
@@ -1165,7 +1165,7 @@ PUBLIC int socketInfo(char *ip, int port, int *family, int *protocol, struct soc
          */
         sa.sin_addr.s_addr = (ulong) hostGetByName((char*) ip);
         if (sa.sin_addr.s_addr < 0) {
-            assert(0);
+            web_assert(0);
             return 0;
         }
 #else

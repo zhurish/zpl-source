@@ -1,0 +1,286 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta content="" name="description" />
+	<meta content="webthemez" name="author" />
+	<!--meta http-equiv="refresh" content="30"-->
+	<!-- Bootstrap Styles-->
+	<link href="../css/bootstrap.min.css" rel="stylesheet" />
+
+	<!-- private Styles-->
+	<link href="../css/private.css" rel="stylesheet" />
+
+	<!-- jQuery Js -->
+	<script src="../js/jquery-2.1.1.min.js"></script>
+	<!-- Bootstrap Js -->
+	<script src="../js/bootstrap.min.js"></script>
+	<script src="../js/xhr.js"></script>
+	<script src="../js/data-type.js"></script>
+
+	<title>NAT</title>
+</head>
+
+<body class="body-bg-img">
+	<div id="maincontent" class="container">
+
+		<fieldset class="fieldset-margin fieldset-background">
+			<table class="table table-condensed">
+				<caption class="tbl-text-align bold">SNAT</caption>
+				<thead>
+					<tr>
+						<th>名称</th>
+						<th>外网IP</th>
+						<th>内网IP</th>
+						<th>出接口</th>
+						<th>操作</th>
+					</tr>
+				</thead>
+				<tbody id="snattbl">
+					<script type="text/javascript">
+						function ip_snat_tbl() {
+							var utbl = "";
+
+							$.get("/goform/snatget", function (data, status) {
+								var data_json = JSON.parse(data);
+								console.log("json:" + data);
+								$.each(data_json, function (index, info) {
+									utbl += "<tr>\n";
+									utbl += "<td>" + info.name + "</td>\n";
+									if (info.wanip == "any" ||
+										info.wanip == "0.0.0.0")
+										utbl += "<td>any</td>\n";
+									else
+										utbl += "<td>" + info.wanip + "</td>\n";
+									utbl += "<td>" + info.lanip + "</td>\n";
+									utbl += "<td>" + info.outif + "</td>\n";
+									//utbl += "<td>" + info.inif + "</td>\n";
+									utbl += "<td>\
+                							<div class=\"col-sm-push-2 control-label\">\
+												  <button type=\"button\" class=\"btn btn-danger\" name=\"delete\" id=\"delete\" \
+												  onclick=\"snat_handle_click(this)\"><span class=\"glyphicon glyphicon-trash\"\
+															style=\"margin-right:10px;\"></span>删除</button>\
+			    							</div>\
+                						</td>";
+									utbl += "</tr>";
+								});
+								utbl += "<tr>";
+								utbl += "<td>";
+								utbl += "</td>";
+
+								utbl += "<td>";
+								utbl += "</td>";
+
+								utbl += "<td>";
+								utbl += "</td>";
+
+								utbl += "<td>";
+								utbl += "</td>";
+
+								utbl += "<td>\
+                					<div class=\"col-sm-push-3 control-label\">\
+										  <button type=\"button\" class=\"btn btn-add\" name=\"add\" id=\"add\" \
+										  onclick=\"snat_add_click(this)\"><span class=\"glyphicon glyphicon-plus\"\
+															style=\"margin-right:10px;\"></span>添加</button>\
+			    						</div>\
+									</td>";
+								utbl += "</tr>";
+								$("#snattbl").html(utbl);
+							});
+						}
+						ip_snat_tbl();
+					</script>
+				</tbody>
+			</table>
+			<legend class="tbl-text-align bold"></legend>
+			<div class="hiden" name="snat" id="snat">
+				<form class="form-horizontal form-margin show" method="POST" ">
+							<legend class=" legend-text-align">SNAT配置</legend>
+
+					<div class="form-group">
+						<label for="snatname" class="col-sm-3 control-label">名称</label>
+						<div class="input-group col-sm-4">
+							<input type="text" minlength="6" maxlength="32" class="form-control" name="snatname"
+								id="snatname" required onclick="port_forwards_rulename_check(this)">
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="snatwan" class="col-sm-3 control-label">外网IP</label>
+						<div class="input-group col-sm-4">
+							<input type="text" minlength="6" maxlength="32" class="form-control" name="snatwan"
+								id="snatwan" onclick="port_forwards_address_check(this)">
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="snatlan" class="col-sm-3 control-label">内网IP</label>
+						<div class="input-group col-sm-4">
+							<input type="text" minlength="6" maxlength="32" class="form-control" name="snatlan"
+								id="snatlan" required onclick="port_forwards_address_check(this)">
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="interface" class="col-sm-3 control-label">出接口</label>
+						<div class="col-sm-4">
+							<select class="form-control" name="interface" id="interface">
+								<script type="text/javascript">
+									function interface_tbl() {
+										var itbl = "";
+										$.get("/goform/interface-tbl", function (data, status) {
+											console.log("==============");
+											console.log(data);
+											var data_json = JSON.parse(data);
+											$.each(data_json, function (index, info) {
+												itbl += "<option value=\"" + info.name + "\">" + info.name + "</option>";
+											});
+											$("#interface").html(itbl);
+										});
+									}
+									interface_tbl();
+								</script>
+							</select>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<div class="col-xs-4 control-label">
+							<button type="reset" class="btn btn-cencel" name="snat_cencel" id="snat_cencel"><span
+									class="glyphicon glyphicon-remove" style="margin-right:10px;"></span>取消</button>
+						</div>
+						<div class="col-xs-4 control-label">
+							<button type="button" class="btn btn-submit" name="snat_submit" id="snat_submit"
+								onclick="snat_handle_click(this)"><span class="glyphicon glyphicon-send"
+									style="margin-right:10px;"></span>确定</button>
+						</div>
+					</div>
+				</form>
+			</div>
+
+
+			<div id="snat_waiting" class="alert alert-success hiden">
+				<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+						style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+			</div>
+			<div id="snat_error" class="alert alert-warning hiden">
+				<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+			</div>
+			<script type="text/javascript">
+				function port_forwards_port_check(self) {
+					if (self.value != "") {
+						if (self.value > 65535 || self.value < 1) {
+							return false;
+						}
+						return true;
+					}
+					return false;
+				}
+				function port_forwards_rulename_check(self) {
+					if (self.value != "") {
+						if (self.length > 32 || self.length < 6) {
+							return false;
+						}
+						return true;
+					}
+					return false;
+				}
+				function port_forwards_address_check(self) {
+					if (self.value != "") {
+						if (self.id == "lanip") {
+							if (checkipv4(self.value) == true)
+								return true;
+						}
+						if (self.value != "0.0.0.0")
+							return true;
+						else {
+							if (checkipv4(self.value) == true)
+								return true;
+						}
+					}
+					return false;
+				}
+
+				function snat_add_click(self) {
+					$("#snat").css("display", "block");
+				}
+				function snat_handle_click(self) {
+					var name = "";
+					var lanip = "";
+					var wanip = "";
+					var outif = "";
+					var argv = "";
+					
+					if (self.id == "snat_submit") {
+						if (!port_forwards_rulename_check(document.getElementById("snatname")) ||
+							!port_forwards_address_check(document.getElementById("snatlan"))) {
+							$("#snat_error").css("display", "block");
+							$("#snat_winting").css("display", "none");
+							setTimeout(function () { $("#snat_error").css("display", "none") }, 3000);
+							return false;
+						}
+					}
+
+					var stxhr = new XHR();
+					if (self.id == "snat_submit") {
+						name = document.getElementById("snatname").value;
+						lanip = document.getElementById("snatlan").value;
+						wanip = document.getElementById("snatwan").value;
+						outif = document.getElementById("interface").value;
+						//proto = document.getElementById("proto").value;
+
+						argv = "ACTION=snat&BTNID=add&name=" + name + "&lanip=" + lanip;
+						if (wanip != "")
+							argv += "&wanip=" + wanip;
+
+						if (outif != "")
+							argv += "&outif=" + outif;
+					}
+					else {
+						name = $(self).parent().parent().prevAll()[3].innerText;
+						lanip = $(self).parent().parent().prevAll()[1].innerText;
+
+						argv = "ACTION=snat&BTNID=delete&name=" + name + "&lanip=" + lanip;
+						
+						console.log("argv:" + argv);
+					}
+
+					$("#snat_winting").css("display", "block");
+					setTimeout(function () { $("#snat_winting").css("display", "none") }, 5000);
+					stxhr.post("/goform/button_onclick", argv,
+						function (x, json) {
+							console.log("json:" + json);
+							console.log(x);
+							if (x.responseText == "ERROR") {
+								$("#snat_error").css("display", "block");
+								$("#snat_winting").css("display", "none");
+								clearTimeout();
+								setTimeout(function () { $("#snat_error").css("display", "none") }, 3000);
+								$("#snat").css("display", "none");
+							}
+							else if (x.responseText == "OK") {
+								$("#snat_winting").css("display", "none");
+								$("#snat_error").css("display", "none");
+								$("#snat").css("display", "none");
+								clearTimeout();
+								ip_snat_tbl();
+							}
+							else if (x.responseText != "" && json != null) {
+								if (json.response == "OK") {
+									$("#snat_winting").css("display", "none");
+									$("#snat_error").css("display", "none");
+									$("#snat").css("display", "none");
+									clearTimeout();
+									ip_snat_tbl();
+								}
+							}
+						},
+						3000);
+				}
+			</script>
+		</fieldset>
+
+	</div>
+</body>
+
+</html>

@@ -51,7 +51,7 @@ extern int iw_dev_bit_set(struct interface *ifp, char * value);
 extern int iw_dev_channel_set(struct interface *ifp, char * value);
 
 extern int iw_ap_dev_information_show(struct interface *ifp, struct vty *vty);
-
+extern iw_mode_t iw_ap_dev_mode_get(struct interface *ifp);
 
 /*
  * show iw phy capabilities
@@ -61,6 +61,9 @@ extern int iw_phy_capabilities_show(struct interface *ifp, struct vty *vty);
  * show support channel/freq
  */
 extern int iw_dev_channel_support_show(struct interface *ifp, struct vty *vty);
+
+extern int iw_get_freq_info(char * ifname, iw_dev_t *iwdev);
+extern int iw_get_bitrate_info(char * ifname, iw_dev_t *iwdev);
 
 
 extern int iw_client_dev_station_dump_show(struct interface *ifp, struct vty *vty);
@@ -72,7 +75,7 @@ extern int iw_client_dev_scan_ap_show(struct interface *ifp, struct vty *vty, in
  * show current connect information
  */
 extern int iw_client_dev_connect_show(struct interface *ifp, struct vty *vty);
-
+extern int iw_client_dev_connect_get(struct interface *ifp, u_int8 essid[]);
 
 extern int iw_client_dev_connect(struct interface *ifp, iw_client_ap_t *ap, char *ssid, char *password);
 extern int iw_client_dev_start_dhcpc(struct interface *ifp);
@@ -88,5 +91,7 @@ extern int iw_client_scan_process_exit(iw_client_t *iw_client);
 extern int iw_ap_connect_scanning(iw_ap_t *iw_ap);
 
 extern int iw_dev_mode(struct interface *ifp);
+
+
 
 #endif /* __WIFI_H__ */

@@ -79,3 +79,12 @@ int pjsip_app_call_hangup_callback(pjsip_callback_tbl *cb, int id, void *pVoid, 
 	}
 	return PJ_SUCCESS;
 }
+
+int pjsip_app_call_incoming_callback(pjsip_callback_tbl *cb, int id, void *pVoid, int state)
+{
+	if(cb && cb->pjsip_call_incoming)
+	{
+		(cb->pjsip_call_incoming)(id, pVoid, state);
+	}
+	return PJ_SUCCESS;
+}

@@ -68,7 +68,12 @@ int icmp_echo_request(uint32_t test_nip,
 		const char *interface,
 		unsigned timeo);
 
-
+int icmp_echo_request_mac(uint32_t test_nip,
+		uint32_t from_ip,
+		uint8_t *from_mac,
+		const char *interface,
+		unsigned int timeo,
+		uint8_t *safe_mac);
 
 //uint16_t inet_cksum(uint16_t *addr, int nleft);
 

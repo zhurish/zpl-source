@@ -19,8 +19,8 @@
 #include "nsm_client.h"
 
 #include "hal_trunk.h"
+#include "hal_driver.h"
 
-sdk_trunk_t sdk_trunk;
 
 int hal_trunkid(int trunkid)
 {
@@ -29,29 +29,29 @@ int hal_trunkid(int trunkid)
 
 int hal_trunk_enable(BOOL enable)
 {
-	if(sdk_trunk.sdk_trunk_enable_cb)
-		return sdk_trunk.sdk_trunk_enable_cb(enable);
+	if(hal_driver && hal_driver->trunk_tbl && hal_driver->trunk_tbl->sdk_trunk_enable_cb)
+		return hal_driver->trunk_tbl->sdk_trunk_enable_cb(hal_driver->driver, enable);
 	return OK;
 }
 
 int hal_trunk_mode(int mode)
 {
-	if(sdk_trunk.sdk_trunk_mode_cb)
-		return sdk_trunk.sdk_trunk_mode_cb(mode);
+	if(hal_driver && hal_driver->trunk_tbl && hal_driver->trunk_tbl->sdk_trunk_mode_cb)
+		return hal_driver->trunk_tbl->sdk_trunk_mode_cb(hal_driver->driver, mode);
 	return OK;
 }
 
 int hal_trunk_interface_enable(ifindex_t ifindex, int trunkid)
 {
-	if(sdk_trunk.sdk_trunk_add_cb)
-		return sdk_trunk.sdk_trunk_add_cb(ifindex, trunkid);
+	if(hal_driver && hal_driver->trunk_tbl && hal_driver->trunk_tbl->sdk_trunk_add_cb)
+		return hal_driver->trunk_tbl->sdk_trunk_add_cb(hal_driver->driver, ifindex, trunkid);
 	return OK;
 }
 
 int hal_trunk_interface_disable(ifindex_t ifindex, int trunkid)
 {
-	if(sdk_trunk.sdk_trunk_del_cb)
-		return sdk_trunk.sdk_trunk_del_cb(ifindex, trunkid);
+	if(hal_driver && hal_driver->trunk_tbl && hal_driver->trunk_tbl->sdk_trunk_del_cb)
+		return hal_driver->trunk_tbl->sdk_trunk_del_cb(hal_driver->driver, ifindex, trunkid);
 	return OK;
 }
 

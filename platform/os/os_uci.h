@@ -21,15 +21,31 @@
 //#endif
 //#define PL_OPENWRT_UCI_SH
 
+#ifndef PL_OPENWRT_UCI_LIB
+enum
+{
+	UCI_OK = 0,
+	UCI_ERR_MEM,
+	UCI_ERR_INVAL,
+	UCI_ERR_NOTFOUND,
+	UCI_ERR_IO,
+	UCI_ERR_PARSE,
+	UCI_ERR_DUPLICATE,
+	UCI_ERR_UNKNOWN,
+	UCI_ERR_LAST
+};
+#endif
 
-
+extern int os_uci_get_errno();
 extern int os_uci_set_string(char *name, char *value);
 extern int os_uci_set_integer(char *name, int value);
-extern int os_uci_set_float(char *name, float value);
+extern int os_uci_set_float(char *name, char *fmt, float value);
+extern int os_uci_set_double(char *name, char *fmt, double value);
 
 extern int os_uci_get_string(char *name, char *value);
 extern int os_uci_get_integer(char *name, int *value);
-extern int os_uci_get_float(char *name, float *value);
+extern int os_uci_get_float(char *name, char *fmt, float *value);
+extern int os_uci_get_double(char *name, char *fmt, double *value);
 extern int os_uci_get_address(char *name, char *value);
 extern int os_uci_get_list(char *name, char **value, int *cnt);
 

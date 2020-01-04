@@ -33,12 +33,13 @@
 #include "nsm_tunnel.h"
 #include "nsm_bridge.h"
 
-#include "pal_interface.h"
 #include "kernel_ioctl.h"
 
 #ifdef HAVE_BSD_LINK_DETECT
 #include <net/if_media.h>
 #endif /* HAVE_BSD_LINK_DETECT*/
+
+#include "pal_driver.h"
 
 
 /* clear and set interface name string */
@@ -50,7 +51,7 @@ ifreq_set_name (struct ifreq *ifreq, struct interface *ifp)
 
 /* call ioctl system call */
 int
-if_ioctl (u_long request, caddr_t buffer)
+if_ioctl (u_int request, caddr_t buffer)
 {
 	int sock = 0;
 	int ret = -1;
@@ -65,8 +66,7 @@ if_ioctl (u_long request, caddr_t buffer)
 	ret = ioctl(sock, request, buffer);
 	if (ret < 0)
 	{
-		zlog_err(ZLOG_PAL, "Cannot ioctl (0x%x) : %s",
-				request, safe_strerror(errno));
+		zlog_err(ZLOG_PAL, "Cannot ioctl (0x%x) : %s", request, safe_strerror(errno));
 		close(sock);
 		return ret;
 	}
@@ -76,7 +76,7 @@ if_ioctl (u_long request, caddr_t buffer)
 
 #ifdef HAVE_IPV6
 int
-if_ioctl_ipv6 (u_long request, caddr_t buffer)
+if_ioctl_ipv6 (u_int request, caddr_t buffer)
 {
 	int sock = 0;
 	int ret = -1;
@@ -881,6 +881,7 @@ static int _ipkernel_create(struct interface *ifp)
 			{
 				bridge->add_member_cb = _ipkernel_bridge_add_interface;
 				bridge->del_member_cb = _ipkernel_bridge_del_interface;
+				bridge->get_member_cb = _ipkernel_bridge_list_interface;
 				ret = _ipkernel_bridge_create(bridge);
 			}
 		}

@@ -22,107 +22,80 @@
 #include "voip_util.h"
 
 
-
 static voip_payload_t _voip_payload_table[] =
 {
-	{"0 PCMU/8000", 			20, "PCMU", 			0},
-	{"8 PCMA/8000", 			-1, "PCMA", 			8},
-	{"1 l016/8000", 			-1, "L016", 			1},
-	{"7 lpc/8000", 				20, "LPC", 				7},
-	{"18 G729/8000", 			-1, "G729", 			18},
-	{"4 G7231/8000", 			-1, "G7231", 			4},
-	{"18 G7221/8000", 			-1, "G7221", 			-1},
-	{"18 G726-40/8000", 		-1, "G726-40", 			-1},
-	{"18 G726-32/8000", 		-1, "G726-32", 			-1},
-	{"18 G726-24/8000", 		-1, "G726-24", 			-1},
-	{"18 G726-16/8000", 		-1, "G726-16", 			-1},
-	{"18 AAL2-G726-40/8000", 	-1, "AAL2-G726-40", 	-1},
-	{"18 AAL2-G726-32/8000", 	-1, "AAL2-G726-32", 	-1},
-	{"18 AAL2-G726-24/8000", 	-1, "AAL2-G726-24", 	-1},
-	{"18 AAL2-G726-16/8000", 	-1, "AAL2-G726-16", 	-1},
+	{"PCMU", 				1, "pcmu", 			1},
+	{"PCMA", 				1, "pcma", 			2},
+	{"l016/8000", 			0, "l016", 			3},
+	{"lpc/8000", 			0, "lpc", 			4},
+	{"G729/8000", 			0, "g729", 			5},
+	{"G7231/8000", 			0, "g7231", 		6},
+	{"G7221/8000", 			0, "g7221", 		7},
+	{"G726-40/8000", 		0, "g726-40", 		8},
+	{"G726-32/8000", 		0, "g726-32", 		9},
+	{"G726-24/8000", 		0, "g726-24", 		10},
+	{"G726-16/8000", 		0, "g726-16", 		11},
+	{"AAL2-G726-40/8000", 	0, "aal2-g726-40", 	12},
+	{"AAL2-G726-32/8000", 	0, "aal2-g726-32", 	13},
+	{"AAL2-G726-24/8000", 	0, "aal2-g726-24", 	14},
+	{"AAL2-G726-16/8000", 	0, "aal2-g726-16", 	15},
 
-	{"112 speex/8000", 			-1, "SPEEX-NB", 		110},
-	{"112 speex/16000", 		-1, "SPEEX-WB", 		111},
-	{"112 iLBC/8000", 			30, "iLBC", 			112},
-	{"115 l015/8000", 			-1, "L015", 			115},
-	{"113 AMR/8000", 			-1, "AMR", 				113},
-	{"9 G722/8000", 			-1, "G722", 			9},
-	{"105 opus/8000", 			-1, "OPUS", 			105},
-	{"114 custom/8000", 		-1, "CUSTOM", 			114},
+	{"speex/8000", 			1, "speex-nb", 		16},
+	{"speex/16000", 		0, "speex-wb", 		17},
+	{"iLBC/8000", 			1, "ilbc", 			18},
+	{"l015/8000", 			0, "l015", 			19},
+	{"AMR/8000", 			0, "amr-nb", 		20},
+	{"G722", 			    1, "g722", 			21},
+	{"GSM", 				1, "gsm", 			22},
+	{"opus/8000", 			0, "opus", 			23},
+	{"custom/8000", 		0, "custom", 		24},
 };
 
 
-/*int voip_sip_get_payload_index(void)
-{
-	zassert(pl_pjsip != NULL);
-	//zlog_debug(ZLOG_VOIP, "======:%s PAYLOAD=%d", __func__, sip_config->payload);
-	return pl_pjsip->payload;
-}*/
-
-int voip_sip_payload_index(char *name)
+int codec_payload_index(char *cmdname)
 {
 	int i = 0;
 	char tmp[PJSIP_NUMBER_MAX];
-	zassert(name != NULL);
+	zassert(cmdname != NULL);
 	memset(tmp, 0, sizeof(tmp));
-	strcpy(tmp, name);
+	strcpy(tmp, cmdname);
 	for(i = 0; i < array_size(_voip_payload_table); i++)
 	{
-		if(_voip_payload_table[i].payload >= 0)
+		if(_voip_payload_table[i].active > 0)
 		{
-			if(strncasecmp(tmp, _voip_payload_table[i].name, PJSIP_NUMBER_MAX) == 0)
+			if(strncasecmp(tmp, _voip_payload_table[i].cmdname, PJSIP_NUMBER_MAX) == 0)
 			{
-				//zlog_debug(ZLOG_VOIP, "======:%s PAYLOAD=%d %s", __func__, _voip_payload_table[i].payload, tmp);
-				return (int)_voip_payload_table[i].payload;
+				return (int)_voip_payload_table[i].index;
 			}
 		}
 	}
 	return -1;
 }
 
-char * voip_sip_payload_name(int index)
+char * codec_payload_name(int index)
 {
 	int i = 0;
 	for(i = 0; i < array_size(_voip_payload_table); i++)
 	{
-		if(_voip_payload_table[i].payload >= 0 && _voip_payload_table[i].payload == index)
+		if(_voip_payload_table[i].active >= 0 && _voip_payload_table[i].index == index)
 		{
-			//zlog_debug(ZLOG_VOIP, "======:%s PAYLOAD=%d %s", __func__, _voip_payload_table[i].payload,
-			//		_voip_payload_table[i].name);
-			return _voip_payload_table[i].name;
+			return _voip_payload_table[i].payload_name;
 		}
 	}
 	return NULL;
 }
 
-char * voip_sip_payload_rtpmap(int index)
+char * codec_cmdname(int index)
 {
 	int i = 0;
 	for(i = 0; i < array_size(_voip_payload_table); i++)
 	{
-		if(_voip_payload_table[i].payload >= 0 && _voip_payload_table[i].payload == index)
+		if(_voip_payload_table[i].active >= 0 && _voip_payload_table[i].index == index)
 		{
-			//zlog_debug(ZLOG_VOIP, "======:%s PAYLOAD=%d %s rtpmap=%s", __func__, _voip_payload_table[i].payload,
-			//		_voip_payload_table[i].name, _voip_payload_table[i].rtpmap);
-			return _voip_payload_table[i].rtpmap;
+			return _voip_payload_table[i].cmdname;
 		}
 	}
-	return NULL;
-}
-
-int voip_sip_payload_ptime(int index)
-{
-	int i = 0;
-	for(i = 0; i < array_size(_voip_payload_table); i++)
-	{
-		if(_voip_payload_table[i].payload >= 0 && _voip_payload_table[i].payload == index)
-		{
-			//zlog_debug(ZLOG_VOIP, "======:%s PAYLOAD=%d %s ptime=%d", __func__, _voip_payload_table[i].payload,
-			//		_voip_payload_table[i].name, _voip_payload_table[i].ptime);
-			return (int)_voip_payload_table[i].ptime;
-		}
-	}
-	return -1;
+	return "Unknown";
 }
 /*************************************************************************/
 /*************************************************************************/
@@ -135,11 +108,11 @@ u_int32 voip_get_address(u_int32 ifindex)
 		struct prefix address;
 		if(nsm_interface_address_get_api(ifp, &address) == OK)
 		{
-			zlog_debug(ZLOG_VOIP, "============ %s :%s -> %s = %x", __func__, ifp->name, ifp->k_name, address.u.prefix4.s_addr);
+			//zlog_debug(ZLOG_VOIP, "============ %s :%s -> %s = %x", __func__, ifp->name, ifp->k_name, address.u.prefix4.s_addr);
 			if(address.family == AF_INET)
 				return ntohl(address.u.prefix4.s_addr);
 		}
-		zlog_debug(ZLOG_VOIP, "============ %s :%s -> %s = %x", __func__, ifp->name, ifp->k_name, address.u.prefix4.s_addr);
+		//zlog_debug(ZLOG_VOIP, "============ %s :%s -> %s = %x", __func__, ifp->name, ifp->k_name, address.u.prefix4.s_addr);
 	}
 	return 0;
 }

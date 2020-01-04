@@ -10,6 +10,7 @@
 
 typedef enum
 {
+	X5B_KEEPALIVE_EV,
 	X5B_TIMER_EV,
 	X5B_READ_EV,
 	X5B_WRITE_EV,

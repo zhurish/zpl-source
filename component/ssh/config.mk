@@ -65,12 +65,15 @@ ifeq ($(strip $(WITH_GCRYPT)),true)
 LIBSSHOBJS += libgcrypt.o \
         gcrypt_missing.o \
         pki_gcrypt.o
+        
+PLDEFINE +=-DHAVE_LIBGCRYPT
 else
 LIBSSHOBJS += pki_crypto.o \
         libcrypto.o 
    # if(OPENSSL_VERSION VERSION_LESS "1.1.0")
 LIBSSHOBJS += libcrypto-compat.o
   #  endif
+#PLDEFINE +=-DHAVE_LIBGCRYPT
 endif
 
 ifeq ($(strip $(WITH_SFTP)),true)

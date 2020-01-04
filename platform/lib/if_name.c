@@ -58,7 +58,7 @@ static int vty_iusp_explain (const char *string, int *unit, int *slot, int *port
 
 const char *getkernelname(if_type_t	type)
 {
-	int i = 0;
+	u_int i = 0;
 	for(i = 0; i < array_size(if_name_mgt); i++)
 	{
 		if(if_name_mgt[i].type && if_name_mgt[i].type == type)
@@ -69,7 +69,7 @@ const char *getkernelname(if_type_t	type)
 
 const char *getabstractname(if_type_t	type)
 {
-	int i = 0;
+	u_int i = 0;
 	for(i = 0; i < array_size(if_name_mgt); i++)
 	{
 		if(if_name_mgt[i].type && if_name_mgt[i].type == type)
@@ -80,7 +80,7 @@ const char *getabstractname(if_type_t	type)
 
 const char *getifpname(if_type_t	type)
 {
-	int i = 0;
+	u_int i = 0;
 	for(i = 0; i < array_size(if_name_mgt); i++)
 	{
 		if(if_name_mgt[i].type && if_name_mgt[i].type == type)
@@ -91,7 +91,7 @@ const char *getifpname(if_type_t	type)
 
 if_type_t kernelname2type(const char *name)
 {
-	int i = 0;
+	u_int i = 0;
 	for(i = 0; i < array_size(if_name_mgt); i++)
 	{
 		if(if_name_mgt[i].type && (os_memcmp(if_name_mgt[i].kname, name, 3) == 0))
@@ -102,7 +102,7 @@ if_type_t kernelname2type(const char *name)
 
 if_type_t abstractname2type(const char *name)
 {
-	int i = 0;
+	u_int i = 0;
 	for(i = 0; i < array_size(if_name_mgt); i++)
 	{
 		if(if_name_mgt[i].type && (os_memcmp(if_name_mgt[i].aname, name, 3) == 0))
@@ -113,7 +113,7 @@ if_type_t abstractname2type(const char *name)
 
 if_type_t name2type(const char *name)
 {
-	int i = 0;
+	u_int i = 0;
 	for(i = 0; i < array_size(if_name_mgt); i++)
 	{
 		if(if_name_mgt[i].type && (os_memcmp(if_name_mgt[i].name, name, 3) == 0))
@@ -185,7 +185,7 @@ const char * if_ifname_format(const char *ifname, const char *uspv)
  */
 const char * if_ifname_split(const char *name)
 {
-	int n = 0;
+	u_int n = 0;
 	static char buf[INTERFACE_NAMSIZ];
 	//p = strstr(name," ");
 /*	n = os_strcspn(name, " ");
@@ -217,17 +217,24 @@ ifindex_t if_ifindex_make(const char *ifname, const char *uspv)
 	ifindex_t ifindex = 0;
 	int unit = 0, slot = 0, port = 0, id = 0, iuspv = 0;
 	if_type_t type = 0;
-	char *uspvstring = uspv;
+	char *uspvstring = ifname;
 
 	type = if_iftype_make(ifname);
-	if(!uspv)
+	if(uspv)
 	{
-		uspvstring = os_strstr(ifname, " ");
+/*		uspvstring = os_strstr(ifname, " ");
 		if(uspvstring)
 			uspvstring++;
-		else
+		else*/
 			uspvstring = uspv;
 	}
+	else
+	{
+		//uspvstring = os_strstr(ifname, " ");
+		//if(uspvstring)
+		//	uspvstring++;
+	}
+//printf("========================%s========================type=%d-->%s\r\n", __func__, type, uspvstring);
 	if( type == IF_SERIAL
 			|| type == IF_ETHERNET
 			|| type == IF_GIGABT_ETHERNET
@@ -264,7 +271,7 @@ static const char * if_ifname_make_by_ifindex(int abstract, ifindex_t ifindex)
 {
 	static char buf[INTERFACE_NAMSIZ];
 
-	char **type_str = NULL;
+	char *type_str = NULL;
 	if(abstract)
 		type_str = getabstractname(IF_TYPE_GET(ifindex));
 	else
@@ -336,13 +343,13 @@ if_type_t if_iftype_make(const char *str)
 	return type;
 }
 
-char *if_mac_out_format(unsigned char *mac, int len)
+const char *if_mac_out_format(unsigned char *mac)
 {
 	static char buf[32];
 	os_memset(buf, 0, sizeof(buf));
 	os_snprintf(buf, sizeof(buf), "%02x%02x-%02x%02x-%02x%02x",
 	        mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
-	return buf;
+	return (const char *)buf;
 }
 
 
@@ -387,6 +394,175 @@ int if_uspv_type_setting(struct interface *ifp)
 	return ERROR;
 }
 
+
+#if 1
+static int vty_iusp_explain (const char *string, int *unit, int *slot, int *port, int *id)
+{
+	char *str = NULL;
+	int ounit = 0, oslot = 0, oport = 0,  oid= 0;
+	u_int  count = 0;
+#ifdef CMD_IUSPV_SUPPORT
+	char *base2 = "0123456789/.";
+#else
+	char *base2 = "0123456789/";
+#endif
+	if (string == NULL)
+	{
+		zlog_err(ZLOG_NSM,"if iusp format ERROR input is NULL");
+		return 0;
+	}
+	//os_memset(buf, 0, sizeof(buf));
+	str = string;
+	while(string)
+	{
+		if(isdigit(*string))
+		{
+			str = string;
+			break;
+		}
+		else
+			string++;
+	}
+
+	count = strspn (str, base2);
+	if (count != strlen (str))
+	{
+		zlog_err(ZLOG_NSM,"if iusp format ERROR input is:%s(%s)",str, string);
+		return 0;
+	}
+	if(strchr_count(str, '/') == 2)
+	{
+		if(strstr(str, "."))
+		{
+			//sscanf(str, "%d[^/]/%d[^/]/%d[^.].%d", &ounit, &oslot, &oport, &oid);
+			sscanf(str, "%d/%d/%d.%d", &ounit, &oslot, &oport, &oid);
+		}
+		else
+			sscanf(str, "%d/%d/%d", &ounit, &oslot, &oport);
+			//sscanf(str, "%d[^/]/%d[^/]/%d", &ounit, &oslot, &oport);
+	}
+	else if(strchr_count(str, '/') == 1)
+	{
+		if(strstr(str, "."))
+		{
+			sscanf(str, "%d/%d.%d", &oslot, &oport, &oid);
+		}
+		else
+			sscanf(str, "%d/%d", &oslot, &oport);
+	}
+	if(unit)
+		*unit = ounit;
+	if(slot)
+		*slot = oslot;
+	if(port)
+		*port = oport;
+	if(id)
+		*id = oid;
+
+	//fprintf(stderr,"---%s---:input str:%s --> %d/%d/%d.%d\r\n", __func__, str,*unit,*slot,*port,*id);
+
+#ifdef VTY_IUSP_DEBUG
+	//if(count == 2)
+		fprintf(stderr,"input str:%s --> %d/%d/%d.%d\r\n",str,*unit,*slot,*port,*id);
+	//else//if(count == 2)
+	//	fprintf(stderr,"input str:%s --> %d/%d/%d.%d\r\n",str,*unit,*slot,*port,*id);
+#endif
+	return 1;
+}
+
+int vty_iusp_get (const char *str, int *uspv)
+{
+	int unit = 0, slot = 0, port = 0, id = 0;
+	char *uspv_str = strstr(str, " ");
+	if_type_t type = if_iftype_make(str);
+	if(type == IF_SERIAL || type == IF_ETHERNET ||
+			type == IF_GIGABT_ETHERNET || type == IF_TUNNEL ||
+			type == IF_BRIGDE || type == IF_WIRELESS
+#ifdef CUSTOM_INTERFACE
+			|| type == IF_WIFI || type == IF_MODEM
+#endif
+			)
+	{
+		if(uspv_str)
+		{
+			if(vty_iusp_explain (uspv_str, &unit, &slot, &port, &id))
+			{
+				if(uspv)
+				{
+					*uspv = (IF_TYPE_SET(type) | IF_USPV_SET(unit, slot, port, id));
+				}
+				return 1;
+			}
+		}
+		else
+		{
+			if(vty_iusp_explain (str, &unit, &slot, &port, &id))
+			{
+				if(uspv)
+				{
+					*uspv = (IF_TYPE_SET(type) | IF_USPV_SET(unit, slot, port, id));
+				}
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
+/*
+ * 0000-0000-0000 --> 00:00:00:00:00:00
+ */
+int vty_mac_get (const char *str, unsigned char *mac)
+{
+	u_int count = 0,i = 0;
+	char buf[16];
+	char *p,*v = NULL;
+	char *base2 = "0123456789abcdefABCDEF-";
+	if (str == NULL)
+	{
+		zlog_err(ZLOG_NSM,"mac address format ERROR input NULL");
+		return 0;
+	}
+	os_memset(buf, 0, sizeof(buf));
+	count = strspn(str,base2);
+	if(count != strlen(str))
+	{
+		zlog_err(ZLOG_NSM,"mac address decode ERROR input:%s",str);
+		return 0;
+	}
+	//base = os_strdup(str);
+	//if(base)
+	v = p = (char *)str;
+	while(1)
+	{
+		v = p;
+		p = strchr (v, '-');
+		if(p)
+		{
+			strncpy (buf, v, p - v);
+			count = strtol (buf,NULL,16);
+			mac[i++] = ((count >> 8)&0xff);
+			mac[i++] = (count & 0xff);
+			p++;
+		}
+		else
+		{
+			//p++;
+			count = strtol (v, NULL, 16);
+			mac[i++] = ((count >> 8)&0xff);
+			mac[i++] = (count & 0xff);
+			break;
+		}
+		if(i==5)
+			break;
+	}
+#ifdef VTY_IUSP_DEBUG
+	//fprintf(stderr,"input str:%s --> %02x%0x2-%02x%02x-%02x%02x\r\n",str,
+	//        mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
+#endif
+	return 1;
+}
+#else
 //vty_iusp_explain
 static int vty_iusp_explain (const char *string, int *unit, int *slot, int *port, int *id)
 {
@@ -619,7 +795,7 @@ int vty_mac_get (const char *str, unsigned char *mac)
 #endif
 	return 1;
 }
-
+#endif
 
 int if_loopback_ifindex_create(if_type_t type, const char *name)
 {

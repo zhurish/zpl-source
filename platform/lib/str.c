@@ -191,9 +191,36 @@ int all_space (const char *str)
   return 1;
 }
 
+const char *str_trim(char* src)
+{
+	char *start = NULL, *end = NULL, *temp = NULL;			//定义去除空格后字符串的头尾指针和遍历指针
+	temp = src;
+	while (isspace(*temp))
+	{
+		++temp;
+	}
+	start = temp; //求得头指针
+	temp = src + strlen(src) - 1; //得到原字符串最后一个字符的指针(不是'\0')
+	//printf("%c\n", *temp);
+	while (isspace(*temp))
+	{
+		*temp = '\0';
+		--temp;
+	}
+	end = temp; //求得尾指针
+	//for (src = start; src <= end;)
+	//{
+	//	*strOut++ = *src++;
+	//}
+	//*strOut = '\0';
+	//end++;
+	//*end = '\0';
+	return start;
+}
+
 const char *itoa(int value, int base)
 {
-	static char buf[64];
+	static char buf[32];
 	memset(buf, 0, sizeof(buf));
 	if(base == 0 || base == 10)
 		snprintf(buf, sizeof(buf), "%d", value);
@@ -202,14 +229,21 @@ const char *itoa(int value, int base)
 	return buf;
 }
 
-const char *itof(float value)
+const char *ftoa(float value, char *fmt)
 {
-	static char buf[64];
+	static char buf[16];
 	memset(buf, 0, sizeof(buf));
-	snprintf(buf, sizeof(buf), "%f", value);
+	snprintf(buf, sizeof(buf), fmt, value);
 	return buf;
 }
 
+const char *dtoa(double value, char *fmt)
+{
+	static char buf[32];
+	memset(buf, 0, sizeof(buf));
+	snprintf(buf, sizeof(buf), fmt, value);
+	return buf;
+}
 
 
 /* Validate a hex character */
@@ -276,16 +310,17 @@ int strchr_next(char *src, const char em)
 {
 	char *p = src;
 	assert(src);
-	int i = 0, count = os_strlen(src);
+	int i = 0, j = 0, count = os_strlen(src);
 	for(i = 0; i < count; i++)
 	{
 		if(p[i] == em)
 		{
+			j = 1;
 			if(i != 0)
 				break;
 		}
 	}
-	return i;
+	return j ? i:0;
 }
 
 char *os_strstr_last(const char *dest,const char *src)
@@ -315,6 +350,32 @@ int str_isempty(char *dest, int len)
 }
 
 
+
+/*
+int inet64_to_mac(u_int64 value, u_int8 *dst)
+{
+	unsigned i;
+	zassert(dst != NULL);
+	u_int64 temp = value;
+	for (i = 0; i < 8; i++) {
+		dst[7-i] = temp & 0xff;
+		temp >>= 8;
+	}
+	return OK;
+}
+
+u_int64 mac_to_inet64(u_int8 *dst)
+{
+	unsigned i;
+	u_int64 temp = 0;
+	zassert(dst != NULL);
+	for (i = 0; i < 8; i++) {
+		temp |= dst[i] & 0xff;
+		temp <<= 8;
+	}
+	return temp;
+}
+*/
 
 
 
@@ -375,7 +436,7 @@ putShort(unsigned char *obuf, int val)
 void
 convert_num(unsigned char *buf, char *str, int base, int size)
 {
-	int negative = 0, tval, max;
+	u_int32_t negative = 0, tval, max;
 	u_int32_t val = 0;
 	char *ptr = str;
 
@@ -413,7 +474,7 @@ convert_num(unsigned char *buf, char *str, int base, int size)
 			//dhcpd_warning("Bogus number: %s.", str);
 			break;
 		}
-		if (tval >= base) {
+		if (tval >= (u_int32_t)base) {
 			//dhcpd_warning("Bogus number: %s: digit %d not in base %d",
 			//    str, tval, base);
 			break;

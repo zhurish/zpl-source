@@ -8,9 +8,10 @@
 #include <zebra.h>
 #include "b53_mdio.h"
 #include "b53_regs.h"
-#include "b53_driver.h"
+#include "sdk_driver.h"
 
 /****************************************************************************************/
+//禁止使能镜像功能
 int b53125_mirror_enable(struct b53125_device *dev, BOOL enable)
 {
 	u16 reg;//, loc;
@@ -22,6 +23,7 @@ int b53125_mirror_enable(struct b53125_device *dev, BOOL enable)
 	return ret;
 }
 
+//设置镜像目的端口
 int b53125_mirror_destination_set(struct b53125_device *dev, int port)
 {
 	u16 reg;//, loc;
@@ -34,6 +36,7 @@ int b53125_mirror_destination_set(struct b53125_device *dev, int port)
 }
 
 /***************************************************************************************************/
+//设置镜像源MAC地址
 int b53125_mirror_ingress_mac(struct b53125_device *dev, u8 *mac)
 {
 	u64 reg = 0;
@@ -68,6 +71,7 @@ int b53125_mirror_egress_mac(struct b53125_device *dev, u8 *mac)
 	return ret;
 }
 /***************************************************************************************************/
+//设置镜像ID
 int b53125_mirror_ingress_div(struct b53125_device *dev, u16 div)
 {
 	int ret = 0;
@@ -98,6 +102,7 @@ int b53125_mirror_egress_div(struct b53125_device *dev, u16 div)
 	return ret;
 }
 /***************************************************************************************************/
+//设置镜像源端口
 int b53125_mirror_ingress_source(struct b53125_device *dev, int port)
 {
 	int ret = 0;

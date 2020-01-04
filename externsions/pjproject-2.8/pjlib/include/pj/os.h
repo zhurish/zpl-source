@@ -294,7 +294,7 @@ PJ_DECL(void*) pj_thread_get_os_handle(pj_thread_t *thread);
  * @return Thread name as null terminated string.
  */
 PJ_DECL(const char*) pj_thread_get_name(pj_thread_t *thread);
-
+PJ_DEF(int) pj_thread_get_tid(pj_thread_t *p);
 /**
  * Resume a suspended thread.
  *

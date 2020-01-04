@@ -8,7 +8,17 @@
 #ifndef __IW_CONFIG_H__
 #define __IW_CONFIG_H__
 
+/*
+#define IW_MAX_FREQUENCIES	32
+#define IW_MAX_BITRATES		32
+#define IW_MAX_TXPOWER		8
+#define IW_MAX_SPY		8
+#define IW_MAX_AP		64
+*/
 
+#define IW_DEV_CHANNEL_MAX	32
+#define IW_DEV_BITRATES_MAX	32
+#define IW_DEV_TXPOWER_MAX	8
 
 #define IW_SSID_NAME_MAX	64
 #define IW_SSID_PASS_MAX	64
@@ -130,6 +140,36 @@ typedef enum
 	IW_VALUE_FIEXD = -1,
 	IW_VALUE_OFF = -2,
 }iw_value_t;
+
+
+typedef struct iw_dev_freq_s
+{
+	unsigned char	active;
+	unsigned char	channel;
+	double	freq;
+}iw_dev_freq_t, iw_dev_channel_s;
+
+
+typedef struct iw_dev_bitrate_s
+{
+	unsigned char	active;
+	unsigned char	channel;
+	unsigned int	bitrate;
+}iw_dev_bitrate_t;
+
+//#include "wireless.h"
+
+typedef struct iw_dev_s
+{
+	iw_dev_freq_t 		freq[IW_DEV_CHANNEL_MAX];
+	iw_dev_freq_t 		cu_freq;
+
+	unsigned char		num_bitrates;
+	iw_dev_bitrate_t	bitrates[IW_DEV_BITRATES_MAX];
+	iw_dev_bitrate_t	cu_bitrates;
+	iw_dev_bitrate_t	broadcast_bitrates;
+
+}iw_dev_t;
 
 
 extern int	iw_debug_conf;

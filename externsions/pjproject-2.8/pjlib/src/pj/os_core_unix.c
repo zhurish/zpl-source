@@ -41,7 +41,7 @@
 
 #include <unistd.h>	    // getpid()
 #include <errno.h>	    // errno
-
+#include <sys/syscall.h>
 #include <pthread.h>
 
 #define THIS_FILE   "os_core_unix.c"
@@ -85,6 +85,7 @@ struct pj_thread_t
     const char	   *caller_file;
     int		    caller_line;
 #endif
+    pid_t		tid;
 };
 
 struct pj_atomic_t
@@ -602,7 +603,7 @@ static void *thread_main(void *param)
 	pj_mutex_lock(rec->suspended_mutex);
 	pj_mutex_unlock(rec->suspended_mutex);
     }
-
+    rec->tid = syscall(SYS_gettid);
 	if (pj_task_cb.pj_task_run_cb)
 		(pj_task_cb.pj_task_run_cb)(pthread_self());
 
@@ -634,24 +635,26 @@ PJ_DEF(pj_status_t) pj_thread_create( pj_pool_t *pool,
     pthread_attr_t thread_attr;
     void *stack_addr;
     int rc;
-
+    char pj_thread_name[128];
     PJ_UNUSED_ARG(stack_addr);
 
     PJ_CHECK_STACK();
     PJ_ASSERT_RETURN(pool && proc && ptr_thread, PJ_EINVAL);
-
+    memset(pj_thread_name, 0, sizeof(pj_thread_name));
     /* Create thread record and assign name for the thread */
     rec = (struct pj_thread_t*) pj_pool_zalloc(pool, sizeof(pj_thread_t));
     PJ_ASSERT_RETURN(rec, PJ_ENOMEM);
 
     /* Set name. */
     if (!thread_name)
-	thread_name = "thr%p";
+    	strcpy(pj_thread_name,"thr%p");
+    else
+    	strcpy(pj_thread_name, thread_name);
 
-    if (strchr(thread_name, '%')) {
-	pj_ansi_snprintf(rec->obj_name, PJ_MAX_OBJ_NAME, thread_name, rec);
+    if (strchr(pj_thread_name, '%')) {
+	pj_ansi_snprintf(rec->obj_name, PJ_MAX_OBJ_NAME, pj_thread_name, rec);
     } else {
-	strncpy(rec->obj_name, thread_name, PJ_MAX_OBJ_NAME);
+	strncpy(rec->obj_name, pj_thread_name, PJ_MAX_OBJ_NAME);
 	rec->obj_name[PJ_MAX_OBJ_NAME-1] = '\0';
     }
 
@@ -702,8 +705,8 @@ PJ_DEF(pj_status_t) pj_thread_create( pj_pool_t *pool,
     /* Create the thread. */
     rec->proc = proc;
     rec->arg = arg;
-    PJ_LOG(5, (rec->obj_name, "--------------Thread created-----------%s", thread_name));
-    __PJSIP_DEBUG("--------------Thread created-----------%s\r\n", thread_name);
+    PJ_LOG(5, (rec->obj_name, "--------------Thread created-----------%s", pj_thread_name));
+    //__PJSIP_DEBUG("--------------Thread created-----------%s\r\n", thread_name);
     rc = pthread_create( &rec->thread, &thread_attr, &thread_main, rec);
     if (rc != 0) {
 	return PJ_RETURN_OS_ERROR(rc);
@@ -740,6 +743,20 @@ PJ_DEF(const char*) pj_thread_get_name(pj_thread_t *p)
 #endif
 }
 
+PJ_DEF(int) pj_thread_get_tid(pj_thread_t *p)
+{
+#if PJ_HAS_THREADS
+    pj_thread_t *rec = (pj_thread_t*)p;
+    if(!p)
+    	return 0;
+    PJ_CHECK_STACK();
+    PJ_ASSERT_RETURN(p, "");
+
+    return rec->tid;
+#else
+    return 0;
+#endif
+}
 /*
  * pj_thread_resume()
  */
@@ -838,8 +855,8 @@ PJ_DEF(pj_status_t) pj_thread_join(pj_thread_t *p)
     if (p == pj_thread_this())
 	return PJ_ECANCELLED;
 
-	if (pj_task_cb.pj_task_del_cb && rec->thread)
-		(pj_task_cb.pj_task_del_cb)(rec->thread);
+/*	if (pj_task_cb.pj_task_del_cb && rec->thread)
+		(pj_task_cb.pj_task_del_cb)(rec->thread);*/
 
     PJ_LOG(6, (pj_thread_this()->obj_name, "Joining thread %s", p->obj_name));
     result = pthread_join( rec->thread, &ret);
@@ -932,19 +949,21 @@ PJ_DEF(void) pj_thread_check_stack(const char *file, int line)
     char stk_ptr;
     pj_uint32_t usage;
     pj_thread_t *thread = pj_thread_this();
+    if(thread)
+    {
+		/* Calculate current usage. */
+		usage = (&stk_ptr > thread->stk_start) ? &stk_ptr - thread->stk_start :
+			thread->stk_start - &stk_ptr;
 
-    /* Calculate current usage. */
-    usage = (&stk_ptr > thread->stk_start) ? &stk_ptr - thread->stk_start :
-		thread->stk_start - &stk_ptr;
+		/* Assert if stack usage is dangerously high. */
+		pj_assert("STACK OVERFLOW!! " && (usage <= thread->stk_size - 128));
 
-    /* Assert if stack usage is dangerously high. */
-    pj_assert("STACK OVERFLOW!! " && (usage <= thread->stk_size - 128));
-
-    /* Keep statistic. */
-    if (usage > thread->stk_max_usage) {
-	thread->stk_max_usage = usage;
-	thread->caller_file = file;
-	thread->caller_line = line;
+		/* Keep statistic. */
+		if (usage > thread->stk_max_usage) {
+		thread->stk_max_usage = usage;
+		thread->caller_file = file;
+		thread->caller_line = line;
+		}
     }
 }
 

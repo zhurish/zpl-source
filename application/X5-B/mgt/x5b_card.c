@@ -11,6 +11,9 @@
 #include "network.h"
 #include "vty.h"
 
+
+#include "x5_b_global.h"
+#ifdef X5B_APP_DATABASE
 #include "x5b_dbase.h"
 
 static LIST *card_table = NULL;
@@ -27,6 +30,11 @@ int card_id_string_to_hex(const char *id, int len, u_int8 *cardNumber)
 		return 0;
 	memset(tmp, 0, sizeof(tmp));
 	memset(cid, 0, sizeof(cid));
+	if(len < 14)
+	{
+		memcpy(cardNumber, id, len);
+		return len;
+	}
 	if(len == 14)
 		memcpy(cid, id, len);
 		//memcpy(cid + 2, id, len);
@@ -821,3 +829,4 @@ int voip_card_web_select_all(void)
 		os_mutex_unlock(card_mutex);
 	return OK;
 }
+#endif

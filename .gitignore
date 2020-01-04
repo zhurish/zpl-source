@@ -23,6 +23,7 @@
 *~
 *.m4
 *_install/*
+externsions/openssl
 *.libs/*
 *.deps/*
 pkg/

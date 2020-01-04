@@ -279,10 +279,20 @@ typedef struct stream_descr
 
 /* Prototype for handling display of each single interface on the
  * system - see iw_enum_devices() */
+
+typedef struct iw_user_cb_s
+{
+  int (*iw_show)(void *vty, char *fmt,...);
+  void *vty;
+  int (*iw_get)(void *p, void *input);
+  void *p;
+} iw_user_cb_t;
+
+
 typedef int (*iw_enum_handler)(int	skfd,
 			       char *	ifname,
 			       char *	args[],
-			       int	count);
+			       int	count, iw_user_cb_t *);
 
 /* Describe a modulation */
 typedef struct iw_modul_descr
@@ -296,8 +306,8 @@ typedef struct iw_modul_descr
 /*
  * All the functions in iwcommon.c
  */
-extern int iwlist_main(int argc, char ** argv);
-extern int iw_main(int argc, char ** argv);
+extern int iwlist_main(iw_user_cb_t *cb, int argc, char ** argv);
+extern int iw_main(iw_user_cb_t *cb, int argc, char ** argv);
 
 extern int iwlist_detail_set(int value);
 extern int iwlist_detail_get();
@@ -308,7 +318,7 @@ extern void
 	iw_enum_devices(int		skfd,
 			iw_enum_handler fn,
 			char *		args[],
-			int		count);
+			int		count, iw_user_cb_t *cb);
 /* --------------------- WIRELESS SUBROUTINES ----------------------*/
 extern int
 	iw_get_kernel_we_version(void);
@@ -494,6 +504,7 @@ extern int
 
 extern int iw_is_connect(char *ifname, unsigned char *bssid);
 extern int iw_kernel_mode(char *ifname, int *mode);
+extern int iw_kernel_ssid(char *ifname, char *ssid);
 extern int iw_start_scan(char * ifname, wireless_scan_head *context);
 extern int iw_free_scan(wireless_scan_head *context);
 /**************************** VARIABLES ****************************/

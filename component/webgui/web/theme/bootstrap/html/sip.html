@@ -1,0 +1,1407 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta content="" name="description" />
+	<meta content="webthemez" name="author" />
+	<!--meta http-equiv="refresh" content="30"-->
+	<!-- Bootstrap Styles-->
+	<link href="../css/bootstrap.min.css" rel="stylesheet" />
+
+	<link href="../css/bootstrap-switch.min.css" rel="stylesheet" />
+
+	<!-- private Styles-->
+	<link href="../css/private.css" rel="stylesheet" />
+
+	<!-- jQuery Js -->
+	<script src="../js/jquery-2.1.1.min.js"></script>
+	<!-- Bootstrap Js -->
+	<script src="../js/bootstrap.min.js"></script>
+
+	<script src="../js/xhr.js"></script>
+	<script src="../js/data-type.js"></script>
+
+	<title>sip</title>
+</head>
+
+<body class="body-bg-img">
+	<div id="maincontent" class="container">
+		<fieldset class="fieldset-margin fieldset-background">
+			<form class="form-horizontal form-margin" role="form" name="media_volume" action="" accept-charset="UTF-8"
+				method="POST">
+				<legend class="legend-text-align">SIP设置</legend>
+
+				<div class="form-group show">
+					<label for="out_vol" class="col-sm-3 control-label">播放音量</label>
+					<div class="col-sm-4">
+						<input type="range" min="0" max="100" step="5" class="form-control" name="out_vol" id="out_vol"
+							value="80" oninput="sip_volume_onchange(this)" required>
+					</div>
+				</div>
+				<div class="form-group show">
+					<label for="in_vol" class="col-sm-3 control-label">录音音量</label>
+					<div class="col-sm-4">
+						<input type="range" min="0" max="100" step="5" class="form-control" name="in_vol" id="in_vol"
+							value="80" oninput="sip_volume_onchange(this)" required>
+					</div>
+				</div>
+			</form>
+			<div class="show" name="sip_reg_state" id="sip_reg_state">
+				<table class="table table-condensed">
+					<caption class="tbl-text-align bold">SIP状态信息</caption>
+					<thead>
+						<tr>
+							<th>本地号码</th>
+							<th>注册服务器</th>
+							<th>DTMF</th>
+							<th>CODEC</th>
+							<th>注册状态</th>
+						</tr>
+					</thead>
+					<tbody id="sipregtbl">
+						<script type="text/javascript">
+							function sip_reg_state() {
+								var utbl = "";
+								$.get("/goform/sipstate", function (data, status) {
+									console.log("data:" + data);
+									var data_json = JSON.parse(data);
+									$.each(data_json, function (index, info) {
+
+										utbl += "<tr>";
+										utbl += "<td>" + info.sip_number + "</td>";
+										utbl += "<td>" + info.serverip + "</td>";
+										utbl += "<td>" + info.dtmf + "</td>";
+										utbl += "<td>" + info.codec + "</td>";
+										utbl += "<td>" + info.state + "</td>";
+										if (info.state == "register" && info.serverip != " ") {
+											utbl += "<td>\
+														<div class=\"col-sm-push-2 control-label\">\
+															  <button type=\"button\" class=\"btn btn-danger\" name=\"unregister\" id=\"unregister\" \
+															  onclick=\"sip_handle_click(this)\"><span class=\"glyphicon glyphicon-ban-circle\"\
+															style=\"margin-right:10px;\"></span>断开</button>\
+														</div>\
+													</td>";
+											utbl += "</tr>";
+										}
+										else {
+											utbl += "<td>\
+														<div class=\"col-sm-push-2 control-label\">\
+															  <button type=\"button\" class=\"btn btn-submit\" name=\"register\" id=\"register\" \
+															  onclick=\"sip_handle_click(this)\"><span class=\"glyphicon glyphicon-ok-circle\"\
+															style=\"margin-right:10px;\"></span>注册</button>\
+														</div>\
+													</td>";
+											utbl += "</tr>";
+										}
+									});
+									$("#sipregtbl").html(utbl);
+								});
+							}
+							sip_reg_state();
+
+						</script>
+					</tbody>
+				</table>
+				<div id="state_waiting" class="alert alert-success hiden">
+					<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+							style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+				</div>
+				<div id="state_error" class="alert alert-warning hiden">
+					<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+				</div>
+				<script type="text/javascript">
+					function sip_volume_onchange(self) {
+						clearTimeout();
+						setTimeout(function (input) {
+							var stxhr = new XHR();
+							var argv = "ACTION=volume&BTNID=" + input.id + "&volume=" + self.value;
+							//console.log("aaaID:" + input.id + " VAL=" + input.value);
+							stxhr.post("/goform/button_onclick", argv,
+								function (x, json) {
+									//console.log("json:" + json);
+									//console.log(x);
+									if (x.responseText == "ERROR") {
+									}
+									else if (x.responseText == "OK") {
+									}
+								},
+								1000);
+						}, 1000, self);
+					}
+
+					function sip_handle_click(self) {
+
+						var number = $(self).parentNode.parentNode.prevAll()[4].innerText;
+						var argv;
+						var stxhr = new XHR();
+						argv = "ACTION=sip&BTNID=" + self.id + "&sip_number=" + number;
+
+						//console.log("BTNID:" + self.id);
+						//console.log("number:" + number);
+
+						$("#state_waiting").css("display", "block");
+						setTimeout(function () { $("#state_waiting").css("display", "none") }, 5000);
+						stxhr.post("/goform/button_onclick", argv,
+							function (x, json) {
+								//console.log("json:" + json);
+								//console.log(x);
+								if (x.responseText == "ERROR") {
+									clearTimeout();
+									$("#state_error").css("display", "block");
+									$("#state_waiting").css("display", "none");
+									setTimeout(function () { $("#state_error").css("display", "none") }, 3000);
+								}
+								else if (x.responseText == "OK") {
+									clearTimeout();
+									$("#state_waiting").css("display", "none");
+									$("#state_error").css("display", "none");
+									sip_reg_state();
+								}
+								else if (x.responseText != "" && json != null) {
+									if (json.response == "OK") {
+										clearTimeout();
+										$("#state_waiting").css("display", "none");
+										$("#state_error").css("display", "none");
+										sip_reg_state();
+									}
+								}
+							},
+							3000);
+					}
+				</script>
+			</div>
+		</fieldset>
+
+		<!-- sip设置 -->
+		<fieldset class="fieldset-margin fieldset-background">
+			<form class="form-horizontal form-margin" role="form" name="setsip" action="" accept-charset="UTF-8"
+				method="POST">
+				<legend class="legend-text-align">SIP设置</legend>
+
+				<div class="form-group">
+					<label for="sip_enable" class="col-sm-3 control-label">SIP</label>
+					<div class="checkbox col-sm-4">
+						<input type="checkbox" name="sip_enable" id="sip_enable" checked value="sip_enable"
+							onclick="sip_enable_check(this,$('#sip_enable'))">
+					</div>
+				</div>
+				<div id="sip_global">
+					<div class="form-group show">
+						<label for="interface" class="col-sm-3 control-label">本地接口</label>
+						<div class="col-sm-4">
+							<select class="form-control" name="interface" id="interface">
+								<script type="text/javascript">
+									function interface_tbl() {
+										var itbl = "";
+										$.get("/goform/interface-tbl", function (data, status) {
+											console.log("==============");
+											console.log(data);
+											var data_json = JSON.parse(data);
+											$.each(data_json, function (index, info) {
+												itbl += "<option value=\"" + info.name + "\">" + info.name + "</option>";
+											});
+											$("#interface").html(itbl);
+										});
+									}
+									interface_tbl();
+								</script>
+								<!--% jst_interface(); %-->
+							</select>
+						</div>
+					</div>
+					<div class="form-group show">
+						<label for="local_port" class="col-sm-3 control-label">本地端口</label>
+						<div class="col-sm-4">
+							<input type="number" min="1" max="65535" class="form-control" name="local_port"
+								id="local_port" onchange="input_port_check(this,$('#local_port'))" required
+								placeholder="5060">
+							<!--onmouseout-->
+						</div>
+						<div class="hiden">
+							<span class="glyphicon glyphicon-ok"
+								style="margin-right:10px;color: rgb(0, 194, 6);"></span>
+						</div>
+						<div class="hiden">
+							<span class="glyphicon glyphicon-remove"
+								style="margin-right:10px;color: rgb(255, 0, 0);"></span>
+						</div>
+					</div>
+
+
+					<div class="form-group show">
+						<label for="serverip" class="col-sm-3 control-label">SIP服务器地址</label>
+						<div class="col-sm-4">
+							<input type="text" minlength="6" maxlength="32" class="form-control" name="serverip"
+								id="serverip" onchange="input_address_check(this,$('#serverip'))" required
+								placeholder="192.168.0.100">
+							<!--onmouseout-->
+						</div>
+					</div>
+
+					<div class="form-group show">
+						<label for="serverport" class="col-sm-3 control-label">SIP服务器端口</label>
+						<div class="col-sm-4">
+							<input type="number" min="1" max="65535" class="form-control" name="serverport"
+								id="serverport" value="5060" onchange="input_port_check(this,$('#serverport'))" required
+								placeholder="5060">
+							<!--onmouseout-->
+						</div>
+					</div>
+
+					<div class="col-md-offset-2 col-lg-offset-2 col-xl-offset-2" id="func_check">
+
+						<label for="sip_backup" class="checkbox-inline">备用SIP</label>
+						<div class="checkbox checkbox-inline">
+							<input type="checkbox" name="sip_backup" id="sip_backup" value="sip_backup"
+								onclick="sip_enable_check(this,$('#sip_backup'))">
+						</div>
+						<label for="sip_proxy" class="checkbox-inline">SIP代理</label>
+						<div class="checkbox checkbox-inline">
+							<input type="checkbox" name="sip_proxya" id="sip_proxy" value="sip_proxy"
+								onclick="sip_enable_check(this,$('#sip_proxy'))">
+						</div>
+
+						<label for="sip_proxy_backup" class="checkbox-inline">备用SIP代理</label>
+						<div class="checkbox checkbox-inline">
+							<input type="checkbox" name="sip_proxy_backup" id="sip_proxy_backup"
+								value="sip_proxy_backup" onclick="sip_enable_check(this,$('#sip_proxy_backup'))">
+						</div>
+					</div><br>
+
+
+					<div class="form-group hiden">
+						<label for="serverip_backup" class="col-sm-3 control-label">备用SIP服务器地址</label>
+						<div class="col-sm-4">
+							<input type="text" minlength="6" maxlength="32" class="form-control" name="serverip_backup"
+								id="serverip_backup" onchange="input_address_check(this,$('#serverip_backup'))" required
+								placeholder="192.168.0.100">
+							<!--onmouseout-->
+						</div>
+					</div>
+
+					<div class="form-group hiden">
+						<label for="serverport_backup" class="col-sm-3 control-label">备用SIP服务器端口</label>
+						<div class="col-sm-4">
+							<input type="number" min="1" max="65535" class="form-control" name="serverport_backup"
+								id="serverport_backup" value="5060"
+								onchange="input_port_check(this,$('#serverport_backup'))" required placeholder="5060">
+							<!--onmouseout-->
+						</div>
+					</div>
+
+					<div class="form-group hiden">
+						<label for="proxy_server" class="col-sm-3 control-label">SIP代理服务器地址</label>
+						<div class="col-sm-4">
+							<input type="text" minlength="6" maxlength="32" class="form-control" name="proxy_server"
+								id="proxy_server" required onchange="input_address_check(this,$('#proxy_server'))"
+								placeholder="192.168.2.100">
+						</div>
+					</div>
+
+					<div class="form-group hiden">
+						<label for="proxy_port" class="col-sm-3 control-label">SIP代理服务器端口</label>
+						<div class="col-sm-4">
+							<input type="number" min="1" max="65535" class="form-control" name="proxy_port"
+								id="proxy_port" value="5060" onchange="input_port_check(this,$('#proxy_port'))" required
+								placeholder="5060">
+							<!--onmouseout-->
+						</div>
+					</div>
+
+					<div class="form-group hiden">
+						<label for="proxy_server_backup" class="col-sm-3 control-label">备用SIP代理服务器地址</label>
+						<div class="col-sm-4">
+							<input type="text" minlength="6" maxlength="32" class="form-control"
+								name="proxy_server_backup" id="proxy_server_backup" required
+								onchange="input_address_check(this,$('#proxy_server_backup'))"
+								placeholder="192.168.2.100">
+						</div>
+					</div>
+
+					<div class="form-group hiden">
+						<label for="proxy_port_backup" class="col-sm-3 control-label">备用SIP代理服务器端口</label>
+						<div class="col-sm-4">
+							<input type="number" min="1" max="65535" class="form-control" name="proxy_port_backup"
+								id="proxy_port_backup" value="5060"
+								onchange="input_port_check(this,$('#proxy_port_backup'))" required placeholder="5060">
+							<!--onmouseout-->
+						</div>
+					</div>
+					<div id="sip_user_config"><br>
+						<legend class="legend-text-align">SIP用户设置</legend>
+
+						<div class="form-group">
+							<label for="sip_user_reg" class="col-sm-3 control-label">用户ID注册</label>
+							<div class="checkbox col-sm-4">
+								<input type="checkbox" name="sip_user_reg" id="sip_user_reg" value="sip_user_reg"
+									onclick="sip_enable_check(this,$('#sip_user_reg'))">
+							</div>
+						</div>
+
+						<div class="form-group hiden">
+							<label for="sip_user" class="col-sm-3 control-label">用户ID</label>
+							<div class="col-sm-4">
+								<input type="text" minlength="1" maxlength="32" class="form-control" name="sip_user"
+									id="sip_user" required onchange="input_username_check(this,$('#sip_user'))">
+							</div>
+						</div>
+						<div class="form-group show">
+							<label for="sip_number" class="col-sm-3 control-label">注册号码</label>
+							<div class="col-sm-4">
+								<input type="text" minlength="1" maxlength="32" class="form-control" name="sip_number"
+									id="sip_number" required onchange="input_number_check(this,$('#sip_number'))">
+							</div>
+						</div>
+
+						<div class="form-group show">
+							<label for="sip_password" class="col-sm-3 control-label">认证密码</label>
+							<div class="col-sm-4">
+								<input type="password" minlength="1" maxlength="32" class="form-control"
+									name="sip_password" id="sip_password" required
+									onchange="input_username_check(this,$('#sip_password'))">
+							</div>
+							<span class="glyphicon glyphicon-eye-close" id="eye_icon"
+								onmousedown="click_see_password(this)" onmouseup="unclick_see_password(this)"></span>
+						</div>
+
+						<div class="form-group show">
+							<label for="sip_realm" class="col-sm-3 control-label">Realm</label>
+							<div class="col-sm-4">
+								<input type="text" minlength="1" maxlength="32" class="form-control" name="sip_realm"
+									id="sip_realm" required onchange="input_username_check(this,$('#sip_realm'))">
+							</div>
+						</div>
+
+						<div class="form-group show">
+							<label for="sip_100_rel" class="col-sm-3 control-label">100 REL</label>
+							<div class="checkbox col-sm-4">
+								<input type="checkbox" name="sip_100_rel" id="sip_100_rel" value="sip_100_rel">
+							</div>
+						</div>
+
+
+						<div class="form-group show">
+							<label for="sip_expires" class="col-sm-3 control-label">注册时间</label>
+							<div class="col-sm-4">
+								<input type="number" min="60" max="65535" class="form-control" name="sip_expires"
+									id="sip_expires" value="1800" onchange="input_port_check(this,$('#sip_expires'))"
+									required placeholder="5060">
+							</div>
+						</div>
+					</div><br>
+
+					<div id="sip_network">
+						<legend class="legend-text-align">网络媒体设置</legend>
+
+						<div class="form-group show">
+							<label for="proto" class="col-sm-3 control-label">传输协议</label>
+							<div class="col-sm-4">
+								<select class="form-control" name="proto" id="proto">
+									<option value="TCP">TCP</option>
+									<option value="UDP">UDP</option>
+								</select>
+							</div>
+						</div>
+
+						<div class="form-group show">
+							<label for="dtmf" class="col-sm-3 control-label">DTMF协议</label>
+							<div class="col-sm-4">
+								<select class="form-control" name="dtmf" id="dtmf">
+									<option value="SIP-INFO">SIP-INFO</option>
+									<option value="RFC2833">RFC2833</option>
+								</select>
+							</div>
+						</div>
+
+						<div class="form-group show">
+							<label for="rtp_port" class="col-sm-3 control-label">RTP端口</label>
+							<div class="col-sm-4">
+								<input type="number" min="60" max="65535" class="form-control" name="rtp_port"
+									id="rtp_port" value="50600" onchange="input_port_check(this,$('#rtp_port'))"
+									required placeholder="50600">
+							</div>
+						</div>
+
+						<div class="form-group show">
+							<label for="sip_codec" class="col-sm-3 control-label">默认CODEC</label>
+							<div class="col-sm-4">
+								<select class="form-control" name="sip_codec" id="sip_codec">
+									<option value="PCMU">PCMU</option>
+									<option value="PCMA">PCMA</option>
+									<option value="GSM">GSM</option>
+									<option value="G722">G722</option>
+									<option value="SPEEX-NB">SPEEX-NB</option>
+									<option value="iLBC">iLBC</option>
+
+								</select>
+							</div>
+						</div>
+
+						<div class="col-md-offset-2 col-lg-offset-2 col-xl-offset-2" id="func_codec_check">
+							<label for="pcmu_8000" class="checkbox-inline">PCMU/8000</label>
+							<div class="checkbox checkbox-inline">
+								<input type="checkbox" name="pcmu_8000" id="pcmu_8000" value="pcmu_8000">
+							</div>
+							<label for="pcma_8000" class="checkbox-inline">PCMA/8000</label>
+							<div class="checkbox checkbox-inline">
+								<input type="checkbox" name="pcma_8000" id="pcma_8000" value="pcma_8000">
+							</div>
+							<label for="gsm_8000" class="checkbox-inline">GSM/8000</label>
+							<div class="checkbox checkbox-inline">
+								<input type="checkbox" name="gsm_8000" id="gsm_8000" value="gsm_8000">
+							</div>
+							<label for="g722_8000" class="checkbox-inline">G722/8000</label>
+							<div class="checkbox checkbox-inline">
+								<input type="checkbox" name="g722_8000" id="g722_8000" value="g722_8000">
+							</div><br>
+							<label for="speex_8000" class="checkbox-inline">speex/8000</label>
+							<div class="checkbox checkbox-inline">
+								<input type="checkbox" name="speex_8000" id="speex_8000" value="speex_8000">
+							</div>
+							<label for="ilbc_8000" class="checkbox-inline">iLBC/8000</label>
+							<div class="checkbox checkbox-inline">
+								<input type="checkbox" name="ilbc_8000" id="ilbc_8000" value="ilbc_8000">
+							</div>
+						</div><br>
+
+						<div class="col-md-offset-2 col-lg-offset-2 col-xl-offset-2" id="func_net_check">
+
+							<label for="sip_stun" class="checkbox-inline">STUN</label>
+							<div class="checkbox checkbox-inline">
+								<input type="checkbox" name="sip_stun" id="sip_stun" value="sip_stun"
+									onclick="sip_enable_check(this,$('#sip_stun'))">
+							</div>
+							<label for="sip_outbound" class="checkbox-inline">OutBound</label>
+							<div class="checkbox checkbox-inline">
+								<input type="checkbox" name="sip_outbound" id="sip_outbound" value="sip_outbound"
+									onclick="sip_enable_check(this,$('#sip_outbound'))">
+							</div>
+
+							<label for="sip_nameserver" class="checkbox-inline">Name Server</label>
+							<div class="checkbox checkbox-inline">
+								<input type="checkbox" name="sip_nameserver" id="sip_nameserver" value="sip_nameserver"
+									onclick="sip_enable_check(this,$('#sip_nameserver'))">
+							</div>
+						</div><br>
+
+						<div id="stun">
+
+							<div class="form-group hiden">
+								<label for="stun_server" class="col-sm-3 control-label">STUN服务器地址</label>
+								<div class="col-sm-4">
+									<input type="text" minlength="6" maxlength="32" class="form-control"
+										name="stun_server" id="stun_server" required
+										onchange="input_address_check(this,$('#stun_server'))"
+										placeholder="192.168.2.100">
+								</div>
+							</div>
+
+							<div class="form-group hiden">
+								<label for="stun_port" class="col-sm-3 control-label">STUN服务器端口</label>
+								<div class="col-sm-4">
+									<input type="number" min="1" max="65535" class="form-control" name="stun_port"
+										id="stun_port" value="5060" onchange="input_port_check(this,$('#stun_port'))"
+										required placeholder="5060">
+									<!--onmouseout-->
+								</div>
+							</div>
+
+							<div class="form-group hiden">
+								<label for="stun_user" class="col-sm-3 control-label">STUN用户名</label>
+								<div class="col-sm-4">
+									<input type="text" minlength="1" maxlength="32" class="form-control"
+										name="stun_user" id="stun_user" required
+										onchange="input_username_check(this,$('#stun_user'))">
+								</div>
+							</div>
+
+							<div class="form-group hiden">
+								<label for="stun_password" class="col-sm-3 control-label">STUN密码</label>
+								<div class="col-sm-4">
+									<input type="password" minlength="1" maxlength="32" class="form-control"
+										name="stun_password" id="stun_password" required
+										onchange="input_username_check(this,$('#stun_password'))">
+								</div>
+
+								<span class="glyphicon glyphicon-eye-close" id="stun_eye_icon"
+									onmousedown="click_see_password(this)"
+									onmouseup="unclick_see_password(this)"></span>
+							</div>
+						</div>
+
+					</div>
+
+					<div id="outbound">
+						<div class="form-group hiden">
+							<label for="outbound_server" class="col-sm-3 control-label">OutBound服务器地址</label>
+							<div class="col-sm-4">
+								<input type="text" minlength="6" maxlength="32" class="form-control"
+									name="outbound_server" id="outbound_server" required
+									onchange="input_address_check(this,$('#outbound_server'))"
+									placeholder="192.168.2.100">
+							</div>
+						</div>
+
+						<div class="form-group hiden">
+							<label for="outbound_port" class="col-sm-3 control-label">OutBound服务器端口</label>
+							<div class="col-sm-4">
+								<input type="number" min="1" max="65535" class="form-control" name="outbound_port"
+									id="outbound_port" value="5060"
+									onchange="input_port_check(this,$('#outbound_port'))" required placeholder="5060">
+								<!--onmouseout-->
+							</div>
+						</div>
+					</div>
+
+					<div id="nameserver">
+						<div class="form-group hiden">
+							<label for="nameserver_server" class="col-sm-3 control-label">NameServer服务器地址</label>
+							<div class="col-sm-4">
+								<input type="text" minlength="6" maxlength="32" class="form-control"
+									name="nameserver_server" id="nameserver_server" required
+									onchange="input_address_check(this,$('#nameserver_server'))"
+									placeholder="192.168.2.100">
+							</div>
+						</div>
+
+						<div class="form-group hiden">
+							<label for="nameserver_port" class="col-sm-3 control-label">NameServer服务器端口</label>
+							<div class="col-sm-4">
+								<input type="number" min="1" max="65535" class="form-control" name="nameserver_port"
+									id="nameserver_port" value="5060"
+									onchange="input_port_check(this,$('#nameserver_port'))" required placeholder="5060">
+								<!--onmouseout-->
+							</div>
+						</div>
+					</div><br>
+
+					<div class="form-group show">
+						<div class="col-sm-4 control-label">
+							<button type="reset" class="btn btn-cencel" name="sip_cencel" id="sip_cencel">
+								<span class="glyphicon glyphicon-remove" style="margin-right:10px;"></span>取消</button>
+						</div>
+						<div class="col-sm-4 control-label">
+							<button type="button" class="btn btn-submit" name="sip_submit" id="sip_submit"
+								onclick="sip_onsubmit()"><span class="glyphicon glyphicon-send"
+									style="margin-right:10px;"></span>确定</button>
+						</div>
+					</div>
+					<div id="handle_waiting" class="alert alert-success hiden">
+						<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+								style="padding-left:150px; padding-right:20px">Waiting for command to
+							complete...</strong>
+					</div>
+					<div id="handle_error" class="alert alert-warning hiden">
+						<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+					</div>
+				</div>
+				<script type="text/javascript">
+
+
+					function sip_enable_check(self, obj) {
+						var value = self.checked;
+						if (value == true) {
+							if (self.id == "sip_enable") {
+
+								document.getElementById("interface").parentNode.parentNode.setAttribute("class", "form-group show");
+								document.getElementById("local_port").parentNode.parentNode.setAttribute("class", "form-group show");
+								document.getElementById("serverip").parentNode.parentNode.setAttribute("class", "form-group show");
+								document.getElementById("serverport").parentNode.parentNode.setAttribute("class", "form-group show");
+
+								document.getElementById("func_check").style.display = "block";
+								document.getElementById("sip_network").style.display = "block";
+								document.getElementById("sip_user_config").style.display = "block";
+
+								document.getElementById("sip_user_reg").parentNode.parentNode.setAttribute("class", "form-group show");
+								document.getElementById("sip_user").parentNode.parentNode.setAttribute("class", "form-group show");
+								document.getElementById("sip_number").parentNode.parentNode.setAttribute("class", "form-group show");
+								document.getElementById("sip_password").parentNode.parentNode.setAttribute("class", "form-group show");
+								document.getElementById("sip_realm").parentNode.parentNode.setAttribute("class", "form-group show");
+								document.getElementById("sip_100_rel").parentNode.parentNode.setAttribute("class", "form-group show");
+								document.getElementById("sip_expires").parentNode.parentNode.setAttribute("class", "form-group show");
+
+								document.getElementById("sip_cencel").parentNode.parentNode.setAttribute("class", "form-group show");
+							}
+							else if (self.id == "sip_backup") {
+								document.getElementById("serverport_backup").parentNode.parentNode.setAttribute("class", "form-group show");
+								document.getElementById("serverip_backup").parentNode.parentNode.setAttribute("class", "form-group show");
+							}
+							else if (self.id == "sip_proxy") {
+
+								document.getElementById("proxy_server").parentNode.parentNode.setAttribute("class", "form-group show");
+								document.getElementById("proxy_port").parentNode.parentNode.setAttribute("class", "form-group show");
+
+							}
+							else if (self.id == "sip_proxy_backup" && document.getElementById("sip_proxy").checked) {
+								document.getElementById("proxy_server_backup").parentNode.parentNode.setAttribute("class", "form-group show");
+								document.getElementById("proxy_port_backup").parentNode.parentNode.setAttribute("class", "form-group show");
+							}
+							else if (self.id == "sip_user_reg") {
+								document.getElementById("sip_user").parentNode.parentNode.setAttribute("class", "form-group show");
+								//document.getElementById("serverip_backup").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							}
+							else if (self.id == "sip_stun") {
+								document.getElementById("stun_server").parentNode.parentNode.setAttribute("class", "form-group show");
+								document.getElementById("stun_port").parentNode.parentNode.setAttribute("class", "form-group show");
+								document.getElementById("stun_user").parentNode.parentNode.setAttribute("class", "form-group show");
+								document.getElementById("stun_password").parentNode.parentNode.setAttribute("class", "form-group show");
+							}
+							else if (self.id == "sip_outbound") {
+								document.getElementById("outbound_server").parentNode.parentNode.setAttribute("class", "form-group show");
+								document.getElementById("outbound_port").parentNode.parentNode.setAttribute("class", "form-group show");
+							}
+							else if (self.id == "sip_nameserver") {
+								document.getElementById("nameserver_server").parentNode.parentNode.setAttribute("class", "form-group show");
+								document.getElementById("nameserver_port").parentNode.parentNode.setAttribute("class", "form-group show");
+							}
+
+
+						}
+						else {
+							if (self.id == "sip_enable") {
+								document.getElementById("interface").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("local_port").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("serverip").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("serverport").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								//document.getElementById("sip_backup").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("serverport_backup").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("serverip_backup").parentNode.parentNode.setAttribute("class", "form-group hiden");
+
+								//document.getElementById("sip_proxy").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("proxy_server").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("proxy_port").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								//document.getElementById("sip_proxy_backup").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("proxy_server_backup").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("proxy_port_backup").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("sip_user_reg").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("func_check").style.display = "none";
+								document.getElementById("sip_network").style.display = "none";
+								document.getElementById("sip_user_config").style.display = "none";
+
+								document.getElementById("sip_user").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("sip_number").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("sip_password").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("sip_realm").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("sip_100_rel").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("sip_expires").parentNode.parentNode.setAttribute("class", "form-group hiden");
+
+
+								document.getElementById("sip_cencel").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							}
+							else if (self.id == "sip_backup") {
+								document.getElementById("serverport_backup").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("serverip_backup").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							}
+							else if (self.id == "sip_proxy") {
+
+								document.getElementById("sip_proxy_backup").checked = false;
+								document.getElementById("proxy_server").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("proxy_port").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								//document.getElementById("sip_proxy_backup").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("proxy_server_backup").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("proxy_port_backup").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							}
+							else if (self.id == "sip_proxy_backup" && document.getElementById("sip_proxy").checked) {
+								document.getElementById("proxy_server_backup").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("proxy_port_backup").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							}
+							else if (self.id == "sip_user_reg") {
+								document.getElementById("sip_user").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								//document.getElementById("serverip_backup").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							}
+							else if (self.id == "sip_stun") {
+								document.getElementById("stun_server").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("stun_port").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("stun_user").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("stun_password").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							}
+							else if (self.id == "sip_outbound") {
+								document.getElementById("outbound_server").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("outbound_port").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							}
+							else if (self.id == "sip_nameserver") {
+								document.getElementById("nameserver_server").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("nameserver_port").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							}
+						}
+						return true;
+					}
+
+					function input_port_check(self, obj) {
+						if (self.value != "") {
+							if (self.value > 1 && self.value < 65535) {
+								check_ok_show(obj);
+								return true;
+							}
+							else {
+								check_err_show(obj);
+							}
+						}
+						return false;
+					}
+
+					function input_username_check(self, obj) {
+						if (self.value != "") {
+							if (self.value.length >= 1 && self.value.length < 32) {
+								check_ok_show(obj);
+								return true;
+							}
+							else {
+								check_err_show(obj);
+							}
+						}
+						return false;
+					}
+
+					//按下鼠标查看密码
+					function click_see_password(self) {
+						//console.log("click_see_password");
+						if (self.id == "eye_icon") {
+							document.getElementById("sip_password").type = "text";
+							document.getElementById("eye_icon").setAttribute("class", "glyphicon glyphicon-eye-open");
+
+						}
+						else if (self.id == "stun_eye_icon") {
+							document.getElementById("stun_password").type = "text";
+							document.getElementById("stun_eye_icon").setAttribute("class", "glyphicon glyphicon-eye-open");
+						}
+					}
+					//释放鼠标恢复密码不可见
+					function unclick_see_password(self) {
+						//console.log("unclick_see_password");
+						if (self.id == "eye_icon") {
+							document.getElementById("sip_password").type = "password";
+							document.getElementById("eye_icon").setAttribute("class", "glyphicon glyphicon-eye-close");
+
+						}
+						else if (self.id == "stun_eye_icon") {
+							document.getElementById("stun_password").type = "password";
+							document.getElementById("stun_eye_icon").setAttribute("class", "glyphicon glyphicon-eye-close");
+						}
+					}
+
+					function input_number_check(self, obj) {
+						if (self.value != "") {
+							if (self.value.length > 1 && self.value.length < 32 && is_alldigit(self.value)) {
+								check_ok_show(obj);
+								return true;
+							}
+							else {
+								check_err_show(obj);
+							}
+						}
+						return false;
+					}
+
+					function sip_set_web_value(json) {
+						var user, net;
+						if (json.sip_enable != undefined) {
+							if (json.sip_enable == true) {
+								document.getElementById("sip_enable").checked = true;
+							}
+							else
+								document.getElementById("sip_enable").checked = false;
+							//sip_enable_check(document.getElementById("sip_enable"), $('#sip_enable'));
+						}
+
+
+						if (json.interface != undefined) {
+							select_option_active(document.getElementById("interface"), json.interface);
+						}
+						if (json.local_port != undefined) {
+							document.getElementById("local_port").value = json.local_port;
+						}
+						if (json.serverip != undefined) {
+							document.getElementById("serverip").value = json.serverip;
+						}
+						if (json.serverport != undefined) {
+							document.getElementById("serverport").value = json.serverport;
+						}
+
+						if (json.sip_backup != undefined) {
+							if (json.sip_backup == true) {
+								document.getElementById("sip_backup").checked = true;
+								document.getElementById("serverport_backup").parentNode.parentNode.setAttribute("class", "form-group show");
+								document.getElementById("serverip_backup").parentNode.parentNode.setAttribute("class", "form-group show");
+							}
+							else {
+								document.getElementById("sip_backup").checked = false;
+								document.getElementById("serverport_backup").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("serverip_backup").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							}
+						}
+						if (json.serverip_backup != undefined) {
+							document.getElementById("serverport_backup").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("serverip_backup").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("sip_backup").checked = true;
+							document.getElementById("serverip_backup").value = json.serverip_backup;
+						}
+						else {
+							document.getElementById("sip_backup").checked = false;
+							document.getElementById("serverport_backup").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							document.getElementById("serverip_backup").parentNode.parentNode.setAttribute("class", "form-group hiden");
+						}
+						if (json.serverport_backup != undefined) {
+							document.getElementById("serverport_backup").value = json.serverport_backup;
+						}
+						/*
+						if(json.sip_proxy != undefined) {
+							if(json.sip_proxy == true) {
+								document.getElementById("sip_proxy").checked = true;
+							}
+							else
+								document.getElementById("sip_proxy").checked = false;
+						}
+						*/
+						if (json.proxy_server != undefined) {
+							document.getElementById("sip_proxy").checked = true;
+							document.getElementById("proxy_server").value = json.proxy_server;
+							document.getElementById("proxy_server").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("proxy_port").parentNode.parentNode.setAttribute("class", "form-group show");
+						}
+						else {
+							document.getElementById("sip_proxy").checked = false;
+							document.getElementById("proxy_server").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							document.getElementById("proxy_port").parentNode.parentNode.setAttribute("class", "form-group hiden");
+						}
+						if (json.proxy_port != undefined) {
+							document.getElementById("proxy_port").value = json.proxy_port;
+						}
+						/*
+						if(json.sip_proxy_backup != undefined) {
+							if(json.sip_proxy_backup == true) {
+								document.getElementById("sip_proxy_backup").checked = true;
+							}
+							else
+								document.getElementById("sip_proxy_backup").checked = false;
+						}
+						*/
+						if (json.proxy_server_backup != undefined) {
+							document.getElementById("sip_proxy_backup").checked = true;
+							document.getElementById("proxy_server_backup").value = json.proxy_server_backup;
+							document.getElementById("proxy_server_backup").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("proxy_port_backup").parentNode.parentNode.setAttribute("class", "form-group show");
+						}
+						else {
+							document.getElementById("sip_proxy_backup").checked = false;
+							document.getElementById("proxy_server_backup").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							document.getElementById("proxy_port_backup").parentNode.parentNode.setAttribute("class", "form-group hiden");
+						}
+						if (json.proxy_port_backup != undefined) {
+							document.getElementById("proxy_port_backup").value = json.proxy_port_backup;
+						}
+						/*
+						if(json.sip_user_reg != undefined) {
+							if(json.sip_user_reg == true) {
+								document.getElementById("sip_user_reg").checked = true;
+							}
+							else
+								document.getElementById("sip_user_reg").checked = false;
+						}
+						*/
+						if (json.sip_user != undefined) {
+							document.getElementById("sip_user_reg").checked = true;
+							document.getElementById("sip_user").value = json.sip_user;
+							document.getElementById("sip_user").parentNode.parentNode.setAttribute("class", "form-group show");
+						}
+						else {
+							document.getElementById("sip_user_reg").checked = false;
+							document.getElementById("sip_user").parentNode.parentNode.setAttribute("class", "form-group hiden");
+						}
+
+						if (json.sip_number != undefined) {
+							document.getElementById("sip_number").value = json.sip_number;
+						}
+						if (json.sip_password != undefined) {
+							document.getElementById("sip_password").value = json.sip_password;
+						}
+						if (json.sip_realm != undefined) {
+							document.getElementById("sip_realm").value = json.sip_realm;
+						}
+						if (json.sip_expires != undefined) {
+							document.getElementById("sip_expires").value = json.sip_expires;
+						}
+						if (json.sip_100_rel != undefined) {
+							if (json.sip_100_rel == true) {
+								document.getElementById("sip_100_rel").checked = true;
+							}
+							else
+								document.getElementById("sip_100_rel").checked = false;
+						}
+
+
+						if (json.proto != undefined) {
+							select_option_active(document.getElementById("proto"), json.proto);
+						}
+						if (json.dtmf != undefined) {
+							select_option_active(document.getElementById("dtmf"), json.dtmf);
+						}
+						if (json.rtp_port != undefined) {
+							document.getElementById("rtp_port").value = json.rtp_port;
+						}
+						if (json.out_vol != undefined) {
+							document.getElementById("out_vol").value = json.out_vol;
+						}
+						if (json.in_vol != undefined) {
+							document.getElementById("in_vol").value = json.in_vol;
+						}
+
+						if (json.codec != undefined) {
+							select_option_active(document.getElementById("sip_codec"), json.codec);
+						}
+
+						if (json.pcmu_8000 != undefined) {
+							if (json.pcmu_8000 == true) {
+								document.getElementById("pcmu_8000").checked = true;
+							}
+							else
+								document.getElementById("pcmu_8000").checked = false;
+						}
+						else
+							document.getElementById("pcmu_8000").checked = false;
+
+						if (json.pcma_8000 != undefined) {
+							if (json.pcma_8000 == true) {
+								document.getElementById("pcma_8000").checked = true;
+							}
+							else
+								document.getElementById("pcma_8000").checked = false;
+						}
+						else
+							document.getElementById("pcma_8000").checked = false;
+
+						if (json.gsm_8000 != undefined) {
+							if (json.gsm_8000 == true) {
+								document.getElementById("gsm_8000").checked = true;
+							}
+							else
+								document.getElementById("gsm_8000").checked = false;
+						}
+						else
+							document.getElementById("gsm_8000").checked = false;
+
+						if (json.g722_8000 != undefined) {
+							if (json.g722_8000 == true) {
+								document.getElementById("g722_8000").checked = true;
+							}
+							else
+								document.getElementById("g722_8000").checked = false;
+						}
+						else
+							document.getElementById("g722_8000").checked = false;
+
+						if (json.speex_8000 != undefined) {
+							if (json.speex_8000 == true) {
+								//$("speex_8000").attr("checked", true);
+								document.getElementById("speex_8000").checked = true;
+							}
+							else
+								document.getElementById("speex_8000").checked = false;
+						}
+						else
+							document.getElementById("speex_8000").checked = false;
+
+						if (json.ilbc_8000 != undefined) {
+							if (json.ilbc_8000 == true) {
+								document.getElementById("ilbc_8000").checked = true;
+							}
+							else
+								document.getElementById("ilbc_8000").checked = false;
+						}
+						else
+							document.getElementById("ilbc_8000").checked = false;
+
+						if (json.stun_server != undefined) {
+							document.getElementById("sip_stun").checked = true;
+							document.getElementById("stun_server").value = json.stun_server;
+							document.getElementById("stun_server").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("stun_port").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("stun_user").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("stun_password").parentNode.parentNode.setAttribute("class", "form-group show");
+						}
+						else {
+							document.getElementById("sip_stun").checked = false;
+							document.getElementById("stun_server").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							document.getElementById("stun_port").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							document.getElementById("stun_user").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							document.getElementById("stun_password").parentNode.parentNode.setAttribute("class", "form-group hiden");
+						}
+						if (json.stun_port != undefined) {
+							document.getElementById("stun_port").value = json.stun_port;
+						}
+						if (json.stun_user != undefined) {
+							document.getElementById("stun_user").value = json.stun_user;
+						}
+						if (json.stun_password != undefined) {
+							document.getElementById("stun_password").value = json.stun_password;
+						}
+
+						if (json.outbound_server != undefined) {
+							document.getElementById("sip_outbound").checked = true;
+							document.getElementById("outbound_server").value = json.outbound_server;
+							document.getElementById("outbound_server").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("outbound_port").parentNode.parentNode.setAttribute("class", "form-group show");
+						}
+						else {
+							document.getElementById("sip_outbound").checked = false;
+							document.getElementById("outbound_server").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							document.getElementById("outbound_port").parentNode.parentNode.setAttribute("class", "form-group hiden");
+						}
+						if (json.outbound_port != undefined) {
+							document.getElementById("outbound_port").value = json.outbound_port;
+						}
+
+						if (json.nameserver_server != undefined) {
+							document.getElementById("sip_nameserver").checked = true;
+							document.getElementById("nameserver_server").value = json.nameserver_server;
+							document.getElementById("nameserver_server").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("nameserver_port").parentNode.parentNode.setAttribute("class", "form-group show");
+						}
+						else {
+							document.getElementById("sip_nameserver").checked = false;
+							document.getElementById("nameserver_server").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							document.getElementById("nameserver_port").parentNode.parentNode.setAttribute("class", "form-group hiden");
+						}
+						if (json.nameserver_port != undefined) {
+							document.getElementById("nameserver_port").value = json.nameserver_port;
+						}
+					}
+
+					function sip_get_action(op) {
+						var argv;
+						var stxhr = new XHR();
+						argv = "ACTION=GET";
+						stxhr.post("/goform/setsip", argv,
+							function (x, json) {
+								//console.log(x);
+								//console.log(json);
+								if (x.responseText != "" && json == null) {
+									if (x.responseText == "ERROR") {
+									}
+									else if (x.responseText == "OK") {
+									}
+								}
+								else if (x.responseText != "" && json != null) {
+									if (json.response == "OK") {
+										sip_set_web_value(json);
+									}
+								}
+							},
+							3000
+						);
+					}
+
+					function sip_get_web_value() {
+						var argv;
+						argv = "interface=" + get_select_option_value(document.getElementById("interface"))
+							+ "&local_port=" + document.getElementById("local_port").value
+							+ "&serverip=" + document.getElementById("serverip").value
+							+ "&serverport=" + document.getElementById("serverport").value
+							+ "&sip_number=" + document.getElementById("sip_number").value
+							+ "&sip_password=" + document.getElementById("sip_password").value
+							+ "&sip_realm=" + document.getElementById("sip_realm").value
+							+ "&sip_expires=" + document.getElementById("sip_expires").value
+							+ "&proto=" + document.getElementById("proto").value
+							+ "&dtmf=" + document.getElementById("dtmf").value
+							+ "&codec=" + document.getElementById("sip_codec").value
+							+ "&rtp_port=" + document.getElementById("rtp_port").value
+							/*+ "&out_vol=" + document.getElementById("out_vol").value
+							+ "&in_vol=" + document.getElementById("in_vol").value*/;
+
+						if (document.getElementById("sip_backup").checked) {
+							argv += "&serverip_backup=" + document.getElementById("serverip_backup").value;
+							argv += "&serverport_backup=" + document.getElementById("serverport_backup").value;
+						}
+
+						if (document.getElementById("sip_proxy").checked) {
+							argv += "&proxy_server=" + document.getElementById("proxy_server").value;
+							argv += "&proxy_port=" + document.getElementById("proxy_port").value;
+						}
+
+						if (document.getElementById("sip_proxy_backup").checked) {
+							argv += "&proxy_server_backup=" + document.getElementById("proxy_server_backup").value;
+							argv += "&proxy_port_backup=" + document.getElementById("proxy_port_backup").value;
+						}
+						if (document.getElementById("sip_user_reg").checked) {
+							argv += "&sip_user=" + document.getElementById("sip_user").value;
+						}
+						if (document.getElementById("sip_100_rel").checked) {
+							argv += "&sip_100_rel=" + document.getElementById("sip_100_rel").value;
+						}
+						if (document.getElementById("pcmu_8000").checked) {
+							argv += "&pcmu_8000=true";
+						}
+						if (document.getElementById("pcma_8000").checked) {
+							argv += "&pcma_8000=true";
+						}
+
+						if (document.getElementById("gsm_8000").checked) {
+							argv += "&gsm_8000=true";
+						}
+						if (document.getElementById("g722_8000").checked) {
+							argv += "&g722_8000=true";
+						}
+						if (document.getElementById("speex_8000").checked) {
+							argv += "&speex_8000=true";
+						}
+						if (document.getElementById("ilbc_8000").checked) {
+							argv += "&ilbc_8000=true";
+						}
+
+						if (document.getElementById("sip_stun").checked) {
+							argv += "&stun_server=" + document.getElementById("stun_server").value;
+							argv += "&stun_port=" + document.getElementById("stun_port").value;
+							argv += "&stun_user=" + document.getElementById("stun_user").value;
+							argv += "&stun_password=" + document.getElementById("stun_password").value;
+						}
+
+						if (document.getElementById("sip_outbound").checked) {
+							argv += "&outbound_server=" + document.getElementById("outbound_server").value;
+							argv += "&outbound_port=" + document.getElementById("outbound_port").value;
+						}
+
+						if (document.getElementById("sip_nameserver").checked) {
+							argv += "&nameserver_server=" + document.getElementById("nameserver_server").value;
+							argv += "&nameserver_port=" + document.getElementById("nameserver_port").value;
+						}
+
+						return argv;
+					}
+
+
+					function sip_set_onaction(op) {
+						var argv;
+						var stxhr = new XHR();
+						argv = "ACTION=SET&" + sip_get_web_value();
+
+
+						$("#handle_waiting").css("display", "block");
+						setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
+						
+						stxhr.post("/goform/setsip", argv,
+							function (x, json) {
+								//console.log(x);
+								//console.log(json);
+								if (x.responseText != "" && json == null) {
+									if (x.responseText == "ERROR") {
+										clearTimeout();
+										$("#handle_waiting").css("display", "none");
+										$("#handle_error").css("display", "block");
+										setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+									}
+									else if (x.responseText == "OK") {
+										clearTimeout();
+									}
+								}
+								else if (x.responseText != "" && json != null) {
+									if (json.response == "OK") {
+										clearTimeout();
+										$("#handle_waiting").css("display", "none");
+										$("#handle_error").css("display", "none");
+
+										sip_set_web_value(json);
+
+										check_okerr_hiden($('#local_port'));
+										check_okerr_hiden($('#serverip'));
+										check_okerr_hiden($('#serverport'));
+										if (document.getElementById("sip_backup").checked) {
+											check_okerr_hiden($('#serverip_backup'));
+											check_okerr_hiden($('#serverport_backup'));
+										}
+										if (document.getElementById("sip_proxy").checked) {
+											check_okerr_hiden($('#proxy_server'));
+											check_okerr_hiden($('#proxy_port'));
+										}
+										if (document.getElementById("sip_proxy_backup").checked) {
+											check_okerr_hiden($('#proxy_server_backup'));
+											check_okerr_hiden($('#proxy_port_backup'));
+										}
+										if (document.getElementById("sip_user_reg").checked) {
+											check_okerr_hiden($('#sip_user'));
+
+										}
+										check_okerr_hiden($('#sip_number'));
+										check_okerr_hiden($('#sip_password'));
+										check_okerr_hiden($('#sip_realm'));
+										check_okerr_hiden($('#sip_expires'));
+										check_okerr_hiden($('#rtp_port'));
+
+										if (document.getElementById("sip_stun").checked) {
+											check_okerr_hiden($('#stun_server'));
+											check_okerr_hiden($('#stun_port'));
+											check_okerr_hiden($('#stun_user'));
+											check_okerr_hiden($('#stun_password'));
+										}
+										if (document.getElementById("sip_outbound").checked) {
+											check_okerr_hiden($('#outbound_server'));
+											check_okerr_hiden($('#outbound_port'));
+										}
+										if (document.getElementById("sip_nameserver").checked) {
+											check_okerr_hiden($('#nameserver_server'));
+											check_okerr_hiden($('#nameserver_port'));
+										}
+									}
+								}
+							},
+							3000
+						);
+					}
+
+					function sip_onsubmit() {
+						if (document.getElementById("local_port").value == "" ||
+							(!input_port_check(document.getElementById("local_port"), $('#local_port')))) {
+							check_err_show($('#local_port'));
+							return false;
+						}
+						if (document.getElementById("serverip").value == "" ||
+							(!input_address_check(document.getElementById("serverip"), $('#serverip')))) {
+							check_err_show($('#serverip'));
+							return false;
+						}
+						if (document.getElementById("serverport").value == "" ||
+							(!input_port_check(document.getElementById("serverport"), $('#serverport')))) {
+							check_err_show($('#serverport'));
+							return false;
+						}
+						if (document.getElementById("sip_backup").checked) {
+
+							if (document.getElementById("serverip_backup").value == "" ||
+								(!input_address_check(document.getElementById("serverip_backup"), $('#serverip_backup')))) {
+								check_err_show($('#serverip_backup'));
+								return false;
+							}
+							if (document.getElementById("serverport_backup").value == "" ||
+								(!input_port_check(document.getElementById("serverport_backup"), $('#serverport_backup')))) {
+								check_err_show($('#serverport_backup'));
+								return false;
+							}
+						}
+						if (document.getElementById("sip_proxy").checked) {
+							if (document.getElementById("proxy_server").value == "" ||
+								(!input_address_check(document.getElementById("proxy_server"), $('#proxy_server')))) {
+								check_err_show($('#proxy_server'));
+								return false;
+							}
+							if (document.getElementById("proxy_port").value == "" ||
+								(!input_port_check(document.getElementById("proxy_port"), $('#proxy_port')))) {
+								check_err_show($('#proxy_port'));
+								return false;
+							}
+
+						}
+						if (document.getElementById("sip_proxy_backup").checked) {
+							if (document.getElementById("proxy_server_backup").value == "" ||
+								(!input_address_check(document.getElementById("proxy_server_backup"), $('#proxy_server_backup')))) {
+								check_err_show($('#proxy_server_backup'));
+								return false;
+							}
+							if (document.getElementById("proxy_port_backup").value == "" ||
+								(!input_port_check(document.getElementById("proxy_port_backup"), $('#proxy_port_backup')))) {
+								check_err_show($('#proxy_port_backup'));
+								return false;
+							}
+						}
+						if (document.getElementById("sip_user_reg").checked) {
+
+							if (document.getElementById("sip_user").value == "" ||
+								(!input_username_check(document.getElementById("sip_user"), $('#sip_user')))) {
+								check_err_show($('#sip_user'));
+								return false;
+							}
+
+						}
+
+						if (document.getElementById("rtp_port").value == "" ||
+							(!input_port_check(document.getElementById("rtp_port"), $('#rtp_port')))) {
+							check_err_show($('#rtp_port'));
+							return false;
+						}
+						if (document.getElementById("sip_number").value == "" ||
+							(!input_number_check(document.getElementById("sip_number"), $('#sip_number')))) {
+							check_err_show($('#sip_number'));
+							return false;
+						}
+						if (document.getElementById("sip_password").value == "" ||
+							(!input_username_check(document.getElementById("sip_password"), $('#sip_password')))) {
+							check_err_show($('#sip_password'));
+							return false;
+						}
+						if (document.getElementById("sip_realm").value == "" ||
+							(!input_username_check(document.getElementById("sip_realm"), $('#sip_realm')))) {
+							check_err_show($('#sip_realm'));
+							return false;
+						}
+						if (document.getElementById("sip_expires").value == "" ||
+							(document.getElementById("sip_expires").value < 60 ||
+								document.getElementById("sip_expires").value > 3600)) {
+							check_err_show($('#sip_expires'));
+							return false;
+						}
+
+						if (document.getElementById("sip_stun").checked) {
+							if (document.getElementById("stun_server").value == "" ||
+								(!input_address_check(document.getElementById("stun_server"), $('#stun_server')))) {
+								check_err_show($('#stun_server'));
+								return false;
+							}
+							if (document.getElementById("stun_port").value == "" ||
+								(!input_port_check(document.getElementById("stun_port"), $('#stun_port')))) {
+								check_err_show($('#stun_port'));
+								return false;
+							}
+							if (document.getElementById("stun_user").value == "" ||
+								(!input_username_check(document.getElementById("stun_user"), $('#stun_user')))) {
+								check_err_show($('#stun_user'));
+								return false;
+							}
+							if (document.getElementById("stun_password").value == "" ||
+								(!input_username_check(document.getElementById("stun_password"), $('#stun_password')))) {
+								check_err_show($('#stun_password'));
+								return false;
+							}
+						}
+						if (document.getElementById("sip_outbound").checked) {
+							if (document.getElementById("outbound_server").value == "" ||
+								(!input_address_check(document.getElementById("outbound_server"), $('#outbound_server')))) {
+								check_err_show($('#outbound_server'));
+								return false;
+							}
+							if (document.getElementById("outbound_port").value == "" ||
+								(!input_port_check(document.getElementById("outbound_port"), $('#outbound_port')))) {
+								check_err_show($('#outbound_port'));
+								return false;
+							}
+						}
+						if (document.getElementById("sip_nameserver").checked) {
+							if (document.getElementById("nameserver_server").value == "" ||
+								(!input_address_check(document.getElementById("nameserver_server"), $('#nameserver_server')))) {
+								check_err_show($('#nameserver_server'));
+								return false;
+							}
+							if (document.getElementById("nameserver_port").value == "" ||
+								(!input_port_check(document.getElementById("nameserver_port"), $('#nameserver_port')))) {
+								check_err_show($('#nameserver_port'));
+								return false;
+							}
+						}
+
+						sip_set_onaction("SET");
+					}		
+				</script>
+			</form>
+		</fieldset>
+		<script type="text/javascript">
+			window.onload = function () {
+				//$('[name="sip_enable"]').bootstrapSwitch('state', true);
+				sip_get_action("GET");
+				sip_reg_state();
+				var myVar = setInterval(function () { sip_reg_state() }, 10000);
+			}
+		</script>
+	</div>
+</body>
+
+</html>

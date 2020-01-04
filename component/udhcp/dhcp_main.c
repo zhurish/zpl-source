@@ -33,11 +33,11 @@ static int dhcpd_config_init(dhcp_global_t *config)
 		config->eloop_master = master_eloop[MODULE_DHCPD] =
 		eloop_master_module_create(MODULE_DHCPD);
 
-	config->server_port = SERVER_PORT;
-	config->client_port = CLIENT_PORT;
+	config->server_port = DHCP_SERVER_PORT;
+	config->client_port = DHCP_CLIENT_PORT;
 
-	config->server_port_v6 = SERVER_PORT6;
-	config->client_port_v6 = CLIENT_PORT6;
+	config->server_port_v6 = DHCP_SERVER_PORT6;
+	config->client_port_v6 = DHCP_CLIENT_PORT6;
 	config->r_thread = NULL;
 	config->sock = 0;
 	config->rawsock = 0;

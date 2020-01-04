@@ -9,7 +9,7 @@ _MODULELIST = \
 	MODULE_SYSLOG.true \
 	MODULE_STARTUP.true \
 	MODULE_PRODUCT.true \
-	MODULE_BCM53125.false \
+	MODULE_SWITCH_SDK.true \
 	MODULE_CLI.true \
 	MODULE_OSPF.false \
 	MODULE_ABSTRACT.true \
@@ -17,9 +17,12 @@ _MODULELIST = \
 	MODULE_PAL_KERNEL.true \
 	MODULE_PAL_IPCOM.false \
 	MODULE_COMPONENT.true \
+	MODULE_OPENSSL.false \
 	MODULE_WIFI.true \
-	MODULE_MODEM.true \
+	MODULE_MODEM.false \
 	MODULE_TOOLS.true \
+	MODULE_PROCESS.true \
+	MODULE_QUECTEL_CM.false \
 	MODULE_DHCP.false \
 	MODULE_UDHCP.true \
 	MODULE_SQLITE.false \
@@ -32,13 +35,14 @@ _MODULELIST = \
 	MODULE_TELNETD.false \
 	MODULE_PING.true \
 	MODULE_TRACEROUTE.true \
-	MODULE_UBUS.true \
-	MODULE_SSH.true \
-	MODULE_PJSIP.true \
+	MODULE_UBUS.false \
+	MODULE_SSH.false \
+	MODULE_PJSIP.false \
 	MODULE_OSIP.false \
 	MODULE_APP.true \
 	MODULE_UCI.true \
-	MODULE_WEB.false 	
+	MODULE_WEB.false \
+	MODULE_MQTT.true
 #
 #
 #
@@ -87,7 +91,18 @@ MODULE_UDHCP=false
 endif
 #
 #
+ifeq ($(strip $(MODULE_WIFI)),true)
+MODULE_PROCESS=true
+endif
 #
+ifeq ($(strip $(MODULE_MODEM)),true)
+MODULE_QUECTEL_CM=true
+MODULE_PROCESS=true
+endif
+#
+ifeq ($(strip $(MODULE_SWITCH_SDK)),true)
+MODULE_HAL=true
+endif
 #
 #
 #
@@ -101,6 +116,7 @@ PlatformModule = \
 	OSPFDIR.ospf \
 	ABSTRACTDIR.abstract \
 	COMPONENTDIR.component \
+	OPENSSLDIR.openssl-1.1.1 \
 	WIFIDIR.wifi \
 	MODEMDIR.modem \
 	TOOLSDIR.tools \
@@ -113,7 +129,8 @@ PlatformModule = \
 	OSIPDIR.osip \
 	PJSIPDIR.pjsip \
 	APPDIR.application \
-	WEBDIR.webgui
+	WEBDIR.webgui \
+	MQTTDIR.mqtt
 ###
 # By default we choose the lexically last Platform component version in hopes
 # that it is the most recent. The directory macros (e.g. IPCOMDIR) may of

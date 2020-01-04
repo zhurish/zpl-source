@@ -24,6 +24,8 @@ TARGET = auddemo
 TMODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(TOBJS))
 endif
 PLCFLAGS +=-DPJ_AUTOCONF=1 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1
+#PLCFLAGS += -Werror=format
+#
 #CFLAGS += -UHAVE_CONFIG_H
 # It's a kind of magic...
 #

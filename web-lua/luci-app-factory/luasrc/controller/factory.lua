@@ -9,8 +9,9 @@ function index()
   entry({"admin", "factory", "OpenConfig"}, cbi("admin_factory/openconfig"), _("Open Configure"), 2) 
     
   --if fs.access("/etc/config/dbtest") then 
-  entry({"admin", "factory", "RoomDBConfig"}, cbi("admin_factory/roomdbconfig"), _("RoomDB Configure"), 9)  
+  --entry({"admin", "factory", "RoomDBConfig"}, cbi("admin_factory/roomdbconfig"), _("RoomDB Configure"), 9)  
   --end  
   
   entry({"admin", "factory", "AppSystemLog"}, cbi("admin_factory/appsystemlog"), _("AppThronLog"), 10)
+  entry({"admin", "factory", "AppCard"}, cbi("admin_factory/appcard"), _("AppCardInfo"), 12)
 end

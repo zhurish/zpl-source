@@ -24,12 +24,36 @@
 #include "interface.h"
 #include "if_name.h"
 
-
+#ifdef PL_WIFI_MODULE
 #include "iw_config.h"
 #include "iw_ap.h"
 #include "iw_client.h"
 #include "iw_interface.h"
 
+DEFUN (wireless_enable,
+	   wireless_enable_cmd,
+		"dev enable",
+		"Device configure\n"
+		"Enable\n")
+{
+	int ret = ERROR;
+	struct interface *ifp = vty->index;
+	ret = nsm_iw_enable_api(ifp, TRUE);
+	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (no_wireless_enable,
+		no_wireless_enable_cmd,
+		"no dev enable",
+		NO_STR
+		"Device configure\n"
+		"Enable\n")
+{
+	int ret = ERROR;
+	struct interface *ifp = vty->index;
+	ret = nsm_iw_enable_api(ifp, FALSE);
+	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
 
 DEFUN (work_mode,
 		work_mode_cmd,
@@ -372,7 +396,7 @@ DEFUN (no_authentication_password,
 
 DEFUN (ap_authentication_method,
 		ap_authentication_method_cmd,
-		"authentication-method (wpa-psk|wpa2-psk|wpa2wpa-psk) ",
+		"authentication-method (wpa-psk|wpa2-psk|wpa-wpa2-psk) ",
 		"authentication method configure\n"
 		"WPA-PSK encrypt\n"
 		"WPA2-PSK encrypt\n"
@@ -387,7 +411,7 @@ DEFUN (ap_authentication_method,
 			auth = IW_ENCRY_WPA_PSK;
 		if(strncmp(argv[0], "wpa2-psk", 7) == 0)
 			auth = IW_ENCRY_WPA2_PSK;
-		if(strncmp(argv[0], "wpa2wpa-psk", 7) == 0)
+		if(strncmp(argv[0], "wpa-wpa2-psk", 7) == 0)
 			auth = IW_ENCRY_WPA2WPA_PSK;
 
 		if(iw_ap_lookup_api(ifp))
@@ -981,6 +1005,11 @@ static int iw_dev_show_cmd(struct vty *vty, int ifindex, char *cmd)
 		ifp = if_lookup_by_index(ifindex);
 		if (ifp && if_is_wireless(ifp))
 		{
+			if(!nsm_iw_enable_get_api(ifp))
+			{
+				vty_out(vty, " wireless is not enable%s", VTY_NEWLINE);
+				return OK;
+			}
 			vty_out(vty, "%s", VTY_NEWLINE);
 			if(strstr(cmd, "channel"))
 				nsm_iw_channel_freq_show(ifp, vty);
@@ -1001,6 +1030,11 @@ static int iw_dev_show_cmd(struct vty *vty, int ifindex, char *cmd)
 		{
 			if (ifp && if_is_wireless(ifp))
 			{
+				if(!nsm_iw_enable_get_api(ifp))
+				{
+					vty_out(vty, " wireless is not enable%s", VTY_NEWLINE);
+					continue;
+				}
 				vty_out(vty, "%s", VTY_NEWLINE);
 				if(strstr(cmd, "channel"))
 					nsm_iw_channel_freq_show(ifp, vty);
@@ -1027,11 +1061,16 @@ static int iw_client_show_cmd(struct vty *vty, int ifindex, int cmd)
 		ifp = if_lookup_by_index(ifindex);
 		if (ifp && if_is_wireless(ifp))
 		{
+			if(!nsm_iw_enable_get_api(ifp))
+			{
+				vty_out(vty, " wireless is not enable%s", VTY_NEWLINE);
+				return OK;
+			}
 			if (iw_client_lookup_api(ifp))
 			{
 				vty_out(vty, "%s", VTY_NEWLINE);
 				if(strstr(cmd, "neighbor"))
-					iw_client_ap_show(iw_client_lookup_api(ifp), vty, TRUE);
+					iw_client_neighbor_show(iw_client_lookup_api(ifp), vty, TRUE);
 				else if(strstr(cmd, "connect"))
 					iw_client_connect_ap_show(iw_client_lookup_api(ifp), vty);
 				else if(strstr(cmd, "scan"))
@@ -1049,11 +1088,16 @@ static int iw_client_show_cmd(struct vty *vty, int ifindex, int cmd)
 		{
 			if (ifp && if_is_wireless(ifp))
 			{
+				if(!nsm_iw_enable_get_api(ifp))
+				{
+					vty_out(vty, " wireless is not enable%s", VTY_NEWLINE);
+					continue;
+				}
 				if (iw_client_lookup_api(ifp))
 				{
 					vty_out(vty, "%s", VTY_NEWLINE);
-					if(strstr(cmd, "neighbor"))
-						iw_client_ap_show(iw_client_lookup_api(ifp), vty, TRUE);
+					if(strstr(cmd, "neighbor"))//显示附近wifi
+						iw_client_neighbor_show(iw_client_lookup_api(ifp), vty, TRUE);
 					else if(strstr(cmd, "connect"))
 						iw_client_connect_ap_show(iw_client_lookup_api(ifp), vty);
 					else if(strstr(cmd, "scan"))
@@ -1067,7 +1111,7 @@ static int iw_client_show_cmd(struct vty *vty, int ifindex, int cmd)
 	}
 	return OK;
 }
-
+//显示当前连接到AP的设备
 static int iw_ap_show_cmd(struct vty *vty, int ifindex, BOOL detail)
 {
 	struct listnode *node = NULL;
@@ -1078,6 +1122,11 @@ static int iw_ap_show_cmd(struct vty *vty, int ifindex, BOOL detail)
 		ifp = if_lookup_by_index(ifindex);
 		if(ifp && if_is_wireless(ifp))
 		{
+			if(!nsm_iw_enable_get_api(ifp))
+			{
+				vty_out(vty, " wireless is not enable%s", VTY_NEWLINE);
+				return OK;
+			}
 			if(iw_ap_lookup_api(ifp))
 			{
 				vty_out(vty, "%s", VTY_NEWLINE);
@@ -1093,6 +1142,11 @@ static int iw_ap_show_cmd(struct vty *vty, int ifindex, BOOL detail)
 		{
 			if(ifp && if_is_wireless(ifp))
 			{
+				if(!nsm_iw_enable_get_api(ifp))
+				{
+					vty_out(vty, " wireless is not enable%s", VTY_NEWLINE);
+					continue;
+				}
 				if(iw_ap_lookup_api(ifp))
 				{
 					vty_out(vty, "%s", VTY_NEWLINE);
@@ -1435,6 +1489,10 @@ static void cmd_base_wireless_show_init(int node)
 
 static void cmd_base_wireless_init(int node)
 {
+
+	install_element(node, &wireless_enable_cmd);
+	install_element(node, &no_wireless_enable_cmd);
+
 	install_element(node, &work_mode_cmd);
 	install_element(node, &no_work_mode_cmd);
 
@@ -1520,3 +1578,4 @@ void cmd_wireless_init(void)
 	install_element(CONFIG_NODE, &no_debug_wireless_set_cmd);
 	install_element(CONFIG_NODE, &no_debug_wireless_set_detail_cmd);
 }
+#endif

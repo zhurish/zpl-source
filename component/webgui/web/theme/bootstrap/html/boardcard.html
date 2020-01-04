@@ -1,0 +1,207 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta content="" name="description" />
+	<meta content="webthemez" name="author" />
+	<!--meta http-equiv="refresh" content="30"-->
+	<!-- Bootstrap Styles-->
+	<link href="../css/bootstrap.min.css" rel="stylesheet" />
+
+	<!-- private Styles-->
+	<link href="../css/private.css" rel="stylesheet" />
+
+	<!-- jQuery Js -->
+	<script src="../js/jquery-2.1.1.min.js"></script>
+	<!-- Bootstrap Js -->
+	<script src="../js/bootstrap.min.js"></script>
+	<script src="../js/xhr.js"></script>
+	<script src="../js/data-type.js"></script>
+
+	<title>Video BoardCard</title>
+</head>
+
+<body class="body-bg-img">
+	<div id="maincontent" class="container">
+		<fieldset class="fieldset-margin fieldset-background">
+			<table class="table table-condensed">
+				<caption class="tbl-text-align bold">计算板卡状态</caption>
+				<thead>
+					<tr>
+						<th>板卡 ID</th>
+						<th>电源状态</th>
+						<th>运行状态</th>
+						<th>当前温度</th>
+						<th>接入视频数量</th>
+						<th>内存使用率</th>
+						<th>CPU占用率</th>
+						<th>操作</th>
+					</tr>
+				</thead>
+				<tbody id="board-tbl">
+					<script type="text/javascript">
+						function boardcard_tbl() {
+							var utbl = "";
+							$.get("/goform/boardcard-tbl", function (data, status) {
+								var data_json = JSON.parse(data);
+								$.each(data_json, function (index, info) {
+									utbl += "<tr>\n";
+									utbl += "<td>" + info.ID + "</td>";
+									if (info.power)
+										utbl += "<td>UP</td>";
+									else
+										utbl += "<td>DOWN</td>";
+									if (info.running)
+										utbl += "<td>OK</td>";
+									else
+										utbl += "<td>ERROR</td>";
+									utbl += "<td>" + info.temp + "</td>";
+									utbl += "<td>" + info.VCH + "</td>";
+									utbl += "<td>" + info.memory + "</td>";
+									utbl += "<td>" + info.cpu + "</td>";
+									if (info.ID == 1)
+										utbl += "<td>\
+										<div class=\"col-sm-push-3 control-label\">\
+											<button type=\"button\" class=\"btn btn-info\" name=\"detail\" id=\"detail\" onclick=\"boardcard_detail(this)\" disabled>\
+												<span class=\"glyphicon glyphicon-info-sign\" style=\"margin-right:10px;\"></span>详情</button>\
+											</div>\
+										</td>";
+									else
+										utbl += "<td>\
+										<div class=\"col-sm-push-3 control-label\">\
+											<button type=\"button\" class=\"btn btn-info\" name=\"detail\" id=\"detail\" onclick=\"boardcard_detail(this)\">\
+												<span class=\"glyphicon glyphicon-info-sign\" style=\"margin-right:10px;\"></span>详情</button>\
+											</div>\
+										</td>";
+									utbl += "</tr>";
+								});
+								$("#board-tbl").html(utbl);
+							});
+						}
+						boardcard_tbl();
+					</script>
+				</tbody>
+			</table>
+		</fieldset>
+
+
+		<fieldset id="boardcard" class="fieldset-margin fieldset-background" style="display:none;">
+			<table class="table table-condensed">
+				<caption class="tbl-text-align bold">计算板卡详细信息</caption>
+				<tbody id="boardcard-info">
+					<tr>
+						<td>设备名称</td>
+						<td>Edge Computing V9 NAS Router</td>
+					</tr>
+				</tbody>
+			</table>
+		</fieldset>
+		<script type="text/javascript">
+			function boardcard_detail(obj) {
+				var cnt = 0;
+				var utbl = "";
+				var argv;
+				var stxhr = new XHR();
+				var ID = $(obj).parent().parent().prevAll()[6].innerText;
+
+				argv = "ACTION=boardcard&BTNID=" + obj.id + "&ID=" + ID;
+
+				stxhr.post("/goform/button_onclick", argv,
+					function (x, json) {
+						console.log("x:");
+						console.log(x);
+						console.log("json:");
+						console.log(json);
+						if (json.response == "OK") {
+							utbl += "<tr>";
+							utbl += "<td>设备名称</td>";
+							utbl += "<td>" + json.devname + "</td>";
+							utbl += "</tr>";
+	
+							utbl += "<tr>";
+							utbl += "<td>设备ID</td>";
+							utbl += "<td>" + json.devid + "</td>";
+							utbl += "</tr>";
+
+							utbl += "<tr>";
+							utbl += "<td>设备类型</td>";
+							utbl += "<td>" + json.type + "</td>";
+							utbl += "</tr>";
+
+							utbl += "<tr>";
+							utbl += "<td>业务方案</td>";
+							utbl += "<td>" + json.mode + "</td>";
+							utbl += "</tr>";
+
+							utbl += "<tr>";
+							utbl += "<td>IP地址</td>";
+							utbl += "<td>" + json.ip + "</td>";
+							utbl += "</tr>";
+
+							utbl += "<tr>";
+							utbl += "<td>网络掩码</td>";
+							utbl += "<td>" + json.netmask + "</td>";
+							utbl += "</tr>";
+
+							utbl += "<tr>";
+							utbl += "<td>网关</td>";
+							utbl += "<td>" + json.gateway + "</td>";
+							utbl += "</tr>";
+
+							utbl += "<tr>";
+							utbl += "<td>厂商名称</td>";
+							utbl += "<td>" + json.product + "</td>";
+							utbl += "</tr>";
+
+							utbl += "<tr>";
+							utbl += "<td>设备型号</td>";
+							utbl += "<td>" + json.productid + "</td>";
+							utbl += "</tr>";
+
+							utbl += "<tr>";
+							utbl += "<td>产品模组</td>";
+							utbl += "<td>" + json.model + "</td>";
+							utbl += "</tr>";
+
+							utbl += "<tr>";
+							utbl += "<td>序列号</td>";
+							utbl += "<td>" + json.SN + "</td>";
+							utbl += "</tr>";
+
+							utbl += "<tr>";
+							utbl += "<td>软件版本</td>";
+							utbl += "<td>" + json.swv + "</td>";
+							utbl += "</tr>";
+
+							utbl += "<tr>";
+							utbl += "<td>硬件版本</td>";
+							utbl += "<td>" + json.hwv + "</td>";
+							utbl += "</tr>";
+
+							utbl += "<tr>";
+							utbl += "<td>工作模式</td>";
+							utbl += "<td>" + json.WorkMode + "</td>";
+							utbl += "</tr>";
+							cnt = 1;
+							//console.log("cnt:" + cnt);
+						}
+						$("#boardcard-info").html(utbl);
+						if(cnt == 1)
+						{
+							if(document.getElementById("boardcard").style.display == "block")
+								document.getElementById("boardcard").style.display = "none";
+							else
+								document.getElementById("boardcard").style.display = "block";	
+						}
+					},
+					3000
+				);
+			}
+		</script>
+	</div>
+</body>
+
+</html>

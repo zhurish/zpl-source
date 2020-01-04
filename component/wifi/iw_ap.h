@@ -132,6 +132,7 @@ typedef struct iw_ap_s
 
 extern int iw_ap_init(iw_ap_t *, ifindex_t ifindex);
 extern int iw_ap_exit(iw_ap_t *);
+extern int iw_ap_enable(iw_ap_t *iw_ap, BOOL enable);
 
 extern int iw_ap_task_start(iw_ap_t *iw_ap);
 extern int iw_ap_task_exit(iw_ap_t *iw_ap);
@@ -190,7 +191,7 @@ extern int iw_ap_hw_mode_set_api(iw_ap_t *, iw_hw_mode_t );
 
 
 /*
- * MAC ACL
+ * MAC ACL 接入点过滤MAC
  */
 extern iw_ap_mac_t * iw_ap_mac_lookup_api(iw_ap_t *iw_ap, u_int8 *mac, BOOL accept);
 extern int iw_ap_mac_add_api(iw_ap_t *iw_ap, u_int8 *mac, BOOL accept);
@@ -198,11 +199,14 @@ extern int iw_ap_mac_del_api(iw_ap_t *iw_ap, u_int8 *mac, BOOL accept);
 
 
 
+#ifdef BUILD_OPENWRT
+extern int _iw_bridge_check_interface(char *br, char *wa);
+#endif
 
 extern int iw_ap_make_script(iw_ap_t *iw_ap);
 extern int iw_ap_running_script(iw_ap_t *iw_ap);
 extern int iw_ap_stop_script(iw_ap_t *iw_ap);
-
+extern int iw_ap_script_is_running(iw_ap_t *iw_ap);
 
 
 /*
@@ -212,7 +216,7 @@ extern int iw_ap_connect_add_api(iw_ap_t *, iw_ap_connect_t *);
 extern int iw_ap_connect_del_api(iw_ap_t *, u_int8 *bssid);
 extern iw_ap_connect_t * iw_ap_connect_lookup_api(iw_ap_t *, u_int8 *bssid);
 extern int iw_ap_connect_callback_api(iw_ap_t *, int (*cb)(iw_ap_connect_t *, void *), void *pVoid);
-
+//显示当前连接到AP的设备
 extern int iw_ap_connect_show(iw_ap_t *iw_ap, struct vty *vty, BOOL detail);
 
 extern int iw_ap_config(iw_ap_t *iw_ap, struct vty *vty);

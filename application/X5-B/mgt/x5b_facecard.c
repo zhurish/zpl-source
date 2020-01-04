@@ -19,6 +19,9 @@
 #include "network.h"
 #include "vty.h"
 
+#include "x5_b_global.h"
+#ifdef X5B_APP_DATABASE
+
 #include "x5b_dbase.h"
 #include "x5b_facecard.h"
 
@@ -373,7 +376,7 @@ static int x5b_user_add_card_hw(user_face_card_t *dbase, u_int64 cardid, u_int32
 			dbase->cardtbl[i].start_time = start;
 			dbase->cardtbl[i].stop_time = stop;
 			zlog_debug(ZLOG_APP, "=================>cardid=%s(l=%d)", dbase->cardtbl[i].cardid,
-					   strlen(dbase->cardtbl[i].cardid));
+					   (int)strlen(dbase->cardtbl[i].cardid));
 #else
 			dbase->cardtbl[i].cardid = cardid;
 			dbase->cardtbl[i].start_time = start;
@@ -1180,3 +1183,4 @@ int voip_facecard_web_select_all(void)
 		os_mutex_unlock(facecard_mutex);
 	return OK;
 }
+#endif

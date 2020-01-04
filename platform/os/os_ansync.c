@@ -109,6 +109,7 @@ os_ansync_lst *os_ansync_lst_create(int module, int maxfd)
 		lst->max_fd = maxfd;
 		lstInit(lst->list);
 		lstInit(lst->unuselist);
+		lst->bquit = FALSE;
 #ifdef OS_ANSYNC_GLOBAL_LIST
 		lstAdd(ansyncList, (NODE *)lst);
 #endif
@@ -778,6 +779,27 @@ os_ansync_run(os_ansync_lst *lst)
 		os_mutex_unlock(lst->mutex);
 	return pstNode;
 }
+int os_ansync_fetch_quit (os_ansync_lst *lst)
+{
+	if(lst)
+	{
+		lst->bquit = TRUE;
+	}
+	return OK;
+}
+
+int os_ansync_fetch_wait (os_ansync_lst *lst)
+{
+	if(lst)
+	{
+		while(lst->bquit)
+		{
+			os_msleep(50);
+		}
+	}
+	return OK;
+}
+
 
 os_ansync_t *os_ansync_fetch(os_ansync_lst *lst)
 {
@@ -794,7 +816,12 @@ os_ansync_t *os_ansync_fetch(os_ansync_lst *lst)
 		node = os_ansync_run(lst);
 		if(node)
 			return node;
-
+		if(lst->bquit)
+		{
+			//fetch = NULL;
+			lst->bquit = FALSE;
+			return NULL;
+		}
 		os_gettime (OS_CLK_MONOTONIC, &wait_tv);
 		if(os_ansync_min_timer_refresh(lst) == OK)
 		{

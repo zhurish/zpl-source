@@ -25,9 +25,9 @@
 
 #if 1
 extern void ifreq_set_name (struct ifreq *ifreq, struct interface *ifp);
-extern int if_ioctl (u_long, caddr_t);
+extern int if_ioctl (u_int, caddr_t);
 #ifdef HAVE_IPV6
-extern int if_ioctl_ipv6 (u_long request, caddr_t buffer);
+extern int if_ioctl_ipv6 (u_int request, caddr_t buffer);
 #endif
 
 extern int ip_arp_stack_init();
@@ -46,7 +46,8 @@ extern int _ipkernel_bridge_create(nsm_bridge_t *br);
 extern int _ipkernel_bridge_delete(nsm_bridge_t *br);
 extern int _ipkernel_bridge_add_interface(nsm_bridge_t *br, int ifindex);
 extern int _ipkernel_bridge_del_interface(nsm_bridge_t *br, int ifindex);
-
+extern int _ipkernel_bridge_list_interface(nsm_bridge_t *br, int ifindex[]);
+extern int _ipkernel_bridge_check_interface(char *br, int ifindex);
 
 extern int _ipkernel_bond_create(struct interface *ifp);
 extern int _ipkernel_bond_delete(struct interface *ifp);

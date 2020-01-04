@@ -522,14 +522,20 @@ DEFUN (no_dhcp_lease_time,
 
 DEFUN (nsm_interface_ip_dhcp_server,
 		nsm_interface_ip_dhcp_server_cmd,
-		"dhcp select server",
+		"dhcp select server NAME",
 		"dhcp config commands\n"
 		"dhcp select configure\n"
-		"DHCP server\n")
+		"DHCP server\n"
+		"DHCP Pool Name\n")
 {
 	int ret = 0;
 	//BOOL mode = FALSE;
 	struct interface *ifp = (struct interface *) vty->index;
+	if(!nsm_dhcps_lookup_api(argv[0]))
+	{
+		vty_out (vty, "%% This dhcp pool is not exist.%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	if(ifp)
 	{
 		//if(nsm_interface_dhcp_is_enable(ifp))
@@ -550,7 +556,7 @@ DEFUN (nsm_interface_ip_dhcp_server,
 			return CMD_WARNING;
 		}
 */
-		ret = nsm_interface_dhcp_mode_set_api(ifp, DHCP_SERVER, NULL);
+		ret = nsm_interface_dhcp_mode_set_api(ifp, DHCP_SERVER, argv[0]);
 		if(ret == ERROR)
 			vty_out (vty, "%% Can not enable dhcp server on this interface%s",VTY_NEWLINE);
 		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;

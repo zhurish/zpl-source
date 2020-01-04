@@ -73,6 +73,22 @@ enum
 	DHCPS_CMD_EXCUDED,
 };
 
+typedef struct nsm_dhcps_host_s
+{
+	NODE			node;
+	u_int8 			mac[ETHER_ADDR_LEN];
+	struct prefix 	address;
+	u_int8 			hostname[DHCPS_NAME_MAX];
+}nsm_dhcps_host_t;
+
+typedef struct nsm_dhcps_exclude_s
+{
+	NODE			node;
+	BOOL			range;
+	struct prefix 	start_address;
+	struct prefix 	end_address;
+
+}nsm_dhcps_exclude_t;
 
 typedef struct nsm_dhcps_s
 {
@@ -102,9 +118,7 @@ typedef struct nsm_dhcps_s
 	BOOL			active;
 
 	void			*pool;
-#ifndef PL_UDHCP_MODULE
-	void			*subnet;
-#endif
+
 	struct interface	*ifp;
 }nsm_dhcps_t;
 
@@ -155,6 +169,16 @@ extern int nsm_dhcps_del_api(char *name);
 extern int nsm_dhcps_set_api(nsm_dhcps_t *dhcps, int cmd, void *val);
 extern int nsm_dhcps_unset_api(nsm_dhcps_t *dhcps, int cmd);
 extern int nsm_dhcps_get_api(nsm_dhcps_t *dhcps, int cmd, void *val);
+
+extern nsm_dhcps_host_t * nsm_dhcps_host_lookup_api(nsm_dhcps_t *dhcps, char *address, u_int8 *mac);
+extern int nsm_dhcps_add_host_api(nsm_dhcps_t *dhcps, char *address, u_int8 *mac);
+extern int nsm_dhcps_del_host_api(nsm_dhcps_t *dhcps, char *address, u_int8 *mac);
+/******************************* exclude list **********************************/
+extern nsm_dhcps_exclude_t * nsm_dhcps_exclude_list_lookup_api(nsm_dhcps_t *dhcps, char *address, char *endaddress);
+extern int nsm_dhcps_add_exclude_list_api(nsm_dhcps_t *dhcps, char *address, char *endaddress);
+extern int nsm_dhcps_del_exclude_list_api(nsm_dhcps_t *dhcps, char *address, char *endaddress);
+
+extern int nsm_dhcps_lease_foreach(int(*cb)(void *, void *), void *p);
 
 extern int nsm_dhcps_write_config(struct vty *vty);
 extern int nsm_dhcps_lease_show(struct vty *vty, struct interface *ifp, char *poolname, BOOL detail);

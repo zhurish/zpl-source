@@ -280,6 +280,7 @@ on_error:
     return status;
 }
 
+#ifdef PL_PJSIP_CALL_SHELL
 static int pj_cli_socket_write_cmd(pjsua_app_config *cfg, char *cmd)
 {
 	int len = 0, ret = 0;
@@ -308,8 +309,9 @@ int pj_cli_execute_cmd(char *cmd)
 {
 	return pj_cli_socket_write_cmd(&app_config, cmd);
 }
+#endif
 
-//cli_destroy()
+
 pj_status_t cli_main(pj_bool_t wait_telnet_cli)
 {
 	char cmdline[PJ_CLI_MAX_CMDBUF];
@@ -1619,7 +1621,7 @@ static pj_status_t cmd_make_multi_call(pj_cli_cmd_val *cval)
 	return PJ_SUCCESS;
 
     pj_strncpy_with_null(&tmp, &cval->argv[2], sizeof(dest));
-
+    fprintf(stdout, "-------------------------:URL:(%s)\r\n", tmp.ptr);
     /* input destination. */
     get_input_url(tmp.ptr, tmp.slen, cval, &result);
     if (result.nb_result != PJSUA_APP_NO_NB) {
@@ -1635,7 +1637,7 @@ static pj_status_t cmd_make_multi_call(pj_cli_cmd_val *cval)
     } else {
 	tmp = pj_str(result.uri_result);
     }
-
+    fprintf(stdout, "==============================:URL:(%s)\r\n", tmp.ptr);
     for (i=0; i<count; ++i) {
 	pj_status_t status;
 

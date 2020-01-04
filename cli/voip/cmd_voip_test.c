@@ -164,17 +164,19 @@ DEFUN (app_stop_test,
 
 DEFUN (app_stop_phone_test,
 		app_stop_phone_test_cmd,
-		"call-phone NUM",
+		"call phone NUM",
 		"Call Configure\n"
-		"Stop Configure\n")
+		"Phone Configure\n"
+		"Phone Number\n")
 {
 	int ret = ERROR;
 	{
-		voip_event_t ev;
+/*		voip_event_t ev;
 		memset(&ev, 0, sizeof(voip_event_t));
 		strcpy(ev.data, argv[0]);
 		ev.dlen = strlen(ev.data);
-		ret = voip_app_start_call_event_ui_phone(&ev);
+		ret = voip_app_start_call_event_ui_phone(&ev);*/
+		ret = voip_app_start_call_event_cli_web(APP_CALL_ID_CLI, 0, 0, 0, argv[0]);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }

@@ -11,6 +11,14 @@
 #include "dhcp_config.h"
 //PUSH_AND_SET_FUNCTION_VISIBILITY_TO_HIDDEN
 
+/* Defaults you may want to tweak */
+/* Default max_lease_sec */
+//#define DEFAULT_LEASE_TIME      (60*60*24 * 10)
+//#define LEASES_FILE             CONFIG_DHCPD_LEASES_FILE
+/* Where to find the DHCP server configuration file */
+//#define DHCPD_CONF_FILE         "/etc/udhcpd.conf"
+
+
 /*** DHCP packet ***/
 
 /* DHCP protocol. See RFC 2131 */
@@ -86,8 +94,8 @@ enum {
 	char c[IP_UDP_DHCP_SIZE == 576 ? 1 : -1];
 };*/
 /* Possible values for flags field... */
-#define BROADCAST_FLAG 0x8000 /* "I need broadcast replies" */
-
+#define BROADCAST_FLAG	0x8000 /* "I need broadcast replies" */
+#define UNICAST_FLAG 	0x0000 /* "I need unicast replies" */
 /* Possible values for hardware type (htype) field... */
 #define HTYPE_ETHER		1	/* Ethernet			*/
 #define HTYPE_IPSEC_TUNNEL	31	/* IPsec Tunnel (RFC3456)	*/
@@ -226,20 +234,30 @@ struct option_set {
 
 
 #if ENABLE_FEATURE_UDHCP_PORT
-#define SERVER_PORT  (server_config.port)
-#define SERVER_PORT6 (server_config.port)
+#define DHCP_SERVER_PORT  (server_config.port)
+#define DHCP_SERVER_PORT6 (server_config.port)
 #else
-#define SERVER_PORT  67
-#define SERVER_PORT6 547
+#define DHCP_SERVER_PORT  67
+#define DHCP_SERVER_PORT6 547
 #endif
-#ifndef CLIENT_PORT
-#define CLIENT_PORT  68
+#ifndef DHCP_CLIENT_PORT
+#define DHCP_CLIENT_PORT  68
 #endif
-#ifndef CLIENT_PORT6
-#define CLIENT_PORT6 546
+#ifndef DHCP_CLIENT_PORT6
+#define DHCP_CLIENT_PORT6 546
 #endif
 
 
+#define DHCPC_DEBUG_STATE			0X0001
+#define DHCPC_DEBUG_EVENT			0X0002
+#define DHCPC_DEBUG_SEND			0X0004
+#define DHCPC_DEBUG_RECV			0X0008
+#define DHCPC_DEBUG_KERNEL			0X0010
+#define DHCPC_DEBUG_DETAIL			0X0020
+
+#define DHCPC_DEBUG_ON(n)		(dhcp_global_config.client_debug |= DHCPC_DEBUG_## n)
+#define DHCPC_DEBUG_OFF(n)		(dhcp_global_config.client_debug &= ~DHCPC_DEBUG_## n)
+#define DHCPC_DEBUG_ISON(n)		(dhcp_global_config.client_debug & DHCPC_DEBUG_## n)
 
 
 typedef struct dhcp_global_s
@@ -266,7 +284,8 @@ typedef struct dhcp_global_s
 	int		rawsock_v6;
 
 	int		client_sock;		//udp socket, just for client
-
+	int		client_cnt;
+	int		client_debug;
 }dhcp_global_t;
 
 extern dhcp_global_t dhcp_global_config;
@@ -339,7 +358,7 @@ extern dhcp_global_t dhcp_global_config;
 
 
 /*** Logging ***/
-
+#if 0
 #if defined CONFIG_UDHCP_DEBUG && CONFIG_UDHCP_DEBUG >= 1
 # define IF_UDHCP_VERBOSE(...) __VA_ARGS__
 extern unsigned dhcp_verbose;
@@ -358,12 +377,12 @@ void udhcp_dump_packet(struct dhcp_packet *packet) FAST_FUNC;
 # endif
 #else
 # define IF_UDHCP_VERBOSE(...)
-# define udhcp_dump_packet(...) ((void)0)
+//# define udhcp_dump_packet(...) ((void)0)
 # define log1(...) ((void)0)
 # define log2(...) ((void)0)
 # define log3(...) ((void)0)
 #endif
-
+#endif
 
 /*
  * packet.c

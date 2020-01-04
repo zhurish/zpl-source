@@ -23,6 +23,10 @@
 #include "pjsua_app_cb.h"
 #include <zebra.h>
 #include <log.h>
+
+#define __PL_PJSIP_DEBUG(fmt,...)		zlog_debug(ZLOG_SIP, fmt, ##__VA_ARGS__)
+
+
 PJ_BEGIN_DECL
 
 #define current_acc	pjsua_acc_get_default()
@@ -181,6 +185,8 @@ typedef struct pjsua_app_config
     int					log_refresh;
     pj_bool_t			app_cli_running;
 
+    pj_bool_t			incomeing;//被叫
+    int					call_cnt;
 } pjsua_app_config;
 
 /** Extern variable declaration **/
@@ -196,6 +202,7 @@ extern pj_bool_t	    app_running;
 */
 
 
+pj_bool_t app_incoming_call();
 
 int my_atoi(const char *cs);
 pj_bool_t find_next_call();

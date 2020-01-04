@@ -47,7 +47,7 @@ struct zlog *zlog_default = NULL;
 
 static const char *zlog_proto_string[] = { "NONE", "DEFAULT", "CONSOLE", "TELNET",/*"ZEBRA",*/ "HAL", "PAL", "NSM", "RIP",
 		"BGP", "OSPF", "RIPNG", "BABEL", "OSPF6", "ISIS", "PIM", "MASC", "NHRP",
-		"HSLS", "OLSR", "VRRP", "FRP", "LLDP", "BFD", "LDP", "SNTP", "IMISH", "DHCP", "WIFI", "MODEM", "SIP", "APP", "VOIP", "SOUND",
+		"HSLS", "OLSR", "VRRP", "FRP", "LLDP", "BFD", "LDP", "SNTP", "IMISH", "DHCP", "WIFI", "MODEM", "WEB", "SIP", "APP", "VOIP", "SOUND",
 		"UTILS", NULL, };
 
 static const char *zlog_priority[] = { "emergencies", "alerts", "critical", "errors",
@@ -174,7 +174,7 @@ size_t quagga_timestamp(zlog_timestamp_t timestamp, char *buf, size_t buflen)
 	//char * asctime(const struct tm * timeptr);
 	//char * ctime(const time_t *timer);
 #else
-	int len = 0;
+	u_int len = 0;
 	char data[128];
 	time_t clock = os_time(NULL);;
 	os_memset(data, 0, sizeof(data));
@@ -803,7 +803,7 @@ static int syslog_connect(void) {
 
 static void syslog_sigsafe(int priority, const char *msg, size_t msglen) {
 	static int syslog_fd = -1;
-	char buf[sizeof("<1234567890>ripngd[1234567890]: ") + msglen + 50];
+	char buf[strlen("<1234567890>ripngd[1234567890]: ") + msglen + 50];
 	char *s;
 
 	if ((syslog_fd < 0) && ((syslog_fd = syslog_connect()) < 0))
@@ -864,7 +864,7 @@ void zlog_signal(int signo, const char *action
 #endif
 		) {
 	time_t now;
-	char buf[sizeof("DEFAULT: Received signal S at T (si_addr 0xP, PC 0xP); aborting...")
+	char buf[strlen("DEFAULT: Received signal S at T (si_addr 0xP, PC 0xP); aborting...")
 			+ 200];
 	char *s = buf;
 	char *msgstart = buf;
@@ -873,6 +873,13 @@ void zlog_signal(int signo, const char *action
 	time(&now);
 	s = str_append(LOC, "(");
 	s = str_append(LOC, os_task_self_name_alisa());
+#ifdef SA_SIGINFO
+	s = str_append(LOC, "[pid=");
+	s = num_append(LOC, siginfo->si_pid);
+	s = str_append(LOC, " uid=");
+	s = num_append(LOC, siginfo->si_uid);
+	s = str_append(LOC, "]");
+#endif
 	s = str_append(LOC, ")");
 
 	if (zlog_default) {
@@ -1661,7 +1668,7 @@ static int zlog_testing_check_file (struct zlog *zl)
 	{
 		memset (&fsize, 0, sizeof(fsize));
 		(void) stat (filetmp, &fsize);
-		zlog_debug(ZLOG_DEFAULT, "========%s:%d %d", __func__, fsize.st_size, zl->testlog.filesize * ZLOG_1M);
+		//zlog_debug(ZLOG_DEFAULT, "========%s:%d %p", __func__, fsize.st_size, zl->testlog.filesize * ZLOG_1M);
 		if (fsize.st_size < (zl->testlog.filesize * ZLOG_1M))
 		{
 			if (zl->mutex)
@@ -1756,7 +1763,7 @@ static int zlog_check_file (struct zlog *zl)
 		memset (&fsize, 0, sizeof(fsize));
 		(void) stat (filetmp, &fsize);
 
-		zlog_debug(ZLOG_DEFAULT, "========%s:%d %d", __func__, fsize.st_size, zl->filesize * ZLOG_1M);
+		//zlog_debug(ZLOG_DEFAULT, "========%s:%d %d", __func__, fsize.st_size, zl->filesize * ZLOG_1M);
 		if (fsize.st_size < (zl->filesize * ZLOG_1M))
 		{
 			if (zl->mutex)

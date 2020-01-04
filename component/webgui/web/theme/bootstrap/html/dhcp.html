@@ -1,0 +1,643 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta content="" name="description" />
+	<meta content="webthemez" name="author" />
+	<!--meta http-equiv="refresh" content="30"-->
+	<!-- Bootstrap Styles-->
+	<link href="../css/bootstrap.min.css" rel="stylesheet" />
+
+	<link href="../css/bootstrap-switch.min.css" rel="stylesheet" />
+
+	<!-- private Styles-->
+	<link href="../css/private.css" rel="stylesheet" />
+
+	<!-- jQuery Js -->
+	<script src="../js/jquery-2.1.1.min.js"></script>
+	<!-- Bootstrap Js -->
+	<script src="../js/bootstrap.min.js"></script>
+	<script src="../js/bootstrap-switch.min.js"></script>
+	<script src="../js/xhr.js"></script>
+	<script src="../js/data-type.js"></script>
+
+	<title>DHCP</title>
+</head>
+
+<body class="body-bg-img">
+	<div id="maincontent" class="container">
+		<!-- DHCP设置 -->
+		<fieldset class="fieldset-margin fieldset-background">
+			<form class="form-horizontal form-margin" role="form" name="setdhcp" action="" accept-charset="UTF-8"
+				method="POST">
+				<legend class="legend-text-align">DHCP设置</legend>
+
+				<div class="form-group">
+					<label for="dhcp_enable" class="col-sm-3 control-label">DHCP</label>
+					<div class="checkbox col-sm-4">
+						<input type="checkbox" name="dhcp_enable" id="dhcp_enable" value="dhcp_enable">
+					</div>
+				</div>
+				<div class="form-group hiden">
+					<label for="poolname" class="col-sm-3 control-label">地址池名称</label>
+					<div class="col-sm-4">
+						<input type="text" minlength="6" maxlength="32" class="form-control" name="poolname"
+							id="poolname" onchange="input_poolname_check(this,$('#poolname'))" required
+							placeholder="test1">
+					</div>
+				</div>
+				<div class="form-group hiden">
+					<label for="startip" class="col-sm-3 control-label">起始地址</label>
+					<div class="col-sm-4">
+						<input type="text" minlength="6" maxlength="32" class="form-control" name="startip" id="startip"
+							onchange="input_address_check(this,$('#startip'))" required placeholder="192.168.0.100">
+						<!--onmouseout-->
+					</div>
+					<!--div class="col-xs-1 check_ok ">
+						√
+					</div>
+					<div class="col-xs-1 check_error ">
+						×
+					</div-->
+				</div>
+
+				<div class="form-group hiden">
+					<label for="endip" class="col-sm-3 control-label">结束地址</label>
+					<div class="col-sm-4">
+						<input type="text" minlength="6" maxlength="32" class="form-control" name="endip" id="endip"
+							onchange="input_address_check(this,$('#endip'))" required placeholder="192.168.0.200">
+						<!--onmouseout-->
+					</div>
+					<!--div class="col-xs-1 check_ok ">
+						√
+					</div>
+					<div class="col-xs-1 check_error ">
+						×
+					</div-->
+				</div>
+				<!--div class="form-group hiden">
+					<label for="netmask" class="col-sm-3 control-label">地址掩码</label>
+					<div class="col-sm-4">
+						<input type="text" minlength="6" maxlength="32" class="form-control" name="netmask" id="netmask"
+							value="255.255.255.0" required onchange="netmask_check()" placeholder="255.255.255.0">
+					</div>
+				</div-->
+				<div class="form-group hiden">
+						<label for="gateway" class="col-sm-3 control-label">首选网关</label>
+						<div class="col-sm-4">
+							<input type="text" minlength="6" maxlength="32" class="form-control" name="gateway" id="gateway"
+								value="192.168.1.100" required onchange="input_address_check(this,$('#gateway'))" placeholder="192.168.1.100">
+						</div>
+						<!--div class="col-xs-1 check_ok ">
+							√
+						</div>
+						<div class="col-xs-1 check_error">
+							×
+						</div-->
+					</div>
+					<div class="form-group hiden">
+							<label for="gateway2" class="col-sm-3 control-label">备选网关</label>
+							<div class="col-sm-4">
+								<input type="text" minlength="6" maxlength="32" class="form-control" name="gateway2" id="gateway2"
+									onchange="input_address_check(this,$('#gateway2'))" placeholder="192.168.1.101">
+							</div>
+							<!--div class="col-xs-1 check_ok ">
+								√
+							</div>
+							<div class="col-xs-1 check_error">
+								×
+							</div-->
+						</div>
+				<div class="form-group hiden">
+					<label for="dns" class="col-sm-3 control-label">首选DNS</label>
+					<div class="col-sm-4">
+						<input type="text" minlength="6" maxlength="32" class="form-control" name="dns" id="dns"
+							value="" onchange="input_address_check(this,$('#dns'))" required placeholder="192.168.0.1">
+					</div>
+					<!--div class="col-xs-1 check_ok ">
+						√
+					</div>
+					<div class="col-xs-1 check_error">
+						×
+					</div-->
+				</div>
+				<div class="form-group hiden">
+					<label for="dns2" class="col-sm-3 control-label">备选DNS</label>
+					<div class="col-sm-4">
+						<input type="text" minlength="6" maxlength="32" class="form-control" name="dns2" id="dns2"
+							value="">
+					</div>
+					<!--div class="col-xs-1 check_ok ">
+						√
+					</div>
+					<div class="col-xs-1 check_error">
+						×
+					</div-->
+				</div>
+
+				<div class="form-group hiden">
+					<label for="interface" class="col-sm-3 control-label">接口</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="interface" id="interface">
+							<script type="text/javascript">
+								function interface_tbl() {
+									var itbl = "";
+									$.get("/goform/interface-tbl", function (data, status) {
+										console.log("==============");
+										console.log(data);
+										var data_json = JSON.parse(data);
+										$.each(data_json, function (index, info) {
+											itbl += "<option value=\"" + info.name + "\">" + info.name + "</option>";
+										});
+										$("#interface").html(itbl);
+									});
+								}
+								interface_tbl();
+							</script>
+							<!--% jst_interface(); %-->
+						</select>
+					</div>
+				</div>
+
+				<div class="form-group hiden">
+					<div class="col-sm-4 control-label">
+						<button type="button" class="btn btn-cencel" name="dhcp_cencel" id="dhcp_cencel"
+							onclick="dhcp_oncencel()"><span class="glyphicon glyphicon-remove"
+								style="margin-right:10px;"></span>取消</button>
+					</div>
+					<div class="col-sm-4 control-label">
+						<button type="button" class="btn btn-submit" name="dhcp_submit" id="dhcp_submit"
+							onclick="dhcp_onsubmit()"><span class="glyphicon glyphicon-send"
+								style="margin-right:10px;"></span>确定</button>
+					</div>
+				</div>
+				<div id="handle_waiting" class="alert alert-success hiden">
+						<strong><img src="../res/icons/loading.gif" alt="Waiting..." style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+					</div>
+					<div id="handle_error" class="alert alert-warning hiden">
+						<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+					</div>
+				<script type="text/javascript">
+					$(function () {
+						/* 初始化控件 */
+						$('[name="dhcp_enable"]').bootstrapSwitch({
+							onText: "ON",      // 设置ON文本  
+							offText: "OFF",    // 设置OFF文本  
+							onColor: "success",// 设置ON文本颜色     (info/success/warning/danger/primary)  
+							offColor: "info",  // 设置OFF文本颜色        (info/success/warning/danger/primary)  
+							size: "normal",    // 设置控件大小,从小到大  (mini/small/normal/large)  
+							// 当开关状态改变时触发  
+							onSwitchChange: function (event, state) {
+								var dhcpcheckbox = document.getElementById("dhcp_enable");
+								if (state == true) {
+									check_okerr_hiden($('#startip'));
+									check_okerr_hiden($('#endip'));
+									//check_okerr_hiden($('#netmask'));
+									check_okerr_hiden($('#dns'));
+									check_okerr_hiden($('#dns2'));
+									check_okerr_hiden($('#interface'));
+									//check_okerr_hiden($('#poolname'));
+									check_okerr_hiden($('#gateway'));
+									check_okerr_hiden($('#gateway2'));
+
+									//document.getElementById("poolname").parentNode.parentNode.setAttribute("class", "form-group show");
+									document.getElementById("startip").parentNode.parentNode.setAttribute("class", "form-group show");
+									document.getElementById("endip").parentNode.parentNode.setAttribute("class", "form-group show");
+									//document.getElementById("netmask").parentNode.parentNode.setAttribute("class", "form-group show");
+									document.getElementById("dns").parentNode.parentNode.setAttribute("class", "form-group show");
+									document.getElementById("dns2").parentNode.parentNode.setAttribute("class", "form-group show");
+									document.getElementById("interface").parentNode.parentNode.setAttribute("class", "form-group show");
+									document.getElementById("dhcp_cencel").parentNode.parentNode.setAttribute("class", "form-group show");
+									document.getElementById("gateway").parentNode.parentNode.setAttribute("class", "form-group show");
+									document.getElementById("gateway2").parentNode.parentNode.setAttribute("class", "form-group show");
+
+									document.getElementById("client_table").setAttribute("class", "show");
+
+									//alert("ON");
+								}
+								else//if (state == false)
+								{
+									check_okerr_hiden($('#startip'));
+									check_okerr_hiden($('#endip'));
+									//check_okerr_hiden($('#netmask'));
+									check_okerr_hiden($('#dns'));
+									check_okerr_hiden($('#dns2'));
+									check_okerr_hiden($('#interface'));
+									check_okerr_hiden($('#gateway'));
+									check_okerr_hiden($('#gateway2'));
+									//check_okerr_hiden($('#poolname'));
+
+									//document.getElementById("poolname").parentNode.parentNode.setAttribute("class", "form-group hiden");
+									document.getElementById("startip").parentNode.parentNode.setAttribute("class", "form-group hiden");
+									document.getElementById("endip").parentNode.parentNode.setAttribute("class", "form-group hiden");
+									//document.getElementById("netmask").parentNode.parentNode.setAttribute("class", "form-group hiden");
+									document.getElementById("gateway").parentNode.parentNode.setAttribute("class", "form-group hiden");
+									document.getElementById("gateway2").parentNode.parentNode.setAttribute("class", "form-group hiden");
+									document.getElementById("dns").parentNode.parentNode.setAttribute("class", "form-group hiden");
+									document.getElementById("dns2").parentNode.parentNode.setAttribute("class", "form-group hiden");
+									document.getElementById("interface").parentNode.parentNode.setAttribute("class", "form-group hiden");
+									document.getElementById("dhcp_cencel").parentNode.parentNode.setAttribute("class", "form-group hiden");
+									document.getElementById("client_table").setAttribute("class", "hiden");
+								}
+							}
+						});
+					});
+
+					function input_poolname_check(self, obj) {
+						var value = self.value;
+						if (value != "") {
+							if (value.length >= 6 && value.length <= 32) {
+								check_ok_show(obj);
+								return true;
+							}
+							else {
+								check_err_show(obj);
+							}
+						}
+						return false;
+					}
+
+					function netmask_check() {
+						var netmask = $('#netmask');
+						var ip = netmask.val();
+						if (ip != "") {
+							if (checknetmaskv4(ip) == true) {
+								check_ok_show(netmask);
+								return true;
+							}
+							else {
+								check_err_show(netmask);
+								return false;
+							}
+						}
+						return false;
+					}
+
+
+					function dhcp_oncencel() {
+						document.getElementById("startip").value = "";
+						document.getElementById("endip").value = "";
+						//document.getElementById("netmask").value = "";
+						document.getElementById("gateway").value = "";
+						document.getElementById("gateway2").value = "";
+						document.getElementById("dns").value = "";
+						document.getElementById("dns2").value = "";
+						//document.getElementById("poolname").value = "";
+						//document.getElementById("netmask").value = "";
+
+						check_okerr_hiden($('#startip'));
+						check_okerr_hiden($('#endip'));
+						//check_okerr_hiden($('#netmask'));
+						check_okerr_hiden($('#dns'));
+						check_okerr_hiden($('#dns2'));
+						check_okerr_hiden($('#gateway'));
+						check_okerr_hiden($('#gateway2'));
+						//check_okerr_hiden($('#poolname'));
+						//check_okerr_hiden($('#interface'));						
+					}
+
+					function dhcp_onaction(op) {
+						//使用form对象的submit()方法，实现提交。
+						//document.setdhcp.submit(); 
+						///goform/changepasswod     
+						var argv;
+						var stxhr = new XHR();
+						if (op == "GET") {
+							argv = "ACTION=GET";
+						}
+						else {
+							argv = "ACTION=SET&poolname=" + "lantest" + "&startip=" 
+								+ document.getElementById("startip").value + "&endip="
+								+ document.getElementById("endip").value + "&gateway="
+								+ document.getElementById("gateway").value + "&dns="
+								+ document.getElementById("dns").value + "&interface="
+								+ document.getElementById("interface").value;
+
+							//	"&netmask="
+							//	+ document.getElementById("netmask").value +
+
+							if (document.getElementById("gateway2").value != "") {
+								argv += "&gateway2=" + document.getElementById("gateway2").value;
+							}
+
+							if (document.getElementById("dns2").value != "") {
+								argv += "&dns2=" + document.getElementById("dns2").value;
+							}
+							$("#handle_waiting").css("display", "block");
+							setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
+						}
+						stxhr.post("/goform/setdhcp", argv,
+							function (x, json) {
+								console.log(x);
+								console.log(json);
+								if (x.responseText != "" && json == null) {
+									if (x.responseText == "ERROR") {
+										if (op != "GET") {
+											clearTimeout();
+											$("#handle_waiting").css("display", "none");
+											$("#handle_error").css("display", "block");
+											setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+										}
+										else {
+											//$('[name="dhcp_enable"]').bootstrapSwitch('state',false);
+										}
+									}
+									else if (x.responseText == "OK") {
+										//$('[name="dhcp_enable"]').bootstrapSwitch('state',true);
+									}
+								}
+								else if (x.responseText != "" && json != null) {
+									if (json.response == "OK") {
+										if (op != "GET") {
+											clearTimeout();
+											$("#handle_waiting").css("display", "none");
+											$("#handle_error").css("display", "none");
+										}
+										$('[name="dhcp_enable"]').bootstrapSwitch('state', true);
+
+										//document.getElementById("poolname").value = json.poolname;
+										document.getElementById("startip").value = json.startip;
+										document.getElementById("endip").value = json.endip;
+										//document.getElementById("netmask").value = json.netmask;
+										document.getElementById("dns").value = json.dns;
+										document.getElementById("dns2").value = json.dns2;
+										document.getElementById("gateway").value = json.gateway;
+										document.getElementById("gateway2").value = json.gateway2;
+										select_option_active(document.getElementById("interface"), json.interface);
+
+										if (op != "GET") {
+											//check_okerr_hiden($('#poolname'));
+											check_okerr_hiden($('#startip'));
+											check_okerr_hiden($('#endip'));
+											//check_okerr_hiden($('#netmask'));
+											check_okerr_hiden($('#dns'));
+											check_okerr_hiden($('#dns2'));
+											check_okerr_hiden($('#gateway'));	
+											check_okerr_hiden($('#gateway2'));
+										}
+									}
+								}
+							},
+							3000
+						);
+					}
+
+					function dhcp_onsubmit() {
+						if (/*document.getElementById("poolname").value == "" ||*/
+							document.getElementById("startip").value == "" ||
+							document.getElementById("endip").value == "" ||
+							//document.getElementById("netmask").value == "" ||
+							document.getElementById("gateway").value == "" ||
+							document.getElementById("dns").value == "" ||
+							/*document.getElementById("dns2").value=="" ||*/
+							document.getElementById("interface").value == "") {
+							/*
+							if (document.getElementById("poolname").value == "" ||
+								!input_poolname_check(document.getElementById("poolname"),$('#poolname')))
+								check_err_show($('#poolname'));
+							*/
+							if (document.getElementById("startip").value == "" ||
+								!checkipv4(document.getElementById("startip").value))
+								check_err_show($('#startip'));
+							if (document.getElementById("endip").value == "" ||
+								!checkipv4(document.getElementById("endip").value))
+								check_err_show($('#endip'));
+							//if (document.getElementById("netmask").value == "" ||
+							//	!checknetmaskv4(document.getElementById("netmask").value))
+							//	check_err_show($('#netmask'));
+							if (document.getElementById("gateway").value == "" ||
+								!checkipv4(document.getElementById("gateway").value))
+								check_err_show($('#gateway'));
+							if (document.getElementById("gateway2").value != "" &&
+								!checkipv4(document.getElementById("gateway2").value))
+								check_err_show($('#gateway2'));
+							if (document.getElementById("dns").value == "" ||
+								!checkipv4(document.getElementById("dns").value))
+								check_err_show($('#dns'));
+							if (document.getElementById("dns2").value != "" &&
+								!checkipv4(document.getElementById("dns2").value))
+								check_err_show($('#dns2'));
+							if (document.getElementById("interface").value == "" ||
+								!checkipv4(document.getElementById("interface").value))
+								check_err_show($('#interface'));
+							return false;
+						}
+						else {
+							dhcp_onaction("SET");
+						}
+					}		
+				</script>
+			</form>
+		</fieldset>
+		<fieldset class="fieldset-margin fieldset-background">
+			<div class="hiden" name="client_table" id="client_table">
+				<table class="table table-condensed">
+					<caption class="tbl-text-align bold">设备信息</caption>
+					<thead>
+						<tr>
+							<th>设备名称</th>
+							<th>MAC地址</th>
+							<th>IP地址</th>
+							<th>有效期</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody id="dhcpctbl">
+						<script type="text/javascript">
+							function dhcp_client_tbl() {
+
+								var utbl = "";
+									//console.log("info.utbl:" + utbl);
+									utbl += "<tr>";
+									utbl += "<td>";
+									utbl += "<input type=\"text\" minlength=\"6\" maxlength=\"32\" class=\"form-control\"";
+									utbl += "name=\"devname\" id=\"devname\" value=\"\" onclick=\"dhcp_devname_check(this)\">";
+									utbl += "</td>";
+
+									utbl += "<td>";
+									utbl += "<input type=\"text\" minlength=\"6\" maxlength=\"32\" class=\"form-control\"";
+									utbl += "name=\"devmac\" id=\"devmac\" value=\"\" onclick=\"dhcp_mac_check(this)\">";
+									utbl += "</td>";
+
+									utbl += "<td>";
+									utbl += "<input type=\"text\" minlength=\"6\" maxlength=\"32\" class=\"form-control\"";
+									utbl += "name=\"devip\" id=\"devip\" value=\"\" onclick=\"dhcp_address_check(this)\">";
+									utbl += "</td>";
+
+									utbl += "<td>";
+									utbl += "<input type=\"number\" min=\"60\" max=\"65535\" class=\"form-control\"";
+									utbl += "name=\"expires\" id=\"expires\" value=\"\"  disabled onclick=\"dhcp_expires_check(this)\">";
+									utbl += "</td>";
+
+									utbl += "<td>\
+										<div class=\"col-sm-push-3 control-label\">\
+													  <button type=\"button\" class=\"btn btn-add\" name=\"dhcpadd\" id=\"dhcpadd\" onclick=\"dhcp_handle_click(this)\">\
+															<span class=\"glyphicon glyphicon-plus\"\
+															style=\"margin-right:10px;\"></span>添加</button>\
+													</div>\
+										</td>";
+									utbl += "</tr>";
+
+								$.get("/goform/dhcp-client", function (data, status) {
+									//console.log("data:" + data);
+									var data_json = JSON.parse(data);
+									$.each(data_json, function (index, info) {
+
+										utbl += "<tr>";
+										utbl += "<td>" + info.name + "</td>";
+										utbl += "<td>" + info.mac + "</td>";
+										utbl += "<td>" + info.ip + "</td>";
+										utbl += "<td>" + info.expires + "</td>";
+										//utbl += "<td>" + info.poolname + "</td>";
+										//utbl += "<td>" + info.interface + "</td>";
+										if (info.expires == "static") {
+											utbl += "<td>\
+														<div class=\"col-sm-push-2 control-label\">\
+															  <button type=\"button\" class=\"btn btn-danger\" name=\"delete\" id=\"delete\" \
+															  onclick=\"dhcp_handle_click(this)\"><span class=\"glyphicon glyphicon-trash\"\
+															style=\"margin-right:10px;\"></span>删除</button>\
+														</div>\
+													</td>";
+											utbl += "</tr>";
+										}
+										else {
+											utbl += "<td>\
+														<div class=\"col-sm-push-2 control-label\">\
+															  <button type=\"button\" class=\"btn btn-default\" disabled name=\"delete\" id=\"delete\" \
+															  onclick=\"dhcp_handle_click(this)\"><span class=\"glyphicon glyphicon-trash\"\
+															style=\"margin-right:10px;\"></span>删除</button>\
+														</div>\
+													</td>";
+											utbl += "</tr>";
+										}
+									});
+									$("#dhcpctbl").html(utbl);
+								});
+							}
+							dhcp_client_tbl();
+						</script>
+					</tbody>
+				</table>
+				<div id="add_waiting" class="alert alert-success hiden">
+						<strong><img src="../res/icons/loading.gif" alt="Waiting..." style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+					</div>
+					<div id="add_error" class="alert alert-warning hiden">
+						<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+					</div>
+				<script type="text/javascript">
+
+					function dhcp_expires_check(self) {
+						if (self.value != "") {
+							if (self.value > 65535 || self.value < 60) {
+								return false;
+							}
+							return true;
+						}
+						return false;
+					}
+					function dhcp_devname_check(self) {
+						if (self.value != "") {
+							if (self.value.length > 32 || self.value.length < 6) {
+								return false;
+							}
+							return true;
+						}
+						return false;
+					}
+					function dhcp_mac_check(self) {
+						if (self.value != "") {
+							if (!is_mac(self.value)) {
+								return false;
+							}
+							return true;
+						}
+						return false;
+					}
+					function dhcp_address_check(self) {
+						if (self.value != "") {
+							if (checkipv4(self.value) == true) {
+								return true;
+							}
+						}
+						return false;
+					}
+
+
+					function dhcp_handle_click(self) {
+
+						var devname = document.getElementById("devname").value;
+						var devmac = document.getElementById("devmac").value;
+						var devip = document.getElementById("devip").value;
+						var expires = document.getElementById("expires").value;
+
+						var argv;
+						var stxhr = new XHR();
+						if (self.id == "dhcpadd")
+							argv = "ACTION=dhcp&BTNID=" + self.id + "&devmac=" + devmac +
+								"&devip=" + devip;
+						else {
+							devmac = $(self).parentNode.parentNode.prevAll()[2].innerText;
+							devip = $(self).parentNode.parentNode.prevAll()[1].innerText;
+
+							argv = "ACTION=dhcp&BTNID=" + self.id + "&devmac=" + devmac +
+								"&devip=" + devip;
+							devname = "";
+							expires = "";
+						}
+
+						console.log("devname:" + devname);
+						console.log("devmac:" + devmac);
+						console.log("devip:" + devip);
+						console.log("expires:" + expires);
+
+						if (devname != "")
+							argv += "&devname=" + devname;
+						if (expires != "")
+							argv += "&expires=" + expires;
+
+						$("#add_waiting").css("display", "block");
+						setTimeout(function () { $("#add_waiting").css("display", "none") }, 5000);
+						stxhr.post("/goform/button_onclick", argv,
+							function (x, json) {
+								console.log("json:" + json);
+								console.log(x);
+								if (x.responseText == "ERROR") {
+									clearTimeout();
+									$("#add_error").css("display", "block");
+									$("#add_waiting").css("display", "none");
+									setTimeout(function () { $("#add_error").css("display", "none") }, 3000);
+								}
+								else if (x.responseText == "OK") {
+									clearTimeout();
+									$("#add_waiting").css("display", "none");
+									$("#add_error").css("display", "none");
+									dhcp_client_tbl();
+								}
+								else if (x.responseText != "" && json != null) {
+									if (json.response == "OK") {
+										clearTimeout();
+										$("#add_waiting").css("display", "none");
+										$("#add_error").css("display", "none");
+										dhcp_client_tbl();
+									}
+								}
+							},
+							3000);
+					}
+				</script>
+			</div>
+		</fieldset>
+		<script type="text/javascript">
+			window.onload = function () {
+				$('[name="dhcp_enable"]').bootstrapSwitch('state', true);
+				dhcp_onaction("GET");
+				//dhcp_client_tbl();
+			}
+		</script>
+	</div>
+</body>
+
+</html>

@@ -1,0 +1,312 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta content="" name="description" />
+	<meta content="webthemez" name="author" />
+	<!--meta http-equiv="refresh" content="30"-->
+	<!-- Bootstrap Styles-->
+	<link href="../css/bootstrap.min.css" rel="stylesheet" />
+
+	<!-- private Styles-->
+	<link href="../css/private.css" rel="stylesheet" />
+
+	<!-- jQuery Js -->
+	<script src="../js/jquery-2.1.1.min.js"></script>
+	<!-- Bootstrap Js -->
+	<script src="../js/bootstrap.min.js"></script>
+	<script src="../js/bootstrap-menu.js"></script>
+	<script src="../js/xhr.js"></script>
+	<script src="../js/data-type.js"></script>
+
+	<title>filesystem</title>
+</head>
+
+<body class="body-bg-img">
+	<div id="maincontent" class="container">
+		<fieldset class="fieldset-margin fieldset-background hiden" id="upgrade">
+			<form class="form-horizontal form-margin" role="form" action="" accept-charset="UTF-8" method="POST">
+				<legend class="legend-text-align">系统升级</legend>
+
+				<div class="form-group">
+					<label for="clear" class="col-sm-3 control-label">清除配置</label>
+					<div class="checkbox col-sm-4">
+						<input type="checkbox" name="clear" id="clear" value="clear">
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="col-xs-4 control-label">
+						<button type="button" class="btn btn-cencel" name="upgrade_cencel" id="upgrade_cencel"
+							onclick="upgrade_oncencel()"><span class="glyphicon glyphicon-remove"
+								style="margin-right:10px;"></span>取消</button>
+					</div>
+					<div class="col-xs-4 control-label">
+						<button type="button" class="btn btn-submit" name="upgrade_submit" id="upgrade_submit"
+							onclick="upgrade_onsubmit()"><span class="glyphicon glyphicon-send"
+								style="margin-right:10px;"></span>升级</button>
+					</div>
+				</div>
+				<div id="upgrade_waiting" class="alert alert-success hiden">
+					<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+							style="padding-left:150px; padding-right:20px">Waiting for system to
+						upgrade and reboot...</strong>
+				</div>
+				<div id="upgrade_error" class="alert alert-warning hiden">
+					<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+				</div>
+				<script type="text/javascript">
+
+					function upgrade_oncencel() {
+						filelist_tbl();
+						document.getElementById("upgrade").setAttribute("class", "fieldset-margin fieldset-background hiden");
+						document.getElementById("filesystem").setAttribute("class", "fieldset-margin fieldset-background show");
+					}
+					function upgrade_onsubmit() {
+						var argv;
+						var interval = 120000;
+						var stxhr = new XHR();
+						argv = "ACTION=filetbl&BTNID=webupgrade";
+						if (document.getElementById("clear").checked)
+							argv += "&clear=true";
+						//else	
+						//	argv += "&clear=false";
+
+						$("#upgrade_waiting").css("display", "block");
+						setTimeout(function () { $("#upgrade_waiting").css("display", "none") }, interval);
+
+						stxhr.post("/goform/button_onclick", argv,
+							function (x) {
+								if (x.responseText == "ERROR") {
+									clearTimeout();
+									$("#upgrade_error").css("display", "block");
+									$("#upgrade_waiting").css("display", "none");
+									setTimeout(function () {
+										$("#upgrade_error").css("display", "none");
+										filelist_tbl();
+										document.getElementById("upgrade").setAttribute("class", "fieldset-margin fieldset-background hiden");
+										document.getElementById("filesystem").setAttribute("class", "fieldset-margin fieldset-background show");
+										//load_main_page("filesystem", " #maincontent");
+									}, 3000);
+
+								}
+								else if (x.responseText == "OK") {
+									clearTimeout();
+									$("#upgrade_waiting").css("display", "none");
+									$("#upgrade_error").css("display", "none");
+									//load_main_page("upgrade", " #maincontent");
+									//location.replace
+								}
+							},
+							interval
+						);
+					}
+				</script>
+			</form>
+		</fieldset>
+		<fieldset class="fieldset-margin fieldset-background" id="filesystem">
+			<table class="table table-condensed">
+				<caption class="tbl-text-align bold">文件信息</caption>
+				<thead>
+					<tr>
+						<th>文件名</th>
+						<th>文件大小</th>
+						<th>删除</th>
+						<th>操作</th>
+					</tr>
+				</thead>
+				<tbody id="filetbl">
+					<script type="text/javascript">
+						//var stxhr = new XHR();
+						function filelist_tbl() {
+							var utbl = "";
+							$.get("/goform/file-list", function (data, status) {
+								//console.log(data);
+								console.log("json:" + data);
+								var n;
+								var flag = false;
+								var data_json = JSON.parse(data);
+								$.each(data_json, function (index, info) {
+									//if(info.name == "")
+									//	break;
+									flag = false;
+									utbl += "<tr>\n";
+									utbl += "<td>" + info.name + "</td>\n";
+									utbl += "<td>" + info.size + "</td>\n";
+
+									utbl += "<td>";
+									utbl += "<div class=\"col-sm-push-3 control-label\">";
+									utbl += "<button type=\"button\" class=\"btn btn-danger\" name=\"delete\" id=\"delete\" \
+										onclick=\"file_handle(this)\"><span class=\"glyphicon glyphicon-trash\"\
+															style=\"margin-right:10px;\"></span>删除</button>";
+									utbl += "</div>";
+									utbl += "</td>";
+
+									utbl += "<td>";
+									utbl += "<div class=\"col-sm-push-3 control-label\">";
+									n = info.name.split(".");
+									if (n) {
+										if (n[1] == "ipk")
+											flag = true;
+										else if ((n[1] == "bin" || n[1] == "BIN")) {
+											if("TSLX5" == sessionStorage.getItem("device"))
+											{
+												if (info.name.match("sysupgrade") ||
+												info.name.match("ESP32") ||
+												info.name.match("esp32") ||
+												info.name.match("stm32") ||
+												info.name.match("STM32"))
+												flag = true;
+											}
+											else if("TSLV9" == sessionStorage.getItem("device"))
+											{
+												if (info.name.match("sysupgrade") ||
+												info.name.match("V9") ||
+												info.name.match("v9") )
+												flag = true;
+											}
+										}
+									}
+									if (flag == false) {
+										if("TSLX5" == sessionStorage.getItem("device"))
+										{
+											if (info.name.match("sysupgrade") ||
+											info.name.match("ESP32") ||
+											info.name.match("esp32") ||
+											info.name.match("stm32") ||
+											info.name.match("STM32"))
+											flag = true;
+										}
+										else if("TSLV9" == sessionStorage.getItem("device"))
+											{
+												if (info.name.match("sysupgrade") ||
+												info.name.match("V9") ||
+												info.name.match("v9") )
+												flag = true;
+											}
+									}
+
+									if (flag == true) {
+										if (info.name.match("sysupgrade")) {
+											utbl += "<button type=\"button\" class=\"btn btn-submit\" name=\"install\" id=\"install\" \
+											onclick=\"file_handle(this)\"><span class=\"glyphicon glyphicon-save\"\
+															style=\"margin-right:10px;\"></span>安装</button>";
+										}
+										else {
+											utbl += "<button type=\"button\" class=\"btn btn-submit\" name=\"install\" id=\"install\" \
+											onclick=\"file_handle(this)\"><span class=\"glyphicon glyphicon-save\"\
+															style=\"margin-right:10px;\"></span>安装</button>";
+										}
+									}
+									else {
+										utbl += "<button type=\"button\" class=\"btn btn-default\" disabled name=\"install\" \
+											id=\"install\" onclick=\"file_handle(this)\"><span class=\"glyphicon glyphicon-save\"\
+															style=\"margin-right:10px;\"></span>安装</button>";
+									}
+
+									utbl += "</div>";
+									utbl += "</td>";
+
+									utbl += "</tr>";
+								});
+								$("#filetbl").html(utbl);
+							});
+						}
+						filelist_tbl();
+					</script>
+				</tbody>
+			</table>
+
+			<form class="form-inline col-md-offset-3 col-lg-offset-4 col-xl-offset-4 form-margin show" method="POST"
+				action="/action/upload" enctype="multipart/form-data">
+				<div class="form-group ">
+					<div class="col-xs-4 control-label">
+						<input type="file" name="upload_filename" id="upload_filename">
+						<!-- 用于 表单后台区分文件路径 -->
+						<input type="text" class="sr-only" name="ID" id="ID" value="other">
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="col-xs-4 control-label">
+						<button type="button" class="btn btn-submit" name="upload" id="upload"
+							onclick="file_upload_submit()">
+							<span class="glyphicon glyphicon-upload" style="margin-right:10px;"></span> 上传
+						</button>
+						<!--input type="submit" class="btn btn-primary" name="upload" id="upload" value="确定" -->
+					</div>
+				</div>
+			</form>
+
+			<div id="handle_waiting" class="alert alert-success hiden">
+				<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+						style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+			</div>
+			<div id="handle_error" class="alert alert-warning hiden">
+				<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+			</div>
+			<script type="text/javascript">
+
+				function file_upload_submit() {
+					console.log("SUBMIT ID:");
+					console.log($('#upload_filename')[0].files[0]);
+					upload_file("/action/upload", "upload_filename", $('#upload_filename')[0].files[0], "other",
+						function (x) {
+							document.getElementById("upload_filename").value = "";
+							filelist_tbl();
+						},
+						function (x) {
+							document.getElementById("upload_filename").value = "";
+							filelist_tbl();
+						});
+				}
+
+				function file_handle(self) {
+					var name;
+					if (self.id == "delete") {
+						name = $(self).parent().parent().prevAll()[1].innerText;
+					}
+					else if (self.id == "install") {
+						name = $(self).parent().parent().prevAll()[2].innerText;
+					}
+					console.log("name:" + name);
+					var argv = "name=";
+					var stxhr = new XHR();
+					var interval = 3000;
+					if (self.id == "install")
+						interval = 120000;
+					argv = "ACTION=filetbl&BTNID=" + self.id + "&" + argv + name;
+					$("#handle_waiting").css("display", "block");
+					setTimeout(function () { $("#handle_waiting").css("display", "none") }, interval);
+					stxhr.post("/goform/button_onclick", argv,
+						function (x) {
+							//console.log("file_handle response x:");
+							//console.log(x);
+							if (x.responseText == "ERROR") {
+								clearTimeout();
+								$("#handle_error").css("display", "block");
+								$("#handle_waiting").css("display", "none");
+								setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+							}
+							else if (x.responseText == "OK") {
+								clearTimeout();
+								$("#handle_waiting").css("display", "none");
+								$("#handle_error").css("display", "none");
+								filelist_tbl();
+								if (name.match("sysupgrade") && self.id == "install") {
+									document.getElementById("upgrade").setAttribute("class", "fieldset-margin fieldset-background show");
+									document.getElementById("filesystem").setAttribute("class", "fieldset-margin fieldset-background hiden");
+									//load_main_page("upgrade", " #maincontent");
+								}
+							}
+						},
+						interval
+					);
+				}
+			</script>
+		</fieldset>
+	</div>
+</body>
+
+</html>

@@ -1,0 +1,445 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta content="" name="description" />
+	<meta content="webthemez" name="author" />
+	<!--meta http-equiv="refresh" content="30"-->
+	<!-- Bootstrap Styles-->
+	<link href="../css/bootstrap.min.css" rel="stylesheet" />
+
+	<!-- private Styles-->
+	<link href="../css/private.css" rel="stylesheet" />
+
+	<!-- jQuery Js -->
+	<script src="../js/jquery-2.1.1.min.js"></script>
+	<!-- Bootstrap Js  Algorithm -->
+	<script src="../js/bootstrap.min.js"></script>
+	<script src="../js/xhr.js"></script>
+	<script src="../js/data-type.js"></script>
+
+	<title>人脸库管理</title>
+</head>
+
+<body class="body-bg-img">
+	<div id="maincontent" class="container">
+		<fieldset id="allface-detail" class="fieldset-margin fieldset-background">
+			<table class="table table-condensed">
+				<caption class="tbl-text-align bold">视频流信息</caption>
+				<thead>
+					<tr>
+						<th>姓名</th>
+						<th>性别</th>
+						<th>证件号</th>
+						<th>分组</th>
+						<th>照片</th>
+						<th>操作</th>
+					</tr>
+				</thead>
+				<tbody id="allface-info">
+					<script type="text/javascript">
+						function allfacelib_get() {
+							var utbl = "";
+							$.get("/goform/allfacelib", function (data, status) {
+								var data_json = JSON.parse(data);
+								console.log("allfacelib json:" + data);
+								$.each(data_json, function (index, info) {
+									utbl += "<tr>";
+									utbl += "<td>" + info.name + "</td>";
+									utbl += "<td>" + info.gender + "</td>";
+									utbl += "<td class=\"hiden\">" + info.ID + "</td>";
+									utbl += "<td>**********</td>";
+									utbl += "<td>" + info.BID + ":" + info.group + "</td>";
+									//utbl += "<td>" + info.pic + "</td>";
+									utbl += "<td> <div> <input type=\"image\" src=\"../res/face.jpg\" width=\"42\" height=\"42\" name=\"loadpic\" id=\"loadpic\" onclick=\"facelib_loadpic(this)\"> </div> </td>";
+									utbl += "<td>\
+                							<div class=\"col-sm-push-3 control-label\">\
+										  		<button type=\"button\" class=\"btn btn-danger\" name=\"delete\" id=\"delete\" \
+										  		onclick=\"facelib_delete(this)\"><span class=\"glyphicon glyphicon-trash\"\
+															style=\"margin-right:10px;\"></span>删除</button>\
+			    								</div>\
+                							</td>";
+									utbl += "</tr>";
+								});
+								$("#allface-info").html(utbl);
+							});
+						}
+						allfacelib_get();
+					</script>
+				</tbody>
+			</table>
+			<style media="screen" type="text/css">
+				.model {
+				  display: none;
+				  position: fixed;
+				  top: 0;
+				  left: 0;
+				  right: 0;
+				  bottom: 0;
+				  background-color: rgba(0, 0, 0, 0.5);
+				}
+				.view {
+				  position: absolute;
+				  top: 50%;
+				  left: 50%;
+				  transform: translate(-50%, -50%);
+				}
+				.close {
+				  position: absolute;
+				  top: 50%;
+				  right: 50%;
+				  color: red;
+				}    
+			</style>
+			<div class="model">
+				<div class="view">
+				  <a href="javascript:" class="close" onclick="closeModel()">X</a>  
+				  <img id="face_img_show" src="../cache/face.jpg">
+				</div>
+			</div>
+			<script type="text/javascript">
+				function closeModel(event) {
+				  $(".model").css("display", "none");
+				  //document.getElementById("facelibconfig").setAttribute("class", "hiden");
+				  document.getElementById("faceconfig").setAttribute("class", "form-horizontal form-margin show");
+				}
+			  </script>
+
+			<form class="form-horizontal form-margin show" role="form" name="faceconfig" id="faceconfig"
+				action="/action/facelib" enctype="multipart/form-data" accept-charset="UTF-8" method="POST">
+				<div class="form-group">
+					<div class="col-xs-4 control-label">
+						<button type="button" class="btn btn-add" name="face_add" id="face_add"
+							onclick="video_face_add()"><span class="glyphicon glyphicon-plus"
+								style="margin-right:10px;"></span>增加</button>
+					</div>
+				</div>
+				<div id="facelibconfig" class="hiden">
+					<legend class="legend-text-align">人脸库配置</legend>
+					<div class="form-group">
+						<label for="name" class="col-sm-3 control-label">姓名</label>
+						<div class="col-sm-4">
+							<input type="text" minlength="1" maxlength="128" class="form-control" name="name" id="name"
+								value="" onchange="username_check()" required placeholder="张三">
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="gender" class="col-sm-3 control-label">性别</label>
+						<div class="col-sm-4">
+							<select class="form-control" name="gender" id="gender">
+								<option selected="selected" value="0">女</option>
+								<option value="1">男</option>
+							</select>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="ID" class="col-sm-3 control-label">证件号</label>
+						<div class="col-sm-4">
+							<input type="text" minlength="1" maxlength="128" class="form-control" name="ID" id="ID"
+								value="" onchange="ID_check()" required>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="group" class="col-sm-3 control-label">分组</label>
+						<div class="col-sm-4">
+							<select class="form-control" name="group" id="group">
+								<option selected="selected" value="0">黑名单</option>
+								<option value="1">白名单</option>
+							</select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="boardid" class="col-sm-3 control-label">板卡ID</label>
+						<div class="col-sm-4">
+							<select class="form-control" name="boardid" id="boardid">
+								<option selected="selected" value="0">all</option>
+								<option value="1">1</option>
+								<option value="2">2</option>
+								<option value="3">3</option>
+								<option value="4">4</option>
+							</select>
+						</div>
+					</div>
+					<div class="form-group ">
+						<label for="pic" class="col-sm-3 control-label">照片</label>
+						<div class="col-sm-4">
+							<input type="file" name="upload_pic" id="upload_pic"
+								accept="image/png,image/jpg,image/jpeg,image/bmp" onchange="facelib_pic_check()">
+							<input type="text" class="sr-only" name="filename" id="filename" value="other">
+						</div>
+					</div>
+
+					<div class="form-group">
+						<div class="col-xs-4 control-label">
+							<button type="button" class="btn btn-cencel" name="facelib_cencel" id="facelib_cencel"
+								onclick="facelib_add_cencel()"><span class="glyphicon glyphicon-remove"
+									style="margin-right:10px;"></span>取消</button>
+						</div>
+						<div class="col-xs-4 control-label">
+							<button type="button" class="btn btn-submit" name="facelib_submit" id="facelib_submit"
+								onclick="facelib_add_submit()"><span class="glyphicon glyphicon-send"
+									style="margin-right:10px;"></span>确定</button>
+						</div>
+					</div>
+
+
+					<div id="handle_waiting" class="alert alert-success hiden">
+						<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+								style="padding-left:150px; padding-right:20px">Waiting for command to
+							complete...</strong>
+					</div>
+					<div id="handle_error" class="alert alert-warning hiden">
+						<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+					</div>
+					<script type="text/javascript">
+						function facelib_pic_check() {
+							var info = event.target.files[0];
+							if (info.size > 1024 * 1024 * 1) {
+								alert(" image file size Must be smaller than 1M!");
+								$("#upload_pic").val("");
+								return false;
+							}
+							if (info.size <= 0) {
+								alert(" image file size error!");
+								$("#upload_pic").val("");
+								return false;
+							}
+							/*if (info.type != "image/jpeg")
+							{
+								alert(" image type error! only accept jpeg format");
+								$("#upload_pic").val("");
+								return false;
+							}*/
+							if (info.name.length >= 31) {
+								alert(" error, image file name is too long!");
+								$("#upload_pic").val("");
+								return false;
+							}
+						}
+						function facelib_delete(obj) {
+							var argv;
+							var stxhr = new XHR();
+							//var ID = $(obj).parent().parent().prevAll()[2].innerText;//**********************
+							var ID = $(obj).parent().parent().prevAll()[3].innerText;
+
+							console.log("ID:" + ID);
+
+							argv = "ACTION=facelib&BTNID=" + obj.id + "&ID=" + ID;
+
+							$("#handle_waiting").css("display", "block");
+							setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
+							stxhr.post("/goform/button_onclick", argv,
+								function (x) {
+									console.log(x);
+									if (x.responseText == "ERROR") {
+										clearTimeout();
+										$("#handle_error").css("display", "block");
+										setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+									}
+									else if (x.responseText == "OK") {
+										clearTimeout();
+										allfacelib_get();
+									}
+								},
+								3000
+							);
+						}
+
+						function facelib_loadpic(obj) {
+							var argv;
+							var stxhr = new XHR();
+							var ID = $(obj).parent().parent().prevAll()[2].innerText;
+
+							argv = "ACTION=facelib&BTNID=" + obj.id + "&ID=" + ID;
+							$("#handle_waiting").css("display", "block");
+							setTimeout(function () { $("#handle_waiting").css("display", "none") }, 3000);
+							stxhr.post("/goform/button_onclick", argv,
+								function (x) {
+									if (x.responseText != "ERROR") {
+										clearTimeout();
+										document.getElementById("face_img_show").src = x.responseText;
+										$(".model").css("display", "block");
+										document.getElementById("faceconfig").setAttribute("class", "form-horizontal form-margin hiden");
+									}
+									else 
+									{
+										clearTimeout();
+										$("#handle_error").css("display", "block");
+										setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+										document.getElementById("faceconfig").setAttribute("class", "form-horizontal form-margin show");
+									}
+								},
+								3000
+							);
+						}
+
+						function video_face_add() {
+
+							document.getElementById("facelibconfig").setAttribute("class", "show");
+							document.getElementById("name").value = "";
+							document.getElementById("ID").value = "";
+
+							check_okerr_hiden($('#name'));
+							check_okerr_hiden($('#ID'));
+						}
+
+
+						function username_check() {
+							if (document.getElementById("name").value == "" ||
+								document.getElementById("name").value.length > 128 ||
+								document.getElementById("name").value.length < 2) {
+								check_err_show($('#name'));
+								return false;
+							}
+							else {
+								check_ok_show($('#name'));
+								return true;
+							}
+						}
+						function ID_check() {
+							if (document.getElementById("ID").value == "" ||
+								document.getElementById("ID").value.length > 128 ||
+								document.getElementById("ID").value.length < 6 ||
+								(!is_alldigit(document.getElementById("ID").value))) {
+								check_err_show($('#ID'));
+								return false;
+							}
+							else {
+								check_ok_show($('#ID'));
+								return true;
+							}
+						}
+
+
+						function facelib_add_cencel() {
+							document.getElementById("name").value = "";
+							//document.getElementById("netmask").value = "";
+							document.getElementById("ID").value = "";
+
+							check_okerr_hiden($('#name'));
+							check_okerr_hiden($('#ID'));
+						}
+
+						function facelib_add_submit() {
+							if (document.getElementById("name").value == "" ||
+								document.getElementById("name").value.length > 128 ||
+								document.getElementById("name").value.length < 2) {
+								check_err_hiden($('#name'));
+								return false;
+							}
+
+							if (document.getElementById("ID").value == "" ||
+								document.getElementById("ID").value.length > 128 ||
+								document.getElementById("ID").value.length < 6 ||
+								(!is_alldigit(document.getElementById("ID").value))) {
+								check_err_hiden($('#ID'));
+								return false;
+							}
+							var formData = new FormData();
+							formData.append("upload_pic", $('#upload_pic')[0].files[0]);
+							formData.append("name", document.getElementById("name").value);
+							formData.append("gender", get_select_option_value(document.getElementById("gender")));
+							formData.append("ID", document.getElementById("ID").value);
+							formData.append("group", get_select_option_value(document.getElementById("group")));
+							formData.append("BID", get_select_option_value(document.getElementById("boardid")));
+
+							console.log("formData:");
+							console.log(formData);
+							$("#handle_waiting").css("display", "block");
+							setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
+
+							$.ajax({
+								type: 'POST',
+								url: "/action/facelib",
+								data: formData,
+								async: true,
+								cache: false,
+								processData: false,
+								contentType: false,
+								success: function (data) {
+									console.log("上传成功:");
+									clearTimeout();
+									$("#handle_waiting").css("display", "none");
+									document.getElementById("facelibconfig").setAttribute("class", "hiden");
+									allfacelib_get();
+									document.getElementById("upload_pic").value = "";
+								},
+								error: function (response) {
+									console.log("上传失败:");
+									clearTimeout();
+									$("#handle_waiting").css("display", "none");
+									$("#handle_error").css("display", "block");
+									setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+									document.getElementById("upload_pic").value = "";
+								}
+							});
+						}
+						/*
+						//button 按钮，结合onclick事件，验证和提交表单
+						function facelib_add_submit() {
+							if (document.getElementById("name").value != "" ||
+								document.getElementById("name").value.length > 128 ||
+								document.getElementById("name").value.length < 6 ) {
+								check_err_hiden($('#name'));
+								return false;
+							}
+
+							if (document.getElementById("ID").value == "" ||
+								document.getElementById("ID").value.length > 128 ||
+								document.getElementById("ID").value.length < 6 ||
+								(!is_alldigit(document.getElementById("ID").value))) {
+								check_err_hiden($('#ID'));
+								return false;
+							}
+
+							{
+								var argv;
+								var stxhr = new XHR();
+								argv = "name=" + document.getElementById("name").value;
+
+								//argv += "&gender=" + document.getElementById("gender").value;
+								argv += "&gender=" + get_select_option_value("gender");
+
+								argv += "&ID=" + document.getElementById("ID").value;
+
+								argv += "&group=" + get_select_option_value("group");
+								//argv += "&group=" + document.getElementById("group").value;
+
+								console.log(argv);
+								$("#handle_waiting").css("display", "block");
+								setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
+								stxhr.post("/goform/addfacelib", argv,
+									function (x) {
+										console.log(x);
+										if (x.responseText == "OK") {
+											clearTimeout();
+											$("#handle_waiting").css("display", "none");
+											document.getElementById("facelibconfig").setAttribute("class", "hiden");
+											allfacelib_get();
+										}
+										else if (x.responseText == "ERROR") {
+											clearTimeout();
+											$("#handle_waiting").css("display", "none");
+											$("#handle_error").css("display", "block");
+											setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+										}
+									},
+									3000
+								);
+							}
+						}
+						*/
+					</script>
+				</div>
+			</form>
+		</fieldset>
+	</div>
+</body>
+
+</html>

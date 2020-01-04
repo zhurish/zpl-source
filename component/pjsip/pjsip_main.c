@@ -34,9 +34,7 @@
 #endif
 #define THIS_FILE	"pjsip_main.c"
 
-/*static pj_bool_t	    running = PJ_TRUE;
-static pj_status_t	    receive_end_sig;
-static pj_thread_t	    *sig_thread;*/
+
 static pjsua_app_cfg_t	    cfg;
 
 static int pl_pjsip_task_load(void *p);
@@ -44,7 +42,7 @@ static int pl_pjsip_task_load(void *p);
 /* Called when CLI (re)started */
 static void on_app_started(pj_status_t status, const char *msg)
 {
-	PJ_LOG(5, ("main", "--------------on_app_started-----------"));
+	//PJ_LOG(5, ("main", "--------------on_app_started-----------"));
     pj_perror(3, THIS_FILE, status, (msg)?msg:"");
 }
 
@@ -54,59 +52,10 @@ static void on_app_stopped(pj_bool_t restart, int argc, char** argv)
 	cfg.argc = argc;
 	cfg.argv = argv;
     }*/
-    PJ_LOG(5, ("main", "--------------on_app_stopped-----------"));
+    //PJ_LOG(5, ("main", "--------------on_app_stopped-----------"));
     //pj_perror(3, THIS_FILE, status, (msg)?msg:"","on_app_started");
     cfg.running = restart;
 }
-
-#if defined(PJ_WIN32) && PJ_WIN32!=0
-#include <windows.h>
-
-static pj_thread_desc handler_desc;
-
-static BOOL WINAPI CtrlHandler(DWORD fdwCtrlType)
-{
-    switch (fdwCtrlType)
-    {
-        // Handle the CTRL+C signal.
-
-        case CTRL_C_EVENT:
-        case CTRL_CLOSE_EVENT:
-        case CTRL_BREAK_EVENT:
-        case CTRL_LOGOFF_EVENT:
-        case CTRL_SHUTDOWN_EVENT:
-	    pj_thread_register("ctrlhandler", handler_desc, &cfg.sig_thread);
-	    PJ_LOG(3,(THIS_FILE, "Ctrl-C detected, quitting.."));
-	    cfg.receive_end_sig = PJ_TRUE;
-            pjsua_app_destroy();
-	    ExitProcess(1);
-            PJ_UNREACHED(return TRUE;)
-
-        default:
-
-            return FALSE;
-    }
-}
-
-static void setup_socket_signal()
-{
-}
-
-static void setup_signal_handler(void)
-{
-    SetConsoleCtrlHandler(&CtrlHandler, TRUE);
-}
-
-#else
-#include <signal.h>
-
-/*static void setup_socket_signal()
-{
-    signal(SIGPIPE, SIG_IGN);
-}*/
-
-//static void setup_signal_handler(void) {}
-#endif
 
 static int main_func(int argc, char *argv[])
 {
@@ -119,12 +68,10 @@ static int main_func(int argc, char *argv[])
 	//cfg.argv = argv;
 	cfg.running = PJ_TRUE;
 	//app_config.app_cli_running = PJ_TRUE;
-	//setup_signal_handler();
-	//setup_socket_signal();
 
 	while (cfg.running)
 	{
-		zlog_debug(ZLOG_SIP, "%s:pjsua_app_init","main_func");
+		//__PL_PJSIP_DEBUG( "%s:pjsua_app_init","main_func");
 		status = pjsua_app_init(&cfg);
 		if (status == PJ_SUCCESS)
 		{
@@ -135,23 +82,11 @@ static int main_func(int argc, char *argv[])
 		{
 			cfg.running = PJ_FALSE;
 		}
-		printf("======================================================3\r\n");
-		if (!cfg.receive_end_sig)
-		{
-			pjsua_app_destroy();
-			printf("======================================================4\r\n");
-			/* This is on purpose */
-			pjsua_app_destroy();
-			printf("======================================================5\r\n");
-		}
-		else
-		{
-			if (cfg.sig_thread)
-			{
-				printf("======================================================6\r\n");
-				pj_thread_join(cfg.sig_thread);
-			}
-		}
+		//__PL_PJSIP_DEBUG("======================================================3\r\n");
+
+		pjsua_app_destroy();
+		//__PL_PJSIP_DEBUG("======================================================4\r\n");
+
 		if(cfg.restart)
 		{
 			cfg.running = PJ_TRUE;
@@ -159,11 +94,6 @@ static int main_func(int argc, char *argv[])
 	}
 	return 0;
 }
-/*thread_desc = malloc(sizeof(pj_thread_desc));
-#endif
-status = pj_thread_register(name, thread_desc, &thread);*/
-
-
 
 
 static int pl_pjsip_task_load(void *p)
@@ -171,7 +101,7 @@ static int pl_pjsip_task_load(void *p)
 	os_task_t *task = p;
 	if(task)
 	{
-		if(task->active && task->priv == NULL)
+		if(task->active && task->priv == NULL && task->td_thread)
 		{
 			task->priv = pj_thread_register_malloc(task->td_thread, task->td_name);
 		}
@@ -183,25 +113,60 @@ static int pl_pjsip_task_load(void *p)
 static void * pl_pjsip_task_self(pthread_t td_thread)
 {
 	void *p = os_task_priv_get(0, os_task_pthread_self());
-	printf("===============%s======== p=%u=========\r\n", __func__, p);
+	//printf("===============%s======== p=%u=========\r\n", __func__, p);
 	return p;
 }
 
-static int pl_pjsip_task_add(char *name, int pri, int op, void *entry, void *arg, int stacksize, int td_thread, void *p)
+static int pl_pjsip_task_add(char *name, int pri, int op, void *entry, void *arg, int stacksize,
+		int td_thread, void *p)
 {
 	//int Priority = 0;
 	os_task_add_name(name, pri, 0, entry, name, arg, stacksize, td_thread);
 	//os_task_priority_get(id, &Priority);
-	printf("===============%s=================:%s\r\n", __func__, name);
+	//__PL_PJSIP_DEBUG("===============%s=================:%s\r\n", __func__, name);
 	if (os_task_priv_get(0, td_thread) == NULL)
 		os_task_priv_set(0, td_thread, p);
 	return 0;
+}
+
+static int _pl_pjsip_task_create(void *p)
+{
+	os_task_t *task = p;
+	if(task && strstr(task->td_name, "alsa"))
+	{
+		cfg.media_quit++;
+		//__PL_PJSIP_DEBUG( "==============%s===========%d", __func__, cfg.media_quit);
+	}
+	return OK;
+}
+
+static int _pl_pjsip_task_destroy(void *p)
+{
+	os_task_t *task = p;
+	if(task && strstr(task->td_name, "alsa"))
+	{
+		cfg.media_quit--;
+		//__PL_PJSIP_DEBUG( "==============%s===========%d", __func__, cfg.media_quit);
+	}
+	return OK;
+}
+
+int pjsip_media_wait_quit(void)
+{
+	//__PL_PJSIP_DEBUG( "==============%s===========%d", __func__, cfg.media_quit);
+	while(cfg.media_quit > 0)
+	{
+		os_msleep(50);
+	}
+	os_msleep(500);
+	return OK;
 }
 
 static int pjmain(void *p)
 {
 	int pjargc = 1;
 	char *pjargv[] = {NULL, NULL};
+
 /*	os_task_cb_tbl_t cb;
 
 	cb.cb_start = pl_pjsip_task_load;
@@ -218,6 +183,10 @@ static int pjmain(void *p)
 	pl_pjsip_module_reload();
 #endif
 	cfg.running = PJ_TRUE;
+
+	os_task_add_create_hook(&_pl_pjsip_task_create);
+	os_task_add_destroy_hook(&_pl_pjsip_task_destroy);
+
 	pj_task_cb_init(pl_pjsip_task_add, os_task_del, os_task_refresh_id, pl_pjsip_task_self);
 
     return pj_run_app(&main_func, pjargc, pjargv, 0);

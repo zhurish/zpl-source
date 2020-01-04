@@ -1,0 +1,290 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta content="" name="description" />
+	<meta content="webthemez" name="author" />
+	<!--meta http-equiv="refresh" content="30"-->
+	<!-- Bootstrap Styles-->
+	<link href="../css/bootstrap.min.css" rel="stylesheet" />
+
+	<!-- private Styles-->
+	<link href="../css/private.css" rel="stylesheet" />
+
+	<!-- jQuery Js -->
+	<script src="../js/jquery-2.1.1.min.js"></script>
+	<!-- Bootstrap Js -->
+	<script src="../js/bootstrap.min.js"></script>
+	<script src="../js/xhr.js"></script>
+	<script src="../js/data-type.js"></script>
+
+	<title>switch</title>
+</head>
+
+<body class="body-bg-img">
+	<div id="maincontent" class="container">
+		<fieldset class="fieldset-margin fieldset-background">
+			<table class="table table-condensed">
+				<caption class="tbl-text-align bold">交换</caption>
+				<thead>
+					<tr>
+						<th>接口</th>
+						<th>VLAN ID</th>
+						<th>Tagged/Untagged</th>
+						<th>WAN/LAN</th>
+						<th>操作</th>
+						<th>状态</th>
+					</tr>
+				</thead>
+				<tbody id="port-tbl">
+					<script type="text/javascript">
+						function switch_port_tbl() {
+							var utbl = "";
+							$.get("/goform/port-tbl", function (data, status) {
+								var data_json = JSON.parse(data);
+								console.log("JSON:" + data_json);
+								$.each(data_json, function (index, info) {
+									utbl += "<tr>\n";
+									utbl += "<td class=\"hiden\">" + info.port + "</td>";
+									utbl += "<td>" + info.name + "</td>";
+									//utbl += "<td>" + info.vlan + "</td>\n";
+									utbl += "<td>";
+									if (info.name != "CPU") {
+										utbl += "<input type=\"number\" min=\"1\" max=\"4095\" class=\"form-control\" required";
+										utbl += "name=\"vlan" + info.port + "\" id=\"vlan" + info.port + "\" value=\"" + info.vlan + "\">";
+									}
+									else {
+										utbl += "ALL";
+									}
+									utbl += "</td>";
+									utbl += "<td>";
+									if (info.name != "CPU") {
+										utbl += "<select class=\"form-control\" name=\"out-tagged" + info.port + "\" id=\"out-tagged" + info.port + "\">";
+										if (info.tagget == "tagget") {
+											utbl += "<option value=\"tagged\" selected=\"selected\">tagged</option>";
+											utbl += "<option value=\"untagged\">untagged</option>";
+										}
+										else {
+											utbl += "<option value=\"untagged\" selected=\"selected\">untagged</option>";
+											utbl += "<option value=\"tagged\">tagged</option>";
+										}
+										utbl += "</select>";
+									}
+									else {
+										utbl += "tagged";
+									}
+									utbl += "</td>";
+									utbl += "<td>";
+									if (info.name != "CPU") {
+										utbl += "<select class=\"form-control\" name=\"wan-lan" + info.port + "\" id=\"wan-lan" + info.port + "\">";
+										if (info.wanlan == "LAN") {
+											utbl += "<option value=\"LAN\" selected=\"selected\">LAN</option>";
+											utbl += "<option value=\"WAN\">WAN</option>";
+										}
+										else {
+											utbl += "<option value=\"LAN\">LAN</option>";
+											utbl += "<option value=\"WAN\" selected=\"selected\">WAN</option>";
+										}
+										utbl += "</select>";
+									}
+									else {
+										utbl += "CPU";
+									}
+									utbl += "</td>";
+									if (info.name != "CPU") {
+										utbl += "<td>\
+               								<div class=\"col-sm-push-3 control-label\">\
+			      								<button type=\"button\" class=\"btn btn-submit\" name=\"save\" id=\"save\"\
+			      			 						onclick=\"switch_save(this)\"><span class=\"glyphicon glyphicon-send\"\
+															style=\"margin-right:10px;\"></span>确定</button>\
+			    							</div>\
+           								</td>";
+
+										utbl += "<td>\
+                							<div>\
+			      								<input type=\"image\" src=\"../res/icons/port_" + info.state + ".png\" \
+			      									name=\"connect\" id=\"connect\" onclick=\"port_connect(this)\">\
+			    							</div>\
+                						</td>";
+									}
+									else {
+										utbl += "<td>\
+               								<div class=\"col-sm-push-3 control-label\">\
+			      								<button type=\"button\" class=\"btn btn-default\" name=\"save\" id=\"save\"\
+			      			 						disabled><span class=\"glyphicon glyphicon-send\"\
+															style=\"margin-right:10px;\"></span>确定</button>\
+			    							</div>\
+           								</td>";
+										utbl += "<td><img src=\"../res/icons/port_" + info.state + ".png\"></td>"
+									}
+									utbl += "</tr>";
+								});
+								$("#port-tbl").html(utbl);
+							});
+						}
+						switch_port_tbl();
+					</script>
+				</tbody>
+			</table>
+			<div id="handle_waiting" class="alert alert-success hiden">
+				<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+						style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+			</div>
+			<div id="handle_error" class="alert alert-warning hiden">
+				<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+			</div>
+			<script type="text/javascript">
+
+				function switch_save(obj) {
+
+					var port = $(obj).parent().parent().prevAll()[4].innerText;
+					var vlanid = document.getElementById("vlan" + port).value;
+					var tagged = document.getElementById("out-tagged" + port).value;
+					var wanlan = document.getElementById("wan-lan" + port).value;
+					//var vlanid=$(obj).parent().parent().prevAll()[2].innerText;
+					//var tagged=$(obj).parent().parent().prevAll()[1].innerText;
+					//var wanlan=$(obj).parent().parent().prevAll()[0].innerText;
+
+					//console.log($($(obj).parent().parent().prevAll()[2].parentNode.innerText));
+
+					console.log("port:" + port);
+					console.log("vlanid:" + vlanid);
+					console.log("tagged:" + tagged);
+					console.log("wanlan:" + wanlan);
+
+					var argv;
+					var stxhr = new XHR();
+					argv = "ACTION=switch&BTNID=" + obj.id + "&port=" + port + "&vlanid=" + vlanid +
+						"&tagged=" + tagged + "&wanlan=" + wanlan;
+
+					$("#handle_waiting").css("display", "block");
+					setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
+					stxhr.post("/goform/button_onclick", argv,
+						function (x, json) {
+							console.log("json:" + json);
+							console.log(x);
+							if (x.responseText == "ERROR") {
+								clearTimeout();
+								$("#handle_error").css("display", "block");
+								$("#handle_waiting").css("display", "none");
+								setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+							}
+							else if (x.responseText == "OK") {
+								clearTimeout();
+								$("#handle_waiting").css("display", "none");
+								$("#handle_error").css("display", "none");
+								//obj.src = imgsrc.replace("up", "down");
+								//console.log("change imgsrc:"+obj.src);
+								switch_port_tbl();
+							}
+							else if (x.responseText != "" && json != null) {
+								if (json.response == "OK") {
+									clearTimeout();
+									$("#handle_waiting").css("display", "none");
+									$("#handle_error").css("display", "none");
+									//obj.src = imgsrc.replace("up", "down");
+									//console.log("json change imgsrc:"+obj.src);
+									switch_port_tbl();
+								}
+								else {
+									clearTimeout();
+									$("#handle_error").css("display", "block");
+									$("#handle_waiting").css("display", "none");
+									setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+								}
+							}
+						},
+						3000);
+				}
+
+				function port_connect(obj) {
+					var imgsrc = obj.src;
+					var port = $(obj).parent().parent().prevAll()[4].innerText;
+					console.log("imgsrc:" + imgsrc + "port:" + port);
+
+					if (imgsrc.search("up") > 0) {
+						var argv;
+						var stxhr = new XHR();
+						argv = "ACTION=switch&BTNID=" + obj.id + "&" + "port=" + port + "&state=down";
+
+						$("#handle_waiting").css("display", "block");
+						setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
+
+						stxhr.post("/goform/button_onclick", argv,
+							function (x, json) {
+								//console.log("json:" + json);
+								//console.log(x);
+								if (x.responseText == "ERROR") {
+									clearTimeout();
+									$("#handle_error").css("display", "block");
+									$("#handle_waiting").css("display", "none");
+									setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+								}
+								else if (x.responseText == "OK") {
+									clearTimeout();
+									$("#handle_waiting").css("display", "none");
+									$("#handle_error").css("display", "none");
+									obj.src = imgsrc.replace("up", "down");
+									//console.log("change imgsrc:" + obj.src);
+								}
+								else if (x.responseText != "" && json != null) {
+									if (json.response == "OK") {
+										clearTimeout();
+										$("#handle_waiting").css("display", "none");
+										$("#handle_error").css("display", "none");
+										obj.src = imgsrc.replace("up", "down");
+										console.log("json change imgsrc:" + obj.src);
+									}
+									else {
+										clearTimeout();
+										$("#handle_error").css("display", "block");
+										$("#handle_waiting").css("display", "none");
+										setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+									}
+								}
+							},
+							3000);
+					}
+					else {
+						var argv;
+						var stxhr = new XHR();
+						argv = "ACTION=port&BTNID=" + obj.id + "&" + "port=" + port + "&state=up";
+
+						$("#handle_waiting").css("display", "block");
+						setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
+
+						stxhr.post("/goform/button_onclick", argv,
+							function (x, json) {
+								console.log(x);
+								if (x.responseText == "ERROR") {
+									clearTimeout();
+									$("#handle_error").css("display", "block");
+									$("#handle_waiting").css("display", "none");
+									setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+								}
+								else if (x.responseText == "OK") {
+									clearTimeout();
+									$("#handle_waiting").css("display", "none");
+									$("#handle_error").css("display", "none");
+									obj.src = imgsrc.replace("down", "up");
+									console.log("change imgsrc:" + obj.src);
+								}
+								else if (x.responseText == "") {
+									clearTimeout();
+									$("#handle_error").css("display", "block");
+									$("#handle_waiting").css("display", "none");
+									setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+								}
+							},
+							3000);
+					}
+				}
+			</script>
+		</fieldset>
+	</div>
+</body>
+
+</html>

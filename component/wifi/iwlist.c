@@ -10,9 +10,11 @@
  * This file is released under the GPL license.
  *     Copyright (c) 1997-2007 Jean Tourrilhes <jt@hpl.hp.com>
  */
-
+#include "iw_config.h"
+#include "iwioctl.h"
 #include "iwlib.h"		/* Header */
 #include <sys/time.h>
+
 
 static unsigned char iwlist_detail = 1;
 
@@ -810,7 +812,7 @@ int has_range, int finsh)
  * Perform a scanning on one device
  */
 static int print_scanning_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	struct iw_scan_req scanopt; /* Options for 'set' */
@@ -1122,8 +1124,57 @@ int count) /* Args count */
 /*
  * Print the number of channels and available frequency for the device
  */
+/* Create a channel to the NET kernel. */
+int iw_get_freq_info(char * ifname, iw_dev_t *iwdev)
+{
+	struct iw_range range;
+	double freq;
+	int k = 0;//, i = 0;
+	//char buffer[128]; /* Temporary buffer */
+
+	int skfd = 0;//, goterr = 0;
+	if ((skfd = iw_sockets_open()) < 0)
+	{
+		perror("socket");
+		return -1;
+	}
+	memset(&iwdev->freq, 0, sizeof(iwdev->freq));
+	/* Get list of frequencies / channels */
+	if (iw_get_range_info(skfd, ifname, &range) < 0)
+	{
+		fprintf(stderr, "%-8.16s  no frequency information.\n\n", kname2ifname(ifname));
+		return -1;
+	}
+	else
+	{
+		if (range.num_frequency > 0)
+		{
+			iw_printf("total: %d channels, available frequencies :\n",
+					range.num_channels);
+
+			for (k = 0; k < range.num_frequency; k++)
+			{
+				freq = iw_freq2float(&(range.freq[k]));
+				iwdev->freq[k].active = TRUE;
+				iwdev->freq[k].channel = range.freq[k].i;
+				iwdev->freq[k].freq = freq;
+
+/*				iw_print_freq_value(buffer, sizeof(buffer), freq);
+
+				iw_printf("          Channel %.2d : %s\n", range.freq[k].i,
+						buffer);*/
+			}
+		}
+		//else
+		//	iw_printf("%-8.16s  %d channels\n", kname2ifname(ifname), range.num_channels);
+	}
+	iw_sockets_close(skfd);
+	return (0);
+}
+
+
 static int print_freq_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	//struct iwreq wrq;
 	struct iw_range range;
@@ -1155,6 +1206,7 @@ int count) /* Args count */
 			{
 				freq = iw_freq2float(&(range.freq[k]));
 				iw_print_freq_value(buffer, sizeof(buffer), freq);
+
 				iw_printf("          Channel %.2d : %s\n", range.freq[k].i,
 						buffer);
 			}
@@ -1181,8 +1233,72 @@ int count) /* Args count */
 /*
  * Print the number of available bitrates for the device
  */
+int iw_get_bitrate_info(char * ifname, iw_dev_t *iwdev)
+{
+	struct iwreq wrq;
+	struct iw_range range;
+	int k = 0;//, i = 0;
+	//char buffer[128]; /* Temporary buffer */
+
+	int skfd = 0;//, goterr = 0;
+	if ((skfd = iw_sockets_open()) < 0)
+	{
+		perror("socket");
+		return -1;
+	}
+	memset(&iwdev->bitrates, 0, sizeof(iwdev->bitrates));
+	/* Get list of frequencies / channels */
+	if (iw_get_range_info(skfd, ifname, &range) < 0)
+	{
+		fprintf(stderr, "%-8.16s  no bit-rate information.\n\n", kname2ifname(ifname));
+		return -1;
+	}
+	else
+	{
+		iwdev->num_bitrates = range.num_bitrates;
+		if ((range.num_bitrates > 0) && (range.num_bitrates <= IW_MAX_BITRATES))
+		{
+			for (k = 0; k < range.num_bitrates; k++)
+			{
+				iwdev->bitrates[k].active = TRUE;
+				iwdev->bitrates[k].channel = k;
+				iwdev->bitrates[k].bitrate = range.bitrate[k];
+			}
+		}
+		//else
+		//	iw_printf("%-8.16s  unknown bit-rate information.\n", kname2ifname(ifname));
+
+		/* Get current bit rate */
+		if (iw_get_ext(skfd, ifname, SIOCGIWRATE, &wrq) >= 0)
+		{
+			iwdev->cu_bitrates.bitrate = wrq.u.bitrate.value;
+			iwdev->cu_bitrates.active = TRUE;
+			//iw_print_bitrate(buffer, sizeof(buffer), wrq.u.bitrate.value);
+			//iw_printf("          Current Bit Rate%c%s\n",
+			//		(wrq.u.bitrate.fixed ? '=' : ':'), buffer);
+		}
+
+		/* Try to get the broadcast bitrate if it exist... */
+		if (range.bitrate_capa & IW_BITRATE_BROADCAST)
+		{
+			wrq.u.bitrate.flags = IW_BITRATE_BROADCAST;
+			if (iw_get_ext(skfd, ifname, SIOCGIWRATE, &wrq) >= 0)
+			{
+				iwdev->broadcast_bitrates.bitrate = wrq.u.bitrate.value;
+				iwdev->broadcast_bitrates.active = TRUE;
+
+				//iw_print_bitrate(buffer, sizeof(buffer), wrq.u.bitrate.value);
+				//iw_printf("          Broadcast Bit Rate%c%s\n",
+				//		(wrq.u.bitrate.fixed ? '=' : ':'), buffer);
+			}
+		}
+	}
+	iw_sockets_close(skfd);
+	return (0);
+}
+
 static int print_bitrate_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	struct iw_range range;
@@ -1245,7 +1361,7 @@ int count) /* Args count */
  * Print all the available encryption keys for the device
  */
 static int print_keys_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	struct iw_range range;
@@ -1389,7 +1505,7 @@ static const int pm_type_flags_size = (sizeof(pm_type_flags)
  * Print Power Management info for each device
  */
 static int print_pm_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	struct iw_range range;
@@ -1525,7 +1641,7 @@ int count) /* Args count */
  * Print the number of available transmit powers for the device
  */
 static int print_txpower_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	struct iw_range range;
@@ -1672,7 +1788,7 @@ static void print_retry_value_range(char * name, int mask, int iwr_flags,
  * Print Retry info for each device
  */
 static int print_retry_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	struct iw_range range;
@@ -1782,7 +1898,7 @@ int count) /* Args count */
  * Exacly the same as the spy list, only with different IOCTL and messages
  */
 static int print_ap_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	char buffer[(sizeof(struct iw_quality) + sizeof(struct sockaddr))
@@ -1880,7 +1996,7 @@ static const char * event_capa_evt[] =
  * Print the event capability for the device
  */
 static int print_event_capa_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iw_range range;
 	int cmd;
@@ -1937,7 +2053,7 @@ int count) /* Args count */
  * Print the authentication parameters for the device
  */
 static int print_auth_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	struct iw_range range;
@@ -1996,7 +2112,7 @@ int count) /* Args count */
  * Print all the available wpa keys for the device
  */
 static int print_wpakeys_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	struct iw_range range;
@@ -2113,7 +2229,7 @@ int count) /* Args count */
  * Note : indentation is broken. We need to fix that.
  */
 static int print_gen_ie_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	unsigned char buf[IW_GENERIC_IE_MAX];
@@ -2148,7 +2264,7 @@ int count) /* Args count */
  * Print Modulation info for each device
  */
 static int print_modul_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	struct iw_range range;
@@ -2331,7 +2447,7 @@ static void iw_usage(int status)
 /*
  * The main !
  */
-int iwlist_main(int argc, char ** argv)
+int iwlist_main(iw_user_cb_t *cb, int argc, char ** argv)
 {
 	int skfd; /* generic raw socket desc.	*/
 	char *dev; /* device name			*/
@@ -2388,9 +2504,9 @@ int iwlist_main(int argc, char ** argv)
 
 	/* do the actual work */
 	if (dev)
-		goterr = (*iwcmd->fn)(skfd, dev, args, count);
+		goterr = (*iwcmd->fn)(skfd, dev, args, count, cb);
 	else
-		iw_enum_devices(skfd, iwcmd->fn, args, count);
+		iw_enum_devices(skfd, iwcmd->fn, args, count, cb);
 
 	/* Close the socket. */
 	iw_sockets_close(skfd);

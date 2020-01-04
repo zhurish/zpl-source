@@ -1,7 +1,7 @@
 /* telnetdLib.c - telnet server library */
 
 /* Copyright 1984 - 2002 Wind River Systems, Inc. */
-#include "copyright_wrs.h"
+//#include "copyright_wrs.h"
 
 
 /*
@@ -132,7 +132,72 @@ INCLUDE FILES: telnetLib.h
 
 SEE ALSO: rlogLib
 */
+#define BUILD_LINUX
+#if defined(BUILD_LINUX)||defined(__linux)
+#include "zebra.h"
+#include "buffer.h"
+#include "command.h"
+#include "linklist.h"
+#include "log.h"
+#include "memory.h"
+#include "vty.h"
+#include "telnetLib.h"
+#include "systools.h"
 
+int xgetpty(char *line)
+{
+    int p;
+#if 1
+    p = open("/dev/ptmx", O_RDWR);
+    if (p > 0) {
+        grantpt(p); /* chmod+chown corresponding slave pty */
+        unlockpt(p); /* (what does this do?) */
+#if 0 /* if ptsname_r is not available... */
+        const char *name;
+        name = ptsname(p); /* find out the name of slave pty */
+        if (!name) {
+        	fprintf(stderr,"ptsname error (is /dev/pts mounted?)");
+            return -1;
+        }
+        safe_strncpy(line, name, GETPTY_BUFSIZE);
+#else
+        /* find out the name of slave pty */
+        if (ptsname_r(p, line, BUFSIZE-1) != 0) {
+            fprintf(stderr,"ptsname error (is /dev/pts mounted?)");
+            return -1;
+        }
+        line[BUFSIZE-1] = '\0';
+#endif
+        return p;
+    }
+#else
+    struct stat stb;
+    int i;
+    int j;
+
+    strcpy(line, "/dev/ptyXX");
+
+    for (i = 0; i < 16; i++) {
+        line[8] = "pqrstuvwxyzabcde"[i];
+        line[9] = '0';
+        if (stat(line, &stb) < 0) {
+            continue;
+        }
+        for (j = 0; j < 16; j++) {
+            line[9] = j < 10 ? j + '0' : j - 10 + 'a';
+                fprintf(stderr, "Trying to open device: %s\n", line);
+            p = open(line, O_RDWR | O_NOCTTY);
+            if (p >= 0) {
+                line[5] = 't';
+                return p;
+            }
+        }
+    }
+#endif /* FEATURE_DEVPTS */
+    return -1;
+}
+
+#else
 #include "vxWorks.h"
 #include "sys/types.h"
 #include "sys/socket.h"
@@ -1857,3 +1922,4 @@ BOOL telnetdStaticTaskInitializationGet()
     {
     return (telnetdTaskFlag);
     } 
+#endif

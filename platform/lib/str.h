@@ -33,8 +33,11 @@ extern const char *strupr(char* src);
 extern const char *strlwr(char* src);
 extern const char *string_have_space(char* src);
 extern int all_space (const char *str);
+extern const char *str_trim(char* src);
+
 extern const char *itoa(int value, int base);
-extern const char *itof(float value);
+extern const char *ftoa(float value, char *fmt);
+extern const char *dtoa(double value, char *fmt);
 
 extern u_int8 atoascii(int a);
 extern BOOL is_hex (char c);

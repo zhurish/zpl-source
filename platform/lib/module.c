@@ -66,10 +66,10 @@ static module_str_t module_string[] =
 
 const char * module2name(int module)
 {
-	int i = 0;
+	u_int i = 0;
 	for(i = 0; i < array_size(module_string); i++)
 	{
-		if(module_string[i].module == module)
+		if(module_string[i].module == (u_int)module)
 			return module_string[i].name;
 	}
 	return "Unknow";
@@ -77,7 +77,7 @@ const char * module2name(int module)
 
 int name2module(const char *name)
 {
-	int i = 0;
+	u_int i = 0;
 	for(i = 0; i < array_size(module_string); i++)
 	{
 		if(os_strcmp(module_string[i].name, name) == 0)
@@ -88,10 +88,10 @@ int name2module(const char *name)
 
 int module2task(int module)
 {
-	int i = 0;
+	u_int i = 0;
 	for(i = 0; i < array_size(module_string); i++)
 	{
-		if(module_string[i].module == module)
+		if(module_string[i].module == (u_int)module)
 			return module_string[i].taskid;
 	}
 	return 0;
@@ -99,10 +99,10 @@ int module2task(int module)
 
 int task2module(int taskid)
 {
-	int i = 0;
+	u_int i = 0;
 	for(i = 0; i < array_size(module_string); i++)
 	{
-		if(module_string[i].taskid == taskid)
+		if(module_string[i].taskid == (u_int)taskid)
 			return module_string[i].module;
 	}
 	return 0;
@@ -110,7 +110,7 @@ int task2module(int taskid)
 
 int task_module_self(void)
 {
-	int i = 0;
+	u_int i = 0;
 	u_int taskid = os_task_id_self ();
 	for(i = 0; i < array_size(module_string); i++)
 	{
@@ -123,12 +123,12 @@ int task_module_self(void)
 
 int module_setup_task(int module, int taskid)
 {
-	int i = 0;
+	u_int i = 0;
 	for(i = 0; i < array_size(module_string); i++)
 	{
-		if(module_string[i].module == module)
+		if(module_string[i].module == (u_int)module)
 		{
-			module_string[i].taskid = taskid;
+			module_string[i].taskid = (u_int)taskid;
 			return 0;
 		}
 	}

@@ -20,7 +20,7 @@
 #include "b53_regs.h"
 
 
-struct b53125_device *b53_device = NULL;
+//struct b53125_device *b53_device = NULL;
 
 #if 1
 static int __mdio_read(struct b53125_device *dev, int addr, u32 regnum)
@@ -387,15 +387,15 @@ static const struct b53_chip_data b53_switch_chips[] = {
 
 #define ARRAY_SIZE(x) (int)(sizeof(x) / sizeof(x[0]))
 
-int b53125_mdio_probe()
+struct b53125_device * b53125_mdio_probe()
 {
 	u32 phy_id = 0;
 	unsigned int i = 0;
-	b53_device = malloc(sizeof(struct b53125_device));
+	struct b53125_device * b53_device = malloc(sizeof(struct b53125_device));
 	if(b53_device == NULL)
 	{
 		zlog_debug(ZLOG_HAL, " Can not malloc b53125 device");
-		return ERROR;
+		return NULL;
 	}
 	memset(b53_device, 0, sizeof(struct b53125_device));
 	//b53_device->fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -404,7 +404,7 @@ int b53125_mdio_probe()
 	{
 		free(b53_device);
 		zlog_debug(ZLOG_HAL, "Can not open b53125 device '%s'", B53_DEVICE_NAME);
-		return ERROR;
+		return NULL;
 	}
 	b53_device->ops = &b53125_mdio_ops;
 
@@ -422,7 +422,7 @@ int b53125_mdio_probe()
 	    (phy_id & 0xfffffc00) != B53_BRCM_OUI_4) {
 		free(b53_device);
 		zlog_debug(ZLOG_HAL, "Unsupported device: 0x%08x", phy_id);
-		return ERROR;
+		return NULL;
 	}
 	b53_device->reg_page = 0xff;
 	b53125_read32(b53_device, B53_MGMT_PAGE, B53_DEVICE_ID, &b53_device->chip_id);
@@ -449,16 +449,94 @@ int b53125_mdio_probe()
 				b53125_read48(b53_device, B53_STAT_PAGE, B53_STRAP_VALUE, &strap_value);
 				if (strap_value & SV_GMII_CTRL_115)
 					b53_device->cpu_port = 5;
+
+				zlog_debug(ZLOG_HAL, "Find b53115 device on '%s' ID:0x%x REV:0x%x", B53_DEVICE_NAME,
+						b53_device->chip_id, b53_device->core_rev);
 			}
+			if (b53_device->chip_id == BCM53125_DEVICE_ID)
+				zlog_debug(ZLOG_HAL, "Find b53125 device on '%s' ID:0x%x REV:0x%x", B53_DEVICE_NAME,
+					b53_device->chip_id, b53_device->core_rev);
+
 			b53_device->num_ports = b53_device->cpu_port + 1;
 			b53_device->enabled_ports |= BIT(b53_device->cpu_port);
 
+/*
 			zlog_debug(ZLOG_HAL, "Find b53125 device on '%s' ID:0x%x REV:0x%x", B53_DEVICE_NAME,
 					b53_device->chip_id, b53_device->core_rev);
 
-			return OK;
+			zlog_debug(ZLOG_HAL, "Find b53125 device on '%s' ID:0x%x REV:0x%x", B53_DEVICE_NAME,
+					b53_device->chip_id, b53_device->core_rev);
+*/
+			b53_device->ops = &b53125_mdio_ops;
+			return b53_device;
 		}
 	}
 	zlog_debug(ZLOG_HAL, "Can not find device by ID'0x%x'", b53_device->chip_id);
-	return ERROR;
+	return NULL;
+}
+
+int b53125_config_init(struct b53125_device *dev)
+{
+	int ret = 0;
+	if(dev == NULL)
+	{
+		return ERROR;
+	}
+	/*******global *******/
+	b53_brcm_hdr_setup(dev, TRUE, dev->cpu_port);
+
+	ret |= b53125_imp_enable(dev, FALSE);//关闭IMP接口
+	ret |= b53125_switch_forwarding(dev, FALSE);//禁止转发
+
+
+	ret |= b53125_switch_manege(dev, TRUE);//设置为managed mode
+	ret |= b53125_switch_forwarding(dev, TRUE);//使能转发
+
+	ret |= b53125_multicast_flood(dev, TRUE);//使能多播泛洪
+	ret |= b53125_unicast_flood(dev, TRUE);//使能单播泛洪
+
+	ret |= b53125_multicast_learning(dev, TRUE);//使能多播报文学习源MAC
+
+	ret |= b53125_enable_bpdu(dev, TRUE);
+
+	ret |= b53125_enable_learning(dev, dev->cpu_port, TRUE);
+	ret |= b53125_enable_learning(dev, 0, TRUE);
+	ret |= b53125_enable_learning(dev, 1, TRUE);
+	ret |= b53125_enable_learning(dev, 2, TRUE);
+	ret |= b53125_enable_learning(dev, 3, TRUE);
+	ret |= b53125_enable_learning(dev, 4, TRUE);
+	ret |= b53125_enable_learning(dev, 6, TRUE);
+
+	ret |= b53125_software_learning(dev, dev->cpu_port, TRUE);
+	ret |= b53125_software_learning(dev, 0, TRUE);
+	ret |= b53125_software_learning(dev, 1, TRUE);
+	ret |= b53125_software_learning(dev, 2, TRUE);
+	ret |= b53125_software_learning(dev, 3, TRUE);
+	ret |= b53125_software_learning(dev, 4, TRUE);
+	ret |= b53125_software_learning(dev, 6, TRUE);
+
+	ret |= b53125_imp_enable(dev, TRUE);
+
+	u8 mgmt = 0;
+	//ret |= b53125_imp_port_enable(dev);
+	ret |= b53125_read8(dev, B53_MGMT_PAGE, B53_MGMT_CTRL, &mgmt);
+	printf("==============mgmt=%x=================\r\n", mgmt);
+/*	void b53_brcm_hdr_setup(struct b53125_device *dev, BOOL enable, int port);
+	int b53125_switch_mode(struct b53125_device *dev, BOOL manege);
+	int b53125_switch_forwarding(struct b53125_device *dev, BOOL enable);
+	int b53125_multicast_flood(struct b53125_device *dev, BOOL enable);
+	int b53125_unicast_flood(struct b53125_device *dev, BOOL enable);
+	int b53125_range_error(struct b53125_device *dev, BOOL enable);
+	int b53125_multicast_learning(struct b53125_device *dev, BOOL enable);
+	int b53125_puase_frame_detection(struct b53125_device *dev, BOOL enable);
+	int b53125_enable_bpdu(struct b53125_device *dev, BOOL enable);
+	int b53125_aging_time(struct b53125_device *dev, int agetime);
+	int b53125_imp_mode(struct b53125_device *dev, BOOL enable);*/
+
+	/******* IMP PORT *******/
+/*		int b53125_imp_enable(struct b53125_device *dev, BOOL enable);
+	int b53125_imp_speed(struct b53125_device *dev, int speed);
+	int b53125_imp_duplex(struct b53125_device *dev, int duplex);
+	int b53125_imp_flow(struct b53125_device *dev, BOOL rx, BOOL tx);*/
+	return ret;
 }

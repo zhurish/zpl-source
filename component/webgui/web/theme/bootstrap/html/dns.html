@@ -1,0 +1,206 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta content="" name="description" />
+	<meta content="webthemez" name="author" />
+	<!--meta http-equiv="refresh" content="30"-->
+	<!-- Bootstrap Styles-->
+	<link href="../css/bootstrap.min.css" rel="stylesheet" />
+
+	<!-- private Styles-->
+	<link href="../css/private.css" rel="stylesheet" />
+
+	<!-- jQuery Js -->
+	<script src="../js/jquery-2.1.1.min.js"></script>
+	<!-- Bootstrap Js -->
+	<script src="../js/bootstrap.min.js"></script>
+	<script src="../js/xhr.js"></script>
+	<script src="../js/data-type.js"></script>
+
+	<title>DNS</title>
+</head>
+
+<body class="body-bg-img">
+	<div id="maincontent" class="container">
+		<fieldset class="fieldset-margin fieldset-background">
+			<form class="form-horizontal form-margin show" role="form" name="dns" action="" accept-charset="UTF-8"
+				method="POST">
+				<div id="dnsconfig">
+					<legend class="legend-text-align">DNS配置</legend>
+					<div class="form-group">
+						<label for="domainname" class="col-sm-3 control-label">Domain Name</label>
+						<div class="col-sm-4">
+							<input type="text" minlength="6" maxlength="32" class="form-control" name="domainname"
+								id="domainname" value="" onchange="domainname_check()">
+						</div>
+						<!--div class="col-xs-1 check_ok">
+								√
+							</div>   
+			    			<div class="col-xs-1 check_error">
+								×
+							</div-->
+					</div>
+					<div class="form-group">
+						<label for="dnsserver" class="col-sm-3 control-label">DNS Server</label>
+						<div class="col-sm-4">
+							<input type="text" minlength="6" maxlength="32" class="form-control" name="dnsserver"
+								id="dnsserver" value="" onchange="dnsserver_check(this, $('#dnsserver'))" required>
+						</div>
+						<!--div class="col-xs-1 check_ok ">
+								√
+							</div> 
+			    			<div class="col-xs-1 check_error">
+								×
+							</div-->
+					</div>
+					<div class="form-group">
+						<label for="dnsserver2" class="col-sm-3 control-label">DNS Server 2</label>
+						<div class="col-sm-4">
+							<input type="text" minlength="6" maxlength="32" class="form-control" name="dnsserver2"
+								id="dnsserver2" value="" onchange="dnsserver_check(this, $('#dnsserver2'))">
+						</div>
+						<!--div class="col-xs-1 check_ok ">
+								√
+							</div> 
+			    			<div class="col-xs-1 check_error">
+								×
+							</div-->
+					</div>
+					<div class="form-group">
+						<div class="col-xs-4 control-label">
+							<button type="button" class="btn btn-warning" name="user_cencel" id="user_cencel"
+								onclick="dns_cencel()">取消</button>
+						</div>
+						<div class="col-xs-4 control-label">
+							<button type="button" class="btn btn-primary" name="user_submit" id="user_submit"
+								onclick="dns_submit()">确定</button>
+						</div>
+					</div>
+
+					<div id="handle_waiting" class="alert alert-success hiden">
+						<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+								style="padding-left:150px; padding-right:20px">Waiting for command to
+							complete...</strong>
+					</div>
+					<div id="handle_error" class="alert alert-warning hiden">
+						<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+					</div>
+					<script type="text/javascript">
+
+						function domainname_check() {
+							if (document.dns.domainname.value == "" || document.dns.domainname.value.length > 32 ||
+								document.dns.domainname.value.length < 6 ||
+								(!hostname(document.dns.domainname.value))) {
+								check_err_show($('#domainname'));
+								return false;
+							}
+							else {
+								check_ok_show($('#domainname'));
+								return true;
+							}
+						}
+						function dnsserver_check(self, obj) {
+							if (obj == $('#dnsserver')) {
+								if (self.value == "" || self.value.length > 32 ||
+									self.value.length < 6 ||
+									(!hostname(self.value) || !checkipv4(self.value))) {
+									check_err_show(obj);
+									return false;
+								}
+								else {
+									check_ok_show(obj);
+									return true;
+								}
+							}
+							else {
+								if (self.value != "") {
+									if (self.value.length > 32 ||
+										self.value.length < 6 ||
+										(!hostname(self.value) || !checkipv4(self.value))) {
+										check_err_show(obj);
+										return false;
+									}
+									else {
+										check_ok_show(obj);
+										return true;
+									}
+								}
+							}
+						}
+
+
+						function dns_cencel() {
+							document.getElementById("domainname").value = "";
+							document.getElementById("dnsserver").value = "";
+							document.getElementById("dnsserver2").value = "";
+							check_okerr_hiden($('#domainname'));
+							check_okerr_hiden($('#dnsserver'));
+							check_okerr_hiden($('#dnsserver2'));
+						}
+						//button 按钮，结合onclick事件，验证和提交表单
+						function dns_submit() {
+							//判断用户名是否为空
+							if (document.dns.dnsserver.value == "") {
+								document.getElementById("domainname").value = "";
+								document.getElementById("dnsserver").value = "";
+								document.getElementById("dnsserver2").value = "";
+								check_okerr_hiden($('#domainname'));
+								check_okerr_hiden($('#dnsserver'));
+								check_okerr_hiden($('#dnsserver2'));
+								return false;
+							}
+							else {
+								var argv;
+								var stxhr = new XHR();
+								argv = "dnsserver=" + document.getElementById("dnsserver").value;
+								if (document.dns.domainname.value == "")
+									argv += "&domainname=" + document.getElementById("domainname").value;
+								if (document.dns.dnsserver2.value == "")
+									argv += "&dnsserver2=" + document.getElementById("dnsserver2").value;
+
+								$("#handle_waiting").css("display", "block");
+
+								stxhr.post("/goform/dns", argv,
+									function (x) {
+										console.log(x);
+										console.log(x, json);
+										if (x.responseText == "ERROR" || (json != null && json.response == "ERROR")) {
+											document.getElementById("dnsserver").value = "";
+											if (document.getElementById("domainname").value)
+												document.getElementById("domainname").value = "";
+											if (document.getElementById("dnsserver2").value)
+												document.getElementById("dnsserver2").value = "";
+												clearTimeout();	
+											$("#handle_waiting").css("display", "none");
+											$("#handle_error").css("display", "block");
+											setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+										}
+										else if (x.responseText == "OK" || (json != null && json.response == "OK")) {
+											if (json) {
+												document.getElementById("dnsserver").value = json.dnsserver;
+												if (json.domainname != undefined && json.domainname != "")
+													document.getElementById("domainname").value = json.domainname;
+												if (json.dnsserver2 != undefined && json.dnsserver2 != "")
+													document.getElementById("dnsserver2").value = json.dnsserver2;
+											}
+											clearTimeout();
+											$("#handle_waiting").css("display", "none");
+											$("#handle_error").css("display", "none");
+										}
+									},
+									3000
+								);
+							}
+						}
+					</script>
+				</div>
+			</form>
+		</fieldset>
+	</div>
+</body>
+
+</html>

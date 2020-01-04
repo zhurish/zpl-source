@@ -15,5 +15,6 @@
 #   Define a user
 #       user name=joshua password=2fd6e47ff9bb70c0465fd2f5c8e5305e roles=manager,purchaser
 #
-user name=admin password=193cdb22e725465d2006f5ec080d4e91 roles=admin
-role name=admin abilities=view,edit,delete
+
+role name=manager abilities=create,view,edit,delete
+user name=root password=74b34c254bc0d7a47cfd426931aaf2f9 roles=manager

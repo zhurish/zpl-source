@@ -5,14 +5,6 @@
 #ifndef UDHCP_DHCPD_H
 #define UDHCP_DHCPD_H 1
 
-//PUSH_AND_SET_FUNCTION_VISIBILITY_TO_HIDDEN
-#define CONFIG_DHCPD_LEASES_FILE	"/var/lib/misc/udhcpd.leases"
-/* Defaults you may want to tweak */
-/* Default max_lease_sec */
-#define DEFAULT_LEASE_TIME      (60*60*24 * 10)
-#define LEASES_FILE             CONFIG_DHCPD_LEASES_FILE
-/* Where to find the DHCP server configuration file */
-#define DHCPD_CONF_FILE         "/etc/udhcpd.conf"
 
 #include "dhcp_def.h"
 #include "dhcp_pool.h"
@@ -31,7 +23,7 @@ typedef struct dhcpd_lease_state_s
 	u_int32_t xid;
 	u_int32_t ciaddr;
 	u_int32_t giaddr;
-	u_int8_t req_mask[256];
+	u_int8_t req_mask[DHCP_OPTION_MAX];
 
 	int read_bytes;
 } dhcpd_lease_state_t;

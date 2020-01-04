@@ -28,7 +28,7 @@ ifeq ($(ME_COM_OPENSSL),1)
     ME_COM_SSL = 1
 endif
 #
-ME_DFLAGS = -DME_DEBUG=1 -D_REENTRANT -DPIC -DME_COM_COMPILER=$(ME_COM_COMPILER) \
+ME_DFLAGS = -D_REENTRANT -DPIC -DME_COM_COMPILER=$(ME_COM_COMPILER) \
 			-DME_COM_LIB=$(ME_COM_LIB) -DME_COM_MATRIXSSL=$(ME_COM_MATRIXSSL) \
 			-DME_COM_MBEDTLS=$(ME_COM_MBEDTLS) -DME_COM_NANOSSL=$(ME_COM_NANOSSL) \
 			-DME_COM_OPENSSL=$(ME_COM_OPENSSL) -DME_COM_OSDEP=$(ME_COM_OSDEP) \
@@ -67,17 +67,58 @@ goahead_openssl_OBJS += goahead-openssl.o #goahead-openssl/goahead-openssl.c
 endif
 
 OBJS += goahead.o
-#gopass_OBJS += gopass.o #src/utils/gopass.c
+#OBJS += gopass.o
+gopass_OBJS += gopass.o 
+#src/utils/gopass.c
+WEBOBJS += web_app.o
+WEBOBJS += web_api.o
+#jst
+APPJSTOBJS += web_html_jst.o
+APPJSTOBJS += web_system_jst.o
+APPJSTOBJS += web_button_jst.o
+APPJSTOBJS += web_port_jst.o
+APPJSTOBJS += web_vlan_jst.o
+APPJSTOBJS += web_interface_jst.o
+APPJSTOBJS += web_firewall_jst.o
+APPJSTOBJS += web_arp_jst.o
+APPJSTOBJS += web_dhcp_jst.o
+APPJSTOBJS += web_dns_jst.o
+APPJSTOBJS += web_dos_jst.o
+APPJSTOBJS += web_mac_jst.o
+APPJSTOBJS += web_ppp_jst.o
+APPJSTOBJS += web_qos_jst.o
+APPJSTOBJS += web_serial_jst.o
+APPJSTOBJS += web_tunnel_jst.o
+APPJSTOBJS += web_route_jst.o
 
-WEBOBJS += webgui_app.o
-#
-APPOBJS += web_tool_html.o
-APPOBJS += web_tool_jst.o
-APPOBJS += web_tool_onclick.o
+#form and action
+APPWEBOBJS += web_util_html.o
 
-APPOBJS += web_login_html.o
-APPOBJS += web_admin_html.o
-APPOBJS += web_updownload_html.o
+APPWEBOBJS += web_login_html.o
+APPWEBOBJS += web_admin_html.o
+APPWEBOBJS += web_sntp_html.o
+APPWEBOBJS += web_syslog_html.o
+APPWEBOBJS += web_network_html.o
+APPWEBOBJS += web_wireless_html.o
+APPWEBOBJS += web_updownload_html.o
+APPWEBOBJS += web_system_html.o
+
+
+ifeq ($(strip $(EN_APP_X5BA)),true)
+APPWEBOBJS += web_switch_html.o
+APPWEBOBJS += web_sip_html.o
+APPWEBOBJS += web_factory_html.o
+APPWEBOBJS += web_card_html.o
+endif
+ifeq ($(strip $(EN_APP_V9)),true)
+APPWEBOBJS += web_boardcard_html.o
+APPWEBOBJS += web_general_html.o
+APPWEBOBJS += web_rtsp_html.o
+APPWEBOBJS += web_algorithm_html.o
+APPWEBOBJS += web_facelib_html.o
+#APPWEBOBJS += web_rtsp_html.o
+endif
+
 #############################################################################
 # LIB
 ###########################################################################

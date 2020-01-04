@@ -48,6 +48,10 @@ struct host
   enum{LOAD_NONE, LOAD_INIT, LOADING, LOAD_DONE} load;
   void *mutx;
   void *cli_mutx;
+
+  s_int8	serial[64];
+
+  u_int8	sysmac[6];
 };
 
 struct host_system
@@ -94,6 +98,8 @@ enum
 	API_SET_ACCESS_CMD,
 	API_SET_IPV6ACCESS_CMD,
 	API_SET_NOPASSCHK_CMD,
+	API_SET_SYSMAC_CMD,
+	API_SET_SERIAL_CMD,
 
 	API_GET_HOSTNAME_CMD,
 	API_GET_DESC_CMD,
@@ -107,6 +113,8 @@ enum
 	API_GET_ACCESS_CMD,
 	API_GET_IPV6ACCESS_CMD,
 	API_GET_NOPASSCHK_CMD,
+	API_GET_SYSMAC_CMD,
+	API_GET_SERIAL_CMD,
 };
 
 

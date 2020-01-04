@@ -31,6 +31,7 @@ OBJS	+= zserv.o
 OBJS	+= debug.o
 
 OBJS	+= nsm_client.o
+OBJS	+= nsm_hook.o
 OBJS	+= nsm_mac.o
 OBJS	+= nsm_vlan.o
 
@@ -49,7 +50,7 @@ OBJS	+= nsm_tunnel.o
 OBJS	+= nsm_bridge.o
 OBJS	+= nsm_veth.o
 OBJS	+= nsm_dns.o
-
+OBJS	+= nsm_firewalld.o
 
 OBJS	+= nsm_main.o
 #############################################################################

@@ -37,7 +37,8 @@
 #include "memory.h"
 #include "command.h"
 #include "vty.h"
-#include "pal_interface.h"
+
+#include "pal_driver.h"
 #ifndef CLONE_NEWNET
 #define CLONE_NEWNET 0x40000000 /* New network namespace (lo, device, names sockets, etc) */
 #endif

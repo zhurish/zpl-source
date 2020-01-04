@@ -8,7 +8,7 @@
 #ifndef __X5_B_CMD_H__
 #define __X5_B_CMD_H__
 
-
+#include "x5_b_global.h"
 #define X5B_APP_HDR_MAKR				0X7E
 
 enum E_CALL_RESULT
@@ -19,6 +19,7 @@ enum E_CALL_RESULT
 	E_CALL_RESULT_TALKLING,			//通话中
 	E_CALL_RESULT_STOP,				//ͨ挂断
 	E_CALL_RESULT_FAIL,				//ͨ拨号失败
+	E_CALL_RESULT_INCOME,			//来电中
 };
 
 enum E_NETWORK_STATE
@@ -52,10 +53,12 @@ enum
 	E_CMD_ROOM_AUTH 	= E_CMD_BASE|0X0006,				//房间号鉴权
 	E_CMD_ROOM_AUTH_ACK = E_CMD_BASE|0X0007,				//
 
-	E_CMD_CARD_RESPONE = E_CMD_BASE|0X000D,				//
+	E_CMD_SECOM_OPEN_REQ = E_CMD_BASE|0X000D,				//C->A NFC&人脸识别开门请求 secom版本开门请求信息
 
 	E_CMD_REBOOT_REQ = E_CMD_BASE|0X000F,					//reboot
 	E_CMD_RESET_REQ = E_CMD_BASE|0X0010,					//reset
+
+	E_CMD_CARD_SEQ = E_CMD_BASE|0X000A,					//卡号
 };
 
 #define E_CMD_SET	0x0200
@@ -85,6 +88,9 @@ enum
 
 	E_CMD_DEVICE_OPT 	= E_CMD_SET|0X0020,				//B->C
 	E_CMD_SIP_OPT 	= E_CMD_SET|0X0021,				//C->B
+
+	E_CMD_SYSTEM_CONFIG 	= E_CMD_SET|0X0030,				//B->C/A
+	E_CMD_SYNC_WEBTIME 	= E_CMD_SET|0X0040,				//B->C
 };
 
 #define E_CMD_CALL	0x0500
@@ -93,7 +99,8 @@ enum
 	E_CMD_START_CALL 	= E_CMD_CALL|0X0000,	//开始呼叫 A/C->B
 	E_CMD_CALL_RESULT 	= E_CMD_CALL|0X0001,	//呼叫结果 B->A/C
 	E_CMD_STOP_CALL		= E_CMD_CALL|0X0002,	//停止呼叫A/C->B
-	E_CMD_START_CALL_OPT = E_CMD_CALL|0X003,				//C->B
+	E_CMD_START_CALL_PHONE = E_CMD_CALL|0X003,				//C->B
+	E_CMD_START_CALL_LIST = E_CMD_CALL|0X004,				//C->B
 };
 
 #define E_CMD_STATUS	0x0600
@@ -249,14 +256,14 @@ typedef struct x5b_app_phone_register_ack_s
 
 typedef struct
 {
-	u_int8 RelayOpenTime;
-	u_int8 RelayOpenWaitOpenDoorTime;
-	u_int8 DoorKeepOpenTime;
+	u_int RelayOpenTime;
+	u_int RelayOpenWaitOpenDoorTime;
+	u_int DoorKeepOpenTime;
 	u_int8 DoorSensorOutPutLevle;
 	u_int8 LockRole;
 	u_int8 TamperAlarm;
 	u_int8 DoorKeepOpentTimeOutAlarm;
-	u_int8 rev;
+	u_int8 rev;//doorcontact
 } ConfiglockType;//A模块开门信息
 
 enum //ID
@@ -309,6 +316,25 @@ typedef struct cardid_respone
 	u_int8    clen;
 	u_int8    ID[8];
 }open_cardid_respone;
+
+
+
+typedef struct global_config_s
+{
+	u_int8 x5cm;//：（1 byte）
+	u_int8 blu;//：（1 byte）
+	u_int8 nfc;//：（1 byte）
+	u_int8 opentype;//：（1 byte）
+	u_int8 custom;//：（1 byte）
+	u_int8 scene;//：（1 byte）
+	u_int8 housing;//：（1 byte）
+	u_int8 devname[X5B_APP_DEVICE_NAME_MAX];//：（64 byte）
+	u_int8 location[X5B_APP_DEVICE_NAME_MAX];//：（64 byte）
+	u_int8 direction;//：（1 byte）
+	u_int8 address1[X5B_APP_DEVICE_IP_MAX];//：（32 byte）
+	u_int8 address2[X5B_APP_DEVICE_IP_MAX];//：（32byte）
+	u_int8 address3[X5B_APP_DEVICE_IP_MAX];//：（32byte
+}global_config_t;
 
 #pragma pack(0)
 

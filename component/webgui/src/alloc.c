@@ -207,7 +207,7 @@ PUBLIC void wfree(void *mp)
         return;
     }
     bp = (WebsAlloc*) ((char*) mp - sizeof(WebsAlloc));
-    assert((bp->flags & WEBS_INTEGRITY_MASK) == WEBS_INTEGRITY);
+    web_assert((bp->flags & WEBS_INTEGRITY_MASK) == WEBS_INTEGRITY);
     if ((bp->flags & WEBS_INTEGRITY_MASK) != WEBS_INTEGRITY) {
         return;
     }
@@ -238,7 +238,7 @@ PUBLIC void *wrealloc(void *mp, ssize newsize)
         return walloc(newsize);
     }
     bp = (WebsAlloc*) ((char*) mp - sizeof(WebsAlloc));
-    assert((bp->flags & WEBS_INTEGRITY_MASK) == WEBS_INTEGRITY);
+    web_assert((bp->flags & WEBS_INTEGRITY_MASK) == WEBS_INTEGRITY);
 
     /*
         If the allocated memory already has enough room just return the previously allocated address.

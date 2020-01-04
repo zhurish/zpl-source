@@ -80,7 +80,7 @@ PUBLIC int websStatFile(cchar *path, WebsFileInfo *sbuf)
 #if ME_ROM
     WebsRomIndex    *wip;
 
-    assert(path && *path);
+    web_assert(path && *path);
 
     if ((wip = lookup(romFs, path)) == NULL) {
         return -1;
@@ -131,8 +131,8 @@ PUBLIC ssize websReadFile(int fd, char *buf, ssize size)
     WebsRomIndex    *wip;
     ssize           len;
 
-    assert(buf);
-    assert(fd >= 0);
+    web_assert(buf);
+    web_assert(fd >= 0);
 
     wip = &websRomIndex[fd];
 
@@ -173,8 +173,8 @@ Offset websSeekFile(int fd, Offset offset, int origin)
     WebsRomIndex    *wip;
     Offset          pos;
 
-    assert(origin == SEEK_SET || origin == SEEK_CUR || origin == SEEK_END);
-    assert(fd >= 0);
+    web_assert(origin == SEEK_SET || origin == SEEK_CUR || origin == SEEK_END);
+    web_assert(fd >= 0);
 
     wip = &websRomIndex[fd];
 

@@ -1,0 +1,832 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta content="" name="description" />
+	<meta content="webthemez" name="author" />
+	<!--meta http-equiv="refresh" content="30"-->
+	<!-- Bootstrap Styles-->
+	<link href="../css/bootstrap.min.css" rel="stylesheet" />
+
+	<!-- private Styles-->
+	<link href="../css/private.css" rel="stylesheet" />
+
+	<!-- jQuery Js -->
+	<script src="../js/jquery-2.1.1.min.js"></script>
+	<!-- Bootstrap Js  Algorithm -->
+	<script src="../js/bootstrap.min.js"></script>
+	<script src="../js/xhr.js"></script>
+	<script src="../js/data-type.js"></script>
+
+	<title>算法配置</title>
+</head>
+
+<body class="body-bg-img">
+	<div id="maincontent" class="container">
+		<fieldset class="fieldset-margin fieldset-background">
+			<form class="form-horizontal form-margin" role="form" name="detecting" action="" accept-charset="UTF-8"
+				method="POST">
+				<legend class="legend-text-align">检测参数</legend>
+
+				<div class="form-group">
+					<label for="detecting_boardid " class="col-sm-3 control-label">板卡ID</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="detecting_boardid" id="detecting_boardid">
+							<option selected value="0">all</option>
+							<option value="1">1</option>
+							<option value="2">2</option>
+							<option value="3">3</option>
+							<option value="4">4</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="detecting_channel " class="col-sm-3 control-label">通道号</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="detecting_channel" id="detecting_channel">
+							<option selected value="0">all</option>
+							<option value="1">1</option>
+							<option value="2">2</option>
+							<option value="3">3</option>
+							<option value="4">4</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="mode " class="col-sm-3 control-label">模式</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="mode" id="mode">
+							<option value="1">禁用抓拍</option>
+							<option value="2">实时抓拍</option>
+							<option selected value="3">离开抓拍</option>
+							<option value="4">定时抓拍</option>
+							<option value="5">进入抓拍</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="time" class="col-sm-3 control-label">时间(秒)</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="3600" step="1" class="form-control" name="time" id="time"
+							onchange="input_value_check(this)" required value="5">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="facemaxpx" class="col-sm-3 control-label">人脸最大值(px)</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="1920" step="1" class="form-control" name="facemaxpx"
+							id="facemaxpx" onchange="input_value_check(this)" required value="1000">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="faceminpx" class="col-sm-3 control-label">人脸最小值(px)</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="1920" step="1" class="form-control" name="faceminpx"
+							id="faceminpx" onchange="input_value_check(this)" required value="64">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="qulityscore" class="col-sm-3 control-label">质量</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="100" step="1" class="form-control" name="qulityscore"
+							id="qulityscore" onchange="input_value_check(this)" required value="40">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="confi" class="col-sm-3 control-label">置信度</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="100" step="1" class="form-control" name="confi" id="confi"
+							onchange="input_value_check(this)" required value="80">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<div class="col-xs-3 control-label">
+						<button type="button" class="btn btn-submit" name="detecting_refresh" id="detecting_refresh"
+						onclick="detecting_get_action('adasd')"><span class="glyphicon glyphicon-refresh"
+								style="margin-right:10px;"></span>刷新</button>
+					</div>
+					<div class="col-xs-3 control-label">
+						<button type="button" class="btn btn-cencel" name="detecting_cencel" id="detecting_cencel"
+							onclick="detecting_oncencel()"><span class="glyphicon glyphicon-remove"
+								style="margin-right:10px;"></span>取消</button>
+					</div>
+					<div class="col-xs-3 control-label">
+						<button type="button" class="btn btn-submit" name="detecting_submit" id="detecting_submit"
+							onclick="detecting_onsubmit()"><span class="glyphicon glyphicon-send"
+								style="margin-right:10px;"></span>确定</button>
+					</div>
+				</div>
+
+
+				<div id="detecting_waiting" class="alert alert-success hiden">
+					<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+							style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+				</div>
+				<div id="detecting_error" class="alert alert-warning hiden">
+					<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+				</div>
+
+			</form>
+		</fieldset>
+
+		<fieldset class="fieldset-margin fieldset-background">
+			<form class="form-horizontal form-margin" role="form" name="identify " action="" accept-charset="UTF-8"
+				method="POST">
+				<legend class="legend-text-align">识别参数</legend>
+
+				<div class="form-group">
+					<label for="identify_boardid " class="col-sm-3 control-label">板卡ID</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="identify_boardid" id="identify_boardid">
+							<option selected value="0">all</option>
+							<option value="1">1</option>
+							<option value="2">2</option>
+							<option value="3">3</option>
+							<option value="4">4</option>
+						</select>
+					</div>
+				</div>
+
+				<!--div class="form-group">
+					<label for="identify_channel " class="col-sm-3 control-label">通道号</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="identify_channel" id="identify_channel">
+							<option selected="selected" value="0">all</option>
+							<option value="1">1</option>
+							<option value="2">2</option>
+							<option value="3">3</option>
+							<option value="4">4</option>
+						</select>
+					</div>
+				</div-->
+
+
+
+				<div class="form-group">
+					<label for="de_threshold" class="col-sm-3 control-label">人脸对比阈值</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="100" step="1" class="form-control" name="de_threshold"
+							id="de_threshold" onchange="input_value_check(this)" required value="40">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="in_threshold" class="col-sm-3 control-label">人脸入库阈值</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="100" step="1" class="form-control" name="in_threshold"
+							id="in_threshold" onchange="input_value_check(this)" required value="60">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="opt_threshold" class="col-sm-3 control-label">优化阈值</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="100" step="1" class="form-control" name="opt_threshold"
+							id="opt_threshold" onchange="input_value_check(this)" required value="40">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="uploadcheck" class="col-sm-3 control-label">上传对比</label>
+					<div class="checkbox col-sm-4">
+						<input type="checkbox" name="uploadcheck" id="uploadcheck" checked value="uploadcheck">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<div class="col-xs-3 control-label">
+						<button type="button" class="btn btn-submit" name="identify_refresh" id="identify_refresh"
+						onclick="identify_get_action('adasd')"><span class="glyphicon glyphicon-refresh"
+								style="margin-right:10px;"></span>刷新</button>
+					</div>
+					<div class="col-xs-3 control-label">
+						<button type="button" class="btn btn-cencel" name="identify_cencel" id="identify_cencel"
+							onclick="identify_oncencel()"><span class="glyphicon glyphicon-remove"
+								style="margin-right:10px;"></span>取消</button>
+					</div>
+					<div class="col-xs-3 control-label">
+						<button type="button" class="btn btn-submit" name="identify_submit" id="identify_submit"
+							onclick="identify_onsubmit()"><span class="glyphicon glyphicon-send"
+								style="margin-right:10px;"></span>确定</button>
+					</div>
+				</div>
+
+
+				<div id="identify_waiting" class="alert alert-success hiden">
+					<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+							style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+				</div>
+				<div id="identify_error" class="alert alert-warning hiden">
+					<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+				</div>
+
+			</form>
+		</fieldset>
+		<fieldset class="fieldset-margin fieldset-background">
+			<form class="form-horizontal form-margin" role="form" name="helmet " action="" accept-charset="UTF-8"
+				method="POST">
+				<legend class="legend-text-align">安全帽参数</legend>
+
+				<div class="form-group">
+					<label for="helmet_boardid " class="col-sm-3 control-label">板卡ID</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="helmet_boardid" id="helmet_boardid">
+							<option selected value="0">all</option>
+							<option value="1">1</option>
+							<option value="2">2</option>
+							<option value="3">3</option>
+							<option value="4">4</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="helmet_channel " class="col-sm-3 control-label">通道号</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="helmet_channel" id="helmet_channel">
+							<option selected value="0">all</option>
+							<option value="1">1</option>
+							<option value="2">2</option>
+							<option value="3">3</option>
+							<option value="4">4</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="sendpic" class="col-sm-3 control-label">发送图片</label>
+					<div class="checkbox col-sm-4">
+						<input type="checkbox" name="sendpic" id="sendpic" checked value="sendpic">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="trace" class="col-sm-3 control-label">跟踪</label>
+					<div class="checkbox col-sm-4">
+						<input type="checkbox" name="trace" id="trace" checked value="trace">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="frame" class="col-sm-3 control-label">画框</label>
+					<div class="checkbox col-sm-4">
+						<input type="checkbox" name="frame" id="frame" checked value="frame">
+					</div>
+				</div>
+
+
+				<div class="form-group">
+					<label for="quality" class="col-sm-3 control-label">图片质量比</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="100" step="1" class="form-control" name="quality" id="quality"
+							onchange="input_value_check(this)" required value="5">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="snap_interval" class="col-sm-3 control-label">抓拍间隔时间</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="100" step="1" class="form-control" name="snap_interval"
+							id="snap_interval" onchange="input_value_check(this)" required value="80">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="warn_interval" class="col-sm-3 control-label">警报间隔时间</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="100" step="1" class="form-control" name="warn_interval"
+							id="warn_interval" onchange="input_value_check(this)" required value="60">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="snap_qulityscore" class="col-sm-3 control-label">抓拍质量比</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="100" step="1" class="form-control" name="snap_qulityscore"
+							id="snap_qulityscore" onchange="input_value_check(this)" required value="40">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="threshold" class="col-sm-3 control-label">阈值</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="100" step="1" class="form-control" name="threshold"
+							id="threshold" onchange="input_value_check(this)" required value="80">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<div class="col-xs-3 control-label">
+						<button type="button" class="btn btn-submit" name="helmet_refresh" id="helmet_refresh"
+							onclick="helmet_get_action('adasd')"><span class="glyphicon glyphicon-refresh"
+								style="margin-right:10px;"></span>刷新</button>
+					</div>
+					<div class="col-xs-3 control-label">
+						<button type="button" class="btn btn-cencel" name="helmet_cencel" id="helmet_cencel"
+							onclick="helmet_oncencel()"><span class="glyphicon glyphicon-remove"
+								style="margin-right:10px;"></span>取消</button>
+					</div>
+					<div class="col-xs-3 control-label">
+						<button type="button" class="btn btn-submit" name="helmet_submit" id="helmet_submit"
+							onclick="helmet_onsubmit()"><span class="glyphicon glyphicon-send"
+								style="margin-right:10px;"></span>确定</button>
+					</div>
+				</div>
+
+
+				<div id="helmet_waiting" class="alert alert-success hiden">
+					<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+							style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+				</div>
+				<div id="helmet_error" class="alert alert-warning hiden">
+					<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+				</div>
+			</form>
+		</fieldset>
+		<script type="text/javascript">
+
+			function input_value_check(self) {
+				if (self.id == "time") {
+					if (self.value == "" ||
+						self.value < 0 ||
+						self.value > 3600) {
+						check_err_show($('#time'));
+						return false;
+					}
+					else {
+						check_ok_show($('#time'));
+						return true;
+					}
+				}
+				else if (self.id == "facemaxpx") {
+					if (self.value == "" ||
+						self.value < 0 ||
+						self.value > 1920) {
+						check_err_show($('#facemaxpx'));
+						return false;
+					}
+					else {
+						check_ok_show($('#facemaxpx'));
+						return true;
+					}
+				}
+				else if (self.id == "faceminpx") {
+					if (self.value == "" ||
+						self.value < 0 ||
+						self.value > 1920) {
+						check_err_show($('#faceminpx'));
+						return false;
+					}
+					else {
+						check_ok_show($('#faceminpx'));
+						return true;
+					}
+				}
+
+				else if (self.id == "qulityscore") {
+					if (self.value == "" ||
+						self.value < 0 ||
+						self.value > 100) {
+						check_err_show($('#qulityscore'));
+						return false;
+					}
+					else {
+						check_ok_show($('#qulityscore'));
+						return true;
+					}
+				}
+				else if (self.id == "confi") {
+					if (self.value == "" ||
+						self.value < 0 ||
+						self.value > 100) {
+						check_err_show($('#confi'));
+						return false;
+					}
+					else {
+						check_ok_show($('#confi'));
+						return true;
+					}
+				}
+				else if (self.id == "de_threshold") {
+					if (self.value == "" ||
+						self.value < 0 ||
+						self.value > 100) {
+						check_err_show($('#de_threshold'));
+						return false;
+					}
+					else {
+						check_ok_show($('#de_threshold'));
+						return true;
+					}
+				}
+
+				else if (self.id == "in_threshold") {
+					if (self.value == "" ||
+						self.value < 0 ||
+						self.value > 100) {
+						check_err_show($('#in_threshold'));
+						return false;
+					}
+					else {
+						check_ok_show($('#in_threshold'));
+						return true;
+					}
+				}
+
+				else if (self.id == "opt_threshold") {
+					if (self.value == "" ||
+						self.value < 0 ||
+						self.value > 100) {
+						check_err_show($('#opt_threshold'));
+						return false;
+					}
+					else {
+						check_ok_show($('#opt_threshold'));
+						return true;
+					}
+				}
+
+				else if (self.id == "quality") {
+					if (self.value == "" ||
+						self.value < 0 ||
+						self.value > 100) {
+						check_err_show($('#quality'));
+						return false;
+					}
+					else {
+						check_ok_show($('#quality'));
+						return true;
+					}
+				}
+				else if (self.id == "snap_interval") {
+					if (self.value == "" ||
+						self.value < 0 ||
+						self.value > 3600) {
+						check_err_show($('#snap_interval'));
+						return false;
+					}
+					else {
+						check_ok_show($('#snap_interval'));
+						return true;
+					}
+				}
+				else if (self.id == "warn_interval") {
+					if (self.value == "" ||
+						self.value < 0 ||
+						self.value > 3600) {
+						check_err_show($('#warn_interval'));
+						return false;
+					}
+					else {
+						check_ok_show($('#warn_interval'));
+						return true;
+					}
+				}
+				else if (self.id == "snap_qulityscore") {
+					if (self.value == "" ||
+						self.value < 0 ||
+						self.value > 100) {
+						check_err_show($('#snap_qulityscore'));
+						return false;
+					}
+					else {
+						check_ok_show($('#snap_qulityscore'));
+						return true;
+					}
+				}
+
+				else if (self.id == "threshold") {
+					if (self.value == "" ||
+						self.value < 0 ||
+						self.value > 100) {
+						check_err_show($('#threshold'));
+						return false;
+					}
+					else {
+						check_ok_show($('#threshold'));
+						return true;
+					}
+				}
+
+				return false;
+			}
+
+
+			function detecting_oncencel() {
+				document.getElementById("time").value = "";
+				document.getElementById("facemaxpx").value = "";
+				document.getElementById("faceminpx").value = "";
+				document.getElementById("qulityscore").value = "";
+				document.getElementById("confi").value = "";
+
+
+				check_okerr_hiden($('#time'));
+				check_okerr_hiden($('#facemaxpx'));
+				check_okerr_hiden($('#faceminpx'));
+				check_okerr_hiden($('#qulityscore'));
+				check_okerr_hiden($('#confi'));
+			}
+			function identify_oncencel() {
+				document.getElementById("de_threshold").value = "";
+				document.getElementById("in_threshold").value = "";
+				document.getElementById("opt_threshold").value = "";
+
+				check_okerr_hiden($('#de_threshold'));
+				check_okerr_hiden($('#in_threshold'));
+				check_okerr_hiden($('#opt_threshold'));
+			}
+			function helmet_oncencel() {
+				document.getElementById("quality").value = "";
+				document.getElementById("snap_interval").value = "";
+				document.getElementById("warn_interval").value = "";
+				document.getElementById("snap_qulityscore").value = "";
+				document.getElementById("threshold").value = "";
+
+
+				check_okerr_hiden($('#quality'));
+				check_okerr_hiden($('#snap_interval'));
+				check_okerr_hiden($('#warn_interval'));
+				check_okerr_hiden($('#snap_qulityscore'));
+				check_okerr_hiden($('#threshold'));
+			}
+
+
+			function detecting_get_action(op) {
+				var argv;
+				var stxhr = new XHR();
+				argv = "ACTION=GET";
+				argv += "&ID=" + get_select_option_value(document.getElementById("detecting_boardid")) +
+					"&ch=" + get_select_option_value(document.getElementById("detecting_channel"));
+				stxhr.post("/goform/detecting", argv,
+					function (x, json) {
+						if (x.responseText != "" && json == null) {
+							if (x.responseText == "ERROR") {
+							}
+							else if (x.responseText == "OK") {
+							}
+						}
+						else if (x.responseText != "" && json != null) {
+							if (json.response == "OK") {
+								document.getElementById("time").value = json.time;
+								document.getElementById("facemaxpx").value = json.facemaxpx;
+								document.getElementById("faceminpx").value = json.faceminpx;
+								document.getElementById("qulityscore").value = json.qulityscore;
+								document.getElementById("confi").value = json.confi;
+								select_option_active(document.getElementById("mode"), json.mode);
+							}
+						}
+					},
+					3000
+				);
+			}
+			function identify_get_action(op) {
+				var argv;
+				var stxhr = new XHR();
+				argv = "ACTION=GET";
+				argv += "&ID=" + get_select_option_value(document.getElementById("identify_boardid"));
+				// +
+				//	"&ch" + get_select_option_value(document.getElementById("identify_channel"));
+				stxhr.post("/goform/identify", argv,
+					function (x, json) {
+						if (x.responseText != "" && json == null) {
+							if (x.responseText == "ERROR") {
+							}
+							else if (x.responseText == "OK") {
+							}
+						}
+						else if (x.responseText != "" && json != null) {
+							if (json.response == "OK") {
+								document.getElementById("de_threshold").value = json.de_threshold;
+								document.getElementById("in_threshold").value = json.in_threshold;
+								document.getElementById("opt_threshold").value = json.opt_threshold;
+								document.getElementById("uploadcheck").checked = json.uploadcheck;
+							}
+						}
+					},
+					3000
+				);
+			}
+
+			function helmet_get_action(op) {
+				var argv;
+				var stxhr = new XHR();
+				argv = "ACTION=GET";
+				argv += "&ID=" + get_select_option_value(document.getElementById("helmet_boardid")) +
+					"&ch=" + get_select_option_value(document.getElementById("helmet_channel"));
+				stxhr.post("/goform/helmet", argv,
+					function (x, json) {
+						if (x.responseText != "" && json == null) {
+							if (x.responseText == "ERROR") {
+							}
+							else if (x.responseText == "OK") {
+							}
+						}
+						else if (x.responseText != "" && json != null) {
+							if (json.response == "OK") {
+								document.getElementById("sendpic").checked = json.sendpic;
+								document.getElementById("trace").checked = json.trace;
+								document.getElementById("frame").checked = json.frame;
+								//document.getElementById("sendpic").enable = json.sendpic;
+								//document.getElementById("sendpic").enable = json.sendpic;
+
+								document.getElementById("quality").value = json.quality;
+								document.getElementById("snap_interval").value = json.snap_interval;
+								document.getElementById("warn_interval").value = json.warn_interval;
+								document.getElementById("snap_qulityscore").value = json.snap_qulityscore;
+								document.getElementById("threshold").value = json.threshold;
+								//document.getElementById("snap_qulityscore").value = json.snap_qulityscore;
+							}
+						}
+					},
+					3000
+				);
+			}
+
+			//button 按钮，结合onclick事件，验证和提交表单
+			function detecting_onsubmit() {
+				var argv;
+				var stxhr = new XHR();
+				argv = "ACTION=SET&ID=" + get_select_option_value(document.getElementById("detecting_boardid")) +
+					"&ch=" + get_select_option_value(document.getElementById("detecting_channel"));
+
+				argv += "&mode=" + get_select_option_value(document.getElementById("mode"));
+				//argv = "ACTION=SET&ID=" + document.getElementById("detecting_boardid").value + "&ch="
+				//	+ document.getElementById("detecting_channel").value;
+
+				argv += "&time="
+					+ document.getElementById("time").value + "&facemaxpx="
+					+ document.getElementById("facemaxpx").value + "&faceminpx="
+					+ document.getElementById("faceminpx").value + "&qulityscore="
+					+ document.getElementById("qulityscore").value + "&confi="
+					+ document.getElementById("confi").value;
+
+
+				$("#detecting_waiting").css("display", "block");
+				setTimeout(function () { $("#detecting_waiting").css("display", "none") }, 5000);
+				stxhr.post("/goform/detecting", argv,
+					function (x) {
+						console.log(x);
+						if (x.responseText == "OK") {
+							clearTimeout();
+							$("#detecting_waiting").css("display", "none");
+
+							//document.getElementById("device_name").value = "";
+							//document.getElementById("location").value = "";
+							//document.getElementById("server").value = "";
+							check_okerr_hiden($('#time'));
+							check_okerr_hiden($('#facemaxpx'));
+							check_okerr_hiden($('#faceminpx'));
+							check_okerr_hiden($('#qulityscore'));
+							check_okerr_hiden($('#confi'));
+						}
+						else if (x.responseText != "OK") {
+							check_okerr_hiden($('#time'));
+							check_okerr_hiden($('#facemaxpx'));
+							check_okerr_hiden($('#faceminpx'));
+							check_okerr_hiden($('#qulityscore'));
+							check_okerr_hiden($('#confi'));
+							clearTimeout();
+							$("#detecting_waiting").css("display", "none");
+							$("#detecting_error").css("display", "block");
+							setTimeout(function () { $("#detecting_error").css("display", "none") }, 3000);
+						}
+					},
+					3000
+				);
+			}
+			function identify_onsubmit() {
+				var argv;
+				var stxhr = new XHR();
+				argv = "ACTION=SET&ID=" + get_select_option_value(document.getElementById("identify_boardid"));// +
+					//"&ch" + get_select_option_value(document.getElementById("identify_channel"));
+
+				//argv += "&mode" + get_select_option_value("mode"));
+				//argv = "ACTION=SET&ID=" + document.getElementById("detecting_boardid").value + "&ch="
+				//	+ document.getElementById("detecting_channel").value;
+
+				argv += "&de_threshold="
+					+ document.getElementById("de_threshold").value + "&in_threshold="
+					+ document.getElementById("in_threshold").value + "&opt_threshold="
+					+ document.getElementById("opt_threshold").value;
+				if(document.getElementById("uploadcheck").checked)	
+					argv +=  "&uploadcheck=true";
+				else	
+					argv +=  "&uploadcheck=false";
+
+
+				$("#identify_waiting").css("display", "block");
+				setTimeout(function () { $("#identify_waiting").css("display", "none") }, 5000);
+				stxhr.post("/goform/identify", argv,
+					function (x) {
+						console.log(x);
+						if (x.responseText == "OK") {
+							clearTimeout();
+							$("#identify_waiting").css("display", "none");
+
+							//document.getElementById("device_name").value = "";
+							//document.getElementById("location").value = "";
+							//document.getElementById("server").value = "";
+							check_okerr_hiden($('#de_threshold'));
+							check_okerr_hiden($('#in_threshold'));
+							check_okerr_hiden($('#opt_threshold'));
+						}
+						else if (x.responseText != "OK") {
+							check_okerr_hiden($('#de_threshold'));
+							check_okerr_hiden($('#in_threshold'));
+							check_okerr_hiden($('#opt_threshold'));
+							clearTimeout();
+							$("#identify_waiting").css("display", "none");
+							$("#identify_error").css("display", "block");
+							setTimeout(function () { $("#identify_error").css("display", "none") }, 3000);
+						}
+					},
+					3000
+				);
+			}
+
+			function helmet_onsubmit() {
+				var argv;
+				var stxhr = new XHR();
+				argv = "ACTION=SET&ID=" + get_select_option_value(document.getElementById("helmet_boardid")) +
+					"&ch=" + get_select_option_value(document.getElementById("helmet_channel"));
+
+				//argv += "&mode" + get_select_option_value(document.getElementById("mode"));
+				//argv = "ACTION=SET&ID=" + document.getElementById("detecting_boardid").value + "&ch="
+				//	+ document.getElementById("detecting_channel").value;
+
+				argv += "&quality="
+					+ document.getElementById("quality").value + "&snap_interval="
+					+ document.getElementById("snap_interval").value + "&warn_interval="
+					+ document.getElementById("warn_interval").value + "&snap_qulityscore="
+					+ document.getElementById("snap_qulityscore").value + "&threshold="
+					+ document.getElementById("threshold").value;
+
+				if(document.getElementById("sendpic").checked)	
+					argv +=  "&sendpic=true";
+				else	
+					argv +=  "&sendpic=false";
+
+				if(document.getElementById("trace").checked)	
+					argv +=  "&trace=true";
+				else	
+					argv +=  "&trace=false";
+					
+				if(document.getElementById("frame").checked)	
+					argv +=  "&frame=true";
+				else	
+					argv +=  "&frame=false";
+
+				$("#helmet_waiting").css("display", "block");
+				setTimeout(function () { $("#helmet_waiting").css("display", "none") }, 5000);
+				stxhr.post("/goform/helmet", argv,
+					function (x) {
+						console.log(x);
+						if (x.responseText == "OK") {
+							clearTimeout();
+							$("#helmet_waiting").css("display", "none");
+
+							//document.getElementById("device_name").value = "";
+							//document.getElementById("location").value = "";
+							//document.getElementById("server").value = "";
+							check_okerr_hiden($('#quality'));
+							check_okerr_hiden($('#snap_interval'));
+							check_okerr_hiden($('#warn_interval'));
+							check_okerr_hiden($('#snap_qulityscore'));
+							check_okerr_hiden($('#threshold'));
+						}
+						else if (x.responseText != "OK") {
+							check_okerr_hiden($('#quality'));
+							check_okerr_hiden($('#snap_interval'));
+							check_okerr_hiden($('#warn_interval'));
+							check_okerr_hiden($('#snap_qulityscore'));
+							check_okerr_hiden($('#threshold'));
+							clearTimeout();
+							$("#helmet_waiting").css("display", "none");
+							$("#helmet_error").css("display", "block");
+							setTimeout(function () { $("#helmet_error").css("display", "none") }, 3000);
+						}
+					},
+					3000
+				);
+			}
+
+			window.onload = function () {
+				detecting_get_action("GET");
+				identify_get_action("GET");
+				helmet_get_action("GET");
+			}
+		</script>
+	</div>
+</body>
+
+</html>

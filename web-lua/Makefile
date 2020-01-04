@@ -25,15 +25,15 @@ endif
 clean: 
 	$(MAKE) -C luci-app-factory clean INSTALLDSTWEB=$(DSTWEBDIR)
 	$(MAKE) -C luci-app-voip clean INSTALLDSTWEB=$(DSTWEBDIR)
-	$(MAKE) -C luci-app-card clean INSTALLDSTWEB=$(DSTWEBDIR)	
+	#$(MAKE) -C luci-app-card clean INSTALLDSTWEB=$(DSTWEBDIR)	
 	$(MAKE) -C luci-app-filetransfer clean INSTALLDSTWEB=$(DSTWEBDIR)
-	$(MAKE) -C luci-app-user clean INSTALLDSTWEB=$(DSTWEBDIR)
+	#$(MAKE) -C luci-app-user clean INSTALLDSTWEB=$(DSTWEBDIR)
 	
 install: 
 	$(MAKE) -C luci-app-factory install INSTALLDSTWEB=$(DSTWEBDIR)
 	$(MAKE) -C luci-app-voip install INSTALLDSTWEB=$(DSTWEBDIR)
-	$(MAKE) -C luci-app-card install INSTALLDSTWEB=$(DSTWEBDIR)	
+	#$(MAKE) -C luci-app-card install INSTALLDSTWEB=$(DSTWEBDIR)	
 	$(MAKE) -C luci-app-filetransfer install INSTALLDSTWEB=$(DSTWEBDIR)
-	$(MAKE) -C luci-app-user install INSTALLDSTWEB=$(DSTWEBDIR)
+	#$(MAKE) -C luci-app-user install INSTALLDSTWEB=$(DSTWEBDIR)
 	
 all: install 

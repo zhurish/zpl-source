@@ -108,6 +108,53 @@ int _ipkernel_bridge_del_interface(nsm_bridge_t *br, int ifindex)
 	return err < 0 ? errno : 0;
 }
 
+
+int _ipkernel_bridge_list_interface(nsm_bridge_t *br, int ifindex[])
+{
+	struct ifreq ifr;
+	int err = -1;
+	int port_index[BRIDGE_MEMBER_MAX];
+	unsigned long args[4] = { BRCTL_GET_PORT_LIST,(unsigned long) &port_index, 0, 0 };
+	strncpy(ifr.ifr_name, br->ifp->k_name, IFNAMSIZ);
+	ifr.ifr_data = (char *) &args;
+
+	if (if_ioctl(SIOCDEVPRIVATE, &ifr) < 0) {
+	//	zlog_err(ZLOG_PAL, "%s: can't get info %s\n",br->ifp->k_name, strerror(errno));
+	//	return CMD_WARNING;
+	}
+	memcpy(ifindex, port_index, sizeof(port_index));
+	return err < 0 ? errno : 0;
+}
+
+
+int _ipkernel_bridge_check_interface(char *br, int ifindex)
+{
+	struct ifreq ifr;
+	//int err = -1;
+	int i = 0;
+	int port_index[BRIDGE_MEMBER_MAX] = {0};
+	unsigned long bargs[4] = { BRCTL_GET_PORT_LIST,(unsigned long) &port_index, 0, 0 };
+	for(i = 0; i < BRIDGE_MEMBER_MAX; i++)
+	{
+		port_index[i] = 0;
+	}
+	strcpy(ifr.ifr_name, br);
+	ifr.ifr_data = (char *) &bargs;
+
+	if (if_ioctl(SIOCDEVPRIVATE, &ifr) < 0) {
+	//	zlog_err(ZLOG_PAL, "%s: can't get info %s\n",br->ifp->k_name, strerror(errno));
+	//	return CMD_WARNING;
+		return ERROR;
+	}
+	for(i = 0; i < BRIDGE_MEMBER_MAX; i++)
+	{
+		if(port_index[i] > 0 && port_index[i] == ifindex)
+			return OK;
+	}
+	//memcpy(ifindex, port_index, sizeof(port_index));
+	return ERROR;
+}
+
 #else
 
 #define HAVE_UTILS_BRCTL

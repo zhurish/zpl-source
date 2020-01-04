@@ -566,10 +566,10 @@ static int _nsm_ip_arp_table_config(ip_arp_t *node, struct vty *vty)
 	os_memset(ip, 0, sizeof(ip));
 	os_memset(ifname, 0, sizeof(ifname));
 /*	sprintf(mac, "%02x%02x-%02x%02x-%02x%02x",node->mac[0],node->mac[1],node->mac[2],
-											 node->mac[3],node->mac[4],node->mac[5]);*/
 
-	sprintf(mac, "%s", if_mac_out_format(node->mac, NSM_MAC_MAX));
-	sprintf(ifname, "%s",ifindex2ifname(node->ifindex));
+											 node->mac[3],node->mac[4],node->mac[5]);*/
+	sprintf(mac, "%s", cli_inet_ethernet(node->mac));//if_mac_out_format(node->mac));
+	sprintf(ifname, "%s", ifindex2ifname(node->ifindex));
 	//ip arp 1.1.1.1 0000-1111-2222 interface gigabitethernet 0/1/1
 	//ip arp 1.1.1.1 0000-1111-2222
 

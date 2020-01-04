@@ -36,6 +36,46 @@
 #endif /* HAVE_UCONTEXT_H */
 #endif /* SA_SIGINFO */
 
+  static const int core_signals[] = {
+    SIGQUIT,
+    SIGILL,
+#ifdef SIGEMT
+    SIGEMT,
+#endif
+    SIGFPE,
+    SIGBUS,
+    SIGSEGV,
+#ifdef SIGSYS
+    SIGSYS,
+#endif
+#ifdef SIGXCPU
+    SIGXCPU,
+#endif
+#ifdef SIGXFSZ
+    SIGXFSZ,
+#endif
+  };
+
+  static const int exit_signals[] = {
+    SIGHUP,
+    SIGINT,
+    SIGALRM,
+    SIGTERM,
+    SIGUSR1,
+    //SIGUSR2,
+#ifdef SIGPOLL
+    SIGPOLL,
+#endif
+#ifdef SIGVTALRM
+    SIGVTALRM,
+#endif
+#ifdef SIGSTKFLT
+    SIGSTKFLT,
+#endif
+  };
+  static const int ignore_signals[] = {
+    SIGPIPE,
+  };
 
 /* master signals descriptor struct */
 struct quagga_sigevent_master_t
@@ -48,82 +88,13 @@ struct quagga_sigevent_master_t
   volatile sig_atomic_t caught;
 } sigmaster;
 
-#ifdef QUAGGA_SIGNAL_REAL_TIMER
-static int signal_pipe = 0;
 
-static void real_time_signal_handler (pthread_t pid, int sig)
-{
-	char buf[128];
-	pthread_t *ppid = (pthread_t *)buf;
-	int *psig = (int *)(buf + sizeof(pthread_t));
-	*ppid = pid;
-	*psig = sig;
-	if(signal_pipe)
-	{
-		if (write (signal_pipe, buf, sizeof(pthread_t) + sizeof (sig)) < 0)
-			zlog_err (ZLOG_DEFAULT, "Could not send signal(%d): %s", sig, strerror (errno));
-	}
-}
-
-/* Call this before doing anything else. Sets up the socket pair
- * and installs the signal handler */
-static void real_signal_setup(void)
-{
-	signal_pipe = os_pipe_create("real-signal", O_RDWR);
-	if(signal_pipe > 0)
-		os_set_nonblocking(signal_pipe);
-}
-/* Read a signal from the signal pipe. Returns 0 if there is
- * no signal, -1 on error (and sets errno appropriately), and
- * your signal on success */
-static int real_signal_read (int timeout)
-{
-	int i = 0, retval = 0;
-	char buf[128];
-	//pthread_t *pid = (pthread_t *)buf;
-	int *sig = (int *)(buf + sizeof(pthread_t));
-	fd_set rfds;
-	struct quagga_signal_t *sighandle;
-	memset(buf, 0, sizeof(buf));
-	FD_ZERO (&rfds);
-	FD_SET (signal_pipe, &rfds);
-	while (1)
-	{
-		retval = os_select_wait(signal_pipe + 1, &rfds, NULL,  timeout);
-
-		if (retval == OS_TIMEOUT)
-			return 0;
-
-		if (!FD_ISSET(signal_pipe, &rfds))
-			return 0;
-
-		if (read(signal_pipe, buf, sizeof(buf)) < 0)
-			return -1;
-
-		for (i = 0; i < sigmaster.sigc; i++)
-		{
-			sighandle = &(sigmaster.signals[i]);
-
-			if (sighandle->signal && sighandle->signal == *sig)
-			{
-				if (sighandle->handler)
-					sighandle->handler();
-				if (sighandle->signal_handler)
-					sighandle->signal_handler(sighandle->signal);
-			}
-		}
-	}
-}
-#endif
 /* Generic signal handler 
  * Schedules signal event thread
  */
 static void
 quagga_signal_handler (int signo)
 {
-#ifdef QUAGGA_SIGNAL_REAL_TIMER
-	real_time_signal_handler (pthread_self(), signo);
-#else
   int i;
   struct quagga_signal_t *sig;
   sigmaster.tid = pthread_self();
@@ -133,17 +104,46 @@ quagga_signal_handler (int signo)
       
       if (sig->signal == signo)
         sig->caught = 1;
+      //quagga_sigevent_process ();
     }
   sigmaster.caught = 1;
-#endif
 } 
 
 /* check if signals have been caught and run appropriate handlers */
+#ifdef QUAGGA_SIGNAL_SIGWAIT
+int quagga_sigevent_process (void)
+{
+	int err = 0, signo = 0;
+	sigset_t	set;
+	sigfillset(&set);
+	sigdelset(&set, SIGUSR2);
+	for (;;) {
+		err = sigwait(&set, &signo);
+		if (err != 0) {
+			err_exit("sigwait failed\n");
+		}
+
+		switch (signo) {
+		case SIGTERM:
+			pr_info("Catch SIGTERM; exiting\n");
+			break;
+		case SIGQUIT:
+			pr_info("Catch SIGQUIT; exiting\n");
+			exit(0);
+			break;
+		case SIGINT:
+			pr_info("Catch SIGINT; exiting\n");
+			break;
+
+		default:
+			pr_info("Unexpected signal %d\n", signo);
+		}
+	}
+}
+#else
 int
 quagga_sigevent_process (void)
 {
-#ifdef QUAGGA_SIGNAL_REAL_TIMER
-#else
   struct quagga_signal_t *sig;
   int i;
 #ifdef SIGEVENT_BLOCK_SIGNALS
@@ -198,15 +198,12 @@ quagga_sigevent_process (void)
     return -1;
 #endif /* SIGEVENT_BLOCK_SIGNALS */
   sigmaster.tid = 0;
-#endif
+
   return 0;
 }
-#ifdef QUAGGA_SIGNAL_REAL_TIMER
-int real_sigevent_process (int timeout)
-{
-	return real_signal_read (timeout);
-}
 #endif
+
+
 /* Initialization of signal handles. */
 /* Signal wrapper. */
 static int
@@ -317,45 +314,6 @@ core_handler(int signo
 static void
 trap_default_signals(void)
 {
-  static const int core_signals[] = {
-    SIGQUIT,
-    SIGILL,
-#ifdef SIGEMT
-    SIGEMT,
-#endif
-    SIGFPE,
-    SIGBUS,
-    SIGSEGV,
-#ifdef SIGSYS
-    SIGSYS,
-#endif
-#ifdef SIGXCPU
-    SIGXCPU,
-#endif
-#ifdef SIGXFSZ
-    SIGXFSZ,
-#endif
-  };
-  static const int exit_signals[] = {
-    SIGHUP,
-    SIGINT,
-    SIGALRM,
-    SIGTERM,
-    SIGUSR1,
-    SIGUSR2,
-#ifdef SIGPOLL
-    SIGPOLL, 
-#endif
-#ifdef SIGVTALRM
-    SIGVTALRM,
-#endif
-#ifdef SIGSTKFLT
-    SIGSTKFLT, 
-#endif
-  };
-  static const int ignore_signals[] = {
-    SIGPIPE,
-  };
   static const struct {
     const int *sigs;
     u_int nsigs;
@@ -412,9 +370,6 @@ void
 signal_init (int sigc,
              struct quagga_signal_t signals[])
 {
-#ifdef QUAGGA_SIGNAL_REAL_TIMER
-  real_signal_setup();
-#endif
   int i = 0;
   struct quagga_signal_t *sig;
 
@@ -437,3 +392,24 @@ signal_init (int sigc,
   sigmaster.sigc = sigc;
   sigmaster.signals = signals;
 }
+
+/*void signal_sigmask()
+{
+	int i = 0;
+	sigset_t	mask;
+	sigfillset(&mask);
+	for(i = 0; i < array_size(core_signals); i++)
+	{
+		sigdelset(&mask, core_signals[i]);
+	}
+	for(i = 0; i < array_size(exit_handler); i++)
+	{
+		sigdelset(&mask, exit_handler[i]);
+	}
+	for(i = 0; i < array_size(ignore_signals); i++)
+	{
+		sigdelset(&mask, ignore_signals[i]);
+	}
+}*/
+
+

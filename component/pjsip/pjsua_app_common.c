@@ -58,6 +58,10 @@ int my_atoi(const char *cs)
     }
 }
 
+pj_bool_t app_incoming_call()
+{
+	return app_config.incomeing;
+}
 /*
  * Find next call when current call is disconnected or when user
  * press ']'
@@ -80,7 +84,7 @@ pj_bool_t find_next_call()
 	    return PJ_TRUE;
 	}
     }
-
+    app_config.incomeing = PJ_FALSE;
     app_config.current_call = PJSUA_INVALID_ID;
     return PJ_FALSE;
 }
@@ -103,7 +107,7 @@ pj_bool_t find_prev_call()
 	    return PJ_TRUE;
 	}
     }
-
+    app_config.incomeing = PJ_FALSE;
     app_config.current_call = PJSUA_INVALID_ID;
     return PJ_FALSE;
 }
@@ -153,7 +157,7 @@ void log_call_dump(int call_id)
     call_dump_len = (unsigned)strlen(some_buf);
 
     log_decor = pj_log_get_decor();
-    pj_log_set_decor(log_decor & ~(PJ_LOG_HAS_NEWLINE | PJ_LOG_HAS_CR));
+    //pj_log_set_decor(log_decor & ~(PJ_LOG_HAS_NEWLINE | PJ_LOG_HAS_CR));
     PJ_LOG(3,(THIS_FILE, "\n"));
     pj_log_set_decor(0);
 
@@ -367,10 +371,10 @@ void vid_list_devs()
 void app_config_show_video(int acc_id, const pjsua_acc_config *acc_cfg)
 {
     PJ_LOG(3,(THIS_FILE,
-	      "Account %d:\n"
-	      "  RX auto show:     %d\n"
-	      "  TX auto transmit: %d\n"
-	      "  Capture dev:      %d\n"
+	      "Account %d:\r\n"
+	      "  RX auto show:     %d\r\n"
+	      "  TX auto transmit: %d\r\n"
+	      "  Capture dev:      %d\r\n"
 	      "  Render dev:       %d",
 	      acc_id,
 	      acc_cfg->vid_in_auto_show,

@@ -21,6 +21,7 @@ typedef struct pjsip_callback_tbl
 {
 	pjsip_register_state_cb pjsip_reg_state;
 	pjsip_call_state_cb 	pjsip_call_state;
+	pjsip_call_state_cb 	pjsip_call_incoming;
 	pjsip_media_state_cb 	pjsip_media_state;
 	pjsip_dtmf_recv_cb 		pjsip_dtmf_recv;
 	pjsip_call_takeup_cb 	pjsip_call_takeup;
@@ -40,6 +41,6 @@ int pjsip_app_dtmf_recv_callback(pjsip_callback_tbl *cb, int id, void *pVoid, in
 int pjsip_app_call_takeup_callback(pjsip_callback_tbl *cb, int id, void *pVoid, int state);
 int pjsip_app_call_timeout_callback(pjsip_callback_tbl *cb, int id, void *pVoid, int state);
 int pjsip_app_call_hangup_callback(pjsip_callback_tbl *cb, int id, void *pVoid, int state);
-
+int pjsip_app_call_incoming_callback(pjsip_callback_tbl *cb, int id, void *pVoid, int state);
 
 #endif /* __PJSIP_PJSUA_APP_CB_H__ */

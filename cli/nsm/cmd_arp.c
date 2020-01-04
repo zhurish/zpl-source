@@ -383,7 +383,7 @@ static int show_nsm_ip_arp_table_one(ip_arp_t *node, struct arp_user *user)
 	os_memset(ifname, 0, sizeof(ifname));
 /*	sprintf(mac, "%02x%02x-%02x%02x-%02x%02x",node->mac[0],node->mac[1],node->mac[2],
 											 node->mac[3],node->mac[4],node->mac[5]);*/
-	sprintf(mac, "%s", if_mac_out_format(node->mac, NSM_MAC_MAX));
+	sprintf(mac, "%s", if_mac_out_format(node->mac));
 
 	sprintf(ifname, "%s",ifindex2ifname(node->ifindex));
 	//Protocol	Address	Age (min)	Hardware Addr    Interface

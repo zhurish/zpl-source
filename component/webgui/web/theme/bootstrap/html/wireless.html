@@ -1,0 +1,916 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta content="" name="description" />
+	<meta content="webthemez" name="author" />
+	<!--meta http-equiv="refresh" content="30"-->
+	<!-- Bootstrap Styles-->
+	<link href="../css/bootstrap.min.css" rel="stylesheet" />
+
+	<!-- private Styles-->
+	<link href="../css/private.css" rel="stylesheet" />
+
+	<!-- jQuery Js -->
+	<script src="../js/jquery-2.1.1.min.js"></script>
+	<!-- Bootstrap Js -->
+	<script src="../js/bootstrap.min.js"></script>
+
+	<script src="../js/xhr.js"></script>
+	<script src="../js/data-type.js"></script>
+
+	<title>wireless</title>
+</head>
+
+<body class="body-bg-img">
+	<div id="maincontent" class="container">
+		<!-- wireless设置 -->
+		<fieldset class="fieldset-margin fieldset-background">
+			<form class="form-horizontal form-margin" role="form" name="wireless" action="" accept-charset="UTF-8"
+				method="POST">
+				<legend class="legend-text-align">无线设置</legend>
+
+				<div class="form-group">
+					<label for="wireless_enable" class="col-sm-3 control-label">无线开关</label>
+					<div class="checkbox col-sm-4">
+						<input type="checkbox" name="wireless_enable" id="wireless_enable" value="wireless_enable"
+							onclick="wireless_enable_check(this)">
+					</div>
+				</div>
+				<div class="form-group hiden">
+					<label for="mode" class="col-sm-3 control-label">工作模式</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="mode" id="mode"
+							onchange="mode_check(this.options[this.options.selectedIndex])">
+							<option selected="selected" value="AP">AP</option>
+							<option value="STA">STA</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="hiden" name="connected_node" id="connected_node">
+					<table class="table table-condensed">
+						<caption class="tbl-text-align bold">连接WIFI</caption>
+						<thead>
+							<tr>
+								<th>名称</th>
+								<th>MAC</th>
+								<th>加密</th>
+								<th>信号</th>
+								<th>状态</th>
+							</tr>
+						</thead>
+						<tbody name="connected_list" id="connected_list">
+							<tr class="hiden">
+								<td>abcdnd</td>
+								<td>48:45:20:a5:89:2b</td>
+								<td>WPA/WPA2-PSK</td>
+								<td>up</td>
+								<td>
+									<button type="button" class="btn btn-danger" name="ap_disconnect" id="ap_disconnect"
+										onclick="ap_disconnect_click(this)"><span
+											class="glyphicon glyphicon-remove-circle" \
+											style="margin-right:10px;"></span>断开</button>
+								</td>
+							<tr>
+						</tbody>
+					</table>
+				</div>
+
+
+				<div class="hiden" name="neighbor_table" id="neighbor_table">
+
+					<table class="table table-condensed">
+						<caption class="tbl-text-align bold">
+							<button type="button" class="btn btn-submit" name="ap_scan" id="ap_scan"
+								onclick="ap_scan_click(this)"><span class="glyphicon glyphicon-list-alt" \
+									style="margin-right:10px;"></span>附近WIFI</button>
+
+
+							<div id="wifi_scan_icon" class="radar hiden" style="margin-top:20%; margin-bottom:10px;">
+							</div>
+							<!--div id="wifi_scan_icon" class="show">
+								<img src="../res/icons/scan.gif" alt="Waiting...">
+							</div-->
+						</caption>
+
+						<!--thead name="wifi_tbl_h" id="wifi_tbl_h"  name="neighbor_thead" id="neighbor_thead" class="hiden"-->
+						<thead>
+							<tr>
+								<th>名称</th>
+								<th>MAC</th>
+								<th>加密</th>
+								<th>信号</th>
+								<th>连接</th>
+							</tr>
+						</thead>
+						<tbody name="neighbor_list" id="neighbor_list">
+							<script type="text/javascript">
+								//var stxhr = new XHR();
+								var ccnt = 0;
+								function neighbor_list_tbl() {
+									var utbl = "";
+									var ctbl = "";
+									document.getElementById("connected_node").setAttribute("class", "hiden");
+									$.get("/goform/wireless-neighbor", function (data, status) {
+										//console.log(data);
+										var data_json = JSON.parse(data);
+										$.each(data_json, function (index, info) {
+											ccnt++;
+											if (info.state == "connect") {
+												ctbl = "<tr>\n";
+												ctbl += "<td>" + info.name + "</td>";
+												ctbl += "<td>" + info.mac + "</td>";
+												if (info.encrytype == "on")
+													ctbl += "<td><span class=\"glyphicon glyphicon-lock\"></span></td>";
+												else
+													ctbl += "<td> </td>";
+												//ctbl += "<td>" + info.encrytype + "</td>";
+												//ctbl += "<td>" + info.encrytype + "</td>";
+												ctbl += "<td class=\"hiden\">" + info.state + "</td>";
+												//ctbl += "<td >" + info.signal + "</td>";
+												if (info.signal > 0 && info.signal <= 25)
+													ctbl += "<td><img src=\"../res/icons/signal-0-25.png\"></td>";
+												else if (info.signal > 25 && info.signal <= 50)
+													ctbl += "<td><img src=\"../res/icons/signal-25-50.png\"></td>";
+												else if (info.signal > 50 && info.signal <= 75)
+													ctbl += "<td><img src=\"../res/icons/signal-50-75.png\"></td>";
+												else if (info.signal > 75 && info.signal <= 100)
+													ctbl += "<td><img src=\"../res/icons/signal-75-100.png\"></td>";
+												else if (info.signal == 0)
+													ctbl += "<td><img src=\"../res/icons/signal-0.png\"></td>";
+												else //if(info.signal > 25 && info.signal <= 50)
+													ctbl += "<td><img src=\"../res/icons/signal-none.png\"></td>";
+
+												ctbl += "<td>\
+			      									<button type=\"button\" class=\"btn btn-danger\" name=\"ap_disconnect\" \
+														  id=\"ap_disconnect\" onclick=\"ap_disconnect_click(this)\">\
+														  <span class=\"glyphicon glyphicon-remove-circle\" \
+														style=\"margin-right:10px;\"></span>断开</button>\
+													</td>";
+												ctbl += "</tr>";
+												$("#connected_list").html(ctbl);
+												document.getElementById("connected_node").setAttribute("class", "show");
+											}
+											utbl += "<tr>\n";
+											utbl += "<td>" + info.name + "</td>";
+											utbl += "<td>" + info.mac + "</td>";
+											//utbl += "<td>" + info.encrytype + "</td>";
+											if (info.encrytype == "on")
+												utbl += "<td><span class=\"glyphicon glyphicon-lock\"></span></td>";
+											else
+												utbl += "<td> </td>";
+											utbl += "<td class=\"hiden\">" + info.state + "</td>";
+											//utbl += "<td >" + info.signal + "</td>";
+											if (info.signal > 0 && info.signal <= 25)
+												utbl += "<td><img src=\"../res/icons/signal-0-25.png\"></td>";
+											else if (info.signal > 25 && info.signal <= 50)
+												utbl += "<td><img src=\"../res/icons/signal-25-50.png\"></td>";
+											else if (info.signal > 50 && info.signal <= 75)
+												utbl += "<td><img src=\"../res/icons/signal-50-75.png\"></td>";
+											else if (info.signal > 75 && info.signal <= 100)
+												utbl += "<td><img src=\"../res/icons/signal-75-100.png\"></td>";
+											else if (info.signal == 0)
+												utbl += "<td><img src=\"../res/icons/signal-0.png\"></td>";
+											else //if(info.signal > 25 && info.signal <= 50)
+												utbl += "<td><img src=\"../res/icons/signal-none.png\"></td>";
+
+											utbl += "<td>\
+			      								<button type=\"button\" class=\"btn btn-submit\" name=\"connect\" id=\"connect\" \
+			      									onclick=\"ap_connect_click(this)\"><span class=\"glyphicon glyphicon-ok-circle\" \
+														style=\"margin-right:10px;\"></span>连接</button>\
+                								</td>";
+											utbl += "</tr>";
+										});
+										if (utbl != "") {
+											//document.getElementById("neighbor_thead").setAttribute("class", "show");
+										}
+										$("#neighbor_list").html(utbl);
+										if (ccnt == 0) {
+											ap_connect_edit_show();
+											//document.getElementById("ap_connect_enable").setAttribute("class", "btn btn-default show");
+										}
+									});
+								}
+								neighbor_list_tbl();
+
+							</script>
+						</tbody>
+					</table>
+				</div>
+
+				<div class="form-group hiden">
+					<label for="staname" class="col-sm-3 control-label">无线名称</label>
+					<div class="col-sm-4">
+						<input type="text" minlength="6" maxlength="32" class="form-control" name="staname" id="staname"
+							onchange="input_name_check(this,$('#staname'))" required placeholder="6到32个字节">
+					</div>
+					<div id="div_name_hiden" class="checkbox col-sm-3" style="display: none;">
+						<label>隐藏无线
+							<input type="checkbox" name="name_hiden" id="name_hiden" value="name_hiden">
+						</label>
+					</div>
+				</div>
+				<div class="form-group hiden">
+					<label for="encrytype" class="col-sm-3 control-label">加密方式</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="encrytype" id="encrytype"
+							onchange="encrytype_check(this.options[this.options.selectedIndex])">
+							<option value="WPA-WPA2-PSK">WPA-WPA2-PSK</option>
+							<option value="WPA-PSK">WPA-PSK</option>
+							<option value="WPA2-PSK">WPA2-PSK</option>
+							<option value="SHARED">SHARED</option>
+							<option value="OPEN">OPEN</option>
+							<option value="NONE">NONE</option>
+						</select>
+					</div>
+				</div>
+				<div class="form-group hiden">
+					<label for="sta-password" class="col-sm-3 control-label">无线密码</label>
+					<div class="col-sm-4">
+						<input type="password" minlength="6" maxlength="32" class="form-control" name="password"
+							id="password" onchange="input_name_check(this,$('#password'))" placeholder="6到32个字节">
+					</div>
+					<span class="glyphicon glyphicon-eye-close" id="eye-icon" onmousedown="click_see_password()"
+						onmouseup="unclick_see_password()"></span>
+				</div>
+				<div class="form-group hiden">
+					<label for="ap_password" class="col-sm-3 control-label">无线密码</label>
+					<div class="col-sm-4">
+						<input type="text" minlength="6" maxlength="32" class="form-control" name="new_password"
+							id="new_password" onchange="input_name_check(this,$('#new_password'))" placeholder="6到32个字节">
+					</div>
+				</div>
+				<div class="form-group hiden">
+					<label for="type" class="col-sm-3 control-label">无线模式</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="type" id="type">
+							<option value="Auto">Auto</option>
+							<option value="11b/g/n">11b/g/n</option>
+							<option value="11b/g">11b/g</option>
+							<option value="11b">11b</option>
+							<option value="11g">11g</option>
+						</select>
+					</div>
+				</div>
+				<div class="form-group hiden">
+					<label for="chennel" class="col-sm-3 control-label">无线信道</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="chennel" id="chennel">
+							<option value="Auto">自动</option>
+							<option value="1">信道 1 (2412MHz)</option>
+							<option value="2">信道 2 (2417MHz)</option>
+							<option value="3">信道 3 (2422MHz)</option>
+							<option value="4">信道 4 (2427MHz)</option>
+							<option value="5">信道 5 (2432MHz)</option>
+							<option value="6">信道 6 (2437MHz)</option>
+							<option value="7">信道 7 (2442MHz)</option>
+							<option value="8">信道 8 (2447MHz)</option>
+							<option value="9">信道 9 (2452MHz)</option>
+							<option value="10">信道 10 (2457MHz)</option>
+							<option value="11">信道 11 (2462MHz)</option>
+							<option value="12">信道 12 (2467MHz)</option>
+							<option value="13">信道 13 (2472MHz)</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="form-group hiden">
+					<label for="freq" class="col-sm-3 control-label">无线频宽</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="freq" id="freq">
+							<option value="Auto">自动</option>
+							<option value="20">20MHz</option>
+							<option value="40">40MHz</option>
+						</select>
+					</div>
+				</div>
+				<!--div class="form-group hiden">
+					<label for="wifi_power" class="col-sm-3 control-label">射频功率</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="wifi_power" id="wifi_power">
+							<option value="Auto">自动</option>
+							<option value="20">20MHz</option>
+							<option value="40">40MHz</option>
+						</select>
+					</div>
+				</div-->
+
+				<div class="form-group">
+					<div class="col-sm-4 control-label">
+						<button type="button" class="btn btn-cencel" name="wireless_cencel" id="wireless_cencel"
+							onclick="wireless_oncencel()"><span class="glyphicon glyphicon-remove"
+								style="margin-right:10px;"></span>取消</button>
+					</div>
+					<div class="col-sm-4 control-label">
+						<button type="button" class="btn btn-submit" name="wireless_submit" id="wireless_submit"
+							onclick="wireless_onsubmit()"><span class="glyphicon glyphicon-send"
+								style="margin-right:10px;"></span>确定</button>
+					</div>
+				</div>
+
+				<div id="wireless_waiting" class="alert alert-success hiden">
+					<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+							style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+				</div>
+				<div id="wireless_error" class="alert alert-warning hiden">
+					<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+				</div>
+				<script type="text/javascript">
+
+					//wifi工作模式
+					function mode_view_show(value) {
+						if (value == "STA") {
+							check_okerr_hiden($('#staname'));
+							check_okerr_hiden($('#password'));
+							document.getElementById("staname").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							document.getElementById("encrytype").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							document.getElementById("div_name_hiden").style.display = "none";
+							document.getElementById("password").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							document.getElementById("type").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							document.getElementById("chennel").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							document.getElementById("freq").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							//document.getElementById("wireless_cencel").parentNode.parentNode.setAttribute("class","form-group hiden");
+							document.getElementById("client_table").setAttribute("class", "hiden");
+
+
+							document.getElementById("connected_node").setAttribute("class", "show");
+							document.getElementById("neighbor_table").setAttribute("class", "show");
+							document.getElementById("staname").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("new_password").parentNode.parentNode.setAttribute("class", "form-group show");
+						}
+						else if (value == "AP") {
+							check_okerr_hiden($('#staname'));
+							check_okerr_hiden($('#password'));
+							document.getElementById("staname").parentNode.parentNode.setAttribute("class", "form-group show");
+							//document.getElementById("name_hiden").parentNode.setAttribute("class", "checkbox col-sm-3 show");
+							document.getElementById("div_name_hiden").style.display = "block";
+							document.getElementById("encrytype").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("password").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("type").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("chennel").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("freq").parentNode.parentNode.setAttribute("class", "form-group show");
+							//document.getElementById("wireless_cencel").parentNode.parentNode.setAttribute("class","form-group show");
+							document.getElementById("client_table").setAttribute("class", "show");
+
+							document.getElementById("connected_node").setAttribute("class", "hiden");
+							document.getElementById("neighbor_table").setAttribute("class", "hiden");
+							//document.getElementById("staname").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							document.getElementById("new_password").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							//document.getElementById("neighbor_table").setAttribute("class","tbl-text-align bold hiden");
+							//document.getElementById("wifi_tbl_h").setAttribute("class","hiden");
+							//document.getElementById("neighbor_list").setAttribute("class","hiden");	
+						}
+						return true;
+					}
+
+					function wireless_enable_check(self) {
+						var argv;
+						var stxhr = new XHR();
+						argv = "ACTION=wireless&BTNID=active&enable=";
+						if (self.checked)
+							argv += "true";
+						else
+							argv += "false";
+
+						stxhr.post("/goform/button_onclick", argv,
+							function (x) {
+								if (x.responseText == "ERROR") {
+								}
+								else if (x.responseText == "OK") {
+									if (self.checked) {
+										document.getElementById("mode").parentNode.parentNode.setAttribute("class", "form-group show");
+										if (document.getElementById("mode").value == "AP") {
+											mode_view_show("AP");
+											clienttbl_tbl();
+										}
+										else if (document.getElementById("mode").value == "STA") {
+											mode_view_show("STA");
+											neighbor_list_tbl();
+										}
+									}
+									else {
+										document.getElementById("mode").parentNode.parentNode.setAttribute("class", "form-group hiden");
+										if (document.getElementById("mode").value == "AP") {
+											check_okerr_hiden($('#staname'));
+											check_okerr_hiden($('#password'));
+											document.getElementById("staname").parentNode.parentNode.setAttribute("class", "form-group hiden");
+											//document.getElementById("name_hiden").parentNode.setAttribute("class", "checkbox col-sm-3 hiden");
+											document.getElementById("div_name_hiden").style.display = "none";
+
+											document.getElementById("encrytype").parentNode.parentNode.setAttribute("class", "form-group hiden");
+											document.getElementById("password").parentNode.parentNode.setAttribute("class", "form-group hiden");
+											document.getElementById("type").parentNode.parentNode.setAttribute("class", "form-group hiden");
+											document.getElementById("chennel").parentNode.parentNode.setAttribute("class", "form-group hiden");
+											document.getElementById("freq").parentNode.parentNode.setAttribute("class", "form-group hiden");
+											//document.getElementById("wireless_cencel").parentNode.parentNode.setAttribute("class","form-group hiden");
+											document.getElementById("client_table").setAttribute("class", "hiden");
+										}
+										else if (document.getElementById("mode").value == "STA") {
+											document.getElementById("connected_node").setAttribute("class", "hiden");
+											document.getElementById("neighbor_table").setAttribute("class", "hiden");
+											document.getElementById("staname").parentNode.parentNode.setAttribute("class", "form-group hiden");
+											document.getElementById("new_password").parentNode.parentNode.setAttribute("class", "form-group hiden");
+											//document.getElementById("neighbor_table").setAttribute("class","tbl-text-align bold hiden");
+											//document.getElementById("wifi_tbl_h").setAttribute("class","hiden");
+											//document.getElementById("neighbor_list").setAttribute("class","hiden");	
+										}
+									}
+								}
+							},
+							3000
+						);
+						/*
+						if(self.checked) {
+							//wireless_enable_click("true");
+							document.getElementById("mode").parentNode.parentNode.setAttribute("class", "form-group show");
+									if (document.getElementById("mode").value == "AP") {
+										mode_view_show("AP");
+										clienttbl_tbl();
+
+									}
+									else if (document.getElementById("mode").value == "STA") {
+
+										mode_view_show("STA");
+										neighbor_list_tbl();
+									}
+						}
+						else {
+							//wireless_enable_click("false");
+							document.getElementById("mode").parentNode.parentNode.setAttribute("class", "form-group hiden");
+									if (document.getElementById("mode").value == "AP") {
+										check_okerr_hiden($('#staname'));
+										check_okerr_hiden($('#password'));
+										document.getElementById("staname").parentNode.parentNode.setAttribute("class", "form-group hiden");
+										//document.getElementById("name_hiden").parentNode.setAttribute("class", "checkbox col-sm-3 hiden");
+										document.getElementById("div_name_hiden").style.display="none";
+
+										document.getElementById("encrytype").parentNode.parentNode.setAttribute("class", "form-group hiden");
+										document.getElementById("password").parentNode.parentNode.setAttribute("class", "form-group hiden");
+										document.getElementById("type").parentNode.parentNode.setAttribute("class", "form-group hiden");
+										document.getElementById("chennel").parentNode.parentNode.setAttribute("class", "form-group hiden");
+										document.getElementById("freq").parentNode.parentNode.setAttribute("class", "form-group hiden");
+										//document.getElementById("wireless_cencel").parentNode.parentNode.setAttribute("class","form-group hiden");
+										document.getElementById("client_table").setAttribute("class", "hiden");
+									}
+									else if (document.getElementById("mode").value == "STA") {
+										document.getElementById("connected_node").setAttribute("class", "hiden");
+										document.getElementById("neighbor_table").setAttribute("class", "hiden");
+										document.getElementById("staname").parentNode.parentNode.setAttribute("class", "form-group hiden");
+										document.getElementById("new_password").parentNode.parentNode.setAttribute("class", "form-group hiden");
+										//document.getElementById("neighbor_table").setAttribute("class","tbl-text-align bold hiden");
+										//document.getElementById("wifi_tbl_h").setAttribute("class","hiden");
+										//document.getElementById("neighbor_list").setAttribute("class","hiden");	
+									}
+						}
+						*/
+					}
+
+					//wifi工作模式
+					function mode_check(self) {
+						var value = self.value;
+						if (value == "STA") {
+							mode_view_show("STA");
+							neighbor_list_tbl();
+						}
+						else if (value == "AP") {
+							mode_view_show("AP");
+							clienttbl_tbl();
+						}
+						//select_option_active(document.getElementById("mode"), value);
+						$(self).selected = true;
+						//$(self).selected="selected";
+						console.log($(self));
+						return true;
+					}
+					//wifi加密方式
+					function encrytype_check(self) {
+						var value = self.value;
+						if (value == "NONE") {
+							if (document.getElementById("mode").value == "AP")
+								document.getElementById("password").parentNode.parentNode.setAttribute("class", "form-group hiden");
+						}
+						else {
+							if (document.getElementById("mode").value == "AP")
+								document.getElementById("password").parentNode.parentNode.setAttribute("class", "form-group show");
+						}
+					}
+					//检测wifi名称
+					function input_name_check(self, obj) {
+						var value = self.value;
+						if (value != "") {
+							if (value.length > 6 && value.length < 32) {
+								check_ok_show(obj);
+								return true;
+							}
+							else {
+								check_err_show(obj);
+							}
+						}
+						return false;
+					}
+					//按下鼠标查看密码
+					function click_see_password() {
+						console.log("click_see_password");
+						document.getElementById("password").type = "text";
+						document.getElementById("eye-icon").setAttribute("class", "glyphicon glyphicon-eye-open");
+					}
+					//释放鼠标恢复密码不可见
+					function unclick_see_password() {
+						console.log("unclick_see_password");
+						document.getElementById("password").type = "password";
+						document.getElementById("eye-icon").setAttribute("class", "glyphicon glyphicon-eye-close");
+					}
+					//点击连接wifi
+					function ap_connect_click(self) {
+
+						var name = $(self).parent().prevAll()[4].innerText;
+						var encrytype = $(self).parent().prevAll()[2].innerText;
+						if (encrytype == "NONE") {
+							document.getElementById("staname").value = name;
+							document.getElementById("div_name_hiden").style.display = "none";
+							//document.getElementById("name_hiden").parentNode.setAttribute("class", "checkbox hiden");
+							wireless_onaction("SET");
+						}
+						else {
+							//console.log($(self).parent().prevAll());
+							//var name=$(self).parentNode.parentNode.prevAll()[3].innerText;
+							document.getElementById("staname").parentNode.parentNode.setAttribute("class", "form-group show");
+							//document.getElementById("name_hiden").parentNode.setAttribute("class", "checkbox hiden");
+							document.getElementById("div_name_hiden").style.display = "block";
+							document.getElementById("new_password").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("staname").value = name;
+							//if(self.id == "ap_connect_enable")
+							if (self.id == "connect")
+								document.getElementById("staname").disabled = true;
+							else
+								document.getElementById("staname").disabled = false;
+							//document.getElementById("ap_connect_enable").setAttribute("class", "btn btn-primary show");
+							//document.getElementById("staname").disabled = true;
+							check_okerr_hiden($('#staname'));
+						}
+					}
+					//扫描没有wifi显示输入框
+					function ap_connect_edit_show() {
+						document.getElementById("staname").parentNode.parentNode.setAttribute("class", "form-group show");
+						//document.getElementById("name_hiden").parentNode.setAttribute("class", "checkbox col-sm-3 hiden");
+						document.getElementById("div_name_hiden").style.display = "none";
+						document.getElementById("new_password").parentNode.parentNode.setAttribute("class", "form-group show");
+						document.getElementById("staname").disabled = false;
+						check_okerr_hiden($('#staname'));
+					}
+					//断开连接
+					function ap_disconnect_click(self) {
+						console.log("ap_disconnect_click");
+						var argv;
+						var stxhr = new XHR();
+						argv = "ACTION=wireless&BTNID=" + self.id;
+						$("#wireless_waiting").css("display", "block");
+						setTimeout(function () { $("#wireless_waiting").css("display", "none") }, 5000);
+						stxhr.post("/goform/button_onclick", argv,
+							function (x) {
+								console.log(x);
+								if (x.responseText == "ERROR") {
+									clearTimeout();
+									$("#wireless_error").css("display", "block");
+									setTimeout(function () { $("#wireless_error").css("display", "none") }, 3000);
+								}
+								else if (x.responseText == "OK") {
+									clearTimeout();
+									$("#wireless_waiting").css("display", "none");
+									//clienttbl_tbl();
+									neighbor_list_tbl();
+								}
+							},
+							3000
+						);
+					}
+					//扫描附近wifi
+					function ap_scan_click(self) {
+						console.log("ap_scan_click");
+						var argv;
+						var stxhr = new XHR();
+						argv = "ACTION=wireless&BTNID=" + self.id;
+						$("#wifi_scan_icon").css("display", "block");
+						stxhr.post("/goform/button_onclick", argv,
+							function (x) {
+								console.log(x);
+								if (x.responseText == "ERROR") {
+									setTimeout(function () { $("#wifi_scan_icon").css("display", "none") }, 3000);
+								}
+								else if (x.responseText == "OK") {
+									setTimeout(function () {
+										$("#wifi_scan_icon").css("display", "none");
+										neighbor_list_tbl();
+									},
+										1000);
+									//$("#wifi_scan_icon").css("display", "none");
+									//neighbor_list_tbl();
+								}
+							},
+							8000
+						);
+					}
+
+					function wireless_oncencel() {
+						if (document.getElementById("mode").value == "AP") {
+							document.getElementById("staname").value = "";
+							//document.getElementById("encrytype").value = "";
+							document.getElementById("password").value = "";
+
+							check_okerr_hiden($('#staname'));
+							check_okerr_hiden($('#password'));
+						}
+						else if (document.getElementById("mode").value == "STA") {
+							document.getElementById("staname").parentNode.parentNode.setAttribute("class", "form-group show");
+							//document.getElementById("name_hiden").parentNode.setAttribute("class", "checkbox col-sm-3 hiden");
+							document.getElementById("div_name_hiden").style.display = "none";
+							document.getElementById("new_password").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("staname").disabled = true;
+							document.getElementById("new_password").value = "";
+						}
+					}
+
+					function wireless_onaction(op) {
+
+						console.log("staname:" + document.getElementById("staname").value);
+						console.log("mode:" + document.getElementById("mode").value);
+						if (document.getElementById("mode").value == "AP") {
+							console.log("encrytype:" + document.getElementById("encrytype").value);
+							if (document.getElementById("encrytype").value != "NONE")
+								console.log("sta_password:" + document.getElementById("password").value);
+							console.log("type:" + document.getElementById("type").value);
+							console.log("freq:" + document.getElementById("freq").value);
+							console.log("chennel:" + document.getElementById("chennel").value);
+						}
+						else {
+							//console.log("name_hiden:" + document.getElementById("name_hiden").checked);
+							console.log("new_password:" + document.getElementById("new_password").value);
+						}
+
+						var argv;
+						var stxhr = new XHR();
+						if (op == "GET") {
+							var options = $("#mode option:selected");
+
+							argv = "ACTION=GET&mode=" + options.val();//document.getElementById("mode").value;
+						}
+						else {
+							var options = $("#mode option:selected");
+
+							argv = "ACTION=SET&mode=" + get_select_option_value(document.getElementById("mode"));
+
+							if (document.getElementById("mode").value == "AP") {
+								argv += "&name="
+									+ document.getElementById("staname").value + "&encrytype="
+									+ document.getElementById("encrytype").value + "&type="
+									+ document.getElementById("type").value + "&freq="
+									+ document.getElementById("freq").value + "&chennel="
+									+ document.getElementById("chennel").value;
+
+								if (document.getElementById("encrytype").value != "NONE")
+									argv += "&password=" + document.getElementById("password").value;
+								else
+									argv += "&password=null";
+
+								if (document.getElementById("name_hiden").checked)
+									argv += "&hiden=true";
+								else
+									argv += "&hiden=false";
+							}
+							else if (document.getElementById("mode").value == "STA") {
+								argv += "&name=" + document.getElementById("staname").value;
+								if (document.getElementById("new_password").value != "")
+									argv += "&password=" + document.getElementById("new_password").value;
+								else
+									argv += "&password=null";
+							}
+							$("#wireless_waiting").css("display", "block");
+							setTimeout(function () { $("#wireless_waiting").css("display", "none") }, 6000);
+						}
+						console.log("argv:" + argv);
+						stxhr.post("/goform/wireless", argv,
+							function (x, json) {
+								console.log(x);
+								console.log(json);
+								if (x.responseText == "") {
+									clearTimeout();
+									$("#wireless_waiting").css("display", "none");
+									$("#wireless_error").css("display", "block");
+									setTimeout(function () { $("#wireless_error").css("display", "none") }, 6000);
+								}
+								else if (x.responseText != "" && json == null) {
+									if (x.responseText == "ERROR") {
+										if (op != "GET") {
+											clearTimeout();
+											$("#wireless_waiting").css("display", "none");
+											$("#wireless_error").css("display", "block");
+											setTimeout(function () { $("#wireless_error").css("display", "none") }, 6000);
+										}
+										else {
+											document.getElementById("wireless_enable").checked = false;
+											document.getElementById("mode").parentNode.parentNode.setAttribute("class", "form-group hiden");
+										}
+									}
+									else if (x.responseText == "OK") {
+										document.getElementById("wireless_enable").checked = true;
+										document.getElementById("mode").parentNode.parentNode.setAttribute("class", "form-group show");
+									}
+								}
+								else if (x.responseText != "" && json != null) {
+									if (json.response == "OK") {
+										if (op != "GET") {
+											clearTimeout();
+											$("#wireless_waiting").css("display", "none");
+											$("#wireless_error").css("display", "none");
+										}
+										document.getElementById("wireless_enable").checked = true;
+										document.getElementById("mode").parentNode.parentNode.setAttribute("class", "form-group show");
+										//$('[name="wireless_enable"]').bootstrapSwitch('state', true);
+
+										select_option_active(document.getElementById("mode"), json.mode);
+
+										if (json.mode == "AP") {
+											document.getElementById("staname").value = json.name;
+											if (document.getElementById("encrytype").value != "NONE")
+												document.getElementById("password").value = json.password;
+											if (json.hiden == "true")
+												document.getElementById("name_hiden").checked = true;
+											else
+												document.getElementById("name_hiden").checked = false;
+
+											select_option_active(document.getElementById("encrytype"), json.encrytype);
+											select_option_active(document.getElementById("type"), json.type);
+											select_option_active(document.getElementById("chennel"), json.chennel);
+											select_option_active(document.getElementById("freq"), json.freq);
+											mode_view_show("AP");
+											clienttbl_tbl();
+										}
+										else if (json.mode == "STA") {
+											//document.getElementById("new_password").value = json.password;
+											document.getElementById("staname").parentNode.parentNode.setAttribute("class", "form-group hiden");
+											//document.getElementById("name_hiden").parentNode.setAttribute("class", "checkbox col-sm-3 hiden");
+											document.getElementById("div_name_hiden").style.display = "block";
+											document.getElementById("new_password").parentNode.parentNode.setAttribute("class", "form-group hiden");
+											//document.getElementById("staname").disabled = true;
+											mode_view_show("STA");
+											neighbor_list_tbl();
+										}
+										if (document.getElementById("mode").value == "AP" && op != "GET") {
+											check_okerr_hiden($('#staname'));
+											check_okerr_hiden($('#password'));
+										}
+									}
+								}
+							},
+							5000
+						);
+					}
+
+					function wireless_onsubmit() {
+						console.log("mode:" + document.getElementById("mode").value);
+						if (document.getElementById("mode").value == "AP") {
+							if (document.getElementById("staname").value == "" ||
+								document.getElementById("encrytype").value == "" ||
+								document.getElementById("password").value == "" ||
+								document.getElementById("type").value == "" ||
+								document.getElementById("chennel").value == "" ||
+								document.getElementById("freq").value == "") {
+
+								if (document.getElementById("staname").value == "" ||
+									document.getElementById("staname").value.length < 6 ||
+									document.getElementById("staname").value.length > 32)
+									check_err_show($('#staname'));
+								if (document.getElementById("encrytype").value != "NONE") {
+									if (document.getElementById("password").value == "" ||
+										document.getElementById("password").value.length < 6 ||
+										document.getElementById("password").value.length > 32)
+										check_err_show($('#password'));
+								}
+								return false;
+							}
+						}
+						else if (document.getElementById("mode").value == "STA") {
+							if (document.getElementById("staname").value == "") {
+								return false;
+							}
+						}
+						wireless_onaction("SET");
+					}		
+				</script>
+			</form>
+		</fieldset>
+
+		<fieldset class="fieldset-margin fieldset-background">
+			<div class="hiden" name="client_table" id="client_table">
+				<table class="table table-condensed">
+					<caption class="tbl-text-align bold">已连接设备</caption>
+					<thead>
+						<tr>
+							<th>设备</th>
+							<th>MAC</th>
+							<th>信号强度</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody name="clienttbl" id="clienttbl">
+						<script type="text/javascript">
+							//var stxhr = new XHR();
+							function clienttbl_tbl() {
+								var cnt_connect = 0;
+								var connecttbl = "";
+								$.get("/goform/clienttbl-tbl", function (data, status) {
+									console.log("clienttbl" + data);
+									var data_json = JSON.parse(data);
+									$.each(data_json, function (index, info) {
+										connecttbl += "<tr>";
+										connecttbl += "<td>" + info.name + "</td>";
+										connecttbl += "<td>" + info.mac + "</td>";
+										//connecttbl += "<td>" + info.signal + "</td>";
+										if (info.signal > 0 && info.signal <= 25)
+											connecttbl += "<td><img src=\"../res/icons/signal-0-25.png\"></td>";
+										else if (info.signal > 25 && info.signal <= 50)
+											connecttbl += "<td><img src=\"../res/icons/signal-25-50.png\"></td>";
+										else if (info.signal > 50 && info.signal <= 75)
+											connecttbl += "<td><img src=\"../res/icons/signal-50-75.png\"></td>";
+										else if (info.signal > 75 && info.signal <= 100)
+											connecttbl += "<td><img src=\"../res/icons/signal-75-100.png\"></td>";
+										else if (info.signal == 0)
+											connecttbl += "<td><img src=\"../res/icons/signal-0.png\"></td>";
+										else //if(info.signal > 25 && info.signal <= 50)
+											connecttbl += "<td><img src=\"../res/icons/signal-none.png\"></td>";
+
+										connecttbl += "<td>\
+			      							<button type=\"button\" class=\"btn btn-danger\" name=\"ap_disable\" \
+												  id=\"ap_disable\" onclick=\"client_disconnect(this)\">\
+												  <span class=\"glyphicon glyphicon-ban-circle\" \
+														style=\"margin-right:10px;\"></span>禁止</button>\
+                							</td>";
+										connecttbl += "</tr>";
+										cnt_connect++;
+									});
+									$("#clienttbl").html(connecttbl);
+									if (cnt_connect > 0)
+										document.getElementById("client_table").setAttribute("class", "show");
+									else
+										document.getElementById("client_table").setAttribute("class", "hiden");
+								});
+							}
+							if (document.getElementById("mode").value == "AP")
+								clienttbl_tbl();
+						</script>
+					</tbody>
+				</table>
+				<div id="disable_waiting" class="alert alert-success hiden">
+					<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+							style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+				</div>
+				<div id="disable_error" class="alert alert-warning hiden">
+					<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+				</div>
+				<script type="text/javascript">
+					//禁止设备连接
+					function client_disconnect(obj) {
+						var argv = "mac=";
+						var stxhr = new XHR();
+						var mac = $(obj).parent().parent().prevAll()[1].innerText;
+
+						console.log(mac);
+						argv = "ACTION=wireless&BTNID=" + obj.id + "&" + argv + mac;
+						$("#disable_waiting").css("display", "block");
+						setTimeout(function () { $("#disable_waiting").css("display", "none") }, 5000);
+						stxhr.post("/goform/button_onclick", argv,
+							function (x) {
+								console.log(x);
+								if (x.responseText == "ERROR") {
+									clearTimeout();
+									$("#disable_error").css("display", "block");
+									setTimeout(function () { $("#disable_error").css("display", "none") }, 3000);
+								}
+								else if (x.responseText == "OK") {
+									clearTimeout();
+									$("#disable_waiting").css("display", "none");
+									clienttbl_tbl();
+								}
+							},
+							3000
+						);
+					}
+				</script>
+			</div>
+		</fieldset>
+		<script type="text/javascript">
+			window.onload = function () {
+				//$('[name="wireless_enable"]').bootstrapSwitch('state', true);
+
+				//if (document.getElementById("mode").value == "AP")
+				wireless_onaction("GET");
+			}
+		</script>
+	</div>
+</body>
+
+</html>

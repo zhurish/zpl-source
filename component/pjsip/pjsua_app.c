@@ -17,6 +17,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
  */
+#include "zebra.h"
+#include "memory.h"
+#include "log.h"
+#include "memory.h"
+#include "str.h"
+#include "linklist.h"
+#include "prefix.h"
+#include "table.h"
+#include "vector.h"
+#include "eloop.h"
+#include "network.h"
+#include "os_util.h"
+#include "os_socket.h"
+
 #include "pjsua_app.h"
 
 #define THIS_FILE	"pjsua_app.c"
@@ -142,7 +156,7 @@ static void call_timeout_callback(pj_timer_heap_t *timer_heap,
     pjsip_generic_string_hdr warn;
     pj_str_t hname = pj_str("Warning");
     pj_str_t hvalue = pj_str("399 pjsua \"Call duration exceeded\"");
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+    __PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
     PJ_UNUSED_ARG(timer_heap);
 
     if (call_id == PJSUA_INVALID_ID) {
@@ -169,121 +183,147 @@ static void call_timeout_callback(pj_timer_heap_t *timer_heap,
  */
 static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
 {
-    pjsua_call_info call_info;
+	pjsua_call_info call_info;
 
-    PJ_UNUSED_ARG(e);
+	PJ_UNUSED_ARG(e);
 
-    pjsua_call_get_info(call_id, &call_info);
+	pjsua_call_get_info(call_id, &call_info);
 
-
-    if (call_info.state == PJSIP_INV_STATE_DISCONNECTED) {
-
-	/* Stop all ringback for this call */
-	ring_stop(call_id);
-
-	/* Cancel duration timer, if any */
-	if (app_config.call_data[call_id].timer.id != PJSUA_INVALID_ID) {
-	    app_call_data *cd = &app_config.call_data[call_id];
-	    pjsip_endpoint *endpt = pjsua_get_pjsip_endpt();
-
-	    cd->timer.id = PJSUA_INVALID_ID;
-	    pjsip_endpt_cancel_timer(endpt, &cd->timer);
-	}
-
-	/* Rewind play file when hangup automatically, 
-	 * since file is not looped
-	 */
-	if (app_config.auto_play_hangup)
-	    pjsua_player_set_pos(app_config.wav_id, 0);
-
-	fprintf(stdout, "Call %d is DISCONNECTED [reason=%d (%.*s)]",
-		  call_id,
-		  call_info.last_status,
-		  (int)call_info.last_status_text.slen,
-		  call_info.last_status_text.ptr);
-
-	PJ_LOG(3,(THIS_FILE, "Call %d is DISCONNECTED [reason=%d (%.*s)]", 
-		  call_id,
-		  call_info.last_status,
-		  (int)call_info.last_status_text.slen,
-		  call_info.last_status_text.ptr));
-
-	if (call_id == app_config.current_call) {
-	    find_next_call();
-	}
-
-	/* Dump media state upon disconnected */
-	if (1) {
-	    PJ_LOG(5,(THIS_FILE, 
-		      "Call %d disconnected, dumping media stats..", 
-		      call_id));
-	    log_call_dump(call_id);
-	}
-
-    } else {
-
-	if (app_config.duration != PJSUA_APP_NO_LIMIT_DURATION && 
-	    call_info.state == PJSIP_INV_STATE_CONFIRMED) 
+	if(!app_incoming_call() && (call_info.state != PJSIP_INV_STATE_DISCONNECTED))
 	{
-	    /* Schedule timer to hangup call after the specified duration */
-	    app_call_data *cd = &app_config.call_data[call_id];
-	    pjsip_endpoint *endpt = pjsua_get_pjsip_endpt();
-	    pj_time_val delay;
-
-	    cd->timer.id = call_id;
-	    delay.sec = app_config.duration;
-	    delay.msec = 0;
-	    pjsip_endpt_schedule_timer(endpt, &cd->timer, &delay);
+		app_config.call_cnt++;
 	}
+	if (call_info.state == PJSIP_INV_STATE_DISCONNECTED) {
 
-	if (call_info.state == PJSIP_INV_STATE_EARLY) {
-	    int code;
-	    pj_str_t reason;
-	    pjsip_msg *msg;
+		/* Stop all ringback for this call */
+		ring_stop(call_id);
 
-	    /* This can only occur because of TX or RX message */
-	    pj_assert(e->type == PJSIP_EVENT_TSX_STATE);
+		/* Cancel duration timer, if any */
+		if (app_config.call_data[call_id].timer.id != PJSUA_INVALID_ID) {
+			app_call_data *cd = &app_config.call_data[call_id];
+			pjsip_endpoint *endpt = pjsua_get_pjsip_endpt();
 
-	    if (e->body.tsx_state.type == PJSIP_EVENT_RX_MSG) {
-		msg = e->body.tsx_state.src.rdata->msg_info.msg;
-	    } else {
-		msg = e->body.tsx_state.src.tdata->msg;
-	    }
+			cd->timer.id = PJSUA_INVALID_ID;
+			pjsip_endpt_cancel_timer(endpt, &cd->timer);
+		}
 
-	    code = msg->line.status.code;
-	    reason = msg->line.status.reason;
+		/* Rewind play file when hangup automatically,
+		 * since file is not looped
+		 */
+		if (app_config.auto_play_hangup)
+			pjsua_player_set_pos(app_config.wav_id, 0);
 
-	    /* Start ringback for 180 for UAC unless there's SDP in 180 */
-	    if (call_info.role==PJSIP_ROLE_UAC && code==180 && 
-		msg->body == NULL && 
-		call_info.media_status==PJSUA_CALL_MEDIA_NONE) 
-	    {
-		ringback_start(call_id);
-	    }
+		/*	__PL_PJSIP_DEBUG( "Call %d is DISCONNECTED [reason=%d (%.*s)]\r\n",
+		 call_id,
+		 call_info.last_status,
+		 (int)call_info.last_status_text.slen,
+		 call_info.last_status_text.ptr);*/
+		//__PL_PJSIP_DEBUG("===========%s=======%s(DISCONNECTED)\r\n", THIS_FILE,
+		//		__func__);
 
-	    PJ_LOG(3,(THIS_FILE, "Call %d state changed to %.*s (%d %.*s)", 
-		      call_id, (int)call_info.state_text.slen, 
-                      call_info.state_text.ptr, code, 
-                      (int)reason.slen, reason.ptr));
+
+		pjsip_app_call_state_callback(&app_config.cbtbl, call_id, NULL,
+				call_info.state);
+
+		PJ_LOG(3,
+				(THIS_FILE, "Call %d is DISCONNECTED [reason=%d (%.*s)]", call_id, call_info.last_status, (int)call_info.last_status_text.slen, call_info.last_status_text.ptr));
+
+		if (call_id == app_config.current_call) {
+			find_next_call();
+		}
+
+		app_config.incomeing = PJ_FALSE;
+		/* Dump media state upon disconnected */
+		if (1) {
+			PJ_LOG(5,
+					(THIS_FILE, "Call %d disconnected, dumping media stats..", call_id));
+			log_call_dump(call_id);
+		}
+
 	} else {
-	    PJ_LOG(3,(THIS_FILE, "Call %d state changed to %.*s", 
-		      call_id,
-		      (int)call_info.state_text.slen,
-		      call_info.state_text.ptr));
-	}
 
-	if (app_config.current_call==PJSUA_INVALID_ID)
-	    app_config.current_call = call_id;
-    }
-	pjsip_app_call_state_callback(&app_config.cbtbl, call_id, NULL, call_info.state);
-	fprintf(stdout, "===========%s=======%s(call_id=%d state=%d current_call=%d)\r\n",THIS_FILE, __func__,
-			call_id, call_info.state, app_config.current_call);
+		if (app_config.duration != PJSUA_APP_NO_LIMIT_DURATION
+				&& call_info.state == PJSIP_INV_STATE_CONFIRMED) {
+			/* Schedule timer to hangup call after the specified duration */
+			app_call_data *cd = &app_config.call_data[call_id];
+			pjsip_endpoint *endpt = pjsua_get_pjsip_endpt();
+			pj_time_val delay;
+			//__PL_PJSIP_DEBUG( "===========%s=======%s(CONFIRMED schedule_timer)\r\n", THIS_FILE, __func__);
+			cd->timer.id = call_id;
+			delay.sec = app_config.duration;
+			delay.msec = 0;
+			pjsip_endpt_schedule_timer(endpt, &cd->timer, &delay);
+		}
+
+		if (call_info.state == PJSIP_INV_STATE_EARLY) {
+			int code;
+			pj_str_t reason;
+			pjsip_msg *msg;
+			//__PL_PJSIP_DEBUG( "===========%s=======%s(EARLY)\r\n", THIS_FILE, __func__);
+			/* This can only occur because of TX or RX message */
+			pj_assert(e->type == PJSIP_EVENT_TSX_STATE);
+
+			if (e->body.tsx_state.type == PJSIP_EVENT_RX_MSG) {
+				msg = e->body.tsx_state.src.rdata->msg_info.msg;
+			} else {
+				msg = e->body.tsx_state.src.tdata->msg;
+			}
+
+			code = msg->line.status.code;
+			reason = msg->line.status.reason;
+
+			/* Start ringback for 180 for UAC unless there's SDP in 180 */
+			if (call_info.role == PJSIP_ROLE_UAC && code == 180
+					&& msg->body == NULL
+					&& call_info.media_status == PJSUA_CALL_MEDIA_NONE) {
+				ringback_start(call_id);
+				//__PL_PJSIP_DEBUG( "===========%s=======%s(UAC ringback_start)\r\n", THIS_FILE, __func__);
+			}
+			//__PL_PJSIP_DEBUG( "Call %d state changed to %.*s (%d %.*s)",
+			//		call_id, (int)call_info.state_text.slen,
+			//		call_info.state_text.ptr, code, (int)reason.slen, reason.ptr);
+			PJ_LOG(3,
+					(THIS_FILE, "Call %d state changed to %.*s (%d %.*s)", call_id, (int)call_info.state_text.slen, call_info.state_text.ptr, code, (int)reason.slen, reason.ptr));
+		} else {
+			//__PL_PJSIP_DEBUG( "Call %d state changed to %.*s", call_id, (int)call_info.state_text.slen, call_info.state_text.ptr);
+			PJ_LOG(3,
+					(THIS_FILE, "Call %d state changed to %.*s", call_id, (int)call_info.state_text.slen, call_info.state_text.ptr));
+		}
+
+		if (app_config.current_call == PJSUA_INVALID_ID)
+			app_config.current_call = call_id;
+
+		pjsip_app_call_state_callback(&app_config.cbtbl, call_id, NULL,
+				call_info.state);
+	}
+	/*	__PL_PJSIP_DEBUG( "===========%s=======%s(call_id=%d state=%d current_call=%d)\r\n",THIS_FILE, __func__,
+	 call_id, call_info.state, app_config.current_call);*/
 
 }
 
 /**
  * Handler when there is incoming call.
  */
+/* Answer call */
+static pj_status_t delay_auto_answer_call(void *p)
+{
+    if ( (app_config.auto_answer > 0) &&
+    		(app_config.incomeing == PJ_TRUE) &&
+			(app_config.current_call != PJSUA_INVALID_ID) ) {
+	//pjsua_call_setting opt;
+
+	//pjsua_call_setting_default(&opt);
+	//opt.aud_cnt = app_config.aud_cnt;
+	//opt.vid_cnt = app_config.vid.vid_cnt;
+    //__PL_PJSIP_DEBUG( "===========%s=======%s auto_answer\r\n",THIS_FILE, __func__);
+    pjsua_call_answer(app_config.current_call, app_config.auto_answer, NULL, NULL);
+	//pjsua_call_answer2(call_id, &app_config.call_opt, app_config.auto_answer, NULL, NULL);
+
+	pjsip_app_call_incoming_callback(&app_config.cbtbl, app_config.current_call, NULL, 1);
+    }
+    return PJ_SUCCESS;
+}
+
 static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 			     pjsip_rx_data *rdata)
 {
@@ -291,31 +331,78 @@ static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 
     PJ_UNUSED_ARG(acc_id);
     PJ_UNUSED_ARG(rdata);
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+    //__PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);
     pjsua_call_get_info(call_id, &call_info);
 
     if (app_config.current_call==PJSUA_INVALID_ID)
+    {
 	app_config.current_call = call_id;
+	app_config.incomeing = PJ_TRUE;
+    }
 
 #ifdef USE_GUI
     if (!showNotification(call_id))
 	return;
 #endif
 
+
+/*	__PL_PJSIP_DEBUG(
+		  "Incoming call for account %d!\r\n"
+		  "Media count: %d audio & %d video\r\n"
+		  "From: %.*s\r\n"
+		  "To: %.*s\r\n"
+		  "Press %s to answer or %s to reject call\r\n",
+		  acc_id,
+		  call_info.rem_aud_cnt,
+		  call_info.rem_vid_cnt,
+		  (int)call_info.remote_info.slen,
+		  call_info.remote_info.ptr,
+		  (int)call_info.local_info.slen,
+		  call_info.local_info.ptr,
+		  (app_config.use_cli?"ca a":"a"),
+		  (app_config.use_cli?"g":"h"));*/
+
+/*	Incoming call for account 0!
+	Media count: 1 audio & 0 video
+	From: "1111" <sip:1111@AIO100>
+	To: <sip:1005@192.168.3.13;ob>
+	Press a to answer or h to reject call
+	*/
+	if(app_config.call_cnt == 0)
+	{
+		app_config.incomeing = PJ_FALSE;
+	    pjsua_call_answer(app_config.current_call, PJSIP_SC_NOT_ACCEPTABLE, NULL, NULL);
+	    return;
+	}
+	//usleep(100);
+	//__PL_PJSIP_DEBUG( "===========%s=======%s start ring_start\r\n",THIS_FILE, __func__);
     /* Start ringback */
     ring_start(call_id);
-    
+    //__PL_PJSIP_DEBUG( "===========%s=======%s end ring_start(auto_answer=%d)\r\n",THIS_FILE, __func__, app_config.auto_answer);
+    //usleep(100);
     if (app_config.auto_answer > 0) {
-	pjsua_call_setting opt;
-
-	pjsua_call_setting_default(&opt);
-	opt.aud_cnt = app_config.aud_cnt;
-	opt.vid_cnt = app_config.vid.vid_cnt;
-
-	pjsua_call_answer2(call_id, &opt, app_config.auto_answer, NULL,
-			   NULL);
+    	if(pjsip_app_call_incoming_callback(&app_config.cbtbl, call_id, &call_info, 0) == ERROR)
+    	{
+    	    pjsua_call_answer(app_config.current_call, PJSIP_SC_NOT_ACCEPTABLE, NULL, NULL);
+    	    return;
+    	}
+	//pjsua_call_setting opt;
+    //app_config.incomeing_call = call_id + 1;
+    os_time_create_once(delay_auto_answer_call, NULL, 10000);
+	//pjsua_call_setting_default(&opt);
+	//opt.aud_cnt = app_config.aud_cnt;
+	//opt.vid_cnt = app_config.vid.vid_cnt;
+    //pjsua_call_answer(call_id, app_config.auto_answer, NULL, NULL);
+	//pjsua_call_answer2(call_id, &app_config.call_opt, app_config.auto_answer, NULL, NULL);
     }
-    
+    else
+    {
+    	if(pjsip_app_call_incoming_callback(&app_config.cbtbl, call_id, &call_info, 0) == ERROR)
+    	{
+    	    pjsua_call_answer(app_config.current_call, PJSIP_SC_NOT_ACCEPTABLE, NULL, NULL);
+    	    return;
+    	}
+    }
     if (app_config.auto_answer < 200) {
 	char notif_st[80] = {0};
 
@@ -329,13 +416,13 @@ static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 	}
 #endif
 
-	PJ_LOG(3,(THIS_FILE,
+	__PL_PJSIP_DEBUG(
 		  "Incoming call for account %d!\n"
 		  "Media count: %d audio & %d video\n"
 		  "%s"
 		  "From: %.*s\n"
 		  "To: %.*s\n"
-		  "Press %s to answer or %s to reject call",
+		  "Press %s to answer or %s to reject call\r\n",
 		  acc_id,
 		  call_info.rem_aud_cnt,
 		  call_info.rem_vid_cnt,
@@ -345,7 +432,7 @@ static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 		  (int)call_info.local_info.slen,
 		  call_info.local_info.ptr,
 		  (app_config.use_cli?"ca a":"a"),
-		  (app_config.use_cli?"g":"h")));
+		  (app_config.use_cli?"g":"h"));
     }
 }
 
@@ -363,7 +450,7 @@ static void on_call_generic_media_state(pjsua_call_info *ci, unsigned mi,
 
     PJ_UNUSED_ARG(has_error);
 
-	fprintf(stdout, "===========%s=======%s(state=%s)\r\n", THIS_FILE, __func__, status_name[ci->media[mi].status]);
+    //__PL_PJSIP_DEBUG( "===========%s=======%s(state=%s)\r\n", THIS_FILE, __func__, status_name[ci->media[mi].status]);
 
     pj_assert(ci->media[mi].status <= PJ_ARRAY_SIZE(status_name));
     pj_assert(PJSUA_CALL_MEDIA_ERROR == 4);
@@ -382,7 +469,7 @@ static void on_call_audio_state(pjsua_call_info *ci, unsigned mi,
     /* Stop ringback */
     ring_stop(ci->id);
 
-	fprintf(stdout, "===========%s=======%s(state=%d)\r\n", THIS_FILE, __func__, ci->media[mi].status);
+    //__PL_PJSIP_DEBUG( "===========%s=======%s(state=%d)\r\n", THIS_FILE, __func__, ci->media[mi].status);
 
     /* Connect ports appropriately when media status is ACTIVE or REMOTE HOLD,
      * otherwise we should NOT connect the ports.
@@ -394,17 +481,22 @@ static void on_call_audio_state(pjsua_call_info *ci, unsigned mi,
 	pj_bool_t disconnect_mic = PJ_FALSE;
 	pjsua_conf_port_id call_conf_slot;
 
+    //__PL_PJSIP_DEBUG( "===========%s=======%s(MEDIA_ACTIVE REMOTE_HOLD)\r\n", THIS_FILE, __func__);
+
 	call_conf_slot = ci->media[mi].stream.aud.conf_slot;
 
 	/* Loopback sound, if desired */
 	if (app_config.auto_loop) {
 	    pjsua_conf_connect(call_conf_slot, call_conf_slot);
 	    connect_sound = PJ_FALSE;
+	    //__PL_PJSIP_DEBUG( "===========%s=======%s(auto_loop)\r\n", THIS_FILE, __func__);
+
 	}
 
 	/* Automatically record conversation, if desired */
 	if (app_config.auto_rec && app_config.rec_port != PJSUA_INVALID_ID) {
 	    pjsua_conf_connect(call_conf_slot, app_config.rec_port);
+	    //__PL_PJSIP_DEBUG( "===========%s=======%s(auto_rec)\r\n", THIS_FILE, __func__);
 	}
 
 	/* Stream a file, if desired */
@@ -413,6 +505,7 @@ static void on_call_audio_state(pjsua_call_info *ci, unsigned mi,
 	{
 	    pjsua_conf_connect(app_config.wav_port, call_conf_slot);
 	    connect_sound = PJ_FALSE;
+	    //__PL_PJSIP_DEBUG( "===========%s=======%s(auto_play)\r\n", THIS_FILE, __func__);
 	}
 
 	/* Stream AVI, if desired */
@@ -423,6 +516,7 @@ static void on_call_audio_state(pjsua_call_info *ci, unsigned mi,
 	    pjsua_conf_connect(app_config.avi[app_config.avi_def_idx].slot,
 			       call_conf_slot);
 	    disconnect_mic = PJ_TRUE;
+	    //__PL_PJSIP_DEBUG( "===========%s=======%s(avi_auto_play)\r\n", THIS_FILE, __func__);
 	}
 
 	/* Put call in conference with other calls, if desired */
@@ -430,6 +524,7 @@ static void on_call_audio_state(pjsua_call_info *ci, unsigned mi,
 	    pjsua_call_id call_ids[PJSUA_MAX_CALLS];
 	    unsigned call_cnt=PJ_ARRAY_SIZE(call_ids);
 	    unsigned i;
+	    //__PL_PJSIP_DEBUG( "===========%s=======%s(auto_conf=%d)\r\n", THIS_FILE, __func__, app_config.auto_conf);
 
 	    /* Get all calls, and establish media connection between
 	     * this call and other calls.
@@ -462,12 +557,16 @@ static void on_call_audio_state(pjsua_call_info *ci, unsigned mi,
 	    connect_sound = PJ_TRUE;
 	}
 
+    //__PL_PJSIP_DEBUG( "===========%s=======%s(connect_sound=%d disconnect_mic=%d)\r\n", THIS_FILE,
+    //		__func__, connect_sound, disconnect_mic);
+
+
 	/* Otherwise connect to sound device */
 	if (connect_sound) {
 	    pjsua_conf_connect(call_conf_slot, 0);
 	    if (!disconnect_mic)
 		pjsua_conf_connect(0, call_conf_slot);
-
+	    //__PL_PJSIP_DEBUG( "===========%s=======%s(connect_sound)\r\n", THIS_FILE, __func__);
 	    pjsip_app_call_state_callback(&app_config.cbtbl, 0, NULL, PJ_TRUE);
 
 	    /* Automatically record conversation, if desired */
@@ -486,7 +585,7 @@ static void on_call_video_state(pjsua_call_info *ci, unsigned mi,
 {
     if (ci->media_status != PJSUA_CALL_MEDIA_ACTIVE)
 	return;
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+    //__PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
     arrange_window(ci->media[mi].stream.vid.win_in);
 
     PJ_UNUSED_ARG(has_error);
@@ -504,7 +603,7 @@ static void on_call_media_state(pjsua_call_id call_id)
     pj_bool_t has_error = PJ_FALSE;
 
     pjsua_call_get_info(call_id, &call_info);
-	fprintf(stdout, "===========%s=======%s(call_id=%d state=%d)\r\n", THIS_FILE, __func__, call_id, call_info.state);
+    //__PL_PJSIP_DEBUG( "===========%s=======%s(call_id=%d state=%d)\r\n", THIS_FILE, __func__, call_id, call_info.state);
 
     for (mi=0; mi<call_info.media_cnt; ++mi) {
 	on_call_generic_media_state(&call_info, mi, &has_error);
@@ -584,7 +683,7 @@ static pjsip_redirect_op call_on_redirected(pjsua_call_id call_id,
 					    const pjsip_event *e)
 {
     PJ_UNUSED_ARG(e);
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+    //__PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
     if (app_config.redir_op == PJSIP_REDIRECT_PENDING) {
 	char uristr[PJSIP_MAX_URL_SIZE];
 	int len;
@@ -610,7 +709,7 @@ static pjsip_redirect_op call_on_redirected(pjsua_call_id call_id,
 static void on_reg_state(pjsua_acc_id acc_id)
 {
     PJ_UNUSED_ARG(acc_id);
-	PJ_LOG(5,(THIS_FILE, "===================Reg state changed (on_reg_state)%d", acc_id));
+	//PJ_LOG(5,(THIS_FILE, "===================Reg state changed (on_reg_state)%d", acc_id));
     // Log already written.
     //pjsua_acc_set_online_status(acc_id, info->renew ? PJ_TRUE:PJ_FALSE);
     pjsip_app_register_state_callback(&app_config.cbtbl, acc_id, NULL, 0);
@@ -618,7 +717,7 @@ static void on_reg_state(pjsua_acc_id acc_id)
 static void on_reg_state2(pjsua_acc_id acc_id, pjsua_reg_info *info)
 {
     PJ_UNUSED_ARG(acc_id);
-	printf("===================Reg state changed (on_reg_state2)%d\r\n", acc_id);
+	//printf("===================Reg state changed (on_reg_state2)%d\r\n", acc_id);
     //pjsua_acc_set_online_status(acc_id, info->renew ? PJ_TRUE:PJ_FALSE);
     pjsip_app_register_state_callback(&app_config.cbtbl, acc_id, NULL, info->renew ? PJ_TRUE:PJ_FALSE);
     // Log already written.
@@ -637,7 +736,7 @@ static void on_incoming_subscribe(pjsua_acc_id acc_id,
 				  pjsua_msg_data *msg_data_)
 {
     /* Just accept the request (the default behavior) */
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+	__PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
     PJ_UNUSED_ARG(acc_id);
     PJ_UNUSED_ARG(srv_pres);
     PJ_UNUSED_ARG(buddy_id);
@@ -656,7 +755,7 @@ static void on_buddy_state(pjsua_buddy_id buddy_id)
 {
     pjsua_buddy_info info;
     pjsua_buddy_get_info(buddy_id, &info);
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+    __PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
     PJ_LOG(3,(THIS_FILE, "%.*s status is %.*s, subscription state is %s "
 			 "(last termination reason code=%d %.*s)",
 	      (int)info.uri.slen,
@@ -680,7 +779,7 @@ static void on_buddy_evsub_state(pjsua_buddy_id buddy_id,
     char event_info[80];
 
     PJ_UNUSED_ARG(sub);
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+    __PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
     event_info[0] = '\0';
 
     if (event->type == PJSIP_EVENT_TSX_STATE &&
@@ -713,7 +812,7 @@ static void on_pager(pjsua_call_id call_id, const pj_str_t *from,
     PJ_UNUSED_ARG(to);
     PJ_UNUSED_ARG(contact);
     PJ_UNUSED_ARG(mime_type);
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+	__PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
     PJ_LOG(3,(THIS_FILE,"MESSAGE from %.*s: %.*s (%.*s)",
 	      (int)from->slen, from->ptr,
 	      (int)text->slen, text->ptr,
@@ -731,7 +830,7 @@ static void on_typing(pjsua_call_id call_id, const pj_str_t *from,
     PJ_UNUSED_ARG(call_id);
     PJ_UNUSED_ARG(to);
     PJ_UNUSED_ARG(contact);
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+	__PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
     PJ_LOG(3,(THIS_FILE, "IM indication: %.*s %s",
 	      (int)from->slen, from->ptr,
 	      (is_typing?"is typing..":"has stopped typing")));
@@ -747,7 +846,7 @@ static void on_call_transfer_status(pjsua_call_id call_id,
 				    pj_bool_t final,
 				    pj_bool_t *p_cont)
 {
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+	__PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
     PJ_LOG(3,(THIS_FILE, "Call %d: transfer status=%d (%.*s) %s",
 	      call_id, status_code,
 	      (int)status_text->slen, status_text->ptr,
@@ -770,7 +869,7 @@ static void on_call_replaced(pjsua_call_id old_call_id,
 			     pjsua_call_id new_call_id)
 {
     pjsua_call_info old_ci, new_ci;
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+	__PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
     pjsua_call_get_info(old_call_id, &old_ci);
     pjsua_call_get_info(new_call_id, &new_ci);
 
@@ -788,7 +887,7 @@ static void on_call_replaced(pjsua_call_id old_call_id,
  */
 static void on_nat_detect(const pj_stun_nat_detect_result *res)
 {
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+	__PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
     if (res->status != PJ_SUCCESS) {
 	pjsua_perror(THIS_FILE, "NAT detection failed", res->status);
     } else {
@@ -805,7 +904,7 @@ static void on_mwi_info(pjsua_acc_id acc_id, pjsua_mwi_info *mwi_info)
     pj_str_t body;
     
     PJ_LOG(3,(THIS_FILE, "Received MWI for acc %d:", acc_id));
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+	__PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
     if (mwi_info->rdata->msg_info.ctype) {
 	const pjsip_ctype_hdr *ctype = mwi_info->rdata->msg_info.ctype;
 
@@ -836,7 +935,7 @@ static void on_transport_state(pjsip_transport *tp,
 			       const pjsip_transport_state_info *info)
 {
     char host_port[128];
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+	__PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
     pj_addr_str_print(&tp->remote_name.host, 
 		      tp->remote_name.port, host_port, sizeof(host_port), 1);
     switch (state) {
@@ -915,7 +1014,7 @@ static void on_transport_state(pjsip_transport *tp,
 static void on_ice_transport_error(int index, pj_ice_strans_op op,
 				   pj_status_t status, void *param)
 {
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+	__PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
     PJ_UNUSED_ARG(op);
     PJ_UNUSED_ARG(param);
     PJ_PERROR(1,(THIS_FILE, status,
@@ -927,8 +1026,8 @@ static void on_ice_transport_error(int index, pj_ice_strans_op op,
  */
 static pj_status_t on_snd_dev_operation(int operation)
 {
-    int cap_dev, play_dev;
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+    int cap_dev = 0, play_dev = 0;
+	//__PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
     pjsua_get_snd_dev(&cap_dev, &play_dev);
     PJ_LOG(3,(THIS_FILE, "Turning sound device %d %d %s", cap_dev, play_dev,
     	      (operation? "ON":"OFF")));
@@ -941,7 +1040,7 @@ static void on_call_media_event(pjsua_call_id call_id,
                                 pjmedia_event *event)
 {
     char event_name[5];
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+	//__PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
     PJ_LOG(5,(THIS_FILE, "Event %s",
 	      pjmedia_fourcc_name(event->type, event_name)));
 
@@ -989,7 +1088,7 @@ static pjmedia_transport* on_create_media_transport(pjsua_call_id call_id,
 {
     pjmedia_transport *adapter;
     pj_status_t status;
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+	//__PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
     /* Create the adapter */
     status = pjmedia_tp_adapter_create(pjsua_get_pjmedia_endpt(),
                                        NULL, base_tp,
@@ -1014,7 +1113,7 @@ static pj_status_t on_playfile_done(pjmedia_port *port, void *usr_data)
 
     PJ_UNUSED_ARG(port);
     PJ_UNUSED_ARG(usr_data);
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+	__PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
     /* Just rewind WAV when it is played outside of call */
     if (pjsua_call_get_count() == 0) {
 	pjsua_player_set_pos(app_config.wav_id, 0);
@@ -1041,7 +1140,7 @@ static void hangup_timeout_callback(pj_timer_heap_t *timer_heap,
 {
     PJ_UNUSED_ARG(timer_heap);
     PJ_UNUSED_ARG(entry);
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+	__PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
     app_config.auto_hangup_timer.id = 0;
     pjsua_call_hangup_all();
 }
@@ -1057,7 +1156,7 @@ static void simple_registrar(pjsip_rx_data *rdata)
     unsigned cnt = 0;
     pjsip_generic_string_hdr *srv;
     pj_status_t status;
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+	__PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
     status = pjsip_endpt_create_response(pjsua_get_pjsip_endpt(),
 					 rdata, 200, NULL, &tdata);
     if (status != PJ_SUCCESS)
@@ -1110,7 +1209,7 @@ static pj_bool_t default_mod_on_rx_request(pjsip_rx_data *rdata)
     pjsip_tx_data *tdata;
     pjsip_status_code status_code;
     pj_status_t status;
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+	__PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
     /* Don't respond to ACK! */
     if (pjsip_method_cmp(&rdata->msg_info.msg->line.req.method,
 			 &pjsip_ack_method) == 0)
@@ -1246,7 +1345,7 @@ int log_refresh_proc(void *arg)
     /* Set thread to lowest priority so that it doesn't clobber
      * stdout output
      */
-	fprintf(stdout, "===========%s=======%s\r\n",THIS_FILE, __func__);;
+	__PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
     pj_thread_set_prio(pj_thread_this(), 
 		       pj_thread_get_prio_min(pj_thread_this()));
 
@@ -1873,9 +1972,21 @@ pj_status_t pjsua_app_init(const pjsua_app_cfg_t *cfg)
     return status;
 }
 
+
 int pjsua_app_restart(void)
 {
+	//cli_destroy();
+	//pj_cli_destroy(pjsua_cli_config.cli);
 	app_config.app_cli_running = FALSE;
+
+/*	if (app_config.cli_cfg.cli_fe & CLI_FE_CONSOLE)
+		pj_cli_quit(pjsua_cli_config.cli, pjsua_cli_config.cli_cons_sess, PJ_TRUE);
+	else if (app_config.cli_cfg.cli_fe & CLI_FE_SOCKET)
+		pj_cli_quit(pjsua_cli_config.cli, pjsua_cli_config.cli_socket_sess, PJ_TRUE);
+	else if (app_config.cli_cfg.cli_fe & CLI_FE_TELNET)
+		pj_cli_quit(pjsua_cli_config.cli, NULL, PJ_TRUE);
+     Invoke CLI stop callback (defined in pjsua_app.c)
+    cli_on_stopped(PJ_TRUE, 0, NULL);*/
 	return 0;
 }
 
@@ -1919,9 +2030,15 @@ pj_status_t pjsua_app_run(pj_bool_t wait_telnet_cli)
     app_config.app_running = PJ_TRUE;
 
     //os_time_create_once(pl_app_restart, &app_config, 30000);
-
+#ifdef PL_PJSIP_CLI_SHELL
     if (app_config.use_cli)
 	cli_main(wait_telnet_cli);	
+#else
+	while (app_config.app_cli_running)
+	{
+		pj_thread_sleep(500);
+	}
+#endif
     //else
 	//legacy_main();
 
@@ -1929,11 +2046,13 @@ pj_status_t pjsua_app_run(pj_bool_t wait_telnet_cli)
     PJ_LOG(5, ("main", "--------------pjsua_app_run exit-----------"));
 on_return:
     if (log_refresh_thread) {
+    {
     	app_config.log_refresh_quit = PJ_TRUE;
-    printf("======================================================0\r\n");
-	pj_thread_join(log_refresh_thread);
-	printf("======================================================1\r\n");
-	pj_thread_destroy(log_refresh_thread);
+    	//__PL_PJSIP_DEBUG( "======================================================0\r\n");
+		pj_thread_join(log_refresh_thread);
+		//__PL_PJSIP_DEBUG( "======================================================1\r\n");
+		pj_thread_destroy(log_refresh_thread);
+    }
 	app_config.log_refresh_quit = PJ_FALSE;
     }
     return status;
@@ -2008,7 +2127,7 @@ static pj_status_t app_destroy()
     }
 
     /* Reset config */
-    pj_bzero(&app_config, sizeof(app_config));
+    //pj_bzero(&app_config, sizeof(app_config));
 
     if (use_cli) {    
 	app_config.use_cli = use_cli;

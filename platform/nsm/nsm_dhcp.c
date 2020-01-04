@@ -161,7 +161,7 @@ int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type, c
 				ifp->dhcp = FALSE;
 			}
 #endif
-#ifdef PL_DHCPC_MODULE
+#ifdef PL_DHCPD_MODULE
 			if(nsm_dhcp->type == DHCP_NONE && type == DHCP_SERVER)
 			{
 				nsm_dhcps_t * pool = nsm_dhcps_lookup_api(name);
@@ -187,7 +187,7 @@ int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type, c
 					return ERROR;
 			}
 #endif
-#ifdef PL_DHCPC_MODULE
+#ifdef PL_DHCPR_MODULE
 			if(nsm_dhcp->type == DHCP_NONE && type == DHCP_RELAY)
 			{
 				//dhcpc_interface_enable_api(ifp,  TRUE);

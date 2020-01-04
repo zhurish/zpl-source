@@ -46,10 +46,10 @@ PUBLIC void websRouteRequest(Webs *wp)
     bool        safeMethod;
     int         i;
 
-    assert(wp);
-    assert(wp->path);
-    assert(wp->method);
-    assert(wp->protocol);
+    web_assert(wp);
+    web_assert(wp->path);
+    web_assert(wp->method);
+    web_assert(wp->protocol);
 
     safeMethod = smatch(wp->method, "POST") || smatch(wp->method, "GET") || smatch(wp->method, "HEAD");
     plen = slen(wp->path);
@@ -75,7 +75,7 @@ PUBLIC void websRouteRequest(Webs *wp)
 
     for (; i < routeCount; i++) {
         route = routes[i];
-        assert(route->prefix && route->prefixLen > 0);
+        web_assert(route->prefix && route->prefixLen > 0);
 
         if (plen < route->prefixLen) continue;
         len = min(route->prefixLen, plen);
@@ -132,7 +132,7 @@ PUBLIC void websRouteRequest(Webs *wp)
         error("Route loop for %s", wp->url);
     }
     websError(wp, HTTP_CODE_NOT_FOUND, "Cannot find suitable route for request.");
-    assert(wp->route == 0);
+    web_assert(wp->route == 0);
 }
 
 
@@ -140,11 +140,11 @@ PUBLIC bool websRunRequest(Webs *wp)
 {
     WebsRoute   *route;
 
-    assert(wp);
-    assert(wp->path);
-    assert(wp->method);
-    assert(wp->protocol);
-    assert(wp->route);
+    web_assert(wp);
+    web_assert(wp->path);
+    web_assert(wp->method);
+    web_assert(wp->protocol);
+    web_assert(wp->route);
 
     if ((route = wp->route) == 0) {
         websError(wp, HTTP_CODE_INTERNAL_SERVER_ERROR, "Configuration error - no route for request");
@@ -162,6 +162,8 @@ PUBLIC bool websRunRequest(Webs *wp)
         if (wp->query && *wp->query) {
             websSetQueryVars(wp);
         }
+        if (wp->flags & WEBS_JSON)
+            websSetJsonVars(wp);
         if (wp->flags & WEBS_FORM) {
             websSetFormVars(wp);
         }
@@ -186,8 +188,8 @@ PUBLIC bool websRunRequest(Webs *wp)
 #if ME_GOAHEAD_AUTH
 static bool can(Webs *wp, char *ability)
 {
-    assert(wp);
-    assert(ability && *ability);
+    web_assert(wp);
+    web_assert(ability && *ability);
 
     if (wp->user && hashLookup(wp->user->abilities, ability)) {
         return 1;
@@ -201,8 +203,8 @@ PUBLIC bool websCan(Webs *wp, WebsHash abilities)
     WebsKey     *key;
     char        *ability, *cp, *start, abuf[ME_GOAHEAD_LIMIT_STRING];
 
-    assert(wp);
-    assert(abilities >= 0);
+    web_assert(wp);
+    web_assert(abilities >= 0);
 
     if (!wp->user) {
         if (wp->authType) {
@@ -326,7 +328,7 @@ PUBLIC WebsRoute *websAddRoute(cchar *uri, cchar *handler, int pos)
 PUBLIC int websSetRouteMatch(WebsRoute *route, cchar *dir, cchar *protocol, WebsHash methods, WebsHash extensions,
         WebsHash abilities, WebsHash redirects)
 {
-    assert(route);
+    web_assert(route);
 
     if (dir) {
         route->dir = sclone(dir);
@@ -356,7 +358,7 @@ static int lookupRoute(cchar *uri)
     WebsRoute   *route;
     int         i;
 
-    assert(uri && *uri);
+    web_assert(uri && *uri);
 
     for (i = 0; i < routeCount; i++) {
         route = routes[i];
@@ -370,7 +372,7 @@ static int lookupRoute(cchar *uri)
 
 static void freeRoute(WebsRoute *route)
 {
-    assert(route);
+    web_assert(route);
 
     if (route->abilities >= 0) {
         hashFree(route->abilities);
@@ -396,7 +398,7 @@ PUBLIC int websRemoveRoute(cchar *uri)
 {
     int         i;
 
-    assert(uri && *uri);
+    web_assert(uri && *uri);
 
     if ((i = lookupRoute(uri)) < 0) {
         return -1;
@@ -454,7 +456,7 @@ PUBLIC int websDefineHandler(cchar *name, WebsHandlerProc match, WebsHandlerProc
 {
     WebsHandler     *handler;
 
-    assert(name && *name);
+    web_assert(name && *name);
 
     if ((handler = walloc(sizeof(WebsHandler))) == 0) {
         return -1;
@@ -503,7 +505,7 @@ PUBLIC int websLoad(cchar *path)
     char        *redirectUri, *token;
     int         rc;
 
-    assert(path && *path);
+    web_assert(path && *path);
 
     rc = 0;
     if ((buf = websReadWholeFile(path)) == 0) {
@@ -544,6 +546,7 @@ PUBLIC int websLoad(cchar *path)
                     }
                     if (smatch(redirectUri, "https")) redirectUri = "https://";
                     if (smatch(redirectUri, "http")) redirectUri = "http://";
+                    //printf("================%s==================key:%s(value:%s)\r\n", __func__, status, redirectUri);
                     addOption(&redirects, status, redirectUri);
                 } else if (smatch(key, "protocol")) {
                     protocol = value;
@@ -558,7 +561,11 @@ PUBLIC int websLoad(cchar *path)
                 rc = -1;
                 break;
             }
+
             websSetRouteMatch(route, dir, protocol, methods, extensions, abilities, redirects);
+
+            //printf("================%s==================redirects:%d route->redirects:%d\r\n", __func__, redirects, route->redirects);
+
 #if ME_GOAHEAD_AUTH
             if (auth && websSetRouteAuth(route, auth) < 0) {
                 rc = -1;
@@ -640,8 +647,8 @@ PUBLIC int websUrlHandlerDefine(cchar *prefix, cchar *dir, int arg, WebsLegacyHa
     static int  legacyCount = 0;
     char        name[ME_GOAHEAD_LIMIT_STRING];
 
-    assert(prefix && *prefix);
-    assert(handler);
+    web_assert(prefix && *prefix);
+    web_assert(handler);
 
     fmt(name, sizeof(name), "%s-%d", prefix, legacyCount);
     if (websDefineHandler(name, 0, (WebsHandlerProc) handler, 0, WEBS_LEGACY_HANDLER) < 0) {

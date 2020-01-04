@@ -75,6 +75,8 @@ static int iw_client_db_save(iw_client_t *iw_client)
 	iw_client_db_t *pstNode = NULL;
 	NODE index;
 	assert(iw_client != NULL);
+	if(!iw_client->db_list)
+		return ERROR;
 	if(lstCount(iw_client->db_list)<=0)
 	{
 		return OK;
@@ -184,6 +186,8 @@ static int iw_client_db_cleanup(iw_client_t *iw_client, ifindex_t ifindex, BOOL 
 	iw_client_db_t *pstNode = NULL;
 	NODE index;
 	assert(iw_client != NULL);
+	if(!iw_client->db_list)
+		return ERROR;
 	if(iw_client->db_mutex)
 		os_mutex_lock(iw_client->db_mutex, OS_WAIT_FOREVER);
 	for(pstNode = (iw_client_db_t *)lstFirst(iw_client->db_list);
@@ -211,6 +215,8 @@ static int iw_client_db_add_node(iw_client_t *iw_client, iw_client_db_t *value)
 {
 	assert(iw_client != NULL);
 	assert(value != NULL);
+	if(!iw_client->db_list)
+		return ERROR;
 	iw_client_db_t *node = XMALLOC(MTYPE_WIFI_DB, sizeof(iw_client_db_t));
 	if(node)
 	{
@@ -224,7 +230,7 @@ static int iw_client_db_add_node(iw_client_t *iw_client, iw_client_db_t *value)
 
 static int iw_client_db_del_node(iw_client_t *iw_client, iw_client_db_t *node)
 {
-	if(node)
+	if(node && iw_client->db_list)
 	{
 		lstDelete(iw_client->db_list, (NODE *)node);
 		XFREE(MTYPE_WIFI_DB, node);
@@ -239,6 +245,8 @@ static iw_client_db_t * iw_client_db_lookup_node(iw_client_t *iw_client, char *s
 	NODE index;
 	char SSID[IW_SSID_NAME_MAX];
 	assert(iw_client != NULL);
+	if(!iw_client->db_list)
+		return NULL;
 	memset(SSID, 0, IW_SSID_NAME_MAX);
 	if(ssid)
 		strcpy(SSID, ssid);
@@ -265,6 +273,8 @@ int iw_client_db_set_api(iw_client_t *iw_client, char *ssid, char *pass)
 	iw_client_db_t *client = NULL;
 	if(!iw_client || !ssid)
 		return ERROR;
+	if(!iw_client->db_list)
+		return ERROR;
 	memset(SSID, 0, IW_SSID_NAME_MAX);
 	if(ssid)
 		strcpy(SSID, ssid);
@@ -278,9 +288,19 @@ int iw_client_db_set_api(iw_client_t *iw_client, char *ssid, char *pass)
 		memcpy(value.SSID, SSID, IW_SSID_NAME_MAX);
 		if(pass)
 		{
-			strcpy(value.password, pass);
-			memset(value.encrypt_password, 0, sizeof(value.encrypt_password));
-			md5_encrypt_password(value.password, value.encrypt_password);
+			if(os_memcmp(pass, "*#@", 3) == 0)
+			{
+				memset(value.encrypt_password, 0, sizeof(value.encrypt_password));
+				strcpy(value.encrypt_password, pass);
+				//md5_encrypt_password(value.password, value.encrypt_password);
+			}
+			else
+			{
+				strcpy(value.password, pass);
+				memset(value.encrypt_password, 0, sizeof(value.encrypt_password));
+				md5_encrypt_password(value.password, value.encrypt_password);
+			}
+
 			if(IW_DEBUG(DB))
 			{
 				zlog_debug(ZLOG_WIFI, "add password %s for SSID=%s", value.SSID, value.password);
@@ -305,9 +325,21 @@ int iw_client_db_set_api(iw_client_t *iw_client, char *ssid, char *pass)
 		os_memset(client->password, 0, sizeof(client->password));
 		if(pass)
 		{
-			strcpy(client->password, pass);
+			if(os_memcmp(pass, "*#@", 3) == 0)
+			{
+				memset(client->encrypt_password, 0, sizeof(client->encrypt_password));
+				strcpy(client->encrypt_password, pass);
+				//md5_encrypt_password(value.password, value.encrypt_password);
+			}
+			else
+			{
+				strcpy(client->password, pass);
+				memset(client->encrypt_password, 0, sizeof(client->encrypt_password));
+				md5_encrypt_password(client->password, client->encrypt_password);
+			}
+/*			strcpy(client->password, pass);
 			memset(client->encrypt_password, 0, sizeof(client->encrypt_password));
-			md5_encrypt_password(client->password, client->encrypt_password);
+			md5_encrypt_password(client->password, client->encrypt_password);*/
 			if(IW_DEBUG(DB))
 			{
 				zlog_debug(ZLOG_WIFI, "update password %s for SSID=%s", client->SSID, client->password);
@@ -330,6 +362,8 @@ int iw_client_db_del_api(iw_client_t *iw_client, char *ssid, BOOL pass)
 	char SSID[IW_SSID_NAME_MAX];
 	iw_client_db_t *client = NULL;
 	if(!iw_client || !ssid)
+		return ERROR;
+	if(!iw_client->db_list)
 		return ERROR;
 	memset(SSID, 0, IW_SSID_NAME_MAX);
 	if(ssid)
@@ -379,6 +413,8 @@ iw_client_db_t * iw_client_db_lookup_api(iw_client_t *iw_client, char *ssid)
 	iw_client_db_t *client = NULL;
 	if(!iw_client || !ssid)
 		return NULL;
+	if(!iw_client->db_list)
+		return NULL;
 	memset(SSID, 0, IW_SSID_NAME_MAX);
 	if(ssid)
 		strcpy(SSID, ssid);
@@ -397,6 +433,8 @@ int iw_client_db_callback_api(iw_client_t *iw_client, int (*cb)(iw_client_db_t *
 	iw_client_db_t *pstNode = NULL;
 	NODE index;
 	if(!iw_client)
+		return ERROR;
+	if(!iw_client->db_list)
 		return ERROR;
 	if(iw_client->db_mutex)
 		os_mutex_lock(iw_client->db_mutex, OS_WAIT_FOREVER);
@@ -446,6 +484,8 @@ static int iw_client_ap_cleanup(iw_client_t *iw_client, BOOL use)
 		list = iw_client->ap_list;
 	else
 		list = iw_client->ap_unlist;
+	if(!list)
+		return ERROR;
 	if(iw_client->ap_mutex)
 		os_mutex_lock(iw_client->ap_mutex, OS_WAIT_FOREVER);
 	for(pstNode = (iw_client_ap_t *)lstFirst(list);
@@ -470,6 +510,8 @@ static int iw_client_ap_add_sort_node(iw_client_t *iw_client, iw_client_ap_t *va
 	NODE index;
 	assert(iw_client != NULL);
 	assert(value != NULL);
+	if(!iw_client->ap_list)
+		return ERROR;
 	for(pnode = (iw_client_ap_t *)lstFirst(iw_client->ap_list);
 			pnode != NULL;  pnode = (iw_client_ap_t *)lstNext((NODE*)&index))
 	{
@@ -497,6 +539,8 @@ static int iw_client_ap_add_node(iw_client_t *iw_client, iw_client_ap_t *value)
 	iw_client_ap_t *node = NULL;
 	assert(iw_client != NULL);
 	assert(value != NULL);
+	if(!iw_client->ap_unlist)
+		return ERROR;
 	if(lstCount(iw_client->ap_unlist))
 	{
 		node = (iw_client_ap_t *)lstFirst(iw_client->ap_unlist);
@@ -519,7 +563,7 @@ static int iw_client_ap_add_node(iw_client_t *iw_client, iw_client_ap_t *value)
 
 static int iw_client_ap_del_node(iw_client_t *iw_client, iw_client_ap_t *node)
 {
-	if(node)
+	if(node && iw_client->ap_list && iw_client->ap_unlist)
 	{
 		lstDelete(iw_client->ap_list, (NODE *)node);
 		lstAdd(iw_client->ap_unlist, (NODE *)node);
@@ -536,6 +580,8 @@ static iw_client_ap_t * iw_client_ap_lookup_node(iw_client_t *iw_client, u_int8 
 	char SSID[IW_SSID_NAME_MAX];
 	u_int8 BSSID[IW_SSID_NAME_MAX];
 	assert(iw_client != NULL);
+	if(!iw_client->ap_list)
+		return NULL;
 	memset(SSID, 0, IW_SSID_NAME_MAX);
 	memset(BSSID, 0, IW_SSID_NAME_MAX);
 	if(ssid)
@@ -571,6 +617,8 @@ static int iw_client_scan_update(iw_client_t *iw_client)
 	iw_client_ap_t *pstNode = NULL;
 	NODE index;
 	assert(iw_client != NULL);
+	if(!iw_client->ap_list)
+		return ERROR;
 	for(pstNode = (iw_client_ap_t *)lstFirst(iw_client->ap_list);
 			pstNode != NULL;  pstNode = (iw_client_ap_t *)lstNext((NODE*)&index))
 	{
@@ -601,7 +649,8 @@ int iw_client_ap_set_api(iw_client_t *iw_client, u_int8 *bssid, iw_client_ap_t *
 	iw_client_ap_t *client = NULL;
 	if(!iw_client || !bssid || !ap)
 		return ERROR;
-
+	if(!iw_client->ap_list)
+		return ERROR;
 	memset(BSSID, 0, IW_SSID_NAME_MAX);
 	if(bssid)
 		memcpy(BSSID, bssid, NSM_MAC_MAX);
@@ -689,12 +738,14 @@ iw_client_ap_t * iw_client_ap_lookup_api(iw_client_t *iw_client, u_int8 *bssid, 
 }
 
 
-int iw_client_ap_callback_api(iw_client_t *iw_client, int (*cb)(iw_client_ap_t *, void *), void *pVoid)
+int iw_client_neighbor_callback_api(iw_client_t *iw_client, int (*cb)(iw_client_ap_t *, void *), void *pVoid)
 {
 	int ret = OK;
 	iw_client_ap_t *pstNode = NULL;
 	NODE index;
 	if(!iw_client)
+		return ERROR;
+	if(!iw_client->ap_list)
 		return ERROR;
 	if(iw_client->ap_mutex)
 		os_mutex_lock(iw_client->ap_mutex, OS_WAIT_FOREVER);
@@ -851,6 +902,8 @@ static int iw_client_connect_process(iw_client_t *iw_client)
 	u_int8 bssid[8] = { 0 };
 	if(!iw_client)
 		return ERROR;
+	if(!iw_client->ap_list)
+		return ERROR;
 	struct interface *ifp = if_lookup_by_index(iw_client->ifindex);
 	if(!(ifp && ifp->k_ifindex && if_is_wireless(ifp)))
 		return OK;
@@ -924,6 +977,8 @@ static int iw_client_disconnect_process(iw_client_t *iw_client)
 	iw_client_ap_t *pstNode = NULL;
 	NODE index;
 	if(!iw_client)
+		return ERROR;
+	if(!iw_client->ap_list)
 		return ERROR;
 	struct interface *ifp = if_lookup_by_index(iw_client->ifindex);
 	if(!(ifp && ifp->k_ifindex && if_is_wireless(ifp)))
@@ -1015,16 +1070,22 @@ static int iw_client_connect_thread(struct thread * thread)
 {
 	assert(thread != NULL);
 	iw_client_t *iw_client = THREAD_ARG(thread);
-	if(iw_client)
+	if(iw_client && iw_client->master)
 	{
+		if(iw_client->mutex)
+			os_mutex_lock(iw_client->mutex, OS_WAIT_FOREVER);
+
 		iw_client->connect_thread = NULL;
-		iw_client->connect_thread = thread_add_timer(iw_client->master,
-				iw_client_connect_thread, iw_client, iw_client->connect_delay);
 
 		if(iw_client->connect_enable)
 		{
 			iw_client_connect_process(iw_client);
 		}
+		iw_client->connect_thread = thread_add_timer(iw_client->master,
+				iw_client_connect_thread, iw_client, iw_client->connect_delay);
+
+		if(iw_client->mutex)
+			os_mutex_unlock(iw_client->mutex);
 	}
 	return OK;
 }
@@ -1033,19 +1094,25 @@ static int iw_client_scan_thread(struct thread * thread)
 {
 	assert(thread != NULL);
 	iw_client_t *iw_client = THREAD_ARG(thread);
-	if(iw_client)
+	if(iw_client && iw_client->master)
 	{
+		if(iw_client->mutex)
+			os_mutex_lock(iw_client->mutex, OS_WAIT_FOREVER);
+
 		iw_client->scan_thread = NULL;
 
-		iw_client->scan_thread = thread_add_timer(iw_client->master,
-				iw_client_scan_thread, iw_client, iw_client->scan_interval);
-/*		THREAD_TIMER_ON(iw_client->master, iw_client->scan_thread,
-				iw_client_scan_thread, iw_client, iw_client->scan_interval);*/
 		if(iw_client->scan_enable)
 		{
 			iw_client_scan_process(iw_client);
 			iw_client_scan_update(iw_client);
 		}
+		iw_client->scan_thread = thread_add_timer(iw_client->master,
+				iw_client_scan_thread, iw_client, iw_client->scan_interval);
+/*		THREAD_TIMER_ON(iw_client->master, iw_client->scan_thread,
+				iw_client_scan_thread, iw_client, iw_client->scan_interval);*/
+
+		if(iw_client->mutex)
+			os_mutex_unlock(iw_client->mutex);
 	}
 	return OK;
 }
@@ -1091,13 +1158,16 @@ int iw_client_connect_start(iw_client_t *iw_client)
 		return ERROR;
 	iw_client->connect_enable = TRUE;
 #ifdef IW_ONCE_TASK
-	if(iw_client->connect_thread)
-		thread_cancel(iw_client->connect_thread);
-	iw_client->connect_thread = NULL;
-	iw_client->connect_thread = thread_add_timer(iw_client->master,
-			iw_client_connect_thread, iw_client, iw_client->connect_delay);
-/*	THREAD_TIMER_ON(iw_client->master, iw_client->connect_thread,
-			iw_client_connect_thread, iw_client, iw_client->connect_delay);*/
+	if(iw_client->master)
+	{
+		if(iw_client->connect_thread)
+			thread_cancel(iw_client->connect_thread);
+		iw_client->connect_thread = NULL;
+		iw_client->connect_thread = thread_add_timer(iw_client->master,
+				iw_client_connect_thread, iw_client, iw_client->connect_delay);
+	/*	THREAD_TIMER_ON(iw_client->master, iw_client->connect_thread,
+				iw_client_connect_thread, iw_client, iw_client->connect_delay);*/
+	}
 #endif
 	return OK;
 }
@@ -1135,15 +1205,25 @@ int iw_client_connect_api(iw_client_t *iw_client, BOOL auto_connect)
 
 int iw_client_scan_start(iw_client_t *iw_client)
 {
+	int scan_interval = 0;
 	if(!iw_client)
 		return ERROR;
 	iw_client->scan_enable = TRUE;
 #ifdef IW_ONCE_TASK
 	if(iw_client->scan_thread)
+	{
 		thread_cancel(iw_client->scan_thread);
-	iw_client->scan_thread = NULL;
-	iw_client->scan_thread = thread_add_timer(iw_client->master,
-			iw_client_scan_thread, iw_client, iw_client->scan_interval);
+		iw_client->scan_thread = NULL;
+		scan_interval = iw_client->scan_interval;
+	}
+	else
+		scan_interval = 1;
+	if(iw_client->master)
+	{
+		//iw_client->scan_thread = NULL;
+		iw_client->scan_thread = thread_add_timer(iw_client->master,
+				iw_client_scan_thread, iw_client, scan_interval);
+	}
 #endif
 	return OK;
 }
@@ -1165,7 +1245,7 @@ int iw_client_scan_exit(iw_client_t *iw_client)
 }
 
 
-static int iw_client_ap_show_one(iw_client_ap_t *ap, struct vty *vty)
+static int iw_client_neighbor_show_one(iw_client_ap_t *ap, struct vty *vty)
 {
 	char buf[128];
 	struct prefix prefix_eth;
@@ -1214,13 +1294,13 @@ static int iw_client_ap_show_one(iw_client_ap_t *ap, struct vty *vty)
 	return OK;
 }
 
-int iw_client_ap_show(iw_client_t *iw_client, struct vty *vty, BOOL all)
+int iw_client_neighbor_show(iw_client_t *iw_client, struct vty *vty, BOOL all)
 {
 	assert(iw_client != NULL);
 	assert(vty != NULL);
 	if(all)
 	{
-		if(lstCount(iw_client->ap_list))
+		if(iw_client->ap_list && lstCount(iw_client->ap_list))
 		{
 			vty_out(vty,"%-20s %-18s %-10s %-8s %-8s %-10s %-20s%s",
 					"--------------------", "------------------", "----------", "--------",
@@ -1231,7 +1311,7 @@ int iw_client_ap_show(iw_client_t *iw_client, struct vty *vty, BOOL all)
 			vty_out(vty,"%-20s %-18s %-10s %-8s %-8s %-10s %-20s%s",
 					"--------------------", "------------------", "----------", "--------",
 						"--------",  "----------", "--------------------", VTY_NEWLINE);
-			return iw_client_ap_callback_api(iw_client, iw_client_ap_show_one, vty);
+			return iw_client_neighbor_callback_api(iw_client, iw_client_neighbor_show_one, vty);
 		}
 		return OK;
 	}
@@ -1250,6 +1330,11 @@ int iw_client_connect_ap_show(iw_client_t *iw_client, struct vty *vty)
 	struct interface *ifp = if_lookup_by_index(iw_client->ifindex);
 	if(ifp && ifp->k_ifindex && if_is_wireless(ifp))
 	{
+		if(!nsm_iw_enable_get_api(ifp))
+		{
+			vty_out(vty, " wireless is not enable%s", VTY_NEWLINE);
+			return OK;
+		}
 		return iw_client_dev_connect_show(ifp, vty);
 	}
 	return OK;
@@ -1262,6 +1347,11 @@ int iw_client_station_dump_show(iw_client_t *iw_client, struct vty *vty)
 	struct interface *ifp = if_lookup_by_index(iw_client->ifindex);
 	if(ifp && ifp->k_ifindex && if_is_wireless(ifp))
 	{
+		if(!nsm_iw_enable_get_api(ifp))
+		{
+			vty_out(vty, " wireless is not enable%s", VTY_NEWLINE);
+			return OK;
+		}
 		return iw_client_dev_station_dump_show(ifp, vty);
 	}
 	return OK;
@@ -1274,6 +1364,11 @@ int iw_client_scan_ap_show(iw_client_t *iw_client, struct vty *vty)
 	struct interface *ifp = if_lookup_by_index(iw_client->ifindex);
 	if(ifp && ifp->k_ifindex && if_is_wireless(ifp))
 	{
+		if(!nsm_iw_enable_get_api(ifp))
+		{
+			vty_out(vty, " wireless is not enable%s", VTY_NEWLINE);
+			return OK;
+		}
 		return iw_client_dev_scan_ap_show(ifp, vty);
 	}
 	return OK;
@@ -1305,10 +1400,12 @@ int iw_client_init(iw_client_t *iw_client, ifindex_t ifindex)
 	iw_client->master = master_thread[MODULE_WIFI] = thread_master_module_create (MODULE_WIFI);
 #endif
 
+
 	iw_client_task_start(iw_client);
 
 	iw_client_scan_start(iw_client);
 	iw_client_connect_start(iw_client);
+
 
 	iw_client->ifindex = ifindex;
 	//iw_dev_mode_set();
@@ -1325,40 +1422,91 @@ int iw_client_exit(iw_client_t *iw_client)
 #ifdef IW_ONCE_TASK
 	iw_client->master = NULL;
 #endif
-	if(lstCount(iw_client->db_list))
+	if(iw_client->db_list && lstCount(iw_client->db_list))
 	{
 		iw_client_db_cleanup(iw_client, 0, TRUE);
 		lstFree(iw_client->db_list);
+		//iw_client->db_list = NULL;
 	}
 	rename(IW_CLIENT_DB_FILE, IW_CLIENT_DB_OLD_FILE);
 	sync();
 
-	if(lstCount(iw_client->ap_list))
+	if(iw_client->ap_list && lstCount(iw_client->ap_list))
 	{
 		iw_client_ap_cleanup(iw_client, TRUE);
 		lstFree(iw_client->ap_list);
+		//iw_client->ap_list = NULL;
 	}
-	if(lstCount(iw_client->ap_unlist))
+	if(iw_client->ap_unlist && lstCount(iw_client->ap_unlist))
 	{
 		iw_client_ap_cleanup(iw_client, FALSE);
 		lstFree(iw_client->ap_unlist);
+		//iw_client->ap_unlist = NULL;
 	}
 	if(iw_client->db_mutex)
 		os_mutex_exit(iw_client->db_mutex);
+	iw_client->db_mutex = NULL;
+
 	if(iw_client->ap_mutex)
 		os_mutex_exit(iw_client->ap_mutex);
+	iw_client->ap_mutex = NULL;
+
 	if(iw_client->db_list)
 		free(iw_client->db_list);
+	iw_client->db_list = NULL;
+
 	if(iw_client->ap_list)
 		free(iw_client->ap_list);
+	iw_client->ap_list = NULL;
+
 	if(iw_client->ap_unlist)
 		free(iw_client->ap_unlist);
+	iw_client->ap_unlist = NULL;
+
 	if(iw_client->mutex)
 		os_mutex_exit(iw_client->mutex);
+	iw_client->mutex = NULL;
 
 	return OK;
 }
 
+int iw_client_enable(iw_client_t *iw_client, BOOL enable)
+{
+	if(!iw_client)
+		return ERROR;
+	if(enable)
+	{
+		if(iw_client->mutex)
+			os_mutex_lock(iw_client->mutex, OS_WAIT_FOREVER);
+		iw_client_task_start(iw_client);
+		iw_client_scan_start(iw_client);
+		iw_client_connect_start(iw_client);
+		if(iw_client->mutex)
+			os_mutex_unlock(iw_client->mutex);
+	}
+	else
+	{
+		if(iw_client->mutex)
+			os_mutex_lock(iw_client->mutex, OS_WAIT_FOREVER);
+
+		iw_client_task_exit(iw_client);
+		iw_client_scan_exit(iw_client);
+		iw_client_connect_exit(iw_client);
+		if(iw_client->ap_list && lstCount(iw_client->ap_list))
+		{
+			iw_client_ap_cleanup(iw_client, TRUE);
+			//lstFree(iw_client->ap_list);
+		}
+		if(iw_client->ap_unlist && lstCount(iw_client->ap_unlist))
+		{
+			iw_client_ap_cleanup(iw_client, FALSE);
+			//lstFree(iw_client->ap_unlist);
+		}
+		if(iw_client->mutex)
+			os_mutex_unlock(iw_client->mutex);
+	}
+	return OK;
+}
 /*
                     IE: WPA Version 1
                         Group Cipher : CCMP

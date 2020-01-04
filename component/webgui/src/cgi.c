@@ -57,7 +57,7 @@ PUBLIC bool cgiHandler(Webs *wp)
     CgiPid      pHandle;
     int         n, envpsize, argpsize, cid;
 
-    assert(websValid(wp));
+    web_assert(websValid(wp));
 
     websSetEnv(wp);
 
@@ -134,7 +134,7 @@ PUBLIC bool cgiHandler(Webs *wp)
         wfree(cgiPath);
         return 1;
     }
-    assert(argp);
+    web_assert(argp);
     *argp = cgiPath;
     n = 1;
     query = 0;
@@ -836,7 +836,7 @@ static uchar *tableToBlock(char **table)
     size_t  sizeBlock;      /*  Size of table */
     int     index;          /*  Index into string table */
 
-    assert(table);
+    web_assert(table);
 
     /*
         Calculate the size of the data block.  Allow for final null byte.
@@ -904,7 +904,7 @@ static CgiPid launchCgi(char *cgiPath, char **argp, char **envp, char *stdIn, ch
         Construct command line
      */
     cmdLine = walloc(sizeof(char) * nLen);
-    assert(cmdLine);
+    web_assert(cmdLine);
     strcpy(cmdLine, "");
 
     pArgs = argp;

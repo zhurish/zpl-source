@@ -181,7 +181,7 @@ PUBLIC char *websDecode64Block(char *s, ssize *len, int flags)
             shift -= 6;
         }
         --i;
-        assert((bp + i) < &buffer[size]);
+        web_assert((bp + i) < &buffer[size]);
         for (j = 0; j < i; j++) {
             *bp++ = (char) ((bitBuf >> (8 * (2 - j))) & 0xff);
         }
@@ -888,7 +888,7 @@ PUBLIC int websGetRandomBytes(char *buf, ssize length, bool block)
     do {
         rc = read(fd, &buf[sofar], length);
         if (rc < 0) {
-            assert(0);
+            web_assert(0);
             close(fd);
             return -1;
         }

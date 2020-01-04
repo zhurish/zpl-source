@@ -181,6 +181,51 @@ dyn_lease_t *dhcp_lease_lookup_expired_lease(LIST *lst)
 	return NULL;
 }
 
+static int dhcp_lease_foreach_one(dhcp_pool_t *config, int(*cb)(dyn_lease_t *, void *p), void *p)
+{
+	NODE index;
+	dyn_lease_t *pstNode = NULL;
+	//leasetime_t oldest_time = time(NULL);
+	if (!lstCount(&config->dhcp_lease_list))
+		return OK;
+	for (pstNode = (dyn_lease_t *)lstFirst(&config->dhcp_lease_list);
+		pstNode != NULL;  pstNode = (dyn_lease_t *)lstNext((NODE*)&index))
+	{
+		index = pstNode->node;
+		if(pstNode)
+		{
+			if(cb)
+				(cb)(pstNode, p);
+		}
+/*		if ((pstNode->ends > oldest_time) && (pstNode->mode == LEASE_DYNAMIC))
+		{
+		}*/
+	}
+	return OK;
+}
+
+int dhcpd_lease_foreach(int(*cb)(dyn_lease_t *, void *p), void *p)
+{
+	//FILE *fp = NULL;
+	NODE index;
+	dhcp_pool_t *pstNode = NULL;
+	if (!lstCount(&dhcp_global_config.pool_list))
+		return OK;
+
+	for (pstNode = (dhcp_pool_t *)lstFirst(&dhcp_global_config.pool_list);
+			pstNode != NULL;  pstNode = (dhcp_pool_t *)lstNext((NODE*)&index))
+		{
+			index = pstNode->node;
+			if (pstNode)
+			{
+				dhcp_lease_foreach_one(pstNode, cb, p);
+				//dhcp_lease_save_one(fp, pstNode);
+			}
+		}
+		return OK;
+}
+
+
 
 static int dhcp_lease_save_one(FILE *fp, dhcp_pool_t *config)
 {

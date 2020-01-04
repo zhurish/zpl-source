@@ -48,7 +48,7 @@ extern int if_uspv_type_setting(struct interface *ifp);
 
 extern int if_loopback_ifindex_create(if_type_t type, const char *name);
 
-extern char *if_mac_out_format(unsigned char *mac, int len);
+extern const char *if_mac_out_format(unsigned char *mac);
 extern int vty_iusp_get (const char *str, int *uspv);
 extern int vty_mac_get (const char *str, unsigned char *mac);
 

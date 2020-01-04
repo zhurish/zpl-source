@@ -8,6 +8,10 @@
 #ifndef __OS_TASK_H__
 #define __OS_TASK_H__
 
+
+//#define OS_SIGNAL_SIGWAIT
+
+
 #define TASK_NAME_MAX	32
 #define TASK_COUNT_MAX	64
 #define TASK_CBTBL_MAX	16
@@ -30,7 +34,7 @@
 
 
 #define OS_TASK_DEBUG
-
+//#define OS_TASK_DEBUG_LOG
 
 typedef int(*task_entry)(void *);
 
@@ -38,6 +42,7 @@ typedef  unsigned int unit32;
 
 enum os_task_state
 {
+	OS_STATE_CREATE,//C
 	OS_STATE_READY = 1,//R
 	OS_STATE_RUNNING,//R
 	OS_STATE_WAIT,//W
@@ -55,13 +60,8 @@ struct os_task_history
 	int cpu;
 };
 
-typedef int(*os_task_cb)(void *);
-typedef struct os_task_cb_tbl
-{
-	os_task_cb 	cb_start;
-	os_task_cb 	cb_stop;
-	void 		*pVoid;
-}os_task_cb_tbl_t;
+typedef int(*os_task_hook)(void *);
+
 
 typedef struct os_task_s
 {
@@ -103,10 +103,23 @@ typedef struct os_task_s
 
 
 
+extern int os_limit_stack_size(int size);
+extern int os_limit_core_size(int size);
+extern int os_task_give_broadcast(void);
 
 extern int os_task_init();
 extern int os_task_exit();
-extern int os_task_cb_install(os_task_cb_tbl_t *cb);
+extern int os_task_sigmask(int sigc, int signo[], sigset_t *mask);
+extern int os_task_sigexecute(int sigc, int signo[], sigset_t *mask);
+extern int os_task_sigmaskall();
+
+extern int os_task_add_start_hook(os_task_hook *cb);
+extern int os_task_add_create_hook(os_task_hook *cb);
+extern int os_task_add_destroy_hook(os_task_hook *cb);
+
+extern int os_task_del_start_hook(os_task_hook *cb);
+extern int os_task_del_create_hook(os_task_hook *cb);
+extern int os_task_del_destroy_hook(os_task_hook *cb);
 
 extern os_task_t * os_task_tcb_get(unit32 id, pthread_t pid);
 extern os_task_t * os_task_tcb_self(void);
@@ -131,7 +144,7 @@ extern void * os_task_priv_get(unit32 TaskID, pthread_t td_thread);
 
 extern int os_task_refresh_id(unit32 td_thread);
 extern int os_task_del(unit32 td_thread);
-extern int os_task_foreach(os_task_cb cb, void *p);
+extern int os_task_foreach(os_task_hook cb, void *p);
 
 extern int os_task_entry_destroy(os_task_t *task);
 extern int os_task_destroy(unit32 taskId);
@@ -153,5 +166,4 @@ extern unit32 os_task_entry_add(char *name, int pri, int op,
 extern int cmd_os_init();
 extern int os_task_show(void *vty, char *task_name, int detail);
 
-extern void os_log(char *file, const char *format, ...);
 #endif /* __OS_TASK_H__ */

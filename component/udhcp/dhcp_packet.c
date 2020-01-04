@@ -36,7 +36,88 @@ void FAST_FUNC udhcp_header_init(struct dhcp_packet *packet, char type)
 	//udhcp_add_simple_option(packet, DHCP_MESSAGE_TYPE, type);
 }
 #endif
+static void dhcp_packet_dump(struct dhcp_packet *packet)
+{
+	char buf[sizeof(packet->chaddr)*2 + 1];
+	//char tmp[128];
+	int len = 0;
+	int message = 0;
+	if(packet->op == BOOTREQUEST)
+		zlog_debug(ZLOG_DHCP, " DHCP Message Type : Request");
+	else if(packet->op == BOOTREPLY)
+		zlog_debug(ZLOG_DHCP, " DHCP Message Type : Reply");
 
+	if(packet->htype == HTYPE_ETHER)
+	{
+		zlog_debug(ZLOG_DHCP, "  Hardware Type : Ethernet");
+		zlog_debug(ZLOG_DHCP, "   Hardware address length : %d", packet->hlen);
+	}
+	else if(packet->htype == HTYPE_IPSEC_TUNNEL)
+	{
+		zlog_debug(ZLOG_DHCP, "  Hardware Type : IPsec Tunnel");
+		zlog_debug(ZLOG_DHCP, "   Hardware address length : %d", packet->hlen);
+	}
+	zlog_debug(ZLOG_DHCP, "  Transaction ID : 0x%x", ntohl(packet->xid));
+
+	if(ntohs(packet->flags) == BROADCAST_FLAG)
+		zlog_debug(ZLOG_DHCP, "  Message Type : Request");
+	else if(ntohs(packet->flags) == UNICAST_FLAG)
+		zlog_debug(ZLOG_DHCP, "  Message Type : Reply");
+
+	zlog_debug(ZLOG_DHCP, "  Client IP address : %s", inet_address(ntohl(packet->ciaddr)));
+	zlog_debug(ZLOG_DHCP, "  Your IP address : %s", inet_address(ntohl(packet->yiaddr)));
+	zlog_debug(ZLOG_DHCP, "  Next server IP address : %s", inet_address(ntohl(packet->siaddr_nip)));
+	zlog_debug(ZLOG_DHCP, "  Relay agent IP address : %s", inet_address(ntohl(packet->gateway_nip)));
+
+	bin2hex(buf, (void *) packet->chaddr, sizeof(packet->chaddr));
+	zlog_debug(ZLOG_DHCP, "  Client Hardware address : %s", buf);
+
+	if(strlen(packet->sname))
+		zlog_debug(ZLOG_DHCP, "  Server name option : %s", packet->sname);
+
+	if(strlen(packet->file))
+		zlog_debug(ZLOG_DHCP, "  Boot file name option : %s", packet->file);
+
+	if(strlen(packet->file))
+		zlog_debug(ZLOG_DHCP, "  Boot file name option : %s", packet->file);
+
+	//uint8_t options[DHCP_OPTIONS_BUFSIZE + CONFIG_UDHCPC_SLACK_FOR_BUGGY_SERVERS];
+	len = dhcp_option_get_length(packet->options);
+
+	message = dhcp_option_message_type_get(packet->options, len);
+	switch (message)
+	{
+	case DHCPDISCOVER:
+		zlog_debug(ZLOG_DHCP, "  Message Type : Discover");
+		break;
+	case DHCPOFFER:
+		zlog_debug(ZLOG_DHCP, "  Message Type : Offer");
+		break;
+	case DHCPREQUEST:
+		zlog_debug(ZLOG_DHCP, "  Message Type : Request");
+		break;
+	case DHCPDECLINE:
+		zlog_debug(ZLOG_DHCP, "  Message Type : Decline");
+		break;
+	case DHCPACK:
+		zlog_debug(ZLOG_DHCP, "  Message Type : ACK");
+		break;
+	case DHCPNAK:
+		zlog_debug(ZLOG_DHCP, "  Message Type : NACK");
+		break;
+	case DHCPRELEASE:
+		zlog_debug(ZLOG_DHCP, "  Message Type : Release");
+		break;
+	case DHCPINFORM:
+		zlog_debug(ZLOG_DHCP, "  Message Type : Inform");
+		break;
+	default:
+		break;
+	}
+
+
+}
+#if 0
 static void _udhcp_dump_packet(struct dhcp_packet *packet)
 {
 	char buf[sizeof(packet->chaddr)*2 + 1];
@@ -75,14 +156,14 @@ static void _udhcp_dump_packet(struct dhcp_packet *packet)
 	bin2hex(buf, (void *) packet->chaddr, sizeof(packet->chaddr));
 	zlog_err(ZLOG_DHCP," chaddr %s", buf);
 }
-
+#endif
 
 /* Read a packet from socket fd, return -1 on read error, -2 on packet error */
 int FAST_FUNC udhcp_recv_packet(struct dhcp_packet *packet, int fd, u_int32 *ifindex)
 {
 #if 1
 	int bytes = 0;
-
+	u_int32 d_ifindex = 0;
 	memset(packet, 0, sizeof(*packet));
 	struct iovec iov;
 	/* Header and data both require alignment. */
@@ -112,9 +193,11 @@ int FAST_FUNC udhcp_recv_packet(struct dhcp_packet *packet, int fd, u_int32 *ifi
 	sin4 = (struct sockaddr_in *)&ss;
 	//memcpy(&from.iabuf, &sin4->sin_addr, from.len);
 
-	zlog_err(ZLOG_DHCP, "-------------%s", inet_ntoa(sin4->sin_addr));
+	//zlog_err(ZLOG_DHCP, "-------------%s", inet_ntoa(sin4->sin_addr));
+
+	d_ifindex = getsockopt_ifindex(AF_INET, &msgh);
 	if (ifindex)
-		*ifindex = getsockopt_ifindex(AF_INET, &msgh);
+		*ifindex = d_ifindex;
 
 	if (bytes < offsetof(struct dhcp_packet, options)
 			|| packet->cookie != htonl(DHCP_MAGIC))
@@ -122,8 +205,18 @@ int FAST_FUNC udhcp_recv_packet(struct dhcp_packet *packet, int fd, u_int32 *ifi
 		zlog_err(ZLOG_DHCP, "packet with bad magic, ignoring");
 		return -2;
 	}
-	zlog_err(ZLOG_DHCP, "===================received %s ifindex=0x%x", "a packet", *ifindex);
-	_udhcp_dump_packet(packet);
+	//zlog_err(ZLOG_DHCP, "===================received %s ifindex=0x%x", "a packet", d_ifindex);
+	//_udhcp_dump_packet(packet);
+	if (DHCPC_DEBUG_ISON(RECV))
+	{
+		if(DHCPC_DEBUG_ISON(DETAIL))
+		{
+			zlog_debug(ZLOG_DHCP," dhcp client received packet(%d byte) on interface %s", bytes, ifindex2ifname(d_ifindex));
+			dhcp_packet_dump(packet);
+		}
+		else
+			zlog_debug(ZLOG_DHCP," dhcp client received packet(%d byte) on interface %s", bytes, ifindex2ifname(d_ifindex));
+	}
 
 	return bytes;
 #else
@@ -211,11 +304,20 @@ int FAST_FUNC udhcp_send_raw_packet(int fd, struct dhcp_packet *dhcp_pkt,
 	packet.ip.ttl = IPDEFTTL;
 	packet.ip.check = in_cksum/*inet_cksum*/((uint16_t *)&packet.ip, sizeof(packet.ip));
 
-	_udhcp_dump_packet(dhcp_pkt);
+	//_udhcp_dump_packet(dhcp_pkt);
 	result = sendto(fd, &packet, IP_UDP_DHCP_SIZE - padding, /*flags:*/ 0,
 			(struct sockaddr *) &dest_sll, sizeof(dest_sll));
 
-	zlog_err(ZLOG_DHCP, "sendto %s", "PACKET");
+	if (DHCPC_DEBUG_ISON(SEND))
+	{
+		if(DHCPC_DEBUG_ISON(DETAIL))
+		{
+			zlog_debug(ZLOG_DHCP," dhcp client sending raw packet(%d byte)", result);
+			dhcp_packet_dump(dhcp_pkt);
+		}
+		else
+			zlog_debug(ZLOG_DHCP," dhcp client sending raw packet(%d byte)", result);
+	}
 	return result;
 }
 
@@ -233,7 +335,7 @@ int FAST_FUNC udhcp_send_udp_packet(int fd, struct dhcp_packet *dhcp_pkt,
 	sa.sin_port = htons(dest->port);
 	sa.sin_addr.s_addr = dest->ip;
 
-	_udhcp_dump_packet(dhcp_pkt);
+	//_udhcp_dump_packet(dhcp_pkt);
 	padding = DHCP_OPTIONS_BUFSIZE - 1 - udhcp_end_option(dhcp_pkt->options);
 	if (padding > DHCP_SIZE - 300)
 		padding = DHCP_SIZE - 300;
@@ -241,8 +343,18 @@ int FAST_FUNC udhcp_send_udp_packet(int fd, struct dhcp_packet *dhcp_pkt,
 	result = sendto(fd, dhcp_pkt, DHCP_SIZE - padding, 0, (struct sockaddr *)&sa,
 		sizeof(struct sockaddr_in));
 
+	if (DHCPC_DEBUG_ISON(SEND))
+	{
+		if(DHCPC_DEBUG_ISON(DETAIL))
+		{
+			zlog_debug(ZLOG_DHCP," dhcp client sending UDP packet(%d byte)", result);
+			dhcp_packet_dump(dhcp_pkt);
+		}
+		else
+			zlog_debug(ZLOG_DHCP," dhcp client sending UDP packet(%d byte)", result);
+	}
 	//result = safe_write(fd, dhcp_pkt, DHCP_SIZE - padding);
-	zlog_err(ZLOG_DHCP, "sendto %s", "UDP");
+	//zlog_err(ZLOG_DHCP, "sendto UDP %d byte", DHCP_SIZE - padding);
 
 	return result;
 }

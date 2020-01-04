@@ -13,17 +13,18 @@
 typedef struct sdk_misc_s
 {
 	//jumbo
-	int (*sdk_jumbo_enable_cb) (ifindex_t, BOOL);
-	int (*sdk_jumbo_size_cb) (int);
+	int (*sdk_jumbo_enable_cb) (void *, ifindex_t, BOOL);
+	int (*sdk_jumbo_size_cb) (void *, int);
 
-	int (*sdk_snooping_cb) (BOOL enable, int mode, BOOL ipv6);
+	int (*sdk_snooping_cb) (void *, BOOL enable, int mode, BOOL ipv6);
 
 
 	//EEE
-	int (*sdk_eee_enable_cb) (ifindex_t, BOOL);
-	int (*sdk_eee_set_cb) (ifindex_t, void *);
-	int (*sdk_eee_unset_cb) (ifindex_t, void *);
+	int (*sdk_eee_enable_cb) (void *, ifindex_t, BOOL);
+	int (*sdk_eee_set_cb) (void *, ifindex_t, void *);
+	int (*sdk_eee_unset_cb) (void *, ifindex_t, void *);
 
+	void *sdk_driver;
 }sdk_misc_t;
 
 //jumbo

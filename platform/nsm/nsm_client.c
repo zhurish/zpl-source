@@ -34,7 +34,9 @@
 #include "zserv.h"
 #include "nsm_client.h"
 
-#include "pal_interface.h"
+#include "nsm_hook.h"
+
+#include "pal_driver.h"
 #ifdef PL_HAL_MODULE
 #include "hal_port.h"
 #endif
@@ -99,6 +101,7 @@ void nsm_client_init (void)
 {
 	nsmlist = list_new();
 	nsmlist->cmp =  nsm_client_cmp;
+	nsm_hook_module_init();
 }
 
 
@@ -155,6 +158,7 @@ int nsm_client_service_write_config (int module, struct vty *vty)
 			}
 		}
 	}
+	nsm_hook_execute (NSM_HOOK_SERVICE, vty, NULL, FALSE);
 	return ret;
 }
 
@@ -176,6 +180,7 @@ int nsm_client_debug_write_config (int module, struct vty *vty)
 				ret |= (client->debug_write_config_cb)(vty);
 		}
 	}
+	nsm_hook_execute (NSM_HOOK_DEBUG, vty, NULL, FALSE);
 	return ret;
 }
 
@@ -197,6 +202,7 @@ int nsm_client_interface_write_config (int module, struct vty *vty, struct inter
 				ret |= (client->interface_write_config_cb)(vty, ifp);
 		}
 	}
+	nsm_hook_execute (NSM_HOOK_IFP_CONFIG, ifp, vty, FALSE);
 	return ret;
 }
 
@@ -213,6 +219,7 @@ int nsm_client_notify_interface_add(struct interface *ifp)
 			ret |= (client->notify_add_cb)(ifp);
 		}
 	}
+	//nsm_hook_execute (NSM_HOOK_IFP_ADD, ifp, NULL, TRUE);
 	return ret;
 }
 
@@ -228,6 +235,23 @@ int nsm_client_notify_interface_delete (struct interface *ifp)
 			ret |= (client->notify_delete_cb)(ifp);
 		}
 	}
+	//nsm_hook_execute (NSM_HOOK_IFP_DEL, ifp, NULL, FALSE);
+	return ret;
+}
+
+int nsm_client_notify_interface_update (struct interface *ifp)
+{
+	int ret = 0;
+	struct listnode *node;
+	struct nsm_client *client;
+	for (ALL_LIST_ELEMENTS_RO(nsmlist, node, client))
+	{
+		if(client->notify_update_cb)
+		{
+			ret |= (client->notify_update_cb)(ifp);
+		}
+	}
+	//nsm_hook_execute (NSM_HOOK_IFP_DEL, ifp, NULL, FALSE);
 	return ret;
 }
 
@@ -243,6 +267,7 @@ int nsm_client_notify_interface_up (struct interface *ifp)
 			ret |= (client->notify_up_cb)(ifp);
 		}
 	}
+	//nsm_hook_execute (NSM_HOOK_IFP_UP, ifp, NULL, TRUE);
 	return ret;
 }
 
@@ -258,6 +283,7 @@ int nsm_client_notify_interface_down (struct interface *ifp)
 			ret |= (client->notify_down_cb)(ifp);
 		}
 	}
+	//nsm_hook_execute (NSM_HOOK_IFP_DOWN, ifp, NULL, FALSE);
 	return ret;
 }
 
@@ -273,6 +299,7 @@ int nsm_client_notify_interface_add_ip (struct interface *ifp, struct connected 
 			ret |= (client->notify_address_add_cb)(ifp, ifc, sec);
 		}
 	}
+	//nsm_hook_execute (NSM_HOOK_IP_ADD, ifp, ifc, TRUE);
 	return ret;
 }
 
@@ -288,6 +315,7 @@ int nsm_client_notify_interface_del_ip (struct interface *ifp, struct connected 
 			ret |= (client->notify_address_del_cb)(ifp, ifc, sec);
 		}
 	}
+	//nsm_hook_execute (NSM_HOOK_IP_DEL, ifp, ifc, FALSE);
 	return ret;
 }
 
@@ -303,6 +331,7 @@ int nsm_client_notify_parameter_change (struct interface *ifp)
 			ret |= (client->notify_parameter_change_cb)(ifp);
 		}
 	}
+	//nsm_hook_execute (NSM_HOOK_IFP_CHANGE, ifp, NULL, TRUE);
 	return ret;
 }
 
@@ -364,7 +393,7 @@ int nsm_pal_interface_mtu (struct interface *ifp, int mtu)
 	if(ret != OK)
 		return ret;
 #ifdef PL_HAL_MODULE
-	ret = hal_port_mtu_set(ifp->ifindex, mtu);
+	//ret = hal_port_mtu_set(ifp->ifindex, mtu);
 #endif
 	return ret;
 }
@@ -373,7 +402,7 @@ int nsm_pal_interface_metric (struct interface *ifp, int metric)
 {
 	int ret = 0;
 #ifdef PL_HAL_MODULE
-	ret = hal_port_metric_set(ifp->ifindex, metric);
+	//ret = hal_port_metric_set(ifp->ifindex, metric);
 #endif
 	return ret;
 }
@@ -385,7 +414,7 @@ int nsm_pal_interface_vrf (struct interface *ifp, int vrf)
 	if(ret != OK)
 		return ret;
 #ifdef PL_HAL_MODULE
-	ret = hal_port_vrf_set(ifp->ifindex, vrf);
+	//ret = hal_port_vrf_set(ifp->ifindex, vrf);
 #endif
 	return ret;
 }
@@ -394,7 +423,7 @@ int nsm_pal_interface_multicast (struct interface *ifp, int multicast)
 {
 	int ret = 0;
 #ifdef PL_HAL_MODULE
-	ret = hal_port_multicast_set(ifp->ifindex, multicast);
+	//ret = hal_port_multicast_set(ifp->ifindex, multicast);
 #endif
 	return ret;
 }
@@ -403,7 +432,7 @@ int nsm_pal_interface_bandwidth (struct interface *ifp, int bandwidth)
 {
 	int ret = 0;
 #ifdef PL_HAL_MODULE
-	ret = hal_port_bandwidth_set(ifp->ifindex, bandwidth);
+	//ret = hal_port_bandwidth_set(ifp->ifindex, bandwidth);
 #endif
 	return ret;
 }
@@ -463,7 +492,7 @@ int nsm_pal_interface_mode (struct interface *ifp, int mode)
 {
 	int ret = 0;
 #ifdef PL_HAL_MODULE
-	ret = hal_port_mode_set(ifp->ifindex, mode);
+	//ret = hal_port_mode_set(ifp->ifindex, mode);
 #endif
 	return ret;
 }
@@ -489,7 +518,7 @@ int nsm_pal_interface_linkdetect (struct interface *ifp, int link)
 {
 	int ret = 0;
 #ifdef PL_HAL_MODULE
-	ret = hal_port_linkdetect_set(ifp->ifindex, link);
+	//ret = hal_port_linkdetect_set(ifp->ifindex, link);
 #endif
 	return ret;
 }
@@ -498,7 +527,8 @@ int nsm_pal_interface_stp (struct interface *ifp,  int stp )
 {
 	int ret = 0;
 #ifdef PL_HAL_MODULE
-	ret = hal_port_stp_set(ifp->ifindex, stp);
+	//ret = hal_port_stp_set(ifp->ifindex, stp);
+	ret = hal_stp_state(ifp->ifindex, stp);
 #endif
 	return ret;
 }
@@ -507,7 +537,7 @@ int nsm_pal_interface_loop (struct interface *ifp,  int loop )
 {
 	int ret = 0;
 #ifdef PL_HAL_MODULE
-	ret = hal_port_loop_set(ifp->ifindex, loop);
+	//ret = hal_port_loop_set(ifp->ifindex, loop);
 #endif
 	return ret;
 }
@@ -516,7 +546,7 @@ int nsm_pal_interface_8021x (struct interface *ifp, int mode)
 {
 	int ret = 0;
 #ifdef PL_HAL_MODULE
-	ret = hal_port_8021x_set(ifp->ifindex, mode);
+	//ret = hal_port_8021x_set(ifp->ifindex, mode);
 #endif
 	return ret;
 }

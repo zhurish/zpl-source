@@ -14,9 +14,11 @@
 
 typedef struct sdk_qinq_s
 {
-	int (*sdk_qinq_enable_cb) (BOOL);
-	int (*sdk_qinq_vlan_ptid_cb) (vlan_t);
-	int (*sdk_qinq_port_enable_cb) (ifindex_t, BOOL);
+	int (*sdk_qinq_enable_cb) (void *, BOOL);
+	int (*sdk_qinq_vlan_ptid_cb) (void *, vlan_t);
+	int (*sdk_qinq_port_enable_cb) (void *, ifindex_t, BOOL);
+
+	void *sdk_driver;
 }sdk_qinq_t;
 
 int hal_qinq_enable(BOOL enable);

@@ -123,54 +123,7 @@ int x5b_app_statistics(x5b_app_mgt_t *mgt, int tx, int from)
 
 
 
-#ifdef X5B_APP_TCP_ENABLE
-static int x5b_app_tcp_connect_init(x5b_app_mgt_t *mgt)
-{
-	if(mgt->app_c.reg_state && mgt->tcp.w_fd == 0)
-	{
-		mgt->tcp.w_fd = sock_create(TRUE);
-		if(mgt->tcp.w_fd)
-		{
-			if(sock_connect(mgt->tcp.w_fd, inet_address(mgt->app_c.address), mgt->local_port + 1) == OK)
-			{
-				zlog_debug(ZLOG_APP, "Connect to %s:%d OK", inet_address(mgt->app_c.address),
-						mgt->local_port + 1);
-				return OK;
-			}
-			zlog_err(ZLOG_APP, "Can not Connect to %s:%d(:%s)", inet_address(mgt->app_c.address),
-					mgt->local_port + 1, strerror(errno));
-			close(mgt->tcp.w_fd);
-			mgt->tcp.w_fd = 0;
-			return ERROR;
-		}
-		zlog_err(ZLOG_APP, "Can not Create client TCP socket(:%s)", strerror(errno));
-	}
-	return ERROR;
-}
 
-static int x5b_app_tcp_socket_init(x5b_app_mgt_t *mgt)
-{
-	int fd = sock_create(TRUE);
-	if(fd)
-	{
-		if(sock_bind(fd, mgt->local_address, mgt->local_port + 1) == OK)
-		{
-			sock_listen(fd, 3);
-			mgt->accept_fd = fd;
-			zlog_debug(ZLOG_APP, "========> add read fd=%d", fd);
-			x5b_app_event_active(mgt, X5B_TCP_ACCEPT_EV, 0, 0);
-			//mgt->accept_thread = eloop_add_read(mgt->master, x5b_app_accept_eloop, mgt, fd);
-			return OK;
-		}
-		else
-		{
-			zlog_err(ZLOG_APP, "Can not bind TCP socket(:%s)", strerror(errno));
-		}
-	}
-	zlog_err(ZLOG_APP, "Can not Create TCP socket(:%s)", strerror(errno));
-	return ERROR;
-}
-#endif
 
 
 int x5b_app_socket_init(x5b_app_mgt_t *mgt)
@@ -182,7 +135,7 @@ int x5b_app_socket_init(x5b_app_mgt_t *mgt)
 	if(fd)
 	{
 		if(mgt->local_port == 0)
-			mgt->local_port = X5B_APP_PORT_DEFAULT;
+			mgt->local_port = X5B_APP_LOCAL_PORT_DEFAULT;
 		//zlog_debug(ZLOG_APP, "sock_bind %s:%d", mgt->local_address ? mgt->local_address:"any", mgt->local_port);
 		if(sock_bind(fd, mgt->local_address, mgt->local_port) == OK)
 		{
@@ -195,9 +148,6 @@ int x5b_app_socket_init(x5b_app_mgt_t *mgt)
 			//zlog_debug(ZLOG_APP, "========> add read fd=%d", fd);
 			x5b_app_event_active(mgt, X5B_READ_EV, 0, 0);
 			//mgt->r_thread = eloop_add_read(mgt->master, x5b_app_read_eloop, mgt, fd);
-#ifdef X5B_APP_TCP_ENABLE
-			x5b_app_tcp_socket_init(mgt);
-#endif
 			//mgt->t_thread = eloop_add_timer(mgt->master, x5b_app_timer_eloop, mgt, mgt->interval + 5);
 			return OK;
 		}
@@ -217,25 +167,18 @@ int x5b_app_socket_exit(x5b_app_mgt_t *mgt)
 		eloop_cancel(mgt->r_thread);
 		mgt->r_thread = NULL;
 	}
-#ifdef X5B_APP_TCP_ENABLE
-	if(mgt && mgt->accept_thread)
+	if(mgt && mgt->t_thread)
 	{
-		eloop_cancel(mgt->accept_thread);
-		mgt->accept_thread = NULL;
+		eloop_cancel(mgt->t_thread);
+		mgt->t_thread = NULL;
 	}
-#endif
+
 	if(mgt && mgt->reset_thread)
 	{
 		eloop_cancel(mgt->reset_thread);
 		mgt->reset_thread = NULL;
 	}
-#ifdef X5B_APP_TCP_ENABLE
-	if(mgt && mgt->tcp.r_thread)
-	{
-		eloop_cancel(mgt->tcp.r_thread);
-		mgt->tcp.r_thread = NULL;
-	}
-#endif
+
 	if(mgt && mgt->app_a.t_thread)
 	{
 		eloop_cancel(mgt->app_a.t_thread);
@@ -248,21 +191,7 @@ int x5b_app_socket_exit(x5b_app_mgt_t *mgt)
 	}
 	if(mgt)
 	{
-#ifdef X5B_APP_TCP_ENABLE
-		if(mgt->tcp.r_fd)
-		{
-			close(mgt->tcp.r_fd);
-			mgt->tcp.r_fd = 0;
-		}
-		if(mgt->tcp.w_fd)
-		{
-			close(mgt->tcp.w_fd);
-			mgt->tcp.w_fd = 0;
-		}
-		if(mgt->accept_fd)
-			close(mgt->accept_fd);
-		mgt->accept_fd = 0;
-#endif
+
 		if(mgt->r_fd)
 			close(mgt->r_fd);
 		mgt->r_fd = 0;
@@ -303,6 +232,71 @@ static int x5b_app_reset_eloop(struct eloop *eloop)
 static int x5b_app_timer_eloop(struct eloop *eloop)
 {
 	zassert(eloop != NULL);
+	x5b_app_mgt_t *mgt = ELOOP_ARG(eloop);
+	//return 0;
+	zassert(mgt != NULL);
+	if(mgt->mutex)
+		os_mutex_lock(mgt->mutex, OS_WAIT_FOREVER);
+
+	mgt->t_thread = NULL;
+#if 0
+#ifdef X5B_APP_TIMESYNC_C
+	if(!mgt->time_sync && mgt->app_c.reg_state)
+#else
+	if(!mgt->time_sync && mgt->app_a.reg_state)
+#endif
+	{
+		if(mgt->mutex)
+			os_mutex_unlock(mgt->mutex);
+#ifdef X5B_APP_TIMESYNC_C
+		if(x5b_app_mode_X5CM())
+			x5b_app_rtc_request(mgt, E_CMD_TO_C);
+		else
+#endif
+			x5b_app_rtc_request(mgt, E_CMD_TO_A);
+		if(mgt->mutex)
+			os_mutex_lock(mgt->mutex, OS_WAIT_FOREVER);
+	}
+#endif
+#if 1
+	if(mgt->app_a.reg_state)
+	{
+/*		if(strlen(mgt->app_a.version) != 0)
+		{
+			memset(mgt->app_a.version, 0, sizeof(mgt->app_a.version));
+		}*/
+		if(strlen(mgt->app_a.version) <= 0 &&
+				mgt->app_a.reg_state)
+		{
+			x5b_app_version_request(mgt, E_CMD_TO_A);
+		}
+	}
+
+	if(x5b_app_mode_X5CM() && mgt->app_c.reg_state)
+	{
+/*		if(strlen(mgt->app_c.version) != 0)
+		{
+			memset(mgt->app_c.version, 0, sizeof(mgt->app_c.version));
+		}*/
+		if(strlen(mgt->app_c.version) <= 0 &&
+				mgt->app_c.reg_state)
+		{
+			x5b_app_version_request(mgt, E_CMD_TO_C);
+		}
+	}
+#endif
+	x5b_app_event_active(mgt, X5B_TIMER_EV, 0, 0);
+	if(mgt->mutex)
+		os_mutex_unlock(mgt->mutex);
+	return OK;
+}
+
+#define X5B_APP_KEEPALIVE_SAME_ONE 1
+
+static int x5b_app_keepalive_eloop(struct eloop *eloop)
+{
+#if (X5B_APP_KEEPALIVE_SAME_ONE == 0)
+	zassert(eloop != NULL);
 	x5b_app_mgt_node_t *mgt_priv = ELOOP_ARG(eloop);
 	zassert(mgt_priv != NULL);
 	zassert(mgt_priv->priv != NULL);
@@ -310,106 +304,18 @@ static int x5b_app_timer_eloop(struct eloop *eloop)
 	zassert(mgt != NULL);
 	if(mgt->mutex)
 		os_mutex_lock(mgt->mutex, OS_WAIT_FOREVER);
+
 	mgt_priv->t_thread = NULL;
-
-	if(!mgt->app_a.reg_state || !mgt->app_a.id)
-	{
-		if(mgt->app_a.version)
-		{
-			free(mgt->app_a.version);
-			mgt->app_a.version = NULL;
-		}
-		if(mgt->app_a.version == NULL)
-		{
-			mgt->app_a.reg_state = TRUE;
-			mgt->app_a.remote_port = X5B_APP_PORT_DEFAULT;
-#ifdef X5B_APP_STATIC_IP_ENABLE
-			mgt->app_a.address = ntohl(inet_addr(X5B_APP_A_IP_DEFAULT));
-#endif
-			if(x5b_app_version_request(mgt, E_CMD_TO_A) == OK)
-			{
-				mgt->app_a.id = X5B_APP_MODULE_ID_A;
-				mgt->app_a.reg_state = TRUE;
-			}
-		}
-	}
-	if(mgt->X5CM)
-	{
-		if(!mgt->app_c.reg_state || !mgt->app_c.id)
-		{
-			if(mgt->app_c.version)
-			{
-				free(mgt->app_c.version);
-				mgt->app_c.version = NULL;
-			}
-			if(mgt->app_c.version == NULL)
-			{
-				mgt->app_c.reg_state = TRUE;
-				mgt->app_c.remote_port = X5B_APP_PORT_DEFAULT;
-#ifdef X5B_APP_STATIC_IP_ENABLE
-				mgt->app_c.address = ntohl(inet_addr(X5B_APP_C_IP_DEFAULT));
-#endif
-				if(x5b_app_version_request(mgt, E_CMD_TO_C) == OK)
-				{
-					mgt->app_c.id = X5B_APP_MODULE_ID_C;
-					mgt->app_c.reg_state = TRUE;
-				}
-			}
-		}
-	}
-
-	if(!mgt->time_sync)
-	{
-		if(mgt->mutex)
-			os_mutex_unlock(mgt->mutex);
-
-		x5b_app_rtc_request(mgt, E_CMD_TO_A);
-
-		if(mgt->mutex)
-			os_mutex_lock(mgt->mutex, OS_WAIT_FOREVER);
-		x5b_app_event_active(mgt, X5B_TIMER_EV, mgt_priv->id, 0);
-		if(mgt->mutex)
-			os_mutex_unlock(mgt->mutex);
-		return OK;
-	}
-/*	if(mgt->state)
-		mgt->state--;*/
 
 	if(mgt_priv->id == X5B_APP_MODULE_ID_A)
 	{
-		if(mgt_priv->reg_state)
-		{
-			if(mgt->app_a.version == NULL)
-			{
-				x5b_app_version_request(mgt, E_CMD_TO_A);
-			}
-/*			if(mgt->app_a.face_snyc == 0)
-			{
-				x5b_app_face_id_request(mgt, E_CMD_TO_C);
-			}*/
-		}
-
 		if(mgt_priv->reg_state && !mgt->upgrade)
 			x5b_app_keepalive_send(mgt, 0, E_CMD_TO_A);
-		//x5b_app_send_msg(mgt);
 	}
 	else if(mgt_priv->id == X5B_APP_MODULE_ID_C)
 	{
-		if(mgt_priv->reg_state)
-		{
-			if(mgt->app_c.version == NULL)
-			{
-				x5b_app_version_request(mgt, E_CMD_TO_C);
-			}
-/*			if(mgt->app_c.face_snyc == 0)
-			{
-				//x5b_app_face_id_request(mgt, E_CMD_TO_C);
-			}*/
-		}
-
 		if(mgt_priv->reg_state && !mgt->upgrade)
 			x5b_app_keepalive_send(mgt, 0, E_CMD_TO_C);
-		//x5b_app_send_msg(mgt);
 	}
 	mgt_priv->keep_cnt--;
 	if(mgt_priv->keep_cnt == 0)
@@ -419,25 +325,55 @@ static int x5b_app_timer_eloop(struct eloop *eloop)
 		else if(mgt_priv->id == X5B_APP_MODULE_ID_C)
 			;//zlog_debug(ZLOG_APP, "===================%s C Module keepalive timeout clear state", __func__);
 	}
-/*	if(!X5B_APP_MGT_STATE_OK(mgt_priv))
+
+	x5b_app_event_active(mgt, X5B_KEEPALIVE_EV, mgt_priv->id, 0);
+#else
+	zassert(eloop != NULL);
+	x5b_app_mgt_t *mgt = ELOOP_ARG(eloop);
+	zassert(mgt != NULL);
+	if(mgt->mutex)
+		os_mutex_lock(mgt->mutex, OS_WAIT_FOREVER);
+
+	mgt->k_thread = NULL;
+
+	if(mgt->app_a.reg_state && !mgt->upgrade)
 	{
-		mgt_priv->reg_state = FALSE;
-		mgt_priv->address = 0;
-		mgt_priv->id = 0;
-		mgt_priv->msg_sync = FALSE;
-		zlog_debug(ZLOG_APP, "===================%s keepalive timeout clear state", __func__);
+		x5b_app_keepalive_send(mgt, 0, E_CMD_TO_A);
+		mgt->app_a.keep_cnt--;
 	}
-	if(!mgt_priv->reg_state)
-		x5b_app_AC_state_save(mgt);*/
-/*	if(mgt_priv->reg_state)
-		mgt_priv->t_thread = eloop_add_timer(mgt->master, x5b_app_timer_eloop, mgt_priv, mgt_priv->interval);*/
-	//else if(mgt_priv->id == X5B_APP_MODULE_ID_C)
-	x5b_app_event_active(mgt, X5B_TIMER_EV, mgt_priv->id, 0);
+	if(x5b_app_mode_X5CM())
+	{
+		if(mgt->app_c.reg_state && !mgt->upgrade)
+		{
+			x5b_app_keepalive_send(mgt, 0, E_CMD_TO_C);
+			mgt->app_c.keep_cnt--;
+		}
+	}
+	if(mgt->app_a.keep_cnt == 0)
+	{
+		x5b_app_event_inactive(mgt, X5B_KEEPALIVE_EV, 0);
+
+		if(mgt->mutex)
+			os_mutex_unlock(mgt->mutex);
+		return OK;
+	}
+	if(x5b_app_mode_X5CM())
+	{
+		if(mgt->app_c.keep_cnt == 0)
+		{
+			x5b_app_event_inactive(mgt, X5B_KEEPALIVE_EV, 0);
+
+			if(mgt->mutex)
+				os_mutex_unlock(mgt->mutex);
+			return OK;
+		}
+	}
+	x5b_app_event_active(mgt, X5B_KEEPALIVE_EV, 0, 0);
+#endif
 	if(mgt->mutex)
 		os_mutex_unlock(mgt->mutex);
 	return OK;
 }
-
 
 static int x5b_app_read_eloop(struct eloop *eloop)
 {
@@ -513,6 +449,15 @@ static int x5b_app_read_eloop(struct eloop *eloop)
 			mgt->fromid = X5B_APP_MODULE_ID_C;
 			x5b_app_statistics(mgt, 0, X5B_APP_MODULE_ID_C);
 		}
+
+		if(!x5b_app_mode_X5CM() && ntohl(mgt->from.sin_addr.s_addr)==mgt->app_c.address)
+		{
+			if(mgt->r_thread == NULL)
+				x5b_app_event_active(mgt, X5B_READ_EV, 0, 0);
+			if(mgt->mutex)
+				os_mutex_unlock(mgt->mutex);
+			return OK;
+		}
 		//x5b_app_read_handle(mgt);
 		//if(mgt->mutex)
 		//	os_mutex_unlock(mgt->mutex);
@@ -529,219 +474,7 @@ static int x5b_app_read_eloop(struct eloop *eloop)
 	return OK;
 }
 
-#ifdef X5B_APP_TCP_ENABLE
-static int x5b_app_accept_eloop(struct eloop *eloop)
-{
-	struct sockaddr_in client;
-	zassert(eloop != NULL);
-	x5b_app_mgt_t *mgt = ELOOP_ARG(eloop);
-	zassert(mgt != NULL);
-	int accept_sock = ELOOP_FD(eloop);
-	mgt->accept_thread = NULL;
-	if(mgt->tcp.r_fd)
-		close(mgt->tcp.r_fd);
-	mgt->tcp.r_fd = sock_accept (accept_sock, &client);
-	//mgt->tcp.w_fd = mgt->tcp.r_fd;
-	zlog_debug(ZLOG_APP, "========> add read fd=%d", mgt->tcp.r_fd);
-	x5b_app_event_active(mgt, X5B_TCP_READ_EV, 0, 0);
-	//mgt->tcp.r_thread = eloop_add_read(mgt->master, x5b_app_tcp_read_eloop, mgt, mgt->tcp.r_fd);
-	zlog_debug(ZLOG_APP, "========> add read fd=%d", accept_sock);
-	x5b_app_event_active(mgt, X5B_TCP_ACCEPT_EV, 0, 0);
-	//mgt->accept_thread = eloop_add_read(mgt->master, x5b_app_accept_eloop, mgt, accept_sock);
-	return OK;
-}
 
-static int x5b_app_tcp_read_eloop(struct eloop *eloop)
-{
-	int len;
-	zassert(eloop != NULL);
-	x5b_app_mgt_t *mgt = ELOOP_ARG(eloop);
-	zassert(mgt != NULL);
-	int sock = ELOOP_FD(eloop);
-	if(mgt->mutex)
-		os_mutex_lock(mgt->mutex, OS_WAIT_FOREVER);
-	x5b_app_hdr_t *hdr = (x5b_app_hdr_t *) mgt->tcp.hdr_buf;
-	mgt->tcp.r_thread = NULL;
-
-	if (X5_B_ESP32_DEBUG(EVENT))
-		zlog_debug(ZLOG_APP, "RECV mgt on TCP socket");
-
-	if (mgt->tcp.hdr_len == 0)
-	{
-		len = ip_read(sock, mgt->tcp.hdr_buf, sizeof(x5b_app_hdr_t));
-		if (len == sizeof(x5b_app_hdr_t))
-		{
-			mgt->tcp.len = ntohl(hdr->total_len) + 2;
-			mgt->tcp.hdr_len = sizeof(x5b_app_hdr_t);
-		}
-		else if (len > 0)
-		{
-			mgt->tcp.hdr_len = len;
-			zlog_debug(ZLOG_APP, "========> add read fd=%d", mgt->tcp.r_fd);
-/*			mgt->tcp.r_thread = eloop_add_read(mgt->master,
-					x5b_app_tcp_read_eloop, mgt, mgt->tcp.r_fd);*/
-			x5b_app_event_active(mgt, X5B_TCP_READ_EV, 0, 0);
-			if(mgt->mutex)
-				os_mutex_unlock(mgt->mutex);
-			return OK;
-		} else
-		{
-			if (ERRNO_IO_RETRY(errno))
-			{
-				zlog_debug(ZLOG_APP, "========> add read fd=%d", mgt->tcp.r_fd);
-		/*		mgt->tcp.r_thread = eloop_add_read(mgt->master,
-						x5b_app_tcp_read_eloop, mgt, mgt->tcp.r_fd);*/
-				x5b_app_event_active(mgt, X5B_TCP_READ_EV, 0, 0);
-				if(mgt->mutex)
-					os_mutex_unlock(mgt->mutex);
-				return OK;
-			}
-			else
-			{
-				close(mgt->tcp.r_fd);
-					mgt->tcp.r_fd = 0;
-/*				close(mgt->tcp.w_fd);
-					mgt->tcp.w_fd = 0;*/
-				if(mgt->mutex)
-					os_mutex_unlock(mgt->mutex);
-				return OK;
-			}
-		}
-		if (mgt->tcp.len < sizeof(mgt->buf))
-			mgt->tcp.buf = mgt->buf;
-		else
-		{
-			mgt->tcp.buf = XMALLOC(MTYPE_TMP, mgt->tcp.len + 16);
-			if (mgt->tcp.buf == NULL)
-			{
-				if(mgt->mutex)
-					os_mutex_unlock(mgt->mutex);
-				return OK;
-			}
-		}
-	}
-	else
-	{
-		if (mgt->tcp.hdr_len < sizeof(x5b_app_hdr_t))
-		{
-			len = ip_read(sock, mgt->tcp.hdr_buf + mgt->tcp.hdr_len,
-					sizeof(x5b_app_hdr_t) - mgt->tcp.hdr_len);
-			if (len == sizeof(x5b_app_hdr_t) - mgt->tcp.hdr_len)
-			{
-				mgt->tcp.len = ntohl(hdr->total_len) + 2;
-				mgt->tcp.hdr_len = sizeof(x5b_app_hdr_t);
-			}
-			else if (len > 0)
-			{
-				mgt->tcp.hdr_len = len;
-				zlog_debug(ZLOG_APP, "========> add read fd=%d", mgt->tcp.r_fd);
-				/*mgt->tcp.r_thread = eloop_add_read(mgt->master,
-						x5b_app_tcp_read_eloop, mgt, mgt->tcp.r_fd);*/
-				x5b_app_event_active(mgt, X5B_TCP_READ_EV, 0, 0);
-				if(mgt->mutex)
-					os_mutex_unlock(mgt->mutex);
-				return OK;
-			}
-			else
-			{
-				if (ERRNO_IO_RETRY(errno))
-				{
-					zlog_debug(ZLOG_APP, "========> add read fd=%d", mgt->tcp.r_fd);
-					/*mgt->tcp.r_thread = eloop_add_read(mgt->master,
-							x5b_app_tcp_read_eloop, mgt, mgt->tcp.r_fd);*/
-					x5b_app_event_active(mgt, X5B_TCP_READ_EV, 0, 0);
-					if(mgt->mutex)
-						os_mutex_unlock(mgt->mutex);
-					return OK;
-				}
-				else
-				{
-					close(mgt->tcp.r_fd);
-						mgt->tcp.r_fd = 0;
-/*					close(mgt->tcp.w_fd);
-						mgt->tcp.w_fd = 0;*/
-					if(mgt->mutex)
-						os_mutex_unlock(mgt->mutex);
-					return OK;
-				}
-			}
-			if (mgt->tcp.len < sizeof(mgt->buf))
-				mgt->tcp.buf = mgt->buf;
-			else
-			{
-				mgt->tcp.buf = XMALLOC(MTYPE_TMP, mgt->tcp.len + 16);
-				if (mgt->tcp.buf == NULL)
-				{
-					if(mgt->mutex)
-						os_mutex_unlock(mgt->mutex);
-					return OK;
-				}
-			}
-		}
-	}
-	zassert(mgt->tcp.buf != NULL);
-	len = ip_read(sock, mgt->tcp.buf + mgt->tcp.offset,
-			mgt->tcp.len - mgt->tcp.offset);
-	if (len > 0)
-	{
-		mgt->tcp.offset += len;
-		if (mgt->tcp.offset == mgt->tcp.len)
-		{
-			mgt->len = mgt->tcp.len;
-			if (X5_B_ESP32_DEBUG(RECV))
-			{
-				zlog_debug(ZLOG_APP, "MSG TCP from %d byte", mgt->len);
-
-				if (X5_B_ESP32_DEBUG(HEX))
-					x5b_app_hex_debug(mgt, "RECV", 1);
-			}
-			mgt->tcp_r = TRUE;
-			if(mgt->mutex)
-				os_mutex_unlock(mgt->mutex);
-			x5b_app_read_handle(mgt);
-			if(mgt->mutex)
-				os_mutex_lock(mgt->mutex, OS_WAIT_FOREVER);
-		}
-		zlog_debug(ZLOG_APP, "========> add read fd=%d", mgt->tcp.r_fd);
-		x5b_app_event_active(mgt, X5B_TCP_READ_EV, 0, 0);
-		/*mgt->tcp.r_thread = eloop_add_read(mgt->master, x5b_app_tcp_read_eloop,
-				mgt, mgt->tcp.r_fd);*/
-		if(mgt->mutex)
-			os_mutex_unlock(mgt->mutex);
-		return OK;
-	}
-	else
-	{
-		if (ERRNO_IO_RETRY(errno))
-		{
-			zlog_debug(ZLOG_APP, "========> add read fd=%d", mgt->tcp.r_fd);
-			/*mgt->tcp.r_thread = eloop_add_read(mgt->master,
-					x5b_app_tcp_read_eloop, mgt, mgt->tcp.r_fd);*/
-			x5b_app_event_active(mgt, X5B_TCP_READ_EV, 0, 0);
-			if(mgt->mutex)
-				os_mutex_unlock(mgt->mutex);
-			return OK;
-		}
-		else
-		{
-			close(mgt->tcp.r_fd);
-				mgt->tcp.r_fd = 0;
-/*			close(mgt->tcp.w_fd);
-				mgt->tcp.w_fd = 0;*/
-				if(mgt->mutex)
-					os_mutex_unlock(mgt->mutex);
-			return OK;
-		}
-	}
-	zlog_debug(ZLOG_APP, "========> add read fd=%d", mgt->tcp.r_fd);
-	x5b_app_event_active(mgt, X5B_TCP_READ_EV, 0, 0);
-/*	mgt->tcp.r_thread = eloop_add_read(mgt->master, x5b_app_tcp_read_eloop, mgt,
-			mgt->tcp.r_fd);*/
-	if(mgt->mutex)
-		os_mutex_unlock(mgt->mutex);
-	return OK;
-}
-#endif
 
 
 int x5b_app_event_active(x5b_app_mgt_t *mgt, x5_b_event_t ev, int who, int value)
@@ -749,43 +482,79 @@ int x5b_app_event_active(x5b_app_mgt_t *mgt, x5_b_event_t ev, int who, int value
 	zassert(mgt != NULL);
 	switch(ev)
 	{
-		case X5B_TIMER_EV:
+		case X5B_KEEPALIVE_EV:
+#if (X5B_APP_KEEPALIVE_SAME_ONE == 0)
 			if(who == X5B_APP_MODULE_ID_A)
 			{
 				if(mgt->app_a.reg_state && mgt->master)
-					mgt->app_a.t_thread = eloop_add_timer(mgt->master, x5b_app_timer_eloop, &mgt->app_a, mgt->app_a.interval);
+					mgt->app_a.t_thread = eloop_add_timer(mgt->master, x5b_app_keepalive_eloop, &mgt->app_a, mgt->app_a.interval);
 			}
 			else if(who == X5B_APP_MODULE_ID_C)
 			{
 				if(mgt->app_c.reg_state && mgt->master)
-					mgt->app_c.t_thread = eloop_add_timer(mgt->master, x5b_app_timer_eloop, &mgt->app_c, mgt->app_c.interval);
+					mgt->app_c.t_thread = eloop_add_timer(mgt->master, x5b_app_keepalive_eloop, &mgt->app_c, mgt->app_c.interval);
+			}
+#else
+			if(x5b_app_mode_X5CM())
+			{
+				if(mgt->app_a.reg_state &&
+						mgt->app_c.reg_state &&
+						mgt->master &&
+						!mgt->k_thread)
+					mgt->k_thread = eloop_add_timer(mgt->master, x5b_app_keepalive_eloop, mgt, mgt->app_a.interval);
+			}
+			else
+			{
+				if(mgt->app_a.reg_state &&
+						mgt->master &&
+						!mgt->k_thread)
+					mgt->k_thread = eloop_add_timer(mgt->master, x5b_app_keepalive_eloop, mgt, mgt->app_a.interval);
+			}
+#endif
+			break;
+
+		case X5B_TIMER_EV:
+			if(mgt->master && !mgt->t_thread)
+			{
+				if(!mgt->time_sync)
+					mgt->t_thread = eloop_add_timer(mgt->master, x5b_app_timer_eloop, mgt, X5B_APP_INTERVAL_DEFAULT);
+				else
+				{
+					if(mgt->app_a.reg_state)
+					{
+						if(strlen(mgt->app_a.version) <= 0 &&
+								mgt->app_a.reg_state)
+						{
+							mgt->t_thread = eloop_add_timer(mgt->master, x5b_app_timer_eloop, mgt, X5B_APP_INTERVAL_DEFAULT);
+						}
+					}
+
+					if(x5b_app_mode_X5CM() && mgt->app_c.reg_state)
+					{
+						if(strlen(mgt->app_c.version) <= 0 &&
+								mgt->app_c.reg_state)
+						{
+							if(!mgt->t_thread)
+								mgt->t_thread = eloop_add_timer(mgt->master, x5b_app_timer_eloop, mgt, X5B_APP_INTERVAL_DEFAULT);
+						}
+					}
+					if(!mgt->t_thread)
+						mgt->t_thread = eloop_add_timer(mgt->master, x5b_app_timer_eloop, mgt, X5B_APP_INTERVAL_DEFAULT * 6);
+				}
 			}
 			break;
 		case X5B_READ_EV:
-			if(mgt->master && mgt->r_fd)
+			if(mgt->master && mgt->r_fd  && !mgt->r_thread)
 				mgt->r_thread = eloop_add_read(mgt->master, x5b_app_read_eloop, mgt, mgt->r_fd);
 			break;
 		case X5B_WRITE_EV:
 			break;
 		case X5B_RESET_EV:
-			if(mgt->master)
+			if(mgt->master  && !mgt->reset_thread)
 				mgt->reset_thread = eloop_add_timer_msec(mgt->master, x5b_app_reset_eloop, mgt, 100);
 			break;
 		case X5B_REPORT_EV:
 			break;
-#ifdef X5B_APP_TCP_ENABLE
-		case X5B_TCP_ACCEPT_EV:
-			if(mgt->master && mgt->accept_fd)
-				mgt->accept_thread = eloop_add_read(mgt->master, x5b_app_accept_eloop, mgt, mgt->accept_fd);
-			break;
-		case X5B_TCP_READ_EV:
-			if(mgt->master && mgt->tcp.r_fd)
-				mgt->tcp.r_thread = eloop_add_read(mgt->master, x5b_app_tcp_read_eloop, mgt,
-					mgt->tcp.r_fd);
-			break;
-		case X5B_TCP_WRITE_EV:
-			break;
-#endif
 	}
 	return OK;
 }
@@ -795,7 +564,8 @@ int x5b_app_event_inactive(x5b_app_mgt_t *mgt, x5_b_event_t ev, int who)
 	zassert(mgt != NULL);
 	switch(ev)
 	{
-		case X5B_TIMER_EV:
+		case X5B_KEEPALIVE_EV:
+#if (X5B_APP_KEEPALIVE_SAME_ONE == 0)
 			if(who == X5B_APP_MODULE_ID_A)
 			{
 				if(mgt->app_a.t_thread)
@@ -811,6 +581,20 @@ int x5b_app_event_inactive(x5b_app_mgt_t *mgt, x5_b_event_t ev, int who)
 					eloop_cancel(mgt->app_c.t_thread);
 					mgt->app_c.t_thread = NULL;
 				}
+			}
+#else
+			if(mgt->k_thread)
+			{
+				eloop_cancel(mgt->k_thread);
+				mgt->k_thread = NULL;
+			}
+#endif
+			break;
+		case X5B_TIMER_EV:
+			if(mgt->t_thread)
+			{
+				eloop_cancel(mgt->t_thread);
+				mgt->t_thread = NULL;
 			}
 			break;
 		case X5B_READ_EV:
@@ -831,24 +615,6 @@ int x5b_app_event_inactive(x5b_app_mgt_t *mgt, x5_b_event_t ev, int who)
 			break;
 		case X5B_REPORT_EV:
 			break;
-#ifdef X5B_APP_TCP_ENABLE
-		case X5B_TCP_ACCEPT_EV:
-			if(mgt->accept_thread)
-			{
-				eloop_cancel(mgt->accept_thread);
-				mgt->accept_thread = NULL;
-			}
-			break;
-		case X5B_TCP_READ_EV:
-			if(mgt->accept_thrtcp.r_threadead)
-			{
-				eloop_cancel(mgt->tcp.r_thread);
-				mgt->tcp.r_thread = NULL;
-			}
-			break;
-		case X5B_TCP_WRITE_EV:
-			break;
-#endif
 	}
 	return OK;
 }
@@ -861,26 +627,6 @@ int x5b_app_read_chk_handle(x5b_app_mgt_t *mgt)
 	u_int16 crc1 = 0;
 	u_int16 *crc = NULL;
 	zassert(mgt != NULL);
-#ifdef X5B_APP_TCP_ENABLE
-	if(mgt->tcp_r)
-	{
-		zassert(mgt->tcp.buf != NULL);
-		x5b_app_hdr_t *hdr = mgt->tcp.hdr_buf;
-/*		if(ntohl(hdr->total_len) + sizeof(x5b_app_hdr_t) + 2!= mgt->len)
-		{
-			if(X5_B_ESP32_DEBUG(EVENT))
-				zlog_warn(ZLOG_APP, "TOTAL len is not same to msg len(%d != %d)",
-						ntohl(hdr->total_len) + sizeof(x5b_app_hdr_t) + 2, mgt->len);
-			return ERROR;
-		}*/
-		crc1 =  Data_CRC16Check (mgt->tcp.buf,  mgt->len - 2);
-		crc = (u_int16 *)&mgt->buf[mgt->len - 2];
-		len = mgt->tcp.len - 2;
-		//offset += 0;
-		mgt->seqnum = hdr->seqnum;
-	}
-	else
-#endif
 	{
 		x5b_app_hdr_t *hdr = mgt->buf;
 		//x5b_app_statistics(mgt, 0);
@@ -888,7 +634,7 @@ int x5b_app_read_chk_handle(x5b_app_mgt_t *mgt)
 		{
 			if(X5_B_ESP32_DEBUG(EVENT))
 				zlog_warn(ZLOG_APP, "TOTAL len is not same to msg len(%d != %d)",
-						ntohl(hdr->total_len) + sizeof(x5b_app_hdr_t) + 2, mgt->len);
+						(int)(ntohl(hdr->total_len) + sizeof(x5b_app_hdr_t) + 2), mgt->len);
 			return ERROR;
 		}
 		crc1 =  Data_CRC16Check (mgt->buf,  mgt->len - 2);
@@ -918,13 +664,6 @@ static int x5b_app_read_ack_handle(x5b_app_mgt_t *mgt, char *output, int outlen)
 	os_tlv_t tlv;
 	char add_tmp[64];
 	zassert(mgt != NULL);
-#ifdef X5B_APP_TCP_ENABLE
-	if(mgt->tcp_r)
-	{
-		offset += 0;
-	}
-	else
-#endif
 	{
 		offset += sizeof(x5b_app_hdr_t);
 	}
@@ -938,12 +677,8 @@ static int x5b_app_read_ack_handle(x5b_app_mgt_t *mgt, char *output, int outlen)
 	while(len > 0)
 	{
 		memset(&tlv, 0, sizeof(os_tlv_t));
-#ifdef X5B_APP_TCP_ENABLE
-		if(mgt->tcp_r)
-			offset += os_tlv_get(mgt->tcp.buf + offset, &tlv);
-		else
-#endif
-			offset += os_tlv_get(mgt->buf + offset, &tlv);
+
+		offset += os_tlv_get(mgt->buf + offset, &tlv);
 		if(tlv.len >= X5B_APP_TLV_DEFAULT)
 			continue;
 /*		if(E_CMD_FROM_C(tlv.tag))
@@ -1009,19 +744,7 @@ static int x5b_app_read_ack_handle(x5b_app_mgt_t *mgt, char *output, int outlen)
 		}
 		len -= offset;
 	}
-#ifdef X5B_APP_TCP_ENABLE
-	if(mgt->tcp_r)
-	{
-		mgt->tcp_r = FALSE;
-		mgt->tcp.offset = 0;
-		mgt->tcp.hdr_len = 0;
-		mgt->tcp.len = 0;
-		memset(mgt->tcp.hdr_buf, 0, sizeof(mgt->tcp.hdr_buf));
-		if((mgt->tcp.len >= sizeof(mgt->buf)) && mgt->tcp.buf)
-			XFREE(MTYPE_TMP, mgt->tcp.buf);
-		mgt->tcp.buf = NULL;
-	}
-#endif
+
 	return ack;
 }
 
@@ -1064,6 +787,11 @@ static int x5b_app_read_msg(int fd, x5b_app_mgt_t *mgt, char *output, int outlen
 		{
 			return OS_TRY_AGAIN;
 		}
+
+		if(!x5b_app_mode_X5CM() && ntohl(mgt->from.sin_addr.s_addr)==mgt->app_c.address)
+		{
+			return OS_TRY_AGAIN;
+		}
 		len = x5b_app_read_ack_handle(mgt, output, outlen);
 		if(len == OK)
 		{
@@ -1086,14 +814,7 @@ int x5b_app_read_msg_timeout(x5b_app_mgt_t *app, int timeout_ms, char *output, i
 	zassert(mgt != NULL);
 
     FD_ZERO( &rfdset );
-#ifdef X5B_APP_TCP_ENABLE
-    if(mgt->tcp_r)
-    {
-        FD_SET( mgt->tcp.r_fd, &rfdset );
-        maxfd = mgt->tcp.r_fd + 1;
-    }
-    else
-#endif
+
     {
         FD_SET( mgt->r_fd, &rfdset );
         maxfd = mgt->r_fd + 1;
@@ -1102,19 +823,7 @@ try_again:
 	ret = os_select_wait(maxfd, &rfdset, NULL, timeout_ms);
 	if(ret > 0)
 	{
-#ifdef X5B_APP_TCP_ENABLE
-	    if(mgt->tcp_r)
-	    {
-	    	if (FD_ISSET( mgt->tcp.r_fd, &rfdset))
-	    	{
-	    		ret = x5b_app_read_msg(mgt->tcp.r_fd, mgt, output, outlen);
-	    		if(ret == OS_TRY_AGAIN)
-	    			goto try_again;
-	    		return ret;
-	    	}
-	    }
-	    else
-#endif
+
 	    {
 	    	if (FD_ISSET( mgt->r_fd, &rfdset))
 	    	{
@@ -1127,19 +836,25 @@ try_again:
 	}
 	else if(ret == OS_TIMEOUT)
 	{
-        zlog_debug(ZLOG_APP, "wait timeout from:%s", inet_address(mgt->app->address));
+		if(mgt->app)
+		{
+			int offset = 0;
+			os_tlv_t *tlv;
+			//x5b_app_hdr_t *hdr = mgt->app->sbuf;
+			offset += sizeof(x5b_app_hdr_t);
+			tlv = (os_tlv_t *)(mgt->app->sbuf + offset);
+			zlog_debug(ZLOG_APP, "CMD 0x%04x (seqnum:%d) wait timeout from:%s",
+					E_CMD_GET(ntohl(tlv->tag)), mgt->app->seqnum, inet_address(mgt->app->address));
+		}
+		else
+		{
+			zlog_debug(ZLOG_APP, "wait timeout from:%s",inet_address(mgt->app->address));
+		}
         return OS_TIMEOUT;
 	}
 	zlog_debug(ZLOG_APP, "wait from %s error:%s", inet_address(mgt->app->address), strerror(errno));
 	return ERROR;
 }
-
-
-
-
-
-
-
 
 int x5b_app_send_msg_without_ack(x5b_app_mgt_t *mgt)
 {
@@ -1171,39 +886,7 @@ int x5b_app_send_msg(x5b_app_mgt_t *mgt)
 	zassert(mgt != NULL);
 	zassert(mgt->app != NULL);
 	zassert(mgt->app->address != 0);
-#ifdef X5B_APP_TCP_ENABLE
-	if(mgt->tcp_r)
-	{
-		if(tcp_sock_state(mgt->tcp.w_fd) != TCP_ESTABLISHED)
-		{
-			close(mgt->tcp.w_fd);
-			mgt->tcp.w_fd = 0;
-			x5b_app_tcp_connect_init(mgt);
-		}
-		if(mgt->tcp.w_fd)
-			len = os_write_timeout(mgt->tcp.w_fd,
-					mgt->app->sbuf, mgt->app->slen, 2000);
-		if(len == ERROR)
-		{
-			if(!ERRNO_IO_RETRY(errno))
-			{
-				close(mgt->tcp.w_fd);
-				mgt->tcp.w_fd = 0;
-				x5b_app_tcp_connect_init(mgt);
-			}
-			mgt->app->seqnum++;
-			return ERROR;
-		}
-		if(X5_B_ESP32_DEBUG(SEND))
-		{
-			zlog_debug(ZLOG_APP, "MSG to %s:%d %d byte (seqnum=%d)", inet_address(mgt->app->address),
-					mgt->local_port + 1, mgt->app->slen, mgt->app->seqnum);
-			if(X5_B_ESP32_DEBUG(HEX))
-				x5b_app_hex_debug(mgt, "SEND", 0);
-		}
-	}
-	else
-#endif
+
 	{
 		if(mgt->app->slen >= X5B_APP_BUF_DEFAULT)
 		{
@@ -1226,9 +909,6 @@ int x5b_app_send_msg(x5b_app_mgt_t *mgt)
 	if(mgt->sync_ack)
 	{
 		//zlog_debug(ZLOG_APP, "----wait ack" );
-#ifdef X5B_APP_TCP_ENABLE
-		if(!mgt->tcp_r)
-#endif
 		{
 			int ret = 0;
 			if(mgt->r_thread)
@@ -1237,13 +917,17 @@ int x5b_app_send_msg(x5b_app_mgt_t *mgt)
 				mgt->r_thread = NULL;
 			}
 			//zlog_debug(ZLOG_APP, "----wait ack 1" );
-			ret = x5b_app_read_msg_timeout(mgt, X5B_APP_WAITING_TIMEOUT, NULL, 0);
+			if(mgt->wait_timeout)
+				ret = x5b_app_read_msg_timeout(mgt, mgt->wait_timeout, NULL, 0);
+			else
+				ret = x5b_app_read_msg_timeout(mgt, X5B_APP_WAITING_TIMEOUT, NULL, 0);
 			if(!mgt->upgrade && mgt->r_thread == NULL)
 			{
 				//zlog_debug(ZLOG_APP, "========> add read fd=%d", mgt->r_fd);
 				x5b_app_event_active(mgt, X5B_READ_EV, 0, 0);
 				//mgt->r_thread = eloop_add_read(mgt->master, x5b_app_read_eloop, mgt, mgt->r_fd);
 			}
+			mgt->wait_timeout = 0;
 			mgt->app->seqnum++;
 			return ret;
 		}

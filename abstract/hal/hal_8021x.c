@@ -20,35 +20,35 @@
 #include "nsm_client.h"
 
 #include "hal_8021x.h"
+#include "hal_driver.h"
 
-sdk_8021x_t sdk_8021x;
 
 
 int hal_8021x_interface_enable(ifindex_t ifindex, BOOL enable)
 {
-	if(sdk_8021x.sdk_8021x_enable_cb)
-		return sdk_8021x.sdk_8021x_enable_cb(ifindex,enable);
+	if(hal_driver && hal_driver->q8021x_tbl && hal_driver->q8021x_tbl->sdk_8021x_enable_cb)
+		return hal_driver->q8021x_tbl->sdk_8021x_enable_cb(hal_driver->driver, ifindex,enable);
 	return ERROR;
 }
 
 int hal_8021x_state(ifindex_t ifindex, u_int value)
 {
-	if(sdk_8021x.sdk_8021x_state_cb)
-		return sdk_8021x.sdk_8021x_state_cb(ifindex, value);
+	if(hal_driver && hal_driver->q8021x_tbl && hal_driver->q8021x_tbl->sdk_8021x_state_cb)
+		return hal_driver->q8021x_tbl->sdk_8021x_state_cb(hal_driver->driver, ifindex, value);
 	return ERROR;
 }
 
 int hal_8021x_mode(ifindex_t ifindex, u_int value)
 {
-	if(sdk_8021x.sdk_8021x_mode_cb)
-		return sdk_8021x.sdk_8021x_mode_cb(ifindex, value);
+	if(hal_driver && hal_driver->q8021x_tbl && hal_driver->q8021x_tbl->sdk_8021x_mode_cb)
+		return hal_driver->q8021x_tbl->sdk_8021x_mode_cb(hal_driver->driver, ifindex, value);
 	return ERROR;
 }
 
 int hal_8021x_auth_bypass(ifindex_t ifindex, u_int value)
 {
-	if(sdk_8021x.sdk_8021x_auth_bypass_cb)
-		return sdk_8021x.sdk_8021x_auth_bypass_cb(ifindex, value);
+	if(hal_driver && hal_driver->q8021x_tbl && hal_driver->q8021x_tbl->sdk_8021x_auth_bypass_cb)
+		return hal_driver->q8021x_tbl->sdk_8021x_auth_bypass_cb(hal_driver->driver, ifindex, value);
 	return ERROR;
 }
 

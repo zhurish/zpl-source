@@ -174,13 +174,15 @@
 #define CONFIG_UDHCPC_DEFAULT_SCRIPT 	"/usr/share/udhcpc/dhcp.script"
 //#define CONFIG_UDHCPC_DEFAULT_SCRIPT 	"/usr/share/udhcpc/default.script"
 
+//PUSH_AND_SET_FUNCTION_VISIBILITY_TO_HIDDEN
+#define CONFIG_DHCPD_LEASES_FILE	"/var/lib/misc/udhcpd.leases"
 
 
 #define UDHCPD_POOL_MAX	64
 #define UDHCPD_HOSTNAME_MAX	64
 
 
-#define	spawn_and_wait(n)
+//#define	spawn_and_wait(n)
 
 
 

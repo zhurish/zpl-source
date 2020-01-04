@@ -218,7 +218,7 @@ PUBLIC int sslUpgrade(Webs *wp)
     WebsSocket          *sp;
     mbedtls_ssl_context *ctx;
 
-    assert(wp);
+    web_assert(wp);
     if ((mb = walloc(sizeof(MbedSocket))) == 0) {
         return -1;
     }
@@ -355,11 +355,11 @@ PUBLIC ssize sslRead(Webs *wp, void *buf, ssize len)
     int             rc;
 
     if (!wp->ssl) {
-        assert(0);
+        web_assert(0);
         return -1;
     }
     mb = (MbedSocket*) wp->ssl;
-    assert(mb);
+    web_assert(mb);
     sp = socketPtr(wp->sid);
 
     if (mb->ctx.state != MBEDTLS_SSL_HANDSHAKE_OVER) {
@@ -405,7 +405,7 @@ PUBLIC ssize sslWrite(Webs *wp, void *buf, ssize len)
     int         rc;
 
     if (wp->ssl == 0 || len <= 0) {
-        assert(0);
+        web_assert(0);
         return -1;
     }
     mb = (MbedSocket*) wp->ssl;

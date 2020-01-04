@@ -65,9 +65,8 @@ typedef struct pjsua_app_cfg_t
 
 
     pj_bool_t	    running;
-    pj_status_t	    receive_end_sig;
-    pj_thread_t	    *sig_thread;
     pj_bool_t 		restart;
+    int 			media_quit;
 } pjsua_app_cfg_t;
 
 /**

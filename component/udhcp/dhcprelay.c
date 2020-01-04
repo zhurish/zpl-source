@@ -350,7 +350,7 @@ static int dhcp_relay_init_sockets(char **iface_list, int num_clients, int *fds)
 
 	n = 0;
 	for (i = 0; i < num_clients; i++) {
-		fds[i] = udhcp_listen_socket(/*INADDR_ANY,*/ SERVER_PORT, iface_list[i]);
+		fds[i] = udhcp_listen_socket(/*INADDR_ANY,*/ DHCP_SERVER_PORT, iface_list[i]);
 		if (n < fds[i])
 			n = fds[i];
 	}
@@ -445,7 +445,7 @@ int dhcprelay_main(int argc, char **argv)
 
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
-	server_addr.sin_port = htons(SERVER_PORT);
+	server_addr.sin_port = htons(DHCP_SERVER_PORT);
 
 	/* dhcprelay CLIENT_IFACE1[,CLIENT_IFACE2...] SERVER_IFACE [SERVER_IP] */
 	if (argc == 4) {

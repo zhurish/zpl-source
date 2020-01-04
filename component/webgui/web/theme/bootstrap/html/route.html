@@ -1,0 +1,375 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta content="" name="description" />
+	<meta content="webthemez" name="author" />
+	<!--meta http-equiv="refresh" content="30"-->
+	<!-- Bootstrap Styles-->
+	<link href="../css/bootstrap.min.css" rel="stylesheet" />
+
+	<!-- private Styles-->
+	<link href="../css/private.css" rel="stylesheet" />
+
+	<!-- jQuery Js -->
+	<script src="../js/jquery-2.1.1.min.js"></script>
+	<!-- Bootstrap Js -->
+	<script src="../js/bootstrap.min.js"></script>
+	<script src="../js/xhr.js"></script>
+	<script src="../js/data-type.js"></script>
+
+	<title>route</title>
+</head>
+
+<body class="body-bg-img">
+	<div id="maincontent" class="container">
+		<fieldset class="fieldset-margin fieldset-background">
+			<table class="table table-condensed">
+				<caption class="tbl-text-align bold">路由表</caption>
+				<thead>
+					<tr>
+						<th>目的路由</th>
+						<th>下一跳</th>
+						<!--th>开销</th-->
+						<th>协议</th>
+						<th>状态</th>
+						<th>出口</th>
+					</tr>
+				</thead>
+				<tbody id="routetbl">
+					<script type="text/javascript">
+						function route_tbl() {
+							var utbl = "";
+							$.get("/goform/route-tbl", function (data, status) {
+								//console.log(data);
+								var data_json = JSON.parse(data);
+								$.each(data_json, function (index, info) {
+									utbl += "<tr>\n";
+									utbl += "<td>" + info.dest + "</td>\n";
+									utbl += "<td>" + info.gateway + "</td>\n";
+									//utbl += "<td>" + info.metric + "</td>\n";
+									utbl += "<td>" + info.proto + "</td>\n";
+									utbl += "<td>" + info.state + "</td>\n";
+									utbl += "<td>" + info.interface + "</td>\n";
+									if (info.proto == "static" || info.proto == "STATIC") {
+										utbl += "<td>\
+                			<div class=\"col-sm-push-3 control-label\">\
+										  <button type=\"button\" class=\"btn btn-danger\" name=\"delete\" id=\"delete\" \
+										  onclick=\"route_delete(this)\"><span class=\"glyphicon glyphicon-trash\"\
+															style=\"margin-right:10px;\"></span>删除</button>\
+			    						</div>\
+                			</td>";
+									}
+									else {
+										utbl += "<td>\
+                			<div class=\"col-sm-push-3 control-label\">\
+										  <button type=\"button\" class=\"btn btn-default\" disabled name=\"delete\" id=\"delete\" \
+										  onclick=\"route_delete(this)\"><span class=\"glyphicon glyphicon-trash\"\
+															style=\"margin-right:10px;\"></span>删除</button>\
+			    						</div>\
+                			</td>";
+									}
+									utbl += "</tr>";
+								});
+								$("#routetbl").html(utbl);
+							});
+						}
+						route_tbl();
+					</script>
+				</tbody>
+			</table>
+			<!-- form-horizontal -->
+			<form class="form-horizontal form-margin show" role="form" name="route" action="" accept-charset="UTF-8"
+				method="POST">
+				<div class="form-group">
+					<div class="col-xs-4 control-label">
+						<button type="button" class="btn btn-add" name="route_add" id="route_add"
+							onclick="route_static_add()"><span class="glyphicon glyphicon-plus"
+								style="margin-right:10px;"></span>增加</button>
+					</div>
+				</div>
+				<div id="routeconfig" class="hiden">
+					<legend class="legend-text-align">静态路由配置</legend>
+					<div class="form-group">
+						<label for="destination" class="col-sm-3 control-label">目的地址</label>
+						<div class="col-sm-4">
+							<input type="text" minlength="6" maxlength="32" class="form-control" name="destination"
+								id="destination" value="" onchange="destination_check()" required
+								placeholder="192.168.0.1">
+						</div>
+						<!--div class="col-xs-1 check_ok">
+							√
+						</div>
+						<div class="col-xs-1 check_error">
+							×
+						</div-->
+					</div>
+					<div class="form-group">
+						<label for="netmask" class="col-sm-3 control-label">目的掩码</label>
+						<div class="col-sm-4">
+							<input type="text" minlength="6" maxlength="32" class="form-control" name="netmask"
+								id="netmask" value="" onchange="netmask_check()" required placeholder="255.255.255.0">
+						</div>
+						<!--div class="col-xs-1 check_ok ">
+							√
+						</div>
+						<div class="col-xs-1 check_error">
+							×
+						</div-->
+					</div>
+					<div class="form-group">
+						<label for="gateway" class="col-sm-3 control-label">网关地址</label>
+						<div class="col-sm-4">
+							<input type="text" minlength="6" maxlength="32" class="form-control" name="gateway"
+								id="gateway" value="" onchange="gateway_check()" required placeholder="192.168.0.1">
+						</div>
+						<!--div class="col-xs-1 check_ok">
+							√
+						</div>
+						<div class="col-xs-1 check_error">
+							×
+						</div-->
+					</div>
+
+					<!--div class="form-group">
+						<label for="metric" class="col-sm-3 control-label">路由开销</label>
+						<div class="col-sm-4">
+							<input type="number" min="0" max="65530" class="form-control" name="metric"
+								id="metric" value="" onchange="metric_check()" required placeholder="1000">
+						</div>
+					</div-->
+
+					<div class="form-group">
+						<label for="dhcpif" class="col-sm-3 control-label">接口</label>
+						<div class="col-sm-4">
+							<select class="form-control" name="interface" id="interface">
+								<script type="text/javascript">
+									function interface_tbl() {
+										var itbl = "";
+										$.get("/goform/interface-tbl", function (data, status) {
+											console.log("==============");
+											console.log(data);
+											var data_json = JSON.parse(data);
+											$.each(data_json, function (index, info) {
+												itbl += "<option value=\"" + info.name + "\">" + info.name + "</option>";
+											});
+											$("#interface").html(itbl);
+										});
+									}
+									interface_tbl();
+								</script>
+							</select>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<div class="col-xs-4 control-label">
+							<button type="button" class="btn btn-cencel" name="route_cencel" id="route_cencel"
+								onclick="route_add_cencel()"><span class="glyphicon glyphicon-remove"
+									style="margin-right:10px;"></span>取消</button>
+						</div>
+						<div class="col-xs-4 control-label">
+							<button type="button" class="btn btn-submit" name="route_submit" id="route_submit"
+								onclick="route_add_submit()"><span class="glyphicon glyphicon-send"
+									style="margin-right:10px;"></span>确定</button>
+						</div>
+					</div>
+
+					<div id="handle_waiting" class="alert alert-success hiden">
+						<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+								style="padding-left:150px; padding-right:20px">Waiting for command to
+							complete...</strong>
+					</div>
+					<div id="handle_error" class="alert alert-warning hiden">
+						<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+					</div>
+					<script type="text/javascript">
+
+						function route_delete(obj) {
+							var argv;
+							var stxhr = new XHR();
+							var dest = $(obj).parent().parent().prevAll()[3].innerText;
+							var gateway = $(obj).parent().parent().prevAll()[2].innerText;
+							//var netmask = $(obj).parent().parent().prevAll()[2].innerText;
+							var interface = $(obj).parent().parent().prevAll()[0].innerText;
+
+							argv = "ACTION=routetbl&BTNID=" + obj.id + "&destination=" + dest +
+								"&gateway=" + gateway + "&interface=" + interface;
+
+							$("#handle_waiting").css("display", "block");
+							setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
+							stxhr.post("/goform/button_onclick", argv,
+								function (x) {
+									console.log(x);
+									if (x.responseText == "ERROR") {
+										clearTimeout();
+										$("#handle_error").css("display", "block");
+										setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+									}
+									else if (x.responseText == "OK") {
+										clearTimeout();
+										route_tbl();
+									}
+								},
+								3000
+							);
+						}
+
+						function route_static_add() {
+
+							document.getElementById("routeconfig").setAttribute("class", "show");
+
+							document.getElementById("destination").value = "";
+							document.getElementById("netmask").value = "";
+							document.getElementById("gateway").value = "";
+							//document.getElementById("metric").value = "";
+							document.getElementById("interface").value = "";
+
+							check_okerr_hiden($('#destination'));
+							check_okerr_hiden($('#netmask'));
+							check_okerr_hiden($('#gateway'));
+							//check_okerr_hiden($('#metric'));
+							check_okerr_hiden($('#interface'));
+						}
+
+
+						function destination_check() {
+							if (document.getElementById("destination").value == "" ||
+								document.getElementById("destination").value.length > 32 ||
+								document.getElementById("destination").value.length < 6 ||
+								(!checkipv4(document.getElementById("destination").value))) {
+								check_err_show($('#destination'));
+								return false;
+							}
+							else {
+								check_ok_show($('#destination'));
+								return true;
+							}
+						}
+						function netmask_check() {
+							if (document.getElementById("netmask").value == "" ||
+								document.getElementById("netmask").value.length > 32 ||
+								document.getElementById("netmask").value.length < 6 ||
+								(!checknetmaskv4(document.getElementById("netmask").value))) {
+								check_err_show($('#netmask'));
+								return false;
+							}
+							else {
+								check_ok_show($('#netmask'));
+								return true;
+							}
+						}
+						function gateway_check() {
+							if (document.getElementById("gateway").value == "" ||
+								document.getElementById("gateway").value.length > 32 ||
+								document.getElementById("gateway").value.length < 6 ||
+								(!checkipv4(document.getElementById("gateway").value))) {
+								check_err_show($('#gateway'));
+								return false;
+							}
+							else {
+								check_ok_show($('#gateway'));
+								return true;
+							}
+						}
+						function metric_check() {
+							if (document.getElementById("metric").value == "" ||
+								document.getElementById("metric").value > 65530 ||
+								document.getElementById("metric").value < 0) {
+								check_err_show($('#metric'));
+								return false;
+							}
+							else {
+								check_ok_show($('#metric'));
+								return true;
+							}
+						}
+
+						function route_add_cencel() {
+							document.getElementById("destination").value = "";
+							document.getElementById("netmask").value = "";
+							document.getElementById("gateway").value = "";
+							document.getElementById("metric").value = "";
+							document.getElementById("interface").value = "";
+
+							check_okerr_hiden($('#destination'));
+							check_okerr_hiden($('#netmask'));
+							check_okerr_hiden($('#gateway'));
+							//check_okerr_hiden($('#metric'));
+							check_okerr_hiden($('#interface'));
+						}
+						//button 按钮，结合onclick事件，验证和提交表单
+						function route_add_submit() {
+							if (document.getElementById("destination").value == "" ||
+								!destination_check()) {
+								check_err_hiden($('#destination'));
+								return false;
+							}
+							if (document.getElementById("netmask").value == "" ||
+								!netmask_check()) {
+								check_err_hiden($('#netmask'));
+								return false;
+							}
+							/*if (document.getElementById("gateway").value != "" || 
+								!gateway_check()) {
+								check_err_hiden($('#gateway'));
+								return false;
+							}
+							if (document.getElementById("metric").value != "" && 
+								!metric_check()) {
+								check_err_hiden($('#metric'));
+								return false;
+							}*/
+							if (document.getElementById("gateway").value == "" &&
+								document.getElementById("interface").value == "") {
+								check_err_hiden($('#gateway'));
+								return false;
+							}
+
+							{
+								var argv;
+								var stxhr = new XHR();
+
+								argv = "destination=" + document.getElementById("destination").value +
+									"&netmask=" + document.getElementById("netmask").value +
+									"&gateway=" + document.getElementById("gateway").value + "&interface="
+									+ document.getElementById("interface").value;
+
+								//"&metric="
+								//+ document.getElementById("metric").value + 
+								$("#handle_waiting").css("display", "block");
+								setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
+								stxhr.post("/goform/addroute", argv,
+									function (x) {
+										console.log(x);
+										if (x.responseText == "OK") {
+											clearTimeout();
+											$("#handle_waiting").css("display", "none");
+											//$("#handle_waiting").css("display", "none");
+											document.getElementById("routeconfig").setAttribute("class", "hiden");
+											route_tbl();
+										}
+										else if (x.responseText == "ERROR") {
+											clearTimeout();
+											$("#handle_waiting").css("display", "none");
+											$("#handle_error").css("display", "block");
+											setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+										}
+										//if(x.status == 404)
+									},
+									3000
+								);
+							}
+						}
+					</script>
+				</div>
+			</form>
+		</fieldset>
+
+	</div>
+</body>
+
+</html>

@@ -1,0 +1,607 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta content="" name="description" />
+	<meta content="webthemez" name="author" />
+	<!--meta http-equiv="refresh" content="30"-->
+	<!-- Bootstrap Styles-->
+	<link href="../css/bootstrap.min.css" rel="stylesheet" />
+
+	<!-- private Styles-->
+	<link href="../css/private.css" rel="stylesheet" />
+
+	<!-- jQuery Js -->
+	<script src="../js/jquery-2.1.1.min.js"></script>
+	<!-- Bootstrap Js -->
+	<script src="../js/bootstrap.min.js"></script>
+	<script src="../js/xhr.js"></script>
+	<script src="../js/data-type.js"></script>
+
+	<title>network</title>
+</head>
+
+<body class="body-bg-img">
+	<div id="maincontent" class="container">
+		<fieldset class="fieldset-margin fieldset-background">
+			<table class="table table-condensed">
+				<caption class="tbl-text-align bold">网络接口</caption>
+				<thead>
+					<tr>
+						<th>接口</th>
+						<th>地址</th>
+						<th>掩码</th>
+						<th>网关</th>
+						<th>DNS</th>
+						<th>修改</th>
+						<th>状态</th>
+						<th class="hiden">proto</th>
+					</tr>
+				</thead>
+				<tbody id="ifptbl">
+					<script type="text/javascript">
+						//var stxhr = new XHR();
+						function network_tbl() {
+							var itbl = "";
+							$.get("/goform/network-tbl", function (data, status) {
+								//console.log(data);
+								var data_json = JSON.parse(data);
+								$.each(data_json, function (index, info) {
+
+									if(info.mode !="wireless-ap") {
+										itbl += "<tr>\n";
+										itbl += "<td class=\"hiden\">" + info.mode + "</td>";
+										itbl += "<td>" + info.name + "</td>";
+										itbl += "<td>" + info.ip + "</td>";
+										itbl += "<td>" + info.netmask + "</td>";
+										itbl += "<td>" + info.gateway + "</td>";
+										itbl += "<td>" + info.dns + "</td>";
+										itbl += "<td class=\"hiden\">" + info.proto + "</td>";
+										//itbl += "<td class=\"hiden\">" + info.proto + "</td>";
+
+										itbl += "<td>\
+							<div class=\"col-sm-push-3 control-label\">\
+								<button type=\"button\" class=\"btn btn-edit\" name=\"edit\" id=\"edit\" onclick=\"network_edit(this)\">\
+										<span class=\"glyphicon glyphicon-edit\"\
+																style=\"margin-right:10px;\"></span>编辑</button>\
+							</div>\
+							</td>";
+
+										itbl += "<td>\
+							<div>\
+								<input type=\"image\" src=\"../res/icons/port_" + info.state + ".png\" name=\"connect\" id=\"connect\" onclick=\"network_connect(this)\">\
+							</div>\
+							</td>";
+
+										//itbl += "<td><img src=\"../res/icons/port_" + info.state + ".png\"></td>"
+
+
+										itbl += "</tr>";
+									}
+								});
+								$("#ifptbl").html(itbl);
+							});
+						}
+						network_tbl();
+					</script>
+				</tbody>
+			</table>
+
+			<div id="connect_waiting" class="alert alert-success hiden">
+				<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+						style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+			</div>
+			<div id="connect_error" class="alert alert-warning hiden">
+				<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+			</div>
+			<form class="form-horizontal form-margin hiden" role="form" name="adminuser" action=""
+				accept-charset="UTF-8" method="POST">
+				<div id="networkconfig">
+					<legend class="legend-text-align">接口配置</legend>
+					<div class="form-group show">
+						<label for="ifpname" class="col-sm-3 control-label">接口</label>
+						<div class="col-sm-4">
+							<input type="text" class="form-control" name="ifpname" id="ifpname" value="" disabled>
+						</div>
+					</div>
+					<div class="form-group hiden">
+							<label for="mode" class="col-sm-3 control-label">模式</label>
+							<div class="col-sm-4">
+								<input type="text" class="form-control" name="mode" id="mode" value="" disabled>
+							</div>
+					</div>
+						
+					<div class="form-group show">
+						<label for="proto" class="col-sm-3 control-label">Protocol</label>
+						<div class="col-sm-4">
+							<select class="form-control" name="proto" id="proto" onchange="proto_check()">
+								<option value="static">static</option>
+								<option value="pppoe">pppoe</option>
+								<option selected="selected" value="dhcp">dhcp client</option>
+							</select>
+						</div>
+					</div>
+					<div class="form-group hiden">
+						<label for="username" class="col-sm-3 control-label">帐号</label>
+						<div class="input-group col-sm-4">
+							<span class="input-group-addon">
+								<span class="glyphicon glyphicon-user"></span>
+							</span>
+							<input type="text" minlength="6" maxlength="32" class="form-control" name="username"
+								id="username" value="" required onchange="username_check(this, $('#username'))">
+						</div>
+					</div>
+
+					<div class="form-group hiden">
+						<label for="password" class="col-sm-3 control-label">密码</label>
+						<div class="input-group col-sm-4">
+							<span class="input-group-addon">
+								<span class="glyphicon glyphicon-lock"></span>
+							</span>
+							<input type="password" minlength="6" maxlength="32" class="form-control" name="password"
+								id="password" value="" required onchange="username_check(this, $('#password'))">
+						</div>
+					</div>
+
+					<div class="form-group hiden">
+						<label for="ipaddress" class="col-sm-3 control-label">IP 地址</label>
+						<div class="col-sm-4">
+							<input type="text" minlength="6" maxlength="32" class="form-control" name="ipaddress"
+								id="ipaddress" value="" required onchange="ipaddress_check(this, $('#ipaddress'))">
+						</div>
+					</div>
+					<div class="form-group hiden">
+						<label for="netmask" class="col-sm-3 control-label">地址掩码</label>
+						<div class="col-sm-4">
+							<input type="text" minlength="6" maxlength="32" class="form-control" name="netmask"
+								id="netmask" value="" required onchange="netmask_check()">
+						</div>
+					</div>
+
+					<div class="form-group hiden">
+						<label for="gateway" class="col-sm-3 control-label">默认网关</label>
+						<div class="col-sm-4">
+							<input type="text" minlength="6" maxlength="32" class="form-control" name="gateway"
+								id="gateway" value="" onchange="ipaddress_check(this, $('#gateway'))">
+						</div>
+					</div>
+					<% type = jst_web_type();
+						if (type == 0)
+						{
+			  			write("<div class=\"form-group hiden\">\
+			    			<label for=\"dns\" class=\"col-sm-3 control-label\">首选DNS</label>\
+			    			<div class=\"col-sm-4\">\
+			      			<input type=\"text\" minlength=\"6\" maxlength=\"32\" class=\"form-control\" name=\"dns\" id=\"dns\" onchange =\"ipaddress_check(this, $('#dns'))\">\
+			    			</div>\
+			 				<div class=\"col-xs-1 check_ok \">\
+								√\
+							</div> \
+			    			<div class=\"col-xs-1 check_error\">\
+								×\
+							</div>\
+			  				</div>");
+                   } %>
+				   <!--		write("<div class=\"form-group hiden\">\
+			    			<label for=\"dns2\" class=\"col-sm-3 control-label\">备选DNS</label>\
+			    			<div class=\"col-sm-4\">\
+			      			<input type=\"text\" minlength=\"6\" maxlength=\"32\" class=\"form-control\" name=\"dns2\" id=\"dns2\" onchange =\"ipaddress_check(this, $('#dns'))\">\
+			    			</div>\
+			 				<div class=\"col-xs-1 check_ok \">\
+								√\
+							</div> \
+			    			<div class=\"col-xs-1 check_error\">\
+								×\
+							</div>\
+							  </div>");
+						-->
+					<div class="form-group show">
+						<div class="col-xs-4 control-label">
+							<button type="button" class="btn btn-cencel" name="user_cencel" id="user_cencel"
+								onclick="network_cencel()"><span class="glyphicon glyphicon-remove"
+									style="margin-right:10px;"></span>取消</button>
+						</div>
+						<div class="col-xs-4 control-label">
+							<button type="button" class="btn btn-submit" name="user_submit" id="user_submit"
+								onclick="network_submit()"><span class="glyphicon glyphicon-send"
+									style="margin-right:10px;"></span>确定</button>
+						</div>
+					</div>
+					<div id="network_waiting" class="alert alert-success hiden">
+						<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+								style="padding-left:150px; padding-right:20px">Waiting for command to
+							complete...</strong>
+					</div>
+					<div id="network_error" class="alert alert-warning hiden">
+						<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+					</div>
+					<script type="text/javascript">
+
+						function proto_check() {
+
+							if (document.getElementById("proto").value == "dhcp") {
+								check_okerr_hiden($('#ipaddress'));
+								check_okerr_hiden($('#netmask'));
+								check_okerr_hiden($('#gateway'));
+								if ($('#dns'))
+									check_okerr_hiden($('#dns'));
+								//if ($('#dns2'))
+								//	check_okerr_hiden($('#dns2'));
+								document.getElementById("ipaddress").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("netmask").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("gateway").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								//document.getElementById("dnsip").parentNode.parentNode.setAttribute("class","form-group hiden");
+								if (document.getElementById("dns"))
+									document.getElementById("dns").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								//if (document.getElementById("dns2"))
+								//	document.getElementById("dns2").parentNode.parentNode.setAttribute("class", "form-group hiden");
+
+								check_okerr_hiden($('#username'));
+								check_okerr_hiden($('#password'));
+								document.getElementById("username").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("password").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							}
+							else if (document.getElementById("proto").value == "pppoe") {
+								check_okerr_hiden($('#username'));
+								check_okerr_hiden($('#password'));
+								document.getElementById("username").parentNode.parentNode.setAttribute("class", "form-group show");
+								document.getElementById("password").parentNode.parentNode.setAttribute("class", "form-group show");
+
+								check_okerr_hiden($('#ipaddress'));
+								check_okerr_hiden($('#netmask'));
+								check_okerr_hiden($('#gateway'));
+								if ($('#dns'))
+									check_okerr_hiden($('#dns'));
+								//if ($('#dns2'))
+								//	check_okerr_hiden($('#dns2'));
+								document.getElementById("ipaddress").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("netmask").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("gateway").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								//document.getElementById("dnsip").parentNode.parentNode.setAttribute("class","form-group hiden");
+								if (document.getElementById("dns"))
+									document.getElementById("dns").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								//if (document.getElementById("dns2"))
+								//	document.getElementById("dns2").parentNode.parentNode.setAttribute("class", "form-group hiden");
+
+							}
+							else {
+								check_okerr_hiden($('#ipaddress'));
+								check_okerr_hiden($('#netmask'));
+								check_okerr_hiden($('#gateway'));
+								if ($('#dns'))
+									check_okerr_hiden($('#dns'));
+								//if ($('#dns2'))
+								//	check_okerr_hiden($('#dns2'));
+								document.getElementById("ipaddress").parentNode.parentNode.setAttribute("class", "form-group show");
+								document.getElementById("netmask").parentNode.parentNode.setAttribute("class", "form-group show");
+								document.getElementById("gateway").parentNode.parentNode.setAttribute("class", "form-group show");
+								if (document.getElementById("dns"))
+									document.getElementById("dns").parentNode.parentNode.setAttribute("class", "form-group show");
+								//if (document.getElementById("dns2"))
+								//	document.getElementById("dns2").parentNode.parentNode.setAttribute("class", "form-group show");
+
+								check_okerr_hiden($('#username'));
+								check_okerr_hiden($('#password'));
+								document.getElementById("username").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("password").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							}
+						}
+
+						function network_edit(obj) {
+							//var name=$(obj).parent().parent().prevAll()[3].innerText;
+							//var level=$(obj).parent().parent().prevAll()[2].innerText;
+							//console.log(name,level);
+							var proto = $(obj).parent().parent().prevAll()[0].innerText;
+							document.getElementById("ifpname").value = $(obj).parent().parent().prevAll()[5].innerText;
+							document.getElementById("ipaddress").value = $(obj).parent().parent().prevAll()[4].innerText;
+							document.getElementById("netmask").value = $(obj).parent().parent().prevAll()[3].innerText;
+							document.getElementById("gateway").value = $(obj).parent().parent().prevAll()[2].innerText;
+							document.getElementById("dns").value = $(obj).parent().parent().prevAll()[1].innerText;
+
+							document.getElementById("networkconfig").parentNode.setAttribute("class", "form-horizontal form-margin show");
+
+							console.log(proto);
+							select_option_active(document.getElementById("proto"), proto);
+							proto_check();
+							check_okerr_hiden($('#ipaddress'));
+							check_okerr_hiden($('#netmask'));
+							check_okerr_hiden($('#gateway'));
+							if ($('#dns'))
+								check_okerr_hiden($('#dns'));
+							//if ($('#dns2'))
+							//	check_okerr_hiden($('#dns2'));
+						}
+
+						function network_connect(obj) {
+							var imgsrc = obj.src;
+							var ifpname = $(obj).parent().parent().prevAll()[5].innerText;
+							console.log("imgsrc:" + imgsrc + "ifpname:" + ifpname);
+
+							if (imgsrc.search("up") > 0) {
+								/* var jsondata = { "ACTION":"network",  "BTNID":obj.id, "ifname":ifpname, "state":"up"};
+								xhr_simple_submit("/goform/button_onclick", jsondata, $("#connect_waiting"), $("#connect_error"),
+									function(x, json) {
+											console.log(x);
+											obj.src = imgsrc.replace("up", "down");
+											console.log("change imgsrc:"+obj.src);
+									},
+									function(x, json) {
+										console.log(x);
+										console.log("change imgsrc:");
+									});
+									*/
+								var argv;
+								var stxhr = new XHR();
+								argv = "ACTION=network&BTNID=" + obj.id + "&" + "ifname=" + ifpname + "&state=down";
+								//argv = { "ACTION":"network",  "BTNID":obj.id, "ifname":ifpname, "state":"up"};
+								$("#connect_waiting").css("display", "block");
+								setTimeout(function () { $("#connect_waiting").css("display", "none") }, 5000);
+								stxhr.post("/goform/button_onclick", argv,
+									function (x, json) {
+										console.log("json:" + json);
+										console.log(x);
+										if (x.responseText == "ERROR") {
+											clearTimeout();
+											$("#connect_error").css("display", "block");
+											$("#connect_waiting").css("display", "none");
+											setTimeout(function () { $("#connect_error").css("display", "none") }, 3000);
+										}
+										else if (x.responseText == "OK") {
+											clearTimeout();
+											$("#connect_waiting").css("display", "none");
+											$("#connect_error").css("display", "none");
+											obj.src = imgsrc.replace("up", "down");
+											console.log("change imgsrc:" + obj.src);
+										}
+										else if (x.responseText != "" && json != null) {
+											if (json.response == "OK") {
+												clearTimeout();
+												$("#connect_waiting").css("display", "none");
+												$("#connect_error").css("display", "none");
+												obj.src = imgsrc.replace("up", "down");
+												console.log("json change imgsrc:" + obj.src);
+											}
+										}
+									},
+									3000
+								);
+							}
+							else {
+								var argv;
+								var stxhr = new XHR();
+								argv = "ACTION=network&BTNID=" + obj.id + "&" + "ifname=" + ifpname + "&state=up";
+
+								$("#connect_waiting").css("display", "block");
+								setTimeout(function () { $("#connect_waiting").css("display", "none") }, 5000);
+								stxhr.post("/goform/button_onclick", argv,
+									function (x) {
+										console.log(x);
+										if (x.responseText == "ERROR") {
+											clearTimeout();
+											$("#connect_error").css("display", "block");
+											$("#connect_waiting").css("display", "none");
+											setTimeout(function () { $("#connect_error").css("display", "none") }, 3000);
+										}
+										else if (x.responseText == "OK") {
+											clearTimeout();
+											$("#connect_waiting").css("display", "none");
+											$("#connect_error").css("display", "none");
+											obj.src = imgsrc.replace("down", "up");
+											console.log("change imgsrc:" + obj.src);
+										}
+									},
+									3000
+								);
+							}
+						}
+
+						function ipaddress_check(self, obj) {
+							//var ipaddress = $('#ipaddress');
+							var ip = self.value;
+							if (ip != "") {
+								if (checkipv4(ip) == true) {
+									check_ok_show(obj);
+									return true;
+								}
+								else {
+									check_err_show(obj);
+									return false;
+								}
+							}
+							return false;
+						}
+
+						function username_check(self, obj) {
+							//var ipaddress = $('#ipaddress');
+							var ip = self.value;
+							if (ip != "") {
+								check_ok_show(obj);
+								return true;
+							}
+							else {
+								check_err_show(obj);
+								return false;
+							}
+							return false;
+						}
+
+						function netmask_check() {
+							var netmask = $('#netmask');
+							var ip = netmask.val();
+							if (ip != "") {
+								if (checknetmaskv4(ip) == true) {
+									check_ok_show(netmask);
+									return true;
+								}
+								else {
+									check_err_show(netmask);
+									return false;
+								}
+							}
+							return false;
+						}
+
+						function network_cencel() {
+
+							if (document.getElementById("proto").value == "static") {
+								document.getElementById("ipaddress").value = "";
+								document.getElementById("netmask").value = "";
+								document.getElementById("gateway").value = "";
+								if (document.getElementById("dns"))
+									document.getElementById("dns").value = "";
+								/*if (document.getElementById("dns2"))
+									document.getElementById("dns2").value = "";
+								*/
+								check_okerr_hiden($('#ipaddress'));
+								check_okerr_hiden($('#netmask'));
+								check_okerr_hiden($('#gateway'));
+								if ($('#dns'))
+									check_okerr_hiden($('#dns'));
+								//if ($('#dns2'))
+								//	check_okerr_hiden($('#dns2'));
+							}
+							else if (document.getElementById("proto").value == "pppoe") {
+								document.getElementById("username").value = "";
+								document.getElementById("password").value = "";
+								check_okerr_hiden($('#username'));
+								check_okerr_hiden($('#password'));
+							}
+						}
+
+						//button 按钮，结合onclick事件，验证和提交表单
+						function network_submit() {
+
+							if (document.getElementById("proto").value == "static") {
+								if (ipaddress_check(document.getElementById("ipaddress"), $('#ipaddress')) == false)
+								{
+									check_err_show($('#ipaddress'));
+									return false;
+								}
+								if (netmask_check() == false) {
+									check_err_show($('#netmask'));
+									return false;
+								}
+								if (document.getElementById("gateway").value != "") {
+									if (ipaddress_check(document.getElementById("gateway"), $('#gateway')) == false) {
+										check_err_show($('#gateway'));
+										return false;
+									}
+								}
+								if (document.getElementById("dns").value != "") {
+									console.log("dns=(" + document.getElementById("dns").value + ")");
+									if (ipaddress_check(document.getElementById("dns"), $('#dns')) == false) {
+										check_err_show($('#dns'));
+										return false;
+									}
+								}
+								/*if (document.getElementById("dns2").value != "") {
+									if (ipaddress_check(document.getElementById("dns2"), $('#dns2')) == false) {
+										check_err_show($('#dns2'));
+										return false;
+									}
+								}*/
+							}
+							else if (document.getElementById("proto").value == "pppoe") {
+								if (document.getElementById("username").value == "" ||
+									document.getElementById("password").value == "") {
+									document.getElementById("username").value = "";
+									document.getElementById("password").value = "";
+									check_okerr_hiden($('#username'));
+									check_okerr_hiden($('#password'));
+									return false;
+								}
+							}
+							{
+								var argv;
+								var stxhr = new XHR();
+
+								argv = "ACTION=SET&ifname=" + document.getElementById("ifpname").value + "&proto="
+									+ document.getElementById("proto").value;
+
+								if (document.getElementById("proto").value == "static") {
+									argv += "&ipaddress=" + document.getElementById("ipaddress").value +
+										"&netmask=" + document.getElementById("netmask").value;
+
+									if (document.getElementById("gateway").value != "") {
+										argv += "&gateway=" + document.getElementById("gateway").value;
+										//console.log("gateway:(" + document.getElementById("gateway").value + ")");
+									}
+									if (document.getElementById("dns").value != "") {
+										argv += "&dns=" + document.getElementById("dns").value;
+										//console.log("dns:(" + document.getElementById("dns").value + ")");
+									}
+									//if (document.getElementById("dns2").value != "") {
+									//	argv += "&dns2=" + document.getElementById("dns2").value;
+									//	//console.log("dns2:(" + document.getElementById("dns2").value + ")");
+									//}
+								}
+								else if (document.getElementById("proto").value == "pppoe") {
+									argv += "&username=" + document.getElementById("username").value +
+										"&password=" + document.getElementById("password").value;
+								}
+
+								console.log("argv:" + argv);
+			
+
+								$("#network_waiting").css("display", "block");
+								setTimeout(function () { $("#network_waiting").css("display", "none") }, 5000);
+								stxhr.post("/goform/networkset", argv,
+									function (x, json) {
+										console.log(x);
+										console.log(x, json);
+										if (x.responseText == "ERROR" || (json != null && json.response == "ERROR")) {
+											if (document.getElementById("proto").value == "static") {
+												document.getElementById("ipaddress").value = "";
+												document.getElementById("netmask").value = "";
+												if (document.getElementById("gateway").value)
+													document.getElementById("gateway").value = "";
+												if (document.getElementById("dns"))
+													document.getElementById("dns").value = "";
+												//if (document.getElementById("dns2"))
+												//	document.getElementById("dns2").value = "";
+											}
+											else if (document.getElementById("proto").value == "pppoe") {
+												document.getElementById("username").value = "";
+												document.getElementById("password").value = "";
+											}
+											clearTimeout();
+											$("#network_waiting").css("display", "none");
+											$("#network_error").css("display", "block");
+											setTimeout(function () { $("#network_error").css("display", "none") }, 5000);
+										}
+										else if (x.responseText == "OK" || (json != null && json.response == "OK")) {
+											if (json) {
+												if (document.getElementById("proto").value == "static") {
+													document.getElementById("ipaddress").value = json.ipaddress;
+													document.getElementById("netmask").value = json.netmask;
+													if (json.gateway != undefined && json.gateway != "")
+														document.getElementById("gateway").value = json.gateway;
+												}
+												else if (document.getElementById("proto").value == "pppoe") {
+													document.getElementById("username").value = json.username;
+													document.getElementById("password").value = json.password;
+												}
+												if (json.proto != undefined && json.proto != "")
+													select_option_active(document.getElementById("proto"), json.proto);
+											}
+											clearTimeout();
+											$("#network_waiting").css("display", "none");
+											$("#network_error").css("display", "none");
+											document.getElementById("networkconfig").parentNode.setAttribute("class", "form-horizontal form-margin hiden");
+											network_tbl();
+										}
+									},
+									5000
+								);
+							}
+						}
+					</script>
+				</div>
+			</form>
+		</fieldset>
+	</div>
+</body>
+
+</html>

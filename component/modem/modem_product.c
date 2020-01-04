@@ -30,6 +30,7 @@ static struct tty_com ec20_attty =
 	.stopbit = STOP_1BIT,
 	.parity = PARITY_NONE,
 	.flow_control = FLOW_CTL_NONE,
+	.mode = TTY_COM_MODE_RAW,
 };
 
 static struct tty_com ec20_pppd =
@@ -40,6 +41,7 @@ static struct tty_com ec20_pppd =
 	.stopbit = STOP_1BIT,
 	.parity = PARITY_NONE,
 	.flow_control = FLOW_CTL_NONE,
+	.mode = TTY_COM_MODE_RAW,
 };
 
 static modem_driver_t ec20_driver =

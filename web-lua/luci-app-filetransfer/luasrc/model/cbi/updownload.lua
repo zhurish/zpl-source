@@ -109,6 +109,7 @@ tb = uplist:section(Table, filelist)
 nm = tb:option(DummyValue, "name", translate("File Name"))
 sz = tb:option(DummyValue, "size", translate("Size"))
 btnrm = tb:option(Button, "remove", translate("Remove"))
+btnrm.inputstyle = "remove"
 
 btnrm.render = function(self, section, scope)
 	self.inputstyle = "remove"

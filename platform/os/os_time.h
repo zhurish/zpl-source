@@ -9,15 +9,15 @@
 #define __OS_TIME_H__
 
 
-//#define OS_TIMER_TEST
+#define OS_TIMER_TEST
 #define OS_TIMER_POSIX
 
 #define OS_TIMER_NAME_MAX	128
 
 
-#define OS_SEC_MIN_V(n)		(60)*(n)
-#define OS_SEC_HOU_V(n)		(3600)*(n)
-#define OS_SEC_DAY_V(n)		(86400)*(n)
+#define OS_SEC_MIN_V(n)		((60)*(n))
+#define OS_SEC_HOU_V(n)		((3600)*(n))
+#define OS_SEC_DAY_V(n)		((86400)*(n))
 
 
 #define os_system_rate()	(100)
@@ -75,6 +75,10 @@ extern char *os_time_string(time_t tInput);
 extern const char *os_build_time2date(char *str);
 extern const char *os_date2build_time(char *str);
 
+extern int os_time_set_api(int timesp);
+extern int os_timezone_offset_api(char * res);
+extern int os_timezone_set_api(int tizone, char *timzstr);
+
 #define OS_TIMER_FOREVER 0X0FFFFFFF
 
 typedef enum
@@ -86,7 +90,7 @@ typedef enum
 typedef struct os_time_s
 {
 	NODE	node;
-	int 	t_id;
+	u_int32 t_id;
 	int		(*time_entry)(void *);
 	void	*pVoid;
 	unsigned int msec;
@@ -105,18 +109,18 @@ extern int os_time_exit();
 extern int os_time_load();
 
 extern int os_time_clean(BOOL all);
-extern os_time_t *os_time_lookup(int id);
+extern os_time_t *os_time_lookup(u_int32 id);
 
-extern int os_time_destroy(int id);
+extern int os_time_destroy(u_int32 id);
 
-extern int os_time_cancel(int id);
+extern int os_time_cancel(u_int32 id);
 
-extern int os_time_restart(int id, int msec);
+extern int os_time_restart(u_int32 id, int msec);
 
 extern int os_time_show(int (*show)(void *, char *fmt,...), void *pVoid);
 //extern int os_time_create(int (*time_entry)(void *), void *pVoid, int msec);
 
-extern int os_time_create_entry(os_time_type type, int (*time_entry)(void *),
+extern u_int32 os_time_create_entry(os_time_type type, int (*time_entry)(void *),
 		void *pVoid, int msec, char *func_name);
 
 

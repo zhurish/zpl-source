@@ -60,6 +60,8 @@ extern int os_process_stop();
 #endif
 
 
+extern void os_log(char *file, const char *format, ...);
+
 
 extern int super_system(const char *cmd);
 extern int super_output_system(const char *cmd, char *output, int len);
@@ -96,7 +98,11 @@ extern int os_write_timeout(int fd, char *buf, int len, int timeout_ms);
 extern int os_read_timeout(int fd, char *buf, int len, int timeout_ms);
 
 
-extern int os_register_signal(int sig, void (*handler)(int));
+extern int os_register_signal(int sig, void (*handler)(int
+#ifdef SA_SIGINFO
+	     , siginfo_t *siginfo, void *context
+#endif
+		));
 
 
 /*
@@ -111,7 +117,7 @@ extern int os_register_signal(int sig, void (*handler)(int));
 #define MPLS_X_G(n)	(n >> 30)
 
 extern int os_file_size (const char *filename);
-extern const char * os_file_size_string(long long len);
+extern const char * os_file_size_string(u_int len);
 
 //extern const char * os_stream_size(long long len);
 

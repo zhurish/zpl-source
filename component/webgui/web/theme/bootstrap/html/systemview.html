@@ -1,0 +1,140 @@
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta content="" name="description" />
+  <meta content="webthemez" name="author" />
+  <!--meta http-equiv="refresh" content="30"-->
+  <!-- Bootstrap Styles-->
+  <link href="../css/bootstrap.min.css" rel="stylesheet" />
+  <!-- private Styles-->
+  <link href="../css/private.css" rel="stylesheet" />
+  <!-- jQuery Js -->
+  <script src="../js/jquery-2.1.1.min.js"></script>
+  <!-- Bootstrap Js -->
+  <script src="../js/bootstrap.min.js"></script>
+  <script src="../js/xhr.js"></script>
+  <script src="../js/data-type.js"></script>
+
+  <title>Status</title>
+</head>
+
+<body class="body-bg-img">
+  <div id="maincontent" class="container">
+    <fieldset class="fieldset-margin fieldset-background">
+      <table class="table">
+        <caption class="tbl-text-align bold">设备系统信息</caption>
+        <tbody>
+          <tr>
+            <td>设备名称</td>
+            <td><%jst_hostname();%></td>
+          </tr>
+          <tr>
+            <td>硬件平台</td>
+            <td><%jst_platform();%></td>
+          </tr>
+          <!--tr>
+            <td>CPU架构</td>
+            <td><%jst_arch();%></td>
+          </tr-->
+
+          <%jst_app_version();%>
+          <!--
+          <tr>
+            <td>IO模块版本</td>
+            <td><%jst_firmware_version("IO");%></td>
+          </tr>
+          <tr>
+            <td>刷卡模块版本</td>
+            <td><%jst_firmware_version("CO");%></td>
+          </tr>
+          <tr>
+            <td>语音模块版本</td>
+            <td><%jst_firmware_version("VO");%></td>
+          </tr>
+          <tr>
+            <td>总控模块版本</td>
+            <td><%jst_firmware_version("ZO");%></td>
+          </tr>  
+        -->
+          <tr>
+            <td>内核版本</td>
+            <td><%jst_kernel_version();%></td>
+          </tr>
+          <tr>
+            <td>本地时间</td>
+            <td id="localtime"><% jst_localtime(); %></td>
+          </tr>
+          <tr>
+            <td>设备运行时间</td>
+            <td id="uptime"><% jst_uptime(); %></td>
+          </tr>
+          <tr>
+            <td>CPU负载</td>
+            <td id="cpu_load"><% jst_cpu_load(); %></td>
+          </tr>
+        </tbody>
+      </table>
+    </fieldset>
+
+    <fieldset class="fieldset-margin fieldset-background">
+      <table class="table">
+        <caption class="tbl-text-align bold">设备系统内存</caption>
+        <tbody>
+          <tr>
+            <td class="col-sm-3">内存占用率</td>
+            <td id="memtotal">
+              <div class="progress">
+                <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
+                  id="memuses-progress" style="width: 60%;">
+                  <span id="memuses-text">60%</span>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <!--tr>
+            <td class="col-sm-3">Memory Average</td>
+            <td id="memtotal">
+              <div class="progress" style="margin-right:10%;margin-left:10%">
+                <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
+                  id="memtotal-progress" style="width: 60%;">
+                  <span id="memtotal-progress-text">60%</span>
+                </div>
+              </div>
+            </td>
+          </tr-->
+
+        </tbody>
+      </table>
+      <script type="text/javascript">
+
+        window.onload = function () {
+          view_progress_load(this, "mem", "memtotal", function (x, json) {
+            $("#memuses-progress").css("width", json.memuses);
+            document.getElementById("memuses-text").innerHTML = json.memuses;
+            document.getElementById("localtime").innerHTML = json.localtime;
+            document.getElementById("uptime").innerHTML = json.uptime;
+            document.getElementById("cpu_load").innerHTML = json.cpu_load;
+          });
+          
+          view_progress_start(this, "mem", "memtotal", function (x, json) {
+
+            $("#memuses-progress").css("width", json.memuses);
+            document.getElementById("memuses-text").innerHTML = json.memuses;
+
+            document.getElementById("localtime").innerHTML = json.localtime;
+            document.getElementById("uptime").innerHTML = json.uptime;
+            document.getElementById("cpu_load").innerHTML = json.cpu_load;
+
+          }, 5000);
+        }
+      </script>
+    </fieldset>
+  </div>
+
+</body>
+
+</html>

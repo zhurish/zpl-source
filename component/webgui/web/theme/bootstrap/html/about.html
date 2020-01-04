@@ -1,0 +1,74 @@
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta content="" name="description" />
+  <meta content="webthemez" name="author" />
+  <meta http-equiv="refresh" content="30">
+  <!-- Bootstrap Styles-->
+  <link href="../css/bootstrap.min.css" rel="stylesheet" />
+  <!-- private Styles-->
+  <link href="../css/private.css" rel="stylesheet" />
+  <!-- jQuery Js -->
+  <script src="../js/jquery-2.1.1.min.js"></script>
+  <!-- Bootstrap Js -->
+  <script src="../js/bootstrap.min.js"></script>
+  <script src="../js/xhr.js"></script>
+  <script src="../js/data-type.js"></script>
+
+  <title>Status</title>
+</head>
+
+<body class="body-bg-img">
+  <div id="maincontent" class="container">
+    <fieldset class="fieldset-margin fieldset-background">
+      <!--legend>sasad</legend
+<table class="table table-striped table-hover" border="2">
+-->
+      <table class="table">
+        <caption class="tbl-text-align bold">System</caption>
+        <tbody>
+        
+          <!--tr>
+            <td>设备序列号</td>
+            <td><% jst_serial_number(); %></td>
+          </tr-->
+          
+          <tr>
+            <td>WEB平台</td>
+            <td><% jst_web_description(); %>(<%jst_web_os("get");%>-<%jst_web_type("get");%>)</td>
+          </tr>
+          <tr>
+            <td>WEB版本</td>
+            <td><%jst_web_name();%>-<%jst_web_version();%></td>
+          </tr>
+          <tr>
+            <td>软件平台</td>
+            <td><%jst_hostname();%></td>
+          </tr>
+          <tr>
+            <td>硬件平台</td>
+            <td><%jst_platform();%></td>
+          </tr>
+          <tr>
+            <td>CPU架构</td>
+            <td><%jst_arch();%></td>
+          </tr>
+          <tr>
+            <td>固件版本</td>
+            <td><%jst_firmware_version("VO");%></td>
+          </tr>
+          <tr>
+            <td>内核版本</td>
+            <td><%jst_kernel_version();%></td>
+          </tr>
+        </tbody>
+      </table>
+    </fieldset>
+  </div>
+</body>
+
+</html>

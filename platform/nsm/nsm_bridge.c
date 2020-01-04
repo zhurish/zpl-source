@@ -164,6 +164,39 @@ int nsm_bridge_del_interface_api(struct interface *bridge, struct interface *ifp
 	return ERROR;
 }
 
+int nsm_bridge_update_member_api(struct interface *bridge)
+{
+	if (if_is_brigde(bridge))
+	{
+		int ret = -1;
+		nsm_bridge_t * bri = nsm_bridge_get(bridge);
+		if (bri)
+		{
+			int kifindex[BRIDGE_MEMBER_MAX];
+			memset(kifindex, 0, sizeof(kifindex));
+			if (bri->get_member_cb)
+				ret = bri->get_member_cb(bri, kifindex);
+			if (ret)
+			{
+				int i = 0;
+				nsm_bridge_member_del_all(bri);
+				for(i = 0; i < BRIDGE_MEMBER_MAX; i++)
+				{
+					if(kifindex[i] > 0 && ifkernel2ifindex(kifindex[i]) > 0)
+					{
+						nsm_bridge_member_add(bri, ifkernel2ifindex(kifindex[i]));
+					}
+				}
+				//extern ifindex_t ifindex2ifkernel(ifindex_t);
+				//extern ifindex_t ifkernel2ifindex(ifindex_t);
+				return OK;
+			}
+		}
+	}
+	return ERROR;
+}
+
+
 int nsm_bridge_interface_stp_set_api(struct interface *bridge, BOOL stp)
 {
 	if(if_is_brigde(bridge))
@@ -295,6 +328,8 @@ int nsm_bridge_client_init()
 	nsm->notify_add_cb = nsm_bridge_create_interface;
 	nsm->notify_delete_cb = nsm_bridge_delete_interface;
 	nsm->interface_write_config_cb = nsm_bridge_interface_write_config;
+	nsm->notify_update_cb = nsm_bridge_update_member_api;
+
 	nsm_client_install (nsm, NSM_BRIDGE);
 	return OK;
 }

@@ -68,6 +68,7 @@ PJ_DEF(pj_status_t) pj_cli_socket_get_wfd(pj_cli_front_end *fe);
 /**
  * @}
  */
+PJ_DEF(pj_status_t) cli_socket_destroy(void *ife);
 
 PJ_END_DECL
 

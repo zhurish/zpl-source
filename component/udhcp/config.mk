@@ -5,7 +5,6 @@ MODULEDIR = component/udhcp
 #OS
 #OBJS += llist.o
 OBJS += dhcp_arpping.o
-#OBJS += dhcp_def.o
 OBJS += dhcp_lease.o
 OBJS += dhcp_pool.o
 OBJS += dhcp_option.o

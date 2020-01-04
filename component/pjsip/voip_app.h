@@ -93,27 +93,27 @@ typedef struct voip_app_s voip_app_t;
 typedef struct voip_call_s
 {
 	BOOL			active;
-	u_int16			room_number;
+	u_int16			room_number;		//呼叫实例内房间号
 
-	u_int16			num;
+	u_int16			num;				//呼叫实例内号码数量
 	call_phone_t	phonetab[VOIP_MULTI_CALL_NUMBER_MAX];
-	u_int16			index;
-	int				time_id;			//定时器ID
+	u_int16			index;				//当前呼叫号码索引
+	u_int32			time_id;			//定时器ID
 	int				time_interval;		//定时间隔（多长时间没有人接听）
-#define APP_RINGING_TIME_INTERVAL		30000//15 SEC
+#define APP_RINGING_TIME_INTERVAL		50000//15 SEC
 
-	u_int32			start_timer;
-	u_int32			open_timer;
-	u_int32			stop_timer;
+	u_int32			start_timer;		//呼叫接通时间
+	u_int32			open_timer;			//呼叫开门时间
+	u_int32			stop_timer;			//呼叫挂断时间
 
-	app_call_source_t 	source;
+	app_call_source_t 	source;			//呼叫来源
 
-	BOOL			talking;
-	u_int8			building;
-	u_int8			unit;
+	BOOL			talking;			//正在通话中
+	u_int8			building;			//楼栋编号
+	u_int8			unit;				//单元编号
 
-	int				instance;
-	void			*sip_session;
+	int				instance;			//呼叫实例编号
+
 	voip_app_t		*app;
 	BOOL			local_stop;		//local stop
 }voip_call_t;
@@ -123,12 +123,28 @@ typedef enum
 	//APP通话状态	APP层面
 	APP_STATE_TALK_IDLE,			//通话空闲
 	APP_STATE_TALK_FAILED,			//通话建立失败
-	APP_STATE_TALK_CALLING,
+	APP_STATE_TALK_CALLING,			//呼叫中
 	APP_STATE_TALK_SUCCESS,			//通话建立
 	APP_STATE_TALK_RUNNING,			//通话中
 }voip_app_state_t;
 
 
+typedef struct voip_call_incoming_s
+{
+	u_int16			room_number;		//呼叫实例内房间号
+	u_int8			building;			//楼栋编号
+	u_int8			unit;				//单元编号
+
+	u_int32			start_timer;		//呼叫接通时间
+	u_int32			open_timer;			//呼叫开门时间
+	u_int32			stop_timer;			//呼叫挂断时间
+
+	call_phone_t 	phone;
+
+	char 			remote_ip[PJSIP_USERNAME_MAX];
+	u_int16 		port;
+	char 			remote_proto[PJSIP_USERNAME_MAX];
+}voip_call_incoming_t;
 
 typedef struct voip_app_s
 {
@@ -137,8 +153,13 @@ typedef struct voip_app_s
 
 	voip_app_state_t	state;
 
-	voip_call_t			*call_session[VOIP_MULTI_CALL_MAX];
-	voip_call_t			*session;
+	voip_call_t			*call_session[VOIP_MULTI_CALL_MAX];//呼叫实例
+	voip_call_t			*session;		//当前呼叫实例
+	u_int16				call_index;
+	BOOL				stop_and_next;
+
+	voip_call_incoming_t			*incoming_session;
+
 	void				*x5b_app;
 
 	BOOL				local_stop;		//local stop
@@ -157,6 +178,7 @@ extern int pl_pjsip_module_init();
 extern int pl_pjsip_module_exit();
 extern int pl_pjsip_module_task_init();
 extern int pl_pjsip_module_task_exit();
+
 #ifdef PL_OPENWRT_UCI
 extern int pl_pjsip_module_reload();
 #endif
@@ -173,12 +195,12 @@ extern voip_call_t * voip_app_call_session_lookup_by_instance(voip_app_t *app, i
 
 //extern void * voip_app_call_ID_instance_lookup(voip_call_t *call, int instance);
 
-int voip_app_call_next_number(void *p);
+//int voip_app_call_next_number(void *p);
 
 extern int voip_app_call_make(voip_call_t *call, app_call_source_t source, u_int8 building,
 		u_int8 unit, u_int16 room);
 
-extern int voip_app_multi_call_next();
+//extern int voip_app_multi_call_next();
 
 
 extern BOOL voip_app_call_event_from_cli_web();
@@ -187,6 +209,7 @@ extern BOOL voip_app_call_event_from_ui();
 extern int voip_app_start_call_event_ui(voip_event_t *ev);
 extern int voip_app_stop_call_event_ui(voip_event_t *ev);
 extern int voip_app_start_call_event_ui_phone(voip_event_t *ev);
+extern int voip_app_start_call_event_ui_user(voip_event_t *ev);
 
 extern int voip_app_start_call_event_cli_web(app_call_source_t source, u_int8 building,
 		u_int8 unit, u_int16 room, char *number);

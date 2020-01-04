@@ -19,27 +19,25 @@
 #include "nsm_client.h"
 
 #include "hal_qinq.h"
-
-sdk_qinq_t sdk_qinq;
-
+#include "hal_driver.h"
 
 int hal_qinq_enable(BOOL enable)
 {
-	if(sdk_qinq.sdk_qinq_enable_cb)
-		return sdk_qinq.sdk_qinq_enable_cb(enable);
+	if(hal_driver && hal_driver->qinq_tbl && hal_driver->qinq_tbl->sdk_qinq_enable_cb)
+		return hal_driver->qinq_tbl->sdk_qinq_enable_cb(hal_driver->driver, enable);
 	return ERROR;
 }
 
 int hal_qinq_vlan_tpid(vlan_t tpid)
 {
-	if(sdk_qinq.sdk_qinq_vlan_ptid_cb)
-		return sdk_qinq.sdk_qinq_vlan_ptid_cb(tpid);
+	if(hal_driver && hal_driver->qinq_tbl && hal_driver->qinq_tbl->sdk_qinq_vlan_ptid_cb)
+		return hal_driver->qinq_tbl->sdk_qinq_vlan_ptid_cb(hal_driver->driver, tpid);
 	return ERROR;
 }
 
 int hal_qinq_interface_enable(ifindex_t ifindex, BOOL enable)
 {
-	if(sdk_qinq.sdk_qinq_port_enable_cb)
-		return sdk_qinq.sdk_qinq_port_enable_cb(ifindex, enable);
+	if(hal_driver && hal_driver->qinq_tbl && hal_driver->qinq_tbl->sdk_qinq_port_enable_cb)
+		return hal_driver->qinq_tbl->sdk_qinq_port_enable_cb(hal_driver->driver, ifindex, enable);
 	return ERROR;
 }

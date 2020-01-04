@@ -1,0 +1,270 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta content="" name="description" />
+	<meta content="webthemez" name="author" />
+	<!--meta http-equiv="refresh" content="30"-->
+	<!-- Bootstrap Styles-->
+	<link href="../css/bootstrap.min.css" rel="stylesheet" />
+
+	<!-- private Styles-->
+	<link href="../css/private.css" rel="stylesheet" />
+
+	<!-- jQuery Js -->
+	<script src="../js/jquery-2.1.1.min.js"></script>
+	<!-- Bootstrap Js  Algorithm -->
+	<script src="../js/bootstrap.min.js"></script>
+	<script src="../js/xhr.js"></script>
+	<script src="../js/data-type.js"></script>
+
+	<title>通用配置</title>
+</head>
+
+<body class="body-bg-img">
+	<div id="maincontent" class="container">
+		<fieldset class="fieldset-margin fieldset-background">
+			<form class="form-horizontal form-margin" role="form" name="general" action="" accept-charset="UTF-8"
+				method="POST">
+				<legend class="legend-text-align">基础参数</legend>
+
+				<div class="form-group">
+					<label for="mode " class="col-sm-3 control-label">业务模式</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="mode" id="mode">
+							<option selected="selected" value="snap">抓拍模式</option>
+							<option value="reco">识别模式</option>
+							<option value="helmet">安全帽模式</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="frme" class="col-sm-3 control-label">检测帧率</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="3600" step="1" class="form-control" name="frme" id="frme"
+							onchange="input_value_check(this)" required value="10">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="snapsrc" class="col-sm-3 control-label">抓拍输出原图</label>
+					<div class="checkbox col-sm-4">
+						<input type="checkbox" name="checkbox" id="snapsrc" checked value="snapsrc">
+					</div>
+				</div>
+
+
+				<div class="form-group">
+					<label for="quality" class="col-sm-3 control-label">人脸编码质量</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="100" step="1" class="form-control" name="quality"
+							id="quality" onchange="input_value_check(this)" required value="60">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="smoothness" class="col-sm-3 control-label">平滑化</label>
+					<div class="checkbox col-sm-4">
+						<input type="checkbox" name="smoothness" id="smoothness" checked value="smoothness">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="detection_module" class="col-sm-3 control-label">检测使用模型</label>
+					<div class="checkbox col-sm-4">
+						<input type="checkbox" name="detection_module" id="detection_module" checked value="detection_module">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="upload_module" class="col-sm-3 control-label">上传使用模型</label>
+					<div class="checkbox col-sm-4">
+						<input type="checkbox" name="upload_module" id="upload_module" checked value="upload_module">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="upload_qulity" class="col-sm-3 control-label">上传质量</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="100" step="1" class="form-control" name="upload_qulity"
+							id="upload_qulity" onchange="input_value_check(this)" required value="40">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<div class="col-xs-4 control-label">
+						<button type="button" class="btn btn-cencel" name="general_cencel" id="general_cencel"
+							onclick="general_oncencel()"><span class="glyphicon glyphicon-remove"
+								style="margin-right:10px;"></span>取消</button>
+					</div>
+					<div class="col-xs-4 control-label">
+						<button type="button" class="btn btn-submit" name="general_submit" id="general_submit"
+							onclick="general_onsubmit()"><span class="glyphicon glyphicon-send"
+								style="margin-right:10px;"></span>确定</button>
+					</div>
+				</div>
+
+
+				<div id="general_waiting" class="alert alert-success hiden">
+					<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+							style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+				</div>
+				<div id="general_error" class="alert alert-warning hiden">
+					<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+				</div>
+
+			</form>
+		</fieldset>
+
+		<script type="text/javascript">
+
+			function input_value_check(self) {
+				if (self.id == "frme") {
+					if (self.value == "" ||
+						self.value < 0 ||
+						self.value > 3600) {
+						check_err_show($('#frme'));
+						return false;
+					}
+					else {
+						check_ok_show($('#frme'));
+						return true;
+					}
+				}
+				else if (self.id == "quality") {
+					if (self.value == "" ||
+						self.value < 0 ||
+						self.value > 100) {
+						check_err_show($('#quality'));
+						return false;
+					}
+					else {
+						check_ok_show($('#quality'));
+						return true;
+					}
+				}
+				else if (self.id == "upload_qulity") {
+					if (self.value == "" ||
+						self.value < 0 ||
+						self.value > 1920) {
+						check_err_show($('#upload_qulity'));
+						return false;
+					}
+					else {
+						check_ok_show($('#upload_qulity'));
+						return true;
+					}
+				}
+				return false;
+			}
+
+
+			function general_oncencel() {
+				document.getElementById("frme").value = "";
+				document.getElementById("quality").value = "";
+				document.getElementById("upload_qulity").value = "";
+
+				check_okerr_hiden($('#frme'));
+				check_okerr_hiden($('#quality'));
+				check_okerr_hiden($('#upload_qulity'));
+			}
+			
+
+
+			function general_get_action(op) {
+				var argv;
+				var stxhr = new XHR();
+				argv = "ACTION=GET";
+
+				stxhr.post("/goform/general", argv,
+					function (x, json) {
+						if (x.responseText != "" && json == null) {
+							if (x.responseText == "ERROR") {
+							}
+							else if (x.responseText == "OK") {
+							}
+						}
+						else if (x.responseText != "" && json != null) {
+							if (json.response == "OK") {
+								document.getElementById("frme").value = json.frme;
+								document.getElementById("quality").value = json.quality;
+								document.getElementById("upload_qulity").value = json.upload_qulity;
+								document.getElementById("smoothness").checked = json.smoothness;
+								document.getElementById("snapsrc").checked = json.snapsrc;
+								document.getElementById("detection_module").checked = json.detection_module;
+								document.getElementById("upload_module").checked = json.upload_module;
+							}
+						}
+					},
+					3000
+				);
+			}
+			
+
+			//button 按钮，结合onclick事件，验证和提交表单
+			function general_onsubmit() {
+				var argv;
+				var stxhr = new XHR();
+				argv = "ACTION=SET&frme=" + document.getElementById("frme").value;
+
+				argv += "&quality" + document.getElementById("quality").value;
+				argv += "&upload_qulity" + document.getElementById("upload_qulity").value;
+				//argv = "ACTION=SET&ID=" + document.getElementById("general_boardid").value + "&ch="
+				//	+ document.getElementById("general_channel").value;
+				if(document.getElementById("smoothness").checked)	
+					argv +=  "&smoothness=true";
+				else	
+					argv +=  "&smoothness=false";
+
+				if(document.getElementById("snapsrc").checked)	
+					argv +=  "&snapsrc=true";
+				else	
+					argv +=  "&snapsrc=false";
+					
+				if(document.getElementById("detection_module").checked)	
+					argv +=  "&detection_module=true";
+				else	
+					argv +=  "&detection_module=false";
+
+				if(document.getElementById("upload_module").checked)	
+					argv +=  "&upload_module=true";
+				else	
+					argv +=  "&upload_module=false";
+					
+				$("#general_waiting").css("display", "block");
+				setTimeout(function () { $("#general_waiting").css("display", "none") }, 5000);
+				stxhr.post("/goform/general", argv,
+					function (x) {
+						console.log(x);
+						if (x.responseText == "OK") {
+							clearTimeout();
+							$("#general_waiting").css("display", "none");
+
+							check_okerr_hiden($('#frme'));
+							check_okerr_hiden($('#quality'));
+							check_okerr_hiden($('#upload_qulity'));
+						}
+						else if (x.responseText != "OK") {
+							check_okerr_hiden($('#frme'));
+							check_okerr_hiden($('#quality'));
+							check_okerr_hiden($('#upload_qulity'));
+							clearTimeout();
+							$("#general_waiting").css("display", "none");
+							$("#general_error").css("display", "block");
+							setTimeout(function () { $("#general_error").css("display", "none") }, 3000);
+						}
+					},
+					3000
+				);
+			}
+			
+			window.onload = function () {
+				general_get_action("GET");
+			}
+		</script>
+	</div>
+</body>
+
+</html>

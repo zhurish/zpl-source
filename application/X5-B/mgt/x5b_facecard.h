@@ -8,6 +8,8 @@
 #ifndef SRC_SWPLATFORM_APPLICATION_X5_B_MGT_X5B_FACECARD_H_
 #define SRC_SWPLATFORM_APPLICATION_X5_B_MGT_X5B_FACECARD_H_
 
+
+#ifdef X5B_APP_DATABASE
 #include "x5b_dbase.h"
 
 #define APP_MULTI_FACE_MAX	8
@@ -81,5 +83,5 @@ user_face_t * x5b_user_get_face_info(u_int32 faceid);
 
 int voip_facecard_web_select_all(void);
 int voip_facecard_cli_show_all(struct vty *vty, BOOL detail);
-
+#endif
 #endif /* SRC_SWPLATFORM_APPLICATION_X5_B_MGT_X5B_FACECARD_H_ */

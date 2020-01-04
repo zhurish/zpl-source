@@ -37,7 +37,7 @@ static int iw_ap_connect_cleanup(iw_ap_t *iw_ap, BOOL use)
 	NODE index;
 	LIST *list = NULL;
 	iw_ap_connect_t *pstNode = NULL;
-	if(!iw_ap)
+	if(!iw_ap && !iw_ap->ap_list)
 		return ERROR;
 	if(use)
 		list = iw_ap->ap_list;
@@ -63,7 +63,7 @@ static int iw_ap_connect_cleanup(iw_ap_t *iw_ap, BOOL use)
 static int iw_ap_connect_add_node(iw_ap_t *iw_ap, iw_ap_connect_t *value)
 {
 	iw_ap_connect_t *node = NULL;
-	if(!iw_ap || !value)
+	if(!iw_ap || !value || !iw_ap->ap_list)
 		return ERROR;
 	node = XMALLOC(MTYPE_WIFI_CLIENT, sizeof(iw_ap_connect_t));
 	if(node)
@@ -81,7 +81,7 @@ static int iw_ap_connect_add_node(iw_ap_t *iw_ap, iw_ap_connect_t *value)
 
 static int iw_ap_connect_del_node(iw_ap_t *iw_ap, iw_ap_connect_t *node)
 {
-	if(iw_ap && node)
+	if(iw_ap && node && iw_ap->ap_list)
 	{
 		lstDelete(iw_ap->ap_list, (NODE *)node);
 		XFREE(MTYPE_WIFI_CLIENT, node);
@@ -96,7 +96,7 @@ static iw_ap_connect_t * iw_ap_connect_lookup_node(iw_ap_t *iw_ap, u_int8 *bssid
 	NODE index;
 	u_int8 BSSID[IW_SSID_NAME_MAX];
 	memset(BSSID, 0, IW_SSID_NAME_MAX);
-	if(!iw_ap || !bssid)
+	if(!iw_ap || !bssid || !iw_ap->ap_list)
 		return NULL;
 	if(bssid)
 		memcpy(BSSID, bssid, NSM_MAC_MAX);
@@ -119,7 +119,7 @@ static iw_ap_connect_t * iw_ap_connect_lookup_node(iw_ap_t *iw_ap, u_int8 *bssid
 int iw_ap_connect_add_api(iw_ap_t *iw_ap, iw_ap_connect_t *value)
 {
 	iw_ap_connect_t *client = NULL;
-	if(!iw_ap || !value)
+	if(!iw_ap || !value || !iw_ap->ap_list)
 		return ERROR;
 	if(iw_ap->ap_mutex)
 		os_mutex_lock(iw_ap->ap_mutex, OS_WAIT_FOREVER);
@@ -151,7 +151,7 @@ int iw_ap_connect_add_api(iw_ap_t *iw_ap, iw_ap_connect_t *value)
 int iw_ap_connect_del_api(iw_ap_t *iw_ap, u_int8 *bssid)
 {
 	iw_ap_connect_t *client = NULL;
-	if(!iw_ap || !bssid)
+	if(!iw_ap || !bssid || !iw_ap->ap_list)
 		return ERROR;
 
 	if(iw_ap->ap_mutex)
@@ -174,7 +174,7 @@ static int iw_ap_connect_update(iw_ap_t *iw_ap, u_int8 TTL)
 {
 	NODE index;
 	iw_ap_connect_t *client = NULL;
-	if(!iw_ap)
+	if(!iw_ap || !iw_ap->ap_list)
 		return ERROR;
 
 	if(iw_ap->ap_mutex)
@@ -207,7 +207,7 @@ static int iw_ap_connect_update(iw_ap_t *iw_ap, u_int8 TTL)
 iw_ap_connect_t * iw_ap_connect_lookup_api(iw_ap_t *iw_ap, u_int8 *bssid)
 {
 	iw_ap_connect_t *client = NULL;
-	if(!iw_ap || !bssid)
+	if(!iw_ap || !bssid || !iw_ap->ap_list)
 		return NULL;
 	if(iw_ap->ap_mutex)
 		os_mutex_lock(iw_ap->ap_mutex, OS_WAIT_FOREVER);
@@ -219,7 +219,7 @@ iw_ap_connect_t * iw_ap_connect_lookup_api(iw_ap_t *iw_ap, u_int8 *bssid)
 
 static int iw_ap_connect_show_one(iw_ap_connect_t *ap, struct vty *vty)
 {
-	if(ap)
+	if(ap && vty)
 	{
 		char buf[128];
 		struct prefix prefix_eth;
@@ -317,7 +317,7 @@ static int iw_ap_connect_show_one(iw_ap_connect_t *ap, struct vty *vty)
 
 int iw_ap_connect_show(iw_ap_t *iw_ap, struct vty *vty, BOOL detail)
 {
-	if(lstCount(iw_ap->ap_list))
+	if(iw_ap && vty && iw_ap->ap_list && lstCount(iw_ap->ap_list))
 	{
 		if(!detail)
 		{
@@ -344,7 +344,8 @@ int iw_ap_connect_callback_api(iw_ap_t *iw_ap, int (*cb)(iw_ap_connect_t *, void
 	int ret = OK;
 	iw_ap_connect_t *pstNode = NULL;
 	NODE index;
-	assert(iw_ap != NULL);
+	if(!iw_ap || !iw_ap->ap_list)
+		return ERROR;
 	if(iw_ap->ap_mutex)
 		os_mutex_lock(iw_ap->ap_mutex, OS_WAIT_FOREVER);
 	for(pstNode = (iw_ap_connect_t *)lstFirst(iw_ap->ap_list);
@@ -406,9 +407,17 @@ int iw_ap_password_set_api(iw_ap_t *iw_ap, char *pass)
 	if(pass)
 	{
 		memset(&iw_ap->password[0], 0, sizeof(iw_ap->password[0]));
-		strcpy(iw_ap->password[0].password, pass);
-		memset(iw_ap->password[0].encrypt_password, 0, sizeof(iw_ap->password[0].encrypt_password));
-		md5_encrypt_password(iw_ap->password[0].password, iw_ap->password[0].encrypt_password);
+		if(os_memcmp(pass, "*#@", 3) == 0)
+		{
+			memset(iw_ap->password[0].encrypt_password, 0, sizeof(iw_ap->password[0].encrypt_password));
+			strcpy(iw_ap->password[0].encrypt_password, pass);
+		}
+		else
+		{
+			strcpy(iw_ap->password[0].password, pass);
+			memset(iw_ap->password[0].encrypt_password, 0, sizeof(iw_ap->password[0].encrypt_password));
+			md5_encrypt_password(iw_ap->password[0].password, iw_ap->password[0].encrypt_password);
+		}
 		iw_ap_start(iw_ap);
 	}
 	if(iw_ap->mutex)
@@ -825,6 +834,8 @@ static int iw_ap_maclist_cleanup(iw_ap_t *iw_ap, BOOL accept)
 		list = iw_ap->mac_list;
 	else
 		list = iw_ap->dmac_list;
+	if(!list)
+		return ERROR;
 	if(iw_ap->ap_mutex)
 		os_mutex_lock(iw_ap->ap_mutex, OS_WAIT_FOREVER);
 	for(pstNode = (iw_ap_mac_t *)lstFirst(list);
@@ -860,7 +871,8 @@ iw_ap_mac_t * iw_ap_mac_lookup_api(iw_ap_t *iw_ap, u_int8 *mac, BOOL accept)
 		list = iw_ap->mac_list;
 	else
 		list = iw_ap->dmac_list;
-
+	if(!list)
+		return ERROR;
 	if(iw_ap->ap_mutex)
 		os_mutex_lock(iw_ap->ap_mutex, OS_WAIT_FOREVER);
 
@@ -891,6 +903,18 @@ int iw_ap_mac_add_api(iw_ap_t *iw_ap, u_int8 *mac, BOOL accept)
 		return ERROR;
 	if(iw_ap_mac_lookup_api(iw_ap, mac,  accept))
 		return ERROR;
+
+	if(accept)
+	{
+		if(!iw_ap->mac_list)
+			return ERROR;
+	}
+	else
+	{
+		if(!iw_ap->dmac_list)
+			return ERROR;
+	}
+
 	if(iw_ap->ap_mutex)
 		os_mutex_lock(iw_ap->ap_mutex, OS_WAIT_FOREVER);
 
@@ -921,6 +945,16 @@ int iw_ap_mac_del_api(iw_ap_t *iw_ap, u_int8 *mac, BOOL accept)
 	node = iw_ap_mac_lookup_api(iw_ap, mac,  accept);
 	if(!node)
 		return ERROR;
+	if(accept)
+	{
+		if(!iw_ap->mac_list)
+			return ERROR;
+	}
+	else
+	{
+		if(!iw_ap->dmac_list)
+			return ERROR;
+	}
 	if(iw_ap->ap_mutex)
 		os_mutex_lock(iw_ap->ap_mutex, OS_WAIT_FOREVER);
 	if(iw_ap && node)
@@ -947,6 +981,9 @@ int iw_ap_config(iw_ap_t *iw_ap, struct vty *vty)
 	char buf[128];
 	iw_ap_mac_t *pstNode = NULL;
 	assert(iw_ap != NULL);
+	if(!vty)
+		return ERROR;
+
 	if(iw_ap->ap_mutex)
 		os_mutex_lock(iw_ap->ap_mutex, OS_WAIT_FOREVER);
 	if(iw_ap->hw_mode != IW_AP_HW_MODE_DEFAULT)
@@ -968,8 +1005,16 @@ int iw_ap_config(iw_ap_t *iw_ap, struct vty *vty)
 		iw_ap->auth == IW_ENCRY_WPA2_PSK ||		//= 2 WPA2-PSK CCMP/AUTO
 		iw_ap->auth == IW_ENCRY_WPA2WPA_PSK)
 	{
-		if (os_strlen(iw_ap->password[0].encrypt_password))
-			vty_out(vty, " authentication password %s%s", iw_ap->password[0].encrypt_password, VTY_NEWLINE);
+		if(vty->type == VTY_FILE)
+		{
+			if (os_strlen(iw_ap->password[0].password))
+				vty_out(vty, " authentication password %s%s", iw_ap->password[0].password, VTY_NEWLINE);
+		}
+		else
+		{
+			if (os_strlen(iw_ap->password[0].encrypt_password))
+				vty_out(vty, " authentication password %s%s", iw_ap->password[0].encrypt_password, VTY_NEWLINE);
+		}
 	}
 
 	if(iw_ap->auth == IW_ENCRY_WEP_OPEN ||
@@ -977,9 +1022,16 @@ int iw_ap_config(iw_ap_t *iw_ap, struct vty *vty)
 	{
 
 		//vty_out(vty, " ap-password %d%s", iw_ap->wep_key, VTY_NEWLINE);
-
-		if (os_strlen(iw_ap->password[0].encrypt_password))
-			vty_out(vty, " authentication password %s%s", iw_ap->password[0].encrypt_password, VTY_NEWLINE);
+		if(vty->type == VTY_FILE)
+		{
+			if (os_strlen(iw_ap->password[0].password))
+				vty_out(vty, " authentication password %s%s", iw_ap->password[0].password, VTY_NEWLINE);
+		}
+		else
+		{
+			if (os_strlen(iw_ap->password[0].encrypt_password))
+				vty_out(vty, " authentication password %s%s", iw_ap->password[0].encrypt_password, VTY_NEWLINE);
+		}
 
 /*		if (os_strlen(iw_ap->password[1].password))
 			vty_out(vty, " ap-password %s%s", iw_ap->password[1].encrypt_password, VTY_NEWLINE);
@@ -1065,7 +1117,7 @@ int iw_ap_config(iw_ap_t *iw_ap, struct vty *vty)
 			if(pstNode)
 			{
 				memset(buf, 0, sizeof(buf));
-				sprintf(buf, "%s", if_mac_out_format(pstNode->MAC, NSM_MAC_MAX));
+				sprintf(buf, "%s", if_mac_out_format(pstNode->MAC));
 				vty_out(vty, " mac permit %s%s",buf, VTY_NEWLINE);
 			}
 		}
@@ -1079,7 +1131,7 @@ int iw_ap_config(iw_ap_t *iw_ap, struct vty *vty)
 			if(pstNode)
 			{
 				memset(buf, 0, sizeof(buf));
-				sprintf(buf, "%s", if_mac_out_format(pstNode->MAC, NSM_MAC_MAX));
+				sprintf(buf, "%s", if_mac_out_format(pstNode->MAC));
 				vty_out(vty, " mac deny %s%s",buf, VTY_NEWLINE);
 			}
 		}
@@ -1100,25 +1152,91 @@ root@OpenWrt:/#
 */
 
 
+#ifdef BUILD_OPENWRT
+int _iw_bridge_check_interface(char *br, char *wa)
+{
+	char buf[512];
+	FILE *f = NULL;
+/*	if(wa && strlen(wa))
+	{
+		memset(cmdtmp, 0, sizeof(cmdtmp));
+		if(super_output_system("brctl show", cmdtmp, sizeof(cmdtmp)) == OK)
+		{
+			if(strstr(cmdtmp, wa))
+				return OK;
+		}
+	}*/
+	super_system("brctl show > /tmp/.brctl");
+	f = fopen("/tmp/.brctl", "r");
+	if (f)
+	{
+		memset(buf, 0, sizeof(buf));
+		while (fgets(buf, sizeof(buf), f))
+		{
+			if(strstr(buf, wa))
+			{
+				fclose(f);
+				remove("/tmp/.brctl");
+				sync();
+				return OK;
+			}
+			memset(buf, 0, sizeof(buf));
+		}
+		fclose(f);
+	}
+	remove("/tmp/.brctl");
+	sync();
+	return ERROR;
+}
+#endif
+
 static int iw_ap_scan_thread(struct thread * thread)
 {
 	assert(thread != NULL);
 	iw_ap_t *iw_ap = THREAD_ARG(thread);
-	if(iw_ap)
+	if(iw_ap && iw_ap->master)
 	{
-		//if(iw_ap->ap_mutex)
-		//	os_mutex_lock(iw_ap->ap_mutex, OS_WAIT_FOREVER);
+#ifdef BUILD_OPENWRT
+		struct interface *ifp = NULL;
+		char cmdtmp[128];
+		ifp = if_lookup_by_index(iw_ap->ifindex);
+		if(ifp)
+		{
+			if(_iw_bridge_check_interface("br-lan", ifp->k_name) != OK)
+			{
+				memset(cmdtmp, 0, sizeof(cmdtmp));
+				sprintf(cmdtmp, "brctl addif br-lan %s", ifp->k_name);
+				//zlog_debug(ZLOG_WIFI, "=======%s======%s", __func__, cmdtmp);
+				super_system(cmdtmp);
+			}
+		}
+		else
+		{
+			//zlog_debug(ZLOG_WIFI, "=======%s==1====", __func__);
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
+			super_system("brctl addif br-lan wlan0");
+#else
+			super_system("brctl addif br-lan ra0");
+#endif
+		}
+#endif
+		if(iw_ap->mutex)
+			os_mutex_lock(iw_ap->mutex, OS_WAIT_FOREVER);
+
+		if(iw_ap_script_is_running(iw_ap) != OK)
+			iw_ap_running_script(iw_ap);
 
 		iw_ap->s_thread = NULL;
-		iw_ap->s_thread = thread_add_timer(iw_ap->master,iw_ap_scan_thread,
-							iw_ap, iw_ap->ap_client_delay);
-		//zlog_debug(ZLOG_WIFI, "%s", __func__);
-		//if(iw_ap->ap_mutex)
-		//	os_mutex_unlock(iw_ap->ap_mutex);
 
 		iw_ap_connect_scanning(iw_ap);
 
 		iw_ap_connect_update(iw_ap, 0);
+
+		iw_ap->s_thread = thread_add_timer(iw_ap->master,iw_ap_scan_thread,
+							iw_ap, iw_ap->ap_client_delay);
+		//zlog_debug(ZLOG_WIFI, "%s", __func__);
+		if(iw_ap->mutex)
+			os_mutex_unlock(iw_ap->mutex);
 	}
 	return OK;
 }
@@ -1128,22 +1246,48 @@ static int iw_ap_start_thread(struct thread * thread)
 {
 	assert(thread != NULL);
 	iw_ap_t *iw_ap = THREAD_ARG(thread);
-	if(iw_ap)
+	if(iw_ap && iw_ap->master)
 	{
-		//if(iw_ap->ap_mutex)
-		//	os_mutex_lock(iw_ap->ap_mutex, OS_WAIT_FOREVER);
+#ifdef BUILD_OPENWRT
+		struct interface *ifp = NULL;
+		char cmdtmp[128];
+		ifp = if_lookup_by_index(iw_ap->ifindex);
+		if(ifp)
+		{
+			if(_iw_bridge_check_interface("br-lan", ifp->k_name) != OK)
+			{
+				memset(cmdtmp, 0, sizeof(cmdtmp));
+				sprintf(cmdtmp, "brctl addif br-lan %s", ifp->k_name);
+				//zlog_debug(ZLOG_WIFI, "=======%s======%s", __func__, cmdtmp);
+				super_system(cmdtmp);
+			}
+		}
+		else
+		{
+			//zlog_debug(ZLOG_WIFI, "=======%s==1====", __func__);
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
+			super_system("brctl addif br-lan wlan0");
+#else
+			super_system("brctl addif br-lan ra0");
+#endif
+		}
+#endif
+		if(iw_ap->mutex)
+			os_mutex_lock(iw_ap->mutex, OS_WAIT_FOREVER);
+		iw_ap->t_thread = NULL;
 
 		//if(iw_ap_make_script(iw_ap) == OK)
 		iw_ap_running_script(iw_ap);
 		//zlog_debug(ZLOG_WIFI, "%s", __func__);
 
-		if(iw_ap->s_thread == NULL)
-			iw_ap->s_thread = thread_add_timer(iw_ap->master,iw_ap_scan_thread,
+		if(iw_ap->s_thread && iw_ap->master)
+			thread_cancel(iw_ap->s_thread);
+		iw_ap->s_thread = NULL;
+		iw_ap->s_thread = thread_add_timer(iw_ap->master, iw_ap_scan_thread,
 					iw_ap, iw_ap->ap_client_delay/2);
 
-
-		//if(iw_ap->ap_mutex)
-		//	os_mutex_unlock(iw_ap->ap_mutex);
+		if(iw_ap->mutex)
+			os_mutex_unlock(iw_ap->mutex);
 	}
 	return OK;
 }
@@ -1165,12 +1309,20 @@ static int iw_ap_start(iw_ap_t *iw_ap)
 	{
 		iw_ap->crc_sum = crc_sum;
 		iw_ap->change = TRUE;
+		//zlog_debug(ZLOG_WIFI, "=======%s====change==", __func__);
 	}
 	//zlog_debug(ZLOG_WIFI, "%s", __func__);
-	if(iw_ap->t_thread)
+
+	if(iw_ap->t_thread && iw_ap->master)
 		thread_cancel(iw_ap->t_thread);
 	iw_ap->t_thread = NULL;
-	iw_ap->t_thread = thread_add_timer(iw_ap->master, iw_ap_start_thread, iw_ap, 10);
+
+	//zlog_debug(ZLOG_WIFI, "%s thread_cancel", __func__);
+
+	if(iw_ap->t_thread == NULL && iw_ap->master)
+		iw_ap->t_thread = thread_add_timer(iw_ap->master, iw_ap_start_thread, iw_ap, 10);
+
+	//zlog_debug(ZLOG_WIFI, "%s thread_add_timer", __func__);
 	//iw_ap->thread = thread_add_timer(zebrad.master, iw_ap_start_thread, iw_ap, 2);
 	//if(iw_ap->ap_mutex) iw_ap->t_thread,
 	//	os_mutex_unlock(iw_ap->ap_mutex);
@@ -1185,10 +1337,12 @@ static int iw_ap_stop(iw_ap_t *iw_ap)
 	//os_job_add(iw_ap_stop_script, iw_ap);
 	if(iw_ap->t_thread)
 		thread_cancel(iw_ap->t_thread);
+	iw_ap->t_thread = NULL;
 	if(iw_ap->s_thread)
 		thread_cancel(iw_ap->s_thread);
-	iw_ap->t_thread = NULL;
 	iw_ap->s_thread = NULL;
+	//iw_ap->t_thread = NULL;
+	//iw_ap->s_thread = NULL;
 	iw_ap->change = FALSE;
 	//zlog_debug(ZLOG_WIFI, "%s", __func__);
 	iw_ap_stop_script(iw_ap);
@@ -1266,6 +1420,9 @@ static int iw_ap_default_init(iw_ap_t *iw_ap, ifindex_t ifindex)
 	struct interface *ifp = NULL;
 	assert(iw_ap != NULL);
 	assert(ifindex);
+#ifdef BUILD_OPENWRT
+	char cmdtmp[128];
+#endif
 	iw_ap->hw_mode			= IW_AP_HW_MODE_DEFAULT;
 	iw_ap->encryption		= IW_AP_ENCRYPTION_DEFAULT;
 	iw_ap->auth				= IW_AP_AUTH_DEFAULT;
@@ -1282,6 +1439,32 @@ static int iw_ap_default_init(iw_ap_t *iw_ap, ifindex_t ifindex)
 	ifp = if_lookup_by_index(iw_ap->ifindex);
 	if(ifp)
 		nsm_interface_mac_get_api(ifp, iw_ap->BSSID, NSM_MAC_MAX);
+
+	printf("===========%s==============(%s):bssid=%02x:%02x:%02x:%02x:%02x:%02x\n", __func__,
+		   ifp? ifp->name:"NULL",
+		   iw_ap->BSSID[0], iw_ap->BSSID[1],
+			iw_ap->BSSID[2], iw_ap->BSSID[3], iw_ap->BSSID[4], iw_ap->BSSID[5]);
+
+#ifdef BUILD_OPENWRT
+	if(ifp)
+	{
+		if(_iw_bridge_check_interface("br-lan", ifp->k_name) != OK)
+		{
+			memset(cmdtmp, 0, sizeof(cmdtmp));
+			sprintf(cmdtmp, "brctl addif br-lan %s", ifp->k_name);
+			//zlog_debug(ZLOG_WIFI, "=============%s", cmdtmp);
+			super_system(cmdtmp);
+		}
+	}
+	else
+	{
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
+			super_system("brctl addif br-lan wlan0");
+#else
+			super_system("brctl addif br-lan ra0");
+#endif
+	}
+#endif
 	return OK;
 }
 
@@ -1310,6 +1493,10 @@ int iw_ap_init(iw_ap_t *iw_ap, ifindex_t ifindex)
 
 int iw_ap_exit(iw_ap_t *iw_ap)
 {
+#ifdef BUILD_OPENWRT
+	char cmdtmp[128];
+	struct interface *ifp = NULL;
+#endif
 	assert(iw_ap != NULL);
 	iw_ap_task_exit(iw_ap);
 
@@ -1317,30 +1504,100 @@ int iw_ap_exit(iw_ap_t *iw_ap)
 	{
 		iw_ap_connect_cleanup(iw_ap, TRUE);
 		lstFree(iw_ap->ap_list);
+		//iw_ap->ap_list = NULL;
 	}
 	if(lstCount(iw_ap->mac_list))
 	{
 		iw_ap_maclist_cleanup(iw_ap, TRUE);
 		lstFree(iw_ap->mac_list);
+		//iw_ap->ap_list = NULL;
 	}
 	if(lstCount(iw_ap->dmac_list))
 	{
 		iw_ap_maclist_cleanup(iw_ap, FALSE);
 		lstFree(iw_ap->dmac_list);
+		//iw_ap->ap_list = NULL;
 	}
 	if(iw_ap->ap_mutex)
 		os_mutex_exit(iw_ap->ap_mutex);
+	iw_ap->ap_mutex = NULL;
 
 	if(iw_ap->ap_list)
 		free(iw_ap->ap_list);
+	iw_ap->ap_list = NULL;
+
 	if(iw_ap->dmac_list)
 		free(iw_ap->mac_list);
+	iw_ap->mac_list = NULL;
+
 	if(iw_ap->dmac_list)
 		free(iw_ap->dmac_list);
+	iw_ap->dmac_list = NULL;
 
 	if(iw_ap->mutex)
 		os_mutex_exit(iw_ap->mutex);
+	iw_ap->mutex = NULL;
 
+#ifdef BUILD_OPENWRT
+	ifp = if_lookup_by_index(iw_ap->ifindex);
+	if(ifp)
+	{
+		if(_iw_bridge_check_interface("br-lan", ifp->k_name) == OK)
+		{
+			memset(cmdtmp, 0, sizeof(cmdtmp));
+			sprintf(cmdtmp, "brctl delif br-lan %s", ifp->k_name);
+			//zlog_debug(ZLOG_WIFI, "=============%s", cmdtmp);
+			super_system(cmdtmp);
+		}
+	}
+	else
+	{
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
+			super_system("brctl delif br-lan wlan0");
+#else
+			super_system("brctl delif br-lan ra0");
+#endif
+	}
+#endif
 	return OK;
 }
 
+int iw_ap_enable(iw_ap_t *iw_ap, BOOL enable)
+{
+	if(!iw_ap)
+		return ERROR;
+	if(enable)
+	{
+		printf("============%s==============: into iw_ap_start\r\n", __func__);
+		if(iw_ap->mutex)
+			os_mutex_lock(iw_ap->mutex, OS_WAIT_FOREVER);
+		printf("============%s==============:execue iw_ap_start\r\n", __func__);
+		//iw_ap_task_start(iw_ap);
+		iw_ap_start(iw_ap);
+
+		if(iw_ap->mutex)
+			os_mutex_unlock(iw_ap->mutex);
+		printf("============%s==============:level iw_ap_start\r\n", __func__);
+	}
+	else
+	{
+		printf("============%s==============:into iw_ap_stop\r\n", __func__);
+		if(iw_ap->mutex)
+			os_mutex_lock(iw_ap->mutex, OS_WAIT_FOREVER);
+
+		printf("============%s==============:execue iw_ap_stop\r\n", __func__);
+		//iw_ap_task_exit(iw_ap);
+		iw_ap_stop(iw_ap);
+
+		printf("============%s==============:level iw_ap_stop\r\n", __func__);
+		if(iw_ap->ap_list && lstCount(iw_ap->ap_list))
+		{
+			iw_ap_connect_cleanup(iw_ap, TRUE);
+			//lstFree(iw_ap->ap_list);
+		}
+
+		if(iw_ap->mutex)
+			os_mutex_unlock(iw_ap->mutex);
+	}
+	return OK;
+}

@@ -21,6 +21,7 @@
 #include "sockunion.h"
 #include "str.h"
 #include "table.h"
+#include "host.h"
 #include "vector.h"
 #include "vrf.h"
 #include "interface.h"
@@ -39,7 +40,7 @@ static int iw_taskid = 0;
 
 iw_t * nsm_iw_get(struct interface *ifp)
 {
-	if(if_is_wireless(ifp) && ifp->ll_type == ZEBRA_LLT_WIRELESS)
+	if(if_is_wireless(ifp)/* && ifp->ll_type == ZEBRA_LLT_WIRELESS*/)
 	{
 		struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 		return (iw_t *)nsm->nsm_client[NSM_WIFI];
@@ -47,13 +48,85 @@ iw_t * nsm_iw_get(struct interface *ifp)
 	return NULL;
 }
 
+
+
+int nsm_iw_enable_api(struct interface *ifp, BOOL enable)
+{
+	iw_t * iw = nsm_iw_get (ifp);
+	if(!iw)
+	{
+		//printf("============%s==============:iw is NULL\r\n", __func__);
+		return ERROR;
+	}
+	//printf("============%s==============:enable=%d=%d\r\n", __func__, iw->enable, enable);
+
+	if (iw && iw->enable != enable)
+	{
+		if (iw->mode == IW_MODE_AP)
+		{
+#ifdef BUILD_OPENWRT
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
+			if(_iw_bridge_check_interface("br-lan", "wlan0") != OK)
+			{
+				super_system("brctl addif br-lan wlan0");
+			}
+#else
+			if(_iw_bridge_check_interface("br-lan", "ra0") != OK)
+			{
+				super_system("brctl addif br-lan ra0");
+			}
+#endif
+
+#endif
+			//printf("============%s==============:iw_ap_enable\r\n", __func__);
+			iw_ap_enable (&iw->private.ap, enable);
+		}
+		if (iw->mode == IW_MODE_MANAGE || iw->mode == IW_MODE_CLIENT)
+		{
+			//printf("============%s==============:iw_client_enable\r\n", __func__);
+			iw_client_enable (&iw->private.client, enable);
+		}
+		iw->enable = enable;
+		return OK;
+	}
+	if(iw)
+		return OK;
+	return ERROR;
+}
+
+
+BOOL nsm_iw_enable_get_api(struct interface *ifp)
+{
+	iw_t * iw = nsm_iw_get (ifp);
+	if (iw)
+	{
+		return iw->enable;
+	}
+	return FALSE;
+}
+
 int nsm_iw_mode_set_api(struct interface *ifp, iw_mode_t mode)
 {
 	iw_t * iw = nsm_iw_get(ifp);
 	if(iw)
 	{
+//		iw->enable = TRUE;
+#ifdef PL_OPENWRT_UCI
+	//	os_uci_get_integer("wireless.radio0.disabled", &iw->enable);
+#endif
+		if(!iw->enable)
+		{
+			iw->mode = mode;
+			return OK;
+		}
 		if(iw->mode != mode)
 		{
+
+			//extern int iw_client_enable(iw_client_t *iw_client, BOOL enable);
+/*			if(iw->mode == IW_MODE_NONE)
+			{
+
+			}*/
 			if(iw->mode == IW_MODE_AP)
 			{
 				iw_ap_exit(&iw->private.ap);
@@ -74,7 +147,7 @@ int nsm_iw_mode_set_api(struct interface *ifp, iw_mode_t mode)
 					pal_interface_up(ifp);
 				}*/
 			}
-			if(mode == IW_MODE_MANAGE || mode == IW_MODE_CLIENT)
+			else if(/*mode == IW_MODE_MANAGE ||*/ mode == IW_MODE_CLIENT)
 			{
 				iw_client_init(&iw->private.client, ifp->ifindex);
 				iw->private.client.ifindex = ifp->ifindex;
@@ -149,19 +222,13 @@ int nsm_iw_channel_freq_show(struct interface *ifp, struct vty *vty)
 	return OK;
 }
 
-static int nsm_iw_create_interface(struct interface *ifp)
+static int nsm_iw_update_interface(struct interface *ifp)
 {
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)	
 	int kmode = 0;
-	iw_t * iw = NULL;
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	if(nsm && if_is_wireless(ifp) && ifp->ll_type == ZEBRA_LLT_WIRELESS)
+	if(nsm && if_is_wireless(ifp) && nsm_iw_enable_get_api(ifp) /*&& ifp->ll_type == ZEBRA_LLT_WIRELESS*/)
 	{
-		if(!nsm->nsm_client[NSM_WIFI])
-			nsm->nsm_client[NSM_WIFI] = XMALLOC(MTYPE_WIFI, sizeof(iw_t));
-		zassert(nsm->nsm_client[NSM_WIFI]);
-		os_memset(nsm->nsm_client[NSM_WIFI], 0, sizeof(iw_t));
-		iw = nsm->nsm_client[NSM_WIFI];
-		iw->ifp = ifp;
 /*		"Auto",
 		"Ad-Hoc",
 		"Managed",
@@ -181,6 +248,8 @@ static int nsm_iw_create_interface(struct interface *ifp)
 		#define IW_MODE_MONITOR	6	/* Passive monitor (listen only) */
 #endif
 		kmode = iw_dev_mode(ifp);
+		//iw_mode_t iw_ap_dev_mode_get(struct interface *ifp);
+		printf("---%s------mode=%d\r\n", __func__, kmode);
 		switch(kmode)
 		{
 		case 0:
@@ -192,6 +261,7 @@ static int nsm_iw_create_interface(struct interface *ifp)
 			break;
 		case 3:
 			nsm_iw_mode_set_api(ifp, IW_MODE_AP);
+
 			break;
 		case 4:
 			break;
@@ -202,21 +272,203 @@ static int nsm_iw_create_interface(struct interface *ifp)
 		case 7:
 			break;
 		default:
+			nsm_iw_mode_set_api(ifp, IW_MODE_AP);
 			break;
 		}
+	}
+#endif
+	return OK;
+}
+
+static int iw_empty_thread(struct thread * thread)
+{
+	assert(thread != NULL);
+	iw_t *iw_ap = THREAD_ARG(thread);
+	if(iw_ap)
+	{
+		iw_ap->n_thread = NULL;
+		//if(iw_ap->ap_mutex)
+		//	os_mutex_lock(iw_ap->ap_mutex, OS_WAIT_FOREVER);
+
+		if(master_thread[MODULE_WIFI])
+			iw_ap->n_thread = thread_add_timer(master_thread[MODULE_WIFI], iw_empty_thread, iw_ap, 10);
+		//if(iw_ap->ap_mutex)
+		//	os_mutex_unlock(iw_ap->ap_mutex);
+	}
+	return OK;
+}
+
+static int nsm_iw_interface_default(struct interface *ifp, iw_t * iw)
+{
+	//iw_ap_t *ap = iw_ap_lookup_api(ifp);
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
+	iw->enable = TRUE;
+	nsm_iw_mode_set_api(ifp, IW_MODE_AP);
+	if(strlen(host.serial))
+		iw_ap_ssid_set_api(&iw->private.ap, host.serial);
+	else
+		iw_ap_ssid_set_api(&iw->private.ap, "TSLSmart-X5CM");
+
+	iw_ap_password_set_api(&iw->private.ap, "admintsl123456!");
+	iw_ap_auth_set_api(&iw->private.ap, IW_ENCRY_WPA2WPA_PSK);
+	iw_ap_encryption_set_api(&iw->private.ap, IW_ALGO_AUTO);
+#else
+	iw->enable = FALSE;
+#ifdef WEB_OPENWRT_PROCESS
+/*
+		if(strlen(host.serial))
+			os_uci_set_string("wireless.radio0.ssid", host.serial);
+		else	
+			iw_ap_ssid_set_api(&iw->private.ap, "TSLSmart-X5CM");
+
+		os_uci_set_string("wireless.radio0.encryption", encrytype);
+		os_uci_set_string("wireless.radio0.key", password);
+*/		
+#endif		
+
+	/*
+	nsm_iw_mode_set_api(ifp, IW_MODE_AP);
+	if(strlen(host.serial))
+		iw_ap_ssid_set_api(&iw->private.ap, host.serial);
+	else
+		iw_ap_ssid_set_api(&iw->private.ap, "TSLSmart-X5CM");
+
+	iw_ap_password_set_api(&iw->private.ap, "admintsl123456!");
+	iw_ap_auth_set_api(&iw->private.ap, IW_ENCRY_WPA2WPA_PSK);
+	iw_ap_encryption_set_api(&iw->private.ap, IW_ALGO_AUTO);
+	*/
+#endif
+
+	return OK;
+}
+
+static int nsm_iw_create_interface(struct interface *ifp)
+{
+	//int kmode = 0;
+	iw_t * iw = NULL;
+	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
+	if(nsm && if_is_wireless(ifp)/* && ifp->ll_type == ZEBRA_LLT_WIRELESS*/)
+	{
+		if(!nsm->nsm_client[NSM_WIFI])
+			nsm->nsm_client[NSM_WIFI] = XMALLOC(MTYPE_WIFI, sizeof(iw_t));
+		zassert(nsm->nsm_client[NSM_WIFI]);
+		os_memset(nsm->nsm_client[NSM_WIFI], 0, sizeof(iw_t));
+		iw = nsm->nsm_client[NSM_WIFI];
+		iw->ifp = ifp;
+
+		if(master_thread[MODULE_WIFI])
+			iw->n_thread = thread_add_timer(master_thread[MODULE_WIFI], iw_empty_thread, iw, 10);
+#ifdef BUILD_OPENWRT
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
+			if(_iw_bridge_check_interface("br-lan", "wlan0") != OK)
+			{
+				super_system("brctl addif br-lan wlan0");
+			}
+#else
+			if(_iw_bridge_check_interface("br-lan", "ra0") != OK)
+			{
+				super_system("brctl addif br-lan ra0");
+			}
+#endif
+#endif
+		nsm_iw_interface_default(ifp, iw);
+#if 0
+#ifdef PL_OPENWRT_UCI
+		os_uci_get_integer("wireless.radio0.disabled", &iw->enable);
+#endif
+		iw->enable = TRUE;
+		kmode = iw_dev_mode(ifp);
+		//iw_mode_t iw_ap_dev_mode_get(struct interface *ifp);
+		printf("---%s------mode=%d enable=%s", __func__, kmode, iw->enable?"true":"false");
+		switch(kmode)
+		{
+		case 0:
+			break;
+		case 1:
+			break;
+		case 2:
+			nsm_iw_mode_set_api(ifp, IW_MODE_MANAGE);
+			break;
+		case 3:
+			nsm_iw_mode_set_api(ifp, IW_MODE_AP);
+#ifdef PL_OPENWRT_UCI
+			//else
+			{
+				char tmp[128];
+				memset(tmp, 0, sizeof(tmp));
+				iw_ap_t *ap = iw_ap_lookup_api(ifp);
+				if(ap)
+				{
+					os_uci_get_string("wireless.default_radio0.ssid", tmp);
+					if(strlen(tmp))
+						iw_ap_ssid_set_api(ap, tmp);
+
+					memset(tmp, 0, sizeof(tmp));
+					os_uci_get_string("wireless.default_radio0.encryption", tmp);
+					if(strlen(tmp))
+					{
+						if(strstr(tmp, "none"))
+							iw_ap_auth_set_api(ap, IW_ENCRY_NONE);
+						//iw_ap_password_set_api(ap, tmp);
+					}
+				}
+			}
+#endif
+			break;
+		case 4:
+			break;
+		case 5:
+			break;
+		case 6:
+			break;
+		case 7:
+			break;
+		default:
+			nsm_iw_mode_set_api(ifp, IW_MODE_AP);
+#ifdef PL_OPENWRT_UCI
+			//else
+			{
+				char tmp[128];
+				memset(tmp, 0, sizeof(tmp));
+				iw_ap_t *ap = iw_ap_lookup_api(ifp);
+				if(ap)
+				{
+					os_uci_get_string("wireless.default_radio0.ssid", tmp);
+					if(strlen(tmp))
+						iw_ap_ssid_set_api(ap, tmp);
+
+					memset(tmp, 0, sizeof(tmp));
+					os_uci_get_string("wireless.default_radio0.encryption", tmp);
+					if(strlen(tmp))
+					{
+						if(strstr(tmp, "none"))
+							iw_ap_auth_set_api(ap, IW_ENCRY_NONE);
+						//iw_ap_password_set_api(ap, tmp);
+					}
+				}
+			}
+#endif
+			break;
+		}
+#endif
 	}
 	return OK;
 }
 
 
+
 static int nsm_iw_delete_interface(struct interface *ifp)
 {
-	if(ifp && if_is_wireless(ifp) && ifp->ll_type == ZEBRA_LLT_WIRELESS)
+	if(ifp && if_is_wireless(ifp) /*&& ifp->ll_type == ZEBRA_LLT_WIRELESS*/)
 	{
 		iw_t * iw = nsm_iw_get(ifp);
 		if(iw)
 		{
 			struct nsm_interface *nsm = ifp->info[MODULE_NSM];
+			if(iw->n_thread)
+			{
+				thread_cancel(iw->n_thread);
+			}
 			if(iw->mode == IW_MODE_AP)
 			{
 				iw_ap_exit(&iw->private.ap);
@@ -283,9 +535,17 @@ static int nsm_iw_write_config_client(struct vty *vty, iw_t * iw)
 			vty_out(vty, " network-name %s%s", (iw->private.client.cu.SSID), VTY_NEWLINE);
 
 			//vty_out(vty, " ap-name %s", (iw->private.client.cu.SSID));
+			if(vty->type == VTY_FILE)
+			{
+				if (os_strlen(iw->private.client.cu.password))
+					vty_out(vty, " authentication password %s%s", (iw->private.client.cu.password), VTY_NEWLINE);
+			}
+			else
+			{
+				if (os_strlen(iw->private.client.cu.encrypt_password))
+					vty_out(vty, " authentication password %s%s", (iw->private.client.cu.encrypt_password), VTY_NEWLINE);
+			}
 
-			if (os_strlen(iw->private.client.cu.encrypt_password))
-				vty_out(vty, " authentication password %s%s", (iw->private.client.cu.encrypt_password), VTY_NEWLINE);
 			//else
 			//	vty_out(vty, "%s", VTY_NEWLINE);
 		}
@@ -301,28 +561,39 @@ static int nsm_iw_write_config_client(struct vty *vty, iw_t * iw)
 
 static int nsm_iw_write_config_interface(struct vty *vty, struct interface *ifp)
 {
-	if(ifp && if_is_wireless(ifp) && ifp->ll_type == ZEBRA_LLT_WIRELESS)
+	if(ifp && if_is_wireless(ifp) /*&& ifp->ll_type == ZEBRA_LLT_WIRELESS*/)
 	{
 		iw_t * iw = nsm_iw_get(ifp);
 		if(iw)
 		{
-			vty_out(vty, " work-mode %s %s", iw_mode_string(iw->mode), VTY_NEWLINE);
+			if(!iw->enable)
+			{
+				vty_out(vty, " no dev enable%s", VTY_NEWLINE);
+				return OK;
+			}
+			vty_out(vty, " dev enable%s", VTY_NEWLINE);
 			switch(iw->mode)
 			{
 			case IW_MODE_IBSS:
+				//vty_out(vty, " work-mode %s %s", iw_mode_string(iw->mode), VTY_NEWLINE);
 				break;
 			case IW_MODE_MANAGE:
+				vty_out(vty, " work-mode %s %s", iw_mode_string(iw->mode), VTY_NEWLINE);
 			//case IW_MODE_CLIENT:
 				nsm_iw_write_config_client(vty, iw);
 				break;
 			case IW_MODE_AP:
+				vty_out(vty, " work-mode %s %s", iw_mode_string(iw->mode), VTY_NEWLINE);
 				nsm_iw_write_config_ap(vty, iw);
 				break;
 			case IW_MODE_WDS:
+				//vty_out(vty, " work-mode %s %s", iw_mode_string(iw->mode), VTY_NEWLINE);
 				break;
 			case IW_MODE_MONITOR:
+				//vty_out(vty, " work-mode %s %s", iw_mode_string(iw->mode), VTY_NEWLINE);
 				break;
 			case IW_MODE_MESH:
+				//vty_out(vty, " work-mode %s %s", iw_mode_string(iw->mode), VTY_NEWLINE);
 				break;
 /*			case IW_MODE_CLIENT:
 				nsm_iw_write_config_client(vty, iw);
@@ -392,6 +663,8 @@ int nsm_iw_client_init()
 	struct nsm_client *nsm = nsm_client_new ();
 	nsm->notify_add_cb = nsm_iw_create_interface;
 	nsm->notify_delete_cb = nsm_iw_delete_interface;
+	nsm->notify_update_cb = nsm_iw_update_interface;
+
 	nsm->interface_write_config_cb = nsm_iw_write_config_interface;
 	nsm_client_install (nsm, NSM_WIFI);
 #ifdef IW_ONCE_TASK

@@ -6,7 +6,7 @@ ifeq ($(strip $(MODULE_PAL_IPCOM)),true)
 OBJS	+= ip_ipstack_route.o
 OBJS	+= ip_ipstack.o
 
-OBJS	+= pal_interface.o
+OBJS	+= pal_driver.o
 endif
 #############################################################################
 # LIB

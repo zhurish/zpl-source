@@ -26,9 +26,10 @@
 
 #include <thread.h>
 
-//#define QUAGGA_SIGNAL_REAL_TIMER
 
-#define QUAGGA_SIGNAL_TIMER_INTERVAL 2L
+//#define QUAGGA_SIGNAL_TIMER_INTERVAL 2L
+
+//#define QUAGGA_SIGNAL_SIGWAIT
 
 struct quagga_signal_t
 {
@@ -48,10 +49,10 @@ struct quagga_signal_t
 extern void signal_init (int sigc,
                          struct quagga_signal_t *signals);
 
+//extern int os_task_sigmask(int sigc, int signo[]);
+
 /* check whether there are signals to handle, process any found */
 extern int quagga_sigevent_process (void);
 
-#ifdef QUAGGA_SIGNAL_REAL_TIMER
-extern int real_sigevent_process (int timeout);
-#endif
+
 #endif /* _QUAGGA_SIGNAL_H */

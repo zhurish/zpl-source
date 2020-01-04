@@ -16,6 +16,7 @@
 #include "command.h"
 #include "vty.h"
 #include "host.h"
+#include "prefix.h"
 #include "vty_user.h"
 
 struct host host;
@@ -60,6 +61,25 @@ int host_config_init(char *motd)
 	host.no_password_check = 0;
 	host.mutx = os_mutex_init();
 	host.cli_mutx = os_mutex_init();
+	if(access("/etc/.serial_no", F_OK) == 0)
+	{
+		memset(host.serial, '\0', sizeof(host.serial));
+		os_read_file("/etc/.serial_no", host.serial, sizeof(host.serial));
+		host.serial[strlen(host.serial)-1] = '\0';
+		printf("=================%s================:(%s)\r\n", __func__,host.serial);
+	}
+	if(access("/etc/.wan-mac", F_OK) == 0)
+	{
+		char tmp[64];
+		memset(tmp, 0, sizeof(tmp));
+		os_read_file("/etc/.wan-mac", tmp, sizeof(tmp));
+		if(strlen(tmp) && strstr(tmp, ":"))
+		{
+			struct ethaddr ether;
+			ether_aton_r (tmp, &ether);
+			host_config_set_api(API_SET_SYSMAC_CMD, ether.octet);
+		}
+	}
 	return OK;
 }
 
@@ -244,6 +264,17 @@ host_config_set_api (int cmd, void *pVoid)
 		host.no_password_check = *intValue;
 		ret = OK;
 		break;
+	case API_SET_SYSMAC_CMD:
+		memcpy(host.sysmac, strValue, 6);
+		ret = OK;
+		break;
+	case API_SET_SERIAL_CMD:
+		memset(host.serial, 0, sizeof(host.serial));
+		if(strValue)
+			strncpy(host.serial, strValue, MIN(strlen(strValue), sizeof(host.serial)));
+		ret = OK;
+		break;
+
 	default:
 		break;
 	}
@@ -347,6 +378,23 @@ host_config_get_api (int cmd, void *pVoid)
 			*intValue = host.no_password_check;
 		ret = OK;
 		break;
+	case API_GET_SYSMAC_CMD:
+		if (!str_isempty(host.sysmac, sizeof(host.sysmac)))
+		{
+			if(strValue)
+				memcpy(strValue, host.sysmac, 6);
+		}
+		ret = OK;
+		break;
+	case API_GET_SERIAL_CMD:
+		if (!str_isempty(host.serial, sizeof(host.serial)))
+		{
+			if(strValue)
+				os_strcpy(strValue, host.serial);
+		}
+		ret = OK;
+		break;
+
 	default:
 		break;
 	}
@@ -392,7 +440,7 @@ static int host_system_cpu_get(struct host_system *host_system)
 					s++;
 				if(host_system->freq == 0.0 && s)
 				{
-					sscanf(s, "%f", &host_system->freq);
+					sscanf(s, "%lf", &host_system->freq);
 				}
 			}
 #else

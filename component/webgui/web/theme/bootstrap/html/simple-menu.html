@@ -1,0 +1,92 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>menu</title>
+
+<style>
+body {
+    margin: 0;
+	background-image:url('../res/mub.jpg');
+}
+
+.menu-body {
+    background-color: "#EBC79E";
+	background-image:url('../res/mub.jpg');
+}
+
+.menu {
+    margin: 0;
+}
+
+.menu>ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    background-color: #f1f1f1;
+    position: fixed;
+    height: 100%;
+    overflow: auto;
+}
+
+li a {
+    display: block;
+    color: #000;
+    padding: 8px 16px;
+    text-decoration: none;
+}
+
+.active {
+    background-color: #4CAF50;
+    color: white;
+}
+
+/* 鼠标移动到选项上修改背景颜色 */
+li a:hover:not(.active) {
+    background-color: #555;
+    color: white;
+}
+
+.caret {
+	display:inline-block;
+	width:0;
+	height:0;
+	margin-left:2px;
+	vertical-align:middle;
+	border-top:4px solid;
+	border-right:4px solid transparent;
+	border-left:4px solid transparent
+}
+
+</style>
+</head>
+
+<body class="menu-body">
+<div class="menu">
+<ul>
+<li><a href="status.html" target="showframe">Status</a></li>
+<li><a href="system.html" target="showframe">System</a></li>
+<li><a href="network.html" target="showframe">Network</a></li>
+<li><a href="service.html" target="showframe">Service</a></li>
+<li><a href="factory.html" target="showframe">Factory</a></li>
+<li><a href="voip.html" target="showframe">Voip</a></li>
+<li><a href="about.html" target="showframe">About</a></li>
+<li><a href="logout.html" target="showframe">Logout</a></li>
+</ul>
+
+
+<script type="text/javascript">
+    var seconC = document.querySelectorAll("a")
+    for (var i = 0; i < seconC.length; i++) {
+        seconC[i].onclick = function () {
+            for (var i = 0; i < seconC.length; i++) {
+                seconC[i].classList.remove("active");
+            }
+            this.classList.add("active");
+        }
+    }
+</script>
+</div>
+</body>
+</html>

@@ -28,8 +28,8 @@ static bool actionHandler(Webs *wp)
     char        *cp, *actionName;
     WebsAction  fn;
 
-    assert(websValid(wp));
-    assert(actionTable >= 0);
+    web_assert(websValid(wp));
+    web_assert(actionTable >= 0);
 
     /*
         Extract the action name
@@ -51,7 +51,7 @@ static bool actionHandler(Webs *wp)
         websError(wp, HTTP_CODE_NOT_FOUND, "Action %s is not defined", actionName);
     } else {
         fn = (WebsAction) sp->content.value.symbol;
-        assert(fn);
+        web_assert(fn);
         if (fn) {
 #if ME_GOAHEAD_LEGACY
             (*((WebsProc) fn))((void*) wp, actionName, wp->query);
@@ -69,8 +69,8 @@ static bool actionHandler(Webs *wp)
  */
 PUBLIC int websDefineAction(cchar *name, void *fn)
 {
-    assert(name && *name);
-    assert(fn);
+    web_assert(name && *name);
+    web_assert(fn);
 
     if (fn == NULL) {
         return -1;
@@ -104,7 +104,7 @@ PUBLIC void websActionOpen(void)
  */
 PUBLIC void websHeader(Webs *wp)
 {
-    assert(websValid(wp));
+    web_assert(websValid(wp));
 
     websWriteHeaders(wp, -1, 0);
     websWriteEndHeaders(wp);
@@ -114,7 +114,7 @@ PUBLIC void websHeader(Webs *wp)
 
 PUBLIC void websFooter(Webs *wp)
 {
-    assert(websValid(wp));
+	web_assert(websValid(wp));
     websWrite(wp, "</html>\n");
 }
 #endif

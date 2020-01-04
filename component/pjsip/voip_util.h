@@ -10,19 +10,15 @@
 
 typedef struct voip_payload_s
 {
-	char 		rtpmap[PJSIP_NUMBER_MAX*2];
-	u_int8 		ptime;
-	char 		name[PJSIP_NUMBER_MAX];
-	u_int8 		payload;
+	char 		payload_name[PJSIP_NUMBER_MAX*2];
+	u_int8 		active;
+	char 		cmdname[PJSIP_NUMBER_MAX];
+	u_int8 		index;
 }voip_payload_t;
 
-int voip_sip_get_payload_index(void);
-int voip_sip_payload_index(char *name);
-char * voip_sip_payload_name(int index);
-char * voip_sip_payload_rtpmap(int index);
-int voip_sip_payload_ptime(int index);
-
-
+int codec_payload_index(char *cmdname);
+char * codec_payload_name(int index);
+char * codec_cmdname(int index);
 
 
 extern u_int32 voip_get_address(u_int32 ifindex);

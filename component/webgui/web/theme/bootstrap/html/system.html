@@ -1,0 +1,829 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta content="" name="description" />
+	<meta content="webthemez" name="author" />
+	<!--meta http-equiv="refresh" content="30"-->
+	<!-- Bootstrap Styles-->
+	<link href="../css/bootstrap.min.css" rel="stylesheet" />
+	<!-- private Styles-->
+	<link href="../css/private.css" rel="stylesheet" />
+
+	<!-- jQuery Js -->
+	<script src="../js/jquery-2.1.1.min.js"></script>
+	<!-- Bootstrap Js -->
+	<script src="../js/bootstrap.min.js"></script>
+
+	<script src="../js/xhr.js"></script>
+	<script src="../js/data-type.js"></script>
+
+	<title>system</title>
+</head>
+
+<body class="body-bg-img">
+	<div id="maincontent" class="container">
+
+		<fieldset class="fieldset-margin fieldset-background">
+			<div id="system_update" class="show">
+				<legend class="tbl-text-align bold">系统信息</legend>
+				<!-- caption class="tbl-text-align bold">系统文件</caption -->
+				<form class="form-horizontal form-margin" role="form" name="system" action="" accept-charset="UTF-8"
+					method="POST">
+					<script type="text/javascript">
+						if("TSLX5" == sessionStorage.getItem("device"))
+						{
+							document.write("<div class=\"form-group show\">");
+							
+							document.write("<label for=\"sysserial\" class=\"col-sm-3 control-label\">设备序列号</label>");
+							document.write("<div class=\"col-sm-4\">");
+							document.write("<input type=\"text\" minlength=\"6\" maxlength=\"32\" class=\"form-control\" name=\"sysserial\" \
+								id=\"sysserial\" readonly=\"readonly\" disabled=\"disabled\">");
+							document.write("</div> </div>");
+						}
+					</script>
+					<div class="form-group show">
+						<label for="syshostname" class="col-sm-3 control-label">设备名称</label>
+						<div class="col-sm-4">
+							<input type="text" minlength="6" maxlength="32" class="form-control" name="syshostname"
+								id="syshostname" onchange="system_hostname_check()" required placeholder="请输入设备名称(B模块)">
+							<!--onmouseout-->
+						</div>
+					</div>
+					<div class="form-group show">
+						<label for="sysmac" class="col-sm-3 control-label">设备MAC</label> <!--placeholder="请输入设备MAC"-->
+						<div class="col-sm-4">
+							<input type="text" minlength="6" maxlength="32" class="form-control" name="sysmac"
+								id="sysmac" readonly="readonly" disabled="disabled" onchange="system_mac_check()" required >
+						</div>
+					</div>
+					<div class="form-group show">
+						<div class="col-sm-4 control-label">
+							<button type="button" class="btn btn-cencel" name="system_cencel" id="system_cencel"
+								onclick="system_oncencel()"><span class="glyphicon glyphicon-remove"
+									style="margin-right:10px;"></span>取消</button>
+						</div>
+						<div class="col-sm-4 control-label">
+							<button type="button" class="btn btn-submit" name="system_submit" id="system_submit"
+								onclick="system_onsubmit()"><span class="glyphicon glyphicon-send"
+									style="margin-right:10px;"></span>确定</button>
+						</div>
+					</div>
+					<legend class="tbl-text-align bold"></legend>
+
+					<div id="system_waiting" class="alert alert-success hiden">
+						<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+								style="padding-left:150px; padding-right:20px">Waiting for command to
+							complete...</strong>
+					</div>
+					<div id="system_error" class="alert alert-warning hiden">
+						<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+					</div>
+					
+					<script type="text/javascript">
+						var myVar = setInterval(function () { localTimerShow() }, 5000);
+						function localTimerShow() {
+
+							//var d = new Date();
+							//var t = d.toLocaleString();
+							//document.getElementById("localtime-text").innerHTML = t;
+
+							$.get("/goform/localtime", function (data, status) {
+								document.getElementById("localtime-text").innerHTML = data;
+							});
+						}
+
+						function webtime_onsync(self) {
+							var argv = "timesp=";
+							var stxhr = new XHR();
+							var time = new Date().getTime();
+							argv = "ACTION=webtime&BTNID=" + self.id + "&" + argv + time / 1000;
+
+							document.getElementById("syncwebtime").disabled = true;
+							$("#syncweb_waiting").css("display", "block");
+							setTimeout(function () { 
+								$("#syncweb_waiting").css("display", "none"); 
+								document.getElementById("syncwebtime").disabled = false; 
+							}, 2000);
+
+							stxhr.post("/goform/button_onclick", argv,
+								function (x) {
+									console.log(x);
+									if (x.responseText == "ERROR") {
+										$("#syncweb_error").css("display", "block"); 
+										$("#syncweb_waiting").css("display", "none");
+		
+										//document.getElementById("syncwebtime").disabled = true;
+										setTimeout(function () { 
+											$("#syncweb_error").css("display", "none"); 
+											//$("#syncweb_waiting").css("display", "none");
+											document.getElementById("syncwebtime").disabled = false; 
+										}, 2000);
+									}
+									else if (x.responseText == "OK") {
+										$("#syncweb_waiting").css("display", "none");
+										document.getElementById("syncwebtime").disabled = false;
+									}
+									/*
+									else {
+										setTimeout(function () { document.getElementById("webtime").disabled = false; }, 2000);
+									}
+									*/
+								},
+								2100
+							);
+						}
+
+						function system_hostname_check() {
+							if (document.getElementById("syshostname").value == "" ||
+								document.getElementById("syshostname").value.length > 32 ||
+								document.getElementById("syshostname").value.length < 6) {
+								check_err_show($('#syshostname'));
+							}
+							else
+								check_ok_show($('#syshostname'));
+						}
+						function system_mac_check() {
+							if (document.getElementById("sysmac").value != "" && is_mac(document.getElementById("sysmac").value)) {
+								check_ok_show($('#sysmac'));
+							}
+							else
+								check_err_show($('#sysmac'));
+						}
+
+
+						function system_oncencel() {
+							document.getElementById("syshostname").value = "";
+							document.getElementById("sysmac").value = "";
+							check_okerr_hiden($('#syshostname'));
+							check_okerr_hiden($('#sysmac'));
+						}
+						function system_onaction(op) {
+							var argv;
+							var stxhr = new XHR();
+							if (op == "GET") {
+								argv = "ACTION=GET";
+							}
+							else {
+								argv = "ACTION=SET&hostname=" + document.getElementById("syshostname").value +
+									"&mac=" + document.getElementById("sysmac").value;
+
+								$("#system_waiting").css("display", "block");
+								setTimeout(function () { $("#system_waiting").css("display", "none") }, 5000);
+							}
+							stxhr.post("/goform/system", argv,
+								function (x, json) {
+									console.log(x);
+									console.log("json:");
+									console.log(json);
+									if (json == null) {
+										if (x.responseText == "ERROR") {
+											if (op != "GET") {
+												clearTimeout();
+												$("#system_waiting").css("display", "none");
+												$("#system_error").css("display", "block");
+												setTimeout(function () { $("#system_error").css("display", "none") }, 3000);
+											}
+										}
+									}
+									else {
+										if (json.response == "OK") {
+											if (op != "GET") {
+												clearTimeout();
+												$("#system_waiting").css("display", "none");
+												$("#system_error").css("display", "none");
+											}
+											if("TSLX5" == sessionStorage.getItem("device"))
+												document.getElementById("sysserial").value = json.serial;
+											document.getElementById("syshostname").value = json.hostname;
+											document.getElementById("sysmac").value = json.mac;
+											if (op != "GET") {
+												check_okerr_hiden($('#syshostname'));
+												check_okerr_hiden($('#sysmac'));
+											}
+										}
+									}
+								},
+								3000
+							);
+						}
+
+						//button 按钮，结合onclick事件，验证和提交表单
+						function system_onsubmit() {
+							if (document.getElementById("syshostname").value == "" ||
+								document.getElementById("syshostname").value.length > 32 ||
+								document.getElementById("syshostname").value.length < 6) {
+								check_err_show($('#syshostname'));
+								return false;
+							}
+							/*
+							if (document.setsntp.sntp_syncinterval.value == "" ||
+								(document.setsntp.sntp_syncinterval.value > 3600 ||
+									document.setsntp.sntp_syncinterval.value < 60)) {
+								check_err_show($('#syshostname'));
+								return false;
+							}
+							*/
+							system_onaction("SET");
+						}					
+					</script>
+				</form>
+			</div>
+		</fieldset>
+		<fieldset class="fieldset-margin fieldset-background">
+			<table class="table table-condensed">
+				<caption class="tbl-text-align bold">系统时间</caption>
+				<tbody>
+					<tr>
+						<td><label for="webtime">本地时间</label></td>
+						<td>
+							<div>
+								<span id="localtime-text"></span>
+							</div>
+						</td>
+						<td>
+							<div>
+								<button type="button" class="btn btn-submit" style="margin-left:20px;"
+									name="syncwebtime" id="syncwebtime" onclick="webtime_onsync(this)"><span
+										class="glyphicon glyphicon-time" style="margin-right:10px;"></span>同步时间</button>
+							</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+
+			
+			<div id="syncweb_waiting" class="alert alert-success hiden">
+				<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+						style="padding-left:150px; padding-right:20px">Waiting for command to
+					complete...</strong>
+			</div>
+			<div id="syncweb_error" class="alert alert-warning hiden">
+				<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+			</div>
+			<!--div class="form-group show">
+					<label for="webtime" class="col-sm-3 control-label">本地时间</label>
+					<div class="col-sm-2 control-label">
+						<span id="localtime-text"></span>
+					</div>
+					<div class="col-sm-2 control-label">
+						<button type="button" class="btn btn-submit" style="margin-left:20px;" name="syncwebtime"
+							id="syncwebtime" onclick="webtime_onsync(this)"><span class="glyphicon glyphicon-time"
+								style="margin-right:10px;"></span>同步时间</button>
+					</div>
+				</div-->
+		</fieldset>
+		<!--fieldset class="fieldset-margin fieldset-background">
+			<div id="system_config" class="show">
+				<legend class="tbl-text-align bold">系统配置文件</legend>
+				<form class="form-inline col-md-offset-2 col-lg-offset-2 col-xl-offset-2 form-margin show" method="POST"
+					action="/action/upload" enctype="multipart/form-data">
+					<label for="upload_config">导入配置文件</label>
+					<div class="form-group ">
+						<div class="col-sm-4 control-label">
+							<input type="file" name="upload_config" id="upload_config">
+							<input type="text" class="sr-only" name="ID" id="ID" value="config">
+						</div>
+					</div>
+					<div class="form-group">
+						<div class="col-sm-4 control-label">
+							<button type="button" class="btn btn-submit" name="btn_upload_config" id="btn_upload_config"
+								onclick="config_upload_submit()">
+								<span class="glyphicon glyphicon-upload" style="margin-right:10px;"></span> 上传
+							</button>
+						</div>
+					</div>
+				</form>
+
+				<form class="form-inline col-md-offset-2 col-lg-offset-2 col-xl-offset-2 form-margin show" role="form"
+					method="POST" action="/action/download">
+					<label for="upload_config">导出配置文件</label>
+					<div class="form-group">
+						<div class="col-sm-4 control-label">
+	
+							<input type="text" class="sr-only" name="ID" id="ID" value="config">
+		
+							<input type="text" class="sr-only" name="filename" id="filename" value="config">
+						</div>
+						<div class="col-sm-4 control-label">
+							<button type="submit" class="btn btn-submit" name="btn_download_config"
+								id="btn_download_config">
+								<span class="glyphicon glyphicon-download" style="margin-right:10px;"></span> 导出
+							</button>
+						</div>
+					</div>
+				</form>
+			</div>
+			<script type="text/javascript">
+
+				function config_upload_submit() {
+					console.log("SUBMIT ID:");
+					console.log($('#upload_config')[0].files[0]);
+					upload_file("/action/upload", "upload_config", $('#upload_config')[0].files[0], "config",
+						function (x) {
+							document.getElementById("upload_config").value = "";
+
+						},
+						function (x) {
+							document.getElementById("upload_config").value = "";
+
+						});
+				}
+			</script>
+		</fieldset-->
+
+		<!-- SNTP设置 -->
+		<!--fieldset class="fieldset-margin fieldset-background">
+			<form class="form-horizontal form-margin" role="form" name="setsntp" action="" accept-charset="UTF-8"
+				method="POST">
+				<legend class="legend-text-align">SNTP设置</legend>
+
+				<div class="form-group">
+					<label for="sntp_enable" class="col-sm-3 control-label">SNTP</label>
+					<div class="checkbox col-sm-4">
+						<input type="checkbox" name="sntp_enable" id="sntp_enable" value="sntp_enable"
+							onclick="sntp_enable_check(this)">
+					</div>
+				</div>
+				<div class="form-group hiden">
+					<label for="sntp_address" class="col-sm-3 control-label">SNTP服务器地址</label>
+					<div class="col-sm-4">
+						<input type="text" minlength="6" maxlength="32" class="form-control" name="sntp_address"
+							id="sntp_address" onchange="sntp_ip_check()" required placeholder="请输入SNTP服务器地址或者IP地址">
+					</div>
+				</div>
+				<div class="form-group hiden">
+					<label for="sntp_timezone" class="col-sm-3 control-label">本地时区</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="sntp_timezone" id="sntp_timezone">
+							<script type="text/javascript">
+
+								var i = 0;
+								var tmz;
+								document.write("<option value=\"UTC\">UTC</option>");
+								document.write("<option value=\"0\">GMT0</option>");
+								for (i = 1; i <= 12; i++) {
+									tmz = "GTM-" + i;
+									document.write("<option value=\"" + i + "\">" + tmz + "</option>");
+								}
+								for (i = 1; i <= 12; i++) {
+									tmz = "GTM+" + i;
+									document.write("<option value=\"-" + i + "\">" + tmz + "</option>");
+								}
+							</script>
+						</select>
+					</div>
+				</div>
+				<div class="form-group hiden">
+					<label for="sntp_syncinterval" class="col-sm-3 control-label">同步间隔</label>
+					<div class="col-sm-4">
+						<input type="number" min="60" max="3600" step="1" value="180" class="form-control"
+							name="sntp_syncinterval" id="sntp_syncinterval" onchange="sntp_interval_check()"
+							placeholder="请输入时间间隔（S）">
+					</div>
+				</div>
+				<div class="form-group show">
+					<div class="col-sm-4 control-label">
+						<button type="button" class="btn btn-cencel" name="sntp_cencel" id="sntp_cencel"
+							onclick="sntp_oncencel()"><span class="glyphicon glyphicon-remove"
+								style="margin-right:10px;"></span>取消</button>
+					</div>
+					<div class="col-sm-4 control-label">
+						<button type="button" class="btn btn-submit" name="sntp_submit" id="sntp_submit"
+							onclick="sntp_onsubmit()"><span class="glyphicon glyphicon-send"
+								style="margin-right:10px;"></span>确定</button>
+					</div>
+				</div>
+				<div id="sntp_waiting" class="alert alert-success hiden">
+					<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+							style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+				</div>
+				<div id="sntp_error" class="alert alert-warning hiden">
+					<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+				</div>
+				<script type="text/javascript">
+
+					function sntp_ip_check() {
+						var sntp_ip = $('#sntp_address');
+						var ip = sntp_ip.val();
+						if (ip != "") {
+							if (checkipv4(ip) == true || hostname(ip) == true) {
+								check_ok_show(sntp_ip);
+							}
+							else {
+								check_err_show(sntp_ip);
+							}
+						}
+					}
+					//$('#sntp_syncinterval').change(function() 
+					function sntp_interval_check() {
+						if (document.getElementById("sntp_syncinterval").value != "") {
+							var syncinterval = $('#sntp_syncinterval');
+							var sync_val = syncinterval.val();
+							if (sync_val > 3600 || sync_val < 60) {
+								//syncinterval.parent().next().next().css("display", "block");
+								var chkok = syncinterval.parent().next();
+								var chkerr = syncinterval.parent().next().next();
+								chkok.css("display", "none");
+								chkerr.css("display", "block");
+							}
+							else {
+								var chkok = syncinterval.parent().next();
+								var chkerr = syncinterval.parent().next().next();
+								chkok.css("display", "block");
+								chkerr.css("display", "none");
+							}
+						}
+					}//);
+
+					function sntp_oncencel() {
+						document.getElementById("sntp_address").value = "";
+						//document.getElementById("sntp_timezone").value = "";
+						document.getElementById("sntp_syncinterval").value = "";
+						check_okerr_hiden($('#sntp_address'));
+						check_okerr_hiden($('#sntp_syncinterval'));
+					}
+
+					function sntp_onaction(op) {
+						var argv;
+						var stxhr = new XHR();
+						if (op == "GET") {
+							argv = "ACTION=GET";
+						}
+						else {
+							if (document.getElementById("sntp_enable").checked) {
+								argv = "ACTION=SET&sntp_enable=true";
+								argv += "&sntp_address=" + document.getElementById("sntp_address").value + "&sntp_timezone="
+									+ document.getElementById("sntp_timezone").value;
+
+								if (document.getElementById("sntp_syncinterval").value != "") {
+									argv += "&sntp_syncinterval=" + document.getElementById("sntp_syncinterval").value;
+								}
+							}
+							else {
+								argv = "ACTION=SET&sntp_enable=false";
+							}
+
+							$("#sntp_waiting").css("display", "block");
+							setTimeout(function () { $("#sntp_waiting").css("display", "none") }, 5000);
+						}
+						stxhr.post("/goform/setsntp", argv,
+							function (x, json) {
+								console.log(x);
+								console.log(json);
+								if (json == null) {
+									if (x.responseText == "ERROR") {
+										if (op != "GET") {
+											clearTimeout();
+											$("#sntp_waiting").css("display", "none");
+											$("#sntp_error").css("display", "block");
+											setTimeout(function () { $("#sntp_error").css("display", "none") }, 3000);
+										}
+										else {
+											//document.getElementById("sntp_enable").checked = false;
+										}
+									}
+									else {
+										if (x.responseText == "OK") {
+											clearTimeout();
+											$("#sntp_waiting").css("display", "none");
+											$("#sntp_error").css("display", "none");
+										}
+										//document.getElementById("sntp_enable").checked = true;
+									}
+								}
+								else {
+									if (json.response == "OK") {
+										if (op != "GET") {
+											clearTimeout();
+											$("#sntp_waiting").css("display", "none");
+											$("#sntp_error").css("display", "none");
+										}
+										document.getElementById("sntp_enable").checked = json.sntp_enable;
+										document.getElementById("sntp_address").value = json.sntp_address;
+										//document.getElementById("sntp_timezone").value = json.sntp_timezone;
+										for (var i = 0, count = document.getElementById("sntp_timezone").options.length; i < count; i++) {
+											if (document.getElementById("sntp_timezone").options[i].value == json.sntp_timezone) {
+												//select.selectedIndex = i;
+												document.getElementById("sntp_timezone").options[i].selected = true;
+												break;
+											}
+										}
+										document.getElementById("sntp_syncinterval").value = json.sntp_syncinterval;
+										if (op != "GET") {
+											check_okerr_hiden($('#sntp_address'));
+											check_okerr_hiden($('#sntp_syncinterval'));
+										}
+									}
+								}
+							},
+							3000
+						);
+					}
+
+					//button 按钮，结合onclick事件，验证和提交表单
+					function sntp_onsubmit() {
+						if (document.setsntp.sntp_address.value == "" ||
+							document.setsntp.sntp_address.value.length > 32 ||
+							document.setsntp.sntp_address.value.length < 6) {
+							check_err_show($('#sntp_address'));
+							return false;
+						}
+						if (document.setsntp.sntp_syncinterval.value == "" ||
+							(document.setsntp.sntp_syncinterval.value > 3600 ||
+								document.setsntp.sntp_syncinterval.value < 60)) {
+							check_err_show($('#sntp_syncinterval'));
+							return false;
+						}
+
+						sntp_onaction("SET");
+					}
+
+					function sntp_enable_check(self) {
+						var value = self.checked;
+						if (value == true) {
+							check_okerr_hiden($('#sntp_address'));
+							check_okerr_hiden($('#sntp_syncinterval'));
+							document.getElementById("sntp_address").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("sntp_timezone").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("sntp_syncinterval").parentNode.parentNode.setAttribute("class", "form-group show");
+							//document.getElementById("sntp_cencel").parentNode.parentNode.setAttribute("class", "form-group show");
+						}
+						else {
+							check_okerr_hiden($('#sntp_address'));
+							check_okerr_hiden($('#sntp_syncinterval'));
+							document.getElementById("sntp_address").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							document.getElementById("sntp_timezone").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							document.getElementById("sntp_syncinterval").parentNode.parentNode.setAttribute("class", "form-group hiden");
+						}
+					}				
+				</script>
+			</form>
+		</fieldset-->
+
+		<!-- syslog设置 -->
+		<!--fieldset class="fieldset-margin fieldset-background">
+			<form class="form-horizontal form-margin" role="form" name="setsyslog" action="" accept-charset="UTF-8"
+				method="POST">
+				<legend class="legend-text-align">Syslog设置</legend>
+
+				<div class="form-group">
+					<label for="syslog" class="col-sm-3 control-label">Syslog</label>
+					<div class="checkbox col-sm-4">
+						<input type="checkbox" name="syslog_enable" id="syslog_enable" value="syslog_enable"
+							onclick="syslog_enable_check(this)">
+					</div>
+				</div>
+				<div class="form-group hiden">
+					<label for="syslog_address" class="col-sm-3 control-label">Syslog服务器地址</label>
+					<div class="col-sm-4">
+						<input type="text" minlength="6" maxlength="32" class="form-control" name="syslog_address"
+							id="syslog_address" onchange="syslog_ip_check()" required
+							placeholder="请输入syslog服务器地址或者IP地址">
+					</div>
+				</div>
+				<div class="form-group hiden">
+					<label for="syslog_proto" class="col-sm-3 control-label">Syslog协议</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="syslog_proto" id="syslog_proto">
+							<option selected="selected" value="UDP">UDP</option>
+							<option value="TCP">TCP</option>
+						</select>
+					</div>
+				</div>
+				<div class="form-group hiden">
+					<label for="syslog_level" class="col-sm-3 control-label">Syslog级别</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="syslog_level" id="syslog_level">
+							<option value="errors">errors</option>
+							<option selected="selected" value="warnings">warnings</option>
+							<option value="informational">informational</option>
+							<option value="notifications">notifications</option>
+							<option value="debugging">debugging</option>
+							<option value="trapping">trapping</option>
+						</select>
+					</div>
+				</div>
+				<div class="form-group hiden">
+					<label for="syslog_port" class="col-sm-3 control-label">Syslog端口</label>
+					<div class="col-sm-4">
+						<input type="number" min="60" max="65535" step="1" value="514" class="form-control"
+							name="syslog_port" id="syslog_port" onchange="syslog_port_check()" placeholder="514">
+					</div>
+				</div>
+				<div class="form-group show">
+					<div class="col-sm-4 control-label">
+						<button type="button" class="btn btn-cencel" name="syslog_cencel" id="syslog_cencel"
+							onclick="syslog_cencel()"><span class="glyphicon glyphicon-remove"
+								style="margin-right:10px;"></span>取消</button>
+					</div>
+					<div class="col-sm-4 control-label">
+						<button type="button" class="btn btn-submit" name="syslog_submit" id="syslog_submit"
+							onclick="syslog_onsubmit()"><span class="glyphicon glyphicon-send"
+								style="margin-right:10px;"></span>确定</button>
+					</div>
+				</div>
+				<div id="syslog_waiting" class="alert alert-success hiden">
+					<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+							style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+				</div>
+				<div id="syslog_error" class="alert alert-warning hiden">
+					<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+				</div>
+
+				<script type="text/javascript">
+
+					function syslog_ip_check() {
+						var syslog_ip = $('#syslog_address');
+						var ip = syslog_ip.val();
+
+						if (ip != "") {
+							if (checkipv4(ip) == true || hostname(ip) == true) {
+								check_ok_show(syslog_ip);
+							}
+							else {
+								check_err_show(syslog_ip);
+							}
+						}
+					}
+
+					//$('#syslog_syncinterval').change(function() 
+					function syslog_port_check() {
+						if (document.getElementById("syslog_port").value != "") {
+							var syncinterval = $('#syslog_port');
+							var sync_val = syncinterval.val();
+							if (sync_val >= 65536 || sync_val < 60) {
+								check_err_show($('#syslog_port'));
+							}
+							else {
+								check_ok_show($('#syslog_port'));
+							}
+						}
+					}//);
+
+					function syslog_cencel() {
+						document.getElementById("syslog_address").value = "";
+						document.getElementById("syslog_port").value = "";
+						check_okerr_hiden($('#syslog_address'));
+						check_okerr_hiden($('#syslog_port'));
+
+					}
+					function syslog_onaction(op) {
+						//使用form对象的submit()方法，实现提交。
+						//document.setsntp.submit(); 
+						////goform/setsyslog     
+						var argv;
+						var stxhr = new XHR();
+						if (op == "GET") {
+							argv = "ACTION=GET";
+						}
+						else {
+							if (document.getElementById("syslog_enable").checked) {
+								argv = "ACTION=SET&syslog_enable=true&syslog_address=" + document.getElementById("syslog_address").value + "&syslog_level="
+									+ document.getElementById("syslog_level").value + "&syslog_proto="
+									+ document.getElementById("syslog_proto").value;
+
+								//if (document.getElementById("syslog_port").value != "")
+								argv += "&syslog_port=" + document.getElementById("syslog_port").value;
+							}
+							else {
+								argv = "ACTION=SET&syslog_enable=false";
+							}
+							$("#syslog_waiting").css("display", "block");
+							setTimeout(function () { $("#syslog_waiting").css("display", "none") }, 3000);
+						}
+						stxhr.post("/goform/setsyslog", argv,
+							function (x, json) {
+								console.log(x);
+								console.log(json);
+								if (json == null) {
+									if (x.responseText == "ERROR") {
+										if (op != "GET") {
+											clearTimeout();
+											$("#syslog_waiting").css("display", "none");
+											$("#syslog_error").css("display", "block");
+											setTimeout(function () { $("#syslog_error").css("display", "none") }, 3000);
+										}
+										else {
+											document.getElementById("syslog_enable").checked = false;
+										}
+									}
+									else {
+										if (x.responseText == "OK") {
+											clearTimeout();
+											$("#syslog_waiting").css("display", "none");
+											$("#syslog_error").css("display", "none");
+										}
+										//document.getElementById("syslog_enable").checked = true;
+									}
+								}
+								else {
+									if (json.response == "OK") {
+										if (op != "GET") {
+											clearTimeout();
+											$("#syslog_waiting").css("display", "none");
+											$("#syslog_error").css("display", "none");
+										}
+										document.getElementById("syslog_enable").checked = json.syslog_enable;
+
+										if (json.syslog_enable == true) {
+											document.getElementById("syslog_address").parentNode.parentNode.setAttribute("class", "form-group show");
+											document.getElementById("syslog_level").parentNode.parentNode.setAttribute("class", "form-group show");
+											document.getElementById("syslog_proto").parentNode.parentNode.setAttribute("class", "form-group show");
+											document.getElementById("syslog_port").parentNode.parentNode.setAttribute("class", "form-group show");
+											//document.getElementById("syslog_cencel").parentNode.parentNode.setAttribute("class", "form-group show");
+										}
+										else {
+											document.getElementById("syslog_address").parentNode.parentNode.setAttribute("class", "form-group hiden");
+											document.getElementById("syslog_level").parentNode.parentNode.setAttribute("class", "form-group hiden");
+											document.getElementById("syslog_proto").parentNode.parentNode.setAttribute("class", "form-group hiden");
+											document.getElementById("syslog_port").parentNode.parentNode.setAttribute("class", "form-group hiden");
+											//document.getElementById("syslog_cencel").parentNode.parentNode.setAttribute("class", "form-group hiden");
+										}
+										document.getElementById("syslog_address").value = json.syslog_address;
+										//document.getElementById("syslog_level").value = json.syslog_level;
+										for (var i = 0, count = document.getElementById("syslog_level").options.length; i < count; i++) {
+											if (document.getElementById("syslog_level").options[i].value == json.syslog_level) {
+												//select.selectedIndex = i;
+												document.getElementById("syslog_level").options[i].selected = true;
+												break;
+											}
+										}
+										document.getElementById("syslog_port").value = json.syslog_port;
+										//document.getElementById("syslog_proto").value = json.syslog_proto;
+										for (var i = 0, count = document.getElementById("syslog_proto").options.length; i < count; i++) {
+											if (document.getElementById("syslog_proto").options[i].value == json.syslog_proto) {
+												//select.selectedIndex = i;
+												document.getElementById("syslog_proto").options[i].selected = true;
+												break;
+											}
+										}
+										if (op != "GET") {
+											check_okerr_hiden($('#syslog_address'));
+											check_okerr_hiden($('#syslog_port'));
+										}
+									}
+								}
+							},
+							3000
+						);
+					}
+
+					//button 按钮，结合onclick事件，验证和提交表单
+					function syslog_onsubmit() {
+
+						if (document.setsyslog.syslog_port.value != "" &&
+							(document.setsyslog.syslog_port.value > 65535 ||
+								document.setsyslog.syslog_port.value < 100)) {
+							check_err_show($('#syslog_port'));
+							return false;
+						}
+						if (document.setsyslog.syslog_address.value == "" ||
+							(checkipv4(document.setsyslog.syslog_address.value) != true &&
+								hostname(document.setsyslog.syslog_address.value) != true)) {
+							check_err_show($('#syslog_address'));
+							return false;
+						}
+						{
+							//使用form对象的submit()方法，实现提交。
+							//document.setsyslog.submit();  
+							syslog_onaction("SET");
+						}
+					}
+					function syslog_enable_check(self) {
+						if (self.checked) {
+							check_okerr_hiden($('#syslog_address'));
+							check_okerr_hiden($('#syslog_port'));
+							document.getElementById("syslog_address").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("syslog_level").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("syslog_proto").parentNode.parentNode.setAttribute("class", "form-group show");
+							document.getElementById("syslog_port").parentNode.parentNode.setAttribute("class", "form-group show");
+						}
+						else {
+							check_okerr_hiden($('#syslog_address'));
+							check_okerr_hiden($('#syslog_port'));
+							document.getElementById("syslog_address").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							document.getElementById("syslog_level").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							document.getElementById("syslog_proto").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							document.getElementById("syslog_port").parentNode.parentNode.setAttribute("class", "form-group hiden");
+						}
+					}
+
+				</script>
+			</form>
+		</fieldset-->
+		<script type="text/javascript">
+			window.onload = function () {
+				localTimerShow();
+				system_onaction("GET");
+				//setTimeout(function () { sntp_onaction("GET"); }, 300);
+				//setTimeout(function () { syslog_onaction("GET"); }, 600);
+			}
+		</script>
+	</div>
+</body>
+
+</html>

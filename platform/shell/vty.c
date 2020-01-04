@@ -243,7 +243,7 @@ static int vty_log_out(struct vty *vty, const char *level,
 	os_memset(buf, 0, sizeof(buf));
 	len += quagga_timestamp(ctl, buf, sizeof(buf));
 
-	if (len + 1 >= sizeof(buf))
+	if ((uint)(len + 1) >= sizeof(buf))
 		return -1;
 
 	if (len)
@@ -2653,6 +2653,9 @@ static void vty_console_close(void)
 	//zassert(_pvty_console->vty != NULL);
 	if (_pvty_console->vty)
 	{
+		/* Check configure. */
+		vty_config_unlock(_pvty_console->vty);
+
 		vty_console_close_cache(_pvty_console->vty);
 
 		/* Free input buffer. */
@@ -3324,6 +3327,9 @@ void vty_close(struct vty *vty)
 	int i;
 	int type = 0;
 
+	/* Check configure. */
+	vty_config_unlock(vty);
+
 	if (_pvty_console && _pvty_console->vty == vty)
 	{
 		if(vty->reload == TRUE)
@@ -3378,9 +3384,6 @@ void vty_close(struct vty *vty)
 		if (vty->buf)
 			XFREE(MTYPE_VTY, vty->buf);
 
-		/* Check configure. */
-		vty_config_unlock(vty);
-
 		if(vty->ssh_close)
 			(vty->ssh_close)(vty);
 
@@ -3429,9 +3432,6 @@ void vty_close(struct vty *vty)
 	if (vty->buf)
 		XFREE(MTYPE_VTY, vty->buf);
 
-	/* Check configure. */
-	vty_config_unlock(vty);
-
 	/* OK free vty. */
 	XFREE(MTYPE_VTY, vty);
 }
@@ -3473,9 +3473,11 @@ static int vty_console_timeout(struct thread *thread)
 	/* Clear buffer*/
 	buffer_reset(vty->obuf);
 
+/*
 	vty_sync_out(vty, "%s%sConsole connection is timed out.%s%s",
 			VTY_NEWLINE, VTY_NEWLINE,
 			VTY_NEWLINE, VTY_NEWLINE);
+*/
 
 	/* Close connection. */
 	if (_pvty_console && _pvty_console->vty == vty)

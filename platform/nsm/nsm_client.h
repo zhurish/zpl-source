@@ -69,6 +69,7 @@ struct nsm_client
   //接口创建删除的时候触发创建删除对应模块的数据结构
   int (*notify_add_cb) (struct interface *);
   int (*notify_delete_cb) (struct interface *);
+  int (*notify_update_cb) (struct interface *);
 
   //接口UP/DOWN，设置删除IP的时候通知其他模块
   int (*notify_up_cb) (struct interface *);
@@ -97,6 +98,7 @@ extern int nsm_client_interface_write_config (int module, struct vty *vty, struc
 
 extern int nsm_client_notify_interface_add(struct interface *ifp);
 extern int nsm_client_notify_interface_delete (struct interface *ifp);
+extern int nsm_client_notify_interface_update (struct interface *ifp);
 extern int nsm_client_notify_interface_up (struct interface *ifp);
 extern int nsm_client_notify_interface_down (struct interface *ifp);
 extern int nsm_client_notify_interface_add_ip (struct interface *ifp, struct connected *, int );

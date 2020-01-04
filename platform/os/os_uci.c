@@ -32,7 +32,7 @@ static enum {
 } uci_flags;
 
 static FILE *uci_input = NULL;
-
+static int _uci_errno = 0;
 static struct uci_context *uci_ctx = NULL;
 enum {
 	/* section cmds */
@@ -177,46 +177,6 @@ uci_lookup_section_ref(struct uci_section *s)
 	return typestr;
 }
 
-#if 0
-static void uci_usage(void)
-{
-	fprintf(stderr,
-		"Usage: %s [<options>] <command> [<arguments>]\n\n"
-		"Commands:\n"
-		"\tbatch\n"
-		"\texport     [<config>]\n"
-		"\timport     [<config>]\n"
-		"\tchanges    [<config>]\n"
-		"\tcommit     [<config>]\n"
-		"\tadd        <config> <section-type>\n"
-		"\tadd_list   <config>.<section>.<option>=<string>\n"
-		"\tdel_list   <config>.<section>.<option>=<string>\n"
-		"\tshow       [<config>[.<section>[.<option>]]]\n"
-		"\tget        <config>.<section>[.<option>]\n"
-		"\tset        <config>.<section>[.<option>]=<value>\n"
-		"\tdelete     <config>[.<section>[[.<option>][=<id>]]]\n"
-		"\trename     <config>.<section>[.<option>]=<name>\n"
-		"\trevert     <config>[.<section>[.<option>]]\n"
-		"\treorder    <config>.<section>=<position>\n"
-		"\n"
-		"Options:\n"
-		"\t-c <path>  set the search path for config files (default: /etc/config)\n"
-		"\t-d <str>   set the delimiter for list values in uci show\n"
-		"\t-f <file>  use <file> as uci_input instead of stdin\n"
-		"\t-m         when importing, merge data into an existing package\n"
-		"\t-n         name unnamed sections on export (default)\n"
-		"\t-N         don't name unnamed sections\n"
-		"\t-p <path>  add a search path for config change files\n"
-		"\t-P <path>  add a search path for config change files and use as default\n"
-		"\t-q         quiet mode (don't print error messages)\n"
-		"\t-s         force strict mode (stop on parser errors, default)\n"
-		"\t-S         disable strict mode\n"
-		"\t-X         do not use extended syntax on 'show'\n"
-		"\n",
-		uci_appname
-	);
-}
-#endif
 
 static void cli_perror(void)
 {
@@ -906,21 +866,24 @@ static int uci_main(int uci_argc, char **uci_argv)
 		//uci_usage();
 		return 1;
 	}
-
+	_uci_errno = uci_ctx->err = UCI_OK;
 	ret = uci_cmd(uci_argc - 1, uci_argv + 1);
 /*	if (uci_input != stdin)
 		fclose(uci_input);*/
-
 /*
 	if (ret == 255)
 		uci_usage();
 */
-
+	_uci_errno = uci_ctx->err;
 	uci_free_context(uci_ctx);
 	_UCI_DEBUG("uci_free_context\r\n");
 	return ret;
 }
 
+int os_uci_get_errno()
+{
+	return _uci_errno;
+}
 /***********************************************************************/
 int os_uci_set_string(char *name, char *value)
 {
@@ -958,15 +921,22 @@ int os_uci_set_integer(char *name, int value)
 	return ERROR;
 }
 
-int os_uci_set_float(char *name, float value)
+int os_uci_set_float(char *name, char *fmt, float value)
 {
 	char cmd_value[512];
+	char tmp[32];
 	char *cmd_argv[5] = {"uci", "set", cmd_value, NULL, NULL};
 	int cmd_argc;
 	if(!name)
 		return ERROR;
+	memset(tmp, 0, sizeof(tmp));
 	memset(cmd_value, 0, sizeof(cmd_value));
-	sprintf(cmd_value, "%s=%f", name, value);
+
+	sprintf(tmp, fmt, value);
+	//printf("---------%s----------%s\r\n", __func__, tmp);
+
+	sprintf(cmd_value, "%s=%s", name, tmp);
+	//printf("---------%s----------%s\r\n", __func__, cmd_value);
 	cmd_argc = 3;
 
 	if(uci_main(cmd_argc, cmd_argv) == 0)
@@ -976,6 +946,30 @@ int os_uci_set_float(char *name, float value)
 	return ERROR;
 }
 
+int os_uci_set_double(char *name, char *fmt, double value)
+{
+	char cmd_value[512];
+	char tmp[32];
+	char *cmd_argv[5] = {"uci", "set", cmd_value, NULL, NULL};
+	int cmd_argc;
+	if(!name)
+		return ERROR;
+	memset(tmp, 0, sizeof(tmp));
+	memset(cmd_value, 0, sizeof(cmd_value));
+
+	sprintf(tmp, fmt, value);
+	//printf("---------%s----------%s->%f\r\n", __func__, tmp, value);
+
+	sprintf(cmd_value, "%s=%s", name, tmp);
+	//printf("---------%s----------%s\r\n", __func__, cmd_value);
+	cmd_argc = 3;
+
+	if(uci_main(cmd_argc, cmd_argv) == 0)
+	{
+		return OK;
+	}
+	return ERROR;
+}
 int os_uci_get_string(char *name, char *value)
 {
 	char cmd_value[512];
@@ -1047,7 +1041,7 @@ int os_uci_get_integer(char *name, int *value)
 	return ERROR;
 }
 
-int os_uci_get_float(char *name, float *value)
+int os_uci_get_float(char *name, char *fmt, float *value)
 {
 	char cmd_value[512];
 	char *cmd_argv[5] = {"uci", "get", cmd_value, NULL, NULL};
@@ -1063,6 +1057,8 @@ int os_uci_get_float(char *name, float *value)
 		{
 			if(value)
 				*value = (float)atof(uci_result_get());
+			//if(value)
+			//	sscanf(uci_result_get(), fmt, value);
 			return OK;
 		}
 		return ERROR;
@@ -1070,6 +1066,30 @@ int os_uci_get_float(char *name, float *value)
 	return ERROR;
 }
 
+int os_uci_get_double(char *name, char *fmt, double *value)
+{
+	char cmd_value[512];
+	char *cmd_argv[5] = {"uci", "get", cmd_value, NULL, NULL};
+	int cmd_argc;
+	if(!name || !value)
+		return ERROR;
+	memset(cmd_value, 0, sizeof(cmd_value));
+	sprintf(cmd_value, "%s", name);
+	cmd_argc = 3;
+	if(uci_main(cmd_argc, cmd_argv) == 0)
+	{
+		if(uci_result_get())
+		{
+			if(value)
+				*value = (double)atof(uci_result_get());
+			//if(value)
+			//	sscanf(uci_result_get(), fmt, value);
+			return OK;
+		}
+		return ERROR;
+	}
+	return ERROR;
+}
 int os_uci_get_list(char *name, char **value, int *cnt)
 {
 	char cmd_value[512];
@@ -1431,9 +1451,22 @@ int os_uci_set_integer(char *name, int value)
 	return os_uci_option_value_set(name, itoa(value, 0), NULL);
 }
 
-int os_uci_set_float(char *name, float value)
+int os_uci_set_float(char *name, char *fmt, float value)
 {
-	return os_uci_option_value_set(name, itof(value), NULL);
+	char tmp[32];
+	memset(tmp, 0, sizeof(tmp));
+	sprintf(tmp, fmt, value);
+
+	return os_uci_option_value_set(name, tmp, NULL);
+}
+
+int os_uci_set_double(char *name, char *fmt, double value)
+{
+	char tmp[32];
+	memset(tmp, 0, sizeof(tmp));
+	sprintf(tmp, fmt, value);
+
+	return os_uci_option_value_set(name, tmp, NULL);
 }
 
 int os_uci_get_string(char *name, char *value)
@@ -1459,14 +1492,31 @@ int os_uci_get_integer(char *name, int *value)
 	return ERROR;
 }
 
-int os_uci_get_float(char *name, float *value)
+int os_uci_get_float(char *name, char *fmt, float *value)
 {
 	char ret_value[512];
 	memset(ret_value, 0, sizeof(ret_value));
 	if( os_uci_option_value_lookup(name, ret_value, NULL) == OK)
 	{
 		if(value)
-			sscanf(ret_value, "%f", value);
+			*value = (float)atof(ret_value);
+		//if(value)
+		//	sscanf(ret_value, fmt, value);
+		return OK;
+	}
+	return ERROR;
+}
+
+int os_uci_get_double(char *name, char *fmt, double *value)
+{
+	char ret_value[512];
+	memset(ret_value, 0, sizeof(ret_value));
+	if( os_uci_option_value_lookup(name, ret_value, NULL) == OK)
+	{
+		if(value)
+			*value = (double)atof(ret_value);
+		//if(value)
+		//	sscanf(ret_value, fmt, value);
 		return OK;
 	}
 	return ERROR;

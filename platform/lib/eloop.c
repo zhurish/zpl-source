@@ -128,7 +128,7 @@ eloop_master_create()
 	}*/
 
 	//rv->ptid = os_task_pthread_self ();
-
+	rv->bquit = FALSE;
 	/* Initialize the timer queues */
 	//rv->timer = pqueue_create();
 	//rv->background = pqueue_create();
@@ -154,7 +154,7 @@ struct eloop_master *eloop_master_module_create(int module)
 
 	for (i = 0; i < MODULE_MAX; i++)
 	{
-		if (master_eloop[i] && master_eloop[i]->module == module)
+		if (master_eloop[i] && master_eloop[i]->module == (u_int)module)
 			return master_eloop[i];
 	}
 	struct eloop_master * m = eloop_master_create();
@@ -567,6 +567,9 @@ void eloop_cancel(struct eloop *eloop)
 		//	list = eloop->master->background;
 		break;
 	default:
+		zlog_debug(ZLOG_DEFAULT, "asdddddddd eloop->type=%d", eloop->type);
+		if (eloop->master && eloop->master->mutex)
+			os_mutex_unlock(eloop->master->mutex);
 		return;
 		break;
 	}
@@ -587,6 +590,8 @@ void eloop_cancel(struct eloop *eloop)
 	}*/
 	else
 	{
+		if (eloop->master && eloop->master->mutex)
+			os_mutex_unlock(eloop->master->mutex);
 		assert(!"Thread should be either in queue or list or array!");
 	}
 
@@ -826,6 +831,26 @@ static unsigned int eloop_process(struct eloop_list *list)
 	return ready;
 }
 
+int eloop_fetch_quit (struct eloop_master *m)
+{
+	if(m)
+	{
+		m->bquit = TRUE;
+	}
+	return OK;
+}
+
+int eloop_wait_quit (struct eloop_master *m)
+{
+	if(m)
+	{
+		while(m->bquit)
+		{
+			os_msleep(50);
+		}
+	}
+	return OK;
+}
 /* Fetch next ready eloop. */
 struct eloop *
 eloop_fetch(struct eloop_master *m, struct eloop *fetch)
@@ -837,6 +862,7 @@ eloop_fetch(struct eloop_master *m, struct eloop *fetch)
 	struct timeval timer_val = { .tv_sec = 1, .tv_usec = TIMER_SECOND_MICRO };
 	struct timeval timer_val_bg;
 	struct timeval *timer_wait = &timer_val;
+	int num = 0;
 	//struct timeval *timer_wait_bg;
 
 	//extern void * vty_eloop_master ();
@@ -845,11 +871,9 @@ eloop_fetch(struct eloop_master *m, struct eloop *fetch)
 
 	while (1)
 	{
-		int num = 0;
 
 		/* Signals pre-empt everything */
 		//quagga_sigevent_process();
-
 		/* Drain the ready queue of already scheduled jobs, before scheduling
 		 * more.
 		 */
@@ -861,6 +885,12 @@ eloop_fetch(struct eloop_master *m, struct eloop *fetch)
 		if (eloop != NULL)
 			return eloop_run(m, eloop, fetch);
 
+		if(m->bquit)
+		{
+			fetch = NULL;
+			m->bquit = FALSE;
+			return NULL;
+		}
 		/* To be fair to all kinds of eloops, and avoid starvation, we
 		 * need to be careful to consider all eloop types for scheduling
 		 * in each quanta. I.e. we should not return early from here on.

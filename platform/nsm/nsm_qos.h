@@ -31,8 +31,8 @@ typedef enum
     NSM_QOS_CLASS_2,
     NSM_QOS_CLASS_3,
 
-    //NSM_QOS_CLASS_4,
-    //NSM_QOS_CLASS_5,
+    NSM_QOS_CLASS_4,
+    NSM_QOS_CLASS_5,
     NSM_QOS_CLASS_MAX,
 }nsm_qos_class_e;
 
@@ -72,6 +72,11 @@ typedef enum
     NSM_QOS_MODE_WFQ,
     NSM_QOS_MODE_FQ,
 }nsm_qos_mode_e;
+
+typedef enum nsm_class_sched_e {
+    NSM_CLASS_SCHED_WEIGHT = 0,
+	NSM_CLASS_SCHED_STRICT,
+} nsm_class_sched_t;
 
 
 typedef enum

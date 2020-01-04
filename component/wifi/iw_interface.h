@@ -19,13 +19,15 @@
 typedef struct iw_s
 {
 	struct interface	*ifp;
+	BOOL				enable;
 	iw_mode_t			mode;
 	union
 	{
 		iw_ap_t		ap;
 		iw_client_t	client;
 	}private;
-
+	void	*n_thread;
+	iw_dev_t iwdev;
 }iw_t;
 
 
@@ -36,6 +38,8 @@ extern iw_t * nsm_iw_get(struct interface *ifp);
 extern int nsm_iw_mode_set_api(struct interface *ifp, iw_mode_t mode);
 extern int nsm_iw_mode_get_api(struct interface *ifp, iw_mode_t *mode);
 
+extern int nsm_iw_enable_api(struct interface *ifp, BOOL enable);
+extern BOOL nsm_iw_enable_get_api(struct interface *ifp);
 extern iw_mode_t nsm_iw_mode(struct interface *ifp);
 
 

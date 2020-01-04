@@ -5,7 +5,7 @@ MODULEDIR = tools/system
 #OS
 upgrade_OBJS += upgrade.o
 nvramenv_OBJS += nvram_env.o
-
+i2cset_OBJS += i2c-set.o
 #OBJS += upgrade.o
 #OBJS += nvram_env.o
 #############################################################################

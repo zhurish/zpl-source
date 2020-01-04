@@ -91,8 +91,8 @@ typedef struct client_interface_s {
 	int					sock;
 	int					udp_sock;
 
-	uint8_t				opt_mask[256];      /* Bitmask of options to send (-O option) */
-	dhcp_option_set_t	options[256];
+	uint8_t				opt_mask[DHCP_OPTION_MAX];      /* Bitmask of options to send (-O option) */
+	dhcp_option_set_t	options[DHCP_OPTION_MAX];
 
 	uint32_t			instance;
 	void				*master;

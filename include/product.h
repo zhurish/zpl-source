@@ -9,8 +9,9 @@
 #define INCLUDE_PRODUCT_H_
 
 
-#define PRODUCT_X5_B_BOARD
+//#define PRODUCT_X5_B_BOARD
 //#define PRODUCT_BOJING_BOARD
+//#define PRODUCT_V9_BOARD
 
 #define OS_SLOT_MAX 	1
 #define OS_SLOT_HY_MAX 	5

@@ -33,10 +33,14 @@ static int iw_ap_macacl_default_config(iw_ap_t *iw_ap, BOOL deny, FILE *fp)
 	NODE index;
 	iw_ap_mac_t *pstNode = NULL;
 	LIST *list = NULL;
+	if(!iw_ap)
+		return ERROR;
 	if(deny)
 		list = iw_ap->dmac_list;
 	else
 		list = iw_ap->mac_list;
+	if(!list)
+		return ERROR;
 	for(pstNode = (iw_ap_mac_t *)lstFirst(list);
 			pstNode != NULL;  pstNode = (iw_ap_connect_t *)lstNext((NODE*)&index))
 	{
@@ -54,6 +58,8 @@ static int iw_ap_macacl_config(iw_ap_t *iw_ap, FILE *fp, int mode)
 {
 	FILE *mfp = NULL;
 	char path[128];
+	if(!iw_ap || !fp)
+		return ERROR;
 	//macaddr_acl：可选，指定MAC地址过滤规则，0表示除非在禁止列表否则允许，1表示除非在允许列表否则禁止，2表示使用外部RADIUS服务器
 	if(mode == 0)
 	{
@@ -97,11 +103,14 @@ static int iw_ap_macacl_config(iw_ap_t *iw_ap, FILE *fp, int mode)
 
 static int iw_ap_hw_default_config(iw_ap_t *iw_ap, FILE *fp)
 {
-	fprintf(fp, "\n# HW config\n");
+	if(!iw_ap && !fp)
+		return ERROR;
+	fprintf(fp, "\n#HW config\n");
 	fprintf(fp, "driver=%s\n", iw_ap->driver ? "none":"nl80211");
 	fprintf(fp, "ht_coex=0\n");
-	fprintf(fp, "ht_capab=[SHORT-GI-20][SHORT-GI-40][TX-STBC][RX-STBC1]\n");
-
+	fprintf(fp, "ht_capab=[SHORT-GI-20][SHORT-GI-40]\n");
+	//fprintf(fp, "ht_capab=[SHORT-GI-20][SHORT-GI-40][TX-STBC][RX-STBC1]\n");
+	fflush(fp);
 	switch(iw_ap->hw_mode)
 	{
 	case IW_HW_MODE_IEEE80211ANY:
@@ -181,7 +190,9 @@ static int iw_ap_hw_default_config(iw_ap_t *iw_ap, FILE *fp)
 
 static int iw_ap_auth_default_config(iw_ap_t *iw_ap, FILE *fp)
 {
-	fprintf(fp, "\n# auth config\n");
+	if(!iw_ap && !fp)
+		return ERROR;
+	fprintf(fp, "\n#auth config\n");
 	switch(iw_ap->auth)
 	{
 	case IW_ENCRY_NONE:
@@ -193,49 +204,50 @@ static int iw_ap_auth_default_config(iw_ap_t *iw_ap, FILE *fp)
 		fprintf(fp, "auth_algs=1\n");
 		fprintf(fp, "wpa=0\n");
 		fprintf(fp, "wep_default_key=0\n");
-		fprintf(fp, "wep_key0=%s\n", iw_ap->password);
-		fprintf(fp, "wep_key1=%s\n", iw_ap->password);
-		fprintf(fp, "wep_key2=%s\n", iw_ap->password);
-		fprintf(fp, "wep_key3=%s\n", iw_ap->password);
+		fprintf(fp, "wep_key0=%s\n", iw_ap->password[0].password);
+		fprintf(fp, "wep_key1=%s\n", iw_ap->password[0].password);
+		fprintf(fp, "wep_key2=%s\n", iw_ap->password[0].password);
+		fprintf(fp, "wep_key3=%s\n", iw_ap->password[0].password);
 		break;
 	case IW_ENCRY_WEP_PRIVATE:
 		fprintf(fp, "auth_algs=2\n");
 		fprintf(fp, "wpa=0\n");
 		fprintf(fp, "wep_default_key=0\n");
-		fprintf(fp, "wep_key0=%s\n", iw_ap->password);
-		fprintf(fp, "wep_key1=%s\n", iw_ap->password);
-		fprintf(fp, "wep_key2=%s\n", iw_ap->password);
-		fprintf(fp, "wep_key3=%s\n", iw_ap->password);
+		fprintf(fp, "wep_key0=%s\n", iw_ap->password[0].password);
+		fprintf(fp, "wep_key1=%s\n", iw_ap->password[0].password);
+		fprintf(fp, "wep_key2=%s\n", iw_ap->password[0].password);
+		fprintf(fp, "wep_key3=%s\n", iw_ap->password[0].password);
 		break;
 	case IW_ENCRY_WPA_PSK:
 		fprintf(fp, "auth_algs=1\n");
 		fprintf(fp, "wpa=1\n");
 		fprintf(fp, "wpa_key_mgmt=WPA-PSK\n");
 		fprintf(fp, "wpa_disable_eapol_key_retries=0\n");
-		fprintf(fp, "wpa_passphrase=%s\n", iw_ap->password);
+		fprintf(fp, "wpa_passphrase=%s\n", iw_ap->password[0].password);
 		break;
 	case IW_ENCRY_WPA2_PSK:
 		fprintf(fp, "auth_algs=1\n");
 		fprintf(fp, "wpa=2\n");
 		fprintf(fp, "wpa_key_mgmt=WPA-PSK\n");
 		fprintf(fp, "wpa_disable_eapol_key_retries=0\n");
-		fprintf(fp, "wpa_passphrase=%s\n", iw_ap->password);
+		fprintf(fp, "wpa_passphrase=%s\n", iw_ap->password[0].password);
 		break;
 	case IW_ENCRY_WPA2WPA_PSK:
 		fprintf(fp, "auth_algs=1\n");
 		fprintf(fp, "wpa=3\n");
 		fprintf(fp, "wpa_key_mgmt=WPA-PSK\n");
 		fprintf(fp, "wpa_disable_eapol_key_retries=0\n");
-		fprintf(fp, "wpa_passphrase=%s\n", iw_ap->password);
+		fprintf(fp, "wpa_passphrase=%s\n", iw_ap->password[0].password);
 		break;
 	default:
 		fprintf(fp, "auth_algs=1\n");
 		fprintf(fp, "wpa=3\n");
 		fprintf(fp, "wpa_key_mgmt=WPA-PSK\n");
 		fprintf(fp, "wpa_disable_eapol_key_retries=0\n");
-		fprintf(fp, "wpa_passphrase=%s\n", iw_ap->password);
+		fprintf(fp, "wpa_passphrase=%s\n", iw_ap->password[0].password);
 		break;
 	}
+	fflush(fp);
 	if(iw_ap->auth == IW_ENCRY_WPA_PSK ||
 		iw_ap->auth == IW_ENCRY_WPA2_PSK ||
 		iw_ap->auth == IW_ENCRY_WPA2WPA_PSK )
@@ -259,12 +271,15 @@ static int iw_ap_auth_default_config(iw_ap_t *iw_ap, FILE *fp)
 			break;
 		}
 	}
+	fflush(fp);
 	return OK;
 }
 
 static int iw_ap_default_config(iw_ap_t *iw_ap, FILE *fp)
 {
-	fprintf(fp, "\n# misc config\n");
+	if(!iw_ap && !fp)
+		return ERROR;
+	fprintf(fp, "\n#misc config\n");
 /*
 # Device Name
 # User-friendly description of device; up to 32 octets encoded in UTF-8
@@ -326,10 +341,12 @@ static int iw_ap_default_config(iw_ap_t *iw_ap, FILE *fp)
 
 static int iw_ap_user_config(iw_ap_t *iw_ap, FILE *fp)
 {
+	if(!iw_ap && !fp)
+		return ERROR;
 	ifindex_t ifindex = ifindex2ifkernel(iw_ap->ifindex);
 	fprintf(fp, "\n# main config\n");
 	fprintf(fp, "country_code=%02d\n", iw_ap->country_code);
-
+	fflush(fp);
 	fprintf(fp, "bssid=%02x:%02x:%02x:%02x:%02x:%02x\n", iw_ap->BSSID[0], iw_ap->BSSID[1],
 			iw_ap->BSSID[2], iw_ap->BSSID[3], iw_ap->BSSID[4], iw_ap->BSSID[5]);
 
@@ -370,9 +387,30 @@ static int iw_ap_user_config(iw_ap_t *iw_ap, FILE *fp)
 
 static int iw_ap_script_check(iw_ap_t *iw_ap)
 {
+	if(!iw_ap)
+		return ERROR;
+
+/*	iw_ap->ifindex = ifindex;
+	ifp = if_lookup_by_index(iw_ap->ifindex);
+	if(ifp)
+		nsm_interface_mac_get_api(ifp, iw_ap->BSSID, NSM_MAC_MAX);
+	*/
 	if(iw_ap->ifindex &&
 		strlen(iw_ap->SSID) &&
-		strlen(iw_ap->BSSID)/* &&
+		str_isempty(iw_ap->BSSID, sizeof(iw_ap->BSSID)))
+	{
+		struct interface *ifp = NULL;
+		ifp = if_lookup_by_index(iw_ap->ifindex);
+		if(ifp)
+			nsm_interface_mac_get_api(ifp, iw_ap->BSSID, NSM_MAC_MAX);
+
+		//printf("============%s==========:ifindex=0x%x SSID=%s BSSID=%s\r\n",
+		//   __func__,iw_ap->ifindex, iw_ap->SSID, iw_ap->BSSID);
+	}
+	if(iw_ap->ifindex &&
+		strlen(iw_ap->SSID) &&
+		!str_isempty(iw_ap->BSSID, sizeof(iw_ap->BSSID))/* &&
+		//strlen(iw_ap->BSSID)
 		iw_ap->hw_mode*/)
 		return OK;
 	return ERROR;
@@ -382,21 +420,34 @@ int iw_ap_make_script(iw_ap_t *iw_ap)
 {
 	FILE *fp = NULL;
 	char path[128];
+	if(!iw_ap)
+		return ERROR;
 	memset(path, 0, sizeof(path));
 	if(iw_ap_script_check(iw_ap) != OK)
+	{
+		//printf("============%s==========:ifindex=0x%x SSID=%s BSSID=%s\r\n",
+		//	   __func__,iw_ap->ifindex, iw_ap->SSID, iw_ap->BSSID);
 		return ERROR;
+	}
 	snprintf(path, sizeof(path), "%s/hostapd-%s.conf", DAEMON_ENV_DIR,
 			ifkernelindex2kernelifname(ifindex2ifkernel(iw_ap->ifindex)));
+	if(access(path, F_OK) == 0)
+	{
+		remove(path);
+		sync();
+	}
 	fp = fopen(path, "w+");
 	if(fp)
 	{
 		fflush(fp);
 		iw_ap_default_config(iw_ap, fp);
+		//printf("============%s==========:path=%s\r\n",
+		//	   __func__, path);
 		iw_ap_hw_default_config(iw_ap, fp);
 		iw_ap_user_config(iw_ap, fp);
 
 		iw_ap_auth_default_config(iw_ap, fp);
-		if(lstCount(iw_ap->mac_list)||lstCount(iw_ap->dmac_list))
+		if((iw_ap->mac_list && lstCount(iw_ap->mac_list)) || (iw_ap->dmac_list && lstCount(iw_ap->dmac_list)))
 			iw_ap_macacl_config(iw_ap, fp, iw_ap->macaddr_acl);
 		fflush(fp);
 		fclose(fp);
@@ -414,6 +465,8 @@ int iw_ap_running_script(iw_ap_t *iw_ap)
 	char pidpath[128];
 	char confpath[128];
 	char *argv[] = {"-s", "-P", NULL, "-B", NULL, NULL};
+	if(!iw_ap)
+		return ERROR;
 	kname = ifkernelindex2kernelifname(ifindex2ifkernel(iw_ap->ifindex));
 	if(!kname)
 		return ERROR;
@@ -439,24 +492,28 @@ int iw_ap_running_script(iw_ap_t *iw_ap)
 	argv[2] = pidpath;
 	argv[4] = confpath;
 
-	if(iw_ap_make_script(iw_ap) == 0)
+	if(iw_ap_make_script(iw_ap) == OK)
 	{
 		iw_ap->change = FALSE;
 		if(IW_DEBUG(EVENT))
 		{
 			zlog_debug(ZLOG_WIFI, "running AP domain process on interface %s ",ifindex2ifname(iw_ap->ifindex));
 		}
+#ifdef DOUBLE_PROCESS
 		os_process_register(PROCESS_DEAMON, path, "/usr/sbin/hostapd", FALSE, argv);
+#endif
 		return OK;
 	}
 	return ERROR;
 }
-
+///tmp/app/var/hostapd-wlan0.pid
 int iw_ap_stop_script(iw_ap_t *iw_ap)
 {
 	int pid = 0;
 	char pidpath[128];
 	char *kname = NULL;
+	if(!iw_ap)
+		return ERROR;
 	kname = ifkernelindex2kernelifname(ifindex2ifkernel(iw_ap->ifindex));
 	if(!kname)
 		return ERROR;
@@ -471,14 +528,40 @@ int iw_ap_stop_script(iw_ap_t *iw_ap)
 	remove(pidpath);
 	return OK;
 }
+
+int iw_ap_script_is_running(iw_ap_t *iw_ap)
+{
+	char *kname = NULL;
+	char pidpath[128];
+	if(!iw_ap)
+		return ERROR;
+	kname = ifkernelindex2kernelifname(ifindex2ifkernel(iw_ap->ifindex));
+	if(!kname)
+		return ERROR;
+
+	memset(pidpath, 0, sizeof(pidpath));
+	snprintf(pidpath, sizeof(pidpath), "%s/hostapd-%s.pid",DAEMON_VTY_DIR, kname);
+	if(os_pid_get(pidpath) > 0)
+	{
+		if(name2pid("hostapd") > 0)
+			return OK;
+	}
+	return ERROR;
+}
+
+
 #else
 int iw_ap_running_config(iw_ap_t *iw_ap)
 {
+	if(!iw_ap)
+		return ERROR;
 	return OK;
 }
 
 int iw_ap_stop_script(iw_ap_t *iw_ap)
 {
+	if(!iw_ap)
+		return ERROR;
 	return OK;
 }
 #endif

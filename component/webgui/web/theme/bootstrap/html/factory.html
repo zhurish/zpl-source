@@ -1,0 +1,1281 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta content="" name="description" />
+	<meta content="webthemez" name="author" />
+	<!--meta http-equiv="refresh" content="30"-->
+	<!-- Bootstrap Styles-->
+	<link href="../css/bootstrap.min.css" rel="stylesheet" />
+
+	<!-- private Styles-->
+	<link href="../css/private.css" rel="stylesheet" />
+
+	<!-- jQuery Js -->
+	<script src="../js/jquery-2.1.1.min.js"></script>
+	<!-- Bootstrap Js -->
+	<script src="../js/bootstrap.min.js"></script>
+	<script src="../js/xhr.js"></script>
+	<script src="../js/data-type.js"></script>
+
+	<title>factory</title>
+</head>
+
+<body class="body-bg-img">
+	<div id="maincontent" class="container">
+		<!-- 出厂 -->
+		<fieldset class="fieldset-margin fieldset-background">
+			<form class="form-horizontal form-margin" role="form" name="factory" action="" accept-charset="UTF-8"
+				method="POST">
+				<legend class="legend-text-align">门禁信息</legend>
+				<div class="form-group">
+					<label for="product" class="col-sm-3 control-label">设备类型</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="product" id="product">
+							<option value="X5BM">X5BM</option>
+							<option value="X5CM">X5CM</option>
+						</select>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="device_name" class="col-sm-3 control-label">节点名称</label>
+					<div class="col-sm-4">
+						<input type="text" minlength="6" maxlength="32" class="form-control" name="device_name"
+							id="device_name" onchange="name_check(this)" required placeholder="请输入名称信息">
+					</div>
+					<!--div class="col-xs-1 check_ok ">
+						√
+					</div>
+					<div class="col-xs-1 check_error">
+						×
+					</div-->
+				</div>
+				<div class="form-group">
+					<label for="location" class="col-sm-3 control-label">安装楼栋位置</label>
+					<div class="col-sm-4">
+						<input type="text" minlength="6" maxlength="32" class="form-control" name="location"
+							id="location" onchange="name_check(this)" required placeholder="请输入位置信息">
+					</div>
+					<!--div class="col-xs-1 check_ok ">
+						√
+					</div>
+					<div class="col-xs-1 check_error">
+						×
+					</div-->
+				</div>
+				<div class="form-group">
+					<label for="customizer " class="col-sm-3 control-label">定制类型</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="customizer" id="customizer">
+							<option value="NONE">NONE</option>
+							<option value="SECOM">SECOM</option>
+							<option value="HUIFU">HUIFU</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="direction " class="col-sm-3 control-label">门禁出入方向</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="direction" id="direction">
+							<option value="out">出方向</option>
+							<option value="in">入方向</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="server" class="col-sm-3 control-label">对接平台IP地址</label>
+					<div class="col-sm-4">
+						<input type="text" minlength="6" maxlength="32" class="form-control" name="server" id="server"
+							onchange="server_check(this)" required placeholder="请输入平台IP地址">
+					</div>
+					<!--div class="col-xs-1 check_ok ">
+						√
+					</div>
+					<div class="col-xs-1 check_error">
+						×
+					</div-->
+				</div>
+				<div class="form-group">
+					<label for="topf" class="col-sm-3 control-label">TOF检测距离(mm)</label>
+					<div class="col-sm-4">
+						<input type="number" min="50" max="1500" step="5" class="form-control" name="topf" id="topf"
+							onchange="input_topf_check(this)" required value="1200">
+					</div>
+				</div>
+				<div class="form-group">
+						<label for="doorcontact" class="col-sm-3 control-label">门禁有门磁</label>
+						<div class="checkbox col-sm-4">
+							<input type="checkbox" name="doorcontact" id="doorcontact" checked value="doorcontact"
+							onclick="open_enable_check(this,$('#doorcontact'))">
+						</div>
+				</div>
+
+
+				<div class="form-group">
+					<div class="col-xs-4 control-label">
+						<button type="button" class="btn btn-cencel" name="factory_cencel" id="factory_cencel"
+							onclick="factory_oncencel()"><span class="glyphicon glyphicon-remove"
+								style="margin-right:10px;"></span>取消</button>
+					</div>
+					<div class="col-xs-4 control-label">
+						<button type="button" class="btn btn-submit" name="factory_submit" id="factory_submit"
+							onclick="factory_onsubmit()"><span class="glyphicon glyphicon-send"
+								style="margin-right:10px;"></span>确定</button>
+					</div>
+				</div>
+
+				<div id="change_waiting" class="alert alert-success hiden">
+					<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+							style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+				</div>
+				<div id="change_error" class="alert alert-warning hiden">
+					<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+				</div>
+				<script type="text/javascript">
+
+					function name_check(self) {
+						if (self.id == "device_name") {
+							if (self.value == "" ||
+								self.value.length < 6 ||
+								self.value.length > 32) {
+								check_err_show($('#device_name'));
+								return false;
+							}
+							else {
+								check_ok_show($('#device_name'));
+								return true;
+							}
+						}
+						else if (self.id == "location") {
+							if (self.value == "" ||
+								self.value.length < 6 ||
+								self.value.length > 32) {
+								check_err_show($('#location'));
+								return false;
+							}
+							else {
+								check_ok_show($('#location'));
+								return true;
+							}
+						}
+						return false;
+					}
+
+					function server_check(self) {
+						if (self.id == "server") {
+							if (self.value == "" ||
+								!checkipv4(self.value)) {
+								check_err_show($('#server'));
+								return false;
+							}
+							else {
+								check_ok_show($('#server'));
+								return true;
+							}
+						}
+						return false;
+					}
+					function input_topf_check() {
+						if (self.id == "topf") {
+							if (self.value == "" ||
+								self.value < 50 ||
+								self.value > 1500) {
+								check_err_show($('#topf'));
+								return false;
+							}
+							else {
+								check_ok_show($('#topf'));
+								return true;
+							}
+						}
+					}
+
+					function factory_oncencel() {
+						document.getElementById("device_name").value = "";
+						document.getElementById("location").value = "";
+						document.getElementById("server").value = "";
+						check_okerr_hiden($('#device_name'));
+						check_okerr_hiden($('#location'));
+						check_okerr_hiden($('#server'));
+					}
+					function factory_get_action(op) {
+						var argv;
+						var stxhr = new XHR();
+						argv = "ACTION=GET";
+						stxhr.post("/goform/factory", argv,
+							function (x, json) {
+								console.log(x);
+								console.log(json);
+								if (x.responseText != "" && json == null) {
+									if (x.responseText == "ERROR") {
+									}
+									else if (x.responseText == "OK") {
+									}
+								}
+								else if (x.responseText != "" && json != null) {
+									if (json.response == "OK") {
+
+										document.getElementById("device_name").value = json.device;
+										document.getElementById("location").value = json.location;
+										document.getElementById("server").value = json.server;
+										document.getElementById("doorcontact").checked = json.doorcontact;
+										document.getElementById("topf").value = json.topf;
+
+										select_option_active(document.getElementById("product"), json.product);
+										select_option_active(document.getElementById("customizer"), json.customizer);
+										select_option_active(document.getElementById("direction"), json.direction);
+										if(document.getElementById("doorcontact").checked)
+										{
+											document.getElementById("openalarm").parentNode.parentNode.setAttribute("class", "form-group show");
+											document.getElementById("waitclose").parentNode.parentNode.setAttribute("class", "form-group show");
+											document.getElementById("openhold").parentNode.parentNode.setAttribute("class", "form-group show");
+										}
+										else
+										{
+											document.getElementById("openalarm").parentNode.parentNode.setAttribute("class", "form-group hiden");
+											document.getElementById("waitclose").parentNode.parentNode.setAttribute("class", "form-group hiden");
+											document.getElementById("openhold").parentNode.parentNode.setAttribute("class", "form-group hiden");
+										}
+									}
+								}
+							},
+							3000
+						);
+					}
+
+					//button 按钮，结合onclick事件，验证和提交表单
+					function factory_onsubmit() {
+						if (!name_check(document.getElementById("device_name"))) {
+							check_err_show($('#device_name'));
+							return false;
+						}
+						if (!name_check(document.getElementById("location"))) {
+							check_err_show($('#location'));
+							return false;
+						}
+						if (!server_check(document.getElementById("server"))) {
+							check_err_show($('#server'));
+							return false;
+						}
+
+						{
+
+							var argv;
+							var stxhr = new XHR();
+
+							argv = "ACTION=SET&product=" + document.getElementById("product").value + "&device="
+								+ document.getElementById("device_name").value + "&location="
+								+ document.getElementById("location").value + "&customizer="
+								+ document.getElementById("customizer").value + "&direction="
+								+ document.getElementById("direction").value + "&server="
+								+ document.getElementById("server").value  + "&topf="
+								+ document.getElementById("topf").value;;
+
+							if (document.getElementById("doorcontact").checked) {
+								argv += "&doorcontact=true";
+							}
+							else
+								argv += "&doorcontact=false";
+
+							$("#change_waiting").css("display", "block");
+							setTimeout(function () { $("#change_waiting").css("display", "none") }, 5000);
+							stxhr.post("/goform/factory", argv,
+								function (x) {
+									console.log(x);
+									if (x.responseText == "OK") {
+										clearTimeout();
+										$("#change_waiting").css("display", "none");
+
+										//document.getElementById("device_name").value = "";
+										//document.getElementById("location").value = "";
+										//document.getElementById("server").value = "";
+										check_okerr_hiden($('#device_name'));
+										check_okerr_hiden($('#location'));
+										check_okerr_hiden($('#server'));
+										check_okerr_hiden($('#topf'));
+									}
+									else if (x.responseText != "OK") {
+										check_okerr_hiden($('#device_name'));
+										check_okerr_hiden($('#location'));
+										check_okerr_hiden($('#server'));
+										check_okerr_hiden($('#topf'));
+										clearTimeout();
+										$("#change_waiting").css("display", "none");
+										$("#change_error").css("display", "block");
+										setTimeout(function () { $("#change_error").css("display", "none") }, 3000);
+									}
+								},
+								3000
+							);
+						}
+					}
+				</script>
+			</form>
+		</fieldset>
+		<fieldset class="fieldset-margin fieldset-background">
+			<form class="form-horizontal form-margin" role="form" name="openconfig" action="" accept-charset="UTF-8"
+				method="POST">
+				<legend class="legend-text-align">开门参数</legend>
+
+				<div class="form-group">
+					<label for="waitopen" class="col-sm-3 control-label">等待开门时间</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="30000" step="100" class="form-control" name="waitopen" id="waitopen"
+							onchange="input_time_check(this)" required value="500">
+					</div>
+					<!--div class="col-xs-1 check_ok ">
+						√
+					</div>
+					<div class="col-xs-1 check_error">
+						×
+					</div-->
+				</div>
+
+				<div class="form-group">
+					<label for="openhold" class="col-sm-3 control-label">开门保持时间</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="30000" step="100" class="form-control" name="openhold" id="openhold"
+							onchange="input_time_check(this)" required value="1000">
+					</div>
+					<!--div class="col-xs-1 check_ok ">
+						√
+					</div>
+					<div class="col-xs-1 check_error">
+						×
+					</div-->
+				</div>
+				<div class="form-group">
+					<label for="openalarm" class="col-sm-3 control-label">开门报警</label>
+					<div class="checkbox col-sm-4">
+						<input type="checkbox" name="openalarm" id="openalarm" checked value="openalarm"
+							onclick="open_enable_check(this,$('#openalarm'))">
+					</div>
+				</div>
+				<div class="form-group ">
+					<label for="waitclose" class="col-sm-3 control-label">等待关门时间</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="60000" step="100" class="form-control" name="waitclose"
+							id="waitclose" onchange="input_time_check(this)" required value="3000">
+					</div>
+					<!--div class="col-xs-1 check_ok ">
+						√
+					</div>
+					<div class="col-xs-1 check_error">
+						×
+					</div-->
+				</div>
+
+
+				<div class="form-group">
+					<label for="outrelay" class="col-sm-3 control-label">继电器输出电平</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="outrelay" id="outrelay">
+							<option value="LOW">LOW</option>
+							<option value="HIGH">HIGH</option>
+						</select>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="tamperalarm" class="col-sm-3 control-label">防拆报警</label>
+					<div class="checkbox col-sm-4">
+						<input type="checkbox" name="tamperalarm" id="tamperalarm" value="tamperalarm"
+							onclick="open_enable_check(this,$('#tamperalarm'))">
+					</div>
+				</div>
+
+
+				<div class="form-group">
+					<label for="opentype " class="col-sm-3 control-label">开门方式</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="opentype" id="opentype">
+							<option value="1">卡和脸</option>
+							<option value="2">卡或脸</option>
+							<option value="3">卡</option>
+							<option value="4">脸</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="wiggins " class="col-sm-3 control-label">韦根参数</label>
+					<div class="col-sm-4">
+						<select class="form-control" name="wiggins" id="wiggins">
+							<option value="26">26-Bit</option>
+							<option value="34">34-Bit</option>
+							<option value="66">66-Bit</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<div class="col-xs-4 control-label">
+						<button type="button" class="btn btn-cencel" name="open_cencel" id="open_cencel"
+							onclick="open_oncencel()"><span class="glyphicon glyphicon-remove"
+								style="margin-right:10px;"></span>取消</button>
+					</div>
+					<div class="col-xs-4 control-label">
+						<button type="button" class="btn btn-submit" name="open_submit" id="open_submit"
+							onclick="open_onsubmit()"><span class="glyphicon glyphicon-send"
+								style="margin-right:10px;"></span>确定</button>
+					</div>
+				</div>
+				<div id="open_waiting" class="alert alert-success hiden">
+					<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+							style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+				</div>
+				<div id="open_error" class="alert alert-warning hiden">
+					<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+				</div>
+				<script type="text/javascript">
+
+					function open_enable_check(self, obj) {
+						var value = self.checked;
+						if (value == true) {
+							if (self.id == "openalarm") {
+								if(document.getElementById("doorcontact").checked)
+								{
+									document.getElementById("waitclose").parentNode.parentNode.setAttribute("class", "form-group show");
+								}
+							}
+
+							if (self.id == "living_detection") {
+								document.getElementById("living_threshold").parentNode.parentNode.setAttribute("class", "form-group show");
+							}
+							if (self.id == "doorcontact") {
+								document.getElementById("openalarm").parentNode.parentNode.setAttribute("class", "form-group show");
+								document.getElementById("openhold").parentNode.parentNode.setAttribute("class", "form-group show");
+								if(document.getElementById("openalarm").checked)
+									document.getElementById("waitclose").parentNode.parentNode.setAttribute("class", "form-group show");
+							}
+						}
+						else {
+							if (self.id == "openalarm") {
+								document.getElementById("waitclose").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							}
+							if (self.id == "living_detection") {
+								document.getElementById("living_threshold").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							}
+							if (self.id == "doorcontact") {
+								document.getElementById("openalarm").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("waitclose").parentNode.parentNode.setAttribute("class", "form-group hiden");
+								document.getElementById("openhold").parentNode.parentNode.setAttribute("class", "form-group hiden");
+							}
+						}
+					}
+
+					function input_time_check(self) {
+						if (self.id == "waitclose") {
+							if (self.value == "" ||
+								self.value < 0 ||
+								self.value > 60000) {
+								check_err_show($('#waitclose'));
+								return false;
+							}
+							else {
+								check_ok_show($('#waitclose'));
+								return true;
+							}
+						}
+						else if (self.id == "openhold") {
+							if (self.value == "" ||
+								self.value < 0 ||
+								self.value > 30000) {
+								check_err_show($('#openhold'));
+								return false;
+							}
+							else {
+								check_ok_show($('#openhold'));
+								return true;
+							}
+						}
+						else if (self.id == "waitopen") {
+							if (self.value == "" ||
+								self.value < 0 ||
+								self.value > 30000) {
+								check_err_show($('#waitopen'));
+								return false;
+							}
+							else {
+								check_ok_show($('#waitopen'));
+								return true;
+							}
+						}
+						return false;
+					}
+
+
+
+					function open_oncencel() {
+						document.getElementById("waitopen").value = "";
+						document.getElementById("openhold").value = "";
+						document.getElementById("waitclose").value = "";
+						check_okerr_hiden($('#waitopen'));
+						check_okerr_hiden($('#openhold'));
+						check_okerr_hiden($('#waitclose'));
+					}
+
+					function open_get_action(op) {
+						var argv;
+						var stxhr = new XHR();
+						argv = "ACTION=GET";
+						stxhr.post("/goform/open", argv,
+							function (x, json) {
+								console.log(x);
+								console.log(json);
+								if (x.responseText != "" && json == null) {
+									if (x.responseText == "ERROR") {
+									}
+									else if (x.responseText == "OK") {
+									}
+								}
+								else if (x.responseText != "" && json != null) {
+									if (json.response == "OK") {
+
+										document.getElementById("waitopen").value = json.waitopen;
+										document.getElementById("openalarm").checked = json.openalarm;
+										document.getElementById("waitclose").value = json.waitclose;
+										document.getElementById("openhold").value = json.openhold;
+
+										select_option_active(document.getElementById("wiggins"), json.wiggins);
+										select_option_active(document.getElementById("opentype"), json.opentype);
+										select_option_active(document.getElementById("outrelay"), json.outrelay);
+
+										document.getElementById("tamperalarm").checked = json.tamperalarm;
+
+										//document.getElementById("wiggins").value = json.wiggins;
+										//document.getElementById("tamperalarm").value = json.tamperalarm;
+										//document.getElementById("opentype").value = json.opentype;
+										//document.getElementById("outrelay").value = json.outrelay;
+									}
+								}
+							},
+							3000
+						);
+					}
+
+					//button 按钮，结合onclick事件，验证和提交表单
+					function open_onsubmit() {
+						if (!input_time_check(document.getElementById("waitopen"))) {
+							check_err_show($('#waitopen'));
+							return false;
+						}
+						if (!input_time_check(document.getElementById("openhold"))) {
+							check_err_show($('#openhold'));
+							return false;
+						}
+						if (!input_time_check(document.getElementById("waitclose"))) {
+							check_err_show($('#waitclose'));
+							return false;
+						}
+
+						{
+
+							var argv;
+							var stxhr = new XHR();
+
+							argv = "ACTION=SET&waitopen=" + document.getElementById("waitopen").value + "&openhold="
+								+ document.getElementById("openhold").value;
+
+							if (document.getElementById("openalarm").checked) {
+								argv += "&openalarm=true";
+								argv += "&waitclose=" + document.getElementById("waitclose").value;
+							}
+							else {
+								argv += "&openalarm=false";
+								argv += "&waitclose=" + document.getElementById("waitclose").value;
+							}
+							if (document.getElementById("tamperalarm").checked)
+								argv += "&tamperalarm=true";
+							else
+								argv += "&tamperalarm=false";
+
+							argv += "&opentype="
+								+ document.getElementById("opentype").value + "&wiggins="
+								+ document.getElementById("wiggins").value + "&outrelay="
+								+ document.getElementById("outrelay").value;
+
+
+							$("#open_waiting").css("display", "block");
+							setTimeout(function () { $("#open_waiting").css("display", "none") }, 5000);
+							stxhr.post("/goform/open", argv,
+								function (x) {
+									console.log(x);
+									if (x.responseText == "OK") {
+										clearTimeout();
+										$("#open_waiting").css("display", "none");
+
+										//document.getElementById("device_name").value = "";
+										//document.getElementById("location").value = "";
+										//document.getElementById("server").value = "";
+										check_okerr_hiden($('#waitopen'));
+										check_okerr_hiden($('#openhold'));
+										check_okerr_hiden($('#waitclose'));
+									}
+									else if (x.responseText != "OK") {
+										check_okerr_hiden($('#waitopen'));
+										check_okerr_hiden($('#openhold'));
+										check_okerr_hiden($('#waitclose'));
+										clearTimeout();
+										$("#open_waiting").css("display", "none");
+										$("#open_error").css("display", "block");
+										setTimeout(function () { $("#open_error").css("display", "none") }, 3000);
+									}
+								},
+								3000
+							);
+						}
+					}
+				</script>
+			</form>
+		</fieldset>
+
+
+		<fieldset class="fieldset-margin fieldset-background">
+			<form class="form-horizontal form-margin" role="form" name="openconfig" action="" accept-charset="UTF-8"
+				method="POST">
+				<legend class="legend-text-align">人脸配置</legend>
+
+				<div class="form-group">
+					<label for="record_threshold" class="col-sm-3 control-label">人脸录入阈值</label>
+					<div class="col-sm-4">
+						<input type="number" min="0.0" max="1.0" class="form-control" name="record_threshold"
+							id="record_threshold" onchange="input_face_foalt_check(this)" required value="0.8">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="recognize_threshold" class="col-sm-3 control-label">人脸识别阈值</label>
+					<div class="col-sm-4">
+						<input type="number" min="0.0" max="1.0" class="form-control" name="recognize_threshold"
+							id="recognize_threshold" onchange="input_face_foalt_check(this)" required value="0.8">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="recognize_sec_threshold" class="col-sm-3 control-label">人脸识别二级阈值</label>
+					<div class="col-sm-4">
+						<input type="number" min="0.0" max="1.0" class="form-control" name="recognize_sec_threshold"
+							id="recognize_sec_threshold" onchange="input_face_foalt_check(this)" required value="0.845">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="living_detection" class="col-sm-3 control-label">活体检测开关</label>
+					<div class="checkbox col-sm-4">
+						<input type="checkbox" name="living_detection" id="living_detection" checked
+							value="living_detection" onclick="open_enable_check(this,$('#living_detection'))">
+					</div>
+				</div>
+				<div class="form-group ">
+					<label for="living_threshold" class="col-sm-3 control-label">活体阈值</label>
+					<div class="col-sm-4">
+						<input type="number" min="0.0" max="1.0" class="form-control" name="living_threshold"
+							id="living_threshold" onchange="input_face_foalt_check(this)" required value="0.95">
+					</div>
+				</div>
+
+
+				<div class="form-group">
+					<label for="success_intervals" class="col-sm-3 control-label">两次成功识别间隔(ms)</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="6000" step="1" class="form-control" name="success_intervals"
+							id="success_intervals" onchange="input_face_foalt_check(this)" required value="1000">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="failure_intervals" class="col-sm-3 control-label">两次失败识别间隔(ms)</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="6000" step="1" class="form-control" name="failure_intervals" 
+							id="failure_intervals" value="1000" onchange="input_face_foalt_check(this)" required>
+					</div>
+				</div>
+				<!--yaw角和pitch角-->
+				<div class="form-group">
+					<label for="face_yaw_left" class="col-sm-3 control-label">左YAW角</label>
+					<div class="col-sm-4">
+						<input type="number" min="-180" max="180" step="1" class="form-control" name="face_yaw_left"
+							id="face_yaw_left" onchange="input_face_foalt_check(this)" required value="20">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="face_yaw_right" class="col-sm-3 control-label">右YAW角</label>
+					<div class="col-sm-4">
+						<input type="number" min="-180" max="180" step="1" class="form-control" name="face_yaw_right"
+							id="face_yaw_right" onchange="input_face_foalt_check(this)" required value="20">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="face_pitch_up" class="col-sm-3 control-label">上PITCH角</label>
+					<div class="col-sm-4">
+						<input type="number" min="-180" max="180" step="1" class="form-control" name="face_pitch_up"
+							id="face_pitch_up" onchange="input_face_foalt_check(this)" required value="20">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="face_pitch_down" class="col-sm-3 control-label">下PITCH角</label>
+					<div class="col-sm-4">
+						<input type="number" min="-180" max="180" step="1" class="form-control" name="face_pitch_down"
+							id="face_pitch_down" onchange="input_face_foalt_check(this)" required value="20">
+					</div>
+				</div>
+
+				<!--人脸大小参数-->
+				<div class="form-group">
+					<label for="face_roi_width" class="col-sm-3 control-label">人脸宽度(px)</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="255" step="1" class="form-control" name="face_roi_width"
+							id="face_roi_width" onchange="input_face_foalt_check(this)" required value="150">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="face_roi_height" class="col-sm-3 control-label">人脸高度(px)</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="255" step="1" class="form-control" name="face_roi_height"
+							id="face_roi_height" onchange="input_face_foalt_check(this)" required value="150">
+					</div>
+				</div>
+
+				<!--录入人脸大小参数-->
+				<div class="form-group">
+					<label for="face_record_width" class="col-sm-3 control-label">录入人脸宽度(px)</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="255" step="1" class="form-control" name="face_record_width"
+							id="face_record_width" onchange="input_face_foalt_check(this)" required value="90">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="face_record_height" class="col-sm-3 control-label">录入人脸高度(px)</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="255" step="1" class="form-control" name="face_record_height"
+							id="face_record_height" onchange="input_face_foalt_check(this)" required value="90">
+					</div>
+				</div>
+
+
+				<!--识别人脸大小参数-->
+				<div class="form-group">
+					<label for="face_recognize_width" class="col-sm-3 control-label">识别人脸宽度(px)</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="255" step="1" class="form-control" name="face_recognize_width"
+							id="face_recognize_width" onchange="input_face_foalt_check(this)" required value="120">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="face_recognize_height" class="col-sm-3 control-label">识别人脸高度(px)</label>
+					<div class="col-sm-4">
+						<input type="number" min="0" max="255" step="1" class="form-control"
+							name="face_recognize_height" id="face_recognize_height"
+							onchange="input_face_foalt_check(this)" required value="120">
+					</div>
+				</div>
+
+
+				<div class="form-group">
+					<div class="col-xs-4 control-label">
+						<button type="button" class="btn btn-cencel" name="face_cencel" id="face_cencel"
+							onclick="face_oncencel()"><span class="glyphicon glyphicon-remove"
+								style="margin-right:10px;"></span>取消</button>
+					</div>
+					<div class="col-xs-4 control-label">
+						<button type="button" class="btn btn-submit" name="face_submit" id="face_submit"
+							onclick="face_onsubmit()"><span class="glyphicon glyphicon-send"
+								style="margin-right:10px;"></span>确定</button>
+					</div>
+				</div>
+
+
+				<div id="face_waiting" class="alert alert-success hiden">
+					<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+							style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+				</div>
+				<div id="face_error" class="alert alert-warning hiden">
+					<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+				</div>
+				<script type="text/javascript">
+
+					function input_face_foalt_check(self) {
+						if (self.id == "record_threshold") {
+							if (self.value == "" ||
+								self.value < 0.0 ||
+								self.value > 1.0) {
+								check_err_show($('#record_threshold'));
+								return false;
+							}
+							else {
+								check_ok_show($('#record_threshold'));
+								return true;
+							}
+						}
+						else if (self.id == "recognize_threshold") {
+							if (self.value == "" ||
+								self.value < 0.0 ||
+								self.value > 1.0) {
+								check_err_show($('#recognize_threshold'));
+								return false;
+							}
+							else {
+								check_ok_show($('#recognize_threshold'));
+								return true;
+							}
+						}
+						else if (self.id == "recognize_sec_threshold") {
+							if (self.value == "" ||
+								self.value < 0.0 ||
+								self.value > 1.0) {
+								check_err_show($('#recognize_sec_threshold'));
+								return false;
+							}
+							else {
+								check_ok_show($('#recognize_sec_threshold'));
+								return true;
+							}
+						}
+						
+						else if (self.id == "living_threshold") {
+							if (self.value == "" ||
+								self.value < 0.0 ||
+								self.value > 1.0) {
+								check_err_show($('#living_threshold'));
+								return false;
+							}
+							else {
+								check_ok_show($('#living_threshold'));
+								return true;
+							}
+						}
+						else if (self.id == "success_intervals") {
+							if (self.value == "" ||
+								self.value < 0 ||
+								self.value > 6000) {
+								check_err_show($('#success_intervals'));
+								return false;
+							}
+							else {
+								check_ok_show($('#success_intervals'));
+								return true;
+							}
+						}
+						else if (self.id == "failure_intervals") {
+							if (self.value == "" ||
+								self.value < 0 ||
+								self.value > 6000) {
+								check_err_show($('#failure_intervals'));
+								return false;
+							}
+							else {
+								check_ok_show($('#failure_intervals'));
+								return true;
+							}
+						}
+
+						else if (self.id == "face_yaw_left") {
+							if (self.value == "" ||
+								self.value < -180 ||
+								self.value > 180) {
+								check_err_show($('#face_yaw_left'));
+								return false;
+							}
+							else {
+								check_ok_show($('#face_yaw_left'));
+								return true;
+							}
+						}
+
+						else if (self.id == "face_yaw_right") {
+							if (self.value == "" ||
+								self.value < -180 ||
+								self.value > 180) {
+								check_err_show($('#face_yaw_right'));
+								return false;
+							}
+							else {
+								check_ok_show($('#face_yaw_right'));
+								return true;
+							}
+						}
+
+						else if (self.id == "face_pitch_up") {
+							if (self.value == "" ||
+								self.value < -180 ||
+								self.value > 180) {
+								check_err_show($('#face_pitch_up'));
+								return false;
+							}
+							else {
+								check_ok_show($('#face_pitch_up'));
+								return true;
+							}
+						}
+						else if (self.id == "face_pitch_down") {
+							if (self.value == "" ||
+								self.value < -180 ||
+								self.value > 180) {
+								check_err_show($('#face_pitch_down'));
+								return false;
+							}
+							else {
+								check_ok_show($('#face_pitch_down'));
+								return true;
+							}
+						}
+						else if (self.id == "face_roi_width") {
+							if (self.value == "" ||
+								self.value < 0 ||
+								self.value > 255) {
+								check_err_show($('#face_roi_width'));
+								return false;
+							}
+							else {
+								check_ok_show($('#face_roi_width'));
+								return true;
+							}
+						}
+						else if (self.id == "face_roi_height") {
+							if (self.value == "" ||
+								self.value < 0 ||
+								self.value > 255) {
+								check_err_show($('#face_roi_height'));
+								return false;
+							}
+							else {
+								check_ok_show($('#face_roi_height'));
+								return true;
+							}
+						}
+
+						else if (self.id == "face_record_width") {
+							if (self.value == "" ||
+								self.value < 0 ||
+								self.value > 255) {
+								check_err_show($('#face_record_width'));
+								return false;
+							}
+							else {
+								check_ok_show($('#face_record_width'));
+								return true;
+							}
+						}
+						else if (self.id == "face_record_height") {
+							if (self.value == "" ||
+								self.value < 0 ||
+								self.value > 255) {
+								check_err_show($('#face_record_height'));
+								return false;
+							}
+							else {
+								check_ok_show($('#face_record_height'));
+								return true;
+							}
+						}
+						else if (self.id == "face_recognize_width") {
+							if (self.value == "" ||
+								self.value < 0 ||
+								self.value > 255) {
+								check_err_show($('#face_recognize_width'));
+								return false;
+							}
+							else {
+								check_ok_show($('#face_recognize_width'));
+								return true;
+							}
+						}
+						else if (self.id == "face_recognize_height") {
+							if (self.value == "" ||
+								self.value < 0 ||
+								self.value > 255) {
+								check_err_show($('#face_recognize_height'));
+								return false;
+							}
+							else {
+								check_ok_show($('#face_recognize_height'));
+								return true;
+							}
+						}
+
+
+						return false;
+					}
+
+
+
+					function face_oncencel() {
+						document.getElementById("record_threshold").value = "";
+						document.getElementById("recognize_threshold").value = "";
+						document.getElementById("recognize_sec_threshold").value = "";
+						document.getElementById("living_threshold").value = "";
+						document.getElementById("success_intervals").value = "";
+						document.getElementById("failure_intervals").value = "";
+						document.getElementById("face_yaw_left").value = "";
+						document.getElementById("face_yaw_right").value = "";
+						document.getElementById("face_pitch_up").value = "";
+						document.getElementById("face_pitch_down").value = "";
+
+						document.getElementById("face_roi_width").value = "";
+						document.getElementById("face_roi_height").value = "";
+						document.getElementById("face_record_width").value = "";
+						document.getElementById("face_record_height").value = "";
+						document.getElementById("face_recognize_width").value = "";
+						document.getElementById("face_recognize_height").value = "";
+
+						check_okerr_hiden($('#record_threshold'));
+						check_okerr_hiden($('#recognize_threshold'));
+						check_okerr_hiden($('#recognize_sec_threshold'));
+						check_okerr_hiden($('#living_threshold'));
+						check_okerr_hiden($('#success_intervals'));
+						check_okerr_hiden($('#failure_intervals'));
+						check_okerr_hiden($('#face_yaw_left'));
+						check_okerr_hiden($('#face_yaw_right'));
+						check_okerr_hiden($('#face_pitch_up'));
+						check_okerr_hiden($('#face_pitch_down'));
+						check_okerr_hiden($('#face_roi_width'));
+						check_okerr_hiden($('#face_roi_height'));
+						check_okerr_hiden($('#face_record_width'));
+						check_okerr_hiden($('#face_record_height'));
+						check_okerr_hiden($('#face_recognize_width'));
+						check_okerr_hiden($('#face_recognize_height'));
+					}
+
+					function face_get_action(op) {
+						var argv;
+						var stxhr = new XHR();
+						argv = "ACTION=GET";
+						stxhr.post("/goform/faceset", argv,
+							function (x, json) {
+								console.log(x);
+								console.log(json);
+								if (x.responseText != "" && json == null) {
+									if (x.responseText == "ERROR") {
+									}
+									else if (x.responseText == "OK") {
+									}
+								}
+								else if (x.responseText != "" && json != null) {
+									if (json.response == "OK") {
+
+										document.getElementById("record_threshold").value = json.record_threshold;
+										document.getElementById("recognize_threshold").checked = json.recognize_threshold;
+										document.getElementById("recognize_sec_threshold").checked = json.recognize_sec_threshold;
+										document.getElementById("living_detection").checked = json.living_detection;
+										document.getElementById("living_threshold").value = json.living_threshold;
+										document.getElementById("success_intervals").value = json.success_intervals;
+										document.getElementById("failure_intervals").value = json.failure_intervals;
+
+										document.getElementById("face_yaw_left").value = json.yaw_left;
+										document.getElementById("face_yaw_right").value = json.yaw_right;
+										document.getElementById("face_pitch_up").value = json.pitch_up;
+										document.getElementById("face_pitch_down").value = json.pitch_down;
+										document.getElementById("face_roi_width").value = json.roi_width;
+										document.getElementById("face_roi_height").value = json.roi_height;
+
+										document.getElementById("face_record_width").value = json.record_width;
+										document.getElementById("face_record_height").value = json.record_height;
+										document.getElementById("face_recognize_width").value = json.recognize_width;
+										document.getElementById("face_recognize_height").value = json.recognize_height;
+									}
+								}
+							},
+							3000
+						);
+					}
+
+					//button 按钮，结合onclick事件，验证和提交表单
+					function face_onsubmit() {
+						if (!input_face_foalt_check(document.getElementById("record_threshold"))) {
+							check_err_show($('#record_threshold'));
+							return false;
+						}
+						if (!input_face_foalt_check(document.getElementById("recognize_threshold"))) {
+							check_err_show($('#recognize_threshold'));
+							return false;
+						}
+						if (!input_face_foalt_check(document.getElementById("recognize_sec_threshold"))) {
+							check_err_show($('#recognize_sec_threshold'));
+							return false;
+						}
+	
+						if (document.getElementById("living_detection").checked) {
+							if (!input_face_foalt_check(document.getElementById("living_threshold"))) {
+								check_err_show($('#living_threshold'));
+								return false;
+							}
+						}
+
+						if (!input_face_foalt_check(document.getElementById("success_intervals"))) {
+							check_err_show($('#success_intervals'));
+							return false;
+						}
+						if (!input_face_foalt_check(document.getElementById("failure_intervals"))) {
+							check_err_show($('#failure_intervals'));
+							return false;
+						}
+						if (!input_face_foalt_check(document.getElementById("face_yaw_left"))) {
+							check_err_show($('#face_yaw_left'));
+							return false;
+						}
+						if (!input_face_foalt_check(document.getElementById("face_yaw_right"))) {
+							check_err_show($('#face_yaw_right'));
+							return false;
+						}
+						if (!input_face_foalt_check(document.getElementById("face_pitch_up"))) {
+							check_err_show($('#face_pitch_up'));
+							return false;
+						}
+						if (!input_face_foalt_check(document.getElementById("face_pitch_down"))) {
+							check_err_show($('#face_pitch_down'));
+							return false;
+						}
+
+
+						if (!input_face_foalt_check(document.getElementById("face_roi_width"))) {
+							check_err_show($('#face_roi_width'));
+							return false;
+						}
+						if (!input_face_foalt_check(document.getElementById("face_roi_height"))) {
+							check_err_show($('#face_roi_height'));
+							return false;
+						}
+
+						if (!input_face_foalt_check(document.getElementById("face_record_width"))) {
+							check_err_show($('#face_record_width'));
+							return false;
+						}
+						if (!input_face_foalt_check(document.getElementById("face_record_height"))) {
+							check_err_show($('#face_record_height'));
+							return false;
+						}
+
+						if (!input_face_foalt_check(document.getElementById("face_recognize_width"))) {
+							check_err_show($('#face_recognize_width'));
+							return false;
+						}
+						if (!input_face_foalt_check(document.getElementById("face_recognize_height"))) {
+							check_err_show($('#face_recognize_height'));
+							return false;
+						}
+						{
+
+							var argv;
+							var stxhr = new XHR();
+
+							argv = "ACTION=SET&record_threshold=" + document.getElementById("record_threshold").value + "&recognize_threshold="
+								+ document.getElementById("recognize_threshold").value + "&recognize_sec_threshold="
+								+ document.getElementById("recognize_sec_threshold").value;;
+
+							if (document.getElementById("living_detection").checked) {
+								argv += "&living_detection=true";
+								argv += "&living_threshold=" + document.getElementById("living_threshold").value;
+							}
+							else {
+								argv += "&living_detection=false";
+								argv += "&living_threshold=" + document.getElementById("living_threshold").value;
+							}
+
+							argv += "&success_intervals="
+								+ document.getElementById("success_intervals").value + "&failure_intervals="
+								+ document.getElementById("failure_intervals").value;
+
+							argv += "&yaw_left="
+								+ document.getElementById("face_yaw_left").value + "&yaw_right="
+								+ document.getElementById("face_yaw_right").value;
+
+							argv += "&pitch_up="
+								+ document.getElementById("face_pitch_up").value + "&pitch_down="
+								+ document.getElementById("face_pitch_down").value;
+
+							argv += "&roi_width="
+								+ document.getElementById("face_roi_width").value + "&roi_height="
+								+ document.getElementById("face_roi_height").value;
+
+							argv += "&record_width="
+								+ document.getElementById("face_record_width").value + "&record_height="
+								+ document.getElementById("face_record_height").value;
+
+							argv += "&recognize_width="
+								+ document.getElementById("face_recognize_width").value + "&recognize_height="
+								+ document.getElementById("face_recognize_height").value;
+
+
+							$("#face_waiting").css("display", "block");
+							setTimeout(function () { $("#face_waiting").css("display", "none") }, 5000);
+							stxhr.post("/goform/faceset", argv,
+								function (x) {
+									console.log(x);
+									if (x.responseText == "OK") {
+										clearTimeout();
+										$("#face_waiting").css("display", "none");
+
+										//document.getElementById("device_name").value = "";
+										//document.getElementById("location").value = "";
+										//document.getElementById("server").value = "";
+										check_okerr_hiden($('#record_threshold'));
+										check_okerr_hiden($('#recognize_threshold'));
+										check_okerr_hiden($('#recognize_sec_threshold'));
+										check_okerr_hiden($('#living_threshold'));
+										check_okerr_hiden($('#success_intervals'));
+										check_okerr_hiden($('#failure_intervals'));
+										check_okerr_hiden($('#face_yaw_left'));
+										check_okerr_hiden($('#face_yaw_right'));
+										check_okerr_hiden($('#face_pitch_up'));
+										check_okerr_hiden($('#face_pitch_down'));
+										check_okerr_hiden($('#face_roi_width'));
+										check_okerr_hiden($('#face_roi_height'));
+										check_okerr_hiden($('#face_record_width'));
+										check_okerr_hiden($('#face_record_height'));
+										check_okerr_hiden($('#face_recognize_width'));
+										check_okerr_hiden($('#face_recognize_height'));
+									}
+									else if (x.responseText != "OK") {
+										check_okerr_hiden($('#record_threshold'));
+										check_okerr_hiden($('#recognize_threshold'));
+										check_okerr_hiden($('#recognize_sec_threshold'));
+										check_okerr_hiden($('#living_threshold'));
+										check_okerr_hiden($('#success_intervals'));
+										check_okerr_hiden($('#failure_intervals'));
+										check_okerr_hiden($('#face_yaw_left'));
+										check_okerr_hiden($('#face_yaw_right'));
+										check_okerr_hiden($('#face_pitch_up'));
+										check_okerr_hiden($('#face_pitch_down'));
+										check_okerr_hiden($('#face_roi_width'));
+										check_okerr_hiden($('#face_roi_height'));
+										check_okerr_hiden($('#face_record_width'));
+										check_okerr_hiden($('#face_record_height'));
+										check_okerr_hiden($('#face_recognize_width'));
+										check_okerr_hiden($('#face_recognize_height'));
+										clearTimeout();
+										$("#face_waiting").css("display", "none");
+										$("#face_error").css("display", "block");
+										setTimeout(function () { $("#face_error").css("display", "none") }, 3000);
+									}
+								},
+								3000
+							);
+						}
+					}
+				</script>
+			</form>
+		</fieldset>
+
+		<script type="text/javascript">
+			window.onload = function () {
+				//$('[name="sip_enable"]').bootstrapSwitch('state', true);
+				factory_get_action("GET");
+				open_get_action("GET");
+				face_get_action("GET");
+				//setTimeout(function () { factory_get_action("GET"); }, 300);
+
+				//factory_get_action("GET");
+			}
+		</script>
+	</div>
+</body>
+
+</html>

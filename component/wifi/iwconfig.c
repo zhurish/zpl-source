@@ -153,7 +153,7 @@ static int get_info(int skfd, char * ifname, struct wireless_info * info)
  * Print on the screen in a neat fashion all the info we have collected
  * on a device.
  */
-static void display_info(struct wireless_info * info, char * ifname)
+static void display_info(struct wireless_info * info, char * ifname, iw_user_cb_t *cb)
 {
 	char buffer[128]; /* Temporary buffer */
 
@@ -161,7 +161,10 @@ static void display_info(struct wireless_info * info, char * ifname)
 	int tokens = 3; /* For name */
 
 	/* Display device name and wireless name (name of the protocol used) */
-	iw_printf("%-8.16s  %s  ", kname2ifname(ifname), info->b.name);
+	if(cb && cb->iw_show && cb->vty)
+		cb->iw_show(cb->vty, "%-8.16s  %s  ", kname2ifname(ifname), info->b.name);
+	else
+		iw_printf("%-8.16s  %s  ", kname2ifname(ifname), info->b.name);
 
 	/* Display ESSID (extended network), if any */
 	if (info->b.has_essid)
@@ -170,25 +173,49 @@ static void display_info(struct wireless_info * info, char * ifname)
 		{
 			/* Does it have an ESSID index ? */
 			if ((info->b.essid_on & IW_ENCODE_INDEX) > 1)
-				iw_printf("ESSID:\"%s\" [%d]  ", info->b.essid,
+			{
+				if(cb && cb->iw_show && cb->vty)
+					cb->iw_show(cb->vty, "ESSID:\"%s\" [%d]  ", info->b.essid,
+							(info->b.essid_on & IW_ENCODE_INDEX));
+				else
+					iw_printf("ESSID:\"%s\" [%d]  ", info->b.essid,
 						(info->b.essid_on & IW_ENCODE_INDEX));
+			}
 			else
-				iw_printf("ESSID:\"%s\"  ", info->b.essid);
+			{
+				if(cb && cb->iw_show && cb->vty)
+					cb->iw_show(cb->vty, "ESSID:\"%s\"  ", info->b.essid);
+				else
+					iw_printf("ESSID:\"%s\"  ", info->b.essid);
+			}
 		}
 		else
+		{
+			if(cb && cb->iw_show && cb->vty)
+				cb->iw_show(cb->vty, "ESSID:off/any  ");
+			else
 			iw_printf("ESSID:off/any  ");
+		}
 	}
 
 #ifndef WE_ESSENTIAL
 	/* Display NickName (station name), if any */
 	if (info->has_nickname)
-		iw_printf("Nickname:\"%s\"", info->nickname);
+	{
+		if(cb && cb->iw_show && cb->vty)
+			cb->iw_show(cb->vty, "Nickname:\"%s\"", info->nickname);
+		else
+			iw_printf("Nickname:\"%s\"", info->nickname);
+	}
 #endif	/* WE_ESSENTIAL */
 
 	/* Formatting */
 	if (info->b.has_essid || info->has_nickname)
 	{
-		iw_printf("\n          ");
+		if(cb && cb->iw_show && cb->vty)
+			cb->iw_show(cb->vty, "\r\n          ");
+		else
+			iw_printf("\n          ");
 		tokens = 0;
 	}
 
@@ -199,9 +226,19 @@ static void display_info(struct wireless_info * info, char * ifname)
 		/* Note : should display proper number of digits according to info
 		 * in range structure */
 		if (info->b.nwid.disabled)
-			iw_printf("NWID:off/any  ");
+		{
+			if(cb && cb->iw_show && cb->vty)
+				cb->iw_show(cb->vty, "NWID:off/any  ");
+			else
+				iw_printf("NWID:off/any  ");
+		}
 		else
-			iw_printf("NWID:%X  ", info->b.nwid.value);
+		{
+			if(cb && cb->iw_show && cb->vty)
+				cb->iw_show(cb->vty, "NWID:%X  ", info->b.nwid.value);
+			else
+				iw_printf("NWID:%X  ", info->b.nwid.value);
+		}
 		tokens += 2;
 	}
 #endif	/* WE_ESSENTIAL */
@@ -209,7 +246,10 @@ static void display_info(struct wireless_info * info, char * ifname)
 	/* Display the current mode of operation */
 	if (info->b.has_mode)
 	{
-		iw_printf("Mode:%s  ", iw_operation_mode[info->b.mode]);
+		if(cb && cb->iw_show && cb->vty)
+			cb->iw_show(cb->vty, "Mode:%s  ", iw_operation_mode[info->b.mode]);
+		else
+			iw_printf("Mode:%s  ", iw_operation_mode[info->b.mode]);
 		tokens += 3;
 	}
 
@@ -225,7 +265,10 @@ static void display_info(struct wireless_info * info, char * ifname)
 			channel = iw_channel_to_freq((int) freq, &freq, &info->range);
 		/* Display */
 		iw_print_freq(buffer, sizeof(buffer), freq, -1, info->b.freq_flags);
-		iw_printf("%s  ", buffer);
+		if(cb && cb->iw_show && cb->vty)
+			cb->iw_show(cb->vty, "%s  ", buffer);
+		else
+			iw_printf("%s  ", buffer);
 		tokens += 4;
 	}
 
@@ -235,17 +278,38 @@ static void display_info(struct wireless_info * info, char * ifname)
 		/* A bit of clever formatting */
 		if (tokens > 8)
 		{
-			iw_printf("\n          ");
+			if(cb && cb->iw_show && cb->vty)
+				cb->iw_show(cb->vty, "\r\n          ");
+			else
+				iw_printf("\n          ");
 			tokens = 0;
 		}
 		tokens += 6;
 
 		/* Oups ! No Access Point in Ad-Hoc mode */
 		if ((info->b.has_mode) && (info->b.mode == IW_MODE_ADHOC))
-			iw_printf("Cell:");
+		{
+			if(cb && cb->iw_show && cb->vty)
+				cb->iw_show(cb->vty, "Cell:");
+			else
+				iw_printf("Cell:");
+		}
 		else
-			iw_printf("Access Point:");
-		iw_printf(" %s   ", iw_sawap_ntop(&info->ap_addr, buffer));
+		{
+			if(cb && cb->iw_show && cb->vty)
+				cb->iw_show(cb->vty, "Access Point:");
+			else
+				iw_printf("Access Point:");
+		}
+		if(cb && cb->iw_get && cb->p)
+		{
+			const struct ether_addr * ether_wap = (const struct ether_addr *) &info->ap_addr.sa_data;
+			(cb->iw_get)(cb->p, ether_wap);
+		}
+		if(cb && cb->iw_show && cb->vty)
+			cb->iw_show(cb->vty, " %s   ", iw_sawap_ntop(&info->ap_addr, buffer));
+		else
+			iw_printf(" %s   ", iw_sawap_ntop(&info->ap_addr, buffer));
 	}
 
 	/* Display the currently used/set bit-rate */
@@ -254,14 +318,20 @@ static void display_info(struct wireless_info * info, char * ifname)
 		/* A bit of clever formatting */
 		if (tokens > 11)
 		{
-			iw_printf("\n          ");
+			if(cb && cb->iw_show && cb->vty)
+				cb->iw_show(cb->vty, "\n          ");
+			else
+				iw_printf("\n          ");
 			tokens = 0;
 		}
 		tokens += 3;
 
 		/* Display it */
 		iw_print_bitrate(buffer, sizeof(buffer), info->bitrate.value);
-		iw_printf("Bit Rate%c%s   ", (info->bitrate.fixed ? '=' : ':'), buffer);
+		if(cb && cb->iw_show && cb->vty)
+			cb->iw_show(cb->vty, "Bit Rate%c%s   ", (info->bitrate.fixed ? '=' : ':'), buffer);
+		else
+			iw_printf("Bit Rate%c%s   ", (info->bitrate.fixed ? '=' : ':'), buffer);
 	}
 
 	/* Display the Transmit Power */
@@ -270,14 +340,20 @@ static void display_info(struct wireless_info * info, char * ifname)
 		/* A bit of clever formatting */
 		if (tokens > 11)
 		{
-			iw_printf("\n          ");
+			if(cb && cb->iw_show && cb->vty)
+				cb->iw_show(cb->vty, "\n          ");
+			else
+				iw_printf("\n          ");
 			tokens = 0;
 		}
 		tokens += 3;
 
 		/* Display it */
 		iw_print_txpower(buffer, sizeof(buffer), &info->txpower);
-		iw_printf("Tx-Power%c%s   ", (info->txpower.fixed ? '=' : ':'), buffer);
+		if(cb && cb->iw_show && cb->vty)
+			cb->iw_show(cb->vty, "Tx-Power%c%s   ", (info->txpower.fixed ? '=' : ':'), buffer);
+		else
+			iw_printf("Tx-Power%c%s   ", (info->txpower.fixed ? '=' : ':'), buffer);
 	}
 
 #ifndef WE_ESSENTIAL
@@ -287,36 +363,67 @@ static void display_info(struct wireless_info * info, char * ifname)
 		/* A bit of clever formatting */
 		if (tokens > 10)
 		{
-			iw_printf("\n          ");
+			if(cb && cb->iw_show && cb->vty)
+				cb->iw_show(cb->vty, "\n          ");
+			else
+				iw_printf("\n          ");
 			tokens = 0;
 		}
 		tokens += 4;
 
 		/* Fixed ? */
-		iw_printf("Sensitivity%c", info->sens.fixed ? '=' : ':');
+		if(cb && cb->iw_show && cb->vty)
+			cb->iw_show(cb->vty, "Sensitivity%c", info->sens.fixed ? '=' : ':');
+		else
+			iw_printf("Sensitivity%c", info->sens.fixed ? '=' : ':');
 
 		if (info->has_range)
 			/* Display in dBm ? */
 			if (info->sens.value < 0)
-				iw_printf("%d dBm  ", info->sens.value);
+			{
+				if(cb && cb->iw_show && cb->vty)
+					cb->iw_show(cb->vty, "%d dBm  ", info->sens.value);
+				else
+					iw_printf("%d dBm  ", info->sens.value);
+			}
 			else
-				iw_printf("%d/%d  ", info->sens.value, info->range.sensitivity);
+			{
+				if(cb && cb->iw_show && cb->vty)
+					cb->iw_show(cb->vty, "%d/%d  ", info->sens.value, info->range.sensitivity);
+				else
+					iw_printf("%d/%d  ", info->sens.value, info->range.sensitivity);
+			}
 		else
-			iw_printf("%d  ", info->sens.value);
+		{
+			if(cb && cb->iw_show && cb->vty)
+				cb->iw_show(cb->vty, "%d  ", info->sens.value);
+			else
+				iw_printf("%d  ", info->sens.value);
+		}
 	}
 #endif	/* WE_ESSENTIAL */
-
-	iw_printf("\n          ");
+	if(cb && cb->iw_show && cb->vty)
+		cb->iw_show(cb->vty, "\n          ");
+	else
+		iw_printf("\n          ");
 	tokens = 0;
 
 #ifndef WE_ESSENTIAL
 	/* Display retry limit/lifetime information */
 	if (info->has_retry)
 	{
-		iw_printf("Retry");
+		if(cb && cb->iw_show && cb->vty)
+			cb->iw_show(cb->vty, "Retry");
+		else
+			iw_printf("Retry");
 		/* Disabled ? */
 		if (info->retry.disabled)
+		{
+			if(cb && cb->iw_show && cb->vty)
+				cb->iw_show(cb->vty, ":off");
+			else
 			iw_printf(":off");
+		}
 		else
 		{
 			/* Let's check the value and its type */
@@ -324,14 +431,25 @@ static void display_info(struct wireless_info * info, char * ifname)
 			{
 				iw_print_retry_value(buffer, sizeof(buffer), info->retry.value,
 						info->retry.flags, info->range.we_version_compiled);
-				iw_printf("%s", buffer);
+				if(cb && cb->iw_show && cb->vty)
+					cb->iw_show(cb->vty, "%s", buffer);
+				else
+					iw_printf("%s", buffer);
 			}
 
 			/* Let's check if nothing (simply on) */
 			if (info->retry.flags == IW_RETRY_ON)
-				iw_printf(":on");
+			{
+				if(cb && cb->iw_show && cb->vty)
+					cb->iw_show(cb->vty, ":on");
+				else
+					iw_printf(":on");
+			}
 		}
-		iw_printf("   ");
+		if(cb && cb->iw_show && cb->vty)
+			cb->iw_show(cb->vty, "   ");
+		else
+			iw_printf("   ");
 		tokens += 5; /* Between 3 and 5, depend on flags */
 	}
 #endif	/* WE_ESSENTIAL */
@@ -341,11 +459,20 @@ static void display_info(struct wireless_info * info, char * ifname)
 	{
 		/* Disabled ? */
 		if (info->rts.disabled)
-			iw_printf("RTS thr:off   ");
+		{
+			if(cb && cb->iw_show && cb->vty)
+				cb->iw_show(cb->vty, "RTS thr:off   ");
+			else
+				iw_printf("RTS thr:off   ");
+		}
 		else
 		{
 			/* Fixed ? */
-			iw_printf("RTS thr%c%d B   ", info->rts.fixed ? '=' : ':',
+			if(cb && cb->iw_show && cb->vty)
+				cb->iw_show(cb->vty, "RTS thr%c%d B   ", info->rts.fixed ? '=' : ':',
+						info->rts.value);
+			else
+				iw_printf("RTS thr%c%d B   ", info->rts.fixed ? '=' : ':',
 					info->rts.value);
 		}
 		tokens += 3;
@@ -357,49 +484,95 @@ static void display_info(struct wireless_info * info, char * ifname)
 		/* A bit of clever formatting */
 		if (tokens > 10)
 		{
-			iw_printf("\n          ");
+			if(cb && cb->iw_show && cb->vty)
+				cb->iw_show(cb->vty, "\n          ");
+			else
+				iw_printf("\n          ");
 			tokens = 0;
 		}
 		tokens += 4;
 
 		/* Disabled ? */
 		if (info->frag.disabled)
-			iw_printf("Fragment thr:off");
+		{
+			if(cb && cb->iw_show && cb->vty)
+				cb->iw_show(cb->vty, "Fragment thr:off");
+			else
+				iw_printf("Fragment thr:off");
+		}
 		else
 		{
 			/* Fixed ? */
-			iw_printf("Fragment thr%c%d B   ", info->frag.fixed ? '=' : ':',
+			if(cb && cb->iw_show && cb->vty)
+				cb->iw_show(cb->vty, "Fragment thr%c%d B   ", info->frag.fixed ? '=' : ':',
+						info->frag.value);
+			else
+				iw_printf("Fragment thr%c%d B   ", info->frag.fixed ? '=' : ':',
 					info->frag.value);
 		}
 	}
 
 	/* Formating */
 	if (tokens > 0)
-		iw_printf("\n          ");
+	{
+		if(cb && cb->iw_show && cb->vty)
+			cb->iw_show(cb->vty, "\n          ");
+		else
+			iw_printf("\n          ");
+	}
 
 	/* Display encryption information */
 	/* Note : we display only the "current" key, use iwlist to list all keys */
 	if (info->b.has_key)
 	{
-		iw_printf("Encryption key:");
+		if(cb && cb->iw_show && cb->vty)
+			cb->iw_show(cb->vty, "Encryption key:");
+		else
+			iw_printf("Encryption key:");
 		if ((info->b.key_flags & IW_ENCODE_DISABLED) || (info->b.key_size == 0))
-			iw_printf("off");
+		{
+			if(cb && cb->iw_show && cb->vty)
+				cb->iw_show(cb->vty, "off");
+			else
+				iw_printf("off");
+		}
 		else
 		{
 			/* Display the key */
 			iw_print_key(buffer, sizeof(buffer), info->b.key, info->b.key_size,
 					info->b.key_flags);
-			iw_printf("%s", buffer);
+			if(cb && cb->iw_show && cb->vty)
+				cb->iw_show(cb->vty, "%s", buffer);
+			else
+				iw_printf("%s", buffer);
 
 			/* Other info... */
 			if ((info->b.key_flags & IW_ENCODE_INDEX) > 1)
-				iw_printf(" [%d]", info->b.key_flags & IW_ENCODE_INDEX);
+			{
+				if(cb && cb->iw_show && cb->vty)
+					cb->iw_show(cb->vty, " [%d]", info->b.key_flags & IW_ENCODE_INDEX);
+				else
+					iw_printf(" [%d]", info->b.key_flags & IW_ENCODE_INDEX);
+			}
 			if (info->b.key_flags & IW_ENCODE_RESTRICTED)
-				iw_printf("   Security mode:restricted");
+			{
+				if(cb && cb->iw_show && cb->vty)
+					cb->iw_show(cb->vty, "   Security mode:restricted");
+				else
+					iw_printf("   Security mode:restricted");
+			}
 			if (info->b.key_flags & IW_ENCODE_OPEN)
-				iw_printf("   Security mode:open");
+			{
+				if(cb && cb->iw_show && cb->vty)
+					cb->iw_show(cb->vty, "   Security mode:open");
+				else
+					iw_printf("   Security mode:open");
+			}
 		}
-		iw_printf("\n          ");
+		if(cb && cb->iw_show && cb->vty)
+			cb->iw_show(cb->vty, "\n          ");
+		else
+			iw_printf("\n          ");
 	}
 
 	/* Display Power Management information */
@@ -407,10 +580,18 @@ static void display_info(struct wireless_info * info, char * ifname)
 	 * (such as HiperLan) has both, the user need to use iwlist... */
 	if (info->has_power) /* I hope the device has power ;-) */
 	{
-		iw_printf("Power Management");
+		if(cb && cb->iw_show && cb->vty)
+			cb->iw_show(cb->vty, "Power Management");
+		else
+			iw_printf("Power Management");
 		/* Disabled ? */
 		if (info->power.disabled)
-			iw_printf(":off");
+		{
+			if(cb && cb->iw_show && cb->vty)
+				cb->iw_show(cb->vty, ":off");
+			else
+				iw_printf(":off");
+		}
 		else
 		{
 			/* Let's check the value and its type */
@@ -418,18 +599,32 @@ static void display_info(struct wireless_info * info, char * ifname)
 			{
 				iw_print_pm_value(buffer, sizeof(buffer), info->power.value,
 						info->power.flags, info->range.we_version_compiled);
-				iw_printf("%s  ", buffer);
+				if(cb && cb->iw_show && cb->vty)
+					cb->iw_show(cb->vty, "%s  ", buffer);
+				else
+					iw_printf("%s  ", buffer);
 			}
 
 			/* Let's check the mode */
 			iw_print_pm_mode(buffer, sizeof(buffer), info->power.flags);
-			iw_printf("%s", buffer);
+			if(cb && cb->iw_show && cb->vty)
+				cb->iw_show(cb->vty, "%s", buffer);
+			else
+				iw_printf("%s", buffer);
 
 			/* Let's check if nothing (simply on) */
 			if (info->power.flags == IW_POWER_ON)
-				iw_printf(":on");
+			{
+				if(cb && cb->iw_show && cb->vty)
+					cb->iw_show(cb->vty, ":on");
+				else
+					iw_printf(":on");
+			}
 		}
-		iw_printf("\n          ");
+		if(cb && cb->iw_show && cb->vty)
+			cb->iw_show(cb->vty, "\n          ");
+		else
+			iw_printf("\n          ");
 	}
 
 	/* Display statistics */
@@ -437,25 +632,45 @@ static void display_info(struct wireless_info * info, char * ifname)
 	{
 		iw_print_stats(buffer, sizeof(buffer), &info->stats.qual, &info->range,
 				info->has_range);
-		iw_printf("Link %s\n", buffer);
+		if(cb && cb->iw_show && cb->vty)
+			cb->iw_show(cb->vty, "Link %s\n", buffer);
+		else
+			iw_printf("Link %s\n", buffer);
 
 		if (info->range.we_version_compiled > 11)
-			iw_printf(
+		{
+			if(cb && cb->iw_show && cb->vty)
+				cb->iw_show(cb->vty, "          Rx invalid nwid:%d  Rx invalid crypt:%d  Rx invalid frag:%d\n          Tx excessive retries:%d  Invalid misc:%d   Missed beacon:%d\n",
+						info->stats.discard.nwid, info->stats.discard.code,
+						info->stats.discard.fragment, info->stats.discard.retries,
+						info->stats.discard.misc, info->stats.miss.beacon);
+			else
+				iw_printf(
 					"          Rx invalid nwid:%d  Rx invalid crypt:%d  Rx invalid frag:%d\n          Tx excessive retries:%d  Invalid misc:%d   Missed beacon:%d\n",
 					info->stats.discard.nwid, info->stats.discard.code,
 					info->stats.discard.fragment, info->stats.discard.retries,
 					info->stats.discard.misc, info->stats.miss.beacon);
+		}
 		else
-			iw_printf(
+		{
+			if(cb && cb->iw_show && cb->vty)
+				cb->iw_show(cb->vty, "          Rx invalid nwid:%d  invalid crypt:%d  invalid misc:%d\n",
+						info->stats.discard.nwid, info->stats.discard.code,
+						info->stats.discard.misc);
+			else
+				iw_printf(
 					"          Rx invalid nwid:%d  invalid crypt:%d  invalid misc:%d\n",
 					info->stats.discard.nwid, info->stats.discard.code,
 					info->stats.discard.misc);
+		}
 	}
-
-	iw_printf("\n");
+	if(cb && cb->iw_show && cb->vty)
+		cb->iw_show(cb->vty, "\n");
+	else
+		iw_printf("\n");
 }
 
-static void display_detail_info(struct wireless_info * info, char * ifname)
+static void display_detail_info(struct wireless_info * info, char * ifname, iw_user_cb_t *cb)
 {
 	char buffer[128]; /* Temporary buffer */
 
@@ -761,7 +976,7 @@ static void display_detail_info(struct wireless_info * info, char * ifname)
  * Print on the screen in a neat fashion all the info we have collected
  * on a device.
  */
-static int print_info(int skfd, char * ifname, char * args[], int count)
+static int print_info(int skfd, char * ifname, char * args[], int count, iw_user_cb_t *cb)
 {
 	struct wireless_info info;
 	int rc;
@@ -777,11 +992,11 @@ static int print_info(int skfd, char * ifname, char * args[], int count)
 		/* Display it ! */
 		if (iwlist_detail_get())
 		{
-			display_detail_info(&info, ifname);
+			display_detail_info(&info, ifname, cb);
 			//iwlist_detail_set(0);
 		}
 		else
-			display_info(&info, ifname);
+			display_info(&info, ifname, cb);
 		break;
 
 	case -ENOTSUP:
@@ -902,7 +1117,7 @@ const struct iwconfig_modifier modifier[], int modnum)
  * Set ESSID
  */
 static int set_essid_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	int i = 1;
@@ -984,7 +1199,7 @@ int count) /* Args count */
  * Set Mode
  */
 static int set_mode_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	unsigned int k; /* Must be unsigned */
@@ -1019,7 +1234,7 @@ int count) /* Args count */
  * Set frequency/channel
  */
 static int set_freq_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	int i = 1;
@@ -1090,7 +1305,7 @@ int count) /* Args count */
  * Set Bit Rate
  */
 static int set_bitrate_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	int i = 1;
@@ -1169,7 +1384,7 @@ int count) /* Args count */
  * Set encryption
  */
 static int set_enc_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	int i = 1;
@@ -1276,7 +1491,7 @@ int count) /* Args count */
  * Set Power Management
  */
 static int set_power_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	int i = 1;
@@ -1391,7 +1606,7 @@ int count) /* Args count */
  * Set Nickname
  */
 static int set_nick_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	int we_kernel_version;
@@ -1424,7 +1639,7 @@ int count) /* Args count */
  * Set commit
  */
 static int set_nwid_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	unsigned long temp;
@@ -1468,7 +1683,7 @@ int count) /* Args count */
  * Set AP Address
  */
 static int set_apaddr_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 
@@ -1510,7 +1725,7 @@ int count) /* Args count */
  * Set Tx Power
  */
 static int set_txpower_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	int i = 1;
@@ -1626,7 +1841,7 @@ int count) /* Args count */
  * Set Sensitivity
  */
 static int set_sens_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	int temp;
@@ -1653,7 +1868,7 @@ int count) /* Args count */
  * Set Retry Limit
  */
 static int set_retry_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	int i = 0;
@@ -1721,7 +1936,7 @@ int count) /* Args count */
  * Set RTS Threshold
  */
 static int set_rts_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 
@@ -1769,7 +1984,7 @@ int count) /* Args count */
  * Set Fragmentation Threshold
  */
 static int set_frag_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 
@@ -1818,7 +2033,7 @@ int count) /* Args count */
  * Set Modulation
  */
 static int set_modulation_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	int i = 1;
@@ -1894,7 +2109,7 @@ int count) /* Args count */
  * Set commit
  */
 static int set_commit_info(int skfd, char * ifname, char * args[], /* Command line args */
-int count) /* Args count */
+int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 
@@ -2022,7 +2237,7 @@ find_command(const char * cmd)
 static int set_info(int skfd, /* The socket */
 char * args[], /* Command line args */
 int count, /* Args count */
-char * ifname) /* Dev name */
+char * ifname, iw_user_cb_t *cb) /* Dev name */
 {
 	const iwconfig_cmd * iwcmd;
 	int ret;
@@ -2048,9 +2263,11 @@ char * ifname) /* Dev name */
 		else
 			ret = 0;
 
+		fprintf(stderr, "=============%s ifname:\"%s\" \n", __func__, ifname);
+
 		/* Call the command */
 		if (!ret)
-			ret = (*iwcmd->fn)(skfd, ifname, args, count);
+			ret = (*iwcmd->fn)(skfd, ifname, args, count, cb);
 
 		/* Deal with various errors */
 		if (ret < 0)
@@ -2131,7 +2348,7 @@ static inline void iw_usage(void)
 /*
  * The main !
  */
-int iw_main(int argc, char ** argv)
+int iw_main(iw_user_cb_t *cb, int argc, char ** argv)
 {
 	int skfd; /* generic raw socket desc.	*/
 	int goterr = 0;
@@ -2140,12 +2357,12 @@ int iw_main(int argc, char ** argv)
 	if ((skfd = iw_sockets_open()) < 0)
 	{
 		perror("socket");
-		exit(-1);
+		//exit(-1);
 	}
 
 	/* No argument : show the list of all device + info */
 	if (argc == 1)
-		iw_enum_devices(skfd, &print_info, NULL, 0);
+		iw_enum_devices(skfd, &print_info, NULL, 0, cb);
 	else
 	/* Special case for help... */
 	if ((!strcmp(argv[1], "-h")) || (!strcmp(argv[1], "--help")))
@@ -2162,13 +2379,13 @@ int iw_main(int argc, char ** argv)
 			argv++;
 			argc--;
 		}
-
+		//printf("===========%s============:%s\r\n", __func__, argv[1]);
 		/* The device name must be the first argument */
 		if (argc == 2)
-			print_info(skfd, argv[1], NULL, 0);
+			print_info(skfd, argv[1], NULL, 0, cb);
 		else
 			/* The other args on the line specify options to be set... */
-			goterr = set_info(skfd, argv + 2, argc - 2, argv[1]);
+			goterr = set_info(skfd, argv + 2, argc - 2, argv[1], cb);
 	}
 
 	/* Close the socket. */

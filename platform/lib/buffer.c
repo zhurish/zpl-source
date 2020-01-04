@@ -405,7 +405,7 @@ buffer_status_t buffer_flush_available(struct buffer *b, int fd, int type)
 #define MAX_FLUSH 131072
 
 	struct buffer_data *d = NULL;
-	int written = 0;
+	size_t written = 0;
 	struct iovec iov[MAX_CHUNKS];
 	size_t iovcnt = 0;
 	size_t nbyte = 0;

@@ -1,0 +1,86 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<link href="../css/bootstrap.min.css" rel="stylesheet" />
+	<!-- jQuery Js -->
+	<script src="../js/jquery-2.1.1.min.js"></script>
+	<script src="../js/xhr.js"></script>
+
+	<title>header</title>
+	<style>
+		.header {
+			background-color: #00CC00;
+			color: #000;
+			/*padding: 50% 0;*/
+			background-image: url('../res/hb.jpg');
+			background-repeat: repeat-x;
+			/*background-repeat:repeat-y;	*/
+			/*background-repeat:no-repeat;*/
+		}
+
+		.header-right {
+			float: right;
+		}
+
+		.header-left {
+			float: left;
+		}
+
+		.header-center {
+			margin-left: 30%;
+			margin-right: 30%;
+			text-align: center;
+			text-decoration: none;
+			display: inline-block;
+		}
+
+		.logo {
+			width: 13rem;
+			height: 2.6rem;
+		}
+
+		.center {
+			text-align: center;
+		}
+
+		.button {
+			/*background-color: #4CAF50;*/
+			border: none;
+			color: #000;
+			padding: 5px 8px;
+			text-align: center;
+			text-decoration: none;
+			display: inline-block;
+			font-size: 16px;
+			margin: 4px 2px;
+			cursor: pointer;
+			border-radius: 5px;
+			background-color: #00CC00;
+		}
+	</style>
+</head>
+
+<body class="header">
+	<div class="header-left">
+		<img class="logo" src="../res/logo.png">
+	</div>
+	<div class="header-center">
+		<p><% jst_web_description(); %> (<%jst_web_version();%>)</p>
+	</div>
+	<div class="header-right">
+			<!--div class="header-left">
+					<button type="button" class="btn btn-primary" name="user_submit" id="user_submit"
+						onclick="admin_submit()">确定</button>
+				</div-->
+		<div>
+			
+			<p><%jst_username();%></p>
+		</div>
+	</div>
+
+</body>
+
+</html>

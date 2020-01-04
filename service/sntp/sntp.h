@@ -154,7 +154,7 @@ typedef struct sntpPacket
 	unsigned char     stratum;
 //	char              poll;
 	char              precision;
-    unsigned int 	  timezone;
+   int 	  timezone;
 } sntp_global_config_t;
 
 extern struct sntp_global_config sntp_global_config;

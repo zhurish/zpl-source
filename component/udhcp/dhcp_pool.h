@@ -17,7 +17,7 @@ typedef struct dhcp_pool_s
 
 	LIST 	interf;
 
-	dhcp_option_set_t	options[256];
+	dhcp_option_set_t	options[DHCP_OPTION_MAX];
 	//struct option_set *options;     /* list of DHCP options loaded from the config file */
 	/* start,end are in host order: we need to compare start <= ip <= end */
 	uint32_t start_ip;              /* start address of leases, in host order */

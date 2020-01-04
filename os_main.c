@@ -243,6 +243,10 @@ int main (int argc, char **argv)
 {
 	char *p;
 	extern int console_enable;
+#ifdef OS_SIGNAL_SIGWAIT
+	int signo[] = {SIGUSR2};
+	sigset_t mask;
+#endif
 	/* Set umask before anything for security */
 	umask (0027);
 
@@ -270,7 +274,10 @@ int main (int argc, char **argv)
 		fprintf(stdout, "voip is disable\r\n");
 		return 0;
 	}*/
-
+	os_limit_stack_size(10240);
+#ifdef OS_SIGNAL_SIGWAIT
+	os_task_sigmaskall();
+#endif
 	os_base_init();
 
 	os_base_load();
@@ -283,8 +290,21 @@ int main (int argc, char **argv)
 	{
 		chdir("/app");
 		super_system_execvp("./VmrMgr", NULL);
-	}*/
-	//printf("%s : %s=%s", __func__, "openwrt", os_nvram_env_lookup("openwrt"));
+	}
+	*/
+#ifdef DOUBLE_PROCESS
+/*	if(name2pid("ProcessMU") <= 0)
+		super_system("cd /app;./ProcessMU -D");*/
+
+	//if(name2pid("ProcessMU") <= 0)
+	super_system("killall -9 ProcessMU");
+	super_system("killall -9 ProcessMU");
+	os_msleep(200);
+	super_system("cd /app;./ProcessMU -D");
+#endif
+
+	printf("=======PJSIP_CA_SCHED=%s PJSIP_CA_SCHED_PRI=%s\r\n",
+			getenv("PJSIP_CA_SCHED"), getenv("PJSIP_CA_SCHED_PRI"));
 
 	if(main_data.tty)
 		console_enable = 1;
@@ -319,7 +339,9 @@ int main (int argc, char **argv)
 	//thread_add_timer(master_thread[MODULE_DEFAULT], main_timer_thread, NULL, 1);
 
 	//os_start_running(NULL, MODULE_DEFAULT);
-
+#ifdef OS_SIGNAL_SIGWAIT
+	os_task_sigmask(1, signo, &mask);
+#endif
 	while(1)
 	{
 #ifdef QUAGGA_SIGNAL_REAL_TIMER

@@ -1,0 +1,84 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta content="" name="description" />
+    <meta content="webthemez" name="author" />
+    <!--meta http-equiv="refresh" content="30"-->
+    <!-- Bootstrap Styles-->
+    <link href="../css/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- private Styles-->
+    <link href="../css/private.css" rel="stylesheet" />
+
+    <!-- jQuery Js -->
+    <script src="../js/jquery-2.1.1.min.js"></script>
+    <!-- Bootstrap Js -->
+    <script src="../js/bootstrap.min.js"></script>
+    <script src="../js/xhr.js"></script>
+    <script src="../js/data-type.js"></script>
+
+    <title>Reboot</title>
+</head>
+
+<body class="body-bg-img">
+    <div id="maincontent" class="container">
+        <fieldset class="fieldset-margin fieldset-background">
+            <form class="form-horizontal form-margin" role="form" name="reset" action="" accept-charset="UTF-8"
+                method="POST">
+                <legend class="legend-text-align">复位系统</legend>
+
+                <div class="form-group">
+                    <label for="clear" class="col-sm-3 control-label">清除配置</label>
+                    <div class="checkbox col-sm-4">
+                        <input type="checkbox" name="clear" id="clear" checked value="clear">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <!--div class="col-xs-4 control-label">
+                        <button type="button" class="btn btn-cencel" name="user_cencel" id="user_cencel"
+                            onclick="admin_cencel()"><span class="glyphicon glyphicon-remove"
+                                style="margin-right:10px;"></span>取消</button>
+                    </div-->
+                    <div class="col-xs-4 control-label">
+                        <button type="button" class="btn btn-submit" name="reset_submit" id="reset_submit"
+                            onclick="reset_onsubmit()"><span class="glyphicon glyphicon-send"
+                                style="margin-right:10px;"></span>确定</button>
+                    </div>
+                </div>
+                <div id="reset_waiting" class="alert alert-success hiden">
+                    <strong><img src="../res/icons/loading.gif" alt="Waiting..."
+                            style="padding-left:150px; padding-right:20px">Waiting for system to
+                        reset/reboot...</strong>
+                </div>
+                <script type="text/javascript">
+
+                    function reset_onsubmit(obj) {
+                        var argv;
+                        var stxhr = new XHR();
+                        if (document.getElementById("clear").checked)
+                            argv = "ACTION=app&BTNID=reset";
+                        else
+                            argv = "ACTION=app&BTNID=reboot";
+
+                        $("#reset_waiting").css("display", "block");
+                        stxhr.post("/goform/button_onclick", argv,
+                            function (x) {
+                                if (x.responseText == "ERROR") {
+                                }
+                                else if (x.responseText == "OK") {
+                                }
+                            },
+                            5000
+                        );
+                    }
+                </script>
+            </form>
+        </fieldset>
+    </div>
+</body>
+
+</html>

@@ -51,7 +51,7 @@ install:
 	$(CP) $(APP_WEB_DIR)/luasrc/model/cbi/roomdbconfig.lua $(CBIDIR)/admin_factory/
 	$(CP) $(APP_WEB_DIR)/luasrc/model/cbi/appsystemlog.lua $(CBIDIR)/admin_factory/
 	$(CP) $(APP_WEB_DIR)/luasrc/model/cbi/openconfig.lua $(CBIDIR)/admin_factory/
-	
+	$(CP) $(APP_WEB_DIR)/luasrc/model/cbi/appcard.lua $(CBIDIR)/admin_factory/
 	
 	$(MKDIR) -p  $(VIEWDIR)/admin_factory
 	$(CP) $(APP_WEB_DIR)/luasrc/view/factoryconfig.htm $(VIEWDIR)/admin_factory/

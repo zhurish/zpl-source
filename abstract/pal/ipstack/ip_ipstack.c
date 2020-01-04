@@ -22,7 +22,7 @@
 #include "nsm_arp.h"
 
 #include "ip_ipstack.h"
-#include "../kernel/pal_interface.h"
+#include "pal_driver.h"
 
 /* clear and set interface name string */
 

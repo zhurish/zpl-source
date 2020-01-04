@@ -84,6 +84,7 @@ struct thread_master
   struct timeval relative_time;
   struct thread *thread_current;
   void *mutex;
+  BOOL	bquit;
 };
 
 typedef unsigned char thread_type;
@@ -235,6 +236,8 @@ extern void thread_call (struct thread *);
 extern unsigned long thread_timer_remain_second (struct thread *);
 extern struct timeval thread_timer_remain(struct thread*);
 extern int thread_should_yield (struct thread *);
+extern int thread_fetch_quit (struct thread_master *);
+extern int thread_wait_quit (struct thread_master *);
 
 extern void thread_getrusage (struct timeval *real);
 /* Returns elapsed real (wall clock) time. */

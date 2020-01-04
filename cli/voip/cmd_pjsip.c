@@ -24,8 +24,10 @@
 #include "vrf.h"
 #include "interface.h"
 
-#ifdef PL_VOIP_MODULE
+#include "application.h"
 
+#ifdef PL_VOIP_MODULE
+#include "voip_app.h"
 #include "pjsua_app_common.h"
 #include "pjsua_app_config.h"
 #include "pjsip_app_api.h"
@@ -2021,92 +2023,62 @@ DEFUN (no_ip_sip_negotiation_timeout,
 
 
 //Audio Options:
-DEFUN (ip_sip_codec_add,
-		ip_sip_codec_add_cmd,
-		"ip sip codec (pcmu|pcma|g722|g721|g729|gsm|ilbc|speex|l16|amr-nb|amr-wb|opus)",
+DEFUN (ip_sip_default_codec_add,
+		ip_sip_default_codec_add_cmd,
+		"ip sip default codec (pcmu|pcma|g722|gsm|ilbc|speex-nb)",
 		IP_STR
 		"SIP configure\n"
 		"codec Configure\n"
 		"PCMU/8000\n"
 		"PCMA/8000\n"
 		"G722\n"
-		"G721\n"
-		"G729\n"
 		"GSM\n"
 		"iLBC/8000\n"
-		"SPEEX/8000\n"
-		"L16\n"
-		"AMR-NB\n"
-		"AMR-WB\n"
-		"OPUS\n")
+		"SPEEX/8000\n")
 {
 	int ret = ERROR;
-	if(strstr(argv[0], "pcmu"))
-	{
-		pl_pjsip_discodec_del_api("PCMU/8000");
-		ret = pl_pjsip_codec_add_api("PCMU/8000");
-	}
-	else if(strstr(argv[0], "pcma"))
-	{
-		pl_pjsip_discodec_del_api("PCMA/8000");
-		ret = pl_pjsip_codec_add_api("PCMA/8000");
-	}
-	else if(strstr(argv[0], "G722"))
-	{
-		pl_pjsip_discodec_del_api("G722");
-		ret = pl_pjsip_codec_add_api("G722");
-	}
-	else if(strstr(argv[0], "G721"))
-	{
-		pl_pjsip_discodec_del_api("G721");
-		ret = pl_pjsip_codec_add_api("G721");
-	}
-	else if(strstr(argv[0], "G729"))
-	{
-		pl_pjsip_discodec_del_api("G729");
-		ret = pl_pjsip_codec_add_api("G729");
-	}
-	else if(strstr(argv[0], "GSM"))
-	{
-		pl_pjsip_discodec_del_api("GSM");
-		ret = pl_pjsip_codec_add_api("GSM");
-	}
-	else if(strstr(argv[0], "iLBC"))
-	{
-		pl_pjsip_discodec_del_api("iLBC/8000");
-		ret = pl_pjsip_codec_add_api("iLBC/8000");
-	}
-	else if(strstr(argv[0], "speex"))
-	{
-		pl_pjsip_discodec_del_api("speex/8000");
-		ret = pl_pjsip_codec_add_api("speex/8000");
-	}
-	else if(strstr(argv[0], "L16"))
-	{
-		pl_pjsip_discodec_del_api("PCMU/8000");
-		ret = pl_pjsip_codec_add_api("L16/8000");
-	}
-	else if(strstr(argv[0], "AMR-NB"))
-	{
-		pl_pjsip_discodec_del_api("AMR-NB/8000");
-		ret = pl_pjsip_codec_add_api("AMR-NB/8000");
-	}
-	else if(strstr(argv[0], "OPUS"))
-	{
-		pl_pjsip_discodec_del_api("OPUS/8000");
-		ret = pl_pjsip_codec_add_api("OPUS/8000");
-	}
-	else if(strstr(argv[0], "AMR-WB"))
-	{
-		pl_pjsip_discodec_del_api("AMR-WB/8000");
-		ret = pl_pjsip_codec_add_api("AMR-WB/8000");
-	}
+
+	ret = pl_pjsip_codec_default_set_api(argv[0]);
+
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (no_ip_sip_default_codec_add,
+		no_ip_sip_default_codec_add_cmd,
+		"no ip sip default codec",
+		NO_STR
+		IP_STR
+		"SIP configure\n"
+		"codec Configure\n")
+{
+	int ret = ERROR;
+
+	ret = pl_pjsip_codec_default_set_api(NULL);
+
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+DEFUN (ip_sip_codec_add,
+		ip_sip_codec_add_cmd,
+		"ip sip codec (pcmu|pcma|g722|gsm|ilbc|speex-nb)",
+		IP_STR
+		"SIP configure\n"
+		"codec Configure\n"
+		"PCMU/8000\n"
+		"PCMA/8000\n"
+		"G722\n"
+		"GSM\n"
+		"iLBC/8000\n"
+		"SPEEX/8000\n")
+{
+	int ret = ERROR;
+	pl_pjsip_discodec_del_api(argv[0]);
+	ret = pl_pjsip_codec_add_api(argv[0]);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
 DEFUN (no_ip_sip_codec_add,
 		no_ip_sip_codec_add_cmd,
-		"no ip sip codec (pcmu|pcma|g722|g721|g729|gsm|ilbc|speex|l16|amr-nb|amr-wb|opus)",
+		"no ip sip codec (pcmu|pcma|g722|gsm|ilbc|speex-nb)",
 		NO_STR
 		IP_STR
 		"SIP configure\n"
@@ -2114,77 +2086,13 @@ DEFUN (no_ip_sip_codec_add,
 		"PCMU/8000\n"
 		"PCMA/8000\n"
 		"G722\n"
-		"G721\n"
-		"G729\n"
 		"GSM\n"
 		"iLBC/8000\n"
-		"SPEEX/8000\n"
-		"L16\n"
-		"AMR-NB\n"
-		"AMR-WB\n"
-		"OPUS\n")
+		"SPEEX/8000\n")
 {
 	int ret = ERROR;
-	if(strstr(argv[0], "pcmu"))
-	{
-		pl_pjsip_codec_del_api("PCMU/8000");
-		ret = pl_pjsip_discodec_add_api("PCMU/8000");
-	}
-	else if(strstr(argv[0], "pcma"))
-	{
-		pl_pjsip_codec_del_api("PCMA/8000");
-		ret = pl_pjsip_discodec_add_api("PCMA/8000");
-	}
-	else if(strstr(argv[0], "G722"))
-	{
-		pl_pjsip_codec_del_api("G722");
-		ret = pl_pjsip_discodec_add_api("G722");
-	}
-	else if(strstr(argv[0], "G721"))
-	{
-		pl_pjsip_codec_del_api("G721");
-		ret = pl_pjsip_discodec_add_api("G721");
-	}
-	else if(strstr(argv[0], "G729"))
-	{
-		pl_pjsip_codec_del_api("G729");
-		ret = pl_pjsip_discodec_add_api("G729");
-	}
-	else if(strstr(argv[0], "GSM"))
-	{
-		pl_pjsip_codec_del_api("GSM");
-		ret = pl_pjsip_discodec_add_api("GSM");
-	}
-	else if(strstr(argv[0], "iLBC"))
-	{
-		pl_pjsip_codec_del_api("iLBC/8000");
-		ret = pl_pjsip_discodec_add_api("iLBC/8000");
-	}
-	else if(strstr(argv[0], "speex"))
-	{
-		pl_pjsip_codec_del_api("speex/8000");
-		ret = pl_pjsip_discodec_add_api("speex/8000");
-	}
-	else if(strstr(argv[0], "L16"))
-	{
-		pl_pjsip_codec_del_api("PCMU/8000");
-		ret = pl_pjsip_discodec_add_api("L16/8000");
-	}
-	else if(strstr(argv[0], "AMR-NB"))
-	{
-		pl_pjsip_codec_del_api("AMR-NB/8000");
-		ret = pl_pjsip_discodec_add_api("AMR-NB/8000");
-	}
-	else if(strstr(argv[0], "OPUS"))
-	{
-		pl_pjsip_codec_del_api("OPUS/8000");
-		ret = pl_pjsip_discodec_add_api("OPUS/8000");
-	}
-	else if(strstr(argv[0], "AMR-WB"))
-	{
-		pl_pjsip_codec_del_api("AMR-WB/8000");
-		ret = pl_pjsip_discodec_add_api("AMR-WB/8000");
-	}
+	pl_pjsip_codec_del_api(argv[0]);
+	ret = pl_pjsip_discodec_add_api(argv[0]);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -3068,10 +2976,204 @@ DEFUN (no_ip_sip_redirect_method,
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
+/*
+ * Sound Module
+ */
+
+/*
+ * Playback
+ */
+DEFUN (voip_playback_volume,
+		voip_playback_volume_cmd,
+		"voip playback volume <0-100>",
+		"VOIP Configure\n"
+		"Playback configure\n"
+		"Volume Configure\n"
+		"volume value in percent\n")
+{
+	int ret = ERROR;
+	if(argc == 1)
+	{
+		ret = voip_playback_volume_out_set_api(atoi(argv[0]));
+	}
+	else
+	{
+		if(strstr(argv[0], "stereo"))
+			ret = voip_playback_volume_dac_set_api(atoi(argv[1]));
+		else
+			ret = voip_playback_volume_mono_set_api(atoi(argv[1]));
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+ALIAS(voip_playback_volume,
+		voip_playback_mono_volume_cmd,
+		"voip playback volume (stereo|mono) <0-100>",
+		"VOIP Configure\n"
+		"Playback configure\n"
+		"Volume Configure\n"
+		"Stereo Configure\n"
+		"Mono Configure\n"
+		"volume value in percent\n");
+
+DEFUN (no_voip_playback_volume,
+		no_voip_playback_volume_cmd,
+		"no voip playback volume",
+		NO_STR
+		"VOIP Configure\n"
+		"Playback configure\n"
+		"Volume Configure\n")
+{
+	int ret = ERROR;
+	if(argc == 1)
+	{
+		ret = voip_playback_volume_out_set_api(0);
+	}
+	else
+	{
+		if(strstr(argv[0], "stereo"))
+			ret = voip_playback_volume_dac_set_api(0);
+		else
+			ret = voip_playback_volume_mono_set_api(0);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+ALIAS(no_voip_playback_volume,
+		no_voip_playback_mono_volume_cmd,
+		"no voip playback volume (stereo|mono)",
+		NO_STR
+		"VOIP Configure\n"
+		"Playback configure\n"
+		"Volume Configure\n"
+		"Stereo Configure\n"
+		"Mono Configure\n");
+
+/*
+ * Capture
+ */
+DEFUN (voip_capture_volume,
+		voip_capture_volume_cmd,
+		"voip capture volume <0-100>",
+		"VOIP Configure\n"
+		"Capture configure\n"
+		"Volume Configure\n"
+		"volume value in percent\n")
+{
+	int ret = ERROR;
+	if(argc == 1)
+	{
+		ret = voip_capture_volume_in_set_api(atoi(argv[0]));
+	}
+	else
+	{
+		if(strstr(argv[0], "stereo"))
+			ret = voip_capture_volume_adc_set_api(atoi(argv[1]));
+		else
+			ret = voip_capture_volume_mono_set_api(atoi(argv[1]));
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+ALIAS(voip_capture_volume,
+		voip_capture_mono_volume_cmd,
+		"voip capture volume (stereo|mono) <0-100>",
+		"VOIP Configure\n"
+		"Capture configure\n"
+		"Volume Configure\n"
+		"Stereo Configure\n"
+		"Mono Configure\n"
+		"volume value in percent\n");
+
+DEFUN (no_voip_capture_volume,
+		no_voip_capture_volume_cmd,
+		"no voip capture volume",
+		NO_STR
+		"VOIP Configure\n"
+		"Capture configure\n"
+		"Volume Configure\n")
+{
+	int ret = ERROR;
+	if(argc == 1)
+	{
+		ret = voip_capture_volume_in_set_api(0);
+	}
+	else
+	{
+		if(strstr(argv[0], "stereo"))
+			ret = voip_capture_volume_adc_set_api(0);
+		else
+			ret = voip_capture_volume_mono_set_api(0);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+ALIAS(no_voip_capture_volume,
+		no_voip_capture_mono_volume_cmd,
+		"no voip capture volume (stereo|mono)",
+		NO_STR
+		"VOIP Configure\n"
+		"Capture configure\n"
+		"Volume Configure\n"
+		"Stereo Configure\n"
+		"Mono Configure\n");
+
+
+DEFUN (voip_capture_boost,
+		voip_capture_boost_cmd,
+		"voip capture boost <0-8>",
+		"VOIP Configure\n"
+		"Capture configure\n"
+		"boost configure\n"
+		"boost value\n")
+{
+	int ret = ERROR;
+	ret = voip_volume_boost_set_api(atoi(argv[0]));
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (no_voip_capture_boost,
+		no_voip_capture_boost_cmd,
+		"no voip capture boost",
+		"VOIP Configure\n"
+		"Capture configure\n"
+		"boost configure\n")
+{
+	int ret = ERROR;
+	ret = voip_volume_boost_set_api(0);
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (voip_capture_boost_gain,
+		voip_capture_boost_gain_cmd,
+		"voip capture boost-gain <0-3>",
+		"VOIP Configure\n"
+		"Capture configure\n"
+		"boost gain configure\n"
+		"boost value\n")
+{
+	int ret = ERROR;
+	ret = voip_volume_boost_gain_set_api(atoi(argv[0]));
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (no_voip_capture_boost_gain,
+		no_voip_capture_boost_gain_cmd,
+		"no voip capture boost-cain",
+		"VOIP Configure\n"
+		"Capture configure\n"
+		"boost gain configure\n")
+{
+	int ret = ERROR;
+	ret = voip_volume_boost_gain_set_api(0);
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
 
 /*
  * call
  */
+#if 0
 DEFUN (pjsip_call_stop_cli,
 		pjsip_call_stop_cli_cmd,
 		"pjsip-call stop STRING",
@@ -3091,6 +3193,18 @@ DEFUN (pjsip_call_start_cli,
 		"PhoneNumber\n")
 {
 	pl_pjsip_app_start_call(current_acc, argv[0], NULL);
+	return  CMD_SUCCESS;
+}
+#endif
+
+DEFUN (pjsip_restart_cli,
+	   pjsip_restart_cli_cmd,
+		"pjsip restart",
+		"SIP Register\n"
+		"Start\n"
+		"PhoneNumber\n")
+{
+	pjsua_app_restart();
 	return  CMD_SUCCESS;
 }
 
@@ -3119,6 +3233,190 @@ DEFUN (show_ip_sip_state,
 	pl_pjsip_show_account_state(vty);
 	return CMD_SUCCESS;
 }
+
+#ifdef X5B_APP_DATABASE
+/************************************ debug ************************************/
+/*
+ * Dbtest Module
+ */
+DEFUN (show_voip_dbase,
+		show_voip_dbase_cmd,
+		"show voip dbase",
+		SHOW_STR
+		"Voip Configure\n"
+		"Data Base information\n")
+{
+	int ret = ERROR;
+	ret = voip_dbase_show_room_phone(vty, 0, 0, 0, NULL, NULL);
+	return  CMD_SUCCESS;
+}
+
+DEFUN (show_voip_card_dbase,
+		show_voip_card_dbase_cmd,
+		"show voip card-dbase",
+		SHOW_STR
+		"Voip Configure\n"
+		"Card Data Base information\n")
+{
+	int ret = ERROR;
+	ret = voip_card_cli_show_all(vty);
+	return  CMD_SUCCESS;
+}
+
+DEFUN (show_voip_card_dbase_info,
+		show_voip_card_dbase_info_cmd,
+		"show voip card-dbase info",
+		SHOW_STR
+		"Voip Configure\n"
+		"Card Data Base information\n")
+{
+	int ret = ERROR;
+	ret = show_voip_card_info(vty);
+	return  CMD_SUCCESS;
+}
+
+DEFUN (show_voip_facecard,
+	   show_voip_facecard_cmd,
+		"show voip facecard",
+		SHOW_STR
+		"Voip Configure\n"
+		"Face Card Data Base information\n")
+{
+	int ret = ERROR;
+	if(argc == 1)
+		ret = voip_facecard_cli_show_all(vty, TRUE);
+	else
+		ret = voip_facecard_cli_show_all(vty, FALSE);
+	return  CMD_SUCCESS;
+}
+
+ALIAS (show_voip_facecard,
+	   show_voip_facecard_info_cmd,
+		"show voip facecard (detail|)",
+		SHOW_STR
+		"Voip Configure\n"
+		"Face Card Data Base information\n");
+#endif
+/************************************ debug ************************************/
+DEFUN (debug_voip_app,
+		debug_voip_app_cmd,
+		"debug voip app",
+		DEBUG_STR
+		"VOIP Configure\n"
+		"APP configure\n")
+{
+	int ret = ERROR;
+	int level = VOIP_APP_DEBUG_EVENT;
+	ret = voip_app_debug_set_api(level);
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (no_debug_voip_app,
+		no_debug_voip_app_cmd,
+		"no debug voip app",
+		NO_STR
+		DEBUG_STR
+		"VOIP Configure\n"
+		"APP configure\n")
+{
+	int ret = ERROR;
+	ret = voip_app_debug_set_api(0);
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (debug_ip_sip,
+		debug_ip_sip_cmd,
+		"debug ip sip "LOG_LEVELS,
+		DEBUG_STR
+		IP_STR
+		"SIP configure\n"
+		LOG_LEVEL_DESC)
+{
+	int ret = ERROR;
+	int level = zlog_priority_match(argv[0]);
+	ret = pl_pjsip_debug_level_set_api(level);
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (no_debug_ip_sip,
+		no_debug_ip_sip_cmd,
+		"no debug ip sip",
+		NO_STR
+		DEBUG_STR
+		IP_STR
+		"SIP configure\n"
+		LOG_LEVEL_DESC)
+{
+	int ret = ERROR;
+	ret = pl_pjsip_debug_level_set_api(LOG_ERR);
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (debug_ip_sip_detail,
+		debug_ip_sip_detail_cmd,
+		"debug ip sip msg-detail",
+		DEBUG_STR
+		IP_STR
+		"SIP configure\n"
+		LOG_LEVEL_DESC)
+{
+	int ret = ERROR;
+	ret = pl_pjsip_debug_detail_set_api(TRUE);
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (no_debug_ip_sip_detail,
+		no_debug_ip_sip_detail_cmd,
+		"no debug ip sip",
+		NO_STR
+		DEBUG_STR
+		IP_STR
+		"SIP configure\n"
+		LOG_LEVEL_DESC)
+{
+	int ret = ERROR;
+	ret = pl_pjsip_debug_detail_set_api(FALSE);
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (show_debugging_voip,
+       show_debugging_voip_cmd,
+       "show debugging voip",
+       SHOW_STR
+       "Debugging information\n"
+	   "VOIP Configure\n")
+{
+	int debug_level = 0;
+	BOOL debug_enable = FALSE;
+	vty_out (vty, "Voip debugging status:%s", VTY_NEWLINE);
+	if (VOIP_APP_DEBUG(EVENT))
+		vty_out (vty, "  Voip event debugging is on%s", VTY_NEWLINE);
+
+	pl_pjsip_debug_level_get_api(&debug_level);
+	if(debug_level)
+		vty_out (vty, "  Sip %s debugging is on%s", zlog_priority_name(debug_level), VTY_NEWLINE);
+
+	pl_pjsip_debug_detail_get_api(&debug_enable);
+	if(debug_enable)
+		vty_out (vty, "  Sip debug msg-detail debugging is on%s", VTY_NEWLINE);
+/*
+	if (VOIP_STREAM_IS_DEBUG(EVENT))
+		vty_out (vty, "  Voip Stream event debugging is on%s", VTY_NEWLINE);
+
+	if (VOIP_STREAM_IS_DEBUG(INFO))
+		vty_out (vty, "  Voip Stream info debugging is on%s", VTY_NEWLINE);
+
+	if (VOIP_STREAM_IS_DEBUG(MSG))
+		vty_out (vty, "  Voip Stream msg debugging is on%s", VTY_NEWLINE);
+
+	if (VOIP_STREAM_IS_DEBUG(DETAIL))
+		vty_out (vty, "  Voip Stream detail debugging is on%s", VTY_NEWLINE);
+*/
+
+	//voip_stream_debug_get_api(vty);
+	return CMD_SUCCESS;
+}
+
 
 
 static void cmd_base_sip_init(int node)
@@ -3298,6 +3596,10 @@ static void cmd_base_sip_init(int node)
 #endif
 	install_element(node, &ip_sip_negotiation_timeout_cmd);
 	install_element(node, &no_ip_sip_negotiation_timeout_cmd);
+
+	install_element(node, &ip_sip_default_codec_add_cmd);
+	install_element(node, &no_ip_sip_default_codec_add_cmd);
+
 	install_element(node, &ip_sip_codec_add_cmd);
 	install_element(node, &no_ip_sip_codec_add_cmd);
 
@@ -3391,16 +3693,59 @@ static void cmd_base_sip_init(int node)
 	install_element(node, &ip_sip_redirect_method_cmd);
 	install_element(node, &no_ip_sip_redirect_method_cmd);
 
+
+	/*
+	 * sound
+	 */
+	install_element(node, &voip_playback_volume_cmd);
+	install_element(node, &voip_playback_mono_volume_cmd);
+
+	install_element(node, &no_voip_playback_volume_cmd);
+	install_element(node, &no_voip_playback_mono_volume_cmd);
+
+	install_element(node, &voip_capture_volume_cmd);
+	install_element(node, &voip_capture_mono_volume_cmd);
+
+	install_element(node, &no_voip_capture_volume_cmd);
+	install_element(node, &no_voip_capture_mono_volume_cmd);
+
+	install_element(node, &voip_capture_boost_cmd);
+	install_element(node, &no_voip_capture_boost_cmd);
+
+	install_element(node, &voip_capture_boost_gain_cmd);
+	install_element(node, &no_voip_capture_boost_gain_cmd);
+}
+
+static void cmd_voip_other_init(int node)
+{
+	install_element(node, &debug_voip_app_cmd);
+	install_element(node, &no_debug_voip_app_cmd);
+
+	install_element(node, &debug_ip_sip_cmd);
+	install_element(node, &no_debug_ip_sip_cmd);
+
+	install_element(node, &debug_ip_sip_detail_cmd);
+	install_element(node, &no_debug_ip_sip_detail_cmd);
+
+	//install_element(node, &pjsip_call_start_cli_cmd);
+	//install_element(node, &pjsip_call_stop_cli_cmd);
+	install_element(node, &pjsip_restart_cli_cmd);
 }
 
 static void cmd_show_sip_init(int node)
 {
 	install_element(node, &show_ip_sip_server_cmd);
 	install_element(node, &show_ip_sip_state_cmd);
-
-	install_element(node, &pjsip_call_start_cli_cmd);
-	install_element(node, &pjsip_call_stop_cli_cmd);
-	//install_element(node, &show_debugging_sip_cmd);
+#ifdef X5B_APP_DATABASE
+	install_element(node, &show_voip_dbase_cmd);
+	install_element(node, &show_voip_card_dbase_cmd);
+	install_element(node, &show_voip_card_dbase_info_cmd);
+#endif
+	install_element(node, &show_debugging_voip_cmd);
+#ifdef X5B_APP_DATABASE
+	install_element(node, &show_voip_facecard_cmd);
+	install_element(node, &show_voip_facecard_info_cmd);
+#endif
 }
 
 void cmd_voip_init(void)
@@ -3421,6 +3766,9 @@ void cmd_voip_init(void)
 	cmd_show_sip_init(SIP_SERVICE_NODE);
 
 	cmd_voip_test_init(ENABLE_NODE);
+
+	cmd_voip_other_init(ENABLE_NODE);
+
 	//install_element(VIEW_NODE, &debug_ip_sip_cmd);
 	//install_element(VIEW_NODE, &no_debug_ip_sip_cmd);
 }

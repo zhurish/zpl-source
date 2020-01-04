@@ -269,9 +269,18 @@ int dhcpd_pool_set_option(dhcp_pool_t *config, uint8_t code, char *str)
 {
 #if 1
 	if(str)
-		//return dhcp_option_add(config->options,  code, str, strlen(str));
-		return dhcp_option_string_set(config->options,  code, str);
-
+	{
+		if(config->gateway == 0 && code == DHCP_ROUTER)
+		{
+			config->gateway = inet_addr(str);
+		}
+		return dhcp_option_add(config->options,  code, str, strlen(str));
+	}
+		//return dhcp_option_string_set(config->options,  code, str);
+	if(config->gateway && code == DHCP_ROUTER)
+	{
+		config->gateway = 0;
+	}
 	return dhcp_option_del(config->options,  code);
 #else
 	if(str)

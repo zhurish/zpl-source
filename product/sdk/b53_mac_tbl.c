@@ -8,7 +8,7 @@
 #include <zebra.h>
 #include "b53_mdio.h"
 #include "b53_regs.h"
-#include "b53_driver.h"
+#include "sdk_driver.h"
 
 /****************************************************************************************/
 static int b53125_flush_mac_tbl(struct b53125_device *dev, u8 mask)

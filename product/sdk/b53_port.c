@@ -10,9 +10,9 @@
 
 #include "b53_mdio.h"
 #include "b53_regs.h"
-#include "b53_driver.h"
+#include "sdk_driver.h"
 
-
+//使能禁止IMP接口收发功能
 int b53125_imp_enable(struct b53125_device *dev, BOOL enable)
 {
 	int ret = 0;
@@ -71,6 +71,7 @@ int b53125_imp_flow(struct b53125_device *dev, BOOL rx, BOOL tx)
 
 /*************************************************************************/
 /*************************************************************************/
+//禁止使能接口收发功能
 int b53125_port_enable(struct b53125_device *dev, int port, BOOL enable)
 {
 	int ret = 0;
@@ -91,6 +92,7 @@ int b53125_port_enable(struct b53125_device *dev, int port, BOOL enable)
 	return ret;
 }
 /*************************************************************************/
+//禁止使能端口保护
 int b53125_port_protected_enable(struct b53125_device *dev, int port, BOOL enable)
 {
 	int ret = 0;
@@ -114,6 +116,7 @@ int b53125_port_protected_enable(struct b53125_device *dev, int port, BOOL enabl
 	return ret;
 }
 
+//禁止使能wan接口（设置某个接口作为wan接口使用）
 int b53125_port_wan_enable(struct b53125_device *dev, int port, BOOL enable)
 {
 	int ret = 0;
@@ -178,6 +181,7 @@ int b53125_pasue_receive_enable(struct b53125_device *dev, int port, BOOL enable
 }
 
 /*************************************************************************/
+//设置非管理模式下BPDU报文转发还是丢弃
 int b53125_bpdu_forward(struct b53125_device *dev, u8 *mac, BOOL enable)
 {
 	int ret = 0;
@@ -212,7 +216,8 @@ int b53125_bpdu_forward(struct b53125_device *dev, u8 *mac, BOOL enable)
 	return ret;
 }
 /*************************************************************************/
-int b53125_unicast_map(struct b53125_device *dev, int port, BOOL enable)
+//设置MAC地址表查找失败的报文转发的目的端口
+int b53125_unknow_unicast_forward_port(struct b53125_device *dev, int port, BOOL enable)
 {
 	int ret = 0;
 	u16 reg = 0;
@@ -235,7 +240,7 @@ int b53125_unicast_map(struct b53125_device *dev, int port, BOOL enable)
 	return ret;
 }
 
-int b53125_multicast_map(struct b53125_device *dev, int port, BOOL enable)
+int b53125_unknow_multicast_forward_port(struct b53125_device *dev, int port, BOOL enable)
 {
 	int ret = 0;
 	u16 reg = 0;
@@ -258,7 +263,7 @@ int b53125_multicast_map(struct b53125_device *dev, int port, BOOL enable)
 	return ret;
 }
 
-int b53125_ip_multicast_map(struct b53125_device *dev, int port, BOOL enable)
+int b53125_unknow_ipmulticast_forward_port(struct b53125_device *dev, int port, BOOL enable)
 {
 	int ret = 0;
 	u16 reg = 0;
@@ -327,6 +332,7 @@ int b53125_pause_pass_tx(struct b53125_device *dev, int port, BOOL enable)
 	return ret;
 }
 /*************************************************************************/
+//禁止使能端口学习
 int b53125_enable_learning(struct b53125_device *dev, int port, BOOL enable)
 {
 	int ret = 0;
@@ -350,7 +356,7 @@ int b53125_enable_learning(struct b53125_device *dev, int port, BOOL enable)
 	return ret;
 }
 
-
+//禁止使能端口软学习（未知报文进入CPU）
 int b53125_software_learning(struct b53125_device *dev, int port, BOOL enable)
 {
 	int ret = 0;
@@ -375,7 +381,7 @@ int b53125_software_learning(struct b53125_device *dev, int port, BOOL enable)
 }
 /*************************************************************************/
 /*************************************************************************/
-int b53125_port_state_override_speed(struct b53125_device *dev, int port, int speed)
+int b53125_port_set_speed(struct b53125_device *dev, int port, int speed)
 {
 	int ret = 0;
 	u8 reg, val, off;
@@ -409,7 +415,7 @@ int b53125_port_state_override_speed(struct b53125_device *dev, int port, int sp
 	return ret;
 }
 
-int b53125_port_state_override_duplex(struct b53125_device *dev, int port, int duplex)
+int b53125_port_set_duplex(struct b53125_device *dev, int port, int duplex)
 {
 	int ret = 0;
 	u8 reg, val, off;
@@ -435,7 +441,7 @@ int b53125_port_state_override_duplex(struct b53125_device *dev, int port, int d
 	return ret;
 }
 
-int b53125_port_state_override_flow(struct b53125_device *dev, int port, int flow)
+int b53125_port_set_flow(struct b53125_device *dev, int port, int flow)
 {
 	int ret = 0;
 	u8 reg, val, off;
@@ -462,7 +468,7 @@ int b53125_port_state_override_flow(struct b53125_device *dev, int port, int flo
 	return ret;
 }
 
-int b53125_port_state_override_link_force(struct b53125_device *dev, int port, int link)
+int b53125_port_set_link_force(struct b53125_device *dev, int port, int link)
 {
 	int ret = 0;
 	u8 reg, val, off;
@@ -486,8 +492,8 @@ int b53125_port_state_override_link_force(struct b53125_device *dev, int port, i
 
 /*************************************************************************/
 
-
-BOOL b53125_port_link(struct b53125_device *dev, int port)
+//获取端口状态
+BOOL b53125_port_get_link(struct b53125_device *dev, int port)
 {
 	BOOL link;
 	u16 sts;
@@ -498,7 +504,23 @@ BOOL b53125_port_link(struct b53125_device *dev, int port)
 	return link;
 }
 
+u_int b53125_port_get_speed(struct b53125_device *dev, int port)
+{
+	u32 sts;
 
+	b53125_read32(dev, B53_STAT_PAGE, B53_SPEED_STAT, &sts);
+	//dsa_port_phylink_mac_change(ds, port, link);
+	return SPEED_PORT_GE(sts, port);
+}
+
+u_int b53125_port_get_duplex(struct b53125_device *dev, int port)
+{
+	u16 sts;
+
+	b53125_read16(dev, B53_STAT_PAGE, B53_DUPLEX_STAT_GE, &sts);
+	//dsa_port_phylink_mac_change(ds, port, link);
+	return (sts & BIT(port))>>(port);
+}
 
 
 

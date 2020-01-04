@@ -24,6 +24,7 @@
  * @file os_linux.h
  * @brief Describes Linux operating system specifics.
  */
+#include "endian.h"
 
 #define PJ_OS_NAME		    "linux"
 

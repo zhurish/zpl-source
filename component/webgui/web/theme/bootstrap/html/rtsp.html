@@ -1,0 +1,417 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta content="" name="description" />
+	<meta content="webthemez" name="author" />
+	<!--meta http-equiv="refresh" content="30"-->
+	<!-- Bootstrap Styles-->
+	<link href="../css/bootstrap.min.css" rel="stylesheet" />
+
+	<!-- private Styles-->
+	<link href="../css/private.css" rel="stylesheet" />
+
+	<!-- jQuery Js -->
+	<script src="../js/jquery-2.1.1.min.js"></script>
+	<!-- Bootstrap Js -->
+	<script src="../js/bootstrap.min.js"></script>
+	<script src="../js/xhr.js"></script>
+	<script src="../js/data-type.js"></script>
+
+	<title>Video Stream</title>
+</head>
+
+<body class="body-bg-img">
+	<div id="maincontent" class="container">
+		<fieldset id="allstream-detail" class="fieldset-margin fieldset-background">
+			<table class="table table-condensed">
+				<caption class="tbl-text-align bold">视频流信息</caption>
+				<thead>
+					<tr>
+						<th>板卡 ID</th>
+						<th>视频流ID</th>
+						<th>视频源</th>
+						<th>用户名</th>
+						<th>帧率</th>
+						<th>RTSP状态</th>
+						<th>解码状态</th>
+					</tr>
+				</thead>
+				<tbody id="allstream-info">
+					<script type="text/javascript">
+						function allvideostream_get() {
+							var utbl = "";
+							$.get("/goform/allvideostream", function (data, status) {
+								var data_json = JSON.parse(data);
+								console.log("allvideostream json:" + data);
+								$.each(data_json, function (index, info) {
+									utbl += "<tr>\n";
+										utbl += "<td>" + info.ID + "</td>";
+										utbl += "<td>" + info.ch + "</td>";
+										utbl += "<td>" + info.url + "</td>";
+										utbl += "<td>" + info.username + "</td>";
+										utbl += "<td>" + info.fps + "</td>";
+										utbl += "<td>" + info.rtsp + "</td>";
+										utbl += "<td>" + info.decode + "</td>";
+										utbl += "<td>" + info.connect + "</td>";
+										/*if (info.ID==1)
+										{
+											utbl += "<td>\
+												<div class=\"col-sm-push-3 control-label\">\
+													<button type=\"button\" class=\"btn btn-info\" name=\"detail\" id=\"detail\" onclick=\"stream_detail(this)\" disabled>\
+														<span class=\"glyphicon glyphicon-info-sign\" style=\"margin-right:10px;\"></span>详情</button>\
+													</div>\
+												</td>";
+										}
+										else
+										{
+											utbl += "<td>\
+												<div class=\"col-sm-push-3 control-label\">\
+													<button type=\"button\" class=\"btn btn-info\" name=\"detail\" id=\"detail\" onclick=\"stream_detail(this)\">\
+														<span class=\"glyphicon glyphicon-info-sign\" style=\"margin-right:10px;\"></span>详情</button>\
+												</div>\
+											</td>";
+										}*/
+										utbl += "<td>\
+                							<div class=\"col-sm-push-3 control-label\">\
+										  		<button type=\"button\" class=\"btn btn-danger\" name=\"delete\" id=\"delete\" \
+										  		onclick=\"stream_delete(this)\"><span class=\"glyphicon glyphicon-trash\"\
+															style=\"margin-right:10px;\"></span>删除</button>\
+			    								</div>\
+                							</td>";
+										utbl += "</tr>";
+								});
+								$("#allstream-info").html(utbl);
+							});
+						}
+						allvideostream_get();
+					</script>
+				</tbody>
+			</table>
+
+			<form class="form-horizontal form-margin show" role="form" name="stream" action="" accept-charset="UTF-8"
+				method="POST">
+				<div class="form-group">
+					<div class="col-xs-4 control-label">
+						<button type="button" class="btn btn-add" name="stream_add" id="stream_add"
+							onclick="video_stream_add()"><span class="glyphicon glyphicon-plus"
+								style="margin-right:10px;"></span>增加</button>
+					</div>
+				</div>
+				<div id="streamconfig" class="hiden">
+					<legend class="legend-text-align">视频流配置</legend>
+					<div class="form-group">
+						<label for="address" class="col-sm-3 control-label">IP地址</label>
+						<div class="col-sm-4">
+							<input type="text" minlength="6" maxlength="32" class="form-control" name="address"
+								id="address" value="" onchange="address_check()" required placeholder="192.168.0.1">
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="rstpport" class="col-sm-3 control-label">RSTP端口</label>
+						<div class="col-sm-4">
+							<input type="number" min="100" max="65530" class="form-control" name="rstpport"
+								id="rstpport" value="" onchange="port_check()" 
+								placeholder="554">
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="username" class="col-sm-3 control-label">用户名</label>
+						<div class="col-sm-4">
+							<input type="text" minlength="6" maxlength="32" class="form-control" name="username"
+								id="username" value="" onchange="username_check()" required
+								placeholder="admin">
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="password" class="col-sm-3 control-label">用户密码</label>
+						<div class="col-sm-4">
+							<input type="password" minlength="6" maxlength="32" class="form-control" name="password"
+								id="password" value="" onchange="password_check()" required placeholder="admin">
+						</div>
+					</div>
+
+					<div class="form-group hiden">
+						<label for="fps" class="col-sm-3 control-label">帧率</label>
+						<div class="col-sm-4">
+							<select class="form-control" name="fps" id="fps">
+							<option value= "1080" selected>1080</option>
+							<option value= "720">720</option>
+							<option value= "960">960</option>
+							<option value= "1920">1920</option>
+							<option value= "1536">1536</option>
+							</select>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="boardid" class="col-sm-3 control-label">板卡编号</label>
+						<div class="col-sm-4">
+							<select class="form-control" name="boardid" id="boardid">
+							<option selected value="0">dynamic</option>
+							<option value= "1">1</option>
+							<option value= "2">2</option>
+							<option value= "3">3</option>
+							<option value= "4">4</option>
+							</select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="channel" class="col-sm-3 control-label">通道</label>
+						<div class="col-sm-4">
+							<select class="form-control" name="channel" id="channel">
+							<option selected value= "0">dynamic</option>
+							<option value= "1">1</option>
+							<option value= "2">2</option>
+							<option value= "3">3</option>
+							<option value= "4">4</option>
+							</select>
+						</div>
+					</div>
+					<div class="form-group">
+						<div class="col-xs-4 control-label">
+							<button type="button" class="btn btn-cencel" name="stream_cencel" id="stream_cencel"
+								onclick="stream_add_cencel()"><span class="glyphicon glyphicon-remove"
+									style="margin-right:10px;"></span>取消</button>
+						</div>
+						<div class="col-xs-4 control-label">
+							<button type="button" class="btn btn-submit" name="stream_submit" id="stream_submit"
+								onclick="stream_add_submit()"><span class="glyphicon glyphicon-send"
+									style="margin-right:10px;"></span>确定</button>
+						</div>
+					</div>
+
+					<div id="handle_waiting" class="alert alert-success hiden">
+						<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+								style="padding-left:150px; padding-right:20px">Waiting for command to
+							complete...</strong>
+					</div>
+					<div id="handle_error" class="alert alert-warning hiden">
+						<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+					</div>
+					<script type="text/javascript">
+
+						function stream_detail(obj) {
+							var argv;
+							var stxhr = new XHR();
+							var ID = $(obj).parent().parent().prevAll()[6].innerText;
+							var ch = $(obj).parent().parent().prevAll()[5].innerText;
+
+							argv = "ACTION=streamtbl&BTNID=" + obj.id + "&ID=" + ID +
+								"&ch=" + ch;
+
+							$("#handle_waiting").css("display", "block");
+							setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
+							stxhr.post("/goform/button_onclick", argv,
+								function (x) {
+									console.log(x);
+									if (x.responseText == "ERROR") {
+										clearTimeout();
+										$("#handle_error").css("display", "block");
+										setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+									}
+									else if (x.responseText == "OK") {
+										clearTimeout();
+										allvideostream_get();
+									}
+								},
+								3000
+							);
+						}
+
+						function stream_delete(obj) {
+							var argv;
+							var stxhr = new XHR();
+							var ID = $(obj).parent().parent().prevAll()[7].innerText;
+							var ch = $(obj).parent().parent().prevAll()[6].innerText;
+
+							argv = "ACTION=streamtbl&BTNID=" + obj.id + "&ID=" + ID +
+								"&ch=" + ch;
+
+							$("#handle_waiting").css("display", "block");
+							setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
+							stxhr.post("/goform/button_onclick", argv,
+								function (x) {
+									console.log(x);
+									if (x.responseText == "ERROR") {
+										clearTimeout();
+										$("#handle_error").css("display", "block");
+										setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+									}
+									else if (x.responseText == "OK") {
+										clearTimeout();
+										allvideostream_get();
+									}
+								},
+								3000
+							);
+						}
+
+						function video_stream_add() {
+
+							document.getElementById("streamconfig").setAttribute("class", "show");
+
+							document.getElementById("address").value = "";
+							document.getElementById("username").value = "";
+							document.getElementById("password").value = "";
+							document.getElementById("rstpport").value = "";
+							//document.getElementById("fps").value = "";
+
+							check_okerr_hiden($('#address'));
+							check_okerr_hiden($('#username'));
+							check_okerr_hiden($('#password'));
+							check_okerr_hiden($('#rstpport'));
+						}
+
+
+						function username_check() {
+							if (document.getElementById("username").value != "" ||
+								document.getElementById("username").value.length > 32 ||
+								document.getElementById("username").value.length < 6 ) {
+								check_err_show($('#username'));
+								return false;
+							}
+							else {
+								check_ok_show($('#username'));
+								return true;
+							}
+						}
+						function password_check() {
+							if (document.getElementById("password").value == "" ||
+								document.getElementById("password").value.length > 32 ||
+								document.getElementById("password").value.length < 6 ) {
+								check_err_show($('#password'));
+								return false;
+							}
+							else {
+								check_ok_show($('#password'));
+								return true;
+							}
+						}
+						function address_check() {
+							if (document.getElementById("address").value == "" ||
+								document.getElementById("address").value.length > 32 ||
+								document.getElementById("address").value.length < 6 ||
+								(!checkipv4(document.getElementById("address").value))) {
+								check_err_show($('#address'));
+								return false;
+							}
+							else {
+								check_ok_show($('#address'));
+								return true;
+							}
+						}
+						function port_check() {
+							if (document.getElementById("rstpport").value == "" ||
+								document.getElementById("rstpport").value > 65530 ||
+								document.getElementById("rstpport").value <= 0) {
+								check_err_show($('#rstpport'));
+								return false;
+							}
+							else {
+								check_ok_show($('#rstpport'));
+								return true;
+							}
+						}
+
+						function stream_add_cencel() {
+							document.getElementById("address").value = "";
+							//document.getElementById("netmask").value = "";
+							document.getElementById("username").value = "";
+							document.getElementById("password").value = "";
+							document.getElementById("rstpport").value = "";
+
+							check_okerr_hiden($('#address'));
+							check_okerr_hiden($('#username'));
+							check_okerr_hiden($('#password'));
+							//check_okerr_hiden($('#metric'));
+							check_okerr_hiden($('#rstpport'));
+						}
+						//button 按钮，结合onclick事件，验证和提交表单
+						function stream_add_submit() {
+							if (document.getElementById("address").value == "" ||
+								!address_check()) {
+								check_err_hiden($('#address'));
+								return false;
+							}
+							/*
+							if (document.getElementById("netmask").value == "" ||
+								!netmask_check()) {
+								check_err_hiden($('#netmask'));
+								return false;
+							}
+							if (document.getElementById("gateway").value != "" || 
+								!gateway_check()) {
+								check_err_hiden($('#gateway'));
+								return false;
+							}
+							if (document.getElementById("metric").value != "" && 
+								!metric_check()) {
+								check_err_hiden($('#metric'));
+								return false;
+							}
+							if (document.getElementById("gateway").value == "" &&
+								document.getElementById("interface").value == "") {
+								check_err_hiden($('#gateway'));
+								return false;
+							}
+							*/
+							{
+								var argv;
+								var stxhr = new XHR();
+								argv = "address=" + document.getElementById("address").value;
+
+								if(document.getElementById("username").value != "")
+									argv += "&username=" + document.getElementById("username").value;
+
+								if(document.getElementById("password").value != "")
+									argv += "&password=" + document.getElementById("password").value;
+
+								if(document.getElementById("rstpport").value != "")
+									argv += "&rstpport=" + document.getElementById("rstpport").value;
+
+								//if(document.getElementById("fps").value != "")
+								//	argv += "&fps=" + document.getElementById("fps").value;								
+
+								if(document.getElementById("boardid").value != "")
+									argv += "&boardid=" + document.getElementById("boardid").value;	
+
+								if(document.getElementById("channel").value != "")
+									argv += "&channel=" + document.getElementById("channel").value;	
+									
+								$("#handle_waiting").css("display", "block");
+								setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
+								stxhr.post("/goform/addstream", argv,
+									function (x) {
+										console.log(x);
+										if (x.responseText == "OK") {
+											clearTimeout();
+											$("#handle_waiting").css("display", "none");
+											document.getElementById("streamconfig").setAttribute("class", "hiden");
+											allvideostream_get();
+										}
+										else if (x.responseText == "ERROR") {
+											clearTimeout();
+											$("#handle_waiting").css("display", "none");
+											$("#handle_error").css("display", "block");
+											setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+										}
+									},
+									3000
+								);
+							}
+						}
+					</script>
+				</div>
+			</form>
+		</fieldset>
+	</div>
+</body>
+
+</html>

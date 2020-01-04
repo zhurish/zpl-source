@@ -1,0 +1,235 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta content="" name="description" />
+    <meta content="webthemez" name="author" />
+    <!--meta http-equiv="refresh" content="30"-->
+    <!-- Bootstrap Styles-->
+    <link href="../css/bootstrap.min.css" rel="stylesheet" />
+    <!-- private Styles-->
+    <link href="../css/private.css" rel="stylesheet" />
+    
+    <link href="../css/bootstrap-switch.min.css" rel="stylesheet" />
+     
+    <!-- jQuery Js -->
+    <script src="../js/jquery-2.1.1.min.js"></script>
+    <!-- Bootstrap Js -->
+    <script src="../js/bootstrap.min.js"></script>
+    <script src="../js/bootstrap-switch.min.js"></script>
+    <script src="../js/data-type.js"></script>
+	<title>Status</title>
+</head>
+
+<body class="body-bg-img">
+	<div id="maincontent" class="container">
+		<fieldset class="fieldset-margin fieldset-background">
+			<form class="form-horizontal form-margin" role="form" name="setsntp" action="/goform/setsntp" accept-charset="UTF-8" method="POST">
+				<legend class="tbl-text-align">SNTP设置</legend>
+				
+			  		<div class="form-group">
+			  		<label for="sntp_address" class="col-sm-3 control-label">SNTP</label>
+						<!--div class="col-sm-4">
+        					<input type="checkbox" name="sntp_enable" id="sntp_enable" value="sntp_enable" onclick="sntp_checked()" checked>
+						</div--> 
+                        <div class="col-sm-4">
+						<input type="checkbox" name="sntp_enable" id="sntp_enable" value="sntp_enable">
+                        </div>
+			  		</div>
+			  						
+
+			  		<div class="form-group hiden">
+			    		<label for="sntp_address" class="col-sm-3 control-label">SNTP服务器地址</label>
+			    			<div class="col-sm-4">
+			      			<input type="text" minlength="6" maxlength="32" class="form-control" name="sntp_address" id="sntp_address" oninput ="sntp_ip_check()" placeholder="请输入SNTP服务器地址或者IP地址"><!--onmouseout-->
+			    			</div>   
+			 				<div class="col-xs-1 check_ok ">
+								√
+							</div> 
+			    			<div class="col-xs-1 check_error ">
+								×
+							</div>
+			  		</div>
+			  		<div class="form-group hiden">
+			    		<label for="sntp_timezone" class="col-sm-3 control-label">本地时区</label>
+			    			<div class="col-sm-4">
+    							<select class="form-control" name="sntp_timezone" id="sntp_timezone">
+    							<%jst_timezone_list();%>
+      							<!--option>1</option>
+      							<option>2</option>
+      							<option>3</option>
+      							<option>4</option>
+      							<option>5</option-->
+    							</select>
+    						</div>	
+			  		</div>
+			  		<div class="form-group hiden">
+			    		<label for="sntp_syncinterval" class="col-sm-3 control-label">同步间隔</label>
+			    			<div class="col-sm-4">
+			      			<input type="number" min="60" max="3600" step="1" value="180" class="form-control" name="sntp_syncinterval" id="sntp_syncinterval" oninput ="sntp_interval_check()" placeholder="请输入时间间隔（S）">
+			    			</div>  
+			 				<div class="col-xs-1 check_ok ">
+								√
+							</div> 
+			    			<div class="col-xs-1 check_error ">
+								×
+							</div>
+			  		</div>			  		
+			  		<div class="form-group hiden" >
+			    		<div class="col-sm-4 control-label">
+			      		<button type="button" class="btn btn-danger" name="sntp_cencel" id="sntp_cencel" onclick="sntp_cencel()">取消</button>
+			    		</div> 
+			    		<div class="col-sm-4 control-label">
+			      		<button type="button" class="btn btn-primary" name="sntp_submit" id="sntp_submit" onclick="sntp_onsubmit()">确定</button>
+			    		</div>
+			  		</div>
+			  		
+					<script type="text/javascript">	
+
+						function sntp_ip_check(){
+						var sntp_ip = $('#sntp_address');
+						var ip = sntp_ip.val();
+
+							if(ip != "")
+							{
+								if(checkipv4(ip) == true)
+								{
+									//var chkok = sntp_ip.parent().next();
+									//var chkerr = sntp_ip.parent().next().next();
+									//chkok.css("display", "block");
+									//chkerr.css("display", "none");
+									check_ok_show(sntp_ip);
+								}
+								else
+								{
+									//var chkok = sntp_ip.parent().next();
+									//var chkerr = sntp_ip.parent().next().next();
+									//chkok.css("display", "none");
+									//chkerr.css("display", "block");
+									check_err_show(sntp_ip);
+								}
+							}
+						}
+						
+						//$('#sntp_syncinterval').change(function() 
+						function sntp_interval_check()
+						{
+							var syncinterval = $('#sntp_syncinterval');
+							var sync_val = syncinterval.val();
+							if(sync_val > 3600 || sync_val < 60)
+							{
+								//syncinterval.parent().next().next().css("display", "block");
+								var chkok = syncinterval.parent().next();
+								var chkerr = syncinterval.parent().next().next();
+								chkok.css("display", "none");
+								chkerr.css("display", "block");
+							}
+							else
+							{
+								var chkok = syncinterval.parent().next();
+								var chkerr = syncinterval.parent().next().next();
+								chkok.css("display", "block");
+								chkerr.css("display", "none");		
+							}
+						}//);
+			
+						function sntp_cencel(){
+							document.getElementById("sntp_address").value = "";
+							document.getElementById("sntp_timezone").value = "";
+								check_okerr_hiden($('#sntp_address'));
+								check_okerr_hiden($('#sntp_syncinterval'));								
+						}
+						//button 按钮，结合onclick事件，验证和提交表单
+					  function sntp_onsubmit(){
+							//判断用户名是否为空
+							if(document.setsntp.sntp_address.value=="" || document.setsntp.sntp_timezone.value==""){
+								//window.alert("密码不能为空");
+								document.getElementById("sntp_address").value = "";
+								document.getElementById("sntp_timezone").value = "";	
+								document.getElementById("sntp_syncinterval").value = "";
+								//name_state.parent().next().next().css("display", "none");
+								if(document.setsntp.sntp_address.value=="")
+								{
+									check_err_show($('#sntp_address'));
+								}
+								if(document.setsntp.sntp_syncinterval.value=="")
+								{
+									check_err_show($('#sntp_syncinterval'));
+								}								
+								return false;
+							}
+							else{
+								//使用form对象的submit()方法，实现提交。
+								document.setsntp.submit();        
+							}
+						}	
+        $(function(){  
+            /* 初始化控件 */  
+            $('[name="sntp_enable"]').bootstrapSwitch({  
+                onText : "ON",      // 设置ON文本  
+                offText : "OFF",    // 设置OFF文本  
+                onColor : "success",// 设置ON文本颜色     (info/success/warning/danger/primary)  
+                offColor : "info",  // 设置OFF文本颜色        (info/success/warning/danger/primary)  
+                size : "normal",    // 设置控件大小,从小到大  (mini/small/normal/large)  
+				//state : true,
+				/*
+				onInit : function(event, state) {
+							var sntpcheckbox = document.getElementById("sntp_enable");
+							//state = event.target.defaultValue;
+							state = true;
+							if (state == false)
+							{
+								check_okerr_hiden($('#sntp_address'));
+								check_okerr_hiden($('#sntp_syncinterval'));								
+								document.getElementById("sntp_address").parentNode.parentNode.setAttribute("class","form-group hiden");
+								document.getElementById("sntp_timezone").parentNode.parentNode.setAttribute("class","form-group hiden");
+								document.getElementById("sntp_syncinterval").parentNode.parentNode.setAttribute("class","form-group hiden");	
+								document.getElementById("sntp_cencel").parentNode.parentNode.setAttribute("class","form-group hiden");	
+								alert("init OFF");						
+							}
+							else
+							{
+								check_okerr_hiden($('#sntp_address'));
+								check_okerr_hiden($('#sntp_syncinterval'));	
+								document.getElementById("sntp_address").parentNode.parentNode.setAttribute("class","form-group show");
+								document.getElementById("sntp_timezone").parentNode.parentNode.setAttribute("class","form-group show");
+								document.getElementById("sntp_syncinterval").parentNode.parentNode.setAttribute("class","form-group show");								
+								document.getElementById("sntp_cencel").parentNode.parentNode.setAttribute("class","form-group show");
+								alert("init ON"+ state);
+							}
+				},
+				*/
+                // 当开关状态改变时触发  
+                onSwitchChange : function(event, state) {  
+							var sntpcheckbox = document.getElementById("sntp_enable");
+							if(state == true)
+							{
+								check_okerr_hiden($('#sntp_address'));
+								check_okerr_hiden($('#sntp_syncinterval'));	
+								document.getElementById("sntp_address").parentNode.parentNode.setAttribute("class","form-group show");
+								document.getElementById("sntp_timezone").parentNode.parentNode.setAttribute("class","form-group show");
+								document.getElementById("sntp_syncinterval").parentNode.parentNode.setAttribute("class","form-group show");								
+								document.getElementById("sntp_cencel").parentNode.parentNode.setAttribute("class","form-group show");
+								alert("ON");
+							}
+							else//if (state == false)
+							{
+								check_okerr_hiden($('#sntp_address'));
+								check_okerr_hiden($('#sntp_syncinterval'));	
+								document.getElementById("sntp_address").parentNode.parentNode.setAttribute("class","form-group hiden");
+								document.getElementById("sntp_timezone").parentNode.parentNode.setAttribute("class","form-group hiden");
+								document.getElementById("sntp_syncinterval").parentNode.parentNode.setAttribute("class","form-group hiden");	
+								document.getElementById("sntp_cencel").parentNode.parentNode.setAttribute("class","form-group hiden");	
+								alert("OFF");					
+							}
+						  } 
+            });  
+        });					
+					</script>  
+			</form>
+		
+		</fieldset>
+        
+</body>
+</html>

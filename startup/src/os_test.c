@@ -60,6 +60,7 @@ DEFUN (syslog_debug_test,
 	return CMD_SUCCESS;
 }
 
+#if 0
 DEFUN (sdk_test,
 		sdk_test_cmd,
        "sdk-speed <0-5> (10|100|1000)",
@@ -204,7 +205,7 @@ DEFUN (process_test,
 	return CMD_SUCCESS;
 }
 #endif
-
+#endif
 
 #ifdef OS_TIMER_TEST
 
@@ -384,19 +385,26 @@ int os_test()
 	//extern int syslogcLibInit (char * pServer);
 	//syslogcLibInit ("127.0.0.1");
 	//modem_test_init();
+
+	install_element (ENABLE_NODE, &i_iusp_test_cmd);
+	install_element (ENABLE_NODE, &i_mac_test_cmd);
+	install_element (ENABLE_NODE, &syslog_debug_test_cmd);
+
+#if 0
 	install_element (ENABLE_NODE, &wifi_list_cmd);
 	install_element (ENABLE_NODE, &wifi_scan_cmd);
 #ifdef PL_DHCP_MODULE
 	install_element (ENABLE_NODE, &dhcp_test_cmd);
 #endif
 	install_element (ENABLE_NODE, &sdk_test_cmd);
-	install_element (ENABLE_NODE, &syslog_debug_test_cmd);
 	install_element (ENABLE_NODE, &bond_test_cmd);
 	install_element (ENABLE_NODE, &os_process_test_cmd);
 
 #ifdef DOUBLE_PROCESS
 	install_element (ENABLE_NODE, &process_test_cmd);
 #endif
+#endif
+
 #ifdef OS_TIMER_TEST
 	install_element (ENABLE_NODE, &timet_test_cmd);
 	install_element (ENABLE_NODE, &timet_test_once_cmd);

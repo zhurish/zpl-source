@@ -84,7 +84,7 @@ PJ_DEF(void) pjsua_logging_config_default(pjsua_logging_config *cfg)
     cfg->level = 5;
     cfg->console_level = 4;
     cfg->decor = PJ_LOG_HAS_SENDER | PJ_LOG_HAS_TIME | 
-		 PJ_LOG_HAS_MICRO_SEC | PJ_LOG_HAS_NEWLINE |
+		 PJ_LOG_HAS_MICRO_SEC | PJ_LOG_HAS_NEWLINE |PJ_LOG_HAS_CR |
 		 PJ_LOG_HAS_SPACE | PJ_LOG_HAS_THREAD_SWC |
 		 PJ_LOG_HAS_INDENT;
 #if (defined(PJ_WIN32) && PJ_WIN32 != 0) || (defined(PJ_WIN64) && PJ_WIN64 != 0)

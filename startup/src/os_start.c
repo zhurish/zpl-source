@@ -54,6 +54,7 @@ static void os_sigint(void)
 	_exit(0);
 }
 
+#if 0
 /* SIGKILL handler. */
 static void os_sigkill(void)
 {
@@ -66,6 +67,7 @@ static void os_sigkill(void)
 	zlog_backtrace(LOG_DEBUG);
 	exit(0);
 }
+#endif
 
 /* SIGUSR1 handler. */
 static void os_sigusr1(void)
@@ -99,10 +101,10 @@ static struct quagga_signal_t os_signals[] =
 		.signal = SIGTERM,
 		.handler = &os_sigint,
 	},
-	{
+/*	{
 		.signal = SIGKILL,
 	 	.handler = &os_sigkill,
-	},
+	},*/
 /*	{
 		.signal = SIGSEGV,
 	 	.handler = &os_sigkill,
@@ -151,6 +153,12 @@ static int os_base_dir_init(void)
 	if(access(SYSWWWCACHEDIR, F_OK) != 0)
 		mkdir(SYSWWWCACHEDIR, 0644);			// /www/cache
 
+	if(access(SYSTFTPBOOTDIR, F_OK) != 0)
+		mkdir(SYSTFTPBOOTDIR, 0644);			// /tftpboot
+
+	if(access(SYSUPLOADDIR, F_OK) != 0)
+		mkdir(SYSUPLOADDIR, 0644);			// /tftpboot
+
 	if(access(BASE_DIR"/img", F_OK) != 0)
 		mkdir(BASE_DIR"/img", 0644);
 
@@ -172,6 +180,24 @@ static int os_base_dir_load(void)
 
 #ifdef PL_WEBGUI_MODULE
 	super_system("cp -arf " RSYSWWWDIR"/*" " " SYSWWWDIR"/");
+#endif
+
+#ifdef BUILD_OPENWRT
+	if(access("/etc/config/product", F_OK) != 0)
+	{
+		if(access(SYSCONFDIR"/product", F_OK) == 0)
+			super_system("cp -af " SYSCONFDIR"/product  /etc/config/");
+	}
+	if(access("/etc/config/voipconfig", F_OK) != 0)
+	{
+		if(access(SYSCONFDIR"/voipconfig", F_OK) == 0)
+			super_system("cp -af " SYSCONFDIR"/voipconfig  /etc/config/");
+	}
+	if(access("/etc/config/openconfig", F_OK) != 0)
+	{
+		if(access(SYSCONFDIR"/openconfig", F_OK) == 0)
+			super_system("cp -af " SYSCONFDIR"/openconfig  /etc/config/");
+	}		
 #endif
 	return 0;
 }
@@ -296,6 +322,7 @@ int os_load_config(char *config)
 //	sleep(1);
 	host.load = LOAD_DONE;
 	signal_init(array_size(os_signals), os_signals);
+	//os_task_give_broadcast();
 	return OK;
 }
 

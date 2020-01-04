@@ -26,6 +26,7 @@ ifneq ($(BUILD_TYPE),X86)
 ifeq ($(CROSS_COMPILE),)
 $(error CROSS_COMPILE is not define)
 endif
+#export CROSS_COMPILE
 export AS=$(CROSS_COMPILE)as
 export LD=$(CROSS_COMPILE)ld
 export CC=$(CROSS_COMPILE)gcc

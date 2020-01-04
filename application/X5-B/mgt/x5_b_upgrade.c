@@ -29,7 +29,7 @@
 #include "x5_b_app.h"
 #include "x5_b_upgrade.h"
 #include "x5_b_cmd.h"
-#include "web_x5b.h"
+#include "x5_b_web.h"
 
 
 int x5b_app_update_mode(x5b_app_mgt_t *app, void *info, int to)
@@ -93,7 +93,7 @@ int x5b_app_update_mode_exit(x5b_app_mgt_t *app)
 	x5b_app_update_mode_enable(mgt, FALSE, E_CMD_TO_A);
 	if(mgt->mutex)
 		os_mutex_unlock(mgt->mutex);
-	zlog_debug(ZLOG_APP, "----x5b_app_update_mode_exit OK" );
+	//zlog_debug(ZLOG_APP, "----x5b_app_update_mode_exit OK" );
 	return OK;
 }
 
@@ -356,7 +356,8 @@ int ymodem_send(int fd, char *filename, int filesize)
 		}
 	}
 	pos = 0;
-	zlog_debug(ZLOG_APP, "Transmit Update Data finish, Send EOT to cancel ymodem\n");
+	if(X5_B_ESP32_DEBUG(UPDATE))
+		zlog_debug(ZLOG_APP, "Transmit Update Data finish, Send EOT to cancel ymodem\n");
 	while(1)
 	{
 		buf[0] = EOT;
@@ -426,7 +427,7 @@ int ymodem_send(int fd, char *filename, int filesize)
 }
 
 
-
+#if 0
 int x5b_app_A_update_handle(char *buf)
 {
 	int ret = 0;
@@ -438,7 +439,8 @@ int x5b_app_A_update_handle(char *buf)
 		brk = strstr(buf, "install-");
 		memset(path, 0, sizeof(path));
 		snprintf(path, sizeof(path), "/tmp/app/tftpboot/%s", brk + strlen("install-"));
-		zlog_debug(ZLOG_APP, "Install '%s' to module A", path);
+		if(X5_B_ESP32_DEBUG(UPDATE))
+			zlog_debug(ZLOG_APP, "Install '%s' to module A", path);
 		if (access (path, F_OK) >= 0)
 		{
 			if(strstr(path, "esp32") || strstr(path, "ESP32"))
@@ -462,18 +464,72 @@ int x5b_app_A_update_handle(char *buf)
 					ret = ymodem_send(fd, brk + strlen("install-"), ntohl(mode.len));
 					close(fd);
 					x5b_app_update_mode_exit(NULL);
-					zlog_debug(ZLOG_APP, "----x5b_app_update_mode OK" );
+					//zlog_debug(ZLOG_APP, "----x5b_app_update_mode OK" );
 					return ret;
 				}
 				x5b_app_update_mode_exit(NULL);
 				return ERROR;
 			}
 			x5b_app_update_mode_exit(NULL);
-			zlog_debug(ZLOG_APP, "----x5b_app_update_mode error" );
+			//zlog_debug(ZLOG_APP, "----x5b_app_update_mode error" );
 			return ERROR;
 		}
 		//int x5b_app_update_mode_exit(x5b_app_mgt_t *app)
-		zlog_debug(ZLOG_APP, "----update file %s not exist. ", brk + strlen("install-"));
+		//zlog_debug(ZLOG_APP, "----update file %s not exist. ", brk + strlen("install-"));
+		return ERROR;
+	}
+	return OK;
+}
+#endif
+
+int x5b_app_upgrade_handle(char *pathdir, char *filename)
+{
+	int ret = 0;
+	char path[128];
+	//char *brk = NULL;
+	//if(strstr(filename, "file"))
+	{
+		x5b_app_update_mode_t mode;
+		//brk = strstr(buf, "install-");
+		memset(path, 0, sizeof(path));
+		snprintf(path, sizeof(path), "%s/%s", pathdir, filename);
+		if(X5_B_ESP32_DEBUG(UPDATE))
+			zlog_debug(ZLOG_APP, "Install '%s' to module A", path);
+		if (access (path, F_OK) >= 0)
+		{
+			if(strstr(path, "esp32") || strstr(path, "ESP32"))
+			{
+				mode.mode = X5B_APP_UPDATE_ESP32;
+			}
+			else if(strstr(path, "stm32") || strstr(path, "STM32"))
+			{
+				mode.mode = X5B_APP_UPDATE_STM32;
+			}
+			mode.len = htonl(os_file_size(path));
+			ret = OK;
+			ret = x5b_app_update_mode(NULL, &mode, E_CMD_TO_A);
+			//ret = x5b_app_update_mode(NULL, &mode, E_CMD_TO_C);
+			if(ret == OK)
+			{
+				int fd = 0;
+				fd = open(path, O_RDONLY);
+				if (fd)
+				{
+					ret = ymodem_send(fd, filename, ntohl(mode.len));
+					close(fd);
+					x5b_app_update_mode_exit(NULL);
+					//zlog_debug(ZLOG_APP, "----x5b_app_update_mode OK" );
+					return ret;
+				}
+				x5b_app_update_mode_exit(NULL);
+				return ERROR;
+			}
+			x5b_app_update_mode_exit(NULL);
+			//zlog_debug(ZLOG_APP, "----x5b_app_update_mode error" );
+			return ERROR;
+		}
+		//int x5b_app_update_mode_exit(x5b_app_mgt_t *app)
+		//zlog_debug(ZLOG_APP, "----update file %s not exist. ", filename);
 		return ERROR;
 	}
 	return OK;

@@ -35,7 +35,8 @@ TAGET=SWP-$(PLVER)
 #
 #PLOS_MAP = -Wl,-Map,target-app.map
 ifneq ($(PLOS_MAP),)
-PLOS_MAP = -Wl,-Map,$(TAGET).map
+TAGETMAP=SWP-$(PLVER).map
+PLOS_MAP = -Wl,-Map,$(TAGETMAP)
 endif
 #
 #
@@ -98,7 +99,7 @@ OBJS = $(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(SOURCES)))
 #
 #
 #	
-.PHONY:	obj objclean clean install all lib rebuild dist demo app target usage help
+.PHONY:	obj objclean clean install all lib rebuild dist demo app target usage help config_install
 #
 #
 target : $(OBJS) $(BASE_ROOT)/$(LIBDIR)/*.a 
@@ -106,6 +107,26 @@ target : $(OBJS) $(BASE_ROOT)/$(LIBDIR)/*.a
 	$(CHMOD) a+x $(TAGET)
 	#$(STRIP) $(TAGET)
 	
+#	
+#
+#
+ifeq ($(BUILD_OPENWRT),true)
+openwrt_install:
+	install -d ${DSTETCDIR} 
+	cd make;./setup.sh $(TAGET)
+else
+openwrt_install:
+	install -d ${DSTETCDIR} 
+endif
+#
+#
+config_install: openwrt_install
+	install -d ${DSTETCDIR} 
+	install -m 755 make/start-boot.sh ${DSTETCDIR}  	
+	install -m 755 startup/etc/plat.conf ${DSTETCDIR}
+	install -m 755 startup/etc/openconfig ${DSTETCDIR}
+	install -m 755 startup/etc/product ${DSTETCDIR}
+	install -m 755 startup/etc/voipconfig ${DSTETCDIR}
 #	
 #	install -d ${BINDIR}
 #	install -m 755 ${TAGET} ${BINDIR}
@@ -169,12 +190,16 @@ clean:
 		then \
 		$(RM) $(TAGET); \
 	fi
+	@if test -f $(TAGETMAP) ; \
+		then \
+		$(RM) $(TAGETMAP); \
+	fi
 	
 obj:
 	${MAKE} -C  $(TOP_DIR)/make/ $@ 
 
 #install: obj
-install: 
+install: config_install
 	${MAKE} -C  $(TOP_DIR)/make/ $@ 
 	install -d ${BINDIR}
 	install -m 755 ${TAGET} ${BINDIR}
@@ -183,10 +208,10 @@ install:
 	#install -d ${DSTULIBDIR}
 	#$(CP) $(ULIBSOFILE) ${DSTULIBDIR}
 	
-	install -d ${DSTETCDIR}
-	cd make;./setup.sh $(TAGET)
-	install -m 755 make/start-boot.sh ${DSTETCDIR}  	
-	install -m 755 startup/etc/plat.conf ${DSTETCDIR}
+	#install -d ${DSTETCDIR}
+	#cd make;./setup.sh $(TAGET)
+	#install -m 755 make/start-boot.sh ${DSTETCDIR}  	
+	#install -m 755 startup/etc/plat.conf ${DSTETCDIR}
 	#install -m 755 startup/etc/default-config.cfg ${DSTETCDIR}
 	#$(CP) $(TAGET) /home/zhurish/Downloads/tftpboot/
 	

@@ -1,0 +1,518 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta content="" name="description" />
+		<meta content="webthemez" name="author" />
+		<!--meta http-equiv="refresh" content="30"-->
+		<!-- Bootstrap Styles-->
+		<link href="../css/bootstrap.min.css" rel="stylesheet" />
+
+		<!-- private Styles-->
+		<link href="../css/private.css" rel="stylesheet" />
+
+		<!-- jQuery Js -->
+		<script src="../js/jquery-2.1.1.min.js"></script>
+		<!-- Bootstrap Js -->
+		<script src="../js/bootstrap.min.js"></script>
+		<script src="../js/xhr.js"></script>
+		<script src="../js/data-type.js"></script>
+
+		<title>firewall</title>
+	</head>
+
+	<body class="body-bg-img">
+		<div id="maincontent" class="container">
+			<fieldset class="fieldset-margin fieldset-background">
+				<table class="table table-condensed">
+					<caption class="tbl-text-align bold">端口映射</caption>
+					<thead>
+						<tr>
+							<th>名称</th>
+							<th>外网IP</th>
+							<th>外网端口</th>
+							<th>内网IP</th>
+							<th>内网端口</th>
+							<th>协议</th>
+							<!--th>出接口</th>
+							<th>入接口</th-->
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody id="portmaptbl">
+						<script type="text/javascript">
+							function port_map_tbl() {
+								var utbl = "";
+
+								$.get("/goform/port-map", function (data, status) {
+									var data_json = JSON.parse(data);
+									console.log("json:" + data);
+									$.each(data_json, function (index, info) {
+										utbl += "<tr>\n";
+										utbl += "<td>" + info.name + "</td>\n";
+										if (info.wanip == "any" ||
+											info.wanip == "0.0.0.0")
+											utbl += "<td>any</td>\n";
+										else
+											utbl += "<td>" + info.wanip + "</td>\n";
+										utbl += "<td>" + info.wanport + "</td>\n";
+										utbl += "<td>" + info.lanip + "</td>\n";
+										utbl += "<td>" + info.lanport + "</td>\n";
+										utbl += "<td>" + info.proto + "</td>\n";
+										//utbl += "<td>" + info.outif + "</td>\n";
+										//utbl += "<td>" + info.inif + "</td>\n";
+										utbl += "<td>\
+                							<div class=\"col-sm-push-2 control-label\">\
+												  <button type=\"button\" class=\"btn btn-danger\" name=\"delete\" id=\"delete\" \
+												  onclick=\"port_map_submit_click(this)\"><span class=\"glyphicon glyphicon-trash\"\
+															style=\"margin-right:10px;\"></span>删除</button>\
+			    							</div>\
+                						</td>";
+										utbl += "</tr>";
+									});
+									utbl += "<tr>";
+									utbl += "<td>";
+									utbl += "</td>";
+
+									utbl += "<td>";
+									utbl += "</td>";
+
+									utbl += "<td>";
+									utbl += "</td>";
+
+									utbl += "<td>";
+									utbl += "</td>";
+
+									utbl += "<td>";
+									utbl += "</td>";
+
+									/*utbl += "<td>";
+									utbl += "</td>";
+
+									utbl += "<td>";
+									utbl += "</td>";
+*/
+									utbl += "<td>";
+									utbl += "</td>";
+
+									utbl += "<td>\
+                					<div class=\"col-sm-push-3 control-label\">\
+										  <button type=\"button\" class=\"btn btn-add\" name=\"add\" id=\"add\" \
+										  onclick=\"port_map_add_click(this)\"><span class=\"glyphicon glyphicon-plus\"\
+															style=\"margin-right:10px;\"></span>添加</button>\
+			    						</div>\
+									</td>";
+									utbl += "</tr>";
+									$("#portmaptbl").html(utbl);
+								});
+							}
+							port_map_tbl();
+						</script>
+					</tbody>
+				</table>
+				<legend class="tbl-text-align bold"></legend>
+				<div class="hiden" name="portmap" id="portmap">
+					<form class="form-horizontal form-margin show" method="POST" ">
+							<legend class=" legend-text-align">端口映射配置</legend>
+
+						<div class="form-group">
+							<label for="rulename" class="col-sm-3 control-label">名称</label>
+							<div class="input-group col-sm-4">
+								<input type="text" minlength="6" maxlength="32" class="form-control" name="rulename"
+									id="rulename" required onclick="port_forwards_rulename_check(this)">
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="wanip" class="col-sm-3 control-label">外网IP</label>
+							<div class="input-group col-sm-4">
+								<input type="text" minlength="6" maxlength="32" class="form-control" name="wanip"
+									id="wanip" required onclick="port_forwards_address_check(this)">
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="wanport" class="col-sm-3 control-label">外网端口</label>
+							<div class="input-group col-sm-4">
+								<input type="number" min="1" max="65536" class="form-control" name="wanport"
+									id="wanport" required onclick="port_forwards_port_check(this)">
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="lanip" class="col-sm-3 control-label">内网IP</label>
+							<div class="input-group col-sm-4">
+								<input type="text" minlength="6" maxlength="32" class="form-control" name="lanip"
+									id="lanip" required onclick="port_forwards_address_check(this)">
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="lanport" class="col-sm-3 control-label">内网端口</label>
+							<div class="input-group col-sm-4">
+								<input type="number" min="1" max="65536" class="form-control" name="lanport"
+									id="lanport" required onclick="port_forwards_port_check(this)">
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="proto" class="col-sm-3 control-label">协议</label>
+							<div class="input-group col-sm-4">
+								<select class="form-control" name="proto" id="proto" required>
+									<option value="ALL" selected="selected">ALL</option>
+									<option value="TCP">TCP</option>
+									<option value="UDP">UDP</option>
+								</select>
+							</div>
+						</div>
+						<!--div class="form-group">
+							<label for="outif" class="col-sm-3 control-label">出接口</label>
+							<div class="input-group col-sm-4">
+								<select class="form-control" name="outif" id="outif" required>
+									<script type="text/javascript">
+										function interface_tbl(obj) {
+											var itbl = "";
+											$.get("/goform/interface-tbl", function (data, status) {
+												console.log("==============");
+												console.log(data);
+												var data_json = JSON.parse(data);
+												$.each(data_json, function (index, info) {
+													itbl += "<option value=\"" + info.name + "\">" + info.name + "</option>";
+												});
+												//$("#outif").html(itbl);
+												obj.html(itbl);
+											});
+										}
+										interface_tbl($("#outif"));
+									</script>
+								</select>
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="inif" class="col-sm-3 control-label">入接口</label>
+							<div class="input-group col-sm-4">
+								<select class="form-control" name="inif" id="inif" required>
+									<script type="text/javascript">
+										interface_tbl($("#inif"));
+									</script>
+								</select>
+							</div>
+						</div-->
+						<div class="form-group">
+							<div class="col-xs-4 control-label">
+								<button type="reset" class="btn btn-cencel" name="port_map_cencel"
+									id="port_map_cencel"><span class="glyphicon glyphicon-remove"
+										style="margin-right:10px;"></span>取消</button>
+							</div>
+							<div class="col-xs-4 control-label">
+								<button type="button" class="btn btn-submit" name="port_map_submit" id="port_map_submit"
+									onclick="port_map_submit_click(this)"><span class="glyphicon glyphicon-send"
+										style="margin-right:10px;"></span>确定</button>
+							</div>
+						</div>
+					</form>
+				</div>
+
+				<div id="handle_waiting" class="alert alert-success hiden">
+					<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+							style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+				</div>
+				<div id="handle_error" class="alert alert-warning hiden">
+					<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+				</div>
+				<script type="text/javascript">
+					function port_forwards_port_check(self) {
+						if (self.value != "") {
+							if (self.value > 65535 || self.value < 1) {
+								return false;
+							}
+							return true;
+						}
+						return false;
+					}
+					function port_forwards_rulename_check(self) {
+						if (self.value != "") {
+							if (self.length > 32 || self.length < 6) {
+								return false;
+							}
+							return true;
+						}
+						return false;
+					}
+					function port_forwards_address_check(self) {
+						if (self.value != "") {
+							if (self.id == "lanip") {
+								if (checkipv4(self.value) == true)
+									return true;
+							}
+							if (self.value != "0.0.0.0")
+								return true;
+							else {
+								if (checkipv4(self.value) == true)
+									return true;
+							}
+						}
+						return false;
+					}
+					function port_map_add_click(self) {
+						$("#portmap").css("display", "block");
+					}
+					function port_map_submit_click(self) {
+						var name;
+						var lanip;
+						var lanport;
+						var wanport;
+						var proto;
+
+						if (self.id == "port_map_submit") {
+							if (!port_forwards_rulename_check(document.getElementById("rulename")) ||
+								!port_forwards_address_check(document.getElementById("lanip")) ||
+								!port_forwards_port_check(document.getElementById("lanport")) ||
+								!port_forwards_port_check(document.getElementById("wanport"))) {
+								$("#handle_error").css("display", "block");
+								$("#handle_winting").css("display", "none");
+								setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+								return false;
+							}
+						}
+						var argv;
+						var stxhr = new XHR();
+						if (self.id == "port_map_submit") {
+							name = document.getElementById("rulename").value;
+							lanip = document.getElementById("lanip").value;
+							lanport = document.getElementById("lanport").value;
+							wanport = document.getElementById("wanport").value;
+							wanip = document.getElementById("wanip").value;
+							proto = document.getElementById("proto").value;
+
+							argv = "ACTION=firewall-map&BTNID=add&name=" + name + "&lanip=" + lanip +
+								"&lanport=" + lanport + "&wanport=" + wanport + "&proto=" + proto;
+							if (wanip != "")
+								argv += "&wanip=" + wanip;
+						}
+						else {
+							name = $(self).parent().parent().prevAll()[5].innerText;
+							lanip = $(self).parent().parent().prevAll()[2].innerText;
+							lanport = $(self).parent().parent().prevAll()[1].innerText;
+							wanport = $(self).parent().parent().prevAll()[3].innerText;
+							proto = $(self).parent().parent().prevAll()[0].innerText;
+	
+							argv = "ACTION=firewall-map&BTNID=" + self.id + "&name=" + name + 
+							 	"&lanip=" + lanip +
+								"&lanport=" + lanport + "&wanport=" + wanport + "&proto=" + proto;
+								
+							console.log("argv:" + argv);
+						}
+
+						$("#handle_winting").css("display", "block");
+						setTimeout(function () { $("#handle_winting").css("display", "none") }, 5000);
+						stxhr.post("/goform/button_onclick", argv,
+							function (x, json) {
+								console.log("json:" + json);
+								console.log(x);
+								if (x.responseText == "ERROR") {
+									$("#handle_error").css("display", "block");
+									$("#handle_winting").css("display", "none");
+									clearTimeout();
+									setTimeout(function () { $("#handle_error").css("display", "none") }, 3000);
+									$("#portmap").css("display", "none");
+								}
+								else if (x.responseText == "OK") {
+									$("#handle_winting").css("display", "none");
+									$("#handle_error").css("display", "none");
+									$("#portmap").css("display", "none");
+									clearTimeout();
+									port_map_tbl();
+								}
+								else if (x.responseText != "" && json != null) {
+									if (json.response == "OK") {
+										$("#handle_winting").css("display", "none");
+										$("#handle_error").css("display", "none");
+										clearTimeout();
+										$("#portmap").css("display", "none");
+										port_map_tbl();
+									}
+								}
+							},
+							3000);
+					}
+				</script>
+			</fieldset>
+
+			<fieldset class="fieldset-margin fieldset-background">
+				<table class="table table-condensed">
+					<caption class="tbl-text-align bold">Traffic Rules</caption>
+					<thead>
+						<tr>
+							<th>名称</th>
+							<th>IP地址</th>
+							<th>端口号</th>
+							<th>协议</th>
+							<th>动作</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody id="portfilter">
+						<script type="text/javascript">
+							function portfilter_rules_tbl() {
+								var utbl = "";
+
+								$.get("/goform/port-filter", function (data, status) {
+									var data_json = JSON.parse(data);
+									console.log("json:" + data);
+									$.each(data_json, function (index, info) {
+										utbl += "<tr>\n";
+										utbl += "<td>" + info.name + "</td>\n";
+										if (info.wanip == "any" ||
+											info.wanip == "0.0.0.0")
+											utbl += "<td>any</td>\n";
+										else
+											utbl += "<td>" + info.wanip + "</td>\n";
+										utbl += "<td>" + info.wanport + "</td>\n";
+										utbl += "<td>" + info.proto + "</td>\n";
+										if(info.action == "ACCEPT")
+											utbl += "<td>允许</td>\n";
+										else	
+											utbl += "<td>禁止</td>\n";
+		
+										//utbl += "<td>" + info.action + "</td>\n";
+										utbl += "<td>\
+												<div class=\"col-sm-push-2 control-label\">\
+													  <button type=\"button\" class=\"btn btn-danger\" name=\"tcdelete\" \
+													  id=\"tcdelete\" onclick=\"portfilter_rules_handle_click(this)\">\
+													  <span class=\"glyphicon glyphicon-trash\"\
+															style=\"margin-right:10px;\"></span>删除</button>\
+												</div>\
+											</td>";
+										utbl += "</tr>";
+									});
+									utbl += "<tr>";
+									utbl += "<td>";
+									utbl += "<input type=\"text\" minlength=\"6\" maxlength=\"32\" class=\"form-control\"";
+									utbl += "name=\"tcrulename\" id=\"tcrulename\" value=\"\" required onclick=\"port_forwards_rulename_check(this)\">";
+									utbl += "</td>";
+
+									utbl += "<td>";
+									utbl += "<input type=\"text\" minlength=\"6\" maxlength=\"32\" class=\"form-control\"";
+									utbl += "name=\"tcwanip\" id=\"tcwanip\" value=\"\" placeholder=\"0.0.0.0\" onclick=\"port_forwards_address_check(this)\">";
+									utbl += "</td>";
+
+									utbl += "<td>";
+									utbl += "<input type=\"number\" min=\"1\" max=\"65535\" class=\"form-control\"";
+									utbl += "name=\"tcwanport\" id=\"tcwanport\" value=\"\" required onclick=\"port_forwards_port_check(this)\">";
+									utbl += "</td>";
+
+									utbl += "<td>";
+									utbl += "<select class=\"form-control\" name=\"tcproto\" id=\"tcproto\">";
+									utbl += "<option value=\"ALL\" selected=\"selected\">ALL</option>";
+									utbl += "<option value=\"TCP\">TCP</option>";
+									utbl += "<option value=\"UDP\">UDP</option>";
+									utbl += "</select>";
+									utbl += "</td>";
+									
+									utbl += "<td>";
+									utbl += "<select class=\"form-control\" name=\"tcaction\" id=\"tcaction\">";
+									utbl += "<option value=\"disable\" selected=\"selected\">禁止</option>";
+									utbl += "<option value=\"enable\">允许</option>";
+									utbl += "</select>";
+									utbl += "</td>";
+
+									utbl += "<td>\
+										<div class=\"col-sm-push-3 control-label\">\
+											  <button type=\"button\" class=\"btn btn-add\" name=\"tcadd\" id=\"tcadd\" \
+											  onclick=\"portfilter_rules_handle_click(this)\"><span class=\"glyphicon glyphicon-plus\"\
+															style=\"margin-right:10px;\"></span>添加</button>\
+											</div>\
+										</td>";
+									utbl += "</tr>";
+									$("#portfilter").html(utbl);
+								});
+							}
+							portfilter_rules_tbl();
+						</script>
+					</tbody>
+				</table>
+				<div id="portfilter_waiting" class="alert alert-success hiden">
+					<strong><img src="../res/icons/loading.gif" alt="Waiting..."
+							style="padding-left:150px; padding-right:20px">Waiting for command to complete...</strong>
+				</div>
+				<div id="portfilter_error" class="alert alert-warning hiden">
+					<strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+				</div>
+				<script type="text/javascript">
+
+					function portfilter_rules_handle_click(self) {
+						var name;
+						var lanip;
+						var lanport;
+						var wanport;
+						var proto;
+						var action;
+						if (self.id == "tcadd") {
+							if (!port_forwards_rulename_check(document.getElementById("tcrulename")) ||
+								!port_forwards_port_check(document.getElementById("tcwanport"))) {
+								$("#portfilter_error").css("display", "block");
+								$("#portfilter_waiting").css("display", "none");
+								setTimeout(function () { $("#portfilter_error").css("display", "none") }, 3000);
+								return false;
+							}
+						}
+						var argv;
+						var stxhr = new XHR();
+						if (self.id == "tcadd") {
+							name = document.getElementById("tcrulename").value;
+							wanport = document.getElementById("tcwanport").value;
+							wanip = document.getElementById("tcwanip").value;
+							proto = document.getElementById("tcproto").value;
+							action = document.getElementById("tcaction").value;
+							
+							argv = "ACTION=firewall-filter&BTNID=add&name=" + name + "&wanport=" + 
+								wanport + "&proto=" + proto  + "&handle=" + action;
+							if (wanip != "")
+								argv += "&wanip=" + wanip;
+						}
+						else {
+							name = $(self).parent().parent().prevAll()[4].innerText;
+							wanport = $(self).parent().parent().prevAll()[2].innerText;
+							proto = $(self).parent().parent().prevAll()[1].innerText;
+							action = $(self).parent().parent().prevAll()[0].innerText;
+							
+							argv = "ACTION=firewall-filter&BTNID=delete&name=" + name + 
+								"&wanport=" + wanport + "&proto=" + proto + "&handle=" + action;
+								
+							console.log("argv:" + argv);
+						}
+
+						$("#portfilter_waiting").css("display", "block");
+						setTimeout(function () { $("#portfilter_waiting").css("display", "none") }, 5000);
+						stxhr.post("/goform/button_onclick", argv,
+							function (x, json) {
+								console.log("json:" + json);
+								console.log(x);
+								if (x.responseText == "ERROR") {
+									$("#portfilter_error").css("display", "block");
+									$("#portfilter_waiting").css("display", "none");
+									clearTimeout();
+									setTimeout(function () { $("#portfilter_error").css("display", "none") }, 3000);
+								}
+								else if (x.responseText == "OK") {
+									$("#portfilter_waiting").css("display", "none");
+									$("#portfilter_error").css("display", "none");
+									clearTimeout();
+									portfilter_rules_tbl();
+								}
+								else if (x.responseText != "" && json != null) {
+									if (json.response == "OK") {
+										$("#portfilter_waiting").css("display", "none");
+										$("#portfilter_error").css("display", "none");
+										clearTimeout();
+										portfilter_rules_tbl();
+									}
+								}
+							},
+							3000);
+					}
+				</script>
+			</fieldset>
+		</div>
+	</body>
+
+</html>

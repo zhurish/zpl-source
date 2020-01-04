@@ -954,7 +954,7 @@ static int tftpdFileWrite
 
     if (returnValue == ERROR)
 	{
-    	systools_error ("%s:  could not send \"%s\" to client\n", tftpdErrStr);
+    	systools_error ("%s:  could not send \"%s\" to client\n", tftpdErrStr, pReplyDesc->fileName);
 	}
 
     tftpdDescriptorDelete (pReplyDesc);

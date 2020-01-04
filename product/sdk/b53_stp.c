@@ -10,7 +10,7 @@
 
 #include "b53_mdio.h"
 #include "b53_regs.h"
-#include "b53_driver.h"
+#include "sdk_driver.h"
 
 
 /****************************************************************************************/
@@ -41,10 +41,10 @@ int b53125_set_stp_state(struct b53125_device *dev, int port, u8 state)
 		return ERROR;
 	}
 
-	ret |= b53_read8(dev, B53_CTRL_PAGE, B53_PORT_CTRL(port), &reg);
+	ret |= b53125_read8(dev, B53_CTRL_PAGE, B53_PORT_CTRL(port), &reg);
 	reg &= ~PORT_CTRL_STP_STATE_MASK;
 	reg |= hw_state;
-	ret |= b53_write8(dev, B53_CTRL_PAGE, B53_PORT_CTRL(port), reg);
+	ret |= b53125_write8(dev, B53_CTRL_PAGE, B53_PORT_CTRL(port), reg);
 	return ret;
 }
 /****************************************************************************************/
@@ -56,7 +56,7 @@ int b53125_mstp_enable(struct b53125_device *dev, BOOL enable)
 		reg |= B53_MSTP_EN;
 	else
 		reg &= ~B53_MSTP_EN;
-	ret |= b53_write8(dev, B53_MSTP_PAGE, B53_MSTP_CTL, reg);
+	ret |= b53125_write8(dev, B53_MSTP_PAGE, B53_MSTP_CTL, reg);
 	return ret;
 }
 /****************************************************************************************/
@@ -65,7 +65,7 @@ int b53125_mstp_aging_time(struct b53125_device *dev, int aging)
 	int ret = 0;
 	u32 reg = 0;
 	reg |= aging & B53_MSTP_AGE_MASK;
-	ret |= b53_write32(dev, B53_MSTP_PAGE, B53_MSTP_AGE_CTL, reg);
+	ret |= b53125_write32(dev, B53_MSTP_PAGE, B53_MSTP_AGE_CTL, reg);
 	return ret;
 }
 /****************************************************************************************/
@@ -73,10 +73,10 @@ int b53125_mstp_state(struct b53125_device *dev, int id, int port, int state)
 {
 	int ret = 0;
 	u32 reg = 0;
-	ret |= b53_read32(dev, B53_MSTP_PAGE, B53_MSTP_TBL_CTL(id), &reg);
+	ret |= b53125_read32(dev, B53_MSTP_PAGE, B53_MSTP_TBL_CTL(id), &reg);
 	reg &= ~B53_MSTP_TBL_PORT_MASK(port);
 	reg |= B53_MSTP_TBL_PORT(port, state);
-	ret |= b53_write32(dev, B53_MSTP_PAGE, B53_MSTP_TBL_CTL(id), reg);
+	ret |= b53125_write32(dev, B53_MSTP_PAGE, B53_MSTP_TBL_CTL(id), reg);
 	return ret;
 }
 
@@ -84,11 +84,11 @@ int b53125_mstp_bypass(struct b53125_device *dev, int id, BOOL enable)
 {
 	int ret = 0;
 	u32 reg = 0;
-	ret |= b53_read16(dev, B53_MSTP_PAGE, B53_MSTP_BYPASS_CTL, &reg);
+	ret |= b53125_read16(dev, B53_MSTP_PAGE, B53_MSTP_BYPASS_CTL, &reg);
 	if(enable)
 		reg |= B53_MSTP_BYPASS_EN(id);
 	else
 		reg &= ~B53_MSTP_BYPASS_EN(id);
-	ret |= b53_write16(dev, B53_MSTP_PAGE, B53_MSTP_BYPASS_CTL, reg);
+	ret |= b53125_write16(dev, B53_MSTP_PAGE, B53_MSTP_BYPASS_CTL, reg);
 	return ret;
 }

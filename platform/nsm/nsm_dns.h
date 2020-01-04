@@ -117,6 +117,7 @@ extern int nsm_ip_dns_del_by_ifindex(ifindex_t ifindex, dns_class_t type);
 
 extern int nsm_ip_dns_add_api(struct prefix *address, BOOL	secondly);
 extern int nsm_ip_dns_del_api(struct prefix *address);
+extern int nsm_ip_dns_get_api(ifindex_t ifindex, struct prefix *address, BOOL	secondly);
 
 extern ip_dns_t * nsm_ip_dns_lookup_api(struct prefix *address, dns_class_t type);
 extern int nsm_ip_dns_callback_api(ip_dns_cb cb, void *pVoid);

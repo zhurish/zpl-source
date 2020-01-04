@@ -2,6 +2,25 @@ include $(MAKE_DIR)/makelinux.mk
 
 include config.mk
 
+WEBGUI_DEBUG=false
+
+export THEME_MATERIAL=false
+export THEME_BOOTSTRAP=true
+
+ifeq ($(WEBGUI_DEBUG),true)
+WEB_DEFINE = -DME_DEBUG=1 -DME_GOAHEAD_LOGGING=1 -DME_GOAHEAD_TRACING=1 -D__WEBGUI_DEBUG -DWEBGUI_SRC_DIR=\"$(WEBGUI_ROOT)\" 
+else
+WEB_DEFINE = -DME_DEBUG=0 -DME_GOAHEAD_LOGGING=1 -DME_GOAHEAD_TRACING=0
+endif
+
+ifeq ($(THEME_MATERIAL),true)
+WEB_DEFINE += -DTHEME_MATERIAL
+endif
+
+ifeq ($(THEME_BOOTSTRAP),true)
+WEB_DEFINE += -DTHEME_BOOTSTRAP
+endif
+
 
 OBJS_DIR = $(BASE_ROOT)/$(OBJDIR)/$(MODULEDIR)
 SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)/src
@@ -12,10 +31,15 @@ MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
 WEB_DIR = $(BASE_ROOT)/$(MODULEDIR)
 MODULE_WEB_OBJS  := $(addprefix $(OBJS_DIR)/,$(WEBOBJS))
 
-APP_DIR = $(BASE_ROOT)/$(MODULEDIR)/app
-MODULE_APP_OBJS  := $(addprefix $(OBJS_DIR)/,$(APPOBJS))
+APP_WEB_DIR = $(BASE_ROOT)/$(MODULEDIR)/app/web
+MODULE_APP_WEB_OBJS  := $(addprefix $(OBJS_DIR)/,$(APPWEBOBJS))
 
-PLCFLAGS +=$(ME_DFLAGS)
+APP_JST_DIR = $(BASE_ROOT)/$(MODULEDIR)/app/jst
+MODULE_APP_JST_OBJS  := $(addprefix $(OBJS_DIR)/,$(APPJSTOBJS))
+
+
+PLCFLAGS +=$(ME_DFLAGS) $(WEB_DEFINE) 
+#-DME_GOAHEAD_UPLOAD_DIR=\"/tmp/app/tftpboot\"
 PLINCLUDE +=-I$(WEBGUI_ROOT)/src
 
 ifeq ($(ME_COM_MBEDTLS),1)
@@ -116,25 +140,36 @@ $(OBJS_DIR)/%.o: $(WEB_DIR)/%.c $(DEP_H)
 	@$(PL_ECHO_CC)
 	@$(PL_OBJ_COMPILE)
 
-$(OBJS_DIR)/%.o: $(APP_DIR)/%.c $(DEP_H)
+$(OBJS_DIR)/%.o: $(APP_WEB_DIR)/%.c $(DEP_H)
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
 	@$(PL_ECHO_CC)
-	@$(PL_OBJ_COMPILE)		
+	@$(PL_OBJ_COMPILE)	
+
+$(OBJS_DIR)/%.o: $(APP_JST_DIR)/%.c $(DEP_H)
+	@if test ! -d $(OBJS_DIR) ; \
+		then \
+		$(MKDIR) -p $(OBJS_DIR) ; \
+	fi
+	@$(PL_ECHO_CC)
+	@$(PL_OBJ_COMPILE)
+	
+		
 #
 #
 $(LIBS) : $(MODULE_OBJS) $(mbedtls_MODULE_OBJS) $(goahead_mbedtls_MODULE_OBJS) \
 		  $(goahead_openssl_MODULE_OBJS) $(gopass_MODULE_OBJS) $(MODULE_WEB_OBJS) \
-		  $(MODULE_APP_OBJS)
+		  $(MODULE_APP_WEB_OBJS) $(MODULE_APP_JST_OBJS)
 	$(PL_MAKE_LIB) $(LIBS) $(MODULE_OBJS) $(mbedtls_MODULE_OBJS) \
 	 $(goahead_mbedtls_MODULE_OBJS) $(goahead_openssl_MODULE_OBJS) \
-	 $(gopass_MODULE_OBJS) $(MODULE_WEB_OBJS) $(MODULE_APP_OBJS)
+	 $(gopass_MODULE_OBJS) $(MODULE_WEB_OBJS) $(MODULE_APP_WEB_OBJS) $(MODULE_APP_JST_OBJS)
 
 
 -include $(MODULE_WEB_OBJS:.o=.d)
--include $(MODULE_APP_OBJS:.o=.d)
+-include $(MODULE_APP_WEB_OBJS:.o=.d)
+-include $(MODULE_APP_JST_OBJS:.o=.d)
 
 ifeq ($(ME_COM_MBEDTLS),1)
 -include $(mbedtls_MODULE_OBJS:.o=.d)

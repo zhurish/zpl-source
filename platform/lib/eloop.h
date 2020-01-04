@@ -76,6 +76,7 @@ struct eloop_master
   struct timeval relative_time;
   struct eloop *eloop_current;
   void *mutex;
+  BOOL bquit;
 };
 
 typedef unsigned char eloop_type;
@@ -227,7 +228,8 @@ extern void eloop_call (struct eloop *);
 extern unsigned long eloop_timer_remain_second (struct eloop *);
 extern struct timeval eloop_timer_remain(struct eloop*);
 extern int eloop_should_yield (struct eloop *);
-
+extern int eloop_fetch_quit (struct eloop_master *);
+extern int eloop_wait_quit (struct eloop_master *);
 /* Internal libzebra exports */
 extern void eloop_getrusage (struct timeval *);
 

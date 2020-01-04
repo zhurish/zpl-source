@@ -33,13 +33,23 @@
 #
 #route uri=/cgi-bin dir=/ handler=cgi
 route uri=/cgi-bin dir=/tmp/app/www handler=cgi
+
+route uri=/action/logout methods=POST handler=action redirect=200@/html/login.html
+route uri=/action/login methods=POST handler=action redirect=200@/html/main.html redirect=401@/html/login.html
+
 route uri=/action handler=action
+
 route uri=/ extensions=jst,asp,html handler=jst
 route uri=/ methods=OPTIONS|TRACE handler=options
 
+#route uri=/action/login methods=POST handler=action redirect=200@/html/main.html redirect=401@/html/login.html
+#route uri=/html/login.html
+#route uri=/html/ auth=form handler=continue abilities=manage redirect=401@/html/login.html
+
+
 #   For legacy GoAhead applications using /goform
 route uri=/goform handler=action
-
+#route uri=/ auth=digest abilities=create,view,edit,delete
 #
 #   Catch-all route without authentication for all other URIs
 #

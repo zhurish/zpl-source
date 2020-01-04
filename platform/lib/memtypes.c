@@ -32,6 +32,8 @@ struct memory_list memory_list_lib[] =
   { MTYPE_NSM,		"NSM"			},
   { MTYPE_NSM_INFO,		"NSM info"			},
   { MTYPE_NSM_CLIENT,		"NSM Client info"			},
+  { MTYPE_HOOK,		"Hook info"			},
+  { MTYPE_NSM_HOOK,		"NSM Client Hook info"			},
   { MTYPE_VTY,			"VTY"				},
   { MTYPE_VTY_OUT_BUF,		"VTY output buffer"		},
   { MTYPE_VTY_HIST,		"VTY history"			},
@@ -428,6 +430,18 @@ struct memory_list memory_list_wifi[] =
 };
 #endif
 
+
+//#ifdef PL_WIFI_MODULE
+struct memory_list memory_list_firewall[] =
+{
+  { MTYPE_FIREWALL,             "Firewall structure"				},
+  { MTYPE_FIREWALL_ZONE,        "Firewall Zone structure"			},
+  { MTYPE_FIREWALL_RULE,        "Firewall Rule info"			},
+  { MTYPE_FIREWALL_TABLE,       "Firewall Table info"			},
+  { -1, NULL }
+};
+//#endif
+
 struct memory_list memory_list_port[] =
 {
 	{ MTYPE_PORT,			"PHY PORT information"			},
@@ -498,6 +512,22 @@ struct memory_list memory_list_web[] =
 };
 #endif
 
+#ifdef PL_VIDEO_MODULE
+struct memory_list memory_list_video[] =
+{
+  { MTYPE_VIDEO,				"Video information"	},
+  { MTYPE_VIDEO_TOP,			"Video Top information"	},
+  { MTYPE_VIDEO_STREAM,			"Video Stream information"	},
+  { MTYPE_VIDEO_MEDIA,			"Video Media information"	},
+  { MTYPE_VIDEO_SESSION,		"Video Session information"	},
+  { MTYPE_VIDEO_DATA,			"Video Data information"	},
+  { MTYPE_VIDEO_SDK,			"Video SDK information"	},
+  { MTYPE_VIDEO_TMP,			"Video Tmp information"	},
+  { -1, NULL },
+};
+
+#endif
+
 struct mlist mlists[] __attribute__ ((unused)) = {
   { memory_list_lib,	"LIB"	},
   { memory_list_zebra,	"ZEBRA"	},
@@ -530,6 +560,9 @@ struct mlist mlists[] __attribute__ ((unused)) = {
 #ifdef PL_WIFI_MODULE
   { memory_list_wifi,	"WIFI"	},
 #endif
+
+  { memory_list_firewall,	"FIREWALL"	},
+
   { memory_list_port,	"PORT"	},
 
   { memory_list_ssh,	"SSH"	},
@@ -539,6 +572,10 @@ struct mlist mlists[] __attribute__ ((unused)) = {
 
 #ifdef PL_WEBGUI_MODULE
   { memory_list_web,	"WEBGUI"	},
+#endif
+
+#ifdef PL_VIDEO_MODULE
+  { memory_list_video,	"VIDEO"	},
 #endif
 /* 2016��6��27�� 21:07:44 zhurish: ��չ·��Э�����ӵ��ڴ���Ϣ */
   { NULL, NULL},

@@ -1,0 +1,111 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta content="" name="description" />
+    <meta content="webthemez" name="author" />
+    <!--meta http-equiv="refresh" content="30"-->
+    <!-- Bootstrap Styles-->
+    <link href="../css/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- private Styles-->
+    <link href="../css/private.css" rel="stylesheet" />
+
+    <!-- jQuery Js -->
+    <script src="../js/jquery-2.1.1.min.js"></script>
+    <!-- Bootstrap Js -->
+    <script src="../js/bootstrap.min.js"></script>
+    <script src="../js/xhr.js"></script>
+    <script src="../js/data-type.js"></script>
+
+    <title>Card</title>
+</head>
+
+<body class="body-bg-img">
+    <div id="maincontent" class="container">
+        <fieldset class="fieldset-margin fieldset-background">
+            <form class="form-horizontal form-margin show" role="form" name="dns" action="" accept-charset="UTF-8"
+                method="POST">
+                <div id="cardconfig">
+                    <legend class="legend-text-align">刷卡配置</legend>
+                    <div class="form-group">
+                        <label for="cardid" class="col-sm-3 control-label">卡ID</label>
+                        <div class="col-sm-4">
+                            <input type="text" minlength="6" maxlength="32" class="form-control" name="cardid"
+                                id="cardid" value="">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="col-xs-4 control-label">
+                            <button type="button" class="btn btn-submit" name="refresh" id="refresh"
+                                onclick="card_refresh()"><span class="glyphicon glyphicon-refresh"
+								style="margin-right:10px;"></span>刷新</button>
+                        </div>
+                    </div>
+
+                    <div id="handle_waiting" class="alert alert-success hiden">
+                        <strong><img src="../res/icons/loading.gif" alt="Waiting..."
+                                style="padding-left:150px; padding-right:20px">Waiting for command to
+                            complete...</strong>
+                    </div>
+                    <div id="handle_error" class="alert alert-warning hiden">
+                        <strong style="padding-left:150px; padding-right:20px; color: red;">Error</strong>
+                    </div>
+                    <script type="text/javascript">
+                        function card_refresh() {
+
+                            var argv;
+                            var stxhr = new XHR();
+                            argv = "ACTION=GET";
+
+                            $("#handle_waiting").css("display", "block");
+                            //document.getElementById("card_refresh").disabled = true;
+
+                            stxhr.post("/goform/card", argv,
+                                function (x, json) {
+                                    console.log(x);
+                                    console.log(json);
+                                    if (x.responseText != "" && json == null) {
+                                        if (x.responseText == "ERROR") {
+
+                                        }
+                                        else if (x.responseText == "OK") {
+                                            //$('[name="dhcp_enable"]').bootstrapSwitch('state',true);
+                                        }
+                                        $("#handle_waiting").css("display", "none");
+                                        setTimeout(function () { $("#handle_error").css("display", "none") }, 2000);
+                                        //document.getElementById("card_refresh").disabled = false;
+                                    }
+                                    else if (x.responseText != "" && json != null) {
+                                        if (json.response == "OK") 
+                                        {
+                                            $("#handle_waiting").css("display", "none");
+
+                                            document.getElementById("cardid").value = json.cardid;
+                                            //document.getElementById("card_refresh").disabled = false;
+                                            //document.getElementById("dns").value = json.dns;
+                                        }
+                                        else
+                                        {
+                                            $("#handle_waiting").css("display", "none");
+                                            setTimeout(function () { $("#handle_error").css("display", "none") }, 2000);
+                                            //document.getElementById("card_refresh").disabled = false;
+                                        }
+                                    }
+                                },
+                                3000
+                            );
+                        }
+                        card_refresh();
+                    </script>
+                </div>
+            </form>
+        </fieldset>
+    </div>
+</body>
+
+</html>

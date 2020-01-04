@@ -3,6 +3,7 @@ include $(MAKE_DIR)/makelinux.mk
 include config.mk
 
 #OBJS = $(OSOBJ)
+PLCFLAGS += -Werror=format
 
 OBJS_DIR = $(BASE_ROOT)/$(OBJDIR)/$(APP_OBJ_DIR)
 SRC_DIR = $(BASE_ROOT)/$(APP_OBJ_DIR)
@@ -23,27 +24,33 @@ $(LIBS) : $(MODULE_OBJS)
 	$(PL_MAKE_LIB) $(APP_LIBS) $(MODULE_OBJS)
 
 
-include $(MAKE_DIR)/make.mk
+#include $(MAKE_DIR)/make.mk
 
-#lib: $(LIBS)
+-include $(MODULE_OBJS:.o=.d)
 #
 #
+#$(LIBS) : $(MODULE_OBJS)
+#	$(PL_MAKE_LIB) $(LIBS) $(MODULE_OBJS)
 #
-#obj: $(MODULE_OBJS) $(MODULE_LIBOBJS)
-#
-#install: $(LIBS)
-#	install -d $(LIB_DIR)
-#	install -m 755 $(LIBS) $(LIB_DIR)
+lib: $(LIBS)
+
+
+
+obj: $(MODULE_OBJS) $(MODULE_LIBOBJS)
+
+install: $(LIBS)
+	install -d $(LIB_DIR)
+	install -m 755 $(LIBS) $(LIB_DIR)
 #	$(STRIP) $(LIB_DIR)/$(LIBS)
 
-#clean: objclean
-#	@$(RM) $(LIB_DIR)/$(LIBS)
-#	@$(RM) $(LIBS)
+clean: objclean
+	@$(RM) $(LIB_DIR)/$(LIBS)
+	@$(RM) $(LIBS)
 
-#objclean: 
-#	@$(RM) $(OBJS_DIR)/*
+objclean: 
+	@$(RM) $(OBJS_DIR)/* -rf
 
-#all: lib install
+all: lib install
 
-#.PHONY:	obj all lib install objclean clean
+.PHONY:	obj all lib install objclean clean
 

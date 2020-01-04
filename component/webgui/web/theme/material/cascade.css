@@ -26,7 +26,7 @@
     src: url('fonts/font.eot');
     src: url('fonts/font.eot') format('embedded-opentype'),
     url('fonts/font.ttf') format('truetype'),
-    /*url('fonts/font.woff') format('woff'),*/
+    url('fonts/font.woff') format('woff'),
     url('fonts/font.svg') format('svg');
     font-weight: normal;
     font-style: normal;
@@ -149,7 +149,7 @@ input,
 
 select:not([multiple="multiple"]):focus,
 input:focus {
-    border-color: #0099CC;
+    border-color: #1890ff;
 }
 
 select[multiple="multiple"] {
@@ -157,7 +157,7 @@ select[multiple="multiple"] {
 }
 
 code {
-    color: #0099CC;
+    color: #1890ff;
 }
 
 abbr {
@@ -272,15 +272,6 @@ footer > a {
     background-color: #EEE;
 }
 
-.main-right > #maincontent > .loading {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    z-index: 1000;
-    display: block;
-    background-color: rgb(240, 240, 240);
-    top: 0;
-}
 .pull-right {
     float: right;
 }
@@ -290,7 +281,7 @@ footer > a {
 }
 
 header {
-    background: #124B5F;
+    background: #1890ff;
     color: white;
 }
 
@@ -301,10 +292,15 @@ header > .fill > .container {
 
 header > .fill > .container > .brand {
     font-size: 1.4rem;
-    color: #30ec15;
+    color: white;
     text-decoration: none;
     cursor: default;
     vertical-align: text-bottom;
+}
+
+header > .fill > .container >.logo {
+    width: 13rem;
+    height: 2.6rem;
 }
 
 .danger {
@@ -416,27 +412,23 @@ header > .fill > .container > .brand {
 .main > .main-left > .nav > li:hover,
 .main > .main-left > .nav > .slide > .menu:hover {
     background: #D4D4D4;
-    display: block;/*zhurish*/
 }
 
 .main > .main-left > .nav > .slide:hover {
     background: none;
-    display: block;/*zhurish*/
 }
 
 .main > .main-left > .nav > .slide > .slide-menu > li {
     padding: 0.4rem 2rem;
-    display: block;/*zhurish*/
 }
 
 .main > .main-left > .nav > .slide > .slide-menu > .active {
-    background-color: #0099CC;
+    background-color: #1890ff;
 }
 
 .main > .main-left > .nav > .slide > .slide-menu > li > a {
     text-decoration: none;
     white-space: nowrap;
-    display: block;/*zhurish*/
 }
 
 .main > .main-left > .nav > .slide > .slide-menu > .active > a {
@@ -445,11 +437,10 @@ header > .fill > .container > .brand {
 
 .main > .main-left > .nav > .slide > .slide-menu > li:hover {
     background: #D4D4D4;
-    display: block;/*zhurish*/
 }
 
 .main > .main-left > .nav > .slide > .slide-menu > .active:hover {
-    background-color: #0099CC;
+    background-color: #1890ff;
     cursor: hand;
 }
 
@@ -607,7 +598,7 @@ div > .table > .tbody > .tr:nth-of-type(2n) {
 #conns > div > div,
 #memtotal > div > div {
     height: 100% !important;
-    background-color: #0099CC !important;
+    background-color: #1890ff !important;
 }
 
 /* fix multiple table */
@@ -637,7 +628,7 @@ td > table > tbody > tr > td,
 .btn, .cbi-button {
     -webkit-appearance: none;
     text-transform: uppercase;
-    color: #000000;
+    color: rgba(0, 0, 0, 0.87);
     background-color: #F0F0F0;
     transition: all 0.2s ease-in-out;
     display: inline-block;
@@ -670,37 +661,29 @@ td > table > tbody > tr > td,
 .cbi-page-actions .cbi-button-apply + .cbi-button-save:hover,
 .cbi-page-actions .cbi-button-apply + .cbi-button-save:focus,
 .cbi-page-actions .cbi-button-apply + .cbi-button-save:active {
-	color: #000000;
     outline: 0;
     text-decoration: none;
     background-color: rgba(250, 250, 250, 0.7);
-    border-radius: 0.5rem;
 }
 
 .btn:hover,
 .btn:focus,
 .cbi-button:hover,
 .cbi-button:focus {
-	color: #000000;
     box-shadow: 0 0px 2px rgba(0, 0, 0, 0.12), 0 2px 2px rgba(0, 0, 0, 0.2);
-    border-radius: 0.5rem;
 }
 
 .btn:active,
 .cbi-button:active {
-	color: #000000;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
-    border-radius: 0.5rem;
 }
 
 .btn:disabled,
 .cbi-button:disabled {
-	color: #000000;
     cursor: not-allowed;
     pointer-events: none;
     opacity: 0.60;
     box-shadow: none;
-    border-radius: 0.5rem;
 }
 
 .cbi-page-actions .cbi-button-apply,
@@ -709,67 +692,71 @@ td > table > tbody > tr > td,
 .cbi-button-apply.important,
 .cbi-button-reload.important,
 .cbi-button-action.important {
-    color: #000000;
+    color: #fff;
     background-color: #337ab7;
-    border-radius: 0.5rem;
 }
 
 .cbi-page-actions .cbi-button-save,
 .cbi-button-add.important,
 .cbi-button-save.important,
 .cbi-button-positive.important {
-    color: #000000;
+    color: #fff;
     background-color: #5bc0de;
-    border-radius: 0.5rem;
 }
 
 .cbi-button-remove.important,
 .cbi-button-reset.important,
 .cbi-button-negative.important {
-    color: #000000;
+    color: #fff;
     background-color: #d9534f;
-    border-radius: 0.5rem;
 }
 
+.cbi-input-find,
+.cbi-input-link,
+.cbi-input-up,
+.cbi-input-down,
+.cbi-input-neutral,
 .cbi-button-find,
 .cbi-button-link,
 .cbi-button-up,
 .cbi-button-down,
 .cbi-button-neutral {
-	color: #000000;
     border: 1px solid #bfbfbf;
-    background-color: #22e40e;
-    border-radius: 0.5rem;
+    background-color: transparent;
 }
-
+.cbi-input-edit,
+.cbi-input-apply,
+.cbi-input-reload,
+.cbi-input-action,
 .cbi-button-edit,
 .cbi-button-apply,
 .cbi-button-reload,
 .cbi-button-action {
-    color: #000000;
+    color: #000;
     border: 1px solid #2e6da4;
-    background-color: #0eb5e4;
-    border-radius: 0.5rem;
+    background-color: #13ce0ee0;
 }
 
+.cbi-input-add,
+.cbi-input-save,
+.cbi-input-positive,
 .cbi-page-actions .cbi-button-apply + .cbi-button-save,
 .cbi-button-add,
 .cbi-button-save,
 .cbi-button-positive {
-    color: #000000;
-    border: 1px solid #46b8da;
-    background-color: #0ee40e;
-    border-radius: 0.5rem;
+    color: #0a0a0a;
+    border: 1px solid #0000;
+    background-color: #1890ff;
 }
-
+.cbi-input-remove,
+.cbi-input-reset,
 .cbi-section-remove > .cbi-button,
 .cbi-button-remove,
 .cbi-button-reset,
 .cbi-button-negative {
-    color: #000000;
+    color: #000;
     border: 1px solid #d43f3a;
-    background-color: #ff0000;
-    border-radius: 0.5rem;
+    background-color: #ea2306;
 }
 
 .cbi-page-actions .cbi-button-link:first-child {
@@ -804,8 +791,8 @@ td > table > tbody > tr > td,
 .tabs > li[class~="active"],
 .tabs > li:hover {
     cursor: pointer;
-    border-bottom: 0.2rem solid #0099CC;
-    color: #0099CC;
+    border-bottom: 0.2rem solid #1890ff;
+    color: #1890ff;
     margin-bottom: -0.18751rem;
 }
 
@@ -1470,7 +1457,6 @@ small {
     min-width: 0;
     padding: 0.2rem 0.3rem;
     font-size: 1.2rem;
-    border-radius: 0.5rem;
 }
 
 .cbi-optionals {

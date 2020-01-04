@@ -10,30 +10,30 @@
 
 typedef struct sdk_vlan_s
 {
-    int    (*sdk_vlan_enable)(BOOL);
-    int    (*sdk_vlan_create)(vlan_t);
-    int    (*sdk_vlan_delete)(vlan_t);
-    int    (*sdk_vlan_batch_create)(vlan_t, vlan_t);
-    int    (*sdk_vlan_batch_delete)(vlan_t, vlan_t);
+    int    (*sdk_vlan_enable)(void *, BOOL);
+    int    (*sdk_vlan_create)(void *, vlan_t);
+    int    (*sdk_vlan_delete)(void *, vlan_t);
+    int    (*sdk_vlan_batch_create)(void *, vlan_t, vlan_t);
+    int    (*sdk_vlan_batch_delete)(void *, vlan_t, vlan_t);
 
-    int    (*sdk_vlan_add_untag_port)(ifindex_t, vlan_t);
-    int    (*sdk_vlan_del_untag_port)(ifindex_t, vlan_t);
-    int    (*sdk_vlan_add_tag_port)(ifindex_t, vlan_t);
-    int    (*sdk_vlan_del_tag_port)(ifindex_t, vlan_t);
+    int    (*sdk_vlan_add_untag_port)(void *, ifindex_t, vlan_t);
+    int    (*sdk_vlan_del_untag_port)(void *, ifindex_t, vlan_t);
+    int    (*sdk_vlan_add_tag_port)(void *, ifindex_t, vlan_t);
+    int    (*sdk_vlan_del_tag_port)(void *, ifindex_t, vlan_t);
 
-    int    (*sdk_port_set_native_vlan)(ifindex_t, vlan_t);
-    int    (*sdk_port_unset_native_vlan)(ifindex_t, vlan_t);
+    int    (*sdk_port_set_native_vlan)(void *, ifindex_t, vlan_t);
+    int    (*sdk_port_unset_native_vlan)(void *, ifindex_t, vlan_t);
 
-    int    (*sdk_port_add_allowed_tag_vlan)(ifindex_t, vlan_t);
-    int    (*sdk_port_del_allowed_tag_vlan)(ifindex_t, vlan_t);
+    int    (*sdk_port_add_allowed_tag_vlan)(void *, ifindex_t, vlan_t);
+    int    (*sdk_port_del_allowed_tag_vlan)(void *, ifindex_t, vlan_t);
 
-    int    (*sdk_port_add_allowed_tag_batch_vlan)(ifindex_t, vlan_t, vlan_t);
-    int    (*sdk_port_del_allowed_tag_batch_vlan)(ifindex_t, vlan_t, vlan_t);
+    int    (*sdk_port_add_allowed_tag_batch_vlan)(void *, ifindex_t, vlan_t, vlan_t);
+    int    (*sdk_port_del_allowed_tag_batch_vlan)(void *, ifindex_t, vlan_t, vlan_t);
 
-    int    (*sdk_port_set_pvid_vlan)(ifindex_t, vlan_t);
-    int    (*sdk_port_unset_pvid_vlan)(ifindex_t, vlan_t);
+    int    (*sdk_port_set_pvid_vlan)(void *, ifindex_t, vlan_t);
+    int    (*sdk_port_unset_pvid_vlan)(void *, ifindex_t, vlan_t);
 
-
+    void *sdk_driver;
 #if 0
     /* vlan_mode_set            */  drv_vlan_mode_set,
     /* vlan_mode_get            */  drv_vlan_mode_get,
@@ -54,8 +54,6 @@ typedef struct sdk_vlan_s
 
 }sdk_vlan_t;
 
-
-extern sdk_vlan_t sdk_vlan;
 
 extern int hal_vlan_enable(BOOL enable);
 extern int hal_vlan_create(vlan_t vlan);

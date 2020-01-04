@@ -222,7 +222,7 @@ char * buf) /* Current position in buffer */
  * The old way use SIOCGIFCONF, so get only configured interfaces (wireless
  * or not).
  */
-void iw_enum_devices(int skfd, iw_enum_handler fn, char * args[], int count)
+void iw_enum_devices(int skfd, iw_enum_handler fn, char * args[], int count, iw_user_cb_t *cb)
 {
 	char buff[1024];
 	FILE * fh;
@@ -271,7 +271,7 @@ void iw_enum_devices(int skfd, iw_enum_handler fn, char * args[], int count)
 			}
 			else
 				/* Got it, print info about this interface */
-				(*fn)(skfd, name, args, count);
+				(*fn)(skfd, name, args, count, cb);
 		}
 
 		fclose(fh);
@@ -290,7 +290,7 @@ void iw_enum_devices(int skfd, iw_enum_handler fn, char * args[], int count)
 
 		/* Print them */
 		for (i = ifc.ifc_len / sizeof(struct ifreq); --i >= 0; ifr++)
-			(*fn)(skfd, ifr->ifr_name, args, count);
+			(*fn)(skfd, ifr->ifr_name, args, count, cb);
 	}
 }
 
@@ -445,7 +445,7 @@ int iw_print_version_info(const char * toolname)
 #endif
 
 	/* Version for each device */
-	iw_enum_devices(skfd, &print_iface_version_info, NULL, 0);
+	iw_enum_devices(skfd, &print_iface_version_info, NULL, 0, NULL);
 
 	iw_sockets_close(skfd);
 
@@ -3130,6 +3130,7 @@ int iw_kernel_mode(char *ifname, int *mode)
 		{
 			goterr = 0;
 			*mode = wrq.u.mode;
+			printf("============%s(mode=%d)\r\n", __func__, wrq.u.mode);
 		}
 		else
 			*mode = IW_NUM_OPER_MODE; /* Unknown/bug */
@@ -3140,3 +3141,27 @@ int iw_kernel_mode(char *ifname, int *mode)
 	return (goterr);
 }
 
+int iw_kernel_ssid(char *ifname, char *ssid)
+{
+	int skfd; /* generic raw socket desc.	*/
+	int goterr = -1;
+	struct iwreq wrq;
+	memset((char *) &wrq, 0, sizeof(struct iwreq));
+	/* Create a channel to the NET kernel. */
+	if ((skfd = iw_sockets_open()) < 0)
+	{
+		perror("socket");
+	}
+	/* Get AP address */
+	if (iw_get_ext(skfd, ifname, SIOCGIWESSID, &wrq) >= 0)
+	{
+		if(ssid && wrq.u.essid.length)
+			strcpy(ssid, wrq.u.essid.pointer);
+		printf("============%s(essid=%s)\r\n", __func__,wrq.u.essid.pointer);
+
+	}
+	/* Close the socket. */
+	iw_sockets_close(skfd);
+
+	return (goterr);
+}

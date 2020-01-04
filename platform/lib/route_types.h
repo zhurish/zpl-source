@@ -25,7 +25,7 @@
 #define ZEBRA_ROUTE_LLDP                 17
 #define ZEBRA_ROUTE_BFD                  18
 #define ZEBRA_ROUTE_LDP                  19
-#define ZEBRA_ROUTE_DHCP                 ZEBRA_ROUTE_KERNEL
+#define ZEBRA_ROUTE_DHCP                 20
 #define ZEBRA_ROUTE_UTILS                21
 #define ZEBRA_ROUTE_MANAGE               22
 #define ZEBRA_ROUTE_SWITCH               23

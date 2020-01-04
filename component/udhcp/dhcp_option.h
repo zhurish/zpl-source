@@ -8,7 +8,7 @@
 #ifndef __DHCP_OPTION_H__
 #define __DHCP_OPTION_H__
 
-#define DHCP_OPTION_MAX	255
+#define DHCP_OPTION_MAX	256
 
 #pragma pack(1)
 typedef struct dhcp_option_set {

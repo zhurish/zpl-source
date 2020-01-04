@@ -93,13 +93,22 @@ static int nsm_security_client_init()
 
 int nsm_security_init()
 {
+	nsm_firewall_init();
+
 	return nsm_security_client_init();
 }
 
 int nsm_security_exit()
 {
+	nsm_firewall_exit();
 	struct nsm_client *nsm = nsm_client_lookup (NSM_SEC);
 	if(nsm)
 		nsm_client_free (nsm);
 	return OK;
+}
+
+
+void cmd_security_init()
+{
+	cmd_firewall_init ();
 }

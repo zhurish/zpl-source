@@ -141,6 +141,8 @@ extern int nsm_interface_speed_set_api(struct interface *ifp, nsm_speed_en speed
 extern int nsm_interface_speed_get_api(struct interface *ifp, nsm_speed_en *speed);
 
 extern int nsm_interface_update_kernel(struct interface *ifp, char *kname);
+extern int nsm_interface_update_api(struct interface *ifp);
+extern int nsm_interface_hw_update_api(struct interface *ifp);
 
 extern void nsm_interface_show_api(struct vty *vty, struct interface *ifp);
 extern void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, BOOL status, BOOL *head);

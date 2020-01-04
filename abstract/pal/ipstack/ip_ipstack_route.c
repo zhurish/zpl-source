@@ -30,7 +30,7 @@
 #include "debug.h"
 
 #include "ip_ipstack.h"
-#include "../kernel/pal_interface.h"
+#include "pal_driver.h"
 
 #if 0
 #include "ipnet_cmd.h"

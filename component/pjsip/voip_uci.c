@@ -32,7 +32,14 @@
 #include "voip_volume.h"
 #include "voip_uci.h"
 
+#include "application.h"
 
+/*
+ * iptables -A INPUT -p tcp --dport 23 -i br-lan -j DROP
+ * iptables -A INPUT -p tcp -m multiport --dports 53,67 -i eth0.2 -j ACCEPT
+ * iptables -A FORWARD -s 192.168.200.1/24 -p all -i eth1_0 -j DROP
+ * iptables -A INPUT -s 192.168.200.1/24 -d 192.168.200.1 -p all -i eth1_0 -j DROP
+ */
 BOOL voip_global_enabled()
 {
 	int enable = 0;
@@ -46,7 +53,7 @@ BOOL voip_global_enabled()
 }
 
 
-int voip_status_register_api(BOOL reg)
+int voip_status_register_api(int reg)
 {
 #ifdef PL_OPENWRT_UCI
 	os_uci_set_integer("voipconfig.status.regstate", reg);
@@ -610,16 +617,16 @@ static int _voip_stream_config_load(pl_pjsip_t *voip)
 */
 
 /*
-	os_uci_get_float("voipconfig.voip.el_force", &floatvalue);
+	os_uci_get_float("voipconfig.voip.el_force", "%.1f", &floatvalue);
 	voip->el_force = floatvalue;
 
-	os_uci_get_float("voipconfig.voip.el_speed", &floatvalue);
+	os_uci_get_float("voipconfig.voip.el_speed", "%.1f", &floatvalue);
 	voip->el_speed = floatvalue;
 
-	os_uci_get_float("voipconfig.voip.el_thres", &floatvalue);
+	os_uci_get_float("voipconfig.voip.el_thres", "%.1f", &floatvalue);
 	voip->el_thres = floatvalue;
 
-	os_uci_get_float("voipconfig.voip.el_transmit", &floatvalue);
+	os_uci_get_float("voipconfig.voip.el_transmit", "%.1f", &floatvalue);
 	voip->el_transmit = floatvalue;
 
 	os_uci_get_integer("voipconfig.voip.el_sustain", &value);
@@ -630,10 +637,10 @@ static int _voip_stream_config_load(pl_pjsip_t *voip)
 	voip->noise_gate = value;
 
 
-	os_uci_get_float("voipconfig.voip.ng_floorgain", &floatvalue);
+	os_uci_get_float("voipconfig.voip.ng_floorgain", "%.1f", &floatvalue);
 	voip->ng_floorgain = floatvalue;
 
-	os_uci_get_float("voipconfig.voip.ng_threshold", &floatvalue);
+	os_uci_get_float("voipconfig.voip.ng_threshold", "%.1f", &floatvalue);
 	voip->ng_threshold = floatvalue;
 */
 
@@ -669,16 +676,16 @@ int voip_stream_config_save(void *p)
 
 /*
 	os_uci_set_integer("voipconfig.voip.ec_limiter", voip->echo_limiter);
-		os_uci_set_float("voipconfig.voip.el_force", voip->el_force);
-		os_uci_set_float("voipconfig.voip.el_speed", voip->el_speed);
-		os_uci_set_float("voipconfig.voip.el_thres", voip->el_thres);
-		os_uci_set_float("voipconfig.voip.el_transmit", voip->el_transmit);
+		os_uci_set_float("voipconfig.voip.el_force", "%.1f", voip->el_force);
+		os_uci_set_float("voipconfig.voip.el_speed", "%.1f", voip->el_speed);
+		os_uci_set_float("voipconfig.voip.el_thres", "%.1f", voip->el_thres);
+		os_uci_set_float("voipconfig.voip.el_transmit", "%.1f", voip->el_transmit);
 		os_uci_set_integer("voipconfig.voip.el_sustain", voip->el_sustain);
 
 
 	os_uci_set_integer("voipconfig.voip.noise_gate", voip->noise_gate);
-		os_uci_set_float("voipconfig.voip.ng_floorgain", voip->ng_floorgain);
-		os_uci_set_float("voipconfig.voip.ng_threshold", voip->ng_threshold);
+		os_uci_set_float("voipconfig.voip.ng_floorgain", "%.1f", voip->ng_floorgain);
+		os_uci_set_float("voipconfig.voip.ng_threshold", "%.1f", voip->ng_threshold);
 */
 
 	voip_playback_volume_out_get_api(&volume);
@@ -719,14 +726,16 @@ int voip_stream_config_load(void *voip)
 
 
 
+#endif
 
+#ifdef X5B_APP_DATABASE
 static int voip_stream_restart_job(void *p)
 {
 	zassert(pl_pjsip != NULL);
 	//if(strstr(buf, "voip"))
 	{
 		_voip_stream_config_load(pl_pjsip);
-		vty_execute_shell("write memory");
+		//vty_execute_shell("write memory");
 	}
 	return OK;
 }
@@ -743,11 +752,10 @@ static int voip_sip_restart_job(void *p)
 		//zlog_debug(ZLOG_VOIP, "OSIP Restart");
 		pjsua_app_restart();
 		//zlog_debug(ZLOG_VOIP, "OSIP Save Config");
-		vty_execute_shell("write memory");
+		//vty_execute_shell("write memory");
 	}
 	return OK;
 }
-
 
 
 /*
@@ -819,7 +827,7 @@ static int voip_ubus_call_enable(BOOL start)
 	}
 	return ret;
 }
-#endif
+
 
 
 static int tcpdump_capture_start(char *name)
@@ -884,8 +892,6 @@ static int tcpdump_capture_stop(void)
 	return OK;
 }
 
-
-#ifdef PL_OPENWRT_UCI
 static int voip_ubus_capture_enable(BOOL start)
 {
 	static u_int8 capture_enable = 0;

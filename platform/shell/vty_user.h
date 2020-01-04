@@ -77,6 +77,7 @@ extern int vty_user_config_write (struct vty *);
 extern int vty_user_create(struct vty *, char *, char *, BOOL , BOOL );
 extern int vty_user_delete(struct vty *, char *, BOOL , BOOL );
 extern int vty_user_change(struct vty *, char *);
+extern int vty_user_foreach (int (*cb)(void *user, void *p), void *p);
 
 extern char * vty_user_get(struct vty *);
 

@@ -19,42 +19,40 @@
 #include "nsm_client.h"
 
 #include "hal_mac.h"
-
-sdk_mac_t sdk_mac;
-
+#include "hal_driver.h"
 
 int hal_mac_age(int age)
 {
-	if(sdk_mac.sdk_mac_age_cb)
-		return sdk_mac.sdk_mac_age_cb(age);
+	if(hal_driver && hal_driver->mac_tbl && hal_driver->mac_tbl->sdk_mac_age_cb)
+		return hal_driver->mac_tbl->sdk_mac_age_cb(hal_driver->driver, age);
 	return ERROR;
 }
 
 int hal_mac_add(ifindex_t ifindex, vlan_t vlan, mac_t *mac, int pri)
 {
-	if(sdk_mac.sdk_mac_add_cb)
-		return sdk_mac.sdk_mac_add_cb(ifindex, vlan, mac, pri);
+	if(hal_driver && hal_driver->mac_tbl && hal_driver->mac_tbl->sdk_mac_add_cb)
+		return hal_driver->mac_tbl->sdk_mac_add_cb(hal_driver->driver, ifindex, vlan, mac, pri);
 	return ERROR;
 }
 
 int hal_mac_del(ifindex_t ifindex, vlan_t vlan, mac_t *mac, int pri)
 {
-	if(sdk_mac.sdk_mac_del_cb)
-		return sdk_mac.sdk_mac_del_cb(ifindex, vlan, mac, pri);
+	if(hal_driver && hal_driver->mac_tbl && hal_driver->mac_tbl->sdk_mac_del_cb)
+		return hal_driver->mac_tbl->sdk_mac_del_cb(hal_driver->driver, ifindex, vlan, mac, pri);
 	return ERROR;
 }
 
 int hal_mac_clr(ifindex_t ifindex, vlan_t vlan)
 {
-	if(sdk_mac.sdk_mac_clr_cb)
-		return sdk_mac.sdk_mac_clr_cb(ifindex, vlan);
+	if(hal_driver && hal_driver->mac_tbl && hal_driver->mac_tbl->sdk_mac_clr_cb)
+		return hal_driver->mac_tbl->sdk_mac_clr_cb(hal_driver->driver, ifindex, vlan);
 	return ERROR;
 }
 
 int hal_mac_read(ifindex_t ifindex, vlan_t vlan)
 {
-	if(sdk_mac.sdk_mac_read_cb)
-		return sdk_mac.sdk_mac_read_cb(ifindex, vlan);
+	if(hal_driver && hal_driver->mac_tbl && hal_driver->mac_tbl->sdk_mac_read_cb)
+		return hal_driver->mac_tbl->sdk_mac_read_cb(hal_driver->driver, ifindex, vlan);
 	return ERROR;
 }
 

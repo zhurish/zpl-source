@@ -8,9 +8,14 @@
 #include <zebra.h>
 #include "b53_mdio.h"
 #include "b53_regs.h"
-#include "b53_driver.h"
+#include "sdk_driver.h"
 
-
+/*
+ * 基于端口的VLAN类似access port配置，在同一个VLAN的端口可以互通
+ * 		路由器 的 LAN接口就是在端口VLAN下配置
+ *
+ * 基于8021Q的vlan 用于配置trunk接口
+ */
 int b53125_enable_vlan(struct b53125_device *dev, BOOL enable,
 		BOOL enable_filtering)
 {
@@ -199,6 +204,19 @@ int b53125_del_vlan_port(struct b53125_device *dev, u16 vid, int port, BOOL tag)
 }
 
 /**************************************************************************************/
+int b53125_port_vlan(struct b53125_device *dev, int port, BOOL enable)
+{
+	int ret = 0;
+	u16 entry = 0;
+	ret |= b53125_write16(dev, B53_PVLAN_PAGE, 2*(port), &entry);
+	if(enable)
+		entry |= BIT(port);
+	else
+		entry &= ~BIT(port);
+	ret |= b53125_write16(dev, B53_PVLAN_PAGE, 2*(port), entry);
+	return ret;
+}
+
 int b53125_port_pvid(struct b53125_device *dev, u16 vid, int port, int pri)
 {
 	int ret = 0;

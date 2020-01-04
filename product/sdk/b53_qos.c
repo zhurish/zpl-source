@@ -10,7 +10,7 @@
 #include <zebra.h>
 #include "b53_mdio.h"
 #include "b53_regs.h"
-#include "b53_driver.h"
+#include "sdk_driver.h"
 
 
 /*************************************************************************/
@@ -22,13 +22,14 @@ int b53125_qos_aggreation_mode(struct b53125_device *dev, BOOL enable)
 	if(enable)
 		port_ctrl |= B53_AGG_MODE;
 	else
-		port_ctrl &= ~B53_AGG_MODE;
+		port_ctrl &= 0x7f;//~B53_AGG_MODE;
 
 	ret |= b53125_write8(dev, B53_QOS_PAGE, B53_QOS_GLOBAL_CTL, port_ctrl);
 	return ret;
 }
 
 /*************************************************************************/
+//设置使能基于端口的优先级(基于端口默认VLAN优先级)
 int b53125_qos_base_port(struct b53125_device *dev, BOOL enable)
 {
 	int ret = 0;
@@ -43,21 +44,26 @@ int b53125_qos_base_port(struct b53125_device *dev, BOOL enable)
 	return ret;
 }
 /*************************************************************************/
+//设置优先级映射规则
 int b53125_qos_layer_sel(struct b53125_device *dev, int sel)
 {
 	int ret = 0;
 	u8 port_ctrl = 0;
 	ret |= b53125_read8(dev, B53_QOS_PAGE, B53_QOS_GLOBAL_CTL, &port_ctrl);
 	port_ctrl &= ~(3<<B53_QOS_LAYER_SEL_S);
+	port_ctrl |= (sel<<B53_QOS_LAYER_SEL_S);
+/*
 	if(enable)
 		port_ctrl |= (sel<<B53_QOS_LAYER_SEL_S);
 	else
 		port_ctrl &= ~(sel<<B53_QOS_LAYER_SEL_S);
+*/
 
 	ret |= b53125_write8(dev, B53_QOS_PAGE, B53_QOS_GLOBAL_CTL, port_ctrl);
 	return ret;
 }
 /*************************************************************************/
+//禁止使能8021p优先级
 int b53125_qos_8021p(struct b53125_device *dev, int port, BOOL enable)
 {
 	int ret = 0;
@@ -72,6 +78,7 @@ int b53125_qos_8021p(struct b53125_device *dev, int port, BOOL enable)
 	return ret;
 }
 /*************************************************************************/
+//禁止使能差分服务优先级
 int b53125_qos_diffserv(struct b53125_device *dev, int port, BOOL enable)
 {
 	int ret = 0;
@@ -87,22 +94,24 @@ int b53125_qos_diffserv(struct b53125_device *dev, int port, BOOL enable)
 }
 
 /*************************************************************************/
+//设置端口到队列的映射（8021P优先级到COS优先级的映射）
 int b53125_qos_port_map_queue(struct b53125_device *dev, int port, int p, int queue)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;
 	ret |= b53125_read32(dev, B53_QOS_PAGE, B53_PCP_TO_TC_PORT_CTL(port), &port_ctrl);
 	port_ctrl &= ~(B53_TC_QUEUE_MASK<<B53_TC_TO_COS(p));
-	if(enable)
+	//if(enable)
 		port_ctrl |= (queue<<B53_TC_TO_COS(p));
-	else
-		port_ctrl &= ~(p<<B53_TC_TO_COS(p));
+	//else
+	//	port_ctrl &= ~(p<<B53_TC_TO_COS(p));
 
 	ret |= b53125_write32(dev, B53_QOS_PAGE, B53_PCP_TO_TC_PORT_CTL(port), port_ctrl);
 	return ret;
 }
 
 /*************************************************************************/
+//设置差分优先级到队列的映射
 int b53125_qos_diffserv_map_queue(struct b53125_device *dev, int diffserv, int queue)
 {
 	int ret = 0;
@@ -120,35 +129,37 @@ int b53125_qos_diffserv_map_queue(struct b53125_device *dev, int diffserv, int q
 
 	ret |= b53125_read48(dev, B53_QOS_PAGE, reg, &port_ctrl);
 	port_ctrl &= ~(B53_TC_QUEUE_MASK<<B53_DIFFSERV_TO_COS(diffserv));
-	if(enable)
+	//if(enable)
 		port_ctrl |= (queue<<B53_DIFFSERV_TO_COS(diffserv));
-	else
-		port_ctrl &= ~(diffserv<<B53_DIFFSERV_TO_COS(diffserv));
+	//else
+	//	port_ctrl &= ~(diffserv<<B53_DIFFSERV_TO_COS(diffserv));
 
 	ret |= b53125_write48(dev, B53_QOS_PAGE, reg, port_ctrl);
 	return ret;
 }
 /*************************************************************************/
+//设置队列到class的映射
 int b53125_qos_queue_map_class(struct b53125_device *dev, int queue, int class)
 {
 	int ret = 0;
 	u16 port_ctrl = 0;
 	ret |= b53125_read16(dev, B53_QOS_PAGE, B53_QUEUE_TO_CLASS_CTL, &port_ctrl);
 	port_ctrl &= ~(B53_TC_CLASS_MASK<<B53_QUEUE_TO_CLASS(queue));
-	if(enable)
+	//if(enable)
 		port_ctrl |= (class<<B53_QUEUE_TO_CLASS(queue));
 
 	ret |= b53125_write16(dev, B53_QOS_PAGE, B53_QUEUE_TO_CLASS_CTL, port_ctrl);
 	return ret;
 }
 /*************************************************************************/
+//设置class调度方式
 int b53125_qos_class_scheduling(struct b53125_device *dev, int mode)
 {
 	int ret = 0;
 	u8 port_ctrl = 0;
 	ret |= b53125_read8(dev, B53_QOS_PAGE, B53_TX_QUEUE_CTL, &port_ctrl);
 	port_ctrl &= ~(B53_TC_CLASS_MASK);
-	if(enable)
+	//if(enable)
 		port_ctrl |= (mode);
 /*
 00 = all queues are weighted round robin
@@ -162,6 +173,7 @@ round robin.
 	return ret;
 }
 /*************************************************************************/
+//设置进入CPU报文到队列的映射
 int b53125_qos_cpu_map_queue(struct b53125_device *dev, int traffic, BOOL enable)
 {
 	int ret = 0;
@@ -175,6 +187,7 @@ int b53125_qos_cpu_map_queue(struct b53125_device *dev, int traffic, BOOL enable
 	return ret;
 }
 /*************************************************************************/
+//设置class调度权限
 int b53125_qos_class_weight(struct b53125_device *dev, int class, int weight)
 {
 	int ret = 0;
@@ -202,6 +215,7 @@ int b53125_qos_class4_weight(struct b53125_device *dev, BOOL strict, int weight)
 /*************************************************************************/
 /*************************************************************************/
 /*************************************************************************/
+//禁止使能流量IPG
 int b53125_qos_ingress_ipg(struct b53125_device *dev, BOOL tx, BOOL enable)
 {
 	int ret = 0;
@@ -249,6 +263,7 @@ int b53125_qos_buck_type(struct b53125_device *dev, int id, int type)
 	return ret;
 }
 /*************************************************************************/
+//端口限速（网络风暴）
 int b53125_qos_ingress_rate_mode(struct b53125_device *dev, int port,  int type, BOOL enable)
 {
 	int ret = 0;
@@ -354,6 +369,7 @@ static int cpu_rate_tbl(int rate)
 	return i;
 }
 /*************************************************************************/
+//CPU接口限速
 int b53125_qos_cpu_rate(struct b53125_device *dev, int rate)
 {
 	int ret = 0;

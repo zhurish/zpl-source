@@ -7,15 +7,16 @@ endif
 ifeq ($(strip $(MODULE_PLATFORM)),true)
 PLATFORM_ROOT=$(PLBASE)/$(PLATFORMDIR)
 
-PLPRODS += $(PLATFORM_ROOT)/os
 PLPRODS += $(PLATFORM_ROOT)/lib
+PLPRODS += $(PLATFORM_ROOT)/os
 PLPRODS += $(PLATFORM_ROOT)/shell
 PLPRODS += $(PLATFORM_ROOT)/nsm
 
-PL_INCLUDE += -I$(PLATFORM_ROOT)/os
 PL_INCLUDE += -I$(PLATFORM_ROOT)/lib
+PL_INCLUDE += -I$(PLATFORM_ROOT)/os
 PL_INCLUDE += -I$(PLATFORM_ROOT)/shell
 PL_INCLUDE += -I$(PLATFORM_ROOT)/nsm
+
 PL_DEFINE	+= -DPL_NSM_MODULE
 PL_DEFINE	+= -DVTY_STDIO_MODULE
 PL_DEFINE	+= -DVTY_CONSOLE_MODULE
@@ -115,12 +116,18 @@ PLPRODS += $(PRODUCT_ROOT)/bsp
 PL_INCLUDE += -I$(PRODUCT_ROOT)/bsp
 PL_DEFINE += -DPL_BSP_MODULE
 
-ifeq ($(strip $(MODULE_BCM53125)),true)
+
+#MODULE_BCM53125
+ifeq ($(strip $(MODULE_SWITCH_SDK)),true)
+SW_SDK_ROOT=$(PRODUCT_ROOT)/sdk
 PLPRODS += $(PRODUCT_ROOT)/sdk
 PL_INCLUDE += -I$(PRODUCT_ROOT)/sdk
 PL_DEFINE += -DPL_SDK_MODULE
-endif #($(strip $(MODULE_BCM53125)),true)
+PL_DEFINE += -DPL_SDK_BCM53125
+endif #($(strip $(MODULE_SWITCH_SDK)),true)
+
 endif #($(strip $(MODULE_PRODUCT)),true)
+
 
 ifeq ($(strip $(MODULE_OSPF)),true)
 OSPF_ROOT=$(PLBASE)/l3protocol/$(OSPFDIR)
@@ -211,13 +218,16 @@ endif
 ifeq ($(strip $(MODULE_SSH)),true)
 ifeq ($(strip $(MODULE_COMPONENT)),true)
 LIBSSH_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(LIBSSHDIR)
+
 PLPRODS += $(LIBSSH_ROOT)
 PL_INCLUDE += -I$(LIBSSH_ROOT)
 PL_INCLUDE += -I$(LIBSSH_ROOT)/include
+
 ifeq ($(BUILD_TYPE),X86)
 PL_INCLUDE += -I$(LIBSSH_ROOT)/include
 PLOS_LDLIBS += -lutil -lssl -lcrypto -lz
 endif #($(BUILD_TYPE),X86)
+
 ifeq ($(BUILD_TYPE),MIPS)
 ifneq ($(OPENEWRT_BASE),)
 OPENWRT_INCLUDE := -I$(OPENEWRT_BASE)/include -I$(OPENEWRT_BASE)/usr/include
@@ -230,9 +240,28 @@ PLEX_LDFLAGS += -L$(PLBASE)/externsions/zlib/mipsl/zlib/lib
 endif #($(OPENEWRT_BASE),)
 PLEX_LDLIBS += -lutil -lssl -lcrypto -lz
 endif #($(BUILD_TYPE),MIPS)
+
 PL_DEFINE += -DPL_SSH_MODULE
+#PLEX_LDLIBS += -lutil -lssl -lcrypto -lz
 endif #($(strip $(MODULE_COMPONENT)),true)
 endif #($(strip $(MODULE_SSH)),true)
+
+
+ifeq ($(strip $(MODULE_OPENSSL)),true)
+ifneq ($(BUILD_TYPE),X86)
+PLEX_DIR += $(PLBASE)/externsions/openssl/openssl-1.1.1/
+export PLATFORM=linux-armv4
+PLEX_INCLUDE += -I$(PLBASE)/externsions/openssl/_install/include
+PLEX_LDFLAGS += -L$(PLBASE)/externsions/openssl/_install/lib
+PLEX_LDLIBS += -lutil -lssl -lcrypto
+
+
+PLEX_DIR += $(PLBASE)/externsions/zlib/zlib-1.2.11/
+PL_INCLUDE += -I$(PLBASE)/externsions/zlib/_install/include
+PLEX_LDFLAGS += -L$(PLBASE)/externsions/zlib/_install/lib
+PLEX_LDLIBS += -lz
+endif
+endif
 
 
 ifeq ($(strip $(MODULE_SQLITE)),true)
@@ -253,31 +282,6 @@ PL_INCLUDE += -I$(WIFI_ROOT)
 PL_DEFINE += -DPL_WIFI_MODULE
 
 endif
-endif
-
-ifeq ($(strip $(MODULE_WEB)),true)
-ifeq ($(strip $(MODULE_COMPONENT)),true)
-WEBGUI_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(WEBDIR)
-PLPRODS += $(WEBGUI_ROOT)
-PL_INCLUDE += -I$(WEBGUI_ROOT)
-PL_INCLUDE += -I$(WEBGUI_ROOT)/include
-PL_DEFINE += -DPL_WEBGUI_MODULE
-endif
-endif
-
-ifeq ($(strip $(MODULE_TOOLS)),true)
-TOOLS_ROOT=$(PLBASE)/$(TOOLSDIR)
-PLPRODS += $(TOOLS_ROOT)/system
-PL_INCLUDE += -I$(TOOLS_ROOT)/system
-
-#PLPRODS += $(TOOLS_ROOT)/quectel-CM
-#PL_INCLUDE += -I$(TOOLS_ROOT)/quectel-CM
-
-PLPRODS += $(TOOLS_ROOT)/process
-PL_INCLUDE += -I$(TOOLS_ROOT)/process
-
-PL_DEFINE += -DDOUBLE_PROCESS
-
 endif
 
 
@@ -351,7 +355,7 @@ export PJMEDIA_GSM_ENABLE = true
 export PJMEDIA_SPEEX_ENABLE = true
 export PJMEDIA_ILBC_ENABLE = true
 export PJMEDIA_G722_ENABLE = true
-export PJMEDIA_WEBRTC_ENABLE = true
+export PJMEDIA_WEBRTC_ENABLE = false
 
 export PJMEDIA_AUDIO_ALSA = true
 export PJMEDIA_AUDIO_PORTAUDIO = false
@@ -430,6 +434,31 @@ endif #($(strip $(MODULE_COMPONENT)),true)
 endif #($(strip $(MODULE_PJSIP)),true)
 
 
+
+
+
+
+ifeq ($(strip $(MODULE_MQTT)),true)
+ifeq ($(strip $(MODULE_COMPONENT)),true)
+MQTT_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(MQTTDIR)
+
+PLPRODS += $(MQTT_ROOT)
+PL_INCLUDE += -I$(MQTT_ROOT)
+PL_INCLUDE += -I$(MQTT_ROOT)/mqttlib
+#PL_INCLUDE += -I$(MQTT_ROOT)/mqttc
+#PL_INCLUDE += -I$(MQTT_ROOT)/mqtts
+
+PL_DEFINE += -DPL_MQTT_MODULE
+
+export MQTT_TLS_ENABLE = false
+export MQTT_SHARED_LIBRARIES = false
+ifeq ($(strip $(MQTT_SHARED_LIBRARIES)),true)
+PL_LDLIBS += -lmosquitto
+endif
+endif #($(strip $(MODULE_COMPONENT)),true)
+endif #($(strip $(MODULE_PJSIP)),true)
+
+
 ifeq ($(strip $(MODULE_APP)),true)
 APP_ROOT=$(PLBASE)/$(APPDIR)
 PLPRODS += $(APP_ROOT)
@@ -437,11 +466,53 @@ PLPRODS += $(APP_ROOT)
 PL_INCLUDE += -I$(APP_ROOT)
 
 PL_DEFINE += -DPL_APP_MODULE
-PLM_DEFINE += -DAPP_X5BA_MODULE 
-PL_DEBUG = -DX5_B_A_DEBUG
+
+
+export EN_APP_X5BA = false
+export EN_APP_V9 = true
+
+ifeq ($(strip $(EN_APP_X5BA)),true)
+PLM_DEFINE += -DPRODUCT_X5_B_BOARD
+PLM_DEFINE += -DAPP_X5BA_MODULE
+endif
+ifeq ($(strip $(EN_APP_V9)),true)
+PLM_DEFINE += -DPRODUCT_V9_BOARD
+PLM_DEFINE += -DAPP_V9_MODULE
+PLM_DEFINE += -DPL_VIDEO_MODULE
+#PL_LDLIBS += -loal_privateProtocol
+endif
+
+
 PLCLI_DIR += $(CLI_ROOT)/app
 endif
 
+ifeq ($(strip $(MODULE_WEB)),true)
+ifeq ($(strip $(MODULE_COMPONENT)),true)
+WEBGUI_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(WEBDIR)
+PLPRODS += $(WEBGUI_ROOT)
+PL_INCLUDE += -I$(WEBGUI_ROOT)
+PL_INCLUDE += -I$(WEBGUI_ROOT)/include
+PL_DEFINE += -DPL_WEBGUI_MODULE
+endif
+endif
+
+ifeq ($(strip $(MODULE_TOOLS)),true)
+TOOLS_ROOT=$(PLBASE)/$(TOOLSDIR)
+PLPRODS += $(TOOLS_ROOT)/system
+PL_INCLUDE += -I$(TOOLS_ROOT)/system
+endif
+
+
+ifeq ($(strip $(MODULE_PROCESS)),true)
+PLPRODS += $(TOOLS_ROOT)/process
+PL_INCLUDE += -I$(TOOLS_ROOT)/process
+PL_DEFINE += -DDOUBLE_PROCESS
+endif
+
+ifeq ($(strip $(MODULE_QUECTEL_CM)),true)
+PLPRODS += $(TOOLS_ROOT)/quectel-CM
+PL_INCLUDE += -I$(TOOLS_ROOT)/quectel-CM
+endif
 
 ifeq ($(strip $(MODULE_CLI)),true)
 PLPRODS += $(PLCLI_DIR)

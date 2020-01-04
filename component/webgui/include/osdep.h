@@ -500,10 +500,14 @@
              */
             #if !WINDOWS || ((_MSC_VER < 1800) && !defined(bool))
                 /* Bool introduced via stdbool in VS 2015 */
-                typedef char bool;
+                typedef int bool;
             #endif
         #endif
     #endif
+#else
+#if !defined(bool)
+	typedef int bool;
+#endif
 #endif
 
 #ifndef HAS_UCHAR

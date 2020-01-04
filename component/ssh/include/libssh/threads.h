@@ -23,7 +23,7 @@
 
 #include <libssh/libssh.h>
 #include <libssh/callbacks.h>
-
+void libcrypto_lock_callback(int mode, int i, const char *file, int line);
 int ssh_threads_init(void);
 void ssh_threads_finalize(void);
 const char *ssh_threads_get_type(void);

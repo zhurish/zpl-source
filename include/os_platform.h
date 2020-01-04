@@ -19,7 +19,7 @@
 
 #include "pthread.h"
 #include "os_memory.h"
-
+#include <linux/version.h>
 #ifndef RT_TABLE_MAIN
 //#define RT_TABLE_MAIN 0
 #endif

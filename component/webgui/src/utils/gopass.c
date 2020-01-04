@@ -8,17 +8,19 @@
  */
 
 /********************************* Includes ***********************************/
-
+#define HAS_BOOL 1
+#include "zebra.h"
 #include    "goahead.h"
-
+#include    "web_util.h"
 /********************************** Locals ************************************/
 
 #define MAX_PASS    64
 
 /********************************* Forwards ***********************************/
-
+#if 0
 static char *getPassword(void);
 static void printUsage(void);
+#endif
 static int writeAuthFile(char *path);
 
 #if ME_WIN_LIKE || VXWORKS
@@ -26,7 +28,7 @@ static char *getpass(char *prompt);
 #endif
 
 /*********************************** Code *************************************/
-
+#if 0
 int main(int argc, char *argv[])
 {
     WebsBuf     buf;
@@ -86,7 +88,7 @@ int main(int argc, char *argv[])
     if (errflg) {
         printUsage();
         exit(2);
-    }   
+    }
     realm = argv[nextArg++];
     username = argv[nextArg++];
 
@@ -101,7 +103,7 @@ int main(int argc, char *argv[])
 
     logOpen();
     websOpenAuth(1);
-    
+
     if (authFile && access(authFile, R_OK) == 0) {
         if (websLoad(authFile) < 0) {
             exit(2);
@@ -136,7 +138,117 @@ int main(int argc, char *argv[])
     websCloseAuth();
     return 0;
 }
+#endif
 
+/*
+static void printUsage(void)
+{
+    error("usage: gopass [--cipher cipher] [--file path] [--password password] realm user roles...\n"
+        "Options:\n"
+        "    --cipher md5|blowfish Select the encryption cipher. Defaults to md5\n"
+        "    --file filename       Modify the password file\n"
+        "    --password password   Use the specified password\n"
+        "\n");
+}
+*/
+//webserver encoded cipher md5 realm goahead.com username admin password admin
+int web_gopass(const char *username, const char *password, const char *cipher,
+		const char *realm,  char *encodedPassword)
+{
+    //WebsBuf     buf;
+	char *encoded = NULL;
+	encoded = websMD5(sfmt("%s:%s:%s", username, realm, password));
+
+    if (smatch(cipher, "md5")) {
+    	encoded = websMD5(sfmt("%s:%s:%s", username, realm, password));
+    } else {
+        /* This uses the more secure blowfish cipher */
+    	encoded = websMakePassword(sfmt("%s:%s:%s", username, realm, password), 16, 128);
+    }
+    printf("%s:(%s)\n", __func__, encoded);
+    //f9bab09668b61f553807d1157c393272
+/*  else
+    {
+        printf("%s\n", encodedPassword);
+    }*/
+    if(encodedPassword)
+    	strcpy(encodedPassword, encoded);
+    wfree(encoded);
+    return 0;
+}
+
+int web_gopass_roles(const char *authFile, const char *username, const char *roles[])
+{
+	WebsBuf buf;
+	char *webroles = NULL;
+	int i = 0;
+
+	bufCreate(&buf, 0, 0);
+	for (i = 0; roles[i] != NULL;)
+	{
+		bufPutStr(&buf, roles[i]);
+		i++;
+		if (roles[i] != NULL)
+		{
+			bufPutc(&buf, ',');
+		}
+	}
+	webroles = sclone(buf.servp);
+	if (websSetUserRoles(username, webroles) == 0)
+	{
+		//exit(7);
+		//websCloseAuth();
+		return -1;
+	}
+	if (writeAuthFile(authFile) < 0)
+	{
+		return -1;
+	}
+	return 0;
+}
+
+int web_gopass_save(const char *authFile, const char *username, const char *roles[], char *encodedPassword)
+{
+	WebsBuf buf;
+	char *webroles = NULL;
+	int i = 0;
+
+	bufCreate(&buf, 0, 0);
+	for (i = 0; roles[i] != NULL;)
+	{
+		bufPutStr(&buf, roles[i]);
+		i++;
+		if (roles[i] != NULL)
+		{
+			bufPutc(&buf, ',');
+		}
+	}
+	webroles = sclone(buf.servp);
+
+	/*    websOpenAuth(1);
+
+	 if (authFile && access(authFile, R_OK) == 0) {
+	 if (websLoad(authFile) < 0) {
+	 return -1;
+	 }
+	 if (access(authFile, W_OK) < 0) {
+	 error("Cannot write to %s", authFile);
+	 return -1;
+	 }
+	 }
+	 if (authFile) {*/
+	websRemoveUser(username);
+	if (websAddUser(username, encodedPassword, webroles) == 0)
+	{
+		//exit(7);
+		//websCloseAuth();
+		return -1;
+	}
+	if (writeAuthFile(authFile) < 0) {
+		return -1;
+	}
+	return 0;
+}
 
 static int writeAuthFile(char *path)
 {
@@ -147,7 +259,7 @@ static int writeAuthFile(char *path)
     WebsHash    roles, users;
     char        *tempFile;
 
-    assert(path && *path);
+    web_assert(path && *path);
 
     tempFile = websTempFile(NULL, "gp");
     if ((fp = fopen(tempFile, "w" FILE_TEXT)) == 0) {
@@ -185,7 +297,7 @@ static int writeAuthFile(char *path)
     return 0;
 }
 
-
+#if 0
 static char *getPassword(void)
 {
     char    *password, *confirm;
@@ -264,7 +376,7 @@ static void printUsage(void)
         "    --password password   Use the specified password\n"
         "\n");
 }
-
+#endif
 
 /*
     Copyright (c) Embedthis Software. All Rights Reserved.

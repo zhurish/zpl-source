@@ -53,16 +53,22 @@ iw_tmp_t iw_tmp =
 
 const char * kname2ifname(const char *kname)
 {
-	ifindex_t ifindex = ifname2kernelifindex(kname);
-	if(ifindex)
-		return ifindex2ifname(ifindex);
+	//ifindex_t ifindex = ifname2kernelifindex(kname);
+	struct interface * ifp = if_lookup_by_kernel_name(kname);
+	if(ifp)
+		return ifp->name;
+	//printf("--------%s ifindex = 0x%x\r\n", __func__, ifindex);
+	//if(ifindex)
+	//	return ifindex2ifname(ifindex);
 	return "Unknown";
 }
 
 static int iw_vty_obuf_swap(struct vty *vty, char *buf, int len)
 {
 	int i = 0, j = 0;
-	char *p = XREALLOC(MTYPE_VTY_OUT_BUF, p, len + 256);
+	//char *p = XREALLOC(MTYPE_VTY_OUT_BUF, p, len + 256);
+	char *p = XMALLOC(MTYPE_VTY_OUT_BUF, len + 256);
+
 	if (!p)
 		return -1;
 	while(1)
@@ -220,7 +226,7 @@ int iw_dev_mode_set(struct interface *ifp, char * value)
 	if(ifp->k_ifindex && if_is_wireless(ifp))
 	{
 		const char *tmpcmd[5] = {"iwconfig", ifp->k_name, "mode", value, NULL};
-		return iw_main(4, tmpcmd);
+		return iw_main(NULL, 4, tmpcmd);
 	}
 	return ERROR;
 }
@@ -231,7 +237,7 @@ int iw_dev_txpower_set(struct interface *ifp, char * value)
 	if(ifp->k_ifindex && if_is_wireless(ifp))
 	{
 		const char *tmpcmd[5] = {"iwconfig", ifp->k_name, "txpower", value, NULL};
-		return iw_main(4, tmpcmd);
+		return iw_main(NULL, 4, tmpcmd);
 	}
 	return ERROR;
 }
@@ -242,7 +248,7 @@ int iw_dev_rts_threshold_set(struct interface *ifp, char * value)
 	if(ifp->k_ifindex && if_is_wireless(ifp))
 	{
 		const char *tmpcmd[5] = {"iwconfig", ifp->k_name, "rts", value, NULL};
-		return iw_main(4, tmpcmd);
+		return iw_main(NULL, 4, tmpcmd);
 	}
 	return ERROR;
 }
@@ -253,7 +259,7 @@ int iw_dev_frag_set(struct interface *ifp, char * value)
 	if(ifp->k_ifindex && if_is_wireless(ifp))
 	{
 		const char *tmpcmd[5] = {"iwconfig", ifp->k_name, "frag", value, NULL};
-		return iw_main(4, tmpcmd);
+		return iw_main(NULL, 4, tmpcmd);
 	}
 	return ERROR;
 }
@@ -264,7 +270,7 @@ int iw_dev_rate_set(struct interface *ifp, char * value)
 	if(ifp->k_ifindex && if_is_wireless(ifp))
 	{
 		const char *tmpcmd[5] = {"iwconfig", ifp->k_name, "rate", value, NULL};
-		return iw_main(4, tmpcmd);
+		return iw_main(NULL, 4, tmpcmd);
 	}
 	return ERROR;
 }
@@ -275,7 +281,7 @@ int iw_dev_bit_set(struct interface *ifp, char * value)
 	if(ifp->k_ifindex && if_is_wireless(ifp))
 	{
 		const char *tmpcmd[5] = {"iwconfig", ifp->k_name, "bit", value, NULL};
-		return iw_main(4, tmpcmd);
+		return iw_main(NULL, 4, tmpcmd);
 	}
 	return ERROR;
 }
@@ -286,7 +292,7 @@ int iw_dev_channel_set(struct interface *ifp, char *  value)
 	if(ifp->k_ifindex && if_is_wireless(ifp))
 	{
 		const char *tmpcmd[5] = {"iwconfig", ifp->k_name, "channel", value, NULL};
-		return iw_main(4, tmpcmd);
+		return iw_main(NULL, 4, tmpcmd);
 	}
 	return ERROR;
 }
@@ -489,6 +495,61 @@ int iw_ap_dev_information_show(struct interface *ifp, struct vty *vty)
 	return OK;
 }
 
+iw_mode_t iw_ap_dev_mode_get(struct interface *ifp)
+{
+	assert(ifp != NULL);
+//	assert(vty != NULL);
+	if(ifp->k_ifindex && if_is_wireless(ifp))
+	{
+		FILE *fp = NULL;
+		char buf[512];
+		char *s = NULL;
+		char *filepath = wifi_file_path();
+		int find = 0;
+		char tmpcmd[128];
+		remove(wifi_file_path());
+		os_memset(tmpcmd, 0, sizeof(tmpcmd));
+		os_sprintf(tmpcmd, "iw dev %s info >> %s 2>&1", ifp->k_name, wifi_file_path());
+		super_system(tmpcmd);
+		//iw_dev_information_split(vty, ifp->k_name, ifp->name);
+		fp = fopen(filepath, "r");
+		if(fp)
+		{
+			while (fgets(buf, sizeof(buf), fp))
+			{
+				for (s = buf + strlen(buf);
+						(s > buf) && isspace((int) *(s - 1)); s--)
+					;
+				*s = '\0';
+				if(strstr(buf, ifp->k_name))
+				{
+					find = 1;
+					//vty_out(vty, " Interface         : %s %s", name, VTY_NEWLINE);
+				}
+				if(find)
+				{
+					s = strstr(buf, "type");
+					if(s)
+					{
+						if(strstr(s+5, "manage") || strstr(s+5, "client"))
+						{
+							fclose(fp);
+							return IW_MODE_MANAGE;
+						}
+						if(strstr(s+5, "ap"))
+						{
+							fclose(fp);
+							return IW_MODE_AP;
+						}
+					}
+				}
+			}
+			fclose(fp);
+		}
+	}
+	return IW_MODE_NONE;
+}
+
 /*
 [zhurish@localhost wifi]$ iw dev wlp3s0 station dump
 Station b0:df:c1:d7:a8:50 (on wlp3s0)
@@ -572,7 +633,7 @@ int iw_dev_channel_support_show(struct interface *ifp, struct vty *vty)
 	{
 		const char *tmpcmd[4] = {"iwlist", ifp->k_name, "channel", NULL};
 		iw_tmp.vty = vty;
-		iwlist_main(3, tmpcmd);
+		iwlist_main(NULL, 3, tmpcmd);
 		iw_tmp.vty = NULL;
 	}
 	return OK;
@@ -590,7 +651,34 @@ int iw_client_dev_connect_show(struct interface *ifp, struct vty *vty)
 		iwlist_detail_set(1);
 		const char *tmpcmd[3] = {"iwconfig", ifp->k_name, NULL};
 		iw_tmp.vty = vty;
-		iw_main(2, tmpcmd);
+		iw_main(NULL, 2, tmpcmd);
+		iw_tmp.vty = NULL;
+		iwlist_detail_set(0);
+	}
+	return OK;
+}
+
+static int iw_access_point_essid_get(void *p, void *input)
+{
+	u_int8 *essid = p;
+	struct ether_addr * ether_wap = (struct ether_addr *)input;
+	memcpy(essid, ether_wap->ether_addr_octet, 6);
+	return OK;
+}
+
+int iw_client_dev_connect_get(struct interface *ifp, u_int8 essid[])
+{
+	assert(ifp != NULL);
+	if(ifp->k_ifindex && if_is_wireless(ifp))
+	{
+		iw_user_cb_t cb;
+		iwlist_detail_set(0);
+		const char *tmpcmd[3] = {"iwconfig", ifp->k_name, NULL};
+		cb.iw_show = NULL;
+		cb.vty = NULL;
+		cb.p = essid;
+		cb.iw_get = iw_access_point_essid_get;
+		iw_main(&cb, 2, tmpcmd);
 		iw_tmp.vty = NULL;
 		iwlist_detail_set(0);
 	}
@@ -613,7 +701,7 @@ int iw_client_dev_scan_ap_show(struct interface *ifp, struct vty *vty, int detai
 		iwlist_detail_set(detail);
 		const char *tmpcmd[4] = {"iwlist", ifp->k_name, "scanning", NULL};
 		iw_tmp.vty = vty;
-		iwlist_main(3, tmpcmd);
+		iwlist_main(NULL, 3, tmpcmd);
 /*		const char *tmpcmd1[4] = {"iwlist", ifp->k_name, "auth", NULL};
 		iwlist_main(3, tmpcmd1);
 		const char *tmpcmd2[4] = {"iwlist", ifp->k_name, "wpakeys", NULL};
@@ -992,6 +1080,7 @@ static int iw_client_scan_swap(struct wireless_scan * wscan, iw_client_ap_t *ap)
 int iw_client_scan_process(iw_client_t *iw_client)
 {
 	int ret = 0;
+	u_int8 essid[8];
 	if(!iw_client)
 		return ERROR;
 	struct interface *ifp = if_lookup_by_index(iw_client->ifindex);
@@ -1019,8 +1108,13 @@ int iw_client_scan_process(iw_client_t *iw_client)
 				ap.ifindex = iw_client->ifindex;
 				//if(testvty)
 				//	iw_client_ap_show_one(&ap, testvty);
+
+				iw_client_dev_connect_get(ifp, essid);
+				if(memcmp(essid, ap.BSSID, NSM_MAC_MAX) == 0)
+					ap.connect = TRUE;
 				iw_client_ap_set_api(iw_client, ap.BSSID, &ap);
 				iw_client->scan_result = context.result;
+
 				if(IW_DEBUG(SCAN))
 				{
 					char buf[128];

@@ -5,9 +5,9 @@
 	<script type="text/javascript">
 	function getfilesize(){
 		var info=event.target.files[0];	
-		if (info.size > 1024*1024*5)
+		if (info.size > 1024*1024*16)
 		{
-			alert(" Upload file size Must be smaller than 5M!");
+			alert(" Upload file size Must be smaller than 16M!");
 			$("#upload_file").val("");
 			return false;
 		}	
