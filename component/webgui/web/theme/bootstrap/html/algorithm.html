@@ -561,12 +561,15 @@
 			}
 
 
-			function detecting_get_action(op) {
+			function detecting_get_action(op, id, ch) {
 				var argv;
 				var stxhr = new XHR();
 				argv = "ACTION=GET";
-				argv += "&ID=" + get_select_option_value(document.getElementById("detecting_boardid")) +
-					"&ch=" + get_select_option_value(document.getElementById("detecting_channel"));
+				//argv += "&ID=" + get_select_option_value(document.getElementById("detecting_boardid")) +
+				//	"&ch=" + get_select_option_value(document.getElementById("detecting_channel"));
+				argv += "&ID=" + id +
+					"&ch=" + ch;
+					
 				stxhr.post("/goform/detecting", argv,
 					function (x, json) {
 						if (x.responseText != "" && json == null) {
@@ -583,17 +586,21 @@
 								document.getElementById("qulityscore").value = json.qulityscore;
 								document.getElementById("confi").value = json.confi;
 								select_option_active(document.getElementById("mode"), json.mode);
+								select_option_active(document.getElementById("detecting_boardid"), json.ID);
+								select_option_active(document.getElementById("detecting_channel"), json.ch);
 							}
 						}
 					},
 					3000
 				);
 			}
-			function identify_get_action(op) {
+			function identify_get_action(op, id, ch) {
 				var argv;
 				var stxhr = new XHR();
 				argv = "ACTION=GET";
-				argv += "&ID=" + get_select_option_value(document.getElementById("identify_boardid"));
+				//argv += "&ID=" + get_select_option_value(document.getElementById("identify_boardid"));
+
+				argv += "&ID=" + id;
 				// +
 				//	"&ch" + get_select_option_value(document.getElementById("identify_channel"));
 				stxhr.post("/goform/identify", argv,
@@ -610,6 +617,7 @@
 								document.getElementById("in_threshold").value = json.in_threshold;
 								document.getElementById("opt_threshold").value = json.opt_threshold;
 								document.getElementById("uploadcheck").checked = json.uploadcheck;
+								select_option_active(document.getElementById("identify_boardid"), json.ID);
 							}
 						}
 					},
@@ -617,12 +625,14 @@
 				);
 			}
 
-			function helmet_get_action(op) {
+			function helmet_get_action(op, id, ch) {
 				var argv;
 				var stxhr = new XHR();
 				argv = "ACTION=GET";
-				argv += "&ID=" + get_select_option_value(document.getElementById("helmet_boardid")) +
-					"&ch=" + get_select_option_value(document.getElementById("helmet_channel"));
+				//argv += "&ID=" + get_select_option_value(document.getElementById("helmet_boardid")) +
+				//	"&ch=" + get_select_option_value(document.getElementById("helmet_channel"));
+				argv += "&ID=" + id +
+					"&ch=" + ch;	
 				stxhr.post("/goform/helmet", argv,
 					function (x, json) {
 						if (x.responseText != "" && json == null) {
@@ -645,6 +655,8 @@
 								document.getElementById("snap_qulityscore").value = json.snap_qulityscore;
 								document.getElementById("threshold").value = json.threshold;
 								//document.getElementById("snap_qulityscore").value = json.snap_qulityscore;
+								select_option_active(document.getElementById("helmet_boardid"), json.ID);
+								select_option_active(document.getElementById("helmet_channel"), json.ch);
 							}
 						}
 					},
@@ -821,9 +833,9 @@
 			}
 
 			window.onload = function () {
-				detecting_get_action("GET");
-				identify_get_action("GET");
-				helmet_get_action("GET");
+				detecting_get_action("GET", "1", "1");
+				identify_get_action("GET", "1", "1");
+				helmet_get_action("GET", "1", "1");
 			}
 		</script>
 	</div>

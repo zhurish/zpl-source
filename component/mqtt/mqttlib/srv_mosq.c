@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013-2019 Roger Light <roger@atchoo.org>
+Copyright (c) 2013-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -28,6 +28,7 @@ Contributors:
 #include "memory_mosq.h"
 #include "mosquitto_internal.h"
 #include "mosquitto.h"
+#include "util_mosq.h"
 
 #ifdef WITH_SRV
 static void srv_callback(void *arg, int status, int timeouts, unsigned char *abuf, int alen)
@@ -91,9 +92,7 @@ int mosquitto_connect_srv(struct mosquitto *mosq, const char *host, int keepaliv
 		mosquitto__free(h);
 	}
 
-	pthread_mutex_lock(&mosq->state_mutex);
-	mosq->state = mosq_cs_connect_srv;
-	pthread_mutex_unlock(&mosq->state_mutex);
+	mosquitto__set_state(mosq, mosq_cs_connect_srv);
 
 	mosq->keepalive = keepalive;
 

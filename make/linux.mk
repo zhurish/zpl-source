@@ -81,7 +81,7 @@ endif
 #
 ifeq ($(BUILD_TYPE),X86)
 ifeq ($(strip $(MODULE_SQLITE)),true)
-PLOS_LDLIBS += -lsqlite3
+#PLOS_LDLIBS += -lsqlite3
 endif
 endif
 #

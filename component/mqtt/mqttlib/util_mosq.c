@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2019 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -17,6 +17,7 @@ Contributors:
 #include "mqtt-config.h"
 
 #include <assert.h>
+#include <ctype.h>
 #include <string.h>
 
 #ifdef WIN32
@@ -68,6 +69,7 @@ int mosquitto__check_keepalive(struct mosquitto *mosq)
 #ifndef WITH_BROKER
 	int rc;
 #endif
+	int state;
 
 	assert(mosq);
 #if defined(WITH_BROKER) && defined(WITH_BRIDGE)
@@ -88,7 +90,8 @@ int mosquitto__check_keepalive(struct mosquitto *mosq)
 	if(mosq->keepalive && mosq->sock != INVALID_SOCKET &&
 			(now >= next_msg_out || now - last_msg_in >= mosq->keepalive)){
 
-		if(mosq->state == mosq_cs_connected && mosq->ping_t == 0){
+		state = mosquitto__get_state(mosq);
+		if(state == mosq_cs_active && mosq->ping_t == 0){
 			send__pingreq(mosq);
 			/* Reset last msg times to give the server time to send a pingresp */
 			pthread_mutex_lock(&mosq->msgtime_mutex);
@@ -100,13 +103,12 @@ int mosquitto__check_keepalive(struct mosquitto *mosq)
 			net__socket_close(db, mosq);
 #else
 			net__socket_close(mosq);
-			pthread_mutex_lock(&mosq->state_mutex);
-			if(mosq->state == mosq_cs_disconnecting){
+			state = mosquitto__get_state(mosq);
+			if(state == mosq_cs_disconnecting){
 				rc = MOSQ_ERR_SUCCESS;
 			}else{
 				rc = MOSQ_ERR_KEEPALIVE;
 			}
-			pthread_mutex_unlock(&mosq->state_mutex);
 			pthread_mutex_lock(&mosq->callback_mutex);
 			if(mosq->on_disconnect){
 				mosq->in_callback = true;
@@ -159,6 +161,9 @@ int mosquitto__hex2bin_sha1(const char *hex, unsigned char **bin)
 	}
 
 	sha = mosquitto__malloc(SHA_DIGEST_LENGTH);
+	if(!sha){
+		return MOSQ_ERR_NOMEM;
+	}
 	memcpy(sha, tmp, SHA_DIGEST_LENGTH);
 	*bin = sha;
 	return MOSQ_ERR_SUCCESS;
@@ -197,96 +202,6 @@ int mosquitto__hex2bin(const char *hex, unsigned char *bin, int bin_max_len)
 	return len + leading_zero;
 }
 #endif
-
-FILE *mosquitto__fopen(const char *path, const char *mode, bool restrict_read)
-{
-#ifdef WIN32
-	char buf[4096];
-	int rc;
-	rc = ExpandEnvironmentStrings(path, buf, 4096);
-	if(rc == 0 || rc > 4096){
-		return NULL;
-	}else{
-		if (restrict_read) {
-			HANDLE hfile;
-			SECURITY_ATTRIBUTES sec;
-			EXPLICIT_ACCESS ea;
-			PACL pacl = NULL;
-			char username[UNLEN + 1];
-			int ulen = UNLEN;
-			SECURITY_DESCRIPTOR sd;
-			DWORD dwCreationDisposition;
-
-			switch(mode[0]){
-				case 'a':
-					dwCreationDisposition = OPEN_ALWAYS;
-					break;
-				case 'r':
-					dwCreationDisposition = OPEN_EXISTING;
-					break;
-				case 'w':
-					dwCreationDisposition = CREATE_ALWAYS;
-					break;
-				default:
-					return NULL;
-			}
-
-			GetUserName(username, &ulen);
-			if (!InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION)) {
-				return NULL;
-			}
-			BuildExplicitAccessWithName(&ea, username, GENERIC_ALL, SET_ACCESS, NO_INHERITANCE);
-			if (SetEntriesInAcl(1, &ea, NULL, &pacl) != ERROR_SUCCESS) {
-				return NULL;
-			}
-			if (!SetSecurityDescriptorDacl(&sd, TRUE, pacl, FALSE)) {
-				LocalFree(pacl);
-				return NULL;
-			}
-
-			sec.nLength = sizeof(SECURITY_ATTRIBUTES);
-			sec.bInheritHandle = FALSE;
-			sec.lpSecurityDescriptor = &sd;
-
-			hfile = CreateFile(buf, GENERIC_READ | GENERIC_WRITE, 0,
-				&sec,
-				dwCreationDisposition,
-				FILE_ATTRIBUTE_NORMAL,
-				NULL);
-
-			LocalFree(pacl);
-
-			int fd = _open_osfhandle((intptr_t)hfile, 0);
-			if (fd < 0) {
-				return NULL;
-			}
-
-			FILE *fptr = _fdopen(fd, mode);
-			if (!fptr) {
-				_close(fd);
-				return NULL;
-			}
-			return fptr;
-
-		}else {
-			return fopen(buf, mode);
-		}
-	}
-#else
-	if (restrict_read) {
-		FILE *fptr;
-		mode_t old_mask;
-
-		old_mask = umask(0077);
-		fptr = fopen(path, mode);
-		umask(old_mask);
-
-		return fptr;
-	}else{
-		return fopen(path, mode);
-	}
-#endif
-}
 
 void util__increment_receive_quota(struct mosquitto *mosq)
 {
@@ -351,4 +266,30 @@ int util__random_bytes(void *bytes, int count)
 	rc = MOSQ_ERR_SUCCESS;
 #endif
 	return rc;
+}
+
+
+int mosquitto__set_state(struct mosquitto *mosq, enum mosquitto_client_state state)
+{
+	pthread_mutex_lock(&mosq->state_mutex);
+#ifdef WITH_BROKER
+	if(mosq->state != mosq_cs_disused)
+#endif
+	{
+		mosq->state = state;
+	}
+	pthread_mutex_unlock(&mosq->state_mutex);
+
+	return MOSQ_ERR_SUCCESS;
+}
+
+enum mosquitto_client_state mosquitto__get_state(struct mosquitto *mosq)
+{
+	enum mosquitto_client_state state;
+
+	pthread_mutex_lock(&mosq->state_mutex);
+	state = mosq->state;
+	pthread_mutex_unlock(&mosq->state_mutex);
+
+	return state;
 }

@@ -21,34 +21,297 @@
 #include "vector.h"
 #include "eloop.h"
 
-#include "application.h"
+//#define APP_V9_MODULE
 
+#include "v9_device.h"
+#include "v9_util.h"
+#include "v9_video.h"
+#include "v9_serial.h"
+#include "v9_slipnet.h"
+#include "v9_cmd.h"
 
+#include "v9_video_disk.h"
+#include "v9_user_db.h"
+#include "v9_video_db.h"
 
-static v9_video_sdk_t *v9_sdk_data = NULL;
-static BOOL	v9_sdk_initialization = FALSE;
+#include "v9_board.h"
+#include "v9_video_sdk.h"
+#include "v9_video_user.h"
+#include "v9_video_board.h"
+#include "v9_video_api.h"
+
 
 static BOOL v9_video_sdk_isopen(v9_video_sdk_t *);
 static int v9_video_sdk_open(v9_video_sdk_t *);
-//static int v9_video_sdk_close(v9_video_sdk_t *);
+static int v9_video_sdk_timeout(struct eloop *eloop);
 
+static BOOL __sdk_initialization = FALSE;
+int __sdk_debug_flag = V9_SDK_DEBUG_EVENT|V9_SDK_DEBUG_ERROR|V9_SDK_DEBUG_WARN;
+
+
+char *v9_video_sdk_errnostr(int err)
+{
+#ifdef V9_VIDEO_SDK_API
+	switch(err)
+	{
+		case EAIS_SDK_ERROR_BAD_PARAMETER:// 参数错误
+			return "BAD Parameter";
+		case EAIS_SDK_ERROR_BAD_LENGHT:// 长度错误
+			return "BAD Lenght";
+		case EAIS_SDK_ERROR_NOT_FIND:// 未找到
+			return "NOT Find";
+		case EAIS_SDK_ERROR_NULL_POITER:// 空指针
+			return "NULL Pointer";
+		case EAIS_SDK_ERROR_NOT_ENOUGH_MEMORY:// 内存不足
+			return "NOT Enough Memory";
+		case EAIS_SDK_ERROR_QUEUE_MAX:// 队列满
+			return "FULL Queue";
+		case EAIS_SDK_ERROR_QUEUE_EMPTY:// 队列为空
+			return "Queue Empty";
+		case EAIS_SDK_ERROR_THREAD_START_FAILED:// 线程启动失败
+			return "Thread Start Failed";
+		case EAIS_SDK_ERROR_THREAD_STOP_FAILED:// 线程停止失败
+			return "Thread Stop Failed";
+		case EAIS_SDK_ERROR_BUSY:// 设备或数据处于忙状态
+			return "BUSY";
+		case EAIS_SDK_ERROR_PARAMETER_EXISTED:// 参数已存在
+			return "Parameter Existed";
+		case EAIS_SDK_ERROR_BAD_ENVIRONMENT:// 环境错误
+			return "BAD Environment";
+		case EAIS_SDK_ERROR_NOT_SUPPORT:// 不支持
+			return "NOT Support";
+		case EAIS_SDK_ERROR_FILE_PATH_NOT_EXIST:// 文件或路径不存在
+			return "File Path Not Exist";
+		case EAIS_SDK_ERROR_ABILITY_NOT_ENOUGH:// 能力不足
+			return "Ability Not Enough";
+		case EAIS_SDK_ERROR_ALREADY_EXISTED:// 已初始化，不能重复
+			return "Already Existed";
+		case EAIS_SDK_ERROR_READ_FILE:// 读文件失败
+			return "Read File";
+		case EAIS_SDK_ERROR_BAD_FILE:// 无效文件
+			return "BAD File";
+
+		// 网络错误号：-1000至-1999
+		case EAIS_SDK_ERROR_SOCKET_OPEN_FAILED:// 套接字open失败
+			return "Open Socket Failed";
+		case EAIS_SDK_ERROR_SOCKET_BIND_FAILED:// 套接字bind失败
+			return "Bind Socket Failed";
+		case EAIS_SDK_ERROR_SOCKET_LISTEN_FAILED:// 套接字listen失败
+			return "Listen Socket Failed";
+		case EAIS_SDK_ERROR_SOCKET_CONNECT_FAILED:// 套接字connect失败
+			return "Connect Socket Failed";
+		case EAIS_SDK_ERROR_SOCKET_CONNECT_TIMEOUT:// 套接字connect超时
+			return "Connect Socket Timeout";
+		case EAIS_SDK_ERROR_SOCKET_ACEPT_FAILED:// 套接字acept失败
+			return "Acept Socket Failed";
+		case EAIS_SDK_ERROR_SOCKET_SEND_FAILED:// 套接字发送失败
+			return "Send Socket Failed";
+		case EAIS_SDK_ERROR_SOCKET_SEND_TIMEOUT:// 套接字发送超时
+			return "Send Socket Timeout";
+		case EAIS_SDK_ERROR_SOCKET_RECV_FAILED:// 套接字接收失败
+			return "Recv Socket Failed";
+		case EAIS_SDK_ERROR_SOCKET_RECV_TIMEOUT:// 接收超时
+			return "Recv Socket Timeout";
+		case EAIS_SDK_ERROR_SOCKET_CONNECTION_BROKEN:// 连接断开
+			return "Connection Socket Broken";
+		case EAIS_SDK_ERROR_NETWORKIO_PORT_USED:// 端口被占用
+			return "Port Already Use";
+		case EAIS_SDK_ERROR_DOMAIN_NAME_PARSE_ERROR:// 域名解析错误
+			return "Domain Name Error";
+		case EAIS_SDK_ERROR_XML_PARSE_ERROR:// XML解析错误
+			return "XML Error";
+		// 业务错误号：-2000至-2999
+		case EAIS_SDK_ERROR_USERNAME_ERROR:// 登录用户名错误
+			return "Username Error";
+		case EAIS_SDK_ERROR_PASSWORD_ERROR:// 登录口令错误
+			return "Password Error";
+		case EAIS_SDK_ERROR_MAX_CONNECTION:// 连接数已经达到最大
+			return "Too Much Connection";
+		case EAIS_SDK_ERROR_MAX_USER:// 用户数量已达到最大
+			return "Too Much User";
+		case EAIS_SDK_ERROR_UPDATE_ERROR:// 升级失败
+			return "Update Error";
+		case EAIS_SDK_ERROR_UPDATE_RUNNING:// 升级正在运行
+			return "Update Running";
+		case EAIS_SDK_ERROR_UPDATE_TAR_FAILED:// 升级解压文件失败
+			return "Update Tar Error";
+		case EAIS_SDK_ERROR_UPDATE_CHK_FAILED:// 升级检查文件失败
+			return "Update Check Error";
+		case EAIS_SDK_ERROR_ILLEGAL_ERROR:// 非法命令
+			return "Illegal command";
+		case EAIS_SDK_ERROR_DECODE_FAILED:// 图片解码失败
+			return "Decode Failed";
+		case EAIS_SDK_ERROR_DETECT_FAILED:// 人脸检测失败
+			return "Detect Failed";
+		case EAIS_SDK_ERROR_ALIGN_FAILED:// 人脸对齐失败
+			return "Align Failed";
+		case EAIS_SDK_ERROR_GET_FEATURE:// 获取特征值失败
+			return "Get Feature Failed";
+		case EAIS_SDK_ERROR_QUALITY:// 质量不达标
+			return "Quality Failed";
+
+		// ONVIF错误号：-3000至-3999
+		case EAIS_ONVIF_ERROR_BAD_REQUEST:// 客户端语法错误
+			return "ONVIF Bad Request";
+		case EAIS_ONVIF_ERROR_NOT_AUTH:// 客户端请求未授权(是否需要ONVIF账户)
+			return "ONVIF Not Auth";
+		case EAIS_ONVIF_ERROR_FORBIDDEN:// 请求资源不可用
+			return "ONVIF Forbidden";
+		case EAIS_ONVIF_ERROR_NOT_FOUND:// 无法找到指定资源
+			return "ONVIF Not Found";
+
+		case EAIS_ONVIF_ERROR_SERVER_ERROR:// 服务端异常
+			return "ONVIF Server Error";
+		case EAIS_ONVIF_ERROR_NOT_SUPPORT:// 服务端不支持该功能
+			return "ONVIF Not Support";
+		case EAIS_ONVIF_ERROR_BAD_GATEWAY:// 代理服务器接收到无效响应
+			return "ONVIF Bad Gateway";
+		case EAIS_ONVIF_ERROR_SERVER_BUSY:// 服务器忙碌
+			return "ONVIF Server Busy";
+		case EAIS_ONVIF_ERROR_SERVER_TIMEOUT:// 服务器超时
+			return "ONVIF Server Timeout";
+		case EAIS_ONVIF_ERROR_HTTP_VERSION_ERR:// 服务器不支持的HTTP版本
+			return "ONVIF Http Version Not Support";
+		// 数据库错误号: -4000至4999
+		case EAIS_DB_ERROR_INVALID_PARAM:// 数据库无效参数
+			return "DB Invalid Param";
+		case EAIS_DB_ERROR_OPEN_DB_FAIL:// 打开数据库失败
+			return "DB Open Filed";
+		case EAIS_DB_ERROR_CREATE_TABLE_FAI:// 数据库创建表失败
+			return "DB Create Failed";
+		case EAIS_DB_ERROR_NO_FREE_SPACE:// 数据库没有空间
+			return "DB No Free Space";
+		case EAIS_DB_ERROR_WRITE_FILE_FAILED:// 数据库写文件失败
+			return "DB Write File Failed";
+		case EAIS_DB_ERROR_ADD_FACE_FAILED:// 数据库添加人脸失败
+			return "DB Add Face Failed";
+		case EAIS_DB_ERROR_GET_USER_FAILED:// 数据库获取用户失败
+			return "DB Get User Failed";
+		case EAIS_DB_ERROR_EXCUTE_FAILED:// 数据库执行过程失败
+			return "DB Excute Failed";
+		case EAIS_DB_ERROR_PREPARE_AFILED:// 数据库准备过程失败
+			return "DB Prepare Failed";
+		case EAIS_DB_ERROR_MATCH_FAILED:// 数据库匹配失败
+			return "DB Match Failed";
+		case EAIS_DB_ERROR_BLOB_FAILED:// 数据库绑定失败
+			return "DB BLOB Failed";
+		case EAIS_DB_ERROR_ID_EXIST:// 数据库ID已存在
+			return "DB ID Exist";
+		case EAIS_DB_ERROR_ERROR:// 数据库命令释放失败
+			return "DB Free Error";
+
+		//case EAIS_HS_ERROR_BEGIN:// 罕森业务错误号: -5000至-5999
+		case EAIS_HS_ERROR_LOGIN_FAIL:		// IPC登录失败
+			return "HS Login Fail";
+		case EAIS_HS_ERROR_ATTACH_RADIO_FAIL:			// 订阅IPC热图服务失败
+			return "HS Attach Radio Fail";
+		case EAIS_HS_ERROR_FETCH_RADIO_FAIL:			// 获取一次热图数据失败
+			return "HS Fetch Radio Fail";
+		case EAIS_HS_ERROR_PARSE_RADIO_FAIL:		// 解析热图数据失败
+			return "HS Parse Radio Fail";
+		case EAIS_HS_ERROR_SDK_INIT_FAIL:			// 大华SDK初始化失败
+			return "HS SDK Init Fail";
+		case EAIS_HS_ERROR_BUSY_COUNTING:		// 正在统计区域温度
+			return "HS Busy Fail";
+
+		// 批量注册人脸错误号: -9000至-9999
+		case REGISTER_ERROR_OPEN_FILE_ERROR:// 打开配置文件失败
+			return "Reg Open File Error";
+		case REGISTER_ERROR_READ_STRING_ERROR:// 读取文件字符串失败
+			return "Reg Read String Error";
+		case REGISTER_ERROR_NOT_FIND_DEST:// 未找到目标字符串
+			return "Reg Not Find Dest";
+		case REGISTER_ERROR_PIC_NAMEED_ERROR:// 文件名不符合命名规则
+			return "Reg PIC Nameed Error";
+		case REGISTER_ERROR_NOT_FIND_PIC:// 在指定图片文件夹未找到*.jpg
+			return "Reg Not Find Pic";
+		case REGISTER_ERROR_WRITE_LOG_FAIL:// 打开日志文件失败
+			return "Reg Write Log Failed";
+		case REGISTER_ERROR_PATH_EMPTY:// 配置文件路径不存在
+			return "Reg Path Empty";
+		case REGISTER_ERROR_REGISTERING:// 正在注册人脸
+			return "Reg is running";
+		default:
+			return "Unknown Error";
+	}
+#endif
+	return "Unknown Error";
+}
+
+
+
+
+static BOOL v9_video_sdk_isopen(v9_video_sdk_t *sdk)
+{
+	return sdk? sdk->login:FALSE;
+}
 
 v9_video_sdk_t * v9_video_sdk_lookup(u_int8 id)
 {
 	int i =0;
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
-		if(v9_sdk_data[i].id == id)
+		if(v9_video_board[i].id == id)
 		{
-			return &v9_sdk_data[i];
+			return &v9_video_board[i].sdk;
 		}
 	}
 	return NULL;
 }
 
-static BOOL v9_video_sdk_isopen(v9_video_sdk_t *sdk)
+
+int v9_video_sdk_init(v9_video_sdk_t *sdk, void *board)
 {
-	return sdk? sdk->login:FALSE;
+	zassert(sdk);
+	zassert(board);
+
+	//初始化最大支持4个EAIS设备
+#ifdef V9_VIDEO_SDK_API
+	if(__sdk_initialization == FALSE)
+	{
+		if (EAIS_SDK_SUCCESS != EAIS_SDK_Init(V9_APP_BOARD_MAX + 1))
+		{
+			if(V9_SDK_DEBUG(ERROR))
+				zlog_err(ZLOG_APP, "EAIS_SDK_Init ERROR");
+			return ERROR;
+		}
+		__sdk_initialization = TRUE;
+	}
+#endif
+
+	if (sdk->initialization == FALSE)
+	{
+#ifdef V9_VIDEO_SDK_API
+		sdk->device = XMALLOC(MTYPE_VIDEO_SDK, sizeof(ST_SDKDeviceInfo));
+		if (sdk->device)
+			memset(sdk->device, 0, sizeof(ST_SDKDeviceInfo));
+#endif
+		if (master_eloop[MODULE_APP_START + 1] == NULL)
+			sdk->master = master_eloop[MODULE_APP_START + 1] =
+					eloop_master_module_create(MODULE_APP_START + 1);
+
+		sdk->interval = 5;
+		//sdk->cnt = 0;
+		sdk->status = 0;
+		sdk->handle = -1;
+		//sdk->port = V9_VIDEO_SDK_PORT;
+		strcpy(sdk->username, V9_VIDEO_SDK_USERNAME);
+		strcpy(sdk->password, V9_VIDEO_SDK_PASSWORD);
+		sdk->board = board;
+		//sdk->master = m;
+		if (sdk->master)
+		{
+			if (sdk->interval)
+			{
+				sdk->t_timeout = eloop_add_timer(sdk->master,
+						v9_video_sdk_timeout, sdk, 3);
+
+			}
+		}
+		sdk->initialization = TRUE;
+		return OK;
+	}
+	return ERROR;
 }
 
 
@@ -65,36 +328,47 @@ static int v9_video_sdk_device_clk(ST_SDKDeviceInfo* p_pstStatusInfo, void* p_pU
 		psdk->type = EAIS_DEVICE_TYPE_SNAP;
 	else if(p_pstStatusInfo->nDeviceType == EAIS_DEVICE_TYPE_RECOGNIZE)
 		psdk->type = EAIS_DEVICE_TYPE_RECOGNIZE;*/
-	zlog_warn(ZLOG_APP,"v9_video_sdk_device_clk nDeviceType=%d szDeviceIP=%s", p_pstStatusInfo->nDeviceType, p_pstStatusInfo->szDeviceIP);
+	V9_SDK_DBGPRF( "v9_video_sdk_device_clk nDeviceType=%d szDeviceIP=%s", p_pstStatusInfo->nDeviceType, p_pstStatusInfo->szDeviceIP);
 	//printf("v9_video_sdk_device_clk nDeviceType=%d szDeviceIP=%s\r\n", p_pstStatusInfo->nDeviceType, p_pstStatusInfo->szDeviceIP);
 	//if(psdk->type)
 	//{
 		//zlog_warn(ZLOG_APP,"v9_video_sdk_device_clk find");
 		//psdk->find = TRUE;
 	//}
-	zlog_warn(ZLOG_APP,"v9_video_sdk_device_clk");
-	//printf("v9_video_sdk_device_clk find\r\n");
-
+	//zlog_warn(ZLOG_APP," v9_video_sdk_device_clk ");
 	if(strlen(p_pstStatusInfo->szDeviceIP))
 	{
 		int i =0;
 		for(i = 0; i < V9_APP_BOARD_MAX; i++)
 		{
-			zlog_warn(ZLOG_APP,"v9_video_sdk_device_clk [%d]address=%s szDeviceIP=%s", i, v9_sdk_data[i].address, p_pstStatusInfo->szDeviceIP);
-			//printf("v9_video_sdk_device_clk [%d]address=%s szDeviceIP=%s\r\n", i, v9_sdk_data[i].address, p_pstStatusInfo->szDeviceIP);
+			V9_SDK_DBGPRF("v9_video_sdk_device_clk [%d]address=%s szDeviceIP=%s", i, inet_address(v9_video_board[i].address), p_pstStatusInfo->szDeviceIP);
+			//printf("v9_video_sdk_device_clk [%d]address=%s szDeviceIP=%s\r\n", i, v9_video_board[i].address, p_pstStatusInfo->szDeviceIP);
 
-			if(strlen(v9_sdk_data[i].address) && inet_addr(v9_sdk_data[i].address) != 0 &&
-					(inet_addr(v9_sdk_data[i].address) == inet_addr(p_pstStatusInfo->szDeviceIP)))
+			if(v9_video_board[i].id != APP_BOARD_MAIN && v9_video_board[i].address != 0 &&
+					(v9_video_board[i].address == ntohl(inet_addr(p_pstStatusInfo->szDeviceIP))))
 			{
-				if(p_pstStatusInfo->nDeviceType == EAIS_DEVICE_TYPE_SNAP)
-					v9_sdk_data[i].type = EAIS_DEVICE_TYPE_SNAP;
-				else if(p_pstStatusInfo->nDeviceType == EAIS_DEVICE_TYPE_RECOGNIZE)
-					v9_sdk_data[i].type = EAIS_DEVICE_TYPE_RECOGNIZE;
-				v9_sdk_data[i].find = TRUE;
-				v9_board_set_ready(v9_sdk_data[i].id);
-				printf("v9_video_sdk_device_clk find\r\n");
-				zlog_warn(ZLOG_APP,"v9_video_sdk_device_clk find");
-				return EAIS_SDK_SUCCESS;
+				if(!v9_video_board[i].sdk.find)
+				{
+					if(p_pstStatusInfo->nDeviceType == EAIS_DEVICE_TYPE_SNAP)
+						v9_video_board[i].sdk.type = EAIS_DEVICE_TYPE_SNAP;
+					else if(p_pstStatusInfo->nDeviceType == EAIS_DEVICE_TYPE_RECOGNIZE)
+						v9_video_board[i].sdk.type = EAIS_DEVICE_TYPE_RECOGNIZE;
+					v9_video_board[i].sdk.find = TRUE;
+
+					v9_board_set_ready(&v9_video_board[i]);
+					if(v9_video_board[i].sdk.master)
+					{
+						if(v9_video_board[i].sdk.t_timeout)
+						{
+							eloop_cancel(v9_video_board[i].sdk.t_timeout);
+							v9_video_board[i].sdk.t_timeout = NULL;
+						}
+						v9_video_board[i].sdk.t_timeout = eloop_add_timer(v9_video_board[i].sdk.master,
+																	v9_video_sdk_timeout, &v9_video_board[i].sdk, 1);
+					}
+					V9_SDK_DBGPRF("v9_video_sdk_device_clk find");
+					return EAIS_SDK_SUCCESS;
+				}
 			}
 		}
 	}
@@ -103,8 +377,10 @@ static int v9_video_sdk_device_clk(ST_SDKDeviceInfo* p_pstStatusInfo, void* p_pU
 
 static int v9_video_sdk_status_clk(ST_SDKStatusInfo* p_pstStatusInfo, void* p_pUserData)
 {
-	v9_video_channel_t *channel;
+	v9_video_board_t *board = NULL;
+	v9_video_stream_t *stream = NULL;
 	v9_video_sdk_t *psdk = (v9_video_sdk_t *)p_pUserData;
+	board = psdk->board;
 	// 如有状态变更， sdk 则会调用该函数
 	if(NULL == p_pstStatusInfo || NULL == p_pUserData)
 		return EAIS_SDK_ERROR_NULL_POITER;
@@ -116,20 +392,26 @@ static int v9_video_sdk_status_clk(ST_SDKStatusInfo* p_pstStatusInfo, void* p_pU
 	5） p_pstInfo->nRTSPStatus： 通道 URL 状态，此时 nChannlId 不为 0.
 	6） p_pstInfo->nDecodeStatus： 通道解码状态，此时 nChannlId 不为 0.
 	**/
-	channel = v9_video_board_video_channel_lookup_by_id_and_ch(psdk->id, p_pstStatusInfo->nChannlId);
-	if(channel)
+	V9_SDK_DBGPRF("v9_video_sdk_status_clk nChannlId=%d", p_pstStatusInfo->nChannlId);
+	if(p_pstStatusInfo->nChannlId > 0)
 	{
-		//channel->connect;				//视频流连接状态
-		if(p_pstStatusInfo->nStatusBit & 0x01)
-			channel->dev_status = p_pstStatusInfo->nESStatus;					// EAIS设备状态，默认离线。 ENUM_EAIS_DEVICE_STATUS
-		if(p_pstStatusInfo->nStatusBit & 0x02)
-			channel->rtsp_status = p_pstStatusInfo->nRTSPStatus;									// 通道RTSP状态 ENUM_EAIS_DEVICE_STATUS
-		if(p_pstStatusInfo->nStatusBit & 0x04)
-			channel->decode_status = p_pstStatusInfo->nDecodeStatus;									// 解码状态
-
-		//channel->change;
+		stream = v9_video_board_stream_lookup_by_id_and_ch(board->id, p_pstStatusInfo->nChannlId);
+		if(stream)
+		{
+			//zlog_warn(ZLOG_APP, "v9_video_sdk_status_clk nChannlId=%d", p_pstStatusInfo->nChannlId);
+			//stream->connect;				//视频流连接状态
+			if(p_pstStatusInfo->nStatusBit & 0x01)
+				stream->dev_status = p_pstStatusInfo->nESStatus;					// EAIS设备状态，默认离线。 ENUM_EAIS_DEVICE_STATUS
+			if(p_pstStatusInfo->nStatusBit & 0x02)
+				stream->rtsp_status = p_pstStatusInfo->nRTSPStatus;									// 通道RTSP状态 ENUM_EAIS_DEVICE_STATUS
+			if(p_pstStatusInfo->nStatusBit & 0x04)
+				stream->decode_status = p_pstStatusInfo->nDecodeStatus;									// 解码状态
+			if(stream->rtsp_status == EAIS_DEVICE_STATUS_ONLINE || stream->decode_status)
+				stream->connect = TRUE;
+			//stream->change;
+		}
 	}
-	zlog_warn(ZLOG_APP,"v9_video_sdk_status_clk");
+	V9_SDK_DBGPRF("v9_video_sdk_status_clk");
 	return EAIS_SDK_SUCCESS;
 }
 
@@ -141,7 +423,7 @@ static int v9_video_sdk_snap_clk(ST_SDKStructInfo* p_pstStatusInfo, void* p_pUse
 		return EAIS_SDK_ERROR_NULL_POITER;
 
 	// 结构化数据类型
-
+	V9_SDK_DBGPRF("v9_video_sdk_snap_clk nChannlId=%d", p_pstStatusInfo->nChannlId);
 	psdk->datatype = p_pstStatusInfo->nDataType;
 
 	// 方案类型
@@ -152,7 +434,7 @@ static int v9_video_sdk_snap_clk(ST_SDKStructInfo* p_pstStatusInfo, void* p_pUse
 	else if(p_pstStatusInfo->nSolutionType == EAIS_SOLUTION_TYPE_RECOGNITION)
 		psdk->mode = EAIS_DEVICE_TYPE_RECOGNIZE;
 
-	zlog_warn(ZLOG_APP,"v9_video_sdk_snap_clk");
+	V9_SDK_DBGPRF("v9_video_sdk_snap_clk");
 	return EAIS_SDK_SUCCESS;
 }
 #endif
@@ -160,103 +442,149 @@ static int v9_video_sdk_snap_clk(ST_SDKStructInfo* p_pstStatusInfo, void* p_pUse
 
 static int v9_video_sdk_open(v9_video_sdk_t *sdk)
 {
-	assert(sdk != NULL);
-	if(!v9_board_ready(sdk->id))
+	zassert(sdk);
+#ifdef V9_VIDEO_SDK_API
+	int ret = 0;
+#endif
+	v9_video_board_t *board = sdk->board;
+	if(!v9_board_ready(board))
 	{
-		zlog_warn(ZLOG_APP," board ID=%d is not ready", sdk->id);
 		return ERROR;
 	}
-	if(!strlen(sdk->address))
-	{
-		v9_address_t * board = v9_board_lookup(sdk->id);
-		if(board)
-		{
-			strcpy(sdk->address, inet_address(board->ip));
-		}
-		else
-		{
-			zlog_err(ZLOG_APP," v9_video_sdk_open:v9_board_lookup(%d) ",sdk->id);
-			return ERROR;
-		}
-		zlog_warn(ZLOG_APP," board ID=%d %s %d %s %s", sdk->id, sdk->address, sdk->port, sdk->username, sdk->password);
-	}
-	else
-		zlog_warn(ZLOG_APP," board ID=%d %s %d %s %s", sdk->id, sdk->address, sdk->port, sdk->username, sdk->password);
+	if(sdk->login != FALSE)
+		return OK;
+	V9_SDK_DBGPRF(" board ID=%d %s %d %s %s", V9_APP_BOARD_HW_ID(board->id), inet_address(board->address), board->port, sdk->username, sdk->password);
 
-	//zlog_warn(ZLOG_APP," board ID=%d %s %d %s %s", sdk->id, sdk->address, sdk->port, sdk->username, sdk->password);
 #ifdef V9_VIDEO_SDK_API
-	EAIS_SDK_StartDiscovery(v9_video_sdk_device_clk, NULL);
-/*
-	// Onvif (获取URL超时单位/秒)
-	LIB_SDK_DLL_EXPORT int __stdcall EAIS_ONVIF_StartDiscovery(EAIS_ONVIFDiscoveryCallBack p_fDiscoveryCallback, void* p_pUserData);
-*/
+
 	if(!sdk->find)
 	{
-		zlog_warn(ZLOG_APP," di not find board ID=%d %s %d %s %s", sdk->id, sdk->address, sdk->port, sdk->username, sdk->password);
+		V9_SDK_DBGPRF(" EAIS_SDK_StartDiscovery ");
+		EAIS_SDK_StartDiscovery(v9_video_sdk_device_clk, NULL);
+
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," can not find board ID=%d %s %d %s %s", V9_APP_BOARD_HW_ID(board->id), inet_address(board->address), board->port, sdk->username, sdk->password);
 		return ERROR;
 	}
 
-	sdk->handle = EAIS_SDK_Login(sdk->address, sdk->port, sdk->username, sdk->password, V9_VIDEO_SDK_TIMEOUT);
+	sdk->handle = EAIS_SDK_Login(inet_address(board->address), board->port, sdk->username, sdk->password, V9_VIDEO_SDK_TIMEOUT);
 	if(sdk->handle < EAIS_SDK_SUCCESS)
 	{
 		sdk->handle = -1;
 		sdk->login = FALSE;
 		sdk->getstate = FALSE;
-		v9_video_board_active(sdk->id, FALSE);
-		zlog_err(ZLOG_APP, " EAIS SDK Login failed on Board ID=%s, errno=%d", sdk->address, sdk->handle);
+		sdk->status = FALSE;
+		v9_video_board_active(board->id, FALSE);
+		if(V9_SDK_DEBUG(ERROR))
+			zlog_err(ZLOG_APP, " EAIS SDK Login failed on Board(%d) %s:%d username=%s password=%s timeout=%d; ERROR(%s)",
+					 V9_APP_BOARD_HW_ID(board->id), inet_address(board->address), board->port,
+				 sdk->username, sdk->password, V9_VIDEO_SDK_TIMEOUT, v9_video_sdk_errnostr(sdk->handle));
 		return ERROR;
 	}
-	zlog_warn(ZLOG_APP,"EAIS_SDK_Login OK");
+	printf("EAIS_SDK_Login OK");
 
 	// 回调注册：设备状态/图片流
 	EAIS_SDK_SetStatusCallBack(sdk->handle, v9_video_sdk_status_clk, sdk);
 	EAIS_SDK_SetSnapCallBack(sdk->handle, v9_video_sdk_snap_clk, sdk);
 
-	if(EAIS_SDK_SUCCESS == EAIS_SDK_GetDeviceInfo(sdk->handle, sdk->device))
+	ret = EAIS_SDK_GetDeviceInfo(sdk->handle, sdk->device);
+	if(EAIS_SDK_SUCCESS == ret)
 	{
-		v9_video_board_active(sdk->id, TRUE);
+		v9_video_board_active(board->id, TRUE);
 		sdk->login = TRUE;
-		zlog_warn(ZLOG_APP,"EAIS_SDK_GetDeviceInfo OK");
+		V9_SDK_DBGPRF("EAIS_SDK_GetDeviceInfo OK");
+
+		v9_video_sdk_open_snap_api(board->id, EAIS_DATA_TYPE_PDAF);
+		v9_video_sdk_ntp_api(board->id, "10.10.10.254", 60);
+		//v9_video_sdk_timer_api(board->id);
 		return OK;
 	}
-	zlog_err(ZLOG_APP,"EAIS_SDK_GetDeviceInfo ERROR");
+	if(V9_SDK_DEBUG(ERROR))
+		zlog_err(ZLOG_APP,"EAIS_SDK_GetDeviceInfo Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 	EAIS_SDK_Logout(sdk->handle);
 	sdk->login = FALSE;
 	sdk->handle = -1;
 	sdk->getstate = FALSE;
-	v9_video_board_active(sdk->id, FALSE);
+	sdk->status = FALSE;
+	v9_video_board_active(board->id, FALSE);
 	return ERROR;
 #else
 	return OK;
 #endif
 }
 
+static int v9_video_sdk_load_config(struct eloop *eloop)
+{
+	v9_video_sdk_t *sdk = NULL;
+	sdk = ELOOP_ARG(eloop);
+	if(!sdk)
+	{
+		if(V9_SDK_DEBUG(ERROR))
+			zlog_err(ZLOG_APP,"v9_video_sdk_timeout sdk = NULL");
+		return 0;
+	}
+	if(sdk && sdk->login && sdk->handle >= 0)
+	{
+		/*
+		 * address:10.10.10.254
+		 * dir:/mnt/diska1/board1/
+		 */
+		v9_video_board_t *board = (v9_video_board_t *)sdk->board;
 
+		if(board && board->id != APP_BOARD_MAIN)
+		{
+			v9_video_sdk_nfsdir_api(board->id, "10.10.10.254", NULL, NULL, v9_video_disk_root_dir(board->id));
+		}
+	}
+	else
+	{
+		eloop_add_timer(sdk->master, v9_video_sdk_load_config, sdk, 2);
+	}
+	return OK;
+}
 
 static int v9_video_sdk_devstatus_get(v9_video_sdk_t *sdk)
 {
+	zassert(sdk);
 #ifdef V9_VIDEO_SDK_API
-/*	ST_SDKDeviceInfo device;
-	memset(&device, 0, sizeof(ST_SDKDeviceInfo));
-	if(sdk && sdk->handle >= 0)
+	int ret = 0;
+	if(sdk && sdk->login && sdk->handle >= 0 && sdk->device)
 	{
-		if(EAIS_SDK_SUCCESS == EAIS_SDK_GetDeviceInfo(sdk->handle, &device))
+		sdk->getstate = FALSE;
+		//sdk->status = FALSE;
+		ret = EAIS_SDK_GetDeviceInfo(sdk->handle, sdk->device);
+		if(EAIS_SDK_SUCCESS == ret)
 		{
 			sdk->getstate = TRUE;
+			if(sdk->status == FALSE)
+				eloop_add_timer(sdk->master, v9_video_sdk_load_config, sdk, 2);
+			sdk->status = TRUE;
 			return OK;
+		}
+		sdk->status = FALSE;
+		if(V9_SDK_DEBUG(ERROR))
+			zlog_err(ZLOG_APP,"EAIS_SDK_GetDeviceInfo Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+
+		if(ret == EAIS_SDK_ERROR_SOCKET_CONNECT_TIMEOUT)
+		{
+			EAIS_SDK_Logout(sdk->handle);
+			sdk->login = FALSE;
+			sdk->handle = -1;
+			sdk->getstate = FALSE;
+			sdk->status = FALSE;
+		}
+		else if(ret == EAIS_SDK_ERROR_SOCKET_CONNECT_FAILED)
+		{
+			//EAIS_SDK_Logout(sdk->handle);
+			sdk->login = FALSE;
+			sdk->handle = -1;
+			sdk->getstate = FALSE;
+			sdk->status = FALSE;
 		}
 		return ERROR;
 	}
-	return ERROR;*/
-	if(sdk && sdk->handle >= 0 && sdk->device)
-	{
-		if(EAIS_SDK_SUCCESS == EAIS_SDK_GetDeviceInfo(sdk->handle, sdk->device))
-		{
-			sdk->getstate = TRUE;
-			return OK;
-		}
-		return ERROR;
-	}
+	if(V9_SDK_DEBUG(WARN))
+		zlog_warn(ZLOG_APP," Video Board SDK not connect");
 	return ERROR;
 #else
 	return OK;
@@ -268,193 +596,136 @@ static int v9_video_sdk_devstatus_get(v9_video_sdk_t *sdk)
 static int v9_video_sdk_timeout(struct eloop *eloop)
 {
 	v9_video_sdk_t *sdk = NULL;
+#ifdef V9_VIDEO_SDK_API
+//	int ret = 0;
+#endif
 	sdk = ELOOP_ARG(eloop);
 	if(!sdk)
 	{
-		zlog_debug(ZLOG_APP,"v9_video_sdk_timeout sdk = NULL");
+		if(V9_SDK_DEBUG(ERROR))
+			zlog_err(ZLOG_APP,"v9_video_sdk_timeout sdk = NULL");
 		return 0;
 	}
+	//v9_video_board_t *board = sdk->board;
 	sdk->t_timeout = NULL;
 
-	if(!v9_sdk_initialization)
+	if(sdk->initialization)
 	{
-#ifdef V9_VIDEO_SDK_API
-		if (EAIS_SDK_SUCCESS != EAIS_SDK_Init(V9_APP_BOARD_MAX + 1))
+		if(!v9_video_sdk_isopen(sdk))
+			v9_video_sdk_open(sdk);
+		else
 		{
-			EAIS_SDK_UnInit();
-			v9_sdk_initialization = FALSE;
-			zlog_err(ZLOG_APP,"EAIS_SDK_Init ERROR");
+			v9_video_sdk_devstatus_get(sdk);
+
 		}
-		// EAIS设备搜索、设置设备IP
-		//EAIS_SDK_StartDiscovery(v9_video_sdk_device_clk, NULL);
-#endif
+		sdk->t_timeout = eloop_add_timer(sdk->master,
+				v9_video_sdk_timeout, sdk, sdk->interval);
 	}
-
-	if(!v9_video_sdk_isopen(sdk))
-		v9_video_sdk_open(sdk);
-	else
-	{
-		v9_video_sdk_devstatus_get(sdk);
-	}
-
-	sdk->t_timeout = eloop_add_timer(sdk->master,
-			v9_video_sdk_timeout, sdk, sdk->interval);
-
-	//zlog_debug(ZLOG_APP,"v9_video_sdk_timeout");
-	return 0;
+	return OK;
 }
+
+#ifdef V9_DEBUGING_TEST
+static void v9_video_sdk_test()
+{
+	v9_video_board_t * board = NULL;
+	if(!v9_video_board_isactive(APP_BOARD_CALCU_1))
+	{
+		board = v9_video_board_lookup(APP_BOARD_CALCU_1);
+		if(board)
+			v9_board_set_ready(board);
+	}
+	if(!v9_video_board_isactive(APP_BOARD_CALCU_2))
+	{
+		board = v9_video_board_lookup(APP_BOARD_CALCU_2);
+		if(board)
+			v9_board_set_ready(board);
+	}
+/*	if(!v9_video_board_isactive(APP_BOARD_CALCU_3))
+	{
+		board = v9_video_board_lookup(APP_BOARD_CALCU_3);
+		if(board)
+			v9_board_set_ready(board);
+	}
+	if(!v9_video_board_isactive(APP_BOARD_CALCU_4))
+	{
+		board = v9_video_board_lookup(APP_BOARD_CALCU_4);
+		if(board)
+			v9_board_set_ready(board);
+	}*/
+}
+#endif
 
 static int v9_video_sdk_task(void *argv)
 {
-	zassert(argv != NULL);
-	v9_video_sdk_t *mgt = (v9_video_sdk_t *)argv;
-	zassert(mgt != NULL);
 	module_setup_task(MODULE_APP_START + 1, os_task_id_self());
 	while(!os_load_config_done())
 	{
 		os_sleep(1);
 	}
-/*	if(!mgt->enable)
-	{
-		os_sleep(5);
-	}*/
 
 	v9_video_sdk_restart_all();
-
-	// EAIS设备搜索、设置设备IP
-	//EAIS_SDK_StartDiscovery(v9_video_sdk_device_clk, NULL);
-/*	if(!tty_isopen(mgt->tty))
-	{
-		tty_com_open(mgt->tty);
-	}*/
+#ifdef V9_DEBUGING_TEST
+	V9_SDK_DBGPRF("---------%s---call v9_board_set_ready----", __func__);
+	v9_video_sdk_test();
+#endif
 	eloop_start_running(master_eloop[MODULE_APP_START + 1], MODULE_APP_START + 1);
 	return OK;
 }
 
 int v9_video_sdk_task_init ()
 {
-	zassert(v9_sdk_data != NULL);
+/*
+	zassert(v9_video_board != NULL);
 	if(master_eloop[MODULE_APP_START + 1] == NULL)
-		v9_sdk_data->master = master_eloop[MODULE_APP_START + 1] = eloop_master_module_create(MODULE_APP_START + 1);
+		v9_video_board->master = master_eloop[MODULE_APP_START + 1] = eloop_master_module_create(MODULE_APP_START + 1);
+*/
 
-	zlog_debug(ZLOG_APP, "---------%s---------", __func__);
-	//v9_sdk_data->enable = TRUE;
-	//v9_sdk_data->task_id =
+	V9_SDK_DBGPRF("---------%s---------", __func__);
+	//v9_video_board->enable = TRUE;
+	//v9_video_board->task_id =
 			os_task_create("appSdk", OS_TASK_DEFAULT_PRIORITY,
-	               0, v9_video_sdk_task, v9_sdk_data, OS_TASK_DEFAULT_STACK * 2);
-	//if(v9_sdk_data->task_id)
+	               0, v9_video_sdk_task, NULL, OS_TASK_DEFAULT_STACK * 2);
+	//if(v9_video_board->task_id)
 	//	return OK;
-	return ERROR;
+	return OK;
 }
 
-
-int v9_video_sdk_update_address(u_int32 id, u_int32 ip)
-{
-	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk)
-	{
-		memset(sdk->address, 0, sizeof(sdk->address));
-		if(ip)
-		{
-			sprintf(sdk->address, "%s", inet_address(ip));
-		}
-		return OK;
-	}
-	else
-		return ERROR;
-}
-
-
-int v9_video_sdk_init(void)
-{
-	int i = 0;
-	if (v9_sdk_data == NULL)
-		v9_sdk_data = XMALLOC(MTYPE_VIDEO_SDK, sizeof(v9_video_sdk_t) * V9_APP_BOARD_MAX);
-	if (v9_sdk_data)
-	{
-		v9_sdk_initialization = FALSE;
-		memset(v9_sdk_data, 0, sizeof(v9_video_sdk_t) * V9_APP_BOARD_MAX);
-		for(i = 0; i < V9_APP_BOARD_MAX; i++)
-		{
-#ifdef V9_VIDEO_SDK_API
-			v9_sdk_data[i].device = XMALLOC(MTYPE_VIDEO_SDK, sizeof(ST_SDKDeviceInfo));
-			if (v9_sdk_data[i].device)
-				memset(v9_sdk_data[i].device, 0, sizeof(ST_SDKDeviceInfo));
-#endif
-			v9_sdk_data[i].id = V9_BOARD_ID(i + APP_BOARD_CALCU_1);
-			v9_sdk_data[i].interval = 15;
-			//v9_sdk_data[i].cnt = 0;
-			v9_sdk_data[i].status = 0;
-			v9_sdk_data[i].handle = -1;
-			v9_sdk_data[i].port = V9_VIDEO_SDK_PORT;
-			strcpy(v9_sdk_data[i].username, V9_VIDEO_SDK_USERNAME);
-			strcpy(v9_sdk_data[i].password, V9_VIDEO_SDK_PASSWORD);
-
-			strcpy(v9_sdk_data[i].address, inet_address(APP_BOARD_ADDRESS_PREFIX + APP_BOARD_CALCU_1 + i));
-
-			//v9_sdk_data[i].master = m;
-			if (v9_sdk_data[i].master)
-			{
-				if (v9_sdk_data[i].interval)
-				{
-					v9_sdk_data[i].t_timeout = eloop_add_timer(v9_sdk_data[i].master,
-																v9_video_sdk_timeout, &v9_sdk_data[i], 5);
-
-				}
-			}
-		}
-		//初始化最大支持4个EAIS设备
-#ifdef V9_VIDEO_SDK_API
-		if (EAIS_SDK_SUCCESS != EAIS_SDK_Init(V9_APP_BOARD_MAX + 1))
-		{
-			v9_sdk_initialization = FALSE;
-			zlog_err(ZLOG_APP,"EAIS_SDK_Init ERROR");
-			return ERROR;
-		}
-		// EAIS设备搜索、设置设备IP
-		//EAIS_SDK_StartDiscovery(v9_video_sdk_device_clk, NULL);
-#endif
-		v9_sdk_initialization = TRUE;
-		return OK;
-	}
-	return ERROR;
-}
 
 
 
 int v9_video_sdk_restart_all()
 {
 	int i = 0;
-	if(!v9_sdk_data)
+	if(!v9_video_board)
 		return ERROR;
 	if(master_eloop[MODULE_APP_START + 1] == NULL)
 		master_eloop[MODULE_APP_START + 1] = eloop_master_module_create(MODULE_APP_START + 1);
 
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
-		v9_sdk_data[i].master = master_eloop[MODULE_APP_START + 1];
-		if (v9_sdk_data[i].master)
+		v9_video_board[i].sdk.master = master_eloop[MODULE_APP_START + 1];
+		if (v9_video_board[i].sdk.master && v9_video_board[i].id != APP_BOARD_MAIN)
 		{
-			if (v9_sdk_data[i].interval)
+			if (v9_video_board[i].sdk.initialization && v9_video_board[i].sdk.interval)
 			{
-				if(v9_sdk_data[i].t_timeout)
+				if(v9_video_board[i].sdk.t_timeout)
 				{
-					eloop_cancel(v9_sdk_data[i].t_timeout);
-					v9_sdk_data[i].t_timeout = NULL;
+					eloop_cancel(v9_video_board[i].sdk.t_timeout);
+					v9_video_board[i].sdk.t_timeout = NULL;
 				}
-				v9_sdk_data[i].t_timeout = eloop_add_timer(v9_sdk_data[i].master,
-															v9_video_sdk_timeout, &v9_sdk_data[i], 5);
+				v9_video_board[i].sdk.t_timeout = eloop_add_timer(v9_video_board[i].sdk.master,
+															v9_video_sdk_timeout, &v9_video_board[i].sdk, 3);
 			}
 		}
 	}
 	return OK;
 }
 
-
+/*
 int v9_video_sdk_start(u_int32 id)
 {
 	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(!v9_sdk_data)
+	if(!v9_video_board)
 		return ERROR;
 	if(!sdk)
 		return ERROR;
@@ -465,11 +736,10 @@ int v9_video_sdk_start(u_int32 id)
 	return ERROR;
 }
 
-
 int v9_video_sdk_stop(u_int32 id)
 {
 	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk)
+	if(v9_video_board && sdk)
 	{
 #ifdef V9_VIDEO_SDK_API
 		if(sdk->handle >= 0)
@@ -487,18 +757,24 @@ int v9_video_sdk_stop(u_int32 id)
 	}
 	return ERROR;
 }
+*/
 
 
 static int _v9_video_sdk_show(struct vty * vty, v9_video_sdk_t *sdk, int debug)
 {
-	if(sdk && sdk->device && sdk->getstate)
+	zassert(sdk);
+	if(sdk && sdk->device && sdk->getstate && sdk->board)
 	{
 #ifdef V9_VIDEO_SDK_API
 		char datatype[64];
 		memset(datatype, 0, sizeof(datatype));
 		ST_SDKDeviceInfo *device = (ST_SDKDeviceInfo *)sdk->device;
-		vty_out (vty, "Board Status:%s", VTY_NEWLINE);
+		v9_video_board_t *board = (v9_video_board_t *)sdk->board;
 
+		if(board->id == APP_BOARD_MAIN)
+			vty_out (vty, "Main Board Status(ID:%d):%s", V9_APP_BOARD_HW_ID(board->id), VTY_NEWLINE);
+		else
+			vty_out (vty, "Board Status(ID:%d):%s", V9_APP_BOARD_HW_ID(board->id), VTY_NEWLINE);
 		vty_out (vty, " Device Name         : %s%s", device->szDeviceName, VTY_NEWLINE);
 		vty_out (vty, " Device ID           : %s%s", device->szDeviceId, VTY_NEWLINE);
 
@@ -508,6 +784,8 @@ static int _v9_video_sdk_show(struct vty * vty, v9_video_sdk_t *sdk, int debug)
 			vty_out (vty, " Type                : SNAP%s", VTY_NEWLINE);// 抓拍类型EAIS设备
 		else if(device->nDeviceType == EAIS_DEVICE_TYPE_RECOGNIZE)
 			vty_out (vty, " Type                : RECOGNIZE%s", VTY_NEWLINE);// 识别类型EAIS设备
+		else
+			vty_out (vty, " Type                : UNKNOW%s", VTY_NEWLINE);
 
 		if(sdk->mode == EAIS_SOLUTION_TYPE_SNAP)
 			vty_out (vty, " Mode                : SNAP%s", VTY_NEWLINE);// 未知类型
@@ -515,9 +793,17 @@ static int _v9_video_sdk_show(struct vty * vty, v9_video_sdk_t *sdk, int debug)
 			vty_out (vty, " Mode                : HELMET%s", VTY_NEWLINE);// 抓拍类型EAIS设备
 		else if(sdk->mode == EAIS_SOLUTION_TYPE_RECOGNITION)
 			vty_out (vty, " Mode                : RECOGNIZE%s", VTY_NEWLINE);// 识别类型EAIS设备
+		else if(sdk->mode == EAIS_SOLUTION_TYPE_PEDESTRIAN)
+			vty_out (vty, " Mode                : PEDESTRIAN%s", VTY_NEWLINE);// 行人方案
+		else if(sdk->mode == EAIS_SOLUTION_TYPE_FIRE)
+			vty_out (vty, " Mode                : FIRE%s", VTY_NEWLINE);// 火焰方案
+		else if(sdk->mode == EAIS_SOLUTION_TYPE_PLATE)
+			vty_out (vty, " Mode                : PLATE%s", VTY_NEWLINE);// 车牌方案
+		else
+			vty_out (vty, " Mode                : UNKNOW%s", VTY_NEWLINE);
 
 		if(sdk->datatype == EAIS_DATA_TYPE_UNKNOW)
-			vty_out (vty, " DataType            : UNKNOW%s", VTY_NEWLINE);// 未知类型
+			strcat(datatype, "UNKNOW");// 未知类型
 		else if(sdk->datatype & EAIS_DATA_TYPE_P)
 			strcat(datatype, "P,");
 		else if(sdk->datatype & EAIS_DATA_TYPE_D)
@@ -572,15 +858,29 @@ static int _v9_video_sdk_show(struct vty * vty, v9_video_sdk_t *sdk, int debug)
 #else
 		vty_out (vty, "Board Status: Not SDK%s", VTY_NEWLINE);
 #endif
+		if(debug == TRUE)
+		{
+			vty_out (vty, " initialization      : %s%s", (sdk->initialization)? "TRUE":"FALSE", VTY_NEWLINE);
+			vty_out (vty, " login               : %s%s", (sdk->login)? "TRUE":"FALSE", VTY_NEWLINE);
+			vty_out (vty, " handle              : %d%s", sdk->handle, VTY_NEWLINE);
+			vty_out (vty, " status              : %d%s", sdk->status, VTY_NEWLINE);
+			vty_out (vty, " interval            : %d%s", sdk->interval, VTY_NEWLINE);
+			vty_out (vty, " getstate            : %s%s", (sdk->getstate)? "TRUE":"FALSE", VTY_NEWLINE);
+			vty_out (vty, " find                : %s%s", (sdk->find)? "TRUE":"FALSE", VTY_NEWLINE);
+			vty_out (vty, " type                : %d%s", sdk->type, VTY_NEWLINE);
+			vty_out (vty, " mode                : %d%s", sdk->mode, VTY_NEWLINE);
+			vty_out (vty, " datatype            : %d%s", sdk->datatype, VTY_NEWLINE);
+			//vty_out (vty, " datatype            : %d%s", sdk->datatype, VTY_NEWLINE);
+		}
 		return OK;
 	}
-	vty_out (vty, "Board Status: Not Connected%s", VTY_NEWLINE);
+	vty_out (vty, "Board Status(ID:%d): Not Connected%s", V9_SDK_ID(sdk), VTY_NEWLINE);
 	return ERROR;
 }
 
 int v9_video_sdk_show(struct vty * vty, int id, int debug)
 {
-	if(v9_sdk_data)
+	if(v9_video_board)
 	{
 		if(id)
 		{
@@ -593,148 +893,184 @@ int v9_video_sdk_show(struct vty * vty, int id, int debug)
 			int i = 0;
 			for(i = 0; i < V9_APP_BOARD_MAX; i++)
 			{
-				_v9_video_sdk_show(vty, &v9_sdk_data[i],  debug);
+				if(v9_video_board[i].id != APP_BOARD_MAIN)
+				_v9_video_sdk_show(vty, &v9_video_board[i].sdk,  debug);
 			}
 		}
 	}
-	return 0;
+	return OK;
 }
 
 
 /*******************************************************************************/
 /*******************************************************************************/
-int v9_video_sdk_reboot_api(u_int32 id, BOOL reset)
+int v9_video_sdk_reboot_api(u_int32 id)
 {
-	int i =0;
-	//v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data)
+	if(!v9_video_board)
 	{
-#ifdef V9_VIDEO_SDK_API
-
-		int ret = 0;
-		if(reset)// 恢复出厂
-		{
-			ST_SDKResetInfo p_pstResetInfo;
-/*
-			ST_SDKDeviceInfo *device = (ST_SDKDeviceInfo *)sdk->device;
-			memset(&p_pstResetInfo, 0, sizeof(ST_SDKResetInfo));
-			if(device)
-				strcpy(p_pstResetInfo.szDeviceID, device->szDeviceId);
-*/
-			if(id == 0)
-			{
-				for(i = 0; i < V9_APP_BOARD_MAX; i++)
-				{
-					if(/*v9_sdk_data[i].id == id && */v9_sdk_data[i].login && v9_sdk_data[i].handle >= 0)
-					{
-						ST_SDKDeviceInfo *device = (ST_SDKDeviceInfo *)v9_sdk_data[i].device;
-						memset(&p_pstResetInfo, 0, sizeof(ST_SDKResetInfo));
-						if(device)
-							strcpy(p_pstResetInfo.szDeviceID, device->szDeviceId);
-
-						ret |= EAIS_SDK_FactoryReset(v9_sdk_data[i].handle, &p_pstResetInfo);
-
-						if(ret != EAIS_SDK_SUCCESS)
-						{
-							zlog_err(ZLOG_APP,"EAIS_SDK_FactoryReset ERROR");
-							v9_video_board_active(id, FALSE);
-							v9_sdk_data[i].login = FALSE;
-							v9_sdk_data[i].handle = -1;
-							v9_sdk_data[i].getstate = FALSE;
-							return ERROR;
-						}
-					}
-				}
-				return OK;
-			}
-			else
-			{
-				v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-				if(sdk && sdk->login && sdk->handle >= 0)
-				{
-					ST_SDKDeviceInfo *device = (ST_SDKDeviceInfo *)sdk->device;
-					memset(&p_pstResetInfo, 0, sizeof(ST_SDKResetInfo));
-					if(device)
-						strcpy(p_pstResetInfo.szDeviceID, device->szDeviceId);
-					ret |= EAIS_SDK_FactoryReset(v9_sdk_data[i].handle, &p_pstResetInfo);
-					if(ret != EAIS_SDK_SUCCESS)
-					{
-						zlog_err(ZLOG_APP,"EAIS_SDK_FactoryReset ERROR");
-						v9_video_board_active(id, FALSE);
-						v9_sdk_data[i].login = FALSE;
-						v9_sdk_data[i].handle = -1;
-						v9_sdk_data[i].getstate = FALSE;
-						return ERROR;
-					}
-					return OK;
-				}
-				return ERROR;
-			}
-		}
-		else // EAIS设备重启
-		{
-			if(id == 0)
-			{
-				for(i = 0; i < V9_APP_BOARD_MAX; i++)
-				{
-					if(/*v9_sdk_data[i].id == id && */v9_sdk_data[i].login && v9_sdk_data[i].handle >= 0)
-					{
-						ret |= EAIS_SDK_DeviceReboot(v9_sdk_data[i].handle);
-
-						if(ret != EAIS_SDK_SUCCESS)
-						{
-							zlog_err(ZLOG_APP,"EAIS_SDK_DeviceReboot ERROR");
-							v9_video_board_active(id, FALSE);
-							v9_sdk_data[i].login = FALSE;
-							v9_sdk_data[i].handle = -1;
-							v9_sdk_data[i].getstate = FALSE;
-							return ERROR;
-						}
-					}
-				}
-				return OK;
-			}
-			else
-			{
-				v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-				if(sdk && sdk->login && sdk->handle >= 0)
-				{
-					ret |= EAIS_SDK_DeviceReboot(v9_sdk_data[i].handle);
-					if(ret != EAIS_SDK_SUCCESS)
-					{
-						zlog_err(ZLOG_APP,"EAIS_SDK_DeviceReboot ERROR");
-						v9_video_board_active(id, FALSE);
-						v9_sdk_data[i].login = FALSE;
-						v9_sdk_data[i].handle = -1;
-						v9_sdk_data[i].getstate = FALSE;
-						return ERROR;
-					}
-					return OK;
-				}
-				return ERROR;
-			}
-		}
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board memory exceptions");
 		return ERROR;
-#else
+	}
+#ifdef V9_VIDEO_SDK_API
+	if(id <= APP_BOARD_MAIN)
+	{
+		int i =0, ret = 0;
+		for(i = 0; i < V9_APP_BOARD_MAX; i++)
+		{
+			if(v9_video_board[i].id != APP_BOARD_MAIN && v9_video_board[i].sdk.login && v9_video_board[i].sdk.handle >= 0)
+			{
+				ret |= EAIS_SDK_DeviceReboot(v9_video_board[i].sdk.handle);
+
+				if(ret != EAIS_SDK_SUCCESS)
+				{
+					if(V9_SDK_DEBUG(ERROR))
+						zlog_err(ZLOG_APP,"EAIS_SDK_DeviceReboot  Video Board (%d) ERROR(%s)",
+							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
+					v9_video_board_active(id, FALSE);
+					v9_video_board[i].sdk.login = FALSE;
+					v9_video_board[i].sdk.handle = -1;
+					v9_video_board[i].sdk.getstate = FALSE;
+					v9_video_board[i].sdk.status = FALSE;
+					return ERROR;
+				}
+			}
+		}
 		return OK;
-#endif
+	}
+	else
+	{
+		int ret = 0;
+		v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+		if(sdk && sdk->login && sdk->handle >= 0)
+		{
+			ret |= EAIS_SDK_DeviceReboot(sdk->handle);
+			if(ret != EAIS_SDK_SUCCESS)
+			{
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP,"EAIS_SDK_DeviceReboot Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+				v9_video_board_active(id, FALSE);
+				sdk->login = FALSE;
+				sdk->handle = -1;
+				sdk->getstate = FALSE;
+				sdk->status = FALSE;
+				return ERROR;
+			}
+			return OK;
+		}
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 	}
 	return ERROR;
+#else
+	return OK;
+#endif
 }
+
+
+int v9_video_sdk_reset_api(u_int32 id)
+{
+#ifdef V9_VIDEO_SDK_API
+	int i = 0;
+	int ret = OK;
+#endif
+	if(!v9_video_board)
+	{
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+		return ERROR;
+	}
+#ifdef V9_VIDEO_SDK_API
+	ST_SDKResetInfo p_pstResetInfo;
+	if (id <= APP_BOARD_MAIN)
+	{
+		for (i = 0; i < V9_APP_BOARD_MAX; i++)
+		{
+			if (v9_video_board[i].id != APP_BOARD_MAIN && v9_video_board[i].sdk.login
+					&& v9_video_board[i].sdk.handle >= 0)
+			{
+				ST_SDKDeviceInfo *device =
+						(ST_SDKDeviceInfo *) v9_video_board[i].sdk.device;
+				memset(&p_pstResetInfo, 0, sizeof(ST_SDKResetInfo));
+				if (device)
+					strcpy(p_pstResetInfo.szDeviceID, device->szDeviceId);
+
+				ret |= EAIS_SDK_FactoryReset(v9_video_board[i].sdk.handle,
+						&p_pstResetInfo);
+
+				if (ret != EAIS_SDK_SUCCESS)
+				{
+					if(V9_SDK_DEBUG(ERROR))
+						zlog_err(ZLOG_APP, "EAIS_SDK_FactoryReset  Video Board (%d) ERROR(%s)",
+							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
+					v9_video_board_active(id, FALSE);
+					v9_video_board[i].sdk.login = FALSE;
+					v9_video_board[i].sdk.handle = -1;
+					v9_video_board[i].sdk.getstate = FALSE;
+					v9_video_board[i].sdk.status = FALSE;
+					return ERROR;
+				}
+			}
+		}
+		return OK;
+	}
+	else
+	{
+		v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+		if (sdk && sdk->login && sdk->handle >= 0)
+		{
+			ST_SDKDeviceInfo *device = (ST_SDKDeviceInfo *) sdk->device;
+			memset(&p_pstResetInfo, 0, sizeof(ST_SDKResetInfo));
+			if (device)
+				strcpy(p_pstResetInfo.szDeviceID, device->szDeviceId);
+			ret |= EAIS_SDK_FactoryReset(sdk->handle, &p_pstResetInfo);
+			if (ret != EAIS_SDK_SUCCESS)
+			{
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP, "EAIS_SDK_FactoryReset Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+				v9_video_board_active(id, FALSE);
+				sdk->login = FALSE;
+				sdk->handle = -1;
+				sdk->getstate = FALSE;
+				sdk->status = FALSE;
+				return ERROR;
+			}
+			return OK;
+		}
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		return ERROR;
+	}
+	return ERROR;
+#else
+	return OK;
+#endif
+}
+
 
 //获取当前正常连接的视频路数
 int v9_video_sdk_getvch_api(u_int32 id)
 {
+	if(!v9_video_board)
+	{
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+		return ERROR;
+	}
+	if (!v9_video_board || id <= APP_BOARD_MAIN)
+		return ERROR;
+
 	v9_video_sdk_t *sdk = v9_video_sdk_lookup (id);
-	if (v9_sdk_data && sdk)
+	if (v9_video_board && sdk)
 	{
 #ifdef V9_VIDEO_SDK_API
-		if (sdk->handle >= 0)
+		int ret = 0;
+		if (sdk->login && sdk->handle >= 0)
 		{
 			ST_SDKRTSPConfig p_pstRTSPConfig;
 			memset (&p_pstRTSPConfig, 0, sizeof(ST_SDKRTSPConfig));
-			if (EAIS_SDK_GetRtspConfig (sdk->handle,
-										&p_pstRTSPConfig) == EAIS_SDK_SUCCESS)
+			ret = EAIS_SDK_GetRtspConfig (sdk->handle, &p_pstRTSPConfig);
+			if (ret == EAIS_SDK_SUCCESS)
 			{
 				int i = 0, vch = 0;
 				if (p_pstRTSPConfig.nRTSPInfoNum == 0)
@@ -751,35 +1087,85 @@ int v9_video_sdk_getvch_api(u_int32 id)
 			}
 			else
 			{
-				zlog_err(ZLOG_APP, "EAIS_SDK_GetRtspConfig ERROR");
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP, "EAIS_SDK_GetRtspConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
-			return 0;
+			return ERROR;
 		}
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		return ERROR;
 #else
-		return 0;
+		return ERROR;
 #endif
 	}
-	return 0;
+	return ERROR;
 }
 
 //把上层配置的视频URL下发到SDK
 int v9_video_sdk_set_vch_api(u_int32 id, int cnum, void *p)
 {
-	v9_video_channel_t *stream = p;
-	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk && stream)
-	{
 #ifdef V9_VIDEO_SDK_API
-		if(sdk->handle >= 0)
+	int i = 0;
+	int ret = 0;
+#endif
+	v9_video_stream_t *stream = p;
+	if(!v9_video_board)
+	{
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+		return ERROR;
+	}
+	if(!stream)
+	{
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Stream memory exceptions");
+		return ERROR;
+	}
+#ifdef V9_VIDEO_SDK_API
+	if (id <= APP_BOARD_MAIN)
+	{
+		for (i = 0; i < V9_APP_BOARD_MAX; i++)
 		{
-			int ret = 0, i =0;
+			if (v9_video_board[i].id != APP_BOARD_MAIN && v9_video_board[i].sdk.login
+					&& v9_video_board[i].sdk.handle >= 0)
+			{
+					ST_SDKRTSPConfig stRTSPConfig;
+					memset(&stRTSPConfig, 0, sizeof(stRTSPConfig));
+					stRTSPConfig.nRTSPInfoNum = cnum;
+					for(i = 0; i < cnum; i++)
+					{
+						if(strlen(stream->video_url)/*stream->video_url*/)
+						{
+							strcpy(stRTSPConfig.stRTSPInfoArr[i].szChanRtspUrl, stream->video_url);
+						}
+					}
+					ret = EAIS_SDK_SetRtspConfig(v9_video_board[i].sdk.handle, &stRTSPConfig);
+
+					if(ret != EAIS_SDK_SUCCESS)
+					{
+						if(V9_SDK_DEBUG(ERROR))
+							zlog_err(ZLOG_APP,"EAIS_SDK_SetRtspConfig Video Board (%d) ERROR(%s)",
+							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
+						return ERROR;
+					}
+					return OK;
+			}
+		}
+		return OK;
+	}
+	else
+	{
+		v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+		if (sdk && sdk->login && sdk->handle >= 0)
+		{
 			ST_SDKRTSPConfig stRTSPConfig;
 			memset(&stRTSPConfig, 0, sizeof(stRTSPConfig));
 			stRTSPConfig.nRTSPInfoNum = cnum;
 			for(i = 0; i < cnum; i++)
 			{
-				if(strlen(stream->video_url))
+				if(strlen(stream->video_url)/*stream->video_url*/)
 				{
 					strcpy(stRTSPConfig.stRTSPInfoArr[i].szChanRtspUrl, stream->video_url);
 				}
@@ -788,27 +1174,66 @@ int v9_video_sdk_set_vch_api(u_int32 id, int cnum, void *p)
 
 			if(ret != EAIS_SDK_SUCCESS)
 			{
-				zlog_err(ZLOG_APP,"EAIS_SDK_SetRtspConfig ERROR");
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP,"EAIS_SDK_SetRtspConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
-#else
-		return OK;
-#endif
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		return ERROR;
 	}
 	return ERROR;
+#else
+	return OK;
+#endif
 }
 
 int v9_video_sdk_add_vch_api(u_int32 id, int ch, char *url)
 {
-	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk && url)
-	{
 #ifdef V9_VIDEO_SDK_API
-		if(sdk->handle >= 0)
+	int i = 0;
+	int ret = 0;
+#endif
+	if(!v9_video_board)
+	{
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+		return ERROR;
+	}
+#ifdef V9_VIDEO_SDK_API
+	if (id <= APP_BOARD_MAIN)
+	{
+		for (i = 0; i < V9_APP_BOARD_MAX; i++)
 		{
-			int ret = 0;
+			if (v9_video_board[i].id != APP_BOARD_MAIN && v9_video_board[i].sdk.login
+					&& v9_video_board[i].sdk.handle >= 0)
+			{
+				ST_SDKRTSPConfig stRTSPConfig;
+				memset(&stRTSPConfig, 0, sizeof(stRTSPConfig));
+				stRTSPConfig.nRTSPInfoNum = 1;
+				stRTSPConfig.stRTSPInfoArr[0].nChannleId = ch;
+				strcpy(stRTSPConfig.stRTSPInfoArr[0].szChanRtspUrl, url);
+				ret = EAIS_SDK_SetRtspConfig(v9_video_board[i].sdk.handle, &stRTSPConfig);
+
+				if(ret != EAIS_SDK_SUCCESS)
+				{
+					if(V9_SDK_DEBUG(ERROR))
+						zlog_err(ZLOG_APP,"EAIS_SDK_SetRtspConfig  Video Board (%d) ERROR(%s)",
+							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
+					return ERROR;
+				}
+				return OK;
+			}
+		}
+		return OK;
+	}
+	else
+	{
+		v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+		if (sdk && sdk->login && sdk->handle >= 0)
+		{
 			ST_SDKRTSPConfig stRTSPConfig;
 			memset(&stRTSPConfig, 0, sizeof(stRTSPConfig));
 			stRTSPConfig.nRTSPInfoNum = 1;
@@ -818,107 +1243,391 @@ int v9_video_sdk_add_vch_api(u_int32 id, int ch, char *url)
 
 			if(ret != EAIS_SDK_SUCCESS)
 			{
-				zlog_err(ZLOG_APP,"EAIS_SDK_SetRtspConfig ERROR");
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP,"EAIS_SDK_SetRtspConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
-#else
-		return OK;
-#endif
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		return ERROR;
 	}
 	return ERROR;
+#else
+	return OK;
+#endif
 }
 
 int v9_video_sdk_del_vch_api(u_int32 id, int ch)
 {
-	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk)
-	{
 #ifdef V9_VIDEO_SDK_API
-		if(sdk->handle >= 0)
+	int i = 0;
+	int ret = 0;
+#endif
+	if(!v9_video_board)
+	{
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+		return ERROR;
+	}
+#ifdef V9_VIDEO_SDK_API
+	if (id <= APP_BOARD_MAIN)
+	{
+		for (i = 0; i < V9_APP_BOARD_MAX; i++)
 		{
-			int ret = 0;
+			if (v9_video_board[i].id != APP_BOARD_MAIN && v9_video_board[i].sdk.login
+					&& v9_video_board[i].sdk.handle >= 0)
+			{
+				ST_SDKRTSPConfig stRTSPConfig;
+				memset(&stRTSPConfig, 0, sizeof(stRTSPConfig));
+				stRTSPConfig.nRTSPInfoNum = 1;
+				stRTSPConfig.stRTSPInfoArr[0].nChannleId = ch;
+				ret = EAIS_SDK_SetRtspConfig(v9_video_board[i].sdk.handle, &stRTSPConfig);
+
+					if(ret != EAIS_SDK_SUCCESS)
+					{
+						if(V9_SDK_DEBUG(ERROR))
+							zlog_err(ZLOG_APP,"EAIS_SDK_SetRtspConfig Video Board (%d) ERROR(%s)",
+									 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
+						return ERROR;
+					}
+					return OK;
+			}
+		}
+		return OK;
+	}
+	else
+	{
+		v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+		if (sdk && sdk->login && sdk->handle >= 0)
+		{
 			ST_SDKRTSPConfig stRTSPConfig;
 			memset(&stRTSPConfig, 0, sizeof(stRTSPConfig));
 			stRTSPConfig.nRTSPInfoNum = 1;
 			stRTSPConfig.stRTSPInfoArr[0].nChannleId = ch;
-			//strcpy(stRTSPConfig.stRTSPInfoArr[0].szChanRtspUrl, url);
 			ret = EAIS_SDK_SetRtspConfig(sdk->handle, &stRTSPConfig);
 
 			if(ret != EAIS_SDK_SUCCESS)
 			{
-				zlog_err(ZLOG_APP,"EAIS_SDK_SetRtspConfig ERROR");
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP,"EAIS_SDK_SetRtspConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
-#else
-		return OK;
-#endif
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		return ERROR;
 	}
 	return ERROR;
+#else
+	return OK;
+#endif
 }
+#ifdef V9_VIDEO_SDK_API
+static int v9_video_sdk_lookup_vch_hw(u_int32 id, v9_video_sdk_t *sdk, int ch, ST_SDKRTSPConfig *pstRTSPConfig)
+{
+	int ret = 0, i = 0;
+	if (sdk && sdk->login && sdk->handle >= 0)
+	{
+		ST_SDKRTSPConfig stRTSPConfig;
+		memset(&stRTSPConfig, 0, sizeof(stRTSPConfig));
+		ret = EAIS_SDK_GetRtspConfig(sdk->handle, &stRTSPConfig);
+		if(ret != EAIS_SDK_SUCCESS)
+		{
+			if(V9_SDK_DEBUG(ERROR))
+				zlog_err(ZLOG_APP,"EAIS_SDK_GetRtspConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+			return ERROR;
+		}
+		if(pstRTSPConfig)
+		{
+			memcpy(pstRTSPConfig, &stRTSPConfig, sizeof(ST_SDKRTSPConfig));
+			return OK;
+		}
+		for(i = 0; i < stRTSPConfig.nRTSPInfoNum; i++)
+		{
+			if(stRTSPConfig.stRTSPInfoArr[i].nChannleId == ch && strlen(stRTSPConfig.stRTSPInfoArr[i].szChanRtspUrl))										// 通道区分
+				return OK;
+		}
+		return ERROR;
+	}
+	if(V9_SDK_DEBUG(WARN))
+		zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+	return ERROR;
+}
+#endif
+
+int v9_video_sdk_get_vch_api(u_int32 id, int ch, void *p)
+{
+#ifdef V9_VIDEO_SDK_API
+	int ret = 0;
+#endif
+	if(!v9_video_board)
+	{
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+		return ERROR;
+	}
+
+#ifdef V9_VIDEO_SDK_API
+	{
+		v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+		if(sdk)
+		{
+			ST_SDKRTSPConfig stRTSPConfig;
+			memset(&stRTSPConfig, 0, sizeof(stRTSPConfig));
+			ret = v9_video_sdk_lookup_vch_hw(id, sdk, ch, &stRTSPConfig);
+			return OK;
+		}
+
+	}
+	return ERROR;
+#else
+	return OK;
+#endif
+}
+
+int v9_video_sdk_lookup_vch_api(u_int32 id, int ch)
+{
+	if(!v9_video_board)
+	{
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+		return ERROR;
+	}
+#ifdef V9_VIDEO_SDK_API
+	{
+		v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+		if(sdk)
+			return v9_video_sdk_lookup_vch_hw(id, sdk, ch, NULL);
+	}
+	return ERROR;
+#else
+	return OK;
+#endif
+}
+
+
+int v9_video_sdk_get_rtsp_status_api(u_int32 id)
+{
+#ifdef V9_VIDEO_SDK_API
+	int ret = 0, i = 0;
+#endif
+	if(!v9_video_board)
+	{
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+		return ERROR;
+	}
+
+#ifdef V9_VIDEO_SDK_API
+	{
+		v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+		if(sdk)
+		{
+			ST_SDKRTSPConfig stRTSPConfig;
+			memset(&stRTSPConfig, 0, sizeof(stRTSPConfig));
+			ret = v9_video_sdk_lookup_vch_hw(id, sdk, 0, &stRTSPConfig);
+
+			for(i = 0; i < stRTSPConfig.nRTSPInfoNum; i++)
+			{
+				if(strlen(stRTSPConfig.stRTSPInfoArr[i].szChanRtspUrl))										// 通道区分
+				{
+					if(V9_SDK_DEBUG(EVENT))
+						zlog_debug(ZLOG_APP,"Video Board (%d) Get Channel (%d) RTSPStatus=%d decodeStatus=%d", id,
+							   stRTSPConfig.stRTSPInfoArr[i].nChannleId,
+							   stRTSPConfig.stRTSPInfoArr[i].nRTSPStatus,
+							   stRTSPConfig.stRTSPInfoArr[i].nDecodeStatus);
+
+					v9_video_board_stream_status_change( id,
+								stRTSPConfig.stRTSPInfoArr[i].nChannleId,
+								stRTSPConfig.stRTSPInfoArr[i].nRTSPStatus,
+								stRTSPConfig.stRTSPInfoArr[i].nDecodeStatus);
+				}
+			}
+			//zlog_debug(ZLOG_APP," Video Board loading RTSP Status OK");
+			return OK;
+		}
+	}
+	return ERROR;
+#else
+	return OK;
+#endif
+}
+
 
 int v9_video_sdk_open_snap_api(u_int32 id, int type)
 {
-	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk)
-	{
 #ifdef V9_VIDEO_SDK_API
-		if(sdk->handle >= 0)
+	int i = 0;
+	int ret = 0;
+#endif
+	if(!v9_video_board)
+	{
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+		return ERROR;
+	}
+#ifdef V9_VIDEO_SDK_API
+	if (id <= APP_BOARD_MAIN)
+	{
+		for (i = 0; i < V9_APP_BOARD_MAX; i++)
 		{
-			int ret = 0;
+			if (v9_video_board[i].id != APP_BOARD_MAIN && v9_video_board[i].sdk.login
+					&& v9_video_board[i].sdk.handle >= 0)
+			{
+				ret = EAIS_SDK_OpenSnapStream(v9_video_board[i].sdk.handle, type);
+				if(ret != EAIS_SDK_SUCCESS)
+				{
+					if(V9_SDK_DEBUG(ERROR))
+						zlog_err(ZLOG_APP,"EAIS_SDK_OpenSnapStream Video Board (%d) ERROR(%s)",
+							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
+					return ERROR;
+				}
+				return OK;
+			}
+		}
+		return OK;
+	}
+	else
+	{
+		v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+		if (sdk && sdk->login && sdk->handle >= 0)
+		{
 			ret = EAIS_SDK_OpenSnapStream(sdk->handle, type);
 
 			if(ret != EAIS_SDK_SUCCESS)
 			{
-				zlog_err(ZLOG_APP,"EAIS_SDK_OpenSnapStream ERROR");
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP,"EAIS_SDK_OpenSnapStream Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
-#else
-		return OK;
-#endif
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		return ERROR;
 	}
 	return ERROR;
+#else
+	return OK;
+#endif
 }
 
 int v9_video_sdk_close_snap_api(u_int32 id)
 {
-	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk)
-	{
 #ifdef V9_VIDEO_SDK_API
-		if(sdk->handle >= 0)
+	int i = 0;
+	int ret = 0;
+#endif
+	if(!v9_video_board)
+	{
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+		return ERROR;
+	}
+#ifdef V9_VIDEO_SDK_API
+	if (id <= APP_BOARD_MAIN)
+	{
+		for (i = 0; i < V9_APP_BOARD_MAX; i++)
 		{
-			int ret = 0;
+			if (v9_video_board[i].id != APP_BOARD_MAIN && v9_video_board[i].sdk.login
+					&& v9_video_board[i].sdk.handle >= 0)
+			{
+				ret = EAIS_SDK_CloseSnapStream(v9_video_board[i].sdk.handle);
+				if(ret != EAIS_SDK_SUCCESS)
+				{
+					if(V9_SDK_DEBUG(ERROR))
+						zlog_err(ZLOG_APP,"EAIS_SDK_CloseSnapStream Video Board (%d) ERROR(%s)",
+							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
+					return ERROR;
+				}
+				return OK;
+			}
+		}
+		return OK;
+	}
+	else
+	{
+		v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+		if (sdk && sdk->login && sdk->handle >= 0)
+		{
 			ret = EAIS_SDK_CloseSnapStream(sdk->handle);
+
 			if(ret != EAIS_SDK_SUCCESS)
 			{
-				zlog_err(ZLOG_APP,"EAIS_SDK_CloseSnapStream ERROR");
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP,"EAIS_SDK_CloseSnapStream Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
-#else
-		return OK;
-#endif
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		return ERROR;
 	}
 	return ERROR;
+#else
+	return OK;
+#endif
 }
 
 int v9_video_sdk_set_snap_dir_api(u_int32 id, BOOL http, char *address, int port,
 								  char *user, char *pass, char *dir)
 {
-	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk)
-	{
 #ifdef V9_VIDEO_SDK_API
-		if(sdk->handle >= 0)
+	int i = 0;
+	int ret = 0;
+#endif
+	if(!v9_video_board)
+	{
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+		return ERROR;
+	}
+#ifdef V9_VIDEO_SDK_API
+	if (id <= APP_BOARD_MAIN)
+	{
+		ST_SDKSnapServerAddr ServerAddr;
+		memset(&ServerAddr, 0, sizeof(ST_SDKSnapServerAddr));
+		ServerAddr.nEnable = address ? 1:0;										// 0：不使能，1：使能
+		if(address)
 		{
-			int ret = 0;
+			strcpy(ServerAddr.szServerUrl, address);			// Ftp、Http服务URL或IP
+			ServerAddr.nDevicePort = port;									// 端口
+			if(user)
+				strcpy(ServerAddr.szUserName, user);									// 用户名
+			if(pass)
+				strcpy(ServerAddr.szPassWord, pass);									// 密码
+			if(http)
+				ServerAddr.nProtocol = 1;										// 当协议为http时有效
+			if(dir)
+				strcpy(ServerAddr.szFtpFilePath, dir);			// Ftp文件上传路径
+		}
+		for (i = 0; i < V9_APP_BOARD_MAX; i++)
+		{
+			if (v9_video_board[i].id != APP_BOARD_MAIN && v9_video_board[i].sdk.login
+					&& v9_video_board[i].sdk.handle >= 0)
+			{
+				ret = EAIS_SDK_SetSnapServerAddr(v9_video_board[i].sdk.handle, http, &ServerAddr);
+				if(ret != EAIS_SDK_SUCCESS)
+				{
+					if(V9_SDK_DEBUG(ERROR))
+						zlog_err(ZLOG_APP,"EAIS_SDK_SetSnapServerAddr Video Board (%d) ERROR(%s)",
+							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
+					return ERROR;
+				}
+				return OK;
+			}
+		}
+		return OK;
+	}
+	else
+	{
+		v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+		if (sdk && sdk->login && sdk->handle >= 0)
+		{
 			ST_SDKSnapServerAddr ServerAddr;
 			memset(&ServerAddr, 0, sizeof(ST_SDKSnapServerAddr));
 			ServerAddr.nEnable = address ? 1:0;										// 0：不使能，1：使能
@@ -938,29 +1647,132 @@ int v9_video_sdk_set_snap_dir_api(u_int32 id, BOOL http, char *address, int port
 			ret = EAIS_SDK_SetSnapServerAddr(sdk->handle, http, &ServerAddr);
 			if(ret != EAIS_SDK_SUCCESS)
 			{
-				zlog_err(ZLOG_APP,"EAIS_SDK_SetSnapServerAddr ERROR");
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP,"EAIS_SDK_SetSnapServerAddr Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
-#else
-		return OK;
-#endif
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		return ERROR;
 	}
 	return ERROR;
+#else
+	return OK;
+#endif
 }
+
+int v9_video_sdk_nfsdir_api(u_int32 id, char *address, char *user, char *pass, char *dir)
+{
+#ifdef V9_VIDEO_SDK_API
+	int ret = 0;
+#endif
+	if(!v9_video_board)
+	{
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+		return ERROR;
+	}
+#ifdef V9_VIDEO_SDK_API
+	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+	if (sdk && sdk->login && sdk->handle >= 0)
+	{
+		ST_SDKSnapServerAddr ServerAddr;
+		memset(&ServerAddr, 0, sizeof(ST_SDKSnapServerAddr));
+		ret = EAIS_SDK_GetSnapServerAddr(sdk->handle, 2, &ServerAddr);
+		if(ret != EAIS_SDK_SUCCESS)
+		{
+			if(V9_SDK_DEBUG(ERROR))
+				zlog_err(ZLOG_APP,"EAIS_SDK_GetSnapServerAddr Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+			return ERROR;
+		}
+
+		if(ServerAddr.nEnable && strlen(ServerAddr.szServerUrl) && strlen(ServerAddr.szFtpFilePath))
+			return OK;
+
+		memset(&ServerAddr, 0, sizeof(ST_SDKSnapServerAddr));
+		ServerAddr.nEnable = address ? 1:0;										// 0：不使能，1：使能
+		if(address)
+		{
+			strcpy(ServerAddr.szServerUrl, address);			// Ftp、Http服务URL或IP
+			if(user)
+				strcpy(ServerAddr.szUserName, user);									// 用户名
+			if(pass)
+				strcpy(ServerAddr.szPassWord, pass);									// 密码
+			//if(http)
+			//	ServerAddr.nProtocol = 1;										// 当协议为http时有效
+			if(dir)
+			{
+				strcpy(ServerAddr.szFtpFilePath, ":");
+				strcat(ServerAddr.szFtpFilePath, dir);			// Ftp文件上传路径(:/home/ccheng)
+			}
+		}
+		ret = EAIS_SDK_SetSnapServerAddr(sdk->handle, 2, &ServerAddr);
+		if(ret != EAIS_SDK_SUCCESS)
+		{
+			if(V9_SDK_DEBUG(ERROR))
+				zlog_err(ZLOG_APP,"EAIS_SDK_SetSnapServerAddr Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+			return ERROR;
+		}
+		return OK;
+	}
+	if(V9_SDK_DEBUG(WARN))
+		zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+	return ERROR;
+#else
+	return OK;
+#endif
+}
+
 
 // 获取/设置人脸识别配置参数
 int v9_video_sdk_recognize_config_set_api(u_int32 id, int nOutSimilarity,
 									  int nRegisterQuality, BOOL nOpenUpload)
 {
-	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk)
-	{
 #ifdef V9_VIDEO_SDK_API
-		if(sdk->handle >= 0)
+	int i = 0;
+	int ret = 0;
+#endif
+	if(!v9_video_board)
+	{
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+		return ERROR;
+	}
+#ifdef V9_VIDEO_SDK_API
+	if (id <= APP_BOARD_MAIN)
+	{
+		ST_SDKRecognizeConfig stRecognizeConfig;
+		memset(&stRecognizeConfig, 0, sizeof(ST_SDKRecognizeConfig));
+
+		stRecognizeConfig.nOutSimilarity = nOutSimilarity;
+		stRecognizeConfig.nRegisterQuality = nRegisterQuality;
+		stRecognizeConfig.nOpenUpload = nOpenUpload;
+
+		for (i = 0; i < V9_APP_BOARD_MAX; i++)
 		{
-			int ret = 0;
+			if (v9_video_board[i].id != APP_BOARD_MAIN && v9_video_board[i].sdk.login
+					&& v9_video_board[i].sdk.handle >= 0)
+			{
+				ret = EAIS_SDK_SetRecognizeCofig(v9_video_board[i].sdk.handle, &stRecognizeConfig);
+				if(ret != EAIS_SDK_SUCCESS)
+				{
+					if(V9_SDK_DEBUG(ERROR))
+						zlog_err(ZLOG_APP,"EAIS_SDK_SetRecognizeCofig Video Board (%d) ERROR(%s)",
+							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
+					return ERROR;
+				}
+				return OK;
+			}
+		}
+		return OK;
+	}
+	else
+	{
+		v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+		if (sdk && sdk->login && sdk->handle >= 0)
+		{
 			ST_SDKRecognizeConfig stRecognizeConfig;
 			memset(&stRecognizeConfig, 0, sizeof(ST_SDKRecognizeConfig));
 
@@ -970,26 +1782,30 @@ int v9_video_sdk_recognize_config_set_api(u_int32 id, int nOutSimilarity,
 			ret = EAIS_SDK_SetRecognizeCofig(sdk->handle, &stRecognizeConfig);
 			if(ret != EAIS_SDK_SUCCESS)
 			{
-				zlog_err(ZLOG_APP,"EAIS_SDK_SetRecognizeCofig ERROR");
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP,"EAIS_SDK_SetRecognizeCofig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
-#else
-		return OK;
-#endif
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		return ERROR;
 	}
 	return ERROR;
+#else
+	return OK;
+#endif
 }
 
 int v9_video_sdk_recognize_config_get_api(u_int32 id, int *nOutSimilarity,
 										  int *nRegisterQuality, BOOL *nOpenUpload)
 {
 	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk)
+	if(v9_video_board && sdk)
 	{
 #ifdef V9_VIDEO_SDK_API
-		if(sdk->handle >= 0)
+		if(sdk->login && sdk->handle >= 0)
 		{
 			int ret = 0;
 			ST_SDKRecognizeConfig stRecognizeConfig;
@@ -998,7 +1814,8 @@ int v9_video_sdk_recognize_config_get_api(u_int32 id, int *nOutSimilarity,
 			ret = EAIS_SDK_GetRecognizeCofig(sdk->handle, &stRecognizeConfig);
 			if(ret != EAIS_SDK_SUCCESS)
 			{
-				zlog_err(ZLOG_APP,"EAIS_SDK_SetRecognizeCofig ERROR");
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP,"EAIS_SDK_GetRecognizeCofig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			if(nOutSimilarity)
@@ -1009,6 +1826,8 @@ int v9_video_sdk_recognize_config_get_api(u_int32 id, int *nOutSimilarity,
 				*nOpenUpload = stRecognizeConfig.nOpenUpload;
 			return OK;
 		}
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 #else
 		return OK;
 #endif
@@ -1019,13 +1838,48 @@ int v9_video_sdk_recognize_config_get_api(u_int32 id, int *nOutSimilarity,
 // 安全帽配置
 int v9_video_sdk_helmet_config_set_api(u_int32 id, u_int32 ch, void *data)
 {
-	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk && data)
-	{
 #ifdef V9_VIDEO_SDK_API
-		if(sdk->handle >= 0)
+	int i = 0;
+	int ret = 0;
+#endif
+	if(!v9_video_board)
+	{
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+		return ERROR;
+	}
+#ifdef V9_VIDEO_SDK_API
+	if (id <= APP_BOARD_MAIN)
+	{
+		ST_SDKHelmetConfig stHelmetConfig;
+		memset(&stHelmetConfig, 0, sizeof(ST_SDKHelmetConfig));
+
+		stHelmetConfig.nHelmetInfoNum = 1;
+		memcpy(&stHelmetConfig.stHelmetInfoArr[0], data, sizeof(ST_SDKHelmetInfo));
+
+		for (i = 0; i < V9_APP_BOARD_MAX; i++)
 		{
-			int ret = 0;
+			if (v9_video_board[i].id != APP_BOARD_MAIN && v9_video_board[i].sdk.login
+					&& v9_video_board[i].sdk.handle >= 0)
+			{
+				ret = EAIS_SDK_SetHelmetConfig(v9_video_board[i].sdk.handle, &stHelmetConfig);
+				if(ret != EAIS_SDK_SUCCESS)
+				{
+					if(V9_SDK_DEBUG(ERROR))
+						zlog_err(ZLOG_APP,"EAIS_SDK_SetHelmetConfig Video Board (%d) ERROR(%s)",
+							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
+					return ERROR;
+				}
+				return OK;
+			}
+		}
+		return OK;
+	}
+	else
+	{
+		v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+		if (sdk && sdk->login && sdk->handle >= 0)
+		{
 			ST_SDKHelmetConfig stHelmetConfig;
 			memset(&stHelmetConfig, 0, sizeof(ST_SDKHelmetConfig));
 
@@ -1035,24 +1889,30 @@ int v9_video_sdk_helmet_config_set_api(u_int32 id, u_int32 ch, void *data)
 			ret = EAIS_SDK_SetHelmetConfig(sdk->handle, &stHelmetConfig);
 			if(ret != EAIS_SDK_SUCCESS)
 			{
-				zlog_err(ZLOG_APP,"EAIS_SDK_SetHelmetConfig ERROR");
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP,"EAIS_SDK_SetHelmetConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
-#else
-		return OK;
-#endif
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		return ERROR;
 	}
 	return ERROR;
+#else
+	return OK;
+#endif
 }
+
+
 int v9_video_sdk_helmet_config_get_api(u_int32 id, u_int32 ch, void *data)
 {
 	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk && data)
+	if(v9_video_board && sdk && data)
 	{
 #ifdef V9_VIDEO_SDK_API
-		if(sdk->handle >= 0)
+		if(sdk->login && sdk->handle >= 0)
 		{
 			int ret = 0;
 			ST_SDKHelmetConfig stHelmetConfig;
@@ -1061,10 +1921,11 @@ int v9_video_sdk_helmet_config_get_api(u_int32 id, u_int32 ch, void *data)
 			ret = EAIS_SDK_GetHelmetConfig(sdk->handle, &stHelmetConfig);
 			if(ret != EAIS_SDK_SUCCESS)
 			{
-				zlog_err(ZLOG_APP,"EAIS_SDK_SetHelmetConfig ERROR");
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP,"EAIS_SDK_GetHelmetConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
-			for(ret = 0; ret < EAIS_SDK_MAX_CHANNEL_SUPPORT; ret++)
+			for(ret = 0; ret < stHelmetConfig.nHelmetInfoNum; ret++)
 			{
 				if(stHelmetConfig.stHelmetInfoArr[ret].nChannelId == ch)
 				{
@@ -1072,8 +1933,12 @@ int v9_video_sdk_helmet_config_get_api(u_int32 id, u_int32 ch, void *data)
 					return OK;
 				}
 			}
+			if(V9_SDK_DEBUG(WARN))
+				zlog_err(ZLOG_APP," Video Board (%d) Can not get helmet config of channel %d", V9_APP_BOARD_HW_ID(id),ch);
 			return ERROR;
 		}
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 #else
 		return OK;
 #endif
@@ -1084,61 +1949,110 @@ int v9_video_sdk_helmet_config_get_api(u_int32 id, u_int32 ch, void *data)
 // 抓拍策略配置
 int v9_video_sdk_snap_config_set_api(u_int32 id, u_int32 ch, void *data)
 {
-	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk && data)
-	{
 #ifdef V9_VIDEO_SDK_API
-		if(sdk->handle >= 0)
+	int i = 0;
+	int ret = 0;
+#endif
+	if(!v9_video_board)
+	{
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+		return ERROR;
+	}
+#ifdef V9_VIDEO_SDK_API
+	if (id <= APP_BOARD_MAIN)
+	{
+		ST_SDKSnapConfig pstSnapConfig;
+		memset(&pstSnapConfig, 0, sizeof(ST_SDKSnapConfig));
+
+		pstSnapConfig.nSnapInfoNum = 1;
+
+		memcpy(&pstSnapConfig.stSnapInfoArr[0], data, sizeof(ST_SDKSnapInfo));
+		pstSnapConfig.stSnapInfoArr[0].nChannelId = ch;
+
+		for (i = 0; i < V9_APP_BOARD_MAX; i++)
 		{
-			int ret = 0;
-			ST_SDKSnapConfig stHelmetConfig;
-			memset(&stHelmetConfig, 0, sizeof(ST_SDKSnapConfig));
+			if (v9_video_board[i].id != APP_BOARD_MAIN && v9_video_board[i].sdk.login
+					&& v9_video_board[i].sdk.handle >= 0)
+			{
+				ret = EAIS_SDK_SetSnapConfig(v9_video_board[i].sdk.handle, &pstSnapConfig);
+				if(ret != EAIS_SDK_SUCCESS)
+				{
+					if(V9_SDK_DEBUG(ERROR))
+						zlog_err(ZLOG_APP,"EAIS_SDK_SetSnapConfig Video Board (%d) ERROR(%s)",
+							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
+					return ERROR;
+				}
+				return OK;
+			}
+		}
+		return OK;
+	}
+	else
+	{
+		v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+		if (sdk && sdk->login && sdk->handle >= 0)
+		{
+			ST_SDKSnapConfig pstSnapConfig;
+			memset(&pstSnapConfig, 0, sizeof(ST_SDKSnapConfig));
 
-			stHelmetConfig.nSnapInfoNum = 1;
+			pstSnapConfig.nSnapInfoNum = 1;
 
-			memcpy(&stHelmetConfig.stSnapInfoArr[0], data, sizeof(ST_SDKSnapInfo));
-			stHelmetConfig.stSnapInfoArr[0].nChannelId = ch;
-			ret = EAIS_SDK_SetHelmetConfig(sdk->handle, &stHelmetConfig);
+			memcpy(&pstSnapConfig.stSnapInfoArr[0], data, sizeof(ST_SDKSnapInfo));
+			pstSnapConfig.stSnapInfoArr[0].nChannelId = ch;
+
+			ret = EAIS_SDK_SetSnapConfig(sdk->handle, &pstSnapConfig);
 			if(ret != EAIS_SDK_SUCCESS)
 			{
-				zlog_err(ZLOG_APP,"EAIS_SDK_SetHelmetConfig ERROR");
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP,"EAIS_SDK_SetSnapConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
-#else
-		return OK;
-#endif
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		return ERROR;
 	}
 	return ERROR;
+#else
+	return OK;
+#endif
 }
+
+
 int v9_video_sdk_snap_config_get_api(u_int32 id, u_int32 ch, void *data)
 {
 	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk && data)
+	if(v9_video_board && sdk && data)
 	{
 #ifdef V9_VIDEO_SDK_API
-		if(sdk->handle >= 0)
+		if(sdk->login && sdk->handle >= 0)
 		{
 			int ret = 0;
-			ST_SDKSnapConfig stHelmetConfig;
-			memset(&stHelmetConfig, 0, sizeof(ST_SDKSnapConfig));
-			ret = EAIS_SDK_GetHelmetConfig(sdk->handle, &stHelmetConfig);
+			ST_SDKSnapConfig pstSnapConfig;
+			memset(&pstSnapConfig, 0, sizeof(ST_SDKSnapConfig));
+			ret = EAIS_SDK_GetSnapConfig(sdk->handle, &pstSnapConfig);
 			if(ret != EAIS_SDK_SUCCESS)
 			{
-				zlog_err(ZLOG_APP,"EAIS_SDK_SetHelmetConfig ERROR");
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP,"EAIS_SDK_GetSnapConfig ERROR(%s)", v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
-			for(ret = 0; ret < EAIS_SDK_MAX_CHANNEL_SUPPORT; ret++)
+			for(ret = 0; ret < pstSnapConfig.nSnapInfoNum; ret++)
 			{
-				if(stHelmetConfig.stSnapInfoArr[ret].nChannelId == ch)
+				if(pstSnapConfig.stSnapInfoArr[ret].nChannelId == ch)
 				{
-					memcpy(data, &stHelmetConfig.stSnapInfoArr[ret], sizeof(ST_SDKSnapInfo));
+					memcpy(data, &pstSnapConfig.stSnapInfoArr[ret], sizeof(ST_SDKSnapInfo));
 					return OK;
 				}
 			}
+			if(V9_SDK_DEBUG(WARN))
+				zlog_err(ZLOG_APP," Video Board (%d) Can not get snap config of channel %d", V9_APP_BOARD_HW_ID(id),ch);
 			return ERROR;
 		}
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 #else
 		return OK;
 #endif
@@ -1149,44 +2063,90 @@ int v9_video_sdk_snap_config_get_api(u_int32 id, u_int32 ch, void *data)
 //原图输出
 int v9_video_sdk_original_pic_enable_set_api(u_int32 id, BOOL enable)
 {
-	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk)
-	{
 #ifdef V9_VIDEO_SDK_API
-		if(sdk->handle >= 0)
+	int i = 0;
+	int ret = 0;
+#endif
+	if(!v9_video_board)
+	{
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+		return ERROR;
+	}
+#ifdef V9_VIDEO_SDK_API
+	if (id <= APP_BOARD_MAIN)
+	{
+		ST_SDKSnapConfig stSnapConfig;
+		memset(&stSnapConfig, 0, sizeof(ST_SDKSnapConfig));
+
+		for (i = 0; i < V9_APP_BOARD_MAX; i++)
 		{
-			int ret = 0;
+			if (v9_video_board[i].id != APP_BOARD_MAIN && v9_video_board[i].sdk.login
+					&& v9_video_board[i].sdk.handle >= 0)
+			{
+				ret = EAIS_SDK_GetSnapConfig(v9_video_board[i].sdk.handle, &stSnapConfig);
+				if(ret != EAIS_SDK_SUCCESS)
+				{
+					if(V9_SDK_DEBUG(ERROR))
+						zlog_err(ZLOG_APP,"EAIS_SDK_GetSnapConfig Video Board (%d) ERROR(%s)",
+							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
+					return ERROR;
+				}
+				stSnapConfig.nOriginalPicEnable = enable;
+				ret = EAIS_SDK_SetSnapConfig(v9_video_board[i].sdk.handle, &stSnapConfig);
+				if(ret != EAIS_SDK_SUCCESS)
+				{
+					if(V9_SDK_DEBUG(ERROR))
+						zlog_err(ZLOG_APP,"EAIS_SDK_SetSnapConfig Video Board (%d) ERROR(%s)",
+							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
+					return ERROR;
+				}
+				return OK;
+			}
+		}
+		return OK;
+	}
+	else
+	{
+		v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+		if (sdk && sdk->login && sdk->handle >= 0)
+		{
 			ST_SDKSnapConfig stSnapConfig;
 			memset(&stSnapConfig, 0, sizeof(ST_SDKSnapConfig));
 			ret = EAIS_SDK_GetSnapConfig(sdk->handle, &stSnapConfig);
 			if(ret != EAIS_SDK_SUCCESS)
 			{
-				zlog_err(ZLOG_APP,"EAIS_SDK_GetSnapConfig ERROR");
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP,"EAIS_SDK_GetSnapConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			stSnapConfig.nOriginalPicEnable = enable;
 			ret = EAIS_SDK_SetSnapConfig(sdk->handle, &stSnapConfig);
 			if(ret != EAIS_SDK_SUCCESS)
 			{
-				zlog_err(ZLOG_APP,"EAIS_SDK_GetSnapConfig ERROR");
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP,"EAIS_SDK_SetSnapConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
-#else
-		return OK;
-#endif
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		return ERROR;
 	}
 	return ERROR;
+#else
+	return OK;
+#endif
 }
 
 int v9_video_sdk_original_pic_enable_get_api(u_int32 id, BOOL *enable)
 {
 	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk)
+	if(v9_video_board && sdk)
 	{
 #ifdef V9_VIDEO_SDK_API
-		if(sdk->handle >= 0)
+		if(sdk->login && sdk->handle >= 0)
 		{
 			int ret = 0;
 			ST_SDKSnapConfig stSnapConfig;
@@ -1194,13 +2154,16 @@ int v9_video_sdk_original_pic_enable_get_api(u_int32 id, BOOL *enable)
 			ret = EAIS_SDK_GetSnapConfig(sdk->handle, &stSnapConfig);
 			if(ret != EAIS_SDK_SUCCESS)
 			{
-				zlog_err(ZLOG_APP,"EAIS_SDK_GetSnapConfig ERROR");
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP,"EAIS_SDK_GetSnapConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			if(enable)
 				*enable = stSnapConfig.nOriginalPicEnable;
 			return OK;
 		}
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 #else
 		return OK;
 #endif
@@ -1210,40 +2173,166 @@ int v9_video_sdk_original_pic_enable_get_api(u_int32 id, BOOL *enable)
 
 
 
+// 告警信息配置
+int v9_video_sdk_alarm_config_set_api(u_int32 id, u_int32 ch, void *data)
+{
+#ifdef V9_VIDEO_SDK_API
+	int i = 0;
+	int ret = 0;
+#endif
+	if(!v9_video_board)
+	{
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+		return ERROR;
+	}
+#ifdef V9_VIDEO_SDK_API
+	if (id <= APP_BOARD_MAIN)
+	{
+		ST_SDKAlarmConfig pstAlarmConfig;
+		memset(&pstAlarmConfig, 0, sizeof(ST_SDKAlarmConfig));
+
+		pstAlarmConfig.nAlarmParamNum = 1;
+
+		memcpy(&pstAlarmConfig.stAlarmParamArr[0], data, sizeof(ST_SDKAlarmParam));
+		pstAlarmConfig.stAlarmParamArr[0].nChannelId = ch;
+
+		for (i = 0; i < V9_APP_BOARD_MAX; i++)
+		{
+			if (v9_video_board[i].id != APP_BOARD_MAIN && v9_video_board[i].sdk.login
+					&& v9_video_board[i].sdk.handle >= 0)
+			{
+				ret = EAIS_SDK_SetAlarmConfig(v9_video_board[i].sdk.handle, &pstAlarmConfig);
+				if(ret != EAIS_SDK_SUCCESS)
+				{
+					if(V9_SDK_DEBUG(ERROR))
+						zlog_err(ZLOG_APP,"EAIS_SDK_SetAlarmConfig Video Board (%d) ERROR(%s)",
+							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
+					return ERROR;
+				}
+				return OK;
+			}
+		}
+		return OK;
+	}
+	else
+	{
+		v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+		if (sdk && sdk->login && sdk->handle >= 0)
+		{
+			ST_SDKAlarmConfig pstAlarmConfig;
+			memset(&pstAlarmConfig, 0, sizeof(ST_SDKAlarmConfig));
+
+			pstAlarmConfig.nAlarmParamNum = 1;
+
+			memcpy(&pstAlarmConfig.stAlarmParamArr[0], data, sizeof(ST_SDKAlarmParam));
+			pstAlarmConfig.stAlarmParamArr[0].nChannelId = ch;
+
+			ret = EAIS_SDK_SetAlarmConfig(sdk->handle, &pstAlarmConfig);
+			if(ret != EAIS_SDK_SUCCESS)
+			{
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP,"EAIS_SDK_SetAlarmConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+				return ERROR;
+			}
+			return OK;
+		}
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		return ERROR;
+	}
+	return ERROR;
+#else
+	return OK;
+#endif
+}
+
+int v9_video_sdk_alarm_config_get_api(u_int32 id, s_int32 ch, void *data)
+{
+	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+	if(v9_video_board && sdk && data)
+	{
+#ifdef V9_VIDEO_SDK_API
+		if(sdk->login && sdk->handle >= 0)
+		{
+			int ret = 0;
+			ST_SDKAlarmConfig pstAlarmConfig;
+			memset(&pstAlarmConfig, 0, sizeof(ST_SDKAlarmConfig));
+			ret = EAIS_SDK_GetAlarmConfig(sdk->handle, ch, &pstAlarmConfig);
+			if(ret != EAIS_SDK_SUCCESS)
+			{
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP,"EAIS_SDK_GetAlarmConfig ERROR(%s)", v9_video_sdk_errnostr(ret));
+				return ERROR;
+			}
+			if(ch == -1)
+			{
+				if(data)
+					memcpy(data, &pstAlarmConfig.stAlarmParamArr[ret], sizeof(ST_SDKAlarmParam));
+				return OK;
+			}
+			if(data)
+			{
+				for(ret = 0; ret < pstAlarmConfig.nAlarmParamNum; ret++)
+				{
+					if(pstAlarmConfig.stAlarmParamArr[ret].nChannelId == ch)
+					{
+						memcpy(data, &pstAlarmConfig.stAlarmParamArr[ret], sizeof(ST_SDKAlarmParam));
+						return OK;
+					}
+				}
+			}
+			if(V9_SDK_DEBUG(WARN))
+				zlog_err(ZLOG_APP," Video Board (%d) Can not get alarm config of channel %d", V9_APP_BOARD_HW_ID(id),ch);
+			return ERROR;
+		}
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+#else
+		return OK;
+#endif
+	}
+	return ERROR;
+}
+
+
 int v9_video_sdk_update_api(u_int32 id, char *filename)
 {
 	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk)
+	if(v9_video_board && sdk/* && sdk->login && sdk->handle >= 0*/)
 	{
 #ifdef V9_VIDEO_SDK_API
 		int ret = 0;
 		int nDataLen = 0;
 		char* pszPacketData = NULL;
+		v9_video_board_t *vboard = sdk->board;
 		nDataLen = os_file_size(filename);
 		if(nDataLen != ERROR && nDataLen > 0)
 		{
-			pszPacketData = malloc(nDataLen + 1);
+			pszPacketData = XMALLOC(MTYPE_VIDEO_TMP, nDataLen + 1);
 			if(!pszPacketData)
 				return ERROR;
 			memset(pszPacketData, 0, nDataLen + 1);
 			ret = os_read_file(filename, pszPacketData, nDataLen);
 			if(ret != OK)
 			{
-				free(pszPacketData);
+				XFREE(MTYPE_VIDEO_TMP, pszPacketData);
 				return ERROR;
 			}
-			ret = EAIS_SDK_Update(sdk->address, V9_VIDEO_SDK_UPDATE_PORT,
+			ret = EAIS_SDK_Update(inet_address(vboard->address), V9_VIDEO_SDK_UPDATE_PORT,
 								  sdk->username, sdk->password, pszPacketData, nDataLen);
 
-			free(pszPacketData);
+			XFREE(MTYPE_VIDEO_TMP, pszPacketData);
 
 			if(ret != EAIS_SDK_SUCCESS)
 			{
-				zlog_err(ZLOG_APP,"EAIS_SDK_Update ERROR");
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP,"EAIS_SDK_Update Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
+			return OK;
 		}
-		return OK;
+		return ERROR;
 #else
 		return OK;
 #endif
@@ -1251,10 +2340,13 @@ int v9_video_sdk_update_api(u_int32 id, char *filename)
 	return ERROR;
 }
 
+/*
+ * 查询抓拍统计
+ */
 int v9_video_sdk_query_api(u_int32 id, u_int32 ch, u_int32 nStartTime, u_int32 nEndTime, void *data)
 {
 	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk && data)
+	if(v9_video_board && sdk && data && sdk->login && sdk->handle >= 0)
 	{
 #ifdef V9_VIDEO_SDK_API
 		int ret = 0;
@@ -1268,7 +2360,8 @@ int v9_video_sdk_query_api(u_int32 id, u_int32 ch, u_int32 nStartTime, u_int32 n
 		ret = EAIS_SDK_QueryPeopleCount(sdk->handle, &stQueryPeopleReq, &stPeopleCount);
 		if(ret != EAIS_SDK_SUCCESS)
 		{
-			zlog_err(ZLOG_APP,"EAIS_SDK_QueryPeopleCount ERROR");
+			if(V9_SDK_DEBUG(ERROR))
+				zlog_err(ZLOG_APP,"EAIS_SDK_QueryPeopleCount Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 			return ERROR;
 		}
 		memcpy(data, &stPeopleCount, sizeof(ST_SDKPeopleCount));
@@ -1288,139 +2381,384 @@ int v9_video_sdk_query_api(u_int32 id, u_int32 ch, u_int32 nStartTime, u_int32 n
 // 抓拍识别方案
 // 用户增删改查
 // 修改(新增)用户 p_bNewUser false:修改用户 true:新用户
-int v9_video_sdk_add_user_api(u_int32 id, BOOL gender, int group, char *user, char *ID, char *pic, BOOL edit)
+int v9_video_sdk_add_user_api(u_int32 id, BOOL gender, int group, char *user, char *ID, char *pic, char *text, BOOL add)
 {
-	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk)
-	{
 #ifdef V9_VIDEO_SDK_API
-		int ret = 0;
+	int i = 0;
+	int ret = 0;
+#endif
+	if(!v9_video_board)
+	{
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+		return ERROR;
+	}
+#ifdef V9_VIDEO_SDK_API
+	if (id <= APP_BOARD_MAIN)
+	{
 		int nDataLen = 0;
 		ST_SDKUserInfo pstUserInfo;
 		memset(&pstUserInfo, 0, sizeof(ST_SDKUserInfo));
 		nDataLen = os_file_size(pic);
-		if(nDataLen != ERROR && nDataLen > 0)
+		if (nDataLen != ERROR && nDataLen > 0)
 		{
-			pstUserInfo.szPictureData = malloc(nDataLen + 1);
-			if(!pstUserInfo.szPictureData)
+			pstUserInfo.szPictureData = XMALLOC(MTYPE_VIDEO_PIC, nDataLen + 1);
+			if (!pstUserInfo.szPictureData)
 				return ERROR;
 			memset(pstUserInfo.szPictureData, 0, nDataLen + 1);
 			ret = os_read_file(pic, pstUserInfo.szPictureData, nDataLen);
-			if(ret != OK)
+			if (ret != OK)
 			{
-				free(pstUserInfo.szPictureData);
+				XFREE(MTYPE_VIDEO_PIC, pstUserInfo.szPictureData);
 				return ERROR;
 			}
-
-			pstUserInfo.nGroupID = group;										// 所属组ID  0： 黑名单 1： 白名单
+			pstUserInfo.nGroupID = group;				// 所属组ID  0： 黑名单 1： 白名单
 			strcpy(pstUserInfo.szUserName, user);			// 姓名
 			strcpy(pstUserInfo.szUserID, ID);				// 证件号
-			pstUserInfo.nGender = gender;										// 人员性别  0： 女 1： 男
-			pstUserInfo.nFaceLen = nDataLen;										// 人脸图片数据长度（1, 1024 * 1024]字节
+			pstUserInfo.nGender = gender;					// 人员性别  0： 女 1： 男
+			pstUserInfo.nFaceLen = nDataLen;	// 人脸图片数据长度（1, 1024 * 1024]字节
 			//pstUserInfo.szPictureData;									// 图片内容
-			//pstUserInfo.szComment[EAIS_SDK_USER_FACE_COMMENT_LEN];		// 用户自定义备注字段
+			if(text)
+				strcpy(pstUserInfo.szComment, text);		// 用户自定义备注字段
 			//pstUserInfo.nRegisterTime;									// 注册时间，从1970-01-01 00:00:00 (utc) 开始计时的秒数
 			//pstUserInfo.szReserved[256];								// 预留位，便于拓展，默认置空
-
-			ret = EAIS_SDK_EditUser(sdk->handle, &pstUserInfo, edit ? FALSE:TRUE);
-
-			free(pstUserInfo.szPictureData);
-
-			if(ret != EAIS_SDK_SUCCESS)
+			for (i = 0; i < V9_APP_BOARD_MAX; i++)
 			{
-				zlog_err(ZLOG_APP,"EAIS_SDK_EditUser ERROR");
-				return ERROR;
+				if (v9_video_board[i].id != APP_BOARD_MAIN && v9_video_board[i].sdk.login
+						&& v9_video_board[i].sdk.handle >= 0)
+				{
+					ret = EAIS_SDK_EditUser(v9_video_board[i].sdk.handle,
+							&pstUserInfo, add ? TRUE : FALSE);
+					if (ret != EAIS_SDK_SUCCESS)
+					{
+						XFREE(MTYPE_VIDEO_PIC, pstUserInfo.szPictureData);
+						if(V9_SDK_DEBUG(ERROR))
+							zlog_err(ZLOG_APP, "EAIS_SDK_EditUser Video Board (%d) ERROR(%s)",
+									 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
+						return ERROR;
+					}
+
+				}
 			}
+			XFREE(MTYPE_VIDEO_PIC, pstUserInfo.szPictureData);
+			return OK;
 		}
-		return OK;
-#else
-		return OK;
-#endif
+		if(V9_SDK_DEBUG(ERROR))
+			zlog_err(ZLOG_APP," Can not open picfile(%s)", pic);
+		return ERROR;
+	}
+	else
+	{
+		v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+		if (sdk && sdk->login && sdk->handle >= 0)
+		{
+			int nDataLen = 0;
+			ST_SDKUserInfo pstUserInfo;
+			memset(&pstUserInfo, 0, sizeof(ST_SDKUserInfo));
+			nDataLen = os_file_size(pic);
+			if (nDataLen != ERROR && nDataLen > 0)
+			{
+				pstUserInfo.szPictureData = XMALLOC(MTYPE_VIDEO_PIC, nDataLen + 1);
+				if (!pstUserInfo.szPictureData)
+					return ERROR;
+				memset(pstUserInfo.szPictureData, 0, nDataLen + 1);
+				ret = os_read_file(pic, pstUserInfo.szPictureData, nDataLen);
+				if (ret != OK)
+				{
+					XFREE(MTYPE_VIDEO_PIC, pstUserInfo.szPictureData);
+					return ERROR;
+				}
+
+				pstUserInfo.nGroupID = group;			// 所属组ID  0： 黑名单 1： 白名单
+				strcpy(pstUserInfo.szUserName, user);			// 姓名
+				strcpy(pstUserInfo.szUserID, ID);				// 证件号
+				pstUserInfo.nGender = gender;				// 人员性别  0： 女 1： 男
+				pstUserInfo.nFaceLen = nDataLen;// 人脸图片数据长度（1, 1024 * 1024]字节
+				//pstUserInfo.szPictureData;									// 图片内容
+				if(text)
+					strcpy(pstUserInfo.szComment, text);		// 用户自定义备注字段
+				//pstUserInfo.nRegisterTime;									// 注册时间，从1970-01-01 00:00:00 (utc) 开始计时的秒数
+				//pstUserInfo.szReserved[256];								// 预留位，便于拓展，默认置空
+
+				ret = EAIS_SDK_EditUser(sdk->handle,
+										&pstUserInfo, add ? TRUE : FALSE);
+
+				XFREE(MTYPE_VIDEO_PIC, pstUserInfo.szPictureData);
+
+				if (ret != EAIS_SDK_SUCCESS)
+				{
+					if(V9_SDK_DEBUG(ERROR))
+						zlog_err(ZLOG_APP, "EAIS_SDK_EditUser Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					return ERROR;
+				}
+				return OK;
+			}
+			if(V9_SDK_DEBUG(ERROR))
+				zlog_err(ZLOG_APP," Can not open picfile(%s)", pic);
+			return ERROR;
+		}
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		return ERROR;
 	}
 	return ERROR;
+#else
+	return OK;
+#endif
 }
 
 // 删除用户
 // 根据用户ID删除用户
-int v9_video_sdk_del_user_api(u_int32 id, char *ID)
+int v9_video_sdk_del_user_api(u_int32 id, int group, char *ID)
 {
-	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk)
-	{
 #ifdef V9_VIDEO_SDK_API
-		int ret = 0;
-		ret = EAIS_SDK_DelUser(sdk->handle, ID);
-		if(ret != EAIS_SDK_SUCCESS)
-		{
-			zlog_err(ZLOG_APP,"EAIS_SDK_DelUser ERROR");
-			return ERROR;
-		}
-		return OK;
-#else
-		return OK;
+	int i = 0;
+	int ret = 0;
 #endif
+	if (!v9_video_board || !ID)
+		return ERROR;
+#ifdef V9_VIDEO_SDK_API
+	if (id <= APP_BOARD_MAIN)
+	{
+		for (i = 0; i < V9_APP_BOARD_MAX; i++)
+		{
+			if (v9_video_board[i].id != APP_BOARD_MAIN && v9_video_board[i].sdk.login
+					&& v9_video_board[i].sdk.handle >= 0)
+			{
+				ret = EAIS_SDK_DelUser(v9_video_board[i].sdk.handle, ID);
+				if (ret != EAIS_SDK_SUCCESS)
+				{
+					if(V9_SDK_DEBUG(ERROR))
+						zlog_err(ZLOG_APP, "EAIS_SDK_DelUser Video Board (%d) ERROR(%s)",
+							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
+					return ERROR;
+				}
+			}
+			return OK;
+		}
+		return ERROR;
+	}
+	else
+	{
+		v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+		if (sdk && sdk->login && sdk->handle >= 0)
+		{
+			ret = EAIS_SDK_DelUser(sdk->handle, ID);
+			if (ret != EAIS_SDK_SUCCESS)
+			{
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP, "EAIS_SDK_DelUser Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+				return ERROR;
+			}
+			return OK;
+		}
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		return ERROR;
 	}
 	return ERROR;
+#else
+	return OK;
+#endif
 }
 
 
 // 批量删除某个库的用户
-//LIB_SDK_DLL_EXPORT int __stdcall EAIS_SDK_DelGroupUserList(int p_nLoginHandle,  ST_SDKUserList* p_pstUserList);
-
 int v9_video_sdk_del_group_user_api(u_int32 id, void *p_pstUserList)
 {
-	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk)
-	{
 #ifdef V9_VIDEO_SDK_API
-		int ret = 0;
-		ret = EAIS_SDK_DelGroupUserList(sdk->handle, p_pstUserList);
-		if(ret != EAIS_SDK_SUCCESS)
-		{
-			zlog_err(ZLOG_APP,"EAIS_SDK_DelGroup ERROR");
-			return ERROR;
-		}
-		return OK;
-#else
-		return OK;
+	int i = 0;
+	int ret = 0;
 #endif
+	if(!v9_video_board)
+	{
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+		return ERROR;
+	}
+#ifdef V9_VIDEO_SDK_API
+	if (id <= APP_BOARD_MAIN)
+	{
+		for (i = 0; i < V9_APP_BOARD_MAX; i++)
+		{
+			if (v9_video_board[i].id != APP_BOARD_MAIN && v9_video_board[i].sdk.login
+					&& v9_video_board[i].sdk.handle >= 0)
+			{
+				ret = EAIS_SDK_DelGroupUserList(v9_video_board[i].sdk.handle, p_pstUserList);
+				if (ret != EAIS_SDK_SUCCESS)
+				{
+					if(V9_SDK_DEBUG(ERROR))
+						zlog_err(ZLOG_APP, "EAIS_SDK_DelGroupUserList Video Board (%d) ERROR(%s)",
+							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
+					return ERROR;
+				}
+			}
+			return OK;
+		}
+		return ERROR;
+	}
+	else
+	{
+		v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+		if (sdk && sdk->login && sdk->handle >= 0)
+		{
+			ret = EAIS_SDK_DelGroupUserList(sdk->handle, p_pstUserList);
+			if (ret != EAIS_SDK_SUCCESS)
+			{
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP, "EAIS_SDK_DelGroupUserList Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+				return ERROR;
+			}
+			return OK;
+		}
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		return ERROR;
 	}
 	return ERROR;
+#else
+	return OK;
+#endif
 }
 
+
+/*
+ * 添加某个分组
+ */
+int v9_video_sdk_add_group_api(u_int32 id, int group, char *name)
+{
+#ifdef V9_VIDEO_SDK_API
+	int i = 0;
+	int ret = 0;
+	ST_SDKGroupInfoList GroupInfo;
+#endif
+	if(!v9_video_board)
+	{
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+		return ERROR;
+	}
+#ifdef V9_VIDEO_SDK_API
+	memset(&GroupInfo, 0, sizeof(GroupInfo));
+	GroupInfo.nGroupNum = 1;
+	GroupInfo.stGroupInfoArr[0].nGroupId = group;
+	strcpy(GroupInfo.stGroupInfoArr[0].szGroupName, name);
+	if (id <= APP_BOARD_MAIN)
+	{
+		for (i = 0; i < V9_APP_BOARD_MAX; i++)
+		{
+			if (v9_video_board[i].id != APP_BOARD_MAIN && v9_video_board[i].sdk.login
+					&& v9_video_board[i].sdk.handle >= 0)
+			{
+				ret = EAIS_SDK_SetGroupNameList(v9_video_board[i].sdk.handle, &GroupInfo);
+				if (ret != EAIS_SDK_SUCCESS)
+				{
+					if(V9_SDK_DEBUG(ERROR))
+						zlog_err(ZLOG_APP, "EAIS_SDK_SetGroupNameList Video Board (%d) ERROR(%s)",
+							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
+					return ERROR;
+				}
+			}
+			return OK;
+		}
+		return ERROR;
+	}
+	else
+	{
+		v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+		if (sdk && sdk->login && sdk->handle >= 0)
+		{
+			ret = EAIS_SDK_SetGroupNameList(sdk->handle, &GroupInfo);
+			if (ret != EAIS_SDK_SUCCESS)
+			{
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP, "EAIS_SDK_SetGroupNameList Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+				return ERROR;
+			}
+			return OK;
+		}
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		return ERROR;
+	}
+	return ERROR;
+#else
+	return OK;
+#endif
+}
+/*
+ * 删除某个分组
+ */
 // 删除库 p_nGroupID : -1 删除所有分组人脸库信息， 0 删除黑名单所有人脸信息，1 删除白名单所有人脸信息
 int v9_video_sdk_del_group_api(u_int32 id, int group)
 {
-	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk)
-	{
 #ifdef V9_VIDEO_SDK_API
-		int ret = 0;
-		ret = EAIS_SDK_DelGroup(sdk->handle, group);
-		if(ret != EAIS_SDK_SUCCESS)
-		{
-			zlog_err(ZLOG_APP,"EAIS_SDK_DelGroup ERROR");
-			return ERROR;
-		}
-		return OK;
-#else
-		return OK;
+	int i = 0;
+	int ret = 0;
 #endif
+	if(!v9_video_board)
+	{
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+		return ERROR;
+	}
+#ifdef V9_VIDEO_SDK_API
+	if (id <= APP_BOARD_MAIN)
+	{
+		for (i = 0; i < V9_APP_BOARD_MAX; i++)
+		{
+			if (v9_video_board[i].id != APP_BOARD_MAIN && v9_video_board[i].sdk.login
+					&& v9_video_board[i].sdk.handle >= 0)
+			{
+				ret = EAIS_SDK_DelGroup(v9_video_board[i].sdk.handle, group);
+				if (ret != EAIS_SDK_SUCCESS)
+				{
+					if(V9_SDK_DEBUG(ERROR))
+						zlog_err(ZLOG_APP, "EAIS_SDK_DelGroup Video Board (%d) ERROR(%s)",
+							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
+					return ERROR;
+				}
+			}
+			return OK;
+		}
+		return ERROR;
+	}
+	else
+	{
+		v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+		if (sdk && sdk->login && sdk->handle >= 0)
+		{
+			ret = EAIS_SDK_DelGroup(sdk->handle, group);
+			if (ret != EAIS_SDK_SUCCESS)
+			{
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP, "EAIS_SDK_DelGroup Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+				return ERROR;
+			}
+			return OK;
+		}
+		if(V9_SDK_DEBUG(WARN))
+			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		return ERROR;
 	}
 	return ERROR;
+#else
+	return OK;
+#endif
 }
 
 int v9_video_sdk_get_user_api(u_int32 id, char* ID, void* UserInfo)
 {
 	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
-	if(v9_sdk_data && sdk)
+	if(v9_video_board && sdk && sdk->login && sdk->handle >= 0)
 	{
 #ifdef V9_VIDEO_SDK_API
 		int ret = 0;
 		ret = EAIS_SDK_GetUser(sdk->handle, ID, UserInfo);
 		if(ret != EAIS_SDK_SUCCESS)
 		{
-			zlog_err(ZLOG_APP,"EAIS_SDK_DelGroup ERROR");
+			if(V9_SDK_DEBUG(ERROR))
+				zlog_err(ZLOG_APP,"EAIS_SDK_GetUser Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 			return ERROR;
 		}
 		return OK;
@@ -1428,183 +2766,506 @@ int v9_video_sdk_get_user_api(u_int32 id, char* ID, void* UserInfo)
 		return OK;
 #endif
 	}
+	if(V9_SDK_DEBUG(WARN))
+		zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 
-// 修改(新增)用户 p_bNewUser false:修改用户 true:新用户
-int v9_video_sdk_add_user_all_api(BOOL gender, int group, char *user, char *ID, char *pic, BOOL edit)
+/*
+ * 获取图片特征值
+ */
+int v9_video_sdk_get_keyvalue_api(u_int32 id, char * pic, void* UserInfo)
 {
-	int i = 0;
-	if(v9_sdk_data)
+	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+	if(v9_video_board && sdk && sdk->login && sdk->handle >= 0)
 	{
 #ifdef V9_VIDEO_SDK_API
 		int ret = 0;
 		int nDataLen = 0;
-		ST_SDKUserInfo pstUserInfo;
-		memset(&pstUserInfo, 0, sizeof(ST_SDKUserInfo));
+		ST_SDKPictureInfo PictureInfo;
+		ST_SDKSnapFea SDKSnapFea;
+		sql_snapfea_key *key = UserInfo;
+		memset(&PictureInfo, 0, sizeof(ST_SDKPictureInfo));
+		memset(&SDKSnapFea, 0, sizeof(ST_SDKSnapFea));
+		//key->feature_len = 0;
 		nDataLen = os_file_size(pic);
-		if(nDataLen != ERROR && nDataLen > 0)
+		if (nDataLen != ERROR && nDataLen > 0)
 		{
-			pstUserInfo.szPictureData = malloc(nDataLen + 1);
-			if(!pstUserInfo.szPictureData)
+			PictureInfo.szPictureData = XMALLOC(MTYPE_VIDEO_PIC, nDataLen + 1);
+			if (!PictureInfo.szPictureData)
 				return ERROR;
-			memset(pstUserInfo.szPictureData, 0, nDataLen + 1);
-			ret = os_read_file(pic, pstUserInfo.szPictureData, nDataLen);
-			if(ret != OK)
+			memset(PictureInfo.szPictureData, 0, nDataLen + 1);
+			ret = os_read_file(pic, PictureInfo.szPictureData, nDataLen);
+			if (ret != OK)
 			{
-				free(pstUserInfo.szPictureData);
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP," Video Board (%d) can not open file size (%s)", V9_APP_BOARD_HW_ID(id), pic);
+				XFREE(MTYPE_VIDEO_PIC, PictureInfo.szPictureData);
+				PictureInfo.szPictureData = NULL;
 				return ERROR;
 			}
+			PictureInfo.nPictureType = EAIS_PICTURE_JPG;				// 人员性别  0： 女 1： 男
+			PictureInfo.nDataLen = nDataLen;// 人脸图片数据长度（1, 1024 * 1024]字节
 
-			pstUserInfo.nGroupID = group;										// 所属组ID  0： 黑名单 1： 白名单
-			strcpy(pstUserInfo.szUserName, user);			// 姓名
-			strcpy(pstUserInfo.szUserID, ID);				// 证件号
-			pstUserInfo.nGender = gender;										// 人员性别  0： 女 1： 男
-			pstUserInfo.nFaceLen = nDataLen;										// 人脸图片数据长度（1, 1024 * 1024]字节
-			//pstUserInfo.szPictureData;									// 图片内容
-			//pstUserInfo.szComment[EAIS_SDK_USER_FACE_COMMENT_LEN];		// 用户自定义备注字段
-			//pstUserInfo.nRegisterTime;									// 注册时间，从1970-01-01 00:00:00 (utc) 开始计时的秒数
-			//pstUserInfo.szReserved[256];								// 预留位，便于拓展，默认置空
-
-			for(i = 0; i < V9_APP_BOARD_MAX; i++)
+			ret = EAIS_SDK_GetPictureFeature(sdk->handle, &PictureInfo, &SDKSnapFea);
+			if(ret != EAIS_SDK_SUCCESS)
 			{
-				if(v9_sdk_data[i].login && v9_sdk_data[i].handle >= 0)
+				XFREE(MTYPE_VIDEO_PIC, PictureInfo.szPictureData);
+				PictureInfo.szPictureData = NULL;
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP,"EAIS_SDK_GetPictureFeature Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+				return ERROR;
+			}
+			if(key)
+			{
+				//memset(key, 0, sizeof(sql_snapfea_key));
+				key->feature.ckey_data = XMALLOC(MTYPE_VIDEO_KEY, SDKSnapFea.nFeatureLen * sizeof(float));									// 特征值
+				if(key->feature.ckey_data)
 				{
-					ret |= EAIS_SDK_EditUser(v9_sdk_data[i].handle, &pstUserInfo, edit ? FALSE:TRUE);
-					if(ret != EAIS_SDK_SUCCESS)
+					key->feature_len = SDKSnapFea.nFeatureLen;									// 特征值个数，长度=个数*sizoof(float)
+					memcpy(key->feature.feature_data, SDKSnapFea.pfFeatureData, key->feature_len * sizeof(float));									// 特征值
+					if(PictureInfo.szPictureData)
 					{
-						zlog_err(ZLOG_APP,"EAIS_SDK_EditUser ERROR");
-						free(pstUserInfo.szPictureData);
-						return ERROR;
+						XFREE(MTYPE_VIDEO_PIC, PictureInfo.szPictureData);
+						PictureInfo.szPictureData = NULL;
 					}
-				}
-			}
-			free(pstUserInfo.szPictureData);
-		}
-		return OK;
-#else
-		return OK;
-#endif
-	}
-	return ERROR;
-}
-
-// 删除用户
-// 根据用户ID删除用户
-int v9_video_sdk_del_user_all_api(char *ID)
-{
-	if(v9_sdk_data)
-	{
-#ifdef V9_VIDEO_SDK_API
-		int ret = 0, i = 0;
-		for(i = 0; i < V9_APP_BOARD_MAX; i++)
-		{
-			if(v9_sdk_data[i].login && v9_sdk_data[i].handle >= 0)
-			{
-				ret |= EAIS_SDK_DelUser(v9_sdk_data[i].handle, ID);
-				if(ret != EAIS_SDK_SUCCESS)
-				{
-					zlog_err(ZLOG_APP,"EAIS_SDK_DelUser ERROR");
-					return ERROR;
-				}
-			}
-		}
-		return OK;
-#else
-		return OK;
-#endif
-	}
-	return ERROR;
-}
-
-
-// 批量删除某个库的用户
-//LIB_SDK_DLL_EXPORT int __stdcall EAIS_SDK_DelGroupUserList(int p_nLoginHandle,  ST_SDKUserList* p_pstUserList);
-
-int v9_video_sdk_del_group_user_all_api(void *p_pstUserList)
-{
-	if(v9_sdk_data )
-	{
-#ifdef V9_VIDEO_SDK_API
-		int ret = 0, i = 0;
-		for(i = 0; i < V9_APP_BOARD_MAX; i++)
-		{
-			if(v9_sdk_data[i].login && v9_sdk_data[i].handle >= 0)
-			{
-				ret |= EAIS_SDK_DelGroupUserList(v9_sdk_data[i].handle, p_pstUserList);
-				if(ret != EAIS_SDK_SUCCESS)
-				{
-					zlog_err(ZLOG_APP,"EAIS_SDK_DelGroup ERROR");
-					return ERROR;
-				}
-			}
-		}
-		return OK;
-#else
-		return OK;
-#endif
-	}
-	return ERROR;
-}
-
-// 删除库 p_nGroupID : -1 删除所有分组人脸库信息， 0 删除黑名单所有人脸信息，1 删除白名单所有人脸信息
-int v9_video_sdk_del_group_all_api(int group)
-{
-	if(v9_sdk_data)
-	{
-#ifdef V9_VIDEO_SDK_API
-		int ret = 0, i = 0;
-		for(i = 0; i < V9_APP_BOARD_MAX; i++)
-		{
-			if(v9_sdk_data[i].login && v9_sdk_data[i].handle >= 0)
-			{
-				ret |= EAIS_SDK_DelGroup(v9_sdk_data[i].handle, group);
-				if(ret != EAIS_SDK_SUCCESS)
-				{
-					zlog_err(ZLOG_APP,"EAIS_SDK_DelGroup ERROR");
-					return ERROR;
-				}
-			}
-		}
-		return OK;
-#else
-		return OK;
-#endif
-	}
-	return ERROR;
-}
-
-int v9_video_sdk_get_user_all_api(char* ID, void* UserInfo)
-{
-	if(v9_sdk_data)
-	{
-#ifdef V9_VIDEO_SDK_API
-		int ret = 0, i = 0;
-		for(i = 0; i < V9_APP_BOARD_MAX; i++)
-		{
-			if(v9_sdk_data[i].login && v9_sdk_data[i].handle >= 0)
-			{
-				ret |= EAIS_SDK_GetUser(v9_sdk_data[i].handle, ID, UserInfo);
-				if(ret == EAIS_SDK_SUCCESS)
-				{
 					return OK;
 				}
 			}
+			if(PictureInfo.szPictureData)
+			{
+				XFREE(MTYPE_VIDEO_PIC, PictureInfo.szPictureData);
+				PictureInfo.szPictureData = NULL;
+			}
+			return ERROR;
 		}
-/*		int ret = 0;
-		ret = EAIS_SDK_GetUser(sdk->handle, ID, UserInfo);
-		if(ret != EAIS_SDK_SUCCESS)
+		else
 		{
-			zlog_err(ZLOG_APP,"EAIS_SDK_GetUser ERROR");
-		}*/
-		zlog_err(ZLOG_APP,"EAIS_SDK_GetUser ERROR");
-		return ERROR;
+			if(V9_SDK_DEBUG(ERROR))
+				zlog_err(ZLOG_APP," Video Board (%d) can not get file size (%s)", V9_APP_BOARD_HW_ID(id), pic);
+			return ERROR;
+		}
 #else
 		return OK;
 #endif
 	}
+	if(V9_SDK_DEBUG(WARN))
+		zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
+
+
+int v9_video_sdk_get_sosine_similarity_api(const float* p_fFirstArray, const float* p_fSecondArray, int p_nlength, float* p_fResult)
+{
+#ifdef V9_VIDEO_SDK_API
+	int ret = 0;
+	ret = EAIS_SDK_GetSosineSimilarity(p_fFirstArray, p_fSecondArray, p_nlength, p_fResult);
+	if(ret != EAIS_SDK_SUCCESS)
+	{
+		if(V9_SDK_DEBUG(ERROR))
+			zlog_err(ZLOG_APP," Video can not get sosine similarity ERROR(%s)", v9_video_sdk_errnostr(ret));
+		return ERROR;
+	}
+	zlog_debug(ZLOG_APP," Video get sosine similarity %f", *p_fResult);
+	return OK;
+#else
+	return ERROR;
+#endif
+}
+
+
+int v9_video_sdk_get_config(struct vty *vty, u_int32 id, v9_video_sdk_t *sdk)
+{
+	if (sdk && sdk->login && sdk->handle >= 0)
+	{
+		int ret = 0;
+
+		if (sdk->mode == EAIS_SOLUTION_TYPE_SNAP)
+		{
+			ST_SDKSnapConfig stSnapConfig;
+			memset (&stSnapConfig, 0, sizeof(ST_SDKSnapConfig));
+			ret = EAIS_SDK_GetSnapConfig (sdk->handle, &stSnapConfig);
+			if (ret != EAIS_SDK_SUCCESS)
+			{
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP, "EAIS_SDK_GetSnapConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+				vty_out (vty, " video sdk %d can not get snap config %s", V9_APP_BOARD_HW_ID(id),
+									 VTY_NEWLINE);
+				return ERROR;
+			}
+			//stHelmetConfig.nOriginalPicEnable
+			vty_out (vty, " video sdk %d original picture %s%s", V9_APP_BOARD_HW_ID(id),
+					 stSnapConfig.nOriginalPicEnable ? "enable" : "disabled",
+					 VTY_NEWLINE);
+
+			for (ret = 0; ret < stSnapConfig.nSnapInfoNum; ret++)
+			{
+				if (stSnapConfig.stSnapInfoArr[ret].nChannelId)
+				{
+					vty_out (vty, " video sdk %d channel %d snap confi %d%s",
+							 V9_APP_BOARD_HW_ID(id), stSnapConfig.stSnapInfoArr[ret].nChannelId,
+							 stSnapConfig.stSnapInfoArr[ret].nConfi,
+							 VTY_NEWLINE);
+					vty_out (vty,
+							 " video sdk %d channel %d snap qulityscore %d%s",
+							 V9_APP_BOARD_HW_ID(id), stSnapConfig.stSnapInfoArr[ret].nChannelId,
+							 stSnapConfig.stSnapInfoArr[ret].nQulityScore,
+							 VTY_NEWLINE);
+					if(vty->type != VTY_FILE)
+					{
+					vty_out (
+							vty,
+							" video sdk %d channel %d snap attr %s%s",
+							V9_APP_BOARD_HW_ID(id),
+							stSnapConfig.stSnapInfoArr[ret].nChannelId,
+							stSnapConfig.stSnapInfoArr[ret].nAttrEnable ?
+									"enable" : "disabled",
+							VTY_NEWLINE);
+					vty_out (
+							vty,
+							" video sdk %d channel %d snap feature %s%s",
+							V9_APP_BOARD_HW_ID(id),
+							stSnapConfig.stSnapInfoArr[ret].nChannelId,
+							stSnapConfig.stSnapInfoArr[ret].nFeatureEnable ?
+									"enable" : "disabled",
+							VTY_NEWLINE);
+					vty_out (
+							vty,
+							" video sdk %d channel %d snap align %s%s",
+							V9_APP_BOARD_HW_ID(id),
+							stSnapConfig.stSnapInfoArr[ret].nChannelId,
+							stSnapConfig.stSnapInfoArr[ret].nAlignEnable ?
+									"enable" : "disabled",
+							VTY_NEWLINE);
+					vty_out (
+							vty,
+							" video sdk %d channel %d snap area %s%s",
+							V9_APP_BOARD_HW_ID(id),
+							stSnapConfig.stSnapInfoArr[ret].nChannelId,
+							stSnapConfig.stSnapInfoArr[ret].nAreaEnable ?
+									"enable" : "disabled",
+							VTY_NEWLINE);
+					vty_out (
+							vty,
+							" video sdk %d channel %d snap tripwire %s%s",
+							V9_APP_BOARD_HW_ID(id),
+							stSnapConfig.stSnapInfoArr[ret].nChannelId,
+							stSnapConfig.stSnapInfoArr[ret].nTripWireEnable ?
+									"enable" : "disabled",
+							VTY_NEWLINE);
+					}
+					switch (stSnapConfig.stSnapInfoArr[ret].nSnapMode)
+					{
+						case 0:
+							vty_out (
+									vty,
+									" video sdk %d channel %d snap snapmode %s%s",
+									V9_APP_BOARD_HW_ID(id),
+									stSnapConfig.stSnapInfoArr[ret].nChannelId,
+									"disabled", VTY_NEWLINE);
+							break;
+						case 1:
+							vty_out (
+									vty,
+									" video sdk %d channel %d snap snapmode %s%s",
+									V9_APP_BOARD_HW_ID(id),
+									stSnapConfig.stSnapInfoArr[ret].nChannelId,
+									"realtime", VTY_NEWLINE);
+							break;
+						case 2:
+							vty_out (
+									vty,
+									" video sdk %d channel %d snap snapmode %s%s",
+									V9_APP_BOARD_HW_ID(id),
+									stSnapConfig.stSnapInfoArr[ret].nChannelId,
+									"leave", VTY_NEWLINE);
+							break;
+						case 3:
+							vty_out (
+									vty,
+									" video sdk %d channel %d snap snapmode %s%s",
+									V9_APP_BOARD_HW_ID(id),
+									stSnapConfig.stSnapInfoArr[ret].nChannelId,
+									"timing", VTY_NEWLINE);
+							break;
+						case 4:
+							vty_out (
+									vty,
+									" video sdk %d channel %d snap snapmode %s%s",
+									V9_APP_BOARD_HW_ID(id),
+									stSnapConfig.stSnapInfoArr[ret].nChannelId,
+									"into", VTY_NEWLINE);
+							break;
+						default:
+							break;
+					}
+					vty_out (vty,
+							 " video sdk %d channel %d snap intervaltime %d%s",
+							 V9_APP_BOARD_HW_ID(id), stSnapConfig.stSnapInfoArr[ret].nChannelId,
+							 stSnapConfig.stSnapInfoArr[ret].nIntervalTime,
+							 VTY_NEWLINE);
+					vty_out (vty, " video sdk %d channel %d snap maxsize %d%s",
+							 V9_APP_BOARD_HW_ID(id), stSnapConfig.stSnapInfoArr[ret].nChannelId,
+							 stSnapConfig.stSnapInfoArr[ret].nMaxSize,
+							 VTY_NEWLINE);
+					vty_out (vty, " video sdk %d channel %d snap minsize %d%s",
+							 V9_APP_BOARD_HW_ID(id), stSnapConfig.stSnapInfoArr[ret].nChannelId,
+							 stSnapConfig.stSnapInfoArr[ret].nMinSize,
+							 VTY_NEWLINE);
+					if(vty->type != VTY_FILE)
+					{
+					vty_out (
+							vty,
+							" video sdk %d channel %d snap areaconfigwidth %d%s",
+							V9_APP_BOARD_HW_ID(id), stSnapConfig.stSnapInfoArr[ret].nChannelId,
+							stSnapConfig.stSnapInfoArr[ret].nAreaConfigWidth,
+							VTY_NEWLINE);
+					vty_out (
+							vty,
+							" video sdk %d channel %d snap areaconfigheight %d%s",
+							V9_APP_BOARD_HW_ID(id), stSnapConfig.stSnapInfoArr[ret].nChannelId,
+							stSnapConfig.stSnapInfoArr[ret].nAreaConfigHeight,
+							VTY_NEWLINE);
+					vty_out (
+							vty,
+							" video sdk %d channel %d snap tripconfigwidth %d%s",
+							V9_APP_BOARD_HW_ID(id), stSnapConfig.stSnapInfoArr[ret].nChannelId,
+							stSnapConfig.stSnapInfoArr[ret].nTripConfigWidth,
+							VTY_NEWLINE);
+					vty_out (
+							vty,
+							" video sdk %d channel %d snap tripconfigheight %d%s",
+							V9_APP_BOARD_HW_ID(id), stSnapConfig.stSnapInfoArr[ret].nChannelId,
+							stSnapConfig.stSnapInfoArr[ret].nTripConfigHeight,
+							VTY_NEWLINE);
+					}
+					/*
+					 vty_out(vty, " video sdk %d channel %d confi %d%s", id, stSnapConfig.stSnapInfoArr[ret].nChannelId, stSnapConfig.stSnapInfoArr[ret].nConfi, VTY_NEWLINE);
+					 vty_out(vty, " video sdk %d channel %d confi %d%s", id, stSnapConfig.stSnapInfoArr[ret].nChannelId, stSnapConfig.stSnapInfoArr[ret].nConfi, VTY_NEWLINE);
+					 vty_out(vty, " video sdk %d channel %d confi %d%s", id, stSnapConfig.stSnapInfoArr[ret].nChannelId, stSnapConfig.stSnapInfoArr[ret].nConfi, VTY_NEWLINE);
+					 vty_out(vty, " video sdk %d channel %d confi %d%s", id, stSnapConfig.stSnapInfoArr[ret].nChannelId, stSnapConfig.stSnapInfoArr[ret].nConfi, VTY_NEWLINE);
+					 vty_out(vty, " video sdk %d channel %d confi %d%s", id, stSnapConfig.stSnapInfoArr[ret].nChannelId, stSnapConfig.stSnapInfoArr[ret].nConfi, VTY_NEWLINE);*/
+				}
+			}
+			return OK;
+		}
+#if 0
+		else if (sdk->mode == EAIS_SOLUTION_TYPE_HELMET)
+		{
+			ST_SDKHelmetConfig stHelmetConfig;
+			memset (&stHelmetConfig, 0, sizeof(ST_SDKHelmetConfig));
+
+			ret = EAIS_SDK_GetHelmetConfig (sdk->handle, &stHelmetConfig);
+			if (ret != EAIS_SDK_SUCCESS)
+			{
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP, "EAIS_SDK_GetHelmetConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+				vty_out (vty, " video sdk %d can not get helmet config%s", V9_APP_BOARD_HW_ID(id),
+												 VTY_NEWLINE);
+				return ERROR;
+			}
+
+			for (ret = 0; ret < stHelmetConfig.nHelmetInfoNum; ret++)
+			{
+				if (stHelmetConfig.stHelmetInfoArr[ret].nChannelId)
+				{
+
+					vty_out (
+							vty,
+							" video sdk %d channel %d helmet sentimage %s%s",
+							V9_APP_BOARD_HW_ID(id),
+							stHelmetConfig.stHelmetInfoArr[ret].nChannelId,
+							stHelmetConfig.stHelmetInfoArr[ret].nSentImage ?
+									"enable" : "disabled",
+							VTY_NEWLINE);
+					vty_out (
+							vty,
+							" video sdk %d channel %d helmet tracking %s%s",
+							V9_APP_BOARD_HW_ID(id),
+							stHelmetConfig.stHelmetInfoArr[ret].nChannelId,
+							stHelmetConfig.stHelmetInfoArr[ret].nUseTracking ?
+									"enable" : "disabled",
+							VTY_NEWLINE);
+					vty_out (
+							vty,
+							" video sdk %d channel %d helmet drawrectangle %s%s",
+							V9_APP_BOARD_HW_ID(id),
+							stHelmetConfig.stHelmetInfoArr[ret].nChannelId,
+							stHelmetConfig.stHelmetInfoArr[ret].nDrawRectangle ?
+									"enable" : "disabled",
+							VTY_NEWLINE);
+
+					vty_out (vty,
+							 " video sdk %d channel %d helmet imageratio %d%s",
+							 V9_APP_BOARD_HW_ID(id), stHelmetConfig.stHelmetInfoArr[ret].nChannelId,
+							 stHelmetConfig.stHelmetInfoArr[ret].nImageRatio,
+							 VTY_NEWLINE);
+					vty_out (
+							vty,
+							" video sdk %d channel %d helmet snapinterval %d%s",
+							V9_APP_BOARD_HW_ID(id), stHelmetConfig.stHelmetInfoArr[ret].nChannelId,
+							stHelmetConfig.stHelmetInfoArr[ret].nSnapInterval,
+							VTY_NEWLINE);
+					vty_out (
+							vty,
+							" video sdk %d channel %d helmet alarminterval %d%s",
+							V9_APP_BOARD_HW_ID(id), stHelmetConfig.stHelmetInfoArr[ret].nChannelId,
+							stHelmetConfig.stHelmetInfoArr[ret].nAlarmInterval,
+							VTY_NEWLINE);
+
+					vty_out (vty,
+							 " video sdk %d channel %d helmet snapratio %d%s",
+							 V9_APP_BOARD_HW_ID(id), stHelmetConfig.stHelmetInfoArr[ret].nChannelId,
+							 stHelmetConfig.stHelmetInfoArr[ret].nSnapRatio,
+							 VTY_NEWLINE);
+					if(vty->type != VTY_FILE)
+					{
+					vty_out (vty,
+							 " video sdk %d channel %d helmet uploadmode %d%s",
+							 V9_APP_BOARD_HW_ID(id), stHelmetConfig.stHelmetInfoArr[ret].nChannelId,
+							 stHelmetConfig.stHelmetInfoArr[ret].nUploadMode,
+							 VTY_NEWLINE);
+					}
+					vty_out (vty,
+							 " video sdk %d channel %d helmet threshold %d%s",
+							 V9_APP_BOARD_HW_ID(id), stHelmetConfig.stHelmetInfoArr[ret].nChannelId,
+							 stHelmetConfig.stHelmetInfoArr[ret].nThreshold,
+							 VTY_NEWLINE);
+
+					/*
+					 int							nChannelId;										// 通道Id
+					 int							nSentImage;										// 是否发送图片0：不使能 1：使能
+					 int							nImageRatio;									// 图片压缩比配置（0, 100]
+					 int							nUseTracking;									// 是否使用跟踪0: 不使能 1：使能
+					 int							nDrawRectangle;									// 是否画框0: 不使能 1：使能
+					 int							nSnapInterval;									// 抓拍间隔时间（0, 3600]s
+					 int							nAlarmInterval;									// 警报间隔时间（0, 3600]s
+					 int							nSnapRatio;										// 抓拍上传图质量比（0, 100]
+					 int							nUploadMode;									// 抓拍上传模式(0 一刀切模式)（0, 100]
+					 int							nThreshold;										// 阈值（0, 100]
+					 ST_SDKROIArea				stROIArea;										// ROI配置
+					 */
+				}
+			}
+			return OK;
+		}
+#endif
+		else if (sdk->mode == EAIS_SOLUTION_TYPE_RECOGNITION)
+		{
+			ST_SDKRecognizeConfig stRecognizeConfig;
+			memset (&stRecognizeConfig, 0, sizeof(ST_SDKRecognizeConfig));
+
+			ret = EAIS_SDK_GetRecognizeCofig (sdk->handle, &stRecognizeConfig);
+			if (ret != EAIS_SDK_SUCCESS)
+			{
+				if(V9_SDK_DEBUG(ERROR))
+					zlog_err(ZLOG_APP, "EAIS_SDK_GetRecognizeCofig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+				vty_out (vty, " video sdk %d can not get recognize cofig %s", V9_APP_BOARD_HW_ID(id),
+												 VTY_NEWLINE);
+				return ERROR;
+			}
+
+			vty_out (
+					vty,
+					" video sdk %d recognize similarity %d registerquality %d%s",
+					V9_APP_BOARD_HW_ID(id), stRecognizeConfig.nOutSimilarity,
+					stRecognizeConfig.nRegisterQuality, VTY_NEWLINE);
+			vty_out (vty, " video sdk %d recognize openupload %s%s", V9_APP_BOARD_HW_ID(id),
+					 stRecognizeConfig.nOpenUpload ? "enable" : "disabled",
+					 VTY_NEWLINE);
+			return OK;
+		}
+	}
+	return OK;
+}
+
+
+static int v9_video_sdk_timer_hw_api(u_int32 id, struct tm *tme)
+{
+	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+	if(v9_video_board && sdk && sdk->login && sdk->handle >= 0)
+	{
+#ifdef V9_VIDEO_SDK_API
+		int ret = 0;
+		ST_SDKDeviceTime pstDeviceTime;
+		pstDeviceTime.nYear = tme->tm_year + 1900;											// 年
+		pstDeviceTime.nMonth = tme->tm_mon + 1;											// 月
+		pstDeviceTime.nDay = tme->tm_mday;											// 日
+		pstDeviceTime.nHour = tme->tm_hour;											// 时
+		pstDeviceTime.nMinute = tme->tm_min;										// 分
+		pstDeviceTime.nSecond = tme->tm_sec;										// 秒;
+
+		ret = EAIS_SDK_SetDeviceTime(sdk->handle, &pstDeviceTime);
+		if(ret != EAIS_SDK_SUCCESS)
+		{
+			if(V9_SDK_DEBUG(ERROR))
+				zlog_err(ZLOG_APP,"EAIS_SDK_SetDeviceTime Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+			return ERROR;
+		}
+		V9_SDK_DBGPRF(" Video Board (%d) SDK Set Device Time OK", V9_APP_BOARD_HW_ID(id));
+		return OK;
+#else
+		return OK;
+#endif
+	}
+	if(V9_SDK_DEBUG(WARN))
+		zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+	return ERROR;
+}
+
+int v9_video_sdk_timer_api(u_int32 id)
+{
+	struct tm tm_tmp;
+	time_t time_tmp = 0;
+
+	time_tmp = os_time(NULL);
+
+	localtime_r(&time_tmp, &tm_tmp);
+	return v9_video_sdk_timer_hw_api(id, &tm_tmp);
+}
+
+int v9_video_sdk_ntp_api(u_int32 id, char *ntps, int TimingInterval)
+{
+	v9_video_sdk_t *sdk = v9_video_sdk_lookup(id);
+	if(v9_video_board && sdk && sdk->login && sdk->handle >= 0)
+	{
+#ifdef V9_VIDEO_SDK_API
+		int ret = 0;
+		ST_SDKNTPInfo pstNTPInfo;
+		memset(&pstNTPInfo, 0, sizeof(pstNTPInfo));
+		if(TimingInterval)
+		{
+			pstNTPInfo.nEnable = 1;										// NTP使能 0：不使能，1：使能
+			if(ntps)
+				strcpy(pstNTPInfo.szDomainName, ntps);			// 域名/ip
+			pstNTPInfo.nTimingInterval = TimingInterval;								// 校时间隔(0, 65535]分钟									// 秒;
+		}
+		else
+		{
+			pstNTPInfo.nEnable = 0;
+		}
+
+		ret = EAIS_SDK_SetNTPInfo(sdk->handle, &pstNTPInfo);
+		if(ret != EAIS_SDK_SUCCESS)
+		{
+			if(V9_SDK_DEBUG(ERROR))
+				zlog_err(ZLOG_APP,"EAIS_SDK_SetNTPInfo Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+			return ERROR;
+		}
+		V9_SDK_DBGPRF(" Video Board (%d) SDK Set Device NTP OK", V9_APP_BOARD_HW_ID(id));
+		return OK;
+#else
+		return OK;
+#endif
+	}
+	if(V9_SDK_DEBUG(WARN))
+		zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+	return ERROR;
+}
+
+
+//LIB_SDK_DLL_EXPORT int __stdcall EAIS_SDK_GetDeviceTime(int p_nLoginHandle, ST_SDKDeviceTime* p_pstDeviceTime);
+//LIB_SDK_DLL_EXPORT int __stdcall EAIS_SDK_SetDeviceTime(int p_nLoginHandle, const ST_SDKDeviceTime* p_pstDeviceTime);
 
 /*
 // 查询用户 当用户不存在时返回-3
@@ -1620,35 +3281,3 @@ LIB_SDK_DLL_EXPORT int __stdcall EAIS_SDK_QueryGroupNameList(int p_nLoginHandle,
 LIB_SDK_DLL_EXPORT int __stdcall EAIS_SDK_SetGroupNameList(int p_nLoginHandle, const ST_SDKGroupInfoList* p_pstGroupInfoList);
 */
 
-
-#if 0
-int v9_video_sdk_time_api(u_int32 timesp)
-{
-#ifdef V9_EAIS_SDK
-	if(v9_sdk && v9_sdk->fd >= 0)
-	{
-	    struct tm *p_tm = NULL;
-	    u_int32 ptimesp = timesp;
-	    ST_SDKDeviceTime p_pstDeviceTime;
-	    p_tm = localtime(&ptimesp);
-
-	    p_pstDeviceTime.nYear = (p_tm->tm_year + 1900);
-	    p_pstDeviceTime.nMonth = (p_tm->tm_mon + 1);
-	    p_pstDeviceTime.nDay = (p_tm->tm_mday);
-	    p_pstDeviceTime.nHour = (p_tm->tm_hour);
-	    p_pstDeviceTime.nMinute = (p_tm->tm_min);
-	    p_pstDeviceTime.nSecond = (p_tm->tm_sec);
-
-		if(EAIS_SDK_SetDeviceTime(v9_sdk->fd, &p_pstDeviceTime) == EAIS_SDK_SUCCESS)
-			return OK;
-		else
-		{
-			os_util_error("EAIS_SDK_SetDeviceTime ERROR");
-		}
-	}
-	return ERROR;
-#else
-	return OK;
-#endif
-}
-#endif

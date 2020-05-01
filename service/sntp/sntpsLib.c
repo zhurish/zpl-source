@@ -1420,6 +1420,21 @@ int sntps_debug_config(struct vty *vty)
 int sntpsInit(void *m)
 {
 	sntps_init(m);
+	if(sntp_server == NULL)
+	{
+		sntp_server->address.s_addr = inet_addr(SNTP_MUTILCAST_ADDRESS);
+		sntp_server->mode = SNTPS_MULTICAST;
+		sntp_server->sntpsInterval = 180;
+		sntp_server->sntps_ttl = 2;
+		sntp_server->version = (SNTP_VN_3>>3);
+
+		if(sntpsIsEnable())
+		{
+			sntpsDisable();
+		}
+		sntpsEnable(sntp_server->sntpsPort, sntp_server->sntpsInterval,
+				sntp_server->version, sntp_server->mode);
+	}
 	//sntp_server->
 	//install_default (SERVICE_NODE);
 #ifdef SNTPS_CLI_ENABLE

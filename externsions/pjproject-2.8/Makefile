@@ -157,14 +157,14 @@ pjsua-test:
 	cd tests/pjsua && python runall.py
 
 install:
-	mkdir -p $(DESTDIR)$(libdir)/
+	@mkdir -p $(DESTDIR)$(libdir)/
 #	cp -af $(APP_LIB_FILES) $(DESTDIR)$(libdir)/
-	cp -af $(APP_LIBXX_FILES) $(DESTDIR)$(libdir)/
+	@cp -af $(APP_LIBXX_FILES) $(DESTDIR)$(libdir)/
 	
-	mkdir -p $(PL_LDLIB_DIR)
-	cp -af $(APP_LIBXX_FILES) $(PL_LDLIB_DIR)
+	@mkdir -p $(PL_LDLIB_DIR)
+	@cp -af $(APP_LIBXX_FILES) $(PL_LDLIB_DIR)
 	
-	mkdir -p $(DESTDIR)$(includedir)/
+	@mkdir -p $(DESTDIR)$(includedir)/
 	for d in pjlib pjlib-util pjnath pjmedia pjsip; do \
 		cp -RLf $$d/include/* $(DESTDIR)$(includedir)/; \
 	done
@@ -186,7 +186,7 @@ uninstall:
 			$(RM) -r "$(DESTDIR)$(includedir)/`basename $$f`" || true; \
 		done; \
 	done
-	rmdir $(DESTDIR)$(includedir) 2> /dev/null || true
+	@rmdir $(DESTDIR)$(includedir) 2> /dev/null || true
 	#$(RM) $(addprefix $(DESTDIR)$(libdir)/,$(notdir $(APP_LIB_FILES)))
-	$(RM) $(addprefix $(DESTDIR)$(libdir)/,$(notdir $(APP_LIBXX_FILES)))
-	rmdir $(DESTDIR)$(libdir) 2> /dev/null || true
+	@$(RM) $(addprefix $(DESTDIR)$(libdir)/,$(notdir $(APP_LIBXX_FILES)))
+	@rmdir $(DESTDIR)$(libdir) 2> /dev/null || true

@@ -33,9 +33,9 @@ obj: $(MODULE_OBJS)
 #$(MODULE_OBJS)
 
 install: $(TARGET)
-	install -d ${DSTSBINDIR}
-	install -m 755 ${TARGET} ${DSTSBINDIR} 
-	$(STRIP) ${DSTSBINDIR}/${TARGET}
+	@install -d ${DSTSBINDIR}
+	@install -m 755 ${TARGET} ${DSTSBINDIR} 
+	@$(STRIP) ${DSTSBINDIR}/${TARGET}
 
 clean: objclean
 	@$(RM) ${DSTSBINDIR}/${TARGET}

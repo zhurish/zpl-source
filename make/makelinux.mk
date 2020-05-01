@@ -85,7 +85,8 @@ endif
 
 #
 ifeq ($(BUILD_DEBUG),NO)
-RELEASEDIR = release
+RELEASEDIR = debug
+#release
 OBJDIR = $(RELEASEDIR)/obj
 LIBDIR = $(RELEASEDIR)/lib
 BINDIR = $(RELEASEDIR)/bin
@@ -206,7 +207,13 @@ PLOS_CFLAGS += -Werror=return-type -Werror=format-extra-args -Werror=missing-pro
 #			 
 PLOS_CFLAGS += -fmessage-length=0 -Wcast-align
 #
-PLOS_CFLAGS += -fsigned-char -O0 -g2 -ggdb
+PLOS_CFLAGS += -fsigned-char
+ifeq ($(BUILD_DEBUG),YES)
+PLOS_CFLAGS += -g2 -ggdb
+else
+PLOS_CFLAGS += -O1
+endif
+
 #
 #PLOS_CFLAGS += -Werror
 #

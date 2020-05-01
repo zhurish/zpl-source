@@ -62,22 +62,30 @@ static int web_login_auth(Webs *wp, char *path, char *query)
 	{
 		strcpy(g_test_pass, strval);
 	}
-	printf("%s: %s %s\r\n", __func__, g_test_name, g_test_pass);
+	//printf("%s: %s %s\r\n", __func__, g_test_name, g_test_pass);
 	if(user_authentication (g_test_name, g_test_pass) == OK)
 	{
+#ifdef THEME_V9UI
+		return web_return_text_plain(wp, OK);
+#else
 		if(web_app && web_app->web_main)
 			websRedirect(wp, web_app->web_main);
 		else
 			websRedirect(wp, "/html/main.html");
+#endif
 	}
 	else
 	{
 	    websRemoveSessionVar(wp, WEBS_SESSION_USERNAME);
 	    websDestroySession(wp);
+#ifdef THEME_V9UI
+	    return web_return_text_plain(wp, ERROR);
+#else
 		if(web_app && web_app->web_login)
 			websRedirect(wp, web_app->web_login);
 		else
 			websRedirect(wp, "/html/login.html");
+#endif
 	}
 	return 0;
 }
@@ -92,13 +100,14 @@ static int web_system_logout(Webs *wp, void *p)
         websError(wp, HTTP_CODE_UNAUTHORIZED, "Logged out.");
         return OK;
     }
+#ifdef THEME_V9UI
+	return web_return_text_plain(wp, OK);
+#else
 	if(web_app && web_app->web_logout)
 		websRedirect(wp, web_app->web_logout);
 	else
 		websRedirect(wp, "/html/login.html");
-    //websRedirectByStatus(wp, HTTP_CODE_OK);
-/*	printf("%s:\r\n", __func__);
-	websRedirect(wp, "/html/login.html");*/
+#endif
 	return OK;
 }
 #endif
@@ -106,7 +115,6 @@ static int web_system_logout(Webs *wp, void *p)
 int web_login_app(void)
 {
 #if !ME_GOAHEAD_AUTO_LOGIN
-	//web_button_add_hook("system", "logout", web_admin_logout, NULL);
 	websFormDefine("login", web_login_auth);
 	websFormDefine("logout", web_system_logout);
 #endif

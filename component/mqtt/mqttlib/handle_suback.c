@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2019 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -29,6 +29,7 @@ Contributors:
 #include "mqtt_protocol.h"
 #include "packet_mosq.h"
 #include "property_mosq.h"
+#include "util_mosq.h"
 #include "read_handle.h"
 
 int handle__suback(struct mosquitto *mosq)
@@ -40,10 +41,12 @@ int handle__suback(struct mosquitto *mosq)
 	int i = 0;
 	int rc;
 	mosquitto_property *properties = NULL;
+	int state;
 
 	assert(mosq);
 
-	if(mosq->state != mosq_cs_connected){
+	state = mosquitto__get_state(mosq);
+	if(state != mosq_cs_active){
 		return MOSQ_ERR_PROTOCOL;
 	}
 

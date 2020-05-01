@@ -55,6 +55,7 @@ typedef int socklen_t;
 #include <string.h>
 #include <pwd.h>
 #include <grp.h>
+#include <dirent.h>
 
 #include "pthread.h"
 #include "semaphore.h"
@@ -604,6 +605,7 @@ typedef uint32_t route_tag_t;
 #include "os_task.h"
 #include "os_time.h"
 #include "os_util.h"
+#include "os_socket.h"
 #include "os_tlv.h"
 #include "cJSON.h"
 #endif

@@ -66,7 +66,7 @@ ifeq ($(ME_COM_OPENSSL),1)
 goahead_openssl_OBJS += goahead-openssl.o #goahead-openssl/goahead-openssl.c
 endif
 
-OBJS += goahead.o
+#OBJS += goahead.o
 #OBJS += gopass.o
 gopass_OBJS += gopass.o 
 #src/utils/gopass.c
@@ -102,7 +102,8 @@ APPWEBOBJS += web_network_html.o
 APPWEBOBJS += web_wireless_html.o
 APPWEBOBJS += web_updownload_html.o
 APPWEBOBJS += web_system_html.o
-
+APPWEBOBJS += web_upgrade_html.o
+APPWEBOBJS += web_netservice_html.o
 
 ifeq ($(strip $(EN_APP_X5BA)),true)
 APPWEBOBJS += web_switch_html.o
@@ -116,7 +117,7 @@ APPWEBOBJS += web_general_html.o
 APPWEBOBJS += web_rtsp_html.o
 APPWEBOBJS += web_algorithm_html.o
 APPWEBOBJS += web_facelib_html.o
-#APPWEBOBJS += web_rtsp_html.o
+APPWEBOBJS += web_db_html.o
 endif
 
 #############################################################################

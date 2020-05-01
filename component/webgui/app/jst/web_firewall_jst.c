@@ -24,7 +24,7 @@
 #include "web_api.h"
 
 
-
+#ifndef THEME_V9UI
 static int web_firewall_rule_forwards_one(firewall_t *rule, Webs *wp)
 {
 	char id[16];
@@ -156,7 +156,7 @@ static int web_firewall_port_map_rule_tbl(Webs *wp, char *path, char *query)
 	wp->iValue1 = 0;
 	websWrite(wp, "%s", "]");
 	websDone(wp);
-	printf("--------------%s-----------------\r\n", __func__);
+	_WEB_DBG_TRAP("--------------%s-----------------\r\n", __func__);
 	return 0;
 }
 
@@ -174,7 +174,7 @@ static int web_firewall_port_filter_rule_tbl(Webs *wp, char *path, char *query)
 	wp->iValue1 = 0;
 	websWrite(wp, "%s", "]");
 	websDone(wp);
-	printf("--------------%s-----------------\r\n", __func__);
+	_WEB_DBG_TRAP("--------------%s-----------------\r\n", __func__);
 	return 0;
 }
 
@@ -193,7 +193,7 @@ static int web_firewall_snat_rule_tbl(Webs *wp, char *path, char *query)
 	wp->iValue1 = 0;
 	websWrite(wp, "%s", "]");
 	websDone(wp);
-	printf("--------------%s-----------------\r\n", __func__);
+	_WEB_DBG_TRAP("--------------%s-----------------\r\n", __func__);
 	return 0;
 }
 
@@ -211,6 +211,8 @@ static int web_firewall_port_map_rule_handle(Webs *wp, void *p)
 	char *strval = webs_get_var(wp, T("BTNID"), T(""));
 	if (NULL == strval)
 	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get BTNID Value");
 		return ERROR;
 	}
 	if(strstr(strval, "delete"))
@@ -336,6 +338,8 @@ static int web_firewall_port_filter_handle(Webs *wp, void *p)
 	char *strval = webs_get_var(wp, T("BTNID"), T(""));
 	if (NULL == strval)
 	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get BTNID Value");
 		return ERROR;
 	}
 	if(strstr(strval, "delete"))
@@ -480,6 +484,8 @@ static int web_firewall_snat_handle(Webs *wp, void *p)
 	char *strval = webs_get_var(wp, T("BTNID"), T(""));
 	if (NULL == strval)
 	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get BTNID Value");
 		return ERROR;
 	}
 	if(strstr(strval, "delete"))
@@ -597,9 +603,11 @@ static int web_firewall_snat_handle(Webs *wp, void *p)
 	}
 	return ERROR;
 }
+#endif /* THEME_V9UI */
 
 int web_firewall_jst_init(void)
 {
+#ifndef THEME_V9UI
 	//websDefineJst("jst_port_connect", jst_port_connect);
 	websFormDefine("port-map", web_firewall_port_map_rule_tbl);
 	web_button_add_hook("firewall-map", "add", web_firewall_port_map_rule_handle, NULL);
@@ -613,7 +621,7 @@ int web_firewall_jst_init(void)
 	websFormDefine("snatget", web_firewall_snat_rule_tbl);
 	web_button_add_hook("snat", "add", web_firewall_snat_handle, NULL);
 	web_button_add_hook("snat", "delete", web_firewall_snat_handle, NULL);
-
+#endif /* THEME_V9UI */
 	return 0;
 }
 

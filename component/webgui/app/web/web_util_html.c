@@ -21,16 +21,23 @@
 #include "web_app.h"
 #include "web_api.h"
 
+
+int _web_app_debug = 0;
+
+
+
 const char *webs_get_var(Webs *wp, const char *var, const char *defaultGetValue)
 {
 	const char *value = websGetVar(wp, var, defaultGetValue);
-	if(value)
+	if(value != NULL)
 	{
 		if(strlen(value) <= 0)
 		{
 			return NULL;
 		}
 		if(all_space(value))
+			return NULL;
+		if(strcasecmp(value, "undefined") == 0)
 			return NULL;
 
 		return str_trim(value);
@@ -47,8 +54,10 @@ int web_return_text_plain(Webs *wp, int ret)
 	websWriteEndHeaders(wp);
 	if(ret == ERROR)
 		websWrite(wp, "%s", "ERROR");
-	else
+	else if(ret == OK)
 		websWrite(wp, "%s", "OK");
+	else if(ret == '[')
+		websWrite(wp, "%s", "[]");
 	websDone(wp);
 	return ret;
 }
@@ -131,4 +140,37 @@ web_os web_os_get()
 		return web_app->webos;
 	}
 	return WEB_OS_OPENWRT;
+}
+
+
+int webs_username_password_update(void *pwp, char *username, char *password)
+{
+#if ME_GOAHEAD_AUTO_LOGIN
+	char encodedPassword[128];
+	memset(encodedPassword, 0, sizeof(encodedPassword));
+	/*
+	 * Password Encoded
+	 */
+	//webserver encoded cipher md5 realm goahead.com username admin password admin
+	if(web_app_gopass_api(username, password, "md5", "goahead.com", encodedPassword) != 0 )
+	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Encoded password Value");
+		return ERROR;
+	}
+	websSetUserPassword(username, encodedPassword);
+	web_app_auth_save_api();
+#endif
+
+#if !ME_GOAHEAD_AUTO_LOGIN
+	if(vty_user_create(NULL, username, password, FALSE , TRUE ) != CMD_SUCCESS)
+	{
+		if(WEB_IS_DEBUG(EVENT))
+		{
+			zlog_debug(ZLOG_WEB, " Can not Change User Password for '%s'", username);
+		}
+		return ERROR;
+	}
+#endif
+	return OK;
 }

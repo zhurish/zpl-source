@@ -26,6 +26,9 @@
 #include "application.h"
 #endif
 
+
+#ifdef THEME_V9UI
+
 #ifndef FSHIFT
 # define FSHIFT 16              /* nr of bits of precision */
 #endif
@@ -132,23 +135,9 @@ static char *_web_uptime(char *tmp)
 static int jst_uptime(int eid, webs_t wp, int argc, char **argv)
 {
 	char tmp[128];
-/*	unsigned int updays = 0, uphours = 0, upminutes = 0;
-	struct sysinfo info;
-	sysinfo(&info);
 	memset(tmp, 0, sizeof(tmp));
-	updays = (unsigned) info.uptime / (unsigned)(60*60*24);
-	if (updays)
-		sprintf(tmp, "%u day%s, ", updays, (updays != 1) ? "s" : "");
-	upminutes = (unsigned) info.uptime / (unsigned)60;
-	uphours = (upminutes / (unsigned)60) % (unsigned)24;
-	upminutes %= 60;
-	if (uphours)
-		sprintf(tmp + strlen(tmp), "%2u:%02u", uphours, upminutes);
-	else
-		sprintf(tmp + strlen(tmp), "%u min", upminutes);*/
-	memset(tmp, 0, sizeof(tmp));
-    websWrite(wp, "%s", _web_uptime(tmp));
-    return 0;
+	websWrite(wp, "%s", _web_uptime(tmp));
+	return 0;
 }
 
 static char *_web_cpu_load(char *tmp)
@@ -164,18 +153,9 @@ static char *_web_cpu_load(char *tmp)
 static int jst_cpu_load(int eid, webs_t wp, int argc, char **argv)
 {
 	char tmp[128];
-/*
-	struct sysinfo info;
-	sysinfo(&info);
 	memset(tmp, 0, sizeof(tmp));
-	sprintf(tmp, " %u.%02u, %u.%02u, %u.%02u",
-			LOAD_INT(info.loads[0]), LOAD_FRAC(info.loads[0]),
-			LOAD_INT(info.loads[1]), LOAD_FRAC(info.loads[1]),
-			LOAD_INT(info.loads[2]), LOAD_FRAC(info.loads[2]));
-*/
-	memset(tmp, 0, sizeof(tmp));
-    websWrite(wp, "%s", _web_cpu_load(tmp));
-    return 0;
+	websWrite(wp, "%s", _web_cpu_load(tmp));
+	return 0;
 }
 #undef FSHIFT
 #undef FIXED_1
@@ -366,14 +346,6 @@ static int jst_platform(int eid, webs_t wp, int argc, char **argv)
     return 0;
 }
 
-/*static int jst_button(int eid, webs_t wp, int argc, char **argv)
-{
-    //char *date = websGetDateString(NULL);
-	websWrite(wp, "%s", "admin");
-    return 0;
-}*/
-
-
 
 static int jst_username(int eid, webs_t wp, int argc, char **argv)
 {
@@ -391,27 +363,6 @@ static int jst_username(int eid, webs_t wp, int argc, char **argv)
 	}
     return 0;
 }
-
-/*
-static int jst_memory(int eid, webs_t wp, int argc, char **argv)
-{
-	struct host_system host_system;
-	memset(&host_system, 0, sizeof(struct host_system));
-	host_system_information_get(&host_system);
-
-	host_system.mem_total = host_system.s_info.totalram >> 10;//               //total
-	host_system.mem_uses = (host_system.s_info.totalram - host_system.s_info.freeram) >> 10; //used
-	host_system.mem_free = host_system.s_info.freeram >> 10;                 //free
-
-	websWrite(wp, "Total:%d MB, Free:%d MB, Uses:%d MB",
-			host_system.mem_total>>10, host_system.mem_free>>10, host_system.mem_uses>>10);
-    //char *date = websGetDateString(NULL);
-	//websWrite(wp, "%s", "admin");
-    return 0;
-}
-*/
-
-
 
 static int jst_auth_level(int eid, webs_t wp, int argc, char **argv)
 {
@@ -462,42 +413,6 @@ static int jst_memory_progress_view(Webs *wp, void *p)
 	websDone(wp);
 	return OK;
 }
-
-/*
-static int jst_memory_progress(int eid, webs_t wp, int argc, char **argv)
-{
-	if(strstr(argv[0], "memtotal"))
-	{
-#ifdef THEME_BOOTSTRAP
-		char *progress = "<div class=\"progress-bar\" role=\"progressbar\" aria-valuenow=\"60\" \
-			aria-valuemin=\"0\" aria-valuemax=\"100\" style=\"width: %d%%;\"> \
-    		<div><small>%s</small></div> \
-		</div>";
-#endif
-		//if(argv[1])
-		{
-			char memtmp[128];
-			struct host_system host_system;
-			memset(&host_system, 0, sizeof(struct host_system));
-			host_system_information_get(&host_system);
-
-			host_system.mem_total = host_system.s_info.totalram >> 10;//               //total
-			host_system.mem_uses = (host_system.s_info.totalram - host_system.s_info.freeram) >> 10; //used
-			host_system.mem_free = host_system.s_info.freeram >> 10;                 //free
-			memset(memtmp, 0, sizeof(memtmp));
-
-			sprintf(memtmp, "%d MB/%d MB(%d%%)", host_system.mem_uses>>10,
-					host_system.mem_total>>10,
-					(host_system.mem_uses * 100)/host_system.mem_total);
-#ifdef THEME_BOOTSTRAP
-			websWrite(wp, progress,
-					(host_system.mem_uses * 100)/host_system.mem_total, memtmp);
-#endif
-		}
-	}
-	return 0;
-}
-*/
 
 static int jst_web_type(int eid, webs_t wp, int argc, char **argv)
 {
@@ -692,10 +607,96 @@ static int jst_app_version(int eid, webs_t wp, int argc, char **argv)
 #endif
 	return 0;
 }
+#endif /* THEME_V9UI */
 
+static int jst_systeminfo(Webs *wp, char *path, char *query)
+{
+	int offset = 0;
+	char buf[1024];
+	char tmp[128];
+	memset(buf, 0, sizeof(buf));
+	struct host_system host_system;
+	memset(&host_system, 0, sizeof(struct host_system));
+	host_system_information_get(&host_system);
+	wp->iValue1 = 0;
+	wp->iValue = 0;
+	websSetStatus(wp, 200);
+	websWriteHeaders(wp, -1, 0);
+	websWriteHeader(wp, "Content-Type", "application/json");
+	//websWriteHeader(wp, "Content-Type", "text/plain");
+	websWriteEndHeaders(wp);
+	//websWrite(wp, "%s", "[");
+
+	//websWrite(wp, "%s", host_name_get());
+#ifdef BUILD_X86
+	if(host_system.model_name)
+	{
+		 sprintf (buf, "{\"devname\":\"%s\", \"platfrom\":\"%s\",", host_name_get(), host_system.model_name);
+	}
+#else
+	if(host_system.system_type && host_system.cpu_model)
+	{
+		sprintf (buf, "{\"devname\":\"%s\", \"platfrom\":\"%s %s\",", host_name_get(), host_system.system_type, host_system.cpu_model);
+	}
+#endif
+	offset = strlen(buf);
+#if LINUX_VERSION_CODE
+	unsigned int mver = 0, sver = 0, lver = 0;
+	mver = (LINUX_VERSION_CODE>>16) & 0xff;
+	sver = (LINUX_VERSION_CODE>>8) & 0xff;
+	lver = (LINUX_VERSION_CODE) & 0xff;
+	sprintf (buf + offset, "\"version\":\"Linux Version %u.%u.%u\",", mver, sver, lver);
+#else
+	if(access("/proc/version", F_OK) == 0)
+	{
+		memset(tmp, 0, sizeof(tmp));
+		os_read_file("/proc/version", tmp, sizeof(tmp));
+		if(strlen(tmp))
+		{
+			char *b = strstr(tmp, "(");
+			if(b)
+			{
+				//websWriteBlock(wp, tmp, tmp-b-1);
+				strcat (buf + offset, "\"version\":\"");
+				offset = strlen(buf);
+				strncat (buf + offset, tmp, tmp-b-1);
+				offset = strlen(buf);
+				strcat (buf + offset, "\",");
+				offset = strlen(buf);
+			}
+		}
+	}
+#endif
+	offset = strlen(buf);
+	memset(tmp, 0, sizeof(tmp));
+	sprintf (buf + offset, "\"appver\":\"%s\",", "V0.0.0.1");
+
+	offset = strlen(buf);
+	memset(tmp, 0, sizeof(tmp));
+	sprintf (buf + offset, "\"uptime\":\"%s\",", _web_uptime(tmp));
+
+	offset = strlen(buf);
+	sprintf (buf + offset, "\"cpu_load\":\"%s\",", _web_cpu_load(tmp));
+
+	host_system.mem_total = host_system.s_info.totalram >> 10;//               //total
+	host_system.mem_uses = (host_system.s_info.totalram - host_system.s_info.freeram) >> 10; //used
+	host_system.mem_free = host_system.s_info.freeram >> 10;                 //free
+
+	offset = strlen(buf);
+	sprintf (buf + offset, "\"memload\":\"%d%%\"}", ((host_system.mem_uses*100)/host_system.mem_total));
+
+	websWrite(wp, buf);
+	//if_list_each(web_interface_name_tbl, wp);
+	//websWrite(wp, "%s", "]");
+	websDone(wp);
+	wp->iValue = 0;
+	wp->iValue1 = 0;
+	return 0;
+}
 
 int web_system_jst_init(void)
 {
+#ifdef THEME_V9UI
 #ifdef ME_DESCRIPTION
 	websDefineJst("jst_web_description", jst_web_description);
 #endif
@@ -726,11 +727,6 @@ int web_system_jst_init(void)
 	websDefineJst("jst_cpu_load", jst_cpu_load);
 	websDefineJst("jst_localtime", jst_localtime);
 
-	//websDefineJst("jst_memory", jst_memory);
-
-
-	//websDefineJst("jst_memory_progress", jst_memory_progress);
-	//websDefineJst("jst_timezone_list", jst_sntp_timezone_list);
 	websDefineJst("jst_app_version", jst_app_version);
 	websDefineJst("jst_web_header", jst_web_header);
 	websDefineJst("jst_web_type", jst_web_type);
@@ -739,5 +735,7 @@ int web_system_jst_init(void)
 	websFormDefine("web-define", web_define_get);
 
 	web_progress_view_add_hook("mem", "memtotal", jst_memory_progress_view, NULL);
+#endif /* THEME_V9UI */
+	websFormDefine("systeminfo", jst_systeminfo);
 	return 0;
 }

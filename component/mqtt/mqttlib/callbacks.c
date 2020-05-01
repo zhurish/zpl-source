@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010-2019 Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -110,8 +110,12 @@ void mosquitto_unsubscribe_v5_callback_set(struct mosquitto *mosq, void (*on_uns
 	mosq->on_unsubscribe_v5 = on_unsubscribe;
 	pthread_mutex_unlock(&mosq->callback_mutex);
 }
-
-void mosquitto_log_callback_set(struct mosquitto *mosq, void (*on_log)(struct mosquitto *, void *, int, const char *))
+#ifndef WITH_BROKER
+void mosquitto_log_callback_set(struct mosquitto *mosq, void (*on_log)(const char *file, const char *func,
+		const int line,struct mosquitto *, void *, int, const char *))
+#else
+libmosq_EXPORT void mosquitto_log_callback_set(struct mosquitto *mosq, void (*on_log)(struct mosquitto *, void *, int, const char *))
+#endif		
 {
 	pthread_mutex_lock(&mosq->log_callback_mutex);
 	mosq->on_log = on_log;

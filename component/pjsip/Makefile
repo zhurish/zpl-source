@@ -74,20 +74,22 @@ ifneq ($(TOBJS),)
 obj: $(MODULE_OBJS) $(MODULE_LIBOBJS) $(TMODULE_OBJS)
 
 install: $(LIBS) $(TARGET)
-	install -d $(LIB_DIR)
-	install -m 755 $(LIBS) $(LIB_DIR)
+	@install -d $(LIB_DIR)
+	@install -m 755 $(LIBS) $(LIB_DIR)
+	@$(STRIP) --strip-unneeded $(LIB_DIR)/$(LIBS)
 #	$(STRIP) $(LIB_DIR)/$(LIBS)
 #	install -m 755 lib*.so $(LIB_DIR)
 #	install -m 755 lib*.so.* $(LIB_DIR)
-	install -d ${DSTSBINDIR}
-	install -m 755 ${TARGET} ${DSTSBINDIR} 
+	@install -d ${DSTSBINDIR}
+	@install -m 755 ${TARGET} ${DSTSBINDIR} 
 	#$(STRIP) ${DSTSBINDIR}/${TARGET}
 else
 obj: $(MODULE_OBJS) $(MODULE_LIBOBJS)
 
 install: $(LIBS)
-	install -d $(LIB_DIR)
-	install -m 755 $(LIBS) $(LIB_DIR)
+	@install -d $(LIB_DIR)
+	@install -m 755 $(LIBS) $(LIB_DIR)
+	@$(STRIP) --strip-unneeded $(LIB_DIR)/$(LIBS)
 #	$(STRIP) $(LIB_DIR)/$(LIBS)
 #	install -m 755 lib*.so $(LIB_DIR)
 #	install -m 755 lib*.so.* $(LIB_DIR)	

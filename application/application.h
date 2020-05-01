@@ -33,6 +33,10 @@ extern void cmd_app_x5b_init(void);
 #include "V9/v9_slipnet.h"
 #include "V9/v9_cmd.h"
 
+#include "V9/v9_video_disk.h"
+#include "V9/v9_user_db.h"
+#include "V9/v9_video_db.h"
+
 #include "V9/v9_board.h"
 #include "V9/v9_video_sdk.h"
 #include "V9/v9_video_user.h"

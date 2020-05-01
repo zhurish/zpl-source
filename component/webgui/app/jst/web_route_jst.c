@@ -32,6 +32,7 @@
 #include "web_app.h"
 #include "web_api.h"
 
+
 #ifdef WEB_OPENWRT_PROCESS
 static int web_kernel_route_table_one(char *input, char *ifname, u_int32 *dest,
 									  u_int32 *gateway, u_int32 *mask, u_int32 *metric)
@@ -138,7 +139,7 @@ int web_kernel_dns_lookup_default(ifindex_t *ifindex, u_int32 *dns1, u_int32 *dn
 }
 #endif
 
-
+#ifndef THEME_V9UI
 static int web_route_table_one(struct route_node *rn, struct rib *rib, ifindex_t ifindex, union g_addr *gate)
 {
 	struct nexthop *nexthop, *tnexthop;
@@ -592,6 +593,8 @@ static int web_route_tbl_handle(Webs *wp, char *path, char *query, int type)
 	dest_str = webs_get_var(wp, T("destination"), T(""));
 	if (NULL == dest_str)
 	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get destination Value");
 		ret = ERROR;
 		goto err_out;
 	}
@@ -600,6 +603,8 @@ static int web_route_tbl_handle(Webs *wp, char *path, char *query, int type)
 		mask_str = webs_get_var(wp, T("netmask"), T(""));
 		if (NULL == mask_str)
 		{
+			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+				zlog_debug(ZLOG_WEB, "Can not Get netmask Value");
 			ret = ERROR;
 			goto err_out;
 		}
@@ -707,12 +712,14 @@ static int web_del_route_tbl(Webs *wp, void *p)
 {
 	return web_route_tbl_handle(wp, NULL, NULL, 0);
 }
-
+#endif /* THEME_V9UI */
 
 int web_route_jst_init(void)
 {
+#ifndef THEME_V9UI
 	websFormDefine("route-tbl", web_route_tbl);
 	websFormDefine("addroute", web_add_route_tbl);
 	web_button_add_hook("routetbl", "delete", web_del_route_tbl, NULL);
+#endif /* THEME_V9UI */
 	return 0;
 }

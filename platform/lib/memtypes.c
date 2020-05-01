@@ -522,11 +522,35 @@ struct memory_list memory_list_video[] =
   { MTYPE_VIDEO_SESSION,		"Video Session information"	},
   { MTYPE_VIDEO_DATA,			"Video Data information"	},
   { MTYPE_VIDEO_SDK,			"Video SDK information"	},
+  { MTYPE_VIDEO_DB,				"Video DB information"	},
+  { MTYPE_VIDEO_PIC,			"Video PIC information"	},
+  { MTYPE_VIDEO_KEY,			"Video KEY information"	},
   { MTYPE_VIDEO_TMP,			"Video Tmp information"	},
   { -1, NULL },
 };
 
 #endif
+
+
+#ifdef PL_MQTT_MODULE
+struct memory_list memory_list_mqtt[] =
+{
+  { MTYPE_MQTT,				"Mqtt information"	},
+  { MTYPE_MQTT_TOP,			"Mqtt Top information"	},
+  { MTYPE_MQTT_TOPIC,		"Mqtt Topic information"	},
+  { MTYPE_MQTT_MESSAGE,		"Mqtt Message information"	},
+  { MTYPE_MQTT_SESSION,		"Mqtt Session information"	},
+  { MTYPE_MQTT_CONF,			"Mqtt Config information"	},
+  { MTYPE_MQTT_FILTER,		"Mqtt Filter information"	},
+  { MTYPE_MQTT_DATA,			"Mqtt Data information"	},
+  { MTYPE_MQTT_SUB,			"Mqtt SUB information"	},
+  { MTYPE_MQTT_PUB,			"Mqtt PUB information"	},
+  { MTYPE_MQTT_KEY,			"Mqtt KEY information"	},
+  { MTYPE_MQTT_TMP,			"Mqtt Tmp information"	},
+  { -1, NULL },
+};
+#endif
+
 
 struct mlist mlists[] __attribute__ ((unused)) = {
   { memory_list_lib,	"LIB"	},
@@ -576,6 +600,10 @@ struct mlist mlists[] __attribute__ ((unused)) = {
 
 #ifdef PL_VIDEO_MODULE
   { memory_list_video,	"VIDEO"	},
+#endif
+
+#ifdef PL_MQTT_MODULE
+  { memory_list_mqtt,	"MQTT"	},
 #endif
 /* 2016��6��27�� 21:07:44 zhurish: ��չ·��Э�����ӵ��ڴ���Ϣ */
   { NULL, NULL},

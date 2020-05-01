@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010-2019 Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -21,6 +21,7 @@ Contributors:
 #include <string.h>
 #ifndef WIN32
 #include <sys/time.h>
+#include <strings.h>
 #endif
 
 #include "mosquitto.h"
@@ -566,7 +567,6 @@ int mosquitto_sub_topic_tokenise(const char *subtopic, char ***topics, int *coun
 	if(!(*topics)) return MOSQ_ERR_NOMEM;
 
 	start = 0;
-	stop = 0;
 	hier = 0;
 
 	for(i=0; i<len+1; i++){

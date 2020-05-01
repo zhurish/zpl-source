@@ -53,9 +53,9 @@ lib: $(LIBS)
 obj: $(BUILT_SOURCES) $(MODULE_OBJS)
 
 install: $(LIBS)
-	install -d $(LIB_DIR)
-	install -m 755 $(LIBS) $(LIB_DIR)
-	#$(STRIP) $(LIB_DIR)/$(LIBS)
+	@install -d $(LIB_DIR)
+	@install -m 755 $(LIBS) $(LIB_DIR)
+	@$(STRIP) --strip-unneeded $(LIB_DIR)/$(LIBS)
 
 clean: objclean
 	@$(RM) $(LIB_DIR)/$(LIBS)

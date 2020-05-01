@@ -21,7 +21,22 @@
 #include "vector.h"
 #include "eloop.h"
 
-#include "application.h"
+#include "v9_device.h"
+#include "v9_util.h"
+#include "v9_video.h"
+#include "v9_serial.h"
+#include "v9_slipnet.h"
+#include "v9_cmd.h"
+
+#include "v9_video_disk.h"
+#include "v9_user_db.h"
+#include "v9_video_db.h"
+
+#include "v9_board.h"
+#include "v9_video_sdk.h"
+#include "v9_video_user.h"
+#include "v9_video_board.h"
+#include "v9_video_api.h"
 
 
 int v9_app_module_init()
@@ -29,11 +44,13 @@ int v9_app_module_init()
 	if(master_eloop[MODULE_APP_START] == NULL)
 		master_eloop[MODULE_APP_START] = eloop_master_module_create(MODULE_APP_START);
 
+	v9_video_disk_dir_init();
 	//v9_board_init();
+	v9_video_sqldb_load(0);
 
 	v9_video_board_init();
 
-	v9_video_sdk_init();
+	//v9_video_sdk_init();
 
 	v9_video_user_load();
 

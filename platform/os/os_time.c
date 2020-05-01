@@ -446,47 +446,82 @@ option stop_date '2019-04-11T00:00'
 {
 
 }*/
+int os_tmtime_get (enum os_tmtime_id type, time_t t, struct tm *ptm)
+{
+	time_t ticlock = t;
+	struct tm tm;
+	os_memset(&tm, 0, sizeof(tm));
+	if(type == OS_TMTIME_LOCAL)
+	{
+		if(localtime_r(&ticlock, &tm) && ptm)
+		{
+			memcpy(ptm, &tm, sizeof(struct tm));
+			return OK;
+		}
+	}
+	else if (type == OS_TMTIME_UTC)
+	{
+		if(gmtime_r(&ticlock, &tm) && ptm)
+		{
+			memcpy(ptm, &tm, sizeof(struct tm));
+			return OK;
+		}
+	}
+	return ERROR;
+}
 
 char *os_time_fmt (char *fmt, time_t t)
 {
 	int len = 0;
 	struct tm tm;
-	struct tm *ptm = NULL;
+	//struct tm *ptm = NULL;
 	static char data[128];
-	time_t clock = t;
+	time_t ticlock = t;
 	os_memset(data, 0, sizeof(data));
 	os_memset(&tm, 0, sizeof(tm));
 	//UTC :Wed Apr 18 05:19:00 UTC 2018
 	if(os_strstr(fmt, "bsd"))
 	{
-		localtime_r(&clock, &tm);
+		localtime_r(&ticlock, &tm);
 		len = strftime(data, sizeof(data), "%b %e %T", &tm);
 	}
 	else if(os_strstr(fmt, "/")||os_strstr(fmt, "date"))
 	{
-		localtime_r(&clock, &tm);
+		localtime_r(&ticlock, &tm);
 		len = strftime(data, sizeof(data), "%Y/%m/%d %H:%M:%S", &tm);
+	}
+	else if(os_strstr(fmt, "-"))
+	{
+		localtime_r(&ticlock, &tm);
+		len = strftime(data, sizeof(data), "%Y-%m-%d %H:%M:%S", &tm);
+	}
+	else if(os_strstr(fmt, "sql"))
+	{
+		localtime_r(&ticlock, &tm);
+		len = strftime(data, sizeof(data), "%Y-%m-%d %H:%M", &tm);
 	}
 	else if(os_strstr(fmt, "short"))
 	{
-		localtime_r(&clock, &tm);
+		localtime_r(&ticlock, &tm);
 		len = strftime(data, sizeof(data), "%m/%d %H:%M:%S", &tm);
 	}
 	else if(os_strstr(fmt, "iso"))
 	{
-		ptm = gmtime(&clock);
+		//ptm = gmtime(&ticlock);
+		gmtime_r(&ticlock, &tm);
 		//len = strftime(data, sizeof(data), "%Y-%m-%dT%H:%M:%S+08:00",tm);
-		len = strftime(data, sizeof(data), "%Y-%m-%dT%H:%M:%S", ptm);
+		len = strftime(data, sizeof(data), "%Y-%m-%dT%H:%M:%S", &tm);
 	}
 	else if(os_strstr(fmt, "rfc3164"))
 	{
-		localtime_r(&clock, &tm);
+		localtime_r(&ticlock, &tm);
 		len = strftime(data, sizeof(data), "%b %d %T", &tm);
 	}
 	else if(os_strstr(fmt, "rfc3339"))
 	{
-		ptm = gmtime(&clock);
-		len = strftime(data, sizeof(data), "%Y-%m-%dT%H:%M:%S", ptm);
+		//ptm = gmtime(&clock);
+		gmtime_r(&ticlock, &tm);
+		len = strftime(data, sizeof(data), "%Y-%m-%dT%H:%M:%S", &tm);
 	}
 	if(len > 0)
 		return data;

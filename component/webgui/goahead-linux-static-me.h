@@ -5,6 +5,34 @@
     configure or define variables in your Makefile to override these default values.
  */
 
+#ifdef PL_NSM_MODULE
+#define HAS_BOOL
+#include "zebra.h"
+#include "vty.h"
+#include "if.h"
+#include "buffer.h"
+#include "log.h"
+#include "memory.h"
+
+#undef ME_GOAHEAD_UPLOAD_DIR
+#ifndef ME_GOAHEAD_UPLOAD_DIR
+#define ME_GOAHEAD_UPLOAD_DIR SYSUPLOADDIR
+#define WEB_UPLOAD_BASE ME_GOAHEAD_UPLOAD_DIR
+#endif /* ME_GOAHEAD_UPLOAD_DIR */
+
+//#error " PL_NSM_MODULE && HAS_BOOL "
+
+#else /* PL_NSM_MODULE */
+
+#define MTYPE_WEB_DATA 1
+#define XMALLOC(mtype, size)       malloc ((size))
+#define XCALLOC(mtype, size)       calloc ((size))
+#define XREALLOC(mtype, ptr, size) realloc ((ptr), (size))
+#define XFREE(mtype, ptr)          free ((ptr))
+#define XSTRDUP(mtype, str)        strdup ((str))
+
+#endif /* PL_NSM_MODULE */
+
 /* Settings */
 #ifndef ME_AUTHOR
     #define ME_AUTHOR "Embedthis Software"
@@ -22,7 +50,7 @@
     #define ME_COMPANY "embedthis"
 #endif
 #ifndef ME_COMPATIBLE
-    #define ME_COMPATIBLE "5.0"
+    #define ME_COMPATIBLE "5.1"
 #endif
 #ifndef ME_COMPILER_FORTIFY
     #define ME_COMPILER_FORTIFY 1
@@ -76,16 +104,19 @@
     #define ME_COMPILER_WARN_UNUSED 1
 #endif
 #ifndef ME_DEBUG
-    #define ME_DEBUG 1
+    #define ME_DEBUG 0
+#endif
+#ifndef ME_DEPRECATED_WARNINGS
+    #define ME_DEPRECATED_WARNINGS 0
 #endif
 #ifndef ME_DEPTH
     #define ME_DEPTH 1
 #endif
 #ifndef ME_DESCRIPTION
-    #define ME_DESCRIPTION "Embedthis GoAhead Core"
+    #define ME_DESCRIPTION "Embedthis GoAhead Community Edition"
 #endif
 #ifndef ME_GOAHEAD_ACCESS_LOG
-    #define ME_GOAHEAD_ACCESS_LOG 0
+    #define ME_GOAHEAD_ACCESS_LOG 1
 #endif
 #ifndef ME_GOAHEAD_AUTH
     #define ME_GOAHEAD_AUTH 1
@@ -118,7 +149,7 @@
     #define ME_GOAHEAD_JAVASCRIPT 1
 #endif
 #ifndef ME_GOAHEAD_LEGACY
-    #define ME_GOAHEAD_LEGACY 0
+    #define ME_GOAHEAD_LEGACY 1
 #endif
 #ifndef ME_GOAHEAD_LIMIT_BUFFER
     #define ME_GOAHEAD_LIMIT_BUFFER 1024
@@ -175,7 +206,8 @@
     #define ME_GOAHEAD_LISTEN "http://*:80,https://*:443"
 #endif
 #ifndef ME_GOAHEAD_LOGFILE
-    #define ME_GOAHEAD_LOGFILE "stderr:0"
+    #define ME_GOAHEAD_LOGFILE 0
+    #define ME_GOAHEAD_LOGFILE_PATH "stderr:0"
 #endif
 #ifndef ME_GOAHEAD_LOGGING
     #define ME_GOAHEAD_LOGGING 1
@@ -184,7 +216,7 @@
     #define ME_GOAHEAD_PUT_DIR "."
 #endif
 #ifndef ME_GOAHEAD_REALM
-    #define ME_GOAHEAD_REALM "example.com"
+    #define ME_GOAHEAD_REALM "goahead.com"
 #endif
 #ifndef ME_GOAHEAD_REPLACE_MALLOC
     #define ME_GOAHEAD_REPLACE_MALLOC 0
@@ -226,7 +258,7 @@
     #define ME_GOAHEAD_SSL_VERIFY_PEER 0
 #endif
 #ifndef ME_GOAHEAD_STEALTH
-    #define ME_GOAHEAD_STEALTH 1
+    #define ME_GOAHEAD_STEALTH 0
 #endif
 #ifndef ME_GOAHEAD_TRACING
     #define ME_GOAHEAD_TRACING 1
@@ -234,9 +266,11 @@
 #ifndef ME_GOAHEAD_UPLOAD
     #define ME_GOAHEAD_UPLOAD 1
 #endif
+
 #ifndef ME_GOAHEAD_UPLOAD_DIR
     #define ME_GOAHEAD_UPLOAD_DIR "/tmp/tftpboot"
 #endif
+
 #ifndef ME_GOAHEAD_XFRAME_HEADER
     #define ME_GOAHEAD_XFRAME_HEADER "SAMEORIGIN"
 #endif
@@ -270,17 +304,15 @@
 #ifndef ME_ROM_TIME
     #define ME_ROM_TIME 1505449519432
 #endif
-#ifndef ME_STATIC
-    #define ME_STATIC 1
-#endif
 #ifndef ME_TITLE
-    #define ME_TITLE "Embedthis GoAhead Core"
+    #define ME_TITLE "Embedthis GoAhead Community Edition"
 #endif
 #ifndef ME_VERSION
-    #define ME_VERSION "5.0.0"
+    #define ME_VERSION "5.1.1"
 #endif
 
 /* Prefixes */
+/*
 #ifndef ME_ROOT_PREFIX
     #define ME_ROOT_PREFIX "/"
 #endif
@@ -332,6 +364,7 @@
 #ifndef ME_SRC_PREFIX
     #define ME_SRC_PREFIX "goahead-5.0.0"
 #endif
+*/
 
 /* Suffixes */
 #ifndef ME_EXE
@@ -369,13 +402,13 @@
     #define ME_MAJOR_VERSION 5
 #endif
 #ifndef ME_MINOR_VERSION
-    #define ME_MINOR_VERSION 0
+    #define ME_MINOR_VERSION 1
 #endif
 #ifndef ME_PATCH_VERSION
-    #define ME_PATCH_VERSION 0
+    #define ME_PATCH_VERSION 1
 #endif
 #ifndef ME_VNUM
-    #define ME_VNUM 500000000
+    #define ME_VNUM 500010001
 #endif
 
 /* Components */
@@ -389,13 +422,13 @@
     #define ME_COM_MATRIXSSL 0
 #endif
 #ifndef ME_COM_MBEDTLS
-    #define ME_COM_MBEDTLS 1
+    #define ME_COM_MBEDTLS 0
 #endif
 #ifndef ME_COM_NANOSSL
     #define ME_COM_NANOSSL 0
 #endif
 #ifndef ME_COM_OPENSSL
-    #define ME_COM_OPENSSL 0
+    #define ME_COM_OPENSSL 1
 #endif
 #ifndef ME_COM_OSDEP
     #define ME_COM_OSDEP 1

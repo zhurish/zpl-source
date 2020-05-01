@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2019 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -199,7 +199,9 @@ int net__socket_close(struct mosquitto *mosq)
 #endif
 	{
 		if(mosq->ssl){
-			SSL_shutdown(mosq->ssl);
+			if(!SSL_in_init(mosq->ssl)){
+				SSL_shutdown(mosq->ssl);
+			}
 			SSL_free(mosq->ssl);
 			mosq->ssl = NULL;
 		}
@@ -210,7 +212,7 @@ int net__socket_close(struct mosquitto *mosq)
 	if(mosq->wsi)
 	{
 		if(mosq->state != mosq_cs_disconnecting){
-			context__set_state(mosq, mosq_cs_disconnect_ws);
+			mosquitto__set_state(mosq, mosq_cs_disconnect_ws);
 		}
 		libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
 	}else
@@ -366,6 +368,50 @@ int net__try_connect_step2(struct mosquitto *mosq, uint16_t port, mosq_sock_t *s
 
 int net__try_connect(const char *host, uint16_t port, mosq_sock_t *sock, const char *bind_address, bool blocking)
 {
+#ifdef PL_MQTT_MODULE
+	int rc = MOSQ_ERR_SUCCESS, sk = 0;
+
+	sk = sock_create(TRUE);
+	if(sk == ERROR)
+	{
+		return MOSQ_ERR_EAI;
+	}
+	*sock = sk;
+	if(bind_address)
+	{
+		if(sock_bind(*sock, bind_address, port) == ERROR)
+		{
+			COMPAT_CLOSE(*sock);
+			*sock = INVALID_SOCKET;
+			return MOSQ_ERR_EAI;
+		}
+	}
+	if(!blocking){
+		/* Set non-blocking */
+		if(net__socket_nonblock(sock)){
+			COMPAT_CLOSE(*sock);
+			*sock = INVALID_SOCKET;
+			return MOSQ_ERR_EAI;
+		}
+	}
+
+	rc = sock_connect(*sock, host, port);
+
+	if(rc == ERROR || errno == EINPROGRESS || errno == COMPAT_EWOULDBLOCK){
+		if(rc < 0 && (errno == EINPROGRESS || errno == COMPAT_EWOULDBLOCK)){
+			rc = MOSQ_ERR_CONN_PENDING;
+		}
+		if(blocking){
+			/* Set non-blocking */
+			if(net__socket_nonblock(sock)){
+				COMPAT_CLOSE(*sock);
+				*sock = INVALID_SOCKET;
+				return MOSQ_ERR_EAI;
+			}
+		}
+	}
+
+#else /* PL_MQTT_MODULE */
 	struct addrinfo hints;
 	struct addrinfo *ainfo, *rp;
 	struct addrinfo *ainfo_bind, *rp_bind;
@@ -457,6 +503,7 @@ int net__try_connect(const char *host, uint16_t port, mosq_sock_t *sock, const c
 	if(!rp){
 		return MOSQ_ERR_ERRNO;
 	}
+#endif /* PL_MQTT_MODULE */
 	return rc;
 }
 
@@ -466,11 +513,13 @@ void net__print_ssl_error(struct mosquitto *mosq)
 {
 	char ebuf[256];
 	unsigned long e;
+	int num = 0;
 
 	e = ERR_get_error();
 	while(e){
-		log__printf(mosq, MOSQ_LOG_ERR, "OpenSSL Error: %s", ERR_error_string(e, ebuf));
+		log__printf(mosq, MOSQ_LOG_ERR, "OpenSSL Error[%d]: %s", num, ERR_error_string(e, ebuf));
 		e = ERR_get_error();
+		num++;
 	}
 }
 
@@ -607,12 +656,14 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 			if(!engine){
 				log__printf(mosq, MOSQ_LOG_ERR, "Error loading %s engine\n", mosq->tls_engine);
 				COMPAT_CLOSE(mosq->sock);
+				mosq->sock = INVALID_SOCKET;
 				return MOSQ_ERR_TLS;
 			}
 			if(!ENGINE_init(engine)){
 				log__printf(mosq, MOSQ_LOG_ERR, "Failed engine initialisation\n");
 				ENGINE_free(engine);
 				COMPAT_CLOSE(mosq->sock);
+				mosq->sock = INVALID_SOCKET;
 				return MOSQ_ERR_TLS;
 			}
 			ENGINE_set_default(engine, ENGINE_METHOD_ALL);
@@ -698,6 +749,7 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 							log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to set engine secret mode sha1");
 							ENGINE_FINISH(engine);
 							COMPAT_CLOSE(mosq->sock);
+							mosq->sock = INVALID_SOCKET;
 							net__print_ssl_error(mosq);
 							return MOSQ_ERR_TLS;
 						}
@@ -705,6 +757,7 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 							log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to set engine pin");
 							ENGINE_FINISH(engine);
 							COMPAT_CLOSE(mosq->sock);
+							mosq->sock = INVALID_SOCKET;
 							net__print_ssl_error(mosq);
 							return MOSQ_ERR_TLS;
 						}
@@ -715,6 +768,7 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 						log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load engine private key file \"%s\".", mosq->tls_keyfile);
 						ENGINE_FINISH(engine);
 						COMPAT_CLOSE(mosq->sock);
+						mosq->sock = INVALID_SOCKET;
 						net__print_ssl_error(mosq);
 						return MOSQ_ERR_TLS;
 					}
@@ -722,6 +776,7 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 						log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to use engine private key file \"%s\".", mosq->tls_keyfile);
 						ENGINE_FINISH(engine);
 						COMPAT_CLOSE(mosq->sock);
+						mosq->sock = INVALID_SOCKET;
 						net__print_ssl_error(mosq);
 						return MOSQ_ERR_TLS;
 					}
@@ -850,7 +905,6 @@ ssize_t net__read(struct mosquitto *mosq, void *buf, size_t count)
 	errno = 0;
 #ifdef WITH_TLS
 	if(mosq->ssl){
-		ERR_clear_error();
 		ret = SSL_read(mosq->ssl, buf, count);
 		if(ret <= 0){
 			err = SSL_get_error(mosq->ssl, ret);
@@ -865,6 +919,7 @@ ssize_t net__read(struct mosquitto *mosq, void *buf, size_t count)
 				net__print_ssl_error(mosq);
 				errno = EPROTO;
 			}
+			ERR_clear_error();
 #ifdef WIN32
 			WSASetLastError(errno);
 #endif
@@ -898,7 +953,6 @@ ssize_t net__write(struct mosquitto *mosq, void *buf, size_t count)
 #ifdef WITH_TLS
 	if(mosq->ssl){
 		mosq->want_write = false;
-		ERR_clear_error();
 		ret = SSL_write(mosq->ssl, buf, count);
 		if(ret < 0){
 			err = SSL_get_error(mosq->ssl, ret);
@@ -913,6 +967,7 @@ ssize_t net__write(struct mosquitto *mosq, void *buf, size_t count)
 				net__print_ssl_error(mosq);
 				errno = EPROTO;
 			}
+			ERR_clear_error();
 #ifdef WIN32
 			WSASetLastError(errno);
 #endif
@@ -937,6 +992,14 @@ ssize_t net__write(struct mosquitto *mosq, void *buf, size_t count)
 int net__socket_nonblock(mosq_sock_t *sock)
 {
 #ifndef WIN32
+#ifdef PL_MQTT_MODULE
+	if(os_set_nonblocking(*sock) != 0)
+	{
+		COMPAT_CLOSE(*sock);
+		*sock = INVALID_SOCKET;
+		return MOSQ_ERR_ERRNO;
+	}
+#else
 	int opt;
 	/* Set non-blocking */
 	opt = fcntl(*sock, F_GETFL, 0);
@@ -948,12 +1011,15 @@ int net__socket_nonblock(mosq_sock_t *sock)
 	if(fcntl(*sock, F_SETFL, opt | O_NONBLOCK) == -1){
 		/* If either fcntl fails, don't want to allow this client to connect. */
 		COMPAT_CLOSE(*sock);
+		*sock = INVALID_SOCKET;
 		return MOSQ_ERR_ERRNO;
 	}
+#endif
 #else
 	unsigned long opt = 1;
 	if(ioctlsocket(*sock, FIONBIO, &opt)){
 		COMPAT_CLOSE(*sock);
+		*sock = INVALID_SOCKET;
 		return MOSQ_ERR_ERRNO;
 	}
 #endif

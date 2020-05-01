@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
                 } else {
                     cipher = argv[i];
                     if (!smatch(cipher, "md5") && !smatch(cipher, "blowfish")) {
-                        error("Unknown cipher \"%s\". Use \"md5\" or \"blowfish\".", cipher);
+                        web_error("Unknown cipher \"%s\". Use \"md5\" or \"blowfish\".", cipher);
                     }
                     break;
                 }
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
             exit(2);
         }
         if (access(authFile, W_OK) < 0) {
-            error("Cannot write to %s", authFile);
+            web_error("Cannot write to %s", authFile);
             exit(4);
         }
     }
@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
 /*
 static void printUsage(void)
 {
-    error("usage: gopass [--cipher cipher] [--file path] [--password password] realm user roles...\n"
+    web_error("usage: gopass [--cipher cipher] [--file path] [--password password] realm user roles...\n"
         "Options:\n"
         "    --cipher md5|blowfish Select the encryption cipher. Defaults to md5\n"
         "    --file filename       Modify the password file\n"
@@ -152,19 +152,23 @@ static void printUsage(void)
 }
 */
 //webserver encoded cipher md5 realm goahead.com username admin password admin
+//webserver encryption username root password admintsl123456! cipher md5 realm goahead.com
 int web_gopass(const char *username, const char *password, const char *cipher,
 		const char *realm,  char *encodedPassword)
 {
     //WebsBuf     buf;
 	char *encoded = NULL;
 	encoded = websMD5(sfmt("%s:%s:%s", username, realm, password));
-
+	if(encoded == NULL)
+		return -1;
     if (smatch(cipher, "md5")) {
     	encoded = websMD5(sfmt("%s:%s:%s", username, realm, password));
     } else {
         /* This uses the more secure blowfish cipher */
     	encoded = websMakePassword(sfmt("%s:%s:%s", username, realm, password), 16, 128);
     }
+	if(encoded == NULL)
+		return -1;
     printf("%s:(%s)\n", __func__, encoded);
     //f9bab09668b61f553807d1157c393272
 /*  else
@@ -232,7 +236,7 @@ int web_gopass_save(const char *authFile, const char *username, const char *role
 	 return -1;
 	 }
 	 if (access(authFile, W_OK) < 0) {
-	 error("Cannot write to %s", authFile);
+	 web_error("Cannot write to %s", authFile);
 	 return -1;
 	 }
 	 }
@@ -250,20 +254,28 @@ int web_gopass_save(const char *authFile, const char *username, const char *role
 	return 0;
 }
 
+int web_auth_save(const char *authFile)
+{
+	if (writeAuthFile(authFile) < 0) {
+		return -1;
+	}
+	return 0;
+}
+
 static int writeAuthFile(char *path)
 {
-    FILE        *fp;
-    WebsKey     *kp, *ap;
-    WebsRole    *role;
-    WebsUser    *user;
+    FILE        *fp = NULL;
+    WebsKey     *kp = NULL, *ap = NULL;
+    WebsRole    *role = NULL;
+    WebsUser    *user = NULL;
     WebsHash    roles, users;
-    char        *tempFile;
-
+    char        *tempFile = NULL;
+    char        temp_cmd[512];
     web_assert(path && *path);
 
     tempFile = websTempFile(NULL, "gp");
     if ((fp = fopen(tempFile, "w" FILE_TEXT)) == 0) {
-        error("Cannot open %s", tempFile);
+        web_error("Cannot open %s", tempFile);
         return -1;
     }
     fprintf(fp, "#\n#   %s - Authorization data\n#\n\n", basename(path));
@@ -289,11 +301,17 @@ static int writeAuthFile(char *path)
         }
     }
     fclose(fp);
-    unlink(path);
-    if (rename(tempFile, path) < 0) {
-        error("Cannot create new %s from %s errno %d", path, tempFile, errno);
+    //unlink(path);
+    memset(temp_cmd, 0, sizeof(temp_cmd));
+    snprintf(temp_cmd, sizeof(temp_cmd), "cp %s %s.old", path, path);
+    system(temp_cmd);
+    memset(temp_cmd, 0, sizeof(temp_cmd));
+    snprintf(temp_cmd, sizeof(temp_cmd), "mv %s %s", tempFile, path);
+    system(temp_cmd);
+/*    if (rename(tempFile, path) < 0) {
+        web_error("Cannot create new %s from %s errno %d", path, tempFile, errno);
         return -1;
-    }
+    }*/
     return 0;
 }
 
@@ -307,7 +325,7 @@ static char *getPassword(void)
     if (smatch(password, confirm)) {
         return password;
     }
-    error("Password not verified");
+    web_error("Password not verified");
     return 0;
 }
 
@@ -369,7 +387,7 @@ static char *getpass(char *prompt)
 
 static void printUsage(void)
 {
-    error("usage: gopass [--cipher cipher] [--file path] [--password password] realm user roles...\n"
+    web_error("usage: gopass [--cipher cipher] [--file path] [--password password] realm user roles...\n"
         "Options:\n"
         "    --cipher md5|blowfish Select the encryption cipher. Defaults to md5\n"
         "    --file filename       Modify the password file\n"

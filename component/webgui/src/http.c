@@ -17,6 +17,13 @@
 #define PARSE_TIMEOUT (ME_GOAHEAD_LIMIT_PARSE_TIMEOUT * 1000)
 #define CHUNK_LOW   128                 /* Low water mark for chunking */
 
+#define TOKEN_HEADER_KEY        0x1     /* Validate token as a header key */
+#define TOKEN_HEADER_VALUE      0x2     /* Validate token as a header value */
+#define TOKEN_URI_VALUE         0x4     /* Validate token as a URI value */
+#define TOKEN_NUMBER            0x8     /* Validate token as a number */
+#define TOKEN_WORD              0x10    /* Validate token as single word with no spaces */
+#define TOKEN_LINE              0x20    /* Validate token as line with no newlines */
+
 /************************************ Locals **********************************/
 
 static int          websBackground;             /* Run as a daemon */
@@ -184,8 +191,10 @@ static WebsError websErrors[] = {
 };
 
 #if ME_GOAHEAD_ACCESS_LOG && !ME_ROM
+#if ME_GOAHEAD_LOGFILE
 static char     accessLog[64] = "access.log";       /* Log filename */
 static int      accessFd;                           /* Log file handle */
+#endif
 #endif
 
 static WebsHash sessions = -1;
@@ -197,7 +206,7 @@ static int      pruneId;                            /* Callback ID */
 static void     checkTimeout(void *arg, int id);
 static bool     filterChunkData(Webs *wp);
 static int      getTimeSinceMark(Webs *wp);
-static char     *getToken(Webs *wp, char *delim);
+static char     *getToken(Webs *wp, char *delim, int validation);
 static void     parseFirstLine(Webs *wp);
 static void     parseHeaders(Webs *wp);
 static bool     processContent(Webs *wp);
@@ -211,8 +220,15 @@ static void     setFileLimits(void);
 static int      setLocalHost(void);
 static void     socketEvent(int sid, int mask, void *data);
 static void     writeEvent(Webs *wp);
+static char     *validateToken(char *token, char *endToken, int validation);
+
 #if ME_GOAHEAD_ACCESS_LOG
+#if ME_GOAHEAD_EXTLOG
+#define logRequest(wp, code) 	pl_zlog (__FILE__, __FUNCTION__, __LINE__, ZLOG_WEB, LOG_DEBUG, "%s - %s \"%s %s %s\" %d", \
+		wp->ipaddr, wp->username == NULL ? "-" : wp->username, wp->method, wp->path, wp->protoVersion, code)
+#else /* ME_GOAHEAD_EXTLOG */
 static void     logRequest(Webs *wp, int code);
+#endif /* ME_GOAHEAD_EXTLOG */
 #endif
 
 /*********************************** Code *************************************/
@@ -228,7 +244,9 @@ PUBLIC int websOpen(cchar *documents, cchar *routeFile)
     websRuntimeOpen();
     websTimeOpen();
     websFsOpen();
+#if ME_GOAHEAD_LOGGING
     logOpen();
+#endif
     setFileLimits();
     socketOpen();
     if (setLocalHost() < 0) {
@@ -281,12 +299,14 @@ PUBLIC int websOpen(cchar *documents, cchar *routeFile)
     }
 
 #if ME_GOAHEAD_ACCESS_LOG && !ME_ROM
+#if ME_GOAHEAD_LOGFILE
     if ((accessFd = open(accessLog, O_CREAT | O_TRUNC | O_APPEND | O_WRONLY, 0666)) < 0) {
-        error("Cannot open access log %s", accessLog);
+        web_error("Cannot open access log %s", accessLog);
         return -1;
     }
     /* Some platforms don't implement O_APPEND (VXWORKS) */
     lseek(accessFd, 0, SEEK_END);
+#endif
 #endif
     return 0;
 }
@@ -333,15 +353,19 @@ PUBLIC void websClose(void)
     sslClose();
 #endif
 #if ME_GOAHEAD_ACCESS_LOG
+#if ME_GOAHEAD_LOGFILE
     if (accessFd >= 0) {
         close(accessFd);
         accessFd = -1;
     }
 #endif
+#endif
     websFsClose();
     hashFree(websMime);
     socketClose();
+#if ME_GOAHEAD_LOGGING
     logClose();
+#endif /* ME_GOAHEAD_LOGGING */
     websTimeClose();
     websRuntimeClose();
     websOsClose();
@@ -449,7 +473,7 @@ static void termWebs(Webs *wp, int reuse)
         wp->putfd = -1;
         web_assert(wp->putname && wp->filename);
         if (rename(wp->putname, wp->filename) < 0) {
-            error("Cannot rename PUT file from %s to %s", wp->putname, wp->filename);
+            web_error("Cannot rename PUT file from %s to %s", wp->putname, wp->filename);
         }
     }
 #endif
@@ -575,6 +599,12 @@ PUBLIC void websDone(Webs *wp)
 #endif
     wp->finalized = 1;
 
+    /*
+        Once running, it is the handlers responsibility to conclude the request.
+     */
+    if (wp->connError && wp->state < WEBS_RUNNING) {
+        wp->state = WEBS_COMPLETE;
+    }
     if (wp->state < WEBS_COMPLETE) {
         /*
             Initiate flush. If not all flushed, wait for output to drain via a socket event.
@@ -585,10 +615,12 @@ PUBLIC void websDone(Webs *wp)
         }
     }
 #if ME_GOAHEAD_ACCESS_LOG
+    // websSetSessionVar(wp, WEBS_SESSION_USERNAME, wp->username);
+    //printf("----------%s----------username=%s username=%s\r\n", __func__, wp->username, websGetSessionVar(wp, WEBS_SESSION_USERNAME, "default"));
     logRequest(wp, wp->code);
 #endif
     if (!(wp->flags & WEBS_RESPONSE_TRACED)) {
-        trace(3 | WEBS_RAW_MSG, "Request complete: code %d", wp->code);
+        web_trace(WEBS_DEBUG | WEBS_RAW_MSG, "Request complete: code %d", wp->code);
     }
 }
 
@@ -602,10 +634,10 @@ static int complete(Webs *wp, int reuse)
     if (reuse && wp->flags & WEBS_KEEP_ALIVE && wp->rxRemaining == 0) {
         reuseConn(wp);
         socketCreateHandler(wp->sid, SOCKET_READABLE, socketEvent, wp);
-        trace(5, "Keep connection alive");
+        web_trace(WEBS_NOTICE, "Keep connection alive");
         return 1;
     }
-    trace(5, "Close connection");
+    web_trace(WEBS_NOTICE, "Close connection");
     wp->state = WEBS_BEGIN;
     wp->flags |= WEBS_CLOSED;
     return 0;
@@ -621,12 +653,12 @@ PUBLIC int websListen(cchar *endpoint)
     web_assert(endpoint && *endpoint);
 
     if (listenMax >= WEBS_MAX_LISTEN) {
-        error("Too many listen endpoints");
+        web_error("Too many listen endpoints");
         return -1;
     }
     socketParseAddress(endpoint, &ip, &port, &secure, 80);
     if ((sid = socketListen(ip, port, websAccept, 0)) < 0) {
-        error("Unable to open socket on port %d.", port);
+        web_error("Unable to open socket on port %d.", port);
         return -1;
     }
     sp = socketPtr(sid);
@@ -644,7 +676,7 @@ PUBLIC int websListen(cchar *endpoint)
     } else {
         ipaddr = "*";
     }
-    logmsg(2, "Started %s://%s:%d", secure ? "https" : "http", ipaddr, port);
+    web_logmsg(WEBS_NOTICE, "Started %s://%s:%d", secure ? "https" : "http", ipaddr, port);
 
     if (!websHostUrl) {
         if (port == 80) {
@@ -696,7 +728,7 @@ PUBLIC int websAccept(int sid, cchar *ipaddr, int port, int listenSid)
      */
     len = sizeof(ifAddr);
     if (getsockname(socketPtr(sid)->sock, (struct sockaddr*) &ifAddr, (Socklen*) &len) < 0) {
-        error("Cannot get sockname");
+        web_error("Cannot get sockname");
         websFree(wp);
         return -1;
     }
@@ -717,14 +749,14 @@ PUBLIC int websAccept(int sid, cchar *ipaddr, int port, int listenSid)
         Arrange for socketEvent to be called when read data is available
      */
     lp = socketPtr(listenSid);
-    trace(4, "New connection from %s:%d to %s:%d", ipaddr, port, wp->ifaddr, lp->port);
+    web_trace(WEBS_NOTICE, "New connection from %s:%d to %s:%d", ipaddr, port, wp->ifaddr, lp->port);
 
 #if ME_COM_SSL
     if (lp->secure) {
         wp->flags |= WEBS_SECURE;
-        trace(4, "Upgrade connection to TLS");
+        web_trace(WEBS_NOTICE, "Upgrade connection to TLS");
         if (sslUpgrade(wp) < 0) {
-            error("Cannot upgrade to TLS");
+            web_error("Cannot upgrade to TLS");
             websFree(wp);
             return -1;
         }
@@ -822,8 +854,9 @@ static void readEvent(Webs *wp)
     } else if (nbytes < 0 && socketEof(wp->sid)) {
         /* EOF or error. Allow running requests to continue. */
         if (wp->state < WEBS_READY) {
-            if (wp->state > WEBS_BEGIN) {
+            if (wp->state >= WEBS_BEGIN) {
                 websError(wp, HTTP_CODE_COMMS_ERROR, "Read error: connection lost");
+                wp->flags |= WEBS_CLOSED;
                 websPump(wp);
             } else {
                 complete(wp, 0);
@@ -889,10 +922,10 @@ static bool parseIncoming(Webs *wp)
         }
         return 0;
     }
-    trace(3 | WEBS_RAW_MSG, "\n<<< Request\n");
+    web_trace(WEBS_DEBUG | WEBS_HEADER_MSG, "<<< Request");
     c = *end;
     *end = '\0';
-    trace(3 | WEBS_RAW_MSG, "%s\n", wp->rxbuf.servp);
+    web_trace(WEBS_DEBUG | WEBS_HEADER_MSG, "%s", wp->rxbuf.servp);
     *end = c;
 
     /*
@@ -931,7 +964,7 @@ static bool parseIncoming(Webs *wp)
         wfree(wp->putname);
         wp->putname = websTempFile(ME_GOAHEAD_PUT_DIR, "put");
         if ((wp->putfd = open(wp->putname, O_BINARY | O_WRONLY | O_CREAT | O_BINARY, 0644)) < 0) {
-            error("Cannot create PUT filename %s", wp->putname);
+            web_error("Cannot create PUT filename %s", wp->putname);
             websError(wp, HTTP_CODE_INTERNAL_SERVER_ERROR, "Cannot create the put URI");
             wfree(wp->putname);
             return 1;
@@ -956,14 +989,14 @@ static void parseFirstLine(Webs *wp)
     /*
         Determine the request type: GET, HEAD or POST
      */
-    op = getToken(wp, 0);
+    op = getToken(wp, NULL, TOKEN_WORD);
     if (op == NULL || *op == '\0') {
         websError(wp, HTTP_CODE_NOT_FOUND | WEBS_CLOSE, "Bad HTTP request");
         return;
     }
     wp->method = supper(sclone(op));
 
-    url = getToken(wp, 0);
+    url = getToken(wp, NULL, TOKEN_URI_VALUE);
     if (url == NULL || *url == '\0') {
         websError(wp, HTTP_CODE_BAD_REQUEST | WEBS_CLOSE, "Bad HTTP request");
         return;
@@ -972,9 +1005,13 @@ static void parseFirstLine(Webs *wp)
         websError(wp, HTTP_CODE_REQUEST_URL_TOO_LARGE | WEBS_CLOSE, "URI too big");
         return;
     }
-    protoVer = getToken(wp, "\r\n");
-    if (websGetLogLevel() == 2) {
-        trace(2, "%s %s %s", wp->method, url, protoVer);
+    protoVer = getToken(wp, "\r\n", TOKEN_WORD);
+    if (protoVer == NULL || *protoVer == '\0') {
+        websError(wp, HTTP_CODE_BAD_REQUEST | WEBS_CLOSE, "Bad HTTP request");
+        return;
+    }
+    if (websGetLogLevel() == 7) {
+        web_trace(WEBS_NOTICE, "%s %s %s", wp->method, url, protoVer);
     }
 
     /*
@@ -984,7 +1021,7 @@ static void parseFirstLine(Webs *wp)
      */
     host = path = port = query = ext = NULL;
     if (websUrlParse(url, &buf, NULL, &host, &port, &path, &ext, NULL, &query) < 0) {
-        error("Cannot parse URL: %s", url);
+        web_error("Cannot parse URL: %s", url);
         websError(wp, HTTP_CODE_BAD_REQUEST | WEBS_CLOSE | WEBS_NOLOG, "Bad URL");
         return;
     }
@@ -997,7 +1034,11 @@ static void parseFirstLine(Webs *wp)
     if (ext) {
         wp->ext = sclone(slower(ext));
     }
-    wp->filename = sfmt("%s%s", websGetDocuments(), wp->path);
+    if((strchr_count(wp->path, '/') > 2) && (strstr(wp->path, "tmp")||strstr(wp->path, "mnt")) )
+    	wp->filename = sfmt("%s",wp->path);
+    else
+    	wp->filename = sfmt("%s%s", websGetDocuments(), wp->path);
+
     wp->query = sclone(query);
     wp->host = sclone(host);
     wp->protocol = wp->flags & WEBS_SECURE ? "https" : "http";
@@ -1040,18 +1081,15 @@ static void parseHeaders(Webs *wp)
             websError(wp, HTTP_CODE_REQUEST_TOO_LARGE | WEBS_CLOSE, "Too many headers");
             return;
         }
-        if ((key = getToken(wp, ":")) == NULL) {
-            continue;
-        }
-        if ((value = getToken(wp, "\r\n")) == NULL) {
-            value = "";
-        }
-        if (!key || !value) {
+        key = getToken(wp, ":", TOKEN_HEADER_KEY);
+        if (key == NULL || *key == '\0' || bufLen(&wp->rxbuf) == 0) {
             websError(wp, HTTP_CODE_BAD_REQUEST | WEBS_CLOSE, "Bad header format");
             return;
         }
-        while (isspace((uchar) *value)) {
-            value++;
+        value = getToken(wp, "\r\n", TOKEN_HEADER_VALUE);
+        if (value == NULL || bufLen(&wp->rxbuf) == 0 || wp->rxbuf.servp[0] == '\0') {
+            websError(wp, HTTP_CODE_BAD_REQUEST | WEBS_CLOSE, "Bad header format");
+            return;
         }
         slower(key);
 
@@ -1174,7 +1212,10 @@ static void parseHeaders(Webs *wp)
             Step over "\r\n" after headers.
             Don't do this if chunked so that chunking can parse a single chunk delimiter of "\r\nSIZE ...\r\n"
          */
-        web_assert(bufLen(&wp->rxbuf) >= 2);
+        if (bufLen(&wp->rxbuf) < 2 || wp->rxbuf.servp[0] != '\r' || wp->rxbuf.servp[1] != '\n') {
+            websError(wp, HTTP_CODE_BAD_REQUEST | WEBS_CLOSE, "Bad header termination");
+            return;
+        }
         wp->rxbuf.servp += 2;
     }
     wp->eof = (wp->rxRemaining == 0);
@@ -1185,6 +1226,7 @@ static bool processContent(Webs *wp)
 {
     bool    canProceed;
 
+    if (!wp->eof) {
     canProceed = filterChunkData(wp);
     if (!canProceed || wp->finalized) {
         return canProceed;
@@ -1213,6 +1255,7 @@ static bool processContent(Webs *wp)
         }
     }
 #endif
+    }
     if (wp->eof) {
         wp->state = WEBS_READY;
         /*
@@ -1220,6 +1263,7 @@ static bool processContent(Webs *wp)
             The handler may not have been created if all the content was read in the initial read. No matter.
          */
         socketDeleteHandler(wp->sid);
+        canProceed = 1;
     }
     return canProceed;
 }
@@ -1319,7 +1363,7 @@ static bool filterChunkData(Webs *wp)
                 wp->eof = 1;
                 return 1;
             }
-            trace(7, "chunkFilter: start incoming chunk of %d bytes", chunkSize);
+            web_trace(WEBS_DEBUG, "chunkFilter: start incoming chunk of %d bytes", chunkSize);
             wp->rxChunkState = WEBS_CHUNK_DATA;
             break;
 
@@ -1589,7 +1633,7 @@ PUBLIC cchar *websGetVar(Webs *wp, cchar *var, cchar *defaultGetValue)
         if (sp->content.value.string) {
             return sp->content.value.string;
         } else {
-            return "";
+            return NULL;//"";
         }
     }
     return defaultGetValue;
@@ -1667,7 +1711,6 @@ static char *makeUri(cchar *scheme, cchar *host, int port, cchar *path)
 PUBLIC void websRedirect(Webs *wp, cchar *uri)
 {
     char    *message, *location, *scheme, *host, *pstr;
-    char    hostbuf[ME_GOAHEAD_LIMIT_STRING];
     bool    secure, fullyQualified;
     ssize   len;
     int     originalPort, port;
@@ -1677,19 +1720,18 @@ PUBLIC void websRedirect(Webs *wp, cchar *uri)
     message = location = NULL;
 
     originalPort = port = 0;
-    if ((host = (wp->host ? wp->host : websHostUrl)) != 0) {
-        scopy(hostbuf, sizeof(hostbuf), host);
-        pstr = strchr(hostbuf, ']');
-        pstr = pstr ? pstr : hostbuf;
-        if ((pstr = strchr(pstr, ':')) != 0) {
-            *pstr++ = '\0';
-            originalPort = atoi(pstr);
-        }
+
+    host = sclone(wp->host ? wp->host : websHostUrl);
+    pstr = strchr(host, ']');
+    pstr = pstr ? pstr : host;
+    if ((pstr = strchr(pstr, ':')) != 0) {
+        *pstr++ = '\0';
+        originalPort = atoi(pstr);
     }
     if (smatch(uri, "http://") || smatch(uri, "https://")) {
         /* Protocol switch with existing Uri */
         scheme = sncmp(uri, "https", 5) == 0 ? "https" : "http";
-        uri = location = makeUri(scheme, hostbuf, 0, wp->url);
+        uri = location = makeUri(scheme, host, 0, wp->url);
     }
     secure = strstr(uri, "https://") != 0;
     fullyQualified = strstr(uri, "http://") || strstr(uri, "https://");
@@ -1705,13 +1747,13 @@ PUBLIC void websRedirect(Webs *wp, cchar *uri)
     }
     if (strstr(uri, "https:///")) {
         /* Short-hand for redirect to https */
-        uri = location = makeUri(scheme, hostbuf, port, &uri[8]);
+        uri = location = makeUri(scheme, host, port, &uri[8]);
 
     } else if (strstr(uri, "http:///")) {
-        uri = location = makeUri(scheme, hostbuf, port, &uri[7]);
+        uri = location = makeUri(scheme, host, port, &uri[7]);
 
     } else if (!fullyQualified) {
-        uri = location = makeUri(scheme, hostbuf, port, uri);
+        uri = location = makeUri(scheme, host, port, uri);
     }
     message = sfmt("<html><head></head><body>\r\n\
         This document has moved to a new <a href=\"%s\">location</a>.\r\n\
@@ -1724,6 +1766,7 @@ PUBLIC void websRedirect(Webs *wp, cchar *uri)
     websWriteBlock(wp, message, len);
     websWriteBlock(wp, "\r\n", 2);
     websDone(wp);
+    wfree(host);
     wfree(message);
     wfree(location);
 }
@@ -1832,7 +1875,7 @@ PUBLIC int websWriteHeader(Webs *wp, cchar *key, cchar *fmt, ...)
 
     if (!(wp->flags & WEBS_RESPONSE_TRACED)) {
         wp->flags |= WEBS_RESPONSE_TRACED;
-        trace(3 | WEBS_RAW_MSG, "\n>>> Response\n");
+        web_trace(WEBS_DEBUG | WEBS_HEADER_MSG, ">>> Response");
     }
     if (key) {
         if (websWriteBlock(wp, key, strlen(key)) < 0) {
@@ -1841,17 +1884,17 @@ PUBLIC int websWriteHeader(Webs *wp, cchar *key, cchar *fmt, ...)
         if (websWriteBlock(wp, ": ", 2) < 0) {
             return -1;
         }
-        trace(3 | WEBS_RAW_MSG, "%s: ", key);
+        web_trace(WEBS_DEBUG | WEBS_HEADER_MSG, "%s: ", key);
     }
     if (fmt) {
         va_start(vargs, fmt);
         if ((buf = sfmtv(fmt, vargs)) == 0) {
-            error("websWrite lost data, buffer overflow");
+            web_error("websWrite lost data, buffer overflow");
             return -1;
         }
         va_end(vargs);
         web_assert(strstr(buf, "UNION") == 0);
-        trace(3 | WEBS_RAW_MSG, "%s", buf);
+        web_trace(WEBS_DEBUG | WEBS_HEADER_MSG, "%s", buf);
         if (websWriteBlock(wp, buf, strlen(buf)) < 0) {
             return -1;
         }
@@ -1860,7 +1903,7 @@ PUBLIC int websWriteHeader(Webs *wp, cchar *key, cchar *fmt, ...)
             return -1;
         }
     }
-    trace(3 | WEBS_RAW_MSG, "\r\n");
+    //web_trace(WEBS_DEBUG | WEBS_RAW_MSG, "\r\n");
     return 0;
 }
 
@@ -1914,6 +1957,22 @@ PUBLIC void websWriteHeaders(Webs *wp, ssize length, cchar *location)
         if (wp->txLen < 0) {
             websWriteHeader(wp, "Transfer-Encoding", "chunked");
         }
+
+		if(websAccessControlGet() & ACCESS_CONTROL_ALLOW_ORIGIN)
+			websWriteHeader(wp, "Access-Control-Allow-Origin", "*");
+		if(websAccessControlGet() & ACCESS_CONTROL_ALLOW_METHODS)
+			websWriteHeader(wp, "Access-Control-Allow-Methods", "GET, POST,OPTIONS,TRACE");
+		if(websAccessControlGet() & ACCESS_CONTROL_ALLOW_HEADERS)
+			websWriteHeader(wp, "Access-Control-Allow-Headers", "accept,x-requested-with,token,Content-Type");
+		if(websAccessControlGet() & ACCESS_CONTROL_ALLOW_CREDENTIALS)
+			websWriteHeader(wp, "Access-Control-Allow-Credentials", "true");
+		if(websAccessControlGet() & ACCESS_CONTROL_EXPOSE_HEADERS)
+			websWriteHeader(wp, "Access-Control-Expose-Headers", "test");
+
+        //{ "Access-Control-Allow-Origin", "*" },
+        //{ "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS" },
+        //{ "Access-Control-Allow-Headers", "X-Custom-Header,Content-Type" },
+
         if (wp->flags & WEBS_KEEP_ALIVE) {
             websWriteHeader(wp, "Connection", "keep-alive");
         } else {
@@ -1987,7 +2046,7 @@ PUBLIC ssize websWrite(Webs *wp, cchar *fmt, ...)
     buf = NULL;
     rc = 0;
     if ((buf = sfmtv(fmt, vargs)) == 0) {
-        error("websWrite lost data, buffer overflow");
+        web_error("websWrite lost data, buffer overflow");
     }
     va_end(vargs);
     web_assert(buf);
@@ -2114,15 +2173,15 @@ PUBLIC int websFlush(Webs *wp, bool block)
     }
     op = &wp->output;
     if (wp->flags & WEBS_CHUNKING) {
-        trace(6, "websFlush chunking finalized %d", wp->finalized);
+        web_trace(WEBS_NOTICE, "websFlush chunking finalized %d", wp->finalized);
         if (flushChunkData(wp) && wp->finalized) {
-            trace(6, "websFlush: write chunk trailer");
+            web_trace(WEBS_DEBUG, "websFlush: write chunk trailer");
             bufPutStr(op, "\r\n0\r\n\r\n");
             bufAddNull(op);
             wp->flags &= ~WEBS_CHUNKING;
         }
     }
-    trace(6, "websFlush: buflen %d", bufLen(op));
+    web_trace(WEBS_DEBUG, "websFlush: buflen %d", bufLen(op));
     written = 0;
     while ((nbytes = bufLen(op)) > 0) {
         if ((written = websWriteSocket(wp, op->servp, nbytes)) < 0) {
@@ -2142,7 +2201,7 @@ PUBLIC int websFlush(Webs *wp, bool block)
         } else if (written == 0) {
             break;
         }
-        trace(6, "websFlush: wrote %d to socket", written);
+        web_trace(WEBS_DEBUG, "websFlush: wrote %d to socket", written);
         bufAdjustStart(op, written);
         bufCompact(op);
         nbytes = bufLen(op);
@@ -2309,6 +2368,7 @@ PUBLIC void websDecodeUrl(char *decoded, char *input, ssize len)
 /*
     Output a log message in Common Log Format: See http://httpd.apache.org/docs/1.3/logs.html#common
  */
+#if !ME_GOAHEAD_EXTLOG
 static void logRequest(Webs *wp, int code)
 {
     char        *buf, timeStr[28], zoneStr[6], dataStr[16];
@@ -2349,11 +2409,15 @@ static void logRequest(Webs *wp, int code)
         wp->ipaddr, wp->username == NULL ? "-" : wp->username,
         timeStr, zoneStr, wp->method, wp->path, wp->protoVersion, code, dataStr);
     len = strlen(buf);
+#if ME_GOAHEAD_LOGFILE
     write(accessFd, buf, len);
+#else
+    web_logmsg(WEBS_NOTICE, "%s", buf);
+#endif
     wfree(buf);
 }
 #endif
-
+#endif /* ME_GOAHEAD_EXTLOG */
 
 /*
     Request and connection timeout. The timeout triggers if we have not read any data from the
@@ -2399,7 +2463,7 @@ static int setLocalHost(void)
     char            host[128], *ipaddr;
 
     if (gethostname(host, sizeof(host)) < 0) {
-        error("Cannot get hostname: errno %d", errno);
+        web_error("Cannot get hostname: errno %d", errno);
         return -1;
     }
 #if VXWORKS
@@ -2418,7 +2482,7 @@ static int setLocalHost(void)
 {
     struct hostent  *hp;
     if ((hp = gethostbyname(host)) == NULL) {
-        error("Cannot get host address for host %s: errno %d", host, errno);
+        web_error("Cannot get host address for host %s: errno %d", host, errno);
         return -1;
     }
     memcpy((char*) &intaddr, (char *) hp->h_addr[0], (size_t) hp->h_length);
@@ -2431,7 +2495,7 @@ static int setLocalHost(void)
     struct hostent  *hp;
     if ((hp = gethostbyname(host)) == NULL) {
         if ((hp = gethostbyname(sfmt("%s.local", host))) == NULL) {
-            error("Cannot get host address for host %s: errno %d", host, errno);
+            web_error("Cannot get host address for host %s: errno %d", host, errno);
             return -1;
         }
     }
@@ -2444,7 +2508,7 @@ static int setLocalHost(void)
 {
     struct hostent  *hp;
     if ((hp = gethostbyname(host)) == NULL) {
-        error("Cannot get host address for host %s: errno %d", host, errno);
+        web_error("Cannot get host address for host %s: errno %d", host, errno);
         return -1;
     }
     memcpy((char*) &intaddr, (char *) hp->h_addr_list[0], (size_t) hp->h_length);
@@ -2592,7 +2656,7 @@ PUBLIC bool websValidUriChars(cchar *uri)
     }
     pos = strspn(uri, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=%");
     if (pos < slen(uri)) {
-        error("Bad character in URI at \"%s\"", &uri[pos]);
+        web_error("Bad character in URI at \"%s\"", &uri[pos]);
         return 0;
     }
     return 1;
@@ -2990,7 +3054,7 @@ PUBLIC void websSetCookie(Webs *wp, cchar *name, cchar *value, cchar *path, ccha
     } else if (flags & WEBS_COOKIE_SAME_STRICT) {
         sameSite = "; SameSite=Strict";
     }
-    cookie = sfmt("%s=%s; path=%s%s%s%s%s%s%s", name, value, path, domainAtt, domain, expiresAtt, expires, secure,
+    cookie = sfmt("%s=%s; path=%s%s%s%s%s%s%s%s", name, value, path, domainAtt, domain, expiresAtt, expires, secure,
         httponly, sameSite);
     hashEnter(wp->responseCookies, name, valueString(cookie, 0), 0);
     wfree(domain);
@@ -2998,35 +3062,101 @@ PUBLIC void websSetCookie(Webs *wp, cchar *name, cchar *value, cchar *path, ccha
 
 
 /*
-    Return the next token in the input stream. Does not allocate
+    Return the next token in the input stream. Does not allocate.
+    The content buffer is advanced to the next token.
+    The delimiter is a string to match and not a set of characters.
+    If the delimeter null, it means use white space (space or tab) as a delimiter.
  */
-static char *getToken(Webs *wp, char *delim)
+static char *getToken(Webs *wp, char *delim, int validation)
 {
     WebsBuf     *buf;
-    char        *token, *nextToken, *endToken;
+    char        *token, *endToken;
 
     web_assert(wp);
     buf = &wp->rxbuf;
-    nextToken = (char*) buf->endp;
+    /* Already null terminated but for safety */
+    bufAddNull(buf);
+    token = (char*) buf->servp;
+    endToken = (char*) buf->endp;
 
-    for (token = (char*) buf->servp; (*token == ' ' || *token == '\t') && token < (char*) buf->endp; token++) {}
+    /*
+        Eat white space before token
+     */
+    for (; token < (char*) buf->endp && (*token == ' ' || *token == '\t'); token++) {}
 
-    if (delim == 0) {
+    if (delim) {
+        if ((endToken = strstr(token, delim)) == NULL) {
+            return NULL;
+        }
+        /* Only eat one occurrence of the delimiter */
+        buf->servp = endToken + strlen(delim);
+        *endToken = '\0';
+
+    } else {
         delim = " \t";
-        if ((endToken = strpbrk(token, delim)) != 0) {
-            nextToken = endToken + strspn(endToken, delim);
-            *endToken = '\0';
+        if ((endToken = strpbrk(token, delim)) == NULL) {
+            return NULL;
+        }
+        buf->servp = endToken + strspn(endToken, delim);
+        *endToken = '\0';
+    }
+    token = validateToken(token, endToken, validation);
+    return token;
+}
+
+
+static char *validateToken(char *token, char *endToken, int validation)
+{
+    char    *t;
+
+    if (validation == TOKEN_HEADER_KEY) {
+        if (token == '\0') {
+            return NULL;
+        }
+        if (strpbrk(token, "\"\\/ \t\r\n(),:;<=>?@[]{}")) {
+            return NULL;
+        }
+        for (t = token; *t; t++) {
+            if (!isprint(*t)) {
+                return NULL;
+            }
+        }
+    } else if (validation == TOKEN_HEADER_VALUE) {
+        if (token < endToken) {
+            /* Trim white space */
+            for (t = &token[slen(token) - 1]; t >= token; t--) {
+                if (isspace((uchar) *t)) {
+                    *t = '\0';
+                } else {
+                    break;
+                }
+            }
+        }
+        while (isspace((uchar) *token)) {
+            token++;
+        }
+        for (t = token; *t; t++) {
+            if (!isprint(*t)) {
+                return NULL;
+            }
+        }
+    } else if (validation == TOKEN_URI_VALUE) {
+        if (!websValidUriChars(token)) {
+            return NULL;
+        }
+    } else if (validation == TOKEN_NUMBER) {
+        if (!snumber(token)) {
+            return NULL;
+        }
+    } else if (validation == TOKEN_WORD) {
+        if (strpbrk(token, " \t\r\n") != NULL) {
+            return NULL;
         }
     } else {
-        if ((endToken = strstr(token, delim)) != 0) {
-            *endToken = '\0';
-            /* Only eat one occurrence of the delimiter */
-            nextToken = endToken + strlen(delim);
-        } else {
-            nextToken = buf->endp;
+        if (strpbrk(token, "\r\n") != NULL) {
+            return NULL;
         }
     }
-    buf->servp = nextToken;
     return token;
 }
 
@@ -3144,7 +3274,7 @@ WebsSession *websGetSession(Webs *wp, int create)
                 return 0;
             }
             if (sessionCount >= ME_GOAHEAD_LIMIT_SESSION_COUNT) {
-                error("Too many sessions %d/%d", sessionCount, ME_GOAHEAD_LIMIT_SESSION_COUNT);
+                web_error("Too many sessions %d/%d", sessionCount, ME_GOAHEAD_LIMIT_SESSION_COUNT);
                 wfree(id);
                 return 0;
             }
@@ -3297,7 +3427,7 @@ static void pruneSessions(void)
             }
         }
         if (oldCount != sessionCount || sessionCount) {
-            trace(4, "Prune %d sessions. Remaining: %d", oldCount - sessionCount, sessionCount);
+            web_trace(WEBS_NOTICE, "Prune %d sessions. Remaining: %d", oldCount - sessionCount, sessionCount);
         }
     }
     websRestartEvent(pruneId, WEBS_SESSION_PRUNE);
@@ -3331,11 +3461,11 @@ PUBLIC int websServer(cchar *endpoint, cchar *documents)
     int     finished = 0;
 
     if (websOpen(documents, "route.txt") < 0) {
-        error("Cannot initialize server. Exiting.");
+        web_error("Cannot initialize server. Exiting.");
         return -1;
     }
     if (websLoad("auth.txt") < 0) {
-        error("Cannot load auth.txt");
+        web_error("Cannot load auth.txt");
         return -1;
     }
     if (websListen(endpoint) < 0) {
@@ -3375,18 +3505,19 @@ static void setFileLimits(void)
     } else {
         r.rlim_cur = r.rlim_max = limit;
         if (setrlimit(RLIMIT_NOFILE, &r) < 0) {
-            error("Cannot set file limit to %d", limit);
+            web_error("Cannot set file limit to %d", limit);
         }
     }
     getrlimit(RLIMIT_NOFILE, &r);
-    trace(6, "Max files soft %d, max %d", r.rlim_cur, r.rlim_max);
+    web_trace(WEBS_NOTICE, "Max files soft %d, max %d", r.rlim_cur, r.rlim_max);
 #endif
 }
 
 /*
     Output an error message and cleanup
  */
-PUBLIC void websError(Webs *wp, int code, cchar *fmt, ...)
+//PUBLIC void websError(Webs *wp, int code, cchar *fmt, ...)
+PUBLIC void webs_error(const char *file, const char *func, const int line, Webs *wp, int code, cchar *fmt, ...)
 {
     va_list     args;
     char        *msg, *buf;
@@ -3418,7 +3549,8 @@ PUBLIC void websError(Webs *wp, int code, cchar *fmt, ...)
             va_start(args, fmt);
             msg = sfmtv(fmt, args);
             va_end(args);
-            trace(2, "%s", msg);
+            //web_error("%s", msg);
+            web_error_proc(file, func, line, "%s", msg);
             wfree(msg);
         }
         buf = sfmt("\

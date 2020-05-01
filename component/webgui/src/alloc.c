@@ -73,7 +73,8 @@ PUBLIC int wopenAlloc(void *buf, int bufsize, int flags)
             bufsize = WEBS_DEFAULT_MEM;
         }
         bufsize = ROUNDUP4(bufsize);
-        if ((buf = malloc(bufsize)) == NULL) {
+        if ((buf = XMALLOC(MTYPE_WEB_DATA, bufsize)) == NULL) {
+        //if ((buf = malloc(bufsize)) == NULL) {
             /*
                 Resetting wopenCount so client code can decide to call wopenAlloc() again with a smaller memory request.
             */
@@ -95,7 +96,8 @@ PUBLIC void wcloseAlloc(void)
 {
 #if ME_GOAHEAD_REPLACE_MALLOC
     if (--wopenCount <= 0 && !(controlFlags & WEBS_USER_BUF)) {
-        free(freeBuf);
+        //free(freeBuf);
+        XFREE(MTYPE_WEB_DATA, freeBuf);
         wopenCount = 0;
     }
 #endif /* ME_GOAHEAD_REPLACE_MALLOC */
@@ -130,7 +132,7 @@ PUBLIC void *walloc(ssize size)
          */
         if (controlFlags & WEBS_USE_MALLOC) {
             memSize = ROUNDUP4(memSize);
-            bp = (WebsAlloc*) malloc(memSize);
+            bp = (WebsAlloc*) XMALLOC(MTYPE_WEB_DATA, memSize);//malloc(memSize);
             if (bp == NULL) {
                 if (memNotifier) {
                     (memNotifier)(memSize);
@@ -173,7 +175,7 @@ PUBLIC void *walloc(ssize size)
                 Nothing left on the primary free list, so malloc a new block
              */
             memSize = ROUNDUP4(memSize);
-            if ((bp = (WebsAlloc*) malloc(memSize)) == NULL) {
+            if ((bp = (WebsAlloc*) XMALLOC(MTYPE_WEB_DATA, memSize)/*;malloc(memSize)*/) == NULL) {
                 if (memNotifier) {
                     (memNotifier)(memSize);
                 }
@@ -213,7 +215,8 @@ PUBLIC void wfree(void *mp)
     }
     wallocGetSize(bp->u.size, &q);
     if (bp->flags & WEBS_MALLOCED) {
-        free(bp);
+        //free(bp);
+        XFREE(MTYPE_WEB_DATA, bp);
         return;
     }
     /*
@@ -277,7 +280,7 @@ PUBLIC void *walloc(ssize num)
 {
     void    *mem;
 
-    if ((mem = malloc(num)) == 0) {
+    if ((mem = XMALLOC(MTYPE_WEB_DATA, num)/*malloc(num)*/) == 0) {
         if (memNotifier) {
             (memNotifier)(num);
         }
@@ -289,7 +292,8 @@ PUBLIC void *walloc(ssize num)
 PUBLIC void wfree(void *mem)
 {
     if (mem) {
-        free(mem);
+    	XFREE(MTYPE_WEB_DATA, mem);
+        //free(mem);
     }
 }
 
@@ -299,7 +303,7 @@ PUBLIC void *wrealloc(void *mem, ssize num)
     void    *old;
 
     old = mem;
-    if ((mem = realloc(mem, num)) == 0) {
+    if ((mem = XREALLOC(MTYPE_WEB_DATA, mem, num)/*realloc(mem, num)*/) == 0) {
         if (memNotifier) {
             (memNotifier)(num);
         }

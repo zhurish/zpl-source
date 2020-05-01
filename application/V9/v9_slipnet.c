@@ -23,7 +23,22 @@
 
 #include "tty_com.h"
 
-#include "application.h"
+#include "v9_device.h"
+#include "v9_util.h"
+#include "v9_video.h"
+#include "v9_serial.h"
+#include "v9_slipnet.h"
+#include "v9_cmd.h"
+
+#include "v9_video_disk.h"
+#include "v9_user_db.h"
+#include "v9_video_db.h"
+
+#include "v9_board.h"
+#include "v9_video_sdk.h"
+#include "v9_video_user.h"
+#include "v9_video_board.h"
+#include "v9_video_api.h"
 
 
 
@@ -33,11 +48,10 @@ static int v9_app_slipnet_read_eloop(struct eloop *eloop)
 	int len = 0;
 	v9_serial_t *mgt = ELOOP_ARG(eloop);
 	zassert(mgt != NULL);
-	//int sock = ELOOP_FD(eloop);
+
 	if(mgt->mutex)
 		os_mutex_lock(mgt->mutex, OS_WAIT_FOREVER);
-	//zlog_debug(ZLOG_APP, "========> x5b_app_read_eloop read fd=%d", mgt->r_fd);
-	//zlog_debug(ZLOG_APP, "---------%s---------v9_app_read_eloop %s", __func__, v9_serial->tty->devname);
+
 	mgt->r_slipnet = NULL;
 	memset(mgt->buf, 0, sizeof(mgt->buf));
 
@@ -48,7 +62,6 @@ static int v9_app_slipnet_read_eloop(struct eloop *eloop)
 		{
 			if (ERRNO_IO_RETRY(errno))
 			{
-				//return 0;
 				zlog_err(ZLOG_APP, "RECV mgt on socket (%s)", strerror(errno));
 				//mgt->reset_thread = eloop_add_timer_msec(mgt->master, x5b_app_reset_eloop, mgt, 100);
 				if(mgt->mutex)
@@ -93,15 +106,15 @@ static int v9_slipnet_default(v9_serial_t *serial)
 
 static int _v9_slipnet_hw_init(v9_serial_t *serial)
 {
-		if(serial != NULL)
+	if (serial != NULL)
+	{
+		serial->slipnet = XMALLOC(MTYPE_VTY, sizeof(struct tty_com));
+		if (serial->slipnet)
 		{
-			serial->slipnet = XMALLOC(MTYPE_VTY, sizeof(struct tty_com));
-			if(serial->slipnet)
-			{
-				v9_slipnet_default(serial);
-				return OK;
-			}
+			v9_slipnet_default (serial);
+			return OK;
 		}
+	}
 	return ERROR;
 }
 

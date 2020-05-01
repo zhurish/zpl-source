@@ -87,6 +87,7 @@ typedef enum
   ZLOG_WIFI,
   ZLOG_MODEM,
   ZLOG_WEB,
+  ZLOG_MQTT,
   ZLOG_SIP,
   ZLOG_APP,
   ZLOG_VOIP,

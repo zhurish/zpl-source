@@ -68,48 +68,86 @@ static const char *cur_section_ref = NULL;
 static int uci_cmd(int uci_argc, char **uci_argv);
 
 static char *uci_result = NULL;
+#define LIST_MAX_CNT	8
+static char *uci_list_result[LIST_MAX_CNT];
+static unsigned int uci_list_rescnt = 0;
 
-static int uci_result_add(char *input)
+static int uci_result_add(int type, char *input)
 {
+#if 0
 	if(uci_result)
 	{
 		//char *p = uci_result;
 		int len = strlen(uci_result);
 		if(input)
 		{
-			uci_result = realloc(uci_result, MIN(UCI_RES_MAX_SIZE, strlen(input)) + 1);
-			strcat(uci_result + len, ";");
-			strcat(uci_result + len + 1, input);
+			uci_result = realloc(uci_result, MIN(UCI_RES_MAX_SIZE, len + ) + 1);
+			strcat(uci_result, ";");
+			strcat(uci_result + 1, input);
 		}
 	}
 	else
 	{
 		if(input)
 		{
-			if(uci_result)
-			{
-				free(uci_result);
-				uci_result = NULL;
-			}
 			//uci_result = malloc(MIN(UCI_RES_MAX_SIZE, strlen(input)));
 			uci_result = malloc(strlen(input)+1);
 			if(uci_result)
 			{
 				memset(uci_result, '\0', strlen(input)+1);
 				//strncpy(uci_result, input, MIN(UCI_RES_MAX_SIZE, strlen(input)));
-				strncpy(uci_result, input, strlen(input));
+				strcpy(uci_result, input);
 			}
 		}
 	}
+#else
+	if(input)
+	{
+		if(type == 1 && (uci_list_rescnt < LIST_MAX_CNT))
+		{
+			uci_list_result[uci_list_rescnt] = malloc(strlen(input)+1);
+			if(uci_list_result[uci_list_rescnt])
+			{
+				memset(uci_list_result[uci_list_rescnt], '\0', strlen(input)+1);
+				strcpy(uci_list_result[uci_list_rescnt], input);
+				uci_list_rescnt++;
+			}
+		}
+		else
+		{
+			if(uci_result)
+			{
+				free(uci_result);
+				uci_result = NULL;
+			}
+			uci_result = malloc(strlen(input)+1);
+			if(uci_result)
+			{
+				memset(uci_result, '\0', strlen(input)+1);
+				//strncpy(uci_result, input, MIN(UCI_RES_MAX_SIZE, strlen(input)));
+				strcpy(uci_result, input);
+			}
+		}
+	}
+#endif
 	return OK;
 }
 
 static int uci_result_clr(void)
 {
+	int i = 0;
 	if(uci_result)
 	{
 		free(uci_result);
 		uci_result = NULL;
+	}
+	for(i = 0; i < LIST_MAX_CNT; i++)
+	{
+		if(uci_list_result[i])
+		{
+			free(uci_list_result[i]);
+			uci_list_result[i] = NULL;
+		}
 	}
 	return OK;
 }
@@ -196,7 +234,7 @@ static void cli_error(const char *fmt, ...)
 	va_end(ap);
 }
 
-static void uci_print_value(FILE *f, const char *v)
+static void uci_print_value(int type, FILE *f, const char *v)
 {
 #if 1
 	char *p = v;
@@ -212,7 +250,8 @@ static void uci_print_value(FILE *f, const char *v)
 		{
 			if(i > 0)
 			{
-				uci_result_add(buf);
+				_UCI_DEBUG("uci_print_value---->%s\r\n", buf);
+				uci_result_add(type, buf);
 				memset(buf, 0, sizeof(buf));
 			}
 			i = 0;
@@ -225,7 +264,7 @@ static void uci_print_value(FILE *f, const char *v)
 		if (*v != '\'')
 		{
 			fputc(*v, f);
-			uci_result_add(*v);
+			uci_result_add(0, *v);
 		}
 		else
 			fprintf(f, "'\\''");
@@ -245,22 +284,26 @@ static void uci_show_value(struct uci_option *o, BOOL quote)
 	switch(o->type) {
 	case UCI_TYPE_STRING:
 		if (quote)
-			uci_print_value(stdout, o->v.string);
+			uci_print_value(0, stdout, o->v.string);
 		else
-			uci_result_add(o->v.string);
+			uci_result_add(0, o->v.string);
 			//printf("uci_show_section---->%s", o->v.string);
-		_UCI_DEBUG("uci_show_section---->\r\n");
+		_UCI_DEBUG("uci_show_value---->UCI_TYPE_STRING\r\n");
 		break;
 	case UCI_TYPE_LIST:
 		uci_foreach_element(&o->v.list, e) {
-			uci_result_add((sep ? uci_delimiter : " "));
-			_UCI_DEBUG("uci_show_section---->%s", (sep ? uci_delimiter : " "));
+			//uci_result_add(0, (sep ? uci_delimiter : " "));
+			_UCI_DEBUG("uci_show_value---->UCI_TYPE_LIST(%s)\r\n", (sep ? uci_delimiter : " "));
 			space = strpbrk(e->name, " \t\r\n");
 			if (!space && !quote)
-				uci_result_add(e->name);
-				//printf("uci_show_section---->%s", e->name);
+			{
+				uci_result_add(1, e->name);
+				_UCI_DEBUG("uci_show_value---->UCI_TYPE_LIST(e->name:%s)\r\n", e->name);
+			}
 			else
-				uci_print_value(stdout, e->name);
+			{
+				uci_print_value(1, stdout, e->name);
+			}
 			sep = TRUE;
 		}
 		_UCI_DEBUG("uci_show_section---->\r\n");
@@ -292,7 +335,7 @@ static void uci_show_section(struct uci_section *s)
 	cname = s->package->e.name;
 	sname = (cur_section_ref ? cur_section_ref : s->e.name);
 	if(s->type)
-		uci_result_add(s->type);
+		uci_result_add(0, s->type);
 	//printf("uci_show_section---->%s.%s=%s\r\n", cname, sname, s->type);
 	uci_foreach_element(&s->options, e) {
 		uci_show_option(uci_to_option(e), TRUE);
@@ -341,7 +384,7 @@ static void uci_show_changes(struct uci_package *p)
 			printf("uci_show_changes---->.%s", e->name);*/
 		if (h->cmd != UCI_CMD_REMOVE && h->value) {
 			//printf("uci_show_changes---->%s", op);
-			uci_print_value(stdout, h->value);
+			uci_print_value(0, stdout, h->value);
 		}
 		_UCI_DEBUG("uci_show_changes---->\r\n");
 	}
@@ -564,7 +607,10 @@ static int uci_do_section_cmd(int cmd, int uci_argc, char **uci_argv)
 		switch(e->type) {
 		case UCI_TYPE_SECTION:
 			if(ptr.s->type)
-				uci_result_add(ptr.s->type);
+			{
+				printf("uci_do_section_cmd--->%s\r\n", ptr.s->type);
+				uci_result_add(0, ptr.s->type);
+			}
 			//uci_result = strdup(ptr.s->type);
 			//printf("uci_do_section_cmd--->%s\r\n", ptr.s->type);
 			break;
@@ -1104,11 +1150,23 @@ int os_uci_get_list(char *name, char **value, int *cnt)
 	//os_uci_value_reset();
 	if(uci_main(cmd_argc, cmd_argv) == 0)
 	{
-/*		if(os_uci_value.cnt == 1)
-			if(value)
-				strcpy(value, os_uci_value.value[0]);
-		os_uci_value_reset();*/
-		return ERROR;
+		int i = 0, num = 0;
+		for(i = 0; i < LIST_MAX_CNT; i++)
+		{
+			if(uci_list_result[i])
+			{
+				*value = strdup(uci_list_result[i]);
+				num++;
+				_UCI_DEBUG("------%s--------:%d(%s)\r\n", __func__, i, uci_list_result[i]);
+			}
+		}
+		if(cnt)
+			*cnt = num;
+/*		if(uci_result_get())
+		{
+			printf("------%s--------:(%s)\r\n", __func__, uci_result_get());
+		}*/
+		return OK;
 	}
 	return ERROR;
 }
@@ -1121,8 +1179,9 @@ int os_uci_list_add(char *name, char * value)
 	if(!name || !value)
 		return ERROR;
 	memset(cmd_value, 0, sizeof(cmd_value));
-	sprintf(cmd_value, "%s", name);
+	//sprintf(cmd_value, "%s", name);
 	cmd_argc = 3;
+	sprintf(cmd_value, "%s=%s", name, value);
 	//char **argvtmp[5] = { "uci", "get", name, NULL};
 	//os_uci_value_reset();
 	if(uci_main(cmd_argc, cmd_argv) == 0)
@@ -1131,7 +1190,7 @@ int os_uci_list_add(char *name, char * value)
 			if(value)
 				strcpy(value, os_uci_value.value[0]);
 		os_uci_value_reset();*/
-		return ERROR;
+		return OK;
 	}
 	return ERROR;
 }
@@ -1144,8 +1203,9 @@ int os_uci_list_del(char *name, char * value)
 	if(!name || !value)
 		return ERROR;
 	memset(cmd_value, 0, sizeof(cmd_value));
-	sprintf(cmd_value, "%s", name);
+	//sprintf(cmd_value, "%s", name);
 	cmd_argc = 3;
+	sprintf(cmd_value, "%s=%s", name, value);
 	//char **argvtmp[5] = { "uci", "get", name, NULL};
 	//os_uci_value_reset();
 	if(uci_main(cmd_argc, cmd_argv) == 0)
@@ -1154,7 +1214,7 @@ int os_uci_list_del(char *name, char * value)
 			if(value)
 				strcpy(value, os_uci_value.value[0]);
 		os_uci_value_reset();*/
-		return ERROR;
+		return OK;
 	}
 	return ERROR;
 }

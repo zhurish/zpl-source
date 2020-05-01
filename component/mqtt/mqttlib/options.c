@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010-2019 Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -32,6 +32,7 @@ Contributors:
 #include "mosquitto.h"
 #include "mosquitto_internal.h"
 #include "memory_mosq.h"
+#include "misc_mosq.h"
 #include "mqtt_protocol.h"
 #include "util_mosq.h"
 #include "will_mosq.h"
@@ -289,6 +290,7 @@ int mosquitto_string_option(struct mosquitto *mosq, enum mosq_opt_t option, cons
 			}else{
 				return MOSQ_ERR_INVAL;
 			}
+			return MOSQ_ERR_SUCCESS;
 #else
 			return MOSQ_ERR_NOT_SUPPORTED;
 #endif
@@ -322,8 +324,6 @@ int mosquitto_string_option(struct mosquitto *mosq, enum mosq_opt_t option, cons
 		default:
 			return MOSQ_ERR_INVAL;
 	}
-
-	return MOSQ_ERR_INVAL;
 }
 
 
@@ -410,14 +410,22 @@ int mosquitto_int_option(struct mosquitto *mosq, enum mosq_opt_t option, int val
 			if(value < 0 || value > 65535){
 				return MOSQ_ERR_INVAL;
 			}
-			mosq->receive_maximum = value;
+			if(value == 0){
+				mosq->msgs_in.inflight_maximum = 65535;
+			}else{
+				mosq->msgs_in.inflight_maximum = value;
+			}
 			break;
 
 		case MOSQ_OPT_SEND_MAXIMUM:
 			if(value < 0 || value > 65535){
 				return MOSQ_ERR_INVAL;
 			}
-			mosq->send_maximum = value;
+			if(value == 0){
+				mosq->msgs_out.inflight_maximum = 65535;
+			}else{
+				mosq->msgs_out.inflight_maximum = value;
+			}
 			break;
 
 		case MOSQ_OPT_SSL_CTX_WITH_DEFAULTS:

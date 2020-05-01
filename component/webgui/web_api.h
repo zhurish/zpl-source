@@ -13,10 +13,13 @@
 #define T(n)	(n)
 
 #define WEBGUI_LISTEN 		"http://*:8080"
+
 #if ME_COM_SSL
 #define WEBGUI_SSL_LISTEN 		"https://*:443"
 #endif
+
 #define WEB_LISTEN_PORT 		 	8080
+
 #if ME_COM_SSL
 #define WEB_LISTEN_SSL_PORT 		443
 #endif
@@ -33,13 +36,23 @@
 #define WEBGUI_DOCUMENTS 	SYSWWWDIR
 #endif
 
+#ifdef THEME_V9UI
+#define WEB_LOGIN_HTML 		"OK/ERROR"
+#define WEB_LOGOUT_HTML 	"OK/ERROR"
+#define WEB_MAIN_HTML 		"OK/ERROR"
+#else
 #define WEB_LOGIN_HTML 		"/html/login.html"
 #define WEB_LOGOUT_HTML 	"/html/login.html"
 #define WEB_MAIN_HTML 		"/html/bootstrap.html"
-
+#endif
 
 
 #define WEB_SYSTEM_LOG 		"/var/log/boot.log"
+
+#define WEB_LOGIN_USERNAME 		"root"
+#define WEB_LOGIN_PASSWORD 		"admintsl123456!"
+
+
 
 //#define WEB_OPENWRT_UCI 		1
 #define WEB_OPENWRT_PROCESS 	1//	WEB_OPENWRT_UCI
@@ -114,11 +127,16 @@ extern int web_app_address_set_api(char *address);
 extern int web_app_port_set_api(BOOL ssl, u_int16 port);
 extern int web_app_debug_set_api(int level);
 
+extern int web_app_username_add_api(const char *username, const char *password, const char *roles);
+extern int web_app_username_lookup_api(const char *username);
+extern int web_app_username_del_api(const char *username);
+
 extern int web_app_gopass_api(const char *username, const char *password,
 							   const char *cipher, const char *realm, char *encodedPassword);
 extern int web_app_gopass_roles_api(const char *username, const char *roles[]);
 extern int web_app_gopass_save_api(const char *username,
 		const char *roles[], char *encodedPassword);
+extern int web_app_auth_save_api(void);
 
 extern int web_app_write_config(struct vty *vty);
 extern void cmd_webserver_init(void);

@@ -25,7 +25,9 @@ enum
 	V9_APP_CMD_STARTUP		= 0X0200|0X05,	//通知主控板计算板完成启动，开始互联配置
 
 
-	V9_CMD_SYNC_TIME	= 0X0f00|0X01,	//有主控同步过来的时间
+	V9_CMD_SYNC_TIME	= 0X0F00|0X01,	//有主控同步过来的时间
+
+	V9_APP_CMD_PASS_RESET	= 0X0E00|0X01,	//恢复默认密码
 };
 
 enum
@@ -102,6 +104,9 @@ typedef struct app_cmd_rtc_s
 	struct tm	ptm;
 }app_cmd_rtc_t;
 
+
+#define V9_APP_HDR_LEN_MAX		V9_APP_HDR_LEN + sizeof(app_cmd_status_ack_t)*4
+
 #pragma pack()
 
 int v9_cmd_get(v9_serial_t *mgt);
@@ -113,7 +118,7 @@ int v9_cmd_handle_autoip(v9_serial_t *mgt);
 int v9_cmd_handle_startup(v9_serial_t *mgt);
 //int v9_cmd_handle_status(v9_serial_t *mgt);
 int v9_cmd_handle_board(v9_serial_t *mgt);
-
+int v9_cmd_handle_pass_reset(v9_serial_t *mgt);
 int v9_cmd_sync_time_to_rtc(v9_serial_t *mgt, u_int32 timesp);
 int v9_cmd_sync_time_test(void);
 

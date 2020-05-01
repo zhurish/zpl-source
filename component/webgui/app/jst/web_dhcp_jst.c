@@ -26,6 +26,7 @@
 #include "web_app.h"
 #include "web_api.h"
 
+#ifdef PL_DHCP_MODULE
 
 #ifdef WEB_OPENWRT_PROCESS
 //#else
@@ -217,7 +218,6 @@ static int web_dhcpd_set_config(Webs *wp, const char *poolname, const char *star
 
 static int jst_dhcpd(int eid, webs_t wp, int argc, char **argv)
 {
-	//char *date = websGetDateString(NULL);
 	websWrite(wp, "%s", "admin");
 	return 0;
 }
@@ -238,6 +238,8 @@ static int web_dhcpset_set(Webs *wp, char *path, char *query)
 	strval = webs_get_var(wp, T("ACTION"), T(""));
 	if (NULL == strval)
 	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get ACTION Value");
 		return web_return_text_plain(wp, ERROR);
 		//return ERROR;
 	}
@@ -245,7 +247,14 @@ static int web_dhcpset_set(Webs *wp, char *path, char *query)
 	{
 		poolname = webs_get_var(wp, T("poolname"), T(""));
 
-
+		if(poolname == NULL)
+		{
+			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+				zlog_debug(ZLOG_WEB, "Can not Get poolname Value");
+			return web_return_text_plain(wp, ERROR);
+		}
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "web Get poolname=%s", poolname);
 		if(web_dhcpd_get_config(wp, poolname) != OK)
 		{
 			return web_return_text_plain(wp, ERROR);
@@ -257,33 +266,37 @@ static int web_dhcpset_set(Webs *wp, char *path, char *query)
 			websWriteHeader(wp, "Content-Type", "application/json");
 			websWriteEndHeaders(wp);
 		}
-		//websWrite(wp,
-		//		"{\"response\":\"%s\", \"poolname\":\"%s\", \"startip\":\"%s\", \"endip\":\"%s\", \"netmask\":\"%s\", \
-		//		\"dns\":\"%s\", \"dns2\":\"%s\", \"interface\":\"%s\"}",
-		//		"OK", "test", "192.168.2.2", "192.168.2.200", "255.255.255.0", "192.168.2.3", "", "ethernet 0/0/1");
 		websDone(wp);
 		return OK;
 	}
 	poolname = webs_get_var(wp, T("poolname"), T(""));
 	if (NULL == poolname)
 	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get poolname Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	ifpname = webs_get_var(wp, T("interface"), T(""));
 	if (NULL == ifpname)
 	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get interface Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 
 	start = webs_get_var(wp, T("startip"), T(""));
 	if (NULL == start)
 	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get start ip Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 
 	end = webs_get_var(wp, T("endip"), T(""));
 	if (NULL == end)
 	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get end ip Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 
@@ -303,7 +316,11 @@ static int web_dhcpset_set(Webs *wp, char *path, char *query)
 
 
 
-
+	if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+	{
+		zlog_debug(ZLOG_WEB, "web Get poolname=%s interface=%s start=%s end=%s gateway=%s gateway2=%s dns=%s dns2=%s",
+				   poolname, ifpname, start, end, gateway?gateway:" ", gateway2?gateway2:" ", dns?dns:" ", dns2?dns2:" ");
+	}
 	if(web_dhcpd_set_config(wp, poolname, start,
 			end, /*const char *netmask, */gateway,
 			gateway2, dns,
@@ -435,6 +452,8 @@ static int web_dhcp_static_handle(Webs *wp, void *p)
 	char *strval = webs_get_var(wp, T("BTNID"), T(""));
 	if (NULL == strval)
 	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get BTNID Value");
 		return ERROR;//web_return_text_plain(wp, ERROR);
 	}
 	if(strstr(strval, "delete"))
@@ -444,6 +463,8 @@ static int web_dhcp_static_handle(Webs *wp, void *p)
 		strval = webs_get_var(wp, T("devmac"), T(""));
 		if(strval == NULL || all_space(strval))
 		{
+			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+				zlog_debug(ZLOG_WEB, "Can not Get devmac Value");
 			return ERROR;//web_return_text_plain(wp, ERROR);
 		}
 		memset(devmac, 0, sizeof(devmac));
@@ -452,10 +473,17 @@ static int web_dhcp_static_handle(Webs *wp, void *p)
 		strval = webs_get_var(wp, T("devip"), T(""));
 		if(strval == NULL || all_space(strval))
 		{
+			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+				zlog_debug(ZLOG_WEB, "Can not Get devip Value");
 			return ERROR;//web_return_text_plain(wp, ERROR);
 		}
 		memset(devip, 0, sizeof(devip));
 		strcpy(devip, strval);
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+		{
+			zlog_debug(ZLOG_WEB, "web Get devip=%s devmac=%s",
+					    devip, devmac);
+		}
 		return (web_dhcp_static_lease(0, NULL, devip, devmac, NULL) == OK) ? web_return_text_plain(wp, OK):ERROR;//;
 	}
 	else if(strstr(strval, "dhcpadd"))
@@ -467,6 +495,8 @@ static int web_dhcp_static_handle(Webs *wp, void *p)
 		strval = webs_get_var(wp, T("devname"), T(""));
 		if(strval == NULL || all_space(strval))
 		{
+			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+				zlog_debug(ZLOG_WEB, "Can not Get devname Value");
 			return ERROR;//web_return_text_plain(wp, ERROR);
 		}
 		memset(devname, 0, sizeof(devname));
@@ -475,6 +505,8 @@ static int web_dhcp_static_handle(Webs *wp, void *p)
 		strval = webs_get_var(wp, T("devip"), T(""));
 		if(strval == NULL || all_space(strval))
 		{
+			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+				zlog_debug(ZLOG_WEB, "Can not Get devip Value");
 			return ERROR;//web_return_text_plain(wp, ERROR);
 		}
 		memset(devip, 0, sizeof(devip));
@@ -482,6 +514,8 @@ static int web_dhcp_static_handle(Webs *wp, void *p)
 		strval = webs_get_var(wp, T("devmac"), T(""));
 		if(strval == NULL || all_space(strval))
 		{
+			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+				zlog_debug(ZLOG_WEB, "Can not Get devmac Value");
 			return ERROR;//web_return_text_plain(wp, ERROR);
 		}
 		memset(devmac, 0, sizeof(devmac));
@@ -490,7 +524,14 @@ static int web_dhcp_static_handle(Webs *wp, void *p)
 		strval = webs_get_var(wp, T("expires"), T(""));
 		if(strval == NULL || all_space(strval))
 		{
+			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+				zlog_debug(ZLOG_WEB, "Can not Get expires Value");
 			return web_return_text_plain(wp, ERROR);
+		}
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+		{
+			zlog_debug(ZLOG_WEB, "web Get devname=%s devip=%s devmac=%s expires=%s",
+					   devname, devip, devmac, expires);
 		}
 		//memset(expires, 0, sizeof(expires));
 		//strcpy(expires, strval);
@@ -525,3 +566,4 @@ int web_dhcp_jst_init(void)
 #endif
 	return 0;
 }
+#endif

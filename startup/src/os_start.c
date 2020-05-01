@@ -179,10 +179,26 @@ static int os_base_dir_load(void)
 #endif
 
 #ifdef PL_WEBGUI_MODULE
-	super_system("cp -arf " RSYSWWWDIR"/*" " " SYSWWWDIR"/");
+	if(access(RSYSWWWDIR"/build.tar.gz", F_OK) == 0)
+	{
+		//super_system("cp -arf " RSYSWWWDIR"/build.tar.gz /tmp/");
+		//super_system("cd /tmp/; tar -zxvf build.tar.gz");
+		if(access(SYSWWWDIR"/index.html", F_OK) != 0)
+		{
+			super_system("tar -zxvf  "RSYSWWWDIR"/build.tar.gz -C /tmp");
+			super_system("cp -arf /tmp/build/* " SYSWWWDIR"/");
+			super_system("rm -rf /tmp/build ");
+		}
+	}
+	else
+	{
+		if(access(SYSWWWDIR"/index.html", F_OK) != 0)
+			super_system("cp -arf " RSYSWWWDIR"/*" " " SYSWWWDIR"/");
+	}
 #endif
 
 #ifdef BUILD_OPENWRT
+#ifdef APP_X5BA_MODULE
 	if(access("/etc/config/product", F_OK) != 0)
 	{
 		if(access(SYSCONFDIR"/product", F_OK) == 0)
@@ -197,7 +213,8 @@ static int os_base_dir_load(void)
 	{
 		if(access(SYSCONFDIR"/openconfig", F_OK) == 0)
 			super_system("cp -af " SYSCONFDIR"/openconfig  /etc/config/");
-	}		
+	}
+#endif
 #endif
 	return 0;
 }

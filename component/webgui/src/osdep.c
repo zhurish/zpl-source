@@ -67,6 +67,86 @@ PUBLIC char *websTempFile(cchar *dir, cchar *prefix)
 }
 
 
+PUBLIC int websOsMkdir(const char *dirpath, int pathflag)
+{
+#if ME_UNIX_LIKE
+#if 1
+	if (strlen (dirpath) == 0 || dirpath == NULL)
+	{
+		printf ("strlen(dir) is 0 or dir is NULL.\n");
+		return -1;
+	}
+	if(pathflag == 0)
+	{
+		if( access(dirpath,   NULL) != 0)
+			return mkdir(dirpath, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+		return 0;
+	}
+	else
+	{
+		char tmp[128];
+		memset (tmp, '\0', sizeof(tmp));
+		snprintf (tmp, sizeof(tmp), "mkdir -p %s", dirpath);
+		if( access(dirpath,   NULL) != 0)
+		{
+			system(tmp);
+			if( access(dirpath,   NULL) != 0)
+				return -1;
+			return 0;
+		}
+		return 0;
+	}
+	return -1;
+#else
+	char tmp[128];
+	char *p = NULL;
+
+	if (strlen (dirpath) == 0 || dirpath == NULL)
+	{
+		printf ("strlen(dir) is 0 or dir is NULL.\n");
+		return -1;
+	}
+	if(pathflag == 0)
+	{
+		if( access(dirpath,   NULL) != 0)
+			return mkdir(dirpath, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+		return -1;
+	}
+	memset (tmp, '\0', sizeof(tmp));
+	strncpy (tmp, dirpath, strlen (dirpath));
+	if (tmp[0] == '/')
+		p = strchr (tmp + 1, '/');
+	else
+		p = strchr (tmp, '/');
+
+	if (p)
+	{
+		*p = '\0';
+		if( access(tmp,   NULL) != 0)
+		{
+			if(mkdir(tmp, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0)
+				chdir (tmp);
+		}
+	}
+	else
+	{
+		if( access(tmp,   NULL) != 0)
+		{
+			if(mkdir(tmp, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0)
+				chdir (tmp);
+		}
+		return 0;
+	}
+	return websOsMkdir (p + 1, pathflag);
+#endif
+#endif
+}
+
+PUBLIC void websOsGetPwdDir(const char *path, int pathsize)
+{
+	getcwd(path, pathsize);
+}
+
 #if VXWORKS
 /*
     Get absolute path.  In VxWorks, functions like chdir, ioctl for mkdir and ioctl for rmdir, require an absolute path.

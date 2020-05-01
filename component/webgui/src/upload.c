@@ -165,7 +165,7 @@ static void processContentBoundary(Webs *wp, char *line)
      */
     if (strncmp(wp->boundary, line, wp->boundaryLen) != 0) {
         websError(wp, HTTP_CODE_BAD_REQUEST, "Bad upload state. Incomplete boundary");
-
+        web_error_proc(__FILE__, __FUNCTION__, __LINE__, "boundary:'%s' line:'%s' len:'%d'", wp->boundary, line, wp->boundaryLen);
     } else if (line[wp->boundaryLen] && strcmp(&line[wp->boundaryLen], "--") == 0) {
         wp->uploadState = UPLOAD_CONTENT_END;
 
@@ -184,7 +184,7 @@ static void processUploadHeader(Webs *wp, char *line)
         wp->uploadState = UPLOAD_CONTENT_DATA;
         return;
     }
-    trace(7, "Header line: %s", line);
+    web_trace(WEBS_NOTICE, "Header line: %s", line);
 
     headerTok = line;
     stok(line, ": ", &rest);
@@ -227,9 +227,48 @@ static void processUploadHeader(Webs *wp, char *line)
                 }
                 value = websNormalizeUriPath(value);
                 if (*value == '.' || !websValidUriChars(value) || strpbrk(value, "\\/:*?<>|~\"'%`^\n\r\t\f")) {
-                    websError(wp, HTTP_CODE_INTERNAL_SERVER_ERROR, "Bad upload client filename");
-                    wfree(value);
-                    return;
+                	if(strstr(value, "/"))
+                	{
+                		char *p = NULL;
+                		//char pwdpath[128];
+                		char newpath[128];
+                		//memset(pwdpath, 0, sizeof(pwdpath));
+                		//websOsGetPwdDir(pwdpath, sizeof(pwdpath));
+                		p = strrchr(value, '/');
+                		if(p)
+                		{
+                			memset(newpath, '\0', sizeof(newpath));
+                			if(websUploadGetDir())
+                			{
+                				strcpy(newpath, websUploadGetDir());
+                				strcat(newpath, "/");
+                			}
+                			memcpy(newpath + strlen(newpath), value, p - value);
+                			//printf("----------------%s:%s\r\n", __func__, newpath);
+                			if(websOsMkdir(newpath, 1) == 0)
+                			{
+                				//chdir(pwdpath);
+                			}
+                			else
+                			{
+        						websError(wp, HTTP_CODE_INTERNAL_SERVER_ERROR, "Bad upload client filename:%s", value);
+        						wfree(value);
+        						return;
+                			}
+                		}
+                		else
+                		{
+    						websError(wp, HTTP_CODE_INTERNAL_SERVER_ERROR, "Bad upload client filename:%s", value);
+    						wfree(value);
+    						return;
+                		}
+                	}
+                	else
+                	{
+						websError(wp, HTTP_CODE_INTERNAL_SERVER_ERROR, "Bad upload client filename:%s", value);
+						wfree(value);
+						return;
+                	}
                 }
                 wfree(wp->clientFilename);
                 wp->clientFilename = value;
@@ -243,7 +282,7 @@ static void processUploadHeader(Webs *wp, char *line)
                         "Cannot create upload temp file %s. Check upload temp dir %s", wp->uploadTmp, uploadDir);
                     return;
                 }
-                trace(5, "File upload of: %s stored as %s", wp->clientFilename, wp->uploadTmp);
+                web_trace(WEBS_DEBUG, "File upload of: %s stored as %s", wp->clientFilename, wp->uploadTmp);
 
                 if ((wp->upfd = open(wp->uploadTmp, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0600)) < 0) {
                     websError(wp, HTTP_CODE_INTERNAL_SERVER_ERROR, "Cannot open upload temp file %s", wp->uploadTmp);
@@ -263,7 +302,7 @@ static void processUploadHeader(Webs *wp, char *line)
 
     } else if (scaselesscmp(headerTok, "Content-Type") == 0) {
         if (wp->clientFilename) {
-            trace(5, "Set files[%s][CONTENT_TYPE] = %s", wp->uploadVar, rest);
+            web_trace(WEBS_DEBUG, "Set files[%s][CONTENT_TYPE] = %s", wp->uploadVar, rest);
             wp->currentFile->contentType = sclone(rest);
         }
     }
@@ -310,7 +349,7 @@ static int writeToFile(Webs *wp, char *data, ssize len)
             return -1;
         }
         file->size += len;
-        trace(7, "uploadFilter: Wrote %d bytes to %s", len, wp->uploadTmp);
+        web_trace(WEBS_DEBUG, "uploadFilter: Wrote %d bytes to %s", len, wp->uploadTmp);
     }
     return 0;
 }
@@ -332,7 +371,7 @@ static bool processContentData(Webs *wp)
         return 0;
     }
     if ((bp = getBoundary(wp, content->servp, size)) == 0) {
-        trace(7, "uploadFilter: Got boundary filename %x", wp->clientFilename);
+        web_trace(WEBS_DEBUG, "uploadFilter: Got boundary filename %x", wp->clientFilename);
         if (wp->clientFilename) {
             /*
                 No signature found yet. probably more data to come. Must handle split boundaries.
@@ -370,13 +409,14 @@ static bool processContentData(Webs *wp)
             }
             hashEnter(wp->files, wp->uploadVar, valueSymbol(file), 0);
             defineUploadVars(wp);
+            wp->currentFile = 0;
 
         } else if (wp->uploadVar) {
             /*
                 Normal string form data variables
              */
             data[len] = '\0';
-            trace(5, "uploadFilter: form[%s] = %s", wp->uploadVar, data);
+            web_trace(WEBS_DEBUG, "uploadFilter: form[%s] = %s", wp->uploadVar, data);
             websDecodeUrl(wp->uploadVar, wp->uploadVar, -1);
             websDecodeUrl(data, data, -1);
             websSetVar(wp, wp->uploadVar, data);
@@ -465,7 +505,7 @@ PUBLIC void websUploadOpen(void)
 	#endif
 		}
 	}
-    trace(4, "Upload directory is %s", uploadDir);
+    web_trace(WEBS_NOTICE, "Upload directory is %s", uploadDir);
     websDefineHandler("upload", 0, uploadHandler, 0, 0);
 }
 
@@ -487,6 +527,11 @@ PUBLIC void websUploadSetDir(char *dirb)
 	}
 	if(dirb)
 	{
+		if(_upload_dir)
+		{
+			free(_upload_dir);
+			_upload_dir = NULL;
+		}
 		_upload_dir = strdup(dirb);
 	}
 }

@@ -18,7 +18,7 @@ extern int voip_stream_config_save(void *voip);
 extern int voip_stream_config_update_api(void *voip);
 extern int voip_stream_config_load(void *voip);
 
-extern int voip_ubus_uci_update_cb(char *buf, int len);
+extern int voip_ubus_uci_update_cb(void *p, char *buf, int len);
 
 #endif
 

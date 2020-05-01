@@ -16,6 +16,7 @@
 ** edit the src/shell.c.in" and/or some of the other files that are included
 ** by "src/shell.c.in", then rerun the tool/mkshellc.tcl script.
 */
+
 /*
 ** 2001 September 15
 **

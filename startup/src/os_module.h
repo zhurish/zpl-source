@@ -8,6 +8,7 @@
 #ifndef __OS_MODULE_H_
 #define __OS_MODULE_H_
 
+extern int console_enable;
 
 extern int nsm_module_init ();
 extern int nsm_task_init ();

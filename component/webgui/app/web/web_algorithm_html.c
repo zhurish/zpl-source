@@ -35,14 +35,16 @@ static int web_video_detecting_get(Webs *wp, char *path, char *query)
 	strval = webs_get_var(wp, T("ID"), T(""));
 	if (NULL == strval)
 	{
-		zlog_warn(ZLOG_APP," can not get ID");
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	id = atoi(strval);
 	strval = webs_get_var(wp, T("ch"), T(""));
 	if (NULL == strval)
 	{
-		zlog_warn(ZLOG_APP," can not get CH");
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get Channel Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	ch = atoi(strval);
@@ -54,27 +56,28 @@ static int web_video_detecting_get(Webs *wp, char *path, char *query)
 #ifdef V9_VIDEO_SDK_API
 	ST_SDKSnapInfo stSnapInfo;
 	memset(&stSnapInfo, 0, sizeof(ST_SDKSnapInfo));
-	if(v9_video_sdk_snap_config_get_api(APP_BOARD_CALCU_ID(id), ch, &stSnapInfo) == OK)
+	if(v9_video_sdk_snap_config_get_api(V9_APP_BOARD_CALCU_ID(id), ch, &stSnapInfo) == OK)
 	{
 		websWrite(wp,
 			"{\"response\":\"%s\", \"ID\":\"%d\", \"ch\":\"%d\", \"time\":\"%d\", \"facemaxpx\":\"%d\", \"faceminpx\":\"%d\",\
 			\"qulityscore\":\"%d\", \"confi\":\"%d\", \"mode\":\"%d\"}",
-			"OK", APP_BOARD_CALCU_ID(id), ch, stSnapInfo.nIntervalTime, stSnapInfo.nMaxSize,
-			stSnapInfo.nMinSize, stSnapInfo.nQulityScore, stSnapInfo.nConfi, stSnapInfo.nSnapMode-1);
+			"OK", (id), ch, stSnapInfo.nIntervalTime, stSnapInfo.nMaxSize,
+			stSnapInfo.nMinSize, stSnapInfo.nQulityScore, stSnapInfo.nConfi, stSnapInfo.nSnapMode + 1);
 	}
 	else
 	{
-		zlog_warn(ZLOG_APP," can not get v9_video_sdk_snap_config_get_api");
+		if(WEB_IS_DEBUG(EVENT))
+			zlog_debug(ZLOG_WEB, "Can not Get Snap Config");
 		websWrite(wp,
 			"{\"response\":\"%s\", \"ID\":\"%s\", \"ch\":\"%s\", \"time\":\"%s\", \"facemaxpx\":\"%s\", \"faceminpx\":\"%s\",\
 			\"qulityscore\":\"%s\", \"confi\":\"%s\", \"mode\":\"%s\"}",
-			"ERROR", "2", "1", "60", "1080", "720", "85", "90", "2");
+			"ERROR", "1", "1", "0", "1080", "720", "0", "0", "1");
 	}
 #else
 	websWrite(wp,
 		"{\"response\":\"%s\", \"ID\":\"%s\", \"ch\":\"%s\", \"time\":\"%s\", \"facemaxpx\":\"%s\", \"faceminpx\":\"%s\",\
 		\"qulityscore\":\"%s\", \"confi\":\"%s\", \"mode\":\"%s\"}",
-		"OK", "2", "1", "60", "1080", "720", "85", "90", "2");
+		"OK", "1", "1", "0", "480", "240", "0", "0", "1");
 #endif
 	websDone(wp);
 	return OK;
@@ -95,7 +98,8 @@ static int web_video_detecting_handle(Webs *wp, char *path, char *query)
 	strval = webs_get_var(wp, T("ACTION"), T(""));
 	if (NULL == strval)
 	{
-		zlog_warn(ZLOG_APP," can not get ACTION");
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get ACTION Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	if(strstr(strval, "GET"))
@@ -106,25 +110,33 @@ static int web_video_detecting_handle(Webs *wp, char *path, char *query)
 	strval = webs_get_var(wp, T("ID"), T(""));
 	if (NULL == strval)
 	{
-		zlog_warn(ZLOG_APP," can not get ID");
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	id = atoi(strval);
 	strval = webs_get_var(wp, T("ch"), T(""));
 	if (NULL == strval)
 	{
-		zlog_warn(ZLOG_APP," can not get CH");
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get Channel Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	ch = atoi(strval);
 #ifdef V9_VIDEO_SDK_API
-	if(v9_video_sdk_snap_config_get_api(APP_BOARD_CALCU_ID(id), ch, &stSnapInfoOld) == OK)
+	if(v9_video_sdk_snap_config_get_api(V9_APP_BOARD_CALCU_ID(id), ch, &stSnapInfoOld) == OK)
 	{
 		//return web_return_text_plain(wp, ERROR);
 		memcpy(&stSnapInfo, &stSnapInfoOld, sizeof(ST_SDKSnapInfo));
+		_WEB_DBG_TRAP(" ------%s------call nChannelId=%d", __func__, stSnapInfo.nChannelId);
 	}
 	else
+	{
+		if(WEB_IS_DEBUG(EVENT))
+			zlog_debug(ZLOG_WEB, "Can not Get Snap Config");
+		//zlog_warn(ZLOG_APP," ------%s------call v9_video_sdk_snap_config_get_api", __func__);
 		memset(&stSnapInfo, 0, sizeof(ST_SDKSnapInfo));
+	}
 #endif
 	strval = webs_get_var(wp, T("mode"), T(""));
 	if (NULL != strval)
@@ -170,11 +182,15 @@ static int web_video_detecting_handle(Webs *wp, char *path, char *query)
 #endif
 	}
 #ifdef V9_VIDEO_SDK_API
-	zlog_warn(ZLOG_APP," board ID=%d nSnapMode=%d nIntervalTime=%d nMaxSize=%d nMinSize=%d nQulityScore=%d nConfi=%d",
-			  APP_BOARD_CALCU_ID(id), stSnapInfo.nSnapMode, stSnapInfo.nIntervalTime, stSnapInfo.nMaxSize, stSnapInfo.nMinSize,
+	if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+		zlog_debug(ZLOG_WEB, "Board ID=%d nSnapMode=%d nIntervalTime=%d nMaxSize=%d nMinSize=%d nQulityScore=%d nConfi=%d",
+			  (id), stSnapInfo.nSnapMode, stSnapInfo.nIntervalTime, stSnapInfo.nMaxSize, stSnapInfo.nMinSize,
 			  stSnapInfo.nQulityScore, stSnapInfo.nConfi);
-	if(v9_video_sdk_snap_config_set_api(id, ch, &stSnapInfo) != OK)
+
+	if(v9_video_sdk_snap_config_set_api(V9_APP_BOARD_CALCU_ID(id), ch, &stSnapInfo) != OK)
 	{
+		if(WEB_IS_DEBUG(EVENT))
+			zlog_debug(ZLOG_WEB, "Can not Set Snap Config");
 		return web_return_text_plain(wp, ERROR);
 	}
 	ret =  OK;
@@ -188,18 +204,21 @@ static int web_video_detecting_handle(Webs *wp, char *path, char *query)
 }
 
 /****************************************************************************/
-static int web_video_identify_get(Webs *wp, char *path, char *query)
+static int web_video_recognize_get(Webs *wp, char *path, char *query)
 {
+#ifdef V9_VIDEO_SDK_API
 	int nOutSimilarity = 0;
 	int nRegisterQuality = 0;
 	BOOL nOpenUpload = FALSE;
+#endif
 	char *strval = NULL;
 	u_int32 id = 0;
 	//u_int32 ch = 0;
 	strval = webs_get_var(wp, T("ID"), T(""));
 	if (NULL == strval)
 	{
-		zlog_warn(ZLOG_APP," can not get ID");
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	id = atoi(strval);
@@ -214,33 +233,34 @@ static int web_video_identify_get(Webs *wp, char *path, char *query)
 	websWriteHeader(wp, "Content-Type", "application/json");
 	websWriteEndHeaders(wp);
 #ifdef V9_VIDEO_SDK_API
-	if(v9_video_sdk_recognize_config_get_api(APP_BOARD_CALCU_ID(id), &nOutSimilarity,
+	if(v9_video_sdk_recognize_config_get_api(V9_APP_BOARD_CALCU_ID(id), &nOutSimilarity,
 										  &nRegisterQuality, &nOpenUpload) == OK)
 	{
 		websWrite(wp,
 			"{\"response\":\"%s\", \"ID\":\"%d\", \"ch\":\"%d\", \"de_threshold\":\"%d\", \"in_threshold\":\"%d\", \"opt_threshold\":\"%d\",\
 			\"uploadcheck\":%s}",
-			"OK", APP_BOARD_CALCU_ID(id), 0, nOutSimilarity, nRegisterQuality, "80", nOpenUpload ? "true":"false");
+			"OK", (id), 0, nOutSimilarity, nRegisterQuality, 80, nOpenUpload ? "true":"false");
 	}
 	else
 	{
-		zlog_warn(ZLOG_APP," can not get v9_video_sdk_recognize_config_get_api");
+		if(WEB_IS_DEBUG(EVENT))
+			zlog_debug(ZLOG_WEB, "Can not Get Recognize Config");
 		websWrite(wp,
 			"{\"response\":\"%s\", \"ID\":\"%s\", \"ch\":\"%s\", \"de_threshold\":\"%s\", \"in_threshold\":\"%s\", \"opt_threshold\":\"%s\",\
 			\"uploadcheck\":%s}",
-			"ERROR", "2", "1", "60", "70", "80", "true");
+			"ERROR", "1", "1", "60", "70", "80", "true");
 	}
 #else
 	websWrite(wp,
 		"{\"response\":\"%s\", \"ID\":\"%s\", \"ch\":\"%s\", \"de_threshold\":\"%s\", \"in_threshold\":\"%s\", \"opt_threshold\":\"%s\",\
 		\"uploadcheck\":%s}",
-		"OK", "2", "1", "60", "70", "80", "true");
+		"OK", "1", "1", "60", "70", "80", "true");
 #endif
 	websDone(wp);
 	return OK;
 }
 
-static int web_video_identify_handle(Webs *wp, char *path, char *query)
+static int web_video_recognize_handle(Webs *wp, char *path, char *query)
 {
 	int ret = 0;
 	char *strval = NULL;
@@ -252,17 +272,19 @@ static int web_video_identify_handle(Webs *wp, char *path, char *query)
 	strval = webs_get_var(wp, T("ACTION"), T(""));
 	if (NULL == strval)
 	{
-		zlog_warn(ZLOG_APP," can not get ACTION");
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get ACTION Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	if(strstr(strval, "GET"))
 	{
-		return web_video_identify_get(wp, path, query);
+		return web_video_recognize_get(wp, path, query);
 	}
 	strval = webs_get_var(wp, T("ID"), T(""));
 	if (NULL == strval)
 	{
-		zlog_warn(ZLOG_APP," can not get ID");
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	id = atoi(strval);
@@ -297,9 +319,11 @@ static int web_video_identify_handle(Webs *wp, char *path, char *query)
 		nOpenUpload = strstr(strval,"true") ? 1:0;
 	}
 #ifdef V9_VIDEO_SDK_API
-	zlog_warn(ZLOG_APP," board ID=%d nOutSimilarity=%d nRegisterQuality=%d nOpenUpload=%d",
-			  APP_BOARD_CALCU_ID(id), nOutSimilarity, nRegisterQuality, nOpenUpload);
-	ret = v9_video_sdk_recognize_config_set_api(APP_BOARD_CALCU_ID(id), nOutSimilarity,
+	if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+		zlog_debug(ZLOG_WEB, "Board ID=%d nOutSimilarity=%d nRegisterQuality=%d nOpenUpload=%d",
+			  (id), nOutSimilarity, nRegisterQuality, nOpenUpload);
+
+	ret = v9_video_sdk_recognize_config_set_api(V9_APP_BOARD_CALCU_ID(id), nOutSimilarity,
 										  nRegisterQuality, nOpenUpload);
 #else
 	ret =  OK;
@@ -307,10 +331,15 @@ static int web_video_identify_handle(Webs *wp, char *path, char *query)
 	if(ret == OK)
 		return web_return_text_plain(wp, OK);
 	else
+	{
+		if(WEB_IS_DEBUG(EVENT))
+			zlog_debug(ZLOG_WEB, "Can not Set Recognize Config");
 		return web_return_text_plain(wp, ERROR);
+	}
 }
 
 /****************************************************************************/
+#if 0
 static int web_video_helmet_get(Webs *wp, char *path, char *query)
 {
 	//int ret = 0;
@@ -320,14 +349,16 @@ static int web_video_helmet_get(Webs *wp, char *path, char *query)
 	strval = webs_get_var(wp, T("ID"), T(""));
 	if (NULL == strval)
 	{
-		zlog_warn(ZLOG_APP," can not get ID");
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	id = atoi(strval);
 	strval = webs_get_var(wp, T("ch"), T(""));
 	if (NULL == strval)
 	{
-		zlog_warn(ZLOG_APP," can not get CH");
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get Channel Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	ch = atoi(strval);
@@ -339,13 +370,13 @@ static int web_video_helmet_get(Webs *wp, char *path, char *query)
 #ifdef V9_VIDEO_SDK_API
 	ST_SDKHelmetInfo HelmetInfo;
 	memset(&HelmetInfo, 0, sizeof(ST_SDKHelmetInfo));
-	if(v9_video_sdk_helmet_config_get_api(APP_BOARD_CALCU_ID(id), ch, &HelmetInfo) == OK)
+	if(v9_video_sdk_helmet_config_get_api(V9_APP_BOARD_CALCU_ID(id), ch, &HelmetInfo) == OK)
 	{
 		websWrite(wp,
 			"{\"response\":\"%s\", \"ID\":\"%d\", \"ch\":\"%d\", \"sendpic\":%s, \"trace\":%s, \"frame\":%s,\
 			\"quality\":\"%d\", \"snap_interval\":\"%d\", \"warn_interval\":\"%d\", \"snap_qulityscore\":\"%d\",\
 			\"threshold\":\"%d\"}",
-			"OK", APP_BOARD_CALCU_ID(id), ch,
+			"OK", (id), ch,
 			HelmetInfo.nSentImage ? "true":"false",
 			HelmetInfo.nUseTracking ? "true":"false",
 			HelmetInfo.nDrawRectangle ? "true":"false",
@@ -355,19 +386,20 @@ static int web_video_helmet_get(Webs *wp, char *path, char *query)
 	}
 	else
 	{
-		zlog_warn(ZLOG_APP," can not get v9_video_sdk_helmet_config_get_api");
+		if(WEB_IS_DEBUG(EVENT))
+			zlog_debug(ZLOG_WEB, "Can not Get Helmet Config");
 		websWrite(wp,
 			"{\"response\":\"%s\", \"ID\":\"%s\", \"ch\":\"%s\", \"sendpic\":%s, \"trace\":%s, \"frame\":%s,\
 			\"quality\":\"%s\", \"snap_interval\":\"%s\", \"warn_interval\":\"%s\", \"snap_qulityscore\":\"%s\",\
 			\"threshold\":\"%s\"}",
-			"OK", "2", "1", "true", "true", "true", "80", "85", "90", "95", "96");
+			"OK", "1", "1", "true", "true", "true", "80", "85", "90", "95", "96");
 	}
 #else
 	websWrite(wp,
 		"{\"response\":\"%s\", \"ID\":\"%s\", \"ch\":\"%s\", \"sendpic\":%s, \"trace\":%s, \"frame\":%s,\
 		\"quality\":\"%s\", \"snap_interval\":\"%s\", \"warn_interval\":\"%s\", \"snap_qulityscore\":\"%s\",\
 		\"threshold\":\"%s\"}",
-		"OK", "2", "1", "true", "true", "true", "80", "85", "90", "95", "96");
+		"OK", "1", "1", "true", "true", "true", "80", "85", "90", "95", "96");
 #endif
 
 	websDone(wp);
@@ -389,7 +421,8 @@ static int web_video_helmet_handle(Webs *wp, char *path, char *query)
 	strval = webs_get_var(wp, T("ACTION"), T(""));
 	if (NULL == strval)
 	{
-		zlog_warn(ZLOG_APP," can not get ACTION");
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get ACTION Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	if(strstr(strval, "GET"))
@@ -400,21 +433,24 @@ static int web_video_helmet_handle(Webs *wp, char *path, char *query)
 	strval = webs_get_var(wp, T("ID"), T(""));
 	if (NULL == strval)
 	{
-		zlog_warn(ZLOG_APP," can not get ID");
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	id = (atoi(strval));
 	strval = webs_get_var(wp, T("ch"), T(""));
 	if (NULL == strval)
 	{
-		zlog_warn(ZLOG_APP," can not get CH");
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get Channel Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	ch = atoi(strval);
 #ifdef V9_VIDEO_SDK_API
-	if(v9_video_sdk_helmet_config_get_api(APP_BOARD_CALCU_ID(id), ch, &stSnapInfoOld) != OK)
+	if(v9_video_sdk_helmet_config_get_api(V9_APP_BOARD_CALCU_ID(id), ch, &stSnapInfoOld) != OK)
 	{
-		zlog_warn(ZLOG_APP," can not get v9_video_sdk_helmet_config_get_api");
+		if(WEB_IS_DEBUG(EVENT))
+			zlog_debug(ZLOG_WEB, "Can not Get Helmet Config");
 		return web_return_text_plain(wp, ERROR);
 	}
 	memcpy(&stSnapInfo, &stSnapInfoOld, sizeof(ST_SDKHelmetInfo));
@@ -478,12 +514,17 @@ static int web_video_helmet_handle(Webs *wp, char *path, char *query)
 #endif
 	}
 #ifdef V9_VIDEO_SDK_API
-	zlog_warn(ZLOG_APP," board ID=%d nImageRatio=%d nSnapInterval=%d nAlarmInterval=%d nSnapRatio=%d nThreshold=%d nSentImage=%d nUseTracking=%d nDrawRectangle=%d",
-			  APP_BOARD_CALCU_ID(id), stSnapInfo.nImageRatio, stSnapInfo.nSnapInterval,
+
+
+	if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+		zlog_debug(ZLOG_WEB, "Board ID=%d nImageRatio=%d nSnapInterval=%d nAlarmInterval=%d nSnapRatio=%d nThreshold=%d nSentImage=%d nUseTracking=%d nDrawRectangle=%d",
+			  (id), stSnapInfo.nImageRatio, stSnapInfo.nSnapInterval,
 			  stSnapInfo.nAlarmInterval, stSnapInfo.nSnapRatio, stSnapInfo.nThreshold, stSnapInfo.nSentImage,
 			  stSnapInfo.nUseTracking, stSnapInfo.nDrawRectangle);
-	if(v9_video_sdk_helmet_config_set_api(APP_BOARD_CALCU_ID(id), ch, &stSnapInfo) != OK)
+	if(v9_video_sdk_helmet_config_set_api(V9_APP_BOARD_CALCU_ID(id), ch, &stSnapInfo) != OK)
 	{
+		if(WEB_IS_DEBUG(EVENT))
+			zlog_debug(ZLOG_WEB, "Can not Set Helmet Config");
 		return web_return_text_plain(wp, ERROR);
 	}
 	ret =  OK;
@@ -495,14 +536,15 @@ static int web_video_helmet_handle(Webs *wp, char *path, char *query)
 	else
 		return web_return_text_plain(wp, ERROR);
 }
+#endif
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
 int web_algorithm_app(void)
 {
 	websFormDefine("detecting", web_video_detecting_handle);
-	websFormDefine("identify", web_video_identify_handle);
-	websFormDefine("helmet", web_video_helmet_handle);
+	websFormDefine("recognize", web_video_recognize_handle);
+	//websFormDefine("helmet", web_video_helmet_handle);
 	return 0;
 }
 //#endif

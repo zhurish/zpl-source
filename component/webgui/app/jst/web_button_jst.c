@@ -96,23 +96,6 @@ static int web_button_call_hook(char *action, char *btnid, Webs *wp)
 	return ERROR;
 }
 
-static int jst_button_onclick(int eid, webs_t wp, int argc, char **argv)
-{
-	int i = 0;
-	for (i = 0; i < argc; i++)
-	{
-		if (argv[i])
-			printf("%s: %d %s\r\n", __func__, i, argv[i]);
-	}
-	return 0;
-}
-
-static int jst_button(int eid, webs_t wp, int argc, char **argv)
-{
-	//char *date = websGetDateString(NULL);
-	websWrite(wp, "%s", "admin");
-	return 0;
-}
 
 static int web_button_onclick(Webs *wp, char *path, char *query)
 {
@@ -124,28 +107,25 @@ static int web_button_onclick(Webs *wp, char *path, char *query)
 	strval = webs_get_var(wp, T("ACTION"), T(""));
 	if (NULL == strval)
 	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get ACTION Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	strcpy(action, strval);
-	//printf("%s: ACTION=%s\r\n", __func__, strval);
+
 	strval = webs_get_var(wp, T("BTNID"), T(""));
 	if (NULL == strval)
 	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get BTNID Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	strcpy(ID, strval);
-/*
-	printf("%s: ID=%s\r\n", __func__, strval);
-
-	if (path)
-		printf("%s: path=%s\r\n", __func__, path);
-	if (query)
-		printf("%s: query=%s\r\n", __func__, query);
-*/
-
+	if(WEB_IS_DEBUG(MSG) && WEB_IS_DEBUG(DETAIL))
+		zlog_debug(ZLOG_WEB, "web Get ACTION=%s BTNID=%s", action, ID);
 	if (web_button_call_hook(action, ID, wp) == OK)
 	{
-		return OK;//web_return_text_plain(wp, OK);
+		return OK;
 	}
 	return web_return_text_plain(wp, ERROR);
 }
@@ -161,25 +141,22 @@ static int web_progress(Webs *wp, char *path, char *query)
 	strval = webs_get_var(wp, T("VIEW"), T(""));
 	if (NULL == strval)
 	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get VIEW Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	strcpy(action, strval);
-	//printf("%s: VIEW=%s\r\n", __func__, strval);
+
 	strval = webs_get_var(wp, T("ID"), T(""));
 	if (NULL == strval)
 	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get ID Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	strcpy(ID, strval);
-/*
-	printf("%s: ID=%s\r\n", __func__, strval);
-
-	if (path)
-		printf("%s: path=%s\r\n", __func__, path);
-	if (query)
-		printf("%s: query=%s\r\n", __func__, query);
-*/
-
+	if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+		zlog_debug(ZLOG_WEB, "web Get VIEW=%s ID=%s", action, ID);
 	if (web_button_call_hook(action, ID, wp) == OK)
 	{
 		return web_return_text_plain(wp, OK);
@@ -196,9 +173,6 @@ int web_button_cb_init(void)
 
 int web_button_jst_init(void)
 {
-
-	websDefineJst("jst_button", jst_button);
-	websDefineJst("jst_button_onclick", jst_button_onclick);
 	websFormDefine("button_onclick", web_button_onclick);
 	websFormDefine("btnClick", web_button_onclick);
 	websFormDefine("progress_view", web_progress);

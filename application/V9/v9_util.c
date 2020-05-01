@@ -27,7 +27,22 @@
 #include <sys/statfs.h>
 #include <sys/vfs.h>
 
-#include "application.h"
+#include "v9_device.h"
+#include "v9_util.h"
+#include "v9_video.h"
+#include "v9_serial.h"
+#include "v9_slipnet.h"
+#include "v9_cmd.h"
+
+#include "v9_video_disk.h"
+#include "v9_user_db.h"
+#include "v9_video_db.h"
+
+#include "v9_board.h"
+#include "v9_video_sdk.h"
+#include "v9_video_user.h"
+#include "v9_video_board.h"
+#include "v9_video_api.h"
 
 
 #ifndef FSHIFT
@@ -43,11 +58,7 @@ int v9_cpu_load(u_int16 *use)
 	u_int16 val = 0;
 	struct sysinfo info;
 	sysinfo(&info);
-/*	sprintf(tmp, " %u.%02u, %u.%02u, %u.%02u",
-			LOAD_INT(info.loads[0]), LOAD_FRAC(info.loads[0]),
-			LOAD_INT(info.loads[1]), LOAD_FRAC(info.loads[1]),
-			LOAD_INT(info.loads[2]), LOAD_FRAC(info.loads[2]));
-	return tmp;*/
+
 	val = (LOAD_INT(info.loads[0]) + LOAD_INT(info.loads[1]) + LOAD_INT(info.loads[2]))/3;
 	val = (val << 8);
 	val |= ((LOAD_FRAC(info.loads[0]) + LOAD_FRAC(info.loads[1]) + LOAD_FRAC(info.loads[2]))/3)&0xff;
@@ -79,19 +90,6 @@ int v9_memory_load(u_int32 *total, u_int8 *use)
 		*total = host_system.mem_total;
 	if(use)
 		*use = ((host_system.mem_uses*100)/host_system.mem_total);
-/*	websWrite(wp, "Total:%d MB, Free:%d MB, Uses:%d MB",
-			host_system.mem_total>>10, host_system.mem_free>>10, host_system.mem_uses>>10);*/
-/*	websSetStatus(wp, 200);
-	websWriteHeaders(wp, -1, 0);
-	websWriteHeader(wp, "Content-Type", "application/json");
-	websWriteEndHeaders(wp);
-
-	websWrite(wp, "{\"response\":\"%s\", \"memuses\":\"%d%%\", \"localtime\":\"%s\", "
-			"\"uptime\":\"%s\", \"cpu_load\":\"%s\"}",
-		"OK", ((host_system.mem_uses*100)/host_system.mem_total),
-		os_time_fmt ("date", os_time(NULL)), _web_uptime(tmp1), _web_cpu_load(tmp2));
-
-	websDone(wp);*/
 	return OK;
 }
 
@@ -112,9 +110,6 @@ int v9_disk_load(char *path, u_int32 *total, u_int32 *use, u_int8 *puse)
 			*use = mbTotalsize - mbFreedisk;
 		if(puse)
 			*puse = ((mbTotalsize - mbFreedisk)*100)/mbTotalsize;
-
-		//zlog_debug(ZLOG_APP, "%s  total=%dMB, free=%dMB", path, mbTotalsize, mbFreedisk);
-
 		return OK;
 	}
 	return ERROR;

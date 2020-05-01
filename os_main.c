@@ -29,7 +29,7 @@
 
 //extern struct zebra_privs_t os_privs;
 //extern struct quagga_signal_t os_signals[];
-
+//handle SIGUSR2 nostop noprint
 
 struct os_main_option
 {
@@ -242,7 +242,7 @@ static int os_privs_low()
 int main (int argc, char **argv)
 {
 	char *p;
-	extern int console_enable;
+	//extern int console_enable;
 #ifdef OS_SIGNAL_SIGWAIT
 	int signo[] = {SIGUSR2};
 	sigset_t mask;

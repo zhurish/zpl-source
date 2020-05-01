@@ -211,7 +211,7 @@ Offset websSeekFile(int fd, Offset offset, int origin)
 PUBLIC ssize websWriteFile(int fd, cchar *buf, ssize size)
 {
 #if ME_ROM
-    error("Cannot write to a rom file system");
+    web_error("Cannot write to a rom file system");
     return -1;
 #else
     return write(fd, buf, (uint) size);

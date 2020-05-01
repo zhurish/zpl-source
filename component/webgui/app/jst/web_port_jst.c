@@ -20,6 +20,7 @@
 #include "web_app.h"
 #include "web_api.h"
 
+#ifndef THEME_V9UI
 static int jst_port_connect(int eid, webs_t wp, int argc, char **argv)
 {
 	if(argv[1])
@@ -78,10 +79,13 @@ static int web_switch_port_connect_tbl(Webs *wp, void *p)
 	return ERROR;
 }
 #endif
+#endif /* THEME_V9UI */
 
 int web_port_jst_init(void)
 {
+#ifndef THEME_V9UI
 	websDefineJst("jst_port_connect", jst_port_connect);
+#endif /* THEME_V9UI */
 #if 0
 	websFormDefine("port-tbl", web_switch_port_tbl);
 	web_button_add_hook("switch", "save", web_switch_port_add_tbl, NULL);

@@ -52,7 +52,7 @@ PUBLIC int socketOpen(void)
         hasIPv6 = 1;
         closesocket(fd);
     } else {
-        trace(1, "This system does not have IPv6 support");
+        web_logmsg(WEBS_NOTICE, "This system does not have IPv6 support");
     }
     return 0;
 }
@@ -133,19 +133,19 @@ PUBLIC int socketListen(cchar *ip, int port, SocketAccept accept, int flags)
     enable = 1;
 #if ME_UNIX_LIKE || VXWORKS
     if (setsockopt(sp->sock, SOL_SOCKET, SO_REUSEADDR, (char*) &enable, sizeof(enable)) != 0) {
-        error("Cannot set reuseaddr, errno %d", errno);
+        web_error("Cannot set reuseaddr, errno %d", errno);
     }
 #if defined(SO_REUSEPORT) && KEEP
     /*
         This permits multiple servers listening on the same endpoint
      */
     if (setsockopt(sp->sock, SOL_SOCKET, SO_REUSEPORT, (char*) &enable, sizeof(enable)) != 0) {
-        error("Cannot set reuseport, errno %d", errno);
+        web_error("Cannot set reuseport, errno %d", errno);
     }
 #endif
 #elif ME_WIN_LIKE && defined(SO_EXCLUSIVEADDRUSE)
     if (setsockopt(sp->sock, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (char*) &enable, sizeof(enable)) != 0) {
-        error("Cannot set exclusiveaddruse, errno %d", WSAGetLastError());
+        web_error("Cannot set exclusiveaddruse, errno %d", WSAGetLastError());
     }
 #endif
 
@@ -165,7 +165,7 @@ PUBLIC int socketListen(cchar *ip, int port, SocketAccept accept, int flags)
     }
 #endif
     if (bind(sp->sock, (struct sockaddr*) &addr, addrlen) == SOCKET_ERROR) {
-        error("Cannot bind to address %s:%d, errno %d", ip ? ip : "*", port, errno);
+        web_error("Cannot bind to address %s:%d, errno %d", ip ? ip : "*", port, errno);
         socketFree(sid);
         return -1;
     }

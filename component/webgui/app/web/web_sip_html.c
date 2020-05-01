@@ -626,7 +626,7 @@ static int web_sip_set(Webs *wp, char *path, char *query)
 
 	if(web_sip_config_set(wp) == OK)
 	{
-		printf("%s: ------_pjsip->proto = %d\r\n", __func__,pl_pjsip->proto);
+		_WEB_DBG_TRAP("%s: ------_pjsip->proto = %d\r\n", __func__,pl_pjsip->proto);
 #ifdef PL_OPENWRT_UCI
 		voip_uci_sip_config_save(pl_pjsip);
 		voip_stream_config_save(pl_pjsip);
@@ -756,7 +756,7 @@ static int web_volume_change(Webs *wp, void *p)
 	btnid = webs_get_var(wp, T("BTNID"), T(""));
 	if (NULL == btnid)
 	{
-		printf("%s: can not get BTNID\r\n", __func__);
+		_WEB_DBG_TRAP("%s: can not get BTNID\r\n", __func__);
 		return ERROR;//web_return_text_plain(wp, ERROR);
 	}
 	if(strstr(btnid, "out_"))
@@ -766,7 +766,7 @@ static int web_volume_change(Webs *wp, void *p)
 			voip_playback_volume_out_set_api(atoi(value));
 		else
 		{
-			printf("%s: can not get out volume\r\n", __func__);
+			_WEB_DBG_TRAP("%s: can not get out volume\r\n", __func__);
 			return ERROR;//web_return_text_plain(wp, ERROR);
 		}
 		return web_return_text_plain(wp, OK);
@@ -778,7 +778,7 @@ static int web_volume_change(Webs *wp, void *p)
 			voip_capture_volume_adc_set_api(atoi(value));
 		else
 		{
-			printf("%s: can not get in volume\r\n", __func__);
+			_WEB_DBG_TRAP("%s: can not get in volume\r\n", __func__);
 			return ERROR;//web_return_text_plain(wp, ERROR);
 		}
 		return web_return_text_plain(wp, OK);

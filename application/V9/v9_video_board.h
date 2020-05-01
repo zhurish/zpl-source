@@ -30,15 +30,15 @@ typedef enum v9_video_stream_type_s
 } v9_video_stream_type_t;
 
 
-typedef struct v9_video_channel_s	//映射到摄像头
+typedef struct v9_video_stream_s	//映射到摄像头
 {
 	//NODE		node;
 	u_int8		id;					//板卡ID
 	u_int8		ch;					//通道
 	u_int32		address;			//IP 地址
 	u_int16		port;				//RTSP 端口号
-	char		username[V9_APP_USERNAME_MAX];		//用户名
-	char		password[V9_APP_PASSWORD_MAX];		//密码
+	char		username[APP_USERNAME_MAX];		//用户名
+	char		password[APP_USERNAME_MAX];		//密码
 	u_int8		proto;				//协议 RTSP
 
 	u_int32		fps;				//帧率
@@ -52,13 +52,15 @@ typedef struct v9_video_channel_s	//映射到摄像头
 	BOOL		change;
 
 	char		video_url[V9_APP_VIDEO_URL_MAX];
-
+	//char		*video_url;
+	char		mainstream[V9_APP_VIDEO_URL_PARAM_MAX];
+	char		secondary[V9_APP_VIDEO_URL_PARAM_MAX];
 
 	v9_video_stream_type_t type;
-#ifdef V9_VIDEO_SDK_API
-	ST_SDKStatusInfo status;
-#endif
-}v9_video_channel_t;
+
+	BOOL		hw_sync;				//参数是否同步至底层
+
+}v9_video_stream_t;
 
 
 typedef struct v9_video_board_s
@@ -70,19 +72,22 @@ typedef struct v9_video_board_s
 
 	u_int8		channel_cnt;			//计算板连接视频通道数
 	u_int8		channel[V9_APP_CHANNEL_MAX];			//计算板连接视频通道数
-	v9_video_channel_t *video_stream[V9_APP_CHANNEL_MAX];//计算板下连接视频数据指针
+	v9_video_stream_t *video_stream[V9_APP_CHANNEL_MAX];//计算板下连接视频数据指针
 
 	u_int32		video_load;				//计算板视频处理负载大小，视频流量均衡分发依据
 										// fps0*ch0 + fps1*ch1 ...
 
 
-	v9_address_t	board;
+	v9_board_t	board;
 	v9_video_sdk_t	sdk;
 
 	BOOL		use;					//计算板卡使用标志
 	BOOL		active;				//计算板卡SDK正常(SDK连接状态，添加视频流等上层操作依赖于该状态)
 
 	BOOL		disabled;			//计算板卡禁止使用
+
+	void 		*mutex;
+	void		*t_timeout;
 }v9_video_board_t;
 
 
@@ -96,6 +101,10 @@ int v9_video_board_add(u_int32 id);
 int v9_video_board_del(u_int32 id);
 int v9_video_board_active(u_int32 id, BOOL enable);
 BOOL v9_video_board_isactive(u_int32 id);
+
+BOOL v9_board_ready(v9_video_board_t *vboard);
+int v9_board_set_ready(v9_video_board_t *vboard);
+
 int v9_video_board_address(u_int32 id, u_int32 address, u_int16 port);
 
 int v9_video_board_get_vch(u_int32 id);
@@ -126,30 +135,40 @@ int v9_video_board_show(struct vty *vty, BOOL detail);
 //获取计算板负载最小的板卡ID
 int v9_video_board_get_minload();
 //根据板卡ID获取空闲通道
-int v9_video_board_channel_alloc(u_int32 id);
+int v9_video_board_stream_alloc(u_int32 id);
 //把视频流加入该板卡
-int v9_video_board_channel_add(u_int32 id, v9_video_channel_t *value);
+int v9_video_board_stream_add(u_int32 id, v9_video_stream_t *value, BOOL load);
 //把视频流从该板卡删除
-int v9_video_board_channel_del(u_int32 id, v9_video_channel_t *value);
+int v9_video_board_stream_del(u_int32 id, v9_video_stream_t *value);
 //在该板卡查询视频流
-int v9_video_board_channel_lookup(u_int32 id, v9_video_channel_t *value);
-
+int v9_video_board_stream_lookup(u_int32 id, v9_video_stream_t *value);
 
 
 /********************************************************************/
+/*int v9_video_stream_split(char *url, u_int8 *ch, u_int32 *address, u_int16 *port,
+							char *username, char *password, char *param, char *secondary);*/
 /********************************************************************/
-v9_video_channel_t * v9_video_board_video_channel_lookup_by_id_and_ch(u_int8 id, u_int8 ch);
+int v9_video_board_stream_status_change(u_int8 id, u_int8 ch, int rtsp, int decode);
 
-v9_video_channel_t * v9_video_channel_alloc_api(u_int8 ch, u_int32 address, u_int16 port,
-												char *username, char *password, u_int32 fps);
-v9_video_channel_t * v9_video_channel_lookup_api(u_int8 ch, u_int32 address, u_int16 port);
+v9_video_stream_t * v9_video_board_stream_lookup_by_id_and_ch(u_int8 id, u_int8 ch);
 
-int v9_video_board_ID_lookup_api_by_video_channel(u_int8 ch, u_int32 address, u_int16 port);
+v9_video_stream_t * v9_video_board_stream_alloc_api(u_int8 ch, u_int32 address, u_int16 port,
+												char *username, char *password, u_int32 fps,
+												char *param, char *secondary);
 
-int v9_video_channel_free_api(v9_video_channel_t *v);
+v9_video_stream_t * v9_video_board_stream_lookup_api(u_int8 ch, u_int32 address, u_int16 port);
+int v9_video_board_stream_update_api(u_int8 id, u_int8 ch, char *param, char *secondary);
 
-int v9_video_channel_show(struct vty *vty, u_int32 id, BOOL detail);
-int v9_video_channel_write_config(struct vty *vty);
+int v9_video_board_ID_lookup_api_by_video_stream(u_int8 ch, u_int32 address, u_int16 port);
+
+int v9_video_board_stream_free_api(v9_video_stream_t *v);
+
+int v9_video_board_stream_show(struct vty *vty, u_int32 id, BOOL detail);
+int v9_video_board_stream_write_config(struct vty *vty);
+
+
+int v9_video_sdk_config_show(struct vty *vty);
+
 void * v9_video_app_tmp();
 
 #endif /* __V9_VIDEO_BOARD_H__ */

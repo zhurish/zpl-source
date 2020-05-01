@@ -367,7 +367,22 @@ enum
   MTYPE_VIDEO_SESSION,
   MTYPE_VIDEO_DATA,
   MTYPE_VIDEO_SDK,
+  MTYPE_VIDEO_DB,
+  MTYPE_VIDEO_PIC,
+  MTYPE_VIDEO_KEY,
   MTYPE_VIDEO_TMP,
+  MTYPE_MQTT,
+  MTYPE_MQTT_TOP,
+  MTYPE_MQTT_TOPIC,
+  MTYPE_MQTT_MESSAGE,
+  MTYPE_MQTT_SESSION,
+  MTYPE_MQTT_CONF,
+  MTYPE_MQTT_FILTER,
+  MTYPE_MQTT_DATA,
+  MTYPE_MQTT_SUB,
+  MTYPE_MQTT_PUB,
+  MTYPE_MQTT_KEY,
+  MTYPE_MQTT_TMP,
   MTYPE_MAX,
 };
 
@@ -395,6 +410,7 @@ extern struct memory_list memory_list_ssh[];
 extern struct memory_list memory_list_voip[];
 extern struct memory_list memory_list_web[];
 extern struct memory_list memory_list_video[];
+extern struct memory_list memory_list_mqtt[];
 
 #endif /* _QUAGGA_MEMTYPES_H */
 

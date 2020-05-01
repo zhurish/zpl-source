@@ -11,18 +11,17 @@ APP_OBJS += v9_cmd.o
 APP_OBJS += v9_board.o
 APP_OBJS += v9_util.o
 
-APP_OBJS += v9_video_api.o
 APP_OBJS += v9_video_board.o
-APP_OBJS += v9_video.o
+
+APP_OBJS += v9_video_disk.o
+APP_OBJS += v9_user_db.o
+APP_OBJS += v9_video_db.o
 
 APP_OBJS += v9_video_sdk.o
 APP_OBJS += v9_video_user.o
 
-#APP_OBJS += x5_b_ctl.o
-
-#APP_OBJS += x5b_dbase.o
-#APP_OBJS += x5b_card.o
-#APP_OBJS += x5b_facecard.o
+APP_OBJS += v9_video.o
+APP_OBJS += v9_video_api.o
 
 APP_OBJS += application.o
 #############################################################################

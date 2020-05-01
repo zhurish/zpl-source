@@ -27,31 +27,67 @@
 #include "application.h"
 
 
-static int v9_video_callback_user(v9_video_user_t *user, void *pweb)
+typedef struct
 {
-	Webs *wp = pweb;
+	u_int8 flag;
+	u_int8 index;
+	u_int32 count;
+	int group;
+	void *pweb;
+}v9_web_user_t;
+
+static v9_web_user_t web_user;
+
+static int v9_video_callback_user(v9_video_user_t *user, void *v9web_user)
+{
+	v9_web_user_t *v9_web_user = v9web_user;
+	Webs *wp = v9_web_user->pweb;
 	if(user && wp)
 	{
 		char *picname = NULL;
+		if(v9_web_user->flag)
+		{
+			v9_web_user->count++;
+
+			if(v9_web_user->index > v9_web_user->count)
+			{
+				return OK;
+			}
+		}
 		if(wp->iValue > 0)
 			websWrite(wp, "%s", ",");
 
-		picname = strrchr(user->picname, '/');
-		if(picname)
-			picname++;
-		else
+		//picname = strrchr(user->picname, '/');
+		//if(picname)
+		//	picname++;
+		//else
 			picname = user->picname;
 
 		websWrite(wp, "{\"name\":\"%s\", \"gender\":\"%s\", \"ID\":\"%s\"," \
-			"\"BID\":%d, \"group\":\"%s\", \"pic\":\"%s%\"}",
+			"\"BID\":%d, \"group\":%d, \"url\":\"%s%\",\"text\":\"%s%\"}",
 			user->username,
 			user->gender ? "男":"女",
 			user->userid,
-			user->ID,
-			user->group ? "白名单":"黑名单",
-			picname);
+			V9_APP_BOARD_HW_ID(user->ID),
+			user->group,
+			picname,
+			user->text);
+
 		wp->iValue++;
+
+		if(web_user.flag)
+		{
+			if(wp->iValue == 24)
+			{
+				v9_web_user->index += wp->iValue;
+				return ERROR;
+			}
+		}
 		return OK;
+	}
+	else
+	{
+		_WEB_DBG_TRAP("%s:wp=%s user=%s\r\n",__func__,wp?"full":"null",user?"full":"null");
 	}
 	return ERROR;
 }
@@ -59,14 +95,75 @@ static int v9_video_callback_user(v9_video_user_t *user, void *pweb)
 
 static int web_facelib_all_detail(Webs *wp, char *path, char *query)
 {
+
+
+	char *tmp = NULL;
+	u_int32 id = 1;
+	int group = ERROR;
+	wp->iValue = 0;
+	tmp = webs_get_var(wp, "ID", NULL);
+	if (tmp == NULL)
+	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
+		return web_return_text_plain(wp, ERROR);
+	}
+	if(tmp)
+	{
+		//_WEB_DBG_TRAP("%s: ID=%s\r\n", __func__, tmp);
+		id = atoi(tmp);
+	}
+	tmp = webs_get_var(wp, "group", NULL);
+	if (tmp == NULL)
+	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get Group ID Value");
+		return web_return_text_plain(wp, '[');
+	}
+	if(tmp)
+	{
+		//_WEB_DBG_TRAP("%s: group=%s\r\n", __func__, tmp);
+		group = atoi(tmp);
+	}
+	tmp = webs_get_var(wp, "ACTION", NULL);
+	if (tmp == NULL)
+	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get ACTION Value");
+		return web_return_text_plain(wp, ERROR);
+	}
+	if(tmp)
+	{
+		//_WEB_DBG_TRAP("%s: ACTION=%s\r\n", __func__, tmp);
+		web_user.count = 0;
+		web_user.index = 24 * atoi(tmp)-24;
+/*		if(strstr(tmp, "frist"))
+			memset(&web_user, 0, sizeof(web_user));
+		else if(strstr(tmp, "next"))
+		{
+			web_user.index = web_user.count;
+		}*/
+		//if(web_user.index == 0)
+		//	web_user.count = web_user.index;
+		web_user.flag = 1;
+	}
+
 	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);
 	websWriteHeader(wp, "Content-Type", "text/plain");
 	websWriteEndHeaders(wp);
 	websWrite(wp, "%s", "[");
-	wp->iValue = 0;
 
-	v9_video_user_foreach(v9_video_callback_user, wp);
+	web_user.pweb = wp;
+	v9_video_user_foreach(V9_APP_BOARD_CALCU_ID(id), group, v9_video_callback_user, &web_user);
+
+	if(web_user.flag)
+	{
+		if(wp->iValue < 24)
+		{
+			memset(&web_user, 0, sizeof(web_user));
+		}
+	}
 
 	wp->iValue = 0;
 	websWrite(wp, "%s", "]");
@@ -74,70 +171,60 @@ static int web_facelib_all_detail(Webs *wp, char *path, char *query)
 	return OK;
 }
 
-/*
-static int web_video_facelib_add(Webs *wp, char *path, char *query)
+
+static int web_video_facelib_delete(Webs *wp, void *p)
 {
-	int ret = 0;
-	v9_video_channel_t facelib;
-	char *value = NULL;
-	memset(&facelib, 0, sizeof(v9_video_channel_t));
-
-	value = webs_get_var(wp, T("address"), T(""));
-	if (NULL == value)
-	{
-		return web_return_text_plain(wp, ERROR);
-	}
-	facelib.address = ntohl(inet_addr(value));
-
-	value = webs_get_var(wp, T("username"), T(""));
-	if (NULL != value)
-	{
-		strcpy(facelib.username, value);
-	}
-	value = webs_get_var(wp, T("password"), T(""));
-	if (NULL != value)
-	{
-		strcpy(facelib.password, value);
-	}
-
-	value = webs_get_var(wp, T("rstpport"), T(""));
-	if (NULL != value)
-	{
-		facelib.port = atoi(value);
-	}
-	value = webs_get_var(wp, T("fps"), T(""));
-	if (NULL != value)
-	{
-		facelib.fps = atoi(value);
-	}
-	value = webs_get_var(wp, T("boardid"), T(""));
-	if (NULL != value)
-	{
-		facelib.id = atoi(value);
-	}
-	ret =  OK;//v9_video_facelib_add_api(facelib.id, facelib.ch, facelib.address, facelib.port,
-	//							   facelib.username, facelib.password, facelib.fps);
-	if(ret == OK)
-		return web_return_text_plain(wp, OK);
-	else
-		return web_return_text_plain(wp, ERROR);
-}
-*/
-
-
-static int web_video_facelib_delete_one(Webs *wp, char *path, char *query, int type)
-{
+	u_int32 id = 0;
 	int ret = 0;
 	char *strID = NULL;
+	char *tmp = NULL;
 	strID = webs_get_var(wp, T("ID"), T(""));
 	if (NULL == strID)
 	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get User ID Value");
 		ret = ERROR;
 		goto err_out;
 	}
-
-	ret = v9_video_user_del_user(0, strID);
-
+	tmp = webs_get_var(wp, "BID", NULL);
+	if(tmp)
+	{
+		//_WEB_DBG_TRAP("%s: BID=%s\r\n", __func__, tmp);
+		id = atoi(tmp);
+	}
+	else
+	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
+		ret = ERROR;
+		goto err_out;
+	}
+	if(strstr(strID, ",") == NULL)
+		ret = v9_video_user_del_user(V9_APP_BOARD_CALCU_ID(id), strID);
+	else
+	{
+		char *strid = strID;
+		int i = 0, j = 0;
+		char tmpid[64];
+		memset(tmpid, 0 ,sizeof(tmpid));
+		while(i < strlen(strID))
+		{
+			if(strid[i] != ',')
+				tmpid[j++] = strid[i];
+			else
+			{
+				ret |= v9_video_user_del_user(V9_APP_BOARD_CALCU_ID(id), tmpid);
+				memset(tmpid, 0 ,sizeof(tmpid));
+				j = 0;
+			}
+			i++;
+		}
+	}
+	if(ret == ERROR)
+	{
+		if(WEB_IS_DEBUG(EVENT))
+			zlog_debug(ZLOG_WEB, "Can not Del User");
+	}
 err_out:
 	if(ret != OK)
 		return ERROR;//
@@ -154,14 +241,9 @@ err_out:
 	return OK;
 }
 
-static int web_video_facelib_delete(Webs *wp, void *p)
-{
-	return web_video_facelib_delete_one(wp, NULL, NULL, 0);
-}
 
 
-
-
+#if 0
 static void web_video_facelib_and_upload(Webs *wp, char *path, char *query)
 {
 	u_int32 id = 0;
@@ -169,7 +251,7 @@ static void web_video_facelib_and_upload(Webs *wp, char *path, char *query)
 	int group = 0, ret = ERROR;
 	char *user = NULL;
 	char *user_id = NULL;
-	char *pic = NULL;
+	//char *pic = NULL;
 	char *tmp = NULL;
 	WebsKey *s = NULL;
 	WebsUpload *up = NULL;
@@ -205,8 +287,8 @@ static void web_video_facelib_and_upload(Webs *wp, char *path, char *query)
 				group = atoi(tmp);
 			}
 			tmp = webs_get_var(wp, "BID", NULL);
-/*			if (tmp != NULL)
-				printf("%s: group=%s\r\n", __func__, tmp);*/
+			if (tmp != NULL)
+				printf("%s: ID=%s\r\n", __func__, tmp);
 			if(tmp)
 			{
 				id = atoi(tmp);
@@ -227,11 +309,12 @@ static void web_video_facelib_and_upload(Webs *wp, char *path, char *query)
 				return ;
 			}
 			//pic = up->clientFilename;
-			pic = uploadfile;
+			//pic = uploadfile;
 
 			printf("rename %s -> %s", up->filename, uploadfile);
 			sync();
-			ret = v9_video_user_add_user( id,  gender,  group, user, user_id, pic);
+			ret = v9_video_user_add_user(V9_APP_BOARD_CALCU_ID(id),  gender,  group, user, user_id, uploadfile);
+
 		}
 		web_return_text_plain(wp, ret);
 		return ;
@@ -272,15 +355,278 @@ err_out:
 	websDone(wp);
 	return OK;
 }
+#endif
+
+static int web_video_facelib_add(Webs *wp, char *path, char *query)
+{
+	u_int32 id = 0;
+	BOOL gender = FALSE;
+	int group = 0, ret = ERROR;
+	char *user = NULL;
+	char *user_id = NULL;
+	char *tmp = NULL;
+	char *text = NULL;
+	char uploadfile[256];
+	char tempfile[256];
+	user = webs_get_var(wp, "name", NULL);
+	if(!user)
+	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get User Name Value");
+		return web_return_text_plain(wp, ERROR);
+	}
+	tmp = webs_get_var(wp, "gender", NULL);
+	if(!tmp)
+	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get gender Value");
+		return web_return_text_plain(wp, ERROR);
+	}
+	gender = atoi(tmp);
+	user_id = webs_get_var(wp, "ID", NULL);
+	if(!user_id)
+	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get User ID Value");
+		return web_return_text_plain(wp, ERROR);
+	}
+	tmp = webs_get_var(wp, "group", NULL);
+	if(!tmp)
+	{
+		return web_return_text_plain(wp, ERROR);
+	}
+	if(tmp)
+	{
+		group = atoi(tmp);
+	}
+
+	tmp = webs_get_var(wp, "BID", NULL);
+	if(!tmp)
+	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
+		return web_return_text_plain(wp, ERROR);
+	}
+	if(tmp)
+	{
+		id = atoi(tmp);
+	}
+	tmp = webs_get_var(wp, "upload_pic", NULL);
+	if(!tmp)
+	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get Pic Name Value");
+		return web_return_text_plain(wp, ERROR);
+	}
+
+
+	text = webs_get_var(wp, "text", NULL);
+
+	memset(uploadfile, 0, sizeof(uploadfile));
+	memset(tempfile, 0, sizeof(tempfile));
+	//sprintf(uploadfile, "%s/%s", WEB_UPLOAD_BASE, tmp);
+	sprintf(tempfile, "%s/%s", V9_USER_DB_DIR, tmp);
+
+	tmp = strrchr(tmp, '.');
+	sprintf(uploadfile, "%s/%s%s", V9_USER_DB_DIR, user_id, tmp);
+	rename(tempfile, uploadfile);
+	sync();
+	_WEB_DBG_TRAP("%s: mv %s %s\r\n", __func__, tempfile, uploadfile);
+	//if(access(v9_user_sqldb_dir(APP_BOARD_CALCU_1), F_OK) != 0)
+	//	mkdir(v9_user_sqldb_dir(APP_BOARD_CALCU_1), 0644);
+
+	ret = v9_video_user_add_user(V9_APP_BOARD_CALCU_ID(id),  gender,  group, user, user_id, uploadfile, text);
+	if(ret == ERROR)
+	{
+		if(WEB_IS_DEBUG(EVENT))
+			zlog_debug(ZLOG_WEB, "Can not Add User");
+	}
+	return web_return_text_plain(wp, ret);
+}
+
+
+/***********************************************************************************/
+/***********************************************************************************/
+static int web_facegroup_all(Webs *wp, char *path, char *query)
+{
+	char *tmp = NULL;
+	u_int32 i = 0;
+	u_int32 id = 1;
+	tmp = webs_get_var(wp, "ID", NULL);
+	if (tmp == NULL)
+	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
+		return web_return_text_plain(wp, ERROR);
+	}
+	websSetStatus(wp, 200);
+	websWriteHeaders(wp, -1, 0);
+	websWriteHeader(wp, "Content-Type", "text/plain");
+	websWriteEndHeaders(wp);
+	wp->iValue = 0;
+	websWrite(wp, "%s", "[");
+	if(tmp)
+	{
+		id = V9_APP_BOARD_CALCU_ID(atoi(tmp));
+	}
+	for(i = 0; i < APP_GROUP_MAX; i++)
+	{
+		//if(GROUP_ACTIVE(_group_tbl[ID_INDEX(id)].ID))
+		{
+			if(GROUP_ACTIVE(_group_tbl[ID_INDEX(id)].gtbl[i].groupid))
+			{
+				if(wp->iValue > 0)
+					websWrite(wp, "%s", ",");
+
+				websWrite(wp, "{\"groupname\":\"%s\", \"group\":%d}",
+						  _group_tbl[ID_INDEX(id)].gtbl[i].groupname,
+						  GROUP_INDEX(_group_tbl[ID_INDEX(id)].gtbl[i].groupid));
+
+				wp->iValue++;
+			}
+		}
+	}
+	wp->iValue = 0;
+	websWrite(wp, "%s", "]");
+	websDone(wp);
+	return OK;
+}
+
+static int web_video_facegroup_handle(Webs *wp, char *path, char *query)
+{
+	u_int32 id = 0;
+	int ret = ERROR;
+
+	char *tmp = NULL;
+
+	tmp = webs_get_var(wp, "ID", NULL);
+	if(!tmp)
+	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
+		return web_return_text_plain(wp, ERROR);
+	}
+	id = V9_APP_BOARD_CALCU_ID(atoi(tmp));
+
+
+	tmp = webs_get_var(wp, "ACTION", NULL);
+	if(!tmp)
+	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get ACTION Value");
+		return web_return_text_plain(wp, ERROR);
+	}
+	if(strstr(tmp, "add"))
+	{
+		tmp = webs_get_var(wp, "groupname", NULL);
+		if(!tmp)
+		{
+			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+				zlog_debug(ZLOG_WEB, "Can not Get groupname Value");
+			return web_return_text_plain(wp, ERROR);
+		}
+		ret = v9_video_usergroup_add( id, tmp);
+		if(ret == ERROR)
+		{
+			if(WEB_IS_DEBUG(EVENT))
+				zlog_debug(ZLOG_WEB, "Can not Add Group");
+		}
+		websSetStatus(wp, 200);
+		websWriteHeaders(wp, -1, 0);
+		websWriteHeader(wp, "Content-Type", "application/json");
+		websWriteEndHeaders(wp);
+
+		if(ret != ERROR)
+		{
+			websWrite(wp,
+				"{\"response\":\"%s\", \"group\":%d, \"groupname\":\"%s\"}", "OK", ret, tmp);
+		}
+		else
+		{
+			websWrite(wp,
+				"{\"response\":\"%s\", \"group\":%d, \"groupname\":\"%s\"}", "ERROR", 0, tmp);
+		}
+		websDone(wp);
+		return OK;
+	}
+	else if(strstr(tmp, "del"))
+	{
+		tmp = webs_get_var(wp, "group", NULL);
+		if(!tmp)
+		{
+			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+				zlog_debug(ZLOG_WEB, "Can not Get Group ID Value");
+			return web_return_text_plain(wp, ERROR);
+		}
+		ret = v9_video_usergroup_del( id, atoi(tmp));
+		if(ret == ERROR)
+		{
+			if(WEB_IS_DEBUG(EVENT))
+				zlog_debug(ZLOG_WEB, "Can not Del Group");
+		}
+	}
+	else if(strstr(tmp, "rename"))
+	{
+		int group = 0;
+		tmp = webs_get_var(wp, "group", NULL);
+		if(!tmp)
+		{
+			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+				zlog_debug(ZLOG_WEB, "Can not Get Group ID Value");
+			return web_return_text_plain(wp, ERROR);
+		}
+		group = atoi(tmp);
+		tmp = webs_get_var(wp, "groupname", NULL);
+		if(!tmp)
+		{
+			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+				zlog_debug(ZLOG_WEB, "Can not Get Group Name Value");
+			return web_return_text_plain(wp, ERROR);
+		}
+		ret = v9_video_usergroup_rename(id, group, tmp);
+		if(ret == ERROR)
+		{
+			if(WEB_IS_DEBUG(EVENT))
+				zlog_debug(ZLOG_WEB, "Can not Rename Group");
+		}
+		websSetStatus(wp, 200);
+		websWriteHeaders(wp, -1, 0);
+		websWriteHeader(wp, "Content-Type", "application/json");
+		websWriteEndHeaders(wp);
+
+		if(ret != ERROR)
+		{
+			websWrite(wp,
+				"{\"response\":\"%s\", \"group\":%d, \"groupname\":\"%s\"}", "OK", ret, tmp);
+		}
+		else
+		{
+			websWrite(wp,
+				"{\"response\":\"%s\", \"group\":%d, \"groupname\":\"%s\"}", "ERROR", 0, tmp);
+		}
+		websDone(wp);
+		return OK;
+	}
+	else
+		return web_return_text_plain(wp, ERROR);
+	return web_return_text_plain(wp, ret);
+}
+/***********************************************************************************/
+/***********************************************************************************/
 
 int web_facelib_app(void)
 {
+	memset(&web_user, 0, sizeof(web_user));
 	websFormDefine("allfacelib", web_facelib_all_detail);
 	web_button_add_hook("facelib", "delete", web_video_facelib_delete, NULL);
-	web_button_add_hook("facelib", "loadpic", web_video_facelib_show, NULL);
+	//web_button_add_hook("facelib", "loadpic", web_video_facelib_show, NULL);
 
-	websDefineAction("facelib", web_video_facelib_and_upload);
-	//websFormDefine("addfacelib", web_video_facelib_add);
+	//websDefineAction("facelib", web_video_facelib_and_upload);
+	websDefineAction("facelib", web_video_facelib_add);
+
+	websFormDefine("facegroupall", web_facegroup_all);
+	websFormDefine("facegroup", web_video_facegroup_handle);
+
 	return 0;
 }
 //#endif

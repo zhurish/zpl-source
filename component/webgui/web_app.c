@@ -25,6 +25,9 @@
 web_app_t *web_app = NULL;
 
 static int
+web_app_start (web_app_t *web);
+
+static int
 web_app_task (void *argv);
 
 static int
@@ -116,24 +119,35 @@ web_app_module_init ()
 
 	if (web_app->web_route)
 		XFREE(MTYPE_WEB_ROUTE, web_app->web_route);
-	web_app->web_route = XSTRDUP(MTYPE_WEB_ROUTE, WEBGUI_ROUTE);
+	if(WEBGUI_ROUTE)
+		web_app->web_route = XSTRDUP(MTYPE_WEB_ROUTE, WEBGUI_ROUTE);
 
 	if (web_app->web_auth)
 		XFREE(MTYPE_WEB_AUTH, web_app->web_auth);
-	web_app->web_auth = XSTRDUP(MTYPE_WEB_AUTH, WEBGUI_AUTH);
+	if(WEBGUI_AUTH)
+		web_app->web_auth = XSTRDUP(MTYPE_WEB_AUTH, WEBGUI_AUTH);
 
 	if (web_app->web_login)
 		XFREE(MTYPE_WEB_DOC, web_app->web_login);
-	web_app->web_login = XSTRDUP(MTYPE_WEB_DOC, WEB_LOGIN_HTML);
+	if(WEB_LOGIN_HTML)
+		web_app->web_login = XSTRDUP(MTYPE_WEB_DOC, WEB_LOGIN_HTML);
 
 	if (web_app->web_logout)
 		XFREE(MTYPE_WEB_DOC, web_app->web_logout);
-	web_app->web_logout = XSTRDUP(MTYPE_WEB_DOC, WEB_LOGOUT_HTML);
+	if(WEB_LOGOUT_HTML)
+		web_app->web_logout = XSTRDUP(MTYPE_WEB_DOC, WEB_LOGOUT_HTML);
 
 	if (web_app->web_main)
 		XFREE(MTYPE_WEB_DOC, web_app->web_main);
-	web_app->web_main = XSTRDUP(MTYPE_WEB_DOC, WEB_MAIN_HTML);
+	if(WEB_MAIN_HTML)
+		web_app->web_main = XSTRDUP(MTYPE_WEB_DOC, WEB_MAIN_HTML);
 
+	WEB_DEBUG_ON(MSG);
+	WEB_DEBUG_ON(DETAIL);
+	WEB_DEBUG_ON(EVENT);
+	_web_app_debug = _WEB_DEBUG_MSG|_WEB_DEBUG_DETAIL|_WEB_DEBUG_EVENT;
+
+	web_app_start (web_app);
 	return OK;
 }
 
@@ -221,13 +235,13 @@ web_app_init (web_app_t *web)
 #endif
 	if (websOpen (web->documents, web->web_route) < 0)
 	{
-		error ("Cannot initialize server. Exiting.");
+		zlog_err (ZLOG_WEB, "Cannot initialize server. Exiting.");
 		return -1;
 	}
 #if ME_GOAHEAD_AUTH
 	if (websLoad (web->web_auth) < 0)
 	{
-		error ("Cannot load %s", web->web_auth);
+		zlog_err (ZLOG_WEB,"Cannot load %s", web->web_auth);
 		return -1;
 	}
 #endif
@@ -239,15 +253,84 @@ web_app_init (web_app_t *web)
 	return 0;
 }
 
+#if !ME_GOAHEAD_EXTLOG
+static void webLogDefaultHandler(int flags, cchar *buf)
+{
+/*    char    prefix[ME_GOAHEAD_LIMIT_STRING];
+
+    if (logFd >= 0) {
+        if (flags & WEBS_RAW_MSG) {
+            write(logFd, buf, (int) slen(buf));
+        } else {
+            fmt(prefix, sizeof(prefix), "%s: %d: ", ME_NAME, flags & WEBS_LEVEL_MASK);
+            write(logFd, prefix, (int) slen(prefix));
+            write(logFd, buf, (int) slen(buf));
+            write(logFd, "\n", 1);
+#if ME_WIN_LIKE || ME_UNIX_LIKE
+            if (flags & WEBS_ERROR_MSG && websGetBackground()) {
+                syslog(LOG_ERR, "%s", buf);
+            }
+#endif
+        }
+    }*/
+
+	if(flags & WEBS_ASSERT_MSG)
+	{
+		//extern void pl_zlog (__FILE__, __FUNCTION__, __LINE__, ZLOG_WEB, (flags & WEBS_LEVEL_MASK), "%s", buf);
+		zlog_err(ZLOG_WEB, "%s", buf);
+		return;
+	}
+	if(flags & WEBS_ERROR_MSG)
+	{
+		zlog_err(ZLOG_WEB, "%s", buf);
+		return;
+	}
+	if(flags & WEBS_TRACE_MSG)
+	{
+		zlog_trap(ZLOG_WEB, "%s", buf);
+		return;
+	}
+	switch(flags & WEBS_LEVEL_MASK)
+	{
+		case LOG_ERR:
+			zlog_err(ZLOG_WEB, "%s", buf);
+			break;
+		case LOG_WARNING:
+			zlog_warn(ZLOG_WEB, "%s", buf);
+			break;
+		case LOG_INFO:
+			zlog_info(ZLOG_WEB, "%s", buf);
+			break;
+		case LOG_NOTICE:
+			zlog_notice(ZLOG_WEB, "%s", buf);
+			break;
+		case LOG_DEBUG:
+			zlog_debug(ZLOG_WEB, "%s", buf);
+			break;
+		case LOG_TRAP:
+			zlog_trap(ZLOG_WEB, "%s", buf);
+			break;
+		default:
+			break;
+	}
+}
+#endif /* ME_GOAHEAD_EXTLOG */
+
 static int
 web_app_start (web_app_t *web)
 {
 	zassert(web != NULL);
 	websSetDebug (1);
+#if ME_GOAHEAD_LOGFILE
 	logSetPath ("stdout:2");
-
-	websSetLogLevel (9);
-
+#endif /* ME_GOAHEAD_EXTLOG */
+	websSetLogLevel (WEBS_TRAP);
+	websAccessControlSet(ACCESS_CONTROL_ALLOW_ORIGIN);
+	websAccessControlSet(ACCESS_CONTROL_ALLOW_METHODS);
+	websAccessControlSet(ACCESS_CONTROL_ALLOW_HEADERS);
+#if !ME_GOAHEAD_EXTLOG
+	logSetHandler(webLogDefaultHandler);
+#endif /* ME_GOAHEAD_EXTLOG */
 	web_app_init (web);
 
 	web_app_html_init (web);
@@ -291,7 +374,7 @@ web_app_task (void *argv)
 	{
 		os_sleep (1);
 	}
-	web_app_start (web);
+	//web_app_start (web);
 	while (1)
 	{
 		if (!web->enable)
@@ -330,7 +413,9 @@ web_app_html_init (web_app_t *web)
 	web_system_jst_init ();
 	web_html_jst_init ();
 	web_arp_jst_init ();
+#ifdef PL_DHCP_MODULE
 	web_dhcp_jst_init ();
+#endif
 	web_dns_jst_init ();
 	web_dos_jst_init ();
 	web_firewall_jst_init ();
@@ -347,9 +432,16 @@ web_app_html_init (web_app_t *web)
 	web_login_app ();
 	web_updownload_app ();
 	web_admin_app ();
+#ifdef PL_SNTPC_MODULE
 	web_sntp_app ();
+#endif
+#ifdef PL_SYSLOG_MODULE
 	web_syslog_app ();
+#endif
+
 	web_network_app ();
+	web_netservice_app();
+
 #ifdef PL_WIFI_MODULE
 	web_wireless_app ();
 #endif
@@ -367,8 +459,9 @@ web_app_html_init (web_app_t *web)
 	web_rtsp_app();
 	web_algorithm_app();
 	web_facelib_app();
+	web_db_app();
 #endif
-
+	web_upgrade_app();
 	web_system_app ();
 
 	return OK;

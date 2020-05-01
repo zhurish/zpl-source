@@ -167,13 +167,13 @@ static int web_wireless_sta(Webs *wp, char *path, char *query)
 	{
 		return web_return_text_plain(wp, ERROR);
 	}
-	printf("%s: name=%s\r\n", __func__, ssid);
+	_WEB_DBG_TRAP("%s: name=%s\r\n", __func__, ssid);
 	pass = webs_get_var(wp, T("password"), T(""));
 	if (NULL == pass)
 	{
 		return web_return_text_plain(wp, ERROR);
 	}
-	printf("%s: password=%s\r\n", __func__, pass);
+	_WEB_DBG_TRAP("%s: password=%s\r\n", __func__, pass);
 
 	ifp = if_lookup_by_name("wireless 0/0/1");
 	if (ifp)
@@ -671,7 +671,7 @@ static int web_wireless_action(Webs *wp, char *path, char *query)
 		{
 			return ERROR;
 		}
-		printf("%s: mode=%s\r\n", __func__, strval);
+		_WEB_DBG_TRAP("%s: mode=%s\r\n", __func__, strval);
 */
 		//if(strstr(strval, "AP"))
 		{
@@ -774,7 +774,7 @@ static int web_wireless_client_disable(Webs *wp, void *p)
 			iw_t *iw = nsm_iw_get(ifp);
 			if (iw)
 			{
-				//printf("============%s==============:strval=%s\r\n", __func__, strval);
+				//_WEB_DBG_TRAP("============%s==============:strval=%s\r\n", __func__, strval);
 				if (strstr(strval, "true"))
 				{
 					nsm_iw_enable_api(ifp, TRUE);
@@ -801,7 +801,7 @@ static int web_wireless_client_disable(Webs *wp, void *p)
 			return ERROR;
 		}
 #else
-		zlog_debug(ZLOG_WEB, "=======%s======%s", __func__, strval);
+		_WEB_DBG_TRAP( "=======%s======%s", __func__, strval);
 		if (strstr(strval, "true"))
 		{
 #ifdef WEB_OPENWRT_PROCESS

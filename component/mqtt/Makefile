@@ -49,36 +49,48 @@ $(APPOBJS_DIR)/%.o: $(APPSRC_DIR)/%.c
 #
 ifeq ($(WITH_SHARED_LIBRARIES),yes)
 $(LIBS) : $(MODULE_OBJS) $(MODULE_APPOBJS) 
-	$(PL_MAKE_LIBSO) $(LIBS) $(MODULE_OBJS) $(MODULE_APPOBJS) 
+	$(PL_MAKE_LIBSO) $(LIBS) $(MODULE_OBJS) $(MODULE_APPOBJS)  
 else
 $(LIBS) : $(MODULE_OBJS) $(MODULE_APPOBJS) 
 	$(PL_MAKE_LIB) $(LIBS) $(MODULE_OBJS) $(MODULE_APPOBJS) 
 endif
 
 
+#
+#include $(MAKE_DIR)/make.mk
+#
+lib: $(LIBS)
+	@${MAKE} -C  src all
 
-include $(MAKE_DIR)/make.mk
+obj: $(MODULE_OBJS) $(MODULE_LIBOBJS)
 
+ifeq ($(BUILD_DEBUG),YES)
+install: $(LIBS)
+	@install -d $(LIB_DIR)
+	@install -m 755 $(LIBS) $(LIB_DIR)
+	@$(STRIP) --strip-unneeded $(LIB_DIR)/$(LIBS)
+	@${MAKE} -C  src install DEST_BIN_DIR=$(DSTSBINDIR)
+else
+install: $(LIBS)
+	@install -d $(LIB_DIR)
+	@install -m 755 $(LIBS) $(LIB_DIR)
+	$(STRIP) --strip-unneeded $(LIB_DIR)/$(LIBS)	
+	@${MAKE} -C  src install DEST_BIN_DIR=$(DSTSBINDIR)
+endif
 
-#lib: $(LIBS)
-#
-#
-#
-#obj: $(MODULE_OBJS) $(MODULE_LIBOBJS)
-#
 #install: $(LIBS)
 #	install -d $(LIB_DIR)
 #	install -m 755 $(LIBS) $(LIB_DIR)
 #	$(STRIP) $(LIB_DIR)/$(LIBS)
 
-#clean: objclean
-#	@$(RM) $(LIB_DIR)/$(LIBS)
-#	@$(RM) $(LIBS)
+clean: objclean
+	@$(RM) $(LIB_DIR)/$(LIBS)
+	@$(RM) $(LIBS)
+	@${MAKE} -C  src clean DEST_BIN_DIR=$(DSTSBINDIR)
 
-#objclean: 
-#	@$(RM) $(OBJS_DIR)/*
+objclean: 
+	@$(RM) $(OBJS_DIR)/* -rf
 
-#all: lib install
+all: lib install
 
-#.PHONY:	obj all lib install objclean clean
-
+.PHONY:	obj all lib install objclean clean

@@ -21,7 +21,7 @@
 
 
 
-typedef int	(*uci_ubus_cb)(char *, int);
+typedef int	(*uci_ubus_cb)(void *, char *, int);
 
 typedef struct uci_ubus_s
 {
@@ -30,6 +30,7 @@ typedef struct uci_ubus_s
 	char	buf[UCI_UBUS_BUF_MAX];
 	int		len;
 	uci_ubus_cb cb[UCI_UBUS_CB_MAX];
+	void 	*cb_argvs[UCI_UBUS_CB_MAX];
 	void	*master;
 	void	*t_accept;
 	void	*t_read;
@@ -39,8 +40,8 @@ typedef struct uci_ubus_s
 
 //extern uci_ubus_t uci_ubus_ctx;
 
-extern int uci_ubus_cb_install(uci_ubus_cb *cb);
-extern int uci_ubus_cb_uninstall(uci_ubus_cb *cb);
+extern int uci_ubus_cb_install(uci_ubus_cb *cb, void *);
+extern int uci_ubus_cb_uninstall(uci_ubus_cb *cb, void *);
 
 extern int uci_ubus_debug(BOOL enable);
 

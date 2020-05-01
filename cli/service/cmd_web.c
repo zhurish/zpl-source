@@ -166,20 +166,60 @@ DEFUN (no_webserver_port,
 }
 
 
+DEFUN (webserver_username,
+	   webserver_username_cmd,
+		"webserver username USER password PASS roles ROLES",
+		"Webserver configure\n"
+		"Username configure\n"
+		"Username String\n"
+		"Password configure\n"
+		"Password String\n"
+		"Roles configure\n"
+		"Roles Name String\n")
+{
+	int ret = ERROR;
+	if(web_app_username_lookup_api(argv[0]) == OK)
+	{
+		vty_out(vty, " Username '%s' is already exist.%s", argv[0], VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	ret = web_app_username_add_api(argv[0], argv[1], argv[2]);
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (no_webserver_username,
+		no_webserver_username_cmd,
+		"no webserver username USER",
+		NO_STR
+		"Webserver configure\n"
+		"Username configure\n"
+		"Username String\n")
+{
+	int ret = ERROR;
+	if(web_app_username_lookup_api(argv[0]) != OK)
+	{
+		vty_out(vty, " Username '%s' is not exist.%s", argv[0], VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	ret = web_app_username_del_api(argv[0]);
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+
 DEFUN (webserver_gopass,
 		webserver_gopass_cmd,
 		"webserver encryption username USER password PASS cipher CIPHER realm REALM",
 		NO_STR
 		"Webserver configure\n"
 		"Encryption Password\n"
-		"Cipher configure\n"
-		"Cipher String\n"
-		"Realm configure\n"
-		"Realm String\n"
 		"Username configure\n"
 		"Username String\n"
 		"Password configure\n"
-		"Password String\n")
+		"Password String\n"
+		"Cipher configure\n"
+		"Cipher String\n"
+		"Realm configure\n"
+		"Realm String\n")
 {
 	int ret = ERROR;
 	char encodedPassword[1024];
@@ -215,29 +255,6 @@ DEFUN (webserver_gopass_roles,
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
-/*DEFUN (webserver_gopass,
-		webserver_gopass_cmd,
-		"webserver encoded cipher CIPHER realm REALM username USER password PASS",
-		NO_STR
-		"Webserver configure\n"
-		"HTTP Protocol\n"
-		"HTTPS Protocol\n"
-		"Listen Port\n")
-{
-	int ret = ERROR;
-	char encodedPassword[1024];
-	ret = web_app_gopass_save_api(argv[0], argv[1], argv[2], argv[3], encodedPassword);
-	if(ret == OK)
-	{
-		vty_out(vty, "encoded password:%s%s", encodedPassword, VTY_NEWLINE);
-	}
-	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-}*/
-
-/*
-extern int web_app_gopass_save_api(const char *username,
-		const char *roles[], char *encodedPassword);
-*/
 
 static int webserver_write_config(struct vty *vty, void *pVoid)
 {
@@ -276,6 +293,10 @@ void cmd_webserver_init(void)
 
 		install_element(TEMPLATE_NODE, &webserver_port_cmd);
 		install_element(TEMPLATE_NODE, &no_webserver_port_cmd);
+
+		install_element(TEMPLATE_NODE, &webserver_username_cmd);
+		install_element(TEMPLATE_NODE, &no_webserver_username_cmd);
+
 
 		install_element(ENABLE_NODE, &webserver_gopass_cmd);
 		install_element(ENABLE_NODE, &webserver_gopass_roles_cmd);

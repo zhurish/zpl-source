@@ -103,7 +103,7 @@ PUBLIC bool cgiHandler(Webs *wp)
                 wfree(cgiPath);
                 cgiPath = exe;
             } else {
-                error("Cannot find CGI program: %s", cgiPath);
+                web_error("Cannot find CGI program: %s", cgiPath);
                 websError(wp, HTTP_CODE_NOT_FOUND | WEBS_NOLOG, "CGI program file does not exist");
                 wfree(cgiPath);
                 return 1;
@@ -144,7 +144,7 @@ PUBLIC bool cgiHandler(Webs *wp)
         websDecodeUrl(query, query, strlen(query));
         for (cp = stok(query, " ", &tok); cp != NULL && argp != NULL; ) {
             *(argp+n) = cp;
-            trace(5, "ARG[%d] %s", n, argp[n-1]);
+            web_trace(WEBS_DEBUG, "ARG[%d] %s", n, argp[n-1]);
             n++;
             if (n >= argpsize) {
                 argpsize *= 2;
@@ -185,7 +185,7 @@ PUBLIC bool cgiHandler(Webs *wp)
                 } else {
                     envp[n++] = sfmt("%s=%s", s->name.value.string, s->content.value.string);
                 }
-                trace(0, "Env[%d] %s", n, envp[n-1]);
+                web_trace(WEBS_DEBUG, "Env[%d] %s", n, envp[n-1]);
                 if (n >= envpsize) {
                     envpsize *= 2;
                     envp = wrealloc(envp, envpsize * sizeof(char *));
@@ -260,11 +260,11 @@ PUBLIC bool websProcessCgiData(Webs *wp)
     ssize   nbytes;
 
     nbytes = bufLen(&wp->input);
-    trace(5, "cgi: write %d bytes to CGI program", nbytes);
+    web_trace(WEBS_DEBUG, "cgi: write %d bytes to CGI program", nbytes);
     if (write(wp->cgifd, wp->input.servp, (int) nbytes) != nbytes) {
         websError(wp, HTTP_CODE_INTERNAL_SERVER_ERROR| WEBS_CLOSE, "Cannot write to CGI gateway");
     } else {
-        trace(5, "cgi: write %d bytes to CGI program", nbytes);
+        web_trace(WEBS_DEBUG, "cgi: write %d bytes to CGI program", nbytes);
     }
     websConsumeInput(wp, nbytes);
     return 1;
@@ -273,7 +273,7 @@ PUBLIC bool websProcessCgiData(Webs *wp)
 
 static void writeCgiHeaders(Webs *wp, int status, ssize contentLength, char *location, char *contentType)
 {
-    trace(5, "cgi: Start response headers");
+    web_trace(WEBS_DEBUG, "cgi: Start response headers");
     websSetStatus(wp, status);
     websWriteHeaders(wp, contentLength, location);
     websWriteHeader(wp, "Pragma", "no-cache");
@@ -338,7 +338,7 @@ static ssize parseCgiHeaders(Webs *wp, char *buf)
             if (key && value && !strspn(key, "%<>/\\")) {
                 websWriteHeader(wp, key, "%s", value);
             } else {
-                trace(5, "cgi: bad response http header: \"%s\": \"%s\"", key, value);
+                web_trace(WEBS_DEBUG, "cgi: bad response http header: \"%s\": \"%s\"", key, value);
             }
         }
         stok(value, "\r\n", &cp);
@@ -378,21 +378,21 @@ static void websCgiGatherOutput(Cgi *cgip)
                 if (!(wp->flags & WEBS_HEADERS_CREATED)) {
                     if ((skip = parseCgiHeaders(wp, buf)) == 0) {
                         if (cgip->handle && sbuf.st_size < ME_GOAHEAD_LIMIT_HEADERS) {
-                            trace(5, "cgi: waiting for http headers");
+                            web_trace(WEBS_DEBUG, "cgi: waiting for http headers");
                             break;
                         } else {
-                            trace(5, "cgi: missing http headers - create default headers");
+                            web_trace(WEBS_DEBUG, "cgi: missing http headers - create default headers");
                             writeCgiHeaders(wp, HTTP_CODE_OK, -1, 0, 0);
                         }
                     }
                 }
-                trace(5, "cgi: write %d bytes to client", nbytes - skip);
+                web_trace(WEBS_DEBUG, "cgi: write %d bytes to client", nbytes - skip);
                 websWriteBlock(wp, &buf[skip], nbytes - skip);
                 cgip->fplacemark += (off_t) nbytes;
             }
             close(fdout);
         } else {
-            trace(5, "cgi: open failed");
+            web_trace(WEBS_DEBUG, "cgi: open failed");
         }
     }
 }
@@ -437,7 +437,7 @@ int websCgiPoll(void)
                 if (cgip->fplacemark == 0) {
                     websError(wp, HTTP_CODE_INTERNAL_SERVER_ERROR, "CGI generated no output");
                 } else {
-                    trace(5, "cgi: Request complete - calling websDone");
+                    web_trace(WEBS_DEBUG, "cgi: Request complete - calling websDone");
                     websDone(wp);
                 }
                 /*
@@ -559,14 +559,14 @@ static CgiPid launchCgi(char *cgiPath, char **argp, char **envp, char *stdIn, ch
 {
     int     fdin, fdout, pid;
 
-    trace(5, "cgi: run %s", cgiPath);
+    web_trace(WEBS_DEBUG, "cgi: run %s", cgiPath);
 
     if ((fdin = open(stdIn, O_RDWR | O_CREAT | O_BINARY, 0666)) < 0) {
-        error("Cannot open CGI stdin: ", cgiPath);
+        web_error("Cannot open CGI stdin: %s", cgiPath);
         return -1;
     }
     if ((fdout = open(stdOut, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, 0666)) < 0) {
-        error("Cannot open CGI stdout: ", cgiPath);
+        web_error("Cannot open CGI stdout: %s", cgiPath);
         return -1;
     }
 
@@ -612,7 +612,7 @@ static int checkCgi(CgiPid handle)
         Check to see if the CGI child process has terminated or not yet.
      */
     if ((pid = waitpid((CgiPid) handle, NULL, WNOHANG)) == handle) {
-        trace(5, "cgi: waited for pid %d", pid);
+        web_trace(WEBS_DEBUG, "cgi: waited for pid %d", pid);
         return 0;
     } else {
         return 1;
@@ -938,7 +938,7 @@ static CgiPid launchCgi(char *cgiPath, char **argp, char **envp, char *stdIn, ch
     newinfo.hStdInput = CreateFile(stdIn, GENERIC_READ, FILE_SHARE_READ, &security, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL,
             NULL);
     if (newinfo.hStdOutput == (HANDLE) -1) {
-        error("Cannot open CGI stdin file");
+        web_error("Cannot open CGI stdin file");
         return (CgiPid) -1;
     }
 
@@ -948,7 +948,7 @@ static CgiPid launchCgi(char *cgiPath, char **argp, char **envp, char *stdIn, ch
     newinfo.hStdOutput = CreateFile(stdOut, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ + FILE_SHARE_WRITE,
             &security, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (newinfo.hStdOutput == (HANDLE) -1) {
-        error("Cannot create CGI stdout file");
+        web_error("Cannot create CGI stdout file");
         CloseHandle(newinfo.hStdInput);
         return (CgiPid) -1;
     }

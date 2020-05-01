@@ -21,474 +21,734 @@
 #include "vector.h"
 #include "eloop.h"
 
-#include "application.h"
+#include "v9_device.h"
+#include "v9_util.h"
+#include "v9_video.h"
+#include "v9_serial.h"
+#include "v9_slipnet.h"
+#include "v9_cmd.h"
 
-static LIST *user_table = NULL;
-static os_mutex_t *user_mutex = NULL;
+#include "v9_video_disk.h"
+#include "v9_user_db.h"
+#include "v9_video_db.h"
 
-static int v9_video_user_update_save(void);
-static int v9_video_user_load_from_file(void);
+#include "v9_board.h"
+#include "v9_video_sdk.h"
+#include "v9_video_user.h"
+#include "v9_video_board.h"
+#include "v9_video_api.h"
 
 
-int v9_video_user_clean(void)
+
+
+int __user_debug_flag = V9_USER_DEBUG_ERROR|V9_USER_DEBUG_WARN|V9_USER_DEBUG_EVENT;
+
+
+
+v9_user_group_t _group_tbl[ID_INDEX(APP_BOARD_CALCU_4)];
+
+/***********************************************************************************/
+static int v9_video_group_init()
 {
-	NODE node;
-	v9_video_user_t *dbtest = NULL;
-	if(user_mutex)
-		os_mutex_lock(user_mutex, OS_WAIT_FOREVER);
-	for (dbtest = (v9_video_user_t *) lstFirst(user_table);
-			dbtest != NULL; dbtest = (v9_video_user_t *) lstNext(&node))
+	memset(_group_tbl, 0, sizeof(_group_tbl));
+
+	if(os_file_access(V9_USER_GROUP_FILE) == OK)
 	{
-		node = dbtest->node;
-		if (dbtest)
-		{
-			lstDelete(user_table, (NODE *) dbtest);
-			XFREE(MTYPE_VIDEO_DATA, dbtest);
-		}
+		os_read_file(V9_USER_GROUP_FILE, _group_tbl, sizeof(_group_tbl));
 	}
-#ifdef V9_USER_DB_FILE
-	remove(V9_USER_DB_FILE);
-#endif
-	sync();
-	if(user_mutex)
-		os_mutex_unlock(user_mutex);
+	else
+	{
+		_group_tbl[ID_INDEX(APP_BOARD_CALCU_1)].gtbl[0].groupid = GROUP_ACTIVE_BIT|GROUP_INDEX(0);
+		strcpy(_group_tbl[ID_INDEX(APP_BOARD_CALCU_1)].gtbl[0].groupname, "黑名单");
+		_group_tbl[ID_INDEX(APP_BOARD_CALCU_1)].gtbl[1].groupid = GROUP_ACTIVE_BIT|GROUP_INDEX(1);
+		strcpy(_group_tbl[ID_INDEX(APP_BOARD_CALCU_1)].gtbl[1].groupname, "白名单");
+
+		_group_tbl[ID_INDEX(APP_BOARD_CALCU_2)].gtbl[0].groupid = GROUP_ACTIVE_BIT|GROUP_INDEX(0);
+		strcpy(_group_tbl[ID_INDEX(APP_BOARD_CALCU_2)].gtbl[0].groupname, "黑名单");
+		_group_tbl[ID_INDEX(APP_BOARD_CALCU_2)].gtbl[1].groupid = GROUP_ACTIVE_BIT|GROUP_INDEX(1);
+		strcpy(_group_tbl[ID_INDEX(APP_BOARD_CALCU_2)].gtbl[1].groupname, "白名单");
+
+		_group_tbl[ID_INDEX(APP_BOARD_CALCU_3)].gtbl[0].groupid = GROUP_ACTIVE_BIT|GROUP_INDEX(0);
+		strcpy(_group_tbl[ID_INDEX(APP_BOARD_CALCU_3)].gtbl[0].groupname, "黑名单");
+		_group_tbl[ID_INDEX(APP_BOARD_CALCU_3)].gtbl[1].groupid = GROUP_ACTIVE_BIT|GROUP_INDEX(1);
+		strcpy(_group_tbl[ID_INDEX(APP_BOARD_CALCU_3)].gtbl[1].groupname, "白名单");
+
+		_group_tbl[ID_INDEX(APP_BOARD_CALCU_4)].gtbl[0].groupid = GROUP_ACTIVE_BIT|GROUP_INDEX(0);
+		strcpy(_group_tbl[ID_INDEX(APP_BOARD_CALCU_4)].gtbl[0].groupname, "黑名单");
+		_group_tbl[ID_INDEX(APP_BOARD_CALCU_4)].gtbl[1].groupid = GROUP_ACTIVE_BIT|GROUP_INDEX(1);
+		strcpy(_group_tbl[ID_INDEX(APP_BOARD_CALCU_4)].gtbl[1].groupname, "白名单");
+
+		os_write_file(V9_USER_GROUP_FILE, _group_tbl, sizeof(_group_tbl));
+	}
 	return OK;
 }
 
-int v9_video_user_exit()
+int v9_video_usergroup_add(u_int32 id, const char * groupname)
 {
-	v9_video_user_clean();
-	if(user_mutex)
+	u_int32 i = 0;
+	if(id != APP_BOARD_CALCU_1 &&
+			id != APP_BOARD_CALCU_2 &&
+			id != APP_BOARD_CALCU_3 &&
+			id != APP_BOARD_CALCU_4)
 	{
-		os_mutex_lock(user_mutex, OS_WAIT_FOREVER);
-		if(os_mutex_exit(user_mutex)==OK)
-			user_mutex = NULL;
-	}
-	if(user_table)
-	{
-		XFREE(MTYPE_VIDEO_TOP, user_table);
-		user_table = NULL;
-	}
-	return OK;
-}
-
-
-
-
-int v9_video_user_load()
-{
-	if (user_table == NULL)
-	{
-		user_table = XMALLOC(MTYPE_VIDEO_TOP, sizeof(LIST));
-		if (user_table)
-		{
-			if(user_mutex == NULL)
-				user_mutex = os_mutex_init();
-			lstInit(user_table);
-			if(user_mutex)
-				os_mutex_lock(user_mutex, OS_WAIT_FOREVER);
-			v9_video_user_load_from_file();
-			if(user_mutex)
-				os_mutex_unlock(user_mutex);
-			return OK;
-		}
 		return ERROR;
 	}
-	return OK;
-}
-
-#ifdef V9_USER_DB_FILE
-static int v9_video_user_read_one(int fd, v9_video_user_t *node)
-{
-	v9_video_user_t *addnode = NULL;
-	if(read(fd, node, sizeof(v9_video_user_t)) == sizeof(v9_video_user_t))
+	for(i = 0; i < APP_GROUP_MAX; i++)
 	{
-		addnode = XMALLOC(MTYPE_VIDEO_DATA, sizeof(v9_video_user_t));
-		if(!addnode)
-			return ERROR;
-		memset(addnode, 0, sizeof(v9_video_user_t));
-		memcpy(addnode, node, sizeof(v9_video_user_t));
-		addnode->node.previous = NULL;
-		addnode->node.next = NULL;
-		lstAdd(user_table, (NODE *) addnode);
-		return OK;
-	}
-	return ERROR;
-}
-#endif
-
-static int v9_video_user_load_from_file(void)
-{
-#ifdef V9_USER_DB_FILE
-	int ret = OK, fd = 0;
-	v9_video_user_t dbase;
-	if (user_table == NULL)
-		return ERROR;
-	if(ret == 0)
-	{
-		fd = open(V9_USER_DB_FILE, O_RDONLY);
-		if(fd <= 0)
+		//if(GROUP_ACTIVE(_group_tbl[ID_INDEX(id)].ID))
 		{
-			return ERROR;
-		}
-		while(ret == OK)
-		{
-			memset(&dbase, 0, sizeof(v9_video_user_t));
-			ret = v9_video_user_read_one(fd, &dbase);
-		}
-		close(fd);
-		return OK;
-	}
-	return ERROR;
-#else
-	return OK;
-#endif
-}
-
-#ifdef V9_USER_DB_FILE
-static int v9_video_user_write_list(int fd)
-{
-	int ret = 0;
-	NODE node;
-	v9_video_user_t *dbase = NULL;
-	for (dbase = (v9_video_user_t *) lstFirst(user_table);
-			dbase != NULL; dbase = (v9_video_user_t *) lstNext(&node))
-	{
-		node = dbase->node;
-		if (dbase)
-		{
-			ret = write(fd, dbase, sizeof(v9_video_user_t));
-			if(ret != sizeof(v9_video_user_t))
-				break;
-		}
-	}
-	return ret;
-}
-#endif
-static int v9_video_user_update_save(void)
-{
-#ifdef V9_USER_DB_FILE
-	int ret = 0, fd = 0;
-	if (user_table == NULL)
-		return ERROR;
-	if(lstCount(user_table) == 0)
-	{
-		if(access(V9_USER_DB_FILE, F_OK) == 0)
-			remove(V9_USER_DB_FILE);
-		sync();
-		return OK;
-	}
-	if(ret == 0)
-	{
-		fd = open(V9_USER_DB_FILE".tmp", O_RDWR|O_CREAT, 0644);
-		if(fd <= 0)
-		{
-			return ERROR;
-		}
-		if(v9_video_user_write_list(fd) != sizeof(v9_video_user_t))
-		{
-			close(fd);
-			remove(V9_USER_DB_FILE".tmp");
-			sync();
-			return ERROR;
-		}
-		close(fd);
-		rename(V9_USER_DB_FILE".tmp", V9_USER_DB_FILE);
-		sync();
-		return OK;
-	}
-	return ERROR;
-#else
-	return OK;
-#endif
-}
-
-
-
-/***********************************************/
-static v9_video_user_t * v9_video_user_node_lookup_by_userid(int id, char *user_id)
-{
-	int flags  = 0;
-	char userid[APP_USERNAME_MAX];
-	NODE node;
-	v9_video_user_t *dbase = NULL;
-	if (user_table == NULL)
-		return NULL;
-	memset(userid, 0, sizeof(userid));
-	if(user_id)
-		strncpy(userid, user_id, MIN(sizeof(userid), strlen(user_id)));
-	for (dbase = (v9_video_user_t *) lstFirst(user_table);
-			dbase != NULL; dbase = (v9_video_user_t *) lstNext(&node))
-	{
-		node = dbase->node;
-		if (dbase)
-		{
-			if(id && (dbase->ID == id))
-				flags = 1;
-			else if(id == 0)
-				flags = 1;
-			if( flags && (memcmp(dbase->userid, userid, sizeof(userid)) == 0) )
+			if(!GROUP_ACTIVE(_group_tbl[ID_INDEX(id)].gtbl[i].groupid))
 			{
-				return dbase;
+				if(v9_video_sdk_add_group_api(id, GROUP_INDEX(i), groupname) == OK)
+				{
+					_group_tbl[ID_INDEX(id)].gtbl[i].groupid = GROUP_ACTIVE_BIT|GROUP_INDEX(i);
+					strcpy(_group_tbl[ID_INDEX(id)].gtbl[i].groupname, groupname);
+					os_write_file(V9_USER_GROUP_FILE, _group_tbl, sizeof(_group_tbl));
+					return GROUP_INDEX(_group_tbl[ID_INDEX(id)].gtbl[i].groupid);
+				}
+				else
+					return ERROR;
+			}
+		}
+	}
+	return ERROR;
+}
+
+int v9_video_usergroup_del(u_int32 id, const int group)
+{
+	u_int32 i = 0;
+	if(id != APP_BOARD_CALCU_1 &&
+			id != APP_BOARD_CALCU_2 &&
+			id != APP_BOARD_CALCU_3 &&
+			id != APP_BOARD_CALCU_4)
+	{
+		return ERROR;
+	}
+	for(i = 0; i < APP_GROUP_MAX; i++)
+	{
+		//if(GROUP_ACTIVE(_group_tbl[ID_INDEX(id)].ID))
+		{
+			if(GROUP_ACTIVE(_group_tbl[ID_INDEX(id)].gtbl[i].groupid))
+			{
+				if(GROUP_INDEX(_group_tbl[ID_INDEX(id)].gtbl[i].groupid) == GROUP_INDEX(group))
+				{
+					if(v9_video_sdk_del_group_api(id, GROUP_INDEX(group)) == OK)
+					{
+						_group_tbl[ID_INDEX(id)].gtbl[i].groupid = 0;
+						memset(_group_tbl[ID_INDEX(id)].gtbl[i].groupname, 0,
+							   sizeof(_group_tbl[ID_INDEX(id)].gtbl[i].groupname));
+						os_write_file(V9_USER_GROUP_FILE, _group_tbl, sizeof(_group_tbl));
+						return OK;
+					}
+					else
+						return ERROR;
+				}
+			}
+		}
+	}
+	return ERROR;
+}
+
+int v9_video_usergroup_rename(u_int32 id, const int group, const char * groupname)
+{
+	u_int32 i = 0;
+	if(id != APP_BOARD_CALCU_1 &&
+			id != APP_BOARD_CALCU_2 &&
+			id != APP_BOARD_CALCU_3 &&
+			id != APP_BOARD_CALCU_4)
+	{
+		return ERROR;
+	}
+	for(i = 0; i < APP_GROUP_MAX; i++)
+	{
+		//if(GROUP_ACTIVE(_group_tbl[ID_INDEX(id)].ID))
+		{
+			if(GROUP_ACTIVE(_group_tbl[ID_INDEX(id)].gtbl[i].groupid))
+			{
+				if(GROUP_INDEX(_group_tbl[ID_INDEX(id)].gtbl[i].groupid) == GROUP_INDEX(group))
+				{
+					if(v9_video_sdk_add_group_api(id, GROUP_INDEX(group), groupname) == OK)
+					{
+						//_group_tbl[ID_INDEX(id)].gtbl[i].groupid = 0;
+						memset(_group_tbl[ID_INDEX(id)].gtbl[i].groupname, 0,
+							   sizeof(_group_tbl[ID_INDEX(id)].gtbl[i].groupname));
+						strcpy(_group_tbl[ID_INDEX(id)].gtbl[i].groupname, groupname);
+						os_write_file(V9_USER_GROUP_FILE, _group_tbl, sizeof(_group_tbl));
+						return GROUP_INDEX(_group_tbl[ID_INDEX(id)].gtbl[i].groupid);
+					}
+					else
+						return ERROR;
+				}
+			}
+		}
+	}
+	return ERROR;
+}
+
+
+const char * v9_video_usergroup_idtoname(u_int32 id, const int group)
+{
+	u_int32 i = 0;
+	if(id != APP_BOARD_CALCU_1 &&
+			id != APP_BOARD_CALCU_2 &&
+			id != APP_BOARD_CALCU_3 &&
+			id != APP_BOARD_CALCU_4)
+	{
+		return NULL;
+	}
+	for(i = 0; i < APP_GROUP_MAX; i++)
+	{
+		if(GROUP_ACTIVE(_group_tbl[ID_INDEX(id)].gtbl[i].groupid))
+		{
+			if(GROUP_INDEX(_group_tbl[ID_INDEX(id)].gtbl[i].groupid) == GROUP_INDEX(group))
+			{
+					return _group_tbl[ID_INDEX(id)].gtbl[i].groupname;
 			}
 		}
 	}
 	return NULL;
 }
 
-
-
-
-
-
-
-v9_video_user_t * v9_video_user_lookup_by_userid(int id, char *user_id)
+u_int32 v9_video_usergroup_nametoid(u_int32 id, const char * groupname)
 {
-	v9_video_user_t * dbase = NULL;
-	if(user_mutex)
-		os_mutex_lock(user_mutex, OS_WAIT_FOREVER);
-	dbase = v9_video_user_node_lookup_by_userid( id, user_id);
-	if(user_mutex)
-		os_mutex_unlock(user_mutex);
-	return dbase;
+	u_int32 i = 0;
+	if(id != APP_BOARD_CALCU_1 &&
+			id != APP_BOARD_CALCU_2 &&
+			id != APP_BOARD_CALCU_3 &&
+			id != APP_BOARD_CALCU_4)
+	{
+		return ERROR;
+	}
+	for(i = 0; i < APP_GROUP_MAX; i++)
+	{
+		if(GROUP_ACTIVE(_group_tbl[ID_INDEX(id)].gtbl[i].groupid))
+		{
+			//strcasecmp
+			if(strcmp(_group_tbl[ID_INDEX(id)].gtbl[i].groupname, groupname) == 0)
+			{
+					return GROUP_INDEX(_group_tbl[ID_INDEX(id)].gtbl[i].groupid);
+			}
+		}
+	}
+	return ERROR;
 }
 
-int v9_video_user_add_user(u_int32 id, BOOL gender, int group, char *user, char *user_id, char *pic)
+
+int v9_video_usergroup_show(u_int32 id, struct vty *vty)
 {
-	int ret = 0;
-	v9_video_user_t * dbase = NULL;
-	printf("%s: id=%d gender=%d group=%d user=%s user_id=%s pic=%s", __func__, id, gender, group, user, user_id, pic);
-	if(user_mutex)
-		os_mutex_lock(user_mutex, OS_WAIT_FOREVER);
-	if(v9_video_user_node_lookup_by_userid( id,  user_id))
+	u_int32 i = 0;
+	if(id == APP_BOARD_CALCU_1 ||
+			id == APP_BOARD_CALCU_2 ||
+			id == APP_BOARD_CALCU_3 ||
+			id == APP_BOARD_CALCU_4)
 	{
-		//printf("%s: id=%d gender=%d group=%d user=%s user_id=%s pic=%s", __func__, id, gender, group, user, user_id, pic);
-		if(user_mutex)
-			os_mutex_unlock(user_mutex);
-		return ERROR;
-	}
-	dbase = XMALLOC(MTYPE_VIDEO_DATA, sizeof(v9_video_user_t));
-	if(!dbase)
-	{
-		return ERROR;
-	}
-	memset(dbase, 0, sizeof(v9_video_user_t));
-
-	dbase->ID = id;
-	dbase->group = group;										// 所属组ID  0： 黑名单 1： 白名单
-	strcpy(dbase->username, user);			// 姓名
-	strcpy(dbase->userid, user_id);				// 证件号
-	dbase->gender = gender;										// 人员性别  0： 女 1： 男
-	if(pic)
-		strcpy(dbase->picname, pic);
-
-	if(dbase->ID == 0)
-	{
-#ifndef V9_USER_DB_NOSDK
-		ret = v9_video_sdk_add_user_all_api(dbase->gender, dbase->group, dbase->username, dbase->userid, dbase->picname, FALSE);
-#else
-		ret = OK;
-#endif
-		if(ret == OK)
+		vty_out(vty, "Video User Group List :(Board:%d)%s", ID_INDEX(id), VTY_NEWLINE);
+		for(i = 0; i < APP_GROUP_MAX; i++)
 		{
-			lstAdd(user_table, (NODE *) dbase);
-			ret = OK;
-			if(ret == OK)
-				ret = v9_video_user_update_save();
+			//if(GROUP_ACTIVE(_group_tbl[ID_INDEX(id)].ID))
+			{
+				if(GROUP_ACTIVE(_group_tbl[ID_INDEX(id)].gtbl[i].groupid))
+				{
+					vty_out(vty, " group id:%d name %s %s",
+						GROUP_INDEX(_group_tbl[ID_INDEX(id)].gtbl[i].groupid),
+						_group_tbl[ID_INDEX(id)].gtbl[i].groupname, VTY_NEWLINE);
+				}
+			}
 		}
-		else
-			ret = ERROR;
 	}
 	else
 	{
-#ifndef V9_USER_DB_NOSDK
-		if(v9_video_sdk_add_user_api(dbase->ID, dbase->gender, dbase->group, dbase->username, dbase->userid, dbase->picname, FALSE) == OK)
-#endif
+		u_int32 j = 0;
+		vty_out(vty, "Video User Group List:%s", VTY_NEWLINE);
+		for(j = APP_BOARD_CALCU_1; j <= APP_BOARD_CALCU_4; j++)
 		{
-			lstAdd(user_table, (NODE *) dbase);
-			ret = OK;
-			if(ret == OK)
-				ret = v9_video_user_update_save();
+			vty_out(vty, " Video User Group List :(Board:%d)%s", ID_INDEX(id), VTY_NEWLINE);
+			for(i = 0; i < APP_GROUP_MAX; i++)
+			{
+				if(GROUP_ACTIVE(_group_tbl[ID_INDEX(id)].gtbl[i].groupid))
+				{
+					vty_out(vty, "  group id:%d name %s %s",
+						GROUP_INDEX(_group_tbl[ID_INDEX(id)].gtbl[i].groupid),
+						_group_tbl[ID_INDEX(id)].gtbl[i].groupname, VTY_NEWLINE);
+				}
+			}
 		}
-#ifndef V9_USER_DB_NOSDK
-		else
-			ret = ERROR;
-#endif
 	}
-	if(user_mutex)
-		os_mutex_unlock(user_mutex);
-	return ret;
+	return ERROR;
 }
 
-int v9_video_user_update_user(u_int32 id, BOOL gender, int group, char *user, char *user_id, char *pic)
+/***********************************************************************************/
+int v9_video_user_load()
 {
-	int ret = 0;
-	v9_video_user_t * dbase = NULL;
+	sqlite3 * db = v9_user_sqldb_open(2);
+	v9_user_sqldb_close(db, 2);
+	v9_video_group_init();
 
-	printf("%s: id=%d gender=%d group=%d user=%s user_id=%s pic=%s", __func__, id, gender, group, user, user_id, pic);
+	return OK;
+}
 
-	if(user_mutex)
-		os_mutex_lock(user_mutex, OS_WAIT_FOREVER);
+int v9_video_user_clean(void)
+{
+	return OK;
+}
 
-	dbase = v9_video_user_node_lookup_by_userid( id,  user_id);
-	if(!dbase)
+int v9_video_user_exit()
+{
+	return OK;
+}
+
+
+int v9_video_user_count(u_int32 id, int group, int *pValue)
+{
+	sqlite3 * db = v9_user_sqldb_open(id);
+	if(db)
 	{
-		printf("%s: can not lookup by user_id=%s", __func__, user_id);
-		if(user_mutex)
-			os_mutex_unlock(user_mutex);
-		return ERROR;
-	}
-
-	dbase->ID = id;
-	dbase->group = group;					// 所属组ID  0： 黑名单 1： 白名单
-	memset(dbase->username, 0, sizeof(dbase->username));
-	memset(dbase->username, 0, sizeof(dbase->userid));
-	memset(dbase->username, 0, sizeof(dbase->picname));
-	strcpy(dbase->username, user);			// 姓名
-	strcpy(dbase->userid, user_id);				// 证件号
-	dbase->gender = gender;										// 人员性别  0： 女 1： 男
-	if(pic)
-		strcpy(dbase->picname, pic);
-
-	if(dbase->ID == 0)
-	{
-#ifndef V9_USER_DB_NOSDK
-		ret = v9_video_sdk_add_user_all_api(dbase->gender, dbase->group, dbase->username, dbase->userid, dbase->picname, TRUE);
-#else
-		ret = OK;
-#endif
-		if(ret == OK)
+		if(v9_user_sqldb_count(db, id, group, pValue) == OK)
 		{
-			ret = OK;
-			if(ret == OK)
-				ret = v9_video_user_update_save();
+			v9_user_sqldb_close(db, id);
+			return OK;
 		}
-		else
-			ret = ERROR;
 	}
-	else
+	return ERROR;
+}
+
+int v9_video_user_add_user(u_int32 id, BOOL gender, int group, char *user, char *user_id, char *pic, char *text)
+{
+	sqlite3 * db = v9_user_sqldb_open(id);
+	if(db)
 	{
-#ifndef V9_USER_DB_NOSDK
-		if(v9_video_sdk_add_user_api(dbase->ID, dbase->gender, dbase->group, dbase->username, dbase->userid, dbase->picname, TRUE) == OK)
-#endif
+		v9_video_user_t usertmp;
+		memset(&usertmp, 0, sizeof(v9_video_user_t));
+		if(v9_user_sqldb_lookup_user(db, id, user_id, &usertmp) == OK)
 		{
-			ret = OK;
-			if(ret == OK)
-				ret = v9_video_user_update_save();
+			if(V9_USER_DEBUG(WARN))
+				zlog_warn(ZLOG_APP, "this user(%s(%s)) is already exist.", user, user_id);
+			v9_user_sqldb_close(db, id);
+			return ERROR;
 		}
-#ifndef V9_USER_DB_NOSDK
-		else
-			ret = ERROR;
-#endif
+
+		if(v9_video_sdk_add_user_api(id, gender, group,
+									 user, user_id, pic, text, TRUE) != OK)
+		{
+			if(V9_USER_DEBUG(WARN))
+				zlog_warn(ZLOG_APP, "this user(%s(%s)) is can't set hw board.", user, user_id);
+			v9_user_sqldb_close(db, id);
+			return ERROR;
+		}
+
+		if(v9_user_sqldb_add(db, id, gender, group, user, user_id, pic, text) == OK)
+		{
+			sql_snapfea_key key;
+			memset(&key, 0, sizeof(sql_snapfea_key));
+			key.feature.ckey_data = NULL;
+			if(v9_video_sdk_get_keyvalue_api( id, pic, &key) != OK)
+			{
+				if(key.feature.ckey_data/*key.feature_data*/)
+				{
+					key.feature_len = 0;
+					XFREE(MTYPE_VIDEO_KEY, key.feature.feature_data);
+					key.feature.ckey_data = NULL;
+				}
+				v9_user_sqldb_del(db, id, user_id);
+				v9_user_sqldb_close(db, id);
+				return ERROR;
+			}
+			if(v9_user_sqldb_key_update(db, id, user_id, &key) != OK)
+			{
+				if(key.feature.ckey_data/*key.feature_data*/)
+				{
+					key.feature_len = 0;
+					XFREE(MTYPE_VIDEO_KEY, key.feature.feature_data);
+					key.feature.ckey_data = NULL;
+				}
+				v9_user_sqldb_del(db, id, user_id);
+				v9_user_sqldb_close(db, id);
+				return ERROR;
+			}
+			if(key.feature.ckey_data/*key.feature_data*/)
+			{
+				key.feature_len = 0;
+				XFREE(MTYPE_VIDEO_KEY, key.feature.feature_data);
+				key.feature.ckey_data = NULL;
+			}
+			v9_user_sqldb_close(db, id);
+			return OK;
+		}
 	}
-	if(user_mutex)
-		os_mutex_unlock(user_mutex);
-	return ret;
+	return ERROR;
+}
+
+int v9_video_user_update_user(u_int32 id, BOOL gender, int group, char *user, char *user_id, char *pic, char *text)
+{
+	sqlite3 * db = v9_user_sqldb_open(id);
+	if(db)
+	{
+		v9_video_user_t usertmp;
+		if(v9_user_sqldb_lookup_user(db, id, user_id, &usertmp) != OK)
+		{
+			if(V9_USER_DEBUG(WARN))
+				zlog_warn(ZLOG_APP, "this user(%s(%s)) is not exist.", user, user_id);
+			v9_user_sqldb_close(db, id);
+			return ERROR;
+		}
+		if(v9_video_sdk_add_user_api(id, gender, group,
+									 user, user_id, pic, text, FALSE) != OK)
+		{
+			if(V9_USER_DEBUG(WARN))
+				zlog_warn(ZLOG_APP, "this user(%s(%s)) is can't update hw board.", user, user_id);
+			v9_user_sqldb_close(db, id);
+			return ERROR;
+		}
+		if(v9_user_sqldb_update(db, id, gender, group, user, user_id, pic, text) == OK)
+		{
+			sql_snapfea_key key;
+			memset(&key, 0, sizeof(sql_snapfea_key));
+			if(v9_video_sdk_get_keyvalue_api( id, pic, &key) != OK)
+			{
+				if(key.feature.ckey_data/*key.feature_data*/)
+				{
+					key.feature_len = 0;
+					XFREE(MTYPE_VIDEO_KEY, key.feature.feature_data);
+					key.feature.ckey_data = NULL;
+				}
+				v9_user_sqldb_close(db, id);
+				return ERROR;
+			}
+			if(v9_user_sqldb_key_update(db, id, user_id, &key) != OK)
+			{
+				if(key.feature.ckey_data/*key.feature_data*/)
+				{
+					key.feature_len = 0;
+					XFREE(MTYPE_VIDEO_KEY, key.feature.feature_data);
+					key.feature.ckey_data = NULL;
+				}
+				v9_user_sqldb_close(db, id);
+				return ERROR;
+			}
+			if(key.feature.ckey_data/*key.feature_data*/)
+			{
+				key.feature_len = 0;
+				XFREE(MTYPE_VIDEO_KEY, key.feature.feature_data);
+				key.feature.ckey_data = NULL;
+			}
+			v9_user_sqldb_close(db, id);
+			return OK;
+		}
+	}
+	return ERROR;
 }
 
 int v9_video_user_del_user(u_int32 id, char *user_id)
 {
-	int ret = 0;
-	v9_video_user_t * dbase = NULL;
-	printf("%s: id=%d user_id=%s", __func__, id, user_id);
-	if(user_mutex)
-		os_mutex_lock(user_mutex, OS_WAIT_FOREVER);
-
-	dbase = v9_video_user_node_lookup_by_userid( id, user_id);
-	if(dbase)
+	sqlite3 * db = v9_user_sqldb_open(id);
+	if(db)
 	{
-		if(id == 0)
+		v9_video_user_t usertmp;
+		if(v9_user_sqldb_lookup_user(db, id, user_id, &usertmp) != OK)
 		{
-#ifndef V9_USER_DB_NOSDK
-			ret = v9_video_sdk_del_user_all_api(user_id);
-#endif
-			if(ret == OK)
-			{
-				printf("%s: delete id=%d user_id=%s", __func__, id, user_id);
-				lstDelete(user_table, (NODE *) dbase);
-				XFREE(MTYPE_VIDEO_DATA, dbase);
-
-				v9_video_user_update_save();
-				if(user_mutex)
-					os_mutex_unlock(user_mutex);
-				return OK;
-			}
+			if(V9_USER_DEBUG(WARN))
+				zlog_warn(ZLOG_APP, "this user(USER ID(%s)) is not exist.", user_id);
+			v9_user_sqldb_close(db, id);
+			return ERROR;
 		}
-		else
+		if(v9_video_sdk_del_user_api(id, 0, user_id) != OK)
 		{
-#ifndef V9_USER_DB_NOSDK
-			if(v9_video_sdk_del_user_api(id, user_id) == OK)
-#endif
-			{
-				printf("%s: delete id=%d user_id=%s", __func__, id, user_id);
-				lstDelete(user_table, (NODE *) dbase);
-				XFREE(MTYPE_VIDEO_DATA, dbase);
-
-				v9_video_user_update_save();
-				if(user_mutex)
-					os_mutex_unlock(user_mutex);
-				return OK;
-			}
+			if(V9_USER_DEBUG(WARN))
+				zlog_warn(ZLOG_APP, "this user(%s) is can't delete from hw board.", user_id);
+			v9_user_sqldb_close(db, id);
+			return ERROR;
 		}
-	}
-	if(user_mutex)
-		os_mutex_unlock(user_mutex);
-	return ERROR;
-}
-
-
-int v9_video_user_foreach(v9_vidoe_callback cb, void *pVoid)
-{
-	NODE node;
-	v9_video_user_t *dbase = NULL;
-	if (user_table == NULL)
-		return NULL;
-	if(user_mutex)
-		os_mutex_lock(user_mutex, OS_WAIT_FOREVER);
-	for (dbase = (v9_video_user_t *) lstFirst(user_table);
-			dbase != NULL; dbase = (v9_video_user_t *) lstNext(&node))
-	{
-		node = dbase->node;
-		if (dbase && cb)
+		if(v9_user_sqldb_del(db, id, user_id) == OK)
 		{
-			(cb)(dbase, pVoid);
+			v9_user_sqldb_close(db, id);
+			return OK;
 		}
-	}
-	if(user_mutex)
-		os_mutex_unlock(user_mutex);
-	return OK;
-}
-
-
-static int v9_video_user_show_callback(v9_video_user_t *user, struct vty *vty)
-{
-	if(user && vty)
-	{
-		vty_out(vty, "%-16s %-4s %-16s %d       %-6s %-16s%s",
-			user->username,
-			user->gender ? "Men":"Women",
-			user->userid,
-			user->ID,
-			user->group ? "白名单":"黑名单",
-			user->picname, VTY_NEWLINE);
-		return OK;
 	}
 	return ERROR;
 }
 
+int v9_video_user_del_group(u_int32 id,  u_int8 group)
+{
+	sqlite3 * db = v9_user_sqldb_open(id);
+	if(db)
+	{
+		if(v9_video_sdk_del_group_api(id, group) != OK)
+		{
+			if(V9_USER_DEBUG(WARN))
+				zlog_warn(ZLOG_APP, "can't delete all user from hw board.");
+			v9_user_sqldb_close(db, id);
+			return ERROR;
+		}
+		if(v9_user_sqldb_del_group(db, id, group) == OK)
+		{
+			v9_user_sqldb_close(db, id);
+			return OK;
+		}
+	}
+	return ERROR;
+}
+
+
+int v9_video_user_lookup_user(u_int32 id, char *user_id, v9_video_user_t *user)
+{
+	sqlite3 * db = v9_user_sqldb_open(id);
+	if(db)
+	{
+		if(v9_user_sqldb_lookup_user(db, id, user_id, user) == OK)
+		{
+			//sql_snapfea_key *key
+			if(v9_user_sqldb_key_select(db,  id, user_id, &user->key) != OK)
+			{
+				v9_user_sqldb_close(db, id);
+				return ERROR;
+			}
+			v9_user_sqldb_close(db, id);
+			return OK;
+		}
+	}
+	return ERROR;
+}
+
+int v9_video_user_lookup_user_url(u_int32 id, char *user_id, v9_video_user_t *user)
+{
+	sqlite3 * db = v9_user_sqldb_open(id);
+	if(db)
+	{
+		if(v9_user_sqldb_lookup_user(db, id, user_id, user) == OK)
+		{
+			v9_user_sqldb_close(db, id);
+			return OK;
+		}
+	}
+	return ERROR;
+}
+
+int v9_video_user_foreach(u_int32 id, int groupid, v9_vidoe_callback cb, void *pVoid)
+{
+	sqlite3 * db = v9_user_sqldb_open(id);
+	if(db)
+	{
+		if(v9_user_sqldb_foreach(db, id, groupid, NULL, cb, pVoid) == OK)
+		{
+			v9_user_sqldb_close(db, id);
+			return OK;
+		}
+	}
+	return ERROR;
+}
 
 int v9_video_user_show(struct vty *vty, BOOL detail)
 {
-	if(lstCount(user_table) > 0)
-	{
-		vty_out(vty, "%-16s %-4s %-16s %-6s %-6s %-16s%s",
-			"Username",
-			"Uender",
-			"UserID",
-			"Board",
-			"group",
-			"picname", VTY_NEWLINE);
-		v9_video_user_foreach(v9_video_user_show_callback, vty);
-	}
 	return OK;
 }
+
+
+/*
+ * 批量导入
+ */
+
+static int v9_video_user_rules_split(const char *rulesfile, char *path)
+{
+	if(os_file_access(rulesfile) == OK)
+	{
+		FILE *f = NULL;
+		char *s = NULL;
+		char buf[512];
+		f = fopen (rulesfile, "r");
+		if (f)
+		{
+			while (fgets (buf, sizeof(buf), f))
+			{
+				if(strstr(buf, "HaveRules"))
+				{
+					for (s = buf + strlen (buf); (s > buf) && isspace((int ) *(s - 1));
+							s--)
+						;
+					*s = '\0';
+					s = buf + strlen("HaveRules") + 1;
+					if(s && *s != '\0')
+					{
+						fclose (f);
+						return atoi(s);
+					}
+				}
+				else if(strstr(buf, "FaceDirectName"))
+				{
+					s = buf + strlen("FaceDirectName") + 1;
+					if(path)
+						strcpy(path, s);
+				}
+			}
+			fclose (f);
+			return ERROR;
+		}
+	}
+	return ERROR;
+}
+
+
+static int v9_video_filename_split(const char *filename, int *gender, int *group,
+								   char *user, char *user_id, char *text)
+{
+	int ret = ERROR;
+	if(strchr_count(filename, '_') == 3)
+	{
+		ret = sscanf(filename, "%d_%[^_]_%[^_]_%d", group, user, user_id, gender);
+	}
+	else if(strchr_count(filename, '_') == 4)
+	{
+		ret = sscanf(filename, "%d_%[^_]_%[^_]_%d_%[^.]", group, user, user_id, gender, text);
+	}
+	return ret;
+}
+
+static int v9_video_user_add_dir(sqlite3 * db, u_int32 id, BOOL gender, int group, char *user,
+								 char *user_id, char *pic, char *text)
+{
+	if(db)
+	{
+		v9_video_user_t usertmp;
+		if(v9_user_sqldb_lookup_user(db, id, user_id, &usertmp) == OK)
+		{
+			if(V9_USER_DEBUG(WARN))
+				zlog_warn(ZLOG_APP, "this user(%s(%s)) is already exist.", user, user_id);
+			return ERROR;
+		}
+
+		if(v9_video_sdk_add_user_api(id, gender, group,
+									 user, user_id, pic, text, TRUE) != OK)
+		{
+			if(V9_USER_DEBUG(WARN))
+				zlog_warn(ZLOG_APP, "this user(%s(%s)) is can't set hw board.", user, user_id);
+			return ERROR;
+		}
+
+		if(v9_user_sqldb_add(db, id, gender, group, user, user_id, pic, text) == OK)
+		{
+			sql_snapfea_key key;
+			memset(&key, 0, sizeof(sql_snapfea_key));
+			if(v9_video_sdk_get_keyvalue_api( id, pic, &key) != OK)
+			{
+				if(key.feature.ckey_data/*key.feature_data*/)
+				{
+					key.feature_len = 0;
+					XFREE(MTYPE_VIDEO_KEY, key.feature.feature_data);
+					key.feature.ckey_data = NULL;
+				}
+				v9_user_sqldb_del(db, id, user_id);
+				return ERROR;
+			}
+			if(v9_user_sqldb_key_update(db, id, user_id, &key) != OK)
+			{
+				if(key.feature.ckey_data/*key.feature_data*/)
+				{
+					key.feature_len = 0;
+					XFREE(MTYPE_VIDEO_KEY, key.feature.feature_data);
+					key.feature.ckey_data = NULL;
+				}
+				v9_user_sqldb_del(db, id, user_id);
+				return ERROR;
+			}
+			if(key.feature.ckey_data/*key.feature_data*/)
+			{
+				key.feature_len = 0;
+				XFREE(MTYPE_VIDEO_KEY, key.feature.feature_data);
+				key.feature.ckey_data = NULL;
+			}
+			return OK;
+		}
+	}
+	return ERROR;
+}
+/*
+ * id: 板卡ID
+ * rules：是否按规则
+ * dirpath：文件所在的绝对路径
+ */
+static int v9_video_dirfile(sqlite3 * db, u_int32 id, BOOL rules, const char *dirpath)
+{
+	DIR *dir = NULL;
+	struct dirent *d = NULL;
+	struct stat sb;
+	v9_video_user_t user;
+	int ret = -1;
+	char pathfile[APP_PATH_MAX*2];
+	/* Open directory. */
+	dir = opendir (dirpath);
+	if (!dir)
+	{
+		if(V9_USER_DEBUG(WARN))
+			zlog_warn(ZLOG_APP,"can not open %s", dirpath);
+		return ERROR;
+	}
+	/* Walk through the directory. */
+	while ((d = readdir (dir)) != NULL)
+	{
+		//把当前目录.，上一级目录..及隐藏文件都去掉，避免死循环遍历目录
+		if(strncmp(d->d_name, ".", 1) == 0)
+		{
+			continue;
+		}
+		//printf("--------------- %s filename=%s:\r\n", __func__, d->d_name);//不带目录的文件名称
+		memset(pathfile, 0, sizeof(pathfile));
+		snprintf(pathfile, sizeof(pathfile), "%s/%s", dirpath, d->d_name);
+
+		//cp  app/tftpboot/aabbcc/* /mnt/diska1/board1/user/
+
+		//判断该文件是否是目录，及是否已搜索了三层，这里我定义只搜索了三层目录，太深就不搜了，省得搜出太多文件
+		if(stat(pathfile, &sb) >= 0 && S_ISDIR(sb.st_mode))
+		{
+			continue;
+		}
+		/* See if this is a process */
+		if(os_file_access(pathfile) == OK)
+		{
+			memset(&user, 0, sizeof(v9_video_user_t));
+
+			ret = v9_video_filename_split(d->d_name, &user.gender, &user.group,
+										  &user.username, &user.userid, &user.text);
+			if(ret != ERROR)
+			{
+				ret = v9_video_user_add_dir(db, id, user.gender, user.group, user.username, user.userid,
+											 pathfile, strlen(user.text)?user.text:NULL);
+				if(ret != OK && V9_USER_DEBUG(WARN))
+					zlog_warn(ZLOG_APP," can not add user '%s' ID '%s' pic %s", user.username, user.userid, d->d_name);
+			}
+		}
+	}
+	closedir (dir);
+	return ret;
+}
+
+
+
+/*
+ * id: 板卡ID
+ * dirpath：文件所在的绝对路径
+ */
+int v9_video_user_dir_add(u_int32 id, const char *dirpath)
+{
+	int ret = 0;
+	char rulesfile[APP_PATH_MAX];
+	memset(rulesfile, 0, sizeof(rulesfile));
+	snprintf(rulesfile, sizeof(rulesfile), "%s/%s", dirpath, "Rules.txt");
+	ret = v9_video_user_rules_split(rulesfile, NULL);
+	if(ret != ERROR)
+	{
+		sqlite3 * db = v9_user_sqldb_open(id);
+		if(db)
+		{
+			ret = v9_video_dirfile(db, id, ret, dirpath);
+			v9_user_sqldb_close(db, id);
+
+			//cp  app/tftpboot/aabbcc/* /mnt/diska1/board1/user/
+			return ret;
+		}
+		if(V9_USER_DEBUG(WARN))
+			zlog_debug(ZLOG_APP, "Can not open sql db");
+	}
+	if(V9_USER_DEBUG(WARN))
+		zlog_debug(ZLOG_APP, "Can not open %s",rulesfile);
+	return ret;
+}
+

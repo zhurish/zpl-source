@@ -45,9 +45,11 @@ static int logfile_fd = -1; /* Used in signal handler. */
 
 struct zlog *zlog_default = NULL;
 
-static const char *zlog_proto_string[] = { "NONE", "DEFAULT", "CONSOLE", "TELNET",/*"ZEBRA",*/ "HAL", "PAL", "NSM", "RIP",
+static const char *zlog_proto_string[] = { "NONE", "DEFAULT", "CONSOLE", "TELNET",
+		/*"ZEBRA",*/ "HAL", "PAL", "NSM", "RIP",
 		"BGP", "OSPF", "RIPNG", "BABEL", "OSPF6", "ISIS", "PIM", "MASC", "NHRP",
-		"HSLS", "OLSR", "VRRP", "FRP", "LLDP", "BFD", "LDP", "SNTP", "IMISH", "DHCP", "WIFI", "MODEM", "WEB", "SIP", "APP", "VOIP", "SOUND",
+		"HSLS", "OLSR", "VRRP", "FRP", "LLDP", "BFD", "LDP", "SNTP", "IMISH", "DHCP", "WIFI",
+		"MODEM", "WEB", "MQTT", "SIP", "APP", "VOIP", "SOUND",
 		"UTILS", NULL, };
 
 static const char *zlog_priority[] = { "emergencies", "alerts", "critical", "errors",

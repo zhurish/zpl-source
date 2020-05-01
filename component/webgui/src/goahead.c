@@ -74,7 +74,7 @@ MAIN(goahead, int argc, char **argv, char **envp)
             if (argind >= argc) usage();
             home = argv[++argind];
             if (chdir(home) < 0) {
-                error("Cannot change directory to %s", home);
+                web_error("Cannot change directory to %s", home);
                 exit(-1);
             }
         } else if (smatch(argp, "--log") || smatch(argp, "-l")) {
@@ -106,12 +106,12 @@ MAIN(goahead, int argc, char **argv, char **envp)
     }
     initPlatform();
     if (websOpen(documents, route) < 0) {
-        error("Cannot initialize server. Exiting.");
+        web_error("Cannot initialize server. Exiting.");
         return -1;
     }
 #if ME_GOAHEAD_AUTH
     if (websLoad(auth) < 0) {
-        error("Cannot load %s", auth);
+        web_error("Cannot load %s", auth);
         return -1;
     }
 #endif
@@ -162,13 +162,13 @@ MAIN(goahead, int argc, char **argv, char **envp)
      */
     if (websGetBackground()) {
         if (daemon(0, 0) < 0) {
-            error("Cannot run as daemon");
+            web_error("Cannot run as daemon");
             return -1;
         }
     }
 #endif
     websServiceEvents(&finished);
-    logmsg(1, "Instructed to exit");
+    web_logmsg(WEBS_WARN, "Instructed to exit");
     websClose();
 #if WINDOWS
     windowsClose();
@@ -182,17 +182,17 @@ static void logHeader(void)
     char    home[ME_GOAHEAD_LIMIT_STRING];
 
     getcwd(home, sizeof(home));
-    logmsg(2, "Configuration for %s", ME_TITLE);
-    logmsg(2, "---------------------------------------------");
-    logmsg(2, "Version:            %s", ME_VERSION);
-    logmsg(2, "BuildType:          %s", ME_DEBUG ? "Debug" : "Release");
-    logmsg(2, "CPU:                %s", ME_CPU);
-    logmsg(2, "OS:                 %s", ME_OS);
-    logmsg(2, "Host:               %s", websGetServer());
-    logmsg(2, "Directory:          %s", home);
-    logmsg(2, "Documents:          %s", websGetDocuments());
-    logmsg(2, "Configure:          %s", ME_CONFIG_CMD);
-    logmsg(2, "---------------------------------------------");
+    web_logmsg(WEBS_NOTICE, "Configuration for %s", ME_TITLE);
+    web_logmsg(WEBS_NOTICE, "---------------------------------------------");
+    web_logmsg(WEBS_NOTICE, "Version:            %s", ME_VERSION);
+    web_logmsg(WEBS_NOTICE, "BuildType:          %s", ME_DEBUG ? "Debug" : "Release");
+    web_logmsg(WEBS_NOTICE, "CPU:                %s", ME_CPU);
+    web_logmsg(WEBS_NOTICE, "OS:                 %s", ME_OS);
+    web_logmsg(WEBS_NOTICE, "Host:               %s", websGetServer());
+    web_logmsg(WEBS_NOTICE, "Directory:          %s", home);
+    web_logmsg(WEBS_NOTICE, "Documents:          %s", websGetDocuments());
+    web_logmsg(WEBS_NOTICE, "Configure:          %s", ME_CONFIG_CMD);
+    web_logmsg(WEBS_NOTICE, "---------------------------------------------");
 }
 
 

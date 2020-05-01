@@ -18,6 +18,11 @@ Contributors:
 
 #include "mosquitto.h"
 
+#ifndef WITH_BROKER
+int __log__printf(const char *file, const char *func, const int line, struct mosquitto *mosq, int priority, const char *fmt, ...);
+#define log__printf(mosq, pri, format, ...) 		__log__printf (__FILE__, __FUNCTION__, __LINE__, mosq, pri, format, ##__VA_ARGS__)
+#else
 int log__printf(struct mosquitto *mosq, int priority, const char *fmt, ...);
+#endif
 
 #endif

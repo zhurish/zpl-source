@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2019 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -40,10 +40,12 @@ int handle__publish(struct mosquitto *mosq)
 	uint16_t mid;
 	int slen;
 	mosquitto_property *properties = NULL;
+	int state;
 
 	assert(mosq);
 
-	if(mosq->state != mosq_cs_connected){
+	state = mosquitto__get_state(mosq);
+	if(state != mosq_cs_active){
 		return MOSQ_ERR_PROTOCOL;
 	}
 
@@ -150,13 +152,13 @@ int handle__publish(struct mosquitto *mosq)
 			mosquitto_property_free_all(&properties);
 			return rc;
 		case 2:
+			message->properties = properties;
 			util__decrement_receive_quota(mosq);
 			rc = send__pubrec(mosq, message->msg.mid, 0);
 			pthread_mutex_lock(&mosq->msgs_in.mutex);
 			message->state = mosq_ms_wait_for_pubrel;
 			message__queue(mosq, message, mosq_md_in);
 			pthread_mutex_unlock(&mosq->msgs_in.mutex);
-			mosquitto_property_free_all(&properties);
 			return rc;
 		default:
 			message__cleanup(&message);

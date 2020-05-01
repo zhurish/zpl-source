@@ -25,6 +25,7 @@
 #include "web_app.h"
 #include "web_api.h"
 
+#ifndef THEME_V9UI
 static int web_syslog_set(Webs *wp, char *path, char *query)
 {
 	char *strval = NULL;
@@ -82,7 +83,7 @@ static int web_syslog_set(Webs *wp, char *path, char *query)
 	{
 		return web_return_text_plain(wp, ERROR);
 	}
-	printf("%s: syslog_address=%s\r\n", __func__, syslog_address);
+	_WEB_DBG_TRAP("%s: syslog_address=%s\r\n", __func__, syslog_address);
 
 	syslog_level = webs_get_var(wp, T("syslog_level"), T(""));
 	if (NULL == syslog_level)
@@ -165,12 +166,15 @@ static int jst_syslog(int eid, webs_t wp, int argc, char **argv)
 	websWrite(wp, "</textarea>");
 	return 0;
 }
+#endif /* THEME_V9UI */
 
 int web_syslog_app(void)
 {
+#ifndef THEME_V9UI
 	websDefineJst("jst_syslog", jst_syslog);
 
 	websFormDefine("setsyslog", web_syslog_set);
+#endif /* THEME_V9UI */
 	return 0;
 }
 

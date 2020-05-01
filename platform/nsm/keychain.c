@@ -872,10 +872,12 @@ static struct cmd_node keychain_key_node =
 static int
 keychain_strftime (char *buf, int bufsiz, time_t *time)
 {
-  struct tm *tm;
+  struct tm *tm = NULL;
+  struct tm stm;
   size_t len;
-
-  tm = localtime (time);
+  localtime_r(time, &stm);
+  tm = &stm;
+  //tm = localtime (time);
 
   len = strftime (buf, bufsiz, "%T %b %d %Y", tm);
 

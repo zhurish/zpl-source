@@ -442,18 +442,19 @@ PUBLIC char *websEncode64(char *s)
  */
 PUBLIC char *websEncode64Block(char *s, ssize len)
 {
-    uint    shiftbuf;
-    char    *buffer, *bp;
-    cchar   *end;
-    ssize   size;
-    int     i, j, shift;
+    uint    shiftbuf = 0;
+    char    *buffer = NULL, *bp = NULL;
+    cchar   *end = NULL;
+    ssize   size = 0;
+    int     i = 0, j = 0, shift = 0;
 
     size = len * 2;
     if ((buffer = walloc(size + 1)) == 0) {
         return NULL;
     }
     bp = buffer;
-    *bp = '\0';
+    memset(bp, '\0', size + 1);
+    //*bp = '\0';
     end = &s[len];
     while (s < end) {
         shiftbuf = 0;

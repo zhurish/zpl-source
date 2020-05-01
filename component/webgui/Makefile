@@ -3,15 +3,26 @@ include $(MAKE_DIR)/makelinux.mk
 include config.mk
 
 WEBGUI_DEBUG=false
+WEBGUI_TRACE=true
 
 export THEME_MATERIAL=false
-export THEME_BOOTSTRAP=true
+export THEME_BOOTSTRAP=false
+export THEME_V9UI=true
 
 ifeq ($(WEBGUI_DEBUG),true)
-WEB_DEFINE = -DME_DEBUG=1 -DME_GOAHEAD_LOGGING=1 -DME_GOAHEAD_TRACING=1 -D__WEBGUI_DEBUG -DWEBGUI_SRC_DIR=\"$(WEBGUI_ROOT)\" 
+WEB_DEFINE = -DME_DEBUG=1 -DME_GOAHEAD_LOGGING=1 -DME_GOAHEAD_EXTLOG=1 -D__WEBGUI_DEBUG -DWEBGUI_SRC_DIR=\"$(WEBGUI_ROOT)\" 
+#-DME_GOAHEAD_TRACING=1 
 else
-WEB_DEFINE = -DME_DEBUG=0 -DME_GOAHEAD_LOGGING=1 -DME_GOAHEAD_TRACING=0
+WEB_DEFINE = -DME_DEBUG=1 -DME_GOAHEAD_LOGGING=1 -DME_GOAHEAD_EXTLOG=1
+#-DME_GOAHEAD_TRACING=0
 endif
+
+ifeq ($(WEBGUI_TRACE),true)
+WEB_DEFINE += -DME_GOAHEAD_TRACING=1
+else
+WEB_DEFINE += -DME_GOAHEAD_TRACING=0
+endif
+
 
 ifeq ($(THEME_MATERIAL),true)
 WEB_DEFINE += -DTHEME_MATERIAL
@@ -21,6 +32,9 @@ ifeq ($(THEME_BOOTSTRAP),true)
 WEB_DEFINE += -DTHEME_BOOTSTRAP
 endif
 
+ifeq ($(THEME_V9UI),true)
+WEB_DEFINE += -DTHEME_V9UI
+endif
 
 OBJS_DIR = $(BASE_ROOT)/$(OBJDIR)/$(MODULEDIR)
 SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)/src
@@ -89,7 +103,7 @@ osdep.h:
 		
 		
 ifeq ($(ME_COM_MBEDTLS),1)
-$(OBJS_DIR)/%.o: $(mbedtls_DIR)/%.c $(DEP_H)
+$(OBJS_DIR)/%.o: $(mbedtls_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
@@ -97,7 +111,7 @@ $(OBJS_DIR)/%.o: $(mbedtls_DIR)/%.c $(DEP_H)
 	@$(PL_ECHO_CC)
 	@$(PL_OBJ_COMPILE)
 	
-$(OBJS_DIR)/%.o: $(goahead_mbedtls_DIR)/%.c $(DEP_H)
+$(OBJS_DIR)/%.o: $(goahead_mbedtls_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
@@ -107,7 +121,7 @@ $(OBJS_DIR)/%.o: $(goahead_mbedtls_DIR)/%.c $(DEP_H)
 endif
 
 ifeq ($(ME_COM_OPENSSL),1)	
-$(OBJS_DIR)/%.o: $(goahead_openssl_DIR)/%.c $(DEP_H)
+$(OBJS_DIR)/%.o: $(goahead_openssl_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
@@ -116,7 +130,7 @@ $(OBJS_DIR)/%.o: $(goahead_openssl_DIR)/%.c $(DEP_H)
 	@$(PL_OBJ_COMPILE)
 endif
 	
-$(OBJS_DIR)/%.o: $(gopass_DIR)/%.c $(DEP_H)
+$(OBJS_DIR)/%.o: $(gopass_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
@@ -124,7 +138,7 @@ $(OBJS_DIR)/%.o: $(gopass_DIR)/%.c $(DEP_H)
 	@$(PL_ECHO_CC)
 	@$(PL_OBJ_COMPILE)		
 					
-$(OBJS_DIR)/%.o: $(SRC_DIR)/%.c $(DEP_H)
+$(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
@@ -132,7 +146,7 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c $(DEP_H)
 	@$(PL_ECHO_CC)
 	@$(PL_OBJ_COMPILE)
 	
-$(OBJS_DIR)/%.o: $(WEB_DIR)/%.c $(DEP_H)
+$(OBJS_DIR)/%.o: $(WEB_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
@@ -140,7 +154,7 @@ $(OBJS_DIR)/%.o: $(WEB_DIR)/%.c $(DEP_H)
 	@$(PL_ECHO_CC)
 	@$(PL_OBJ_COMPILE)
 
-$(OBJS_DIR)/%.o: $(APP_WEB_DIR)/%.c $(DEP_H)
+$(OBJS_DIR)/%.o: $(APP_WEB_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
@@ -148,7 +162,7 @@ $(OBJS_DIR)/%.o: $(APP_WEB_DIR)/%.c $(DEP_H)
 	@$(PL_ECHO_CC)
 	@$(PL_OBJ_COMPILE)	
 
-$(OBJS_DIR)/%.o: $(APP_JST_DIR)/%.c $(DEP_H)
+$(OBJS_DIR)/%.o: $(APP_JST_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
@@ -159,7 +173,7 @@ $(OBJS_DIR)/%.o: $(APP_JST_DIR)/%.c $(DEP_H)
 		
 #
 #
-$(LIBS) : $(MODULE_OBJS) $(mbedtls_MODULE_OBJS) $(goahead_mbedtls_MODULE_OBJS) \
+$(LIBS) : $(DEP_H) $(MODULE_OBJS) $(mbedtls_MODULE_OBJS) $(goahead_mbedtls_MODULE_OBJS) \
 		  $(goahead_openssl_MODULE_OBJS) $(gopass_MODULE_OBJS) $(MODULE_WEB_OBJS) \
 		  $(MODULE_APP_WEB_OBJS) $(MODULE_APP_JST_OBJS)
 	$(PL_MAKE_LIB) $(LIBS) $(MODULE_OBJS) $(mbedtls_MODULE_OBJS) \
@@ -184,33 +198,31 @@ endif
 #include $(MAKE_DIR)/make.mk
 ifeq ($(ME_COM_SSL),1)
 sslinstall: 
-	install -d $(DSTETCDIR)/web
-	$(CP) src/certs/samples/ca.crt $(DSTETCDIR)/web/ca.crt
-	$(CP) src/certs/samples/ca.key $(DSTETCDIR)/web/ca.key
-	$(CP) src/certs/samples/ec.crt $(DSTETCDIR)/web/ec.crt
-	$(CP) src/certs/samples/ec.key $(DSTETCDIR)/web/ec.key
-	$(CP) src/certs/samples/roots.crt $(DSTETCDIR)/web/roots.crt
-	$(CP) src/certs/samples/self.crt $(DSTETCDIR)/web/self.crt
-	$(CP) src/certs/samples/self.key $(DSTETCDIR)/web/self.key
+	@install -d $(DSTETCDIR)/web
+	@$(CP) src/certs/samples/ca.crt $(DSTETCDIR)/web/ca.crt
+	@$(CP) src/certs/samples/ca.key $(DSTETCDIR)/web/ca.key
+	@$(CP) src/certs/samples/ec.crt $(DSTETCDIR)/web/ec.crt
+	@$(CP) src/certs/samples/ec.key $(DSTETCDIR)/web/ec.key
+	@$(CP) src/certs/samples/roots.crt $(DSTETCDIR)/web/roots.crt
+	@$(CP) src/certs/samples/self.crt $(DSTETCDIR)/web/self.crt
+	@$(CP) src/certs/samples/self.key $(DSTETCDIR)/web/self.key
 #
 #
 sslclean: 
-	$(RM) $(DSTETCDIR)/web/ca.crt
-	$(RM) $(DSTETCDIR)/web/ca.key
-	$(RM) $(DSTETCDIR)/web/ec.crt
-	$(RM) $(DSTETCDIR)/web/ec.key
-	$(RM) $(DSTETCDIR)/web/roots.crt
-	$(RM) $(DSTETCDIR)/web/self.crt
-	$(RM) $(DSTETCDIR)/web/self.key
+	@$(RM) $(DSTETCDIR)/web/ca.crt
+	@$(RM) $(DSTETCDIR)/web/ca.key
+	@$(RM) $(DSTETCDIR)/web/ec.crt
+	@$(RM) $(DSTETCDIR)/web/ec.key
+	@$(RM) $(DSTETCDIR)/web/roots.crt
+	@$(RM) $(DSTETCDIR)/web/self.crt
+	@$(RM) $(DSTETCDIR)/web/self.key
 #
 #
 else
 sslinstall: 
-	$(ECHO) aa > /dev/null
 #
 #
 sslclean: 
-	$(ECHO) aa > /dev/null
 #	
 endif
 
@@ -229,14 +241,14 @@ lib: $(LIBS)
 obj: $(MODULE_OBJS) $(MODULE_LIBOBJS)
 
 webinstall: 
-	${MAKE} -C  web/ install 
+	@${MAKE} -C  web/ install 
 webclean: 
-	${MAKE} -C  web/ clean 
+	@${MAKE} -C  web/ clean 
 
 install: $(LIBS) webinstall sslinstall
-	install -d $(LIB_DIR)
-	install -m 755 $(LIBS) $(LIB_DIR)
-
+	@install -d $(LIB_DIR)
+	@install -m 755 $(LIBS) $(LIB_DIR)
+	@$(STRIP) --strip-unneeded $(LIB_DIR)/$(LIBS)
 
 clean: objclean webclean sslclean
 	@$(RM) $(LIB_DIR)/$(LIBS)

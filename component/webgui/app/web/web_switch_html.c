@@ -29,6 +29,7 @@
 #include "web_app.h"
 #include "web_api.h"
 
+#ifndef THEME_V9UI
 //#define BUILD_OPENWRT
 #ifdef BUILD_OPENWRT
 /*
@@ -109,7 +110,7 @@ static int switch_dev_config_load(switch_dev_t *dev)
 
 	memset(tmp, 0, sizeof(tmp));
 	ret = os_uci_get_string("network.wan.ifname", tmp);
-	//printf("-----%s-----:wan %s\r\n", __func__, tmp);
+	//_WEB_DBG_TRAP("-----%s-----:wan %s\r\n", __func__, tmp);
 	if(ret == OK)
 	{
 		char *brk = strstr(tmp, ".");
@@ -117,11 +118,11 @@ static int switch_dev_config_load(switch_dev_t *dev)
 		{
 			brk++;
 			wan_vid = atoi(brk);
-			//printf("-----%s-----:wan vid%d\r\n", __func__, wan_vid);
+			//_WEB_DBG_TRAP("-----%s-----:wan vid%d\r\n", __func__, wan_vid);
 		}
 	}
 	ret = os_uci_get_string("network.lan.ifname", tmp);
-	//printf("-----%s-----:lan %s\r\n", __func__, tmp);
+	//_WEB_DBG_TRAP("-----%s-----:lan %s\r\n", __func__, tmp);
 	if(ret == OK)
 	{
 		char *brk = strstr(tmp, ".");
@@ -129,11 +130,11 @@ static int switch_dev_config_load(switch_dev_t *dev)
 		{
 			brk++;
 			lan_vid = atoi(brk);
-			//printf("-----%s-----:lan vid%d\r\n", __func__, lan_vid);
+			//_WEB_DBG_TRAP("-----%s-----:lan vid%d\r\n", __func__, lan_vid);
 		}
 	}
 	ret = os_uci_get_integer("network.@switch[0].enable_vlan", &dev->vlan_enable);
-	////printf("-----%s-----:network.@switch[0].enable_vlan=%d\r\n", __func__, dev->vlan_enable);
+	////_WEB_DBG_TRAP("-----%s-----:network.@switch[0].enable_vlan=%d\r\n", __func__, dev->vlan_enable);
 	if(ret == OK && dev->vlan_enable)
 	{
 		for(i = 0; i < SWITCH_VLAN_MAX; i++)
@@ -141,7 +142,7 @@ static int switch_dev_config_load(switch_dev_t *dev)
 			memset(cmd, 0, sizeof(cmd));
 			sprintf(cmd, "network.@switch_vlan[%d].vlan", i);
 			ret = os_uci_get_integer(cmd, &dev->vlan[i].vlan);
-			//printf("-----%s-----:dev->vlan[%d].vlan=%d\r\n", __func__, i,dev->vlan[i].vlan);
+			//_WEB_DBG_TRAP("-----%s-----:dev->vlan[%d].vlan=%d\r\n", __func__, i,dev->vlan[i].vlan);
 			if(ret != OK)
 				break;
 			if(ret == OK && dev->vlan[i].vlan > 0)
@@ -157,7 +158,7 @@ static int switch_dev_config_load(switch_dev_t *dev)
 				sprintf(cmd, "network.@switch_vlan[%d].ports", i);
 				ret = os_uci_get_string(cmd, tmp);
 
-				//printf("-----%s-----:dev->vlan[%d].ports=%s\r\n", __func__, i, tmp);
+				//_WEB_DBG_TRAP("-----%s-----:dev->vlan[%d].ports=%s\r\n", __func__, i, tmp);
 				if(ret == OK)
 				{
 					int j = 0;
@@ -176,7 +177,7 @@ static int switch_dev_config_load(switch_dev_t *dev)
 							dev->vlan[i].ports[0].res = 0;
 							ind = 0;
 							find = 1;
-							//printf("-----%s-----:tmp[j]=%c\r\n", __func__, tmp[j]);
+							//_WEB_DBG_TRAP("-----%s-----:tmp[j]=%c\r\n", __func__, tmp[j]);
 							break;
 						case '1':
 							dev->vlan[i].ports[1].port = 1;
@@ -187,7 +188,7 @@ static int switch_dev_config_load(switch_dev_t *dev)
 							dev->vlan[i].ports[1].res = 0;
 							ind = 1;
 							find = 1;
-							//printf("-----%s-----:tmp[j]=%c\r\n", __func__, tmp[j]);
+							//_WEB_DBG_TRAP("-----%s-----:tmp[j]=%c\r\n", __func__, tmp[j]);
 							break;
 						case '2':
 							dev->vlan[i].ports[2].port = 2;
@@ -198,7 +199,7 @@ static int switch_dev_config_load(switch_dev_t *dev)
 							dev->vlan[i].ports[2].res = 0;
 							ind = 2;
 							find = 1;
-							//printf("-----%s-----:tmp[j]=%c\r\n", __func__, tmp[j]);
+							//_WEB_DBG_TRAP("-----%s-----:tmp[j]=%c\r\n", __func__, tmp[j]);
 							break;
 						case '3':
 							dev->vlan[i].ports[3].port = 3;
@@ -209,7 +210,7 @@ static int switch_dev_config_load(switch_dev_t *dev)
 							dev->vlan[i].ports[3].res = 0;
 							ind = 3;
 							find = 1;
-							//printf("-----%s-----:tmp[j]=%c\r\n", __func__, tmp[j]);
+							//_WEB_DBG_TRAP("-----%s-----:tmp[j]=%c\r\n", __func__, tmp[j]);
 							break;
 						case '4':
 							dev->vlan[i].ports[4].port = 4;
@@ -220,7 +221,7 @@ static int switch_dev_config_load(switch_dev_t *dev)
 							dev->vlan[i].ports[4].res = 0;
 							ind = 4;
 							find = 1;
-							//printf("-----%s-----:tmp[j]=%c\r\n", __func__, tmp[j]);
+							//_WEB_DBG_TRAP("-----%s-----:tmp[j]=%c\r\n", __func__, tmp[j]);
 							break;
 						case '5':
 							dev->vlan[i].ports[5].port = 5;
@@ -231,7 +232,7 @@ static int switch_dev_config_load(switch_dev_t *dev)
 							dev->vlan[i].ports[5].res = 0;
 							ind = 5;
 							find = 1;
-							//printf("-----%s-----:tmp[j]=%c\r\n", __func__, tmp[j]);
+							//_WEB_DBG_TRAP("-----%s-----:tmp[j]=%c\r\n", __func__, tmp[j]);
 							break;
 						case '6':
 							dev->vlan[i].ports[6].port = 6;
@@ -242,7 +243,7 @@ static int switch_dev_config_load(switch_dev_t *dev)
 							dev->vlan[i].ports[6].res = 0;
 							ind = 6;
 							find = 1;
-							//printf("-----%s-----:tmp[j]=%c\r\n", __func__, tmp[j]);
+							//_WEB_DBG_TRAP("-----%s-----:tmp[j]=%c\r\n", __func__, tmp[j]);
 							break;
 						case '7':
 							dev->vlan[i].ports[7].port = 7;
@@ -253,7 +254,7 @@ static int switch_dev_config_load(switch_dev_t *dev)
 							dev->vlan[i].ports[7].res = 0;
 							ind = 7;
 							find = 1;
-							//printf("-----%s-----:tmp[j]=%c\r\n", __func__, tmp[j]);
+							//_WEB_DBG_TRAP("-----%s-----:tmp[j]=%c\r\n", __func__, tmp[j]);
 							break;
 						case 't':
 							find = 0;
@@ -264,7 +265,7 @@ static int switch_dev_config_load(switch_dev_t *dev)
 								dev->vlan[i].ports[6].is_cpu = 1;
 								dev->vlan[i].ports[6].tagged = 1;
 							}
-							//printf("-----%s-----:tmp[j]=%c\r\n", __func__, tmp[j]);
+							//_WEB_DBG_TRAP("-----%s-----:tmp[j]=%c\r\n", __func__, tmp[j]);
 							break;
 						case ' ':
 							ind = 0;
@@ -754,15 +755,17 @@ static int web_switch_port_tbl(Webs *wp, char *path, char *query)
 	websDone(wp);
 	return 0;
 }
-
+#endif /* THEME_V9UI */
 
 int web_switch_app(void)
 {
+#ifndef THEME_V9UI
 #ifdef BUILD_OPENWRT
 	switch_dev_init();
 	websFormDefine("port-tbl", web_switch_port_tbl);
 	web_button_add_hook("switch", "save", web_switch_handle, NULL);
 	web_button_add_hook("switch", "connect", web_switch_handle, NULL);
 #endif
+#endif /* THEME_V9UI */
 	return 0;
 }

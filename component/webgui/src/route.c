@@ -79,7 +79,7 @@ PUBLIC void websRouteRequest(Webs *wp)
 
         if (plen < route->prefixLen) continue;
         len = min(route->prefixLen, plen);
-        trace(5, "Examine route %s", route->prefix);
+        web_trace(WEBS_NOTICE, "Examine route %s", route->prefix);
         /*
             Match route
          */
@@ -87,19 +87,19 @@ PUBLIC void websRouteRequest(Webs *wp)
             continue;
         }
         if (route->protocol && !smatch(route->protocol, wp->protocol)) {
-            trace(5, "Route %s does not match protocol %s", route->prefix, wp->protocol);
+            web_trace(WEBS_NOTICE, "Route %s does not match protocol %s", route->prefix, wp->protocol);
             continue;
         }
         if (route->methods >= 0) {
             if (!hashLookup(route->methods, wp->method)) {
-                trace(5, "Route %s does not match method %s", route->prefix, wp->method);
+                web_trace(WEBS_NOTICE, "Route %s does not match method %s", route->prefix, wp->method);
                 continue;
             }
         } else if (!safeMethod) {
             continue;
         }
         if (route->extensions >= 0 && (wp->ext == 0 || !hashLookup(route->extensions, &wp->ext[1]))) {
-            trace(5, "Route %s doesn match extension %s", route->prefix, wp->ext ? wp->ext : "");
+            web_trace(WEBS_NOTICE, "Route %s doesn match extension %s", route->prefix, wp->ext ? wp->ext : "");
             continue;
         }
 
@@ -129,7 +129,7 @@ PUBLIC void websRouteRequest(Webs *wp)
         }
     }
     if (wp->routeCount >= WEBS_MAX_ROUTE) {
-        error("Route loop for %s", wp->url);
+        web_error("Route loop for %s", wp->url);
     }
     websError(wp, HTTP_CODE_NOT_FOUND, "Cannot find suitable route for request.");
     web_assert(wp->route == 0);
@@ -170,7 +170,7 @@ PUBLIC bool websRunRequest(Webs *wp)
         wp->flags |= WEBS_VARS_ADDED;
     }
     wp->state = WEBS_RUNNING;
-    trace(5, "Route %s calls handler %s", route->prefix, route->handler->name);
+    web_trace(WEBS_NOTICE, "Route %s calls handler %s", route->prefix, route->handler->name);
 
 #if ME_GOAHEAD_LEGACY
     if (route->handler->flags & WEBS_LEGACY_HANDLER) {
@@ -262,7 +262,7 @@ PUBLIC bool websCanString(Webs *wp, char *abilities)
             return 0;
         }
         if ((user = websLookupUser(wp->username)) == 0) {
-            trace(2, "Cannot find user %s", wp->username);
+            web_trace(WEBS_DEBUG, "Cannot find user %s", wp->username);
             return 0;
         }
     }
@@ -288,7 +288,7 @@ PUBLIC WebsRoute *websAddRoute(cchar *uri, cchar *handler, int pos)
     WebsKey     *key;
 
     if (uri == 0 || *uri == '\0') {
-        error("Route has bad URI");
+        web_error("Route has bad URI");
         return 0;
     }
     if ((route = walloc(sizeof(WebsRoute))) == 0) {
@@ -302,7 +302,7 @@ PUBLIC WebsRoute *websAddRoute(cchar *uri, cchar *handler, int pos)
         handler = "file";
     }
     if ((key = hashLookup(handlers, handler)) == 0) {
-        error("Cannot find route handler %s", handler);
+        web_error("Cannot find route handler %s", handler);
         wfree(route->prefix);
         wfree(route);
         return 0;
@@ -347,7 +347,7 @@ static void growRoutes(void)
     if (routeCount >= routeMax) {
         routeMax += 16;
         if ((routes = wrealloc(routes, sizeof(WebsRoute*) * routeMax)) == 0) {
-            error("Cannot grow routes");
+            web_error("Cannot grow routes");
         }
     }
 }
@@ -509,7 +509,7 @@ PUBLIC int websLoad(cchar *path)
 
     rc = 0;
     if ((buf = websReadWholeFile(path)) == 0) {
-        error("Cannot open config file %s", path);
+        web_error("Cannot open config file %s", path);
         return -1;
     }
     for (line = stok(buf, "\r\n", &token); line; line = stok(NULL, "\r\n", &token)) {
@@ -553,7 +553,7 @@ PUBLIC int websLoad(cchar *path)
                 } else if (smatch(key, "uri")) {
                     uri = value;
                 } else {
-                    error("Bad route keyword %s", key);
+                    web_error("Bad route keyword %s", key);
                     continue;
                 }
             }
@@ -583,7 +583,7 @@ PUBLIC int websLoad(cchar *path)
                 } else if (smatch(key, "roles")) {
                     roles = value;
                 } else {
-                    error("Bad user keyword %s", key);
+                    web_error("Bad user keyword %s", key);
                     continue;
                 }
             }
@@ -609,7 +609,7 @@ PUBLIC int websLoad(cchar *path)
             }
 #endif
         } else {
-            error("Unknown route keyword %s", kind);
+            web_error("Unknown route keyword %s", kind);
             rc = -1;
             break;
         }

@@ -1047,7 +1047,7 @@ static int voip_ubus_uci_action(char *buf, int len)
 	return OK;
 }
 
-int voip_ubus_uci_update_cb(char *buf, int len)
+int voip_ubus_uci_update_cb(void *p, char *buf, int len)
 {
 	int ret = 0;
 	if(strstr(buf, "sip"))

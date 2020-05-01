@@ -24,6 +24,10 @@
 
 extern int os_system_tick();
 
+enum os_tmtime_id {
+  OS_TMTIME_LOCAL = 0,
+  OS_TMTIME_UTC,
+};
 
 enum os_clkid {
   OS_CLK_REALTIME = 0,	/* ala gettimeofday() */
@@ -68,6 +72,8 @@ extern int os_msleep(unsigned int);
 extern int os_sleep(unsigned int);
 extern void os_msleep_interrupt (int mseconds);
 extern void os_usleep_interrupt (int useconds);
+
+extern int os_tmtime_get (enum os_tmtime_id type, time_t t, struct tm *ptm);
 
 extern char *os_time_fmt (char *fmt, time_t t);
 extern char *os_time_string(time_t tInput);

@@ -224,15 +224,15 @@ PUBLIC int sslOpen()
     uchar       resume[16];
     char        *ciphers;
 
-    trace(7, "Initializing SSL");
+    web_trace(WEBS_NOTICE, "Initializing SSL");
 
     randBuf.now = time(0);
     randBuf.pid = getpid();
     RAND_seed((void*) &randBuf, sizeof(randBuf));
 #if ME_UNIX_LIKE
-    trace(6, "OpenSsl: Before calling RAND_load_file");
+    web_trace(WEBS_INFO, "OpenSsl: Before calling RAND_load_file");
     RAND_load_file("/dev/urandom", 256);
-    trace(6, "OpenSsl: After calling RAND_load_file");
+    web_trace(WEBS_INFO, "OpenSsl: After calling RAND_load_file");
 #endif
 #if !ME_WIN_LIKE
     OpenSSL_add_all_algorithms();
@@ -242,7 +242,7 @@ PUBLIC int sslOpen()
     SSLeay_add_ssl_algorithms();
 
     if ((sslctx = SSL_CTX_new(SSLv23_server_method())) == 0) {
-        error("Unable to create SSL context");
+        web_error("Unable to create SSL context");
         return -1;
     }
 
@@ -270,7 +270,7 @@ PUBLIC int sslOpen()
     if (ME_GOAHEAD_SSL_AUTHORITY && *ME_GOAHEAD_SSL_AUTHORITY) {
         if ((!SSL_CTX_load_verify_locations(sslctx, ME_GOAHEAD_SSL_AUTHORITY, NULL)) ||
             (!SSL_CTX_set_default_verify_paths(sslctx))) {
-            error("Unable to read cert verification locations");
+            web_error("Unable to read cert verification locations");
             sslClose();
             return -1;
         }
@@ -283,7 +283,7 @@ PUBLIC int sslOpen()
     if (ME_GOAHEAD_SSL_REVOKE && *ME_GOAHEAD_SSL_REVOKE) {
         store = SSL_CTX_get_cert_store(sslctx);
         if (!X509_STORE_load_locations(store, ME_GOAHEAD_SSL_REVOKE, 0)) {
-            error("Cannot load certificate revoke list: %s", ME_GOAHEAD_SSL_REVOKE);
+            web_error("Cannot load certificate revoke list: %s", ME_GOAHEAD_SSL_REVOKE);
             sslClose();
             return -1;
         }
@@ -304,9 +304,9 @@ PUBLIC int sslOpen()
         ciphers = OPENSSL_DEFAULT_CIPHERS;
     }
     ciphers = mapCipherNames(ciphers);
-    trace(5, "Using OpenSSL ciphers: %s", ciphers);
+    web_trace(WEBS_INFO, "Using OpenSSL ciphers: %s", ciphers);
     if (SSL_CTX_set_cipher_list(sslctx, ciphers) != 1) {
-        error("Unable to set cipher list \"%s\"", ciphers);
+        web_error("Unable to set cipher list \"%s\"", ciphers);
         sslClose();
         wfree(ciphers);
         return -1;
@@ -343,12 +343,12 @@ PUBLIC int sslOpen()
 
             name = ME_GOAHEAD_SSL_CURVE;
             if ((nid = OBJ_sn2nid(name)) == 0) {
-                error("Unknown curve name \"%s\"", name);
+                web_error("Unknown curve name \"%s\"", name);
                 sslClose();
                 return -1;
             }
             if ((ecdh = EC_KEY_new_by_curve_name(nid)) == 0) {
-                error("Unable to create curve \"%s\"", name);
+                web_error("Unable to create curve \"%s\"", name);
                 sslClose();
                 return -1;
             }
@@ -543,12 +543,12 @@ PUBLIC ssize sslRead(Webs *wp, void *buf, ssize len)
             }
             serror = ERR_get_error();
             ERR_error_string_n(serror, ebuf, sizeof(ebuf) - 1);
-            trace(5, "SSL_read %s", ebuf);
+            web_trace(WEBS_DEBUG, "SSL_read %s", ebuf);
         }
         break;
     }
     if (maxHandshakes && sp->handshakes > maxHandshakes) {
-        error("TLS renegotiation attack");
+        web_error("TLS renegotiation attack");
         rc = -1;
         sp->flags |= SOCKET_EOF;
         return -1;
@@ -568,7 +568,7 @@ PUBLIC ssize sslRead(Webs *wp, void *buf, ssize len)
         } else if (err != SSL_ERROR_ZERO_RETURN) {
             serror = ERR_get_error();
             ERR_error_string_n(serror, ebuf, sizeof(ebuf) - 1);
-            trace(4, "OpenSSL: connection with protocol error: %s", ebuf);
+            web_trace(WEBS_WARN, "OpenSSL: connection with protocol error: %s", ebuf);
             rc = -1;
             sp->flags |= SOCKET_EOF;
         }
@@ -595,16 +595,16 @@ PUBLIC ssize sslWrite(Webs *wp, void *buf, ssize len)
 
     do {
         rc = SSL_write(wp->ssl, buf, (int) len);
-        trace(7, "OpenSSL: written %d, requested len %d", rc, len);
+        web_trace(WEBS_DEBUG, "OpenSSL: written %d, requested len %d", rc, len);
         if (rc <= 0) {
             err = SSL_get_error(wp->ssl, rc);
             if (err == SSL_ERROR_NONE || err == SSL_ERROR_WANT_WRITE) {
                 break;
             }
-            trace(7, "OpenSSL: error %d", err);
+            web_trace(WEBS_WARN, "OpenSSL: error %d", err);
             return -1;
         } else if (maxHandshakes && sp->handshakes > maxHandshakes) {
-            error("TLS renegotiation attack");
+            web_error("TLS renegotiation attack");
             rc = -1;
             sp->flags |= SOCKET_EOF;
             return -1;
@@ -612,7 +612,7 @@ PUBLIC ssize sslWrite(Webs *wp, void *buf, ssize len)
         totalWritten += rc;
         buf = (void*) ((char*) buf + rc);
         len -= rc;
-        trace(7, "OpenSSL: write: len %d, written %d, total %d", len, rc, totalWritten);
+        web_trace(WEBS_DEBUG, "OpenSSL: write: len %d, written %d, total %d", len, rc, totalWritten);
     } while (len > 0);
 
     if (totalWritten == 0 && err == SSL_ERROR_WANT_WRITE) {
@@ -645,19 +645,19 @@ static int sslSetCertFile(char *certFile)
         return rc;
     }
     if ((buf = websReadWholeFile(certFile)) == 0) {
-        error("Unable to read certificate %s", certFile);
+        web_error("Unable to read certificate %s", certFile);
 
     } else if ((bio = BIO_new_mem_buf(buf, -1)) == 0) {
-        error("Unable to allocate memory for certificate %s", certFile);
+        web_error("Unable to allocate memory for certificate %s", certFile);
 
     } else if ((cert = PEM_read_bio_X509(bio, NULL, 0, NULL)) == 0) {
-        error("Unable to parse certificate %s", certFile);
+        web_error("Unable to parse certificate %s", certFile);
 
     } else if (SSL_CTX_use_certificate(sslctx, cert) != 1) {
-        error("Unable to use certificate %s", certFile);
+        web_error("Unable to use certificate %s", certFile);
 
     } else if (!SSL_CTX_check_private_key(sslctx)) {
-        error("Unable to check certificate key %s", certFile);
+        web_error("Unable to check certificate key %s", certFile);
 
     } else {
         rc = 0;
@@ -695,16 +695,16 @@ static int sslSetKeyFile(char *keyFile)
         ;
 
     } else if ((buf = websReadWholeFile(keyFile)) == 0) {
-        error("Unable to read certificate %s", keyFile);
+        web_error("Unable to read certificate %s", keyFile);
 
     } else if ((bio = BIO_new_mem_buf(buf, -1)) == 0) {
-        error("Unable to allocate memory for key %s", keyFile);
+        web_error("Unable to allocate memory for key %s", keyFile);
 
     } else if ((key = PEM_read_bio_RSAPrivateKey(bio, NULL, 0, NULL)) == 0) {
-        error("Unable to parse key %s", keyFile);
+        web_error("Unable to parse key %s", keyFile);
 
     } else if (SSL_CTX_use_RSAPrivateKey(sslctx, key) != 1) {
-        error("Unable to use key %s", keyFile);
+        web_error("Unable to use key %s", keyFile);
 
     } else {
         rc = 0;
@@ -753,14 +753,14 @@ static int verifyClientCertificate(int ok, X509_STORE_CTX *xContext)
     case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
     case X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN:
         if (ME_GOAHEAD_SSL_VERIFY_ISSUER) {
-            logmsg(3, "Self-signed certificate");
+            web_logmsg(WEBS_WARN, "Self-signed certificate");
             ok = 0;
         }
 
     case X509_V_ERR_CERT_UNTRUSTED:
     case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY:
         if (ME_GOAHEAD_SSL_VERIFY_ISSUER) {
-            logmsg(3, "Certificate not trusted");
+            web_logmsg(WEBS_WARN, "Certificate not trusted");
             ok = 0;
         }
         break;
@@ -768,7 +768,7 @@ static int verifyClientCertificate(int ok, X509_STORE_CTX *xContext)
     case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
     case X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE:
         if (ME_GOAHEAD_SSL_VERIFY_ISSUER) {
-            logmsg(3, "Certificate not trusted");
+            web_logmsg(WEBS_WARN, "Certificate not trusted");
             ok = 0;
         }
         break;
@@ -782,18 +782,18 @@ static int verifyClientCertificate(int ok, X509_STORE_CTX *xContext)
     case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
     case X509_V_ERR_INVALID_CA:
     default:
-        logmsg(3, "Certificate verification error %d", error);
+        web_logmsg(WEBS_WARN, "Certificate verification error %d", error);
         ok = 0;
         break;
     }
     if (ok) {
-        trace(3, "OpenSSL: Certificate verified: subject %s", subject);
+        web_trace(WEBS_DEBUG, "OpenSSL: Certificate verified: subject %s", subject);
     } else {
-        trace(1, "OpenSSL: Certification failed: subject %s (more trace at level 4)", subject);
-        trace(4, "OpenSSL: Error: %d: %s", error, X509_verify_cert_error_string(error));
+        web_trace(WEBS_WARN, "OpenSSL: Certification failed: subject %s (more trace at level 4)", subject);
+        web_trace(WEBS_WARN, "OpenSSL: Error: %d: %s", error, X509_verify_cert_error_string(error));
     }
-    trace(4, "OpenSSL: Issuer: %s", issuer);
-    trace(4, "OpenSSL: Peer: %s", peer);
+    web_trace(WEBS_DEBUG, "OpenSSL: Issuer: %s", issuer);
+    web_trace(WEBS_DEBUG, "OpenSSL: Peer: %s", peer);
     return ok;
 }
 

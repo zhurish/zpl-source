@@ -116,6 +116,14 @@
 #define EAIS_DB_ERROR_ID_EXIST					(EAIS_DB_ERROR_BEGIN -12)			// 数据库ID已存在
 #define EAIS_DB_ERROR_ERROR						(EAIS_DB_ERROR_BEGIN -13)			// 数据库命令释放失败
 
+#define EAIS_HS_ERROR_BEGIN						-5000								// 罕森业务错误号: -5000至-5999
+#define EAIS_HS_ERROR_LOGIN_FAIL				(EAIS_HS_ERROR_BEGIN -1)			// IPC登录失败
+#define EAIS_HS_ERROR_ATTACH_RADIO_FAIL			(EAIS_HS_ERROR_BEGIN -2)			// 订阅IPC热图服务失败
+#define EAIS_HS_ERROR_FETCH_RADIO_FAIL			(EAIS_HS_ERROR_BEGIN -3)			// 获取一次热图数据失败
+#define EAIS_HS_ERROR_PARSE_RADIO_FAIL			(EAIS_HS_ERROR_BEGIN -4)			// 解析热图数据失败
+#define EAIS_HS_ERROR_SDK_INIT_FAIL				(EAIS_HS_ERROR_BEGIN -5)			// 大华SDK初始化失败
+#define EAIS_HS_ERROR_BUSY_COUNTING				(EAIS_HS_ERROR_BEGIN -6)			// 正在统计区域温度
+
 #define REGISTER_ERROR_BEGIN					-9000								// 批量注册人脸错误号: -9000至-9999
 #define REGISTER_ERROR_OPEN_FILE_ERROR			(REGISTER_ERROR_BEGIN -1)			// 打开配置文件失败	
 #define REGISTER_ERROR_READ_STRING_ERROR		(REGISTER_ERROR_BEGIN -2)			// 读取文件字符串失败	
@@ -163,7 +171,10 @@ enum ENUM_EAIS_SOLUTION_TYPE
 {
 	EAIS_SOLUTION_TYPE_SNAP			= 0,										// 抓拍方案
 	EAIS_SOLUTION_TYPE_HELMET		= 1,										// 安全帽方案
-	EAIS_SOLUTION_TYPE_RECOGNITION	= 2,										// 识别方案
+	EAIS_SOLUTION_TYPE_RECOGNITION  = 2,										// 识别方案
+	EAIS_SOLUTION_TYPE_PEDESTRIAN	= 3,										// 行人方案
+	EAIS_SOLUTION_TYPE_FIRE			= 4,										// 火焰方案
+	EAIS_SOLUTION_TYPE_PLATE		= 5										    // 车牌方案
 };
 
 // 用户账户
@@ -446,24 +457,26 @@ typedef struct
 // 感兴趣区域
 typedef struct  
 {
+	int							nChannelId;										// 通道ID
 	int							nEnable;										// 0: 不使能 1：使能
 	ST_SDKPointArray			stPointArray;									// 感兴趣区域坐标
+	int							nAreaConfigWidth;								// 区域对应的分辨率宽
+	int							nAreaConfigHeight;								// 区域对应的分辨率高
 }ST_SDKROIArea;
 
 // 安全帽信息
 typedef struct
 {
-	int							nChannelId;										// 通道Id
-	int							nSentImage;										// 是否发送图片0：不使能 1：使能
-	int							nImageRatio;									// 图片压缩比配置（0, 100]
-	int							nUseTracking;									// 是否使用跟踪0: 不使能 1：使能
-	int							nDrawRectangle;									// 是否画框0: 不使能 1：使能
-	int							nSnapInterval;									// 抓拍间隔时间（0, 3600]s
-	int							nAlarmInterval;									// 警报间隔时间（0, 3600]s
-	int							nSnapRatio;										// 抓拍上传图质量比（0, 100]
-	int							nUploadMode;									// 抓拍上传模式(0 一刀切模式)（0, 100]
-	int							nThreshold;										// 阈值（0, 100]
-	ST_SDKROIArea				stROIArea;										// ROI配置							
+	int							nChannelId;										// 通道ID
+	int							nSendImage;										// 是否发送原图 0：不发  1： 发送
+	int							nHoldTime;										// 报警维持时间[0, 36000]s
+	int							nInterval;										// 报警间隔[0, 36000]s
+	int							nSensity;										// 灵敏度(0, 100]
+	int							nFPS;											// 检测帧率(0, 25]
+	int							nHelmetThresh;									// 安全帽阈值(0, 100]
+	int							nPedThresh;										// 人体检测阈值(0, 100]
+	int							nIOUThresh;										// IOU阈值
+	ST_SDKROIArea				stROIArea;										// ROI配置
 }ST_SDKHelmetInfo;
 
 // 安全帽配置
@@ -513,9 +526,28 @@ typedef struct
 // 用户结构数据信息
 typedef struct
 {
-	int							nUserNum;										// 用户个数
-	char*						pszStructData;      							// 用户
+	int							nAllUserNum;									// 组所有用户
+	int							nUserNum;										// 返回用户个数
+	int							nHaveReadNum;									// 成功读取个数
+	int							nUserDataLen;									// 用户数据长度
+	int							nHaveReadLen;									// 成功读取读取长度
+	char*						pszStructData;									// 用户数据
 }ST_SDKUserData;
+
+#pragma pack (1)// 指定按1字节对齐
+// 用户信息
+typedef struct
+{
+	int							nGroupID;										// 所属组ID  0： 黑名单 1： 白名单
+	char						szUserName[EAIS_SDK_MAX_COMMON_LEN];			// 姓名
+	char						szUserID[EAIS_SDK_MAX_COMMON_LEN];				// 证件号
+	int							nGender;										// 人员性别  0： 女 1： 男
+	int        			        nFaceLen;										// 人脸图片数据长度（1, 1024 * 1024]字节
+	char						szComment[EAIS_SDK_USER_FACE_COMMENT_LEN];		// 用户自定义备注字段
+	int							nRegisterTime;									// 注册时间，从1970-01-01 00:00:00 (utc) 开始计时的秒数
+	char						szReserved[256];								// 预留位，便于拓展，默认置空 
+}ST_SDKUserInfoData;
+#pragma pack ()  // 取消指定对齐，恢复缺省对齐
 
 // 识别配置参数
 typedef struct
@@ -541,14 +573,24 @@ typedef struct
 	int							nOverLineCount;									// 越线人数 
 }ST_SDKPeopleCount;
 
-// 设备登录信息
+// 报警信息
 typedef struct
 {
-	char						szDeviceIP[EAIS_SDK_MAX_COMMON_LEN];				// IP地址
-	int							nDevicePort;											// 端口
-	char						szUserName[EAIS_SDK_MAX_COMMON_LEN];			// 用户名
-	char						szPassWord[EAIS_SDK_MAX_COMMON_LEN];			// 密码
-	int							nTimeOut;										// 登录超时
-}ST_SDKLoginInfo;
+	int							nChannelId;										// 通道ID
+	int							nSlutionType;									// 解决方案类型 ENUM_EAIS_SOLUTION_TYPE
+	int							nEnable;										// 是否开启 0：不开启  1： 开启
+	int							nHoldTime;										// 报警维持时间[0, 36000]s
+	int							nInterval;										// 报警间隔[0, 36000]s
+	int							nSensity;										// 灵敏度(0, 100]
+	int							nFPS;											// 检测帧率(0, 25]
+	int                         nDetThreshold;									// 检测阈值(0, 100]
+	ST_SDKROIArea				stROIArea;										// ROI配置	
+}ST_SDKAlarmParam;
 
+// 安全帽配置
+typedef struct
+{
+	int							nAlarmParamNum;									// 有效数据个数
+	ST_SDKAlarmParam			stAlarmParamArr[EAIS_SDK_MAX_CHANNEL_SUPPORT];	// 报警配置信息
+}ST_SDKAlarmConfig;
 #endif

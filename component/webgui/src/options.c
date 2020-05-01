@@ -22,7 +22,8 @@ static bool optionsHandler(Webs *wp)
     if (smatch(wp->method, "OPTIONS")) {
         websSetStatus(wp, HTTP_CODE_OK);
         websWriteHeaders(wp, 0, 0);
-        websWriteHeader(wp, "Allow", "DELETE,GET,HEAD,OPTIONS,POST,PUT,TRACE");
+        //websWriteHeader(wp, "Allow", "DELETE,GET,HEAD,OPTIONS,POST,PUT,TRACE");
+        websWriteHeader(wp, "Allow", "GET, POST,OPTIONS,TRACE");
         websWriteEndHeaders(wp);
         websDone(wp);
         return 1;
@@ -36,6 +37,7 @@ static bool optionsHandler(Webs *wp)
         return 1;
     }
 #endif
+    printf("%s   :Unsupported method\r\n", __func__);
     websResponse(wp, HTTP_CODE_NOT_ACCEPTABLE, "Unsupported method");
     return 1;
 }
@@ -56,3 +58,16 @@ PUBLIC int websOptionsOpen(void)
     by the terms of either license. Consult the LICENSE.md distributed with
     this software for full details and other copyrights.
  */
+
+static unsigned int access_control_flag = 0;
+
+PUBLIC int websAccessControlSet(int type)
+{
+	access_control_flag |= type;
+	return 0;
+}
+
+PUBLIC int websAccessControlGet(void)
+{
+	return access_control_flag;
+}

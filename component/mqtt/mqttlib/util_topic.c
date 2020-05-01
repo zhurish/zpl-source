@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2018 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -49,14 +49,25 @@ Contributors:
 int mosquitto_pub_topic_check(const char *str)
 {
 	int len = 0;
+#ifdef WITH_BROKER
+	int hier_count = 0;
+#endif
 	while(str && str[0]){
 		if(str[0] == '+' || str[0] == '#'){
 			return MOSQ_ERR_INVAL;
 		}
+#ifdef WITH_BROKER
+		else if(str[0] == '/'){
+			hier_count++;
+		}
+#endif
 		len++;
 		str = &str[1];
 	}
 	if(len > 65535) return MOSQ_ERR_INVAL;
+#ifdef WITH_BROKER
+	if(hier_count > TOPIC_HIERARCHY_LIMIT) return MOSQ_ERR_INVAL;
+#endif
 
 	return MOSQ_ERR_SUCCESS;
 }
@@ -64,6 +75,9 @@ int mosquitto_pub_topic_check(const char *str)
 int mosquitto_pub_topic_check2(const char *str, size_t len)
 {
 	size_t i;
+#ifdef WITH_BROKER
+	int hier_count = 0;
+#endif
 
 	if(len > 65535) return MOSQ_ERR_INVAL;
 
@@ -71,7 +85,15 @@ int mosquitto_pub_topic_check2(const char *str, size_t len)
 		if(str[i] == '+' || str[i] == '#'){
 			return MOSQ_ERR_INVAL;
 		}
+#ifdef WITH_BROKER
+		else if(str[i] == '/'){
+			hier_count++;
+		}
+#endif
 	}
+#ifdef WITH_BROKER
+	if(hier_count > TOPIC_HIERARCHY_LIMIT) return MOSQ_ERR_INVAL;
+#endif
 
 	return MOSQ_ERR_SUCCESS;
 }
@@ -87,6 +109,10 @@ int mosquitto_sub_topic_check(const char *str)
 {
 	char c = '\0';
 	int len = 0;
+#ifdef WITH_BROKER
+	int hier_count = 0;
+#endif
+
 	while(str && str[0]){
 		if(str[0] == '+'){
 			if((c != '\0' && c != '/') || (str[1] != '\0' && str[1] != '/')){
@@ -97,11 +123,19 @@ int mosquitto_sub_topic_check(const char *str)
 				return MOSQ_ERR_INVAL;
 			}
 		}
+#ifdef WITH_BROKER
+		else if(str[0] == '/'){
+			hier_count++;
+		}
+#endif
 		len++;
 		c = str[0];
 		str = &str[1];
 	}
 	if(len > 65535) return MOSQ_ERR_INVAL;
+#ifdef WITH_BROKER
+	if(hier_count > TOPIC_HIERARCHY_LIMIT) return MOSQ_ERR_INVAL;
+#endif
 
 	return MOSQ_ERR_SUCCESS;
 }
@@ -110,6 +144,9 @@ int mosquitto_sub_topic_check2(const char *str, size_t len)
 {
 	char c = '\0';
 	size_t i;
+#ifdef WITH_BROKER
+	int hier_count = 0;
+#endif
 
 	if(len > 65535) return MOSQ_ERR_INVAL;
 
@@ -123,8 +160,16 @@ int mosquitto_sub_topic_check2(const char *str, size_t len)
 				return MOSQ_ERR_INVAL;
 			}
 		}
+#ifdef WITH_BROKER
+		else if(str[i] == '/'){
+			hier_count++;
+		}
+#endif
 		c = str[i];
 	}
+#ifdef WITH_BROKER
+	if(hier_count > TOPIC_HIERARCHY_LIMIT) return MOSQ_ERR_INVAL;
+#endif
 
 	return MOSQ_ERR_SUCCESS;
 }
@@ -174,6 +219,9 @@ int mosquitto_topic_matches_sub2(const char *sub, size_t sublen, const char *top
 				spos++;
 				sub++;
 				while(topic[0] != 0 && topic[0] != '/'){
+					if(topic[0] == '+' || topic[0] == '#'){
+						return MOSQ_ERR_INVAL;
+					}
 					topic++;
 				}
 				if(topic[0] == 0 && sub[0] == 0){
@@ -189,6 +237,12 @@ int mosquitto_topic_matches_sub2(const char *sub, size_t sublen, const char *top
 				if(sub[1] != 0){
 					return MOSQ_ERR_INVAL;
 				}else{
+					while(topic[0] != 0){
+						if(topic[0] == '+' || topic[0] == '#'){
+							return MOSQ_ERR_INVAL;
+						}
+						topic++;
+					}
 					*result = true;
 					return MOSQ_ERR_SUCCESS;
 				}
@@ -246,6 +300,12 @@ int mosquitto_topic_matches_sub2(const char *sub, size_t sublen, const char *top
 	}
 	if((topic[0] != 0 || sub[0] != 0)){
 		*result = false;
+	}
+	while(topic[0] != 0){
+		if(topic[0] == '+' || topic[0] == '#'){
+			return MOSQ_ERR_INVAL;
+		}
+		topic++;
 	}
 
 	return MOSQ_ERR_SUCCESS;

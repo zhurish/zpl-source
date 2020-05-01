@@ -22,6 +22,7 @@
 #include "web_api.h"
 
 
+
 int web_app_quit_api()
 {
 	zassert(web_app != NULL);
@@ -289,7 +290,9 @@ int web_app_port_set_api(BOOL ssl, u_int16 port)
 int web_app_debug_set_api(int level)
 {
 	websSetDebug(level?1:0);
+//#if ME_GOAHEAD_LOGGING
 	websSetLogLevel(level);
+//#endif /* ME_GOAHEAD_LOGGING */
 	return OK;
 }
 
@@ -306,7 +309,7 @@ int web_app_gopass_roles_api(const char *username, const char *roles[])
 {
 	return web_gopass_roles(WEBGUI_AUTH, username, roles);
 }
-extern int web_gopass_roles(const char *authFile, const char *username, const char *roles[]);
+//extern int web_gopass_roles(const char *authFile, const char *username, const char *roles[]);
 
 int web_app_gopass_save_api(const char *username,
 		const char *roles[], char *encodedPassword)
@@ -314,6 +317,79 @@ int web_app_gopass_save_api(const char *username,
 	return web_gopass_save(WEBGUI_AUTH, username,
 			roles, encodedPassword);
 }
+
+int web_app_auth_save_api(void)
+{
+	return web_auth_save(WEBGUI_AUTH);
+}
+
+
+int web_app_username_add_api(const char *username, const char *password, const char *roles)
+{
+	//webserver encryption username root password admintsl123456! cipher md5 realm goahead.com
+	char encodedPassword[1024];
+	memset(encodedPassword, 0, sizeof(encodedPassword));
+	if(web_app_gopass_api(username, password,
+						   "md5", "goahead.com", encodedPassword) == OK)
+	{
+		if(websAddUser(username, encodedPassword, roles))
+			return OK;
+	}
+	return ERROR;
+}
+
+int web_app_username_lookup_api(const char *username)
+{
+	if(websLookupUser(username))
+		return OK;
+	return ERROR;
+}
+
+int web_app_username_del_api(const char *username)
+{
+	if(websRemoveUser(username) == 0)
+		return OK;
+	return ERROR;
+}
+/*
+
+WebsUser *websAddUser(cchar *username, cchar *password, cchar *proles)
+PUBLIC int websRemoveUser(cchar *username)
+WebsRole *websAddRole(cchar *name, WebsHash abilities)
+PUBLIC int websRemoveRole(cchar *name)
+*/
+
+
+static int web_app_username_tbl(struct vty *vty)
+{
+	WebsKey     *kp = NULL, *ap = NULL;
+	WebsRole    *role = NULL;
+	WebsUser    *user = NULL;
+	WebsHash    roles, users;
+
+	roles = websGetRoles();
+	if (roles >= 0 && vty->type != VTY_FILE) {
+		for (kp = hashFirst(roles); kp; kp = hashNext(roles, kp)) {
+			role = kp->content.value.symbol;
+			vty_out(vty, " webserver rolename %s abilities ", kp->name.value.string);
+			for (ap = hashFirst(role->abilities); ap; ap = hashNext(role->abilities, ap)) {
+				vty_out(vty, "%s,",ap->name.value.string);
+			}
+			vty_out(vty, "%s",VTY_NEWLINE);
+		}
+	}
+	//webserver username USER password PASS roles ROLES
+	users = websGetUsers();
+	if (users >= 0) {
+		for (kp = hashFirst(users); kp; kp = hashNext(users, kp)) {
+			user = kp->content.value.symbol;
+			vty_out(vty, " webserver username %s password %s roles %s%s", user->name, user->password, user->roles, VTY_NEWLINE);
+		}
+	}
+	return 0;
+}
+
+
 
 
 int web_app_write_config(struct vty *vty)
@@ -337,6 +413,8 @@ int web_app_write_config(struct vty *vty)
 #endif
 			if(web_app->proto == WEB_PROTO_HTTP && web_app->port != WEB_LISTEN_PORT)
 				vty_out(vty, " webserver listen port %d%s", web_app->port, VTY_NEWLINE);
+
+			web_app_username_tbl(vty);
 
 			vty_out(vty, "!%s",VTY_NEWLINE);
 		}

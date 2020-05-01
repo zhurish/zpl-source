@@ -24,8 +24,10 @@
 #define SQLITE_ENABLE_DBSTAT_VTAB 1
 
 */
+#ifndef __linux__
+#define __linux__
+#endif
 
-//#define __linux__
 //#define SQLITE_OS_UNIX 1
 
 
@@ -60,7 +62,7 @@
 #define HAVE_DECL_STRERROR_R       1
 #define HAVE_STRERROR_R       1
 //#define HAVE_READLINE_READLINE_H       1
-//#define HAVE_READLINE       1
+#define HAVE_READLINE       1
 //#define HAVE_POSIX_FALLOCATE       1
 //#define HAVE_ZLIB_H       1
 

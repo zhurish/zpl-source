@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2019 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -47,10 +47,12 @@ int handle__pubackcomp(struct mosquitto *mosq, const char *type)
 	int rc;
 	mosquitto_property *properties = NULL;
 	int qos;
+	int state;
 
 	assert(mosq);
 
-	if(mosq->state != mosq_cs_connected){
+	state = mosquitto__get_state(mosq);
+	if(state != mosq_cs_active){
 		return MOSQ_ERR_PROTOCOL;
 	}
 

@@ -25,7 +25,7 @@ int sock_create(BOOL tcp)
 	//int flag = 1;
 
 	/* socket creation */
-	rc = socket(AF_INET, tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
+	rc = socket(AF_INET, tcp ? SOCK_STREAM : SOCK_DGRAM, tcp ? IPPROTO_TCP:IPPROTO_UDP);
 	if (rc < 0)
 	{
 		fprintf(stderr, "cannot open socket\n");
@@ -115,7 +115,7 @@ int tcp_sock_state (int sock)
 int sock_connect(int sock, char *ipaddress, int port)
 {
 	int ret = 0;
-
+	printf("----------%s-----------------host=%s\r\n",__func__,ipaddress);
 	if (ipaddress)
 	{
 		struct sockaddr_in serv;
@@ -287,7 +287,7 @@ int raw_sock_sendto(int fd, int family, int protocol, int ifindex,
 int unix_sockpair_create(BOOL tcp, int *rfd, int *wfd)
 {
 	int fd[2];
-	if(socketpair (AF_UNIX, tcp ? SOCK_STREAM : SOCK_DGRAM, 0, fd) == 0)
+	if(socketpair (AF_UNIX, tcp ? SOCK_STREAM : SOCK_DGRAM, tcp ? IPPROTO_TCP:IPPROTO_UDP, fd) == 0)
 	{
 		if(rfd)
 			*rfd = fd[0];
@@ -313,7 +313,7 @@ int unix_sock_server_create(BOOL tcp, const char *name)
 	old_mask = umask (0007);
 	unlink(path);
 	/* Make UNIX domain socket. */
-	sock = socket(AF_UNIX, tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
+	sock = socket(AF_UNIX, tcp ? SOCK_STREAM : SOCK_DGRAM, 0/*tcp ? IPPROTO_TCP:IPPROTO_UDP*/);
 	if (sock < 0)
 	{
 		fprintf(stderr, "Cannot create unix stream socket: %s",
@@ -402,7 +402,7 @@ int unix_sock_client_create (BOOL tcp, const char *name)
 		}
 	}
 
-	sock = socket(AF_UNIX, tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
+	sock = socket(AF_UNIX, tcp ? SOCK_STREAM : SOCK_DGRAM, 0/*tcp ? IPPROTO_TCP:IPPROTO_UDP*/);
 	if (sock < 0)
 	{
 		fprintf(stderr, "vtysh_connect(%s): socket = %s\n", path,

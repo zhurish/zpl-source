@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010-2019 Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -94,7 +94,7 @@ enum mosquitto_client_state {
 	mosq_cs_new = 0,
 	mosq_cs_connected = 1,
 	mosq_cs_disconnecting = 2,
-	mosq_cs_connect_async = 3,
+	mosq_cs_active = 3,
 	mosq_cs_connect_pending = 4,
 	mosq_cs_connect_srv = 5,
 	mosq_cs_disconnect_ws = 6,
@@ -107,7 +107,6 @@ enum mosquitto_client_state {
 	mosq_cs_socks5_userpass_reply = 13,
 	mosq_cs_socks5_send_userpass = 14,
 	mosq_cs_expiring = 15,
-	mosq_cs_connecting = 16,
 	mosq_cs_duplicate = 17, /* client that has been taken over by another with the same id */
 	mosq_cs_disconnect_with_will = 18,
 	mosq_cs_disused = 19, /* client that has been added to the disused list to be freed */
@@ -321,11 +320,16 @@ struct mosquitto {
 	void (*on_subscribe_v5)(struct mosquitto *, void *userdata, int mid, int qos_count, const int *granted_qos, const mosquitto_property *props);
 	void (*on_unsubscribe)(struct mosquitto *, void *userdata, int mid);
 	void (*on_unsubscribe_v5)(struct mosquitto *, void *userdata, int mid, const mosquitto_property *props);
+	#ifndef WITH_BROKER
+	void (*on_log)(const char *file, const char *func, const int line, struct mosquitto *, void *userdata, int level, const char *str);
+	#else
 	void (*on_log)(struct mosquitto *, void *userdata, int level, const char *str);
+	#endif
 	//void (*on_error)();
 	char *host;
 	int port;
 	char *bind_address;
+	unsigned int reconnects;
 	unsigned int reconnect_delay;
 	unsigned int reconnect_delay_max;
 	bool reconnect_exponential_backoff;
@@ -334,8 +338,6 @@ struct mosquitto {
 #  ifdef WITH_SRV
 	ares_channel achan;
 #  endif
-	uint16_t send_maximum;
-	uint16_t receive_maximum;
 #endif
 	uint8_t maximum_qos;
 

@@ -52,9 +52,25 @@ int super_system(const char *cmd)
 	ret = system(cmd);
 	if(ret == -1 || ret == 127)
 	{
-		fprintf (stderr, "%s: execute cmd: %s(%s)",__func__,cmd,strerror (errno) );
+		fprintf (stderr, "%s: execute cmd: %s(%s)\r\n",__func__,cmd,strerror (errno) );
 		return ERROR;
 	}
+/*	if (WIFEXITED(ret))
+	{
+		if (0 == WEXITSTATUS(ret))
+		{
+			return OK;
+		}
+		else
+		{
+			fprintf (stderr, "%s: run shell script fail: script exit code: %d\r\n",__func__, WEXITSTATUS(ret) );
+			return ERROR;
+		}
+	}
+	else
+	{
+		fprintf (stderr, "%s: exit code: %d\r\n",__func__, WEXITSTATUS(ret) );
+	}*/
 	return ret;
 }
 
@@ -142,7 +158,7 @@ int name2pid(const char *name)
 	if (!dir)
 	{
 		printf("cannot open /proc");
-		return -1;
+		return ERROR;
 	}
 
 	/* Walk through the directory. */
@@ -291,7 +307,7 @@ int child_process_kill(int pid)
 
 int os_write_file(const char *name, const char *string, int len)
 {
-	FILE *fp = fopen(name, "w");
+	FILE *fp = fopen(name, "w+");
 	if(fp)
 	{
 		//fprintf(fp, "%s\n", string);
@@ -400,6 +416,13 @@ int os_pipe_close(int fd)
 {
 	if(fd)
 		close(fd);
+	return OK;
+}
+
+int os_file_access(char *filename)
+{
+	if(access(filename, F_OK) != 0)
+		return ERROR;
 	return OK;
 }
 
@@ -524,13 +547,29 @@ int os_register_signal(int sig)
 
 int os_file_size (const char *filename)
 {
+#if 0
+	if(!filename)
+		return ERROR;
+	int filesize = -1;
+	FILE *fp = NULL;
+	fp = fopen(filename, "r");
+	if(fp == NULL)
+		return filesize;
+	fseek(fp, 0L, SEEK_END);
+	filesize = ftell(fp);
+	fclose(fp);
+	return filesize;
+#else
 	struct stat fsize;
+	if(!filename)
+		return ERROR;
 	if (access (filename, F_OK) >= 0)
 	{
-		memset (&fsize, 0, sizeof(fsize));
+		memset (&fsize, 0, sizeof(struct stat));
 		if(stat (filename, &fsize) == 0)
 			return fsize.st_size;
 	}
+#endif
 	return ERROR;
 }
 
@@ -599,7 +638,8 @@ const char * os_file_size_string(u_int len)
  *
  * scp  global@194.169.13.45:/home/global/workspace/test/ipran_u3-20180609.tar.bz2
  * scp -P 9225 root@183.63.84.114:/root/ipran_u3-w.tat.bz ./
- *
+ * rtsp://admin:abc123456@192.168.3.64:554/av0_0
+ * rtsp://admin:abc123456@192.168.1.64/av0_0
  */
 int os_url_split(const char * URL, os_url_t *spliurl)
 {
@@ -778,7 +818,7 @@ static int os_url_debug_test(char *URL)
 
 int os_url_test()
 {
-	os_url_debug_test("tftp://1.1.1.1:80/file");
+/*	os_url_debug_test("tftp://1.1.1.1:80/file");
 	os_url_debug_test("tftp://1.1.1.1/file");
 	os_url_debug_test("tftp://1.1.1.1:80:/file");
 	os_url_debug_test("tftp://1.1.1.1:/file");
@@ -798,9 +838,11 @@ int os_url_test()
 	os_url_debug_test("ssh://user@1.1.1.1:80");
 	os_url_debug_test("ssh://user:password@1.1.1.1:80");
 	os_url_debug_test("ssh://user@1.1.1.1");
-	os_url_debug_test("ssh://user:password@1.1.1.1");
+	os_url_debug_test("ssh://user:password@1.1.1.1");*/
 	//proto://[user[:password@]] ip [:port][:][/file]
-	exit(0);
+
+	os_url_debug_test("rtsp://admin:abc123456@192.168.3.64:554/av0_0");
+	os_url_debug_test("rtsp://admin:abc123456@192.168.1.64/av0_0");
 	return 0;
 }
 #endif

@@ -381,7 +381,7 @@ static int web_faceconfig_set(Webs *wp, char *path, char *query)
 	}
 	//sscanf(strval, "%.3f", &info.similarRecord);
 	info.similarRecord = atof(strval);
-	//printf("----%s----:similarRecord=%f=%s", __func__, info.similarRecord, strval);
+	//_WEB_DBG_TRAP("----%s----:similarRecord=%f=%s", __func__, info.similarRecord, strval);
 	strval = webs_get_var(wp, T("recognize_threshold"), T(""));
 	if (NULL == strval)
 	{
@@ -397,7 +397,7 @@ static int web_faceconfig_set(Webs *wp, char *path, char *query)
 	}
 	info.similarSecRecognize = atof(strval);
 
-	//printf("----%s----:similarRecognize=%f=%s", __func__, info.similarRecognize, strval);
+	//_WEB_DBG_TRAP("----%s----:similarRecognize=%f=%s", __func__, info.similarRecognize, strval);
 	strval = webs_get_var(wp, T("living_detection"), T(""));
 	if (NULL == strval)
 	{
@@ -420,7 +420,7 @@ static int web_faceconfig_set(Webs *wp, char *path, char *query)
 			info.similarLiving = 0.0;
 		//info.similarLiving = atof(strval);
 		//sscanf(strval, "%.3f", &info.similarLiving);
-		//printf("----%s----:similarLiving=%f=%s", __func__, info.similarLiving, strval);
+		//_WEB_DBG_TRAP("----%s----:similarLiving=%f=%s", __func__, info.similarLiving, strval);
 	}
 
 	strval = webs_get_var(wp, T("yaw_left"), T(""));
@@ -546,62 +546,6 @@ static int web_faceconfig_action(Webs *wp, char *path, char *query)
 	return OK;
 }
 
-
-static u_int8 web_reset_flag = 0;
-
-static int web_system_app_action_job(void *a)
-{
-	os_sleep(1);
-	if(web_reset_flag)
-	{
-		super_system("jffs2reset -y");
-		super_system("reboot -f");
-	}
-	else
-		super_system("reboot -f");
-	return OK;
-}
-
-static int web_system_app_action(Webs *wp, void *p)
-{
-	int ret = 0;
-	char *strval = NULL;
-	strval = webs_get_var(wp, T("BTNID"), T(""));
-	if (NULL == strval)
-	{
-		return ERROR;//;
-	}
-	if(strstr(strval, "reboot"))
-	{
-		ret = x5b_app_reboot_request(NULL, E_CMD_TO_A, FALSE);
-		if(x5b_app_mgt && x5b_app_mode_X5CM())
-			ret |= x5b_app_reboot_request(NULL, E_CMD_TO_C, FALSE);
-		if(ret == OK)
-		{
-			os_job_add(web_system_app_action_job, NULL);
-			return web_return_text_plain(wp, OK);
-		}
-	}
-	else if(strstr(strval, "reset"))
-	{
-		web_reset_flag = 1;
-		ret = x5b_app_reboot_request(NULL, E_CMD_TO_A, TRUE);
-		if(x5b_app_mgt && x5b_app_mode_X5CM())
-			ret |= x5b_app_reboot_request(NULL, E_CMD_TO_C, TRUE);
-		if(ret == OK)
-		{
-			os_job_add(web_system_app_action_job, NULL);
-			return web_return_text_plain(wp, OK);
-		}
-	}
-	else if(strstr(strval, "websynctime"))
-	{
-		if(x5b_app_mgt && x5b_app_mode_X5CM())
-			x5b_app_sync_web_time(x5b_app_mgt, E_CMD_TO_C);
-		return web_return_text_plain(wp, OK);
-	}
-	return ERROR;//web_return_text_plain(wp, ERROR);
-}
 #endif
 #endif
 
@@ -612,10 +556,6 @@ int web_factory_app(void)
 	websFormDefine("factory", web_factory_action);
 	websFormDefine("open", web_openconfig_action);
 	websFormDefine("faceset", web_faceconfig_action);
-
-	web_button_add_hook("app", "websynctime", web_system_app_action, NULL);
-	web_button_add_hook("app", "reboot", web_system_app_action, NULL);
-	web_button_add_hook("app", "reset", web_system_app_action, NULL);
 #endif
 #endif
 	return 0;

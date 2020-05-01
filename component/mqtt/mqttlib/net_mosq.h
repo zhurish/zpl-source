@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010-2019 Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -17,10 +17,13 @@ Contributors:
 #define NET_MOSQ_H
 
 #ifndef WIN32
-#include <unistd.h>
+#  include <unistd.h>
 #else
-#include <winsock2.h>
+#  include <winsock2.h>
+#  ifndef _SSIZE_T_DEFINED
 typedef SSIZE_T ssize_t;
+#    define _SSIZE_T_DEFINED
+#  endif
 #endif
 
 #include "mosquitto_internal.h"

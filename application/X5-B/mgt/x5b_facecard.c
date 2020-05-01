@@ -927,10 +927,14 @@ static char *facecard_time_fmt (char *fmt, time_t t)
 	int len = 0;
 	struct tm tm;
 	static char data[128];
-	time_t clock = t;
+	time_t ticlock = t;
 	os_memset(data, 0, sizeof(data));
 	os_memset(&tm, 0, sizeof(tm));
-	localtime_r(&clock, &tm);
+	//localtime_r(&ticlock, &tm);
+    if(os_tmtime_get (OS_TMTIME_LOCAL, ticlock, &tm) != OK)
+    {
+    	return "UNKNOWN";
+    }
 	len = strftime(data, sizeof(data), "%Y-%m-%dT%H:%M:%S", &tm);
 	if(len > 0)
 		return data;

@@ -68,12 +68,13 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 	ifname = webs_get_var(wp, T("ifname"), T(""));
 	if (NULL == ifname)
 	{
-		printf("================%s=======================:ifname\r\n", __func__);
+		_WEB_DBG_TRAP("================%s=======================:ifname:%s\r\n", __func__, websGetVar(wp, T("ifname"), NULL));
+		//printf("================%s=======================:ifname\r\n", __func__);
 		return web_return_text_plain(wp, ERROR);
 	}
 	if(web_type_get() == WEB_TYPE_HOME_WIFI)
 	{
-		printf("================%s=======================:WEB_TYPE_HOME_WIFI\r\n", __func__);
+		_WEB_DBG_TRAP("================%s=======================:WEB_TYPE_HOME_WIFI\r\n", __func__);
 #ifdef APP_V9_MODULE
 		if(strstr(ifname, "wan2"))
 			ifp = if_lookup_by_name("ethernet 0/0/3");
@@ -88,18 +89,18 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 	}
 	else
 	{
-		printf("================%s=======================:%d\r\n", __func__, web_type_get());
+		_WEB_DBG_TRAP("================%s=======================:%d\r\n", __func__, web_type_get());
 		ifp = if_lookup_by_name(ifname);
 	}
 	if(!ifp)
 	{
-		printf("================%s=======================:if_lookup_by_name\r\n", __func__);
+		_WEB_DBG_TRAP("================%s=======================:if_lookup_by_name\r\n", __func__);
 		return web_return_text_plain(wp, ERROR);
 	}
 	proto = webs_get_var(wp, T("proto"), T(""));
 	if (NULL == proto)
 	{
-		printf("================%s=======================:proto\r\n", __func__);
+		_WEB_DBG_TRAP("================%s=======================:proto\r\n", __func__);
 		return web_return_text_plain(wp, ERROR);
 	}
 	if(strstr(proto, "dhcp"))
@@ -177,13 +178,13 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 		ipaddress = webs_get_var(wp, T("ipaddress"), T(""));
 		if (NULL == ipaddress)
 		{
-			printf("================%s=======================:ipaddress\r\n", __func__);
+			_WEB_DBG_TRAP("================%s=======================:ipaddress\r\n", __func__);
 			return web_return_text_plain(wp, ERROR);
 		}
 		netmask = webs_get_var(wp, T("netmask"), T(""));
 		if (NULL == netmask)
 		{
-			printf("================%s=======================:netmask\r\n", __func__);
+			_WEB_DBG_TRAP("================%s=======================:netmask\r\n", __func__);
 			return web_return_text_plain(wp, ERROR);
 		}
 
@@ -191,12 +192,16 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 		dns = webs_get_var(wp, T("dns"), T(""));
 		dns2 = webs_get_var(wp, T("dns2"), T(""));
 
-		printf("================ipaddress=======================:%s\r\n", ipaddress);
-		printf("================netmask=======================:%s\r\n", netmask);
+		_WEB_DBG_TRAP("================ipaddress=======================:%s\r\n", ipaddress);
+		_WEB_DBG_TRAP("================netmask=======================:%s\r\n", netmask);
 		if(gateway)
-		printf("================gateway=======================:%s\r\n", gateway);
+		{
+			_WEB_DBG_TRAP("================gateway=======================:%s\r\n", gateway);
+		}
 		if(dns)
-		printf("================dns=======================:%s\r\n", dns);
+		{
+			_WEB_DBG_TRAP("================dns=======================:%s\r\n", dns);
+		}
 
 #ifdef WEB_OPENWRT_PROCESS
 		if(ifp->ifindex ==ifname2ifindex("ethernet 0/0/2"))
@@ -250,14 +255,14 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 
 		if(str2prefix_ipv4 (addressbuf, (struct prefix_ipv4 *)&cp) <= 0)
 		{
-			printf("================%s=======================:str2prefix_ipv4:%s\r\n", __func__, addressbuf);
+			_WEB_DBG_TRAP("================%s=======================:str2prefix_ipv4:%s\r\n", __func__, addressbuf);
 			return web_return_text_plain(wp, ERROR);
 		}
 		nsm_interface_address_get_api(ifp, &ocp);
 		nsm_interface_address_unset_api(ifp, &ocp, FALSE);
 		if(nsm_interface_address_set_api(ifp, &cp, FALSE) != OK)
 		{
-			printf("================%s=======================:nsm_interface_address_set_api\r\n", __func__);
+			_WEB_DBG_TRAP("================%s=======================:nsm_interface_address_set_api\r\n", __func__);
 			return web_return_text_plain(wp, ERROR);
 		}
 
@@ -265,12 +270,12 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 		{
 			if (str2prefix (dns, &cp) <= 0)
 			{
-				printf("================%s=======================:dns str2prefix:%s\r\n", __func__, dns);
+				_WEB_DBG_TRAP("================%s=======================:dns str2prefix:%s\r\n", __func__, dns);
 				return web_return_text_plain(wp, ERROR);
 			}
 			if(nsm_ip_dns_add_api(&cp, FALSE) != OK)
 			{
-				printf("================%s=======================:dns\r\n", __func__);
+				_WEB_DBG_TRAP("================%s=======================:dns\r\n", __func__);
 				return web_return_text_plain(wp, ERROR);
 			}
 		}
@@ -278,25 +283,25 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 		{
 			if (str2prefix (dns2, &cp) <= 0)
 			{
-				printf("================%s=======================:dns2 str2prefix:%s\r\n", __func__,dns2);
+				_WEB_DBG_TRAP("================%s=======================:dns2 str2prefix:%s\r\n", __func__,dns2);
 				return web_return_text_plain(wp, ERROR);
 			}
 			if(nsm_ip_dns_add_api(&cp, TRUE) != OK)
 			{
-				printf("================%s=======================:dns2\r\n", __func__);
+				_WEB_DBG_TRAP("================%s=======================:dns2\r\n", __func__);
 				return web_return_text_plain(wp, ERROR);
 			}
 		}
 
 		if(gateway)
 		{
-			printf("================%s=======================:gateway=%s\r\n", __func__, gateway);
-		  if(web_static_ipv4_safi (SAFI_UNICAST, 1, "0.0.0.0", NULL,
+			_WEB_DBG_TRAP("================%s=======================:gateway=%s\r\n", __func__, gateway);
+			if(web_static_ipv4_safi (SAFI_UNICAST, 1, "0.0.0.0", NULL,
 				  gateway, NULL, NULL, NULL, NULL) != NULL)
-		  {
-			  printf("================%s=======================:web_static_ipv4_safi\r\n", __func__);
-			  return web_return_text_plain(wp, ERROR);
-		  }
+			{
+				_WEB_DBG_TRAP("================%s=======================:web_static_ipv4_safi\r\n", __func__);
+				return web_return_text_plain(wp, ERROR);
+			}
 		}
 		return web_return_text_plain(wp, OK);
 	}

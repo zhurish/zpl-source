@@ -39,8 +39,9 @@ lib: $(LIBS)
 obj: $(MODULE_OBJS) $(MODULE_LIBOBJS)
 
 install: $(LIBS)
-	install -d $(LIB_DIR)
-	install -m 755 $(LIBS) $(LIB_DIR)
+	@install -d $(LIB_DIR)
+	@install -m 755 $(LIBS) $(LIB_DIR)
+	@$(STRIP) --strip-unneeded $(LIB_DIR)/$(LIBS)
 #	$(STRIP) $(LIB_DIR)/$(LIBS)
 
 clean: objclean

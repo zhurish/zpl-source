@@ -48,9 +48,10 @@ lib: $(LIBS)
 obj: $(MODULE_OBJS) $(MODULE_LIBOBJS)
 
 install: $(LIBS)
-	install -d $(LIB_DIR)
-	install -m 755 $(LIBS) $(LIB_DIR)
-	install -m 755 $(APP_ROOT)/V9/lib/liboal_privateProtocol.a $(LIB_DIR)
+	@install -d $(LIB_DIR)
+	@install -m 755 $(LIBS) $(LIB_DIR)
+	@$(STRIP) --strip-unneeded $(LIB_DIR)/$(LIBS)
+	@install -m 755 $(APP_ROOT)/V9/lib/liboal_privateProtocol.a $(LIB_DIR)
 #	install -d $(BASE_ROOT)/$(ULIBDIR)
 #	install -m 755 $(APP_ROOT)/V9/lib/liboal_privateProtocol.so $(BASE_ROOT)/$(ULIBDIR)
 

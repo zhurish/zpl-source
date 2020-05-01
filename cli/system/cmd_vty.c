@@ -215,7 +215,7 @@ ALIAS(terminal_no_monitor,
 		"Copy debug output to the current terminal line\n")
 
 
-/*DEFUN (terminal_trapping,
+DEFUN (terminal_trapping,
 		terminal_trapping_cmd,
 		"terminal trapping",
 		"Set terminal line parameters\n"
@@ -234,7 +234,7 @@ DEFUN (no_terminal_trapping,
 {
 	vty->trapping = 0;
 	return CMD_SUCCESS;
-}*/
+}
 
 DEFUN (show_history,
 		show_history_cmd,
@@ -343,10 +343,10 @@ int cmd_vty_init()
 	install_element(ENABLE_NODE, &terminal_no_monitor_cmd);
 	install_element(ENABLE_NODE, &no_terminal_monitor_cmd);
 
-/*
+
 	install_element(ENABLE_NODE, &terminal_trapping_cmd);
 	install_element(ENABLE_NODE, &no_terminal_trapping_cmd);
-*/
+
 
 	install_default(VTY_NODE);
 	install_element(VTY_NODE, &exec_timeout_min_cmd);

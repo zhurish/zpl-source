@@ -14,11 +14,60 @@
 #include "nexthop.h"
 #include "rib.h"
 
-#undef ME_GOAHEAD_UPLOAD_DIR
-#ifndef ME_GOAHEAD_UPLOAD_DIR
-#define ME_GOAHEAD_UPLOAD_DIR SYSUPLOADDIR
-#define WEB_UPLOAD_BASE ME_GOAHEAD_UPLOAD_DIR
+
+#define _WEB_DEBUG_ENABLE 1
+
+#if defined(_WEB_DEBUG_ENABLE)
+#define _WEB_DBG_ERR(format, ...) 		zlog_err (ZLOG_WEB, format, ##__VA_ARGS__)
+#define _WEB_DBG_WARN(format, ...) 		zlog_warn (ZLOG_WEB, format, ##__VA_ARGS__)
+#define _WEB_DBG_INFO(format, ...) 		zlog_info (ZLOG_WEB, format, ##__VA_ARGS__)
+#define _WEB_DBG_DEBUG(format, ...) 	zlog_debug (ZLOG_WEB, format, ##__VA_ARGS__)
+#define _WEB_DBG_TRAP(format, ...) 		zlog_trap (ZLOG_WEB, format, ##__VA_ARGS__)
+#else
+#define _WEB_DBG_ERR(format, ...)
+#define _WEB_DBG_WARN(format, ...)
+#define _WEB_DBG_INFO(format, ...)
+#define _WEB_DBG_DEBUG(format, ...)
+#define _WEB_DBG_TRAP(format, ...)
 #endif
+
+#if 0
+#define WEBS_CRIT		0
+#define WEBS_ALERT		1
+#define WEBS_EMERG		2
+#define WEBS_ERROR      3           /**< Hard error trace level */
+#define WEBS_WARN       4           /**< Soft warning trace level */
+#define WEBS_NOTICE		5
+#define WEBS_INFO		6
+#define WEBS_DEBUG		7
+#define WEBS_TRAP		(WEBS_DEBUG+1)
+#define WEBS_CONFIG     2           /**< Configuration settings trace level. */
+#define WEBS_VERBOSE    9           /**< Highest level of trace */
+/*
+    Log message flags
+ */
+#define WEBS_ASSERT_MSG     0x10        /**< Originated from assert */
+#define WEBS_ERROR_MSG      0x20        /**< Originated from error */
+#define WEBS_LOG_MSG        0x100       /**< Originated from logmsg */
+#define WEBS_RAW_MSG        0x200       /**< Raw message output */
+#define WEBS_TRACE_MSG      0x400       /**< Originated from trace */
+#define WEBS_EVENT_MSG      0x800       /**< Originated from trace */
+
+#endif
+
+
+#define _WEB_DEBUG_MSG		0X01
+#define _WEB_DEBUG_DETAIL	0X200
+#define _WEB_DEBUG_EVENT	0X800
+#define _WEB_DEBUG_TRACE	0X400
+#define _WEB_DEBUG_RAW		0X200
+#define _WEB_DEBUG_HEADER   0x1000      /**< trace HTTP header */
+
+
+#define WEB_IS_DEBUG(n)		(_WEB_DEBUG_ ## n & _web_app_debug)
+#define WEB_DEBUG_ON(n)		{ _web_app_debug |= (_WEB_DEBUG_ ## n ); logLevel |= (_WEB_DEBUG_ ## n );}
+#define WEB_DEBUG_OFF(n)	{ _web_app_debug &= ~(_WEB_DEBUG_ ## n ); logLevel &= ~(_WEB_DEBUG_ ## n );}
+
 
 /*
 #ifndef ME_GOAHEAD_UPLOAD_DIR
@@ -33,7 +82,7 @@
 */
 
 #define HAS_BOOL 1
-#include "goahead.h"
+#include "src/goahead.h"
 
 #include "web_api.h"
 
@@ -85,6 +134,8 @@ extern const char * web_type_string(web_app_t *wp);
 extern const char * web_os_type_string(web_app_t *wp);
 extern web_type web_type_get();
 extern web_os web_os_get();
+
+extern int _web_app_debug;
 /*
  * Webs Util
  */
@@ -101,6 +152,10 @@ extern int web_gopass(const char *username, const char *password, const char *ci
 extern int web_gopass_roles(const char *authFile, const char *username, const char *roles[]);
 extern int web_gopass_save(const char *authFile, const char *username,
 		const char *roles[], char *encodedPassword);
+extern int web_auth_save(const char *authFile);
+
+extern int webs_username_password_update(void *pwp, char *username, char *password);
+
 /*
  * Return
  */

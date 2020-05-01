@@ -8,7 +8,7 @@
 #pragma pack(1)
 
 
-typedef struct v9_address_s
+typedef struct v9_board_s
 {
 	u_int8		id;				//ID编号
 //	u_int8		addr;			//总线地址
@@ -37,16 +37,15 @@ typedef struct v9_address_s
 	u_int8		use:1;			//使用标志
 
 	u_int8		cnt;			//计数
-}v9_address_t;
+}v9_board_t;
 
 
 #pragma pack()
 
-extern int v9_board_init(u_int8 id, v9_address_t *board);
-extern v9_address_t * v9_board_lookup(u_int8 id);
-extern int v9_board_update_board(u_int8 id, v9_address_t *);
-extern BOOL v9_board_ready(u_int8 id);
-extern int v9_board_set_ready(u_int8 id);
+extern int v9_board_init(u_int8 id, v9_board_t *board);
+extern v9_board_t * v9_board_lookup(u_int8 id);
+extern int v9_board_update_board(u_int8 id, v9_board_t *);
+
 extern int v9_board_show(struct vty * vty, int id, int debug);
 
 #endif /* __V9_BOARD_H__ */

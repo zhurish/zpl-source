@@ -8,7 +8,7 @@
 #ifndef __V9_SERIAL_H__
 #define __V9_SERIAL_H__
 
-#define V9_SERIAL_CTL_NAME	"/dev/ttyS1"
+#define V9_SERIAL_CTL_NAME	"/dev/ttyS2"
 
 
 #define V9_APP_DEBUG_EVENT		0X01
@@ -27,7 +27,7 @@
 #define V9_APP_DEBUG_OFF(n)	(v9_serial->debug &= ~(V9_APP_DEBUG_ ## n ))
 
 
-
+#define V9_APP_SYNC_PIPE
 
 
 typedef struct v9_serial_s

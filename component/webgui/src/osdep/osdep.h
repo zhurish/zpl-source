@@ -143,6 +143,8 @@
     #define ME_UNIX_LIKE 1
     #define ME_WIN_LIKE 0
     #define ME_BSD_LIKE 1
+    #define HAS_USHORT 1
+    #define HAS_UINT 1
 
 #elif defined(__OpenBSD__)
     #define ME_OS "freebsd"
@@ -383,6 +385,7 @@
 #endif
 #if ME_BSD_LIKE
     #include    <readpassphrase.h>
+    #include    <sys/sysctl.h>
 #endif
     #include    <setjmp.h>
     #include    <signal.h>

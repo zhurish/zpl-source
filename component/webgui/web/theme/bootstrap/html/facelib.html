@@ -227,10 +227,12 @@
 							var stxhr = new XHR();
 							//var ID = $(obj).parent().parent().prevAll()[2].innerText;//**********************
 							var ID = $(obj).parent().parent().prevAll()[3].innerText;
+							var BIDT = $(obj).parent().parent().prevAll()[1].innerText;
+							var BID=BIDT.split(":");
 
 							console.log("ID:" + ID);
 
-							argv = "ACTION=facelib&BTNID=" + obj.id + "&ID=" + ID;
+							argv = "ACTION=facelib&BTNID=" + obj.id + "&ID=" + ID + "&BID=" + BID[0];
 
 							$("#handle_waiting").css("display", "block");
 							setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);

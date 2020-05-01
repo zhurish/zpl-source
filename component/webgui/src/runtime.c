@@ -163,9 +163,9 @@ typedef struct HashTable {              /* Symbol table descriptor */
 #if ME_WIN_LIKE
     PUBLIC void syslog(int priority, char *fmt, ...);
 #endif
-
+//#if ME_GOAHEAD_LOGGING
 PUBLIC int       logLevel;          /* Log verbosity level */
-
+//#endif /* ME_GOAHEAD_LOGGING */
 /************************************* Locals *********************************/
 
 static Callback  **callbacks;
@@ -177,9 +177,11 @@ static int       symMax;            /* One past the max symbol table */
 char *embedthisGoAheadCopyright = EMBEDTHIS_GOAHEAD_COPYRIGHT;
 
 #if ME_GOAHEAD_LOGGING
-static char      *logPath;          /* Log file name */
+#if ME_GOAHEAD_LOGFILE
+static char      *logPath = NULL;          /* Log file name */
 static int       logFd;             /* Log file handle */
-#endif
+#endif /* ME_GOAHEAD_LOGFILE */
+#endif /* ME_GOAHEAD_LOGGING */
 
 /********************************** Forwards **********************************/
 
@@ -188,10 +190,11 @@ static int getBinBlockSize(int size);
 static int hashIndex(HashTable *tp, cchar *name);
 static WebsKey *hash(HashTable *tp, cchar *name);
 
-#if ME_GOAHEAD_LOGGING
+#if !ME_GOAHEAD_EXTLOG
 static void defaultLogHandler(int level, cchar *buf);
-static WebsLogHandler logHandler = defaultLogHandler;
-#endif
+static WebsLogHandler logHandler = NULL;//defaultLogHandler;
+#endif /* ME_GOAHEAD_EXTLOG */
+
 
 static int  getState(char c, int state);
 static int  growBuf(Format *fmt);
@@ -312,7 +315,7 @@ int websRunEvents(void)
 PUBLIC char *sfmt(cchar *format, ...)
 {
     va_list     ap;
-    char        *result;
+    char        *result = NULL;
 
     web_assert(format);
 
@@ -329,7 +332,7 @@ PUBLIC char *sfmt(cchar *format, ...)
 PUBLIC char *fmt(char *buf, ssize bufsize, cchar *format, ...)
 {
     va_list     ap;
-    char        *result;
+    char        *result = NULL;
 
     web_assert(buf);
     web_assert(format);
@@ -377,7 +380,7 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list args)
     int64         iValue;
     uint64        uValue;
     int           state;
-    char          c, *safe;
+    char          c, *safe = NULL;
 
     if (spec == 0) {
         spec = "";
@@ -648,7 +651,7 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list args)
 
 static void outString(Format *fmt, char *str, ssize len)
 {
-    char    *cp;
+    char    *cp = NULL;
     ssize   i;
 
     if (str == NULL) {
@@ -685,7 +688,7 @@ static void outString(Format *fmt, char *str, ssize len)
 #if ME_CHAR_LEN > 1 && KEEP
 static void outWideString(Format *fmt, wchar *str, ssize len)
 {
-    wchar     *cp;
+    wchar     *cp = NULL;
     int         i;
 
     if (str == 0) {
@@ -726,8 +729,8 @@ static void outWideString(Format *fmt, wchar *str, ssize len)
 static void outNum(Format *fmt, char *prefix, uint64 value)
 {
     char    numBuf[64];
-    char    *cp;
-    char    *endp;
+    char    *cp = NULL;
+    char    *endp = NULL;
     char    c;
     int     letter, len, leadingZeros, i, fill;
 
@@ -864,7 +867,7 @@ static void outFloat(Format *fmt, char specChar, double value)
  */
 static int growBuf(Format *fmt)
 {
-    uchar   *newbuf;
+    uchar   *newbuf = NULL;
     ssize   buflen;
 
     buflen = (int) (fmt->endbuf - fmt->buf);
@@ -952,8 +955,7 @@ PUBLIC void valueFree(WebsValue* v)
     v->allocated = 0;
 }
 
-
-#if ME_GOAHEAD_LOGGING
+#if !ME_GOAHEAD_EXTLOG
 static void defaultLogHandler(int flags, cchar *buf)
 {
     char    prefix[ME_GOAHEAD_LIMIT_STRING];
@@ -974,9 +976,7 @@ static void defaultLogHandler(int flags, cchar *buf)
         }
     }
 }
-
-
-PUBLIC void error(cchar *fmt, ...)
+/*PUBLIC void error(cchar *fmt, ...)
 {
     va_list     args;
     char        *message;
@@ -990,12 +990,29 @@ PUBLIC void error(cchar *fmt, ...)
     logHandler(WEBS_ERROR_MSG, message);
     wfree(message);
 }
+*/
+PUBLIC void flerror(char *file, int line, cchar *fmt, ...)
+{
+    va_list     args;
+    char        *fmtBuf = NULL, *message = NULL;
+
+    va_start(args, fmt);
+    fmtBuf = sfmtv(fmt, args);
+
+    message = sfmt("Error %s, (%s,line:%d)\n", fmtBuf, WEBS_ARGS);
+    va_end(args);
+    wfree(fmtBuf);
+    if (logHandler) {
+        logHandler(WEBS_ERROR_MSG, message);
+    }
+    wfree(message);
+}
 
 
 PUBLIC void assertError(WEBS_ARGS_DEC, char *fmt, ...)
 {
     va_list     args;
-    char        *fmtBuf, *message;
+    char        *fmtBuf = NULL, *message = NULL;
 
     va_start(args, fmt);
     fmtBuf = sfmtv(fmt, args);
@@ -1013,7 +1030,7 @@ PUBLIC void assertError(WEBS_ARGS_DEC, char *fmt, ...)
 PUBLIC void logmsgProc(int level, cchar *fmt, ...)
 {
     va_list     args;
-    char        *message;
+    char        *message = NULL;
 
     if ((level & WEBS_LEVEL_MASK) <= logLevel && logHandler) {
         va_start(args, fmt);
@@ -1028,17 +1045,17 @@ PUBLIC void logmsgProc(int level, cchar *fmt, ...)
 PUBLIC void traceProc(int level, cchar *fmt, ...)
 {
     va_list     args;
-    char        *message;
+    char        *message = NULL;
 
     if ((level & WEBS_LEVEL_MASK) <= logLevel && logHandler) {
         va_start(args, fmt);
         message = sfmtv(fmt, args);
-        logHandler(level | WEBS_TRACE_MSG, message);
+        logHandler(NULL, NULL, 0, level | WEBS_TRACE_MSG, message);
         wfree(message);
         va_end(args);
     }
 }
-
+#endif /* ME_GOAHEAD_EXTLOG*/
 
 PUBLIC int websGetLogLevel(void)
 {
@@ -1051,7 +1068,7 @@ void websSetLogLevel(int level)
     logLevel = level;
 }
 
-
+#if !ME_GOAHEAD_EXTLOG
 WebsLogHandler logGetHandler(void)
 {
     return logHandler;
@@ -1071,13 +1088,15 @@ WebsLogHandler logSetHandler(WebsLogHandler handler)
     }
     return oldHandler;
 }
-
+#endif /* ME_GOAHEAD_EXTLOG */
 
 PUBLIC int logOpen(void)
 {
+#if !ME_GOAHEAD_EXTLOG
+#if ME_GOAHEAD_LOGFILE
     if (!logPath) {
         /* This definition comes from main.me goahead.logfile */
-        logSetPath(ME_GOAHEAD_LOGFILE);
+        logSetPath(ME_GOAHEAD_LOGFILE_PATH);
     }
     if (smatch(logPath, "stdout")) {
         logFd = 1;
@@ -1091,25 +1110,33 @@ PUBLIC int logOpen(void)
         lseek(logFd, 0, SEEK_END);
 #endif
     }
-    logSetHandler(logHandler);
+#endif /* ME_GOAHEAD_LOGFILE */
+    if(logHandler == NULL)
+    	logSetHandler(defaultLogHandler);
+    //else
+    //	logSetHandler(defaultLogHandler);
+#endif /* ME_GOAHEAD_EXTLOG */
     return 0;
 }
 
 
 PUBLIC void logClose(void)
 {
+#if ME_GOAHEAD_LOGFILE
 #if !ME_ROM
     if (logFd > 2) {
         close(logFd);
         logFd = -1;
     }
 #endif
+#endif
 }
 
-
+#if !ME_GOAHEAD_EXTLOG
+#if ME_GOAHEAD_LOGFILE
 PUBLIC void logSetPath(cchar *path)
 {
-    char  *lp;
+    char  *lp = NULL;
 
     wfree(logPath);
     logPath = sclone(path);
@@ -1117,8 +1144,10 @@ PUBLIC void logSetPath(cchar *path)
         *lp++ = '\0';
         logLevel = atoi(lp);
     }
+
 }
-#endif
+#endif /* ME_GOAHEAD_LOGFILE */
+#endif /* ME_GOAHEAD_EXTLOG */
 
 
 /*
@@ -1126,7 +1155,7 @@ PUBLIC void logSetPath(cchar *path)
  */
 PUBLIC char *slower(char *pstring)
 {
-    char  *s;
+    char  *s = NULL;
 
     if (pstring == NULL) {
         return NULL;
@@ -1148,7 +1177,7 @@ PUBLIC char *slower(char *pstring)
  */
 PUBLIC char *supper(char *pstring)
 {
-    char  *s;
+    char  *s = NULL;
 
     if (pstring == NULL) {
         return NULL;
@@ -1167,7 +1196,7 @@ PUBLIC char *supper(char *pstring)
 
 PUBLIC char *itosbuf(char *buf, ssize size, int64 value, int radix)
 {
-    char    *cp, *end;
+    char    *cp = NULL, *end = NULL;
     char    digits[] = "0123456789ABCDEF";
     int     negative;
 
@@ -1209,8 +1238,8 @@ PUBLIC char *itosbuf(char *buf, ssize size, int64 value, int radix)
  */
 PUBLIC int wallocHandle(void *mapArg)
 {
-    void    ***map;
-    ssize   *mp;
+    void    ***map = NULL;
+    ssize   *mp = NULL;
     int     handle, len, memsize, incr;
 
     map = (void***) mapArg;
@@ -1266,8 +1295,8 @@ PUBLIC int wallocHandle(void *mapArg)
  */
 PUBLIC int wfreeHandle(void *mapArg, int handle)
 {
-    void    ***map;
-    ssize   *mp;
+    void    ***map = NULL;
+    ssize   *mp = NULL;
     int     len;
 
     map = (void***) mapArg;
@@ -1307,8 +1336,8 @@ PUBLIC int wfreeHandle(void *mapArg, int handle)
  */
 PUBLIC int wallocObject(void *listArg, int *max, int size)
 {
-    void    ***list;
-    char    *cp;
+    void    ***list = NULL;
+    char    *cp = NULL;
     int     id;
 
     list = (void***) listArg;
@@ -1418,7 +1447,7 @@ PUBLIC char *bufStart(WebsBuf *bp)
  */
 PUBLIC int bufGetc(WebsBuf *bp)
 {
-    char    c, *cp;
+    char    c, *cp = NULL;
 
     web_assert(bp);
     web_assert(bp->buflen == (bp->endbuf - bp->buf));
@@ -1443,7 +1472,7 @@ PUBLIC int bufGetc(WebsBuf *bp)
  */
 PUBLIC int bufPutc(WebsBuf *bp, char c)
 {
-    char *cp;
+    char *cp = NULL;
 
     web_assert(bp);
     web_assert(bp->buflen == (bp->endbuf - bp->buf));
@@ -1466,7 +1495,7 @@ PUBLIC int bufPutc(WebsBuf *bp, char c)
  */
 PUBLIC int bufInsertc(WebsBuf *bp, char c)
 {
-    char *cp;
+    char *cp = NULL;
 
     web_assert(bp);
     web_assert(bp->buflen == (bp->endbuf - bp->buf));
@@ -1487,7 +1516,7 @@ PUBLIC int bufInsertc(WebsBuf *bp, char c)
 PUBLIC ssize bufPut(WebsBuf *bp, cchar *fmt, ...)
 {
     va_list     ap;
-    char        *str;
+    char        *str = NULL;
     ssize       rc;
 
     web_assert(bp);
@@ -1834,7 +1863,7 @@ PUBLIC void bufReset(WebsBuf *bp)
  */
 PUBLIC bool bufGrow(WebsBuf *bp, ssize room)
 {
-    char    *newbuf;
+    char    *newbuf = NULL;
     ssize   len;
 
     web_assert(bp);
@@ -1887,7 +1916,7 @@ static int  getBinBlockSize(int size)
 WebsHash hashCreate(int size)
 {
     WebsHash    sd;
-    HashTable   *tp;
+    HashTable   *tp = NULL;
 
     if (size < 0) {
         size = WEBS_SMALL_HASH;
@@ -1936,8 +1965,8 @@ WebsHash hashCreate(int size)
  */
 PUBLIC void hashFree(WebsHash sd)
 {
-    HashTable   *tp;
-    WebsKey     *sp, *forw;
+    HashTable   *tp = NULL;
+    WebsKey     *sp = NULL, *forw = NULL;
     int         i;
 
     if (sd < 0) {
@@ -1971,8 +2000,8 @@ PUBLIC void hashFree(WebsHash sd)
  */
 WebsKey *hashFirst(WebsHash sd)
 {
-    HashTable   *tp;
-    WebsKey     *sp;
+    HashTable   *tp = NULL;
+    WebsKey     *sp = NULL;
     int         i;
 
     web_assert(0 <= sd && sd < symMax);
@@ -1999,8 +2028,8 @@ WebsKey *hashFirst(WebsHash sd)
  */
 WebsKey *hashNext(WebsHash sd, WebsKey *last)
 {
-    HashTable   *tp;
-    WebsKey     *sp;
+    HashTable   *tp = NULL;
+    WebsKey     *sp = NULL;
     int         i;
 
     web_assert(0 <= sd && sd < symMax);
@@ -2029,9 +2058,9 @@ WebsKey *hashNext(WebsHash sd, WebsKey *last)
  */
 WebsKey *hashLookup(WebsHash sd, cchar *name)
 {
-    HashTable   *tp;
-    WebsKey     *sp;
-    char        *cp;
+    HashTable   *tp = NULL;
+    WebsKey     *sp = NULL;
+    char        *cp = NULL;
 
     web_assert(0 <= sd && sd < symMax);
     if (sd < 0 || (tp = sym[sd]) == NULL) {
@@ -2055,7 +2084,7 @@ WebsKey *hashLookup(WebsHash sd, cchar *name)
 
 void *hashLookupSymbol(WebsHash sd, cchar *name)
 {
-    WebsKey     *kp;
+    WebsKey     *kp = NULL;
 
     if ((kp = hashLookup(sd, name)) == 0) {
         return 0;
@@ -2071,9 +2100,9 @@ void *hashLookupSymbol(WebsHash sd, cchar *name)
  */
 WebsKey *hashEnter(WebsHash sd, cchar *name, WebsValue v, int arg)
 {
-    HashTable   *tp;
-    WebsKey     *sp, *last;
-    char        *cp;
+    HashTable   *tp = NULL;
+    WebsKey     *sp = NULL, *last = NULL;
+    char        *cp = NULL;
     int         hindex;
 
     web_assert(name);
@@ -2147,9 +2176,9 @@ WebsKey *hashEnter(WebsHash sd, cchar *name, WebsValue v, int arg)
  */
 PUBLIC int hashDelete(WebsHash sd, cchar *name)
 {
-    HashTable   *tp;
-    WebsKey     *sp, *last;
-    char        *cp;
+    HashTable   *tp = NULL;
+    WebsKey     *sp = NULL, *last = NULL;
+    char        *cp = NULL;
     int         hindex;
 
     web_assert(name && *name);
@@ -2351,7 +2380,7 @@ PUBLIC ssize mtow(wchar *dest, ssize destCount, char *src, ssize count)
 
 wchar *amtow(char *src, ssize *lenp)
 {
-    wchar   *dest;
+    wchar   *dest = NULL;
     ssize   len;
 
     len = mtow(NULL, MAXSSIZE, src, -1);
@@ -2370,7 +2399,7 @@ wchar *amtow(char *src, ssize *lenp)
 
 PUBLIC char *awtom(wchar *src, ssize *lenp)
 {
-    char    *dest;
+    char    *dest = NULL;
     ssize   len;
 
     len = wtom(NULL, MAXSSIZE, src, -1);
@@ -2393,7 +2422,7 @@ PUBLIC char *awtom(wchar *src, ssize *lenp)
  */
 uint hextoi(cchar *hexstring)
 {
-    cchar   *h;
+    cchar   *h = NULL;
     uint    c, v;
 
     if (!hexstring) {
@@ -2422,7 +2451,7 @@ uint hextoi(cchar *hexstring)
 
 PUBLIC char *sclone(cchar *s)
 {
-    char    *buf;
+    char    *buf = NULL;
 
     if (s == NULL) {
         s = "";
@@ -2441,7 +2470,7 @@ PUBLIC char *sclone(cchar *s)
  */
 PUBLIC char *snclone(cchar *str, ssize len)
 {
-    char    *ptr;
+    char    *ptr = NULL;
     ssize   size, l;
 
     if (str == 0) {
@@ -2670,7 +2699,7 @@ PUBLIC int sncaselesscmp(cchar *s1, cchar *s2, ssize n)
  */
 PUBLIC char *ssplit(char *str, cchar *delim, char **last)
 {
-    char    *end;
+    char    *end = NULL;
 
     if (last) {
         *last = "";
@@ -2700,7 +2729,7 @@ PUBLIC char *ssplit(char *str, cchar *delim, char **last)
  */
 PUBLIC char *stok(char *str, cchar *delim, char **last)
 {
-    char  *start, *end;
+    char  *start = NULL, *end = NULL;
     ssize   i;
 
     start = str ? str : *last;
@@ -2727,7 +2756,7 @@ PUBLIC char *stok(char *str, cchar *delim, char **last)
 
 PUBLIC char *strim(char *str, cchar *set, int where)
 {
-    char    *s;
+    char    *s = NULL;
     ssize   len, i;
 
     if (str == 0 || set == 0) {

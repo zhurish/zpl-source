@@ -253,7 +253,7 @@ static int getNumOrSym(char **token, int sep, int kind, int *isAlpah)
 
     web_assert(token && *token);
 
-    if (*token == 0) {
+    if (token == NULL || *token == NULL || **token == '\0') {
         return 0;
     }
     if (isalpha((uchar) **token)) {
@@ -521,14 +521,15 @@ static void validateTime(struct tm *tp, struct tm *defaults)
 
     /*
         Check for overflow. Underflow validated below.
+        tm_sec can be 61 for leap seconds.
      */
-    if (tp->tm_sec > 60) {
+    if (tp->tm_sec > 61) {
         tp->tm_sec = -1;
     }
-    if (tp->tm_min > 60) {
+    if (tp->tm_min > 59) {
         tp->tm_sec = -1;
     }
-    if (tp->tm_hour > 24) {
+    if (tp->tm_hour > 23) {
         tp->tm_sec = -1;
     }
     if (tp->tm_mday > 31) {

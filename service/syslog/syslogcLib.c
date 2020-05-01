@@ -844,7 +844,7 @@ int syslogc_host_config_get(char *hostname, int *port, int *facility)
 		os_mutex_lock(syslog_client->mutx, OS_WAIT_FOREVER);
 	if(port)
 		*port = syslog_client->port;
-	if(hostname && os_strlen(syslog_client->address_string))
+	if(hostname && os_strlen(syslog_client->address_string)>1)
 		os_strncpy(hostname, syslog_client->address_string,
 				MIN(os_strlen(syslog_client->address_string), DFT_HOST_NAME_LEN));
 	if(facility)

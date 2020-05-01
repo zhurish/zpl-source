@@ -88,6 +88,8 @@ extern int os_set_blocking(int fd);
 extern int os_pipe_create(char *name, int mode);
 extern int os_pipe_close(int fd);
 
+extern int os_file_access(char *filename);
+
 extern int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, int timeout_ms);
 
 

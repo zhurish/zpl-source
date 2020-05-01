@@ -18,7 +18,7 @@
 #include "vty.h"
 #include "vty_user.h"
 
-
+#ifdef PL_SNTPC_MODULE
 #include "sntpcLib.h"
 
 #include "web_util.h"
@@ -26,6 +26,7 @@
 #include "web_app.h"
 #include "web_api.h"
 
+#ifndef THEME_V9UI
 static int jst_sntp_timezone_list(int eid, webs_t wp, int argc, char **argv)
 {
 	int i = 0;
@@ -101,7 +102,7 @@ static int web_sntp_set(Webs *wp, char *path, char *query)
 	}
 	if(strstr(strval, "false"))
 	{
-		printf("%s: sntp_enable=%s\r\n", __func__, strval);
+		_WEB_DBG_TRAP("%s: sntp_enable=%s\r\n", __func__, strval);
 		sntpc_client_set_api(NULL, API_SNTPC_SET_ENABLE, NULL);
 		return web_return_text_plain(wp, OK);
 	}
@@ -152,11 +153,16 @@ static int web_sntp_set(Webs *wp, char *path, char *query)
 	websDone(wp);
 	return OK;
 }
+#endif /* THEME_V9UI */
+
 
 int web_sntp_app(void)
 {
+#ifndef THEME_V9UI
 	websDefineJst("jst_timezone_list", jst_sntp_timezone_list);
 	websFormDefine("setsntp", web_sntp_set);
+#endif /* THEME_V9UI */
 	return 0;
 }
 
+#endif /* PL_SNTPC_MODULE */

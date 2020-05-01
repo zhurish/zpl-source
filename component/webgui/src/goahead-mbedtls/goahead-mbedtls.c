@@ -63,7 +63,7 @@ PUBLIC int sslOpen()
     cuchar              dhm_g[] = MBEDTLS_DHM_RFC3526_MODP_2048_G_BIN;
     int                 rc;
 
-    trace(7, "Initializing MbedTLS SSL"); 
+    web_trace(WEBS_NOTICE, "Initializing MbedTLS SSL");
 
     mbedtls_entropy_init(&cfg.entropy);
 
@@ -186,11 +186,11 @@ PUBLIC int sslOpen()
     if (websGetLogLevel() >= 5) {
         char    cipher[80];
         cint    *cp;
-        trace(5, "mbedtls: Supported Ciphers");
+        web_trace(WEBS_DEBUG, "mbedtls: Supported Ciphers");
         for (cp = mbedtls_ssl_list_ciphersuites(); *cp; cp++) {
             scopy(cipher, sizeof(cipher), (char*) mbedtls_ssl_get_ciphersuite_name(*cp));
             replaceHyphen(cipher, '-', '_');
-            trace(5, "mbedtls: %s (0x%04X)", cipher, *cp);
+            web_trace(WEBS_DEBUG, "mbedtls: %s (0x%04X)", cipher, *cp);
         }
     }
     return 0;
@@ -286,11 +286,11 @@ static int mbedHandshake(Webs *wp)
     if (rc < 0) {
         if (rc == MBEDTLS_ERR_SSL_PRIVATE_KEY_REQUIRED && 
                 (ME_GOAHEAD_SSL_KEY[0] == '\0' || ME_GOAHEAD_SSL_CERTIFICATE[0] == '\0')) {
-            error("Missing required certificate and key");
+            web_error("Missing required certificate and key");
         } else {
             char ebuf[256];
             mbedtls_strerror(-rc, ebuf, sizeof(ebuf));
-            error("%s: error -0x%x", ebuf, -rc);
+            web_error("%s: error -0x%x", ebuf, -rc);
         }
         sp->flags |= SOCKET_EOF;
         errno = EPROTO;
@@ -298,22 +298,22 @@ static int mbedHandshake(Webs *wp)
 
     } else if ((vrc = mbedtls_ssl_get_verify_result(&mb->ctx)) != 0) {
         if (vrc & MBEDTLS_X509_BADCERT_MISSING) {
-            logmsg(2, "Certificate missing");
+            web_logmsg(WEBS_DEBUG, "Certificate missing");
 
         } else if (vrc & MBEDTLS_X509_BADCERT_EXPIRED) {
-            logmsg(2, "Certificate expired");
+            web_logmsg(WEBS_DEBUG, "Certificate expired");
 
         } else if (vrc & MBEDTLS_X509_BADCERT_REVOKED) {
-            logmsg(2, "Certificate revoked");
+            web_logmsg(WEBS_DEBUG, "Certificate revoked");
 
         } else if (vrc & MBEDTLS_X509_BADCERT_CN_MISMATCH) {
-            logmsg(2, "Certificate common name mismatch");
+            web_logmsg(WEBS_DEBUG, "Certificate common name mismatch");
 
         } else if (vrc & MBEDTLS_X509_BADCERT_KEY_USAGE || vrc & MBEDTLS_X509_BADCERT_EXT_KEY_USAGE) {
-            logmsg(2, "Unauthorized key use in certificate");
+            web_logmsg(WEBS_DEBUG, "Unauthorized key use in certificate");
 
         } else if (vrc & MBEDTLS_X509_BADCERT_NOT_TRUSTED) {
-            logmsg(2, "Certificate not trusted");
+            web_logmsg(WEBS_DEBUG, "Certificate not trusted");
             if (!ME_GOAHEAD_SSL_VERIFY_ISSUER) {
                 vrc = 0;
             }
@@ -326,18 +326,18 @@ static int mbedHandshake(Webs *wp)
 
         } else {
             if (mb->ctx.client_auth && !*ME_GOAHEAD_SSL_CERTIFICATE) {
-                logmsg(2, "Server requires a client certificate");
+                web_logmsg(WEBS_DEBUG, "Server requires a client certificate");
 
             } else if (rc == MBEDTLS_ERR_NET_CONN_RESET) {
-                logmsg(2, "Peer disconnected");
+                web_logmsg(WEBS_DEBUG, "Peer disconnected");
 
             } else {
-                logmsg(2, "Cannot handshake: error -0x%x", -rc);
+                web_logmsg(WEBS_DEBUG, "Cannot handshake: error -0x%x", -rc);
             }
         }
         if (vrc != 0 && ME_GOAHEAD_SSL_VERIFY_PEER) {
             if (mbedtls_ssl_get_peer_cert(&mb->ctx) == 0) {
-                logmsg(2, "Peer did not provide a certificate");
+                web_logmsg(WEBS_DEBUG, "Peer did not provide a certificate");
             }
             sp->flags |= SOCKET_EOF;
             errno = EPROTO;
@@ -369,21 +369,21 @@ PUBLIC ssize sslRead(Webs *wp, void *buf, ssize len)
     }
     while (1) {
         rc = mbedtls_ssl_read(&mb->ctx, buf, (int) len);
-        trace(5, "mbedtls: mbedtls_ssl_read %d", rc);
+        web_trace(WEBS_DEBUG, "mbedtls: mbedtls_ssl_read %d", rc);
         if (rc < 0) {
             if (rc == MBEDTLS_ERR_SSL_WANT_READ || rc == MBEDTLS_ERR_SSL_WANT_WRITE)  {
                 rc = 0;
                 break;
             } else if (rc == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
-                trace(5, "mbedtls: connection was closed gracefully");
+                web_trace(WEBS_DEBUG, "mbedtls: connection was closed gracefully");
                 sp->flags |= SOCKET_EOF;
                 return -1;
             } else if (rc == MBEDTLS_ERR_NET_CONN_RESET) {
-                trace(5, "mbedtls: connection reset");
+                web_trace(WEBS_DEBUG, "mbedtls: connection reset");
                 sp->flags |= SOCKET_EOF;
                 return -1;
             } else {
-                trace(4, "mbedtls: read error -0x%", -rc);
+                web_trace(WEBS_DEBUG, "mbedtls: read error -0x%", -rc);
                 sp->flags |= SOCKET_EOF;
                 return -1; 
             }
@@ -417,17 +417,17 @@ PUBLIC ssize sslWrite(Webs *wp, void *buf, ssize len)
     totalWritten = 0;
     do {
         rc = mbedtls_ssl_write(&mb->ctx, (uchar*) buf, (int) len);
-        trace(7, "mbedtls write: wrote %d of %zd", rc, len);
+        web_trace(WEBS_DEBUG, "mbedtls write: wrote %d of %zd", rc, len);
         if (rc <= 0) {
             if (rc == MBEDTLS_ERR_SSL_WANT_READ || rc == MBEDTLS_ERR_SSL_WANT_WRITE) {
                 socketSetError(EAGAIN);
                 return -1;
             }
             if (rc == MBEDTLS_ERR_NET_CONN_RESET) {
-                trace(4, "mbedtls_ssl_write peer closed");
+                web_trace(WEBS_DEBUG, "mbedtls_ssl_write peer closed");
                 return -1;
             } else {
-                trace(4, "mbedtls_ssl_write failed rc %d", rc);
+                web_trace(WEBS_DEBUG, "mbedtls_ssl_write failed rc %d", rc);
                 return -1;
             }
         } else {
@@ -461,7 +461,7 @@ static int *getCipherSuite(char *ciphers, int *len)
     for (i = 0; (cipher = stok(next, ":, \t", &next)) != 0; ) {
         replaceHyphen(cipher, '_', '-');
         if ((code = mbedtls_ssl_get_ciphersuite_id(cipher)) <= 0) {
-            error("Unsupported cipher \"%s\"", cipher);
+            web_error("Unsupported cipher \"%s\"", cipher);
             continue;
         }
         result[i++] = code;
@@ -480,7 +480,7 @@ static int parseCert(mbedtls_x509_crt *cert, char *path)
     ssize   len;
 
     if ((buf = websReadWholeFile(path)) == 0) {
-        error("Unable to read certificate %s", path); 
+        web_error("Unable to read certificate %s", path);
         return -1;
     }
     len = slen(buf);
@@ -490,7 +490,7 @@ static int parseCert(mbedtls_x509_crt *cert, char *path)
     }
     if (mbedtls_x509_crt_parse(cert, (uchar*) buf, len) != 0) {
         memset(buf, 0, len);
-        error("Unable to parse certificate %s", path); 
+        web_error("Unable to parse certificate %s", path);
         return -1;
     }
     memset(buf, 0, len);
@@ -505,7 +505,7 @@ static int parseKey(mbedtls_pk_context *key, char *path)
     ssize   len;
 
     if ((buf = websReadWholeFile(path)) == 0) {
-        error("Unable to read key %s", path); 
+        web_error("Unable to read key %s", path);
         return -1;
     }
     len = slen(buf);
@@ -514,7 +514,7 @@ static int parseKey(mbedtls_pk_context *key, char *path)
     }
     if (mbedtls_pk_parse_key(key, (uchar*) buf, len, NULL, 0) != 0) {
         memset(buf, 0, len);
-        error("Unable to parse key %s", path); 
+        web_error("Unable to parse key %s", path);
         return -1;
     }
     memset(buf, 0, len);
@@ -529,7 +529,7 @@ static int parseCrl(mbedtls_x509_crl *crl, char *path)
     ssize   len;
 
     if ((buf = websReadWholeFile(path)) == 0) {
-        error("Unable to read crl %s", path); 
+        web_error("Unable to read crl %s", path);
         return -1;
     }
     len = slen(buf);
@@ -538,7 +538,7 @@ static int parseCrl(mbedtls_x509_crl *crl, char *path)
     }
     if (mbedtls_x509_crl_parse(crl, (uchar*) buf, len) != 0) {
         memset(buf, 0, len);
-        error("Unable to parse crl %s", path); 
+        web_error("Unable to parse crl %s", path);
         return -1;
     }
     memset(buf, 0, len);
@@ -555,7 +555,7 @@ static void traceMbed(void *context, int level, cchar *file, int line, cchar *st
     if (level <= websGetLogLevel()) {
         buf = sclone((char*) str);
         buf[slen(buf) - 1] = '\0';
-        trace(level, "%s", buf);
+        web_trace(level, "%s", buf);
         wfree(buf);
     }
 }
@@ -568,7 +568,7 @@ static void merror(int rc, char *fmt, ...)
 
     va_start(ap, fmt);
     mbedtls_strerror(-rc, ebuf, sizeof(ebuf));
-    error("mbedtls", "mbedtls error: 0x%x %s %s", rc, sfmtv(fmt, ap), ebuf);
+    web_error("mbedtls", "mbedtls error: 0x%x %s %s", rc, sfmtv(fmt, ap), ebuf);
     va_end(ap);
 }
 

@@ -102,12 +102,68 @@ OBJS = $(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(SOURCES)))
 .PHONY:	obj objclean clean install all lib rebuild dist demo app target usage help config_install
 #
 #
+ifeq ($(BUILD_DEBUG),YES)
 target : $(OBJS) $(BASE_ROOT)/$(LIBDIR)/*.a 
 	$(CC) -o $(TAGET) $(OBJS) $(PLDEFINE) $(PLCFLAGS) $(PLLDFLAGS) $(PLINCLUDE) -Xlinker "-(" $(PLLDLIBS) -Xlinker "-)" $(PLOS_MAP)
 	$(CHMOD) a+x $(TAGET)
-	#$(STRIP) $(TAGET)
+	$(STRIP) --strip-unneeded $(TAGET)
+else
+target : $(OBJS) $(BASE_ROOT)/$(LIBDIR)/*.a 
+	$(CC) -o $(TAGET) $(OBJS) $(PLDEFINE) $(PLCFLAGS) $(PLLDFLAGS) $(PLINCLUDE) -Xlinker "-(" $(PLLDLIBS) -Xlinker "-)" $(PLOS_MAP)
+	$(CHMOD) a+x $(TAGET)
+	$(STRIP) $(TAGET)
+endif
+
 	
 #	
+#
+ifneq ($(APP_BIN_DIR),)
+app_bin_install:
+	install -d $(APP_BIN_DIR)
+	install -m 755 debug/bin/*bin* $(APP_BIN_DIR)
+	install -m 755 debug/sbin/* $(APP_BIN_DIR)
+else
+app_bin_install:
+	@$(ECHO) " install -m 755 bin "
+endif
+#
+ifneq ($(APP_ETC_DIR),)
+app_etc_install:
+	install -d $(APP_ETC_DIR)
+	install -m 755 debug/etc/* $(APP_ETC_DIR)
+else
+app_etc_install:
+	@$(ECHO) " install -m 755 etc "
+endif
+#
+ifneq ($(APP_WEB_DIR),)
+app_web_install:
+	install -d $(APP_WEB_DIR)
+	install -m 755 debug/etc/web/* $(APP_WEB_DIR)
+else
+app_web_install:
+	@$(ECHO) " install -m 755 etc/web "
+endif
+#
+ifneq ($(APP_WWW_DIR),)
+app_www_install:
+	install -d $(APP_WWW_DIR)
+	install -m 755 debug/www/* $(APP_WWW_DIR)
+else
+app_www_install:
+	@$(ECHO) " install -m 755 www "
+endif
+#
+ifneq ($(APP_LIB_DIR),)
+app_lib_install:
+	install -d $(APP_LIB_DIR)
+	install -m 755 debug/usr/lib/*so* $(APP_LIB_DIR)
+else
+app_lib_install:
+	@$(ECHO) " install -m 755 lib "
+endif
+#
+#
 #
 #
 ifeq ($(BUILD_OPENWRT),true)
@@ -120,7 +176,7 @@ openwrt_install:
 endif
 #
 #
-config_install: openwrt_install
+config_install: openwrt_install 
 	install -d ${DSTETCDIR} 
 	install -m 755 make/start-boot.sh ${DSTETCDIR}  	
 	install -m 755 startup/etc/plat.conf ${DSTETCDIR}
@@ -137,6 +193,12 @@ config_install: openwrt_install
 #	install -m 755 startup/etc/plat.conf ${DSTETCDIR}
 	#install -m 755 startup/etc/default-config.cfg ${DSTETCDIR}
 	#$(CP) $(TAGET) /home/zhurish/Downloads/tftpboot/
+#
+#
+#
+app_all_install: app_bin_install app_etc_install app_web_install app_www_install app_lib_install 
+
+#
 #
 #
 help:usage

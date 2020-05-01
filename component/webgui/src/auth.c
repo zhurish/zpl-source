@@ -225,7 +225,7 @@ PUBLIC int websWriteAuthFile(char *path)
 
     tempFile = websTempFile(NULL, NULL);
     if ((fp = fopen(tempFile, "w" FILE_TEXT)) == 0) {
-        error("Cannot open %s", tempFile);
+        web_error("Cannot open %s", tempFile);
         wfree(tempFile);
         return -1;
     }
@@ -252,7 +252,7 @@ PUBLIC int websWriteAuthFile(char *path)
     fclose(fp);
     unlink(path);
     if (rename(tempFile, path) < 0) {
-        error("Cannot create new %s", path);
+        web_error("Cannot create new %s", path);
         wfree(tempFile);
         return -1;
     }
@@ -284,11 +284,11 @@ WebsUser *websAddUser(cchar *username, cchar *password, cchar *proles)
     WebsUser    *user;
 
     if (!username) {
-        error("User is missing name");
+        web_error("User is missing name");
         return 0;
     }
     if (websLookupUser(username)) {
-        error("User %s already exists", username);
+        web_error("User %s already exists", username);
         /* Already exists */
         return 0;
     }
@@ -307,10 +307,14 @@ PUBLIC int websRemoveUser(cchar *username)
     WebsKey     *key;
 
     web_assert(username);
-    if ((key = hashLookup(users, username)) != 0) {
-        freeUser(key->content.value.symbol);
+    if (users >= 0)
+    {
+		if ((key = hashLookup(users, username)) != 0) {
+			freeUser(key->content.value.symbol);
+		}
+		return hashDelete(users, username);
     }
-    return hashDelete(users, username);
+    return -1;
 }
 
 
@@ -359,10 +363,14 @@ WebsUser *websLookupUser(cchar *username)
     WebsKey     *key;
 
     web_assert(username);
-    if ((key = hashLookup(users, username)) == 0) {
-        return 0;
+    if (users >= 0)
+    {
+		if ((key = hashLookup(users, username)) == 0) {
+			return 0;
+		}
+		return (WebsUser*) key->content.value.symbol;
     }
-    return (WebsUser*) key->content.value.symbol;
+    return NULL;
 }
 
 
@@ -376,7 +384,7 @@ static void computeAbilities(WebsHash abilities, cchar *role, int depth)
     web_assert(depth >= 0);
 
     if (depth > 20) {
-        error("Recursive ability definition for %s", role);
+        web_error("Recursive ability definition for %s", role);
         return;
     }
     if (roles >= 0) {
@@ -407,12 +415,12 @@ static void computeUserAbilities(WebsUser *user)
 #if ME_DEBUG
     {
         WebsKey *key;
-        trace(5 | WEBS_RAW_MSG, "User \"%s\" has abilities: ", user->name);
+        web_trace(WEBS_DEBUG, "User \"%s\" has abilities: ", user->name);
         for (key = hashFirst(user->abilities); key; key = hashNext(user->abilities, key)) {
-            trace(5 | WEBS_RAW_MSG, "%s ", key->name.value.string);
+            web_trace(WEBS_DEBUG, "%s ", key->name.value.string);
             ability = key->name.value.string;
         }
-        trace(5, "");
+        web_trace(WEBS_DEBUG, "");
     }
 #endif
     wfree(proles);
@@ -438,11 +446,16 @@ WebsRole *websAddRole(cchar *name, WebsHash abilities)
     WebsRole    *rp;
 
     if (!name) {
-        error("Role is missing name");
+        web_error("Role is missing name");
+        return 0;
+    }
+    if (roles < 0)
+    {
+        web_error("Roles is missing init");
         return 0;
     }
     if (hashLookup(roles, name)) {
-        error("Role %s already exists", name);
+        web_error("Role %s already exists", name);
         /* Already exists */
         return 0;
     }
@@ -515,10 +528,10 @@ PUBLIC bool websLoginUser(Webs *wp, cchar *username, cchar *password)
     wp->password = sclone(password);
 
     if (!(wp->route->verify)(wp)) {
-        trace(2, "Password does not match");
+        web_trace(WEBS_ERROR, "Password does not match");
         return 0;
     }
-    trace(2, "Login successful for %s", username);
+    web_trace(WEBS_NOTICE, "Login successful for %s", username);
     websCreateSession(wp);
     websSetSessionVar(wp, WEBS_SESSION_USERNAME, wp->username);
     return 1;
@@ -537,8 +550,16 @@ PUBLIC bool websLogoutUser(Webs *wp)
     //printf("================%s==================code:%s\r\n", __func__, "websRedirectByStatus");
 #if ME_GOAHEAD_AUTO_LOGIN
 	if(web_logout_html)
+	{
+		//printf("================%s==================web_logout_html=%s\r\n", __func__, web_logout_html);
+		if(strstr(web_logout_html, "OK"))
+		{
+			web_return_text_plain(wp, 0);
+			return 1;
+		}
     	websRedirect(wp, web_logout_html);
-    else
+        return 1;
+	}
 #endif
     websRedirectByStatus(wp, HTTP_CODE_OK);
     return 1;
@@ -560,27 +581,43 @@ static void loginServiceProc(Webs *wp)
         /* If the application defines a referrer session var, redirect to that */
         cchar *referrer;
         if ((referrer = websGetSessionVar(wp, "referrer", 0)) != 0) {
-        	printf("================%s==================referrer=%s\r\n", __func__, referrer);
+        	//printf("================%s==================referrer=%s\r\n", __func__, referrer);
             websRedirect(wp, referrer);
         } else {
-        	printf("================%s==================referrer=%s\r\n", __func__, "null");
+        	//printf("================%s==================referrer=%s\r\n", __func__, "null");
 #if ME_GOAHEAD_AUTO_LOGIN
         	if(web_main_html)
-        		websRedirect(wp, web_main_html);
+        	{
+        		//printf("================%s==================web_main_html=%s\r\n", __func__, web_main_html);
+        		if(strstr(web_main_html, "OK"))
+        		{
+        			web_return_text_plain(wp, 0);
+        		}
+        		else
+        			websRedirect(wp, web_main_html);
+        	}
         	else
 #endif
             websRedirectByStatus(wp, HTTP_CODE_OK);
         }
         websSetSessionVar(wp, "loginStatus", "ok");
     } else {
-    	printf("================%s==================route->askLogin\r\n", __func__);
+    	//printf("================%s==================route->askLogin\r\n", __func__);
         if (route->askLogin) {
             (route->askLogin)(wp);
         }
         websSetSessionVar(wp, "loginStatus", "failed");
 #if ME_GOAHEAD_AUTO_LOGIN
-        if(web_main_html)
-        	websRedirect(wp, web_login_html);
+        if(web_login_html)
+        {
+        	//printf("================%s==================web_login_html=%s\r\n", __func__, web_login_html);
+    		if(strstr(web_login_html, "OK"))
+    		{
+    			web_return_text_plain(wp, -1);
+    		}
+    		else
+    			websRedirect(wp, web_login_html);
+        }
         else
 #endif
         websRedirectByStatus(wp, HTTP_CODE_UNAUTHORIZED);
@@ -590,7 +627,7 @@ static void loginServiceProc(Webs *wp)
 
 static void logoutServiceProc(Webs *wp)
 {
-	printf("================%s==================\r\n", __func__);
+	//printf("================%s==================\r\n", __func__);
     websLogoutUser(wp);
 }
 
@@ -623,7 +660,7 @@ PUBLIC bool websVerifyPasswordFromFile(Webs *wp)
 
     web_assert(wp);
     if (!wp->user && (wp->user = websLookupUser(wp->username)) == 0) {
-        trace(5, "verifyUser: Unknown user \"%s\"", wp->username);
+        web_trace(WEBS_WARN, "verifyUser: Unknown user \"%s\"", wp->username);
         return 0;
     }
     /*
@@ -642,9 +679,9 @@ PUBLIC bool websVerifyPasswordFromFile(Webs *wp)
         success = smatch(wp->password, wp->user->password);
     }
     if (success) {
-        trace(5, "User \"%s\" authenticated", wp->username);
+        web_trace(WEBS_NOTICE, "User \"%s\" authenticated", wp->username);
     } else {
-        trace(5, "Password for user \"%s\" failed to authenticate", wp->username);
+        web_trace(WEBS_WARN, "Password for user \"%s\" failed to authenticate", wp->username);
     }
     return success;
 }
@@ -676,11 +713,11 @@ PUBLIC bool websVerifyPasswordFromPam(Webs *wp)
     }
     if ((res = pam_authenticate(pamh, PAM_DISALLOW_NULL_AUTHTOK)) != PAM_SUCCESS) {
         pam_end(pamh, PAM_SUCCESS);
-        trace(5, "httpPamVerifyUser failed to verify %s", wp->username);
+        web_trace(WEBS_WARN, "httpPamVerifyUser failed to verify %s", wp->username);
         return 0;
     }
     pam_end(pamh, PAM_SUCCESS);
-    trace(5, "httpPamVerifyUser verified %s", wp->username);
+    web_trace(WEBS_DEBUG, "httpPamVerifyUser verified %s", wp->username);
 
     if (!wp->user) {
         wp->user = websLookupUser(wp->username);
@@ -701,7 +738,7 @@ PUBLIC bool websVerifyPasswordFromPam(Webs *wp)
                 }
             }
             bufAddNull(&abilities);
-            trace(5, "Create temp user \"%s\" with abilities: %s", wp->username, abilities.servp);
+            web_trace(WEBS_DEBUG, "Create temp user \"%s\" with abilities: %s", wp->username, abilities.servp);
             if ((wp->user = websAddUser(wp->username, 0, abilities.servp)) == 0) {
                 return 0;
             }
@@ -980,25 +1017,25 @@ static bool parseDigestDetails(Webs *wp)
     when = 0; secret = 0; realm = 0;
     decoded = parseDigestNonce(wp->nonce, &secret, &realm, &when);
     if (!smatch(masterSecret, secret)) {
-        trace(2, "Access denied: Nonce mismatch");
+        web_trace(WEBS_WARN, "Access denied: Nonce mismatch");
         wfree(decoded);
         return 0;
     } else if (!smatch(realm, ME_GOAHEAD_REALM)) {
-        trace(2, "Access denied: Realm mismatch");
+        web_trace(WEBS_WARN, "Access denied: Realm mismatch");
         wfree(decoded);
         return 0;
     } else if (!smatch(wp->qop, "auth")) {
-        trace(2, "Access denied: Bad qop");
+        web_trace(WEBS_WARN, "Access denied: Bad qop");
         wfree(decoded);
         return 0;
     } else if ((when + (5 * 60)) < time(0)) {
-        trace(2, "Access denied: Nonce is stale");
+        web_trace(WEBS_WARN, "Access denied: Nonce is stale");
         wfree(decoded);
         return 0;
     }
     if (!wp->user) {
         if ((wp->user = websLookupUser(wp->username)) == 0) {
-            trace(2, "Access denied: user is unknown");
+            web_trace(WEBS_WARN, "Access denied: user is unknown");
             wfree(decoded);
             return 0;
         }

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2019 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -169,6 +169,7 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 		property__write_all(packet, properties, false);
 		property__write_all(packet, local_props, false);
 	}
+	mosquitto_property_free_all(&local_props);
 
 	/* Payload */
 	if(clientid){

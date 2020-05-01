@@ -35,25 +35,25 @@ static int web_board_tbl(Webs *wp, char *path, char *query)
 	websWriteEndHeaders(wp);
 	websWrite(wp, "%s", "[");
 	wp->iValue = 0;
-	for (i = 0; i < v9_board.b_max; i++)
+	for (i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
-		if (v9_board.board[i] != NULL && v9_board.board[i]->use == TRUE)
+		if (v9_video_board[i].board.use == TRUE && v9_video_board[i].id != APP_BOARD_MAIN)
 		{
-			if (v9_board.board[i]->online == TRUE)
+			//if (v9_video_board[i].board.online == TRUE)
 			{
 				if(wp->iValue > 0)
 					websWrite(wp, "%s", ",");
 
 				websWrite(wp, "{\"ID\":\"%d\", \"power\":%s, \"running\":%s,"
 					"\"temp\":%d, \"VCH\":%d, \"memory\":\"%d%%\", \"cpu\":\"%d.%d%%\"}",
-					v9_board.board[i]->id,
-					v9_board.board[i]->online ? "true":"false",
-					v9_board.board[i]->active ? "true":"false",
-					v9_board.board[i]->temp,
-					v9_video_board_get_vch(v9_board.board[i]->id),//v9_board.board[i]->vch,
-					v9_board.board[i]->memload,
-					(v9_board.board[i]->cpuload>>8)&0xff,
-					(v9_board.board[i]->cpuload)&0xff);
+					V9_APP_BOARD_HW_ID(v9_video_board[i].id),
+					v9_video_board[i].board.online ? "true":"false",
+					v9_video_board[i].board.active ? "true":"false",
+					v9_video_board[i].board.temp,
+					v9_video_board_get_vch(v9_video_board[i].id),
+					v9_video_board[i].board.memload,
+					(v9_video_board[i].board.cpuload>>8)&0xff,
+					(v9_video_board[i].board.cpuload)&0xff);
 				wp->iValue++;
 			}
 		}
@@ -67,10 +67,6 @@ static int web_board_tbl(Webs *wp, char *path, char *query)
 
 static int web_board_sdk_detail_one(Webs *wp, v9_video_sdk_t *sdk)
 {
-	if(sdk)
-	{
-		zlog_debug(ZLOG_APP, "web_board_sdk_detail_one: sdk->getstate=%d", sdk->getstate);
-	}
 	if(sdk && sdk->device && sdk->getstate)
 	{
 #ifdef V9_VIDEO_SDK_API
@@ -103,13 +99,6 @@ static int web_board_sdk_detail_one(Webs *wp, v9_video_sdk_t *sdk)
 		websWrite(wp,"\"ip\":\"%s\", \"netmask\":\"%s\", \"gateway\":\"%s\",",
 				  device->szDeviceIP, device->szSubnetMask, device->szGatewayAddr);
 
-/*
-		vty_out (vty, " Service Port        : %d%s", device->nDeviceSerPort, VTY_NEWLINE);// 设备服务端口
-		vty_out (vty, " Update Port         : %d%s", device->nDeviceUpdatePort, VTY_NEWLINE);// 设备升级服务端口号
-		vty_out (vty, " HTTP Port           : %d%s", device->nDeviceHttpPort, VTY_NEWLINE);// HTTP服务端口号
-		vty_out (vty, " RTSP Port           : %d%s", device->nDeviceRTSPPort, VTY_NEWLINE);// RTSP服务端口号
-*/
-
 		websWrite(wp,"\"product\":\"%s\", \"productid\":\"%s\", \"model\":\"%s\",",
 				  device->szManufacturerName, device->szManufacturerId, device->szProductModel);
 
@@ -127,55 +116,42 @@ static int web_board_sdk_detail_one(Webs *wp, v9_video_sdk_t *sdk)
 }
 
 
-static int web_board_detail_one(Webs *wp, char *path, char *query, int type)
+static int web_board_detail(Webs *wp, void *p)
 {
-	//int ret = 0;
 	char *strID = NULL;
 	u_int8 id = 0;
 	v9_video_sdk_t * sdk = NULL;
 	strID = webs_get_var(wp, T("ID"), T(""));
 	if (NULL == strID)
 	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
 		return ERROR;
 	}
 	id = atoi(strID);
-	sdk = v9_video_sdk_lookup(id);
-	zlog_debug(ZLOG_APP, "web_board_detail_one: ID=%d(%s)", id, strID);
+	sdk = v9_video_sdk_lookup(V9_APP_BOARD_CALCU_ID(id));
+	_WEB_DBG_TRAP( "web_board_detail_one: ID=%d(%s)", id, strID);
 
 	if(sdk)
 	{
-
 		websSetStatus(wp, 200);
 		websWriteHeaders(wp, -1, 0);
 		websWriteHeader(wp, "Content-Type", "application/json");
 		websWriteEndHeaders(wp);
 		web_board_sdk_detail_one(wp, sdk);
-	/*	websWrite(wp,
-				"{\"response\":\"%s\", \"serial\":\"%s\", \"hostname\":\"%s\", \"mac\":\"%s\"}",
-				"OK", serial, host_name_get(), inet_ethernet(sysmac));*/
+
 		websDone(wp);
 		return OK;
 	}
-	zlog_debug(ZLOG_APP, "web_board_detail_one: v9_video_sdk_lookup");
+	_WEB_DBG_TRAP( "web_board_detail_one: v9_video_sdk_lookup");
 	return ERROR;
 }
 
-static int web_board_detail(Webs *wp, void *p)
-{
-	return web_board_detail_one(wp, NULL, NULL, 0);
-}
-
-/*static int web_board_detail(Webs *wp, char *path, char *query)
-{
-	return web_board_detail_one(wp, NULL, NULL, 0);
-}*/
 
 int web_boardcard_app(void)
 {
 	websFormDefine("boardcard-tbl", web_board_tbl);
 	web_button_add_hook("boardcard", "detail", web_board_detail, NULL);
-	//websFormDefine("boardcard-detail", web_board_detail);
-	//websFormDefine("allvideostream", web_board_all_stream_detail);
 	return 0;
 }
 //#endif

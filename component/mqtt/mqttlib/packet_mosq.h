@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010-2019 Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -25,6 +25,7 @@ struct mosquitto_db;
 
 int packet__alloc(struct mosquitto__packet *packet);
 void packet__cleanup(struct mosquitto__packet *packet);
+void packet__cleanup_all(struct mosquitto *mosq);
 int packet__queue(struct mosquitto *mosq, struct mosquitto__packet *packet);
 
 int packet__check_oversize(struct mosquitto *mosq, uint32_t remaining_length);

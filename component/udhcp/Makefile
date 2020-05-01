@@ -10,7 +10,10 @@ LIB_DIR = $(BASE_ROOT)/$(LIBDIR)
 
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
 PLDEFINE += -DDHCPD_CONF_DEBUG
-PLLDLIBS += -lssl -lsqlite3
+PLLDLIBS += -lssl 
+ifeq ($(strip $(MODULE_SQLITE)),true)
+PLLDLIBS += -lsqlite
+endif #-lsqlite3
 
 $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \

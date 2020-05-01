@@ -12,7 +12,7 @@
 
 #ifdef PL_OPENWRT_UCI
 #if 1//def BUILD_OPENWRT
-#include "os_uci.h"
+//#include "os_uci.h"
 #include "uci_ubus.h"
 
 static uci_ubus_t uci_ubus_ctx;
@@ -26,7 +26,7 @@ int uci_ubus_debug(BOOL enable)
 	return OK;
 }
 
-int uci_ubus_cb_install(uci_ubus_cb *cb)
+int uci_ubus_cb_install(uci_ubus_cb *cb, void *p)
 {
 	int i = 0;
 	for(i = 0; i < UCI_UBUS_CB_MAX; i++)
@@ -34,13 +34,14 @@ int uci_ubus_cb_install(uci_ubus_cb *cb)
 		if(uci_ubus_ctx.cb[i] == NULL)
 		{
 			uci_ubus_ctx.cb[i] = cb;
+			uci_ubus_ctx.cb_argvs[i] = p;
 			return OK;
 		}
 	}
 	return ERROR;
 }
 
-int uci_ubus_cb_uninstall(uci_ubus_cb *cb)
+int uci_ubus_cb_uninstall(uci_ubus_cb *cb, void *p)
 {
 	int i = 0;
 	for(i = 0; i < UCI_UBUS_CB_MAX; i++)
@@ -48,6 +49,7 @@ int uci_ubus_cb_uninstall(uci_ubus_cb *cb)
 		if(uci_ubus_ctx.cb[i] == cb)
 		{
 			uci_ubus_ctx.cb[i] = NULL;
+			uci_ubus_ctx.cb_argvs[i] = NULL;
 			return OK;
 		}
 	}
@@ -94,7 +96,7 @@ static int uci_ubus_handle(uci_ubus_t *uci)
 		{
 			if(uci->cb[i])
 			{
-				ret |= uci->cb[i](uci->buf, uci->len);
+				ret |= uci->cb[i](uci->cb_argvs, uci->buf, uci->len);
 			}
 		}
 		if(ret == OK)

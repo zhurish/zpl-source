@@ -101,7 +101,7 @@ LIB_SDK_DLL_EXPORT int __stdcall EAIS_SDK_SetNTPInfo(int p_nLoginHandle, const S
 LIB_SDK_DLL_EXPORT int __stdcall EAIS_SDK_GetPictureFeature(int p_nLoginHandle, const ST_SDKPictureInfo* p_pstPictureInfo, ST_SDKSnapFea* p_pstSnapFea);
 
 // 获取特征值余弦相似度
-//LIB_SDK_DLL_EXPORT int __stdcall EAIS_SDK_GetSosineSimilarity(const float* p_fFirstArray, const float* p_fSecondArray, int p_nlength, float& p_fResult);
+LIB_SDK_DLL_EXPORT int __stdcall EAIS_SDK_GetSosineSimilarity(const float* p_fFirstArray, const float* p_fSecondArray, int p_nlength, float* p_fResult);
 
 // 获取/设置安全帽配置: 获取默认全部, 设置支持单个通道、多个通道及全部通道
 LIB_SDK_DLL_EXPORT int __stdcall EAIS_SDK_GetHelmetConfig(int p_nLoginHandle, ST_SDKHelmetConfig* p_pstHelmetConfig);
@@ -126,7 +126,7 @@ LIB_SDK_DLL_EXPORT int __stdcall EAIS_SDK_DelGroup(int p_nLoginHandle, int p_nGr
 LIB_SDK_DLL_EXPORT int __stdcall EAIS_SDK_GetUser(int p_nLoginHandle, char* p_pszUserID, ST_SDKUserInfo* p_pstUserInfo);
 
 // 功能描述：查询一个组内部分人员信息 当组为空时返回-3
-LIB_SDK_DLL_EXPORT int __stdcall EAIS_SDK_GetGroupUsers(int p_nLoginHandle, int p_nGroupID, int p_nPageIndex, int* p_pnALLUserNum, ST_SDKUserData* p_pstUserInfoList);
+LIB_SDK_DLL_EXPORT int __stdcall EAIS_SDK_GetGroupUsers(int p_nLoginHandle, int p_nGroupID, int p_nPageIndex,  ST_SDKUserData* p_pstUserInfoList);
 
 // 查询组名信息
 LIB_SDK_DLL_EXPORT int __stdcall EAIS_SDK_QueryGroupNameList(int p_nLoginHandle, ST_SDKGroupInfoList* p_pstGroupInfoList);
@@ -140,4 +140,13 @@ LIB_SDK_DLL_EXPORT int __stdcall EAIS_SDK_SetRecognizeCofig(int p_nLoginHandle, 
 
 // 查询人数统计信息
 LIB_SDK_DLL_EXPORT int __stdcall EAIS_SDK_QueryPeopleCount(int p_nLoginHandle, const ST_SDKQueryPeopleReq* p_pstQueryPeopleReq, ST_SDKPeopleCount* p_pstPeopleCount);
+
+// 获取/设置报警配置: p_pChannelID: -1代表获取所有通道
+LIB_SDK_DLL_EXPORT int __stdcall EAIS_SDK_GetAlarmConfig(int p_nLoginHandle, int p_pChannelID, ST_SDKAlarmConfig* p_pstAlarmConfig);
+LIB_SDK_DLL_EXPORT int __stdcall EAIS_SDK_SetAlarmConfig(int p_nLoginHandle, const ST_SDKAlarmConfig* p_pstAlarmConfig);
+
+// 设置ROI
+LIB_SDK_DLL_EXPORT int __stdcall EAIS_SDK_GetROIArea(int p_nLoginHandle, int p_pChannelID, ST_SDKROIArea* p_pstROIArea);
+LIB_SDK_DLL_EXPORT int __stdcall EAIS_SDK_SetROIArea(int p_nLoginHandle, const ST_SDKROIArea* p_pstROIArea);
+
 #endif

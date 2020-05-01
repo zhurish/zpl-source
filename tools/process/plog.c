@@ -39,15 +39,20 @@ int open_log(char *file)
 static int plog_timestamp(char *buf, size_t buflen)
 {
 
-	time_t clock;
-	struct tm *tm;
+	time_t ticlock;
+	struct tm tm;
 	char data[128];
 	int len = 0;
-	clock = time(NULL);
+	ticlock = time(NULL);
 	os_memset(data, 0, sizeof(data));
 
-	tm = localtime(&clock);
-	len = strftime(data, sizeof(data), "%Y/%m/%d %H:%M:%S",tm);
+	//tm = localtime(&ticlock);
+
+	if(os_tmtime_get (OS_TMTIME_LOCAL, ticlock, &tm) != OK)
+	{
+		return 0;
+	}
+	len = strftime(data, sizeof(data), "%Y/%m/%d %H:%M:%S",&tm);
 
 	if(buf)
 	{

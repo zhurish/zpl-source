@@ -16,6 +16,7 @@
 #include "eloop.h"
 #include "os_start.h"
 #include "os_module.h"
+
 #ifdef PL_APP_MODULE
 #include "application.h"
 #endif
@@ -284,7 +285,7 @@ int os_module_task_init(void)
 
 
 #ifdef PL_MQTT_MODULE
-
+	mqtt_module_task_init();
 #endif
 	return OK;
 }
@@ -365,7 +366,7 @@ int os_module_cmd_init(int terminal)
 #endif
 
 #ifdef PL_MQTT_MODULE
-
+	//mqtt_module_task_init();
 #endif
 
 
@@ -428,7 +429,7 @@ int os_module_exit(void)
 #endif
 
 #ifdef PL_MQTT_MODULE
-
+	mqtt_module_exit();
 #endif
 	nsm_template_exit();
 
@@ -496,7 +497,7 @@ int os_module_task_exit(void)
 #endif
 
 #ifdef PL_MQTT_MODULE
-
+	mqtt_module_task_exit();
 #endif
 	systools_task_exit();
 	os_time_exit();

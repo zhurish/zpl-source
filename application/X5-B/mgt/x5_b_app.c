@@ -1764,7 +1764,7 @@ int x5b_app_module_init(char *local, u_int16 port)
 		//x5b_app_mgt->debug = X5_B_ESP32_DEBUG_TIME | X5_B_ESP32_DEBUG_EVENT | X5_B_ESP32_DEBUG_RECV | X5_B_ESP32_DEBUG_SEND | X5_B_ESP32_DEBUG_WEB | X5_B_ESP32_DEBUG_STATE;
 		x5b_app_mgt->debug = 0;//X5_B_ESP32_DEBUG_EVENT;
 #ifdef PL_UBUS_MODULE
-		uci_ubus_cb_install(x5_b_ubus_uci_update_cb);
+		//uci_ubus_cb_install(x5_b_ubus_uci_update_cb);
 #endif
 	}
 #ifdef X5B_APP_DATABASE

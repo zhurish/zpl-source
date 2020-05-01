@@ -2455,6 +2455,7 @@ vty_new_init(int vty_sock)
 	vty->iac_sb_in_progress = 0;
 	vty->sb_len = 0;
 	vty->fd_type = OS_STACK;
+	vty->trapping = TRUE;
 	return vty;
 }
 

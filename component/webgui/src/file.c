@@ -24,83 +24,103 @@ static void fileWriteEvent(Webs *wp);
  */
 static bool fileHandler(Webs *wp)
 {
-    WebsFileInfo    info;
-    char            *tmp, *date;
-    ssize           nchars;
-    int             code;
+	WebsFileInfo info;
+	char *tmp, *date;
+	ssize nchars;
+	int code;
 
-    web_assert(websValid(wp));
-    web_assert(wp->method);
-    web_assert(wp->filename && wp->filename[0]);
+	web_assert(websValid (wp));
+	web_assert(wp->method);
+	web_assert(wp->filename && wp->filename[0]);
 
 #if !ME_ROM
-    if (smatch(wp->method, "DELETE")) {
-        if (unlink(wp->filename) < 0) {
-            websError(wp, HTTP_CODE_NOT_FOUND, "Cannot delete the URI");
-        } else {
-            /* No content */
-            websResponse(wp, 204, 0);
-        }
-    } else if (smatch(wp->method, "PUT")) {
-        /* Code is already set for us by processContent() */
-        websResponse(wp, wp->code, 0);
+	if (smatch (wp->method, "DELETE"))
+	{
+		if (unlink (wp->filename) < 0)
+		{
+			websError (wp, HTTP_CODE_NOT_FOUND, "Cannot delete the URI");
+		}
+		else
+		{
+			/* No content */
+			websResponse (wp, 204, 0);
+		}
+	}
+	else if (smatch (wp->method, "PUT"))
+	{
+		/* Code is already set for us by processContent() */
+		websResponse (wp, wp->code, 0);
 
-    } else
+	}
+	else
 #endif /* !ME_ROM */
-    {
-        /*
-            If the file is a directory, redirect using the nominated default page
-         */
-        if (websPageIsDirectory(wp)) {
-            nchars = strlen(wp->path);
-            if (wp->path[nchars - 1] == '/' || wp->path[nchars - 1] == '\\') {
-                wp->path[--nchars] = '\0';
-            }
-            tmp = sfmt("%s/%s", wp->path, websIndex);
-            websRedirect(wp, tmp);
-            wfree(tmp);
-            return 1;
-        }
-        if (websPageOpen(wp, O_RDONLY | O_BINARY, 0666) < 0) {
+	{
+		/*
+		 If the file is a directory, redirect using the nominated default page
+		 */
+		if (websPageIsDirectory (wp))
+		{
+			nchars = strlen (wp->path);
+			if (wp->path[nchars - 1] == '/' || wp->path[nchars - 1] == '\\')
+			{
+				wp->path[--nchars] = '\0';
+			}
+			tmp = sfmt ("%s/%s", wp->path, websIndex);
+			websRedirect (wp, tmp);
+			wfree (tmp);
+			return 1;
+		}
+		//printf ("fileHandler:%s\r\n", wp->filename);
+		if (websPageOpen (wp, O_RDONLY | O_BINARY, 0666) < 0)
+		{
 #if ME_DEBUG
-            if (wp->referrer) {
-                trace(1, "From %s", wp->referrer);
-            }
+			if (wp->referrer)
+			{
+				web_trace(WEBS_DEBUG, "From %s", wp->referrer);
+			}
 #endif
-            websError(wp, HTTP_CODE_NOT_FOUND, "Cannot open document for: %s", wp->path);
-            return 1;
-        }
-        if (websPageStat(wp, &info) < 0) {
-            websError(wp, HTTP_CODE_NOT_FOUND, "Cannot stat page for URL");
-            return 1;
-        }
-        code = 200;
-        if (wp->since && info.mtime <= wp->since) {
-            code = 304;
-            info.size = 0;
-        }
-        websSetStatus(wp, code);
-        websWriteHeaders(wp, info.size, 0);
-        if ((date = websGetDateString(&info)) != NULL) {
-            websWriteHeader(wp, "Last-Modified", "%s", date);
-            wfree(date);
-        }
-        websWriteEndHeaders(wp);
+			websError (wp, HTTP_CODE_NOT_FOUND, "Cannot open document for: %s",
+					   wp->path);
+			return 1;
+		}
+		if (websPageStat (wp, &info) < 0)
+		{
+			websError (wp, HTTP_CODE_NOT_FOUND, "Cannot stat page for URL");
+			return 1;
+		}
+		code = 200;
+		if (wp->since && info.mtime <= wp->since)
+		{
+			code = 304;
+			info.size = 0;
+		}
+		websSetStatus (wp, code);
+		websWriteHeaders (wp, info.size, 0);
+		if ((date = websGetDateString (&info)) != NULL)
+		{
+			websWriteHeader (wp, "Last-Modified", "%s", date);
+			wfree (date);
+		}
+		websWriteEndHeaders (wp);
 
-        /*
-            All done if the browser did a HEAD request
-         */
-        if (smatch(wp->method, "HEAD")) {
-            websDone(wp);
-            return 1;
-        }
-        if (info.size > 0) {
-            websSetBackgroundWriter(wp, fileWriteEvent);
-        } else {
-            websDone(wp);
-        }
-    }
-    return 1;
+		/*
+		 All done if the browser did a HEAD request
+		 */
+		if (smatch (wp->method, "HEAD"))
+		{
+			websDone (wp);
+			return 1;
+		}
+		if (info.size > 0)
+		{
+			websSetBackgroundWriter (wp, fileWriteEvent);
+		}
+		else
+		{
+			websDone (wp);
+		}
+	}
+	return 1;
 }
 
 

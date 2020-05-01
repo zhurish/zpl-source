@@ -9,10 +9,10 @@ obj:install
 #
 #
 config_install:
-	install -d ${DSTETCDIR} 
-	install -m 755 openconfig ${DSTETCDIR}
-	install -m 755 product ${DSTETCDIR}
-	install -m 755 voipconfig ${DSTETCDIR}	
+	@install -d ${DSTETCDIR} 
+	@install -m 755 openconfig ${DSTETCDIR}
+	@install -m 755 product ${DSTETCDIR}
+	@install -m 755 voipconfig ${DSTETCDIR}	
 #
 #	
 config_clean:
@@ -23,9 +23,9 @@ config_clean:
 #
 #
 install: config_install
-	install -d ${DSTETCDIR} 
-	install -m 755 plat.conf ${DSTETCDIR}
-	install -m 755 default-config.cfg ${DSTETCDIR}
+	@install -d ${DSTETCDIR} 
+	@install -m 755 plat.conf ${DSTETCDIR}
+	@install -m 755 default-config.cfg ${DSTETCDIR}
 
 clean: config_clean
 	@$(RM) $(DSTETCDIR)/plat.conf

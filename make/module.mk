@@ -9,23 +9,23 @@ _MODULELIST = \
 	MODULE_SYSLOG.true \
 	MODULE_STARTUP.true \
 	MODULE_PRODUCT.true \
-	MODULE_SWITCH_SDK.true \
+	MODULE_SWITCH_SDK.false \
 	MODULE_CLI.true \
 	MODULE_OSPF.false \
 	MODULE_ABSTRACT.true \
-	MODULE_HAL.true \
+	MODULE_HAL.false \
 	MODULE_PAL_KERNEL.true \
 	MODULE_PAL_IPCOM.false \
 	MODULE_COMPONENT.true \
 	MODULE_OPENSSL.false \
-	MODULE_WIFI.true \
+	MODULE_WIFI.false \
 	MODULE_MODEM.false \
 	MODULE_TOOLS.true \
-	MODULE_PROCESS.true \
+	MODULE_PROCESS.false \
 	MODULE_QUECTEL_CM.false \
 	MODULE_DHCP.false \
-	MODULE_UDHCP.true \
-	MODULE_SQLITE.false \
+	MODULE_UDHCP.false \
+	MODULE_SQLITE.true \
 	MODULE_SYSTOOLS.true \
 	MODULE_FTPD.true \
 	MODULE_FTPC.true \
@@ -39,9 +39,9 @@ _MODULELIST = \
 	MODULE_SSH.false \
 	MODULE_PJSIP.false \
 	MODULE_OSIP.false \
-	MODULE_APP.true \
+	MODULE_APP.false \
 	MODULE_UCI.true \
-	MODULE_WEB.false \
+	MODULE_WEB.true \
 	MODULE_MQTT.true
 #
 #

@@ -37,6 +37,7 @@
 #include "web_app.h"
 #include "web_api.h"
 
+#ifndef THEME_V9UI
 static int jst_flags(int eid, webs_t wp, int argc, char **argv)
 {
 	//char *date = websGetDateString(NULL);
@@ -85,9 +86,11 @@ static int web_interface_name_list(struct interface *ifp, void *pVoid)
 			websWrite (wp, "<option value=\"%s\">%s</option>", "wan2",
 					   "wan2");
 #endif
+#ifndef APP_V9_MODULE
 		else if (ifp->ifindex == ifname2ifindex ("brigde 0/0/1"))
 			websWrite (wp, "<option value=\"%s\">%s</option>", "lan",
 					   "lan");
+#endif
 	}
 	else
 		websWrite (wp, "<option value=\"%s\">%s</option>", ifp->name,
@@ -139,6 +142,7 @@ static int web_interface_name_tbl(struct interface *ifp, void *pVoid)
 			wp->iValue++;
 		}
 #endif
+#ifndef APP_V9_MODULE
 		else if (ifp->ifindex == if_ifindex_make ("brigde 0/0/1", NULL))
 		{
 			if (wp->iValue)
@@ -147,6 +151,7 @@ static int web_interface_name_tbl(struct interface *ifp, void *pVoid)
 					   "up");
 			wp->iValue++;
 		}
+#endif
 	}
 	else
 	{
@@ -177,7 +182,7 @@ static int jst_interface_tbl(Webs *wp, char *path, char *query)
 	wp->iValue1 = 0;
 	return 0;
 }
-
+#endif /* THEME_V9UI */
 
 static int web_network_workmode(struct interface *ifp, char *workmode, char *ifname_str)
 {
@@ -239,12 +244,14 @@ static int web_network_workmode(struct interface *ifp, char *workmode, char *ifn
 			sprintf (ifname_str, "%s", "wan2");
 		}
 #endif
+#ifndef APP_V9_MODULE
 		else if (ifp->ifindex
 				== if_ifindex_make ("brigde 0/0/1", NULL))
 		{
 			//memset (ifname_str, 0, sizeof(ifname_str));
 			sprintf (ifname_str, "%s", "lan");
 		}
+#endif
 	}
 	else
 	{
@@ -318,6 +325,8 @@ static int web_network_gateway_dns(struct interface *ifp, char *gateway_str, cha
 #endif
 	return OK;
 }
+
+
 
 static int web_network_list(struct interface *ifp, void *pVoid)
 {
@@ -404,6 +413,7 @@ static int web_network_list(struct interface *ifp, void *pVoid)
 			}
 		}
 #endif
+#ifndef APP_V9_MODULE
 		else if (ifp->ifindex == if_ifindex_make ("brigde 0/0/1", NULL))
 		{
 			os_uci_get_string ("network.lan.proto", proto);
@@ -420,6 +430,7 @@ static int web_network_list(struct interface *ifp, void *pVoid)
 				web_network_gateway_dns(ifp, gateway_str, dns_str);
 			}
 		}
+#endif
 		if (wp->iValue)
 			websWrite (wp, "%s", ",\n");
 		websWrite (
@@ -461,11 +472,13 @@ static int web_network_list(struct interface *ifp, void *pVoid)
 		web_network_gateway_dns(ifp, gateway_str, dns_str);
 	}
 #endif
+#ifndef APP_V9_MODULE
 	else if (ifp->ifindex == if_ifindex_make ("brigde 0/0/1", NULL))
 	{
 		web_network_address_netmask(ifp, address_str, netmask_str);
 		web_network_gateway_dns(ifp, gateway_str, dns_str);
 	}
+#endif
 	if (wp->iValue)
 		websWrite (wp, "%s", ",\n");
 
@@ -509,7 +522,7 @@ static int jst_network_tbl(Webs *wp, char *path, char *query)
 	return 0;
 }
 
-
+#ifndef THEME_V9UI
 static int web_network_connect(Webs *wp, void *p)
 {
 	char *strval = NULL;
@@ -517,6 +530,8 @@ static int web_network_connect(Webs *wp, void *p)
 	strval = websGetVar(wp, T("ifname"), T(""));
 	if (NULL == strval)
 	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get ifname Value");
 		return ERROR;//web_return_text_plain(wp, ERROR);
 	}
 	if (strval)
@@ -543,6 +558,8 @@ static int web_network_connect(Webs *wp, void *p)
 	strval = websGetVar(wp, T("state"), T(""));
 	if (NULL == strval)
 	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(ZLOG_WEB, "Can not Get state Value");
 		return ERROR;//web_return_text_plain(wp, ERROR);
 	}
 	if(strstr(strval, "up"))
@@ -557,9 +574,11 @@ static int web_network_connect(Webs *wp, void *p)
 	}
 	return ERROR;//web_return_text_plain(wp, ERROR);
 }
+#endif /* THEME_V9UI */
 
 int web_interface_jst_init(void)
 {
+#ifndef THEME_V9UI
 	websDefineJst("jst_flags", jst_flags);
 
 	websDefineJst("jst_ipv6", jst_ipv6);
@@ -567,8 +586,11 @@ int web_interface_jst_init(void)
 	websDefineJst("jst_interface", jst_interface_list);
 
 	websFormDefine("interface-tbl", jst_interface_tbl);
-	websFormDefine("network-tbl", jst_network_tbl);
+#endif /* THEME_V9UI */
 
+	websFormDefine("network-tbl", jst_network_tbl);
+#ifndef THEME_V9UI
 	web_button_add_hook("network", "connect", web_network_connect, NULL);
+#endif /* THEME_V9UI */
 	return 0;
 }

@@ -29,7 +29,7 @@
 #ifdef APP_X5BA_MODULE
 
 #ifdef PL_OPENWRT_UCI
-extern int x5_b_ubus_uci_update_cb(char *buf, int len);
+//extern int x5_b_ubus_uci_update_cb(char *buf, int len);
 #endif
 /*
  *
@@ -395,7 +395,7 @@ DEFUN (x5b_app_reset,
 		if(c == 'y')*/
 		{
 #ifdef PL_OPENWRT_UCI
-			x5_b_ubus_uci_update_cb("reboot -c f", strlen("reboot -c f"));
+			//x5_b_ubus_uci_update_cb("reboot -c f", strlen("reboot -c f"));
 #endif
 			//super_system("lua-sync -m reboot -c f");
 			super_system("reboot -d 1 -f");

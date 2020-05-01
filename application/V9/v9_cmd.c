@@ -14,7 +14,26 @@
 #include "vector.h"
 #include "eloop.h"
 
-#include "application.h"
+#include "v9_device.h"
+#include "v9_util.h"
+#include "v9_video.h"
+#include "v9_serial.h"
+#include "v9_slipnet.h"
+#include "v9_cmd.h"
+
+#include "v9_video_disk.h"
+#include "v9_user_db.h"
+#include "v9_video_db.h"
+
+#include "v9_board.h"
+#include "v9_video_sdk.h"
+#include "v9_video_user.h"
+#include "v9_video_board.h"
+#include "v9_video_api.h"
+
+#ifdef PL_WEBGUI_MODULE
+#include "web_util.h"
+#endif
 
 #define APP_SLIPNET_QUEUE_SIZE			1460
 #pragma pack(1)
@@ -54,9 +73,9 @@ int v9_cmd_send_ack(v9_serial_t *mgt, u_int8 status)
 	ack->status = status;
 	mgt->slen += sizeof(app_cmd_ack_t);
 	hdr->len = htons(sizeof(app_cmd_ack_t));
-	//v9_app_hex_debug(mgt, "SEND", FALSE);
+
 	if(mgt->tty)
-		return tty_com_slip_write (mgt->tty, mgt->sbuf, mgt->slen);
+		return tty_com_write (mgt->tty, mgt->sbuf, mgt->slen);
 	return (ERROR);
 }
 
@@ -79,9 +98,13 @@ int v9_cmd_handle_keepalive(v9_serial_t *mgt)
 		state->synctime = FALSE;		//时间是否已经同步
 	if(mgt->id == 0 && hdr->id != 0)
 	{
+		if(hdr->id != APP_BOARD_MAIN)
+		{
+			return v9_cmd_send_ack (mgt, V9_APP_ACK_ERROR);
+		}
 		mgt->id = hdr->id;
-		//if(V9_APP_DEBUG(EVENT))
-			zlog_debug(ZLOG_APP, "MSG KEEPALIVE -> SET ID = %d", hdr->id);
+		if(V9_APP_DEBUG(EVENT))
+			zlog_warn(ZLOG_APP, "MSG KEEPALIVE -> SET ID = %d", hdr->id);
 	}
 
 	v9_cmd_make_hdr(mgt);
@@ -90,30 +113,30 @@ int v9_cmd_handle_keepalive(v9_serial_t *mgt)
 
 	state->temp = 56;			//温度
 	state->status = 1;			//状态
-	state->vch = 2;			//处理视频路数
+	state->vch = 0;			//处理视频路数
 	v9_cpu_load(&state->cpuload);		//CPU负载（百分比）
 	state->cpuload = htons(state->cpuload);
-	state->memtotal = htonl(1024*2);		//内存(M)
-	state->memload = 65;		//内存占用（百分比）
+	state->memtotal = 0;		//内存(M)
+	state->memload = 0;		//内存占用（百分比）
 
 	v9_memory_load(&state->memtotal, &state->memload);
 	state->memtotal = htonl(state->memtotal);
 
-	state->disktatol1 = htonl(1024*1024);		//硬盘(M)
-	state->diskload1 = 15;		//硬盘占用（百分比）
-	state->disktatol2 = htonl(1024*1024);		//硬盘(M)
-	state->diskload2 = 10;		//硬盘占用（百分比）
+	state->disktatol1 = 0;		//硬盘(M)
+	state->diskload1 = 0;		//硬盘占用（百分比）
+	state->disktatol2 = 0;		//硬盘(M)
+	state->diskload2 = 0;		//硬盘占用（百分比）
 
-	v9_disk_load("/mnt/sda1", &state->disktatol1, NULL, &state->diskload1);
+	v9_disk_load("/mnt/diska1", &state->disktatol1, NULL, &state->diskload1);
 	state->disktatol1 = htonl(state->disktatol1);
 
-	v9_disk_load("/mnt", &state->disktatol2, NULL, &state->diskload2);
+	v9_disk_load("/mnt/diskb1", &state->disktatol2, NULL, &state->diskload2);
 	state->disktatol2 = htonl(state->disktatol2);
 
 	mgt->slen += sizeof(app_cmd_status_ack_t);
 
 	if(mgt->tty)
-		return tty_com_slip_write (mgt->tty, mgt->sbuf, mgt->slen);
+		return tty_com_write (mgt->tty, mgt->sbuf, mgt->slen);
 	return (ERROR);
 }
 
@@ -284,8 +307,8 @@ int v9_cmd_handle_route(v9_serial_t *mgt)
 int v9_cmd_handle_board(v9_serial_t *mgt)
 {
 	zassert(mgt != NULL);
-	v9_address_t	rboard;
-	v9_address_t	*board = (v9_address_t *)(mgt->buf + sizeof(app_cmd_hdr_t) + 2);
+	v9_board_t	rboard;
+	v9_board_t	*board = (v9_board_t *)(mgt->buf + sizeof(app_cmd_hdr_t) + 2);
 	app_cmd_hdr_t *hdr = (app_cmd_hdr_t *)(mgt->buf);
 	if(mgt->id == 0 || mgt->id != hdr->id)
 	{
@@ -297,8 +320,7 @@ int v9_cmd_handle_board(v9_serial_t *mgt)
 
 	if(v9_board_lookup(board->id))
 	{
-		//zlog_debug(ZLOG_APP, "Board is already setup and update info");
-		memcpy(&rboard, board, sizeof(v9_address_t));
+		memcpy(&rboard, board, sizeof(v9_board_t));
 		rboard.ip = ntohl(board->ip);				//IP地址
 		rboard.cpuload = ntohs(board->cpuload);
 		rboard.memtotal = ntohl(board->memtotal);		//内存(M)
@@ -309,8 +331,7 @@ int v9_cmd_handle_board(v9_serial_t *mgt)
 	}
 	else
 	{
-		//zlog_debug(ZLOG_APP, "Board is not setup and add board info");
-		memcpy(&rboard, board, sizeof(v9_address_t));
+		memcpy(&rboard, board, sizeof(v9_board_t));
 		rboard.ip = ntohl(board->ip);				//IP地址
 		rboard.cpuload = ntohs(board->cpuload);
 		rboard.memtotal = ntohl(board->memtotal);		//内存(M)
@@ -332,12 +353,39 @@ int v9_cmd_get(v9_serial_t *mgt)
 }
 
 
+int v9_cmd_handle_pass_reset(v9_serial_t *mgt)
+{
+	app_cmd_hdr_t *hdr = (app_cmd_hdr_t *)(mgt->buf);
+	app_cmd_status_t *ack = (app_cmd_status_t *)(mgt->buf + sizeof(app_cmd_hdr_t));
+	if(mgt->id == 0 || mgt->id != hdr->id)
+	{
+		zlog_warn(ZLOG_APP, "MSG PASS RESET %d = %d", mgt->id, hdr->id);
+		return v9_cmd_send_ack (mgt, V9_APP_ACK_ERROR);
+	}
+	if(V9_APP_DEBUG(EVENT))
+		zlog_debug(ZLOG_APP, "MSG PASS RESET(%d) -> id=%d(id=%d) ACK seqnum = %d", ack->cmd, hdr->id, mgt->id, hdr->seqnum);
+#ifdef PL_WEBGUI_MODULE
+	if(webs_username_password_update(NULL, WEB_LOGIN_USERNAME, WEB_LOGIN_PASSWORD) == OK)
+	{
+		//if(V9_APP_DEBUG(EVENT))
+			zlog_debug(ZLOG_APP, "Reset Webs Login User Password Successful");
+		return v9_cmd_send_ack (mgt, V9_APP_ACK_OK);
+	}
+	else
+	{
+		zlog_debug(ZLOG_APP, "Reset Webs Login User Password Failed");
+		return v9_cmd_send_ack (mgt, V9_APP_ACK_ERROR);
+	}
+#else
+	return v9_cmd_send_ack (mgt, V9_APP_ACK_OK);
+#endif
+}
+
 
 int v9_cmd_sync_time_to_rtc(v9_serial_t *mgt, u_int32 timesp)
 {
 	int ret = 0;
-    struct tm *p_tm = NULL;
-    //struct tm tm_new;
+    struct tm p_tm;
     u_int32 ptimesp = timesp;
 	zassert(mgt != NULL);
 	app_slipnet_data_t slipdata;
@@ -357,17 +405,18 @@ int v9_cmd_sync_time_to_rtc(v9_serial_t *mgt, u_int32 timesp)
 	rtc->cmd = htons(V9_CMD_SYNC_TIME);
 	rtc->zone = 8;
 
-    p_tm = localtime(&ptimesp);
-
-	//zlog_info(ZLOG_APP, "%s: %d/%d/%d %d:%d:%d", __func__, p_tm->tm_year + 1900, p_tm->tm_mon + 1, p_tm->tm_mday,
-	//		  p_tm->tm_hour, p_tm->tm_min, p_tm->tm_sec);
-
-	rtc->ptm.tm_year = htonl(p_tm->tm_year + 1900);
-	rtc->ptm.tm_mon = htonl(p_tm->tm_mon + 1);
-	rtc->ptm.tm_mday = htonl(p_tm->tm_mday);
-	rtc->ptm.tm_hour = htonl(p_tm->tm_hour);
-	rtc->ptm.tm_min = htonl(p_tm->tm_min);
-	rtc->ptm.tm_sec = htonl(p_tm->tm_sec);
+    if(os_tmtime_get (OS_TMTIME_UTC, ptimesp, &p_tm) != OK)
+    {
+    	if(mgt->mutex)
+    		os_mutex_unlock(mgt->mutex);
+    	return ERROR;
+    }
+	rtc->ptm.tm_year = htonl(p_tm.tm_year + 1900);
+	rtc->ptm.tm_mon = htonl(p_tm.tm_mon + 1);
+	rtc->ptm.tm_mday = htonl(p_tm.tm_mday);
+	rtc->ptm.tm_hour = htonl(p_tm.tm_hour);
+	rtc->ptm.tm_min = htonl(p_tm.tm_min);
+	rtc->ptm.tm_sec = htonl(p_tm.tm_sec);
 
 	mgt->slen += sizeof(app_cmd_rtc_t);
 	hdr->len = htons(sizeof(app_cmd_rtc_t));
@@ -375,7 +424,7 @@ int v9_cmd_sync_time_to_rtc(v9_serial_t *mgt, u_int32 timesp)
 	slipdata.len = htons(mgt->slen + 3);
 
 	if(mgt->slipnet)
-		ret = tty_com_slip_write (mgt->slipnet, &slipdata, ntohs(slipdata.len));
+		ret = tty_com_write (mgt->slipnet, &slipdata, ntohs(slipdata.len));
 
 	if(mgt->mutex)
 		os_mutex_unlock(mgt->mutex);
@@ -385,7 +434,7 @@ int v9_cmd_sync_time_to_rtc(v9_serial_t *mgt, u_int32 timesp)
 int v9_cmd_sync_time_test(void)
 {
 	u_int32 timesp = os_time(NULL);
-	zlog_debug(ZLOG_APP, "---------%s--------- %d", __func__, timesp);
+	//zlog_debug(ZLOG_APP, "---------%s--------- %d", __func__, timesp);
 	v9_cmd_sync_time_to_rtc(v9_serial, timesp);
 	return OK;
 }
