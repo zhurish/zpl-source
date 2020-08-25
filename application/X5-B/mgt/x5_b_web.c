@@ -19,7 +19,7 @@
 #include "vty.h"
 #include "cJSON.h"
 #include "os_uci.h"
-#include "uci_ubus.h"
+#include "ubus_sync.h"
 
 #include "x5_b_global.h"
 #include "x5_b_cmd.h"

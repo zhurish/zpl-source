@@ -81,6 +81,10 @@ extern int child_process_wait(int pid, int wait);
 
 extern int super_system_execvp(const char *cmd, char **input);
 
+extern int os_mkdir(const char *dirpath, int mode, int pathflag);
+extern int os_rmdir(const char *dirpath, int pathflag);
+extern int os_getpwddir(const char *path, int pathsize);
+
 
 extern int os_get_blocking(int fd);
 extern int os_set_nonblocking(int fd);
@@ -119,7 +123,7 @@ extern int os_register_signal(int sig, void (*handler)(int
 #define MPLS_X_G(n)	(n >> 30)
 
 extern int os_file_size (const char *filename);
-extern const char * os_file_size_string(u_int len);
+extern const char * os_file_size_string(u_int32 len);
 
 //extern const char * os_stream_size(long long len);
 

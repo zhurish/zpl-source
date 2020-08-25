@@ -203,36 +203,7 @@ int x5b_app_register_status_api(x5b_app_mgt_t *app, int res, int to)
 	}
 
 	x5b_app_hdr_make(mgt);
-#ifdef PL_OSIP_MODULE
-	if(voip_sip_multiuser_get_api())
-	{
-		voip_sip_local_number_get_api(state.phone, FALSE);
-		int rlen = (1 + strlen(state.phone));
-		state.reg_state = voip_sip_main_regstate() & 0xff;
 
-		len = os_tlv_set_octet(mgt->app->sbuf + mgt->app->offset,
-				E_CMD_MAKE(E_CMD_MODULE_B, E_CMD_STATUS, E_CMD_REG_STATUS), rlen, &state);
-		mgt->app->offset += len;
-
-		voip_sip_local_number_get_api(state.phone, TRUE);
-		rlen = (1 + strlen(state.phone));
-		state.reg_state = voip_sip_stanby_regstate() & 0xff;
-
-		len = os_tlv_set_octet(mgt->app->sbuf + mgt->app->offset,
-				E_CMD_MAKE(E_CMD_MODULE_B, E_CMD_STATUS, E_CMD_REG_STATUS), rlen, &state);
-		mgt->app->offset += len;
-	}
-	else
-	{
-		voip_sip_local_number_get_api(state.phone, FALSE);
-		int rlen = (1 + strlen(state.phone));
-		state.reg_state = voip_sip_main_regstate() & 0xff;
-
-		len = os_tlv_set_octet(mgt->app->sbuf + mgt->app->offset,
-				E_CMD_MAKE(E_CMD_MODULE_B, E_CMD_STATUS, E_CMD_REG_STATUS), rlen, &state);
-		mgt->app->offset += len;
-	}
-#endif
 #ifdef PL_PJSIP_MODULE
 	if(pl_pjsip_multiuser_get_api())
 	{

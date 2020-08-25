@@ -52,11 +52,11 @@ struct slot_port_phy
 
 static struct unit_slot_port iusp_table[] =
 {
-#ifdef PRODUCT_X5_B_BOARD
+#ifdef APP_X5BA_MODULE
 	{.type = IF_SERIAL, .unit = 0, .slot = 0, .port = 0 },
 	{.type = IF_ETHERNET, .unit = 0, .slot = 0, .port = 2 },
 #endif
-#ifdef PRODUCT_V9_BOARD
+#ifdef APP_V9_MODULE
 	{.type = IF_SERIAL, .unit = 0, .slot = 0, .port = 0 },
 	{.type = IF_ETHERNET, .unit = 0, .slot = 0, .port = 3 },
 #endif
@@ -71,11 +71,11 @@ static struct unit_slot_port iusp_table[] =
 	{.type = IF_TUNNEL, .unit = 0, .slot = 1, .port = 0 },
 	{.type = IF_VLAN, .unit = 0, .slot = 1, .port = 0 },
 	{.type = IF_LAG, .unit = 0, .slot = 1, .port = 0 },
-#ifdef PRODUCT_X5_B_BOARD
+#ifdef APP_X5BA_MODULE
 	{.type = IF_BRIGDE, .unit = 0, .slot = 0, .port = 1 },
 	{.type = IF_WIRELESS, .unit = 0, .slot = 0, .port = 1 },
 #endif
-#ifdef PRODUCT_X5_B_BOARD
+#ifdef APP_X5BA_MODULE
 	{.type = IF_BRIGDE, .unit = 0, .slot = 0, .port = 1 },
 	{.type = IF_WIRELESS, .unit = 0, .slot = 0, .port = 0 },
 #endif

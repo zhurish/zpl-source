@@ -48,7 +48,7 @@ DEFUN (app_template,
 		"ESP configure\n")
 {
 	//int ret = ERROR;
-	template_t * temp = nsm_template_lookup_name ("app esp");
+	template_t * temp = nsm_template_lookup_name (FALSE, "app esp");
 	if(temp)
 	{
 		vty->node = TEMPLATE_NODE;
@@ -58,7 +58,7 @@ DEFUN (app_template,
 	}
 	else
 	{
-		temp = nsm_template_new ();
+		temp = nsm_template_new (FALSE);
 		if(temp)
 		{
 			temp->module = 0;
@@ -85,7 +85,7 @@ DEFUN (no_app_template,
 		"APP configure\n"
 		"ESP configure\n")
 {
-	template_t * temp = nsm_template_lookup_name ("app esp");
+	template_t * temp = nsm_template_lookup_name (FALSE, "app esp");
 	if(temp)
 	{
 		x5b_app_free();
@@ -514,11 +514,11 @@ void cmd_app_x5b_init(void)
 //	install_default_basic(APP_TEMPLATES_NODE);
 //
 //	reinstall_node(APP_TEMPLATES_NODE, app_write_config);
-#ifdef PL_VOIP_MODULE
+#ifdef PL_PJSIP_MODULE
 	if(voip_global_enabled())
 #endif
 	{
-		template_t * temp = nsm_template_new ();
+		template_t * temp = nsm_template_new (FALSE);
 		if(temp)
 		{
 			temp->module = 0;

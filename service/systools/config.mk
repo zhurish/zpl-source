@@ -29,9 +29,7 @@ ifeq ($(strip $(MODULE_TRACEROUTE)),true)
 OBJS	+= tracerouteLib.o
 endif
 ifeq ($(strip $(MODULE_UBUS)),true)
-ifeq ($(strip $(MODULE_UCI)),true)
-OBJS	+= uci_ubus.o				
-endif
+OBJS	+= ubus_sync.o				
 endif
 
 #OBJS	+= bsdsignal.o

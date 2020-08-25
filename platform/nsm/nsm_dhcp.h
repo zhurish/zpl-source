@@ -8,12 +8,6 @@
 #ifndef __NSM_DHCP_H__
 #define __NSM_DHCP_H__
 
-/*
-#define PL_DHCP_MODULE
-#define PL_DHCPC_MODULE
-#define PL_DHCPD_MODULE
-#define PL_DHCPR_MODULE
-*/
 
 #ifdef PL_DHCP_MODULE
 

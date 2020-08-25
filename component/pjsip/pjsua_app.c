@@ -54,6 +54,7 @@
 #define RING_CNT	    3
 #define RING_INTERVAL	    3000
 
+//#define PJMEDIA_VIDEO_DEV_HAS_AVI 0
 //#define current_acc	pjsua_acc_get_default()
 
 #ifdef STEREO_DEMO

@@ -30,6 +30,11 @@
 u_int32 _sqldb_debug = V9_SQLDB_DEBUG_MSG | V9_SQLDB_DEBUG_DB
 		| V9_SQLDB_DEBUG_STATE;
 
+
+
+
+
+
 static char * v9_user_sqldb_file(u_int32 id)
 {
 	u_int32 iid = APP_BOARD_CALCU_1;
@@ -107,8 +112,13 @@ static int v9_user_sqldb_table_create(sqlite3 *db, u_int32 id)
 {
 	char sqlcmd[512];
 	char *zErrMsg = NULL;
-	memset(sqlcmd, 0, sizeof(sqlcmd));
 
+	memset(sqlcmd, 0, sizeof(sqlcmd));
+	snprintf(sqlcmd, sizeof(sqlcmd), "%s/table%d", V9_USER_DB_DIR, V9_APP_DB_ID_ABS(id));
+	if(access(sqlcmd, F_OK) != 0)
+		mkdir(sqlcmd, 0644);
+
+	memset(sqlcmd, 0, sizeof(sqlcmd));
 	snprintf(sqlcmd, sizeof(sqlcmd), V9_USER_DB_TBL_ST, V9_APP_DB_ID_ABS(id));
 
 	if (V9_SQLDB_DEBUG(DBCMD))
@@ -165,7 +175,7 @@ int v9_user_sqldb_count(sqlite3 *db, u_int32 id, int group, int *pValue)
 	if (group >= 0)
 	{
 		snprintf(sqlcmd, sizeof(sqlcmd),
-				"SELECT count(*) FROM "V9_USER_DB_TBL "WHERE groupid = '%d';",
+				"SELECT count(*) FROM "V9_USER_DB_TBL " WHERE groupid = %d;",
 				V9_APP_DB_ID_ABS(id), group);
 	}
 	else
@@ -324,8 +334,7 @@ int v9_user_sqldb_key_select(sqlite3 *db, u_int32 id, char *user_id,
 	memset(sqlcmd, 0, sizeof(sqlcmd));
 
 	snprintf(sqlcmd, sizeof(sqlcmd),
-			"SELECT username,key FROM "V9_USER_DB_TBL " \
-			WHERE userid = '%s';",
+			"SELECT username,key FROM "V9_USER_DB_TBL " WHERE userid = '%s';",
 			V9_APP_DB_ID_ABS(id), user_id);
 
 	if (V9_SQLDB_DEBUG(DBCMD))
@@ -345,7 +354,11 @@ int v9_user_sqldb_key_select(sqlite3 *db, u_int32 id, char *user_id,
 
 		if (key && len && pReadBolbData)
 		{
-			key->feature.ckey_data = XMALLOC(MTYPE_VIDEO_KEY, len + 1);
+			if(len > APP_FEATURE_MAX)
+			{
+				key->feature.feature_data = key->feature.ckey_data = XREALLOC(MTYPE_VIDEO_KEY,
+					key->feature.ckey_data, len + sizeof(float));									// 特征值
+			}
 			if (key->feature.ckey_data && pReadBolbData)
 			{
 				key->feature_len = len / sizeof(float);
@@ -363,12 +376,41 @@ int v9_user_sqldb_key_select(sqlite3 *db, u_int32 id, char *user_id,
 	return ERROR;
 }
 
-static int v9_user_sqldb_del_callback(void *pArgv, int type, char const * name,
+/*static int v9_user_sqldb_del_callback(void *pArgv, int type, char const * name,
 		char const * tblname, sqlite3_int64 aaaa)
 {
 	printf(" %s :type=%d, name=%s, tblname=%s\n", __func__, type, name,
 			tblname);
 	return OK;
+}*/
+
+static int v9_user_sqldb_del_callback(void *NotUsed, int argc, char **argv,
+		char **azColName)
+{
+	int i;
+	for (i = 0; i < argc; i++)
+	{
+		if (azColName[i] && strcasecmp(azColName[i], "url") == 0)
+		{
+			if(argv[i])
+				remove(argv[i]);
+			return 0;
+		}
+	}
+	return 0;
+}
+
+int v9_user_sqldb_cleanup(u_int32 id)
+{
+/*	if(_user_mutex)
+		os_mutex_lock(_user_mutex, OS_WAIT_FOREVER);
+
+	if(_user_mutex)
+		os_mutex_unlock(_user_mutex);*/
+	remove(v9_user_sqldb_file(id));
+	system("rm "V9_USER_DB_DIR"/* -rf");
+	sync();
+	return 0;
 }
 
 int v9_user_sqldb_del(sqlite3 *db, u_int32 id, char *user_id)
@@ -377,16 +419,18 @@ int v9_user_sqldb_del(sqlite3 *db, u_int32 id, char *user_id)
 	char *zErrMsg = NULL;
 	memset(sqlcmd, 0, sizeof(sqlcmd));
 	snprintf(sqlcmd, sizeof(sqlcmd),
-			"DELETE FROM "V9_USER_DB_TBL " \
-    		WHERE userid = '%s';",
+			"DELETE FROM "V9_USER_DB_TBL " WHERE userid = '%s';",
 			V9_APP_DB_ID_ABS(id), user_id);
 
 	if (V9_SQLDB_DEBUG(DBCMD))
 		zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
 
-	sqlite3_update_hook(db, v9_user_sqldb_del_callback, NULL);
-	if (sqlite3_exec(db, sqlcmd, NULL, NULL, &zErrMsg) == SQLITE_OK)
+	//sqlite3_update_hook(db, v9_user_sqldb_del_callback, NULL);
+	if (sqlite3_exec(db, sqlcmd, v9_user_sqldb_del_callback, NULL, &zErrMsg) == SQLITE_OK)
+	{
+		sync();
 		return OK;
+	}
 	if (V9_SQLDB_DEBUG(MSG))
 		zlog_err(ZLOG_APP, " SQL DELETE Info by userid:%s(%s)", user_id,
 				zErrMsg);
@@ -400,16 +444,18 @@ int v9_user_sqldb_del_group(sqlite3 *db, u_int32 id, int group)
 	char *zErrMsg = NULL;
 	memset(sqlcmd, 0, sizeof(sqlcmd));
 	snprintf(sqlcmd, sizeof(sqlcmd),
-			"DELETE FROM "V9_USER_DB_TBL " \
-    		WHERE groupid = %d;",
+			"DELETE FROM "V9_USER_DB_TBL " WHERE groupid = %d;",
 			V9_APP_DB_ID_ABS(id), group);
 
 	if (V9_SQLDB_DEBUG(DBCMD))
 		zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
 
-	sqlite3_update_hook(db, v9_user_sqldb_del_callback, NULL);
-	if (sqlite3_exec(db, sqlcmd, NULL, NULL, &zErrMsg) == SQLITE_OK)
+	//sqlite3_update_hook(db, v9_user_sqldb_del_callback, NULL);
+	if (sqlite3_exec(db, sqlcmd, v9_user_sqldb_del_callback, NULL, &zErrMsg) == SQLITE_OK)
+	{
+		sync();
 		return OK;
+	}
 	if (V9_SQLDB_DEBUG(MSG))
 		zlog_err(ZLOG_APP, " SQL DELETE Info by group:%d(%s)", group, zErrMsg);
 	sqlite3_free(zErrMsg);
@@ -455,7 +501,7 @@ static int v9_user_sqldb_lookup_callback(void *NotUsed, int argc, char **argv,
 		}
 		//sql_snapfea_key	key;
 	}
-	printf("========%s===========%s\r\n", __func__, user->userid);
+	//printf("========%s===========%s\r\n", __func__, user->userid);
 	return 0;
 }
 
@@ -469,8 +515,7 @@ int v9_user_sqldb_lookup_user(sqlite3 *db, u_int32 id, char *user_id,
 	if (user_id)
 	{
 		snprintf(sqlcmd, sizeof(sqlcmd),
-				"SELECT userid,username,gender,groupid,url FROM "V9_USER_DB_TBL " \
-				WHERE userid = '%s';",
+				"SELECT userid,username,gender,groupid,url FROM "V9_USER_DB_TBL " WHERE userid = '%s';",
 				V9_APP_DB_ID_ABS(id), user_id);
 		if (V9_SQLDB_DEBUG(DBCMD))
 			zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
@@ -479,8 +524,6 @@ int v9_user_sqldb_lookup_user(sqlite3 *db, u_int32 id, char *user_id,
 				&zErrMsg) == SQLITE_OK)
 		{
 			v9_video_user_t *user = pArgv;
-			printf("========%s===========%s\r\n", __func__, user->userid);
-
 			if (strlen(user->userid))
 				return OK;
 			return ERROR;

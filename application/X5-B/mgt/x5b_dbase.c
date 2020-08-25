@@ -22,7 +22,7 @@
 #include "x5_b_global.h"
 #ifdef X5B_APP_DATABASE
 
-#ifdef PL_VOIP_MODULE
+#ifdef PL_PJSIP_MODULE
 #include "voip_app.h"
 #endif
 #include "x5b_dbase.h"
@@ -749,7 +749,7 @@ int voip_dbase_get_room_phone(u_int8 building, u_int8 unit, u_int16 room_number,
 		os_mutex_unlock(dbase_mutex);
 	return 0;
 }
-#ifdef PL_VOIP_MODULE
+#ifdef PL_PJSIP_MODULE
 int voip_dbase_get_call_phone(u_int8 building, u_int8 unit, u_int16 room_number, void *call_phone)
 {
 	int i = 0, num = 0;

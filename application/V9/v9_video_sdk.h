@@ -73,6 +73,7 @@ typedef struct v9_video_sdk_s
 	int		mode;
 	int		datatype;
 	void		*board;
+	BOOL		nfs;
 	//int		debug;
 }v9_video_sdk_t;
 

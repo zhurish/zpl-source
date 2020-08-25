@@ -44,7 +44,7 @@ DEFUN (app_template,
 		"Video configure\n")
 {
 	//int ret = ERROR;
-	template_t * temp = nsm_template_lookup_name ("app video");
+	template_t * temp = nsm_template_lookup_name (FALSE, "app video");
 	if(temp)
 	{
 		vty->node = TEMPLATE_NODE;
@@ -54,7 +54,7 @@ DEFUN (app_template,
 	}
 	else
 	{
-		temp = nsm_template_new ();
+		temp = nsm_template_new (FALSE);
 		if(temp)
 		{
 			temp->module = 0;
@@ -81,7 +81,7 @@ DEFUN (no_app_template,
 		"APP configure\n"
 		"Video configure\n")
 {
-	template_t * temp = nsm_template_lookup_name ("app video");
+	template_t * temp = nsm_template_lookup_name (FALSE, "app video");
 	if(temp)
 	{
 		//x5b_app_free();
@@ -251,30 +251,23 @@ DEFUN (v9_app_board_active,
 /* show */
 DEFUN (v9_app_board_show,
 	   v9_app_board_show_cmd,
-		"show board status",
-		SHOW_STR
-		"Board Configure\n"
-		"Status Information\n")
-{
-	v9_board_show(vty, 0, TRUE);
-	return CMD_SUCCESS;
-}
-
-DEFUN (v9_app_video_board_show,
-	   v9_app_video_board_show_cmd,
-		"show video board information",
+		"show video board status [detail]",
 		SHOW_STR
 		"Video Configure\n"
 		"Board Configure\n"
 		"Status Information\n")
 {
-	v9_video_board_show(vty, TRUE);
+	if(argc == 1)
+		v9_video_board_show(vty, TRUE);
+	else
+		v9_board_show(vty, 0, TRUE);
 	return CMD_SUCCESS;
 }
 
-DEFUN (v9_app_video_channel_show,
-	   v9_app_video_channel_show_cmd,
-		"show video stream information",
+
+DEFUN (v9_app_video_rtsp_show,
+	   v9_app_video_rtsp_show_cmd,
+		"show video rtsp information",
 		SHOW_STR
 		"Video Configure\n"
 		"Video Stream Configure\n"
@@ -287,9 +280,9 @@ DEFUN (v9_app_video_channel_show,
 	return CMD_SUCCESS;
 }
 
-ALIAS(v9_app_video_channel_show,
-	  v9_app_video_channel_id_show_cmd,
-		"show video <1-4> stream information",
+ALIAS(v9_app_video_rtsp_show,
+	  v9_app_video_rtsp_id_show_cmd,
+		"show video <1-4> rtsp information",
 		SHOW_STR
 		"Video Configure\n"
 		"Board ID\n"
@@ -321,13 +314,19 @@ ALIAS(v9_app_video_usergroup_show,
 		"Video Stream Configure\n"
 		"Status Information\n");
 
+
 DEFUN (v9_app_time_sync_cmd,
 	   v9_app_time_sync_cmd_cmd,
 		"sync time",
 		"Sync Configure\n"
 		"Time Information\n")
 {
+#ifdef V9_SLIPNET_ENABLE
 	v9_cmd_sync_time_test();
+#else
+		if(v9_serial)
+			v9_serial->timer_sync = 1;
+#endif
 	return CMD_SUCCESS;
 }
 
@@ -1156,6 +1155,41 @@ int v9_video_sdk_del_group_user_api(u_int32 id, void *p_pstUserList);
 int v9_video_sdk_del_group_api(u_int32 id, int group);
 int v9_video_sdk_get_user_api(u_int32 id, char* ID, void* UserInfo);
 */
+DEFUN (v9_sdk_hw_clean_user,
+	   v9_sdk_hw_clean_user_cmd,
+		"video sdk <1-4> clean alluser",
+		"Video Configure\n"
+		"SDK Configure\n"
+		"Board ID Value\n"
+		"Clean Configure\n"
+		"All User Configure\n")
+{
+	v9_video_user_clean ();
+	if(v9_video_sdk_del_group_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), -1) == OK)
+	{
+		return CMD_SUCCESS;
+	}
+	vty_out(vty, "Clean Video SDK User information ERROR%s", VTY_NEWLINE);
+	return CMD_WARNING;
+}
+
+DEFUN (v9_sdk_hw_clean_rtsp,
+	   v9_sdk_hw_clean_rtsp_cmd,
+		"video sdk <1-4> clean allrtsp",
+		"Video Configure\n"
+		"SDK Configure\n"
+		"Board ID Value\n"
+		"Clean Configure\n"
+		"All RTSP Configure\n")
+{
+	v9_video_board_stream_cleanup_api();
+	if(v9_video_sdk_del_vch_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), -1) == OK)
+	{
+		return CMD_SUCCESS;
+	}
+	vty_out(vty, "Clean Video SDK RTSP information ERROR%s", VTY_NEWLINE);
+	return CMD_WARNING;
+}
 
 DEFUN (v9_sdk_hw_del_user,
 	   v9_sdk_hw_del_user_cmd,
@@ -1239,6 +1273,19 @@ DEFUN (v9_sdk_sqldb_cap_tbl,
 	v9_video_sqldb_test(1, atoi(argv[0]), vty);
 	return CMD_SUCCESS;
 }
+#ifdef V9_SLIPNET_ENABLE
+DEFUN (v9_led_ctl,
+	   v9_led_ctl_cmd,
+		"video led-status <0-1>",
+		"Video Configure\n"
+		"led Configure\n"
+		"Status Value\n")
+{
+	if(v9_serial)
+	v9_cmd_sync_led(v9_serial, 1, atoi(argv[0]));
+	return CMD_SUCCESS;
+}
+#endif
 #endif
 
 DEFUN (v9_app_sdk_show_config,
@@ -1254,6 +1301,268 @@ DEFUN (v9_app_sdk_show_config,
 
 #endif
 
+DEFUN (debug_video_event,
+	   debug_video_event_cmd,
+       "debug video (user|serial|sdk) (event|error|warn)",
+       DEBUG_STR
+       "Video configuration\n"
+       "User Debug Configuration\n"
+       "Serial Debug Configuration\n"
+       "SDK Debug Configuration\n"
+       "Debug option set event\n"
+       "Debug option set error\n"
+       "Debug option set warn\n")
+{
+  if (strncmp ("user", argv[0], strlen (argv[0])) == 0)
+  {
+	  if (strncmp ("event", argv[1], strlen (argv[1])) == 0)
+		  v9_user_debug_api(TRUE, V9_USER_DEBUG_EVENT);
+	  if (strncmp ("error", argv[1], strlen (argv[1])) == 0)
+		  v9_user_debug_api(TRUE, V9_USER_DEBUG_ERROR);
+	  if (strncmp ("warn", argv[1], strlen (argv[1])) == 0)
+		  v9_user_debug_api(TRUE, V9_USER_DEBUG_WARN);
+  }
+  else if (strncmp ("serial", argv[0], strlen (argv[0])) == 0)
+  {
+	  if (strncmp ("event", argv[1], strlen (argv[1])) == 0)
+		  v9_serial_debug_api(TRUE, V9_APP_DEBUG_EVENT);
+	  if (strncmp ("error", argv[1], strlen (argv[1])) == 0)
+		  v9_serial_debug_api(TRUE, V9_APP_DEBUG_ERROR);
+	  if (strncmp ("warn", argv[1], strlen (argv[1])) == 0)
+		  v9_serial_debug_api(TRUE, V9_APP_DEBUG_WARN);
+  }
+  else if (strncmp ("sdk", argv[0], strlen (argv[0])) == 0)
+  {
+	  if (strncmp ("event", argv[1], strlen (argv[1])) == 0)
+		  v9_video_sdk_debug_api(TRUE, V9_SDK_DEBUG_EVENT);
+	  if (strncmp ("error", argv[1], strlen (argv[1])) == 0)
+		  v9_video_sdk_debug_api(TRUE, V9_SDK_DEBUG_ERROR);
+	  if (strncmp ("warn", argv[1], strlen (argv[1])) == 0)
+		  v9_video_sdk_debug_api(TRUE, V9_SDK_DEBUG_WARN);
+  }
+  return CMD_SUCCESS;
+}
+
+DEFUN (debug_video_sqldb,
+	   debug_video_sqldb_cmd,
+       "debug video sqldb (msg|db|state|sqlcmd)",
+       DEBUG_STR
+       "Video configuration\n"
+       "Sqldb Debug Configuration\n"
+       "Debug option set msg\n"
+       "Debug option set db\n"
+       "Debug option set state\n"
+	   "Debug option set sqlcmd\n")
+{
+	  if (strncmp ("msg", argv[1], strlen (argv[1])) == 0)
+		  v9_sqldb_debug_api(TRUE, V9_USER_DEBUG_EVENT);
+	  if (strncmp ("db", argv[1], strlen (argv[1])) == 0)
+		  v9_sqldb_debug_api(TRUE, V9_USER_DEBUG_ERROR);
+	  if (strncmp ("state", argv[1], strlen (argv[1])) == 0)
+		  v9_sqldb_debug_api(TRUE, V9_USER_DEBUG_WARN);
+	  if (strncmp ("sqlcmd", argv[1], strlen (argv[1])) == 0)
+		  v9_sqldb_debug_api(TRUE, V9_USER_DEBUG_WARN);
+  return CMD_SUCCESS;
+}
+
+DEFUN (debug_video_appsdk,
+	   debug_video_appsdk_cmd,
+       "debug video (sreial|sdk) (msg|web|state)",
+       DEBUG_STR
+       "Video configuration\n"
+       "Serial Debug Configuration\n"
+       "SDK Debug Configuration\n"
+       "Debug option set msg\n"
+       "Debug option set web\n"
+       "Debug option set state\n")
+{
+	  if (strncmp ("sdk", argv[0], strlen (argv[0])) == 0)
+	  {
+		  if (strncmp ("msg", argv[1], strlen (argv[1])) == 0)
+			  v9_video_sdk_debug_api(TRUE, V9_SDK_DEBUG_MSG);
+		  if (strncmp ("web", argv[1], strlen (argv[1])) == 0)
+			  v9_video_sdk_debug_api(TRUE, V9_SDK_DEBUG_WEB);
+		  if (strncmp ("state", argv[1], strlen (argv[1])) == 0)
+			  v9_video_sdk_debug_api(TRUE, V9_SDK_DEBUG_STATE);
+	  }
+	  else if (strncmp ("serial", argv[0], strlen (argv[0])) == 0)
+	  {
+		  if (strncmp ("msg", argv[1], strlen (argv[1])) == 0)
+			  v9_serial_debug_api(TRUE, V9_APP_DEBUG_MSG);
+		  if (strncmp ("web", argv[1], strlen (argv[1])) == 0)
+			  v9_serial_debug_api(TRUE, V9_APP_DEBUG_WEB);
+		  if (strncmp ("state", argv[1], strlen (argv[1])) == 0)
+			  v9_serial_debug_api(TRUE, V9_APP_DEBUG_STATE);
+	  }
+  return CMD_SUCCESS;
+}
+
+DEFUN (debug_video_sreial,
+	   debug_video_sreial_cmd,
+       "debug video sreial (hex|send|recv|update|timer|uci)",
+       DEBUG_STR
+       "Video configuration\n"
+       "Sreial Debug Configuration\n"
+       "Debug option set hex\n"
+       "Debug option set send\n"
+       "Debug option set recv\n"
+	   "Debug option set update\n"
+	   "Debug option set timer\n"
+	   "Debug option set uci\n")
+{
+	  if (strncmp ("hex", argv[1], strlen (argv[1])) == 0)
+		  v9_serial_debug_api(TRUE, V9_APP_DEBUG_HEX);
+	  if (strncmp ("recv", argv[1], strlen (argv[1])) == 0)
+		  v9_serial_debug_api(TRUE, V9_APP_DEBUG_RECV);
+	  if (strncmp ("send", argv[1], strlen (argv[1])) == 0)
+		  v9_serial_debug_api(TRUE, V9_APP_DEBUG_SEND);
+	  if (strncmp ("update", argv[1], strlen (argv[1])) == 0)
+		  v9_serial_debug_api(TRUE, V9_APP_DEBUG_UPDATE);
+	  if (strncmp ("timer", argv[1], strlen (argv[1])) == 0)
+		  v9_serial_debug_api(TRUE, V9_APP_DEBUG_TIME);
+	  if (strncmp ("uci", argv[1], strlen (argv[1])) == 0)
+		  v9_serial_debug_api(TRUE, V9_APP_DEBUG_UCI);
+  return CMD_SUCCESS;
+}
+
+DEFUN (no_debug_video_event,
+	   no_debug_video_event_cmd,
+       "no debug video (user|serial|sdk) (event|error|warn)",
+	   NO_STR
+       DEBUG_STR
+       "Video configuration\n"
+       "User Debug Configuration\n"
+       "Serial Debug Configuration\n"
+       "SDK Debug Configuration\n"
+       "Debug option set event\n"
+       "Debug option set error\n"
+       "Debug option set warn\n")
+{
+  if (strncmp ("user", argv[0], strlen (argv[0])) == 0)
+  {
+	  if (strncmp ("event", argv[1], strlen (argv[1])) == 0)
+		  v9_user_debug_api(TRUE, V9_USER_DEBUG_EVENT);
+	  if (strncmp ("error", argv[1], strlen (argv[1])) == 0)
+		  v9_user_debug_api(TRUE, V9_USER_DEBUG_ERROR);
+	  if (strncmp ("warn", argv[1], strlen (argv[1])) == 0)
+		  v9_user_debug_api(TRUE, V9_USER_DEBUG_WARN);
+  }
+  else if (strncmp ("serial", argv[0], strlen (argv[0])) == 0)
+  {
+	  if (strncmp ("event", argv[1], strlen (argv[1])) == 0)
+		  v9_serial_debug_api(TRUE, V9_APP_DEBUG_EVENT);
+	  if (strncmp ("error", argv[1], strlen (argv[1])) == 0)
+		  v9_serial_debug_api(TRUE, V9_APP_DEBUG_ERROR);
+	  if (strncmp ("warn", argv[1], strlen (argv[1])) == 0)
+		  v9_serial_debug_api(TRUE, V9_APP_DEBUG_WARN);
+  }
+  else if (strncmp ("sdk", argv[0], strlen (argv[0])) == 0)
+  {
+	  if (strncmp ("event", argv[1], strlen (argv[1])) == 0)
+		  v9_video_sdk_debug_api(TRUE, V9_SDK_DEBUG_EVENT);
+	  if (strncmp ("error", argv[1], strlen (argv[1])) == 0)
+		  v9_video_sdk_debug_api(TRUE, V9_SDK_DEBUG_ERROR);
+	  if (strncmp ("warn", argv[1], strlen (argv[1])) == 0)
+		  v9_video_sdk_debug_api(TRUE, V9_SDK_DEBUG_WARN);
+  }
+  return CMD_SUCCESS;
+}
+
+DEFUN (no_debug_video_sqldb,
+	   no_debug_video_sqldb_cmd,
+       "no debug video sqldb (msg|db|state|sqlcmd)",
+	   NO_STR
+       DEBUG_STR
+       "Video configuration\n"
+       "Sqldb Debug Configuration\n"
+       "Debug option set msg\n"
+       "Debug option set db\n"
+       "Debug option set state\n"
+	   "Debug option set sqlcmd\n")
+{
+	  if (strncmp ("msg", argv[1], strlen (argv[1])) == 0)
+		  v9_sqldb_debug_api(TRUE, V9_USER_DEBUG_EVENT);
+	  if (strncmp ("db", argv[1], strlen (argv[1])) == 0)
+		  v9_sqldb_debug_api(TRUE, V9_USER_DEBUG_ERROR);
+	  if (strncmp ("state", argv[1], strlen (argv[1])) == 0)
+		  v9_sqldb_debug_api(TRUE, V9_USER_DEBUG_WARN);
+	  if (strncmp ("sqlcmd", argv[1], strlen (argv[1])) == 0)
+		  v9_sqldb_debug_api(TRUE, V9_USER_DEBUG_WARN);
+  return CMD_SUCCESS;
+}
+
+DEFUN (no_debug_video_appsdk,
+	   no_debug_video_appsdk_cmd,
+       "no debug video (sreial|sdk) (msg|web|state)",
+	   NO_STR
+       DEBUG_STR
+       "Video configuration\n"
+       "Serial Debug Configuration\n"
+       "SDK Debug Configuration\n"
+       "Debug option set msg\n"
+       "Debug option set web\n"
+       "Debug option set state\n")
+{
+	  if (strncmp ("sdk", argv[0], strlen (argv[0])) == 0)
+	  {
+		  if (strncmp ("msg", argv[1], strlen (argv[1])) == 0)
+			  v9_video_sdk_debug_api(TRUE, V9_SDK_DEBUG_MSG);
+		  if (strncmp ("web", argv[1], strlen (argv[1])) == 0)
+			  v9_video_sdk_debug_api(TRUE, V9_SDK_DEBUG_WEB);
+		  if (strncmp ("state", argv[1], strlen (argv[1])) == 0)
+			  v9_video_sdk_debug_api(TRUE, V9_SDK_DEBUG_STATE);
+	  }
+	  else if (strncmp ("serial", argv[0], strlen (argv[0])) == 0)
+	  {
+		  if (strncmp ("msg", argv[1], strlen (argv[1])) == 0)
+			  v9_serial_debug_api(TRUE, V9_APP_DEBUG_MSG);
+		  if (strncmp ("web", argv[1], strlen (argv[1])) == 0)
+			  v9_serial_debug_api(TRUE, V9_APP_DEBUG_WEB);
+		  if (strncmp ("state", argv[1], strlen (argv[1])) == 0)
+			  v9_serial_debug_api(TRUE, V9_APP_DEBUG_STATE);
+	  }
+  return CMD_SUCCESS;
+}
+
+DEFUN (no_debug_video_sreial,
+	   no_debug_video_sreial_cmd,
+       "no debug video sreial (hex|send|recv|update|timer|uci)",
+	   NO_STR
+       DEBUG_STR
+       "Video configuration\n"
+       "Sreial Debug Configuration\n"
+       "Debug option set hex\n"
+       "Debug option set send\n"
+       "Debug option set recv\n"
+	   "Debug option set update\n"
+	   "Debug option set timer\n"
+	   "Debug option set uci\n")
+{
+	  if (strncmp ("hex", argv[1], strlen (argv[1])) == 0)
+		  v9_serial_debug_api(TRUE, V9_APP_DEBUG_HEX);
+	  if (strncmp ("recv", argv[1], strlen (argv[1])) == 0)
+		  v9_serial_debug_api(TRUE, V9_APP_DEBUG_RECV);
+	  if (strncmp ("send", argv[1], strlen (argv[1])) == 0)
+		  v9_serial_debug_api(TRUE, V9_APP_DEBUG_SEND);
+	  if (strncmp ("update", argv[1], strlen (argv[1])) == 0)
+		  v9_serial_debug_api(TRUE, V9_APP_DEBUG_UPDATE);
+	  if (strncmp ("timer", argv[1], strlen (argv[1])) == 0)
+		  v9_serial_debug_api(TRUE, V9_APP_DEBUG_TIME);
+	  if (strncmp ("uci", argv[1], strlen (argv[1])) == 0)
+		  v9_serial_debug_api(TRUE, V9_APP_DEBUG_UCI);
+  return CMD_SUCCESS;
+}
+
+DEFUN (show_debug_video,
+	   show_debug_video_cmd,
+       "show debug video",
+	   SHOW_STR
+       DEBUG_STR
+       "Video configuration\n")
+{
+	v9_video_debug_config(vty, TRUE);
+	return CMD_SUCCESS;
+}
 
 static int app_write_config(struct vty *vty, void *pVoid)
 {
@@ -1269,9 +1578,9 @@ static int app_write_config(struct vty *vty, void *pVoid)
 static void cmd_app_global_init(void)
 {
 	install_element(ENABLE_NODE, &v9_app_board_show_cmd);
-	install_element(ENABLE_NODE, &v9_app_video_board_show_cmd);
-	install_element(ENABLE_NODE, &v9_app_video_channel_show_cmd);
-	install_element(ENABLE_NODE, &v9_app_video_channel_id_show_cmd);
+
+	install_element(ENABLE_NODE, &v9_app_video_rtsp_show_cmd);
+	install_element(ENABLE_NODE, &v9_app_video_rtsp_id_show_cmd);
 	install_element(ENABLE_NODE, &v9_app_sdk_show_cmd);
 	install_element(ENABLE_NODE, &v9_app_sdk_show_config_cmd);
 	install_element(ENABLE_NODE, &v9_app_time_sync_cmd_cmd);
@@ -1327,6 +1636,19 @@ static void cmd_app_temp_init(int node)
 static void cmd_app_debug_init(void)
 {
 	install_element(TEMPLATE_NODE, &v9_app_board_active_cmd);
+
+	install_element(ENABLE_NODE, &debug_video_event_cmd);
+	install_element(ENABLE_NODE, &debug_video_sqldb_cmd);
+	install_element(ENABLE_NODE, &debug_video_appsdk_cmd);
+	install_element(ENABLE_NODE, &debug_video_sreial_cmd);
+
+	install_element(ENABLE_NODE, &no_debug_video_event_cmd);
+	install_element(ENABLE_NODE, &no_debug_video_sqldb_cmd);
+	install_element(ENABLE_NODE, &no_debug_video_appsdk_cmd);
+	install_element(ENABLE_NODE, &no_debug_video_sreial_cmd);
+
+	install_element(ENABLE_NODE, &show_debug_video_cmd);
+
 #ifdef V9_VIDEO_SDK_API
 	install_element(ENABLE_NODE, &v9_sdk_hw_reboot_cmd);
 	install_element(ENABLE_NODE, &v9_sdk_hw_update_cmd);
@@ -1351,11 +1673,16 @@ static void cmd_app_debug_init(void)
 	install_element(ENABLE_NODE, &v9_sdk_hw_get_recognize_cmd);
 	install_element(ENABLE_NODE, &v9_sdk_hw_get_snapinfo_cmd);
 	install_element(ENABLE_NODE, &v9_sdk_hw_get_helmet_cmd);
+	install_element(ENABLE_NODE, &v9_sdk_hw_clean_user_cmd);
+	install_element(ENABLE_NODE, &v9_sdk_hw_clean_rtsp_cmd);
 	install_element(ENABLE_NODE, &v9_sdk_hw_del_user_cmd);
 	install_element(ENABLE_NODE, &v9_sdk_hw_get_user_cmd);
 #ifdef V9_SQLDB_TEST
 	install_element(ENABLE_NODE, &v9_sdk_sqldb_user_cmd);
 	install_element(ENABLE_NODE, &v9_sdk_sqldb_cap_tbl_cmd);
+#ifdef V9_SLIPNET_ENABLE
+	install_element(ENABLE_NODE, &v9_led_ctl_cmd);
+#endif
 #endif
 
 #endif
@@ -1364,7 +1691,7 @@ static void cmd_app_debug_init(void)
 
 void cmd_app_v9_init(void)
 {
-	template_t * temp = nsm_template_new ();
+	template_t * temp = nsm_template_new (FALSE);
 	if(temp)
 	{
 		temp->module = 0;
@@ -1382,7 +1709,7 @@ void cmd_app_v9_init(void)
 		install_element(CONFIG_NODE, &no_app_template_cmd);
 
 /*		install_element(TEMPLATE_NODE, &v9_app_board_disabled_cmd);
-
+extern int v9_video_debug_config(struct vty *vty, BOOL detail);
 		install_element(TEMPLATE_NODE, &v9_app_stream_add_cmd);
 		install_element(TEMPLATE_NODE, &v9_app_stream_add_1_cmd);
 		install_element(TEMPLATE_NODE, &v9_app_stream_add_2_cmd);*/

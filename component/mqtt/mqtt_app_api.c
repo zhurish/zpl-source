@@ -17,30 +17,90 @@
 #include "mqtt_app_subscribed.h"
 #include "mqtt_app_api.h"
 
+
+/*
+//Set the connect callback.  This is called when the broker sends a CONNACK message in response to a connection.
+mosquitto_connect_callback_set
+//Set the connect callback.  This is called when the broker sends a CONNACK message in response to a connection.
+mosquitto_connect_with_flags_callback_set
+//Set the connect callback.  This is called when the broker sends a CONNACK message in response to a connection.
+mosquitto_connect_v5_callback_set
+//Set the disconnect callback.  This is called when the broker has received the DISCONNECT command and has disconnected the client.
+mosquitto_disconnect_callback_set
+//Set the disconnect callback.  This is called when the broker has received the DISCONNECT command and has disconnected the client.
+mosquitto_disconnect_v5_callback_set
+//Set the publish callback.  This is called when a message initiated with mosquitto_publish has been sent to the broker successfully.
+mosquitto_publish_callback_set
+//Set the publish callback.  This is called when a message initiated with mosquitto_publish has been sent to the broker.  This callback will be called both if the message is sent successfully,
+//  or if the broker responded with an error, which will be reflected in the reason_code parameter.
+mosquitto_publish_v5_callback_set
+//Set the message callback.  This is called when a message is received from the broker.
+mosquitto_message_callback_set
+mosquitto_message_v5_callback_set
+//Set the subscribe callback.  This is called when the broker responds to a subscription request.
+mosquitto_subscribe_callback_set
+mosquitto_subscribe_v5_callback_set
+//Set the unsubscribe callback.  This is called when the broker responds to a unsubscription request.
+mosquitto_unsubscribe_callback_set
+mosquitto_unsubscribe_v5_callback_set
+mosquitto_log_callback_set
+*/
+
 static int mosquitto_new_reinit(struct mqtt_app_config *cfg)
 {
 	zassert(cfg != NULL);
 	cfg->mosq = mosquitto_new(cfg->id, cfg->clean_session, cfg);
 	if(!cfg->mosq)
 	{
-		printf("------------%s-------------mosquitto_new\r\n",__func__);
+		_MQTT_DBG_TRAP("------------%s-------------mosquitto_new",__func__);
 		return ERROR;
-	}
-	if (cfg->debug)
-	{
-		mosquitto_log_callback_set(cfg->mosq, mqtt_log_callback);
 	}
 	if (mqtt_client_opts_config(cfg))
 	{
-		printf("------------%s-------------mqtt_client_opts_config\r\n",__func__);
+		if(mqtt_config->mosq)
+		{
+			mosquitto_destroy(mqtt_config->mosq);
+			mqtt_config->mosq = NULL;
+		}
+		_MQTT_DBG_TRAP("------------%s-------------mqtt_client_opts_config",__func__);
 		return ERROR;
 	}
-	mosquitto_subscribe_callback_set(cfg->mosq, mqtt_sub_subscribe_callback);
-	mosquitto_connect_v5_callback_set(cfg->mosq, mqtt_sub_connect_callback);
-	mosquitto_message_v5_callback_set(cfg->mosq, mqtt_sub_message_callback);
+
+	mosquitto_log_callback_set(cfg->mosq, mqtt_log_callback);
+	mosquitto_user_data_set(cfg->mosq, cfg);
+
+	if (cfg->mqtt_version == MQTT_PROTOCOL_V5)
+	{
+		mosquitto_subscribe_v5_callback_set(cfg->mosq, mqtt_sub_subscribe_v5_callback);
+		mosquitto_connect_v5_callback_set(cfg->mosq, mqtt_sub_connect_v5_callback);
+		mosquitto_message_v5_callback_set(cfg->mosq, mqtt_sub_message_v5_callback);
+		mosquitto_publish_v5_callback_set(cfg->mosq, mqtt_sub_publish_v5_callback);
+		//void mosquitto_disconnect_v5_callback_set(struct mosquitto *mosq, void (*on_disconnect)(struct mosquitto *, void *, int, const mosquitto_property *));
+		//void mosquitto_unsubscribe_v5_callback_set(struct mosquitto *mosq, void (*on_unsubscribe)(struct mosquitto *, void *, int, const mosquitto_property *props));
+	}
+	else
+	{
+		mosquitto_subscribe_callback_set(cfg->mosq, mqtt_sub_subscribe_callback);
+		mosquitto_connect_callback_set(cfg->mosq, mqtt_sub_connect_callback);
+		mosquitto_message_callback_set(cfg->mosq, mqtt_sub_message_callback);
+		mosquitto_publish_callback_set(cfg->mosq, mqtt_sub_publish_callback);
+		//void mosquitto_disconnect_callback_set(struct mosquitto *mosq, void (*on_disconnect)(struct mosquitto *, void *, int));
+		//void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, void (*on_unsubscribe)(struct mosquitto *, void *, int));
+	}
 	return OK;
 }
 
+BOOL mqtt_isenable_api(struct mqtt_app_config *cfg)
+{
+	BOOL enable = FALSE;
+	zassert(cfg != NULL);
+	if(cfg->mutex)
+		os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
+	enable = cfg->enable;
+	if(cfg->mutex)
+		os_mutex_unlock(cfg->mutex);
+	return enable;
+}
 
 int mqtt_enable_api(struct mqtt_app_config *cfg, BOOL enable)
 {
@@ -231,7 +291,7 @@ int mqtt_tls_insecure_api(struct mqtt_app_config *cfg, const bool insecure)
 	return OK;
 }
 
-int mqtt_tls_ciphers_api(struct mqtt_app_config *cfg, const char *keyform)
+int mqtt_tls_keyform_api(struct mqtt_app_config *cfg, const char *keyform)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -291,7 +351,7 @@ int mqtt_id_prefix_api(struct mqtt_app_config *cfg,
 		os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
 	if (cfg->id_prefix)
 	{
-		XFREE(MTYPE_MQTT_CONF,cfg->id_prefix);
+		XFREE(MTYPE_MQTT_CONF, cfg->id_prefix);
 	}
 	if (format)
 	{
@@ -389,6 +449,16 @@ int mqtt_retain_api(struct mqtt_app_config *cfg, const bool retain)
 }
 
 
+int mqtt_clean_session_api(struct mqtt_app_config *cfg, const bool clean_session)
+{
+	zassert(cfg != NULL);
+	if(cfg->mutex)
+		os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
+	cfg->clean_session = clean_session;
+	if(cfg->mutex)
+		os_mutex_unlock(cfg->mutex);
+	return OK;
+}
 
 #ifdef WITH_SRV
 int mqtt_use_srv_api(struct mqtt_app_config *cfg, const bool use_srv)
@@ -477,6 +547,19 @@ int mqtt_tls_version_api(struct mqtt_app_config *cfg, const char * format)
 }
 #endif
 
+
+int mqtt_debug_api(struct mqtt_app_config *cfg, int loglevel)
+{
+	zassert(cfg != NULL);
+	if(cfg->mutex)
+		os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
+	cfg->loglevel = loglevel;
+	if(cfg->mutex)
+		os_mutex_unlock(cfg->mutex);
+	return OK;
+}
+
+
 int mqtt_version_api(struct mqtt_app_config *cfg,
 		const int mqtt_version)
 {
@@ -484,124 +567,49 @@ int mqtt_version_api(struct mqtt_app_config *cfg,
 	if(cfg->mutex)
 		os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
 	cfg->mqtt_version = mqtt_version;
+	if (cfg->mqtt_version == MQTT_PROTOCOL_V5)
+	{
+		mosquitto_subscribe_v5_callback_set(cfg->mosq, mqtt_sub_subscribe_v5_callback);
+		mosquitto_connect_v5_callback_set(cfg->mosq, mqtt_sub_connect_v5_callback);
+		mosquitto_message_v5_callback_set(cfg->mosq, mqtt_sub_message_v5_callback);
+		mosquitto_publish_v5_callback_set(cfg->mosq, mqtt_sub_publish_v5_callback);
+
+		mosquitto_subscribe_callback_set(cfg->mosq, NULL);
+		mosquitto_connect_callback_set(cfg->mosq, NULL);
+		mosquitto_message_callback_set(cfg->mosq, NULL);
+		mosquitto_publish_callback_set(cfg->mosq, NULL);
+		//void mosquitto_disconnect_v5_callback_set(struct mosquitto *mosq, void (*on_disconnect)(struct mosquitto *, void *, int, const mosquitto_property *));
+		//void mosquitto_unsubscribe_v5_callback_set(struct mosquitto *mosq, void (*on_unsubscribe)(struct mosquitto *, void *, int, const mosquitto_property *props));
+	}
+	else
+	{
+		mosquitto_subscribe_v5_callback_set(cfg->mosq, NULL);
+		mosquitto_connect_v5_callback_set(cfg->mosq, NULL);
+		mosquitto_message_v5_callback_set(cfg->mosq, NULL);
+		mosquitto_publish_v5_callback_set(cfg->mosq, NULL);
+
+		mosquitto_subscribe_callback_set(cfg->mosq, mqtt_sub_subscribe_callback);
+		mosquitto_connect_callback_set(cfg->mosq, mqtt_sub_connect_callback);
+		mosquitto_message_callback_set(cfg->mosq, mqtt_sub_message_callback);
+		mosquitto_publish_callback_set(cfg->mosq, mqtt_sub_publish_callback);
+		//void mosquitto_disconnect_callback_set(struct mosquitto *mosq, void (*on_disconnect)(struct mosquitto *, void *, int));
+		//void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, void (*on_unsubscribe)(struct mosquitto *, void *, int));
+	}
 	if(cfg->mutex)
 		os_mutex_unlock(cfg->mutex);
 	return OK;
 }
 
-
-int mqtt_will_payload_api(struct mqtt_app_config *cfg,
-		mqtt_mode_t type, const char * format)
+int mqtt_session_expiry_interval_api(struct mqtt_app_config *cfg, int interval)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
 		os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
-	if(type == MQTT_MODE_SUB)
-	{
-		if (cfg->sub.will_payload)
-		{
-			XFREE(MTYPE_MQTT_DATA,cfg->sub.will_payload);
-		}
-		if (format)
-		{
-			cfg->sub.will_payload = XSTRDUP(MTYPE_MQTT_DATA,format);
-			cfg->sub.will_payloadlen = strlen(cfg->sub.will_payload);
-		}
-	}
-	else if(type == MQTT_MODE_PUB)
-	{
-		if (cfg->pub.will_payload)
-		{
-			XFREE(MTYPE_MQTT_DATA,cfg->pub.will_payload);
-		}
-		if (format)
-		{
-			cfg->pub.will_payload = XSTRDUP(MTYPE_MQTT_DATA,format);
-			cfg->pub.will_payloadlen = strlen(cfg->pub.will_payload);
-		}
-	}
+	cfg->session_expiry_interval = interval;
 	if(cfg->mutex)
 		os_mutex_unlock(cfg->mutex);
 	return OK;
 }
-
-
-int mqtt_will_topic_api(struct mqtt_app_config *cfg,
-		mqtt_mode_t type, const char * will_topic)
-{
-	zassert(cfg != NULL);
-	if(cfg->mutex)
-		os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
-
-	if (mosquitto_validate_utf8(will_topic, strlen(will_topic)))
-	{
-		mqtt_err_printf(cfg, "Error: Malformed UTF-8 in --will-topic argument.");
-		return -1;
-	}
-	if (mosquitto_pub_topic_check(will_topic) == MOSQ_ERR_INVAL)
-	{
-		mqtt_err_printf(cfg,
-				"Error: Invalid will topic '%s', does it contain '+' or '#'?\n",
-				will_topic);
-		return -1;
-	}
-	if(type == MQTT_MODE_SUB)
-	{
-		if (cfg->sub.will_topic)
-		{
-			XFREE(MTYPE_MQTT_TOPIC,cfg->sub.will_topic);
-		}
-		if (will_topic)
-		{
-			cfg->sub.will_topic = XSTRDUP(MTYPE_MQTT_TOPIC,will_topic);
-		}
-	}
-	else if(type == MQTT_MODE_PUB)
-	{
-		if (cfg->pub.will_topic)
-		{
-			XFREE(MTYPE_MQTT_TOPIC,cfg->pub.will_topic);
-		}
-		if (will_topic)
-		{
-			cfg->pub.will_topic = XSTRDUP(MTYPE_MQTT_TOPIC,will_topic);
-		}
-	}
-	if(cfg->mutex)
-		os_mutex_unlock(cfg->mutex);
-	return OK;
-}
-
-int mqtt_will_qos_api(struct mqtt_app_config *cfg,
-		mqtt_mode_t type, const mqtt_qos_level will_qos)
-{
-	zassert(cfg != NULL);
-	if(cfg->mutex)
-		os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
-	if(type == MQTT_MODE_SUB)
-		cfg->sub.will_qos = will_qos;
-	else if(type == MQTT_MODE_PUB)
-		cfg->pub.will_qos = will_qos;
-	if(cfg->mutex)
-		os_mutex_unlock(cfg->mutex);
-	return OK;
-}
-
-int mqtt_will_retain_api(struct mqtt_app_config *cfg,
-		mqtt_mode_t type, const bool will_retain)
-{
-	zassert(cfg != NULL);
-	if(cfg->mutex)
-		os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
-	if(type == MQTT_MODE_SUB)
-		cfg->sub.will_retain = will_retain;
-	else if(type == MQTT_MODE_PUB)
-		cfg->pub.will_retain = will_retain;
-	if(cfg->mutex)
-		os_mutex_unlock(cfg->mutex);
-	return OK;
-}
-
 
 
 int mqtt_sub_filter_out_api(struct mqtt_app_config *cfg,
@@ -609,45 +617,11 @@ int mqtt_sub_filter_out_api(struct mqtt_app_config *cfg,
 {
 	zassert(cfg != NULL);
 	zassert(filter != NULL);
-	if(cfg->mutex)
-			os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
-	if (mosquitto_validate_utf8(filter, strlen(filter)))
+	if((cfg->sub.filter_out_count) == MQTT_TOPICS_MAX)
 	{
-		if(cfg->mutex)
-			os_mutex_unlock(cfg->mutex);
-		mqtt_err_printf(cfg, "Error: Malformed UTF-8 in -T argument.");
+		mqtt_err_printf(cfg, "Error: Too many Filter Topic");
 		return ERROR;
 	}
-	if (mosquitto_sub_topic_check(filter) == MOSQ_ERR_INVAL)
-	{
-		if(cfg->mutex)
-			os_mutex_unlock(cfg->mutex);
-		mqtt_err_printf(cfg,
-				"Error: Invalid filter topic '%s', are all '+' and '#' wildcards correct?\n",
-				filter);
-		return ERROR;
-	}
-	cfg->sub.filter_out_count++;
-	cfg->sub.filter_outs = XREALLOC(MTYPE_MQTT_FILTER, cfg->sub.filter_outs,
-			cfg->sub.filter_out_count * sizeof(char *));
-	if (!cfg->sub.filter_outs)
-	{
-		if(cfg->mutex)
-			os_mutex_unlock(cfg->mutex);
-		mqtt_err_printf(cfg, "Error: Out of memory.");
-		return ERROR;
-	}
-	cfg->sub.filter_outs[cfg->sub.filter_out_count - 1] = XSTRDUP(MTYPE_MQTT_FILTER,filter);
-	if(cfg->mutex)
-		os_mutex_unlock(cfg->mutex);
-	return OK;
-}
-
-int mqtt_sub_unsubscribe_api(struct mqtt_app_config *cfg,
-		const char * filter)
-{
-	zassert(cfg != NULL);
-	zassert(filter != NULL);
 	if(cfg->mutex)
 			os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
 	if (mosquitto_validate_utf8(filter, strlen(filter)))
@@ -666,69 +640,207 @@ int mqtt_sub_unsubscribe_api(struct mqtt_app_config *cfg,
 				filter);
 		return ERROR;
 	}
-	cfg->sub.unsub_topic_count++;
-	cfg->sub.unsub_topics = XREALLOC(MTYPE_MQTT_TOPIC, cfg->sub.unsub_topics,
-			cfg->sub.unsub_topic_count * sizeof(char *));
+
+/*	if (!cfg->sub.filter_outs)
+	{
+		cfg->sub.filter_outs = XMALLOC(MTYPE_MQTT_FILTER, MQTT_TOPICS_MAX * sizeof(char *));
+	}
+	if (!cfg->sub.filter_outs)
+	{
+		if(cfg->mutex)
+			os_mutex_unlock(cfg->mutex);
+		mqtt_err_printf(cfg, "Error: Out of memory.");
+		return ERROR;
+	}*/
+	cfg->sub.filter_out_count++;
+	cfg->sub.filter_outs[cfg->sub.filter_out_count - 1] = XSTRDUP(MTYPE_MQTT_FILTER,filter);
+
+	if(cfg->mutex)
+		os_mutex_unlock(cfg->mutex);
+	return OK;
+}
+
+int mqtt_sub_filter_out_del_api(struct mqtt_app_config *cfg, char *filter)
+{
+	int i = 0;
+	zassert(cfg != NULL);
+	for(i = 0; i < cfg->sub.filter_out_count; i++)
+	{
+		if(cfg->sub.filter_outs[i] && strcmp(cfg->sub.filter_outs[i], filter) == 0)
+		{
+			XFREE(MTYPE_MQTT_FILTER, cfg->sub.filter_outs[i]);
+			cfg->sub.filter_outs[i] = NULL;
+			cfg->sub.filter_out_count--;
+			return OK;
+		}
+	}
+	return ERROR;
+}
+
+
+int mqtt_sub_unsubscribe_api(struct mqtt_app_config *cfg,
+		const char * filter)
+{
+	zassert(cfg != NULL);
+	zassert(filter != NULL);
+	if((cfg->sub.unsub_topic_count) == MQTT_TOPICS_MAX)
+	{
+		mqtt_err_printf(cfg, "Error: Too many Filter Topic");
+		return ERROR;
+	}
+	if(cfg->mutex)
+			os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
+	if (mosquitto_validate_utf8(filter, strlen(filter)))
+	{
+		if(cfg->mutex)
+			os_mutex_unlock(cfg->mutex);
+		mqtt_err_printf(cfg, "Error: Malformed UTF-8 in -T argument.");
+		return ERROR;
+	}
+	if (mosquitto_sub_topic_check(filter) == MOSQ_ERR_INVAL)
+	{
+		if(cfg->mutex)
+			os_mutex_unlock(cfg->mutex);
+		mqtt_err_printf(cfg,
+				"Error: Invalid filter topic '%s', are all '+' and '#' wildcards correct?",
+				filter);
+		return ERROR;
+	}
+
+/*	if (!cfg->sub.unsub_topics)
+	{
+		cfg->sub.unsub_topics = XMALLOC(MTYPE_MQTT_TOPIC, MQTT_TOPICS_MAX * sizeof(char *));
+	}
+
 	if (!cfg->sub.unsub_topics)
 	{
 		if(cfg->mutex)
 			os_mutex_unlock(cfg->mutex);
 		mqtt_err_printf(cfg, "Error: Out of memory.");
 		return ERROR;
-	}
+	}*/
+	cfg->sub.unsub_topic_count++;
+
 	cfg->sub.unsub_topics[cfg->sub.unsub_topic_count - 1] = XSTRDUP(MTYPE_MQTT_TOPIC,filter);
 	if(cfg->mutex)
 		os_mutex_unlock(cfg->mutex);
 	return OK;
 }
 
-int mqtt_pub_repeat_count_delay_api(struct mqtt_app_config *cfg,
-		const int repeat_count, const float repeat_delay)
+int mqtt_sub_unsubscribe_del_api(struct mqtt_app_config *cfg, char *topic)
+{
+	int i = 0;
+	zassert(cfg != NULL);
+	for(i = 0; i < cfg->sub.unsub_topic_count; i++)
+	{
+		if(cfg->sub.unsub_topics[i] && strcmp(cfg->sub.unsub_topics[i], topic) == 0)
+		{
+			XFREE(MTYPE_MQTT_TOPIC, cfg->sub.unsub_topics[i]);
+			cfg->sub.unsub_topics[i] = NULL;
+			cfg->sub.unsub_topic_count--;
+			return OK;
+		}
+	}
+	return ERROR;
+}
+
+
+
+int mqtt_will_payload_api(struct mqtt_app_config *cfg, const char * format)
 {
 	zassert(cfg != NULL);
-	float f = repeat_delay;
 	if(cfg->mutex)
-			os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
-	if(repeat_delay != 0.0000000)
+		os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
+	//if(type == MQTT_MODE_SUB)
 	{
-		f *= 1.0e6;
-		cfg->pub.repeat_delay.tv_sec = (int) f / 1e6;
-		cfg->pub.repeat_delay.tv_usec = (int) f % 1000000;
+		if (cfg->sub.will_payload)
+		{
+			XFREE(MTYPE_MQTT_DATA, cfg->sub.will_payload);
+			cfg->sub.will_payload = NULL;
+		}
+		if (format)
+		{
+			cfg->sub.will_payload = XSTRDUP(MTYPE_MQTT_DATA,format);
+			cfg->sub.will_payloadlen = strlen(cfg->sub.will_payload);
+		}
 	}
-	if(repeat_count)
-		cfg->pub.repeat_count = repeat_count;
 	if(cfg->mutex)
 		os_mutex_unlock(cfg->mutex);
 	return OK;
 }
 
 
-
-/*
-int mqtt_config_sub_mode(struct mqtt_app_config *cfg,
-		const char * format)
+int mqtt_will_topic_api(struct mqtt_app_config *cfg, const char * will_topic)
 {
 	zassert(cfg != NULL);
-	if (cfg->sub.format)
+	if(cfg->mutex)
+		os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
+
+	//if(type == MQTT_MODE_SUB)
 	{
-		XFREE(MTYPE_MQTT_CONF,cfg->sub.format);
+		if (cfg->sub.will_topic)
+		{
+			XFREE(MTYPE_MQTT_TOPIC,cfg->sub.will_topic);
+			cfg->sub.will_payload = NULL;
+		}
+		if (will_topic)
+		{
+			if (mosquitto_validate_utf8(will_topic, strlen(will_topic)))
+			{
+				mqtt_err_printf(cfg, "Error: Malformed UTF-8 in --will-topic argument.");
+				return -1;
+			}
+			if (mosquitto_pub_topic_check(will_topic) == MOSQ_ERR_INVAL)
+			{
+				mqtt_err_printf(cfg,
+						"Error: Invalid will topic '%s', does it contain '+' or '#'?",
+						will_topic);
+				return -1;
+			}
+			cfg->sub.will_topic = XSTRDUP(MTYPE_MQTT_TOPIC,will_topic);
+		}
 	}
-	if (format)
-	{
-		cfg->sub.format = XSTRDUP(MTYPE_MQTT_CONF,format);
-	}
-	return MOSQ_ERR_SUCCESS;
-}*/
+	if(cfg->mutex)
+		os_mutex_unlock(cfg->mutex);
+	return OK;
+}
+
+int mqtt_will_qos_api(struct mqtt_app_config *cfg, const mqtt_qos_level will_qos)
+{
+	zassert(cfg != NULL);
+	if(cfg->mutex)
+		os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
+	//if(type == MQTT_MODE_SUB)
+		cfg->sub.will_qos = will_qos;
+	if(cfg->mutex)
+		os_mutex_unlock(cfg->mutex);
+	return OK;
+}
+
+int mqtt_will_retain_api(struct mqtt_app_config *cfg, const bool will_retain)
+{
+	zassert(cfg != NULL);
+	if(cfg->mutex)
+		os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
+	//if(type == MQTT_MODE_SUB)
+		cfg->sub.will_retain = will_retain;
+	if(cfg->mutex)
+		os_mutex_unlock(cfg->mutex);
+	return OK;
+}
 
 
-int mqtt_sub_no_retain_api(struct mqtt_app_config *cfg,
+/*int mqtt_sub_no_retain_api(struct mqtt_app_config *cfg,
 		const bool no_retain)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
 			os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
 	cfg->sub.no_retain = no_retain;
-	cfg->sub.sub_opts |= MQTT_SUB_OPT_SEND_RETAIN_NEVER;
+	if(no_retain)
+		cfg->sub.sub_opts |= MQTT_SUB_OPT_SEND_RETAIN_NEVER;
+	else
+		cfg->sub.sub_opts &= ~MQTT_SUB_OPT_SEND_RETAIN_NEVER;
 	if(cfg->mutex)
 		os_mutex_unlock(cfg->mutex);
 	return OK;
@@ -743,7 +855,7 @@ int mqtt_sub_retain_as_published_api(struct mqtt_app_config *cfg)
 	if(cfg->mutex)
 		os_mutex_unlock(cfg->mutex);
 	return OK;
-}
+}*/
 
 int mqtt_sub_remove_retained_api(struct mqtt_app_config *cfg,
 		const bool remove_retained)
@@ -757,9 +869,68 @@ int mqtt_sub_remove_retained_api(struct mqtt_app_config *cfg,
 	return OK;
 }
 
+int mqtt_option_api(struct mqtt_app_config *cfg, const int option, bool set)
+{
+	zassert(cfg != NULL);
+	if(cfg->mutex)
+			os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
+	//cfg->sub.no_retain = no_retain;
+	//if(no_retain)
+	//	cfg->sub.sub_opts |= MQTT_SUB_OPT_SEND_RETAIN_NEVER;
+	//else
+	//	cfg->sub.sub_opts &= ~MQTT_SUB_OPT_SEND_RETAIN_NEVER;
 
+	//cfg->sub.sub_opts |= MQTT_SUB_OPT_RETAIN_AS_PUBLISHED;
+	if(set)
+	{
+		cfg->sub.sub_opts |= option;
+		if(option & MQTT_SUB_OPT_SEND_RETAIN_NEVER)
+			cfg->sub.no_retain = TRUE;
+	}
+	else
+	{
+		cfg->sub.sub_opts &= ~option;
+		if(option & MQTT_SUB_OPT_SEND_RETAIN_NEVER)
+			cfg->sub.no_retain = FALSE;
+	}
+	if(cfg->mutex)
+		os_mutex_unlock(cfg->mutex);
+	return OK;
+}
 
-
+int mqtt_module_commit_api(struct mqtt_app_config *cfg)
+{
+	zassert(cfg != NULL);
+	if(cfg->mutex)
+			os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
+	if(os_load_config_done ())
+	{
+		if(cfg->connectd == TRUE && cfg->mosq)
+		{
+			mosquitto_disconnect(cfg->mosq);
+			cfg->connectd = FALSE;
+		}
+		if(cfg->mosq)
+		{
+			mosquitto_destroy(cfg->mosq);
+			cfg->mosq = NULL;
+		}
+		if(mosquitto_new_reinit(cfg) == ERROR)
+		{
+			if(cfg->mosq)
+			{
+				mosquitto_destroy(cfg->mosq);
+				cfg->mosq = NULL;
+			}
+			if(cfg->mutex)
+				os_mutex_unlock(cfg->mutex);
+			return ERROR;
+		}
+	}
+	if(cfg->mutex)
+		os_mutex_unlock(cfg->mutex);
+	return OK;
+}
 
 
 
@@ -776,25 +947,27 @@ int mqtt_module_init(void)
 	mqtt_config->enable = TRUE;
 	if (mqtt_client_id_generate(mqtt_config) != MOSQ_ERR_SUCCESS)
 	{
-		printf("------------%s-------------mqtt_client_id_generate\r\n",__func__);
+		_MQTT_DBG_TRAP("------------%s-------------mqtt_client_id_generate",__func__);
 		mosquitto_lib_cleanup();
 		mqtt_config_default_cleanup(mqtt_config);
 		return ERROR;
 	}
-	if (mqtt_config_cfg_check(mqtt_config,  MQTT_MODE_SUB) != MOSQ_ERR_SUCCESS)
+	if (mqtt_config_cfg_check(mqtt_config) != MOSQ_ERR_SUCCESS)
 	{
-		printf("------------%s-------------mqtt_config_cfg_check\r\n",__func__);
+		_MQTT_DBG_TRAP("------------%s-------------mqtt_config_cfg_check",__func__);
 		mosquitto_lib_cleanup();
 		mqtt_config_default_cleanup(mqtt_config);
 		return ERROR;
 	}
-
-	if(mosquitto_new_reinit(mqtt_config) == ERROR)
+	if(os_load_config_done ())
 	{
-		printf("------------%s-------------mosquitto_new_reinit\r\n",__func__);
-		mosquitto_lib_cleanup();
-		mqtt_config_default_cleanup(mqtt_config);
-		return ERROR;
+		if(mosquitto_new_reinit(mqtt_config) == ERROR)
+		{
+			_MQTT_DBG_TRAP("------------%s-------------mosquitto_new_reinit",__func__);
+			mosquitto_lib_cleanup();
+			mqtt_config_default_cleanup(mqtt_config);
+			return ERROR;
+		}
 	}
 	return OK;
 }
@@ -803,9 +976,14 @@ int mqtt_module_exit(void)
 {
 	zassert(mqtt_config != NULL);
 	if(mqtt_config->mosq)
+	{
 		mosquitto_destroy(mqtt_config->mosq);
+		mqtt_config->mosq = NULL;
+	}
 	mosquitto_lib_cleanup();
 	mqtt_config_default_cleanup(mqtt_config);
+	if(mqtt_config)
+		XFREE(MTYPE_MQTT, mqtt_config);
 	return OK;
 }
 
@@ -815,7 +993,7 @@ static int mqtt_app_task (void *argv)
 	int ret = 0;
 	enum mosquitto_client_state state;
 	struct mqtt_app_config *cfg = argv;
-	zassert(argv != NULL);
+	zassert(cfg != NULL);
 
 	while (!os_load_config_done ())
 	{
@@ -825,13 +1003,25 @@ static int mqtt_app_task (void *argv)
 	{
 		os_sleep (1);
 	}
+	os_sleep (1);
+	if(!cfg->mosq)
+	{
+		if(mosquitto_new_reinit(cfg) == ERROR)
+		{
+			mosquitto_lib_cleanup();
+			mqtt_config_default_cleanup(cfg);
+			return ERROR;
+		}
+	}
 	while (1)
 	{
 		if(cfg->mutex)
 			os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
 
-		ret = mqtt_client_connect(cfg);
-
+		if(cfg->connectd != TRUE && cfg->host)
+		{
+			ret = mqtt_client_connect(cfg);
+		}
 		if(cfg->mutex)
 			os_mutex_unlock(cfg->mutex);
 
@@ -840,31 +1030,79 @@ static int mqtt_app_task (void *argv)
 			os_sleep(1);
 			continue;
 		}
+		cfg->connectd = TRUE;
 
-		ret = mosquitto_loop_forever(cfg->mosq, -1, 1);
+#if 0
+		do
+		{
+			ret = mosquitto_loop(cfg->mosq, 1000, 1);
 
+			if(cfg->mutex)
+				os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
+
+			state = mosquitto__get_state(cfg->mosq);
+			if(state == mosq_cs_disconnecting || state == mosq_cs_disconnected)
+			{
+				cfg->connectd = FALSE;
+				if(cfg->reload)
+				{
+					cfg->reload = FALSE;
+					if(cfg->mosq)
+						mosquitto_destroy(cfg->mosq);
+
+					if(mosquitto_new_reinit(cfg) != OK)
+					{
+						if(cfg->mutex)
+							os_mutex_unlock(cfg->mutex);
+						continue;
+					}
+				}
+			}
+			if(cfg->taskquit)
+				break;
+
+			if(cfg->mutex)
+				os_mutex_unlock(cfg->mutex);
+
+		} while (ret == MOSQ_ERR_SUCCESS);
+#else
+		ret = mosquitto_loop_forever(cfg->mosq, 1000, 1);
 		if(cfg->mutex)
 			os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
 
 		state = mosquitto__get_state(cfg->mosq);
 		if(state == mosq_cs_disconnecting || state == mosq_cs_disconnected)
 		{
+			cfg->connectd = FALSE;
 			if(cfg->reload)
 			{
 				cfg->reload = FALSE;
 				if(cfg->mosq)
 					mosquitto_destroy(cfg->mosq);
 
-				//mosquitto_lib_cleanup();
-
 				if(mosquitto_new_reinit(cfg) != OK)
-					break;
+				{
+					if(cfg->mutex)
+						os_mutex_unlock(cfg->mutex);
+					continue;
+				}
 			}
 		}
+		if(cfg->taskquit)
+			break;
+
 		if(cfg->mutex)
 			os_mutex_unlock(cfg->mutex);
+#endif
 	}
+
+	cfg->taskquit = FALSE;
+
+	if(cfg->mutex)
+		os_mutex_unlock(cfg->mutex);
+
 	mqtt_module_exit();
+
 	return OK;
 }
 
@@ -883,5 +1121,12 @@ int mqtt_module_task_init(void)
 int mqtt_module_task_exit(void)
 {
 	zassert(mqtt_config != NULL);
+	if(mqtt_config->mutex)
+		os_mutex_lock(mqtt_config->mutex, OS_WAIT_FOREVER);
+	if(mqtt_config->mosq)
+		mosquitto_loop_stop(mqtt_config->mosq, TRUE);
+	mqtt_config->taskquit = TRUE;
+	if(mqtt_config->mutex)
+		os_mutex_unlock(mqtt_config->mutex);
 	return OK;
 }

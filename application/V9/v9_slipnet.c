@@ -41,11 +41,17 @@
 #include "v9_video_api.h"
 
 
+#ifdef V9_SLIPNET_ENABLE
 
 
 static int v9_app_slipnet_read_eloop(struct eloop *eloop)
 {
 	int len = 0;
+#ifdef V9_SLIPNET_UDP
+	int sock_len = 0;
+	struct sockaddr_in from;
+	sock_len = sizeof(struct sockaddr_in);
+#endif
 	v9_serial_t *mgt = ELOOP_ARG(eloop);
 	zassert(mgt != NULL);
 
@@ -54,8 +60,12 @@ static int v9_app_slipnet_read_eloop(struct eloop *eloop)
 
 	mgt->r_slipnet = NULL;
 	memset(mgt->buf, 0, sizeof(mgt->buf));
-
+#ifdef V9_SLIPNET_UDP
+	len = recvfrom(mgt->slipnet->fd, mgt->buf, sizeof(mgt->buf), 0, &from, &sock_len);
+	//len = read(mgt->slipnet->fd, mgt->buf, sizeof(mgt->buf));
+#else
 	len = tty_com_slip_read(mgt->slipnet, mgt->buf, sizeof(mgt->buf));
+#endif
 	if (len <= 0)
 	{
 		if (len < 0)
@@ -74,7 +84,6 @@ static int v9_app_slipnet_read_eloop(struct eloop *eloop)
 	{
 		mgt->len = len;
 
-		//v9_app_read_handle(mgt);
 	}
 	mgt->r_slipnet = eloop_add_read(mgt->master, v9_app_slipnet_read_eloop, mgt, mgt->slipnet->fd);
 
@@ -90,17 +99,21 @@ static int v9_app_slipnet_read_eloop(struct eloop *eloop)
 static int v9_slipnet_default(v9_serial_t *serial)
 {
 	memset(serial->slipnet, 0, sizeof(struct tty_com));
-
+#ifdef V9_SLIPNET_UDP
+	strcpy(serial->slipnet->devname, V9_SLIPNET_UDPSRV_HOST);
+#else
 	strcpy(serial->slipnet->devname, V9_SERIAL_CTL_NAME);
 	serial->slipnet->speed = 115200;		// speed bit
 	serial->slipnet->databit = DATA_8BIT;	// data bit
 	serial->slipnet->stopbit = STOP_1BIT;	// stop bit
 	serial->slipnet->parity = PARITY_NONE;		// parity
 	serial->slipnet->flow_control = FLOW_CTL_NONE;// flow control
+	serial->slipnet->mode = TTY_COM_MODE_SLIP;
 
 	serial->slipnet->encapsulation = NULL;
 	serial->slipnet->decapsulation = NULL;
 	serial->status = 0;
+#endif
 	return OK;
 }
 
@@ -122,8 +135,16 @@ static int _v9_slipnet_hw_exit(v9_serial_t *serial)
 {
 	if(serial && serial->slipnet)
 	{
+#ifdef V9_SLIPNET_UDP
+		if(serial->slipnet->fd)
+		{
+			close(serial->slipnet->fd);
+			serial->slipnet->fd = 0;
+		}
+#else
 		if(tty_isopen(serial->slipnet))
 			tty_com_close(serial->slipnet);
+#endif
 		XFREE(MTYPE_VTY, serial->slipnet);
 	}
 	return OK;
@@ -140,6 +161,26 @@ int v9_app_slipnet_init(v9_serial_t *serial, char *devname, u_int32 speed)
 			master_eloop[MODULE_APP_START] = eloop_master_module_create(MODULE_APP_START);
 			serial->master = master_eloop[MODULE_APP_START];
 		}
+#ifdef V9_SLIPNET_UDP
+		memset(serial->slipnet->devname, 0, sizeof(v9_serial->slipnet->devname));
+		strcpy(serial->slipnet->devname, V9_SLIPNET_UDPSRV_HOST);
+		if(serial->slipnet->fd)
+		{
+			close(serial->slipnet->fd);
+			serial->slipnet->fd = 0;
+		}
+		serial->slipnet->fd = sock_create(FALSE);
+		if(sock_bind(serial->slipnet->fd, NULL, V9_SLIPNET_UDPSRV_PORT) == OK)
+		{
+			if(serial->r_slipnet)
+			{
+				eloop_cancel(serial->r_slipnet);
+				serial->r_slipnet = NULL;
+			}
+			serial->r_slipnet = eloop_add_read(serial->master, v9_app_slipnet_read_eloop, serial, serial->slipnet->fd);
+			return OK;
+		}
+#else
 		memset(serial->slipnet->devname, 0, sizeof(v9_serial->slipnet->devname));
 		strcpy(serial->slipnet->devname, devname);
 		serial->slipnet->speed = speed;		// speed bit
@@ -168,6 +209,7 @@ int v9_app_slipnet_init(v9_serial_t *serial, char *devname, u_int32 speed)
 			serial->r_slipnet = eloop_add_read(serial->master, v9_app_slipnet_read_eloop, serial, serial->slipnet->fd);
 			return OK;
 		}
+#endif
 	}
 	return ERROR;
 }
@@ -185,3 +227,7 @@ int v9_app_slipnet_exit(v9_serial_t *serial)
 	}
 	return OK;
 }
+
+
+
+#endif /* V9_SLIPNET_ENABLE */

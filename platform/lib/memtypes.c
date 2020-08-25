@@ -476,7 +476,7 @@ struct memory_list memory_list_ssh[] =
   { -1, NULL },
 };
 
-#ifdef PL_VOIP_MODULE
+#ifdef PL_PJSIP_MODULE
 struct memory_list memory_list_voip[] =
 {
   { MTYPE_VOIP,				"VOIP information"	},
@@ -590,7 +590,7 @@ struct mlist mlists[] __attribute__ ((unused)) = {
   { memory_list_port,	"PORT"	},
 
   { memory_list_ssh,	"SSH"	},
-#ifdef PL_VOIP_MODULE
+#ifdef PL_PJSIP_MODULE
   { memory_list_voip,	"VOIP"	},
 #endif
 

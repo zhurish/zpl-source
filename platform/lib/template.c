@@ -24,14 +24,16 @@
 #include "template.h"
 
 static struct list *template_list = NULL;
-
+static struct list *service_list = NULL;
 
 
 /* Allocate template structure. */
-template_t * nsm_template_new (void)
+template_t * nsm_template_new (BOOL service)
 {
   template_t *template;
   template = XCALLOC (MTYPE_ZCLIENT, sizeof (template_t));
+  if(template)
+	  template->service = service;
   return template;
 }
 
@@ -44,7 +46,7 @@ void nsm_template_free (template_t *template)
 {
 	if(template)
 	{
-		listnode_delete (template_list, template);
+		listnode_delete (template->service?service_list:template_list, template);
 		XFREE (MTYPE_ZCLIENT, template);
 	}
 }
@@ -55,14 +57,14 @@ void nsm_template_install (template_t *template, int module)
 {
 	template->module = module;
 	//listnode_add_sort(template_list, template);
-	listnode_add (template_list, template);
+	listnode_add (template->service?service_list:template_list, template);
 }
 
-template_t* nsm_template_lookup (int module)
+template_t* nsm_template_lookup (BOOL service, int module)
 {
 	struct listnode *node = NULL;
 	template_t *template = NULL;
-	for (ALL_LIST_ELEMENTS_RO(template_list, node, template))
+	for (ALL_LIST_ELEMENTS_RO(service?service_list:template_list, node, template))
 	{
 		if(template->module == module)
 			return template;
@@ -71,11 +73,11 @@ template_t* nsm_template_lookup (int module)
 }
 
 
-template_t* nsm_template_lookup_name (char * name)
+template_t* nsm_template_lookup_name (BOOL service, char * name)
 {
 	struct listnode *node = NULL;
 	template_t *template = NULL;
-	for (ALL_LIST_ELEMENTS_RO(template_list, node, template))
+	for (ALL_LIST_ELEMENTS_RO(service?service_list:template_list, node, template))
 	{
 		if(strcmp(template->name, name) == 0)
 			return template;
@@ -89,12 +91,18 @@ void nsm_template_init (void)
 	if(template_list == NULL)
 		template_list = list_new();
 	template_list->cmp =  NULL;//nsm_template_cmp;
+
+	if(service_list == NULL)
+		service_list = list_new();
+	service_list->cmp =  NULL;//nsm_template_cmp;
 }
 
 void nsm_template_exit (void)
 {
 	if(template_list)
 		list_delete(template_list);
+	if(service_list)
+		list_delete(service_list);
 }
 
 int nsm_template_write_config (struct vty *vty)
@@ -121,6 +129,42 @@ int nsm_template_show_config (struct vty *vty, BOOL detail)
 	struct listnode *node;
 	template_t  *template;
 	for (ALL_LIST_ELEMENTS_RO(template_list, node, template))
+	{
+		if(template->show_template)
+		{
+			ret = 0;
+			ret = (template->show_template)(vty, template->pVoid, detail);
+			if(ret)
+				vty_out(vty, "!%s", VTY_NEWLINE);
+		}
+	}
+	return ret;
+}
+
+int nsm_service_write_config (struct vty *vty)
+{
+	int ret = 0;
+	struct listnode *node;
+	template_t  *template;
+	for (ALL_LIST_ELEMENTS_RO(service_list, node, template))
+	{
+		if(template->write_template)
+		{
+			ret = 0;
+			ret = (template->write_template)(vty, template->pVoid);
+			if(ret)
+				vty_out(vty, "!%s", VTY_NEWLINE);
+		}
+	}
+	return ret;
+}
+
+int nsm_service_show_config (struct vty *vty, BOOL detail)
+{
+	int ret = 0;
+	struct listnode *node;
+	template_t  *template;
+	for (ALL_LIST_ELEMENTS_RO(service_list, node, template))
 	{
 		if(template->show_template)
 		{

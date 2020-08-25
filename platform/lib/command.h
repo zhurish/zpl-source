@@ -45,6 +45,7 @@ enum node_type
   VLAN_NODE,			/* vlan node */
   VRF_NODE,			/* VRF node. */
   SERVICE_NODE, 		/* Service node. */
+  ALL_SERVICE_NODE, 		/* Service node. */
 
 /* 2016閿熸枻鎷�6閿熸枻鎷�27閿熸枻鎷� 21:01:23 zhurish: 浣块敓鏂ゆ嫹IMI Module缁熶竴CLI閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鏃堕敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鎵ч敓鏂ゆ嫹linux閿熻妭鏍哥鎷峰厓閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷疯瘶閿燂拷 */
 #ifdef IMISH_IMI_MODULE  
@@ -59,16 +60,6 @@ enum node_type
 
   TEMPLATE_NODE,				/* templates server*/
 
-#ifdef PL_APP_MODULE
-  APP_TEMPLATES_NODE,		/* APP templates node. */
-#ifdef APP_X5BA_MODULE
-  APP_X5BA_NODE,
-#endif
-#endif
-#ifdef PL_VOIP_MODULE
-  VOIP_SERVICE_NODE,
-  SIP_SERVICE_NODE,
-#endif
   LOOPBACK_INTERFACE_NODE,	/* Loopback Interface mode node. */
 
   SERIAL_INTERFACE_NODE,	/* Serial Interface mode node. */

@@ -21,7 +21,7 @@
 #include "os_util.h"
 #include "os_socket.h"
 #include "os_uci.h"
-#include "uci_ubus.h"
+#include "ubus_sync.h"
 
 #include "pjsua_app_common.h"
 #include "pjsua_app_config.h"

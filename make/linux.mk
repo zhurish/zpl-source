@@ -19,7 +19,8 @@ export OBJDUMP=objdump
 export RANLIB=ranlib
 PLOS_DEFINE += -DBUILD_$(BUILD_TYPE)
 PLOS_DEFINE += -DSYS_REAL_DIR=\"$(BASE_ROOT)/$(RELEASEDIR)\"
-
+PLOS_CFLAGS += -I/usr/include -I/usr/local/include 
+PLOS_LDFLAGS += -L/lib -L/usr/lib -L/lib64 -L/usr/lib64 -L/usr/local/lib -L/usr/local/lib64
 endif
 #
 ifneq ($(BUILD_TYPE),X86)
@@ -104,7 +105,7 @@ PL_DEFINE += $(IPCOM_DEF) -DUSE_IPSTACK_IPCOM
 
 PL_INCLUDE += $(IPSTACK_INCLUDE)
 else
-PLOS_DEFINE += -DUSE_IPSTACK_KERNEL -DUSE_LINUX_OS
+PLOS_DEFINE += -DUSE_IPSTACK_KERNEL -DUSE_LINUX_OS -D__linux__
 
 endif
 #

@@ -40,6 +40,8 @@
 
 extern u_int32 _sqldb_debug;
 
+
+
 extern sqlite3 * v9_user_sqldb_open(u_int32 id);
 extern int v9_user_sqldb_close(sqlite3 *db, u_int32 id);
 
@@ -57,7 +59,7 @@ extern int v9_user_sqldb_key_select(sqlite3 *db, u_int32 id, char *user_id, sql_
 extern int v9_user_sqldb_del(sqlite3 *db, u_int32 id, char *user_id);
 
 extern int v9_user_sqldb_del_group(sqlite3 *db, u_int32 id, int group);
-
+extern int v9_user_sqldb_cleanup(u_int32 id);
 
 extern int v9_user_sqldb_lookup_user(sqlite3 *db,u_int32 id, char *user_id, void *user);
 extern int v9_user_sqldb_foreach(sqlite3 *db, u_int32 id, int groupid, char *user_id, void * cb, void *pVoid);

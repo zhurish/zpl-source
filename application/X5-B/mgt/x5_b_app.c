@@ -21,7 +21,7 @@
 #include "eloop.h"
 
 #ifdef PL_UBUS_MODULE
-#include "uci_ubus.h"
+#include "ubus_sync.h"
 #endif
 
 #include "x5_b_global.h"
@@ -1288,7 +1288,7 @@ static int x5b_app_read_status_cmd_tlv(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 				x5b_app_a_thlog_log(tlv->val.pval);
 #endif
 			}
-#ifdef PL_VOIP_MODULE
+#ifdef PL_PJSIP_MODULE
 			else if(E_CMD_FROM_C(tlv->tag))
 			{
 				voip_thlog_log2("%s", tlv->val.pval);
@@ -1450,40 +1450,6 @@ static int x5b_app_report_eloop(struct eloop *eloop)
 		}
 #endif
 #ifdef PL_OPENWRT_UCI
-#ifdef PL_OSIP_MODULE
-		if(voip_sip_multiuser_get_api())
-		{
-			int rlen = 0;
-			x5b_app_register_ack_t state;
-			voip_sip_local_number_get_api(&state.phone, FALSE);
-			rlen = (1 + strlen(&state.phone));
-			state.reg_state = voip_sip_main_regstate() & 0xff;
-
-			len = os_tlv_set_octet(mgt->app->sbuf + mgt->app->offset,
-					E_CMD_MAKE(E_CMD_MODULE_B, E_CMD_STATUS, E_CMD_REG_STATUS), rlen, &state);
-			mgt->app->offset += len;
-
-			voip_sip_local_number_get_api(&state.phone, TRUE);
-			rlen = (1 + strlen(&state.phone));
-			state.reg_state = voip_sip_stanby_regstate() & 0xff;
-
-			len = os_tlv_set_octet(mgt->app->sbuf + mgt->app->offset,
-					E_CMD_MAKE(E_CMD_MODULE_B, E_CMD_STATUS, E_CMD_REG_STATUS), rlen, &state);
-			mgt->app->offset += len;
-		}
-		else
-		{
-			int rlen = 0;
-			x5b_app_register_ack_t state;
-			voip_sip_local_number_get_api(&state.phone, FALSE);
-			rlen = (1 + strlen(&state.phone));
-			state.reg_state = voip_sip_main_regstate() & 0xff;
-
-			len = os_tlv_set_octet(mgt->app->sbuf + mgt->app->offset,
-					E_CMD_MAKE(E_CMD_MODULE_B, E_CMD_STATUS, E_CMD_REG_STATUS), rlen, &state);
-			mgt->app->offset += len;
-		}
-#endif
 #ifdef PL_PJSIP_MODULE
 	if(pl_pjsip_multiuser_get_api())
 	{
@@ -1764,7 +1730,7 @@ int x5b_app_module_init(char *local, u_int16 port)
 		//x5b_app_mgt->debug = X5_B_ESP32_DEBUG_TIME | X5_B_ESP32_DEBUG_EVENT | X5_B_ESP32_DEBUG_RECV | X5_B_ESP32_DEBUG_SEND | X5_B_ESP32_DEBUG_WEB | X5_B_ESP32_DEBUG_STATE;
 		x5b_app_mgt->debug = 0;//X5_B_ESP32_DEBUG_EVENT;
 #ifdef PL_UBUS_MODULE
-		//uci_ubus_cb_install(x5_b_ubus_uci_update_cb);
+		//ubus_sync_hook_install(x5_b_ubus_uci_update_cb);
 #endif
 	}
 #ifdef X5B_APP_DATABASE

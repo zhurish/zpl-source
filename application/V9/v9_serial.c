@@ -22,7 +22,7 @@
 #include "eloop.h"
 #include "tty_com.h"
 #ifdef PL_UBUS_MODULE
-#include "uci_ubus.h"
+#include "ubus_sync.h"
 #endif
 #include "v9_device.h"
 #include "v9_util.h"
@@ -138,6 +138,21 @@ static int v9_app_read_handle(v9_serial_t *mgt)
 			//zlog_debug(ZLOG_APP, "MSG V9_APP_CMD_STARTUP -> RES seqnum = %d", hdr->seqnum);
 			v9_cmd_handle_pass_reset(mgt);
 			break;
+#ifndef V9_SLIPNET_ENABLE
+		case V9_APP_CMD_SYNC_TIME:
+			//zlog_debug(ZLOG_APP, "MSG V9_APP_CMD_STARTUP -> RES seqnum = %d", hdr->seqnum);
+			v9_cmd_handle_sntp_sync(mgt);
+			break;
+#endif
+
+		case V9_APP_CMD_DEVICE:
+			//zlog_debug(ZLOG_APP, "MSG V9_APP_CMD_SEND_LOAD -> RES seqnum = %d", hdr->seqnum);
+			v9_cmd_handle_device(mgt);
+			break;
+		case V9_APP_CMD_DOWNLOAD_OTA:
+			//zlog_debug(ZLOG_APP, "MSG V9_APP_CMD_SEND_LOAD -> RES seqnum = %d", hdr->seqnum);
+			v9_cmd_update_bios_ack(mgt);
+			break;
 
 		default:
 			if(V9_APP_DEBUG(EVENT))
@@ -211,19 +226,61 @@ static int v9_app_read_eloop(struct eloop *eloop)
 
 
 #ifdef PL_UBUS_MODULE
-static int v9_ntp_time_update_cb(void *p, char *buf, int len)
+static int v9_job_cb_action(void *p)
 {
 	int ret = 0;
+	os_msleep(500);
 	v9_serial_t *serial = p;
-	if(serial && strstr(buf, "ntp"))
+	if(!serial)
+		return 0;
+
+	if(strstr(serial->tmpbuf, "ntp"))
 	{
-		if(strstr(buf + 4, "sync"))
+		if(strstr(serial->tmpbuf + 4, "sync"))
 		{
+#ifdef V9_SLIPNET_ENABLE
 			u_int32 timesp = os_time(NULL);
 			ret = v9_cmd_sync_time_to_rtc(serial, timesp);
+#else
+			if(serial->timer_sync == 0)
+				serial->timer_sync = 1;
+#endif /* V9_SLIPNET_ENABLE */
 		}
 	}
+	else if(strstr(serial->tmpbuf, "led"))
+	{
+#ifdef V9_SLIPNET_ENABLE
+		//static u_int8 led = 0;
+		if(strstr(serial->tmpbuf, "up"))
+		{
+			//if(led == 0)
+			{
+				//led = 1;
+				ret = v9_cmd_sync_led(serial, 1, 1);
+			}
+		}
+		else if(strstr(serial->tmpbuf, "down"))
+		{
+			//if(led == 1)
+			{
+				//led = 0;
+				ret = v9_cmd_sync_led(serial, 1, 0);
+			}
+		}
+#endif
+	}
+	memset(serial->tmpbuf, 0, sizeof(serial->tmpbuf));
 	return ret;
+}
+
+static int v9_ntp_time_update_cb(void *p, char *buf, int len)
+{
+	if(!v9_serial)
+		return 0;
+	memset(v9_serial->tmpbuf, 0, sizeof(v9_serial->tmpbuf));
+	strncpy(v9_serial->tmpbuf, buf, MIN(sizeof(v9_serial->tmpbuf), len));
+	os_job_add(v9_job_cb_action, v9_serial);
+	return 0;
 }
 #endif /* PL_UBUS_MODULE */
 
@@ -243,12 +300,8 @@ static int v9_serial_default(v9_serial_t *serial)
 	serial->tty->encapsulation = NULL;
 	serial->tty->decapsulation = NULL;
 	serial->status = 0;
-	//serial->debug = V9_APP_DEBUG_EVENT|V9_APP_DEBUG_RECV;
+	serial->debug = V9_APP_DEBUG_EVENT;
 	serial->id = APP_BOARD_MAIN;
-#ifdef PL_UBUS_MODULE
-	uci_ubus_cb_install(v9_ntp_time_update_cb, serial);
-#endif /* PL_UBUS_MODULE */
-
 	return OK;
 }
 
@@ -310,8 +363,18 @@ int v9_serial_init(char *devname, u_int32 speed)
 					v9_serial->r_thread = NULL;
 				}
 				v9_serial->r_thread = eloop_add_read(v9_serial->master, v9_app_read_eloop, v9_serial, v9_serial->tty->fd);
+#ifdef V9_SLIPNET_ENABLE
+#ifdef V9_SLIPNET_UDP
+				v9_app_slipnet_init(v9_serial, V9_SLIPNET_UDPSRV_HOST, V9_SLIPNET_UDPSRV_PORT);
+#else
+				v9_app_slipnet_init(v9_serial, V9_SLIPNET_CTL_NAME, V9_SLIPNET_SPEED_RATE);
+#endif
+#endif /* V9_SLIPNET_ENABLE */
 
-				//v9_app_slipnet_init(v9_serial, V9_SLIPNET_CTL_NAME, V9_SLIPNET_SPEED_RATE);
+#ifdef PL_UBUS_MODULE
+				ubus_sync_hook_install(v9_ntp_time_update_cb, v9_serial);
+#endif /* PL_UBUS_MODULE */
+
 				return OK;
 			}
 		}
@@ -333,7 +396,9 @@ int v9_serial_exit()
 {
 	if(v9_serial)
 	{
-		//v9_app_slipnet_exit(v9_serial);
+#ifdef V9_SLIPNET_ENABLE
+		v9_app_slipnet_exit(v9_serial);
+#endif /* V9_SLIPNET_ENABLE */
 		if(v9_serial->mutex)
 		{
 			os_mutex_exit(v9_serial->mutex);

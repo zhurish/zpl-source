@@ -107,5 +107,6 @@ ifeq ($(strip $(MODULE_SQLITE)),true)
 endif
 endif
 #
+PLOS_DEFINE += -DUSE_LINUX_OS -D__linux__
 #
 

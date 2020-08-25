@@ -38,6 +38,7 @@ int mosquitto_loop_start(struct mosquitto *mosq)
 		return MOSQ_ERR_ERRNO;
 	}
 #else
+	mosq->run_forever = 1;
 	return MOSQ_ERR_NOT_SUPPORTED;
 #endif
 }
@@ -72,6 +73,7 @@ int mosquitto_loop_stop(struct mosquitto *mosq, bool force)
 
 	return MOSQ_ERR_SUCCESS;
 #else
+	mosq->run_forever = 0;
 	return MOSQ_ERR_NOT_SUPPORTED;
 #endif
 }

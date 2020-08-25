@@ -86,12 +86,15 @@ typedef struct v9_video_board_s
 
 	BOOL		disabled;			//计算板卡禁止使用
 
-	void 		*mutex;
+	//void 		*mutex;
 	void		*t_timeout;
 }v9_video_board_t;
 
 
 extern v9_video_board_t *v9_video_board;
+
+void v9_video_board_lock();
+void v9_video_board_unlock();
 
 //板卡参数操作
 int v9_video_board_init();
@@ -162,6 +165,8 @@ int v9_video_board_stream_update_api(u_int8 id, u_int8 ch, char *param, char *se
 int v9_video_board_ID_lookup_api_by_video_stream(u_int8 ch, u_int32 address, u_int16 port);
 
 int v9_video_board_stream_free_api(v9_video_stream_t *v);
+int v9_video_board_stream_cleanup();
+
 
 int v9_video_board_stream_show(struct vty *vty, u_int32 id, BOOL detail);
 int v9_video_board_stream_write_config(struct vty *vty);

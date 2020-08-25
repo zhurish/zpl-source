@@ -893,18 +893,8 @@ static void vty_end_config(struct vty *vty)
 	case CONFIG_NODE:
 	case DHCPS_NODE:
 	case TEMPLATE_NODE:
-#ifdef PL_VOIP_MODULE
-	case VOIP_SERVICE_NODE:
-	case SIP_SERVICE_NODE:
-#endif
-
-#ifdef PL_APP_MODULE
-	case APP_TEMPLATES_NODE:
-#ifdef APP_X5BA_MODULE
-	case APP_X5BA_NODE:
-#endif
-#endif
-
+	case SERVICE_NODE:
+	case ALL_SERVICE_NODE:
 	case MODEM_PROFILE_NODE:
 	case MODEM_CHANNEL_NODE:
 	case INTERFACE_NODE:
@@ -1337,16 +1327,8 @@ static void vty_stop_input(struct vty *vty)
 	case CONFIG_NODE:
 	case DHCPS_NODE:
 	case TEMPLATE_NODE:
-#ifdef PL_VOIP_MODULE
-	case VOIP_SERVICE_NODE:
-	case SIP_SERVICE_NODE:
-#endif
-#ifdef PL_APP_MODULE
-	case APP_TEMPLATES_NODE:
-#ifdef APP_X5BA_MODULE
-	case APP_X5BA_NODE:
-#endif
-#endif
+	case SERVICE_NODE:
+	case ALL_SERVICE_NODE:
 	case MODEM_PROFILE_NODE:
 	case MODEM_CHANNEL_NODE:
 	case INTERFACE_NODE:
@@ -3315,8 +3297,8 @@ void vty_serv_init(const char *addr, unsigned short port, const char *path, cons
 #ifdef VTYSH
 	vty_serv_un (path);
 #endif /* VTYSH */
-	//if(tty)
-	vty_console_init(tty, NULL);
+	if(tty)
+		vty_console_init(tty, NULL);
 }
 
 /* Close vty interface.  Warning: call this only from functions that
@@ -3948,10 +3930,10 @@ void vty_reset()
 			if(vty->obuf)
 				buffer_reset(vty->obuf);
 			vty->status = VTY_CLOSE;
-			if (_pvty_console && vty != _pvty_console->vty)
-				vty_close(vty);
-			else
+			if (_pvty_console && vty == _pvty_console->vty)
 				vty_console_close();
+			else
+				vty_close(vty);
 		}
 
 	for (i = 0; i < vector_active(host.Vvty_serv_thread); i++)
@@ -4104,7 +4086,7 @@ void * vty_thread_master()
 void vty_init(void *m1, void *m2)
 {
 	/* For further configuration read, preserve current directory. */
-	if(_pvty_console == NULL)
+	if(_pvty_console == NULL && m1)
 	{
 		_pvty_console = XMALLOC(MTYPE_VTY, sizeof(tty_console_t));
 		memset(_pvty_console, 0, sizeof(tty_console_t));
@@ -4117,7 +4099,8 @@ void vty_init(void *m1, void *m2)
 	eloop_master = m2;
 	vty_ctrl_cmd = vty_ctrl_default;
 
-	atexit(vty_console_close);
+	if(_pvty_console)
+		atexit(vty_console_close);
 
 	/* Initilize server thread vector. */
 	host.Vvty_serv_thread = vector_init(VECTOR_MIN_SIZE);

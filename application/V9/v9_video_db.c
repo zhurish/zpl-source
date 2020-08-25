@@ -27,6 +27,23 @@
 #include "v9_video_board.h"
 #include "v9_video_api.h"
 
+static void 		*_db_cap_mutex = NULL;
+
+
+void v9_video_db_lock()
+{
+	if(_db_cap_mutex)
+	{
+		os_mutex_lock(_db_cap_mutex, OS_WAIT_FOREVER);
+	}
+}
+void v9_video_db_unlock()
+{
+	if(_db_cap_mutex)
+	{
+		os_mutex_unlock(_db_cap_mutex);
+	}
+}
 
 static char * v9_video_sqldb_file(u_int32 id)
 {
@@ -128,6 +145,10 @@ static int v9_video_sqldb_table_create(sqlite3 *db, u_int32 table)
 
 int v9_video_sqldb_load(u_int32 id)
 {
+	if(!_db_cap_mutex)
+	{
+		_db_cap_mutex = os_mutex_init();
+	}
 	return OK;
 }
 
@@ -300,37 +321,59 @@ int v9_video_sqldb_count(sqlite3 *db, u_int32 id, u_int32 table, int *pValue)
 	return ERROR;
 }
 
+
+
+
+
 /*
  * 删除
  */
 //删除小于某个时间的记录
 static int v9_video_sqldb_delete_callback(void *NotUsed, int argc, char **argv, char **azColName)
 {
-   int i;
-	for(i=0; i<argc; i++)
+	int i = 0, j = 0, k = 0;
+	u_int32 *bid = NotUsed;
+	if(!bid || !(*bid))
+		return 0;
+	for (i = 0; i < argc; i++)
 	{
-	   if(azColName[i] && strcasecmp(azColName[i], "picurl")==0)
-	   {
-		   if(argv[i])
-		   {
-			   remove(argv[i]);
-		   }
-	   }
-	   if(azColName[i] && strcasecmp(azColName[i], "videourl")==0)
-	   {
-		   if(argv[i])
-		   {
-			   remove(argv[i]);
-		   }
-	   }
-   }
-   return 0;
+		if (azColName[i] && strcasecmp (azColName[i], "username") == 0)
+		{
+			k = 1;
+		}
+		if (azColName[i] && ( (strcasecmp (azColName[i], "picurl") == 0) || (strcasecmp (azColName[i], "videourl") == 0) ) )
+		{
+			if (argv[i])
+			{
+				if (strncasecmp (argv[i], "/nfsroot/", 6) == 0)
+				{
+					v9_video_disk_urlpath(*bid, argv[i] + strlen ("/nfsroot/"));
+				}
+				else
+				{
+					remove(argv[i]);
+				}
+			}
+			j++;
+			if(strcasecmp (azColName[i], "videourl") == 0)
+				j++;
+		}
+		if(k == 1 && j == 2)
+			break;
+		else
+		{
+			if(j == 1)
+				break;
+		}
+	}
+	return 0;
 }
 
 int v9_video_sqldb_del_by_datetime(sqlite3 *db, u_int32 id, u_int32 table, char *datetime)
 {
 	char sqlcmd[256];
 	char *zErrMsg =NULL;
+	u_int32 bid = id;
 	memset(sqlcmd, 0, sizeof(sqlcmd));
 	if(table == 0)
 		snprintf(sqlcmd, sizeof(sqlcmd), "DELETE FROM "V9_VIDEO_SNAP_TBL_NAME " \
@@ -341,7 +384,7 @@ int v9_video_sqldb_del_by_datetime(sqlite3 *db, u_int32 id, u_int32 table, char 
 
     if(V9_SQLDB_DEBUG(DBCMD))
     	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
-	if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_delete_callback, NULL, &zErrMsg) == SQLITE_OK)
+	if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_delete_callback, &bid, &zErrMsg) == SQLITE_OK)
 	{
 		sync();
 		return OK;
@@ -361,6 +404,7 @@ int v9_video_sqldb_del_by_channel(sqlite3 *db, u_int32 id, u_int32 table, u_int3
 {
 	char sqlcmd[256];
 	char *zErrMsg =NULL;
+	u_int32 bid = id;
 	memset(sqlcmd, 0, sizeof(sqlcmd));
 	if(table == 0)
 		snprintf(sqlcmd, sizeof(sqlcmd), "DELETE FROM "V9_VIDEO_SNAP_TBL_NAME " \
@@ -370,7 +414,7 @@ int v9_video_sqldb_del_by_channel(sqlite3 *db, u_int32 id, u_int32 table, u_int3
     		WHERE channel = %d;", channel);
     if(V9_SQLDB_DEBUG(DBCMD))
     	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
-	if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_delete_callback, NULL, &zErrMsg) == SQLITE_OK)
+	if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_delete_callback, &bid, &zErrMsg) == SQLITE_OK)
 	{
 		sync();
 		return OK;
@@ -390,6 +434,7 @@ int v9_video_sqldb_del_by_gender(sqlite3 *db, u_int32 id, u_int32 table, BOOL ge
 {
 	char sqlcmd[256];
 	char *zErrMsg =NULL;
+	u_int32 bid = id;
 	memset(sqlcmd, 0, sizeof(sqlcmd));
 	if(table == 0)
     	snprintf(sqlcmd, sizeof(sqlcmd), "DELETE FROM "V9_VIDEO_SNAP_TBL_NAME " \
@@ -400,7 +445,7 @@ int v9_video_sqldb_del_by_gender(sqlite3 *db, u_int32 id, u_int32 table, BOOL ge
 
     if(V9_SQLDB_DEBUG(DBCMD))
     	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
-	if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_delete_callback, NULL, &zErrMsg) == SQLITE_OK)
+	if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_delete_callback, &bid, &zErrMsg) == SQLITE_OK)
 	{
 		sync();
 		return OK;
@@ -420,6 +465,7 @@ int v9_video_sqldb_del_by_userid(sqlite3 *db, u_int32 id, u_int32 table, char * 
 {
 	char sqlcmd[256];
 	char *zErrMsg =NULL;
+	u_int32 bid = id;
 	memset(sqlcmd, 0, sizeof(sqlcmd));
 	if(table == 0)
 		snprintf(sqlcmd, sizeof(sqlcmd), "DELETE FROM "V9_VIDEO_SNAP_TBL_NAME " \
@@ -430,7 +476,7 @@ int v9_video_sqldb_del_by_userid(sqlite3 *db, u_int32 id, u_int32 table, char * 
 
     if(V9_SQLDB_DEBUG(DBCMD))
     	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
-	if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_delete_callback, NULL, &zErrMsg) == SQLITE_OK)
+	if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_delete_callback, &bid, &zErrMsg) == SQLITE_OK)
 	{
 		sync();
 		return OK;
@@ -450,6 +496,7 @@ int v9_video_sqldb_del_by_index_id(sqlite3 *db, u_int32 id, u_int32 table, u_int
 {
 	char sqlcmd[256];
 	char *zErrMsg =NULL;
+	u_int32 bid = id;
 	memset(sqlcmd, 0, sizeof(sqlcmd));
 	if(table == 0)
     {
@@ -472,7 +519,7 @@ int v9_video_sqldb_del_by_index_id(sqlite3 *db, u_int32 id, u_int32 table, u_int
 
     if(V9_SQLDB_DEBUG(DBCMD))
     	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
-	if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_delete_callback, NULL, &zErrMsg) == SQLITE_OK)
+	if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_delete_callback, &bid, &zErrMsg) == SQLITE_OK)
 	{
 		sync();
 		return OK;
@@ -483,6 +530,47 @@ int v9_video_sqldb_del_by_index_id(sqlite3 *db, u_int32 id, u_int32 table, u_int
 			zlog_err(ZLOG_APP, " SQL DELETE by start(%d-%d) on Table '%s'(%s)", start, end, V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
 		else
 			zlog_err(ZLOG_APP, " SQL DELETE by start(%d-%d) on Table '%s'(%s)", start, end, V9_VIDEO_WARN_TBL_NAME, zErrMsg);
+	}
+	sqlite3_free(zErrMsg);
+	return ERROR;
+}
+
+
+
+int v9_video_sqldb_select_by_oldid(sqlite3 *db, u_int32 id, u_int32 table, u_int32 limit)
+{
+	char sqlcmd[1024];
+	u_int32 bid = id;
+	char *zErrMsg =NULL;
+	memset(sqlcmd, 0, sizeof(sqlcmd));
+
+	if(table == 0)
+    {
+		//DELETE FROM snapcaptable WHERE id IN ( SELECT id FROM snapcaptable ORDER BY id ASC LIMIT 5)
+		//根据ID升序排列返回有限个结果
+    	snprintf(sqlcmd, sizeof(sqlcmd), "DELETE FROM "V9_VIDEO_SNAP_TBL_NAME " WHERE id IN ("
+				 "SELECT id FROM "V9_VIDEO_SNAP_TBL_NAME " ORDER BY id ASC LIMIT %d);", limit);
+    }
+	else
+    {
+    	snprintf(sqlcmd, sizeof(sqlcmd), "DELETE FROM "V9_VIDEO_WARN_TBL_NAME " WHERE id IN ("
+				 "SELECT id FROM "V9_VIDEO_WARN_TBL_NAME " ORDER BY id ASC LIMIT %d);", limit);
+    }
+
+    if(V9_SQLDB_DEBUG(DBCMD))
+    	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+
+	if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_delete_callback, &bid, &zErrMsg) == SQLITE_OK)
+	{
+		sync();
+		return OK;
+	}
+	if(V9_SQLDB_DEBUG(MSG))
+	{
+		if(table == 0)
+			zlog_err(ZLOG_APP, " SQL DELETE by start count(%d) on Table '%s'(%s)", limit, V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
+		else
+			zlog_err(ZLOG_APP, " SQL DELETE by start count(%d) on Table '%s'(%s)", limit, V9_VIDEO_WARN_TBL_NAME, zErrMsg);
 	}
 	sqlite3_free(zErrMsg);
 	return ERROR;
@@ -501,20 +589,200 @@ int v9_video_sqldb_del_by_index_id(sqlite3 *db, u_int32 id, u_int32 table, u_int
 
 
 
-
-
-
-
 /*
  * 查询
  */
+static int v9_video_sqldb_select_sqlcmd_by_keywork(v9_cap_keywork_t *keywork, char *sqlcmd, int maxsize)
+{
+	int offset = 0, i = 0;
+	char *sqlstr = sqlcmd;
+	if (keywork->limit)
+	{
+		if (keywork->table == 0)
+		{
+			snprintf (
+					sqlstr + offset,
+					maxsize - offset,
+					"SELECT id,channel FROM "V9_VIDEO_SNAP_TBL_NAME " WHERE id IN ( ");
+		}
+		else
+		{
+			snprintf (
+					sqlstr + offset,
+					maxsize - offset,
+					"SELECT id,channel FROM "V9_VIDEO_WARN_TBL_NAME " WHERE id IN ( ");
+		}
+		offset = strlen (sqlstr);
+		if (keywork->table == 0)
+		{
+			snprintf (sqlstr + offset, maxsize - offset,
+					  "SELECT id FROM "V9_VIDEO_SNAP_TBL_NAME " WHERE ");
+		}
+		else
+		{
+			snprintf (sqlstr + offset, maxsize - offset,
+					  "SELECT id FROM "V9_VIDEO_WARN_TBL_NAME " WHERE ");
+		}
+	}
+	else
+	{
+		if (keywork->table == 0)
+		{
+			snprintf (
+					sqlstr + offset, maxsize - offset,
+					"SELECT id,channel FROM "V9_VIDEO_SNAP_TBL_NAME " WHERE ");
+		}
+		else
+		{
+			snprintf (
+					sqlstr + offset, maxsize - offset,
+					"SELECT id,channel FROM "V9_VIDEO_WARN_TBL_NAME " WHERE ");
+		}
+	}
+
+	if(offset >= maxsize)
+		return ERROR;
+	offset = strlen (sqlstr);
+	if (keywork->channel != 0)
+	{
+		snprintf (sqlstr + offset, maxsize - offset, " channel=%d",
+				  keywork->channel - 1);
+		i++;
+	}
+	offset = strlen (sqlstr);
+	if (keywork->gender == 1 || keywork->gender == 2)
+	{
+		snprintf (sqlstr + offset, maxsize - offset, " %s gender=%d",
+				  i ? "and" : " ", keywork->gender - 1);
+		i++;
+	}
+	if(offset >= maxsize)
+		return ERROR;
+	//offset = strlen(sqlstr);
+	//if(keywork->group == 0||keywork->group == 1)
+	//	snprintf(sqlstr + offset, maxsize - offset, " groupid=%d and", keywork->group);
+
+	offset = strlen (sqlstr);
+	if (keywork->starttime != 0)
+	{
+		snprintf (sqlstr + offset, maxsize - offset,
+				  " %s datetime >= '%s'", i ? "and" : " ",
+				  os_time_fmt ("sql", keywork->starttime));
+		i++;
+	}
+	if(offset >= maxsize)
+		return ERROR;
+	offset = strlen (sqlstr);
+	if (keywork->endtime != 0)
+	{
+		snprintf (sqlstr + offset, maxsize - offset,
+				  " %s datetime <= '%s'", i ? "and" : " ",
+				  os_time_fmt ("sql", keywork->endtime));
+		i++;
+	}
+	offset = strlen (sqlstr);
+	if(offset >= maxsize)
+		return ERROR;
+	if (keywork->age != 0)
+	{
+		snprintf (sqlstr + offset, maxsize - offset, " %s age=%d",
+				  i ? "and" : " ", keywork->age - 1);
+		i++;
+	}
+	if (keywork->table != 0)
+	{
+		offset = strlen (sqlstr);
+		if (keywork->group != 0)
+		{
+			snprintf (sqlstr + offset, maxsize - offset,
+					  " %s groupid=%d", i ? "and" : " ", keywork->group - 1);
+			i++;
+		}
+
+		offset = strlen (sqlstr);
+		if(offset >= maxsize)
+			return ERROR;
+		if (strlen (keywork->username))
+		{
+			snprintf (sqlstr + offset, maxsize - offset,
+					  " %s username='%s'", i ? "and" : " ", keywork->username);
+			i++;
+		}
+
+		offset = strlen (sqlstr);
+		if(offset >= maxsize)
+			return ERROR;
+		if (strlen (keywork->userid))
+		{
+			snprintf (sqlstr + offset, maxsize - offset,
+					  " %s userid='%s'", i ? "and" : " ", keywork->userid);
+			i++;
+		}
+	}
+	if (keywork->limit)
+	{
+		offset = strlen (sqlstr);
+		if(offset >= maxsize)
+			return ERROR;
+		snprintf (sqlstr + offset, maxsize - offset,
+				  ") ORDER BY id DESC LIMIT %d", keywork->limit);
+	}
+	strcat (sqlstr, ";");
+	if(offset >= maxsize)
+		return ERROR;
+	return OK;
+}
+
+int v9_video_sqldb_select_count_by_keywork(sqlite3 *db, v9_cap_keywork_t *keywork, int *pValue)
+{
+	int value = 0;
+	char sqlcmd[1024];
+	char *zErrMsg = NULL;
+	memset(sqlcmd, 0, sizeof(sqlcmd));
+
+	value = v9_video_sqldb_select_sqlcmd_by_keywork(keywork, sqlcmd, sizeof(sqlcmd));
+	if(value != OK)
+	{
+		zlog_err(ZLOG_APP, " SQL Format SQL CMD fail");
+		return ERROR;
+	}
+	if (keywork->limit)
+	{
+		if(pValue)
+			*pValue = 8192;
+		return OK;
+	}
+	//id,channel SELECT id,channel
+	memset(sqlcmd, 0, strlen("SELECT id,channel"));
+	memcpy(sqlcmd, "SELECT  count(*) ", strlen("SELECT  count(*) "));
+
+    //if(V9_SQLDB_DEBUG(DBCMD))
+    	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+
+	if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_count_callback, &value, &zErrMsg) == SQLITE_OK)
+	{
+		if(pValue)
+			*pValue = value;
+		//printf("=======================%s============================value=%d sqlcmd=%s\r\n", __func__, value, sqlcmd);
+		return OK;
+	}
+	if(V9_SQLDB_DEBUG(MSG))
+	{
+		if(keywork->table == 0)
+			zlog_err(ZLOG_APP, " SQL SELECT count on Table '%s'(%s)", V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
+		else
+			zlog_err(ZLOG_APP, " SQL SELECT count on Table '%s'(%s)", V9_VIDEO_WARN_TBL_NAME, zErrMsg);
+	}
+	sqlite3_free(zErrMsg);
+	return ERROR;
+}
 /*
  * 根据条件获取ID表
  */
 int v9_video_sqldb_select_by_keywork(sqlite3 *db, v9_cap_keywork_t *keywork,
 									 u_int32 *outid, u_int32 *cnt)
 {
-	int ret = 0, i = 0, offset = 0;
+	int ret = 0, i = 0;
 	char sqlcmd[1024];
 	sqlite3_stmt *stmt = NULL;
 	int len = 0;
@@ -522,89 +790,12 @@ int v9_video_sqldb_select_by_keywork(sqlite3 *db, v9_cap_keywork_t *keywork,
 	//float fresult = 0.0f;
 	memset(sqlcmd, 0, sizeof(sqlcmd));
 
-	if(keywork->table == 0)
-    {
-    	snprintf(sqlcmd, sizeof(sqlcmd), "SELECT id,channel FROM "V9_VIDEO_SNAP_TBL_NAME " WHERE ");
-    }
-	else
-    {
-		snprintf(sqlcmd, sizeof(sqlcmd), "SELECT id,channel FROM "V9_VIDEO_WARN_TBL_NAME " WHERE ");
-    }
-
-	offset = strlen(sqlcmd);
-	if(keywork->channel != 0)
+	ret = v9_video_sqldb_select_sqlcmd_by_keywork(keywork, sqlcmd, sizeof(sqlcmd));
+	if(ret != OK)
 	{
-		snprintf(sqlcmd + offset, sizeof(sqlcmd) - offset, " channel=%d", keywork->channel-1);
-		i++;
+		zlog_err(ZLOG_APP, " SQL Format SQL CMD fail");
+		return ERROR;
 	}
-	offset = strlen(sqlcmd);
-	if(keywork->gender == 1||keywork->gender == 2)
-	{
-		snprintf(sqlcmd + offset, sizeof(sqlcmd) - offset, " %s gender=%d", i?"and":" ", keywork->gender - 1);
-		i++;
-	}
-	//offset = strlen(sqlcmd);
-	//if(keywork->group == 0||keywork->group == 1)
-	//	snprintf(sqlcmd + offset, sizeof(sqlcmd) - offset, " groupid=%d and", keywork->group);
-
-	offset = strlen(sqlcmd);
-	if(keywork->starttime != 0)
-	{
-		snprintf(sqlcmd + offset, sizeof(sqlcmd) - offset, " %s datetime >= '%s'", i?"and":" ", os_time_fmt("sql",keywork->starttime));
-		i++;
-	}
-	offset = strlen(sqlcmd);
-	if(keywork->endtime != 0)
-	{
-		snprintf(sqlcmd + offset, sizeof(sqlcmd) - offset, " %s datetime <= '%s'", i?"and":" ", os_time_fmt("sql",keywork->endtime));
-		i++;
-	}
-	offset = strlen(sqlcmd);
-	if(keywork->age == 1)
-	{
-		snprintf(sqlcmd + offset, sizeof(sqlcmd) - offset, " %s age between 18 and 39", i?"and":" ");
-		i++;
-	}
-	else if(keywork->age == 2)
-	{
-		snprintf(sqlcmd + offset, sizeof(sqlcmd) - offset, " %s age between 40 and 59", i?"and":" ");
-		i++;
-	}
-	else if(keywork->age == 3)
-	{
-		snprintf(sqlcmd + offset, sizeof(sqlcmd) - offset, " %s age between 60 and 99", i?"and":" ");
-		i++;
-	}
-	else if(keywork->age == 4)
-	{
-		snprintf(sqlcmd + offset, sizeof(sqlcmd) - offset, " %s age>=100", i?"and":" ");
-		i++;
-	}
-	if(keywork->table != 0)
-	{
-		offset = strlen(sqlcmd);
-		if(keywork->group != 0)
-		{
-			snprintf(sqlcmd + offset, sizeof(sqlcmd) - offset, " %s groupid=%d" , i?"and":" ", keywork->group-1);
-			i++;
-		}
-
-		offset = strlen(sqlcmd);
-		if(strlen(keywork->username))
-		{
-			snprintf(sqlcmd + offset, sizeof(sqlcmd) - offset, " %s username='%s'", i?"and":" ", keywork->username);
-			i++;
-		}
-
-		offset = strlen(sqlcmd);
-		if(strlen(keywork->userid))
-		{
-			snprintf(sqlcmd + offset, sizeof(sqlcmd) - offset, " %s userid='%s'", i?"and":" ", keywork->userid);
-			i++;
-		}
-	}
-
-	strcat(sqlcmd, ";");
 	//select * from student where sex='男' and age=20;
     if(V9_SQLDB_DEBUG(DBCMD))
     	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
@@ -625,6 +816,8 @@ int v9_video_sqldb_select_by_keywork(sqlite3 *db, v9_cap_keywork_t *keywork,
 		{
 			outid[i++] = atoi(pReadBolbData);
 		}
+		if(cnt && i >= *cnt)
+			break;
  		ret = sqlite3_step(stmt);
     }
 
@@ -653,11 +846,11 @@ int v9_video_sqldb_select_by_new(sqlite3 *db, v9_cap_keywork_t *keywork,
 	if(keywork->table == 0)
     {
 		//根据ID降序排列返回有限个结果
-    	snprintf(sqlcmd, sizeof(sqlcmd), "SELECT id,channel FROM "V9_VIDEO_SNAP_TBL_NAME " ORDER BY id DESC LIMIT %d;", keywork->age);
+    	snprintf(sqlcmd, sizeof(sqlcmd), "SELECT id,channel FROM "V9_VIDEO_SNAP_TBL_NAME " ORDER BY id DESC LIMIT %d;", keywork->limit);
     }
 	else
     {
-		snprintf(sqlcmd, sizeof(sqlcmd), "SELECT id,channel FROM "V9_VIDEO_WARN_TBL_NAME " ORDER BY id DESC LIMIT %d;",  keywork->age);
+		snprintf(sqlcmd, sizeof(sqlcmd), "SELECT id,channel FROM "V9_VIDEO_WARN_TBL_NAME " ORDER BY id DESC LIMIT %d;",  keywork->limit);
     }
 
     if(V9_SQLDB_DEBUG(DBCMD))
@@ -693,24 +886,55 @@ int v9_video_sqldb_select_by_new(sqlite3 *db, v9_cap_keywork_t *keywork,
 /*
  * 根据特征值获取ID表
  */
-int v9_video_sqldb_select_by_keyvalue(sqlite3 *db, u_int32 id, u_int32 table, sql_snapfea_key *key, u_int32 *outid, u_int32 *cnt)
+int v9_video_sqldb_select_by_keyvalue(sqlite3 *db, u_int32 id, u_int32 table, u_int32 limit, sql_snapfea_key *key, u_int32 *outid, u_int32 *cnt)
 {
-	int ret = 0, i = 0;
+	int ret = 0, i = 0, offset = 0;
     char sqlcmd[512];
     sqlite3_stmt *stmt = NULL;
 	int len = 0;
 	void *pReadBolbData = NULL;
 	float fresult = 0.0f;
     memset(sqlcmd, 0, sizeof(sqlcmd));
+	if(limit)
+	{
+		if(table == 0)
+		{
+			snprintf(sqlcmd + offset, sizeof(sqlcmd) - offset,
+					 "SELECT id,channel FROM "V9_VIDEO_SNAP_TBL_NAME " WHERE id IN ( ");
+		}
+		else
+		{
+			snprintf(sqlcmd + offset, sizeof(sqlcmd) - offset,
+					 "SELECT id,channel FROM "V9_VIDEO_WARN_TBL_NAME " WHERE id IN ( ");
+		}
+		offset = strlen(sqlcmd);
+		if(table == 0)
+		{
+			snprintf(sqlcmd + offset, sizeof(sqlcmd) - offset, "SELECT id FROM "V9_VIDEO_SNAP_TBL_NAME);
+		}
+		else
+		{
+			snprintf(sqlcmd + offset, sizeof(sqlcmd) - offset, "SELECT id FROM "V9_VIDEO_WARN_TBL_NAME);
+		}
+	}
+	else
+	{
+		if(table == 0)
+		{
+			snprintf(sqlcmd + offset, sizeof(sqlcmd) - offset, "SELECT id,keyvalue FROM "V9_VIDEO_SNAP_TBL_NAME);
+		}
+		else
+		{
+			snprintf(sqlcmd + offset, sizeof(sqlcmd) - offset, "SELECT id,keyvalue FROM "V9_VIDEO_WARN_TBL_NAME);
+		}
+	}
+	if(limit)
+	{
+		offset = strlen(sqlcmd);
+		snprintf(sqlcmd + offset, sizeof(sqlcmd) - offset, ") ORDER BY id DESC LIMIT %d", limit);
+	}
+	strcat(sqlcmd, ";");
 
-    if(table == 0)
-    {
-    	snprintf(sqlcmd, sizeof(sqlcmd), "SELECT id,keyvalue FROM "V9_VIDEO_SNAP_TBL_NAME ";");
-    }
-    else
-    {
-		snprintf(sqlcmd, sizeof(sqlcmd), "SELECT id,keyvalue FROM "V9_VIDEO_WARN_TBL_NAME ";");
-    }
     if(V9_SQLDB_DEBUG(DBCMD))
     	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
     if (sqlite3_prepare(db, sqlcmd, strlen(sqlcmd), &stmt, NULL) != SQLITE_OK)
@@ -733,7 +957,7 @@ int v9_video_sqldb_select_by_keyvalue(sqlite3 *db, u_int32 id, u_int32 table, sq
  				ret = (key->feature_memcmp)(key->feature.feature_data, pReadBolbData, MIN(len/sizeof(float),key->feature_len) , &fresult);
  				if( ret == OK)
  				{
- 					zlog_debug(ZLOG_APP, "======================%s:keyw->key.input_value=%f\r\n",__func__, key->input_value);
+ 					//zlog_debug(ZLOG_APP, "======================%s:keyw->key.input_value=%f\r\n",__func__, key->input_value);
  					if((double)fabs((double)fresult) >= (double)(key->input_value))
  					{
  						key->output_result = fresult;
@@ -751,6 +975,8 @@ int v9_video_sqldb_select_by_keyvalue(sqlite3 *db, u_int32 id, u_int32 table, sq
  				zlog_warn(ZLOG_APP, " feature cmp func is null");
  			}
  		}
+		if(cnt && i >= *cnt)
+			break;
  		ret = sqlite3_step(stmt);
     }
 
@@ -797,7 +1023,12 @@ int v9_video_sqldb_get_keyvalue(sqlite3 *db, u_int32 id, u_int32 table, u_int32 
  		if(key && len && pReadBolbData)
  		{
 			key->feature_len = len/sizeof(float);
-			key->feature.ckey_data = XMALLOC(MTYPE_VIDEO_KEY,len + 1);
+			//key->feature.feature_data = key->feature.ckey_data = XMALLOC(MTYPE_VIDEO_KEY,len + 1);
+			if(len > APP_FEATURE_MAX)
+			{
+				key->feature.feature_data = key->feature.ckey_data = XREALLOC(MTYPE_VIDEO_KEY,
+					key->feature.ckey_data, len + sizeof(float));									// 特征值
+			}
 			if(key->feature.ckey_data && pReadBolbData)
 			{
 				memcpy(key->feature.feature_data, pReadBolbData, len);
@@ -835,6 +1066,7 @@ static int v9_video_sqldb_get_callback(void *NotUsed, int argc, char **argv, cha
 		{
 			if (argv[i])
 				strcpy (user->datetime, argv[i]);
+				//strncpy (user->datetime, argv[i], 16/*strlen("2020-05-05 11:15")*/);
 		}
 		else if (azColName[i] && strcasecmp (azColName[i], "gender")==0)
 		{
@@ -895,7 +1127,16 @@ static int v9_video_sqldb_get_callback(void *NotUsed, int argc, char **argv, cha
 			else if (azColName[i] && strcasecmp (azColName[i], "videourl")==0)
 			{
 				if (argv[i])
-					strcpy (user->videoname, argv[i]);
+				{
+					if(strncasecmp(argv[i], "/nfsroot/", 6)==0)
+					{
+						strcpy (user->videoname, argv[i] + strlen("/nfsroot/"));
+					}
+					else
+					{
+						strcpy (user->videoname, argv[i]);
+					}
+				}
 			}
 			else if (azColName[i] && strcasecmp (azColName[i], "similarity")==0)
 			{
@@ -920,14 +1161,15 @@ int v9_video_sqldb_get_capinfo(sqlite3 *db,u_int32 id, u_int32 table, u_int32 in
 	user->ID = id;
 	if(table == 0)
     {
-    	snprintf(sqlcmd, sizeof(sqlcmd), "SELECT id,channel,datetime,gender,age,mood,complexion,minority,picurl FROM "V9_VIDEO_SNAP_TBL_NAME " WHERE id = %d;", inid);
+    	snprintf(sqlcmd, sizeof(sqlcmd), "SELECT id,channel,datetime,gender,age,mood,complexion,"
+    			"minority,picurl FROM "V9_VIDEO_SNAP_TBL_NAME " WHERE id = %d;", inid);
         if(V9_SQLDB_DEBUG(DBCMD))
         	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
 		if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_get_callback, pArgv, &zErrMsg) == SQLITE_OK)
 		{
-			if(v9_video_sqldb_get_keyvalue(db,  id,  table,  inid, &user->key) == SQLITE_OK)
+			//if(v9_video_sqldb_get_keyvalue(db,  id,  table,  inid, &user->key) == SQLITE_OK)
 				return OK;
-			else
+/*			else
 			{
 				if(V9_SQLDB_DEBUG(MSG))
 				{
@@ -937,19 +1179,21 @@ int v9_video_sqldb_get_capinfo(sqlite3 *db,u_int32 id, u_int32 table, u_int32 in
 						zlog_err(ZLOG_APP, " SQL DELETE by ID(%d) on Table '%s'(%s)", inid, V9_VIDEO_WARN_TBL_NAME, sqlite3_errmsg (db));
 				}
 				return ERROR;
-			}
+			}*/
 		}
     }
 	else
     {
-    	snprintf(sqlcmd, sizeof(sqlcmd), "SELECT id,username,userid,groupid,channel,datetime,gender,similarity,age,mood,complexion,minority,picurl,videourl FROM "V9_VIDEO_WARN_TBL_NAME " WHERE id = %d;", inid);
+    	snprintf(sqlcmd, sizeof(sqlcmd), "SELECT id,username,userid,groupid,channel,"
+    			"datetime,gender,similarity,age,mood,complexion,minority,picurl,"
+    			"videourl FROM "V9_VIDEO_WARN_TBL_NAME " WHERE id = %d;", inid);
         if(V9_SQLDB_DEBUG(DBCMD))
         	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
 		if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_get_callback, pArgv, &zErrMsg) == SQLITE_OK)
 		{
-			if(v9_video_sqldb_get_keyvalue(db,  id,  table,  inid, &user->key) == SQLITE_OK)
+			//if(v9_video_sqldb_get_keyvalue(db,  id,  table,  inid, &user->key) == SQLITE_OK)
 				return OK;
-			else
+/*			else
 			{
 				if(V9_SQLDB_DEBUG(MSG))
 				{
@@ -959,7 +1203,7 @@ int v9_video_sqldb_get_capinfo(sqlite3 *db,u_int32 id, u_int32 table, u_int32 in
 						zlog_err(ZLOG_APP, " SQL DELETE by ID(%d) on Table '%s'(%s)", inid, V9_VIDEO_WARN_TBL_NAME, sqlite3_errmsg (db));
 				}
 				return ERROR;
-			}
+			}*/
 		}
     }
 	if(V9_SQLDB_DEBUG(MSG))
@@ -1023,6 +1267,33 @@ int v9_video_sqldb_select_by_userid(sqlite3 *db, u_int32 id, u_int32 table, char
 
 
 #ifdef V9_SQLDB_TEST
+/*int v9_video_sqldb_del_by_index_id()
+{
+	sqlite3 * db = v9_video_sqldb_open(APP_BOARD_CALCU_1, tbl);
+	char sqlcmd[256];
+	char *zErrMsg =NULL;
+	memset(sqlcmd, 0, sizeof(sqlcmd));
+
+    		snprintf(sqlcmd, sizeof(sqlcmd), "update "V9_VIDEO_WARN_TBL_NAME "set similarity='%.f';");
+
+    if(V9_SQLDB_DEBUG(DBCMD))
+    	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+	if(sqlite3_exec(db, sqlcmd, NULL, NULL, &zErrMsg) == SQLITE_OK)
+	{
+		sync();
+		return OK;
+	}
+	if(V9_SQLDB_DEBUG(MSG))
+	{
+		if(table == 0)
+			zlog_err(ZLOG_APP, " SQL DELETE by start(%d-%d) on Table '%s'(%s)", start, end, V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
+		else
+			zlog_err(ZLOG_APP, " SQL DELETE by start(%d-%d) on Table '%s'(%s)", start, end, V9_VIDEO_WARN_TBL_NAME, zErrMsg);
+	}
+	sqlite3_free(zErrMsg);
+	return ERROR;
+}*/
+
 int v9_video_sqldb_test(int i, int tbl, void *pArg)
 {
 	sqlite3 * db = v9_video_sqldb_open(APP_BOARD_CALCU_1, tbl);

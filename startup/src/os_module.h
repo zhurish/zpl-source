@@ -8,6 +8,13 @@
 #ifndef __OS_MODULE_H_
 #define __OS_MODULE_H_
 
+#ifdef PL_PJSIP_MODULE
+extern int _pl_pjsip_module_init();
+extern int _pl_pjsip_module_exit();
+extern int _pl_pjsip_module_task_init();
+extern int _pl_pjsip_module_task_exit();
+#endif
+
 extern int console_enable;
 
 extern int nsm_module_init ();

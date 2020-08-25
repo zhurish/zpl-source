@@ -350,6 +350,7 @@ struct mosquitto {
 #ifdef WITH_EPOLL
 	uint32_t events;
 #endif
+	bool run_forever;
 };
 
 #define STREMPTY(str) (str[0] == '\0')

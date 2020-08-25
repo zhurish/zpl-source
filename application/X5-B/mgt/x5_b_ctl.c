@@ -35,12 +35,10 @@
 #include "x5_b_util.h"
 #include "x5_b_web.h"
 #include "x5b_facecard.h"
-#ifdef PL_VOIP_MODULE
+#ifdef PL_PJSIP_MODULE
 #include "voip_def.h"
 #endif
-#ifdef PL_OSIP_MODULE
-#include "voip_app.h"
-#endif
+
 
 
 
@@ -92,10 +90,8 @@ static int x5b_app_local_address_set(char *address, u_int32 mask)
 		cp.prefixlen = ip_masklen(netmask);
 		if(mask == 0)
 			cp.prefixlen = 24;
-#ifdef PL_VOIP_MODULE
-#ifdef PL_OSIP_MODULE
-		voip_sip_source_interface_set_api(ifp->ifindex);
-#endif
+#ifdef PL_PJSIP_MODULE
+
 #ifdef PL_PJSIP_MODULE
 		pl_pjsip_source_interface_set_api(ifp->ifindex);
 #endif
@@ -239,11 +235,8 @@ int x5b_app_start_call(BOOL start, x5b_app_call_t *call)
 {
 	if(call /*&& strlen(call->data) >= 4*/)
 	{
-#ifdef PL_VOIP_MODULE
-#ifdef PL_OSIP_MODULE
-		voip_event_ready_add(start ? voip_app_start_call_event_ui:voip_app_stop_call_event_ui,
-				NULL, call, sizeof(x5b_app_call_t), 0);
-#endif
+#ifdef PL_PJSIP_MODULE
+
 #ifdef PL_PJSIP_MODULE
 		voip_event_t event;
 		memset(&event, 0, sizeof(voip_event_t));
@@ -264,11 +257,8 @@ int x5b_app_start_call_phone(BOOL start, char *call)
 {
 	if(call /*&& strlen(call->data) >= 4*/)
 	{
-#ifdef PL_VOIP_MODULE
-#ifdef PL_OSIP_MODULE
-		voip_event_ready_add(start ? voip_app_start_call_event_ui_phone:voip_app_stop_call_event_ui,
-				NULL, call, strlen(call), 0);
-#endif
+#ifdef PL_PJSIP_MODULE
+
 #ifdef PL_PJSIP_MODULE
 		voip_event_t event;
 		memset(&event, 0, sizeof(voip_event_t));
@@ -289,11 +279,8 @@ int x5b_app_start_call_user(BOOL start, char *call)
 {
 	if(call /*&& strlen(call->data) >= 4*/)
 	{
-#ifdef PL_VOIP_MODULE
-#ifdef PL_OSIP_MODULE
-		voip_event_ready_add(start ? voip_app_start_call_event_ui_user:voip_app_stop_call_event_ui,
-				NULL, call, strlen(call), 0);
-#endif
+#ifdef PL_PJSIP_MODULE
+
 #ifdef PL_PJSIP_MODULE
 		voip_event_t event;
 		memset(&event, 0, sizeof(voip_event_t));
@@ -314,10 +301,8 @@ int x5b_app_stop_call(BOOL start, x5b_app_call_t *call)
 {
 	if(1/* call && strlen(call->data) >= 4*/)
 	{
-#ifdef PL_VOIP_MODULE
-#ifdef PL_OSIP_MODULE
-	voip_event_ready_add(voip_app_stop_call_event_ui, NULL, NULL, 0, 0);
-#endif
+#ifdef PL_PJSIP_MODULE
+
 #ifdef PL_PJSIP_MODULE
 		voip_app_stop_call_event_ui(NULL);
 #endif
@@ -443,22 +428,8 @@ int x5b_app_local_network_info_get(x5b_app_netinfo_t *info)
 
 int x5b_app_local_register_info_get(x5b_app_phone_register_ack_t *info)
 {
-#ifdef PL_VOIP_MODULE
-#ifdef PL_OSIP_MODULE
-	if(sip_config && info)
-	{
-		info->iface = 0;
-		info->l_port = htons(sip_config->sip_local_port);
-		info->sip_address = htonl(sip_config->sip_server);
-		info->sip_port = htons(sip_config->sip_port);
-		info->proxy_address = htonl(sip_config->sip_proxy_server);
-		info->proxy_port = htons(sip_config->sip_proxy_port);
-		info->proto = sip_config->proto;
-		info->dtmf		= sip_config->dtmf - 1;
-		info->codec = sip_config->payload;
-		return OK;
-	}
-#endif
+#ifdef PL_PJSIP_MODULE
+
 #ifdef PL_PJSIP_MODULE
 	if(pl_pjsip && info)
 	{

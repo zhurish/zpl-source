@@ -37,6 +37,9 @@
 
 int v9_board_init(u_int8 id, v9_board_t *board)
 {
+	zassert(board);
+	memset(&bios_device, 0, sizeof(bios_device));
+	bios_device.cmd = 0;
 	switch(id)
 	{
 	case APP_BOARD_MAIN:
@@ -126,6 +129,19 @@ int v9_board_update_board(u_int8 id, v9_board_t *board)
 static void _v9_app_board_show(struct vty * vty, int id, int debug)
 {
 	int i = 0;
+	char tmp[128];
+	u_int glen = 0, tlen = 0, mlen = 0;
+	vty_out(vty, "BIOS Information : %s",VTY_NEWLINE);
+	vty_out(vty, " Serial NO                  : %s%s", bios_device.serialno, VTY_NEWLINE);
+	vty_out(vty, " Device ID                  : %s%s", bios_device.deviceid, VTY_NEWLINE);
+	vty_out(vty, " Manufacturer               : %s%s", bios_device.manufacturer, VTY_NEWLINE);
+	vty_out(vty, " Version                    : %s-%s%s",
+			 bios_device.kervel_version,
+			 bios_device.app_version,
+			 VTY_NEWLINE);
+	vty_out(vty, " Buildtime                  : %s%s", bios_device.buildtime, VTY_NEWLINE);
+	vty_out(vty, "%s", VTY_NEWLINE);
+
 	for (i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
 		if (v9_video_board[i].board.use == TRUE)
@@ -152,13 +168,60 @@ static void _v9_app_board_show(struct vty * vty, int id, int debug)
 				vty_out(vty, "  CPU Load                  : %d.%d%%%s", (v9_video_board[i].board.cpuload>>8)&0xff,
 						(v9_video_board[i].board.cpuload)&0xff, VTY_NEWLINE);
 
-				vty_out(vty, "  Memory Total              : %d MB%s", v9_video_board[i].board.memtotal, VTY_NEWLINE);
+				mlen = (v9_video_board[i].board.memtotal) & 0X000003FF;
+				glen = (v9_video_board[i].board.memtotal >> 10) & 0X000003FF;
+				tlen = (v9_video_board[i].board.memtotal >> 20) & 0X000003FF;
+				memset(tmp, 0, sizeof(tmp));
+				if (tlen > 0)
+				{
+					snprintf(tmp, sizeof(tmp), "%d.%02d T", tlen, glen);
+				}
+				else if (glen > 0)
+				{
+					snprintf(tmp, sizeof(tmp), "%d.%02d G", glen, mlen);
+				}
+				else
+					snprintf(tmp, sizeof(tmp), "%d MB", v9_video_board[i].board.memtotal);
+
+				vty_out(vty, "  Memory Total              : %s%s", tmp, VTY_NEWLINE);
+
 				vty_out(vty, "  Memory Uses               : %d%%%s", v9_video_board[i].board.memload, VTY_NEWLINE);
+
 				if ((APP_BOARD_MAIN == id) || (v9_video_board[i].id == APP_BOARD_MAIN) )
 				{
-					vty_out(vty, "  Disk1 Total               : %d MB%s", v9_video_board[i].board.disktatol1, VTY_NEWLINE);
+					mlen = (v9_video_board[i].board.disktatol1) & 0X000003FF;
+					glen = (v9_video_board[i].board.disktatol1 >> 10) & 0X000003FF;
+					tlen = (v9_video_board[i].board.disktatol1 >> 20) & 0X000003FF;
+					memset(tmp, 0, sizeof(tmp));
+					if (tlen > 0)
+					{
+						snprintf(tmp, sizeof(tmp), "%d.%02d T", tlen, glen);
+					}
+					else if (glen > 0)
+					{
+						snprintf(tmp, sizeof(tmp), "%d.%02d G", glen, mlen);
+					}
+					else
+						snprintf(tmp, sizeof(tmp), "%d MB", v9_video_board[i].board.disktatol1);
+
+					vty_out(vty, "  Disk1 Total               : %s%s", tmp, VTY_NEWLINE);
 					vty_out(vty, "  Disk1 Uses                : %d%%%s", v9_video_board[i].board.diskload1, VTY_NEWLINE);
-					vty_out(vty, "  Disk2 Total               : %d MB%s", v9_video_board[i].board.disktatol2, VTY_NEWLINE);
+
+					mlen = (v9_video_board[i].board.disktatol2) & 0X000003FF;
+					glen = (v9_video_board[i].board.disktatol2 >> 10) & 0X000003FF;
+					tlen = (v9_video_board[i].board.disktatol2 >> 20) & 0X000003FF;
+					memset(tmp, 0, sizeof(tmp));
+					if (tlen > 0)
+					{
+						snprintf(tmp, sizeof(tmp), "%d.%02d T", tlen, glen);
+					}
+					else if (glen > 0)
+					{
+						snprintf(tmp, sizeof(tmp), "%d.%02d G", glen, mlen);
+					}
+					else
+						snprintf(tmp, sizeof(tmp), "%d MB", v9_video_board[i].board.disktatol2);
+					vty_out(vty, "  Disk2 Total               : %s%s", tmp, VTY_NEWLINE);
 					vty_out(vty, "  Disk2 Uses                : %d%%%s", v9_video_board[i].board.diskload2, VTY_NEWLINE);
 				}
 				if (debug)
@@ -184,6 +247,8 @@ static void _v9_app_board_show(struct vty * vty, int id, int debug)
 
 int v9_board_show(struct vty * vty, int id, int debug)
 {
+	v9_video_board_lock();
 	_v9_app_board_show(vty,  id,  debug);
+	v9_video_board_unlock();
 	return 0;
 }

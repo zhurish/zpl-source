@@ -73,11 +73,11 @@ int mqtt_client_connect(struct mqtt_app_config *cfg)
 #else
 			FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errno, 0, (LPTSTR)&err, 1024, NULL);
 #endif
-			mqtt_err_printf(cfg, "Error: %s\n", err);
+			mqtt_err_printf(cfg, "Error: %s", err);
 		}
 		else
 		{
-			mqtt_err_printf(cfg, "Unable to connect (%s).\n",
+			mqtt_err_printf(cfg, "Unable to connect (%s).",
 					mosquitto_strerror(rc));
 		}
 		return rc;
@@ -103,16 +103,22 @@ int mqtt_client_id_generate(struct mqtt_app_config *cfg)
 }
 
 
-int mqtt_client_add_topic(struct mqtt_app_config *cfg, mqtt_mode_t type, char *topic,
-		const char *arg)
+int mqtt_client_add_topic(struct mqtt_app_config *cfg, char *topic)
 {
 	zassert(cfg != NULL);
-	if (mosquitto_validate_utf8(topic, strlen(topic)))
+
+	if((cfg->sub.topic_count) == MQTT_TOPICS_MAX)
 	{
-		mqtt_err_printf(cfg, "Error: Malformed UTF-8 in %s argument.\n\n", arg);
+		mqtt_err_printf(cfg, "Error: Too many Topic");
 		return -1;
 	}
-	if (type == MQTT_MODE_PUB || type == MQTT_MODE_RR)
+
+	if (mosquitto_validate_utf8(topic, strlen(topic)))
+	{
+		mqtt_err_printf(cfg, "Error: Malformed UTF-8 in argument");
+		return -1;
+	}
+/*	if (type == MQTT_MODE_PUB || type == MQTT_MODE_RR)
 	{
 		if (mosquitto_pub_topic_check(topic) == MOSQ_ERR_INVAL)
 		{
@@ -121,42 +127,46 @@ int mqtt_client_add_topic(struct mqtt_app_config *cfg, mqtt_mode_t type, char *t
 					topic);
 			return -1;
 		}
-		if (type == MQTT_MODE_PUB)
-			cfg->pub.topic = XSTRDUP(MTYPE_MQTT_TOPIC,topic);
-		if (type == MQTT_MODE_RR)
-			cfg->rr.topic = XSTRDUP(MTYPE_MQTT_TOPIC,topic);
 	}
-	else if (type == MQTT_MODE_RESPONSE_TOPIC)
-	{
-		if (mosquitto_pub_topic_check(topic) == MOSQ_ERR_INVAL)
-		{
-			mqtt_err_printf(cfg,
-					"Error: Invalid response topic '%s', does it contain '+' or '#'?\n",
-					topic);
-			return -1;
-		}
-		cfg->rr.response_topic = XSTRDUP(MTYPE_MQTT_TOPIC,topic);
-	}
-	else
+	else*/
 	{
 		if (mosquitto_sub_topic_check(topic) == MOSQ_ERR_INVAL)
 		{
 			mqtt_err_printf(cfg,
-					"Error: Invalid subscription topic '%s', are all '+' and '#' wildcards correct?\n",
+					"Error: Invalid subscription topic '%s', are all '+' and '#' wildcards correct?",
 					topic);
 			return -1;
 		}
-		cfg->sub.topic_count++;
-		cfg->sub.topics = XREALLOC(MTYPE_MQTT_TOPIC, cfg->sub.topics,
-				cfg->sub.topic_count * sizeof(char *));
+/*		if (!cfg->sub.topics)
+		{
+			cfg->sub.topics = XMALLOC(MTYPE_MQTT_TOPIC, MQTT_TOPICS_MAX * sizeof(char *));
+		}
 		if (!cfg->sub.topics)
 		{
 			mqtt_err_printf(cfg, "Error: Out of memory.");
-			return -1;
-		}
-		cfg->sub.topics[cfg->sub.topic_count - 1] = XSTRDUP(MTYPE_MQTT_TOPIC,topic);
+			return ERROR;
+		}*/
+		cfg->sub.topic_count++;
+		cfg->sub.topics[cfg->sub.topic_count - 1] = XSTRDUP(MTYPE_MQTT_TOPIC, topic);
 	}
 	return 0;
+}
+
+int mqtt_client_del_topic(struct mqtt_app_config *cfg, char *topic)
+{
+	int i = 0;
+	zassert(cfg != NULL);
+	for(i = 0; i < cfg->sub.topic_count; i++)
+	{
+		if(cfg->sub.topics[i] && strcmp(cfg->sub.topics[i], topic) == 0)
+		{
+			XFREE(MTYPE_MQTT_TOPIC, cfg->sub.topics[i]);
+			cfg->sub.topics[i] = NULL;
+			cfg->sub.topic_count--;
+			return OK;
+		}
+	}
+	return ERROR;
 }
 
 int mqtt_client_opts_config(struct mqtt_app_config *cfg)
@@ -197,7 +207,7 @@ int mqtt_client_opts_config(struct mqtt_app_config *cfg)
 			}
 			else
 			{
-				mqtt_err_printf(cfg, "Error: Problem setting TLS options: %s.\n", mosquitto_strerror(rc));
+				mqtt_err_printf(cfg, "Error: Problem setting TLS options: %s.", mosquitto_strerror(rc));
 			}
 			return -1;
 		}
@@ -209,7 +219,7 @@ int mqtt_client_opts_config(struct mqtt_app_config *cfg)
 	}
 	if(cfg->tls_engine && mosquitto_string_option(cfg->mosq, MOSQ_OPT_TLS_ENGINE, cfg->tls_engine))
 	{
-		mqtt_err_printf(cfg, "Error: Problem setting TLS engine, is %s a valid engine?\n", cfg->tls_engine);
+		mqtt_err_printf(cfg, "Error: Problem setting TLS engine, is %s a valid engine?", cfg->tls_engine);
 		return -1;
 	}
 	if(cfg->keyform && mosquitto_string_option(cfg->mosq, MOSQ_OPT_TLS_KEYFORM, cfg->keyform))
@@ -315,14 +325,14 @@ int mqtt_client_property(struct mqtt_app_config *cfg, char *cmdname,
 		break;
 
 	case CMD_PUBLISH:
-		if (identifier == MQTT_PROP_TOPIC_ALIAS)
+/*		if (identifier == MQTT_PROP_TOPIC_ALIAS)
 		{
 			cfg->pub.have_topic_alias = true;
-		}
+		}*/
 		if (identifier == MQTT_PROP_SUBSCRIPTION_IDENTIFIER)
 		{
 			mqtt_err_printf(cfg,
-					"Error: %s property not supported for %s in --property argument.\n\n",
+					"Error: %s property not supported for %s in --property argument.",
 					propname, cmdname);
 			return MOSQ_ERR_INVAL;
 		}
@@ -334,7 +344,7 @@ int mqtt_client_property(struct mqtt_app_config *cfg, char *cmdname,
 				&& identifier != MQTT_PROP_USER_PROPERTY)
 		{
 			mqtt_err_printf(cfg,
-					"Error: %s property not supported for %s in --property argument.\n\n",
+					"Error: %s property not supported for %s in --property argument.",
 					propname, cmdname);
 			return MOSQ_ERR_NOT_SUPPORTED;
 		}
@@ -351,7 +361,7 @@ int mqtt_client_property(struct mqtt_app_config *cfg, char *cmdname,
 
 	case CMD_AUTH:
 		mqtt_err_printf(cfg,
-				"Error: %s property not supported for %s in --property argument.\n\n",
+				"Error: %s property not supported for %s in --property argument.",
 				propname, cmdname);
 		return MOSQ_ERR_NOT_SUPPORTED;
 
@@ -366,7 +376,7 @@ int mqtt_client_property(struct mqtt_app_config *cfg, char *cmdname,
 	case CMD_SUBACK:
 	case CMD_UNSUBACK:
 		mqtt_err_printf(cfg,
-				"Error: %s property not supported for %s in --property argument.\n\n",
+				"Error: %s property not supported for %s in --property argument.",
 				propname, cmdname);
 		return MOSQ_ERR_NOT_SUPPORTED;
 
@@ -404,7 +414,7 @@ int mqtt_client_property(struct mqtt_app_config *cfg, char *cmdname,
 	}
 	if (rc)
 	{
-		mqtt_err_printf(cfg, "Error adding property %s %d\n", propname, type);
+		mqtt_err_printf(cfg, "Error adding property %s %d", propname, type);
 		return rc;
 	}
 	return MOSQ_ERR_SUCCESS;
@@ -433,23 +443,17 @@ void mqtt_log_callback(const char *file, const char *func, const int line,
 		struct mosquitto *mosq, void *obj, int level, const char *str)
 {
 	int loglevel = 0;
-//	#define LOG_TRAP		(LOG_DEBUG+1)
-	if(level == MOSQ_LOG_ERR)
+	if(level & MOSQ_LOG_ERR)
 		loglevel = LOG_ERR;
-	else if(level == MOSQ_LOG_WARNING)
+	if(level & MOSQ_LOG_WARNING)
 		loglevel = LOG_WARNING;
-	else if(level == MOSQ_LOG_NOTICE)
+	if(level & MOSQ_LOG_NOTICE)
 		loglevel = LOG_NOTICE;
-	else if(level == MOSQ_LOG_INFO)
+	if(level & MOSQ_LOG_INFO)
 		loglevel = LOG_INFO;
-	else if(level == MOSQ_LOG_DEBUG)
+	if(level & MOSQ_LOG_DEBUG)
 		loglevel = LOG_DEBUG;
 
-	if(loglevel)
+	if(loglevel && mqtt_config && loglevel <= (mqtt_config->loglevel & 0x001f))
 		pl_zlog (file, func, line, ZLOG_MQTT, loglevel, "%s", str);
-
-	/*	UNUSED(mosq);
-		UNUSED(obj);
-		UNUSED(level);
-		printf("%s\n", str);*/
 }

@@ -191,8 +191,9 @@ MOSQ_OBJS=mosquitto.o \
 		  
 MQTT_OBJS=mqtt_app_util.o
 MQTT_OBJS+=mqtt_app_conf.o
-#MQTT_OBJS+=mqtt_app_publish.o
+MQTT_OBJS+=mqtt_app_publish.o
 MQTT_OBJS+=mqtt_app_subscribed.o
+MQTT_OBJS+=mqtt_app_show.o
 MQTT_OBJS+=mqtt_app_api.o
 #############################################################################
 # LIB

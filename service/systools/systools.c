@@ -35,7 +35,7 @@
 #include "tracerouteLib.h"
 #endif
 #ifdef PL_UBUS_MODULE
-#include "uci_ubus.h"
+#include "ubus_sync.h"
 #endif
 
 
@@ -143,9 +143,7 @@ int systools_module_init ()
 #ifdef PL_TRACEROUTE_MODULE
 #endif
 #ifdef PL_UBUS_MODULE
-#ifdef PL_OPENWRT_UCI
-	uci_ubus_init(master_eloop[MODULE_UTILS]);
-#endif
+	ubus_sync_init(master_eloop[MODULE_UTILS]);
 #endif
 
 	return OK;
@@ -160,9 +158,7 @@ int systools_module_exit ()
 	tftpdUnInit();
 #endif
 #ifdef PL_UBUS_MODULE
-#ifdef PL_OPENWRT_UCI
-	uci_ubus_exit();
-#endif
+	ubus_sync_exit();
 #endif
 	if(master_eloop[MODULE_UTILS])
 		eloop_master_free(master_eloop[MODULE_UTILS]);

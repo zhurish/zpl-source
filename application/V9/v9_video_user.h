@@ -19,9 +19,9 @@
 
 
 
-#define V9_USER_DEBUG(n)			(V9_SDK_DEBUG_ ## n & __user_debug_flag)
-#define V9_USER_DEBUG_ON(n)		(__user_debug_flag |= (V9_SDK_DEBUG_ ## n ))
-#define V9_USER_DEBUG_OFF(n)		(__user_debug_flag &= ~(V9_SDK_DEBUG_ ## n ))
+#define V9_USER_DEBUG(n)			(V9_USER_DEBUG_ ## n & __user_debug_flag)
+#define V9_USER_DEBUG_ON(n)		(__user_debug_flag |= (V9_USER_DEBUG_ ## n ))
+#define V9_USER_DEBUG_OFF(n)		(__user_debug_flag &= ~(V9_USER_DEBUG_ ## n ))
 
 
 

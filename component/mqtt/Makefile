@@ -18,8 +18,8 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(PL_ECHO_CC)
-	@$(PL_OBJ_COMPILE)
+	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
+	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
 #
 #
 APPOBJS_DIR = $(BASE_ROOT)/$(OBJDIR)/$(MODULEAPPDIR)
@@ -33,8 +33,8 @@ $(APPOBJS_DIR)/%.o: $(APPSRC_DIR)/%.c
 		then \
 		$(MKDIR) -p $(APPOBJS_DIR) ; \
 	fi
-	@$(PL_ECHO_CC)
-	@$(PL_OBJ_COMPILE)
+	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
+	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
 #
 #
 -include $(MODULE_APPOBJS:.o=.d)
@@ -49,15 +49,14 @@ $(APPOBJS_DIR)/%.o: $(APPSRC_DIR)/%.c
 #
 ifeq ($(WITH_SHARED_LIBRARIES),yes)
 $(LIBS) : $(MODULE_OBJS) $(MODULE_APPOBJS) 
-	$(PL_MAKE_LIBSO) $(LIBS) $(MODULE_OBJS) $(MODULE_APPOBJS)  
+	$(CC) -shared -o  $(LIBS) $(MODULE_OBJS) $(MODULE_APPOBJS)  
 else
 $(LIBS) : $(MODULE_OBJS) $(MODULE_APPOBJS) 
-	$(PL_MAKE_LIB) $(LIBS) $(MODULE_OBJS) $(MODULE_APPOBJS) 
+	@$(AR) -rs $(LIBS) $(MODULE_OBJS) $(MODULE_APPOBJS) 
 endif
 
 
 #
-#include $(MAKE_DIR)/make.mk
 #
 lib: $(LIBS)
 	@${MAKE} -C  src all
@@ -68,13 +67,13 @@ ifeq ($(BUILD_DEBUG),YES)
 install: $(LIBS)
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
-	@$(STRIP) --strip-unneeded $(LIB_DIR)/$(LIBS)
+	@$(STRIP) $(PLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
 	@${MAKE} -C  src install DEST_BIN_DIR=$(DSTSBINDIR)
 else
 install: $(LIBS)
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
-	$(STRIP) --strip-unneeded $(LIB_DIR)/$(LIBS)	
+	$(STRIP) $(PLSTRIP_CFLAGS)$(LIB_DIR)/$(LIBS)	
 	@${MAKE} -C  src install DEST_BIN_DIR=$(DSTSBINDIR)
 endif
 

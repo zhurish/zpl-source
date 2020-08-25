@@ -40,10 +40,29 @@
 
 
 v9_video_board_t *v9_video_board = NULL;
-
+static void 		*board_mutex = NULL;
 /*********************************************************************/
+void v9_video_board_lock()
+{
+	if(board_mutex)
+	{
+		os_mutex_lock(board_mutex, OS_WAIT_FOREVER);
+	}
+}
+void v9_video_board_unlock()
+{
+	if(board_mutex)
+	{
+		os_mutex_unlock(board_mutex);
+	}
+}
+
 int v9_video_board_init()
 {
+	if(!board_mutex)
+	{
+		board_mutex = os_mutex_init();
+	}
 	if(!v9_video_board)
 	{
 		v9_video_board = XMALLOC(MTYPE_VIDEO_MEDIA, sizeof(v9_video_board_t) * V9_APP_BOARD_MAX);
@@ -74,6 +93,8 @@ int v9_video_board_init()
 			v9_video_board_address(APP_BOARD_CALCU_4, APP_BOARD_ADDRESS_PREFIX + APP_BOARD_CALCU_4, V9_VIDEO_SDK_PORT);
 			v9_board_init(APP_BOARD_CALCU_4, &v9_video_board[APP_BOARD_CALCU_4-1].board);
 			v9_video_sdk_init(&v9_video_board[APP_BOARD_CALCU_4-1].sdk, &v9_video_board[APP_BOARD_CALCU_4-1]);
+
+
 			return OK;
 		}
 		return ERROR;
@@ -87,6 +108,11 @@ int v9_video_board_exit()
 	{
 		XFREE(MTYPE_VIDEO_MEDIA, v9_video_board);
 		v9_video_board = NULL;
+	}
+	if(board_mutex)
+	{
+		os_mutex_exit(board_mutex);
+		board_mutex = NULL;
 	}
 	return OK;
 }
@@ -103,7 +129,8 @@ int v9_video_board_add(u_int32 id)
 			return OK;
 		}
 	}
-	zlog_debug(ZLOG_APP," can not add video board %d (ID) data.", V9_APP_BOARD_HW_ID(id));
+	if(V9_APP_DEBUG(BOARD_EVENT))
+		zlog_debug(ZLOG_APP," can not add video board %d (ID) data.", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 
@@ -120,7 +147,8 @@ int v9_video_board_del(u_int32 id)
 			return OK;
 		}
 	}
-	zlog_debug(ZLOG_APP," can not delete video board %d (ID) data.", V9_APP_BOARD_HW_ID(id));
+	if(V9_APP_DEBUG(BOARD_EVENT))
+		zlog_debug(ZLOG_APP," can not delete video board %d (ID) data.", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 
@@ -134,7 +162,8 @@ v9_video_board_t * v9_video_board_lookup(u_int32 id)
 			return &v9_video_board[i];
 		}
 	}
-	zlog_debug(ZLOG_APP," can not lookup video board %d (ID) data.", V9_APP_BOARD_HW_ID(id));
+	if(V9_APP_DEBUG(BOARD_EVENT))
+		zlog_debug(ZLOG_APP," can not lookup video board %d (ID) data.", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 
@@ -152,12 +181,13 @@ int v9_video_board_active(u_int32 id, BOOL enable)
 			if(enable)
 			{
 				v9_video_board[i].board.active = TRUE;
-				v9_video_board[i].board.autoip = TRUE;
+				//v9_video_board[i].board.autoip = TRUE;
 			}
 			return OK;
 		}
 	}
-	zlog_debug(ZLOG_APP," can not active video board %d (ID) data.", V9_APP_BOARD_HW_ID(id));
+	if(V9_APP_DEBUG(BOARD_EVENT))
+		zlog_debug(ZLOG_APP," can not active video board %d (ID) data.", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 
@@ -218,7 +248,8 @@ int v9_video_board_address(u_int32 id, u_int32 address, u_int16 port)
 			return OK;
 		}
 	}
-	zlog_debug(ZLOG_APP," can not update video board %d (ID) address.", V9_APP_BOARD_HW_ID(id));
+	if(V9_APP_DEBUG(BOARD_EVENT))
+		zlog_debug(ZLOG_APP," can not update video board %d (ID) address.", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 
@@ -247,7 +278,8 @@ int v9_video_board_disabled(u_int32 id, BOOL enable)
 			return OK;
 		}
 	}
-	zlog_debug(ZLOG_APP," can not disabled video board %d (ID) data.", V9_APP_BOARD_HW_ID(id));
+	if(V9_APP_DEBUG(BOARD_EVENT))
+		zlog_debug(ZLOG_APP," can not disabled video board %d (ID) data.", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 
@@ -319,6 +351,8 @@ static int v9_video_board_stream_hw_sync(struct eloop *eloop)
 static int __v9_video_stream_add(v9_video_board_t *board, v9_video_stream_t *value)
 {
 	u_int32 i = 0;
+	zassert(board);
+	zassert(value);
 	for(i = 0; i < V9_APP_CHANNEL_MAX; i++)
 	{
 		if(board->video_stream[i] == NULL /*&& value->video_url*/)
@@ -349,13 +383,16 @@ static int __v9_video_stream_add(v9_video_board_t *board, v9_video_stream_t *val
 			return OK;
 		}
 	}
-	zlog_debug(ZLOG_APP," can not add video stream to board %d(ID).", V9_APP_BOARD_HW_ID(board->id));
+	if(V9_APP_DEBUG(BOARD_EVENT))
+		zlog_debug(ZLOG_APP," can not add video stream to board %d(ID).", V9_APP_BOARD_HW_ID(board->id));
 	return ERROR;
 }
 
 static int __v9_video_stream_del(v9_video_board_t *board, v9_video_stream_t *value)
 {
 	u_int32 i = 0;
+	zassert(board);
+	zassert(value);
 	for(i = 0; i < V9_APP_CHANNEL_MAX; i++)
 	{
 		if(board->video_stream[i] && board->video_stream[i] == value)
@@ -364,16 +401,21 @@ static int __v9_video_stream_del(v9_video_board_t *board, v9_video_stream_t *val
 			board->channel[i] = FALSE;
 			value->id = 0;
 			board->video_stream[i] = NULL;
-			return v9_video_sdk_del_vch_api(board->id, value->ch);
+			if(value->hw_sync)
+				return v9_video_sdk_del_vch_api(board->id, value->ch);
+			return OK;
 		}
 	}
-	zlog_debug(ZLOG_APP," can not del video stream from board %d(ID).", V9_APP_BOARD_HW_ID(board->id));
+	if(V9_APP_DEBUG(BOARD_EVENT))
+		zlog_debug(ZLOG_APP," can not del video stream from board %d(ID).", V9_APP_BOARD_HW_ID(board->id));
 	return ERROR;
 }
 
 static v9_video_stream_t * __v9_video_stream_lookup(v9_video_board_t *board, v9_video_stream_t *value)
 {
 	u_int32 i = 0;
+	zassert(board);
+	zassert(value);
 	for(i = 0; i < V9_APP_CHANNEL_MAX; i++)
 	{
 		if(board->video_stream[i] && board->video_stream[i] == value)
@@ -381,7 +423,8 @@ static v9_video_stream_t * __v9_video_stream_lookup(v9_video_board_t *board, v9_
 			return board->video_stream[i];
 		}
 	}
-	zlog_debug(ZLOG_APP," can not lookup video stream on board %d(ID).", V9_APP_BOARD_HW_ID(board->id));
+	if(V9_APP_DEBUG(BOARD_EVENT))
+		zlog_debug(ZLOG_APP," can not lookup video stream on board %d(ID).", V9_APP_BOARD_HW_ID(board->id));
 	return NULL;
 }
 /********************************************************************/
@@ -394,6 +437,8 @@ v9_video_stream_t * v9_video_board_stream_lookup_by_id_and_ch(u_int8 id, u_int8 
 	v9_video_board_t *board = v9_video_board_lookup(id);
 	if(!board)
 		return NULL;
+	if(board->channel_cnt == 0)
+		return NULL;
 	for(i = 0; i < V9_APP_CHANNEL_MAX; i++)
 	{
 		if(board->video_stream[i] && board->video_stream[i] && board->video_stream[i]->ch == ch)
@@ -401,7 +446,8 @@ v9_video_stream_t * v9_video_board_stream_lookup_by_id_and_ch(u_int8 id, u_int8 
 			return board->video_stream[i];
 		}
 	}
-	zlog_debug(ZLOG_APP," can not lookup video stream by board ID:%d VCH:%d.", V9_APP_BOARD_HW_ID(id), ch);
+	if(V9_APP_DEBUG(BOARD_EVENT))
+		zlog_debug(ZLOG_APP," can not lookup video stream by board ID:%d VCH:%d.", V9_APP_BOARD_HW_ID(id), ch);
 	return NULL;
 }
 
@@ -451,7 +497,8 @@ int v9_video_board_get_minload()
 				return v9_video_board[i].id;
 		}
 	}
-	zlog_debug(ZLOG_APP," can not get min vidoe load board ID.");
+	if(V9_APP_DEBUG(BOARD_EVENT))
+		zlog_debug(ZLOG_APP," can not get min vidoe load board ID.");
 	return ERROR;
 }
 
@@ -472,7 +519,8 @@ int v9_video_board_stream_alloc(u_int32 id)
 			}
 		}
 	}
-	zlog_debug(ZLOG_APP," can not alloc video stream by board ID:%d.", V9_APP_BOARD_HW_ID(id));
+	if(V9_APP_DEBUG(BOARD_EVENT))
+		zlog_debug(ZLOG_APP," can not alloc video stream by board ID:%d.", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 
@@ -481,6 +529,8 @@ int v9_video_board_stream_add(u_int32 id, v9_video_stream_t *value, BOOL load)
 {
 	u_int32 i = 0;
 	//zlog_debug(ZLOG_APP," %s ID=%d", __func__, V9_APP_BOARD_HW_ID(id));
+	//zassert(board);
+	zassert(value);
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
 		if(v9_video_board && v9_video_board[i].use && v9_video_board[i].id == id)
@@ -502,13 +552,16 @@ int v9_video_board_stream_add(u_int32 id, v9_video_stream_t *value, BOOL load)
 			}
 		}
 	}
-	zlog_debug(ZLOG_APP," can not add video stream to board ID:%d.", V9_APP_BOARD_HW_ID(id));
+	if(V9_APP_DEBUG(BOARD_EVENT))
+		zlog_debug(ZLOG_APP," can not add video stream to board ID:%d.", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 
 int v9_video_board_stream_del(u_int32 id, v9_video_stream_t *value)
 {
 	u_int32 i = 0;
+	//zassert(board);
+	zassert(value);
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
 		if(v9_video_board && v9_video_board[i].use && v9_video_board[i].id == id)
@@ -526,13 +579,16 @@ int v9_video_board_stream_del(u_int32 id, v9_video_stream_t *value)
 			}
 		}
 	}
-	zlog_debug(ZLOG_APP," can not del video stream from board ID:%d.", V9_APP_BOARD_HW_ID(id));
+	if(V9_APP_DEBUG(BOARD_EVENT))
+		zlog_debug(ZLOG_APP," can not del video stream from board ID:%d.", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 
 int v9_video_board_stream_lookup(u_int32 id, v9_video_stream_t *value)
 {
 	u_int32 i = 0;
+	//zassert(board);
+	zassert(value);
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
 		if(v9_video_board && v9_video_board[i].use && v9_video_board[i].id == id)
@@ -625,6 +681,32 @@ int v9_video_stream_split(char *url, u_int8 *ch, u_int32 *address, u_int16 *port
 }
 #endif
 /********************************************************************/
+/********************************************************************/
+int v9_video_board_stream_cleanup()
+{
+	u_int32 i = 0, j = 0;
+	for(i = 0; i < V9_APP_BOARD_MAX; i++)
+	{
+		if(v9_video_board && v9_video_board[i].use)
+		{
+			for(j = 0; j < V9_APP_CHANNEL_MAX; j++)
+			{
+				if(v9_video_board[i].video_stream[j] && v9_video_board[i].channel[j])
+				{
+					v9_video_board[i].video_load -= V9_APP_VIDEO_LOAD(v9_video_board[i].video_stream[j]->fps, 1);
+					v9_video_board[i].channel[i] = FALSE;
+					if(v9_video_board[i].video_stream[j]->hw_sync)
+						v9_video_sdk_del_vch_api(v9_video_board[i].id, v9_video_board[i].video_stream[j]->ch);
+					v9_video_board[i].channel_cnt--;
+					v9_video_board_stream_free_api(v9_video_board[i].video_stream[i]);
+					v9_video_board[i].video_stream[j]->id = 0;
+					v9_video_board[i].video_stream[i] = NULL;
+				}
+			}
+		}
+	}
+	return OK;
+}
 /********************************************************************/
 v9_video_stream_t * v9_video_board_stream_alloc_api(u_int8 ch, u_int32 address, u_int16 port,
 												char *username, char *password, u_int32 fps,
@@ -824,7 +906,8 @@ int v9_video_board_ID_lookup_api_by_video_stream(u_int8 ch, u_int32 address, u_i
 			}
 		}
 	}
-	zlog_debug(ZLOG_APP," can not lookup video stream by url (%s:%d/vd-%d).", inet_address(address), port, ch);
+	if(V9_APP_DEBUG(BOARD_EVENT))
+		zlog_debug(ZLOG_APP," can not lookup video stream by url (%s:%d/vd-%d).", inet_address(address), port, ch);
 	return ERROR;
 }
 /********************************************************************/
@@ -851,7 +934,7 @@ static int v9_video_board_stream_show_one(struct vty *vty, v9_video_stream_t *ps
 #ifdef V9_VIDEO_SDK_API
 		if(pstNode->type == V9_VIDEO_STREAM_TYPE_STATIC)
 			vty_out (vty, "   Type                 : %s%s", "Static", VTY_NEWLINE);
-		else if(pstNode->type == V9_VIDEO_STREAM_TYPE_STATIC)
+		else if(pstNode->type == V9_VIDEO_STREAM_TYPE_DYNAMIC)
 			vty_out (vty, "   Type                 : %s%s", "Dynamic", VTY_NEWLINE);
 		else
 			vty_out (vty, "   Type                 : %s%s", "Unknown", VTY_NEWLINE);
@@ -903,6 +986,7 @@ static int v9_video_board_stream_show_one(struct vty *vty, v9_video_stream_t *ps
 int v9_video_board_stream_show(struct vty *vty, u_int32 id, BOOL detail)
 {
 	u_int32 i = 0, j = 0;
+	v9_video_board_lock();
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
 		if(v9_video_board && v9_video_board[i].use && !v9_video_board[i].disabled && v9_video_board[i].active)
@@ -920,6 +1004,7 @@ int v9_video_board_stream_show(struct vty *vty, u_int32 id, BOOL detail)
 						v9_video_board_stream_show_one(vty, v9_video_board[i].video_stream[j],  detail);
 					}
 				}
+				v9_video_board_unlock();
 				return OK;
 			}
 			else if(id == 0)
@@ -934,6 +1019,7 @@ int v9_video_board_stream_show(struct vty *vty, u_int32 id, BOOL detail)
 			}
 		}
 	}
+	v9_video_board_unlock();
 	return OK;
 }
 
@@ -1004,6 +1090,7 @@ static int v9_video_board_show_one(struct vty *vty, v9_video_board_t *board, BOO
 int v9_video_board_show(struct vty *vty, BOOL detail)
 {
 	u_int32 i = 0;
+	v9_video_board_lock();
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
 		if(v9_video_board && v9_video_board[i].use && !v9_video_board[i].disabled/*&& v9_video_board[i].active*/)
@@ -1011,6 +1098,7 @@ int v9_video_board_show(struct vty *vty, BOOL detail)
 			v9_video_board_show_one(vty, &v9_video_board[i],  detail);
 		}
 	}
+	v9_video_board_unlock();
 	return OK;
 }
 /****************************** SDK **********************************/
@@ -1029,7 +1117,7 @@ static int v9_video_board_stream_write_config_one(struct vty *vty, v9_video_stre
 		memset(confstr, 0, sizeof(confstr));
 
 		len = snprintf(confstr, sizeof(confstr), "%s", "video stream ");
-
+		//zlog_debug(ZLOG_WEB, "=====%s====type=%d", __func__,pstNode->type);
 		if(pstNode->type == V9_VIDEO_STREAM_TYPE_STATIC)
 		{
 			snprintf(confstr + len, sizeof(confstr) - len, "board %d channel %d ",V9_APP_BOARD_HW_ID(pstNode->id), pstNode->ch);
@@ -1046,7 +1134,12 @@ static int v9_video_board_stream_write_config_one(struct vty *vty, v9_video_stre
 		{
 			snprintf(confstr + len, sizeof(confstr) - len, "board 0 channel 0 ");
 		}
+		else
+		{
+			snprintf(confstr + len, sizeof(confstr) - len, "board %d channel %d ",V9_APP_BOARD_HW_ID(pstNode->id), pstNode->ch);
+		}
 
+		len = strlen(confstr);
 		if(pstNode->port != RTSP_PORT_DEFAULT)
 		{
 			snprintf(confstr + len, sizeof(confstr) - len, "ip %s port %d ",inet_address(pstNode->address), pstNode->port);
@@ -1102,6 +1195,7 @@ static int v9_video_sdk_write_config_one(struct vty *vty, u_int32 id, v9_video_s
 int v9_video_board_stream_write_config(struct vty *vty)
 {
 	u_int32 i = 0, j = 0;
+	v9_video_board_lock();
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
 		if(v9_video_board && v9_video_board[i].use && v9_video_board[i].active)
@@ -1142,12 +1236,14 @@ int v9_video_board_stream_write_config(struct vty *vty)
 	}
 #endif
 */
+	v9_video_board_unlock();
 	return OK;
 }
 
 int v9_video_sdk_config_show(struct vty *vty)
 {
 	u_int32 i = 0;
+	v9_video_board_lock();
 #ifdef V9_VIDEO_SDK_API
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
@@ -1163,5 +1259,6 @@ int v9_video_sdk_config_show(struct vty *vty)
 		}
 	}
 #endif
+	v9_video_board_unlock();
 	return OK;
 }

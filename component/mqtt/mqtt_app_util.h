@@ -8,18 +8,29 @@
 #ifndef __MQTT_APP_UTIL_H__
 #define __MQTT_APP_UTIL_H__
 
-/*
-#define MOSQ_LOG_SUBSCRIBE		(1<<5)
-#define MOSQ_LOG_UNSUBSCRIBE	(1<<6)
-#define MOSQ_LOG_WEBSOCKETS		(1<<7)
-#define MOSQ_LOG_INTERNAL		0x80000000U
-#define MOSQ_LOG_ALL			0xFFFFFFFFU
-*/
+#define _MQTT_DEBUG_ENABLE 1
+
+#if defined(_MQTT_DEBUG_ENABLE)
+#define _MQTT_DBG_ERR(format, ...) 			zlog_err (ZLOG_MQTT, format, ##__VA_ARGS__)
+#define _MQTT_DBG_WARN(format, ...) 		zlog_warn (ZLOG_MQTT, format, ##__VA_ARGS__)
+#define _MQTT_DBG_INFO(format, ...) 		zlog_info (ZLOG_MQTT, format, ##__VA_ARGS__)
+#define _MQTT_DBG_DEBUG(format, ...) 		zlog_debug (ZLOG_MQTT, format, ##__VA_ARGS__)
+#define _MQTT_DBG_TRAP(format, ...) 		zlog_trap (ZLOG_MQTT, format, ##__VA_ARGS__)
+#else
+#define _MQTT_DBG_ERR(format, ...)
+#define _MQTT_DBG_WARN(format, ...)
+#define _MQTT_DBG_INFO(format, ...)
+#define _MQTT_DBG_DEBUG(format, ...)
+#define _MQTT_DBG_TRAP(format, ...)
+#endif
+
 
 int mqtt_client_connect(struct mqtt_app_config *cfg);
 int mqtt_client_id_generate(struct mqtt_app_config *cfg);
 int mqtt_client_opts_config(struct mqtt_app_config *cfg);
-int mqtt_client_add_topic(struct mqtt_app_config *cfg, mqtt_mode_t type, char *topic, const char *arg);
+int mqtt_client_add_topic(struct mqtt_app_config *cfg, char *topic);
+int mqtt_client_del_topic(struct mqtt_app_config *cfg, char *topic);
+
 int mqtt_client_property(struct mqtt_app_config *cfg, char *cmdname,
 		char *propname, char *key, char *value);
 

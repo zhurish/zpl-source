@@ -193,7 +193,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 
 int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 {
-	int run = 1;
+	//int run = 1;
 	int rc;
 	unsigned long reconnect_delay;
 #ifndef WIN32
@@ -202,13 +202,13 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 	int state;
 
 	if(!mosq) return MOSQ_ERR_INVAL;
-
+	mosq->run_forever = 1;
 	mosq->reconnects = 0;
 
-	while(run){
+	while(mosq->run_forever){
 		do{
 			rc = mosquitto_loop(mosq, timeout, max_packets);
-		}while(run && rc == MOSQ_ERR_SUCCESS);
+		}while(mosq->run_forever && rc == MOSQ_ERR_SUCCESS);
 		/* Quit after fatal errors. */
 		switch(rc){
 			case MOSQ_ERR_NOMEM:
@@ -234,7 +234,7 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 			rc = MOSQ_ERR_SUCCESS;
 			state = mosquitto__get_state(mosq);
 			if(state == mosq_cs_disconnecting || state == mosq_cs_disconnected){
-				run = 0;
+				mosq->run_forever = 0;
 			}else{
 				if(mosq->reconnect_delay_max > mosq->reconnect_delay){
 					if(mosq->reconnect_exponential_backoff){
@@ -264,12 +264,12 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 
 				state = mosquitto__get_state(mosq);
 				if(state == mosq_cs_disconnecting || state == mosq_cs_disconnected){
-					run = 0;
+					mosq->run_forever = 0;
 				}else{
 					rc = mosquitto_reconnect(mosq);
 				}
 			}
-		}while(run && rc != MOSQ_ERR_SUCCESS);
+		}while(mosq->run_forever && rc != MOSQ_ERR_SUCCESS);
 	}
 	return rc;
 }

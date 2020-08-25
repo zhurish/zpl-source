@@ -2,15 +2,16 @@ include $(MAKE_DIR)/makelinux.mk
 
 include config.mk
 
+PL_PJINC = -I$(PJPROJDIR)/_install/include
 
-#PJPROJ=$(PLBASE)/externsions/pjproject-2.8
+#PJPROJDIR=$(PLBASE)/externsions/pjproject-2.10
 #PJCC=$(CC)
 #PJCXX=$(CXX)
 #$(PJLIBS): 
-#	cd $(PJPROJ); ./configure --prefix=$(PJPROJ)/_install --target=mipsel-openwrt-linux CC=$(PJCC) \
+#	cd $(PJPROJDIR); ./configure --prefix=$(PJPROJDIR)/_install --target=mipsel-openwrt-linux CC=$(PJCC) \
 #		CXX=$(PJCXX) 
 #		
-#	make -C $(PJPROJ)
+#	make -C $(PJPROJDIR)
 	
 	
 OBJS_DIR = $(BASE_ROOT)/$(OBJDIR)/$(MODULEDIR)
@@ -34,21 +35,35 @@ PLCFLAGS +=-DPJ_AUTOCONF=1 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1
 #				-lpjsua -lsrtp
 					
 $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c 
-	$(MAKE) -C $(PLBASE)/externsions/pjproject-2.8 lib
-	$(MAKE) -C $(PLBASE)/externsions/pjproject-2.8 install
+	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl lib
+	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl install
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(PL_ECHO_CC)
-	@$(PL_OBJ_COMPILE)
+	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
+	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE) $(PL_PJINC)
 #
+ifeq ($(PJMEDIA_SDL2_ENABLE),true)
+SDL2LIBS:
+	$(MAKE) -C $(SDL2PROJDIR) -f Makefile-pl all
 
-$(LIBS) : $(MODULE_OBJS) 
+SDL2CLEAN:
+	$(MAKE) -C $(SDL2PROJDIR) -f Makefile-pl clean	
+else
+SDL2LIBS:
+	$(ECHO) NO SDL2
+
+SDL2CLEAN:
+	$(ECHO) NO SDL2
+endif
+
+
+$(LIBS) : $(SDL2LIBS) $(MODULE_OBJS) 
 #	$(MAKE) -C $(PLBASE)/externsions/pjproject-2.8 dep
 #	$(MAKE) -C $(PLBASE)/externsions/pjproject-2.8 lib
 #	$(MAKE) -C $(PLBASE)/externsions/pjproject-2.8 install
-	$(PL_MAKE_LIB) $(LIBS) $(MODULE_OBJS) 
+	@$(AR) -rs $(LIBS) $(MODULE_OBJS) 
 
 ifneq ($(TOBJS),)
 LDCLFLAG = $(PLOS_LDLIBS) -L$(DSTULIBDIR) $(PL_LDLIBS) 
@@ -56,7 +71,7 @@ LDCLFLAG = $(PLOS_LDLIBS) -L$(DSTULIBDIR) $(PL_LDLIBS)
 $(TARGET): $(TMODULE_OBJS)
 	$(CC) $(TMODULE_OBJS) $(CFLAGS) $(LDCLFLAG) -o $(TARGET) 
 endif		
-#include $(MAKE_DIR)/make.mk
+
 
 #lib: $(LIBS)
 #
@@ -73,10 +88,10 @@ lib: $(LIBS)
 ifneq ($(TOBJS),)
 obj: $(MODULE_OBJS) $(MODULE_LIBOBJS) $(TMODULE_OBJS)
 
-install: $(LIBS) $(TARGET)
+install: $(TARGET)
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
-	@$(STRIP) --strip-unneeded $(LIB_DIR)/$(LIBS)
+	@$(STRIP) $(PLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
 #	$(STRIP) $(LIB_DIR)/$(LIBS)
 #	install -m 755 lib*.so $(LIB_DIR)
 #	install -m 755 lib*.so.* $(LIB_DIR)
@@ -86,22 +101,22 @@ install: $(LIBS) $(TARGET)
 else
 obj: $(MODULE_OBJS) $(MODULE_LIBOBJS)
 
-install: $(LIBS)
+install: 
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
-	@$(STRIP) --strip-unneeded $(LIB_DIR)/$(LIBS)
+	@$(STRIP) $(PLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
 #	$(STRIP) $(LIB_DIR)/$(LIBS)
 #	install -m 755 lib*.so $(LIB_DIR)
 #	install -m 755 lib*.so.* $(LIB_DIR)	
 endif
 
-clean: objclean
+clean: $(SDL2CLEAN) objclean
 	@$(RM) $(LIB_DIR)/$(LIBS)
 	@$(RM) $(LIBS)
 
 objclean: 
-	$(MAKE) -C $(PLBASE)/externsions/pjproject-2.8 uninstall
-	$(MAKE) -C $(PLBASE)/externsions/pjproject-2.8 clean
+	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl uninstall
+	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl clean
 	@$(RM) $(OBJS_DIR)/*
 
 all: lib install

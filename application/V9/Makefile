@@ -17,23 +17,22 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(PL_ECHO_CC)
-	#@$(PL_CXX_OBJ_COMPILE)
-	@$(PL_OBJ_COMPILE)
+	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
+	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
 
 $(OBJS_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(PL_ECHO_CPP)
-	@$(PL_CXX_OBJ_COMPILE)
+	@$(ECHO) CXX '$(PLCPPFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
+	@$(CXX) -fPIC $(PLCPPFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
 	
 $(LIBS) : $(MODULE_OBJS)
-	$(PL_MAKE_LIB) $(APP_LIBS) $(MODULE_OBJS)
+	@$(AR) -rs $(APP_LIBS) $(MODULE_OBJS)
 
 
-#include $(MAKE_DIR)/make.mk
+
 
 -include $(MODULE_OBJS:.o=.d)
 #
@@ -50,7 +49,7 @@ obj: $(MODULE_OBJS) $(MODULE_LIBOBJS)
 install: $(LIBS)
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
-	@$(STRIP) --strip-unneeded $(LIB_DIR)/$(LIBS)
+	@$(STRIP) $(PLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
 	@install -m 755 $(APP_ROOT)/V9/lib/liboal_privateProtocol.a $(LIB_DIR)
 #	install -d $(BASE_ROOT)/$(ULIBDIR)
 #	install -m 755 $(APP_ROOT)/V9/lib/liboal_privateProtocol.so $(BASE_ROOT)/$(ULIBDIR)

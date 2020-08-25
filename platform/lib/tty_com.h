@@ -108,6 +108,9 @@ extern int tty_com_getc(struct tty_com *com, unsigned char *c);
 extern int tty_com_slip_write(struct tty_com *com, char *p, int len);
 extern int tty_com_slip_read(struct tty_com *com, char *p, int len);
 
+extern int tty_com_ppp_write (struct tty_com *com, char *p, int len);
+extern int tty_com_ppp_read (struct tty_com *com, char *p, int len);
+
 extern int tty_com_slip_encapsulation(struct tty_slip *sl, unsigned char *s, int len);
 extern int tty_com_slip_decapsulation(struct tty_slip *sl, unsigned char *s, int len);
 extern int tty_com_slip_decode_byte(struct tty_slip *sl, unsigned char s);

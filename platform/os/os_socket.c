@@ -115,7 +115,7 @@ int tcp_sock_state (int sock)
 int sock_connect(int sock, char *ipaddress, int port)
 {
 	int ret = 0;
-	printf("----------%s-----------------host=%s\r\n",__func__,ipaddress);
+	//printf("----------%s-----------------host=%s\r\n",__func__,ipaddress);
 	if (ipaddress)
 	{
 		struct sockaddr_in serv;

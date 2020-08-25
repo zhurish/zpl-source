@@ -30,7 +30,32 @@
 //extern struct zebra_privs_t os_privs;
 //extern struct quagga_signal_t os_signals[];
 //handle SIGUSR2 nostop noprint
-
+/*
+ * /proc/sys/net/ipv4/tcp_orphan_retries 1
+ * /proc/sys/net/ipv4/tcp_fin_timeout 10
+ * cat /proc/sys/net/ipv4/tcp_keepalive_time 30
+ *
+ * 编辑/etc/sysctl.conf文件，增加三行：
+引用
+net.ipv4.tcp_fin_timeout = 30
+net.ipv4.tcp_keepalive_time = 1200
+net.ipv4.tcp_syncookies = 1
+net.ipv4.tcp_tw_reuse = 1
+net.ipv4.tcp_tw_recycle = 1
+net.ipv4.ip_local_port_range = 1024    65000
+net.ipv4.tcp_max_syn_backlog = 8192
+net.ipv4.tcp_max_tw_buckets = 5000
+net.ipv4.route.gc_timeout = 100
+net.ipv4.tcp_syn_retries = 1
+net.ipv4.tcp_synack_retries = 1
+说明：
+net.ipv4.tcp_syncookies = 1 表示开启SYN Cookies。当出现SYN等待队列溢出时，启用cookies来处理，可防范少量SYN攻击，默认为0，表示关闭；
+net.ipv4.tcp_tw_reuse = 1 表示开启重用。允许将TIME-WAIT sockets重新用于新的TCP连接，默认为0，表示关闭；
+net.ipv4.tcp_tw_recycle = 1 表示开启TCP连接中TIME-WAIT sockets的快速回收，默认为0，表示关闭。
+再执行以下命令，让修改结果立即生效：
+引用
+/sbin/sysctl -p
+ */
 struct os_main_option
 {
 	char *progname;
@@ -308,7 +333,7 @@ int main (int argc, char **argv)
 
 	if(main_data.tty)
 		console_enable = 1;
-	console_enable = 1;
+	//console_enable = 1;
 
 
 	//b53125_mdio_probe();

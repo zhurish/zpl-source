@@ -3013,7 +3013,7 @@ static pj_status_t add_config_command(pj_cli_t *c)
 #if PJSUA_HAS_VIDEO
 static pj_status_t add_video_command(pj_cli_t *c)
 {
-    char* video_command =
+    char video_command[8192] =
 	"<CMD name='video' id='600' desc='Video commands'>"
 	"  <CMD name='enable' id='6001' desc='Enable video'/>"
 	"  <CMD name='disable' id='6002' desc='Disable video'/>"

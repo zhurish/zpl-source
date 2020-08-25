@@ -32,8 +32,6 @@
 #ifdef PL_UDHCP_MODULE
 #include "dhcp_config.h"
 #include "dhcpd.h"
-#else
-#include "dhcpd_api.h"
 #endif
 
 Gnsm_dhcps_t dhcps_list;
@@ -86,8 +84,6 @@ static int nsm_dhcps_cleanup( BOOL all)
 			lstFree(&pstNode->excludedlist);
 #ifdef PL_UDHCP_MODULE
 			dhcpd_pool_del(pstNode->name);
-#else
-			dhcpd_pool_del_api(pstNode->name);
 #endif
 			XFREE(MTYPE_DHCPS_POOL, pstNode);
 		}
@@ -156,8 +152,6 @@ int nsm_dhcps_add_api(char *name)
 			os_strcpy(node->name, name);
 #ifdef PL_UDHCP_MODULE
 			node->pool = dhcpd_pool_create(name);
-#else
-			node->pool = dhcpd_pool_add_api(name);
 #endif
 			if(node->pool)
 				ret = nsm_dhcps_add_node(node);
@@ -190,13 +184,6 @@ int nsm_dhcps_del_api(char *name)
 
 #ifdef PL_UDHCP_MODULE
 		if(dhcpd_pool_del(name) == OK)
-		{
-			lstDelete(dhcps_list.dhcpslist, (NODE*)value);
-			XFREE(MTYPE_DHCPS_POOL, value);
-			ret = OK;
-		}
-#else
-		if(dhcpd_pool_del_api(name) == OK)
 		{
 			lstDelete(dhcps_list.dhcpslist, (NODE*)value);
 			XFREE(MTYPE_DHCPS_POOL, value);
@@ -576,15 +563,6 @@ int nsm_dhcps_set_api(nsm_dhcps_t *dhcps, int cmd, void *val)
 				ret = OK;
 			}
 		}
-#else
-		if(!dhcps->pool)
-		{
-			struct prefix sub_net;
-			prefix_copy(&sub_net, val);
-			memcpy(&dhcps->address, &sub_net, sizeof(struct prefix));
-			dhcps->pool = dhcpd_pool_subnet_add_api(dhcps->pool, sub_net);
-			ret = OK;
-		}
 #endif
 		break;
 	case DHCPS_CMD_NETWORK_START:
@@ -608,36 +586,6 @@ int nsm_dhcps_set_api(nsm_dhcps_t *dhcps, int cmd, void *val)
 				ret = OK;
 			}
 		}
-#else
-		if(!dhcps->pool)
-			break;
-/*		else
-		{
-			struct in_addr mask;
-			struct prefix sub_net;
-			prefix_copy(&sub_net, val);
-			masklen2ip (sub_net.prefixlen, &mask);
-			mask.s_addr = ntohl(mask.s_addr);
-			sub_net.u.prefix4.s_addr = htonl(ntohl(sub_net.u.prefix4.s_addr) & mask.s_addr);
-
-			dhcps->pool = dhcpd_pool_subnet_add_api(dhcps->pool, sub_net);
-			if(dhcps->pool)
-			{
-				memcpy(&dhcps->start_address, val, sizeof(struct prefix));
-				if(dhcps->end_address.u.prefix4.s_addr)
-				{
-					struct prefix startp, endp;
-					prefix_copy(&startp, val);
-					prefix_copy(&endp, &dhcps->end_address);
-					startp.u.prefix4.s_addr = htonl(ntohl(startp.u.prefix4.s_addr) | 1);
-					endp.u.prefix4.s_addr = htonl(ntohl(endp.u.prefix4.s_addr) | 254);
-					if(dhcpd_pool_address_range_add_api(dhcps->pool, startp, endp) == OK)
-					{
-						ret = OK;
-					}
-				}
-			}
-		}*/
 #endif
 		memcpy(&dhcps->start_address, val, sizeof(struct prefix));
 		ret = OK;
@@ -663,23 +611,6 @@ int nsm_dhcps_set_api(nsm_dhcps_t *dhcps, int cmd, void *val)
 				ret = OK;
 			}
 		}
-#else
-		if(dhcps->pool)
-		{
-			memcpy(&dhcps->end_address, val, sizeof(struct prefix));
-			if(dhcps->end_address.u.prefix4.s_addr && dhcps->start_address.u.prefix4.s_addr)
-			{
-				struct prefix startp, endp;
-				prefix_copy(&startp, &dhcps->start_address);
-				prefix_copy(&endp, &dhcps->end_address);
-				startp.u.prefix4.s_addr = htonl(ntohl(startp.u.prefix4.s_addr) /*| 1*/);
-				endp.u.prefix4.s_addr = htonl(ntohl(endp.u.prefix4.s_addr)/* | 254*/);
-				if(dhcpd_pool_address_range_add_api(dhcps->pool, startp, endp) == OK)
-				{
-					ret = OK;
-				}
-			}
-		}
 #endif
 		//ret = OK;
 		break;
@@ -692,8 +623,6 @@ int nsm_dhcps_set_api(nsm_dhcps_t *dhcps, int cmd, void *val)
 			prefix_2_address_str (pu, prefix, sizeof(prefix));
 #ifdef PL_UDHCP_MODULE
 			dhcpd_pool_set_option(dhcps->pool, 3/*"routers"*/, prefix);
-#else
-			dhcpd_pool_option_add_api(dhcps->pool, 3/*"routers"*/, prefix);
 #endif
 		}
 		dhcps->ifp = if_lookup_prefix(val);
@@ -718,8 +647,6 @@ int nsm_dhcps_set_api(nsm_dhcps_t *dhcps, int cmd, void *val)
 				strcat(prefix, prefix_sec);
 #ifdef PL_UDHCP_MODULE
 				dhcpd_pool_set_option(dhcps->pool, 3/*"routers"*/, prefix);
-#else
-				dhcpd_pool_option_add_api(dhcps->pool, 3/*"routers"*/, prefix);
 #endif
 			}
 		}
@@ -734,9 +661,6 @@ int nsm_dhcps_set_api(nsm_dhcps_t *dhcps, int cmd, void *val)
 #ifdef PL_UDHCP_MODULE
 		if(strlen(dhcps->domain_name))
 			dhcpd_pool_set_option(dhcps->pool, 15/*"routers"*/, dhcps->domain_name);
-#else
-		if(strlen(dhcps->domain_name))
-			dhcpd_pool_option_add_api(dhcps->pool, 15/*"domain-name"*/, dhcps->domain_name);
 #endif
 		ret = OK;
 		break;
@@ -749,8 +673,6 @@ int nsm_dhcps_set_api(nsm_dhcps_t *dhcps, int cmd, void *val)
 			prefix_2_address_str (pu, prefix, sizeof(prefix));
 #ifdef PL_UDHCP_MODULE
 			dhcpd_pool_set_option(dhcps->pool, 44/*"routers"*/, prefix);
-#else
-			dhcpd_pool_option_add_api(dhcps->pool, 44/*"netbios-name-servers"*/, prefix);
 #endif
 		}
 		ret = OK;
@@ -774,8 +696,6 @@ int nsm_dhcps_set_api(nsm_dhcps_t *dhcps, int cmd, void *val)
 				strcat(prefix, prefix_sec);
 #ifdef PL_UDHCP_MODULE
 				dhcpd_pool_set_option(dhcps->pool, 44/*"routers"*/, prefix);
-#else
-				dhcpd_pool_option_add_api(dhcps->pool, 44/*"netbios-name-servers"*/, prefix);
 #endif
 			}
 		}
@@ -790,8 +710,6 @@ int nsm_dhcps_set_api(nsm_dhcps_t *dhcps, int cmd, void *val)
 			prefix_2_address_str (pu, prefix, sizeof(prefix));
 #ifdef PL_UDHCP_MODULE
 			dhcpd_pool_set_option(dhcps->pool, 6/*"routers"*/, prefix);
-#else
-			dhcpd_pool_option_add_api(dhcps->pool, 6/*"domain-name-servers"*/, prefix);
 #endif
 		}
 		ret = OK;
@@ -815,8 +733,6 @@ int nsm_dhcps_set_api(nsm_dhcps_t *dhcps, int cmd, void *val)
 				strcat(prefix, prefix_sec);
 #ifdef PL_UDHCP_MODULE
 				dhcpd_pool_set_option(dhcps->pool, 6/*"routers"*/, prefix);
-#else
-				dhcpd_pool_option_add_api(dhcps->pool, 6/*"domain-name-servers"*/, prefix);
 #endif
 			}
 		}
@@ -831,8 +747,6 @@ int nsm_dhcps_set_api(nsm_dhcps_t *dhcps, int cmd, void *val)
 			prefix_2_address_str (pu, prefix, sizeof(prefix));
 #ifdef PL_UDHCP_MODULE
 			dhcpd_pool_set_option(dhcps->pool, 66/*"routers"*/, prefix);
-#else
-			dhcpd_pool_option_add_api(dhcps->pool, 66/*"tftp-server-name"*/, prefix);
 #endif
 		}
 		ret = OK;
@@ -889,8 +803,6 @@ int nsm_dhcps_unset_api(nsm_dhcps_t *dhcps, int cmd)
 	case DHCPS_CMD_GATEWAY:
 #ifdef PL_UDHCP_MODULE
 		dhcpd_pool_set_option(dhcps->pool, 3/*"routers"*/, NULL);
-#else
-		dhcpd_pool_option_del_api(dhcps->pool, 3/*"routers"*/);
 #endif
 		memset(&dhcps->gateway, 0, sizeof(struct prefix));
 		ret = OK;
@@ -902,8 +814,6 @@ int nsm_dhcps_unset_api(nsm_dhcps_t *dhcps, int cmd)
 	case DHCPS_CMD_GATEWAY_SECONDARY:
 #ifdef PL_UDHCP_MODULE
 		dhcpd_pool_set_option(dhcps->pool, 3/*"routers"*/, NULL);
-#else
-		dhcpd_pool_option_del_api(dhcps->pool, 3/*"routers"*/);
 #endif
 		if(dhcps->netbios.u.prefix4.s_addr)
 		{
@@ -912,8 +822,6 @@ int nsm_dhcps_unset_api(nsm_dhcps_t *dhcps, int cmd)
 			prefix_2_address_str (pu, prefix, sizeof(prefix));
 #ifdef PL_UDHCP_MODULE
 			dhcpd_pool_set_option(dhcps->pool, 3/*"routers"*/, prefix);
-#else
-			dhcpd_pool_option_add_api(dhcps->pool, 3/*"routers"*/, prefix);
 #endif
 		}
 		memset(&dhcps->gateway_secondary, 0, sizeof(struct prefix));
@@ -926,8 +834,6 @@ int nsm_dhcps_unset_api(nsm_dhcps_t *dhcps, int cmd)
 	case DHCPS_CMD_DOMAIN_NAME:
 #ifdef PL_UDHCP_MODULE
 		dhcpd_pool_set_option(dhcps->pool, 15/*"domain-name"*/, NULL);
-#else
-		dhcpd_pool_option_del_api(dhcps->pool, 15/*"domain-name"*/);
 #endif
 		memset(dhcps->domain_name, 0, sizeof(dhcps->domain_name));
 		ret = OK;
@@ -935,8 +841,6 @@ int nsm_dhcps_unset_api(nsm_dhcps_t *dhcps, int cmd)
 	case DHCPS_CMD_NETBIOS:
 #ifdef PL_UDHCP_MODULE
 		dhcpd_pool_set_option(dhcps->pool, 44/*"netbios-name-servers"*/, NULL);
-#else
-		dhcpd_pool_option_del_api(dhcps->pool, 44/*"netbios-name-servers"*/);
 #endif
 		memset(&dhcps->netbios, 0, sizeof(struct prefix));
 		ret = OK;
@@ -944,8 +848,6 @@ int nsm_dhcps_unset_api(nsm_dhcps_t *dhcps, int cmd)
 	case DHCPS_CMD_NETBIOS_SECONDARY:
 #ifdef PL_UDHCP_MODULE
 		dhcpd_pool_set_option(dhcps->pool, 44/*"netbios-name-servers"*/, NULL);
-#else
-		dhcpd_pool_option_del_api(dhcps->pool, 44/*"netbios-name-servers"*/);
 #endif
 		if(dhcps->netbios.u.prefix4.s_addr)
 		{
@@ -954,8 +856,6 @@ int nsm_dhcps_unset_api(nsm_dhcps_t *dhcps, int cmd)
 			prefix_2_address_str (pu, prefix, sizeof(prefix));
 #ifdef PL_UDHCP_MODULE
 			dhcpd_pool_set_option(dhcps->pool, 44/*"netbios-name-servers"*/, prefix);
-#else
-			dhcpd_pool_option_add_api(dhcps->pool, 44/*"netbios-name-servers"*/, prefix);
 #endif
 		}
 		memset(&dhcps->netbios_secondary, 0, sizeof(struct prefix));
@@ -964,8 +864,6 @@ int nsm_dhcps_unset_api(nsm_dhcps_t *dhcps, int cmd)
 	case DHCPS_CMD_DNS:
 #ifdef PL_UDHCP_MODULE
 		dhcpd_pool_set_option(dhcps->pool, 6/*"domain-name-servers"*/, NULL);
-#else
-		dhcpd_pool_option_del_api(dhcps->pool, 6/*"domain-name-servers"*/);
 #endif
 		memset(&dhcps->dns, 0, sizeof(struct prefix));
 		ret = OK;
@@ -973,8 +871,6 @@ int nsm_dhcps_unset_api(nsm_dhcps_t *dhcps, int cmd)
 	case DHCPS_CMD_DNS_SECONDARY:
 #ifdef PL_UDHCP_MODULE
 		dhcpd_pool_set_option(dhcps->pool, 6/*"domain-name-servers"*/, NULL);
-#else
-		dhcpd_pool_option_del_api(dhcps->pool, 6/*"domain-name-servers"*/);
 #endif
 		if(dhcps->dns.u.prefix4.s_addr)
 		{
@@ -983,8 +879,6 @@ int nsm_dhcps_unset_api(nsm_dhcps_t *dhcps, int cmd)
 			prefix_2_address_str (pu, prefix, sizeof(prefix));
 #ifdef PL_UDHCP_MODULE
 			dhcpd_pool_set_option(dhcps->pool, 6/*"domain-name-servers"*/, prefix);
-#else
-			dhcpd_pool_option_add_api(dhcps->pool, 6/*"domain-name-servers"*/, prefix);
 #endif
 		}
 		memset(&dhcps->dns_secondary, 0, sizeof(struct prefix));
@@ -993,8 +887,6 @@ int nsm_dhcps_unset_api(nsm_dhcps_t *dhcps, int cmd)
 	case DHCPS_CMD_TFTP:
 #ifdef PL_UDHCP_MODULE
 		dhcpd_pool_set_option(dhcps->pool, 66/*"tftp-name-servers"*/, NULL);
-#else
-		dhcpd_pool_option_del_api(dhcps->pool, 66/*"tftp-server-name"*/);
 #endif
 		memset(&dhcps->tftp, 0, sizeof(struct prefix));
 		ret = OK;
@@ -1002,8 +894,6 @@ int nsm_dhcps_unset_api(nsm_dhcps_t *dhcps, int cmd)
 	case DHCPS_CMD_LEASE:
 #ifdef PL_UDHCP_MODULE
 		dhcpd_pool_set_offer_time(dhcps->pool, DHCPS_LEASE_DEFAULT);
-#else
-		dhcpd_default_lease_set_api(dhcps->pool, DHCPS_LEASE_DEFAULT);
 #endif
 		dhcps->lease_time = DHCPS_LEASE_DEFAULT;
 		ret = OK;
@@ -1207,10 +1097,7 @@ int nsm_interface_dhcps_enable(nsm_dhcps_t *pool, ifindex_t kifindex, BOOL enabl
 	else
 		return dhcpd_pool_del_interface(pool->pool, kifindex);
 #else
-	if(enable)
-		return dhcpd_interface_add_api(kifindex);
-	else
-		return dhcpd_interface_del_api(kifindex);
+	return OK;
 #endif
 }
 int nsm_dhcps_lease_foreach(int(*cb)(void *, void *), void *p)

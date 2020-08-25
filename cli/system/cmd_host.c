@@ -50,6 +50,13 @@ static struct cmd_node service_node =
 	1
 };
 
+static struct cmd_node all_service_node =
+{
+	ALL_SERVICE_NODE,
+	"%s(config-%s)# ",
+	1
+};
+
 static struct cmd_node auth_enable_node =
 {
 	AUTH_ENABLE_NODE,
@@ -76,37 +83,7 @@ static struct cmd_node template_node =
 	1
 };
 
-#ifdef PL_DHCP_MODULE
-static struct cmd_node config_dhcp_node =
-{
-	DHCPS_NODE,
-	"%s(config-dhcp)# ",
-	1
-};
-#endif
-#ifdef PL_VOIP_MODULE
-static struct cmd_node config_voip_node =
-{
-	VOIP_SERVICE_NODE,
-	"%s(config-voip)# ",
-	1
-};
-static struct cmd_node config_sip_node =
-{
-	SIP_SERVICE_NODE,
-	"%s(config-sip)# ",
-	1
-};
-#endif
 
-#ifdef PL_APP_MODULE
-static struct cmd_node config_app_templates_node =
-{
-	APP_TEMPLATES_NODE,
-	"%s(config-templates-%s)# ",
-	1
-};
-#endif
 struct cmd_node interface_node =
 {
 		INTERFACE_NODE,
@@ -279,18 +256,10 @@ DEFUN (config_exit,
 		vty->node = ENABLE_NODE;
 		vty_config_unlock(vty);
 		break;
-#ifdef PL_VOIP_MODULE
-	case VOIP_SERVICE_NODE:
-	case SIP_SERVICE_NODE:
-#endif
-#ifdef PL_APP_MODULE
-	case APP_TEMPLATES_NODE:
-#ifdef APP_X5BA_MODULE
-	case APP_X5BA_NODE:
-#endif
-#endif
+
 	case DHCPS_NODE:
 	case TEMPLATE_NODE:
+	case ALL_SERVICE_NODE:
 	case MODEM_PROFILE_NODE:
 	case MODEM_CHANNEL_NODE:
 	case INTERFACE_NODE:
@@ -375,19 +344,11 @@ DEFUN (config_end,
 		/*    case RESTRICTED_NODE:*/
 		/* Nothing to do. */
 		break;
-#ifdef PL_VOIP_MODULE
-	case VOIP_SERVICE_NODE:
-	case SIP_SERVICE_NODE:
-#endif
-#ifdef PL_APP_MODULE
-	case APP_TEMPLATES_NODE:
-#ifdef APP_X5BA_MODULE
-	case APP_X5BA_NODE:
-#endif
-#endif
+
 	case CONFIG_NODE:
 	case DHCPS_NODE:
 	case TEMPLATE_NODE:
+	case ALL_SERVICE_NODE:
 	case MODEM_PROFILE_NODE:
 	case MODEM_CHANNEL_NODE:
 	case INTERFACE_NODE:
@@ -1366,6 +1327,7 @@ static int _cmd_host_base_init(int terminal)
 	install_node(&brigde_interface_node, NULL);
 	install_node(&interface_wireless_node, NULL);
 
+	install_node(&all_service_node, nsm_service_write_config);
 	install_node(&template_node, nsm_template_write_config);
 
 #ifdef CUSTOM_INTERFACE
@@ -1374,16 +1336,6 @@ static int _cmd_host_base_init(int terminal)
 #endif
 	install_node(&modem_profile_node, NULL);
 	install_node(&modem_channel_node, NULL);
-#ifdef PL_DHCP_MODULE
-	install_node(&config_dhcp_node, NULL);
-#endif
-#ifdef PL_VOIP_MODULE
-	install_node(&config_voip_node, NULL);
-	install_node(&config_sip_node, NULL);
-#endif
-#ifdef PL_APP_MODULE
-	install_node(&config_app_templates_node, NULL);
-#endif
 
 	install_default(VIEW_NODE);
 	install_default(CONFIG_NODE);

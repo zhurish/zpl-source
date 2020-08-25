@@ -201,9 +201,6 @@ int os_module_init(void)
 	ssh_module_init();
 #endif
 
-#ifdef PL_OSIP_MODULE
-	voip_module_init();
-#endif
 
 #ifdef PL_PJSIP_MODULE
 	pl_pjsip_module_init();
@@ -266,10 +263,6 @@ int os_module_task_init(void)
 	ssh_module_task_init();
 #endif
 
-
-#ifdef PL_OSIP_MODULE
-	voip_module_task_init();
-#endif
 
 #ifdef PL_PJSIP_MODULE
 	pl_pjsip_module_task_init();
@@ -353,7 +346,7 @@ int os_module_cmd_init(int terminal)
 	ssh_cmd_init();
 #endif
 
-#ifdef PL_VOIP_MODULE
+#ifdef PL_PJSIP_MODULE
 	cmd_voip_init();
 #endif
 
@@ -366,7 +359,7 @@ int os_module_cmd_init(int terminal)
 #endif
 
 #ifdef PL_MQTT_MODULE
-	//mqtt_module_task_init();
+	cmd_mqtt_init();
 #endif
 
 
@@ -453,9 +446,6 @@ int os_module_exit(void)
 	ssh_module_exit();
 #endif
 
-#ifdef PL_OSIP_MODULE
-	voip_module_exit();
-#endif
 
 #ifdef PL_PJSIP_MODULE
 	pl_pjsip_module_exit();
@@ -509,9 +499,6 @@ int os_module_task_exit(void)
 	ssh_module_task_exit();
 #endif
 
-#ifdef PL_OSIP_MODULE
-	voip_module_task_exit();
-#endif
 
 #ifdef PL_PJSIP_MODULE
 	pl_pjsip_module_task_exit();

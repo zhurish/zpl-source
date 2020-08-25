@@ -253,13 +253,13 @@ BOOL is_hex (char c)
 	  ((c >= 'A') && (c <= 'F')) || ((c >= 'a') && (c <= 'f')));
 }
 
-u_int32 string_to_hex(char * room)
+u_int32 str_to_hex(char * room)
 {
 	zassert(room != NULL);
 	return strtol(room, NULL, 16);
 }
 
-char * hex_to_string(u_int32 hex)
+char * hex_to_str(u_int32 hex)
 {
 	static char buf[64];
 	memset(buf, 0, sizeof(buf));

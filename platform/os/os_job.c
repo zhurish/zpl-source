@@ -202,9 +202,9 @@ static int os_job_task(void)
 					if(job_mutex)
 						os_mutex_unlock(job_mutex);
 					(t->job_entry)(t->pVoid);
-					t->cnt++;
 					if(job_mutex)
 						os_mutex_lock(job_mutex, OS_WAIT_FOREVER);
+					t->cnt++;
 				}
 				lstDelete(job_list, t);
 				if(job_unused_list)

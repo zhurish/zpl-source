@@ -32,6 +32,9 @@
 /* SIGHUP handler. */
 static void os_sighup(void)
 {
+#ifdef APP_V9_MODULE
+	v9_app_module_exit();
+#endif
 	vty_terminate();
 	os_log("/app/signo.log", "%s:%d",__func__, os_task_gettid());
 	//zlog_notice(ZLOG_DEFAULT, "%s: SIGHUP received\r\n",__func__);
@@ -44,6 +47,9 @@ static void os_sighup(void)
 /* SIGINT handler. */
 static void os_sigint(void)
 {
+#ifdef APP_V9_MODULE
+	v9_app_module_exit();
+#endif
 	vty_terminate();
 	os_log("/app/signo.log", "%s:%d",__func__, os_task_gettid());
 	//zlog_notice(ZLOG_DEFAULT, "%s: Terminating on signal\r\n",__func__);
@@ -54,20 +60,15 @@ static void os_sigint(void)
 	_exit(0);
 }
 
-#if 0
 /* SIGKILL handler. */
 static void os_sigkill(void)
 {
+#ifdef APP_V9_MODULE
+	v9_app_module_exit();
+#endif
 	vty_terminate();
-	os_log("/app/signo.log", "%s:%d",__func__, os_task_gettid());
-	zlog_notice(ZLOG_DEFAULT, "%s\r\n",__func__);
-	//os_msgq_exit();
-	//os_exit_all_module();
-	zlog_backtrace_sigsafe(LOG_DEBUG,"AAAAAAAA");
-	zlog_backtrace(LOG_DEBUG);
 	exit(0);
 }
-#endif
 
 /* SIGUSR1 handler. */
 static void os_sigusr1(void)
@@ -101,14 +102,14 @@ static struct quagga_signal_t os_signals[] =
 		.signal = SIGTERM,
 		.handler = &os_sigint,
 	},
-/*	{
+	{
 		.signal = SIGKILL,
 	 	.handler = &os_sigkill,
-	},*/
-/*	{
+	},
+	{
 		.signal = SIGSEGV,
 	 	.handler = &os_sigkill,
-	},*/
+	},
 /*	{
 		.signal = SIGCHLD,
 	 	.handler = &os_sighld,
@@ -253,7 +254,8 @@ int os_start_init(char *progname, module_t pro, int daemon_mode, char *tty)
 		return ERROR;
 
 	openzlog (progname, pro, LOG_LOCAL7, 0);
-	vty_tty_init(tty);
+	if(tty)
+		vty_tty_init(tty);
 	return OK;
 }
 

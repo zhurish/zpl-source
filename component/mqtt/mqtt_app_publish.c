@@ -17,6 +17,72 @@
 #include "mqtt_app_api.h"
 
 
+
+void mqtt_sub_publish_v5_callback(struct mosquitto *mosq, void *obj, int mid,
+		int reason_code, const mosquitto_property *properties)
+{
+	UNUSED(obj);
+	UNUSED(reason_code);
+	UNUSED(properties);
+	zassert(mosq != NULL);
+	zassert(obj != NULL);
+	UNUSED(obj);
+	UNUSED(properties);
+#if 0
+	last_mid_sent = mid;
+	if (reason_code > 127)
+	{
+		mqtt_err_printf(&cfg, "Warning: Publish %d failed: %s.\n", mid,
+				mosquitto_reason_string(reason_code));
+	}
+	publish_count++;
+
+	if (cfg.pub_mode == MSGMODE_STDIN_LINE)
+	{
+		if (mid == last_mid)
+		{
+			mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
+			disconnect_sent = true;
+		}
+	}
+	else if (publish_count < cfg.repeat_count)
+	{
+		ready_for_repeat = true;
+		set_repeat_time();
+	}
+	else if (disconnect_sent == false)
+	{
+		mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
+		disconnect_sent = true;
+	}
+#endif
+}
+
+void mqtt_sub_publish_callback(struct mosquitto *mosq, void *obj, int mid, int reason_code)
+{
+	mqtt_sub_publish_v5_callback(mosq, obj,  mid,
+			 reason_code, NULL);
+}
+
+
+int mqtt_publish(struct mosquitto *mosq, int *mid, const char *topic,
+		int payloadlen, void *payload, int qos, bool retain)
+{
+	struct mqtt_app_config *cfg = mosquitto_userdata(mosq);
+
+	if (cfg->mqtt_version == MQTT_PROTOCOL_V5)
+	{
+		return mosquitto_publish_v5(mosq, mid, NULL, payloadlen, payload, qos,
+				retain, cfg->publish_props);
+	}
+	else
+	{
+		return mosquitto_publish(mosq, mid, topic, payloadlen, payload, qos, retain);
+	}
+	return ERROR;
+}
+
+#if 0
 void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc,
 		const mosquitto_property *properties)
 {
@@ -31,23 +97,7 @@ void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc,
 	}
 }
 
-int my_publish(struct mosquitto *mosq, int *mid, const char *topic,
-		int payloadlen, void *payload, int qos, bool retain)
-{
-	ready_for_repeat = false;
-	if (cfg.mqtt_version == MQTT_PROTOCOL_V5 && cfg.have_topic_alias
-			&& first_publish == false)
-	{
-		return mosquitto_publish_v5(mosq, mid, NULL, payloadlen, payload, qos,
-				retain, cfg.publish_props);
-	}
-	else
-	{
-		first_publish = false;
-		return mosquitto_publish_v5(mosq, mid, topic, payloadlen, payload, qos,
-				retain, cfg.publish_props);
-	}
-}
+
 
 void my_connect_callback(struct mosquitto *mosq, void *obj, int result,
 		int flags, const mosquitto_property *properties)
@@ -482,4 +532,4 @@ int pub_main(int argc, char *argv[])
 	pub_shared_cleanup();
 	return 1;
 }
-
+#endif

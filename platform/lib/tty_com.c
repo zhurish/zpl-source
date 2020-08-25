@@ -30,6 +30,21 @@
 #define TTY_COM_ESC_END         0334		/* ESC ESC_END means END 'data'	*/
 #define TTY_COM_ESC_ESC         0335		/* ESC ESC_ESC means ESC 'data'	*/
 
+// PPP数据帧每一帧都以标识字符0x7E开始和结束；
+// 由于标识字符的值是0x7E，因此当该字符出现在信息字段中时，PPP需要对它进行转义。
+// 当PPP使用异步传输时，它把转义字符定义为：0x7D，并使用字节填充RFC-1662标准。
+// 字节填充RFC-1662标准规定如下：
+// 1. 把信息字段中出现的每一个0x7E字符转变成字节序列（0x7D,0x5E）
+// 2. 若信息字段中出现一个0x7D的字节（即出现了与转义字符相同的比特组合），
+//    则把0x7D转义成两个字节序列（0x7D,0x5D）
+// 3. 若信息字段中出现ASCII码的控制字符（即数值小于0x20的字符），
+//    则在该字符前面加入一个0x7D字节，同时将该字符的编码加以改变
+
+#define TTY_COM_PPP_FRAME_FLAG        ( 0x7E )    /* 标识字符 */
+#define TTY_COM_PPP_FRAME_ESC        ( 0x7D )    /* 转义字符 */
+#define TTY_COM_PPP_FRAME_END        ( 0x20 )    /* 编码字符 */
+#define TTY_COM_PPP_FRAME_ESC_END        ( 0x5E )    /* 编码字符 */
+#define TTY_COM_PPP_FRAME_ESC_ESC        ( 0x5D )    /* 编码字符 */
 
 struct tty_speed_table
 {
@@ -592,3 +607,111 @@ int tty_com_slip_decode_byte(struct tty_slip *sl, unsigned char s)
 	return ERROR;
 }
 
+
+int tty_com_ppp_write (struct tty_com *com, char *p, int len)
+{
+	int slen = len;
+	unsigned char sc = 0;
+	/*发送一个END字符*/
+	tty_com_putc (com, TTY_COM_PPP_FRAME_FLAG);
+
+	/*发送包内的数据*/
+	for(slen = 0; slen < len; slen++)
+	{
+		sc = p[slen];
+		switch (sc)
+		{
+			/*如果需要转意，则进行相应的处理*/
+			case TTY_COM_PPP_FRAME_FLAG:
+				tty_com_putc (com, TTY_COM_PPP_FRAME_ESC);
+				tty_com_putc (com, TTY_COM_PPP_FRAME_ESC_END);
+				break;
+			case TTY_COM_PPP_FRAME_ESC:
+				tty_com_putc (com, TTY_COM_PPP_FRAME_ESC);
+				tty_com_putc (com, TTY_COM_PPP_FRAME_ESC_ESC);
+				break;
+
+				/*如果不需要转意，则直接发送*/
+			default:
+				if(sc < TTY_COM_PPP_FRAME_END)
+				{
+					tty_com_putc (com, TTY_COM_PPP_FRAME_ESC);
+					tty_com_putc (com, sc^TTY_COM_PPP_FRAME_END);
+				}
+				else
+					tty_com_putc (com, sc);
+				break;
+		}
+	}
+	//tty_com_putc (com, sc); FSC
+	//tty_com_putc (com, sc); FSC
+	/*通知接收方发送结束*/
+	tty_com_putc (com, TTY_COM_PPP_FRAME_FLAG);
+	return len;
+}
+
+int tty_com_ppp_read (struct tty_com *com, char *p, int len)
+{
+	unsigned char c = 0;
+	int received = 0;
+	while (1)
+	{
+		/*接收字符*/
+		if (tty_com_getc (com, &c) == 1)
+		{
+			switch (c)
+			{
+					/*如果接收到END，包数据结束，如果包内没有数据，直接抛弃*/
+				case TTY_COM_PPP_FRAME_FLAG:
+					if (received)
+					{
+						if(received <= len)
+							return received;
+						return ERROR;
+					}
+					else
+						break;
+
+					/*下面的代码用于处理转意字符*/
+				case TTY_COM_PPP_FRAME_ESC:
+					if (tty_com_getc (com, &c) == 1)
+					{
+						switch (c)
+						{
+							case TTY_COM_PPP_FRAME_ESC_END:
+								c = TTY_COM_PPP_FRAME_FLAG;
+								if (received < len)
+								{
+									p[received++] = c;
+								}
+								break;
+							case TTY_COM_PPP_FRAME_ESC_ESC:
+								c = TTY_COM_PPP_FRAME_ESC;
+								if (received < len)
+								{
+									p[received++] = c;
+								}
+								break;
+							default:
+								c = c^TTY_COM_PPP_FRAME_END;
+								if (received < len)
+								{
+									p[received++] = c;
+								}
+								break;
+						}
+					}
+					break;
+				default:
+					if (received < len)
+					{
+						p[received++] = c;
+					}
+					else
+						return ERROR;
+					break;
+			}
+		}
+	}
+	return ERROR;
+}

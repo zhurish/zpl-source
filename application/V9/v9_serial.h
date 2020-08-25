@@ -8,19 +8,15 @@
 #ifndef __V9_SERIAL_H__
 #define __V9_SERIAL_H__
 
+#include "v9_video.h"
+
 #define V9_SERIAL_CTL_NAME	"/dev/ttyS2"
 
+#define V9_SLIPNET_ENABLE
+#define V9_SLIPNET_UDP
 
-#define V9_APP_DEBUG_EVENT		0X01
-#define V9_APP_DEBUG_HEX		0X02
-#define V9_APP_DEBUG_RECV		0X04
-#define V9_APP_DEBUG_SEND		0X08
-#define V9_APP_DEBUG_UPDATE		0X10
-#define V9_APP_DEBUG_TIME		0X20
-#define V9_APP_DEBUG_WEB		0X40
-#define V9_APP_DEBUG_MSG		0X80
-#define V9_APP_DEBUG_STATE		0X100
-#define V9_APP_DEBUG_UCI		0X200
+
+#define V9_SERIAL_BUF_MAX 512
 
 #define V9_APP_DEBUG(n)		(V9_APP_DEBUG_ ## n & v9_serial->debug)
 #define V9_APP_DEBUG_ON(n)	(v9_serial->debug |= (V9_APP_DEBUG_ ## n ))
@@ -39,21 +35,25 @@ typedef struct v9_serial_s
 	void			*r_thread;
 
 	struct tty_com *tty;
-
+#ifdef V9_SLIPNET_ENABLE
 	struct tty_com *slipnet;
 	void			*r_slipnet;
-
-
+#else
+	u_int8			timer_sync;
+#endif /* V9_SLIPNET_ENABLE */
+	u_int8			sntp_sync;
 	u_int8			status;
 
 	u_int8			id;
 	u_int8			seqnum;
-	char			buf[512];
+	char			buf[V9_SERIAL_BUF_MAX];
 	int				len;
 
-	char			sbuf[512];
+	char			sbuf[V9_SERIAL_BUF_MAX];
 	int				slen;
 	int				debug;
+
+	char			tmpbuf[V9_SERIAL_BUF_MAX];
 } v9_serial_t;
 
 extern v9_serial_t *v9_serial;

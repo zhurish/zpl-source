@@ -32,12 +32,13 @@
  * 获取当前挂载硬盘数量
  */
 static int _disk_count = 0;
-
+static u_int32 _disk_timer = 0;
+static u_int32 _disk_keep_day = 0;
 static int v9_video_disk_info_load(void);
 
 int v9_video_disk_count(void)
 {
-	v9_video_disk_info_load();
+	//v9_video_disk_info_load();
 	if(_disk_count == 0)
 		_disk_count++;
 	return _disk_count;
@@ -237,6 +238,17 @@ static int v9_video_disk_test(void)
 }
 
 
+
+char * v9_video_disk_urlpath(int id, char *picpath)
+{
+	static char pathff[V9_APP_DIR_NAME_MAX];
+	memset(pathff, 0, sizeof(pathff));
+	sprintf(pathff, "%s/%s", v9_video_disk_capdb_dir(id), picpath);
+	return pathff;
+}
+
+
+
 int v9_video_disk_dir_init(void)
 {
 /*	v9_video_disk_info_load();
@@ -250,6 +262,7 @@ int v9_video_disk_dir_init(void)
 	}
 	if(_disk_count == 0)
 		_disk_count++;*/
+	v9_video_disk_info_load();
 	if(v9_video_disk_count() > 0)
 	{
 		if(access(v9_video_disk_root_dir(APP_BOARD_CALCU_1), F_OK) != 0)
@@ -319,6 +332,237 @@ int v9_video_disk_dir_init(void)
 			mkdir(v9_video_disk_warn_dir(APP_BOARD_CALCU_4), 0644);
 
 		v9_video_disk_test();
+#ifdef PL_OPENWRT_UCI
+		os_uci_get_integer("product.global.keepday", &_disk_keep_day);
+#endif
+		v9_video_disk_monitor_start(TRUE);
 	}
 	return 0;
+}
+
+
+
+/*
+ * disk monitor
+ */
+
+int v9_video_disk_keep_day_set(u_int32 day)
+{
+#ifdef PL_OPENWRT_UCI
+	if(os_uci_set_integer("product.global.keepday", day) == OK)
+	{
+		os_uci_save_config("product");
+		_disk_keep_day = day;
+		return OK;
+	}
+#endif
+	return ERROR;
+}
+
+int v9_video_disk_keep_day_get(void)
+{
+#ifdef PL_OPENWRT_UCI
+	if(_disk_keep_day == 0)
+	{
+		if(os_uci_set_integer("product.global.keepday", V9_APP_DISK_KEEP_DAY) == OK)
+		{
+			os_uci_save_config("product");
+			_disk_keep_day = V9_APP_DISK_KEEP_DAY;
+			return _disk_keep_day;
+		}
+	}
+#endif
+	return _disk_keep_day;
+}
+//#include <dirent.h>
+
+static int isdirempty(char *dirname)
+{
+    /* 打开要进行匹配的文件目录 */
+	if(!dirname)
+		return -1;
+    DIR *dir = opendir(dirname);
+    struct dirent *ent = NULL;
+    if (dir == NULL)
+    {
+        return -1;
+    }
+    while (1)
+    {
+        ent = readdir (dir);
+        if (ent <= 0)
+        {
+            break;
+        }
+        if ((strcmp(".", ent->d_name)==0) || (strcmp("..", ent->d_name)==0))
+        {
+            continue;
+        }
+        /*判断是否有目录和文件*/
+        if((ent->d_type == DT_DIR))
+        {
+        	if(isdirempty(ent->d_name) == 0)
+        	{
+        		rmdir(ent->d_name);
+        		sync();
+        	}
+/*        	else
+        	{
+
+        	}*/
+        }
+        if (ent->d_type == DT_REG)
+        {
+        	closedir(dir);
+            return -1;
+        }
+    }
+    closedir(dir);
+    return 0;
+}
+
+static int v9_video_sqltbl_monitor_datetime(u_int32 id, u_int32 table, u_int32 datecnt)
+{
+	sqlite3 *db = NULL;
+	int datetime = os_time(NULL);
+	v9_video_db_lock();
+	db = v9_video_sqldb_open(id, table);
+	if(db)
+	{
+		datetime -= OS_SEC_DAY_V(datecnt);
+		v9_video_sqldb_del_by_datetime(db,  id,  table, os_time_fmt ("sql", datetime));
+		v9_video_sqldb_close(db, id);
+	}
+	v9_video_db_unlock();
+	if(isdirempty(v9_video_disk_base_dir(id)) == 0)
+	{
+		rmdir(v9_video_disk_base_dir(id));
+		sync();
+	}
+	return OK;
+}
+
+
+static int v9_video_sqltbl_monitor(u_int32 id, u_int32 table, u_int32 limit, u_int32 delcnt)
+{
+	sqlite3 *db = NULL;
+	int getlimit = 0;
+	v9_video_db_lock();
+	db = v9_video_sqldb_open(id, table);
+	if(db)
+	{
+		if(v9_video_sqldb_count(db,  id,  table, &getlimit) == OK)
+		{
+			if(getlimit >= limit)
+			{
+				v9_video_sqldb_select_by_oldid(db, id, table, delcnt);
+			}
+		}
+		v9_video_sqldb_close(db, id);
+	}
+	v9_video_db_unlock();
+	return OK;
+}
+
+
+static int v9_video_disk_monitor_task(void *p)
+{
+	u_int diskload1 = 0, diskload2 = 0;
+	if(v9_video_board_isactive(APP_BOARD_CALCU_1))
+	{
+		v9_video_sqltbl_monitor_datetime(APP_BOARD_CALCU_1, 0, _disk_keep_day?_disk_keep_day:V9_APP_DISK_KEEP_DAY);
+		v9_video_sqltbl_monitor_datetime(APP_BOARD_CALCU_1, 1, _disk_keep_day?_disk_keep_day:V9_APP_DISK_KEEP_DAY);
+	}
+	if(v9_video_board_isactive(APP_BOARD_CALCU_2))
+	{
+		v9_video_sqltbl_monitor_datetime(APP_BOARD_CALCU_2, 0, _disk_keep_day?_disk_keep_day:V9_APP_DISK_KEEP_DAY);
+		v9_video_sqltbl_monitor_datetime(APP_BOARD_CALCU_2, 1, _disk_keep_day?_disk_keep_day:V9_APP_DISK_KEEP_DAY);
+	}
+	if(v9_video_board_isactive(APP_BOARD_CALCU_3))
+	{
+		v9_video_sqltbl_monitor_datetime(APP_BOARD_CALCU_3, 0, _disk_keep_day?_disk_keep_day:V9_APP_DISK_KEEP_DAY);
+		v9_video_sqltbl_monitor_datetime(APP_BOARD_CALCU_3, 1, _disk_keep_day?_disk_keep_day:V9_APP_DISK_KEEP_DAY);
+	}
+	if(v9_video_board_isactive(APP_BOARD_CALCU_4))
+	{
+		v9_video_sqltbl_monitor_datetime(APP_BOARD_CALCU_4, 0, _disk_keep_day?_disk_keep_day:V9_APP_DISK_KEEP_DAY);
+		v9_video_sqltbl_monitor_datetime(APP_BOARD_CALCU_4, 1, _disk_keep_day?_disk_keep_day:V9_APP_DISK_KEEP_DAY);
+	}
+	sync();
+
+	if (v9_video_board[APP_BOARD_MAIN-1].id == APP_BOARD_MAIN)
+	{
+		//zlog_trap(ZLOG_APP, "===================%s===================", __func__);
+		v9_video_board_lock();
+
+		diskload1 = v9_video_board[APP_BOARD_MAIN-1].board.diskload1;
+		diskload2 = v9_video_board[APP_BOARD_MAIN-1].board.diskload2;
+		v9_video_board_unlock();
+
+		if(diskload1 >= V9_APP_DISK_LOAD_LIMIT)
+		{
+			if(v9_video_board_isactive(APP_BOARD_CALCU_1))
+			{
+				v9_video_sqltbl_monitor(APP_BOARD_CALCU_1, 0, V9_APP_DB_ROW_LIMIT, V9_APP_DB_DELETE_LIMIT);
+				v9_video_sqltbl_monitor(APP_BOARD_CALCU_1, 1, V9_APP_DB_ROW_LIMIT, V9_APP_DB_DELETE_LIMIT);
+			}
+			if(v9_video_board_isactive(APP_BOARD_CALCU_2))
+			{
+				v9_video_sqltbl_monitor(APP_BOARD_CALCU_2, 0, V9_APP_DB_ROW_LIMIT, V9_APP_DB_DELETE_LIMIT);
+				v9_video_sqltbl_monitor(APP_BOARD_CALCU_2, 1, V9_APP_DB_ROW_LIMIT, V9_APP_DB_DELETE_LIMIT);
+			}
+			if(v9_video_disk_count() == 1)
+			{
+				if(v9_video_board_isactive(APP_BOARD_CALCU_3))
+				{
+					v9_video_sqltbl_monitor(APP_BOARD_CALCU_3, 0, V9_APP_DB_ROW_LIMIT, V9_APP_DB_DELETE_LIMIT);
+					v9_video_sqltbl_monitor(APP_BOARD_CALCU_3, 1, V9_APP_DB_ROW_LIMIT, V9_APP_DB_DELETE_LIMIT);
+				}
+				if(v9_video_board_isactive(APP_BOARD_CALCU_4))
+				{
+					v9_video_sqltbl_monitor(APP_BOARD_CALCU_4, 0, V9_APP_DB_ROW_LIMIT, V9_APP_DB_DELETE_LIMIT);
+					v9_video_sqltbl_monitor(APP_BOARD_CALCU_4, 1, V9_APP_DB_ROW_LIMIT, V9_APP_DB_DELETE_LIMIT);
+				}
+			}
+		}
+		if(v9_video_disk_count() == 2)
+		{
+			if(diskload1 >= V9_APP_DISK_LOAD_LIMIT)
+			{
+				if(v9_video_board_isactive(APP_BOARD_CALCU_3))
+				{
+					v9_video_sqltbl_monitor(APP_BOARD_CALCU_3, 0, V9_APP_DB_ROW_LIMIT, V9_APP_DB_DELETE_LIMIT);
+					v9_video_sqltbl_monitor(APP_BOARD_CALCU_3, 1, V9_APP_DB_ROW_LIMIT, V9_APP_DB_DELETE_LIMIT);
+				}
+				if(v9_video_board_isactive(APP_BOARD_CALCU_4))
+				{
+					v9_video_sqltbl_monitor(APP_BOARD_CALCU_4, 0, V9_APP_DB_ROW_LIMIT, V9_APP_DB_DELETE_LIMIT);
+					v9_video_sqltbl_monitor(APP_BOARD_CALCU_4, 1, V9_APP_DB_ROW_LIMIT, V9_APP_DB_DELETE_LIMIT);
+				}
+			}
+		}
+		sync();
+	}
+	return OK;
+}
+
+int v9_video_disk_monitor_start(BOOL enable)
+{
+	if(enable)
+	{
+		if(_disk_timer)
+			os_time_restart(_disk_timer, V9_APP_MONITOR_TIME_H(1));
+		else
+			_disk_timer = os_time_create(v9_video_disk_monitor_task, NULL, V9_APP_MONITOR_TIME_H(1));
+	}
+	else
+	{
+		if(_disk_timer)
+		{
+			os_time_cancel(_disk_timer);
+			_disk_timer = 0;
+		}
+		return OK;
+	}
+	return (_disk_timer > 0)? OK:ERROR;
 }

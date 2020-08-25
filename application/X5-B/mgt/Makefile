@@ -17,14 +17,14 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(PL_ECHO_CC)
-	@$(PL_OBJ_COMPILE)
+	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
+	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
 
 $(LIBS) : $(MODULE_OBJS)
-	$(PL_MAKE_LIB) $(APP_LIBS) $(MODULE_OBJS)
+	@$(AR) -rs  $(APP_LIBS) $(MODULE_OBJS)
 
 
-#include $(MAKE_DIR)/make.mk
+
 
 -include $(MODULE_OBJS:.o=.d)
 #
@@ -41,7 +41,7 @@ obj: $(MODULE_OBJS) $(MODULE_LIBOBJS)
 install: $(LIBS)
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
-	@$(STRIP) --strip-unneeded $(LIB_DIR)/$(LIBS)
+	@$(STRIP) $(PLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
 #	$(STRIP) $(LIB_DIR)/$(LIBS)
 
 clean: objclean

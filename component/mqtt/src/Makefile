@@ -275,10 +275,10 @@ $(OBJS_DIR)/will_mosq.o : ../mqttlib/will_mosq.c ../mqttlib/will_mosq.h
 	@$(CC) $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
 
 mosquitto_passwd : $(OBJS_DIR)/mosquitto_passwd.o $(OBJS_DIR)/misc_mosq.o
-	@$(CC) ${LDFLAGS} $^ -o $@ $(PASSWD_LDADD)
+	@$(CC) ${BROKER_LDFLAGS} $^ -o $@ $(PASSWD_LDADD)
 
 $(OBJS_DIR)/mosquitto_passwd.o : mosquitto_passwd.c
-	@$(CC) -I.. -I../mqttlib $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+	@$(CC) -I.. -I../mqttlib $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
 
 $(OBJS_DIR)/plugin_defer.so : plugin_defer.c mosquitto_plugin.h mosquitto_broker.h mosquitto_broker_internal.h
 	@$(CC) -I. -I../mqttlib -fPIC -shared $< -o $@

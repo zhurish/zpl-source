@@ -18,8 +18,8 @@ PL_INCLUDE += -I$(PLATFORM_ROOT)/shell
 PL_INCLUDE += -I$(PLATFORM_ROOT)/nsm
 
 PL_DEFINE	+= -DPL_NSM_MODULE
-PL_DEFINE	+= -DVTY_STDIO_MODULE
-PL_DEFINE	+= -DVTY_CONSOLE_MODULE
+#PL_DEFINE	+= -DVTY_STDIO_MODULE
+#PL_DEFINE	+= -DVTY_CONSOLE_MODULE
 
 PLCLI_DIR += $(CLI_ROOT)/nsm
 PLCLI_DIR += $(CLI_ROOT)/system
@@ -178,25 +178,6 @@ PLCLI_DIR += $(CLI_ROOT)/modem
 endif
 endif
 
-ifeq ($(strip $(MODULE_DHCP)),true)
-ifeq ($(strip $(MODULE_COMPONENT)),true)
-
-DHCPCD_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(DHCPCDDIR)
-PLPRODS += $(DHCPCD_ROOT)
-#PL_INCLUDE += -I$(DHCPCD_ROOT)
-
-DHCPD_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(DHCPDDIR)
-PLPRODS += $(DHCPD_ROOT)
-PL_INCLUDE += -I$(DHCPD_ROOT)
-
-PL_DEFINE += -DPL_DHCP_MODULE 
-PL_DEFINE += -DPL_DHCPC_MODULE
-PL_DEFINE += -DPL_DHCPD_MODULE
-
-PLCLI_DIR += $(CLI_ROOT)/dhcp
-
-endif
-endif
 
 ifeq ($(strip $(MODULE_UDHCP)),true)
 ifeq ($(strip $(MODULE_COMPONENT)),true)
@@ -225,7 +206,7 @@ PL_INCLUDE += -I$(LIBSSH_ROOT)/include
 
 ifeq ($(BUILD_TYPE),X86)
 PL_INCLUDE += -I$(LIBSSH_ROOT)/include
-PLOS_LDLIBS += -lutil -lssl -lcrypto -lz
+#PLOS_LDLIBS += -lutil -lssl -lcrypto -lz
 endif #($(BUILD_TYPE),X86)
 
 ifeq ($(BUILD_TYPE),MIPS)
@@ -238,7 +219,7 @@ PLEX_LDFLAGS += -L$(PLBASE)/externsions/openssl/mipsl/lib
 PLEX_INCLUDE += -I$(PLBASE)/externsions/zlib/mipsl/zlib/include
 PLEX_LDFLAGS += -L$(PLBASE)/externsions/zlib/mipsl/zlib/lib
 endif #($(OPENEWRT_BASE),)
-PLEX_LDLIBS += -lutil -lssl -lcrypto -lz
+#PLEX_LDLIBS += -lutil -lssl -lcrypto -lz
 endif #($(BUILD_TYPE),MIPS)
 
 PL_DEFINE += -DPL_SSH_MODULE
@@ -260,6 +241,8 @@ PLEX_DIR += $(PLBASE)/externsions/zlib/zlib-1.2.11/
 PL_INCLUDE += -I$(PLBASE)/externsions/zlib/_install/include
 PLEX_LDFLAGS += -L$(PLBASE)/externsions/zlib/_install/lib
 PLEX_LDLIBS += -lz
+else #($(BUILD_TYPE),X86)
+PLOS_LDLIBS += -lutil -lssl -lcrypto -lz
 endif
 endif
 
@@ -302,141 +285,8 @@ endif
 endif
 
 
-
-ifeq ($(strip $(MODULE_OSIP)),true)
-OSIP_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(OSIPDIR)
-PLPRODS += $(OSIP_ROOT)/libosip/src/osip2
-PLPRODS += $(OSIP_ROOT)/libosip/src/osipparser2
-PLPRODS += $(OSIP_ROOT)/libexosip/src
-PLPRODS += $(OSIP_ROOT)/voip
-
-PL_INCLUDE += -I$(OSIP_ROOT)/libosip/include
-PL_INCLUDE += -I$(OSIP_ROOT)/libexosip/include
-PL_INCLUDE += -I$(OSIP_ROOT)/voip
-
-#PL_INCLUDE += -I$(OSIP_ROOT)
-
-PL_DEFINE += -DPL_OSIP_MODULE -DOSIP_MONOTHREAD -D__linux
-PL_DEFINE += -DPL_VOIP_MODULE  -DPL_VOIP_MEDIASTREAM
-EXTRA_DEFINE += -DVOIP_CARDS_DEBUG
-
-PLOS_LDLIBS += -lresolv -lasound -lutil -lssl -lcrypto -lz
-
-PLCLI_DIR += $(CLI_ROOT)/voip
-
-endif #($(strip $(MODULE_OSIP)),true)
-
-
-
-ifeq ($(strip $(MODULE_PJSIP)),true)
-ifeq ($(strip $(MODULE_COMPONENT)),true)
-PJSIP_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(PJSIPDIR)
-#PLPRODS += $(PLBASE)/externsions/pjproject-2.8
-#PL_INCLUDE += -I$(PLBASE)/externsions/pjproject-2.8
-PLPRODS += $(PJSIP_ROOT)
-PL_INCLUDE += -I$(PJSIP_ROOT)
-PL_DEFINE += -DPL_PJSIP_MODULE
-PL_DEFINE += -DPL_VOIP_MODULE
-PL_INCLUDE += -I$(PLBASE)/externsions/pjproject-2.8/_install/include
-
-export PJSHARE_ENABLE = true
-export PJMEDIA_ENABLE = true
-export PJMEDIA_AUDIODEV_ENABLE = true
-export PJMEDIA_CODEC_ENABLE = true
-export PJMEDIA_VIDEODEV_ENABLE = false
-export PJMEDIA_NATH_ENABLE = true
-export PJMEDIA_SIMPLE_ENABLE = true
-export PJMEDIA_RESAMPLE_ENABLE = false
-export PJMEDIA_UA_ENABLE = true
-
-export PJMEDIA_SRTP_ENABLE = true
-
-export PJMEDIA_YUV_ENABLE = false
-export PJMEDIA_GSM_ENABLE = true
-export PJMEDIA_SPEEX_ENABLE = true
-export PJMEDIA_ILBC_ENABLE = true
-export PJMEDIA_G722_ENABLE = true
-export PJMEDIA_WEBRTC_ENABLE = false
-
-export PJMEDIA_AUDIO_ALSA = true
-export PJMEDIA_AUDIO_PORTAUDIO = false
-
-PL_LDLIBS += -lpj -lpjlib-util -lpjsip 
-			 
-PLOS_LDLIBS += -luuid -lasound
-	
-ifeq ($(PJSHARE_ENABLE),true)			 
-ifeq ($(PJMEDIA_ENABLE),true)
-PL_LDLIBS += -lpjmedia
-endif
-ifeq ($(PJMEDIA_AUDIODEV_ENABLE),true)
-PL_LDLIBS += -lpjmedia-audiodev
-endif
-ifeq ($(PJMEDIA_CODEC_ENABLE),true)
-PL_LDLIBS += -lpjmedia-codec
-endif
-ifeq ($(PJMEDIA_VIDEODEV_ENABLE),true)
-PL_LDLIBS += -lpjmedia-videodev
-endif
-ifeq ($(PJMEDIA_NATH_ENABLE),true)
-PL_LDLIBS += -lpjnath
-endif
-ifeq ($(PJMEDIA_SIMPLE_ENABLE),true)
-PL_LDLIBS += -lpjsip-simple
-endif
-ifeq ($(PJMEDIA_RESAMPLE_ENABLE),true)
-PL_LDLIBS += -lpjsip-resample
-endif
-ifeq ($(PJMEDIA_UA_ENABLE),true)
-PL_LDLIBS += -lpjsua -lpjsip-ua
-endif
-ifeq ($(PJMEDIA_SRTP_ENABLE),true)
-PL_LDLIBS += -lsrtp
-endif
-ifeq ($(PJMEDIA_YUV_ENABLE),true)
-PL_LDLIBS += -lyuv
-endif
-ifeq ($(PJMEDIA_GSM_ENABLE),true)
-PL_LDLIBS += -lgsmcodec
-endif
-ifeq ($(PJMEDIA_SPEEX_ENABLE),true)
-PL_LDLIBS += -lspeex
-endif
-ifeq ($(PJMEDIA_ILBC_ENABLE),true)
-PL_LDLIBS += -lilbccodec
-endif
-ifeq ($(PJMEDIA_G722_ENABLE),true)
-PL_LDLIBS += -lg7221codec
-endif
-ifeq ($(PJMEDIA_WEBRTC_ENABLE),true)
-PL_LDLIBS += -lwebrtc
-endif
-endif
-
-ifeq ($(PJMEDIA_AUDIO_PORTAUDIO),true)
-PLOS_LDLIBS += -lportaudio
-endif
-
-#./configure  --prefix=/home/zhurish/workspace/home-work/pjproject-2.8-x86/_install
-# --enable-epoll --enable-sound --enable-video --enable-speex-aec --enable-g711-codec
-# --enable-l16-codec --enable-gsm-codec --enable-g722-codec --enable-g7221-codec 
-#--enable-speex-codec --enable-ilbc-codec --enable-v4l2 --disable-ipp --enable-libwebrtc
-#PL_LDFLAGS += -L$(PLBASE)/externsions/pjproject-2.8/_install/lib 
-#PL_LDFLAGS += -L$(PLBASE)/externsions/pjproject-2.8/third_party/lib 
-#PL_LDLIBS += -lpj -lpjlib-util -lpjmedia -lpjmedia-audiodev -lpjmedia-codec\
-			 -lpjmedia-videodev -lpjnath -lpjsip -lpjsip-simple -lpjsip-ua \
-			 -lpjsua -lsrtp -lgsmcodec -lspeex -lilbccodec -lg7221codec 
-			 
-#PL_LDLIBS += -luuid -lasound
-
-PLCLI_DIR += $(CLI_ROOT)/voip
-
-endif #($(strip $(MODULE_COMPONENT)),true)
-endif #($(strip $(MODULE_PJSIP)),true)
-
-
-
-
+#include /home/zhurish/workspace/SWPlatform/make/pjsip-config.mk
+include $(MAKE_DIR)/pjsip-config.mk
 
 
 ifeq ($(strip $(MODULE_MQTT)),true)
@@ -456,6 +306,9 @@ export MQTT_SHARED_LIBRARIES = false
 ifeq ($(strip $(MQTT_SHARED_LIBRARIES)),true)
 PL_LDLIBS += -lmosquitto
 endif
+
+PLCLI_DIR += $(CLI_ROOT)/mqtt
+
 endif #($(strip $(MODULE_COMPONENT)),true)
 endif #($(strip $(MODULE_PJSIP)),true)
 
@@ -469,15 +322,11 @@ PL_INCLUDE += -I$(APP_ROOT)
 PL_DEFINE += -DPL_APP_MODULE
 
 
-export EN_APP_X5BA = false
-export EN_APP_V9 = true
-
 ifeq ($(strip $(EN_APP_X5BA)),true)
-PLM_DEFINE += -DPRODUCT_X5_B_BOARD
 PLM_DEFINE += -DAPP_X5BA_MODULE
 endif
 ifeq ($(strip $(EN_APP_V9)),true)
-PLM_DEFINE += -DPRODUCT_V9_BOARD
+
 PLM_DEFINE += -DAPP_V9_MODULE
 PLM_DEFINE += -DPL_VIDEO_MODULE
 #PL_LDLIBS += -loal_privateProtocol

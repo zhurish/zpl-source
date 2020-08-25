@@ -37,6 +37,12 @@
 #PLM_DEFINE			模块定义
 #PLM_INCLUDE		模块头文件
 #
+#= 是最基本的赋值
+#:= 是覆盖之前的值
+#?= 是如果没有被赋值过就赋予等号后面的值
+#+= 是添加等号后面的值
+#
+#
 #
 ifneq ($(TOP_DIR),)
 ROOT_DIR = $(TOP_DIR)
@@ -63,6 +69,8 @@ CP = cp
 CHMOD = chmod
 MKDIR = mkdir
 TAR = tar
+INSTALL = install -c
+LN = ln -s
 #
 #
 BUILD_TYPE	=$(ARCH_TYPE)
@@ -165,7 +173,8 @@ PLOS_LDLIBS += -lpthread -lrt -rdynamic -lm -lcrypt -ldl -lgcc_s -lstdc++
 #
 #PLOS_LDLIBS += -std=c99 
 PLOS_CFLAGS += -std=gnu99 -fgnu89-inline
-PLOS_CPPFLAGS += -std=c++11 -Wno-write-strings
+#PLOS_CPPFLAGS += -std=c++11 -Wno-write-strings
+PLOS_CPPFLAGS += -std=c++98 -Wno-write-strings -D_GLIBCXX_USE_CXX11_ABI=0
 #
 #
 # WANRING
@@ -183,15 +192,15 @@ PLOS_CPPFLAGS += -MMD -MP -Wfatal-errors -Wall -Wextra -Wnested-externs -Wmissin
 			 -Wpointer-arith -Wwrite-strings -Wstrict-prototypes
 			 			 
 # -Werror=implicit-function-declaration -Werror=switch
-PLOS_CFLAGS += -Werror=return-type -Werror=format-extra-args -Werror=missing-prototypes \
+PLOS_CFLAGS += -Werror=return-type -Werror=format-extra-args  \
 			  -Werror=unreachable-code -Werror=unused-function -Werror=unused-variable \
 			  -Werror=unused-value -Werror=implicit-int -Werror=missing-parameter-type\
-			  -Werror=parentheses -Werror=shadow -Werror=char-subscripts -Werror=parentheses  \
+			  -Werror=parentheses -Werror=char-subscripts -Werror=parentheses  \
 			  -Werror=invalid-memory-model -Werror=sizeof-pointer-memaccess \
-			  -Werror=shadow -Werror=overflow -Werror=overlength-strings -Werror=format-security \
+			  -Werror=overflow  -Werror=format-security -Werror=missing-prototypes -Werror=shadow \
 			  -Werror=unsafe-loop-optimizations -Werror=init-self 
-			  #-Werror=stack-protector 
-			  #-Werror=suggest-attribute=format -Werror=missing-format-attribute
+			  #-Werror=stack-protector   
+			  #-Werror=suggest-attribute=format -Werror=missing-format-attribute  -Werror=overlength-stringsl
 			  #-Werror=sign-compare 有符号和无符号参数比较
 			  #-Werror=format-overflow
 			  #-Werror=shift-count-overflow
@@ -256,6 +265,7 @@ export PLDEFINE = $(PLOS_DEFINE) $(PLEX_DEFINE) $(PL_DEFINE) $(PLM_DEFINE)
 export PLDEBUG = $(PL_DEBUG)
 #
 # 
+export PLSTRIP_CFLAGS= --strip-unneeded
 # 
 #export PLCFLAGS += $(PLOS_CFLAGS) $(PLEX_CFLAGS) $(PL_CFLAGS) $(PL_DEBUG) -fPIC $(PLINCLUDE)
 #export PLLDCLFLAG += $(PLOS_LDFLAGS) $(PLEX_LDFLAGS) $(PL_LDFLAGS) $(PLOS_LDLIBS) $(PLEX_LDLIBS) $(PL_LDLIBS) 
@@ -264,22 +274,22 @@ export PLDEBUG = $(PL_DEBUG)
 #
 #
 #
-PL_ECHO_CC = $(ECHO) CC '$(PLDEFINE) $(PLDEBUG) $(PLCFLAGS) $(PLLDFLAGS) $(PLINCLUDE)' $@
-PL_ECHO_CPP = $(ECHO) CXX '$(PLDEFINE) $(PLDEBUG) $(PLCPPFLAGS) $(PLLDFLAGS) $(PLINCLUDE)' $@
-PL_ECHO_AS = $(ECHO) AS '$(PLDEFINE) $(PLDEBUG) $(PLASFLAGS) $(PLLDFLAGS)' $@
+#PL_ECHO_CC = $(ECHO) CC '$(PLDEFINE) $(PLDEBUG) $(PLCFLAGS) $(PLLDFLAGS) $(PLINCLUDE)' $@
+#PL_ECHO_CPP = $(ECHO) CXX '$(PLDEFINE) $(PLDEBUG) $(PLCPPFLAGS) $(PLLDFLAGS) $(PLINCLUDE)' $@
+#PL_ECHO_AS = $(ECHO) AS '$(PLDEFINE) $(PLDEBUG) $(PLASFLAGS) $(PLLDFLAGS)' $@
 #
 #
-PL_OBJ_COMPILE = @$(CC) -fPIC $(PLDEFINE) $(PLDEBUG) $(PLCFLAGS) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
-PL_LIB_COMPILE = $(CC) -fPIC $(PLDEFINE) $(PLDEBUG) $(PLCFLAGS) $(PLLDFLAGS) $^ -o $@ $(PLINCLUDE)
+#PL_OBJ_COMPILE = @$(CC) -fPIC $(PLDEFINE) $(PLDEBUG) $(PLCFLAGS) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
+#PL_LIB_COMPILE = $(CC) -fPIC $(PLDEFINE) $(PLDEBUG) $(PLCFLAGS) $(PLLDFLAGS) $^ -o $@ $(PLINCLUDE)
 #
-PL_MAKE_LIBSO = $(CC) -shared -o 
+#PL_MAKE_LIBSO = $(CC) -shared -o 
 #
-PL_CXX_OBJ_COMPILE = @$(CXX) -fPIC $(PLDEFINE) $(PLDEBUG) $(PLCPPFLAGS) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
-PL_CXX_LIB_COMPILE = $(CXX) -fPIC $(PLDEFINE) $(PLDEBUG) $(PLCPPFLAGS) $(PLLDFLAGS) $^ -o $@ $(PLINCLUDE)
+#PL_CXX_OBJ_COMPILE = @$(CXX) -fPIC $(PLDEFINE) $(PLDEBUG) $(PLCPPFLAGS) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
+#PL_CXX_LIB_COMPILE = $(CXX) -fPIC $(PLDEFINE) $(PLDEBUG) $(PLCPPFLAGS) $(PLLDFLAGS) $^ -o $@ $(PLINCLUDE)
 #
-PL_CXX_MAKE_LIBSO = $(CXX) -shared -o 
+#PL_CXX_MAKE_LIBSO = $(CXX) -shared -o 
 #
-PL_MAKE_LIB = @$(AR) -rs
+#PL_MAKE_LIB = @$(AR) -rs
 #
 #
 

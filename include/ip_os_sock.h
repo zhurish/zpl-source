@@ -708,6 +708,8 @@ struct if_nameindex {
 #define ip_read(fd,buf,nbytes)                read((int)fd,buf,(size_t)nbytes)
 #define ip_select(nfds,rf,wf,ef,t)            select(nfds,rf,wf,NULL,t)
 
+#define ip_fcntl(fd,request,argp)             fcntl((int)fd,request,argp)
+
 /* select stuff */
 /*
 #undef FD_SETSIZE
@@ -740,6 +742,8 @@ struct if_nameindex {
 #define ip_connect(fd,addr,addrlen)           connect((int)fd,(const struct sockaddr *)addr,(socklen_t)addrlen)
 #define ip_accept(fd,addr,addrlenp)           accept((int)fd,(struct sockaddr *)addr,(socklen_t *)addrlenp)
 #define ip_listen(fd,backlog)                 listen((int)fd,backlog)
+#define ip_closesocket(fd)                    closesocket((int)fd)
+
 
 #define ip_send(fd,msg,len,flags)             send((int)fd,(const void *)msg,(size_t)len,flags)
 #define ip_sendto(fd,msg,len,flags,to,tolen)  sendto((int)fd,(const void *)msg,(size_t)len,flags,(const struct sockaddr *)to,(socklen_t)tolen)
@@ -762,6 +766,7 @@ struct if_nameindex {
 #define ip_if_indextoname(ifindex,ifname)     if_indextoname((int)ifindex, (char *)ifname)
 #define ip_if_nameindex()                     if_nameindex()
 #define ip_if_freenameindex(pif)              if_freenameindex(pif)
+
 
 /*
 #define inet6_rth_space(t,s)               ipcom_inet6_rth_space(t,s)
@@ -797,6 +802,8 @@ struct if_nameindex {
 #endif
 /* port/src/ipcom_gethostby.c (use getipnodebyname/getipnodebyaddr for all new code!) */
 #define ip_gethostbyname(name)     gethostbyname(name)
+#define ip_gethostbyname2(addrptr, family)    gethostbyname2(addrptr, family)
+
 #define ip_gethostbyaddr(a,l,t)    gethostbyaddr(a,l,t)
 
 /* src/ipcom_sock2.c */
@@ -807,6 +814,10 @@ struct if_nameindex {
 #define ip_getservbyname(n,p)      getservbyname(n,p)
 #define ip_getservbyport(p,p2)     getservbyport(p,p2)
 
+
+#define ip_getaddrinfo(family,addrptr,strptr,len)   getaddrinfo(family,addrptr,strptr,len)
+#define ip_freeaddrinfo(pif)            freeaddrinfo(pif)
+#define ip_getnameinfo              getnameinfo
 
 
 

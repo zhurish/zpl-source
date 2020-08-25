@@ -17,13 +17,12 @@ _MODULELIST = \
 	MODULE_PAL_KERNEL.true \
 	MODULE_PAL_IPCOM.false \
 	MODULE_COMPONENT.true \
-	MODULE_OPENSSL.false \
+	MODULE_OPENSSL.true \
 	MODULE_WIFI.false \
 	MODULE_MODEM.false \
 	MODULE_TOOLS.true \
 	MODULE_PROCESS.false \
 	MODULE_QUECTEL_CM.false \
-	MODULE_DHCP.false \
 	MODULE_UDHCP.false \
 	MODULE_SQLITE.true \
 	MODULE_SYSTOOLS.true \
@@ -37,11 +36,10 @@ _MODULELIST = \
 	MODULE_TRACEROUTE.true \
 	MODULE_UBUS.false \
 	MODULE_SSH.false \
-	MODULE_PJSIP.false \
-	MODULE_OSIP.false \
-	MODULE_APP.false \
+	MODULE_PJSIP.true \
+	MODULE_APP.true \
 	MODULE_UCI.true \
-	MODULE_WEB.true \
+	MODULE_WEB.false \
 	MODULE_MQTT.true
 #
 #
@@ -73,22 +71,6 @@ MODULE_PAL_KERNEL=false
 MODULE_ABSTRACT=true
 endif
 #
-ifeq ($(strip $(MODULE_PJSIP)),true)
-MODULE_OSIP=false
-endif
-#
-ifeq ($(strip $(MODULE_OSIP)),true)
-MODULE_PJSIP=false
-endif
-#
-#
-ifeq ($(strip $(MODULE_UDHCP)),true)
-MODULE_DHCP=false
-endif
-#
-ifeq ($(strip $(MODULE_DHCP)),true)
-MODULE_UDHCP=false
-endif
 #
 #
 ifeq ($(strip $(MODULE_WIFI)),true)
@@ -104,6 +86,12 @@ ifeq ($(strip $(MODULE_SWITCH_SDK)),true)
 MODULE_HAL=true
 endif
 #
+ifeq ($(strip $(MODULE_APP)),true)
+export EN_APP_X5BA = true 
+export EN_APP_V9 = false
+endif
+
+
 #
 #
 PlatformModule = \
@@ -120,16 +108,13 @@ PlatformModule = \
 	WIFIDIR.wifi \
 	MODEMDIR.modem \
 	TOOLSDIR.tools \
-	DHCPCDDIR.dhcpcd \
-	DHCPDDIR.dhcpd \
 	UDHCPDIR.udhcp \
 	SQLITEDIR.sqlite \
 	SYSTOOLSDIR.systools \
 	LIBSSHDIR.ssh \
-	OSIPDIR.osip \
 	PJSIPDIR.pjsip \
 	APPDIR.application \
-	WEBDIR.webgui \
+	WEBDIR.webserver \
 	MQTTDIR.mqtt
 ###
 # By default we choose the lexically last Platform component version in hopes

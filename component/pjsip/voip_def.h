@@ -13,7 +13,7 @@
 #include "plconfig.h"
 #include "zassert.h"
 #include "os_uci.h"
-#include "uci_ubus.h"
+#include "ubus_sync.h"
 
 #include "pjsip_app_api.h"
 #include "pjsua_app_common.h"

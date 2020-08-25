@@ -55,7 +55,8 @@ endif
 #
 #
 #PL_LDCLFLAG=$(PLOS_LDLIBS) $(PLEX_LDLIBS) $(PL_LDLIBS) 
-PLLDLIBS += $(LIBC)
+PLLSLIBS += $(LIBC)
+PLLDSOLIBS = $(PLLDLIBS)
 #
 #PLINCLUDE += -I$(BASE_ROOT)/include
 #
@@ -85,7 +86,7 @@ PLLDLIBS += $(IPLIBC)
 # $(PL_CFLAGS)
 #
 %.o: %.c
-	$(PL_OBJ_COMPILE)
+	@$(CC) -fPIC $(PLDEFINE) $(PLDEBUG) $(PLCFLAGS) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
 
 
 SOURCES = $(wildcard *.c *.cpp)
@@ -104,12 +105,13 @@ OBJS = $(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(SOURCES)))
 #
 ifeq ($(BUILD_DEBUG),YES)
 target : $(OBJS) $(BASE_ROOT)/$(LIBDIR)/*.a 
-	$(CC) -o $(TAGET) $(OBJS) $(PLDEFINE) $(PLCFLAGS) $(PLLDFLAGS) $(PLINCLUDE) -Xlinker "-(" $(PLLDLIBS) -Xlinker "-)" $(PLOS_MAP)
+	$(CC) -o $(TAGET) $(OBJS) $(PLCFLAGS) $(PLDEFINE) $(PLLDFLAGS) $(PLLDSOLIBS) -Xlinker "-(" $(PLLSLIBS) -Xlinker "-)" $(PLOS_MAP) $(PLINCLUDE)
 	$(CHMOD) a+x $(TAGET)
-	$(STRIP) --strip-unneeded $(TAGET)
+#	$(STRIP) --strip-unneeded $(TAGET)
 else
 target : $(OBJS) $(BASE_ROOT)/$(LIBDIR)/*.a 
-	$(CC) -o $(TAGET) $(OBJS) $(PLDEFINE) $(PLCFLAGS) $(PLLDFLAGS) $(PLINCLUDE) -Xlinker "-(" $(PLLDLIBS) -Xlinker "-)" $(PLOS_MAP)
+	$(CC) -o $(TAGET) $(OBJS) $(PLCFLAGS) $(PLDEFINE) $(PLLDFLAGS) $(PLLDSOLIBS) -Xlinker "-(" $(PLLSLIBS) -Xlinker "-)" $(PLOS_MAP) $(PLINCLUDE)
+	#$(CC) -o $(TAGET) $(OBJS) $(PLCFLAGS) $(PLDEFINE) $(PLLDFLAGS) $(PLINCLUDE) -Xlinker "-(" $(PLLDSLIBS) -Xlinker "-)" $(PLOS_MAP)
 	$(CHMOD) a+x $(TAGET)
 	$(STRIP) $(TAGET)
 endif
@@ -119,9 +121,9 @@ endif
 #
 ifneq ($(APP_BIN_DIR),)
 app_bin_install:
-	install -d $(APP_BIN_DIR)
-	install -m 755 debug/bin/*bin* $(APP_BIN_DIR)
-	install -m 755 debug/sbin/* $(APP_BIN_DIR)
+	$(INSTALL) -d $(APP_BIN_DIR)
+	$(INSTALL) -m 755 debug/bin/*bin* $(APP_BIN_DIR)
+	$(INSTALL) -m 755 debug/sbin/* $(APP_BIN_DIR)
 else
 app_bin_install:
 	@$(ECHO) " install -m 755 bin "
@@ -129,8 +131,8 @@ endif
 #
 ifneq ($(APP_ETC_DIR),)
 app_etc_install:
-	install -d $(APP_ETC_DIR)
-	install -m 755 debug/etc/* $(APP_ETC_DIR)
+	$(INSTALL) -d $(APP_ETC_DIR)
+	$(INSTALL) -m 755 debug/etc/* $(APP_ETC_DIR)
 else
 app_etc_install:
 	@$(ECHO) " install -m 755 etc "
@@ -138,8 +140,8 @@ endif
 #
 ifneq ($(APP_WEB_DIR),)
 app_web_install:
-	install -d $(APP_WEB_DIR)
-	install -m 755 debug/etc/web/* $(APP_WEB_DIR)
+	$(INSTALL) -d $(APP_WEB_DIR)
+	$(INSTALL) -m 755 debug/etc/web/* $(APP_WEB_DIR)
 else
 app_web_install:
 	@$(ECHO) " install -m 755 etc/web "
@@ -147,8 +149,8 @@ endif
 #
 ifneq ($(APP_WWW_DIR),)
 app_www_install:
-	install -d $(APP_WWW_DIR)
-	install -m 755 debug/www/* $(APP_WWW_DIR)
+	$(INSTALL) -d $(APP_WWW_DIR)
+	$(INSTALL) -m 755 debug/www/* $(APP_WWW_DIR)
 else
 app_www_install:
 	@$(ECHO) " install -m 755 www "
@@ -156,8 +158,8 @@ endif
 #
 ifneq ($(APP_LIB_DIR),)
 app_lib_install:
-	install -d $(APP_LIB_DIR)
-	install -m 755 debug/usr/lib/*so* $(APP_LIB_DIR)
+	$(INSTALL) -d $(APP_LIB_DIR)
+	$(INSTALL) -m 755 debug/usr/lib/*so* $(APP_LIB_DIR)
 else
 app_lib_install:
 	@$(ECHO) " install -m 755 lib "
@@ -168,30 +170,30 @@ endif
 #
 ifeq ($(BUILD_OPENWRT),true)
 openwrt_install:
-	install -d ${DSTETCDIR} 
+	$(INSTALL) -d ${DSTETCDIR} 
 	cd make;./setup.sh $(TAGET)
 else
 openwrt_install:
-	install -d ${DSTETCDIR} 
+	$(INSTALL) -d ${DSTETCDIR} 
 endif
 #
 #
 config_install: openwrt_install 
-	install -d ${DSTETCDIR} 
-	install -m 755 make/start-boot.sh ${DSTETCDIR}  	
-	install -m 755 startup/etc/plat.conf ${DSTETCDIR}
-	install -m 755 startup/etc/openconfig ${DSTETCDIR}
-	install -m 755 startup/etc/product ${DSTETCDIR}
-	install -m 755 startup/etc/voipconfig ${DSTETCDIR}
+	$(INSTALL) -d ${DSTETCDIR} 
+	$(INSTALL) -m 755 make/start-boot.sh ${DSTETCDIR}  	
+	$(INSTALL) -m 755 startup/etc/plat.conf ${DSTETCDIR}
+	$(INSTALL) -m 755 startup/etc/openconfig ${DSTETCDIR}
+	$(INSTALL) -m 755 startup/etc/product ${DSTETCDIR}
+	$(INSTALL) -m 755 startup/etc/voipconfig ${DSTETCDIR}
 #	
-#	install -d ${BINDIR}
-#	install -m 755 ${TAGET} ${BINDIR}
+#	$(INSTALL) -d ${BINDIR}
+#	$(INSTALL) -m 755 ${TAGET} ${BINDIR}
 #	$(STRIP) $(BINDIR)/$(TAGET) 
-#	install -d ${DSTETCDIR} 
+#	$(INSTALL) -d ${DSTETCDIR} 
 #	cd make;./setup.sh $(TAGET)
-#	install -m 755 make/start-boot.sh ${DSTETCDIR}  	
-#	install -m 755 startup/etc/plat.conf ${DSTETCDIR}
-	#install -m 755 startup/etc/default-config.cfg ${DSTETCDIR}
+#	$(INSTALL) -m 755 make/start-boot.sh ${DSTETCDIR}  	
+#	$(INSTALL) -m 755 startup/etc/plat.conf ${DSTETCDIR}
+	#$(INSTALL) -m 755 startup/etc/default-config.cfg ${DSTETCDIR}
 	#$(CP) $(TAGET) /home/zhurish/Downloads/tftpboot/
 #
 #
@@ -263,8 +265,8 @@ obj:
 #install: obj
 install: config_install
 	${MAKE} -C  $(TOP_DIR)/make/ $@ 
-	install -d ${BINDIR}
-	install -m 755 ${TAGET} ${BINDIR}
+	$(INSTALL) -d ${BINDIR}
+	$(INSTALL) -m 755 ${TAGET} ${BINDIR}
 	#$(STRIP) $(BINDIR)/$(TAGET) 
 	
 	#install -d ${DSTULIBDIR}

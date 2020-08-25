@@ -36,11 +36,6 @@ int nsm_interface_dhcpc_enable(struct interface *ifp, BOOL enable)
 {
 #ifdef PL_UDHCP_MODULE
 	return dhcpc_interface_enable_api(ifp, enable);
-#else
-	if(enable)
-		return dhcpc_interface_enable_api(ifp, enable);
-	else
-		return dhcpc_interface_enable_api(ifp, enable);
 #endif
 }
 
@@ -54,8 +49,6 @@ int nsm_interface_dhcpc_start(struct interface *ifp, BOOL enable)
 		{
 			dhcp->running = enable;
 #ifdef PL_UDHCP_MODULE
-#else
-			ret = dhcpc_interface_start_api(ifp,  enable);
 #endif
 		}
 	}
@@ -81,8 +74,6 @@ int nsm_interface_dhcpc_option(struct interface *ifp, BOOL enable, int index, ch
 	int ret = ERROR;
 #ifdef PL_UDHCP_MODULE
 	ret = dhcpc_interface_option_api(ifp, enable, index, option);
-#else
-	ret = dhcpc_interface_option_api(ifp, enable, index, option);
 #endif
 	return ret;
 }
@@ -92,8 +83,6 @@ int nsm_interface_dhcpc_write_config(struct interface *ifp, struct vty *vty)
 {
 #ifdef PL_UDHCP_MODULE
 	return dhcpc_interface_config(ifp, vty);
-#else
-	return dhcpc_interface_config(ifp, vty);
 #endif
 }
 
@@ -101,11 +90,6 @@ int nsm_interface_dhcpc_client_show(struct interface *ifp, struct vty *vty, BOOL
 {
 #ifdef PL_UDHCP_MODULE
 	return dhcpc_interface_lease_show(vty, ifp, detail);
-#else
-	if(detail)
-		return dhcpc_client_interface_detail_show(ifp, vty);
-	else
-		return dhcpc_client_interface_show(ifp, vty);
 #endif
 }
 

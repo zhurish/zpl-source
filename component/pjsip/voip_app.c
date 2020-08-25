@@ -76,7 +76,7 @@ int pl_pjsip_module_init()
 	voip_thlog_init();
 
 #ifdef PL_UBUS_MODULE
-	uci_ubus_cb_install(voip_ubus_uci_update_cb, NULL);
+	//ubus_sync_hook_install(voip_ubus_uci_update_cb, NULL);
 #endif
 
 	voip_status_clear_api();

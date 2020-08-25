@@ -73,9 +73,9 @@ rtsp://admin:admin@10.12.4.84:554/cam/realmonitor?channel=2&subtype=1
 int v9_video_board_stream_add_api(u_int8 id, u_int8 ch, u_int32 address, u_int16 port,
 							   char *username, char *password, u_int32 fps, char *param, char *secondary)
 {
-	int iid = id, chid = ch;
+	int iid = id, chid = ch, ret = 0;
 	v9_video_stream_t *stream = NULL;
-
+	v9_video_board_lock();
 	if(id)
 		iid = V9_APP_BOARD_CALCU_ID(id);
 
@@ -89,6 +89,7 @@ int v9_video_board_stream_add_api(u_int8 id, u_int8 ch, u_int32 address, u_int16
 	{
 		if(v9_video_board_stream_lookup_by_id_and_ch(iid, chid))
 		{
+			v9_video_board_unlock();
 			zlog_debug(ZLOG_APP," this channel is already exist.");
 			return ERROR;
 		}
@@ -102,7 +103,7 @@ int v9_video_board_stream_add_api(u_int8 id, u_int8 ch, u_int32 address, u_int16
 	{
 		//if(id && ch)
 		//{
-			stream->type = V9_VIDEO_STREAM_TYPE_STATIC;
+		stream->type = V9_VIDEO_STREAM_TYPE_STATIC;
 /*
 		}
 		else if(id && !ch)
@@ -116,17 +117,22 @@ int v9_video_board_stream_add_api(u_int8 id, u_int8 ch, u_int32 address, u_int16
 		else
 			stream->type = V9_VIDEO_STREAM_TYPE_DYNAMIC;
 */
-
-		return v9_video_board_stream_add( iid,  stream, TRUE);
+		ret = v9_video_board_stream_add( iid,  stream, TRUE);
+		v9_video_board_unlock();
+		return ret;
 	}
-	zlog_debug(ZLOG_APP," can not alloc video channel data.");
+	v9_video_board_unlock();
+	if(V9_APP_DEBUG(BOARD_EVENT))
+		zlog_debug(ZLOG_APP," can not alloc video channel data.");
 	return ERROR;
 }
 
 
 int v9_video_board_stream_del_api(u_int8 id, u_int8 ch, u_int32 address, u_int16 port)
 {
+	int ret = 0;
 	v9_video_stream_t *stream = NULL;
+	v9_video_board_lock();
 	if(id && ch)
 		stream = v9_video_board_stream_lookup_by_id_and_ch(V9_APP_BOARD_CALCU_ID(id), ch);
 	else
@@ -134,11 +140,28 @@ int v9_video_board_stream_del_api(u_int8 id, u_int8 ch, u_int32 address, u_int16
 	if(stream)
 	{
 		if(v9_video_board_stream_del(stream->id, stream) == OK)
-			return v9_video_board_stream_free_api(stream);
+		{
+			ret = v9_video_board_stream_free_api(stream);
+			v9_video_board_unlock();
+			return ret;
+		}
 		else
-			zlog_debug(ZLOG_APP," can not delete this video channel data(%d:%d).", id, ch);
+		{
+			if(V9_APP_DEBUG(BOARD_EVENT))
+				zlog_debug(ZLOG_APP," can not delete this video channel data(%d:%d).", id, ch);
+		}
 	}
-	zlog_debug(ZLOG_APP," can not lookup this video channel(%d:%d).", id, ch);
+	v9_video_board_unlock();
+	if(V9_APP_DEBUG(BOARD_EVENT))
+		zlog_debug(ZLOG_APP," can not lookup this video channel(%d:%d).", id, ch);
 	return ERROR;
 }
 
+int v9_video_board_stream_cleanup_api()
+{
+	int ret = 0;
+	v9_video_board_lock();
+	ret = v9_video_board_stream_cleanup();
+	v9_video_board_unlock();
+	return ret;
+}

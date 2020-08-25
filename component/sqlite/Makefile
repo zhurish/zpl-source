@@ -33,17 +33,17 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(PL_ECHO_CC)
-	@$(PL_OBJ_COMPILE)
+	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
+	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
 
 -include $(MODULE_OBJS:.o=.d)
 -include $(MODULE_BOBJS:.o=.d)
 
 $(LIBS) : $(MODULE_OBJS)
-	$(PL_MAKE_LIB) $(LIBS) $(MODULE_OBJS)
+	@$(AR) -rs $(LIBS) $(MODULE_OBJS)
 
 $(LIBDS) : $(MODULE_OBJS)
-	$(PL_MAKE_LIBSO) $(LIBDS) $(MODULE_OBJS)
+	$(CC) -shared -o  $(LIBDS) $(MODULE_OBJS)
 
 
 $(SQLBIN) : $(MODULE_BOBJS)
@@ -69,7 +69,7 @@ install: $(LIBS) $(LIBDS)
 	#$(STRIP) $(LIB_DIR)/$(LIBS)
 	@install -d $(LIBD_DIR)
 	@install -m 755 $(LIBDS) $(LIBD_DIR)
-	@$(STRIP) --strip-unneeded $(LIBD_DIR)/$(LIBDS)
+	@$(STRIP) $(PLSTRIP_CFLAGS) $(LIBD_DIR)/$(LIBDS)
 	#$(STRIP) $(LIBD_DIR)/$(LIBDS)
 	
 #	install -d ${DSTSBINDIR}

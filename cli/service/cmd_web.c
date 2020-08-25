@@ -29,7 +29,7 @@ DEFUN (webserver_template,
 		"Template configure\n"
 		"Webserver configure\n")
 {
-	template_t * temp = nsm_template_lookup_name ("webserver");
+	template_t * temp = nsm_template_lookup_name (FALSE, "webserver");
 	if(temp)
 	{
 		vty->node = TEMPLATE_NODE;
@@ -40,7 +40,7 @@ DEFUN (webserver_template,
 	}
 	else
 	{
-		temp = nsm_template_new ();
+		temp = nsm_template_new (FALSE);
 		if(temp)
 		{
 			temp->module = 0;
@@ -67,7 +67,7 @@ DEFUN (no_webserver_template,
 		"Template configure\n"
 		"Webserver configure\n")
 {
-	template_t * temp = nsm_template_lookup_name ("webserver");
+	template_t * temp = nsm_template_lookup_name (FALSE, "webserver");
 	if(temp)
 	{
 		web_app_enable_set_api(FALSE);
@@ -180,7 +180,8 @@ DEFUN (webserver_username,
 	int ret = ERROR;
 	if(web_app_username_lookup_api(argv[0]) == OK)
 	{
-		vty_out(vty, " Username '%s' is already exist.%s", argv[0], VTY_NEWLINE);
+		if (vty->type != VTY_FILE)
+			vty_out(vty, " Username '%s' is already exist.%s", argv[0], VTY_NEWLINE);
 		return CMD_WARNING;
 	}
 	ret = web_app_username_add_api(argv[0], argv[1], argv[2]);
@@ -198,7 +199,8 @@ DEFUN (no_webserver_username,
 	int ret = ERROR;
 	if(web_app_username_lookup_api(argv[0]) != OK)
 	{
-		vty_out(vty, " Username '%s' is not exist.%s", argv[0], VTY_NEWLINE);
+		if (vty->type != VTY_FILE)
+			vty_out(vty, " Username '%s' is not exist.%s", argv[0], VTY_NEWLINE);
 		return CMD_WARNING;
 	}
 	ret = web_app_username_del_api(argv[0]);
@@ -266,7 +268,7 @@ static int webserver_write_config(struct vty *vty, void *pVoid)
 void cmd_webserver_init(void)
 {
 	{
-		template_t * temp = nsm_template_new ();
+		template_t * temp = nsm_template_new (FALSE);
 		if(temp)
 		{
 			temp->module = 1;

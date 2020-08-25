@@ -11,8 +11,27 @@
 
 
 #define MQTT_PORT_DETAULT 			1883
-#define MQTT_KEEPALIVE_DETAULT 	60
+#define MQTT_KEEPALIVE_DETAULT 		60
+#define MQTT_TOPICS_MAX 		32
 
+
+/*
+#define MOSQ_LOG_NONE			0
+#define MOSQ_LOG_INFO			(1<<0)
+#define MOSQ_LOG_NOTICE			(1<<1)
+#define MOSQ_LOG_WARNING		(1<<2)
+#define MOSQ_LOG_ERR			(1<<3)
+#define MOSQ_LOG_DEBUG			(1<<4)
+#define MOSQ_LOG_SUBSCRIBE		(1<<5)
+#define MOSQ_LOG_UNSUBSCRIBE	(1<<6)
+#define MOSQ_LOG_WEBSOCKETS		(1<<7)
+#define MOSQ_LOG_INTERNAL		0x80000000U
+#define MOSQ_LOG_ALL			0xFFFFFFFFU
+*/
+
+#define MQTT_IS_DEBUG(n)		( (mqtt_config) && (MOSQ_LOG_ ## n & mqtt_config->loglevel) )
+#define MQTT_DEBUG_ON(n)		{ if(mqtt_config) { mqtt_config->loglevel |= (MOSQ_LOG_ ## n );}}
+#define MQTT_DEBUG_OFF(n)		{ if(mqtt_config) { mqtt_config->loglevel &= ~(MOSQ_LOG_ ## n );}}
 
 /*
  名字	值	流向	描述
@@ -35,8 +54,8 @@ typedef enum mqtt_mode_type
 {
 	MQTT_MODE_PUB = 1,
 	MQTT_MODE_SUB = 2,
-	MQTT_MODE_RR = 3,
-	MQTT_MODE_RESPONSE_TOPIC = 4
+	//MQTT_MODE_RR = 3,
+	//MQTT_MODE_RESPONSE_TOPIC = 4
 }mqtt_mode_t;
 
 enum prop_type
@@ -53,13 +72,13 @@ enum prop_type
 struct mqtt_app_sub {
 	int sub_opts; /* sub */
 
-	char **topics; /* sub */ //指定消息所发布到哪个主题
+	char *topics[MQTT_TOPICS_MAX]; /* sub */ //指定消息所发布到哪个主题
 	int topic_count; /* sub */
 
-	char **unsub_topics; /* sub */
+	char *unsub_topics[MQTT_TOPICS_MAX]; /* sub */
 	int unsub_topic_count; /* sub */
 
-	char **filter_outs; /* sub */
+	char *filter_outs[MQTT_TOPICS_MAX]; /* sub */
 	int filter_out_count; /* sub */
 
 	bool no_retain; /* sub */
@@ -74,7 +93,7 @@ struct mqtt_app_sub {
 	bool 		will_retain;//如果指定该选项，则万一客户端意外断开，已被发送的消息将被当做retained消息。
 								//必须和选项 --will-topic同时使 用.
 };
-
+#if 0
 struct mqtt_app_pub {
 
 	//int pub_mode; /* pub*/
@@ -93,17 +112,8 @@ struct mqtt_app_pub {
 	int 		will_qos;//指定Will的服务质量，默认是0.必须和选项 --will-topic同时使用.
 	bool 		will_retain;//如果指定该选项，则万一客户端意外断开，已被发送的消息将被当做retained消息。
 								//必须和选项 --will-topic同时使 用.
-
 };
-
-struct mqtt_app_rr {
-	int pub_mode; /*rr */
-	char *file_input; /*rr */
-	char *message; /*rr */
-	long msglen; /*rr */
-	char *topic; /*rr */
-	char *response_topic; /* rr */
-};
+#endif
 
 struct mqtt_app_config {
 
@@ -112,6 +122,8 @@ struct mqtt_app_config {
 	int		taskid;
 	BOOL		reload;
 	BOOL		enable;
+	BOOL		taskquit;
+	BOOL		connectd;
 	void		*mutex;
 	mqtt_mode_t mqtt_mode;
 
@@ -141,13 +153,14 @@ struct mqtt_app_config {
 	char 		*id_prefix;
 
 	bool 		debug;
+	int			loglevel;
 	bool 		quiet;// 如果指定该选项，则不会有任何错误被打印，当然，这排除了无效的用户输入所引起的错误消息
 
 	//仅针对SUBSCRIBED消息。不同值，不同含义：
 	bool 		clean_session;//禁止'clean session'选项，即如果客户端断开连接，这个订阅仍然保留来接收随后到的QoS为1和2的
 									//消息，当改客户端重新连接之后，它将接收到已排在队列中的消息。建议使用此选项时，
-									//客户端id选 项设为--id
-	long 		session_expiry_interval;
+
+	unsigned int session_expiry_interval;
 
 #ifdef WITH_SRV
 	bool 		use_srv;
@@ -186,8 +199,7 @@ struct mqtt_app_config {
 	mosquitto_property *will_props;
 
 	struct mqtt_app_sub	sub;
-	struct mqtt_app_pub	pub;
-	struct mqtt_app_rr	rr;
+	//struct mqtt_app_pub	pub;
 };
 
 extern struct mqtt_app_config  *mqtt_config;
@@ -200,6 +212,6 @@ void mqtt_config_default_cleanup(struct mqtt_app_config *cfg);
 
 
 
-int mqtt_config_cfg_check(struct mqtt_app_config *cfg, mqtt_mode_t pub_or_sub);
+int mqtt_config_cfg_check(struct mqtt_app_config *cfg);
 
 #endif /* __MQTT_APP_CONF_H__ */

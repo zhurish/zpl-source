@@ -9,7 +9,10 @@
 #define __OS_TIME_H__
 
 
-#define OS_TIMER_TEST
+//#define OS_TIMER_TEST
+
+//#define OS_TIMER_DEBUG
+
 #define OS_TIMER_POSIX
 
 #define OS_TIMER_NAME_MAX	128
@@ -49,7 +52,6 @@ struct os_time_stats
 extern int os_system_time_base(char *dt);
 extern time_t os_time (time_t *t);
 extern time_t os_monotonic_time (void);
-//extern time_t quagga_time(time_t *t);
 extern int os_gettime (enum os_clkid clkid, struct timeval *tv);
 
 
@@ -60,7 +62,7 @@ extern int os_gettimeofday (struct timeval *tv);
 extern int os_get_realtime (struct timeval *tv);
 extern int os_get_monotonic (struct timeval *tv);
 extern int os_get_monotonic_msec ();
-//extern void os_real_stabilised (struct timeval *tv);
+
 extern unsigned int os_timeval_elapsed (struct timeval a, struct timeval b);
 
 extern struct timeval os_time_min(struct timeval a, struct timeval b);
@@ -106,6 +108,7 @@ typedef struct os_time_s
 
 	os_time_type type;
 	enum {OS_TIMER_FALSE, OS_TIMER_TRUE, OS_TIMER_CANCEL} state;
+	enum {OS_TIMER_NONE, OS_TIMER_READY, OS_TIMER_UNUSE} lstid;
 	char    entry_name[OS_TIMER_NAME_MAX];
 }os_time_t;
 

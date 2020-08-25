@@ -35,11 +35,11 @@ void mqtt_config_default_init(struct mqtt_app_config *cfg, mqtt_mode_t pub_or_su
 
 	cfg->mqtt_mode = pub_or_sub;
 
-	if (pub_or_sub == MQTT_MODE_RR)
-	{
-		cfg->mqtt_version = MQTT_PROTOCOL_V5;
-	}
-	else
+	//if (pub_or_sub == MQTT_MODE_RR)
+	//{
+	//	cfg->mqtt_version = MQTT_PROTOCOL_V5;
+	//}
+	//else
 	{
 		cfg->mqtt_version = MQTT_PROTOCOL_V311;
 	}
@@ -47,16 +47,13 @@ void mqtt_config_default_init(struct mqtt_app_config *cfg, mqtt_mode_t pub_or_su
 
 	//cfg->bind_address;//服务绑定的IP地址
 
-	mqtt_connect_host_api(cfg, "127.0.0.1");
+	//mqtt_connect_host_api(cfg, "192.168.3.222");
 	mqtt_connect_port_api(cfg, MQTT_PORT_DETAULT);
 
 	cfg->qos = 0;
 	cfg->retain = TRUE;//如果指定该选项，该条消息将被保留做为最后一条收到的消息。下一个订阅消息者将能至少收到该条消息。
 
-	//cfg->username;
-	//cfg->password;
-
-	mqtt_id_prefix_api(cfg, "aabbcc");
+	mqtt_id_prefix_api(cfg, "aabbcc");//客户端ID/ID前缀
 
 	cfg->debug = TRUE;
 	cfg->quiet = FALSE;// 如果指定该选项，则不会有任何错误被打印，当然，这排除了无效的用户输入所引起的错误消息
@@ -77,7 +74,7 @@ void mqtt_config_default_init(struct mqtt_app_config *cfg, mqtt_mode_t pub_or_su
 	 */
 	/* sub */
 	//cfg->sub.topic_count = 1;
-	mqtt_client_add_topic(cfg, pub_or_sub, "aa", "bb");
+	//mqtt_client_add_topic(cfg, "aa");//设置订阅主题
 	/*
  	cfg->sub.topics;  //指定消息所发布到哪个主题
 	cfg->sub.no_retain;
@@ -101,9 +98,9 @@ void mqtt_config_default_init(struct mqtt_app_config *cfg, mqtt_mode_t pub_or_su
 	cfg->pub.repeat_delay;
 	cfg->pub.have_topic_alias;
 	 */
-	cfg->pub.repeat_count = 1;
+/*	cfg->pub.repeat_count = 1;
 	cfg->pub.repeat_delay.tv_sec = 0;
-	cfg->pub.repeat_delay.tv_usec = 0;
+	cfg->pub.repeat_delay.tv_usec = 0;*/
 }
 
 void mqtt_config_default_cleanup(struct mqtt_app_config *cfg)
@@ -118,18 +115,15 @@ void mqtt_config_default_cleanup(struct mqtt_app_config *cfg)
 		XFREE(MTYPE_MQTT_CONF,cfg->id_prefix);
 	if (cfg->host)
 		XFREE(MTYPE_MQTT_CONF,cfg->host);
-	if (cfg->pub.file_input)
+/*	if (cfg->pub.file_input)
 		XFREE(MTYPE_MQTT_CONF,cfg->pub.file_input);
-	if (cfg->rr.file_input)
-		XFREE(MTYPE_MQTT_CONF,cfg->rr.file_input);
+
 	if (cfg->pub.message)
 		XFREE(MTYPE_MQTT_MESSAGE,cfg->pub.message);
-	if (cfg->rr.message)
-		XFREE(MTYPE_MQTT_MESSAGE,cfg->rr.message);
+
 	if (cfg->pub.topic)
-		XFREE(MTYPE_MQTT_TOPIC,cfg->pub.topic);
-	if (cfg->rr.topic)
-		XFREE(MTYPE_MQTT_TOPIC,cfg->rr.topic);
+		XFREE(MTYPE_MQTT_TOPIC,cfg->pub.topic);*/
+
 	if (cfg->bind_address)
 		XFREE(MTYPE_MQTT_CONF,cfg->bind_address);
 	if (cfg->username)
@@ -140,14 +134,13 @@ void mqtt_config_default_cleanup(struct mqtt_app_config *cfg)
 		XFREE(MTYPE_MQTT_TOPIC,cfg->sub.will_topic);
 	if (cfg->sub.will_payload)
 		XFREE(MTYPE_MQTT_DATA,cfg->sub.will_payload);
-	if (cfg->pub.will_topic)
+/*	if (cfg->pub.will_topic)
 		XFREE(MTYPE_MQTT_TOPIC,cfg->pub.will_topic);
 	if (cfg->pub.will_payload)
-		XFREE(MTYPE_MQTT_DATA,cfg->pub.will_payload);
+		XFREE(MTYPE_MQTT_DATA,cfg->pub.will_payload);*/
 /*	if (cfg->sub.format)
 		XFREE(MTYPE_MQTT_CONF,cfg->sub.format);*/
-	if (cfg->rr.response_topic)
-		XFREE(MTYPE_MQTT_TOPIC,cfg->rr.response_topic);
+
 
 #ifdef WITH_TLS
 	if(cfg->cafile)
@@ -185,7 +178,7 @@ void mqtt_config_default_cleanup(struct mqtt_app_config *cfg)
 			if (cfg->sub.topics[i])
 				XFREE(MTYPE_MQTT_TOPIC,cfg->sub.topics[i]);
 		}
-		XFREE(MTYPE_MQTT_TOPIC,cfg->sub.topics);
+		//XFREE(MTYPE_MQTT_TOPIC,cfg->sub.topics);
 	}
 	if (cfg->sub.filter_outs)
 	{
@@ -194,7 +187,7 @@ void mqtt_config_default_cleanup(struct mqtt_app_config *cfg)
 			if (cfg->sub.filter_outs[i])
 				XFREE(MTYPE_MQTT_FILTER,cfg->sub.filter_outs[i]);
 		}
-		XFREE(MTYPE_MQTT_FILTER,cfg->sub.filter_outs);
+		//XFREE(MTYPE_MQTT_FILTER,cfg->sub.filter_outs);
 	}
 	if (cfg->sub.unsub_topics)
 	{
@@ -203,7 +196,7 @@ void mqtt_config_default_cleanup(struct mqtt_app_config *cfg)
 			if (cfg->sub.unsub_topics[i])
 				XFREE(MTYPE_MQTT_TOPIC,cfg->sub.unsub_topics[i]);
 		}
-		XFREE(MTYPE_MQTT_TOPIC,cfg->sub.unsub_topics);
+		//XFREE(MTYPE_MQTT_TOPIC,cfg->sub.unsub_topics);
 	}
 #ifdef WITH_SOCKS
 	if(cfg->socks5_host)
@@ -232,11 +225,11 @@ void mqtt_config_default_cleanup(struct mqtt_app_config *cfg)
 
 
 
-int mqtt_config_cfg_check(struct mqtt_app_config *cfg, mqtt_mode_t pub_or_sub)
+int mqtt_config_cfg_check(struct mqtt_app_config *cfg)
 {
 	int rc = 0;
 	zassert(cfg != NULL);
-	if(pub_or_sub == MQTT_MODE_SUB)
+	//if(pub_or_sub == MQTT_MODE_SUB)
 	{
 		if (cfg->sub.will_payload && !cfg->sub.will_topic)
 		{
@@ -250,7 +243,7 @@ int mqtt_config_cfg_check(struct mqtt_app_config *cfg, mqtt_mode_t pub_or_sub)
 			return -1;
 		}
 	}
-	else if(pub_or_sub == MQTT_MODE_PUB)
+/*	else if(pub_or_sub == MQTT_MODE_PUB)
 	{
 		if (cfg->pub.will_payload && !cfg->pub.will_topic)
 		{
@@ -263,7 +256,7 @@ int mqtt_config_cfg_check(struct mqtt_app_config *cfg, mqtt_mode_t pub_or_sub)
 			mqtt_err_printf(cfg, "Error: Will retain given, but no will topic given.");
 			return -1;
 		}
-	}
+	}*/
 #ifdef WITH_TLS
 	if((cfg->certfile && !cfg->keyfile) || (cfg->keyfile && !cfg->certfile))
 	{
@@ -294,7 +287,7 @@ int mqtt_config_cfg_check(struct mqtt_app_config *cfg, mqtt_mode_t pub_or_sub)
 	}
 #endif
 
-	if (cfg->mqtt_version == 5)
+	if (cfg->mqtt_version == MQTT_PROTOCOL_V5)
 	{
 		if (cfg->clean_session == false && cfg->session_expiry_interval == -1)
 		{
@@ -331,7 +324,7 @@ int mqtt_config_cfg_check(struct mqtt_app_config *cfg, mqtt_mode_t pub_or_sub)
 		}
 	}
 
-	if (pub_or_sub == MQTT_MODE_SUB)
+/*	if (pub_or_sub == MQTT_MODE_SUB)
 	{
 		if (cfg->sub.topic_count == 0)
 		{
@@ -339,11 +332,11 @@ int mqtt_config_cfg_check(struct mqtt_app_config *cfg, mqtt_mode_t pub_or_sub)
 					"Error: You must specify a topic to subscribe to.");
 			return -1;
 		}
-	}
+	}*/
 
 	if (!cfg->host)
 	{
-		cfg->host = XSTRDUP(MTYPE_MQTT_CONF,"localhost");
+		cfg->host = XSTRDUP(MTYPE_MQTT_CONF, "localhost");
 		if (!cfg->host)
 		{
 			mqtt_err_printf(cfg, "Error: Out of memory.");
@@ -353,42 +346,42 @@ int mqtt_config_cfg_check(struct mqtt_app_config *cfg, mqtt_mode_t pub_or_sub)
 	rc = mosquitto_property_check_all(CMD_CONNECT, cfg->connect_props);
 	if (rc)
 	{
-		mqtt_err_printf(cfg, "Error in CONNECT properties: %s\n",
+		mqtt_err_printf(cfg, "Error in CONNECT properties: %s",
 				mosquitto_strerror(rc));
 		return -1;
 	}
 	rc = mosquitto_property_check_all(CMD_PUBLISH, cfg->publish_props);
 	if (rc)
 	{
-		mqtt_err_printf(cfg, "Error in PUBLISH properties: %s\n",
+		mqtt_err_printf(cfg, "Error in PUBLISH properties: %s",
 				mosquitto_strerror(rc));
 		return -1;
 	}
 	rc = mosquitto_property_check_all(CMD_SUBSCRIBE, cfg->subscribe_props);
 	if (rc)
 	{
-		mqtt_err_printf(cfg, "Error in SUBSCRIBE properties: %s\n",
+		mqtt_err_printf(cfg, "Error in SUBSCRIBE properties: %s",
 				mosquitto_strerror(rc));
 		return -1;
 	}
 	rc = mosquitto_property_check_all(CMD_UNSUBSCRIBE, cfg->unsubscribe_props);
 	if (rc)
 	{
-		mqtt_err_printf(cfg, "Error in UNSUBSCRIBE properties: %s\n",
+		mqtt_err_printf(cfg, "Error in UNSUBSCRIBE properties: %s",
 				mosquitto_strerror(rc));
 		return -1;
 	}
 	rc = mosquitto_property_check_all(CMD_DISCONNECT, cfg->disconnect_props);
 	if (rc)
 	{
-		mqtt_err_printf(cfg, "Error in DISCONNECT properties: %s\n",
+		mqtt_err_printf(cfg, "Error in DISCONNECT properties: %s",
 				mosquitto_strerror(rc));
 		return -1;
 	}
 	rc = mosquitto_property_check_all(CMD_WILL, cfg->will_props);
 	if (rc)
 	{
-		mqtt_err_printf(cfg, "Error in Will properties: %s\n",
+		mqtt_err_printf(cfg, "Error in Will properties: %s",
 				mosquitto_strerror(rc));
 		return -1;
 	}

@@ -20,7 +20,7 @@
 #define V9_SQLDB_BASE
 
 #define V9_SQLDB_TEST
-#define V9_DEBUGING_TEST
+//#define V9_DEBUGING_TEST
 /* board */
 
 #define V9_APP_BOARD_CALCU_ID(n)			((n)+1)
@@ -68,7 +68,7 @@
 
 #define APP_BOARD_ADDRESS_PREFIX		0x0A0A0A00
 #define APP_BOARD_ADDRESS_MAIN			254
-
+#define APP_FEATURE_MAX				1024
 
 #if defined( V9_VIDEO_APP_DEBUG)||defined( V9_VIDEO_APP_DEBUG_HW)
 #define V9_DEBUG(format, ...) 			zlog_debug (ZLOG_APP, format, ##__VA_ARGS__)
@@ -82,6 +82,29 @@
 #define V9_SDK_DBGPRF(format, ...)
 #endif
 
+/* serial */
+#define V9_APP_DEBUG_EVENT		0X01
+#define V9_APP_DEBUG_HEX		0X02
+#define V9_APP_DEBUG_RECV		0X04
+#define V9_APP_DEBUG_SEND		0X08
+#define V9_APP_DEBUG_UPDATE		0X10
+#define V9_APP_DEBUG_TIME		0X20
+#define V9_APP_DEBUG_WEB		0X40
+#define V9_APP_DEBUG_MSG		0X80
+#define V9_APP_DEBUG_STATE		0X100
+#define V9_APP_DEBUG_UCI		0X200
+#define V9_APP_DEBUG_ERROR		0X400
+#define V9_APP_DEBUG_WARN		0X800
+/* board */
+#define V9_APP_DEBUG_BOARD_EVENT	0X01
+#define V9_APP_DEBUG_BOARD_STATE	0X02
+
+
+
+
+#define WEB_USER_PRIVATE_INDEX 		0
+#define WEB_CAPDB_PRIVATE_INDEX 	1
+#define WEB_CAPDB_WARN_INDEX 		2
 
 enum
 {
@@ -100,19 +123,27 @@ typedef struct
 	{
 		void*						ckey_data;
 		float*						feature_data;
-	}feature;
-	//float*						feature_data;									// 特征值
+	}feature;																	// 特征值
 	float						input_value;									// 相似度（输入）
 	float						output_result;									// 相似度（输出）
 	int							(*feature_memcmp)(float *, float *, int,  float *);
+	BOOL						nomem;
 }sql_snapfea_key;
 
 
+extern int v9_app_snapfea_key_alloc(sql_snapfea_key *key, BOOL nomem);
+extern int v9_app_snapfea_key_free(sql_snapfea_key *key);
+extern char * v9_app_age_string(u_int32 age);
 
+extern int v9_sqldb_debug_api(BOOL enable, u_int32 flag);
+extern int v9_user_debug_api(BOOL enable, u_int32 flag);
+extern int v9_video_sdk_debug_api(BOOL enable, u_int32 flag);
+extern int v9_serial_debug_api(BOOL enable, u_int32 flag);
+extern int v9_video_debug_config(struct vty *vty, BOOL detail);
 
-int v9_app_module_init();
-int v9_app_module_exit();
-int v9_app_module_task_init(void);
-int v9_app_module_task_exit(void);
+extern int v9_app_module_init();
+extern int v9_app_module_exit();
+extern int v9_app_module_task_init(void);
+extern int v9_app_module_task_exit(void);
 
 #endif /* __V9_VIDEO_H__ */

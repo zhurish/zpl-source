@@ -22,7 +22,7 @@
 #include "os_util.h"
 #include "os_socket.h"
 #include "eloop.h"
-#include "uci_ubus.h"
+#include "ubus_sync.h"
 
 #include "x5_b_cmd.h"
 #include "x5_b_app.h"

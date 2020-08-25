@@ -13,6 +13,7 @@
 #include "table.h"
 #include "vector.h"
 #include "eloop.h"
+#include "tty_com.h"
 
 #include "v9_device.h"
 #include "v9_util.h"
@@ -35,17 +36,9 @@
 #include "web_util.h"
 #endif
 
-#define APP_SLIPNET_QUEUE_SIZE			1460
-#pragma pack(1)
-typedef struct app_slipnet_data_s {
-#define APP_SLIPNET_TYPE_DATA	1
-#define APP_SLIPNET_TYPE_CMD	2
-	u_int8 type;
-	u_int16 len;
-	u_int8 data[APP_SLIPNET_QUEUE_SIZE];
-}app_slipnet_data_t;
-#pragma pack()
 
+app_cmd_device_t bios_device;
+static int biso_finsh = 0;
 
 static int v9_app_rtc_tm_set(int timesp)
 {
@@ -129,10 +122,11 @@ int v9_cmd_handle_keepalive(v9_serial_t *mgt)
 
 	v9_disk_load("/mnt/diska1", &state->disktatol1, NULL, &state->diskload1);
 	state->disktatol1 = htonl(state->disktatol1);
-
-	v9_disk_load("/mnt/diskb1", &state->disktatol2, NULL, &state->diskload2);
-	state->disktatol2 = htonl(state->disktatol2);
-
+	if(v9_video_disk_count() == 2)
+	{
+		v9_disk_load("/mnt/diskb1", &state->disktatol2, NULL, &state->diskload2);
+		state->disktatol2 = htonl(state->disktatol2);
+	}
 	mgt->slen += sizeof(app_cmd_status_ack_t);
 
 	if(mgt->tty)
@@ -156,6 +150,7 @@ int v9_cmd_handle_reboot(v9_serial_t *mgt)
 		if(V9_APP_DEBUG(EVENT))
 			zlog_debug(ZLOG_APP, "MSG REBOOT -> id=%d(id=%d) ACK seqnum = %d", hdr->id, mgt->id, hdr->seqnum);
 		ret = v9_cmd_send_ack (mgt, V9_APP_ACK_OK);
+		v9_app_module_exit();
 		super_system("reboot -f");
 	}
 	else if(ack->cmd == htons(V9_APP_CMD_RESET))
@@ -163,6 +158,7 @@ int v9_cmd_handle_reboot(v9_serial_t *mgt)
 		if(V9_APP_DEBUG(EVENT))
 			zlog_debug(ZLOG_APP, "MSG RESET -> id=%d(id=%d) ACK seqnum = %d", hdr->id, mgt->id, hdr->seqnum);
 		ret = v9_cmd_send_ack (mgt, V9_APP_ACK_OK);
+		v9_app_module_exit();
 		super_system("jffs2reset -y && reboot -f");
 	}
 	else if(ack->cmd == htons(V9_APP_CMD_SHUTDOWN))
@@ -170,6 +166,7 @@ int v9_cmd_handle_reboot(v9_serial_t *mgt)
 		if(V9_APP_DEBUG(EVENT))
 			zlog_debug(ZLOG_APP, "MSG SHUTDOWN -> id=%d(id=%d) ACK seqnum = %d", hdr->id, mgt->id, hdr->seqnum);
 		ret = v9_cmd_send_ack (mgt, V9_APP_ACK_OK);
+		v9_app_module_exit();
 		super_system("poweroff -d 1");
 	}
 	else
@@ -315,8 +312,9 @@ int v9_cmd_handle_board(v9_serial_t *mgt)
 		zlog_warn(ZLOG_APP, "MSG BOARD %d = %d", mgt->id, hdr->id);
 		return v9_cmd_send_ack (mgt, V9_APP_ACK_ERROR);
 	}
-	if(V9_APP_DEBUG(EVENT))
-		zlog_debug(ZLOG_APP, "MSG BOARD -> id=%d(id=%d) ACK seqnum = %d", hdr->id, mgt->id, hdr->seqnum);
+	//if(V9_APP_DEBUG(EVENT))
+	//	zlog_debug(ZLOG_APP, "MSG BOARD Status -> id=%d ACK seqnum = %d", board->id, hdr->seqnum);
+		//zlog_debug(ZLOG_APP, "MSG BOARD -> id=%d(id=%d) ACK seqnum = %d", hdr->id, mgt->id, hdr->seqnum);
 
 	if(v9_board_lookup(board->id))
 	{
@@ -326,8 +324,9 @@ int v9_cmd_handle_board(v9_serial_t *mgt)
 		rboard.memtotal = ntohl(board->memtotal);		//内存(M)
 		rboard.disktatol1 = ntohl(board->disktatol1);		//硬盘(M)
 		rboard.disktatol2 = ntohl(board->disktatol2);		//硬盘(M)
-
+		v9_video_board_lock();
 		v9_board_update_board(board->id, &rboard);
+		v9_video_board_unlock();
 	}
 	else
 	{
@@ -337,8 +336,9 @@ int v9_cmd_handle_board(v9_serial_t *mgt)
 		rboard.memtotal = ntohl(board->memtotal);		//内存(M)
 		rboard.disktatol1 = ntohl(board->disktatol1);		//硬盘(M)
 		rboard.disktatol2 = ntohl(board->disktatol2);		//硬盘(M)
-
+		v9_video_board_lock();
 		v9_board_update_board(board->id, &rboard);
+		v9_video_board_unlock();
 	}
 	return v9_cmd_send_ack (mgt, V9_APP_ACK_OK);
 }
@@ -352,6 +352,63 @@ int v9_cmd_get(v9_serial_t *mgt)
 	return ntohs(ack->cmd);
 }
 
+int v9_cmd_handle_device(v9_serial_t *mgt)
+{
+	zassert(mgt != NULL);
+	app_cmd_device_t *device = (app_cmd_device_t *)(mgt->buf + sizeof(app_cmd_hdr_t));
+	app_cmd_hdr_t *hdr = (app_cmd_hdr_t *)(mgt->buf);
+	if(mgt->id == 0 || mgt->id != hdr->id)
+	{
+		zlog_warn(ZLOG_APP, "MSG Device %d = %d", mgt->id, hdr->id);
+		return v9_cmd_send_ack (mgt, V9_APP_ACK_ERROR);
+	}
+	v9_video_board_lock();
+	if(bios_device.cmd == 0)
+	{
+		memset(&bios_device, '\0', sizeof(bios_device));
+		bios_device.cmd = 0;				//IP地址
+		strcpy(bios_device.devicename, device->devicename);
+		strcpy(bios_device.deviceid, device->deviceid);
+		strcpy(bios_device.serialno, device->serialno);
+		strcpy(bios_device.manufacturer, device->manufacturer);
+		strcpy(bios_device.kervel_version, device->kervel_version);
+		strcpy(bios_device.app_version, device->app_version);
+		strcpy(bios_device.buildtime, device->buildtime);
+/*
+		zlog_warn(ZLOG_APP,"%s: devicename=%s", __func__, bios_device.devicename);
+		zlog_warn(ZLOG_APP,"%s: deviceid=%s", __func__, bios_device.deviceid);
+		zlog_warn(ZLOG_APP,"%s: serialno=%s", __func__, bios_device.serialno);
+		zlog_warn(ZLOG_APP,"%s: manufacturer=%s", __func__, bios_device.manufacturer);
+		zlog_warn(ZLOG_APP,"%s: kervel_version=%s", __func__, bios_device.kervel_version);
+		zlog_warn(ZLOG_APP,"%s: buildtime=%s", __func__, bios_device.buildtime);
+		zlog_warn(ZLOG_APP,"%s: app_version=%s", __func__, bios_device.app_version);*/
+	}
+	v9_video_board_unlock();
+	return v9_cmd_send_ack (mgt, V9_APP_ACK_OK);
+}
+
+int v9_web_device_info(char *buf)
+{
+	int offset = 0;
+	sprintf (buf + offset, "\"serialno\":\"%s\",", bios_device.serialno);
+
+	offset = strlen(buf);
+	sprintf (buf + offset, "\"deviceid\":\"%s\",", bios_device.deviceid);
+
+	offset = strlen(buf);
+	sprintf (buf + offset, "\"manufacturer\":\"%s\",", bios_device.manufacturer);
+
+	offset = strlen(buf);
+	sprintf (buf + offset, "\"buildtime\":\"%s\",", bios_device.buildtime);
+
+	offset = strlen(buf);
+	sprintf (buf + offset, "\"biosversion\":\"%s-%s\",",
+			 bios_device.kervel_version,
+			 bios_device.app_version);
+
+	offset = strlen(buf);
+	return offset;
+}
 
 int v9_cmd_handle_pass_reset(v9_serial_t *mgt)
 {
@@ -381,17 +438,19 @@ int v9_cmd_handle_pass_reset(v9_serial_t *mgt)
 #endif
 }
 
-
+#ifdef V9_SLIPNET_ENABLE
 int v9_cmd_sync_time_to_rtc(v9_serial_t *mgt, u_int32 timesp)
 {
 	int ret = 0;
-    struct tm p_tm;
+    //struct tm p_tm;
     u_int32 ptimesp = timesp;
 	zassert(mgt != NULL);
 	app_slipnet_data_t slipdata;
 	app_cmd_hdr_t *hdr = (app_cmd_hdr_t *)slipdata.data;
 	app_cmd_rtc_t *rtc = (app_cmd_rtc_t *)(slipdata.data + sizeof(app_cmd_hdr_t));
 
+	if(!mgt->slipnet)
+		return OK;
 	if(mgt->mutex)
 		os_mutex_lock(mgt->mutex, OS_WAIT_FOREVER);
 
@@ -402,39 +461,251 @@ int v9_cmd_sync_time_to_rtc(v9_serial_t *mgt, u_int32 timesp)
 	mgt->slen = sizeof(app_cmd_hdr_t);
 	hdr->seqnum = mgt->seqnum;
 
-	rtc->cmd = htons(V9_CMD_SYNC_TIME);
+	rtc->cmd = htons(V9_APP_CMD_SYNC_TIME);
 	rtc->zone = 8;
 
-    if(os_tmtime_get (OS_TMTIME_UTC, ptimesp, &p_tm) != OK)
+/*    if(os_tmtime_get (OS_TMTIME_UTC, ptimesp, &p_tm) != OK)
     {
     	if(mgt->mutex)
     		os_mutex_unlock(mgt->mutex);
     	return ERROR;
-    }
-	rtc->ptm.tm_year = htonl(p_tm.tm_year + 1900);
-	rtc->ptm.tm_mon = htonl(p_tm.tm_mon + 1);
-	rtc->ptm.tm_mday = htonl(p_tm.tm_mday);
-	rtc->ptm.tm_hour = htonl(p_tm.tm_hour);
-	rtc->ptm.tm_min = htonl(p_tm.tm_min);
-	rtc->ptm.tm_sec = htonl(p_tm.tm_sec);
+    }*/
+	rtc->timesp = htonl(ptimesp);
 
 	mgt->slen += sizeof(app_cmd_rtc_t);
 	hdr->len = htons(sizeof(app_cmd_rtc_t));
 
 	slipdata.len = htons(mgt->slen + 3);
-
+#ifdef V9_SLIPNET_UDP
+	if(mgt->slipnet && mgt->slipnet->fd)
+		ret = sock_client_write(mgt->slipnet->fd, mgt->slipnet->devname,
+								V9_SLIPNET_UDPSRV_PORT, &slipdata, ntohs(slipdata.len));
+#else
 	if(mgt->slipnet)
 		ret = tty_com_write (mgt->slipnet, &slipdata, ntohs(slipdata.len));
-
+#endif
+	if(ret > OK)
+	{
+		mgt->sntp_sync = TRUE;
+	}
 	if(mgt->mutex)
 		os_mutex_unlock(mgt->mutex);
 	return (ret);
 }
 
+
 int v9_cmd_sync_time_test(void)
 {
-	u_int32 timesp = os_time(NULL);
+	u_int32 timesp = os_time(NULL);//返回UTC时间
 	//zlog_debug(ZLOG_APP, "---------%s--------- %d", __func__, timesp);
 	v9_cmd_sync_time_to_rtc(v9_serial, timesp);
 	return OK;
 }
+
+int v9_cmd_web_reboot()
+{
+	int ret = 0;
+	zassert(v9_serial != NULL);
+	app_slipnet_data_t slipdata;
+	app_cmd_hdr_t *hdr = (app_cmd_hdr_t *)slipdata.data;
+	app_cmd_reboot_t *rtc = (app_cmd_reboot_t *)(slipdata.data + sizeof(app_cmd_hdr_t));
+
+	if(!v9_serial->slipnet)
+		return OK;
+	if(v9_serial->mutex)
+		os_mutex_lock(v9_serial->mutex, OS_WAIT_FOREVER);
+
+	memset(slipdata.data, 0, sizeof(slipdata.data));
+
+	slipdata.type = APP_SLIPNET_TYPE_CMD;
+
+	v9_serial->slen = sizeof(app_cmd_hdr_t);
+	hdr->seqnum = v9_serial->seqnum;
+
+	rtc->cmd = htons(V9_APP_CMD_REBOOT);
+
+	//len = app_cmd_makeup(APP_CMD_REBOOT, buf);
+
+	v9_serial->slen += sizeof(app_cmd_reboot_t);
+	hdr->len = htons(sizeof(app_cmd_reboot_t));
+
+	slipdata.len = htons(v9_serial->slen + 3);
+#ifdef V9_SLIPNET_UDP
+	if(v9_serial->slipnet && v9_serial->slipnet->fd)
+		ret = sock_client_write(v9_serial->slipnet->fd, v9_serial->slipnet->devname,
+								V9_SLIPNET_UDPSRV_PORT, &slipdata, ntohs(slipdata.len));
+#else
+	if(v9_serial->slipnet)
+		ret = tty_com_write (v9_serial->slipnet, &slipdata, ntohs(slipdata.len));
+#endif
+	if(v9_serial->mutex)
+		os_mutex_unlock(v9_serial->mutex);
+	return (ret);
+}
+
+int v9_cmd_sync_led(v9_serial_t *mgt, u_int32 led, int status)
+{
+	int ret = 0;
+	zassert(mgt != NULL);
+	app_slipnet_data_t slipdata;
+	app_cmd_hdr_t *hdr = (app_cmd_hdr_t *)slipdata.data;
+	app_cmd_led_t *rtc = (app_cmd_led_t *)(slipdata.data + sizeof(app_cmd_hdr_t));
+
+	if(!mgt->slipnet)
+	{
+		//printf("--------%s---------:if(!mgt->slipnet)\r\n", __func__);
+		return OK;
+	}
+	//printf("--------%s---------:\r\n", __func__);
+	if(mgt->mutex)
+		os_mutex_lock(mgt->mutex, OS_WAIT_FOREVER);
+
+	memset(slipdata.data, 0, sizeof(slipdata.data));
+
+	slipdata.type = APP_SLIPNET_TYPE_CMD;
+
+	mgt->slen = sizeof(app_cmd_hdr_t);
+	hdr->seqnum = mgt->seqnum;
+
+	rtc->cmd = htons(V9_APP_CMD_SYNC_LED);
+	rtc->zone = status;
+	rtc->timesp = htonl(led);
+
+	mgt->slen += sizeof(app_cmd_led_t);
+	hdr->len = htons(sizeof(app_cmd_led_t));
+
+	slipdata.len = htons(mgt->slen + 3);
+#ifdef V9_SLIPNET_UDP
+	if(mgt->slipnet && mgt->slipnet->fd)
+		ret = sock_client_write(mgt->slipnet->fd, mgt->slipnet->devname,
+								V9_SLIPNET_UDPSRV_PORT, &slipdata, ntohs(slipdata.len));
+#else
+	if(mgt->slipnet)
+		ret = tty_com_write (mgt->slipnet, &slipdata, ntohs(slipdata.len));
+#endif
+	if(ret > OK)
+	{
+		mgt->sntp_sync = TRUE;
+	}
+	if(mgt->mutex)
+		os_mutex_unlock(mgt->mutex);
+	return (ret);
+}
+
+int v9_cmd_update_bios(u_int32 state)
+{
+	int ret = 0;
+	zassert(v9_serial != NULL);
+	app_slipnet_data_t slipdata;
+	app_cmd_hdr_t *hdr = (app_cmd_hdr_t *)slipdata.data;
+	app_cmd_bios_t *bios = (app_cmd_bios_t *)(slipdata.data + sizeof(app_cmd_hdr_t));
+
+	if(!v9_serial->slipnet)
+		return OK;
+	if(v9_serial->mutex)
+		os_mutex_lock(v9_serial->mutex, OS_WAIT_FOREVER);
+
+	memset(slipdata.data, 0, sizeof(slipdata.data));
+
+	slipdata.type = APP_SLIPNET_TYPE_CMD;
+
+	v9_serial->slen = sizeof(app_cmd_hdr_t);
+	hdr->seqnum = v9_serial->seqnum;
+
+	bios->cmd = htons(V9_APP_CMD_DOWNLOAD_OTA);
+	bios->filelen = htons(state);
+	v9_serial->slen += sizeof(app_cmd_bios_t);
+	hdr->len = htons(sizeof(app_cmd_bios_t));
+
+	slipdata.len = htons(v9_serial->slen + 3);
+
+	biso_finsh = 0;
+
+#ifdef V9_SLIPNET_UDP
+	if(v9_serial->slipnet && v9_serial->slipnet->fd)
+		ret = sock_client_write(v9_serial->slipnet->fd, v9_serial->slipnet->devname,
+								V9_SLIPNET_UDPSRV_PORT, &slipdata, ntohs(slipdata.len));
+#else
+	if(v9_serial->slipnet)
+		ret = tty_com_write (v9_serial->slipnet, &slipdata, ntohs(slipdata.len));
+#endif
+	if(v9_serial->mutex)
+		os_mutex_unlock(v9_serial->mutex);
+	return (ret);
+}
+
+
+int v9_cmd_update_bios_ack(v9_serial_t *mgt)
+{
+	zassert(mgt != NULL);
+	app_cmd_bios_t	*bios = (app_cmd_bios_t *)(mgt->buf + sizeof(app_cmd_hdr_t));
+	app_cmd_hdr_t *hdr = (app_cmd_hdr_t *)(mgt->buf);
+	if(mgt->id == 0 || mgt->id != hdr->id)
+	{
+		zlog_warn(ZLOG_APP, "MSG BOARD %d = %d", mgt->id, hdr->id);
+		return v9_cmd_send_ack (mgt, V9_APP_ACK_ERROR);
+	}
+	v9_cmd_send_ack (mgt, V9_APP_ACK_OK);
+	if(bios->filelen == 0)
+	{
+		biso_finsh = 1;
+		return OK;
+	}
+	else
+	{
+		biso_finsh = 2;
+		return ERROR;
+	}
+}
+
+int v9_cmd_update_bios_finsh()
+{
+	while(biso_finsh == 0)
+	{
+		os_msleep(1);
+	}
+	return biso_finsh;
+}
+
+#else
+int v9_cmd_handle_sntp_sync(v9_serial_t *mgt)
+{
+	app_cmd_hdr_t *hdr = (app_cmd_hdr_t *)(mgt->buf);
+	//app_cmd_rtc_t *ack = (app_cmd_rtc_t *)(mgt->buf + sizeof(app_cmd_hdr_t));
+	app_cmd_hdr_t *shdr = (app_cmd_hdr_t *)mgt->sbuf;
+	app_cmd_rtc_t *rtc = (app_cmd_rtc_t *)(mgt->sbuf + sizeof(app_cmd_hdr_t));
+
+	if(mgt->id == 0 || mgt->id != hdr->id)
+	{
+		zlog_warn(ZLOG_APP, "MSG SNTP SYNC %d = %d", mgt->id, hdr->id);
+		return v9_cmd_send_ack (mgt, V9_APP_ACK_ERROR);
+	}
+	if(V9_APP_DEBUG(EVENT))
+		zlog_debug(ZLOG_APP, "MSG SNTP SYNC -> id=%d(id=%d) ACK seqnum = %d", hdr->id, mgt->id, hdr->seqnum);
+
+	v9_cmd_make_hdr(mgt);
+	rtc->cmd = htons(V9_APP_CMD_SYNC_TIME/*V9_APP_CMD_GET_STATUS*/);
+	shdr->len = htons(sizeof(app_cmd_rtc_t));
+
+	mgt->slen = sizeof(app_cmd_hdr_t);
+	shdr->seqnum = mgt->seqnum;
+
+	rtc->cmd = htons(V9_APP_CMD_SYNC_TIME);
+	if(mgt->timer_sync == 1)
+	{
+		rtc->zone = 8;
+		rtc->timesp = htonl(os_time(NULL));
+		mgt->timer_sync = 0;
+	}
+	else
+	{
+		rtc->zone = 0;
+		rtc->timesp = 0;
+	}
+	mgt->slen += sizeof(app_cmd_rtc_t);
+
+	if(mgt->tty)
+		return tty_com_write (mgt->tty, mgt->sbuf, mgt->slen);
+	return (ERROR);
+}
+#endif /* V9_SLIPNET_ENABLE */

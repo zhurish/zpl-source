@@ -12,5 +12,6 @@ int v9_video_board_stream_add_api(u_int8 id, u_int8 ch, u_int32 address, u_int16
 							   char *username, char *password, u_int32 fps, char *param, char *secondary);
 int v9_video_board_stream_del_api(u_int8 id, u_int8 ch, u_int32 address, u_int16 port);
 
+int v9_video_board_stream_cleanup_api();
 
 #endif /* __V9_VIDEO_API_H__ */

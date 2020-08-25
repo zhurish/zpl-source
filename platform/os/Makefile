@@ -16,33 +16,31 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(PL_ECHO_CC)
-	@$(PL_OBJ_COMPILE)
+	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
+	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
 
 $(LIBS) : $(MODULE_OBJS)
-	$(PL_MAKE_LIB) $(LIBS) $(MODULE_OBJS)
+	@$(AR) -rs $(LIBS) $(MODULE_OBJS)
 
 
-include $(MAKE_DIR)/make.mk
 
-#lib: $(LIBS)
-#
-#
-#
-#obj: $(MODULE_OBJS) $(MODULE_LIBOBJS)
-#
-#install: $(LIBS)
-#	install -d $(LIB_DIR)
-#	install -m 755 $(LIBS) $(LIB_DIR)
-#	$(STRIP) $(LIB_DIR)/$(LIBS)
+lib: $(LIBS)
 
-#clean: objclean
-#	@$(RM) $(LIB_DIR)/$(LIBS)
-#	@$(RM) $(LIBS)
 
-#objclean: 
-#	@$(RM) $(OBJS_DIR)/*
+obj: $(BUILT_SOURCES) $(MODULE_OBJS)
 
-#all: lib install
+install: $(LIBS)
+	@install -d $(LIB_DIR)
+	@install -m 755 $(LIBS) $(LIB_DIR)
+	@$(STRIP) $(PLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
 
-#.PHONY:	obj all lib install objclean clean
+clean: objclean
+	@$(RM) $(LIB_DIR)/$(LIBS)
+	@$(RM) $(LIBS)
+
+objclean: 
+	@$(RM) $(OBJS_DIR)/*
+
+all: lib install
+
+.PHONY:	obj all lib install objclean clean

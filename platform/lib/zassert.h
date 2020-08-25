@@ -38,6 +38,10 @@ extern void _zlog_assert_failed (const char *assertion, const char *file,
 			    (_zlog_assert_failed(#EX, __FILE__, __LINE__, \
 						 __ASSERT_FUNCTION), 0)))
 
+#define plzassert(EX) if((EX)){} else {	\
+				   _zlog_assert_failed(#EX, __FILE__, __LINE__, \
+						 __ASSERT_FUNCTION); }
+
 #undef assert
 #define assert(EX) zassert(EX)
 

@@ -31,6 +31,17 @@ enum
 
 #define V9_APP_DB_ID_ABS(n)			((n)-1)
 
+
+
+#define V9_APP_MONITOR_TIME_M(n)	((n)*1000*60) 	//监控硬盘空间的时间间隔
+#define V9_APP_MONITOR_TIME_H(n)	((n)*V9_APP_MONITOR_TIME_M(60)) 	//监控硬盘空间的时间间隔
+
+#define V9_APP_DB_ROW_LIMIT			100000			//数据表限制表格函数
+#define V9_APP_DB_DELETE_LIMIT		(1000)			//每次删除表格数据行数
+#define V9_APP_DISK_LOAD_LIMIT		(80)			//硬盘占用百分比
+#define V9_APP_DISK_KEEP_DAY		(30)			//保留30天的记录
+
+
 int v9_video_disk_count(void);
 
 char * v9_video_disk_root_dir(u_int32 id);
@@ -41,7 +52,14 @@ char * v9_video_disk_warn_dir(u_int32 id);
 //char * v9_video_disk_user_dir(u_int32 id);
 char * v9_video_disk_capdb_dir(u_int32 id);
 char * v9_video_disk_recg_dir(u_int32 id);
+
+char * v9_video_disk_urlpath(int id, char *picpath);
+
 int v9_video_disk_dir_init(void);
 
+int v9_video_disk_keep_day_set(u_int32 day);
+int v9_video_disk_keep_day_get(void);
+
+int v9_video_disk_monitor_start(BOOL enable);
 
 #endif /* __V9_VIDEO_DISK_H__ */

@@ -12,7 +12,7 @@
 struct mqtt_app_config;
 //#include "mqtt_app_conf.h"
 
-
+BOOL mqtt_isenable_api(struct mqtt_app_config *cfg);
 int mqtt_enable_api(struct mqtt_app_config *cfg, BOOL enable);
 
 int mqtt_reload_api(struct mqtt_app_config *cfg);
@@ -42,7 +42,7 @@ int mqtt_tls_capath_api(struct mqtt_app_config *cfg, const char *capath);
 int mqtt_tls_certfile_api(struct mqtt_app_config *cfg, const char *certfile);
 int mqtt_tls_ciphers_api(struct mqtt_app_config *cfg, const char *ciphers);
 int mqtt_tls_insecure_api(struct mqtt_app_config *cfg, const bool insecure);
-int mqtt_tls_ciphers_api(struct mqtt_app_config *cfg, const char *keyform);
+int mqtt_tls_keyform_api(struct mqtt_app_config *cfg, const char *keyform);
 int mqtt_tls_keyfile_api(struct mqtt_app_config *cfg, const char *keyfile);
 #endif
 
@@ -62,6 +62,8 @@ int mqtt_tls_psk_identity_api(struct mqtt_app_config *cfg, const char * format);
 
 int mqtt_qos_api(struct mqtt_app_config *cfg, const mqtt_qos_level qos);
 int mqtt_retain_api(struct mqtt_app_config *cfg, const bool retain);
+int mqtt_clean_session_api(struct mqtt_app_config *cfg, const bool clean_session);
+int mqtt_session_expiry_interval_api(struct mqtt_app_config *cfg, int interval);
 
 #ifdef WITH_SRV
 int mqtt_use_srv_api(struct mqtt_app_config *cfg, const bool use_srv);
@@ -74,44 +76,52 @@ int mqtt_tls_engine_kpass_sha1_api(struct mqtt_app_config *cfg, const char * for
 int mqtt_tls_version_api(struct mqtt_app_config *cfg, const char * format);
 #endif
 
+
+int mqtt_debug_api(struct mqtt_app_config *cfg, int loglevel);
+
 int mqtt_version_api(struct mqtt_app_config *cfg,
 		const int protocol_version);
 
 
-int mqtt_will_payload_api(struct mqtt_app_config *cfg,
-		mqtt_mode_t type, const char * format);
-
-int mqtt_will_topic_api(struct mqtt_app_config *cfg,
-		mqtt_mode_t type, const char * will_topic);
-
-int mqtt_will_qos_api(struct mqtt_app_config *cfg,
-		mqtt_mode_t type, const mqtt_qos_level will_qos);
-
-int mqtt_will_retain_api(struct mqtt_app_config *cfg,
-		mqtt_mode_t type, const bool will_retain);
-
 int mqtt_sub_filter_out_api(struct mqtt_app_config *cfg,
 		const char * filter);
+int mqtt_sub_filter_out_del_api(struct mqtt_app_config *cfg, char *filter);
+
 int mqtt_sub_unsubscribe_api(struct mqtt_app_config *cfg,
 		const char * filter);
+int mqtt_sub_unsubscribe_del_api(struct mqtt_app_config *cfg, char *topic);
 
+/*
 int mqtt_pub_repeat_count_delay_api(struct mqtt_app_config *cfg,
 		const int repeat_count, const float repeat_delay);
 
+*/
+int mqtt_will_payload_api(struct mqtt_app_config *cfg, const char * format);
+
+int mqtt_will_topic_api(struct mqtt_app_config *cfg, const char * will_topic);
+
+int mqtt_will_qos_api(struct mqtt_app_config *cfg, const mqtt_qos_level will_qos);
+
+int mqtt_will_retain_api(struct mqtt_app_config *cfg, const bool will_retain);
 
 
+/*
 int mqtt_sub_no_retain_api(struct mqtt_app_config *cfg,
 		const bool no_retain);
 int mqtt_sub_retain_as_published_api(struct mqtt_app_config *cfg);
+*/
+
 int mqtt_sub_remove_retained_api(struct mqtt_app_config *cfg,
 		const bool remove_retained);
 
+int mqtt_option_api(struct mqtt_app_config *cfg, const int option, bool set);
 
 
+int mqtt_module_commit_api(struct mqtt_app_config *cfg);
 int mqtt_module_init(void);
 int mqtt_module_exit(void);
 int mqtt_module_task_init(void);
 int mqtt_module_task_exit(void);
-
+void cmd_mqtt_init(void);
 
 #endif /* __MQTT_APP_API_H__ */

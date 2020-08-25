@@ -25,7 +25,7 @@
 #if defined(PJMEDIA_HAS_OPENH264_CODEC) && \
             PJMEDIA_HAS_OPENH264_CODEC != 0 && \
     defined(PJMEDIA_HAS_VIDEO) && (PJMEDIA_HAS_VIDEO != 0)
-
+#error "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 #ifdef _MSC_VER
 #   include <stdint.h>
 #   pragma comment( lib, "openh264.lib")

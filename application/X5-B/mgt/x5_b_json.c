@@ -23,17 +23,17 @@
 #include "interface.h"
 #include "eloop.h"
 #include "cJSON.h"
-
+/*
 #include <openssl/pem.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
-
+*/
 #include "x5_b_app.h"
 #include "x5_b_json.h"
 #include "x5_b_cmd.h"
 #include "x5_b_web.h"
 
-#ifdef PL_VOIP_MODULE
+#ifdef PL_PJSIP_MODULE
 #include "voip_def.h"
 #include "voip_app.h"
 #endif
@@ -261,108 +261,7 @@ int x5b_app_device_json(x5b_app_mgt_t *app, char *device,
 	return ERROR;
 }
 
-#ifdef PL_VOIP_MODULE
-#ifdef PL_OSIP_MODULE
-static int x5b_sip_load_from_json(char *input)
-{
-	char *us = NULL;
-	cJSON* pItem = cJSON_Parse (input);
-	cJSON* pj_tmp = NULL;
-	if (pItem == NULL)
-	{
-		return ERROR;
-	}
-	pj_tmp = cJSON_GetObjectItem (pItem, "phone");
-	if (pj_tmp == NULL)
-	{
-		return ERROR;
-	}
-	us = pj_tmp->valuestring;
-	if(us)
-	{
-		voip_sip_local_number_set_api(us, FALSE);
-	}
-	pj_tmp = cJSON_GetObjectItem (pItem, "username");
-	if (pj_tmp)
-	{
-		us = pj_tmp->valuestring;
-		if(us)
-		{
-			voip_sip_user_set_api(us, FALSE);
-		}
-	}
-	pj_tmp = cJSON_GetObjectItem (pItem, "password");
-	if (pj_tmp)
-	{
-		us = pj_tmp->valuestring;
-		if(us)
-		{
-			voip_sip_password_set_api(us, FALSE);
-		}
-	}
-	pj_tmp = cJSON_GetObjectItem (pItem, "sip-address");
-	if (pj_tmp)
-	{
-		us = pj_tmp->valuestring;
-		if(us)
-		{
-			u_int16 port = 0;
-			u_int32 ip = ntohl(inet_addr(us));
-			voip_sip_server_get_api(NULL, &port, FALSE);
-			voip_sip_server_set_api(ip, port, FALSE);
-		}
-	}
-	pj_tmp = cJSON_GetObjectItem (pItem, "sip-port");
-	if (pj_tmp)
-	{
-		if(pj_tmp->valueint)
-		{
-			u_int32 ip = ntohl(inet_addr(us));
-			voip_sip_server_get_api(&ip, NULL, FALSE);
-			voip_sip_server_set_api(ip, pj_tmp->valueint, FALSE);
-		}
-	}
-	pj_tmp = cJSON_GetObjectItem (pItem, "codec");
-	if (pj_tmp)
-	{
-		us = pj_tmp->valuestring;
-		if(us)
-		{
-			voip_sip_payload_name_set_api(us);
-/*			if(voip_sip_payload_index(us) >= 0)
-			{
-				extern int voip_sip_payload_name_set_api(char * value);
-				extern int voip_sip_get_payload_index(void);
-				extern int voip_sip_payload_index(char *name);
-				extern char * voip_sip_payload_name(int index);
-				extern char * voip_sip_payload_rtpmap(int index);
-				extern int voip_sip_payload_ptime(int index);
-				//voip_stream_payload_api(tmp, -1);
-				sip->payload = voip_sip_payload_index(us);
-				memset(sip->payload_name, 0, sizeof(sip->payload_name));
-				strcpy(sip->payload_name, strlwr(tmp));
-			}*/
-		}
-	}
-	pj_tmp = cJSON_GetObjectItem (pItem, "dtmf");
-	if (pj_tmp)
-	{
-		us = pj_tmp->valuestring;
-		if(us)
-		{
-			if(strstr(us, "2833"))
-				voip_sip_dtmf_set_api(VOIP_SIP_RFC2833);
-			else if(strstr(us, "info") || strstr(us, "INFO"))
-				voip_sip_dtmf_set_api(VOIP_SIP_INFO);
-			else if(strstr(us, "INBAND") || strstr(us, "inband"))
-				voip_sip_dtmf_set_api(VOIP_SIP_INBAND);
-		}
-	}
-	voip_osip_restart();
-	//vty_execute_shell("write memory");
-	return OK;
-}
-#endif
+#ifdef PL_PJSIP_MODULE
 
 #ifdef PL_PJSIP_MODULE
 static int x5b_sip_load_from_json(char *input)
@@ -488,7 +387,7 @@ int x5b_app_sip_config_parse(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 		//if(X5_B_ESP32_DEBUG(MSG) && X5_B_ESP32_DEBUG(WEB))
 			zlog_debug(ZLOG_APP,"Recv make Face IMG respone len=%d val=%s\r\n", tlv->len, temp);
 		//zlog_debug(ZLOG_APP,"tlv->len=%d ->%s", tlv->len, temp);
-#ifdef PL_VOIP_MODULE
+#ifdef PL_PJSIP_MODULE
 		if(x5b_sip_load_from_json(temp) == OK)
 		{
 		}

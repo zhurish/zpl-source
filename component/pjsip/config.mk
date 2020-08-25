@@ -8,6 +8,7 @@ PLINCLUDE += -I$(PJSIP_ROOT)/include
 #
 #
 #OS
+OBJS += pjsip_util.o
 #OBJS += pjsua_app_legacy.o
 OBJS += pjsua_app_config.o
 OBJS += pjsua_app_common.o

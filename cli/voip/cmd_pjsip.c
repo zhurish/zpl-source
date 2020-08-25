@@ -23,10 +23,12 @@
 #include "vector.h"
 #include "vrf.h"
 #include "interface.h"
-
+#include "template.h"
+#ifdef PL_APP_MODULE
 #include "application.h"
+#endif
 
-#ifdef PL_VOIP_MODULE
+#ifdef PL_PJSIP_MODULE
 #include "voip_app.h"
 #include "pjsua_app_common.h"
 #include "pjsua_app_config.h"
@@ -36,8 +38,10 @@
 /*
  * SIP Global
  */
-int pl_pjsip_global_set_api(BOOL enable);
-int pl_pjsip_global_get_api(BOOL *enable);
+//int pl_pjsip_global_set_api(BOOL enable);
+//int pl_pjsip_global_get_api(BOOL *enable);
+static int pjsip_write_config(struct vty *vty, void *pVoid);
+
 
 DEFUN (ip_sip_enable,
 		ip_sip_enable_cmd,
@@ -64,7 +68,7 @@ DEFUN (ip_sip_enable,
 			ret = OK;
 	}
 	if(ret == OK)
-		vty->node = SIP_SERVICE_NODE;
+		vty->node = ALL_SERVICE_NODE;
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -74,6 +78,37 @@ DEFUN (ip_sip_service,
 		"Service configure\n"
 		"SIP Protocol\n")
 {
+	template_t * temp = nsm_template_lookup_name (TRUE, "service pjsip");
+	if(temp)
+	{
+		if(!pl_pjsip_global_isenable())
+			pl_pjsip_global_set_api(TRUE);
+		vty->node = ALL_SERVICE_NODE;
+		memset(vty->prompt, 0, sizeof(vty->prompt));
+		sprintf(vty->prompt, "%s", temp->prompt);
+		return CMD_SUCCESS;
+	}
+	else
+	{
+		temp = nsm_template_new (TRUE);
+		if(temp)
+		{
+			temp->module = 0;
+			strcpy(temp->name, "service pjsip");
+			strcpy(temp->prompt, "service-sip"); /* (config-app-esp)# */
+			temp->write_template = pjsip_write_config;
+			//temp->pVoid = v9_video_app_tmp();
+			nsm_template_install(temp, 0);
+			if(!pl_pjsip_global_isenable())
+				pl_pjsip_global_set_api(TRUE);
+			vty->node = ALL_SERVICE_NODE;
+			memset(vty->prompt, 0, sizeof(vty->prompt));
+			sprintf(vty->prompt, "%s", temp->prompt);
+			return CMD_SUCCESS;
+		}
+	}
+	return CMD_WARNING;
+/*
 	int ret = ERROR;
 	if(!pl_pjsip_global_isenable())
 		ret = pl_pjsip_global_set_api(TRUE);
@@ -81,7 +116,7 @@ DEFUN (ip_sip_service,
 		ret = OK;
 	if(ret == OK)
 		vty->node = SIP_SERVICE_NODE;
-	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;*/
 }
 
 DEFUN (no_ip_sip_service,
@@ -91,14 +126,24 @@ DEFUN (no_ip_sip_service,
 		"Service configure\n"
 		"SIP Protocol\n")
 {
-	int ret = ERROR;
+	template_t * temp = nsm_template_lookup_name (TRUE, "service pjsip");
+	if(temp)
+	{
+		if(pl_pjsip_global_isenable())
+			pl_pjsip_global_set_api(FALSE);
+		nsm_template_free(temp);
+		return CMD_SUCCESS;
+	}
+	return CMD_WARNING;
+
+/*	int ret = ERROR;
 	if(pl_pjsip_global_isenable())
 		ret = pl_pjsip_global_set_api(FALSE);
 	else
 		ret = OK;
 	if(ret == OK)
 		vty->node = SIP_SERVICE_NODE;
-	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;*/
 }
 
 /*
@@ -3417,7 +3462,16 @@ DEFUN (show_debugging_voip,
 	return CMD_SUCCESS;
 }
 
-
+static int pjsip_write_config(struct vty *vty, void *pVoid)
+{
+	if(pVoid)
+	{
+		vty_out(vty, "service pjsip%s",VTY_NEWLINE);
+		pl_pjsip_write_config(vty);
+		return 1;
+	}
+	return 0;
+}
 
 static void cmd_base_sip_init(int node)
 {
@@ -3750,26 +3804,36 @@ static void cmd_show_sip_init(int node)
 
 void cmd_voip_init(void)
 {
-	install_default(SIP_SERVICE_NODE);
-	install_default_basic(SIP_SERVICE_NODE);
+	//install_default(SIP_SERVICE_NODE);
+	//install_default_basic(SIP_SERVICE_NODE);
+	//reinstall_node(SIP_SERVICE_NODE, pl_pjsip_write_config);
 
-	reinstall_node(SIP_SERVICE_NODE, pl_pjsip_write_config);
+	template_t * temp = nsm_template_new (TRUE);
+	if(temp)
+	{
+		temp->module = 0;
+		strcpy(temp->name, "service pjsip");
+		strcpy(temp->prompt, "service-sip"); /* (config-app-esp)# */
+		//temp->prompt[64];
+		//temp->id;
+		//temp->pVoid;
+		temp->pVoid = NULL;
+		temp->write_template = pjsip_write_config;
+		nsm_template_install(temp, 0);
 
-	install_element(CONFIG_NODE, &ip_sip_enable_cmd);
-	install_element(CONFIG_NODE, &ip_sip_service_cmd);
-	install_element(CONFIG_NODE, &no_ip_sip_service_cmd);
+		install_element(CONFIG_NODE, &ip_sip_enable_cmd);
+		install_element(CONFIG_NODE, &ip_sip_service_cmd);
+		install_element(CONFIG_NODE, &no_ip_sip_service_cmd);
 
-	cmd_base_sip_init(SIP_SERVICE_NODE);
+		cmd_base_sip_init(ALL_SERVICE_NODE);
 
-	cmd_show_sip_init(ENABLE_NODE);
-	cmd_show_sip_init(CONFIG_NODE);
-	cmd_show_sip_init(SIP_SERVICE_NODE);
+		cmd_show_sip_init(ENABLE_NODE);
+		cmd_show_sip_init(CONFIG_NODE);
+		cmd_show_sip_init(ALL_SERVICE_NODE);
 
-	cmd_voip_test_init(ENABLE_NODE);
+		cmd_voip_test_init(ENABLE_NODE);
 
-	cmd_voip_other_init(ENABLE_NODE);
-
-	//install_element(VIEW_NODE, &debug_ip_sip_cmd);
-	//install_element(VIEW_NODE, &no_debug_ip_sip_cmd);
+		cmd_voip_other_init(ENABLE_NODE);
+	}
 }
-#endif/* PL_VOIP_MODULE */
+#endif/* PL_PJSIP_MODULE */

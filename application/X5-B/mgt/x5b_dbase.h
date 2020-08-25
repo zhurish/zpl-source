@@ -88,7 +88,7 @@ extern int voip_dbase_del_room_phone(u_int8 building, u_int8 unit, u_int16 room_
 extern int voip_dbase_update_room_phone(u_int8 building, u_int8 unit, u_int16 room_number, char *phone, char *username, char *user_id);
 
 extern int voip_dbase_get_room_phone(u_int8 building, u_int8 unit, u_int16 room_number, char *phone);
-#ifdef PL_VOIP_MODULE
+#ifdef PL_PJSIP_MODULE
 extern int voip_dbase_get_call_phone(u_int8 building, u_int8 unit, u_int16 room_number, void *call_phone);
 #endif
 extern int voip_dbase_get_phone_by_user(u_int8 building, u_int8 unit, u_int16 room_number, char *username, char *user_id, char *phone);
