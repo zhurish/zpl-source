@@ -912,7 +912,7 @@ int iw_protocol_compare(const char * protocol1, const char * protocol2)
  * Note : the two functions below are the cause of troubles on
  * various embeeded platforms, as they are the reason we require
  * libm (math library).
- * In this case, please use enable BUILD_NOLIBM in the makefile
+ * In this case, please use enable PL_BUILD_NOLIBM in the makefile
  *
  * FIXME : check negative mantissa and exponent
  */

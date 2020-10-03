@@ -67,7 +67,6 @@ static int main_func(int argc, char *argv[])
 	//cfg.argc = argc;
 	//cfg.argv = argv;
 	cfg.running = PJ_TRUE;
-	//app_config.app_cli_running = PJ_TRUE;
 
 	while (cfg.running)
 	{
@@ -82,6 +81,8 @@ static int main_func(int argc, char *argv[])
 		{
 			cfg.running = PJ_FALSE;
 		}
+		if (status == PJ_SUCCESS)
+			break;
 		//__PL_PJSIP_DEBUG("======================================================3\r\n");
 
 		pjsua_app_destroy();
@@ -179,9 +180,7 @@ static int pjmain(void *p)
 	{
 		os_sleep(1);
 	}
-#ifdef PL_OPENWRT_UCI
-	pl_pjsip_module_reload();
-#endif
+
 	cfg.running = PJ_TRUE;
 
 	os_task_add_create_hook(&_pl_pjsip_task_create);
@@ -202,6 +201,9 @@ int pjsip_module_init()
 
 int pjsip_module_exit()
 {
+	pjsua_app_exit();
+	pjsip_media_wait_quit();
+	pjsua_app_destroy();
 	memset(&app_config, 0, sizeof(app_config));
 	return OK;
 }

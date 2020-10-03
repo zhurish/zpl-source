@@ -48,18 +48,11 @@ static int voip_app_call_timeout(void *p);
 static int voip_app_call_next_number(void *p);
 static BOOL voip_app_call_next();
 
-int pl_pjsip_module_init()
+int void_module_init(pl_pjsip_t *pj)
 {
-/*
-	if(!voip_global_enabled())
-		return OK;
-*/
 	if(voip_app == NULL)
 		voip_app = XMALLOC(MTYPE_VOIP_APP, sizeof(voip_app_t));
 	zassert(voip_app != NULL);
-
-
-	_pl_pjsip_module_init();
 
 	pjsip_callback_tbl cb;
 	cb.pjsip_dtmf_recv = voip_app_dtmf_recv_callback;
@@ -75,7 +68,7 @@ int pl_pjsip_module_init()
 #endif
 	voip_thlog_init();
 
-#ifdef PL_UBUS_MODULE
+#ifdef PL_SERVICE_UBUS_SYNC
 	//ubus_sync_hook_install(voip_ubus_uci_update_cb, NULL);
 #endif
 
@@ -86,7 +79,9 @@ int pl_pjsip_module_init()
 	voip_app->x5b_app = x5b_app_tmp();
 #endif
 	if(voip_app)
-		voip_app->pjsip = pl_pjsip;
+		voip_app->pjsip = pj;
+	if(pj)
+		pj->userdata = voip_app;
 
 	/*
 	 * 声音音量控制单元初始化
@@ -111,18 +106,14 @@ int pl_pjsip_module_reload()
 }
 #endif
 
-int pl_pjsip_module_exit()
+int void_module_exit(pl_pjsip_t *pj)
 {
-/*	if(!voip_global_enabled())
-		return OK;*/
 
 	voip_volume_module_exit();
 	voip_status_clear_api();
 #ifdef APP_X5BA_MODULE
 	x5b_app_module_exit();
 #endif
-
-	_pl_pjsip_module_exit();
 
 	zassert(voip_app != NULL);
 	XFREE(MTYPE_VOIP_APP, voip_app);
@@ -132,18 +123,16 @@ int pl_pjsip_module_exit()
 }
 
 
-int pl_pjsip_module_task_init()
+int void_module_task_init()
 {
-	_pl_pjsip_module_task_init();
 #ifdef APP_X5BA_MODULE
 	x5b_app_module_task_init();
 #endif
 	return OK;
 }
 
-int pl_pjsip_module_task_exit()
+int void_module_task_exit()
 {
-	_pl_pjsip_module_task_exit();
 #ifdef APP_X5BA_MODULE
 	x5b_app_module_task_exit();
 #endif

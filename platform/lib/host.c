@@ -24,7 +24,7 @@ struct host host;
 
 int host_sysconfig_sync()
 {
-#ifdef BUILD_OPENWRT
+#ifdef PL_BUILD_OPENWRT
 #else
 	//cp -arf /app/etc/* /tmp/app/etc/
 	//super_system("cp -a "SYSCONFDIR"/default-config.cfg " SYSCONF_REAL_DIR"/default-config.cfg");
@@ -419,7 +419,7 @@ static int host_system_cpu_get(struct host_system *host_system)
 			for (s = buf + strlen(buf); (s > buf) && isspace((int) *(s - 1)); s--)
 				;
 			*s = '\0';
-#ifdef BUILD_X86
+#ifdef PL_BUILD_X86
 			if(strstr(buf, "processor"))
 				host_system->process++;
 
@@ -541,7 +541,7 @@ static int host_system_information_free(struct host_system *host_system)
 {
 	host_system->process = 0;
 	host_system->freq = 0.0;
-#ifdef BUILD_X86
+#ifdef PL_BUILD_X86
 	if(host_system->model_name)
 	{
 		free(host_system->model_name);
@@ -662,7 +662,7 @@ int free_main(int argc UNUSED_PARAM, char **argv IF_NOT_DESKTOP(UNUSED_PARAM))
 
 int show_host_system_information(struct host_system *host_system, struct vty *vty)
 {
-#ifdef BUILD_X86
+#ifdef PL_BUILD_X86
 	if(host_system->model_name)
 	{
 		vty_out(vty, " CPU Type      : %s%s", host_system->model_name, VTY_NEWLINE);

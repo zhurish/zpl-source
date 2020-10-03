@@ -435,10 +435,10 @@ web_app_html_init (web_app_t *web)
 	web_login_app ();
 	web_updownload_app ();
 	web_admin_app ();
-#ifdef PL_SNTPC_MODULE
+#ifdef PL_SERVICE_SNTPC
 	web_sntp_app ();
 #endif
-#ifdef PL_SYSLOG_MODULE
+#ifdef PL_SERVICE_SYSLOG
 	web_syslog_app ();
 #endif
 

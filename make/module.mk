@@ -1,46 +1,258 @@
 # the following is a list of the Platform configurations that have booleans associated with them
+ifeq ($(MENUCONFIG_PL_BUILD),true)
+include $(MENUCONFIG_MODULE)
+else
 
-_MODULELIST = \
-	MODULE_PLATFORM.true \
-	MODULE_L2PROTOCOL.false \
-	MODULE_SERVICE.true \
-	MODULE_SNTPC.true \
-	MODULE_SNTPS.true \
-	MODULE_SYSLOG.true \
-	MODULE_STARTUP.true \
-	MODULE_PRODUCT.true \
-	MODULE_SWITCH_SDK.false \
-	MODULE_CLI.true \
-	MODULE_OSPF.false \
-	MODULE_ABSTRACT.true \
-	MODULE_HAL.false \
-	MODULE_PAL_KERNEL.true \
-	MODULE_PAL_IPCOM.false \
-	MODULE_COMPONENT.true \
-	MODULE_OPENSSL.true \
-	MODULE_WIFI.false \
-	MODULE_MODEM.false \
-	MODULE_TOOLS.true \
-	MODULE_PROCESS.false \
-	MODULE_QUECTEL_CM.false \
-	MODULE_UDHCP.false \
-	MODULE_SQLITE.true \
-	MODULE_SYSTOOLS.true \
-	MODULE_FTPD.true \
-	MODULE_FTPC.true \
-	MODULE_TFTPD.true \
-	MODULE_TFTPC.true \
-	MODULE_TELNET.true \
-	MODULE_TELNETD.false \
-	MODULE_PING.true \
-	MODULE_TRACEROUTE.true \
-	MODULE_UBUS.false \
-	MODULE_SSH.false \
-	MODULE_PJSIP.true \
-	MODULE_APP.true \
-	MODULE_UCI.true \
-	MODULE_WEB.false \
-	MODULE_MQTT.true
+#
+# Global Settings
+#
+_MODULELIST_GLOBAL = \
+	PL_RUNNING_BASE_PATH="/tmp/app" \
+	PL_REAL_SYSCONFIG_PATH="/dm/zhurish/work/busybox-1.28.4/SWPlatform/debug/etc" \
+	PL_INSTALL_PATH="./_install" 
+
+PL_RUNNING_BASE_PATH="/tmp/app"
+PL_REAL_SYSCONFIG_PATH="/dm/zhurish/work/busybox-1.28.4/SWPlatform/debug/etc"
+
+#
+# Platform Arch Config
+#
+_MODULELIST_PLATFORM = \
+	PL_SYSTEM_MODULE.true	 \
+	PL_USEING_LINUX.true	 \
+	PL_USEING_OPENWRT.false	 \
+	PL_ARCH_MODULE.true	 \
+	PL_USEING_ARM.false	 \
+	PL_USEING_ARM64.false	 \
+	PL_USEING_X86.false	 \
+	PL_USEING_X86_64.true	
+
+#
+# Toolchain Config
+#
+_MODULELIST_TOOLCHAIN = \
+	PL_HOST_TOOLCHAIN_MODULE.true	 \
+	PL_EXTERNAL_TOOLCHAIN_MODULE.false	 \
+	PL_EXTERNAL_TOOLCHAIN_GLIBC.false	 \
+	PL_EXTERNAL_TOOLCHAIN_UCLIBC.false	 
+
+#
+# Product Module Config
+#
+_MODULELIST_PRODUCT = \
+	PL_PRODUCT_MODULE.true	 \
+	PL_PRODUCT_L2SWITCH.true	 \
+	PL_PRODUCT_L3ROUTE.true	 \
+	PL_VPN_MODULE.true	 \
+	PL_IPCOM_STACK_MODULE.false	 \
+	PL_KERNEL_STACK_MODULE.true	 \
+	PL_PRODUCT_BSP_MODULE.true	 \
+	PL_PRODUCT_SDK_MODULE.false	
+
+#
+# Platform configuration
+#
+
+#
+# Platform OS Abstract Layer Module
+#
+_MODULELIST_OS = \
+	PL_OS_MODULE.true	 \
+	PL_OS_JSON.true	 \
+	PL_OS_UCI.true	 \
+	PL_OS_TLV.true	 \
+	PL_OS_RNG.true	 \
+	PL_OS_QUEUE.true	 \
+	PL_OS_NVRAM.true	 \
+	PL_OS_AVL.true	 \
+	PL_OS_TTYCOM.true	 \
+	PL_OS_XYZ_MODEM.true	 \
+	PL_OS_CPPJSON.true	
+
+#
+# Platform Misc Lib Layer Module
+#
+_MODULELIST_MISC = \
+	PL_MISC_MODULE.true	 \
+	PL_MISC_BITMAP.true	\
+	PL_MISC_IFHOOK.false	 \
+	PL_MISC_SHOW_HOOK.false	 
+
+#
+# Platform NSM Layer Module
+#
+_MODULELIST_NSM = \
+	PL_NSM_MODULE.true	 \
+	PL_NSM_8021X.true	 \
+	PL_NSM_ARP.true	 \
+	PL_NSM_BRIDGE.true	 \
+	PL_NSM_DHCP.true	 \
+	PL_NSM_DNS.true	 \
+	PL_NSM_DOS.true	 \
+	PL_NSM_FIREWALLD.true	 \
+	PL_NSM_MAC.true	 \
+	PL_NSM_MIRROR.true	 \
+	PL_NSM_PPP.true	 \
+	PL_NSM_QOS.true	 \
+	PL_NSM_SERIAL.true	 \
+	PL_NSM_TRUNK.true	 \
+	PL_NSM_TUNNEL.true	 \
+	PL_NSM_VLAN.true	 \
+	PL_NSM_VETH.true	 \
+	PL_NSM_SECURITY.true	 
+
+#
+# Platform Shell Module
+#
+_MODULELIST_SHELL = \
+	PL_SHELL_MODULE.true	
+
+#
+# Component Module Config
+#
+_MODULELIST_COMPONENT = \
+	PL_COMPONENT_MODULE.true	 \
+	PL_MODEM_MODULE.true	 \
+	PL_MQTT_MODULE.true	 \
+	PL_MQTT_SSL.false	 \
+	PL_MQTT_SRV.true	 \
+	PL_PJSIP_MODULE.true	 \
+	PL_PJSIP_PJSUA2.true	 \
+	PL_SQLITE_MODULE.true	 \
+	PL_SQLITE_EXE_MODULE.false	 \
+	PL_LIBSSH_MODULE.false	 \
+	PL_LIBSSH_NACL.false	 \
+	PL_LIBSSH_ZLIB.false	 \
+	PL_LIBSSH_SFTP.false	 \
+	PL_LIBSSH_SSH1.false	 \
+	PL_LIBSSH_GCRYPT.false	 \
+	PL_LIBSSH_SERVER.false	 \
+	PL_LIBSSH_PTHREAD.false	 \
+	PL_LIBSSH_GSSAPI.false	 \
+	PL_UDHCP_MODULE.true	 \
+	PL_UDHCPS_MODULE.true	 \
+	PL_UDHCPC_MODULE.true	 \
+	PL_UDHCPR_MODULE.true	 \
+	PL_WEBSERVER_MODULE.true	 \
+	PL_WIFI_MODULE.true	 
+
+#
+# Externsions Module Config
+#
+_MODULELIST_EXTERNSIONS = \
+	PL_EXTERNSIONS_MODULE.true	 \
+	PL_PJPROJECT_MODULE.true	 \
+	PL_PJPROJECT_OPTIONS.true	 \
+	PL_PJ_RESAMPLE_ENABLE.false	 \
+	PL_PJ_SIMPLE_ENABLE.true	 \
+	PL_PJ_SRTP_ENABLE.true	 \
+	PL_PJ_VIDEO_ENABLE.true	 \
+	PL_PJ_VIDEO_YUV_ENABLE.true	 \
+	PL_PJ_VIDEO_H264_ENABLE.true	 \
+	PL_PJ_CODEC_GSM_ENABLE.true	 \
+	PL_PJ_CODEC_SPEEX_ENABLE.true	 \
+	PL_PJ_CODEC_ILBC_ENABLE.true	 \
+	PL_PJ_CODEC_G722_ENABLE.true	 \
+	PL_PJ_CODEC_WEBRTC_ENABLE.true	 \
+	PL_PJ_AUDIO_ALSA.true	 \
+	PL_PJ_AUDIO_PORTAUDIO.false	 \
+	PL_OPENSSL_MODULE.false	 
+
+#
+# Abstract Module Config
+#
+_MODULELIST_ABSTRACT = \
+	PL_ABSTRACT_MODULE.true	 \
+	PL_HAL_MODULE.true	 \
+	PL_PAL_MODULE.true	 \
+	PL_PAL_IPCOM_STACK.false	 \
+	PL_PAL_KERNEL_STACK.true	 
+
+#
+# Service Module Config
+#
+_MODULELIST_SERVICE = \
+	PL_SERVICE_MODULE.true	 \
+	PL_SERVICE_SNTPC.true	 \
+	PL_SERVICE_SNTPS.true	 \
+	PL_SERVICE_SYSLOG.true	 \
+	PL_SERVICE_FTPC.true	 \
+	PL_SERVICE_FTPD.true	 \
+	PL_SERVICE_TFTPC.true	 \
+	PL_SERVICE_TFTPD.true	 \
+	PL_SERVICE_PING.true	 \
+	PL_SERVICE_TELNET.true	 \
+	PL_SERVICE_TELENTD.false	 \
+	PL_SERVICE_TRACEROUTE.true	 \
+	PL_SERVICE_UBUS_SYNC.true	 
+
+#
+# CLI Module Config
+#
+_MODULELIST_CLI = \
+	PL_CLI_MODULE.true	 
+
+#
+# Application Module Config
+#
+_MODULELIST_APPLICATION = \
+	PL_APPLICATION_MODULE.true	 \
+	PL_APP_X5_MODULE.true	 \
+	PL_APP_V9_MODULE.false	 
+
+#
+# Tools Module Config
+#
+_MODULELIST_TOOLS = \
+	PL_TOOLS_MODULE.false	 \
+	PL_TOOLS_PROCESS.false	 \
+	PL_TOOLS_QUECTEL_CM.false	 \
+	PL_TOOLS_SYSTEM.false	 
+
+_MODULELIST = $(_MODULELIST_PLATFORM) $(_MODULELIST_PRODUCT) $(_MODULELIST_OS) $(_MODULELIST_MISC) \
+				$(_MODULELIST_NSM) $(_MODULELIST_SHELL) $(_MODULELIST_COMPONENT) \
+				$(_MODULELIST_EXTERNSIONS) $(_MODULELIST_ABSTRACT) $(_MODULELIST_SERVICE) \
+				$(_MODULELIST_CLI) $(_MODULELIST_APPLICATION) $(_MODULELIST_TOOLS)
+
+
+_MODULELIST_OLD = \
+	PL_SERVICE_MODULE.true \
+	PL_SERVICE_SNTPC.true \
+	PL_SERVICE_SNTPS.true \
+	PL_SERVICE_SYSLOG.true \
+	PL_STARTUP_MODULE.true \
+	PL_PRODUCT_MODULE.true \
+	PL_PRODUCT_SDK_MODULE.false \
+	PL_CLI_MODULE.true \
+	PL_ABSTRACT_MODULE.true \
+	PL_HAL_MODULE.false \
+	PL_PAL_KERNEL_STACK.true \
+	PL_PAL_IPCOM_STACK.false \
+	PL_COMPONENT_MODULE.true \
+	PL_OPENSSL_MODULE.true \
+	PL_WIFI_MODULE.false \
+	PL_MODEM_MODULE.false \
+	PL_TOOLS_MODULE.true \
+	PL_TOOLS_PROCESS.false \
+	PL_TOOLS_QUECTEL_CM.false \
+	PL_UDHCP_MODULE.false \
+	PL_SQLITE_MODULE.true \
+	PL_EXTERNSIONS_MODULE.true \
+	PL_SERVICE_FTPD.true \
+	PL_SERVICE_FTPC.true \
+	PL_SERVICE_TFTPD.true \
+	PL_SERVICE_TFTPC.true \
+	PL_SERVICE_TELNET.true \
+	PL_SERVICE_TELNETD.false \
+	PL_SERVICE_PING.true \
+	PL_SERVICE_TRACEROUTE.true \
+	PL_SERVICE_UBUS_SYNC.false \
+	PL_LIBSSH_MODULE.false \
+	PL_PJSIP_MODULE.true \
+	PL_APPLICATION_MODULE.true \
+	PL_OS_UCI.true \
+	PL_WEBSERVER_MODULE.false \
+	PL_MQTT_MODULE.true
 #
 #
 #
@@ -52,88 +264,13 @@ define _MODULE_DEF
 export $(subst .,:=, $1)
 #endif
 #endif
-BUILD_MODULE := $(BUILD_MODULE) $(subst .,=, $1)
+PL_BUILD_MODULE := $(PL_BUILD_MODULE) $(subst .,=, $1)
 endef
 #
 #
 $(foreach IModule,$(_MODULELIST), $(eval $(call _MODULE_DEF,$(IModule))))
 #
-#
-#
-#
-ifeq ($(strip $(MODULE_PAL_KERNEL)),true)
-MODULE_PAL_IPCOM=false
-MODULE_ABSTRACT=true
 endif
 #
-ifeq ($(strip $(MODULE_PAL_IPCOM)),true)
-MODULE_PAL_KERNEL=false
-MODULE_ABSTRACT=true
-endif
-#
-#
-#
-ifeq ($(strip $(MODULE_WIFI)),true)
-MODULE_PROCESS=true
-endif
-#
-ifeq ($(strip $(MODULE_MODEM)),true)
-MODULE_QUECTEL_CM=true
-MODULE_PROCESS=true
-endif
-#
-ifeq ($(strip $(MODULE_SWITCH_SDK)),true)
-MODULE_HAL=true
-endif
-#
-ifeq ($(strip $(MODULE_APP)),true)
-export EN_APP_X5BA = true 
-export EN_APP_V9 = false
-endif
 
-
-#
-#
-PlatformModule = \
-	PLATFORMDIR.platform \
-	L2PROTOCOLDIR.l2protocol \
-	SERVICEDIR.service \
-	STARTUPDIR.startup \
-	PRODUCTDIR.product \
-	CLIDIR.cli \
-	OSPFDIR.ospf \
-	ABSTRACTDIR.abstract \
-	COMPONENTDIR.component \
-	OPENSSLDIR.openssl-1.1.1 \
-	WIFIDIR.wifi \
-	MODEMDIR.modem \
-	TOOLSDIR.tools \
-	UDHCPDIR.udhcp \
-	SQLITEDIR.sqlite \
-	SYSTOOLSDIR.systools \
-	LIBSSHDIR.ssh \
-	PJSIPDIR.pjsip \
-	APPDIR.application \
-	WEBDIR.webserver \
-	MQTTDIR.mqtt
-###
-# By default we choose the lexically last Platform component version in hopes
-# that it is the most recent. The directory macros (e.g. IPCOMDIR) may of
-# course be overriden on the command line.
-#
-define _DIR_DEF
-#
-#
-$(subst .,=, $1)
-#endif
-#endif
-PLATFORM_COMPS := $(PLATFORM_COMPS) $(subst .,=, $1)
-#
-#
-endef
-#
-#
-$(foreach PlatformModule,$(PlatformModule), $(eval $(call _DIR_DEF,$(PlatformModule))))
-#
-#
         

@@ -295,9 +295,9 @@ int v9_video_sdk_init(v9_video_sdk_t *sdk, void *board)
 		if (sdk->device)
 			memset(sdk->device, 0, sizeof(ST_SDKDeviceInfo));
 #endif
-		if (master_eloop[MODULE_APP_START + 1] == NULL)
-			sdk->master = master_eloop[MODULE_APP_START + 1] =
-					eloop_master_module_create(MODULE_APP_START + 1);
+		if (master_eloop[PL_APPLICATION_MODULE_START + 1] == NULL)
+			sdk->master = master_eloop[PL_APPLICATION_MODULE_START + 1] =
+					eloop_master_module_create(PL_APPLICATION_MODULE_START + 1);
 
 		sdk->interval = 5;
 		//sdk->cnt = 0;
@@ -669,7 +669,7 @@ static void v9_video_sdk_test()
 
 static int v9_video_sdk_task(void *argv)
 {
-	module_setup_task(MODULE_APP_START + 1, os_task_id_self());
+	module_setup_task(PL_APPLICATION_MODULE_START + 1, os_task_id_self());
 	while(!os_load_config_done())
 	{
 		os_sleep(1);
@@ -680,7 +680,7 @@ static int v9_video_sdk_task(void *argv)
 	V9_SDK_DBGPRF("---------%s---call v9_board_set_ready----", __func__);
 	v9_video_sdk_test();
 #endif
-	eloop_start_running(master_eloop[MODULE_APP_START + 1], MODULE_APP_START + 1);
+	eloop_start_running(master_eloop[PL_APPLICATION_MODULE_START + 1], PL_APPLICATION_MODULE_START + 1);
 	return OK;
 }
 
@@ -688,8 +688,8 @@ int v9_video_sdk_task_init ()
 {
 /*
 	zassert(v9_video_board != NULL);
-	if(master_eloop[MODULE_APP_START + 1] == NULL)
-		v9_video_board->master = master_eloop[MODULE_APP_START + 1] = eloop_master_module_create(MODULE_APP_START + 1);
+	if(master_eloop[PL_APPLICATION_MODULE_START + 1] == NULL)
+		v9_video_board->master = master_eloop[PL_APPLICATION_MODULE_START + 1] = eloop_master_module_create(PL_APPLICATION_MODULE_START + 1);
 */
 
 	//V9_SDK_DBGPRF("---------%s---------", __func__);
@@ -710,12 +710,12 @@ int v9_video_sdk_restart_all()
 	int i = 0;
 	if(!v9_video_board)
 		return ERROR;
-	if(master_eloop[MODULE_APP_START + 1] == NULL)
-		master_eloop[MODULE_APP_START + 1] = eloop_master_module_create(MODULE_APP_START + 1);
+	if(master_eloop[PL_APPLICATION_MODULE_START + 1] == NULL)
+		master_eloop[PL_APPLICATION_MODULE_START + 1] = eloop_master_module_create(PL_APPLICATION_MODULE_START + 1);
 	v9_video_board_lock();
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
-		v9_video_board[i].sdk.master = master_eloop[MODULE_APP_START + 1];
+		v9_video_board[i].sdk.master = master_eloop[PL_APPLICATION_MODULE_START + 1];
 		if (v9_video_board[i].sdk.master && v9_video_board[i].id != APP_BOARD_MAIN)
 		{
 			if (v9_video_board[i].sdk.initialization && v9_video_board[i].sdk.interval)

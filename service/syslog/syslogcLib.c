@@ -38,7 +38,7 @@
 #include "host.h"
 #include "syslogcLib.h"
 
-#ifdef PL_SYSLOG_MODULE
+#ifdef PL_SERVICE_SYSLOG
 /* typedefs */
 
 /* locals */

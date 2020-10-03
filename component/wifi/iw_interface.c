@@ -64,7 +64,7 @@ int nsm_iw_enable_api(struct interface *ifp, BOOL enable)
 	{
 		if (iw->mode == IW_MODE_AP)
 		{
-#ifdef BUILD_OPENWRT
+#ifdef PL_BUILD_OPENWRT
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
 			if(_iw_bridge_check_interface("br-lan", "wlan0") != OK)
 			{
@@ -290,8 +290,8 @@ static int iw_empty_thread(struct thread * thread)
 		//if(iw_ap->ap_mutex)
 		//	os_mutex_lock(iw_ap->ap_mutex, OS_WAIT_FOREVER);
 
-		if(master_thread[MODULE_WIFI])
-			iw_ap->n_thread = thread_add_timer(master_thread[MODULE_WIFI], iw_empty_thread, iw_ap, 10);
+		if(master_thread[PL_WIFI_MODULE])
+			iw_ap->n_thread = thread_add_timer(master_thread[PL_WIFI_MODULE], iw_empty_thread, iw_ap, 10);
 		//if(iw_ap->ap_mutex)
 		//	os_mutex_unlock(iw_ap->ap_mutex);
 	}
@@ -356,9 +356,9 @@ static int nsm_iw_create_interface(struct interface *ifp)
 		iw = nsm->nsm_client[NSM_WIFI];
 		iw->ifp = ifp;
 
-		if(master_thread[MODULE_WIFI])
-			iw->n_thread = thread_add_timer(master_thread[MODULE_WIFI], iw_empty_thread, iw, 10);
-#ifdef BUILD_OPENWRT
+		if(master_thread[PL_WIFI_MODULE])
+			iw->n_thread = thread_add_timer(master_thread[PL_WIFI_MODULE], iw_empty_thread, iw, 10);
+#ifdef PL_BUILD_OPENWRT
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
 			if(_iw_bridge_check_interface("br-lan", "wlan0") != OK)
 			{
@@ -628,14 +628,14 @@ static int iw_task(void *p)
 	{
 		os_sleep(1);
 	}
-	os_start_running(NULL, MODULE_WIFI);
+	os_start_running(NULL, PL_WIFI_MODULE);
 	return OK;
 }
 
 
 static int iw_task_start(void)
 {
-	master_thread[MODULE_WIFI] = thread_master_module_create (MODULE_WIFI);
+	master_thread[PL_WIFI_MODULE] = thread_master_module_create (PL_WIFI_MODULE);
 
 	if(iw_taskid == 0)
 		iw_taskid = os_task_create("iwApTask", OS_TASK_DEFAULT_PRIORITY,
@@ -650,7 +650,7 @@ static int iw_task_exit(void)
 	if(iw_taskid)
 	{
 		//iw_ap_stop(iw_ap);
-		thread_master_free(master_thread[MODULE_WIFI]);
+		thread_master_free(master_thread[PL_WIFI_MODULE]);
 		if(os_task_destroy(iw_taskid)==OK)
 			iw_taskid = 0;
 	}

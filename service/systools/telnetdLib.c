@@ -132,8 +132,8 @@ INCLUDE FILES: telnetLib.h
 
 SEE ALSO: rlogLib
 */
-#define BUILD_LINUX
-#if defined(BUILD_LINUX)||defined(__linux)
+#define PL_BUILD_LINUX
+#if defined(PL_BUILD_LINUX)||defined(__linux)
 #include "zebra.h"
 #include "buffer.h"
 #include "command.h"

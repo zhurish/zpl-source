@@ -27,7 +27,7 @@
 #include "telnetLib.h"
 #include "tracerouteLib.h"
 
-#ifdef PL_SSH_MODULE
+#ifdef PL_LIBSSH_MODULE
 #include "ssh_api.h"
 
 DEFUN (ssh_service_enable,

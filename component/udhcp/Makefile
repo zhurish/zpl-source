@@ -11,7 +11,7 @@ LIB_DIR = $(BASE_ROOT)/$(LIBDIR)
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
 PLDEFINE += -DDHCPD_CONF_DEBUG
 PLLDLIBS += -lssl 
-ifeq ($(strip $(MODULE_SQLITE)),true)
+ifeq ($(strip $(PL_SQLITE_MODULE)),true)
 PLLDLIBS += -lsqlite
 endif #-lsqlite3
 

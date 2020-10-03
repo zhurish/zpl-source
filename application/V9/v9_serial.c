@@ -21,7 +21,7 @@
 #include "vector.h"
 #include "eloop.h"
 #include "tty_com.h"
-#ifdef PL_UBUS_MODULE
+#ifdef PL_SERVICE_UBUS_SYNC
 #include "ubus_sync.h"
 #endif
 #include "v9_device.h"
@@ -225,7 +225,7 @@ static int v9_app_read_eloop(struct eloop *eloop)
 
 
 
-#ifdef PL_UBUS_MODULE
+#ifdef PL_SERVICE_UBUS_SYNC
 static int v9_job_cb_action(void *p)
 {
 	int ret = 0;
@@ -282,7 +282,7 @@ static int v9_ntp_time_update_cb(void *p, char *buf, int len)
 	os_job_add(v9_job_cb_action, v9_serial);
 	return 0;
 }
-#endif /* PL_UBUS_MODULE */
+#endif /* PL_SERVICE_UBUS_SYNC */
 
 
 static int v9_serial_default(v9_serial_t *serial)
@@ -344,10 +344,10 @@ int v9_serial_init(char *devname, u_int32 speed)
 {
 	if(_v9_serial_hw_init() == OK)
 	{
-		if(master_eloop[MODULE_APP_START] == NULL)
-			master_eloop[MODULE_APP_START] = eloop_master_module_create(MODULE_APP_START);
+		if(master_eloop[PL_APPLICATION_MODULE_START] == NULL)
+			master_eloop[PL_APPLICATION_MODULE_START] = eloop_master_module_create(PL_APPLICATION_MODULE_START);
 
-		v9_serial->master = master_eloop[MODULE_APP_START];
+		v9_serial->master = master_eloop[PL_APPLICATION_MODULE_START];
 		v9_serial->mutex = os_mutex_init();
 		memset(v9_serial->tty->devname, 0, sizeof(v9_serial->tty->devname));
 		strcpy(v9_serial->tty->devname, devname);
@@ -371,9 +371,9 @@ int v9_serial_init(char *devname, u_int32 speed)
 #endif
 #endif /* V9_SLIPNET_ENABLE */
 
-#ifdef PL_UBUS_MODULE
+#ifdef PL_SERVICE_UBUS_SYNC
 				ubus_sync_hook_install(v9_ntp_time_update_cb, v9_serial);
-#endif /* PL_UBUS_MODULE */
+#endif /* PL_SERVICE_UBUS_SYNC */
 
 				return OK;
 			}
@@ -414,7 +414,7 @@ static int v9_app_mgt_task(void *argv)
 	zassert(argv != NULL);
 	v9_serial_t *mgt = (v9_serial_t *)argv;
 	zassert(mgt != NULL);
-	module_setup_task(MODULE_APP_START, os_task_id_self());
+	module_setup_task(PL_APPLICATION_MODULE_START, os_task_id_self());
 	while(!os_load_config_done())
 	{
 		os_sleep(1);
@@ -426,7 +426,7 @@ static int v9_app_mgt_task(void *argv)
 
 	//v9_video_sdk_restart_all();
 
-	eloop_start_running(master_eloop[MODULE_APP_START], MODULE_APP_START);
+	eloop_start_running(master_eloop[PL_APPLICATION_MODULE_START], PL_APPLICATION_MODULE_START);
 	return OK;
 }
 
@@ -434,8 +434,8 @@ static int v9_app_mgt_task(void *argv)
 static int v9_app_task_init (v9_serial_t *mgt)
 {
 	zassert(mgt != NULL);
-	if(master_eloop[MODULE_APP_START] == NULL)
-		mgt->master = master_eloop[MODULE_APP_START] = eloop_master_module_create(MODULE_APP_START);
+	if(master_eloop[PL_APPLICATION_MODULE_START] == NULL)
+		mgt->master = master_eloop[PL_APPLICATION_MODULE_START] = eloop_master_module_create(PL_APPLICATION_MODULE_START);
 
 	mgt->enable = TRUE;
 	mgt->task_id = os_task_create("appTask", OS_TASK_DEFAULT_PRIORITY,

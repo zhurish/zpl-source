@@ -375,7 +375,7 @@ ALIAS(no_config_log_syslog,
 		"Logging to syslog\n"
 		LOG_LEVEL_DESC)
 
-#ifdef PL_SYSLOG_MODULE
+#ifdef PL_SERVICE_SYSLOG
 
 DEFUN (syslog_host,
 		syslog_host_cmd,
@@ -1068,7 +1068,7 @@ int cmd_log_init()
 	install_element(CONFIG_NODE, &config_log_timestamp_cmd);
 	install_element(CONFIG_NODE, &no_config_log_timestamp_cmd);
 
-#ifdef PL_SYSLOG_MODULE
+#ifdef PL_SERVICE_SYSLOG
 	install_element(CONFIG_NODE, &syslog_host_cmd);
 	install_element(CONFIG_NODE, &syslog_host_port_cmd);
 	install_element(CONFIG_NODE, &no_syslog_host_cmd);

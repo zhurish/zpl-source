@@ -1555,7 +1555,7 @@ DEFUN (no_debug_video_sreial,
 
 DEFUN (show_debug_video,
 	   show_debug_video_cmd,
-       "show debug video",
+		"show debugging video",
 	   SHOW_STR
        DEBUG_STR
        "Video configuration\n")

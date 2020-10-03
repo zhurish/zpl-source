@@ -39,7 +39,7 @@
 
 #include "zebra.h"
 
-#ifdef BUILD_X86
+#ifdef PL_BUILD_X86
 #define KEYS_FOLDER 		"/home/zhurish/.ssh/"
 #define USER 				"zhurish"
 #define PASS 				"centos"

@@ -186,8 +186,8 @@ char * v9_app_age_string(u_int32 age)
 
 int v9_app_module_init()
 {
-	if(master_eloop[MODULE_APP_START] == NULL)
-		master_eloop[MODULE_APP_START] = eloop_master_module_create(MODULE_APP_START);
+	if(master_eloop[PL_APPLICATION_MODULE_START] == NULL)
+		master_eloop[PL_APPLICATION_MODULE_START] = eloop_master_module_create(PL_APPLICATION_MODULE_START);
 
 	v9_video_disk_dir_init();
 	//v9_board_init();

@@ -1,0 +1,252 @@
+# DO NOT EDIT. This file is generated from Config.src
+#
+#
+
+menu "Platform configuration"
+
+comment "Platform OS Abstract Layer Module"
+
+config PL_OS_MODULE
+	bool "Platform OS Abstract Layer"
+	default y
+	help
+	Build Platform OS Abstract Layer, timer, task, sem, list.
+
+config PL_OS_JSON
+	bool "Platform OS JSON Module"
+	depends on PL_OS_MODULE
+	default y
+	help
+	Build cJSON Module.
+	
+config PL_OS_UCI
+	bool "Platform OS UCI Module"
+	depends on PL_OS_MODULE
+	default y
+	help
+	Build UCI Module.
+	
+config PL_OS_TLV
+	bool "Platform OS TLV Module"
+	depends on PL_OS_MODULE
+	default y
+	help
+	Build TLV Module.
+	
+config PL_OS_RNG
+	bool "Platform OS RNG Module"
+	depends on PL_OS_MODULE
+	default y
+	help
+	Build RNG Module.
+	
+config PL_OS_QUEUE
+	bool "Platform OS QUEUE Module"
+	depends on PL_OS_MODULE
+	default y
+	help
+	Build QUEUE Module.
+	
+config PL_OS_NVRAM
+	bool "Platform OS NVRAM Module"
+	depends on PL_OS_MODULE
+	default y
+	help
+	Build NVRAM Module.
+	
+config PL_OS_AVL
+	bool "Platform OS AVL Module"
+	depends on PL_OS_MODULE
+	default y
+	help
+	Build AVL Module.
+
+config PL_OS_TTYCOM
+	bool "Platform TTYCOM Module"
+	depends on PL_OS_MODULE
+	default y
+	help
+	Build TTYCOM Module.
+	
+config PL_OS_XYZ_MODEM
+	bool "Platform XYZ-MODEM Module"
+	depends on PL_OS_MODULE
+	default y
+	help
+	Build XYZ MODEM Module.
+
+config PL_OS_CPPJSON
+	bool "Platform OS CPPJSON Module"
+	depends on PL_OS_MODULE
+	default y
+	help
+	Build CPPJSON Module.
+
+comment "Platform Misc Lib Layer Module"
+
+config PL_MISC_MODULE
+	bool "Platform MISC Abstract Layer"
+	default y
+	help
+	Build Platform MISC Abstract Layer.
+
+config PL_MISC_BITMAP
+	bool "Platform BITMAP Module"
+	depends on PL_MISC_MODULE
+	default y
+	help
+	Build BITMAP Module.
+	
+config PL_MISC_IFHOOK
+	bool "Platform IF Hook Module"
+	depends on PL_MISC_MODULE
+	default n
+	help
+	Build IF Hook Module.
+	
+config PL_MISC_SHOW_HOOK
+	bool "Platform Show Hook Module"
+	depends on PL_MISC_MODULE
+	default n
+	help
+	Build Show Hook Module.
+	
+
+	
+comment "Platform NSM Layer Module"
+
+config PL_NSM_MODULE
+	bool "Platform NSM Abstract Layer"
+	default y
+	help
+	Build Platform NSM Abstract Layer.
+
+config PL_NSM_8021X
+	bool "Platform NSM 8021x Module"
+	default n
+	depends on PL_NSM_MODULE
+	help
+	Build NSM 8021x Module.
+	
+config PL_NSM_ARP
+	bool "Platform NSM ARP Module"
+	default n
+	depends on PL_NSM_MODULE
+	help
+	Build NSM ARP Module.
+	
+config PL_NSM_BRIDGE
+	bool "Platform NSM Bridge Module"
+	default y
+	depends on PL_NSM_MODULE
+	help
+	Build NSM Bridge Module.
+	
+config PL_NSM_DHCP
+	bool "Platform NSM Dhcp Module"
+	default y
+	depends on PL_NSM_MODULE
+	help
+	Build NSM Dhcp Module.
+	
+config PL_NSM_DNS
+	bool "Platform NSM Dns Module"
+	default y
+	depends on PL_NSM_MODULE
+	help
+	Build NSM Dns Module.
+	
+config PL_NSM_DOS
+	bool "Platform NSM Dos Module"
+	default n
+	depends on PL_NSM_MODULE
+	help
+	Build NSM Dos Module.
+	
+config PL_NSM_FIREWALLD
+	bool "Platform NSM Firewalld Module"
+	default y
+	depends on PL_NSM_MODULE
+	help
+	Build NSM Firewalld Module.
+	
+config PL_NSM_MAC
+	bool "Platform NSM MAC Module"
+	default n
+	depends on PL_NSM_MODULE
+	help
+	Build NSM MAC Module.
+	
+config PL_NSM_MIRROR
+	bool "Platform NSM Mirror Module"
+	default n
+	depends on PL_NSM_MODULE
+	help
+	Build NSM Mirror Module.
+	
+config PL_NSM_PPP
+	bool "Platform NSM PPP Module"
+	default y
+	depends on PL_NSM_MODULE
+	help
+	Build NSM PPP Module.
+	
+config PL_NSM_QOS
+	bool "Platform NSM QOS Module"
+	default n
+	depends on PL_NSM_MODULE
+	help
+	Build NSM QOS Module.
+	
+config PL_NSM_SERIAL
+	bool "Platform NSM Serial Module"
+	default y
+	depends on PL_NSM_MODULE
+	help
+	Build NSM Serial Module.
+	
+config PL_NSM_TRUNK
+	bool "Platform NSM Trunk Module"
+	default n
+	depends on PL_NSM_MODULE
+	help
+	Build NSM Trunk Module.
+
+config PL_NSM_TUNNEL
+	bool "Platform NSM Tunnel Module"
+	default y
+	depends on PL_NSM_MODULE
+	help
+	Build NSM Tunnel Module.
+	
+config PL_NSM_VLAN
+	bool "Platform NSM VLAN Module"
+	default n
+	depends on PL_NSM_MODULE
+	help
+	Build NSM VLAN Module.
+	
+config PL_NSM_VETH
+	bool "Platform NSM Veth Module"
+	default y
+	depends on PL_NSM_MODULE
+	help
+	Build NSM Veth Module.
+	
+config PL_NSM_SECURITY
+	bool "Platform NSM Security Module"
+	default n
+	depends on PL_NSM_MODULE
+	help
+	Build NSM Security Module.
+
+comment "Platform Shell Module"
+
+config PL_SHELL_MODULE
+	bool "Platform Shell Module" 
+	depends on PL_OS_MODULE
+	default y
+	help
+	Build Shell Module.
+	
+endmenu

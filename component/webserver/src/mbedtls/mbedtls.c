@@ -20747,8 +20747,8 @@ static int ecp_mod_p256k1( mbedtls_mpi *N )
 
 #if defined(MBEDTLS_TEST_NULL_ENTROPY)
 #warning "**** WARNING!  MBEDTLS_TEST_NULL_ENTROPY defined! "
-#warning "**** THIS BUILD HAS NO DEFINED ENTROPY SOURCES "
-#warning "**** THIS BUILD IS *NOT* SUITABLE FOR PRODUCTION USE "
+#warning "**** THIS PL_BUILD HAS NO DEFINED ENTROPY SOURCES "
+#warning "**** THIS PL_BUILD IS *NOT* SUITABLE FOR PRODUCTION USE "
 #endif
 
 

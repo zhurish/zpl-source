@@ -27,7 +27,7 @@
 #endif
 
 
-#ifdef THEME_V9UI
+
 
 #ifndef FSHIFT
 # define FSHIFT 16              /* nr of bits of precision */
@@ -35,7 +35,7 @@
 #define FIXED_1      (1 << FSHIFT)     /* 1.0 as fixed-point */
 #define LOAD_INT(x)  (unsigned)((x) >> FSHIFT)
 #define LOAD_FRAC(x) LOAD_INT(((x) & (FIXED_1 - 1)) * 100)
-
+#if 0
 static int jst_hostname(int eid, webs_t wp, int argc, char **argv)
 {
     websWrite(wp, "%s", host_name_get());
@@ -107,13 +107,14 @@ static int jst_serial_number(int eid, webs_t wp, int argc, char **argv)
     websWrite(wp, "%s", serial);
     return 0;
 }
-
+#endif
+/*
 static int jst_localtime(int eid, webs_t wp, int argc, char **argv)
 {
 	websWrite(wp, "%s", os_time_fmt ("date", os_time(NULL)));
     return 0;
 }
-
+*/
 static char *_web_uptime(char *tmp)
 {
 	unsigned int updays = 0, uphours = 0, upminutes = 0;
@@ -131,7 +132,7 @@ static char *_web_uptime(char *tmp)
 		sprintf(tmp + strlen(tmp), "%u min", upminutes);
 	return tmp;
 }
-
+/*
 static int jst_uptime(int eid, webs_t wp, int argc, char **argv)
 {
 	char tmp[128];
@@ -139,7 +140,7 @@ static int jst_uptime(int eid, webs_t wp, int argc, char **argv)
 	websWrite(wp, "%s", _web_uptime(tmp));
 	return 0;
 }
-
+*/
 static char *_web_cpu_load(char *tmp)
 {
 	struct sysinfo info;
@@ -150,6 +151,7 @@ static char *_web_cpu_load(char *tmp)
 			LOAD_INT(info.loads[2]), LOAD_FRAC(info.loads[2]));
 	return tmp;
 }
+/*
 static int jst_cpu_load(int eid, webs_t wp, int argc, char **argv)
 {
 	char tmp[128];
@@ -157,10 +159,13 @@ static int jst_cpu_load(int eid, webs_t wp, int argc, char **argv)
 	websWrite(wp, "%s", _web_cpu_load(tmp));
 	return 0;
 }
+*/
 #undef FSHIFT
 #undef FIXED_1
 #undef LOAD_INT
 #undef LOAD_FRAC
+
+#ifdef THEME_V9UI
 
 static int web_firmware_version_get(char *argv, char *ver)
 {
@@ -313,7 +318,7 @@ static int jst_arch(int eid, webs_t wp, int argc, char **argv)
 	struct host_system host_system;
 	memset(&host_system, 0, sizeof(struct host_system));
 	host_system_information_get(&host_system);
-#ifdef BUILD_X86
+#ifdef PL_BUILD_X86
 	if(host_system.model_name)
 	{
 		websWrite(wp, "%s", host_system.model_name);
@@ -332,7 +337,7 @@ static int jst_platform(int eid, webs_t wp, int argc, char **argv)
 	struct host_system host_system;
 	memset(&host_system, 0, sizeof(struct host_system));
 	host_system_information_get(&host_system);
-#ifdef BUILD_X86
+#ifdef PL_BUILD_X86
 	if(host_system.model_name)
 	{
 	    websWrite(wp, "%s", host_system.model_name);
@@ -628,7 +633,7 @@ static int jst_systeminfo(Webs *wp, char *path, char *query)
 	//websWrite(wp, "%s", "[");
 
 	//websWrite(wp, "%s", host_name_get());
-#ifdef BUILD_X86
+#ifdef PL_BUILD_X86
 	if(host_system.model_name)
 	{
 		 sprintf (buf, "{\"devname\":\"%s\", \"platfrom\":\"%s\",", host_name_get(), host_system.model_name);

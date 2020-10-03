@@ -28,20 +28,20 @@ static int console_task_id = 0;
 
 static int cli_telnet_task(void *argv)
 {
-	module_setup_task(MODULE_TELNET, os_task_id_self());
+	module_setup_task(PL_SERVICE_TELNET, os_task_id_self());
 	while(!os_load_config_done())
 	{
 		os_sleep(1);
 	}
-	eloop_start_running(NULL, MODULE_TELNET);
+	eloop_start_running(NULL, PL_SERVICE_TELNET);
 	return 0;
 }
 
 static int cli_telnet_task_init ()
 {
-	if(master_eloop[MODULE_TELNET] == NULL)
-		master_eloop[MODULE_TELNET] = eloop_master_module_create(MODULE_TELNET);
-	//master_thread[MODULE_TELNET] = thread_master_module_create(MODULE_TELNET);
+	if(master_eloop[PL_SERVICE_TELNET] == NULL)
+		master_eloop[PL_SERVICE_TELNET] = eloop_master_module_create(PL_SERVICE_TELNET);
+	//master_thread[PL_SERVICE_TELNET] = thread_master_module_create(PL_SERVICE_TELNET);
 	if(telnet_task_id == 0)
 		telnet_task_id = os_task_create("telnetdTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, cli_telnet_task, NULL, OS_TASK_DEFAULT_STACK);
@@ -55,9 +55,9 @@ static int cli_telnet_task_exit ()
 	if(telnet_task_id)
 		os_task_destroy(telnet_task_id);
 	telnet_task_id = 0;
-	if(master_eloop[MODULE_TELNET])
-		eloop_master_free(master_eloop[MODULE_TELNET]);
-	master_eloop[MODULE_TELNET] = NULL;
+	if(master_eloop[PL_SERVICE_TELNET])
+		eloop_master_free(master_eloop[PL_SERVICE_TELNET]);
+	master_eloop[PL_SERVICE_TELNET] = NULL;
 	return OK;
 }
 
@@ -113,14 +113,14 @@ int os_shell_start(char *shell_path, char *shell_addr, int shell_port, const cha
 static int os_default_start()
 {
 	/* Make master thread emulator. */
-	if(master_eloop[MODULE_TELNET] == NULL)
-		master_eloop[MODULE_TELNET] = eloop_master_module_create(MODULE_TELNET);
+	if(master_eloop[PL_SERVICE_TELNET] == NULL)
+		master_eloop[PL_SERVICE_TELNET] = eloop_master_module_create(PL_SERVICE_TELNET);
 
 	if(master_thread[MODULE_CONSOLE] == NULL)
 		master_thread[MODULE_CONSOLE] = thread_master_module_create(MODULE_CONSOLE);
 
 	cmd_init(1);
-	vty_init(master_thread[MODULE_CONSOLE], master_eloop[MODULE_TELNET]);
+	vty_init(master_thread[MODULE_CONSOLE], master_eloop[PL_SERVICE_TELNET]);
 	vty_user_init();
 	memory_init();
 	return OK;
@@ -144,13 +144,13 @@ int os_module_init(void)
 
 	if(master_eloop[MODULE_NSM] == NULL)
 		master_eloop[MODULE_NSM] = eloop_master_module_create(MODULE_NSM);
-#ifdef PL_SNTPS_MODULE
+#ifdef PL_SERVICE_SNTPS
 	sntpsInit(master_eloop[MODULE_NSM]);
 #endif
-#ifdef PL_SNTPC_MODULE
+#ifdef PL_SERVICE_SNTPC
 	sntpcInit(master_eloop[MODULE_NSM]);
 #endif
-#ifdef PL_SYSLOG_MODULE
+#ifdef PL_SERVICE_SYSLOG
 	syslogc_lib_init(master_eloop[MODULE_NSM], NULL);
 #endif
 
@@ -197,7 +197,7 @@ int os_module_init(void)
 	nsm_dhcp_module_init ();
 #endif
 
-#ifdef PL_SSH_MODULE
+#ifdef PL_LIBSSH_MODULE
 	ssh_module_init();
 #endif
 
@@ -259,7 +259,7 @@ int os_module_task_init(void)
 
 	systools_task_init();
 
-#ifdef PL_SSH_MODULE
+#ifdef PL_LIBSSH_MODULE
 	ssh_module_task_init();
 #endif
 
@@ -309,10 +309,10 @@ int os_module_cmd_init(int terminal)
 	cmd_port_init();
 
 
-#ifdef PL_SNTPC_MODULE
+#ifdef PL_SERVICE_SNTPC
 	cmd_sntpc_init();
 #endif
-#ifdef PL_SNTPS_MODULE
+#ifdef PL_SERVICE_SNTPS
 	cmd_sntps_init();
 #endif
 	//service_module_cmd_init();
@@ -321,7 +321,7 @@ int os_module_cmd_init(int terminal)
 	cmd_dos_init ();
 	cmd_dot1x_init ();
 	cmd_mirror_init();
-	zebra_debug_init ();
+	cmd_debug_init ();
 	cmd_serial_init();
 	cmd_dns_init();
 	cmd_ppp_init();
@@ -342,7 +342,7 @@ int os_module_cmd_init(int terminal)
 #endif
 
 	systools_cmd_init();
-#ifdef PL_SSH_MODULE
+#ifdef PL_LIBSSH_MODULE
 	ssh_cmd_init();
 #endif
 
@@ -392,7 +392,7 @@ int os_module_exit(void)
 	systools_module_exit();
 
 	if_terminate() ;
-#ifdef PL_SYSLOG_MODULE
+#ifdef PL_SERVICE_SYSLOG
 //	sntpsExit();
 //	sntpcExit();
 	syslogc_lib_uninit();
@@ -442,7 +442,7 @@ int os_module_exit(void)
 	nsm_tunnel_client_exit();
 	nsm_veth_client_exit();
 	//pal_abstract_exit();
-#ifdef PL_SSH_MODULE
+#ifdef PL_LIBSSH_MODULE
 	ssh_module_exit();
 #endif
 
@@ -495,7 +495,7 @@ int os_module_task_exit(void)
 	if(console_enable)
 		cli_console_task_exit ();
 	cli_telnet_task_exit ();
-#ifdef PL_SSH_MODULE
+#ifdef PL_LIBSSH_MODULE
 	ssh_module_task_exit();
 #endif
 

@@ -1,5 +1,7 @@
 include $(MAKE_DIR)/makelinux.mk
 
+PL_MQTT_BROKER=false
+include config-def.mk
 include config.mk
 
 OBJS_DIR = $(BASE_ROOT)/$(OBJDIR)/$(MODULEDIR)
@@ -58,12 +60,16 @@ endif
 
 #
 #
+ifeq ($(PL_MQTT_SRV),true)
 lib: $(LIBS)
 	@${MAKE} -C  src all
+else	
+lib: $(LIBS)
+endif
 
-obj: $(MODULE_OBJS) $(MODULE_LIBOBJS)
+obj: $(MODULE_OBJS)
 
-ifeq ($(BUILD_DEBUG),YES)
+ifeq ($(PL_MQTT_SRV),true)
 install: $(LIBS)
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
@@ -74,18 +80,19 @@ install: $(LIBS)
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
 	$(STRIP) $(PLSTRIP_CFLAGS)$(LIB_DIR)/$(LIBS)	
-	@${MAKE} -C  src install DEST_BIN_DIR=$(DSTSBINDIR)
 endif
 
-#install: $(LIBS)
-#	install -d $(LIB_DIR)
-#	install -m 755 $(LIBS) $(LIB_DIR)
-#	$(STRIP) $(LIB_DIR)/$(LIBS)
 
+ifeq ($(PL_MQTT_SRV),true)
 clean: objclean
 	@$(RM) $(LIB_DIR)/$(LIBS)
 	@$(RM) $(LIBS)
 	@${MAKE} -C  src clean DEST_BIN_DIR=$(DSTSBINDIR)
+else
+clean: objclean
+	@$(RM) $(LIB_DIR)/$(LIBS)
+	@$(RM) $(LIBS)
+endif
 
 objclean: 
 	@$(RM) $(OBJS_DIR)/* -rf

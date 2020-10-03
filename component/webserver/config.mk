@@ -9,12 +9,32 @@ MODULEDIR = component/webserver
 #
 ME_COM_COMPILER       = 1
 ME_COM_LIB            = 1
+ifeq ($(PL_WEBSERVER_MATRIXSSL),1)
+ME_COM_MATRIXSSL      = 1
+else
 ME_COM_MATRIXSSL      = 0
+endif
+ifeq ($(PL_WEBSERVER_MBEDTLS),1)
+ME_COM_MBEDTLS        = 1
+else
 ME_COM_MBEDTLS        = 0
+endif
+ifeq ($(PL_WEBSERVER_NANOSSL),1)
+ME_COM_NANOSSL        = 1
+else
 ME_COM_NANOSSL        = 0
+endif
+ifeq ($(PL_WEBSERVER_OPENSSL),1)
 ME_COM_OPENSSL        = 1
+else
+ME_COM_OPENSSL        = 0
+endif
 ME_COM_OSDEP          = 0
+ifeq ($(ME_COM_OPENSSL),1)
 ME_COM_SSL            = 1
+else
+ME_COM_SSL            = 0
+endif
 ME_GOAHEAD_LOGIN_HTML = 0
 ME_GOAHEAD_LOGIN_JS   = 1
 ME_GOAHEAD_LOGIN_MAX   = 2

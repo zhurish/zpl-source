@@ -56,7 +56,7 @@ usage:
 	@$(ECHO) "  PLASFLAGS  = $(PLASFLAGS)"	
 	@$(ECHO) "  PLDEFINE   = $(PLDEFINE)"	
 	@$(ECHO) "  PLINCLUDE  = $(PLINCLUDE)"				
-ifeq ($(BUILD_DEBUG),YES)
+ifeq ($(PL_BUILD_DEBUG),YES)
 	@$(ECHO) "  PLDEBUG    = $(PLDEBUG)"
 endif
 	@$(ECHO) ""
@@ -64,6 +64,9 @@ endif
 
 	@$(PLVERB)for prod in $(PLPRODS); do \
 		$(ECHO) "  $$prod"; \
+        done
+	@$(PLVERB)for prod in $(PLEX_DIR); do \
+		$(ECHO) "EX ：$$prod"; \
         done
 	@$(ECHO) "Targets:"
 	@$(ECHO) "  all        build all"

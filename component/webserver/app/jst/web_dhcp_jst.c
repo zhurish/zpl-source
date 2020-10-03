@@ -489,7 +489,7 @@ static int web_dhcp_static_handle(Webs *wp, void *p)
 		char devname[128];
 		char devip[128];
 		char devmac[128];
-		//char expires[128];
+		char expires[128];
 		strval = webs_get_var(wp, T("devname"), T(""));
 		if(strval == NULL || all_space(strval))
 		{
@@ -526,6 +526,9 @@ static int web_dhcp_static_handle(Webs *wp, void *p)
 				zlog_debug(ZLOG_WEB, "Can not Get expires Value");
 			return web_return_text_plain(wp, ERROR);
 		}
+		memset(expires, 0, sizeof(expires));
+		strcpy(expires, strval);
+		
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
 		{
 			zlog_debug(ZLOG_WEB, "web Get devname=%s devip=%s devmac=%s expires=%s",

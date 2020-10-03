@@ -34,8 +34,8 @@
 #define ZLOG_TASK_ENABLE
 #define ZLOG_TESTING_ENABLE
 
-//#define PL_SYSLOG_MODULE
-#ifdef PL_SYSLOG_MODULE
+//#define PL_SERVICE_SYSLOG
+#ifdef PL_SERVICE_SYSLOG
 #include "syslogcLib.h"
 #endif
 /* Here is some guidance on logging levels to use:

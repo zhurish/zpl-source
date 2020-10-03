@@ -1,14 +1,14 @@
 #############################################################################
 # DEFINE
 
-WITH_NACL = false
-WITH_PTHREAD=true
-WITH_SERVER=true
-WITH_GSSAPI=false
-WITH_ZLIB=true
-WITH_SSH1=true
-WITH_SFTP=true
-WITH_GCRYPT=false
+PL_LIBSSH_NACL = false
+PL_LIBSSH_PTHREAD=true
+PL_LIBSSH_SERVER=true
+PL_LIBSSH_GSSAPI=false
+PL_LIBSSH_ZLIB=true
+PL_LIBSSH_SSH1=true
+PL_LIBSSH_SFTP=true
+PL_LIBSSH_GCRYPT=false
 ###########################################################################
 MODULEDIR = component/ssh
 #PLINCLUDE += -I$(OPENSSH_ROOT)/include
@@ -61,7 +61,7 @@ LIBSSHOBJS += agent.o \
 
   
   
-ifeq ($(strip $(WITH_GCRYPT)),true)
+ifeq ($(strip $(PL_LIBSSH_GCRYPT)),true)
 LIBSSHOBJS += libgcrypt.o \
         gcrypt_missing.o \
         pki_gcrypt.o
@@ -76,14 +76,14 @@ LIBSSHOBJS += libcrypto-compat.o
 #PLDEFINE +=-DHAVE_LIBGCRYPT
 endif
 
-ifeq ($(strip $(WITH_SFTP)),true)
+ifeq ($(strip $(PL_LIBSSH_SFTP)),true)
 LIBSSHOBJS += sftp.o
-ifeq ($(strip $(WITH_SERVER)),true)
+ifeq ($(strip $(PL_LIBSSH_SERVER)),true)
 LIBSSHOBJS += sftpserver.o
 endif
 endif
 
-ifeq ($(strip $(WITH_SSH1)),true)
+ifeq ($(strip $(PL_LIBSSH_SSH1)),true)
 LIBSSHOBJS += auth1.o \
     channels1.o \
     crc32.o \
@@ -91,27 +91,27 @@ LIBSSHOBJS += auth1.o \
     packet1.o
 endif
 
-ifeq ($(strip $(WITH_SERVER)),true)
+ifeq ($(strip $(PL_LIBSSH_SERVER)),true)
 LIBSSHOBJS += server.o \
     bind.o
 endif
 
-ifeq ($(strip $(WITH_ZLIB)),true)
+ifeq ($(strip $(PL_LIBSSH_ZLIB)),true)
 LIBSSHOBJS += gzip.o
 endif
 
-ifeq ($(strip $(WITH_GSSAPI)),true)
-#if (WITH_GSSAPI AND GSSAPI_FOUND)
+ifeq ($(strip $(PL_LIBSSH_GSSAPI)),true)
+#if (PL_LIBSSH_GSSAPI AND GSSAPI_FOUND)
 LIBSSHOBJS += gssapi.o
-#endif (WITH_GSSAPI AND GSSAPI_FOUND)
+#endif (PL_LIBSSH_GSSAPI AND GSSAPI_FOUND)
 endif
 
-ifeq ($(strip $(WITH_NACL)),false)
-#if (NOT WITH_NACL)
+ifeq ($(strip $(PL_LIBSSH_NACL)),false)
+#if (NOT PL_LIBSSH_NACL)
 LIBSSHOBJS += curve25519_ref.o
-#endif (NOT WITH_NACL)
+#endif (NOT PL_LIBSSH_NACL)
 endif
-ifeq ($(strip $(WITH_PTHREAD)),true)
+ifeq ($(strip $(PL_LIBSSH_PTHREAD)),true)
 LIBSSHOBJS += pthread.o 
 PLDEFINE +=-DHAVE_PTHREAD
 endif 

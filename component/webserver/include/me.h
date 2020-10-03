@@ -140,7 +140,7 @@
     #define ME_GOAHEAD_CLIENT_CACHE "css,gif,ico,jpg,js,png"
 #endif
 #ifndef ME_GOAHEAD_CLIENT_CACHE_LIFESPAN
-    #define ME_GOAHEAD_CLIENT_CACHE_LIFESPAN 300
+    #define ME_GOAHEAD_CLIENT_CACHE_LIFESPAN 60*5
 #endif
 #ifndef ME_GOAHEAD_DIGEST
     #define ME_GOAHEAD_DIGEST 1

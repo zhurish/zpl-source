@@ -10,31 +10,31 @@
 
 #include "systools.h"
 
-#ifdef PL_TFTPC_MODULE
+#ifdef PL_SERVICE_TFTPC
 #include "tftpLib.h"
 #endif
-#ifdef PL_TFTPD_MODULE
+#ifdef PL_SERVICE_TFTPD
 #include "tftpdLib.h"
 #endif
-#ifdef PL_FTPC_MODULE
+#ifdef PL_SERVICE_FTPC
 #include "ftpLib.h"
 #endif
-#ifdef PL_FTPD_MODULE
+#ifdef PL_SERVICE_FTPD
 #include "ftpdLib.h"
 #endif
-#ifdef PL_TELNET_MODULE
+#ifdef PL_SERVICE_TELNET
 #include "telnetLib.h"
 #endif
-#ifdef PL_TELNETD_MODULE
+#ifdef PL_SERVICE_TELNETD
 #include "telnetLib.h"
 #endif
-#ifdef PL_PING_MODULE
+#ifdef PL_SERVICE_PING
 #include "pingLib.h"
 #endif
-#ifdef PL_TRACEROUTE_MODULE
+#ifdef PL_SERVICE_TRACEROUTE
 #include "tracerouteLib.h"
 #endif
-#ifdef PL_UBUS_MODULE
+#ifdef PL_SERVICE_UBUS_SYNC
 #include "ubus_sync.h"
 #endif
 
@@ -74,7 +74,7 @@ int systools_printf(const char *format, ...)
 	return len;
 }
 
-#ifdef PL_FTPD_MODULE
+#ifdef PL_SERVICE_FTPD
 const char *ftpd_hostname()
 {
 	return "VxWorks 5.5";
@@ -123,26 +123,26 @@ int systools_module_init ()
 {
 	if(master_eloop[MODULE_UTILS] == NULL)
 		master_eloop[MODULE_UTILS] = eloop_master_module_create(MODULE_UTILS);
-#ifdef PL_TFTPC_MODULE
+#ifdef PL_SERVICE_TFTPC
 #endif
-#ifdef PL_TFTPD_MODULE
+#ifdef PL_SERVICE_TFTPD
 	tftpdInit(master_eloop[MODULE_UTILS], NULL);
 #endif
-#ifdef PL_FTPC_MODULE
+#ifdef PL_SERVICE_FTPC
 	ftpLibInit(5);
 #endif
-#ifdef PL_FTPD_MODULE
+#ifdef PL_SERVICE_FTPD
 	ftpdInit (master_eloop[MODULE_UTILS], ftpd_loginVerify);
 #endif
-#ifdef PL_TELNET_MODULE
+#ifdef PL_SERVICE_TELNET
 #endif
-#ifdef PL_TELNETD_MODULE
+#ifdef PL_SERVICE_TELNETD
 #endif
-#ifdef PL_PING_MODULE
+#ifdef PL_SERVICE_PING
 #endif
-#ifdef PL_TRACEROUTE_MODULE
+#ifdef PL_SERVICE_TRACEROUTE
 #endif
-#ifdef PL_UBUS_MODULE
+#ifdef PL_SERVICE_UBUS_SYNC
 	ubus_sync_init(master_eloop[MODULE_UTILS]);
 #endif
 
@@ -151,13 +151,13 @@ int systools_module_init ()
 
 int systools_module_exit ()
 {
-#ifdef PL_FTPD_MODULE
+#ifdef PL_SERVICE_FTPD
 	ftpdDisable();
 #endif
-#ifdef PL_TFTPD_MODULE
+#ifdef PL_SERVICE_TFTPD
 	tftpdUnInit();
 #endif
-#ifdef PL_UBUS_MODULE
+#ifdef PL_SERVICE_UBUS_SYNC
 	ubus_sync_exit();
 #endif
 	if(master_eloop[MODULE_UTILS])

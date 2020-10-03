@@ -8,7 +8,7 @@
 #ifndef __APPLICATION_H__
 #define __APPLICATION_H__
 
-//#define APP_X5BA_MODULE
+#define APP_X5BA_MODULE
 
 #ifdef APP_X5BA_MODULE
 #define X5_B_A_DEBUG

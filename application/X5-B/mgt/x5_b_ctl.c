@@ -193,7 +193,7 @@ int x5b_app_rtc_tm_set(int timesp)
 			super_system("/etc/init.d/sysntpd restart");
 		return OK;
 	}
-#ifdef BUILD_X86
+#ifdef PL_BUILD_X86
 	return OK;
 #endif
 	sntpTime.tv_sec = timesp;
@@ -479,7 +479,7 @@ int x5b_app_call_room_param_get(void *data, u_int8 *building,
  *
  *
  */
-#ifdef BUILD_OPENWRT
+#ifdef PL_BUILD_OPENWRT
 /*
  * swconfig dev switch0 port 2 show | grep link
  */
@@ -637,7 +637,7 @@ int x5b_app_network_event_init(x5b_app_mgt_t *app)
 	}
 	if(app->wan_state.t_thread)
 		eloop_cancel(app->wan_state.t_thread);
-#ifdef BUILD_OPENWRT
+#ifdef PL_BUILD_OPENWRT
 	if(app->master)
 		app->wan_state.t_thread = eloop_add_timer(app->master, x5b_app_network_port_status_event, app, app->wan_state.interval);
 #endif

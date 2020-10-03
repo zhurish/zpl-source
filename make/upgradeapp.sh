@@ -14,12 +14,12 @@ cd /tmp
 #
 appreboot=0
 
-if [ "ABCreboot" != "ABC$2" ] ; then 
+if [ "ABCreboot" != "ABC$3" ] ; then 
 	appreboot=1 
 fi 
 
-if [ "ABCxx" != "ABC$2" ] ; then 
-	tftp -r $1 - g $2
+if [ "ABCxx" != "ABC$3" ] ; then 
+	tftp -r $1 - g $3
 fi 
 
 if [ "ABCreboot" != "ABC$3" ] ; then 

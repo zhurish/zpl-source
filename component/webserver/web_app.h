@@ -17,13 +17,13 @@ extern int web_updownload_app(void);
  */
 extern int web_admin_app(void);
 
-#ifdef PL_SNTPC_MODULE
+#ifdef PL_SERVICE_SNTPC
 extern int web_sntp_app(void);
-#endif /*PL_SNTPC_MODULE*/
+#endif /*PL_SERVICE_SNTPC*/
 
-#ifdef PL_SYSLOG_MODULE
+#ifdef PL_SERVICE_SYSLOG
 extern int web_syslog_app(void);
-#endif /*PL_SYSLOG_MODULE*/
+#endif /*PL_SERVICE_SYSLOG*/
 
 extern int web_network_app(void);
 extern int web_netservice_app(void);

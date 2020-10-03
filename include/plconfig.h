@@ -1,23 +1,26 @@
+
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define if building universal (internal helper macro) */
-/* #undef AC_APPLE_UNIVERSAL_BUILD */
+/* #undef AC_APPLE_UNIVERSAL_PL_BUILD */
 
 //#define USE_IPSTACK_KERNEL
 	//USE_IPSTACK_KERNEL
-#undef BASE_DIR
+//#undef BASE_DIR
 #ifndef BASE_DIR
 #define BASE_DIR	"/tmp/app"
 #endif
 
-#ifdef BUILD_X86
+#ifdef PL_BUILD_X86
 #ifndef SYS_REAL_DIR
 #define SYS_REAL_DIR		"/home/zhurish/workspace/SWPlatform/debug"
+#undef BASE_DIR
+#define BASE_DIR	SYS_REAL_DIR"/tmp/app"
 #endif
 #define SYSCONF_REAL_DIR 	SYS_REAL_DIR "/etc"
 #else
-#ifdef BUILD_OPENWRT
+#ifdef PL_BUILD_OPENWRT
 #ifndef SYS_REAL_DIR
 #define SYS_REAL_DIR		"/app"
 #endif
@@ -30,7 +33,7 @@
 #endif
 #endif
 
-//#ifdef BUILD_OPENWRT
+//#ifdef PL_BUILD_OPENWRT
 //#define SYSCONFDIR 		"/etc/app"
 //#else
 //#define SYSCONFDIR 		BASE_DIR "/etc"
@@ -69,12 +72,12 @@
 
 #define CONF_BACKUP_EXT ".sav"
 
-#ifdef BUILD_OPENWRT
+#ifdef PL_BUILD_OPENWRT
 #define STARTUP_CONFIG_FILE	SYSCONFDIR "/startup-config.cfg"
 #define DEFAULT_CONFIG_FILE	SYSCONFDIR "/default-config.cfg"
 #define FACTORY_CONFIG_FILE	SYSCONFDIR "/factory-config.cfg"
 #else
-#ifdef BUILD_X86
+#ifdef PL_BUILD_X86
 #define STARTUP_CONFIG_FILE	PLSYSCONFDIR "/startup-config.cfg"
 #define DEFAULT_CONFIG_FILE	PLSYSCONFDIR "/default-config.cfg"
 #define FACTORY_CONFIG_FILE	PLSYSCONFDIR "/factory-config.cfg"
@@ -95,7 +98,7 @@
 #define CONSUMED_TIME_CHECK 5000000
 
 /* Build for development */
-/* #undef DEV_BUILD */
+/* #undef DEV_PL_BUILD */
 
 /* Disable BGP installation to zebra */
 #define DISABLE_BGP_ANNOUNCE 0
@@ -132,7 +135,7 @@
 /* #undef HAVE_BSD_STRUCT_IP_MREQ_HACK */
 
 /* capabilities */
-#ifdef BUILD_X86
+#ifdef PL_BUILD_X86
 #define HAVE_CAPABILITIES 1
 #endif
 /* Define to 1 if your system has a working `chown' function. */
@@ -236,7 +239,7 @@
 #define HAVE_INTTYPES_H 1
 
 /* IPv6 */
-#ifdef BUILD_IPV6
+#ifdef PL_BUILD_IPV6
 #define HAVE_IPV6 1
 #endif
 /* Have IP_PKTINFO */
@@ -255,7 +258,7 @@
 /* #undef HAVE_KVM_H */
 
 /* Capabilities */
-#ifdef BUILD_X86
+#ifdef PL_BUILD_X86
 #define HAVE_LCAPS 1
 #endif
 /* Define to 1 if you have the `crypt' library (-lcrypt). */
@@ -312,7 +315,7 @@
 
 /* Define to 1 if you have the <netdb.h> header file. */
 #define HAVE_NETDB_H 1
-#ifdef BUILD_IPV6
+#ifdef PL_BUILD_IPV6
 /* Define to 1 if you have the <netinet6/in6.h> header file. */
 /* #undef HAVE_NETINET6_IN6_H */
 
@@ -847,7 +850,7 @@
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
-#if defined AC_APPLE_UNIVERSAL_BUILD
+#if defined AC_APPLE_UNIVERSAL_PL_BUILD
 # if defined __BIG_ENDIAN__
 #  define WORDS_BIGENDIAN 1
 # endif

@@ -174,10 +174,10 @@ typedef struct voip_app_s
 extern voip_app_t  *voip_app;
 
 
-extern int pl_pjsip_module_init();
-extern int pl_pjsip_module_exit();
-extern int pl_pjsip_module_task_init();
-extern int pl_pjsip_module_task_exit();
+extern int void_module_init(pl_pjsip_t *pj);
+extern int void_module_exit(pl_pjsip_t *pj);
+extern int void_module_task_init();
+extern int void_module_task_exit();
 
 #ifdef PL_OPENWRT_UCI
 extern int pl_pjsip_module_reload();

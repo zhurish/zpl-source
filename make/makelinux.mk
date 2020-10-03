@@ -48,7 +48,6 @@ ifneq ($(TOP_DIR),)
 ROOT_DIR = $(TOP_DIR)
 else
 ROOT_DIR = $(shell pwd)
-#/home/zhurish/workspace/SWPlatform
 endif
 
 BASE_ROOT = $(ROOT_DIR)
@@ -57,7 +56,7 @@ export MAKE_DIR = $(BASE_ROOT)/make
 export BASE_ROOT = $(ROOT_DIR)
 #
 #
-include $(MAKE_DIR)/board.cfg
+include $(MAKE_DIR)/board.mk
 #
 #
 #
@@ -73,26 +72,68 @@ INSTALL = install -c
 LN = ln -s
 #
 #
-BUILD_TYPE	=$(ARCH_TYPE)
+PL_BUILD_TYPE	=$(ARCH_TYPE)
 #
-BUILD_DEBUG	=$(ARCH_DEBUG)
-#
-#
-#BUILD_IPV6	= false
-BUILD_IPV6	= true
+PL_BUILD_DEBUG	=$(ARCH_DEBUG)
 #
 #
+#PL_BUILD_IPV6	= false
+PL_BUILD_IPV6	= $(IPV6_ENABLE)
 #
-ifeq ($(SIM),yes)
-export SIMULATION = YES
-else
-ifeq ($(SIM),YES)
-export SIMULATION = YES
-endif
-endif
+#
 
 #
-ifeq ($(BUILD_DEBUG),NO)
+#PLOS_LDLIBS += -std=c99 
+PLOS_CFLAGS += -std=gnu99 -fgnu89-inline
+#PLOS_CPPFLAGS += -std=c++11 -Wno-write-strings
+PLOS_CPPFLAGS += -std=c++11 -Wno-write-strings
+# -D_GLIBCXX_USE_CXX11_ABI=0
+#
+#
+# WANRING
+#	
+PLOS_CFLAGS += -MMD -MP -Wfatal-errors -Wall -Wextra -Wnested-externs -Wmissing-prototypes \
+			 -Wredundant-decls -Wcast-align -Wunreachable-code -Wshadow	\
+			 -Wimplicit-function-declaration -Wimplicit	-Wreturn-type -Wunused \
+			 -Wswitch -Wformat -Wuninitialized -Wchar-subscripts  \
+			 -Wpointer-arith -Wwrite-strings -Wstrict-prototypes
+			 
+PLOS_CPPFLAGS += -MMD -MP -Wall -Wextra -Wnested-externs -Wmissing-prototypes \
+			 -Wredundant-decls -Wcast-align -Wunreachable-code -Wshadow	\
+			 -Wimplicit-function-declaration -Wimplicit	-Wreturn-type -Wunused \
+			 -Wswitch -Wformat -Wuninitialized -Wchar-subscripts  \
+			 -Wpointer-arith -Wwrite-strings -Wstrict-prototypes
+			 			 
+# -Werror=implicit-function-declaration -Werror=switch -Wfatal-errors 
+PLOS_CFLAGS += -Werror=return-type -Werror=format-extra-args  \
+			  -Werror=unreachable-code -Werror=unused-function -Werror=unused-variable \
+			  -Werror=unused-value -Werror=implicit-int -Werror=missing-parameter-type\
+			  -Werror=parentheses -Werror=char-subscripts -Werror=parentheses  \
+			  -Werror=invalid-memory-model -Werror=sizeof-pointer-memaccess \
+			  -Werror=overflow  -Werror=format-security -Werror=missing-prototypes -Werror=shadow \
+			  -Werror=unsafe-loop-optimizations -Werror=init-self 
+			  #-Werror=stack-protector   
+			  #-Werror=suggest-attribute=format -Werror=missing-format-attribute  -Werror=overlength-stringsl
+			  #-Werror=sign-compare 有符号和无符号参数比较
+			  #-Werror=format-overflow
+			  #-Werror=shift-count-overflow
+			  #-Werror=pointer-arith 
+			  #sequence-point:违反顺序点的代码,比如 a[i] = c[i++];
+			  #-Werror=cast-qual 
+			  #-Werror=type-limits 参数类型限制
+			  #-Werror=float-equal 对浮点数使用等号，这是不安全的
+			  #-Werror=redundant-decls -Werror=format -Werror=missingbraces
+#			 -Werror=switch-default -Werror=missing-format-attribute 
+#				-Werror=overlength-strings -Werror=cast-align 
+#PLOS_CPPFLAGS
+#			 
+PLOS_CFLAGS += -fmessage-length=0 -Wcast-align
+#
+PLOS_CFLAGS += -fsigned-char
+#
+#
+#
+ifeq ($(PL_BUILD_DEBUG),NO)
 RELEASEDIR = debug
 #release
 OBJDIR = $(RELEASEDIR)/obj
@@ -120,47 +161,13 @@ PLOS_MAP = -Wl,-Map,
 endif
 #
 #
-ifeq ($(BUILD_OPENWRT),true)
+ifeq ($(PL_BUILD_OPENWRT),true)
 include $(MAKE_DIR)/openwrt.mk
-PLOS_DEFINE += -DBUILD_OPENWRT
+PLOS_DEFINE += -DPL_BUILD_OPENWRT
 else
 include $(MAKE_DIR)/linux.mk
-PLOS_DEFINE += -DBUILD_LINUX
+PLOS_DEFINE += -DPL_BUILD_LINUX
 endif
-#
-
-#
-PL_LDFLAGS += -L$(BASE_ROOT)/$(LIBDIR) -L$(BASE_ROOT)/$(ULIBDIR)
-#
-#
-ifeq ($(BUILD_DEBUG),YES)
-PL_CFLAGS +=  -g
-endif
-#
-#
-ifeq ($(USE_IPCOM_STACK),true)
-PLOS_DEFINE += -DUSE_IPCOM_STACK
-else
-PLOS_DEFINE += -DUSE_IPSTACK_KERNEL
-endif
-#
-#
-#BUILD_TIME=$(shell date -u "+%Y%m%d%H%M%S")
-BUILD_TIME=$(shell date "+%Y%m%d%H%M%S")
-#
-#
-ifeq ($(BUILD_DEBUG),YES)
-PLVER = $(VERSION).bin
-else
-PLVER = $(VERSION)-$(BUILD_TIME).bin
-endif
-#
-#
-#
-ifeq ($(strip $(BUILD_IPV6)),true)
-PLOS_DEFINE += -DBUILD_IPV6
-endif
-#
 #
 #
 ifeq ($(GCC_TYPE),UCLIBC)
@@ -168,65 +175,49 @@ PLOS_CFLAGS += -D__UCLIBC__
 endif
 #
 #
-PLOS_LDLIBS += -lpthread -lrt -rdynamic -lm -lcrypt -ldl -lgcc_s -lstdc++
-#
-#
-#PLOS_LDLIBS += -std=c99 
-PLOS_CFLAGS += -std=gnu99 -fgnu89-inline
-#PLOS_CPPFLAGS += -std=c++11 -Wno-write-strings
-PLOS_CPPFLAGS += -std=c++98 -Wno-write-strings -D_GLIBCXX_USE_CXX11_ABI=0
-#
-#
-# WANRING
-#	
-PLOS_CFLAGS += -MMD -MP -Wfatal-errors -Wall -Wextra -Wnested-externs -Wmissing-prototypes \
-			 -Wredundant-decls -Wcast-align -Wunreachable-code -Wshadow	\
-			 -Wimplicit-function-declaration -Wimplicit	-Wreturn-type -Wunused \
-			 -Wswitch -Wformat -Wuninitialized -Wchar-subscripts  \
-			 -Wpointer-arith -Wwrite-strings -Wstrict-prototypes
-			 
-PLOS_CPPFLAGS += -MMD -MP -Wfatal-errors -Wall -Wextra -Wnested-externs -Wmissing-prototypes \
-			 -Wredundant-decls -Wcast-align -Wunreachable-code -Wshadow	\
-			 -Wimplicit-function-declaration -Wimplicit	-Wreturn-type -Wunused \
-			 -Wswitch -Wformat -Wuninitialized -Wchar-subscripts  \
-			 -Wpointer-arith -Wwrite-strings -Wstrict-prototypes
-			 			 
-# -Werror=implicit-function-declaration -Werror=switch
-PLOS_CFLAGS += -Werror=return-type -Werror=format-extra-args  \
-			  -Werror=unreachable-code -Werror=unused-function -Werror=unused-variable \
-			  -Werror=unused-value -Werror=implicit-int -Werror=missing-parameter-type\
-			  -Werror=parentheses -Werror=char-subscripts -Werror=parentheses  \
-			  -Werror=invalid-memory-model -Werror=sizeof-pointer-memaccess \
-			  -Werror=overflow  -Werror=format-security -Werror=missing-prototypes -Werror=shadow \
-			  -Werror=unsafe-loop-optimizations -Werror=init-self 
-			  #-Werror=stack-protector   
-			  #-Werror=suggest-attribute=format -Werror=missing-format-attribute  -Werror=overlength-stringsl
-			  #-Werror=sign-compare 有符号和无符号参数比较
-			  #-Werror=format-overflow
-			  #-Werror=shift-count-overflow
-			  #-Werror=pointer-arith 
-			  #sequence-point:违反顺序点的代码,比如 a[i] = c[i++];
-			  #-Werror=cast-qual 
-			  #-Werror=type-limits 参数类型限制
-			  #-Werror=float-equal 对浮点数使用等号，这是不安全的
-			  #-Werror=redundant-decls -Werror=format -Werror=missingbraces
-#			 -Werror=switch-default -Werror=missing-format-attribute 
-#				-Werror=overlength-strings -Werror=cast-align 
-#PLOS_CPPFLAGS
-#			 
-PLOS_CFLAGS += -fmessage-length=0 -Wcast-align
-#
-PLOS_CFLAGS += -fsigned-char
-ifeq ($(BUILD_DEBUG),YES)
+ifeq ($(PL_BUILD_DEBUG),YES)
 PLOS_CFLAGS += -g2 -ggdb
 else
 PLOS_CFLAGS += -O1
 endif
-
 #
-#PLOS_CFLAGS += -Werror
 #
-PLOS_DEFINE += -DBUILD_VERSION=\"$(VERSION)\" -DBUILD_TIME=\"$(BUILD_TIME)\"
+#
+#
+#
+ifeq ($(PL_IPCOM_STACK_MODULE),true)
+PLOS_DEFINE += -DPL_IPCOM_STACK_MODULE
+else
+PLOS_DEFINE += -DUSE_IPSTACK_KERNEL
+endif
+#
+#
+#PL_BUILD_TIME=$(shell date -u "+%Y%m%d%H%M%S")
+PL_BUILD_TIME=$(shell date "+%Y%m%d%H%M%S")
+#
+#
+ifeq ($(PL_BUILD_DEBUG),YES)
+PLVER = $(VERSION).bin
+else
+PLVER = $(VERSION)-$(PL_BUILD_TIME).bin
+endif
+#
+#
+#
+ifeq ($(strip $(PL_BUILD_IPV6)),true)
+PLOS_DEFINE += -DPL_BUILD_IPV6
+endif
+#
+#
+#
+#
+PLOS_LDLIBS += -lpthread -lrt -rdynamic -lm -lcrypt -ldl -lgcc_s -lstdc++
+#
+PL_LDFLAGS += -L$(BASE_ROOT)/$(LIBDIR) -L$(BASE_ROOT)/$(ULIBDIR)
+#
+#
+#
+PLOS_DEFINE += -DPL_BUILD_VERSION=\"$(VERSION)\" -DPL_BUILD_TIME=\"$(PL_BUILD_TIME)\"
 #
 #
 export DSTBINDIR = $(BASE_ROOT)/$(BINDIR)

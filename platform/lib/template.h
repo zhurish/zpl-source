@@ -39,8 +39,10 @@ extern template_t* nsm_template_lookup_name (BOOL service, char * name);
 
 extern int nsm_template_write_config (struct vty *vty);
 extern int nsm_template_show_config (struct vty *vty, BOOL detail);
-extern int nsm_service_write_config (struct vty *vty);
-extern int nsm_service_show_config (struct vty *vty, BOOL detail);
+extern int nsm_template_service_write_config (struct vty *vty);
+extern int nsm_template_service_show_config (struct vty *vty, BOOL detail);
 
+extern int nsm_template_debug_write_config (struct vty *vty);
+extern int nsm_template_debug_show_config (struct vty *vty, BOOL detail);
 
 #endif /* __LIB_TEMPLATE_H__ */

@@ -2,7 +2,7 @@
 # DEFINE
 ###########################################################################
 MODULEDIR = abstract/pal/ipstack
-ifeq ($(strip $(MODULE_PAL_IPCOM)),true)
+ifeq ($(strip $(PL_PAL_IPCOM_STACK)),true)
 OBJS	+= ip_ipstack_route.o
 OBJS	+= ip_ipstack.o
 

@@ -47,7 +47,7 @@ endif
 LIBS1 = $(shell $(CD) $(BASE_ROOT)/$(LIBDIR)/ && ls *.a)
 LIBS2 = $(subst .a,,$(LIBS1))
 LIBC += $(subst lib,-l,$(LIBS2))
-ifneq ($(BUILD_TYPE),X86)
+ifneq ($(PL_BUILD_TYPE),X86)
 LIBSO1 = $(shell $(CD) $(BASE_ROOT)/$(LIBDIR)/ && ls *.so)
 LIBSO2 = $(subst .so,,$(LIBSO1))
 LIBC += $(subst lib,-l,$(LIBSO2))
@@ -63,7 +63,7 @@ PLLDSOLIBS = $(PLLDLIBS)
 #PLINCLUDE += $(IPSTACK_INCLUDE)
 #IPSTACK_LIBDIR
 #
-ifeq ($(USE_IPCOM_STACK),true)
+ifeq ($(PL_IPCOM_STACK_MODULE),true)
 IPLIBS1 = $(shell $(CD) $(IPSTACK_LIBDIR)/ && ls *.a)
 IPLIBS2 = $(subst .a,,$(IPLIBS1))
 IPLIBC += $(subst lib,-l,$(IPLIBS2))
@@ -86,7 +86,7 @@ PLLDLIBS += $(IPLIBC)
 # $(PL_CFLAGS)
 #
 %.o: %.c
-	@$(CC) -fPIC $(PLDEFINE) $(PLDEBUG) $(PLCFLAGS) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
+	@$(CC) -fPIC $(PLDEFINE) $(PLDEBUG) $(PLCFLAGS) $(PLLDSOLIBS) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
 
 
 SOURCES = $(wildcard *.c *.cpp)
@@ -102,16 +102,17 @@ OBJS = $(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(SOURCES)))
 #	
 .PHONY:	obj objclean clean install all lib rebuild dist demo app target usage help config_install
 #
+# awk -F= '/^NAME/{print $2}' /etc/os-release
+# ubuntu 系统要把链接库放在行的末尾处
+#
 #
 ifeq ($(BUILD_DEBUG),YES)
 target : $(OBJS) $(BASE_ROOT)/$(LIBDIR)/*.a 
-	$(CC) -o $(TAGET) $(OBJS) $(PLCFLAGS) $(PLDEFINE) $(PLLDFLAGS) $(PLLDSOLIBS) -Xlinker "-(" $(PLLSLIBS) -Xlinker "-)" $(PLOS_MAP) $(PLINCLUDE)
+	$(CC) -o $(TAGET) $(OBJS) -Xlinker "-(" $(PLLSLIBS) -Xlinker "-)" $(PLOS_MAP) $(PLLDFLAGS) $(PLLDSOLIBS)
 	$(CHMOD) a+x $(TAGET)
-#	$(STRIP) --strip-unneeded $(TAGET)
 else
 target : $(OBJS) $(BASE_ROOT)/$(LIBDIR)/*.a 
-	$(CC) -o $(TAGET) $(OBJS) $(PLCFLAGS) $(PLDEFINE) $(PLLDFLAGS) $(PLLDSOLIBS) -Xlinker "-(" $(PLLSLIBS) -Xlinker "-)" $(PLOS_MAP) $(PLINCLUDE)
-	#$(CC) -o $(TAGET) $(OBJS) $(PLCFLAGS) $(PLDEFINE) $(PLLDFLAGS) $(PLINCLUDE) -Xlinker "-(" $(PLLDSLIBS) -Xlinker "-)" $(PLOS_MAP)
+	$(CC) -o $(TAGET) $(OBJS) -Xlinker "-(" $(PLLSLIBS) -Xlinker "-)" $(PLOS_MAP) $(PLLDFLAGS) $(PLLDSOLIBS)
 	$(CHMOD) a+x $(TAGET)
 	$(STRIP) $(TAGET)
 endif

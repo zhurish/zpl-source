@@ -402,16 +402,14 @@ typedef struct pl_pjsip_s
 
 	void				*mutex;
 
+	void				*userdata;
 } pl_pjsip_t;
 /************************************************************************/
 /************************************************************************/
 extern pl_pjsip_t *pl_pjsip;
 /************************************************************************/
 /************************************************************************/
-int _pl_pjsip_module_init();
-int _pl_pjsip_module_exit();
-int _pl_pjsip_module_task_init();
-int _pl_pjsip_module_task_exit();
+
 /************************************************************************/
 char *pl_pjsip_dtmf_name(pjsip_dtmf_t );
 char *pl_pjsip_transport_name(pjsip_transport_t );
@@ -754,5 +752,6 @@ int pl_pjsip_show_config(void *p, BOOL detail);
 void cmd_voip_init(void);
 void cmd_voip_test_init(int node);
 /************************************************************************/
+int pl_pjsip_json_test();
 /************************************************************************/
 #endif /* __PJSIP_APP_API_H__ */

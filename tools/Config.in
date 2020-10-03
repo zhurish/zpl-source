@@ -1,0 +1,34 @@
+# DO NOT EDIT. This file is generated from Config.src
+#
+#
+
+menu "Tools Module Config"
+
+config PL_TOOLS_MODULE
+	bool "Tools Module"
+	default y
+	help
+	Build Tools Module.
+
+config PL_TOOLS_PROCESS
+	bool "Process Module"
+	depends on PL_TOOLS_MODULE
+	default y
+	help
+	Build Process Module.
+
+config PL_TOOLS_QUECTEL_CM
+	bool "Quectel-CM Module"
+	depends on PL_TOOLS_MODULE
+	default y
+	help
+	Build Quectel-CM Module.
+	
+config PL_TOOLS_SYSTEM
+	bool "System Module"
+	depends on PL_TOOLS_MODULE
+	default y
+	help
+	Build System Module.
+	
+endmenu

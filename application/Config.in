@@ -1,0 +1,27 @@
+# DO NOT EDIT. This file is generated from Config.src
+#
+#
+
+menu "Application Module Config"
+
+config PL_APPLICATION_MODULE
+	bool "Application Module"
+	default n
+	help
+	Build Application Module.
+
+config PL_APP_X5_MODULE
+	bool "X5 Project Application Module"
+	default n
+	depends on PL_APPLICATION_MODULE
+	help
+	Build X5 Project Application Module.
+
+config PL_APP_V9_MODULE
+	bool "V9 Project Application Module"
+	default n
+	depends on PL_APPLICATION_MODULE
+	help
+	Build V9 Project Application Module.
+
+endmenu

@@ -376,7 +376,12 @@ int os_sem_take(os_sem_t *ossem, int wait)
 int os_sem_exit(os_sem_t *ossem)
 {
 	if(ossem)
-		return sem_destroy(&ossem->sem);
+	{
+		sem_destroy(&ossem->sem);
+		os_free(ossem);
+		ossem = NULL;
+		return OK;
+	}	
 	return ERROR;
 }
 
@@ -435,7 +440,12 @@ int os_mutex_lock(os_mutex_t *osmutex, int wait)
 int os_mutex_exit(os_mutex_t *osmutex)
 {
 	if(osmutex)
-		return pthread_mutex_destroy(&osmutex->mutex);
+	{
+		pthread_mutex_destroy(&osmutex->mutex);
+		os_free(osmutex);
+		osmutex = NULL;
+		return OK;
+	}
 	return ERROR;
 }
 
@@ -473,7 +483,12 @@ int os_spin_lock(os_spin_t *spin)
 int os_spin_exit(os_spin_t *spin)
 {
 	if(spin)
-		return pthread_spin_destroy(&spin->lock);
+	{
+		pthread_spin_destroy(&spin->lock);
+		os_free(spin);
+		spin = NULL;
+		return OK;
+	}
 	return ERROR;
 }
 

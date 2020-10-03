@@ -20,7 +20,7 @@
 #include "vector.h"
 #include "eloop.h"
 
-#ifdef PL_UBUS_MODULE
+#ifdef PL_SERVICE_UBUS_SYNC
 #include "ubus_sync.h"
 #endif
 
@@ -1431,7 +1431,7 @@ static int x5b_app_report_eloop(struct eloop *eloop)
 		}
 
 		x5b_app_hdr_make(mgt);
-#ifdef BUILD_OPENWRT
+#ifdef PL_BUILD_OPENWRT
 		if (x5b_app_network_port_status_get(mgt) == OK)
 		{
 			u_int8 val = 0;
@@ -1697,10 +1697,10 @@ int x5b_app_module_init(char *local, u_int16 port)
 		x5b_app_mgt = malloc(sizeof(x5b_app_mgt_t));
 		memset(x5b_app_mgt, 0, sizeof(x5b_app_mgt_t));
 
-		if(master_eloop[MODULE_APP_START] == NULL)
-			master_eloop[MODULE_APP_START] = eloop_master_module_create(MODULE_APP_START);
+		if(master_eloop[PL_APPLICATION_MODULE_START] == NULL)
+			master_eloop[PL_APPLICATION_MODULE_START] = eloop_master_module_create(PL_APPLICATION_MODULE_START);
 
-		x5b_app_mgt->master = master_eloop[MODULE_APP_START];
+		x5b_app_mgt->master = master_eloop[PL_APPLICATION_MODULE_START];
 
 		x5b_app_mgt->mutex = os_mutex_init();
 
@@ -1729,14 +1729,14 @@ int x5b_app_module_init(char *local, u_int16 port)
 		x5b_app_network_event_init(x5b_app_mgt);
 		//x5b_app_mgt->debug = X5_B_ESP32_DEBUG_TIME | X5_B_ESP32_DEBUG_EVENT | X5_B_ESP32_DEBUG_RECV | X5_B_ESP32_DEBUG_SEND | X5_B_ESP32_DEBUG_WEB | X5_B_ESP32_DEBUG_STATE;
 		x5b_app_mgt->debug = 0;//X5_B_ESP32_DEBUG_EVENT;
-#ifdef PL_UBUS_MODULE
+#ifdef PL_SERVICE_UBUS_SYNC
 		//ubus_sync_hook_install(x5_b_ubus_uci_update_cb);
 #endif
 	}
 #ifdef X5B_APP_DATABASE
 	x5b_user_load();
 #endif
-#ifdef BUILD_X86
+#ifdef PL_BUILD_X86
 	x5b_app_global->X5CM = TRUE;
 	x5b_app_global->opentype = OPEN_FACE_AND_CARD;
 	x5b_app_global->customizer = CUSTOMIZER_SECOM;
@@ -1770,7 +1770,7 @@ static int x5b_app_mgt_task(void *argv)
 	zassert(argv != NULL);
 	x5b_app_mgt_t *mgt = (x5b_app_mgt_t *)argv;
 	zassert(mgt != NULL);
-	module_setup_task(MODULE_APP_START, os_task_id_self());
+	module_setup_task(PL_APPLICATION_MODULE_START, os_task_id_self());
 	while(!os_load_config_done())
 	{
 		os_sleep(1);
@@ -1780,7 +1780,7 @@ static int x5b_app_mgt_task(void *argv)
 		os_sleep(5);
 	}
 	//x5b_app_state_load(mgt);
-	eloop_start_running(master_eloop[MODULE_APP_START], MODULE_APP_START);
+	eloop_start_running(master_eloop[PL_APPLICATION_MODULE_START], PL_APPLICATION_MODULE_START);
 	return OK;
 }
 
@@ -1788,8 +1788,8 @@ static int x5b_app_mgt_task(void *argv)
 static int x5b_app_task_init (x5b_app_mgt_t *mgt)
 {
 	zassert(mgt != NULL);
-	if(master_eloop[MODULE_APP_START] == NULL)
-		master_eloop[MODULE_APP_START] = eloop_master_module_create(MODULE_APP_START);
+	if(master_eloop[PL_APPLICATION_MODULE_START] == NULL)
+		master_eloop[PL_APPLICATION_MODULE_START] = eloop_master_module_create(PL_APPLICATION_MODULE_START);
 
 	mgt->enable = TRUE;
 	mgt->task_id = os_task_create("appTask", OS_TASK_DEFAULT_PRIORITY,

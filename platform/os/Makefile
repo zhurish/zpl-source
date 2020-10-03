@@ -39,7 +39,7 @@ clean: objclean
 	@$(RM) $(LIBS)
 
 objclean: 
-	@$(RM) $(OBJS_DIR)/*
+	@$(RM) -rf $(OBJS_DIR)/*
 
 all: lib install
 

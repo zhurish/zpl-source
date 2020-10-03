@@ -18,7 +18,7 @@
 #include "vty.h"
 
 
-#ifdef PL_SNTPS_MODULE
+#ifdef PL_SERVICE_SNTPS
 #include "sntpsLib.h"
 #ifndef SNTPS_CLI_ENABLE
 
@@ -192,7 +192,7 @@ DEFUN (show_sntps_server,
 #endif
 #endif
 
-#ifdef PL_SNTPC_MODULE
+#ifdef PL_SERVICE_SNTPC
 #include "sntpcLib.h"
 #ifndef SNTPC_CLI_ENABLE
 DEFUN (sntp_enable,
@@ -401,7 +401,7 @@ int cmd_sntpc_init()
 }
 #endif
 
-#ifdef PL_SNTPS_MODULE
+#ifdef PL_SERVICE_SNTPS
 int cmd_sntps_init()
 {
 #ifndef SNTPS_CLI_ENABLE

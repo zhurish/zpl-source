@@ -168,7 +168,7 @@ static int modem_timer_thread(void *argv)
 int modem_module_init ()
 {
 	modem_main_init();
-	modem_ansync_lst = os_ansync_lst_create(MODULE_MODEM, 4);
+	modem_ansync_lst = os_ansync_lst_create(PL_MODEM_MODULE, 4);
 	if(modem_ansync_lst)
 	{
 		os_ansync_timeout_api(modem_ansync_lst, OS_ANSYNC_SEC(5));

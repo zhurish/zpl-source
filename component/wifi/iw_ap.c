@@ -1152,7 +1152,7 @@ root@OpenWrt:/#
 */
 
 
-#ifdef BUILD_OPENWRT
+#ifdef PL_BUILD_OPENWRT
 int _iw_bridge_check_interface(char *br, char *wa)
 {
 	char buf[512];
@@ -1196,7 +1196,7 @@ static int iw_ap_scan_thread(struct thread * thread)
 	iw_ap_t *iw_ap = THREAD_ARG(thread);
 	if(iw_ap && iw_ap->master)
 	{
-#ifdef BUILD_OPENWRT
+#ifdef PL_BUILD_OPENWRT
 		struct interface *ifp = NULL;
 		char cmdtmp[128];
 		ifp = if_lookup_by_index(iw_ap->ifindex);
@@ -1248,7 +1248,7 @@ static int iw_ap_start_thread(struct thread * thread)
 	iw_ap_t *iw_ap = THREAD_ARG(thread);
 	if(iw_ap && iw_ap->master)
 	{
-#ifdef BUILD_OPENWRT
+#ifdef PL_BUILD_OPENWRT
 		struct interface *ifp = NULL;
 		char cmdtmp[128];
 		ifp = if_lookup_by_index(iw_ap->ifindex);
@@ -1365,7 +1365,7 @@ static int iw_ap_task(iw_ap_t *iw_ap)
 		os_sleep(iw_client->connect_delay);*/
 		struct thread thread;
 		//os_log_reopen(ZLOG_NSM);
-		while (thread_fetch (master_thread[MODULE_WIFI], &thread))
+		while (thread_fetch (master_thread[PL_WIFI_MODULE], &thread))
 			thread_call (&thread);
 	}
 	return OK;
@@ -1378,7 +1378,7 @@ int iw_ap_task_start(iw_ap_t *iw_ap)
 	if(!iw_ap)
 		return ERROR;
 	/* Make master thread emulator. */
-	master_thread[MODULE_WIFI] = thread_master_module_create (MODULE_WIFI);
+	master_thread[PL_WIFI_MODULE] = thread_master_module_create (PL_WIFI_MODULE);
 
 	if(iw_ap->taskid == 0)
 		iw_ap->taskid = os_task_create("iwApTask", OS_TASK_DEFAULT_PRIORITY,
@@ -1390,7 +1390,7 @@ int iw_ap_task_start(iw_ap_t *iw_ap)
 	if(!iw_ap)
 		return ERROR;
 	/* Make master thread emulator. */
-	iw_ap->master = master_thread[MODULE_WIFI] = thread_master_module_create (MODULE_WIFI);
+	iw_ap->master = master_thread[PL_WIFI_MODULE] = thread_master_module_create (PL_WIFI_MODULE);
 	return OK;
 #endif
 }
@@ -1404,7 +1404,7 @@ int iw_ap_task_exit(iw_ap_t *iw_ap)
 	if(iw_ap->taskid)
 	{
 		iw_ap_stop(iw_ap);
-		thread_master_free(master_thread[MODULE_WIFI]);
+		thread_master_free(master_thread[PL_WIFI_MODULE]);
 		if(os_task_destroy(iw_ap->taskid)==OK)
 			iw_ap->taskid = 0;
 	}
@@ -1420,7 +1420,7 @@ static int iw_ap_default_init(iw_ap_t *iw_ap, ifindex_t ifindex)
 	struct interface *ifp = NULL;
 	assert(iw_ap != NULL);
 	assert(ifindex);
-#ifdef BUILD_OPENWRT
+#ifdef PL_BUILD_OPENWRT
 	char cmdtmp[128];
 #endif
 	iw_ap->hw_mode			= IW_AP_HW_MODE_DEFAULT;
@@ -1445,7 +1445,7 @@ static int iw_ap_default_init(iw_ap_t *iw_ap, ifindex_t ifindex)
 		   iw_ap->BSSID[0], iw_ap->BSSID[1],
 			iw_ap->BSSID[2], iw_ap->BSSID[3], iw_ap->BSSID[4], iw_ap->BSSID[5]);
 
-#ifdef BUILD_OPENWRT
+#ifdef PL_BUILD_OPENWRT
 	if(ifp)
 	{
 		if(_iw_bridge_check_interface("br-lan", ifp->k_name) != OK)
@@ -1493,7 +1493,7 @@ int iw_ap_init(iw_ap_t *iw_ap, ifindex_t ifindex)
 
 int iw_ap_exit(iw_ap_t *iw_ap)
 {
-#ifdef BUILD_OPENWRT
+#ifdef PL_BUILD_OPENWRT
 	char cmdtmp[128];
 	struct interface *ifp = NULL;
 #endif
@@ -1538,7 +1538,7 @@ int iw_ap_exit(iw_ap_t *iw_ap)
 		os_mutex_exit(iw_ap->mutex);
 	iw_ap->mutex = NULL;
 
-#ifdef BUILD_OPENWRT
+#ifdef PL_BUILD_OPENWRT
 	ifp = if_lookup_by_index(iw_ap->ifindex);
 	if(ifp)
 	{

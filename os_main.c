@@ -328,9 +328,8 @@ int main (int argc, char **argv)
 	super_system("cd /app;./ProcessMU -D");
 #endif
 
-	printf("=======PJSIP_CA_SCHED=%s PJSIP_CA_SCHED_PRI=%s\r\n",
-			getenv("PJSIP_CA_SCHED"), getenv("PJSIP_CA_SCHED_PRI"));
-
+	//pl_pjsip_json_test();
+	
 	if(main_data.tty)
 		console_enable = 1;
 	//console_enable = 1;

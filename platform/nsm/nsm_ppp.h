@@ -177,7 +177,10 @@ typedef struct nsm_pppd_s
 
 
 
-
+int nsm_ppp_interface_redisconnect(nsm_pppd_t *ppp, BOOL enable);
+int nsm_ppp_interface_enable(struct interface *ifp, BOOL enable);
+int nsm_ppp_client_init();
+int nsm_ppp_client_exit();
 void cmd_ppp_init(void);
 
 

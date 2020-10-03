@@ -282,7 +282,7 @@ static int kernel_task_init ()
 {
 	if(master_eloop[MODULE_KERNEL] == NULL)
 		master_eloop[MODULE_KERNEL] = eloop_master_module_create(MODULE_KERNEL);
-	//master_thread[MODULE_TELNET] = thread_master_module_create(MODULE_TELNET);
+	//master_thread[PL_SERVICE_TELNET] = thread_master_module_create(PL_SERVICE_TELNET);
 	kernel_task_id = os_task_create("kernelTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, pal_abstract_task, NULL, OS_TASK_DEFAULT_STACK);
 	if(kernel_task_id)

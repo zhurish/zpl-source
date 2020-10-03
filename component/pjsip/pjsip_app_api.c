@@ -227,7 +227,7 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 	pl_pjsip_discodec_add_api("speex-wb");
 	pl_pjsip_discodec_add_api("ilbc");
 
-#ifdef BUILD_X86
+#ifdef PL_BUILD_X86
 	strcpy(sip->sip_user.sip_user, "100");
 	strcpy(sip->sip_user.sip_password, "100");
 	strcpy(sip->sip_server.sip_address, "192.168.0.103");
@@ -247,7 +247,29 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 	return OK;
 }
 
-int _pl_pjsip_module_init()
+#include "pjsip_jsoncfg.h"
+#include "pjsip_cfg.h"
+//handle SIGUSR2 nostop noprint
+int pl_pjsip_json_test()
+{
+	pjsip_config_t pj_config_tmp;
+/*
+	memset(&pj_config_tmp, 0, sizeof(pjsip_config_t));
+	pj_config_tmp.table_cnt = 2;
+	pjsip_endpoint_config_init(&pj_config_tmp.endpoint);
+	pjsip_account_config_init(&pj_config_tmp.pjsip_account_table[0]);
+	pjsip_account_config_init(&pj_config_tmp.pjsip_account_table[1]);
+	printf("ddddddddddddddddddddddddddddddddddddddddddddddd\r\n");
+	pjsip_config_write("./pjsip-json.txt", &pj_config_tmp);
+	printf("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\r\n");
+*/
+	printf("lllllllllllllllllllllllllllllllllllllllllllllll\r\n");
+	memset(&pj_config_tmp, 0, sizeof(pjsip_config_t));
+	pjsip_config_load("./pjsip-json.txt", &pj_config_tmp);
+	printf("lllllllllllllllllllllllllllllllllllllllllllllll :%d \r\n", pj_config_tmp.table_cnt);
+	return 0;
+}
+int pl_pjsip_module_init()
 {
 	if(pl_pjsip == NULL)
 		pl_pjsip = XMALLOC(MTYPE_VOIP, sizeof(pl_pjsip_t));
@@ -257,31 +279,47 @@ int _pl_pjsip_module_init()
 	pl_pjsip->mutex = os_mutex_init();
 	pl_pjsip_config_default(pl_pjsip);
 	pjsip_module_init();
+#ifdef APP_X5BA_MODULE
+	void_module_init(pl_pjsip);
+#endif
+
+
+
 	return OK;
 }
 
-int _pl_pjsip_module_exit()
+
+int pl_pjsip_module_exit()
 {
+#ifdef APP_X5BA_MODULE
+	void_module_exit(pl_pjsip);
+#endif
+
 	pjsip_module_exit();
 	if(pl_pjsip == NULL)
 		XFREE(MTYPE_VOIP, pl_pjsip);
 	pl_pjsip = NULL;
-
 	return OK;
 }
 
-
-int _pl_pjsip_module_task_init()
+int pl_pjsip_module_task_init()
 {
 	pjsip_module_task_init();
+#ifdef APP_X5BA_MODULE
+	void_module_task_init();
+#endif
 	return OK;
 }
 
-int _pl_pjsip_module_task_exit()
+int pl_pjsip_module_task_exit()
 {
+#ifdef APP_X5BA_MODULE
+	void_module_task_exit();
+#endif
 	pjsip_module_task_exit();
 	return OK;
 }
+
 /***************************************************************************************/
 /***************************************************************************************/
 char *pl_pjsip_dtmf_name(pjsip_dtmf_t dtmf)
@@ -3251,7 +3289,7 @@ BOOL pl_pjsip_isregister_api(void)
 	pjsip_server_t		sip_server;
 	pjsip_server_t		sip_server_sec;
 */
-#ifndef BUILD_X86
+#ifndef PL_BUILD_X86
 	if(x5b_app_port_status_get() == FALSE)
 	{
 		if(pl_pjsip->mutex)

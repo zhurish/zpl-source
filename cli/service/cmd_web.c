@@ -18,6 +18,7 @@
 #include "template.h"
 
 #ifdef PL_WEBGUI_MODULE
+#include "web_util.h"
 #include "web_api.h"
 #endif
 
@@ -258,6 +259,41 @@ DEFUN (webserver_gopass_roles,
 }
 
 
+DEFUN (debug_webserver_level,
+	   debug_webserver_level_cmd,
+		"debug webserver "LOG_LEVELS,
+		DEBUG_STR
+		"Webserver configure\n"
+		LOG_LEVEL_DESC)
+{
+	int ret = OK, level = 0;
+	if(argc == 1)
+	{
+		if ((level = zlog_priority_match(argv[0])) == ZLOG_DISABLED)
+			return CMD_ERR_NO_MATCH;
+	}
+	web_app_debug_set_api(level);
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (no_debug_webserver_level,
+	   no_debug_webserver_level_cmd,
+		"no debug webserver",
+		NO_STR
+		DEBUG_STR
+		"Webserver configure\n")
+{
+	int ret = OK;
+	web_app_debug_set_api(WEBS_ERROR);
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+static int webserver_debug_write_config(struct vty *vty, void *pVoid)
+{
+	web_app_debug_write_config(vty);
+	return 0;
+}
+
 static int webserver_write_config(struct vty *vty, void *pVoid)
 {
 	web_app_write_config(vty);
@@ -276,12 +312,17 @@ void cmd_webserver_init(void)
 			strcpy(temp->prompt, "webserver"); /* (config-app-esp)# */
 			temp->pVoid = NULL;
 			temp->write_template = webserver_write_config;
+			temp->show_debug = webserver_debug_write_config;
 			nsm_template_install(temp, 1);
 		}
 
 		install_element(CONFIG_NODE, &webserver_template_cmd);
 		install_element(CONFIG_NODE, &no_webserver_template_cmd);
 
+		install_element(CONFIG_NODE, &debug_webserver_level_cmd);
+		install_element(CONFIG_NODE, &no_debug_webserver_level_cmd);
+		install_element(ENABLE_NODE, &debug_webserver_level_cmd);
+		install_element(ENABLE_NODE, &no_debug_webserver_level_cmd);
 /*
 		install_element(TEMPLATE_NODE, &webserver_address_cmd);
 		install_element(TEMPLATE_NODE, &no_webserver_address_cmd);

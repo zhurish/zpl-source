@@ -54,7 +54,6 @@
 #define RING_CNT	    3
 #define RING_INTERVAL	    3000
 
-//#define PJMEDIA_VIDEO_DEV_HAS_AVI 0
 //#define current_acc	pjsua_acc_get_default()
 
 #ifdef STEREO_DEMO
@@ -1988,6 +1987,12 @@ int pjsua_app_restart(void)
 		pj_cli_quit(pjsua_cli_config.cli, NULL, PJ_TRUE);
      Invoke CLI stop callback (defined in pjsua_app.c)
     cli_on_stopped(PJ_TRUE, 0, NULL);*/
+	return 0;
+}
+
+int pjsua_app_exit(void)
+{
+	app_config.app_cli_running = FALSE;
 	return 0;
 }
 

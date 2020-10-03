@@ -199,7 +199,7 @@ extern int iw_ap_mac_del_api(iw_ap_t *iw_ap, u_int8 *mac, BOOL accept);
 
 
 
-#ifdef BUILD_OPENWRT
+#ifdef PL_BUILD_OPENWRT
 extern int _iw_bridge_check_interface(char *br, char *wa);
 #endif
 

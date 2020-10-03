@@ -47,7 +47,7 @@ typedef enum
 	HOUSING_NONE,
 	HOUSING_UNIT,
 	HOUSING_WALL,
-	HOUSING_BUILDING,
+	HOUSING_PL_BUILDING,
 } x5b_app_housing_t;		//小区场景下安装位置
 
 

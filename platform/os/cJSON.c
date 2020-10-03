@@ -666,6 +666,40 @@ int    cJSON_GetArraySize(cJSON *array)							{cJSON *c=array->child;int i=0;whi
 cJSON *cJSON_GetArrayItem(cJSON *array,int item)				{cJSON *c=array->child;  while (c && item>0) item--,c=c->next; return c;}
 cJSON *cJSON_GetObjectItem(cJSON *object,const char *string)	{cJSON *c=object->child; while (c && cJSON_strcasecmp(c->string,string)) c=c->next; return c;}
 
+
+
+int cJSON_GetObjectItemIntValue(cJSON *object,const char *string)
+{
+	cJSON *c=object->child;
+	while (c && cJSON_strcasecmp(c->string,string))
+		c=c->next;
+	return c?c->valueint:-1;
+}
+
+int cJSON_GetObjectItemBoolValue(cJSON *object,const char *string)
+{
+	cJSON *c=object->child;
+	while (c && cJSON_strcasecmp(c->string,string))
+		c=c->next;
+	return c?c->type:cJSON_False;
+}
+
+char* cJSON_GetObjectItemStringValue(cJSON *object,const char *string)
+{
+	cJSON *c=object->child;
+	while (c && cJSON_strcasecmp(c->string,string))
+		c=c->next;
+	return c?c->valuestring:NULL;
+}
+
+double cJSON_GetObjectItemDoubleValue(cJSON *object,const char *string)
+{
+	cJSON *c=object->child;
+	while (c && cJSON_strcasecmp(c->string,string))
+		c=c->next;
+	return c?c->valuedouble:0.0f;
+}
+
 /* Utility for array list handling. */
 static void suffix_object(cJSON *prev,cJSON *item) {prev->next=item;item->prev=prev;}
 /* Utility for handling references. */

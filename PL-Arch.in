@@ -1,0 +1,42 @@
+# DO NOT EDIT. This file is generated from Config.src
+#
+#
+
+menu "Platform Arch Config"
+
+config PL_SYSTEM_MODULE
+	bool "OS systems type"
+	default y
+	help
+	Build OS systems.
+
+choice
+	prompt "OS systems"
+	depends on PL_SYSTEM_MODULE
+	default PL_USEING_LINUX
+config PL_USEING_LINUX
+	bool "Linux systems"
+config PL_USEING_OPENWRT
+	bool "Openwrt systems"
+endchoice
+
+config PL_ARCH_MODULE
+	bool "ARCH CPU type"
+	default y
+
+choice
+	prompt "OS systems"
+	depends on PL_ARCH_MODULE
+	default PL_USEING_X86_64
+
+config PL_USEING_ARM
+	bool "ARM"
+config PL_USEING_ARM64
+	bool "ARM"
+config PL_USEING_X86
+	bool "X86"
+config PL_USEING_X86_64
+	bool "X86-64"	
+endchoice
+
+endmenu

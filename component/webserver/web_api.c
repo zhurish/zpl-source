@@ -296,6 +296,10 @@ int web_app_debug_set_api(int level)
 	return OK;
 }
 
+int web_app_debug_get_api()
+{
+	return websGetLogLevel();
+}
 int web_app_gopass_api(const char *username, const char *password,
 					   const char *cipher, const char *realm, char *encodedPassword)
 {
@@ -390,7 +394,47 @@ static int web_app_username_tbl(struct vty *vty)
 }
 
 
-
+int web_app_debug_write_config(struct vty *vty)
+{
+	if(websGetDebug())
+	{
+		switch(web_app_debug_get_api())
+		{
+			case WEBS_CRIT:
+			case WEBS_ALERT:
+			case WEBS_EMERG:
+				vty_out(vty, "debug webserver alerts%s",VTY_NEWLINE);
+				break;
+			case WEBS_ERROR:
+				vty_out(vty, "debug webserver errors%s",VTY_NEWLINE);
+				break;
+			case WEBS_WARN:
+				vty_out(vty, "debug webserver warnings%s",VTY_NEWLINE);
+				break;
+			case WEBS_INFO:
+				vty_out(vty, "debug webserver informational%s",VTY_NEWLINE);
+				break;
+			case WEBS_NOTICE:
+				vty_out(vty, "debug webserver notifications%s",VTY_NEWLINE);
+				break;
+			case WEBS_DEBUG:
+				vty_out(vty, "debug webserver debugging%s",VTY_NEWLINE);
+				break;
+			case WEBS_TRAP:
+				vty_out(vty, "debug webserver trapping%s",VTY_NEWLINE);
+				break;
+			case WEBS_CONFIG:
+				vty_out(vty, "debug webserver config%s",VTY_NEWLINE);
+				break;
+			case WEBS_VERBOSE:
+				vty_out(vty, "debug webserver verbose%s",VTY_NEWLINE);
+				break;
+			default:
+				break;
+		}
+	}
+	return 0;
+}
 
 int web_app_write_config(struct vty *vty)
 {

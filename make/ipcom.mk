@@ -1,0 +1,155 @@
+ifeq ($(PL_IPCOM_STACK_MODULE),true)
+
+export IPCOM_DEF = -DIPCOM_DRIVER_CB -DIPCOM_DRV_ETH_HOOK -DIPUTIL -DIPCOM_OS_THREAD -DIPCOM_THREAD \
+	-DIPCOM_NETSNMP -DNETSNMP -DIPSNMP -DIPCOM_USE_MIB2 -DIPNET6 -DIPCOM_USE_INET6 \
+	-DIPNET_USE_BOND -DIPNET -DIPCOM_USE_INET -DIPVRRP -DIPNET_MSP_DISTRIBUTION \
+	-DIPNET_STATISTICS -DIPTCP -DIPSCTP -DIPPPP -DIPIPSEC2 -DIPFIREWALL -DIP8021X \
+	-DIPDHCPC -DIPDNSC -DIPTFTPC -DIPTFTPS -DIPFTPC -DIPFTPS -DIPCRYPTO \
+	-DIPCRYPTO_USE_TYPE_MAPPING -DIPDHCPC6 -DIPDHCPR -DIPDHCPS6 -DIPDHCPS -DIPDIAMETER \
+	-DIPEAP -DIPIKE -DIPCOM_USE_FLOAT -DIPL2TP -DIPMCP -DIPMIP4 -DIPMIP6HA  -DIPMIP6MN \
+	-DIPMIP6 -DIPMIPFA -DIPMIPHA -DIPMIPMN -DIPMPLS -DIPMPLS_MULTIPLE_ROUTE_TABLES \
+	-DIPRADIUS -DIPRIPNG -DIPRIP -DIPSNTP -DIPSSH -DIPSSL -DIPRIPNG -DIPDIAMETER -DIPWLAN \
+	-DIPMIPPM -DIPMIP -DIPNET_USE_NETLINKSOCK -DIPROHC -DIPWPS -DIPCOM_DRV_ETH_SIMULATION 
+
+export IPCOM_INCLUDE = -I$(CONFIG_IPCOM_ROOT_PATH)/ipcom/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipcom/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipcom/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipcom/port/linux/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipcom/port/linux/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipcom/port/linux/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/iputil/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/iputil/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/osconfig/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/netsnmp/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/netsnmp/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/netsnmp/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/netsnmp/src/mib \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/netsnmp/netsnmp/snmplib \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/netsnmp/netsnmp/snmplib/transports \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/netsnmp/netsnmp/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/netsnmp/netsnmp/src/agent \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/netsnmp/netsnmp/src/agentx \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/netsnmp/netsnmp/src/helpers \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/netsnmp/netsnmp/src/mibII \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/netsnmp/netsnmp/src/snmpv3 \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/netsnmp/netsnmp/src/util_funcs \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipnet2/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipnet2/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipnet2/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/iptcp/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/iptcp/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/iptcp/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipsctp/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipsctp/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipsctp/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipppp/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipppp/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipppp/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipipsec2/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipipsec2/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipipsec2/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipfirewall/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipfirewall/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipfirewall/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ip8021x/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ip8021x/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipwlan/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipappl/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipappl/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipcrypto/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipcrypto/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipcrypto/openssl-0_9_8/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipcrypto/openssl-0_9_8/crypto \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipcrypto/openssl-0_9_8  \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipdhcpc6/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipdhcpc6/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipdhcpc6/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipdhcpr/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipdhcpr/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipdhcps6/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipdhcps6/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipdhcps/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipdhcps/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipdiameter/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipdiameter/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipdiameter/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipeap/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipeap/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipike/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipike/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipl2tp/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipl2tp/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipl2tp/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmcp/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmcp/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmip4/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmip4/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmip6ha/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmip6ha/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmip6ha/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmip6mn/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmip6mn/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmip6mn/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmip6/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmip6/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmip6/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmipfa/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmipfa/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmipfa/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmipha/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmipha/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmipha/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmipmn/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmipmn/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmipmn/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmpls/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmpls/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmpls/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipradius/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipradius/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipripng/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipripng/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipripng/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/iprip/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/iprip/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipsntp/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipsntp/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipssh/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipssh/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipssl2/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipssl2/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipssl2/openssl-0_9_8/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipripng/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipripng/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipripng/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipdiameter/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipdiameter/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipdiameter/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipwlan/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipwlan/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmippm/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmippm/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmippm/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmip/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmip/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/iprohc/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/iprohc/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/iprohc/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipwps/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipwps/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/simulation/config \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/simulation/include \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/simulation/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipappl/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipdhcpr/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipdhcps6/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipdhcps/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipl2tp/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipmcp/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipradius/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipsntp/src \
+				  -I$(CONFIG_IPCOM_ROOT_PATH)/ipwlan/src
+
+export IPCOM_LIBDIR = $(CONFIG_IPCOM_ROOT_PATH)/debug/lib
+endif
+#

@@ -62,6 +62,9 @@ extern unsigned long zebra_debug_rib;
 extern unsigned long zebra_debug_fpm;
 extern unsigned long zebra_debug_nht;
 
+extern int cmd_debug_init();
+
+//extern int config_zebra_write_debug (struct vty *vty);
 extern void zebra_debug_init (void);
 
 #endif /* _ZEBRA_DEBUG_H */

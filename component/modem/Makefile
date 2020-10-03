@@ -2,7 +2,6 @@ include $(MAKE_DIR)/makelinux.mk
 
 include config.mk
 
-#OBJS = $(OSOBJ)
 
 OBJS_DIR = $(BASE_ROOT)/$(OBJDIR)/$(MODULEDIR)
 SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
@@ -20,38 +19,23 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
 
 $(LIBS) : $(MODULE_OBJS)
-	@$(AR) -rs $(LIBS) $(MODULE_OBJS) $(MODULE_APPOBJS) 
+	@$(AR) -rs $(LIBS) $(MODULE_OBJS)
 
 
 #
 lib: $(LIBS)
-	@${MAKE} -C  src all
 
-obj: $(MODULE_OBJS) $(MODULE_LIBOBJS)
+obj: $(MODULE_OBJS)
 
-ifeq ($(BUILD_DEBUG),YES)
 install: $(LIBS)
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
 	@$(STRIP) $(PLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
-	@${MAKE} -C  src install DEST_BIN_DIR=$(DSTSBINDIR)
-else
-install: $(LIBS)
-	@install -d $(LIB_DIR)
-	@install -m 755 $(LIBS) $(LIB_DIR)
-	$(STRIP) $(PLSTRIP_CFLAGS)$(LIB_DIR)/$(LIBS)	
-	@${MAKE} -C  src install DEST_BIN_DIR=$(DSTSBINDIR)
-endif
 
-#install: $(LIBS)
-#	install -d $(LIB_DIR)
-#	install -m 755 $(LIBS) $(LIB_DIR)
-#	$(STRIP) $(LIB_DIR)/$(LIBS)
 
 clean: objclean
 	@$(RM) $(LIB_DIR)/$(LIBS)
 	@$(RM) $(LIBS)
-	@${MAKE} -C  src clean DEST_BIN_DIR=$(DSTSBINDIR)
 
 objclean: 
 	@$(RM) $(OBJS_DIR)/* -rf

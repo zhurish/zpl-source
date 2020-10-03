@@ -162,10 +162,10 @@ PUBLIC_DATA int __websLogLevel;
 #define WEBS_NOTICE		LOG_NOTICE
 #define WEBS_INFO		LOG_INFO
 #define WEBS_DEBUG		LOG_DEBUG
-#define WEBS_TRAP		(LOG_DEBUG+1)
+#define WEBS_TRAP		(WEBS_DEBUG+1)
 
-#define WEBS_CONFIG         2           /**< Configuration settings trace level. */
-#define WEBS_VERBOSE        9           /**< Highest level of trace */
+#define WEBS_CONFIG     (WEBS_DEBUG+2)           /**< Configuration settings trace level. */
+#define WEBS_VERBOSE    (WEBS_DEBUG+3)           /**< Highest level of trace */
 
 #else
 #define WEBS_CRIT		0
@@ -177,8 +177,8 @@ PUBLIC_DATA int __websLogLevel;
 #define WEBS_INFO		6
 #define WEBS_DEBUG		7
 #define WEBS_TRAP		(WEBS_DEBUG+1)
-#define WEBS_CONFIG     2           /**< Configuration settings trace level. */
-#define WEBS_VERBOSE    9           /**< Highest level of trace */
+#define WEBS_CONFIG     (WEBS_DEBUG+2)           /**< Configuration settings trace level. */
+#define WEBS_VERBOSE    (WEBS_DEBUG+3)           /**< Highest level of trace */
 #endif
 #define WEBS_LEVEL_MASK     0xF         /**< Level mask */
 

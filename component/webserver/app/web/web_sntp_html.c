@@ -18,7 +18,7 @@
 #include "vty.h"
 #include "vty_user.h"
 
-#ifdef PL_SNTPC_MODULE
+#ifdef PL_SERVICE_SNTPC
 #include "sntpcLib.h"
 
 #include "web_util.h"
@@ -165,4 +165,4 @@ int web_sntp_app(void)
 	return 0;
 }
 
-#endif /* PL_SNTPC_MODULE */
+#endif /* PL_SERVICE_SNTPC */

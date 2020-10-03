@@ -58,10 +58,10 @@ struct host_system
 {
 	u_int8		process;
 	double		freq;
-#ifdef BUILD_X86
+#ifdef PL_BUILD_X86
 	char		*model_name;
 #else
-#ifdef BUILD_MIPS
+#ifdef PL_BUILD_MIPS
 //#error "aaaaaaaaaaaaaaaaaaaa"
 #endif
 	char		*system_type;

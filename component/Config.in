@@ -1,0 +1,180 @@
+# DO NOT EDIT. This file is generated from Config.src
+#
+#
+
+menu "Component Module Config"
+
+config PL_COMPONENT_MODULE
+	bool "Component Module"
+	default y
+
+config PL_MODEM_MODULE
+	bool "MODEM Module"
+	default n
+	depends on PL_COMPONENT_MODULE
+	help
+	Build MODEM Module.
+
+config PL_MQTT_MODULE
+	bool "MQTT Module"
+	default n
+	depends on PL_COMPONENT_MODULE
+	help
+	Build MQTT Module.
+
+config PL_MQTT_SSL
+	bool "MQTT SSL Module"
+	default n
+	depends on PL_MQTT_MODULE
+	help
+	Build MQTT SSL Module.
+
+config PL_MQTT_SRV
+	bool "MQTT Server Module"
+	default n
+	depends on PL_MQTT_MODULE
+	help
+	Build MQTT Server Module.
+
+
+config PL_PJSIP_MODULE
+	bool "Pjsip Module"
+	depends on PL_PJPROJECT_MODULE && PL_COMPONENT_MODULE
+	default n
+	help
+	Build Pjsip Module.
+
+config PL_PJSIP_PJSUA2
+	bool "Pjsip pjsua2 Module"
+	default y
+	depends on PL_PJSIP_MODULE
+	help
+	Build Pjsip pjsua2 Module.
+
+config PL_SQLITE_MODULE
+	bool "Sqlite Module"
+	default y
+	depends on PL_COMPONENT_MODULE
+	help
+	Build Sqlite Module.
+
+config PL_SQLITE_EXE_MODULE
+	bool "Sqlite app Module"
+	default y
+	depends on PL_SQLITE_MODULE
+	help
+	Build Sqlite exe app Module.
+
+config PL_LIBSSH_MODULE
+	bool "LIBSSH Module"
+	depends on PL_OPENSSL_MODULE && PL_COMPONENT_MODULE
+	default n
+	help
+	Build SHH Module.
+
+config PL_LIBSSH_NACL
+	bool "Libssh NACL"
+	depends on PL_LIBSSH_MODULE
+	default n
+	help
+	Build Libssh whih NACL Module.
+
+config PL_LIBSSH_ZLIB
+	bool "Libssh ZLIB"
+	depends on PL_LIBSSH_MODULE
+	default y
+	help
+	Build Libssh whih ZLIB Module.
+config PL_LIBSSH_SFTP
+	bool "Libssh SFTP"
+	depends on PL_LIBSSH_MODULE
+	default y
+	help
+	Build Libssh whih SFTP Module.
+config PL_LIBSSH_SSH1
+	bool "Libssh SSH1"
+	depends on PL_LIBSSH_MODULE
+	default y
+	help
+	Build Libssh whih SSH1 Module.
+config PL_LIBSSH_GCRYPT
+	bool "Libssh GCRYPT"
+	depends on PL_LIBSSH_MODULE
+	default n
+	help
+	Build Libssh whih GCRYPT Module.
+config PL_LIBSSH_SERVER
+	bool "Libssh SERVER"
+	depends on PL_LIBSSH_MODULE
+	default y
+	help
+	Build Libssh whih SERVER Module.
+config PL_LIBSSH_PTHREAD
+	bool "Libssh PTHREAD"
+	depends on PL_LIBSSH_MODULE
+	default y
+	help
+	Build Libssh whih PTHREAD Module.
+config PL_LIBSSH_GSSAPI
+	bool "Libssh GSSAPI"
+	depends on PL_LIBSSH_MODULE
+	default n
+	help
+	Build Libssh whih GSSAPI Module.
+
+config PL_UDHCP_MODULE
+	bool "UDHCP Module"
+	default y
+	depends on PL_COMPONENT_MODULE
+	help
+	Build UDHCP Module.
+
+config PL_UDHCPS_MODULE
+	bool "UDHCP Server Module"
+	depends on PL_UDHCP_MODULE
+	default y
+	help
+	Build UDHCP Server Module.
+
+config PL_UDHCPC_MODULE
+	bool "UDHCP Client Module"
+	depends on PL_UDHCP_MODULE
+	default y
+	help
+	Build UDHCP Client Module.
+
+config PL_UDHCPR_MODULE
+	bool "UDHCP Relay Module"
+	depends on PL_UDHCP_MODULE
+	default y
+	help
+	Build UDHCP Relay Module.
+
+config PL_WEBSERVER_MODULE
+	bool "WEB Server Module"
+	default y
+	depends on PL_COMPONENT_MODULE
+	help
+	Build WEB Server Module.
+	choice 
+		prompt "WEB Server SSL"
+		depends on PL_WEBSERVER_MODULE
+		default PL_WEBSERVER_OPENSSL
+		config PL_WEBSERVER_OPENSSL
+			bool "WEB Server OPENSSL"
+		config PL_WEBSERVER_MATRIXSSL
+			bool "WEB Server MATRIXSSL"
+		config PL_WEBSERVER_MBEDTLS
+			bool "WEB Server MBEDTLS"
+		config PL_WEBSERVER_NANOSSL
+			bool "WEB Server NANOSSL"
+	endchoice
+
+config PL_WIFI_MODULE
+	bool "WIFI Module"
+	default n
+	depends on PL_COMPONENT_MODULE
+	help
+	Build WIFI Module.
+
+endmenu

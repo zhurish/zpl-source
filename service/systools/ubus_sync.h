@@ -9,7 +9,7 @@
 #define __UBUS_SYNC_H__
 
 
-#ifdef PL_UBUS_MODULE
+#ifdef PL_SERVICE_UBUS_SYNC
 
 #define UBUS_SYNC_BUF_MAX	1024
 #define UBUS_SYNC_CB_MAX		16
@@ -49,6 +49,6 @@ extern int ubus_sync_reset(void);
 extern int ubus_sync_exit(void);
 
 
-#endif /* PL_UBUS_MODULE */
+#endif /* PL_SERVICE_UBUS_SYNC */
 
 #endif /* __UBUS_SYNC_H__ */

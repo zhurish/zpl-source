@@ -1,3 +1,5 @@
+PL_MQTT_BROKER=true
+include ../config-def.mk
 include ../config.mk
 
 .PHONY: all install clean

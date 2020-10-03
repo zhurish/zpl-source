@@ -88,9 +88,9 @@ static int nsm_ppp_del_interface(struct interface *ifp)
 
 static int nsm_ppp_interface_config(struct vty *vty, struct interface *ifp)
 {
-	int i = 0;
-	int count = 0;
-	char tmp[128];
+	//int i = 0;
+	//int count = 0;
+	//char tmp[128];
 	char tmpcli_str[256];
 	struct nsm_interface *nsm_ifp = NULL;
 	nsm_pppd_t *nsm_ppp = NULL;
@@ -105,7 +105,7 @@ static int nsm_ppp_interface_config(struct vty *vty, struct interface *ifp)
 	return OK;
 }
 
-static int nsm_ppp_client_init()
+int nsm_ppp_client_init()
 {
 	struct nsm_client *nsm = nsm_client_new ();
 	nsm->notify_add_cb = nsm_ppp_add_interface;

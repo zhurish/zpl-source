@@ -10,7 +10,7 @@
 #include "network.h"
 #include "eloop.h"
 
-#ifdef PL_UBUS_MODULE
+#ifdef PL_SERVICE_UBUS_SYNC
 
 #include "ubus_sync.h"
 
@@ -278,5 +278,5 @@ int ubus_sync_exit(void)
 	}
 	return OK;
 }
-#endif /* PL_UBUS_MODULE */
+#endif /* PL_SERVICE_UBUS_SYNC */
 

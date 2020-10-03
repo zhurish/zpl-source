@@ -30,8 +30,8 @@
 #include "web_api.h"
 
 #ifndef THEME_V9UI
-//#define BUILD_OPENWRT
-#ifdef BUILD_OPENWRT
+//#define PL_BUILD_OPENWRT
+#ifdef PL_BUILD_OPENWRT
 /*
 config switch
         option name 'switch0'
@@ -760,7 +760,7 @@ static int web_switch_port_tbl(Webs *wp, char *path, char *query)
 int web_switch_app(void)
 {
 #ifndef THEME_V9UI
-#ifdef BUILD_OPENWRT
+#ifdef PL_BUILD_OPENWRT
 	switch_dev_init();
 	websFormDefine("port-tbl", web_switch_port_tbl);
 	web_button_add_hook("switch", "save", web_switch_handle, NULL);

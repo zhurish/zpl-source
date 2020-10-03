@@ -1,0 +1,72 @@
+# DO NOT EDIT. This file is generated from Config.src
+#
+#
+
+menu "Product Module Config"
+
+config PL_PRODUCT_MODULE
+	bool "Product Module"
+	default y
+	help
+	Build Product Module.
+
+config PL_PRODUCT_L2SWITCH
+	bool "L2 Switch Module"
+	default n
+	depends on PL_PRODUCT_MODULE
+	help
+	Build L2 Switch Module.
+
+config PL_PRODUCT_L3ROUTE
+	bool "L3 Route Module"
+	default y
+	depends on PL_PRODUCT_MODULE
+	help
+	Build L3 Route Module.
+
+config PL_VPN_MODULE
+	bool "VPN Module"
+	default y
+	depends on PL_PRODUCT_MODULE
+	help
+	Build VPN Module.
+
+config PL_IPCOM_STACK_MODULE
+	bool "IPCOM IP/TCP Stack Module"
+	default n
+	depends on PL_PRODUCT_MODULE
+	help
+	Build IPCOM IP/TCP Stack Module.
+
+config PL_IPCOM_ROOT_PATH
+	string
+	prompt "IPCOM IP/TCP Stack Root Path"
+	default "/home/zhurish/workspace/ipnet2.6"
+	depends on PL_IPCOM_STACK_MODULE
+	help
+		Specify directories IPCOM IP/TCP Stack Source
+
+config PL_KERNEL_STACK_MODULE
+	bool "Linux Kernel IP/TCP Stack Module"
+	default y
+	depends on PL_PRODUCT_MODULE
+	help
+	Build Linux Kernel IP/TCP Stack Module.
+
+
+config PL_PRODUCT_BSP_MODULE
+	bool "BSP Module"
+	depends on PL_PRODUCT_MODULE
+	default y
+	help
+	Build BSP Module.
+
+config PL_PRODUCT_SDK_MODULE
+	bool "Switch SDK Module"
+	depends on PL_PRODUCT_MODULE
+	select PL_PRODUCT_L2SWITCH
+	default n
+	help
+	Build Switch SDK Module.
+	
+endmenu

@@ -125,7 +125,7 @@ static int x5b_app_global_mode_config_load(x5b_app_global_t *gl)
 		else if(strcasestr (tmp, "Wall"))
 			gl->housing = HOUSING_WALL;
 		else if(strcasestr (tmp, "Building"))
-			gl->housing = HOUSING_BUILDING;
+			gl->housing = HOUSING_PL_BUILDING;
 	}
 
 	memset(tmp, 0, sizeof(tmp));
@@ -207,7 +207,7 @@ int x5b_app_global_mode_config_save(void)
 		ret = os_uci_set_string("product.global.housing_location", "Unit");
 	else if(x5b_app_global->housing == HOUSING_WALL)
 		ret = os_uci_set_string("product.global.housing_location", "Wall");
-	else if(x5b_app_global->housing == HOUSING_BUILDING)
+	else if(x5b_app_global->housing == HOUSING_PL_BUILDING)
 		ret = os_uci_set_string("product.global.housing_location", "Building");
 
 	if(x5b_app_global->install_scene == APP_SCENE_HOUSING)
@@ -855,8 +855,8 @@ static int _x5b_app_global_show(struct vty *vty)
 			vty_out(vty, " Housing Scene           : %s %s", "UNIT", VTY_NEWLINE);
 		else if(x5b_app_global->housing == HOUSING_WALL)
 			vty_out(vty, " Housing Scene           : %s %s", "WALL", VTY_NEWLINE);
-		else if(x5b_app_global->housing == HOUSING_BUILDING)
-			vty_out(vty, " Housing Scene           : %s %s", "BUILDING", VTY_NEWLINE);
+		else if(x5b_app_global->housing == HOUSING_PL_BUILDING)
+			vty_out(vty, " Housing Scene           : %s %s", "PL_BUILDING", VTY_NEWLINE);
 
 		if(strlen(x5b_app_global->devicename))
 			vty_out(vty, " Devicename              : %s %s", x5b_app_global->devicename, VTY_NEWLINE);

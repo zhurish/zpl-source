@@ -142,6 +142,22 @@ extern void cJSON_Minify(char *json);
 #define cJSON_SetIntValue(object,val)			((object)?(object)->valueint=(object)->valuedouble=(val):(val))
 #define cJSON_SetNumberValue(object,val)		((object)?(object)->valueint=(object)->valuedouble=(val):(val))
 
+
+extern int cJSON_GetObjectItemIntValue(cJSON *object,const char *string);
+extern int cJSON_GetObjectItemBoolValue(cJSON *object,const char *string);
+extern char* cJSON_GetObjectItemStringValue(cJSON *object,const char *string);
+extern double cJSON_GetObjectItemDoubleValue(cJSON *object,const char *string);
+
+
+
+
+#define cJSON_HaveObject(object,name)		cJSON_GetObjectItem(object, name)
+#define cJSON_GetIntValue(object,name)		cJSON_GetObjectItemIntValue(object, name)
+#define cJSON_GetBoolValue(object,name)		cJSON_GetObjectItemBoolValue(object, name)
+#define cJSON_GetStringValue(object,name)		cJSON_GetObjectItemStringValue(object, name)
+#define cJSON_GetDoubleValue(object,name)		cJSON_GetObjectItemDoubleValue(object, name)
+
+
 #ifdef __cplusplus
 }
 #endif

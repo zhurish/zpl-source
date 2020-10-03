@@ -162,10 +162,10 @@ typedef struct pjsua_app_config
     /* AVI to play */
     unsigned                avi_cnt;
     struct {
-	pj_str_t		path;
-	pjmedia_vid_dev_index	dev_id;
-	pjsua_conf_port_id	slot;
-    } avi[PJSUA_APP_MAX_AVI];
+	    pj_str_t		path;
+	    pjmedia_vid_dev_index	dev_id;
+	    pjsua_conf_port_id	slot;
+        } avi[PJSUA_APP_MAX_AVI];
     pj_bool_t               avi_auto_play;
     int			    avi_def_idx;
 
@@ -191,15 +191,7 @@ typedef struct pjsua_app_config
 
 /** Extern variable declaration **/
 extern pjsua_app_config	    app_config;
-/*
-extern pjsua_call_id	    current_call;
-extern pjsua_app_config	    app_config;
-extern int		    stdout_refresh;
-extern pj_bool_t	    stdout_refresh_quit;
-extern pjsua_call_setting   call_opt;
-extern pjsua_msg_data	    msg_data;
-extern pj_bool_t	    app_running;
-*/
+
 
 
 pj_bool_t app_incoming_call();

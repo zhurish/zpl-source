@@ -7,7 +7,7 @@ OBJS	+= cmd_sntp.o
 OBJS	+= cmd_systools.o
 
 OBJS	+= cmd_ssh.o
-ifeq ($(strip $(MODULE_WEB)),true)
+ifeq ($(strip $(PL_WEBSERVER_MODULE)),true)
 OBJS	+= cmd_web.o
 endif
 #############################################################################

@@ -18,7 +18,7 @@ extern "C" {
 #endif
 
 //#include "vxWorks.h"
-#ifdef PL_SYSLOG_MODULE
+#ifdef PL_SERVICE_SYSLOG
 /* syslog port */
 
 #define SYSLOGC_DEFAULT_PORT   514

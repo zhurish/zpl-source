@@ -20,11 +20,13 @@ LIB_DIR = $(BASE_ROOT)/$(LIBDIR)
 
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
 
-ifneq ($(TOBJS),)
-TARGET = auddemo
-TMODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(TOBJS))
+ifeq ($(strip $(PL_PJSIP_PJSUA2)),true)
+MODULE_PJSUA2_OBJS  := $(addprefix $(OBJS_DIR)/,$(PJSUA2OBJ))
+PJSUA2TEST_OBJS  := $(addprefix $(OBJS_DIR)/,$(PJSUA2TEST))
 endif
+
 PLCFLAGS +=-DPJ_AUTOCONF=1 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1
+PLCPPFLAGS += -g -DPJ_AUTOCONF=1 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1 
 #PLCFLAGS += -Werror=format
 #
 #CFLAGS += -UHAVE_CONFIG_H
@@ -33,16 +35,42 @@ PLCFLAGS +=-DPJ_AUTOCONF=1 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1
 #PL_LDLIBS += -lpj -lpjlib-util -lpjmedia -lpjmedia-audiodev -lpjmedia-codec\
 #			 -lpjmedia-videodev -lpjnath -lpjsip -lpjsip-simple -lpjsip-ua \
 #				-lpjsua -lsrtp
-					
+
+
 $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c 
-	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl lib
-	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl install
+#ifeq ($(strip $(PL_PJPROJECT_MODULE)),true)
+#	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl lib
+#	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl install
+#endif	
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
 	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
 	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE) $(PL_PJINC)
+
+#
+#
+#
+ifeq ($(strip $(PL_PJSIP_PJSUA2)),true)
+$(OBJS_DIR)/%.o: $(SRC_DIR)/pjsua2/%.cpp 
+	@if test ! -d $(OBJS_DIR) ; \
+		then \
+		$(MKDIR) -p $(OBJS_DIR) ; \
+	fi
+	@$(ECHO) CXX '$(PLCPPFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLINCLUDE)' $@
+	@$(CXX) -fPIC $(PLCPPFLAGS) $(PLDEFINE) $(PLDEBUG) -c  $< -o $@ $(PLINCLUDE) $(PL_PJINC)
+
+#
+$(OBJS_DIR)/%.o: $(SRC_DIR)/pjsua2/%.c 
+	@if test ! -d $(OBJS_DIR) ; \
+		then \
+		$(MKDIR) -p $(OBJS_DIR) ; \
+	fi
+	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLINCLUDE)' $@
+	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) -c  $< -o $@ $(PLINCLUDE) $(PL_PJINC)
+endif
+#	
 #
 ifeq ($(PJMEDIA_SDL2_ENABLE),true)
 SDL2LIBS:
@@ -59,66 +87,90 @@ SDL2CLEAN:
 endif
 
 
-$(LIBS) : $(SDL2LIBS) $(MODULE_OBJS) 
-#	$(MAKE) -C $(PLBASE)/externsions/pjproject-2.8 dep
-#	$(MAKE) -C $(PLBASE)/externsions/pjproject-2.8 lib
-#	$(MAKE) -C $(PLBASE)/externsions/pjproject-2.8 install
+ifeq ($(strip $(PL_PJPROJECT_MODULE)),0)
+PL_PJPROJECT_LIBS:
+	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl lib
+	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl install
+
+PL_PJPROJECT_UNLIBS:
+	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl uninstall
+	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl clean
+
+else
+PL_PJPROJECT_LIBS:
+	@$(ECHO) " "
+
+PL_PJPROJECT_UNLIBS:
+	@$(ECHO) " "
+endif
+
+
+
+$(LIBS) : $(PL_PJPROJECT_LIBS) $(SDL2LIBS) $(MODULE_OBJS) 
 	@$(AR) -rs $(LIBS) $(MODULE_OBJS) 
 
-ifneq ($(TOBJS),)
-LDCLFLAG = $(PLOS_LDLIBS) -L$(DSTULIBDIR) $(PL_LDLIBS) 
+ifeq ($(strip $(PL_PJSIP_PJSUA2)),true)
+$(PJSUA2LIBS) : $(MODULE_PJSUA2_OBJS)
+	#$(CXX) -shared -o  $(PJSUA2LIBS) $(MODULE_PJSUA2_OBJS)
+	@$(AR) -rs $(PJSUA2LIBS) $(MODULE_PJSUA2_OBJS)
 
-$(TARGET): $(TMODULE_OBJS)
-	$(CC) $(TMODULE_OBJS) $(CFLAGS) $(LDCLFLAG) -o $(TARGET) 
-endif		
+PJPLLDCLFLAG += -L$(BASE_ROOT)/$(ULIBDIR) -L$(LIB_DIR) 
 
 
-#lib: $(LIBS)
+$(PJSUA2TEST_BIN) : $(PJSUA2TEST_OBJS) 
+	$(CXX) $(PJSUA2TEST_OBJS) $(PLCPPFLAGS) $(PJPLLDCLFLAG) $(PLLDLIBS) -Xlinker "-(" -ljsoncpp -lpjsipc++ -Xlinker "-)" -o $(PJSUA2TEST_BIN) 
+endif
 #
 #
 -include $(MODULE_OBJS:.o=.d)
-#
-#
-#$(LIBS) : $(MODULE_OBJS)
-#	$(PL_MAKE_LIB) $(LIBS) $(MODULE_OBJS)
-#
-lib: $(LIBS)
-
-
-ifneq ($(TOBJS),)
-obj: $(MODULE_OBJS) $(MODULE_LIBOBJS) $(TMODULE_OBJS)
-
-install: $(TARGET)
-	@install -d $(LIB_DIR)
-	@install -m 755 $(LIBS) $(LIB_DIR)
-	@$(STRIP) $(PLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
-#	$(STRIP) $(LIB_DIR)/$(LIBS)
-#	install -m 755 lib*.so $(LIB_DIR)
-#	install -m 755 lib*.so.* $(LIB_DIR)
-	@install -d ${DSTSBINDIR}
-	@install -m 755 ${TARGET} ${DSTSBINDIR} 
-	#$(STRIP) ${DSTSBINDIR}/${TARGET}
-else
-obj: $(MODULE_OBJS) $(MODULE_LIBOBJS)
-
-install: 
-	@install -d $(LIB_DIR)
-	@install -m 755 $(LIBS) $(LIB_DIR)
-	@$(STRIP) $(PLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
-#	$(STRIP) $(LIB_DIR)/$(LIBS)
-#	install -m 755 lib*.so $(LIB_DIR)
-#	install -m 755 lib*.so.* $(LIB_DIR)	
+ifeq ($(strip $(PL_PJSIP_PJSUA2)),true)
+-include $(MODULE_PJSUA2_OBJS:.o=.d)
+-include $(PJSUA2TEST_OBJS:.o=.d)
 endif
+#
+#
+#
+ifeq ($(strip $(PL_PJSIP_PJSUA2)),true)
+lib: $(LIBS) $(PJSUA2LIBS)
+
+obj: $(MODULE_OBJS) $(MODULE_PJSUA2_OBJS) $(PJSUA2TEST_OBJS) 
+
+install-lib:
+	@install -d $(LIB_DIR)
+	@install -m 755 $(LIBS) $(LIB_DIR)
+	@$(STRIP) $(PLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
+	@install -m 755 $(PJSUA2LIBS) $(LIB_DIR)
+	@$(STRIP) $(PLSTRIP_CFLAGS) $(LIB_DIR)/$(PJSUA2LIBS)
+	 
+install: install-lib $(PJSUA2TEST_BIN)
+	@install -m 755 ${PJSUA2TEST_BIN} ${DSTSBINDIR}
 
 clean: $(SDL2CLEAN) objclean
 	@$(RM) $(LIB_DIR)/$(LIBS)
 	@$(RM) $(LIBS)
+	@$(RM) $(LIB_DIR)/$(PJSUA2LIBS)
+	@$(RM) $(PJSUA2LIBS)
+else
+lib: $(LIBS)
 
-objclean: 
-	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl uninstall
-	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl clean
+obj: $(MODULE_OBJS)
+
+install-lib:
+	@install -d $(LIB_DIR)
+	@install -m 755 $(LIBS) $(LIB_DIR)
+	@$(STRIP) $(PLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
+	 
+install: install-lib
+
+clean: objclean
+	@$(RM) $(LIB_DIR)/$(LIBS)
+	@$(RM) $(LIBS)
+
+endif
+
+objclean: $(PL_PJPROJECT_LIBS) 
 	@$(RM) $(OBJS_DIR)/*
 
 all: lib install
 
-.PHONY:	obj all lib install objclean clean
+.PHONY:	obj all lib install objclean clean install-lib

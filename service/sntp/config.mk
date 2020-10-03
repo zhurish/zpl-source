@@ -3,10 +3,10 @@
 ###########################################################################
 MODULEDIR = service/sntp
 #OS
-ifeq ($(strip $(MODULE_SNTPC)),true)
+ifeq ($(strip $(PL_SERVICE_SNTPC)),true)
 OBJS	+= sntpcLib.o
 endif
-ifeq ($(strip $(MODULE_SNTPS)),true)
+ifeq ($(strip $(PL_SERVICE_SNTPS)),true)
 OBJS	+= sntpsLib.o
 endif
 

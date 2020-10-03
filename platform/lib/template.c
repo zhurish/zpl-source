@@ -141,7 +141,7 @@ int nsm_template_show_config (struct vty *vty, BOOL detail)
 	return ret;
 }
 
-int nsm_service_write_config (struct vty *vty)
+int nsm_template_service_write_config (struct vty *vty)
 {
 	int ret = 0;
 	struct listnode *node;
@@ -159,7 +159,7 @@ int nsm_service_write_config (struct vty *vty)
 	return ret;
 }
 
-int nsm_service_show_config (struct vty *vty, BOOL detail)
+int nsm_template_service_show_config (struct vty *vty, BOOL detail)
 {
 	int ret = 0;
 	struct listnode *node;
@@ -170,6 +170,43 @@ int nsm_service_show_config (struct vty *vty, BOOL detail)
 		{
 			ret = 0;
 			ret = (template->show_template)(vty, template->pVoid, detail);
+			if(ret)
+				vty_out(vty, "!%s", VTY_NEWLINE);
+		}
+	}
+	return ret;
+}
+
+
+int nsm_template_debug_show_config (struct vty *vty, BOOL detail)
+{
+	int ret = 0;
+	struct listnode *node;
+	template_t  *template;
+	for (ALL_LIST_ELEMENTS_RO(service_list, node, template))
+	{
+		if(template->show_debug)
+		{
+			ret = 0;
+			ret = (template->show_debug)(vty, template->pVoid, detail);
+			if(ret)
+				vty_out(vty, "!%s", VTY_NEWLINE);
+		}
+	}
+	return ret;
+}
+
+int nsm_template_debug_write_config (struct vty *vty)
+{
+	int ret = 0;
+	struct listnode *node;
+	template_t  *template;
+	for (ALL_LIST_ELEMENTS_RO(service_list, node, template))
+	{
+		if(template->show_debug)
+		{
+			ret = 0;
+			ret = (template->show_debug)(vty, template->pVoid, FALSE);
 			if(ret)
 				vty_out(vty, "!%s", VTY_NEWLINE);
 		}

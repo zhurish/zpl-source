@@ -433,9 +433,9 @@ DEFUN (show_version,
 	//vty_out(vty, " Git Release   : %s%s", OEM_GIT_RELEASE, VTY_NEWLINE);
 	//vty_out(vty, " Git Commit    : %s%s", OEM_GIT_COMMIT, VTY_NEWLINE);
 	//vty_out(vty, " Version       : %s%s", OEM_VERSION, VTY_NEWLINE);
-#ifdef BUILD_TIME
+#ifdef PL_BUILD_TIME
 	//20181024160232
-	vty_out(vty, " Build Time    : %s .%s", os_build_time2date(BUILD_TIME), VTY_NEWLINE);
+	vty_out(vty, " Build Time    : %s .%s", os_build_time2date(PL_BUILD_TIME), VTY_NEWLINE);
 #else
 #ifdef OEM_MAKE_DATE
 	//20181024160232
@@ -443,7 +443,7 @@ DEFUN (show_version,
 #else
 	vty_out(vty, " Build Time    : %s %s .%s", __DATE__, __TIME__, VTY_NEWLINE);
 #endif /* OEM_MAKE_DATE */
-#endif /* BUILD_TIME */
+#endif /* PL_BUILD_TIME */
 
 #if 0
 	vty_out(vty, " Hello this is \"%s\" (version:%s).%s", OEM_PACKAGE_NAME,
@@ -454,9 +454,9 @@ DEFUN (show_version,
 	if ((GIT_SUFFIX) && (strlen(GIT_SUFFIX) > 2))
 		vty_out(vty, " Git suffex : %s%s Git info:%s%s", GIT_SUFFIX,
 					VTY_NEWLINE, GIT_INFO, VTY_NEWLINE);
-#ifdef BUILD_TIME
+#ifdef PL_BUILD_TIME
 	//20181024160232
-	vty_out(vty, " It't make: %s.%s", os_build_time2date(BUILD_TIME), VTY_NEWLINE);
+	vty_out(vty, " It't make: %s.%s", os_build_time2date(PL_BUILD_TIME), VTY_NEWLINE);
 #else
 #ifdef OEM_MAKE_DATE
 	//20181024160232
@@ -464,7 +464,7 @@ DEFUN (show_version,
 #else
 	vty_out(vty, " It't make: %s %s.%s", __DATE__, __TIME__, VTY_NEWLINE);
 #endif /* OEM_MAKE_DATE */
-#endif /* BUILD_TIME */
+#endif /* PL_BUILD_TIME */
 #endif
 	vty_out(vty, "%s", VTY_NEWLINE);
 	return CMD_SUCCESS;
@@ -493,9 +493,9 @@ DEFUN_HIDDEN (show_hidden_version,
 	vty_out(vty, " Git Release   : %s%s", OEM_GIT_RELEASE, VTY_NEWLINE);
 	vty_out(vty, " Git Commit    : %s%s", OEM_GIT_COMMIT, VTY_NEWLINE);
 	vty_out(vty, " Git Version   : %s%s", GIT_VERSION, VTY_NEWLINE);
-#ifdef BUILD_TIME
+#ifdef PL_BUILD_TIME
 	//20181024160232
-	vty_out(vty, " Build Time    : %s .%s", os_build_time2date(BUILD_TIME), VTY_NEWLINE);
+	vty_out(vty, " Build Time    : %s .%s", os_build_time2date(PL_BUILD_TIME), VTY_NEWLINE);
 #else
 #ifdef OEM_MAKE_DATE
 	//20181024160232
@@ -503,7 +503,7 @@ DEFUN_HIDDEN (show_hidden_version,
 #else
 	vty_out(vty, " Build Time    : %s %s .%s", __DATE__, __TIME__, VTY_NEWLINE);
 #endif /* OEM_MAKE_DATE */
-#endif /* BUILD_TIME */
+#endif /* PL_BUILD_TIME */
 	vty_out(vty, "%s", VTY_NEWLINE);
 	return CMD_SUCCESS;
 }
@@ -1216,7 +1216,7 @@ config_write_host (struct vty *vty)
 					zlog_priority_name(zlog_default->maxlvl[ZLOG_DEST_SYSLOG]));
 		vty_out(vty, "%s", VTY_NEWLINE);
 	}
-#ifdef PL_SYSLOG_MODULE
+#ifdef PL_SERVICE_SYSLOG
 		if (syslogc_is_enable()) {
 			int port = 0;
 			char log_host[32];
@@ -1327,7 +1327,7 @@ static int _cmd_host_base_init(int terminal)
 	install_node(&brigde_interface_node, NULL);
 	install_node(&interface_wireless_node, NULL);
 
-	install_node(&all_service_node, nsm_service_write_config);
+	install_node(&all_service_node, nsm_template_service_write_config);
 	install_node(&template_node, nsm_template_write_config);
 
 #ifdef CUSTOM_INTERFACE

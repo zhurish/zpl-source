@@ -1,298 +1,252 @@
 
-ifeq ($(strip $(MODULE_CLI)),true)
-CLI_ROOT=$(PLBASE)/$(CLIDIR)
-endif
+include $(MAKE_DIR)/module-dir.mk
 
 
-ifeq ($(strip $(MODULE_PLATFORM)),true)
-PLATFORM_ROOT=$(PLBASE)/$(PLATFORMDIR)
+
+
 
 PLPRODS += $(PLATFORM_ROOT)/lib
 PLPRODS += $(PLATFORM_ROOT)/os
 PLPRODS += $(PLATFORM_ROOT)/shell
 PLPRODS += $(PLATFORM_ROOT)/nsm
+PLPRODS += $(PLATFORM_ROOT)/misc
 
 PL_INCLUDE += -I$(PLATFORM_ROOT)/lib
 PL_INCLUDE += -I$(PLATFORM_ROOT)/os
 PL_INCLUDE += -I$(PLATFORM_ROOT)/shell
 PL_INCLUDE += -I$(PLATFORM_ROOT)/nsm
+PL_INCLUDE += -I$(PLATFORM_ROOT)/misc
 
 PL_DEFINE	+= -DPL_NSM_MODULE
-#PL_DEFINE	+= -DVTY_STDIO_MODULE
-#PL_DEFINE	+= -DVTY_CONSOLE_MODULE
 
+ifeq ($(strip $(PL_CLI_MODULE)),true)
 PLCLI_DIR += $(CLI_ROOT)/nsm
 PLCLI_DIR += $(CLI_ROOT)/system
-
-endif #($(strip $(MODULE_PLATFORM)),true)
-
-
-ifeq ($(strip $(MODULE_L2PROTOCOL)),true)
-
-L2PROTOCOL_ROOT=$(PLBASE)/$(L2PROTOCOLDIR)
-
-PLPRODS += $(L2PROTOCOL_ROOT)/ospf
-PLPRODS += $(L2PROTOCOL_ROOT)/bgp
-
-PL_INCLUDE += -I$(L2PROTOCOL_ROOT)/ospf
-PL_INCLUDE += -I$(L2PROTOCOL_ROOT)/bgp
-#PL_DEFINE	+= -DPL_NSM_MODULE
-endif #($(strip $(MODULE_L2PROTOCOL)),true)
-
-ifeq ($(strip $(MODULE_SERVICE)),true)
-SERVICE_ROOT=$(PLBASE)/$(SERVICEDIR)
-PLCLI_DIR += $(CLI_ROOT)/service
-
-ifeq ($(strip $(MODULE_SNTPC)),true)
-PLPRODS += $(SERVICE_ROOT)/sntp
-PL_INCLUDE += -I$(SERVICE_ROOT)/sntp
-PL_DEFINE += -DPL_SNTPC_MODULE
-endif
-
-ifeq ($(strip $(MODULE_SNTPS)),true)
-ifneq ($(strip $(MODULE_SNTPC)),true)
-PLPRODS += $(SERVICE_ROOT)/sntp
-PL_INCLUDE += -I$(SERVICE_ROOT)/sntp
-endif
-PL_DEFINE += -DPL_SNTPS_MODULE
-endif
-
-ifeq ($(strip $(MODULE_SYSLOG)),true)
-PLPRODS += $(SERVICE_ROOT)/syslog
-PL_INCLUDE += -I$(SERVICE_ROOT)/syslog
-PL_DEFINE += -DPL_SYSLOG_MODULE
-endif
-#PL_DEFINE += -DPL_SERVICE_MODULE 
-endif #($(strip $(MODULE_SERVICE)),true)
-
-ifeq ($(strip $(MODULE_SYSTOOLS)),true)
-SYSTOOLS_ROOT=$(SERVICE_ROOT)/$(SYSTOOLSDIR)
-PLPRODS += $(SERVICE_ROOT)/$(SYSTOOLSDIR)
-PL_INCLUDE += -I$(SERVICE_ROOT)/$(SYSTOOLSDIR)
-ifneq ($(strip $(MODULE_SERVICE)),true)
-PLCLI_DIR += $(CLI_ROOT)/service
-endif
-
-ifeq ($(strip $(MODULE_TFTPC)),true)
-PL_DEFINE += -DPL_TFTPC_MODULE
-endif
-ifeq ($(strip $(MODULE_TFTPD)),true)
-PL_DEFINE += -DPL_TFTPD_MODULE
-endif
-ifeq ($(strip $(MODULE_FTPC)),true)
-PL_DEFINE += -DPL_FTPC_MODULE
-endif
-ifeq ($(strip $(MODULE_FTPD)),true)
-PL_DEFINE += -DPL_FTPD_MODULE
-endif
-ifeq ($(strip $(MODULE_TELNET)),true)
-PL_DEFINE += -DPL_TELNET_MODULE
-endif
-ifeq ($(strip $(MODULE_TELNETD)),true)
-PL_DEFINE += -DPL_TELNETD_MODULE
-endif
-ifeq ($(strip $(MODULE_PING)),true)
-PL_DEFINE += -DPL_PING_MODULE
-endif
-ifeq ($(strip $(MODULE_TRACEROUTE)),true)
-PL_DEFINE += -DPL_TRACEROUTE_MODULE
-endif
-ifeq ($(strip $(MODULE_UBUS)),true)
-PL_DEFINE += -DPL_UBUS_MODULE
-endif
-endif #($(strip $(MODULE_SYSTOOLS)),true)
-
-ifeq ($(strip $(MODULE_STARTUP)),true)
-STARTUP_ROOT=$(PLBASE)/$(STARTUPDIR)
-PLPRODS += $(STARTUP_ROOT)/src
-PL_INCLUDE += -I$(STARTUP_ROOT)/src
-PLPRODS += $(STARTUP_ROOT)/etc
-endif #($(strip $(MODULE_STARTUP)),true)
-
-
-ifeq ($(strip $(MODULE_PRODUCT)),true)
-PRODUCT_ROOT=$(PLBASE)/$(PRODUCTDIR)
-PLPRODS += $(PRODUCT_ROOT)/bsp
-PL_INCLUDE += -I$(PRODUCT_ROOT)/bsp
-PL_DEFINE += -DPL_BSP_MODULE
-
-
-#MODULE_BCM53125
-ifeq ($(strip $(MODULE_SWITCH_SDK)),true)
-SW_SDK_ROOT=$(PRODUCT_ROOT)/sdk
-PLPRODS += $(PRODUCT_ROOT)/sdk
-PL_INCLUDE += -I$(PRODUCT_ROOT)/sdk
-PL_DEFINE += -DPL_SDK_MODULE
-PL_DEFINE += -DPL_SDK_BCM53125
-endif #($(strip $(MODULE_SWITCH_SDK)),true)
-
-endif #($(strip $(MODULE_PRODUCT)),true)
-
-
-ifeq ($(strip $(MODULE_OSPF)),true)
-OSPF_ROOT=$(PLBASE)/l3protocol/$(OSPFDIR)
-PLPRODS += $(OSPF_ROOT)
-PL_INCLUDE += -I$(OSPF_ROOT)
-PL_DEFINE += -DPL_OSPF_MODULE
 endif
 
 
-ifeq ($(strip $(MODULE_ABSTRACT)),true)
-ABSTRACT_ROOT=$(PLBASE)/$(ABSTRACTDIR)
 
-ifeq ($(strip $(MODULE_PAL_KERNEL)),true)
-PLPRODS += $(ABSTRACT_ROOT)/pal/kernel
-PL_INCLUDE += -I$(ABSTRACT_ROOT)/pal/kernel
-PL_DEFINE += -DPL_PAL_MODULE
-endif
-ifeq ($(strip $(MODULE_PAL_IPCOM)),true)
-ifneq ($(strip $(MODULE_PAL_KERNEL)),true)
-PL_DEFINE += -DPL_PAL_MODULE
-endif
-PLPRODS += $(ABSTRACT_ROOT)/pal/ipstack
-PL_INCLUDE += -I$(ABSTRACT_ROOT)/pal/ipstack
-endif
-
-ifeq ($(strip $(MODULE_HAL)),true)
-PLPRODS += $(ABSTRACT_ROOT)/hal
-PL_INCLUDE += -I$(ABSTRACT_ROOT)/hal
-PL_DEFINE += -DPL_HAL_MODULE
-endif #($(strip $(MODULE_HAL)),true)
-endif #ifeq ($(strip $(MODULE_ABSTRACT)),true)
-
-
-ifeq ($(strip $(MODULE_COMPONENT)),true)
-COMPONENT_ROOT=$(PLBASE)/$(COMPONENTDIR)
+ifeq ($(strip $(PL_OS_CPPJSON)),true)
+JSONCPP_ROOT=$(PLATFORM_ROOT)/jsoncpp
+PLPRODS += $(JSONCPP_ROOT)
+PL_INCLUDE += -I$(JSONCPP_ROOT)
 endif
 
 
-ifeq ($(strip $(MODULE_MODEM)),true)
-ifeq ($(strip $(MODULE_COMPONENT)),true)
-MODEM_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(MODEMDIR)
-PLPRODS += $(MODEM_ROOT)
-PL_INCLUDE += -I$(MODEM_ROOT)
-PL_DEFINE += -DPL_MODEM_MODULE
-
-PLCLI_DIR += $(CLI_ROOT)/modem
-
-endif
-endif
-
-
-ifeq ($(strip $(MODULE_UDHCP)),true)
-ifeq ($(strip $(MODULE_COMPONENT)),true)
-UDHCP_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(UDHCPDIR)
-PLPRODS += $(UDHCP_ROOT)
-PL_INCLUDE += -I$(UDHCP_ROOT)
-
-PL_DEFINE += -DPL_UDHCP_MODULE 
-
-PL_DEFINE += -DPL_DHCP_MODULE
-PL_DEFINE += -DPL_DHCPC_MODULE
-PL_DEFINE += -DPL_DHCPD_MODULE
-
-PLCLI_DIR += $(CLI_ROOT)/dhcp
-
-endif
-endif
-
-ifeq ($(strip $(MODULE_SSH)),true)
-ifeq ($(strip $(MODULE_COMPONENT)),true)
-LIBSSH_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(LIBSSHDIR)
-
-PLPRODS += $(LIBSSH_ROOT)
-PL_INCLUDE += -I$(LIBSSH_ROOT)
-PL_INCLUDE += -I$(LIBSSH_ROOT)/include
-
-ifeq ($(BUILD_TYPE),X86)
-PL_INCLUDE += -I$(LIBSSH_ROOT)/include
-#PLOS_LDLIBS += -lutil -lssl -lcrypto -lz
-endif #($(BUILD_TYPE),X86)
-
-ifeq ($(BUILD_TYPE),MIPS)
-ifneq ($(OPENEWRT_BASE),)
-OPENWRT_INCLUDE := -I$(OPENEWRT_BASE)/include -I$(OPENEWRT_BASE)/usr/include
-OPENWRT_LDFLAGS := -L$(OPENEWRT_BASE)/lib -L$(OPENEWRT_BASE)/usr/lib
-else #($(OPENEWRT_BASE),)
-PLEX_INCLUDE += -I$(PLBASE)/externsions/openssl/mipsl/include
-PLEX_LDFLAGS += -L$(PLBASE)/externsions/openssl/mipsl/lib 
-PLEX_INCLUDE += -I$(PLBASE)/externsions/zlib/mipsl/zlib/include
-PLEX_LDFLAGS += -L$(PLBASE)/externsions/zlib/mipsl/zlib/lib
-endif #($(OPENEWRT_BASE),)
-#PLEX_LDLIBS += -lutil -lssl -lcrypto -lz
-endif #($(BUILD_TYPE),MIPS)
-
-PL_DEFINE += -DPL_SSH_MODULE
-#PLEX_LDLIBS += -lutil -lssl -lcrypto -lz
-endif #($(strip $(MODULE_COMPONENT)),true)
-endif #($(strip $(MODULE_SSH)),true)
-
-
-ifeq ($(strip $(MODULE_OPENSSL)),true)
-ifneq ($(BUILD_TYPE),X86)
-PLEX_DIR += $(PLBASE)/externsions/openssl/openssl-1.1.1/
-export PLATFORM=linux-armv4
-PLEX_INCLUDE += -I$(PLBASE)/externsions/openssl/_install/include
-PLEX_LDFLAGS += -L$(PLBASE)/externsions/openssl/_install/lib
-PLEX_LDLIBS += -lutil -lssl -lcrypto
-
-
-PLEX_DIR += $(PLBASE)/externsions/zlib/zlib-1.2.11/
-PL_INCLUDE += -I$(PLBASE)/externsions/zlib/_install/include
-PLEX_LDFLAGS += -L$(PLBASE)/externsions/zlib/_install/lib
-PLEX_LDLIBS += -lz
-else #($(BUILD_TYPE),X86)
-PLOS_LDLIBS += -lutil -lssl -lcrypto -lz
-endif
-endif
-
-
-ifeq ($(strip $(MODULE_SQLITE)),true)
-#ifeq ($(strip $(MODULE_COMPONENT)),true)
-SQLITE_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(SQLITEDIR)
-PLPRODS += $(SQLITE_ROOT)
-PL_INCLUDE += -I$(SQLITE_ROOT)
-PL_DEFINE += -DPL_SQLITE_MODULE
-PL_LDLIBS += -lsqlite
-#endif
-endif
-
-ifeq ($(strip $(MODULE_WIFI)),true)
-ifeq ($(strip $(MODULE_COMPONENT)),true)
-WIFI_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(WIFIDIR)
-PLPRODS += $(WIFI_ROOT)
-PL_INCLUDE += -I$(WIFI_ROOT)
-
-PL_DEFINE += -DPL_WIFI_MODULE
-
-endif
-endif
-
-
-ifeq ($(strip $(MODULE_UCI)),true)
+ifeq ($(strip $(PL_OS_UCI)),true)
 ifneq ($(OPENEWRT_BASE),)
 OPENWRT_INCLUDE := -I$(OPENEWRT_BASE)/include -I$(OPENEWRT_BASE)/usr/include
 OPENWRT_LDFLAGS := -L$(OPENEWRT_BASE)/lib -L$(OPENEWRT_BASE)/usr/lib
 PLEX_LDLIBS += -luci
 PL_DEFINE += -DPL_OPENWRT_UCI -DPL_OPENWRT_UCI_LIB	
 else
-LIBUCI_ROOT=$(PLATFORM_ROOT)/os/libuci
+LIBUCI_ROOT=$(PLATFORM_ROOT)/libuci
 PLPRODS += $(LIBUCI_ROOT)
 PL_INCLUDE += -I$(LIBUCI_ROOT)
 PL_DEFINE += -DPL_OPENWRT_UCI -DPL_OPENWRT_UCI_LIB
-endif			
-#PL_DEFINE += -DPL_OPENWRT_UCI -DPL_OPENWRT_UCI_LIB	
+endif #			
+endif #($(strip $(PL_OS_UCI)),true)
+
+
+
+
+ifeq ($(strip $(PL_SERVICE_MODULE)),true)
+PLPRODS += $(SERVICE_ROOT)/systools
+PLCLI_DIR += $(CLI_ROOT)/service
+PL_INCLUDE += -I$(SERVICE_ROOT)/systools
+
+ifeq ($(strip $(PL_SERVICE_SNTPC)),true)
+PLPRODS += $(SERVICE_ROOT)/sntp
+PL_INCLUDE += -I$(SERVICE_ROOT)/sntp
+endif
+
+ifeq ($(strip $(PL_SERVICE_SNTPS)),true)
+ifeq ($(strip $(PL_SERVICE_SNTPC)),false)
+PLPRODS += $(SERVICE_ROOT)/sntp
+PL_INCLUDE += -I$(SERVICE_ROOT)/sntp
+endif
+endif
+
+ifeq ($(strip $(PL_SERVICE_SNTPC)),true)
+PL_DEFINE += -DPL_SERVICE_SNTPC
+endif
+
+ifeq ($(strip $(PL_SERVICE_SNTPS)),true)
+PL_DEFINE += -DPL_SERVICE_SNTPS
+endif
+
+ifeq ($(strip $(PL_SERVICE_SYSLOG)),true)
+PLPRODS += $(SERVICE_ROOT)/syslog
+PL_INCLUDE += -I$(SERVICE_ROOT)/syslog
+PL_DEFINE += -DPL_SERVICE_SYSLOG
+endif
+
+ifeq ($(strip $(PL_SERVICE_TFTPC)),true)
+PL_DEFINE += -DPL_SERVICE_TFTPC
+endif
+ifeq ($(strip $(PL_SERVICE_TFTPD)),true)
+PL_DEFINE += -DPL_SERVICE_TFTPD
+endif
+ifeq ($(strip $(PL_SERVICE_FTPC)),true)
+PL_DEFINE += -DPL_SERVICE_FTPC
+endif
+ifeq ($(strip $(PL_SERVICE_FTPD)),true)
+PL_DEFINE += -DPL_SERVICE_FTPD
+endif
+ifeq ($(strip $(PL_SERVICE_TELNET)),true)
+PL_DEFINE += -DPL_SERVICE_TELNET
+endif
+ifeq ($(strip $(PL_SERVICE_TELNETD)),true)
+PL_DEFINE += -DPL_SERVICE_TELNETD
+endif
+ifeq ($(strip $(PL_SERVICE_PING)),true)
+PL_DEFINE += -DPL_SERVICE_PING
+endif
+ifeq ($(strip $(PL_SERVICE_TRACEROUTE)),true)
+PL_DEFINE += -DPL_SERVICE_TRACEROUTE
+endif
+ifeq ($(strip $(PL_SERVICE_UBUS_SYNC)),true)
+PL_DEFINE += -DPL_SERVICE_UBUS_SYNC
+endif
+
+endif #($(strip $(PL_SERVICE_MODULE)),true)
+
+
+ifeq ($(strip $(PL_PRODUCT_MODULE)),true)
+
+PLPRODS += $(PRODUCT_ROOT)/bsp
+PL_INCLUDE += -I$(PRODUCT_ROOT)/bsp
+PL_DEFINE += -DPL_BSP_MODULE
+
+
+ifeq ($(strip $(PL_PRODUCT_SDK_MODULE)),true)
+SW_SDK_ROOT=$(PRODUCT_ROOT)/sdk
+PLPRODS += $(PRODUCT_ROOT)/sdk
+PL_INCLUDE += -I$(PRODUCT_ROOT)/sdk
+PL_DEFINE += -DPL_SDK_MODULE
+PL_DEFINE += -DPL_SDK_BCM53125
+endif #($(strip $(PL_PRODUCT_SDK_MODULE)),true)
+
+endif #($(strip $(PL_PRODUCT_MODULE)),true)
+
+#PL_ABSTRACT_MODULE
+ifeq ($(strip $(PL_ABSTRACT_MODULE)),true)
+
+PL_DEFINE += -DPL_PAL_MODULE
+
+ifeq ($(strip $(PL_PAL_KERNEL_STACK)),true)
+PLPRODS += $(ABSTRACT_ROOT)/pal/kernel
+PL_INCLUDE += -I$(ABSTRACT_ROOT)/pal/kernel
+endif
+ifeq ($(strip $(PL_PAL_IPCOM_STACK)),true)
+PLPRODS += $(ABSTRACT_ROOT)/pal/ipstack
+PL_INCLUDE += -I$(ABSTRACT_ROOT)/pal/ipstack
+endif
+
+ifeq ($(strip $(PL_HAL_MODULE)),true)
+PLPRODS += $(ABSTRACT_ROOT)/hal
+PL_INCLUDE += -I$(ABSTRACT_ROOT)/hal
+PL_DEFINE += -DPL_HAL_MODULE
+endif #($(strip $(PL_HAL_MODULE)),true)
+
+endif #ifeq ($(strip $(PL_PAL_MODULE)),true)
+
+
+ifeq ($(strip $(PL_COMPONENT_MODULE)),true)
+
+ifeq ($(strip $(PL_MODEM_MODULE)),true)
+MODEM_ROOT=$(COMPONENT_ROOT)/modem
+PLPRODS += $(MODEM_ROOT)
+PL_INCLUDE += -I$(MODEM_ROOT)
+PL_DEFINE += -DPL_MODEM_MODULE
+PLCLI_DIR += $(CLI_ROOT)/modem
+endif
+
+ifeq ($(strip $(PL_UDHCP_MODULE)),true)
+UDHCP_ROOT=$(COMPONENT_ROOT)/udhcp
+PLPRODS += $(UDHCP_ROOT)
+PL_INCLUDE += -I$(UDHCP_ROOT)
+
+PL_DEFINE += -DPL_UDHCP_MODULE
+
+PL_DEFINE += -DPL_DHCP_MODULE
+PL_DEFINE += -DPL_DHCPC_MODULE
+PL_DEFINE += -DPL_DHCPD_MODULE
+
+PLCLI_DIR += $(CLI_ROOT)/dhcp
 endif
 
 
-#include /home/zhurish/workspace/SWPlatform/make/pjsip-config.mk
+ifeq ($(strip $(PL_LIBSSH_MODULE)),true)
+LIBSSH_ROOT=$(COMPONENT_ROOT)/ssh
+
+PLPRODS += $(LIBSSH_ROOT)
+PL_INCLUDE += -I$(LIBSSH_ROOT)
+PL_INCLUDE += -I$(LIBSSH_ROOT)/include
+
+ifeq ($(PL_BUILD_TYPE),X86)
+PL_INCLUDE += -I$(LIBSSH_ROOT)/include
+#PLOS_LDLIBS += -lutil -lssl -lcrypto -lz
+endif #($(PL_BUILD_TYPE),X86)
+
+ifeq ($(PL_BUILD_TYPE),MIPS)
+ifneq ($(OPENEWRT_BASE),)
+OPENWRT_INCLUDE := -I$(OPENEWRT_BASE)/include -I$(OPENEWRT_BASE)/usr/include
+OPENWRT_LDFLAGS := -L$(OPENEWRT_BASE)/lib -L$(OPENEWRT_BASE)/usr/lib
+else
+PLEX_INCLUDE += -I$(EXTERNSION_ROOT)/openssl/mipsl/include
+PLEX_LDFLAGS += -L$(EXTERNSION_ROOT)/openssl/mipsl/lib 
+PLEX_INCLUDE += -I$(EXTERNSION_ROOT)/zlib/mipsl/zlib/include
+PLEX_LDFLAGS += -L$(EXTERNSION_ROOT)/zlib/mipsl/zlib/lib
+endif #($(OPENEWRT_BASE),)
+#PLEX_LDLIBS += -lutil -lssl -lcrypto -lz
+endif #($(PL_BUILD_TYPE),MIPS)
+
+PL_DEFINE += -DPL_LIBSSH_MODULE
+#PLEX_LDLIBS += -lutil -lssl -lcrypto -lz
+
+endif #($(strip $(PL_LIBSSH_MODULE)),true)
+
+
+ifeq ($(strip $(PL_OPENSSL_MODULE)),true)
+ifneq ($(PL_BUILD_TYPE),X86)
+PLEX_DIR += $(EXTERNSION_ROOT)/openssl/openssl-1.1.1/
+export PLATFORM=linux-armv4
+PLEX_INCLUDE += -I$(EXTERNSION_ROOT)/openssl/_install/include
+PLEX_LDFLAGS += -L$(EXTERNSION_ROOT)/openssl/_install/lib
+PLEX_LDLIBS += -lutil -lssl -lcrypto
+PLEX_DIR += $(EXTERNSION_ROOT)/zlib/zlib-1.2.11/
+PL_INCLUDE += -I$(EXTERNSION_ROOT)/zlib/_install/include
+PLEX_LDFLAGS += -L$(EXTERNSION_ROOT)/zlib/_install/lib
+PLEX_LDLIBS += -lz
+else 
+PLOS_LDLIBS += -lutil -lssl -lcrypto -lz
+endif #($(PL_BUILD_TYPE),X86)
+PL_DEFINE += -DPL_OPENSSL_MODULE
+endif #($(strip $(PL_OPENSSL_MODULE)),true)
+
+
+ifeq ($(strip $(PL_SQLITE_MODULE)),true)
+SQLITE_ROOT=$(COMPONENT_ROOT)/sqlite
+PLPRODS += $(SQLITE_ROOT)
+PL_INCLUDE += -I$(SQLITE_ROOT)
+PL_DEFINE += -DPL_SQLITE_MODULE
+PL_LDLIBS += -lsqlite
+endif#($(strip $(PL_SQLITE_MODULE)),true)
+
+ifeq ($(strip $(PL_WIFI_MODULE)),true)
+WIFI_ROOT=$(COMPONENT_ROOT)/wifi
+PLPRODS += $(WIFI_ROOT)
+PL_INCLUDE += -I$(WIFI_ROOT)
+PL_DEFINE += -DPL_WIFI_MODULE
+endif#($(strip $(PL_WIFI_MODULE)),true)
+
+
 include $(MAKE_DIR)/pjsip-config.mk
 
 
-ifeq ($(strip $(MODULE_MQTT)),true)
-ifeq ($(strip $(MODULE_COMPONENT)),true)
-MQTT_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(MQTTDIR)
-
+ifeq ($(strip $(PL_MQTT_MODULE)),true)
+MQTT_ROOT=$(COMPONENT_ROOT)/mqtt
 PLPRODS += $(MQTT_ROOT)
 PL_INCLUDE += -I$(MQTT_ROOT)
 PL_INCLUDE += -I$(MQTT_ROOT)/mqttlib
@@ -301,69 +255,76 @@ PL_INCLUDE += -I$(MQTT_ROOT)/mqttlib
 
 PL_DEFINE += -DPL_MQTT_MODULE
 
-export MQTT_TLS_ENABLE = false
 export MQTT_SHARED_LIBRARIES = false
 ifeq ($(strip $(MQTT_SHARED_LIBRARIES)),true)
 PL_LDLIBS += -lmosquitto
 endif
 
 PLCLI_DIR += $(CLI_ROOT)/mqtt
-
-endif #($(strip $(MODULE_COMPONENT)),true)
-endif #($(strip $(MODULE_PJSIP)),true)
+endif #($(strip $(PL_MQTT_MODULE)),true)
 
 
-ifeq ($(strip $(MODULE_APP)),true)
-APP_ROOT=$(PLBASE)/$(APPDIR)
+ifeq ($(strip $(PL_WEBSERVER_MODULE)),true)
+WEBGUI_ROOT=$(COMPONENT_ROOT)/webserver
+PLPRODS += $(WEBGUI_ROOT)
+PL_INCLUDE += -I$(WEBGUI_ROOT)
+PL_INCLUDE += -I$(WEBGUI_ROOT)/include
+PL_DEFINE += -DPL_WEBGUI_MODULE
+endif
+
+endif#($(strip $(PL_COMPONENT_MODULE)),true)
+
+
+ifeq ($(strip $(PL_APPLICATION_MODULE)),true)
 PLPRODS += $(APP_ROOT)
 
 PL_INCLUDE += -I$(APP_ROOT)
 
 PL_DEFINE += -DPL_APP_MODULE
 
-
 ifeq ($(strip $(EN_APP_X5BA)),true)
 PLM_DEFINE += -DAPP_X5BA_MODULE
 endif
 ifeq ($(strip $(EN_APP_V9)),true)
-
 PLM_DEFINE += -DAPP_V9_MODULE
 PLM_DEFINE += -DPL_VIDEO_MODULE
 #PL_LDLIBS += -loal_privateProtocol
 endif
-
-
 PLCLI_DIR += $(CLI_ROOT)/app
 endif
 
-ifeq ($(strip $(MODULE_WEB)),true)
-ifeq ($(strip $(MODULE_COMPONENT)),true)
-WEBGUI_ROOT=$(PLBASE)/$(COMPONENTDIR)/$(WEBDIR)
-PLPRODS += $(WEBGUI_ROOT)
-PL_INCLUDE += -I$(WEBGUI_ROOT)
-PL_INCLUDE += -I$(WEBGUI_ROOT)/include
-PL_DEFINE += -DPL_WEBGUI_MODULE
-endif
-endif
 
-ifeq ($(strip $(MODULE_TOOLS)),true)
-TOOLS_ROOT=$(PLBASE)/$(TOOLSDIR)
-PLPRODS += $(TOOLS_ROOT)/system
-PL_INCLUDE += -I$(TOOLS_ROOT)/system
-endif
+ifeq ($(strip $(PL_TOOLS_MODULE)),true)
 
-
-ifeq ($(strip $(MODULE_PROCESS)),true)
+ifeq ($(strip $(PL_TOOLS_PROCESS)),true)
 PLPRODS += $(TOOLS_ROOT)/process
 PL_INCLUDE += -I$(TOOLS_ROOT)/process
 PL_DEFINE += -DDOUBLE_PROCESS
 endif
 
-ifeq ($(strip $(MODULE_QUECTEL_CM)),true)
+ifeq ($(strip $(PL_TOOLS_QUECTEL_CM)),true)
 PLPRODS += $(TOOLS_ROOT)/quectel-CM
 PL_INCLUDE += -I$(TOOLS_ROOT)/quectel-CM
 endif
 
-ifeq ($(strip $(MODULE_CLI)),true)
+ifeq ($(strip $(PL_TOOLS_SYSTEM)),true)
+PLPRODS += $(TOOLS_ROOT)/system
+PL_INCLUDE += -I$(TOOLS_ROOT)/system
+endif
+
+endif
+
+
+
+#
+# 下面两个模块保持在最后
+# 
+ifeq ($(strip $(PL_CLI_MODULE)),true)
 PLPRODS += $(PLCLI_DIR)
 endif
+
+
+#
+PLPRODS += $(STARTUP_ROOT)/src
+PL_INCLUDE += -I$(STARTUP_ROOT)/src
+PLPRODS += $(STARTUP_ROOT)/etc

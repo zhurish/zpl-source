@@ -1,0 +1,39 @@
+# DO NOT EDIT. This file is generated from Config.src
+#
+#
+
+menu "Abstract Module Config"
+
+config PL_ABSTRACT_MODULE
+	bool "Abstract Module"
+	default y
+
+config PL_HAL_MODULE
+	bool "HAL Abstract Module"
+	default n
+	depends on PL_PRODUCT_L2SWITCH && PL_ABSTRACT_MODULE
+	help
+	Build HAL Abstract Module.
+
+config PL_PAL_MODULE
+	bool "PAL Abstract Module"
+	default y
+	depends on PL_ABSTRACT_MODULE
+	help
+	Build PAL Abstract Module.
+
+choice
+	prompt "PAL Abstract type"
+	depends on PL_PAL_MODULE
+
+config PL_PAL_IPCOM_STACK
+	bool "IPCOM IP/TCP Stack Module"
+	depends on PL_IPCOM_STACK_MODULE
+
+config PL_PAL_KERNEL_STACK
+	bool "Linux Kernel IP/TCP Stack Module"
+	depends on PL_KERNEL_STACK_MODULE
+	
+endchoice
+
+endmenu

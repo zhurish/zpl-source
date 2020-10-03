@@ -163,16 +163,12 @@ static int web_handle_file_tbl(Webs *wp, void *p)
 				{
 #ifdef APP_V9_MODULE
 					if(strstr(strval, "sysupgrade") || strstr(strval, "V9"))
-#endif
-#ifdef APP_X5BA_MODULE
+#elif APP_X5BA_MODULE
 					if(strstr(strval, "sysupgrade") || strstr(strval, "BYQ"))
+#else					
+					if(strstr(strval, "sysupgrade"))		
 #endif
 					{
-/*						chdir(WEB_UPLOAD_BASE);
-						memset(filetmp, 0, sizeof(filetmp));
-						snprintf(filetmp, sizeof(filetmp), "sysupgrade %s", strval);
-						system(filetmp);*/
-
 						if(web_upgrade_file)
 						{
 							free(web_upgrade_file);

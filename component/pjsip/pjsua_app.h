@@ -88,6 +88,7 @@ pj_status_t pjsua_app_run(pj_bool_t wait_telnet_cli);
  */
 pj_status_t pjsua_app_destroy();
 int pjsua_app_restart(void);
+int pjsua_app_exit(void);
 
 int log_refresh_proc(void *arg);
 

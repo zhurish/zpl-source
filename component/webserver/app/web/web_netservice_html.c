@@ -17,7 +17,7 @@
 #include "log.h"
 #include "vty.h"
 #include "vty_user.h"
-#ifdef PL_SYSLOG_MODULE
+#ifdef PL_SERVICE_SYSLOG
 #include "syslogcLib.h"
 #endif
 #include "web_util.h"
@@ -87,7 +87,7 @@ static int web_netservice_goform(Webs *wp, char *path, char *query)
 		os_uci_get_address("product.global.platip", plataddress);
 #endif
 
-#ifdef PL_SYSLOG_MODULE
+#ifdef PL_SERVICE_SYSLOG
 		syslogc_host_config_get(address, NULL, NULL);
 #endif
 		websSetStatus(wp, 200);
@@ -100,7 +100,7 @@ static int web_netservice_goform(Webs *wp, char *path, char *query)
 					"OK", plat, plataddress,
 					sntpen?"true":"false", sntp_addr[0]?sntp_addr[0]:" ",
 					sntp_addr[1]?sntp_addr[1]:" ",
-#ifdef PL_SYSLOG_MODULE
+#ifdef PL_SERVICE_SYSLOG
 							syslogc_is_enable() ? "true" : "false",
 #else
 									"false",
@@ -165,7 +165,7 @@ static int web_netservice_goform(Webs *wp, char *path, char *query)
 			_WEB_DBG_TRAP("================%s=======================: can not get syslogip=%s\r\n", __func__, syslog_address);
 			return web_return_text_plain(wp, ERROR);
 		}
-#ifdef PL_SYSLOG_MODULE
+#ifdef PL_SERVICE_SYSLOG
 		if (!syslogc_is_enable())
 			syslogc_enable(host.name);
 		zlog_set_level(ZLOG_DEST_SYSLOG, LOG_WARNING);
@@ -173,7 +173,7 @@ static int web_netservice_goform(Webs *wp, char *path, char *query)
 		syslogc_host_config_set(syslog_address, 0, 0);
 #endif
 	}
-#ifdef PL_SYSLOG_MODULE
+#ifdef PL_SERVICE_SYSLOG
 	else
 	{
 		if (syslogc_is_enable())

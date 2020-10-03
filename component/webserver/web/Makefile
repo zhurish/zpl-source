@@ -2,7 +2,6 @@ include $(MAKE_DIR)/makelinux.mk
 
 #
 #
-
 #
 #
 #
@@ -14,7 +13,7 @@ ifeq ($(THEME_BOOTSTRAP),true)
 endif
 
 ifeq ($(THEME_V9UI),true)
-    #WEB_THEME_DIR = 
+   # WEB_THEME_DIR = aa
 endif
 
 #ifeq ($(THEME),THEME_MATERIAL)
@@ -25,7 +24,6 @@ endif
 #endif
 #
 ifeq ($(THEME_V9UI),true)
-
 install: 
 	@install -d $(DSTETCDIR)/web
 	@$(CP) ./auth.txt $(DSTETCDIR)/web/auth.txt
@@ -77,5 +75,20 @@ clean: webclean web_theme_clean
 #
 #
 .PHONY:	install clean webclean webinstall web_theme_install web_theme_clean
+
+else
+
+install: 
+	@install -d $(DSTETCDIR)/web
+	@$(CP) ./auth.txt $(DSTETCDIR)/web/auth.txt
+	@$(CP) ./route.txt $(DSTETCDIR)/web/route.txt
+
+clean:  
+	@$(RM) $(DSTETCDIR)/web/auth.txt
+	@$(RM) $(DSTETCDIR)/web/route.txt
+	@$(RM) -rf $(DSTWWWDIR)/*
+	
+.PHONY:	install clean
+
 
 endif

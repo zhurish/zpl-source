@@ -16,7 +16,7 @@
 //#define _UCI_DEBUG(fmt,...)	printf(fmt, ##__VA_ARGS__)
 #define _UCI_DEBUG(fmt,...)
 
-//#if 1//def BUILD_OPENWRT
+//#if 1//def PL_BUILD_OPENWRT
 //#define PL_OPENWRT_UCI_LIB
 //#endif
 //#define PL_OPENWRT_UCI_SH

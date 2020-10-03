@@ -8,6 +8,10 @@
 #ifndef __WEB_API_H__
 #define __WEB_API_H__
 
+
+#define HAS_BOOL 1
+#include "src/goahead.h"
+
 //#define __WEBGUI_DEBUG
 
 #define T(n)	(n)
@@ -127,6 +131,7 @@ extern web_proto web_app_proto_get_api();
 extern int web_app_address_set_api(char *address);
 extern int web_app_port_set_api(BOOL ssl, u_int16 port);
 extern int web_app_debug_set_api(int level);
+extern int web_app_debug_get_api();
 
 extern int web_app_username_add_api(const char *username, const char *password, const char *roles);
 extern int web_app_username_lookup_api(const char *username);
@@ -139,6 +144,7 @@ extern int web_app_gopass_save_api(const char *username,
 		const char *roles[], char *encodedPassword);
 extern int web_app_auth_save_api(void);
 
+extern int web_app_debug_write_config(struct vty *vty);
 extern int web_app_write_config(struct vty *vty);
 extern void cmd_webserver_init(void);
 
