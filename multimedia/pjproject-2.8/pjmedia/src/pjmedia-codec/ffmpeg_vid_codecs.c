@@ -61,6 +61,24 @@
 #  define AVCODEC_OPEN(ctx,c)		avcodec_open(ctx,c)
 #endif
 
+
+
+#ifndef FF_INPUT_BUFFER_PADDING_SIZE
+#ifdef  AV_INPUT_BUFFER_PADDING_SIZE
+#define FF_INPUT_BUFFER_PADDING_SIZE AV_INPUT_BUFFER_PADDING_SIZE
+#else
+#define FF_INPUT_BUFFER_PADDING_SIZE 64
+#endif
+#endif
+#ifndef FF_MIN_BUFFER_SIZE
+#ifdef  AV_INPUT_BUFFER_MIN_SIZE
+#define FF_MIN_BUFFER_SIZE AV_INPUT_BUFFER_MIN_SIZE
+#else
+#define FF_INPUT_BUFFER_PADDING_SIZE 16384
+#endif
+#endif
+
+
 #if LIBAVCODEC_VER_AT_LEAST(53,61)
 #  if LIBAVCODEC_VER_AT_LEAST(54,59)
    /* Not sure when AVCodec::encode is obsoleted/removed. */

@@ -160,9 +160,8 @@ static const AVCodec * const codec_list[] = {
     &ff_text_encoder,
     &ff_webvtt_encoder,
     &ff_xsub_encoder,
-    &ff_libx264_encoder,
-    &ff_libx264rgb_encoder,
     &ff_h263_v4l2m2m_encoder,
+    &ff_libopenh264_encoder,
     &ff_h264_v4l2m2m_encoder,
     &ff_hevc_v4l2m2m_encoder,
     &ff_mpeg4_v4l2m2m_encoder,
@@ -639,4 +638,5 @@ static const AVCodec * const codec_list[] = {
     &ff_xbin_decoder,
     &ff_idf_decoder,
     &ff_av1_decoder,
+    &ff_libopenh264_decoder,
     NULL };

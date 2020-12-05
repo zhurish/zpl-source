@@ -42,7 +42,8 @@ TESTLIBS = -lpthread -lrt -rdynamic -lm -lcrypt -ldl -lgcc_s -lstdc++ \
 		 -los
 
 ifeq ($(strip $(PL_FFMPEG_MODULE)),true)
-TESTLIBS += -lavdevice -lavcodec -lavformat -lavfilter -lavutil -lswscale -lswresample -lpostproc
+TESTLIBS += -lavdevice -lavcodec -lavformat -lavfilter -lavutil -lswscale -lswresample 
+#-lpostproc
 endif
 ifeq ($(strip $(PL_OPENH264_MODULE)),true)
 TESTLIBS += -lopenh264

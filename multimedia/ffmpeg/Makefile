@@ -35,6 +35,9 @@ FFLIBS := avutil
 SKIPHEADERS = compat/w32pthreads.h
 
 # first so "all" becomes default target
+#include configdef.mk
+#defconfig:
+#	./configure $()
 all: all-yes
 
 #include $(SRC_PATH)/tools/Makefile
