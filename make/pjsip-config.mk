@@ -1,8 +1,8 @@
 #include $(MAKE_DIR)/module-dir.mk
 
 ifeq ($(strip $(PL_PJPROJECT_MODULE)),true)
-PJPROJECT_ROOT=$(EXTERNSION_ROOT)/pjproject-2.10
-PLEX_DIR += $(EXTERNSION_ROOT)/pjproject-2.10
+PJPROJECT_ROOT=$(MULTIMEDIA_ROOT)/pjproject-2.10
+PLEX_DIR += $(MULTIMEDIA_ROOT)/pjproject-2.10
 
 ifeq ($(PL_PJ_RESAMPLE_ENABLE),true)
 export PJMEDIA_RESAMPLE_ENABLE = true
