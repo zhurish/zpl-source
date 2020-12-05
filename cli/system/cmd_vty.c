@@ -9,7 +9,7 @@
 #include <arpa/telnet.h>
 #include <termios.h>
 
-#include "filter.h"
+#include "nsm_filter.h"
 #include "buffer.h"
 #include "command.h"
 #include "linklist.h"

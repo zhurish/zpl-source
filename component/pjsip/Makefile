@@ -2,7 +2,7 @@ include $(MAKE_DIR)/makelinux.mk
 
 include config.mk
 
-PL_PJINC = -I$(PJPROJDIR)/_install/include
+PL_PJINC = -I$(DSTROOTFSDIR)/include
 
 #PJPROJDIR=$(PLBASE)/externsions/pjproject-2.10
 #PJCC=$(CC)
@@ -114,7 +114,7 @@ $(PJSUA2LIBS) : $(MODULE_PJSUA2_OBJS)
 	#$(CXX) -shared -o  $(PJSUA2LIBS) $(MODULE_PJSUA2_OBJS)
 	@$(AR) -rs $(PJSUA2LIBS) $(MODULE_PJSUA2_OBJS)
 
-PJPLLDCLFLAG += -L$(BASE_ROOT)/$(ULIBDIR) -L$(LIB_DIR) 
+PJPLLDCLFLAG += -L$(BASE_ROOT)/$(ULIBDIR) -L$(LIB_DIR) -L$(DSTROOTFSDIR)/lib
 
 
 $(PJSUA2TEST_BIN) : $(PJSUA2TEST_OBJS) 

@@ -9,8 +9,8 @@
 #define __MQTT_APP_API_H__
 
 
-struct mqtt_app_config;
-//#include "mqtt_app_conf.h"
+
+#include "mqtt_app_conf.h"
 
 BOOL mqtt_isenable_api(struct mqtt_app_config *cfg);
 int mqtt_enable_api(struct mqtt_app_config *cfg, BOOL enable);

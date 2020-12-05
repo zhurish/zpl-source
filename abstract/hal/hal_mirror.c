@@ -14,7 +14,7 @@
 #include "memtypes.h"
 #include "prefix.h"
 #include "if.h"
-#include "interface.h"
+#include "nsm_interface.h"
 #include <log.h>
 #include "os_list.h"
 

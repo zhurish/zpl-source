@@ -490,7 +490,7 @@ struct in_pktinfo
 #define ZEBRA_MESSAGE_MAX                 90
 
 /* Marker value used in new Zserv, in the byte location corresponding
- * the command value in the old zserv header. To allow old and new
+ * the command value in the old nsm_zserv.header. To allow old and new
  * Zserv headers to be distinguished from each other.
  */
 #define ZEBRA_HEADER_MARKER              255

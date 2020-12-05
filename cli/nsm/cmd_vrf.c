@@ -18,12 +18,12 @@
 #include "network.h"
 #include "log.h"
 #include "table.h"
-#include "rib.h"
-#include "vrf.h"
+#include "nsm_rib.h"
+#include "nsm_vrf.h"
 
-#include "zserv.h"
-#include "router-id.h"
-#include "redistribute.h"
+#include "nsm_zserv.h"
+#include "nsm_router-id.h"
+#include "nsm_redistribute.h"
 
 
 #ifdef USE_IPSTACK_IPCOM

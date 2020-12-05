@@ -344,10 +344,10 @@ int v9_serial_init(char *devname, u_int32 speed)
 {
 	if(_v9_serial_hw_init() == OK)
 	{
-		if(master_eloop[PL_APPLICATION_MODULE_START] == NULL)
-			master_eloop[PL_APPLICATION_MODULE_START] = eloop_master_module_create(PL_APPLICATION_MODULE_START);
+		if(master_eloop[MODULE_APP_START] == NULL)
+			master_eloop[MODULE_APP_START] = eloop_master_module_create(MODULE_APP_START);
 
-		v9_serial->master = master_eloop[PL_APPLICATION_MODULE_START];
+		v9_serial->master = master_eloop[MODULE_APP_START];
 		v9_serial->mutex = os_mutex_init();
 		memset(v9_serial->tty->devname, 0, sizeof(v9_serial->tty->devname));
 		strcpy(v9_serial->tty->devname, devname);
@@ -414,7 +414,7 @@ static int v9_app_mgt_task(void *argv)
 	zassert(argv != NULL);
 	v9_serial_t *mgt = (v9_serial_t *)argv;
 	zassert(mgt != NULL);
-	module_setup_task(PL_APPLICATION_MODULE_START, os_task_id_self());
+	module_setup_task(MODULE_APP_START, os_task_id_self());
 	while(!os_load_config_done())
 	{
 		os_sleep(1);
@@ -426,7 +426,7 @@ static int v9_app_mgt_task(void *argv)
 
 	//v9_video_sdk_restart_all();
 
-	eloop_start_running(master_eloop[PL_APPLICATION_MODULE_START], PL_APPLICATION_MODULE_START);
+	eloop_start_running(master_eloop[MODULE_APP_START], MODULE_APP_START);
 	return OK;
 }
 
@@ -434,8 +434,8 @@ static int v9_app_mgt_task(void *argv)
 static int v9_app_task_init (v9_serial_t *mgt)
 {
 	zassert(mgt != NULL);
-	if(master_eloop[PL_APPLICATION_MODULE_START] == NULL)
-		mgt->master = master_eloop[PL_APPLICATION_MODULE_START] = eloop_master_module_create(PL_APPLICATION_MODULE_START);
+	if(master_eloop[MODULE_APP_START] == NULL)
+		mgt->master = master_eloop[MODULE_APP_START] = eloop_master_module_create(MODULE_APP_START);
 
 	mgt->enable = TRUE;
 	mgt->task_id = os_task_create("appTask", OS_TASK_DEFAULT_PRIORITY,

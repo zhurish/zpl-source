@@ -3,35 +3,33 @@
 ###########################################################################
 MODULEDIR = platform/nsm
 #nsm
-#OBJS	+= debug.o
-OBJS	+= interface.o
-OBJS	+= redistribute.o
-OBJS	+= router-id.o
-OBJS	+= connected.o
-#OBJS	+= zebra_fpm.o
-#OBJS	+= zebra_rib.o
-
-#OBJS	+= zebra_routemap.o
-#OBJS	+= zebra_snmp.o
-#OBJS	+= zebra_vty.o
-
-OBJS	+= distribute.o
-OBJS	+= filter.o
-#OBJS	+= if_rmap.o
-OBJS	+= keychain.o
-OBJS	+= plist.o
-OBJS	+= routemap.o
-
-OBJS	+= vrf.o
-#OBJS	+= nsm_log.o
-OBJS	+= zebra_rib.o
-OBJS	+= zebra_rnh.o
-OBJS	+= zserv.o
-#OBJS	+= zclient.o
-OBJS	+= debug.o
-
+ifeq ($(strip $(PL_NSM_MODULE)),true)
+OBJS	+= nsm_interface.o
+OBJS	+= nsm_connected.o
 OBJS	+= nsm_client.o
 OBJS	+= nsm_hook.o
+OBJS	+= nsm_router-id.o
+
+
+#OBJS	+= nsm_zebra_routemap.o
+#OBJS	+= nsm_snmp.o
+#OBJS	+= nsm_vty.o
+
+OBJS	+= nsm_distribute.o
+OBJS	+= nsm_redistribute.o
+OBJS	+= nsm_filter.o
+OBJS	+= nsm_if_rmap.o
+OBJS	+= nsm_keychain.o
+OBJS	+= nsm_plist.o
+OBJS	+= nsm_routemap.o
+
+OBJS	+= nsm_vrf.o
+OBJS	+= nsm_rib.o
+OBJS	+= nsm_rnh.o
+OBJS	+= nsm_fpm.o
+OBJS	+= nsm_zserv.o
+OBJS	+= nsm_debug.o
+
 
 
 ifeq ($(strip $(PL_NSM_8021X)),true)
@@ -95,3 +93,4 @@ OBJS	+= nsm_main.o
 # LIB
 ###########################################################################
 LIBS = libnsm.a
+endif

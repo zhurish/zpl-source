@@ -32,7 +32,9 @@ choice
 config PL_USEING_ARM
 	bool "ARM"
 config PL_USEING_ARM64
-	bool "ARM"
+	bool "ARM64"
+config PL_USEING_AARCH64
+	bool "AARCH64"
 config PL_USEING_X86
 	bool "X86"
 config PL_USEING_X86_64

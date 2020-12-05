@@ -163,7 +163,8 @@ static int web_handle_file_tbl(Webs *wp, void *p)
 				{
 #ifdef APP_V9_MODULE
 					if(strstr(strval, "sysupgrade") || strstr(strval, "V9"))
-#elif APP_X5BA_MODULE
+
+#elif defined APP_X5BA_MODULE
 					if(strstr(strval, "sysupgrade") || strstr(strval, "BYQ"))
 #else					
 					if(strstr(strval, "sysupgrade"))		

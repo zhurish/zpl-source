@@ -4,7 +4,7 @@
 #
 #
 #
-ifeq ($(PL_BUILD_TYPE),X86)
+ifeq ($(CROSS_COMPILE),)
 export AS=as
 export LD=ld
 export CC=gcc
@@ -21,13 +21,9 @@ PLOS_DEFINE += -DPL_BUILD_$(PL_BUILD_TYPE)
 #PLOS_DEFINE += -DSYS_REAL_DIR=\"$(BASE_ROOT)/$(RELEASEDIR)\"
 PLOS_INCLUDE += -I/usr/include -I/usr/local/include 
 PLOS_LDFLAGS += -L/lib -L/usr/lib -L/lib64 -L/usr/lib64 -L/usr/local/lib -L/usr/local/lib64
-endif
 #
-ifneq ($(PL_BUILD_TYPE),X86)
-ifeq ($(CROSS_COMPILE),)
-$(error CROSS_COMPILE is not define)
-endif
-#export CROSS_COMPILE
+else
+#
 export AS=$(CROSS_COMPILE)as
 export LD=$(CROSS_COMPILE)ld
 export CC=$(CROSS_COMPILE)gcc
@@ -41,19 +37,22 @@ export OBJCOPY=$(CROSS_COMPILE)objcopy
 export OBJDUMP=$(CROSS_COMPILE)objdump
 export RANLIB=$(CROSS_COMPILE)ranlib
 
-PLOS_INCLUDE += -I$(CROSS_COMPILE_ROOT)/include -I$(CROSS_COMPILE_ROOT)/usr/include 
-PLOS_LDFLAGS += -L$(CROSS_COMPILE_ROOT)/lib -L$(CROSS_COMPILE_ROOT)/usr/lib
+export CROSS_COMPILE
+#PLOS_INCLUDE += -I$(CROSS_COMPILE_INC)
+#PLOS_LDFLAGS += -L$(CROSS_COMPILE_LIB)
+
+PLOS_INCLUDE += -I$(CROSS_COMPILE_PATH)/include -I$(CROSS_COMPILE_PATH)/usr/include 
+PLOS_LDFLAGS += -L$(CROSS_COMPILE_PATH)/lib -L$(CROSS_COMPILE_PATH)/usr/lib
+
 PLOS_DEFINE += -DPL_BUILD_$(PL_BUILD_TYPE)
 endif
 #
 #
 #
-ifeq ($(ARCH_BIT),64)
+ifeq ($(PL_BUILD_TYPE),X86_64)
 PLOS_CFLAGS += -m64
-else
-ifneq ($(PL_BUILD_TYPE),X86)
-#PLOS_CFLAGS += -m32
-endif
+else ifeq ($(PL_BUILD_TYPE),AARCH64)
+PLOS_CFLAGS += -m64
 endif
 #
 #
@@ -83,7 +82,7 @@ ifeq ($(strip $(PL_LIBSSH_MODULE)),true)
 #-lz -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err
 endif
 #
-ifeq ($(PL_BUILD_TYPE),X86)
+ifeq ($(PL_BUILD_TYPE),X86_64)
 ifeq ($(strip $(PL_SQLITE_MODULE)),true)
 #PLOS_LDLIBS += -lsqlite3
 endif

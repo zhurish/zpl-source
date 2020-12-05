@@ -11,7 +11,7 @@ obj:install
 config_install:
 	@install -d ${DSTETCDIR} 
 	@install -m 755 product ${DSTETCDIR}
-ifeq ($(EN_APP_X5BA),true)
+ifeq ($(PL_APP_X5_MODULE),true)
 	@install -m 755 openconfig ${DSTETCDIR}
 	@install -m 755 voipconfig ${DSTETCDIR}	
 endif	
@@ -19,7 +19,7 @@ endif
 #	
 config_clean:
 	@$(RM) $(DSTETCDIR)/product
-ifeq ($(EN_APP_X5BA),true)
+ifeq ($(PL_APP_X5_MODULE),true)
 	@$(RM) $(DSTETCDIR)/voipconfig
 	@$(RM) $(DSTETCDIR)/openconfig	
 endif	

@@ -25,7 +25,7 @@
 /* For struct zapi_ipv{4,6}. */
 #include "if.h"
 #include "prefix.h"
-#include "vrf.h"
+#include "nsm_vrf.h"
 
 
 enum

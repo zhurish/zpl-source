@@ -10,7 +10,7 @@ using namespace std;
 class pjsipCall : public Call
 {
 public:
-    pjsipCall(Account &acc, int call_id = PJSUA_INVALID_ID);
+    pjsipCall(Account &account, int call_id = PJSUA_INVALID_ID);
     //pjsipCall(pjsipObserver *observer, Account &acc, int call_id = PJSUA_INVALID_ID);
     ~pjsipCall();
 
@@ -34,6 +34,7 @@ public:
     void onTypingIndication(OnTypingIndicationParam &prm);
     pjsip_redirect_op onCallRedirected(OnCallRedirectedParam &prm)
     {
+        return PJSIP_REDIRECT_REJECT;
     }
     void onCallMediaTransportState(OnCallMediaTransportStateParam &prm);
     void onCallMediaEvent(OnCallMediaEventParam &prm);

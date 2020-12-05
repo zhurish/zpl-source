@@ -2,10 +2,10 @@
 # DEFINE
 ###########################################################################
 
-ifeq ($(strip $(EN_APP_X5BA)),true)
+ifeq ($(strip $(PL_APP_X5_MODULE)),true)
     APP_DIR += X5-B
 endif
-ifeq ($(strip $(EN_APP_V9)),true)
+ifeq ($(strip $(PL_APP_V9_MODULE)),true)
     APP_DIR += V9
 endif
 

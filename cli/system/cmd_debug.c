@@ -18,7 +18,7 @@
 #include "vty.h"
 #include "vty_user.h"
 #include "host.h"
-#include "debug.h"
+#include "nsm_debug.h"
 #include "template.h"
 
 /* Debug node. */

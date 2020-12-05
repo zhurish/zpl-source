@@ -29,10 +29,10 @@
 #include "prefix.h"
 #include "log.h"
 #include "sigevent.h"
-#include "vrf.h"
-#include "rib.h"
-#include "zserv.h"
-#include "router-id.h"
+#include "nsm_vrf.h"
+#include "nsm_rib.h"
+#include "nsm_zserv.h"
+#include "nsm_router-id.h"
 
 struct zebra_t zebrad =
 {

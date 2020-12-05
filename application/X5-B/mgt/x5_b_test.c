@@ -504,10 +504,10 @@ static int x5b_app_test_module_init(char *local, u_int16 port)
 		mgt_test = malloc(sizeof(x5b_app_mgt_t));
 		memset(mgt_test, 0, sizeof(x5b_app_mgt_t));
 
-		if(master_eloop[PL_APPLICATION_MODULE_START + 1] == NULL)
-			master_eloop[PL_APPLICATION_MODULE_START + 1] = eloop_master_module_create(PL_APPLICATION_MODULE_START + 1);
+		if(master_eloop[MODULE_APP_START + 1] == NULL)
+			master_eloop[MODULE_APP_START + 1] = eloop_master_module_create(MODULE_APP_START + 1);
 
-		mgt_test->master = master_eloop[PL_APPLICATION_MODULE_START + 1];
+		mgt_test->master = master_eloop[MODULE_APP_START + 1];
 
 		mgt_test->mutex = os_mutex_init();
 
@@ -564,7 +564,7 @@ static int x5b_app_test_mgt_task(void *argv)
 	zassert(argv != NULL);
 	x5b_app_mgt_t *mgt = (x5b_app_mgt_t *)argv;
 	zassert(mgt != NULL);
-	module_setup_task(PL_APPLICATION_MODULE_START + 1, os_task_id_self());
+	module_setup_task(MODULE_APP_START + 1, os_task_id_self());
 	while(!os_load_config_done())
 	{
 		os_sleep(1);
@@ -574,7 +574,7 @@ static int x5b_app_test_mgt_task(void *argv)
 		os_sleep(5);
 	}
 	//x5b_app_state_load(mgt);
-	eloop_start_running(master_eloop[PL_APPLICATION_MODULE_START + 1], PL_APPLICATION_MODULE_START + 1);
+	eloop_start_running(master_eloop[MODULE_APP_START + 1], MODULE_APP_START + 1);
 	return OK;
 }
 
@@ -582,8 +582,8 @@ static int x5b_app_test_mgt_task(void *argv)
 static int x5b_app_test_task_init (x5b_app_mgt_t *mgt)
 {
 	zassert(mgt != NULL);
-	if(master_eloop[PL_APPLICATION_MODULE_START + 1] == NULL)
-		master_eloop[PL_APPLICATION_MODULE_START + 1] = eloop_master_module_create(PL_APPLICATION_MODULE_START + 1);
+	if(master_eloop[MODULE_APP_START + 1] == NULL)
+		master_eloop[MODULE_APP_START + 1] = eloop_master_module_create(MODULE_APP_START + 1);
 
 	mgt->enable = TRUE;
 	mgt->task_id = os_task_create("appTest", OS_TASK_DEFAULT_PRIORITY,

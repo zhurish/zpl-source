@@ -9,7 +9,7 @@
 #TARGET_LDFLAGS:=-L$(STAGING_DIR)/usr/lib -L$(STAGING_DIR)/lib
 #
 #TOOLCHAIN_DIR=/home/zhurish/application/openwrt-lede/staging_dir/toolchain-mipsel_24kc_gcc-5.4.0_glibc-2.24"
-#TARGET_ROOTFS_DIR=/home/zhurish/application/openwrt-lede/build_dir/target-mipsel_24kc_glibc-2.24
+#TARGET_DSTROOTFSDIR=/home/zhurish/application/openwrt-lede/build_dir/target-mipsel_24kc_glibc-2.24
 #TOOLCHAIN_DIR_NAME=toolchain-mipsel_24kc_gcc-5.4.0_glibc-2.24
 #PL_BUILD_DIR_TOOLCHAIN=/home/zhurish/application/openwrt-lede/build_dir/toolchain-mipsel_24kc_gcc-5.4.0_glibc-2.24
 #TARGET_CROSS=mipsel-openwrt-linux-gnu-
@@ -22,7 +22,7 @@
 #CROSS_COMPILE_ROOT = /opt/toolchain/toolchain-mipsel_24kc_gcc-7.3.0_glibc
 #CROSS_COMPILE = $(CROSS_COMPILE_ROOT)/bin/mipsel-openwrt-linux-
 #
-#ifneq ($(PL_BUILD_TYPE),X86)
+#ifneq ($(PL_BUILD_TYPE),X86_64)
 ifneq ($(CROSS_COMPILE),)
 #$(error CROSS_COMPILE is not define)
 #endif
@@ -60,11 +60,11 @@ endif
 #
 #
 #
-ifeq ($(ARCH_BIT),64)
+ifeq ($(PL_BUILD_TYPE),X86_64)
 PLOS_CFLAGS += -m64
 else
-ifneq ($(PL_BUILD_TYPE),X86)
-#PLOS_CFLAGS += -m32
+ifneq ($(PL_BUILD_TYPE),AARCH64)
+PLOS_CFLAGS += -m64
 endif
 endif
 #
@@ -102,7 +102,7 @@ ifeq ($(strip $(PL_LIBSSH_MODULE)),true)
 #-lz -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err
 endif
 #
-ifeq ($(PL_BUILD_TYPE),X86)
+ifeq ($(PL_BUILD_TYPE),X86_64)
 ifeq ($(strip $(PL_SQLITE_MODULE)),true)
 #PLOS_LDLIBS += -lsqlite3
 endif

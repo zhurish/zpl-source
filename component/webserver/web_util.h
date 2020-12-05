@@ -10,9 +10,9 @@
 
 #include "zebra.h"
 #include "if.h"
-#include "vrf.h"
+#include "nsm_vrf.h"
 #include "nexthop.h"
-#include "rib.h"
+#include "nsm_rib.h"
 
 
 #define _WEB_DEBUG_ENABLE 1

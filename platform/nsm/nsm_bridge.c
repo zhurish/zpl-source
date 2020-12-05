@@ -12,7 +12,7 @@
 #include "memtypes.h"
 #include "prefix.h"
 #include "if.h"
-#include "interface.h"
+#include "nsm_interface.h"
 #include <log.h>
 #include "nsm_client.h"
 

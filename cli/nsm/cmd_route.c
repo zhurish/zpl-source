@@ -26,12 +26,12 @@
 #include "prefix.h"
 #include "command.h"
 #include "table.h"
-#include "rib.h"
-#include "vrf.h"
+#include "nsm_rib.h"
+#include "nsm_vrf.h"
 #include "nexthop.h"
 
-#include "zserv.h"
-#include "zebra_rnh.h"
+#include "nsm_zserv.h"
+#include "nsm_rnh.h"
 
 char *proto_rm[AFI_MAX][ZEBRA_ROUTE_MAX+1];	/* "any" == ZEBRA_ROUTE_MAX */
 static int do_show_ip_route(struct vty *vty, safi_t safi, vrf_id_t vrf_id);

@@ -15,7 +15,7 @@
 #include "table.h"
 #include "vector.h"
 #include "if.h"
-#include "interface.h"
+#include "nsm_interface.h"
 
 #include "pjsip_app_api.h"
 

@@ -7,8 +7,8 @@ using namespace std;
 /*
  * class pjsipCall
  */
-pjsipCall::pjsipCall(Account &acc, int call_id)
-    : Call(acc, call_id)
+pjsipCall::pjsipCall(Account &account, int call_id)
+    : Call(account, call_id)
 {
     PJSIP_ENTER_DEBUG();
     incomintVideoWindow = nullptr;

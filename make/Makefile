@@ -29,7 +29,7 @@ endif
 #
 #
 #
-.PHONY:	obj all demo lib clean rebuild install help usage objclean packet
+.PHONY:	obj all demo lib clean rebuild install help usage objclean packet debug
 #
 #
 help:usage
@@ -83,7 +83,7 @@ endif
 #
 objclean:
 	@for i in $(PLPRODS); do	\
-		$(MAKE) -C $$i objclean; 	\
+		$(MAKE) -C $$i objclean || exit "$$?"; 	\
 	done
 #
 obj:
@@ -108,14 +108,15 @@ clean:
 	done
 
 demo: 	
+
 	@for i in $(PLPRODS); do	\
 		$(MAKE) -C $$i demo || exit "$$?"; 	\
 	done
 
 lib: 
 	@for i in $(PLEX_DIR); do	\
-		$(MAKE) -C $$i all; 	\
-		$(MAKE) -C $$i install; 	\
+		$(MAKE) -C $$i all || exit "$$?"; 	\
+		$(MAKE) -C $$i install || exit "$$?"; 	\
 	done
 	@for i in $(PLPRODS); do	\
 		$(MAKE) -C $$i lib || exit "$$?"; 	\
@@ -123,13 +124,23 @@ lib:
 		
 all: 
 	@for i in $(PLEX_DIR); do	\
-		$(MAKE) -C $$i all; 	\
-		$(MAKE) -C $$i install; 	\
+		$(MAKE) -C $$i all || exit "$$?"; 	\
+		$(MAKE) -C $$i install || exit "$$?"; 	\
 	done
 	@for i in $(PLPRODS); do	\
 		$(MAKE) -C $$i all || exit "$$?"; 	\
 	done
-	
+
+debug:
+	@$(ECHO) " CROSS_COMPILE: $(CROSS_COMPILE)"
+	@$(ECHO) " PL_BUILD_TYPE: $(PL_BUILD_TYPE)"
+	@$(ECHO) " ARCH_TYPE: $(ARCH_TYPE)"
+	@$(ECHO) " GCC_TYPE: $(GCC_TYPE)"
+	@$(ECHO) " PL_BUILD_OPENWRT: $(PL_BUILD_OPENWRT)"
+	@$(ECHO) " ARCH_DEBUG: $(ARCH_DEBUG)"	
+	@$(ECHO) " PL_COMPILE_OPTIONS: $(PL_COMPILE_OPTIONS)"
+
+
 rebuild: clean all
 
 packet:

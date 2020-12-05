@@ -25,7 +25,7 @@
 
 #include "log.h"
 
-#include "ipforward.h"
+#include "nsm_ipforward.h"
 
 
 char proc_net_snmp[] = "/proc/net/snmp";

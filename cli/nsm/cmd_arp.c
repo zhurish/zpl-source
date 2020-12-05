@@ -20,8 +20,8 @@
 #include "str.h"
 #include "table.h"
 #include "vector.h"
-#include "vrf.h"
-#include "interface.h"
+#include "nsm_vrf.h"
+#include "nsm_interface.h"
 #include "nsm_mac.h"
 #include "nsm_arp.h"
 

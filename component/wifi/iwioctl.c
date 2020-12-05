@@ -24,7 +24,7 @@
 #include "str.h"
 #include "table.h"
 #include "vector.h"
-#include "vrf.h"
+#include "nsm_vrf.h"
 
 #include "iw_config.h"
 #include "iw_ap.h"

@@ -1,5 +1,5 @@
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef __MQTT_CONFIG_H__
+#define __MQTT_CONFIG_H__
 /* ============================================================
  * Platform options
  * ============================================================ */

@@ -158,7 +158,12 @@ extern int modem_interface_bind_api(char *name, char *ifname);
 extern int modem_interface_unbind_api(char *name);
 */
 
-extern int modem_module_init(void);
+
+extern int modem_module_init (void);
+extern int modem_module_exit (void);
+extern int modem_task_init (void);
+extern int modem_task_exit (void);
+
 extern int modem_main_process(void *pVoid);
 
 

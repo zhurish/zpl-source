@@ -162,7 +162,7 @@ os_timeval_elapsed (struct timeval a, struct timeval b)
 int
 os_gettimeofday (struct timeval *tv)
 {
-  assert (tv);
+  //assert (tv);
   return gettimeofday (tv, NULL);
 
 }
@@ -171,7 +171,7 @@ int
 os_get_realtime (struct timeval *tv)
 {
 	int ret;
-	assert(tv);
+	//assert(tv);
 	struct timespec tp;
 	if (!(ret = clock_gettime(CLOCK_REALTIME, &tp)))
 	{
@@ -185,7 +185,7 @@ int
 os_get_monotonic (struct timeval *tv)
 {
   int ret;
-  assert (tv);
+  //assert (tv);
 #ifdef HAVE_CLOCK_MONOTONIC
   {
     struct timespec tp;
@@ -1088,7 +1088,7 @@ static int os_time_task(void)
 	int signum = 0, err = 0;
 	sigset_t	set;
 #endif
-	while(!os_load_config_done())
+	//while(!os_load_config_done())
 	{
 		os_sleep(1);
 	}

@@ -2,7 +2,7 @@ include $(MAKE_DIR)/makelinux.mk
 
 include config.mk
 
-PL_PJINC = -I$(PJPROJDIR)/_install/include
+PL_PJINC = -I$(DSTROOTFSDIR)/include
 #OBJS = $(OSOBJ)
 
 OBJS_DIR = $(BASE_ROOT)/$(OBJDIR)/$(MODULEDIR)

@@ -11,7 +11,7 @@ config PL_COMPONENT_MODULE
 config PL_MODEM_MODULE
 	bool "MODEM Module"
 	default n
-	depends on PL_COMPONENT_MODULE
+	depends on PL_COMPONENT_MODULE && PL_NSM_MODULE
 	help
 	Build MODEM Module.
 
@@ -125,13 +125,13 @@ config PL_LIBSSH_GSSAPI
 config PL_UDHCP_MODULE
 	bool "UDHCP Module"
 	default y
-	depends on PL_COMPONENT_MODULE
+	depends on PL_COMPONENT_MODULE  && PL_NSM_MODULE
 	help
 	Build UDHCP Module.
 
 config PL_UDHCPS_MODULE
 	bool "UDHCP Server Module"
-	depends on PL_UDHCP_MODULE
+	depends on PL_UDHCP_MODULE 
 	default y
 	help
 	Build UDHCP Server Module.
@@ -155,7 +155,7 @@ config PL_WEBSERVER_MODULE
 	default y
 	depends on PL_COMPONENT_MODULE
 	help
-	Build WEB Server Module.
+		Build WEB Server Module.
 	choice 
 		prompt "WEB Server SSL"
 		depends on PL_WEBSERVER_MODULE
@@ -173,7 +173,7 @@ config PL_WEBSERVER_MODULE
 config PL_WIFI_MODULE
 	bool "WIFI Module"
 	default n
-	depends on PL_COMPONENT_MODULE
+	depends on PL_COMPONENT_MODULE  && PL_NSM_MODULE
 	help
 	Build WIFI Module.
 

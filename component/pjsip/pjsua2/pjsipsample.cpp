@@ -1007,7 +1007,7 @@ int pjsipSample::pjsipSampleTimerHandle()
     return 0;
 }
 
-void pjsipSample::pjsipAppNotifyRegisterState(pjsipAccount &account, int code, string &reason, long ex)
+void pjsipSample::pjsipAppNotifyRegisterState(pjsipAccount &account_in, int code, string &reason, long ex)
 {
     PJSIP_ENTER_DEBUG();
     string msg_str = "";
@@ -1035,7 +1035,7 @@ void pjsipSample::pjsipAppNotifyRegisterState(pjsipAccount &account, int code, s
             sipRegState = PJSIP_STATE.PJSIP_STATE_REGISTER_FAILED;
     }
     if(pjsipSample_observer != nullptr)
-        pjsipSample_observer->pjsipSampleNotifyRegisterState(account,  sipRegState, reason,  ex);
+        pjsipSample_observer->pjsipSampleNotifyRegisterState(account_in,  sipRegState, reason,  ex);
     PJSIP_LEAVE_DEBUG();
 }
 

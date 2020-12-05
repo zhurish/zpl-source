@@ -16,7 +16,7 @@
 #include "table.h"
 #include "thread.h"
 #include "vty.h"
-#include "zserv.h"
+#include "nsm_zserv.h"
 #include "nsm_hook.h"
 
 #include "pal_driver.h"

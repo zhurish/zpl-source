@@ -16,9 +16,9 @@
 #include "sigevent.h"
 #include "sockunion.h"
 //#include "version.h"
-#include "vrf.h"
-#include "filter.h"
-#include "plist.h"
+#include "nsm_vrf.h"
+#include "nsm_filter.h"
+#include "nsm_plist.h"
 #include "vty.h"
 #include "nsm_vlan.h"
 

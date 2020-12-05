@@ -204,4 +204,5 @@ int pjsipTimer::pjsipTimerCancel()
     pjsipTimerStop(0);
     //if (_pjsipSampleimerPtr != null)
     //    _pjsipSampleimerPtr.cancel();
+    return 0;
 }

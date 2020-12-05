@@ -132,13 +132,13 @@ APPWEBOBJS += web_system_html.o
 APPWEBOBJS += web_upgrade_html.o
 APPWEBOBJS += web_netservice_html.o
 
-ifeq ($(strip $(EN_APP_X5BA)),true)
+ifeq ($(strip $(PL_APP_X5_MODULE)),true)
 APPWEBOBJS += web_switch_html.o
 APPWEBOBJS += web_sip_html.o
 APPWEBOBJS += web_factory_html.o
 APPWEBOBJS += web_card_html.o
 endif
-ifeq ($(strip $(EN_APP_V9)),true)
+ifeq ($(strip $(PL_APP_V9_MODULE)),true)
 APPWEBOBJS += web_boardcard_html.o
 APPWEBOBJS += web_general_html.o
 APPWEBOBJS += web_rtsp_html.o

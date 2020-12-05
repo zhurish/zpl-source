@@ -23,8 +23,8 @@
 #include "table.h"
 #include "host.h"
 #include "vector.h"
-#include "vrf.h"
-#include "interface.h"
+#include "nsm_vrf.h"
+#include "nsm_interface.h"
 #include "nsm_client.h"
 
 #include "iw_config.h"

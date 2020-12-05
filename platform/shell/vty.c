@@ -40,7 +40,7 @@
 #include "host.h"
 #include "vty.h"
 #include "tty_com.h"
-#include "filter.h"
+#include "nsm_filter.h"
 #include "vty_user.h"
 
 

@@ -20,7 +20,7 @@
 #include "str.h"
 #include "table.h"
 #include "vector.h"
-#include "vrf.h"
+#include "nsm_vrf.h"
 
 #include "if_hook.h"
 #include "if_name.h"

@@ -76,6 +76,8 @@ PL_BUILD_TYPE	=$(ARCH_TYPE)
 #
 PL_BUILD_DEBUG	=$(ARCH_DEBUG)
 #
+PL_BUILD_OS	=$(ARCH_OS)
+#
 #
 #PL_BUILD_IPV6	= false
 PL_BUILD_IPV6	= $(IPV6_ENABLE)
@@ -98,12 +100,12 @@ PLOS_CFLAGS += -MMD -MP -Wfatal-errors -Wall -Wextra -Wnested-externs -Wmissing-
 			 -Wswitch -Wformat -Wuninitialized -Wchar-subscripts  \
 			 -Wpointer-arith -Wwrite-strings -Wstrict-prototypes
 			 
-PLOS_CPPFLAGS += -MMD -MP -Wall -Wextra -Wnested-externs -Wmissing-prototypes \
+PLOS_CPPFLAGS += -MMD -MP -Wall -Wextra  \
 			 -Wredundant-decls -Wcast-align -Wunreachable-code -Wshadow	\
-			 -Wimplicit-function-declaration -Wimplicit	-Wreturn-type -Wunused \
+			 -Wreturn-type -Wunused \
 			 -Wswitch -Wformat -Wuninitialized -Wchar-subscripts  \
-			 -Wpointer-arith -Wwrite-strings -Wstrict-prototypes
-			 			 
+			 -Wpointer-arith -Wwrite-strings
+		
 # -Werror=implicit-function-declaration -Werror=switch -Wfatal-errors 
 PLOS_CFLAGS += -Werror=return-type -Werror=format-extra-args  \
 			  -Werror=unreachable-code -Werror=unused-function -Werror=unused-variable \
@@ -125,7 +127,8 @@ PLOS_CFLAGS += -Werror=return-type -Werror=format-extra-args  \
 			  #-Werror=redundant-decls -Werror=format -Werror=missingbraces
 #			 -Werror=switch-default -Werror=missing-format-attribute 
 #				-Werror=overlength-strings -Werror=cast-align 
-#PLOS_CPPFLAGS
+PLOS_CPPFLAGS += -Werror=shadow -Werror=return-type -Werror=unreachable-code -Werror=unused-function \
+				 -Werror=ctor-dtor-privacy 
 #			 
 PLOS_CFLAGS += -fmessage-length=0 -Wcast-align
 #
@@ -159,6 +162,9 @@ WWWDIR = $(RELEASEDIR)/www
 #PLOS_MAP = -Wl,-Map,target-app.map
 PLOS_MAP = -Wl,-Map,
 endif
+
+ROOTFS_DIR = rootfs_install
+export DSTROOTFSDIR = $(BASE_ROOT)/$(ROOTFS_DIR)
 #
 #
 ifeq ($(PL_BUILD_OPENWRT),true)
@@ -177,8 +183,10 @@ endif
 #
 ifeq ($(PL_BUILD_DEBUG),YES)
 PLOS_CFLAGS += -g2 -ggdb
+PLOS_CPPFLAGS += -g2
 else
 PLOS_CFLAGS += -O1
+PLOS_CPPFLAGS += -O1
 endif
 #
 #

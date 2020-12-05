@@ -9,3 +9,4 @@ COMPONENT_ROOT	=$(PLBASE)/component
 TOOLS_ROOT		=$(PLBASE)/tools
 APP_ROOT		=$(PLBASE)/application
 EXTERNSION_ROOT	=$(PLBASE)/externsions
+MULTIMEDIA_ROOT	=$(PLBASE)/multimedia

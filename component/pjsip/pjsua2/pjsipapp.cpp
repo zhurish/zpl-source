@@ -312,6 +312,7 @@ int pjsipApp::pjsipDeinit()
     delete (ep);
     ep = nullptr;
     PJSIP_LEAVE_DEBUG();
+    return 0;
 }
 
 int pjsipApp::pjsipAppLoadConfig()

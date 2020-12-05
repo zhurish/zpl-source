@@ -9,6 +9,9 @@
 #define __MQTT_APP_CONF_H__
 
 
+#include "mqtt-config.h"
+#include <mqtt_protocol.h>
+#include <mosquitto.h>
 
 #define MQTT_PORT_DETAULT 			1883
 #define MQTT_KEEPALIVE_DETAULT 		60

@@ -165,7 +165,7 @@ static int modem_timer_thread(void *argv)
 	return modem_process_callback_api(modem_process_handle, NULL);
 }
 
-int modem_module_init ()
+int modem_module_init (void)
 {
 	modem_main_init();
 	modem_ansync_lst = os_ansync_lst_create(PL_MODEM_MODULE, 4);
@@ -177,14 +177,14 @@ int modem_module_init ()
 	return 0;
 }
 
-int modem_module_exit ()
+int modem_module_exit (void)
 {
 	modem_main_exit();
 	os_ansync_lst_destroy(modem_ansync_lst);
 	return OK;
 }
 
-int modem_task_init ()
+int modem_task_init (void)
 {
 	if(modem_task_id == 0)
 		modem_task_id = os_task_create("modemTask", OS_TASK_DEFAULT_PRIORITY,
@@ -195,7 +195,7 @@ int modem_task_init ()
 }
 
 
-int modem_task_exit ()
+int modem_task_exit (void)
 {
 	if(modem_task_id == 0)
 		return OK;

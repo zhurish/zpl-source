@@ -752,6 +752,10 @@ int pl_pjsip_show_config(void *p, BOOL detail);
 void cmd_voip_init(void);
 void cmd_voip_test_init(int node);
 /************************************************************************/
+int pl_pjsip_module_init();
+int pl_pjsip_module_exit();
+int pl_pjsip_module_task_init();
+int pl_pjsip_module_task_exit();
 int pl_pjsip_json_test();
 /************************************************************************/
 #endif /* __PJSIP_APP_API_H__ */

@@ -14,8 +14,8 @@
 #include "version.h"
 #include <log.h>
 #include "getopt.h"
-#include "filter.h"
-#include "plist.h"
+#include "nsm_filter.h"
+#include "nsm_plist.h"
 #include "host.h"
 #include "eloop.h"
 #include "os_job.h"

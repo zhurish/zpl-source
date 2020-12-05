@@ -93,6 +93,7 @@ int pjsipMain::pjsip_app_task(void *p)
         }
         pj_thread_sleep(1000);
     }
+    return 0;
 }
 /*
 static pjsipSample *pjsip_sample = nullptr;

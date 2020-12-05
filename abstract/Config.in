@@ -7,6 +7,7 @@ menu "Abstract Module Config"
 config PL_ABSTRACT_MODULE
 	bool "Abstract Module"
 	default y
+	depends on PL_NSM_MODULE
 
 config PL_HAL_MODULE
 	bool "HAL Abstract Module"

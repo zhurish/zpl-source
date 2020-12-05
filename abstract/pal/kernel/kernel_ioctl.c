@@ -26,8 +26,8 @@
 #include "if.h"
 #include "prefix.h"
 #include "log.h"
-#include "rib.h"
-#include "interface.h"
+#include "nsm_rib.h"
+#include "nsm_interface.h"
 
 #include "nsm_veth.h"
 #include "nsm_tunnel.h"

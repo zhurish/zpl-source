@@ -165,5 +165,5 @@ extern unit32 os_task_entry_add(char *name, int pri, int op,
 
 extern int cmd_os_init();
 extern int os_task_show(void *vty, char *task_name, int detail);
-
+extern int os_task_cli_hook_set(void *hook);
 #endif /* __OS_TASK_H__ */

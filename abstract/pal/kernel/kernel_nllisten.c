@@ -23,21 +23,21 @@
 
 #include "linklist.h"
 #include "if.h"
-#include "connected.h"
+#include "nsm_connected.h"
 #include "log.h"
 #include "prefix.h"
 #include "table.h"
 #include "memory.h"
-#include "rib.h"
+#include "nsm_rib.h"
 #include "thread.h"
-#include "vrf.h"
+#include "nsm_vrf.h"
 #include "nexthop.h"
 
-#include "zserv.h"
+#include "nsm_zserv.h"
 
-#include "redistribute.h"
-#include "interface.h"
-#include "debug.h"
+#include "nsm_redistribute.h"
+#include "nsm_interface.h"
+#include "nsm_debug.h"
 #include "nsm_hook.h"
 #include "kernel_netlink.h"
 

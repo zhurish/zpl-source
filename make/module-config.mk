@@ -2,25 +2,24 @@
 include $(MAKE_DIR)/module-dir.mk
 
 
-
-
-
-PLPRODS += $(PLATFORM_ROOT)/lib
 PLPRODS += $(PLATFORM_ROOT)/os
-PLPRODS += $(PLATFORM_ROOT)/shell
-PLPRODS += $(PLATFORM_ROOT)/nsm
+PLPRODS += $(PLATFORM_ROOT)/lib
 PLPRODS += $(PLATFORM_ROOT)/misc
+PLPRODS += $(PLATFORM_ROOT)/shell
 
-PL_INCLUDE += -I$(PLATFORM_ROOT)/lib
 PL_INCLUDE += -I$(PLATFORM_ROOT)/os
-PL_INCLUDE += -I$(PLATFORM_ROOT)/shell
-PL_INCLUDE += -I$(PLATFORM_ROOT)/nsm
+PL_INCLUDE += -I$(PLATFORM_ROOT)/lib
 PL_INCLUDE += -I$(PLATFORM_ROOT)/misc
+PL_INCLUDE += -I$(PLATFORM_ROOT)/shell
 
+ifeq ($(strip $(PL_NSM_MODULE)),true)
+PLPRODS += $(PLATFORM_ROOT)/nsm
+PL_INCLUDE += -I$(PLATFORM_ROOT)/nsm
 PL_DEFINE	+= -DPL_NSM_MODULE
+PLCLI_DIR += $(CLI_ROOT)/nsm
+endif
 
 ifeq ($(strip $(PL_CLI_MODULE)),true)
-PLCLI_DIR += $(CLI_ROOT)/nsm
 PLCLI_DIR += $(CLI_ROOT)/system
 endif
 
@@ -184,10 +183,10 @@ PLPRODS += $(LIBSSH_ROOT)
 PL_INCLUDE += -I$(LIBSSH_ROOT)
 PL_INCLUDE += -I$(LIBSSH_ROOT)/include
 
-ifeq ($(PL_BUILD_TYPE),X86)
+ifeq ($(PL_BUILD_TYPE),X86_64)
 PL_INCLUDE += -I$(LIBSSH_ROOT)/include
 #PLOS_LDLIBS += -lutil -lssl -lcrypto -lz
-endif #($(PL_BUILD_TYPE),X86)
+endif #($(PL_BUILD_TYPE),X86_64)
 
 ifeq ($(PL_BUILD_TYPE),MIPS)
 ifneq ($(OPENEWRT_BASE),)
@@ -209,19 +208,19 @@ endif #($(strip $(PL_LIBSSH_MODULE)),true)
 
 
 ifeq ($(strip $(PL_OPENSSL_MODULE)),true)
-ifneq ($(PL_BUILD_TYPE),X86)
+ifneq ($(PL_BUILD_TYPE),X86_64)
 PLEX_DIR += $(EXTERNSION_ROOT)/openssl/openssl-1.1.1/
 export PLATFORM=linux-armv4
-PLEX_INCLUDE += -I$(EXTERNSION_ROOT)/openssl/_install/include
-PLEX_LDFLAGS += -L$(EXTERNSION_ROOT)/openssl/_install/lib
+PLEX_INCLUDE += -I$(DSTROOTFSDIR)/include
+PLEX_LDFLAGS += -L$(DSTROOTFSDIR)/lib
 PLEX_LDLIBS += -lutil -lssl -lcrypto
 PLEX_DIR += $(EXTERNSION_ROOT)/zlib/zlib-1.2.11/
-PL_INCLUDE += -I$(EXTERNSION_ROOT)/zlib/_install/include
-PLEX_LDFLAGS += -L$(EXTERNSION_ROOT)/zlib/_install/lib
+PL_INCLUDE += -I$(DSTROOTFSDIR)/include
+PLEX_LDFLAGS += -L$(DSTROOTFSDIR)/lib
 PLEX_LDLIBS += -lz
 else 
 PLOS_LDLIBS += -lutil -lssl -lcrypto -lz
-endif #($(PL_BUILD_TYPE),X86)
+endif #($(PL_BUILD_TYPE),X86_64)
 PL_DEFINE += -DPL_OPENSSL_MODULE
 endif #($(strip $(PL_OPENSSL_MODULE)),true)
 
@@ -241,9 +240,8 @@ PL_INCLUDE += -I$(WIFI_ROOT)
 PL_DEFINE += -DPL_WIFI_MODULE
 endif#($(strip $(PL_WIFI_MODULE)),true)
 
-
+include $(MAKE_DIR)/multimedia-config.mk
 include $(MAKE_DIR)/pjsip-config.mk
-
 
 ifeq ($(strip $(PL_MQTT_MODULE)),true)
 MQTT_ROOT=$(COMPONENT_ROOT)/mqtt
@@ -282,10 +280,10 @@ PL_INCLUDE += -I$(APP_ROOT)
 
 PL_DEFINE += -DPL_APP_MODULE
 
-ifeq ($(strip $(EN_APP_X5BA)),true)
+ifeq ($(strip $(PL_APP_X5_MODULE)),true)
 PLM_DEFINE += -DAPP_X5BA_MODULE
 endif
-ifeq ($(strip $(EN_APP_V9)),true)
+ifeq ($(strip $(PL_APP_V9_MODULE)),true)
 PLM_DEFINE += -DAPP_V9_MODULE
 PLM_DEFINE += -DPL_VIDEO_MODULE
 #PL_LDLIBS += -loal_privateProtocol

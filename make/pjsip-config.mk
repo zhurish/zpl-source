@@ -67,33 +67,53 @@ ifeq ($(PL_PJ_AUDIO_PORTAUDIO),true)
 export PJMEDIA_AUDIO_ALSA = false
 export PJMEDIA_AUDIO_PORTAUDIO = true
 endif
+ifeq ($(PL_PJ_CODEC_VPX_ENABLE),true)
+export PJMEDIA_VPX_ENABLE = true
+else
+export PJMEDIA_VPX_ENABLE = false
+endif
+ifeq ($(PL_PJ_FFMPEG_ENABLE),true)
+export PJMEDIA_FFMPEG_ENABLE = true
+else
+export PJMEDIA_FFMPEG_ENABLE = false
+endif
+ifeq ($(PL_PJ_SDL_ENABLE),true)
+export PJMEDIA_SDL2_ENABLE = true
+else
+export PJMEDIA_SDL2_ENABLE = false
+endif
+
 
 export PJSHARE_ENABLE = true
 export PJMEDIA_ENABLE = true
 export PJMEDIA_AUDIODEV_ENABLE = true
 export PJMEDIA_CODEC_ENABLE = true
-
 export PJMEDIA_NATH_ENABLE = true
 export PJMEDIA_UA_ENABLE = true
-export PJMEDIA_VPX_ENABLE = false
+ifeq ($(PL_PJ_VIDEO_ENABLE),true)
 export PJMEDIA_V4L2_ENABLE = true
-export PJMEDIA_SDL2_ENABLE = false
-export PJMEDIA_FFMPEG_ENABLE = false
+endif
 
 
 # SDL flags
 ifeq ($(PJMEDIA_SDL2_ENABLE),true)
 SDL2PROJDIR = $(EXTERNSION_ROOT)/SDL2-2.0.12
-SDL2_DIR = $(EXTERNSION_ROOT)/SDL2-2.0.12/_install
+SDL2_DIR = $(PL_PJ_SDL_LIB_PATH)
 
 SDL_CFLAGS ?= -DPJMEDIA_VIDEO_DEV_HAS_SDL=1 -D_REENTRANT -I$(SDL2_DIR)/include/SDL2 
 SDL_LDFLAGS ?= -Wl,--enable-new-dtags -lSDL2 -L$(SDL2_DIR)/lib 
-
+else
+SDL_CFLAGS ?=
+SDL_LDFLAGS ?=
 endif
 
-ifeq ($(PJMEDIA_FFMPEG_ENABLE),true)
 # FFMPEG flags
-FFMPEG_DIR = /home/zhurish/workspace/android/pjsip/ffmpeg/_install
+ifeq ($(PJMEDIA_FFMPEG_ENABLE),true)
+ifeq ($(strip $(PL_FFMPEG_MODULE)),true)
+FFMPEG_DIR = $(DSTROOTFSDIR)
+else
+FFMPEG_DIR = $(PL_PJ_FFMPEG_LIB_PATH)
+endif
 
 FFMPEG_CFLAGS ?=   -DPJMEDIA_USE_OLD_FFMPEG=1 \
 				-DPJMEDIA_HAS_LIBAVDEVICE=1 -DPJMEDIA_HAS_LIBAVFORMAT=1 \
@@ -104,33 +124,49 @@ FFMPEG_CFLAGS ?=   -DPJMEDIA_USE_OLD_FFMPEG=1 \
 FFMPEG_LDFLAGS ?=   -L$(FFMPEG_DIR)/lib -lavdevice -lxcb -lxcb-shm \
 				-lxcb-shape -lxcb-xfixes -lasound -lavfilter -lm  \
 				-lavformat -lbz2 -lavcodec -lz -lswresample -lswscale -lavutil -pthread 
-
+else
+FFMPEG_CFLAGS ?=
+FFMPEG_LDFLAGS ?=
 endif
 
-ifeq ($(PJMEDIA_V4L2_ENABLE),true)
 # Video4Linux2
+ifeq ($(PJMEDIA_V4L2_ENABLE),true)
 V4L2_CFLAGS ?= -DPJMEDIA_VIDEO_DEV_HAS_V4L2=1
 V4L2_LDFLAGS ?= -lv4l2 
+else
+V4L2_CFLAGS ?=
+V4L2_LDFLAGS ?=
 endif
 
 # OPENH264 flags
 ifeq ($(PJMEDIA_H264_ENABLE),true)
-H264_DIR = /usr/local
+ifeq ($(strip $(PL_OPENH264_MODULE)),true)
+H264_DIR = $(DSTROOTFSDIR)
+else
+H264_DIR = $(PL_PJ_CODEC_H264_LIB_PATH)
+endif
 OPENH264_CFLAGS ?= -DPJMEDIA_HAS_OPENH264_CODEC=1 -DPJMEDIA_HAS_VIDEO=1 -I$(H264_DIR)/include
 OPENH264_LDFLAGS ?= -L$(H264_DIR)/lib -lopenh264 -lstdc++
+else
+OPENH264_CFLAGS ?=
+OPENH264_LDFLAGS ?=
 endif
 
 # VPX flags 
 ifeq ($(PJMEDIA_VPX_ENABLE),true)
-VPX_DIR = /home/zhurish/workspace/android/pjsip/libvpx-1.9.0/_install-x86
-
+ifeq ($(strip $(PL_LIBVPX_MODULE)),true)
+VPX_DIR = $(DSTROOTFSDIR)
+else
+VPX_DIR = $(PL_PJ_CODEC_VPX_LIB_PATH)
+endif
 VPX_CFLAGS ?= -DPJMEDIA_HAS_VPX_CODEC=1 -I$(VPX_DIR)/include 
 VPX_LDFLAGS ?=  -L$(VPX_DIR)/lib -lvpx
-
+else
+VPX_CFLAGS ?=
+VPX_LDFLAGS ?=
 endif
 
-
-endif
+endif #PL_PJPROJECT_MODULE
 
 
 ifeq ($(strip $(PL_PJSIP_MODULE)),true)
@@ -140,7 +176,7 @@ PJSIP_ROOT=$(COMPONENT_ROOT)/pjsip
 PLPRODS += $(PJSIP_ROOT)
 PL_INCLUDE += -I$(PJSIP_ROOT)
 PL_DEFINE += -DPL_PJSIP_MODULE
-PLEX_INCLUDE += -I$(PJPROJECT_ROOT)/_install/include
+PLEX_INCLUDE += -I$(DSTROOTFSDIR)/include
 
 
 PL_LDLIBS += -lpj -lpjlib-util -lpjsip  -lpjsua2
@@ -156,8 +192,9 @@ endif
 ifeq ($(PJMEDIA_CODEC_ENABLE),true)
 PL_LDLIBS += -lpjmedia-codec
 endif
+
 ifeq ($(PJMEDIA_VIDEODEV_ENABLE),true)
-PL_LDLIBS += -lpjmedia-videodev -lopenh264
+PL_LDLIBS += -lpjmedia-videodev
 
 # SDL flags
 ifeq ($(PJMEDIA_SDL2_ENABLE),true)
@@ -178,7 +215,8 @@ endif
 
 # OPENH264 flags
 ifeq ($(PJMEDIA_H264_ENABLE),true)
-PL_LDLIBS += -lopenh264 -L$(H264_DIR)/lib
+PL_LDLIBS += -lopenh264 
+PL_LDFLAGS += -L$(H264_DIR)/lib
 endif
 
 # VPX flags 

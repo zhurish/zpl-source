@@ -11,7 +11,7 @@
 
 #include "if.h"
 #include "prefix.h"
-#include "vrf.h"
+#include "nsm_vrf.h"
 
 #define NSM_HOOK_TBL_MAX	128 * 2
 

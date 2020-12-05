@@ -30,7 +30,7 @@
 #endif
 
 #include "if.h"
-#include "vrf.h"
+#include "nsm_vrf.h"
 #include "prefix.h"
 #include "table.h"
 #include "log.h"

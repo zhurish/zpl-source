@@ -3,7 +3,6 @@
 ###########################################################################
 MODULEDIR = platform/misc
 #lib
-OBJS	+= bitmap.o
 
 OBJS	+= if_name.o
 OBJS	+= if.o
@@ -15,8 +14,9 @@ OBJS	+= prefix.o
 
 OBJS	+= sockopt.o
 OBJS	+= sockunion.o
+ifeq ($(strip $(PL_NSM_MODULE)),true)
 OBJS	+= zclient.o
-
+endif
 ifeq ($(strip $(PL_MISC_IFHOOK)),true)
 OBJS	+= if_hook.o			
 endif

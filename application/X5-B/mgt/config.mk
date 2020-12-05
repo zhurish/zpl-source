@@ -4,7 +4,7 @@
 #OS
 #APP_OBJ_DIR = $(APP_ROOT)/X5-B/mgt
 APP_OBJ_DIR = application/X5-B/mgt
-
+APP_OBJS += application.o
 APP_OBJS += x5_b_global.o
 APP_OBJS += x5_b_app.o
 APP_OBJS += x5_b_util.o

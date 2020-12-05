@@ -19,11 +19,11 @@ GAWK = gawk
 #	route_types.pl route_types.txt \
 #	gitversion.pl
 	
-BUILT_SOURCES = memtypes.h route_types.h
+DEPEND_HEADER = memtypes.h route_types.h
 # gitversion.h
 	
 	
--include $(MODULE_OBJS:.o=.d)
+#-include $(MODULE_OBJS:.o=.d)
 	
 $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \
@@ -33,7 +33,7 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
 	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
 
-$(LIBS) : $(BUILT_SOURCES) $(MODULE_OBJS)
+$(LIBS) : $(DEPEND_HEADER) $(MODULE_OBJS)
 	@$(AR) -rs $(LIBS) $(MODULE_OBJS)
 
 
@@ -50,7 +50,7 @@ route_types.h: $(SRC_DIR)/route_types.txt $(SRC_DIR)/route_types.pl
 lib: $(LIBS)
 
 
-obj: $(BUILT_SOURCES) $(MODULE_OBJS)
+obj: $(DEPEND_HEADER) $(MODULE_OBJS)
 
 install: $(LIBS)
 	@install -d $(LIB_DIR)

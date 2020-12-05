@@ -15,9 +15,9 @@
 #include "command.h"
 #include "memory.h"
 #include "log.h"
-#include "vrf.h"
+#include "nsm_vrf.h"
 #include "command.h"
-#include "interface.h"
+#include "nsm_interface.h"
 #include "if_name.h"
 #include "nsm_dhcp.h"
 

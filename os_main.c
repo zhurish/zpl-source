@@ -21,11 +21,11 @@
 #include "sigevent.h"
 #include "thread.h"
 //#include "version.h"
-#include "vrf.h"
+#include "nsm_vrf.h"
 #include "os_start.h"
 #include "os_module.h"
-#include "platform/nsm/filter.h"
-#include "platform/nsm/plist.h"
+#include "platform/nsm/nsm_filter.h"
+#include "platform/nsm/nsm_plist.h"
 
 //extern struct zebra_privs_t os_privs;
 //extern struct quagga_signal_t os_signals[];

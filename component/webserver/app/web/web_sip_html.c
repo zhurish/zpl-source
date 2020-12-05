@@ -21,8 +21,8 @@
 #include "str.h"
 #include "table.h"
 #include "vector.h"
-#include "vrf.h"
-#include "interface.h"
+#include "nsm_vrf.h"
+#include "nsm_interface.h"
 #include "nsm_client.h"
 
 #include "web_util.h"

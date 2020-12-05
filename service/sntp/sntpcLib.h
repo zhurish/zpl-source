@@ -87,6 +87,7 @@ extern int sntpc_is_dynamics(void);
 extern int sntpc_dynamics_enable(void);
 extern int sntpc_dynamics_disable(void);
 
+extern int cmd_sntpc_init();
 //#define SNTPC_CLI_ENABLE
 #ifndef SNTPC_CLI_ENABLE
 

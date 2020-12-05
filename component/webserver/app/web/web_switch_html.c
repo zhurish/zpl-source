@@ -20,8 +20,8 @@
 #include "str.h"
 #include "table.h"
 #include "vector.h"
-#include "vrf.h"
-#include "interface.h"
+#include "nsm_vrf.h"
+#include "nsm_interface.h"
 #include "nsm_dhcp.h"
 
 #include "web_util.h"
@@ -30,7 +30,7 @@
 #include "web_api.h"
 
 #ifndef THEME_V9UI
-//#define PL_BUILD_OPENWRT
+
 #ifdef PL_BUILD_OPENWRT
 /*
 config switch
@@ -326,7 +326,7 @@ static int switch_dev_config_save(void)
 		return _switch_dev_config_save(switch_dev);
 	return ERROR;
 }
-#endif
+
 
 static int switch_dev_init()
 {
@@ -756,6 +756,7 @@ static int web_switch_port_tbl(Webs *wp, char *path, char *query)
 	return 0;
 }
 #endif /* THEME_V9UI */
+#endif
 
 int web_switch_app(void)
 {

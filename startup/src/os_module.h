@@ -17,9 +17,6 @@ extern int _pl_pjsip_module_task_exit();
 
 extern int console_enable;
 
-extern int nsm_module_init ();
-extern int nsm_task_init ();
-extern int nsm_module_exit ();
 
 extern int ospfd_module_init();
 extern int ospfd_task_init ();

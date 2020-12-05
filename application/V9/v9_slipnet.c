@@ -156,10 +156,10 @@ int v9_app_slipnet_init(v9_serial_t *serial, char *devname, u_int32 speed)
 {
 	if(_v9_slipnet_hw_init(serial) == OK)
 	{
-		if(master_eloop[PL_APPLICATION_MODULE_START] == NULL)
+		if(master_eloop[MODULE_APP_START] == NULL)
 		{
-			master_eloop[PL_APPLICATION_MODULE_START] = eloop_master_module_create(PL_APPLICATION_MODULE_START);
-			serial->master = master_eloop[PL_APPLICATION_MODULE_START];
+			master_eloop[MODULE_APP_START] = eloop_master_module_create(MODULE_APP_START);
+			serial->master = master_eloop[MODULE_APP_START];
 		}
 #ifdef V9_SLIPNET_UDP
 		memset(serial->slipnet->devname, 0, sizeof(v9_serial->slipnet->devname));

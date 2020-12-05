@@ -161,7 +161,7 @@ private:
     int pjsipSampleIsRegister();
 
     //int pjsipSampleTimerHandle();
-    void pjsipAppNotifyRegisterState(pjsipAccount& account, int code, string &reason, long ex);
+    void pjsipAppNotifyRegisterState(pjsipAccount& account_in, int code, string &reason, long ex);
     void pjsipAppNotifyIncomingCall(pjsipCall& call);
     void pjsipAppNotifyCallState(pjsipCall& call);
     void pjsipAppNotifyCallMediaState(pjsipCall& call);

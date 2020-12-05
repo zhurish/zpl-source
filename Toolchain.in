@@ -33,7 +33,7 @@ config PL_EXTERNAL_TOOLCHAIN_PREFIX
 			bool "uClibc"
 	endchoice
 
-	config PL_TOOLCHAIN_BIN_PATH
+	config PL_TOOLCHAIN_PATH
 		string
 		prompt "Toolchain program path"
 		depends on PL_EXTERNAL_TOOLCHAIN_MODULE && !PL_HOST_TOOLCHAIN_MODULE

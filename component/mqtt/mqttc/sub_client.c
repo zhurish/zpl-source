@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2019 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2020 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -44,7 +44,7 @@ int last_mid = 0;
 #ifndef WIN32
 void my_signal_handler(int signum)
 {
-	if(signum == SIGALRM){
+	if(signum == SIGALRM || signum == SIGTERM || signum == SIGINT){
 		process_messages = false;
 		mosquitto_disconnect_v5(mosq, MQTT_RC_DISCONNECT_WITH_WILL_MSG, cfg.disconnect_props);
 	}
@@ -76,10 +76,6 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 
 	if(process_messages == false) return;
 
-	if(cfg.remove_retained && message->retain){
-		mosquitto_publish(mosq, &last_mid, message->topic, 0, NULL, 1, true);
-	}
-
 	if(cfg.retained_only && !message->retain && process_messages){
 		process_messages = false;
 		if(last_mid == 0){
@@ -94,6 +90,10 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 			mosquitto_topic_matches_sub(cfg.filter_outs[i], message->topic, &res);
 			if(res) return;
 		}
+	}
+
+	if(cfg.remove_retained && message->retain){
+		mosquitto_publish(mosq, &last_mid, message->topic, 0, NULL, 1, true);
 	}
 
 	print_message(&cfg, message);
@@ -126,9 +126,13 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 	}else{
 		if(result){
 			if(cfg.protocol_version == MQTT_PROTOCOL_V5){
-				err_printf(&cfg, "%s\n", mosquitto_reason_string(result));
+				if(result == MQTT_RC_UNSUPPORTED_PROTOCOL_VERSION){
+					err_printf(&cfg, "Connection error: %s. Try connecting to an MQTT v5 broker, or use MQTT v3.x mode.\n", mosquitto_reason_string(result));
+				}else{
+					err_printf(&cfg, "Connection error: %s\n", mosquitto_reason_string(result));
+				}
 			}else{
-				err_printf(&cfg, "%s\n", mosquitto_connack_string(result));
+				err_printf(&cfg, "Connection error: %s\n", mosquitto_connack_string(result));
 			}
 		}
 		mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
@@ -141,11 +145,13 @@ void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_c
 
 	UNUSED(obj);
 
-	if(!cfg.quiet) printf("Subscribed (mid: %d): %d", mid, granted_qos[0]);
-	for(i=1; i<qos_count; i++){
-		if(!cfg.quiet) printf(", %d", granted_qos[i]);
+	if(cfg.debug){
+		if(!cfg.quiet) printf("Subscribed (mid: %d): %d", mid, granted_qos[0]);
+		for(i=1; i<qos_count; i++){
+			if(!cfg.quiet) printf(", %d", granted_qos[i]);
+		}
+		if(!cfg.quiet) printf("\n");
 	}
-	if(!cfg.quiet) printf("\n");
 
 	if(cfg.exit_after_sub){
 		mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
@@ -278,8 +284,6 @@ int main(int argc, char *argv[])
 #ifndef WIN32
 		struct sigaction sigact;
 #endif
-	
-	memset(&cfg, 0, sizeof(struct mosq_config));
 
 	mosquitto_lib_init();
 
@@ -320,8 +324,8 @@ int main(int argc, char *argv[])
 	}
 	if(cfg.debug){
 		mosquitto_log_callback_set(mosq, my_log_callback);
-		mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);
 	}
+	mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);
 	mosquitto_connect_v5_callback_set(mosq, my_connect_callback);
 	mosquitto_message_v5_callback_set(mosq, my_message_callback);
 
@@ -336,6 +340,16 @@ int main(int argc, char *argv[])
 	sigact.sa_flags = 0;
 
 	if(sigaction(SIGALRM, &sigact, NULL) == -1){
+		perror("sigaction");
+		goto cleanup;
+	}
+
+	if(sigaction(SIGTERM, &sigact, NULL) == -1){
+		perror("sigaction");
+		goto cleanup;
+	}
+
+	if(sigaction(SIGINT, &sigact, NULL) == -1){
 		perror("sigaction");
 		goto cleanup;
 	}
@@ -355,11 +369,12 @@ int main(int argc, char *argv[])
 	}
 	client_config_cleanup(&cfg);
 	if(rc){
-		fprintf(stderr, "Error: %s\n", mosquitto_strerror(rc));
+		err_printf(&cfg, "Error: %s\n", mosquitto_strerror(rc));
 	}
 	return rc;
 
 cleanup:
+	mosquitto_destroy(mosq);
 	mosquitto_lib_cleanup();
 	client_config_cleanup(&cfg);
 	return 1;

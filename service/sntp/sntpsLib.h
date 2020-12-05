@@ -96,7 +96,7 @@ typedef struct sntpsTimeData
 extern int sntps_config(struct vty *);
 extern int sntps_debug_config(struct vty *);
 extern int sntpsInit(void *);
-
+extern int cmd_sntps_init();
 //#define SNTPS_CLI_ENABLE
 #ifndef SNTPS_CLI_ENABLE
 enum

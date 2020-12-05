@@ -11,7 +11,7 @@
 #include "log.h"
 
 #include "nsm_dns.h"
-#include "rib.h"
+#include "nsm_rib.h"
 
 
 #include "dhcp_def.h"

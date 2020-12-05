@@ -46,7 +46,7 @@ TAR=tar
 SHELL=/bin/sh
 EXE=
 
-prefix =../_install
+prefix =$(DSTROOTFSDIR)
 exec_prefix =${prefix}
 libdir =${exec_prefix}/lib
 sharedlibdir =${libdir}

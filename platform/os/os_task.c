@@ -759,9 +759,9 @@ static int os_task_refresh_total_cpu(struct os_task_history *hist)
 					+ softirq + stealstolen + guest) - hist->total_realy;
 //			OS_DEBUG("total cpu(%f)\r\n",100*(float)(hist->total-idle)/hist->total);
 		}
-		else
-			zlog_err(ZLOG_DEFAULT, "can't read path:%s(%s)\r\n", path,
-					strerror(errno));
+		//else
+		//	zlog_err(ZLOG_DEFAULT, "can't read path:%s(%s)\r\n", path,
+		//			strerror(errno));
 		fclose(fp);
 	}
 	else
@@ -811,9 +811,9 @@ static int os_task_refresh_cpu(os_task_t *task)
 					- task->hist.total;
 
 		}
-		else
-			zlog_err(ZLOG_DEFAULT, "can't read path:%s(%s)\r\n", path,
-					strerror(errno));
+		//else
+		//	zlog_err(ZLOG_DEFAULT, "can't read path:%s(%s)\r\n", path,
+		//			strerror(errno));
 		fclose(fp);
 	}
 	else
@@ -1247,9 +1247,9 @@ unit32 os_task_entry_create(char *name, int pri, int op, task_entry entry,
 
 		ret = pthread_setname_np(task->td_thread, task->td_name);
 
-		if (ret != OK)
-			zlog_err(ZLOG_DEFAULT, "%s: could not lower privs, %s", __func__,
-					os_strerror(errno));
+		//if (ret != OK)
+		//	zlog_err(ZLOG_DEFAULT, "%s: could not lower privs, %s", __func__,
+		//			os_strerror(errno));
 #endif
 		OS_DEBUG("\r\ncreate task:%s(%u %u->%u:ret=%d) pid=%d\r\n",task->td_name,
 				task->td_thread,(unit32)task,task->td_id,ret,getpid());
@@ -1446,30 +1446,42 @@ int os_task_foreach(os_task_hook cb, void *p)
 /*
  * for CLI cmd
  */
+static int (*_os_task_cli_show)(struct vty *, const char *, ...);
+
+int os_task_cli_hook_set(void *hook)
+{
+	_os_task_cli_show = hook;
+	return OK;
+} 
+
 static int os_task_show_head(struct vty *vty, int detail)
 {
-	extern int vty_out(struct vty *, const char *, ...);
-
-	vty_out(vty,
+	//extern int vty_out(struct vty *, const char *, ...);
+	if(_os_task_cli_show)
+		(_os_task_cli_show)(vty,
 			"%s                   	   CPU (user+system): Real (wall-clock):%s",
 			VTY_NEWLINE, VTY_NEWLINE);
 //vty_out(vty, "Runtime(ms)   Invoked Avg uSec Max uSecs Avg uSec Max uSecs  Type  Thread%s",VTY_NEWLINE);
 
-	if (detail)
-		vty_out(vty, "  %-16s %-12s %-20s %-8s %-4s %-8s %-6s %-8s %-8s%s",
+	if (detail) {
+		if(_os_task_cli_show)
+			(_os_task_cli_show)(vty, "  %-16s %-12s %-20s %-8s %-4s %-8s %-6s %-8s %-8s%s",
 				"taskNmae", "taskId", "entry", "LVPID","pri", "tacksize", "state",
 				"Real", "Total", VTY_NEWLINE);
-	else
-		vty_out(vty, "  %-16s %-12s %-20s %-4s %-8s %-6s %-8s %-8s%s",
+	}
+	else {
+		if(_os_task_cli_show)
+			(_os_task_cli_show)(vty, "  %-16s %-12s %-20s %-4s %-8s %-6s %-8s %-8s%s",
 				"taskNmae", "taskId", "entry", "pri", "tacksize", "state",
 				"Real", "Total", VTY_NEWLINE);
+	}
 	return 0;
 }
 
 static int os_task_show_detail(void *p, os_task_t *task, int detail)
 {
 	struct vty *vty = (struct vty *)p;
-	extern int vty_out(struct vty *, const char *, ...);
+	//extern int vty_out(struct vty *, const char *, ...);
 	char taskId[16];
 	char pri[16];
 	char tacksize[16];
@@ -1522,14 +1534,18 @@ static int os_task_show_detail(void *p, os_task_t *task, int detail)
 	{
 
 		sprintf(lvpid, "%d", task->td_tid);
-		vty_out(vty, "  %-16s %-12s %-20s %-8s %-4s %-8s %-6s %-8s %-8s%s",
+		if(_os_task_cli_show)
+			(_os_task_cli_show)(vty, "  %-16s %-12s %-20s %-8s %-4s %-8s %-6s %-8s %-8s%s",
 			task->td_name, taskId, task->td_entry_name, lvpid, pri, tacksize, state,
 			real, total, VTY_NEWLINE);
 	}
 	else
-		vty_out(vty, "  %-16s %-12s %-20s %-4s %-8s %-6s %-8s %-8s%s",
+	{
+		if(_os_task_cli_show)
+			(_os_task_cli_show)(vty, "  %-16s %-12s %-20s %-4s %-8s %-6s %-8s %-8s%s",
 			task->td_name, taskId, task->td_entry_name, pri, tacksize, state,
 			real, total, VTY_NEWLINE);
+	}
 	return 0;
 }
 
@@ -1589,6 +1605,8 @@ int os_task_show(void *vty, char *task_name, int detail)
 	return 0;
 }
 
+
+#if 0
 DEFUN (show_process,
 		show_process_cmd,
 		"show process cpu [NAME]",
@@ -1703,7 +1721,7 @@ int cmd_os_init()
 #endif
 	return 0;
 }
-
+#endif
 /*
 linux内核的三种 调度策略 ：
 SCHED_OTHER 分时调度策略，（默认的）

@@ -19,12 +19,12 @@
 #include "str.h"
 #include "table.h"
 #include "vector.h"
-#include "vrf.h"
-#include "interface.h"
+#include "nsm_vrf.h"
+#include "nsm_interface.h"
 #include "nexthop.h"
-#include "rib.h"
-#include "zserv.h"
-#include "zebra_rnh.h"
+#include "nsm_rib.h"
+#include "nsm_zserv.h"
+#include "nsm_rnh.h"
 
 
 #include "web_util.h"

@@ -12,7 +12,7 @@ typedef struct {
 } QMI_NAME_T;
 
 #define qmi_name_item(type) {type, #type}
-
+/*
 static const QMI_NAME_T qmi_IFType[] = {
 {USB_CTL_MSG_TYPE_QMI, "USB_CTL_MSG_TYPE_QMI"},
 };
@@ -32,13 +32,14 @@ qmi_name_item(QMUX_TYPE_WMS),
 qmi_name_item(QMUX_TYPE_PDS),
 qmi_name_item(QMUX_TYPE_WDS_ADMIN),
 };
-
+*/
+/*
 static const QMI_NAME_T qmi_ctl_CtlFlags[] = {
 qmi_name_item(QMICTL_FLAG_REQUEST),
 qmi_name_item(QMICTL_FLAG_RESPONSE),
 qmi_name_item(QMICTL_FLAG_INDICATION),
 };
-
+*/
 static const QMI_NAME_T qmux_ctl_QMICTLType[] = {
 // QMICTL Type
 qmi_name_item(QMICTL_SET_INSTANCE_ID_REQ), //    0x0020

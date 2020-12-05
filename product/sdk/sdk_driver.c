@@ -12,9 +12,9 @@
 #include "prefix.h"
 #include "command.h"
 #include "memory.h"
-#include "vrf.h"
+#include "nsm_vrf.h"
 #include "command.h"
-#include "interface.h"
+#include "nsm_interface.h"
 #include "if_manage.h"
 
 

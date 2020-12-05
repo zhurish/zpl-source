@@ -62,7 +62,7 @@ web_fonts_install:
 #
 #				
 #
-ifeq ($(strip $(EN_APP_X5BA)),true)
+ifeq ($(strip $(PL_APP_X5_MODULE)),true)
 web_app_html_install:
 	@install -d $(DSTWWWDIR)/html
 	@$(CP) ./html/switch.html $(DSTWWWDIR)/html/switch.html
@@ -73,7 +73,7 @@ web_app_html_install:
 	@$(CP) ./html/bootstrap-x5.html $(DSTWWWDIR)/html/bootstrap.html
 endif
 
-ifeq ($(strip $(EN_APP_V9)),true)
+ifeq ($(strip $(PL_APP_V9_MODULE)),true)
 web_app_html_install:
 	@install -d $(DSTWWWDIR)/html
 	@$(CP) ./html/bootstrap-v9.html $(DSTWWWDIR)/html/bootstrap.html

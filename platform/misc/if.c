@@ -34,8 +34,8 @@
 #include "str.h"
 #include "table.h"
 #include "vector.h"
-#include "vrf.h"
-#include "connected.h"
+#include "nsm_vrf.h"
+#include "nsm_connected.h"
 #include <net/if_arp.h>
 
 static void *ifMutex = NULL;
