@@ -39,7 +39,7 @@ int ffmpegSource::ffmpegSourceInit()
 	ret = ffmpeg_Device->ffmpegDeviceDecoderOpen();
 	if (ret != 0)
 		return ret;
-	ret = ffmpeg_Encode->ffmpegEncoderInit(640, 480, 30);
+	ret = ffmpeg_Encode->ffmpegEncoderInit(640, 480, 0, 30);
 	if (ret != 0)
 		return ret;
 	ret = ffmpeg_Encode->ffmpegEncoderOpen(0);

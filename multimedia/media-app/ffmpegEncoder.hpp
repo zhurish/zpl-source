@@ -29,17 +29,21 @@ extern "C"
 };
 
 
-class ffmpegEncoder {
+
+class ffmpegEncoder{
     public:
         ffmpegEncoder();
-        int ffmpegEncoderInit(int width, int height, int fps);
+        int ffmpegEncoderInit(int width, int height, int fmt, int fps);
         int ffmpegEncoderOpen(int enc/*, std::function <int(void*, int)> Callback*/);
         int ffmpegEncoderFrame(AVFrame *input, AVPacket *out);
         int ffmpegEncoderFrameFinish();
         int ffmpegEncoderDestroy();
 
     private:
-        int v_width, v_height, v_fps;
+        int m_width;	
+        int m_height;
+        int m_fmt;
+        int m_fps;
 
         AVFormatContext    *m_AVOutputCtx = nullptr;
         AVCodecContext     *m_CodecCtx = nullptr;

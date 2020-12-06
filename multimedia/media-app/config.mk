@@ -15,10 +15,12 @@ OBJS += rtsp_server.o
 OBJS += rtsp_client.o
 
 OBJS += v4l2_driver.o
+OBJS += v4l2Device.o
 
-OBJS += videoDevice.o
 OBJS += h264Encoder.o
 OBJS += h264Decoder.o
+OBJS += vpxEncoder.o
+OBJS += vpxDecoder.o
 
 OBJS += ffmpegDevice.o
 OBJS += ffmpegEncoder.o

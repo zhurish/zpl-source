@@ -28,23 +28,22 @@ extern "C"
 #include "device/v4l2_driver.h"
 };
 
-#include "h264Encoder.hpp"
-#include "videoDevice.hpp"
-////////// videoDevice //////////
+#include "videoEncoder.hpp"
+#include "v4l2Device.hpp"
+////////// v4l2Device //////////
 
-videoDevice::videoDevice(int width, int height, int fps, int fmt)
+v4l2Device::v4l2Device(int width, int height, int fps, int fmt)
 {
   this->m_width = width;
   this->m_height = height;
   this->m_fmt = V4L2_PIX_FMT_YUYV;
   this->m_fps = fps;
-  h264Core = nullptr;
-  h264Core = new h264Encoder();
+  m_videoEncoder = nullptr;
   obuf.start = nullptr;
   obuf.length = 0;
 }
 
-videoDevice::~videoDevice()
+v4l2Device::~v4l2Device()
 {
   if (obuf.start != nullptr)
   {
@@ -56,15 +55,9 @@ videoDevice::~videoDevice()
     v4l2_free_bufs(&video_drv);
     v4l2_close(&video_drv);
   }
-  if (h264Core != nullptr)
-  {
-    h264Core->h264EncoderDestroy();
-    delete h264Core;
-    h264Core = nullptr;
-  }
 }
 
-int videoDevice::videoDeviceTryOpen(char *device)
+int v4l2Device::v4l2DeviceTryOpen(char *device)
 {
   int ret = 0;
   struct v4l2_format fmt;
@@ -100,7 +93,7 @@ int videoDevice::videoDeviceTryOpen(char *device)
   return ret;
 }
 
-int videoDevice::videoDeviceOpen(char *device)
+int v4l2Device::v4l2DeviceOpen(char *device)
 {
   int ret = 0;
   struct v4l2_format fmt;
@@ -129,20 +122,12 @@ int videoDevice::videoDeviceOpen(char *device)
     v4l2_close(&video_drv);
     return -1;
   }
-  if (h264Core != nullptr)
-  {
-#ifdef PL_LIBX264_MODULE
-    h264Core->h264EncoderSetup(m_width, m_height, X264_CSP_I422, this->m_fps);
-#endif
-#ifdef PL_OPENH264_MODULE
-    h264Core->h264EncoderSetup(m_width, m_height, videoFormatI420, this->m_fps);
-#endif
-  }
   return ret;
 }
 
-int videoDevice::videoDeviceStart()
+int v4l2Device::v4l2DeviceStart(videoEncoder *encoder)
 {
+  this->m_videoEncoder = encoder;
   if (video_drv.fd)
   {
     obuf.length = video_drv.bufs[0].length;
@@ -152,7 +137,7 @@ int videoDevice::videoDeviceStart()
   return -1;
 }
 
-int videoDevice::videoDeviceStop()
+int v4l2Device::v4l2DeviceStop()
 {
   if (video_drv.fd)
   {
@@ -161,7 +146,7 @@ int videoDevice::videoDeviceStop()
   return -1;
 }
 
-int videoDevice::videoDeviceStartCapture(struct v4l2_t_buf *buf, int timeout)
+int v4l2Device::v4l2DeviceStartCapture(struct v4l2_t_buf *buf, int timeout)
 {
   fd_set fds;
   struct timeval tv;
@@ -197,7 +182,7 @@ int videoDevice::videoDeviceStartCapture(struct v4l2_t_buf *buf, int timeout)
   return r;
 }
 
-int videoDevice::videoDeviceStartCapture(FramedQueue *m_queue)
+int v4l2Device::v4l2DeviceStartCapture(FramedQueue *m_queue)
 {
   if (m_queue != nullptr)
   {
@@ -209,12 +194,12 @@ int videoDevice::videoDeviceStartCapture(FramedQueue *m_queue)
   if (m_queue != nullptr)
   {
     m_queue->FramedQueueWait();
-    int ret = videoDeviceStartCapture(&obuf, 500);
+    int ret = v4l2DeviceStartCapture(&obuf, 500);
     if (ret > 0)
     {
       if (m_queue->FramedQueueDataIsFull())
         m_queue->FramedQueueDataFlush();
-      if (h264Core != nullptr)
+      if (m_videoEncoder != nullptr)
       {
         //h264Core->h264Encoder_setup(m_width, m_height, X264_CSP_I422);
         /*
@@ -222,9 +207,9 @@ int videoDevice::videoDeviceStartCapture(FramedQueue *m_queue)
           fwrite(obuf.start, ret, 1, fp);
           fclose(fp);
           */
-        ret = h264Core->h264EncoderInput((char *)obuf.start, ret);
+        ret = m_videoEncoder->videoEncoderInput((char *)obuf.start, ret, false);
         if (ret > 0)
-          m_queue->FramedQueueDataPut((char *)h264Core->h264EncoderOutput(), h264Core->h264EncoderOutputSize(true));
+          m_queue->FramedQueueDataPut((char *)m_videoEncoder->videoEncoderOutput(), m_videoEncoder->videoEncoderOutputSize(true));
       }
       else
         m_queue->FramedQueueDataPut((char *)obuf.start, ret);
@@ -233,7 +218,7 @@ int videoDevice::videoDeviceStartCapture(FramedQueue *m_queue)
   return 0;
 }
 /*
-int videoDevice::recebe_buffer (struct v4l2_buffer *v4l2_buf, struct v4l2_t_buf *buf)
+int v4l2Device::recebe_buffer (struct v4l2_buffer *v4l2_buf, struct v4l2_t_buf *buf)
 {
   //memcpy(aa, buf->start, v4l2_buf->bytesused);
 	return v4l2_buf->bytesused;

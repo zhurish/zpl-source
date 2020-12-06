@@ -17,55 +17,57 @@
 
 #include "h264Decoder.hpp"
 
-h264Decoder::h264Decoder()
+h264Decoder::h264Decoder():videoDecoder()
 {
 }
 
 h264Decoder::~h264Decoder()
 {
-    h264DecoderDestroy();
+    videoDecoderDestroy();
 }
 
-int h264Decoder::h264DecoderSetup(int width, int height, int fmt, int fps)
+int h264Decoder::videoDecoderSetup(const int width, const int height, const int fmt, const int fps)
 {
-    this->v_width = width;
-    this->v_height = height;
+    this->m_width = width;
+    this->m_height = height;
+    this->m_fmt = fmt;
+    this->m_fps = fps;
 #ifdef PL_OPENH264_MODULE
     return openh264_decoder_setup(width, height, fmt, fps);
 #endif
 }
 
-int h264Decoder::h264DecoderInput(char *frame, int len)
+int h264Decoder::videoDecoderInput(const unsigned char *frame, const int len)
 {
 #ifdef PL_OPENH264_MODULE
     return openh264_decoder_input(frame, len);
 #endif
 }
 
-int h264Decoder::h264DecoderOutput(char *frame, int len)
+int h264Decoder::videoDecoderOutput(unsigned char *frame, const int len)
 {
 #ifdef PL_OPENH264_MODULE
     return openh264_decoder_output(frame, len);
 #endif
 }
 
-unsigned char *h264Decoder::h264DecoderOutput()
+unsigned char *h264Decoder::videoDecoderOutput()
 {
 #ifdef PL_OPENH264_MODULE
     return (unsigned char *)m_out_frame_payload;
 #endif
 }
 
-int h264Decoder::h264DecoderOutputSize(bool clear)
+int h264Decoder::videoDecoderOutputSize(const bool clear)
 {
     int ret = 0;
-    ret = (int)m_out_frame_size;
+    ret = (int)m_out_size;
     if (clear)
-        m_out_frame_size = 0;
+        m_out_size = 0;
     return ret;
 }
 
-int h264Decoder::h264DecoderDestroy()
+int h264Decoder::videoDecoderDestroy()
 {
 #ifdef PL_OPENH264_MODULE
     openh264_decoder_destroy();
@@ -82,7 +84,7 @@ int h264Decoder::openh264_decoder_destroy()
     return 0;
 }
 
-int h264Decoder::openh264_decoder_setup(int width, int height, int fmt, int fps)
+int h264Decoder::openh264_decoder_setup(const int width, const int height, const int fmt, const int fps)
 {
     /* decoder allocation */
     SDecodingParam param = {0};
@@ -116,24 +118,25 @@ int h264Decoder::openh264_decoder_setup(int width, int height, int fmt, int fps)
 }
 
 int h264Decoder::openh264_write_yuv(unsigned char *buf,
-                                    unsigned dst_len,
-                                    unsigned char *pData[3],
-                                    int iStride[2],
-                                    int iWidth,
-                                    int iHeight)
+                                    const int dst_len,
+                                    const unsigned char *pData[3],
+                                    const int *iStride,
+                                    const int iWidth,
+                                    const int iHeight)
 {
     unsigned req_size;
     unsigned char *dst = buf;
     unsigned char *max = dst + dst_len;
     int i;
     unsigned char *pPtr = NULL;
-
+    int miWidth = 0;
+    int miHeight = 0;
     req_size = (iWidth * iHeight) + (iWidth / 2 * iHeight / 2) +
                (iWidth / 2 * iHeight / 2);
     if (dst_len < req_size)
         return -1;
 
-    pPtr = pData[0];
+    pPtr = (unsigned char *)pData[0];
     for (i = 0; i < iHeight && (dst + iWidth < max); i++)
     {
         memcpy(dst, pPtr, iWidth);
@@ -144,39 +147,37 @@ int h264Decoder::openh264_write_yuv(unsigned char *buf,
     if (i < iHeight)
         return -1;
 
-    iHeight = iHeight / 2;
-    iWidth = iWidth / 2;
-    pPtr = pData[1];
-    for (i = 0; i < iHeight && (dst + iWidth <= max); i++)
+    miHeight = iHeight / 2;
+    miWidth = iWidth / 2;
+    pPtr = (unsigned char *)pData[1];
+    for (i = 0; i < miHeight && (dst + miWidth <= max); i++)
     {
-        memcpy(dst, pPtr, iWidth);
+        memcpy(dst, pPtr, miWidth);
         pPtr += iStride[1];
-        dst += iWidth;
+        dst += miWidth;
     }
 
-    if (i < iHeight)
+    if (i < miHeight)
         return -1;
 
-    pPtr = pData[2];
-    for (i = 0; i < iHeight && (dst + iWidth <= max); i++)
+    pPtr = (unsigned char *)pData[2];
+    for (i = 0; i < miHeight && (dst + miWidth <= max); i++)
     {
-        memcpy(dst, pPtr, iWidth);
+        memcpy(dst, pPtr, miWidth);
         pPtr += iStride[1];
-        dst += iWidth;
+        dst += miWidth;
     }
 
-    if (i < iHeight)
+    if (i < miHeight)
         return -1;
 
     return dst - buf;
 }
 
 int h264Decoder::openh264_got_decoded_frame(
-    unsigned char *pData[3],
-    SBufferInfo *sDstBufInfo,
-    uint64_t *timestamp,
-    unsigned out_size,
-    char *output)
+    const unsigned char *pData[3],
+    const SBufferInfo *sDstBufInfo,
+    uint64_t *timestamp)
 {
     unsigned char *pDst[3] = {NULL};
 
@@ -200,8 +201,8 @@ int h264Decoder::openh264_got_decoded_frame(
     iStride[0] = sDstBufInfo->UsrData.sSystemBuffer.iStride[0];
     iStride[1] = sDstBufInfo->UsrData.sSystemBuffer.iStride[1];
 
-    int len = openh264_write_yuv((unsigned char*)output, out_size,
-                                 pDst, iStride, iWidth, iHeight);
+    int len = openh264_write_yuv((unsigned char*)m_out_frame_payload, (const int)m_out_size,
+                                 (const unsigned char **)pDst, (const int *)iStride, (const int)iWidth, (const int)iHeight);
     if (len > 0)
     {
         //output->timestamp = *timestamp;
@@ -218,7 +219,7 @@ int h264Decoder::openh264_got_decoded_frame(
     return 0;
 }
 
-int h264Decoder::openh264_decoder_input(char *frame, int len)
+int h264Decoder::openh264_decoder_input(const unsigned char *frame, const int len)
 {
     SBufferInfo info = {0};
     uint8_t *ptrs[3];
@@ -262,10 +263,9 @@ int h264Decoder::openh264_decoder_input(char *frame, int len)
     {
         uint64_t ptimestamp;
         /* May overwrite existing frame but that's ok. */
-        int status = openh264_got_decoded_frame(ptrs,
-                                            &info,
-                                            &ptimestamp, m_out_frame_size,
-                                            m_out_frame_payload);
+        int status = openh264_got_decoded_frame((const unsigned char**)ptrs,
+                                            (const SBufferInfo *)&info,
+                                            (uint64_t *)&ptimestamp);
         if(status > 0)
             return status;                                    
         //has_frame = (status==PJ_SUCCESS && output->size != 0);
@@ -273,13 +273,13 @@ int h264Decoder::openh264_decoder_input(char *frame, int len)
     return 0;
 }
 
-int h264Decoder::openh264_decoder_output(char *frame, int len)
+int h264Decoder::openh264_decoder_output(unsigned char *frame, const int len)
 {
-    if (m_out_frame_size > 0 && m_out_frame_payload != nullptr)
+    if (m_out_size > 0 && m_out_frame_payload != nullptr)
     {
-        int ret = (m_out_frame_size > len) ? len : m_out_frame_size;
+        int ret = (m_out_size > len) ? len : m_out_size;
         memmove(frame, m_out_frame_payload, ret);
-        m_out_frame_size = 0;
+        m_out_size = 0;
         return ret;
     }
     return -1;

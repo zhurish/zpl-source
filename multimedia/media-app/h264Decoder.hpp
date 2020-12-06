@@ -15,45 +15,42 @@
 #include "h264_config.hpp"
 
 
+#include "videoDecoder.hpp"
 
-
-class h264Decoder {
+class h264Decoder:public videoDecoder {
     public:
         h264Decoder();
         ~h264Decoder();
-        int h264DecoderSetup(int width, int height, int fmt, int fps);
-        int h264DecoderInput(char *frame, int len);
-        int h264DecoderOutput(char *frame, int len);
-        unsigned char * h264DecoderOutput();
-        int h264DecoderOutputSize(bool clear=true);
-        int h264DecoderDestroy();
+        int videoDecoderSetup(const int width, const int height, const int fmt, const int fps);
+        int videoDecoderInput(const unsigned char *frame, const int len);
+        int videoDecoderOutput(unsigned char *frame, const int len);
+        unsigned char * videoDecoderOutput();
+        int videoDecoderOutputSize(const bool clear=true);
+        int videoDecoderDestroy();
 
     private:
 #ifdef PL_OPENH264_MODULE
         int openh264_decoder_destroy();
-        int openh264_decoder_setup(int width, int height, int fmt, int fps);
-        int openh264_decoder_input(char *frame, int len);
-        int openh264_decoder_output(char *frame, int len);
+        int openh264_decoder_setup(const int width, const int height, const int fmt, const int fps);
+        int openh264_decoder_input(const unsigned char *frame, const int len);
+        int openh264_decoder_output( unsigned char *frame, const int len);
         int openh264_write_yuv(unsigned char *buf,
-                     unsigned dst_len,
-                     unsigned char* pData[3],
-                     int iStride[2],
-                     int iWidth,
-                     int iHeight);
+                     const int dst_len,
+                     const unsigned char* pData[3],
+                     const int *iStride,
+                     const int iWidth,
+                     const int iHeight);
         int  openh264_got_decoded_frame(
-					   unsigned char *pData[3],
-					   SBufferInfo *sDstBufInfo,
-					   uint64_t *timestamp,
-					   unsigned out_size,
-					   char *output);
+					   const unsigned char *pData[3],
+					   const SBufferInfo *sDstBufInfo,
+					   uint64_t *timestamp);
 #endif
     private:
-        int v_width, v_height;
-        unsigned m_out_frame_size = 0;
+
 #ifdef PL_OPENH264_MODULE
         /* Encoder state */
         ISVCDecoder *m_decoder = nullptr;
-        char *m_out_frame_payload = nullptr;
+        unsigned char *m_out_frame_payload = nullptr;
 #endif
 };
 

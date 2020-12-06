@@ -35,11 +35,12 @@ ffmpegEncoder::ffmpegEncoder()
 {
 }
 
-int ffmpegEncoder::ffmpegEncoderInit(int width, int height, int fps)
+int ffmpegEncoder::ffmpegEncoderInit(int width, int height, int fmt, int fps)
 {
-	this->v_width = width;
-	this->v_height = height;
-	this->v_fps = fps;
+    this->m_width = width;
+    this->m_height = height;
+    this->m_fmt = fmt;
+    this->m_fps = fps;
 	return 0;
 }
 
@@ -88,7 +89,7 @@ int ffmpegEncoder::ffmpegEncoderOpen(int enc /*, std::function <int(void*, int)>
 	/* 创建输出码流的AVStream */
 	m_video_st = avformat_new_stream(m_AVOutputCtx, 0);
 	m_video_st->time_base.num = 1;
-	m_video_st->time_base.den = this->v_fps;
+	m_video_st->time_base.den = this->m_fps;
 	if (m_video_st == NULL)
 	{
 		return -1;
@@ -99,9 +100,16 @@ int ffmpegEncoder::ffmpegEncoderOpen(int enc /*, std::function <int(void*, int)>
 	//pCodecCtx->codec_id =AV_CODEC_ID_HEVC;  //H265
 	m_CodecCtx->codec_id = AV_CODEC_ID_H264;
 	m_CodecCtx->codec_type = AVMEDIA_TYPE_VIDEO;
-	m_CodecCtx->pix_fmt = AV_PIX_FMT_YUV422P;
-	m_CodecCtx->width = this->v_width;
-	m_CodecCtx->height = this->v_height;
+	//openh264 -> AV_PIX_FMT_YUV420P
+	//libx264 -> AV_PIX_FMT_YUV422P
+#ifdef PL_LIBX264_MODULE
+	m_CodecCtx->pix_fmt = AV_PIX_FMT_YUV422P;//AV_PIX_FMT_YUYV422;//AV_PIX_FMT_YUV422P;
+#endif
+#ifdef PL_OPENH264_MODULE
+	m_CodecCtx->pix_fmt = AV_PIX_FMT_YUV420P;//AV_PIX_FMT_YUYV422;//AV_PIX_FMT_YUV422P;
+#endif
+	m_CodecCtx->width = this->m_width;
+	m_CodecCtx->height = this->m_height;
 	m_CodecCtx->b_frame_strategy = true;
 	/*
 	码率
@@ -124,7 +132,7 @@ int ffmpegEncoder::ffmpegEncoderOpen(int enc /*, std::function <int(void*, int)>
 
 	//编码帧率，每秒多少帧。下面表示1秒25帧
 	m_CodecCtx->time_base.num = 1;
-	m_CodecCtx->time_base.den = this->v_fps;
+	m_CodecCtx->time_base.den = this->m_fps;
 
 	//最小的量化因子
 	m_CodecCtx->qmin = 10;
@@ -225,7 +233,7 @@ int ffmpegEncoder::ffmpegEncoderFrame(AVFrame *input, AVPacket *out)
 	//AVRational time_base_q = { 1, AV_TIME_BASE };
 	//av_init_packet(&enc_pkt);
 	//PTS
-	input->pts = enc_count * (m_video_st->time_base.den) / ((m_video_st->time_base.num) * this->v_fps);
+	input->pts = enc_count * (m_video_st->time_base.den) / ((m_video_st->time_base.num) * this->m_fps);
 
 	int ret = avcodec_encode_video2(m_CodecCtx, out, input, &enc_got_frame);
 	if (enc_got_frame >= 1)

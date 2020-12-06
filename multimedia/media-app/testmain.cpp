@@ -23,7 +23,7 @@
 #include "ffmpegDevice.hpp"
 #include "h264Encoder.hpp"
 #include "ffmpegSource.hpp"
-#include "videoDevice.hpp"
+#include "v4l2Device.hpp"
 
 #include "H264UDPServerMediaSubsession.hpp"
 #include "H264BasicFdServerMediaSubsession.hpp"
@@ -54,7 +54,7 @@ static void * encoder_task(void *a)
     int ret = 0;
     printf("start encoder_task\n");
     //return 0;
-#if 0    
+#if 1    
     ffmpegSource *ffmpeg_source = new ffmpegSource();
     if(ffmpeg_source)
     {
@@ -115,30 +115,30 @@ static void * encoder_task(void *a)
 #else
     sleep(2);
 #ifdef PL_LIBX264_MODULE
-    videoDevice *devi = new videoDevice(640, 480, 25, X264_CSP_I422); 
+    v4l2Device *devi = new v4l2Device(640, 480, 25, X264_CSP_I422); 
 #endif
 #ifdef PL_OPENH264_MODULE
-    videoDevice *devi = new videoDevice(640, 480, 25, videoFormatI420); 
+    v4l2Device *devi = new v4l2Device(640, 480, 25, videoFormatYUY2/*videoFormatI420*/); 
 #endif
     if(devi)
     {
-        if(devi->videoDeviceTryOpen("/dev/video0") < 0)
+        if(devi->v4l2DeviceTryOpen("/dev/video0") < 0)
         {
             delete devi;
             return 0;
         }
-        devi->videoDeviceOpen("/dev/video0");
-        devi->videoDeviceStart();
+        devi->v4l2DeviceOpen("/dev/video0");
+        devi->v4l2DeviceStart();
         while(1)
         { 
-            devi->videoDeviceStartCapture(m_queue);
+            devi->v4l2DeviceStartCapture(m_queue);
             if(sig_en == 1)
             {
                 udp_write("127.0.0.1", 9696, (char *)"ffmpeg_source->enc_pkt.data", 5);
                 break;
             }
         }
-        devi->videoDeviceStop();
+        devi->v4l2DeviceStop();
     }
 #endif
     udp_close();
@@ -161,7 +161,8 @@ int main(int argc, char** argv)
 #ifdef SIGPIPE
     signal(SIGPIPE, SIG_IGN); /* Broken pipe (POSIX). */
 #endif
-
+    ///openh264_test();
+    //return 0;
     if(strstr(argv[1], "client"))
     {
         ctmp = new rtsp_client();

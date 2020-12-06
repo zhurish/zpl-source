@@ -27,24 +27,24 @@ extern "C"
 #include "device/v4l2_driver.h"
 };
 
-#include "h264Encoder.hpp"
+#include "videoEncoder.hpp"
 #include "FramedQueue.hpp"
 
-class videoDevice {
+class v4l2Device {
 public:
-  videoDevice(int width, int height, int fps, int fmt);
-  virtual ~videoDevice();
-  int videoDeviceTryOpen(char *device);
-  int videoDeviceOpen(char *device);
-  int videoDeviceStart();
-  int videoDeviceStop();
-  int videoDeviceStartCapture(struct v4l2_t_buf *buf, int timeout);
-  int videoDeviceStartCapture(FramedQueue *m_queue);
+  v4l2Device(int width, int height, int fps, int fmt);
+  virtual ~v4l2Device();
+  int v4l2DeviceTryOpen(char *device);
+  int v4l2DeviceOpen(char *device);
+  int v4l2DeviceStart(videoEncoder *encoder);
+  int v4l2DeviceStop();
+  int v4l2DeviceStartCapture(struct v4l2_t_buf *buf, int timeout);
+  int v4l2DeviceStartCapture(FramedQueue *m_queue);
   //static int recebe_buffer (struct v4l2_buffer *v4l2_buf, struct v4l2_t_buf *buf);
 private:
   //int v4l2_read_capture(struct v4l2_driver *drv);
 private:
-  h264Encoder *h264Core = nullptr;
+  videoEncoder *m_videoEncoder = nullptr;
   struct v4l2_driver video_drv;
   struct v4l2_t_buf obuf;
 	int m_width;	
