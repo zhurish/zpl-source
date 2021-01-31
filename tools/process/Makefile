@@ -27,6 +27,13 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 $(TARGET): $(MODULE_OBJS)
 	$(CC) $(MODULE_OBJS) $(CFLAGS) $(LDCLFLAG) -o $(TARGET) 
 
+
+files = $(patsubst %.o,%.c,$(OBJS))
+make_prepare:
+	@for i in $(files); do	\
+		$(MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+	done
+
 lib: $(MODULE_OBJS)
 
 obj: $(MODULE_OBJS)
@@ -46,4 +53,4 @@ objclean:
 
 all: obj install 
 
-.PHONY:	obj all lib install objclean clean
+.PHONY:	obj all lib install objclean clean make_prepare

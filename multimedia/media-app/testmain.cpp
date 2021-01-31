@@ -20,9 +20,6 @@
 #include <liveMedia/liveMedia.hh>
 #include "BasicUsageEnvironment.hh"
 #include "rtsp_server.hpp"
-#include "ffmpegDevice.hpp"
-#include "h264Encoder.hpp"
-#include "ffmpegSource.hpp"
 #include "v4l2Device.hpp"
 
 #include "H264UDPServerMediaSubsession.hpp"
@@ -32,6 +29,15 @@
 #include "BasicQueueServerMediaSubsession.hpp"
 
 #include "rtsp_client.hpp"
+
+#ifdef PL_FFMPEG_MODULE
+#include "ffmpegDevice.hpp"
+#include "ffmpegSource.hpp"
+#endif
+#ifdef PL_OPENH264_MODULE
+#include "h264Encoder.hpp"
+#endif
+
 
 
 static int sig_en = 0;
@@ -54,7 +60,7 @@ static void * encoder_task(void *a)
     int ret = 0;
     printf("start encoder_task\n");
     //return 0;
-#if 1    
+#ifdef PL_FFMPEG_MODULE    
     ffmpegSource *ffmpeg_source = new ffmpegSource();
     if(ffmpeg_source)
     {
@@ -90,7 +96,7 @@ static void * encoder_task(void *a)
                         {
                             if(m_queue->FramedQueueDataIsFull())
                                 m_queue->FramedQueueDataFlush();
-                            m_queue->FramedQueueDataPut((char *)ffmpeg_source->enc_pkt.data, getsize);
+                            m_queue->FramedQueueDataPut((unsigned char *)ffmpeg_source->enc_pkt.data, getsize);
                             //udp_write("127.0.0.1", 9696, (char *)&getsize, 4);
                         }
                         else
@@ -112,7 +118,7 @@ static void * encoder_task(void *a)
         ffmpeg_source->ffmpegSourceDestroy();
         delete ffmpeg_source;
     }
-#else
+#endif
     sleep(2);
 #ifdef PL_LIBX264_MODULE
     v4l2Device *devi = new v4l2Device(640, 480, 25, X264_CSP_I422); 
@@ -120,6 +126,7 @@ static void * encoder_task(void *a)
 #ifdef PL_OPENH264_MODULE
     v4l2Device *devi = new v4l2Device(640, 480, 25, videoFormatYUY2/*videoFormatI420*/); 
 #endif
+#if defined(PL_OPENH264_MODULE)||defined(PL_LIBX264_MODULE)
     if(devi)
     {
         if(devi->v4l2DeviceTryOpen("/dev/video0") < 0)
@@ -128,7 +135,7 @@ static void * encoder_task(void *a)
             return 0;
         }
         devi->v4l2DeviceOpen("/dev/video0");
-        devi->v4l2DeviceStart();
+        devi->v4l2DeviceStart(nullptr);
         while(1)
         { 
             devi->v4l2DeviceStartCapture(m_queue);

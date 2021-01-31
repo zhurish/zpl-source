@@ -124,7 +124,7 @@ Boolean FramedQueueSource::handleReadFramedQueue(unsigned char *buffer, unsigned
       m_Queue->FramedQueuePost();
       return False;
     }
-    bytesRead = m_Queue->FramedQueueDataGet((char *)buffer, bufferMaxSize);
+    bytesRead = m_Queue->FramedQueueDataGet((unsigned char  *)buffer, bufferMaxSize);
     if (bytesRead > 0)
     {
       m_Queue->FramedQueuePost();

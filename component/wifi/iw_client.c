@@ -303,14 +303,14 @@ int iw_client_db_set_api(iw_client_t *iw_client, char *ssid, char *pass)
 
 			if(IW_DEBUG(DB))
 			{
-				zlog_debug(ZLOG_WIFI, "add password %s for SSID=%s", value.SSID, value.password);
+				zlog_debug(MODULE_WIFI, "add password %s for SSID=%s", value.SSID, value.password);
 			}
 		}
 		else
 		{
 			if(IW_DEBUG(DB))
 			{
-				zlog_debug(ZLOG_WIFI, "add SSID=%s", value.SSID);
+				zlog_debug(MODULE_WIFI, "add SSID=%s", value.SSID);
 			}
 		}
 		value.ifindex = iw_client->ifindex;
@@ -342,7 +342,7 @@ int iw_client_db_set_api(iw_client_t *iw_client, char *ssid, char *pass)
 			md5_encrypt_password(client->password, client->encrypt_password);*/
 			if(IW_DEBUG(DB))
 			{
-				zlog_debug(ZLOG_WIFI, "update password %s for SSID=%s", client->SSID, client->password);
+				zlog_debug(MODULE_WIFI, "update password %s for SSID=%s", client->SSID, client->password);
 			}
 		}
 		client->ifindex = iw_client->ifindex;
@@ -385,14 +385,14 @@ int iw_client_db_del_api(iw_client_t *iw_client, char *ssid, BOOL pass)
 			ret = OK;
 			if(IW_DEBUG(DB))
 			{
-				zlog_debug(ZLOG_WIFI, "delete password %s for SSID=%s", client->SSID, client->password);
+				zlog_debug(MODULE_WIFI, "delete password %s for SSID=%s", client->SSID, client->password);
 			}
 		}
 		else
 		{
 			if(IW_DEBUG(DB))
 			{
-				zlog_debug(ZLOG_WIFI, "delete SSID=%s", client->SSID);
+				zlog_debug(MODULE_WIFI, "delete SSID=%s", client->SSID);
 			}
 			os_memset(&iw_client->cu, 0, sizeof(iw_client_db_t));
 			if(iw_client->now == client)
@@ -634,7 +634,7 @@ static int iw_client_scan_update(iw_client_t *iw_client)
 		{
 			if(IW_DEBUG(SCAN))
 			{
-				zlog_debug(ZLOG_WIFI, "delete network SSID = %s", pstNode->SSID);
+				zlog_debug(MODULE_WIFI, "delete network SSID = %s", pstNode->SSID);
 			}
 			iw_client_ap_del_node(iw_client, pstNode);
 		}
@@ -669,7 +669,7 @@ int iw_client_ap_set_api(iw_client_t *iw_client, u_int8 *bssid, iw_client_ap_t *
 			memcpy(prefix_eth.u.prefix_eth.octet, ap->BSSID, NSM_MAC_MAX);
 			pu.p = &prefix_eth;
 			memset(buf, 0, sizeof(buf));
-			zlog_debug(ZLOG_WIFI, "add network by BSSID = %s SSID = %s",
+			zlog_debug(MODULE_WIFI, "add network by BSSID = %s SSID = %s",
 					prefix_2_address_str (pu, buf, sizeof(buf)), ap->SSID);
 		}
 	}
@@ -680,7 +680,7 @@ int iw_client_ap_set_api(iw_client_t *iw_client, u_int8 *bssid, iw_client_ap_t *
 		os_memcpy(client, ap, sizeof(iw_client_ap_t));
 		client->node = node;
 		client->ttl = 2;
-		//zlog_debug(ZLOG_PAL, "%s update", __func__);
+		//zlog_debug(MODULE_PAL, "%s update", __func__);
 		ret = OK;
 	}
 	if(iw_client->ap_mutex)
@@ -712,7 +712,7 @@ int iw_client_ap_del_api(iw_client_t *iw_client, u_int8 *bssid, char *ssid)
 			memcpy(prefix_eth.u.prefix_eth.octet, client->BSSID, NSM_MAC_MAX);
 			pu.p = &prefix_eth;
 			memset(buf, 0, sizeof(buf));
-			zlog_debug(ZLOG_WIFI, "add network by BSSID = %s SSID = %s",
+			zlog_debug(MODULE_WIFI, "add network by BSSID = %s SSID = %s",
 					prefix_2_address_str (pu, buf, sizeof(buf)), client->SSID);
 		}
 		if(iw_client->now == client)
@@ -815,13 +815,13 @@ static int iw_client_is_connect(struct interface *ifp, iw_client_ap_t *ap, u_int
 		{
 			if(IW_DEBUG(EVENT))
 			{
-				zlog_debug(ZLOG_WIFI, "interface %s is connect",ifp->name);
+				zlog_debug(MODULE_WIFI, "interface %s is connect",ifp->name);
 			}
 			return OK;
 		}
 		if(IW_DEBUG(EVENT))
 		{
-			zlog_debug(ZLOG_WIFI, "interface %s is not connect",ifp->name);
+			zlog_debug(MODULE_WIFI, "interface %s is not connect",ifp->name);
 		}
 	}
 	return ERROR;
@@ -837,7 +837,7 @@ static int iw_client_try_connect(iw_client_t *iw_client, iw_client_ap_t *ap, int
 	{
 		if(IW_DEBUG(EVENT))
 		{
-			//zlog_debug(ZLOG_WIFI, "got the password config on \"%s\" start to connect",ap->SSID);
+			//zlog_debug(MODULE_WIFI, "got the password config on \"%s\" start to connect",ap->SSID);
 		}
 		//TODO setup password and start to connect
 		struct interface *ifp = if_lookup_by_index(db->ifindex);
@@ -846,7 +846,7 @@ static int iw_client_try_connect(iw_client_t *iw_client, iw_client_ap_t *ap, int
 	}
 	if(IW_DEBUG(EVENT))
 	{
-		;//zlog_debug(ZLOG_WIFI, "can not gtt the password config on \"%s\"",ap->SSID);
+		;//zlog_debug(MODULE_WIFI, "can not gtt the password config on \"%s\"",ap->SSID);
 	}
 	return ERROR;
 }
@@ -865,7 +865,7 @@ static int iw_client_connect(iw_client_t *iw_client, iw_client_ap_t *ap, u_int8 
 		{
 			if(IW_DEBUG(EVENT))
 			{
-				zlog_debug(ZLOG_WIFI, "running DHCPC on interface %s on \"%s\"",ifp->name, ap->SSID);
+				zlog_debug(MODULE_WIFI, "running DHCPC on interface %s on \"%s\"",ifp->name, ap->SSID);
 			}
 			ap->connect = 1;
 #ifdef PL_DHCPC_MODULE
@@ -913,7 +913,7 @@ static int iw_client_connect_process(iw_client_t *iw_client)
 		{
 			if(IW_DEBUG(EVENT))
 			{
-				zlog_debug(ZLOG_WIFI, "is already connect to \"%s\" on interface %s ",
+				zlog_debug(MODULE_WIFI, "is already connect to \"%s\" on interface %s ",
 						iw_client->ap->SSID, ifp->name);
 			}
 			iw_client->ap->connect = 1;
@@ -958,7 +958,7 @@ int iw_client_disconnect_api(iw_client_t *iw_client)
 		return ERROR;
 	if(IW_DEBUG(EVENT))
 	{
-		zlog_debug(ZLOG_WIFI, "disconnect on interface %s ",ifp->name);
+		zlog_debug(MODULE_WIFI, "disconnect on interface %s ",ifp->name);
 	}
 #ifdef PL_DHCPC_MODULE
 	if(DHCP_CLIENT == nsm_interface_dhcp_mode_get_api(ifp))

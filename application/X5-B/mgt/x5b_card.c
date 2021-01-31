@@ -325,32 +325,32 @@ face_card_t * voip_card_node_lookup_by_cardid(char *carid)
 			{
 				if(card_mutex)
 					os_mutex_unlock(card_mutex);
-				zlog_debug(ZLOG_APP, "=========%s==========%s", __func__,card_id);
+				zlog_debug(MODULE_APP, "=========%s==========%s", __func__,card_id);
 				return dbase;
 			}
 		}
 	}
 	if(card_mutex)
 		os_mutex_unlock(card_mutex);
-	zlog_debug(ZLOG_APP, "=========%s=====can not get===%s", __func__,card_id);
+	zlog_debug(MODULE_APP, "=========%s=====can not get===%s", __func__,card_id);
 	return NULL;
 }
 
 static int voip_card_debug_info(char *hdr, face_card_t *card)
 {
-	zlog_debug(ZLOG_APP, "=========%s==========", hdr);
-	zlog_debug(ZLOG_APP, "username:%s", strlen(card->username)? card->username:" ");
-	//zlog_debug(ZLOG_APP, "username:%d", card->card_type);
-	zlog_debug(ZLOG_APP, "user_id:%s", strlen(card->user_id)? card->user_id:" ");
-	zlog_debug(ZLOG_APP, "card_id:%s", strlen(card->card_id)? card->card_id:" ");
-	zlog_debug(ZLOG_APP, "img_id:%s",strlen(card->img_id)? card->img_id:" ");
-	zlog_debug(ZLOG_APP, "face_id:%d", card->face_id);
-	zlog_debug(ZLOG_APP, "start_time:%d", card->start_time);
-	zlog_debug(ZLOG_APP, "stop_time:%d", card->stop_time);
-	zlog_debug(ZLOG_APP, "card_type:%d", card->card_type);
-	zlog_debug(ZLOG_APP, "make_card:%d", card->make_card);
-	zlog_debug(ZLOG_APP, "make_face:%d", card->make_face);
-	zlog_debug(ZLOG_APP, "===================");
+	zlog_debug(MODULE_APP, "=========%s==========", hdr);
+	zlog_debug(MODULE_APP, "username:%s", strlen(card->username)? card->username:" ");
+	//zlog_debug(MODULE_APP, "username:%d", card->card_type);
+	zlog_debug(MODULE_APP, "user_id:%s", strlen(card->user_id)? card->user_id:" ");
+	zlog_debug(MODULE_APP, "card_id:%s", strlen(card->card_id)? card->card_id:" ");
+	zlog_debug(MODULE_APP, "img_id:%s",strlen(card->img_id)? card->img_id:" ");
+	zlog_debug(MODULE_APP, "face_id:%d", card->face_id);
+	zlog_debug(MODULE_APP, "start_time:%d", card->start_time);
+	zlog_debug(MODULE_APP, "stop_time:%d", card->stop_time);
+	zlog_debug(MODULE_APP, "card_type:%d", card->card_type);
+	zlog_debug(MODULE_APP, "make_card:%d", card->make_card);
+	zlog_debug(MODULE_APP, "make_face:%d", card->make_face);
+	zlog_debug(MODULE_APP, "===================");
 	return OK;
 }
 int voip_card_add_cardid(face_card_t *card)
@@ -388,7 +388,7 @@ int voip_card_del_cardid(char *username, char *user_id, char *carid)
 		dbase = voip_card_node_lookup_by_cardid(carid);
 		if(!dbase)
 		{
-			zlog_debug(ZLOG_APP,"==== can not lookup carid by card id:%s", carid);
+			zlog_debug(MODULE_APP,"==== can not lookup carid by card id:%s", carid);
 			return ERROR;
 		}
 		if(card_mutex)
@@ -451,7 +451,7 @@ int voip_card_update_cardid(char *user_id, face_card_t *info)
 		dbase->card_type = info->card_type;
 		dbase->make_card = info->make_card;
 		dbase->make_face = info->make_face;
-		zlog_debug(ZLOG_APP, "===================%s -> type=%d", __func__, dbase->card_type);
+		zlog_debug(MODULE_APP, "===================%s -> type=%d", __func__, dbase->card_type);
 		voip_card_update_save();
 		if(card_mutex)
 			os_mutex_unlock(card_mutex);
@@ -503,7 +503,7 @@ int voip_card_update_cardid_by_userid(char *user_id, face_card_t *info)
 		dbase->card_type = info->card_type;
 		dbase->make_card = info->make_card;
 		dbase->make_face = info->make_face;*/
-		//zlog_debug(ZLOG_APP, "===================%s -> type=%d", __func__, dbase->card_type);
+		//zlog_debug(MODULE_APP, "===================%s -> type=%d", __func__, dbase->card_type);
 		voip_card_debug_info("add card", dbase);
 		voip_card_update_save();
 		if(card_mutex)
@@ -559,7 +559,7 @@ int voip_card_update_face_by_userid(char *user_id, face_card_t *info)
 		dbase->make_card = info->make_card;
 		dbase->make_face = info->make_face;*/
 		voip_card_debug_info("add face", dbase);
-		//zlog_debug(ZLOG_APP, "===================%s -> type=%d", __func__, dbase->card_type);
+		//zlog_debug(MODULE_APP, "===================%s -> type=%d", __func__, dbase->card_type);
 		voip_card_update_save();
 		if(card_mutex)
 			os_mutex_unlock(card_mutex);

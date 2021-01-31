@@ -19,13 +19,13 @@
 static int nsm_pqueue_add_stream (struct nsm_pqueue *queue, struct stream *s)
 {
 	struct nsm_stream *stream = NULL;
-	if(lstCount(queue->stream_list) < queue->array_max - 1)
+	if(lstCount(&queue->stream_list) < queue->array_max - 1)
 	{
 		stream = XMALLOC(MTYPE_STREAM, sizeof(struct nsm_stream));
 		if(stream)
 		{
 			stream->stream = stream_dup(s);
-			lstAdd(queue->stream_list, (NODE *)stream);
+			lstAdd(&queue->stream_list, (NODE *)stream);
 			return OK;
 		}
 	}
@@ -53,13 +53,13 @@ int nsm_pqueue_fetch (struct nsm_pqueue *queue)
 	if(queue->mutex)
 		os_mutex_lock(queue->mutex, OS_WAIT_FOREVER);
 
-	for(pstNode = (struct nsm_stream *)lstFirst(queue->stream_list);
+	for(pstNode = (struct nsm_stream *)lstFirst(&queue->stream_list);
 			pstNode != NULL;  pstNode = (struct nsm_stream *)lstNext((NODE*)&index))
 	{
 		index = pstNode->node;
 		if(pstNode->stream)
 		{
-			lstDelete(queue->stream_list, (NODE *)pstNode);
+			lstDelete(&queue->stream_list, (NODE *)pstNode);
 			if(queue->fetch)
 			{
 				ret = (queue->fetch)(pstNode->stream);
@@ -80,9 +80,9 @@ struct nsm_pqueue * nsm_pqueue_create (u_int num)
   queue = XCALLOC (MTYPE_PQUEUE, sizeof (struct nsm_pqueue));
   queue->mutex = os_mutex_init();
 
-  lstInit(queue->stream_list);
+  lstInit(&queue->stream_list);
   queue->array_max = num;
   /* By default we want nothing to happen when a node changes. */
-  queue->update = NULL;
+  //queue->update = NULL;
   return queue;
 }

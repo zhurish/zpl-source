@@ -346,7 +346,7 @@ funcname_eloop_add_read_write(int dir, struct eloop_master *m,
 
 	if (FD_ISSET(fd, fdset))
 	{
-		zlog(ZLOG_DEFAULT, LOG_WARNING, "There is already %s fd [%d]", (dir =
+		zlog(MODULE_DEFAULT, LOG_WARNING, "There is already %s fd [%d]", (dir =
 				ELOOP_READ) ? "read" : "write", fd);
 		if (m->mutex)
 			os_mutex_unlock(m->mutex);
@@ -567,7 +567,7 @@ void eloop_cancel(struct eloop *eloop)
 		//	list = eloop->master->background;
 		break;
 	default:
-		zlog_debug(ZLOG_DEFAULT, "asdddddddd eloop->type=%d", eloop->type);
+		zlog_debug(MODULE_DEFAULT, "asdddddddd eloop->type=%d", eloop->type);
 		if (eloop->master && eloop->master->mutex)
 			os_mutex_unlock(eloop->master->mutex);
 		return;
@@ -950,7 +950,7 @@ eloop_fetch(struct eloop_master *m, struct eloop *fetch)
 			if (errno == EINTR/* || m->max_fd == 0*/)
 				continue; /* signal received - process it */
 			printf("select(max_fd=%d) error: %s\r\n", m->max_fd, safe_strerror(errno));
-			zlog_warn(ZLOG_DEFAULT, "select() error: %s", safe_strerror(errno));
+			zlog_warn(MODULE_DEFAULT, "select() error: %s", safe_strerror(errno));
 			return NULL;
 		}
 		if (m->mutex)
@@ -1129,7 +1129,7 @@ void eloop_call(struct eloop *eloop)
 		 * Whinge about it now, so we're aware this is yet another task
 		 * to fix.
 		 */
-/*		zlog_warn(ZLOG_DEFAULT,
+/*		zlog_warn(MODULE_DEFAULT,
 				"SLOW ELOOP: task %s (%lx) ran for %lums (cpu time %lums)",
 				eloop->funcname, (unsigned long) eloop->func, realtime / 1000,
 				cputime / 1000);*/

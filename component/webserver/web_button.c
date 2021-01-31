@@ -114,7 +114,7 @@ static int web_button_onclick(Webs *wp, char *path, char *query)
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get ACTION Value");
+			zlog_debug(MODULE_WEB, "Can not Get ACTION Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	strcpy(action, strval);
@@ -123,12 +123,12 @@ static int web_button_onclick(Webs *wp, char *path, char *query)
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get BTNID Value");
+			zlog_debug(MODULE_WEB, "Can not Get BTNID Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	strcpy(ID, strval);
 	if(WEB_IS_DEBUG(MSG) && WEB_IS_DEBUG(DETAIL))
-		zlog_debug(ZLOG_WEB, "web Get ACTION=%s BTNID=%s", action, ID);
+		zlog_debug(MODULE_WEB, "web Get ACTION=%s BTNID=%s", action, ID);
 	if (web_button_call_hook(action, ID, wp) == OK)
 	{
 		return OK;
@@ -272,7 +272,7 @@ static int web_progress(Webs *wp, char *path, char *query)
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get VIEW Value");
+			zlog_debug(MODULE_WEB, "Can not Get VIEW Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	strcpy(action, strval);
@@ -281,12 +281,12 @@ static int web_progress(Webs *wp, char *path, char *query)
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get ID Value");
+			zlog_debug(MODULE_WEB, "Can not Get ID Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	strcpy(ID, strval);
 	if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-		zlog_debug(ZLOG_WEB, "web Get VIEW=%s ID=%s", action, ID);
+		zlog_debug(MODULE_WEB, "web Get VIEW=%s ID=%s", action, ID);
 	if (web_button_call_hook(action, ID, wp) == OK)
 	{
 		return web_return_text_plain(wp, OK);

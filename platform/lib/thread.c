@@ -430,7 +430,7 @@ funcname_thread_add_read_write(int dir, struct thread_master *m,
 
 	if (FD_ISSET(fd, fdset))
 	{
-		zlog(ZLOG_DEFAULT, LOG_WARNING, "There is already %s fd [%d]", (dir =
+		zlog(MODULE_DEFAULT, LOG_WARNING, "There is already %s fd [%d]", (dir =
 				THREAD_READ) ? "read" : "write", fd);
 		if (m->mutex)
 			os_mutex_unlock(m->mutex);
@@ -629,7 +629,7 @@ void thread_cancel(struct thread *thread)
 		queue = thread->master->background;
 		break;
 	default:
-		zlog_debug(ZLOG_DEFAULT, "asdddddddd thread->type=%d", thread->type);
+		zlog_debug(MODULE_DEFAULT, "asdddddddd thread->type=%d", thread->type);
 		if (thread->master->mutex)
 			os_mutex_unlock(thread->master->mutex);
 		return;
@@ -979,7 +979,7 @@ thread_fetch(struct thread_master *m, struct thread *fetch)
 		{
 			if (errno == EINTR/*  || m->max_fd == 0*/)
 				continue; /* signal received - process it */
-			zlog_warn(ZLOG_DEFAULT, "select() error: %s", safe_strerror(errno));
+			zlog_warn(MODULE_DEFAULT, "select() error: %s", safe_strerror(errno));
 			return NULL;
 		}
 		if (m->mutex)
@@ -1157,7 +1157,7 @@ void thread_call(struct thread *thread)
 		 * Whinge about it now, so we're aware this is yet another task
 		 * to fix.
 		 */
-/*		zlog_warn(ZLOG_DEFAULT,
+/*		zlog_warn(MODULE_DEFAULT,
 				"SLOW THREAD: task %s (%lx) ran for %lums (cpu time %lums)",
 				thread->funcname, (unsigned long) thread->func, realtime / 1000,
 				cputime / 1000);*/

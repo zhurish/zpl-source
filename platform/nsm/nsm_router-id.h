@@ -29,7 +29,7 @@
 #include "memory.h"
 #include "prefix.h"
 #include "if.h"
-#include "zclient.h"
+#include "nsm_zclient.h"
 
 extern void router_id_add_address(struct connected *);
 extern void router_id_del_address(struct connected *);

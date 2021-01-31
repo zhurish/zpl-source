@@ -37,8 +37,8 @@ public:
   int rngSize();//
   bool rngIsEmpty();
   bool rngIsFull ();
-  int 	rngBufGet (char *buffer, int maxbytes);
-  int 	rngBufPut (char *buffer, int nbytes);
+  int 	rngBufGet (unsigned char *buffer, int maxbytes);
+  int 	rngBufPut (unsigned char *buffer, int nbytes);
   int 	rngFreeBytes ();
   void 	rngFlush ();
 
@@ -46,15 +46,15 @@ private:
   int pToBuf = 0;		/* offset from start of buffer where to write next */
   int pFromBuf = 0;	/* offset from start of buffer where to read next */
   int bufSize = 0;	/* size of ring in bytes */
-  char *buf = nullptr;		/* pointer to start of buffer */
+  unsigned char *buf = nullptr;		/* pointer to start of buffer */
 };
 
 
 class listData{
 public:
-  listData(char *d, int len);
+  listData(unsigned char *d, int len);
   virtual ~listData();
-  char *data;
+  unsigned char *data;
   int maxsize;
   int datasize;
 };
@@ -64,13 +64,13 @@ public:
   vectorBuffer(int num);
   virtual ~vectorBuffer();
 
-  int vectorBufferDataAdd(char *d, int l);
-  int vectorBufferDataGet(char *d, int l);
+  int vectorBufferDataAdd(unsigned char *d, int l);
+  int vectorBufferDataGet(unsigned char *d, int l);
   int vectorBufferDataFlush(void);
   bool vectorBufferDataIsFull();
   bool vectorBufferDataIsEmpty();
 private:
-  listData * vectorBufferDataCreate(char *d, int l);
+  listData * vectorBufferDataCreate(unsigned char *d, int l);
   int vectorBufferDataFree(void);
 
 private:
@@ -84,13 +84,13 @@ public:
   listBuffer(int num);
   virtual ~listBuffer();
 
-  int listBufferDataAdd(char *d, int l);
-  int listBufferDataGet(char *d, int l);
+  int listBufferDataAdd(unsigned char *d, int l);
+  int listBufferDataGet(unsigned char *d, int l);
   int listBufferDataFlush(void);
   bool listBufferDataIsFull();
   bool listBufferDataIsEmpty();
 private:
-  listData * listBufferDataCreate(char *d, int l);
+  listData * listBufferDataCreate(unsigned char *d, int l);
   int listBufferDataFree(void);
 
 private:
@@ -113,8 +113,8 @@ public:
   virtual ~FramedQueue();
 
   int FramedQueueInit(int size, bool syncsize);
-  int FramedQueueDataPut(char *d, int l);
-  int FramedQueueDataGet(char *d, int l);
+  int FramedQueueDataPut(unsigned char *d, int l);
+  int FramedQueueDataGet(unsigned char *d, int l);
   int FramedQueueDataSizeGet();
 
   int FramedQueueDataFlush(void);
@@ -139,9 +139,9 @@ private:
   listBuffer *list_buffer = nullptr;
   vectorBuffer *vector_buffer = nullptr;
   ringBuffer *ring_buffer = nullptr;
-  int m_type;
-  bool event;
-  int m_fd[2]; 
+  int m_type = 0;
+  bool event = false;
+  int m_fd[2] = {0, 0}; 
 };
 
 #endif

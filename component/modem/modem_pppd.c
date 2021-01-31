@@ -956,7 +956,7 @@ static int modem_pppd_task_connect(modem_pppd_t *pppd)
 	int pid = child_process_create();
 	if(pid < 0)
 	{
-		  zlog_warn(ZLOG_DEFAULT, "Can't create child process (%s), continuing", safe_strerror(errno));
+		  zlog_warn(MODULE_DEFAULT, "Can't create child process (%s), continuing", safe_strerror(errno));
 		  return -1;
 	}
 	else if(pid == 0)

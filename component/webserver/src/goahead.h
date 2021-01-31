@@ -361,42 +361,42 @@ PUBLIC void traceProc(int level, cchar *fmt, ...);
 */
 
 #define web_assert(C) 				plzassert(C)
-#define web_error(fmt, ...) 		if (websGetDebug()) { pl_zlog (__FILE__, __FUNCTION__, __LINE__, ZLOG_WEB, WEBS_ERROR, fmt, ##__VA_ARGS__); } else {}
-#define web_error_proc(f,c,l,fmt, ...) 		if (websGetDebug()) { pl_zlog (f, c, l, ZLOG_WEB, WEBS_ERROR, fmt, ##__VA_ARGS__); } else {}
+#define web_error(fmt, ...) 		if (websGetDebug()) { pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, WEBS_ERROR, fmt, ##__VA_ARGS__); } else {}
+#define web_error_proc(f,c,l,fmt, ...) 		if (websGetDebug()) { pl_zlog (f, c, l, MODULE_WEB, WEBS_ERROR, fmt, ##__VA_ARGS__); } else {}
 
 #if 0//ME_GOAHEAD_TRACING
 #define web_trace(l, fmt, ...) 		if (websGetDebug()) { \
 		if((l)) { \
-				pl_zlog (__FILE__, __FUNCTION__, __LINE__, ZLOG_WEB, LOG_DEBUG, fmt, ##__VA_ARGS__); \
+				pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, LOG_DEBUG, fmt, ##__VA_ARGS__); \
 			} \
 		} else {}
 
 #define web_logmsg(l, fmt, ...) 	if (websGetDebug()) { \
 	if((l)) \
-		pl_zlog (__FILE__, __FUNCTION__, __LINE__, ZLOG_WEB, LOG_DEBUG, fmt, ##__VA_ARGS__); \
+		pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, LOG_DEBUG, fmt, ##__VA_ARGS__); \
 	} else {}
 #else
 #define web_trace(l, fmt, ...) 		if (websGetDebug()) { \
 		if((l)&WEBS_RAW_MSG) { \
 			if(websGetLogLevel() & WEBS_RAW_MSG) { \
-				pl_zlog (__FILE__, __FUNCTION__, __LINE__, ZLOG_WEB, LOG_DEBUG+1, fmt, ##__VA_ARGS__); \
+				pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, LOG_DEBUG+1, fmt, ##__VA_ARGS__); \
 			} \
 		} else if((l)&WEBS_HEADER_MSG) { \
 			if(websGetLogLevel() & WEBS_HEADER_MSG) { \
-				pl_zlog (__FILE__, __FUNCTION__, __LINE__, ZLOG_WEB, LOG_DEBUG+1, fmt, ##__VA_ARGS__); \
+				pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, LOG_DEBUG+1, fmt, ##__VA_ARGS__); \
 			} \
 		} else { \
 			if(websGetLogLevel() & WEBS_TRACE_MSG) { \
-				pl_zlog (__FILE__, __FUNCTION__, __LINE__, ZLOG_WEB, ((l)&WEBS_LEVEL_MASK), fmt, ##__VA_ARGS__); \
+				pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, ((l)&WEBS_LEVEL_MASK), fmt, ##__VA_ARGS__); \
 			} \
 		} \
 	} else {}
 
 #define web_logmsg(l, fmt, ...) 	if (websGetDebug()) { \
 	if((l)&WEBS_RAW_MSG) \
-		pl_zlog (__FILE__, __FUNCTION__, __LINE__, ZLOG_WEB, LOG_DEBUG, fmt, ##__VA_ARGS__); \
+		pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, LOG_DEBUG, fmt, ##__VA_ARGS__); \
 	else \
-		pl_zlog (__FILE__, __FUNCTION__, __LINE__, ZLOG_WEB, ((l)&WEBS_LEVEL_MASK) + (LOG_INFO-2), fmt, ##__VA_ARGS__); \
+		pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, ((l)&WEBS_LEVEL_MASK) + (LOG_INFO-2), fmt, ##__VA_ARGS__); \
 	} else {}
 #endif
 

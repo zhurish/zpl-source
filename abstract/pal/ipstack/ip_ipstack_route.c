@@ -811,7 +811,7 @@ static int netlink_socket(struct nlsock *nl, unsigned long groups,
 	sock = ip_socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
 	if (sock < 0)
 	{
-		zlog(ZLOG_NSM, LOG_ERR, "Can't open %s socket: %s", nl->name,
+		zlog(MODULE_NSM, LOG_ERR, "Can't open %s socket: %s", nl->name,
 				ipcom_strerror(ipcom_errno));
 		printf("Can't open %s socket: %s", nl->name,
 				ipcom_strerror(ipcom_errno));
@@ -828,7 +828,7 @@ static int netlink_socket(struct nlsock *nl, unsigned long groups,
 	save_errno = ipcom_errno;
 	if (ret < 0)
 	{
-		zlog(ZLOG_NSM, LOG_ERR, "Can't bind %s socket to group 0x%x: %s",
+		zlog(MODULE_NSM, LOG_ERR, "Can't bind %s socket to group 0x%x: %s",
 				nl->name, snl.nl_groups, ipcom_strerror(save_errno));
 		ip_close(sock);
 		return -1;
@@ -840,7 +840,7 @@ static int netlink_socket(struct nlsock *nl, unsigned long groups,
 			(socklen_t *) &namelen);
 	if (ret < 0 || namelen != sizeof snl)
 	{
-		zlog(ZLOG_NSM, LOG_ERR, "Can't get %s socket name: %s", nl->name,
+		zlog(MODULE_NSM, LOG_ERR, "Can't get %s socket name: %s", nl->name,
 				ipcom_strerror(ipcom_errno));
 		ip_close(sock);
 		return -1;
@@ -879,20 +879,20 @@ static int netlink_parse_info(
 				continue;
 			if (ipcom_errno == EWOULDBLOCK || errno == EAGAIN)
 				break;
-			zlog(ZLOG_NSM, LOG_ERR, "%s recvmsg overrun: %s", nl->name,
+			zlog(MODULE_NSM, LOG_ERR, "%s recvmsg overrun: %s", nl->name,
 					ipcom_strerror(ipcom_errno));
 			continue;
 		}
 
 		if (status == 0) //netlink-cmd EOF
 		{
-			zlog(ZLOG_NSM, LOG_ERR, "%s EOF", nl->name);
+			zlog(MODULE_NSM, LOG_ERR, "%s EOF", nl->name);
 			return -1;
 		}
 
 		if (msg.msg_namelen != sizeof snl)
 		{
-			zlog(ZLOG_NSM, LOG_ERR, "%s sender address length error: length %d",
+			zlog(MODULE_NSM, LOG_ERR, "%s sender address length error: length %d",
 					nl->name, msg.msg_namelen);
 			return -1;
 		}
@@ -916,7 +916,7 @@ static int netlink_parse_info(
 				{
 					if (IS_ZEBRA_DEBUG_KERNEL)
 					{
-						zlog_debug(ZLOG_NSM,
+						zlog_debug(MODULE_NSM,
 								"%s: %s ACK: type=%s(%u), seq=%u, pid=%u",
 								__FUNCTION__, nl->name,
 								lookup(nlmsg_str, err->msg.nlmsg_type),
@@ -934,7 +934,7 @@ static int netlink_parse_info(
 
 				if (h->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr)))
 				{
-					zlog(ZLOG_NSM, LOG_ERR, "%s error: message truncated",
+					zlog(MODULE_NSM, LOG_ERR, "%s error: message truncated",
 							nl->name);
 					return -1;
 				}
@@ -947,7 +947,7 @@ static int netlink_parse_info(
 										&& -errnum == EEXIST)))
 				{
 					if (IS_ZEBRA_DEBUG_KERNEL)
-						zlog_debug(ZLOG_NSM,
+						zlog_debug(MODULE_NSM,
 								"%s: error: %s type=%s(%u), seq=%u, pid=%u",
 								nl->name, ipcom_strerror(-errnum),
 								lookup(nlmsg_str, msg_type), msg_type,
@@ -955,7 +955,7 @@ static int netlink_parse_info(
 					return 0;
 				}
 
-				zlog_err(ZLOG_NSM, "%s error: %s, type=%s(%u), seq=%u, pid=%u",
+				zlog_err(MODULE_NSM, "%s error: %s, type=%s(%u), seq=%u, pid=%u",
 						nl->name, ipcom_strerror(-errnum),
 						lookup(nlmsg_str, msg_type), msg_type,
 						err->msg.nlmsg_seq, err->msg.nlmsg_pid);
@@ -964,7 +964,7 @@ static int netlink_parse_info(
 
 			/* OK we got netlink message. */
 			if (IS_ZEBRA_DEBUG_KERNEL)
-				zlog_debug(ZLOG_NSM,
+				zlog_debug(MODULE_NSM,
 						"netlink_parse_info: %s type %s(%u), seq=%u, pid=%u",
 						nl->name, lookup(nlmsg_str, h->nlmsg_type),
 						h->nlmsg_type, h->nlmsg_seq, h->nlmsg_pid);
@@ -979,7 +979,7 @@ static int netlink_parse_info(
 							&& h->nlmsg_type != RTM_DELADDR))
 			{
 				if (IS_ZEBRA_DEBUG_KERNEL)
-					zlog_debug(ZLOG_NSM,
+					zlog_debug(MODULE_NSM,
 							"netlink_parse_info: %s packet comes from %s",
 							netlink_cmd.name, nl->name);
 				continue;
@@ -988,7 +988,7 @@ static int netlink_parse_info(
 			error = (*filter)(&snl, h, zvrf->vrf_id);
 			if (error < 0)
 			{
-				zlog(ZLOG_NSM, LOG_ERR, "%s filter function error", nl->name);
+				zlog(MODULE_NSM, LOG_ERR, "%s filter function error", nl->name);
 				ret = error;
 			}
 		}
@@ -996,14 +996,14 @@ static int netlink_parse_info(
 		/* After error care. */
 		if (msg.msg_flags & MSG_TRUNC)
 		{
-			zlog(ZLOG_NSM, LOG_ERR, "%s error: message truncated!", nl->name);
-			zlog(ZLOG_NSM, LOG_ERR,
+			zlog(MODULE_NSM, LOG_ERR, "%s error: message truncated!", nl->name);
+			zlog(MODULE_NSM, LOG_ERR,
 					"Must restart with larger --nl-bufsize value!");
 			continue;
 		}
 		if (status)
 		{
-			zlog(ZLOG_NSM, LOG_ERR, "%s error: data remnant size %d", nl->name,
+			zlog(MODULE_NSM, LOG_ERR, "%s error: data remnant size %d", nl->name,
 					status);
 			return -1;
 		}
@@ -1093,7 +1093,7 @@ static int addattr32(struct nlmsghdr *n, size_t maxlen, int type, int data)
 static int netlink_talk_filter(struct sockaddr_nl *snl, struct nlmsghdr *h,
 		vrf_id_t vrf_id)
 {
-	zlog_warn(ZLOG_NSM, "netlink_talk: ignoring message type 0x%04x vrf %u",
+	zlog_warn(MODULE_NSM, "netlink_talk: ignoring message type 0x%04x vrf %u",
 			h->nlmsg_type, vrf_id);
 	return 0;
 }
@@ -1120,7 +1120,7 @@ static int netlink_talk(struct nlmsghdr *n, struct nlsock *nl,
 	n->nlmsg_flags |= NLM_F_ACK;
 
 	if (IS_ZEBRA_DEBUG_KERNEL)
-		zlog_debug(ZLOG_NSM, "netlink_talk: %s type %s(%u), seq=%u", nl->name,
+		zlog_debug(MODULE_NSM, "netlink_talk: %s type %s(%u), seq=%u", nl->name,
 				lookup(nlmsg_str, n->nlmsg_type), n->nlmsg_type, n->nlmsg_seq);
 
 	/* Send message to netlink interface. */
@@ -1130,7 +1130,7 @@ static int netlink_talk(struct nlmsghdr *n, struct nlsock *nl,
 
 	if (status < 0)
 	{
-		zlog(ZLOG_NSM, LOG_ERR, "netlink_talk sendmsg() error: %s",
+		zlog(MODULE_NSM, LOG_ERR, "netlink_talk sendmsg() error: %s",
 				ipcom_strerror(save_errno));
 		return -1;
 	}
@@ -1168,7 +1168,7 @@ static void _netlink_route_build_singlepath(const char *routedesc, int bytelen,
 					bytelen);
 
 		if (IS_ZEBRA_DEBUG_KERNEL)
-			zlog_debug(ZLOG_NSM, "netlink_route_multipath() (%s): "
+			zlog_debug(MODULE_NSM, "netlink_route_multipath() (%s): "
 					"nexthop via %s if %s", routedesc,
 					inet_ntoa(nexthop->gate.ipv4),
 					ifindex2ifname(nexthop->ifindex));
@@ -1182,7 +1182,7 @@ static void _netlink_route_build_singlepath(const char *routedesc, int bytelen,
 				&nexthop->gate.ipv6, bytelen);
 
 		if (IS_ZEBRA_DEBUG_KERNEL)
-		zlog_debug(ZLOG_NSM, "netlink_route_multipath() (%s): "
+		zlog_debug(MODULE_NSM, "netlink_route_multipath() (%s): "
 				"nexthop via %s if %s",
 				routedesc,
 				inet6_ntoa (nexthop->gate.ipv6),
@@ -1200,7 +1200,7 @@ static void _netlink_route_build_singlepath(const char *routedesc, int bytelen,
 					bytelen);
 
 		if (IS_ZEBRA_DEBUG_KERNEL)
-			zlog_debug(ZLOG_NSM, "netlink_route_multipath() (%s): "
+			zlog_debug(MODULE_NSM, "netlink_route_multipath() (%s): "
 					"nexthop via if %s", routedesc,
 					ifindex2ifname(nexthop->ifindex));
 	}
@@ -1211,7 +1211,7 @@ static void _netlink_route_build_singlepath(const char *routedesc, int bytelen,
 		addattr32(nlmsg, req_size, RTA_OIF, ifindex2ifkernel(nexthop->ifindex));
 
 		if (IS_ZEBRA_DEBUG_KERNEL)
-			zlog_debug(ZLOG_NSM, "netlink_route_multipath() (%s): "
+			zlog_debug(MODULE_NSM, "netlink_route_multipath() (%s): "
 					"nexthop via if %s", routedesc,
 					ifindex2ifname(nexthop->ifindex));
 	}
@@ -1256,7 +1256,7 @@ static void _netlink_route_build_multipath(const char *routedesc, int bytelen,
 			*src = &nexthop->src;
 
 		if (IS_ZEBRA_DEBUG_KERNEL)
-			zlog_debug(ZLOG_NSM, "netlink_route_multipath() (%s): "
+			zlog_debug(MODULE_NSM, "netlink_route_multipath() (%s): "
 					"nexthop via %s if %s", routedesc,
 					inet_ntoa(nexthop->gate.ipv4),
 					ifindex2ifname(nexthop->ifindex));
@@ -1271,7 +1271,7 @@ static void _netlink_route_build_multipath(const char *routedesc, int bytelen,
 		rtnh->rtnh_len += sizeof (struct rtattr) + bytelen;
 
 		if (IS_ZEBRA_DEBUG_KERNEL)
-		zlog_debug(ZLOG_NSM, "netlink_route_multipath() (%s): "
+		zlog_debug(MODULE_NSM, "netlink_route_multipath() (%s): "
 				"nexthop via %s if %s",
 				routedesc,
 				inet6_ntoa (nexthop->gate.ipv6),
@@ -1287,7 +1287,7 @@ static void _netlink_route_build_multipath(const char *routedesc, int bytelen,
 		if (nexthop->src.ipv4.s_addr)
 			*src = &nexthop->src;
 		if (IS_ZEBRA_DEBUG_KERNEL)
-			zlog_debug(ZLOG_NSM, "netlink_route_multipath() (%s): "
+			zlog_debug(MODULE_NSM, "netlink_route_multipath() (%s): "
 					"nexthop via if %s", routedesc,
 					ifindex2ifname(nexthop->ifindex));
 	}
@@ -1297,7 +1297,7 @@ static void _netlink_route_build_multipath(const char *routedesc, int bytelen,
 		rtnh->rtnh_ifindex = ifindex2ifkernel(nexthop->ifindex);
 
 		if (IS_ZEBRA_DEBUG_KERNEL)
-			zlog_debug(ZLOG_NSM, "netlink_route_multipath() (%s): "
+			zlog_debug(MODULE_NSM, "netlink_route_multipath() (%s): "
 					"nexthop via if %s", routedesc,
 					ifindex2ifname(nexthop->ifindex));
 	}
@@ -1324,7 +1324,7 @@ static void _netlink_route_debug(int cmd, struct prefix *p,
 	if (IS_ZEBRA_DEBUG_KERNEL)
 	{
 		char buf[PREFIX_STRLEN];
-		zlog_debug(ZLOG_NSM,
+		zlog_debug(MODULE_NSM,
 				"netlink_route_multipath() (%s): %s %s vrf %u type %s",
 				routedesc, lookup(nlmsg_str, cmd),
 				prefix2str(p, buf, sizeof(buf)), zvrf->vrf_id,
@@ -1558,7 +1558,7 @@ static int netlink_route_multipath(int cmd, struct prefix *p, struct rib *rib)
 	if (nexthop_num == 0)
 	{
 		if (IS_ZEBRA_DEBUG_KERNEL)
-			zlog_debug(ZLOG_NSM,
+			zlog_debug(MODULE_NSM,
 					"netlink_route_multipath(): No useful nexthop.");
 		return 0;
 	}

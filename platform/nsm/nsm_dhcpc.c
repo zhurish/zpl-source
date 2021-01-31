@@ -23,7 +23,7 @@
 #include "nsm_zserv.h"
 #include "nsm_redistribute.h"
 #include "nsm_debug.h"
-#include "zclient.h"
+#include "nsm_zclient.h"
 #include "nsm_dhcp.h"
 
 #ifdef PL_UDHCP_MODULE

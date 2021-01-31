@@ -13,64 +13,274 @@
 #include "os_ansync.h"
 
 
-typedef struct module_str_s
-{
-	u_int 		module;
-	u_int		taskid;
-	const char 	*name;
-}module_str_t;
 
-#define MODULE_ENTRY(T) { (MODULE_ ##T), 0, (#T) }
-
-static module_str_t module_string[] =
-{
-	MODULE_ENTRY(NONE),
-	MODULE_ENTRY(DEFAULT),
-	MODULE_ENTRY(TIMER),
-	MODULE_ENTRY(JOB),
-	MODULE_ENTRY(CONSOLE),
-	MODULE_ENTRY(TELNET),
-	MODULE_ENTRY(LIBSSH),
-	MODULE_ENTRY(NSM),			//route table manage
-	MODULE_ENTRY(MODEM),
-	MODULE_ENTRY(WIFI),
-	MODULE_ENTRY(DHCP),
-	MODULE_ENTRY(DHCPD),
-	MODULE_ENTRY(RIP),
-	MODULE_ENTRY(BGP),
-	MODULE_ENTRY(OSPF),
-	MODULE_ENTRY(RIPNG),
-	MODULE_ENTRY(BABEL),
-	MODULE_ENTRY(OSPF6),
-	MODULE_ENTRY(ISIS),
-	MODULE_ENTRY(PIM),
-	MODULE_ENTRY(MASC),
-	MODULE_ENTRY(NHRP),
-	MODULE_ENTRY(HSLS),
-	MODULE_ENTRY(OLSR),
-	MODULE_ENTRY(VRRP),
-	MODULE_ENTRY(FRP),
-	MODULE_ENTRY(LLDP),
-	MODULE_ENTRY(BFD),
-	MODULE_ENTRY(LDP),
-	MODULE_ENTRY(SNTP),
-	MODULE_ENTRY(IMISH),
-	MODULE_ENTRY(UTILS),
-	MODULE_ENTRY(KERNEL),
-	MODULE_ENTRY(VOIP),
-	MODULE_ENTRY(APP_START),
-	MODULE_ENTRY(APP_STOP),
-	MODULE_ENTRY(MAX),
+struct module_list module_list_default = 
+{ 
+	.module=MODULE_DEFAULT, 
+	.name="DEFAULT", 
+	.module_init=NULL, 
+	.module_exit=NULL, 
+	.module_task_init=NULL, 
+	.module_task_exit=NULL, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
 };
 
+struct module_list module_list_lib = 
+{ 
+	.module=MODULE_LIB, 
+	.name="LIB", 
+	.module_init=NULL, 
+	.module_exit=NULL, 
+	.module_task_init=NULL, 
+	.module_task_exit=NULL, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};
+
+struct module_list module_list_osal = 
+{ 
+	.module=MODULE_OSAL, 
+	.name="OSAL", 
+	.module_init=NULL, 
+	.module_exit=NULL, 
+	.module_task_init=NULL, 
+	.module_task_exit=NULL, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};
+
+struct module_list module_list_timer = 
+{ 
+	.module=MODULE_TIMER, 
+	.name="TIMER", 
+	.module_init=NULL, 
+	.module_exit=NULL, 
+	.module_task_init=NULL, 
+	.module_task_exit=NULL, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};
+struct module_list module_list_job = 
+{ 
+	.module=MODULE_JOB, 
+	.name="JOB", 
+	.module_init=NULL, 
+	.module_exit=NULL, 
+	.module_task_init=NULL, 
+	.module_task_exit=NULL, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};
+struct module_list module_list_console = 
+{ 
+	.module=MODULE_CONSOLE, 
+	.name="CONSOLE", 
+	.module_init=NULL, 
+	.module_exit=NULL, 
+	.module_task_init=NULL, 
+	.module_task_exit=NULL, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};
+
+struct module_list module_list_telnet = 
+{ 
+	.module=MODULE_TELNET, 
+	.name="TELNET", 
+	.module_init=NULL, 
+	.module_exit=NULL, 
+	.module_task_init=NULL, 
+	.module_task_exit=NULL, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};
+
+struct module_list module_list_utils = 
+{ 
+	.module=MODULE_UTILS, 
+	.name="UTILS", 
+	.module_init=NULL, 
+	.module_exit=NULL, 
+	.module_task_init=NULL, 
+	.module_task_exit=NULL, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};
+
+struct module_list module_list_imish = 
+{ 
+	.module=MODULE_IMISH, 
+	.name="IMISH", 
+	.module_init=NULL, 
+	.module_exit=NULL, 
+	.module_task_init=NULL, 
+	.module_task_exit=NULL, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};
+
+struct module_list module_list_kernel = 
+{ 
+	.module=MODULE_KERNEL, 
+	.name="KERNEL", 
+	.module_init=NULL, 
+	.module_exit=NULL, 
+	.module_task_init=NULL, 
+	.module_task_exit=NULL, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};
+
+int pl_module_name_init(const char * name)
+{
+	u_int i = 0;
+	for(i = 0; i < array_size(module_lists_tbl); i++)
+	{
+		if(module_lists_tbl[i].tbl && os_strcmp(module_lists_tbl[i].tbl->name, name) == 0)
+		{
+			if(module_lists_tbl[i].tbl->module_init)
+				return (module_lists_tbl[i].tbl->module_init)();
+		}	
+	}
+	return -1;
+}
+
+int pl_module_init(int module)
+{
+	u_int i = 0;
+	for(i = 0; i < array_size(module_lists_tbl); i++)
+	{
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (u_int)module)
+		{
+			if(module_lists_tbl[i].tbl->module_init)
+				return (module_lists_tbl[i].tbl->module_init)();
+		}	
+	}
+	return -1;
+}
+
+int pl_module_exit(int module)
+{
+	u_int i = 0;
+	for(i = 0; i < array_size(module_lists_tbl); i++)
+	{
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (u_int)module)
+		{
+			if(module_lists_tbl[i].tbl->module_exit)
+				return (module_lists_tbl[i].tbl->module_exit)();
+		}	
+	}
+	return -1;
+}
+
+int pl_module_task_name_init(const char * name)
+{
+	u_int i = 0;
+	for(i = 0; i < array_size(module_lists_tbl); i++)
+	{
+		if(module_lists_tbl[i].tbl && os_strcmp(module_lists_tbl[i].tbl->name, name) == 0)
+		{
+			if(module_lists_tbl[i].tbl->module_task_init)
+				return (module_lists_tbl[i].tbl->module_task_init)();
+		}	
+	}
+	return -1;
+}
+
+int pl_module_task_init(int module)
+{
+	u_int i = 0;
+	for(i = 0; i < array_size(module_lists_tbl); i++)
+	{
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (u_int)module)
+		{
+			if(module_lists_tbl[i].tbl->module_task_init)
+				return (module_lists_tbl[i].tbl->module_task_init)();
+		}	
+	}
+	return -1;
+}
+
+int pl_module_task_exit(int module)
+{
+	u_int i = 0;
+	for(i = 0; i < array_size(module_lists_tbl); i++)
+	{
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (u_int)module)
+		{
+			if(module_lists_tbl[i].tbl->module_task_exit)
+				return (module_lists_tbl[i].tbl->module_task_exit)();
+		}	
+	}
+	return -1;
+}
+
+int pl_module_cmd_name_init(const char * name)
+{
+	u_int i = 0;
+	for(i = 0; i < array_size(module_lists_tbl); i++)
+	{
+		if(module_lists_tbl[i].tbl && os_strcmp(module_lists_tbl[i].tbl->name, name) == 0)
+		{
+			if(module_lists_tbl[i].tbl->module_cmd_init)
+				return (module_lists_tbl[i].tbl->module_cmd_init)();
+		}	
+	}
+	return -1;
+}
+
+int pl_module_cmd_init(int module)
+{
+	u_int i = 0;
+	for(i = 0; i < array_size(module_lists_tbl); i++)
+	{
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (u_int)module)
+		{
+			if(module_lists_tbl[i].tbl->module_cmd_init)
+				return (module_lists_tbl[i].tbl->module_cmd_init)();
+		}	
+	}
+	return -1;
+}
 
 const char * module2name(int module)
 {
 	u_int i = 0;
-	for(i = 0; i < array_size(module_string); i++)
+	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
-		if(module_string[i].module == (u_int)module)
-			return module_string[i].name;
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (u_int)module)
+			return module_lists_tbl[i].tbl->name;
 	}
 	return "Unknow";
 }
@@ -78,10 +288,10 @@ const char * module2name(int module)
 int name2module(const char *name)
 {
 	u_int i = 0;
-	for(i = 0; i < array_size(module_string); i++)
+	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
-		if(os_strcmp(module_string[i].name, name) == 0)
-			return module_string[i].module;
+		if(module_lists_tbl[i].tbl && os_strcmp(module_lists_tbl[i].tbl->name, name) == 0)
+			return module_lists_tbl[i].tbl->module;
 	}
 	return 0;
 }
@@ -89,10 +299,10 @@ int name2module(const char *name)
 int module2task(int module)
 {
 	u_int i = 0;
-	for(i = 0; i < array_size(module_string); i++)
+	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
-		if(module_string[i].module == (u_int)module)
-			return module_string[i].taskid;
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (u_int)module)
+			return module_lists_tbl[i].tbl->taskid;
 	}
 	return 0;
 }
@@ -100,10 +310,10 @@ int module2task(int module)
 int task2module(int taskid)
 {
 	u_int i = 0;
-	for(i = 0; i < array_size(module_string); i++)
+	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
-		if(module_string[i].taskid == (u_int)taskid)
-			return module_string[i].module;
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->taskid == (u_int)taskid)
+			return module_lists_tbl[i].tbl->module;
 	}
 	return 0;
 }
@@ -112,10 +322,10 @@ int task_module_self(void)
 {
 	u_int i = 0;
 	u_int taskid = os_task_id_self ();
-	for(i = 0; i < array_size(module_string); i++)
+	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
-		if(module_string[i].taskid == taskid)
-			return module_string[i].module;
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->taskid == taskid)
+			return module_lists_tbl[i].tbl->module;
 	}
 	return 0;
 }
@@ -124,11 +334,11 @@ int task_module_self(void)
 int module_setup_task(int module, int taskid)
 {
 	u_int i = 0;
-	for(i = 0; i < array_size(module_string); i++)
+	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
-		if(module_string[i].module == (u_int)module)
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (u_int)module)
 		{
-			module_string[i].taskid = (u_int)taskid;
+			module_lists_tbl[i].tbl->taskid = (u_int)taskid;
 			return 0;
 		}
 	}

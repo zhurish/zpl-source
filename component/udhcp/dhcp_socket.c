@@ -37,18 +37,18 @@ int udhcp_udp_socket(/*uint32_t ip,*/int port)
 	{
 		sockopt_reuseaddr(fd);
 		if (sockopt_broadcast(fd) == -1)
-			zlog_err(ZLOG_DHCP, "SO_BROADCAST");
+			zlog_err(MODULE_DHCP, "SO_BROADCAST");
 
 		if (setsockopt_ifindex(AF_INET, fd, 1) == -1)
-			zlog_err(ZLOG_DHCP, "setsockopt_ifindex");
+			zlog_err(MODULE_DHCP, "setsockopt_ifindex");
 
 		sockopt_ttl(AF_INET, fd, 1);
 		os_set_nonblocking(fd);
 		if (sock_bind(fd, NULL, port) == OK)
 			return fd;
-		zlog_err(ZLOG_DHCP, "sock_bind");
+		zlog_err(MODULE_DHCP, "sock_bind");
 	}
-	zlog_err(ZLOG_DHCP, "udhcp_udp_socket");
+	zlog_err(MODULE_DHCP, "udhcp_udp_socket");
 	return ERROR;
 }
 
@@ -58,7 +58,7 @@ int udhcp_raw_socket(void)
 	/* Get packet socket to write raw frames on */
 	if ((fd = raw_sock_create(SOCK_DGRAM, (ETH_P_IP))) < 0)
 	{
-		zlog_err(ZLOG_DHCP, "failed to open raw udp for relay(%s)", strerror(errno));
+		zlog_err(MODULE_DHCP, "failed to open raw udp for relay(%s)", strerror(errno));
 		return (-1);
 	}
 	setsockopt(fd, SOL_SOCKET, SO_BROADCAST, (char *)&onoff, sizeof(onoff));
@@ -70,7 +70,7 @@ int udhcp_client_socket_bind(int fd, int ifindex)
 {
 	int ret = 0;
 	ifindex_t kifindex = ifindex2ifkernel(ifindex);
-	//zlog_err(ZLOG_DHCP, "Can not bind raw socket(%s)", kifindex);
+	//zlog_err(MODULE_DHCP, "Can not bind raw socket(%s)", kifindex);
 	ret = raw_sock_bind(fd, PF_PACKET, ETH_P_IP, kifindex);
 	return ret;
 }
@@ -125,7 +125,7 @@ int udhcp_client_socket_filter(int fd, int port)
 		if (setsockopt(fd, SOL_SOCKET, SO_ATTACH_FILTER, &filter_prog,
 				sizeof(filter_prog)) < 0)
 		{
-			zlog_err(ZLOG_DHCP, "attached filter to raw socket fail:%s", strerror(errno));
+			zlog_err(MODULE_DHCP, "attached filter to raw socket fail:%s", strerror(errno));
 			return ERROR;
 		}
 	}

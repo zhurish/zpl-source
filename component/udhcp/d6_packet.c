@@ -17,7 +17,7 @@ void FAST_FUNC d6_dump_packet(struct d6_packet *packet)
 	if (dhcp_verbose < 2)
 		return;
 
-	zlog_err(ZLOG_DHCP,
+	zlog_err(MODULE_DHCP,
 		" xid %x"
 		, packet->d6_xid32
 	);
@@ -35,15 +35,15 @@ int FAST_FUNC d6_recv_kernel_packet(struct in6_addr *peer_ipv6
 	memset(packet, 0, sizeof(*packet));
 	bytes = safe_read(fd, packet, sizeof(*packet));
 	if (bytes < 0) {
-		zlog_err(ZLOG_DHCP,"packet read error, ignoring");
+		zlog_err(MODULE_DHCP,"packet read error, ignoring");
 		return bytes; /* returns -1 */
 	}
 
 	if (bytes < offsetof(struct d6_packet, d6_options)) {
-		zlog_err(ZLOG_DHCP,"packet with bad magic, ignoring");
+		zlog_err(MODULE_DHCP,"packet with bad magic, ignoring");
 		return -2;
 	}
-	zlog_err(ZLOG_DHCP,"received %s", "a packet");
+	zlog_err(MODULE_DHCP,"received %s", "a packet");
 	d6_dump_packet(packet);
 
 	return bytes;
@@ -120,7 +120,7 @@ int FAST_FUNC d6_send_raw_packet(
 	close(fd);
 	if (result < 0) {
  ret_msg:
- zlog_err(ZLOG_DHCP,msg, "PACKET");
+ zlog_err(MODULE_DHCP,msg, "PACKET");
 	}
 	return result;
 }
@@ -170,7 +170,7 @@ int FAST_FUNC d6_send_kernel_packet(
 	close(fd);
 	if (result < 0) {
  ret_msg:
- zlog_err(ZLOG_DHCP,msg, "UDP");
+ zlog_err(MODULE_DHCP,msg, "UDP");
 	}
 	return result;
 }

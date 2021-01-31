@@ -85,7 +85,7 @@ static int netlink_address(int cmd, int family, struct interface *ifp,
 		SET_FLAG(req.ifa.ifa_flags, IFA_F_SECONDARY);
 
 	if (IS_ZEBRA_DEBUG_KERNEL)
-		zlog_debug(ZLOG_PAL, "netlink %s address on %s(%d)", (cmd == RTM_NEWADDR) ? "add":"del",
+		zlog_debug(MODULE_PAL, "netlink %s address on %s(%d)", (cmd == RTM_NEWADDR) ? "add":"del",
 				ifp->name, req.ifa.ifa_index);
 	/*
 	 if (ifc->label)

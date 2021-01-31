@@ -127,7 +127,7 @@ int modem_usb_driver_add(modem_usb_driver *driver)
 	if(!modem_driver_lookup(driver->vendor, driver->product))
 	{
 		if(MODEM_IS_DEBUG(DRIVER))
-			zlog_warn(ZLOG_MODEM, "not support this modem ID:%x %x ",
+			zlog_warn(MODULE_MODEM, "not support this modem ID:%x %x ",
 				driver->vendor, driver->product);
 		return ERROR;
 	}

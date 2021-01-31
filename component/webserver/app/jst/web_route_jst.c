@@ -594,7 +594,7 @@ static int web_route_tbl_handle(Webs *wp, char *path, char *query, int type)
 	if (NULL == dest_str)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get destination Value");
+			zlog_debug(MODULE_WEB, "Can not Get destination Value");
 		ret = ERROR;
 		goto err_out;
 	}
@@ -604,7 +604,7 @@ static int web_route_tbl_handle(Webs *wp, char *path, char *query, int type)
 		if (NULL == mask_str)
 		{
 			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-				zlog_debug(ZLOG_WEB, "Can not Get netmask Value");
+				zlog_debug(MODULE_WEB, "Can not Get netmask Value");
 			ret = ERROR;
 			goto err_out;
 		}

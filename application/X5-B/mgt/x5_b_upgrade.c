@@ -47,7 +47,7 @@ int x5b_app_update_mode(x5b_app_mgt_t *app, void *info, int to)
 	if(!mgt->app->reg_state)
 	{
 		if(X5_B_ESP32_DEBUG(EVENT))
-			zlog_warn(ZLOG_APP, "Remote is Not Register");
+			zlog_warn(MODULE_APP, "Remote is Not Register");
 /*		if(mgt->mutex)
 			os_mutex_unlock(mgt->mutex);*/
 		return ERROR;
@@ -55,7 +55,7 @@ int x5b_app_update_mode(x5b_app_mgt_t *app, void *info, int to)
 	if(mgt->app->address == 0)
 	{
 		if(X5_B_ESP32_DEBUG(EVENT))
-			zlog_warn(ZLOG_APP, "OPEN CMD MSG Can not send, Unknown Remote IP Address");
+			zlog_warn(MODULE_APP, "OPEN CMD MSG Can not send, Unknown Remote IP Address");
 /*		if(mgt->mutex)
 			os_mutex_unlock(mgt->mutex);*/
 		return ERROR;
@@ -70,7 +70,7 @@ int x5b_app_update_mode(x5b_app_mgt_t *app, void *info, int to)
 		mgt->app->offset += len;
 		x5b_app_crc_make(mgt);
 		if(X5_B_ESP32_DEBUG(EVENT))
-			zlog_debug(ZLOG_APP, "Update Mode MSG to %s:%d %d byte", inet_address(mgt->app->address),
+			zlog_debug(MODULE_APP, "Update Mode MSG to %s:%d %d byte", inet_address(mgt->app->address),
 					mgt->app->remote_port, mgt->app->slen);
 		len = x5b_app_send_msg(mgt);
 		mgt->upgrade = TRUE;
@@ -93,7 +93,7 @@ int x5b_app_update_mode_exit(x5b_app_mgt_t *app)
 	x5b_app_update_mode_enable(mgt, FALSE, E_CMD_TO_A);
 	if(mgt->mutex)
 		os_mutex_unlock(mgt->mutex);
-	//zlog_debug(ZLOG_APP, "----x5b_app_update_mode_exit OK" );
+	//zlog_debug(MODULE_APP, "----x5b_app_update_mode_exit OK" );
 	return OK;
 }
 
@@ -111,7 +111,7 @@ int x5b_app_update_data(x5b_app_mgt_t *app, void *info, int inlen, int to)
 	if(!mgt->app->reg_state)
 	{
 		if(X5_B_ESP32_DEBUG(UPDATE))
-			zlog_warn(ZLOG_APP, "Remote is Not Register");
+			zlog_warn(MODULE_APP, "Remote is Not Register");
 /*		if(mgt->mutex)
 			os_mutex_unlock(mgt->mutex);*/
 		return ERROR;
@@ -119,7 +119,7 @@ int x5b_app_update_data(x5b_app_mgt_t *app, void *info, int inlen, int to)
 	if(mgt->app->address == 0)
 	{
 		if(X5_B_ESP32_DEBUG(UPDATE))
-			zlog_warn(ZLOG_APP, "OPEN CMD MSG Can not send, Unknown Remote IP Address");
+			zlog_warn(MODULE_APP, "OPEN CMD MSG Can not send, Unknown Remote IP Address");
 /*		if(mgt->mutex)
 			os_mutex_unlock(mgt->mutex);*/
 		return ERROR;
@@ -134,7 +134,7 @@ int x5b_app_update_data(x5b_app_mgt_t *app, void *info, int inlen, int to)
 		mgt->app->offset += len;
 		x5b_app_crc_make(mgt);
 		if(X5_B_ESP32_DEBUG(UPDATE))
-			zlog_debug(ZLOG_APP, "Update Data MSG to %s:%d %d byte", inet_address(mgt->app->address),
+			zlog_debug(MODULE_APP, "Update Data MSG to %s:%d %d byte", inet_address(mgt->app->address),
 					mgt->app->remote_port, mgt->app->slen);
 		len = x5b_app_send_msg(mgt);
 /*		if(mgt->mutex)
@@ -203,7 +203,7 @@ static int xyz_modem_transmit_data(xyz_modem_t *xyz, void *p, int len, int timeo
 				if(buf[0] == ACK)
 				{
 					if(X5_B_ESP32_DEBUG(UPDATE))
-						zlog_debug(ZLOG_APP, "Successfully sent packet");
+						zlog_debug(MODULE_APP, "Successfully sent packet");
 					return OK;
 				}
 				else if(buf[0] == NAK)
@@ -212,7 +212,7 @@ static int xyz_modem_transmit_data(xyz_modem_t *xyz, void *p, int len, int timeo
 					{
 						xyz->total_retries++;
 						if(X5_B_ESP32_DEBUG(UPDATE))
-							zlog_debug(ZLOG_APP, "Received NAK, expected ACK. Retrying...");
+							zlog_debug(MODULE_APP, "Received NAK, expected ACK. Retrying...");
 						continue;
 					}
 					else if(xyz->s_eof == 1)
@@ -228,7 +228,7 @@ static int xyz_modem_transmit_data(xyz_modem_t *xyz, void *p, int len, int timeo
 				else if(buf[0] == 'C')
 				{
 					if(X5_B_ESP32_DEBUG(UPDATE))
-						zlog_debug(ZLOG_APP, "Received 'C'");
+						zlog_debug(MODULE_APP, "Received 'C'");
 					return xyzModem_timeout;
 				}
 			}
@@ -259,7 +259,7 @@ static int xyz_modem_transmit_data(xyz_modem_t *xyz, void *p, int len, int timeo
 static int ymodem_send_finsh(xyz_modem_t *xyz)
 {
 	zassert(xyz != NULL);
-	zlog_debug(ZLOG_APP, "xyzModem: Total len %d Byte, %d(SOH)/%d(STX)/%d(CAN) packets, %d retries",
+	zlog_debug(MODULE_APP, "xyzModem: Total len %d Byte, %d(SOH)/%d(STX)/%d(CAN) packets, %d retries",
 		xyz->len, xyz->total_SOH, xyz->total_STX,
 		xyz->total_CAN, xyz->total_retries);
 	return OK;
@@ -276,15 +276,15 @@ int ymodem_send(int fd, char *filename, int filesize)
 	xyz.sequm = 0;
 	zassert(filename != NULL);
 	memset(&xyz, 0, sizeof(xyz_modem_t));
-	//zlog_debug(ZLOG_APP, "waiting to send data...");
+	//zlog_debug(MODULE_APP, "waiting to send data...");
 	ret = xyz_modem_wait_start_transmit_data(&xyz, xyzModem_CHAR_TIMEOUT);
 	if(ret != OK)
 	{
 		//x5b_app_update_mode_enable(NULL, FALSE, E_CMD_TO_A);
-		zlog_debug(ZLOG_APP, "waiting timeout or error...");
+		zlog_debug(MODULE_APP, "waiting timeout or error...");
 		return ret;
 	}
-	//zlog_debug(ZLOG_APP, "Sending %u bytes...", pos);
+	//zlog_debug(MODULE_APP, "Sending %u bytes...", pos);
 
 	ret = xyz_modem_build_hdr(&xyz, &hdr, filename, pos);
 
@@ -292,14 +292,14 @@ int ymodem_send(int fd, char *filename, int filesize)
 	if (ret == ERROR)
 	{
 		//x5b_app_update_mode_enable(NULL, FALSE, E_CMD_TO_A);
-		zlog_debug(ZLOG_APP, "Error: No ACK received in 5 attempts\n");
+		zlog_debug(MODULE_APP, "Error: No ACK received in 5 attempts\n");
 		return ERROR;
 	}
 	ret = xyz_modem_wait_start_transmit_data(&xyz, xyzModem_CHAR_TIMEOUT);
 	if(ret != OK)
 	{
 		//x5b_app_update_mode_enable(NULL, FALSE, E_CMD_TO_A);
-		zlog_debug(ZLOG_APP, "waiting timeout or error...");
+		zlog_debug(MODULE_APP, "waiting timeout or error...");
 		return ERROR;
 	}
 
@@ -307,7 +307,7 @@ int ymodem_send(int fd, char *filename, int filesize)
 		ret = xyz_modem_build_finsh_eot(&xyz, 1);
 	while ((bytes_read = read(fd, buf, XYZ_MAX_SIZE)) > 0)
 	{
-		//zlog_debug(ZLOG_APP, " ================ read %d byte\n", bytes_read);
+		//zlog_debug(MODULE_APP, " ================ read %d byte\n", bytes_read);
 		/* Make 10 attempts to sent the packet */
 		//if(strstr(filename, "esp32"))
 		if(strstr(filename, "esp32") || strstr(filename, "ESP32"))
@@ -327,7 +327,7 @@ int ymodem_send(int fd, char *filename, int filesize)
 			ymodem_send_finsh(&xyz);
 			//x5b_app_update_mode_enable(NULL, FALSE, E_CMD_TO_A);
 			//if(X5_B_ESP32_DEBUG(UPDATE))
-				zlog_debug(ZLOG_APP, "Error: No ACK received in 10 attempts\n");
+				zlog_debug(MODULE_APP, "Error: No ACK received in 10 attempts\n");
 			return ERROR;
 		}
 		else if (ret == xyzModem_cancel)
@@ -335,7 +335,7 @@ int ymodem_send(int fd, char *filename, int filesize)
 			ymodem_send_finsh(&xyz);
 			//x5b_app_update_mode_enable(NULL, FALSE, E_CMD_TO_A);
 			//if(X5_B_ESP32_DEBUG(UPDATE))
-				zlog_debug(ZLOG_APP, "Error: Cancel Ymodem\n");
+				zlog_debug(MODULE_APP, "Error: Cancel Ymodem\n");
 			return ERROR;
 		}
 		else if (ret == xyzModem_eof)
@@ -343,7 +343,7 @@ int ymodem_send(int fd, char *filename, int filesize)
 			ymodem_send_finsh(&xyz);
 			//x5b_app_update_mode_enable(NULL, FALSE, E_CMD_TO_A);
 			//if(X5_B_ESP32_DEBUG(UPDATE))
-				zlog_debug(ZLOG_APP, "Error: EOF And Cancel Ymodem\n");
+				zlog_debug(MODULE_APP, "Error: EOF And Cancel Ymodem\n");
 			return ERROR;
 		}
 		else if (ret == xyzModem_timeout)
@@ -351,13 +351,13 @@ int ymodem_send(int fd, char *filename, int filesize)
 			ymodem_send_finsh(&xyz);
 			//x5b_app_update_mode_enable(NULL, FALSE, E_CMD_TO_A);
 			//if(X5_B_ESP32_DEBUG(UPDATE))
-				zlog_debug(ZLOG_APP, "Error: EOF Timeout Cancel Ymodem\n");
+				zlog_debug(MODULE_APP, "Error: EOF Timeout Cancel Ymodem\n");
 			return ERROR;
 		}
 	}
 	pos = 0;
 	if(X5_B_ESP32_DEBUG(UPDATE))
-		zlog_debug(ZLOG_APP, "Transmit Update Data finish, Send EOT to cancel ymodem\n");
+		zlog_debug(MODULE_APP, "Transmit Update Data finish, Send EOT to cancel ymodem\n");
 	while(1)
 	{
 		buf[0] = EOT;
@@ -395,7 +395,7 @@ int ymodem_send(int fd, char *filename, int filesize)
 			ymodem_send_finsh(&xyz);
 			//x5b_app_update_mode_enable(NULL, FALSE, E_CMD_TO_A);
 			//if(X5_B_ESP32_DEBUG(UPDATE))
-				zlog_debug(ZLOG_APP, "Error: No ACK received in 5 attempts\n");
+				zlog_debug(MODULE_APP, "Error: No ACK received in 5 attempts\n");
 			return ERROR;
 		}
 		else if (ret == xyzModem_cancel)
@@ -440,7 +440,7 @@ int x5b_app_A_update_handle(char *buf)
 		memset(path, 0, sizeof(path));
 		snprintf(path, sizeof(path), "/tmp/app/tftpboot/%s", brk + strlen("install-"));
 		if(X5_B_ESP32_DEBUG(UPDATE))
-			zlog_debug(ZLOG_APP, "Install '%s' to module A", path);
+			zlog_debug(MODULE_APP, "Install '%s' to module A", path);
 		if (access (path, F_OK) >= 0)
 		{
 			if(strstr(path, "esp32") || strstr(path, "ESP32"))
@@ -464,18 +464,18 @@ int x5b_app_A_update_handle(char *buf)
 					ret = ymodem_send(fd, brk + strlen("install-"), ntohl(mode.len));
 					close(fd);
 					x5b_app_update_mode_exit(NULL);
-					//zlog_debug(ZLOG_APP, "----x5b_app_update_mode OK" );
+					//zlog_debug(MODULE_APP, "----x5b_app_update_mode OK" );
 					return ret;
 				}
 				x5b_app_update_mode_exit(NULL);
 				return ERROR;
 			}
 			x5b_app_update_mode_exit(NULL);
-			//zlog_debug(ZLOG_APP, "----x5b_app_update_mode error" );
+			//zlog_debug(MODULE_APP, "----x5b_app_update_mode error" );
 			return ERROR;
 		}
 		//int x5b_app_update_mode_exit(x5b_app_mgt_t *app)
-		//zlog_debug(ZLOG_APP, "----update file %s not exist. ", brk + strlen("install-"));
+		//zlog_debug(MODULE_APP, "----update file %s not exist. ", brk + strlen("install-"));
 		return ERROR;
 	}
 	return OK;
@@ -494,7 +494,7 @@ int x5b_app_upgrade_handle(char *pathdir, char *filename)
 		memset(path, 0, sizeof(path));
 		snprintf(path, sizeof(path), "%s/%s", pathdir, filename);
 		if(X5_B_ESP32_DEBUG(UPDATE))
-			zlog_debug(ZLOG_APP, "Install '%s' to module A", path);
+			zlog_debug(MODULE_APP, "Install '%s' to module A", path);
 		if (access (path, F_OK) >= 0)
 		{
 			if(strstr(path, "esp32") || strstr(path, "ESP32"))
@@ -518,18 +518,18 @@ int x5b_app_upgrade_handle(char *pathdir, char *filename)
 					ret = ymodem_send(fd, filename, ntohl(mode.len));
 					close(fd);
 					x5b_app_update_mode_exit(NULL);
-					//zlog_debug(ZLOG_APP, "----x5b_app_update_mode OK" );
+					//zlog_debug(MODULE_APP, "----x5b_app_update_mode OK" );
 					return ret;
 				}
 				x5b_app_update_mode_exit(NULL);
 				return ERROR;
 			}
 			x5b_app_update_mode_exit(NULL);
-			//zlog_debug(ZLOG_APP, "----x5b_app_update_mode error" );
+			//zlog_debug(MODULE_APP, "----x5b_app_update_mode error" );
 			return ERROR;
 		}
 		//int x5b_app_update_mode_exit(x5b_app_mgt_t *app)
-		//zlog_debug(ZLOG_APP, "----update file %s not exist. ", filename);
+		//zlog_debug(MODULE_APP, "----update file %s not exist. ", filename);
 		return ERROR;
 	}
 	return OK;

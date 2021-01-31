@@ -108,11 +108,11 @@ u_int32 voip_get_address(u_int32 ifindex)
 		struct prefix address;
 		if(nsm_interface_address_get_api(ifp, &address) == OK)
 		{
-			//zlog_debug(ZLOG_VOIP, "============ %s :%s -> %s = %x", __func__, ifp->name, ifp->k_name, address.u.prefix4.s_addr);
+			//zlog_debug(MODULE_VOIP, "============ %s :%s -> %s = %x", __func__, ifp->name, ifp->k_name, address.u.prefix4.s_addr);
 			if(address.family == AF_INET)
 				return ntohl(address.u.prefix4.s_addr);
 		}
-		//zlog_debug(ZLOG_VOIP, "============ %s :%s -> %s = %x", __func__, ifp->name, ifp->k_name, address.u.prefix4.s_addr);
+		//zlog_debug(MODULE_VOIP, "============ %s :%s -> %s = %x", __func__, ifp->name, ifp->k_name, address.u.prefix4.s_addr);
 	}
 	return 0;
 }

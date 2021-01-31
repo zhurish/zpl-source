@@ -41,7 +41,7 @@ int x5b_app_open_option(x5b_app_mgt_t *app, void *info, int to)
 	if(!mgt->app->reg_state)
 	{
 		if(X5_B_ESP32_DEBUG(EVENT))
-		zlog_warn(ZLOG_APP, "Remote is Not Register");
+		zlog_warn(MODULE_APP, "Remote is Not Register");
 		if(mgt->mutex)
 			os_mutex_unlock(mgt->mutex);
 		return ERROR;
@@ -49,7 +49,7 @@ int x5b_app_open_option(x5b_app_mgt_t *app, void *info, int to)
 	if(mgt->app->address == 0)
 	{
 		if(X5_B_ESP32_DEBUG(EVENT))
-		zlog_warn(ZLOG_APP, "OPEN CMD MSG Can not send, Unknown Remote IP Address");
+		zlog_warn(MODULE_APP, "OPEN CMD MSG Can not send, Unknown Remote IP Address");
 		if(mgt->mutex)
 			os_mutex_unlock(mgt->mutex);
 		return ERROR;
@@ -73,7 +73,7 @@ int x5b_app_open_option(x5b_app_mgt_t *app, void *info, int to)
 		mgt->app->offset += len;
 		x5b_app_crc_make(mgt);
 		if(X5_B_ESP32_DEBUG(EVENT))
-			zlog_debug(ZLOG_APP, "OPEN OPTION MSG to %s:%d %d byte", inet_address(mgt->app->address),
+			zlog_debug(MODULE_APP, "OPEN OPTION MSG to %s:%d %d byte", inet_address(mgt->app->address),
 					mgt->app->remote_port, mgt->app->slen);
 		len = x5b_app_send_msg(mgt);
 		if(mgt->mutex)
@@ -100,7 +100,7 @@ int x5b_app_wiggins_setting(x5b_app_mgt_t *app, int wiggins, int to)
 	if(!mgt->app->reg_state)
 	{
 		if(X5_B_ESP32_DEBUG(EVENT))
-		zlog_warn(ZLOG_APP, "Remote is Not Register");
+		zlog_warn(MODULE_APP, "Remote is Not Register");
 		if(mgt->mutex)
 			os_mutex_unlock(mgt->mutex);
 		return ERROR;
@@ -108,7 +108,7 @@ int x5b_app_wiggins_setting(x5b_app_mgt_t *app, int wiggins, int to)
 	if(mgt->app->address == 0)
 	{
 		if(X5_B_ESP32_DEBUG(EVENT))
-		zlog_warn(ZLOG_APP, "wiggins MSG Can not send, Unknown Remote IP Address");
+		zlog_warn(MODULE_APP, "wiggins MSG Can not send, Unknown Remote IP Address");
 		if(mgt->mutex)
 			os_mutex_unlock(mgt->mutex);
 		return ERROR;
@@ -120,7 +120,7 @@ int x5b_app_wiggins_setting(x5b_app_mgt_t *app, int wiggins, int to)
 	mgt->app->offset += len;
 	x5b_app_crc_make(mgt);
 	if(X5_B_ESP32_DEBUG(EVENT))
-		zlog_debug(ZLOG_APP, "Wiggins MSG to %s:%d %d byte", inet_address(mgt->app->address),
+		zlog_debug(MODULE_APP, "Wiggins MSG to %s:%d %d byte", inet_address(mgt->app->address),
 				mgt->app->remote_port, mgt->app->slen);
 	len = x5b_app_send_msg(mgt);
 	if(mgt->mutex)
@@ -150,7 +150,7 @@ int x5b_app_add_card(x5b_app_mgt_t *app, void *info, int to)
 	if(!mgt->app->reg_state)
 	{
 		if(X5_B_ESP32_DEBUG(EVENT))
-		zlog_warn(ZLOG_APP, "Remote is Not Register");
+		zlog_warn(MODULE_APP, "Remote is Not Register");
 		if(mgt->mutex)
 			os_mutex_unlock(mgt->mutex);
 		return ERROR;
@@ -158,7 +158,7 @@ int x5b_app_add_card(x5b_app_mgt_t *app, void *info, int to)
 	if(mgt->app->address == 0)
 	{
 		if(X5_B_ESP32_DEBUG(EVENT))
-		zlog_warn(ZLOG_APP, "OPEN CMD MSG Can not send, Unknown Remote IP Address");
+		zlog_warn(MODULE_APP, "OPEN CMD MSG Can not send, Unknown Remote IP Address");
 		if(mgt->mutex)
 			os_mutex_unlock(mgt->mutex);
 		return ERROR;
@@ -186,7 +186,7 @@ int x5b_app_add_card(x5b_app_mgt_t *app, void *info, int to)
 		else if(strstr(inputcard->cardtype,"Whitelist"))
 			card.status = 2;
 	}
-	zlog_debug(ZLOG_APP, "===================%s -> type=%d", __func__, card.status);
+	zlog_debug(MODULE_APP, "===================%s -> type=%d", __func__, card.status);
 */
 
 	x5b_app_hdr_make(mgt);
@@ -197,7 +197,7 @@ int x5b_app_add_card(x5b_app_mgt_t *app, void *info, int to)
 	mgt->app->offset += len;
 	x5b_app_crc_make(mgt);
 	if(X5_B_ESP32_DEBUG(EVENT))
-		zlog_debug(ZLOG_APP, "MAKE Card CMD MSG to %s:%d %d byte", inet_address(mgt->app->address),
+		zlog_debug(MODULE_APP, "MAKE Card CMD MSG to %s:%d %d byte", inet_address(mgt->app->address),
 				mgt->app->remote_port, mgt->app->slen);
 	len = x5b_app_send_msg(mgt);
 	if(mgt->mutex)
@@ -219,7 +219,7 @@ int x5b_app_delete_card(x5b_app_mgt_t *app, void *info, int to)
 	if(!mgt->app->reg_state)
 	{
 		if(X5_B_ESP32_DEBUG(EVENT))
-		zlog_warn(ZLOG_APP, "Remote is Not Register");
+		zlog_warn(MODULE_APP, "Remote is Not Register");
 		if(mgt->mutex)
 			os_mutex_unlock(mgt->mutex);
 		return ERROR;
@@ -227,7 +227,7 @@ int x5b_app_delete_card(x5b_app_mgt_t *app, void *info, int to)
 	if(mgt->app->address == 0)
 	{
 		if(X5_B_ESP32_DEBUG(EVENT))
-		zlog_warn(ZLOG_APP, "OPEN CMD MSG Can not send, Unknown Remote IP Address");
+		zlog_warn(MODULE_APP, "OPEN CMD MSG Can not send, Unknown Remote IP Address");
 		if(mgt->mutex)
 			os_mutex_unlock(mgt->mutex);
 		return ERROR;
@@ -257,7 +257,7 @@ int x5b_app_delete_card(x5b_app_mgt_t *app, void *info, int to)
 	mgt->app->offset += len;
 	x5b_app_crc_make(mgt);
 	if(X5_B_ESP32_DEBUG(EVENT))
-		zlog_debug(ZLOG_APP, "Delete Card CMD MSG to %s:%d %d byte", inet_address(mgt->app->address),
+		zlog_debug(MODULE_APP, "Delete Card CMD MSG to %s:%d %d byte", inet_address(mgt->app->address),
 				mgt->app->remote_port, mgt->app->slen);
 	len = x5b_app_send_msg(mgt);
 	if(mgt->mutex)

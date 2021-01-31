@@ -115,7 +115,7 @@ static int voip_uci_sip_config_load_address(pl_pjsip_t *sip)
 	memset(tmp, 0, sizeof(tmp));
 	ret = os_uci_get_string("voipconfig.sip.sip_source_interface", tmp);
 #ifdef OSIP_LOAD_DEBUG
-	zlog_debug(ZLOG_VOIP, "sip->sip_source_interface = %s", tmp);
+	zlog_debug(MODULE_VOIP, "sip->sip_source_interface = %s", tmp);
 #endif
 	if(ret == OK && strlen(tmp) >= 1)
 	{
@@ -154,13 +154,13 @@ static int voip_uci_sip_config_load_address(pl_pjsip_t *sip)
 	if(ret == OK)
 		sip->sip_local.sip_port = value;
 #ifdef OSIP_LOAD_DEBUG
-	zlog_debug(ZLOG_VOIP, "sip->sip_local_port = %d", sip->sip_local.sip_port);
+	zlog_debug(MODULE_VOIP, "sip->sip_local_port = %d", sip->sip_local.sip_port);
 #endif
 
 	memset(tmp, 0, sizeof(tmp));
 	ret = os_uci_get_address("voipconfig.sip.sip_server", tmp);
 #ifdef OSIP_LOAD_DEBUG
-	zlog_debug(ZLOG_VOIP, "sip->sip_server = %s", tmp);
+	zlog_debug(MODULE_VOIP, "sip->sip_server = %s", tmp);
 #endif
 	if(ret == OK && strlen(tmp) >= 1)
 	{
@@ -171,7 +171,7 @@ static int voip_uci_sip_config_load_address(pl_pjsip_t *sip)
 	if(ret == OK)
 		sip->sip_server.sip_port = value;
 #ifdef OSIP_LOAD_DEBUG
-	zlog_debug(ZLOG_VOIP, "sip->sip_port = %d", sip->sip_server.sip_port);
+	zlog_debug(MODULE_VOIP, "sip->sip_port = %d", sip->sip_server.sip_port);
 #endif
 	if(sip->sip_active_standby == FALSE)
 		return OK;
@@ -179,7 +179,7 @@ static int voip_uci_sip_config_load_address(pl_pjsip_t *sip)
 	memset(tmp, 0, sizeof(tmp));
 	ret = os_uci_get_address("voipconfig.sip.sip_server_sec", tmp);
 #ifdef OSIP_LOAD_DEBUG
-	zlog_debug(ZLOG_VOIP, "sip->sip_server_sec = %s", tmp);
+	zlog_debug(MODULE_VOIP, "sip->sip_server_sec = %s", tmp);
 #endif
 	if(ret == OK && strlen(tmp) >= 1)
 	{
@@ -191,7 +191,7 @@ static int voip_uci_sip_config_load_address(pl_pjsip_t *sip)
 	if(ret == OK)
 		sip->sip_server_sec.sip_port = value;
 #ifdef OSIP_LOAD_DEBUG
-	zlog_debug(ZLOG_VOIP, "sip->sip_port_sec = %d", sip->sip_server_sec.sip_port);
+	zlog_debug(MODULE_VOIP, "sip->sip_port_sec = %d", sip->sip_server_sec.sip_port);
 #endif
 	return OK;
 }
@@ -208,7 +208,7 @@ static int voip_uci_sip_config_load_proxy_address(pl_pjsip_t *sip)
 
 	ret = os_uci_get_address("voipconfig.sip.sip_proxy_server", tmp);
 #ifdef OSIP_LOAD_DEBUG
-	zlog_debug(ZLOG_VOIP, "sip->sip_proxy_server = %s", tmp);
+	zlog_debug(MODULE_VOIP, "sip->sip_proxy_server = %s", tmp);
 #endif
 	if(ret == OK && strlen(tmp) >= 1)
 	{
@@ -219,14 +219,14 @@ static int voip_uci_sip_config_load_proxy_address(pl_pjsip_t *sip)
 	if(ret == OK)
 		sip->sip_proxy.sip_port = value;
 #ifdef OSIP_LOAD_DEBUG
-	zlog_debug(ZLOG_VOIP, "sip->sip_proxy_port = %d", sip->sip_proxy.sip_port);
+	zlog_debug(MODULE_VOIP, "sip->sip_proxy_port = %d", sip->sip_proxy.sip_port);
 #endif
 
 	//sec
 	memset(tmp, 0, sizeof(tmp));
 	ret = os_uci_get_address("voipconfig.sip.sip_proxy_server_sec", tmp);
 #ifdef OSIP_LOAD_DEBUG
-	zlog_debug(ZLOG_VOIP, "sip->sip_proxy_server_sec = %s", tmp);
+	zlog_debug(MODULE_VOIP, "sip->sip_proxy_server_sec = %s", tmp);
 #endif
 	if(ret == OK && strlen(tmp) >= 1)
 	{
@@ -237,7 +237,7 @@ static int voip_uci_sip_config_load_proxy_address(pl_pjsip_t *sip)
 	if(ret == OK)
 		sip->sip_proxy_sec.sip_port = value;
 #ifdef OSIP_LOAD_DEBUG
-	zlog_debug(ZLOG_VOIP, "sip->sip_proxy_port_sec = %d", sip->sip_proxy_sec.sip_port);
+	zlog_debug(MODULE_VOIP, "sip->sip_proxy_port_sec = %d", sip->sip_proxy_sec.sip_port);
 #endif
 	return OK;
 }
@@ -251,7 +251,7 @@ static int voip_uci_sip_config_load_username(pl_pjsip_t *sip)
 
 	ret = os_uci_get_string("voipconfig.sip.localphone", tmp);
 #ifdef OSIP_LOAD_DEBUG
-	zlog_debug(ZLOG_VOIP, "sip->localphone = %s", tmp);
+	zlog_debug(MODULE_VOIP, "sip->localphone = %s", tmp);
 #endif
 	if(ret == OK && strlen(tmp) >= 1)
 	{
@@ -262,7 +262,7 @@ static int voip_uci_sip_config_load_username(pl_pjsip_t *sip)
 	memset(tmp, 0, sizeof(tmp));
 	ret = os_uci_get_string("voipconfig.sip.username", tmp);
 #ifdef OSIP_LOAD_DEBUG
-	zlog_debug(ZLOG_VOIP, "sip->username = %s", tmp);
+	zlog_debug(MODULE_VOIP, "sip->username = %s", tmp);
 #endif
 	if(ret == OK && strlen(tmp) >= 1)
 	{
@@ -274,7 +274,7 @@ static int voip_uci_sip_config_load_username(pl_pjsip_t *sip)
 	memset(tmp, 0, sizeof(tmp));
 	ret = os_uci_get_string("voipconfig.sip.password", tmp);
 #ifdef OSIP_LOAD_DEBUG
-	zlog_debug(ZLOG_VOIP, "sip->password = %s", tmp);
+	zlog_debug(MODULE_VOIP, "sip->password = %s", tmp);
 #endif
 	if(ret == OK && strlen(tmp) >= 1)
 	{
@@ -288,7 +288,7 @@ static int voip_uci_sip_config_load_username(pl_pjsip_t *sip)
 	memset(tmp, 0, sizeof(tmp));
 	ret = os_uci_get_string("voipconfig.sip.localphone_sec", tmp);
 #ifdef OSIP_LOAD_DEBUG
-	zlog_debug(ZLOG_VOIP, "sip->localphone_sec = %s", tmp);
+	zlog_debug(MODULE_VOIP, "sip->localphone_sec = %s", tmp);
 #endif
 	if(ret == OK && strlen(tmp) >= 1)
 	{
@@ -299,7 +299,7 @@ static int voip_uci_sip_config_load_username(pl_pjsip_t *sip)
 	memset(tmp, 0, sizeof(tmp));
 	ret = os_uci_get_string("voipconfig.sip.username_sec", tmp);
 #ifdef OSIP_LOAD_DEBUG
-	zlog_debug(ZLOG_VOIP, "sip->username_sec = %s", tmp);
+	zlog_debug(MODULE_VOIP, "sip->username_sec = %s", tmp);
 #endif
 	if(ret == OK && strlen(tmp) >= 1)
 	{
@@ -311,7 +311,7 @@ static int voip_uci_sip_config_load_username(pl_pjsip_t *sip)
 	memset(tmp, 0, sizeof(tmp));
 	ret = os_uci_get_string("voipconfig.sip.password_sec", tmp);
 #ifdef OSIP_LOAD_DEBUG
-	zlog_debug(ZLOG_VOIP, "sip->password_sec = %s", tmp);
+	zlog_debug(MODULE_VOIP, "sip->password_sec = %s", tmp);
 #endif
 	if(ret == OK && strlen(tmp) >= 1)
 	{
@@ -330,7 +330,7 @@ static int voip_uci_sip_config_load_misc(pl_pjsip_t *sip)
 	memset(tmp, 0, sizeof(tmp));
 	ret = os_uci_get_string("voipconfig.sip.proto", tmp);
 #ifdef OSIP_LOAD_DEBUG
-	zlog_debug(ZLOG_VOIP, "sip->proto = %s", tmp);
+	zlog_debug(MODULE_VOIP, "sip->proto = %s", tmp);
 #endif
 	if(ret == OK && strlen(tmp) >= 1)
 	{
@@ -346,7 +346,7 @@ static int voip_uci_sip_config_load_misc(pl_pjsip_t *sip)
 	memset(tmp, 0, sizeof(tmp));
 	ret = os_uci_get_string("voipconfig.sip.payload", tmp);
 #ifdef OSIP_LOAD_DEBUG
-	zlog_debug(ZLOG_VOIP, "sip->payload = %s", tmp);
+	zlog_debug(MODULE_VOIP, "sip->payload = %s", tmp);
 #endif
 	if(ret == OK && strlen(tmp) >= 1)
 	{
@@ -360,7 +360,7 @@ static int voip_uci_sip_config_load_misc(pl_pjsip_t *sip)
 	memset(tmp, 0, sizeof(tmp));
 	ret = os_uci_get_string("voipconfig.sip.dtmf", tmp);
 #ifdef OSIP_LOAD_DEBUG
-	zlog_debug(ZLOG_VOIP, "sip->dtmf = %s", tmp);
+	zlog_debug(MODULE_VOIP, "sip->dtmf = %s", tmp);
 #endif
 	if(ret == OK && strlen(tmp) >= 1)
 	{
@@ -376,7 +376,7 @@ static int voip_uci_sip_config_load_misc(pl_pjsip_t *sip)
 	if(ret == OK)
 		sip->sip_expires = value;
 #ifdef OSIP_LOAD_DEBUG
-	zlog_debug(ZLOG_VOIP, "sip->sip_register_interval = %d", sip->sip_expires);
+	zlog_debug(MODULE_VOIP, "sip->sip_register_interval = %d", sip->sip_expires);
 #endif
 /*
 	if(sip->sip_keepalive == FALSE)
@@ -385,7 +385,7 @@ static int voip_uci_sip_config_load_misc(pl_pjsip_t *sip)
 	if(ret == OK)
 		sip->sip_keepalive_interval = value;
 #ifdef OSIP_LOAD_DEBUG
-	zlog_debug(ZLOG_VOIP, "sip->sip_keepalive_interval = %d", sip->sip_keepalive_interval);
+	zlog_debug(MODULE_VOIP, "sip->sip_keepalive_interval = %d", sip->sip_keepalive_interval);
 #endif
 */
 
@@ -406,7 +406,7 @@ int voip_uci_sip_config_load(void *p)
 	if(ret == OK)
 		sip->sip_enable = value;
 #ifdef OSIP_LOAD_DEBUG
-	zlog_debug(ZLOG_VOIP, "sip->sip_enable = %d", sip->sip_enable);
+	zlog_debug(MODULE_VOIP, "sip->sip_enable = %d", sip->sip_enable);
 #endif
 	ret = os_uci_get_integer("voipconfig.sip.sip_active_standby", &value);
 	if(ret == OK)
@@ -746,12 +746,12 @@ static int voip_sip_restart_job(void *p)
 	zassert(pl_pjsip != NULL);
 	//if(strstr(buf, "sip"))
 	{
-		zlog_debug(ZLOG_VOIP, "OSIP Reload");
+		zlog_debug(MODULE_VOIP, "OSIP Reload");
 		//voip_sip_config_load(sip_config);
 		voip_uci_sip_config_load(pl_pjsip);
-		//zlog_debug(ZLOG_VOIP, "OSIP Restart");
+		//zlog_debug(MODULE_VOIP, "OSIP Restart");
 		pjsua_app_restart();
-		//zlog_debug(ZLOG_VOIP, "OSIP Save Config");
+		//zlog_debug(MODULE_VOIP, "OSIP Save Config");
 		//vty_execute_shell("write memory");
 	}
 	return OK;
@@ -872,7 +872,7 @@ static int tcpdump_capture_start(char *name)
 	snprintf(cap_cmd, sizeof(cap_cmd), "tcpdump -i %s %s -w /tmp/app/tmp/%s > /dev/null &", ifname, filler, name);
 	super_system(cap_cmd);
 
-	//zlog_debug(ZLOG_VOIP, "----------------%s:%s", __func__, cap_cmd);
+	//zlog_debug(MODULE_VOIP, "----------------%s:%s", __func__, cap_cmd);
 	return OK;
 }
 
@@ -881,12 +881,12 @@ static int tcpdump_capture_stop(void)
 /*	pid_t pid = name2pid("tcpdump");
 	if(pid > 0)
 	{
-		zlog_debug(ZLOG_VOIP, "----------------%s:%d", __func__, pid);
+		zlog_debug(MODULE_VOIP, "----------------%s:%d", __func__, pid);
 		kill(pid, -9);
 	}
 	else*/
 	{
-		//zlog_debug(ZLOG_VOIP, "----------------%s:killall -9 tcpdump", __func__);
+		//zlog_debug(MODULE_VOIP, "----------------%s:killall -9 tcpdump", __func__);
 		super_system("killall -9 tcpdump");
 	}
 	return OK;
@@ -948,7 +948,7 @@ static int voip_ubus_capture_enable(BOOL start)
 			ret = os_uci_get_integer("voipconfig.testing.log_mod_media", &value);
 			if(ret == OK && value == 1)
 			{
-				//zlog_debug(ZLOG_VOIP, "----------------%s:%s", __func__, prefix_filename);
+				//zlog_debug(MODULE_VOIP, "----------------%s:%s", __func__, prefix_filename);
 				memset(log_filename, 0, sizeof(log_filename));
 				snprintf(log_filename, sizeof(log_filename), "%s-capture.pcap", prefix_filename);
 				tcpdump_capture_start(log_filename);
@@ -971,7 +971,7 @@ static int voip_ubus_capture_enable(BOOL start)
 
 			if(strlen(prefix_filename))
 			{
-				//zlog_debug(ZLOG_VOIP, "----------------%s:%s", __func__, prefix_filename);
+				//zlog_debug(MODULE_VOIP, "----------------%s:%s", __func__, prefix_filename);
 				memset(log_cmd, 0, sizeof(log_cmd));
 				snprintf(log_cmd, sizeof(log_cmd), "mv /tmp/app/log/%s-capture.log /tmp/app/tmp/ > /dev/null", prefix_filename);
 				super_system(log_cmd);

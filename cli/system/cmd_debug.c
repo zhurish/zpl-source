@@ -18,7 +18,9 @@
 #include "vty.h"
 #include "vty_user.h"
 #include "host.h"
+#ifdef PL_NSM_MODULE
 #include "nsm_debug.h"
+#endif
 #include "template.h"
 
 /* Debug node. */
@@ -40,7 +42,7 @@ DEFUN (show_debuging_config,
 }
 
 
-
+#ifdef PL_NSM_MODULE
 static int config_zebra_write_debug (struct vty *vty)
 {
   int write = 0;
@@ -99,10 +101,13 @@ static int config_zebra_write_debug (struct vty *vty)
   vty_out (vty, "!%s", VTY_NEWLINE);
   return write;
 }
+#endif
 
 static int config_write_debug (struct vty *vty)
 {
+  #ifdef PL_NSM_MODULE
 	config_zebra_write_debug (vty);
+  #endif
 	nsm_template_debug_write_config (vty);
 	return OK;
 }

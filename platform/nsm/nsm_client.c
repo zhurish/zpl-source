@@ -35,8 +35,9 @@
 #include "nsm_client.h"
 
 #include "nsm_hook.h"
-
+#ifdef PL_PAL_MODULE
 #include "pal_driver.h"
+#endif
 #ifdef PL_HAL_MODULE
 #include "hal_port.h"
 #endif

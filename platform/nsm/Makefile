@@ -23,11 +23,20 @@ $(LIBS) : $(MODULE_OBJS)
 	@$(AR) -rs $(LIBS) $(MODULE_OBJS)
 
 
+route_types.h: $(SRC_DIR)/route_types.txt $(SRC_DIR)/route_types.pl
+	/usr/bin/perl $(SRC_DIR)/route_types.pl < $(SRC_DIR)/route_types.txt > $@
+	
+
+files = $(patsubst %.o,%.c,$(OBJS))
+make_prepare: route_types.h
+	@for i in $(files); do	\
+		$(MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+	done
 
 lib: $(LIBS)
 
 
-obj: $(BUILT_SOURCES) $(MODULE_OBJS)
+obj: route_types.h $(BUILT_SOURCES) $(MODULE_OBJS)
 
 install: $(LIBS)
 	@install -d $(LIB_DIR)
@@ -43,4 +52,4 @@ objclean:
 
 all: lib install
 
-.PHONY:	obj all lib install objclean clean
+.PHONY:	obj all lib install objclean clean make_prepare

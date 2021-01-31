@@ -51,7 +51,7 @@ static const struct message mstr [] =
 static void __attribute__ ((noreturn))
 zerror (const char *fname, int type, size_t size)
 {
-  zlog_err (ZLOG_DEFAULT, "%s : can't allocate memory for `%s' size %d: %s\n",
+  zlog_err (MODULE_DEFAULT, "%s : can't allocate memory for `%s' size %d: %s\n",
 	    fname, lookup (mstr, type), (int) size, safe_strerror(errno));
   log_memstats(LOG_WARNING);
   /* N.B. It might be preferable to call zlog_backtrace_sigsafe here, since
@@ -199,7 +199,7 @@ static struct
 static void
 mtype_log (char *func, void *memory, const char *file, int line, int type)
 {
-  zlog_debug (ZLOG_DEFAULT, "%s: %s %p %s %d", func, lookup (mstr, type), memory, file, line);
+  zlog_debug (MODULE_DEFAULT, "%s: %s %p %s %d", func, lookup (mstr, type), memory, file, line);
 }
 
 void *
@@ -303,10 +303,10 @@ log_memstats(int pri)
     {
       struct memory_list *m;
 
-      zlog (ZLOG_DEFAULT, pri, "Memory utilization in module %s:", ml->name);
+      zlog (MODULE_DEFAULT, pri, "Memory utilization in module %s:", ml->name);
       for (m = ml->list; m->index >= 0; m++)
 	if (m->index && mstat[m->index].alloc)
-	  zlog (ZLOG_DEFAULT, pri, "  %-30s: %10ld", m->format, mstat[m->index].alloc);
+	  zlog (MODULE_DEFAULT, pri, "  %-30s: %10ld", m->format, mstat[m->index].alloc);
     }
 }
 

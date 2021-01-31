@@ -43,7 +43,7 @@ public:
           return 0;
     }
     */
-    virtual int videoEncoderInput(const unsigned char *frame, const int len) = 0;
+    virtual int videoEncoderInput(const unsigned char *frame, const int len, bool keyframe) = 0;
     virtual int videoEncoderOutput(unsigned char *frame, const int len) = 0;
     virtual unsigned char *videoEncoderOutput() = 0;
     virtual int videoEncoderOutputSize(const bool clear = true) = 0;

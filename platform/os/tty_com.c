@@ -213,7 +213,7 @@ static int _tty_com_option(struct tty_com *com)
 
 		tcflush(com->fd, TCIOFLUSH);
 		if(tcsetattr(com->fd, TCSANOW, termios) != 0)
-			zlog_debug(ZLOG_PAL, "tcsetattr %s error:%s", com->devname, safe_strerror(errno));
+			zlog_debug(MODULE_LIB, "tcsetattr %s error:%s", com->devname, safe_strerror(errno));
 
 	    //int modembits = TIOCM_DTR;
 	    //ioctl(com->fd, TIOCMBIS, &modembits);
@@ -261,7 +261,7 @@ int tty_com_open(struct tty_com *com)
 			close(com->fd);
 			com->fd = -1;
 		}
-		zlog_debug(ZLOG_PAL, "open %s error:%s", com->devname, safe_strerror(errno));
+		zlog_debug(MODULE_OSAL, "open %s error:%s", com->devname, safe_strerror(errno));
 	}
 	return -1;
 }

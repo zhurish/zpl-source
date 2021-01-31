@@ -386,14 +386,14 @@ static void d6_run_script(struct d6_packet *packet, const char *name)
 	envp = fill_envp(packet);
 
 	/* call script */
-	zlog_err(ZLOG_DHCP, "executing %s %s", client_config.script, name);
+	zlog_err(MODULE_DHCP, "executing %s %s", client_config.script, name);
 	argv[0] = (char*) client_config.script;
 	argv[1] = (char*) name;
 	argv[2] = NULL;
 	spawn_and_wait(argv);
 
 	for (curr = envp; *curr; curr++) {
-		zlog_err(ZLOG_DHCP, " %s", *curr);
+		zlog_err(MODULE_DHCP, " %s", *curr);
 		free(*curr);
 	}
 	free(envp);
@@ -579,7 +579,7 @@ static  int send_d6_discover(uint32_t xid, struct in6_addr *requested_ipv6)
 	 */
 	opt_ptr = add_d6_client_options(opt_ptr);
 
-	zlog_err(ZLOG_DHCP, "sending %s", "discover");
+	zlog_err(MODULE_DHCP, "sending %s", "discover");
 	return d6_mcast_from_client_config_ifindex(&packet, opt_ptr);
 }
 
@@ -632,7 +632,7 @@ static int send_d6_select(uint32_t xid)
 	 */
 	opt_ptr = add_d6_client_options(opt_ptr);
 
-	zlog_err(ZLOG_DHCP,"sending %s", "select");
+	zlog_err(MODULE_DHCP,"sending %s", "select");
 	return d6_mcast_from_client_config_ifindex(&packet, opt_ptr);
 }
 
@@ -701,7 +701,7 @@ static  int send_d6_renew(uint32_t xid, struct in6_addr *server_ipv6, struct in6
 	 */
 	opt_ptr = add_d6_client_options(opt_ptr);
 
-	zlog_err(ZLOG_DHCP,"sending %s", "renew");
+	zlog_err(MODULE_DHCP,"sending %s", "renew");
 	if (server_ipv6)
 		return d6_send_kernel_packet(
 			&packet, (opt_ptr - (uint8_t*) &packet),
@@ -725,7 +725,7 @@ static int send_d6_release(struct in6_addr *server_ipv6, struct in6_addr *our_cu
 	/* IA NA (contains our current IP) */
 	opt_ptr = mempcpy(opt_ptr, client6_data.ia_na, client6_data.ia_na->len + 2+2);
 
-	zlog_err(ZLOG_DHCP,"sending %s", "release");
+	zlog_err(MODULE_DHCP,"sending %s", "release");
 	return d6_send_kernel_packet(
 		&packet, (opt_ptr - (uint8_t*) &packet),
 		our_cur_ipv6, CLIENT_PORT6,
@@ -743,19 +743,19 @@ static  int d6_recv_raw_packet(struct in6_addr *peer_ipv6, struct d6_packet *d6_
 
 	bytes = safe_read(fd, &packet, sizeof(packet));
 	if (bytes < 0) {
-		zlog_err(ZLOG_DHCP,"packet read error, ignoring");
+		zlog_err(MODULE_DHCP,"packet read error, ignoring");
 		/* NB: possible down interface, etc. Caller should pause. */
 		return bytes; /* returns -1 */
 	}
 
 	if (bytes < (int) (sizeof(packet.ip6) + sizeof(packet.udp))) {
-		zlog_err(ZLOG_DHCP,"packet is too short, ignoring");
+		zlog_err(MODULE_DHCP,"packet is too short, ignoring");
 		return -2;
 	}
 
 	if (bytes < sizeof(packet.ip6) + ntohs(packet.ip6.ip6_plen)) {
 		/* packet is bigger than sizeof(packet), we did partial read */
-		zlog_err(ZLOG_DHCP,"oversized packet, ignoring");
+		zlog_err(MODULE_DHCP,"oversized packet, ignoring");
 		return -2;
 	}
 
@@ -769,7 +769,7 @@ static  int d6_recv_raw_packet(struct in6_addr *peer_ipv6, struct d6_packet *d6_
 	/* || bytes > (int) sizeof(packet) - can't happen */
 	 || packet.udp.len != packet.ip6.ip6_plen
 	) {
-		zlog_err(ZLOG_DHCP, "unrelated/bogus packet, ignoring");
+		zlog_err(MODULE_DHCP, "unrelated/bogus packet, ignoring");
 		return -2;
 	}
 
@@ -788,7 +788,7 @@ static  int d6_recv_raw_packet(struct in6_addr *peer_ipv6, struct d6_packet *d6_
 	if (peer_ipv6)
 		*peer_ipv6 = packet.ip6.ip6_src; /* struct copy */
 
-	zlog_err(ZLOG_DHCP,"received %s", "a packet");
+	zlog_err(MODULE_DHCP,"received %s", "a packet");
 	d6_dump_packet(&packet.data);
 
 	bytes -= sizeof(packet.ip6) + sizeof(packet.udp);
@@ -876,10 +876,10 @@ static int d6_raw_socket(int ifindex)
 	};
 #endif
 
-	zlog_err(ZLOG_DHCP,"opening raw socket on ifindex %d", ifindex);
+	zlog_err(MODULE_DHCP,"opening raw socket on ifindex %d", ifindex);
 
 	fd = socket(PF_PACKET, SOCK_DGRAM, htons(ETH_P_IPV6));
-	zlog_err(ZLOG_DHCP, "got raw socket fd %d", fd);
+	zlog_err(MODULE_DHCP, "got raw socket fd %d", fd);
 
 	memset(&sock, 0, sizeof(sock)); /* let's be deterministic */
 	sock.sll_family = AF_PACKET;
@@ -897,18 +897,18 @@ static int d6_raw_socket(int ifindex)
 		/* Ignoring error (kernel may lack support for this) */
 		if (setsockopt(fd, SOL_SOCKET, SO_ATTACH_FILTER, &filter_prog,
 				sizeof(filter_prog)) >= 0)
-			zlog_err(ZLOG_DHCP,"attached filter to raw socket fd %d", fd); // log?
+			zlog_err(MODULE_DHCP,"attached filter to raw socket fd %d", fd); // log?
 	}
 #endif
 
-	zlog_err(ZLOG_DHCP,"created raw socket");
+	zlog_err(MODULE_DHCP,"created raw socket");
 
 	return fd;
 }
 
 static void change_listen_mode(int new_mode)
 {
-	zlog_err(ZLOG_DHCP,"entering listen mode: %s",
+	zlog_err(MODULE_DHCP,"entering listen mode: %s",
 		new_mode != LISTEN_NONE
 			? (new_mode == LISTEN_KERNEL ? "kernel" : "raw")
 			: "none"
@@ -929,7 +929,7 @@ static void change_listen_mode(int new_mode)
 /* Called only on SIGUSR1 */
 static void perform_renew(void)
 {
-	zlog_err(ZLOG_DHCP,"performing DHCP renew");
+	zlog_err(MODULE_DHCP,"performing DHCP renew");
 	switch (state) {
 	case BOUND:
 		change_listen_mode(LISTEN_KERNEL);
@@ -957,10 +957,10 @@ static void perform_d6_release(struct in6_addr *server_ipv6, struct in6_addr *ou
 	 || state == REBINDING
 	 || state == RENEW_REQUESTED
 	) {
-		zlog_err(ZLOG_DHCP,"unicasting a release");
+		zlog_err(MODULE_DHCP,"unicasting a release");
 		send_d6_release(server_ipv6, our_cur_ipv6); /* unicast */
 	}
-	zlog_err(ZLOG_DHCP,"entering released state");
+	zlog_err(MODULE_DHCP,"entering released state");
 /*
  * We can be here on: SIGUSR2,
  * or on exit (SIGTERM) and -R "release on quit" is specified.
@@ -1126,7 +1126,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 	requested_ipv6 = NULL;
 	if (opt & OPT_r) {
 		if (inet_pton(AF_INET6, str_r, &ipv6_buf) <= 0)
-			zlog_err(ZLOG_DHCP,"bad IPv6 address '%s'", str_r);
+			zlog_err(MODULE_DHCP,"bad IPv6 address '%s'", str_r);
 		requested_ipv6 = &ipv6_buf;
 	}
 #if ENABLE_FEATURE_UDHCP_PORT
@@ -1204,7 +1204,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 	/* Create pidfile */
 	write_pidfile(client_config.pidfile);
 	/* Goes to stdout (unless NOMMU) and possibly syslog */
-	zlog_err(ZLOG_DHCP,"started, v"BB_VER);
+	zlog_err(MODULE_DHCP,"started, v"BB_VER);
 	/* Set up the signal pipe */
 	udhcp_sp_setup();
 	/* We want random_xid to be random... */
@@ -1229,7 +1229,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 		/* silence "uninitialized!" warning */
 		unsigned timestamp_before_wait = timestamp_before_wait;
 
-		//zlog_err(ZLOG_DHCP,"sockfd:%d, listen_mode:%d", sockfd, listen_mode);
+		//zlog_err(MODULE_DHCP,"sockfd:%d, listen_mode:%d", sockfd, listen_mode);
 
 		/* Was opening raw or udp socket here
 		 * if (listen_mode != LISTEN_NONE && sockfd < 0),
@@ -1254,7 +1254,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 					continue;
 				}
 				/* Else: an error occured, panic! */
-				zlog_err(ZLOG_DHCP,"poll");
+				zlog_err(MODULE_DHCP,"poll");
 			}
 		}
 
@@ -1295,14 +1295,14 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 				d6_run_script(NULL, "leasefail");
 #if BB_MMU /* -b is not supported on NOMMU */
 				if (opt & OPT_b) { /* background if no lease */
-					zlog_err(ZLOG_DHCP,"no lease, forking to background");
+					zlog_err(MODULE_DHCP,"no lease, forking to background");
 					client_background();
 					/* do not background again! */
 					opt = ((opt & ~OPT_b) | OPT_f);
 				} else
 #endif
 				if (opt & OPT_n) { /* abort if no lease */
-					zlog_err(ZLOG_DHCP,"no lease, failing");
+					zlog_err(MODULE_DHCP,"no lease, failing");
 					retval = 1;
 					goto ret;
 				}
@@ -1330,7 +1330,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 				state = RENEWING;
 				client_config.first_secs = 0; /* make secs field count from 0 */
 				change_listen_mode(LISTEN_KERNEL);
-				zlog_err(ZLOG_DHCP,"entering renew state");
+				zlog_err(MODULE_DHCP,"entering renew state");
 				/* fall right through */
 			case RENEW_REQUESTED: /* manual (SIGUSR1) renew */
 			case_RENEW_REQUESTED:
@@ -1350,7 +1350,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 					continue;
 				}
 				/* Timed out, enter rebinding state */
-				zlog_err(ZLOG_DHCP,"entering rebinding state");
+				zlog_err(MODULE_DHCP,"entering rebinding state");
 				state = REBINDING;
 				/* fall right through */
 			case REBINDING:
@@ -1365,7 +1365,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 					continue;
 				}
 				/* Timed out, enter init state */
-				zlog_err(ZLOG_DHCP,"lease lost, entering init state");
+				zlog_err(MODULE_DHCP,"lease lost, entering init state");
 				d6_run_script(NULL, "deconfig");
 				state = INIT_SELECTING;
 				client_config.first_secs = 0; /* make secs field count from 0 */
@@ -1412,7 +1412,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 			timeout = INT_MAX;
 			continue;
 		case SIGTERM:
-			zlog_err(ZLOG_DHCP,"received %s", "SIGTERM");
+			zlog_err(MODULE_DHCP,"received %s", "SIGTERM");
 			goto ret0;
 		}
 
@@ -1430,7 +1430,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 				len = d6_recv_raw_packet(&srv6_buf, &packet, sockfd);
 			if (len == -1) {
 				/* Error is severe, reopen socket */
-				zlog_err(ZLOG_DHCP,"read error: "STRERROR_FMT", reopening socket" STRERROR_ERRNO);
+				zlog_err(MODULE_DHCP,"read error: "STRERROR_FMT", reopening socket" STRERROR_ERRNO);
 				sleep(discover_timeout); /* 3 seconds by default */
 				change_listen_mode(listen_mode); /* just close and reopen */
 			}
@@ -1444,7 +1444,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 		}
 
 		if ((packet.d6_xid32 & htonl(0x00ffffff)) != xid) {
-			zlog_err(ZLOG_DHCP,"xid %x (our is %x), ignoring packet",
+			zlog_err(MODULE_DHCP,"xid %x (our is %x), ignoring packet",
 				(unsigned)(packet.d6_xid32 & htonl(0x00ffffff)), (unsigned)xid);
 			continue;
 		}
@@ -1468,7 +1468,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 				option = d6_find_option(packet.d6_options, packet_end, D6_OPT_STATUS_CODE);
 				if (option && (option->data[0] | option->data[1]) != 0) {
 					/* return to init state */
-					zlog_err(ZLOG_DHCP,"received DHCP NAK (%u)", option->data[4]);
+					zlog_err(MODULE_DHCP,"received DHCP NAK (%u)", option->data[4]);
 					d6_run_script(&packet, "nak");
 					if (state != REQUESTING)
 						d6_run_script(NULL, "deconfig");
@@ -1484,7 +1484,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 				}
 				option = d6_copy_option(packet.d6_options, packet_end, D6_OPT_SERVERID);
 				if (!option) {
-					zlog_err(ZLOG_DHCP,"no server ID, ignoring packet");
+					zlog_err(MODULE_DHCP,"no server ID, ignoring packet");
 					continue;
 					/* still selecting - this server looks bad */
 				}
@@ -1590,11 +1590,11 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 				free(client6_data.ia_na);
 				client6_data.ia_na = d6_copy_option(packet.d6_options, packet_end, D6_OPT_IA_NA);
 				if (!client6_data.ia_na) {
-					zlog_err(ZLOG_DHCP,"no %s option, ignoring packet", "IA_NA");
+					zlog_err(MODULE_DHCP,"no %s option, ignoring packet", "IA_NA");
 					continue;
 				}
 				if (client6_data.ia_na->len < (4 + 4 + 4) + (2 + 2 + 16 + 4 + 4)) {
-					zlog_err(ZLOG_DHCP,"IA_NA option is too short:%d bytes", client6_data.ia_na->len);
+					zlog_err(MODULE_DHCP,"IA_NA option is too short:%d bytes", client6_data.ia_na->len);
 					continue;
 				}
 				iaaddr = d6_find_option(client6_data.ia_na->data + 4 + 4 + 4,
@@ -1602,11 +1602,11 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 						D6_OPT_IAADDR
 				);
 				if (!iaaddr) {
-					zlog_err(ZLOG_DHCP,"no %s option, ignoring packet", "IAADDR");
+					zlog_err(MODULE_DHCP,"no %s option, ignoring packet", "IAADDR");
 					continue;
 				}
 				if (iaaddr->len < (16 + 4 + 4)) {
-					zlog_err(ZLOG_DHCP,"IAADDR option is too short:%d bytes", iaaddr->len);
+					zlog_err(MODULE_DHCP,"IAADDR option is too short:%d bytes", iaaddr->len);
 					continue;
 				}
 				/* Note: the address is sufficiently aligned for cast:
@@ -1623,7 +1623,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 					lease_seconds = 0x7fffffff / 1000;
 				/* enter bound state */
 				timeout = lease_seconds / 2;
-				zlog_err(ZLOG_DHCP,"lease obtained, lease time %u",
+				zlog_err(MODULE_DHCP,"lease obtained, lease time %u",
 					/*inet_ntoa(temp_addr),*/ (unsigned)lease_seconds);
 				d6_run_script(&packet, state == REQUESTING ? "bound" : "renew");
 

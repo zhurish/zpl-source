@@ -680,3 +680,18 @@ int nsm_iw_client_exit()
 	nsm_client_free (nsm);
 	return OK;
 }
+
+struct module_list module_list_wifi = 
+{ 
+	.module=MODULE_WIFI, 
+	.name="WIFI", 
+	.module_init=NULL, 
+	.module_exit=NULL, 
+	.module_task_init=NULL, 
+	.module_task_exit=NULL, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};

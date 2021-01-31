@@ -105,7 +105,7 @@ _rnode_zlog(const char *_func, struct route_node *rn, int priority,
 		snprintf(buf, sizeof(buf), "{(route_node *) NULL}");
 	}
 
-	zlog(ZLOG_NSM, priority, "%s: %s: %s", _func, buf, msgbuf);
+	zlog(MODULE_NSM, priority, "%s: %s: %s", _func, buf, msgbuf);
 }
 
 #define rnode_debug(node, ...) \
@@ -665,7 +665,7 @@ rib_match_ipv4_multicast(struct in_addr addr, struct route_node **rn_out,
 		char buf[BUFSIZ];
 		inet_ntop(AF_INET, &addr, buf, BUFSIZ);
 
-		zlog_debug(ZLOG_NSM, "%s: %s vrf %u: found %s, using %s", __func__, buf,
+		zlog_debug(MODULE_NSM, "%s: %s vrf %u: found %s, using %s", __func__, buf,
 				vrf_id,
 				mrib ? (urib ? "MRIB+URIB" : "MRIB") :
 				urib ? "URIB" : "nothing",
@@ -677,7 +677,7 @@ rib_match_ipv4_multicast(struct in_addr addr, struct route_node **rn_out,
 void multicast_mode_ipv4_set(enum multicast_mode mode)
 {
 	if (IS_ZEBRA_DEBUG_RIB)
-		zlog_debug(ZLOG_NSM, "%s: multicast lookup mode set (%d)", __func__,
+		zlog_debug(MODULE_NSM, "%s: multicast lookup mode set (%d)", __func__,
 				mode);
 	ipv4_multicast_mode = mode;
 }
@@ -799,7 +799,7 @@ int rib_lookup_ipv4_route(struct prefix_ipv4 *p, union sockunion * qgate,
 				INET_ADDRSTRLEN);
 				inet_ntop(AF_INET, &sockunion2ip(qgate), qgate_buf,
 				INET_ADDRSTRLEN);
-				zlog_debug(ZLOG_NSM, "%s: qgate == %s, %s == %s", __func__,
+				zlog_debug(MODULE_NSM, "%s: qgate == %s, %s == %s", __func__,
 						qgate_buf, recursing ? "rgate" : "gate", gate_buf);
 			}
 		}
@@ -1400,7 +1400,7 @@ static unsigned int process_subq(struct list * subq, u_char qindex)
 #if 0
 	else
 	{
-		zlog_debug (ZLOG_NSM, "%s: called for route_node (%p, %d) with no ribs",
+		zlog_debug (MODULE_NSM, "%s: called for route_node (%p, %d) with no ribs",
 				__func__, rnode, rnode->lock);
 		zlog_backtrace(LOG_DEBUG);
 	}
@@ -1503,7 +1503,7 @@ static void rib_queue_add(struct zebra_t *zebra, struct route_node *rn)
 	/* Pointless to queue a route_node with no RIB entries to add or remove */
 	if (!rnode_to_ribs(rn))
 	{
-		zlog_debug(ZLOG_NSM, "%s: called for route_node (%p, %d) with no ribs",
+		zlog_debug(MODULE_NSM, "%s: called for route_node (%p, %d) with no ribs",
 				__func__, (void *) rn, rn->lock);
 		zlog_backtrace(LOG_DEBUG);
 		return;
@@ -1516,7 +1516,7 @@ static void rib_queue_add(struct zebra_t *zebra, struct route_node *rn)
 
 	if (zebra->ribq == NULL)
 	{
-		zlog_err(ZLOG_NSM, "%s: work_queue does not exist!", __func__);
+		zlog_err(MODULE_NSM, "%s: work_queue does not exist!", __func__);
 		return;
 	}
 
@@ -1567,7 +1567,7 @@ static void rib_queue_init(struct zebra_t *zebra)
 
 	if (!(zebra->ribq = work_queue_new(zebra->master, "route_node processing")))
 	{
-		zlog_err(ZLOG_NSM, "%s: could not initialise work queue!", __func__);
+		zlog_err(MODULE_NSM, "%s: could not initialise work queue!", __func__);
 		return;
 	}
 
@@ -1581,7 +1581,7 @@ static void rib_queue_init(struct zebra_t *zebra)
 
 	if (!(zebra->mq = meta_queue_new()))
 	{
-		zlog_err(ZLOG_NSM, "%s: could not initialise meta queue!", __func__);
+		zlog_err(MODULE_NSM, "%s: could not initialise meta queue!", __func__);
 		return;
 	}
 	return;
@@ -1811,7 +1811,7 @@ int rib_add_ipv4(int type, int flags, struct prefix_ipv4 *p,
 
 	/* Link new rib to node.*/
 	if (IS_ZEBRA_DEBUG_RIB)
-		zlog_debug(ZLOG_NSM, "%s: calling rib_addnode (%p, %p)", __func__,
+		zlog_debug(MODULE_NSM, "%s: calling rib_addnode (%p, %p)", __func__,
 				(void *) rn, (void *) rib);
 	rib_addnode(rn, rib);
 
@@ -1819,7 +1819,7 @@ int rib_add_ipv4(int type, int flags, struct prefix_ipv4 *p,
 	if (same)
 	{
 		if (IS_ZEBRA_DEBUG_RIB)
-			zlog_debug(ZLOG_NSM, "%s: calling rib_delnode (%p, %p)", __func__,
+			zlog_debug(MODULE_NSM, "%s: calling rib_delnode (%p, %p)", __func__,
 					(void *) rn, (void *) rib);
 		rib_delnode(rn, same);
 	}
@@ -1843,15 +1843,15 @@ void _rib_dump(const char * func, union prefix46constptr pp,
 	struct nexthop *nexthop, *tnexthop;
 	int recursing;
 
-	zlog_debug(ZLOG_NSM, "%s: dumping RIB entry %p for %s vrf %u", func,
+	zlog_debug(MODULE_NSM, "%s: dumping RIB entry %p for %s vrf %u", func,
 			(void *) rib, prefix2str(p, straddr, sizeof(straddr)), rib->vrf_id);
-	zlog_debug(ZLOG_NSM,
+	zlog_debug(MODULE_NSM,
 			"%s: refcnt == %lu, uptime == %lu, type == %u, table == %d", func,
 			rib->refcnt, (unsigned long) rib->uptime, rib->type, rib->table);
-	zlog_debug(ZLOG_NSM,
+	zlog_debug(MODULE_NSM,
 			"%s: metric == %u, distance == %u, flags == %u, status == %u", func,
 			rib->metric, rib->distance, rib->flags, rib->status);
-	zlog_debug(ZLOG_NSM,
+	zlog_debug(MODULE_NSM,
 			"%s: nexthop_num == %u, nexthop_active_num == %u, nexthop_fib_num == %u",
 			func, rib->nexthop_num, rib->nexthop_active_num,
 			rib->nexthop_fib_num);
@@ -1859,7 +1859,7 @@ void _rib_dump(const char * func, union prefix46constptr pp,
 	for (ALL_NEXTHOPS_RO(rib->nexthop, nexthop, tnexthop, recursing))
 	{
 		inet_ntop(p->family, &nexthop->gate, straddr, INET6_ADDRSTRLEN);
-		zlog_debug(ZLOG_NSM, "%s: %s %s with flags %s%s%s", func,
+		zlog_debug(MODULE_NSM, "%s: %s %s with flags %s%s%s", func,
 				(recursing ? "  NH" : "NH"), straddr,
 				(CHECK_FLAG (nexthop->flags, NEXTHOP_FLAG_ACTIVE) ?
 						"ACTIVE " : ""),
@@ -1867,7 +1867,7 @@ void _rib_dump(const char * func, union prefix46constptr pp,
 				(CHECK_FLAG (nexthop->flags, NEXTHOP_FLAG_RECURSIVE) ?
 						"RECURSIVE" : ""));
 	}
-	zlog_debug(ZLOG_NSM, "%s: dump complete", func);
+	zlog_debug(MODULE_NSM, "%s: dump complete", func);
 }
 
 /* This is an exported helper to rtm_read() to dump the strange
@@ -1885,7 +1885,7 @@ void rib_lookup_and_dump(struct prefix_ipv4 * p)
 	table = nsm_vrf_table(AFI_IP, SAFI_UNICAST, VRF_DEFAULT);
 	if (!table)
 	{
-		zlog_err(ZLOG_NSM, "%s: nsm_vrf_table() returned NULL", __func__);
+		zlog_err(MODULE_NSM, "%s: nsm_vrf_table() returned NULL", __func__);
 		return;
 	}
 	if(table->mutex)
@@ -1896,7 +1896,7 @@ void rib_lookup_and_dump(struct prefix_ipv4 * p)
 	/* No route for this prefix. */
 	if (!rn)
 	{
-		zlog_debug(ZLOG_NSM, "%s: lookup failed for %s", __func__,
+		zlog_debug(MODULE_NSM, "%s: lookup failed for %s", __func__,
 				prefix2str((struct prefix*) p, prefix_buf, sizeof(prefix_buf)));
 		if(table->mutex)
 			os_mutex_unlock(table->mutex);
@@ -1909,7 +1909,7 @@ void rib_lookup_and_dump(struct prefix_ipv4 * p)
 	/* let's go */
 	RNODE_FOREACH_RIB (rn, rib)
 	{
-		zlog_debug(ZLOG_NSM, "%s: rn %p, rib %p: %s, %s", __func__, (void *) rn,
+		zlog_debug(MODULE_NSM, "%s: rn %p, rib %p: %s, %s", __func__, (void *) rn,
 				(void *) rib,
 				(CHECK_FLAG (rib->status, RIB_ENTRY_REMOVED) ?
 						"removed" : "NOT removed"),
@@ -1974,7 +1974,7 @@ int rib_add_ipv4_multipath(struct prefix_ipv4 *p, struct rib *rib, safi_t safi)
 	ret = 1;
 	if (IS_ZEBRA_DEBUG_RIB)
 	{
-		zlog_debug(ZLOG_NSM, "%s: called rib_addnode (%p, %p) on new RIB entry",
+		zlog_debug(MODULE_NSM, "%s: called rib_addnode (%p, %p) on new RIB entry",
 				__func__, (void *) rn, (void *) rib);
 		rib_dump(p, rib);
 	}
@@ -1984,7 +1984,7 @@ int rib_add_ipv4_multipath(struct prefix_ipv4 *p, struct rib *rib, safi_t safi)
 	{
 		if (IS_ZEBRA_DEBUG_RIB)
 		{
-			zlog_debug(ZLOG_NSM,
+			zlog_debug(MODULE_NSM,
 					"%s: calling rib_delnode (%p, %p) on existing RIB entry",
 					__func__, (void *) rn, (void *) same);
 			rib_dump(p, same);
@@ -2025,12 +2025,12 @@ int rib_delete_ipv4(int type, int flags, struct prefix_ipv4 *p,
 	if (IS_ZEBRA_DEBUG_KERNEL)
 	{
 		if (gate)
-			zlog_debug(ZLOG_NSM,
+			zlog_debug(MODULE_NSM,
 					"rib_delete_ipv4(): route delete %s vrf %u via %s ifindex %d",
 					prefix2str(p, buf1, sizeof(buf1)), vrf_id, inet_ntoa(*gate),
 					ifindex);
 		else
-			zlog_debug(ZLOG_NSM,
+			zlog_debug(MODULE_NSM,
 					"rib_delete_ipv4(): route delete %s vrf %u ifindex %d",
 					prefix2str(p, buf1, sizeof(buf1)), vrf_id, ifindex);
 	}
@@ -2042,13 +2042,13 @@ int rib_delete_ipv4(int type, int flags, struct prefix_ipv4 *p,
 		if (IS_ZEBRA_DEBUG_KERNEL)
 		{
 			if (gate)
-				zlog_debug(ZLOG_NSM,
+				zlog_debug(MODULE_NSM,
 						"route %s vrf %u via %s ifindex %d doesn't exist in rib",
 						prefix2str(p, buf1, sizeof(buf1)), vrf_id,
 						inet_ntop(AF_INET, gate, buf2, INET_ADDRSTRLEN),
 						ifindex);
 			else
-				zlog_debug(ZLOG_NSM,
+				zlog_debug(MODULE_NSM,
 						"route %s vrf %u ifindex %d doesn't exist in rib",
 						prefix2str(p, buf1, sizeof(buf1)), vrf_id, ifindex);
 		}
@@ -2112,7 +2112,7 @@ int rib_delete_ipv4(int type, int flags, struct prefix_ipv4 *p,
 		{
 			if (IS_ZEBRA_DEBUG_KERNEL)
 			{
-				zlog_debug(ZLOG_NSM,
+				zlog_debug(MODULE_NSM,
 						"Zebra route %s/%d was deleted by others from kernel",
 						inet_ntop(AF_INET, &p->prefix, buf1, INET_ADDRSTRLEN),
 						p->prefixlen);
@@ -2126,14 +2126,14 @@ int rib_delete_ipv4(int type, int flags, struct prefix_ipv4 *p,
 			if (IS_ZEBRA_DEBUG_KERNEL)
 			{
 				if (gate)
-					zlog_debug(ZLOG_NSM,
+					zlog_debug(MODULE_NSM,
 							"route %s vrf %u via %s ifindex %d type %d "
 									"doesn't exist in rib",
 							prefix2str(p, buf1, sizeof(buf1)), vrf_id,
 							inet_ntop(AF_INET, gate, buf2, INET_ADDRSTRLEN),
 							ifindex, type);
 				else
-					zlog_debug(ZLOG_NSM,
+					zlog_debug(MODULE_NSM,
 							"route %s vrf %u ifindex %d type %d doesn't exist in rib",
 							prefix2str(p, buf1, sizeof(buf1)), vrf_id, ifindex,
 							type);
@@ -2624,7 +2624,7 @@ rib_add_ipv6 (int type, int flags, struct prefix_ipv6 *p,
 	rib_addnode (rn, rib);
 	if (IS_ZEBRA_DEBUG_RIB)
 	{
-		zlog_debug (ZLOG_NSM, "%s: called rib_addnode (%p, %p) on new RIB entry",
+		zlog_debug (MODULE_NSM, "%s: called rib_addnode (%p, %p) on new RIB entry",
 				__func__, (void *)rn, (void *)rib);
 		rib_dump (p, rib);
 	}
@@ -2634,7 +2634,7 @@ rib_add_ipv6 (int type, int flags, struct prefix_ipv6 *p,
 	{
 		if (IS_ZEBRA_DEBUG_RIB)
 		{
-			zlog_debug (ZLOG_NSM, "%s: calling rib_delnode (%p, %p) on existing RIB entry",
+			zlog_debug (MODULE_NSM, "%s: calling rib_delnode (%p, %p) on existing RIB entry",
 					__func__, (void *)rn, (void *)same);
 			rib_dump (p, same);
 		}
@@ -2723,7 +2723,7 @@ rib_add_ipv6_multipath (struct prefix_ipv6 *p, struct rib *rib, safi_t safi)
 	{
 		if (IS_ZEBRA_DEBUG_RIB)
 		{
-			zlog_debug (ZLOG_NSM, "%s: calling rib_delnode (%p, %p) on existing RIB entry",
+			zlog_debug (MODULE_NSM, "%s: calling rib_delnode (%p, %p) on existing RIB entry",
 					__func__, rn, same);
 			rib_dump ((struct prefix *)p, same);
 		}
@@ -2769,12 +2769,12 @@ rib_delete_ipv6 (int type, int flags, struct prefix_ipv6 *p,
 		if (IS_ZEBRA_DEBUG_KERNEL)
 		{
 			if (gate)
-			zlog_debug (ZLOG_NSM, "route %s vrf %u via %s ifindex %d doesn't exist in rib",
+			zlog_debug (MODULE_NSM, "route %s vrf %u via %s ifindex %d doesn't exist in rib",
 					prefix2str (p, buf1, sizeof(buf1)), vrf_id,
 					inet_ntop (AF_INET6, gate, buf2, INET6_ADDRSTRLEN),
 					ifindex);
 			else
-			zlog_debug (ZLOG_NSM, "route %s vrf %u ifindex %d doesn't exist in rib",
+			zlog_debug (MODULE_NSM, "route %s vrf %u ifindex %d doesn't exist in rib",
 					prefix2str (p, buf1, sizeof(buf1)), vrf_id,
 					ifindex);
 		}
@@ -2839,7 +2839,7 @@ rib_delete_ipv6 (int type, int flags, struct prefix_ipv6 *p,
 		{
 			if (IS_ZEBRA_DEBUG_KERNEL)
 			{
-				zlog_debug (ZLOG_NSM, "Zebra route %s/%d was deleted by others from kernel",
+				zlog_debug (MODULE_NSM, "Zebra route %s/%d was deleted by others from kernel",
 						inet_ntop (AF_INET, &p->prefix, buf1, INET_ADDRSTRLEN),
 						p->prefixlen);
 			}
@@ -2852,14 +2852,14 @@ rib_delete_ipv6 (int type, int flags, struct prefix_ipv6 *p,
 			if (IS_ZEBRA_DEBUG_KERNEL)
 			{
 				if (gate)
-				zlog_debug (ZLOG_NSM, "route %s vrf %u via %s ifindex %d type %d "
+				zlog_debug (MODULE_NSM, "route %s vrf %u via %s ifindex %d type %d "
 						"doesn't exist in rib",
 						prefix2str (p, buf1, sizeof(buf1)), vrf_id,
 						inet_ntop (AF_INET6, gate, buf2, INET6_ADDRSTRLEN),
 						ifindex,
 						type);
 				else
-				zlog_debug (ZLOG_NSM, "route %s vrf %u ifindex %d type %d doesn't exist in rib",
+				zlog_debug (MODULE_NSM, "route %s vrf %u ifindex %d type %d doesn't exist in rib",
 						prefix2str (p, buf1, sizeof(buf1)), vrf_id,
 						ifindex,
 						type);

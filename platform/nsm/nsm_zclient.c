@@ -29,7 +29,7 @@
 #include "if.h"
 #include "log.h"
 #include "thread.h"
-#include "zclient.h"
+#include "nsm_zclient.h"
 #include "memory.h"
 #include "table.h"
 
@@ -106,7 +106,7 @@ zclient_init (struct zclient *zclient, int redist_default)
 
   /* Schedule first zclient connection. */
   if (zclient_debug)
-    zlog_debug (ZLOG_DEFAULT, "zclient start scheduled");
+    zlog_debug (MODULE_DEFAULT, "zclient start scheduled");
 
   zclient_event (ZCLIENT_SCHEDULE, zclient);
 }
@@ -116,7 +116,7 @@ void
 zclient_stop (struct zclient *zclient)
 {
   if (zclient_debug)
-    zlog_debug (ZLOG_DEFAULT, "zclient stopped");
+    zlog_debug (MODULE_DEFAULT, "zclient stopped");
 
   /* Stop threads. */
   THREAD_OFF(zclient->t_read);
@@ -255,7 +255,7 @@ zclient_flush_data(struct thread *thread)
   switch (buffer_flush_available(zclient->wb, zclient->sock, OS_STACK))
     {
     case BUFFER_ERROR:
-      zlog_warn(ZLOG_DEFAULT, "%s: buffer_flush_available failed on zclient fd %d, closing",
+      zlog_warn(MODULE_DEFAULT, "%s: buffer_flush_available failed on zclient fd %d, closing",
       		__func__, zclient->sock);
       return zclient_failed(zclient);
       break;
@@ -278,7 +278,7 @@ zclient_send_message(struct zclient *zclient)
 		       stream_get_endp(zclient->obuf), OS_STACK))
     {
     case BUFFER_ERROR:
-      zlog_warn(ZLOG_DEFAULT,"%s: buffer_write failed to zclient fd %d, closing",
+      zlog_warn(MODULE_DEFAULT,"%s: buffer_write failed to zclient fd %d, closing",
       		 __func__, zclient->sock);
       return zclient_failed(zclient);
       break;
@@ -345,7 +345,7 @@ zclient_start (struct zclient *zclient)
   int i;
 
   if (zclient_debug)
-    zlog_debug (ZLOG_DEFAULT,"zclient_start is called");
+    zlog_debug (MODULE_DEFAULT,"zclient_start is called");
 
   /* zclient is disabled. */
   if (! zclient->enable)
@@ -362,19 +362,19 @@ zclient_start (struct zclient *zclient)
   if (zclient_socket_connect(zclient) < 0)
     {
       if (zclient_debug)
-    	  zlog_debug (ZLOG_DEFAULT,"zclient connection fail");
+    	  zlog_debug (MODULE_DEFAULT,"zclient connection fail");
       zclient->fail++;
       zclient_event (ZCLIENT_CONNECT, zclient);
       return -1;
     }
 
   if (set_nonblocking(zclient->sock) < 0)
-    zlog_warn(ZLOG_DEFAULT,"%s: set_nonblocking(%d) failed", __func__, zclient->sock);
+    zlog_warn(MODULE_DEFAULT,"%s: set_nonblocking(%d) failed", __func__, zclient->sock);
 
   /* Clear fail count. */
   zclient->fail = 0;
   if (zclient_debug)
-    zlog_debug (ZLOG_DEFAULT,"zclient connect success with socket [%d]", zclient->sock);
+    zlog_debug (MODULE_DEFAULT,"zclient connect success with socket [%d]", zclient->sock);
       
   /* Create read thread. */
   zclient_event (ZCLIENT_READ, zclient);
@@ -410,7 +410,7 @@ zclient_connect (struct thread *t)
   zclient->t_connect = NULL;
 
   if (zclient_debug)
-    zlog_debug (ZLOG_DEFAULT,"zclient_connect is called");
+    zlog_debug (MODULE_DEFAULT,"zclient_connect is called");
 
   return zclient_start (zclient);
 }
@@ -775,7 +775,7 @@ zebra_interface_address_read (int type, struct stream *s)
   ifp = if_lookup_by_index (ifindex);
   if (ifp == NULL)
     {
-      zlog_warn (ZLOG_DEFAULT,"zebra_interface_address_read(%s): "
+      zlog_warn (MODULE_DEFAULT,"zebra_interface_address_read(%s): "
                  "Can't find interface by ifindex: %d ",
                  (type == ZEBRA_INTERFACE_ADDRESS_ADD? "ADD" : "DELETE"),
                  ifindex);
@@ -811,7 +811,7 @@ zebra_interface_address_read (int type, struct stream *s)
 	       /* carp interfaces on OpenBSD with 0.0.0.0/0 as "peer" */
 	       char buf[BUFSIZ];
 	       prefix2str (ifc->address, buf, sizeof(buf));
-	       zlog_warn(ZLOG_DEFAULT,"warning: interface %s address %s "
+	       zlog_warn(MODULE_DEFAULT,"warning: interface %s address %s "
 		    "with peer flag set, but no peer address!",
 		    ifp->name, buf);
 	       UNSET_FLAG(ifc->flags, ZEBRA_IFA_PEER);
@@ -850,7 +850,7 @@ zclient_read (struct thread *thread)
 	  (nbyte == -1))
 	{
 	  if (zclient_debug)
-	   zlog_debug (ZLOG_DEFAULT,"zclient connection closed socket [%d].", zclient->sock);
+	   zlog_debug (MODULE_DEFAULT,"zclient connection closed socket [%d].", zclient->sock);
 	  return zclient_failed(zclient);
 	}
       if (nbyte != (ssize_t)(ZEBRA_HEADER_SIZE-already))
@@ -873,14 +873,14 @@ zclient_read (struct thread *thread)
   
   if (marker != ZEBRA_HEADER_MARKER || version != ZSERV_VERSION)
     {
-      zlog_err(ZLOG_DEFAULT,"%s: socket %d version mismatch, marker %d, version %d",
+      zlog_err(MODULE_DEFAULT,"%s: socket %d version mismatch, marker %d, version %d",
                __func__, zclient->sock, marker, version);
       return zclient_failed(zclient);
     }
   
   if (length < ZEBRA_HEADER_SIZE) 
     {
-      zlog_err(ZLOG_DEFAULT,"%s: socket %d message length %u is less than %d ",
+      zlog_err(MODULE_DEFAULT,"%s: socket %d message length %u is less than %d ",
 	       __func__, zclient->sock, length, ZEBRA_HEADER_SIZE);
       return zclient_failed(zclient);
     }
@@ -889,7 +889,7 @@ zclient_read (struct thread *thread)
   if (length > STREAM_SIZE(zclient->ibuf))
     {
       struct stream *ns;
-      zlog_warn(ZLOG_DEFAULT,"%s: message size %u exceeds buffer size %lu, expanding...",
+      zlog_warn(MODULE_DEFAULT,"%s: message size %u exceeds buffer size %lu, expanding...",
 	        __func__, length, (u_long)STREAM_SIZE(zclient->ibuf));
       ns = stream_new(length);
       stream_copy(ns, zclient->ibuf);
@@ -906,7 +906,7 @@ zclient_read (struct thread *thread)
 	  (nbyte == -1))
 	{
 	  if (zclient_debug)
-	    zlog_debug(ZLOG_DEFAULT,"zclient connection closed socket [%d].", zclient->sock);
+	    zlog_debug(MODULE_DEFAULT,"zclient connection closed socket [%d].", zclient->sock);
 	  return zclient_failed(zclient);
 	}
       if (nbyte != (ssize_t)(length-already))
@@ -920,7 +920,7 @@ zclient_read (struct thread *thread)
   length -= ZEBRA_HEADER_SIZE;
 
   if (zclient_debug)
-    zlog_debug(ZLOG_DEFAULT,"zclient 0x%p command 0x%x \n", zclient, command);
+    zlog_debug(MODULE_DEFAULT,"zclient 0x%p command 0x%x \n", zclient, command);
 
   switch (command)
     {
@@ -1040,7 +1040,7 @@ zclient_event (enum event event, struct zclient *zclient)
       if (zclient->fail >= 10)
 	return;
       if (zclient_debug)
-	zlog_debug (ZLOG_DEFAULT,"zclient connect schedule interval is %d",
+	zlog_debug (MODULE_DEFAULT,"zclient connect schedule interval is %d",
 		   zclient->fail < 3 ? 10 : 60);
       if (! zclient->t_connect)
 	zclient->t_connect = 
@@ -1070,13 +1070,13 @@ zclient_serv_path_set (char *path)
   /* test if `path' is socket. don't set it otherwise. */
   if (stat(path, &sb) == -1)
     {
-      zlog_warn (ZLOG_DEFAULT,"%s: zebra socket `%s' does not exist", __func__, path);
+      zlog_warn (MODULE_DEFAULT,"%s: zebra socket `%s' does not exist", __func__, path);
       return;
     }
 
   if ((sb.st_mode & S_IFMT) != S_IFSOCK)
     {
-      zlog_warn (ZLOG_DEFAULT,"%s: `%s' is not unix socket, sir", __func__, path);
+      zlog_warn (MODULE_DEFAULT,"%s: `%s' is not unix socket, sir", __func__, path);
       return;
     }
 

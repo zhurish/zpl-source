@@ -97,7 +97,7 @@ int v9_cmd_handle_keepalive(v9_serial_t *mgt)
 		}
 		mgt->id = hdr->id;
 		if(V9_APP_DEBUG(EVENT))
-			zlog_warn(ZLOG_APP, "MSG KEEPALIVE -> SET ID = %d", hdr->id);
+			zlog_warn(MODULE_APP, "MSG KEEPALIVE -> SET ID = %d", hdr->id);
 	}
 
 	v9_cmd_make_hdr(mgt);
@@ -142,13 +142,13 @@ int v9_cmd_handle_reboot(v9_serial_t *mgt)
 	app_cmd_reboot_t *ack = (app_cmd_reboot_t *)(mgt->buf + sizeof(app_cmd_hdr_t));
 	if(mgt->id == 0 || mgt->id != hdr->id)
 	{
-		zlog_warn(ZLOG_APP, "MSG REBOOT/RESET/SHUTDOWN %d = %d", mgt->id, hdr->id);
+		zlog_warn(MODULE_APP, "MSG REBOOT/RESET/SHUTDOWN %d = %d", mgt->id, hdr->id);
 		return v9_cmd_send_ack (mgt, V9_APP_ACK_ERROR);
 	}
 	if(ack->cmd == htons(V9_APP_CMD_REBOOT))
 	{
 		if(V9_APP_DEBUG(EVENT))
-			zlog_debug(ZLOG_APP, "MSG REBOOT -> id=%d(id=%d) ACK seqnum = %d", hdr->id, mgt->id, hdr->seqnum);
+			zlog_debug(MODULE_APP, "MSG REBOOT -> id=%d(id=%d) ACK seqnum = %d", hdr->id, mgt->id, hdr->seqnum);
 		ret = v9_cmd_send_ack (mgt, V9_APP_ACK_OK);
 		v9_app_module_exit();
 		super_system("reboot -f");
@@ -156,7 +156,7 @@ int v9_cmd_handle_reboot(v9_serial_t *mgt)
 	else if(ack->cmd == htons(V9_APP_CMD_RESET))
 	{
 		if(V9_APP_DEBUG(EVENT))
-			zlog_debug(ZLOG_APP, "MSG RESET -> id=%d(id=%d) ACK seqnum = %d", hdr->id, mgt->id, hdr->seqnum);
+			zlog_debug(MODULE_APP, "MSG RESET -> id=%d(id=%d) ACK seqnum = %d", hdr->id, mgt->id, hdr->seqnum);
 		ret = v9_cmd_send_ack (mgt, V9_APP_ACK_OK);
 		v9_app_module_exit();
 		super_system("jffs2reset -y && reboot -f");
@@ -164,7 +164,7 @@ int v9_cmd_handle_reboot(v9_serial_t *mgt)
 	else if(ack->cmd == htons(V9_APP_CMD_SHUTDOWN))
 	{
 		if(V9_APP_DEBUG(EVENT))
-			zlog_debug(ZLOG_APP, "MSG SHUTDOWN -> id=%d(id=%d) ACK seqnum = %d", hdr->id, mgt->id, hdr->seqnum);
+			zlog_debug(MODULE_APP, "MSG SHUTDOWN -> id=%d(id=%d) ACK seqnum = %d", hdr->id, mgt->id, hdr->seqnum);
 		ret = v9_cmd_send_ack (mgt, V9_APP_ACK_OK);
 		v9_app_module_exit();
 		super_system("poweroff -d 1");
@@ -183,11 +183,11 @@ int v9_cmd_handle_autoip(v9_serial_t *mgt)
 	app_cmd_autoip_t *ack = (app_cmd_autoip_t *)(mgt->buf + sizeof(app_cmd_hdr_t));
 	if(mgt->id == 0 || mgt->id != hdr->id)
 	{
-		zlog_warn(ZLOG_APP, "MSG AUTOIP %d = %d", mgt->id, hdr->id);
+		zlog_warn(MODULE_APP, "MSG AUTOIP %d = %d", mgt->id, hdr->id);
 		return v9_cmd_send_ack (mgt, V9_APP_ACK_ERROR);
 	}
 	if(V9_APP_DEBUG(EVENT))
-		zlog_debug(ZLOG_APP, "MSG AUTOIP -> id=%d(id=%d) ACK seqnum = %d", hdr->id, mgt->id, hdr->seqnum);
+		zlog_debug(MODULE_APP, "MSG AUTOIP -> id=%d(id=%d) ACK seqnum = %d", hdr->id, mgt->id, hdr->seqnum);
 
 	if(ack->cmd == htons(V9_APP_CMD_AUTOIP))
 	{
@@ -230,11 +230,11 @@ int v9_cmd_handle_startup(v9_serial_t *mgt)
 	app_cmd_startup_t *ack = (app_cmd_startup_t *)(mgt->buf + sizeof(app_cmd_hdr_t));
 	if(mgt->id == 0 || mgt->id != hdr->id)
 	{
-		zlog_warn(ZLOG_APP, "MSG STARTUP %d = %d", mgt->id, hdr->id);
+		zlog_warn(MODULE_APP, "MSG STARTUP %d = %d", mgt->id, hdr->id);
 		return v9_cmd_send_ack (mgt, V9_APP_ACK_ERROR);
 	}
 	if(V9_APP_DEBUG(EVENT))
-		zlog_debug(ZLOG_APP, "MSG STARTUP(%d) -> id=%d(id=%d) ACK seqnum = %d", ack->status, hdr->id, mgt->id, hdr->seqnum);
+		zlog_debug(MODULE_APP, "MSG STARTUP(%d) -> id=%d(id=%d) ACK seqnum = %d", ack->status, hdr->id, mgt->id, hdr->seqnum);
 
 	//if(v9_video_board_active(ack->status, TRUE) == OK)
 	//{
@@ -251,11 +251,11 @@ int v9_cmd_handle_route(v9_serial_t *mgt)
 	app_cmd_route_t *ack = (app_cmd_route_t *)(mgt->buf + sizeof(app_cmd_hdr_t));
 	if(mgt->id == 0 || mgt->id != hdr->id)
 	{
-		zlog_warn(ZLOG_APP, "MSG ROUTE %d = %d", mgt->id, hdr->id);
+		zlog_warn(MODULE_APP, "MSG ROUTE %d = %d", mgt->id, hdr->id);
 		return v9_cmd_send_ack (mgt, V9_APP_ACK_ERROR);
 	}
 	if(V9_APP_DEBUG(EVENT))
-		zlog_debug(ZLOG_APP, "MSG ROUTE -> id=%d(id=%d) ACK seqnum = %d", hdr->id, mgt->id, hdr->seqnum);
+		zlog_debug(MODULE_APP, "MSG ROUTE -> id=%d(id=%d) ACK seqnum = %d", hdr->id, mgt->id, hdr->seqnum);
 #ifdef PL_OPENWRT_UCI
 	if(ack->address == 0 && ack->port == 1)//DHCP inport
 	{
@@ -309,12 +309,12 @@ int v9_cmd_handle_board(v9_serial_t *mgt)
 	app_cmd_hdr_t *hdr = (app_cmd_hdr_t *)(mgt->buf);
 	if(mgt->id == 0 || mgt->id != hdr->id)
 	{
-		zlog_warn(ZLOG_APP, "MSG BOARD %d = %d", mgt->id, hdr->id);
+		zlog_warn(MODULE_APP, "MSG BOARD %d = %d", mgt->id, hdr->id);
 		return v9_cmd_send_ack (mgt, V9_APP_ACK_ERROR);
 	}
 	//if(V9_APP_DEBUG(EVENT))
-	//	zlog_debug(ZLOG_APP, "MSG BOARD Status -> id=%d ACK seqnum = %d", board->id, hdr->seqnum);
-		//zlog_debug(ZLOG_APP, "MSG BOARD -> id=%d(id=%d) ACK seqnum = %d", hdr->id, mgt->id, hdr->seqnum);
+	//	zlog_debug(MODULE_APP, "MSG BOARD Status -> id=%d ACK seqnum = %d", board->id, hdr->seqnum);
+		//zlog_debug(MODULE_APP, "MSG BOARD -> id=%d(id=%d) ACK seqnum = %d", hdr->id, mgt->id, hdr->seqnum);
 
 	if(v9_board_lookup(board->id))
 	{
@@ -359,7 +359,7 @@ int v9_cmd_handle_device(v9_serial_t *mgt)
 	app_cmd_hdr_t *hdr = (app_cmd_hdr_t *)(mgt->buf);
 	if(mgt->id == 0 || mgt->id != hdr->id)
 	{
-		zlog_warn(ZLOG_APP, "MSG Device %d = %d", mgt->id, hdr->id);
+		zlog_warn(MODULE_APP, "MSG Device %d = %d", mgt->id, hdr->id);
 		return v9_cmd_send_ack (mgt, V9_APP_ACK_ERROR);
 	}
 	v9_video_board_lock();
@@ -375,13 +375,13 @@ int v9_cmd_handle_device(v9_serial_t *mgt)
 		strcpy(bios_device.app_version, device->app_version);
 		strcpy(bios_device.buildtime, device->buildtime);
 /*
-		zlog_warn(ZLOG_APP,"%s: devicename=%s", __func__, bios_device.devicename);
-		zlog_warn(ZLOG_APP,"%s: deviceid=%s", __func__, bios_device.deviceid);
-		zlog_warn(ZLOG_APP,"%s: serialno=%s", __func__, bios_device.serialno);
-		zlog_warn(ZLOG_APP,"%s: manufacturer=%s", __func__, bios_device.manufacturer);
-		zlog_warn(ZLOG_APP,"%s: kervel_version=%s", __func__, bios_device.kervel_version);
-		zlog_warn(ZLOG_APP,"%s: buildtime=%s", __func__, bios_device.buildtime);
-		zlog_warn(ZLOG_APP,"%s: app_version=%s", __func__, bios_device.app_version);*/
+		zlog_warn(MODULE_APP,"%s: devicename=%s", __func__, bios_device.devicename);
+		zlog_warn(MODULE_APP,"%s: deviceid=%s", __func__, bios_device.deviceid);
+		zlog_warn(MODULE_APP,"%s: serialno=%s", __func__, bios_device.serialno);
+		zlog_warn(MODULE_APP,"%s: manufacturer=%s", __func__, bios_device.manufacturer);
+		zlog_warn(MODULE_APP,"%s: kervel_version=%s", __func__, bios_device.kervel_version);
+		zlog_warn(MODULE_APP,"%s: buildtime=%s", __func__, bios_device.buildtime);
+		zlog_warn(MODULE_APP,"%s: app_version=%s", __func__, bios_device.app_version);*/
 	}
 	v9_video_board_unlock();
 	return v9_cmd_send_ack (mgt, V9_APP_ACK_OK);
@@ -416,21 +416,21 @@ int v9_cmd_handle_pass_reset(v9_serial_t *mgt)
 	app_cmd_status_t *ack = (app_cmd_status_t *)(mgt->buf + sizeof(app_cmd_hdr_t));
 	if(mgt->id == 0 || mgt->id != hdr->id)
 	{
-		zlog_warn(ZLOG_APP, "MSG PASS RESET %d = %d", mgt->id, hdr->id);
+		zlog_warn(MODULE_APP, "MSG PASS RESET %d = %d", mgt->id, hdr->id);
 		return v9_cmd_send_ack (mgt, V9_APP_ACK_ERROR);
 	}
 	if(V9_APP_DEBUG(EVENT))
-		zlog_debug(ZLOG_APP, "MSG PASS RESET(%d) -> id=%d(id=%d) ACK seqnum = %d", ack->cmd, hdr->id, mgt->id, hdr->seqnum);
+		zlog_debug(MODULE_APP, "MSG PASS RESET(%d) -> id=%d(id=%d) ACK seqnum = %d", ack->cmd, hdr->id, mgt->id, hdr->seqnum);
 #ifdef PL_WEBGUI_MODULE
 	if(webs_username_password_update(NULL, WEB_LOGIN_USERNAME, WEB_LOGIN_PASSWORD) == OK)
 	{
 		//if(V9_APP_DEBUG(EVENT))
-			zlog_debug(ZLOG_APP, "Reset Webs Login User Password Successful");
+			zlog_debug(MODULE_APP, "Reset Webs Login User Password Successful");
 		return v9_cmd_send_ack (mgt, V9_APP_ACK_OK);
 	}
 	else
 	{
-		zlog_debug(ZLOG_APP, "Reset Webs Login User Password Failed");
+		zlog_debug(MODULE_APP, "Reset Webs Login User Password Failed");
 		return v9_cmd_send_ack (mgt, V9_APP_ACK_ERROR);
 	}
 #else
@@ -497,7 +497,7 @@ int v9_cmd_sync_time_to_rtc(v9_serial_t *mgt, u_int32 timesp)
 int v9_cmd_sync_time_test(void)
 {
 	u_int32 timesp = os_time(NULL);//返回UTC时间
-	//zlog_debug(ZLOG_APP, "---------%s--------- %d", __func__, timesp);
+	//zlog_debug(MODULE_APP, "---------%s--------- %d", __func__, timesp);
 	v9_cmd_sync_time_to_rtc(v9_serial, timesp);
 	return OK;
 }
@@ -642,7 +642,7 @@ int v9_cmd_update_bios_ack(v9_serial_t *mgt)
 	app_cmd_hdr_t *hdr = (app_cmd_hdr_t *)(mgt->buf);
 	if(mgt->id == 0 || mgt->id != hdr->id)
 	{
-		zlog_warn(ZLOG_APP, "MSG BOARD %d = %d", mgt->id, hdr->id);
+		zlog_warn(MODULE_APP, "MSG BOARD %d = %d", mgt->id, hdr->id);
 		return v9_cmd_send_ack (mgt, V9_APP_ACK_ERROR);
 	}
 	v9_cmd_send_ack (mgt, V9_APP_ACK_OK);
@@ -677,11 +677,11 @@ int v9_cmd_handle_sntp_sync(v9_serial_t *mgt)
 
 	if(mgt->id == 0 || mgt->id != hdr->id)
 	{
-		zlog_warn(ZLOG_APP, "MSG SNTP SYNC %d = %d", mgt->id, hdr->id);
+		zlog_warn(MODULE_APP, "MSG SNTP SYNC %d = %d", mgt->id, hdr->id);
 		return v9_cmd_send_ack (mgt, V9_APP_ACK_ERROR);
 	}
 	if(V9_APP_DEBUG(EVENT))
-		zlog_debug(ZLOG_APP, "MSG SNTP SYNC -> id=%d(id=%d) ACK seqnum = %d", hdr->id, mgt->id, hdr->seqnum);
+		zlog_debug(MODULE_APP, "MSG SNTP SYNC -> id=%d(id=%d) ACK seqnum = %d", hdr->id, mgt->id, hdr->seqnum);
 
 	v9_cmd_make_hdr(mgt);
 	rtc->cmd = htons(V9_APP_CMD_SYNC_TIME/*V9_APP_CMD_GET_STATUS*/);

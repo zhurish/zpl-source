@@ -760,7 +760,7 @@ static int os_task_refresh_total_cpu(struct os_task_history *hist)
 //			OS_DEBUG("total cpu(%f)\r\n",100*(float)(hist->total-idle)/hist->total);
 		}
 		//else
-		//	zlog_err(ZLOG_DEFAULT, "can't read path:%s(%s)\r\n", path,
+		//	zlog_err(MODULE_DEFAULT, "can't read path:%s(%s)\r\n", path,
 		//			strerror(errno));
 		fclose(fp);
 	}
@@ -812,7 +812,7 @@ static int os_task_refresh_cpu(os_task_t *task)
 
 		}
 		//else
-		//	zlog_err(ZLOG_DEFAULT, "can't read path:%s(%s)\r\n", path,
+		//	zlog_err(MODULE_DEFAULT, "can't read path:%s(%s)\r\n", path,
 		//			strerror(errno));
 		fclose(fp);
 	}
@@ -1248,7 +1248,7 @@ unit32 os_task_entry_create(char *name, int pri, int op, task_entry entry,
 		ret = pthread_setname_np(task->td_thread, task->td_name);
 
 		//if (ret != OK)
-		//	zlog_err(ZLOG_DEFAULT, "%s: could not lower privs, %s", __func__,
+		//	zlog_err(MODULE_DEFAULT, "%s: could not lower privs, %s", __func__,
 		//			os_strerror(errno));
 #endif
 		OS_DEBUG("\r\ncreate task:%s(%u %u->%u:ret=%d) pid=%d\r\n",task->td_name,

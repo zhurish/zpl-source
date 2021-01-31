@@ -61,6 +61,11 @@ taget: $(SQLBIN)
 
 endif
 
+files = $(patsubst %.o,%.c,$(OBJS))
+make_prepare:
+	@for i in $(files); do	\
+		$(MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+	done
 
 lib: $(LIBS) $(LIBDS) 
 
@@ -95,9 +100,9 @@ objclean:
 ifeq ($(strip $(PL_SQLITE_EXE_MODULE)),true)
 all: lib install taget
 
-.PHONY:	obj all lib install objclean clean taget
+.PHONY:	obj all lib install objclean clean taget make_prepare
 else
 all: lib install
 
-.PHONY:	obj all lib install objclean clean
+.PHONY:	obj all lib install objclean clean make_prepare
 endif

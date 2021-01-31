@@ -391,7 +391,7 @@ static int web_wireless_ap(Webs *wp, char *path, char *query)
 	char tmp[64];
 	memset(tmp, 0, sizeof(tmp));
 
-	//zlog_debug(ZLOG_WEB, "=======%s======", __func__);
+	//zlog_debug(MODULE_WEB, "=======%s======", __func__);
 
 	os_uci_get_integer("wireless.radio0.disabled", &ret);
 	if (ret == 1)
@@ -405,7 +405,7 @@ static int web_wireless_ap(Webs *wp, char *path, char *query)
 	name = webs_get_var(wp, T("name"), T(""));
 	if (NULL == name)
 	{
-		zlog_debug(ZLOG_WEB, "=======%s======name", __func__);
+		zlog_debug(MODULE_WEB, "=======%s======name", __func__);
 		return web_return_text_plain(wp, ERROR);
 	}
 	os_uci_set_string("wireless.radio0.ssid", name);
@@ -413,11 +413,11 @@ static int web_wireless_ap(Webs *wp, char *path, char *query)
 	encrytype = webs_get_var(wp, T("encrytype"), T(""));
 	if (NULL == encrytype)
 	{
-		zlog_debug(ZLOG_WEB, "=======%s======encrytype", __func__);
+		zlog_debug(MODULE_WEB, "=======%s======encrytype", __func__);
 		return web_return_text_plain(wp, ERROR);
 	}
 	
-	//zlog_debug(ZLOG_WEB, "=======%s======encrytype=%s", __func__, encrytype);
+	//zlog_debug(MODULE_WEB, "=======%s======encrytype=%s", __func__, encrytype);
 
 	if (strstr(encrytype, "NONE"))
 		os_uci_set_string("wireless.radio0.encryption", "none");
@@ -437,10 +437,10 @@ static int web_wireless_ap(Webs *wp, char *path, char *query)
 		password = webs_get_var(wp, T("password"), T(""));
 		if (NULL == password)
 		{
-			zlog_debug(ZLOG_WEB, "=======%s======password", __func__);
+			zlog_debug(MODULE_WEB, "=======%s======password", __func__);
 			return web_return_text_plain(wp, ERROR);
 		}
-		//zlog_debug(ZLOG_WEB, "=======%s======password=%s", __func__, password);
+		//zlog_debug(MODULE_WEB, "=======%s======password=%s", __func__, password);
 		os_uci_set_string("wireless.radio0.key", password);
 	}
 
@@ -448,7 +448,7 @@ static int web_wireless_ap(Webs *wp, char *path, char *query)
 	/*
 	if (NULL == type)
 	{
-		zlog_debug(ZLOG_WEB, "=======%s======type", __func__);
+		zlog_debug(MODULE_WEB, "=======%s======type", __func__);
 		return web_return_text_plain(wp, ERROR);
 	}
 	if (strstr(type, "Auto"))
@@ -467,7 +467,7 @@ static int web_wireless_ap(Webs *wp, char *path, char *query)
 	freq = webs_get_var(wp, T("freq"), T(""));
 	if (NULL == freq)
 	{
-		zlog_debug(ZLOG_WEB, "=======%s======freq", __func__);
+		zlog_debug(MODULE_WEB, "=======%s======freq", __func__);
 		return web_return_text_plain(wp, ERROR);
 	}
 	os_uci_set_integer("wireless.ra0.ht", atoi(freq));
@@ -719,7 +719,7 @@ static int web_wireless_action(Webs *wp, char *path, char *query)
 				return web_return_text_plain(wp, ERROR);
 		}
 #else
-		//zlog_debug(ZLOG_WEB, "=======%s======%s", __func__, strval);
+		//zlog_debug(MODULE_WEB, "=======%s======%s", __func__, strval);
 		return web_wireless_action_get(wp, path, query);
 #endif
 	}
@@ -730,7 +730,7 @@ static int web_wireless_action(Webs *wp, char *path, char *query)
 		{
 			return web_return_text_plain(wp, ERROR);
 		}
-		//zlog_debug(ZLOG_WEB, "=======%s======%s", __func__, strval);
+		//zlog_debug(MODULE_WEB, "=======%s======%s", __func__, strval);
 		if (strstr(strval, "AP"))
 			return web_wireless_ap(wp, path, query);
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)			

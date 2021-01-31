@@ -107,7 +107,20 @@ int ssh_module_task_exit ()
 	return OK;
 }
 
-
+struct module_list module_list_libssh = 
+{ 
+	.module=MODULE_SSH, 
+	.name="SSH", 
+	.module_init=ssh_module_init, 
+	.module_exit=ssh_module_exit, 
+	.module_task_init=ssh_module_task_init, 
+	.module_task_exit=ssh_module_task_exit, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};
 /*
 
 int sshd_enable(char *address, int port)
@@ -145,7 +158,7 @@ static int sshd_stop(ssh_config_t *sshconfig)
 	//ssh_config.running = FALSE;
 	//close all channel
 	//close all session
-	zlog_debug(ZLOG_UTILS, "%s", __func__);
+	zlog_debug(MODULE_UTILS, "%s", __func__);
 	ssh_event_remove_fd(sshconfig->event,
 			  ssh_bind_get_fd(sshconfig->sshbind));
 
@@ -175,7 +188,7 @@ static int sshd_start(ssh_config_t *sshconfig)
 	if(sshconfig->event == NULL)
 		sshconfig->event = ssh_event_new();
 
-	zlog_debug(ZLOG_UTILS, "%s", __func__);
+	zlog_debug(MODULE_UTILS, "%s", __func__);
 
     if(sshconfig->bindport)
     	ssh_bind_options_set(sshconfig->sshbind, SSH_BIND_OPTIONS_BINDPORT, &sshconfig->bindport);

@@ -15,7 +15,7 @@
 #define VOIP_APP_GET_PHONE
 //#define VOIP_APP_GET_ROOM
 
-#define V_APP_DEBUG(fmt,...)		zlog_debug(ZLOG_VOIP, fmt, ##__VA_ARGS__)
+#define V_APP_DEBUG(fmt,...)		zlog_debug(MODULE_VOIP, fmt, ##__VA_ARGS__)
 
 #define VOIP_APP_DEBUG
 

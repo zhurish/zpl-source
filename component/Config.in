@@ -133,6 +133,7 @@ config PL_UDHCPS_MODULE
 	bool "UDHCP Server Module"
 	depends on PL_UDHCP_MODULE 
 	default y
+	select PL_NSM_DHCP
 	help
 	Build UDHCP Server Module.
 
@@ -174,6 +175,7 @@ config PL_WIFI_MODULE
 	bool "WIFI Module"
 	default n
 	depends on PL_COMPONENT_MODULE  && PL_NSM_MODULE
+	select PL_TOOLS_PROCESS
 	help
 	Build WIFI Module.
 

@@ -390,7 +390,7 @@ int v9_video_user_add_user(u_int32 id, BOOL gender, int group, char *user, char 
 		if(v9_user_sqldb_lookup_user(db, id, user_id, &usertmp) == OK)
 		{
 			if(V9_USER_DEBUG(WARN))
-				zlog_warn(ZLOG_APP, "this user(%s(%s)) is already exist.", user, user_id);
+				zlog_warn(MODULE_APP, "this user(%s(%s)) is already exist.", user, user_id);
 			v9_user_sqldb_close(db, id);
 			if(_user_mutex)
 				os_mutex_unlock(_user_mutex);
@@ -401,7 +401,7 @@ int v9_video_user_add_user(u_int32 id, BOOL gender, int group, char *user, char 
 									 user, user_id, pic, text, TRUE) != OK)
 		{
 			if(V9_USER_DEBUG(WARN))
-				zlog_warn(ZLOG_APP, "this user(%s(%s)) is can't set hw board.", user, user_id);
+				zlog_warn(MODULE_APP, "this user(%s(%s)) is can't set hw board.", user, user_id);
 			v9_user_sqldb_close(db, id);
 			if(_user_mutex)
 				os_mutex_unlock(_user_mutex);
@@ -468,7 +468,7 @@ int v9_video_user_update_user(u_int32 id, BOOL gender, int group, char *user, ch
 		if(v9_user_sqldb_lookup_user(db, id, user_id, &usertmp) != OK)
 		{
 			if(V9_USER_DEBUG(WARN))
-				zlog_warn(ZLOG_APP, "this user(%s(%s)) is not exist.", user, user_id);
+				zlog_warn(MODULE_APP, "this user(%s(%s)) is not exist.", user, user_id);
 			v9_user_sqldb_close(db, id);
 			if(_user_mutex)
 				os_mutex_unlock(_user_mutex);
@@ -478,7 +478,7 @@ int v9_video_user_update_user(u_int32 id, BOOL gender, int group, char *user, ch
 									 user, user_id, pic, text, FALSE) != OK)
 		{
 			if(V9_USER_DEBUG(WARN))
-				zlog_warn(ZLOG_APP, "this user(%s(%s)) is can't update hw board.", user, user_id);
+				zlog_warn(MODULE_APP, "this user(%s(%s)) is can't update hw board.", user, user_id);
 			v9_user_sqldb_close(db, id);
 			if(_user_mutex)
 				os_mutex_unlock(_user_mutex);
@@ -538,7 +538,7 @@ int v9_video_user_del_user(u_int32 id, char *user_id)
 		if(v9_user_sqldb_lookup_user(db, id, user_id, &usertmp) != OK)
 		{
 			if(V9_USER_DEBUG(WARN))
-				zlog_warn(ZLOG_APP, "this user(USER ID(%s)) is not exist.", user_id);
+				zlog_warn(MODULE_APP, "this user(USER ID(%s)) is not exist.", user_id);
 			v9_user_sqldb_close(db, id);
 			if(_user_mutex)
 				os_mutex_unlock(_user_mutex);
@@ -547,7 +547,7 @@ int v9_video_user_del_user(u_int32 id, char *user_id)
 		if(v9_video_sdk_del_user_api(id, 0, user_id) != OK)
 		{
 			if(V9_USER_DEBUG(WARN))
-				zlog_warn(ZLOG_APP, "this user(%s) is can't delete from hw board.", user_id);
+				zlog_warn(MODULE_APP, "this user(%s) is can't delete from hw board.", user_id);
 			v9_user_sqldb_close(db, id);
 			if(_user_mutex)
 				os_mutex_unlock(_user_mutex);
@@ -577,7 +577,7 @@ int v9_video_user_del_group(u_int32 id,  u_int8 group)
 		if(v9_video_sdk_del_group_api(id, group) != OK)
 		{
 			if(V9_USER_DEBUG(WARN))
-				zlog_warn(ZLOG_APP, "can't delete all user from hw board.");
+				zlog_warn(MODULE_APP, "can't delete all user from hw board.");
 			v9_user_sqldb_close(db, id);
 			if(_user_mutex)
 				os_mutex_unlock(_user_mutex);
@@ -747,7 +747,7 @@ static int v9_video_user_add_dir(sqlite3 * db, u_int32 id, BOOL gender, int grou
 		if(v9_user_sqldb_lookup_user(db, id, user_id, &usertmp) == OK)
 		{
 			if(V9_USER_DEBUG(WARN))
-				zlog_warn(ZLOG_APP, "this user(%s(%s)) is already exist.", user, user_id);
+				zlog_warn(MODULE_APP, "this user(%s(%s)) is already exist.", user, user_id);
 			return ERROR;
 		}
 
@@ -755,7 +755,7 @@ static int v9_video_user_add_dir(sqlite3 * db, u_int32 id, BOOL gender, int grou
 									 user, user_id, pic, text, TRUE) != OK)
 		{
 			if(V9_USER_DEBUG(WARN))
-				zlog_warn(ZLOG_APP, "this user(%s(%s)) is can't set hw board.", user, user_id);
+				zlog_warn(MODULE_APP, "this user(%s(%s)) is can't set hw board.", user, user_id);
 			return ERROR;
 		}
 
@@ -822,7 +822,7 @@ static int v9_video_dirfile(sqlite3 * db, u_int32 id, BOOL rules, const char *di
 	if (!dir)
 	{
 		if(V9_USER_DEBUG(WARN))
-			zlog_warn(ZLOG_APP,"can not open %s", dirpath);
+			zlog_warn(MODULE_APP,"can not open %s", dirpath);
 		v9_video_emptydir_clean(dirpath, 1);
 		return ERROR;
 	}
@@ -867,7 +867,7 @@ static int v9_video_dirfile(sqlite3 * db, u_int32 id, BOOL rules, const char *di
 				ret = v9_video_user_add_dir(db, id, user.gender, user.group, user.username, user.userid,
 											uploadfile, strlen(user.text)?user.text:NULL);
 				if(ret != OK && V9_USER_DEBUG(WARN))
-					zlog_warn(ZLOG_APP," can not add user '%s' ID '%s' pic %s", user.username, user.userid, d->d_name);
+					zlog_warn(MODULE_APP," can not add user '%s' ID '%s' pic %s", user.username, user.userid, d->d_name);
 				}
 			}
 		}
@@ -910,14 +910,14 @@ int v9_video_user_dir_add(u_int32 id, const char *dirpath)
 			v9_video_emptydir_clean(dirpath, 1);
 		}
 		if(V9_USER_DEBUG(WARN))
-			zlog_debug(ZLOG_APP, "Can not open sql db");
+			zlog_debug(MODULE_APP, "Can not open sql db");
 	}
 	else
 	{
 		v9_video_emptydir_clean(dirpath, 1);
 	}
 	if(V9_USER_DEBUG(WARN))
-		zlog_debug(ZLOG_APP, "Can not open %s",rulesfile);
+		zlog_debug(MODULE_APP, "Can not open %s",rulesfile);
 	if(_user_mutex)
 		os_mutex_unlock(_user_mutex);
 	return ret;

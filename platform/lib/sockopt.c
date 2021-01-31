@@ -36,7 +36,7 @@ setsockopt_so_recvbuf (int sock, int size)
   
   if ( (ret = ip_setsockopt (sock, SOL_SOCKET, SO_RCVBUF, (char *)
                           &size, sizeof (int))) < 0)
-    zlog_err (ZLOG_DEFAULT, "fd %d: can't setsockopt SO_RCVBUF to %d: %s",
+    zlog_err (MODULE_DEFAULT, "fd %d: can't setsockopt SO_RCVBUF to %d: %s",
 	      sock,size,safe_strerror(errno));
 
   return ret;
@@ -49,7 +49,7 @@ setsockopt_so_sendbuf (const int sock, int size)
     (char *)&size, sizeof (int));
   
   if (ret < 0)
-    zlog_err (ZLOG_DEFAULT, "fd %d: can't setsockopt SO_SNDBUF to %d: %s",
+    zlog_err (MODULE_DEFAULT, "fd %d: can't setsockopt SO_SNDBUF to %d: %s",
       sock, size, safe_strerror (errno));
 
   return ret;
@@ -64,7 +64,7 @@ getsockopt_so_sendbuf (const int sock)
     (char *)&optval, &optlen);
   if (ret < 0)
   {
-    zlog_err (ZLOG_DEFAULT, "fd %d: can't getsockopt SO_SNDBUF: %d (%s)",
+    zlog_err (MODULE_DEFAULT, "fd %d: can't getsockopt SO_SNDBUF: %d (%s)",
       sock, errno, safe_strerror (errno));
     return ret;
   }
@@ -96,11 +96,11 @@ setsockopt_ipv6_pktinfo (int sock, int val)
 #ifdef IPV6_RECVPKTINFO		/*2292bis-01*/
   ret = ip_setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &val, sizeof(val));
   if (ret < 0)
-    zlog_warn (ZLOG_DEFAULT, "can't setsockopt IPV6_RECVPKTINFO : %s", safe_strerror (errno));
+    zlog_warn (MODULE_DEFAULT, "can't setsockopt IPV6_RECVPKTINFO : %s", safe_strerror (errno));
 #else	/*RFC2292*/
   ret = ip_setsockopt(sock, IPPROTO_IPV6, IPV6_PKTINFO, &val, sizeof(val));
   if (ret < 0)
-    zlog_warn (ZLOG_DEFAULT, "can't setsockopt IPV6_PKTINFO : %s", safe_strerror (errno));
+    zlog_warn (MODULE_DEFAULT, "can't setsockopt IPV6_PKTINFO : %s", safe_strerror (errno));
 #endif /* INIA_IPV6 */
   return ret;
 }
@@ -117,7 +117,7 @@ setsockopt_ipv6_checksum (int sock, int val)
   ret = ip_setsockopt(sock, IPPROTO_IPV6, IPV6_CHECKSUM, &val, sizeof(val));
 #endif /* GNU_LINUX */
   if (ret < 0)
-    zlog_warn (ZLOG_DEFAULT, "can't setsockopt IPV6_CHECKSUM");
+    zlog_warn (MODULE_DEFAULT, "can't setsockopt IPV6_CHECKSUM");
   return ret;
 }
 
@@ -129,7 +129,7 @@ setsockopt_ipv6_multicast_hops (int sock, int val)
 
   ret = ip_setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &val, sizeof(val));
   if (ret < 0)
-    zlog_warn (ZLOG_DEFAULT, "can't setsockopt IPV6_MULTICAST_HOPS");
+    zlog_warn (MODULE_DEFAULT, "can't setsockopt IPV6_MULTICAST_HOPS");
   return ret;
 }
 
@@ -141,7 +141,7 @@ setsockopt_ipv6_unicast_hops (int sock, int val)
 
   ret = ip_setsockopt(sock, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &val, sizeof(val));
   if (ret < 0)
-    zlog_warn (ZLOG_DEFAULT, "can't setsockopt IPV6_UNICAST_HOPS");
+    zlog_warn (MODULE_DEFAULT, "can't setsockopt IPV6_UNICAST_HOPS");
   return ret;
 }
 
@@ -153,11 +153,11 @@ setsockopt_ipv6_hoplimit (int sock, int val)
 #ifdef IPV6_RECVHOPLIMIT	/*2292bis-01*/
   ret = ip_setsockopt (sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &val, sizeof(val));
   if (ret < 0)
-    zlog_warn (ZLOG_DEFAULT, "can't setsockopt IPV6_RECVHOPLIMIT");
+    zlog_warn (MODULE_DEFAULT, "can't setsockopt IPV6_RECVHOPLIMIT");
 #else	/*RFC2292*/
   ret = ip_setsockopt (sock, IPPROTO_IPV6, IPV6_HOPLIMIT, &val, sizeof(val));
   if (ret < 0)
-    zlog_warn (ZLOG_DEFAULT, "can't setsockopt IPV6_HOPLIMIT");
+    zlog_warn (MODULE_DEFAULT, "can't setsockopt IPV6_HOPLIMIT");
 #endif
   return ret;
 }
@@ -171,7 +171,7 @@ setsockopt_ipv6_multicast_loop (int sock, int val)
   ret = ip_setsockopt (sock, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &val,
 		    sizeof (val));
   if (ret < 0)
-    zlog_warn (ZLOG_DEFAULT, "can't setsockopt IPV6_MULTICAST_LOOP");
+    zlog_warn (MODULE_DEFAULT, "can't setsockopt IPV6_MULTICAST_LOOP");
   return ret;
 }
 
@@ -193,7 +193,7 @@ setsockopt_ipv6_tclass(int sock, int tclass)
 #ifdef IPV6_TCLASS /* RFC3542 */
   ret = ip_setsockopt (sock, IPPROTO_IPV6, IPV6_TCLASS, &tclass, sizeof (tclass));
   if (ret < 0)
-    zlog_warn (ZLOG_DEFAULT, "Can't set IPV6_TCLASS option for fd %d to %#x: %s",
+    zlog_warn (MODULE_DEFAULT, "Can't set IPV6_TCLASS option for fd %d to %#x: %s",
 	       sock, tclass, safe_strerror(errno));
 #endif
   return ret;
@@ -265,7 +265,7 @@ setsockopt_ipv4_multicast(int sock,
     {
       /* see above: handle possible problem when interface comes back up */
       char buf[1][INET_ADDRSTRLEN];
-      zlog_info(ZLOG_DEFAULT, "setsockopt_ipv4_multicast attempting to drop and "
+      zlog_info(MODULE_DEFAULT, "setsockopt_ipv4_multicast attempting to drop and "
                 "re-add (fd %d, mcast %s, ifindex %u)",
                 sock,
                 inet_ntop(AF_INET, &mreqn.imr_multiaddr,
@@ -302,7 +302,7 @@ setsockopt_ipv4_multicast(int sock,
     {
       /* see above: handle possible problem when interface comes back up */
       char buf[1][INET_ADDRSTRLEN];
-      zlog_info(ZLOG_DEFAULT, "setsockopt_ipv4_multicast attempting to drop and "
+      zlog_info(MODULE_DEFAULT, "setsockopt_ipv4_multicast attempting to drop and "
                 "re-add (fd %d, mcast %s, ifindex %u)",
                 sock,
                 inet_ntop(AF_INET, &mreq.imr_multiaddr,
@@ -385,11 +385,11 @@ setsockopt_ipv4_ifindex (int sock, ifindex_t val)
 
 #if defined (IP_PKTINFO)
   if ((ret = ip_setsockopt (sock, IPPROTO_IP, IP_PKTINFO, &val, sizeof (val))) < 0)
-    zlog_warn (ZLOG_DEFAULT, "Can't set IP_PKTINFO option for fd %d to %d: %s",
+    zlog_warn (MODULE_DEFAULT, "Can't set IP_PKTINFO option for fd %d to %d: %s",
 	       sock,val,safe_strerror(errno));
 #elif defined (IP_RECVIF)
   if ((ret = ip_setsockopt (sock, IPPROTO_IP, IP_RECVIF, &val, sizeof (val))) < 0)
-    zlog_warn (ZLOG_DEFAULT, "Can't set IP_RECVIF option for fd %d to %d: %s",
+    zlog_warn (MODULE_DEFAULT, "Can't set IP_RECVIF option for fd %d to %d: %s",
 	       sock,val,safe_strerror(errno));
 #else
 #warning "Neither IP_PKTINFO nor IP_RECVIF is available."
@@ -408,7 +408,7 @@ setsockopt_ipv4_tos(int sock, int tos)
 
   ret = ip_setsockopt (sock, IPPROTO_IP, IP_TOS, &tos, sizeof (tos));
   if (ret < 0)
-    zlog_warn (ZLOG_DEFAULT, "Can't set IP_TOS option for fd %d to %#x: %s",
+    zlog_warn (MODULE_DEFAULT, "Can't set IP_TOS option for fd %d to %#x: %s",
 	       sock, tos, safe_strerror(errno));
   return ret;
 }
@@ -430,7 +430,7 @@ setsockopt_ifindex (int af, int sock, ifindex_t val)
         break;
 #endif
       default:
-        zlog_warn (ZLOG_DEFAULT, "setsockopt_ifindex: unknown address family %d", af);
+        zlog_warn (MODULE_DEFAULT, "setsockopt_ifindex: unknown address family %d", af);
     }
   return ret;
 }
@@ -504,7 +504,7 @@ getsockopt_ipv4_ifindex (struct msghdr *msgh)
   ifindex = 0;
 
 #endif /* IP_PKTINFO */ 
-  //zlog_debug(ZLOG_DEFAULT, "kernel %s->%d",ifkernelindex2kernelifname(ifindex),ifindex);
+  //zlog_debug(MODULE_DEFAULT, "kernel %s->%d",ifkernelindex2kernelifname(ifindex),ifindex);
   return ifkernel2ifindex(ifindex);
 }
 
@@ -523,7 +523,7 @@ getsockopt_ifindex (int af, struct msghdr *msgh)
         break;
 #endif
       default:
-        zlog_warn (ZLOG_DEFAULT, "getsockopt_ifindex: unknown address family %d", af);
+        zlog_warn (MODULE_DEFAULT, "getsockopt_ifindex: unknown address family %d", af);
         return 0;
     }
 }
@@ -535,7 +535,7 @@ setsockopt_ipv4_multicast_loop(int sock, int opt)
   int optval = opt;
   ret = ip_setsockopt (sock, IPPROTO_IP, IP_MULTICAST_LOOP, &optval, sizeof (optval));
   if (ret < 0)
-    zlog_warn (ZLOG_DEFAULT, "Can't set IP_MULTICAST_LOOP option for fd %d to %#x: %s",
+    zlog_warn (MODULE_DEFAULT, "Can't set IP_MULTICAST_LOOP option for fd %d to %#x: %s",
 	       sock, opt, safe_strerror(errno));
   return ret;
 }
@@ -674,7 +674,7 @@ sockopt_tcp_signature (int sock, union sockunion *su, const char *password)
       if (ENOENT == errno)
 	ret = 0;
       else
-	zlog_err (ZLOG_DEFAULT, "sockopt_tcp_signature: setsockopt(%d): %s",
+	zlog_err (MODULE_DEFAULT, "sockopt_tcp_signature: setsockopt(%d): %s",
 		  sock, safe_strerror(errno));
     }
   return ret;

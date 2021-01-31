@@ -21,7 +21,6 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #ifndef __VIDEO_DEVICE_HPP__
 #define __VIDEO_DEVICE_HPP__
 
-
 extern "C"
 {
 #include "device/v4l2_driver.h"
@@ -30,7 +29,8 @@ extern "C"
 #include "videoEncoder.hpp"
 #include "FramedQueue.hpp"
 
-class v4l2Device {
+class v4l2Device
+{
 public:
   v4l2Device(int width, int height, int fps, int fmt);
   virtual ~v4l2Device();
@@ -47,13 +47,12 @@ private:
   videoEncoder *m_videoEncoder = nullptr;
   struct v4l2_driver video_drv;
   struct v4l2_t_buf obuf;
-	int m_width;	
-	int m_height;
+  int m_width;
+  int m_height;
   int m_fmt;
- 	int m_fps;
-	int m_fps_sec;
-	int m_size;
-
+  int m_fps;
+  int m_fps_sec;
+  int m_size;
 };
 
 #endif

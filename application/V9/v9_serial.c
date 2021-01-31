@@ -78,7 +78,7 @@ int v9_app_hex_debug(v9_serial_t *mgt, char *hdr, int rx)
 			strcat(buf, "\r\n");
 		strcat(buf, tmp);
 	}
-	zlog_debug(ZLOG_APP, "%s : %s%s", hdr, buf, (len>128) ? "...":" ");
+	zlog_debug(MODULE_APP, "%s : %s%s", hdr, buf, (len>128) ? "...":" ");
 	return OK;
 }
 
@@ -98,65 +98,65 @@ static int v9_app_read_handle(v9_serial_t *mgt)
 		case V9_APP_CMD_REBOOT:
 		case V9_APP_CMD_RESET:
 		case V9_APP_CMD_SHUTDOWN:
-			//zlog_debug(ZLOG_APP, "MSG V9_CMD_REBOOT -> ACK seqnum = %d", hdr->seqnum);
+			//zlog_debug(MODULE_APP, "MSG V9_CMD_REBOOT -> ACK seqnum = %d", hdr->seqnum);
 			v9_cmd_handle_reboot (mgt);
 			break;
 
 		case V9_APP_CMD_KEEPALIVE:
-			//zlog_debug(ZLOG_APP, "MSG V9_CMD_KEEPALIVE -> ACK seqnum = %d", hdr->seqnum);
+			//zlog_debug(MODULE_APP, "MSG V9_CMD_KEEPALIVE -> ACK seqnum = %d", hdr->seqnum);
 			v9_cmd_handle_keepalive (mgt);
 			break;
 
 		case V9_APP_CMD_SET_ROUTE:
-			//zlog_debug(ZLOG_APP, "MSG V9_APP_CMD_SET_ROUTE -> ACK seqnum = %d", hdr->seqnum);
+			//zlog_debug(MODULE_APP, "MSG V9_APP_CMD_SET_ROUTE -> ACK seqnum = %d", hdr->seqnum);
 			v9_cmd_handle_route (mgt);
 			break;
 
 /*
 		case V9_APP_CMD_GET_STATUS:
-			zlog_debug(ZLOG_APP, "MSG V9_CMD_GET_STATUS -> RES seqnum = %d", hdr->seqnum);
+			zlog_debug(MODULE_APP, "MSG V9_CMD_GET_STATUS -> RES seqnum = %d", hdr->seqnum);
 			v9_cmd_handle_status(mgt);
 			break;
 */
 
 		case V9_APP_CMD_SEND_LOAD:
-			//zlog_debug(ZLOG_APP, "MSG V9_APP_CMD_SEND_LOAD -> RES seqnum = %d", hdr->seqnum);
+			//zlog_debug(MODULE_APP, "MSG V9_APP_CMD_SEND_LOAD -> RES seqnum = %d", hdr->seqnum);
 			v9_cmd_handle_board(mgt);
 			break;
 
 		case V9_APP_CMD_AUTOIP:
-			//zlog_debug(ZLOG_APP, "MSG V9_APP_CMD_AUTOIP -> RES seqnum = %d", hdr->seqnum);
+			//zlog_debug(MODULE_APP, "MSG V9_APP_CMD_AUTOIP -> RES seqnum = %d", hdr->seqnum);
 			v9_cmd_handle_autoip(mgt);
 			break;
 
 		case V9_APP_CMD_STARTUP:
-			//zlog_debug(ZLOG_APP, "MSG V9_APP_CMD_STARTUP -> RES seqnum = %d", hdr->seqnum);
+			//zlog_debug(MODULE_APP, "MSG V9_APP_CMD_STARTUP -> RES seqnum = %d", hdr->seqnum);
 			v9_cmd_handle_startup(mgt);
 			break;
 
 		case V9_APP_CMD_PASS_RESET:
-			//zlog_debug(ZLOG_APP, "MSG V9_APP_CMD_STARTUP -> RES seqnum = %d", hdr->seqnum);
+			//zlog_debug(MODULE_APP, "MSG V9_APP_CMD_STARTUP -> RES seqnum = %d", hdr->seqnum);
 			v9_cmd_handle_pass_reset(mgt);
 			break;
 #ifndef V9_SLIPNET_ENABLE
 		case V9_APP_CMD_SYNC_TIME:
-			//zlog_debug(ZLOG_APP, "MSG V9_APP_CMD_STARTUP -> RES seqnum = %d", hdr->seqnum);
+			//zlog_debug(MODULE_APP, "MSG V9_APP_CMD_STARTUP -> RES seqnum = %d", hdr->seqnum);
 			v9_cmd_handle_sntp_sync(mgt);
 			break;
 #endif
 
 		case V9_APP_CMD_DEVICE:
-			//zlog_debug(ZLOG_APP, "MSG V9_APP_CMD_SEND_LOAD -> RES seqnum = %d", hdr->seqnum);
+			//zlog_debug(MODULE_APP, "MSG V9_APP_CMD_SEND_LOAD -> RES seqnum = %d", hdr->seqnum);
 			v9_cmd_handle_device(mgt);
 			break;
 		case V9_APP_CMD_DOWNLOAD_OTA:
-			//zlog_debug(ZLOG_APP, "MSG V9_APP_CMD_SEND_LOAD -> RES seqnum = %d", hdr->seqnum);
+			//zlog_debug(MODULE_APP, "MSG V9_APP_CMD_SEND_LOAD -> RES seqnum = %d", hdr->seqnum);
 			v9_cmd_update_bios_ack(mgt);
 			break;
 
 		default:
 			if(V9_APP_DEBUG(EVENT))
-			zlog_warn(ZLOG_APP, "TAG HDR = 0x%x(len=%d) (id=%d(id=%d) seqnum=%d)", v9_cmd_get (mgt),
+			zlog_warn(MODULE_APP, "TAG HDR = 0x%x(len=%d) (id=%d(id=%d) seqnum=%d)", v9_cmd_get (mgt),
 						mgt->len, hdr->id, mgt->id, mgt->seqnum);
 
 			v9_cmd_send_ack (mgt, V9_APP_ACK_ERROR);
@@ -185,7 +185,7 @@ static int v9_app_read_eloop(struct eloop *eloop)
 		{
 			if (ERRNO_IO_RETRY(errno))
 			{
-				zlog_err(ZLOG_APP, "RECV mgt on socket (%s)", strerror(errno));
+				zlog_err(MODULE_APP, "RECV mgt on socket (%s)", strerror(errno));
 				//mgt->reset_thread = eloop_add_timer_msec(mgt->master, x5b_app_reset_eloop, mgt, 100);
 				if(mgt->mutex)
 					os_mutex_unlock(mgt->mutex);
@@ -198,7 +198,7 @@ static int v9_app_read_eloop(struct eloop *eloop)
 		mgt->len = len;
 		if(len <= V9_APP_HDR_LEN  || len > V9_APP_HDR_LEN_MAX)
 		{
-			zlog_err(ZLOG_APP, "MSG from %d byte", mgt->len);
+			zlog_err(MODULE_APP, "MSG from %d byte", mgt->len);
 			v9_app_hex_debug(mgt, "RECV", TRUE);
 
 			mgt->r_thread = eloop_add_read(mgt->master, v9_app_read_eloop, mgt, mgt->tty->fd);
@@ -210,7 +210,7 @@ static int v9_app_read_eloop(struct eloop *eloop)
 
 		if(V9_APP_DEBUG(RECV))
 		{
-			zlog_debug(ZLOG_APP, "MSG from %d byte", mgt->len);
+			zlog_debug(MODULE_APP, "MSG from %d byte", mgt->len);
 			v9_app_hex_debug(mgt, "RECV", TRUE);
 		}
 		v9_app_read_handle(mgt);

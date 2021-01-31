@@ -455,7 +455,7 @@ static int dir_upload_cb(Webs *wp, WebsUpload *up, void *p)
 			if(idtmp == NULL)
 			{
 				if(WEB_IS_DEBUG(EVENT))
-					zlog_debug(ZLOG_WEB, "Can not create get Board ID");
+					zlog_debug(MODULE_WEB, "Can not create get Board ID");
 				free(dir_tmp);
 				dir_tmp = NULL;
 				web_return_text_plain(wp, ERROR);
@@ -479,7 +479,7 @@ static int dir_upload_cb(Webs *wp, WebsUpload *up, void *p)
 			if(dir_tmp->tid <= 0)
 			{
 				if(WEB_IS_DEBUG(EVENT))
-					zlog_debug(ZLOG_WEB, "Can not create once timer job");
+					zlog_debug(MODULE_WEB, "Can not create once timer job");
 				web_return_text_plain(wp, ERROR);
 				return ERROR;
 			}
@@ -487,7 +487,7 @@ static int dir_upload_cb(Webs *wp, WebsUpload *up, void *p)
 		else
 		{
 			if(WEB_IS_DEBUG(EVENT))
-				zlog_debug(ZLOG_WEB, "Can not malloc once timer job memory");
+				zlog_debug(MODULE_WEB, "Can not malloc once timer job memory");
 			web_return_text_plain(wp, ERROR);
 			return ERROR;
 		}
@@ -525,7 +525,7 @@ static int dir_upload_cb(Webs *wp, WebsUpload *up, void *p)
 	if (rename(up->filename, uploadfile) < 0)
 	{
 		if(WEB_IS_DEBUG(EVENT))
-			zlog_debug(ZLOG_WEB, "Can not rename %s %s (ERROR:%s)", up->filename, uploadfile, strerror(errno));
+			zlog_debug(MODULE_WEB, "Can not rename %s %s (ERROR:%s)", up->filename, uploadfile, strerror(errno));
 		//_WEB_DBG_TRAP("%s: rename %s %s  error:%s\r\n", __func__, up->filename, uploadfile, strerror(errno));
 		return ERROR;
 	}

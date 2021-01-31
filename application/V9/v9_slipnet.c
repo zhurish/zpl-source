@@ -72,7 +72,7 @@ static int v9_app_slipnet_read_eloop(struct eloop *eloop)
 		{
 			if (ERRNO_IO_RETRY(errno))
 			{
-				zlog_err(ZLOG_APP, "RECV mgt on socket (%s)", strerror(errno));
+				zlog_err(MODULE_APP, "RECV mgt on socket (%s)", strerror(errno));
 				//mgt->reset_thread = eloop_add_timer_msec(mgt->master, x5b_app_reset_eloop, mgt, 100);
 				if(mgt->mutex)
 					os_mutex_unlock(mgt->mutex);

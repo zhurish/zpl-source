@@ -206,7 +206,7 @@ void netlink_interface_update_hw_addr(struct rtattr **tb, struct interface *ifp)
 		hw_addr_len = RTA_PAYLOAD(tb[IFLA_ADDRESS]);
 
 		if (hw_addr_len > INTERFACE_HWADDR_MAX)
-			zlog_warn(ZLOG_PAL, "Hardware address is too large: %d",
+			zlog_warn(MODULE_PAL, "Hardware address is too large: %d",
 					hw_addr_len);
 		else
 		{
@@ -241,7 +241,7 @@ void _netlink_route_debug(int cmd, struct prefix *p, struct nexthop *nexthop,
 	if (IS_ZEBRA_DEBUG_KERNEL)
 	{
 		char buf[PREFIX_STRLEN];
-		zlog_debug(ZLOG_PAL,
+		zlog_debug(MODULE_PAL,
 				"netlink_route_multipath() (%s): %s %s vrf %u type %s",
 				routedesc, lookup(nlmsg_str, cmd),
 				prefix2str(p, buf, sizeof(buf)), zvrf->vrf_id,
@@ -259,17 +259,17 @@ void set_ifindex(struct interface *ifp, ifindex_t ifi_index)
 			&& (oifp != ifp))
 	{
 		if (ifi_index == IFINDEX_INTERNAL)
-			zlog_err(ZLOG_PAL,
+			zlog_err(MODULE_PAL,
 					"Netlink is setting interface %s k_ifindex to reserved "
 							"internal value %u", ifp->k_name, ifi_index);
 		else
 		{
 			if (IS_ZEBRA_DEBUG_KERNEL)
-				zlog_debug(ZLOG_PAL,
+				zlog_debug(MODULE_PAL,
 						"interface index %d was renamed from %s to %s",
 						ifi_index, oifp->name, ifp->name);
 			if (if_is_up(oifp))
-				zlog_err(ZLOG_PAL,
+				zlog_err(MODULE_PAL,
 						"interface rename detected on up interface: index %d "
 								"was renamed from %s to %s, results are uncertain!",
 						ifi_index, oifp->name, ifp->name);
@@ -295,7 +295,7 @@ int netlink_request(int family, int type, struct nlsock *nl)
 	/* Check netlink socket. */
 	if (nl->sock < 0)
 	{
-		zlog_err(ZLOG_PAL, "%s socket isn't active.", nl->name);
+		zlog_err(MODULE_PAL, "%s socket isn't active.", nl->name);
 		return -1;
 	}
 
@@ -316,7 +316,7 @@ int netlink_request(int family, int type, struct nlsock *nl)
 
 	if (ret < 0)
 	{
-		zlog_err(ZLOG_PAL, "%s sendto failed: %s", nl->name,
+		zlog_err(MODULE_PAL, "%s sendto failed: %s", nl->name,
 				safe_strerror(save_errno));
 		return -1;
 	}
@@ -358,20 +358,20 @@ int netlink_parse_info(
 				continue;
 			if (errno == EWOULDBLOCK || errno == EAGAIN)
 				break;
-			zlog_err(ZLOG_PAL, "%s recvmsg overrun: %s", nl->name,
+			zlog_err(MODULE_PAL, "%s recvmsg overrun: %s", nl->name,
 					safe_strerror(errno));
 			continue;
 		}
 
 		if (status == 0)
 		{
-			zlog_err(ZLOG_PAL, "%s EOF", nl->name);
+			zlog_err(MODULE_PAL, "%s EOF", nl->name);
 			return -1;
 		}
 
 		if (msg.msg_namelen != sizeof snl)
 		{
-			zlog_err(ZLOG_PAL, "%s sender address length error: length %d",
+			zlog_err(MODULE_PAL, "%s sender address length error: length %d",
 					nl->name, msg.msg_namelen);
 			return -1;
 		}
@@ -395,7 +395,7 @@ int netlink_parse_info(
 				{
 					if (IS_ZEBRA_DEBUG_KERNEL)
 					{
-						zlog_debug(ZLOG_PAL,
+						zlog_debug(MODULE_PAL,
 								"%s: %s ACK: type=%s(%u), seq=%u, pid=%u",
 								__FUNCTION__, nl->name,
 								lookup(nlmsg_str, err->msg.nlmsg_type),
@@ -413,7 +413,7 @@ int netlink_parse_info(
 
 				if (h->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr)))
 				{
-					zlog_err(ZLOG_PAL, "%s error: message truncated", nl->name);
+					zlog_err(MODULE_PAL, "%s error: message truncated", nl->name);
 					return -1;
 				}
 
@@ -428,7 +428,7 @@ int netlink_parse_info(
 							|| (msg_type == RTM_DELLINK && (-errnum == ENODEV || -errnum == ESRCH)))
 					{
 						if (IS_ZEBRA_DEBUG_KERNEL)
-							zlog_debug(ZLOG_PAL,
+							zlog_debug(MODULE_PAL,
 									"%s: error: %s type=%s(%u), seq=%u, pid=%u",
 									nl->name, safe_strerror(-errnum),
 									lookup(nlmsg_str, msg_type), msg_type,
@@ -437,7 +437,7 @@ int netlink_parse_info(
 					}
 				}
 
-				zlog_err(ZLOG_PAL, "%s error: %s, type=%s(%u), seq=%u, pid=%u",
+				zlog_err(MODULE_PAL, "%s error: %s, type=%s(%u), seq=%u, pid=%u",
 						nl->name, safe_strerror(-errnum),
 						lookup(nlmsg_str, msg_type), msg_type,
 						err->msg.nlmsg_seq, err->msg.nlmsg_pid);
@@ -447,7 +447,7 @@ int netlink_parse_info(
 			/* OK we got netlink message. */
 /*
 			if (IS_ZEBRA_DEBUG_KERNEL)
-				zlog_debug(ZLOG_PAL,
+				zlog_debug(MODULE_PAL,
 						"netlink_parse_info: %s type %s(%u), seq=%u, pid=%u",
 						nl->name, lookup(nlmsg_str, h->nlmsg_type),
 						h->nlmsg_type, h->nlmsg_seq, h->nlmsg_pid);
@@ -462,7 +462,7 @@ int netlink_parse_info(
 							&& h->nlmsg_type != RTM_DELADDR))
 			{
 				//if (IS_ZEBRA_DEBUG_KERNEL)
-					zlog_debug(ZLOG_PAL,
+					zlog_debug(MODULE_PAL,
 							"netlink_parse_info: %s packet comes from %s",
 							zvrf->netlink_cmd.name, nl->name);
 				continue;
@@ -470,7 +470,7 @@ int netlink_parse_info(
 			if(filter)
 			{
 /*
-				zlog_debug(ZLOG_PAL,
+				zlog_debug(MODULE_PAL,
 						"netlink_parse_info: %s type %s(%u), seq=%u, pid=%u",
 						nl->name, lookup(nlmsg_str, h->nlmsg_type),
 						h->nlmsg_type, h->nlmsg_seq, h->nlmsg_pid);
@@ -478,7 +478,7 @@ int netlink_parse_info(
 				error = (*filter)(&snl, h, zvrf->vrf_id);
 				if (error < 0)
 				{
-					zlog_err(ZLOG_PAL, "%s filter function error", nl->name);
+					zlog_err(MODULE_PAL, "%s filter function error", nl->name);
 					ret = error;
 				}
 			}
@@ -489,13 +489,13 @@ int netlink_parse_info(
 		/* After error care. */
 		if (msg.msg_flags & MSG_TRUNC)
 		{
-			zlog_err(ZLOG_PAL, "%s error: message truncated!", nl->name);
-			zlog_err(ZLOG_PAL, "Must restart with larger --nl-bufsize value!");
+			zlog_err(MODULE_PAL, "%s error: message truncated!", nl->name);
+			zlog_err(MODULE_PAL, "Must restart with larger --nl-bufsize value!");
 			continue;
 		}
 		if (status)
 		{
-			zlog_err(ZLOG_PAL, "%s error: data remnant size %d", nl->name,
+			zlog_err(MODULE_PAL, "%s error: data remnant size %d", nl->name,
 					status);
 			return -1;
 		}
@@ -507,7 +507,7 @@ int netlink_parse_info(
 static int netlink_talk_filter(struct sockaddr_nl *snl, struct nlmsghdr *h,
 		vrf_id_t vrf_id)
 {
-	zlog_warn(ZLOG_PAL, "netlink_talk: ignoring message type 0x%04x vrf %u",
+	zlog_warn(MODULE_PAL, "netlink_talk: ignoring message type 0x%04x vrf %u",
 			h->nlmsg_type, vrf_id);
 	return 0;
 }
@@ -534,7 +534,7 @@ int netlink_talk(struct nlmsghdr *n, struct nlsock *nl, struct nsm_vrf *zvrf)
 	n->nlmsg_flags |= NLM_F_ACK;
 
 	if (IS_ZEBRA_DEBUG_KERNEL)
-		zlog_debug(ZLOG_PAL, "netlink_talk: %s type %s(%u), seq=%u", nl->name,
+		zlog_debug(MODULE_PAL, "netlink_talk: %s type %s(%u), seq=%u", nl->name,
 				lookup(nlmsg_str, n->nlmsg_type), n->nlmsg_type, n->nlmsg_seq);
 
 	/* Send message to netlink interface. */
@@ -542,7 +542,7 @@ int netlink_talk(struct nlmsghdr *n, struct nlsock *nl, struct nsm_vrf *zvrf)
 	save_errno = errno;
 	if (status < 0)
 	{
-		zlog_err(ZLOG_PAL, "netlink_talk sendmsg() error: %s",
+		zlog_err(MODULE_PAL, "netlink_talk sendmsg() error: %s",
 				safe_strerror(save_errno));
 		return -1;
 	}
@@ -562,7 +562,7 @@ static int netlink_recvbuf(struct nlsock *nl, int sock, int newsize)
 			sizeof(nl_rcvbufsize));
 	if (ret < 0)
 	{
-		zlog_err(ZLOG_PAL, "Can't set %s receive buffer size: %s", nl->name,
+		zlog_err(MODULE_PAL, "Can't set %s receive buffer size: %s", nl->name,
 				safe_strerror(errno));
 		return -1;
 	}
@@ -570,7 +570,7 @@ static int netlink_recvbuf(struct nlsock *nl, int sock, int newsize)
 			sizeof(nl_rcvbufsize));
 	if (ret < 0)
 	{
-		zlog_err(ZLOG_PAL, "Can't set %s send buffer size: %s", nl->name,
+		zlog_err(MODULE_PAL, "Can't set %s send buffer size: %s", nl->name,
 				safe_strerror(errno));
 		return -1;
 	}
@@ -589,7 +589,7 @@ int netlink_socket(struct nlsock *nl, unsigned long groups, vrf_id_t vrf_id)
 	sock = vrf_socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE, vrf_id);
 	if (sock < 0)
 	{
-		zlog_err(ZLOG_PAL, "Can't open %s socket: %s", nl->name,
+		zlog_err(MODULE_PAL, "Can't open %s socket: %s", nl->name,
 				safe_strerror(errno));
 		return -1;
 	}
@@ -604,7 +604,7 @@ int netlink_socket(struct nlsock *nl, unsigned long groups, vrf_id_t vrf_id)
 
 	if (ret < 0)
 	{
-		zlog_err(ZLOG_PAL, "Can't bind %s socket to group 0x%x: %s", nl->name,
+		zlog_err(MODULE_PAL, "Can't bind %s socket to group 0x%x: %s", nl->name,
 				snl.nl_groups, safe_strerror(save_errno));
 		close(sock);
 		return -1;
@@ -619,14 +619,14 @@ int netlink_socket(struct nlsock *nl, unsigned long groups, vrf_id_t vrf_id)
 	ret = getsockname(sock, (struct sockaddr *) &snl, (socklen_t *) &namelen);
 	if (ret < 0 || namelen != sizeof snl)
 	{
-		zlog_err(ZLOG_PAL, "Can't get %s socket name: %s", nl->name,
+		zlog_err(MODULE_PAL, "Can't get %s socket name: %s", nl->name,
 				safe_strerror(errno));
 		close(sock);
 		return -1;
 	}
 	if (snl.nl_family != AF_NETLINK)
 	{
-		zlog_err(ZLOG_PAL, "Wrong address family %d\n", snl.nl_family);
+		zlog_err(MODULE_PAL, "Wrong address family %d\n", snl.nl_family);
 		close(sock);
 		return -1;
 	}
@@ -662,7 +662,7 @@ static void netlink_install_filter(int sock, __u32 pid)
 	{ .len = array_size(filter), .filter = filter, };
 
 	if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &prog, sizeof(prog)) < 0)
-		zlog_warn(ZLOG_PAL, "Can't install socket filter: %s\n",
+		zlog_warn(MODULE_PAL, "Can't install socket filter: %s\n",
 				safe_strerror(errno));
 }
 
@@ -684,7 +684,7 @@ static void kernel_nl_open(struct nsm_vrf *zvrf)
 	{
 		/* Only want non-blocking on the netlink event socket */
 		if (fcntl(zvrf->netlink.sock, F_SETFL, O_NONBLOCK) < 0)
-			zlog_err(ZLOG_PAL, "Can't set %s socket flags: %s",
+			zlog_err(MODULE_PAL, "Can't set %s socket flags: %s",
 					zvrf->netlink.name, safe_strerror(errno));
 
 		/* Set receive buffer size if it's set from command line */

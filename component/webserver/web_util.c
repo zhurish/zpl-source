@@ -394,7 +394,7 @@ int webs_username_password_update(void *pwp, char *username, char *password)
 	if(web_app_gopass_api(username, password, "md5", "goahead.com", encodedPassword) != 0 )
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Encoded password Value");
+			zlog_debug(MODULE_WEB, "Can not Encoded password Value");
 		return ERROR;
 	}
 	websSetUserPassword(username, encodedPassword);
@@ -406,7 +406,7 @@ int webs_username_password_update(void *pwp, char *username, char *password)
 	{
 		if(WEB_IS_DEBUG(EVENT))
 		{
-			zlog_debug(ZLOG_WEB, " Can not Change User Password for '%s'", username);
+			zlog_debug(MODULE_WEB, " Can not Change User Password for '%s'", username);
 		}
 		return ERROR;
 	}

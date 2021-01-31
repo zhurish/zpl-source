@@ -31,14 +31,14 @@
 
 #define zfpm_debug(...)						\
   do {								\
-    if (IS_ZEBRA_DEBUG_FPM) zlog_debug(ZLOG_NSM, "FPM: " __VA_ARGS__);	\
+    if (IS_ZEBRA_DEBUG_FPM) zlog_debug(MODULE_NSM, "FPM: " __VA_ARGS__);	\
   } while(0)
 
 #elif defined __GNUC__
 
 #define zfpm_debug(_args...)				\
   do {							\
-    if (IS_ZEBRA_DEBUG_FPM) zlog_debug(ZLOG_NSM, "FPM: " _args);	\
+    if (IS_ZEBRA_DEBUG_FPM) zlog_debug(MODULE_NSM, "FPM: " _args);	\
   } while(0)
 
 #else

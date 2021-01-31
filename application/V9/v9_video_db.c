@@ -68,7 +68,7 @@ static sqlite3 * v9_video_sqldb_init(u_int32 id)
 	if( ret != SQLITE_OK )
 	{
 		if(V9_SQLDB_DEBUG(MSG))
-			zlog_err(ZLOG_APP, "Can't open database: %s(%s)", v9_video_sqldb_file(id), sqlite3_errmsg(db));
+			zlog_err(MODULE_APP, "Can't open database: %s(%s)", v9_video_sqldb_file(id), sqlite3_errmsg(db));
 		sqlite3_close(db);
 		return NULL;
 	}
@@ -109,9 +109,9 @@ static BOOL v9_video_sqldb_table_exist(sqlite3 *db, u_int32 table)
 	if(V9_SQLDB_DEBUG(MSG))
 	{
 		if(table == 0)
-			zlog_err(ZLOG_APP, " SQL Table '%s' exist check (%s)", V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL Table '%s' exist check (%s)", V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
 		else
-			zlog_err(ZLOG_APP, " SQL Table '%s' exist check (%s)", V9_VIDEO_WARN_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL Table '%s' exist check (%s)", V9_VIDEO_WARN_TBL_NAME, zErrMsg);
 	}
 	sqlite3_free(zErrMsg);
 	return FALSE;
@@ -134,9 +134,9 @@ static int v9_video_sqldb_table_create(sqlite3 *db, u_int32 table)
 	if(V9_SQLDB_DEBUG(MSG))
 	{
 		if(table == 0)
-			zlog_err(ZLOG_APP, " SQL Create Table '%s'(%s)", V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL Create Table '%s'(%s)", V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
 		else
-			zlog_err(ZLOG_APP, " SQL Create Table '%s'(%s)", V9_VIDEO_WARN_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL Create Table '%s'(%s)", V9_VIDEO_WARN_TBL_NAME, zErrMsg);
 	}
 	sqlite3_free(zErrMsg);
 	return ERROR;
@@ -209,12 +209,12 @@ int v9_video_sqldb_add_node(sqlite3 *db, u_int32 id, u_int32 table, BOOL gender,
     }
 
     if(V9_SQLDB_DEBUG(DBCMD))
-    	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+    	zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 	if(sqlite3_exec(db, sqlcmd, NULL, NULL, &zErrMsg) == SQLITE_OK)
 		return OK;
 
 	if(V9_SQLDB_DEBUG(MSG))
-		zlog_err(ZLOG_APP, " SQL INSERT Info(%s)", zErrMsg);
+		zlog_err(MODULE_APP, " SQL INSERT Info(%s)", zErrMsg);
 
 	sqlite3_free(zErrMsg);
 	return ERROR;
@@ -245,12 +245,12 @@ int v9_video_sqldb_keyvalue_update(sqlite3 *db, u_int32 id, u_int32 table, u_int
 	}
 
     if(V9_SQLDB_DEBUG(DBCMD))
-    	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+    	zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 
 	if (sqlite3_prepare (db, sqlcmd, strlen (sqlcmd), &stmt, NULL) != SQLITE_OK)
 	{
 		if(V9_SQLDB_DEBUG(MSG))
-			zlog_err(ZLOG_APP, " SQL Prepare fail(%s)", sqlite3_errmsg (db));
+			zlog_err(MODULE_APP, " SQL Prepare fail(%s)", sqlite3_errmsg (db));
 		sqlite3_finalize (stmt);
 		return ERROR;
 	}
@@ -259,7 +259,7 @@ int v9_video_sqldb_keyvalue_update(sqlite3 *db, u_int32 id, u_int32 table, u_int
 						   SQLITE_STATIC) != SQLITE_OK)
 	{
 		if(V9_SQLDB_DEBUG(MSG))
-			zlog_err(ZLOG_APP, " SQL Bind fail(%s)", sqlite3_errmsg (db));
+			zlog_err(MODULE_APP, " SQL Bind fail(%s)", sqlite3_errmsg (db));
 		sqlite3_finalize (stmt);
 		return ERROR;
 	}
@@ -269,7 +269,7 @@ int v9_video_sqldb_keyvalue_update(sqlite3 *db, u_int32 id, u_int32 table, u_int
 		return OK;
 	}
 	if(V9_SQLDB_DEBUG(MSG))
-		zlog_err(ZLOG_APP, " SQL Step fail(%s)", sqlite3_errmsg (db));
+		zlog_err(MODULE_APP, " SQL Step fail(%s)", sqlite3_errmsg (db));
 	sqlite3_finalize (stmt);
 	return ERROR;
 }
@@ -313,9 +313,9 @@ int v9_video_sqldb_count(sqlite3 *db, u_int32 id, u_int32 table, int *pValue)
 	if(V9_SQLDB_DEBUG(MSG))
 	{
 		if(table == 0)
-			zlog_err(ZLOG_APP, " SQL SELECT count on Table '%s'(%s)", V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL SELECT count on Table '%s'(%s)", V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
 		else
-			zlog_err(ZLOG_APP, " SQL SELECT count on Table '%s'(%s)", V9_VIDEO_WARN_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL SELECT count on Table '%s'(%s)", V9_VIDEO_WARN_TBL_NAME, zErrMsg);
 	}
 	sqlite3_free(zErrMsg);
 	return ERROR;
@@ -383,7 +383,7 @@ int v9_video_sqldb_del_by_datetime(sqlite3 *db, u_int32 id, u_int32 table, char 
     		WHERE datetime <= '%s';", datetime);
 
     if(V9_SQLDB_DEBUG(DBCMD))
-    	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+    	zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 	if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_delete_callback, &bid, &zErrMsg) == SQLITE_OK)
 	{
 		sync();
@@ -392,9 +392,9 @@ int v9_video_sqldb_del_by_datetime(sqlite3 *db, u_int32 id, u_int32 table, char 
 	if(V9_SQLDB_DEBUG(MSG))
 	{
 		if(table == 0)
-			zlog_err(ZLOG_APP, " SQL DELETE by datetime(%s) on Table '%s'(%s)", datetime, V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL DELETE by datetime(%s) on Table '%s'(%s)", datetime, V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
 		else
-			zlog_err(ZLOG_APP, " SQL DELETE by datetime(%s) on Table '%s'(%s)", datetime, V9_VIDEO_WARN_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL DELETE by datetime(%s) on Table '%s'(%s)", datetime, V9_VIDEO_WARN_TBL_NAME, zErrMsg);
 	}
 	sqlite3_free(zErrMsg);
 	return ERROR;
@@ -413,7 +413,7 @@ int v9_video_sqldb_del_by_channel(sqlite3 *db, u_int32 id, u_int32 table, u_int3
     	snprintf(sqlcmd, sizeof(sqlcmd), "DELETE FROM "V9_VIDEO_WARN_TBL_NAME " \
     		WHERE channel = %d;", channel);
     if(V9_SQLDB_DEBUG(DBCMD))
-    	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+    	zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 	if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_delete_callback, &bid, &zErrMsg) == SQLITE_OK)
 	{
 		sync();
@@ -422,9 +422,9 @@ int v9_video_sqldb_del_by_channel(sqlite3 *db, u_int32 id, u_int32 table, u_int3
 	if(V9_SQLDB_DEBUG(MSG))
 	{
 		if(table == 0)
-			zlog_err(ZLOG_APP, " SQL DELETE by channel(%d) on Table '%s'(%s)", channel, V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL DELETE by channel(%d) on Table '%s'(%s)", channel, V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
 		else
-			zlog_err(ZLOG_APP, " SQL DELETE by channel(%d) on Table '%s'(%s)", channel, V9_VIDEO_WARN_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL DELETE by channel(%d) on Table '%s'(%s)", channel, V9_VIDEO_WARN_TBL_NAME, zErrMsg);
 	}
 	sqlite3_free(zErrMsg);
 	return ERROR;
@@ -444,7 +444,7 @@ int v9_video_sqldb_del_by_gender(sqlite3 *db, u_int32 id, u_int32 table, BOOL ge
     		WHERE gender = %d;", gender);
 
     if(V9_SQLDB_DEBUG(DBCMD))
-    	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+    	zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 	if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_delete_callback, &bid, &zErrMsg) == SQLITE_OK)
 	{
 		sync();
@@ -453,9 +453,9 @@ int v9_video_sqldb_del_by_gender(sqlite3 *db, u_int32 id, u_int32 table, BOOL ge
 	if(V9_SQLDB_DEBUG(MSG))
 	{
 		if(table == 0)
-			zlog_err(ZLOG_APP, " SQL DELETE by gender(%d) on Table '%s'(%s)", gender, V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL DELETE by gender(%d) on Table '%s'(%s)", gender, V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
 		else
-			zlog_err(ZLOG_APP, " SQL DELETE by gender(%d) on Table '%s'(%s)", gender, V9_VIDEO_WARN_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL DELETE by gender(%d) on Table '%s'(%s)", gender, V9_VIDEO_WARN_TBL_NAME, zErrMsg);
 	}
 	sqlite3_free(zErrMsg);
 	return ERROR;
@@ -475,7 +475,7 @@ int v9_video_sqldb_del_by_userid(sqlite3 *db, u_int32 id, u_int32 table, char * 
     		WHERE userid = '%s';", userid);
 
     if(V9_SQLDB_DEBUG(DBCMD))
-    	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+    	zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 	if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_delete_callback, &bid, &zErrMsg) == SQLITE_OK)
 	{
 		sync();
@@ -484,9 +484,9 @@ int v9_video_sqldb_del_by_userid(sqlite3 *db, u_int32 id, u_int32 table, char * 
 	if(V9_SQLDB_DEBUG(MSG))
 	{
 		if(table == 0)
-			zlog_err(ZLOG_APP, " SQL DELETE by userid(%s) on Table '%s'(%s)", userid, V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL DELETE by userid(%s) on Table '%s'(%s)", userid, V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
 		else
-			zlog_err(ZLOG_APP, " SQL DELETE by userid(%s) on Table '%s'(%s)", userid, V9_VIDEO_WARN_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL DELETE by userid(%s) on Table '%s'(%s)", userid, V9_VIDEO_WARN_TBL_NAME, zErrMsg);
 	}
 	sqlite3_free(zErrMsg);
 	return ERROR;
@@ -518,7 +518,7 @@ int v9_video_sqldb_del_by_index_id(sqlite3 *db, u_int32 id, u_int32 table, u_int
     }
 
     if(V9_SQLDB_DEBUG(DBCMD))
-    	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+    	zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 	if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_delete_callback, &bid, &zErrMsg) == SQLITE_OK)
 	{
 		sync();
@@ -527,9 +527,9 @@ int v9_video_sqldb_del_by_index_id(sqlite3 *db, u_int32 id, u_int32 table, u_int
 	if(V9_SQLDB_DEBUG(MSG))
 	{
 		if(table == 0)
-			zlog_err(ZLOG_APP, " SQL DELETE by start(%d-%d) on Table '%s'(%s)", start, end, V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL DELETE by start(%d-%d) on Table '%s'(%s)", start, end, V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
 		else
-			zlog_err(ZLOG_APP, " SQL DELETE by start(%d-%d) on Table '%s'(%s)", start, end, V9_VIDEO_WARN_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL DELETE by start(%d-%d) on Table '%s'(%s)", start, end, V9_VIDEO_WARN_TBL_NAME, zErrMsg);
 	}
 	sqlite3_free(zErrMsg);
 	return ERROR;
@@ -558,7 +558,7 @@ int v9_video_sqldb_select_by_oldid(sqlite3 *db, u_int32 id, u_int32 table, u_int
     }
 
     if(V9_SQLDB_DEBUG(DBCMD))
-    	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+    	zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 
 	if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_delete_callback, &bid, &zErrMsg) == SQLITE_OK)
 	{
@@ -568,9 +568,9 @@ int v9_video_sqldb_select_by_oldid(sqlite3 *db, u_int32 id, u_int32 table, u_int
 	if(V9_SQLDB_DEBUG(MSG))
 	{
 		if(table == 0)
-			zlog_err(ZLOG_APP, " SQL DELETE by start count(%d) on Table '%s'(%s)", limit, V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL DELETE by start count(%d) on Table '%s'(%s)", limit, V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
 		else
-			zlog_err(ZLOG_APP, " SQL DELETE by start count(%d) on Table '%s'(%s)", limit, V9_VIDEO_WARN_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL DELETE by start count(%d) on Table '%s'(%s)", limit, V9_VIDEO_WARN_TBL_NAME, zErrMsg);
 	}
 	sqlite3_free(zErrMsg);
 	return ERROR;
@@ -743,7 +743,7 @@ int v9_video_sqldb_select_count_by_keywork(sqlite3 *db, v9_cap_keywork_t *keywor
 	value = v9_video_sqldb_select_sqlcmd_by_keywork(keywork, sqlcmd, sizeof(sqlcmd));
 	if(value != OK)
 	{
-		zlog_err(ZLOG_APP, " SQL Format SQL CMD fail");
+		zlog_err(MODULE_APP, " SQL Format SQL CMD fail");
 		return ERROR;
 	}
 	if (keywork->limit)
@@ -757,7 +757,7 @@ int v9_video_sqldb_select_count_by_keywork(sqlite3 *db, v9_cap_keywork_t *keywor
 	memcpy(sqlcmd, "SELECT  count(*) ", strlen("SELECT  count(*) "));
 
     //if(V9_SQLDB_DEBUG(DBCMD))
-    	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+    	zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 
 	if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_count_callback, &value, &zErrMsg) == SQLITE_OK)
 	{
@@ -769,9 +769,9 @@ int v9_video_sqldb_select_count_by_keywork(sqlite3 *db, v9_cap_keywork_t *keywor
 	if(V9_SQLDB_DEBUG(MSG))
 	{
 		if(keywork->table == 0)
-			zlog_err(ZLOG_APP, " SQL SELECT count on Table '%s'(%s)", V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL SELECT count on Table '%s'(%s)", V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
 		else
-			zlog_err(ZLOG_APP, " SQL SELECT count on Table '%s'(%s)", V9_VIDEO_WARN_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL SELECT count on Table '%s'(%s)", V9_VIDEO_WARN_TBL_NAME, zErrMsg);
 	}
 	sqlite3_free(zErrMsg);
 	return ERROR;
@@ -793,17 +793,17 @@ int v9_video_sqldb_select_by_keywork(sqlite3 *db, v9_cap_keywork_t *keywork,
 	ret = v9_video_sqldb_select_sqlcmd_by_keywork(keywork, sqlcmd, sizeof(sqlcmd));
 	if(ret != OK)
 	{
-		zlog_err(ZLOG_APP, " SQL Format SQL CMD fail");
+		zlog_err(MODULE_APP, " SQL Format SQL CMD fail");
 		return ERROR;
 	}
 	//select * from student where sex='男' and age=20;
     if(V9_SQLDB_DEBUG(DBCMD))
-    	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+    	zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 
 	if (sqlite3_prepare(db, sqlcmd, strlen(sqlcmd), &stmt, NULL) != SQLITE_OK)
     {
     	//if(V9_SQLDB_DEBUG(DB))
-    		zlog_err(ZLOG_APP, " SQL Prepare fail(%s)", sqlite3_errmsg (db));
+    		zlog_err(MODULE_APP, " SQL Prepare fail(%s)", sqlite3_errmsg (db));
         return ERROR;
     }
 	i = 0;
@@ -854,12 +854,12 @@ int v9_video_sqldb_select_by_new(sqlite3 *db, v9_cap_keywork_t *keywork,
     }
 
     if(V9_SQLDB_DEBUG(DBCMD))
-    	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+    	zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 
 	if (sqlite3_prepare(db, sqlcmd, strlen(sqlcmd), &stmt, NULL) != SQLITE_OK)
     {
     	//if(V9_SQLDB_DEBUG(DB))
-    		zlog_err(ZLOG_APP, " SQL Prepare fail(%s)", sqlite3_errmsg (db));
+    		zlog_err(MODULE_APP, " SQL Prepare fail(%s)", sqlite3_errmsg (db));
         return ERROR;
     }
 	i = 0;
@@ -936,11 +936,11 @@ int v9_video_sqldb_select_by_keyvalue(sqlite3 *db, u_int32 id, u_int32 table, u_
 	strcat(sqlcmd, ";");
 
     if(V9_SQLDB_DEBUG(DBCMD))
-    	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+    	zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
     if (sqlite3_prepare(db, sqlcmd, strlen(sqlcmd), &stmt, NULL) != SQLITE_OK)
     {
     	//if(V9_SQLDB_DEBUG(DB))
-    		zlog_err(ZLOG_APP, " SQL Prepare fail(%s)", sqlite3_errmsg (db));
+    		zlog_err(MODULE_APP, " SQL Prepare fail(%s)", sqlite3_errmsg (db));
         return ERROR;
     }
 
@@ -957,7 +957,7 @@ int v9_video_sqldb_select_by_keyvalue(sqlite3 *db, u_int32 id, u_int32 table, u_
  				ret = (key->feature_memcmp)(key->feature.feature_data, pReadBolbData, MIN(len/sizeof(float),key->feature_len) , &fresult);
  				if( ret == OK)
  				{
- 					//zlog_debug(ZLOG_APP, "======================%s:keyw->key.input_value=%f\r\n",__func__, key->input_value);
+ 					//zlog_debug(MODULE_APP, "======================%s:keyw->key.input_value=%f\r\n",__func__, key->input_value);
  					if((double)fabs((double)fresult) >= (double)(key->input_value))
  					{
  						key->output_result = fresult;
@@ -972,7 +972,7 @@ int v9_video_sqldb_select_by_keyvalue(sqlite3 *db, u_int32 id, u_int32 table, u_
  			}
  			else
  			{
- 				zlog_warn(ZLOG_APP, " feature cmp func is null");
+ 				zlog_warn(MODULE_APP, " feature cmp func is null");
  			}
  		}
 		if(cnt && i >= *cnt)
@@ -1007,11 +1007,11 @@ int v9_video_sqldb_get_keyvalue(sqlite3 *db, u_int32 id, u_int32 table, u_int32 
 		snprintf(sqlcmd, sizeof(sqlcmd), "SELECT id,keyvalue FROM "V9_VIDEO_WARN_TBL_NAME " WHERE id = %d;", inid);
     }
     if(V9_SQLDB_DEBUG(DBCMD))
-    	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+    	zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
     if (sqlite3_prepare(db, sqlcmd, strlen(sqlcmd), &stmt, NULL) != SQLITE_OK)
     {
     	if(V9_SQLDB_DEBUG(DB))
-    		zlog_err(ZLOG_APP, " SQL Prepare fail(%s)", sqlite3_errmsg (db));
+    		zlog_err(MODULE_APP, " SQL Prepare fail(%s)", sqlite3_errmsg (db));
         return ERROR;
     }
     ret = sqlite3_step(stmt);
@@ -1038,7 +1038,7 @@ int v9_video_sqldb_get_keyvalue(sqlite3 *db, u_int32 id, u_int32 table, u_int32 
  		}
      }
 	if(V9_SQLDB_DEBUG(DB))
-		zlog_debug(ZLOG_APP, " SQL Step Finalize(%s)", sqlite3_errmsg (db));
+		zlog_debug(MODULE_APP, " SQL Step Finalize(%s)", sqlite3_errmsg (db));
  	sqlite3_finalize(stmt);
 	return ERROR;
 }
@@ -1164,7 +1164,7 @@ int v9_video_sqldb_get_capinfo(sqlite3 *db,u_int32 id, u_int32 table, u_int32 in
     	snprintf(sqlcmd, sizeof(sqlcmd), "SELECT id,channel,datetime,gender,age,mood,complexion,"
     			"minority,picurl FROM "V9_VIDEO_SNAP_TBL_NAME " WHERE id = %d;", inid);
         if(V9_SQLDB_DEBUG(DBCMD))
-        	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+        	zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 		if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_get_callback, pArgv, &zErrMsg) == SQLITE_OK)
 		{
 			//if(v9_video_sqldb_get_keyvalue(db,  id,  table,  inid, &user->key) == SQLITE_OK)
@@ -1174,9 +1174,9 @@ int v9_video_sqldb_get_capinfo(sqlite3 *db,u_int32 id, u_int32 table, u_int32 in
 				if(V9_SQLDB_DEBUG(MSG))
 				{
 					if(table == 0)
-						zlog_err(ZLOG_APP, " SQL DELETE by ID(%d) on Table '%s'(%s)", inid, V9_VIDEO_SNAP_TBL_NAME, sqlite3_errmsg (db));
+						zlog_err(MODULE_APP, " SQL DELETE by ID(%d) on Table '%s'(%s)", inid, V9_VIDEO_SNAP_TBL_NAME, sqlite3_errmsg (db));
 					else
-						zlog_err(ZLOG_APP, " SQL DELETE by ID(%d) on Table '%s'(%s)", inid, V9_VIDEO_WARN_TBL_NAME, sqlite3_errmsg (db));
+						zlog_err(MODULE_APP, " SQL DELETE by ID(%d) on Table '%s'(%s)", inid, V9_VIDEO_WARN_TBL_NAME, sqlite3_errmsg (db));
 				}
 				return ERROR;
 			}*/
@@ -1188,7 +1188,7 @@ int v9_video_sqldb_get_capinfo(sqlite3 *db,u_int32 id, u_int32 table, u_int32 in
     			"datetime,gender,similarity,age,mood,complexion,minority,picurl,"
     			"videourl FROM "V9_VIDEO_WARN_TBL_NAME " WHERE id = %d;", inid);
         if(V9_SQLDB_DEBUG(DBCMD))
-        	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+        	zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 		if(sqlite3_exec(db, sqlcmd, v9_video_sqldb_get_callback, pArgv, &zErrMsg) == SQLITE_OK)
 		{
 			//if(v9_video_sqldb_get_keyvalue(db,  id,  table,  inid, &user->key) == SQLITE_OK)
@@ -1198,9 +1198,9 @@ int v9_video_sqldb_get_capinfo(sqlite3 *db,u_int32 id, u_int32 table, u_int32 in
 				if(V9_SQLDB_DEBUG(MSG))
 				{
 					if(table == 0)
-						zlog_err(ZLOG_APP, " SQL DELETE by ID(%d) on Table '%s'(%s)", inid, V9_VIDEO_SNAP_TBL_NAME, sqlite3_errmsg (db));
+						zlog_err(MODULE_APP, " SQL DELETE by ID(%d) on Table '%s'(%s)", inid, V9_VIDEO_SNAP_TBL_NAME, sqlite3_errmsg (db));
 					else
-						zlog_err(ZLOG_APP, " SQL DELETE by ID(%d) on Table '%s'(%s)", inid, V9_VIDEO_WARN_TBL_NAME, sqlite3_errmsg (db));
+						zlog_err(MODULE_APP, " SQL DELETE by ID(%d) on Table '%s'(%s)", inid, V9_VIDEO_WARN_TBL_NAME, sqlite3_errmsg (db));
 				}
 				return ERROR;
 			}*/
@@ -1209,9 +1209,9 @@ int v9_video_sqldb_get_capinfo(sqlite3 *db,u_int32 id, u_int32 table, u_int32 in
 	if(V9_SQLDB_DEBUG(MSG))
 	{
 		if(table == 0)
-			zlog_err(ZLOG_APP, " SQL DELETE by ID(%d) on Table '%s'(%s)", inid, V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL DELETE by ID(%d) on Table '%s'(%s)", inid, V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
 		else
-			zlog_err(ZLOG_APP, " SQL DELETE by ID(%d) on Table '%s'(%s)", inid, V9_VIDEO_WARN_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL DELETE by ID(%d) on Table '%s'(%s)", inid, V9_VIDEO_WARN_TBL_NAME, zErrMsg);
 	}
 	sqlite3_free(zErrMsg);
 	return ERROR;
@@ -1236,11 +1236,11 @@ int v9_video_sqldb_select_by_userid(sqlite3 *db, u_int32 id, u_int32 table, char
 		snprintf(sqlcmd, sizeof(sqlcmd), "SELECT id,channel FROM "V9_VIDEO_WARN_TBL_NAME " where userid='%s';", userid);
     }
     if(V9_SQLDB_DEBUG(DBCMD))
-    	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+    	zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 	if (sqlite3_prepare(db, sqlcmd, strlen(sqlcmd), &stmt, NULL) != SQLITE_OK)
     {
     	if(V9_SQLDB_DEBUG(DB))
-    		zlog_err(ZLOG_APP, " SQL Prepare fail(%s)", sqlite3_errmsg (db));
+    		zlog_err(MODULE_APP, " SQL Prepare fail(%s)", sqlite3_errmsg (db));
         return ERROR;
     }
    ret = sqlite3_step(stmt);
@@ -1277,7 +1277,7 @@ int v9_video_sqldb_select_by_userid(sqlite3 *db, u_int32 id, u_int32 table, char
     		snprintf(sqlcmd, sizeof(sqlcmd), "update "V9_VIDEO_WARN_TBL_NAME "set similarity='%.f';");
 
     if(V9_SQLDB_DEBUG(DBCMD))
-    	zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+    	zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 	if(sqlite3_exec(db, sqlcmd, NULL, NULL, &zErrMsg) == SQLITE_OK)
 	{
 		sync();
@@ -1286,9 +1286,9 @@ int v9_video_sqldb_select_by_userid(sqlite3 *db, u_int32 id, u_int32 table, char
 	if(V9_SQLDB_DEBUG(MSG))
 	{
 		if(table == 0)
-			zlog_err(ZLOG_APP, " SQL DELETE by start(%d-%d) on Table '%s'(%s)", start, end, V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL DELETE by start(%d-%d) on Table '%s'(%s)", start, end, V9_VIDEO_SNAP_TBL_NAME, zErrMsg);
 		else
-			zlog_err(ZLOG_APP, " SQL DELETE by start(%d-%d) on Table '%s'(%s)", start, end, V9_VIDEO_WARN_TBL_NAME, zErrMsg);
+			zlog_err(MODULE_APP, " SQL DELETE by start(%d-%d) on Table '%s'(%s)", start, end, V9_VIDEO_WARN_TBL_NAME, zErrMsg);
 	}
 	sqlite3_free(zErrMsg);
 	return ERROR;

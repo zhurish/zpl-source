@@ -29,7 +29,7 @@ endif
 ALLFFLIBS = avcodec avdevice avfilter avformat avresample avutil postproc swscale swresample
 
 # NASM requires -I path terminated with /
-IFLAGS     := -I. -I$(SRC_LINK)/ -I$(INCDIR)
+IFLAGS     := -I. -I$(SRC_LINK)/ -I$(INCDIR) -I/usr/include -I/usr/local/include
 CPPFLAGS   := $(IFLAGS) $(CPPFLAGS)
 CFLAGS     += $(ECFLAGS)
 CCFLAGS     = $(CPPFLAGS) $(CFLAGS)

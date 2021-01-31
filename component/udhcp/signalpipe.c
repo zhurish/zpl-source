@@ -28,7 +28,7 @@ static void signal_handler(int sig)
 	int sv = errno;
 	unsigned char ch = sig; /* use char, avoid dealing with partial writes */
 	if (write(signal_pipe.wr, &ch, 1) != 1)
-		zlog_err(ZLOG_DHCP,"can't send signal");
+		zlog_err(MODULE_DHCP,"can't send signal");
 	errno = sv;
 }
 

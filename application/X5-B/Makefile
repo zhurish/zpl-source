@@ -7,8 +7,13 @@ include config.mk
 
 #PL_DEBUG += -DX5_B_A_DEBUG
 
-.PHONY:	obj all demo lib clean rebuild install objclean
+.PHONY:	obj all demo lib clean rebuild install objclean make_prepare
 
+
+make_prepare:
+	@for i in $(X5_B_DIR); do	\
+		$(MAKE) -C $$i make_prepare || exit "$$?"; 	\
+	done
 
 objclean:
 	@for i in $(X5_B_DIR); do	\

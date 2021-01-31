@@ -212,7 +212,7 @@ static int web_firewall_port_map_rule_handle(Webs *wp, void *p)
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get BTNID Value");
+			zlog_debug(MODULE_WEB, "Can not Get BTNID Value");
 		return ERROR;
 	}
 	if(strstr(strval, "delete"))
@@ -339,7 +339,7 @@ static int web_firewall_port_filter_handle(Webs *wp, void *p)
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get BTNID Value");
+			zlog_debug(MODULE_WEB, "Can not Get BTNID Value");
 		return ERROR;
 	}
 	if(strstr(strval, "delete"))
@@ -485,7 +485,7 @@ static int web_firewall_snat_handle(Webs *wp, void *p)
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get BTNID Value");
+			zlog_debug(MODULE_WEB, "Can not Get BTNID Value");
 		return ERROR;
 	}
 	if(strstr(strval, "delete"))

@@ -42,7 +42,7 @@ int x5b_app_open_option_action(void *p, BOOL save, BOOL face)
 		ret = x5b_app_wiggins_setting(NULL, openconf->wiggins, E_CMD_TO_A);
 		if(ret != OK)
 		{
-			zlog_debug(ZLOG_APP, "Can not setting wiggins to IO Center");
+			zlog_debug(MODULE_APP, "Can not setting wiggins to IO Center");
 			return ERROR;
 		}
 		os_msleep(500);
@@ -69,7 +69,7 @@ int x5b_app_open_option_action(void *p, BOOL save, BOOL face)
 			ret |= x5b_app_open_option(NULL, &openconf->opentype, E_CMD_TO_C);
 		if(ret != OK)
 		{
-			zlog_debug(ZLOG_APP, "Can not setting Door Open Type to Control Center");
+			zlog_debug(MODULE_APP, "Can not setting Door Open Type to Control Center");
 			return ERROR;
 		}
 		x5b_app_open->opentype = openconf->opentype;
@@ -77,7 +77,7 @@ int x5b_app_open_option_action(void *p, BOOL save, BOOL face)
 	ret = x5b_app_open_option(NULL, &info, E_CMD_TO_A);
 	if(ret != OK)
 	{
-		zlog_debug(ZLOG_APP, "Can not setting Door Open Configure to IO Center");
+		zlog_debug(MODULE_APP, "Can not setting Door Open Configure to IO Center");
 		return ERROR;
 	}
 
@@ -111,7 +111,7 @@ int x5b_app_face_config_action(void *info, BOOL save)
 		}
 		else
 		{
-			zlog_debug(ZLOG_APP, "Can not setting Face Configure to Control Center");
+			zlog_debug(MODULE_APP, "Can not setting Face Configure to Control Center");
 			return ERROR;
 		}
 	}
@@ -146,7 +146,7 @@ int x5b_app_global_config_action(void *info, BOOL save)
 		}
 		else
 		{
-			zlog_debug(ZLOG_APP, "Can not setting Global Configure to Control Center");
+			zlog_debug(MODULE_APP, "Can not setting Global Configure to Control Center");
 			return ERROR;
 		}
 	}
@@ -168,7 +168,7 @@ int x5b_app_global_config_action(void *info, BOOL save)
 	char path[128];
 	if(!filename || strlen(filename) <= 0)
 	{
-		zlog_debug(ZLOG_APP, "x5b_app_A_update_test filename is null");
+		zlog_debug(MODULE_APP, "x5b_app_A_update_test filename is null");
 		return ERROR;
 	}
 	memset(path, 0, sizeof(path));
@@ -188,7 +188,7 @@ int x5b_app_A_unit_test_set_api(BOOL enable)
 	if(!mgt->app->reg_state)
 	{
 		if(X5_B_ESP32_DEBUG(EVENT))
-		zlog_warn(ZLOG_APP, "Remote is Not Register");
+		zlog_warn(MODULE_APP, "Remote is Not Register");
 		if(mgt->mutex)
 			os_mutex_unlock(mgt->mutex);
 		return ERROR;
@@ -196,7 +196,7 @@ int x5b_app_A_unit_test_set_api(BOOL enable)
 	if(mgt->app->address == 0)
 	{
 		if(X5_B_ESP32_DEBUG(EVENT))
-		zlog_warn(ZLOG_APP, "A Module Unit Test MSG Can not send, Unknown Remote IP Address");
+		zlog_warn(MODULE_APP, "A Module Unit Test MSG Can not send, Unknown Remote IP Address");
 		if(mgt->mutex)
 			os_mutex_unlock(mgt->mutex);
 		return ERROR;
@@ -208,7 +208,7 @@ int x5b_app_A_unit_test_set_api(BOOL enable)
 	mgt->app->offset += len;
 	x5b_app_crc_make(mgt);
 	if(X5_B_ESP32_DEBUG(EVENT))
-		zlog_debug(ZLOG_APP, "A Module Unit Test MSG to %s:%d %d byte", inet_address(mgt->app->address),
+		zlog_debug(MODULE_APP, "A Module Unit Test MSG to %s:%d %d byte", inet_address(mgt->app->address),
 				mgt->app->remote_port, mgt->app->slen);
 	len = x5b_app_send_msg(mgt);
 	if(mgt->mutex)

@@ -188,7 +188,7 @@ static int voip_app_dtmf_recv_callback(int id, void *p, int input)
 		if(app_incoming_call())
 		{
 			if (VOIP_APP_DEBUG(EVENT))
-				zlog_debug(ZLOG_VOIP, "HUIFU/NONE Product recv dtmf:%c and open door", input);
+				zlog_debug(MODULE_VOIP, "HUIFU/NONE Product recv dtmf:%c and open door", input);
 /*			if (voip_app && voip_app->session)
 			{
 											voip_app->incoming_session->remote_proto,
@@ -225,7 +225,7 @@ static int voip_app_dtmf_recv_callback(int id, void *p, int input)
 			else
 			{
 				if (VOIP_APP_DEBUG(EVENT))
-					zlog_debug(ZLOG_VOIP, "Unknonw Product recv dtmf:%c and open door", input);
+					zlog_debug(MODULE_VOIP, "Unknonw Product recv dtmf:%c and open door", input);
 			}
 			return OK;
 		}
@@ -237,7 +237,7 @@ static int voip_app_dtmf_recv_callback(int id, void *p, int input)
 			s_int8 cardid[32];
 			memset (cardid, 0, sizeof(cardid));
 			if (VOIP_APP_DEBUG(EVENT))
-				zlog_debug(ZLOG_VOIP, "SECOM Product recv dtmf:%c and open door", input);
+				zlog_debug(MODULE_VOIP, "SECOM Product recv dtmf:%c and open door", input);
 			if (voip_app && voip_app->session)
 				ret = x5b_user_get_card (
 							voip_app->session->phonetab[voip_app->session->index].username,
@@ -288,7 +288,7 @@ static int voip_app_dtmf_recv_callback(int id, void *p, int input)
 				x5b_app_customizer () == CUSTOMIZER_SECOM)
 		{
 			if (VOIP_APP_DEBUG(EVENT))
-				zlog_debug(ZLOG_VOIP, "HUIFU/NONE Product recv dtmf:%c and open door", input);
+				zlog_debug(MODULE_VOIP, "HUIFU/NONE Product recv dtmf:%c and open door", input);
 			if (voip_app && voip_app->session)
 			{
 				char *phone = voip_app->session->phonetab[voip_app->session->index].phone;
@@ -320,16 +320,16 @@ static int voip_app_dtmf_recv_callback(int id, void *p, int input)
 		else
 		{
 			if (VOIP_APP_DEBUG(EVENT))
-				zlog_debug(ZLOG_VOIP, "Unknonw Product recv dtmf:%c and open door", input);
+				zlog_debug(MODULE_VOIP, "Unknonw Product recv dtmf:%c and open door", input);
 		}
 	}
 	else
 	{
 		if (VOIP_APP_DEBUG(EVENT))
-			zlog_debug(ZLOG_VOIP, "module recv dtmf:%c", input);
+			zlog_debug(MODULE_VOIP, "module recv dtmf:%c", input);
 		return ERROR;
 	}
-	//zlog_debug(ZLOG_VOIP, "module recv dtmf:%c", input);
+	//zlog_debug(MODULE_VOIP, "module recv dtmf:%c", input);
 	return OK;
 }
 
@@ -364,7 +364,7 @@ static int voip_app_register_state_callback(int id, void *p, int input)
 
 static int voip_app_call_state_callback(int id, void *p, int input)
 {
-	//zlog_debug(ZLOG_VOIP, "call state -> :%d", input);
+	//zlog_debug(MODULE_VOIP, "call state -> :%d", input);
 	if(input == PJSIP_INV_STATE_NULL)
 	{
 		if(voip_app && voip_app->session)
@@ -631,7 +631,7 @@ static int voip_app_call_incoming_callback(int id, void *p, int input)
 						sizeof(voip_call_incoming_t));
 				if (voip_app->incoming_session) {
 					if (VOIP_APP_DEBUG(EVENT)) {
-						zlog_debug(ZLOG_VOIP,
+						zlog_debug(MODULE_VOIP,
 								" Incoming call for!\r\n"
 								"   Media count: %d audio & %d video\r\n"
 								"   From: %.*s\r\n"
@@ -645,7 +645,7 @@ static int voip_app_call_incoming_callback(int id, void *p, int input)
 								(int )call_info->remote_contact.slen,
 								call_info->remote_contact.ptr);
 
-						//zlog_debug(ZLOG_VOIP, "module recv dtmf:%c", input);
+						//zlog_debug(MODULE_VOIP, "module recv dtmf:%c", input);
 					}
 					//<sip:1111@192.168.3.254:5060>
 					if (call_info->remote_contact.slen) {
@@ -808,7 +808,7 @@ int voip_app_call_make(voip_call_t *call, app_call_source_t source, u_int8 build
 	if(voip_app_call_phonelist_make(call, phonelist) != OK)
 	{
 			voip_app_call_default(call, source);
-			zlog_err(ZLOG_VOIP,
+			zlog_err(MODULE_VOIP,
 						" error make Call Session phone number in number list");
 			return ERROR;
 	}*/
@@ -838,7 +838,7 @@ static int voip_app_call_make_rebuild(voip_call_t *call, app_call_source_t sourc
 	if(voip_app_call_phonelist_make(call, phonelist) != OK)
 	{
 			voip_app_call_default(call, source);
-			zlog_err(ZLOG_VOIP,
+			zlog_err(MODULE_VOIP,
 						" error make Call Session phone number in number list");
 			return ERROR;
 	}*/
@@ -869,7 +869,7 @@ static int voip_app_call_make_cli(voip_call_t *call, char *num)
 	if(voip_app_call_phonelist_make(call, phonelist) != OK)
 	{
 			voip_app_call_default(call, source);
-			zlog_err(ZLOG_VOIP,
+			zlog_err(MODULE_VOIP,
 						" error make Call Session phone number in number list");
 			return ERROR;
 	}*/
@@ -902,7 +902,7 @@ static int voip_app_call_session_create(voip_app_t *app, voip_call_t *call)
 			return OK;
 		}
 	}
-	zlog_err(ZLOG_VOIP, "Can not Create Call Session");
+	zlog_err(MODULE_VOIP, "Can not Create Call Session");
 	return ERROR;
 }
 
@@ -925,12 +925,12 @@ voip_call_t * voip_app_call_session_lookup_by_number(voip_app_t *app, char *numb
 					return app->call_session[i];
 				}
 			}
-			zlog_err(ZLOG_VOIP,
+			zlog_err(MODULE_VOIP,
 						"Can not lookup Call Session by %s", number);
 			return NULL;
 		}
 	}
-	zlog_err(ZLOG_VOIP,
+	zlog_err(MODULE_VOIP,
 				"Can not lookup Call Session by %s", number);
 	return NULL;
 }
@@ -950,12 +950,12 @@ voip_call_t * voip_app_call_session_lookup_by_instance(voip_app_t *app, int inst
 					return app->call_session[i];
 				}
 			}
-			zlog_err(ZLOG_VOIP,
+			zlog_err(MODULE_VOIP,
 						"Can not lookup Call Session by instance %d", instance);
 			return NULL;
 		}
 	}
-	zlog_err(ZLOG_VOIP,
+	zlog_err(MODULE_VOIP,
 				"Can not lookup Call Session by instance %d", instance);
 	return NULL;
 }
@@ -1030,15 +1030,15 @@ static int voip_app_pjsip_call_start(voip_call_t *call)
 				}
 			}
 			else
-				zlog_err(ZLOG_VOIP,
+				zlog_err(MODULE_VOIP,
 							"pjsip Start Call to '%s'", call->phonetab[call->index].phone);
 		}
 		else
-			zlog_err(ZLOG_VOIP,
+			zlog_err(MODULE_VOIP,
 						"call session error:active=%d, num=%d", call->active, call->num);
 	}
 	else
-		zlog_err(ZLOG_VOIP,
+		zlog_err(MODULE_VOIP,
 				"sip session '%s'", "null");
 	return ERROR;
 }
@@ -1057,7 +1057,7 @@ static int voip_app_pjsip_call_stop(voip_call_t *call)
 		//call->app->local_stop = TRUE;
 		return pl_pjsip_app_stop_call(find_current_call(), TRUE);
 	}
-	zlog_err(ZLOG_VOIP,
+	zlog_err(MODULE_VOIP,
 				"Can not Stop Call to '%s'", call->phonetab[call->index].phone);
 	return ERROR;
 }
@@ -1094,7 +1094,7 @@ static int voip_app_call_next_number(void *p)
 		if(call->time_id > 0)
 		{
 			V_APP_DEBUG("==============%s: os_time_destroy next===========", __func__);
-			//zlog_debug(ZLOG_VOIP, "================================%s-------> call stop", __func__);
+			//zlog_debug(MODULE_VOIP, "================================%s-------> call stop", __func__);
 			os_time_destroy(call->time_id);
 			call->time_id = 0;
 		}
@@ -1238,7 +1238,7 @@ static int _voip_app_call_start_api(voip_app_t *app,
 				{
 					if(APP_CALL_ID_UI == source)
 						x5b_app_call_internal_result_api(NULL, E_CALL_RESULT_FAIL, 0, E_CMD_TO_AUTO);
-					zlog_err(ZLOG_VOIP,
+					zlog_err(MODULE_VOIP,
 								"Can not set Current Call Session");
 					voip_app_state_set(app, APP_STATE_TALK_IDLE);
 					return ERROR;
@@ -1246,7 +1246,7 @@ static int _voip_app_call_start_api(voip_app_t *app,
 			}
 			else
 			{
-				zlog_err(ZLOG_VOIP,
+				zlog_err(MODULE_VOIP,
 							"Can not Create Call Session");
 				if(APP_CALL_ID_UI == source)
 					x5b_app_call_internal_result_api(NULL, E_CALL_RESULT_FAIL, 0, E_CMD_TO_AUTO);
@@ -1256,12 +1256,12 @@ static int _voip_app_call_start_api(voip_app_t *app,
 		{
 			if(APP_CALL_ID_UI == source)
 				x5b_app_call_internal_result_api(NULL, E_CALL_RESULT_FAIL, 0, E_CMD_TO_AUTO);
-			zlog_err(ZLOG_VOIP,
+			zlog_err(MODULE_VOIP,
 						"Can not make Call info");
 		}
 	}
 	else
-		zlog_warn(ZLOG_VOIP, "voip app is on talking state");
+		zlog_warn(MODULE_VOIP, "voip app is on talking state");
 	voip_app_state_set(app, APP_STATE_TALK_IDLE);
 	return ERROR;
 }
@@ -1289,7 +1289,7 @@ static int _voip_app_call_stop_api(voip_app_t *app, voip_call_t *call)
 		}
 	}
 	else
-		zlog_warn(ZLOG_VOIP, "voip app is on IDLE state(%d)", state);
+		zlog_warn(MODULE_VOIP, "voip app is on IDLE state(%d)", state);
 	voip_app_state_set(app, APP_STATE_TALK_IDLE);
 	return ERROR;
 }
@@ -1337,7 +1337,7 @@ int voip_app_start_call_event_ui(voip_event_t *ev)
 		x5b_app_call_room_param_get(ev->data, &building, &unit, &room);
 
 	if(VOIP_APP_DEBUG(EVENT))
-		zlog_debug(ZLOG_VOIP, "app start call @'%d'", room);
+		zlog_debug(MODULE_VOIP, "app start call @'%d'", room);
 
 	if(voip_app_state_get(voip_app) == APP_STATE_TALK_IDLE)
 	{
@@ -1345,7 +1345,7 @@ int voip_app_start_call_event_ui(voip_event_t *ev)
 				 APP_CALL_ID_UI, building, unit, room, NULL, FALSE);
 	}
 	else
-		zlog_warn(ZLOG_VOIP, "voip app is on talking state %d", voip_app_state_get(voip_app));
+		zlog_warn(MODULE_VOIP, "voip app is on talking state %d", voip_app_state_get(voip_app));
 	return ERROR;
 }
 
@@ -1364,7 +1364,7 @@ int voip_app_start_call_event_ui_phone(voip_event_t *ev)
 		return ERROR;
 	}
 	if(VOIP_APP_DEBUG(EVENT))
-		zlog_debug(ZLOG_VOIP, "app start call @'%s'", ev->data);
+		zlog_debug(MODULE_VOIP, "app start call @'%s'", ev->data);
 
 	if(pl_pjsip_isregister_api() == FALSE)
 	{
@@ -1377,7 +1377,7 @@ int voip_app_start_call_event_ui_phone(voip_event_t *ev)
 				 APP_CALL_ID_UI, building, unit, room, ev->data, FALSE);
 	}
 	else
-		zlog_warn(ZLOG_VOIP, "voip app is on talking state %d", voip_app_state_get(voip_app));
+		zlog_warn(MODULE_VOIP, "voip app is on talking state %d", voip_app_state_get(voip_app));
 	return ERROR;
 }
 
@@ -1395,7 +1395,7 @@ int voip_app_start_call_event_ui_user(voip_event_t *ev)
 		return ERROR;
 	}
 	if(VOIP_APP_DEBUG(EVENT))
-		zlog_debug(ZLOG_VOIP, "app start call @'%s'", ev->data);
+		zlog_debug(MODULE_VOIP, "app start call @'%s'", ev->data);
 	if(pl_pjsip_isregister_api() == FALSE)
 	{
 		x5b_app_call_internal_result_api(NULL, E_CALL_RESULT_UNREGISTER, 0, E_CMD_TO_AUTO);
@@ -1407,7 +1407,7 @@ int voip_app_start_call_event_ui_user(voip_event_t *ev)
 				 APP_CALL_ID_UI, building, unit, room, ev->data, TRUE);
 	}
 	else
-		zlog_warn(ZLOG_VOIP, "voip app is on talking state %d", voip_app_state_get(voip_app));
+		zlog_warn(MODULE_VOIP, "voip app is on talking state %d", voip_app_state_get(voip_app));
 	return ERROR;
 }
 
@@ -1417,7 +1417,7 @@ int voip_app_start_call_event_cli_web(app_call_source_t source, u_int8 building,
 {
 	zassert(voip_app != NULL);
 	if(VOIP_APP_DEBUG(EVENT))
-		zlog_debug(ZLOG_VOIP, "app start call @'%d'", room);
+		zlog_debug(MODULE_VOIP, "app start call @'%d'", room);
 	if(pl_pjsip_isregister_api() == FALSE)
 	{
 		if(APP_CALL_ID_UI == source)
@@ -1431,7 +1431,7 @@ int voip_app_start_call_event_cli_web(app_call_source_t source, u_int8 building,
 				 source, building, unit, room, number, FALSE);
 	}
 	else
-		zlog_warn(ZLOG_VOIP, "voip app is on talking state");
+		zlog_warn(MODULE_VOIP, "voip app is on talking state");
 	return ERROR;
 }
 

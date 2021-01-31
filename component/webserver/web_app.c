@@ -237,13 +237,13 @@ web_app_init (web_app_t *web)
 #endif
 	if (websOpen (web->documents, web->web_route) < 0)
 	{
-		zlog_err (ZLOG_WEB, "Cannot initialize server. Exiting.");
+		zlog_err (MODULE_WEB, "Cannot initialize server. Exiting.");
 		return -1;
 	}
 #if ME_GOAHEAD_AUTH
 	if (websLoad (web->web_auth) < 0)
 	{
-		zlog_err (ZLOG_WEB,"Cannot load %s", web->web_auth);
+		zlog_err (MODULE_WEB,"Cannot load %s", web->web_auth);
 		return -1;
 	}
 #endif
@@ -278,39 +278,39 @@ static void webLogDefaultHandler(int flags, cchar *buf)
 
 	if(flags & WEBS_ASSERT_MSG)
 	{
-		//extern void pl_zlog (__FILE__, __FUNCTION__, __LINE__, ZLOG_WEB, (flags & WEBS_LEVEL_MASK), "%s", buf);
-		zlog_err(ZLOG_WEB, "%s", buf);
+		//extern void pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, (flags & WEBS_LEVEL_MASK), "%s", buf);
+		zlog_err(MODULE_WEB, "%s", buf);
 		return;
 	}
 	if(flags & WEBS_ERROR_MSG)
 	{
-		zlog_err(ZLOG_WEB, "%s", buf);
+		zlog_err(MODULE_WEB, "%s", buf);
 		return;
 	}
 	if(flags & WEBS_TRACE_MSG)
 	{
-		zlog_trap(ZLOG_WEB, "%s", buf);
+		zlog_trap(MODULE_WEB, "%s", buf);
 		return;
 	}
 	switch(flags & WEBS_LEVEL_MASK)
 	{
 		case LOG_ERR:
-			zlog_err(ZLOG_WEB, "%s", buf);
+			zlog_err(MODULE_WEB, "%s", buf);
 			break;
 		case LOG_WARNING:
-			zlog_warn(ZLOG_WEB, "%s", buf);
+			zlog_warn(MODULE_WEB, "%s", buf);
 			break;
 		case LOG_INFO:
-			zlog_info(ZLOG_WEB, "%s", buf);
+			zlog_info(MODULE_WEB, "%s", buf);
 			break;
 		case LOG_NOTICE:
-			zlog_notice(ZLOG_WEB, "%s", buf);
+			zlog_notice(MODULE_WEB, "%s", buf);
 			break;
 		case LOG_DEBUG:
-			zlog_debug(ZLOG_WEB, "%s", buf);
+			zlog_debug(MODULE_WEB, "%s", buf);
 			break;
 		case LOG_TRAP:
-			zlog_trap(ZLOG_WEB, "%s", buf);
+			zlog_trap(MODULE_WEB, "%s", buf);
 			break;
 		default:
 			break;

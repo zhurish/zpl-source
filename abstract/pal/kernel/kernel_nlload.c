@@ -69,7 +69,7 @@ static int netlink_interface_load(struct sockaddr_nl *snl, struct nlmsghdr *h,
 	if ((tb[IFLA_WIRELESS] != NULL) && (ifi->ifi_change == 0))
 	{
 		if (IS_ZEBRA_DEBUG_KERNEL)
-		zlog_debug (ZLOG_PAL, "%s: ignoring IFLA_WIRELESS message", __func__);
+		zlog_debug (MODULE_PAL, "%s: ignoring IFLA_WIRELESS message", __func__);
 		return 0;
 	}
 #endif /* IFLA_WIRELESS */
@@ -146,7 +146,7 @@ static int netlink_interface_address_load(struct sockaddr_nl *snl, struct nlmsgh
 		return -1;
 	if (h->nlmsg_pid == snl->nl_pid)
 	{
-		zlog_err(ZLOG_PAL,
+		zlog_err(MODULE_PAL,
 				"netlink_interface_address_load Ignoring message from pid (self):%u",
 				h->nlmsg_pid);
 		return 0;
@@ -161,7 +161,7 @@ static int netlink_interface_address_load(struct sockaddr_nl *snl, struct nlmsgh
 		memset(kbuf, 0, sizeof(kbuf));
 		if_indextoname(ifa->ifa_index, kbuf);
 
-		zlog_err(ZLOG_PAL,
+		zlog_err(MODULE_PAL,
 				"netlink_interface_addr can't find interface by index %d(%s) vrf %u",
 				ifa->ifa_index, kbuf, vrf_id);
 		return -1;
@@ -170,28 +170,28 @@ static int netlink_interface_address_load(struct sockaddr_nl *snl, struct nlmsgh
 	if (IS_ZEBRA_DEBUG_KERNEL) /* remove this line to see initial ifcfg */
 	{
 		char buf[BUFSIZ];
-		zlog_debug(ZLOG_PAL, "netlink_interface_addr %s %s vrf %u:",
+		zlog_debug(MODULE_PAL, "netlink_interface_addr %s %s vrf %u:",
 				nl_msg_type_to_str(h->nlmsg_type), ifp->name, vrf_id);
 		if (tb[IFA_LOCAL])
-			zlog_debug(ZLOG_PAL, "  IFA_LOCAL     %s/%d",
+			zlog_debug(MODULE_PAL, "  IFA_LOCAL     %s/%d",
 					inet_ntop(ifa->ifa_family, RTA_DATA(tb[IFA_LOCAL]), buf,
 							BUFSIZ), ifa->ifa_prefixlen);
 		if (tb[IFA_ADDRESS])
-			zlog_debug(ZLOG_PAL, "  IFA_ADDRESS   %s/%d",
+			zlog_debug(MODULE_PAL, "  IFA_ADDRESS   %s/%d",
 					inet_ntop(ifa->ifa_family, RTA_DATA(tb[IFA_ADDRESS]), buf,
 							BUFSIZ), ifa->ifa_prefixlen);
 		if (tb[IFA_BROADCAST])
-			zlog_debug(ZLOG_PAL, "  IFA_BROADCAST %s/%d",
+			zlog_debug(MODULE_PAL, "  IFA_BROADCAST %s/%d",
 					inet_ntop(ifa->ifa_family, RTA_DATA(tb[IFA_BROADCAST]), buf,
 							BUFSIZ), ifa->ifa_prefixlen);
 		if (tb[IFA_LABEL] && strcmp(ifp->k_name, RTA_DATA(tb[IFA_LABEL])))
-			zlog_debug(ZLOG_PAL, "  IFA_LABEL     %s",
+			zlog_debug(MODULE_PAL, "  IFA_LABEL     %s",
 					(char *) RTA_DATA(tb[IFA_LABEL]));
 
 		if (tb[IFA_CACHEINFO])
 		{
 			struct ifa_cacheinfo *ci = RTA_DATA(tb[IFA_CACHEINFO]);
-			zlog_debug(ZLOG_PAL, "  IFA_CACHEINFO pref %d, valid %d",
+			zlog_debug(MODULE_PAL, "  IFA_CACHEINFO pref %d, valid %d",
 					ci->ifa_prefered, ci->ifa_valid);
 		}
 	}
@@ -220,7 +220,7 @@ static int netlink_interface_address_load(struct sockaddr_nl *snl, struct nlmsgh
 	/* addr is primary key, SOL if we don't have one */
 	if (addr == NULL)
 	{
-		zlog_debug(ZLOG_PAL, "%s: NULL address", __func__);
+		zlog_debug(MODULE_PAL, "%s: NULL address", __func__);
 		return -1;
 	}
 

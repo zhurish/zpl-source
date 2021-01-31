@@ -65,7 +65,7 @@ static modem_driver_t ec20_driver =
 
 int modem_product_init()
 {
-	//zlog_warn(ZLOG_MODEM, "----modem-channel profile : %s",modem_serial_channel_name(&ec20_driver));
+	//zlog_warn(MODULE_MODEM, "----modem-channel profile : %s",modem_serial_channel_name(&ec20_driver));
 	modem_driver_register(&ec20_driver);
 	return OK;
 }

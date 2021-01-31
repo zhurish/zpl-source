@@ -280,7 +280,7 @@ int v9_video_sdk_init(v9_video_sdk_t *sdk, void *board)
 		if (EAIS_SDK_SUCCESS != EAIS_SDK_Init(V9_APP_BOARD_MAX + 1))
 		{
 			if(V9_SDK_DEBUG(ERROR))
-				zlog_err(ZLOG_APP, "EAIS_SDK_Init ERROR");
+				zlog_err(MODULE_APP, "EAIS_SDK_Init ERROR");
 			return ERROR;
 		}
 		__sdk_initialization = TRUE;
@@ -341,10 +341,10 @@ static int v9_video_sdk_device_clk(ST_SDKDeviceInfo* p_pstStatusInfo, void* p_pU
 	//printf("v9_video_sdk_device_clk nDeviceType=%d szDeviceIP=%s\r\n", p_pstStatusInfo->nDeviceType, p_pstStatusInfo->szDeviceIP);
 	//if(psdk->type)
 	//{
-		//zlog_warn(ZLOG_APP,"v9_video_sdk_device_clk find");
+		//zlog_warn(MODULE_APP,"v9_video_sdk_device_clk find");
 		//psdk->find = TRUE;
 	//}
-	//zlog_warn(ZLOG_APP," v9_video_sdk_device_clk ");
+	//zlog_warn(MODULE_APP," v9_video_sdk_device_clk ");
 	if(strlen(p_pstStatusInfo->szDeviceIP))
 	{
 		int i =0;
@@ -411,7 +411,7 @@ static int v9_video_sdk_status_clk(ST_SDKStatusInfo* p_pstStatusInfo, void* p_pU
 		stream = v9_video_board_stream_lookup_by_id_and_ch(board->id, p_pstStatusInfo->nChannlId);
 		if(stream)
 		{
-			//zlog_warn(ZLOG_APP, "v9_video_sdk_status_clk nChannlId=%d", p_pstStatusInfo->nChannlId);
+			//zlog_warn(MODULE_APP, "v9_video_sdk_status_clk nChannlId=%d", p_pstStatusInfo->nChannlId);
 			//stream->connect;				//视频流连接状态
 			if(p_pstStatusInfo->nStatusBit & 0x01)
 				stream->dev_status = p_pstStatusInfo->nESStatus;					// EAIS设备状态，默认离线。 ENUM_EAIS_DEVICE_STATUS
@@ -480,7 +480,7 @@ static int v9_video_sdk_open(v9_video_sdk_t *sdk)
 		EAIS_SDK_StartDiscovery(v9_video_sdk_device_clk, NULL);
 
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," can not find board ID=%d %s %d %s %s", V9_APP_BOARD_HW_ID(board->id), inet_address(board->address), board->port, sdk->username, sdk->password);
+			zlog_warn(MODULE_APP," can not find board ID=%d %s %d %s %s", V9_APP_BOARD_HW_ID(board->id), inet_address(board->address), board->port, sdk->username, sdk->password);
 		return ERROR;
 	}
 
@@ -495,7 +495,7 @@ static int v9_video_sdk_open(v9_video_sdk_t *sdk)
 		v9_video_board_active(board->id, FALSE);
 		v9_video_board_unlock();
 		if(V9_SDK_DEBUG(ERROR))
-			zlog_err(ZLOG_APP, " EAIS SDK Login failed on Board(%d) %s:%d username=%s password=%s timeout=%d; ERROR(%s)",
+			zlog_err(MODULE_APP, " EAIS SDK Login failed on Board(%d) %s:%d username=%s password=%s timeout=%d; ERROR(%s)",
 					 V9_APP_BOARD_HW_ID(board->id), inet_address(board->address), board->port,
 				 sdk->username, sdk->password, V9_VIDEO_SDK_TIMEOUT, v9_video_sdk_errnostr(sdk->handle));
 		return ERROR;
@@ -521,7 +521,7 @@ static int v9_video_sdk_open(v9_video_sdk_t *sdk)
 		return OK;
 	}
 	if(V9_SDK_DEBUG(ERROR))
-		zlog_err(ZLOG_APP,"EAIS_SDK_GetDeviceInfo Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+		zlog_err(MODULE_APP,"EAIS_SDK_GetDeviceInfo Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 	EAIS_SDK_Logout(sdk->handle);
 	v9_video_board_lock();
 	sdk->login = FALSE;
@@ -571,7 +571,7 @@ static int v9_video_sdk_devstatus_get(v9_video_sdk_t *sdk)
 		}
 		sdk->status = FALSE;
 		if(V9_SDK_DEBUG(ERROR))
-			zlog_err(ZLOG_APP,"EAIS_SDK_GetDeviceInfo Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+			zlog_err(MODULE_APP,"EAIS_SDK_GetDeviceInfo Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 
 		if(ret == EAIS_SDK_ERROR_SOCKET_CONNECT_TIMEOUT)
 		{
@@ -596,7 +596,7 @@ static int v9_video_sdk_devstatus_get(v9_video_sdk_t *sdk)
 	}
 	v9_video_board_unlock();
 	if(V9_SDK_DEBUG(WARN))
-		zlog_warn(ZLOG_APP," Video Board SDK not connect");
+		zlog_warn(MODULE_APP," Video Board SDK not connect");
 	return ERROR;
 #else
 	return OK;
@@ -615,7 +615,7 @@ static int v9_video_sdk_timeout(struct eloop *eloop)
 	if(!sdk)
 	{
 		if(V9_SDK_DEBUG(ERROR))
-			zlog_err(ZLOG_APP,"v9_video_sdk_timeout sdk = NULL");
+			zlog_err(MODULE_APP,"v9_video_sdk_timeout sdk = NULL");
 		return 0;
 	}
 	//v9_video_board_t *board = sdk->board;
@@ -926,7 +926,7 @@ int v9_video_sdk_reboot_api(u_int32 id)
 	if(!v9_video_board)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+			zlog_warn(MODULE_APP," Video Board memory exceptions");
 		return ERROR;
 	}
 #ifdef V9_VIDEO_SDK_API
@@ -942,7 +942,7 @@ int v9_video_sdk_reboot_api(u_int32 id)
 				if(ret != EAIS_SDK_SUCCESS)
 				{
 					if(V9_SDK_DEBUG(ERROR))
-						zlog_err(ZLOG_APP,"EAIS_SDK_DeviceReboot  Video Board (%d) ERROR(%s)",
+						zlog_err(MODULE_APP,"EAIS_SDK_DeviceReboot  Video Board (%d) ERROR(%s)",
 							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
 					v9_video_board_lock();
 					v9_video_board_active(id, FALSE);
@@ -967,7 +967,7 @@ int v9_video_sdk_reboot_api(u_int32 id)
 			if(ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP,"EAIS_SDK_DeviceReboot Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP,"EAIS_SDK_DeviceReboot Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				v9_video_board_lock();
 				v9_video_board_active(id, FALSE);
 				sdk->login = FALSE;
@@ -980,7 +980,7 @@ int v9_video_sdk_reboot_api(u_int32 id)
 			return OK;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 	}
 	return ERROR;
 #else
@@ -998,7 +998,7 @@ int v9_video_sdk_reset_api(u_int32 id)
 	if(!v9_video_board)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+			zlog_warn(MODULE_APP," Video Board memory exceptions");
 		return ERROR;
 	}
 #ifdef V9_VIDEO_SDK_API
@@ -1022,7 +1022,7 @@ int v9_video_sdk_reset_api(u_int32 id)
 				if (ret != EAIS_SDK_SUCCESS)
 				{
 					if(V9_SDK_DEBUG(ERROR))
-						zlog_err(ZLOG_APP, "EAIS_SDK_FactoryReset  Video Board (%d) ERROR(%s)",
+						zlog_err(MODULE_APP, "EAIS_SDK_FactoryReset  Video Board (%d) ERROR(%s)",
 							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
 					v9_video_board_lock();
 					v9_video_board_active(id, FALSE);
@@ -1050,7 +1050,7 @@ int v9_video_sdk_reset_api(u_int32 id)
 			if (ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP, "EAIS_SDK_FactoryReset Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP, "EAIS_SDK_FactoryReset Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				v9_video_board_lock();
 				v9_video_board_active(id, FALSE);
 				sdk->login = FALSE;
@@ -1063,7 +1063,7 @@ int v9_video_sdk_reset_api(u_int32 id)
 			return OK;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 		return ERROR;
 	}
 	return ERROR;
@@ -1079,7 +1079,7 @@ int v9_video_sdk_getvch_api(u_int32 id)
 	if(!v9_video_board)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+			zlog_warn(MODULE_APP," Video Board memory exceptions");
 		return ERROR;
 	}
 	if (!v9_video_board || id <= APP_BOARD_MAIN)
@@ -1113,13 +1113,13 @@ int v9_video_sdk_getvch_api(u_int32 id)
 			else
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP, "EAIS_SDK_GetRtspConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP, "EAIS_SDK_GetRtspConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return ERROR;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 		return ERROR;
 #else
 		return ERROR;
@@ -1139,13 +1139,13 @@ int v9_video_sdk_set_vch_api(u_int32 id, int cnum, void *p)
 	if(!v9_video_board)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+			zlog_warn(MODULE_APP," Video Board memory exceptions");
 		return ERROR;
 	}
 	if(!stream)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Stream memory exceptions");
+			zlog_warn(MODULE_APP," Video Stream memory exceptions");
 		return ERROR;
 	}
 #ifdef V9_VIDEO_SDK_API
@@ -1171,7 +1171,7 @@ int v9_video_sdk_set_vch_api(u_int32 id, int cnum, void *p)
 					if(ret != EAIS_SDK_SUCCESS)
 					{
 						if(V9_SDK_DEBUG(ERROR))
-							zlog_err(ZLOG_APP,"EAIS_SDK_SetRtspConfig Video Board (%d) ERROR(%s)",
+							zlog_err(MODULE_APP,"EAIS_SDK_SetRtspConfig Video Board (%d) ERROR(%s)",
 							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
 						return ERROR;
 					}
@@ -1200,13 +1200,13 @@ int v9_video_sdk_set_vch_api(u_int32 id, int cnum, void *p)
 			if(ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP,"EAIS_SDK_SetRtspConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP,"EAIS_SDK_SetRtspConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 		return ERROR;
 	}
 	return ERROR;
@@ -1224,7 +1224,7 @@ int v9_video_sdk_add_vch_api(u_int32 id, int ch, char *url)
 	if(!v9_video_board)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+			zlog_warn(MODULE_APP," Video Board memory exceptions");
 		return ERROR;
 	}
 #ifdef V9_VIDEO_SDK_API
@@ -1245,7 +1245,7 @@ int v9_video_sdk_add_vch_api(u_int32 id, int ch, char *url)
 				if(ret != EAIS_SDK_SUCCESS)
 				{
 					if(V9_SDK_DEBUG(ERROR))
-						zlog_err(ZLOG_APP,"EAIS_SDK_SetRtspConfig  Video Board (%d) ERROR(%s)",
+						zlog_err(MODULE_APP,"EAIS_SDK_SetRtspConfig  Video Board (%d) ERROR(%s)",
 							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
 					return ERROR;
 				}
@@ -1269,13 +1269,13 @@ int v9_video_sdk_add_vch_api(u_int32 id, int ch, char *url)
 			if(ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP,"EAIS_SDK_SetRtspConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP,"EAIS_SDK_SetRtspConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 		return ERROR;
 	}
 	return ERROR;
@@ -1293,7 +1293,7 @@ int v9_video_sdk_del_vch_api(u_int32 id, int ch)
 	if(!v9_video_board)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+			zlog_warn(MODULE_APP," Video Board memory exceptions");
 		return ERROR;
 	}
 #ifdef V9_VIDEO_SDK_API
@@ -1328,7 +1328,7 @@ int v9_video_sdk_del_vch_api(u_int32 id, int ch)
 				if(ret != EAIS_SDK_SUCCESS)
 				{
 					if(V9_SDK_DEBUG(ERROR))
-						zlog_err(ZLOG_APP,"EAIS_SDK_SetRtspConfig Video Board (%d) ERROR(%s)",
+						zlog_err(MODULE_APP,"EAIS_SDK_SetRtspConfig Video Board (%d) ERROR(%s)",
 									 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
 					return ERROR;
 				}
@@ -1366,13 +1366,13 @@ int v9_video_sdk_del_vch_api(u_int32 id, int ch)
 			if(ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP,"EAIS_SDK_SetRtspConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP,"EAIS_SDK_SetRtspConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 		return ERROR;
 	}
 	return ERROR;
@@ -1392,7 +1392,7 @@ static int v9_video_sdk_lookup_vch_hw(u_int32 id, v9_video_sdk_t *sdk, int ch, S
 		if(ret != EAIS_SDK_SUCCESS)
 		{
 			if(V9_SDK_DEBUG(ERROR))
-				zlog_err(ZLOG_APP,"EAIS_SDK_GetRtspConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+				zlog_err(MODULE_APP,"EAIS_SDK_GetRtspConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 			return ERROR;
 		}
 		if(pstRTSPConfig)
@@ -1408,7 +1408,7 @@ static int v9_video_sdk_lookup_vch_hw(u_int32 id, v9_video_sdk_t *sdk, int ch, S
 		return ERROR;
 	}
 	if(V9_SDK_DEBUG(WARN))
-		zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 #endif
@@ -1421,7 +1421,7 @@ int v9_video_sdk_get_vch_api(u_int32 id, int ch, void *p)
 	if(!v9_video_board)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+			zlog_warn(MODULE_APP," Video Board memory exceptions");
 		return ERROR;
 	}
 
@@ -1448,7 +1448,7 @@ int v9_video_sdk_lookup_vch_api(u_int32 id, int ch)
 	if(!v9_video_board)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+			zlog_warn(MODULE_APP," Video Board memory exceptions");
 		return ERROR;
 	}
 #ifdef V9_VIDEO_SDK_API
@@ -1472,7 +1472,7 @@ int v9_video_sdk_get_rtsp_status_api(u_int32 id)
 	if(!v9_video_board)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+			zlog_warn(MODULE_APP," Video Board memory exceptions");
 		return ERROR;
 	}
 
@@ -1490,7 +1490,7 @@ int v9_video_sdk_get_rtsp_status_api(u_int32 id)
 				if(strlen(stRTSPConfig.stRTSPInfoArr[i].szChanRtspUrl))										// 通道区分
 				{
 					if(V9_SDK_DEBUG(EVENT))
-						zlog_debug(ZLOG_APP,"Video Board (%d) Get Channel (%d) RTSPStatus=%d decodeStatus=%d", id,
+						zlog_debug(MODULE_APP,"Video Board (%d) Get Channel (%d) RTSPStatus=%d decodeStatus=%d", id,
 							   stRTSPConfig.stRTSPInfoArr[i].nChannleId,
 							   stRTSPConfig.stRTSPInfoArr[i].nRTSPStatus,
 							   stRTSPConfig.stRTSPInfoArr[i].nDecodeStatus);
@@ -1501,7 +1501,7 @@ int v9_video_sdk_get_rtsp_status_api(u_int32 id)
 								stRTSPConfig.stRTSPInfoArr[i].nDecodeStatus);
 				}
 			}
-			//zlog_debug(ZLOG_APP," Video Board loading RTSP Status OK");
+			//zlog_debug(MODULE_APP," Video Board loading RTSP Status OK");
 			return OK;
 		}
 	}
@@ -1521,7 +1521,7 @@ int v9_video_sdk_open_snap_api(u_int32 id, int type)
 	if(!v9_video_board)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+			zlog_warn(MODULE_APP," Video Board memory exceptions");
 		return ERROR;
 	}
 #ifdef V9_VIDEO_SDK_API
@@ -1536,7 +1536,7 @@ int v9_video_sdk_open_snap_api(u_int32 id, int type)
 				if(ret != EAIS_SDK_SUCCESS)
 				{
 					if(V9_SDK_DEBUG(ERROR))
-						zlog_err(ZLOG_APP,"EAIS_SDK_OpenSnapStream Video Board (%d) ERROR(%s)",
+						zlog_err(MODULE_APP,"EAIS_SDK_OpenSnapStream Video Board (%d) ERROR(%s)",
 							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
 					return ERROR;
 				}
@@ -1555,13 +1555,13 @@ int v9_video_sdk_open_snap_api(u_int32 id, int type)
 			if(ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP,"EAIS_SDK_OpenSnapStream Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP,"EAIS_SDK_OpenSnapStream Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 		return ERROR;
 	}
 	return ERROR;
@@ -1579,7 +1579,7 @@ int v9_video_sdk_close_snap_api(u_int32 id)
 	if(!v9_video_board)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+			zlog_warn(MODULE_APP," Video Board memory exceptions");
 		return ERROR;
 	}
 #ifdef V9_VIDEO_SDK_API
@@ -1594,7 +1594,7 @@ int v9_video_sdk_close_snap_api(u_int32 id)
 				if(ret != EAIS_SDK_SUCCESS)
 				{
 					if(V9_SDK_DEBUG(ERROR))
-						zlog_err(ZLOG_APP,"EAIS_SDK_CloseSnapStream Video Board (%d) ERROR(%s)",
+						zlog_err(MODULE_APP,"EAIS_SDK_CloseSnapStream Video Board (%d) ERROR(%s)",
 							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
 					return ERROR;
 				}
@@ -1613,13 +1613,13 @@ int v9_video_sdk_close_snap_api(u_int32 id)
 			if(ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP,"EAIS_SDK_CloseSnapStream Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP,"EAIS_SDK_CloseSnapStream Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 		return ERROR;
 	}
 	return ERROR;
@@ -1638,7 +1638,7 @@ int v9_video_sdk_set_snap_dir_api(u_int32 id, BOOL http, char *address, int port
 	if(!v9_video_board)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+			zlog_warn(MODULE_APP," Video Board memory exceptions");
 		return ERROR;
 	}
 #ifdef V9_VIDEO_SDK_API
@@ -1669,7 +1669,7 @@ int v9_video_sdk_set_snap_dir_api(u_int32 id, BOOL http, char *address, int port
 				if(ret != EAIS_SDK_SUCCESS)
 				{
 					if(V9_SDK_DEBUG(ERROR))
-						zlog_err(ZLOG_APP,"EAIS_SDK_SetSnapServerAddr Video Board (%d) ERROR(%s)",
+						zlog_err(MODULE_APP,"EAIS_SDK_SetSnapServerAddr Video Board (%d) ERROR(%s)",
 							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
 					return ERROR;
 				}
@@ -1703,13 +1703,13 @@ int v9_video_sdk_set_snap_dir_api(u_int32 id, BOOL http, char *address, int port
 			if(ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP,"EAIS_SDK_SetSnapServerAddr Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP,"EAIS_SDK_SetSnapServerAddr Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 		return ERROR;
 	}
 	return ERROR;
@@ -1726,7 +1726,7 @@ int v9_video_sdk_nfsdir_api(u_int32 id, char *address, char *user, char *pass, c
 	if(!v9_video_board)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+			zlog_warn(MODULE_APP," Video Board memory exceptions");
 		return ERROR;
 	}
 #ifdef V9_VIDEO_SDK_API
@@ -1739,7 +1739,7 @@ int v9_video_sdk_nfsdir_api(u_int32 id, char *address, char *user, char *pass, c
 		if(ret != EAIS_SDK_SUCCESS)
 		{
 			if(V9_SDK_DEBUG(ERROR))
-				zlog_err(ZLOG_APP,"EAIS_SDK_GetSnapServerAddr Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+				zlog_err(MODULE_APP,"EAIS_SDK_GetSnapServerAddr Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 			return ERROR;
 		}
 		//已经配置
@@ -1752,7 +1752,7 @@ int v9_video_sdk_nfsdir_api(u_int32 id, char *address, char *user, char *pass, c
 				//配置参数和原参数一致
 				if(strcmp(ServerAddr.szServerUrl, address) == 0 && strcmp(ServerAddr.szFtpFilePath + 1, dir) == 0)
 				{
-					zlog_warn(ZLOG_APP, "EAIS_SDK_SetSnapServerAddr Same NFS URL and Path(Do not need setup)");
+					zlog_warn(MODULE_APP, "EAIS_SDK_SetSnapServerAddr Same NFS URL and Path(Do not need setup)");
 					return OK;
 				}
 			}
@@ -1780,13 +1780,13 @@ int v9_video_sdk_nfsdir_api(u_int32 id, char *address, char *user, char *pass, c
 		if(ret != EAIS_SDK_SUCCESS)
 		{
 			if(V9_SDK_DEBUG(ERROR))
-				zlog_err(ZLOG_APP,"EAIS_SDK_SetSnapServerAddr Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+				zlog_err(MODULE_APP,"EAIS_SDK_SetSnapServerAddr Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 			return ERROR;
 		}
 		return OK;
 	}
 	if(V9_SDK_DEBUG(WARN))
-		zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 #else
 	return OK;
@@ -1805,7 +1805,7 @@ int v9_video_sdk_recognize_config_set_api(u_int32 id, int nOutSimilarity,
 	if(!v9_video_board)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+			zlog_warn(MODULE_APP," Video Board memory exceptions");
 		return ERROR;
 	}
 #ifdef V9_VIDEO_SDK_API
@@ -1827,7 +1827,7 @@ int v9_video_sdk_recognize_config_set_api(u_int32 id, int nOutSimilarity,
 				if(ret != EAIS_SDK_SUCCESS)
 				{
 					if(V9_SDK_DEBUG(ERROR))
-						zlog_err(ZLOG_APP,"EAIS_SDK_SetRecognizeCofig Video Board (%d) ERROR(%s)",
+						zlog_err(MODULE_APP,"EAIS_SDK_SetRecognizeCofig Video Board (%d) ERROR(%s)",
 							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
 					return ERROR;
 				}
@@ -1851,13 +1851,13 @@ int v9_video_sdk_recognize_config_set_api(u_int32 id, int nOutSimilarity,
 			if(ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP,"EAIS_SDK_SetRecognizeCofig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP,"EAIS_SDK_SetRecognizeCofig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 		return ERROR;
 	}
 	return ERROR;
@@ -1883,7 +1883,7 @@ int v9_video_sdk_recognize_config_get_api(u_int32 id, int *nOutSimilarity,
 			if(ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP,"EAIS_SDK_GetRecognizeCofig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP,"EAIS_SDK_GetRecognizeCofig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			if(nOutSimilarity)
@@ -1895,7 +1895,7 @@ int v9_video_sdk_recognize_config_get_api(u_int32 id, int *nOutSimilarity,
 			return OK;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 #else
 		return OK;
 #endif
@@ -1913,7 +1913,7 @@ int v9_video_sdk_helmet_config_set_api(u_int32 id, u_int32 ch, void *data)
 	if(!v9_video_board)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+			zlog_warn(MODULE_APP," Video Board memory exceptions");
 		return ERROR;
 	}
 #ifdef V9_VIDEO_SDK_API
@@ -1934,7 +1934,7 @@ int v9_video_sdk_helmet_config_set_api(u_int32 id, u_int32 ch, void *data)
 				if(ret != EAIS_SDK_SUCCESS)
 				{
 					if(V9_SDK_DEBUG(ERROR))
-						zlog_err(ZLOG_APP,"EAIS_SDK_SetHelmetConfig Video Board (%d) ERROR(%s)",
+						zlog_err(MODULE_APP,"EAIS_SDK_SetHelmetConfig Video Board (%d) ERROR(%s)",
 							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
 					return ERROR;
 				}
@@ -1958,13 +1958,13 @@ int v9_video_sdk_helmet_config_set_api(u_int32 id, u_int32 ch, void *data)
 			if(ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP,"EAIS_SDK_SetHelmetConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP,"EAIS_SDK_SetHelmetConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 		return ERROR;
 	}
 	return ERROR;
@@ -1990,7 +1990,7 @@ int v9_video_sdk_helmet_config_get_api(u_int32 id, u_int32 ch, void *data)
 			if(ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP,"EAIS_SDK_GetHelmetConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP,"EAIS_SDK_GetHelmetConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			for(ret = 0; ret < stHelmetConfig.nHelmetInfoNum; ret++)
@@ -2002,11 +2002,11 @@ int v9_video_sdk_helmet_config_get_api(u_int32 id, u_int32 ch, void *data)
 				}
 			}
 			if(V9_SDK_DEBUG(WARN))
-				zlog_err(ZLOG_APP," Video Board (%d) Can not get helmet config of channel %d", V9_APP_BOARD_HW_ID(id),ch);
+				zlog_err(MODULE_APP," Video Board (%d) Can not get helmet config of channel %d", V9_APP_BOARD_HW_ID(id),ch);
 			return ERROR;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 #else
 		return OK;
 #endif
@@ -2024,7 +2024,7 @@ int v9_video_sdk_snap_config_set_api(u_int32 id, u_int32 ch, void *data)
 	if(!v9_video_board)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+			zlog_warn(MODULE_APP," Video Board memory exceptions");
 		return ERROR;
 	}
 #ifdef V9_VIDEO_SDK_API
@@ -2047,7 +2047,7 @@ int v9_video_sdk_snap_config_set_api(u_int32 id, u_int32 ch, void *data)
 				if(ret != EAIS_SDK_SUCCESS)
 				{
 					if(V9_SDK_DEBUG(ERROR))
-						zlog_err(ZLOG_APP,"EAIS_SDK_SetSnapConfig Video Board (%d) ERROR(%s)",
+						zlog_err(MODULE_APP,"EAIS_SDK_SetSnapConfig Video Board (%d) ERROR(%s)",
 							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
 					return ERROR;
 				}
@@ -2073,13 +2073,13 @@ int v9_video_sdk_snap_config_set_api(u_int32 id, u_int32 ch, void *data)
 			if(ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP,"EAIS_SDK_SetSnapConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP,"EAIS_SDK_SetSnapConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 		return ERROR;
 	}
 	return ERROR;
@@ -2104,7 +2104,7 @@ int v9_video_sdk_snap_config_get_api(u_int32 id, u_int32 ch, void *data)
 			if(ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP,"EAIS_SDK_GetSnapConfig ERROR(%s)", v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP,"EAIS_SDK_GetSnapConfig ERROR(%s)", v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			for(ret = 0; ret < pstSnapConfig.nSnapInfoNum; ret++)
@@ -2116,11 +2116,11 @@ int v9_video_sdk_snap_config_get_api(u_int32 id, u_int32 ch, void *data)
 				}
 			}
 			if(V9_SDK_DEBUG(WARN))
-				zlog_err(ZLOG_APP," Video Board (%d) Can not get snap config of channel %d", V9_APP_BOARD_HW_ID(id),ch);
+				zlog_err(MODULE_APP," Video Board (%d) Can not get snap config of channel %d", V9_APP_BOARD_HW_ID(id),ch);
 			return ERROR;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 #else
 		return OK;
 #endif
@@ -2138,7 +2138,7 @@ int v9_video_sdk_original_pic_enable_set_api(u_int32 id, BOOL enable)
 	if(!v9_video_board)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+			zlog_warn(MODULE_APP," Video Board memory exceptions");
 		return ERROR;
 	}
 #ifdef V9_VIDEO_SDK_API
@@ -2156,7 +2156,7 @@ int v9_video_sdk_original_pic_enable_set_api(u_int32 id, BOOL enable)
 				if(ret != EAIS_SDK_SUCCESS)
 				{
 					if(V9_SDK_DEBUG(ERROR))
-						zlog_err(ZLOG_APP,"EAIS_SDK_GetSnapConfig Video Board (%d) ERROR(%s)",
+						zlog_err(MODULE_APP,"EAIS_SDK_GetSnapConfig Video Board (%d) ERROR(%s)",
 							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
 					return ERROR;
 				}
@@ -2165,7 +2165,7 @@ int v9_video_sdk_original_pic_enable_set_api(u_int32 id, BOOL enable)
 				if(ret != EAIS_SDK_SUCCESS)
 				{
 					if(V9_SDK_DEBUG(ERROR))
-						zlog_err(ZLOG_APP,"EAIS_SDK_SetSnapConfig Video Board (%d) ERROR(%s)",
+						zlog_err(MODULE_APP,"EAIS_SDK_SetSnapConfig Video Board (%d) ERROR(%s)",
 							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
 					return ERROR;
 				}
@@ -2185,7 +2185,7 @@ int v9_video_sdk_original_pic_enable_set_api(u_int32 id, BOOL enable)
 			if(ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP,"EAIS_SDK_GetSnapConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP,"EAIS_SDK_GetSnapConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			stSnapConfig.nOriginalPicEnable = enable;
@@ -2193,13 +2193,13 @@ int v9_video_sdk_original_pic_enable_set_api(u_int32 id, BOOL enable)
 			if(ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP,"EAIS_SDK_SetSnapConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP,"EAIS_SDK_SetSnapConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 		return ERROR;
 	}
 	return ERROR;
@@ -2223,7 +2223,7 @@ int v9_video_sdk_original_pic_enable_get_api(u_int32 id, BOOL *enable)
 			if(ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP,"EAIS_SDK_GetSnapConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP,"EAIS_SDK_GetSnapConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			if(enable)
@@ -2231,7 +2231,7 @@ int v9_video_sdk_original_pic_enable_get_api(u_int32 id, BOOL *enable)
 			return OK;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 #else
 		return OK;
 #endif
@@ -2251,7 +2251,7 @@ int v9_video_sdk_alarm_config_set_api(u_int32 id, u_int32 ch, void *data)
 	if(!v9_video_board)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+			zlog_warn(MODULE_APP," Video Board memory exceptions");
 		return ERROR;
 	}
 #ifdef V9_VIDEO_SDK_API
@@ -2274,7 +2274,7 @@ int v9_video_sdk_alarm_config_set_api(u_int32 id, u_int32 ch, void *data)
 				if(ret != EAIS_SDK_SUCCESS)
 				{
 					if(V9_SDK_DEBUG(ERROR))
-						zlog_err(ZLOG_APP,"EAIS_SDK_SetAlarmConfig Video Board (%d) ERROR(%s)",
+						zlog_err(MODULE_APP,"EAIS_SDK_SetAlarmConfig Video Board (%d) ERROR(%s)",
 							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
 					return ERROR;
 				}
@@ -2300,13 +2300,13 @@ int v9_video_sdk_alarm_config_set_api(u_int32 id, u_int32 ch, void *data)
 			if(ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP,"EAIS_SDK_SetAlarmConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP,"EAIS_SDK_SetAlarmConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 		return ERROR;
 	}
 	return ERROR;
@@ -2330,7 +2330,7 @@ int v9_video_sdk_alarm_config_get_api(u_int32 id, s_int32 ch, void *data)
 			if(ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP,"EAIS_SDK_GetAlarmConfig ERROR(%s)", v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP,"EAIS_SDK_GetAlarmConfig ERROR(%s)", v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			if(ch == -1)
@@ -2351,11 +2351,11 @@ int v9_video_sdk_alarm_config_get_api(u_int32 id, s_int32 ch, void *data)
 				}
 			}
 			if(V9_SDK_DEBUG(WARN))
-				zlog_err(ZLOG_APP," Video Board (%d) Can not get alarm config of channel %d", V9_APP_BOARD_HW_ID(id),ch);
+				zlog_err(MODULE_APP," Video Board (%d) Can not get alarm config of channel %d", V9_APP_BOARD_HW_ID(id),ch);
 			return ERROR;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 #else
 		return OK;
 #endif
@@ -2395,7 +2395,7 @@ int v9_video_sdk_update_api(u_int32 id, char *filename)
 			if(ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP,"EAIS_SDK_Update Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP,"EAIS_SDK_Update Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
@@ -2429,7 +2429,7 @@ int v9_video_sdk_query_api(u_int32 id, u_int32 ch, u_int32 nStartTime, u_int32 n
 		if(ret != EAIS_SDK_SUCCESS)
 		{
 			if(V9_SDK_DEBUG(ERROR))
-				zlog_err(ZLOG_APP,"EAIS_SDK_QueryPeopleCount Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+				zlog_err(MODULE_APP,"EAIS_SDK_QueryPeopleCount Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 			return ERROR;
 		}
 		memcpy(data, &stPeopleCount, sizeof(ST_SDKPeopleCount));
@@ -2458,7 +2458,7 @@ int v9_video_sdk_add_user_api(u_int32 id, BOOL gender, int group, char *user, ch
 	if(!v9_video_board)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+			zlog_warn(MODULE_APP," Video Board memory exceptions");
 		return ERROR;
 	}
 #ifdef V9_VIDEO_SDK_API
@@ -2501,7 +2501,7 @@ int v9_video_sdk_add_user_api(u_int32 id, BOOL gender, int group, char *user, ch
 					{
 						XFREE(MTYPE_VIDEO_PIC, pstUserInfo.szPictureData);
 						if(V9_SDK_DEBUG(ERROR))
-							zlog_err(ZLOG_APP, "EAIS_SDK_EditUser Video Board (%d) ERROR(%s)",
+							zlog_err(MODULE_APP, "EAIS_SDK_EditUser Video Board (%d) ERROR(%s)",
 									 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
 						return ERROR;
 					}
@@ -2512,7 +2512,7 @@ int v9_video_sdk_add_user_api(u_int32 id, BOOL gender, int group, char *user, ch
 			return OK;
 		}
 		if(V9_SDK_DEBUG(ERROR))
-			zlog_err(ZLOG_APP," Can not open picfile(%s)", pic);
+			zlog_err(MODULE_APP," Can not open picfile(%s)", pic);
 		return ERROR;
 	}
 	else
@@ -2556,17 +2556,17 @@ int v9_video_sdk_add_user_api(u_int32 id, BOOL gender, int group, char *user, ch
 				if (ret != EAIS_SDK_SUCCESS)
 				{
 					if(V9_SDK_DEBUG(ERROR))
-						zlog_err(ZLOG_APP, "EAIS_SDK_EditUser Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+						zlog_err(MODULE_APP, "EAIS_SDK_EditUser Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 					return ERROR;
 				}
 				return OK;
 			}
 			if(V9_SDK_DEBUG(ERROR))
-				zlog_err(ZLOG_APP," Can not open picfile(%s)", pic);
+				zlog_err(MODULE_APP," Can not open picfile(%s)", pic);
 			return ERROR;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 		return ERROR;
 	}
 	return ERROR;
@@ -2597,7 +2597,7 @@ int v9_video_sdk_del_user_api(u_int32 id, int group, char *ID)
 				if (ret != EAIS_SDK_SUCCESS)
 				{
 					if(V9_SDK_DEBUG(ERROR))
-						zlog_err(ZLOG_APP, "EAIS_SDK_DelUser Video Board (%d) ERROR(%s)",
+						zlog_err(MODULE_APP, "EAIS_SDK_DelUser Video Board (%d) ERROR(%s)",
 							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
 					return ERROR;
 				}
@@ -2615,13 +2615,13 @@ int v9_video_sdk_del_user_api(u_int32 id, int group, char *ID)
 			if (ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP, "EAIS_SDK_DelUser Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP, "EAIS_SDK_DelUser Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 		return ERROR;
 	}
 	return ERROR;
@@ -2641,7 +2641,7 @@ int v9_video_sdk_del_group_user_api(u_int32 id, void *p_pstUserList)
 	if(!v9_video_board)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+			zlog_warn(MODULE_APP," Video Board memory exceptions");
 		return ERROR;
 	}
 #ifdef V9_VIDEO_SDK_API
@@ -2656,7 +2656,7 @@ int v9_video_sdk_del_group_user_api(u_int32 id, void *p_pstUserList)
 				if (ret != EAIS_SDK_SUCCESS)
 				{
 					if(V9_SDK_DEBUG(ERROR))
-						zlog_err(ZLOG_APP, "EAIS_SDK_DelGroupUserList Video Board (%d) ERROR(%s)",
+						zlog_err(MODULE_APP, "EAIS_SDK_DelGroupUserList Video Board (%d) ERROR(%s)",
 							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
 					return ERROR;
 				}
@@ -2674,13 +2674,13 @@ int v9_video_sdk_del_group_user_api(u_int32 id, void *p_pstUserList)
 			if (ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP, "EAIS_SDK_DelGroupUserList Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP, "EAIS_SDK_DelGroupUserList Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 		return ERROR;
 	}
 	return ERROR;
@@ -2703,7 +2703,7 @@ int v9_video_sdk_add_group_api(u_int32 id, int group, char *name)
 	if(!v9_video_board)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+			zlog_warn(MODULE_APP," Video Board memory exceptions");
 		return ERROR;
 	}
 #ifdef V9_VIDEO_SDK_API
@@ -2722,7 +2722,7 @@ int v9_video_sdk_add_group_api(u_int32 id, int group, char *name)
 				if (ret != EAIS_SDK_SUCCESS)
 				{
 					if(V9_SDK_DEBUG(ERROR))
-						zlog_err(ZLOG_APP, "EAIS_SDK_SetGroupNameList Video Board (%d) ERROR(%s)",
+						zlog_err(MODULE_APP, "EAIS_SDK_SetGroupNameList Video Board (%d) ERROR(%s)",
 							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
 					return ERROR;
 				}
@@ -2740,13 +2740,13 @@ int v9_video_sdk_add_group_api(u_int32 id, int group, char *name)
 			if (ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP, "EAIS_SDK_SetGroupNameList Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP, "EAIS_SDK_SetGroupNameList Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 		return ERROR;
 	}
 	return ERROR;
@@ -2767,7 +2767,7 @@ int v9_video_sdk_del_group_api(u_int32 id, int group)
 	if(!v9_video_board)
 	{
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board memory exceptions");
+			zlog_warn(MODULE_APP," Video Board memory exceptions");
 		return ERROR;
 	}
 #ifdef V9_VIDEO_SDK_API
@@ -2782,7 +2782,7 @@ int v9_video_sdk_del_group_api(u_int32 id, int group)
 				if (ret != EAIS_SDK_SUCCESS)
 				{
 					if(V9_SDK_DEBUG(ERROR))
-						zlog_err(ZLOG_APP, "EAIS_SDK_DelGroup Video Board (%d) ERROR(%s)",
+						zlog_err(MODULE_APP, "EAIS_SDK_DelGroup Video Board (%d) ERROR(%s)",
 							 V9_APP_BOARD_HW_ID(v9_video_board[i].id), v9_video_sdk_errnostr(ret));
 					return ERROR;
 				}
@@ -2800,13 +2800,13 @@ int v9_video_sdk_del_group_api(u_int32 id, int group)
 			if (ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP, "EAIS_SDK_DelGroup Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP, "EAIS_SDK_DelGroup Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			return OK;
 		}
 		if(V9_SDK_DEBUG(WARN))
-			zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+			zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 		return ERROR;
 	}
 	return ERROR;
@@ -2826,7 +2826,7 @@ int v9_video_sdk_get_user_api(u_int32 id, char* ID, void* UserInfo)
 		if(ret != EAIS_SDK_SUCCESS)
 		{
 			if(V9_SDK_DEBUG(ERROR))
-				zlog_err(ZLOG_APP,"EAIS_SDK_GetUser Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+				zlog_err(MODULE_APP,"EAIS_SDK_GetUser Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 			return ERROR;
 		}
 		return OK;
@@ -2835,7 +2835,7 @@ int v9_video_sdk_get_user_api(u_int32 id, char* ID, void* UserInfo)
 #endif
 	}
 	if(V9_SDK_DEBUG(WARN))
-		zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 
@@ -2867,7 +2867,7 @@ int v9_video_sdk_get_keyvalue_api(u_int32 id, char * pic, void* UserInfo)
 			if (ret != OK)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP," Video Board (%d) can not open file size (%s)", V9_APP_BOARD_HW_ID(id), pic);
+					zlog_err(MODULE_APP," Video Board (%d) can not open file size (%s)", V9_APP_BOARD_HW_ID(id), pic);
 				XFREE(MTYPE_VIDEO_PIC, PictureInfo.szPictureData);
 				PictureInfo.szPictureData = NULL;
 				return ERROR;
@@ -2881,7 +2881,7 @@ int v9_video_sdk_get_keyvalue_api(u_int32 id, char * pic, void* UserInfo)
 				XFREE(MTYPE_VIDEO_PIC, PictureInfo.szPictureData);
 				PictureInfo.szPictureData = NULL;
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP,"EAIS_SDK_GetPictureFeature Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP,"EAIS_SDK_GetPictureFeature Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				return ERROR;
 			}
 			if(key)
@@ -2913,7 +2913,7 @@ int v9_video_sdk_get_keyvalue_api(u_int32 id, char * pic, void* UserInfo)
 		else
 		{
 			if(V9_SDK_DEBUG(ERROR))
-				zlog_err(ZLOG_APP," Video Board (%d) can not get file size (%s)", V9_APP_BOARD_HW_ID(id), pic);
+				zlog_err(MODULE_APP," Video Board (%d) can not get file size (%s)", V9_APP_BOARD_HW_ID(id), pic);
 			return ERROR;
 		}
 #else
@@ -2921,7 +2921,7 @@ int v9_video_sdk_get_keyvalue_api(u_int32 id, char * pic, void* UserInfo)
 #endif
 	}
 	if(V9_SDK_DEBUG(WARN))
-		zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 
@@ -2934,10 +2934,10 @@ int v9_video_sdk_get_sosine_similarity_api(const float* p_fFirstArray, const flo
 	if(ret != EAIS_SDK_SUCCESS)
 	{
 		if(V9_SDK_DEBUG(ERROR))
-			zlog_err(ZLOG_APP," Video can not get sosine similarity ERROR(%s)", v9_video_sdk_errnostr(ret));
+			zlog_err(MODULE_APP," Video can not get sosine similarity ERROR(%s)", v9_video_sdk_errnostr(ret));
 		return ERROR;
 	}
-	zlog_debug(ZLOG_APP," Video get sosine similarity %f", *p_fResult);
+	zlog_debug(MODULE_APP," Video get sosine similarity %f", *p_fResult);
 	return OK;
 #else
 	return ERROR;
@@ -2959,7 +2959,7 @@ int v9_video_sdk_get_config(struct vty *vty, u_int32 id, v9_video_sdk_t *sdk)
 			if (ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP, "EAIS_SDK_GetSnapConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP, "EAIS_SDK_GetSnapConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				vty_out (vty, " video sdk %d can not get snap config %s", V9_APP_BOARD_HW_ID(id),
 									 VTY_NEWLINE);
 				return ERROR;
@@ -3130,7 +3130,7 @@ int v9_video_sdk_get_config(struct vty *vty, u_int32 id, v9_video_sdk_t *sdk)
 			if (ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP, "EAIS_SDK_GetHelmetConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP, "EAIS_SDK_GetHelmetConfig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				vty_out (vty, " video sdk %d can not get helmet config%s", V9_APP_BOARD_HW_ID(id),
 												 VTY_NEWLINE);
 				return ERROR;
@@ -3230,7 +3230,7 @@ int v9_video_sdk_get_config(struct vty *vty, u_int32 id, v9_video_sdk_t *sdk)
 			if (ret != EAIS_SDK_SUCCESS)
 			{
 				if(V9_SDK_DEBUG(ERROR))
-					zlog_err(ZLOG_APP, "EAIS_SDK_GetRecognizeCofig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+					zlog_err(MODULE_APP, "EAIS_SDK_GetRecognizeCofig Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 				vty_out (vty, " video sdk %d can not get recognize cofig %s", V9_APP_BOARD_HW_ID(id),
 												 VTY_NEWLINE);
 				return ERROR;
@@ -3270,7 +3270,7 @@ static int v9_video_sdk_timer_hw_api(u_int32 id, struct tm *tme)
 		if(ret != EAIS_SDK_SUCCESS)
 		{
 			if(V9_SDK_DEBUG(ERROR))
-				zlog_err(ZLOG_APP,"EAIS_SDK_SetDeviceTime Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+				zlog_err(MODULE_APP,"EAIS_SDK_SetDeviceTime Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 			return ERROR;
 		}
 		V9_SDK_DBGPRF(" Video Board (%d) SDK Set Device Time OK", V9_APP_BOARD_HW_ID(id));
@@ -3280,7 +3280,7 @@ static int v9_video_sdk_timer_hw_api(u_int32 id, struct tm *tme)
 #endif
 	}
 	if(V9_SDK_DEBUG(WARN))
-		zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 
@@ -3320,7 +3320,7 @@ int v9_video_sdk_ntp_api(u_int32 id, char *ntps, int TimingInterval)
 		if(ret != EAIS_SDK_SUCCESS)
 		{
 			if(V9_SDK_DEBUG(ERROR))
-				zlog_err(ZLOG_APP,"EAIS_SDK_SetNTPInfo Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
+				zlog_err(MODULE_APP,"EAIS_SDK_SetNTPInfo Video Board (%d) ERROR(%s)", V9_SDK_ID(sdk),v9_video_sdk_errnostr(ret));
 			return ERROR;
 		}
 		V9_SDK_DBGPRF(" Video Board (%d) SDK Set Device NTP OK", V9_APP_BOARD_HW_ID(id));
@@ -3330,7 +3330,7 @@ int v9_video_sdk_ntp_api(u_int32 id, char *ntps, int TimingInterval)
 #endif
 	}
 	if(V9_SDK_DEBUG(WARN))
-		zlog_warn(ZLOG_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
+		zlog_warn(MODULE_APP," Video Board (%d) SDK not connect", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 

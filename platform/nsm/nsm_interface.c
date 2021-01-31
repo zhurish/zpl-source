@@ -38,7 +38,7 @@
 #include "nsm_zserv.h"
 #include "nsm_redistribute.h"
 #include "nsm_debug.h"
-#include "zclient.h"
+#include "nsm_zclient.h"
 #include "nsm_mac.h"
 #include "nsm_vlan.h"
 #include "nsm_serial.h"
@@ -138,7 +138,7 @@ static void if_addr_wakeup (struct interface *ifp)
 				//ret = if_set_prefix(ifp, ifc);
 				//if (ret < 0)
 				{
-					zlog_warn(ZLOG_NSM, "Can't set interface's address: %s",
+					zlog_warn(MODULE_NSM, "Can't set interface's address: %s",
 							safe_strerror(errno));
 					continue;
 				}
@@ -164,7 +164,7 @@ static void if_addr_wakeup (struct interface *ifp)
 				//ret = if_prefix_add_ipv6(ifp, ifc);
 				//if (ret < 0)
 				{
-					zlog_warn(ZLOG_NSM,"Can't set interface's address: %s",
+					zlog_warn(MODULE_NSM,"Can't set interface's address: %s",
 							safe_strerror(errno));
 					continue;
 				}
@@ -390,7 +390,7 @@ static int nsm_interface_new_hook(struct interface *ifp)
 #ifdef USE_IPSTACK_KERNEL
 	if(ifp->dynamic == FALSE && if_kernel_name_lookup(ifp->ifindex))
 	{
-		//zlog_debug(ZLOG_NSM, "=====%s: %s -> %s",__func__, ifp->name, if_kernel_name_lookup(ifp->ifindex));
+		//zlog_debug(MODULE_NSM, "=====%s: %s -> %s",__func__, ifp->name, if_kernel_name_lookup(ifp->ifindex));
 		if_kname_set(ifp, if_kernel_name_lookup(ifp->ifindex));
 	}
 #endif
@@ -552,6 +552,7 @@ static int nsm_interface_delete(struct interface *ifp)
 #endif
 			)
 	{
+		#ifdef PL_NSM_TRUNK
 		if(ifp->if_type == IF_LAG)
 		{
 			u_int trunkId = 0;
@@ -563,6 +564,7 @@ static int nsm_interface_delete(struct interface *ifp)
 				}
 			}
 		}
+		#endif
 		delete = 1;
 	}
 	if(delete)

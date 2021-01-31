@@ -15,7 +15,7 @@
 #include "command.h"
 #include "memory.h"
 #include "log.h"
-#include "zclient.h"
+#include "nsm_zclient.h"
 #include "eloop.h"
 
 #include <netinet/if_ether.h>
@@ -204,11 +204,11 @@ static int kernel_driver_recv(int fd)
 	m.msg_controllen = sizeof(cbuf);
 
 	if ((len = recvmsg(fd, &m, 0)) < 0) {
-		zlog_warn(ZLOG_PAL, "receiving a ARP message failed: %s", strerror(errno));
+		zlog_warn(MODULE_PAL, "receiving a ARP message failed: %s", strerror(errno));
 		return -1;
 	}
 	if (ss.ss_family != AF_INET) {
-		//zlog_warn(ZLOG_PAL, "received ARP message is not AF_INET");
+		//zlog_warn(MODULE_PAL, "received ARP message is not AF_INET");
 		return -1;
 	}
 

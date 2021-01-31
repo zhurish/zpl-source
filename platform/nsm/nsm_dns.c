@@ -143,10 +143,10 @@ static int ip_dns_add_node(ip_dns_t *value)
 			pu.p = &value->address;
 			prefix_2_address_str (pu, buf, sizeof(buf));
 			if((value->type == IP_DNS_DYNAMIC || value->type == IP_DNS_STATIC))
-				zlog_debug(ZLOG_NSM, "add DNS Server %s on %s", buf,
+				zlog_debug(MODULE_NSM, "add DNS Server %s on %s", buf,
 					ifindex2ifname(value->_dns_ifindex));
 			else
-				zlog_debug(ZLOG_NSM, "add host name %s <-> %s", buf,
+				zlog_debug(MODULE_NSM, "add host name %s <-> %s", buf,
 					value->_host_name);
 		}
 		return OK;
@@ -344,10 +344,10 @@ int nsm_ip_dns_del_by_ifindex(ifindex_t ifindex, dns_class_t type)
 					pu.p = &pstNode->address;
 					prefix_2_address_str (pu, buf, sizeof(buf));
 					if((pstNode->type == IP_DNS_DYNAMIC || pstNode->type == IP_DNS_STATIC))
-						zlog_debug(ZLOG_NSM, "add DNS Server %s on %s", buf,
+						zlog_debug(MODULE_NSM, "add DNS Server %s on %s", buf,
 							ifindex2ifname(pstNode->_dns_ifindex));
 					else
-						zlog_debug(ZLOG_NSM, "add host name %s <-> %s", buf,
+						zlog_debug(MODULE_NSM, "add host name %s <-> %s", buf,
 								pstNode->_host_name);
 				}
 
@@ -401,10 +401,10 @@ int nsm_ip_dns_del(struct prefix *address, dns_class_t type)
 			pu.p = &value->address;
 			prefix_2_address_str (pu, buf, sizeof(buf));
 			if((value->type == IP_DNS_DYNAMIC || value->type == IP_DNS_STATIC))
-				zlog_debug(ZLOG_NSM, "add DNS Server %s on %s", buf,
+				zlog_debug(MODULE_NSM, "add DNS Server %s on %s", buf,
 					ifindex2ifname(value->_dns_ifindex));
 			else
-				zlog_debug(ZLOG_NSM, "add host name %s <-> %s", buf,
+				zlog_debug(MODULE_NSM, "add host name %s <-> %s", buf,
 					value->_host_name);
 		}
 
@@ -481,10 +481,10 @@ int nsm_ip_host_del(struct prefix *address, dns_class_t type)
 			pu.p = &value->address;
 			prefix_2_address_str (pu, buf, sizeof(buf));
 			if((value->type == IP_DNS_DYNAMIC || value->type == IP_DNS_STATIC))
-				zlog_debug(ZLOG_NSM, "del DNS Server %s on %s", buf,
+				zlog_debug(MODULE_NSM, "del DNS Server %s on %s", buf,
 					ifindex2ifname(value->_dns_ifindex));
 			else
-				zlog_debug(ZLOG_NSM, "del host name %s <-> %s", buf,
+				zlog_debug(MODULE_NSM, "del host name %s <-> %s", buf,
 					value->_host_name);
 		}
 
@@ -730,7 +730,7 @@ static int ip_dns_static_update_interface(ip_dns_t *value)
 				memset(buf, 0, sizeof(buf));
 				pu.p = &value->address;
 				prefix_2_address_str (pu, buf, sizeof(buf));
-				zlog_debug(ZLOG_NSM, "update DNS Server %s on %s", buf,
+				zlog_debug(MODULE_NSM, "update DNS Server %s on %s", buf,
 						ifindex2ifname(value->_dns_ifindex));
 			}
 		}
@@ -762,7 +762,7 @@ static int ip_dns_static_check_active(ip_dns_t *value)
 				memset(buf, 0, sizeof(buf));
 				pu.p = &value->address;
 				prefix_2_address_str (pu, buf, sizeof(buf));
-				zlog_debug(ZLOG_NSM, "DNS Server %s on %s state channel %s -> %s",
+				zlog_debug(MODULE_NSM, "DNS Server %s on %s state channel %s -> %s",
 						buf,
 						ifindex2ifname(value->_dns_ifindex),
 						old ? "UP":"DOWN", value->_dns_active ? "UP":"DOWN");
@@ -889,7 +889,7 @@ static int ip_dns_choose_best(ip_dns_t *value)
 		{
 			pu.p = &gIpdns.dns1->address;
 			prefix_2_address_str (pu, buf, sizeof(buf));
-			zlog_debug(ZLOG_NSM, "Choose best: DNS Server %s on %s",
+			zlog_debug(MODULE_NSM, "Choose best: DNS Server %s on %s",
 					buf,
 					ifindex2ifname(gIpdns.dns1->_dns_ifindex));
 		}
@@ -897,7 +897,7 @@ static int ip_dns_choose_best(ip_dns_t *value)
 		{
 			pu.p = &gIpdns.dns2->address;
 			prefix_2_address_str (pu, buf, sizeof(buf));
-			zlog_debug(ZLOG_NSM, "Choose best: DNS Server(seondly) %s on %s",
+			zlog_debug(MODULE_NSM, "Choose best: DNS Server(seondly) %s on %s",
 					buf,
 					ifindex2ifname(gIpdns.dns2->_dns_ifindex));
 		}
@@ -991,7 +991,7 @@ static int ip_dns_job_work(void *p)
 
 	if((_dns_debug & IP_DNS_EVENT_DEBUG))
 	{
-		zlog_debug(ZLOG_NSM, "start running work job %d # %p", job->cmd, job->p);
+		zlog_debug(MODULE_NSM, "start running work job %d # %p", job->cmd, job->p);
 	}
 
 	switch(job->cmd)
@@ -1022,7 +1022,7 @@ static int ip_dns_job_work(void *p)
 	{
 		if((_dns_debug & IP_DNS_EVENT_DEBUG))
 		{
-			zlog_debug(ZLOG_NSM, "add/update DNS Server under work job %d # %p", job->cmd, job->p);
+			zlog_debug(MODULE_NSM, "add/update DNS Server under work job %d # %p", job->cmd, job->p);
 		}
 		ip_dns_kernel_add(gIpdns.domain_name1, gIpdns.domain_name2,
 			gIpdns.dns1, gIpdns.dns2, gIpdns.dns3);
@@ -1031,7 +1031,7 @@ static int ip_dns_job_work(void *p)
 	{
 		if((_dns_debug & IP_DNS_EVENT_DEBUG))
 		{
-			zlog_debug(ZLOG_NSM, "delete DNS Server under work job %d # %p", job->cmd, job->p);
+			zlog_debug(MODULE_NSM, "delete DNS Server under work job %d # %p", job->cmd, job->p);
 		}
 		ip_dns_kernel_del();
 	}
@@ -1097,7 +1097,7 @@ static int ip_dns_start_job(dns_cmd_t cmd, void *p)
 		}
 		if((_dns_debug & IP_DNS_EVENT_DEBUG))
 		{
-			zlog_debug(ZLOG_NSM, "add work job %d # %p", node->cmd, node->p);
+			zlog_debug(MODULE_NSM, "add work job %d # %p", node->cmd, node->p);
 		}
 		os_job_add(ip_dns_job_work, node);
 		return OK;
@@ -1255,7 +1255,7 @@ static int ip_host_kernel_add(ip_host_t *dns1, char *name)
 		prefix_2_address_str (pu, buf, sizeof(buf));
 		if((_dns_debug & IP_DNS_EVENT_DEBUG))
 		{
-			zlog_debug(ZLOG_NSM, "kernel add host: host %s -> %s", buf, name);
+			zlog_debug(MODULE_NSM, "kernel add host: host %s -> %s", buf, name);
 		}
 		fprintf(fp, "# Generated by NSM-DNS\n");
 		fprintf(fp, "%s %s\n", buf, name);
@@ -1281,7 +1281,7 @@ static int ip_host_kernel_del(ip_host_t *dns1)
 
 	if((_dns_debug & IP_DNS_EVENT_DEBUG))
 	{
-		zlog_debug(ZLOG_NSM, "kernel del host: host %s", buf);
+		zlog_debug(MODULE_NSM, "kernel del host: host %s", buf);
 	}
 	if(fp1 && fp2)
 	{

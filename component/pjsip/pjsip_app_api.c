@@ -3666,7 +3666,7 @@ int pl_pjsip_app_start_call(int accid, char *num, int *callid)
 	memset(cmd, '\0', sizeof(cmd));
 	if(!pl_pjsip)
 		return ERROR;
-	//zlog_debug(ZLOG_VOIP, "========%s->os_mutex_lock", __func__);
+	//zlog_debug(MODULE_VOIP, "========%s->os_mutex_lock", __func__);
 	if(pl_pjsip->mutex)
 		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
 
@@ -3728,9 +3728,9 @@ int pl_pjsip_app_start_call(int accid, char *num, int *callid)
 		os_mutex_unlock(pl_pjsip->mutex);
 	if(app_config.current_call != PJSUA_INVALID_ID)
 		return ERROR;
-	//zlog_debug(ZLOG_VOIP, "========%s->voip_volume_control_api", __func__);
+	//zlog_debug(MODULE_VOIP, "========%s->voip_volume_control_api", __func__);
 	voip_volume_control_api(TRUE);
-	//zlog_debug(ZLOG_VOIP, "========%s-> enter pl_pjsip_app_start_call", __func__);
+	//zlog_debug(MODULE_VOIP, "========%s-> enter pl_pjsip_app_start_call", __func__);
 
 #ifndef PL_PJSIP_CALL_SHELL
 	//char *pj_call_str = (char *)(cmd + 9);
@@ -3744,7 +3744,7 @@ int pl_pjsip_app_start_call(int accid, char *num, int *callid)
 	{
 		if(callid)
 			*callid = app_config.current_call;
-		//zlog_debug(ZLOG_VOIP, "========%s-> level pl_pjsip_app_start_call", __func__);
+		//zlog_debug(MODULE_VOIP, "========%s-> level pl_pjsip_app_start_call", __func__);
 		return OK;
 	}
 #else
@@ -3758,7 +3758,7 @@ int pl_pjsip_app_start_call(int accid, char *num, int *callid)
 /*
  * handle SIGUSR2 nostop noprint
 */
-	//zlog_debug(ZLOG_VOIP, "========%s-> level pl_pjsip_app_start_call", __func__);
+	//zlog_debug(MODULE_VOIP, "========%s-> level pl_pjsip_app_start_call", __func__);
 	voip_volume_control_api(FALSE);
 	return ERROR;
 }

@@ -75,7 +75,7 @@ int voip_thlog_init()
 	os_uci_get_integer("product.global.thlog_max", &thlog_db->thlog_max);
 	//os_uci_get_integer("product.global.thlog_index", &thlog_db->thlog_index);
 #endif
-	//zlog_debug(ZLOG_VOIP, "=================%d %d", thlog_db->thlog_max, thlog_db->thlog_index);
+	//zlog_debug(MODULE_VOIP, "=================%d %d", thlog_db->thlog_max, thlog_db->thlog_index);
 	return OK;
 }
 

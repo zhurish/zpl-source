@@ -304,10 +304,10 @@ zfpm_get_time (void)
   struct timeval tv;
 #ifdef OS_THREAD
   if (os_gettime (OS_CLK_MONOTONIC, &tv) < 0)
-    zlog_warn (ZLOG_NSM, "FPM: quagga_gettime failed!!");
+    zlog_warn (MODULE_NSM, "FPM: quagga_gettime failed!!");
 #else
   if (quagga_gettime (QUAGGA_CLK_MONOTONIC, &tv) < 0)
-    zlog_warn (ZLOG_NSM, "FPM: quagga_gettime failed!!");
+    zlog_warn (MODULE_NSM, "FPM: quagga_gettime failed!!");
 #endif
   return tv.tv_sec;
 }
@@ -731,7 +731,7 @@ zfpm_connection_down (const char *detail)
 
   assert (zfpm_g->state == ZFPM_STATE_ESTABLISHED);
 
-  zlog_info (ZLOG_NSM, "connection to the FPM has gone down: %s", detail);
+  zlog_info (MODULE_NSM, "connection to the FPM has gone down: %s", detail);
 
   zfpm_read_off ();
   zfpm_write_off ();
@@ -1198,7 +1198,7 @@ zfpm_connect_cb (struct thread *t)
       return 0;
     }
 
-  zlog_info (ZLOG_NSM, "can't connect to FPM %d: %s", sock, safe_strerror (errno));
+  zlog_info (MODULE_NSM, "can't connect to FPM %d: %s", sock, safe_strerror (errno));
   close (sock);
 
   /*
@@ -1650,7 +1650,7 @@ zfpm_init_message_format (const char *format)
     {
       if (!have_netlink)
 	{
-	  zlog_err (ZLOG_NSM, "FPM netlink message format is not available");
+	  zlog_err (MODULE_NSM, "FPM netlink message format is not available");
 	  return;
 	}
       zfpm_g->message_format = ZFPM_MSG_FORMAT_NETLINK;
@@ -1661,14 +1661,14 @@ zfpm_init_message_format (const char *format)
     {
       if (!have_protobuf)
 	{
-	  zlog_err (ZLOG_NSM, "FPM protobuf message format is not available");
+	  zlog_err (MODULE_NSM, "FPM protobuf message format is not available");
 	  return;
 	}
       zfpm_g->message_format = ZFPM_MSG_FORMAT_PROTOBUF;
       return;
     }
 
-  zlog_warn (ZLOG_NSM, "Unknown fpm format '%s'", format);
+  zlog_warn (MODULE_NSM, "Unknown fpm format '%s'", format);
 }
 
 /**

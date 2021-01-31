@@ -7,7 +7,6 @@
 ifeq ($(MENUCONFIG_PL_BUILD),true)
 include $(MENUCONFIG_PL_CONFIG)
 else
-
 ifeq ($(ARCH_TYPE),)
 #ARCH_TYPE=ARM
 ARCH_TYPE=X86

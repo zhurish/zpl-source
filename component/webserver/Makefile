@@ -231,8 +231,12 @@ endif
 -include $(MODULE_OBJS:.o=.d)
 #
 #
-#$(LIBS) : $(MODULE_OBJS)
-#	$(PL_MAKE_LIB) $(LIBS) $(MODULE_OBJS)
+
+files = $(patsubst %.o,%.c,$(OBJS))
+make_prepare:
+	@for i in $(files); do	\
+		$(MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+	done
 #
 lib: $(LIBS)
 
@@ -259,4 +263,4 @@ objclean:
 
 all: lib install
 
-.PHONY:	obj all lib install objclean clean webclean webinstall sslinstall sslclean
+.PHONY:	obj all lib install objclean clean webclean webinstall sslinstall sslclean make_prepare

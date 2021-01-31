@@ -375,16 +375,16 @@ static int x5b_user_add_card_hw(user_face_card_t *dbase, u_int64 cardid, u_int32
 			//strcpy(dbase->cardtbl[i].cardid, cardid);
 			dbase->cardtbl[i].start_time = start;
 			dbase->cardtbl[i].stop_time = stop;
-			zlog_debug(ZLOG_APP, "=================>cardid=%s(l=%d)", dbase->cardtbl[i].cardid,
+			zlog_debug(MODULE_APP, "=================>cardid=%s(l=%d)", dbase->cardtbl[i].cardid,
 					   (int)strlen(dbase->cardtbl[i].cardid));
 #else
 			dbase->cardtbl[i].cardid = cardid;
 			dbase->cardtbl[i].start_time = start;
 			dbase->cardtbl[i].stop_time = stop;
-			zlog_debug(ZLOG_APP, "=================>cardid=%08x", dbase->cardtbl[i].cardid);
+			zlog_debug(MODULE_APP, "=================>cardid=%08x", dbase->cardtbl[i].cardid);
 #endif
-			zlog_debug(ZLOG_APP, "=================>start=%d", dbase->cardtbl[i].start_time);
-			zlog_debug(ZLOG_APP, "=================>stop=%d", dbase->cardtbl[i].stop_time);
+			zlog_debug(MODULE_APP, "=================>start=%d", dbase->cardtbl[i].start_time);
+			zlog_debug(MODULE_APP, "=================>stop=%d", dbase->cardtbl[i].stop_time);
 			dbase->cardtbl[i].card_type = type;
 			dbase->cardtbl[i].use_flag = 1;
 			dbase->card_max++;
@@ -590,7 +590,7 @@ int x5b_user_update_card(char *username, char *userid, u_int64 cardid, u_int32 s
 	if(dbase)
 	{
 		x5b_user_del_card_hw_cid(dbase,  cid);
-		zlog_debug(ZLOG_APP,"===============delete frist and add");
+		zlog_debug(MODULE_APP,"===============delete frist and add");
 		ret = x5b_user_add_card_hw(dbase,  cardid,  start,  stop,  type);
 		if(ret == OK)
 		{
@@ -742,7 +742,7 @@ int x5b_user_update_face(char *username, char *userid, char *img, u_int32 faceid
 	if(dbase)
 	{
 		x5b_user_del_face_hw(dbase,  faceid);
-		zlog_debug(ZLOG_APP,"===============delete frist and add");
+		zlog_debug(MODULE_APP,"===============delete frist and add");
 		ret = x5b_user_add_face_hw(dbase,  img,  faceid);
 		if(ret == OK)
 		{

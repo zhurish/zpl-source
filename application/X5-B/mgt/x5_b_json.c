@@ -123,7 +123,7 @@ int x5b_app_face_config_json(x5b_app_mgt_t *app, void *info, int to)
 	if(!mgt->app->reg_state)
 	{
 		if(X5_B_ESP32_DEBUG(EVENT))
-			zlog_warn(ZLOG_APP, "Remote is Not Register");
+			zlog_warn(MODULE_APP, "Remote is Not Register");
 		if(mgt->mutex)
 			os_mutex_unlock(mgt->mutex);
 		return ERROR;
@@ -131,7 +131,7 @@ int x5b_app_face_config_json(x5b_app_mgt_t *app, void *info, int to)
 	if(mgt->app->address == 0)
 	{
 		if(X5_B_ESP32_DEBUG(EVENT))
-			zlog_warn(ZLOG_APP, "OPEN CMD MSG Can not send, Unknown Remote IP Address");
+			zlog_warn(MODULE_APP, "OPEN CMD MSG Can not send, Unknown Remote IP Address");
 		if(mgt->mutex)
 			os_mutex_unlock(mgt->mutex);
 		return ERROR;
@@ -151,7 +151,7 @@ int x5b_app_face_config_json(x5b_app_mgt_t *app, void *info, int to)
 		mgt->app->offset += len;
 		x5b_app_crc_make(mgt);
 		if(X5_B_ESP32_DEBUG(EVENT))
-			zlog_debug(ZLOG_APP, "FACE CONFIG CMD MSG to %s:%d %d byte", inet_address(mgt->app->address),
+			zlog_debug(MODULE_APP, "FACE CONFIG CMD MSG to %s:%d %d byte", inet_address(mgt->app->address),
 					mgt->app->remote_port, mgt->app->slen);
 		free(output);
 		len = x5b_app_send_msg(mgt);
@@ -183,7 +183,7 @@ int x5b_app_device_json(x5b_app_mgt_t *app, char *device,
 	if(!mgt->app->reg_state)
 	{
 		if(X5_B_ESP32_DEBUG(EVENT))
-			zlog_warn(ZLOG_APP, "Remote is Not Register");
+			zlog_warn(MODULE_APP, "Remote is Not Register");
 		if(mgt->mutex)
 			os_mutex_unlock(mgt->mutex);
 		return ERROR;
@@ -191,7 +191,7 @@ int x5b_app_device_json(x5b_app_mgt_t *app, char *device,
 	if(mgt->app->address == 0)
 	{
 		if(X5_B_ESP32_DEBUG(EVENT))
-			zlog_warn(ZLOG_APP, "OPEN CMD MSG Can not send, Unknown Remote IP Address");
+			zlog_warn(MODULE_APP, "OPEN CMD MSG Can not send, Unknown Remote IP Address");
 		if(mgt->mutex)
 			os_mutex_unlock(mgt->mutex);
 		return ERROR;
@@ -249,7 +249,7 @@ int x5b_app_device_json(x5b_app_mgt_t *app, char *device,
 		mgt->app->offset += len;
 		x5b_app_crc_make(mgt);
 		if(X5_B_ESP32_DEBUG(EVENT))
-			zlog_debug(ZLOG_APP, "DEVICE CMD MSG to %s:%d %d byte", inet_address(mgt->app->address),
+			zlog_debug(MODULE_APP, "DEVICE CMD MSG to %s:%d %d byte", inet_address(mgt->app->address),
 					mgt->app->remote_port, mgt->app->slen);
 		len = x5b_app_send_msg(mgt);
 		if(mgt->mutex)
@@ -385,8 +385,8 @@ int x5b_app_sip_config_parse(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 		memset(temp, 0, tlv->len);
 		memcpy(temp, tlv->val.pval, tlv->len);
 		//if(X5_B_ESP32_DEBUG(MSG) && X5_B_ESP32_DEBUG(WEB))
-			zlog_debug(ZLOG_APP,"Recv make Face IMG respone len=%d val=%s\r\n", tlv->len, temp);
-		//zlog_debug(ZLOG_APP,"tlv->len=%d ->%s", tlv->len, temp);
+			zlog_debug(MODULE_APP,"Recv make Face IMG respone len=%d val=%s\r\n", tlv->len, temp);
+		//zlog_debug(MODULE_APP,"tlv->len=%d ->%s", tlv->len, temp);
 #ifdef PL_PJSIP_MODULE
 		if(x5b_sip_load_from_json(temp) == OK)
 		{
@@ -413,7 +413,7 @@ int x5b_app_call_phone_number(x5b_app_mgt_t *mgt, os_tlv_t *tlv, BOOL list)
 		memset(temp, 0, tlv->len + 1);
 		memcpy(temp, tlv->val.pval, tlv->len);
 		temp[tlv->len] = '\0';
-		zlog_debug(ZLOG_APP,"Recv Phone Call IMG respone len=%d val=%s\r\n", tlv->len, temp);
+		zlog_debug(MODULE_APP,"Recv Phone Call IMG respone len=%d val=%s\r\n", tlv->len, temp);
 		if(list == FALSE)
 			x5b_app_start_call_phone(TRUE, temp);
 		else
@@ -442,7 +442,7 @@ int x5b_app_call_user_list(char *json, u_int8 *building, u_int8 *unit,
 	cJSON* pj_tmp = NULL;
 	if(pArray == NULL)
 	{
-		zlog_debug(ZLOG_APP, "Error:%s", cJSON_GetErrorPtr());
+		zlog_debug(MODULE_APP, "Error:%s", cJSON_GetErrorPtr());
 		return 0;
 	}
 	num = cJSON_GetArraySize(pArray);
@@ -459,14 +459,14 @@ int x5b_app_call_user_list(char *json, u_int8 *building, u_int8 *unit,
 		if(pj_tmp && pj_tmp->valuestring)
 		{
 			strcpy(phone[i].username, pj_tmp->valuestring);
-			zlog_debug(ZLOG_APP, " -----> %d use:%s", i, pj_tmp->valuestring);
+			zlog_debug(MODULE_APP, " -----> %d use:%s", i, pj_tmp->valuestring);
 		}
 
 		pj_tmp = cJSON_GetObjectItem(pItem, "ID");
 		if(pj_tmp && pj_tmp->valuestring)
 		{
 			strcpy(phone[i].user_id, pj_tmp->valuestring);
-			zlog_debug(ZLOG_APP, " -----> %d ID:%s", i, pj_tmp->valuestring);
+			zlog_debug(MODULE_APP, " -----> %d ID:%s", i, pj_tmp->valuestring);
 		}
 
 		pj_tmp = cJSON_GetObjectItem(pItem, "room");
@@ -474,14 +474,14 @@ int x5b_app_call_user_list(char *json, u_int8 *building, u_int8 *unit,
 		{
 			if(room_number)
 				*room_number = atoi(pj_tmp->valuestring);
-			zlog_debug(ZLOG_APP, " -----> %d room:%s", i, pj_tmp->valuestring);
+			zlog_debug(MODULE_APP, " -----> %d room:%s", i, pj_tmp->valuestring);
 		}
 
 		pj_tmp = cJSON_GetObjectItem(pItem, "phone");
 		if(pj_tmp && pj_tmp->valuestring)
 		{
 			strcpy(phone[i].phone, pj_tmp->valuestring);
-			zlog_debug(ZLOG_APP, " -----> %d phone:%s", i, pj_tmp->valuestring);
+			zlog_debug(MODULE_APP, " -----> %d phone:%s", i, pj_tmp->valuestring);
 		}
 	}
 	return num;

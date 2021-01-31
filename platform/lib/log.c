@@ -45,12 +45,6 @@ static int logfile_fd = -1; /* Used in signal handler. */
 
 struct zlog *zlog_default = NULL;
 
-static const char *zlog_proto_string[] = { "NONE", "DEFAULT", "CONSOLE", "TELNET",
-		/*"ZEBRA",*/ "HAL", "PAL", "NSM", "RIP",
-		"BGP", "OSPF", "RIPNG", "BABEL", "OSPF6", "ISIS", "PIM", "MASC", "NHRP",
-		"HSLS", "OLSR", "VRRP", "FRP", "LLDP", "BFD", "LDP", "SNTP", "IMISH", "DHCP", "WIFI",
-		"MODEM", "WEB", "MQTT", "SIP", "APP", "VOIP", "SOUND",
-		"UTILS", NULL, };
 
 static const char *zlog_priority[] = { "emergencies", "alerts", "critical", "errors",
 		"warnings", "notifications", "informational", "debugging", "trapping", NULL, };
@@ -115,8 +109,10 @@ const char * zlog_priority_name(int level) {
 }
 
 const char * zlog_proto_names(zlog_proto_t module) {
-	if(module >= ZLOG_NONE && module <= ZLOG_MAX)
-		return zlog_proto_string[module];
+	if(module >= MODULE_NONE && module <= MODULE_MAX)
+	{
+		return module2name(module);
+	}
 	return "Unknow";
 }
 
@@ -344,7 +340,7 @@ static void vzlog_output(struct zlog *zl, int module, int priority, const char *
 	
 	if (zl->mutex)
 		os_mutex_lock(zl->mutex, OS_WAIT_FOREVER);
-	if (module != ZLOG_NONE) {
+	if (module != MODULE_NONE) {
 		protocol = zl->protocol;
 		zl->protocol = module;
 	}
@@ -354,7 +350,7 @@ static void vzlog_output(struct zlog *zl, int module, int priority, const char *
 		va_list ac;
 		time_print(zl->testlog.fp, zl->timestamp);
 		fprintf(zl->testlog.fp, "%s: ", zlog_priority[priority]);
-		fprintf(zl->testlog.fp, "%s: ", zlog_proto_string[zl->protocol]);
+		fprintf(zl->testlog.fp, "%s: ", zlog_proto_names(zl->protocol));
 		va_copy(ac, args);
 		vfprintf(zl->testlog.fp, format, ac);
 		va_end(ac);
@@ -381,7 +377,7 @@ static void vzlog_output(struct zlog *zl, int module, int priority, const char *
 		time_print(zl->fp, zl->timestamp);
 		if (zl->record_priority)
 			fprintf(zl->fp, "%s: ", zlog_priority[priority]);
-		fprintf(zl->fp, "%s: ", zlog_proto_string[zl->protocol]);
+		fprintf(zl->fp, "%s: ", zlog_proto_names(zl->protocol));
 		va_copy(ac, args);
 		vfprintf(zl->fp, format, ac);
 		va_end(ac);
@@ -396,7 +392,7 @@ static void vzlog_output(struct zlog *zl, int module, int priority, const char *
 		time_print(stdout, zl->timestamp);
 		if (zl->record_priority)
 			fprintf(stdout, "%s: ", zlog_priority[priority]);
-		fprintf(stdout, "%s: ", zlog_proto_string[zl->protocol]);
+		fprintf(stdout, "%s: ", zlog_proto_names(zl->protocol));
 		va_copy(ac, args);
 		vfprintf(stdout, format, ac);
 		va_end(ac);
@@ -413,14 +409,14 @@ static void vzlog_output(struct zlog *zl, int module, int priority, const char *
 	if (priority <= zl->maxlvl[ZLOG_DEST_MONITOR])
 	{
 		vty_log((zl->record_priority ? zlog_priority[priority] : NULL),
-				zlog_proto_string[zl->protocol], format, zl->timestamp, args);
+				zlog_proto_names(zl->protocol), format, zl->timestamp, args);
 	}
 	//trapping
 	if (priority == zl->trap_lvl)
 		vty_trap_log((zl->record_priority ? zlog_priority[priority] : NULL),
-				zlog_proto_string[zl->protocol], format, zl->timestamp, args);
+				zlog_proto_names(zl->protocol), format, zl->timestamp, args);
 
-	if (module != ZLOG_NONE) {
+	if (module != MODULE_NONE) {
 		zl->protocol = protocol;
 	}
 	errno = original_errno;
@@ -458,7 +454,7 @@ void pl_vzlog(const char *file, const char *func, const int line,
 	}
 	if (zl->mutex)
 		os_mutex_lock(zl->mutex, OS_WAIT_FOREVER);
-	if (module != ZLOG_NONE)
+	if (module != MODULE_NONE)
 	{
 		protocol = zl->protocol;
 		zl->protocol = module;
@@ -613,7 +609,7 @@ void vzlog(const char *file, const char *func, const int line,
 		zl = zlog_default;
 	if (zl->mutex)
 		os_mutex_lock(zl->mutex, OS_WAIT_FOREVER);
-	if (module != ZLOG_NONE) {
+	if (module != MODULE_NONE) {
 		protocol = zl->protocol;
 		zl->protocol = module;
 	}
@@ -628,7 +624,7 @@ void vzlog(const char *file, const char *func, const int line,
 
 		/* In this case we return at here. */
 		errno = original_errno;
-		if (module != ZLOG_NONE) {
+		if (module != MODULE_NONE) {
 			zl->protocol = protocol;
 		}
 		if (zl->mutex)
@@ -641,7 +637,7 @@ void vzlog(const char *file, const char *func, const int line,
 		va_list ac;
 		time_print(zl->testlog.fp, zl->timestamp);
 		fprintf(zl->testlog.fp, "%s: ", zlog_priority[priority]);
-		fprintf(zl->testlog.fp, "%s: ", zlog_proto_string[zl->protocol]);
+		fprintf(zl->testlog.fp, "%s: ", zlog_proto_names(zl->protocol));
 		zlog_depth_debug_detail(zl->testlog.fp, NULL, zl->depth_debug, file, func, line);
 		va_copy(ac, args);
 		vfprintf(zl->testlog.fp, format, ac);
@@ -674,7 +670,7 @@ void vzlog(const char *file, const char *func, const int line,
 		time_print(zl->fp, zl->timestamp);
 		if (zl->record_priority)
 			fprintf(zl->fp, "%s: ", zlog_priority[priority]);
-		fprintf(zl->fp, "%s: ", zlog_proto_string[zl->protocol]);
+		fprintf(zl->fp, "%s: ", zlog_proto_names(zl->protocol));
 		zlog_depth_debug_detail(zl->fp, NULL, zl->depth_debug, file, func, line);
 		va_copy(ac, args);
 		vfprintf(zl->fp, format, ac);
@@ -695,7 +691,7 @@ void vzlog(const char *file, const char *func, const int line,
 		time_print(stdout, zl->timestamp);
 		if (zl->record_priority)
 			fprintf(stdout, "%s: ", zlog_priority[priority]);
-		fprintf(stdout, "%s: ", zlog_proto_string[zl->protocol]);
+		fprintf(stdout, "%s: ", zlog_proto_names(zl->protocol));
 		zlog_depth_debug_detail(stdout, NULL, zl->depth_debug, file, func, line);
 		va_copy(ac, args);
 		vfprintf(stdout, format, ac);
@@ -714,17 +710,17 @@ void vzlog(const char *file, const char *func, const int line,
 	{
 		if(zl->depth_debug != ZLOG_DEPTH_NONE)
 			vty_log_debug((zl->record_priority ? zlog_priority[priority] : NULL),
-				zlog_proto_string[zl->protocol], format, zl->timestamp, args, file, func, line);
+				zlog_proto_names(zl->protocol), format, zl->timestamp, args, file, func, line);
 		else
 			vty_log((zl->record_priority ? zlog_priority[priority] : NULL),
-				zlog_proto_string[zl->protocol], format, zl->timestamp, args);
+				zlog_proto_names(zl->protocol), format, zl->timestamp, args);
 	}
 	//trapping
 	if (priority == zl->trap_lvl)
 		vty_trap_log((zl->record_priority ? zlog_priority[priority] : NULL),
-				zlog_proto_string[zl->protocol], format, zl->timestamp, args);
+				zlog_proto_names(zl->protocol), format, zl->timestamp, args);
 
-	if (module != ZLOG_NONE) {
+	if (module != MODULE_NONE) {
 		zl->protocol = protocol;
 	}
 	errno = original_errno;
@@ -885,7 +881,7 @@ void zlog_signal(int signo, const char *action
 	s = str_append(LOC, ")");
 
 	if (zlog_default) {
-		s = str_append(LOC, zlog_proto_string[zlog_default->protocol]);
+		s = str_append(LOC, zlog_proto_names(zlog_default->protocol));
 		*s++ = ':';
 		*s++ = ' ';
 		msgstart = s;
@@ -1063,22 +1059,22 @@ void zlog_backtrace(int priority)
 	size = backtrace(array, array_size(array));
 	if (size <= 0 || (size_t)size > array_size(array))
 	{
-		zlog_err(ZLOG_DEFAULT, "Cannot get backtrace, returned invalid # of frames %d "
+		zlog_err(MODULE_DEFAULT, "Cannot get backtrace, returned invalid # of frames %d "
 				"(valid range is between 1 and %lu)",
 				size, (unsigned long)(array_size(array)));
 		return;
 	}
-	zlog(ZLOG_DEFAULT, priority, "Backtrace for %d stack frames:", size);
+	zlog(MODULE_DEFAULT, priority, "Backtrace for %d stack frames:", size);
 	if (!(strings = backtrace_symbols(array, size)))
 	{
-		zlog_err(ZLOG_DEFAULT, "Cannot get backtrace symbols (out of memory?)");
+		zlog_err(MODULE_DEFAULT, "Cannot get backtrace symbols (out of memory?)");
 		for (i = 0; i < size; i++)
-			zlog(ZLOG_DEFAULT, priority, "[bt %d] %p",i,array[i]);
+			zlog(MODULE_DEFAULT, priority, "[bt %d] %p",i,array[i]);
 	}
 	else
 	{
 		for (i = 0; i < size; i++)
-			zlog(ZLOG_DEFAULT, priority, "[bt %d] %s",i,strings[i]);
+			zlog(MODULE_DEFAULT, priority, "[bt %d] %s",i,strings[i]);
 		free(strings);
 	}
 #endif /* HAVE_GLIBC_BACKTRACE */
@@ -1153,7 +1149,7 @@ ZLOG_FUNC(pl_zlog_trap, LOG_TRAP)
 /*
 static void zlog_thread_info(int log_level)
 {
-	zlog(ZLOG_DEFAULT, log_level,
+	zlog(MODULE_DEFAULT, log_level,
 		"Current thread/eloop function %s, scheduled from "
 				"file %s, line %u", zlog_backtrace_funcname(),
 				zlog_backtrace_schedfrom(), zlog_backtrace_schedfrom_line());
@@ -1168,7 +1164,7 @@ void _zlog_assert_failed(const char *assertion, const char *file,
 			&& ((logfile_fd = open_crashlog()) >= 0) && ((zlog_default->fp =
 					fdopen(logfile_fd, "w")) != NULL))
 		zlog_default->maxlvl[ZLOG_DEST_FILE] = LOG_ERR;
-	zlog(ZLOG_DEFAULT, LOG_CRIT,
+	zlog(MODULE_DEFAULT, LOG_CRIT,
 			"Assertion `%s' failed in file %s, line %u, function %s", assertion,
 			file, line, (function ? function : "?"));
 	zlog_backtrace(LOG_CRIT);
@@ -1670,7 +1666,7 @@ static int zlog_testing_check_file (struct zlog *zl)
 	{
 		memset (&fsize, 0, sizeof(fsize));
 		(void) stat (filetmp, &fsize);
-		//zlog_debug(ZLOG_DEFAULT, "========%s:%d %p", __func__, fsize.st_size, zl->testlog.filesize * ZLOG_1M);
+		//zlog_debug(MODULE_DEFAULT, "========%s:%d %p", __func__, fsize.st_size, zl->testlog.filesize * ZLOG_1M);
 		if (fsize.st_size < (zl->testlog.filesize * ZLOG_1M))
 		{
 			if (zl->mutex)
@@ -1765,7 +1761,7 @@ static int zlog_check_file (struct zlog *zl)
 		memset (&fsize, 0, sizeof(fsize));
 		(void) stat (filetmp, &fsize);
 
-		//zlog_debug(ZLOG_DEFAULT, "========%s:%d %d", __func__, fsize.st_size, zl->filesize * ZLOG_1M);
+		//zlog_debug(MODULE_DEFAULT, "========%s:%d %d", __func__, fsize.st_size, zl->filesize * ZLOG_1M);
 		if (fsize.st_size < (zl->filesize * ZLOG_1M))
 		{
 			if (zl->mutex)
@@ -1845,7 +1841,7 @@ static int zlog_buffer_format(struct zlog *zl, zlog_buffer_t *buffer,
 
 	if (zl->record_priority)
 		len += sprintf(buffer->buffer[index].log + len, "%s: ", zlog_priority[level]);
-	len += sprintf(buffer->buffer[index].log + len, "%s: ", zlog_proto_string[zl->protocol]);
+	len += sprintf(buffer->buffer[index].log + len, "%s: ", zlog_proto_names(zl->protocol));
 	va_copy(ac, args);
 	len += vsprintf(buffer->buffer[index].log + len, format, ac);
 	va_end(ac);
@@ -2029,7 +2025,7 @@ int zlog_rotate()
 		umask(oldumask);
 		if (zlog_default->fp == NULL)
 		{
-			zlog_err(ZLOG_DEFAULT,
+			zlog_err(MODULE_DEFAULT,
 					"Log rotate failed: cannot open file %s for append: %s",
 					zlog_default->filename, safe_strerror(save_errno));
 			if (zlog_default->mutex)
@@ -2083,14 +2079,14 @@ mes_lookup(const struct message *meslist, int max, int index, const char *none,
 			if (meslist->key == index) {
 				const char *str = (meslist->str ? meslist->str : none);
 
-				zlog_debug(ZLOG_DEFAULT,
+				zlog_debug(MODULE_DEFAULT,
 						"message index %d [%s] found in %s at position %d (max is %d)",
 						index, str, mesname, i, max);
 				return str;
 			}
 		}
 	}
-	zlog_err(ZLOG_DEFAULT, "message index %d not found in %s (max is %d)",
+	zlog_err(MODULE_DEFAULT, "message index %d not found in %s (max is %d)",
 			index, mesname, max);
 	assert(none);
 	return none;
@@ -2102,6 +2098,8 @@ safe_strerror(int errnum) {
 	const char *s = strerror(errnum);
 	return (s != NULL) ? s : "Unknown error";
 }
+
+#ifdef PL_NSM_MODULE
 
 #define DESC_ENTRY(T) [(T)] = { (T), (#T), '\0' }
 static const struct zebra_desc_table command_types[] = {
@@ -2139,21 +2137,21 @@ zroute_lookup(u_int zroute) {
 	u_int i;
 
 	if (zroute >= array_size(route_types)) {
-		zlog_err(ZLOG_DEFAULT, "unknown zebra route type: %u", zroute);
+		zlog_err(MODULE_DEFAULT, "unknown zebra route type: %u", zroute);
 		return &unknown;
 	}
 	if (zroute == route_types[zroute].type)
 		return &route_types[zroute];
 	for (i = 0; i < array_size(route_types); i++) {
 		if (zroute == route_types[i].type) {
-			zlog_warn(ZLOG_DEFAULT,
+			zlog_warn(MODULE_DEFAULT,
 					"internal error: route type table out of order "
 							"while searching for %u, please notify developers",
 					zroute);
 			return &route_types[i];
 		}
 	}
-	zlog_err(ZLOG_DEFAULT,
+	zlog_err(MODULE_DEFAULT,
 			"internal error: cannot find route type %u in table!", zroute);
 	return &unknown;
 }
@@ -2170,7 +2168,7 @@ char zebra_route_char(u_int zroute) {
 const char *
 zserv_command_string(unsigned int command) {
 	if (command >= array_size(command_types)) {
-		zlog_err(ZLOG_DEFAULT, "unknown zserv command type: %u", command);
+		zlog_err(MODULE_DEFAULT, "unknown zserv command type: %u", command);
 		return unknown.string;
 	}
 	return command_types[command].string;
@@ -2254,6 +2252,7 @@ int proto_redistnum(int afi, const char *s) {
 	}
 	return -1;
 }
+#endif
 
 void zlog_hexdump(void *mem, unsigned int len) {
 	unsigned long i = 0;
@@ -2292,5 +2291,5 @@ void zlog_hexdump(void *mem, unsigned int len) {
 			s += sprintf(s, "\n");
 		}
 	}
-	zlog_debug(ZLOG_DEFAULT, "\n%s", buf);
+	zlog_debug(MODULE_DEFAULT, "\n%s", buf);
 }

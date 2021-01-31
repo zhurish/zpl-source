@@ -85,13 +85,13 @@ set_nonblocking(int fd)
      never be negative. */
   if ((flags = fcntl(fd, F_GETFL)) < 0)
     {
-      zlog_warn(ZLOG_DEFAULT, "fcntl(F_GETFL) failed for fd %d: %s",
+      zlog_warn(MODULE_DEFAULT, "fcntl(F_GETFL) failed for fd %d: %s",
       		fd, safe_strerror(errno));
       return -1;
     }
   if (fcntl(fd, F_SETFL, (flags | O_NONBLOCK)) < 0)
     {
-      zlog_warn(ZLOG_DEFAULT, "fcntl failed setting fd %d non-blocking: %s",
+      zlog_warn(MODULE_DEFAULT, "fcntl failed setting fd %d non-blocking: %s",
       		fd, safe_strerror(errno));
       return -1;
     }
@@ -107,14 +107,14 @@ set_blocking(int fd)
      never be negative. */
   if ((flags = fcntl(fd, F_GETFL)) < 0)
     {
-      zlog_warn(ZLOG_DEFAULT, "fcntl(F_GETFL) failed for fd %d: %s",
+      zlog_warn(MODULE_DEFAULT, "fcntl(F_GETFL) failed for fd %d: %s",
       		fd, safe_strerror(errno));
       return -1;
     }
   flags &= ~O_NONBLOCK;
   if (fcntl(fd, F_SETFL, (flags)) < 0)
     {
-      zlog_warn(ZLOG_DEFAULT, "fcntl failed setting fd %d non-blocking: %s",
+      zlog_warn(MODULE_DEFAULT, "fcntl failed setting fd %d non-blocking: %s",
       		fd, safe_strerror(errno));
       return -1;
     }

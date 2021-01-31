@@ -403,7 +403,7 @@ static int dhcp_client_lease_set_kernel(client_interface_t *ifter, client_lease_
 		}
 		if (DHCPC_DEBUG_ISON(KERNEL))
 		{
-			zlog_debug(ZLOG_DHCP," dhcp set kernel ip address %s on interface %s", tmp, ifindex2ifname(ifter->ifindex));
+			zlog_debug(MODULE_DHCP," dhcp set kernel ip address %s on interface %s", tmp, ifindex2ifname(ifter->ifindex));
 		}
 		SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
 		ret = nsm_pal_interface_set_address (ifp, ifc, 0);
@@ -427,7 +427,7 @@ static int dhcp_client_lease_set_kernel(client_interface_t *ifter, client_lease_
 
 		if (DHCPC_DEBUG_ISON(KERNEL))
 		{
-			zlog_debug(ZLOG_DHCP," dhcp set kernel dns %s ", inet_address(ntohl(lease->lease_dns1)));
+			zlog_debug(MODULE_DHCP," dhcp set kernel dns %s ", inet_address(ntohl(lease->lease_dns1)));
 		}
 
 		nsm_ip_dns_add(&dnscp, &dnsopt, FALSE, IP_DNS_DYNAMIC);
@@ -448,7 +448,7 @@ static int dhcp_client_lease_set_kernel(client_interface_t *ifter, client_lease_
 	{
 		if (DHCPC_DEBUG_ISON(KERNEL))
 		{
-			zlog_debug(ZLOG_DHCP," dhcp set kernel domain name %s ", lease->domain_name);
+			zlog_debug(MODULE_DHCP," dhcp set kernel domain name %s ", lease->domain_name);
 		}
 		nsm_dns_domain_name_add_api(lease->domain_name, FALSE);
 		nsm_dns_domain_name_dynamic_api(TRUE, FALSE);
@@ -467,7 +467,7 @@ static int dhcp_client_lease_set_kernel(client_interface_t *ifter, client_lease_
 
 		if (DHCPC_DEBUG_ISON(KERNEL))
 		{
-			zlog_debug(ZLOG_DHCP," dhcp set kernel gateway %s ", inet_address(ntohl(lease->lease_gateway)));
+			zlog_debug(MODULE_DHCP," dhcp set kernel gateway %s ", inet_address(ntohl(lease->lease_gateway)));
 		}
 	}
 	if(lease->lease_gateway2)
@@ -503,7 +503,7 @@ static int dhcp_client_lease_unset_kernel(client_interface_t *ifter, client_leas
 					 ifter->ifindex, ifp->vrf_id, SAFI_UNICAST);
 		if (DHCPC_DEBUG_ISON(KERNEL))
 		{
-			zlog_debug(ZLOG_DHCP," dhcp unset kernel gateway %s ", inet_address(ntohl(lease->lease_gateway)));
+			zlog_debug(MODULE_DHCP," dhcp unset kernel gateway %s ", inet_address(ntohl(lease->lease_gateway)));
 		}
 	}
 	if(lease->lease_gateway2)
@@ -529,7 +529,7 @@ static int dhcp_client_lease_unset_kernel(client_interface_t *ifter, client_leas
 		nsm_ip_dns_del(&dnscp, IP_DNS_DYNAMIC);
 		if (DHCPC_DEBUG_ISON(KERNEL))
 		{
-			zlog_debug(ZLOG_DHCP," dhcp set kernel dns %s ", inet_address(ntohl(lease->lease_dns1)));
+			zlog_debug(MODULE_DHCP," dhcp set kernel dns %s ", inet_address(ntohl(lease->lease_dns1)));
 		}
 		if(lease->lease_dns2)
 		{
@@ -580,7 +580,7 @@ static int dhcp_client_lease_unset_kernel(client_interface_t *ifter, client_leas
 			}
 			if (DHCPC_DEBUG_ISON(KERNEL))
 			{
-				zlog_debug(ZLOG_DHCP," dhcp unset kernel ip address %s on interface %s", tmp, ifindex2ifname(ifter->ifindex));
+				zlog_debug(MODULE_DHCP," dhcp unset kernel ip address %s on interface %s", tmp, ifindex2ifname(ifter->ifindex));
 			}
 			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
 			ret = nsm_pal_interface_unset_address (ifp, ifc, 0);
@@ -935,7 +935,7 @@ void udhcp_run_script(void *p, const char *name)
 	pid = child_process_create();
 	if(pid < 0)
 	{
-		  zlog_warn(ZLOG_DEFAULT, "Can't create child process (%s), continuing", safe_strerror(errno));
+		  zlog_warn(MODULE_DEFAULT, "Can't create child process (%s), continuing", safe_strerror(errno));
 		  return ;
 	}
 	else if(pid == 0)

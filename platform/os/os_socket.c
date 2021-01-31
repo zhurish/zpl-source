@@ -250,7 +250,7 @@ int raw_sock_bind(int fd, int family, int protocol, int ifindex)
 	sock.sll_family = family;
 	sock.sll_protocol = htons(protocol);
 	sock.sll_ifindex = ifindex;
-	//zlog_debug(ZLOG_DHCP, "Can not bind raw socket(%s)", strerror(errno));
+	//zlog_debug(MODULE_DHCP, "Can not bind raw socket(%s)", strerror(errno));
 	/*sock.sll_hatype = ARPHRD_???;*/
 	/*sock.sll_pkttype = PACKET_???;*/
 	/*sock.sll_halen = ???;*/

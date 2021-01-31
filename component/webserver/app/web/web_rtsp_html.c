@@ -99,7 +99,7 @@ static int web_video_stream_all(Webs *wp, char *path, char *query)
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
+			zlog_debug(MODULE_WEB, "Can not Get Board ID Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	id = atoi(strval);
@@ -178,7 +178,7 @@ static int web_video_stream_detail(Webs *wp, char *path, char *query)
 	{
 		return web_return_text_plain(wp, ERROR);
 	}
-	zlog_debug(ZLOG_APP,"web_board_stream_detail: ID=%s", value);
+	zlog_debug(MODULE_APP,"web_board_stream_detail: ID=%s", value);
 	id = atoi(value);
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
@@ -206,7 +206,7 @@ static int web_video_stream_add(Webs *wp, char *path, char *query)
 	if (NULL == value)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get Address Value");
+			zlog_debug(MODULE_WEB, "Can not Get Address Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	stream.address = ntohl(inet_addr(value));
@@ -257,7 +257,7 @@ static int web_video_stream_add(Webs *wp, char *path, char *query)
 	if(!v9_video_board_isactive(V9_APP_BOARD_CALCU_ID(stream.id)))
 	{
 		if(WEB_IS_DEBUG(EVENT))
-				zlog_debug(ZLOG_WEB, "Board ID %d is not active", V9_APP_BOARD_CALCU_ID(stream.id));
+				zlog_debug(MODULE_WEB, "Board ID %d is not active", V9_APP_BOARD_CALCU_ID(stream.id));
 		return web_return_text_plain(wp, ERROR);
 	}
 	ret =  v9_video_board_stream_add_api(stream.id, stream.ch, stream.address, stream.port,
@@ -272,7 +272,7 @@ static int web_video_stream_add(Webs *wp, char *path, char *query)
 	else
 	{
 		if(WEB_IS_DEBUG(EVENT))
-				zlog_debug(ZLOG_WEB, "Can not Add RTSP Stream");
+				zlog_debug(MODULE_WEB, "Can not Add RTSP Stream");
 		return web_return_text_plain(wp, ERROR);
 	}
 }
@@ -290,7 +290,7 @@ static int web_video_stream_delete_one(Webs *wp, char *path, char *query, int ty
 	if (NULL == strID)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
+			zlog_debug(MODULE_WEB, "Can not Get Board ID Value");
 		ret = ERROR;
 		goto err_out;
 	}
@@ -298,7 +298,7 @@ static int web_video_stream_delete_one(Webs *wp, char *path, char *query, int ty
 	if (NULL == strch)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get Channel Value");
+			zlog_debug(MODULE_WEB, "Can not Get Channel Value");
 		ret = ERROR;
 		goto err_out;
 	}
@@ -337,7 +337,7 @@ static int web_video_stream_delete_one(Webs *wp, char *path, char *query, int ty
 	if(ret != OK)
 	{
 		if(WEB_IS_DEBUG(EVENT))
-			zlog_debug(ZLOG_WEB, "Can not Del RTSP Stream");
+			zlog_debug(MODULE_WEB, "Can not Del RTSP Stream");
 	}
 	else
 	{
@@ -391,7 +391,7 @@ static int web_video_stream_show_one(Webs *wp, void *p)
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
+			zlog_debug(MODULE_WEB, "Can not Get Board ID Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	id = atoi(strval);
@@ -399,7 +399,7 @@ static int web_video_stream_show_one(Webs *wp, void *p)
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get Channel Value");
+			zlog_debug(MODULE_WEB, "Can not Get Channel Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	ch = atoi(strval);
@@ -411,7 +411,7 @@ static int web_video_stream_show_one(Webs *wp, void *p)
 		if(ffmpegpid != ERROR && ffmpegpid > 0)
 		{
 			if(WEB_IS_DEBUG(EVENT))
-				zlog_debug(ZLOG_WEB, "ffmpeg already running");
+				zlog_debug(MODULE_WEB, "ffmpeg already running");
 			return web_return_text_plain(wp, OK);
 		}
 	}
@@ -444,7 +444,7 @@ static int web_video_stream_show_one(Webs *wp, void *p)
 					inet_address(stream->address), stream->port, stream->secondary);
 
 
-		zlog_debug(ZLOG_WEB, "ffmpeg exe:'%s'", ffmpegcmd);
+		zlog_debug(MODULE_WEB, "ffmpeg exe:'%s'", ffmpegcmd);
 		super_system(ffmpegcmd);
 
 		os_msleep(500);
@@ -453,7 +453,7 @@ static int web_video_stream_show_one(Webs *wp, void *p)
 		if(ffmpegpid != ERROR && ffmpegpid > 0)
 		{
 			if(WEB_IS_DEBUG(EVENT))
-				zlog_debug(ZLOG_WEB, "ffmpeg running ok");
+				zlog_debug(MODULE_WEB, "ffmpeg running ok");
 			return web_return_text_plain(wp, OK);
 		}
 	}
@@ -462,7 +462,7 @@ static int web_video_stream_show_one(Webs *wp, void *p)
 		if(stream && str_isempty(stream->secondary, sizeof(stream->secondary)))
 		{
 			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-				zlog_debug(ZLOG_WEB, "Stream Secondary Param null.");
+				zlog_debug(MODULE_WEB, "Stream Secondary Param null.");
 		}
 		sid = 0;
 		sch = 0;
@@ -477,12 +477,12 @@ static int web_video_stream_show_one(Webs *wp, void *p)
 		if(stream && stream->decode_status!=TRUE)
 		{
 			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-				zlog_debug(ZLOG_WEB, "decode Status Failed");
+				zlog_debug(MODULE_WEB, "decode Status Failed");
 		}
 		else
 		{
 			if(WEB_IS_DEBUG(EVENT))
-				zlog_debug(ZLOG_WEB, "Can lookup stream id=%d ch=%d",V9_APP_BOARD_CALCU_ID(id), ch);
+				zlog_debug(MODULE_WEB, "Can lookup stream id=%d ch=%d",V9_APP_BOARD_CALCU_ID(id), ch);
 		}
 		return web_return_text_plain(wp, ERROR);
 	}

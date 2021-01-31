@@ -32,7 +32,7 @@
 #include "prefix.h"
 #include "sockunion.h"
 #include "str.h"
-#include "table.h"
+//#include "table.h"
 #include "vector.h"
 #include "nsm_vrf.h"
 #include "nsm_connected.h"
@@ -43,29 +43,28 @@ static struct list *intfList = NULL;
 
 struct if_master
 {
-	  int (*interface_add_cb) (struct interface *);
-	  int (*interface_delete_cb) (struct interface *);
-	  int llc;
-	  int mode;
+	int (*interface_add_cb)(struct interface *);
+	int (*interface_delete_cb)(struct interface *);
+	int llc;
+	int mode;
 };
 
 struct if_master if_master =
-{
-	.interface_add_cb = NULL,
-	.interface_delete_cb = NULL,
+	{
+		.interface_add_cb = NULL,
+		.interface_delete_cb = NULL,
 };
 
-
-int if_data_lock ()
+int if_data_lock()
 {
-	if(ifMutex)
+	if (ifMutex)
 		os_mutex_lock(ifMutex, OS_WAIT_FOREVER);
 	return OK;
 }
 
-int if_data_unlock ()
+int if_data_unlock()
 {
-	if(ifMutex)
+	if (ifMutex)
 		os_mutex_unlock(ifMutex);
 	return OK;
 }
@@ -75,8 +74,7 @@ struct list *if_list_get()
 	return intfList;
 }
 
-
-int if_hook_add(int (*add_cb) (struct interface *), int (*del_cb) (struct interface *))
+int if_hook_add(int (*add_cb)(struct interface *), int (*del_cb)(struct interface *))
 {
 	if_master.interface_add_cb = add_cb;
 	if_master.interface_delete_cb = del_cb;
@@ -98,7 +96,8 @@ int if_new_llc_type_mode(int llc, int mode)
  * before all numbers.  Examples: de0 < de1, de100 < fxp0 < xl0, devpty <
  * devpty0, de0 < del0
  */
-int if_cmp_func(struct interface *ifp1, struct interface *ifp2) {
+int if_cmp_func(struct interface *ifp1, struct interface *ifp2)
+{
 	unsigned int l1, l2;
 	long int x1, x2;
 	char *p1, *p2;
@@ -107,7 +106,8 @@ int if_cmp_func(struct interface *ifp1, struct interface *ifp2) {
 	p1 = ifp1->name;
 	p2 = ifp2->name;
 
-	while (*p1 && *p2) {
+	while (*p1 && *p2)
+	{
 		/* look up to any number */
 		l1 = strcspn(p1, "0123456789");
 		l2 = strcspn(p2, "0123456789");
@@ -124,11 +124,11 @@ int if_cmp_func(struct interface *ifp1, struct interface *ifp2) {
 			 * tunnel
 			 * vlan
 			 */
-			if(ifp1->if_type < ifp2->if_type)
+			if (ifp1->if_type < ifp2->if_type)
 				return -1;
-			else if(ifp1->if_type > ifp2->if_type)
+			else if (ifp1->if_type > ifp2->if_type)
 				return 1;
-/*			if(strstr(p1,"loop") && !strstr(p2,"loop"))
+			/*			if(strstr(p1,"loop") && !strstr(p2,"loop"))
 				return -1;
 			if(strstr(p1,"serial") && !strstr(p2,"serial"))
 				return -1;
@@ -182,15 +182,15 @@ int if_cmp_func(struct interface *ifp1, struct interface *ifp2) {
 static int if_create_make_ifname(struct interface *ifp, const char *name, int namelen)
 {
 	if (ifp->if_type == IF_SERIAL ||
-			ifp->if_type == IF_ETHERNET ||
-			ifp->if_type == IF_GIGABT_ETHERNET ||
-			ifp->if_type == IF_TUNNEL ||
-			ifp->if_type == IF_WIRELESS ||
+		ifp->if_type == IF_ETHERNET ||
+		ifp->if_type == IF_GIGABT_ETHERNET ||
+		ifp->if_type == IF_TUNNEL ||
+		ifp->if_type == IF_WIRELESS ||
 #ifdef CUSTOM_INTERFACE
-			ifp->if_type == IF_WIFI ||
-			ifp->if_type == IF_MODEM ||
+		ifp->if_type == IF_WIFI ||
+		ifp->if_type == IF_MODEM ||
 #endif
-			ifp->if_type == IF_BRIGDE )
+		ifp->if_type == IF_BRIGDE)
 	{
 		if (os_strstr(name, " ") == NULL)
 		{
@@ -200,8 +200,7 @@ static int if_create_make_ifname(struct interface *ifp, const char *name, int na
 		else
 			strncpy(ifp->name, name, namelen);
 	}
-	else if (ifp->if_type == IF_VLAN || ifp->if_type == IF_LAG
-			|| ifp->if_type == IF_LOOPBACK)
+	else if (ifp->if_type == IF_VLAN || ifp->if_type == IF_LAG || ifp->if_type == IF_LOOPBACK)
 	{
 		strncpy(ifp->name, name, namelen);
 	}
@@ -212,7 +211,7 @@ static int if_create_make_ifname(struct interface *ifp, const char *name, int na
 
 int if_make_llc_type(struct interface *ifp)
 {
-	switch(ifp->if_type)
+	switch (ifp->if_type)
 	{
 	case IF_SERIAL:
 		ifp->ll_type = ZEBRA_LLT_SERIAL;
@@ -262,12 +261,12 @@ int if_make_llc_type(struct interface *ifp)
 	default:
 		break;
 	}
-	if(if_master.llc)
+	if (if_master.llc)
 	{
 		ifp->ll_type = if_master.llc;
 		if_master.llc = 0;
 	}
-	if(if_master.mode)
+	if (if_master.mode)
 	{
 		ifp->if_mode = if_master.mode;
 		if_master.mode = 0;
@@ -281,16 +280,15 @@ static int if_make_ifindex_type(struct interface *ifp)
 
 	ifp->ifindex = IF_IFINDEX_SET(ifp->if_type, ifp->uspv);
 
-	if (ifp->if_type == IF_VLAN || ifp->if_type == IF_LAG
-			|| ifp->if_type == IF_LOOPBACK)
+	if (ifp->if_type == IF_VLAN || ifp->if_type == IF_LAG || ifp->if_type == IF_LOOPBACK)
 	{
 		ifp->ifindex |= if_loopback_ifindex_create(ifp->if_type, ifp->name);
 		//fprintf(stderr, "%s (%s):ifindex=0x%x", __func__,ifp->name, ifp->ifindex);
 	}
 
-	if( (ifp->if_type == IF_ETHERNET ||
-			ifp->if_type == IF_GIGABT_ETHERNET) &&
-			(IF_IS_SUBIF_GET(ifp->ifindex)) )
+	if ((ifp->if_type == IF_ETHERNET ||
+		 ifp->if_type == IF_GIGABT_ETHERNET) &&
+		(IF_IS_SUBIF_GET(ifp->ifindex)))
 		ifp->encavlan = IF_IFINDEX_ID_GET(ifp->ifindex);
 	return OK;
 }
@@ -310,9 +308,9 @@ if_create_vrf_dynamic(const char *name, int namelen, vrf_id_t vrf_id)
 
 	ifp->dynamic = TRUE;
 
-	if(if_create_make_ifname(ifp, name,  namelen) != OK)
+	if (if_create_make_ifname(ifp, name, namelen) != OK)
 	{
-		zlog_err(ZLOG_NSM, "if_create(%s): corruption detected  %u!", name, namelen);
+		zlog_err(MODULE_DEFAULT, "if_create(%s): corruption detected  %u!", name, namelen);
 
 		XFREE(MTYPE_IF, ifp);
 		IF_DATA_UNLOCK();
@@ -320,8 +318,9 @@ if_create_vrf_dynamic(const char *name, int namelen, vrf_id_t vrf_id)
 	}
 	if (if_uspv_type_setting(ifp) == ERROR)
 	{
-		zlog_err(ZLOG_NSM, "if_create(%s): corruption detected -- interface with this "
-				"uspv in VRF %u!", ifp->name, vrf_id);
+		zlog_err(MODULE_DEFAULT, "if_create(%s): corruption detected -- interface with this "
+						   "uspv in VRF %u!",
+				 ifp->name, vrf_id);
 		XFREE(MTYPE_IF, ifp);
 		IF_DATA_UNLOCK();
 		return NULL;
@@ -331,7 +330,7 @@ if_create_vrf_dynamic(const char *name, int namelen, vrf_id_t vrf_id)
 	ifp->vrf_id = vrf_id;
 
 	ifp->connected = list_new();
-	ifp->connected->del = (void (*)(void *)) connected_free;
+	ifp->connected->del = (void (*)(void *))connected_free;
 
 	if_make_ifindex_type(ifp);
 
@@ -344,17 +343,18 @@ if_create_vrf_dynamic(const char *name, int namelen, vrf_id_t vrf_id)
 #else
 	ifp->if_mode = IF_MODE_ACCESS_L2;
 #endif
-	ifp->flags |= IFF_UP|IFF_RUNNING;
+	ifp->flags |= IFF_UP | IFF_RUNNING;
 
 	if_make_llc_type(ifp);
 
 	if (if_lookup_by_name_vrf(ifp->name, vrf_id) == NULL)
 		listnode_add_sort(intf_list, ifp);
 	else
-		zlog_err(ZLOG_NSM, "if_create(%s): corruption detected -- interface with this "
-				"name exists already in VRF %u!", ifp->name, vrf_id);
+		zlog_err(MODULE_DEFAULT, "if_create(%s): corruption detected -- interface with this "
+						   "name exists already in VRF %u!",
+				 ifp->name, vrf_id);
 
-	if(if_master.interface_add_cb)
+	if (if_master.interface_add_cb)
 		if_master.interface_add_cb(ifp);
 	IF_DATA_UNLOCK();
 	return ifp;
@@ -375,7 +375,7 @@ if_create_vrf(const char *name, int namelen, vrf_id_t vrf_id)
 
 	ifp->dynamic = FALSE;
 
-	if(if_create_make_ifname(ifp, name,  namelen) != OK)
+	if (if_create_make_ifname(ifp, name, namelen) != OK)
 	{
 		XFREE(MTYPE_IF, ifp);
 		IF_DATA_UNLOCK();
@@ -383,8 +383,9 @@ if_create_vrf(const char *name, int namelen, vrf_id_t vrf_id)
 	}
 	if (if_uspv_type_setting(ifp) == ERROR)
 	{
-		zlog_err(ZLOG_NSM, "if_create(%s): corruption detected -- interface with this "
-				"uspv in VRF %u!", ifp->name, vrf_id);
+		zlog_err(MODULE_DEFAULT, "if_create(%s): corruption detected -- interface with this "
+						   "uspv in VRF %u!",
+				 ifp->name, vrf_id);
 		XFREE(MTYPE_IF, ifp);
 		IF_DATA_UNLOCK();
 		return NULL;
@@ -394,7 +395,7 @@ if_create_vrf(const char *name, int namelen, vrf_id_t vrf_id)
 	ifp->vrf_id = vrf_id;
 
 	ifp->connected = list_new();
-	ifp->connected->del = (void (*)(void *)) connected_free;
+	ifp->connected->del = (void (*)(void *))connected_free;
 
 	if_make_ifindex_type(ifp);
 
@@ -407,37 +408,41 @@ if_create_vrf(const char *name, int namelen, vrf_id_t vrf_id)
 #else
 	ifp->if_mode = IF_MODE_ACCESS_L2;
 #endif
-	ifp->flags |= IFF_UP|IFF_RUNNING;
+	ifp->flags |= IFF_UP | IFF_RUNNING;
 
 	if_make_llc_type(ifp);
 
 	if (if_lookup_by_name_vrf(ifp->name, vrf_id) == NULL)
 		listnode_add_sort(intf_list, ifp);
 	else
-		zlog_err(ZLOG_NSM, "if_create(%s): corruption detected -- interface with this "
-				"name exists already in VRF %u!", ifp->name, vrf_id);
+		zlog_err(MODULE_DEFAULT, "if_create(%s): corruption detected -- interface with this "
+						   "name exists already in VRF %u!",
+				 ifp->name, vrf_id);
 
-	if(if_master.interface_add_cb)
+	if (if_master.interface_add_cb)
 		if_master.interface_add_cb(ifp);
 	IF_DATA_UNLOCK();
 	return ifp;
 }
 
 struct interface *
-if_create(const char *name, int namelen) {
+if_create(const char *name, int namelen)
+{
 	return if_create_vrf(name, namelen, VRF_DEFAULT);
 }
 
 struct interface *
-if_create_dynamic(const char *name, int namelen) {
+if_create_dynamic(const char *name, int namelen)
+{
 	return if_create_vrf_dynamic(name, namelen, VRF_DEFAULT);
 }
 
 /* Delete and free interface structure. */
-void if_delete(struct interface *ifp) {
+void if_delete(struct interface *ifp)
+{
 
 	IF_DATA_LOCK();
-	if(if_master.interface_delete_cb)
+	if (if_master.interface_delete_cb)
 		if_master.interface_delete_cb(ifp);
 
 	listnode_delete(intfList, ifp);
@@ -447,15 +452,15 @@ void if_delete(struct interface *ifp) {
 	IF_DATA_UNLOCK();
 }
 
-
-
 /* Interface existance check by index. */
 struct interface *
-if_lookup_by_index_vrf(ifindex_t ifindex, vrf_id_t vrf_id) {
+if_lookup_by_index_vrf(ifindex_t ifindex, vrf_id_t vrf_id)
+{
 	struct listnode *node;
 	struct interface *ifp;
 
-	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp)) {
+	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+	{
 		if ((ifp->ifindex && ifp->ifindex == ifindex) && (ifp->vrf_id == vrf_id))
 			return ifp;
 	}
@@ -463,11 +468,13 @@ if_lookup_by_index_vrf(ifindex_t ifindex, vrf_id_t vrf_id) {
 }
 
 struct interface *
-if_lookup_by_index(ifindex_t ifindex) {
+if_lookup_by_index(ifindex_t ifindex)
+{
 	struct listnode *node;
 	struct interface *ifp;
 
-	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp)) {
+	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+	{
 		if (ifp->ifindex && ifp->ifindex == ifindex)
 			return ifp;
 	}
@@ -475,12 +482,14 @@ if_lookup_by_index(ifindex_t ifindex) {
 }
 
 struct interface *
-if_lookup_by_kernel_name_vrf(const char *name, vrf_id_t vrf_id) {
+if_lookup_by_kernel_name_vrf(const char *name, vrf_id_t vrf_id)
+{
 	struct listnode *node;
 	struct interface *ifp;
 
 	if (name)
-		for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp)) {
+		for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+		{
 			if (ifp->k_name_hash == if_name_hash_make(name) && (ifp->vrf_id == vrf_id))
 				return ifp;
 		}
@@ -488,12 +497,14 @@ if_lookup_by_kernel_name_vrf(const char *name, vrf_id_t vrf_id) {
 }
 
 struct interface *
-if_lookup_by_kernel_name(const char *name) {
+if_lookup_by_kernel_name(const char *name)
+{
 	struct listnode *node;
 	struct interface *ifp;
 
 	if (name)
-		for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp)) {
+		for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+		{
 			if (ifp->k_name_hash == if_name_hash_make(name))
 				return ifp;
 		}
@@ -502,21 +513,25 @@ if_lookup_by_kernel_name(const char *name) {
 }
 
 struct interface *
-if_lookup_by_kernel_index_vrf(ifindex_t kifindex, vrf_id_t vrf_id) {
+if_lookup_by_kernel_index_vrf(ifindex_t kifindex, vrf_id_t vrf_id)
+{
 	struct listnode *node;
 	struct interface *ifp;
-	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp)) {
-		if (ifp->k_ifindex &&  ifp->k_ifindex == kifindex && (ifp->vrf_id == vrf_id))
+	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+	{
+		if (ifp->k_ifindex && ifp->k_ifindex == kifindex && (ifp->vrf_id == vrf_id))
 			return ifp;
 	}
 	return NULL;
 }
 
 struct interface *
-if_lookup_by_kernel_index(ifindex_t kifindex) {
+if_lookup_by_kernel_index(ifindex_t kifindex)
+{
 	struct listnode *node;
 	struct interface *ifp;
-	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp)) {
+	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+	{
 		if (ifp->k_ifindex && ifp->k_ifindex == kifindex)
 			return ifp;
 	}
@@ -524,82 +539,82 @@ if_lookup_by_kernel_index(ifindex_t kifindex) {
 	//return if_lookup_by_kernel_index_vrf(kifindex, VRF_DEFAULT);
 }
 
-const char *ifkernelindex2kernelifname(ifindex_t kifindex) {
+const char *ifkernelindex2kernelifname(ifindex_t kifindex)
+{
 	struct interface *ifp;
-	return ((ifp = if_lookup_by_kernel_index(kifindex)) != NULL) ?
-			ifp->k_name : NULL;
+	return ((ifp = if_lookup_by_kernel_index(kifindex)) != NULL) ? ifp->k_name : NULL;
 }
 
-const char *ifkernelindex2kernelifname_vrf(ifindex_t kifindex, vrf_id_t vrf_id) {
+const char *ifkernelindex2kernelifname_vrf(ifindex_t kifindex, vrf_id_t vrf_id)
+{
 	struct interface *ifp;
-	return ((ifp = if_lookup_by_kernel_index_vrf(kifindex, vrf_id)) != NULL) ?
-			ifp->k_name : NULL;
+	return ((ifp = if_lookup_by_kernel_index_vrf(kifindex, vrf_id)) != NULL) ? ifp->k_name : NULL;
 }
 
-ifindex_t ifname2kernelifindex(const char *ifname) {
+ifindex_t ifname2kernelifindex(const char *ifname)
+{
 	struct interface *ifp;
-	return ((ifp = if_lookup_by_kernel_name(ifname)) != NULL) ?
-			ifp->k_ifindex : IFINDEX_INTERNAL;
+	return ((ifp = if_lookup_by_kernel_name(ifname)) != NULL) ? ifp->k_ifindex : IFINDEX_INTERNAL;
 }
 
-ifindex_t ifname2kernelifindex_vrf(const char *ifname, vrf_id_t vrf_id) {
+ifindex_t ifname2kernelifindex_vrf(const char *ifname, vrf_id_t vrf_id)
+{
 	struct interface *ifp;
-	return ((ifp = if_lookup_by_kernel_name_vrf(ifname, vrf_id)) != NULL) ?
-			ifp->k_ifindex : IFINDEX_INTERNAL;
+	return ((ifp = if_lookup_by_kernel_name_vrf(ifname, vrf_id)) != NULL) ? ifp->k_ifindex : IFINDEX_INTERNAL;
 }
 
 ifindex_t ifindex2ifkernel(ifindex_t ifindex)
 {
 	struct interface *ifp;
-	return ((ifp = if_lookup_by_index(ifindex)) != NULL) ?
-			ifp->k_ifindex : IFINDEX_INTERNAL;
+	return ((ifp = if_lookup_by_index(ifindex)) != NULL) ? ifp->k_ifindex : IFINDEX_INTERNAL;
 }
 
 ifindex_t ifkernel2ifindex(ifindex_t ifkindex)
 {
 	struct interface *ifp;
-	return ((ifp = if_lookup_by_kernel_index(ifkindex)) != NULL) ?
-			ifp->ifindex : IFINDEX_INTERNAL;
+	return ((ifp = if_lookup_by_kernel_index(ifkindex)) != NULL) ? ifp->ifindex : IFINDEX_INTERNAL;
 }
 
 const char *
-ifindex2ifname_vrf(ifindex_t ifindex, vrf_id_t vrf_id) {
+ifindex2ifname_vrf(ifindex_t ifindex, vrf_id_t vrf_id)
+{
 	struct interface *ifp;
 
-	return ((ifp = if_lookup_by_index_vrf(ifindex, vrf_id)) != NULL) ?
-			ifp->name : "unknown";
+	return ((ifp = if_lookup_by_index_vrf(ifindex, vrf_id)) != NULL) ? ifp->name : "unknown";
 }
 
 const char *
-ifindex2ifname(ifindex_t ifindex) {
+ifindex2ifname(ifindex_t ifindex)
+{
 	struct interface *ifp;
 
-	return ((ifp = if_lookup_by_index(ifindex)) != NULL) ?
-			ifp->name : "unknown";
+	return ((ifp = if_lookup_by_index(ifindex)) != NULL) ? ifp->name : "unknown";
 	//return ifindex2ifname_vrf(ifindex, VRF_DEFAULT);
 }
 
-ifindex_t ifname2ifindex_vrf(const char *name, vrf_id_t vrf_id) {
+ifindex_t ifname2ifindex_vrf(const char *name, vrf_id_t vrf_id)
+{
 	struct interface *ifp;
 
-	return ((ifp = if_lookup_by_name_vrf(name, vrf_id)) != NULL) ?
-			ifp->ifindex : IFINDEX_INTERNAL;
+	return ((ifp = if_lookup_by_name_vrf(name, vrf_id)) != NULL) ? ifp->ifindex : IFINDEX_INTERNAL;
 }
 
-ifindex_t ifname2ifindex(const char *name) {
+ifindex_t ifname2ifindex(const char *name)
+{
 	struct interface *ifp;
-	return ((ifp = if_lookup_by_name(name)) != NULL) ?
-			ifp->ifindex : IFINDEX_INTERNAL;
+	return ((ifp = if_lookup_by_name(name)) != NULL) ? ifp->ifindex : IFINDEX_INTERNAL;
 }
 
 /* Interface existance check by interface name. */
 struct interface *
-if_lookup_by_name_vrf(const char *name, vrf_id_t vrf_id) {
+if_lookup_by_name_vrf(const char *name, vrf_id_t vrf_id)
+{
 	struct listnode *node;
 	struct interface *ifp;
 
 	if (name)
-		for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp)) {
+		for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+		{
 			if (ifp->name_hash == if_name_hash_make(name) && (ifp->vrf_id == vrf_id))
 				return ifp;
 		}
@@ -607,12 +622,14 @@ if_lookup_by_name_vrf(const char *name, vrf_id_t vrf_id) {
 }
 
 struct interface *
-if_lookup_by_name(const char *name) {
+if_lookup_by_name(const char *name)
+{
 	struct listnode *node;
 	struct interface *ifp;
 
 	if (name)
-		for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp)) {
+		for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+		{
 			if (ifp->name_hash == if_name_hash_make(name))
 				return ifp;
 		}
@@ -621,14 +638,16 @@ if_lookup_by_name(const char *name) {
 }
 
 struct interface *
-if_lookup_by_name_len_vrf(const char *name, size_t namelen, vrf_id_t vrf_id) {
+if_lookup_by_name_len_vrf(const char *name, size_t namelen, vrf_id_t vrf_id)
+{
 	struct listnode *node;
 	struct interface *ifp;
 
 	if (namelen > INTERFACE_NAMSIZ)
 		return NULL;
 
-	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp)) {
+	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+	{
 		if (ifp->name_hash == if_name_hash_make(name) && (ifp->vrf_id == vrf_id))
 			return ifp;
 	}
@@ -636,17 +655,17 @@ if_lookup_by_name_len_vrf(const char *name, size_t namelen, vrf_id_t vrf_id) {
 }
 
 struct interface *
-if_lookup_by_name_len(const char *name, size_t namelen) {
+if_lookup_by_name_len(const char *name, size_t namelen)
+{
 	return if_lookup_by_name(name);
 }
 
-
-unsigned int ifindex2vlan(ifindex_t ifindex) {
+unsigned int ifindex2vlan(ifindex_t ifindex)
+{
 
 	struct interface *ifp = if_lookup_by_index(ifindex);
 	return ifp ? ifp->encavlan : IFINDEX_INTERNAL;
 }
-
 
 struct interface *if_lookup_by_encavlan(unsigned short encavlan)
 {
@@ -654,7 +673,8 @@ struct interface *if_lookup_by_encavlan(unsigned short encavlan)
 	struct interface *ifp;
 	if (!encavlan)
 		return NULL;
-	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp)) {
+	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+	{
 		if ((ifp->encavlan == encavlan))
 			return ifp;
 	}
@@ -662,7 +682,8 @@ struct interface *if_lookup_by_encavlan(unsigned short encavlan)
 }
 /* Lookup interface by IPv4 address. */
 struct interface *
-if_lookup_exact_address_vrf(struct in_addr src, vrf_id_t vrf_id) {
+if_lookup_exact_address_vrf(struct in_addr src, vrf_id_t vrf_id)
+{
 	struct listnode *node;
 	struct listnode *cnode;
 	struct interface *ifp;
@@ -671,13 +692,14 @@ if_lookup_exact_address_vrf(struct in_addr src, vrf_id_t vrf_id) {
 
 	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
 	{
-		if((ifp->vrf_id == vrf_id))
+		if ((ifp->vrf_id == vrf_id))
 		{
 			for (ALL_LIST_ELEMENTS_RO(ifp->connected, cnode, c))
 			{
 				p = c->address;
 
-				if (p && p->family == AF_INET) {
+				if (p && p->family == AF_INET)
+				{
 					if (IPV4_ADDR_SAME(&p->u.prefix4, &src))
 						return ifp;
 				}
@@ -688,13 +710,15 @@ if_lookup_exact_address_vrf(struct in_addr src, vrf_id_t vrf_id) {
 }
 
 struct interface *
-if_lookup_exact_address(struct in_addr src) {
+if_lookup_exact_address(struct in_addr src)
+{
 	return if_lookup_exact_address_vrf(src, VRF_DEFAULT);
 }
 
 /* Lookup interface by IPv4 address. */
 struct interface *
-if_lookup_address_vrf(struct in_addr src, vrf_id_t vrf_id) {
+if_lookup_address_vrf(struct in_addr src, vrf_id_t vrf_id)
+{
 	struct listnode *node;
 	struct prefix addr;
 	int bestlen = 0;
@@ -711,12 +735,12 @@ if_lookup_address_vrf(struct in_addr src, vrf_id_t vrf_id) {
 
 	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
 	{
-		if(ifp->vrf_id == vrf_id)
+		if (ifp->vrf_id == vrf_id)
 		{
-			for (ALL_LIST_ELEMENTS_RO(ifp->connected, cnode, c)) {
-				if (c->address && (c->address->family == AF_INET)
-						&& prefix_match(CONNECTED_PREFIX(c), &addr)
-						&& (c->address->prefixlen > bestlen)) {
+			for (ALL_LIST_ELEMENTS_RO(ifp->connected, cnode, c))
+			{
+				if (c->address && (c->address->family == AF_INET) && prefix_match(CONNECTED_PREFIX(c), &addr) && (c->address->prefixlen > bestlen))
+				{
 					bestlen = c->address->prefixlen;
 					match = ifp;
 				}
@@ -727,13 +751,15 @@ if_lookup_address_vrf(struct in_addr src, vrf_id_t vrf_id) {
 }
 
 struct interface *
-if_lookup_address(struct in_addr src) {
+if_lookup_address(struct in_addr src)
+{
 	return if_lookup_address_vrf(src, VRF_DEFAULT);
 }
 
 /* Lookup interface by prefix */
 struct interface *
-if_lookup_prefix_vrf(struct prefix *prefix, vrf_id_t vrf_id) {
+if_lookup_prefix_vrf(struct prefix *prefix, vrf_id_t vrf_id)
+{
 
 	struct listnode *node;
 	struct listnode *cnode;
@@ -742,10 +768,12 @@ if_lookup_prefix_vrf(struct prefix *prefix, vrf_id_t vrf_id) {
 
 	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
 	{
-		if(ifp->vrf_id == vrf_id)
+		if (ifp->vrf_id == vrf_id)
 		{
-			for (ALL_LIST_ELEMENTS_RO(ifp->connected, cnode, c)) {
-				if (prefix_cmp(c->address, prefix) == 0) {
+			for (ALL_LIST_ELEMENTS_RO(ifp->connected, cnode, c))
+			{
+				if (prefix_cmp(c->address, prefix) == 0)
+				{
 					return ifp;
 				}
 			}
@@ -755,10 +783,10 @@ if_lookup_prefix_vrf(struct prefix *prefix, vrf_id_t vrf_id) {
 }
 
 struct interface *
-if_lookup_prefix(struct prefix *prefix) {
+if_lookup_prefix(struct prefix *prefix)
+{
 	return if_lookup_prefix_vrf(prefix, VRF_DEFAULT);
 }
-
 
 int if_count_lookup_type(if_type_t type)
 {
@@ -778,15 +806,15 @@ int if_count_lookup_type(if_type_t type)
 }
 /* Get interface by name if given name interface doesn't exist create one. */
 
-int if_up (struct interface *ifp)
+int if_up(struct interface *ifp)
 {
 	struct connected *connected;
 	struct listnode *node;
 	struct prefix *p;
-
+#ifdef PL_NSM_MODULE
 	/* Notify the protocol daemons. */
 	zebra_interface_up_update(ifp);
-
+#endif
 	/* Install connected routes to the kernel. */
 	for (ALL_LIST_ELEMENTS_RO(ifp->connected, node, connected))
 	{
@@ -800,19 +828,22 @@ int if_up (struct interface *ifp)
 #endif /* HAVE_IPV6 */
 	}
 	ifp->flags |= IFF_UP | IFF_RUNNING;
-	/* Examine all static routes. */
+/* Examine all static routes. */
+#ifdef PL_NSM_MODULE
 	rib_update(ifp->vrf_id);
+#endif
 	return OK;
 }
 
-int if_down (struct interface *ifp)
+int if_down(struct interface *ifp)
 {
 	struct connected *connected;
 	struct listnode *node;
 	struct prefix *p;
+#ifdef PL_NSM_MODULE
 	/* Notify to the protocol daemons. */
-	zebra_interface_down_update (ifp);
-
+	zebra_interface_down_update(ifp);
+#endif
 	/* Delete connected routes from the kernel. */
 	for (ALL_LIST_ELEMENTS_RO(ifp->connected, node, connected))
 	{
@@ -820,35 +851,39 @@ int if_down (struct interface *ifp)
 		if (p->family == AF_INET)
 			connected_down_ipv4(ifp, connected);
 #ifdef HAVE_IPV6
-	    else if (p->family == AF_INET6)
-	    	connected_down_ipv6 (ifp, connected);
+		else if (p->family == AF_INET6)
+			connected_down_ipv6(ifp, connected);
 #endif /* HAVE_IPV6 */
 	}
-	ifp->flags &= ~(IFF_UP|IFF_RUNNING);
-	/* Examine all static routes which direct to the interface. */
-	rib_update (ifp->vrf_id);
+	ifp->flags &= ~(IFF_UP | IFF_RUNNING);
+/* Examine all static routes which direct to the interface. */
+#ifdef PL_NSM_MODULE
+	rib_update(ifp->vrf_id);
+#endif
 	return OK;
 }
 /* Does interface up ? */
-int if_is_up(struct interface *ifp) {
+int if_is_up(struct interface *ifp)
+{
 	return ifp->flags & IFF_UP;
 }
 
 /* Is interface running? */
-int if_is_running(struct interface *ifp) {
+int if_is_running(struct interface *ifp)
+{
 	return ifp->flags & IFF_RUNNING;
 }
 
 /* Is the interface operative, eg. either UP & RUNNING
  or UP & !ZEBRA_INTERFACE_LINK_DETECTION */
-int if_is_operative(struct interface *ifp) {
-	return ((ifp->flags & IFF_UP)
-			&& (ifp->flags & IFF_RUNNING
-					|| !CHECK_FLAG(ifp->status, ZEBRA_INTERFACE_LINKDETECTION)));
+int if_is_operative(struct interface *ifp)
+{
+	return ((ifp->flags & IFF_UP) && (ifp->flags & IFF_RUNNING || !CHECK_FLAG(ifp->status, ZEBRA_INTERFACE_LINKDETECTION)));
 }
 
 /* Is this loopback interface ? */
-int if_is_loopback(struct interface *ifp) {
+int if_is_loopback(struct interface *ifp)
+{
 	/* XXX: Do this better, eg what if IFF_WHATEVER means X on platform M
 	 * but Y on platform N?
 	 */
@@ -856,54 +891,57 @@ int if_is_loopback(struct interface *ifp) {
 }
 
 /* Does this interface support broadcast ? */
-int if_is_broadcast(struct interface *ifp) {
+int if_is_broadcast(struct interface *ifp)
+{
 	return ifp->flags & IFF_BROADCAST;
 }
 
 /* Does this interface support broadcast ? */
-int if_is_pointopoint(struct interface *ifp) {
+int if_is_pointopoint(struct interface *ifp)
+{
 	return ifp->flags & IFF_POINTOPOINT;
 }
 
 /* Does this interface support multicast ? */
-int if_is_multicast(struct interface *ifp) {
+int if_is_multicast(struct interface *ifp)
+{
 	return ifp->flags & IFF_MULTICAST;
 }
 
 int if_is_serial(struct interface *ifp)
 {
-	if(os_strstr(ifp->name, "serial"))
+	if (os_strstr(ifp->name, "serial"))
 		return 1;
-	if(ifp->if_type == IF_SERIAL)
+	if (ifp->if_type == IF_SERIAL)
 		return 1;
-/*	if(ifp->zebra_link_type == IF_SERIAL)
+	/*	if(ifp->zebra_link_type == IF_SERIAL)
 		return 1;*/
 	return 0;
 }
 
 int if_is_ethernet(struct interface *ifp)
 {
-	if(os_strstr(ifp->name, "ethernet"))
+	if (os_strstr(ifp->name, "ethernet"))
 		return 1;
-	if(ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET)
+	if (ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET)
 		return 1;
 	return 0;
 }
 
 int if_is_tunnel(struct interface *ifp)
 {
-	if(os_strstr(ifp->name, "tunnel"))
+	if (os_strstr(ifp->name, "tunnel"))
 		return 1;
-	if(ifp->if_type == IF_TUNNEL)
+	if (ifp->if_type == IF_TUNNEL)
 		return 1;
 	return 0;
 }
 
 int if_is_lag(struct interface *ifp)
 {
-	if(os_strstr(ifp->name, "port-channel"))
+	if (os_strstr(ifp->name, "port-channel"))
 		return 1;
-	if(ifp->if_type == IF_LAG)
+	if (ifp->if_type == IF_LAG)
 		return 1;
 	return 0;
 }
@@ -915,16 +953,16 @@ int if_is_lag_member(struct interface *ifp)
 
 int if_is_vlan(struct interface *ifp)
 {
-	if(os_strstr(ifp->name, "vlan"))
+	if (os_strstr(ifp->name, "vlan"))
 		return 1;
-	if(ifp->if_type == IF_VLAN)
+	if (ifp->if_type == IF_VLAN)
 		return 1;
 	return 0;
 }
 
 int if_is_brigde(struct interface *ifp)
 {
-	if(ifp->if_type == IF_BRIGDE)
+	if (ifp->if_type == IF_BRIGDE)
 		return 1;
 	return 0;
 }
@@ -934,27 +972,25 @@ int if_is_brigde_member(struct interface *ifp)
 	return CHECK_FLAG(ifp->ifmember, IF_BRIDGE_MEM);
 }
 
-
 int if_is_loop(struct interface *ifp)
 {
-	if(ifp->if_type == IF_LOOPBACK)
+	if (ifp->if_type == IF_LOOPBACK)
 		return 1;
 	return 0;
 }
 
 int if_is_wireless(struct interface *ifp)
 {
-	if(os_strstr(ifp->name, "wireless"))
+	if (os_strstr(ifp->name, "wireless"))
 		return 1;
-	if(ifp->if_type == IF_WIRELESS)
+	if (ifp->if_type == IF_WIRELESS)
 		return 1;
 	return 0;
 }
 
-
 int if_name_set(struct interface *ifp, const char *str)
 {
-	if(os_strlen(ifp->name) == 0)
+	if (os_strlen(ifp->name) == 0)
 		os_strcpy(ifp->name, str);
 	ifp->name_hash = if_name_hash_make(ifp->name);
 	return OK;
@@ -962,7 +998,7 @@ int if_name_set(struct interface *ifp, const char *str)
 
 int if_kname_set(struct interface *ifp, const char *str)
 {
-	if(strlen(str))
+	if (strlen(str))
 	{
 		char buf[INTERFACE_NAMSIZ + 1];
 		os_memset(buf, 0, sizeof(buf));
@@ -970,7 +1006,9 @@ int if_kname_set(struct interface *ifp, const char *str)
 		os_memset(ifp->k_name, 0, sizeof(ifp->k_name));
 		os_strcpy(ifp->k_name, buf);
 		ifp->k_name_hash = if_name_hash_make(ifp->k_name);
+#ifdef PL_PAL_MODULE
 		ifp->k_ifindex = pal_interface_ifindex(ifp->k_name);
+#endif
 	}
 	else
 	{
@@ -981,9 +1019,9 @@ int if_kname_set(struct interface *ifp, const char *str)
 	return OK;
 }
 
-const char *if_enca_string(if_enca_t	enca)
+const char *if_enca_string(if_enca_t enca)
 {
-	switch(enca)
+	switch (enca)
 	{
 	case IF_ENCA_NONE:
 		return " ";
@@ -1030,7 +1068,6 @@ const char *if_enca_string(if_enca_t	enca)
 	return " ";
 }
 
-
 int if_list_each(int (*cb)(struct interface *ifp, void *pVoid), void *pVoid)
 {
 	struct listnode *node;
@@ -1039,9 +1076,9 @@ int if_list_each(int (*cb)(struct interface *ifp, void *pVoid), void *pVoid)
 	{
 		if (ifp)
 		{
-			if(cb)
+			if (cb)
 			{
-				if(OK != (cb)(ifp, pVoid))
+				if (OK != (cb)(ifp, pVoid))
 					break;
 			}
 		}
@@ -1049,16 +1086,16 @@ int if_list_each(int (*cb)(struct interface *ifp, void *pVoid), void *pVoid)
 	return OK;
 }
 
-
-
 /* Allocate connected structure. */
 struct connected *
-connected_new(void) {
+connected_new(void)
+{
 	return XCALLOC(MTYPE_CONNECTED, sizeof(struct connected));
 }
 
 /* Free connected structure. */
-void connected_free(struct connected *connected) {
+void connected_free(struct connected *connected)
+{
 	if (connected->address)
 		prefix_free(connected->address);
 
@@ -1069,22 +1106,24 @@ void connected_free(struct connected *connected) {
 }
 
 /* If two connected address has same prefix return 1. */
-static int connected_same_prefix(struct prefix *p1, struct prefix *p2) {
-	if (p1->family == p2->family) {
-		if (p1->family == AF_INET&&
-		IPV4_ADDR_SAME (&p1->u.prefix4, &p2->u.prefix4))
+static int connected_same_prefix(struct prefix *p1, struct prefix *p2)
+{
+	if (p1->family == p2->family)
+	{
+		if (p1->family == AF_INET &&
+			IPV4_ADDR_SAME(&p1->u.prefix4, &p2->u.prefix4))
 			return 1;
 #ifdef HAVE_IPV6
 		if (p1->family == AF_INET6 &&
-				IPV6_ADDR_SAME (&p1->u.prefix6, &p2->u.prefix6))
-		return 1;
+			IPV6_ADDR_SAME(&p1->u.prefix6, &p2->u.prefix6))
+			return 1;
 #endif /* HAVE_IPV6 */
 	}
 	return 0;
 }
 
 struct connected *
-connected_delete_by_prefix (struct interface *ifp, struct prefix *p)
+connected_delete_by_prefix(struct interface *ifp, struct prefix *p)
 {
 	struct listnode *node;
 	struct listnode *next;
@@ -1108,7 +1147,8 @@ connected_delete_by_prefix (struct interface *ifp, struct prefix *p)
 /* Find the IPv4 address on our side that will be used when packets
  are sent to dst. */
 struct connected *
-connected_lookup_address(struct interface *ifp, struct in_addr dst) {
+connected_lookup_address(struct interface *ifp, struct in_addr dst)
+{
 	struct prefix addr;
 	struct listnode *cnode;
 	struct connected *c;
@@ -1122,17 +1162,15 @@ connected_lookup_address(struct interface *ifp, struct in_addr dst) {
 
 	for (ALL_LIST_ELEMENTS_RO(ifp->connected, cnode, c))
 	{
-		if (c->address && (c->address->family == AF_INET)
-				&& prefix_match(CONNECTED_PREFIX(c), &addr)
-				&& (!match || (c->address->prefixlen > match->address->prefixlen)))
+		if (c->address && (c->address->family == AF_INET) && prefix_match(CONNECTED_PREFIX(c), &addr) && (!match || (c->address->prefixlen > match->address->prefixlen)))
 			match = c;
 	}
 	return match;
 }
 
 struct connected *
-connected_add_by_prefix (struct interface *ifp, struct prefix *p,
-                         struct prefix *destination)
+connected_add_by_prefix(struct interface *ifp, struct prefix *p,
+						struct prefix *destination)
 {
 	struct connected *ifc;
 
@@ -1158,7 +1196,8 @@ connected_add_by_prefix (struct interface *ifp, struct prefix *p,
 
 /* If same interface address is already exist... */
 struct connected *
-connected_check(struct interface *ifp, struct prefix *p) {
+connected_check(struct interface *ifp, struct prefix *p)
+{
 	struct connected *ifc;
 	struct listnode *node;
 
@@ -1170,8 +1209,9 @@ connected_check(struct interface *ifp, struct prefix *p) {
 }
 
 /* Print if_addr structure. */
-static void __attribute__ ((unused))
-connected_log(struct connected *connected, char *str) {
+static void __attribute__((unused))
+connected_log(struct connected *connected, char *str)
+{
 	struct prefix *p;
 	struct interface *ifp;
 	char logbuf[BUFSIZ];
@@ -1181,32 +1221,34 @@ connected_log(struct connected *connected, char *str) {
 	p = connected->address;
 
 	snprintf(logbuf, BUFSIZ, "%s interface %s vrf %u %s %s/%d ", str, ifp->name,
-			ifp->vrf_id, prefix_family_str(p),
-			inet_ntop(p->family, &p->u.prefix, buf, BUFSIZ), p->prefixlen);
+			 ifp->vrf_id, prefix_family_str(p),
+			 inet_ntop(p->family, &p->u.prefix, buf, BUFSIZ), p->prefixlen);
 
 	p = connected->destination;
-	if (p) {
+	if (p)
+	{
 		strncat(logbuf, inet_ntop(p->family, &p->u.prefix, buf, BUFSIZ),
 				BUFSIZ - strlen(logbuf));
 	}
-	zlog_info(ZLOG_NSM, "%s", logbuf);
+	zlog_info(MODULE_DEFAULT, "%s", logbuf);
 }
 
 /* Printout flag information into log */
 const char *
-if_flag_dump(unsigned long flag) {
+if_flag_dump(unsigned long flag)
+{
 	int separator = 0;
 	static char logbuf[BUFSIZ];
 
-#define IFF_OUT_LOG(X,STR) \
-  if (flag & (X)) \
-    { \
-      if (separator) \
-	strlcat (logbuf, ",", BUFSIZ); \
-      else \
-	separator = 1; \
-      strlcat (logbuf, STR, BUFSIZ); \
-    }
+#define IFF_OUT_LOG(X, STR)               \
+	if (flag & (X))                       \
+	{                                     \
+		if (separator)                    \
+			strlcat(logbuf, ",", BUFSIZ); \
+		else                              \
+			separator = 1;                \
+		strlcat(logbuf, STR, BUFSIZ);     \
+	}
 
 	strlcpy(logbuf, "<", BUFSIZ);
 	IFF_OUT_LOG(IFF_UP, "UP");
@@ -1238,25 +1280,28 @@ if_flag_dump(unsigned long flag) {
 }
 
 /* For debugging */
-static void if_dump(const struct interface *ifp) {
+static void if_dump(const struct interface *ifp)
+{
 	struct listnode *node;
 	struct connected *c __attribute__((unused));
 
 	for (ALL_LIST_ELEMENTS_RO(ifp->connected, node, c))
-		zlog_info(ZLOG_NSM, "Interface %s vrf %u index %d metric %d mtu %d "
+		zlog_info(MODULE_DEFAULT, "Interface %s vrf %u index %d metric %d mtu %d "
 #ifdef HAVE_IPV6
-				"mtu6 %d "
+							"mtu6 %d "
 #endif /* HAVE_IPV6 */
-						"%s", ifp->name, ifp->vrf_id, ifp->ifindex, ifp->metric,
-				ifp->mtu,
+							"%s",
+				  ifp->name, ifp->vrf_id, ifp->ifindex, ifp->metric,
+				  ifp->mtu,
 #ifdef HAVE_IPV6
-				ifp->mtu6,
+				  ifp->mtu6,
 #endif /* HAVE_IPV6 */
-				if_flag_dump(ifp->flags));
+				  if_flag_dump(ifp->flags));
 }
 
 /* Interface printing for all interface. */
-void if_dump_all(void) {
+void if_dump_all(void)
+{
 	struct listnode *node;
 	void *p;
 	for (ALL_LIST_ELEMENTS_RO(intfList, node, p))
@@ -1264,15 +1309,21 @@ void if_dump_all(void) {
 }
 
 /* Initialize interface list. */
-void if_init() {
-	intfList = list_new();
-	if(ifMutex == NULL)
-		ifMutex = os_mutex_init();
-	(intfList)->cmp = (int (*)(void *, void *)) if_cmp_func;
+void if_init()
+{
+	if(intfList == NULL)
+	{
+		intfList = list_new();
+		if (ifMutex == NULL)
+			ifMutex = os_mutex_init();
+		(intfList)->cmp = (int (*)(void *, void *))if_cmp_func;
+	}
 }
 
-void if_terminate() {
-	for (;;) {
+void if_terminate()
+{
+	for (;;)
+	{
 		struct interface *ifp;
 
 		ifp = listnode_head(intfList);
@@ -1287,9 +1338,13 @@ void if_terminate() {
 }
 
 const char *
-if_link_type_str(enum zebra_link_type llt) {
-	switch (llt) {
-#define llts(T,S) case (T): return (S)
+if_link_type_str(enum zebra_link_type llt)
+{
+	switch (llt)
+	{
+#define llts(T, S) \
+	case (T):      \
+		return (S)
 		llts(ZEBRA_LLT_UNKNOWN, "Unknown");
 		llts(ZEBRA_LLT_SERIAL, "Serial");
 		llts(ZEBRA_LLT_ETHER, "Ethernet");
@@ -1315,8 +1370,8 @@ if_link_type_str(enum zebra_link_type llt) {
 		llts(ZEBRA_LLT_WIFI, "Wifi");
 		llts(ZEBRA_LLT_MODEM, "Modem");
 		llts(ZEBRA_LLT_WIRELESS, "Wireless");
-		default:
-		zlog_warn (ZLOG_NSM, "Unknown value %d", llt);
+	default:
+		zlog_warn(MODULE_DEFAULT, "Unknown value %d", llt);
 		return "Unknown type!";
 #undef llts
 	}
@@ -1324,32 +1379,49 @@ if_link_type_str(enum zebra_link_type llt) {
 }
 
 enum zebra_link_type
-netlink_to_zebra_link_type (unsigned int hwt)
+netlink_to_zebra_link_type(unsigned int hwt)
 {
-  switch (hwt)
-  {
-    case ARPHRD_ETHER: return ZEBRA_LLT_ETHER;
-    case ARPHRD_ATM: return ZEBRA_LLT_ATM;
-    case ARPHRD_SLIP: return ZEBRA_LLT_SLIP;
-    case ARPHRD_CSLIP: return ZEBRA_LLT_CSLIP;
-    case ARPHRD_SLIP6: return ZEBRA_LLT_SLIP6;
-    case ARPHRD_CSLIP6: return ZEBRA_LLT_CSLIP6;
-    case ARPHRD_PPP: return ZEBRA_LLT_PPP;
-    case ARPHRD_CISCO: return ZEBRA_LLT_CHDLC;
-    case ARPHRD_RAWHDLC: return ZEBRA_LLT_RAWHDLC;
-    case ARPHRD_TUNNEL: return ZEBRA_LLT_IPIP;
-    case ARPHRD_TUNNEL6: return ZEBRA_LLT_IPIP6;
-    case ARPHRD_LOOPBACK: return ZEBRA_LLT_LOOPBACK;
-    case ARPHRD_SIT: return ZEBRA_LLT_SIT;
-    case ARPHRD_IPGRE: return ZEBRA_LLT_IPGRE;
+	switch (hwt)
+	{
+	case ARPHRD_ETHER:
+		return ZEBRA_LLT_ETHER;
+	case ARPHRD_ATM:
+		return ZEBRA_LLT_ATM;
+	case ARPHRD_SLIP:
+		return ZEBRA_LLT_SLIP;
+	case ARPHRD_CSLIP:
+		return ZEBRA_LLT_CSLIP;
+	case ARPHRD_SLIP6:
+		return ZEBRA_LLT_SLIP6;
+	case ARPHRD_CSLIP6:
+		return ZEBRA_LLT_CSLIP6;
+	case ARPHRD_PPP:
+		return ZEBRA_LLT_PPP;
+	case ARPHRD_CISCO:
+		return ZEBRA_LLT_CHDLC;
+	case ARPHRD_RAWHDLC:
+		return ZEBRA_LLT_RAWHDLC;
+	case ARPHRD_TUNNEL:
+		return ZEBRA_LLT_IPIP;
+	case ARPHRD_TUNNEL6:
+		return ZEBRA_LLT_IPIP6;
+	case ARPHRD_LOOPBACK:
+		return ZEBRA_LLT_LOOPBACK;
+	case ARPHRD_SIT:
+		return ZEBRA_LLT_SIT;
+	case ARPHRD_IPGRE:
+		return ZEBRA_LLT_IPGRE;
 
-   // case ARPHRD_IEEE802: return ZEBRA_LLT_IPGRE;
-    case ARPHRD_IEEE80211: return ZEBRA_LLT_WIRELESS;
-   // case ARPHRD_IEEE802154: return ZEBRA_LLT_ZIGBEE;
+		// case ARPHRD_IEEE802: return ZEBRA_LLT_IPGRE;
+	case ARPHRD_IEEE80211:
+		return ZEBRA_LLT_WIRELESS;
+		// case ARPHRD_IEEE802154: return ZEBRA_LLT_ZIGBEE;
 
 #ifdef ARPHRD_IP6GRE
-    case ARPHRD_IP6GRE: return ZEBRA_LLT_IP6GRE;
+	case ARPHRD_IP6GRE:
+		return ZEBRA_LLT_IP6GRE;
 #endif
-    default: return ZEBRA_LLT_UNKNOWN;
-  }
+	default:
+		return ZEBRA_LLT_UNKNOWN;
+	}
 }

@@ -133,7 +133,7 @@ static int tty_attty_fdopen(struct tty_com *attty)
 	set_blocking(attty->fd);
 	if(attty->fp)
 		return OK;
-	zlog_debug(ZLOG_PAL, "fdopen error:%s", safe_strerror(errno));
+	zlog_debug(MODULE_PAL, "fdopen error:%s", safe_strerror(errno));
 	return ERROR;
 #else
 	assert (attty);
@@ -237,10 +237,10 @@ static int tty_attty_read(struct tty_com *attty, char *buf, int len)
 	{
 		if (errno == EPIPE || errno == EBADF || errno == EIO)
 		{
-			zlog_err(ZLOG_MODEM, " Can not get bytes to read(%s)", safe_strerror(errno));
+			zlog_err(MODULE_MODEM, " Can not get bytes to read(%s)", safe_strerror(errno));
 			return RES_CLOSE;
 		}
-		zlog_err(ZLOG_MODEM, " Can not get bytes to read(%s)", safe_strerror(errno));
+		zlog_err(MODULE_MODEM, " Can not get bytes to read(%s)", safe_strerror(errno));
 		return RES_ERROR;
 	}
 	if(bytes > 0 && bytes < ATCMD_RESPONSE_MAX)
@@ -274,7 +274,7 @@ static int tty_attty_read(struct tty_com *attty, char *buf, int len)
 				{
 					if(ret < 0)
 					{
-						zlog_err(ZLOG_MODEM, " Can not read (%s)", safe_strerror(errno));
+						zlog_err(MODULE_MODEM, " Can not read (%s)", safe_strerror(errno));
 						return RES_ERROR;
 					}
 				}
@@ -282,9 +282,9 @@ static int tty_attty_read(struct tty_com *attty, char *buf, int len)
 		}
 	}
 	if(bytes > ATCMD_RESPONSE_MAX)
-		zlog_warn(ZLOG_MODEM, " Too much data to be read(%d bytes)", bytes);
+		zlog_warn(MODULE_MODEM, " Too much data to be read(%d bytes)", bytes);
 	else
-		zlog_warn(ZLOG_MODEM, " There no data to be read(%d bytes)", bytes);
+		zlog_warn(MODULE_MODEM, " There no data to be read(%d bytes)", bytes);
 	return RES_ERROR;
 }
 #else
@@ -311,10 +311,10 @@ try_again:
 	{
 		if (errno == EPIPE || errno == EBADF || errno == EIO)
 		{
-			zlog_err(ZLOG_MODEM, " Can not get bytes to read(%s)", safe_strerror(errno));
+			zlog_err(MODULE_MODEM, " Can not get bytes to read(%s)", safe_strerror(errno));
 			return RES_CLOSE;
 		}
-		zlog_err(ZLOG_MODEM, " Can not get bytes to read(%s)", safe_strerror(errno));
+		zlog_err(MODULE_MODEM, " Can not get bytes to read(%s)", safe_strerror(errno));
 		return RES_ERROR;
 	}
 	if(bytes > 0 && bytes < ATCMD_RESPONSE_MAX)
@@ -338,7 +338,7 @@ try_again:
 					fflush(stdout);
 #endif
 					if(MODEM_IS_DEBUG(ATCMD))
-						zlog_debug(ZLOG_MODEM, " AT CMD: <<<<< :%s", buf);
+						zlog_debug(MODULE_MODEM, " AT CMD: <<<<< :%s", buf);
 					//os_msleep(10);
 					return readlen;
 				}
@@ -377,7 +377,7 @@ try_again:
 				{
 					if(ret < 0)
 					{
-						zlog_err(ZLOG_MODEM, " Can not read (%s)", safe_strerror(errno));
+						zlog_err(MODULE_MODEM, " Can not read (%s)", safe_strerror(errno));
 						return RES_ERROR;
 					}
 				}
@@ -385,9 +385,9 @@ try_again:
 		}
 	}
 	if(bytes > ATCMD_RESPONSE_MAX)
-		zlog_warn(ZLOG_MODEM, " Too much data to be read(%d bytes)", bytes);
+		zlog_warn(MODULE_MODEM, " Too much data to be read(%d bytes)", bytes);
 	else
-		zlog_warn(ZLOG_MODEM, " There no data to be read(%d bytes)", bytes);
+		zlog_warn(MODULE_MODEM, " There no data to be read(%d bytes)", bytes);
 	return RES_ERROR;
 }
 #endif
@@ -424,7 +424,7 @@ static int tty_attty_wait_response(modem_client_t *client, int timeout)
 	case RES_CLOSE:
 		{
 			MODEM_TTY_DEBUG(" AT CMD ERROR and close AT Channel(%s)",safe_strerror(errno));
-			zlog_err(ZLOG_MODEM, " AT CMD ERROR and close AT Channel(%s)",
+			zlog_err(MODULE_MODEM, " AT CMD ERROR and close AT Channel(%s)",
 					safe_strerror(errno));
 #ifdef _MODEM_TTY_DEBUG
 			fprintf(stdout, " %s:%d (%s)", __func__, __LINE__,
@@ -546,7 +546,7 @@ static md_res_en modem_attty_write_one(modem_client_t *client)
     	client->atcmd->buf[client->atcmd->len-2] = '\0';
 
 	if(MODEM_IS_DEBUG(ATCMD))
-		zlog_debug(ZLOG_MODEM, " AT CMD: >>>>> :%s", client->atcmd->buf);
+		zlog_debug(MODULE_MODEM, " AT CMD: >>>>> :%s", client->atcmd->buf);
 
 	return RES_OK;
 }
@@ -593,7 +593,7 @@ md_res_en modem_attty_write(modem_client_t *client, const char *format, ...)
     	client->atcmd->buf[client->atcmd->len-2] = '\0';
 
 	if(MODEM_IS_DEBUG(ATCMD))
-		zlog_debug(ZLOG_MODEM, " AT CMD: >>>>> :%s", client->atcmd->buf);
+		zlog_debug(MODULE_MODEM, " AT CMD: >>>>> :%s", client->atcmd->buf);
 	if(!client->bSms)
 		modem_main_unlock(client->modem);
 	return RES_OK;

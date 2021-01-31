@@ -88,7 +88,7 @@ int modem_driver_remove(int vendor, int product)
 		return ERROR;
 	}
 	if(MODEM_IS_DEBUG(DRIVER))
-		zlog_warn(ZLOG_MODEM, "Remove modem :%s %x %x ", driver->module_name,
+		zlog_warn(MODULE_MODEM, "Remove modem :%s %x %x ", driver->module_name,
 				driver->vendor, driver->product);
 	client = driver->client;
 	if(client->modem)
@@ -122,7 +122,7 @@ int modem_driver_inster(int vendor, int product)
 	client = driver->client;
 
 	if(MODEM_IS_DEBUG(DRIVER))
-		zlog_debug(ZLOG_MODEM, "Inster modem : %s %x %x (%s)",
+		zlog_debug(MODULE_MODEM, "Inster modem : %s %x %x (%s)",
 				driver->module_name, driver->vendor, driver->product, client->module_name);
 
 	if(modem_driver_hw_channel(vendor, product, &hw_channel) == OK)
@@ -133,7 +133,7 @@ int modem_driver_inster(int vendor, int product)
 		}
 		else
 		{
-			//zlog_warn(ZLOG_MODEM, "Create modem-channel profile : %s",modem_serial_channel_name(driver));
+			//zlog_warn(MODULE_MODEM, "Create modem-channel profile : %s",modem_serial_channel_name(driver));
 			if(modem_serial_add_api(modem_serial_channel_name(driver)) == OK)
 			{
 				modem_serial_channel_api(modem_serial_channel_name(driver), hw_channel);
@@ -142,11 +142,11 @@ int modem_driver_inster(int vendor, int product)
 			else
 			{
 				if(modem_serial_lookup_api(modem_serial_channel_name(driver), 0))
-					zlog_warn(ZLOG_MODEM, "modem-channel profile '%s' is already exist.",
+					zlog_warn(MODULE_MODEM, "modem-channel profile '%s' is already exist.",
 							modem_serial_channel_name(driver));
 				else
 				//if(MODEM_IS_DEBUG(DRIVER))
-					zlog_warn(ZLOG_MODEM, "Can not create modem-channel profile for : %s %x %x (%s)",
+					zlog_warn(MODULE_MODEM, "Can not create modem-channel profile for : %s %x %x (%s)",
 							driver->module_name, driver->vendor, driver->product, client->module_name);
 			}
 		}
@@ -159,7 +159,7 @@ int modem_driver_inster(int vendor, int product)
 		return OK;
 	}
 	if(MODEM_IS_DEBUG(DRIVER))
-		zlog_err(ZLOG_MODEM, "Inster modem : %s %x %x (%s) can not find hw channel",
+		zlog_err(MODULE_MODEM, "Inster modem : %s %x %x (%s) can not find hw channel",
 				driver->module_name, driver->vendor, driver->product, client->module_name);
 
 	return ERROR;

@@ -20,7 +20,12 @@ export RANLIB=ranlib
 PLOS_DEFINE += -DPL_BUILD_$(PL_BUILD_TYPE)
 #PLOS_DEFINE += -DSYS_REAL_DIR=\"$(BASE_ROOT)/$(RELEASEDIR)\"
 PLOS_INCLUDE += -I/usr/include -I/usr/local/include 
-PLOS_LDFLAGS += -L/lib -L/usr/lib -L/lib64 -L/usr/lib64 -L/usr/local/lib -L/usr/local/lib64
+ifeq ($(PL_BUILD_TYPE),X86_64)
+PLOS_LDFLAGS += -L/lib64 -L/usr/lib64 -L/usr/local/lib64
+else ifeq ($(PL_BUILD_TYPE),X86)
+PLOS_LDFLAGS += -L/lib -L/usr/lib -L/usr/local/lib 
+endif
+#PLOS_LDFLAGS += -L/lib -L/usr/lib -L/lib64 -L/usr/lib64 -L/usr/local/lib -L/usr/local/lib64
 #
 else
 #

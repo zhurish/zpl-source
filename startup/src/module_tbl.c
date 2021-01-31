@@ -15,6 +15,8 @@
 #include "getopt.h"
 #include "eloop.h"
 #include "template.h"
+#include "if.h"
+#include "nsm_vrf.h"
 #ifdef PL_NSM_MODULE
 #include "nsm_main.h"
 #include "nsm_router-id.h"
@@ -24,7 +26,55 @@
 #ifdef PL_NSM_PPP
 #include "nsm_ppp.h"
 #endif
+#ifdef PL_NSM_MAC
+#include "nsm_mac.h"
 #endif
+#ifdef PL_NSM_ARP
+#include "nsm_arp.h"
+#endif
+#ifdef PL_NSM_DNS
+#include "nsm_dns.h"
+#endif
+#ifdef PL_NSM_DOS
+#include "nsm_dos.h"
+#endif
+#ifdef PL_NSM_8021X
+#include "nsm_8021x.h"
+#endif
+
+#ifdef PL_NSM_VLAN
+#include "nsm_vlan.h"
+#endif
+#ifdef PL_NSM_QOS
+#include "nsm_qos.h"
+#endif
+#ifdef PL_NSM_TRUNK
+#include "nsm_trunk.h"
+#endif
+#ifdef PL_NSM_MIRROR
+#include "nsm_mirror.h"
+#endif
+#ifdef PL_NSM_TUNNEL
+#include "nsm_tunnel.h"
+#endif
+#ifdef PL_NSM_SERIAL
+#include "nsm_serial.h"
+#endif
+
+#ifdef PL_NSM_SECURITY
+#include "nsm_security.h"
+#endif
+#ifdef PL_NSM_VETH
+#include "nsm_veth.h"
+#endif
+
+#ifdef PL_NSM_BRIDGE
+#include "nsm_bridge.h"
+#endif
+
+#endif
+
+
 #ifdef PL_PAL_MODULE
 #include "pal_driver.h"
 #endif
@@ -260,7 +310,7 @@ static _task_init_cb _task_init_tbl[] =
 	nsm_task_init,
 #endif
 #ifdef PL_SERVICE_MODULE
-	systools_task_init
+	systools_task_init,
 #endif
 #ifdef PL_MODEM_MODULE
 	modem_task_init,

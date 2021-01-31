@@ -13,12 +13,12 @@
 
 
 
-#define voip_debug_log(fmt,...)		zlog_debug(ZLOG_SOUND, fmt, ##__VA_ARGS__)
-#define voip_err_log(fmt,...)		zlog_err(ZLOG_SOUND, fmt, ##__VA_ARGS__)
-#define voip_warn_log(fmt,...)		zlog_warn(ZLOG_SOUND, fmt, ##__VA_ARGS__)
-#define voip_info_log(fmt,...)		zlog_info(ZLOG_SOUND, fmt, ##__VA_ARGS__)
-#define voip_notice_log(fmt,...)		zlog_notice(ZLOG_SOUND, fmt, ##__VA_ARGS__)
-#define voip_trap_log(fmt,...)		zlog_trap(ZLOG_SOUND, fmt, ##__VA_ARGS__)
+#define voip_debug_log(fmt,...)		zlog_debug(MODULE_SOUND, fmt, ##__VA_ARGS__)
+#define voip_err_log(fmt,...)		zlog_err(MODULE_SOUND, fmt, ##__VA_ARGS__)
+#define voip_warn_log(fmt,...)		zlog_warn(MODULE_SOUND, fmt, ##__VA_ARGS__)
+#define voip_info_log(fmt,...)		zlog_info(MODULE_SOUND, fmt, ##__VA_ARGS__)
+#define voip_notice_log(fmt,...)		zlog_notice(MODULE_SOUND, fmt, ##__VA_ARGS__)
+#define voip_trap_log(fmt,...)		zlog_trap(MODULE_SOUND, fmt, ##__VA_ARGS__)
 
 
 

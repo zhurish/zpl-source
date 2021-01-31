@@ -73,7 +73,7 @@ static int netlink_interface_addr(struct sockaddr_nl *snl, struct nlmsghdr *h,
 		return -1;
 /*	if (h->nlmsg_pid == snl->nl_pid)
 	{
-		zlog_err(ZLOG_PAL,
+		zlog_err(MODULE_PAL,
 				"netlink_interface_addr Ignoring message from pid (self):%u",
 				h->nlmsg_pid);
 		return 0;
@@ -87,17 +87,17 @@ static int netlink_interface_addr(struct sockaddr_nl *snl, struct nlmsghdr *h,
 		memset(ifkname, 0, sizeof(ifkname));
 		if (if_indextoname(ifa->ifa_index, ifkname) == NULL)
 		{
-			zlog_err(ZLOG_PAL,
+			zlog_err(MODULE_PAL,
 					"netlink_interface_addr can't find interface by index %d vrf %u",
 					ifa->ifa_index, vrf_id);
 			return -1;
 		}
-		zlog_debug(ZLOG_PAL, "find interface %s index %d ", ifkname, ifa->ifa_index);
+		zlog_debug(MODULE_PAL, "find interface %s index %d ", ifkname, ifa->ifa_index);
 
 		ifp = if_lookup_by_kernel_name_vrf(ifkname, vrf_id);
 		if (ifp == NULL)
 		{
-			zlog_err(ZLOG_PAL,
+			zlog_err(MODULE_PAL,
 					"netlink_interface_addr can't find interface by index %d(%s) vrf %u",
 					ifa->ifa_index, ifkname, vrf_id);
 			return -1;
@@ -107,28 +107,28 @@ static int netlink_interface_addr(struct sockaddr_nl *snl, struct nlmsghdr *h,
 	if (IS_ZEBRA_DEBUG_KERNEL) /* remove this line to see initial ifcfg */
 	{
 		char buf[BUFSIZ];
-		zlog_debug(ZLOG_PAL, "netlink_interface_addr %s %s vrf %u:",
+		zlog_debug(MODULE_PAL, "netlink_interface_addr %s %s vrf %u:",
 				nl_msg_type_to_str(h->nlmsg_type), ifp->name, vrf_id);
 		if (tb[IFA_LOCAL])
-			zlog_debug(ZLOG_PAL, "  IFA_LOCAL     %s/%d",
+			zlog_debug(MODULE_PAL, "  IFA_LOCAL     %s/%d",
 					inet_ntop(ifa->ifa_family, RTA_DATA(tb[IFA_LOCAL]), buf,
 							BUFSIZ), ifa->ifa_prefixlen);
 		if (tb[IFA_ADDRESS])
-			zlog_debug(ZLOG_PAL, "  IFA_ADDRESS   %s/%d",
+			zlog_debug(MODULE_PAL, "  IFA_ADDRESS   %s/%d",
 					inet_ntop(ifa->ifa_family, RTA_DATA(tb[IFA_ADDRESS]), buf,
 							BUFSIZ), ifa->ifa_prefixlen);
 		if (tb[IFA_BROADCAST])
-			zlog_debug(ZLOG_PAL, "  IFA_BROADCAST %s/%d",
+			zlog_debug(MODULE_PAL, "  IFA_BROADCAST %s/%d",
 					inet_ntop(ifa->ifa_family, RTA_DATA(tb[IFA_BROADCAST]), buf,
 							BUFSIZ), ifa->ifa_prefixlen);
 		if (tb[IFA_LABEL] && strcmp(ifp->k_name, RTA_DATA(tb[IFA_LABEL])))
-			zlog_debug(ZLOG_PAL, "  IFA_LABEL     %s",
+			zlog_debug(MODULE_PAL, "  IFA_LABEL     %s",
 					(char *) RTA_DATA(tb[IFA_LABEL]));
 
 		if (tb[IFA_CACHEINFO])
 		{
 			struct ifa_cacheinfo *ci = RTA_DATA(tb[IFA_CACHEINFO]);
-			zlog_debug(ZLOG_PAL, "  IFA_CACHEINFO pref %d, valid %d",
+			zlog_debug(MODULE_PAL, "  IFA_CACHEINFO pref %d, valid %d",
 					ci->ifa_prefered, ci->ifa_valid);
 		}
 	}
@@ -157,7 +157,7 @@ static int netlink_interface_addr(struct sockaddr_nl *snl, struct nlmsghdr *h,
 	/* addr is primary key, SOL if we don't have one */
 	if (addr == NULL)
 	{
-		zlog_debug(ZLOG_PAL, "%s: NULL address", __func__);
+		zlog_debug(MODULE_PAL, "%s: NULL address", __func__);
 		return -1;
 	}
 
@@ -248,14 +248,14 @@ static int netlink_route_change(struct sockaddr_nl *snl, struct nlmsghdr *h,
 	if (!(h->nlmsg_type == RTM_NEWROUTE || h->nlmsg_type == RTM_DELROUTE))
 	{
 		/* If this is not route add/delete message print warning. */
-		zlog_warn(ZLOG_PAL, "Kernel message: %d vrf %u\n", h->nlmsg_type,
+		zlog_warn(MODULE_PAL, "Kernel message: %d vrf %u\n", h->nlmsg_type,
 				vrf_id);
 		return 0;
 	}
 
 	/* Connected route. */
 	if (IS_ZEBRA_DEBUG_KERNEL)
-		zlog_debug(ZLOG_PAL, "%s %s %s proto %s vrf %u",
+		zlog_debug(MODULE_PAL, "%s %s %s proto %s vrf %u",
 				h->nlmsg_type == RTM_NEWROUTE ? "RTM_NEWROUTE" : "RTM_DELROUTE",
 				rtm->rtm_family == AF_INET ? "ipv4" : "ipv6",
 				rtm->rtm_type == RTN_UNICAST ? "unicast" : "multicast",
@@ -293,7 +293,7 @@ static int netlink_route_change(struct sockaddr_nl *snl, struct nlmsghdr *h,
 
 	if (rtm->rtm_src_len != 0)
 	{
-		zlog_warn(ZLOG_PAL, "netlink_route_change(): no src len, vrf %u",
+		zlog_warn(MODULE_PAL, "netlink_route_change(): no src len, vrf %u",
 				vrf_id);
 		return 0;
 	}
@@ -306,7 +306,7 @@ static int netlink_route_change(struct sockaddr_nl *snl, struct nlmsghdr *h,
 	if (tb[RTA_OIF])
 	{
 		ifkindex = *(ifindex_t *) RTA_DATA(tb[RTA_OIF]);
-/*		zlog_debug(ZLOG_PAL, "---------------- %s(%d) vrf %u",
+/*		zlog_debug(MODULE_PAL, "---------------- %s(%d) vrf %u",
 						ifkernelindex2kernelifname(ifkindex), ifkindex, vrf_id);*/
 	}
 	if (tb[RTA_DST])
@@ -345,7 +345,7 @@ static int netlink_route_change(struct sockaddr_nl *snl, struct nlmsghdr *h,
 		if (IS_ZEBRA_DEBUG_KERNEL)
 		{
 			char buf[PREFIX_STRLEN];
-			zlog_debug(ZLOG_PAL, "%s %s %s(%d) vrf %u",
+			zlog_debug(MODULE_PAL, "%s %s %s(%d) vrf %u",
 					h->nlmsg_type == RTM_NEWROUTE ?
 							"RTM_NEWROUTE" : "RTM_DELROUTE",
 					prefix2str(&p, buf, sizeof(buf)), ifkernelindex2kernelifname(ifkindex), ifkindex, vrf_id);
@@ -432,7 +432,7 @@ static int netlink_route_change(struct sockaddr_nl *snl, struct nlmsghdr *h,
 		if (IS_ZEBRA_DEBUG_KERNEL)
 		{
 			char buf[PREFIX_STRLEN];
-			zlog_debug(ZLOG_PAL, "%s %s vrf %u",
+			zlog_debug(MODULE_PAL, "%s %s vrf %u",
 					h->nlmsg_type == RTM_NEWROUTE ?
 							"RTM_NEWROUTE" : "RTM_DELROUTE",
 					prefix2str(&p, buf, sizeof(buf)), vrf_id);
@@ -467,7 +467,7 @@ static int netlink_link_change(struct sockaddr_nl *snl, struct nlmsghdr *h,
 	if (!(h->nlmsg_type == RTM_NEWLINK || h->nlmsg_type == RTM_DELLINK))
 	{
 		/* If this is not link add/delete message so print warning. */
-		zlog_warn(ZLOG_PAL,
+		zlog_warn(MODULE_PAL,
 				"netlink_link_change: wrong kernel message %s vrf %u\n",
 				nl_msg_type_to_str(h->nlmsg_type), vrf_id);
 		return 0;
@@ -486,7 +486,7 @@ static int netlink_link_change(struct sockaddr_nl *snl, struct nlmsghdr *h,
 	if ((tb[IFLA_WIRELESS] != NULL) && (ifi->ifi_change == 0))
 	{
 		if (IS_ZEBRA_DEBUG_KERNEL)
-		zlog_debug (ZLOG_PAL,"%s: ignoring IFLA_WIRELESS message, vrf %u", __func__,
+		zlog_debug (MODULE_PAL,"%s: ignoring IFLA_WIRELESS message, vrf %u", __func__,
 				vrf_id);
 		return 0;
 	}
@@ -574,7 +574,7 @@ static int netlink_link_change(struct sockaddr_nl *snl, struct nlmsghdr *h,
 
 		if (ifp == NULL)
 		{
-			zlog_warn(ZLOG_PAL, "interface %s vrf %u is deleted but can't find",
+			zlog_warn(MODULE_PAL, "interface %s vrf %u is deleted but can't find",
 					  ifkname, vrf_id);
 			return 0;
 		}
@@ -590,7 +590,7 @@ static int netlink_information_fetch(struct sockaddr_nl *snl,
 {
 	if (h->nlmsg_pid && h->nlmsg_pid == snl->nl_pid)
 	{
-		zlog_err(ZLOG_PAL, "Ignoring %s message from pid %u", nl_msg_type_to_str(h->nlmsg_type), snl->nl_pid);
+		zlog_err(MODULE_PAL, "Ignoring %s message from pid %u", nl_msg_type_to_str(h->nlmsg_type), snl->nl_pid);
 		return 0;
 	}
 	switch (h->nlmsg_type)
@@ -614,7 +614,7 @@ static int netlink_information_fetch(struct sockaddr_nl *snl,
 		return netlink_interface_addr(snl, h, vrf_id);
 		break;
 	default:
-		zlog_warn(ZLOG_PAL, "Unknown netlink nlmsg_type %s vrf %u\n",
+		zlog_warn(MODULE_PAL, "Unknown netlink nlmsg_type %s vrf %u\n",
 				nl_msg_type_to_str(h->nlmsg_type), vrf_id);
 		break;
 	}

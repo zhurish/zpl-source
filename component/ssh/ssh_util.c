@@ -38,22 +38,22 @@ void ssh_log_callback_func(int priority,
 	switch(priority)
 	{
 	case LOG_ERR:
-		zlog_err(ZLOG_UTILS, "SSH %s", buffer);
+		zlog_err(MODULE_SSH, "SSH %s", buffer);
 		break;
 	case LOG_WARNING:
-		zlog_warn(ZLOG_UTILS, "SSH %s", buffer);
+		zlog_warn(MODULE_SSH, "SSH %s", buffer);
 		break;
 	case LOG_INFO:
-		zlog_info(ZLOG_UTILS, "SSH %s", buffer);
+		zlog_info(MODULE_SSH, "SSH %s", buffer);
 		break;
 	case LOG_NOTICE:
-		zlog_notice(ZLOG_UTILS, "SSH %s", buffer);
+		zlog_notice(MODULE_SSH, "SSH %s", buffer);
 		break;
 	case LOG_DEBUG:
-		zlog_debug(ZLOG_UTILS, "SSH %s", buffer);
+		zlog_debug(MODULE_SSH, "SSH %s", buffer);
 		break;
 	case LOG_TRAP:
-		zlog_trap(ZLOG_UTILS, "SSH %s", buffer);
+		zlog_trap(MODULE_SSH, "SSH %s", buffer);
 		break;
 	default:
 		break;
@@ -178,7 +178,7 @@ int ssh_printf(ssh_session session, const char *fmt,...)
         va_start(va, fmt);
         len = vsnprintf(buffer, sizeof(buffer), fmt, va);
         va_end(va);
-    	zlog_debug(ZLOG_UTILS, "SSH %s", buffer);
+    	zlog_debug(MODULE_SSH, "SSH %s", buffer);
     }
     return OK;
 }

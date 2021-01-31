@@ -531,7 +531,7 @@ static int web_network_connect(Webs *wp, void *p)
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get ifname Value");
+			zlog_debug(MODULE_WEB, "Can not Get ifname Value");
 		return ERROR;//web_return_text_plain(wp, ERROR);
 	}
 	if (strval)
@@ -559,7 +559,7 @@ static int web_network_connect(Webs *wp, void *p)
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get state Value");
+			zlog_debug(MODULE_WEB, "Can not Get state Value");
 		return ERROR;//web_return_text_plain(wp, ERROR);
 	}
 	if(strstr(strval, "up"))

@@ -8,7 +8,8 @@
 #ifndef __LIB_MODULE_H__
 #define __LIB_MODULE_H__
 
-
+#include "moduletypes.h"
+/*
 typedef enum
 {
   MODULE_NONE,
@@ -49,7 +50,43 @@ typedef enum
   MODULE_APP_STOP = MODULE_APP_START + 16,
   MODULE_MAX,
 } module_t;
+*/
 
+/* For pretty printing of memory allocate information. */
+struct module_list
+{
+  int module;
+	const char 	*name;
+
+  int	(*module_init)(void);
+	int	(*module_exit)(void);
+	int	(*module_task_init)(void);
+	int	(*module_task_exit)(void);
+	int	(*module_cmd_init)(void);
+
+  int	(*module_write_config)(struct vty *, void *);
+	int	(*module_show_config)(struct vty *, void *, BOOL);
+	int	(*module_show_debug)(struct vty *, void *, BOOL);
+
+	u_int		taskid;
+};
+
+struct module_alllist
+{
+  struct module_list *tbl;
+};
+
+
+extern struct module_alllist module_lists_tbl[MODULE_MAX];
+
+extern int pl_module_name_init(const char * name);
+extern int pl_module_init(int module);
+extern int pl_module_exit(int module);
+extern int pl_module_task_name_init(const char * name);
+extern int pl_module_task_init(int module);
+extern int pl_module_task_exit(int module);
+extern int pl_module_cmd_name_init(const char * name);
+extern int pl_module_cmd_init(int module);
 
 extern const char * module2name(int module);
 extern int name2module(const char *name);

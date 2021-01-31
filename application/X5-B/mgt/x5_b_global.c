@@ -83,7 +83,7 @@ static int x5b_app_global_mode_config_load(x5b_app_global_t *gl)
 		else
 			gl->X5CM = FALSE;
 	}
-	//zlog_debug(ZLOG_APP, "===========%s %s X5CM=%d", __func__, tmp, gl->X5CM);
+	//zlog_debug(MODULE_APP, "===========%s %s X5CM=%d", __func__, tmp, gl->X5CM);
 	memset(tmp, 0, sizeof(tmp));
 	ret = os_uci_get_string("openconfig.open.opentype", tmp);
 	if(ret == OK && strlen(tmp))
@@ -361,76 +361,76 @@ int x5b_app_face_config_load(make_face_config_t *fct)
 	ret |= os_uci_get_integer("openconfig.faceopt.face_yaw_left", &info.faceYawLeft);
 	if(ret != OK)
 	{
-		zlog_debug(ZLOG_APP, "faceYawLeft ====== %d", info.faceYawLeft);
+		zlog_debug(MODULE_APP, "faceYawLeft ====== %d", info.faceYawLeft);
 		return ERROR;
 	}
 
 	ret |= os_uci_get_integer("openconfig.faceopt.face_yaw_right", &info.faceYawRight);
 	if(ret != OK)
 	{
-		zlog_debug(ZLOG_APP, "faceYawRight ====== %d", info.faceYawRight);
+		zlog_debug(MODULE_APP, "faceYawRight ====== %d", info.faceYawRight);
 		return ERROR;
 	}
 
 	ret |= os_uci_get_integer("openconfig.faceopt.face_pitch_up", &info.facePitchUp);
 	if(ret != OK)
 	{
-		zlog_debug(ZLOG_APP, "facePitchUp ====== %d", info.facePitchUp);
+		zlog_debug(MODULE_APP, "facePitchUp ====== %d", info.facePitchUp);
 		return ERROR;
 	}
 
 	ret |= os_uci_get_integer("openconfig.faceopt.face_pitch_down", &info.facePitchDown);
 	if(ret != OK)
 	{
-		zlog_debug(ZLOG_APP, "facePitchDown ====== %d", info.facePitchDown);
+		zlog_debug(MODULE_APP, "facePitchDown ====== %d", info.facePitchDown);
 		return ERROR;
 	}
 
 	ret |= os_uci_get_integer("openconfig.faceopt.face_record_width", &info.faceRecordWidth);
 	if(ret != OK)
 	{
-		zlog_debug(ZLOG_APP, "faceRecordWidth ====== %d", info.faceRecordWidth);
+		zlog_debug(MODULE_APP, "faceRecordWidth ====== %d", info.faceRecordWidth);
 		return ERROR;
 	}
 
 	ret |= os_uci_get_integer("openconfig.faceopt.face_record_height", &info.faceRecordHeight);
 	if(ret != OK)
 	{
-		zlog_debug(ZLOG_APP, "faceRecordHeight ====== %d", info.faceRecordHeight);
+		zlog_debug(MODULE_APP, "faceRecordHeight ====== %d", info.faceRecordHeight);
 		return ERROR;
 	}
 
 	ret |= os_uci_get_integer("openconfig.faceopt.face_recognize_width", &info.faceRecognizeWidth);
 	if(ret != OK)
 	{
-		zlog_debug(ZLOG_APP, "faceRecognizeWidth ====== %d", info.faceRecognizeWidth);
+		zlog_debug(MODULE_APP, "faceRecognizeWidth ====== %d", info.faceRecognizeWidth);
 		return ERROR;
 	}
 
 	ret |= os_uci_get_integer("openconfig.faceopt.face_recognize_height", &info.faceRecognizeHeight);
 	if(ret != OK)
 	{
-		zlog_debug(ZLOG_APP, "faceRecognizeHeight ====== %d", info.faceRecognizeHeight);
+		zlog_debug(MODULE_APP, "faceRecognizeHeight ====== %d", info.faceRecognizeHeight);
 		return ERROR;
 	}
 
 	ret |= os_uci_get_double("openconfig.faceopt.record_threshold", "%.3f", &info.similarRecord);
 	if(ret != OK)
 	{
-		zlog_debug(ZLOG_APP, "similarRecord ====== %.3f", info.similarRecord);
+		zlog_debug(MODULE_APP, "similarRecord ====== %.3f", info.similarRecord);
 		return ERROR;
 	}
 
 	ret |= os_uci_get_double("openconfig.faceopt.recognize_threshold", "%.3f", &info.similarRecognize);
 	if(ret != OK)
 	{
-		zlog_debug(ZLOG_APP, "similarRecognize ====== %.3f", info.similarRecognize);
+		zlog_debug(MODULE_APP, "similarRecognize ====== %.3f", info.similarRecognize);
 		return ERROR;
 	}
 	ret |= os_uci_get_double("openconfig.faceopt.recognize_sec_threshold", "%.3f", &info.similarSecRecognize);
 	if(ret != OK)
 	{
-		zlog_debug(ZLOG_APP, "similarSecRecognize ====== %.3f", info.similarSecRecognize);
+		zlog_debug(MODULE_APP, "similarSecRecognize ====== %.3f", info.similarSecRecognize);
 		return ERROR;
 	}
 
@@ -438,28 +438,28 @@ int x5b_app_face_config_load(make_face_config_t *fct)
 	ret |= os_uci_get_double("openconfig.faceopt.living_threshold", "%.3f", &info.similarLiving);
 	if(ret != OK)
 	{
-		zlog_debug(ZLOG_APP, "similarLiving ====== %.3f", info.similarLiving);
+		zlog_debug(MODULE_APP, "similarLiving ====== %.3f", info.similarLiving);
 		return ERROR;
 	}
 
 	ret |= os_uci_get_integer("openconfig.faceopt.living_detection", &info.livenessSwitch);
 	if(ret != OK)
 	{
-		zlog_debug(ZLOG_APP, "livenessSwitch ====== %d", info.livenessSwitch);
+		zlog_debug(MODULE_APP, "livenessSwitch ====== %d", info.livenessSwitch);
 		return ERROR;
 	}
 
 	ret |= os_uci_get_integer("openconfig.faceopt.face_roi_width", &info.faceRoiWidth);
 	if(ret != OK)
 	{
-		zlog_debug(ZLOG_APP, "faceRoiWidth ====== %d", info.faceRoiWidth);
+		zlog_debug(MODULE_APP, "faceRoiWidth ====== %d", info.faceRoiWidth);
 		return ERROR;
 	}
 
 	ret |= os_uci_get_integer("openconfig.faceopt.face_roi_height", &info.faceRoiHeight);
 	if(ret != OK)
 	{
-		zlog_debug(ZLOG_APP, "faceRoiHeight ====== %d", info.faceRoiHeight);
+		zlog_debug(MODULE_APP, "faceRoiHeight ====== %d", info.faceRoiHeight);
 		return ERROR;
 	}
 
@@ -467,13 +467,13 @@ int x5b_app_face_config_load(make_face_config_t *fct)
 	ret |= os_uci_get_integer("openconfig.faceopt.success_intervals", &info.faceOKContinuousTime);
 	if(ret != OK)
 	{
-		zlog_debug(ZLOG_APP, "successful_intervals ====== %d", info.faceOKContinuousTime);
+		zlog_debug(MODULE_APP, "successful_intervals ====== %d", info.faceOKContinuousTime);
 		return ERROR;
 	}
 	ret |= os_uci_get_integer("openconfig.faceopt.failure_intervals", &info.faceERRContinuousTime);
 	if(ret != OK)
 	{
-		zlog_debug(ZLOG_APP, "failure_intervals ====== %d", info.faceERRContinuousTime);
+		zlog_debug(MODULE_APP, "failure_intervals ====== %d", info.faceERRContinuousTime);
 		return ERROR;
 	}
 	if(fct)
@@ -543,7 +543,7 @@ int x5b_app_global_device_config(void *app, int to)
 	if(!mgt->app->reg_state)
 	{
 		if(X5_B_ESP32_DEBUG(EVENT))
-			zlog_warn(ZLOG_APP, "Remote is Not Register");
+			zlog_warn(MODULE_APP, "Remote is Not Register");
 		if(mgt->mutex)
 			os_mutex_unlock(mgt->mutex);
 		return ERROR;
@@ -551,7 +551,7 @@ int x5b_app_global_device_config(void *app, int to)
 	if(mgt->app->address == 0)
 	{
 		if(X5_B_ESP32_DEBUG(EVENT))
-			zlog_warn(ZLOG_APP, "OPEN CMD MSG Can not send, Unknown Remote IP Address");
+			zlog_warn(MODULE_APP, "OPEN CMD MSG Can not send, Unknown Remote IP Address");
 		if(mgt->mutex)
 			os_mutex_unlock(mgt->mutex);
 		return ERROR;
@@ -585,7 +585,7 @@ int x5b_app_global_device_config(void *app, int to)
 		mgt->app->offset += len;
 		x5b_app_crc_make(mgt);
 		if(X5_B_ESP32_DEBUG(EVENT))
-			zlog_debug(ZLOG_APP, "DEVICE CMD MSG to %s:%d %d byte", inet_address(mgt->app->address),
+			zlog_debug(MODULE_APP, "DEVICE CMD MSG to %s:%d %d byte", inet_address(mgt->app->address),
 					mgt->app->remote_port, mgt->app->slen);
 		len = x5b_app_send_msg(mgt);
 		if(mgt->mutex)

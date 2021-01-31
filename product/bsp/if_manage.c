@@ -15,12 +15,11 @@
 #include "sockunion.h"
 #include "prefix.h"
 #include "memory.h"
-#include "table.h"
+
 #include "buffer.h"
 #include "str.h"
 
 #include "product.h"
-//#include "net/if_arp.h"
 
 
 /*
@@ -172,7 +171,7 @@ const char * if_kernel_name_lookup(ifindex_t ifindex)
 			{
 				memset(buf, 0, sizeof(buf));
 				//return if_indextoname(phy_table[i][j].kifindex, buf);
-				//zlog_debug(ZLOG_DEFAULT,"+++++++%s: %x -> %d", __func__, ifindex, phy_table[i][j].kifindex);
+				//zlog_debug(MODULE_DEFAULT,"+++++++%s: %x -> %d", __func__, ifindex, phy_table[i][j].kifindex);
 				if(if_indextoname(phy_table[i][j].kifindex, buf))
 					return buf;
 				return NULL;
@@ -232,7 +231,7 @@ static int if_slot_kernel_add(ifindex_t ifindex, char *name)
 					//if(if_nametoindex(name))
 					{
 						//os_strcpy(phy_table[i][j].kname, name);
-						//zlog_debug(ZLOG_DEFAULT, "=======%s: IFINDEX=%s  %s", __func__,
+						//zlog_debug(MODULE_DEFAULT, "=======%s: IFINDEX=%s  %s", __func__,
 						//		if_ifname_make(ifindex), name);
 						phy_table[i][j].kifindex = if_nametoindex(name);
 					}

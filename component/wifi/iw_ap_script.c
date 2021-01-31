@@ -497,7 +497,7 @@ int iw_ap_running_script(iw_ap_t *iw_ap)
 		iw_ap->change = FALSE;
 		if(IW_DEBUG(EVENT))
 		{
-			zlog_debug(ZLOG_WIFI, "running AP domain process on interface %s ",ifindex2ifname(iw_ap->ifindex));
+			zlog_debug(MODULE_WIFI, "running AP domain process on interface %s ",ifindex2ifname(iw_ap->ifindex));
 		}
 #ifdef DOUBLE_PROCESS
 		os_process_register(PROCESS_DEAMON, path, "/usr/sbin/hostapd", FALSE, argv);

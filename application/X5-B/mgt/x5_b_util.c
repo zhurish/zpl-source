@@ -94,7 +94,7 @@ int x5b_app_hex_debug(x5b_app_mgt_t *mgt, char *hdr, int rx)
 			strcat(buf, "\r\n");
 		strcat(buf, tmp);
 	}
-	zlog_debug(ZLOG_APP, "%s : %s%s", hdr, buf, (len>128) ? "...":" ");
+	zlog_debug(MODULE_APP, "%s : %s%s", hdr, buf, (len>128) ? "...":" ");
 	return OK;
 }
 
@@ -136,7 +136,7 @@ int x5b_app_socket_init(x5b_app_mgt_t *mgt)
 	{
 		if(mgt->local_port == 0)
 			mgt->local_port = X5B_APP_LOCAL_PORT_DEFAULT;
-		//zlog_debug(ZLOG_APP, "sock_bind %s:%d", mgt->local_address ? mgt->local_address:"any", mgt->local_port);
+		//zlog_debug(MODULE_APP, "sock_bind %s:%d", mgt->local_address ? mgt->local_address:"any", mgt->local_port);
 		if(sock_bind(fd, mgt->local_address, mgt->local_port) == OK)
 		{
 			mgt->r_fd = fd;
@@ -145,7 +145,7 @@ int x5b_app_socket_init(x5b_app_mgt_t *mgt)
 			setsockopt_so_recvbuf (fd, 8192);
 			setsockopt_so_sendbuf (fd, 8192);
 
-			//zlog_debug(ZLOG_APP, "========> add read fd=%d", fd);
+			//zlog_debug(MODULE_APP, "========> add read fd=%d", fd);
 			x5b_app_event_active(mgt, X5B_READ_EV, 0, 0);
 			//mgt->r_thread = eloop_add_read(mgt->master, x5b_app_read_eloop, mgt, fd);
 			//mgt->t_thread = eloop_add_timer(mgt->master, x5b_app_timer_eloop, mgt, mgt->interval + 5);
@@ -153,10 +153,10 @@ int x5b_app_socket_init(x5b_app_mgt_t *mgt)
 		}
 		else
 		{
-			zlog_err(ZLOG_APP, "Can not bind UDP socket(:%s)", strerror(errno));
+			zlog_err(MODULE_APP, "Can not bind UDP socket(:%s)", strerror(errno));
 		}
 	}
-	zlog_err(ZLOG_APP, "Can not Create UDP socket(:%s)", strerror(errno));
+	zlog_err(MODULE_APP, "Can not Create UDP socket(:%s)", strerror(errno));
 	return ERROR;
 }
 
@@ -221,7 +221,7 @@ static int x5b_app_reset_eloop(struct eloop *eloop)
 		os_mutex_lock(mgt->mutex, OS_WAIT_FOREVER);
 	mgt->reset_thread = NULL;
 	if(X5_B_ESP32_DEBUG(EVENT))
-		zlog_debug(ZLOG_APP, "RESET mgt socket OK");
+		zlog_debug(MODULE_APP, "RESET mgt socket OK");
 	x5b_app_socket_exit(mgt);
 	x5b_app_socket_init(mgt);
 	if(mgt->mutex)
@@ -321,9 +321,9 @@ static int x5b_app_keepalive_eloop(struct eloop *eloop)
 	if(mgt_priv->keep_cnt == 0)
 	{
 		if(mgt_priv->id == X5B_APP_MODULE_ID_A)
-			;//zlog_debug(ZLOG_APP, "===================%s A Module keepalive timeout clear state", __func__);
+			;//zlog_debug(MODULE_APP, "===================%s A Module keepalive timeout clear state", __func__);
 		else if(mgt_priv->id == X5B_APP_MODULE_ID_C)
-			;//zlog_debug(ZLOG_APP, "===================%s C Module keepalive timeout clear state", __func__);
+			;//zlog_debug(MODULE_APP, "===================%s C Module keepalive timeout clear state", __func__);
 	}
 
 	x5b_app_event_active(mgt, X5B_KEEPALIVE_EV, mgt_priv->id, 0);
@@ -384,7 +384,7 @@ static int x5b_app_read_eloop(struct eloop *eloop)
 	zassert(mgt != NULL);
 	int sock = ELOOP_FD(eloop);
 
-	//zlog_debug(ZLOG_APP, "========> x5b_app_read_eloop read fd=%d", mgt->r_fd);
+	//zlog_debug(MODULE_APP, "========> x5b_app_read_eloop read fd=%d", mgt->r_fd);
 
 	if(mgt->mutex)
 		os_mutex_lock(mgt->mutex, OS_WAIT_FOREVER);
@@ -398,11 +398,11 @@ static int x5b_app_read_eloop(struct eloop *eloop)
 	mgt->r_thread = NULL;
 	memset(mgt->buf, 0, sizeof(mgt->buf));
 	//if(X5_B_ESP32_DEBUG(EVENT))
-	//	zlog_debug(ZLOG_APP, "RECV mgt on socket");
+	//	zlog_debug(MODULE_APP, "RECV mgt on socket");
 	//memset(&from, 0, sizeof(from));
 	sock_len = sizeof(struct sockaddr_in);
 	len = recvfrom(sock, mgt->buf, sizeof(mgt->buf), 0, &mgt->from, &sock_len);
-/*	zlog_debug(ZLOG_APP, "MSG from %s:%d %d byte", inet_address(ntohl(from.sin_addr.s_addr)),
+/*	zlog_debug(MODULE_APP, "MSG from %s:%d %d byte", inet_address(ntohl(from.sin_addr.s_addr)),
 			ntohs(from.sin_port), len);*/
 	if (len <= 0)
 	{
@@ -411,7 +411,7 @@ static int x5b_app_read_eloop(struct eloop *eloop)
 			if (ERRNO_IO_RETRY(errno))
 			{
 				//return 0;
-				zlog_err(ZLOG_APP, "RECV mgt on socket (%s)", strerror(errno));
+				zlog_err(MODULE_APP, "RECV mgt on socket (%s)", strerror(errno));
 				mgt->reset_thread = eloop_add_timer_msec(mgt->master, x5b_app_reset_eloop, mgt, 100);
 				if(mgt->mutex)
 					os_mutex_unlock(mgt->mutex);
@@ -423,7 +423,7 @@ static int x5b_app_read_eloop(struct eloop *eloop)
 	{
 		if(len > X5B_APP_BUF_DEFAULT)
 		{
-			zlog_err(ZLOG_APP, "Recv buf size is too big on socket (%d byte)", len);
+			zlog_err(MODULE_APP, "Recv buf size is too big on socket (%d byte)", len);
 			if(mgt->r_thread == NULL)
 				x5b_app_event_active(mgt, X5B_READ_EV, 0, 0);
 			if(mgt->mutex)
@@ -433,7 +433,7 @@ static int x5b_app_read_eloop(struct eloop *eloop)
 		mgt->len = len;
 		if(X5_B_ESP32_DEBUG(RECV))
 		{
-			zlog_debug(ZLOG_APP, "MSG from %s:%d %d byte", inet_address(ntohl(mgt->from.sin_addr.s_addr)),
+			zlog_debug(MODULE_APP, "MSG from %s:%d %d byte", inet_address(ntohl(mgt->from.sin_addr.s_addr)),
 					ntohs(mgt->from.sin_port), mgt->len);
 
 			if(X5_B_ESP32_DEBUG(HEX))
@@ -465,7 +465,7 @@ static int x5b_app_read_eloop(struct eloop *eloop)
 		//if(mgt->mutex)
 		//	os_mutex_lock(mgt->mutex, OS_WAIT_FOREVER);
 	}
-//	zlog_debug(ZLOG_APP, "========> add read fd=%d", sock);
+//	zlog_debug(MODULE_APP, "========> add read fd=%d", sock);
 	if(mgt->r_thread == NULL)
 		x5b_app_event_active(mgt, X5B_READ_EV, 0, 0);
 		//mgt->r_thread = eloop_add_read(mgt->master, x5b_app_read_eloop, mgt, sock);
@@ -633,7 +633,7 @@ int x5b_app_read_chk_handle(x5b_app_mgt_t *mgt)
 		if(ntohl(hdr->total_len) + sizeof(x5b_app_hdr_t) + 2!= mgt->len)
 		{
 			if(X5_B_ESP32_DEBUG(EVENT))
-				zlog_warn(ZLOG_APP, "TOTAL len is not same to msg len(%d != %d)",
+				zlog_warn(MODULE_APP, "TOTAL len is not same to msg len(%d != %d)",
 						(int)(ntohl(hdr->total_len) + sizeof(x5b_app_hdr_t) + 2), mgt->len);
 			return ERROR;
 		}
@@ -642,13 +642,13 @@ int x5b_app_read_chk_handle(x5b_app_mgt_t *mgt)
 	/*	if(*crc != htons(crc1))
 		{
 			if(X5_B_ESP32_DEBUG(EVENT))
-				zlog_warn(ZLOG_APP, "CRC CHECK (%x != %x)", crc, crc1);
+				zlog_warn(MODULE_APP, "CRC CHECK (%x != %x)", crc, crc1);
 			return ERROR;
 		}*/
 		len = ntohl(hdr->total_len)/* - 2*/;
 		if(len > X5B_APP_BUF_DEFAULT)
 		{
-			zlog_err(ZLOG_APP, "TLV buf size is too big on socket (%d byte)", len);
+			zlog_err(MODULE_APP, "TLV buf size is too big on socket (%d byte)", len);
 			return ERROR;
 		}
 		//offset += sizeof(x5b_app_hdr_t);
@@ -669,7 +669,7 @@ static int x5b_app_read_ack_handle(x5b_app_mgt_t *mgt, char *output, int outlen)
 	}
 	if(!mgt->app)
 	{
-		zlog_err(ZLOG_APP, "send module is null");
+		zlog_err(MODULE_APP, "send module is null");
 		return ERROR;
 	}
 	len = x5b_app_read_chk_handle(mgt);
@@ -691,7 +691,7 @@ static int x5b_app_read_ack_handle(x5b_app_mgt_t *mgt, char *output, int outlen)
 			{
 				if(E_CMD_GET(tlv.tag) == E_CMD_UPDATE_DATA)
 				{
-					//zlog_debug(ZLOG_APP, "E_CMD_UPDATE_DATA");
+					//zlog_debug(MODULE_APP, "E_CMD_UPDATE_DATA");
 					if(output)
 					{
 						//memcpy(buf, tlv.val.pval, MIN(l, tlv.len));
@@ -711,7 +711,7 @@ static int x5b_app_read_ack_handle(x5b_app_mgt_t *mgt, char *output, int outlen)
 			{
 				if(E_CMD_GET(tlv.tag) == E_CMD_ACK)
 				{
-					//zlog_debug(ZLOG_APP, "E_CMD_ACK : seqnum 0x%02x", tlv.val.val8);
+					//zlog_debug(MODULE_APP, "E_CMD_ACK : seqnum 0x%02x", tlv.val.val8);
 					mgt->ack_seqnum = tlv.val.pval[0];//tlv.val.val8;
 					//os_tlv_get_byte
 					if(mgt->sync_ack)
@@ -720,7 +720,7 @@ static int x5b_app_read_ack_handle(x5b_app_mgt_t *mgt, char *output, int outlen)
 						if(mgt->ack_seqnum == mgt->app->seqnum)
 						{
 							if(X5_B_ESP32_DEBUG(EVENT))
-								zlog_debug(ZLOG_APP, "ACK msg (seqnum=%d) OK", mgt->app->seqnum);
+								zlog_debug(MODULE_APP, "ACK msg (seqnum=%d) OK", mgt->app->seqnum);
 							mgt->ack_seqnum = 0;
 							ack = OK;
 							break;
@@ -730,7 +730,7 @@ static int x5b_app_read_ack_handle(x5b_app_mgt_t *mgt, char *output, int outlen)
 							//if(X5_B_ESP32_DEBUG(EVENT))
 							memset(add_tmp, 0, sizeof(add_tmp));
 							sprintf(add_tmp, sizeof(add_tmp), "%s", inet_address(mgt->app->address));
-							zlog_err(ZLOG_APP, "ACK msg (send seqnum=%d(%s) not same recv seqnum=%d(%s)) ERROR",
+							zlog_err(MODULE_APP, "ACK msg (send seqnum=%d(%s) not same recv seqnum=%d(%s)) ERROR",
 										 mgt->app->seqnum, add_tmp,
 										 mgt->ack_seqnum, inet_address(ntohl(mgt->from.sin_addr.s_addr)));
 							ack = ERROR;
@@ -758,7 +758,7 @@ static int x5b_app_read_msg(int fd, x5b_app_mgt_t *mgt, char *output, int outlen
 	len = recvfrom(fd, mgt->buf, sizeof(mgt->buf), 0, &mgt->from, &sock_len);
 	if (len <= 0)
 	{
-		zlog_debug(ZLOG_APP, "recvfrom:%s", strerror(errno));
+		zlog_debug(MODULE_APP, "recvfrom:%s", strerror(errno));
 		if (len < 0)
 		{
 			if (ERRNO_IO_RETRY(errno))
@@ -772,7 +772,7 @@ static int x5b_app_read_msg(int fd, x5b_app_mgt_t *mgt, char *output, int outlen
 		mgt->len = len;
 		if(X5_B_ESP32_DEBUG(RECV))
 		{
-			zlog_debug(ZLOG_APP, "MSG from %s:%d %d byte", inet_address(ntohl(mgt->from.sin_addr.s_addr)),
+			zlog_debug(MODULE_APP, "MSG from %s:%d %d byte", inet_address(ntohl(mgt->from.sin_addr.s_addr)),
 					ntohs(mgt->from.sin_port), mgt->len);
 
 			if(X5_B_ESP32_DEBUG(HEX))
@@ -843,16 +843,16 @@ try_again:
 			//x5b_app_hdr_t *hdr = mgt->app->sbuf;
 			offset += sizeof(x5b_app_hdr_t);
 			tlv = (os_tlv_t *)(mgt->app->sbuf + offset);
-			zlog_debug(ZLOG_APP, "CMD 0x%04x (seqnum:%d) wait timeout from:%s",
+			zlog_debug(MODULE_APP, "CMD 0x%04x (seqnum:%d) wait timeout from:%s",
 					E_CMD_GET(ntohl(tlv->tag)), mgt->app->seqnum, inet_address(mgt->app->address));
 		}
 		else
 		{
-			zlog_debug(ZLOG_APP, "wait timeout from:%s",inet_address(mgt->app->address));
+			zlog_debug(MODULE_APP, "wait timeout from:%s",inet_address(mgt->app->address));
 		}
         return OS_TIMEOUT;
 	}
-	zlog_debug(ZLOG_APP, "wait from %s error:%s", inet_address(mgt->app->address), strerror(errno));
+	zlog_debug(MODULE_APP, "wait from %s error:%s", inet_address(mgt->app->address), strerror(errno));
 	return ERROR;
 }
 
@@ -865,7 +865,7 @@ int x5b_app_send_msg_without_ack(x5b_app_mgt_t *mgt)
 	{
 		if(X5_B_ESP32_DEBUG(SEND))
 		{
-			zlog_debug(ZLOG_APP, "MSG to %s:%d %d byte (seqnum=%d)", inet_address(mgt->app->address),
+			zlog_debug(MODULE_APP, "MSG to %s:%d %d byte (seqnum=%d)", inet_address(mgt->app->address),
 					mgt->app->remote_port, mgt->app->slen, mgt->app->seqnum);
 			if(X5_B_ESP32_DEBUG(HEX))
 				x5b_app_hex_debug(mgt, "SEND", 0);
@@ -890,13 +890,13 @@ int x5b_app_send_msg(x5b_app_mgt_t *mgt)
 	{
 		if(mgt->app->slen >= X5B_APP_BUF_DEFAULT)
 		{
-			zlog_err(ZLOG_APP, "MSG(to %s:%d) Size is too big", inet_address(mgt->app->address),
+			zlog_err(MODULE_APP, "MSG(to %s:%d) Size is too big", inet_address(mgt->app->address),
 					mgt->app->remote_port);
 			return ERROR;
 		}
 		if(X5_B_ESP32_DEBUG(SEND))
 		{
-			zlog_debug(ZLOG_APP, "MSG to %s:%d %d byte (seqnum=%d)", inet_address(mgt->app->address),
+			zlog_debug(MODULE_APP, "MSG to %s:%d %d byte (seqnum=%d)", inet_address(mgt->app->address),
 					mgt->app->remote_port, mgt->app->slen, mgt->app->seqnum);
 			if(X5_B_ESP32_DEBUG(HEX))
 				x5b_app_hex_debug(mgt, "SEND", 0);
@@ -908,7 +908,7 @@ int x5b_app_send_msg(x5b_app_mgt_t *mgt)
 	x5b_app_statistics(mgt, 1, mgt->app->id);
 	if(mgt->sync_ack)
 	{
-		//zlog_debug(ZLOG_APP, "----wait ack" );
+		//zlog_debug(MODULE_APP, "----wait ack" );
 		{
 			int ret = 0;
 			if(mgt->r_thread)
@@ -916,14 +916,14 @@ int x5b_app_send_msg(x5b_app_mgt_t *mgt)
 				eloop_cancel(mgt->r_thread);
 				mgt->r_thread = NULL;
 			}
-			//zlog_debug(ZLOG_APP, "----wait ack 1" );
+			//zlog_debug(MODULE_APP, "----wait ack 1" );
 			if(mgt->wait_timeout)
 				ret = x5b_app_read_msg_timeout(mgt, mgt->wait_timeout, NULL, 0);
 			else
 				ret = x5b_app_read_msg_timeout(mgt, X5B_APP_WAITING_TIMEOUT, NULL, 0);
 			if(!mgt->upgrade && mgt->r_thread == NULL)
 			{
-				//zlog_debug(ZLOG_APP, "========> add read fd=%d", mgt->r_fd);
+				//zlog_debug(MODULE_APP, "========> add read fd=%d", mgt->r_fd);
 				x5b_app_event_active(mgt, X5B_READ_EV, 0, 0);
 				//mgt->r_thread = eloop_add_read(mgt->master, x5b_app_read_eloop, mgt, mgt->r_fd);
 			}

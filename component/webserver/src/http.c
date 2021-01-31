@@ -224,7 +224,7 @@ static char     *validateToken(char *token, char *endToken, int validation);
 
 #if ME_GOAHEAD_ACCESS_LOG
 #if ME_GOAHEAD_EXTLOG
-#define logRequest(wp, code) 	pl_zlog (__FILE__, __FUNCTION__, __LINE__, ZLOG_WEB, LOG_DEBUG, "%s - %s \"%s %s %s\" %d", \
+#define logRequest(wp, code) 	pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, LOG_DEBUG, "%s - %s \"%s %s %s\" %d", \
 		wp->ipaddr, wp->username == NULL ? "-" : wp->username, wp->method, wp->path, wp->protoVersion, code)
 #else /* ME_GOAHEAD_EXTLOG */
 static void     logRequest(Webs *wp, int code);

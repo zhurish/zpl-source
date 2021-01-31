@@ -103,11 +103,11 @@ static modem_client_t * modem_client_lookup_node_by_name(char *name)
 			return OK;
 		}
 		if(MODEM_IS_DEBUG(CLIENT))
-			zlog_debug(ZLOG_MODEM, "can't malloc modem client memory");
+			zlog_debug(MODULE_MODEM, "can't malloc modem client memory");
 		return ERROR;
 	}
 	if(MODEM_IS_DEBUG(CLIENT))
-		zlog_debug(ZLOG_MODEM, "modem client is exist, vendor:%x product:%x",
+		zlog_debug(MODULE_MODEM, "modem client is exist, vendor:%x product:%x",
 				client->vendor, client->product);
 	return ERROR;
 }*/
@@ -126,11 +126,11 @@ modem_client_t * modem_client_alloc(int vendor, int product)
 			return node;
 		}
 		if(MODEM_IS_DEBUG(CLIENT))
-			zlog_debug(ZLOG_MODEM, "can't malloc modem client memory");
+			zlog_debug(MODULE_MODEM, "can't malloc modem client memory");
 		return NULL;
 	}
 	if(MODEM_IS_DEBUG(CLIENT))
-		zlog_debug(ZLOG_MODEM, "modem client is exist, vendor:%x product:%x",
+		zlog_debug(MODULE_MODEM, "modem client is exist, vendor:%x product:%x",
 				vendor, product);
 	return NULL;
 }

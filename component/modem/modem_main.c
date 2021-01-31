@@ -204,3 +204,17 @@ int modem_task_exit (void)
 	return OK;
 }
 
+struct module_list module_list_modem = 
+{ 
+	.module=MODULE_MODEM, 
+	.name="MODEM", 
+	.module_init=modem_module_init, 
+	.module_exit=modem_module_exit, 
+	.module_task_init=modem_task_init, 
+	.module_task_exit=modem_task_exit, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};

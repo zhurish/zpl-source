@@ -38,6 +38,12 @@ $(LIBS) : $(MODULE_OBJS) $(MODULE_LIBOBJS)
 
 -include $(MODULE_LIBOBJS:.o=.d)
 
+files = $(patsubst %.o,%.c,$(OBJS))
+make_prepare:
+	@for i in $(files); do	\
+		$(MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+	done
+
 lib: $(LIBS)
 
 
@@ -57,4 +63,4 @@ objclean:
 
 all: lib install
 
-.PHONY:	obj all lib install objclean clean
+.PHONY:	obj all lib install objclean clean make_prepare

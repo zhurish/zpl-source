@@ -35,11 +35,10 @@
 #include "nsm_router-id.h"
 
 struct zebra_t zebrad =
-{
-  .rtm_table_default = 0,
+	{
+		.rtm_table_default = 0,
 };
 static int nsm_task_id = 0;
-
 
 static int nsm_main_task(void *argv)
 {
@@ -51,7 +50,7 @@ static int nsm_main_task(void *argv)
 	{
 		os_sleep(1);
 	}
-	//os_log_reopen(ZLOG_NSM);
+	//os_log_reopen(MODULE_NSM);
 	while (thread_fetch (zebrad.master, &thread))
 		thread_call (&thread);
 	/* Not reached... */
@@ -59,23 +58,75 @@ static int nsm_main_task(void *argv)
 	return 0;
 }
 
-int nsm_module_init ()
+int nsm_module_init()
 {
 	/* Make master thread emulator. */
-	master_thread[MODULE_NSM] = thread_master_module_create (MODULE_NSM);
+	master_thread[MODULE_NSM] = thread_master_module_create(MODULE_NSM);
 	zebrad.master = master_thread[MODULE_NSM];
 
-	if_init();
-	zserv_init ();
-	rib_init ();
-	nsm_vrf_init ();
+	//if_init();
+	zserv_init();
+	rib_init();
+	//nsm_vrf_init ();
 	nsm_interface_init();
-	nsm_client_init ();
+	nsm_client_init();
 
+#ifdef PL_NSM_8021X
+	nsm_dot1x_init();
+#endif
+#ifdef PL_NSM_ARP
+	nsm_ip_arp_init();
+#endif
+#ifdef PL_NSM_BRIDGE
+
+#endif
+#ifdef PL_NSM_DHCP
+
+#endif
+#ifdef PL_NSM_DNS
+	nsm_ip_dns_init();
+#endif
+#ifdef PL_NSM_DOS
+	nsm_dos_init();
+
+#endif
+#ifdef PL_NSM_FIREWALLD
+
+#endif
+#ifdef PL_NSM_MAC
+	nsm_mac_init();
+#endif
+#ifdef PL_NSM_VLAN
+	nsm_vlan_init();
+#endif
+#ifdef PL_NSM_QOS
+	nsm_qos_init();
+#endif
+#ifdef PL_NSM_TRUNK
+	nsm_trunk_init();
+#endif
+#ifdef PL_NSM_MIRROR
+	nsm_mirror_init();
+#endif
+#ifdef PL_NSM_TUNNEL
+	nsm_tunnel_client_init();
+#endif
+#ifdef PL_NSM_SERIAL
+	nsm_serial_client_init();
+#endif
+#ifdef PL_NSM_PPP
+
+#endif
+#ifdef PL_NSM_SECURITY
+	nsm_security_init();
+#endif
+#ifdef PL_NSM_VETH
+	nsm_veth_client_init();
+#endif
 	//kernel_init(NULL);
 	//zebra_debug_init ();
-	//zclient_new(master_thread[ZLOG_NSM]);
-/*	zebra_init ();
+	//zclient_new(master_thread[MODULE_NSM]);
+	/*	zebra_init ();
 
 	zebra_if_init ();
 	zebra_debug_init ();
@@ -117,22 +168,137 @@ int nsm_module_init ()
 	 This must be done only after locking pidfile (bug #403).
 	zebra_zserv_socket_init (NULL);*/
 	return 0;
-
 }
 
-
-
-int nsm_task_init ()
+int nsm_task_init()
 {
-	nsm_task_id = os_task_create("nsmTask", OS_TASK_DEFAULT_PRIORITY,
-	               0, nsm_main_task, NULL, OS_TASK_DEFAULT_STACK);
-	if(nsm_task_id)
+	if(nsm_task_id == 0)
+		nsm_task_id = os_task_create("nsmTask", OS_TASK_DEFAULT_PRIORITY,
+								 0, nsm_main_task, NULL, OS_TASK_DEFAULT_STACK);
+	if (nsm_task_id)
 		return OK;
 	return ERROR;
-
 }
 
-int nsm_module_exit ()
+int nsm_task_exit ()
 {
+	if(nsm_task_id)
+		os_task_destroy(nsm_task_id);
+	nsm_task_id = 0;
 	return OK;
 }
+
+int nsm_module_exit()
+{
+#ifdef PL_NSM_MAC
+	nsm_mac_exit();
+#endif
+#ifdef PL_NSM_VLAN
+	nsm_vlan_exit();
+#endif
+
+#ifdef PL_NSM_ARP
+	nsm_ip_arp_exit();
+#endif
+#ifdef PL_NSM_TRUNK
+	nsm_trunk_exit();
+#endif
+#ifdef PL_NSM_DOS
+	nsm_dos_exit();
+#endif
+#ifdef PL_NSM_8021X
+	nsm_dot1x_exit();
+#endif
+#ifdef PL_NSM_MIRROR
+	nsm_mirror_exit();
+#endif
+
+#ifdef PL_NSM_SERIAL
+	nsm_serial_client_exit();
+#endif
+#ifdef PL_NSM_DNS
+	nsm_ip_dns_exit();
+#endif
+#ifdef PL_NSM_QOS
+	nsm_qos_exit();
+#endif
+#ifdef PL_NSM_VETH
+	nsm_veth_client_exit();
+#endif
+
+#ifdef PL_NSM_TUNNEL
+	nsm_tunnel_client_exit();
+#endif
+#ifdef PL_NSM_BRIDGE
+
+#endif
+#ifdef PL_NSM_SECURITY
+	nsm_security_exit();
+#endif
+
+	return OK;
+}
+
+int nsm_module_cmd_init()
+{
+	cmd_router_id_init();
+	cmd_interface_init();
+	cmd_route_init();
+
+#ifdef PL_NSM_MAC
+	cmd_mac_init();
+#endif
+#ifdef PL_NSM_VLAN
+	cmd_vlan_init();
+#endif
+	cmd_port_init();
+#ifdef PL_NSM_ARP
+	cmd_arp_init();
+#endif
+#ifdef PL_NSM_TRUNK
+	cmd_trunk_init();
+#endif
+#ifdef PL_NSM_DOS
+	cmd_dos_init();
+#endif
+#ifdef PL_NSM_8021X
+	cmd_dot1x_init();
+#endif
+#ifdef PL_NSM_MIRROR
+	cmd_mirror_init();
+#endif
+
+#ifdef PL_NSM_SERIAL
+	cmd_serial_init();
+#endif
+#ifdef PL_NSM_DNS
+	cmd_dns_init();
+#endif
+#ifdef PL_NSM_PPP
+	cmd_ppp_init();
+#endif
+#ifdef PL_NSM_TUNNEL
+	cmd_tunnel_init();
+#endif
+#ifdef PL_NSM_BRIDGE
+	cmd_bridge_init();
+#endif
+#ifdef PL_NSM_SECURITY
+	cmd_security_init();
+#endif
+	return OK;
+}
+
+struct module_list module_list_nsm = {
+		.module = MODULE_NSM,
+		.name = "NSM",
+		.module_init = nsm_module_init,
+		.module_exit = nsm_module_exit,
+		.module_task_init = nsm_task_init,
+		.module_task_exit = nsm_task_exit,
+		.module_cmd_init = nsm_module_cmd_init,
+		.module_write_config = NULL,
+		.module_show_config = NULL,
+		.module_show_debug = NULL,
+		.taskid = 0,
+};

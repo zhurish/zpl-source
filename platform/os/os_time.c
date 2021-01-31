@@ -858,7 +858,7 @@ static int os_time_interrupt_setting(int msec)
 #ifdef OS_TIMER_DEBUG
 	//fprintf(stdout, "%s time=%u.%u\n", __func__, tick.it_value.tv_sec,
 	//		(tick.it_value.tv_nsec)/1000000);
-	//zlog_debug(ZLOG_NSM, "%s time=%u.%u", __func__,tick.it_value.tv_sec, tick.it_value.tv_usec/1000);
+	//zlog_debug(MODULE_NSM, "%s time=%u.%u", __func__,tick.it_value.tv_sec, tick.it_value.tv_usec/1000);
 #endif
 #ifndef OS_SIGNAL_SIGWAIT
 	timer_connect(0, NULL);
@@ -916,7 +916,7 @@ u_int32 os_time_create_entry(os_time_type type, int (*time_entry)(void *),
 		os_time_interval_refresh();
 
 #ifdef OS_TIMER_DEBUG
-	zlog_debug(ZLOG_DEFAULT, "%s '%s' time=%lu.%lu\r\n", __func__, func_name, t->interrupt_timestamp/TIMER_MSEC_MICRO,
+	zlog_debug(MODULE_DEFAULT, "%s '%s' time=%lu.%lu\r\n", __func__, func_name, t->interrupt_timestamp/TIMER_MSEC_MICRO,
 			(t->interrupt_timestamp)%TIMER_MSEC_MICRO);
 #endif
 		if(time_mutex)
@@ -979,7 +979,7 @@ int os_time_destroy(u_int32 id)
 			t->lstid = OS_TIMER_UNUSE;
 		}
 		t->state = OS_TIMER_FALSE;
-		//zlog_debug(ZLOG_DEFAULT, "=========================%s:%s", __func__, t->entry_name);
+		//zlog_debug(MODULE_DEFAULT, "=========================%s:%s", __func__, t->entry_name);
 		t->t_id = 0;
 		os_time_interval_refresh();
 		if(time_mutex)
@@ -1033,7 +1033,7 @@ int os_time_restart(u_int32 id, int msec)
 		t->msec = msec;
 		os_time_interval_update(t);
 #ifdef OS_TIMER_DEBUG
-		zlog_debug(ZLOG_DEFAULT, "%s '%s' time=%lu.%lu\r\n", __func__, t->entry_name, t->interrupt_timestamp/TIMER_MSEC_MICRO,
+		zlog_debug(MODULE_DEFAULT, "%s '%s' time=%lu.%lu\r\n", __func__, t->entry_name, t->interrupt_timestamp/TIMER_MSEC_MICRO,
 			(t->interrupt_timestamp)%TIMER_MSEC_MICRO);
 #endif
 		t->state = OS_TIMER_TRUE;
@@ -1103,11 +1103,11 @@ static int os_time_task(void)
 		err = sigwait(&set, &signum);
 		if(err != 0)
 		{
-			zlog_debug(ZLOG_DEFAULT, "=========================%s:%s(SIGUSR2=%d, signum=%d)",
+			zlog_debug(MODULE_DEFAULT, "=========================%s:%s(SIGUSR2=%d, signum=%d)",
 					__func__, strerror(errno),SIGUSR2, signum);
 			continue;
 		}
-		zlog_debug(ZLOG_DEFAULT, "=========================%s SIGUSR2=%d, signum=%d",
+		zlog_debug(MODULE_DEFAULT, "=========================%s SIGUSR2=%d, signum=%d",
 				__func__, SIGUSR2, signum);
 		current_time = NULL;
 #else
@@ -1137,7 +1137,7 @@ static int os_time_task(void)
 
 						lstDelete (time_list, (NODE *)t);
 #ifdef OS_TIMER_DEBUG
-						zlog_debug(ZLOG_DEFAULT, "%s '%s'\r\n", __func__, t->entry_name);
+						zlog_debug(MODULE_DEFAULT, "%s '%s'\r\n", __func__, t->entry_name);
 #endif
 						t->lstid = OS_TIMER_UNUSE;
 						lstAdd(time_unuse_list, (NODE *)t);
@@ -1147,7 +1147,7 @@ static int os_time_task(void)
 						os_time_interval_update(t);
 						lstDelete (time_list, (NODE *)t);
 #ifdef OS_TIMER_DEBUG
-						zlog_debug(ZLOG_DEFAULT, "%s '%s'\r\n", __func__, t->entry_name);
+						zlog_debug(MODULE_DEFAULT, "%s '%s'\r\n", __func__, t->entry_name);
 #endif
 						t->lstid = OS_TIMER_UNUSE;
 						lstAdd(time_unuse_list, (NODE *)t);
@@ -1170,7 +1170,7 @@ static int os_time_task(void)
 				{
 					lstDelete (time_unuse_list, (NODE *)t);
 #ifdef OS_TIMER_DEBUG
-					zlog_debug(ZLOG_DEFAULT, "%s resetting '%s'\r\n", __func__, t->entry_name);
+					zlog_debug(MODULE_DEFAULT, "%s resetting '%s'\r\n", __func__, t->entry_name);
 #endif
 					t->lstid = OS_TIMER_READY;
 					lstAddSort(time_list, (NODE *)t);
@@ -1194,7 +1194,7 @@ static int timer_test_handle(void *p)
 	struct timeval now;
 	os_timer_timeval(&now);
 	fprintf(stdout, "%s time=%lu.%lu msec\n", __func__,now.tv_sec*TIMER_MSEC_MICRO, now.tv_sec/TIMER_MSEC_MICRO);
-	//zlog_debug(ZLOG_NSM, "%s time=%u.%u msec", __func__,now.tv_sec, now.tv_sec/1000);
+	//zlog_debug(MODULE_NSM, "%s time=%u.%u msec", __func__,now.tv_sec, now.tv_sec/1000);
 	t_time_test = 0;
 	return OK;
 }

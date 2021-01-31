@@ -15,10 +15,14 @@ ifeq ($(strip $(PL_NSM_BRIDGE)),true)
 OBJS	+= kernel_brigde.o		
 endif
 
-OBJS	+= kernel_bond.o
+ifeq ($(strip $(PL_NSM_TRUNK)),true)
+OBJS	+= kernel_bond.o		
+endif
+
 ifeq ($(strip $(PL_NSM_VETH)),true)
 OBJS	+= kernel_veth.o	
 endif
+
 OBJS	+= kernel_vrf.o
 OBJS	+= kernel_ipforward.o
 OBJS	+= kernel_netlink.o
@@ -27,6 +31,7 @@ OBJS	+= kernel_nlroute.o
 OBJS	+= kernel_nllisten.o
 OBJS	+= kernel_nliface.o
 OBJS	+= kernel_nlload.o
+
 ifeq ($(strip $(PL_NSM_FIREWALLD)),true)
 OBJS	+= kernel_firewalld.o		
 endif

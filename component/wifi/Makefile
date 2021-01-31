@@ -37,6 +37,11 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c wireless.h
 $(LIBS) : $(MODULE_OBJS) 
 	@$(AR) -rs $(LIBS) $(MODULE_OBJS) 
 
+files = $(patsubst %.o,%.c,$(OBJS))
+make_prepare:
+	@for i in $(files); do	\
+		$(MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+	done
 
 lib: $(LIBS)
 
@@ -57,4 +62,4 @@ objclean:
 
 all: lib install
 
-.PHONY:	obj all lib install objclean clean
+.PHONY:	obj all lib install objclean clean make_prepare

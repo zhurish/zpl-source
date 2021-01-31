@@ -67,11 +67,11 @@ static dhcpd_interface_t * dhcpd_pool_create_interface(u_int32 ifindex) {
 		 if(ifter->k_name)
 		 {
 		 udhcp_read_interface(ifter->k_name, NULL, &ifter->ipaddr, ifter->server_mac);
-		 zlog_debug(ZLOG_DHCP, "===========%s", ifter->k_name);
+		 zlog_debug(MODULE_DHCP, "===========%s", ifter->k_name);
 		 }
 		 */
 		udhcp_interface_mac(ifindex, &ifter->ipaddr, ifter->server_mac);
-		zlog_debug(ZLOG_DHCP, "===========%s", ifp->k_name);
+		zlog_debug(MODULE_DHCP, "===========%s", ifp->k_name);
 		return ifter;
 		//ifter->port;
 		//ifter->server_mac[6];          /* our MAC address (used only for ARP probing) */
@@ -125,11 +125,11 @@ int dhcpd_pool_add_interface(dhcp_pool_t*config, u_int32 ifindex) {
 		if(config->global->rawsock == 0)
 			config->global->rawsock = udhcp_raw_socket();
 
-		zlog_debug(ZLOG_DHCP, "dhcpd_pool_add_interface -> udhcp_udp_socket udhcp_raw_socket");
+		zlog_debug(MODULE_DHCP, "dhcpd_pool_add_interface -> udhcp_udp_socket udhcp_raw_socket");
 
 		if (config->global->r_thread == NULL && config->global->sock > 0)
 		{
-			zlog_debug(ZLOG_DHCP, "dhcpd_pool_add_interface");
+			zlog_debug(MODULE_DHCP, "dhcpd_pool_add_interface");
 			config->global->r_thread = eloop_add_read(
 				config->global->eloop_master, udhcp_read_thread,
 				config->global, config->global->sock);
@@ -239,7 +239,7 @@ static int dhcpd_icmp_echo_request(uint32_t nip, const uint8_t *safe_mac,
 	if (r)
 		return r;
 	temp.s_addr = nip;
-	zlog_err(ZLOG_DHCP, "%s belongs to someone, reserving it for %u seconds",
+	zlog_err(MODULE_DHCP, "%s belongs to someone, reserving it for %u seconds",
 			inet_ntoa(temp), (unsigned )ifter->pool->conflict_time);
 	//add_lease(ifter->pool, NULL, nip, ifter->pool->conflict_time, NULL, 0);
 	return 0;
@@ -420,11 +420,11 @@ static void dhcpd_packet_to_client(struct dhcp_packet *dhcp_pkt,
 
 	if (force_broadcast || (dhcp_pkt->flags & htons(BROADCAST_FLAG))
 			|| dhcp_pkt->ciaddr == 0) {
-		zlog_err(ZLOG_DHCP, "broadcasting packet to client");
+		zlog_err(MODULE_DHCP, "broadcasting packet to client");
 		ciaddr = INADDR_BROADCAST;
 		chaddr = DHCP_MAC_BCAST_ADDR;
 	} else {
-		zlog_err(ZLOG_DHCP, "unicasting packet to client ciaddr");
+		zlog_err(MODULE_DHCP, "unicasting packet to client ciaddr");
 		ciaddr = dhcp_pkt->ciaddr;
 		chaddr = dhcp_pkt->chaddr;
 	}
@@ -440,7 +440,7 @@ static void dhcpd_packet_to_client(struct dhcp_packet *dhcp_pkt,
 /* Send a packet to gateway_nip using the kernel ip stack */
 static void dhcpd_packet_to_relay(struct dhcp_packet *dhcp_pkt,
 		dhcp_pool_t *config, dhcpd_interface_t *ifter) {
-	zlog_err(ZLOG_DHCP, "forwarding packet to relay");
+	zlog_err(MODULE_DHCP, "forwarding packet to relay");
 	if (ifter && ifter->ipaddr) {
 		struct udhcp_packet_cmd source;
 		struct udhcp_packet_cmd dest;
@@ -594,7 +594,7 @@ static void dhcpd_send_offer(struct dhcp_packet *oldpacket, dhcp_pool_t *config,
 	}
 	if (!packet.yiaddr)
 	{
-		zlog_err(ZLOG_DHCP, "no free IP addresses. OFFER abandoned");
+		zlog_err(MODULE_DHCP, "no free IP addresses. OFFER abandoned");
 		return;
 	}
 	packet.siaddr_nip = ifter->ipaddr;
@@ -625,7 +625,7 @@ static void dhcpd_send_offer(struct dhcp_packet *oldpacket, dhcp_pool_t *config,
 	}
 
 	addr.s_addr = packet.yiaddr;
-	zlog_err(ZLOG_DHCP, "sending OFFER of %s", inet_ntoa(addr));
+	zlog_err(MODULE_DHCP, "sending OFFER of %s", inet_ntoa(addr));
 	/* dhcpd_send_packet emits error message itself if it detects failure */
 	dhcpd_send_packet(&packet, /*force_bcast:*/0, config, ifter);
 }
@@ -637,7 +637,7 @@ static void dhcpd_send_nak(struct dhcp_packet *oldpacket, dhcp_pool_t *config,
 	dhcpd_packet_init(&packet, oldpacket, DHCPNAK, ifter->ipaddr);
 	dhcp_lease_del(&config->dhcp_lease_list, lease);
 	lease = NULL;
-	zlog_err(ZLOG_DHCP, "sending %s", "NAK");
+	zlog_err(MODULE_DHCP, "sending %s", "NAK");
 	dhcpd_send_packet(&packet, /*force_bcast:*/1, config, ifter);
 }
 
@@ -665,7 +665,7 @@ static void dhcpd_send_ack(struct dhcp_packet *oldpacket, dhcp_pool_t *config,
 	dhcpd_build_options(config, &packet, oldpacket);
 
 	addr.s_addr = lease->lease_address;
-	zlog_err(ZLOG_DHCP, "sending ACK to %s", inet_ntoa(addr));
+	zlog_err(MODULE_DHCP, "sending ACK to %s", inet_ntoa(addr));
 	dhcpd_send_packet(&packet, /*force_bcast:*/0, config, ifter);
 
 	cu_lease = dhcpd_update_lease(lease,
@@ -742,7 +742,7 @@ static void dhcpd_send_inform(struct dhcp_packet *oldpacket, dhcp_pool_t *config
 	dhcpd_build_options(config, &packet, oldpacket);
 
 	addr.s_addr = lease->lease_address;
-	zlog_err(ZLOG_DHCP, "sending ACK to %s", inet_ntoa(addr));
+	zlog_err(MODULE_DHCP, "sending ACK to %s", inet_ntoa(addr));
 	dhcpd_send_packet(&packet, /*force_bcast:*/0, config, ifter);
 
 	cu_lease = dhcpd_update_lease(lease,
@@ -791,7 +791,7 @@ static void dhcp_discover(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
 	}
 	if(lease == NULL)
 	{
-		zlog_warn(ZLOG_DHCP, "dhcpd can not allocate new lease by '%s'", inet_ethernet(packet->chaddr));
+		zlog_warn(MODULE_DHCP, "dhcpd can not allocate new lease by '%s'", inet_ethernet(packet->chaddr));
 		return ;
 	}
 	dhcpd_send_offer(packet, pool, ifter, lease);
@@ -809,7 +809,7 @@ static void dhcp_request(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
 	}
 	if(lease == NULL)
 	{
-		zlog_warn(ZLOG_DHCP, "Can not find lease by '%s'", inet_ethernet(packet->chaddr));
+		zlog_warn(MODULE_DHCP, "Can not find lease by '%s'", inet_ethernet(packet->chaddr));
 		return;
 	}
 	ifter->state.requested_address = 0;
@@ -820,7 +820,7 @@ static void dhcp_request(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
 	if(ifter->state.requested_address == 0)
 	{
 		dhcpd_send_nak(packet, pool, ifter, lease);
-		zlog_warn(ZLOG_DHCP, "Can not get requested address for '%s', ignoring", inet_ethernet(packet->chaddr));
+		zlog_warn(MODULE_DHCP, "Can not get requested address for '%s', ignoring", inet_ethernet(packet->chaddr));
 		return;
 	}
 	if (lease && ifter->state.requested_address == lease->lease_address)
@@ -845,7 +845,7 @@ static void dhcp_release(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
 	}
 	if(lease == NULL)
 	{
-		zlog_warn(ZLOG_DHCP, "Can not find lease by '%s'", inet_ethernet(packet->chaddr));
+		zlog_warn(MODULE_DHCP, "Can not find lease by '%s'", inet_ethernet(packet->chaddr));
 		return;
 	}
 /*	ifter->state.requested_address = 0;
@@ -856,7 +856,7 @@ static void dhcp_release(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
 	if(ifter->state.requested_address == 0)
 	{
 		dhcpd_send_nak(packet, pool, ifter, lease);
-		zlog_warn(ZLOG_DHCP, "Can not get requested address for '%s', ignoring", inet_ethernet(packet->chaddr));
+		zlog_warn(MODULE_DHCP, "Can not get requested address for '%s', ignoring", inet_ethernet(packet->chaddr));
 		return;
 	}*/
 	if (lease && lease->lease_address)
@@ -897,7 +897,7 @@ static void dhcp_decline(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
 	}
 	if(lease == NULL)
 	{
-		zlog_warn(ZLOG_DHCP, "Can not find lease by '%s'", inet_ethernet(packet->chaddr));
+		zlog_warn(MODULE_DHCP, "Can not find lease by '%s'", inet_ethernet(packet->chaddr));
 		return;
 	}
 	/* DHCPDECLINE must specify address. */
@@ -937,7 +937,7 @@ static void dhcp_inform(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
 	}*/
 	if(lease == NULL)
 	{
-		zlog_warn(ZLOG_DHCP, "Can not find lease by '%s'", inet_ethernet(packet->chaddr));
+		zlog_warn(MODULE_DHCP, "Can not find lease by '%s'", inet_ethernet(packet->chaddr));
 		return;
 	}
 	/*
@@ -970,11 +970,11 @@ int udhcp_server_handle_thread(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
 	uint8_t msg_type = 0;
 
 	if (packet->hlen != 6) {
-		zlog_err(ZLOG_DHCP, "MAC length != 6, ignoring packet");
+		zlog_err(MODULE_DHCP, "MAC length != 6, ignoring packet");
 		return ERROR;
 	}
 	if (packet->op != BOOTREQUEST) {
-		zlog_err(ZLOG_DHCP, "not a REQUEST, ignoring packet");
+		zlog_err(MODULE_DHCP, "not a REQUEST, ignoring packet");
 		return ERROR;
 	}
 
@@ -986,7 +986,7 @@ int udhcp_server_handle_thread(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
 		ifter->state.server_identifier = 0;
 		dhcp_option_get_address(packet->options, DHCP_SERVER_ID, &ifter->state.server_identifier);
 		if (ifter->state.server_identifier != ifter->ipaddr) {
-			zlog_err(ZLOG_DHCP, "server ID doesn't match, ignoring 0x%x != 0x%x", ifter->state.server_identifier, ifter->ipaddr);
+			zlog_err(MODULE_DHCP, "server ID doesn't match, ignoring 0x%x != 0x%x", ifter->state.server_identifier, ifter->ipaddr);
 			//return ERROR;
 		}
 	}
@@ -994,17 +994,17 @@ int udhcp_server_handle_thread(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
 	switch (msg_type) {
 
 	case DHCPDISCOVER:
-		zlog_err(ZLOG_DHCP, "received %s", "DISCOVER");
+		zlog_err(MODULE_DHCP, "received %s", "DISCOVER");
 		dhcp_discover(packet, pool, ifter);
 		break;
 
 	case DHCPREQUEST:
-		zlog_debug(ZLOG_DHCP, "received %s", "REQUEST");
+		zlog_debug(MODULE_DHCP, "received %s", "REQUEST");
 		dhcp_request(packet, pool, ifter);
 		break;
 
 	case DHCPDECLINE:
-		zlog_err(ZLOG_DHCP, "received %s", "DECLINE");
+		zlog_err(MODULE_DHCP, "received %s", "DECLINE");
 		dhcp_decline(packet, pool, ifter);
 /*		if (ifter->lease && packet->ciaddr == ifter->lease->lease_address)
 		{
@@ -1024,16 +1024,16 @@ int udhcp_server_handle_thread(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
 		 * chaddr must be filled in,
 		 * ciaddr must be filled in
 		 */
-		zlog_err(ZLOG_DHCP, "received %s", "RELEASE");
+		zlog_err(MODULE_DHCP, "received %s", "RELEASE");
 		dhcp_release(packet, pool, ifter);
 		break;
 
 	case DHCPINFORM:
-		zlog_err(ZLOG_DHCP, "received %s", "INFORM");
+		zlog_err(MODULE_DHCP, "received %s", "INFORM");
 		dhcp_inform(packet, pool, ifter);
 		break;
 	default:
-		zlog_err(ZLOG_DHCP, "not a REQUEST, ignoring packet msg_type=%d", msg_type);
+		zlog_err(MODULE_DHCP, "not a REQUEST, ignoring packet msg_type=%d", msg_type);
 		break;
 	}
 	return OK;
@@ -1085,7 +1085,7 @@ int udhcpd_main_a(void *p)
 
 	arpping_ms = atoi(str_a);
 
-	zlog_err(ZLOG_DHCP, "started, v"BB_VER);
+	zlog_err(MODULE_DHCP, "started, v"BB_VER);
 
 	option = udhcp_find_option(config->options, DHCP_LEASE_TIME);
 	config->max_lease_sec = DEFAULT_LEASE_TIME;
@@ -1100,7 +1100,7 @@ int udhcpd_main_a(void *p)
 	num_ips = config->end_ip - config->start_ip + 1;
 	if (config->max_leases > num_ips)
 	{
-		zlog_err(ZLOG_DHCP, "max_leases=%u is too big, setting to %u",
+		zlog_err(MODULE_DHCP, "max_leases=%u is too big, setting to %u",
 				(unsigned )config->max_leases, num_ips);
 		config->max_leases = num_ips;
 	}
@@ -1171,11 +1171,11 @@ int udhcpd_main_a(void *p)
 
 		/*		if (pfds[0].revents) switch (udhcp_sp_read()) {
 		 case SIGUSR1:
-		 zlog_err(ZLOG_DHCP,"received %s", "SIGUSR1");
+		 zlog_err(MODULE_DHCP,"received %s", "SIGUSR1");
 		 write_leases();
 		 goto continue_with_autotime;
 		 case SIGTERM:
-		 zlog_err(ZLOG_DHCP,"received %s", "SIGTERM");
+		 zlog_err(MODULE_DHCP,"received %s", "SIGTERM");
 		 write_leases();
 		 goto ret0;
 		 }*/
@@ -1194,7 +1194,7 @@ int udhcpd_main_a(void *p)
 			/* bytes can also be -2 ("bad packet data") */
 			if (bytes == -1 && errno != EINTR)
 			{
-				zlog_err(ZLOG_DHCP,
+				zlog_err(MODULE_DHCP,
 						"read error: "STRERROR_FMT", reopening socket" STRERROR_ERRNO);
 				close(server_socket);
 				server_socket = -1;
@@ -1207,18 +1207,18 @@ int udhcpd_main_a(void *p)
 		}
 		if (packet.hlen != 6)
 		{
-			zlog_err(ZLOG_DHCP, "MAC length != 6, ignoring packet");
+			zlog_err(MODULE_DHCP, "MAC length != 6, ignoring packet");
 			continue;
 		}
 		if (packet.op != BOOTREQUEST)
 		{
-			zlog_err(ZLOG_DHCP, "not a REQUEST, ignoring packet");
+			zlog_err(MODULE_DHCP, "not a REQUEST, ignoring packet");
 			continue;
 		}
 		state = udhcp_get_option(&packet, DHCP_MESSAGE_TYPE);
 		if (state == NULL || state[0] < DHCP_MINTYPE || state[0] > DHCP_MAXTYPE)
 		{
-			zlog_err(ZLOG_DHCP,
+			zlog_err(MODULE_DHCP,
 					"no or bad message type option, ignoring packet");
 			continue;
 		}
@@ -1235,7 +1235,7 @@ int udhcpd_main_a(void *p)
 					!= server_nip/*config->server_nip*/)
 			{
 				/* client talks to somebody else */
-				zlog_err(ZLOG_DHCP, "server ID doesn't match, ignoring");
+				zlog_err(MODULE_DHCP, "server ID doesn't match, ignoring");
 				continue;
 			}
 		}
@@ -1245,7 +1245,7 @@ int udhcpd_main_a(void *p)
 				&packet.chaddr);
 		if (static_lease_nip)
 		{
-			zlog_err(ZLOG_DHCP, "found static lease: %x", static_lease_nip);
+			zlog_err(MODULE_DHCP, "found static lease: %x", static_lease_nip);
 			memcpy(&fake_lease.lease_mac, &packet.chaddr, 6);
 			fake_lease.lease_nip = static_lease_nip;
 			fake_lease.expires = 0;
@@ -1267,14 +1267,14 @@ int udhcpd_main_a(void *p)
 		{
 
 			case DHCPDISCOVER:
-			zlog_err(ZLOG_DHCP, "received %s", "DISCOVER");
+			zlog_err(MODULE_DHCP, "received %s", "DISCOVER");
 
 			dhcpd_send_offer(&packet, static_lease_nip, lease, requested_ip_opt,
 					arpping_ms, ifindex);
 			break;
 
 			case DHCPREQUEST:
-			zlog_err(ZLOG_DHCP, "received %s", "REQUEST");
+			zlog_err(MODULE_DHCP, "received %s", "REQUEST");
 			/* RFC 2131:
 
 			 o DHCPREQUEST generated during SELECTING state:
@@ -1366,7 +1366,7 @@ int udhcpd_main_a(void *p)
 				requested_nip = packet.ciaddr;
 				if (requested_nip == 0)
 				{
-					zlog_err(ZLOG_DHCP,
+					zlog_err(MODULE_DHCP,
 							"no requested IP and no ciaddr, ignoring");
 					break;
 				}
@@ -1404,7 +1404,7 @@ int udhcpd_main_a(void *p)
 			 * chaddr must be filled in,
 			 * ciaddr must be 0 (we do not check this)
 			 */
-			zlog_err(ZLOG_DHCP, "received %s", "DECLINE");
+			zlog_err(MODULE_DHCP, "received %s", "DECLINE");
 			if (server_id_opt && requested_ip_opt && lease /* chaddr matches this lease */
 					&& requested_nip == lease->lease_nip)
 			{
@@ -1422,7 +1422,7 @@ int udhcpd_main_a(void *p)
 			 * chaddr must be filled in,
 			 * ciaddr must be filled in
 			 */
-			zlog_err(ZLOG_DHCP, "received %s", "RELEASE");
+			zlog_err(MODULE_DHCP, "received %s", "RELEASE");
 			if (server_id_opt && lease /* chaddr matches this lease */
 					&& packet.ciaddr == lease->lease_nip)
 			{
@@ -1431,7 +1431,7 @@ int udhcpd_main_a(void *p)
 			break;
 
 			case DHCPINFORM:
-			zlog_err(ZLOG_DHCP, "received %s", "INFORM");
+			zlog_err(MODULE_DHCP, "received %s", "INFORM");
 			dhcpd_send_inform(&packet, ifindex);
 			break;
 		}
@@ -1517,7 +1517,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 	//write_pidfile(server_config.pidfile);
 	/* if (!..) bb_perror_msg("can't create pidfile %s", pidfile); */
 
-	zlog_err(ZLOG_DHCP,"started, v"BB_VER);
+	zlog_err(MODULE_DHCP,"started, v"BB_VER);
 
 	option = udhcp_find_option(server_config.options, DHCP_LEASE_TIME);
 	server_config.max_lease_sec = DEFAULT_LEASE_TIME;
@@ -1531,7 +1531,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 	num_ips = server_config.end_ip - server_config.start_ip + 1;
 	if (server_config.max_leases > num_ips)
 	{
-		zlog_err(ZLOG_DHCP,"max_leases=%u is too big, setting to %u",
+		zlog_err(MODULE_DHCP,"max_leases=%u is too big, setting to %u",
 				(unsigned)server_config.max_leases, num_ips);
 		server_config.max_leases = num_ips;
 	}
@@ -1601,11 +1601,11 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 
 		/*		if (pfds[0].revents) switch (udhcp_sp_read()) {
 		 case SIGUSR1:
-		 zlog_err(ZLOG_DHCP,"received %s", "SIGUSR1");
+		 zlog_err(MODULE_DHCP,"received %s", "SIGUSR1");
 		 write_leases();
 		 goto continue_with_autotime;
 		 case SIGTERM:
-		 zlog_err(ZLOG_DHCP,"received %s", "SIGTERM");
+		 zlog_err(MODULE_DHCP,"received %s", "SIGTERM");
 		 write_leases();
 		 goto ret0;
 		 }*/
@@ -1624,7 +1624,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 			/* bytes can also be -2 ("bad packet data") */
 			if (bytes == -1 && errno != EINTR)
 			{
-				zlog_err(ZLOG_DHCP,"read error: "STRERROR_FMT", reopening socket" STRERROR_ERRNO);
+				zlog_err(MODULE_DHCP,"read error: "STRERROR_FMT", reopening socket" STRERROR_ERRNO);
 				close(server_socket);
 				server_socket = -1;
 			}
@@ -1632,18 +1632,18 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 		}
 		if (packet.hlen != 6)
 		{
-			zlog_err(ZLOG_DHCP,"MAC length != 6, ignoring packet");
+			zlog_err(MODULE_DHCP,"MAC length != 6, ignoring packet");
 			continue;
 		}
 		if (packet.op != BOOTREQUEST)
 		{
-			zlog_err(ZLOG_DHCP,"not a REQUEST, ignoring packet");
+			zlog_err(MODULE_DHCP,"not a REQUEST, ignoring packet");
 			continue;
 		}
 		state = udhcp_get_option(&packet, DHCP_MESSAGE_TYPE);
 		if (state == NULL || state[0] < DHCP_MINTYPE || state[0] > DHCP_MAXTYPE)
 		{
-			zlog_err(ZLOG_DHCP,"no or bad message type option, ignoring packet");
+			zlog_err(MODULE_DHCP,"no or bad message type option, ignoring packet");
 			continue;
 		}
 
@@ -1656,7 +1656,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 			if (server_id_network_order != server_config.server_nip)
 			{
 				/* client talks to somebody else */
-				zlog_err(ZLOG_DHCP,"server ID doesn't match, ignoring");
+				zlog_err(MODULE_DHCP,"server ID doesn't match, ignoring");
 				continue;
 			}
 		}
@@ -1665,7 +1665,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 		static_lease_nip = dhcpd_get_static_nip_by_mac(server_config.static_leases, &packet.chaddr);
 		if (static_lease_nip)
 		{
-			zlog_err(ZLOG_DHCP,"found static lease: %x", static_lease_nip);
+			zlog_err(MODULE_DHCP,"found static lease: %x", static_lease_nip);
 			memcpy(&fake_lease.lease_mac, &packet.chaddr, 6);
 			fake_lease.lease_nip = static_lease_nip;
 			fake_lease.expires = 0;
@@ -1687,13 +1687,13 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 		{
 
 			case DHCPDISCOVER:
-			zlog_err(ZLOG_DHCP,"received %s", "DISCOVER");
+			zlog_err(MODULE_DHCP,"received %s", "DISCOVER");
 
 			dhcpd_send_offer(&packet, static_lease_nip, lease, requested_ip_opt, arpping_ms);
 			break;
 
 			case DHCPREQUEST:
-			zlog_err(ZLOG_DHCP,"received %s", "REQUEST");
+			zlog_err(MODULE_DHCP,"received %s", "REQUEST");
 			/* RFC 2131:
 
 			 o DHCPREQUEST generated during SELECTING state:
@@ -1785,7 +1785,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 				requested_nip = packet.ciaddr;
 				if (requested_nip == 0)
 				{
-					zlog_err(ZLOG_DHCP,"no requested IP and no ciaddr, ignoring");
+					zlog_err(MODULE_DHCP,"no requested IP and no ciaddr, ignoring");
 					break;
 				}
 			}
@@ -1822,7 +1822,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 			 * chaddr must be filled in,
 			 * ciaddr must be 0 (we do not check this)
 			 */
-			zlog_err(ZLOG_DHCP,"received %s", "DECLINE");
+			zlog_err(MODULE_DHCP,"received %s", "DECLINE");
 			if (server_id_opt
 					&& requested_ip_opt
 					&& lease /* chaddr matches this lease */
@@ -1843,7 +1843,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 			 * chaddr must be filled in,
 			 * ciaddr must be filled in
 			 */
-			zlog_err(ZLOG_DHCP,"received %s", "RELEASE");
+			zlog_err(MODULE_DHCP,"received %s", "RELEASE");
 			if (server_id_opt
 					&& lease /* chaddr matches this lease */
 					&& packet.ciaddr == lease->lease_nip
@@ -1854,7 +1854,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 			break;
 
 			case DHCPINFORM:
-			zlog_err(ZLOG_DHCP,"received %s", "INFORM");
+			zlog_err(MODULE_DHCP,"received %s", "INFORM");
 			dhcpd_send_inform(&packet);
 			break;
 		}

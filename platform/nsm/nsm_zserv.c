@@ -32,7 +32,7 @@
 #include "network.h"
 #include "sockunion.h"
 #include "log.h"
-#include "zclient.h"
+#include "nsm_zclient.h"
 #include "network.h"
 #include "buffer.h"
 #include "nsm_vrf.h"
@@ -88,7 +88,7 @@ zserv_flush_data(struct thread *thread)
   switch (buffer_flush_available(client->wb, client->sock, OS_STACK))
     {
     case BUFFER_ERROR:
-      zlog_warn(ZLOG_NSM, "%s: buffer_flush_available failed on zserv client fd %d, "
+      zlog_warn(MODULE_NSM, "%s: buffer_flush_available failed on zserv client fd %d, "
       		"closing", __func__, client->sock);
       zebra_client_close(client);
       break;
@@ -116,7 +116,7 @@ zebra_server_send_message(struct zserv *client)
 		       stream_get_endp(client->obuf), OS_STACK))
     {
     case BUFFER_ERROR:
-      zlog_warn(ZLOG_NSM, "%s: buffer_write failed to zserv client fd %d, closing",
+      zlog_warn(MODULE_NSM, "%s: buffer_write failed to zserv client fd %d, closing",
       		 __func__, client->sock);
       /* Schedule a delayed close since many of the functions that call this
          one do not check the return code.  They do not allow for the
@@ -166,7 +166,7 @@ zserv_encode_interface (struct stream *s, struct interface *ifp)
   if (ifp->hw_addr_len)
     stream_put (s, ifp->hw_addr, ifp->hw_addr_len);
 
-  zlog_info(ZLOG_NSM, "Try to set TE Link Param");
+  zlog_info(MODULE_NSM, "Try to set TE Link Param");
   /* Then, Traffic Engineering parameters if any */
 /*  if (HAS_LINK_PARAMS(ifp) && IS_LINK_PARAMS_SET(ifp->link_params))
     {
@@ -690,7 +690,7 @@ zsend_ipv4_nexthop_lookup (struct zserv *client, struct in_addr addr,
   else
     {
       if (IS_ZEBRA_DEBUG_PACKET && IS_ZEBRA_DEBUG_RECV)
-        zlog_debug(ZLOG_NSM, "%s: No matching rib entry found.", __func__);
+        zlog_debug(MODULE_NSM, "%s: No matching rib entry found.", __func__);
       stream_putl (s, 0); /* metric */
       stream_putc (s, 0); /* nexthop_num */
     }
@@ -711,7 +711,7 @@ zserv_nexthop_register (struct zserv *client, int sock, u_short length, vrf_id_t
   u_char connected;
 
   if (IS_ZEBRA_DEBUG_NHT)
-    zlog_debug(ZLOG_NSM, "nexthop_register msg from client %s: length=%d\n",
+    zlog_debug(MODULE_NSM, "nexthop_register msg from client %s: length=%d\n",
 	       zebra_route_string(client->proto), length);
 
   s = client->ibuf;
@@ -748,7 +748,7 @@ zserv_nexthop_unregister (struct zserv *client, int sock, u_short length)
   u_short l = 0;
 
   if (IS_ZEBRA_DEBUG_NHT)
-    zlog_debug(ZLOG_NSM, "nexthop_unregister msg from client %s: length=%d\n",
+    zlog_debug(MODULE_NSM, "nexthop_unregister msg from client %s: length=%d\n",
 	       zebra_route_string(client->proto), length);
 
   s = client->ibuf;
@@ -1113,7 +1113,7 @@ zread_ipv4_nexthop_lookup (int cmd, struct zserv *client, u_short length,
 
   addr.s_addr = stream_get_ipv4 (client->ibuf);
   if (IS_ZEBRA_DEBUG_PACKET && IS_ZEBRA_DEBUG_RECV)
-    zlog_debug(ZLOG_NSM, "%s: looking up %s", __func__,
+    zlog_debug(MODULE_NSM, "%s: looking up %s", __func__,
                inet_ntop (AF_INET, &addr, buf, BUFSIZ));
 
   return zsend_ipv4_nexthop_lookup (client, addr, cmd, vrf_id);
@@ -1339,7 +1339,7 @@ zread_ipv6_nexthop_lookup (struct zserv *client, u_short length,
 
   stream_get (&addr, client->ibuf, 16);
   if (IS_ZEBRA_DEBUG_PACKET && IS_ZEBRA_DEBUG_RECV)
-    zlog_debug(ZLOG_NSM, "%s: looking up %s", __func__,
+    zlog_debug(MODULE_NSM, "%s: looking up %s", __func__,
                inet_ntop (AF_INET6, &addr, buf, BUFSIZ));
 
   return zsend_ipv6_nexthop_lookup (client, &addr, vrf_id);
@@ -1380,12 +1380,12 @@ zread_hello (struct zserv *client)
   if ((proto < ZEBRA_ROUTE_MAX)
   &&  (proto > ZEBRA_ROUTE_STATIC))
     {
-      zlog_notice (ZLOG_NSM, "client %d says hello and bids fair to announce only %s routes",
+      zlog_notice (MODULE_NSM, "client %d says hello and bids fair to announce only %s routes",
                     client->sock, zebra_route_string(proto));
 
       /* if route-type was binded by other client */
       if (route_type_oaths[proto])
-        zlog_warn (ZLOG_NSM, "sender of %s routes changed %c->%c",
+        zlog_warn (MODULE_NSM, "sender of %s routes changed %c->%c",
                     zebra_route_string(proto), route_type_oaths[proto],
                     client->sock);
 
@@ -1420,7 +1420,7 @@ zebra_score_rib (int client_sock)
   for (i = ZEBRA_ROUTE_RIP; i < ZEBRA_ROUTE_MAX; i++)
     if (client_sock == route_type_oaths[i])
       {
-        zlog_notice (ZLOG_NSM, "client %d disconnected. %lu %s routes removed from the rib",
+        zlog_notice (MODULE_NSM, "client %d disconnected. %lu %s routes removed from the rib",
                       client_sock, rib_score_proto (i), zebra_route_string (i));
         route_type_oaths[i] = 0;
         break;
@@ -1527,7 +1527,7 @@ zebra_client_read (struct thread *thread)
 	  (nbyte == -1))
 	{
 	  if (IS_ZEBRA_DEBUG_EVENT)
-	    zlog_debug (ZLOG_NSM, "connection closed socket [%d]", sock);
+	    zlog_debug (MODULE_NSM, "connection closed socket [%d]", sock);
 	  zebra_client_close (client);
 	  return -1;
 	}
@@ -1552,21 +1552,21 @@ zebra_client_read (struct thread *thread)
 
   if (marker != ZEBRA_HEADER_MARKER || version != ZSERV_VERSION)
     {
-      zlog_err(ZLOG_NSM, "%s: socket %d version mismatch, marker %d, version %d",
+      zlog_err(MODULE_NSM, "%s: socket %d version mismatch, marker %d, version %d",
                __func__, sock, marker, version);
       zebra_client_close (client);
       return -1;
     }
   if (length < ZEBRA_HEADER_SIZE) 
     {
-      zlog_warn(ZLOG_NSM, "%s: socket %d message length %u is less than header size %d",
+      zlog_warn(MODULE_NSM, "%s: socket %d message length %u is less than header size %d",
 	        __func__, sock, length, ZEBRA_HEADER_SIZE);
       zebra_client_close (client);
       return -1;
     }
   if (length > STREAM_SIZE(client->ibuf))
     {
-      zlog_warn(ZLOG_NSM, "%s: socket %d message length %u exceeds buffer size %lu",
+      zlog_warn(MODULE_NSM, "%s: socket %d message length %u exceeds buffer size %lu",
 	        __func__, sock, length, (u_long)STREAM_SIZE(client->ibuf));
       zebra_client_close (client);
       return -1;
@@ -1581,7 +1581,7 @@ zebra_client_read (struct thread *thread)
 	  (nbyte == -1))
 	{
 	  if (IS_ZEBRA_DEBUG_EVENT)
-	    zlog_debug (ZLOG_NSM, "connection closed [%d] when reading zebra data", sock);
+	    zlog_debug (MODULE_NSM, "connection closed [%d] when reading zebra data", sock);
 	  zebra_client_close (client);
 	  return -1;
 	}
@@ -1597,10 +1597,10 @@ zebra_client_read (struct thread *thread)
 
   /* Debug packet information. */
   if (IS_ZEBRA_DEBUG_EVENT)
-    zlog_debug (ZLOG_NSM, "zebra message comes from socket [%d]", sock);
+    zlog_debug (MODULE_NSM, "zebra message comes from socket [%d]", sock);
 
   if (IS_ZEBRA_DEBUG_PACKET && IS_ZEBRA_DEBUG_RECV)
-    zlog_debug (ZLOG_NSM, "zebra message received [%s] %d in VRF %u",
+    zlog_debug (MODULE_NSM, "zebra message received [%s] %d in VRF %u",
 	       zserv_command_string (command), length, vrf_id);
 
   client->last_read_time = quagga_time(NULL);
@@ -1670,7 +1670,7 @@ zebra_client_read (struct thread *thread)
       zserv_nexthop_unregister(client, sock, length);
       break;
     default:
-      zlog_info (ZLOG_NSM, "Zebra received unknown command %d", command);
+      zlog_info (MODULE_NSM, "Zebra received unknown command %d", command);
       break;
     }
 
@@ -1706,7 +1706,7 @@ zebra_accept (struct thread *thread)
 
   if (client_sock < 0)
     {
-      zlog_warn (ZLOG_NSM, "Can't accept zebra socket: %s", safe_strerror (errno));
+      zlog_warn (MODULE_NSM, "Can't accept zebra socket: %s", safe_strerror (errno));
       return -1;
     }
 
@@ -1732,9 +1732,9 @@ zebra_serv ()
 
   if (accept_sock < 0) 
     {
-      zlog_warn (ZLOG_NSM, "Can't create zserv stream socket: %s",
+      zlog_warn (MODULE_NSM, "Can't create zserv stream socket: %s",
                  safe_strerror (errno));
-      //zlog_warn (ZLOG_NSM, "zebra can't provice full functionality due to above error");
+      //zlog_warn (MODULE_NSM, "zebra can't provice full functionality due to above error");
       return;
     }
 
@@ -1754,9 +1754,9 @@ zebra_serv ()
 	       sizeof (struct sockaddr_in));
   if (ret < 0)
     {
-      zlog_warn (ZLOG_NSM, "Can't bind to stream socket: %s",
+      zlog_warn (MODULE_NSM, "Can't bind to stream socket: %s",
                  safe_strerror (errno));
-      //zlog_warn (ZLOG_NSM, "zebra can't provice full functionality due to above error");
+      //zlog_warn (MODULE_NSM, "zebra can't provice full functionality due to above error");
       close (accept_sock);      /* Avoid sd leak. */
       return;
     }
@@ -1764,9 +1764,9 @@ zebra_serv ()
   ret = listen (accept_sock, 1);
   if (ret < 0)
     {
-      zlog_warn (ZLOG_NSM, "Can't listen to stream socket: %s",
+      zlog_warn (MODULE_NSM, "Can't listen to stream socket: %s",
                  safe_strerror (errno));
-      //zlog_warn (ZLOG_NSM, "zebra can't provice full functionality due to above error");
+      //zlog_warn (MODULE_NSM, "zebra can't provice full functionality due to above error");
       close (accept_sock);	/* Avoid sd leak. */
       return;
     }
@@ -1797,9 +1797,9 @@ zebra_serv_un (const char *path)
   sock = socket (AF_UNIX, SOCK_STREAM, 0);
   if (sock < 0)
     {
-      zlog_warn (ZLOG_NSM, "Can't create zserv unix socket: %s",
+      zlog_warn (MODULE_NSM, "Can't create zserv unix socket: %s",
                  safe_strerror (errno));
-      //zlog_warn (ZLOG_NSM, "zebra can't provide full functionality due to above error");
+      //zlog_warn (MODULE_NSM, "zebra can't provide full functionality due to above error");
       return;
     }
 
@@ -1818,9 +1818,9 @@ zebra_serv_un (const char *path)
   ret = bind (sock, (struct sockaddr *) &serv, len);
   if (ret < 0)
     {
-      zlog_warn (ZLOG_NSM, "Can't bind to unix socket %s: %s",
+      zlog_warn (MODULE_NSM, "Can't bind to unix socket %s: %s",
                  path, safe_strerror (errno));
-      //zlog_warn (ZLOG_NSM, "zebra can't provide full functionality due to above error");
+      //zlog_warn (MODULE_NSM, "zebra can't provide full functionality due to above error");
       close (sock);
       return;
     }
@@ -1828,9 +1828,9 @@ zebra_serv_un (const char *path)
   ret = listen (sock, 5);
   if (ret < 0)
     {
-      zlog_warn (ZLOG_NSM, "Can't listen to unix socket %s: %s",
+      zlog_warn (MODULE_NSM, "Can't listen to unix socket %s: %s",
                  path, safe_strerror (errno));
-      //zlog_warn (ZLOG_NSM, "zebra can't provide full functionality due to above error");
+      //zlog_warn (MODULE_NSM, "zebra can't provide full functionality due to above error");
       close (sock);
       return;
     }

@@ -5,32 +5,24 @@ MODULEDIR = platform/nsm
 #nsm
 ifeq ($(strip $(PL_NSM_MODULE)),true)
 OBJS	+= nsm_interface.o
-OBJS	+= nsm_connected.o
 OBJS	+= nsm_client.o
 OBJS	+= nsm_hook.o
 OBJS	+= nsm_router-id.o
-
-
-#OBJS	+= nsm_zebra_routemap.o
-#OBJS	+= nsm_snmp.o
-#OBJS	+= nsm_vty.o
+OBJS	+= nsm_zclient.o
 
 OBJS	+= nsm_distribute.o
 OBJS	+= nsm_redistribute.o
-OBJS	+= nsm_filter.o
 OBJS	+= nsm_if_rmap.o
-OBJS	+= nsm_keychain.o
-OBJS	+= nsm_plist.o
 OBJS	+= nsm_routemap.o
 
-OBJS	+= nsm_vrf.o
 OBJS	+= nsm_rib.o
 OBJS	+= nsm_rnh.o
 OBJS	+= nsm_fpm.o
 OBJS	+= nsm_zserv.o
 OBJS	+= nsm_debug.o
 
-
+OBJS	+= nexthop.o
+OBJS	+= table.o
 
 ifeq ($(strip $(PL_NSM_8021X)),true)
 OBJS	+= nsm_8021x.o			

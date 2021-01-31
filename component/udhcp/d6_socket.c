@@ -28,8 +28,8 @@ int FAST_FUNC d6_read_interface(const char *interface, int *ifindex, struct in6_
 		if (ifa->ifa_addr->sa_family == AF_PACKET) {
 			struct sockaddr_ll *sll = (struct sockaddr_ll*)(ifa->ifa_addr);
 			memcpy(mac, sll->sll_addr, 6);
-			zlog_err(ZLOG_DHCP,"MAC %02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-			zlog_err(ZLOG_DHCP,"ifindex %d", sll->sll_ifindex);
+			zlog_err(MODULE_DHCP,"MAC %02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+			zlog_err(MODULE_DHCP,"ifindex %d", sll->sll_ifindex);
 			*ifindex = sll->sll_ifindex;
 			retval &= (0xf - (1<<0));
 		}
@@ -43,7 +43,7 @@ int FAST_FUNC d6_read_interface(const char *interface, int *ifindex, struct in6_
 		 && IN6_IS_ADDR_LINKLOCAL(&sip6->sin6_addr)
 		) {
 			*nip6 = sip6->sin6_addr; /* struct copy */
-			zlog_err(ZLOG_DHCP,
+			zlog_err(MODULE_DHCP,
 				"IPv6 %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x",
 				nip6->s6_addr[0], nip6->s6_addr[1],
 				nip6->s6_addr[2], nip6->s6_addr[3],
@@ -63,9 +63,9 @@ int FAST_FUNC d6_read_interface(const char *interface, int *ifindex, struct in6_
 		return retval;
 
 	if (retval & (1<<0))
-		zlog_err(ZLOG_DHCP,"can't get %s", "MAC");
+		zlog_err(MODULE_DHCP,"can't get %s", "MAC");
 	if (retval & (1<<1))
-		zlog_err(ZLOG_DHCP,"can't get %s", "link-local IPv6 address");
+		zlog_err(MODULE_DHCP,"can't get %s", "link-local IPv6 address");
 	return -1;
 }
 
@@ -74,12 +74,12 @@ int FAST_FUNC d6_listen_socket(int port, const char *inf)
 	int fd;
 	struct sockaddr_in6 addr;
 
-	zlog_err(ZLOG_DHCP,"opening listen socket on *:%d %s", port, inf);
+	zlog_err(MODULE_DHCP,"opening listen socket on *:%d %s", port, inf);
 	fd = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
 
 	setsockopt_reuseaddr(fd);
 	if (setsockopt_broadcast(fd) == -1)
-		zlog_err(ZLOG_DHCP,"SO_BROADCAST");
+		zlog_err(MODULE_DHCP,"SO_BROADCAST");
 
 	/* NB: bug 1032 says this doesn't work on ethernet aliases (ethN:M) */
 	if (setsockopt_bindtodevice(fd, inf))

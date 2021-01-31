@@ -78,12 +78,12 @@ zebra_add_rnh (struct prefix *p, vrf_id_t vrfid)
     {
       char buf[INET6_ADDRSTRLEN];
       prefix2str(p, buf, INET6_ADDRSTRLEN);
-      zlog_debug(ZLOG_NSM, "add rnh %s in vrf %d", buf, vrfid);
+      zlog_debug(MODULE_NSM, "add rnh %s in vrf %d", buf, vrfid);
     }
   table = lookup_rnh_table(vrfid, PREFIX_FAMILY(p));
   if (!table)
     {
-      zlog_debug(ZLOG_NSM, "add_rnh: rnh table not found\n");
+      zlog_debug(MODULE_NSM, "add_rnh: rnh table not found\n");
       return NULL;
     }
 
@@ -139,7 +139,7 @@ zebra_delete_rnh (struct rnh *rnh)
   if (IS_ZEBRA_DEBUG_NHT)
     {
       char buf[INET6_ADDRSTRLEN];
-      zlog_debug(ZLOG_NSM,"delete rnh %s", rnh_str(rnh, buf, INET6_ADDRSTRLEN));
+      zlog_debug(MODULE_NSM,"delete rnh %s", rnh_str(rnh, buf, INET6_ADDRSTRLEN));
     }
 
   list_free(rnh->client_list);
@@ -156,7 +156,7 @@ zebra_add_rnh_client (struct rnh *rnh, struct zserv *client, vrf_id_t vrf_id)
   if (IS_ZEBRA_DEBUG_NHT)
     {
       char buf[INET6_ADDRSTRLEN];
-      zlog_debug(ZLOG_NSM, "client %s registers rnh %s",
+      zlog_debug(MODULE_NSM, "client %s registers rnh %s",
 		 zebra_route_string(client->proto),
 		 rnh_str(rnh, buf, INET6_ADDRSTRLEN));
     }
@@ -173,7 +173,7 @@ zebra_remove_rnh_client (struct rnh *rnh, struct zserv *client)
   if (IS_ZEBRA_DEBUG_NHT)
     {
       char buf[INET6_ADDRSTRLEN];
-      zlog_debug(ZLOG_NSM, "client %s unregisters rnh %s",
+      zlog_debug(MODULE_NSM, "client %s unregisters rnh %s",
 		 zebra_route_string(client->proto),
 		 rnh_str(rnh, buf, INET6_ADDRSTRLEN));
     }
@@ -197,14 +197,14 @@ zebra_evaluate_rnh_table (vrf_id_t vrfid, int family)
   ntable = lookup_rnh_table(vrfid, family);
   if (!ntable)
     {
-      zlog_debug(ZLOG_NSM, "evaluate_rnh_table: rnh table not found\n");
+      zlog_debug(MODULE_NSM, "evaluate_rnh_table: rnh table not found\n");
       return -1;
     }
 
   ptable = nsm_vrf_table(family2afi(family), SAFI_UNICAST, vrfid);
   if (!ptable)
     {
-      zlog_debug(ZLOG_NSM, "evaluate_rnh_table: prefix table not found\n");
+      zlog_debug(MODULE_NSM, "evaluate_rnh_table: prefix table not found\n");
       return -1;
     }
 
@@ -258,7 +258,7 @@ zebra_evaluate_rnh_table (vrf_id_t vrfid, int family)
 		prefix2str(&prn->p, bufp, INET6_ADDRSTRLEN);
 	      else
 		strcpy(bufp, "null");
-	      zlog_debug(ZLOG_NSM, "rnh %s resolved through route %s - sending "
+	      zlog_debug(MODULE_NSM, "rnh %s resolved through route %s - sending "
 			 "nexthop %s event to clients", bufn, bufp,
 			 rib ? "reachable" : "unreachable");
 	    }
@@ -280,7 +280,7 @@ zebra_dispatch_rnh_table (vrf_id_t vrfid, int family, struct zserv *client)
   ntable = lookup_rnh_table(vrfid, family);
   if (!ntable)
     {
-      zlog_debug(ZLOG_NSM, "dispatch_rnh_table: rnh table not found\n");
+      zlog_debug(MODULE_NSM, "dispatch_rnh_table: rnh table not found\n");
       return -1;
     }
 
@@ -294,7 +294,7 @@ zebra_dispatch_rnh_table (vrf_id_t vrfid, int family, struct zserv *client)
 	{
 	  char bufn[INET6_ADDRSTRLEN];
 	  prefix2str(&nrn->p, bufn, INET6_ADDRSTRLEN);
-	  zlog_debug(ZLOG_NSM, "rnh %s - sending nexthop %s event to client %s", bufn,
+	  zlog_debug(MODULE_NSM, "rnh %s - sending nexthop %s event to client %s", bufn,
 		     rnh->state ? "reachable" : "unreachable",
 		     zebra_route_string(client->proto));
 	}
@@ -312,7 +312,7 @@ zebra_print_rnh_table (vrf_id_t vrfid, int af, struct vty *vty)
   table = lookup_rnh_table(vrfid, af);
   if (!table)
     {
-      zlog_debug(ZLOG_NSM, "print_rnhs: rnh table not found\n");
+      zlog_debug(MODULE_NSM, "print_rnhs: rnh table not found\n");
       return;
     }
 
@@ -331,7 +331,7 @@ zebra_cleanup_rnh_client (vrf_id_t vrfid, int family, struct zserv *client)
   ntable = lookup_rnh_table(vrfid, family);
   if (!ntable)
     {
-      zlog_debug(ZLOG_NSM, "cleanup_rnh_client: rnh table not found\n");
+      zlog_debug(MODULE_NSM, "cleanup_rnh_client: rnh table not found\n");
       return -1;
     }
 
@@ -345,7 +345,7 @@ zebra_cleanup_rnh_client (vrf_id_t vrfid, int family, struct zserv *client)
 	{
 	  char bufn[INET6_ADDRSTRLEN];
 	  prefix2str(&nrn->p, bufn, INET6_ADDRSTRLEN);
-	  zlog_debug(ZLOG_NSM, "rnh %s - cleaning state for client %s", bufn,
+	  zlog_debug(MODULE_NSM, "rnh %s - cleaning state for client %s", bufn,
 		     zebra_route_string(client->proto));
 	}
       zebra_remove_rnh_client(rnh, client);

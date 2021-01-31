@@ -35,9 +35,13 @@ $(OBJS_DIR)/testmain.o: $(SRC_DIR)/testmain.cpp
 	@$(CXX) -fPIC $(PLCPPFLAGS) $(PLDEFINE) $(PLDEBUG) -g -c  $< -o $@ $(PLINCLUDE) 
 
 TESTPLLDCLFLAG += -L$(LIB_DIR) -L$(DSTROOTFSDIR)/lib
-
+ifeq ($(PL_BUILD_TYPE),X86_64)
+TESTPLLDCLFLAG += -L/lib64 -L/usr/lib64 -L/usr/local/lib64
+else
+TESTPLLDCLFLAG += -L/lib -L/usr/lib -L/usr/local/lib
+endif
 TESTLIBS = -lpthread -lrt -rdynamic -lm -lcrypt -ldl -lgcc_s -lstdc++ \
-		-lxcb -lxcb-shm -lxcb-shape -lxcb-xfixes -lasound -lbz2 -lz -llzma \
+		-lxcb -lxcb-shm -lxcb-shape -lxcb-xfixes -lasound  \
 		-lBasicUsageEnvironment  -lgroupsock  -lliveMedia  -lUsageEnvironment -lmediaapp \
 		 -los
 

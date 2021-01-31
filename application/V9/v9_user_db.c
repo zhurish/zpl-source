@@ -62,7 +62,7 @@ static sqlite3 * v9_user_sqldb_init(u_int32 id)
 	if (ret != SQLITE_OK)
 	{
 		if (V9_SQLDB_DEBUG(MSG))
-			zlog_err(ZLOG_APP, "Can't open database: %s(%s)",
+			zlog_err(MODULE_APP, "Can't open database: %s(%s)",
 					v9_user_sqldb_file(id), sqlite3_errmsg(db));//sqlite3_errmsg(db)用以获得数据库打开错误码的英文描述。
 		sqlite3_close(db);
 		return NULL;
@@ -98,11 +98,11 @@ static BOOL v9_user_sqldb_table_exist(sqlite3 *db, u_int32 id)
 	snprintf(sqlcmd, sizeof(sqlcmd), "select * from "V9_USER_DB_TBL,
 			V9_APP_DB_ID_ABS(id));
 	if (V9_SQLDB_DEBUG(DBCMD))
-		zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+		zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 	if (sqlite3_exec(db, sqlcmd, NULL, NULL, &zErrMsg) == SQLITE_OK)
 		return TRUE;
 	if (V9_SQLDB_DEBUG(MSG))
-		zlog_err(ZLOG_APP, " SQL Table "V9_USER_DB_TBL" exist check (%s)",
+		zlog_err(MODULE_APP, " SQL Table "V9_USER_DB_TBL" exist check (%s)",
 				V9_APP_DB_ID_ABS(id), zErrMsg);
 	sqlite3_free(zErrMsg);
 	return FALSE;
@@ -122,11 +122,11 @@ static int v9_user_sqldb_table_create(sqlite3 *db, u_int32 id)
 	snprintf(sqlcmd, sizeof(sqlcmd), V9_USER_DB_TBL_ST, V9_APP_DB_ID_ABS(id));
 
 	if (V9_SQLDB_DEBUG(DBCMD))
-		zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+		zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 	if (sqlite3_exec(db, sqlcmd, NULL, NULL, &zErrMsg) == SQLITE_OK)
 		return OK;
 	if (V9_SQLDB_DEBUG(MSG))
-		zlog_err(ZLOG_APP, " SQL Create Table(%s)", zErrMsg);
+		zlog_err(MODULE_APP, " SQL Create Table(%s)", zErrMsg);
 	sqlite3_free(zErrMsg);
 	return ERROR;
 }
@@ -184,7 +184,7 @@ int v9_user_sqldb_count(sqlite3 *db, u_int32 id, int group, int *pValue)
 				V9_APP_DB_ID_ABS(id));
 
 	if (V9_SQLDB_DEBUG(DBCMD))
-		zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+		zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 
 	if (sqlite3_exec(db, sqlcmd, v9_user_sqldb_count_callback, &value,
 			&zErrMsg) == SQLITE_OK)
@@ -194,7 +194,7 @@ int v9_user_sqldb_count(sqlite3 *db, u_int32 id, int group, int *pValue)
 		return OK;
 	}
 	if (V9_SQLDB_DEBUG(MSG))
-		zlog_err(ZLOG_APP, " SQL SELECT count(%s)", zErrMsg);
+		zlog_err(MODULE_APP, " SQL SELECT count(%s)", zErrMsg);
 	sqlite3_free(zErrMsg);
 	return ERROR;
 }
@@ -232,12 +232,12 @@ int v9_user_sqldb_add(sqlite3 *db, u_int32 id, BOOL gender, int group,
 			os_time_fmt("sql", os_time(NULL)), pic);
 
 	if (V9_SQLDB_DEBUG(DBCMD))
-		zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+		zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 
 	if (sqlite3_exec(db, sqlcmd, NULL, NULL, &zErrMsg) == SQLITE_OK)
 		return OK;
 	if (V9_SQLDB_DEBUG(MSG))
-		zlog_err(ZLOG_APP, " SQL INSERT Info(%s)", zErrMsg);
+		zlog_err(MODULE_APP, " SQL INSERT Info(%s)", zErrMsg);
 	sqlite3_free(zErrMsg);
 	return ERROR;
 }
@@ -273,12 +273,12 @@ int v9_user_sqldb_update(sqlite3 *db, u_int32 id, BOOL gender, int group,
 			os_time_fmt("sql", os_time(NULL)), pic, user_id);
 
 	if (V9_SQLDB_DEBUG(DBCMD))
-		zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+		zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 
 	if (sqlite3_exec(db, sqlcmd, NULL, NULL, &zErrMsg) == SQLITE_OK)
 		return OK;
 	if (V9_SQLDB_DEBUG(MSG))
-		zlog_err(ZLOG_APP, " SQL UPDATE Info(%s)", zErrMsg);
+		zlog_err(MODULE_APP, " SQL UPDATE Info(%s)", zErrMsg);
 	sqlite3_free(zErrMsg);
 	return ERROR;
 }
@@ -296,12 +296,12 @@ int v9_user_sqldb_key_update(sqlite3 *db, u_int32 id, char *user_id,
 			V9_APP_DB_ID_ABS(id), user_id);
 
 	if (V9_SQLDB_DEBUG(DBCMD))
-		zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+		zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 
 	if (sqlite3_prepare(db, sqlcmd, strlen(sqlcmd), &stmt, NULL) != SQLITE_OK)
 	{
 		if (V9_SQLDB_DEBUG(MSG))
-			zlog_err(ZLOG_APP, " SQL Prepare fail(%s)", sqlite3_errmsg(db));
+			zlog_err(MODULE_APP, " SQL Prepare fail(%s)", sqlite3_errmsg(db));
 		sqlite3_finalize(stmt);
 		return ERROR;
 	}
@@ -310,7 +310,7 @@ int v9_user_sqldb_key_update(sqlite3 *db, u_int32 id, char *user_id,
 			SQLITE_STATIC) != SQLITE_OK)
 	{
 		if (V9_SQLDB_DEBUG(MSG))
-			zlog_err(ZLOG_APP, " SQL Bind fail(%s)", sqlite3_errmsg(db));
+			zlog_err(MODULE_APP, " SQL Bind fail(%s)", sqlite3_errmsg(db));
 		sqlite3_finalize(stmt);
 		return ERROR;
 	}
@@ -320,7 +320,7 @@ int v9_user_sqldb_key_update(sqlite3 *db, u_int32 id, char *user_id,
 		return OK;
 	}
 	if (V9_SQLDB_DEBUG(MSG))
-		zlog_err(ZLOG_APP, " SQL Step fail(%s)", sqlite3_errmsg(db));
+		zlog_err(MODULE_APP, " SQL Step fail(%s)", sqlite3_errmsg(db));
 	sqlite3_finalize(stmt);
 	return ERROR;
 }
@@ -338,12 +338,12 @@ int v9_user_sqldb_key_select(sqlite3 *db, u_int32 id, char *user_id,
 			V9_APP_DB_ID_ABS(id), user_id);
 
 	if (V9_SQLDB_DEBUG(DBCMD))
-		zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+		zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 
 	if (sqlite3_prepare(db, sqlcmd, strlen(sqlcmd), &stmt, NULL) != SQLITE_OK)
 	{
 		if (V9_SQLDB_DEBUG(MSG))
-			zlog_err(ZLOG_APP, " SQL Prepare fail(%s)", sqlite3_errmsg(db));
+			zlog_err(MODULE_APP, " SQL Prepare fail(%s)", sqlite3_errmsg(db));
 		return ERROR;
 	}
 	ret = sqlite3_step(stmt);
@@ -371,7 +371,7 @@ int v9_user_sqldb_key_select(sqlite3 *db, u_int32 id, char *user_id,
 		}
 	}
 	if (V9_SQLDB_DEBUG(MSG))
-		zlog_err(ZLOG_APP, " SQL Step Finalize(%s)", sqlite3_errmsg(db));
+		zlog_err(MODULE_APP, " SQL Step Finalize(%s)", sqlite3_errmsg(db));
 	sqlite3_finalize(stmt);
 	return ERROR;
 }
@@ -423,7 +423,7 @@ int v9_user_sqldb_del(sqlite3 *db, u_int32 id, char *user_id)
 			V9_APP_DB_ID_ABS(id), user_id);
 
 	if (V9_SQLDB_DEBUG(DBCMD))
-		zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+		zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 
 	//sqlite3_update_hook(db, v9_user_sqldb_del_callback, NULL);
 	if (sqlite3_exec(db, sqlcmd, v9_user_sqldb_del_callback, NULL, &zErrMsg) == SQLITE_OK)
@@ -432,7 +432,7 @@ int v9_user_sqldb_del(sqlite3 *db, u_int32 id, char *user_id)
 		return OK;
 	}
 	if (V9_SQLDB_DEBUG(MSG))
-		zlog_err(ZLOG_APP, " SQL DELETE Info by userid:%s(%s)", user_id,
+		zlog_err(MODULE_APP, " SQL DELETE Info by userid:%s(%s)", user_id,
 				zErrMsg);
 	sqlite3_free(zErrMsg);
 	return ERROR;
@@ -448,7 +448,7 @@ int v9_user_sqldb_del_group(sqlite3 *db, u_int32 id, int group)
 			V9_APP_DB_ID_ABS(id), group);
 
 	if (V9_SQLDB_DEBUG(DBCMD))
-		zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+		zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 
 	//sqlite3_update_hook(db, v9_user_sqldb_del_callback, NULL);
 	if (sqlite3_exec(db, sqlcmd, v9_user_sqldb_del_callback, NULL, &zErrMsg) == SQLITE_OK)
@@ -457,7 +457,7 @@ int v9_user_sqldb_del_group(sqlite3 *db, u_int32 id, int group)
 		return OK;
 	}
 	if (V9_SQLDB_DEBUG(MSG))
-		zlog_err(ZLOG_APP, " SQL DELETE Info by group:%d(%s)", group, zErrMsg);
+		zlog_err(MODULE_APP, " SQL DELETE Info by group:%d(%s)", group, zErrMsg);
 	sqlite3_free(zErrMsg);
 	return ERROR;
 }
@@ -518,7 +518,7 @@ int v9_user_sqldb_lookup_user(sqlite3 *db, u_int32 id, char *user_id,
 				"SELECT userid,username,gender,groupid,url FROM "V9_USER_DB_TBL " WHERE userid = '%s';",
 				V9_APP_DB_ID_ABS(id), user_id);
 		if (V9_SQLDB_DEBUG(DBCMD))
-			zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+			zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 
 		if (sqlite3_exec(db, sqlcmd, v9_user_sqldb_lookup_callback, pArgv,
 				&zErrMsg) == SQLITE_OK)
@@ -536,7 +536,7 @@ int v9_user_sqldb_lookup_user(sqlite3 *db, u_int32 id, char *user_id,
 				V9_APP_DB_ID_ABS(id));
 
 		if (V9_SQLDB_DEBUG(DBCMD))
-			zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+			zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 
 		if (sqlite3_exec(db, sqlcmd, v9_user_sqldb_lookup_callback, pArgv,
 				&zErrMsg) == SQLITE_OK)
@@ -549,7 +549,7 @@ int v9_user_sqldb_lookup_user(sqlite3 *db, u_int32 id, char *user_id,
 		}
 	}
 	if (V9_SQLDB_DEBUG(MSG))
-		zlog_err(ZLOG_APP, " SQL GET Info by userid:%s(%s)", user_id, zErrMsg);
+		zlog_err(MODULE_APP, " SQL GET Info by userid:%s(%s)", user_id, zErrMsg);
 	sqlite3_free(zErrMsg);
 	return ERROR;
 }
@@ -630,7 +630,7 @@ int v9_user_sqldb_foreach(sqlite3 *db, u_int32 id, int groupid, char *user_id,
 				"SELECT userid,username,gender,groupid,datetime,url,text FROM "V9_USER_DB_TBL " WHERE userid = '%s';",
 				V9_APP_DB_ID_ABS(id), user_id);
 		if (V9_SQLDB_DEBUG(DBCMD))
-			zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+			zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 		if (sqlite3_exec(db, sqlcmd, v9_user_sqldb_callback, &user_sqldb,
 				&zErrMsg) == SQLITE_OK)
 			return OK;
@@ -646,13 +646,13 @@ int v9_user_sqldb_foreach(sqlite3 *db, u_int32 id, int groupid, char *user_id,
 					"SELECT userid,username,gender,groupid,datetime,url,text FROM "V9_USER_DB_TBL ";",
 					V9_APP_DB_ID_ABS(id));
 		if (V9_SQLDB_DEBUG(DBCMD))
-			zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+			zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 		if (sqlite3_exec(db, sqlcmd, v9_user_sqldb_callback, &user_sqldb,
 				&zErrMsg) == SQLITE_OK)
 			return OK;
 	}
 	if (V9_SQLDB_DEBUG(MSG))
-		zlog_err(ZLOG_APP, " SQL Foreach Info (%s)", zErrMsg);
+		zlog_err(MODULE_APP, " SQL Foreach Info (%s)", zErrMsg);
 	sqlite3_free(zErrMsg);
 	return ERROR;
 }
@@ -674,12 +674,12 @@ int v9_user_sqldb_key_foreach(sqlite3 *db, u_int32 id,
 			V9_APP_DB_ID_ABS(id));
 
 	if (V9_SQLDB_DEBUG(DBCMD))
-		zlog_debug(ZLOG_APP, "SQL:%s", sqlcmd);
+		zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 
 	if (sqlite3_prepare(db, sqlcmd, strlen(sqlcmd), &stmt, NULL) != SQLITE_OK)
 	{
 		if (V9_SQLDB_DEBUG(MSG))
-			zlog_err(ZLOG_APP, " SQL Prepare fail(%s)", sqlite3_errmsg(db));
+			zlog_err(MODULE_APP, " SQL Prepare fail(%s)", sqlite3_errmsg(db));
 		return ERROR;
 	}
 	ret = sqlite3_step(stmt);
@@ -712,7 +712,7 @@ int v9_user_sqldb_key_foreach(sqlite3 *db, u_int32 id,
 			}
  			else
  			{
- 				zlog_warn(ZLOG_APP, " feature cmp func is null");
+ 				zlog_warn(MODULE_APP, " feature cmp func is null");
  			}
 		}
 

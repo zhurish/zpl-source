@@ -61,11 +61,11 @@ static dhcp_relay_t * dhcp_relay_create_interface(u_int32 ifindex) {
 		 if(ifter->k_name)
 		 {
 		 udhcp_read_interface(ifter->k_name, NULL, &ifter->ipaddr, ifter->server_mac);
-		 zlog_debug(ZLOG_DHCP, "===========%s", ifter->k_name);
+		 zlog_debug(MODULE_DHCP, "===========%s", ifter->k_name);
 		 }
 		 */
 		udhcp_interface_mac(ifindex, &ifter->ipaddr, ifter->mac);
-		zlog_debug(ZLOG_DHCP, "===========%s", ifp->k_name);
+		zlog_debug(MODULE_DHCP, "===========%s", ifp->k_name);
 		return ifter;
 		//ifter->port;
 		//ifter->server_mac[6];          /* our MAC address (used only for ARP probing) */
@@ -99,11 +99,11 @@ int dhcp_relay_add_interface(dhcp_global_t*config, u_int32 ifindex) {
 		if(config->global->rawsock == 0)
 			config->global->rawsock = udhcp_raw_socket();
 
-		zlog_debug(ZLOG_DHCP, "dhcp_relay_add_interface -> udhcp_udp_socket udhcp_raw_socket");
+		zlog_debug(MODULE_DHCP, "dhcp_relay_add_interface -> udhcp_udp_socket udhcp_raw_socket");
 
 		if (config->global->r_thread == NULL && config->global->sock > 0)
 		{
-			zlog_debug(ZLOG_DHCP, "dhcp_relay_add_interface");
+			zlog_debug(MODULE_DHCP, "dhcp_relay_add_interface");
 			config->global->r_thread = eloop_add_read(
 				config->global->eloop_master, udhcp_read_thread,
 				config->global, config->global->sock);
@@ -151,7 +151,7 @@ static int dhcp_relay_forward(int sock, const void *msg, int msg_len, struct soc
 	err = sendto(sock, msg, msg_len, 0, (struct sockaddr*) to, sizeof(*to));
 	err -= msg_len;
 	if (err)
-		zlog_err(ZLOG_DHCP,"sendto");
+		zlog_err(MODULE_DHCP,"sendto");
 	return err;
 }
 
@@ -365,7 +365,7 @@ static int dhcp_relay_sendto_ip4(int sock, const void *msg, int msg_len, struct 
 	err = sendto(sock, msg, msg_len, 0, (struct sockaddr*) to, sizeof(*to));
 	err -= msg_len;
 	if (err)
-		zlog_err(ZLOG_DHCP,"sendto");
+		zlog_err(MODULE_DHCP,"sendto");
 	return err;
 }
 

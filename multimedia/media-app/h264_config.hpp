@@ -84,7 +84,7 @@ typedef enum media_frame_type
 /**
  * This structure describes a media frame.
  */
-typedef struct pjmedia_frame
+typedef struct video_frame
 {
     pjmedia_frame_type	 type;	    /**< Frame type.			    */
     void		*buf;	    /**< Pointer to buffer.		    */
@@ -95,7 +95,7 @@ typedef struct pjmedia_frame
 					 at the octet boundary, so this field
 					 may be used for specifying start &
 					 end bit offset.		    */
-} pjmedia_frame;
+} video_frame;
 #endif
 
 #endif /* __H264_CONFIG_HPP__ */

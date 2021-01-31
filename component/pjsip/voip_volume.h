@@ -9,7 +9,7 @@
 #define __VOIP_VOLUME_H__
 
 #define VOIP_AMP_DEV_ENABLE
-//#define _VOIP_VOLUME_DEBUG(fmt,...)		zlog_debug(ZLOG_VOIP, fmt, ##__VA_ARGS__)
+//#define _VOIP_VOLUME_DEBUG(fmt,...)		zlog_debug(MODULE_VOIP, fmt, ##__VA_ARGS__)
 #define _VOIP_VOLUME_DEBUG(fmt,...)
 
 #define VOIP_VOLUME_USE_SHELL

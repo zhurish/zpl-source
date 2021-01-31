@@ -163,7 +163,7 @@ int iw_fprintf(void *fp, const char *format, ...)
 		va_start(args, format);
 		len = vsnprintf(buf, sizeof(buf), format, args);
 		va_end(args);
-		zlog_err(ZLOG_WIFI, "%s",buf);
+		zlog_err(MODULE_WIFI, "%s",buf);
 	}
 	else
 	{
@@ -696,7 +696,7 @@ int iw_client_dev_scan_ap_show(struct interface *ifp, struct vty *vty, int detai
 	{
 		if(IW_DEBUG(EVENT))
 		{
-			zlog_debug(ZLOG_WIFI, "scanning network on interface %s ",ifp->name);
+			zlog_debug(MODULE_WIFI, "scanning network on interface %s ",ifp->name);
 		}
 		iwlist_detail_set(detail);
 		const char *tmpcmd[4] = {"iwlist", ifp->k_name, "scanning", NULL};
@@ -814,7 +814,7 @@ int iw_client_dev_connect(struct interface *ifp, iw_client_ap_t *ap, char *ssid,
 	{
 		if(IW_DEBUG(EVENT))
 		{
-			zlog_debug(ZLOG_WIFI, "running connect process on interface %s ",ifp->name);
+			zlog_debug(MODULE_WIFI, "running connect process on interface %s ",ifp->name);
 		}
 		os_process_register(PROCESS_DEAMON, path, "/usr/sbin/wpa_supplicant", FALSE, argv);
 		//TODO check if is connect
@@ -850,7 +850,7 @@ int iw_client_dev_start_dhcpc(struct interface *ifp)
 	argv1[1] = pidpath;
 	if(IW_DEBUG(EVENT))
 	{
-		zlog_debug(ZLOG_WIFI, "running dhcpc process on interface %s ",ifp->name);
+		zlog_debug(MODULE_WIFI, "running dhcpc process on interface %s ",ifp->name);
 	}
 	os_process_register(PROCESS_DEAMON, path, "udhcpc", FALSE, argv1);
 	//udhcpc -p /var/run/udhcpc-wlan0.pid -s /lib/netifd/dhcp.script -f -t 0
@@ -1087,15 +1087,15 @@ int iw_client_scan_process(iw_client_t *iw_client)
 	wireless_scan_head context;
 	struct wireless_scan * wscan = NULL;
 	iw_client_ap_t ap;
-	//zlog_debug(ZLOG_PAL, "%s into(%s)", __func__, ifp->name);
+	//zlog_debug(MODULE_PAL, "%s into(%s)", __func__, ifp->name);
 	if(!(ifp && ifp->k_ifindex && if_is_wireless(ifp)))
 		return OK;
 
 	if(IW_DEBUG(EVENT))
 	{
-		zlog_debug(ZLOG_WIFI, "scanning network on interface %s ",ifp->name);
+		zlog_debug(MODULE_WIFI, "scanning network on interface %s ",ifp->name);
 	}
-	//zlog_debug(ZLOG_PAL, "%s start(%s)", __func__, ifp->k_name);
+	//zlog_debug(MODULE_PAL, "%s start(%s)", __func__, ifp->k_name);
 	ret = iw_start_scan(ifp->k_name, &context);
 	if(ret == 0 && context.result)
 	{
@@ -1104,7 +1104,7 @@ int iw_client_scan_process(iw_client_t *iw_client)
 			memset(&ap, 0, sizeof(ap));
 			if(iw_client_scan_swap(wscan, &ap) == 0)
 			{
-				//zlog_debug(ZLOG_PAL, "%s iw_client_ap_set_api", __func__);
+				//zlog_debug(MODULE_PAL, "%s iw_client_ap_set_api", __func__);
 				ap.ifindex = iw_client->ifindex;
 				//if(testvty)
 				//	iw_client_ap_show_one(&ap, testvty);
@@ -1124,21 +1124,21 @@ int iw_client_scan_process(iw_client_t *iw_client)
 					memcpy(prefix_eth.u.prefix_eth.octet, ap.BSSID, NSM_MAC_MAX);
 					pu.p = &prefix_eth;
 					memset(buf, 0, sizeof(buf));
-					zlog_debug(ZLOG_WIFI, " scanning network: %s", ifindex2ifname(ap.ifindex));
-					zlog_debug(ZLOG_WIFI, "  SSID        %s", ap.SSID);
-					zlog_debug(ZLOG_WIFI, "   BSSID      %s ",prefix_2_address_str (pu, buf, sizeof(buf)));
-					zlog_debug(ZLOG_WIFI, "   signal     %d/%d dBm", ap.signal, ap.nosie);
+					zlog_debug(MODULE_WIFI, " scanning network: %s", ifindex2ifname(ap.ifindex));
+					zlog_debug(MODULE_WIFI, "  SSID        %s", ap.SSID);
+					zlog_debug(MODULE_WIFI, "   BSSID      %s ",prefix_2_address_str (pu, buf, sizeof(buf)));
+					zlog_debug(MODULE_WIFI, "   signal     %d/%d dBm", ap.signal, ap.nosie);
 					memset(buf, 0, sizeof(buf));
 					iw_print_freq_value(buf, sizeof(buf), ap.freq);
-					zlog_debug(ZLOG_WIFI, "   FREQ       %s", buf);
+					zlog_debug(MODULE_WIFI, "   FREQ       %s", buf);
 				}
 			}
 			//else
-			//	zlog_debug(ZLOG_PAL, "%s iw_client_scan_swap", __func__);
+			//	zlog_debug(MODULE_PAL, "%s iw_client_scan_swap", __func__);
 		}
 		iw_free_scan(&context);
 	}
-	//zlog_debug(ZLOG_PAL, "%s stop", __func__);
+	//zlog_debug(MODULE_PAL, "%s stop", __func__);
 	//iw_client_ap_update(iw_client);
 	return OK;
 }
@@ -1253,12 +1253,12 @@ static int iw_dev_station_dump_add(iw_ap_t *iw_ap, struct interface *ifp)
 							memcpy(prefix_eth.u.prefix_eth.octet, connect.BSSID, NSM_MAC_MAX);
 							pu.p = &prefix_eth;
 							memset(sbuf, 0, sizeof(sbuf));
-							zlog_debug(ZLOG_WIFI, " ACCEPT network: %s", ifindex2ifname(iw_ap->ifindex));
-							zlog_debug(ZLOG_WIFI, "   BSSID      %s ",prefix_2_address_str (pu, sbuf, sizeof(sbuf)));
-							zlog_debug(ZLOG_WIFI, "   signal     %d dBm", connect.signal);
-							zlog_debug(ZLOG_WIFI, "   authorized     %s", connect.authorized ? "YES":"NO");
-							zlog_debug(ZLOG_WIFI, "   authenticated  %s", connect.authenticated ? "YES":"NO");
-							zlog_debug(ZLOG_WIFI, "   associated     %s", connect.associated ? "YES":"NO");
+							zlog_debug(MODULE_WIFI, " ACCEPT network: %s", ifindex2ifname(iw_ap->ifindex));
+							zlog_debug(MODULE_WIFI, "   BSSID      %s ",prefix_2_address_str (pu, sbuf, sizeof(sbuf)));
+							zlog_debug(MODULE_WIFI, "   signal     %d dBm", connect.signal);
+							zlog_debug(MODULE_WIFI, "   authorized     %s", connect.authorized ? "YES":"NO");
+							zlog_debug(MODULE_WIFI, "   authenticated  %s", connect.authenticated ? "YES":"NO");
+							zlog_debug(MODULE_WIFI, "   associated     %s", connect.associated ? "YES":"NO");
 						}
 					}
 					memset(&connect, 0, sizeof(connect));
@@ -1418,12 +1418,12 @@ static int iw_dev_station_dump_add(iw_ap_t *iw_ap, struct interface *ifp)
 				memcpy(prefix_eth.u.prefix_eth.octet, connect.BSSID, NSM_MAC_MAX);
 				pu.p = &prefix_eth;
 				memset(sbuf, 0, sizeof(sbuf));
-				zlog_debug(ZLOG_WIFI, " ACCEPT network: %s", ifindex2ifname(iw_ap->ifindex));
-				zlog_debug(ZLOG_WIFI, "   BSSID      %s ",prefix_2_address_str (pu, sbuf, sizeof(sbuf)));
-				zlog_debug(ZLOG_WIFI, "   signal     %d dBm", connect.signal);
-				zlog_debug(ZLOG_WIFI, "   authorized     %s", connect.authorized ? "YES":"NO");
-				zlog_debug(ZLOG_WIFI, "   authenticated  %s", connect.authenticated ? "YES":"NO");
-				zlog_debug(ZLOG_WIFI, "   associated     %s", connect.associated ? "YES":"NO");
+				zlog_debug(MODULE_WIFI, " ACCEPT network: %s", ifindex2ifname(iw_ap->ifindex));
+				zlog_debug(MODULE_WIFI, "   BSSID      %s ",prefix_2_address_str (pu, sbuf, sizeof(sbuf)));
+				zlog_debug(MODULE_WIFI, "   signal     %d dBm", connect.signal);
+				zlog_debug(MODULE_WIFI, "   authorized     %s", connect.authorized ? "YES":"NO");
+				zlog_debug(MODULE_WIFI, "   authenticated  %s", connect.authenticated ? "YES":"NO");
+				zlog_debug(MODULE_WIFI, "   associated     %s", connect.associated ? "YES":"NO");
 			}
 		}
 		fclose(fp);

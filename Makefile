@@ -41,6 +41,8 @@ endif
 #
 #
 #
+
+	
 #
 #
 #
@@ -85,8 +87,8 @@ PLLDLIBS += $(IPLIBC)
 #$(PLDEFINE) $(PLINCLUDE) $(PL_DEBUG) -g #-lcrypto
 # $(PL_CFLAGS)
 #
-%.o: %.c
-	@$(CC) -fPIC $(PLDEFINE) $(PLDEBUG) $(PLCFLAGS) $(PLLDSOLIBS) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
+%.o: %.c 
+	@$(CC) -fPIC $(PLDEFINE) $(PLDEBUG) $(PLCFLAGS) -g $(PLLDSOLIBS) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
 
 
 SOURCES = $(wildcard *.c *.cpp)
@@ -100,13 +102,13 @@ OBJS = $(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(SOURCES)))
 #
 #
 #	
-.PHONY:	obj objclean clean install all lib rebuild dist demo app target usage help config_install
+.PHONY:	obj objclean clean install all lib rebuild dist demo app target usage help config_install prebuilts
 #
 # awk -F= '/^NAME/{print $2}' /etc/os-release
 # ubuntu 系统要把链接库放在行的末尾处
 #
 #
-ifeq ($(BUILD_DEBUG),YES)
+ifeq ($(PL_BUILD_DEBUG),YES)
 target : $(OBJS) $(BASE_ROOT)/$(LIBDIR)/*.a 
 	$(CC) -o $(TAGET) $(OBJS) -Xlinker "-(" $(PLLSLIBS) -Xlinker "-)" $(PLOS_MAP) $(PLLDFLAGS) $(PLLDSOLIBS)
 	$(CHMOD) a+x $(TAGET)
@@ -199,7 +201,7 @@ config_install: openwrt_install
 #
 #
 #
-app_all_install: app_bin_install app_etc_install app_web_install app_www_install app_lib_install 
+app_all_install: app_bin_install app_etc_install app_web_install app_www_install app_lib_install  make_prepare
 
 #
 #
@@ -225,6 +227,9 @@ usage:
 	${MAKE} -C  $(TOP_DIR)/make/ $@ 
 #
 #
+#
+make_prepare:
+	${MAKE} -C  $(TOP_DIR)/make/ $@ 
 #
 objclean:  
 	${MAKE} -C  $(TOP_DIR)/make/ $@ 
@@ -260,7 +265,7 @@ clean:
 		$(RM) $(TAGETMAP); \
 	fi
 	
-obj:
+obj: 
 	${MAKE} -C  $(TOP_DIR)/make/ $@ 
 
 #install: obj

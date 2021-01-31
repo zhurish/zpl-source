@@ -1289,7 +1289,9 @@ config_write_host (struct vty *vty)
 		os_mutex_unlock(host.mutx);
 	vty_out(vty, "!%s", VTY_NEWLINE);
 	vty_out(vty, "!%s", VTY_NEWLINE);
+#ifdef PL_NSM_MODULE
 	nsm_client_write_config (0, vty);
+#endif
 	return 1;
 }
 
@@ -1297,11 +1299,13 @@ config_write_host (struct vty *vty)
 static int
 config_write_service (struct vty *vty)
 {
+	#ifdef PL_NSM_MODULE
 	nsm_ip_arp_config(vty);
 	vty_out(vty, "!%s", VTY_NEWLINE);
 	nsm_ip_dns_host_config(vty);
 	vty_out(vty, "!%s", VTY_NEWLINE);
 	nsm_client_service_write_config (0, vty);
+	#endif
 	return 1;
 }
 

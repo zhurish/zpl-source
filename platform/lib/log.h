@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 
-
+#include "moduletypes.h"
 
 #define ZLOG_TASK_ENABLE
 #define ZLOG_TESTING_ENABLE
@@ -55,46 +55,7 @@
  */
 #define LOG_TRAP		(LOG_DEBUG+1)
 
-typedef enum 
-{
-  ZLOG_NONE,
-  ZLOG_DEFAULT,		//Default
-  ZLOG_CONSOLE,		//Console
-  ZLOG_TELNET,		//telnet
-  ZLOG_HAL,
-  ZLOG_PAL,
-  ZLOG_NSM,			//route table manage
-  ZLOG_RIP,
-  ZLOG_BGP,
-  ZLOG_OSPF,
-  ZLOG_RIPNG,
-  ZLOG_BABEL,
-  ZLOG_OSPF6,
-  ZLOG_ISIS,
-  ZLOG_PIM,
-  ZLOG_MASC,
-  ZLOG_NHRP,
-  ZLOG_HSLS, 
-  ZLOG_OLSR, 
-  ZLOG_VRRP,
-  ZLOG_FRP,
-  ZLOG_LLDP,
-  ZLOG_BFD,
-  ZLOG_LDP,
-  ZLOG_SNTP,
-  ZLOG_IMISH,
-  ZLOG_DHCP,
-  ZLOG_WIFI,
-  ZLOG_MODEM,
-  ZLOG_WEB,
-  ZLOG_MQTT,
-  ZLOG_SIP,
-  ZLOG_APP,
-  ZLOG_VOIP,
-  ZLOG_SOUND,
-  ZLOG_UTILS,
-  ZLOG_MAX,
-} zlog_proto_t;
+typedef module_t zlog_proto_t;
 
 #define ZLOG_1M		1024000
 #define ZLOG_FILE_SIZE	(2)

@@ -14,14 +14,14 @@
 #include "command.h"
 #include "memory.h"
 #include "log.h"
-#include "zclient.h"
+#include "nsm_zclient.h"
 #include "thread.h"
 #include "nsm_veth.h"
 #include "nsm_tunnel.h"
 #include "nsm_bridge.h"
 
 #include "kernel_ioctl.h"
-
+#ifdef PL_NSM_TRUNK
 //#include "linux/if_tunnel.h"
 //#include "linux/if_bonding.h"
 #include "linux/sockios.h"
@@ -176,3 +176,5 @@ int _if_bond_test()
 #endif
 	return 0;
 }
+
+#endif

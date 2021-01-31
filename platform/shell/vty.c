@@ -311,7 +311,7 @@ static int vty_log_out(struct vty *vty, const char *level,
 			return -1;
 		/* Fatal I/O error. */
 		vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
-		zlog_warn(ZLOG_DEFAULT,
+		zlog_warn(MODULE_DEFAULT,
 				"%s: write failed to vty client fd %d, closing: %s", __func__,
 				vty->fd, safe_strerror(errno));
 		if(vty->obuf)
@@ -337,7 +337,7 @@ void vty_time_print(struct vty *vty, int cr)
 
 	if (quagga_timestamp(ZLOG_TIMESTAMP_DATE, buf, sizeof(buf)) == 0)
 	{
-		zlog(ZLOG_DEFAULT, LOG_INFO, "quagga_timestamp error");
+		zlog(MODULE_DEFAULT, LOG_INFO, "quagga_timestamp error");
 		return;
 	}
 	if (cr)
@@ -566,7 +566,7 @@ int vty_command(struct vty *vty, char *buf)
 				vty_str);
 
 		/* now log the command */
-		zlog(ZLOG_DEFAULT, LOG_ERR, "%s%s", prompt_str, buf);
+		zlog(MODULE_DEFAULT, LOG_ERR, "%s%s", prompt_str, buf);
 	}
 
 	if (vty_user_authorization(vty, buf) != CMD_SUCCESS)
@@ -602,7 +602,7 @@ int vty_command(struct vty *vty, char *buf)
 		if (zlog_default)
 			protocolname = zlog_proto_names(zlog_default->protocol);
 		else
-			protocolname = zlog_proto_names(ZLOG_NONE);
+			protocolname = zlog_proto_names(MODULE_DEFAULT);
 
 #ifdef CONSUMED_TIME_CHECK
 		os_get_monotonic(&after);
@@ -614,7 +614,7 @@ int vty_command(struct vty *vty, char *buf)
 					strstr(buf, "ping") || strstr(buf, "traceroute") ||
 					strstr(buf, "ymodem") || strstr(buf, "xmodem") || strstr(buf, "esp update") ||
 					strstr(buf, "scp")))
-				zlog_warn(ZLOG_DEFAULT,
+				zlog_warn(MODULE_DEFAULT,
 					"SLOW COMMAND: command took %lums (cpu time %lums): %s",
 					realtime / 1000, cputime / 1000, buf);
 		}
@@ -1487,12 +1487,12 @@ static int vty_telnet_option(struct vty *vty, unsigned char *buf, int nbytes)
 		{
 		case TELOPT_NAWS:
 			if (vty->sb_len != TELNET_NAWS_SB_LEN)
-				zlog_warn(ZLOG_DEFAULT,
+				zlog_warn(MODULE_DEFAULT,
 						"RFC 1073 violation detected: telnet NAWS option "
 								"should send %d characters, but we received %lu",
 						TELNET_NAWS_SB_LEN, (u_long) vty->sb_len);
 			else if (sizeof(vty->sb_buf) < TELNET_NAWS_SB_LEN)
-				zlog_err(ZLOG_DEFAULT,
+				zlog_err(MODULE_DEFAULT,
 						"Bug detected: sizeof(vty->sb_buf) %lu < %d, "
 								"too small to handle the telnet NAWS option",
 						(u_long) sizeof(vty->sb_buf), TELNET_NAWS_SB_LEN);
@@ -1710,7 +1710,7 @@ int vty_getc_input(struct vty *vty)
 						continue;
 					}
 					vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
-					zlog_warn(ZLOG_DEFAULT,
+					zlog_warn(MODULE_DEFAULT,
 							"%s: read failed on vtysh client fd %d, closing: %s",
 							__func__, vty->fd, safe_strerror(errno));
 					return -1;
@@ -1955,7 +1955,7 @@ static int vty_read(struct eloop *thread)
 				return 0;
 			}
 			vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
-			zlog_warn(ZLOG_DEFAULT,
+			zlog_warn(MODULE_DEFAULT,
 					"%s: read error on vty client fd %d, closing: %s", __func__,
 					vty->fd, safe_strerror(errno));
 			buffer_reset(vty->obuf);
@@ -1995,7 +1995,7 @@ static int vty_console_read(struct thread *thread)
 				return 0;
 			}
 			vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
-			zlog_warn(ZLOG_DEFAULT,
+			zlog_warn(MODULE_DEFAULT,
 					"%s: read error on vty client fd %d, closing: %s", __func__,
 					vty->fd, safe_strerror(errno));
 			buffer_reset(vty->obuf);
@@ -2042,7 +2042,7 @@ vty_read (struct thread *thread)
 				return 0;
 			}
 			vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
-			zlog_warn(ZLOG_DEFAULT,
+			zlog_warn(MODULE_DEFAULT,
 					"%s: read error on vty client fd %d, closing: %s", __func__,
 					vty->fd, safe_strerror(errno));
 			buffer_reset(vty->obuf);
@@ -2302,7 +2302,7 @@ static int vty_flush_handle(struct vty *vty, int vty_sock)
 	{
 	case BUFFER_ERROR:
 		vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
-		zlog_warn(ZLOG_DEFAULT,
+		zlog_warn(MODULE_DEFAULT,
 				"buffer_flush failed on vty client fd %d, closing", vty->wfd);
 		buffer_reset(vty->obuf);
 		vty_close(vty);
@@ -2367,7 +2367,7 @@ static int vty_flush(struct eloop *thread)
 	{
 		case BUFFER_ERROR:
 		vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
-		zlog_warn(ZLOG_DEFAULT, "buffer_flush failed on vty client fd %d, closing",
+		zlog_warn(MODULE_DEFAULT, "buffer_flush failed on vty client fd %d, closing",
 				vty->fd);
 		buffer_reset(vty->obuf);
 		vty_close(vty);
@@ -2746,7 +2746,7 @@ int vty_console_init(const char *tty, void (*atclose)())
 			os_strcpy(_pvty_console->ttycom.devname,tty);
 
 			fprintf(stdout, "Shell open '%s' for CLI!\r\n", tty);
-			zlog_notice(ZLOG_CONSOLE, "Shell open '%s' for CLI!\r\n", tty);
+			zlog_notice(MODULE_CONSOLE, "Shell open '%s' for CLI!\r\n", tty);
 			if(tty_iscom(&_pvty_console->ttycom))
 			{
 /*
@@ -2767,7 +2767,7 @@ int vty_console_init(const char *tty, void (*atclose)())
 					ttyfd = _pvty_console->ttycom.fd;
 				else
 				{
-					zlog_notice(ZLOG_CONSOLE, "Shell can not open '%s' for CLI!\r\n", tty);
+					zlog_notice(MODULE_CONSOLE, "Shell can not open '%s' for CLI!\r\n", tty);
 					fprintf(stdout, "vty can not open %s(%s)\r\n", tty, strerror(errno));
 					return ERROR;
 				}
@@ -2809,7 +2809,7 @@ int vty_console_init(const char *tty, void (*atclose)())
 	else
 		strcpy(_pvty_console->vty->address, "stdin");
 	vty_event(VTY_STDIO_WAIT, ttyfd, _pvty_console->vty);
-	zlog_notice(ZLOG_DEFAULT, "vty_console_init waiting");
+	zlog_notice(MODULE_DEFAULT, "vty_console_init waiting");
 	return OK;
 }
 
@@ -2836,7 +2836,7 @@ static int vty_accept(struct eloop *thread)
 	vty_sock = sockunion_accept(accept_sock, &su);
 	if (vty_sock < 0)
 	{
-		zlog_warn(ZLOG_DEFAULT, "can't accept vty socket : %s",
+		zlog_warn(MODULE_DEFAULT, "can't accept vty socket : %s",
 				safe_strerror(errno));
 		return -1;
 	}
@@ -2845,14 +2845,13 @@ static int vty_accept(struct eloop *thread)
 	sockunion2hostprefix(&su, &p);
 	if (host.mutx)
 		os_mutex_lock(host.mutx, OS_WAIT_FOREVER);
-
 	/* VTY's accesslist apply. */
 	if (p.family == AF_INET && host.vty_accesslist_name)
 	{
 		if ((acl = access_list_lookup(AFI_IP, host.vty_accesslist_name))
 				&& (access_list_apply(acl, &p) == FILTER_DENY))
 		{
-			zlog(ZLOG_DEFAULT, LOG_INFO, "Vty connection refused from %s",
+			zlog(MODULE_DEFAULT, LOG_INFO, "Vty connection refused from %s",
 					sockunion2str(&su, buf, SU_ADDRSTRLEN));
 			close(vty_sock);
 			if (host.mutx)
@@ -2870,7 +2869,7 @@ static int vty_accept(struct eloop *thread)
 		if ((acl = access_list_lookup (AFI_IP6, host.vty_ipv6_accesslist_name)) &&
 				(access_list_apply (acl, &p) == FILTER_DENY))
 		{
-			zlog (ZLOG_DEFAULT, LOG_INFO, "Vty connection refused from %s",
+			zlog (MODULE_DEFAULT, LOG_INFO, "Vty connection refused from %s",
 					sockunion2str (&su, buf, SU_ADDRSTRLEN));
 			close (vty_sock);
 			if (host.mutx)
@@ -2882,17 +2881,16 @@ static int vty_accept(struct eloop *thread)
 		}
 	}
 #endif /* HAVE_IPV6 */
-
 	if (host.mutx)
 		os_mutex_unlock(host.mutx);
 	on = 1;
 	ret = ip_setsockopt(vty_sock, IPPROTO_TCP, TCP_NODELAY, (char *) &on,
 			sizeof(on));
 	if (ret < 0)
-		zlog(ZLOG_DEFAULT, LOG_INFO, "can't set sockopt to vty_sock : %s",
+		zlog(MODULE_DEFAULT, LOG_INFO, "can't set sockopt to vty_sock : %s",
 				safe_strerror(errno));
 
-	zlog(ZLOG_DEFAULT, LOG_INFO, "Vty connection from %s",
+	zlog(MODULE_DEFAULT, LOG_INFO, "Vty connection from %s",
 			sockunion2str(&su, buf, SU_ADDRSTRLEN));
 
 	vty_create(vty_sock, &su);
@@ -2928,11 +2926,11 @@ static void vty_serv_sock_family(const char* addr, unsigned short port,
 		switch (inet_pton(family, addr, naddr))
 		{
 		case -1:
-			zlog_err(ZLOG_DEFAULT, "bad address %s", addr);
+			zlog_err(MODULE_DEFAULT, "bad address %s", addr);
 			naddr = NULL;
 			break;
 		case 0:
-			zlog_err(ZLOG_DEFAULT, "error translating address %s: %s", addr,
+			zlog_err(MODULE_DEFAULT, "error translating address %s: %s", addr,
 					safe_strerror(errno));
 			naddr = NULL;
 		}
@@ -2950,7 +2948,7 @@ static void vty_serv_sock_family(const char* addr, unsigned short port,
 	ret = sockunion_bind(accept_sock, &su, port, naddr);
 	if (ret < 0)
 	{
-		zlog_warn(ZLOG_DEFAULT, "can't bind socket");
+		zlog_warn(MODULE_DEFAULT, "can't bind socket");
 		ip_close(accept_sock); /* Avoid sd leak. */
 		return;
 	}
@@ -2959,7 +2957,7 @@ static void vty_serv_sock_family(const char* addr, unsigned short port,
 	ret = ip_listen(accept_sock, 3);
 	if (ret < 0)
 	{
-		zlog(ZLOG_DEFAULT, LOG_WARNING, "can't listen socket(%s)",
+		zlog(MODULE_DEFAULT, LOG_WARNING, "can't listen socket(%s)",
 				safe_strerror(errno));
 		ip_close(accept_sock); /* Avoid sd leak. */
 		return;
@@ -2991,7 +2989,7 @@ vty_serv_un (const char *path)
 	sock = ip_socket (AF_UNIX, SOCK_STREAM, 0);
 	if (sock < 0)
 	{
-		zlog_err(ZLOG_DEFAULT, "Cannot create unix stream socket: %s", safe_strerror(errno));
+		zlog_err(MODULE_DEFAULT, "Cannot create unix stream socket: %s", safe_strerror(errno));
 		return;
 	}
 
@@ -3008,7 +3006,7 @@ vty_serv_un (const char *path)
 	ret = ip_bind (sock, (struct sockaddr *) &serv, len);
 	if (ret < 0)
 	{
-		zlog_err(ZLOG_DEFAULT, "Cannot bind path %s: %s", path, safe_strerror(errno));
+		zlog_err(MODULE_DEFAULT, "Cannot bind path %s: %s", path, safe_strerror(errno));
 		ip_close (sock); /* Avoid sd leak. */
 		return;
 	}
@@ -3016,7 +3014,7 @@ vty_serv_un (const char *path)
 	ret = ip_listen (sock, 5);
 	if (ret < 0)
 	{
-		zlog_err(ZLOG_DEFAULT, "listen(fd %d) failed: %s", sock, safe_strerror(errno));
+		zlog_err(MODULE_DEFAULT, "listen(fd %d) failed: %s", sock, safe_strerror(errno));
 		ip_close (sock); /* Avoid sd leak. */
 		return;
 	}
@@ -3049,13 +3047,13 @@ vtysh_accept (struct thread *thread)
 
 	if (sock < 0)
 	{
-		zlog_warn (ZLOG_DEFAULT, "can't accept vty socket : %s", safe_strerror (errno));
+		zlog_warn (MODULE_DEFAULT, "can't accept vty socket : %s", safe_strerror (errno));
 		return -1;
 	}
 
 	if (set_nonblocking(sock) < 0)
 	{
-		zlog_warn (ZLOG_DEFAULT, "vtysh_accept: could not set vty socket %d to non-blocking,"
+		zlog_warn (MODULE_DEFAULT, "vtysh_accept: could not set vty socket %d to non-blocking,"
 				" %s, closing", sock, safe_strerror (errno));
 		ip_close (sock);
 		return -1;
@@ -3086,7 +3084,7 @@ vtysh_flush(struct vty *vty)
 		break;
 		case BUFFER_ERROR:
 		vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
-		zlog_warn(ZLOG_DEFAULT, "%s: write error to fd %d, closing", __func__, vty->wfd);
+		zlog_warn(MODULE_DEFAULT, "%s: write error to fd %d, closing", __func__, vty->wfd);
 		buffer_reset(vty->obuf);
 		vty_close(vty);
 		return -1;
@@ -3123,7 +3121,7 @@ vtysh_read (struct thread *thread)
 				return 0;
 			}
 			vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
-			zlog_warn(ZLOG_DEFAULT, "%s: read failed on vtysh client fd %d, closing: %s",
+			zlog_warn(MODULE_DEFAULT, "%s: read failed on vtysh client fd %d, closing: %s",
 					__func__, sock, safe_strerror(errno));
 		}
 		buffer_reset(vty->obuf);
@@ -3217,7 +3215,7 @@ static int vty_sshd_read (struct thread *thread)
 				return 0;
 			}
 			vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
-			zlog_warn(ZLOG_DEFAULT, "%s: read failed on vtysh client fd %d, closing: %s",
+			zlog_warn(MODULE_DEFAULT, "%s: read failed on vtysh client fd %d, closing: %s",
 					__func__, sock, safe_strerror(errno));
 		}
 		buffer_reset(vty->obuf);

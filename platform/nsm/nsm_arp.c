@@ -31,6 +31,20 @@ static int ip_arp_dynamic_update(void *pVoid);
 #define ARP_STATIC_INC(n)	(gIparp.static_cnt) += (n)
 #define ARP_STATIC_SUB(n)	(gIparp.static_cnt) -= (n)
 
+struct module_list module_list_nsmarp = 
+{ 
+	.module=MODULE_NSMARP, 
+	.name="NSMARP", 
+	.module_init=nsm_ip_arp_init, 
+	.module_exit=nsm_ip_arp_exit, 
+	.module_task_init=NULL, 
+	.module_task_exit=NULL, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};
 
 int nsm_ip_arp_init(void)
 {

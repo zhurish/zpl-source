@@ -36,7 +36,7 @@
 #include "nsm_redistribute.h"
 #include "nsm_debug.h"
 #include "nsm_router-id.h"
-#include "zclient.h"
+#include "nsm_zclient.h"
 
 
 /* master zebra server structure */
@@ -153,7 +153,7 @@ zebra_redistribute (struct zserv *client, int type, vrf_id_t vrf_id)
       RNODE_FOREACH_RIB (rn, newrib)
         {
           if (IS_ZEBRA_DEBUG_EVENT)
-            zlog_debug(ZLOG_NSM, "%s: checking: selected=%d, type=%d, distance=%d, zebra_check_addr=%d",
+            zlog_debug(MODULE_NSM, "%s: checking: selected=%d, type=%d, distance=%d, zebra_check_addr=%d",
                        __func__, CHECK_FLAG (newrib->flags, ZEBRA_FLAG_SELECTED),
                        newrib->type, newrib->distance, zebra_check_addr (&rn->p));
           if (CHECK_FLAG (newrib->flags, ZEBRA_FLAG_SELECTED)
@@ -304,7 +304,7 @@ zebra_interface_up_update (struct interface *ifp)
   struct zserv *client;
 
   if (IS_ZEBRA_DEBUG_EVENT)
-    zlog_debug (ZLOG_NSM, "MESSAGE: ZEBRA_INTERFACE_UP %s", ifp->name);
+    zlog_debug (MODULE_NSM, "MESSAGE: ZEBRA_INTERFACE_UP %s", ifp->name);
 
   for (ALL_LIST_ELEMENTS (zebrad.client_list, node, nnode, client))
     if (client->ifinfo)
@@ -322,7 +322,7 @@ zebra_interface_down_update (struct interface *ifp)
   struct zserv *client;
 
   if (IS_ZEBRA_DEBUG_EVENT)
-    zlog_debug (ZLOG_NSM, "MESSAGE: ZEBRA_INTERFACE_DOWN %s", ifp->name);
+    zlog_debug (MODULE_NSM, "MESSAGE: ZEBRA_INTERFACE_DOWN %s", ifp->name);
 
   for (ALL_LIST_ELEMENTS (zebrad.client_list, node, nnode, client))
     {
@@ -338,7 +338,7 @@ zebra_interface_add_update (struct interface *ifp)
   struct zserv *client;
 
   if (IS_ZEBRA_DEBUG_EVENT)
-    zlog_debug (ZLOG_NSM, "MESSAGE: ZEBRA_INTERFACE_ADD %s", ifp->name);
+    zlog_debug (MODULE_NSM, "MESSAGE: ZEBRA_INTERFACE_ADD %s", ifp->name);
     
   for (ALL_LIST_ELEMENTS (zebrad.client_list, node, nnode, client))
     if (client->ifinfo)
@@ -356,7 +356,7 @@ zebra_interface_delete_update (struct interface *ifp)
   struct zserv *client;
 
   if (IS_ZEBRA_DEBUG_EVENT)
-    zlog_debug (ZLOG_NSM, "MESSAGE: ZEBRA_INTERFACE_DELETE %s", ifp->name);
+    zlog_debug (MODULE_NSM, "MESSAGE: ZEBRA_INTERFACE_DELETE %s", ifp->name);
 
   for (ALL_LIST_ELEMENTS (zebrad.client_list, node, nnode, client))
     if (client->ifinfo)
@@ -380,7 +380,7 @@ zebra_interface_address_add_update (struct interface *ifp,
       char buf[PREFIX_STRLEN];
 
       p = ifc->address;
-      zlog_debug (ZLOG_NSM, "MESSAGE: ZEBRA_INTERFACE_ADDRESS_ADD %s on %s",
+      zlog_debug (MODULE_NSM, "MESSAGE: ZEBRA_INTERFACE_ADDRESS_ADD %s on %s",
 		  prefix2str (p, buf, sizeof(buf)),
 		  ifc->ifp->name);
     }
@@ -414,7 +414,7 @@ zebra_interface_address_delete_update (struct interface *ifp,
       char buf[PREFIX_STRLEN];
 
       p = ifc->address;
-      zlog_debug (ZLOG_NSM, "MESSAGE: ZEBRA_INTERFACE_ADDRESS_DELETE %s on %s",
+      zlog_debug (MODULE_NSM, "MESSAGE: ZEBRA_INTERFACE_ADDRESS_DELETE %s on %s",
 		  prefix2str (p, buf, sizeof(buf)),
 		  ifc->ifp->name);
     }
@@ -437,7 +437,7 @@ zebra_interface_mode_update (struct interface *ifp, uint32_t mode)
   struct zserv *client;
 
   if (IS_ZEBRA_DEBUG_EVENT)
-    zlog_debug (ZLOG_NSM, "MESSAGE: ZEBRA_INTERFACE_MODE %s", ifp->name);
+    zlog_debug (MODULE_NSM, "MESSAGE: ZEBRA_INTERFACE_MODE %s", ifp->name);
 
   for (ALL_LIST_ELEMENTS (zebrad.client_list, node, nnode, client))
     if (client->ifinfo)

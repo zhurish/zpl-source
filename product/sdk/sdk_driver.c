@@ -1087,7 +1087,7 @@ int sdk_module_init(hal_driver_t *hal)
 	hal->driver = malloc(sizeof(sdk_driver_t));
 	if(hal->driver == NULL)
 	{
-		zlog_debug(ZLOG_HAL, " Can not malloc b53125 device");
+		zlog_debug(MODULE_HAL, " Can not malloc b53125 device");
 		return ERROR;
 	}
 	memset(hal->driver, 0, sizeof(sdk_driver_t));

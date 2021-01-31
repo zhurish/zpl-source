@@ -83,7 +83,7 @@ static int nsm_mirror_client_setup(ifindex_t ifindex, void *p)
 /*	struct interface *ifp = if_lookup_by_index(ifindex);
 	if(ifp)
 	{
-		struct nsm_interface *nsm = ifp->info[ZLOG_NSM];
+		struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 		if(nsm)
 			nsm->nsm_client[NSM_MIRROR] = p;
 	}*/
@@ -533,7 +533,7 @@ int nsm_mirror_source_mac_filter_get_api(mirror_dir_en dir, BOOL *enable, u_char
 
 /*static int nsm_vlan_add_interface(struct interface *ifp)
 {
-	struct nsm_interface *nsm = ifp->info[ZLOG_NSM];
+	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	nsm->nsm_client[NSM_MIRROR] = XMALLOC(MTYPE_IF, sizeof(nsm_vlan_t));
 	os_memset(nsm->nsm_client[NSM_MIRROR], 0, sizeof(nsm_vlan_t));
 	nsm_interface_add_untag_vlan_api(1,  ifp);
@@ -544,7 +544,7 @@ int nsm_mirror_source_mac_filter_get_api(mirror_dir_en dir, BOOL *enable, u_char
 
 static int nsm_vlan_del_interface(struct interface *ifp)
 {
-	struct nsm_interface *nsm = ifp->info[ZLOG_NSM];
+	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	nsm_interface_del_untag_vlan_api(1,  ifp);
 	nsm_interface_del_tag_vlan_api(1,  ifp);
 	if(nsm->nsm_client[NSM_MIRROR])

@@ -46,31 +46,31 @@ static PJ_DEF(void) pj_pjsip_log_cb(int level, const char *buffer, int len)
 		switch (level)
 		{
 		case (6):
-			zlog_other(ZLOG_SIP, LOG_TRAP, "%s", buffer);
+			zlog_other(MODULE_SIP, LOG_TRAP, "%s", buffer);
 			break;
 		case 4:
-			zlog_other(ZLOG_SIP, LOG_DEBUG, "%s", buffer);
+			zlog_other(MODULE_SIP, LOG_DEBUG, "%s", buffer);
 			break;
 		case 3:
-			zlog_other(ZLOG_SIP, LOG_INFO, "%s", buffer);
+			zlog_other(MODULE_SIP, LOG_INFO, "%s", buffer);
 			break;
 		case 5:
-			zlog_other(ZLOG_SIP, LOG_NOTICE, "%s", buffer);
+			zlog_other(MODULE_SIP, LOG_NOTICE, "%s", buffer);
 			break;
 		case 2:
-			zlog_other(ZLOG_SIP, LOG_WARNING, "%s", buffer);
+			zlog_other(MODULE_SIP, LOG_WARNING, "%s", buffer);
 			break;
 		case 1:
-			zlog_other(ZLOG_SIP, LOG_ERR, "%s", buffer);
+			zlog_other(MODULE_SIP, LOG_ERR, "%s", buffer);
 			break;
 		case 0:
-			zlog_other(ZLOG_SIP, LOG_CRIT, "%s", buffer);
+			zlog_other(MODULE_SIP, LOG_CRIT, "%s", buffer);
 			break;
 /*		case LOG_ALERT:
-			zlog_other(ZLOG_SIP, LOG_ALERT + 1, "%s", buffer);
+			zlog_other(MODULE_SIP, LOG_ALERT + 1, "%s", buffer);
 			break;
 		case LOG_EMERG:
-			zlog_other(ZLOG_SIP, LOG_EMERG + 1, "%s", buffer);
+			zlog_other(MODULE_SIP, LOG_EMERG + 1, "%s", buffer);
 			break;*/
 		default:
 			break;
@@ -86,25 +86,25 @@ static PJ_DEF(void) pj_pjsip_log_cb(int level, const char *buffer, int len)
 		switch (level)
 		{
 		case (6):
-			zlog_other(ZLOG_SIP, LOG_TRAP, "%s", buffer);
+			zlog_other(MODULE_SIP, LOG_TRAP, "%s", buffer);
 			break;
 		case 4:
-			zlog_other(ZLOG_SIP, LOG_DEBUG, "%s", buffer);
+			zlog_other(MODULE_SIP, LOG_DEBUG, "%s", buffer);
 			break;
 		case 3:
-			zlog_other(ZLOG_SIP, LOG_INFO, "%s", buffer);
+			zlog_other(MODULE_SIP, LOG_INFO, "%s", buffer);
 			break;
 		case 5:
-			zlog_other(ZLOG_SIP, LOG_NOTICE, "%s", buffer);
+			zlog_other(MODULE_SIP, LOG_NOTICE, "%s", buffer);
 			break;
 		case 2:
-			zlog_other(ZLOG_SIP, LOG_WARNING, "%s", buffer);
+			zlog_other(MODULE_SIP, LOG_WARNING, "%s", buffer);
 			break;
 		case 1:
-			zlog_other(ZLOG_SIP, LOG_ERR, "%s", buffer);
+			zlog_other(MODULE_SIP, LOG_ERR, "%s", buffer);
 			break;
 		case 0:
-			zlog_other(ZLOG_SIP, LOG_CRIT, "%s", buffer);
+			zlog_other(MODULE_SIP, LOG_CRIT, "%s", buffer);
 			break;
 		default:
 			break;

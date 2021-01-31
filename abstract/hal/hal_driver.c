@@ -35,7 +35,7 @@ int hal_module_init()
 	hal_driver = malloc(sizeof(hal_driver_t));
 	if(hal_driver == NULL)
 	{
-		zlog_debug(ZLOG_HAL, " Can not malloc hal_driver_t");
+		zlog_debug(MODULE_HAL, " Can not malloc hal_driver_t");
 		return ERROR;
 	}
 	memset(hal_driver, 0, sizeof(hal_driver_t));

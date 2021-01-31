@@ -153,13 +153,13 @@ int x5b_app_rtc_tm_set(int timesp)
 /*	if(zone < 0)
 	{
 		if(X5_B_ESP32_DEBUG(TIME))
-			zlog_debug(ZLOG_APP, "get local system timezone:%d", zone);
+			zlog_debug(MODULE_APP, "get local system timezone:%d", zone);
 	    sntpTime.tv_sec = timesp - OS_SEC_HOU_V(abs(zone));
 	}
 	else
 	{
 		if(X5_B_ESP32_DEBUG(TIME))
-			zlog_debug(ZLOG_APP, "get local system timezone:%d", zone);
+			zlog_debug(MODULE_APP, "get local system timezone:%d", zone);
 		sntpTime.tv_sec = timesp + OS_SEC_HOU_V((zone));
 	}*/
 	local_timesp = os_time(NULL);
@@ -168,7 +168,7 @@ int x5b_app_rtc_tm_set(int timesp)
 		char timespstr[128];
 		memset(timespstr, 0, sizeof(timespstr));
 		snprintf(timespstr, sizeof(timespstr), "%s", os_time_fmt("/", timesp));
-		zlog_debug(ZLOG_APP, "remote time less than local(:%d < %d) (%s < %s)",
+		zlog_debug(MODULE_APP, "remote time less than local(:%d < %d) (%s < %s)",
 				   timesp, zone,
 				   timespstr, os_time_fmt("/", zone));
 		return OK;
@@ -179,7 +179,7 @@ int x5b_app_rtc_tm_set(int timesp)
 		char timespstr[128];
 		memset(timespstr, 0, sizeof(timespstr));
 		snprintf(timespstr, sizeof(timespstr), "%s", os_time_fmt("/", timesp));
-		zlog_debug(ZLOG_APP, "set sync system time:%d set realtime:%d (%s--%s)",
+		zlog_debug(MODULE_APP, "set sync system time:%d set realtime:%d (%s--%s)",
 				   timesp, local_timesp,
 				   timespstr, os_time_fmt("/", local_timesp));
 	}
@@ -197,7 +197,7 @@ int x5b_app_rtc_tm_set(int timesp)
 	return OK;
 #endif
 	sntpTime.tv_sec = timesp;
-	//zlog_debug(ZLOG_APP, "===========get stm32 times:->%d realtime=%d", timesp, sntpTime.tv_sec);
+	//zlog_debug(MODULE_APP, "===========get stm32 times:->%d realtime=%d", timesp, sntpTime.tv_sec);
 	value = 5;
 	while(value)
 	{
@@ -205,13 +205,13 @@ int x5b_app_rtc_tm_set(int timesp)
 		if(clock_settime(CLOCK_REALTIME, &sntpTime)!= 0)//SET SYSTEM LOCAL TIME
 		{
 			if(X5_B_ESP32_DEBUG(TIME))
-				zlog_err(ZLOG_APP, "set system realtime by clock_settime is error:%s", strerror(errno));
+				zlog_err(MODULE_APP, "set system realtime by clock_settime is error:%s", strerror(errno));
 			value--;
 		}
 		else
 		{
 			if(X5_B_ESP32_DEBUG(TIME))
-				zlog_debug(ZLOG_APP, "set system realtime by clock_settime is success:%s", strerror(errno));
+				zlog_debug(MODULE_APP, "set system realtime by clock_settime is success:%s", strerror(errno));
 			break;
 		}
 	}
@@ -415,7 +415,7 @@ int x5b_app_local_network_info_get(x5b_app_netinfo_t *info)
 			x5b_route_lookup_default(ifp->ifindex, &info->local_gateway);
 			x5b_route_lookup_dns(&info->local_dns);
 			if(X5_B_ESP32_DEBUG(STATE))
-				zlog_debug(ZLOG_APP, "get local network information address=%x  netmask=%x  gateway=%x  dns=%x",
+				zlog_debug(MODULE_APP, "get local network information address=%x  netmask=%x  gateway=%x  dns=%x",
 						   info->local_address,info->local_netmask, info->local_gateway, info->local_dns);
 		}
 		return  ret;
@@ -467,7 +467,7 @@ int x5b_app_call_room_param_get(void *data, u_int8 *building,
 
 /*	if(voip_dbase_get_room_phone(input->building, input->unit, input->room_number, phonelist) <= 0)
 	{
-		zlog_err(ZLOG_APP,
+		zlog_err(MODULE_APP,
 					"Can not get Phone Number by Room");
 		return ERROR;
 	}*/
@@ -611,7 +611,7 @@ static int x5b_app_network_port_status_event(struct eloop *eloop)
 		//x5b_app_read_eloop_reload(app);
 	if(app->mutex)
 		os_mutex_unlock(app->mutex);
-	//zlog_debug(ZLOG_APP, "=================x5b_app_network_port_status_event -> x5b_app_read_eloop_reload");
+	//zlog_debug(MODULE_APP, "=================x5b_app_network_port_status_event -> x5b_app_read_eloop_reload");
 	return OK;
 /*	E_CMD_NETWORK_STATE_PHY_DOWN,
 	E_CMD_NETWORK_STATE_PHY_UP,
@@ -779,7 +779,7 @@ int x5b_app_a_thlog_log(char *format)
 	memset(&stm, 0, sizeof(struct tm));
 	localtime_r(&openTime, &stm);
 	len = strftime(data_tmp, sizeof(data_tmp), "%Y/%m/%d %H:%M:%S", &stm);
-	zlog_debug(ZLOG_APP, "openTime=0X%x -> %d :%s", a_log->hdr.openTime, openTime, data_tmp);
+	zlog_debug(MODULE_APP, "openTime=0X%x -> %d :%s", a_log->hdr.openTime, openTime, data_tmp);
 */
 
 	a_log->hdr.eraseCnt = ntohl(a_log->hdr.eraseCnt);
@@ -921,24 +921,24 @@ int x5b_app_a_thlog_log(char *format)
 	if(card)
 	{
 		if(X5_B_ESP32_DEBUG(MSG))
-			zlog_debug(ZLOG_APP, "type=%s result=%s ID:%s username=%s userid=%s CARD-TYPE:%s Privilege:%s",
+			zlog_debug(MODULE_APP, "type=%s result=%s ID:%s username=%s userid=%s CARD-TYPE:%s Privilege:%s",
 				   type, result, cardNumber, card->username, card->userid, card_type, card_level);
 	}
 	else
 	{
 		if(X5_B_ESP32_DEBUG(MSG))
-			zlog_debug(ZLOG_APP, "type=%s result=%s ID:%s username=Unknown userid=Unknown CARD-TYPE:%s Privilege:%s",
+			zlog_debug(MODULE_APP, "type=%s result=%s ID:%s username=Unknown userid=Unknown CARD-TYPE:%s Privilege:%s",
 				   type, result, cardNumber, card_type, card_level);
 	}
 	return OK;
 
-	//zlog_debug(ZLOG_APP, "=======================================");
+	//zlog_debug(MODULE_APP, "=======================================");
 	if(card)
 	{
 		voip_thlog_log4(a_log->hdr.openTime + SEC_DAY_V, type, result,
 				"%s username=%s userid=%s CARD-TYPE:%s Privilege:%s",
 				cardNumber, card->username, card->userid, card_type, card_level);
-		zlog_debug(ZLOG_APP, "type=%s result=%s ID:%s username=%s userid=%s CARD-TYPE:%s Privilege:%s",
+		zlog_debug(MODULE_APP, "type=%s result=%s ID:%s username=%s userid=%s CARD-TYPE:%s Privilege:%s",
 				   type, result, cardNumber, card->username, card->userid, card_type, card_level);
 	}
 	else
@@ -946,7 +946,7 @@ int x5b_app_a_thlog_log(char *format)
 		voip_thlog_log4(a_log->hdr.openTime + SEC_DAY_V, type, result,
 				"%s %s username=Unknown userid=Unknown CARD-TYPE:%s Privilege:%s",
 			cardNumber, card_type, card_level);
-		zlog_debug(ZLOG_APP, "type=%s result=%s ID:%s username=Unknown userid=Unknown CARD-TYPE:%s Privilege:%s",
+		zlog_debug(MODULE_APP, "type=%s result=%s ID:%s username=Unknown userid=Unknown CARD-TYPE:%s Privilege:%s",
 				   type, result, cardNumber, card_type, card_level);
 	}
 	return OK;

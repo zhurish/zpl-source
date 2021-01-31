@@ -161,7 +161,7 @@ quagga_sigevent_process (void)
    
   if ( (sigprocmask (SIG_BLOCK, &newmask, &oldmask)) < 0)
     {
-      zlog_err (ZLOG_DEFAULT, "quagga_signal_timer: couldnt block signals!");
+      zlog_err (MODULE_DEFAULT, "quagga_signal_timer: couldnt block signals!");
       return -1;
     }
 #endif /* SIGEVENT_BLOCK_SIGNALS */
@@ -358,7 +358,7 @@ trap_default_signals(void)
 #endif
 	        }
 	      if (sigaction(sigmap[i].sigs[j],&act,NULL) < 0)
-	        zlog_warn(ZLOG_DEFAULT, "Unable to set signal handler for signal %d: %s",
+	        zlog_warn(MODULE_DEFAULT, "Unable to set signal handler for signal %d: %s",
 			  sigmap[i].sigs[j],safe_strerror(errno));
 
 	    }

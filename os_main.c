@@ -21,11 +21,12 @@
 #include "sigevent.h"
 #include "thread.h"
 //#include "version.h"
-#include "nsm_vrf.h"
+//#include "nsm_vrf.h"
 #include "os_start.h"
 #include "os_module.h"
-#include "platform/nsm/nsm_filter.h"
-#include "platform/nsm/nsm_plist.h"
+
+//#include "platform/nsm/nsm_filter.h"
+//#include "platform/nsm/nsm_plist.h"
 
 //extern struct zebra_privs_t os_privs;
 //extern struct quagga_signal_t os_signals[];
@@ -337,7 +338,7 @@ int main (int argc, char **argv)
 
 	//b53125_mdio_probe();
 
-	os_start_init(main_data.progname, ZLOG_DEFAULT, main_data.daemon_mode, main_data.tty);
+	os_start_init(main_data.progname, MODULE_DEFAULT, main_data.daemon_mode, main_data.tty);
 
 	zlog_set_level (ZLOG_DEST_STDOUT, LOG_DEBUG);
 
@@ -345,7 +346,7 @@ int main (int argc, char **argv)
 
 	os_start_all_module();
 
-	//os_start_module (ZLOG_DEFAULT, main_data.config_file, NULL);
+	//os_start_module (MODULE_DEFAULT, main_data.config_file, NULL);
 
 	os_start_pid(MODULE_DEFAULT, main_data.pid_file, &main_data.pid);
 
@@ -358,7 +359,7 @@ int main (int argc, char **argv)
 	 * load config file
 	 */
 	os_load_config (main_data.config_file);
-	zlog_notice(ZLOG_DEFAULT, "Zebra os_load_config");
+	zlog_notice(MODULE_DEFAULT, "Zebra os_load_config");
 
 	//thread_add_timer(master_thread[MODULE_DEFAULT], main_timer_thread, NULL, 1);
 
@@ -407,11 +408,11 @@ int os_main (int argc, char **argv)
 
 	main_getopt (argc, argv);
 
-	os_start_init(main_data.progname, ZLOG_NSM, main_data.daemon_mode);
+	os_start_init(main_data.progname, MODULE_NSM, main_data.daemon_mode);
 
-	os_start_module (ZLOG_NSM, main_data.config_file, NULL);
+	os_start_module (MODULE_NSM, main_data.config_file, NULL);
 
-	os_start_pid(ZLOG_NSM, main_data.pid_file, &main_data.pid);
+	os_start_pid(MODULE_NSM, main_data.pid_file, &main_data.pid);
 
 	/*
 	 * load config file
@@ -424,7 +425,7 @@ int os_main (int argc, char **argv)
 	os_shell_start (main_data.zserv_path, NULL, main_data.vty_port);
 
 
-	os_start_running(NULL, ZLOG_NSM);
+	os_start_running(NULL, MODULE_NSM);
 
 	return 0;
 }

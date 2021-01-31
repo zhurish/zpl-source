@@ -85,10 +85,10 @@ struct access_master
   struct access_list_list str;
 
   /* Hook function which is executed when new access_list is added. */
-  void (*add_hook[ZLOG_MAX]) (struct access_list *);
+  void (*add_hook[MODULE_MAX]) (struct access_list *);
 
   /* Hook function which is executed when access_list is deleted. */
-  void (*delete_hook[ZLOG_MAX]) (struct access_list *);
+  void (*delete_hook[MODULE_MAX]) (struct access_list *);
 };
 
 /* Static structure for IPv4 access_list's master. */
@@ -428,7 +428,7 @@ access_list_apply (struct access_list *access, void *object)
 void
 access_list_add_hook (int proto, void (*func) (struct access_list *access))
 {
-	if(INT_MAX_MIN_SPACE(proto, ZLOG_NONE, ZLOG_MAX))
+	if(INT_MAX_MIN_SPACE(proto, MODULE_NONE, MODULE_MAX))
 	{
 		access_master_ipv4.add_hook[proto] = func;
 #ifdef HAVE_IPV6
@@ -441,7 +441,7 @@ access_list_add_hook (int proto, void (*func) (struct access_list *access))
 void
 access_list_delete_hook (int proto, void (*func) (struct access_list *access))
 {
-  if(INT_MAX_MIN_SPACE(proto, ZLOG_NONE, ZLOG_MAX))
+  if(INT_MAX_MIN_SPACE(proto, MODULE_NONE, MODULE_MAX))
   {
 	  access_master_ipv4.delete_hook[proto] = func;
 #ifdef HAVE_IPV6
@@ -452,7 +452,7 @@ access_list_delete_hook (int proto, void (*func) (struct access_list *access))
 static int access_list_hook_callback(int type, struct access_list *access)
 {
 	int i = 0;
-	for(i = 0 ; i < ZLOG_MAX; i++)
+	for(i = 0 ; i < MODULE_MAX; i++)
 	{
 		if(type == 1)
 		{

@@ -5,7 +5,6 @@
  *      Author: zhurish
  */
 
-
 #include "zebra.h"
 #include <stdio.h>
 #include <sys/types.h>
@@ -1226,7 +1225,7 @@ int os_process_register(process_action action, char *name,
 	errno = 0;
 	ret = write(os_process_sock, &head, sizeof(process_head));
 	//ret = os_stream_head_write(fd, &head, sizeof(process_head));
-	//zlog_debug(ZLOG_NSM, "%s:name:%s(%d byte(%s))",__func__, head.name, ret, strerror(errno));
+	//zlog_debug(MODULE_NSM, "%s:name:%s(%d byte(%s))",__func__, head.name, ret, strerror(errno));
 	if( ret == sizeof(process_head))
 	{
 		int num = 0;
@@ -1292,7 +1291,7 @@ int os_process_action(process_action action, char *name, int id)
 	errno = 0;
 	ret = write(os_process_sock, &head, sizeof(process_head));
 	//ret = os_stream_head_write(fd, &head, sizeof(process_head));
-	//zlog_debug(ZLOG_NSM, "%s:name:%s(%d byte(%s))",__func__, head.name, ret, strerror(errno));
+	//zlog_debug(MODULE_NSM, "%s:name:%s(%d byte(%s))",__func__, head.name, ret, strerror(errno));
 	if( ret == sizeof(process_head))
 	{
 		int num = 0;

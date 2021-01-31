@@ -14,7 +14,7 @@
 #include "command.h"
 #include "memory.h"
 #include "log.h"
-#include "zclient.h"
+#include "nsm_zclient.h"
 #include "thread.h"
 #include "eloop.h"
 
@@ -124,7 +124,7 @@ static int kernel_arp_init()
 	skfd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ARP));
 	if (skfd < 0)
 	{
-		zlog_err(ZLOG_PAL, "Can't open %s socket: %s", "arp socket",
+		zlog_err(MODULE_PAL, "Can't open %s socket: %s", "arp socket",
 				strerror(errno));
 		//printf("socket() failed! \n");
 		return -1;
@@ -132,13 +132,13 @@ static int kernel_arp_init()
 #ifdef IP_RECVIF
 	onoff = 1;
 	if (setsockopt(skfd, IPPROTO_IP, IP_RECVIF, &onoff, sizeof(onoff)) != 0)
-		zlog_warn(ZLOG_PAL, "setsocketopt IP_RECVIF failed for udp: %s",
+		zlog_warn(MODULE_PAL, "setsocketopt IP_RECVIF failed for udp: %s",
 		    strerror(errno));
 #endif
 #if defined (IP_PKTINFO)
 	onoff = 1;
 	if (setsockopt (skfd, IPPROTO_IP, IP_PKTINFO, &onoff, sizeof (onoff)) != 0)
-		zlog_warn(ZLOG_PAL, "setsocketopt IP_PKTINFO failed for udp: %s",
+		zlog_warn(MODULE_PAL, "setsocketopt IP_PKTINFO failed for udp: %s",
 		    strerror(errno));
 #endif
 	return skfd;
@@ -200,11 +200,11 @@ static int kernel_arp_recv(int	sock)
 	m.msg_controllen = sizeof(cbuf);
 
 	if ((len = recvmsg(sock, &m, 0)) < 0) {
-		zlog_warn(ZLOG_PAL, "receiving a ARP message failed: %s", strerror(errno));
+		zlog_warn(MODULE_PAL, "receiving a ARP message failed: %s", strerror(errno));
 		return -1;
 	}
 	if (ss.ss_family != AF_INET) {
-		//zlog_warn(ZLOG_PAL, "received ARP message is not AF_INET");
+		//zlog_warn(MODULE_PAL, "received ARP message is not AF_INET");
 		return -1;
 	}
 	for (cm = (struct cmsghdr *)CMSG_FIRSTHDR(&m);
@@ -217,7 +217,7 @@ static int kernel_arp_recv(int	sock)
 		{
 			sdl = (struct sockaddr_dl *)CMSG_DATA(cm);
 			if (sdl == NULL) {
-				zlog_warn(ZLOG_PAL, "could not get the received interface by IP_RECVIF");
+				zlog_warn(MODULE_PAL, "could not get the received interface by IP_RECVIF");
 				return -1;
 			}
 			ifindex = sdl->sdl_index;
@@ -230,7 +230,7 @@ static int kernel_arp_recv(int	sock)
 		{
 			pktinfo = (struct in_pktinfo *)CMSG_DATA(cm);
 			if (pktinfo == NULL) {
-				zlog_warn(ZLOG_PAL, "could not get the received interface by IP_PKTINFO");
+				zlog_warn(MODULE_PAL, "could not get the received interface by IP_PKTINFO");
 				return -1;
 			}
 			ifindex = pktinfo->ipi_ifindex;
@@ -279,7 +279,7 @@ static int kernel_arp_request(struct interface *ifp, struct prefix *address)
 	skfd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ARP));
 	if (skfd < 0)
 	{
-		zlog_err(ZLOG_PAL, "Can't open %s socket: %s", "arp socket",
+		zlog_err(MODULE_PAL, "Can't open %s socket: %s", "arp socket",
 				strerror(errno));
 		return -1;
 	}
@@ -312,7 +312,7 @@ static int kernel_arp_request(struct interface *ifp, struct prefix *address)
 	n = sendto(skfd, buf, len, 0, (struct sockaddr*)&sll, sizeof(struct sockaddr_ll));
 	if (n < 0)
 	{
-		zlog_warn(ZLOG_PAL, "send a ARP message failed: %s", strerror(errno));
+		zlog_warn(MODULE_PAL, "send a ARP message failed: %s", strerror(errno));
 	}
 	else
 	{

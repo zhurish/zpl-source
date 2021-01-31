@@ -58,6 +58,11 @@ $(LIBS) : $(MODULE_OBJS) $(MODULE_APPOBJS)
 endif
 
 
+files = $(patsubst %.o,%.c,$(MQTT_OBJS))
+make_prepare:
+	@for i in $(files); do	\
+		$(MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+	done
 #
 #
 ifeq ($(PL_MQTT_SRV),true)
@@ -99,4 +104,4 @@ objclean:
 
 all: lib install
 
-.PHONY:	obj all lib install objclean clean
+.PHONY:	obj all lib install objclean clean make_prepare

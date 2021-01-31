@@ -74,7 +74,7 @@ static int sshd_close(struct vty *vty)
 	sshclient = vty->ssh;
 	if(sshclient)
 	{
-	    zlog_debug(ZLOG_UTILS, "%s :", __func__);
+	    zlog_debug(MODULE_UTILS, "%s :", __func__);
 
 	    vty->ssh = NULL;
         vty->ssh_enable = FALSE;
@@ -106,7 +106,7 @@ static void sshd_shell_close(ssh_session session,
         void *userdata)
 {
     sshd_client_t *sshclient = (sshd_client_t *)userdata;
-    zlog_debug(ZLOG_UTILS, "%s :", __func__);
+    zlog_debug(MODULE_UTILS, "%s :", __func__);
 
     //ssh_event_remove_session(client->config->event, client->session);
 	if(sshclient)
@@ -238,7 +238,7 @@ static int sshd_shell_create(sshd_client_t *sshclient, ssh_session sseion)
 	ssh_socket_set_nonblocking(socket[1]);
 
 	sshclient->vty = sshd_shell_new(socket[0]);
-	zlog_debug(ZLOG_UTILS, "%s :", __func__);
+	zlog_debug(MODULE_UTILS, "%s :", __func__);
 	if(!sshclient->vty)
 	{
 		sshclient->sock = 0;
@@ -279,7 +279,7 @@ static int sshd_shell_window_open(ssh_session session, ssh_channel channel,
     client->winsize.ws_col = cols;
     client->winsize.ws_xpixel = px;
     client->winsize.ws_ypixel = py;
-    zlog_debug(ZLOG_UTILS, "%s :", __func__);
+    zlog_debug(MODULE_UTILS, "%s :", __func__);
 
     return SSH_OK;
 }
@@ -295,7 +295,7 @@ static int sshd_shell_window_change(ssh_session session, ssh_channel channel, in
     client->winsize.ws_col = cols;
     client->winsize.ws_xpixel = px;
     client->winsize.ws_ypixel = py;
-    zlog_debug(ZLOG_UTILS, "%s :", __func__);
+    zlog_debug(MODULE_UTILS, "%s :", __func__);
     return SSH_OK;
 }
 
@@ -319,7 +319,7 @@ static int sshd_shell_request(ssh_session session, ssh_channel channel,
         client->sock = 0;
 		return SSH_ERROR;
 	}
-    zlog_debug(ZLOG_UTILS, "%s :", __func__);
+    zlog_debug(MODULE_UTILS, "%s :", __func__);
     return SSH_OK;
 }
 
@@ -346,7 +346,7 @@ static int sshd_exec_request(ssh_session session, ssh_channel channel,
     (void) session;
     (void) channel;
     //scp -f /tmp/resolv.conf
-    zlog_debug(ZLOG_UTILS, "%s : %s", __func__, command);
+    zlog_debug(MODULE_UTILS, "%s : %s", __func__, command);
     if(strstr(command, "scp"))
     {
     	client->type = SSH_C_SCP;
@@ -359,7 +359,7 @@ static int sshd_subsystem_request(ssh_session session, ssh_channel channel,
                              const char *subsystem, void *userdata) {
     /* subsystem requests behave simillarly to exec requests. */
 
-	zlog_debug(ZLOG_UTILS, "sshd_subsystem_request:%s", subsystem);
+	zlog_debug(MODULE_UTILS, "sshd_subsystem_request:%s", subsystem);
 #ifdef SSH_OPENSSH_TOOL
     if (strcmp(subsystem, "sftp") == 0) {
         return sshd_exec_request(session, channel, SFTP_SERVER_PATH, userdata);
@@ -376,14 +376,14 @@ static int sshd_auth_password(ssh_session session, const char *user,
 	sshd_client_t *client = (sshd_client_t *)userdata;
 
     (void) session;
-    zlog_debug(ZLOG_UTILS, "auth_password : %s -> %s", user, pass);
+    zlog_debug(MODULE_UTILS, "auth_password : %s -> %s", user, pass);
     //return SSH_AUTH_SUCCESS;
 
     //if (strcmp(user, USER) == 0 && strcmp(pass, PASS) == 0)
     if(user_authentication(user, pass) == OK)
     {
     	client->authenticated = 1;
-    	zlog_debug(ZLOG_UTILS, "auth_password : SSH_AUTH_SUCCESS");
+    	zlog_debug(MODULE_UTILS, "auth_password : SSH_AUTH_SUCCESS");
         return SSH_AUTH_SUCCESS;
     }
 
@@ -426,7 +426,7 @@ static int sshd_data_function(ssh_session session, ssh_channel channel, void *da
     if(ssh_channel_is_open(channel))
     {
     	int ret = 0;
-    	zlog_debug(ZLOG_UTILS, "data_function :%s(%x->%d)", buf, buf[0],len);
+    	zlog_debug(MODULE_UTILS, "data_function :%s(%x->%d)", buf, buf[0],len);
     	ret = sshd_shell_input(client, (char *) data, len);
     	if(ret == SSH_ERROR)
     	{
@@ -553,13 +553,13 @@ static int sshd_key_authenticate(sshd_client_t *client, ssh_event event)
         if (client->auth_attempts >= client->config->auth_retries/* ||
         		n >= 3*/) {
         	ssh_event_remove_session(event, client->session);
-        	zlog_debug(ZLOG_UTILS, "%s : too mush time", __func__);
+        	zlog_debug(MODULE_UTILS, "%s : too mush time", __func__);
             return SSH_ERROR;
         }
 
         if (ssh_event_dopoll(event, client->config->auth_waitting * 1000) == SSH_ERROR) {
         	ssh_event_remove_session(event, client->session);
-            zlog_debug(ZLOG_UTILS, "%s : %s", __func__, ssh_get_error(client->session));
+            zlog_debug(MODULE_UTILS, "%s : %s", __func__, ssh_get_error(client->session));
             return SSH_ERROR;
         }
         //n++;

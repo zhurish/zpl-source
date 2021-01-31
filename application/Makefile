@@ -5,8 +5,12 @@ include config.mk
 
 
 
-.PHONY:	obj all demo lib clean rebuild install objclean
+.PHONY:	obj all demo lib clean rebuild install objclean make_prepare
 
+make_prepare:
+	@for i in $(APP_DIR); do	\
+		$(MAKE) -C $$i make_prepare || exit "$$?"; 	\
+	done
 
 objclean:
 	@for i in $(APP_DIR); do	\

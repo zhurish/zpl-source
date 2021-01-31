@@ -7,20 +7,20 @@
 
 #include "zebra.h"
 #include "os_list.h"
-
-#include "if.h"
+#include "linklist.h"
+//#include "if.h"
 #include "vty.h"
 #include "sockunion.h"
 #include "prefix.h"
 #include "command.h"
 #include "memory.h"
 #include "log.h"
-#include "nsm_vrf.h"
+//#include "nsm_vrf.h"
 #include "command.h"
-#include "nsm_interface.h"
-#include "zclient.h"
+//#include "nsm_interface.h"
+//#include "nsm_zclient.h"
 #include "module.h"
-#include "nsm_client.h"
+//#include "nsm_client.h"
 #include "template.h"
 
 static struct list *template_list = NULL;

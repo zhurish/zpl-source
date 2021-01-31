@@ -111,7 +111,7 @@ static int web_facelib_all_detail(Webs *wp, char *path, char *query)
 		if(websPrivData->private_data[WEB_USER_PRIVATE_INDEX] == NULL)
 		{
 			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-				zlog_debug(ZLOG_WEB, "Can not Alloc Memory");
+				zlog_debug(MODULE_WEB, "Can not Alloc Memory");
 			return web_return_application_json_array(wp, ERROR, "未能获取缓存", NULL);
 			//return web_return_text_plain(wp, ERROR);
 		}
@@ -124,7 +124,7 @@ static int web_facelib_all_detail(Webs *wp, char *path, char *query)
 	if (tmp == NULL)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
+			zlog_debug(MODULE_WEB, "Can not Get Board ID Value");
 		return web_return_application_json_array(wp, ERROR, "获取板卡ID失败", NULL);
 		//return web_return_text_plain(wp, ERROR);
 	}
@@ -137,7 +137,7 @@ static int web_facelib_all_detail(Webs *wp, char *path, char *query)
 	if (tmp == NULL)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get Group ID Value");
+			zlog_debug(MODULE_WEB, "Can not Get Group ID Value");
 		return web_return_application_json_array(wp, ERROR, "获取分组ID失败", NULL);
 		//return web_return_text_plain(wp, '[');
 	}
@@ -150,7 +150,7 @@ static int web_facelib_all_detail(Webs *wp, char *path, char *query)
 	if (tmp == NULL)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get ACTION Value");
+			zlog_debug(MODULE_WEB, "Can not Get ACTION Value");
 		return web_return_application_json_array(wp, ERROR, "获取分页索引失败", NULL);
 		//return web_return_text_plain(wp, ERROR);
 	}
@@ -216,7 +216,7 @@ static int web_video_facelib_delete(Webs *wp, void *p)
 	if (NULL == strID)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get User ID Value");
+			zlog_debug(MODULE_WEB, "Can not Get User ID Value");
 		ret = ERROR;
 		goto err_out;
 	}
@@ -229,7 +229,7 @@ static int web_video_facelib_delete(Webs *wp, void *p)
 	else
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
+			zlog_debug(MODULE_WEB, "Can not Get Board ID Value");
 		ret = ERROR;
 		goto err_out;
 	}
@@ -262,7 +262,7 @@ static int web_video_facelib_delete(Webs *wp, void *p)
 	if(ret == ERROR)
 	{
 		if(WEB_IS_DEBUG(EVENT))
-			zlog_debug(ZLOG_WEB, "Can not Del User");
+			zlog_debug(MODULE_WEB, "Can not Del User");
 	}
 err_out:
 	if(ret != OK)
@@ -412,14 +412,14 @@ static int web_video_facelib_add(Webs *wp, char *path, char *query)
 	if(!user)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get User Name Value");
+			zlog_debug(MODULE_WEB, "Can not Get User Name Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	tmp = webs_get_var(wp, "gender", NULL);
 	if(!tmp)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get gender Value");
+			zlog_debug(MODULE_WEB, "Can not Get gender Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	gender = atoi(tmp);
@@ -427,7 +427,7 @@ static int web_video_facelib_add(Webs *wp, char *path, char *query)
 	if(!user_id)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get User ID Value");
+			zlog_debug(MODULE_WEB, "Can not Get User ID Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	tmp = webs_get_var(wp, "group", NULL);
@@ -444,7 +444,7 @@ static int web_video_facelib_add(Webs *wp, char *path, char *query)
 	if(!tmp)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
+			zlog_debug(MODULE_WEB, "Can not Get Board ID Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	if(tmp)
@@ -455,7 +455,7 @@ static int web_video_facelib_add(Webs *wp, char *path, char *query)
 	if(!tmp)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get Pic Name Value");
+			zlog_debug(MODULE_WEB, "Can not Get Pic Name Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 
@@ -496,7 +496,7 @@ static int web_video_facelib_add(Webs *wp, char *path, char *query)
 		remove(uploadfile);
 		sync();
 		if(WEB_IS_DEBUG(EVENT))
-			zlog_debug(ZLOG_WEB, "Can not Add User");
+			zlog_debug(MODULE_WEB, "Can not Add User");
 	}
 	return web_return_text_plain(wp, ret);
 }
@@ -514,7 +514,7 @@ static int web_facegroup_all(Webs *wp, char *path, char *query)
 	if (tmp == NULL)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
+			zlog_debug(MODULE_WEB, "Can not Get Board ID Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	websSetStatus(wp, 200);
@@ -561,7 +561,7 @@ static int web_video_facegroup_handle(Webs *wp, char *path, char *query)
 	if(!tmp)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
+			zlog_debug(MODULE_WEB, "Can not Get Board ID Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	id = V9_APP_BOARD_CALCU_ID(atoi(tmp));
@@ -571,7 +571,7 @@ static int web_video_facegroup_handle(Webs *wp, char *path, char *query)
 	if(!tmp)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get ACTION Value");
+			zlog_debug(MODULE_WEB, "Can not Get ACTION Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	if(strstr(tmp, "add"))
@@ -580,14 +580,14 @@ static int web_video_facegroup_handle(Webs *wp, char *path, char *query)
 		if(!tmp)
 		{
 			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-				zlog_debug(ZLOG_WEB, "Can not Get groupname Value");
+				zlog_debug(MODULE_WEB, "Can not Get groupname Value");
 			return web_return_text_plain(wp, ERROR);
 		}
 		ret = v9_video_usergroup_add( id, tmp);
 		if(ret == ERROR)
 		{
 			if(WEB_IS_DEBUG(EVENT))
-				zlog_debug(ZLOG_WEB, "Can not Add Group");
+				zlog_debug(MODULE_WEB, "Can not Add Group");
 		}
 		websSetStatus(wp, 200);
 		websWriteHeaders(wp, -1, 0);
@@ -613,14 +613,14 @@ static int web_video_facegroup_handle(Webs *wp, char *path, char *query)
 		if(!tmp)
 		{
 			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-				zlog_debug(ZLOG_WEB, "Can not Get Group ID Value");
+				zlog_debug(MODULE_WEB, "Can not Get Group ID Value");
 			return web_return_text_plain(wp, ERROR);
 		}
 		ret = v9_video_usergroup_del( id, atoi(tmp));
 		if(ret == ERROR)
 		{
 			if(WEB_IS_DEBUG(EVENT))
-				zlog_debug(ZLOG_WEB, "Can not Del Group");
+				zlog_debug(MODULE_WEB, "Can not Del Group");
 		}
 	}
 	else if(strstr(tmp, "rename"))
@@ -630,7 +630,7 @@ static int web_video_facegroup_handle(Webs *wp, char *path, char *query)
 		if(!tmp)
 		{
 			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-				zlog_debug(ZLOG_WEB, "Can not Get Group ID Value");
+				zlog_debug(MODULE_WEB, "Can not Get Group ID Value");
 			return web_return_text_plain(wp, ERROR);
 		}
 		group = atoi(tmp);
@@ -638,14 +638,14 @@ static int web_video_facegroup_handle(Webs *wp, char *path, char *query)
 		if(!tmp)
 		{
 			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-				zlog_debug(ZLOG_WEB, "Can not Get Group Name Value");
+				zlog_debug(MODULE_WEB, "Can not Get Group Name Value");
 			return web_return_text_plain(wp, ERROR);
 		}
 		ret = v9_video_usergroup_rename(id, group, tmp);
 		if(ret == ERROR)
 		{
 			if(WEB_IS_DEBUG(EVENT))
-				zlog_debug(ZLOG_WEB, "Can not Rename Group");
+				zlog_debug(MODULE_WEB, "Can not Rename Group");
 		}
 		websSetStatus(wp, 200);
 		websWriteHeaders(wp, -1, 0);

@@ -237,7 +237,7 @@ static int web_dhcpset_set(Webs *wp, char *path, char *query)
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get ACTION Value");
+			zlog_debug(MODULE_WEB, "Can not Get ACTION Value");
 		return web_return_text_plain(wp, ERROR);
 		//return ERROR;
 	}
@@ -248,11 +248,11 @@ static int web_dhcpset_set(Webs *wp, char *path, char *query)
 		if(poolname == NULL)
 		{
 			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-				zlog_debug(ZLOG_WEB, "Can not Get poolname Value");
+				zlog_debug(MODULE_WEB, "Can not Get poolname Value");
 			return web_return_text_plain(wp, ERROR);
 		}
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "web Get poolname=%s", poolname);
+			zlog_debug(MODULE_WEB, "web Get poolname=%s", poolname);
 		if(web_dhcpd_get_config(wp, poolname) != OK)
 		{
 			return web_return_text_plain(wp, ERROR);
@@ -271,14 +271,14 @@ static int web_dhcpset_set(Webs *wp, char *path, char *query)
 	if (NULL == poolname)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get poolname Value");
+			zlog_debug(MODULE_WEB, "Can not Get poolname Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	ifpname = webs_get_var(wp, T("interface"), T(""));
 	if (NULL == ifpname)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get interface Value");
+			zlog_debug(MODULE_WEB, "Can not Get interface Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 
@@ -286,7 +286,7 @@ static int web_dhcpset_set(Webs *wp, char *path, char *query)
 	if (NULL == start)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get start ip Value");
+			zlog_debug(MODULE_WEB, "Can not Get start ip Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 
@@ -294,7 +294,7 @@ static int web_dhcpset_set(Webs *wp, char *path, char *query)
 	if (NULL == end)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get end ip Value");
+			zlog_debug(MODULE_WEB, "Can not Get end ip Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 
@@ -316,7 +316,7 @@ static int web_dhcpset_set(Webs *wp, char *path, char *query)
 
 	if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
 	{
-		zlog_debug(ZLOG_WEB, "web Get poolname=%s interface=%s start=%s end=%s gateway=%s gateway2=%s dns=%s dns2=%s",
+		zlog_debug(MODULE_WEB, "web Get poolname=%s interface=%s start=%s end=%s gateway=%s gateway2=%s dns=%s dns2=%s",
 				   poolname, ifpname, start, end, gateway?gateway:" ", gateway2?gateway2:" ", dns?dns:" ", dns2?dns2:" ");
 	}
 	if(web_dhcpd_set_config(wp, poolname, start,
@@ -451,7 +451,7 @@ static int web_dhcp_static_handle(Webs *wp, void *p)
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get BTNID Value");
+			zlog_debug(MODULE_WEB, "Can not Get BTNID Value");
 		return ERROR;//web_return_text_plain(wp, ERROR);
 	}
 	if(strstr(strval, "delete"))
@@ -462,7 +462,7 @@ static int web_dhcp_static_handle(Webs *wp, void *p)
 		if(strval == NULL || all_space(strval))
 		{
 			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-				zlog_debug(ZLOG_WEB, "Can not Get devmac Value");
+				zlog_debug(MODULE_WEB, "Can not Get devmac Value");
 			return ERROR;//web_return_text_plain(wp, ERROR);
 		}
 		memset(devmac, 0, sizeof(devmac));
@@ -472,14 +472,14 @@ static int web_dhcp_static_handle(Webs *wp, void *p)
 		if(strval == NULL || all_space(strval))
 		{
 			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-				zlog_debug(ZLOG_WEB, "Can not Get devip Value");
+				zlog_debug(MODULE_WEB, "Can not Get devip Value");
 			return ERROR;//web_return_text_plain(wp, ERROR);
 		}
 		memset(devip, 0, sizeof(devip));
 		strcpy(devip, strval);
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
 		{
-			zlog_debug(ZLOG_WEB, "web Get devip=%s devmac=%s",
+			zlog_debug(MODULE_WEB, "web Get devip=%s devmac=%s",
 					    devip, devmac);
 		}
 		return (web_dhcp_static_lease(0, NULL, devip, devmac, NULL) == OK) ? web_return_text_plain(wp, OK):ERROR;//;
@@ -494,7 +494,7 @@ static int web_dhcp_static_handle(Webs *wp, void *p)
 		if(strval == NULL || all_space(strval))
 		{
 			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-				zlog_debug(ZLOG_WEB, "Can not Get devname Value");
+				zlog_debug(MODULE_WEB, "Can not Get devname Value");
 			return ERROR;//web_return_text_plain(wp, ERROR);
 		}
 		memset(devname, 0, sizeof(devname));
@@ -504,7 +504,7 @@ static int web_dhcp_static_handle(Webs *wp, void *p)
 		if(strval == NULL || all_space(strval))
 		{
 			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-				zlog_debug(ZLOG_WEB, "Can not Get devip Value");
+				zlog_debug(MODULE_WEB, "Can not Get devip Value");
 			return ERROR;//web_return_text_plain(wp, ERROR);
 		}
 		memset(devip, 0, sizeof(devip));
@@ -513,7 +513,7 @@ static int web_dhcp_static_handle(Webs *wp, void *p)
 		if(strval == NULL || all_space(strval))
 		{
 			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-				zlog_debug(ZLOG_WEB, "Can not Get devmac Value");
+				zlog_debug(MODULE_WEB, "Can not Get devmac Value");
 			return ERROR;//web_return_text_plain(wp, ERROR);
 		}
 		memset(devmac, 0, sizeof(devmac));
@@ -523,7 +523,7 @@ static int web_dhcp_static_handle(Webs *wp, void *p)
 		if(strval == NULL || all_space(strval))
 		{
 			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-				zlog_debug(ZLOG_WEB, "Can not Get expires Value");
+				zlog_debug(MODULE_WEB, "Can not Get expires Value");
 			return web_return_text_plain(wp, ERROR);
 		}
 		memset(expires, 0, sizeof(expires));
@@ -531,7 +531,7 @@ static int web_dhcp_static_handle(Webs *wp, void *p)
 		
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
 		{
-			zlog_debug(ZLOG_WEB, "web Get devname=%s devip=%s devmac=%s expires=%s",
+			zlog_debug(MODULE_WEB, "web Get devname=%s devip=%s devmac=%s expires=%s",
 					   devname, devip, devmac, expires);
 		}
 		//memset(expires, 0, sizeof(expires));

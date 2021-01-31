@@ -71,10 +71,10 @@
 #define APP_FEATURE_MAX				1024
 
 #if defined( V9_VIDEO_APP_DEBUG)||defined( V9_VIDEO_APP_DEBUG_HW)
-#define V9_DEBUG(format, ...) 			zlog_debug (ZLOG_APP, format, ##__VA_ARGS__)
-#define V9_EVENT_DEBUG(format, ...) 	zlog_debug (ZLOG_APP, format, ##__VA_ARGS__)
-#define V9_DB_DEBUG(format, ...) 		zlog_debug (ZLOG_APP, format, ##__VA_ARGS__)
-#define V9_SDK_DBGPRF(format, ...) 		zlog_debug (ZLOG_APP, format, ##__VA_ARGS__)
+#define V9_DEBUG(format, ...) 			zlog_debug (MODULE_APP, format, ##__VA_ARGS__)
+#define V9_EVENT_DEBUG(format, ...) 	zlog_debug (MODULE_APP, format, ##__VA_ARGS__)
+#define V9_DB_DEBUG(format, ...) 		zlog_debug (MODULE_APP, format, ##__VA_ARGS__)
+#define V9_SDK_DBGPRF(format, ...) 		zlog_debug (MODULE_APP, format, ##__VA_ARGS__)
 #else
 #define V9_DEBUG(format, ...)
 #define V9_EVENT_DEBUG(format, ...)

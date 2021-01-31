@@ -35,8 +35,8 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 
 ringBuffer::ringBuffer(const int maxsize)
 {
-  char *buffer;
-  buffer = new char[maxsize + 1];
+  unsigned char *buffer;
+  buffer = new unsigned char [maxsize + 1];
   this->bufSize = maxsize;
   this->pToBuf = 0;
   this->pFromBuf = 0;
@@ -53,7 +53,7 @@ void ringBuffer::rngFlush()
   this->pFromBuf = 0;
 }
 
-int ringBuffer::rngBufGet(char *buffer, int maxbytes)
+int ringBuffer::rngBufGet(unsigned char *buffer, int maxbytes)
 {
   int bytesgot = 0;
   int toBuf = this->pToBuf;
@@ -111,7 +111,7 @@ int ringBuffer::rngBufGet(char *buffer, int maxbytes)
 * if there is insufficient room in the ring buffer at the time of the call.
 */
 
-int ringBuffer::rngBufPut(char *buffer, /* buffer to get data from       */
+int ringBuffer::rngBufPut(unsigned char *buffer, /* buffer to get data from       */
                           int nbytes    /* number of bytes to try to put */
 )
 {
@@ -211,11 +211,11 @@ int ringBuffer::rngFreeBytes()
 }
 
 //////////////////////listData///////////////////////
-listData::listData(char *d, int len)
+listData::listData(unsigned char *d, int len)
 {
   this->maxsize = ((len + 3) / 4) * 4;
   this->datasize = len;
-  this->data = new char[this->maxsize];
+  this->data = new unsigned char [this->maxsize];
   memcpy(this->data, d, len);
 }
 
@@ -226,7 +226,7 @@ listData::~listData()
 }
 
 //////////////////////vectorBuffer///////////////////////
-listData *vectorBuffer::vectorBufferDataCreate(char *d, int l)
+listData *vectorBuffer::vectorBufferDataCreate(unsigned char *d, int l)
 {
   listData *t = nullptr;
   if (data_unused_list.size())
@@ -287,7 +287,7 @@ bool vectorBuffer::vectorBufferDataIsEmpty()
   }
   return false;
 }
-int vectorBuffer::vectorBufferDataAdd(char *d, int l)
+int vectorBuffer::vectorBufferDataAdd(unsigned char *d, int l)
 {
   if ((data_list.size() + data_unused_list.size()) >= node_num)
   {
@@ -338,7 +338,7 @@ vectorBuffer::~vectorBuffer()
   data_unused_list.clear();
 }
 
-int vectorBuffer::vectorBufferDataGet(char *d, int l)
+int vectorBuffer::vectorBufferDataGet(unsigned char *d, int l)
 {
   if (data_list.size())
   {
@@ -358,7 +358,7 @@ int vectorBuffer::vectorBufferDataGet(char *d, int l)
 }
 
 //////////////////////listBuffer///////////////////////
-listData *listBuffer::listBufferDataCreate(char *d, int l)
+listData *listBuffer::listBufferDataCreate(unsigned char *d, int l)
 {
   listData *t = nullptr;
   if (data_unused_list.size())
@@ -419,7 +419,7 @@ bool listBuffer::listBufferDataIsEmpty()
   }
   return false;
 }
-int listBuffer::listBufferDataAdd(char *d, int l)
+int listBuffer::listBufferDataAdd(unsigned char *d, int l)
 {
   if ((data_list.size() + data_unused_list.size()) >= node_num)
   {
@@ -470,7 +470,7 @@ listBuffer::~listBuffer()
   data_unused_list.clear();
 }
 
-int listBuffer::listBufferDataGet(char *d, int l)
+int listBuffer::listBufferDataGet(unsigned char *d, int l)
 {
   if (data_list.size())
   {
@@ -595,7 +595,7 @@ void FramedQueue::FramedQueuePost()
 #endif
 }
 
-int FramedQueue::FramedQueueDataPut(char *d, int l)
+int FramedQueue::FramedQueueDataPut(unsigned char *d, int l)
 {
   int ret = 0;
   m_mutex.lock();
@@ -629,7 +629,7 @@ int FramedQueue::FramedQueueDataPut(char *d, int l)
   return ret;
 }
 
-int FramedQueue::FramedQueueDataGet(char *d, int l)
+int FramedQueue::FramedQueueDataGet(unsigned char *d, int l)
 {
   int ret = 0;
   m_mutex.lock();

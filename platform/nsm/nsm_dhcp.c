@@ -23,7 +23,7 @@
 #include "nsm_zserv.h"
 #include "nsm_redistribute.h"
 #include "nsm_debug.h"
-#include "zclient.h"
+#include "nsm_zclient.h"
 #include "nsm_dhcp.h"
 
 
@@ -122,7 +122,6 @@ void * nsm_dhcp_interface_get_pravite(struct interface *ifp, nsm_dhcp_type type)
 	}
 	return NULL;
 }
-
 
 nsm_dhcp_type nsm_interface_dhcp_mode_get_api(struct interface *ifp)
 {
@@ -299,5 +298,19 @@ int nsm_dhcp_module_exit ()
 	return OK;
 }
 
+struct module_list module_list_nsmdhcp = 
+{ 
+	.module=MODULE_NSMDHCP, 
+	.name="NSMDHCP", 
+	.module_init=nsm_dhcp_module_init, 
+	.module_exit=nsm_dhcp_module_exit, 
+	.module_task_init=nsm_dhcp_task_init, 
+	.module_task_exit=nsm_dhcp_task_exit, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};
 
 #endif

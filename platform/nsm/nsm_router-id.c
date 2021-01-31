@@ -77,7 +77,7 @@ router_id_get (struct prefix *p, vrf_id_t vrf_id)
   struct nsm_vrf *zvrf = vrf_info_lookup (vrf_id);
   if(!zvrf)
   {
-	  zlog_err(ZLOG_NSM,"vrf_info_lookup NULL\r\n");
+	  zlog_err(MODULE_NSM,"vrf_info_lookup NULL\r\n");
 	  return;
   }
   p->u.prefix4.s_addr = 0;

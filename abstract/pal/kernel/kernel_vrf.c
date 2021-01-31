@@ -111,7 +111,7 @@ vrf_netns_pathname(const char *name)
 
 	if (!result)
 	{
-		zlog_err(ZLOG_PAL, "Invalid pathname: %s", safe_strerror(errno));
+		zlog_err(MODULE_PAL, "Invalid pathname: %s", safe_strerror(errno));
 		return NULL;
 	}
 	return pathname;
@@ -156,16 +156,16 @@ static int vrf_enable(vrf_id_t vrf_id)
 
 		if (!vrf_is_enabled(vrf))
 		{
-			zlog_err(ZLOG_PAL, "Can not enable VRF %u: %s!", vrf->vrf_id,
+			zlog_err(MODULE_PAL, "Can not enable VRF %u: %s!", vrf->vrf_id,
 					safe_strerror(errno));
 			return -1;
 		}
 
 		if (have_netns())
-			zlog_info(ZLOG_PAL, "VRF %u is associated with NETNS %s.",
+			zlog_info(MODULE_PAL, "VRF %u is associated with NETNS %s.",
 					vrf->vrf_id, vrf->name);
 
-		zlog_info(ZLOG_PAL, "VRF %u is enabled.", vrf->vrf_id);
+		zlog_info(MODULE_PAL, "VRF %u is enabled.", vrf->vrf_id);
 	}
 	return 0;
 }
@@ -180,7 +180,7 @@ static int vrf_disable(vrf_id_t vrf_id)
 	struct vrf *vrf = vrf_lookup(vrf_id);
 	if (vrf_is_enabled(vrf))
 	{
-		zlog_info(ZLOG_PAL, "VRF %u is to be disabled.", vrf->vrf_id);
+		zlog_info(MODULE_PAL, "VRF %u is to be disabled.", vrf->vrf_id);
 		if (have_netns())
 			close(vrf->fd);
 

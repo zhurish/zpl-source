@@ -1,18 +1,20 @@
 
 include $(MAKE_DIR)/module-dir.mk
 
+include $(MAKE_DIR)/multimedia-config.mk
+include $(MAKE_DIR)/pjsip-config.mk
 
 PLPRODS += $(PLATFORM_ROOT)/os
 PLPRODS += $(PLATFORM_ROOT)/lib
-PLPRODS += $(PLATFORM_ROOT)/misc
+
 PLPRODS += $(PLATFORM_ROOT)/shell
 
 PL_INCLUDE += -I$(PLATFORM_ROOT)/os
 PL_INCLUDE += -I$(PLATFORM_ROOT)/lib
-PL_INCLUDE += -I$(PLATFORM_ROOT)/misc
 PL_INCLUDE += -I$(PLATFORM_ROOT)/shell
 
 ifeq ($(strip $(PL_NSM_MODULE)),true)
+
 PLPRODS += $(PLATFORM_ROOT)/nsm
 PL_INCLUDE += -I$(PLATFORM_ROOT)/nsm
 PL_DEFINE	+= -DPL_NSM_MODULE
@@ -128,6 +130,7 @@ endif #($(strip $(PL_PRODUCT_SDK_MODULE)),true)
 
 endif #($(strip $(PL_PRODUCT_MODULE)),true)
 
+
 #PL_ABSTRACT_MODULE
 ifeq ($(strip $(PL_ABSTRACT_MODULE)),true)
 
@@ -240,8 +243,6 @@ PL_INCLUDE += -I$(WIFI_ROOT)
 PL_DEFINE += -DPL_WIFI_MODULE
 endif#($(strip $(PL_WIFI_MODULE)),true)
 
-include $(MAKE_DIR)/multimedia-config.mk
-include $(MAKE_DIR)/pjsip-config.mk
 
 ifeq ($(strip $(PL_MQTT_MODULE)),true)
 MQTT_ROOT=$(COMPONENT_ROOT)/mqtt

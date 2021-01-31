@@ -36,7 +36,12 @@ $(NVRAMENV_TARGET): $(nvramenv_MODULE_OBJS)
 $(I2CSET_TARGET): $(i2cset_MODULE_OBJS)
 	$(CC) $(i2cset_MODULE_OBJS) $(PLCFLAGS) $(LDCLFLAG) -o $(I2CSET_TARGET)
 	
-	
+files = $(patsubst %.o,%.c,$(upgrade_OBJS))
+make_prepare:
+	@for i in $(files); do	\
+		$(MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+	done
+
 lib: $(upgrade_MODULE_OBJS) $(nvramenv_MODULE_OBJS) 
 #$(i2cset_MODULE_OBJS)
 
@@ -68,4 +73,4 @@ objclean:
 
 all: obj install 
 
-.PHONY:	obj all lib install objclean clean
+.PHONY:	obj all lib install objclean clean make_prepare

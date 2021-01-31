@@ -130,14 +130,14 @@ int iw_ap_connect_add_api(iw_ap_t *iw_ap, iw_ap_connect_t *value)
 		client->ifindex = iw_ap->ifindex;
 		client->TTL = IW_AP_CONNECT_TTL_DEFAULT;
 
-		//zlog_debug(ZLOG_WIFI, "update TTL ");
+		//zlog_debug(MODULE_WIFI, "update TTL ");
 		if(iw_ap->ap_mutex)
 			os_mutex_unlock(iw_ap->ap_mutex);
 		return OK;
 	}
 	else
 	{
-		//zlog_debug(ZLOG_WIFI, "add connect node ");
+		//zlog_debug(MODULE_WIFI, "add connect node ");
 		iw_ap_connect_add_node(iw_ap, value);
 		if(iw_ap->ap_mutex)
 			os_mutex_unlock(iw_ap->ap_mutex);
@@ -1206,13 +1206,13 @@ static int iw_ap_scan_thread(struct thread * thread)
 			{
 				memset(cmdtmp, 0, sizeof(cmdtmp));
 				sprintf(cmdtmp, "brctl addif br-lan %s", ifp->k_name);
-				//zlog_debug(ZLOG_WIFI, "=======%s======%s", __func__, cmdtmp);
+				//zlog_debug(MODULE_WIFI, "=======%s======%s", __func__, cmdtmp);
 				super_system(cmdtmp);
 			}
 		}
 		else
 		{
-			//zlog_debug(ZLOG_WIFI, "=======%s==1====", __func__);
+			//zlog_debug(MODULE_WIFI, "=======%s==1====", __func__);
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
 			super_system("brctl addif br-lan wlan0");
 #else
@@ -1234,7 +1234,7 @@ static int iw_ap_scan_thread(struct thread * thread)
 
 		iw_ap->s_thread = thread_add_timer(iw_ap->master,iw_ap_scan_thread,
 							iw_ap, iw_ap->ap_client_delay);
-		//zlog_debug(ZLOG_WIFI, "%s", __func__);
+		//zlog_debug(MODULE_WIFI, "%s", __func__);
 		if(iw_ap->mutex)
 			os_mutex_unlock(iw_ap->mutex);
 	}
@@ -1258,13 +1258,13 @@ static int iw_ap_start_thread(struct thread * thread)
 			{
 				memset(cmdtmp, 0, sizeof(cmdtmp));
 				sprintf(cmdtmp, "brctl addif br-lan %s", ifp->k_name);
-				//zlog_debug(ZLOG_WIFI, "=======%s======%s", __func__, cmdtmp);
+				//zlog_debug(MODULE_WIFI, "=======%s======%s", __func__, cmdtmp);
 				super_system(cmdtmp);
 			}
 		}
 		else
 		{
-			//zlog_debug(ZLOG_WIFI, "=======%s==1====", __func__);
+			//zlog_debug(MODULE_WIFI, "=======%s==1====", __func__);
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
 			super_system("brctl addif br-lan wlan0");
 #else
@@ -1278,7 +1278,7 @@ static int iw_ap_start_thread(struct thread * thread)
 
 		//if(iw_ap_make_script(iw_ap) == OK)
 		iw_ap_running_script(iw_ap);
-		//zlog_debug(ZLOG_WIFI, "%s", __func__);
+		//zlog_debug(MODULE_WIFI, "%s", __func__);
 
 		if(iw_ap->s_thread && iw_ap->master)
 			thread_cancel(iw_ap->s_thread);
@@ -1309,20 +1309,20 @@ static int iw_ap_start(iw_ap_t *iw_ap)
 	{
 		iw_ap->crc_sum = crc_sum;
 		iw_ap->change = TRUE;
-		//zlog_debug(ZLOG_WIFI, "=======%s====change==", __func__);
+		//zlog_debug(MODULE_WIFI, "=======%s====change==", __func__);
 	}
-	//zlog_debug(ZLOG_WIFI, "%s", __func__);
+	//zlog_debug(MODULE_WIFI, "%s", __func__);
 
 	if(iw_ap->t_thread && iw_ap->master)
 		thread_cancel(iw_ap->t_thread);
 	iw_ap->t_thread = NULL;
 
-	//zlog_debug(ZLOG_WIFI, "%s thread_cancel", __func__);
+	//zlog_debug(MODULE_WIFI, "%s thread_cancel", __func__);
 
 	if(iw_ap->t_thread == NULL && iw_ap->master)
 		iw_ap->t_thread = thread_add_timer(iw_ap->master, iw_ap_start_thread, iw_ap, 10);
 
-	//zlog_debug(ZLOG_WIFI, "%s thread_add_timer", __func__);
+	//zlog_debug(MODULE_WIFI, "%s thread_add_timer", __func__);
 	//iw_ap->thread = thread_add_timer(zebrad.master, iw_ap_start_thread, iw_ap, 2);
 	//if(iw_ap->ap_mutex) iw_ap->t_thread,
 	//	os_mutex_unlock(iw_ap->ap_mutex);
@@ -1344,7 +1344,7 @@ static int iw_ap_stop(iw_ap_t *iw_ap)
 	//iw_ap->t_thread = NULL;
 	//iw_ap->s_thread = NULL;
 	iw_ap->change = FALSE;
-	//zlog_debug(ZLOG_WIFI, "%s", __func__);
+	//zlog_debug(MODULE_WIFI, "%s", __func__);
 	iw_ap_stop_script(iw_ap);
 
 	//if(iw_ap->ap_mutex)
@@ -1364,7 +1364,7 @@ static int iw_ap_task(iw_ap_t *iw_ap)
 /*		iw_client_connect_process(iw_client);
 		os_sleep(iw_client->connect_delay);*/
 		struct thread thread;
-		//os_log_reopen(ZLOG_NSM);
+		//os_log_reopen(MODULE_NSM);
 		while (thread_fetch (master_thread[PL_WIFI_MODULE], &thread))
 			thread_call (&thread);
 	}
@@ -1452,7 +1452,7 @@ static int iw_ap_default_init(iw_ap_t *iw_ap, ifindex_t ifindex)
 		{
 			memset(cmdtmp, 0, sizeof(cmdtmp));
 			sprintf(cmdtmp, "brctl addif br-lan %s", ifp->k_name);
-			//zlog_debug(ZLOG_WIFI, "=============%s", cmdtmp);
+			//zlog_debug(MODULE_WIFI, "=============%s", cmdtmp);
 			super_system(cmdtmp);
 		}
 	}
@@ -1546,7 +1546,7 @@ int iw_ap_exit(iw_ap_t *iw_ap)
 		{
 			memset(cmdtmp, 0, sizeof(cmdtmp));
 			sprintf(cmdtmp, "brctl delif br-lan %s", ifp->k_name);
-			//zlog_debug(ZLOG_WIFI, "=============%s", cmdtmp);
+			//zlog_debug(MODULE_WIFI, "=============%s", cmdtmp);
 			super_system(cmdtmp);
 		}
 	}

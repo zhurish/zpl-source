@@ -14,7 +14,7 @@
 #include "command.h"
 #include "memory.h"
 #include "log.h"
-#include "zclient.h"
+#include "nsm_zclient.h"
 #include "thread.h"
 #include "nsm_veth.h"
 #include "nsm_tunnel.h"
@@ -24,7 +24,7 @@
 #include "linux/if_tunnel.h"
 #include "linux/sockios.h"
 
-
+#ifdef PL_NSM_TUNNEL
 #if 1
 
 static int _if_tunnel_create(const char *dev, struct ip_tunnel_parm *p)
@@ -690,4 +690,5 @@ int utils_tunnel_cmd_init (void)
 }
 #endif
 #endif /* HAVE_UTILS_TUNNEL */
+#endif
 #endif

@@ -7,6 +7,8 @@ lib:install
 #
 obj:install
 #
+
+make_prepare:
 #
 config_install:
 	@install -d ${DSTETCDIR} 

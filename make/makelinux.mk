@@ -182,8 +182,8 @@ endif
 #
 #
 ifeq ($(PL_BUILD_DEBUG),YES)
-PLOS_CFLAGS += -g2 -ggdb
-PLOS_CPPFLAGS += -g2
+PLOS_CFLAGS += -g -ggdb
+PLOS_CPPFLAGS += -g
 else
 PLOS_CFLAGS += -O1
 PLOS_CPPFLAGS += -O1
@@ -290,8 +290,7 @@ export PLSTRIP_CFLAGS= --strip-unneeded
 #
 #PL_MAKE_LIB = @$(AR) -rs
 #
-#
-
+# files = $(patsubst %.o,%.c,$(objects))
 #
 #
 #

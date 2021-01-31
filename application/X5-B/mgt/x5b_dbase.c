@@ -291,7 +291,7 @@ voip_dbase_t * voip_dbase_node_lookup_by_username(char *username, char *user_id)
 					}
 					else if(user_id)
 					{
-						//zlog_debug(ZLOG_APP, "===========in-userid:%s userid:%s", userid, dbase->phonetab[i].user_id);
+						//zlog_debug(MODULE_APP, "===========in-userid:%s userid:%s", userid, dbase->phonetab[i].user_id);
 
 						if( (memcmp(dbase->phonetab[i].user_id, userid, sizeof(userid)) == 0) )
 						{
@@ -899,7 +899,7 @@ int voip_dbase_get_room_phone_by_user(char *user_id, u_int16 *room_number,
 	{
 		dbase = voip_dbase_node_lookup_by_username (NULL, user_id);
 
-		//zlog_debug(ZLOG_APP, "===========userid:%s room=%d", user_id, dbase? dbase->room_number:0);
+		//zlog_debug(MODULE_APP, "===========userid:%s room=%d", user_id, dbase? dbase->room_number:0);
 
 		if (dbase == NULL)
 			return ERROR;
@@ -1561,7 +1561,7 @@ static int voip_ubus_dbase_sync_one(BOOL badd)
 		{
 			if(voip_dbase_node_lookup_by_username(NULL, user_id))
 			{
-				zlog_err(ZLOG_APP, "This User ID(%s) is already exist.", user_id);
+				zlog_err(MODULE_APP, "This User ID(%s) is already exist.", user_id);
 				return ERROR;
 			}
 			//if(badd)

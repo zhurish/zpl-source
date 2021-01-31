@@ -26,6 +26,7 @@ config PL_PAL_MODULE
 choice
 	prompt "PAL Abstract type"
 	depends on PL_PAL_MODULE
+	default PL_PAL_KERNEL_STACK
 
 config PL_PAL_IPCOM_STACK
 	bool "IPCOM IP/TCP Stack Module"

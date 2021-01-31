@@ -492,7 +492,7 @@ static int v9_video_disk_monitor_task(void *p)
 
 	if (v9_video_board[APP_BOARD_MAIN-1].id == APP_BOARD_MAIN)
 	{
-		//zlog_trap(ZLOG_APP, "===================%s===================", __func__);
+		//zlog_trap(MODULE_APP, "===================%s===================", __func__);
 		v9_video_board_lock();
 
 		diskload1 = v9_video_board[APP_BOARD_MAIN-1].board.diskload1;

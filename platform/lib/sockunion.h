@@ -23,8 +23,11 @@
 #ifndef _ZEBRA_SOCKUNION_H
 #define _ZEBRA_SOCKUNION_H
 
+#ifdef PL_NSM_MODULE
 #include "if.h"
-
+#else
+typedef unsigned int ifindex_t;
+#endif
 #if 0
 union sockunion {
   struct sockinet {

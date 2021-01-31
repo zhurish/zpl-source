@@ -147,7 +147,7 @@ static int modem_event_reload_thread(modem_t *modem)
 		modem->state = MODEM_MACHINE_STATE_NONE;
 		MODEM_EV_DEBUG("Into %s",__func__);
 		if(MODEM_IS_DEBUG(EVENT))
-			zlog_debug(ZLOG_MODEM, "Handle %s on time delay thread.", modem_event_string(modem->a_event));
+			zlog_debug(MODULE_MODEM, "Handle %s on time delay thread.", modem_event_string(modem->a_event));
 		modem->t_time = 0;
 		modem->a_event = MODEM_EV_NONE;
 		return OK;
@@ -168,7 +168,7 @@ int modem_event_reload(modem_t *modem, modem_event event, BOOL lock)
 		}
 	}
 /*	if(MODEM_IS_DEBUG(EVENT))
-		zlog_debug(ZLOG_MODEM, "modem add event %s.", modem_event_string(modem->a_event));*/
+		zlog_debug(MODULE_MODEM, "modem add event %s.", modem_event_string(modem->a_event));*/
 	modem->a_event = event;
 	modem->t_time = os_time_create_once(modem_event_reload_thread, modem, 10000);
 	return OK;
@@ -255,7 +255,7 @@ modem_event modem_event_inster(modem_t *modem, modem_event event)
 	MODEM_EV_DEBUG("Into %s",__func__);
 
 	if(MODEM_IS_DEBUG(EVENT))
-		zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
+		zlog_debug(MODULE_MODEM, "Handle %s event on %s", modem_event_string(event),
 				(const char*)modem_module_name(modem));
 
 	if(modem_mgtlayer_inster(modem) != OK)
@@ -277,7 +277,7 @@ modem_event modem_event_init(modem_t *modem, modem_event event)
 	assert(modem);
 	//MODEM_EV_DEBUG("Into %s",__func__);
 	if(MODEM_IS_DEBUG(EVENT))
-		zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
+		zlog_debug(MODULE_MODEM, "Handle %s event on %s", modem_event_string(event),
 				modem_module_name(modem));
 
 	if(modem_mgtlayer_init(modem) != OK)
@@ -301,7 +301,7 @@ modem_event modem_event_remove(modem_t *modem, modem_event event)
 	assert(modem);
 	MODEM_EV_DEBUG("Into %s",__func__);
 	if(MODEM_IS_DEBUG(EVENT))
-		zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
+		zlog_debug(MODULE_MODEM, "Handle %s event on %s", modem_event_string(event),
 				modem_module_name(modem));
 	/*
 	 * Stop network
@@ -326,7 +326,7 @@ modem_event modem_event_card_remove(modem_t *modem, modem_event event)
 	assert(modem);
 	MODEM_EV_DEBUG("Into %s",__func__);
 	if(MODEM_IS_DEBUG(EVENT))
-		zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
+		zlog_debug(MODULE_MODEM, "Handle %s event on %s", modem_event_string(event),
 				modem_module_name(modem));
 	/*
 	 * Stop network
@@ -352,7 +352,7 @@ modem_event modem_event_card_inster(modem_t *modem, modem_event event)
 	assert(modem);
 	MODEM_EV_DEBUG("Into %s",__func__);
 	if(MODEM_IS_DEBUG(EVENT))
-		zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
+		zlog_debug(MODULE_MODEM, "Handle %s event on %s", modem_event_string(event),
 				modem_module_name(modem));
 
 	if(modem_mgtlayer_inster_usim(modem) != OK)
@@ -378,7 +378,7 @@ modem_event modem_event_card_switch(modem_t *modem, modem_event event)
 	assert(modem);
 	MODEM_EV_DEBUG("Into %s",__func__);
 	if(MODEM_IS_DEBUG(EVENT))
-		zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
+		zlog_debug(MODULE_MODEM, "Handle %s event on %s", modem_event_string(event),
 				modem_module_name(modem));
 	/*
 	 * Stop network
@@ -406,7 +406,7 @@ modem_event modem_event_network_setup(modem_t *modem, modem_event event)
 	assert(modem);
 	MODEM_EV_DEBUG("Into %s",__func__);
 	if(MODEM_IS_DEBUG(EVENT))
-		zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
+		zlog_debug(MODULE_MODEM, "Handle %s event on %s", modem_event_string(event),
 				modem_module_name(modem));
 
 	if(modem_mgtlayer_network_setup(modem) != OK)
@@ -429,7 +429,7 @@ modem_event modem_event_online(modem_t *modem, modem_event event)
 	assert(modem);
 	MODEM_EV_DEBUG("Into %s",__func__);
 	if(MODEM_IS_DEBUG(EVENT))
-		zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
+		zlog_debug(MODULE_MODEM, "Handle %s event on %s", modem_event_string(event),
 				modem_module_name(modem));
 
 	if(modem_mgtlayer_network_online(modem) != OK)
@@ -455,7 +455,7 @@ modem_event modem_event_network_attach(modem_t *modem, modem_event event)
 	assert(modem);
 	MODEM_EV_DEBUG("Into %s",__func__);
 	if(MODEM_IS_DEBUG(EVENT))
-		zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
+		zlog_debug(MODULE_MODEM, "Handle %s event on %s", modem_event_string(event),
 				modem_module_name(modem));
 
 	if(modem_mgtlayer_network_attach(modem) != OK)
@@ -478,7 +478,7 @@ modem_event modem_event_network_unattach(modem_t *modem, modem_event event)
 	assert(modem);
 	MODEM_EV_DEBUG("Into %s",__func__);
 	if(MODEM_IS_DEBUG(EVENT))
-		zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
+		zlog_debug(MODULE_MODEM, "Handle %s event on %s", modem_event_string(event),
 				modem_module_name(modem));
 
 	if(modem_mgtlayer_network_unattach(modem) != OK)
@@ -500,7 +500,7 @@ modem_event modem_event_offline(modem_t *modem, modem_event event)
 	assert(modem);
 	MODEM_EV_DEBUG("Into %s",__func__);
 	if(MODEM_IS_DEBUG(EVENT))
-		zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
+		zlog_debug(MODULE_MODEM, "Handle %s event on %s", modem_event_string(event),
 				modem_module_name(modem));
 
 	if(modem_mgtlayer_network_offline(modem) != OK)
@@ -527,7 +527,7 @@ modem_event modem_event_delay(modem_t *modem, modem_event event)
 		modem->time_base = modem->time_axis;
 		MODEM_EV_DEBUG("Into %s",__func__);
 		if(MODEM_IS_DEBUG(EVENT))
-			zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
+			zlog_debug(MODULE_MODEM, "Handle %s event on %s", modem_event_string(event),
 					modem_module_name(modem));
 
 		if(modem_mgtlayer_delay(modem) != OK)
@@ -551,7 +551,7 @@ modem_event modem_event_detection(modem_t *modem, modem_event event)
 		modem->detime_base = modem->detime_axis;
 		MODEM_EV_DEBUG("Into %s",__func__);
 		if(MODEM_IS_DEBUG(EVENT))
-			zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
+			zlog_debug(MODULE_MODEM, "Handle %s event on %s", modem_event_string(event),
 					modem_module_name(modem));
 
 		if(modem_mgtlayer_network_detection(modem) != OK)
@@ -572,7 +572,7 @@ modem_event modem_event_reboot(modem_t *modem, modem_event event)
 	assert(modem);
 	MODEM_EV_DEBUG("Into %s",__func__);
 	if(MODEM_IS_DEBUG(EVENT))
-		zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
+		zlog_debug(MODULE_MODEM, "Handle %s event on %s", modem_event_string(event),
 				modem_module_name(modem));
 
 	modem->state = modem->newstate;
@@ -587,7 +587,7 @@ modem_event modem_event_dailog(modem_t *modem, modem_event event)
 	assert(modem);
 	MODEM_EV_DEBUG("Into %s",__func__);
 	if(MODEM_IS_DEBUG(EVENT))
-		zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
+		zlog_debug(MODULE_MODEM, "Handle %s event on %s", modem_event_string(event),
 				modem_module_name(modem));
 
 	if(modem_mgtlayer_dialog(modem) != OK)
@@ -606,7 +606,7 @@ modem_event modem_event_redailog(modem_t *modem, modem_event event)
 	assert(modem);
 	MODEM_EV_DEBUG("Into %s",__func__);
 	if(MODEM_IS_DEBUG(EVENT))
-		zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
+		zlog_debug(MODULE_MODEM, "Handle %s event on %s", modem_event_string(event),
 				modem_module_name(modem));
 				
 	if(modem_mgtlayer_redialog(modem) != OK)
@@ -625,7 +625,7 @@ modem_event modem_event_message(modem_t *modem, modem_event event)
 	assert(modem);
 	MODEM_EV_DEBUG("Into %s",__func__);
 	if(MODEM_IS_DEBUG(EVENT))
-		zlog_debug(ZLOG_MODEM, "Handle %s event on %s", modem_event_string(event),
+		zlog_debug(MODULE_MODEM, "Handle %s event on %s", modem_event_string(event),
 				modem_module_name(modem));
 				
 	if(modem_mgtlayer_message(modem) != OK)
@@ -650,7 +650,7 @@ modem_event modem_event_process(modem_t *modem, modem_event event)
 		{
 			modem_event_end(modem);
 			if(MODEM_IS_DEBUG(EVENT))
-				zlog_err(ZLOG_MODEM, "Handle %s event on %s, AT Channel is not Open.",
+				zlog_err(MODULE_MODEM, "Handle %s event on %s, AT Channel is not Open.",
 						modem_event_string(event), modem_module_name(modem));
 			fprintf(stdout, "Handle %s event on %s, AT Channel is not Open.",
 									modem_event_string(event), modem_module_name(modem));

@@ -29,7 +29,7 @@ endif
 #
 #
 #
-.PHONY:	obj all demo lib clean rebuild install help usage objclean packet debug
+.PHONY:	obj all demo lib clean rebuild install help usage objclean packet debug prebuilts make_prepare
 #
 #
 help:usage
@@ -80,6 +80,19 @@ endif
 #
 #rebuild:clean all
 #
+prebuilts:
+	./moduletypes.sh header make $(PLATFORM_ROOT)
+	@for i in $(PLPRODS); do	\
+		./moduletypes.sh def $$i $(PLATFORM_ROOT); \
+	done
+	./moduletypes.sh tail make $(PLATFORM_ROOT)
+#	
+make_prepare:
+	./moduletypes.sh header make $(PLATFORM_ROOT)
+	@for i in $(PLPRODS); do	\
+		$(MAKE) -C $$i make_prepare || exit "$$?"; 	\
+	done
+	./moduletypes.sh tail make $(PLATFORM_ROOT)
 #
 objclean:
 	@for i in $(PLPRODS); do	\

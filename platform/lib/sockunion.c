@@ -222,7 +222,7 @@ sockunion_socket (const union sockunion *su)
   sock = ip_socket (su->sa.sa_family, SOCK_STREAM, 0);
   if (sock < 0)
     {
-      zlog (ZLOG_DEFAULT,  LOG_WARNING, "Can't make socket : %s", safe_strerror (errno));
+      zlog (MODULE_DEFAULT,  LOG_WARNING, "Can't make socket : %s", safe_strerror (errno));
       return -1;
     }
 
@@ -340,7 +340,7 @@ sockunion_connect (int fd, const union sockunion *peersu, unsigned short port,
       if (errno != EINPROGRESS)
 	{
 	  char str[SU_ADDRSTRLEN];
-	  zlog_info (ZLOG_DEFAULT, "can't connect to %s fd %d : %s",
+	  zlog_info (MODULE_DEFAULT, "can't connect to %s fd %d : %s",
 		     sockunion_log (&su, str, sizeof str),
 		     fd, safe_strerror (errno));
 	  return connect_error;
@@ -364,7 +364,7 @@ sockunion_stream_socket (union sockunion *su)
   sock = ip_socket (su->sa.sa_family, SOCK_STREAM, 0);
 
   if (sock < 0)
-    zlog (ZLOG_DEFAULT, LOG_WARNING, "can't make socket sockunion_stream_socket");
+    zlog (MODULE_DEFAULT, LOG_WARNING, "can't make socket sockunion_stream_socket");
 
   return sock;
 }
@@ -409,7 +409,7 @@ sockunion_bind (int sock, union sockunion *su, unsigned short port,
 
   ret = ip_bind (sock, (struct sockaddr *)su, size);
   if (ret < 0)
-    zlog (ZLOG_DEFAULT, LOG_WARNING, "can't bind socket : %s", safe_strerror (errno));
+    zlog (MODULE_DEFAULT, LOG_WARNING, "can't bind socket : %s", safe_strerror (errno));
 
   return ret;
 }
@@ -424,7 +424,7 @@ sockopt_reuseaddr (int sock)
 		    (void *) &on, sizeof (on));
   if (ret < 0)
     {
-      zlog (ZLOG_DEFAULT, LOG_WARNING, "can't set sockopt SO_REUSEADDR to socket %d", sock);
+      zlog (MODULE_DEFAULT, LOG_WARNING, "can't set sockopt SO_REUSEADDR to socket %d", sock);
       return -1;
     }
   return 0;
@@ -441,7 +441,7 @@ sockopt_reuseport (int sock)
 		    (void *) &on, sizeof (on));
   if (ret < 0)
     {
-      zlog (ZLOG_DEFAULT, LOG_WARNING, "can't set sockopt SO_REUSEPORT to socket %d", sock);
+      zlog (MODULE_DEFAULT, LOG_WARNING, "can't set sockopt SO_REUSEPORT to socket %d", sock);
       return -1;
     }
   return 0;
@@ -493,14 +493,14 @@ int sockopt_bindtodevice(int fd, const char *iface)
 	 * But just in case it's not true on some obscure arch... */
 	r = setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr));
 	if (r)
-		zlog (ZLOG_DEFAULT, LOG_WARNING, "can't bind to interface %s", iface);
+		zlog (MODULE_DEFAULT, LOG_WARNING, "can't bind to interface %s", iface);
 	return r;
 }
 #else
 int sockopt_bindtodevice(int fd,
 		const char *iface)
 {
-	zlog (ZLOG_DEFAULT, LOG_WARNING, "SO_BINDTODEVICE is not supported on this system");
+	zlog (MODULE_DEFAULT, LOG_WARNING, "SO_BINDTODEVICE is not supported on this system");
 	return -1;
 }
 #endif
@@ -517,7 +517,7 @@ sockopt_ttl (int family, int sock, int ttl)
 			(void *) &ttl, sizeof (int));
       if (ret < 0)
 	{
-	  zlog (ZLOG_DEFAULT, LOG_WARNING, "can't set sockopt IP_TTL %d to socket %d", ttl, sock);
+	  zlog (MODULE_DEFAULT, LOG_WARNING, "can't set sockopt IP_TTL %d to socket %d", ttl, sock);
 	  return -1;
 	}
       return 0;
@@ -530,7 +530,7 @@ sockopt_ttl (int family, int sock, int ttl)
 			(void *) &ttl, sizeof (int));
       if (ret < 0)
 	{
-	  zlog (ZLOG_DEFAULT,  LOG_WARNING, "can't set sockopt IPV6_UNICAST_HOPS %d to socket %d",
+	  zlog (MODULE_DEFAULT,  LOG_WARNING, "can't set sockopt IPV6_UNICAST_HOPS %d to socket %d",
 		    ttl, sock);
 	  return -1;
 	}
@@ -558,7 +558,7 @@ sockopt_minttl (int family, int sock, int minttl)
     {
       int ret = ip_setsockopt (sock, IPPROTO_IP, IP_MINTTL, &minttl, sizeof(minttl));
       if (ret < 0)
-	  zlog (ZLOG_DEFAULT, LOG_WARNING,
+	  zlog (MODULE_DEFAULT, LOG_WARNING,
 		"can't set sockopt IP_MINTTL to %d on socket %d: %s",
 		minttl, sock, safe_strerror (errno));
       return ret;
@@ -569,7 +569,7 @@ sockopt_minttl (int family, int sock, int minttl)
     {
       int ret = ip_setsockopt (sock, IPPROTO_IPV6, IPV6_MINHOPCNT, &minttl, sizeof(minttl));
       if (ret < 0)
-	  zlog (ZLOG_DEFAULT, LOG_WARNING,
+	  zlog (MODULE_DEFAULT, LOG_WARNING,
 		"can't set sockopt IPV6_MINHOPCNT to %d on socket %d: %s",
 		minttl, sock, safe_strerror (errno));
       return ret;
@@ -593,7 +593,7 @@ sockopt_v6only (int family, int sock)
 			(void *) &on, sizeof (int));
       if (ret < 0)
 	{
-	  zlog (ZLOG_DEFAULT,  LOG_WARNING, "can't set sockopt IPV6_V6ONLY "
+	  zlog (MODULE_DEFAULT,  LOG_WARNING, "can't set sockopt IPV6_V6ONLY "
 		    "to socket %d", sock);
 	  return -1;
 	}
@@ -741,7 +741,7 @@ sockunion_getsockname (int fd)
   ret = ip_getsockname (fd, (struct sockaddr *)&name, &len);
   if (ret < 0)
     {
-      zlog_warn (ZLOG_DEFAULT, "Can't get local address and port by getsockname: %s",
+      zlog_warn (MODULE_DEFAULT, "Can't get local address and port by getsockname: %s",
 		 safe_strerror (errno));
       return NULL;
     }
@@ -786,7 +786,7 @@ sockunion_getpeername (int fd)
   ret = ip_getpeername (fd, (struct sockaddr *)&name, &len);
   if (ret < 0)
     {
-      zlog (ZLOG_DEFAULT, LOG_WARNING, "Can't get remote address and port: %s",
+      zlog (MODULE_DEFAULT, LOG_WARNING, "Can't get remote address and port: %s",
 	    safe_strerror (errno));
       return NULL;
     }

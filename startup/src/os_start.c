@@ -14,8 +14,8 @@
 #include "version.h"
 #include <log.h>
 #include "getopt.h"
-#include "nsm_filter.h"
-#include "nsm_plist.h"
+//#include "nsm_filter.h"
+//#include "nsm_plist.h"
 #include "host.h"
 #include "eloop.h"
 #include "os_job.h"
@@ -37,7 +37,7 @@ static void os_sighup(void)
 #endif
 	vty_terminate();
 	os_log("/app/signo.log", "%s:%d",__func__, os_task_gettid());
-	//zlog_notice(ZLOG_DEFAULT, "%s: SIGHUP received\r\n",__func__);
+	//zlog_notice(MODULE_DEFAULT, "%s: SIGHUP received\r\n",__func__);
 	//os_msgq_exit();
 	//os_exit_all_module();
 
@@ -52,7 +52,7 @@ static void os_sigint(void)
 #endif
 	vty_terminate();
 	os_log("/app/signo.log", "%s:%d",__func__, os_task_gettid());
-	//zlog_notice(ZLOG_DEFAULT, "%s: Terminating on signal\r\n",__func__);
+	//zlog_notice(MODULE_DEFAULT, "%s: Terminating on signal\r\n",__func__);
 	//os_msgq_exit();
 	//os_exit_all_module();
 
@@ -297,9 +297,10 @@ int os_start_all_module()
 	 */
 	os_module_task_init();
 	os_msleep(500);
-
+#ifdef PL_PAL_MODULE
 #ifdef USE_IPSTACK_KERNEL
 	kernel_load_all();
+#endif
 #endif
 	return OK;
 }
@@ -330,14 +331,16 @@ int os_start_pid(int pro, char *pid_file, int *pid)
 	if (pid)
 		*pid = getpid();
 
-	zlog_notice(ZLOG_DEFAULT,"Zebra %s starting pid:%d", OEM_VERSION, getpid());
+	zlog_notice(MODULE_DEFAULT,"Zebra %s starting pid:%d", OEM_VERSION, getpid());
 	return OK;
 }
 
 int os_load_config(char *config)
 {
 	host.load = LOAD_NONE;
+	printf("==================os_load_config %s\r\n",config);
 	vty_load_config(config);
+	printf("++++++++++++++++++os_load_config %s\r\n",config);
 //	sleep(1);
 	host.load = LOAD_DONE;
 	signal_init(array_size(os_signals), os_signals);

@@ -110,6 +110,21 @@ SEE ALSO: sntpcLib, RFC 1769
 static struct sntp_server *sntp_server = NULL;
 static BOOL sntpsClockHookRtn(int , void *);
 static STATUS sntpsClockSet (struct sntp_server *, BOOL (*)(int, void *));
+
+struct module_list module_list_sntps = 
+{ 
+	.module=MODULE_SNTPS, 
+	.name="SNTPS", 
+	.module_init=NULL, 
+	.module_exit=NULL, 
+	.module_task_init=NULL, 
+	.module_task_exit=NULL, 
+	.module_cmd_init=cmd_sntps_init, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};
 /*******************************************************************************
 *
 * sntpsInit - set up the SNTP server
@@ -372,7 +387,7 @@ static int sntpsMsgSend (struct sntp_server *server)
 			/*        semGive (sntpsMutexSem);
 			 wdStart (sntpsTimer, sntpsInterval * sysClkRateGet (),
 			 (FUNCPTR)netJobAdd, (int)sntpsMsgSend);*/
-			zlog_debug(ZLOG_SNTP, "%s:sntpsClockHookRtn",__func__);
+			zlog_debug(MODULE_SNTPS, "%s:sntpsClockHookRtn",__func__);
 			return ERROR;
 		}
 	}
@@ -440,7 +455,7 @@ static int sntpsMsgSend (struct sntp_server *server)
 			(struct sockaddr *) &dstAddr, sizeof(dstAddr));
 
 
-	zlog_debug(ZLOG_SNTP, "%s:send %d byte to %s:%d",__func__, result, inet_ntoa(dstAddr.sin_addr),server->sntpsPort);
+	zlog_debug(MODULE_SNTPS, "%s:send %d byte to %s:%d",__func__, result, inet_ntoa(dstAddr.sin_addr),server->sntpsPort);
 	/* Schedule a new transmission after the broadcast interval. */
 
 	/*    wdStart (sntpsTimer, interval * sysClkRateGet (),
@@ -464,7 +479,7 @@ static int sntps_time(struct thread *thread)
 		server->t_time = thread_add_timer (server->master, sntps_time, server, server->sntpsInterval);
 		return 0;
 	}
-	zlog_debug(ZLOG_SNTP, "%s:saaaaaaaaaaaa",__func__);
+	zlog_debug(MODULE_SNTPS, "%s:saaaaaaaaaaaa",__func__);
 	server->t_write = thread_add_write (server->master, sntps_write, server, server->sock);
 	server->t_time = thread_add_timer (server->master, sntps_time, server, server->sntpsInterval);
 	return 0;

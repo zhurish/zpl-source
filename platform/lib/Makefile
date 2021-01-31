@@ -19,7 +19,7 @@ GAWK = gawk
 #	route_types.pl route_types.txt \
 #	gitversion.pl
 	
-DEPEND_HEADER = memtypes.h route_types.h
+DEPEND_HEADER = memtypes.h
 # gitversion.h
 	
 	
@@ -41,11 +41,13 @@ $(LIBS) : $(DEPEND_HEADER) $(MODULE_OBJS)
 memtypes.h: $(SRC_DIR)/memtypes.c $(SRC_DIR)/memtypes.awk
 	($(GAWK) -f $(SRC_DIR)/memtypes.awk $(SRC_DIR)/memtypes.c > $@)
 
-route_types.h: $(SRC_DIR)/route_types.txt $(SRC_DIR)/route_types.pl
-	/usr/bin/perl $(SRC_DIR)/route_types.pl < $(SRC_DIR)/route_types.txt > $@
-	
-	
-	
+files = $(patsubst %.o,%.c,$(OBJS))
+make_prepare:
+	@for i in $(files); do	\
+		sh $(MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); 	\
+	done
+
+lib: $(LIBS)
 
 lib: $(LIBS)
 
@@ -66,4 +68,4 @@ objclean:
 
 all: lib install
 
-.PHONY:	obj all lib install objclean clean
+.PHONY:	obj all lib install objclean clean make_prepare

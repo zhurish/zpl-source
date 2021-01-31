@@ -7,20 +7,20 @@
 #include "zebra.h"
 #include "getopt.h"
 #include <log.h>
-#include "if_name.h"
-#include "zclient.h"
+//#include "if_name.h"
+//#include "nsm_zclient.h"
 #include "command.h"
-#include "if.h"
+//#include "if.h"
 #include "memory.h"
 #include "prefix.h"
 #include "sigevent.h"
 #include "sockunion.h"
 //#include "version.h"
-#include "nsm_vrf.h"
-#include "nsm_filter.h"
-#include "nsm_plist.h"
+//#include "nsm_vrf.h"
+//#include "nsm_filter.h"
+//#include "nsm_plist.h"
 #include "vty.h"
-#include "nsm_vlan.h"
+//#include "nsm_vlan.h"
 
 #include "os_start.h"
 #include "os_module.h"
@@ -54,9 +54,9 @@ DEFUN (syslog_debug_test,
 	   "dest")
 {
 	char *message;
-	extern int syslogc_out(int priority, int ffacility, char * pStr, int len);
+	//extern int syslogc_out(int priority, int ffacility, char * pStr, int len);
 	message = argv_concat(argv, argc, 0);
-	syslogc_out(LOG_DEBUG, 7, message, os_strlen(message));
+	//syslogc_out(LOG_DEBUG, 7, message, os_strlen(message));
 	return CMD_SUCCESS;
 }
 

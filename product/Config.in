@@ -26,7 +26,7 @@ config PL_PRODUCT_L3ROUTE
 
 config PL_VPN_MODULE
 	bool "VPN Module"
-	default y
+	default n
 	depends on PL_PRODUCT_MODULE
 	help
 	Build VPN Module.
@@ -65,6 +65,7 @@ config PL_PRODUCT_SDK_MODULE
 	bool "Switch SDK Module"
 	depends on PL_PRODUCT_MODULE
 	select PL_PRODUCT_L2SWITCH
+	select PL_HAL_MODULE
 	default n
 	help
 	Build Switch SDK Module.

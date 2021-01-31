@@ -133,7 +133,7 @@ static int web_board_detail(Webs *wp, void *p)
 	if (NULL == strID)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
+			zlog_debug(MODULE_WEB, "Can not Get Board ID Value");
 		return ERROR;
 	}
 	id = atoi(strID);

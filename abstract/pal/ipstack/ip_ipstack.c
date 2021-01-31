@@ -48,7 +48,7 @@ static int ip_stack_ioctl(unsigned long cmd, void *data, vrf_id_t vrf_id)
 	int fd = ipcom_socket(IP_AF_INET, IP_SOCK_DGRAM, 0);
 	if(fd < 0)
 	{
-		zlog_err(ZLOG_PAL,"failed to create socket");
+		zlog_err(MODULE_PAL,"failed to create socket");
 		return -1;
 	}
     if(vrf_id > 0)
@@ -58,14 +58,14 @@ static int ip_stack_ioctl(unsigned long cmd, void *data, vrf_id_t vrf_id)
         if(ret < 0)
         {
         	ipcom_socketclose (fd);
-        	zlog_err(ZLOG_PAL,"failed to set socket to VRF");
+        	zlog_err(MODULE_PAL,"failed to set socket to VRF");
             return -1;
         }
     }
 	ret = ipcom_socketioctl(fd, (unsigned long)cmd, data);
 	if(fd < 0)
 	{
-		zlog_err(ZLOG_PAL,"failed to ioctl socket");
+		zlog_err(MODULE_PAL,"failed to ioctl socket");
 		ipcom_socketclose (fd);
 		return -1;
 	}
@@ -82,7 +82,7 @@ static int ip_stack_change_state(struct interface *ifp, BOOL if_up)
 
     if (ip_stack_ioctl(IP_SIOCGIFFLAGS, &ifreq, ifp->vrf_id) < 0)
     {
-        zlog_err(ZLOG_PAL, "failed to get interface flags: %s", ipcom_strerror(ipcom_errno));
+        zlog_err(MODULE_PAL, "failed to get interface flags: %s", ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
     }
 
@@ -92,7 +92,7 @@ static int ip_stack_change_state(struct interface *ifp, BOOL if_up)
     	UNSET_FLAG(ifreq.ip_ifr_flags, IP_IFF_UP);
     if (ip_stack_ioctl(IP_SIOCSIFFLAGS, &ifreq, ifp->vrf_id) < 0)
     {
-    	zlog_err(ZLOG_PAL, "failed to set interface flags: %s", ipcom_strerror(ipcom_errno));
+    	zlog_err(MODULE_PAL, "failed to set interface flags: %s", ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
     }
     return 0;
@@ -116,7 +116,7 @@ static int ip_stack_update_flag(struct interface *ifp)
 
     if (ip_stack_ioctl(IP_SIOCGIFFLAGS, &ifreq, ifp->vrf_id) < 0)
     {
-        zlog_err(ZLOG_PAL, "failed to get interface flags: %s", ipcom_strerror(ipcom_errno));
+        zlog_err(MODULE_PAL, "failed to get interface flags: %s", ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
     }
     ifp->flags = ifreq.ip_ifr_flags;
@@ -134,7 +134,7 @@ static int ip_stack_set_vr(struct interface *ifp, vrf_id_t vrf_id)
 
     if (ip_stack_ioctl(IP_SIOCSIFVR, &ifreq, 0) < 0)
     {
-    	zlog_err(ZLOG_PAL, "set vr failed: %s", ipcom_strerror(ipcom_errno));
+    	zlog_err(MODULE_PAL, "set vr failed: %s", ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
     }
     return 0;
@@ -150,7 +150,7 @@ static int ip_stack_set_mtu(struct interface *ifp, int mtu)
 
     if (ip_stack_ioctl(IP_SIOCSIFMTU, &ifreq, ifp->vrf_id) < 0)
     {
-    	zlog_err(ZLOG_PAL, "set MTU failed: %s" , ipcom_strerror(ipcom_errno));
+    	zlog_err(MODULE_PAL, "set MTU failed: %s" , ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
     }
     return 0;
@@ -171,7 +171,7 @@ static int ip_stack_set_lladdr(struct interface *ifp, unsigned char *mac, int le
 
     if (ip_stack_ioctl(IP_SIOCSIFLLADDR, &ifreq, ifp->vrf_id) < 0)
     {
-    	zlog_err(ZLOG_PAL, "Set LLADDR failed: %s" , ipcom_strerror(ipcom_errno));
+    	zlog_err(MODULE_PAL, "Set LLADDR failed: %s" , ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
     }
     return 0;
@@ -186,7 +186,7 @@ static int ip_stack_create(struct interface *ifp)
 
     if (ip_stack_ioctl(IP_SIOCIFCREATE, &ifreq, ifp->vrf_id) < 0)
     {
-    	zlog_err(ZLOG_PAL, "Creating %s failed: %s" , ifreq.ifr_name, ipcom_strerror(ipcom_errno));
+    	zlog_err(MODULE_PAL, "Creating %s failed: %s" , ifreq.ifr_name, ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
     }
 	os_memset(&ifreq, 0, sizeof(struct Ip_ifreq));
@@ -194,7 +194,7 @@ static int ip_stack_create(struct interface *ifp)
     ifreq.ip_ifr_addr.sa_family = IP_AF_INET;
     if (ip_stack_ioctl(IP_SIOCGIFINDEX, &ifreq, ifp->vrf_id) < 0)
     {
-    	zlog_err(ZLOG_PAL, "get ifindex %s failed: %s" , ifreq.ifr_name, ipcom_strerror(ipcom_errno));
+    	zlog_err(MODULE_PAL, "get ifindex %s failed: %s" , ifreq.ifr_name, ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
     }
     ifp->k_ifindex = ifreq.ip_ifr_ifindex;
@@ -214,7 +214,7 @@ static int ip_stack_destroy(struct interface *ifp)
 
     if (ip_stack_ioctl(IP_SIOCIFDESTROY, &ifreq, ifp->vrf_id) < 0)
     {
-    	zlog_err(ZLOG_PAL, "Destroying %s failed: %s" , ifreq.ifr_name, ipcom_strerror(ipcom_errno));
+    	zlog_err(MODULE_PAL, "Destroying %s failed: %s" , ifreq.ifr_name, ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
     }
     return 0;
@@ -236,7 +236,7 @@ static int ip_stack_vlan_set(struct interface *ifp, int vlan)
     ifreq.ip_ifr_data = &vlanreq;
     if (ip_stack_ioctl(IP_SIOCSETVLAN, &ifreq, ifp->vrf_id) < 0)
     {
-    	zlog_err(ZLOG_PAL, "Setting VLAN parameters for %s failed: %s" ,
+    	zlog_err(MODULE_PAL, "Setting VLAN parameters for %s failed: %s" ,
                      ifreq.ifr_name,
                      ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
@@ -258,7 +258,7 @@ static int ip_stack_vlanpri_set(struct interface *ifp, int pri)
     ifreq.ip_ifr_data = &vlanreq;
     if (ip_stack_ioctl(IP_SIOCSETVLANPRI, &ifreq, ifp->vrf_id) < 0)
     {
-    	zlog_err(ZLOG_PAL, "Setting VLAN priority for %s failed: %s" ,
+    	zlog_err(MODULE_PAL, "Setting VLAN priority for %s failed: %s" ,
                      ifreq.ifr_name,
                      ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
@@ -275,7 +275,7 @@ static int ip_stack_promisc_link(struct interface *ifp, BOOL enable)
     ifreq.ifr_ifru.ifru_opt = enable;
     if (ip_stack_ioctl(IP_SIOCXPROMISC, &ifreq, ifp->vrf_id) < 0)
     {
-    	zlog_err(ZLOG_PAL, "failed to set interface flags: %s", ipcom_strerror(ipcom_errno));
+    	zlog_err(MODULE_PAL, "failed to set interface flags: %s", ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
     }
     return 0;
@@ -293,7 +293,7 @@ static int ip_stack_change_dhcp(struct interface *ifp, BOOL enable)
     ifreq.ifr_ifru.ifru_opt = enable;
     if (ip_stack_ioctl(IP_SIOCXSDHCPRUNNING, &ifreq, ifp->vrf_id) < 0)
     {
-    	zlog_err(ZLOG_PAL, "failed to enable/disabled DHCP: %s", ipcom_strerror(ipcom_errno));
+    	zlog_err(MODULE_PAL, "failed to enable/disabled DHCP: %s", ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
     }
     return 0;
@@ -311,7 +311,7 @@ static int ip_stack_add_dstaddr(struct interface *ifp, struct connected *ifc)
 	in_addr->sin_addr.s_addr = ifc->destination->u.prefix4.s_addr;
 
 	if (ip_stack_ioctl(IP_SIOCSIFDSTADDR, &ifreq, ifp->vrf_id) < 0) {
-		zlog_err(ZLOG_PAL, "set destination address failed: %s",
+		zlog_err(MODULE_PAL, "set destination address failed: %s",
 				ipcom_strerror(ipcom_errno));
 		return -ipcom_errno;
 	}
@@ -330,7 +330,7 @@ static int ip_stack_del_dstaddr(struct interface *ifp, struct connected *ifc)
 	in_addr->sin_addr.s_addr = 0;
 
 	if (ip_stack_ioctl(IP_SIOCSIFDSTADDR, &ifreq, ifp->vrf_id) < 0) {
-		zlog_err(ZLOG_PAL, "set destination address failed: %s",
+		zlog_err(MODULE_PAL, "set destination address failed: %s",
 				ipcom_strerror(ipcom_errno));
 		return -ipcom_errno;
 	}
@@ -344,7 +344,7 @@ static int ip_stack_ipv4_replace(struct interface *ifp,struct connected *ifc)
 
     if (ifc->address == IP_NULL)
     {
-    	zlog_err(ZLOG_PAL, "address is missing" );
+    	zlog_err(MODULE_PAL, "address is missing" );
         return -IP_ERRNO_EINVAL;
     }
 
@@ -357,7 +357,7 @@ static int ip_stack_ipv4_replace(struct interface *ifp,struct connected *ifc)
     in->sin_addr   = ifc->address->u.prefix4;
     if (ip_stack_ioctl(IP_SIOCSIFADDR, &ifr, ifp->vrf_id) < 0)
     {
-    	zlog_err(ZLOG_PAL, "failed to set primary IPv4 address: %s" ,
+    	zlog_err(MODULE_PAL, "failed to set primary IPv4 address: %s" ,
                          ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
     }
@@ -369,7 +369,7 @@ static int ip_stack_ipv4_replace(struct interface *ifp,struct connected *ifc)
     //in->sin_addr   = *netmask;
     if (ip_stack_ioctl(IP_SIOCSIFNETMASK, &ifr, ifp->vrf_id) < 0)
     {
-    	zlog_err(ZLOG_PAL, "failed to set mask for primary IPv4 address: %s" ,
+    	zlog_err(MODULE_PAL, "failed to set mask for primary IPv4 address: %s" ,
                          ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
     }
@@ -386,7 +386,7 @@ static int ip_stack_ipv4_add(struct interface *ifp,struct connected *ifc)
     union prefix46constptr  addrp;
     if (ifc->address == IP_NULL)
     {
-    	zlog_err(ZLOG_PAL, "address is missing" );
+    	zlog_err(MODULE_PAL, "address is missing" );
         return -IP_ERRNO_EINVAL;
     }
 
@@ -412,7 +412,7 @@ static int ip_stack_ipv4_add(struct interface *ifp,struct connected *ifc)
 */
     if (ip_stack_ioctl(IP_SIOCAIFADDR, &ifal, ifp->vrf_id) < 0)
     {
-    	zlog_err(ZLOG_PAL, "failed to %s IPv4 address: %s" ,
+    	zlog_err(MODULE_PAL, "failed to %s IPv4 address: %s" ,
                 "add",
                 ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
@@ -429,7 +429,7 @@ static int ip_stack_ipv4_delete(struct interface *ifp,struct connected *ifc)
     union prefix46constptr  addrp;
     if (ifc->address == IP_NULL)
     {
-    	zlog_err(ZLOG_PAL, "address is missing" );
+    	zlog_err(MODULE_PAL, "address is missing" );
         return -IP_ERRNO_EINVAL;
     }
 
@@ -449,7 +449,7 @@ static int ip_stack_ipv4_delete(struct interface *ifp,struct connected *ifc)
 */
     if (ip_stack_ioctl(IP_SIOCDIFADDR, &ifal, ifp->vrf_id) < 0)
     {
-    	zlog_err(ZLOG_PAL, "failed to %s IPv4 address: %s" ,
+    	zlog_err(MODULE_PAL, "failed to %s IPv4 address: %s" ,
                 "delete",
                 ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
@@ -493,7 +493,7 @@ static int ip_stack_ipv6_add(struct interface *ifp,struct connected *ifc)
 */
     if (ip_stack_ioctl(IP_SIOCAIFADDR_IN6, &ifareq, ifp->vrf_id) < 0)
     {
-    	zlog_err(ZLOG_PAL, "failed to %s IPv6 address: %s" ,
+    	zlog_err(MODULE_PAL, "failed to %s IPv6 address: %s" ,
                 "add",
                 ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
@@ -526,7 +526,7 @@ static int ip_stack_ipv6_delete(struct interface *ifp,struct connected *ifc)
 
     if (ip_stack_ioctl(IP_SIOCDIFADDR_IN6, &ifareq, ifp->vrf_id) < 0)
     {
-    	zlog_err(ZLOG_PAL, "failed to %s IPv6 address: %s" ,
+    	zlog_err(MODULE_PAL, "failed to %s IPv6 address: %s" ,
                 "delete",
                 ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
@@ -578,7 +578,7 @@ static int ip_stack_arp_add(struct interface *ifp, struct prefix *address, unsig
 
     if (ip_stack_ioctl(IP_SIOCSARP, &arpreq, ifp->vrf_id) < 0)
     {
-    	zlog_err(ZLOG_PAL, "failed to %s arp address: %s" ,
+    	zlog_err(MODULE_PAL, "failed to %s arp address: %s" ,
                 "add",
                 ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
@@ -614,7 +614,7 @@ static int ip_stack_arp_delete(struct interface *ifp,  struct prefix *address)
 #endif
     if (ip_stack_ioctl(IP_SIOCDARP, &arpreq, ifp->vrf_id) < 0)
     {
-    	zlog_err(ZLOG_PAL, "failed to %s arp address: %s" ,
+    	zlog_err(MODULE_PAL, "failed to %s arp address: %s" ,
                 "add",
                 ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
@@ -650,7 +650,7 @@ static int ip_stack_arp_request(struct interface *ifp,  struct prefix *address)
 #endif
     if (ip_stack_ioctl(IP_SIOCPARP, &arpreq, ifp->vrf_id) < 0)
     {
-    	zlog_err(ZLOG_PAL, "failed to %s arp address: %s" ,
+    	zlog_err(MODULE_PAL, "failed to %s arp address: %s" ,
                 "add",
                 ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
@@ -668,7 +668,7 @@ static int ip_stack_route_ioctl (unsigned long request, void * buffer)
 	if (sock < 0)
 	{
 		int save_errno = errno;
-		zlog_err(ZLOG_PAL, "Cannot create ROUTE RAW socket: %s",
+		zlog_err(MODULE_PAL, "Cannot create ROUTE RAW socket: %s",
 				safe_strerror(save_errno));
 		return -1;
 	}
@@ -676,7 +676,7 @@ static int ip_stack_route_ioctl (unsigned long request, void * buffer)
 
 	if (ret < 0)
 	{
-		zlog_err(ZLOG_PAL, "failed to ioctl socket");
+		zlog_err(MODULE_PAL, "failed to ioctl socket");
 		ipcom_socketclose(sock);
 		return -1;
 	}
@@ -748,7 +748,7 @@ static int ip_stack_new_vr (vrf_id_t vr)
     ret = ip_stack_route_ioctl (IP_SIOCADDVR, &vr);
     if (ret < 0)
     {
-    	zlog_err(ZLOG_PAL, "can't new vr(%d) to ipstack %d", vr, ret);
+    	zlog_err(MODULE_PAL, "can't new vr(%d) to ipstack %d", vr, ret);
         return ret;
     }
     return 0;
@@ -760,7 +760,7 @@ static int ip_stack_del_vr (vrf_id_t vr)
     ret = ip_stack_route_ioctl (IP_SIOCDELVR, &vr);
     if (ret < 0)
     {
-    	zlog_err(ZLOG_PAL, "can't del vr(%d) to ipstack %d", vr, ret);
+    	zlog_err(MODULE_PAL, "can't del vr(%d) to ipstack %d", vr, ret);
         return ret;
     }
     return 0;
@@ -794,7 +794,7 @@ int if_lag_add_mem(struct interface *ifp_lag, const char *ifp_mem_name)
   ret = if_ioctl (IP_SIOCSETBONDLAG, (caddr_t) &ifreq, ifp_lag->vrf_id);
   if (ret < 0)
   {
-	  zlog_err(ZLOG_PAL, "%s if_lag_add_mem interface %s",ifp_lag->name, ifp_mem_name);
+	  zlog_err(MODULE_PAL, "%s if_lag_add_mem interface %s",ifp_lag->name, ifp_mem_name);
       return ret;
   }
 
@@ -825,7 +825,7 @@ int if_lag_delete_mem(struct interface *ifp_lag, const char *ifp_mem_name)
   ret = if_ioctl (IP_SIOCREMOVEBONDLAG, (caddr_t) &ifreq, ifp_lag->vrfid);
   if (ret < 0)
   {
-	  zlog_err(ZLOG_PAL, "%s if_lag_delete_mem interface %s",ifp_lag->name, ifp_mem_name);
+	  zlog_err(MODULE_PAL, "%s if_lag_delete_mem interface %s",ifp_lag->name, ifp_mem_name);
       return ret;
   }
 
@@ -860,7 +860,7 @@ int if_lag_set_mem_flag(struct interface *ifp_lag, const char *ifp_mem_name, int
   ret = if_ioctl (IP_SIOCSETBONDMS, (caddr_t) &ifreq, ifp_lag->vrfid);
   if (ret < 0)
   {
-	  zlog_err(ZLOG_PAL, "%s if_lag_set_mem_flag interface  %s %d",ifp_lag->name, ifp_mem_name, master_slave_flag);
+	  zlog_err(MODULE_PAL, "%s if_lag_set_mem_flag interface  %s %d",ifp_lag->name, ifp_mem_name, master_slave_flag);
       return ret;
   }
 

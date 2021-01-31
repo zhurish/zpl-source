@@ -90,7 +90,7 @@ int v9_video_board_stream_add_api(u_int8 id, u_int8 ch, u_int32 address, u_int16
 		if(v9_video_board_stream_lookup_by_id_and_ch(iid, chid))
 		{
 			v9_video_board_unlock();
-			zlog_debug(ZLOG_APP," this channel is already exist.");
+			zlog_debug(MODULE_APP," this channel is already exist.");
 			return ERROR;
 		}
 	}
@@ -123,7 +123,7 @@ int v9_video_board_stream_add_api(u_int8 id, u_int8 ch, u_int32 address, u_int16
 	}
 	v9_video_board_unlock();
 	if(V9_APP_DEBUG(BOARD_EVENT))
-		zlog_debug(ZLOG_APP," can not alloc video channel data.");
+		zlog_debug(MODULE_APP," can not alloc video channel data.");
 	return ERROR;
 }
 
@@ -148,12 +148,12 @@ int v9_video_board_stream_del_api(u_int8 id, u_int8 ch, u_int32 address, u_int16
 		else
 		{
 			if(V9_APP_DEBUG(BOARD_EVENT))
-				zlog_debug(ZLOG_APP," can not delete this video channel data(%d:%d).", id, ch);
+				zlog_debug(MODULE_APP," can not delete this video channel data(%d:%d).", id, ch);
 		}
 	}
 	v9_video_board_unlock();
 	if(V9_APP_DEBUG(BOARD_EVENT))
-		zlog_debug(ZLOG_APP," can not lookup this video channel(%d:%d).", id, ch);
+		zlog_debug(MODULE_APP," can not lookup this video channel(%d:%d).", id, ch);
 	return ERROR;
 }
 

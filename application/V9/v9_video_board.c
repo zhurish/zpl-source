@@ -130,7 +130,7 @@ int v9_video_board_add(u_int32 id)
 		}
 	}
 	if(V9_APP_DEBUG(BOARD_EVENT))
-		zlog_debug(ZLOG_APP," can not add video board %d (ID) data.", V9_APP_BOARD_HW_ID(id));
+		zlog_debug(MODULE_APP," can not add video board %d (ID) data.", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 
@@ -148,7 +148,7 @@ int v9_video_board_del(u_int32 id)
 		}
 	}
 	if(V9_APP_DEBUG(BOARD_EVENT))
-		zlog_debug(ZLOG_APP," can not delete video board %d (ID) data.", V9_APP_BOARD_HW_ID(id));
+		zlog_debug(MODULE_APP," can not delete video board %d (ID) data.", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 
@@ -163,7 +163,7 @@ v9_video_board_t * v9_video_board_lookup(u_int32 id)
 		}
 	}
 	if(V9_APP_DEBUG(BOARD_EVENT))
-		zlog_debug(ZLOG_APP," can not lookup video board %d (ID) data.", V9_APP_BOARD_HW_ID(id));
+		zlog_debug(MODULE_APP," can not lookup video board %d (ID) data.", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 
@@ -187,7 +187,7 @@ int v9_video_board_active(u_int32 id, BOOL enable)
 		}
 	}
 	if(V9_APP_DEBUG(BOARD_EVENT))
-		zlog_debug(ZLOG_APP," can not active video board %d (ID) data.", V9_APP_BOARD_HW_ID(id));
+		zlog_debug(MODULE_APP," can not active video board %d (ID) data.", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 
@@ -249,7 +249,7 @@ int v9_video_board_address(u_int32 id, u_int32 address, u_int16 port)
 		}
 	}
 	if(V9_APP_DEBUG(BOARD_EVENT))
-		zlog_debug(ZLOG_APP," can not update video board %d (ID) address.", V9_APP_BOARD_HW_ID(id));
+		zlog_debug(MODULE_APP," can not update video board %d (ID) address.", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 
@@ -279,7 +279,7 @@ int v9_video_board_disabled(u_int32 id, BOOL enable)
 		}
 	}
 	if(V9_APP_DEBUG(BOARD_EVENT))
-		zlog_debug(ZLOG_APP," can not disabled video board %d (ID) data.", V9_APP_BOARD_HW_ID(id));
+		zlog_debug(MODULE_APP," can not disabled video board %d (ID) data.", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 
@@ -384,7 +384,7 @@ static int __v9_video_stream_add(v9_video_board_t *board, v9_video_stream_t *val
 		}
 	}
 	if(V9_APP_DEBUG(BOARD_EVENT))
-		zlog_debug(ZLOG_APP," can not add video stream to board %d(ID).", V9_APP_BOARD_HW_ID(board->id));
+		zlog_debug(MODULE_APP," can not add video stream to board %d(ID).", V9_APP_BOARD_HW_ID(board->id));
 	return ERROR;
 }
 
@@ -407,7 +407,7 @@ static int __v9_video_stream_del(v9_video_board_t *board, v9_video_stream_t *val
 		}
 	}
 	if(V9_APP_DEBUG(BOARD_EVENT))
-		zlog_debug(ZLOG_APP," can not del video stream from board %d(ID).", V9_APP_BOARD_HW_ID(board->id));
+		zlog_debug(MODULE_APP," can not del video stream from board %d(ID).", V9_APP_BOARD_HW_ID(board->id));
 	return ERROR;
 }
 
@@ -424,7 +424,7 @@ static v9_video_stream_t * __v9_video_stream_lookup(v9_video_board_t *board, v9_
 		}
 	}
 	if(V9_APP_DEBUG(BOARD_EVENT))
-		zlog_debug(ZLOG_APP," can not lookup video stream on board %d(ID).", V9_APP_BOARD_HW_ID(board->id));
+		zlog_debug(MODULE_APP," can not lookup video stream on board %d(ID).", V9_APP_BOARD_HW_ID(board->id));
 	return NULL;
 }
 /********************************************************************/
@@ -447,7 +447,7 @@ v9_video_stream_t * v9_video_board_stream_lookup_by_id_and_ch(u_int8 id, u_int8 
 		}
 	}
 	if(V9_APP_DEBUG(BOARD_EVENT))
-		zlog_debug(ZLOG_APP," can not lookup video stream by board ID:%d VCH:%d.", V9_APP_BOARD_HW_ID(id), ch);
+		zlog_debug(MODULE_APP," can not lookup video stream by board ID:%d VCH:%d.", V9_APP_BOARD_HW_ID(id), ch);
 	return NULL;
 }
 
@@ -498,7 +498,7 @@ int v9_video_board_get_minload()
 		}
 	}
 	if(V9_APP_DEBUG(BOARD_EVENT))
-		zlog_debug(ZLOG_APP," can not get min vidoe load board ID.");
+		zlog_debug(MODULE_APP," can not get min vidoe load board ID.");
 	return ERROR;
 }
 
@@ -520,7 +520,7 @@ int v9_video_board_stream_alloc(u_int32 id)
 		}
 	}
 	if(V9_APP_DEBUG(BOARD_EVENT))
-		zlog_debug(ZLOG_APP," can not alloc video stream by board ID:%d.", V9_APP_BOARD_HW_ID(id));
+		zlog_debug(MODULE_APP," can not alloc video stream by board ID:%d.", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 
@@ -528,7 +528,7 @@ int v9_video_board_stream_alloc(u_int32 id)
 int v9_video_board_stream_add(u_int32 id, v9_video_stream_t *value, BOOL load)
 {
 	u_int32 i = 0;
-	//zlog_debug(ZLOG_APP," %s ID=%d", __func__, V9_APP_BOARD_HW_ID(id));
+	//zlog_debug(MODULE_APP," %s ID=%d", __func__, V9_APP_BOARD_HW_ID(id));
 	//zassert(board);
 	zassert(value);
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
@@ -542,7 +542,7 @@ int v9_video_board_stream_add(u_int32 id, v9_video_stream_t *value, BOOL load)
 			}
 			else
 			{
-				//zlog_debug(ZLOG_APP," %s BID=%d", __func__, V9_APP_BOARD_HW_ID(v9_video_board[i].id));
+				//zlog_debug(MODULE_APP," %s BID=%d", __func__, V9_APP_BOARD_HW_ID(v9_video_board[i].id));
 				if(__v9_video_stream_add(&v9_video_board[i], value) == OK)
 				{
 					v9_video_board[i].channel_cnt++;
@@ -553,7 +553,7 @@ int v9_video_board_stream_add(u_int32 id, v9_video_stream_t *value, BOOL load)
 		}
 	}
 	if(V9_APP_DEBUG(BOARD_EVENT))
-		zlog_debug(ZLOG_APP," can not add video stream to board ID:%d.", V9_APP_BOARD_HW_ID(id));
+		zlog_debug(MODULE_APP," can not add video stream to board ID:%d.", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 
@@ -580,7 +580,7 @@ int v9_video_board_stream_del(u_int32 id, v9_video_stream_t *value)
 		}
 	}
 	if(V9_APP_DEBUG(BOARD_EVENT))
-		zlog_debug(ZLOG_APP," can not del video stream from board ID:%d.", V9_APP_BOARD_HW_ID(id));
+		zlog_debug(MODULE_APP," can not del video stream from board ID:%d.", V9_APP_BOARD_HW_ID(id));
 	return ERROR;
 }
 
@@ -907,7 +907,7 @@ int v9_video_board_ID_lookup_api_by_video_stream(u_int8 ch, u_int32 address, u_i
 		}
 	}
 	if(V9_APP_DEBUG(BOARD_EVENT))
-		zlog_debug(ZLOG_APP," can not lookup video stream by url (%s:%d/vd-%d).", inet_address(address), port, ch);
+		zlog_debug(MODULE_APP," can not lookup video stream by url (%s:%d/vd-%d).", inet_address(address), port, ch);
 	return ERROR;
 }
 /********************************************************************/
@@ -1117,7 +1117,7 @@ static int v9_video_board_stream_write_config_one(struct vty *vty, v9_video_stre
 		memset(confstr, 0, sizeof(confstr));
 
 		len = snprintf(confstr, sizeof(confstr), "%s", "video stream ");
-		//zlog_debug(ZLOG_WEB, "=====%s====type=%d", __func__,pstNode->type);
+		//zlog_debug(MODULE_WEB, "=====%s====type=%d", __func__,pstNode->type);
 		if(pstNode->type == V9_VIDEO_STREAM_TYPE_STATIC)
 		{
 			snprintf(confstr + len, sizeof(confstr) - len, "board %d channel %d ",V9_APP_BOARD_HW_ID(pstNode->id), pstNode->ch);

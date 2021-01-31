@@ -9,9 +9,6 @@
 #define IF_USP_H_
 
 #include "if.h"
-//#include "zebra.h"
-//#include "linklist.h"
-//#define VTY_IUSP_DEBUG
 
 extern const char *getkernelname(if_type_t	type);
 

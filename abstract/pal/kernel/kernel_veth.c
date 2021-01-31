@@ -15,7 +15,7 @@
 #include "command.h"
 #include "memory.h"
 #include "log.h"
-#include "zclient.h"
+#include "nsm_zclient.h"
 #include "thread.h"
 #include "nsm_veth.h"
 #include "nsm_tunnel.h"
@@ -27,6 +27,7 @@
 #include "linux/if_vlan.h"
 #include "linux/sockios.h"
 
+#ifdef PL_NSM_VETH
 
 #define IPKERNEL_TUN_NAME	"/dev/net/tun"
 #define IPKERNEL_TAP_NAME	"/dev/tap"
@@ -51,7 +52,7 @@ static int _ipkernel_veth_create (nsm_veth_t *kifp)
 		kifp->fd = open(IPKERNEL_TUN_NAME, O_RDWR);
 		if (kifp->fd < 0)
 		{
-			zlog_err(ZLOG_PAL, "Unable to open %s to create L3 interface(%s).",
+			zlog_err(MODULE_PAL, "Unable to open %s to create L3 interface(%s).",
 					IPKERNEL_TUN_NAME, safe_strerror(errno));
 			return ERROR;
 		}
@@ -61,7 +62,7 @@ static int _ipkernel_veth_create (nsm_veth_t *kifp)
 		kifp->fd = open(IPKERNEL_TAP_NAME, O_RDWR);
 		if (kifp->fd < 0)
 		{
-			zlog_err(ZLOG_PAL, "Unable to open %s to create L3 interface(%s).",
+			zlog_err(MODULE_PAL, "Unable to open %s to create L3 interface(%s).",
 					IPKERNEL_TUN_NAME, safe_strerror(errno));
 			return ERROR;
 		}
@@ -86,7 +87,7 @@ static int _ipkernel_veth_create (nsm_veth_t *kifp)
 
 	if (ioctl(kifp->fd, TUNSETIFF, &ifr) < 0)
 	{
-		zlog_err(ZLOG_PAL, "Unable to create corresponding L3 interface %s(%s).",
+		zlog_err(MODULE_PAL, "Unable to create corresponding L3 interface %s(%s).",
 				ifp->name, safe_strerror(errno));
 		close(kifp->fd);
 		return ERROR;
@@ -97,7 +98,7 @@ static int _ipkernel_veth_create (nsm_veth_t *kifp)
     macadd[5] = ifp->ifindex & 0xff;
     if(pal_interface_set_lladdr(ifp, macadd, 6) != OK)
 	{
-		zlog_err(ZLOG_PAL, "Unable to set L3 interface  mac %s(%s).",
+		zlog_err(MODULE_PAL, "Unable to set L3 interface  mac %s(%s).",
 				ifp->name, safe_strerror(errno));
 		close(kifp->fd);
 		return ERROR;
@@ -263,3 +264,4 @@ int _ipkernel_linux_change (nsm_veth_t *kifp, int vlan)
 	}
 	return ERROR;
 }
+#endif

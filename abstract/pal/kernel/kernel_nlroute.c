@@ -69,7 +69,7 @@ static void _netlink_route_build_singlepath(const char *routedesc, int bytelen,
 					bytelen);
 
 		if (IS_ZEBRA_DEBUG_KERNEL)
-			zlog_debug(ZLOG_PAL, "netlink_route_multipath() (%s): "
+			zlog_debug(MODULE_PAL, "netlink_route_multipath() (%s): "
 					"nexthop via %s if %u", routedesc,
 					inet_ntoa(nexthop->gate.ipv4), nexthop->ifindex);
 	}
@@ -82,7 +82,7 @@ static void _netlink_route_build_singlepath(const char *routedesc, int bytelen,
 				&nexthop->gate.ipv6, bytelen);
 
 		if (IS_ZEBRA_DEBUG_KERNEL)
-		zlog_debug(ZLOG_PAL, "netlink_route_multipath() (%s): "
+		zlog_debug(MODULE_PAL, "netlink_route_multipath() (%s): "
 				"nexthop via %s if %u",
 				routedesc,
 				inet6_ntoa (nexthop->gate.ipv6),
@@ -100,7 +100,7 @@ static void _netlink_route_build_singlepath(const char *routedesc, int bytelen,
 					bytelen);
 
 		if (IS_ZEBRA_DEBUG_KERNEL)
-			zlog_debug(ZLOG_PAL, "netlink_route_multipath() (%s): "
+			zlog_debug(MODULE_PAL, "netlink_route_multipath() (%s): "
 					"nexthop via if %u", routedesc, nexthop->ifindex);
 	}
 
@@ -110,7 +110,7 @@ static void _netlink_route_build_singlepath(const char *routedesc, int bytelen,
 		addattr32(nlmsg, req_size, RTA_OIF, ifindex2ifkernel(nexthop->ifindex));
 
 		if (IS_ZEBRA_DEBUG_KERNEL)
-			zlog_debug(ZLOG_PAL, "netlink_route_multipath() (%s): "
+			zlog_debug(MODULE_PAL, "netlink_route_multipath() (%s): "
 					"nexthop via if %u", routedesc, nexthop->ifindex);
 	}
 }
@@ -154,7 +154,7 @@ static void _netlink_route_build_multipath(const char *routedesc, int bytelen,
 			*src = &nexthop->src;
 
 		if (IS_ZEBRA_DEBUG_KERNEL)
-			zlog_debug(ZLOG_PAL, "netlink_route_multipath() (%s): "
+			zlog_debug(MODULE_PAL, "netlink_route_multipath() (%s): "
 					"nexthop via %s if %u", routedesc,
 					inet_ntoa(nexthop->gate.ipv4), nexthop->ifindex);
 	}
@@ -168,7 +168,7 @@ static void _netlink_route_build_multipath(const char *routedesc, int bytelen,
 		rtnh->rtnh_len += sizeof (struct rtattr) + bytelen;
 
 		if (IS_ZEBRA_DEBUG_KERNEL)
-		zlog_debug(ZLOG_PAL, "netlink_route_multipath() (%s): "
+		zlog_debug(MODULE_PAL, "netlink_route_multipath() (%s): "
 				"nexthop via %s if %u",
 				routedesc,
 				inet6_ntoa (nexthop->gate.ipv6),
@@ -184,7 +184,7 @@ static void _netlink_route_build_multipath(const char *routedesc, int bytelen,
 		if (nexthop->src.ipv4.s_addr)
 			*src = &nexthop->src;
 		if (IS_ZEBRA_DEBUG_KERNEL)
-			zlog_debug(ZLOG_PAL, "netlink_route_multipath() (%s): "
+			zlog_debug(MODULE_PAL, "netlink_route_multipath() (%s): "
 					"nexthop via if %u", routedesc, nexthop->ifindex);
 	}
 	else if (nexthop->type == NEXTHOP_TYPE_IPV6_IFNAME
@@ -193,7 +193,7 @@ static void _netlink_route_build_multipath(const char *routedesc, int bytelen,
 		rtnh->rtnh_ifindex = ifindex2ifkernel(nexthop->ifindex);
 
 		if (IS_ZEBRA_DEBUG_KERNEL)
-			zlog_debug(ZLOG_PAL, "netlink_route_multipath() (%s): "
+			zlog_debug(MODULE_PAL, "netlink_route_multipath() (%s): "
 					"nexthop via if %u", routedesc, nexthop->ifindex);
 	}
 	else
@@ -387,7 +387,7 @@ static int netlink_route_multipath(int cmd, struct prefix *p, struct rib *rib)
 	if (nexthop_num == 0)
 	{
 		if (IS_ZEBRA_DEBUG_KERNEL)
-			zlog_debug(ZLOG_PAL,
+			zlog_debug(MODULE_PAL,
 					"netlink_route_multipath(): No useful nexthop.");
 		return 0;
 	}

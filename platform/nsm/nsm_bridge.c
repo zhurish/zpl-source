@@ -341,3 +341,18 @@ int nsm_bridge_client_exit()
 		nsm_client_free (nsm);
 	return OK;
 }
+
+struct module_list module_list_nsmbridge = 
+{ 
+	.module=MODULE_NSMBRIDGE, 
+	.name="NSMBRIDGE", 
+	.module_init=nsm_bridge_client_init, 
+	.module_exit=nsm_bridge_client_exit, 
+	.module_task_init=NULL, 
+	.module_task_exit=NULL, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};

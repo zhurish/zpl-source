@@ -302,6 +302,20 @@ DEFUN (no_debug_zebra_fpm,
 }
 
 
+struct module_list module_list_nsmdebug = 
+{ 
+	.module=MODULE_NSMDEBUG, 
+	.name="NSMDEBUG", 
+	.module_init=zebra_debug_init, 
+	.module_exit=NULL, 
+	.module_task_init=NULL, 
+	.module_task_exit=NULL, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};
 
 void
 zebra_debug_init (void)

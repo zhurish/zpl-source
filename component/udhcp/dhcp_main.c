@@ -29,9 +29,9 @@ static int dhcpd_config_init(dhcp_global_t *config)
 	lstInit(&config->pool_list);
 	lstInit(&config->client_list);
 	lstInit(&config->relay_list);
-	if (master_eloop[MODULE_DHCPD] == NULL)
-		config->eloop_master = master_eloop[MODULE_DHCPD] =
-		eloop_master_module_create(MODULE_DHCPD);
+	if (master_eloop[MODULE_DHCP] == NULL)
+		config->eloop_master = master_eloop[MODULE_DHCP] =
+		eloop_master_module_create(MODULE_DHCP);
 
 	config->server_port = DHCP_SERVER_PORT;
 	config->client_port = DHCP_CLIENT_PORT;
@@ -49,9 +49,9 @@ static int dhcpd_config_uninit(dhcp_global_t *config)
 	if(config->init != TRUE)
 		return OK;
 
-	if(master_eloop[MODULE_DHCPD])
-		eloop_master_free(master_eloop[MODULE_DHCPD]);
-	master_eloop[MODULE_DHCPD] = NULL;
+	if(master_eloop[MODULE_DHCP])
+		eloop_master_free(master_eloop[MODULE_DHCP]);
+	master_eloop[MODULE_DHCP] = NULL;
 	config->init = FALSE;
 	lstFree(&config->pool_list);
 	lstFree(&config->client_list);
@@ -72,13 +72,13 @@ int udhcp_read_thread(struct eloop *eloop)
 	sock = ELOOP_FD(eloop);
 	config = ELOOP_ARG(eloop);
 
-	zlog_debug(ZLOG_DHCP, "====================%s", __func__);
+	zlog_debug(MODULE_DHCP, "====================%s", __func__);
 	memset(&packet, 0, sizeof(struct dhcp_packet));
 	bytes = udhcp_recv_packet(&packet, sock, &ifindex);
 	if (bytes < 0) {
 		/* bytes can also be -2 ("bad packet data") */
 		if (bytes == -1 && errno != EINTR) {
-			zlog_err(ZLOG_DHCP,
+			zlog_err(MODULE_DHCP,
 					"read error: "STRERROR_FMT", reopening socket" STRERROR_ERRNO);
 			close(sock);
 			sock = -1;
@@ -91,14 +91,14 @@ int udhcp_read_thread(struct eloop *eloop)
 	if (pool == NULL) {
 		config->r_thread = eloop_add_read(config->eloop_master,
 				udhcp_read_thread, config, sock);
-		zlog_err(ZLOG_DHCP, " this Interface is not allow DHCP pool:%s", ifindex2ifname(ifindex));
+		zlog_err(MODULE_DHCP, " this Interface is not allow DHCP pool:%s", ifindex2ifname(ifindex));
 		return ERROR;
 	}
 	ifter = dhcpd_lookup_interface(pool, ifindex);
 	if (ifter == NULL) {
 		config->r_thread = eloop_add_read(config->eloop_master,
 				udhcp_read_thread, config, sock);
-		zlog_err(ZLOG_DHCP, " this Interface is not allow DHCP:%s", ifindex2ifname(ifindex));
+		zlog_err(MODULE_DHCP, " this Interface is not allow DHCP:%s", ifindex2ifname(ifindex));
 		return ERROR;
 	}
 	udhcp_server_handle_thread(pool, ifter, &packet);
@@ -112,7 +112,7 @@ static int udhcp_task_main(void *p)
 {
 	//dhcp_pool_t *pool = NULL;
 	dhcp_global_t *config = (dhcp_global_t *) p;
-	module_setup_task(MODULE_DHCPD, os_task_id_self());
+	module_setup_task(MODULE_DHCP, os_task_id_self());
 	while (!os_load_config_done()) {
 		os_sleep(1);
 	}
@@ -125,7 +125,7 @@ static int udhcp_task_main(void *p)
 	}
 	dhcpd_lease_load();
 	os_sleep(1);*/
-	zlog_debug(ZLOG_DHCP, "---------udhcpd_main");
+	zlog_debug(MODULE_DHCP, "---------udhcpd_main");
 
 	//config->global->sock
 /*	while(1)
@@ -141,10 +141,10 @@ static int udhcp_task_main(void *p)
 		if (r < 0)
 			continue;
 		if (r) {
-			zlog_debug(ZLOG_DHCP, "read -> udhcpd_main");
+			zlog_debug(MODULE_DHCP, "read -> udhcpd_main");
 		}
 	}*/
-	eloop_start_running(config->eloop_master, MODULE_DHCPD);
+	eloop_start_running(config->eloop_master, MODULE_DHCP);
 	return 0;
 }
 
@@ -261,12 +261,26 @@ int udhcp_module_task_exit ()
 	if(dhcp_global_config.task_id)
 		os_task_destroy(dhcp_global_config.task_id);
 	dhcp_global_config.task_id = 0;
-	if(master_eloop[MODULE_DHCPD])
-		eloop_master_free(master_eloop[MODULE_DHCPD]);
-	master_eloop[MODULE_DHCPD] = NULL;
+	if(master_eloop[MODULE_DHCP])
+		eloop_master_free(master_eloop[MODULE_DHCP]);
+	master_eloop[MODULE_DHCP] = NULL;
 	return OK;
 }
 
+struct module_list module_list_dhcp = 
+{ 
+	.module=MODULE_DHCP, 
+	.name="DHCP", 
+	.module_init=udhcp_module_init, 
+	.module_exit=udhcp_module_exit, 
+	.module_task_init=udhcp_module_task_init, 
+	.module_task_exit=udhcp_module_task_exit, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};
 /*
 int dhcpc_enable_test()
 {

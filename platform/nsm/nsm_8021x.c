@@ -25,6 +25,21 @@ static Gdot1x_t gDot1x_t;
 
 static int dot1x_cleanup(ifindex_t ifindex, BOOL all);
 
+struct module_list module_list_nsmdot1x = 
+{ 
+	.module=MODULE_NSMDOT1X, 
+	.name="NSMDOT1X", 
+	.module_init=nsm_dot1x_init, 
+	.module_exit=nsm_dot1x_exit, 
+	.module_task_init=NULL, 
+	.module_task_exit=NULL, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};
+
 int nsm_dot1x_init(void)
 {
 	os_memset(&gDot1x_t, 0, sizeof(Gdot1x_t));

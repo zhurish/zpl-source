@@ -24,7 +24,7 @@
 #include <zebra.h>
 #include <log.h>
 
-#define __PL_PJSIP_DEBUG(fmt,...)		zlog_debug(ZLOG_SIP, fmt, ##__VA_ARGS__)
+#define __PL_PJSIP_DEBUG(fmt,...)		zlog_debug(MODULE_SIP, fmt, ##__VA_ARGS__)
 
 
 PJ_BEGIN_DECL

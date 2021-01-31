@@ -46,7 +46,7 @@ static int web_admin_user(Webs *wp, char *path, char *query)
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get username Value");
+			zlog_debug(MODULE_WEB, "Can not Get username Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	strcpy(username, strval);
@@ -55,7 +55,7 @@ static int web_admin_user(Webs *wp, char *path, char *query)
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get password Value");
+			zlog_debug(MODULE_WEB, "Can not Get password Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	strcpy(password, strval);
@@ -64,13 +64,13 @@ static int web_admin_user(Webs *wp, char *path, char *query)
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get user_level Value");
+			zlog_debug(MODULE_WEB, "Can not Get user_level Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	strcpy(authlevel, strval);
 	if(WEB_IS_DEBUG(MSG) && WEB_IS_DEBUG(DETAIL))
 	{
-		zlog_debug(ZLOG_WEB, " get goform/adminuser username:%s password:%s authlevel:%s", username,password,authlevel);
+		zlog_debug(MODULE_WEB, " get goform/adminuser username:%s password:%s authlevel:%s", username,password,authlevel);
 	}
 	if(vty_user_create(NULL, username, password, FALSE , TRUE ) == CMD_SUCCESS)
 	{
@@ -85,7 +85,7 @@ static int web_admin_user(Webs *wp, char *path, char *query)
 	{
 		if(WEB_IS_DEBUG(EVENT))
 		{
-			zlog_debug(ZLOG_WEB, " Can not Create User for '%s'", username);
+			zlog_debug(MODULE_WEB, " Can not Create User for '%s'", username);
 		}
 		ret = ERROR;
 	}
@@ -112,13 +112,13 @@ static int web_admin_change_password(Webs *wp, char *path, char *query)
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get password Value");
+			zlog_debug(MODULE_WEB, "Can not Get password Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	strcpy(password, strval);
 	if(WEB_IS_DEBUG(MSG) && WEB_IS_DEBUG(DETAIL))
 	{
-		zlog_debug(ZLOG_WEB, " get goform/admin-password username:%s password:%s", wp->username, password);
+		zlog_debug(MODULE_WEB, " get goform/admin-password username:%s password:%s", wp->username, password);
 	}
 	if(vty_user_create(NULL, wp->username, password, FALSE , TRUE ) == CMD_SUCCESS)
 	{
@@ -126,7 +126,7 @@ static int web_admin_change_password(Webs *wp, char *path, char *query)
 	}
 	if(WEB_IS_DEBUG(EVENT))
 	{
-		zlog_debug(ZLOG_WEB, " Can not Change User Password for '%s'", wp->username);
+		zlog_debug(MODULE_WEB, " Can not Change User Password for '%s'", wp->username);
 	}
 	return web_return_text_plain(wp, ERROR);
 }
@@ -141,7 +141,7 @@ static int web_admin_deluser(Webs *wp, void *p)
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get username Value");
+			zlog_debug(MODULE_WEB, "Can not Get username Value");
 		return ERROR;
 
 	}
@@ -153,7 +153,7 @@ static int web_admin_deluser(Webs *wp, void *p)
 	}
 	if(WEB_IS_DEBUG(EVENT))
 	{
-		zlog_debug(ZLOG_WEB, " Can not Delete User '%s'", username);
+		zlog_debug(MODULE_WEB, " Can not Delete User '%s'", username);
 	}
 	return ERROR;
 }
@@ -237,7 +237,7 @@ static int web_change_password(Webs *wp, char *path, char *query)
 			wfree(oldpass);
 #endif
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get new password Value");
+			zlog_debug(MODULE_WEB, "Can not Get new password Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 
@@ -252,7 +252,7 @@ static int web_change_password(Webs *wp, char *path, char *query)
 			wfree(oldpass);
 #endif
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get username Value");
+			zlog_debug(MODULE_WEB, "Can not Get username Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 	oldpassword = webs_get_var(wp, T("password"), T(""));
@@ -266,7 +266,7 @@ static int web_change_password(Webs *wp, char *path, char *query)
 			wfree(oldpass);
 #endif
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get old password Value");
+			zlog_debug(MODULE_WEB, "Can not Get old password Value");
 		return web_return_text_plain(wp, ERROR);
 	}
 #if ME_GOAHEAD_AUTO_LOGIN
@@ -286,7 +286,7 @@ static int web_change_password(Webs *wp, char *path, char *query)
 		if(oldpass)
 			wfree(oldpass);
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not verify password Value");
+			zlog_debug(MODULE_WEB, "Can not verify password Value");
 
 		return web_return_text_plain(wp, ERROR);
 	}
@@ -308,7 +308,7 @@ static int web_change_password(Webs *wp, char *path, char *query)
 		if(oldpass)
 			wfree(oldpass);
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Encoded password Value");
+			zlog_debug(MODULE_WEB, "Can not Encoded password Value");
 
 		return web_return_text_plain(wp, ERROR);
 	}
@@ -318,14 +318,14 @@ static int web_change_password(Webs *wp, char *path, char *query)
 
 	if(WEB_IS_DEBUG(MSG) && WEB_IS_DEBUG(DETAIL))
 	{
-		zlog_debug(ZLOG_WEB, " get goform/admin-password username:%s password:%s", wp->username, newpassword);
+		zlog_debug(MODULE_WEB, " get goform/admin-password username:%s password:%s", wp->username, newpassword);
 	}
 
 #if !ME_GOAHEAD_AUTO_LOGIN
 	if(user_authentication(username, password) != 0)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not verify password Value");
+			zlog_debug(MODULE_WEB, "Can not verify password Value");
 
 		return web_return_text_plain(wp, ERROR);
 	}
@@ -333,7 +333,7 @@ static int web_change_password(Webs *wp, char *path, char *query)
 	{
 		if(WEB_IS_DEBUG(EVENT))
 		{
-			zlog_debug(ZLOG_WEB, " Can not Change User Password for '%s'", wp->username);
+			zlog_debug(MODULE_WEB, " Can not Change User Password for '%s'", wp->username);
 		}
 		return web_return_text_plain(wp, ERROR);
 	}

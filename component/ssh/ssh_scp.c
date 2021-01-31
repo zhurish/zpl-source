@@ -547,7 +547,7 @@ static int ssh_scpd_start_file(sshd_client_t *sshclient, const char *filename, u
 static int ssh_scpd_close(sshd_client_t *sshclient)
 {
 	int n = 0;
-    zlog_debug(ZLOG_UTILS, "%s :", __func__);
+    zlog_debug(MODULE_UTILS, "%s :", __func__);
 
     ssh_event_remove_session(sshclient->config->event, sshclient->session);
 

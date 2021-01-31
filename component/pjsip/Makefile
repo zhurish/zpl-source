@@ -104,7 +104,11 @@ PL_PJPROJECT_UNLIBS:
 	@$(ECHO) " "
 endif
 
-
+files = $(patsubst %.o,%.c,$(OBJS))
+make_prepare:
+	@for i in $(files); do	\
+		$(MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+	done
 
 $(LIBS) : $(PL_PJPROJECT_LIBS) $(SDL2LIBS) $(MODULE_OBJS) 
 	@$(AR) -rs $(LIBS) $(MODULE_OBJS) 
@@ -173,4 +177,4 @@ objclean: $(PL_PJPROJECT_LIBS)
 
 all: lib install
 
-.PHONY:	obj all lib install objclean clean install-lib
+.PHONY:	obj all lib install objclean clean install-lib make_prepare

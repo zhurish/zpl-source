@@ -24,7 +24,7 @@
 #define _ZEBRA_COMMAND_H
 
 #include "hash.h"
-#include "route_types.h"
+//#include "route_types.h"
 #include "vector.h"
 #include "vty.h"
 

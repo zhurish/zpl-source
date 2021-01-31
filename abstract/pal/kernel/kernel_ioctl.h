@@ -32,26 +32,29 @@ extern int if_ioctl_ipv6 (u_int request, caddr_t buffer);
 
 extern int ip_arp_stack_init();
 
-
+#ifdef PL_NSM_VETH
 extern int _ipkernel_linux_create (nsm_veth_t *kifp);
 extern int _ipkernel_linux_destroy (nsm_veth_t *kifp);
 extern int _ipkernel_linux_change (nsm_veth_t *kifp, int vlan);
+#endif
 
+#ifdef PL_NSM_TUNNEL
 extern int _ipkernel_tunnel_create(nsm_tunnel_t *tunnel);
 extern int _ipkernel_tunnel_delete(nsm_tunnel_t *tunnel);
 extern int _ipkernel_tunnel_change(nsm_tunnel_t *tunnel);
-
-
+#endif
+#ifdef PL_NSM_BRIDGE
 extern int _ipkernel_bridge_create(nsm_bridge_t *br);
 extern int _ipkernel_bridge_delete(nsm_bridge_t *br);
 extern int _ipkernel_bridge_add_interface(nsm_bridge_t *br, int ifindex);
 extern int _ipkernel_bridge_del_interface(nsm_bridge_t *br, int ifindex);
 extern int _ipkernel_bridge_list_interface(nsm_bridge_t *br, int ifindex[]);
 extern int _ipkernel_bridge_check_interface(char *br, int ifindex);
-
+#endif
+#ifdef PL_NSM_TRUNK
 extern int _ipkernel_bond_create(struct interface *ifp);
 extern int _ipkernel_bond_delete(struct interface *ifp);
-
+#endif
 
 extern int os_vrf_stack_init();
 

@@ -55,11 +55,11 @@ int icmp_echo_request(uint32_t test_nip,
 
 	s = socket(PF_PACKET, SOCK_PACKET, htons(ETH_P_ARP));
 	if (s == -1) {
-		zlog_err(ZLOG_DHCP, "can't create raw socket");
+		zlog_err(MODULE_DHCP, "can't create raw socket");
 		return -1;
 	}
 	if (setsockopt(s, SOL_SOCKET, SO_BROADCAST, &rv, sizeof(int)) == -1) {
-		zlog_err(ZLOG_DHCP, "can't enable bcast on raw socket");
+		zlog_err(MODULE_DHCP, "can't enable bcast on raw socket");
 		goto ret;
 	}
 
@@ -133,7 +133,7 @@ int icmp_echo_request(uint32_t test_nip,
 
  ret:
 	close(s);
-	zlog_err(ZLOG_DHCP, "%srp reply received for this address", rv ? "no a" : "A");
+	zlog_err(MODULE_DHCP, "%srp reply received for this address", rv ? "no a" : "A");
 	return rv;
 }
 
@@ -158,11 +158,11 @@ int icmp_echo_request_mac(uint32_t test_nip,
 
 	s = socket(PF_PACKET, SOCK_PACKET, htons(ETH_P_ARP));
 	if (s == -1) {
-		zlog_err(ZLOG_DHCP, "can't create raw socket");
+		zlog_err(MODULE_DHCP, "can't create raw socket");
 		return -1;
 	}
 	if (setsockopt(s, SOL_SOCKET, SO_BROADCAST, &rv, sizeof(int)) == -1) {
-		zlog_err(ZLOG_DHCP, "can't enable bcast on raw socket");
+		zlog_err(MODULE_DHCP, "can't enable bcast on raw socket");
 		goto ret;
 	}
 
@@ -239,6 +239,6 @@ int icmp_echo_request_mac(uint32_t test_nip,
 
  ret:
 	close(s);
-	zlog_err(ZLOG_DHCP, "%srp reply received for this address", rv ? "no a" : "A");
+	zlog_err(MODULE_DHCP, "%srp reply received for this address", rv ? "no a" : "A");
 	return rv;
 }

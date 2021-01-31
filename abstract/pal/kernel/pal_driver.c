@@ -25,6 +25,20 @@
 pal_stack_t pal_stack;
 static int kernel_task_id = 0;
 
+struct module_list module_list_pal = 
+{ 
+	.module=MODULE_PAL, 
+	.name="PAL", 
+	.module_init=pal_abstract_init, 
+	.module_exit=NULL, 
+	.module_task_init=NULL, 
+	.module_task_exit=NULL, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};
 
 int pal_interface_up(struct interface *ifp)
 {

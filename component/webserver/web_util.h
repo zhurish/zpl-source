@@ -18,11 +18,11 @@
 #define _WEB_DEBUG_ENABLE 1
 
 #if defined(_WEB_DEBUG_ENABLE)
-#define _WEB_DBG_ERR(format, ...) 		zlog_err (ZLOG_WEB, format, ##__VA_ARGS__)
-#define _WEB_DBG_WARN(format, ...) 		zlog_warn (ZLOG_WEB, format, ##__VA_ARGS__)
-#define _WEB_DBG_INFO(format, ...) 		zlog_info (ZLOG_WEB, format, ##__VA_ARGS__)
-#define _WEB_DBG_DEBUG(format, ...) 	zlog_debug (ZLOG_WEB, format, ##__VA_ARGS__)
-#define _WEB_DBG_TRAP(format, ...) 		zlog_trap (ZLOG_WEB, format, ##__VA_ARGS__)
+#define _WEB_DBG_ERR(format, ...) 		zlog_err (MODULE_WEB, format, ##__VA_ARGS__)
+#define _WEB_DBG_WARN(format, ...) 		zlog_warn (MODULE_WEB, format, ##__VA_ARGS__)
+#define _WEB_DBG_INFO(format, ...) 		zlog_info (MODULE_WEB, format, ##__VA_ARGS__)
+#define _WEB_DBG_DEBUG(format, ...) 	zlog_debug (MODULE_WEB, format, ##__VA_ARGS__)
+#define _WEB_DBG_TRAP(format, ...) 		zlog_trap (MODULE_WEB, format, ##__VA_ARGS__)
 #else
 #define _WEB_DBG_ERR(format, ...)
 #define _WEB_DBG_WARN(format, ...)

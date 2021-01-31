@@ -77,7 +77,7 @@ static int web_video_snap_keywork_get(Webs *wp, char *path, char *query, v9_cap_
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
+			zlog_debug(MODULE_WEB, "Can not Get Board ID Value");
 		return web_return_application_json_msg(wp, ERROR, "获取不到板卡ID", NULL);
 		//return web_return_text_plain(wp, ERROR);
 	}
@@ -101,7 +101,7 @@ static int web_video_snap_keywork_get(Webs *wp, char *path, char *query, v9_cap_
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get starttime Value");
+			zlog_debug(MODULE_WEB, "Can not Get starttime Value");
 		return web_return_application_json_msg(wp, ERROR, "获取起始时间失败", NULL);
 	}
 	keyw->starttime = os_timestamp_spilt(0,  strval);
@@ -110,7 +110,7 @@ static int web_video_snap_keywork_get(Webs *wp, char *path, char *query, v9_cap_
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get endtime Value");
+			zlog_debug(MODULE_WEB, "Can not Get endtime Value");
 		return web_return_application_json_msg(wp, ERROR, "获取结束时间失败", NULL);
 	}
 	keyw->endtime = os_timestamp_spilt(0,  strval);
@@ -172,7 +172,7 @@ static int web_video_snap_handle(Webs *wp, char *path, char *query)
 		if (ret != OK)
 		{
 			if(WEB_IS_DEBUG(EVENT))
-				zlog_debug(ZLOG_WEB, "Can not Select by Keywork Value");
+				zlog_debug(MODULE_WEB, "Can not Select by Keywork Value");
 			XFREE (MTYPE_VIDEO_TMP, keywork.get_outid);
 			keywork.get_outid = NULL;
 			v9_video_sqldb_close (db, keywork.id);
@@ -225,7 +225,7 @@ static int web_video_snap_handle(Webs *wp, char *path, char *query)
 			else
 			{
 				if(WEB_IS_DEBUG(EVENT))
-					zlog_debug(ZLOG_WEB, "Can not Select by index id Value");
+					zlog_debug(MODULE_WEB, "Can not Select by index id Value");
 			}
 /*			if(wp->iValue == 20)
 				break;*/
@@ -269,7 +269,7 @@ static int web_video_pic_keywork_get(Webs *wp, char *path, char *query, v9_cap_k
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
+			zlog_debug(MODULE_WEB, "Can not Get Board ID Value");
 		return web_return_application_json_msg(wp, ERROR, "获取不到板卡ID", NULL);
 		//return web_return_text_plain(wp, ERROR);
 	}
@@ -293,19 +293,19 @@ static int web_video_pic_keywork_get(Webs *wp, char *path, char *query, v9_cap_k
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get similarity Value");
+			zlog_debug(MODULE_WEB, "Can not Get similarity Value");
 		return web_return_application_json_msg(wp, ERROR, "获取相似度失败", NULL);
 		//return web_return_text_plain(wp, ERROR);
 	}
 	keyw->key.input_value = (float)(atoi(strval)/100);
 
-	zlog_debug(ZLOG_WEB, "======================%s:keyw->key.input_value=%f(%s)\r\n",__func__, keyw->key.input_value, strval);
+	zlog_debug(MODULE_WEB, "======================%s:keyw->key.input_value=%f(%s)\r\n",__func__, keyw->key.input_value, strval);
 
 	strval = webs_get_var(wp, T("starttime"), T(""));
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get starttime Value");
+			zlog_debug(MODULE_WEB, "Can not Get starttime Value");
 		return web_return_application_json_msg(wp, ERROR, "获取起始时间失败", NULL);
 		//return web_return_text_plain(wp, ERROR);
 	}
@@ -315,7 +315,7 @@ static int web_video_pic_keywork_get(Webs *wp, char *path, char *query, v9_cap_k
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get endtime Value");
+			zlog_debug(MODULE_WEB, "Can not Get endtime Value");
 		return web_return_application_json_msg(wp, ERROR, "获取结束时间失败", NULL);
 		//return web_return_text_plain(wp, ERROR);
 	}
@@ -354,12 +354,12 @@ static int web_video_pic_keywork_get(Webs *wp, char *path, char *query, v9_cap_k
 				{
 					v9_app_snapfea_key_free(&keyw->key);
 					if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-						zlog_debug(ZLOG_WEB, "Can not Get keyvalue Value by pic '%s'", uploadfile);
+						zlog_debug(MODULE_WEB, "Can not Get keyvalue Value by pic '%s'", uploadfile);
 					return ERROR;
 				}
 			}
 			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-				zlog_debug(ZLOG_WEB, "Can not Get keyvalue Value by pic '%s'", uploadfile);
+				zlog_debug(MODULE_WEB, "Can not Get keyvalue Value by pic '%s'", uploadfile);
 			return ERROR;
 			//printf("rename %s -> %s", up->filename, uploadfile);
 #else
@@ -409,7 +409,7 @@ static int web_video_snap_pichandle(Webs *wp, char *path, char *query)
 		/*
 		 * 根据条件获取ID表
 		 */
-		zlog_debug(ZLOG_WEB, "======================%s:keyw->key.input_value=%f\r\n",__func__, keywork.key.input_value);
+		zlog_debug(MODULE_WEB, "======================%s:keyw->key.input_value=%f\r\n",__func__, keywork.key.input_value);
 		keywork.key.feature_memcmp = v9_video_sdk_get_sosine_similarity_api;
 		//keywork.key.input_value = 0.80;
 		ret = v9_video_sqldb_select_by_keyvalue (db, keywork.id, keywork.table, keywork.limit,
@@ -422,7 +422,7 @@ static int web_video_snap_pichandle(Webs *wp, char *path, char *query)
 		if (ret != OK)
 		{
 			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-				zlog_debug(ZLOG_WEB, "Can not Select db by keyvalue Value");
+				zlog_debug(MODULE_WEB, "Can not Select db by keyvalue Value");
 			XFREE (MTYPE_VIDEO_TMP, keywork.get_outid);
 			keywork.get_outid = NULL;
 			v9_app_snapfea_key_free(&keywork.key);
@@ -473,7 +473,7 @@ static int web_video_snap_pichandle(Webs *wp, char *path, char *query)
 			else
 			{
 				if(WEB_IS_DEBUG(EVENT))
-					zlog_debug(ZLOG_WEB, "Can not Select by index id Value");
+					zlog_debug(MODULE_WEB, "Can not Select by index id Value");
 			}
 /*			if(wp->iValue == 20)
 				break;*/
@@ -514,7 +514,7 @@ static int web_video_warn_keywork_get(Webs *wp, char *path, char *query, v9_cap_
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
+			zlog_debug(MODULE_WEB, "Can not Get Board ID Value");
 		return web_return_application_json_msg(wp, ERROR, "获取不到板卡ID", NULL);
 	}
 	keyw->id = atoi(strval);
@@ -536,7 +536,7 @@ static int web_video_warn_keywork_get(Webs *wp, char *path, char *query, v9_cap_
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get starttime Value");
+			zlog_debug(MODULE_WEB, "Can not Get starttime Value");
 		return web_return_application_json_msg(wp, ERROR, "获取起始时间失败", NULL);
 	}
 	keyw->starttime = os_timestamp_spilt(0,  strval);
@@ -545,7 +545,7 @@ static int web_video_warn_keywork_get(Webs *wp, char *path, char *query, v9_cap_
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get endtime Value");
+			zlog_debug(MODULE_WEB, "Can not Get endtime Value");
 		return web_return_application_json_msg(wp, ERROR, "获取结束时间失败", NULL);
 	}
 	keyw->endtime = os_timestamp_spilt(0,  strval);
@@ -608,7 +608,7 @@ static int web_video_warn_handle(Webs *wp, char *path, char *query)
 		if (ret != OK)
 		{
 			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-				zlog_debug(ZLOG_WEB, "Can not Select db by keywork Value");
+				zlog_debug(MODULE_WEB, "Can not Select db by keywork Value");
 			XFREE (MTYPE_VIDEO_TMP, keywork.get_outid);
 			keywork.get_outid = NULL;
 			v9_video_sqldb_close (db, keywork.id);
@@ -672,7 +672,7 @@ static int web_video_warn_handle(Webs *wp, char *path, char *query)
 			else
 			{
 				if(WEB_IS_DEBUG(EVENT))
-					zlog_debug(ZLOG_WEB, "Can not Select by index id Value");
+					zlog_debug(MODULE_WEB, "Can not Select by index id Value");
 			}
 /*			if(wp->iValue == 20)
 				break;*/
@@ -726,7 +726,7 @@ static int web_video_real_warn_handle(Webs *wp, char *path, char *query)
 	if (NULL == strval)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(ZLOG_WEB, "Can not Get Board ID Value");
+			zlog_debug(MODULE_WEB, "Can not Get Board ID Value");
 		return web_return_application_json_msg(wp, ERROR, "获取不到板卡ID", NULL);
 	}
 	keywork.id = atoi(strval);
@@ -755,7 +755,7 @@ static int web_video_real_warn_handle(Webs *wp, char *path, char *query)
 		{
 			v9_video_sqldb_close (db, keywork.id);
 			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-				zlog_debug(ZLOG_WEB, "Can not Select db by keywork Value");
+				zlog_debug(MODULE_WEB, "Can not Select db by keywork Value");
 			XFREE (MTYPE_VIDEO_TMP, keywork.get_outid);
 			keywork.get_outid = NULL;
 			v9_app_snapfea_key_free(&keywork.key);
@@ -820,7 +820,7 @@ static int web_video_real_warn_handle(Webs *wp, char *path, char *query)
 			else
 			{
 				if(WEB_IS_DEBUG(EVENT))
-					zlog_debug(ZLOG_WEB, "Can not Select by index id Value");
+					zlog_debug(MODULE_WEB, "Can not Select by index id Value");
 			}
 /*			if(wp->iValue == 20)
 				break;*/

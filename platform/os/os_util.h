@@ -11,7 +11,6 @@
 
 #define OS_PIPE_BASE	SYSRUNDIR
 
-
 //#define DOUBLE_PROCESS
 
 #ifdef DOUBLE_PROCESS

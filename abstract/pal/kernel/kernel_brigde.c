@@ -22,7 +22,7 @@
 #include "command.h"
 #include "memory.h"
 #include "log.h"
-#include "zclient.h"
+#include "nsm_zclient.h"
 #include "thread.h"
 
 #include "nsm_veth.h"
@@ -30,6 +30,8 @@
 #include "nsm_bridge.h"
 
 #include "kernel_ioctl.h"
+
+#ifdef PL_NSM_BRIDGE
 
 #define _LINUX_IP_H
 
@@ -119,7 +121,7 @@ int _ipkernel_bridge_list_interface(nsm_bridge_t *br, int ifindex[])
 	ifr.ifr_data = (char *) &args;
 
 	if (if_ioctl(SIOCDEVPRIVATE, &ifr) < 0) {
-	//	zlog_err(ZLOG_PAL, "%s: can't get info %s\n",br->ifp->k_name, strerror(errno));
+	//	zlog_err(MODULE_PAL, "%s: can't get info %s\n",br->ifp->k_name, strerror(errno));
 	//	return CMD_WARNING;
 	}
 	memcpy(ifindex, port_index, sizeof(port_index));
@@ -142,7 +144,7 @@ int _ipkernel_bridge_check_interface(char *br, int ifindex)
 	ifr.ifr_data = (char *) &bargs;
 
 	if (if_ioctl(SIOCDEVPRIVATE, &ifr) < 0) {
-	//	zlog_err(ZLOG_PAL, "%s: can't get info %s\n",br->ifp->k_name, strerror(errno));
+	//	zlog_err(MODULE_PAL, "%s: can't get info %s\n",br->ifp->k_name, strerror(errno));
 	//	return CMD_WARNING;
 		return ERROR;
 	}
@@ -317,7 +319,7 @@ static int bridge_cmd_error(struct vty *vty, int type, const char *bridge, const
 			if(vty)
 				vty_out (vty, "%% bridge device %s already exists; can't create %s",bridge, VTY_NEWLINE);
 			else
-				zlog_debug(ZLOG_PAL, "%% bridge device %s already exists; can't create \n",bridge);
+				zlog_debug(MODULE_PAL, "%% bridge device %s already exists; can't create \n",bridge);
 		}
 		break;
 	case ENXIO:
@@ -326,7 +328,7 @@ static int bridge_cmd_error(struct vty *vty, int type, const char *bridge, const
 			if(vty)
 				vty_out (vty, "%% bridge device %s doesn't exist; can't delete it.%s",bridge, VTY_NEWLINE);
 			else
-				zlog_debug(ZLOG_PAL, "%% bridge device %s doesn't exist; can't delete it.\n",bridge);
+				zlog_debug(MODULE_PAL, "%% bridge device %s doesn't exist; can't delete it.\n",bridge);
 		}
 		break;
 
@@ -336,14 +338,14 @@ static int bridge_cmd_error(struct vty *vty, int type, const char *bridge, const
 			if(vty)
 				vty_out (vty, "%% bridge device %s is still up; can't delete it\%s",bridge, VTY_NEWLINE);
 			else
-				zlog_debug(ZLOG_PAL, "%% bridge device %s is still up; can't delete it\n",bridge);
+				zlog_debug(MODULE_PAL, "%% bridge device %s is still up; can't delete it\n",bridge);
 		}
 		if(type == BRCTL_ADD_IF)
 		{
 			if(vty)
 				vty_out (vty, "%% interface %s is already to bridge %s %s",dev,bridge, VTY_NEWLINE);
 			else
-				zlog_debug(ZLOG_PAL, "%% interface %s is already to bridge %s \n",dev,bridge);
+				zlog_debug(MODULE_PAL, "%% interface %s is already to bridge %s \n",dev,bridge);
 		}
 		break;
 
@@ -353,14 +355,14 @@ static int bridge_cmd_error(struct vty *vty, int type, const char *bridge, const
 			if(vty)
 				vty_out (vty, "%% interface %s does not exist. %s",dev, VTY_NEWLINE);
 			else
-				zlog_debug(ZLOG_PAL, "%% interface %s does not exist. \n",dev);
+				zlog_debug(MODULE_PAL, "%% interface %s does not exist. \n",dev);
 		}
 		if(type == BRCTL_DEL_IF)
 		{
 			if(vty)
 				vty_out (vty, "%% interface %s does not exist.%s",dev, VTY_NEWLINE);
 			else
-				zlog_debug(ZLOG_PAL, "%% interface %s does not exist. \n",dev);
+				zlog_debug(MODULE_PAL, "%% interface %s does not exist. \n",dev);
 		}
 		break;
 
@@ -370,7 +372,7 @@ static int bridge_cmd_error(struct vty *vty, int type, const char *bridge, const
 			if(vty)
 				vty_out (vty, "%% interface %s is a bridge device itself can't enslave a bridge device to a bridge device. %s",dev, VTY_NEWLINE);
 			else
-				zlog_debug(ZLOG_PAL, "%% interface %s is a bridge device itself can't enslave a bridge device to a bridge device.\n",dev);
+				zlog_debug(MODULE_PAL, "%% interface %s is a bridge device itself can't enslave a bridge device to a bridge device.\n",dev);
 		}
 		break;
 
@@ -380,7 +382,7 @@ static int bridge_cmd_error(struct vty *vty, int type, const char *bridge, const
 			if(vty)
 				vty_out (vty, "%% interface %s is not bridge on bridge device %s. %s",dev, bridge, VTY_NEWLINE);
 			else
-				zlog_debug(ZLOG_PAL, "%% interface %s is not bridge on bridge device %s.\n",dev, bridge);
+				zlog_debug(MODULE_PAL, "%% interface %s is not bridge on bridge device %s.\n",dev, bridge);
 		}
 		break;
 	}
@@ -464,7 +466,7 @@ static int ip_bridge_port_get(struct utils_interface *uifp)
 	ifr.ifr_data = (char *) &args;
 
 	if (ioctl(br_sock_fd, SIOCDEVPRIVATE, &ifr) < 0) {
-		zlog_err(ZLOG_PAL, "%s: can't get info %s\n",uifp->name, strerror(errno));
+		zlog_err(MODULE_PAL, "%s: can't get info %s\n",uifp->name, strerror(errno));
 		return CMD_WARNING;
 	}
 	memcpy(uifp->br_ifindex, port_index, sizeof(port_index));
@@ -480,7 +482,7 @@ static int ip_bridge_port_info_get(struct utils_interface *uifp)
 	ifr.ifr_data = (char *) &args;
 
 	if (ioctl(br_sock_fd, SIOCDEVPRIVATE, &ifr) < 0) {
-		zlog_err(ZLOG_PAL, "%s: can't get info %s\n",uifp->name, strerror(errno));
+		zlog_err(MODULE_PAL, "%s: can't get info %s\n",uifp->name, strerror(errno));
 		return CMD_WARNING;
 	}
 	uifp->br_stp_state = port.state;
@@ -502,7 +504,7 @@ int ip_bridge_startup_config(struct utils_interface *uifp)
 	ifr.ifr_data = (char *) &args;
 
 	if (ioctl(br_sock_fd, SIOCDEVPRIVATE, &ifr) < 0) {
-		zlog_err(ZLOG_PAL, "%s: can't get info %s\n",uifp->name, strerror(errno));
+		zlog_err(MODULE_PAL, "%s: can't get info %s\n",uifp->name, strerror(errno));
 		if(br_sock_fd)
 			close(br_sock_fd);
 		br_sock_fd = -1;
@@ -580,7 +582,7 @@ static int ip_bridge_info(struct vty *vty, const char *bridge)
 	ifr.ifr_data = (char *) &args;
 
 	if (ioctl(br_sock_fd, SIOCDEVPRIVATE, &ifr) < 0) {
-		zlog_err(ZLOG_PAL, "%s: can't get info %s\n",bridge, strerror(errno));
+		zlog_err(MODULE_PAL, "%s: can't get info %s\n",bridge, strerror(errno));
 		if(br_sock_fd)
 			close(br_sock_fd);
 		br_sock_fd = -1;
@@ -644,7 +646,7 @@ int no_bridge_interface(struct vty *vty, const char *ifname)
 		if(vty)
 	      vty_out (vty, "%% invalid input bridge interface name is null %s",VTY_NEWLINE);
 		else
-			zlog_debug(ZLOG_PAL, "%% invalid input bridge interface name is null\n");
+			zlog_debug(MODULE_PAL, "%% invalid input bridge interface name is null\n");
 	    return CMD_WARNING;
 	}
 	//查找接口
@@ -654,7 +656,7 @@ int no_bridge_interface(struct vty *vty, const char *ifname)
 		if(vty)
 			vty_out (vty, "%% Can't lookup bridge interface %s %s",ifname,VTY_NEWLINE);
 		else
-			zlog_debug(ZLOG_PAL, "%% Can't lookup bridge interface %s",ifname);
+			zlog_debug(MODULE_PAL, "%% Can't lookup bridge interface %s",ifname);
 		return CMD_WARNING;
 	}
 	//当前接口不是桥接口，返回
@@ -671,7 +673,7 @@ int no_bridge_interface(struct vty *vty, const char *ifname)
 		if(vty)
 			vty_out (vty, "%% Can't delete bridge interface %s there have sub interface %s",ifname,VTY_NEWLINE);
 		else
-			zlog_debug(ZLOG_PAL, "%% Can't delete bridge interface %s there have sub interface",ifname);
+			zlog_debug(MODULE_PAL, "%% Can't delete bridge interface %s there have sub interface",ifname);
 		return CMD_WARNING;
 	}
 #ifdef BRCTL_CMD_DEBUG
@@ -683,7 +685,7 @@ int no_bridge_interface(struct vty *vty, const char *ifname)
 		if(vty)
 			vty_out (vty, "%% Can't delete bridge interface %s%s",ifname,VTY_NEWLINE);
 		else
-			zlog_debug(ZLOG_PAL, "%% Can't delete bridge interface %s",ifname);
+			zlog_debug(MODULE_PAL, "%% Can't delete bridge interface %s",ifname);
 		return CMD_WARNING;
 	}
 #else
@@ -694,7 +696,7 @@ int no_bridge_interface(struct vty *vty, const char *ifname)
 		if(vty)
 			vty_out (vty, "%% Can't delete bridge interface %s%s",ifname,VTY_NEWLINE);
 		else
-			zlog_debug(ZLOG_PAL, "%% Can't delete bridge interface %s",ifname);
+			zlog_debug(MODULE_PAL, "%% Can't delete bridge interface %s",ifname);
 		return CMD_WARNING;
 	}
 #endif
@@ -1255,6 +1257,7 @@ void utils_bridge_cmd_init (void)
 	install_element (INTERFACE_NODE, &ip_bridge_stp_on_cmd);
 	install_element (INTERFACE_NODE, &no_ip_bridge_stp_on_cmd);
 }
+#endif
 #endif
 #endif
 

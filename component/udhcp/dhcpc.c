@@ -205,7 +205,7 @@ static int udhcpc_packet_bcast_ucast(int sock, struct dhcp_packet *packet,
 		dest.ip = server;
 		dest.port = dhcp_global_config.server_port;
 
-		zlog_debug(ZLOG_DHCP,
+		zlog_debug(MODULE_DHCP,
 				"udhcpc_packet_bcast_ucast UDP %x:%d to %s:%d\r\n", ciaddr,
 				source.port, inet_address(ntohl(server)), dest.port);
 
@@ -238,7 +238,7 @@ static int udhcpc_send_discover(client_interface_t *inter, uint32_t requested)
 
 	if (DHCPC_DEBUG_ISON(EVENT))
 	{
-		zlog_debug(ZLOG_DHCP, "DHCP Client sending DHCPDISCOVER packet on interface %s",
+		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCPDISCOVER packet on interface %s",
 				ifindex2ifname(inter->ifindex));
 	}
 	if (inter->state.mode == DHCP_RAW_MODE)
@@ -289,9 +289,9 @@ static int udhcpc_send_request(client_interface_t *inter, uint32_t server,
 	{
 		struct in_addr temp_addr;
 		temp_addr.s_addr = requested;
-		zlog_debug(ZLOG_DHCP, "DHCP Client sending DHCPREQUEST packet on interface %s",
+		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCPREQUEST packet on interface %s",
 				ifindex2ifname(inter->ifindex));
-		zlog_debug(ZLOG_DHCP, "DHCP Client  request ip address %s",
+		zlog_debug(MODULE_DHCP, "DHCP Client  request ip address %s",
 				inet_ntoa(temp_addr));
 	}
 	if (inter->state.mode == DHCP_RAW_MODE)
@@ -346,9 +346,9 @@ static int udhcpc_send_renew(client_interface_t *inter, uint32_t server,
 		char tmpbug[64];
 		memset(tmpbug, 0, sizeof(tmpbug));
 		sprintf(tmpbug, "%s", inet_address(ciaddr));
-		zlog_debug(ZLOG_DHCP, "DHCP Client sending DHCPREQUEST packet on interface %s",
+		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCPREQUEST packet on interface %s",
 				ifindex2ifname(inter->ifindex));
-		zlog_debug(ZLOG_DHCP, "DHCP Client renew ip address %s from %s",
+		zlog_debug(MODULE_DHCP, "DHCP Client renew ip address %s from %s",
 				tmpbug, inet_ntoa(temp_addr));
 	}
 	//return udhcpc_packet_bcast_ucast(inter->sock, &packet, ciaddr, server, inter->ifindex);
@@ -393,9 +393,9 @@ static int udhcpc_send_decline(client_interface_t *inter, uint32_t server,
 		char tmpbug[64];
 		memset(tmpbug, 0, sizeof(tmpbug));
 		sprintf(tmpbug, "%s", inet_address(requested));
-		zlog_debug(ZLOG_DHCP, "DHCP Client sending DHCPDECLINE packet on interface %s",
+		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCPDECLINE packet on interface %s",
 				ifindex2ifname(inter->ifindex));
-		zlog_debug(ZLOG_DHCP, "DHCP Client decline ip address %s from %s",
+		zlog_debug(MODULE_DHCP, "DHCP Client decline ip address %s from %s",
 				tmpbug, inet_ntoa(temp_addr));
 	}
 	if (inter->state.mode == DHCP_RAW_MODE)
@@ -432,9 +432,9 @@ static int udhcpc_send_release(client_interface_t *inter, uint32_t server,
 		char tmpbug[64];
 		memset(tmpbug, 0, sizeof(tmpbug));
 		sprintf(tmpbug, "%s", inet_address(ciaddr));
-		zlog_debug(ZLOG_DHCP, "DHCP Client sending DHCPRELEASE packet on interface %s",
+		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCPRELEASE packet on interface %s",
 				ifindex2ifname(inter->ifindex));
-		zlog_debug(ZLOG_DHCP, "DHCP Client release ip address %s from %s",
+		zlog_debug(MODULE_DHCP, "DHCP Client release ip address %s from %s",
 				tmpbug, inet_ntoa(temp_addr));
 	}
 	/* Note: normally we unicast here since "server" is not zero.
@@ -475,9 +475,9 @@ static int udhcpc_send_inform(client_interface_t *inter, uint32_t server,
 		char tmpbug[64];
 		memset(tmpbug, 0, sizeof(tmpbug));
 		sprintf(tmpbug, "%s", inet_address(ciaddr));
-		zlog_debug(ZLOG_DHCP, "DHCP Client sending DHCPINFORM packet on interface %s",
+		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCPINFORM packet on interface %s",
 				ifindex2ifname(inter->ifindex));
-		zlog_debug(ZLOG_DHCP, "DHCP Client inform ip address %s from %s",
+		zlog_debug(MODULE_DHCP, "DHCP Client inform ip address %s from %s",
 				tmpbug, inet_ntoa(temp_addr));
 	}
 	/* Note: normally we unicast here since "server" is not zero.
@@ -504,10 +504,10 @@ static int udhcpc_client_socket(int ifindex)
 		if (udhcp_client_socket_bind(fd, ifindex) == OK)
 		{
 			udhcp_client_socket_filter(fd, 68);
-			//zlog_debug(ZLOG_DHCP, "created raw socket");
+			//zlog_debug(MODULE_DHCP, "created raw socket");
 			return fd;
 		}
-		zlog_err(ZLOG_DHCP, "Can not bind raw socket(%s)", strerror(errno));
+		zlog_err(MODULE_DHCP, "Can not bind raw socket(%s)", strerror(errno));
 		close(fd);
 		return 0;
 	}
@@ -521,7 +521,7 @@ static int udhcpc_client_socket(int ifindex)
 #if 0
 static int perform_renew(client_interface_t * ifter)
 {
-	zlog_err(ZLOG_DHCP, "performing DHCP renew");
+	zlog_err(MODULE_DHCP, "performing DHCP renew");
 	switch (ifter->state)
 	{
 		case BOUND:
@@ -558,15 +558,15 @@ static int udhcp_client_release(client_interface_t * ifter, uint32_t server_addr
 			char tmpbug[64];
 			memset(tmpbug, 0, sizeof(tmpbug));
 			sprintf(tmpbug, "%s", inet_address(ntohl(requested_ip)));
-			zlog_debug(ZLOG_DHCP, "DHCP Client sending DHCPRELEASE packet on interface %s",
+			zlog_debug(MODULE_DHCP, "DHCP Client sending DHCPRELEASE packet on interface %s",
 					ifindex2ifname(ifter->ifindex));
-			zlog_debug(ZLOG_DHCP, "DHCP Client release ip address %s from %s",
+			zlog_debug(MODULE_DHCP, "DHCP Client release ip address %s from %s",
 					tmpbug, inet_ntoa(temp_addr));
 		}
 		udhcpc_send_release(ifter, server_addr, requested_ip); /* unicast */
 	}
 	if (DHCPC_DEBUG_ISON(EVENT))
-		zlog_debug(ZLOG_DHCP, "DHCP Client state change to DHCP_RELEASE");
+		zlog_debug(MODULE_DHCP, "DHCP Client state change to DHCP_RELEASE");
 	/*
 	 * We can be here on: SIGUSR2,
 	 * or on exit (SIGTERM) and -R "release on quit" is specified.
@@ -625,7 +625,7 @@ static int udhcp_client_explain_lease(struct dhcp_packet *packet,
 	temp = udhcp_get_option(packet, DHCP_LEASE_TIME, NULL);
 	if (!temp)
 	{
-		zlog_warn(ZLOG_DHCP, "no lease time with ACK, using 1 hour lease");
+		zlog_warn(MODULE_DHCP, "no lease time with ACK, using 1 hour lease");
 		ifter->lease.lease_gateway = 60 * 60;
 	}
 	else
@@ -716,7 +716,7 @@ static int udhcp_client_send_handle(client_interface_t * ifter, int event)
 		{
 			if (DHCPC_DEBUG_ISON(STATE))
 			{
-				zlog_debug(ZLOG_DHCP, "DHCP Client state change to INIT");
+				zlog_debug(MODULE_DHCP, "DHCP Client state change to INIT");
 			}
 			ifter->state.state = DHCP_INIT;
 			ifter->state.dis_cnt = 0;
@@ -761,7 +761,7 @@ static int udhcp_client_send_handle(client_interface_t * ifter, int event)
 		ifter->state.state = DHCP_RENEWING;
 		if (DHCPC_DEBUG_ISON(STATE))
 		{
-			zlog_debug(ZLOG_DHCP, "DHCP Client state change to RENEWING");
+			zlog_debug(MODULE_DHCP, "DHCP Client state change to RENEWING");
 		}
 		break;
 
@@ -771,7 +771,7 @@ static int udhcp_client_send_handle(client_interface_t * ifter, int event)
 		ifter->state.state = DHCP_REBINDING;
 		if (DHCPC_DEBUG_ISON(STATE))
 		{
-			zlog_debug(ZLOG_DHCP, "DHCP Client state change to REBINDING");
+			zlog_debug(MODULE_DHCP, "DHCP Client state change to REBINDING");
 		}
 		break;
 
@@ -781,7 +781,7 @@ static int udhcp_client_send_handle(client_interface_t * ifter, int event)
 		ifter->state.state = DHCP_DECLINE;
 		if (DHCPC_DEBUG_ISON(STATE))
 		{
-			zlog_debug(ZLOG_DHCP, "DHCP Client state change to DECLINE");
+			zlog_debug(MODULE_DHCP, "DHCP Client state change to DECLINE");
 		}
 		break;
 	case DHCP_RELEASE:
@@ -790,7 +790,7 @@ static int udhcp_client_send_handle(client_interface_t * ifter, int event)
 		ifter->state.state = DHCP_RELEASE;
 		if (DHCPC_DEBUG_ISON(STATE))
 		{
-			zlog_debug(ZLOG_DHCP, "DHCP Client state change to RELEASE");
+			zlog_debug(MODULE_DHCP, "DHCP Client state change to RELEASE");
 		}
 		break;
 	case DHCP_INFORM:
@@ -799,7 +799,7 @@ static int udhcp_client_send_handle(client_interface_t * ifter, int event)
 		ifter->state.state = DHCP_INFORM;
 		if (DHCPC_DEBUG_ISON(STATE))
 		{
-			zlog_debug(ZLOG_DHCP, "DHCP Client state change to INFORM");
+			zlog_debug(MODULE_DHCP, "DHCP Client state change to INFORM");
 		}
 		break;
 	}
@@ -854,7 +854,7 @@ static int udhcpc_stop(client_interface_t * ifter)
 {
 	if (DHCPC_DEBUG_ISON(STATE))
 	{
-		zlog_debug(ZLOG_DHCP, "DHCP Client state change to INIT");
+		zlog_debug(MODULE_DHCP, "DHCP Client state change to INIT");
 	}
 	ifter->state.state = DHCP_INIT;
 	//ifter->state.dis_timeout;
@@ -939,16 +939,16 @@ static int udhcpc_state_mode_change(client_interface_t * ifter, int mode)
 	}
 	if (DHCP_RAW_MODE == mode)
 	{
-		zlog_debug(ZLOG_DHCP, "udhcpc_state_mode_change DHCP_RAW_MODE\r\n");
+		zlog_debug(MODULE_DHCP, "udhcpc_state_mode_change DHCP_RAW_MODE\r\n");
 		if (ifter->state.mode != DHCP_RAW_MODE)
 		{
-			zlog_debug(ZLOG_DHCP,
+			zlog_debug(MODULE_DHCP,
 					"udhcpc_state_mode_change DHCP_RAW_MODE close udp socket=%d\r\n",
 					ifter->udp_sock);
 
 			if (DHCPC_DEBUG_ISON(STATE))
 			{
-				zlog_debug(ZLOG_DHCP, "DHCP Client change to RAW MODE");
+				zlog_debug(MODULE_DHCP, "DHCP Client change to RAW MODE");
 			}
 
 			if (ifter->udp_sock)
@@ -971,7 +971,7 @@ static int udhcpc_state_mode_change(client_interface_t * ifter, int mode)
 			ifter->sock = udhcpc_client_socket(ifter->ifindex);
 			if (ifter->sock > 0)
 			{
-				zlog_debug(ZLOG_DHCP,
+				zlog_debug(MODULE_DHCP,
 						"udhcpc_state_mode_change DHCP_RAW_MODE open raw socket=%d\r\n",
 						ifter->sock);
 				if (ifter->r_thread == NULL && ifter->sock)
@@ -985,12 +985,12 @@ static int udhcpc_state_mode_change(client_interface_t * ifter, int mode)
 	{
 		if (ifter->state.mode != DHCP_UDP_MODE)
 		{
-			zlog_debug(ZLOG_DHCP,
+			zlog_debug(MODULE_DHCP,
 					"udhcpc_state_mode_change DHCP_UDP_MODE close raw socket=%d\r\n",
 					ifter->sock);
 			if (DHCPC_DEBUG_ISON(STATE))
 			{
-				zlog_debug(ZLOG_DHCP, "DHCP Client change to UDP MODE");
+				zlog_debug(MODULE_DHCP, "DHCP Client change to UDP MODE");
 			}
 			if (ifter->sock)
 				close(ifter->sock);
@@ -1008,7 +1008,7 @@ static int udhcpc_state_mode_change(client_interface_t * ifter, int mode)
 		ifter->udp_sock = dhcp_global_config.client_sock;
 		dhcp_global_config.client_cnt++;
 
-		zlog_debug(ZLOG_DHCP,
+		zlog_debug(MODULE_DHCP,
 				"udhcpc_state_mode_change DHCP_UDP_MODE open udp socket=%d\r\n",
 				ifter->udp_sock);
 
@@ -1027,7 +1027,7 @@ static int udhcp_client_recv_handle(struct dhcp_packet *packet,
 
 	if (ntohl(packet->xid) != ifter->state.xid)
 	{
-		zlog_err(ZLOG_DHCP, "dhcp transaction id 0x%x (our is 0x%x), ignoring packet",
+		zlog_err(MODULE_DHCP, "dhcp transaction id 0x%x (our is 0x%x), ignoring packet",
 				(unsigned )ntohl(packet->xid), (unsigned )ifter->state.xid);
 		return ERROR;
 	}
@@ -1036,7 +1036,7 @@ static int udhcp_client_recv_handle(struct dhcp_packet *packet,
 	if (packet->hlen != 6 || memcmp(packet->chaddr, ifter->client_mac, 6) != 0)
 	{
 		//FIXME: need to also check that last 10 bytes are zero
-		zlog_err(ZLOG_DHCP, "client hardware address does not match, ignoring packet"); // log2?
+		zlog_err(MODULE_DHCP, "client hardware address does not match, ignoring packet"); // log2?
 		return ERROR;
 	}
 
@@ -1057,7 +1057,7 @@ static int udhcp_client_recv_handle(struct dhcp_packet *packet,
 		ifter->state.state = DHCP_REQUESTING;
 		if (DHCPC_DEBUG_ISON(STATE))
 		{
-			zlog_debug(ZLOG_DHCP, "DHCP Client state change to REQUESTING");
+			zlog_debug(MODULE_DHCP, "DHCP Client state change to REQUESTING");
 		}
 		udhcp_client_send_handle(ifter, DHCP_REQUESTING/*DHCPREQUEST*/);
 		break;
@@ -1073,11 +1073,11 @@ static int udhcp_client_recv_handle(struct dhcp_packet *packet,
 			ifter->state.state = DHCP_BOUND;
 			if (DHCPC_DEBUG_ISON(STATE))
 			{
-				zlog_debug(ZLOG_DHCP, "DHCP Client state change to BOUND");
+				zlog_debug(MODULE_DHCP, "DHCP Client state change to BOUND");
 			}
 			ifter->t_thread = eloop_add_timer(ifter->master, udhcpc_renew_event,
 					ifter, ifter->lease.expires - ifter->state.renew_timeout1);
-			zlog_debug(ZLOG_DHCP,
+			zlog_debug(MODULE_DHCP,
 					"udhcp_client_recv_handle DHCP_REQUESTING ACK and dhcp_client_lease_set");
 			dhcp_client_lease_set(ifter);
 		}
@@ -1089,11 +1089,11 @@ static int udhcp_client_recv_handle(struct dhcp_packet *packet,
 			ifter->state.state = DHCP_BOUND;
 			if (DHCPC_DEBUG_ISON(STATE))
 			{
-				zlog_debug(ZLOG_DHCP, "DHCP Client state change to BOUND");
+				zlog_debug(MODULE_DHCP, "DHCP Client state change to BOUND");
 			}
 			ifter->t_thread = eloop_add_timer(ifter->master, udhcpc_renew_event,
 					ifter, ifter->lease.expires - ifter->state.renew_timeout1);
-			zlog_debug(ZLOG_DHCP,
+			zlog_debug(MODULE_DHCP,
 					"udhcp_client_recv_handle DHCP_RENEWING ACK and dhcp_client_lease_set");
 			dhcp_client_lease_set(ifter);
 		}
@@ -1105,11 +1105,11 @@ static int udhcp_client_recv_handle(struct dhcp_packet *packet,
 			ifter->state.state = DHCP_BOUND;
 			if (DHCPC_DEBUG_ISON(STATE))
 			{
-				zlog_debug(ZLOG_DHCP, "DHCP Client state change to BOUND");
+				zlog_debug(MODULE_DHCP, "DHCP Client state change to BOUND");
 			}
 			ifter->t_thread = eloop_add_timer(ifter->master, udhcpc_renew_event,
 					ifter, ifter->lease.expires - ifter->state.renew_timeout1);
-			zlog_debug(ZLOG_DHCP,
+			zlog_debug(MODULE_DHCP,
 					"udhcp_client_recv_handle DHCP_REBINDING ACK and dhcp_client_lease_set");
 			dhcp_client_lease_set(ifter);
 		}
@@ -1175,7 +1175,7 @@ static int udhcp_recv_raw_packet(struct dhcp_packet *dhcp_pkt, int fd,
 		{
 			if (errno == EINTR)
 				continue;
-			zlog_err(ZLOG_DHCP, "packet read error, ignoring");
+			zlog_err(MODULE_DHCP, "packet read error, ignoring");
 			/* NB: possible down interface, etc. Caller should pause. */
 			return bytes; /* returns -1 */
 		}
@@ -1183,14 +1183,14 @@ static int udhcp_recv_raw_packet(struct dhcp_packet *dhcp_pkt, int fd,
 	}
 	if (bytes < (int) (sizeof(packet.ip) + sizeof(packet.udp)))
 	{
-		zlog_err(ZLOG_DHCP, "packet is too short, ignoring");
+		zlog_err(MODULE_DHCP, "packet is too short, ignoring");
 		return -2;
 	}
 
 	if (bytes < ntohs(packet.ip.tot_len))
 	{
 		/* packet is bigger than sizeof(packet), we did partial read */
-		zlog_err(ZLOG_DHCP, "oversized packet, ignoring");
+		zlog_err(MODULE_DHCP, "oversized packet, ignoring");
 		return -2;
 	}
 
@@ -1204,7 +1204,7 @@ static int udhcp_recv_raw_packet(struct dhcp_packet *dhcp_pkt, int fd,
 			/* || bytes > (int) sizeof(packet) - can't happen */
 			|| ntohs(packet.udp.len) != (uint16_t) (bytes - sizeof(packet.ip)))
 	{
-		zlog_err(ZLOG_DHCP, "unrelated/bogus packet, ignoring");
+		zlog_err(MODULE_DHCP, "unrelated/bogus packet, ignoring");
 		return -2;
 	}
 
@@ -1213,7 +1213,7 @@ static int udhcp_recv_raw_packet(struct dhcp_packet *dhcp_pkt, int fd,
 	packet.ip.check = 0;
 	if (check != in_cksum((uint16_t *) &packet.ip, sizeof(packet.ip)))
 	{
-		zlog_err(ZLOG_DHCP, "bad IP header checksum, ignoring");
+		zlog_err(MODULE_DHCP, "bad IP header checksum, ignoring");
 		return -2;
 	}
 
@@ -1228,12 +1228,12 @@ static int udhcp_recv_raw_packet(struct dhcp_packet *dhcp_pkt, int fd,
 	packet.udp.check = 0;
 	if (check && check != in_cksum((uint16_t *) &packet, bytes))
 	{
-		zlog_err(ZLOG_DHCP, "packet with bad UDP checksum received, ignoring");
+		zlog_err(MODULE_DHCP, "packet with bad UDP checksum received, ignoring");
 		return -2;
 	}
 	if (packet.data.cookie != htonl(DHCP_MAGIC))
 	{
-		zlog_err(ZLOG_DHCP, "packet with bad magic, ignoring");
+		zlog_err(MODULE_DHCP, "packet with bad magic, ignoring");
 		return -2;
 	}
 
@@ -1273,7 +1273,7 @@ static int udhcpc_raw_read_thread(struct eloop *eloop)
 			/* bytes can also be -2 ("bad packet data") */
 			if (bytes == -1 && errno != EINTR)
 			{
-				zlog_err(ZLOG_DHCP, "received error %s",strerror(errno));
+				zlog_err(MODULE_DHCP, "received error %s",strerror(errno));
 				dhcp_client_lease_unset(ifter);
 				udhcpc_stop(ifter);
 				//ifter->state.mode = DHCP_UDP_MODE;
@@ -1319,14 +1319,14 @@ static int udhcpc_udp_read_thread(struct eloop *eloop)
 	ifter = dhcp_client_lookup_interface(&dhcp_global_config, ifindex);
 	if (ifter == NULL)
 	{
-		zlog_err(ZLOG_DHCP, " this Interface is not allow DHCP");
+		zlog_err(MODULE_DHCP, " this Interface is not allow DHCP");
 		return ERROR;
 	}
 	if (ifter->state.mode == DHCP_RAW_MODE)
 	{
 		ifter->r_thread = eloop_add_read(eloop->master, udhcpc_udp_read_thread,
 				NULL, sock);
-		zlog_err(ZLOG_DHCP, " this Interface is running in RAW MODE");
+		zlog_err(MODULE_DHCP, " this Interface is running in RAW MODE");
 		return ERROR;
 	}
 	ifter->r_thread = NULL;
@@ -1389,7 +1389,7 @@ static client_interface_t * dhcp_client_create_interface(u_int32 ifindex)
 
 		dhcp_client_interface_option_default(ifter);
 
-		//zlog_debug(ZLOG_DHCP, "===========%s", ifp->k_name);
+		//zlog_debug(MODULE_DHCP, "===========%s", ifp->k_name);
 		return ifter;
 	}
 	return NULL;

@@ -69,9 +69,9 @@ CFLAGS=   -std=c11 -fomit-frame-pointer -fPIC -pthread -g -Wdeclaration-after-st
         -fno-signed-zeros -fno-tree-vectorize -Werror=format-security -Werror=implicit-function-declaration \
         -Werror=missing-prototypes -Werror=return-type -Werror=vla -Wformat -fdiagnostics-color=auto -Wno-maybe-uninitialized
 
-CFLAGS += -pthread  -I/home/zhurish/workspace/SWPlatform/source/rootfs_install/include
+CFLAGS += -pthread  -I/home/zhurish/workspace/SWPlatform/source/rootfs_install/include -I/usr/include -I/usr/local/include
 
-CXXFLAGS=  -D__STDC_CONSTANT_MACROS -std=c++11 
+CXXFLAGS=  -D__STDC_CONSTANT_MACROS -std=c++11 -I/usr/include -I/usr/local/include
 OBJCFLAGS=  
 ASFLAGS= -fPIC -g
 NVCCFLAGS=--cuda-gpu-arch=sm_30 -O2 -m64 -S -nocudalib -nocudainc --cuda-device-only -include ./compat/cuda/cuda_runtime.h
@@ -195,11 +195,11 @@ EXTRALIBS-swscale=-lm
 EXTRALIBS-postproc=-lm
 EXTRALIBS-avformat=-lm
 ifeq ($(PL_BUILD_TYPE),X86_64)
-EXTRALIBS-avformat += -lbz2 -lz
+EXTRALIBS-avformat += -L/lib64 -L/usr/lib64 -L/usr/local/lib64  -lz
 endif
 EXTRALIBS-avcodec=-pthread -lm 
 ifeq ($(PL_BUILD_TYPE),X86_64)
-EXTRALIBS-avcodec += -llzma -lz 
+EXTRALIBS-avcodec += -L/lib64 -L/usr/lib64 -L/usr/local/lib64  -lz 
 endif
 ifeq ($(PL_LIBX264_MODULE),true)
 EXTRALIBS-avcodec += -L/home/zhurish/workspace/SWPlatform/source/rootfs_install/lib -lx264

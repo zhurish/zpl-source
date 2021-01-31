@@ -41,7 +41,7 @@ static int x5b_app_test_send_msg_without_ack(x5b_app_mgt_t *mgt)
 	{
 		//if(X5_B_ESP32_DEBUG(SEND))
 /*		{
-			zlog_debug(ZLOG_APP, "MSG to %s:%d %d byte (seqnum=%d)", inet_address(mgt->app->address),
+			zlog_debug(MODULE_APP, "MSG to %s:%d %d byte (seqnum=%d)", inet_address(mgt->app->address),
 					mgt->app->remote_port, mgt->app->slen, mgt->app->seqnum);
 			//if(X5_B_ESP32_DEBUG(HEX))
 			//	x5b_app_hex_debug(mgt, "SEND", 0);
@@ -76,7 +76,7 @@ static int x5b_app_test_send_msg(x5b_app_mgt_t *mgt)
 				eloop_cancel(mgt->r_thread);
 				mgt->r_thread = NULL;
 			}
-			//zlog_debug(ZLOG_APP, "----wait ack 1" );
+			//zlog_debug(MODULE_APP, "----wait ack 1" );
 			ret = x5b_app_read_msg_timeout(mgt, X5B_APP_WAITING_TIMEOUT, NULL, 0);
 			if(!mgt->upgrade && mgt->r_thread == NULL)
 			{
@@ -103,13 +103,13 @@ static int x5b_app_test_ack_api(x5b_app_mgt_t *mgt, u_int8 seqnum, int to)
 	if(!mgt->app->reg_state)
 	{
 		//if(X5_B_ESP32_DEBUG(EVENT))
-			zlog_warn(ZLOG_APP, "Remote is Not Register");
+			zlog_warn(MODULE_APP, "Remote is Not Register");
 		return ERROR;
 	}
 	if(mgt->app->address == 0)
 	{
 		//if(X5_B_ESP32_DEBUG(EVENT))
-			zlog_warn(ZLOG_APP, "ACK MSG Can not send, Unknown Remote IP Address");
+			zlog_warn(MODULE_APP, "ACK MSG Can not send, Unknown Remote IP Address");
 		return ERROR;
 	}
 	x5b_app_hdr_make(mgt);
@@ -121,7 +121,7 @@ static int x5b_app_test_ack_api(x5b_app_mgt_t *mgt, u_int8 seqnum, int to)
 
 	x5b_app_crc_make(mgt);
 	//if(X5_B_ESP32_DEBUG(EVENT))
-	//zlog_debug(ZLOG_APP, "ACK MSG to %s:%d %d byte(seqnum=%d)", inet_address(mgt->app->address),
+	//zlog_debug(MODULE_APP, "ACK MSG to %s:%d %d byte(seqnum=%d)", inet_address(mgt->app->address),
 	//			mgt->app->remote_port, mgt->app->slen, seqnum);
 	ret = x5b_app_test_send_msg_without_ack(mgt);
 	return ret;
@@ -135,13 +135,13 @@ static int x5b_app_test_keepalive_send(x5b_app_mgt_t *mgt)
 	if(!mgt->app->reg_state)
 	{
 		//if(X5_B_ESP32_DEBUG(EVENT))
-		zlog_warn(ZLOG_APP, "Remote is Not Register");
+		zlog_warn(MODULE_APP, "Remote is Not Register");
 		return ERROR;
 	}
 	if(mgt->app->address == 0)
 	{
 		//if(X5_B_ESP32_DEBUG(EVENT))
-		zlog_warn(ZLOG_APP, "Keepalive MSG Can not send, Unknown Remote IP Address");
+		zlog_warn(MODULE_APP, "Keepalive MSG Can not send, Unknown Remote IP Address");
 		return ERROR;
 	}
 
@@ -167,7 +167,7 @@ static int x5b_app_test_register_send(x5b_app_mgt_t *mgt)
 	if(mgt->app->address == 0)
 	{
 		//if(X5_B_ESP32_DEBUG(EVENT))
-		zlog_warn(ZLOG_APP, "Keepalive MSG Can not send, Unknown Remote IP Address");
+		zlog_warn(MODULE_APP, "Keepalive MSG Can not send, Unknown Remote IP Address");
 		return ERROR;
 	}
 
@@ -192,13 +192,13 @@ static int x5b_app_test_version_send(x5b_app_mgt_t *mgt)
 	if(!mgt->app->reg_state)
 	{
 		//if(X5_B_ESP32_DEBUG(EVENT))
-		zlog_warn(ZLOG_APP, "Remote is Not Register");
+		zlog_warn(MODULE_APP, "Remote is Not Register");
 		return ERROR;
 	}
 	if(mgt->app->address == 0)
 	{
 		//if(X5_B_ESP32_DEBUG(EVENT))
-		zlog_warn(ZLOG_APP, "Keepalive MSG Can not send, Unknown Remote IP Address");
+		zlog_warn(MODULE_APP, "Keepalive MSG Can not send, Unknown Remote IP Address");
 		return ERROR;
 	}
 
@@ -255,10 +255,10 @@ static int x5b_app_test_read_handle(x5b_app_mgt_t *mgt)
 					case E_CMD_REGISTER_OK:
 						mgt->app = &mgt->app_c;
 						mgt->app->reg_state = TRUE;
-						zlog_debug(ZLOG_APP, "C Module Register OK and start up");
+						zlog_debug(MODULE_APP, "C Module Register OK and start up");
 						break;
 					case E_CMD_OPEN:
-						zlog_debug(ZLOG_APP, "C Module Recv OPEN Door CMD");
+						zlog_debug(MODULE_APP, "C Module Recv OPEN Door CMD");
 						break;
 					case E_CMD_KEEPALIVE:
 						break;
@@ -272,13 +272,13 @@ static int x5b_app_test_read_handle(x5b_app_mgt_t *mgt)
 			switch(E_CMD_GET(tlv.tag))
 			{
 			case E_CMD_FACE_CONFIG:
-				zlog_debug(ZLOG_APP, "C Module Recv FACE CONFIG CMD");
+				zlog_debug(MODULE_APP, "C Module Recv FACE CONFIG CMD");
 				break;
 			case E_CMD_DEVICE_OPT:
-				zlog_debug(ZLOG_APP, "C Module Recv DEVICE OPT CMD");
+				zlog_debug(MODULE_APP, "C Module Recv DEVICE OPT CMD");
 				break;
 			case E_CMD_SYSTEM_CONFIG:
-				zlog_debug(ZLOG_APP, "C Module Recv SYSTEM CONFIG CMD");
+				zlog_debug(MODULE_APP, "C Module Recv SYSTEM CONFIG CMD");
 				break;
 			default:
 				break;
@@ -290,7 +290,7 @@ static int x5b_app_test_read_handle(x5b_app_mgt_t *mgt)
 			switch(E_CMD_GET(tlv.tag))
 			{
 			case E_CMD_CALL_RESULT:
-				zlog_debug(ZLOG_APP, "C Module Recv CALL STATUS CMD");
+				zlog_debug(MODULE_APP, "C Module Recv CALL STATUS CMD");
 				break;
 			default:
 				break;
@@ -302,21 +302,21 @@ static int x5b_app_test_read_handle(x5b_app_mgt_t *mgt)
 			switch(E_CMD_GET(tlv.tag))
 			{
 			case E_CMD_NETSTATUS:
-				zlog_debug(ZLOG_APP, "C Module Recv NET STATUS CMD");
+				zlog_debug(MODULE_APP, "C Module Recv NET STATUS CMD");
 				break;
 
 			case E_CMD_ACK_STATUS:
-				zlog_debug(ZLOG_APP, "C Module Recv REQ NET STATUS CMD");
+				zlog_debug(MODULE_APP, "C Module Recv REQ NET STATUS CMD");
 				break;
 			case E_CMD_REG_STATUS:
-				zlog_debug(ZLOG_APP, "C Module Recv SIP REGISTER STATUS");
+				zlog_debug(MODULE_APP, "C Module Recv SIP REGISTER STATUS");
 				break;
 			case E_CMD_ACK_REGISTER:
-				zlog_debug(ZLOG_APP, "C Module Recv SIP REGISTER CMD");
+				zlog_debug(MODULE_APP, "C Module Recv SIP REGISTER CMD");
 				break;
 
 			case E_CMD_REQ_VERSION:
-				zlog_debug(ZLOG_APP, "C Module Recv REQ Version CMD");
+				zlog_debug(MODULE_APP, "C Module Recv REQ Version CMD");
 				x5b_app_test_version_send(mgt);
 				break;
 			default:
@@ -326,7 +326,7 @@ static int x5b_app_test_read_handle(x5b_app_mgt_t *mgt)
 			break;
 		default:
 			//if(X5_B_ESP32_DEBUG(EVENT))
-				zlog_warn(ZLOG_APP, "TAG HDR = 0x%x(0x%x) (seqnum=%d)", tlv.tag, E_CMD_TYPE_GET(tlv.tag), mgt->seqnum);
+				zlog_warn(MODULE_APP, "TAG HDR = 0x%x(0x%x) (seqnum=%d)", tlv.tag, E_CMD_TYPE_GET(tlv.tag), mgt->seqnum);
 			break;
 		}
 		len -= offset;
@@ -352,7 +352,7 @@ static int x5b_app_test_timer_eloop(struct eloop *eloop)
 	if(mgt->mutex)
 		os_mutex_lock(mgt->mutex, OS_WAIT_FOREVER);
 	mgt_test->app_c.t_thread = NULL;
-	//zlog_debug(ZLOG_APP, "x5b_app_test_timer_eloop X5CM:%s reg-state:%d", x5b_app_mode_X5CM() ? "TRUE":"FALSE", mgt->app_c.reg_state);
+	//zlog_debug(MODULE_APP, "x5b_app_test_timer_eloop X5CM:%s reg-state:%d", x5b_app_mode_X5CM() ? "TRUE":"FALSE", mgt->app_c.reg_state);
 	if(x5b_app_mode_X5CM())
 	{
 		if(!mgt->app_c.reg_state)
@@ -394,7 +394,7 @@ static int x5b_app_test_read_eloop(struct eloop *eloop)
 			if (ERRNO_IO_RETRY(errno))
 			{
 				//return 0;
-				zlog_err(ZLOG_APP, "RECV mgt on socket (%s)", strerror(errno));
+				zlog_err(MODULE_APP, "RECV mgt on socket (%s)", strerror(errno));
 				if(mgt->mutex)
 					os_mutex_unlock(mgt->mutex);
 				return OK;
@@ -405,7 +405,7 @@ static int x5b_app_test_read_eloop(struct eloop *eloop)
 	{
 		if(len > X5B_APP_BUF_DEFAULT)
 		{
-			zlog_err(ZLOG_APP, "Recv buf size is too big on socket (%d byte)", len);
+			zlog_err(MODULE_APP, "Recv buf size is too big on socket (%d byte)", len);
 			if(mgt->r_thread == NULL)
 				mgt->r_thread = eloop_add_read(mgt->master, x5b_app_test_read_eloop, mgt, sock);
 			if(mgt->mutex)
@@ -415,7 +415,7 @@ static int x5b_app_test_read_eloop(struct eloop *eloop)
 		mgt->len = len;
 		//if(X5_B_ESP32_DEBUG(RECV))
 /*		{
-			zlog_debug(ZLOG_APP, "MSG from %s:%d %d byte", inet_address(ntohl(mgt->from.sin_addr.s_addr)),
+			zlog_debug(MODULE_APP, "MSG from %s:%d %d byte", inet_address(ntohl(mgt->from.sin_addr.s_addr)),
 					ntohs(mgt->from.sin_port), mgt->len);
 		}*/
 
@@ -453,10 +453,10 @@ static int x5b_app_test_socket_init()
 		}
 		else
 		{
-			zlog_err(ZLOG_APP, "Can not bind UDP socket(:%s)", strerror(errno));
+			zlog_err(MODULE_APP, "Can not bind UDP socket(:%s)", strerror(errno));
 		}
 	}
-	zlog_err(ZLOG_APP, "Can not Create UDP socket(:%s)", strerror(errno));
+	zlog_err(MODULE_APP, "Can not Create UDP socket(:%s)", strerror(errno));
 	return ERROR;
 }
 
@@ -632,7 +632,7 @@ static int x5b_app_test_call_send(x5b_app_mgt_t *mgt, char *jsonstr, int jsonlen
 	if(mgt->app->address == 0)
 	{
 		if(X5_B_ESP32_DEBUG(EVENT))
-		zlog_warn(ZLOG_APP, "Keepalive MSG Can not send, Unknown Remote IP Address");
+		zlog_warn(MODULE_APP, "Keepalive MSG Can not send, Unknown Remote IP Address");
 		return ERROR;
 	}
 	x5b_app_hdr_make(mgt);
