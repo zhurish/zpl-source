@@ -248,7 +248,7 @@ process_t * process_lookup_id_api(int id)
 
 int process_start(process_t *process)
 {
-	process->active = TRUE;
+	process->active = ospl_true;
 	if(process->active && process->pid == 0)
 	{
 		int pid = 0;
@@ -288,7 +288,7 @@ int process_start(process_t *process)
 
 int process_deamon_start(process_t *process)
 {
-	process->active = TRUE;
+	process->active = ospl_true;
 	if(process->active && process->pid == 0)
 	{
 		int i =0;
@@ -318,7 +318,7 @@ int process_stop(process_t *process)
 	process_log_debug("stop process :%s execp:%s", process->name, process->process);
 	if(process->active && process->pid)
 	{
-		process->active = FALSE;
+		process->active = ospl_false;
 		child_process_kill(process->pid);
 		process->pid = 0;
 	}
@@ -330,7 +330,7 @@ int process_restart(process_t *process)
 {
 	process_stop(process);
 	//return process_start(process);
-	process->active = TRUE;
+	process->active = ospl_true;
 	if(process->active && process->pid == 0)
 	{
 		int pid = 0;
@@ -480,7 +480,7 @@ static int process_argvs_split(process_t *process, char *argvs)
 			return ERROR;
 	}
 #else
-	int offset = 0;
+	ospl_uint32 offset = 0;
 	char *brk = argvs;
 	char tmp[128];
 	while(brk && brk != '\0')
@@ -524,7 +524,7 @@ process_t * process_get(process_head *head)
 		if(os_strlen(head->process))
 			os_strcpy(node->process, head->process);
 		node->restart = head->restart;
-		node->active = TRUE;
+		node->active = ospl_true;
 		node->id	= head->id;
 		if(os_strlen(head->argvs))
 		{

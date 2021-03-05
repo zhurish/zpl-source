@@ -35,7 +35,7 @@ struct vlan_user
 	int				itag;
 	int				iuntag;
 	int				total;
-	BOOL			all;
+	ospl_bool			all;
 
 	int 			frist;
 	char			cli_str[256];
@@ -73,7 +73,7 @@ DEFUN (vlan_add,
 #if 1
 		ret = nsm_vlan_list_create_api(argv[0]);
 #else
-		int i = 0, num = 0;
+		ospl_uint32 = 0, num = 0;
 		vlan_t value[VLAN_TABLE_MAX];
 		vlan_t base = 0, end = 0;
 		num = vlan_string_explain(argv[0], value, VLAN_TABLE_MAX, &base, &end);
@@ -124,7 +124,7 @@ DEFUN (no_vlan_add,
 #if 1
 		ret = nsm_vlan_list_destroy_api(argv[0]);
 #else
-		int i = 0, num = 0;
+		ospl_uint32 = 0, num = 0;
 		vlan_t value[VLAN_TABLE_MAX];
 		vlan_t base = 0, end = 0;
 		num = vlan_string_explain(argv[0], value, VLAN_TABLE_MAX, &base, &end);
@@ -588,7 +588,7 @@ ALIAS(show_vlan_id,
 
 static int show_nsm_vlan_database_one(l2vlan_t *node, struct vlan_user *pVoid)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	int frist = 0;
 	char vlan[16], name[32], state[16], stp[16], member1[64], member2[64], empty[128];
 	struct vty *vty = pVoid->vty;

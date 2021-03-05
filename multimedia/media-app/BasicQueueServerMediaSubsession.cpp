@@ -74,7 +74,7 @@ FramedSource *BasicQueueServerMediaSubsession::createNewStreamSource(unsigned cl
 	//return H264VideoStreamFramer::createNew(envir(), transportStreamSource);
 }
 
-RTPSink *BasicQueueServerMediaSubsession::createNewRTPSink(Groupsock *rtpGroupsock, unsigned char rtpPayloadTypeIfDynamic, FramedSource *inputSource)
+RTPSink *BasicQueueServerMediaSubsession::createNewRTPSink(Groupsock *rtpGroupsock, ospl_uint8 rtpPayloadTypeIfDynamic, FramedSource *inputSource)
 {
 
 	return BasicQueueCreateNewRTPSink(rtpGroupsock,
@@ -134,7 +134,7 @@ FramedSource *BasicQueueServerMediaSubsession::BasicQueueCreateStreamSource(unsi
 }
 
 RTPSink *BasicQueueServerMediaSubsession::BasicQueueCreateNewRTPSink(Groupsock *rtpGroupsock,
-																	 unsigned char rtpPayloadTypeIfDynamic, FramedSource *inputSource, int format)
+																	 ospl_uint8 rtpPayloadTypeIfDynamic, FramedSource *inputSource, int format)
 {
 	RTPSink *videoSink = NULL;
 	if (format == BasicFormatType::BASIC_FORMAT_TYPE_MPEG2)

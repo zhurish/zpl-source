@@ -30,7 +30,7 @@ int main(void)
 {
 	struct v4l2_driver drv;
 	struct drv_list *cur;
-	unsigned int count = 10, i;
+	ospl_uint32 count = 10, i;
 	double freq;
 
 	if (v4l2_open ("/dev/video0", 1,&drv)<0) {
@@ -72,7 +72,7 @@ int main(void)
 		struct v4l2_format fmt;
 		memset (&fmt,0,sizeof(fmt));
 
-		uint32_t	   pixelformat=((struct v4l2_fmtdesc *)cur->curr)->pixelformat;
+		ospl_uint32 	   pixelformat=((struct v4l2_fmtdesc *)cur->curr)->pixelformat;
 		if (cur->curr) {
 			if (v4l2_gettryset_fmt_cap (&drv,V4L2_SET,&fmt, 640, 480,
 						pixelformat,V4L2_FIELD_ANY))

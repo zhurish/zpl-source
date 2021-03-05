@@ -42,10 +42,10 @@
 
 
 /* Interface address modification. */
-static int netlink_address(int cmd, int family, struct interface *ifp,
+static int netlink_address(ospl_uint32 cmd, ospl_family_t family, struct interface *ifp,
 		struct connected *ifc)
 {
-	int bytelen;
+	ospl_uint32 bytelen;
 	struct prefix *p;
 
 	struct

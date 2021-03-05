@@ -23,13 +23,17 @@
 #ifndef _ZEBRA_RNH_H
 #define _ZEBRA_RNH_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "prefix.h"
 #include "vty.h"
 
 /* Nexthop structure. */
 struct rnh
 {
-  u_char flags;
+  ospl_uchar flags;
 #define ZEBRA_NHT_CONNECTED  	0x1
   struct rib *state;
   struct list *client_list;
@@ -41,9 +45,16 @@ extern struct rnh *zebra_lookup_rnh(struct prefix *p, vrf_id_t vrfid);
 extern void zebra_delete_rnh(struct rnh *rnh);
 extern void zebra_add_rnh_client(struct rnh *rnh, struct zserv *client, vrf_id_t vrf_id_t);
 extern void zebra_remove_rnh_client(struct rnh *rnh, struct zserv *client);
-extern int zebra_evaluate_rnh_table(vrf_id_t vrfid, int family);
-extern int zebra_dispatch_rnh_table(vrf_id_t vrfid, int family, struct zserv *cl);
-extern void zebra_print_rnh_table(vrf_id_t vrfid, int family, struct vty *vty);
-extern char *rnh_str(struct rnh *rnh, char *buf, int size);
-extern int zebra_cleanup_rnh_client(vrf_id_t vrf, int family, struct zserv *client);
+extern int zebra_evaluate_rnh_table(vrf_id_t vrfid, ospl_family_t family);
+extern int zebra_dispatch_rnh_table(vrf_id_t vrfid, ospl_family_t family, struct zserv *cl);
+extern void zebra_print_rnh_table(vrf_id_t vrfid, ospl_family_t family, struct vty *vty);
+extern ospl_char *rnh_str(struct rnh *rnh, ospl_char *buf, ospl_size_t size);
+extern int zebra_cleanup_rnh_client(vrf_id_t vrf, ospl_family_t family, struct zserv *client);
+
+
+ 
+#ifdef __cplusplus
+}
+#endif
+
 #endif /*_ZEBRA_RNH_H */

@@ -7,7 +7,9 @@
 
 #ifndef __HAL_DRIVER_H__
 #define __HAL_DRIVER_H__
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <zebra.h>
 
 #include "zebra.h"
@@ -42,28 +44,28 @@
 
 typedef struct sdk_global_s
 {
-	int (*sdk_switch_manege_cb) (void *, BOOL);
-	int (*sdk_switch_forward_cb) (void *, BOOL);
-	int (*sdk_multicast_flood_cb) (void *, BOOL);
-	int (*sdk_unicast_flood_cb) (void *, BOOL);
-	int (*sdk_multicast_learning_cb) (void *, BOOL);
-	int (*sdk_bpdu_enable_cb) (void *, BOOL);//全局使能接收BPDU报文
-	int (*sdk_aging_time_cb) (void *, u_int);
+	int (*sdk_switch_manege_cb) (void *, ospl_bool);
+	int (*sdk_switch_forward_cb) (void *, ospl_bool);
+	int (*sdk_multicast_flood_cb) (void *, ospl_bool);
+	int (*sdk_unicast_flood_cb) (void *, ospl_bool);
+	int (*sdk_multicast_learning_cb) (void *, ospl_bool);
+	int (*sdk_bpdu_enable_cb) (void *, ospl_bool);//全局使能接收BPDU报文
+	int (*sdk_aging_time_cb) (void *, ospl_uint32);
 }sdk_global_t;
 
 typedef struct sdk_cpu_s
 {
-	int (*sdk_cpu_mode_cb) (void *, BOOL);
-	int (*sdk_cpu_enable_cb) (void *, BOOL);
-	int (*sdk_cpu_speed_cb) (void *, u_int);
-	int (*sdk_cpu_duplex_cb) (void *, u_int);
-	int (*sdk_cpu_flow_cb) (void *, BOOL, BOOL);
+	int (*sdk_cpu_mode_cb) (void *, ospl_bool);
+	int (*sdk_cpu_enable_cb) (void *, ospl_bool);
+	int (*sdk_cpu_speed_cb) (void *, ospl_uint32);
+	int (*sdk_cpu_duplex_cb) (void *, ospl_uint32);
+	int (*sdk_cpu_flow_cb) (void *, ospl_bool, ospl_bool);
 }sdk_cpu_t;
 
 
 typedef struct hal_driver {
-	int		product;
-	int 	id;
+	ospl_uint32		product;
+	ospl_uint32 	id;
 	char 	*name;
 
 	sdk_cpu_t		*cpu_tbl;
@@ -93,22 +95,26 @@ int hal_test_init();
 /*
  * CPU Port
  */
-int hal_cpu_port_mode(BOOL enable);
-int hal_cpu_port_enable(BOOL enable);
-int hal_cpu_port_speed(u_int value);
-int hal_cpu_port_duplex(u_int value);
-int hal_cpu_port_flow(BOOL rx, BOOL tx);
+int hal_cpu_port_mode(ospl_bool enable);
+int hal_cpu_port_enable(ospl_bool enable);
+int hal_cpu_port_speed(ospl_uint32 value);
+int hal_cpu_port_duplex(ospl_uint32 value);
+int hal_cpu_port_flow(ospl_bool rx, ospl_bool tx);
 
 /*
  * Global
  */
-int hal_switch_mode(BOOL manage);
-int hal_switch_forward(BOOL enable);
-int hal_multicast_flood(BOOL enable);
-int hal_unicast_flood(BOOL enable);
-int hal_multicast_learning(BOOL enable);
+int hal_switch_mode(ospl_bool manage);
+int hal_switch_forward(ospl_bool enable);
+int hal_multicast_flood(ospl_bool enable);
+int hal_unicast_flood(ospl_bool enable);
+int hal_multicast_learning(ospl_bool enable);
 //全局使能接收BPDU报文
-int hal_global_bpdu_enable(BOOL enable);
-int hal_global_aging_time(u_int value);
+int hal_global_bpdu_enable(ospl_bool enable);
+int hal_global_aging_time(ospl_uint32 value);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __HAL_DRIVER_H__ */

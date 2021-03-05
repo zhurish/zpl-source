@@ -133,19 +133,19 @@ extern "C" {
 
 struct syslog_client
 {
-	BOOL enable;
+	ospl_bool enable;
 	enum { SYSLOG_UDP_MODE, SYSLOG_TCP_MODE } mode;
 	int sock;
-	int port;
+	ospl_uint16 port;
 	struct in_addr address;
 	char  address_string[DFT_HOST_NAME_LEN];
-	BOOL		dynamics;
+	ospl_bool		dynamics;
 	char  *hostname;//[DFT_HOST_NAME_LEN];
 	char  *processname;//[DFT_HOST_NAME_LEN];
 
-	int facility;
+	ospl_uint32 facility;
 
-	BOOL connect;
+	ospl_bool connect;
 
 	void *master;
 
@@ -158,27 +158,27 @@ struct syslog_client
 
 extern int syslogc_lib_init(void *, char *);
 extern int syslogc_lib_uninit(void);
-extern int syslogc_host_config_set(char *, int, int );
-extern int syslogc_host_config_get(char *, int *, int *);
+extern int syslogc_host_config_set(char *, ospl_uint16, ospl_uint32 );
+extern int syslogc_host_config_get(char *, ospl_uint16 *, ospl_uint32 *);
 
 extern int syslogc_enable(char *);
-extern BOOL syslogc_is_enable(void);
+extern ospl_bool syslogc_is_enable(void);
 extern int syslogc_disable(void);
 extern int syslogc_is_dynamics(void);
 extern int syslogc_dynamics_enable(void);
 extern int syslogc_dynamics_disable(void);
-extern int syslogc_mode_set(int );
-extern int syslogc_mode_get(int *);
-extern int syslogc_facility_set(int );
-extern int syslogc_facility_get(int *);
+extern int syslogc_mode_set(ospl_uint32 );
+extern int syslogc_mode_get(ospl_uint32 *);
+extern int syslogc_facility_set(ospl_uint32 );
+extern int syslogc_facility_get(ospl_uint32 *);
 
-extern int vsysclog (int , int, char *, va_list );
-extern int syslogc_out(int , int, char * , int );
+extern int vsysclog (ospl_uint32 , ospl_uint32, char *, va_list );
+extern int syslogc_out(ospl_uint32 , ospl_uint32, char * , ospl_uint32 );
 /*
 extern int syslogcLibInit (char *);
 //extern STATUS syslogcMdataSend(M_BLK_ID,int,char *, UINT16,ULONG);
-extern int syslogcBinDataSend (unsigned char *, int, char *,unsigned short, unsigned long);
-extern int syslogcStringSend (char *, unsigned short, unsigned long);
+extern int syslogcBinDataSend (ospl_uint8 *, int, char *,ospl_uint16, ospl_ulong);
+extern int syslogcStringSend (char *, ospl_uint16, ospl_ulong);
 */
 
 #else	/* __STDC__ */

@@ -62,9 +62,9 @@ int os_nvram_env_exit()
 }
 
 
-static os_nvram_env_t * os_nvram_env_node_lookup_by_name(char *nvram_env_name)
+static os_nvram_env_t * os_nvram_env_node_lookup_by_name(ospl_char *nvram_env_name)
 {
-	char name[OS_NVRAM_MAX];
+	ospl_char name[OS_NVRAM_MAX];
 	NODE node;
 	os_nvram_env_t *nvram_env = NULL;
 	if (env_table == NULL)
@@ -93,7 +93,7 @@ static os_nvram_env_t * os_nvram_env_node_lookup_by_name(char *nvram_env_name)
 	return NULL;
 }
 
-int os_nvram_env_add(char *name, char *value)
+int os_nvram_env_add(ospl_char *name, ospl_char *value)
 {
 	os_nvram_env_t *node = os_nvram_env_node_lookup_by_name(name);
 	if(node == NULL)
@@ -114,7 +114,7 @@ int os_nvram_env_add(char *name, char *value)
 	return OK;
 }
 
-int os_nvram_env_set(char *name, char *value)
+int os_nvram_env_set(ospl_char *name, ospl_char *value)
 {
 	os_nvram_env_t *node = os_nvram_env_node_lookup_by_name(name);
 	if(!node)
@@ -132,7 +132,7 @@ int os_nvram_env_set(char *name, char *value)
 	return OK;
 }
 
-int os_nvram_env_add_integer(char *name, int len, int value)
+int os_nvram_env_add_integer(ospl_char *name, ospl_uint32 len, ospl_uint32 value)
 {
 	os_nvram_env_t *node = os_nvram_env_node_lookup_by_name(name);
 	if(node == NULL)
@@ -146,13 +146,13 @@ int os_nvram_env_add_integer(char *name, int len, int value)
 	switch(len)
 	{
 	case 1:
-		node->ptr.va_8 = (u_int8 )value;
+		node->ptr.va_8 = (ospl_uint8 )value;
 		break;
 	case 2:
-		node->ptr.va_16 = (u_int16 )value;
+		node->ptr.va_16 = (ospl_uint16 )value;
 		break;
 	case 4:
-		node->ptr.va_32 = (u_int32 )value;
+		node->ptr.va_32 = (ospl_uint32 )value;
 		break;
 	default:
 		break;
@@ -169,7 +169,7 @@ int os_nvram_env_add_integer(char *name, int len, int value)
 
 
 
-int os_nvram_env_del(char *name)
+int os_nvram_env_del(ospl_char *name)
 {
 	os_nvram_env_t *node = os_nvram_env_node_lookup_by_name(name);
 	if(!node)
@@ -183,7 +183,7 @@ int os_nvram_env_del(char *name)
 	return OK;
 }
 
-int os_nvram_env_get(char *name, char *value, int len)
+int os_nvram_env_get(ospl_char *name, ospl_char *value, ospl_uint32 len)
 {
 	os_nvram_env_t *node = os_nvram_env_node_lookup_by_name(name);
 	if(!node)
@@ -204,9 +204,9 @@ int os_nvram_env_get(char *name, char *value, int len)
 	return OK;
 }
 
-int os_nvram_env_get_integer(char *name, int len)
+int os_nvram_env_get_integer(ospl_char *name, ospl_uint32 len)
 {
-	int value = 0;
+	ospl_uint32 value = 0;
 	os_nvram_env_t *node = os_nvram_env_node_lookup_by_name(name);
 	if(!node)
 		return ERROR;
@@ -234,7 +234,7 @@ int os_nvram_env_get_integer(char *name, int len)
 }
 
 
-const char * os_nvram_env_lookup(const char *name)
+const ospl_char * os_nvram_env_lookup(const ospl_char *name)
 {
 	os_nvram_env_t *node = os_nvram_env_node_lookup_by_name(name);
 	if(!node)
@@ -282,7 +282,7 @@ const char * os_nvram_env_lookup(const char *name)
 	return NULL;
 }
 
-int os_nvram_env_show(char *name, int (*show_cb)(void *, os_nvram_env_t *), void *p)
+int os_nvram_env_show(ospl_char *name, int (*show_cb)(void *, os_nvram_env_t *), void *p)
 {
 	NODE node;
 	os_nvram_env_t *nvram_env = NULL;
@@ -316,7 +316,7 @@ int os_nvram_env_show(char *name, int (*show_cb)(void *, os_nvram_env_t *), void
 
 
 #ifdef OS_NVRAM_ON_FILE
-static int os_nvram_env_read_one(int fd, os_nvram_env_t *node)
+static int os_nvram_env_read_one(ospl_uint32 fd, os_nvram_env_t *node)
 {
 	os_nvram_env_t *addnode = NULL;
 	if(read(fd, node, sizeof(os_nvram_env_t)) == sizeof(os_nvram_env_t))
@@ -335,7 +335,7 @@ static int os_nvram_env_read_one(int fd, os_nvram_env_t *node)
 
 static int os_nvram_env_loadall(void)
 {
-	int ret = OK, fd = 0;
+	ospl_uint32 ret = OK, fd = 0;
 	os_nvram_env_t nvram_env;
 	if (env_table == NULL)
 		return ERROR;
@@ -357,9 +357,9 @@ static int os_nvram_env_loadall(void)
 	return ERROR;
 }
 
-static int os_nvram_env_write_list(int fd)
+static int os_nvram_env_write_list(ospl_uint32 fd)
 {
-	int ret = 0;
+	ospl_uint32 ret = 0;
 	NODE node;
 	os_nvram_env_t *nvram_env = NULL;
 	for (nvram_env = (os_nvram_env_t *) lstFirst(env_table);
@@ -378,7 +378,7 @@ static int os_nvram_env_write_list(int fd)
 
 static int os_nvram_env_update_save(void)
 {
-	int ret = 0, fd = 0;
+	ospl_uint32 ret = 0, fd = 0;
 	if (env_table == NULL)
 		return ERROR;
 	if(lstCount(env_table) == 0)
@@ -414,7 +414,7 @@ static int os_nvram_env_update_save(void)
 //static os_nvram_env_t os_nvram_env;
 
 
-static int mtd_nvram_lookup()
+static ospl_uint32 mtd_nvram_lookup()
 {
 	system("dd if=/dev/mtdblock2 of=/tmp/factory.bin");
 	if(access("/tmp/factory.bin", 0) != 0)
@@ -422,29 +422,29 @@ static int mtd_nvram_lookup()
 	return 0;
 }
 
-static int mtd_nvram_restore(int hwreset)
+static ospl_uint32 mtd_nvram_restore(ospl_uint32 hwreset)
 {
 	system("mtd write /tmp/factory.bin factory");
 	remove(MTD_NVRAM_FILE);
 	return 0;
 }
 
-static int mtd_nvram_offset(int fd, int offset)
+static ospl_uint32 mtd_nvram_offset(ospl_uint32 fd, ospl_uint32 offset)
 {
 	return lseek(fd, SEEK_SET, offset);
 }
 
-static int mtd_nvram_read(int fd, unsigned char *buf, int len)
+static ospl_uint32 mtd_nvram_read(ospl_uint32 fd, unsigned ospl_char *buf, ospl_uint32 len)
 {
 	return read(fd, buf, len);
 }
 
-static int mtd_nvram_write(int fd, unsigned char *buf, int len)
+static ospl_uint32 mtd_nvram_write(ospl_uint32 fd, unsigned ospl_char *buf, ospl_uint32 len)
 {
 	return write(fd, buf, len);
 }
 
-static int mtd_nvram_open(unsigned char *filename)
+static ospl_uint32 mtd_nvram_open(unsigned ospl_char *filename)
 {
 	return open(filename, O_RDWR);
 }

@@ -268,7 +268,7 @@ modem_signal_state modem_signal_state_get(modem_client_t *client)
 }*/
 
 
-int modem_register_state(modem_client_t *client, int code)
+int modem_register_state(modem_client_t *client, ospl_uint32 code)
 {
 	assert(client);
 	client->nw_register_state = (nw_register_state)code;

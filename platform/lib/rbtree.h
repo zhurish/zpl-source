@@ -9,22 +9,26 @@
 #ifndef __RBTREE_H_
 #define __RBTREE_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(container_of)
   #undef container_of
   #define container_of(ptr, type, member) ({			\
         const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
-        (type *)( (char *)__mptr - offsetof(type,member) );})
+        (type *)( (ospl_char *)__mptr - offsetof(type,member) );})
 #else
   #define container_of(ptr, type, member) ({			\
         const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
-        (type *)( (char *)__mptr - offsetof(type,member) );})
+        (type *)( (ospl_char *)__mptr - offsetof(type,member) );})
 #endif
 
 #if defined(offsetof)
   #undef offsetof
-  #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+  #define offsetof(TYPE, MEMBER) ((ospl_size_t) &((TYPE *)0)->MEMBER)
 #else
-  #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+  #define offsetof(TYPE, MEMBER) ((ospl_size_t) &((TYPE *)0)->MEMBER)
 #endif
 
 #undef NULL
@@ -39,7 +43,7 @@
 
 
 struct rb_node {
-	unsigned long  __rb_parent_color;
+	ospl_ulong  __rb_parent_color;
 	struct rb_node *rb_right;
 	struct rb_node *rb_left;
 } __attribute__((aligned(sizeof(long))));
@@ -62,7 +66,7 @@ struct rb_root {
 
 static inline void rb_set_parent(struct rb_node *rb, struct rb_node *p)
 {
-	rb->__rb_parent_color = (rb->__rb_parent_color & 3) | (unsigned long)p;
+	rb->__rb_parent_color = (rb->__rb_parent_color & 3) | (ospl_ulong)p;
 }
 static inline void rb_set_color(struct rb_node *rb, int color)
 {
@@ -78,9 +82,9 @@ static inline void rb_set_color(struct rb_node *rb, int color)
 
 /* 'empty' nodes are nodes that are known not to be inserted in an rbree */
 #define RB_EMPTY_NODE(node)  \
-	((node)->__rb_parent_color == (unsigned long)(node))
+	((node)->__rb_parent_color == (ospl_ulong)(node))
 #define RB_CLEAR_NODE(node)  \
-	((node)->__rb_parent_color = (unsigned long)(node))
+	((node)->__rb_parent_color = (ospl_ulong)(node))
 
 
 static inline void rb_init_node(struct rb_node *rb)
@@ -109,7 +113,7 @@ extern void rb_replace_node(struct rb_node *victim, struct rb_node *new,
 static inline void rb_link_node(struct rb_node * node, struct rb_node * parent,
 				struct rb_node ** rb_link)
 {
-	node->__rb_parent_color = (unsigned long )parent;
+	node->__rb_parent_color = (ospl_ulong )parent;
 	node->rb_left = node->rb_right = NULL;
 
 	*rb_link = node;
@@ -148,5 +152,9 @@ extern int rblstInit (RBLIST *pList, void *cmp, void *del);
 //extern void rblstInsert (RBLIST *pList, RBNODE *pPrev, RBNODE *pNode);
 
 
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __RBTREE_H_ */

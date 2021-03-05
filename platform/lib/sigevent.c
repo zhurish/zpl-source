@@ -95,7 +95,7 @@ struct quagga_sigevent_master_t
 static void
 quagga_signal_handler (int signo)
 {
-  int i;
+  ospl_uint32 i;
   struct quagga_signal_t *sig;
   sigmaster.tid = pthread_self();
   for (i = 0; i < sigmaster.sigc; i++)
@@ -145,7 +145,7 @@ int
 quagga_sigevent_process (void)
 {
   struct quagga_signal_t *sig;
-  int i;
+  ospl_uint32 i;
 #ifdef SIGEVENT_BLOCK_SIGNALS
   /* shouldnt need to block signals, but potentially may be needed */
   sigset_t newmask, oldmask;
@@ -316,7 +316,7 @@ trap_default_signals(void)
 {
   static const struct {
     const int *sigs;
-    u_int nsigs;
+    ospl_uint32 nsigs;
     void (*handler)(int signo
 #ifdef SA_SIGINFO
 		    , siginfo_t *info, void *context
@@ -327,11 +327,11 @@ trap_default_signals(void)
     { exit_signals, array_size(exit_signals), exit_handler},
     { ignore_signals, array_size(ignore_signals), NULL},
   };
-  u_int i;
+  ospl_uint32 i;
 
   for (i = 0; i < array_size(sigmap); i++)
     {
-      u_int j;
+      ospl_uint32 j;
 
       for (j = 0; j < sigmap[i].nsigs; j++)
         {
@@ -370,7 +370,7 @@ void
 signal_init (int sigc,
              struct quagga_signal_t signals[])
 {
-  int i = 0;
+  ospl_uint32 i = 0;
   struct quagga_signal_t *sig;
 
   /* First establish some default handlers that can be overridden by
@@ -395,7 +395,7 @@ signal_init (int sigc,
 
 /*void signal_sigmask()
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	sigset_t	mask;
 	sigfillset(&mask);
 	for(i = 0; i < array_size(core_signals); i++)

@@ -53,7 +53,7 @@ void ifreq_set_name(struct ifreq *ifreq, struct interface *ifp)
 }
 
 /* call ioctl system call */
-int if_ioctl(u_int request, caddr_t buffer)
+int if_ioctl(ospl_uint32 request, caddr_t buffer)
 {
   int sock = 0;
   int ret = -1;
@@ -77,7 +77,7 @@ int if_ioctl(u_int request, caddr_t buffer)
 }
 
 #ifdef HAVE_IPV6
-int if_ioctl_ipv6(u_int request, caddr_t buffer)
+int if_ioctl_ipv6(ospl_uint32 request, caddr_t buffer)
 {
   int sock = 0;
   int ret = -1;
@@ -141,7 +141,7 @@ if_get_metric(struct interface *ifp)
 }
 
 static int
-if_set_metric(struct interface *ifp, int metric)
+if_set_metric(struct interface *ifp, ospl_uint32 metric)
 {
 #ifdef SIOCGIFMETRIC
   struct ifreq ifreq;
@@ -178,7 +178,7 @@ if_get_mtu(struct interface *ifp)
 }
 
 static int
-if_set_mtu(struct interface *ifp, int mtu)
+if_set_mtu(struct interface *ifp, ospl_uint32 mtu)
 {
   struct ifreq ifreq;
 
@@ -514,7 +514,7 @@ if_unset_dst_prefix(struct interface *ifp, struct connected *ifc)
 struct in6_ifreq
 {
   struct in6_addr ifr6_addr;
-  u_int32_t ifr6_prefixlen;
+  ospl_uint32 ifr6_prefixlen;
   int ifr6_ifindex;
 };
 #endif /* _LINUX_IN6_H */
@@ -666,7 +666,7 @@ if_prefix_delete_ipv6(struct interface *ifp, struct connected *ifc)
 
 #endif /* HAVE_IPV6 */
 
-static int if_set_mac(struct interface *ifp, unsigned char *mac, int len)
+static int if_set_mac(struct interface *ifp, ospl_uint8 *mac, ospl_uint32 len)
 {
   int ret;
   struct ifreq ifreq;
@@ -694,7 +694,7 @@ static int if_set_down(struct interface *ifp)
   return if_unset_flags(ifp, IFF_UP | IFF_RUNNING);
 }
 
-static int if_update_flags(struct interface *ifp, int flag)
+static int if_update_flags(struct interface *ifp, uint64_t flag)
 {
   return if_set_flags(ifp, flag);
 }
@@ -1020,7 +1020,7 @@ static int _ipkernel_change(struct interface *ifp)
   return ret;
 }
 
-static int _ipkernel_set_vlan(struct interface *ifp, int vlan)
+static int _ipkernel_set_vlan(struct interface *ifp, vlan_t vlan)
 {
   if ((if_is_ethernet(ifp) && IF_ID_GET(ifp->ifindex)))
   {

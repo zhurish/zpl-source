@@ -29,7 +29,7 @@ int ssh_authenticate_kbdint(int fd, ssh_session session, const char *password) {
         const char *instruction;
         const char *name;
         char buffer[128];
-        int i, n;
+        ospl_uint32 i, n;
 
         name = ssh_userauth_kbdint_getname(session);
         instruction = ssh_userauth_kbdint_getinstruction(session);
@@ -99,9 +99,9 @@ int ssh_authenticate_kbdint(int fd, ssh_session session, const char *password) {
 int ssh_verify_knownhost(int fd, ssh_session session)
 {
 	char *hexa;
-	int state;
+	ospl_uint32 state;
 	char buf[10];
-	unsigned char *hash = NULL;
+	ospl_uint8 *hash = NULL;
 	size_t hlen;
 	ssh_key srv_pubkey;
 	int rc;
@@ -198,7 +198,7 @@ int ssh_verify_knownhost(int fd, ssh_session session)
 int ssh_authenticate_api (ssh_session session, char *pass)
 {
 	int rc = SSH_AUTH_DENIED;
-	int method = 0;
+	ospl_uint32 method = 0;
 	char *banner = NULL;
 	char password[128];
 	int fd = ssh_stdin_get(session);

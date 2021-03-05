@@ -122,7 +122,7 @@ static void pingFinish (PING_STAT * pPS);
  *
  * The second parameter, <numPackets>, specifies the number of ICMP packets
  * to receive from the remote host.  If <numPackets> is 1, this routine waits
- * for a single echo reply packet, and then prints a short message
+ * for a single echo reply packet, and then prints a ospl_int16 message
  * indicating whether the remote host is reachable.  For all other values
  * of <numPackets>, timing and sequence information is printed as echoed
  * packets are received.  If <numPackets> is 0, this routine runs continuously.
@@ -238,7 +238,7 @@ static int ping_thread(PING_STAT * pPS)
 		os_gettime(OS_CLK_MONOTONIC, pPS->pBufTime); /* load current tick count */
 		pPS->pBufIcmp->icmp_seq = pPS->numTx++; /* increment seq number */
 		pPS->pBufIcmp->icmp_cksum = 0;
-		pPS->pBufIcmp->icmp_cksum = in_cksum((u_short *) pPS->pBufIcmp,
+		pPS->pBufIcmp->icmp_cksum = in_cksum((ospl_ushort *) pPS->pBufIcmp,
 				pPS->pingTxLen);
 		/* transmit ICMP packet */
 
@@ -327,7 +327,7 @@ static int ping_ctrl_quit(struct vty *vty, int ctrl, void *p)
 	PING_STAT * pPS = (PING_STAT *)p;
 	if(pPS)
 	{
-		pPS->quit = TRUE;
+		pPS->quit = ospl_true;
 	    //vty->shell_ctrl_cmd = NULL;
 	    //vty->ctrl = NULL;
 	}
@@ -335,7 +335,7 @@ static int ping_ctrl_quit(struct vty *vty, int ctrl, void *p)
 }
 */
 
-int ping(struct vty *vty, char * host, int numPackets, int len, u_int32 options)
+int ping(struct vty *vty, char * host, int numPackets, int len, ospl_uint32 options)
 {
 	PING_STAT * pPS = NULL;
 	struct in_addr addr;
@@ -391,14 +391,14 @@ int ping(struct vty *vty, char * host, int numPackets, int len, u_int32 options)
 		strcpy(pPS->toHostName, host);
     }
 
-    vty_ansync_enable(vty, TRUE);
+    vty_ansync_enable(vty, ospl_true);
     vty_out(vty,"%s", VTY_NEWLINE);
     ping_thread(pPS);
     //os_thread_once(ping_thread, pPS);
     //vty->shell_ctrl_cmd = ping_ctrl_quit;
     //vty->ctrl = pPS;
     //pingFinish(pPS);
-    vty_ansync_enable(vty, FALSE);
+    vty_ansync_enable(vty, ospl_false);
 
 	if(pPS->bufRx != NULL)
 		XFREE(MTYPE_DATA, pPS->bufRx);
@@ -440,7 +440,7 @@ static int pingRxPrint(PING_STAT * pPS, /* ping stats structure */
 	if (len < hlen + ICMP_MINLEN) /* at least min length ? */
 	{
 		if (pPS->flags & PING_OPT_DEBUG)
-			vty_out(vty,"packet too short (%d bytes) from %s%s", len, inet_ntoa(from->sin_addr), VTY_NEWLINE);
+			vty_out(vty,"packet too ospl_int16 (%d bytes) from %s%s", len, inet_ntoa(from->sin_addr), VTY_NEWLINE);
 		return (ERROR);
 	}
 
@@ -531,7 +531,7 @@ static void pingFinish(PING_STAT * pPS /* pointer to task control block */
 							pPS->tMin, pPS->tSum / pPS->numRx, pPS->tMax, VTY_NEWLINE);
 			}
 			else
-				/* short report */
+				/* ospl_int16 report */
 				vty_out(vty,"%s is alive%s", pPS->toInetName, VTY_NEWLINE);
 		}
 		else

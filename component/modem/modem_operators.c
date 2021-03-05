@@ -541,9 +541,9 @@ static md_operators_t operators_table[] =
 	return "UNKNOWN";
 }*/
 
-const char * modem_operators_string(int code)
+const char * modem_operators_string(ospl_uint32 code)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < sizeof(operators_table)/sizeof(operators_table[0]); i++)
 	{
 		if(operators_table[i].operator_code == code)
@@ -554,9 +554,9 @@ const char * modem_operators_string(int code)
 	return "UNKNOWN";
 }
 
-const char * modem_country_string(int code)
+const char * modem_country_string(ospl_uint32 code)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < sizeof(operators_table)/sizeof(operators_table[0]); i++)
 	{
 		if((operators_table[i].operator_code & 0xfff00) == (code << 8))
@@ -567,9 +567,9 @@ const char * modem_country_string(int code)
 	return "UNKNOWN";
 }
 
-const char * modem_nation_string(int code)
+const char * modem_nation_string(ospl_uint32 code)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < sizeof(operators_table)/sizeof(operators_table[0]); i++)
 	{
 		if((operators_table[i].operator_code & 0xfff00) == (code << 8))

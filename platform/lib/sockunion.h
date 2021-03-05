@@ -23,17 +23,21 @@
 #ifndef _ZEBRA_SOCKUNION_H
 #define _ZEBRA_SOCKUNION_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef PL_NSM_MODULE
 #include "if.h"
 #else
-typedef unsigned int ifindex_t;
+typedef ospl_uint32  ifindex_t;
 #endif
 #if 0
 union sockunion {
   struct sockinet {
-    u_char si_len;
-    u_char si_family;
-    u_short si_port;
+    ospl_uchar si_len;
+    ospl_family_t si_family;
+    ospl_ushort si_port;
   } su_si;
   struct sockaddr_in  su_sin;
   struct sockaddr_in6 su_sin6;
@@ -89,16 +93,16 @@ enum connect_result
 
 /* Prototypes. */
 extern int str2sockunion (const char *, union sockunion *);
-extern const char *sockunion2str (const union sockunion *, char *, size_t);
+extern const char *sockunion2str (const union sockunion *, ospl_char *, ospl_size_t);
 extern int sockunion_cmp (const union sockunion *, const union sockunion *);
 extern int sockunion_same (const union sockunion *, const union sockunion *);
-extern unsigned int sockunion_hash (const union sockunion *);
+extern ospl_uint32  sockunion_hash (const union sockunion *);
 
-extern size_t family2addrsize(int family);
-extern size_t sockunion_get_addrlen(const union sockunion *);
-extern const u_char *sockunion_get_addr(const union sockunion *);
-extern unsigned short sockunion_get_port (const union sockunion *);
-extern void sockunion_set(union sockunion *, int family, const u_char *addr, size_t bytes);
+extern ospl_size_t family2addrsize(ospl_family_t family);
+extern ospl_size_t sockunion_get_addrlen(const union sockunion *);
+extern const ospl_uchar *sockunion_get_addr(const union sockunion *);
+extern ospl_ushort sockunion_get_port (const union sockunion *);
+extern void sockunion_set(union sockunion *, ospl_family_t family, const ospl_uchar *addr, ospl_size_t bytes);
 
 extern union sockunion *sockunion_str2su (const char *str);
 extern int sockunion_accept (int sock, union sockunion *);
@@ -109,16 +113,16 @@ extern int sockopt_int(int fd, int level, int optname, int optval);
 extern int sockopt_broadcast(int fd);
 extern int sockopt_keepalive(int fd);
 extern int sockopt_bindtodevice(int fd, const char *iface);
-extern int sockopt_v6only (int family, int sock);
+extern int sockopt_v6only (ospl_family_t family, int sock);
 extern int sockunion_bind (int sock, union sockunion *, 
-                           unsigned short, union sockunion *);
-extern int sockopt_ttl (int family, int sock, int ttl);
-extern int sockopt_minttl (int family, int sock, int minttl);
+                           ospl_ushort, union sockunion *);
+extern int sockopt_ttl (ospl_family_t family, int sock, int ttl);
+extern int sockopt_minttl (ospl_family_t family, int sock, int minttl);
 extern int sockopt_cork (int sock, int onoff);
 extern int sockunion_socket (const union sockunion *su);
-extern const char *inet_sutop (const union sockunion *su, char *str);
+extern const char *inet_sutop (const union sockunion *su, ospl_char *str);
 extern enum connect_result sockunion_connect (int fd, const union sockunion *su,
-                                              unsigned short port,
+                                              ospl_ushort port,
                                               ifindex_t);
 extern union sockunion *sockunion_getsockname (int);
 extern union sockunion *sockunion_getpeername (int);
@@ -126,16 +130,20 @@ extern union sockunion *sockunion_dup (const union sockunion *);
 extern void sockunion_free (union sockunion *);
 
 #ifndef HAVE_INET_NTOP
-extern const char * inet_ntop (int family, const void *addrptr, 
-                               char *strptr, size_t len);
+extern const char * inet_ntop (ospl_family_t family, const void *addrptr, 
+                               ospl_char *strptr, ospl_size_t len);
 #endif /* HAVE_INET_NTOP */
 
 #ifndef HAVE_INET_PTON
-extern int inet_pton (int family, const char *strptr, void *addrptr);
+extern int inet_pton (ospl_family_t family, const char *strptr, void *addrptr);
 #endif /* HAVE_INET_PTON */
 
 #ifndef HAVE_INET_ATON
 extern int inet_aton (const char *cp, struct in_addr *inaddr);
+#endif
+ 
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* _ZEBRA_SOCKUNION_H */

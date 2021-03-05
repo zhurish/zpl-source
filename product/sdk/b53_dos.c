@@ -15,7 +15,7 @@
 #include "sdk_driver.h"
 
 /*************************************************************************/
-int b53125_dos_icmpv6_longping_drop(struct b53125_device *dev, BOOL enable)
+int b53125_dos_icmpv6_longping_drop(struct b53125_device *dev, ospl_bool enable)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;
@@ -29,7 +29,7 @@ int b53125_dos_icmpv6_longping_drop(struct b53125_device *dev, BOOL enable)
 	return ret;
 }
 /*************************************************************************/
-int b53125_dos_icmpv4_longping_drop(struct b53125_device *dev, BOOL enable)
+int b53125_dos_icmpv4_longping_drop(struct b53125_device *dev, ospl_bool enable)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;
@@ -43,7 +43,7 @@ int b53125_dos_icmpv4_longping_drop(struct b53125_device *dev, BOOL enable)
 	return ret;
 }
 /*************************************************************************/
-int b53125_dos_icmpv6_fragment_drop(struct b53125_device *dev, BOOL enable)
+int b53125_dos_icmpv6_fragment_drop(struct b53125_device *dev, ospl_bool enable)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;
@@ -57,7 +57,7 @@ int b53125_dos_icmpv6_fragment_drop(struct b53125_device *dev, BOOL enable)
 	return ret;
 }
 /*************************************************************************/
-int b53125_dos_icmpv4_fragment_drop(struct b53125_device *dev, BOOL enable)
+int b53125_dos_icmpv4_fragment_drop(struct b53125_device *dev, ospl_bool enable)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;
@@ -72,7 +72,7 @@ int b53125_dos_icmpv4_fragment_drop(struct b53125_device *dev, BOOL enable)
 }
 
 /*************************************************************************/
-int b53125_dos_tcp_fragerror_drop(struct b53125_device *dev, BOOL enable)
+int b53125_dos_tcp_fragerror_drop(struct b53125_device *dev, ospl_bool enable)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;
@@ -86,7 +86,7 @@ int b53125_dos_tcp_fragerror_drop(struct b53125_device *dev, BOOL enable)
 	return ret;
 }
 /*************************************************************************/
-int b53125_dos_tcp_shorthdr_drop(struct b53125_device *dev, BOOL enable)
+int b53125_dos_tcp_ospl_int16hdr_drop(struct b53125_device *dev, ospl_bool enable)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;
@@ -100,7 +100,7 @@ int b53125_dos_tcp_shorthdr_drop(struct b53125_device *dev, BOOL enable)
 	return ret;
 }
 /*************************************************************************/
-int b53125_dos_tcp_synerror_drop(struct b53125_device *dev, BOOL enable)
+int b53125_dos_tcp_synerror_drop(struct b53125_device *dev, ospl_bool enable)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;
@@ -114,7 +114,7 @@ int b53125_dos_tcp_synerror_drop(struct b53125_device *dev, BOOL enable)
 	return ret;
 }
 /*************************************************************************/
-int b53125_dos_tcp_synfinscan_drop(struct b53125_device *dev, BOOL enable)
+int b53125_dos_tcp_synfinscan_drop(struct b53125_device *dev, ospl_bool enable)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;
@@ -128,7 +128,7 @@ int b53125_dos_tcp_synfinscan_drop(struct b53125_device *dev, BOOL enable)
 	return ret;
 }
 /*************************************************************************/
-int b53125_dos_tcp_nullscan_drop(struct b53125_device *dev, BOOL enable)
+int b53125_dos_tcp_nullscan_drop(struct b53125_device *dev, ospl_bool enable)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;
@@ -142,7 +142,7 @@ int b53125_dos_tcp_nullscan_drop(struct b53125_device *dev, BOOL enable)
 	return ret;
 }
 /*************************************************************************/
-int b53125_dos_tcp_xmassscan_drop(struct b53125_device *dev, BOOL enable)
+int b53125_dos_tcp_xmassscan_drop(struct b53125_device *dev, ospl_bool enable)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;
@@ -156,7 +156,7 @@ int b53125_dos_tcp_xmassscan_drop(struct b53125_device *dev, BOOL enable)
 	return ret;
 }
 /*************************************************************************/
-int b53125_dos_udp_blat_drop(struct b53125_device *dev, BOOL enable)
+int b53125_dos_udp_blat_drop(struct b53125_device *dev, ospl_bool enable)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;
@@ -170,7 +170,7 @@ int b53125_dos_udp_blat_drop(struct b53125_device *dev, BOOL enable)
 	return ret;
 }
 /*************************************************************************/
-int b53125_dos_tcp_blat_drop(struct b53125_device *dev, BOOL enable)
+int b53125_dos_tcp_blat_drop(struct b53125_device *dev, ospl_bool enable)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;
@@ -184,7 +184,7 @@ int b53125_dos_tcp_blat_drop(struct b53125_device *dev, BOOL enable)
 	return ret;
 }
 /*************************************************************************/
-int b53125_dos_ip_lan_drip_drop(struct b53125_device *dev, BOOL enable)
+int b53125_dos_ip_lan_drip_drop(struct b53125_device *dev, ospl_bool enable)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;
@@ -226,7 +226,7 @@ int b53125_dos_icmp4_maxsize(struct b53125_device *dev, int minsize)
 	return ret;
 }
 /*************************************************************************/
-int b53125_dos_disable_lean(struct b53125_device *dev, BOOL enable)
+int b53125_dos_disable_lean(struct b53125_device *dev, ospl_bool enable)
 {
 	int ret = 0;
 	u8 port_ctrl = 0;

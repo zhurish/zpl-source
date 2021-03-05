@@ -27,7 +27,7 @@
 #include "v9_video_board.h"
 #include "v9_video_api.h"
 
-u_int32 _sqldb_debug = V9_SQLDB_DEBUG_MSG | V9_SQLDB_DEBUG_DB
+ospl_uint32 _sqldb_debug = V9_SQLDB_DEBUG_MSG | V9_SQLDB_DEBUG_DB
 		| V9_SQLDB_DEBUG_STATE;
 
 
@@ -35,9 +35,9 @@ u_int32 _sqldb_debug = V9_SQLDB_DEBUG_MSG | V9_SQLDB_DEBUG_DB
 
 
 
-static char * v9_user_sqldb_file(u_int32 id)
+static char * v9_user_sqldb_file(ospl_uint32 id)
 {
-	u_int32 iid = APP_BOARD_CALCU_1;
+	ospl_uint32 iid = APP_BOARD_CALCU_1;
 	static char dirbase[V9_APP_DIR_NAME_MAX];
 	memset(dirbase, 0, sizeof(dirbase));
 	//snprintf(dirbase, sizeof(dirbase), "%s/%s", v9_video_disk_base_dir(APP_BOARD_CALCU_1), V9_USER_DB_FILE);
@@ -48,7 +48,7 @@ static char * v9_user_sqldb_file(u_int32 id)
 	return dirbase;
 }
 
-static sqlite3 * v9_user_sqldb_init(u_int32 id)
+static sqlite3 * v9_user_sqldb_init(ospl_uint32 id)
 {
 	int ret = 0;
 	sqlite3 *db = NULL;
@@ -80,7 +80,7 @@ static int v9_user_sqldb_exit(sqlite3 *db)
 	return ERROR;
 }
 
-static int v9_user_sqldb_sync(sqlite3 *db, u_int32 id)
+static int v9_user_sqldb_sync(sqlite3 *db, ospl_uint32 id)
 {
 	if (db)
 	{
@@ -90,7 +90,7 @@ static int v9_user_sqldb_sync(sqlite3 *db, u_int32 id)
 	return ERROR;
 }
 
-static BOOL v9_user_sqldb_table_exist(sqlite3 *db, u_int32 id)
+static ospl_bool v9_user_sqldb_table_exist(sqlite3 *db, ospl_uint32 id)
 {
 	char sqlcmd[256];
 	char *zErrMsg = NULL;
@@ -100,15 +100,15 @@ static BOOL v9_user_sqldb_table_exist(sqlite3 *db, u_int32 id)
 	if (V9_SQLDB_DEBUG(DBCMD))
 		zlog_debug(MODULE_APP, "SQL:%s", sqlcmd);
 	if (sqlite3_exec(db, sqlcmd, NULL, NULL, &zErrMsg) == SQLITE_OK)
-		return TRUE;
+		return ospl_true;
 	if (V9_SQLDB_DEBUG(MSG))
 		zlog_err(MODULE_APP, " SQL Table "V9_USER_DB_TBL" exist check (%s)",
 				V9_APP_DB_ID_ABS(id), zErrMsg);
 	sqlite3_free(zErrMsg);
-	return FALSE;
+	return ospl_false;
 }
 
-static int v9_user_sqldb_table_create(sqlite3 *db, u_int32 id)
+static int v9_user_sqldb_table_create(sqlite3 *db, ospl_uint32 id)
 {
 	char sqlcmd[512];
 	char *zErrMsg = NULL;
@@ -131,21 +131,21 @@ static int v9_user_sqldb_table_create(sqlite3 *db, u_int32 id)
 	return ERROR;
 }
 
-sqlite3 * v9_user_sqldb_open(u_int32 id)
+sqlite3 * v9_user_sqldb_open(ospl_uint32 id)
 {
 	sqlite3 *db = NULL;
 	if (db == NULL)
 		db = v9_user_sqldb_init(id);
 	if (!db)
 		return NULL;
-	if (v9_user_sqldb_table_exist(db, id) != TRUE)
+	if (v9_user_sqldb_table_exist(db, id) != ospl_true)
 	{
 		v9_user_sqldb_table_create(db, id);
 	}
 	return db;
 }
 
-int v9_user_sqldb_close(sqlite3 *db, u_int32 id)
+int v9_user_sqldb_close(sqlite3 *db, ospl_uint32 id)
 {
 	v9_user_sqldb_sync(db, id);
 	v9_user_sqldb_exit(db);
@@ -155,7 +155,7 @@ int v9_user_sqldb_close(sqlite3 *db, u_int32 id)
 static int v9_user_sqldb_count_callback(void *NotUsed, int argc, char **argv,
 		char **azColName)
 {
-	int i;
+	ospl_uint32 i;
 	int *value = NotUsed;
 	for (i = 0; i < argc; i++)
 	{
@@ -166,7 +166,7 @@ static int v9_user_sqldb_count_callback(void *NotUsed, int argc, char **argv,
 	return 0;
 }
 
-int v9_user_sqldb_count(sqlite3 *db, u_int32 id, int group, int *pValue)
+int v9_user_sqldb_count(sqlite3 *db, ospl_uint32 id, int group, int *pValue)
 {
 	int value = 0;
 	char sqlcmd[512];
@@ -199,7 +199,7 @@ int v9_user_sqldb_count(sqlite3 *db, u_int32 id, int group, int *pValue)
 	return ERROR;
 }
 
-int v9_user_sqldb_add(sqlite3 *db, u_int32 id, BOOL gender, int group,
+int v9_user_sqldb_add(sqlite3 *db, ospl_uint32 id, ospl_bool gender, int group,
 		char *user, char *user_id, char *pic, char *text)
 {
 	char sqlcmd[1024];
@@ -242,7 +242,7 @@ int v9_user_sqldb_add(sqlite3 *db, u_int32 id, BOOL gender, int group,
 	return ERROR;
 }
 
-int v9_user_sqldb_update(sqlite3 *db, u_int32 id, BOOL gender, int group,
+int v9_user_sqldb_update(sqlite3 *db, ospl_uint32 id, ospl_bool gender, int group,
 		char *user, char *user_id, char *pic, char *text)
 {
 	char sqlcmd[1024];
@@ -283,7 +283,7 @@ int v9_user_sqldb_update(sqlite3 *db, u_int32 id, BOOL gender, int group,
 	return ERROR;
 }
 
-int v9_user_sqldb_key_update(sqlite3 *db, u_int32 id, char *user_id,
+int v9_user_sqldb_key_update(sqlite3 *db, ospl_uint32 id, char *user_id,
 		sql_snapfea_key *key)
 {
 	char sqlcmd[512];
@@ -306,7 +306,7 @@ int v9_user_sqldb_key_update(sqlite3 *db, u_int32 id, char *user_id,
 		return ERROR;
 	}
 	if (sqlite3_bind_blob(stmt, 1, key->feature.feature_data,
-			key->feature_len * sizeof(float),
+			key->feature_len * sizeof(ospl_float),
 			SQLITE_STATIC) != SQLITE_OK)
 	{
 		if (V9_SQLDB_DEBUG(MSG))
@@ -325,7 +325,7 @@ int v9_user_sqldb_key_update(sqlite3 *db, u_int32 id, char *user_id,
 	return ERROR;
 }
 
-int v9_user_sqldb_key_select(sqlite3 *db, u_int32 id, char *user_id,
+int v9_user_sqldb_key_select(sqlite3 *db, ospl_uint32 id, char *user_id,
 		sql_snapfea_key *key)
 {
 	int ret = 0;
@@ -349,7 +349,7 @@ int v9_user_sqldb_key_select(sqlite3 *db, u_int32 id, char *user_id,
 	ret = sqlite3_step(stmt);
 	if (/*ret == SQLITE_DONE || */ret == SQLITE_ROW)
 	{
-		int len = sqlite3_column_bytes(stmt, 1);
+		ospl_uint32 len = sqlite3_column_bytes(stmt, 1);
 		void *pReadBolbData = sqlite3_column_blob(stmt, 1);
 
 		if (key && len && pReadBolbData)
@@ -357,11 +357,11 @@ int v9_user_sqldb_key_select(sqlite3 *db, u_int32 id, char *user_id,
 			if(len > APP_FEATURE_MAX)
 			{
 				key->feature.feature_data = key->feature.ckey_data = XREALLOC(MTYPE_VIDEO_KEY,
-					key->feature.ckey_data, len + sizeof(float));									// 特征值
+					key->feature.ckey_data, len + sizeof(ospl_float));									// 特征值
 			}
 			if (key->feature.ckey_data && pReadBolbData)
 			{
-				key->feature_len = len / sizeof(float);
+				key->feature_len = len / sizeof(ospl_float);
 				memcpy(key->feature.feature_data, pReadBolbData, len);
 				V9_DB_DEBUG(" %s :len=%d data[0]=%f\n", __func__,
 						key->feature_len, key->feature.feature_data[0]);
@@ -376,7 +376,7 @@ int v9_user_sqldb_key_select(sqlite3 *db, u_int32 id, char *user_id,
 	return ERROR;
 }
 
-/*static int v9_user_sqldb_del_callback(void *pArgv, int type, char const * name,
+/*static int v9_user_sqldb_del_callback(void *pArgv, ospl_uint32 type, char const * name,
 		char const * tblname, sqlite3_int64 aaaa)
 {
 	printf(" %s :type=%d, name=%s, tblname=%s\n", __func__, type, name,
@@ -387,7 +387,7 @@ int v9_user_sqldb_key_select(sqlite3 *db, u_int32 id, char *user_id,
 static int v9_user_sqldb_del_callback(void *NotUsed, int argc, char **argv,
 		char **azColName)
 {
-	int i;
+	ospl_uint32 i;
 	for (i = 0; i < argc; i++)
 	{
 		if (azColName[i] && strcasecmp(azColName[i], "url") == 0)
@@ -400,7 +400,7 @@ static int v9_user_sqldb_del_callback(void *NotUsed, int argc, char **argv,
 	return 0;
 }
 
-int v9_user_sqldb_cleanup(u_int32 id)
+int v9_user_sqldb_cleanup(ospl_uint32 id)
 {
 /*	if(_user_mutex)
 		os_mutex_lock(_user_mutex, OS_WAIT_FOREVER);
@@ -413,7 +413,7 @@ int v9_user_sqldb_cleanup(u_int32 id)
 	return 0;
 }
 
-int v9_user_sqldb_del(sqlite3 *db, u_int32 id, char *user_id)
+int v9_user_sqldb_del(sqlite3 *db, ospl_uint32 id, char *user_id)
 {
 	char sqlcmd[256];
 	char *zErrMsg = NULL;
@@ -438,7 +438,7 @@ int v9_user_sqldb_del(sqlite3 *db, u_int32 id, char *user_id)
 	return ERROR;
 }
 
-int v9_user_sqldb_del_group(sqlite3 *db, u_int32 id, int group)
+int v9_user_sqldb_del_group(sqlite3 *db, ospl_uint32 id, int group)
 {
 	char sqlcmd[256];
 	char *zErrMsg = NULL;
@@ -465,7 +465,7 @@ int v9_user_sqldb_del_group(sqlite3 *db, u_int32 id, int group)
 static int v9_user_sqldb_lookup_callback(void *NotUsed, int argc, char **argv,
 		char **azColName)
 {
-	int i;
+	ospl_uint32 i;
 	v9_video_user_t *user = NotUsed;
 	for (i = 0; i < argc; i++)
 	{
@@ -505,7 +505,7 @@ static int v9_user_sqldb_lookup_callback(void *NotUsed, int argc, char **argv,
 	return 0;
 }
 
-int v9_user_sqldb_lookup_user(sqlite3 *db, u_int32 id, char *user_id,
+int v9_user_sqldb_lookup_user(sqlite3 *db, ospl_uint32 id, char *user_id,
 		void *pArgv)
 {
 	char sqlcmd[512];
@@ -556,7 +556,7 @@ int v9_user_sqldb_lookup_user(sqlite3 *db, u_int32 id, char *user_id,
 
 struct user_sqldb_foreach
 {
-	u_int8 id;
+	ospl_uint8 id;
 	v9_video_user_t user;
 	v9_vidoe_callback cb;
 	void *pVoid;
@@ -565,7 +565,7 @@ struct user_sqldb_foreach
 static int v9_user_sqldb_callback(void *NotUsed, int argc, char **argv,
 		char **azColName)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	struct user_sqldb_foreach *user_sqldb = NotUsed;
 
 	for (i = 0; i < argc; i++)
@@ -610,7 +610,7 @@ static int v9_user_sqldb_callback(void *NotUsed, int argc, char **argv,
 	return 0;
 }
 
-int v9_user_sqldb_foreach(sqlite3 *db, u_int32 id, int groupid, char *user_id,
+int v9_user_sqldb_foreach(sqlite3 *db, ospl_uint32 id, int groupid, char *user_id,
 		void * cb, void *pVoid)
 {
 	char sqlcmd[512];
@@ -657,15 +657,15 @@ int v9_user_sqldb_foreach(sqlite3 *db, u_int32 id, int groupid, char *user_id,
 	return ERROR;
 }
 
-int v9_user_sqldb_key_foreach(sqlite3 *db, u_int32 id,
-		sql_snapfea_key *key, char *user_id, float* p_fResult)
+int v9_user_sqldb_key_foreach(sqlite3 *db, ospl_uint32 id,
+		sql_snapfea_key *key, char *user_id, ospl_float* p_fResult)
 {
 	int ret = 0;
 	char sqlcmd[512];
 	sqlite3_stmt *stmt = NULL;
-	int len = 0;
+	ospl_uint32 len = 0;
 	void *pReadBolbData = NULL;
-	float fresult = 0.0f;
+	ospl_float fresult = 0.0f;
 
 	memset(sqlcmd, 0, sizeof(sqlcmd));
 
@@ -693,7 +693,7 @@ int v9_user_sqldb_key_foreach(sqlite3 *db, u_int32 id,
 			if (key->feature_memcmp)
 			{
 				ret = (key->feature_memcmp)(key->feature.feature_data, pReadBolbData,
-						MIN(len / sizeof(float), key->feature_len), &fresult);
+						MIN(len / sizeof(ospl_float), key->feature_len), &fresult);
 				if (ret == OK)
 				{
 					//if (fresult >= value)
@@ -724,14 +724,14 @@ int v9_user_sqldb_key_foreach(sqlite3 *db, u_int32 id,
 }
 
 #ifdef V9_SQLDB_TEST
-int v9_user_sqldb_test(int i, void *pArg)
+int v9_user_sqldb_test(ospl_uint32 i, void *pArg)
 {
 	//struct vty *vty = pArg;
 	int pValue = 0;
 	sqlite3 * db = v9_user_sqldb_init(2);
 	if (db)
 	{
-		if (v9_user_sqldb_table_exist(db, 2) != TRUE)
+		if (v9_user_sqldb_table_exist(db, 2) != ospl_true)
 		{
 			v9_user_sqldb_table_create(db, 2);
 		}

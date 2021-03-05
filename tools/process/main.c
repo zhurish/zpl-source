@@ -96,7 +96,7 @@ static int process_manage_unit(int fd, process_head *head, int *errnum)
 {
 
 	int /*num = 0, */len = 0;
-	int offset = 0;
+	ospl_uint32 offset = 0;
 	char buf[1024];
 	os_memset(buf, 0, sizeof(buf));
 	while(1)
@@ -236,7 +236,7 @@ int main(int argc, char *argv[])
 	debug = 7;
 	if(sock == 0)
 	{
-		sock = unix_sock_server_create(TRUE, PROCESS_MGT_UNIT_NAME);
+		sock = unix_sock_server_create(ospl_true, PROCESS_MGT_UNIT_NAME);
 	}
 	if(sock <= 0)
 		return ERROR;

@@ -8,6 +8,10 @@
 #ifndef __SDK_DRIVER_H__
 #define __SDK_DRIVER_H__
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 
 /*typedef enum drv_port_stp_state_e {
     DRV_PORT_STP_DISABLE = 1,
@@ -159,5 +163,9 @@ extern sdk_driver_t *sdk_driver;
 
 int sdk_module_init(hal_driver_t *hal);
 
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __SDK_DRIVER_H__ */

@@ -9,6 +9,10 @@
 #define __NSM_HOOK_H__
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "if.h"
 #include "prefix.h"
 #include "nsm_vrf.h"
@@ -35,11 +39,11 @@ typedef enum
 //接口创建删除的时候触发创建删除对应模块的数据结构
 //接口UP/DOWN，设置删除IP的时候通知其他模块
 //参数变化
-typedef int (*ifp_hook)(struct interface *, BOOL);
-typedef int (*ifp_address_hook)(struct interface *, struct connected *, BOOL);
-typedef int (*service_hook)(void *, BOOL);
-typedef int (*debug_hook)(void *, BOOL);
-typedef int (*ifp_show_hook)(struct interface *, struct vty *, BOOL);
+typedef int (*ifp_hook)(struct interface *, ospl_bool);
+typedef int (*ifp_address_hook)(struct interface *, struct connected *, ospl_bool);
+typedef int (*service_hook)(void *, ospl_bool);
+typedef int (*debug_hook)(void *, ospl_bool);
+typedef int (*ifp_show_hook)(struct interface *, struct vty *, ospl_bool);
 
 typedef struct nsm_hook_node
 {
@@ -75,7 +79,11 @@ void * nsm_hook_lookup (nsm_hook_em type);
 
 int nsm_hook_install (nsm_hook_em type, void *hook);
 int nsm_hook_uninstall (nsm_hook_em type, void *hook);
-int nsm_hook_execute (nsm_hook_em type, void *p1, void *p2, BOOL b);
+int nsm_hook_execute (nsm_hook_em type, void *p1, void *p2, ospl_bool b);
 
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __NSM_HOOK_H__ */

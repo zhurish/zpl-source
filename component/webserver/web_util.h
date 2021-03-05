@@ -8,6 +8,10 @@
 #ifndef __WEB_UTIL_H__
 #define __WEB_UTIL_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "zebra.h"
 #include "if.h"
 #include "nsm_vrf.h"
@@ -214,17 +218,21 @@ extern int web_download_call_hook(char *form, char *id, Webs *wp, char **filenam
 /*
  * Route
  */
-extern int web_route_lookup_default(ifindex_t ifindex, u_int32 *local_gateway);
-extern int web_static_ipv4_safi (u_int8_t safi, int add_cmd,
+extern int web_route_lookup_default(ifindex_t ifindex, ospl_uint32 *local_gateway);
+extern int web_static_ipv4_safi (ospl_uint8 safi, int add_cmd,
 			const char *dest_str, const char *mask_str,
 			const char *gate_str, const char *flag_str,
 			const char *tag_str, const char *distance_str,
 			const char *vrf_id_str);
 
 #ifdef WEB_OPENWRT_PROCESS
-extern int web_kernel_route_lookup_default(ifindex_t ifindex, u_int32 *local_gateway );
-extern int web_kernel_dns_lookup_default(ifindex_t *ifindex, u_int32 *dns1, u_int32 *dns2);
+extern int web_kernel_route_lookup_default(ifindex_t ifindex, ospl_uint32 *local_gateway );
+extern int web_kernel_dns_lookup_default(ifindex_t *ifindex, ospl_uint32 *dns1, ospl_uint32 *dns2);
 #endif
 
-
+ 
+#ifdef __cplusplus
+}
+#endif
+ 
 #endif /* __WEB_UTIL_H__ */

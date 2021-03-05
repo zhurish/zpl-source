@@ -237,7 +237,7 @@ static int telnetHostInputParse
                 }
             else if (ch == (char)TELOPT_ECHO)
                 {
-                session->echoIsDone = TRUE;
+                session->echoIsDone = ospl_true;
                 
                 if (session->cmd == (char)WONT)
                     {
@@ -249,7 +249,7 @@ static int telnetHostInputParse
                 }
             else if (ch == (char)TELOPT_SGA)
                 {
-                session->sgaIsDone = TRUE;
+                session->sgaIsDone = ospl_true;
 
                 /* no action necessary */
                 }
@@ -349,10 +349,10 @@ static int telnetTask(TELNETC_SESSION_DATA *session)
 	int bytesRead = 0;
 	int bytesWritten = 0;
 	char ch = 0;
-	int i = 0;
+	ospl_uint32 i = 0;
 	fd_set readFds;
 	struct vty *vty = session->vty;
-	while(session->connect != TRUE)
+	while(session->connect != ospl_true)
 	{
 		if(session->state == SCTD_EMPTY)
 			return telnetExit(session);
@@ -361,12 +361,12 @@ static int telnetTask(TELNETC_SESSION_DATA *session)
 	vty_out(vty, "Connected to %s.%s", session->hostname, VTY_NEWLINE);
 	vty_out(vty, "Exit character is '%s'.%s", TELNET_ESC_STRING, VTY_NEWLINE);
 	/* send our DO commands to host */
-	session->echoIsDone = FALSE;
+	session->echoIsDone = ospl_false;
 	if (telnetCmdSend((char) DO, (char) TELOPT_ECHO, session) == ERROR)
 	{
 		return telnetExit(session);
 	}
-	session->sgaIsDone = FALSE;
+	session->sgaIsDone = ospl_false;
 	if (telnetCmdSend((char) DO, (char) TELOPT_SGA, session) == ERROR)
 	{
 		return telnetExit(session);
@@ -502,7 +502,7 @@ int telnet(struct vty *vty, char * pHostName, int port)
 	bzero ((char *) &hostSockAddr, sizeof (struct sockaddr_in));
 
 	/* establish TCP/IP connection to host */
-	vty_ansync_enable(vty, TRUE);
+	vty_ansync_enable(vty, ospl_true);
 
 	vty_out(vty, "%sTrying %s...%s", VTY_NEWLINE, session->hostname, VTY_NEWLINE);
 
@@ -511,7 +511,7 @@ int telnet(struct vty *vty, char * pHostName, int port)
 	if (session->hostFd == ERROR)
 	{
 		vty_out(vty, "Error creating socket%s", VTY_NEWLINE);
-		vty_ansync_enable(vty, FALSE);
+		vty_ansync_enable(vty, ospl_false);
 		return telnetExit(session);
 	}
 
@@ -529,7 +529,7 @@ int telnet(struct vty *vty, char * pHostName, int port)
 	if(os_task_create("telnet-client", OS_TASK_DEFAULT_PRIORITY,
                0, telnetTask, session, OS_TASK_DEFAULT_STACK) <= 0)
 	{
-		vty_ansync_enable(vty, FALSE);
+		vty_ansync_enable(vty, ospl_false);
 		telnetExit(session);
 		return ERROR;
 	}
@@ -540,14 +540,14 @@ int telnet(struct vty *vty, char * pHostName, int port)
 
 	if (status != OK)
 	{
-		vty_ansync_enable(vty, FALSE);
+		vty_ansync_enable(vty, ospl_false);
 		session->state = SCTD_EMPTY;
 		return ERROR;
 	}
 	vty_cancel(vty);
 /*	vty_out(vty, "Connected to %s.%s", pHostName, VTY_NEWLINE);
 	vty_out(vty, "Exit character is '%s'.%s", TELNET_ESC_STRING, VTY_NEWLINE);*/
-	session->connect = TRUE;
+	session->connect = ospl_true;
 	return OK;
 	/* NOT REACHED */
 }
@@ -582,7 +582,7 @@ static int telnetExit
 	}
     if(session->vty)
     {
-    	vty_ansync_enable(session->vty, FALSE);
+    	vty_ansync_enable(session->vty, ospl_false);
     	vty_resume(session->vty);
     	if(session->loutfd)
     		write(session->loutfd, "\r\n",strlen("\r\n"));

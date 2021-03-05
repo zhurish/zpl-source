@@ -81,7 +81,7 @@ static void dhcp_packet_dump(struct dhcp_packet *packet)
 	if(strlen(packet->file))
 		zlog_debug(MODULE_DHCP, "  Boot file name option : %s", packet->file);
 
-	//uint8_t options[DHCP_OPTIONS_BUFSIZE + CONFIG_UDHCPC_SLACK_FOR_BUGGY_SERVERS];
+	//ospl_uint8 options[DHCP_OPTIONS_BUFSIZE + CONFIG_UDHCPC_SLACK_FOR_BUGGY_SERVERS];
 	len = dhcp_option_get_length(packet->options);
 
 	message = dhcp_option_message_type_get(packet->options, len);
@@ -159,11 +159,11 @@ static void _udhcp_dump_packet(struct dhcp_packet *packet)
 #endif
 
 /* Read a packet from socket fd, return -1 on read error, -2 on packet error */
-int FAST_FUNC udhcp_recv_packet(struct dhcp_packet *packet, int fd, u_int32 *ifindex)
+int FAST_FUNC udhcp_recv_packet(struct dhcp_packet *packet, int fd, ospl_uint32 *ifindex)
 {
 #if 1
 	int bytes = 0;
-	u_int32 d_ifindex = 0;
+	ospl_uint32 d_ifindex = 0;
 	memset(packet, 0, sizeof(*packet));
 	struct iovec iov;
 	/* Header and data both require alignment. */
@@ -247,8 +247,8 @@ int FAST_FUNC udhcp_recv_packet(struct dhcp_packet *packet, int fd, u_int32 *ifi
 /* Construct a ip/udp header for a packet, send packet */
 int FAST_FUNC udhcp_send_raw_packet(int fd, struct dhcp_packet *dhcp_pkt,
 	struct udhcp_packet_cmd *source,
-	struct udhcp_packet_cmd *dest, const uint8_t *dest_arp,
-		int ifindex)
+	struct udhcp_packet_cmd *dest, const ospl_uint8 *dest_arp,
+		ifindex_t ifindex)
 {
 	struct sockaddr_ll dest_sll;
 	struct ip_udp_dhcp_packet packet;
@@ -280,7 +280,7 @@ int FAST_FUNC udhcp_send_raw_packet(int fd, struct dhcp_packet *dhcp_pkt,
 	 * However, RFC 1542 says "The IP Total Length and UDP Length
 	 * must be large enough to contain the minimal BOOTP header of 300 octets".
 	 * Thus, we retain enough padding to not go below 300 BOOTP bytes.
-	 * Some devices have filters which drop DHCP packets shorter than that.
+	 * Some devices have filters which drop DHCP packets ospl_int16er than that.
 	 */
 	padding = DHCP_OPTIONS_BUFSIZE - 1 - udhcp_end_option(packet.data.options);
 	if (padding > DHCP_SIZE - 300)
@@ -295,14 +295,14 @@ int FAST_FUNC udhcp_send_raw_packet(int fd, struct dhcp_packet *dhcp_pkt,
 	packet.udp.len = htons(UDP_DHCP_SIZE - padding);
 	/* for UDP checksumming, ip.len is set to UDP packet len */
 	packet.ip.tot_len = packet.udp.len;
-	packet.udp.check = in_cksum/*inet_cksum*/((uint16_t *)&packet,
+	packet.udp.check = in_cksum/*inet_cksum*/((ospl_uint16 *)&packet,
 			IP_UDP_DHCP_SIZE - padding);
 	/* but for sending, it is set to IP packet len */
 	packet.ip.tot_len = htons(IP_UDP_DHCP_SIZE - padding);
 	packet.ip.ihl = sizeof(packet.ip) >> 2;
 	packet.ip.version = IPVERSION;
 	packet.ip.ttl = IPDEFTTL;
-	packet.ip.check = in_cksum/*inet_cksum*/((uint16_t *)&packet.ip, sizeof(packet.ip));
+	packet.ip.check = in_cksum/*inet_cksum*/((ospl_uint16 *)&packet.ip, sizeof(packet.ip));
 
 	//_udhcp_dump_packet(dhcp_pkt);
 	result = sendto(fd, &packet, IP_UDP_DHCP_SIZE - padding, /*flags:*/ 0,

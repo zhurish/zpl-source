@@ -35,22 +35,22 @@ class vpxEncoder : public videoEncoder {
         ~vpxEncoder();
 
         int videoEncoderSetup(const int width, const int height, const int fmt, const int fps);
-        int videoEncoderInput(const unsigned char *frame, const int len, const bool keyframe);
-        int videoEncoderOutput(unsigned char *frame, const int len);
-        unsigned char * videoEncoderOutput();
+        int videoEncoderInput(const ospl_uint8 *frame, const int len, const bool keyframe);
+        int videoEncoderOutput(ospl_uint8 *frame, const int len);
+        ospl_uint8 * videoEncoderOutput();
         int videoEncoderOutputSize(const bool clear=true);
         int videoEncoderDestroy();
 
     private:
-        int vpx_encode_framed(const unsigned char *packets, const int in_size,
-                                  unsigned char *output, unsigned out_size, bool force_keyframe);
+        int vpx_encode_framed(const ospl_uint8 *packets, const int in_size,
+                                  ospl_uint8 *output, unsigned out_size, bool force_keyframe);
     private:
 
         /* Encoder */
         vpx_codec_ctx_t enc;
         vpx_codec_iter_t enc_iter;
         unsigned enc_input_size;
-        unsigned char *enc_frame_whole;
+        ospl_uint8 *enc_frame_whole;
         unsigned enc_frame_size;
         unsigned enc_processed;
         bool enc_frame_is_keyframe;

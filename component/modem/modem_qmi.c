@@ -73,7 +73,7 @@ static int _qmi_start( char *process, char *apn, char *user, char *passwd, char 
 	char path[128];
 	memset(path, 0, sizeof(path));
 	snprintf(path, sizeof(path), "quectel-CM");
-	id = os_process_register(PROCESS_START, path, "quectel-CM", TRUE, argv);
+	id = os_process_register(PROCESS_START, path, "quectel-CM", ospl_true, argv);
 	if(id)
 		return id;
 #endif
@@ -126,17 +126,17 @@ static int _modem_qmi_stop(modem_client_t *client)
 	return OK;
 }
 
-BOOL modem_qmi_isconnect(modem_t *modem)
+ospl_bool modem_qmi_isconnect(modem_t *modem)
 {
 	assert(modem);
 	if(modem->pid[modem->dialtype])
 	{
-		return TRUE;
+		return ospl_true;
 	}
-	return FALSE;
+	return ospl_false;
 }
 
-BOOL modem_qmi_islinkup(modem_t *modem)
+ospl_bool modem_qmi_islinkup(modem_t *modem)
 {
 	assert(modem);
 	struct interface *ifp = modem->eth0;
@@ -150,11 +150,11 @@ BOOL modem_qmi_islinkup(modem_t *modem)
 				{
 					modem_serial_interface_update_kernel(modem, ifp->k_name);
 				}
-				return TRUE;
+				return ospl_true;
 			}
 		}
 	}
-	return FALSE;
+	return ospl_false;
 }
 
 

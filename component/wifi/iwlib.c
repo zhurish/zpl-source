@@ -151,7 +151,7 @@ int iw_ignore_version = 0;
 int iw_sockets_open(void)
 {
 	static const int families[] = { AF_INET, AF_IPX, AF_AX25, AF_APPLETALK };
-	unsigned int i;
+	ospl_uint32 i;
 	int sock;
 
 	/*
@@ -767,7 +767,7 @@ int iw_set_basic_config(int skfd, const char * ifname, wireless_config * info)
 	/* Set encryption information */
 	if (info->has_key)
 	{
-		int flags = info->key_flags;
+		ospl_uint32 flags = info->key_flags;
 
 		/* Check if there is a key index */
 		if ((flags & IW_ENCODE_INDEX) > 0)
@@ -875,7 +875,7 @@ int iw_protocol_compare(const char * protocol1, const char * protocol2)
 	{
 		const char * sub1 = protocol1 + strlen(dot11);
 		const char * sub2 = protocol2 + strlen(dot11);
-		unsigned int i;
+		ospl_uint32 i;
 		int isds1 = 0;
 		int isds2 = 0;
 		int is5g1 = 0;
@@ -937,7 +937,7 @@ void iw_float2freq(double in, iwfreq * out)
 	out->m = (long) in;
 #else	/* WE_NOLIBM */
 	/* Version with libm : faster */
-	out->e = (short) (floor(log10(in)));
+	out->e = (ospl_int16) (floor(log10(in)));
 	if (out->e > 8)
 	{
 		out->m = ((long) (floor(in / pow(10, out->e - 6)))) * 100;
@@ -1262,25 +1262,25 @@ int iw_get_stats(int skfd, const char * ifname, iwstats * stats,
 				/* -- status -- */
 				bp = strtok(bp, " ");
 				sscanf(bp, "%X", &t);
-				stats->status = (unsigned short) t;
+				stats->status = (ospl_uint16) t;
 				/* -- link quality -- */
 				bp = strtok(NULL, " ");
 				if (strchr(bp, '.') != NULL)
 					stats->qual.updated |= 1;
 				sscanf(bp, "%d", &t);
-				stats->qual.qual = (unsigned char) t;
+				stats->qual.qual = (ospl_uint8) t;
 				/* -- signal level -- */
 				bp = strtok(NULL, " ");
 				if (strchr(bp, '.') != NULL)
 					stats->qual.updated |= 2;
 				sscanf(bp, "%d", &t);
-				stats->qual.level = (unsigned char) t;
+				stats->qual.level = (ospl_uint8) t;
 				/* -- noise level -- */
 				bp = strtok(NULL, " ");
 				if (strchr(bp, '.') != NULL)
 					stats->qual.updated += 4;
 				sscanf(bp, "%d", &t);
-				stats->qual.noise = (unsigned char) t;
+				stats->qual.noise = (ospl_uint8) t;
 				/* -- discarded packets -- */
 				bp = strtok(NULL, " ");
 				sscanf(bp, "%d", &stats->discard.nwid);
@@ -1446,7 +1446,7 @@ void iw_print_stats(char * buffer, int buflen, const iwqual * qual,
 /*
  * Output the encoding key, with a nice formating
  */
-void iw_print_key(char * buffer, int buflen, const unsigned char * key, /* Must be unsigned */
+void iw_print_key(char * buffer, int buflen, const ospl_uint8 * key, /* Must be unsigned */
 int key_size, int key_flags)
 {
 	int i;
@@ -1499,7 +1499,7 @@ int key_size, int key_flags)
  * ### NOT IMPLEMENTED ###
  * Return size of the key, or 0 (no key) or -1 (error)
  */
-static int iw_pass_key(const char * input, unsigned char * key)
+static int iw_pass_key(const char * input, ospl_uint8 * key)
 {
 	input = input;
 	key = key;
@@ -1514,7 +1514,7 @@ static int iw_pass_key(const char * input, unsigned char * key)
  * Return size of the key, or 0 (no key) or -1 (error)
  * If the key is too long, it's simply truncated...
  */
-int iw_in_key(const char * input, unsigned char * key)
+int iw_in_key(const char * input, ospl_uint8 * key)
 {
 	int keylen = 0;
 
@@ -1538,7 +1538,7 @@ int iw_in_key(const char * input, unsigned char * key)
 	{
 		const char * p;
 		int dlen; /* Digits sequence length */
-		unsigned char out[IW_ENCODING_TOKEN_MAX];
+		ospl_uint8 out[IW_ENCODING_TOKEN_MAX];
 
 		/* Third case : as hexadecimal digits */
 		p = input;
@@ -1572,7 +1572,7 @@ int iw_in_key(const char * input, unsigned char * key)
 				templ |= temph << 4;
 			else
 				templ = temph;
-			out[keylen++] = (unsigned char) (templ & 0xFF);
+			out[keylen++] = (ospl_uint8) (templ & 0xFF);
 			/* Check overflow in output */
 			if (keylen >= IW_ENCODING_TOKEN_MAX)
 				break;
@@ -1605,7 +1605,7 @@ int iw_in_key(const char * input, unsigned char * key)
  * Return size of the key, or 0 (no key) or -1 (error)
  */
 int iw_in_key_full(int skfd, const char * ifname, const char * input,
-		unsigned char * key, __u16 * flags)
+		ospl_uint8 * key, __u16 * flags)
 {
 	int keylen = 0;
 	char * p;
@@ -1796,7 +1796,7 @@ void iw_print_retry_value(char * buffer, int buflen, int value, int flags,
 	}
 	if (flags & IW_RETRY_SHORT)
 	{
-		strcpy(buffer, " short"); /* Size checked */
+		strcpy(buffer, " ospl_int16"); /* Size checked */
 		buffer += 6;
 	}
 	if (flags & IW_RETRY_LONG)
@@ -1847,7 +1847,7 @@ void iw_print_timeval(char * buffer, int buflen, const struct timeval * timev,
 
 	s = (timev->tv_sec - tz->tz_minuteswest * 60) % 86400;
 	snprintf(buffer, buflen, "%02d:%02d:%02d.%06u", s / 3600, (s % 3600) / 60,
-			s % 60, (u_int32_t) timev->tv_usec);
+			s % 60, (ospl_uint32) timev->tv_usec);
 }
 
 /*********************** ADDRESS SUBROUTINES ************************/
@@ -1907,7 +1907,7 @@ int iw_check_if_addr_type(int skfd, const char * ifname)
 
 #ifdef DEBUG
 	printf("Interface : %d - 0x%lX\n", ifr.ifr_addr.sa_family,
-			*((unsigned long *) ifr.ifr_addr.sa_data));
+			*((ospl_ulong *) ifr.ifr_addr.sa_data));
 #endif
 
 	return (0);
@@ -1943,7 +1943,7 @@ int
 iw_get_mac_addr(int skfd,
 		const char * ifname,
 		struct ether_addr * eth,
-		unsigned short * ptype)
+		ospl_uint16 * ptype)
 {
 	struct ifreq ifr;
 	int ret;
@@ -1966,7 +1966,7 @@ iw_get_mac_addr(int skfd,
  * Display an arbitrary length MAC address in readable format.
  */
 char *
-iw_mac_ntop(const unsigned char * mac, int maclen, char * buf, int buflen)
+iw_mac_ntop(const ospl_uint8 * mac, int maclen, char * buf, int buflen)
 {
 	int i;
 
@@ -2032,7 +2032,7 @@ iw_sawap_ntop(const struct sockaddr * sap, char * buf)
  * Input an arbitrary length MAC address and convert to binary.
  * Return address size.
  */
-int iw_mac_aton(const char * orig, unsigned char * mac, int macmax)
+int iw_mac_aton(const char * orig, ospl_uint8 * mac, int macmax)
 {
 	const char * p = orig;
 	int maclen = 0;
@@ -2049,7 +2049,7 @@ int iw_mac_aton(const char * orig, unsigned char * mac, int macmax)
 			break; /* Error -> non-hex chars */
 		/* Output two chars as one byte */
 		templ |= temph << 4;
-		mac[maclen++] = (unsigned char) (templ & 0xFF);
+		mac[maclen++] = (ospl_uint8) (templ & 0xFF);
 
 		/* Check end of string */
 		p += 2;
@@ -2094,7 +2094,7 @@ int iw_mac_aton(const char * orig, unsigned char * mac, int macmax)
 int iw_ether_aton(const char *orig, struct ether_addr *eth)
 {
 	int maclen;
-	maclen = iw_mac_aton(orig, (unsigned char *) eth, ETH_ALEN);
+	maclen = iw_mac_aton(orig, (ospl_uint8 *) eth, ETH_ALEN);
 	if ((maclen > 0) && (maclen < ETH_ALEN))
 	{
 		errno = EINVAL;
@@ -2249,7 +2249,7 @@ sizeof(struct sockaddr), /* IW_PRIV_TYPE_ADDR */
 int iw_get_priv_size(int args)
 {
 	int num = args & IW_PRIV_SIZE_MASK;
-	int type = (args & IW_PRIV_TYPE_MASK) >> 12;
+	ospl_uint32 type = (args & IW_PRIV_TYPE_MASK) >> 12;
 
 	return (num * priv_type_size[type]);
 }
@@ -2417,7 +2417,7 @@ static const struct iw_ioctl_description standard_ioctl_descr[] =
 				{ .header_type = IW_HEADER_TYPE_POINT, .token_size = 1,
 						.min_tokens = sizeof(struct iw_pmksa), .max_tokens =
 								sizeof(struct iw_pmksa), }, };
-static const unsigned int standard_ioctl_num = (sizeof(standard_ioctl_descr)
+static const ospl_uint32 standard_ioctl_num = (sizeof(standard_ioctl_descr)
 		/ sizeof(struct iw_ioctl_description));
 
 /*
@@ -2442,7 +2442,7 @@ static const struct iw_ioctl_description standard_event_descr[] =
 		IW_GENERIC_IE_MAX, }, [IWEVPMKIDCAND - IWEVFIRST] =
 { .header_type = IW_HEADER_TYPE_POINT, .token_size = 1, .max_tokens =
 		sizeof(struct iw_pmkid_cand), }, };
-static const unsigned int standard_event_num = (sizeof(standard_event_descr)
+static const ospl_uint32 standard_event_num = (sizeof(standard_event_descr)
 		/ sizeof(struct iw_ioctl_description));
 
 /* Size (in bytes) of various events */
@@ -2487,7 +2487,7 @@ int we_version)
 {
 	const struct iw_ioctl_description * descr = NULL;
 	int event_type = 0;
-	unsigned int event_len = 1; /* Invalid */
+	ospl_uint32 event_len = 1; /* Invalid */
 	char * pointer;
 	/* Don't "optimise" the following variable, it will crash */
 	unsigned cmd_index; /* *MUST* be unsigned */
@@ -2577,7 +2577,7 @@ int we_version)
 	if (event_type == IW_HEADER_TYPE_POINT)
 	{
 		/* Check the length of the payload */
-		unsigned int extra_len = iwe->len - (event_len + IW_EV_LCP_PK_LEN);
+		ospl_uint32 extra_len = iwe->len - (event_len + IW_EV_LCP_PK_LEN);
 		if (extra_len > 0)
 		{
 			/* Set pointer on variable part (warning : non aligned) */
@@ -2592,7 +2592,7 @@ int we_version)
 				/* Those checks are actually pretty hard to trigger,
 				 * because of the checks done in the kernel... */
 
-				unsigned int token_len = iwe->u.data.length * descr->token_size;
+				ospl_uint32 token_len = iwe->u.data.length * descr->token_size;
 
 				/* Ugly fixup for alignement issues.
 				 * If the kernel is 64 bits and userspace 32 bits,
@@ -2601,7 +2601,7 @@ int we_version)
 				if ((token_len != extra_len) && (extra_len >= 4))
 				{
 					__u16 alt_dlen = *((__u16 *) pointer);
-					unsigned int alt_token_len = alt_dlen * descr->token_size;
+					ospl_uint32 alt_token_len = alt_dlen * descr->token_size;
 					if ((alt_token_len + 8) == extra_len)
 					{
 #ifdef DEBUG
@@ -2709,9 +2709,9 @@ int we_version)
  * what's really needed, and continuous scanning is a bad idea.
  * Jean II
  */
-static int iw_split_gen_ie(unsigned char * buffer, int buflen)
+static int iw_split_gen_ie(ospl_uint8 * buffer, int buflen)
 {
-	int offset = 0;
+	ospl_uint32 offset = 0;
 	int value[2] = {0, 0};
 	/* Loop on each IE, each IE is minimum 2 bytes */
 	while (offset <= (buflen - 2))
@@ -2851,9 +2851,9 @@ int iw_process_scan(int skfd, char * ifname, int we_version,
 		wireless_scan_head * context)
 {
 	struct iwreq wrq;
-	unsigned char * buffer = NULL; /* Results */
+	ospl_uint8 * buffer = NULL; /* Results */
 	int buflen = IW_SCAN_MAX_DATA; /* Min for compat WE<17 */
-	unsigned char * newbuf;
+	ospl_uint8 * newbuf;
 
 	/* Don't waste too much time on interfaces (150 * 100 = 15s) */
 	context->retry++;
@@ -3062,7 +3062,7 @@ int iw_free_scan(wireless_scan_head *context)
 	return -1;
 }
 
-int iw_is_connect(char *ifname, unsigned char *bssid)
+int iw_is_connect(char *ifname, ospl_uint8 *bssid)
 {
 	int skfd; /* generic raw socket desc.	*/
 	int goterr = -1;

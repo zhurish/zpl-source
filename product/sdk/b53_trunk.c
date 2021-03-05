@@ -12,7 +12,7 @@
 
 /* Trunk Registers */
 /*************************************************************************/
-int b53125_trunk_mac_base_enable(struct b53125_device *dev, BOOL enable)
+int b53125_trunk_mac_base_enable(struct b53125_device *dev, ospl_bool enable)
 {
 	int ret = 0;
 	u8 port_ctrl = 0;

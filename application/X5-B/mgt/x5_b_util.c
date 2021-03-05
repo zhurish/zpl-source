@@ -30,10 +30,10 @@
 
 
 
-uint16_t Data_CRC16Check ( uint8_t * data, uint16_t leng )  // crc 校验
+ospl_uint16 Data_CRC16Check ( ospl_uint8 * data, ospl_uint16 leng )  // crc 校验
 {
-    uint16_t i, j;
-    uint16_t crcvalue = 0;
+    ospl_uint16 i, j;
+    ospl_uint16 crcvalue = 0;
     if ( leng <= 0 )
     {
         return ( 0 );
@@ -61,33 +61,33 @@ int x5b_app_hex_debug(x5b_app_mgt_t *mgt, char *hdr, int rx)
 {
 	char buf[1200];
 	char tmp[16];
-	u_int8 *p = NULL;
-	int i = 0;
-	int len = 0;
+	ospl_uint8 *p = NULL;
+	ospl_uint32 i = 0;
+	ospl_uint32 len = 0;
 	zassert(mgt != NULL);
 	zassert(hdr != NULL);
-	if(mgt->not_debug == TRUE)
+	if(mgt->not_debug == ospl_true)
 	{
-		mgt->not_debug = FALSE;
+		mgt->not_debug = ospl_false;
 		return OK;
 	}
 	if(rx)
 	{
 		len = (int)mgt->len;
-		p = (u_int8 *)mgt->buf;
+		p = (ospl_uint8 *)mgt->buf;
 	}
 	else
 	{
 		if(!mgt->app)
 			return 0;
 		len = mgt->app->slen;
-		p = (u_int8 *)mgt->app->sbuf;
+		p = (ospl_uint8 *)mgt->app->sbuf;
 	}
 	memset(buf, 0, sizeof(buf));
 	for(i = 0; i < MIN(len, 128); i++)
 	{
 		memset(tmp, 0, sizeof(tmp));
-		sprintf(tmp, "0x%02x ", (u_int8)p[i]);
+		sprintf(tmp, "0x%02x ", (ospl_uint8)p[i]);
 		if(i%6 == 0)
 			strcat(buf, " ");
 		if(i%12 == 0)
@@ -131,7 +131,7 @@ int x5b_app_socket_init(x5b_app_mgt_t *mgt)
 	zassert(mgt != NULL);
 	if(mgt->r_fd > 0)
 		return OK;
-	int fd = sock_create(FALSE);
+	int fd = sock_create(ospl_false);
 	if(fd)
 	{
 		if(mgt->local_port == 0)
@@ -623,9 +623,9 @@ int x5b_app_event_inactive(x5b_app_mgt_t *mgt, x5_b_event_t ev, int who)
 /******************************************************************************/
 int x5b_app_read_chk_handle(x5b_app_mgt_t *mgt)
 {
-	int len = 0;//, offset = 0;
-	u_int16 crc1 = 0;
-	u_int16 *crc = NULL;
+	ospl_uint32 len = 0;//, offset = 0;
+	ospl_uint16 crc1 = 0;
+	ospl_uint16 *crc = NULL;
 	zassert(mgt != NULL);
 	{
 		x5b_app_hdr_t *hdr = mgt->buf;
@@ -638,7 +638,7 @@ int x5b_app_read_chk_handle(x5b_app_mgt_t *mgt)
 			return ERROR;
 		}
 		crc1 =  Data_CRC16Check (mgt->buf,  mgt->len - 2);
-		crc = (u_int16 *)&mgt->buf[mgt->len - 2];
+		crc = (ospl_uint16 *)&mgt->buf[mgt->len - 2];
 	/*	if(*crc != htons(crc1))
 		{
 			if(X5_B_ESP32_DEBUG(EVENT))
@@ -660,7 +660,7 @@ int x5b_app_read_chk_handle(x5b_app_mgt_t *mgt)
 
 static int x5b_app_read_ack_handle(x5b_app_mgt_t *mgt, char *output, int outlen)
 {
-	int len = 0, offset = 0, ack = 0;
+	ospl_uint32 len = 0, offset = 0, ack = 0;
 	os_tlv_t tlv;
 	char add_tmp[64];
 	zassert(mgt != NULL);
@@ -716,7 +716,7 @@ static int x5b_app_read_ack_handle(x5b_app_mgt_t *mgt, char *output, int outlen)
 					//os_tlv_get_byte
 					if(mgt->sync_ack)
 					{
-						//mgt->sync_ack = FALSE;
+						//mgt->sync_ack = ospl_false;
 						if(mgt->ack_seqnum == mgt->app->seqnum)
 						{
 							if(X5_B_ESP32_DEBUG(EVENT))
@@ -838,7 +838,7 @@ try_again:
 	{
 		if(mgt->app)
 		{
-			int offset = 0;
+			ospl_uint32 offset = 0;
 			os_tlv_t *tlv;
 			//x5b_app_hdr_t *hdr = mgt->app->sbuf;
 			offset += sizeof(x5b_app_hdr_t);
@@ -858,7 +858,7 @@ try_again:
 
 int x5b_app_send_msg_without_ack(x5b_app_mgt_t *mgt)
 {
-	int len = 0;
+	ospl_uint32 len = 0;
 	zassert(mgt != NULL);
 	zassert(mgt->app != NULL);
 	zassert(mgt->app->address != 0);
@@ -882,7 +882,7 @@ int x5b_app_send_msg_without_ack(x5b_app_mgt_t *mgt)
 
 int x5b_app_send_msg(x5b_app_mgt_t *mgt)
 {
-	int len = 0;
+	ospl_uint32 len = 0;
 	zassert(mgt != NULL);
 	zassert(mgt->app != NULL);
 	zassert(mgt->app->address != 0);

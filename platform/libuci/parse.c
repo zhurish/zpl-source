@@ -49,10 +49,10 @@ void uci_parse_section(struct uci_section *s, const struct uci_parse_option *opt
 // MurmurHashNeutral2, by Austin Appleby
 
 // Same as MurmurHash2, but endian- and alignment-neutral.
-static uint32_t hash_murmur2(uint32_t h, const void * key, int len)
+static int  hash_murmur2(int  h, const void * key, int len)
 {
 	const unsigned char * data = key;
-	const uint32_t m = 0x5bd1e995;
+	const int  m = 0x5bd1e995;
 	const int r = 24;
 
 	while(len >= 4)
@@ -90,7 +90,7 @@ static uint32_t hash_murmur2(uint32_t h, const void * key, int len)
 	return h;
 }
 
-static uint32_t uci_hash_list(uint32_t h, const struct uci_list *list)
+static int  uci_hash_list(int  h, const struct uci_list *list)
 {
 	const struct uci_element *e;
 
@@ -100,9 +100,9 @@ static uint32_t uci_hash_list(uint32_t h, const struct uci_list *list)
 	return h;
 }
 
-uint32_t uci_hash_options(struct uci_option **tb, int n_opts)
+int  uci_hash_options(struct uci_option **tb, int n_opts)
 {
-	uint32_t h = 0xdeadc0de;
+	int  h = 0xdeadc0de;
 	int i;
 
 	for (i = 0; i < n_opts; i++) {

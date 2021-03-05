@@ -27,6 +27,13 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #ifndef _GROUPSOCK_HH
 #include "Groupsock.hh"
 #endif
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "ospl_type.h"
+#ifdef __cplusplus
+}
+#endif
 
 class BasicFdSource: public FramedSource {
 public:
@@ -39,7 +46,7 @@ private:
       // called only by createNew()
   static void BasicFdReadableHandler(BasicFdSource* source, int mask);
   void BasicFdReadFrom();
-  Boolean handleReadFd(unsigned char* buffer, unsigned bufferMaxSize,
+  Boolean handleReadFd(ospl_uint8* buffer, unsigned bufferMaxSize,
 			      unsigned& bytesRead);
   Boolean doReadFromFd();
             

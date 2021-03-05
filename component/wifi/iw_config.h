@@ -8,6 +8,11 @@
 #ifndef __IW_CONFIG_H__
 #define __IW_CONFIG_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "ospl_type.h"
 /*
 #define IW_MAX_FREQUENCIES	32
 #define IW_MAX_BITRATES		32
@@ -144,17 +149,17 @@ typedef enum
 
 typedef struct iw_dev_freq_s
 {
-	unsigned char	active;
-	unsigned char	channel;
+	ospl_uint8	active;
+	ospl_uint8	channel;
 	double	freq;
 }iw_dev_freq_t, iw_dev_channel_s;
 
 
 typedef struct iw_dev_bitrate_s
 {
-	unsigned char	active;
-	unsigned char	channel;
-	unsigned int	bitrate;
+	ospl_uint8	active;
+	ospl_uint8	channel;
+	ospl_uint32	bitrate;
 }iw_dev_bitrate_t;
 
 //#include "wireless.h"
@@ -164,7 +169,7 @@ typedef struct iw_dev_s
 	iw_dev_freq_t 		freq[IW_DEV_CHANNEL_MAX];
 	iw_dev_freq_t 		cu_freq;
 
-	unsigned char		num_bitrates;
+	ospl_uint8		num_bitrates;
 	iw_dev_bitrate_t	bitrates[IW_DEV_BITRATES_MAX];
 	iw_dev_bitrate_t	cu_bitrates;
 	iw_dev_bitrate_t	broadcast_bitrates;
@@ -179,5 +184,9 @@ extern char * iw_hw_mode_string(iw_hw_mode_t mode);
 extern char * iw_auth_string(iw_authentication_t mode);
 extern char * iw_encryption_string(iw_encryption_t mode);
 //extern char * iw_network_string(iw_network_t mode);
-
+ 
+#ifdef __cplusplus
+}
+#endif
+ 
 #endif /* __IW_CONFIG_H__ */

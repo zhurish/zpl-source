@@ -52,9 +52,9 @@ int FAST_FUNC d6_recv_kernel_packet(struct in6_addr *peer_ipv6
 /* Construct a ipv6+udp header for a packet, send packet */
 int FAST_FUNC d6_send_raw_packet(
 		struct d6_packet *d6_pkt, unsigned d6_pkt_size,
-		struct in6_addr *src_ipv6, int source_port,
-		struct in6_addr *dst_ipv6, int dest_port, const uint8_t *dest_arp,
-		int ifindex)
+		struct in6_addr *src_ipv6, ospl_uint16 source_port,
+		struct in6_addr *dst_ipv6, ospl_uint16 dest_port, const ospl_uint8 *dest_arp,
+		ifindex_t ifindex)
 {
 	struct sockaddr_ll dest_sll;
 	struct ip6_udp_d6_packet packet;
@@ -103,7 +103,7 @@ int FAST_FUNC d6_send_raw_packet(
 	 */
 	packet.ip6.ip6_hlim = IPPROTO_UDP;
 	packet.udp.check = inet_cksum(
-				(uint16_t *)&packet + 2,
+				(ospl_uint16 *)&packet + 2,
 				offsetof(struct ip6_udp_d6_packet, data) - 4 + d6_pkt_size
 	);
 	/* fix 'hop limit' and 'next header' after UDP checksumming */
@@ -128,9 +128,9 @@ int FAST_FUNC d6_send_raw_packet(
 /* Let the kernel do all the work for packet generation */
 int FAST_FUNC d6_send_kernel_packet(
 		struct d6_packet *d6_pkt, unsigned d6_pkt_size,
-		struct in6_addr *src_ipv6, int source_port,
-		struct in6_addr *dst_ipv6, int dest_port,
-		int ifindex)
+		struct in6_addr *src_ipv6, ospl_uint16 source_port,
+		struct in6_addr *dst_ipv6, ospl_uint16 dest_port,
+		ifindex_t ifindex)
 {
 	struct sockaddr_in6 sa;
 	int fd;

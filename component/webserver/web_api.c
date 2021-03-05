@@ -22,37 +22,52 @@
 #include "web_api.h"
 
 
+struct module_list module_list_webserver = 
+{ 
+	.module=MODULE_WEB, 
+	.name="WEB", 
+	.module_init=web_app_module_init, 
+	.module_exit=web_app_module_exit, 
+	.module_task_init=web_app_module_task_init, 
+	.module_task_exit=web_app_module_task_exit, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};
+
 
 int web_app_quit_api()
 {
 	zassert(web_app != NULL);
-	web_app->finished = TRUE;
+	web_app->finished = ospl_true;
 	return OK;
 }
 
 int web_app_reload_api()
 {
 	zassert(web_app != NULL);
-	web_app->finished = TRUE;
-	web_app->reload = TRUE;
+	web_app->finished = ospl_true;
+	web_app->reload = ospl_true;
 	return OK;
 }
 /****************************************************************************/
-int web_app_enable_set_api(BOOL enable)
+int web_app_enable_set_api(ospl_bool enable)
 {
 	zassert(web_app != NULL);
 	if(web_app->enable == enable)
 		return OK;
 	if(web_app->enable && !enable)
 	{
-		web_app->finished = TRUE;
-		web_app->enable = FALSE;
+		web_app->finished = ospl_true;
+		web_app->enable = ospl_false;
 		return OK;
 	}
 	if(!web_app->enable && enable)
 	{
-		web_app->finished = FALSE;
-		web_app->enable = TRUE;
+		web_app->finished = ospl_false;
+		web_app->enable = ospl_true;
 		return OK;
 	}
 	return ERROR;
@@ -210,7 +225,7 @@ int web_app_address_set_api(char *address)
 	return web_app_reload_api();
 }
 
-int web_app_port_set_api(BOOL ssl, u_int16 port)
+int web_app_port_set_api(ospl_bool ssl, ospl_uint16 port)
 {
 	zassert(web_app != NULL);
 
@@ -287,7 +302,7 @@ int web_app_port_set_api(BOOL ssl, u_int16 port)
 	return web_app_reload_api();
 }
 
-int web_app_debug_set_api(int level)
+int web_app_debug_set_api(ospl_int32 level)
 {
 	websSetDebug(level?1:0);
 //#if ME_GOAHEAD_LOGGING

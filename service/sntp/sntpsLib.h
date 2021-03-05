@@ -53,29 +53,29 @@ extern "C" {
 
 struct sntp_server
 {
-	int enable;
+	ospl_bool enable;
 	int sock;
-	int mode;
+	ospl_uint32 mode;
 
-	unsigned char leap;
-	unsigned char version;
-    unsigned char Mode;
-    unsigned char stratum;
-    unsigned char poll;
+	ospl_uint8 leap;
+	ospl_uint8 version;
+    ospl_uint8 Mode;
+    ospl_uint8 stratum;
+    ospl_uint8 poll;
 
-    int sntpsInterval;
-    u_short sntpsPort;
+    ospl_uint32 sntpsInterval;
+    ospl_ushort sntpsPort;
     struct in_addr address;
-    int sntps_ttl;
-	unsigned char time_debug;
+    ospl_uint32 sntps_ttl;
+	ospl_uint8 time_debug;
 
     ULONG 	sntpsClockId;         /* SNTP clock identifier. */
     ULONG   sntpsRefId;           /* Default reference identifier. ָʾʱ�Ӳο�Դ�ı�ǣ����ֶ�ֻ�ڷ���������Ч */
     ULONG   sntpsResolution;      /* Clock resolution, in nanoseconds. */
     INT8    sntpsPrecision;       /* Clock precision, in RFC format. */
-    int		sntpsClockReady;
+    ospl_uint32		sntpsClockReady;
 //    FUNCPTR sntpsClockHookRtn;
-    BOOL (*sntpsClockHookRtn)(int, void *);
+    ospl_bool (*sntpsClockHookRtn)(int, void *);
 
     void *master;
     void *obuf;
@@ -121,12 +121,12 @@ enum
 
 extern int vty_show_sntps_server(struct vty *vty);
 
-extern int sntp_server_set_api(struct vty *, int cmd, const char *value);
-extern int sntp_server_get_api(struct vty *, int cmd, const char *value);
+extern int sntp_server_set_api(struct vty *, ospl_uint32 cmd, const char *value);
+extern int sntp_server_get_api(struct vty *, ospl_uint32 cmd, const char *value);
 
 #endif
 
-/*IMPORT STATUS sntpsInit (char *, u_char, char *, short, u_short, FUNCPTR);
+/*IMPORT STATUS sntpsInit (char *, ospl_uchar, char *, ospl_int16, ospl_ushort, FUNCPTR);
 IMPORT STATUS sntpsClockSet (FUNCPTR);
 IMPORT ULONG  sntpsNsecToFraction (ULONG);
 IMPORT STATUS sntpsConfigSet (int, void *);*/

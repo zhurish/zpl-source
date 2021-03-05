@@ -9,6 +9,10 @@
 #define __WEB_APP_H__
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 extern int web_login_app(void);
 extern int web_updownload_app(void);
@@ -53,5 +57,9 @@ extern int web_db_app(void);
 extern int web_upgrade_app(void);
 extern int web_system_app(void);
 
-
+ 
+#ifdef __cplusplus
+}
+#endif
+ 
 #endif /* __WEB_APP_H__ */

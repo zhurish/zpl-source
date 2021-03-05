@@ -46,7 +46,7 @@
 
 static int v9_app_slipnet_read_eloop(struct eloop *eloop)
 {
-	int len = 0;
+	ospl_uint32 len = 0;
 #ifdef V9_SLIPNET_UDP
 	int sock_len = 0;
 	struct sockaddr_in from;
@@ -152,7 +152,7 @@ static int _v9_slipnet_hw_exit(v9_serial_t *serial)
 
 
 
-int v9_app_slipnet_init(v9_serial_t *serial, char *devname, u_int32 speed)
+int v9_app_slipnet_init(v9_serial_t *serial, char *devname, ospl_uint32 speed)
 {
 	if(_v9_slipnet_hw_init(serial) == OK)
 	{
@@ -169,7 +169,7 @@ int v9_app_slipnet_init(v9_serial_t *serial, char *devname, u_int32 speed)
 			close(serial->slipnet->fd);
 			serial->slipnet->fd = 0;
 		}
-		serial->slipnet->fd = sock_create(FALSE);
+		serial->slipnet->fd = sock_create(ospl_false);
 		if(sock_bind(serial->slipnet->fd, NULL, V9_SLIPNET_UDPSRV_PORT) == OK)
 		{
 			if(serial->r_slipnet)

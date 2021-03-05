@@ -338,9 +338,10 @@ int os_start_pid(int pro, char *pid_file, int *pid)
 int os_load_config(char *config)
 {
 	host.load = LOAD_NONE;
-	printf("==================os_load_config %s\r\n",config);
+	fprintf(stdout, "==================os_load_config %s\r\n",config);
 	vty_load_config(config);
-	printf("++++++++++++++++++os_load_config %s\r\n",config);
+	fprintf(stdout, "++++++++++++++++++os_load_config %s\r\n",config);
+	fflush(stdout);
 //	sleep(1);
 	host.load = LOAD_DONE;
 	signal_init(array_size(os_signals), os_signals);
@@ -348,11 +349,11 @@ int os_load_config(char *config)
 	return OK;
 }
 
-BOOL os_load_config_done(void)
+ospl_bool os_load_config_done(void)
 {
 	if(host.load == LOAD_DONE)
-		return TRUE;
-	return FALSE;
+		return ospl_true;
+	return ospl_false;
 }
 
 static int os_thread_start(void *m, module_t pro)

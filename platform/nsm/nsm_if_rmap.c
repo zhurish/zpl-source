@@ -64,7 +64,7 @@ if_rmap_lookup (const char *ifname)
   struct if_rmap *if_rmap;
 
   /* temporary copy */
-  key.ifname = (char *)ifname;
+  key.ifname = (ospl_char *)ifname;
 
   if_rmap = hash_lookup (ifrmaphash, &key);
   
@@ -72,7 +72,7 @@ if_rmap_lookup (const char *ifname)
 }
 
 void
-if_rmap_hook_add (int type, void (*func) (struct if_rmap *))
+if_rmap_hook_add (ospl_uint16 type, void (*func) (struct if_rmap *))
 {
   if(type == RIP_NODE )
   if_rmap_add_hook[0] = func;
@@ -81,7 +81,7 @@ if_rmap_hook_add (int type, void (*func) (struct if_rmap *))
 }
 
 void
-if_rmap_hook_delete (int type, void (*func) (struct if_rmap *))
+if_rmap_hook_delete (ospl_uint16 type, void (*func) (struct if_rmap *))
 {
 	  if(type == RIP_NODE )
 		  if_rmap_delete_hook[0] = func;
@@ -107,12 +107,12 @@ if_rmap_get (const char *ifname)
   struct if_rmap key;
 
   /* temporary copy */
-  key.ifname = (char *)ifname;
+  key.ifname = (ospl_char *)ifname;
 
   return (struct if_rmap *) hash_get (ifrmaphash, &key, if_rmap_hash_alloc);
 }
 
-static unsigned int
+static ospl_uint32 
 if_rmap_hash_make (void *data)
 {
   const struct if_rmap *if_rmap = data;
@@ -286,7 +286,7 @@ ALIAS (no_if_rmap,
 int
 config_write_if_rmap (struct vty *vty)
 {
-  unsigned int i;
+  ospl_uint32  i;
   struct hash_backet *mp;
   int write = 0;
 

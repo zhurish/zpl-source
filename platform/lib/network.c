@@ -26,10 +26,10 @@
 
 /* Read nbytes from fd and store into ptr. */
 int
-readn (int fd, u_char *ptr, int nbytes, int type)
+readn (int fd, ospl_uchar *ptr, ospl_uint32 nbytes, ospl_uint32 type)
 {
-  int nleft;
-  int nread;
+  ospl_uint32 nleft;
+  ospl_uint32 nread;
 
   nleft = nbytes;
 
@@ -54,10 +54,10 @@ readn (int fd, u_char *ptr, int nbytes, int type)
 
 /* Write nbytes from ptr to fd. */
 int
-writen(int fd, const u_char *ptr, int nbytes, int type)
+writen(int fd, const ospl_uchar *ptr, ospl_uint32 nbytes, ospl_uint32 type)
 {
-  int nleft;
-  int nwritten;
+  ospl_uint32 nleft;
+  ospl_uint32 nwritten;
 
   nleft = nbytes;
 
@@ -79,7 +79,7 @@ writen(int fd, const u_char *ptr, int nbytes, int type)
 int
 set_nonblocking(int fd)
 {
-  int flags;
+  ospl_uint32 flags;
 
   /* According to the Single UNIX Spec, the return value for F_GETFL should
      never be negative. */
@@ -101,7 +101,7 @@ set_nonblocking(int fd)
 int
 set_blocking(int fd)
 {
-  int flags;
+  ospl_uint32 flags;
 
   /* According to the Single UNIX Spec, the return value for F_GETFL should
      never be negative. */
@@ -121,23 +121,23 @@ set_blocking(int fd)
   return 0;
 }
 
-float
-htonf (float host)
+ospl_float
+htonf (ospl_float host)
 {
 #if !defined(__STDC_IEC_559__) && __GCC_IEC_559 < 0
 #warning "Unknown floating-point format on platform, htonf may break"
 #endif
-  u_int32_t lu1, lu2;
-  float convert;
+  ospl_uint32 lu1, lu2;
+  ospl_float convert;
   
-  memcpy (&lu1, &host, sizeof (u_int32_t));
+  memcpy (&lu1, &host, sizeof (ospl_uint32));
   lu2 = htonl (lu1);
-  memcpy (&convert, &lu2, sizeof (u_int32_t));
+  memcpy (&convert, &lu2, sizeof (ospl_uint32));
   return convert;
 }
 
-float
-ntohf (float net)
+ospl_float
+ntohf (ospl_float net)
 {
   return htonf (net);
 }

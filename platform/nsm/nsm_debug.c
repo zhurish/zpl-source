@@ -25,12 +25,12 @@
 #include "nsm_debug.h"
 
 /* For debug statement. */
-unsigned long zebra_debug_event;
-unsigned long zebra_debug_packet = 0xffffff;
-unsigned long zebra_debug_kernel = 0xffffff;
-unsigned long zebra_debug_rib = 0xffffff;
-unsigned long zebra_debug_fpm;
-unsigned long zebra_debug_nht;
+ospl_ulong zebra_debug_event;
+ospl_ulong zebra_debug_packet = 0xffffff;
+ospl_ulong zebra_debug_kernel = 0xffffff;
+ospl_ulong zebra_debug_rib = 0xffffff;
+ospl_ulong zebra_debug_fpm;
+ospl_ulong zebra_debug_nht;
 
 DEFUN (show_debugging_zebra,
        show_debugging_zebra_cmd,

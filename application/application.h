@@ -8,6 +8,10 @@
 #ifndef __APPLICATION_H__
 #define __APPLICATION_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef APP_X5BA_MODULE
 #define X5_B_A_DEBUG
 #include "X5-B/mgt/x5_b_global.h"
@@ -53,5 +57,9 @@ extern int app_module_task_exit(void);
 
 extern void cmd_app_init(void);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __APPLICATION_H__ */

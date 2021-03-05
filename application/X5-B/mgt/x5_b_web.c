@@ -31,7 +31,7 @@
 #include "x5b_dbase.h"
 
 
-int x5b_app_open_option_action(void *p, BOOL save, BOOL face)
+int x5b_app_open_option_action(void *p, ospl_bool save, ospl_bool face)
 {
 	//char tmp[128];
 	int ret = 0;
@@ -96,7 +96,7 @@ int x5b_app_open_option_action(void *p, BOOL save, BOOL face)
 
 
 
-int x5b_app_face_config_action(void *info, BOOL save)
+int x5b_app_face_config_action(void *info, ospl_bool save)
 {
 	if(x5b_app_mgt && x5b_app_mode_X5CM())
 	{
@@ -127,7 +127,7 @@ int x5b_app_face_config_action(void *info, BOOL save)
 	return ERROR;
 }
 
-int x5b_app_global_config_action(void *info, BOOL save)
+int x5b_app_global_config_action(void *info, ospl_bool save)
 {
 	x5b_app_global_t *glinfo = info;
 	if(x5b_app_mgt && x5b_app_mode_X5CM())
@@ -177,9 +177,9 @@ int x5b_app_global_config_action(void *info, BOOL save)
 }*/
 /*
 
-int x5b_app_A_unit_test_set_api(BOOL enable)
+int x5b_app_A_unit_test_set_api(ospl_bool enable)
 {
-	int len = 0;
+	ospl_uint32 len = 0;
 	x5b_app_mgt_t *mgt = x5b_app_mgt;
 	zassert(mgt != NULL);
 	if(mgt->mutex)

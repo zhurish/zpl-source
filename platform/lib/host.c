@@ -33,7 +33,7 @@ int host_sysconfig_sync()
 }
 
 
-int host_config_init(char *motd)
+int host_config_init(ospl_char *motd)
 {
 	os_memset(&host, 0, sizeof(host));
 	/* Default host value settings. */
@@ -70,7 +70,7 @@ int host_config_init(char *motd)
 	}
 	if(access("/etc/.wan-mac", F_OK) == 0)
 	{
-		char tmp[64];
+		ospl_char tmp[64];
 		memset(tmp, 0, sizeof(tmp));
 		os_read_file("/etc/.wan-mac", tmp, sizeof(tmp));
 		if(strlen(tmp) && strstr(tmp, ":"))
@@ -142,7 +142,7 @@ int host_config_exit(void)
 
 /* Set config filename.  Called from vty.c */
 void
-host_config_set (char *filename)
+host_config_set (ospl_char *filename)
 {
 	if (host.mutx)
 		os_mutex_lock(host.mutx, OS_WAIT_FOREVER);
@@ -166,11 +166,11 @@ host_name_get (void)
 }
 
 int
-host_config_set_api (int cmd, void *pVoid)
+host_config_set_api (ospl_uint32 cmd, void *pVoid)
 {
 	int ret = ERROR;
-	char *strValue = (char *)pVoid;
-	int *intValue = (int *)pVoid;
+	ospl_char *strValue = (ospl_char *)pVoid;
+	ospl_uint32 *intValue = (ospl_uint32 *)pVoid;
 	if (host.mutx)
 		os_mutex_lock(host.mutx, OS_WAIT_FOREVER);
 
@@ -195,7 +195,7 @@ host_config_set_api (int cmd, void *pVoid)
 		ret = OK;
 		break;
 	case API_SET_LINES_CMD:
-		host.lines = *intValue;
+		host.lines = (ospl_uint32)*intValue;
 		ret = OK;
 		break;
 	case API_SET_LOGFILE_CMD:
@@ -217,7 +217,7 @@ host_config_set_api (int cmd, void *pVoid)
 		ret = OK;
 		break;
 	case API_SET_ENCRYPT_CMD:
-		host.encrypt = *intValue;
+		host.encrypt = (ospl_bool)*intValue;
 		ret = OK;
 		break;
 	case API_SET_MOTD_CMD:
@@ -239,7 +239,7 @@ host_config_set_api (int cmd, void *pVoid)
 		ret = OK;
 		break;
 	case API_SET_VTY_TIMEOUT_CMD:
-		host.vty_timeout_val = *intValue;
+		host.vty_timeout_val = (ospl_ulong)*intValue;
 		ret = OK;
 		break;
 	case API_SET_ACCESS_CMD:
@@ -261,7 +261,7 @@ host_config_set_api (int cmd, void *pVoid)
 		ret = OK;
 		break;
 	case API_SET_NOPASSCHK_CMD:
-		host.no_password_check = *intValue;
+		host.no_password_check = (ospl_bool)*intValue;
 		ret = OK;
 		break;
 	case API_SET_SYSMAC_CMD:
@@ -284,11 +284,11 @@ host_config_set_api (int cmd, void *pVoid)
 }
 
 int
-host_config_get_api (int cmd, void *pVoid)
+host_config_get_api (ospl_uint32 cmd, void *pVoid)
 {
 	int ret = ERROR;
-	char *strValue = (char *)pVoid;
-	int *intValue = (int *)pVoid;
+	ospl_char *strValue = (ospl_char *)pVoid;
+	ospl_uint32 *intValue = (ospl_uint32 *)pVoid;
 	if (host.mutx)
 		os_mutex_lock(host.mutx, OS_WAIT_FOREVER);
 
@@ -312,7 +312,7 @@ host_config_get_api (int cmd, void *pVoid)
 		break;
 	case API_GET_LINES_CMD:
 		if(intValue)
-			*intValue = host.lines;
+			*intValue = (ospl_uint32)host.lines;
 		ret = OK;
 		break;
 	case API_GET_LOGFILE_CMD:
@@ -333,7 +333,7 @@ host_config_get_api (int cmd, void *pVoid)
 		break;
 	case API_GET_ENCRYPT_CMD:
 		if(intValue)
-			*intValue = host.encrypt;
+			*intValue = (ospl_bool)host.encrypt;
 		ret = OK;
 		break;
 	case API_GET_MOTD_CMD:
@@ -354,7 +354,7 @@ host_config_get_api (int cmd, void *pVoid)
 		break;
 	case API_GET_VTY_TIMEOUT_CMD:
 		if(intValue)
-			*intValue = host.vty_timeout_val;
+			*intValue = (ospl_uint32)host.vty_timeout_val;
 		ret = OK;
 		break;
 	case API_GET_ACCESS_CMD:
@@ -375,7 +375,7 @@ host_config_get_api (int cmd, void *pVoid)
 		break;
 	case API_GET_NOPASSCHK_CMD:
 		if(intValue)
-			*intValue = host.no_password_check;
+			*intValue = (ospl_bool)host.no_password_check;
 		ret = OK;
 		break;
 	case API_GET_SYSMAC_CMD:
@@ -407,11 +407,11 @@ host_config_get_api (int cmd, void *pVoid)
 static int host_system_cpu_get(struct host_system *host_system)
 {
 	FILE *f = NULL;
-	char buf[1024];
+	ospl_char buf[1024];
 	f = fopen("/proc/cpuinfo", "r");
 	if (f)
 	{
-		char *s = NULL;
+		ospl_char *s = NULL;
 		memset(buf, 0, sizeof(buf));
 		while (fgets(buf, sizeof(buf), f))
 		{
@@ -500,12 +500,12 @@ static int host_system_mem_get(struct host_system *host_system)
 /*	MemTotal:       11831640 kB
 	MemFree:          932640 kB*/
 	FILE *f = NULL;
-	char buf[1024];
+	ospl_char buf[1024];
 	f = fopen("/proc/meminfo", "r");
 	if (f)
 	{
-		int off = 0;
-		char *s = NULL;
+		ospl_uint32 off = 0;
+		ospl_char *s = NULL;
 		memset(buf, 0, sizeof(buf));
 		while (fgets(buf, sizeof(buf), f))
 		{
@@ -582,15 +582,15 @@ int host_system_information_get(struct host_system *host_system)
 
 
 #if 0
-static unsigned long long scale(struct globals *g, unsigned long d)
+static ospl_ullong  scale(struct globals *g, ospl_ulong d)
 {
-	return ((unsigned long long)d * g->mem_unit) >> G_unit_steps;
+	return ((ospl_ullong )d * g->mem_unit) >> G_unit_steps;
 }
-int free_main(int argc UNUSED_PARAM, char **argv IF_NOT_DESKTOP(UNUSED_PARAM))
+int free_main(int argc UNUSED_PARAM, ospl_char **argv IF_NOT_DESKTOP(UNUSED_PARAM))
 {
 	struct globals G;
 	struct sysinfo info;
-	unsigned long long cached;
+	ospl_ullong  cached;
 
 #if ENABLE_DESKTOP
 	G.unit_steps = 10;
@@ -625,7 +625,7 @@ int free_main(int argc UNUSED_PARAM, char **argv IF_NOT_DESKTOP(UNUSED_PARAM))
 	/* Kernels prior to 2.4.x will return info.mem_unit==0, so cope... */
 	G.mem_unit = (info.mem_unit ? info.mem_unit : 1);
 	/* Extract cached from /proc/meminfo and convert to mem_units */
-	cached = ((unsigned long long) parse_cached_kb() * 1024) / G.mem_unit;
+	cached = ((ospl_ullong ) parse_cached_kb() * 1024) / G.mem_unit;
 
 #define FIELDS_6 "%11llu%11llu%11llu%11llu%11llu%11llu\n"
 #define FIELDS_3 (FIELDS_6 + 3*6)

@@ -42,14 +42,18 @@
 #ifndef _LIBZEBRA_MD5_H_
 #define _LIBZEBRA_MD5_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MD5_BUFLEN	64
 #define MD5_DIGEST_LENGTH 16
 
 
 typedef struct {
 	union {
-		uint32_t	md5_state32[4];
-		uint8_t	md5_state8[16];
+		ospl_uint32 	md5_state32[4];
+		ospl_uint8	md5_state8[16];
 	} md5_st;
 
 #define md5_sta		md5_st.md5_state32[0]
@@ -60,19 +64,19 @@ typedef struct {
 
 	union {
 		uint64_t	md5_count64;
-		uint8_t	md5_count8[8];
+		ospl_uint8	md5_count8[8];
 	} md5_count;
 #define md5_n	md5_count.md5_count64
 #define md5_n8	md5_count.md5_count8
 
 	uint	md5_i;
-	uint8_t	md5_buf[MD5_BUFLEN];
+	ospl_uint8	md5_buf[MD5_BUFLEN];
 } md5_ctxt;
 
 extern void md5_init (md5_ctxt *);
-extern void md5_loop (md5_ctxt *, const void *, u_int);
+extern void md5_loop (md5_ctxt *, const void *, ospl_uint32);
 extern void md5_pad (md5_ctxt *);
-extern void md5_result (uint8_t *, md5_ctxt *);
+extern void md5_result (ospl_uint8 *, md5_ctxt *);
 
 /* compatibility */
 #define MD5_CTX		md5_ctxt
@@ -86,16 +90,22 @@ do {				\
 
 
 void	MD5_Init(MD5_CTX *);
-void	MD5_Update(MD5_CTX *, const unsigned char *, size_t);
-void	MD5_Final(unsigned char *, MD5_CTX *);
+void	MD5_Update(MD5_CTX *, const ospl_uchar *, ospl_size_t);
+void	MD5_Final(ospl_uchar *, MD5_CTX *);
 
 
 /* From RFC 2104 */
-void hmac_md5(unsigned char* text, int text_len, unsigned char* key,
-              int key_len, uint8_t *digest);
+void hmac_md5(ospl_uchar* text, ospl_uint32 text_len, ospl_uchar* key,
+              ospl_uint32 key_len, ospl_uint8 *digest);
 
 
 #ifndef USE_IPSTACK_KERNEL
-unsigned char *MD5(const unsigned char *d, size_t n, unsigned char *md);
+ospl_uchar *MD5(const ospl_uchar *d, ospl_size_t n, ospl_uchar *md);
 #endif
+
+ 
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* ! _LIBZEBRA_MD5_H_*/

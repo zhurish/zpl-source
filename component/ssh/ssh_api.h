@@ -8,6 +8,10 @@
 #ifndef COMPONENT_SSH_SSH_API_H_
 #define COMPONENT_SSH_SSH_API_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "zebra.h"
 #include "prefix.h"
 
@@ -52,9 +56,9 @@ enum
 
 typedef struct ssh_config_s
 {
-	BOOL			enable;
-	BOOL			shell_enable;
-	int				bindport;
+	ospl_bool			enable;
+	ospl_bool			shell_enable;
+	ospl_uint16				bindport;
 	struct prefix	bind_prefix;
 
 	char			hostkey[SSH_KEY_FILENAME_MAX];
@@ -62,9 +66,9 @@ typedef struct ssh_config_s
 	char			dsakey[SSH_KEY_FILENAME_MAX];
 	char			ecdsakey[SSH_KEY_FILENAME_MAX];
 
-	unsigned char	auth_retries;
-	unsigned char	auth_waitting;
-	//unsigned char	ssh_connect_timeout;
+	ospl_uint8	auth_retries;
+	ospl_uint8	auth_waitting;
+	//ospl_uint8	ssh_connect_timeout;
 
 	enum
 	{
@@ -78,7 +82,7 @@ typedef struct ssh_config_s
 		SSH_AUTH_GSSAPI,
 	}auth_type;
 
-	int				ssh_debug;
+	ospl_uint32				ssh_debug;
 	char			ssh_version;
 
 	void			*ssh_acl;
@@ -86,10 +90,10 @@ typedef struct ssh_config_s
 	int				sock;
 	int				ctlfd;
 
-	BOOL			initialized;
-	BOOL			quit;
-	BOOL			running;
-	int				sshd_taskid;
+	ospl_bool			initialized;
+	ospl_bool			quit;
+	ospl_bool			running;
+	ospl_uint32				sshd_taskid;
     ssh_bind 		sshbind;
     ssh_event 		event;
 
@@ -97,26 +101,26 @@ typedef struct ssh_config_s
     ssh_keymgt_t	*key;
 }ssh_config_t;
 
-extern BOOL ssh_is_enable_api(void);
-extern BOOL ssh_is_running_api(void);
+extern ospl_bool ssh_is_enable_api(void);
+extern ospl_bool ssh_is_running_api(void);
 
-extern int ssh_enable_api(BOOL enable);
-extern int ssh_login_api(BOOL enable);
+extern int ssh_enable_api(ospl_bool enable);
+extern int ssh_login_api(ospl_bool enable);
 extern int ssh_bind_address_api(struct prefix *address);
-extern int ssh_bind_port_api(int port);
-extern int ssh_version_api(int version);
-extern int ssh_debug_api(int, int debug);
+extern int ssh_bind_port_api(ospl_uint16 port);
+extern int ssh_version_api(ospl_uint32 version);
+extern int ssh_debug_api(ospl_uint32 type, ospl_uint32 debug);
 
-extern int ssh_authentication_type_api(int value);
-extern int ssh_authentication_waitting_api(int value);
-extern int ssh_authentication_retries_api(int value);
+extern int ssh_authentication_type_api(ospl_uint32 value);
+extern int ssh_authentication_waitting_api(ospl_uint32 value);
+extern int ssh_authentication_retries_api(ospl_uint32 value);
 
-extern int ssh_keyfile_api(int type, char * value);
+extern int ssh_keyfile_api(ospl_uint32 type, char * value);
 
-extern int ssh_generate_key_api(struct vty *vty, int type, char * keyname);
+extern int ssh_generate_key_api(struct vty *vty, ospl_uint32 type, char * keyname);
 extern int ssh_key_delete_api(char * keyname);
-extern int ssh_keymgt_export_api(char *keyname, int type, char *filename, char *password);
-extern int ssh_keymgt_import_api(char *keyname, int type, char *filename, char *password);
+extern int ssh_keymgt_export_api(char *keyname, ospl_uint32 type, char *filename, char *password);
+extern int ssh_keymgt_import_api(char *keyname, ospl_uint32 type, char *filename, char *password);
 
 extern int show_ssh_keymgt(struct vty *vty);
 extern int ssh_write_config(struct vty *vty);
@@ -128,5 +132,9 @@ extern int ssh_module_exit();
 extern int ssh_module_task_init ();
 extern int ssh_module_task_exit ();
 
-
+ 
+#ifdef __cplusplus
+}
+#endif
+ 
 #endif /* COMPONENT_SSH_SSH_API_H_ */

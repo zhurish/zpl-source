@@ -37,11 +37,11 @@ DEFUN (cli_mqtt_service,
 		"Service Configure\n"
 		"Mqtt Protocol\n")
 {
-	template_t * temp = nsm_template_lookup_name (TRUE, "service mqtt");
+	template_t * temp = nsm_template_lookup_name (ospl_true, "service mqtt");
 	if(temp && temp->pVoid)
 	{
 		if(!mqtt_isenable_api(temp->pVoid))
-			mqtt_enable_api(temp->pVoid, TRUE);
+			mqtt_enable_api(temp->pVoid, ospl_true);
 		vty->node = ALL_SERVICE_NODE;
 		vty->index = temp->pVoid;
 		memset(vty->prompt, 0, sizeof(vty->prompt));
@@ -50,7 +50,7 @@ DEFUN (cli_mqtt_service,
 	}
 	else
 	{
-		temp = nsm_template_new (TRUE);
+		temp = nsm_template_new (ospl_true);
 		if(temp)
 		{
 			temp->module = 0;
@@ -60,7 +60,7 @@ DEFUN (cli_mqtt_service,
 			vty->index = temp->pVoid = mqtt_config;
 			nsm_template_install(temp, 0);
 			if(!mqtt_isenable_api(temp->pVoid))
-				mqtt_enable_api(temp->pVoid, TRUE);
+				mqtt_enable_api(temp->pVoid, ospl_true);
 			vty->node = ALL_SERVICE_NODE;
 			memset(vty->prompt, 0, sizeof(vty->prompt));
 			sprintf(vty->prompt, "%s", temp->prompt);
@@ -77,11 +77,11 @@ DEFUN (no_cli_mqtt_service,
 		"Service Configure\n"
 		"Mqtt Protocol\n")
 {
-	template_t * temp = nsm_template_lookup_name (TRUE, "service mqtt");
+	template_t * temp = nsm_template_lookup_name (ospl_true, "service mqtt");
 	if(temp)
 	{
 		if(!mqtt_isenable_api(temp->pVoid))
-			mqtt_enable_api(temp->pVoid, FALSE);
+			mqtt_enable_api(temp->pVoid, ospl_false);
 		vty->index = NULL;
 		nsm_template_free(temp);
 		return CMD_SUCCESS;
@@ -450,7 +450,7 @@ DEFUN (cli_mqtt_client_retain,
 {
 	int ret = ERROR;
 	if(vty->index)
-		ret = mqtt_retain_api(vty->index, strstr(argv[0],"enable")?TRUE:FALSE);
+		ret = mqtt_retain_api(vty->index, strstr(argv[0],"enable")?ospl_true:ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -465,7 +465,7 @@ DEFUN (cli_mqtt_client_clean_session,
 {
 	int ret = ERROR;
 	if(vty->index)
-		ret = mqtt_clean_session_api(vty->index, strstr(argv[0],"enable")?TRUE:FALSE);
+		ret = mqtt_clean_session_api(vty->index, strstr(argv[0],"enable")?ospl_true:ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -601,7 +601,7 @@ DEFUN (cli_mqtt_client_will_retain,
 {
 	int ret = ERROR;
 	if(vty->index)
-		ret = mqtt_will_retain_api(vty->index, strstr(argv[0],"enable")?TRUE:FALSE);
+		ret = mqtt_will_retain_api(vty->index, strstr(argv[0],"enable")?ospl_true:ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -632,7 +632,7 @@ DEFUN (cli_mqtt_client_remove_retain,
 {
 	int ret = ERROR;
 	if(vty->index)
-		ret = mqtt_sub_remove_retained_api(vty->index, strstr(argv[0],"enable")?TRUE:FALSE);
+		ret = mqtt_sub_remove_retained_api(vty->index, strstr(argv[0],"enable")?ospl_true:ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -653,15 +653,15 @@ DEFUN (cli_mqtt_client_option,
 	if(vty->index)
 	{
 		if(strstr(argv[0],"local"))
-			ret = mqtt_option_api(vty->index, MQTT_SUB_OPT_NO_LOCAL, TRUE);
+			ret = mqtt_option_api(vty->index, MQTT_SUB_OPT_NO_LOCAL, ospl_true);
 		else if(strstr(argv[0],"published"))
-			ret = mqtt_option_api(vty->index, MQTT_SUB_OPT_RETAIN_AS_PUBLISHED, TRUE);
+			ret = mqtt_option_api(vty->index, MQTT_SUB_OPT_RETAIN_AS_PUBLISHED, ospl_true);
 		else if(strstr(argv[0],"always"))
-			ret = mqtt_option_api(vty->index, MQTT_SUB_OPT_SEND_RETAIN_ALWAYS, TRUE);
+			ret = mqtt_option_api(vty->index, MQTT_SUB_OPT_SEND_RETAIN_ALWAYS, ospl_true);
 		else if(strstr(argv[0],"new"))
-			ret = mqtt_option_api(vty->index, MQTT_SUB_OPT_SEND_RETAIN_NEW, TRUE);
+			ret = mqtt_option_api(vty->index, MQTT_SUB_OPT_SEND_RETAIN_NEW, ospl_true);
 		else if(strstr(argv[0],"never"))
-			ret = mqtt_option_api(vty->index, MQTT_SUB_OPT_SEND_RETAIN_NEVER, TRUE);
+			ret = mqtt_option_api(vty->index, MQTT_SUB_OPT_SEND_RETAIN_NEVER, ospl_true);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -683,15 +683,15 @@ DEFUN (no_cli_mqtt_client_option,
 	if(vty->index)
 	{
 		if(strstr(argv[0],"local"))
-			ret = mqtt_option_api(vty->index, MQTT_SUB_OPT_NO_LOCAL, FALSE);
+			ret = mqtt_option_api(vty->index, MQTT_SUB_OPT_NO_LOCAL, ospl_false);
 		else if(strstr(argv[0],"published"))
-			ret = mqtt_option_api(vty->index, MQTT_SUB_OPT_RETAIN_AS_PUBLISHED, FALSE);
+			ret = mqtt_option_api(vty->index, MQTT_SUB_OPT_RETAIN_AS_PUBLISHED, ospl_false);
 		else if(strstr(argv[0],"always"))
-			ret = mqtt_option_api(vty->index, MQTT_SUB_OPT_SEND_RETAIN_ALWAYS, FALSE);
+			ret = mqtt_option_api(vty->index, MQTT_SUB_OPT_SEND_RETAIN_ALWAYS, ospl_false);
 		else if(strstr(argv[0],"new"))
-			ret = mqtt_option_api(vty->index, MQTT_SUB_OPT_SEND_RETAIN_NEW, FALSE);
+			ret = mqtt_option_api(vty->index, MQTT_SUB_OPT_SEND_RETAIN_NEW, ospl_false);
 		else if(strstr(argv[0],"never"))
-			ret = mqtt_option_api(vty->index, MQTT_SUB_OPT_SEND_RETAIN_NEVER, FALSE);
+			ret = mqtt_option_api(vty->index, MQTT_SUB_OPT_SEND_RETAIN_NEVER, ospl_false);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -709,7 +709,7 @@ DEFUN (cli_mqtt_client_tls_insecure,
 {
 	int ret = ERROR;
 	if(vty->index)
-		ret = mqtt_tls_insecure_api(vty->index, strstr(argv[0],"enable")?TRUE:FALSE);
+		ret = mqtt_tls_insecure_api(vty->index, strstr(argv[0],"enable")?ospl_true:ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -904,7 +904,7 @@ DEFUN (show_cli_mqtt_server,
 		"Mqtt Configure\n"
 		"Service\n")
 {
-	mqtt_app_config_show(mqtt_config, vty, TRUE, FALSE);
+	mqtt_app_config_show(mqtt_config, vty, ospl_true, ospl_false);
 	return CMD_SUCCESS;
 }
 
@@ -983,7 +983,7 @@ static int mqtt_write_config(struct vty *vty, void *pVoid)
 	if(pVoid)
 	{
 		vty_out(vty, "service mqtt%s",VTY_NEWLINE);
-		mqtt_app_config_show(pVoid, vty, TRUE, TRUE);
+		mqtt_app_config_show(pVoid, vty, ospl_true, ospl_true);
 		return 1;
 	}
 	return 0;
@@ -1071,7 +1071,7 @@ static void cmd_show_mqtt_init(int node)
 
 void cmd_mqtt_init(void)
 {
-	template_t * temp = nsm_template_new (TRUE);
+	template_t * temp = nsm_template_new (ospl_true);
 	if(temp)
 	{
 		temp->module = 0;

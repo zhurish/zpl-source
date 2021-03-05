@@ -8,6 +8,10 @@
 #ifndef __VOIP_LOG_H__
 #define __VOIP_LOG_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "zebra.h"
 #include "log.h"
 
@@ -28,10 +32,14 @@ extern int voip_thlog_close();
 extern int voip_thlog_reload();
 extern int voip_thlog_clean();
 extern int voip_thlog_log(const char *format, ...);
-extern int voip_thlog_log1(u_int8 building, u_int8 unit, u_int16 room, char *id,
+extern int voip_thlog_log1(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room, char *id,
 						   char *phone, const char *format, ...);
 extern int voip_thlog_log2(const char *format, ...);
 extern int voip_thlog_log3(char *type, char *result, const char *format, ...);
-extern int voip_thlog_log4(const time_t ti, char *type, char *result, const char *format, ...);
+extern int voip_thlog_log4(const ospl_time_t ti, char *type, char *result, const char *format, ...);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __VOIP_LOG_H__ */

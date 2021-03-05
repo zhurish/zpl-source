@@ -23,15 +23,19 @@
 #ifndef _ZEBRA_REDISTRIBUTE_H
 #define _ZEBRA_REDISTRIBUTE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "table.h"
 #include "nsm_zserv.h"
 
-extern void zebra_redistribute_add (int, struct zserv *, int, vrf_id_t);
-extern void zebra_redistribute_delete (int, struct zserv *, int, vrf_id_t);
+extern void zebra_redistribute_add (ospl_uint16, struct zserv *, ospl_size_t, vrf_id_t);
+extern void zebra_redistribute_delete (ospl_uint16, struct zserv *, ospl_size_t, vrf_id_t);
 
-extern void zebra_redistribute_default_add (int, struct zserv *, int,
+extern void zebra_redistribute_default_add (ospl_uint16, struct zserv *, ospl_size_t,
     vrf_id_t);
-extern void zebra_redistribute_default_delete (int, struct zserv *, int,
+extern void zebra_redistribute_default_delete (ospl_uint16, struct zserv *, ospl_size_t,
     vrf_id_t);
 
 extern void redistribute_add (struct prefix *, struct rib *new, struct rib *old);
@@ -48,7 +52,7 @@ extern void zebra_interface_address_add_update (struct interface *,
 extern void zebra_interface_address_delete_update (struct interface *,
 						   struct connected *c);
 
-extern void zebra_interface_mode_update (struct interface *ifp, uint32_t mode);
+extern void zebra_interface_mode_update (struct interface *ifp, ospl_uint32  mode);
 
 extern void zebra_write_config_cb (struct vty *vty);
 extern void zebra_debug_write_config_cb (struct vty *vty);
@@ -58,6 +62,10 @@ extern void zebra_interface_write_config_cb (struct vty *vty, struct interface *
 extern int zebra_check_addr (struct prefix *);
 
 extern int is_default (struct prefix *);
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ZEBRA_REDISTRIBUTE_H */
 

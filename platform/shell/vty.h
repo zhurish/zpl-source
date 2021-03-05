@@ -21,6 +21,10 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #ifndef _ZEBRA_VTY_H
 #define _ZEBRA_VTY_H
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 #include "zebra.h"
 #include "log.h"
 #include "sockunion.h"
@@ -56,37 +60,37 @@ struct vty
   /* Is this vty connect to file or not */
   enum {VTY_TERM, VTY_FILE, VTY_SHELL, VTY_SHELL_SERV} type;
 
-  int fd_type;
+  ospl_uint32 fd_type;
   /* Node status of this vty */
-  int node;
+  ospl_uint32 node;
 
   /* Failure count */
-  int fail;
-  BOOL	reload;
+  ospl_uint32 fail;
+  ospl_bool	reload;
 
   /* Output buffer. */
   struct buffer *obuf;
 
   /* Command input buffer */
-  char *buf;
+  ospl_char *buf;
 
   /* Command cursor point */
-  int cp;
+  ospl_uint32 cp;
 
   /* Command length */
-  int length;
+  ospl_uint32 length;
 
   /* Command max length. */
-  int max;
+  ospl_uint32 max;
 
   /* Histry of command */
-  char *hist[VTY_MAXHIST];
+  ospl_char *hist[VTY_MAXHIST];
 
   /* History lookup current point */
-  int hp;
+  ospl_uint32 hp;
 
   /* History insert end point */
-  int hindex;
+  ospl_uint32 hindex;
 
   /* For current referencing point of interface, route-map,
      access-list etc... */
@@ -96,10 +100,10 @@ struct vty
   void *index_sub;
 
   /* */
-  int index_value;
+  ospl_uint32 index_value;
 
   /* For escape character. */
-  unsigned char escape;
+  ospl_uchar escape;
 
   /* Current vty status. */
   enum {VTY_NORMAL, VTY_CLOSE, VTY_MORE, VTY_MORELINE} status;
@@ -107,53 +111,53 @@ struct vty
   /* IAC handling: was the last character received the
      IAC (interpret-as-command) escape character (and therefore the next
      character will be the command code)?  Refer to Telnet RFC 854. */
-  unsigned char iac;
+  ospl_uchar iac;
 
   /* IAC SB (option subnegotiation) handling */
-  unsigned char iac_sb_in_progress;
+  ospl_uchar iac_sb_in_progress;
   /* At the moment, we care only about the NAWS (window size) negotiation,
      and that requires just a 5-character buffer (RFC 1073):
-       <NAWS char> <16-bit width> <16-bit height> */
+       <NAWS ospl_char> <16-bit width> <16-bit height> */
 #define TELNET_NAWS_SB_LEN 5
-  unsigned char sb_buf[TELNET_NAWS_SB_LEN];
+  ospl_uchar sb_buf[TELNET_NAWS_SB_LEN];
   /* How many subnegotiation characters have we received?  We just drop
      those that do not fit in the buffer. */
-  size_t sb_len;
+  ospl_size_t sb_len;
 
   /* Window width/height. */
-  int width;
-  int height;
+  ospl_uint32 width;
+  ospl_uint32 height;
 
   /* Configure lines. */
-  int lines;
+  ospl_uint32 lines;
 
   /* Terminal monitor. */
-  int monitor;
+  ospl_bool monitor;
   /* Terminal trap. */
-  int trapping;
+  ospl_bool trapping;
 
   /* In configure mode. */
-  int config;
+  ospl_uint32 config;
 
   /* Read and write thread. */
   void *t_read;
   void *t_write;
 
   /* Timeout seconds and thread. */
-  unsigned long v_timeout;
+  ospl_ulong v_timeout;
 
   void *t_timeout;
   /* What address is this vty comming from. */
-  char address[SU_ADDRSTRLEN];
+  ospl_char address[SU_ADDRSTRLEN];
 
-  char	prompt[64];
-  char	subprompt[64];
-  char *username;
+  ospl_char	prompt[64];
+  ospl_char	subprompt[64];
+  ospl_char *username;
 
   int	(*shell_ctrl_cmd)(struct vty *, int , void *);
   void *ctrl;
 
-  BOOL	ssh_enable;
+  ospl_bool	ssh_enable;
   int	(*ssh_close)(struct vty *);
   void	*ssh;
 
@@ -166,17 +170,17 @@ struct vty
 	  VTY_LOGIN_SH
   } login_type;
 
-  BOOL	cancel;
+  ospl_bool	cancel;
 
-  BOOL	ansync;
+  ospl_bool	ansync;
 
-  pid_t pid;
-  pthread_t pthd;
+  ospl_pid_t pid;
+  ospl_pthread_t pthd;
 
 
-  BOOL detail;
-  BOOL res0;
-  BOOL res1;
+  ospl_bool detail;
+  ospl_bool res0;
+  ospl_bool res1;
   void		*priv;
 };
 
@@ -212,10 +216,10 @@ struct vty
 #define PRINTF_ATTRIBUTE(a,b)
 #endif /* __GNUC__ */
 
-/* Utility macros to convert VTY argument to unsigned long */
+/* Utility macros to convert VTY argument to ospl_ulong */
 #define VTY_GET_ULONG(NAME,V,STR) \
 do { \
-  char *endptr = NULL; \
+  ospl_char *endptr = NULL; \
   errno = 0; \
   (V) = strtoul ((STR), &endptr, 10); \
   if (*(STR) == '-' || *endptr != '\0' || errno) \
@@ -244,14 +248,14 @@ do {                                                            \
 
 #define VTY_GET_INTEGER_RANGE(NAME,V,STR,MIN,MAX)               \
 do {                                                            \
-  unsigned long tmpl;                                           \
+  ospl_ulong tmpl;                                           \
   VTY_GET_INTEGER_RANGE_HEART(NAME,tmpl,STR,MIN,MAX);           \
   (V) = tmpl;                                                   \
 } while (0)
 
 #define VTY_CHECK_INTEGER_RANGE(NAME,STR,MIN,MAX)               \
 do {                                                            \
-  unsigned long tmpl;                                           \
+  ospl_ulong tmpl;                                           \
   VTY_GET_INTEGER_RANGE_HEART(NAME,tmpl,STR,MIN,MAX);           \
 } while (0)
 
@@ -289,7 +293,7 @@ do {                                                                          \
 } while (0)
 
 /* Exported variables */
-extern char integrate_default[];
+extern ospl_char integrate_default[];
 
 /* Prototypes. */
 
@@ -300,14 +304,14 @@ extern struct vty *vty_new_init(int vty_sock);
 extern int vty_cancel(struct vty *vty);
 extern int vty_resume(struct vty *vty);
 
-extern int exec_timeout(struct vty *vty, const char *min_str, const char *sec_str);
+extern int vty_exec_timeout(struct vty *vty, const char *min_str, const char *sec_str);
 
-extern int vty_command(struct vty *vty, char *buf);
+extern int vty_command(struct vty *vty, ospl_char *buf);
 extern int vty_execute(struct vty *vty);
 extern int vty_execute_shell(const char *cmd);
 
 extern int vty_getc_input(struct vty *vty);
-extern int vty_read_handle(struct vty *vty, unsigned char *buf, int len);
+extern int vty_read_handle(struct vty *vty, ospl_uchar *buf, ospl_uint32 len);
 
 extern int vty_out (struct vty *, const char *, ...) PRINTF_ATTRIBUTE(2, 3);
 extern int vty_sync_out(struct vty *vty, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
@@ -316,13 +320,13 @@ extern void vty_close (struct vty *);
 extern int vty_config_lock (struct vty *);
 extern int vty_config_unlock (struct vty *);
 
-extern void vty_time_print (struct vty *, int);
+extern void vty_time_print (struct vty *, ospl_bool);
 extern struct vty * vty_lookup(int sock);
 
 extern void vty_hello (struct vty *);
-extern int vty_ansync_enable(struct vty *vty, BOOL enable);
+extern int vty_ansync_enable(struct vty *vty, ospl_bool enable);
 
-extern void vty_self_insert(struct vty *vty, char c);
+extern void vty_self_insert(struct vty *vty, ospl_char c);
 
 extern int vty_shell (struct vty *);
 extern int vty_shell_serv (struct vty *);
@@ -335,28 +339,28 @@ extern int vty_console_init(const char *tty, void (*atclose)());
 
 
 extern void vty_init (void *, void *);
-extern void vty_tty_init(char *tty);
+extern void vty_tty_init(ospl_char *tty);
 extern void vty_init_vtysh (void);
 extern void vty_terminate (void);
 extern void vty_reset (void);
 
-extern void vty_serv_init (const char *, unsigned short, const char *, const char *);
+extern void vty_serv_init (const char *, ospl_ushort, const char *, const char *);
 
 
-extern void vty_load_config (char *);
+extern void vty_load_config (ospl_char *);
 
 
 extern void vty_log (const char *level, const char *proto, 
                      const char *fmt, zlog_timestamp_t , va_list);
 extern void vty_log_debug(const char *level, const char *proto_str, const char *format,
-		zlog_timestamp_t ctl, va_list va, const char *file, const char *func, const int line);
+		zlog_timestamp_t ctl, va_list va, const char *file, const char *func, const ospl_uint32 line);
 
 extern void vty_trap_log (const char *level, const char *proto_str,
 	 const char *format, zlog_timestamp_t ctl, va_list);
-extern void vty_log_fixed (char *buf, size_t len);
+extern void vty_log_fixed (ospl_char *buf, ospl_size_t len);
 
 
-extern char *vty_get_cwd (void);
+extern ospl_char *vty_get_cwd (void);
 
 
 
@@ -365,5 +369,12 @@ extern char *vty_get_cwd (void);
 #ifdef VTYSH
 extern int vty_sshd_init(int sock, struct vty *vty);
 #endif /* VTYSH */
+
+
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* _ZEBRA_VTY_H */

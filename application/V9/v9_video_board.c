@@ -117,14 +117,14 @@ int v9_video_board_exit()
 	return OK;
 }
 
-int v9_video_board_add(u_int32 id)
+int v9_video_board_add(ospl_uint32 id)
 {
-	u_int32 i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
-		if(v9_video_board && v9_video_board[i].use == FALSE)
+		if(v9_video_board && v9_video_board[i].use == ospl_false)
 		{
-			v9_video_board[i].use = TRUE;
+			v9_video_board[i].use = ospl_true;
 			v9_video_board[i].id = id;
 			return OK;
 		}
@@ -134,15 +134,15 @@ int v9_video_board_add(u_int32 id)
 	return ERROR;
 }
 
-int v9_video_board_del(u_int32 id)
+int v9_video_board_del(ospl_uint32 id)
 {
-	u_int32 i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
 		if(v9_video_board && v9_video_board[i].id == id)
 		{
-			v9_video_board[i].active = FALSE;
-			v9_video_board[i].use = FALSE;
+			v9_video_board[i].active = ospl_false;
+			v9_video_board[i].use = ospl_false;
 			v9_video_board[i].id = 0;
 			return OK;
 		}
@@ -152,9 +152,9 @@ int v9_video_board_del(u_int32 id)
 	return ERROR;
 }
 
-v9_video_board_t * v9_video_board_lookup(u_int32 id)
+v9_video_board_t * v9_video_board_lookup(ospl_uint32 id)
 {
-	u_int32 i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
 		if(v9_video_board && v9_video_board[i].id == id)
@@ -170,9 +170,9 @@ v9_video_board_t * v9_video_board_lookup(u_int32 id)
 /*
  * SDK 连接上的时候调用设置
  */
-int v9_video_board_active(u_int32 id, BOOL enable)
+int v9_video_board_active(ospl_uint32 id, ospl_bool enable)
 {
-	u_int32 i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
 		if(v9_video_board && v9_video_board[i].id == id)
@@ -180,8 +180,8 @@ int v9_video_board_active(u_int32 id, BOOL enable)
 			v9_video_board[i].active = enable;
 			if(enable)
 			{
-				v9_video_board[i].board.active = TRUE;
-				//v9_video_board[i].board.autoip = TRUE;
+				v9_video_board[i].board.active = ospl_true;
+				//v9_video_board[i].board.autoip = ospl_true;
 			}
 			return OK;
 		}
@@ -194,9 +194,9 @@ int v9_video_board_active(u_int32 id, BOOL enable)
 /*
  * 通过SDK连接状态判定板卡是否可操作
  */
-BOOL v9_video_board_isactive(u_int32 id)
+ospl_bool v9_video_board_isactive(ospl_uint32 id)
 {
-	u_int32 i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
 		if(v9_video_board && v9_video_board[i].id == id)
@@ -204,21 +204,21 @@ BOOL v9_video_board_isactive(u_int32 id)
 			return v9_video_board[i].active;
 		}
 	}
-	return FALSE;
+	return ospl_false;
 }
 
 /*
  * 通过串口传过来的板卡参数；判定板卡是否在线等状态
  */
-BOOL v9_board_ready(v9_video_board_t *vboard)
+ospl_bool v9_board_ready(v9_video_board_t *vboard)
 {
 	if(vboard && vboard->board.online &&
 						vboard->board.power &&
 						vboard->board.active &&
 						vboard->board.autoip /*&&
 						vboard->board.startup*/)
-					return TRUE;
-	return FALSE;
+					return ospl_true;
+	return ospl_false;
 }
 
 
@@ -226,19 +226,19 @@ int v9_board_set_ready(v9_video_board_t *vboard)
 {
 	if(vboard)
 	{
-		vboard->board.online = TRUE;
-		vboard->board.power = TRUE;
-		vboard->board.active = TRUE;
-		vboard->board.autoip = TRUE;
+		vboard->board.online = ospl_true;
+		vboard->board.power = ospl_true;
+		vboard->board.active = ospl_true;
+		vboard->board.autoip = ospl_true;
 		return OK;
 	}
 	return ERROR;
 }
 
 
-int v9_video_board_address(u_int32 id, u_int32 address, u_int16 port)
+int v9_video_board_address(ospl_uint32 id, ospl_uint32 address, ospl_uint16 port)
 {
-	u_int32 i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
 		if(v9_video_board && v9_video_board[i].id == id)
@@ -253,9 +253,9 @@ int v9_video_board_address(u_int32 id, u_int32 address, u_int16 port)
 	return ERROR;
 }
 
-int v9_video_board_get_vch(u_int32 id)
+int v9_video_board_get_vch(ospl_uint32 id)
 {
-	u_int32 i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
 		if(v9_video_board && v9_video_board[i].id == id)
@@ -267,9 +267,9 @@ int v9_video_board_get_vch(u_int32 id)
 }
 
 
-int v9_video_board_disabled(u_int32 id, BOOL enable)
+int v9_video_board_disabled(ospl_uint32 id, ospl_bool enable)
 {
-	u_int32 i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
 		if(v9_video_board && v9_video_board[i].id == id)
@@ -283,9 +283,9 @@ int v9_video_board_disabled(u_int32 id, BOOL enable)
 	return ERROR;
 }
 
-BOOL v9_video_board_isdisabled(u_int32 id)
+ospl_bool v9_video_board_isdisabled(ospl_uint32 id)
 {
-	u_int32 i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
 		if(v9_video_board && v9_video_board[i].id == id)
@@ -293,13 +293,13 @@ BOOL v9_video_board_isdisabled(u_int32 id)
 			return v9_video_board[i].disabled;
 		}
 	}
-	return FALSE;
+	return ospl_false;
 }
 /********************************************************************/
 /********************************************************************/
 static int v9_video_board_stream_hw_sync(struct eloop *eloop)
 {
-	u_int32 i = 0, j = 0;
+	ospl_uint32 i = 0, j = 0;
 	//sdk = ELOOP_ARG(eloop);
 	if(!v9_video_board)
 		return ERROR;
@@ -311,15 +311,15 @@ static int v9_video_board_stream_hw_sync(struct eloop *eloop)
 		{
 			for(j = 0; j < V9_APP_CHANNEL_MAX; j++)
 			{
-				if(v9_video_board[i].channel[j] == TRUE &&
+				if(v9_video_board[i].channel[j] == ospl_true &&
 						v9_video_board[i].video_stream[j] != NULL &&
 						strlen(v9_video_board[i].video_stream[j]->video_url) &&
-						v9_video_board[i].video_stream[j]->hw_sync == FALSE)
+						v9_video_board[i].video_stream[j]->hw_sync == ospl_false)
 				{
 					if(v9_video_sdk_add_vch_api(v9_video_board[i].id,
 												v9_video_board[i].video_stream[j]->ch,
 												v9_video_board[i].video_stream[j]->video_url) == OK)
-						v9_video_board[i].video_stream[j]->hw_sync = TRUE;
+						v9_video_board[i].video_stream[j]->hw_sync = ospl_true;
 				}
 			}
 		}
@@ -332,10 +332,10 @@ static int v9_video_board_stream_hw_sync(struct eloop *eloop)
 		{
 			for(j = 0; j < V9_APP_CHANNEL_MAX; j++)
 			{
-				if(v9_video_board[i].channel[j] == TRUE &&
+				if(v9_video_board[i].channel[j] == ospl_true &&
 						v9_video_board[i].video_stream[j] != NULL &&
 						strlen(v9_video_board[i].video_stream[j]->video_url) &&
-						v9_video_board[i].video_stream[j]->hw_sync == FALSE)
+						v9_video_board[i].video_stream[j]->hw_sync == ospl_false)
 				{
 					if(v9_video_board[0].sdk.master)
 						v9_video_board[0].t_timeout = eloop_add_timer(v9_video_board[0].sdk.master,
@@ -350,14 +350,14 @@ static int v9_video_board_stream_hw_sync(struct eloop *eloop)
 
 static int __v9_video_stream_add(v9_video_board_t *board, v9_video_stream_t *value)
 {
-	u_int32 i = 0;
+	ospl_uint32 i = 0;
 	zassert(board);
 	zassert(value);
 	for(i = 0; i < V9_APP_CHANNEL_MAX; i++)
 	{
 		if(board->video_stream[i] == NULL /*&& value->video_url*/)
 		{
-			board->channel[i] = TRUE;
+			board->channel[i] = ospl_true;
 			board->video_stream[i] = value;
 			value->id = board->id;
 			board->video_load += V9_APP_VIDEO_LOAD(value->fps, 1);
@@ -366,9 +366,9 @@ static int __v9_video_stream_add(v9_video_board_t *board, v9_video_stream_t *val
 				if(v9_video_board_isactive(board->id))
 				{
 					if(v9_video_sdk_add_vch_api(board->id, value->ch, value->video_url) == OK)
-						value->hw_sync = TRUE;
+						value->hw_sync = ospl_true;
 				}
-				if(value->hw_sync == FALSE)
+				if(value->hw_sync == ospl_false)
 				{
 					if(v9_video_board[0].t_timeout)
 					{
@@ -390,7 +390,7 @@ static int __v9_video_stream_add(v9_video_board_t *board, v9_video_stream_t *val
 
 static int __v9_video_stream_del(v9_video_board_t *board, v9_video_stream_t *value)
 {
-	u_int32 i = 0;
+	ospl_uint32 i = 0;
 	zassert(board);
 	zassert(value);
 	for(i = 0; i < V9_APP_CHANNEL_MAX; i++)
@@ -398,7 +398,7 @@ static int __v9_video_stream_del(v9_video_board_t *board, v9_video_stream_t *val
 		if(board->video_stream[i] && board->video_stream[i] == value)
 		{
 			board->video_load -= V9_APP_VIDEO_LOAD(value->fps, 1);
-			board->channel[i] = FALSE;
+			board->channel[i] = ospl_false;
 			value->id = 0;
 			board->video_stream[i] = NULL;
 			if(value->hw_sync)
@@ -413,7 +413,7 @@ static int __v9_video_stream_del(v9_video_board_t *board, v9_video_stream_t *val
 
 static v9_video_stream_t * __v9_video_stream_lookup(v9_video_board_t *board, v9_video_stream_t *value)
 {
-	u_int32 i = 0;
+	ospl_uint32 i = 0;
 	zassert(board);
 	zassert(value);
 	for(i = 0; i < V9_APP_CHANNEL_MAX; i++)
@@ -429,9 +429,9 @@ static v9_video_stream_t * __v9_video_stream_lookup(v9_video_board_t *board, v9_
 }
 /********************************************************************/
 /********************************************************************/
-v9_video_stream_t * v9_video_board_stream_lookup_by_id_and_ch(u_int8 id, u_int8 ch)
+v9_video_stream_t * v9_video_board_stream_lookup_by_id_and_ch(ospl_uint8 id, ospl_uint8 ch)
 {
-	u_int32 i = 0;
+	ospl_uint32 i = 0;
 	if(id > V9_APP_BOARD_MAX)
 		return NULL;
 	v9_video_board_t *board = v9_video_board_lookup(id);
@@ -452,7 +452,7 @@ v9_video_stream_t * v9_video_board_stream_lookup_by_id_and_ch(u_int8 id, u_int8 
 }
 
 
-int v9_video_board_stream_status_change(u_int8 id, u_int8 ch, int rtsp, int decode)
+int v9_video_board_stream_status_change(ospl_uint8 id, ospl_uint8 ch, int rtsp, int decode)
 {
 	v9_video_stream_t * stream = v9_video_board_stream_lookup_by_id_and_ch(id, ch);
 	if(stream)
@@ -464,10 +464,10 @@ int v9_video_board_stream_status_change(u_int8 id, u_int8 ch, int rtsp, int deco
 		if(decode != -1)
 			stream->decode_status = 1 - decode; // ==0 OK ==1 ERROR								// 解码状态
 
-		if(stream->rtsp_status == EAIS_DEVICE_STATUS_ONLINE || stream->decode_status == TRUE)
-			stream->connect = TRUE;
+		if(stream->rtsp_status == EAIS_DEVICE_STATUS_ONLINE || stream->decode_status == ospl_true)
+			stream->connect = ospl_true;
 		else
-			stream->connect = FALSE;
+			stream->connect = ospl_false;
 		//stream->change;
 		return OK;
 	}
@@ -479,7 +479,7 @@ int v9_video_board_stream_status_change(u_int8 id, u_int8 ch, int rtsp, int deco
  */
 int v9_video_board_get_minload()
 {
-	u_int32 i = 0, video_load = 0xfffffff0;
+	ospl_uint32 i = 0, video_load = 0xfffffff0;
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
 		if(v9_video_board && v9_video_board[i].use && !v9_video_board[i].disabled &&
@@ -503,9 +503,9 @@ int v9_video_board_get_minload()
 }
 
 
-int v9_video_board_stream_alloc(u_int32 id)
+int v9_video_board_stream_alloc(ospl_uint32 id)
 {
-	u_int32 i = 0, j = 0;
+	ospl_uint32 i = 0, j = 0;
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
 		if(v9_video_board && v9_video_board[i].use && v9_video_board[i].id == id)
@@ -525,9 +525,9 @@ int v9_video_board_stream_alloc(u_int32 id)
 }
 
 
-int v9_video_board_stream_add(u_int32 id, v9_video_stream_t *value, BOOL load)
+int v9_video_board_stream_add(ospl_uint32 id, v9_video_stream_t *value, ospl_bool load)
 {
-	u_int32 i = 0;
+	ospl_uint32 i = 0;
 	//zlog_debug(MODULE_APP," %s ID=%d", __func__, V9_APP_BOARD_HW_ID(id));
 	//zassert(board);
 	zassert(value);
@@ -557,9 +557,9 @@ int v9_video_board_stream_add(u_int32 id, v9_video_stream_t *value, BOOL load)
 	return ERROR;
 }
 
-int v9_video_board_stream_del(u_int32 id, v9_video_stream_t *value)
+int v9_video_board_stream_del(ospl_uint32 id, v9_video_stream_t *value)
 {
-	u_int32 i = 0;
+	ospl_uint32 i = 0;
 	//zassert(board);
 	zassert(value);
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
@@ -584,9 +584,9 @@ int v9_video_board_stream_del(u_int32 id, v9_video_stream_t *value)
 	return ERROR;
 }
 
-int v9_video_board_stream_lookup(u_int32 id, v9_video_stream_t *value)
+int v9_video_board_stream_lookup(ospl_uint32 id, v9_video_stream_t *value)
 {
-	u_int32 i = 0;
+	ospl_uint32 i = 0;
 	//zassert(board);
 	zassert(value);
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
@@ -607,7 +607,7 @@ int v9_video_board_stream_lookup(u_int32 id, v9_video_stream_t *value)
 /********************************************************************/
 /********************************************************************/
 #if 0
-int v9_video_stream_split(char *url, u_int8 *ch, u_int32 *address, u_int16 *port,
+int v9_video_stream_split(char *url, ospl_uint8 *ch, ospl_uint32 *address, ospl_uint16 *port,
 							char *username, char *password, char *param, char *secondary)
 {
 	os_url_t spliurl;
@@ -684,7 +684,7 @@ int v9_video_stream_split(char *url, u_int8 *ch, u_int32 *address, u_int16 *port
 /********************************************************************/
 int v9_video_board_stream_cleanup()
 {
-	u_int32 i = 0, j = 0;
+	ospl_uint32 i = 0, j = 0;
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
 		if(v9_video_board && v9_video_board[i].use)
@@ -694,7 +694,7 @@ int v9_video_board_stream_cleanup()
 				if(v9_video_board[i].video_stream[j] && v9_video_board[i].channel[j])
 				{
 					v9_video_board[i].video_load -= V9_APP_VIDEO_LOAD(v9_video_board[i].video_stream[j]->fps, 1);
-					v9_video_board[i].channel[i] = FALSE;
+					v9_video_board[i].channel[i] = ospl_false;
 					if(v9_video_board[i].video_stream[j]->hw_sync)
 						v9_video_sdk_del_vch_api(v9_video_board[i].id, v9_video_board[i].video_stream[j]->ch);
 					v9_video_board[i].channel_cnt--;
@@ -708,8 +708,8 @@ int v9_video_board_stream_cleanup()
 	return OK;
 }
 /********************************************************************/
-v9_video_stream_t * v9_video_board_stream_alloc_api(u_int8 ch, u_int32 address, u_int16 port,
-												char *username, char *password, u_int32 fps,
+v9_video_stream_t * v9_video_board_stream_alloc_api(ospl_uint8 ch, ospl_uint32 address, ospl_uint16 port,
+												char *username, char *password, ospl_uint32 fps,
 												char *param, char *secondary)
 {
 	v9_video_stream_t *value = XMALLOC(MTYPE_VIDEO_STREAM, sizeof(v9_video_stream_t));
@@ -731,12 +731,12 @@ v9_video_stream_t * v9_video_board_stream_alloc_api(u_int8 ch, u_int32 address, 
 		if(secondary)
 			os_strcpy(value->secondary, secondary);		//密码
 
-		value->connect = FALSE;				//视频流连接状态
+		value->connect = ospl_false;				//视频流连接状态
 		value->dev_status = 0;					// EAIS设备状态，默认离线。 ENUM_EAIS_DEVICE_STATUS
 		value->rtsp_status = 0;									// 通道RTSP状态 ENUM_EAIS_DEVICE_STATUS
 		value->decode_status = 0;									// 解码状态
-		value->change = FALSE;
-		value->hw_sync = FALSE;
+		value->change = ospl_false;
+		value->hw_sync = ospl_false;
 		if(param)
 		{
 			if(username)
@@ -766,9 +766,9 @@ v9_video_stream_t * v9_video_board_stream_alloc_api(u_int8 ch, u_int32 address, 
 	return NULL;
 }
 
-v9_video_stream_t * v9_video_board_stream_lookup_api(u_int8 ch, u_int32 address, u_int16 port)
+v9_video_stream_t * v9_video_board_stream_lookup_api(ospl_uint8 ch, ospl_uint32 address, ospl_uint16 port)
 {
-	u_int32 i = 0, j = 0;
+	ospl_uint32 i = 0, j = 0;
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
 		if(v9_video_board && v9_video_board[i].use && v9_video_board[i].id != APP_BOARD_MAIN)
@@ -800,7 +800,7 @@ v9_video_stream_t * v9_video_board_stream_lookup_api(u_int8 ch, u_int32 address,
 }
 
 
-int v9_video_board_stream_update_api(u_int8 id, u_int8 ch, char *param, char *secondary)
+int v9_video_board_stream_update_api(ospl_uint8 id, ospl_uint8 ch, char *param, char *secondary)
 {
 	v9_video_board_t * board = NULL;
 	v9_video_stream_t * stream = NULL;
@@ -808,7 +808,7 @@ int v9_video_board_stream_update_api(u_int8 id, u_int8 ch, char *param, char *se
 	stream = v9_video_board_stream_lookup_by_id_and_ch(id, ch);
 	if(board && stream)
 	{
-		//u_int32 i = 0;
+		//ospl_uint32 i = 0;
 		if(param)
 		{
 			memset(stream->mainstream, 0, sizeof(stream->mainstream));
@@ -832,9 +832,9 @@ int v9_video_board_stream_update_api(u_int8 id, u_int8 ch, char *param, char *se
 		if(v9_video_board_isactive(board->id))
 		{
 			if(v9_video_sdk_add_vch_api(board->id, stream->ch, stream->video_url) == OK)
-				stream->hw_sync = TRUE;
+				stream->hw_sync = ospl_true;
 		}
-		if(stream->hw_sync == FALSE)
+		if(stream->hw_sync == ospl_false)
 		{
 			if(v9_video_board[0].t_timeout)
 			{
@@ -876,9 +876,9 @@ int v9_video_board_stream_free_api(v9_video_stream_t *v)
 /*
  * 根据视频流信息获取计算板ID
  */
-int v9_video_board_ID_lookup_api_by_video_stream(u_int8 ch, u_int32 address, u_int16 port)
+int v9_video_board_ID_lookup_api_by_video_stream(ospl_uint8 ch, ospl_uint32 address, ospl_uint16 port)
 {
-	u_int32 i = 0, j = 0;
+	ospl_uint32 i = 0, j = 0;
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
 		if(v9_video_board && v9_video_board[i].active && v9_video_board[i].use && !v9_video_board[i].disabled)
@@ -913,7 +913,7 @@ int v9_video_board_ID_lookup_api_by_video_stream(u_int8 ch, u_int32 address, u_i
 /********************************************************************/
 /********************************************************************/
 
-static int v9_video_board_stream_show_one(struct vty *vty, v9_video_stream_t *pstNode, BOOL detail)
+static int v9_video_board_stream_show_one(struct vty *vty, v9_video_stream_t *pstNode, ospl_bool detail)
 {
 	if (pstNode)
 	{
@@ -921,11 +921,11 @@ static int v9_video_board_stream_show_one(struct vty *vty, v9_video_stream_t *ps
 		vty_out (vty, "  Channel ID            : %d:%d%s", V9_APP_BOARD_HW_ID(pstNode->id), pstNode->ch, VTY_NEWLINE);
 		vty_out (vty, "   Address              : %s:%d%s", inet_address(pstNode->address), pstNode->port, VTY_NEWLINE);
 		vty_out (vty, "   FPS                  : %d%s", pstNode->fps, VTY_NEWLINE);
-		vty_out (vty, "   Connect              : %s%s", pstNode->connect ? "TRUE":"FALSE", VTY_NEWLINE);
-		vty_out (vty, "   HW Sync              : %s%s", pstNode->hw_sync ? "TRUE":"FALSE", VTY_NEWLINE);
+		vty_out (vty, "   Connect              : %s%s", pstNode->connect ? "ospl_true":"ospl_false", VTY_NEWLINE);
+		vty_out (vty, "   HW Sync              : %s%s", pstNode->hw_sync ? "ospl_true":"ospl_false", VTY_NEWLINE);
 		if(strlen(pstNode->username) && strlen(pstNode->password))
 		{
-			unsigned char passecrypt[64];
+			ospl_uint8 passecrypt[64];
 			memset(passecrypt, 0, sizeof(passecrypt));
 			md5_encrypt_password(pstNode->password, passecrypt);
 			vty_out (vty, "   Username             : %s%s", pstNode->username, VTY_NEWLINE);
@@ -960,7 +960,7 @@ static int v9_video_board_stream_show_one(struct vty *vty, v9_video_stream_t *ps
 					vty_out (vty,"   RTSP Status          : %s%s","Unknown", VTY_NEWLINE);
 					break;
 			}
-			if (pstNode->decode_status == TRUE)
+			if (pstNode->decode_status == ospl_true)
 				vty_out (vty, "   Decode Status        : %s%s","Successful ", VTY_NEWLINE);
 			else
 				vty_out (vty, "   Decode Status        : %s%s","ABORT", VTY_NEWLINE);
@@ -983,9 +983,9 @@ static int v9_video_board_stream_show_one(struct vty *vty, v9_video_stream_t *ps
 /*
  * 显示计算板视频流信息（计算板在线激活的）
  */
-int v9_video_board_stream_show(struct vty *vty, u_int32 id, BOOL detail)
+int v9_video_board_stream_show(struct vty *vty, ospl_uint32 id, ospl_bool detail)
 {
-	u_int32 i = 0, j = 0;
+	ospl_uint32 i = 0, j = 0;
 	v9_video_board_lock();
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
@@ -999,7 +999,7 @@ int v9_video_board_stream_show(struct vty *vty, u_int32 id, BOOL detail)
 			{
 				for(j = 0; j < V9_APP_CHANNEL_MAX; j++)
 				{
-					if(v9_video_board[i].channel[j] == TRUE && v9_video_board[i].video_stream[j] != NULL)
+					if(v9_video_board[i].channel[j] == ospl_true && v9_video_board[i].video_stream[j] != NULL)
 					{
 						v9_video_board_stream_show_one(vty, v9_video_board[i].video_stream[j],  detail);
 					}
@@ -1011,7 +1011,7 @@ int v9_video_board_stream_show(struct vty *vty, u_int32 id, BOOL detail)
 			{
 				for(j = 0; j < V9_APP_CHANNEL_MAX; j++)
 				{
-					if(v9_video_board[i].channel[j] == TRUE && v9_video_board[i].video_stream[j] != NULL)
+					if(v9_video_board[i].channel[j] == ospl_true && v9_video_board[i].video_stream[j] != NULL)
 					{
 						v9_video_board_stream_show_one(vty, v9_video_board[i].video_stream[j],  detail);
 					}
@@ -1024,7 +1024,7 @@ int v9_video_board_stream_show(struct vty *vty, u_int32 id, BOOL detail)
 }
 
 /********************************************************************/
-static int v9_video_board_show_one(struct vty *vty, v9_video_board_t *board, BOOL detail)
+static int v9_video_board_show_one(struct vty *vty, v9_video_board_t *board, ospl_bool detail)
 {
 	vty_out (vty, "-------------------------------------------%s", VTY_NEWLINE);
 	if(board->disabled)
@@ -1036,8 +1036,8 @@ static int v9_video_board_show_one(struct vty *vty, v9_video_board_t *board, BOO
 		vty_out (vty, "   Address              : %s:%d%s", inet_address(board->address), board->port, VTY_NEWLINE);
 		//if(detail)
 		{
-			//vty_out (vty, "   Channel              : %d%s", board->active ? "TRUE":"FALSE", VTY_NEWLINE);
-			vty_out (vty, "   Active               : %s%s", board->active ? "TRUE":"FALSE", VTY_NEWLINE);
+			//vty_out (vty, "   Channel              : %d%s", board->active ? "ospl_true":"ospl_false", VTY_NEWLINE);
+			vty_out (vty, "   Active               : %s%s", board->active ? "ospl_true":"ospl_false", VTY_NEWLINE);
 		}
 		vty_out (vty, "-------------------------------------------%s", VTY_NEWLINE);
 		return OK;
@@ -1052,7 +1052,7 @@ static int v9_video_board_show_one(struct vty *vty, v9_video_board_t *board, BOO
 	{
 		if(board->channel_cnt)
 		{
-			u_int32 i = 0;
+			ospl_uint32 i = 0;
 			char tmp[32];
 			char tmpbuf[128];
 			memset(tmpbuf, 0, sizeof(tmpbuf));
@@ -1077,8 +1077,8 @@ static int v9_video_board_show_one(struct vty *vty, v9_video_board_t *board, BOO
 
 	//if(detail)
 	{
-		//vty_out (vty, "   Channel              : %d%s", board->active ? "TRUE":"FALSE", VTY_NEWLINE);
-		vty_out (vty, "   Active               : %s%s", board->active ? "TRUE":"FALSE", VTY_NEWLINE);
+		//vty_out (vty, "   Channel              : %d%s", board->active ? "ospl_true":"ospl_false", VTY_NEWLINE);
+		vty_out (vty, "   Active               : %s%s", board->active ? "ospl_true":"ospl_false", VTY_NEWLINE);
 	}
 	vty_out (vty, "-------------------------------------------%s", VTY_NEWLINE);
 	return OK;
@@ -1087,9 +1087,9 @@ static int v9_video_board_show_one(struct vty *vty, v9_video_board_t *board, BOO
 /*
  * 显示板卡信息
  */
-int v9_video_board_show(struct vty *vty, BOOL detail)
+int v9_video_board_show(struct vty *vty, ospl_bool detail)
 {
-	u_int32 i = 0;
+	ospl_uint32 i = 0;
 	v9_video_board_lock();
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
@@ -1112,7 +1112,7 @@ static int v9_video_board_stream_write_config_one(struct vty *vty, v9_video_stre
 {
 	if (pstNode)
 	{
-		int len = 0;
+		ospl_uint32 len = 0;
 		char confstr[1024];
 		memset(confstr, 0, sizeof(confstr));
 
@@ -1159,7 +1159,7 @@ static int v9_video_board_stream_write_config_one(struct vty *vty, v9_video_stre
 			}
 			else
 			{
-				unsigned char passecrypt[64];
+				ospl_uint8 passecrypt[64];
 				memset(passecrypt, 0, sizeof(passecrypt));
 				md5_encrypt_password(pstNode->password, passecrypt);
 				snprintf(confstr + len, sizeof(confstr) - len, "username %s password %s ",
@@ -1186,7 +1186,7 @@ void * v9_video_app_tmp()
 }
 
 #ifdef V9_VIDEO_SDK_API
-static int v9_video_sdk_write_config_one(struct vty *vty, u_int32 id, v9_video_sdk_t *sdk)
+static int v9_video_sdk_write_config_one(struct vty *vty, ospl_uint32 id, v9_video_sdk_t *sdk)
 {
 	return v9_video_sdk_get_config(vty, id, sdk);
 }
@@ -1194,7 +1194,7 @@ static int v9_video_sdk_write_config_one(struct vty *vty, u_int32 id, v9_video_s
 
 int v9_video_board_stream_write_config(struct vty *vty)
 {
-	u_int32 i = 0, j = 0;
+	ospl_uint32 i = 0, j = 0;
 	v9_video_board_lock();
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
@@ -1242,7 +1242,7 @@ int v9_video_board_stream_write_config(struct vty *vty)
 
 int v9_video_sdk_config_show(struct vty *vty)
 {
-	u_int32 i = 0;
+	ospl_uint32 i = 0;
 	v9_video_board_lock();
 #ifdef V9_VIDEO_SDK_API
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)

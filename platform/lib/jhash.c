@@ -41,11 +41,11 @@
  * of bytes.  No alignment or length assumptions are made about
  * the input key.
  */
-u_int32_t
-jhash (const void *key, u_int32_t length, u_int32_t initval)
+ospl_uint32
+jhash (const void *key, ospl_uint32 length, ospl_uint32 initval)
 {
-  u_int32_t a, b, c, len;
-  const u_int8_t *k = key;
+  ospl_uint32 a, b, c, len;
+  const ospl_uint8 *k = key;
 
   len = length;
   a = b = JHASH_GOLDEN_RATIO;
@@ -54,14 +54,14 @@ jhash (const void *key, u_int32_t length, u_int32_t initval)
   while (len >= 12)
     {
       a +=
-        (k[0] + ((u_int32_t) k[1] << 8) + ((u_int32_t) k[2] << 16) +
-         ((u_int32_t) k[3] << 24));
+        (k[0] + ((ospl_uint32) k[1] << 8) + ((ospl_uint32) k[2] << 16) +
+         ((ospl_uint32) k[3] << 24));
       b +=
-        (k[4] + ((u_int32_t) k[5] << 8) + ((u_int32_t) k[6] << 16) +
-         ((u_int32_t) k[7] << 24));
+        (k[4] + ((ospl_uint32) k[5] << 8) + ((ospl_uint32) k[6] << 16) +
+         ((ospl_uint32) k[7] << 24));
       c +=
-        (k[8] + ((u_int32_t) k[9] << 8) + ((u_int32_t) k[10] << 16) +
-         ((u_int32_t) k[11] << 24));
+        (k[8] + ((ospl_uint32) k[9] << 8) + ((ospl_uint32) k[10] << 16) +
+         ((ospl_uint32) k[11] << 24));
 
       __jhash_mix (a, b, c);
 
@@ -73,25 +73,25 @@ jhash (const void *key, u_int32_t length, u_int32_t initval)
   switch (len)
     {
     case 11:
-      c += ((u_int32_t) k[10] << 24);
+      c += ((ospl_uint32) k[10] << 24);
     case 10:
-      c += ((u_int32_t) k[9] << 16);
+      c += ((ospl_uint32) k[9] << 16);
     case 9:
-      c += ((u_int32_t) k[8] << 8);
+      c += ((ospl_uint32) k[8] << 8);
     case 8:
-      b += ((u_int32_t) k[7] << 24);
+      b += ((ospl_uint32) k[7] << 24);
     case 7:
-      b += ((u_int32_t) k[6] << 16);
+      b += ((ospl_uint32) k[6] << 16);
     case 6:
-      b += ((u_int32_t) k[5] << 8);
+      b += ((ospl_uint32) k[5] << 8);
     case 5:
       b += k[4];
     case 4:
-      a += ((u_int32_t) k[3] << 24);
+      a += ((ospl_uint32) k[3] << 24);
     case 3:
-      a += ((u_int32_t) k[2] << 16);
+      a += ((ospl_uint32) k[2] << 16);
     case 2:
-      a += ((u_int32_t) k[1] << 8);
+      a += ((ospl_uint32) k[1] << 8);
     case 1:
       a += k[0];
     };
@@ -101,13 +101,13 @@ jhash (const void *key, u_int32_t length, u_int32_t initval)
   return c;
 }
 
-/* A special optimized version that handles 1 or more of u_int32_ts.
- * The length parameter here is the number of u_int32_ts in the key.
+/* A special optimized version that handles 1 or more of ospl_uint32s.
+ * The length parameter here is the number of ospl_uint32s in the key.
  */
-u_int32_t
-jhash2 (const u_int32_t *k, u_int32_t length, u_int32_t initval)
+ospl_uint32
+jhash2 (const ospl_uint32 *k, ospl_uint32 length, ospl_uint32 initval)
 {
-  u_int32_t a, b, c, len;
+  ospl_uint32 a, b, c, len;
 
   a = b = JHASH_GOLDEN_RATIO;
   c = initval;
@@ -145,8 +145,8 @@ jhash2 (const u_int32_t *k, u_int32_t length, u_int32_t initval)
  * NOTE: In partilar the "c += length; __jhash_mix(a,b,c);" normally
  *       done at the end is not done here.
  */
-u_int32_t
-jhash_3words (u_int32_t a, u_int32_t b, u_int32_t c, u_int32_t initval)
+ospl_uint32
+jhash_3words (ospl_uint32 a, ospl_uint32 b, ospl_uint32 c, ospl_uint32 initval)
 {
   a += JHASH_GOLDEN_RATIO;
   b += JHASH_GOLDEN_RATIO;
@@ -157,14 +157,14 @@ jhash_3words (u_int32_t a, u_int32_t b, u_int32_t c, u_int32_t initval)
   return c;
 }
 
-u_int32_t
-jhash_2words (u_int32_t a, u_int32_t b, u_int32_t initval)
+ospl_uint32
+jhash_2words (ospl_uint32 a, ospl_uint32 b, ospl_uint32 initval)
 {
   return jhash_3words (a, b, 0, initval);
 }
 
-u_int32_t
-jhash_1word (u_int32_t a, u_int32_t initval)
+ospl_uint32
+jhash_1word (ospl_uint32 a, ospl_uint32 initval)
 {
   return jhash_3words (a, 0, 0, initval);
 }

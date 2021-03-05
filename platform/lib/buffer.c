@@ -36,13 +36,13 @@ struct buffer_data
 	struct buffer_data *next;
 
 	/* Location to add new data. */
-	size_t cp;
+	ospl_size_t cp;
 
 	/* Pointer to data not yet flushed. */
-	size_t sp;
+	ospl_size_t sp;
 
 	/* Actual data stream (variable length). */
-	unsigned char data[]; /* real dimension is buffer->size */
+	ospl_uchar data[]; /* real dimension is buffer->size */
 };
 
 /* Buffer master. */
@@ -53,7 +53,7 @@ struct buffer
 	struct buffer_data *tail;
 
 	/* Size of each buffer_data chunk. */
-	size_t size;
+	ospl_size_t size;
 };
 /* It should always be true that: 0 <= sp <= cp <= size */
 
@@ -65,7 +65,7 @@ struct buffer
 
 /* Make new buffer. */
 struct buffer *
-buffer_new(size_t size)
+buffer_new(ospl_size_t size)
 {
 	struct buffer *b;
 
@@ -75,7 +75,7 @@ buffer_new(size_t size)
 		b->size = size;
 	else
 	{
-		static size_t default_size;
+		static ospl_size_t default_size;
 		if (!default_size)
 		{
 			long pgsz = sysconf(_SC_PAGESIZE);
@@ -95,13 +95,13 @@ void buffer_free(struct buffer *b)
 }
 
 /* Make string clone. */
-char *
+ospl_char *
 buffer_getstr(struct buffer *b)
 {
-	size_t totlen = 0;
+	ospl_size_t totlen = 0;
 	struct buffer_data *data;
-	char *s;
-	char *p;
+	ospl_char *s;
+	ospl_char *p;
 
 	for (data = b->head; data; data = data->next)
 		totlen += data->cp - data->sp;
@@ -118,7 +118,7 @@ buffer_getstr(struct buffer *b)
 }
 
 /* Return 1 if buffer is empty. */
-int buffer_empty(struct buffer *b)
+ospl_bool buffer_empty(struct buffer *b)
 {
 	return (b->head == NULL);
 }
@@ -157,7 +157,7 @@ buffer_add(struct buffer *b)
 }
 
 /* Write data to buffer. */
-void buffer_put(struct buffer *b, const void *p, size_t size)
+void buffer_put(struct buffer *b, const void *p, ospl_size_t size)
 {
 	struct buffer_data *data = b->tail;
 	const char *ptr = p;
@@ -165,7 +165,7 @@ void buffer_put(struct buffer *b, const void *p, size_t size)
 	/* We use even last one byte of data buffer. */
 	while (size)
 	{
-		size_t chunk;
+		ospl_size_t chunk;
 
 		/* If there is no data buffer add it. */
 		if (data == NULL || data->cp == b->size)
@@ -180,7 +180,7 @@ void buffer_put(struct buffer *b, const void *p, size_t size)
 }
 
 /* Insert character into the buffer. */
-void buffer_putc(struct buffer *b, u_char c)
+void buffer_putc(struct buffer *b, ospl_uchar c)
 {
 	buffer_put(b, &c, 1);
 }
@@ -193,11 +193,11 @@ void buffer_putstr(struct buffer *b, const char *c)
 
 /* Keep flushing data to the fd until the buffer is empty or an error is
  encountered or the operation would block. */
-buffer_status_t buffer_flush_all(struct buffer *b, int fd, int type)
+buffer_status_t buffer_flush_all(struct buffer *b, int fd, ospl_uint32 type)
 {
 	buffer_status_t ret;
 	struct buffer_data *head;
-	size_t head_sp;
+	ospl_size_t head_sp;
 
 	if (!b->head)
 		return BUFFER_EMPTY;
@@ -216,21 +216,21 @@ buffer_status_t buffer_flush_all(struct buffer *b, int fd, int type)
 
 /* Flush enough data to fill a terminal window of the given scene (used only
  by vty telnet interface). */
-buffer_status_t buffer_flush_window(struct buffer *b, int fd, int width,
-		int height, int erase_flag, int no_more_flag, int type)
+buffer_status_t buffer_flush_window(struct buffer *b, int fd, ospl_uint32 width,
+		ospl_uint32 height, ospl_uint32 erase_flag, ospl_uint32 no_more_flag, ospl_uint32 type)
 {
-	int nbytes;
-	int iov_alloc;
-	int iov_index;
+	ospl_uint32 nbytes;
+	ospl_uint32 iov_alloc;
+	ospl_uint32 iov_index;
 	struct iovec *iov;
 	struct iovec small_iov[3];
-	char more[] = " --More-- ";
-	char erase[] =
+	ospl_char more[] = " --More-- ";
+	ospl_char erase[] =
 	{ 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, ' ', ' ', ' ',
 			' ', ' ', ' ', ' ', ' ', ' ', ' ', 0x08, 0x08, 0x08, 0x08, 0x08,
 			0x08, 0x08, 0x08, 0x08, 0x08 };
 	struct buffer_data *data;
-	int column;
+	ospl_uint32 column;
 
 	if (!b->head)
 		return BUFFER_EMPTY;
@@ -277,7 +277,7 @@ buffer_status_t buffer_flush_window(struct buffer *b, int fd, int width,
 	column = 1; /* Column position of next character displayed. */
 	for (data = b->head; data && (height > 0); data = data->next)
 	{
-		size_t cp;
+		ospl_size_t cp;
 
 		cp = data->sp;
 		while ((cp < data->cp) && (height > 0))
@@ -295,7 +295,7 @@ buffer_status_t buffer_flush_window(struct buffer *b, int fd, int width,
 				column++;
 			cp++;
 		}
-		iov[iov_index].iov_base = (char *) (data->data + data->sp);
+		iov[iov_index].iov_base = (ospl_char *) (data->data + data->sp);
 		iov[iov_index++].iov_len = cp - data->sp;
 		data->sp = cp;
 
@@ -341,7 +341,7 @@ buffer_status_t buffer_flush_window(struct buffer *b, int fd, int width,
 
 		while (iov_index > 0)
 		{
-			int iov_size;
+			ospl_uint32 iov_size;
 
 			iov_size = ((iov_index > IOV_MAX) ? IOV_MAX : iov_index);
 			if(type == IPCOM_STACK)
@@ -391,7 +391,7 @@ buffer_status_t buffer_flush_window(struct buffer *b, int fd, int width,
  all of the queued data, just a "big" chunk.  It returns 0 if it was
  able to empty out the buffers completely, 1 if more flushing is
  required later, or -1 on a fatal write error. */
-buffer_status_t buffer_flush_available(struct buffer *b, int fd, int type)
+buffer_status_t buffer_flush_available(struct buffer *b, int fd, ospl_uint32 type)
 {
 
 	/* These are just reasonable values to make sure a significant amount of
@@ -405,10 +405,10 @@ buffer_status_t buffer_flush_available(struct buffer *b, int fd, int type)
 #define MAX_FLUSH 131072
 
 	struct buffer_data *d = NULL;
-	size_t written = 0;
+	ospl_size_t written = 0;
 	struct iovec iov[MAX_CHUNKS];
-	size_t iovcnt = 0;
-	size_t nbyte = 0;
+	ospl_size_t iovcnt = 0;
+	ospl_size_t nbyte = 0;
 
 	for (d = b->head; d && (iovcnt < MAX_CHUNKS) && (nbyte < MAX_FLUSH);
 			d = d->next, iovcnt++)
@@ -471,7 +471,7 @@ buffer_status_t buffer_flush_available(struct buffer *b, int fd, int type)
 }
 
 buffer_status_t buffer_write(struct buffer *b, int fd, const void *p,
-		size_t size, int type)
+		ospl_size_t size, ospl_uint32 type)
 {
 	ssize_t nbytes;
 
@@ -506,7 +506,7 @@ buffer_status_t buffer_write(struct buffer *b, int fd, const void *p,
 	}
 	/* Add any remaining data to the buffer. */
 	{
-		size_t written = nbytes;
+		ospl_size_t written = nbytes;
 		if (written < size)
 			buffer_put(b, ((const char *) p) + written, size - written);
 	}

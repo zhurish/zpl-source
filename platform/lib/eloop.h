@@ -22,6 +22,10 @@
 #ifndef _ELOOP_H
 #define _ELOOP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #include "zebra.h"
 #include "vty.h"
@@ -34,7 +38,7 @@ struct eloop_list
 {
   struct eloop *head;
   struct eloop *tail;
-  int count;
+  ospl_uint32 count;
 };
 
 struct pqueue;
@@ -48,7 +52,7 @@ typedef fd_set eloop_fd_set;
 #define OS_ELOOP_CPU_MAX	128
 struct eloop_cpu
 {
-	int key;
+	ospl_uint32 key;
 	void *data;
 };
 
@@ -67,19 +71,19 @@ struct eloop_master
   eloop_fd_set readfd;
   eloop_fd_set writefd;
   eloop_fd_set exceptfd;
-  unsigned long alloc;
+  ospl_ulong alloc;
 
-  u_int module;
+  ospl_uint32 module;
 
   int max_fd;
   struct eloop_cpu cpu_record[OS_ELOOP_CPU_MAX];
   struct timeval relative_time;
   struct eloop *eloop_current;
   void *mutex;
-  BOOL bquit;
+  ospl_bool bquit;
 };
 
-typedef unsigned char eloop_type;
+typedef ospl_uchar eloop_type;
 
 /* Thread itself. */
 struct eloop
@@ -92,22 +96,22 @@ struct eloop
   int (*func) (struct eloop *); /* event function */
   void *arg;			/* event argument */
   union {
-    int val;			/* second argument of the event. */
+    ospl_uint32 val;			/* second argument of the event. */
     int fd;			/* file descriptor in case of read/write. */
     struct timeval sands;	/* rest of time sands value. */
   } u;
-  int index;			/* used for timers to store position in queue */
+  ospl_uint32 index;			/* used for timers to store position in queue */
   struct timeval real;
   struct cpu_eloop_history *hist; /* cache pointer to cpu_history */
   const char *funcname;
   const char *schedfrom;
-  int schedfrom_line;
+  ospl_uint32 schedfrom_line;
 };
 
 struct cpu_eloop_history
 {
   int (*func)(struct eloop *);
-  unsigned int total_calls;
+  ospl_uint32  total_calls;
   struct os_time_stats real;
   eloop_type types;
   const char *funcname;
@@ -168,7 +172,7 @@ struct cpu_eloop_history
 #define ELOOP_WRITE_OFF(eloop)  ELOOP_OFF(eloop)
 #define ELOOP_TIMER_OFF(eloop)  ELOOP_OFF(eloop)
 
-#define debugargdef  const char *funcname, const char *schedfrom, int fromln
+#define debugargdef  const char *funcname, const char *schedfrom, ospl_uint32 fromln
 
 #define eloop_add_read(m,f,a,v) funcname_eloop_add_read(m,f,a,v,#f,__FILE__,__LINE__)
 #define eloop_add_write(m,f,a,v) funcname_eloop_add_write(m,f,a,v,#f,__FILE__,__LINE__)
@@ -185,7 +189,7 @@ struct cpu_eloop_history
 /* Prototypes. */
 extern struct eloop_master *eloop_master_create (void);
 
-extern struct eloop_master *eloop_master_module_create (int );
+extern struct eloop_master *eloop_master_module_create (ospl_uint32 );
 
 extern void eloop_master_free (struct eloop_master *);
 
@@ -222,10 +226,10 @@ extern struct eloop *funcname_eloop_ready (struct eloop_master *,
 #undef debugargdef
 
 extern void eloop_cancel (struct eloop *);
-extern unsigned int eloop_cancel_event (struct eloop_master *, void *);
+extern ospl_uint32  eloop_cancel_event (struct eloop_master *, void *);
 extern struct eloop *eloop_fetch (struct eloop_master *, struct eloop *);
 extern void eloop_call (struct eloop *);
-extern unsigned long eloop_timer_remain_second (struct eloop *);
+extern ospl_ulong eloop_timer_remain_second (struct eloop *);
 extern struct timeval eloop_timer_remain(struct eloop*);
 extern int eloop_should_yield (struct eloop *);
 extern int eloop_fetch_quit (struct eloop_master *);
@@ -234,8 +238,8 @@ extern int eloop_wait_quit (struct eloop_master *);
 extern void eloop_getrusage (struct timeval *);
 
 /* Returns elapsed real (wall clock) time. */
-extern unsigned long eloop_consumed_time(struct timeval *after, struct timeval *before,
-					  unsigned long *cpu_time_elapsed);
+extern ospl_ulong eloop_consumed_time(struct timeval *after, struct timeval *before,
+					  ospl_ulong *cpu_time_elapsed);
 
 extern struct eloop_master * master_eloop[];
 extern struct eloop *eloop_current_get();
@@ -243,5 +247,9 @@ extern struct eloop *eloop_current_get();
 
 extern int cpu_eloop_show(struct eloop_master *m, struct vty *vty);
 
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ELOOP_H */

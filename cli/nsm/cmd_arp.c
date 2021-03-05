@@ -31,10 +31,10 @@ struct arp_user
 	struct vty 		*vty;
 	arp_class_t		class;
 	ifindex_t		ifindex;
-	unsigned short	vlan;
+	ospl_uint16	vlan;
 	vrf_id_t		vrfid;
-	BOOL			all;
-	BOOL			summary;
+	ospl_bool			all;
+	ospl_bool			summary;
 
 	//summary
 	int				iStatic;
@@ -151,7 +151,7 @@ DEFUN (ip_arp_add,
 {
 	int ret = ERROR;
 	struct prefix address;
-	unsigned char mac[8];
+	ospl_uint8 mac[8];
 	struct interface *ifp;
 	if (argc < 2)
 		return CMD_WARNING;
@@ -250,17 +250,17 @@ DEFUN (clear_ip_arp_add,
 	int ret = ERROR;
 	if(argc == 0)
 	{
-		ret = ip_arp_cleanup_api(ARP_DYNAMIC, FALSE, 0);
+		ret = ip_arp_cleanup_api(ARP_DYNAMIC, ospl_false, 0);
 	}
 	else if(argc == 1)
 	{
-		//ret = ip_arp_cleanup_api(ARP_DYNAMIC, FALSE, 0);
+		//ret = ip_arp_cleanup_api(ARP_DYNAMIC, ospl_false, 0);
 		vty_out(vty, "not implementation now%s",VTY_NEWLINE);
 	}
 	else if(argc > 2)
 	{
 		if(if_lookup_by_index(if_ifindex_make(argv[1], argv[2])))
-			ret = ip_arp_cleanup_api(ARP_DYNAMIC, FALSE, if_ifindex_make(argv[1], argv[2]));
+			ret = ip_arp_cleanup_api(ARP_DYNAMIC, ospl_false, if_ifindex_make(argv[1], argv[2]));
 	}
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -305,7 +305,7 @@ DEFUN (show_ip_arp,
 		{
 			//dynamic|static|summary
 			if(os_memcmp(argv[0], "summary", 3) == 0)
-				user.summary = TRUE;
+				user.summary = ospl_true;
 			if(os_memcmp(argv[0], "static", 3) == 0)
 				user.class = ARP_STATIC;
 			if(os_memcmp(argv[0], "dynamic", 3) == 0)

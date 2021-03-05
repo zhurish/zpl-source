@@ -25,7 +25,7 @@ void mqtt_sub_message_v5_callback(struct mosquitto *mosq, void *obj,
 		const struct mosquitto_message *message,
 		const mosquitto_property *properties)
 {
-	int i, /*msg_count = 0,*/last_mid = 0;
+	ospl_uint32 i, /*msg_count = 0,*/last_mid = 0;
 	bool res;
 	zassert(mosq != NULL);
 	zassert(obj != NULL);

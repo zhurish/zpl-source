@@ -8,6 +8,10 @@
 #ifndef __UDHCP_LLIST_H__
 #define __UDHCP_LLIST_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 typedef struct llist_t {
 	struct llist_t *link;
@@ -23,5 +27,9 @@ llist_t *llist_rev(llist_t *list);
 llist_t *llist_find_str(llist_t *first, const char *str);
 
 
-
+ 
+#ifdef __cplusplus
+}
+#endif
+ 
 #endif /* __UDHCP_LLIST_H__ */

@@ -13,16 +13,22 @@
 #include "videoEncoder.hpp"
 
 #include "h264_config.hpp"
-
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "ospl_type.h"
+#ifdef __cplusplus
+}
+#endif
 class h264Encoder  : public videoEncoder {
     public:
         h264Encoder();
         ~h264Encoder();
 
         int videoEncoderSetup(const int width, const int height, const int fmt, const int fps);
-        int videoEncoderInput(const unsigned char *frame, const int len, const bool keyframe);
-        int videoEncoderOutput(unsigned char *frame, const int len);
-        unsigned char * videoEncoderOutput();
+        int videoEncoderInput(const ospl_uint8 *frame, const int len, const bool keyframe);
+        int videoEncoderOutput(ospl_uint8 *frame, const int len);
+        ospl_uint8 * videoEncoderOutput();
         int videoEncoderOutputSize(const bool clear=true);
         int videoEncoderDestroy();
 
@@ -32,15 +38,15 @@ class h264Encoder  : public videoEncoder {
     private:
 #ifdef PL_LIBX264_MODULE
         int h264_encoder_setup(const int width, const int height, const int fmt, const int fps);
-        int h264_encoder_input(const unsigned char *frame, const int len, const bool keyframe);
-        int h264_encoder_output(unsigned char *frame, const int len);
+        int h264_encoder_input(const ospl_uint8 *frame, const int len, const bool keyframe);
+        int h264_encoder_output(ospl_uint8 *frame, const int len);
 #endif
 #ifdef PL_OPENH264_MODULE
         int openh264_encoder_destroy();
         int openh264_encoder_setup(const int width, const int height, const int fmt, const int fps);
-        int openh264_encoder_input(const unsigned char *frame, const int len, const bool keyframe);
-        int openh264_encoder_output(unsigned char *frame, const int len);
-        int yuyv_yuv422_to_yuv420(const unsigned char yuv422[], unsigned char yuv420[], const int width, const int height);
+        int openh264_encoder_input(const ospl_uint8 *frame, const int len, const bool keyframe);
+        int openh264_encoder_output(ospl_uint8 *frame, const int len);
+        int yuyv_yuv422_to_yuv420(const ospl_uint8 yuv422[], ospl_uint8 yuv420[], const int width, const int height);
 #endif
     private:
 
@@ -50,16 +56,16 @@ class h264Encoder  : public videoEncoder {
         ISVCEncoder		*m_encoder = nullptr;
         SSourcePicture		m_esrc_pic;
         //unsigned		enc_input_size;
-        //unsigned char		*enc_frame_whole;
+        //ospl_uint8		*enc_frame_whole;
         //unsigned		enc_frame_size;
         //unsigned		enc_processed;
         //pj_timestamp		ets;
         SFrameBSInfo		m_sfbsinfo;
         int			m_ilayer = 0;
-        //unsigned int		iDLayerQp;
+        //ospl_uint32		iDLayerQp;
         //SSliceArgument	sSliceArgument;
         char *m_out_frame_payload = nullptr;
-        unsigned char *m_yuv420 = nullptr;
+        ospl_uint8 *m_yuv420 = nullptr;
 #endif
 #ifdef PL_LIBX264_MODULE
         x264_param_t m_param;

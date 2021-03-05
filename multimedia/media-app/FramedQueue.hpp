@@ -26,7 +26,13 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include <semaphore.h>
 #include <vector>
 #include <list>
-
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "ospl_type.h"
+#ifdef __cplusplus
+}
+#endif
 //#define FRAMED_QUEUE_SYNC
 
 class ringBuffer {
@@ -37,8 +43,8 @@ public:
   int rngSize();//
   bool rngIsEmpty();
   bool rngIsFull ();
-  int 	rngBufGet (unsigned char *buffer, int maxbytes);
-  int 	rngBufPut (unsigned char *buffer, int nbytes);
+  int 	rngBufGet (ospl_uint8 *buffer, int maxbytes);
+  int 	rngBufPut (ospl_uint8 *buffer, ospl_uint32 nbytes);
   int 	rngFreeBytes ();
   void 	rngFlush ();
 
@@ -46,15 +52,15 @@ private:
   int pToBuf = 0;		/* offset from start of buffer where to write next */
   int pFromBuf = 0;	/* offset from start of buffer where to read next */
   int bufSize = 0;	/* size of ring in bytes */
-  unsigned char *buf = nullptr;		/* pointer to start of buffer */
+  ospl_uint8 *buf = nullptr;		/* pointer to start of buffer */
 };
 
 
 class listData{
 public:
-  listData(unsigned char *d, int len);
+  listData(ospl_uint8 *d, int len);
   virtual ~listData();
-  unsigned char *data;
+  ospl_uint8 *data;
   int maxsize;
   int datasize;
 };
@@ -64,13 +70,13 @@ public:
   vectorBuffer(int num);
   virtual ~vectorBuffer();
 
-  int vectorBufferDataAdd(unsigned char *d, int l);
-  int vectorBufferDataGet(unsigned char *d, int l);
+  int vectorBufferDataAdd(ospl_uint8 *d, int l);
+  int vectorBufferDataGet(ospl_uint8 *d, int l);
   int vectorBufferDataFlush(void);
   bool vectorBufferDataIsFull();
   bool vectorBufferDataIsEmpty();
 private:
-  listData * vectorBufferDataCreate(unsigned char *d, int l);
+  listData * vectorBufferDataCreate(ospl_uint8 *d, int l);
   int vectorBufferDataFree(void);
 
 private:
@@ -84,13 +90,13 @@ public:
   listBuffer(int num);
   virtual ~listBuffer();
 
-  int listBufferDataAdd(unsigned char *d, int l);
-  int listBufferDataGet(unsigned char *d, int l);
+  int listBufferDataAdd(ospl_uint8 *d, int l);
+  int listBufferDataGet(ospl_uint8 *d, int l);
   int listBufferDataFlush(void);
   bool listBufferDataIsFull();
   bool listBufferDataIsEmpty();
 private:
-  listData * listBufferDataCreate(unsigned char *d, int l);
+  listData * listBufferDataCreate(ospl_uint8 *d, int l);
   int listBufferDataFree(void);
 
 private:
@@ -108,13 +114,13 @@ public:
   static const int FRAMED_QUEUE_LIST = 1;
   static const int FRAMED_QUEUE_MAP = 2;
 
-  FramedQueue(int type);
-  //FramedQueue(int type, DT *p);
+  FramedQueue(ospl_uint32 type);
+  //FramedQueue(ospl_uint32 type, DT *p);
   virtual ~FramedQueue();
 
   int FramedQueueInit(int size, bool syncsize);
-  int FramedQueueDataPut(unsigned char *d, int l);
-  int FramedQueueDataGet(unsigned char *d, int l);
+  int FramedQueueDataPut(ospl_uint8 *d, int l);
+  int FramedQueueDataGet(ospl_uint8 *d, int l);
   int FramedQueueDataSizeGet();
 
   int FramedQueueDataFlush(void);

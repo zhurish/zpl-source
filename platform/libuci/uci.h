@@ -346,7 +346,7 @@ void uci_parse_section(struct uci_section *s, const struct uci_parse_option *opt
  * @tb: list of option pointers
  * @n_opts: number of options
  */
-uint32_t uci_hash_options(struct uci_option **tb, int n_opts);
+int  uci_hash_options(struct uci_option **tb, int n_opts);
 
 
 /* UCI data structures */

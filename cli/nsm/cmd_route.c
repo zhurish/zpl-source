@@ -49,15 +49,15 @@ zebra_static_ipv4_safi (struct vty *vty, safi_t safi, int add_cmd,
 			const char *vrf_id_str)
 {
   int ret;
-  u_char distance;
+  ospl_uchar distance;
   struct prefix p;
   struct in_addr gate;
   struct in_addr mask;
   const char *ifname;
-  u_char flag = 0;
+  ospl_uchar flag = 0;
   route_tag_t tag = 0;
   vrf_id_t vrf_id = VRF_DEFAULT;
-//  u_char vrf_name = 0;
+//  ospl_uchar vrf_name = 0;
   ret = str2prefix (dest_str, &p);
   if (ret <= 0)
     {
@@ -2081,7 +2081,7 @@ DEFUN (ip_protocol,
        "Protocol name\n"
        "Route map name\n")
 {
-  int i;
+  ospl_uint32 i = 0;
 
   if (strcasecmp(argv[0], "any") == 0)
     i = ZEBRA_ROUTE_MAX;
@@ -2106,7 +2106,7 @@ DEFUN (no_ip_protocol,
        "Remove route map from PROTO\n"
        "Protocol name\n")
 {
-  int i;
+  ospl_uint32 i = 0;
 
   if (strcasecmp(argv[0], "any") == 0)
     i = ZEBRA_ROUTE_MAX;
@@ -2177,7 +2177,7 @@ vty_show_ip_route_detail (struct vty *vty, struct route_node *rn, int mcast)
           || rib->type == ZEBRA_ROUTE_NHRP
           || rib->type == ZEBRA_ROUTE_BGP)
 	{
-	  time_t uptime;
+	  ospl_time_t uptime;
 	  struct tm *tm;
 
 	  uptime = time (NULL);
@@ -2402,7 +2402,7 @@ vty_show_ip_route (struct vty *vty, struct route_node *rn, struct rib *rib)
           || rib->type == ZEBRA_ROUTE_NHRP
           || rib->type == ZEBRA_ROUTE_BGP)
 	{
-	  time_t uptime;
+	  ospl_time_t uptime;
 	  struct tm *tm;
 
 	  uptime = time (NULL);
@@ -2667,7 +2667,7 @@ DEFUN (show_ip_route_supernets,
   struct route_table *table;
   struct route_node *rn;
   struct rib *rib;
-  u_int32_t addr;
+  ospl_uint32 addr;
   int first = 1;
   vrf_id_t vrf_id = VRF_DEFAULT;
 
@@ -2729,7 +2729,7 @@ DEFUN (show_ip_route_protocol,
        "IP routing table\n"
        QUAGGA_IP_REDIST_HELP_STR_ZEBRA)
 {
-  int type;
+  ospl_uint32 type;
   struct route_table *table;
   struct route_node *rn;
   struct rib *rib;
@@ -2946,9 +2946,9 @@ vty_show_ip_route_summary (struct vty *vty, struct route_table *table)
   struct nexthop *nexthop;
 #define ZEBRA_ROUTE_IBGP  ZEBRA_ROUTE_MAX
 #define ZEBRA_ROUTE_TOTAL (ZEBRA_ROUTE_IBGP + 1)
-  u_int32_t rib_cnt[ZEBRA_ROUTE_TOTAL + 1];
-  u_int32_t fib_cnt[ZEBRA_ROUTE_TOTAL + 1];
-  u_int32_t i;
+  ospl_uint32 rib_cnt[ZEBRA_ROUTE_TOTAL + 1];
+  ospl_uint32 fib_cnt[ZEBRA_ROUTE_TOTAL + 1];
+  ospl_uint32 i;
 
   memset (&rib_cnt, 0, sizeof(rib_cnt));
   memset (&fib_cnt, 0, sizeof(fib_cnt));
@@ -3020,9 +3020,9 @@ vty_show_ip_route_summary_prefix (struct vty *vty, struct route_table *table)
   struct nexthop *nexthop;
 #define ZEBRA_ROUTE_IBGP  ZEBRA_ROUTE_MAX
 #define ZEBRA_ROUTE_TOTAL (ZEBRA_ROUTE_IBGP + 1)
-  u_int32_t rib_cnt[ZEBRA_ROUTE_TOTAL + 1];
-  u_int32_t fib_cnt[ZEBRA_ROUTE_TOTAL + 1];
-  u_int32_t i;
+  ospl_uint32 rib_cnt[ZEBRA_ROUTE_TOTAL + 1];
+  ospl_uint32 fib_cnt[ZEBRA_ROUTE_TOTAL + 1];
+  ospl_uint32 i;
   int       cnt;
 
   memset (&rib_cnt, 0, sizeof(rib_cnt));
@@ -3280,7 +3280,7 @@ DEFUN (show_ip_route_supernets_vrf_all,
   struct rib *rib;
   struct nsm_vrf *zvrf;
   vrf_iter_t iter;
-  u_int32_t addr;
+  ospl_uint32 addr;
   int first = 1;
 
   for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
@@ -3321,7 +3321,7 @@ DEFUN (show_ip_route_protocol_vrf_all,
        QUAGGA_IP_REDIST_HELP_STR_ZEBRA
        VRF_ALL_CMD_HELP_STR)
 {
-  int type;
+  ospl_uint32 type;
   struct route_table *table;
   struct route_node *rn;
   struct rib *rib;
@@ -3565,7 +3565,7 @@ DEFUN (show_ip_protocol,
         IP_STR
        "IP protocol filtering status\n")
 {
-    int i; 
+    ospl_uint32 i = 0; 
 
     vty_out(vty, "Protocol    : route-map %s", VTY_NEWLINE);
     vty_out(vty, "------------------------%s", VTY_NEWLINE);
@@ -3596,13 +3596,13 @@ static_ipv6_func (struct vty *vty, int add_cmd, const char *dest_str,
 		  const char *distance_str, const char *vrf_id_str)
 {
   int ret;
-  u_char distance;
+  ospl_uchar distance;
   struct prefix p;
   struct in6_addr *gate = NULL;
   struct in6_addr gate_addr;
-  u_char type = 0;
+  ospl_uchar type = 0;
   vrf_id_t vrf_id = VRF_DEFAULT;
-  u_char flag = 0;
+  ospl_uchar flag = 0;
   //, vrf_name = 0;
   route_tag_t tag = 0;
   
@@ -4906,7 +4906,7 @@ DEFUN (show_ipv6_route_protocol,
        "IP routing table\n"
 	QUAGGA_IP6_REDIST_HELP_STR_ZEBRA)
 {
-  int type;
+  ospl_uint32 type;
   struct route_table *table;
   struct route_node *rn;
   struct rib *rib;
@@ -5371,7 +5371,7 @@ DEFUN (show_ipv6_route_protocol_vrf_all,
        QUAGGA_IP6_REDIST_HELP_STR_ZEBRA
        VRF_ALL_CMD_HELP_STR)
 {
-  int type;
+  ospl_uint32 type;
   struct route_table *table;
   struct route_node *rn;
   struct rib *rib;
@@ -5660,7 +5660,7 @@ zebra_ip_config (struct vty *vty)
 
 static int config_write_vty(struct vty *vty)
 {
-  int i;
+  ospl_uint32 i = 0;
   enum multicast_mode ipv4_multicast_mode = multicast_mode_ipv4_get ();
 
   if (ipv4_multicast_mode != MCAST_NO_CONFIG)

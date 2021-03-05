@@ -22,6 +22,10 @@
 #ifndef _ZEBRA_ZSERV_H
 #define _ZEBRA_ZSERV_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "nsm_rib.h"
 #include "if.h"
 #include "workqueue.h"
@@ -54,7 +58,7 @@ struct zserv
   struct thread *t_suicide;
 
   /* default routing table this client munges */
-  int rtm_table;
+  ospl_uint32 rtm_table;
 
   /* This client's redistribute flag. */
   vrf_bitmap_t redist[ZEBRA_ROUTE_MAX];
@@ -69,35 +73,35 @@ struct zserv
   vrf_bitmap_t ridinfo;
 
   /* client's protocol */
-  u_char proto;
+  ospl_uchar proto;
 
   /* Statistics */
-  u_int32_t redist_v4_add_cnt;
-  u_int32_t redist_v4_del_cnt;
-  u_int32_t redist_v6_add_cnt;
-  u_int32_t redist_v6_del_cnt;
-  u_int32_t v4_route_add_cnt;
-  u_int32_t v4_route_upd8_cnt;
-  u_int32_t v4_route_del_cnt;
-  u_int32_t v6_route_add_cnt;
-  u_int32_t v6_route_del_cnt;
-  u_int32_t v6_route_upd8_cnt;
-  u_int32_t connected_rt_add_cnt;
-  u_int32_t connected_rt_del_cnt;
-  u_int32_t ifup_cnt;
-  u_int32_t ifdown_cnt;
-  u_int32_t ifadd_cnt;
-  u_int32_t ifdel_cnt;
+  ospl_uint32 redist_v4_add_cnt;
+  ospl_uint32 redist_v4_del_cnt;
+  ospl_uint32 redist_v6_add_cnt;
+  ospl_uint32 redist_v6_del_cnt;
+  ospl_uint32 v4_route_add_cnt;
+  ospl_uint32 v4_route_upd8_cnt;
+  ospl_uint32 v4_route_del_cnt;
+  ospl_uint32 v6_route_add_cnt;
+  ospl_uint32 v6_route_del_cnt;
+  ospl_uint32 v6_route_upd8_cnt;
+  ospl_uint32 connected_rt_add_cnt;
+  ospl_uint32 connected_rt_del_cnt;
+  ospl_uint32 ifup_cnt;
+  ospl_uint32 ifdown_cnt;
+  ospl_uint32 ifadd_cnt;
+  ospl_uint32 ifdel_cnt;
 
-  time_t connect_time;
-  time_t last_read_time;
-  time_t last_write_time;
-  time_t nh_reg_time;
-  time_t nh_dereg_time;
-  time_t nh_last_upd_time;
+  ospl_time_t connect_time;
+  ospl_time_t last_read_time;
+  ospl_time_t last_write_time;
+  ospl_time_t nh_reg_time;
+  ospl_time_t nh_dereg_time;
+  ospl_time_t nh_last_upd_time;
 
-  int last_read_cmd;
-  int last_write_cmd;
+  ospl_uint32 last_read_cmd;
+  ospl_uint32 last_write_cmd;
 };
 
 /* Zebra instance */
@@ -108,7 +112,7 @@ struct zebra_t
   struct list *client_list;
 
   /* default table */
-  int rtm_table_default;
+  ospl_uint32 rtm_table_default;
 
   /* rib work queue */
   struct work_queue *ribq;
@@ -119,7 +123,7 @@ extern struct zebra_t zebrad;
 /* Prototypes. */
 extern void zebra_init (void);
 extern void zebra_if_init (void);
-extern void zebra_zserv_socket_init (char *path);
+extern void zebra_zserv_socket_init (ospl_char *path);
 
 extern void hostinfo_get (void);
 extern void rib_init (void);
@@ -137,13 +141,13 @@ extern void zebra_vty_init (void);
 
 extern int zsend_interface_add (struct zserv *, struct interface *);
 extern int zsend_interface_delete (struct zserv *, struct interface *);
-extern int zsend_interface_address (int, struct zserv *, struct interface *,
+extern int zsend_interface_address (ospl_uint16, struct zserv *, struct interface *,
                                     struct connected *);
-extern int zsend_interface_state (int, struct zserv *, struct interface *);
-extern int zsend_interface_mode (struct zserv *, struct interface *, u_int mode);
+extern int zsend_interface_state (ospl_uint16, struct zserv *, struct interface *);
+extern int zsend_interface_mode (struct zserv *, struct interface *, ospl_uint32 mode);
 
 
-extern int zsend_route_multipath (int, struct zserv *, struct prefix *, 
+extern int zsend_route_multipath (ospl_uint16, struct zserv *, struct prefix *, 
                                   struct rib *);
 extern int zsend_router_id_update (struct zserv *, struct prefix *,
                                    vrf_id_t);
@@ -152,7 +156,13 @@ extern int zsend_router_id_update (struct zserv *, struct prefix *,
 
 //extern pid_t pid;
 
-extern void zserv_create_header(struct stream *s, uint16_t cmd, vrf_id_t);
+extern void zserv_create_header(struct stream *s, ospl_uint16 cmd, vrf_id_t);
 extern int zebra_server_send_message(struct zserv *client);
+
+
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ZEBRA_ZEBRA_H */

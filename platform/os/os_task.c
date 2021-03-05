@@ -23,9 +23,9 @@
 
 static LIST *os_task_list = NULL;
 static os_mutex_t *task_mutex = NULL;
-static u_int32 os_moniter_id = 0;
+static ospl_uint32 os_moniter_id = 0;
 struct os_task_history total_cpu;
-static BOOL os_entry_running = FALSE;
+static ospl_bool os_entry_running = ospl_false;
 
 typedef struct os_task_hook_tbl
 {
@@ -86,7 +86,7 @@ int os_limit_core_size(int size)
 /*
 static int os_task_waitting_signal(void)
 {
-	while(os_entry_running != TRUE)
+	while(os_entry_running != ospl_true)
 	{
 		os_msleep(1000);
 	}
@@ -96,7 +96,7 @@ static int os_task_waitting_signal(void)
 
 int os_task_give_broadcast(void)
 {
-	os_entry_running = TRUE;
+	os_entry_running = ospl_true;
 	return OK;
 }
 
@@ -310,7 +310,7 @@ int os_task_del_destroy_hook(os_task_hook *cb)
 	return ERROR;
 }
 
-static os_task_t * os_task_lookup(unit32 id, pthread_t pid, BOOL mutex)
+static os_task_t * os_task_lookup(ospl_uint32 id, ospl_pthread_t pid, ospl_bool mutex)
 {
 	NODE *node = NULL;
 	os_task_t *task = NULL;
@@ -336,8 +336,8 @@ static os_task_t * os_task_lookup(unit32 id, pthread_t pid, BOOL mutex)
 				}
 				return task;
 			}
-			else if (((pthread_t) pid != 0)
-					&& (pthread_t) pid == (pthread_t) task->td_thread)
+			else if (((ospl_pthread_t) pid != 0)
+					&& (ospl_pthread_t) pid == (ospl_pthread_t) task->td_thread)
 			{
 				if(mutex)
 				{
@@ -357,12 +357,12 @@ static os_task_t * os_task_lookup(unit32 id, pthread_t pid, BOOL mutex)
 	return NULL;
 }
 
-static unsigned int os_task_name_hash_key(const char *str)
+static ospl_uint32 os_task_name_hash_key(const char *str)
 {
-	unsigned int hash = 0;
+	ospl_uint32 hash = 0;
 	const char *p = str;
 	while (*p)
-		hash = (hash * 33) ^ (unsigned int) *p++;
+		hash = (hash * 33) ^ (ospl_uint32) *p++;
 
 	return hash;
 }
@@ -395,7 +395,7 @@ static os_task_t * os_task_node_lookup_by_name(char *task_name)
 	return NULL;
 }
 
-unit32 os_task_lookup_by_name(char *task_name)
+ospl_uint32 os_task_lookup_by_name(char *task_name)
 {
 	os_task_t *task = os_task_node_lookup_by_name(task_name);
 	if (task)
@@ -405,7 +405,7 @@ unit32 os_task_lookup_by_name(char *task_name)
 
 os_task_t * os_task_tcb_self(void)
 {
-	os_task_t *task = os_task_lookup(0, os_task_pthread_self(), TRUE);
+	os_task_t *task = os_task_lookup(0, os_task_pthread_self(), ospl_true);
 	if (task)
 	{
 		return task;
@@ -413,9 +413,9 @@ os_task_t * os_task_tcb_self(void)
 	return NULL;
 }
 
-os_task_t * os_task_tcb_get(unit32 id, pthread_t pid)
+os_task_t * os_task_tcb_get(ospl_uint32 id, ospl_pthread_t pid)
 {
-	os_task_t *task = os_task_lookup(id, pid, TRUE);
+	os_task_t *task = os_task_lookup(id, pid, ospl_true);
 	if (task)
 	{
 		return task;
@@ -424,14 +424,14 @@ os_task_t * os_task_tcb_get(unit32 id, pthread_t pid)
 }
 
 
-pthread_t os_task_pthread_self(void)
+ospl_pthread_t os_task_pthread_self(void)
 {
 	return pthread_self();
 }
 
-unit32 os_task_id_self(void)
+ospl_uint32 os_task_id_self(void)
 {
-	os_task_t *task = os_task_lookup(0, os_task_pthread_self(), TRUE);
+	os_task_t *task = os_task_lookup(0, os_task_pthread_self(), ospl_true);
 	if (task)
 	{
 		return task->td_id;
@@ -461,7 +461,7 @@ int os_task_gettid(void)
 	return syscall(SYS_gettid);
 }
 
-const char * os_task_self_name_alisa(void)
+const ospl_char * os_task_self_name_alisa(void)
 {
 	NODE *node = NULL;
 	os_task_t *task = NULL;
@@ -492,7 +492,7 @@ const char * os_task_self_name_alisa(void)
 	return "unknown";
 }
 
-int os_task_name_get(unit32 task_id, char *task_name)
+int os_task_name_get(ospl_uint32 task_id, char *task_name)
 {
 	os_task_t *task = (os_task_t *) task_id;
 	if (task)
@@ -512,7 +512,7 @@ int os_task_name_get(unit32 task_id, char *task_name)
 	return ERROR;
 }
 
-char * os_task_2_name(unit32 task_id)
+ospl_char * os_task_2_name(ospl_uint32 task_id)
 {
 	static char name[TASK_NAME_MAX];
 	os_memset(name, 0, sizeof(name));
@@ -521,7 +521,7 @@ char * os_task_2_name(unit32 task_id)
 	return "Unknow";
 }
 
-int os_task_priority_set(unit32 TaskID, int Priority)
+int os_task_priority_set(ospl_uint32 TaskID, ospl_uint32 Priority)
 {
 	int policy; //,pri;
 	struct sched_param sp;
@@ -563,7 +563,7 @@ int os_task_priority_set(unit32 TaskID, int Priority)
 	return ERROR;
 }
 
-int os_task_priority_get(unit32 TaskID, int *Priority)
+int os_task_priority_get(ospl_uint32 TaskID, ospl_uint32 *Priority)
 {
 	os_task_t *osapiTask = (os_task_t *) TaskID;
 	if (osapiTask)
@@ -579,7 +579,7 @@ int os_task_priority_get(unit32 TaskID, int *Priority)
 	return ERROR;
 }
 
-int os_task_supend(unit32 TaskID)
+int os_task_supend(ospl_uint32 TaskID)
 {
 	os_task_t *osapiTask = (os_task_t *) TaskID;
 	if (osapiTask)
@@ -594,7 +594,7 @@ int os_task_supend(unit32 TaskID)
 	return ERROR;
 }
 
-int os_task_resume(unit32 TaskID)
+int os_task_resume(ospl_uint32 TaskID)
 {
 	os_task_t *osapiTask = (os_task_t *) TaskID;
 	if (osapiTask)
@@ -757,7 +757,7 @@ static int os_task_refresh_total_cpu(struct os_task_history *hist)
 					+ stealstolen + guest);
 			hist->total_realy = (user + nice + system + idle + iowait + irq
 					+ softirq + stealstolen + guest) - hist->total_realy;
-//			OS_DEBUG("total cpu(%f)\r\n",100*(float)(hist->total-idle)/hist->total);
+//			OS_DEBUG("total cpu(%f)\r\n",100*(ospl_float)(hist->total-idle)/hist->total);
 		}
 		//else
 		//	zlog_err(MODULE_DEFAULT, "can't read path:%s(%s)\r\n", path,
@@ -991,7 +991,7 @@ int os_task_entry_destroy(os_task_t *task)
 	//		__func__, task->td_name, task->td_tid, task->td_thread, pthread_self());
 	if (task->td_thread == pthread_self())
 	{
-		BOOL	active = task->active;
+		ospl_bool	active = task->active;
 		/*
 		 if (pthread_mutex_lock(&zombie_tasks_lock) != 0)
 		 {
@@ -1050,7 +1050,7 @@ int os_task_entry_destroy(os_task_t *task)
 	return OK;
 }
 
-int os_task_destroy(unit32 taskId)
+int os_task_destroy(ospl_uint32 taskId)
 {
 	os_task_t *task = (os_task_t *) taskId;
 	if (task)
@@ -1058,10 +1058,10 @@ int os_task_destroy(unit32 taskId)
 	return ERROR;
 }
 
-static int os_task_tcb_create(os_task_t *task, BOOL active)
+static int os_task_tcb_create(os_task_t *task, ospl_bool active)
 {
 	//int time_slice = 0;
-	if(active == FALSE)
+	if(active == ospl_false)
 		return OK;
 	pthread_mutexattr_t attr;
 	//pthread_condattr_t 	cat;
@@ -1150,8 +1150,8 @@ static int os_task_tcb_active(os_task_t *task)
 	return ERROR;
 }
 
-static os_task_t * os_task_tcb_entry_create(char *name, int pri, int op,
-		task_entry entry, void *pVoid, char *func_name, int stacksize, BOOL active)
+static os_task_t * os_task_tcb_entry_create(ospl_char *name, ospl_uint32 pri, ospl_uint32 op,
+		task_entry entry, void *pVoid, ospl_char *func_name, ospl_uint32 stacksize, ospl_bool active)
 {
 	if(pri > OS_TASK_MAX_PRIORITY || pri < 0)
 		return NULL;
@@ -1169,7 +1169,7 @@ static os_task_t * os_task_tcb_entry_create(char *name, int pri, int op,
 	if (task)
 	{
 		os_memset(task, 0, sizeof(os_task_t));
-		task->td_id = (unit32) task; /* task id */
+		task->td_id = (ospl_uint32) task; /* task id */
 		os_strcpy(task->td_name, name); /* name of task */
 		task->td_name_key = os_task_name_hash_key(task->td_name);
 		/*
@@ -1228,19 +1228,19 @@ static int os_task_moniter_init(void)
 	return ERROR;
 }
 
-unit32 os_task_entry_create(char *name, int pri, int op, task_entry entry,
-		void *pVoid, char *func_name, int stacksize)
+ospl_uint32 os_task_entry_create(ospl_char *name, ospl_uint32 pri, ospl_uint32 op, task_entry entry,
+		void *pVoid, ospl_char *func_name, ospl_uint32 stacksize)
 {
 	os_task_t * task = os_task_tcb_entry_create(name, pri, op, entry, pVoid,
-			func_name, stacksize, TRUE);
+			func_name, stacksize, ospl_true);
 	if (task == NULL)
 		return ERROR;
 	if (os_task_tcb_active(task) == OK)
 	{
 #ifdef HAVE_PTHREAD_SETNAME_NP
 		//prctl(PR_SET_NAME,"THREAD2");
-		//int pthread_setname_np(pthread_t thread, const char *name);
-		//int pthread_getname_np(pthread_t thread,
+		//int pthread_setname_np(ospl_pthread_t thread, const char *name);
+		//int pthread_getname_np(ospl_pthread_t thread,
 		//                              char *name, size_t len);
 		//extern struct zebra_privs_t os_privs;
 		int ret = 0;
@@ -1252,9 +1252,9 @@ unit32 os_task_entry_create(char *name, int pri, int op, task_entry entry,
 		//			os_strerror(errno));
 #endif
 		OS_DEBUG("\r\ncreate task:%s(%u %u->%u:ret=%d) pid=%d\r\n",task->td_name,
-				task->td_thread,(unit32)task,task->td_id,ret,getpid());
+				task->td_thread,(ospl_uint32)task,task->td_id,ret,getpid());
 		/*		fprintf(stdout,"\r\ncreate task:%s(%u %u->%u:ret=%d) pid=%d\r\n",task->td_name,
-		 task->td_thread,(unit32)task,task->td_id,ret,getpid());*/
+		 task->td_thread,(ospl_uint32)task,task->td_id,ret,getpid());*/
 #ifndef OS_TASK_DEBUG
 		os_task_finsh_job();
 #endif
@@ -1277,19 +1277,19 @@ unit32 os_task_entry_create(char *name, int pri, int op, task_entry entry,
 
 
 
-unit32 os_task_entry_add(char *name, int pri, int op,
+ospl_uint32 os_task_entry_add(ospl_char *name, ospl_uint32 pri, ospl_uint32 op,
                          task_entry entry, void *pVoid,
-                         char *func_name, int stacksize, unit32 td_thread)
+                         ospl_char *func_name, ospl_uint32 stacksize, ospl_uint32 td_thread)
 {
 	os_task_t * task = os_task_tcb_entry_create(name, pri, op, entry, pVoid,
-			func_name, stacksize, FALSE);
+			func_name, stacksize, ospl_false);
 	if (task == NULL)
 	{
 		return ERROR;
 	}
 	task->td_thread = td_thread;
-	//task->active = FALSE;
-	task->td_id = (unit32)task;
+	//task->active = ospl_false;
+	task->td_id = (ospl_uint32)task;
 #ifndef OS_TASK_DEBUG
 	os_task_finsh_job();
 #endif
@@ -1301,11 +1301,11 @@ unit32 os_task_entry_add(char *name, int pri, int op,
 		}
 	}
 	OS_DEBUG("\r\nadd task:%s(%u %u->%u) pid=%d\r\n",task->td_name,
-				task->td_thread,(unit32)task,task->td_id,getpid());
+				task->td_thread,(ospl_uint32)task,task->td_id,getpid());
 	return task->td_id;
 }
 
-int os_task_priv_set(unit32 TaskID, pthread_t td_thread, void *priv)
+int os_task_priv_set(ospl_uint32 TaskID, ospl_pthread_t td_thread, void *priv)
 {
 	if(TaskID > 0)
 	{
@@ -1322,7 +1322,7 @@ int os_task_priv_set(unit32 TaskID, pthread_t td_thread, void *priv)
 	}
 	else
 	{
-		os_task_t *task = os_task_lookup(0, td_thread, TRUE);
+		os_task_t *task = os_task_lookup(0, td_thread, ospl_true);
 		if (task)
 		{
 			if (task_mutex)
@@ -1336,7 +1336,7 @@ int os_task_priv_set(unit32 TaskID, pthread_t td_thread, void *priv)
 	return ERROR;
 }
 
-void * os_task_priv_get(unit32 TaskID, pthread_t td_thread)
+void * os_task_priv_get(ospl_uint32 TaskID, ospl_pthread_t td_thread)
 {
 	os_task_t *task = NULL;
 	void *priv = NULL;
@@ -1355,7 +1355,7 @@ void * os_task_priv_get(unit32 TaskID, pthread_t td_thread)
 	}
 	else
 	{
-		task = os_task_lookup(0, td_thread, TRUE);
+		task = os_task_lookup(0, td_thread, ospl_true);
 		if (task)
 		{
 			if (task_mutex)
@@ -1369,19 +1369,19 @@ void * os_task_priv_get(unit32 TaskID, pthread_t td_thread)
 	return NULL;
 }
 
-int os_task_del(unit32 td_thread)
+int os_task_del(ospl_uint32 td_thread)
 {
-	os_task_t *task = os_task_lookup(0, td_thread, TRUE);
+	os_task_t *task = os_task_lookup(0, td_thread, ospl_true);
 	if (task)
 		return os_task_entry_destroy(task);
 	return ERROR;
 }
 
-int os_task_refresh_id(unit32 td_thread)
+int os_task_refresh_id(ospl_uint32 td_thread)
 {
 	if (task_mutex)
 		os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
-	os_task_t *task = os_task_lookup(0, td_thread, FALSE);
+	os_task_t *task = os_task_lookup(0, td_thread, ospl_false);
 	if(task)
 	{
 		task->td_pid = getpid();/* kernel process ID */
@@ -1517,16 +1517,16 @@ static int os_task_show_detail(void *p, os_task_t *task, int detail)
 	if (total_cpu.total_realy)
 		sprintf(real, "%.2f%%",
 				total_cpu.cpu * 100
-						* (float) ((float) task->hist.total_realy
-								/ (float) total_cpu.total_realy));
+						* (ospl_float) ((ospl_float) task->hist.total_realy
+								/ (ospl_float) total_cpu.total_realy));
 	else
 		sprintf(real, "%s", "0.00%");
 
 	if (total_cpu.total)
 		sprintf(total, "%.2f%%",
 				total_cpu.cpu * 100
-						* (float) ((float) task->hist.total
-								/ (float) total_cpu.total));
+						* (ospl_float) ((ospl_float) task->hist.total
+								/ (ospl_float) total_cpu.total));
 	else
 		sprintf(total, "%s", "0.00%");
 
@@ -1549,9 +1549,9 @@ static int os_task_show_detail(void *p, os_task_t *task, int detail)
 	return 0;
 }
 
-int os_task_show(void *vty, char *task_name, int detail)
+int os_task_show(void *vty, ospl_char *task_name, ospl_uint32 detail)
 {
-//	unit32 task_id = 0;
+//	ospl_uint32 task_id = 0;
 	NODE *node = NULL;
 	os_task_t *task = NULL;
 	if (os_task_list == NULL)
@@ -1688,7 +1688,7 @@ static int ipcom_process_printf(const char *format, ...)
 		p = buf;
 
 		/* Pointer p must point out buffer. */
-		buffer_put (vty->obuf, (u_char *) p, len);
+		buffer_put (vty->obuf, (ospl_uchar *) p, len);
 
 		/* If p is not different with buf, it is allocated buffer.  */
 		if (p != buf)

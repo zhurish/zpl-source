@@ -47,13 +47,13 @@ extern struct zebra_t zebrad;
 static int netlink_interface_addr(struct sockaddr_nl *snl, struct nlmsghdr *h,
 		vrf_id_t vrf_id)
 {
-	int len;
+	ospl_uint32 len;
 	struct ifaddrmsg *ifa;
 	struct rtattr *tb[IFA_MAX + 1];
 	struct interface *ifp;
 	void *addr = NULL;
 	void *broad = NULL;
-	u_char flags = 0;
+	ospl_uchar flags = 0;
 	char *label = NULL;
 	char ifkname[64];
 	ifa = NLMSG_DATA(h);
@@ -210,14 +210,14 @@ static int netlink_interface_addr(struct sockaddr_nl *snl, struct nlmsghdr *h,
 		if (ifp && h->nlmsg_type == RTM_NEWADDR)
 		{
 			//nsm_client_notify_parameter_change(ifp);
-			//nsm_hook_execute (NSM_HOOK_IP_DEL, ifp, ifc, FALSE);
-			nsm_hook_execute (NSM_HOOK_IFP_CHANGE, ifp, NULL, TRUE);
+			//nsm_hook_execute (NSM_HOOK_IP_DEL, ifp, ifc, ospl_false);
+			nsm_hook_execute (NSM_HOOK_IFP_CHANGE, ifp, NULL, ospl_true);
 		}
 		else if(ifp)
 		{
 			//nsm_client_notify_parameter_change(ifp);
-			//nsm_hook_execute (NSM_HOOK_IP_DEL, ifp, ifc, FALSE);
-			nsm_hook_execute (NSM_HOOK_IFP_CHANGE, ifp, NULL, FALSE);
+			//nsm_hook_execute (NSM_HOOK_IP_DEL, ifp, ifc, ospl_false);
+			nsm_hook_execute (NSM_HOOK_IFP_CHANGE, ifp, NULL, ospl_false);
 		}
 	}
 	return 0;
@@ -227,17 +227,17 @@ static int netlink_interface_addr(struct sockaddr_nl *snl, struct nlmsghdr *h,
 static int netlink_route_change(struct sockaddr_nl *snl, struct nlmsghdr *h,
 		vrf_id_t vrf_id)
 {
-	int len;
+	ospl_uint32 len;
 	struct rtmsg *rtm;
 	struct rtattr *tb[RTA_MAX + 1];
-	u_char zebra_flags = 0;
+	ospl_uchar zebra_flags = 0;
 
 	char anyaddr[16] =
 	{ 0 };
 
 	ifindex_t ifkindex;
-	int table;
-	u_int32_t mtu = 0;
+	ospl_uint32 table;
+	ospl_uint32 mtu = 0;
 
 	void *dest;
 	void *gate;
@@ -331,7 +331,7 @@ static int netlink_route_change(struct sockaddr_nl *snl, struct nlmsghdr *h,
 					RTA_PAYLOAD(tb[RTA_METRICS]));
 
 			if (mxrta[RTAX_MTU])
-				mtu = *(u_int32_t *) RTA_DATA(mxrta[RTAX_MTU]);
+				mtu = *(ospl_uint32 *) RTA_DATA(mxrta[RTAX_MTU]);
 		}
 	}
 
@@ -455,7 +455,7 @@ static int netlink_route_change(struct sockaddr_nl *snl, struct nlmsghdr *h,
 static int netlink_link_change(struct sockaddr_nl *snl, struct nlmsghdr *h,
 		vrf_id_t vrf_id)
 {
-	int len;
+	ospl_uint32 len;
 	struct ifinfomsg *ifi;
 	struct rtattr *tb[IFLA_MAX + 1];
 	struct interface *ifp;

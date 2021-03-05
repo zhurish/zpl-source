@@ -8,6 +8,10 @@
 #ifndef __IW_AP_H__
 #define __IW_AP_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #include "zebra.h"
 #include "vty.h"
@@ -24,7 +28,7 @@
 #define IW_AP_BEACON_DEFAULT		100
 #define IW_AP_COUNTRY_DEFAULT		0
 #define IW_AP_DRIVER_DEFAULT		0
-#define IW_AP_WMM_DEFAULT			TRUE
+#define IW_AP_WMM_DEFAULT			ospl_true
 #define IW_AP_MAX_STA_DEFAULT		128
 #define IW_AP_CLIENT_SCAN_DEFAULT	30
 
@@ -32,43 +36,43 @@ typedef struct iw_ap_connect_s
 {
 	NODE				node;
 	ifindex_t			ifindex;
-	u_int8 				BSSID[IW_SSID_NAME_MAX];
-	u_int16				inactive_time;
+	ospl_uint8 				BSSID[IW_SSID_NAME_MAX];
+	ospl_uint16				inactive_time;
 	int					signal;
-	u_int32				rx_bytes;
-	u_int32				rx_packets;
-	u_int32				tx_bytes;
-	u_int32				tx_packets;
-	u_int32				tx_retries;
-	u_int32				tx_failed;
-	u_int32				rx_drop;
-	double				tx_bitrate;
-	double				rx_bitrate;
-	double				throughput;
-	BOOL				authorized;
-	BOOL				authenticated;
-	BOOL				associated;
-	BOOL				WME_WMM;
-	//u_int8				preamble;
-	BOOL				MFP;
-	BOOL				TDLS;
-	u_int8				period;
-	u_int8				beacon;
-	u_int32				connected_time;
-	u_int8				TTL;
+	ospl_uint32				rx_bytes;
+	ospl_uint32				rx_packets;
+	ospl_uint32				tx_bytes;
+	ospl_uint32				tx_packets;
+	ospl_uint32				tx_retries;
+	ospl_uint32				tx_failed;
+	ospl_uint32				rx_drop;
+	ospl_double				tx_bitrate;
+	ospl_double				rx_bitrate;
+	ospl_double				throughput;
+	ospl_bool				authorized;
+	ospl_bool				authenticated;
+	ospl_bool				associated;
+	ospl_bool				WME_WMM;
+	//ospl_uint8				preamble;
+	ospl_bool				MFP;
+	ospl_bool				TDLS;
+	ospl_uint8				period;
+	ospl_uint8				beacon;
+	ospl_uint32				connected_time;
+	ospl_uint8				TTL;
 }iw_ap_connect_t;
 
 typedef struct iw_ap_mac_s
 {
 	NODE				node;
-	u_int8 				MAC[6];
+	ospl_uint8 				MAC[6];
 }iw_ap_mac_t;
 
 
 typedef struct iw_ap_pass_s
 {
-	char password[IW_SSID_PASS_MAX];
-	char encrypt_password[IW_SSID_PASS_MAX];
+	ospl_char password[IW_SSID_PASS_MAX];
+	ospl_char encrypt_password[IW_SSID_PASS_MAX];
 }iw_ap_pass_t;
 
 typedef struct iw_ap_s
@@ -81,47 +85,47 @@ typedef struct iw_ap_s
 	iw_authentication_t auth;
 	//iw_network_t		network;
 
-	char 				SSID[IW_SSID_NAME_MAX];
-	BOOL				hiden_ssid;
+	ospl_char 				SSID[IW_SSID_NAME_MAX];
+	ospl_bool				hiden_ssid;
 /*	char 				password[IW_SSID_PASS_MAX];
 	char 				encrypt_password[IW_SSID_PASS_MAX];*/
-	u_int8				wep_key;
+	ospl_uint8				wep_key;
 	iw_ap_pass_t		password[1];
 
-	u_int8 				BSSID[IW_SSID_NAME_MAX];
-	u_int8				channel;
-	u_int8				beacon;
-	u_int8				power;
+	ospl_uint8 				BSSID[IW_SSID_NAME_MAX];
+	ospl_uint8				channel;
+	ospl_uint8				beacon;
+	ospl_uint8				power;
 
-	u_int8				driver;
-	u_int8				country_code;
-	int					signal;
-	int					bitrate;
-	BOOL				wmm_enabled;
-	BOOL				ap_isolate;
-	double				freq;
+	ospl_uint8				driver;
+	ospl_uint8				country_code;
+	ospl_int					signal;
+	ospl_int					bitrate;
+	ospl_bool				wmm_enabled;
+	ospl_bool				ap_isolate;
+	ospl_double				freq;
 	ifindex_t			bridge;
 
-	int					rts_threshold;
-	int 				frag;
+	ospl_int					rts_threshold;
+	ospl_int 				frag;
 	//分片阈值 1400 RTS/CTS 阈值
 	//RTS thr=100 B   Fragment thr=1400 B
 
-	u_int16				acs_num_scans;
+	ospl_uint16				acs_num_scans;
 
-	u_int16				max_num_sta;
+	ospl_uint16				max_num_sta;
 	LIST				*ap_list;
 	void				*ap_mutex;
 
-	u_int8				macaddr_acl;
+	ospl_uint8				macaddr_acl;
 	LIST				*mac_list;
 	LIST				*dmac_list;
 
-	u_int8				ap_client_delay;
-	BOOL				change;
-	u_int32				crc_sum;
+	ospl_uint8				ap_client_delay;
+	ospl_bool				change;
+	ospl_uint32				crc_sum;
 #ifndef IW_ONCE_TASK
-	int					taskid;
+	ospl_uint32					taskid;
 #else
 	void				*master;
 	void				*t_thread;
@@ -132,7 +136,7 @@ typedef struct iw_ap_s
 
 extern int iw_ap_init(iw_ap_t *, ifindex_t ifindex);
 extern int iw_ap_exit(iw_ap_t *);
-extern int iw_ap_enable(iw_ap_t *iw_ap, BOOL enable);
+extern int iw_ap_enable(iw_ap_t *iw_ap, ospl_bool enable);
 
 extern int iw_ap_task_start(iw_ap_t *iw_ap);
 extern int iw_ap_task_exit(iw_ap_t *iw_ap);
@@ -146,16 +150,16 @@ extern int iw_ap_ssid_del_api(iw_ap_t *);
 extern int iw_ap_password_set_api(iw_ap_t *, char *);
 extern int iw_ap_password_del_api(iw_ap_t *);
 
-extern int iw_ap_channel_set_api(iw_ap_t *, int );
-extern int iw_ap_channel_del_api(iw_ap_t *, int );
+extern int iw_ap_channel_set_api(iw_ap_t *, ospl_uint8 );
+extern int iw_ap_channel_del_api(iw_ap_t *, ospl_uint8 );
 
-extern int iw_ap_power_set_api(iw_ap_t *, int );
-extern int iw_ap_power_del_api(iw_ap_t *, int );
+extern int iw_ap_power_set_api(iw_ap_t *, ospl_uint8 );
+extern int iw_ap_power_del_api(iw_ap_t *, ospl_uint8 );
 
 extern int iw_ap_signal_set_api(iw_ap_t *, int );
 
-extern int iw_ap_rts_threshold_set_api(iw_ap_t *iw_ap, int rts_threshold);
-extern int iw_ap_frag_set_api(iw_ap_t *iw_ap, int frag);
+extern int iw_ap_rts_threshold_set_api(iw_ap_t *iw_ap, ospl_int rts_threshold);
+extern int iw_ap_frag_set_api(iw_ap_t *iw_ap, ospl_int frag);
 /*
 extern int iw_dev_mode_set(struct interface *ifp, char * value);
 extern int iw_dev_txpower_set(struct interface *ifp, char * value);
@@ -166,16 +170,16 @@ extern int iw_dev_bit_set(struct interface *ifp, char * value);
 extern int iw_dev_channel_set(struct interface *ifp, struct vty *vty, char *  value);
 */
 
-extern int iw_ap_beacon_set_api(iw_ap_t *iw_ap, int beacon);
-extern int iw_ap_bitrate_set_api(iw_ap_t *iw_ap, int bitrate);
-extern int iw_ap_isolate_set_api(iw_ap_t *iw_ap, BOOL enable);
+extern int iw_ap_beacon_set_api(iw_ap_t *iw_ap, ospl_uint8 beacon);
+extern int iw_ap_bitrate_set_api(iw_ap_t *iw_ap, ospl_int bitrate);
+extern int iw_ap_isolate_set_api(iw_ap_t *iw_ap, ospl_bool enable);
 extern int iw_ap_bridge_set_api(iw_ap_t *iw_ap, ifindex_t bridge);
-extern int iw_ap_country_set_api(iw_ap_t *iw_ap, int country);
-extern int iw_ap_wmm_set_api(iw_ap_t *iw_ap, BOOL enable);
+extern int iw_ap_country_set_api(iw_ap_t *iw_ap, ospl_uint8 country);
+extern int iw_ap_wmm_set_api(iw_ap_t *iw_ap, ospl_bool enable);
 
-extern int iw_ap_freq_set_api(iw_ap_t *iw_ap, double freq);
-extern int iw_ap_scan_num_set_api(iw_ap_t *iw_ap, int value);
-extern int iw_ap_client_num_set_api(iw_ap_t *iw_ap, int value);
+extern int iw_ap_freq_set_api(iw_ap_t *iw_ap, ospl_double freq);
+extern int iw_ap_scan_num_set_api(iw_ap_t *iw_ap, ospl_uint16 value);
+extern int iw_ap_client_num_set_api(iw_ap_t *iw_ap, ospl_uint16 value);
 
 extern int iw_ap_auth_set_api(iw_ap_t *, iw_authentication_t );
 extern int iw_ap_auth_del_api(iw_ap_t *, iw_authentication_t );
@@ -193,9 +197,9 @@ extern int iw_ap_hw_mode_set_api(iw_ap_t *, iw_hw_mode_t );
 /*
  * MAC ACL 接入点过滤MAC
  */
-extern iw_ap_mac_t * iw_ap_mac_lookup_api(iw_ap_t *iw_ap, u_int8 *mac, BOOL accept);
-extern int iw_ap_mac_add_api(iw_ap_t *iw_ap, u_int8 *mac, BOOL accept);
-extern int iw_ap_mac_del_api(iw_ap_t *iw_ap, u_int8 *mac, BOOL accept);
+extern iw_ap_mac_t * iw_ap_mac_lookup_api(iw_ap_t *iw_ap, ospl_uint8 *mac, ospl_bool accept);
+extern int iw_ap_mac_add_api(iw_ap_t *iw_ap, ospl_uint8 *mac, ospl_bool accept);
+extern int iw_ap_mac_del_api(iw_ap_t *iw_ap, ospl_uint8 *mac, ospl_bool accept);
 
 
 
@@ -213,13 +217,17 @@ extern int iw_ap_script_is_running(iw_ap_t *iw_ap);
  * ap connect
  */
 extern int iw_ap_connect_add_api(iw_ap_t *, iw_ap_connect_t *);
-extern int iw_ap_connect_del_api(iw_ap_t *, u_int8 *bssid);
-extern iw_ap_connect_t * iw_ap_connect_lookup_api(iw_ap_t *, u_int8 *bssid);
+extern int iw_ap_connect_del_api(iw_ap_t *, ospl_uint8 *bssid);
+extern iw_ap_connect_t * iw_ap_connect_lookup_api(iw_ap_t *, ospl_uint8 *bssid);
 extern int iw_ap_connect_callback_api(iw_ap_t *, int (*cb)(iw_ap_connect_t *, void *), void *pVoid);
 //显示当前连接到AP的设备
-extern int iw_ap_connect_show(iw_ap_t *iw_ap, struct vty *vty, BOOL detail);
+extern int iw_ap_connect_show(iw_ap_t *iw_ap, struct vty *vty, ospl_bool detail);
 
 extern int iw_ap_config(iw_ap_t *iw_ap, struct vty *vty);
 
-
+ 
+#ifdef __cplusplus
+}
+#endif
+ 
 #endif /* __IW_AP_H__ */

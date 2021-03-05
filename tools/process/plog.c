@@ -39,7 +39,7 @@ int open_log(char *file)
 static int plog_timestamp(char *buf, size_t buflen)
 {
 
-	time_t ticlock;
+	ospl_time_t ticlock;
 	struct tm tm;
 	char data[128];
 	int len = 0;

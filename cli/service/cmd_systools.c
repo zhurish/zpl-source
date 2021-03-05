@@ -80,7 +80,7 @@ DEFUN (tftp_copy_download,
 
 	if(os_url_split(url, &spliurl) == OK)
 	{
-		vty_ansync_enable(vty, TRUE);
+		vty_ansync_enable(vty, ospl_true);
 		vty_out(vty, "%s", VTY_NEWLINE);
 		if(strstr(spliurl.proto,"tftp"))
 			ret = tftp_download(vty, spliurl.host, spliurl.port, spliurl.filename,
@@ -90,15 +90,15 @@ DEFUN (tftp_copy_download,
 					spliurl.user, spliurl.pass, localfileName);
 #ifdef PL_LIBSSH_MODULE
 		else if(strstr(spliurl.proto,"scp"))
-			ret = ssh_scp_download(vty, TRUE, url, localfileName);
-			//ret = do_ssh_copy(vty, TRUE, url, localfileName);
+			ret = ssh_scp_download(vty, ospl_true, url, localfileName);
+			//ret = do_ssh_copy(vty, ospl_true, url, localfileName);
 		else if(strstr(spliurl.proto,"sftp"))
-			ret = sftp_action(vty, TRUE, url, localfileName);
+			ret = sftp_action(vty, ospl_true, url, localfileName);
 #endif
 		else
 		{
 			vty_out(vty, " URL protocol '%s' is not support%s", spliurl.proto, VTY_NEWLINE);
-			vty_ansync_enable(vty, FALSE);
+			vty_ansync_enable(vty, ospl_false);
 			os_url_free(&spliurl);
 			return CMD_WARNING;
 		}
@@ -106,11 +106,11 @@ DEFUN (tftp_copy_download,
 	else
 	{
 		vty_out(vty, "URL format is warning.%s", VTY_NEWLINE);
-		vty_ansync_enable(vty, FALSE);
+		vty_ansync_enable(vty, ospl_false);
 		os_url_free(&spliurl);
 		return CMD_WARNING;
 	}
-	vty_ansync_enable(vty, FALSE);
+	vty_ansync_enable(vty, ospl_false);
 	os_url_free(&spliurl);
 	if(ret != CMD_SUCCESS)
 		return CMD_WARNING;
@@ -143,7 +143,7 @@ DEFUN (tftp_copy_upload,
 
 	if(os_url_split(url, &spliurl) == OK)
 	{
-		vty_ansync_enable(vty, TRUE);
+		vty_ansync_enable(vty, ospl_true);
 		vty_out(vty, "%s", VTY_NEWLINE);
 		if(strstr(spliurl.proto,"tftp"))
 			ret = tftp_upload(vty, spliurl.host, spliurl.port, spliurl.filename,
@@ -153,15 +153,15 @@ DEFUN (tftp_copy_upload,
 					spliurl.user, spliurl.pass, localfileName);
 #ifdef PL_LIBSSH_MODULE
 		else if(strstr(spliurl.proto,"scp"))
-			ret = ssh_scp_upload(vty, FALSE, url, localfileName);
-			//ret = do_ssh_copy(vty, FALSE, url, localfileName);
+			ret = ssh_scp_upload(vty, ospl_false, url, localfileName);
+			//ret = do_ssh_copy(vty, ospl_false, url, localfileName);
 		else if(strstr(spliurl.proto,"sftp"))
-			ret = sftp_action(vty, FALSE, url, localfileName);
+			ret = sftp_action(vty, ospl_false, url, localfileName);
 #endif
 		else
 		{
 			vty_out(vty, " URL protocol '%s' is not support%s", spliurl.proto, VTY_NEWLINE);
-			vty_ansync_enable(vty, FALSE);
+			vty_ansync_enable(vty, ospl_false);
 			os_url_free(&spliurl);
 			return CMD_WARNING;
 		}
@@ -172,7 +172,7 @@ DEFUN (tftp_copy_upload,
 		os_url_free(&spliurl);
 		return CMD_WARNING;
 	}
-	vty_ansync_enable(vty, FALSE);
+	vty_ansync_enable(vty, ospl_false);
 	os_url_free(&spliurl);
 	if(ret != CMD_SUCCESS)
 		return CMD_WARNING;
@@ -189,12 +189,12 @@ DEFUN (tftp_server_enable,
 {
 	if(argc == 1 && argv[0])
 	{
-		if(tftpdEnable(TRUE, argv[0], 0) == OK)
+		if(tftpdEnable(ospl_true, argv[0], 0) == OK)
 			return CMD_SUCCESS;
 	}
 	else
 	{
-		if(tftpdEnable(TRUE, NULL, 0) == OK)
+		if(tftpdEnable(ospl_true, NULL, 0) == OK)
 			return CMD_SUCCESS;
 	}
 	return CMD_WARNING;
@@ -217,7 +217,7 @@ DEFUN (no_tftp_server_enable,
 		"Server configure\n"
 		"enable configure\n")
 {
-	if(tftpdEnable(FALSE, NULL, 0) == OK)
+	if(tftpdEnable(ospl_false, NULL, 0) == OK)
 		return CMD_SUCCESS;
 	return CMD_WARNING;
 }

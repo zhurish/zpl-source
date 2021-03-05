@@ -28,7 +28,7 @@
 
 struct unit_slot_port
 {
-  int type;
+  ospl_uint32 type;
   int unit;
   int slot;
   int port;
@@ -111,7 +111,7 @@ static struct slot_port_phy phy_table[OS_SLOT_MAX][OS_SLOT_HY_MAX] =
 
 static int if_slot_port_to_phy(int s, int p)
 {
-	int i = 0, j = 0;
+	ospl_uint32 i = 0, j = 0;
 	for(i = 0; i < OS_SLOT_MAX; i++)
 	{
 		for(j = 0; j < OS_SLOT_HY_MAX; j++)
@@ -162,7 +162,7 @@ const int if_ifindex2phy(ifindex_t ifindex)
 const char * if_kernel_name_lookup(ifindex_t ifindex)
 {
 	static char buf[64];
-	int i = 0, j = 0;
+	ospl_uint32 i = 0, j = 0;
 	for(i = 0; i < OS_SLOT_MAX; i++)
 	{
 		for(j = 0; j < OS_SLOT_HY_MAX; j++)
@@ -183,7 +183,7 @@ const char * if_kernel_name_lookup(ifindex_t ifindex)
 
 ifindex_t ifindex_lookup_by_kname(const char *kname)
 {
-	int i = 0, j = 0;
+	ospl_uint32 i = 0, j = 0;
 	for(i = 0; i < OS_SLOT_MAX; i++)
 	{
 		for(j = 0; j < OS_SLOT_HY_MAX; j++)
@@ -199,7 +199,7 @@ ifindex_t ifindex_lookup_by_kname(const char *kname)
 
 static int if_slot_kernel_lookup(ifindex_t ifindex)
 {
-	int i = 0, j = 0;
+	ospl_uint32 i = 0, j = 0;
 	for(i = 0; i < OS_SLOT_MAX; i++)
 	{
 		for(j = 0; j < OS_SLOT_HY_MAX; j++)
@@ -215,7 +215,7 @@ static int if_slot_kernel_lookup(ifindex_t ifindex)
 
 static int if_slot_kernel_add(ifindex_t ifindex, char *name)
 {
-	int i = 0, j = 0;
+	ospl_uint32 i = 0, j = 0;
 	//printf("=======%s: IFINDEX=%x  %s->%d\r\n", __func__, ifindex, name, if_nametoindex(name));
 	if(if_slot_kernel_lookup(ifindex) == 0)
 	{
@@ -245,7 +245,7 @@ static int if_slot_kernel_add(ifindex_t ifindex, char *name)
 
 static int if_slot_kernel_del(ifindex_t ifindex)
 {
-	int i = 0, j = 0;
+	ospl_uint32 i = 0, j = 0;
 	if(if_slot_kernel_lookup(ifindex))
 	{
 		for(i = 0; i < OS_SLOT_MAX; i++)
@@ -268,7 +268,7 @@ static int if_slot_kernel_del(ifindex_t ifindex)
 static int if_slot_kernel_update()
 {
 	char buf[64];
-	int i = 0, j = 0;
+	ospl_uint32 i = 0, j = 0;
 	remove(SLOT_PORT_CONF);
 	FILE *fp = fopen(SLOT_PORT_CONF, "w+");
 	if(fp)
@@ -296,7 +296,7 @@ static int if_slot_kernel_update()
 
 static int if_slot_kernel_read()
 {
-	//int i = 0;
+	//ospl_uint32 i = 0;
 	char buf[512];
 	ifindex_t ifindex;
 	char kname[64], name[128];
@@ -351,7 +351,7 @@ int if_slot_set_port_phy(ifindex_t ifindex, char *name)
 int if_slot_show_port_phy(struct vty *vty)
 {
 	char buf[512];
-	int i = 0, j = 0;
+	ospl_uint32 i = 0, j = 0;
 	char head = 0;
 	for(i = 0; i < OS_SLOT_MAX; i++)
 	{
@@ -378,10 +378,10 @@ int if_slot_show_port_phy(struct vty *vty)
 #endif
 
 
-static int if_unit_slot_port(int type, int u, int s, int p)
+static int if_unit_slot_port(ospl_uint32 type, int u, int s, int p)
 {
 	struct interface * ifp = NULL;
-	int i = 0;
+	ospl_uint32 i = 0;
 	char name[64];//[ethernet|gigabitethernet|tunnel|loopback]
 	if(p == 0)
 		return 0;
@@ -427,7 +427,7 @@ static int if_unit_slot_port(int type, int u, int s, int p)
 
 static int if_unit_slot(void)
 {
-	int i = 1;
+	ospl_uint32 i = 1;
 #ifdef USE_IPSTACK_KERNEL
 	if(i)
 		if_slot_kernel_read();
@@ -456,7 +456,7 @@ int bsp_usp_module_init()
 #if 0
 static int _bsp_create_serial_interface(char *kname)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	char name[64];//[ethernet|gigabitethernet|tunnel|loopback]
 	struct interface *ifp;
 	if(kname == NULL)
@@ -512,7 +512,7 @@ static int _bsp_delete_serial_interface(char *kname)
 
 static int _bsp_create_modem_interface(char *kname)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	char name[64];//[ethernet|gigabitethernet|tunnel|loopback]
 	struct interface *ifp;
 	if(kname == NULL)
@@ -565,7 +565,7 @@ static int _bsp_delete_modem_interface(char *kname)
 
 static int _bsp_create_wifi_interface(char *kname)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	char name[64];//[ethernet|gigabitethernet|tunnel|loopback]
 	struct interface *ifp;
 	if(kname == NULL)

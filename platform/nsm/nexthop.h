@@ -24,6 +24,10 @@
 #ifndef _LIB_NEXTHOP_H
 #define _LIB_NEXTHOP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "prefix.h"
 
 union g_addr {
@@ -53,12 +57,12 @@ struct nexthop
   struct nexthop *prev;
 
   /* Interface index. */
-  char *ifname;
+  ospl_char *ifname;
   ifindex_t ifindex;
 
   enum nexthop_types_t type;
 
-  u_char flags;
+  ospl_uchar flags;
 #define NEXTHOP_FLAG_ACTIVE     (1 << 0) /* This nexthop is alive. */
 #define NEXTHOP_FLAG_FIB        (1 << 1) /* FIB nexthop. */
 #define NEXTHOP_FLAG_RECURSIVE  (1 << 2) /* Recursive nexthop. */
@@ -87,5 +91,9 @@ void nexthops_free (struct nexthop *nexthop);
 
 extern const char *nexthop_type_to_str (enum nexthop_types_t nh_type);
 extern int nexthop_same_no_recurse (struct nexthop *next1, struct nexthop *next2);
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*_LIB_NEXTHOP_H */

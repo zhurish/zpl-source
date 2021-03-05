@@ -42,6 +42,21 @@ x5b_app_mgt_t *x5b_app_mgt = NULL;
 static int x5b_app_report_start(x5b_app_mgt_t *mgt, int interval);
 static int x5b_app_config_load(struct eloop *eloop);
 
+struct module_list module_list_app = 
+{ 
+	.module=MODULE_APP, 
+	.name="APP", 
+	.module_init=NULL, 
+	.module_exit=x5b_app_module_exit, 
+	.module_task_init=x5b_app_module_task_init, 
+	.module_task_exit=x5b_app_module_task_exit, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};
+
 int x5b_app_hdr_make(x5b_app_mgt_t *mgt)
 {
 	zassert(mgt != NULL);
@@ -56,16 +71,16 @@ int x5b_app_hdr_make(x5b_app_mgt_t *mgt)
 	return OK;
 }
 
-static int x5b_app_crc_setup(char *buf, u_int16 crc)
+static int x5b_app_crc_setup(char *buf, ospl_uint16 crc)
 {
-	u_int16 *scrc = (u_int16 *)buf;
+	ospl_uint16 *scrc = (ospl_uint16 *)buf;
 	*scrc = htons(crc);
 	return OK;
 }
 
 int x5b_app_crc_make(x5b_app_mgt_t *mgt)
 {
-	u_int16	crc1 = 0;
+	ospl_uint16	crc1 = 0;
 	zassert(mgt != NULL);
 	zassert(mgt->app != NULL);
 	x5b_app_hdr_t *hdr = (x5b_app_hdr_t *)mgt->app->sbuf;
@@ -81,12 +96,12 @@ int x5b_app_crc_make(x5b_app_mgt_t *mgt)
 	return mgt->app->slen;
 }
 
-static int x5b_app_ack_make(x5b_app_mgt_t *mgt, u_int8 seqnum)
+static int x5b_app_ack_make(x5b_app_mgt_t *mgt, ospl_uint8 seqnum)
 {
-	u_int8 val = (u_int8)seqnum;
+	ospl_uint8 val = (ospl_uint8)seqnum;
 	zassert(mgt != NULL);
 	zassert(mgt->app != NULL);
-	int len = os_tlv_set_integer(mgt->app->sbuf + mgt->app->offset,
+	ospl_uint32 len = os_tlv_set_integer(mgt->app->sbuf + mgt->app->offset,
 			E_CMD_MAKE(E_CMD_MODULE_B, E_CMD_BASE, E_CMD_ACK), E_CMD_ACK_LEN, &val);
 	mgt->app->offset += len;
 	return (len);
@@ -119,11 +134,11 @@ int x5b_app_make_update(x5b_app_mgt_t *mgt, int to)
 		mgt->app = &mgt->app_c;
 	}
 	zassert(mgt->app != NULL);
-	mgt->regsync = FALSE;
+	mgt->regsync = ospl_false;
 	if(x5b_app_mode_X5CM())
 	{
 		if(mgt->app_c.reg_state && mgt->app_a.reg_state)
-			mgt->regsync = TRUE;
+			mgt->regsync = ospl_true;
 		else
 		{
 			if(X5_B_ESP32_DEBUG(EVENT))
@@ -146,7 +161,7 @@ int x5b_app_make_update(x5b_app_mgt_t *mgt, int to)
 	else
 	{
 		if(mgt->app_a.reg_state)
-			mgt->regsync = TRUE;
+			mgt->regsync = ospl_true;
 		else
 		{
 			if(X5_B_ESP32_DEBUG(EVENT))
@@ -163,7 +178,7 @@ int x5b_app_make_update(x5b_app_mgt_t *mgt, int to)
 /*
  * Base CMD
  */
-static int x5b_app_ack_api(x5b_app_mgt_t *app, u_int8 seqnum, int to)
+static int x5b_app_ack_api(x5b_app_mgt_t *app, ospl_uint8 seqnum, int to)
 {
 	int ret = 0;
 	x5b_app_mgt_t *mgt = app;
@@ -207,8 +222,8 @@ static int x5b_app_ack_api(x5b_app_mgt_t *app, u_int8 seqnum, int to)
 /* register ACK */
 static int x5b_app_register_ok_api(x5b_app_mgt_t *mgt, int to, int havepayload)
 {
-	u_int8 val[16] = {1, 2, 3, 4, 5, 6, 7, 8};
-	int len = 0;
+	ospl_uint8 val[16] = {1, 2, 3, 4, 5, 6, 7, 8};
+	ospl_uint32 len = 0;
 	zassert(mgt != NULL);
 /*	if(mgt->mutex)
 		os_mutex_lock(mgt->mutex, OS_WAIT_FOREVER);*/
@@ -240,7 +255,7 @@ static int x5b_app_register_ok_api(x5b_app_mgt_t *mgt, int to, int havepayload)
 #ifndef X5B_APP_STATIC_IP_ENABLE
 	if(havepayload)
 	{
-		u_int32 addr = 0;
+		ospl_uint32 addr = 0;
 		if(x5b_app_mode_X5CM())
 		{
 			if(to == E_CMD_TO_A && mgt->app_c.address)
@@ -281,7 +296,7 @@ static int x5b_app_register_ok_api(x5b_app_mgt_t *mgt, int to, int havepayload)
 
 int x5b_app_keepalive_send(x5b_app_mgt_t *app, int res, int to)
 {
-	int len = 0, zone = 0;
+	ospl_uint32 len = 0, zone = 0;
 	//int timesp = 0;
 	x5b_app_mgt_t *mgt = app;
 	if(app == NULL)
@@ -311,7 +326,7 @@ int x5b_app_keepalive_send(x5b_app_mgt_t *app, int res, int to)
 
 	if(to == E_CMD_TO_C || to == E_CMD_TO_A)
 	{
-		u_int8 tibuf[8];
+		ospl_uint8 tibuf[8];
 		int *tisp = (int *)(tibuf + 1);
 		*tisp = htonl(os_time(NULL));
 
@@ -357,7 +372,7 @@ int x5b_app_keepalive_send(x5b_app_mgt_t *app, int res, int to)
 //本地WEB时间同步给基准设备
 int x5b_app_sync_web_time(x5b_app_mgt_t *app, int to)
 {
-	int len = 0, zone = 0;
+	ospl_uint32 len = 0, zone = 0;
 	x5b_app_mgt_t *mgt = app;
 	if(app == NULL)
 		mgt = x5b_app_mgt;
@@ -385,7 +400,7 @@ int x5b_app_sync_web_time(x5b_app_mgt_t *app, int to)
 
 	if(to == E_CMD_TO_C || to == E_CMD_TO_A)
 	{
-		u_int8 tibuf[8];
+		ospl_uint8 tibuf[8];
 		int *tisp = (int *)(tibuf + 1);
 		*tisp = htonl(os_time(NULL));
 
@@ -424,7 +439,7 @@ int x5b_app_sync_web_time(x5b_app_mgt_t *app, int to)
  */
 int x5b_app_rtc_request(x5b_app_mgt_t *app, int to)
 {
-	int len = 0;
+	ospl_uint32 len = 0;
 	x5b_app_mgt_t *mgt = app;
 	if(app == NULL)
 		mgt = x5b_app_mgt;
@@ -466,7 +481,7 @@ int x5b_app_rtc_request(x5b_app_mgt_t *app, int to)
 
 int x5b_app_version_request(x5b_app_mgt_t *app, int to)
 {
-	int len = 0;
+	ospl_uint32 len = 0;
 	x5b_app_mgt_t *mgt = app;
 	if(app == NULL)
 		mgt = x5b_app_mgt;
@@ -509,10 +524,10 @@ int x5b_app_version_request(x5b_app_mgt_t *app, int to)
 
 
 //向A/C模块通告IP地址
-int x5b_app_IP_address_api(x5b_app_mgt_t *app, u_int32 address, int to)
+int x5b_app_IP_address_api(x5b_app_mgt_t *app, ospl_uint32 address, int to)
 {
-	u_int32 val = (u_int32)address;
-	int len = 0;
+	ospl_uint32 val = (ospl_uint32)address;
+	ospl_uint32 len = 0;
 	x5b_app_mgt_t *mgt = app;
 	if(app == NULL)
 		mgt = x5b_app_mgt;
@@ -544,7 +559,7 @@ int x5b_app_IP_address_api(x5b_app_mgt_t *app, u_int32 address, int to)
 	}
 	x5b_app_hdr_make(mgt);
 	len = os_tlv_set_integer(mgt->app->sbuf + mgt->app->offset,
-			E_CMD_MAKE(E_CMD_MODULE_B, E_CMD_SET, E_CMD_IP_ADDRESS), sizeof(u_int32), &val);
+			E_CMD_MAKE(E_CMD_MODULE_B, E_CMD_SET, E_CMD_IP_ADDRESS), sizeof(ospl_uint32), &val);
 	mgt->app->offset += len;
 	x5b_app_crc_make(mgt);
 	if(X5_B_ESP32_DEBUG(EVENT))
@@ -564,8 +579,8 @@ int x5b_app_IP_address_api(x5b_app_mgt_t *app, u_int32 address, int to)
  */
 int x5b_app_network_port_status_api(x5b_app_mgt_t *app, int res, int to)
 {
-	u_int8 val = res & 0xff;
-	int len = 0;
+	ospl_uint8 val = res & 0xff;
+	ospl_uint32 len = 0;
 	x5b_app_mgt_t *mgt = app;
 	if(app == NULL)
 		mgt = x5b_app_mgt;
@@ -613,7 +628,7 @@ int x5b_app_network_port_status_api(x5b_app_mgt_t *app, int res, int to)
 static int x5b_app_network_information_ack(x5b_app_mgt_t *mgt, int to)
 {
 	x5b_app_netinfo_t netinfo;
-	int len = 0;
+	ospl_uint32 len = 0;
 	zassert(mgt != NULL);
 	//zassert(mgt->app != NULL);
 /*	if(mgt->mutex)
@@ -663,9 +678,9 @@ static int x5b_app_network_information_ack(x5b_app_mgt_t *mgt, int to)
 
 
 /**********************************************/
-int x5b_app_reboot_request(x5b_app_mgt_t *app, int to, BOOL hwreset)
+int x5b_app_reboot_request(x5b_app_mgt_t *app, int to, ospl_bool hwreset)
 {
-	int len = 0;
+	ospl_uint32 len = 0;
 	x5b_app_mgt_t *mgt = app;
 	if(app == NULL)
 		mgt = x5b_app_mgt;
@@ -691,7 +706,7 @@ int x5b_app_reboot_request(x5b_app_mgt_t *app, int to, BOOL hwreset)
 	}
 
 	x5b_app_hdr_make(mgt);
-	if(hwreset == TRUE)
+	if(hwreset == ospl_true)
 	{
 		len = os_tlv_set_zero(mgt->app->sbuf + mgt->app->offset,
 			E_CMD_MAKE(E_CMD_MODULE_B, E_CMD_BASE, E_CMD_RESET_REQ), 0);
@@ -730,8 +745,8 @@ static int x5b_app_read_register_tlv(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 
 	if(E_CMD_FROM_A(tlv->tag))//from A module
 	{
-		u_int32	*rtc = NULL;
-		mgt->app_a.reg_state = TRUE;
+		ospl_uint32	*rtc = NULL;
+		mgt->app_a.reg_state = ospl_true;
 		//mgt->app_a.remote_address = strdup(inet_address(ntohl(mgt->from.sin_addr.s_addr)));
 #ifndef X5B_APP_STATIC_IP_ENABLE
 		if(mgt->app_a.remote_port == 0)
@@ -746,7 +761,7 @@ static int x5b_app_read_register_tlv(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 		memset(mgt->app_a.version, 0, sizeof(mgt->app_a.version));
 		memset(mgt->app_a.ioversion, 0, sizeof(mgt->app_a.ioversion));
 
-		rtc = (u_int32 *)tlv->val.pval;
+		rtc = (ospl_uint32 *)tlv->val.pval;
 		mgt->app_a.id = ntohl(*rtc);//set Module ID
 
 #ifdef X5B_APP_TIMESYNC_C
@@ -754,12 +769,12 @@ static int x5b_app_read_register_tlv(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 		{
 			if(tlv->len > 4)
 			{
-				rtc = (u_int32 *)(tlv->val.pval + sizeof(u_int32));
+				rtc = (ospl_uint32 *)(tlv->val.pval + sizeof(ospl_uint32));
 
 				mgt->app_a.remote_timestmp = ntohl(*rtc);
 				if(x5b_app_rtc_tm_set(ntohl(*rtc)) == OK)//set local time by RTC Time
 				{
-					mgt->time_sync = TRUE;
+					mgt->time_sync = ospl_true;
 				}
 			}
 		}
@@ -767,12 +782,12 @@ static int x5b_app_read_register_tlv(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 		{
 			if(tlv->len > 4)
 			{
-				rtc = (u_int32 *)(tlv->val.pval + sizeof(u_int32));
+				rtc = (ospl_uint32 *)(tlv->val.pval + sizeof(ospl_uint32));
 
 				mgt->app_a.remote_timestmp = ntohl(*rtc);
 				if(x5b_app_rtc_tm_set(ntohl(*rtc)) == OK)//set local time by RTC Time
 				{
-					mgt->time_sync = TRUE;
+					mgt->time_sync = ospl_true;
 				}
 			}
 		}
@@ -786,15 +801,15 @@ static int x5b_app_read_register_tlv(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 		{
 			if(mgt->app_c.reg_state)//when C module is register OK, send register OK result
 			{
-				//if(mgt->app_a.msg_sync == FALSE)
+				//if(mgt->app_a.msg_sync == ospl_false)
 				{
 					x5b_app_register_ok_api(mgt, E_CMD_TO_A, 1);
-					//mgt->app_a.msg_sync = TRUE;
+					//mgt->app_a.msg_sync = ospl_true;
 				}
-				//if(mgt->app_c.msg_sync == FALSE)
+				//if(mgt->app_c.msg_sync == ospl_false)
 				{
 					x5b_app_register_ok_api(mgt, E_CMD_TO_C, 1);
-					//mgt->app_c.msg_sync = TRUE;
+					//mgt->app_c.msg_sync = ospl_true;
 				}
 				if(mgt->app_a.t_thread)
 				{
@@ -807,11 +822,11 @@ static int x5b_app_read_register_tlv(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 		}
 		else
 		{
-			//if(mgt->app_a.msg_sync == FALSE)
+			//if(mgt->app_a.msg_sync == ospl_false)
 			{
 				//zlog_debug(MODULE_APP, "======================== X5BM Register TO A");
 				x5b_app_register_ok_api(mgt, E_CMD_TO_A, 1);
-				//mgt->app_a.msg_sync = TRUE;
+				//mgt->app_a.msg_sync = ospl_true;
 				x5b_app_event_active(mgt, X5B_TIMER_EV, 0, 0);
 				x5b_app_event_active(mgt, X5B_KEEPALIVE_EV, X5B_APP_MODULE_ID_A, 0);
 			}
@@ -819,7 +834,7 @@ static int x5b_app_read_register_tlv(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 	}
 	else if(E_CMD_FROM_C(tlv->tag) && x5b_app_mode_X5CM())
 	{
-		mgt->app_c.reg_state = TRUE;
+		mgt->app_c.reg_state = ospl_true;
 #ifndef X5B_APP_STATIC_IP_ENABLE
 		//mgt->app_c.remote_address = strdup(inet_address(ntohl(mgt->from.sin_addr.s_addr)));
 		if(mgt->app_c.remote_port == 0)
@@ -846,16 +861,16 @@ static int x5b_app_read_register_tlv(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 			if(mgt->app_a.reg_state)//when A module is register OK, send register OK result
 			{
 				//zlog_debug(MODULE_APP, "======================== X5CM");
-				//if(mgt->app_a.msg_sync == FALSE)
+				//if(mgt->app_a.msg_sync == ospl_false)
 				{
 					x5b_app_register_ok_api(mgt, E_CMD_TO_A, 1);
-					//mgt->app_a.msg_sync = TRUE;
+					//mgt->app_a.msg_sync = ospl_true;
 					//zlog_debug(MODULE_APP, "======================== X5BM Register TO A");
 				}
-				//if(mgt->app_c.msg_sync == FALSE)
+				//if(mgt->app_c.msg_sync == ospl_false)
 				{
 					x5b_app_register_ok_api(mgt, E_CMD_TO_C, 1);
-					//mgt->app_c.msg_sync = TRUE;
+					//mgt->app_c.msg_sync = ospl_true;
 					//zlog_debug(MODULE_APP, "======================== X5BM Register TO C");
 				}
 				if(mgt->app_c.t_thread)
@@ -872,11 +887,11 @@ static int x5b_app_read_register_tlv(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 			x5b_app_event_active(mgt, X5B_TIMER_EV, 0, 0);
 			x5b_app_event_active(mgt, X5B_KEEPALIVE_EV, X5B_APP_MODULE_ID_A, 0);
 			//zlog_debug(MODULE_APP, "======================== X5BM");
-			//if(mgt->app_c.msg_sync == FALSE)
+			//if(mgt->app_c.msg_sync == ospl_false)
 			{
 				//zlog_debug(MODULE_APP, "======================== X5BM Register TO C");
 				x5b_app_register_ok_api(mgt, E_CMD_TO_C, 1);
-				//mgt->app_c.msg_sync = TRUE;
+				//mgt->app_c.msg_sync = ospl_true;
 			}
 		}
 	}
@@ -885,7 +900,7 @@ static int x5b_app_read_register_tlv(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 		zlog_debug(MODULE_APP, "---%s---1 x5b_app_mode_X5CM", __func__);
 		if(/*!mgt->regsync && */mgt->app_c.reg_state && mgt->app_a.reg_state)
 		{
-			//mgt->regsync = TRUE;
+			//mgt->regsync = ospl_true;
 			zlog_debug(MODULE_APP, "---%s---2 x5b_app_mode_X5CM", __func__);
 			eloop_add_timer(mgt->master, x5b_app_config_load, mgt, 2);
 
@@ -896,7 +911,7 @@ static int x5b_app_read_register_tlv(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 		zlog_debug(MODULE_APP, "---%s---1 !x5b_app_mode_X5CM", __func__);
 		if(/*!mgt->regsync && */mgt->app_a.reg_state)
 		{
-			//mgt->regsync = TRUE;
+			//mgt->regsync = ospl_true;
 			zlog_debug(MODULE_APP, "---%s---2 !x5b_app_mode_X5CM", __func__);
 			eloop_add_timer(mgt->master, x5b_app_config_load, mgt, 2);
 		}
@@ -938,7 +953,7 @@ static int x5b_app_read_base_cmd_tlv(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 		mgt->ack_seqnum = tlv->val.pval[0];//tlv->val.val8;
 		if(mgt->sync_ack)
 		{
-			//mgt->sync_ack = FALSE;
+			//mgt->sync_ack = ospl_false;
 			if(mgt->ack_seqnum == mgt->app->seqnum)
 			{
 				if(X5_B_ESP32_DEBUG(EVENT))
@@ -978,14 +993,14 @@ static int x5b_app_read_base_cmd_tlv(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 #ifdef X5B_APP_TIMESYNC_C
 			if(x5b_app_mode_X5CM())
 			{
-				u_int8	*timezone = NULL;
-				u_int32	*rtc = NULL;
-				timezone = (u_int8 *)tlv->val.pval;
-				rtc = (u_int32 *)(tlv->val.pval + 1);
+				ospl_uint8	*timezone = NULL;
+				ospl_uint32	*rtc = NULL;
+				timezone = (ospl_uint8 *)tlv->val.pval;
+				rtc = (ospl_uint32 *)(tlv->val.pval + 1);
 				mgt->app_c.remote_timestmp = ntohl(*rtc);
 				if(x5b_app_rtc_tm_set(ntohl(*rtc)) == OK)//set local time by RTC Time
 				{
-					mgt->time_sync = TRUE;
+					mgt->time_sync = ospl_true;
 
 					//x5b_app_event_inactive(mgt, X5B_TIMER_EV, 0);
 				}
@@ -1080,14 +1095,14 @@ static int x5b_app_read_set_cmd_tlv(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 			zlog_debug(MODULE_APP, "RTC Time msg (seqnum=%d)", mgt->seqnum);
 		if(tlv->val.pval && tlv->len >= 4)	
 		{
-			u_int32 *rtc_value = (u_int32 *)tlv->val.pval;
+			ospl_uint32 *rtc_value = (ospl_uint32 *)tlv->val.pval;
 #ifdef X5B_APP_TIMESYNC_C
 			if(x5b_app_mode_X5CM())
 			{
 				mgt->app_c.remote_timestmp = ntohl(rtc_value);
 				if(x5b_app_rtc_tm_set(ntohl(rtc_value)) == OK)
 				{
-					mgt->time_sync = TRUE;
+					mgt->time_sync = ospl_true;
 				}
 			}
 #else
@@ -1097,7 +1112,7 @@ static int x5b_app_read_set_cmd_tlv(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 
 				if(x5b_app_rtc_tm_set(ntohl(rtc_value)) == OK)
 				{
-					mgt->time_sync = TRUE;
+					mgt->time_sync = ospl_true;
 				}
 			}
 #endif
@@ -1174,7 +1189,7 @@ static int x5b_app_read_call_cmd_tlv(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 			else
 			{
 				//call.room_number = ntohs(call.room_number);
-				x5b_app_start_call(TRUE, &call);
+				x5b_app_start_call(ospl_true, &call);
 			}
 #endif
 		}
@@ -1192,7 +1207,7 @@ static int x5b_app_read_call_cmd_tlv(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 				memcpy(temp, tlv->val.pval, tlv->len);
 				temp[tlv->len] = '\0';
 				zlog_debug(MODULE_APP,"Recv Phone Call IMG respone len=%d val=%s\r\n", tlv->len, temp);
-				x5b_app_start_call_user(TRUE, temp);
+				x5b_app_start_call_user(ospl_true, temp);
 				free(temp);
 				return OK;
 			}
@@ -1203,19 +1218,19 @@ static int x5b_app_read_call_cmd_tlv(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 		if(X5_B_ESP32_DEBUG(EVENT))
 			zlog_debug(MODULE_APP, "Stop Call msg (seqnum=%d)", mgt->seqnum);
 		{
-			x5b_app_stop_call(FALSE, NULL);
+			x5b_app_stop_call(ospl_false, NULL);
 		}
 		break;
 	case E_CMD_START_CALL_PHONE:				//
 		if(X5_B_ESP32_DEBUG(EVENT))
 			zlog_debug(MODULE_APP, "Start Call(phone) msg (seqnum=%d)", mgt->seqnum);
-		x5b_app_call_phone_number(mgt, tlv, FALSE);
+		x5b_app_call_phone_number(mgt, tlv, ospl_false);
 		break;
 
 	case E_CMD_START_CALL_LIST:				//
 		if(X5_B_ESP32_DEBUG(EVENT))
 			zlog_debug(MODULE_APP, "Start Call(list) msg (seqnum=%d)", mgt->seqnum);
-		x5b_app_call_phone_number(mgt, tlv, TRUE);
+		x5b_app_call_phone_number(mgt, tlv, ospl_true);
 		break;
 
 	default:
@@ -1308,7 +1323,7 @@ static int x5b_app_read_status_cmd_tlv(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 
 int x5b_app_read_handle(x5b_app_mgt_t *mgt)
 {
-	int len = 0, offset = 0, ack = 0;
+	ospl_uint32 len = 0, offset = 0, ack = 0;
 	os_tlv_t tlv;
 	zassert(mgt != NULL);
 	{
@@ -1375,14 +1390,14 @@ static int x5b_app_config_load(struct eloop *eloop)
 		{
 			//if(X5_B_ESP32_DEBUG(EVENT))
 				zlog_debug(MODULE_APP, "loading config and send to C module when C is register");
-			//x5b_app_global_config_action(x5b_app_global, FALSE);
-			//x5b_app_face_config_action(x5b_app_face, FALSE);
+			//x5b_app_global_config_action(x5b_app_global, ospl_false);
+			//x5b_app_face_config_action(x5b_app_face, ospl_false);
 		}
 		if(mgt->app_a.address)
 		{
 			//if(X5_B_ESP32_DEBUG(EVENT))
 				zlog_debug(MODULE_APP, "loading config and send to A module when A is register");
-			x5b_app_open_option_action(x5b_app_open, FALSE, FALSE);
+			x5b_app_open_option_action(x5b_app_open, ospl_false, ospl_false);
 		}
 	}
 	return OK;
@@ -1390,7 +1405,7 @@ static int x5b_app_config_load(struct eloop *eloop)
 
 static int x5b_app_report_eloop(struct eloop *eloop)
 {
-	int len = 0, to_cmd = 0, send_cnt = 2;
+	ospl_uint32 len = 0, to_cmd = 0, send_cnt = 2;
 	zassert(eloop != NULL);
 	x5b_app_netinfo_t netinfo;
 	x5b_app_phone_register_ack_t reginfo;
@@ -1434,7 +1449,7 @@ static int x5b_app_report_eloop(struct eloop *eloop)
 #ifdef PL_BUILD_OPENWRT
 		if (x5b_app_network_port_status_get(mgt) == OK)
 		{
-			u_int8 val = 0;
+			ospl_uint8 val = 0;
 			if(mgt->wan_state.address)
 				val = E_CMD_NETWORK_STATE_UP;
 			else
@@ -1455,7 +1470,7 @@ static int x5b_app_report_eloop(struct eloop *eloop)
 	{
 		int rlen = 0;
 		x5b_app_register_ack_t state;
-		pl_pjsip_username_get_api(state.phone, NULL, FALSE);
+		pl_pjsip_username_get_api(state.phone, NULL, ospl_false);
 
 		rlen = (1 + strlen(state.phone));
 		if(pl_pjsip->sip_user.sip_state == PJSIP_STATE_REGISTER_SUCCESS)
@@ -1468,7 +1483,7 @@ static int x5b_app_report_eloop(struct eloop *eloop)
 				E_CMD_MAKE(E_CMD_MODULE_B, E_CMD_STATUS, E_CMD_REG_STATUS), rlen, &state);
 		mgt->app->offset += len;
 
-		pl_pjsip_username_get_api(state.phone, NULL, TRUE);
+		pl_pjsip_username_get_api(state.phone, NULL, ospl_true);
 		rlen = (1 + strlen(state.phone));
 		if(pl_pjsip->sip_user_sec.sip_state == PJSIP_STATE_REGISTER_SUCCESS)
 			state.reg_state = 1;
@@ -1483,7 +1498,7 @@ static int x5b_app_report_eloop(struct eloop *eloop)
 	{
 		int rlen = 0;
 		x5b_app_register_ack_t state;
-		pl_pjsip_username_get_api(state.phone, NULL, FALSE);
+		pl_pjsip_username_get_api(state.phone, NULL, ospl_false);
 
 		rlen = (1 + strlen(state.phone));
 		if(pl_pjsip->sip_user.sip_state == PJSIP_STATE_REGISTER_SUCCESS)
@@ -1538,7 +1553,7 @@ static int x5b_app_report_start(x5b_app_mgt_t *mgt, int interval)
 }
 
 
-int x5b_app_update_mode_enable(x5b_app_mgt_t *app, BOOL enable, int to)
+int x5b_app_update_mode_enable(x5b_app_mgt_t *app, ospl_bool enable, int to)
 {
 	if(to == E_CMD_TO_A)
 	{
@@ -1549,9 +1564,9 @@ int x5b_app_update_mode_enable(x5b_app_mgt_t *app, BOOL enable, int to)
 
 		if(enable)
 		{
-			if(mgt->upgrade == TRUE)
+			if(mgt->upgrade == ospl_true)
 				return OK;
-			mgt->upgrade = TRUE;
+			mgt->upgrade = ospl_true;
 			if(mgt->r_thread)
 			{
 				eloop_cancel(mgt->r_thread);
@@ -1587,7 +1602,7 @@ int x5b_app_update_mode_enable(x5b_app_mgt_t *app, BOOL enable, int to)
 		}
 		else
 		{
-			if(mgt->upgrade != TRUE)
+			if(mgt->upgrade != ospl_true)
 				return OK;
 			if(!mgt->r_thread && mgt->r_fd > 0)
 			{
@@ -1598,15 +1613,15 @@ int x5b_app_update_mode_enable(x5b_app_mgt_t *app, BOOL enable, int to)
 				x5b_app_event_active(mgt, X5B_KEEPALIVE_EV, X5B_APP_MODULE_ID_C, 0);
 				//mgt->app_c.t_thread = eloop_add_timer(mgt->master, x5b_app_timer_eloop, &mgt->app_c, mgt->app_c.interval);
 
-			//mgt->sync_ack = FALSE;
+			//mgt->sync_ack = ospl_false;
 			mgt->app_a.id = 0;
-			mgt->app_a.reg_state = FALSE;
+			mgt->app_a.reg_state = ospl_false;
 			//mgt->app_a.state = 0;			//>= 3: OK, else ERROR;
 			mgt->app_a.keep_cnt = X5B_APP_INTERVAL_CNT_DEFAULT;
 		#ifndef X5B_APP_STATIC_IP_ENABLE
 			mgt->app_a.address = 0;
 		#endif
-			mgt->upgrade = FALSE;
+			mgt->upgrade = ospl_false;
 			//mgt->app_a.remote_port = 0;
 			//zlog_debug(MODULE_APP, "----x5b_app_update_mode_disable_a OK" );
 			return OK;
@@ -1638,7 +1653,7 @@ int x5b_app_local_address_set_api(char *address)
 	return OK;
 }
 
-int x5b_app_local_port_set_api(u_int16 port)
+int x5b_app_local_port_set_api(ospl_uint16 port)
 {
 	if(!x5b_app_mgt)
 		return ERROR;
@@ -1657,7 +1672,7 @@ int x5b_app_local_port_set_api(u_int16 port)
 	return OK;
 }
 
-int x5b_app_port_set_api(int to, u_int16 port)
+int x5b_app_port_set_api(int to, ospl_uint16 port)
 {
 	if(!x5b_app_mgt)
 		return ERROR;
@@ -1672,7 +1687,7 @@ int x5b_app_port_set_api(int to, u_int16 port)
 	return OK;
 }
 
-int x5b_app_interval_set_api(int to, u_int8 interval)
+int x5b_app_interval_set_api(int to, ospl_uint8 interval)
 {
 	if(!x5b_app_mgt)
 		return ERROR;
@@ -1688,7 +1703,7 @@ int x5b_app_interval_set_api(int to, u_int8 interval)
 }
 
 
-int x5b_app_module_init(char *local, u_int16 port)
+int x5b_app_module_init(char *local, ospl_uint16 port)
 {
 	x5b_app_global_mode_load();
 
@@ -1697,10 +1712,10 @@ int x5b_app_module_init(char *local, u_int16 port)
 		x5b_app_mgt = malloc(sizeof(x5b_app_mgt_t));
 		memset(x5b_app_mgt, 0, sizeof(x5b_app_mgt_t));
 
-		if(master_eloop[MODULE_APP_START] == NULL)
-			master_eloop[MODULE_APP_START] = eloop_master_module_create(MODULE_APP_START);
+		if(master_eloop[MODULE_APP] == NULL)
+			master_eloop[MODULE_APP] = eloop_master_module_create(MODULE_APP);
 
-		x5b_app_mgt->master = master_eloop[MODULE_APP_START];
+		x5b_app_mgt->master = master_eloop[MODULE_APP];
 
 		x5b_app_mgt->mutex = os_mutex_init();
 
@@ -1723,7 +1738,7 @@ int x5b_app_module_init(char *local, u_int16 port)
 		x5b_app_mgt->app_a.priv = x5b_app_mgt;
 		x5b_app_mgt->app_c.priv = x5b_app_mgt;
 
-		x5b_app_mgt->sync_ack = TRUE;
+		x5b_app_mgt->sync_ack = ospl_true;
 		x5b_app_socket_init(x5b_app_mgt);
 
 		x5b_app_network_event_init(x5b_app_mgt);
@@ -1737,11 +1752,11 @@ int x5b_app_module_init(char *local, u_int16 port)
 	x5b_user_load();
 #endif
 #ifdef PL_BUILD_X86
-	x5b_app_global->X5CM = TRUE;
+	x5b_app_global->X5CM = ospl_true;
 	x5b_app_global->opentype = OPEN_FACE_AND_CARD;
 	x5b_app_global->customizer = CUSTOMIZER_SECOM;
 	x5b_app_global->install_scene = APP_SCENE_BUSSINESS;
-	x5b_app_out_direction_set_api(TRUE);
+	x5b_app_out_direction_set_api(ospl_true);
 #endif
 	return OK;
 }
@@ -1770,7 +1785,7 @@ static int x5b_app_mgt_task(void *argv)
 	zassert(argv != NULL);
 	x5b_app_mgt_t *mgt = (x5b_app_mgt_t *)argv;
 	zassert(mgt != NULL);
-	module_setup_task(MODULE_APP_START, os_task_id_self());
+	module_setup_task(MODULE_APP, os_task_id_self());
 	while(!os_load_config_done())
 	{
 		os_sleep(1);
@@ -1780,7 +1795,7 @@ static int x5b_app_mgt_task(void *argv)
 		os_sleep(5);
 	}
 	//x5b_app_state_load(mgt);
-	eloop_start_running(master_eloop[MODULE_APP_START], MODULE_APP_START);
+	eloop_start_running(master_eloop[MODULE_APP], MODULE_APP);
 	return OK;
 }
 
@@ -1788,10 +1803,10 @@ static int x5b_app_mgt_task(void *argv)
 static int x5b_app_task_init (x5b_app_mgt_t *mgt)
 {
 	zassert(mgt != NULL);
-	if(master_eloop[MODULE_APP_START] == NULL)
-		master_eloop[MODULE_APP_START] = eloop_master_module_create(MODULE_APP_START);
+	if(master_eloop[MODULE_APP] == NULL)
+		master_eloop[MODULE_APP] = eloop_master_module_create(MODULE_APP);
 
-	mgt->enable = TRUE;
+	mgt->enable = ospl_true;
 	mgt->task_id = os_task_create("appTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, x5b_app_mgt_task, mgt, OS_TASK_DEFAULT_STACK * 2);
 	if(mgt->task_id)
@@ -1804,7 +1819,7 @@ int x5b_app_debug_proc()
 {
 	if(x5b_app_mgt)
 	{
-		x5b_app_mgt->enable = TRUE;
+		x5b_app_mgt->enable = ospl_true;
 		x5b_app_mgt->task_id = 1;
 		x5b_app_mgt_task(x5b_app_mgt);
 	}
@@ -1911,7 +1926,7 @@ int x5b_app_show_state(struct vty *vty)
 		vty_out(vty, " A port                  : %d %s", mgt->app_a.remote_port, VTY_NEWLINE);
 		vty_out(vty, " A keep cnt              : %d %s", mgt->app_a.keep_cnt, VTY_NEWLINE);
 		vty_out(vty, " A ID                    : 0x%x %s", mgt->app_a.id, VTY_NEWLINE);
-		vty_out(vty, " A Reg state             : %s %s", mgt->app_a.reg_state ? "TRUE":"FALSE", VTY_NEWLINE);
+		vty_out(vty, " A Reg state             : %s %s", mgt->app_a.reg_state ? "ospl_true":"ospl_false", VTY_NEWLINE);
 		vty_out(vty, " A interval              : %d %s", mgt->app_a.interval, VTY_NEWLINE);
 		vty_out(vty, " A send seqnum           : %d %s", mgt->app_a.seqnum, VTY_NEWLINE);
 		vty_out(vty, " A module version        : %s %s", strlen(mgt->app_a.version)? mgt->app_a.version:" ", VTY_NEWLINE);
@@ -1921,7 +1936,7 @@ int x5b_app_show_state(struct vty *vty)
 			vty_out(vty, " C port                  : %d %s", mgt->app_c.remote_port, VTY_NEWLINE);
 			vty_out(vty, " C keep cnt              : %d %s", mgt->app_c.keep_cnt, VTY_NEWLINE);
 			vty_out(vty, " C ID                    : 0x%x %s", mgt->app_c.id, VTY_NEWLINE);
-			vty_out(vty, " C Reg state             : %s %s", mgt->app_c.reg_state ? "TRUE":"FALSE", VTY_NEWLINE);
+			vty_out(vty, " C Reg state             : %s %s", mgt->app_c.reg_state ? "ospl_true":"ospl_false", VTY_NEWLINE);
 			vty_out(vty, " C interval              : %d %s", mgt->app_c.interval, VTY_NEWLINE);
 			vty_out(vty, " C send seqnum           : %d %s", mgt->app_c.seqnum, VTY_NEWLINE);
 			vty_out(vty, " C module version        : %s %s", strlen(mgt->app_c.version)? mgt->app_c.version:" ", VTY_NEWLINE);
@@ -1967,7 +1982,7 @@ static int x5b_app_c_enable_load(x5_b_a_mgt_t *mgt)
 		}
 		fclose(fp);
 		if(cnt >= 4)
-			mgt->enable = FALSE;
+			mgt->enable = ospl_false;
 		return OK;
 	}
 	return ERROR;
@@ -1979,7 +1994,7 @@ int x5b_app_test_register(int to, int p)
 	if(to == 	E_CMD_TO_A)
 	{
 		x5b_app_mgt->app_a.id = X5B_APP_MODULE_ID_A;
-		x5b_app_mgt->app_a.reg_state = TRUE;
+		x5b_app_mgt->app_a.reg_state = ospl_true;
 		x5b_app_mgt->app_a.keep_cnt = 3;			//>= 3: OK, else ERROR;
 		x5b_app_mgt->app_a.interval = 3;
 		x5b_app_mgt->app_a.address = ntohl(inet_addr("192.168.3.222"));
@@ -1991,7 +2006,7 @@ int x5b_app_test_register(int to, int p)
 	if(to == 	E_CMD_TO_C)
 	{
 		x5b_app_mgt->app_c.id = X5B_APP_MODULE_ID_C;
-		x5b_app_mgt->app_c.reg_state = TRUE;
+		x5b_app_mgt->app_c.reg_state = ospl_true;
 		x5b_app_mgt->app_c.keep_cnt = 3;			//>= 3: OK, else ERROR;
 		x5b_app_mgt->app_c.interval = 3;
 		x5b_app_mgt->app_c.address = ntohl(inet_addr("192.168.3.222"));
@@ -2001,9 +2016,9 @@ int x5b_app_test_register(int to, int p)
 	}
 	return x5b_app_register_ok_api(x5b_app_mgt, to, p);
 }
-int x5b_app_test_call(u_int16 num)
+int x5b_app_test_call(ospl_uint16 num)
 {
-	u_int16 *crc = (u_int16 *)(x5b_app_mgt->buf + sizeof(x5b_app_hdr_t) + 8 + sizeof(x5b_app_call_t));
+	ospl_uint16 *crc = (ospl_uint16 *)(x5b_app_mgt->buf + sizeof(x5b_app_hdr_t) + 8 + sizeof(x5b_app_call_t));
 	x5b_app_hdr_t *hdr = (x5b_app_hdr_t *)x5b_app_mgt->buf;
 	os_tlv_t *tlv = (os_tlv_t *)(x5b_app_mgt->buf + sizeof(x5b_app_hdr_t));
 	x5b_app_call_t *call = (x5b_app_call_t *)(x5b_app_mgt->buf + sizeof(x5b_app_hdr_t) + 8);

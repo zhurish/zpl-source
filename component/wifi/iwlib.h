@@ -12,6 +12,10 @@
 #ifndef IWLIB_H
 #define IWLIB_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*#include "CHANGELOG.h"*/
 
 /***************************** INCLUDES *****************************/
@@ -59,7 +63,7 @@
 
 /* Private copy of Wireless extensions (in this directoty) */
 #include "wireless.h"
-
+#include "ospl_type.h"
 /* Make gcc understant that when we say inline, we mean it.
  * I really hate when the compiler is trying to be more clever than me,
  * because in this case gcc is not able to figure out functions with a
@@ -90,9 +94,6 @@
 #define inline		inline		__attribute__((always_inline))
 #endif	/* IW_GCC_HAS_BROKEN_INLINE */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /****************************** DEBUG ******************************/
 
@@ -309,8 +310,8 @@ typedef struct iw_modul_descr
 extern int iwlist_main(iw_user_cb_t *cb, int argc, char ** argv);
 extern int iw_main(iw_user_cb_t *cb, int argc, char ** argv);
 
-extern int iwlist_detail_set(int value);
-extern int iwlist_detail_get();
+extern int iwlist_detail_set(ospl_bool value);
+extern ospl_bool iwlist_detail_get();
 /* ---------------------- SOCKET SUBROUTINES -----------------------*/
 extern int
 	iw_sockets_open(void);
@@ -397,17 +398,17 @@ extern void
 extern void
 	iw_print_key(char *			buffer,
 		     int			buflen,
-		     const unsigned char *	key,
+		     const ospl_uint8 *	key,
 		     int			key_size,
 		     int			key_flags);
 extern int
 	iw_in_key(const char *		input,
-		  unsigned char *	key);
+		  ospl_uint8 *	key);
 extern int
 	iw_in_key_full(int		skfd,
 		       const char *	ifname,
 		       const char *	input,
-		       unsigned char *	key,
+		       ospl_uint8 *	key,
 		       __u16 *		flags);
 /* ----------------- POWER MANAGEMENT SUBROUTINES ----------------- */
 extern void
@@ -450,10 +451,10 @@ extern int
 	iw_get_mac_addr(int			skfd,
 			const char *		name,
 			struct ether_addr *	eth,
-			unsigned short *	ptype);
+			ospl_uint16 *	ptype);
 #endif
 extern char *
-	iw_mac_ntop(const unsigned char *	mac,
+	iw_mac_ntop(const ospl_uint8 *	mac,
 		    int				maclen,
 		    char *			buf,
 		    int				buflen);
@@ -465,7 +466,7 @@ extern char *
 		      char *			buf);
 extern int
 	iw_mac_aton(const char *	orig,
-		    unsigned char *	mac,
+		    ospl_uint8 *	mac,
 		    int			macmax);
 extern int
 	iw_ether_aton(const char* bufp, struct ether_addr* eth);
@@ -502,7 +503,7 @@ extern int
 		wireless_scan_head *	context);
 
 
-extern int iw_is_connect(char *ifname, unsigned char *bssid);
+extern int iw_is_connect(char *ifname, ospl_uint8 *bssid);
 extern int iw_kernel_mode(char *ifname, int *mode);
 extern int iw_kernel_ssid(char *ifname, char *ssid);
 extern int iw_start_scan(char * ifname, wireless_scan_head *context);

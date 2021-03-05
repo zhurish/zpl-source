@@ -94,7 +94,7 @@ static int __mdio_write(struct b53125_device *dev, int addr, u32 regnum, u16 val
 
 static int b53125_mdio_op(struct b53125_device *dev, u8 page, u8 reg, u16 op)
 {
-	int i;
+	ospl_uint32 i;
 	u16 v;
 	int ret;
 
@@ -173,7 +173,7 @@ static int b53125_mdio_read32(struct b53125_device *dev, u8 page, u8 reg, u32 *v
 static int b53125_mdio_read48(struct b53125_device *dev, u8 page, u8 reg, u64 *val)
 {
 	u64 temp = 0;
-	int i;
+	ospl_uint32 i;
 	int ret;
 
 	ret = b53125_mdio_op(dev, page, reg, REG_MII_ADDR_READ);
@@ -194,7 +194,7 @@ static int b53125_mdio_read48(struct b53125_device *dev, u8 page, u8 reg, u64 *v
 static int b53125_mdio_read64(struct b53125_device *dev, u8 page, u8 reg, u64 *val)
 {
 	u64 temp = 0;
-	int i;
+	ospl_uint32 i;
 	int ret;
 
 	ret = b53125_mdio_op(dev, page, reg, REG_MII_ADDR_READ);
@@ -240,7 +240,7 @@ static int b53125_mdio_write16(struct b53125_device *dev, u8 page, u8 reg,
 static int b53125_mdio_write32(struct b53125_device *dev, u8 page, u8 reg,
 			    u32 value)
 {
-	unsigned int i;
+	ospl_uint32 i;
 	u32 temp = value;
 
 	for (i = 0; i < 2; i++) {
@@ -258,7 +258,7 @@ static int b53125_mdio_write32(struct b53125_device *dev, u8 page, u8 reg,
 static int b53125_mdio_write48(struct b53125_device *dev, u8 page, u8 reg,
 			    u64 value)
 {
-	unsigned int i;
+	ospl_uint32 i;
 	u64 temp = value;
 
 	for (i = 0; i < 3; i++) {
@@ -276,7 +276,7 @@ static int b53125_mdio_write48(struct b53125_device *dev, u8 page, u8 reg,
 static int b53125_mdio_write64(struct b53125_device *dev, u8 page, u8 reg,
 			    u64 value)
 {
-	unsigned int i;
+	ospl_uint32 i;
 	u64 temp = value;
 
 	for (i = 0; i < 4; i++) {
@@ -390,7 +390,7 @@ static const struct b53_chip_data b53_switch_chips[] = {
 struct b53125_device * b53125_mdio_probe()
 {
 	u32 phy_id = 0;
-	unsigned int i = 0;
+	ospl_uint32 i = 0;
 	struct b53125_device * b53_device = malloc(sizeof(struct b53125_device));
 	if(b53_device == NULL)
 	{
@@ -483,60 +483,60 @@ int b53125_config_init(struct b53125_device *dev)
 		return ERROR;
 	}
 	/*******global *******/
-	b53_brcm_hdr_setup(dev, TRUE, dev->cpu_port);
+	b53_brcm_hdr_setup(dev, ospl_true, dev->cpu_port);
 
-	ret |= b53125_imp_enable(dev, FALSE);//关闭IMP接口
-	ret |= b53125_switch_forwarding(dev, FALSE);//禁止转发
+	ret |= b53125_imp_enable(dev, ospl_false);//关闭IMP接口
+	ret |= b53125_switch_forwarding(dev, ospl_false);//禁止转发
 
 
-	ret |= b53125_switch_manege(dev, TRUE);//设置为managed mode
-	ret |= b53125_switch_forwarding(dev, TRUE);//使能转发
+	ret |= b53125_switch_manege(dev, ospl_true);//设置为managed mode
+	ret |= b53125_switch_forwarding(dev, ospl_true);//使能转发
 
-	ret |= b53125_multicast_flood(dev, TRUE);//使能多播泛洪
-	ret |= b53125_unicast_flood(dev, TRUE);//使能单播泛洪
+	ret |= b53125_multicast_flood(dev, ospl_true);//使能多播泛洪
+	ret |= b53125_unicast_flood(dev, ospl_true);//使能单播泛洪
 
-	ret |= b53125_multicast_learning(dev, TRUE);//使能多播报文学习源MAC
+	ret |= b53125_multicast_learning(dev, ospl_true);//使能多播报文学习源MAC
 
-	ret |= b53125_enable_bpdu(dev, TRUE);
+	ret |= b53125_enable_bpdu(dev, ospl_true);
 
-	ret |= b53125_enable_learning(dev, dev->cpu_port, TRUE);
-	ret |= b53125_enable_learning(dev, 0, TRUE);
-	ret |= b53125_enable_learning(dev, 1, TRUE);
-	ret |= b53125_enable_learning(dev, 2, TRUE);
-	ret |= b53125_enable_learning(dev, 3, TRUE);
-	ret |= b53125_enable_learning(dev, 4, TRUE);
-	ret |= b53125_enable_learning(dev, 6, TRUE);
+	ret |= b53125_enable_learning(dev, dev->cpu_port, ospl_true);
+	ret |= b53125_enable_learning(dev, 0, ospl_true);
+	ret |= b53125_enable_learning(dev, 1, ospl_true);
+	ret |= b53125_enable_learning(dev, 2, ospl_true);
+	ret |= b53125_enable_learning(dev, 3, ospl_true);
+	ret |= b53125_enable_learning(dev, 4, ospl_true);
+	ret |= b53125_enable_learning(dev, 6, ospl_true);
 
-	ret |= b53125_software_learning(dev, dev->cpu_port, TRUE);
-	ret |= b53125_software_learning(dev, 0, TRUE);
-	ret |= b53125_software_learning(dev, 1, TRUE);
-	ret |= b53125_software_learning(dev, 2, TRUE);
-	ret |= b53125_software_learning(dev, 3, TRUE);
-	ret |= b53125_software_learning(dev, 4, TRUE);
-	ret |= b53125_software_learning(dev, 6, TRUE);
+	ret |= b53125_software_learning(dev, dev->cpu_port, ospl_true);
+	ret |= b53125_software_learning(dev, 0, ospl_true);
+	ret |= b53125_software_learning(dev, 1, ospl_true);
+	ret |= b53125_software_learning(dev, 2, ospl_true);
+	ret |= b53125_software_learning(dev, 3, ospl_true);
+	ret |= b53125_software_learning(dev, 4, ospl_true);
+	ret |= b53125_software_learning(dev, 6, ospl_true);
 
-	ret |= b53125_imp_enable(dev, TRUE);
+	ret |= b53125_imp_enable(dev, ospl_true);
 
 	u8 mgmt = 0;
 	//ret |= b53125_imp_port_enable(dev);
 	ret |= b53125_read8(dev, B53_MGMT_PAGE, B53_MGMT_CTRL, &mgmt);
 	printf("==============mgmt=%x=================\r\n", mgmt);
-/*	void b53_brcm_hdr_setup(struct b53125_device *dev, BOOL enable, int port);
-	int b53125_switch_mode(struct b53125_device *dev, BOOL manege);
-	int b53125_switch_forwarding(struct b53125_device *dev, BOOL enable);
-	int b53125_multicast_flood(struct b53125_device *dev, BOOL enable);
-	int b53125_unicast_flood(struct b53125_device *dev, BOOL enable);
-	int b53125_range_error(struct b53125_device *dev, BOOL enable);
-	int b53125_multicast_learning(struct b53125_device *dev, BOOL enable);
-	int b53125_puase_frame_detection(struct b53125_device *dev, BOOL enable);
-	int b53125_enable_bpdu(struct b53125_device *dev, BOOL enable);
+/*	void b53_brcm_hdr_setup(struct b53125_device *dev, ospl_bool enable, int port);
+	int b53125_switch_mode(struct b53125_device *dev, ospl_bool manege);
+	int b53125_switch_forwarding(struct b53125_device *dev, ospl_bool enable);
+	int b53125_multicast_flood(struct b53125_device *dev, ospl_bool enable);
+	int b53125_unicast_flood(struct b53125_device *dev, ospl_bool enable);
+	int b53125_range_error(struct b53125_device *dev, ospl_bool enable);
+	int b53125_multicast_learning(struct b53125_device *dev, ospl_bool enable);
+	int b53125_puase_frame_detection(struct b53125_device *dev, ospl_bool enable);
+	int b53125_enable_bpdu(struct b53125_device *dev, ospl_bool enable);
 	int b53125_aging_time(struct b53125_device *dev, int agetime);
-	int b53125_imp_mode(struct b53125_device *dev, BOOL enable);*/
+	int b53125_imp_mode(struct b53125_device *dev, ospl_bool enable);*/
 
 	/******* IMP PORT *******/
-/*		int b53125_imp_enable(struct b53125_device *dev, BOOL enable);
+/*		int b53125_imp_enable(struct b53125_device *dev, ospl_bool enable);
 	int b53125_imp_speed(struct b53125_device *dev, int speed);
 	int b53125_imp_duplex(struct b53125_device *dev, int duplex);
-	int b53125_imp_flow(struct b53125_device *dev, BOOL rx, BOOL tx);*/
+	int b53125_imp_flow(struct b53125_device *dev, ospl_bool rx, ospl_bool tx);*/
 	return ret;
 }

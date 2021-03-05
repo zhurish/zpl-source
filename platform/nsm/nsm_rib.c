@@ -83,8 +83,8 @@ static void __attribute__((format (printf, 4, 5)))
 _rnode_zlog(const char *_func, struct route_node *rn, int priority,
 		const char *msgfmt, ...)
 {
-	char prefix[PREFIX_STRLEN], buf[256];
-	char msgbuf[512];
+	ospl_char prefix[PREFIX_STRLEN], buf[256];
+	ospl_char msgbuf[512];
 	va_list ap;
 
 	va_start(ap, msgfmt);
@@ -147,7 +147,7 @@ rib_nexthop_ifindex_add(struct rib *rib, ifindex_t ifindex)
 }
 
 struct nexthop *
-rib_nexthop_ifname_add(struct rib *rib, char *ifname)
+rib_nexthop_ifname_add(struct rib *rib, ospl_char *ifname)
 {
 	struct nexthop *nexthop;
 
@@ -211,7 +211,7 @@ rib_nexthop_ipv6_add (struct rib *rib, struct in6_addr *ipv6)
 
 static struct nexthop *
 rib_nexthop_ipv6_ifname_add (struct rib *rib, struct in6_addr *ipv6,
-		char *ifname)
+		ospl_char *ifname)
 {
 	struct nexthop *nexthop;
 
@@ -546,7 +546,7 @@ nexthop_active_ipv6 (struct rib *rib, struct nexthop *nexthop, int set,
 #endif
 
 struct rib *
-rib_match_ipv4_safi(struct in_addr addr, safi_t safi, int skip_bgp,
+rib_match_ipv4_safi(struct in_addr addr, safi_t safi, ospl_bool skip_bgp,
 		struct route_node **rn_out, vrf_id_t vrf_id)
 {
 	struct route_table *table;
@@ -662,7 +662,7 @@ rib_match_ipv4_multicast(struct in_addr addr, struct route_node **rn_out,
 
 	if (IS_ZEBRA_DEBUG_RIB)
 	{
-		char buf[BUFSIZ];
+		ospl_char buf[BUFSIZ];
 		inet_ntop(AF_INET, &addr, buf, BUFSIZ);
 
 		zlog_debug(MODULE_NSM, "%s: %s vrf %u: found %s, using %s", __func__, buf,
@@ -794,7 +794,7 @@ int rib_lookup_ipv4_route(struct prefix_ipv4 *p, union sockunion * qgate,
 				return ZEBRA_RIB_FOUND_EXACT;
 			if (IS_ZEBRA_DEBUG_RIB)
 			{
-				char gate_buf[INET_ADDRSTRLEN], qgate_buf[INET_ADDRSTRLEN];
+				ospl_char gate_buf[INET_ADDRSTRLEN], qgate_buf[INET_ADDRSTRLEN];
 				inet_ntop(AF_INET, &nexthop->gate.ipv4.s_addr, gate_buf,
 				INET_ADDRSTRLEN);
 				inet_ntop(AF_INET, &sockunion2ip(qgate), qgate_buf,
@@ -890,14 +890,14 @@ rib_match_ipv6 (struct in6_addr *addr, vrf_id_t vrf_id)
  */
 
 static unsigned nexthop_active_check(struct route_node *rn, struct rib *rib,
-		struct nexthop *nexthop, int set)
+		struct nexthop *nexthop, ospl_bool set)
 {
 	rib_table_info_t *info = rn->table->info;
 	struct interface *ifp;
 	route_map_result_t ret = RMAP_MATCH;
-	//extern char *proto_rm[AFI_MAX][ZEBRA_ROUTE_MAX + 1];
+	//extern ospl_char *proto_rm[AFI_MAX][ZEBRA_ROUTE_MAX + 1];
 	//struct route_map *rmap;
-	int family;
+	ospl_family_t family;
 
 	family = 0;
 	switch (nexthop->type)
@@ -1014,10 +1014,10 @@ static unsigned nexthop_active_check(struct route_node *rn, struct rib *rib,
  */
 
 static int nexthop_active_update(struct route_node *rn, struct rib *rib,
-		int set)
+		ospl_bool set)
 {
 	struct nexthop *nexthop;
-	unsigned int prev_active, new_active;
+	ospl_uint32  prev_active, new_active;
 	ifindex_t prev_index;
 
 	rib->nexthop_active_num = 0;
@@ -1039,7 +1039,7 @@ static int nexthop_active_update(struct route_node *rn, struct rib *rib,
 {
 	int recursing;
 	struct nexthop *nexthop = NULL, *tnexthop = NULL;
-	char prefix[PREFIX_STRLEN], buf[256];
+	ospl_char prefix[PREFIX_STRLEN], buf[256];
 	rib_table_info_t *info = rn->table->info;
 	if (rn)
 	{
@@ -1126,7 +1126,7 @@ static void rib_unlink(struct route_node *, struct rib *);
 /*
  * rib_can_delete_dest
  *
- * Returns TRUE if the given dest can be deleted from the table.
+ * Returns ospl_true if the given dest can be deleted from the table.
  */
 static int rib_can_delete_dest(rib_dest_t *dest)
 {
@@ -1152,7 +1152,7 @@ static int rib_can_delete_dest(rib_dest_t *dest)
  * Garbage collect the rib dest corresponding to the given route node
  * if appropriate.
  *
- * Returns TRUE if the dest was deleted, FALSE otherwise.
+ * Returns ospl_true if the dest was deleted, ospl_false otherwise.
  */
 int rib_gc_dest(struct route_node *rn)
 {
@@ -1378,7 +1378,7 @@ static void rib_process(struct route_node *rn)
  * picked from it and processed by rib_process(). Don't process more, 
  * than one RN record; operate only in the specified sub-queue.
  */
-static unsigned int process_subq(struct list * subq, u_char qindex)
+static ospl_uint32  process_subq(struct list * subq, ospl_uchar qindex)
 {
 	struct listnode *lnode = listhead(subq);
 	struct route_node *rnode;
@@ -1447,7 +1447,7 @@ static wq_item_status meta_queue_process(struct work_queue *dummy, void *data)
 /*
  * Map from rib types to queue type (priority) in meta queue
  */
-static const u_char meta_queue_map[ZEBRA_ROUTE_MAX] = {
+static const ospl_uchar meta_queue_map[ZEBRA_ROUTE_MAX] = {
   [ZEBRA_ROUTE_SYSTEM]  = 4,
   [ZEBRA_ROUTE_KERNEL]  = 0,
   [ZEBRA_ROUTE_CONNECT] = 0,
@@ -1472,7 +1472,7 @@ static void rib_meta_queue_add(struct meta_queue *mq, struct route_node *rn)
 
 	RNODE_FOREACH_RIB (rn, rib)
 	{
-		u_char qindex = meta_queue_map[rib->type];
+		ospl_uchar qindex = meta_queue_map[rib->type];
 
 		/* Invariant: at this point we always have rn->info set. */
 		if (CHECK_FLAG(rib_dest_from_rnode(rn)->flags,
@@ -1718,10 +1718,10 @@ static void rib_delnode(struct route_node *rn, struct rib *rib)
 	rib_queue_add(&zebrad, rn);
 }
 
-int rib_add_ipv4(int type, int flags, struct prefix_ipv4 *p,
+int rib_add_ipv4(ospl_uint32 type, ospl_uint32 flags, struct prefix_ipv4 *p,
 		struct in_addr *gate, struct in_addr *src, ifindex_t ifindex,
-		vrf_id_t vrf_id, int table_id, u_int32_t metric, u_int32_t mtu,
-		u_char distance, safi_t safi)
+		vrf_id_t vrf_id, ospl_uint32 table_id, ospl_uint32 metric, ospl_uint32 mtu,
+		ospl_uchar distance, safi_t safi)
 {
 	struct rib *rib;
 	struct rib *same = NULL;
@@ -1839,7 +1839,7 @@ void _rib_dump(const char * func, union prefix46constptr pp,
 		const struct rib * rib)
 {
 	const struct prefix *p = pp.p;
-	char straddr[PREFIX_STRLEN];
+	ospl_char straddr[PREFIX_STRLEN];
 	struct nexthop *nexthop, *tnexthop;
 	int recursing;
 
@@ -1847,7 +1847,7 @@ void _rib_dump(const char * func, union prefix46constptr pp,
 			(void *) rib, prefix2str(p, straddr, sizeof(straddr)), rib->vrf_id);
 	zlog_debug(MODULE_NSM,
 			"%s: refcnt == %lu, uptime == %lu, type == %u, table == %d", func,
-			rib->refcnt, (unsigned long) rib->uptime, rib->type, rib->table);
+			rib->refcnt, (ospl_ulong) rib->uptime, rib->type, rib->table);
 	zlog_debug(MODULE_NSM,
 			"%s: metric == %u, distance == %u, flags == %u, status == %u", func,
 			rib->metric, rib->distance, rib->flags, rib->status);
@@ -1879,7 +1879,7 @@ void rib_lookup_and_dump(struct prefix_ipv4 * p)
 	struct route_table *table;
 	struct route_node *rn;
 	struct rib *rib;
-	char prefix_buf[INET_ADDRSTRLEN];
+	ospl_char prefix_buf[INET_ADDRSTRLEN];
 
 	/* Lookup table.  */
 	table = nsm_vrf_table(AFI_IP, SAFI_UNICAST, VRF_DEFAULT);
@@ -2000,7 +2000,7 @@ int rib_add_ipv4_multipath(struct prefix_ipv4 *p, struct rib *rib, safi_t safi)
 }
 
 /* XXX factor with rib_delete_ipv6 */
-int rib_delete_ipv4(int type, int flags, struct prefix_ipv4 *p,
+int rib_delete_ipv4(ospl_uint32 type, ospl_uint32 flags, struct prefix_ipv4 *p,
 		struct in_addr *gate, ifindex_t ifindex, vrf_id_t vrf_id, safi_t safi)
 {
 	struct route_table *table;
@@ -2010,8 +2010,8 @@ int rib_delete_ipv4(int type, int flags, struct prefix_ipv4 *p,
 	struct rib *same = NULL;
 	struct nexthop *nexthop, *tnexthop;
 	int recursing;
-	char buf1[PREFIX_STRLEN];
-	char buf2[INET_ADDRSTRLEN];
+	ospl_char buf1[PREFIX_STRLEN];
+	ospl_char buf2[INET_ADDRSTRLEN];
 
 	/* Lookup table.  */
 	table = nsm_vrf_table(AFI_IP, safi, vrf_id);
@@ -2363,10 +2363,10 @@ static void static_uninstall_route(afi_t afi, safi_t safi, struct prefix *p,
 
 int
 static_add_ipv4_safi (safi_t safi, struct prefix *p, struct in_addr *gate,
-		      const char *ifname, u_char flags, route_tag_t tag,
-		      u_char distance, vrf_id_t vrf_id)
+		      const char *ifname, ospl_uchar flags, route_tag_t tag,
+		      ospl_uchar distance, vrf_id_t vrf_id)
 {
-	u_char type = 0;
+	ospl_uchar type = 0;
 	struct route_node *rn;
 	struct static_route *si;
 	struct static_route *pp;
@@ -2464,9 +2464,9 @@ static_add_ipv4_safi (safi_t safi, struct prefix *p, struct in_addr *gate,
 }
 
 int static_delete_ipv4_safi(safi_t safi, struct prefix *p, struct in_addr *gate,
-		const char *ifname, route_tag_t tag, u_char distance, vrf_id_t vrf_id)
+		const char *ifname, route_tag_t tag, ospl_uchar distance, vrf_id_t vrf_id)
 {
-	u_char type = 0;
+	ospl_uchar type = 0;
 	struct route_node *rn;
 	struct static_route *si;
 	struct route_table *stable;
@@ -2536,10 +2536,10 @@ int static_delete_ipv4_safi(safi_t safi, struct prefix *p, struct in_addr *gate,
 }
 #ifdef HAVE_IPV6
 int
-rib_add_ipv6 (int type, int flags, struct prefix_ipv6 *p,
+rib_add_ipv6 (ospl_uint32 type, ospl_uint32 flags, struct prefix_ipv6 *p,
 	      struct in6_addr *gate, ifindex_t ifindex,
-	      vrf_id_t vrf_id, int table_id,
-	      u_int32_t metric, u_int32_t mtu, u_char distance, safi_t safi)
+	      vrf_id_t vrf_id, ospl_uint32 table_id,
+	      ospl_uint32 metric, ospl_uint32 mtu, ospl_uchar distance, safi_t safi)
 {
 	struct rib *rib;
 	struct rib *same = NULL;
@@ -2739,7 +2739,7 @@ rib_add_ipv6_multipath (struct prefix_ipv6 *p, struct rib *rib, safi_t safi)
 
 /* XXX factor with rib_delete_ipv6 */
 int
-rib_delete_ipv6 (int type, int flags, struct prefix_ipv6 *p,
+rib_delete_ipv6 (ospl_uint32 type, ospl_uint32 flags, struct prefix_ipv6 *p,
 		struct in6_addr *gate, ifindex_t ifindex,
 		vrf_id_t vrf_id, safi_t safi)
 {
@@ -2750,8 +2750,8 @@ rib_delete_ipv6 (int type, int flags, struct prefix_ipv6 *p,
 	struct rib *same = NULL;
 	struct nexthop *nexthop, *tnexthop;
 	int recursing;
-	char buf1[PREFIX_STRLEN];
-	char buf2[INET6_ADDRSTRLEN];
+	ospl_char buf1[PREFIX_STRLEN];
+	ospl_char buf2[INET6_ADDRSTRLEN];
 
 	/* Apply mask. */
 	apply_mask_ipv6 (p);
@@ -2882,9 +2882,9 @@ rib_delete_ipv6 (int type, int flags, struct prefix_ipv6 *p,
 
 /* Add static route into static route configuration. */
 int
-static_add_ipv6 (struct prefix *p, u_char type, struct in6_addr *gate,
-		const char *ifname, u_char flags, route_tag_t tag,
-		u_char distance, vrf_id_t vrf_id)
+static_add_ipv6 (struct prefix *p, ospl_uchar type, struct in6_addr *gate,
+		const char *ifname, ospl_uchar flags, route_tag_t tag,
+		ospl_uchar distance, vrf_id_t vrf_id)
 {
 	struct route_node *rn;
 	struct static_route *si;
@@ -2993,8 +2993,8 @@ static_add_ipv6 (struct prefix *p, u_char type, struct in6_addr *gate,
 
 /* Delete static route from static route configuration. */
 int
-static_delete_ipv6 (struct prefix *p, u_char type, struct in6_addr *gate,
-		const char *ifname, route_tag_t tag, u_char distance,
+static_delete_ipv6 (struct prefix *p, ospl_uchar type, struct in6_addr *gate,
+		const char *ifname, route_tag_t tag, ospl_uchar distance,
 		vrf_id_t vrf_id)
 {
 	struct route_node *rn;
@@ -3177,13 +3177,13 @@ void rib_sweep_route(void)
 }
 
 /* Remove specific by protocol routes from 'table'. */
-static unsigned long rib_score_proto_table(u_char proto,
+static ospl_ulong rib_score_proto_table(ospl_uchar proto,
 		struct route_table *table)
 {
 	struct route_node *rn;
 	struct rib *rib;
 	struct rib *next;
-	unsigned long n = 0;
+	ospl_ulong n = 0;
 
 	if (table)
 	{
@@ -3210,11 +3210,11 @@ static unsigned long rib_score_proto_table(u_char proto,
 }
 
 /* Remove specific by protocol routes. */
-unsigned long rib_score_proto(u_char proto)
+ospl_ulong rib_score_proto(ospl_uchar proto)
 {
 	vrf_iter_t iter;
 	struct nsm_vrf *zvrf;
-	unsigned long cnt = 0;
+	ospl_ulong cnt = 0;
 
 	for (iter = vrf_first(); iter != VRF_ITER_INVALID; iter = vrf_next(iter))
 		if ((zvrf = vrf_iter2info(iter)) != NULL)
@@ -3283,7 +3283,7 @@ void rib_init(void)
  *
  * Get the first vrf id that is greater than the given vrf id if any.
  *
- * Returns TRUE if a vrf id was found, FALSE otherwise.
+ * Returns ospl_true if a vrf id was found, ospl_false otherwise.
  */
 static inline int vrf_id_get_next(vrf_id_t vrf_id, vrf_id_t *next_id_p)
 {
@@ -3418,7 +3418,7 @@ nsm_vrf_alloc(vrf_id_t vrf_id)
 {
 	struct nsm_vrf *zvrf;
 #ifdef HAVE_NETLINK
-	//char nl_name[64];
+	//ospl_char nl_name[64];
 #endif
 
 	zvrf = XCALLOC(MTYPE_ZEBRA_VRF, sizeof(struct nsm_vrf));

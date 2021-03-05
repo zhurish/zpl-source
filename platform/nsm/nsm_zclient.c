@@ -42,7 +42,7 @@ static void zclient_event (enum event, struct zclient *);
 
 extern struct thread_master *master;
 
-char *zclient_serv_path = NULL;
+ospl_char *zclient_serv_path = NULL;
 
 /* This file local debug flag. */
 int zclient_debug = 0;
@@ -82,9 +82,9 @@ zclient_free (struct zclient *zclient)
 /* Initialize zebra client.  Argument redist_default is unwanted
    redistribute route type. */
 void
-zclient_init (struct zclient *zclient, int redist_default)
+zclient_init (struct zclient *zclient, ospl_uint32 redist_default)
 {
-  int i;
+  ospl_uint32 i = 0;
   
   /* Enable zebra client connection by default. */
   zclient->enable = 1;
@@ -294,7 +294,7 @@ zclient_send_message(struct zclient *zclient)
 }
 
 void
-zclient_create_header (struct stream *s, uint16_t command)
+zclient_create_header (struct stream *s, ospl_uint16 command)
 {
   /* length placeholder, caller can update */
   stream_putw (s, ZEBRA_HEADER_SIZE);
@@ -305,7 +305,7 @@ zclient_create_header (struct stream *s, uint16_t command)
 
 /* Send simple Zebra message. */
 static int
-zebra_message_send (struct zclient *zclient, int command)
+zebra_message_send (struct zclient *zclient, ospl_uint16 command)
 {
   struct stream *s;
 
@@ -342,7 +342,7 @@ zebra_hello_send (struct zclient *zclient)
 int
 zclient_start (struct zclient *zclient)
 {
-  int i;
+  ospl_uint32 i = 0;
 
   if (zclient_debug)
     zlog_debug (MODULE_DEFAULT,"zclient_start is called");
@@ -460,10 +460,10 @@ zclient_connect (struct thread *t)
   * XXX: No attention paid to alignment.
   */ 
 int
-zapi_ipv4_route (u_char cmd, struct zclient *zclient, struct prefix_ipv4 *p,
+zapi_ipv4_route (ospl_uint16 cmd, struct zclient *zclient, struct prefix_ipv4 *p,
                  struct zapi_ipv4 *api)
 {
-  int i;
+  ospl_uint32 i = 0;
   int psize;
   struct stream *s;
 
@@ -482,7 +482,7 @@ zapi_ipv4_route (u_char cmd, struct zclient *zclient, struct prefix_ipv4 *p,
   /* Put prefix information. */
   psize = PSIZE (p->prefixlen);
   stream_putc (s, p->prefixlen);
-  stream_write (s, (u_char *) & p->prefix, psize);
+  stream_write (s, (ospl_uchar *) & p->prefix, psize);
 
   /* Nexthop, ifindex, distance and metric information. */
   if (CHECK_FLAG (api->message, ZAPI_MESSAGE_NEXTHOP))
@@ -522,10 +522,10 @@ zapi_ipv4_route (u_char cmd, struct zclient *zclient, struct prefix_ipv4 *p,
 
 #ifdef HAVE_IPV6
 int
-zapi_ipv6_route (u_char cmd, struct zclient *zclient, struct prefix_ipv6 *p,
+zapi_ipv6_route (ospl_uint16 cmd, struct zclient *zclient, struct prefix_ipv6 *p,
 	       struct zapi_ipv6 *api)
 {
-  int i;
+  ospl_uint32 i = 0;
   int psize;
   struct stream *s;
 
@@ -544,7 +544,7 @@ zapi_ipv6_route (u_char cmd, struct zclient *zclient, struct prefix_ipv6 *p,
   /* Put prefix information. */
   psize = PSIZE (p->prefixlen);
   stream_putc (s, p->prefixlen);
-  stream_write (s, (u_char *)&p->prefix, psize);
+  stream_write (s, (ospl_uchar *)&p->prefix, psize);
 
   /* Nexthop, ifindex, distance and metric information. */
   if (CHECK_FLAG (api->message, ZAPI_MESSAGE_NEXTHOP))
@@ -554,7 +554,7 @@ zapi_ipv6_route (u_char cmd, struct zclient *zclient, struct prefix_ipv6 *p,
       for (i = 0; i < api->nexthop_num; i++)
 	{
 	  stream_putc (s, ZEBRA_NEXTHOP_IPV6);
-	  stream_write (s, (u_char *)api->nexthop[i], 16);
+	  stream_write (s, (ospl_uchar *)api->nexthop[i], 16);
 	}
       for (i = 0; i < api->ifindex_num; i++)
 	{
@@ -582,7 +582,7 @@ zapi_ipv6_route (u_char cmd, struct zclient *zclient, struct prefix_ipv6 *p,
  * sending client
  */
 int
-zebra_redistribute_send (int command, struct zclient *zclient, int type)
+zebra_redistribute_send (ospl_uint16 command, struct zclient *zclient, ospl_uint32 type)
 {
   struct stream *s;
 
@@ -601,7 +601,7 @@ zebra_redistribute_send (int command, struct zclient *zclient, int type)
 void
 zebra_router_id_update_read (struct stream *s, struct prefix *rid)
 {
-  int plen;
+  ospl_uint32 plen;
 
   /* Fetch interface address. */
   rid->family = stream_getc (s);
@@ -647,7 +647,7 @@ struct interface *
 zebra_interface_add_read (struct stream *s)
 {
   struct interface *ifp;
-  char ifname_tmp[INTERFACE_NAMSIZ];
+  ospl_char ifname_tmp[INTERFACE_NAMSIZ];
 
   /* Read interface name. */
   stream_get (ifname_tmp, s, INTERFACE_NAMSIZ);
@@ -671,7 +671,7 @@ struct interface *
 zebra_interface_state_read (struct stream *s)
 {
   struct interface *ifp;
-  char ifname_tmp[INTERFACE_NAMSIZ];
+  ospl_char ifname_tmp[INTERFACE_NAMSIZ];
 
   /* Read interface name. */
   stream_get (ifname_tmp, s, INTERFACE_NAMSIZ);
@@ -744,9 +744,9 @@ zebra_interface_if_set_value (struct stream *s, struct interface *ifp)
 }
 
 static int
-memconstant(const void *s, int c, size_t n)
+memconstant(const void *s, int c, ospl_size_t n)
 {
-  const u_char *p = s;
+  const ospl_uchar *p = s;
 
   while (n-- > 0)
     if (*p++ != c)
@@ -755,15 +755,15 @@ memconstant(const void *s, int c, size_t n)
 }
 
 struct connected *
-zebra_interface_address_read (int type, struct stream *s)
+zebra_interface_address_read (ospl_uint16 type, struct stream *s)
 {
-  unsigned int ifindex;
+  ospl_uint32  ifindex;
   struct interface *ifp;
   struct connected *ifc;
   struct prefix p, d;
   int family;
-  int plen;
-  u_char ifc_flags;
+  ospl_uint32 plen;
+  ospl_uchar ifc_flags;
 
   memset (&p, 0, sizeof(p));
   memset (&d, 0, sizeof(d));
@@ -809,7 +809,7 @@ zebra_interface_address_read (int type, struct stream *s)
 	   else if (CHECK_FLAG(ifc->flags, ZEBRA_IFA_PEER))
 	     {
 	       /* carp interfaces on OpenBSD with 0.0.0.0/0 as "peer" */
-	       char buf[BUFSIZ];
+	       ospl_char buf[BUFSIZ];
 	       prefix2str (ifc->address, buf, sizeof(buf));
 	       zlog_warn(MODULE_DEFAULT,"warning: interface %s address %s "
 		    "with peer flag set, but no peer address!",
@@ -832,9 +832,9 @@ zebra_interface_address_read (int type, struct stream *s)
 static int
 zclient_read (struct thread *thread)
 {
-  size_t already;
-  uint16_t length, command;
-  uint8_t marker, version;
+  ospl_size_t already;
+  ospl_uint16 length, command;
+  ospl_uint8 marker, version;
   struct zclient *zclient;
 
   /* Get socket to zebra. */
@@ -984,7 +984,7 @@ zclient_read (struct thread *thread)
 }
 
 void
-zclient_redistribute (int command, struct zclient *zclient, int type)
+zclient_redistribute (ospl_uint16 command, struct zclient *zclient, ospl_uint32 type)
 {
 
   if (command == ZEBRA_REDISTRIBUTE_ADD) 
@@ -1006,7 +1006,7 @@ zclient_redistribute (int command, struct zclient *zclient, int type)
 
 
 void
-zclient_redistribute_default (int command, struct zclient *zclient)
+zclient_redistribute_default (ospl_uint16 command, struct zclient *zclient)
 {
 
   if (command == ZEBRA_REDISTRIBUTE_DEFAULT_ADD)
@@ -1060,7 +1060,7 @@ const char *const zclient_serv_path_get()
 }
 
 void
-zclient_serv_path_set (char *path)
+zclient_serv_path_set (ospl_char *path)
 {
   struct stat sb;
 

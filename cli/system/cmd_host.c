@@ -564,7 +564,7 @@ DEFUN (config_list,
 		"list",
 		"Print command list\n")
 {
-	unsigned int i;
+	ospl_uint32  i;
 	struct cmd_node *cnode = vector_slot(cmdvec, vty->node);
 	struct cmd_element *cmd;
 
@@ -584,7 +584,7 @@ DEFUN (config_write_file,
 		"Write running configuration to memory, network, or terminal\n"
 		"Write to configuration file\n")
 {
-	unsigned int i;
+	ospl_uint32  i;
 	int fd;
 	struct cmd_node *node;
 	char *config_file;
@@ -672,7 +672,7 @@ DEFUN (config_write_terminal,
 		"Write running configuration to memory, network, or terminal\n"
 		"Write to terminal\n")
 {
-	unsigned int i;
+	ospl_uint32  i;
 	struct cmd_node *node;
 
 	if (vty->type == VTY_SHELL_SERV)
@@ -800,7 +800,7 @@ DEFUN (config_password,
 
 	if (argc == 2) {
 		if (*argv[0] == '8') {
-			vty_user_create(vty, vty->username, argv[1], FALSE, FALSE);
+			vty_user_create(vty, vty->username, argv[1], ospl_false, ospl_false);
 			return CMD_SUCCESS;
 		} else {
 			vty_out(vty, "Unknown encryption type.%s", VTY_NEWLINE);
@@ -813,7 +813,7 @@ DEFUN (config_password,
 				VTY_NEWLINE);
 		return CMD_WARNING;
 	}
-	vty_user_create(vty, vty->username, argv[1], FALSE, host.encrypt);
+	vty_user_create(vty, vty->username, argv[1], ospl_false, host.encrypt);
 	return CMD_SUCCESS;
 }
 
@@ -842,7 +842,7 @@ DEFUN (config_enable_password,
 	/* Crypt type is specified. */
 	if (argc == 2) {
 		if (*argv[0] == '8') {
-			vty_user_create(vty, vty->username, argv[1], TRUE, FALSE);
+			vty_user_create(vty, vty->username, argv[1], ospl_true, ospl_false);
 			return CMD_SUCCESS;
 		} else {
 			vty_out(vty, "Unknown encryption type.%s", VTY_NEWLINE);
@@ -855,7 +855,7 @@ DEFUN (config_enable_password,
 				VTY_NEWLINE);
 		return CMD_WARNING;
 	}
-	vty_user_create(vty, vty->username, argv[1], TRUE, host.encrypt);
+	vty_user_create(vty, vty->username, argv[1], ospl_true, host.encrypt);
 	return CMD_SUCCESS;
 }
 
@@ -874,7 +874,7 @@ DEFUN (no_config_enable_password,
 		"Modify enable password parameters\n"
 		"Assign the privileged level password\n")
 {
-	vty_user_delete(vty, vty->username, TRUE, FALSE);
+	vty_user_delete(vty, vty->username, ospl_true, ospl_false);
 	return CMD_SUCCESS;
 }
 
@@ -890,14 +890,14 @@ DEFUN (service_password_encrypt,
 	}
 	if (encrypt)
 	{
-		vty_user_encrypt_enable(TRUE);
+		vty_user_encrypt_enable(ospl_true);
 		return CMD_SUCCESS;
 	}
 	encrypt = 1;
 	if (host_config_set_api(API_SET_ENCRYPT_CMD, &encrypt) != OK) {
 		return CMD_WARNING;
 	}
-	vty_user_encrypt_enable(TRUE);
+	vty_user_encrypt_enable(ospl_true);
 	return CMD_SUCCESS;
 }
 
@@ -914,14 +914,14 @@ DEFUN (no_service_password_encrypt,
 	}
 	if (!encrypt)
 	{
-		vty_user_encrypt_enable(FALSE);
+		vty_user_encrypt_enable(ospl_false);
 		return CMD_SUCCESS;
 	}
 	encrypt = 0;
 	if (host_config_set_api(API_SET_ENCRYPT_CMD, &encrypt) != OK) {
 		return CMD_WARNING;
 	}
-	vty_user_encrypt_enable(FALSE);
+	vty_user_encrypt_enable(ospl_false);
 	return CMD_SUCCESS;
 }
 
@@ -1101,7 +1101,7 @@ DEFUN (show_commandtree,
 {
 	/* TBD */
 	vector cmd_vector;
-	unsigned int i;
+	ospl_uint32  i;
 
 	vty_out(vty, "Current node id: %d%s", vty->node, VTY_NEWLINE);
 
@@ -1252,7 +1252,7 @@ config_write_host (struct vty *vty)
 	else if(zlog_default->timestamp == ZLOG_TIMESTAMP_DATE)
 		vty_out(vty, "log timestamp date%s",VTY_NEWLINE);
 	else if(zlog_default->timestamp == ZLOG_TIMESTAMP_SHORT)
-		vty_out(vty, "log timestamp short%s",VTY_NEWLINE);
+		vty_out(vty, "log timestamp ospl_int16%s",VTY_NEWLINE);
 	else if(zlog_default->timestamp == ZLOG_TIMESTAMP_BSD)
 		vty_out(vty, "log timestamp bsd%s",VTY_NEWLINE);
 	else if(zlog_default->timestamp == ZLOG_TIMESTAMP_ISO)
@@ -1310,7 +1310,7 @@ config_write_service (struct vty *vty)
 }
 
 
-static int _cmd_host_base_init(int terminal)
+static int _cmd_host_base_init(ospl_bool terminal)
 {
 	/*  install_node (&restricted_node, NULL);*/
 	install_node(&user_node, NULL);
@@ -1402,7 +1402,7 @@ static int _cmd_host_base_init(int terminal)
 	return OK;
 }
 
-int cmd_host_init(int terminal)
+int cmd_host_init(ospl_bool terminal)
 {
 	return _cmd_host_base_init(terminal);
 }

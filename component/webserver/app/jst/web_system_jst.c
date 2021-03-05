@@ -71,7 +71,7 @@ static int jst_kernel_version(int eid, webs_t wp, int argc, char **argv)
 {
 	//Linux version 4.14.121
 #if LINUX_VERSION_CODE
-	unsigned int mver = 0, sver = 0, lver = 0;
+	ospl_uint32 mver = 0, sver = 0, lver = 0;
 	mver = (LINUX_VERSION_CODE>>16) & 0xff;
 	sver = (LINUX_VERSION_CODE>>8) & 0xff;
 	lver = (LINUX_VERSION_CODE) & 0xff;
@@ -101,7 +101,7 @@ static int jst_kernel_version(int eid, webs_t wp, int argc, char **argv)
 
 static int jst_serial_number(int eid, webs_t wp, int argc, char **argv)
 {
-	s_int8	serial[64];
+	ospl_int8	serial[64];
 	memset(serial, 0, sizeof(serial));
 	host_config_get_api(API_GET_SERIAL_CMD, serial);
     websWrite(wp, "%s", serial);
@@ -117,7 +117,7 @@ static int jst_localtime(int eid, webs_t wp, int argc, char **argv)
 */
 static char *_web_uptime(char *tmp)
 {
-	unsigned int updays = 0, uphours = 0, upminutes = 0;
+	ospl_uint32 updays = 0, uphours = 0, upminutes = 0;
 	struct sysinfo info;
 	sysinfo(&info);
 	updays = (unsigned) info.uptime / (unsigned)(60*60*24);
@@ -616,7 +616,7 @@ static int jst_app_version(int eid, webs_t wp, int argc, char **argv)
 
 static int jst_systeminfo(Webs *wp, char *path, char *query)
 {
-	int offset = 0;
+	ospl_uint32 offset = 0;
 	char buf[2048];
 	char tmp[128];
 	memset(buf, 0, sizeof(buf));
@@ -647,7 +647,7 @@ static int jst_systeminfo(Webs *wp, char *path, char *query)
 #endif
 	offset = strlen(buf);
 #if LINUX_VERSION_CODE
-	unsigned int mver = 0, sver = 0, lver = 0;
+	ospl_uint32 mver = 0, sver = 0, lver = 0;
 	mver = (LINUX_VERSION_CODE>>16) & 0xff;
 	sver = (LINUX_VERSION_CODE>>8) & 0xff;
 	lver = (LINUX_VERSION_CODE) & 0xff;

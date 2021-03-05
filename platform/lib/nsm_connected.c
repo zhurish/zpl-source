@@ -178,8 +178,8 @@ void connected_down_ipv6(struct interface *ifp, struct connected *ifc)
 
 #ifdef USE_IPSTACK_KERNEL
 /* Add connected IPv4 route to the interface. */
-void connected_add_ipv4(struct interface *ifp, int flags, struct in_addr *addr,
-						u_char prefixlen, struct in_addr *broad,
+void connected_add_ipv4(struct interface *ifp, ospl_uint32 flags, struct in_addr *addr,
+						ospl_uchar prefixlen, struct in_addr *broad,
 						const char *label)
 {
 	struct prefix_ipv4 *p;
@@ -231,7 +231,7 @@ void connected_add_ipv4(struct interface *ifp, int flags, struct in_addr *addr,
 		{
 			if (broad->s_addr != ipv4_broadcast_addr(addr->s_addr, prefixlen))
 			{
-				char buf[INET_ADDRSTRLEN];
+				ospl_char buf[INET_ADDRSTRLEN];
 				struct in_addr bcalc;
 				bcalc.s_addr = ipv4_broadcast_addr(addr->s_addr, prefixlen);
 				memset(buf, 0, sizeof(buf));
@@ -279,8 +279,8 @@ void connected_add_ipv4(struct interface *ifp, int flags, struct in_addr *addr,
 }
 /* Delete connected IPv4 route to the interface. */
 
-void connected_delete_ipv4(struct interface *ifp, int flags, struct in_addr *addr,
-						   u_char prefixlen, struct in_addr *broad)
+void connected_delete_ipv4(struct interface *ifp, ospl_uint32 flags, struct in_addr *addr,
+						   ospl_uchar prefixlen, struct in_addr *broad)
 {
 	struct prefix_ipv4 p;
 	struct connected *ifc;
@@ -306,8 +306,8 @@ void connected_delete_ipv4(struct interface *ifp, int flags, struct in_addr *add
 }
 #ifdef HAVE_IPV6
 /* Add connected IPv6 route to the interface. */
-void connected_add_ipv6(struct interface *ifp, int flags, struct in6_addr *addr,
-						u_char prefixlen, struct in6_addr *broad,
+void connected_add_ipv6(struct interface *ifp, ospl_uint32 flags, struct in6_addr *addr,
+						ospl_uchar prefixlen, struct in6_addr *broad,
 						const char *label)
 {
 	struct prefix_ipv6 *p;
@@ -384,7 +384,7 @@ void connected_add_ipv6(struct interface *ifp, int flags, struct in6_addr *addr,
 }
 
 void connected_delete_ipv6(struct interface *ifp, struct in6_addr *address,
-						   u_char prefixlen, struct in6_addr *broad)
+						   ospl_uchar prefixlen, struct in6_addr *broad)
 {
 	struct prefix_ipv6 p;
 	struct connected *ifc;

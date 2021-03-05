@@ -23,7 +23,7 @@
 #include "hal_driver.h"
 
 
-int hal_vlan_enable(BOOL  enable)
+int hal_vlan_enable(ospl_bool  enable)
 {
 	if(hal_driver && hal_driver->vlan_tbl && hal_driver->vlan_tbl->sdk_vlan_enable)
 		return hal_driver->vlan_tbl->sdk_vlan_enable(hal_driver->driver, enable);

@@ -179,7 +179,7 @@ static const char * ip_tun_mode_str[] =
 /**************************************************************/
 /**************************************************************/
 
-static int ip_tunnel_setting(struct utils_interface *ifp, int type)
+static int ip_tunnel_setting(struct utilospl_interface *ifp, ospl_uint32 type)
 {
 	char src[32];
 	char dest[32];
@@ -238,9 +238,9 @@ static int ip_tunnel_setting(struct utils_interface *ifp, int type)
 	return CMD_WARNING;
 }
 /**************************************************************/
-static int ip_tunnel_mtu_ttl(struct utils_interface *ifp, int mtu, int ttl)
+static int ip_tunnel_mtu_ttl(struct utilospl_interface *ifp, int mtu, int ttl)
 {
-	//int i = 0;
+	//ospl_uint32 i = 0;
 	char cmd[256];
 	//for(i = 0; i < TUNNEL_TABLE_MAX; i++)
 	{
@@ -289,9 +289,9 @@ static int ip_tunnel_mtu_ttl(struct utils_interface *ifp, int mtu, int ttl)
 	}
 	return CMD_WARNING;
 }
-static int ip_tunnel_active_setting(struct utils_interface *ifp)
+static int ip_tunnel_active_setting(struct utilospl_interface *ifp)
 {
-	//int i = 0;
+	//ospl_uint32 i = 0;
 	//for(i = 0; i < TUNNEL_TABLE_MAX; i++)
 	{
 		if(/* ifp->index == index && */
@@ -330,7 +330,7 @@ DEFUN (ip_tunnel_src,
 		"Select source ip address\n"
 		"IP address information\n")
 {
-	struct utils_interface *ifp;
+	struct utilospl_interface *ifp;
 	ifp = ((struct interface *)vty->index)->info;
 	if(ifp->type != UTILS_IF_TUNNEL)
 	{
@@ -358,7 +358,7 @@ DEFUN (ip_tunnel_dest,
 		"Select remote ip address\n"
 		"IP address information\n")
 {
-	struct utils_interface *ifp;
+	struct utilospl_interface *ifp;
 	ifp = ((struct interface *)vty->index)->info;
 	if(ifp->type != UTILS_IF_TUNNEL)
 	{
@@ -387,7 +387,7 @@ DEFUN (ip_tunnel_ttl,
 		"configure ttl\n"
 		"ttl value\n")
 {
-	struct utils_interface *ifp;
+	struct utilospl_interface *ifp;
 	ifp = ((struct interface *)vty->index)->info;
 	if(ifp->type != UTILS_IF_TUNNEL)
 	{
@@ -416,7 +416,7 @@ DEFUN (no_ip_tunnel_ttl,
 	    "tunnel Interface\n"
 		"configure ttl\n")
 {
-	struct utils_interface *ifp;
+	struct utilospl_interface *ifp;
 	ifp = ((struct interface *)vty->index)->info;
 	if(ifp->type != UTILS_IF_TUNNEL)
 	{
@@ -436,7 +436,7 @@ DEFUN (ip_tunnel_mtu,
 		"configure mtu\n"
 		"mtu value\n")
 {
-	struct utils_interface *ifp;
+	struct utilospl_interface *ifp;
 	ifp = ((struct interface *)vty->index)->info;
 	if(ifp->type != UTILS_IF_TUNNEL)
 	{
@@ -464,7 +464,7 @@ DEFUN (no_ip_tunnel_mtu,
 	    "tunnel Interface\n"
 		"configure mtu\n")
 {
-	struct utils_interface *ifp;
+	struct utilospl_interface *ifp;
 	ifp = ((struct interface *)vty->index)->info;
 	if(ifp->type != UTILS_IF_TUNNEL)
 	{
@@ -489,7 +489,7 @@ DEFUN (ip_tunnel_mode,
 		"sit tunnel mode\n")
 {
 	//int mode = TUNNEL_GRE;
-	struct utils_interface *ifp;
+	struct utilospl_interface *ifp;
 	ifp = ((struct interface *)vty->index)->info;
 	if(ifp->type != UTILS_IF_TUNNEL)
 	{
@@ -525,10 +525,10 @@ DEFUN (interface_tunnel,
 	    "tunnel Interface\n"
 		"tunnel num \n")
 {
-	int index = 0;
+	ospl_uint32 index = 0;
 	char ifname[INTERFACE_NAMSIZ];
 	struct interface *ifp = NULL;
-	struct utils_interface *uifp = NULL;
+	struct utilospl_interface *uifp = NULL;
 	memset(ifname, 0, sizeof(ifname));
 	if(argv[0] == NULL)
 	{
@@ -537,10 +537,10 @@ DEFUN (interface_tunnel,
 	}
 	index = atoi(argv[0]);
 	sprintf(ifname, "tunnel%d", index);
-	uifp = utils_interface_lookup_by_name (ifname);
+	uifp = utilospl_interface_lookup_by_name (ifname);
 	if(!uifp)
 	{
-		//uifp = utils_interface_create (ifname);
+		//uifp = utilospl_interface_create (ifname);
 		ifp = if_create(ifname, strlen(ifname));
 		if(!ifp)
 		{
@@ -561,7 +561,7 @@ DEFUN (interface_tunnel,
 int no_tunnel_interface(struct vty *vty, const char *ifname)
 {
 	struct interface *ifp = NULL;
-	struct utils_interface *tifp = NULL;
+	struct utilospl_interface *tifp = NULL;
 	ifp = if_lookup_by_name (ifname);
 	if(ifp)
 	{
@@ -581,7 +581,7 @@ DEFUN (no_interface_tunnel,
 {
 	char ifname[INTERFACE_NAMSIZ];
 	struct interface *ifp = NULL;
-	struct utils_interface *tifp = NULL;
+	struct utilospl_interface *tifp = NULL;
 	if(argv[0] == NULL)
 	{
 	      vty_out (vty, "%% invalid input bridge interface name is null %s",VTY_NEWLINE);
@@ -597,7 +597,7 @@ DEFUN (no_interface_tunnel,
 		return CMD_WARNING;
 	}
 	//当前接口不是tun接口，返回
-	tifp = (struct utils_interface *)ifp->info;
+	tifp = (struct utilospl_interface *)ifp->info;
 	if(tifp->type != UTILS_IF_TUNNEL)
 	{
 		return CMD_SUCCESS;
@@ -607,16 +607,16 @@ DEFUN (no_interface_tunnel,
 	//delete
 	no_tunnel_interface(vty, ifname);
 	//删除tun接口
-	//utils_interface_delete(tifp);
+	//utilospl_interface_delete(tifp);
 	return CMD_SUCCESS;
 }
 static int show_tunnel_interface_detail(struct vty *vty, struct interface *ifp)
 {
-	struct utils_interface *tifp = ifp->info;
-	//show_utils_interface(vty, ifp);
+	struct utilospl_interface *tifp = ifp->info;
+	//show_utilospl_interface(vty, ifp);
 	if(tifp->type == UTILS_IF_TUNNEL)
 	{
-		show_utils_interface(vty, ifp);
+		show_utilospl_interface(vty, ifp);
 		vty_out (vty, "  tunnel source %s", inet_ntoa(tifp->source));
 		vty_out (vty, "  remote %s", inet_ntoa(tifp->remote));
 		vty_out (vty, "  tunnel mode %s", ip_tun_mode_str[tifp->tun_mode]);
@@ -656,7 +656,7 @@ DEFUN (show_tunnel_interface,
 }
 int tunnel_interface_config_write (struct vty *vty, struct interface *ifp)
 {
-  struct utils_interface * tifp = (struct utils_interface *)ifp->info;
+  struct utilospl_interface * tifp = (struct utilospl_interface *)ifp->info;
   if(tifp->type != UTILS_IF_TUNNEL)
   {
 		return 0;

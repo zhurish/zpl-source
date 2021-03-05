@@ -8,6 +8,10 @@
 #ifndef __VOIP_BUDDY_H__
 #define __VOIP_BUDDY_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define BUDDY_USERNAME_MAX			32
 #define BUDDY_PHONE_MAX				32
@@ -27,20 +31,20 @@
 typedef struct
 {
 	char 		phone[BUDDY_PHONE_MAX];
-	u_int8		active:1;
-	u_int8		res:7;
+	ospl_uint8		active:1;
+	ospl_uint8		res:7;
 }buddy_phone_t;
 
 typedef struct
 {
 	NODE				node;
 	char 				username[BUDDY_USERNAME_MAX];
-	u_int32				userid;
+	ospl_uint32				userid;
 	char 				address[BUDDY_ADDRESS_MAX];
 	char 				email[BUDDY_EMAIL_MAX];
 	char 				company[BUDDY_COMPANY_MAX];
 	char 				group[BUDDY_GROUP_MAX];
-	u_int32				groupid;
+	ospl_uint32				groupid;
 	buddy_phone_t 		buddy_phone[BUDDY_MULTI_NUMBER_MAX];
 	void				*pVoid;
 }buddy_user_t;
@@ -49,10 +53,10 @@ typedef struct
 /*typedef struct buddy_dbase_s
 {
 	NODE			node;
-	u_int8			number;
-	u_int8			building;
-	u_int8 			unit;
-	u_int16			room_number;
+	ospl_uint8			number;
+	ospl_uint8			building;
+	ospl_uint8 			unit;
+	ospl_uint16			room_number;
 	room_phone_t	phonetab[APP_MULTI_NUMBER_MAX];
 }voip_dbase_t;*/
 #pragma pack(0)
@@ -65,10 +69,14 @@ buddy_user_t * buddy_dbase_node_lookup_by_phonenumber(char *phone);
 buddy_user_t * buddy_dbase_node_lookup_by_private_ID(int (*pri_cmp)(void *p1, void *p2), void *p2);
 buddy_user_t * buddy_dbase_lookup_by_username(char *username);
 
-int buddy_dbase_username_add(char *username, u_int32	userid);
-int buddy_dbase_username_del(char *username, u_int32 userid);
+int buddy_dbase_username_add(char *username, ospl_uint32	userid);
+int buddy_dbase_username_del(char *username, ospl_uint32 userid);
 
 int buddy_dbase_username_add_phone(char *username, char *phone);
 int buddy_dbase_username_del_phone(char *username, char *phone);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __VOIP_BUDDY_H__ */

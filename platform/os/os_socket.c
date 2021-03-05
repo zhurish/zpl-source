@@ -18,7 +18,7 @@
 
 
 
-int sock_create(BOOL tcp)
+int sock_create(ospl_bool tcp)
 {
 	int rc = 0;//, ret;
 	//struct sockaddr_in serv;
@@ -41,7 +41,7 @@ int sock_create(BOOL tcp)
 	return rc;
 }
 
-int sock_bind(int sock, char *ipaddress, int port)
+int sock_bind(int sock, char *ipaddress, ospl_uint16 port)
 {
 	struct sockaddr_in serv;
 	int ret = 0;//, flag = 1;
@@ -63,7 +63,7 @@ int sock_bind(int sock, char *ipaddress, int port)
 	return OK;
 }
 
-int sock_listen(int sock, int listennum)
+int sock_listen(int sock, ospl_uint32 listennum)
 {
 	//struct sockaddr_in serv;
 	int ret = 0;
@@ -80,7 +80,7 @@ int sock_listen(int sock, int listennum)
 int sock_accept (int accept_sock, void *p)
 {
 	int sock;
-	int client_len;
+	ospl_uint32 client_len;
 	struct sockaddr_in client;
 
 	memset (&client, 0, sizeof (struct sockaddr_in));
@@ -100,7 +100,7 @@ int sock_accept (int accept_sock, void *p)
 
 int tcp_sock_state (int sock)
 {
-	int client_len;
+	ospl_uint32 client_len;
 	struct tcp_info client;
 
 	memset (&client, 0, sizeof (struct tcp_info));
@@ -112,7 +112,7 @@ int tcp_sock_state (int sock)
 	return client.tcpi_state;
 }
 
-int sock_connect(int sock, char *ipaddress, int port)
+int sock_connect(int sock, char *ipaddress, ospl_uint16 port)
 {
 	int ret = 0;
 	//printf("----------%s-----------------host=%s\r\n",__func__,ipaddress);
@@ -136,7 +136,7 @@ int sock_connect(int sock, char *ipaddress, int port)
 	return ERROR;
 }
 
-int sock_connect_timeout(int sock, char *ipaddress, int port, int timeout_ms)
+int sock_connect_timeout(int sock, char *ipaddress, ospl_uint16 port, ospl_uint32 timeout_ms)
 {
 	int ret = 0;
 
@@ -207,7 +207,7 @@ int sock_connect_timeout(int sock, char *ipaddress, int port, int timeout_ms)
 
 
 
-int sock_client_write(int fd, char *ipaddress, int port, char *buf, int len)
+int sock_client_write(int fd, char *ipaddress, ospl_uint16 port, char *buf, ospl_uint32 len)
 {
 	int ret = ERROR;
 	if (buf && ipaddress)
@@ -231,7 +231,7 @@ int sock_client_write(int fd, char *ipaddress, int port, char *buf, int len)
 }
 
 
-int raw_sock_create(int style, int protocol)
+int raw_sock_create(ospl_int style, ospl_uint16 protocol)
 {
 	int fd = 0;
 	if ((fd = socket(AF_PACKET, style, htons(protocol))) < 0)
@@ -242,7 +242,7 @@ int raw_sock_create(int style, int protocol)
 	return fd;
 }
 
-int raw_sock_bind(int fd, int family, int protocol, int ifindex)
+int raw_sock_bind(int fd, ospl_int family, ospl_uint16 protocol, ospl_int ifindex)
 {
 	int ret = 0;
 	struct sockaddr_ll sock;
@@ -261,8 +261,8 @@ int raw_sock_bind(int fd, int family, int protocol, int ifindex)
 	return ERROR;
 }
 
-int raw_sock_sendto(int fd, int family, int protocol, int ifindex,
-		u_int8 *dstmac, const char *data, int len)
+int raw_sock_sendto(int fd, ospl_int family, ospl_uint16 protocol, ospl_int ifindex,
+		ospl_uint8 *dstmac, const char *data, ospl_uint32 len)
 {
 	struct sockaddr_ll dest_sll;
 
@@ -284,7 +284,7 @@ int raw_sock_sendto(int fd, int family, int protocol, int ifindex,
 }
 
 
-int unix_sockpair_create(BOOL tcp, int *rfd, int *wfd)
+int unix_sockpair_create(ospl_bool tcp, int *rfd, int *wfd)
 {
 	int fd[2];
 	if(socketpair (AF_UNIX, tcp ? SOCK_STREAM : SOCK_DGRAM, tcp ? IPPROTO_TCP:IPPROTO_UDP, fd) == 0)
@@ -298,10 +298,11 @@ int unix_sockpair_create(BOOL tcp, int *rfd, int *wfd)
 	return ERROR;
 }
 
-int unix_sock_server_create(BOOL tcp, const char *name)
+int unix_sock_server_create(ospl_bool tcp, const char *name)
 {
 	int ret = 0;
-	int sock = 0, len = 0;
+	int sock = 0;
+	ospl_uint32 len = 0;
 	char path[128];
 	mode_t old_mask;
 	struct sockaddr_un serv;
@@ -356,7 +357,7 @@ int unix_sock_server_create(BOOL tcp, const char *name)
 int unix_sock_accept (int accept_sock, void *p)
 {
 	int sock = 0;
-	int client_len = 0;
+	ospl_uint32 client_len = 0;
 	struct sockaddr_un client;
 
 	memset (&client, 0, sizeof (struct sockaddr_un));
@@ -372,10 +373,11 @@ int unix_sock_accept (int accept_sock, void *p)
 }
 
 
-int unix_sock_client_create (BOOL tcp, const char *name)
+int unix_sock_client_create (ospl_bool tcp, const char *name)
 {
 	int ret;
-	int sock, len;
+	int sock;
+	ospl_uint32 len;
 	struct sockaddr_un addr;
 	struct stat s_stat;
 	char path[128];
@@ -433,7 +435,7 @@ int unix_sock_client_create (BOOL tcp, const char *name)
 /*
  * just for unix UDP
  */
-int unix_sock_client_write(int fd, char *name, char *buf, int len)
+int unix_sock_client_write(int fd, char *name, char *buf, ospl_uint32 len)
 {
 	int ret = ERROR;
 	if (buf && name)

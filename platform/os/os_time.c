@@ -27,14 +27,14 @@ static os_mutex_t *time_mutex = NULL;
 #ifdef OS_TIMER_POSIX
 static os_time_t *current_time = NULL;
 #else
-static int	inter_value = 10;
+static ospl_uint32	inter_value = 10;
 #endif
-static unit32 time_task_id = 0;
+static ospl_uint32 time_task_id = 0;
 
 #ifdef OS_TIMER_POSIX
 static timer_t os_timerid = 0;
 #ifndef OS_SIGNAL_SIGWAIT
-static void os_time_interrupt(int signo
+static void os_time_interrupt(ospl_uint32 signo
 #ifdef SA_SIGINFO
 	     , siginfo_t *siginfo, void *context
 #endif
@@ -44,12 +44,12 @@ static void os_time_interrupt(int signo
 static int os_time_task(void);
 
 
-int os_system_time_base(char *dt)
+int os_system_time_base(ospl_char *dt)
 {
 	//int sysb = os_time(NULL);
 	//if(sysb < 1546272000 || sysb >= 1577808000)//2019-01-01 00:00:00 < x < 2020-01-01 00:00:00
 	{
-		char dtcmd[128];
+		ospl_char dtcmd[128];
 		memset(dtcmd, 0, sizeof(dtcmd));
 		snprintf(dtcmd, sizeof(dtcmd), "date -s\"%s\"", dt);
 		//super_system(dtcmd);
@@ -68,10 +68,10 @@ int os_system_tick()
 }
 
 
-static void _os_usleep_interrupt (int useconds)
+static void _os_usleep_interrupt (ospl_uint32 useconds)
 {
 	struct timeval delay;
-	int sec = 0;
+	ospl_uint32 sec = 0;
 	sec = (int) useconds / 1000000;
 	if (sec > 0)
 	{
@@ -86,27 +86,27 @@ static void _os_usleep_interrupt (int useconds)
 	select(0, 0, 0, 0, &delay);
 }
 
-void os_usleep_interrupt (int useconds)
+void os_usleep_interrupt (ospl_uint32 useconds)
 {
 	_os_usleep_interrupt (useconds);
 }
 
-void os_msleep_interrupt (int mseconds)
+void os_msleep_interrupt (ospl_uint32 mseconds)
 {
 	_os_usleep_interrupt (mseconds * 1000);
 }
 
-int os_usleep(unsigned int us)
+int os_usleep(ospl_uint32 us)
 {
 	return usleep(us);
 }
 
-int os_msleep(unsigned int ms)
+int os_msleep(ospl_uint32 ms)
 {
 	return usleep(ms*1000);
 }
 
-int os_sleep(unsigned int s)
+int os_sleep(ospl_uint32 s)
 {
 	return sleep(s);
 }
@@ -152,7 +152,7 @@ os_timeval_cmp (struct timeval a, struct timeval b)
 	  ? a.tv_usec - b.tv_usec : a.tv_sec - b.tv_sec);
 }
 
-unsigned int
+ospl_uint32
 os_timeval_elapsed (struct timeval a, struct timeval b)
 {
   return (((a.tv_sec - b.tv_sec) * TIMER_SECOND_MICRO)
@@ -231,19 +231,19 @@ CLOCK_REALTIME:系统实时时间,随系统实时时间改变而改变,即从UTC
 　　CLOCK_THREAD_CPUTIME_ID:本线程到当前代码系统CPU花费的时间
  *
  *
-unsigned long long FAST_FUNC monotonic_ns(void)
+ospl_ullong  FAST_FUNC monotonic_ns(void)
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 	return tv.tv_sec * 1000000000ULL + tv.tv_usec * 1000;
 }
-unsigned long long FAST_FUNC monotonic_us(void)
+ospl_ullong  FAST_FUNC monotonic_us(void)
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 	return tv.tv_sec * 1000000ULL + tv.tv_usec;
 }
-unsigned long long FAST_FUNC monotonic_ms(void)
+ospl_ullong  FAST_FUNC monotonic_ms(void)
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
@@ -281,11 +281,11 @@ os_gettime (enum os_clkid clkid, struct timeval *tv)
 /*
  * 20181024160232  -> 2018/10/24 16:02:32
  */
-const char *os_build_time2date(char *str)
+const ospl_char *os_build_time2date(ospl_char *str)
 {
-	int i = 0, j = 0;
-	static char buf[64];
-	char *p = str;
+	ospl_uint32 i = 0, j = 0;
+	static ospl_char buf[64];
+	ospl_char *p = str;
 	memset(buf, 0, sizeof(buf));
 	while (*p != '\0')
 	{
@@ -315,11 +315,11 @@ const char *os_build_time2date(char *str)
 /*
  * 2018/10/24 16:02:32 -> 20181024160232
  */
-const char *os_date2build_time(char *str)
+const ospl_char *os_date2build_time(ospl_char *str)
 {
-	int i = 0;
-	static char buf[64];
-	char *p = str;
+	ospl_uint32 i = 0;
+	static ospl_char buf[64];
+	ospl_char *p = str;
 	memset(buf, 0, sizeof(buf));
 	while (*p != '\0')
 	{
@@ -350,16 +350,16 @@ struct tm {
 #endif
 
 
-u_int32 os_timestamp_spilt(time_t t,  char *input)
+ospl_uint32 os_timestamp_spilt(ospl_time_t t,  ospl_char *input)
 {
-	int i = 0, b = 0;
+	ospl_uint32 i = 0, b = 0;
 	struct tm tm_tmp;
-	time_t time_tmp = 0;
+	ospl_time_t time_tmp = 0;
 	if(!input || !strlen(input))
 	{
 		return os_time(NULL);
 	}
-	char *brk = strstr(input, ":");
+	ospl_char *brk = strstr(input, ":");
 	if(t == 0)
 		time_tmp = os_time(NULL);
 	else
@@ -369,7 +369,7 @@ u_int32 os_timestamp_spilt(time_t t,  char *input)
 	tm_tmp.tm_year = 0;
 	memset(&tm_tmp, 0, sizeof(struct tm));
 	brk = input;
-	while((uint)i < strlen(brk))
+	while((ospl_uint32)i < strlen(brk))
 	{
 		if(brk[i] == 'T')
 			brk[i] = ' ';
@@ -390,12 +390,12 @@ u_int32 os_timestamp_spilt(time_t t,  char *input)
 	tm_tmp.tm_mon -= 1;
 	tm_tmp.tm_year -= 1900;
 	time_tmp = mktime(&tm_tmp);
-	return (u_int32)time_tmp;
+	return (ospl_uint32)time_tmp;
 }
 
 struct timeval os_time_min(struct timeval a, struct timeval b)
 {
-	unsigned int ma = 0, mb = 0;
+	ospl_uint32 ma = 0, mb = 0;
 	ma = a.tv_sec * TIMER_SECOND_MICRO + a.tv_usec;
 	mb = b.tv_sec * TIMER_SECOND_MICRO + b.tv_usec;
 
@@ -407,7 +407,7 @@ struct timeval os_time_min(struct timeval a, struct timeval b)
 
 struct timeval os_time_max(struct timeval a, struct timeval b)
 {
-	unsigned int ma = 0, mb = 0;
+	ospl_uint32 ma = 0, mb = 0;
 	ma = a.tv_sec * TIMER_SECOND_MICRO + a.tv_usec;
 	mb = b.tv_sec * TIMER_SECOND_MICRO + b.tv_usec;
 
@@ -417,10 +417,10 @@ struct timeval os_time_max(struct timeval a, struct timeval b)
 		return b;
 }
 
-/* time_t value in terms of stabilised absolute time.
+/* ospl_time_t value in terms of stabilised absolute time.
  * replacement for POSIX time()
  */
-time_t os_time (time_t *t)
+ospl_time_t os_time (ospl_time_t *t)
 {
 /*  struct timeval tv;
   os_gettime(OS_CLK_REALTIME, &tv);
@@ -431,7 +431,7 @@ time_t os_time (time_t *t)
   return time(t);
 }
 
-time_t os_monotonic_time (void)
+ospl_time_t os_monotonic_time (void)
 {
   struct timeval tv;
   os_get_monotonic (&tv);
@@ -442,13 +442,13 @@ time_t os_monotonic_time (void)
 option start_date '2019-04-09T00:00'
 option stop_date '2019-04-11T00:00'
 */
-/*time_t os_time_scanf (char *fmt, time_t t)
+/*ospl_time_t os_time_scanf (char *fmt, ospl_time_t t)
 {
 
 }*/
-int os_tmtime_get (enum os_tmtime_id type, time_t t, struct tm *ptm)
+int os_tmtime_get (enum os_tmtime_id type, ospl_time_t t, struct tm *ptm)
 {
-	time_t ticlock = t;
+	ospl_time_t ticlock = t;
 	struct tm tm;
 	os_memset(&tm, 0, sizeof(tm));
 	if(type == OS_TMTIME_LOCAL)
@@ -470,13 +470,13 @@ int os_tmtime_get (enum os_tmtime_id type, time_t t, struct tm *ptm)
 	return ERROR;
 }
 
-char *os_time_fmt (char *fmt, time_t t)
+ospl_char *os_time_fmt (ospl_char *fmt, ospl_time_t t)
 {
-	int len = 0;
+	ospl_uint32 len = 0;
 	struct tm tm;
 	//struct tm *ptm = NULL;
-	static char data[128];
-	time_t ticlock = t;
+	static ospl_uint32 data[128];
+	ospl_time_t ticlock = t;
 	os_memset(data, 0, sizeof(data));
 	os_memset(&tm, 0, sizeof(tm));
 	//UTC :Wed Apr 18 05:19:00 UTC 2018
@@ -500,7 +500,7 @@ char *os_time_fmt (char *fmt, time_t t)
 		localtime_r(&ticlock, &tm);
 		len = strftime(data, sizeof(data), "%Y-%m-%d %H:%M", &tm);
 	}
-	else if(os_strstr(fmt, "short"))
+	else if(os_strstr(fmt, "ospl_int16"))
 	{
 		localtime_r(&ticlock, &tm);
 		len = strftime(data, sizeof(data), "%m/%d %H:%M:%S", &tm);
@@ -528,13 +528,13 @@ char *os_time_fmt (char *fmt, time_t t)
 	return "UNKNOWN";
 }
 
-char *os_time_string(time_t tInput)
+ospl_char *os_time_string(ospl_time_t tInput)
 {
-	static char tString[64];
+	static ospl_char tString[64];
 	if(tInput)
 	{
-			int sec = 0, minu = 0, hou = 0, day = 0;
-			time_t local_t;
+			ospl_uint32 sec = 0, minu = 0, hou = 0, day = 0;
+			ospl_time_t local_t;
 			local_t = tInput;
 
 			//if(local_t > OS_SEC_MIN_V(1))
@@ -672,7 +672,7 @@ int os_time_load()
 	return ERROR;
 }
 
-int os_time_clean(BOOL all)
+int os_time_clean(ospl_bool all)
 {
 	NODE node;
 	os_time_t *t = NULL;
@@ -740,8 +740,8 @@ static os_time_t * os_time_get_node()
 
 
 
-static os_time_t * os_time_entry_create(os_time_type type, int	(*time_entry)(void *),
-		void *pVoid, int msec, char *func_name)
+static os_time_t * os_time_entry_create(os_time_type type, int (*time_entry)(void *),
+		void *pVoid, ospl_uint32 msec, ospl_char *func_name)
 {
 	os_time_t *t = os_time_get_node();
 	if(t == NULL)
@@ -753,7 +753,7 @@ static os_time_t * os_time_entry_create(os_time_type type, int	(*time_entry)(voi
 	if(t)
 	{
 		os_memset(t, 0, sizeof(os_time_t));
-		t->t_id = (u_int32)t;
+		t->t_id = (ospl_uint32)t;
 		//t->t_id = (int)os_get_monotonic_msec ();
 		t->msec = msec;
 		t->pVoid = pVoid;
@@ -773,7 +773,7 @@ static os_time_t * os_time_entry_create(os_time_type type, int	(*time_entry)(voi
  */
 #ifdef OS_TIMER_POSIX
 #ifndef OS_SIGNAL_SIGWAIT
-static void os_time_interrupt(int signo
+static void os_time_interrupt(ospl_uint32 signo
 #ifdef SA_SIGINFO
 	     , siginfo_t *siginfo, void *context
 #endif
@@ -829,7 +829,7 @@ static int os_time_interval_update(os_time_t *t)
 	return OK;
 }
 
-static u_long os_time_interrupt_interval_get(os_time_t *t)
+static ospl_ulong os_time_interrupt_interval_get(os_time_t *t)
 {
 	return (t->interrupt_timestamp - os_get_monotonic_msec ());
 /*	struct timeval current_tv;
@@ -839,7 +839,7 @@ static u_long os_time_interrupt_interval_get(os_time_t *t)
 		  + (current_tv.tv_usec))/TIMER_MSEC_MICRO;*/
 }
 
-static int os_time_interrupt_setting(int msec)
+static int os_time_interrupt_setting(ospl_uint32 msec)
 {
 	struct itimerspec tick;
 	memset(&tick, 0, sizeof(tick));
@@ -898,8 +898,8 @@ static int os_time_interval_refresh()
 }
 
 
-u_int32 os_time_create_entry(os_time_type type, int (*time_entry)(void *),
-		void *pVoid, int msec, char *func_name)
+ospl_uint32 os_time_create_entry(os_time_type type, int (*time_entry)(void *),
+		void *pVoid, ospl_uint32 msec, const ospl_char *func_name)
 {
 	os_time_t * t = os_time_entry_create(type, time_entry, pVoid,  msec, func_name);
 	if(t)
@@ -923,10 +923,10 @@ u_int32 os_time_create_entry(os_time_type type, int (*time_entry)(void *),
 			os_mutex_unlock(time_mutex);
 		return t->t_id;
 	}
-	return (u_int32)0;
+	return (ospl_uint32)0;
 }
 
-static os_time_t *os_time_lookup_raw(u_int32 id)
+static os_time_t *os_time_lookup_raw(ospl_uint32 id)
 {
 	NODE node;
 	os_time_t *t = NULL;
@@ -952,7 +952,7 @@ static os_time_t *os_time_lookup_raw(u_int32 id)
 	return t;
 }
 
-os_time_t *os_time_lookup(u_int32 id)
+os_time_t *os_time_lookup(ospl_uint32 id)
 {
 	os_time_t *t = NULL;
 	if(time_mutex)
@@ -964,7 +964,7 @@ os_time_t *os_time_lookup(u_int32 id)
 }
 
 
-int os_time_destroy(u_int32 id)
+int os_time_destroy(ospl_uint32 id)
 {
 	os_time_t *t = NULL;
 	if(time_mutex)
@@ -991,7 +991,7 @@ int os_time_destroy(u_int32 id)
 	return ERROR;
 }
 
-int os_time_cancel(u_int32 id)
+int os_time_cancel(ospl_uint32 id)
 {
 	os_time_t *t = NULL;
 	if(time_mutex)
@@ -1016,7 +1016,7 @@ int os_time_cancel(u_int32 id)
 	return ERROR;
 }
 
-int os_time_restart(u_int32 id, int msec)
+int os_time_restart(ospl_uint32 id, ospl_uint32 msec)
 {
 	os_time_t *t = NULL;
 	if(time_mutex)
@@ -1051,12 +1051,12 @@ int os_time_restart(u_int32 id, int msec)
 }
 
 
-int os_time_show(int (*show)(void *, char *fmt,...), void *pVoid)
+int os_time_show(int (*show)(void *, ospl_char *fmt,...), void *pVoid)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	NODE *node = NULL;
 	os_time_t *t = NULL;
-	int timestamp = os_get_monotonic_msec ();
+	ospl_uint32 timestamp = os_get_monotonic_msec ();
 	if (time_mutex)
 		os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
 	if(lstCount(time_list) && show )
@@ -1083,9 +1083,9 @@ static int os_time_task(void)
 {
 	NODE node;
 	os_time_t *t;
-	unsigned int interrupt_timestamp = 0;
+	ospl_uint32 interrupt_timestamp = 0;
 #ifdef OS_SIGNAL_SIGWAIT
-	int signum = 0, err = 0;
+	ospl_uint32 signum = 0, err = 0;
 	sigset_t	set;
 #endif
 	//while(!os_load_config_done())
@@ -1093,7 +1093,7 @@ static int os_time_task(void)
 		os_sleep(1);
 	}
 #ifdef OS_SIGNAL_SIGWAIT
-	int signo_tbl[] = {SIGUSR2};
+	ospl_uint32 signo_tbl[] = {SIGUSR2};
 	os_task_sigexecute(1, signo_tbl, &set);
 	timer_connect(0, NULL);
 #endif
@@ -1188,7 +1188,7 @@ static int os_time_task(void)
 
 #ifdef OS_TIMER_TEST
 
-static u_int32 t_time_test = 0, t_time_test1 = 0;
+static ospl_uint32 t_time_test = 0, t_time_test1 = 0;
 static int timer_test_handle(void *p)
 {
 	struct timeval now;
@@ -1199,14 +1199,14 @@ static int timer_test_handle(void *p)
 	return OK;
 }
 
-int timer_test(int time, int type)
+int timer_test(ospl_uint32 time, ospl_uint32 type)
 {
 	static char clean_flag = 0;
 	struct timeval now;
 	os_timer_timeval(&now);
 	if(clean_flag == 0)
 	{
-		//os_time_clean(FALSE);
+		//os_time_clean(ospl_false);
 		clean_flag = 1;
 	}
 	if(type)
@@ -1232,7 +1232,7 @@ int timer_test(int time, int type)
 	return OK;
 }
 
-int timer_test_exit(int type)
+int timer_test_exit(ospl_uint32 type)
 {
 	if(type)
 	{
@@ -1257,10 +1257,10 @@ int timer_test_exit(int type)
 #endif
 
 
-int os_time_set_api(int timesp)
+int os_time_set_api(ospl_uint32 timesp)
 {
 	struct timespec sntpTime; /* storage for retrieved time value */
-	int local_timesp = 0, value = 0;
+	ospl_uint32 local_timesp = 0, value = 0;
 	sntpTime.tv_sec = sntpTime.tv_nsec = rand();
 
 	local_timesp = os_time(NULL);
@@ -1293,7 +1293,7 @@ int os_time_set_api(int timesp)
 		return ERROR;
 }
 
-int os_timezone_set_api(int tizone, char *timzstr)
+int os_timezone_set_api(ospl_uint32 tizone, ospl_char *timzstr)
 {
 	if(timzstr)
 	{
@@ -1305,7 +1305,7 @@ int os_timezone_set_api(int tizone, char *timzstr)
 	}
 	else
 	{
-		char tizmp[64];
+		ospl_char tizmp[64];
 		memset(tizmp, 0, sizeof(tizmp));
 		if(tizone == 0)
 		{
@@ -1332,8 +1332,8 @@ int os_timezone_set_api(int tizone, char *timzstr)
 
 struct time_zone
 {
-	char *time_zone;
-	int	offset;
+	ospl_char *time_zone;
+	ospl_uint32	offset;
 }time_zone_tbl[] =
 {
 	{ "UTC", 0 },
@@ -1789,10 +1789,10 @@ struct time_zone
 };
 
 
-int os_timezone_offset_api(char * res)
+int os_timezone_offset_api(ospl_char * res)
 {
-	int i = 0;
-	char tmp[128];
+	ospl_uint32 i = 0;
+	ospl_char tmp[128];
 	int	 ret = 0;
 	if(res)
 	{
@@ -1922,7 +1922,7 @@ Thread 2 "timeTask" received signal SIGABRT, Aborted.
 char * mpls_get_file_size(const char *path,  u_long  *ulFilesize )
 {
 	static char sizeString[64];
-	unsigned long filesize = 0;
+	ospl_ulong filesize = 0;
 	struct stat statbuff;
 	if(stat(path, &statbuff) < 0)
 	{

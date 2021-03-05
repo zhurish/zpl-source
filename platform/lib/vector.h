@@ -23,11 +23,15 @@
 #ifndef _ZEBRA_VECTOR_H
 #define _ZEBRA_VECTOR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* struct for vector */
 struct _vector 
 {
-  unsigned int active;		/* number of active slots */
-  unsigned int alloced;		/* number of allocated slot */
+  ospl_uint32  active;		/* number of active slots */
+  ospl_uint32  alloced;		/* number of allocated slot */
   void **index;			/* index to data */
 };
 typedef struct _vector *vector;
@@ -45,19 +49,23 @@ typedef struct _vector *vector;
 #define vector_active(V) ((V)->active)
 
 /* Prototypes. */
-extern vector vector_init (unsigned int size);
-extern void vector_ensure (vector v, unsigned int num);
+extern vector vector_init (ospl_uint32  size);
+extern void vector_ensure (vector v, ospl_uint32  num);
 extern int vector_empty_slot (vector v);
 extern int vector_set (vector v, void *val);
-extern int vector_set_index (vector v, unsigned int i, void *val);
-extern void vector_unset (vector v, unsigned int i);
-extern unsigned int vector_count (vector v);
+extern int vector_set_index (vector v, ospl_uint32  i, void *val);
+extern void vector_unset (vector v, ospl_uint32  i);
+extern ospl_uint32  vector_count (vector v);
 extern void vector_only_wrapper_free (vector v);
 extern void vector_only_index_free (void *index);
 extern void vector_free (vector v);
 extern vector vector_copy (vector v);
 
-extern void *vector_lookup (vector, unsigned int);
-extern void *vector_lookup_ensure (vector, unsigned int);
+extern void *vector_lookup (vector, ospl_uint32 );
+extern void *vector_lookup_ensure (vector, ospl_uint32 );
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ZEBRA_VECTOR_H */

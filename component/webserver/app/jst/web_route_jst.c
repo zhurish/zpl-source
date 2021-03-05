@@ -34,20 +34,20 @@
 
 
 #ifdef WEB_OPENWRT_PROCESS
-static int web_kernel_route_table_one(char *input, char *ifname, u_int32 *dest,
-									  u_int32 *gateway, u_int32 *mask, u_int32 *metric)
+static int web_kernel_route_table_one(char *input, char *ifname, ospl_uint32 *dest,
+									  ospl_uint32 *gateway, ospl_uint32 *mask, ospl_uint32 *metric)
 {
-	//u_int32 flag = 0, ref = 0, use = 0;&flag, &ref, &use,
+	//ospl_uint32 flag = 0, ref = 0, use = 0;&flag, &ref, &use,
 	sscanf(input, "%[^\t] %x %x %*x%*d%*d %d %x", ifname, dest, gateway, metric, mask);
 	return 0;
 }
 
-int web_kernel_route_lookup_default(ifindex_t ifindex, u_int32 *local_gateway)
+int web_kernel_route_lookup_default(ifindex_t ifindex, ospl_uint32 *local_gateway)
 {
 	FILE *f;
 	char buf[512];
 	char ifname[32];
-	u_int32 dest = 0, gateway = 0, mask = 0, metric = 0;
+	ospl_uint32 dest = 0, gateway = 0, mask = 0, metric = 0;
 	ifindex_t ifkindex = 0;
 	f = fopen ("/proc/net/route", "r");
 	if (f)
@@ -80,11 +80,11 @@ int web_kernel_route_lookup_default(ifindex_t ifindex, u_int32 *local_gateway)
 	return ERROR;
 }
 
-int web_kernel_dns_lookup_default(ifindex_t *ifindex, u_int32 *dns1, u_int32 *dns2)
+int web_kernel_dns_lookup_default(ifindex_t *ifindex, ospl_uint32 *dns1, ospl_uint32 *dns2)
 {
 	FILE *f;
 	char buf[512];
-	u_int32 find = 0, in = 0;
+	ospl_uint32 find = 0, in = 0;
 	//ifindex_t ifkindex = 0;
 	f = fopen ("/tmp/resolv.conf.auto", "r");
 	if (f)
@@ -167,7 +167,7 @@ static int web_route_table_one(struct route_node *rn, struct rib *rib, ifindex_t
 	return ERROR;
 }
 
-int web_route_lookup_default(ifindex_t ifindex, u_int32 *local_gateway)
+int web_route_lookup_default(ifindex_t ifindex, ospl_uint32 *local_gateway)
 {
 	struct route_table *table;
 	struct route_node *rn;
@@ -487,12 +487,12 @@ int web_static_ipv4_safi (safi_t safi, int add_cmd,
 			const char *vrf_id_str)
 {
   int ret;
-  u_char distance;
+  ospl_uchar distance;
   struct prefix p;
   struct in_addr gate;
   struct in_addr mask;
   const char *ifname;
-  //u_char flag = 0;
+  //ospl_uchar flag = 0;
   route_tag_t tag = 0;
   vrf_id_t vrf_id = VRF_DEFAULT;
 
@@ -578,7 +578,7 @@ int web_static_ipv4_safi (safi_t safi, int add_cmd,
 }
 
 
-static int web_route_tbl_handle(Webs *wp, char *path, char *query, int type)
+static int web_route_tbl_handle(Webs *wp, char *path, char *query, ospl_uint32 type)
 {
 
 	int ret = 0, gate_null = 0;

@@ -135,7 +135,7 @@ static int web_wireless_scan_disconnect(Webs *wp, void *p)
 			{
 				if (iw->mode == IW_MODE_MANAGE || iw->mode == IW_MODE_CLIENT)
 				{
-					iw->private.client.scan_enable = TRUE;
+					iw->private.client.scan_enable = ospl_true;
 #ifdef IW_ONCE_TASK
 					if (iw->private.client.scan_thread)
 					{
@@ -349,9 +349,9 @@ static int web_wireless_ap(Webs *wp, char *path, char *query)
 	hiden = webs_get_var(wp, T("hiden"), T(""));
 
 	if (hiden && strstr(hiden, "true"))
-		iw->private.ap.hiden_ssid = TRUE;
+		iw->private.ap.hiden_ssid = ospl_true;
 	else
-		iw->private.ap.hiden_ssid = FALSE;
+		iw->private.ap.hiden_ssid = ospl_false;
 
 	/*
 	chennel = webs_get_var(wp, T("chennel"), T(""));
@@ -568,7 +568,7 @@ static int web_wireless_action_get(Webs *wp, char *path, char *query)
 {
 #ifdef WEB_OPENWRT_PROCESS
 	char tmp[64];
-	int val = 0, mode = 0;
+	ospl_uint32 val = 0, mode = 0;
 	memset(tmp, 0, sizeof(tmp));
 	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);
@@ -583,7 +583,7 @@ static int web_wireless_action_get(Webs *wp, char *path, char *query)
 	if (mode == IW_MODE_AP)
 	{
 		char name[64], password[64], encrytype[64], freq[64], chennel[64];
-		int type = 0, hiden = 0;
+		ospl_uint32 type = 0, hiden = 0;
 		memset(name, 0, sizeof(name));
 		memset(password, 0, sizeof(password));
 		memset(encrytype, 0, sizeof(encrytype));
@@ -748,7 +748,7 @@ static int web_wireless_disable_job(void *p)
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
 	struct interface *ifp = p;
 	os_sleep(1);
-	nsm_iw_enable_api(ifp, FALSE);
+	nsm_iw_enable_api(ifp, ospl_false);
 	vty_execute_shell("write memory");
 #else
 #ifdef WEB_OPENWRT_PROCESS
@@ -777,14 +777,14 @@ static int web_wireless_client_disable(Webs *wp, void *p)
 				//_WEB_DBG_TRAP("============%s==============:strval=%s\r\n", __func__, strval);
 				if (strstr(strval, "true"))
 				{
-					nsm_iw_enable_api(ifp, TRUE);
+					nsm_iw_enable_api(ifp, ospl_true);
 					vty_execute_shell("write memory");
 					return web_return_text_plain(wp, OK);
 				}
 				else if (strstr(strval, "false"))
 				{
 					os_job_add(web_wireless_disable_job, ifp);
-/*					nsm_iw_enable_api(ifp, FALSE);
+/*					nsm_iw_enable_api(ifp, ospl_false);
 					vty_execute_shell("write memory");*/
 					return web_return_text_plain(wp, OK);
 				}
@@ -844,7 +844,7 @@ static int web_wireless_client_disable(Webs *wp, void *p)
 			if (iw->mode == IW_MODE_AP)
 			{
 				//if(iw->private.ap)
-				ret = iw_ap_mac_add_api(&iw->private.ap, strval, FALSE);
+				ret = iw_ap_mac_add_api(&iw->private.ap, strval, ospl_false);
 			}
 		}
 #endif

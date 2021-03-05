@@ -19,7 +19,7 @@
 #include "mqtt_app_show.h"
 
 static int __mqtt_app_config_sub_show(struct mqtt_app_config  *cfg, struct vty *vty,
-		BOOL detail, BOOL wrshow)
+		ospl_bool detail, ospl_bool wrshow)
 {
 	int i = 0;
 	if (cfg && vty)
@@ -77,7 +77,7 @@ static int __mqtt_app_config_sub_show(struct mqtt_app_config  *cfg, struct vty *
 
 #ifdef WITH_TLS
 static int __mqtt_app_config_tls_show(struct mqtt_app_config  *cfg, struct vty *vty,
-		BOOL detail, BOOL wrshow)
+		ospl_bool detail, ospl_bool wrshow)
 {
 	if(wrshow)
 	{
@@ -139,7 +139,7 @@ static int __mqtt_app_config_tls_show(struct mqtt_app_config  *cfg, struct vty *
 }
 #endif
 
-static int __mqtt_app_config_show(struct mqtt_app_config  *cfg, struct vty *vty, BOOL detail, BOOL wrshow)
+static int __mqtt_app_config_show(struct mqtt_app_config  *cfg, struct vty *vty, ospl_bool detail, ospl_bool wrshow)
 {
 	if(!cfg->enable)
 	{
@@ -264,7 +264,7 @@ static int __mqtt_app_config_show(struct mqtt_app_config  *cfg, struct vty *vty,
 }
 
 
-int mqtt_app_config_show(struct mqtt_app_config  *cfg, struct vty *vty, BOOL detail, BOOL wrshow)
+int mqtt_app_config_show(struct mqtt_app_config  *cfg, struct vty *vty, ospl_bool detail, ospl_bool wrshow)
 {
 	if(cfg && vty)
 		return __mqtt_app_config_show(cfg, vty,  detail,  wrshow);

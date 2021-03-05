@@ -42,7 +42,7 @@ DEFUN (channel_group,
 		"Passive mode\n")
 {
 	int ret = ERROR;
-	u_int trunkid;
+	ospl_uint32 trunkid;
 	struct interface *ifp = vty->index;
 	trunk_type_t type = TRUNK_DYNAMIC;
 	trunk_mode_t mode = TRUNK_ACTIVE;
@@ -73,7 +73,7 @@ DEFUN (channel_group,
 		}
 		else
 		{
-			u_int trunkIdOld = 0;
+			ospl_uint32 trunkIdOld = 0;
 			if(nsm_trunk_get_ID_interface_api(ifp->ifindex, &trunkIdOld) == OK)
 			{
 				if(trunkIdOld != trunkid)
@@ -97,7 +97,7 @@ DEFUN (channel_group_static,
 		"Channel number\n")
 {
 	int ret = ERROR;
-	u_int trunkid;
+	ospl_uint32 trunkid;
 	struct interface *ifp = vty->index;
 	trunk_type_t type = TRUNK_STATIC;
 	trunk_mode_t mode = TRUNK_ACTIVE;
@@ -124,7 +124,7 @@ DEFUN (channel_group_static,
 		}
 		else
 		{
-			u_int trunkIdOld = 0;
+			ospl_uint32 trunkIdOld = 0;
 			if(nsm_trunk_get_ID_interface_api(ifp->ifindex, &trunkIdOld) == OK)
 			{
 				if(trunkIdOld != trunkid)
@@ -148,7 +148,7 @@ DEFUN (no_channel_group_static,
 		"Static Channel Group\n")
 {
 	int ret = ERROR;
-	u_int trunkid;
+	ospl_uint32 trunkid;
 	struct interface *ifp = vty->index;
 	if(nsm_trunk_get_ID_interface_api(ifp->ifindex, &trunkid) != OK)
 	{
@@ -181,7 +181,7 @@ DEFUN (lacp_port_priority,
 		"priority value\n")
 {
 	int ret = ERROR;
-	u_int  pri;
+	ospl_uint32  pri;
 	//trunkid = vty->index_value;
 	pri = atoi(argv[1]);
 
@@ -200,7 +200,7 @@ DEFUN (no_lacp_port_priority,
 		"system-priority\n")
 {
 	int ret = ERROR;
-	u_int  pri;
+	ospl_uint32  pri;
 	//trunkid = vty->index_value;
 	pri = 0;
 	struct interface *ifp = vty->index;
@@ -217,12 +217,12 @@ DEFUN (lacp_system_priority,
 		"priority value\n")
 {
 	int ret = ERROR;
-	u_int  pri;
+	ospl_uint32  pri;
 	//trunkid = vty->index_value;
 	pri = atoi(argv[1]);
 	if(!nsm_trunk_is_enable())
 		nsm_trunk_enable();
-	u_int trunkid = 1;
+	ospl_uint32 trunkid = 1;
 
 	ret = nsm_trunk_lacp_system_priority_api(trunkid, pri);
 
@@ -237,10 +237,10 @@ DEFUN (no_lacp_system_priority,
 		"system-priority\n")
 {
 	int ret = ERROR;
-	u_int  pri;
+	ospl_uint32  pri;
 	//trunkid = vty->index_value;
 	pri = 0;
-	u_int trunkid = 1;
+	ospl_uint32 trunkid = 1;
 	if(!nsm_trunk_is_enable())
 		nsm_trunk_enable();
 	ret = nsm_trunk_lacp_system_priority_api(trunkid, pri);
@@ -256,7 +256,7 @@ DEFUN (lacp_timeout,
 		"timeout value\n")
 {
 	int ret = ERROR;
-	u_int value;
+	ospl_uint32 value;
 	struct interface *ifp = vty->index;
 	//trunkid = vty->index_value;
 	value = atoi(argv[1]);
@@ -272,7 +272,7 @@ DEFUN (no_lacp_timeout,
 		"timeout\n")
 {
 	int ret = ERROR;
-	u_int value;
+	ospl_uint32 value;
 	struct interface *ifp = vty->index;
 	//trunkid = vty->index_value;
 	value = 1;
@@ -292,7 +292,7 @@ DEFUN (port_channel_load_balance,
 		"dst src mac load-balance mode\n")
 {
 	int ret = ERROR;
-	u_int trunkid = 0;
+	ospl_uint32 trunkid = 0;
 	load_balance_t value = TRUNK_LOAD_BALANCE_NONE;
 	trunkid = 1;//vty->index_value;
 	if(!nsm_trunk_is_enable())
@@ -321,7 +321,7 @@ DEFUN (no_port_channel_load_balance,
 		"load-balance\n")
 {
 	int ret = ERROR;
-	u_int trunkid, value;
+	ospl_uint32 trunkid, value;
 	trunkid = 1;//vty->index_value;
 	if(!nsm_trunk_is_enable())
 		nsm_trunk_enable();

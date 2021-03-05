@@ -125,7 +125,7 @@ keychain_delete (struct keychain *keychain)
 }
 
 static struct key *
-key_lookup (const struct keychain *keychain, u_int32_t index)
+key_lookup (const struct keychain *keychain, ospl_uint32 index)
 {
   struct listnode *node;
   struct key *key;
@@ -139,11 +139,11 @@ key_lookup (const struct keychain *keychain, u_int32_t index)
 }
 
 struct key *
-key_lookup_for_accept (const struct keychain *keychain, u_int32_t index)
+key_lookup_for_accept (const struct keychain *keychain, ospl_uint32 index)
 {
   struct listnode *node;
   struct key *key;
-  time_t now;
+  ospl_time_t now;
 
   now = time (NULL);
 
@@ -167,7 +167,7 @@ key_match_for_accept (const struct keychain *keychain, const char *auth_str)
 {
   struct listnode *node;
   struct key *key;
-  time_t now;
+  ospl_time_t now;
 
   now = time (NULL);
 
@@ -187,7 +187,7 @@ key_lookup_for_send (const struct keychain *keychain)
 {
   struct listnode *node;
   struct key *key;
-  time_t now;
+  ospl_time_t now;
 
   now = time (NULL);
 
@@ -204,7 +204,7 @@ key_lookup_for_send (const struct keychain *keychain)
 }
 
 static struct key *
-key_get (const struct keychain *keychain, u_int32_t index)
+key_get (const struct keychain *keychain, ospl_uint32 index)
 {
   struct key *key;
 
@@ -277,7 +277,7 @@ DEFUN (key,
 {
   struct keychain *keychain;
   struct key *key;
-  u_int32_t index;
+  ospl_uint32 index;
 
   keychain = vty->index;
 
@@ -298,7 +298,7 @@ DEFUN (no_key,
 {
   struct keychain *keychain;
   struct key *key;
-  u_int32_t index;
+  ospl_uint32 index;
   
   keychain = vty->index;
 
@@ -354,18 +354,18 @@ DEFUN (no_key_string,
   return CMD_SUCCESS;
 }
 
-/* Convert HH:MM:SS MON DAY YEAR to time_t value.  -1 is returned when
+/* Convert HH:MM:SS MON DAY YEAR to ospl_time_t value.  -1 is returned when
    given string is malformed. */
-static time_t 
+static ospl_time_t 
 key_str2time (const char *time_str, const char *day_str, const char *month_str,
 	      const char *year_str)
 {
-  int i = 0;
-  char *colon;
+  ospl_uint32 i = 0;
+  ospl_char *colon;
   struct tm tm;
-  time_t time;
-  unsigned int sec, min, hour;
-  unsigned int day, month, year;
+  ospl_time_t time;
+  ospl_uint32  sec, min, hour;
+  ospl_uint32  day, month, year;
 
   const char *month_name[] = 
   {
@@ -386,8 +386,8 @@ key_str2time (const char *time_str, const char *day_str, const char *month_str,
 
 #define _GET_LONG_RANGE(V,STR,MMCOND) \
 { \
-  unsigned long tmpl; \
-  char *endptr = NULL; \
+  ospl_ulong tmpl; \
+  ospl_char *endptr = NULL; \
   tmpl = strtoul ((STR), &endptr, 10); \
   if (*endptr != '\0' || tmpl == ULONG_MAX) \
     return -1; \
@@ -466,8 +466,8 @@ key_lifetime_set (struct vty *vty, struct key_range *krange,
 		  const char *etime_str, const char *eday_str,
 		  const char *emonth_str, const char *eyear_str)
 {
-  time_t time_start;
-  time_t time_end;
+  ospl_time_t time_start;
+  ospl_time_t time_end;
   
   time_start = key_str2time (stime_str, sday_str, smonth_str, syear_str);
   if (time_start < 0)
@@ -501,8 +501,8 @@ key_lifetime_duration_set (struct vty *vty, struct key_range *krange,
 			   const char *smonth_str, const char *syear_str,
 			   const char *duration_str)
 {
-  time_t time_start;
-  u_int32_t duration;
+  ospl_time_t time_start;
+  ospl_uint32 duration;
     
   time_start = key_str2time (stime_str, sday_str, smonth_str, syear_str);
   if (time_start < 0)
@@ -524,7 +524,7 @@ key_lifetime_infinite_set (struct vty *vty, struct key_range *krange,
 			   const char *stime_str, const char *sday_str,
 			   const char *smonth_str, const char *syear_str)
 {
-  time_t time_start;
+  ospl_time_t time_start;
     
   time_start = key_str2time (stime_str, sday_str, smonth_str, syear_str);
   if (time_start < 0)
@@ -870,11 +870,11 @@ static struct cmd_node keychain_key_node =
 };
 
 static int
-keychain_strftime (char *buf, int bufsiz, time_t *time)
+keychain_strftime (ospl_char *buf, int bufsiz, ospl_time_t *time)
 {
   struct tm *tm = NULL;
   struct tm stm;
-  size_t len;
+  ospl_size_t len;
   localtime_r(time, &stm);
   tm = &stm;
   //tm = localtime (time);
@@ -891,7 +891,7 @@ keychain_config_write (struct vty *vty)
   struct key *key;
   struct listnode *node;
   struct listnode *knode;
-  char buf[BUFSIZ];
+  ospl_char buf[BUFSIZ];
 
   for (ALL_LIST_ELEMENTS_RO (keychain_list, node, keychain))
     {

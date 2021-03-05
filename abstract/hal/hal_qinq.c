@@ -21,7 +21,7 @@
 #include "hal_qinq.h"
 #include "hal_driver.h"
 
-int hal_qinq_enable(BOOL enable)
+int hal_qinq_enable(ospl_bool enable)
 {
 	if(hal_driver && hal_driver->qinq_tbl && hal_driver->qinq_tbl->sdk_qinq_enable_cb)
 		return hal_driver->qinq_tbl->sdk_qinq_enable_cb(hal_driver->driver, enable);
@@ -35,7 +35,7 @@ int hal_qinq_vlan_tpid(vlan_t tpid)
 	return ERROR;
 }
 
-int hal_qinq_interface_enable(ifindex_t ifindex, BOOL enable)
+int hal_qinq_interface_enable(ifindex_t ifindex, ospl_bool enable)
 {
 	if(hal_driver && hal_driver->qinq_tbl && hal_driver->qinq_tbl->sdk_qinq_port_enable_cb)
 		return hal_driver->qinq_tbl->sdk_qinq_port_enable_cb(hal_driver->driver, ifindex, enable);

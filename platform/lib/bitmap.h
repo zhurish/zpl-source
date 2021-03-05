@@ -4,6 +4,10 @@
 #ifndef __BITMAP_H
 #define __BITMAP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #ifndef INLINE
 #define INLINE
@@ -46,8 +50,8 @@
 */
 INLINE void BIT_LST_SET
     (
-    unsigned char *bitList,
-    unsigned long  bit
+    ospl_uchar *bitList,
+    ospl_ulong  bit
     );
 /*****************************************************************************
 *
@@ -55,17 +59,17 @@ INLINE void BIT_LST_SET
 */
  INLINE void BIT_LST_CLR
     (
-    unsigned char *bitList,
-    unsigned long  bit
+    ospl_uchar *bitList,
+    ospl_ulong  bit
     );
 /*****************************************************************************
 *
 * bitListTst - Return True if the bit is set, else False.
 */
- INLINE unsigned long BIT_LST_TST
+ INLINE ospl_ulong BIT_LST_TST
     (
-    unsigned char *bitList,
-    unsigned long  bit
+    ospl_uchar *bitList,
+    ospl_ulong  bit
     );
 
 /****************************************************************************
@@ -75,7 +79,7 @@ INLINE void BIT_LST_SET
 ��nbit��1��ʼ
 */
 
- INLINE void BIT_LST_XOR(unsigned char *dst, const unsigned char *src1,const unsigned char *src2, unsigned long nbit);
+ INLINE void BIT_LST_XOR(ospl_uchar *dst, const ospl_uchar *src1,const ospl_uchar *src2, ospl_ulong nbit);
 
 /****************************************************************************
 *
@@ -84,7 +88,7 @@ INLINE void BIT_LST_SET
 ��nbit��1��ʼ
 */
 
- INLINE void BIT_LST_AND(unsigned char *dst, const unsigned char *src1,const unsigned char *src2, unsigned long nbit);
+ INLINE void BIT_LST_AND(ospl_uchar *dst, const ospl_uchar *src1,const ospl_uchar *src2, ospl_ulong nbit);
 
 /****************************************************************************
 *
@@ -93,21 +97,21 @@ INLINE void BIT_LST_SET
 ��nbit��1��ʼ
 */
 
- INLINE void BIT_LST_OR(unsigned char *dst, const unsigned char *src1,const unsigned char *src2, unsigned long nbit);
+ INLINE void BIT_LST_OR(ospl_uchar *dst, const ospl_uchar *src1,const ospl_uchar *src2, ospl_ulong nbit);
 /****************************************************************************
 *
 *���nbit�����ص�ֵ�Ƿ�Ϊ0
 *
 ��nbit����1��ʼ
 */
- INLINE int BIT_LST_EMPTY(unsigned char *src, unsigned long nbit);
+ INLINE ospl_bool BIT_LST_EMPTY(ospl_uchar *src, ospl_ulong nbit);
 /****************************************************************************
 *
 *�Ƚ�nbit�����ص������ַ�����ֵ�Ƿ����
 *
 ��nbit����1��ʼ
 */
- INLINE int BIT_LST_CMP(const unsigned char *src1, const unsigned char *src2, unsigned long nbit);
+ INLINE int BIT_LST_CMP(const ospl_uchar *src1, const ospl_uchar *src2, ospl_ulong nbit);
 
 /****************************************************************************
 *
@@ -115,22 +119,26 @@ INLINE void BIT_LST_SET
 *
 ��nbit����1��ʼ
 */
- INLINE void BIT_LST_COPY(const unsigned char *src, unsigned char *dst, unsigned long nbit);
+ INLINE void BIT_LST_COPY(const ospl_uchar *src, ospl_uchar *dst, ospl_ulong nbit);
 /****************************************************************************
 *
 *�������ı���λΪ1��ֵ
 *
 ��nbit����1��ʼ
 */
- INLINE int BIT_LST_MAX(unsigned char *src, unsigned long nbit);
+ INLINE ospl_uint32 BIT_LST_MAX(ospl_uchar *src, ospl_ulong nbit);
 
 /*
 ����bitΪ1�ĸ���
 */
 
- INLINE int BIT_LST_CNT(unsigned char *src, unsigned long nbit);
+ INLINE ospl_uint32 BIT_LST_CNT(ospl_uchar *src, ospl_ulong nbit);
 
 
 
-
+ 
+#ifdef __cplusplus
+}
+#endif
+ 
 #endif /* __BITMAP_H */

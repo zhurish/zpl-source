@@ -32,8 +32,8 @@ extern "C" {
 #endif
 
 #include <sys/types.h>
-
-typedef unsigned long	avl_uintptr_t;
+#include "ospl_type.h"
+typedef ospl_ulong	avl_uintptr_t;
 
 
 #define COMPILE_32
@@ -60,18 +60,18 @@ typedef unsigned long	avl_uintptr_t;
 struct avl_node {
 	struct avl_node *avl_child[2];	/* left/right children */
 	struct avl_node *avl_parent;	/* this node's parent */
-	unsigned short avl_child_index;	/* my index in parent's avl_child[] */
-	short avl_balance;		/* balance value: -1, 0, +1 */
+	ospl_uint16 avl_child_index;	/* my index in parent's avl_child[] */
+	ospl_int16 avl_balance;		/* balance value: -1, 0, +1 */
 };
 
 #define	AVL_XPARENT(n)		((n)->avl_parent)
 #define	AVL_SETPARENT(n, p)	((n)->avl_parent = (p))
 
 #define	AVL_XCHILD(n)		((n)->avl_child_index)
-#define	AVL_SETCHILD(n, c)	((n)->avl_child_index = (unsigned short)(c))
+#define	AVL_SETCHILD(n, c)	((n)->avl_child_index = (ospl_uint16)(c))
 
 #define	AVL_XBALANCE(n)		((n)->avl_balance)
-#define	AVL_SETBALANCE(n, b)	((n)->avl_balance = (short)(b))
+#define	AVL_SETBALANCE(n, b)	((n)->avl_balance = (ospl_int16)(b))
 
 #else /* _LP64 */
 
@@ -136,7 +136,7 @@ struct avl_node {
 #define	AVL_MKINDEX(n, c)	((avl_index_t)(n) | (c))
 
 #ifndef ulong_t
-#define		ulong_t		unsigned long
+#define		ulong_t		ospl_ulong
 #endif
 
 #ifndef offsetof
@@ -151,9 +151,9 @@ struct avl_node {
 struct avl_tree {
 	struct avl_node *avl_root;	/* root node in tree */
 	int (*avl_compar)(const void *, const void *);
-	unsigned long avl_offset;		/* offsetof(type, avl_link_t field) */
-	unsigned long avl_numnodes;		/* number of nodes in the tree */
-	unsigned long avl_size;		/* sizeof user type struct */
+	ospl_ulong avl_offset;		/* offsetof(type, avl_link_t field) */
+	ospl_ulong avl_numnodes;		/* number of nodes in the tree */
+	ospl_ulong avl_size;		/* sizeof user type struct */
 };
 
 
@@ -529,7 +529,7 @@ struct avl_list{
 })
 
 #define avl_list_count(list) ({\
-    u_int x = 0 ;\
+    ospl_uint32 x = 0 ;\
     x = avl_numnodes((&((list)->stAvlTree)));\
     x = x;\
 })

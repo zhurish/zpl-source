@@ -89,14 +89,14 @@ extern struct zebra_t zebrad;
 oid ipfw_oid [] = { IPFWMIB };
 
 /* Hook functions. */
-static u_char * ipFwNumber (struct variable *, oid [], size_t *,
-		     int, size_t *, WriteMethod **);
-static u_char * ipFwTable (struct variable *, oid [], size_t *,
-			   int, size_t *, WriteMethod **);
-static u_char * ipCidrNumber (struct variable *, oid [], size_t *,
-			      int, size_t *, WriteMethod **);
-static u_char * ipCidrTable (struct variable *, oid [], size_t *,
-			     int, size_t *, WriteMethod **);
+static ospl_uchar * ipFwNumber (struct variable *, oid [], ospl_size_t *,
+		     int, ospl_size_t *, WriteMethod **);
+static ospl_uchar * ipFwTable (struct variable *, oid [], ospl_size_t *,
+			   int, ospl_size_t *, WriteMethod **);
+static ospl_uchar * ipCidrNumber (struct variable *, oid [], ospl_size_t *,
+			      int, ospl_size_t *, WriteMethod **);
+static ospl_uchar * ipCidrTable (struct variable *, oid [], ospl_size_t *,
+			     int, ospl_size_t *, WriteMethod **);
 
 struct variable zebra_variables[] = 
   {
@@ -136,9 +136,9 @@ struct variable zebra_variables[] =
   };
 
 
-static u_char *
-ipFwNumber (struct variable *v, oid objid[], size_t *objid_len,
-	    int exact, size_t *val_len, WriteMethod **write_method)
+static ospl_uchar *
+ipFwNumber (struct variable *v, oid objid[], ospl_size_t *objid_len,
+	    int exact, ospl_size_t *val_len, WriteMethod **write_method)
 {
   static int result;
   struct route_table *table;
@@ -158,12 +158,12 @@ ipFwNumber (struct variable *v, oid objid[], size_t *objid_len,
     RNODE_FOREACH_RIB (rn, rib)
       result++;
 
-  return (u_char *)&result;
+  return (ospl_uchar *)&result;
 }
 
-static u_char *
-ipCidrNumber (struct variable *v, oid objid[], size_t *objid_len,
-	      int exact, size_t *val_len, WriteMethod **write_method)
+static ospl_uchar *
+ipCidrNumber (struct variable *v, oid objid[], ospl_size_t *objid_len,
+	      int exact, ospl_size_t *val_len, WriteMethod **write_method)
 {
   static int result;
   struct route_table *table;
@@ -183,13 +183,13 @@ ipCidrNumber (struct variable *v, oid objid[], size_t *objid_len,
     RNODE_FOREACH_RIB (rn, rib)
       result++;
 
-  return (u_char *)&result;
+  return (ospl_uchar *)&result;
 }
 
 static int
-in_addr_cmp(u_char *p1, u_char *p2)
+in_addr_cmp(ospl_uchar *p1, ospl_uchar *p2)
 {
-  int i;
+  ospl_uint32;
 
   for (i=0; i<4; i++)
     {
@@ -203,9 +203,9 @@ in_addr_cmp(u_char *p1, u_char *p2)
 }
 
 static int 
-in_addr_add(u_char *p, int num)
+in_addr_add(ospl_uchar *p, int num)
 {
-  int i, ip0;
+  ospl_uint32, ip0;
 
   ip0 = *p;
   p += 4;
@@ -228,7 +228,7 @@ in_addr_add(u_char *p, int num)
 }
 
 static int
-proto_trans(int type)
+proto_trans(ospl_uint32 type)
 {
   switch (type)
     {
@@ -259,7 +259,7 @@ static void
 check_replace(struct route_node *np2, struct rib *rib2, 
               struct route_node **np, struct rib **rib)
 {
-  int proto, proto2;
+  ospl_proto_t proto, proto2;
 
   if (!*np)
     {
@@ -289,8 +289,8 @@ check_replace(struct route_node *np2, struct rib *rib2,
       return;
     }
 
-  if (in_addr_cmp((u_char *)&(*rib)->nexthop->gate.ipv4, 
-                  (u_char *)&rib2->nexthop->gate.ipv4) <= 0)
+  if (in_addr_cmp((ospl_uchar *)&(*rib)->nexthop->gate.ipv4, 
+                  (ospl_uchar *)&rib2->nexthop->gate.ipv4) <= 0)
     return;
 
   *np = np2;
@@ -299,26 +299,26 @@ check_replace(struct route_node *np2, struct rib *rib2,
 }
 
 static void
-get_fwtable_route_node(struct variable *v, oid objid[], size_t *objid_len, 
+get_fwtable_route_node(struct variable *v, oid objid[], ospl_size_t *objid_len, 
 		       int exact, struct route_node **np, struct rib **rib)
 {
   struct in_addr dest;
   struct route_table *table;
   struct route_node *np2;
   struct rib *rib2;
-  int proto;
-  int policy;
+  ospl_proto_t proto;
+  ospl_uint32 policy;
   struct in_addr nexthop;
-  u_char *pnt;
-  int i;
+  ospl_uchar *pnt;
+  ospl_uint32;
 
   /* Init index variables */
 
-  pnt = (u_char *) &dest;
+  pnt = (ospl_uchar *) &dest;
   for (i = 0; i < 4; i++)
     *pnt++ = 0;
 
-  pnt = (u_char *) &nexthop;
+  pnt = (ospl_uchar *) &nexthop;
   for (i = 0; i < 4; i++)
     *pnt++ = 0;
 
@@ -360,7 +360,7 @@ get_fwtable_route_node(struct variable *v, oid objid[], size_t *objid_len,
 
   if (!exact && (*objid_len >= (unsigned) v->namelen + 10))
     {
-      if (! in_addr_add((u_char *) &nexthop, 1)) 
+      if (! in_addr_add((ospl_uchar *) &nexthop, 1)) 
         return;
     }
 
@@ -372,12 +372,12 @@ get_fwtable_route_node(struct variable *v, oid objid[], size_t *objid_len,
         return;
       for (*np = route_top (table); *np; *np = route_next (*np))
 	{
-	  if (!in_addr_cmp(&(*np)->p.u.prefix, (u_char *)&dest))
+	  if (!in_addr_cmp(&(*np)->p.u.prefix, (ospl_uchar *)&dest))
 	    {
 	      RNODE_FOREACH_RIB (*np, *rib)
 	        {
-		  if (!in_addr_cmp((u_char *)&(*rib)->nexthop->gate.ipv4,
-				   (u_char *)&nexthop))
+		  if (!in_addr_cmp((ospl_uchar *)&(*rib)->nexthop->gate.ipv4,
+				   (ospl_uchar *)&nexthop))
 		    if (proto == proto_trans((*rib)->type))
 		      return;
 		}
@@ -392,11 +392,11 @@ get_fwtable_route_node(struct variable *v, oid objid[], size_t *objid_len,
     {
 
       /* Check destination first */
-      if (in_addr_cmp(&np2->p.u.prefix, (u_char *)&dest) > 0)
+      if (in_addr_cmp(&np2->p.u.prefix, (ospl_uchar *)&dest) > 0)
 	RNODE_FOREACH_RIB (np2, rib2)
 	  check_replace(np2, rib2, np, rib);
 
-      if (in_addr_cmp(&np2->p.u.prefix, (u_char *)&dest) == 0)
+      if (in_addr_cmp(&np2->p.u.prefix, (ospl_uchar *)&dest) == 0)
         { /* have to look at each rib individually */
 	  RNODE_FOREACH_RIB (np2, rib2)
 	    {
@@ -408,8 +408,8 @@ get_fwtable_route_node(struct variable *v, oid objid[], size_t *objid_len,
 	      if ((policy < policy2)
 		  || ((policy == policy2) && (proto < proto2))
 		  || ((policy == policy2) && (proto == proto2)
-		      && (in_addr_cmp((u_char *)&rib2->nexthop->gate.ipv4,
-				      (u_char *) &nexthop) >= 0)
+		      && (in_addr_cmp((ospl_uchar *)&rib2->nexthop->gate.ipv4,
+				      (ospl_uchar *) &nexthop) >= 0)
 		      ))
 		check_replace(np2, rib2, np, rib);
 	    }
@@ -423,7 +423,7 @@ get_fwtable_route_node(struct variable *v, oid objid[], size_t *objid_len,
   proto = proto_trans((*rib)->type);
 
   *objid_len = v->namelen + 10;
-  pnt = (u_char *) &(*np)->p.u.prefix;
+  pnt = (ospl_uchar *) &(*np)->p.u.prefix;
   for (i = 0; i < 4; i++)
     objid[v->namelen + i] = *pnt++;
 
@@ -436,7 +436,7 @@ get_fwtable_route_node(struct variable *v, oid objid[], size_t *objid_len,
     nexthop = (*rib)->nexthop;
     if (nexthop)
       {
-	pnt = (u_char *) &nexthop->gate.ipv4;
+	pnt = (ospl_uchar *) &nexthop->gate.ipv4;
 	for (i = 0; i < 4; i++)
 	  objid[i + v->namelen + 6] = *pnt++;
       }
@@ -445,9 +445,9 @@ get_fwtable_route_node(struct variable *v, oid objid[], size_t *objid_len,
   return;
 }
 
-static u_char *
-ipFwTable (struct variable *v, oid objid[], size_t *objid_len,
-	   int exact, size_t *val_len, WriteMethod **write_method)
+static ospl_uchar *
+ipFwTable (struct variable *v, oid objid[], ospl_size_t *objid_len,
+	   int exact, ospl_size_t *val_len, WriteMethod **write_method)
 {
   struct route_node *np;
   struct rib *rib;
@@ -477,20 +477,20 @@ ipFwTable (struct variable *v, oid objid[], size_t *objid_len,
     case IPFORWARDMASK:
       masklen2ip(np->p.prefixlen, &netmask);
       *val_len = 4;
-      return (u_char *)&netmask;
+      return (ospl_uchar *)&netmask;
       break;
     case IPFORWARDPOLICY:
       result = 0;
       *val_len  = sizeof(int);
-      return (u_char *)&result;
+      return (ospl_uchar *)&result;
       break;
     case IPFORWARDNEXTHOP:
       *val_len = 4;
-      return (u_char *)&nexthop->gate.ipv4;
+      return (ospl_uchar *)&nexthop->gate.ipv4;
       break;
     case IPFORWARDIFINDEX:
       *val_len = sizeof(int);
-      return (u_char *)&nexthop->ifindex;
+      return (ospl_uchar *)&nexthop->ifindex;
       break;
     case IPFORWARDTYPE:
       if (nexthop->type == NEXTHOP_TYPE_IFINDEX
@@ -499,53 +499,53 @@ ipFwTable (struct variable *v, oid objid[], size_t *objid_len,
       else
         result = 4;
       *val_len  = sizeof(int);
-      return (u_char *)&result;
+      return (ospl_uchar *)&result;
       break;
     case IPFORWARDPROTO:
       result = proto_trans(rib->type);
       *val_len  = sizeof(int);
-      return (u_char *)&result;
+      return (ospl_uchar *)&result;
       break;
     case IPFORWARDAGE:
       result = 0;
       *val_len  = sizeof(int);
-      return (u_char *)&result;
+      return (ospl_uchar *)&result;
       break;
     case IPFORWARDINFO:
       resarr[0] = 0;
       resarr[1] = 0;
       *val_len  = 2 * sizeof(int);
-      return (u_char *)resarr;
+      return (ospl_uchar *)resarr;
       break;
     case IPFORWARDNEXTHOPAS:
       result = -1;
       *val_len  = sizeof(int);
-      return (u_char *)&result;
+      return (ospl_uchar *)&result;
       break;
     case IPFORWARDMETRIC1:
       result = 0;
       *val_len  = sizeof(int);
-      return (u_char *)&result;
+      return (ospl_uchar *)&result;
       break;
     case IPFORWARDMETRIC2:
       result = 0;
       *val_len  = sizeof(int);
-      return (u_char *)&result;
+      return (ospl_uchar *)&result;
       break;
     case IPFORWARDMETRIC3:
       result = 0;
       *val_len  = sizeof(int);
-      return (u_char *)&result;
+      return (ospl_uchar *)&result;
       break;
     case IPFORWARDMETRIC4:
       result = 0;
       *val_len  = sizeof(int);
-      return (u_char *)&result;
+      return (ospl_uchar *)&result;
       break;
     case IPFORWARDMETRIC5:
       result = 0;
       *val_len  = sizeof(int);
-      return (u_char *)&result;
+      return (ospl_uchar *)&result;
       break;
     default:
       return NULL;
@@ -554,9 +554,9 @@ ipFwTable (struct variable *v, oid objid[], size_t *objid_len,
   return NULL;
 }
 
-static u_char *
-ipCidrTable (struct variable *v, oid objid[], size_t *objid_len,
-	     int exact, size_t *val_len, WriteMethod **write_method)
+static ospl_uchar *
+ipCidrTable (struct variable *v, oid objid[], ospl_size_t *objid_len,
+	     int exact, ospl_size_t *val_len, WriteMethod **write_method)
 {
   if (smux_header_table(v, objid, objid_len, exact, val_len, write_method)
       == MATCH_FAILED)

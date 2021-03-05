@@ -24,12 +24,12 @@
 
 
 
-ssh_session ssh_connect_api(struct vty *vty, const char *remotehost, int port,
+ssh_session ssh_connect_api(struct vty *vty, const char *remotehost, ospl_uint16 port,
 		const char *user, char *password)
 {
 	ssh_session session;
-	int auth = 0;
-	int verbosity=7;
+	ospl_uint32 auth = 0;
+	ospl_uint32 verbosity=7;
 	session = ssh_new();
 	if (session == NULL)
 	{
@@ -45,7 +45,7 @@ ssh_session ssh_connect_api(struct vty *vty, const char *remotehost, int port,
 	}
 	if (port != 0)
 	{
-		int cport = port;
+		ospl_uint16 cport = port;
 		if (ssh_options_set(session, SSH_OPTIONS_PORT, &cport) < 0)
 		{
 			ssh_free(session);
@@ -101,12 +101,12 @@ ssh_session ssh_connect_api(struct vty *vty, const char *remotehost, int port,
 	return NULL;
 }
 
-ssh_session ssh_client_connect_api(ssh_session session, struct vty *vty, const char *remotehost, int port,
+ssh_session ssh_client_connect_api(ssh_session session, struct vty *vty, const char *remotehost, ospl_uint16 port,
 		const char *user, char *password)
 {
 	//ssh_session session;
-	int auth = 0;
-	int verbosity = 3;
+	ospl_uint32 auth = 0;
+	ospl_uint32 verbosity = 3;
 	//session = ssh_new();
 	if (session == NULL)
 	{
@@ -122,7 +122,7 @@ ssh_session ssh_client_connect_api(ssh_session session, struct vty *vty, const c
 	}
 	if (port != 0)
 	{
-		int cport = port;
+		ospl_uint16 cport = port;
 		if (ssh_options_set(session, SSH_OPTIONS_PORT, &cport) < 0)
 		{
 			ssh_free(session);

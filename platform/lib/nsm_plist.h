@@ -23,6 +23,10 @@
 #ifndef _QUAGGA_PLIST_H
 #define _QUAGGA_PLIST_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum prefix_list_type 
 {
   PREFIX_DENY,
@@ -33,9 +37,9 @@ struct prefix_list;
 
 struct orf_prefix
 {
-  u_int32_t seq;
-  u_char ge;
-  u_char le;
+  ospl_uint32 seq;
+  ospl_uchar ge;
+  ospl_uchar le;
   struct prefix p;
 };
 
@@ -52,9 +56,13 @@ extern enum prefix_list_type prefix_list_apply (struct prefix_list *, void *);
 extern struct prefix_list *prefix_bgp_orf_lookup (afi_t, const char *);
 extern struct stream * prefix_bgp_orf_entry (struct stream *,
                                              struct prefix_list *,
-                                             u_char, u_char, u_char);
-extern int prefix_bgp_orf_set (char *, afi_t, struct orf_prefix *, int, int);
-extern void prefix_bgp_orf_remove_all (afi_t, char *);
-extern int prefix_bgp_show_prefix_list (struct vty *, afi_t, char *);
+                                             ospl_uchar, ospl_uchar, ospl_uchar);
+extern int prefix_bgp_orf_set (ospl_char *, afi_t, struct orf_prefix *, int, int);
+extern void prefix_bgp_orf_remove_all (afi_t, ospl_char *);
+extern int prefix_bgp_show_prefix_list (struct vty *, afi_t, ospl_char *);
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _QUAGGA_PLIST_H */

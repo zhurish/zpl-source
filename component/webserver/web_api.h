@@ -8,6 +8,10 @@
 #ifndef __WEB_API_H__
 #define __WEB_API_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define HAS_BOOL 1
 #include "src/goahead.h"
@@ -86,18 +90,18 @@ typedef enum
 
 typedef struct web_app_s
 {
-	int taskid;
-	BOOL enable;
-	BOOL finished;
-	BOOL init;
-	BOOL reload;
-	u_int8 debug_level;
+	ospl_uint32 taskid;
+	ospl_bool enable;
+	ospl_bool finished;
+	ospl_bool init;
+	ospl_bool reload;
+	ospl_int32 debug_level;
 
 	web_proto proto;
 	char *address;
-	u_int16 port;
+	ospl_uint16 port;
 #if ME_COM_SSL
-	u_int16 ssl_port;
+	ospl_uint16 ssl_port;
 #endif
 	char *endpoints;
 	char *documents;
@@ -125,12 +129,12 @@ extern int web_app_module_task_exit ();
 extern int web_app_quit_api();
 extern int web_app_reload_api();
 
-extern int web_app_enable_set_api(BOOL enable);
+extern int web_app_enable_set_api(ospl_bool enable);
 extern int web_app_proto_set_api(web_proto proto);
 extern web_proto web_app_proto_get_api();
 extern int web_app_address_set_api(char *address);
-extern int web_app_port_set_api(BOOL ssl, u_int16 port);
-extern int web_app_debug_set_api(int level);
+extern int web_app_port_set_api(ospl_bool ssl, ospl_uint16 port);
+extern int web_app_debug_set_api(ospl_int32 level);
 extern int web_app_debug_get_api();
 
 extern int web_app_username_add_api(const char *username, const char *password, const char *roles);
@@ -147,5 +151,9 @@ extern int web_app_auth_save_api(void);
 extern int web_app_debug_write_config(struct vty *vty);
 extern int web_app_write_config(struct vty *vty);
 extern void cmd_webserver_init(void);
-
+ 
+#ifdef __cplusplus
+}
+#endif
+ 
 #endif /* __WEB_API_H__ */

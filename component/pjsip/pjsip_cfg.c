@@ -46,7 +46,7 @@ static int pjsip_ua_config_default(pjsip_ua_config_t *ua)
 {
 	if (ua)
 	{
-		unsigned int i;
+		ospl_uint32 i;
 		pjsua_config ua_cfg;
 		pjsua_config_default(&ua_cfg);
 
@@ -102,7 +102,7 @@ static int pjsip_ua_config_destroy(pjsip_ua_config_t *ua)
 {
 	if (ua)
 	{
-		unsigned int i;
+		ospl_uint32 i;
 		if (ua->userAgent)
 			free(ua->userAgent);
 

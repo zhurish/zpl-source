@@ -32,7 +32,7 @@ iptables -t filter -L -n -v --line-numbers
 /*
  * 端口映射
  */
-int pal_firewall_portmap_rule_set(firewall_t *rule, int action)
+int pal_firewall_portmap_rule_set(firewall_t *rule, ospl_action action)
 {
 	char cmd[512];
 	char proto[16];
@@ -43,9 +43,9 @@ int pal_firewall_portmap_rule_set(firewall_t *rule, int action)
 	//iptables -t nat -A PREROUTING -d 192.168.88.134 -p tcp --dport 80 -j DNAT --to 192.168.88.134:8080
 	if (rule && rule->class == FIREWALL_C_PORT)
 	{
-		sprintf(cmd, "iptables -t nat -%s %s %d ", action ? "I":"D", firewall_type_string(rule->type), rule->ID);
+		sprintf(cmd, "iptables -t nat -%s %s %d ", (action==ospl_add) ? "I":"D", firewall_type_string(rule->type), rule->ID);
 
-		if(action == 0)
+		if(action == ospl_delete)
 		{
 			printf("---%s---:%s\r\n", __func__, cmd);
 			return super_system(cmd);
@@ -113,7 +113,7 @@ int pal_firewall_portmap_rule_set(firewall_t *rule, int action)
 /*
  * 端口开放
  */
-int pal_firewall_port_filter_rule_set(firewall_t *rule, int action)
+int pal_firewall_port_filter_rule_set(firewall_t *rule, ospl_action action)
 {
 	char cmd[512];
 	char proto[16];
@@ -123,8 +123,8 @@ int pal_firewall_port_filter_rule_set(firewall_t *rule, int action)
 	if (rule && rule->class == FIREWALL_C_FILTER)
 	{
 
-		sprintf(cmd, "iptables -t filter -%s %s %d ", action ? "I":"D", firewall_type_string(rule->type), rule->ID);
-		if(action == 0)
+		sprintf(cmd, "iptables -t filter -%s %s %d ", (action==ospl_add) ? "I":"D", firewall_type_string(rule->type), rule->ID);
+		if(action == ospl_delete)
 		{
 			printf("---%s---:%s\r\n", __func__, cmd);
 			return super_system(cmd);
@@ -226,14 +226,14 @@ int pal_firewall_port_filter_rule_set(firewall_t *rule, int action)
 
 
 
-int pal_firewall_mangle_rule_set(firewall_t *rule, int action)
+int pal_firewall_mangle_rule_set(firewall_t *rule, ospl_action action)
 {
 	if (rule && rule->class == FIREWALL_C_MANGLE)
 		return OK;
 	return ERROR;
 }
 
-int pal_firewall_raw_rule_set(firewall_t *rule, int action)
+int pal_firewall_raw_rule_set(firewall_t *rule, ospl_action action)
 {
 	if (rule && rule->class == FIREWALL_C_RAW)
 		return OK;
@@ -288,7 +288,7 @@ iptables -t nat -A POSTROUTING -s 10.0.2.0/22 -o eth0 -j SNAT --to-source 124.42
 2.7 系统防火墙与网络内核优化标准参数
 */
 
-int pal_firewall_snat_rule_set(firewall_t *rule, int action)
+int pal_firewall_snat_rule_set(firewall_t *rule, ospl_action action)
 {
 	/*
 	需要将192.168.10.10转换为111.196.211.212，iptables命令如下：
@@ -301,8 +301,8 @@ int pal_firewall_snat_rule_set(firewall_t *rule, int action)
 	memset(cmd, 0, sizeof(cmd));
 	if (rule && rule->class == FIREWALL_C_SNAT)
 	{
-		sprintf(cmd, "iptables -t nat -%s %s %d ", action ? "I":"D", firewall_type_string(rule->type), rule->ID);
-		if(action == 0)
+		sprintf(cmd, "iptables -t nat -%s %s %d ", (action==ospl_add) ? "I":"D", firewall_type_string(rule->type), rule->ID);
+		if(action == ospl_delete)
 		{
 			printf("---%s---:%s\r\n", __func__, cmd);
 			return super_system(cmd);
@@ -402,7 +402,7 @@ int pal_firewall_snat_rule_set(firewall_t *rule, int action)
 }
 
 
-int pal_firewall_dnat_rule_set(firewall_t *rule, int action)
+int pal_firewall_dnat_rule_set(firewall_t *rule, ospl_action action)
 {
 	/*
 目标地址192.168.10.6在路由前就转换成61.240.149.149，需在网关上运行iptables命令如下：
@@ -414,8 +414,8 @@ eth1网口传入，且想要使用 port 80 的服务时，将该封包重新传�
 	memset(cmd, 0, sizeof(cmd));
 	if (rule && rule->class == FIREWALL_C_DNAT)
 	{
-		sprintf(cmd, "iptables -t nat -%s %s %d ", action ? "I":"D", firewall_type_string(rule->type), rule->ID);
-		if(action == 0)
+		sprintf(cmd, "iptables -t nat -%s %s %d ", (action==ospl_add) ? "I":"D", firewall_type_string(rule->type), rule->ID);
+		if(action == ospl_delete)
 		{
 			printf("---%s---:%s\r\n", __func__, cmd);
 			return super_system(cmd);

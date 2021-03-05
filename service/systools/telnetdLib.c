@@ -11,7 +11,7 @@ modification history
 03m,07may02,kbw  man page edits
 03l,02may02,elr  Removed telnetdMutexSem in telnetdParserSet()  (SPR #76641)
                  Corrected uninitialized session data pointers 
-                 Removed superfluous telnetdInitialized = FALSE
+                 Removed superfluous telnetdInitialized = ospl_false
 03k,30apr02,elr  Moved password authentication to telnetd context (SPR 30687)
                  Corrected problems with messy session disconnects leaving 
                       many resources still open (SPR 75891) (SPR 72752) (SPR 5059)
@@ -172,7 +172,7 @@ int xgetpty(char *line)
     }
 #else
     struct stat stb;
-    int i;
+    ospl_uint32 i;
     int j;
 
     strcpy(line, "/dev/ptyXX");
@@ -280,7 +280,7 @@ int telnetdCurrentClients = 0;
 LOCAL LIST 		telnetdSessionList;
 
 
-LOCAL BOOL telnetdTaskFlag = TRUE;    /* Create tasks when client connects? */
+LOCAL ospl_bool telnetdTaskFlag = ospl_true;    /* Create tasks when client connects? */
 
 /* telnetdTaskList - an array of all sessions (active or inactive) */
 
@@ -292,19 +292,19 @@ LOCAL int telnetdTaskId;        /* task ID of telnet server task */
 LOCAL int telnetdServerSock;
 LOCAL SEM_ID telnetdMutexSem;
 
-LOCAL BOOL telnetdInitialized = FALSE; 	/* Server initialized? */
-LOCAL BOOL telnetdParserFlag = FALSE; 	/* Parser access task registered? */
-LOCAL BOOL telnetdStartFlag = FALSE;    /* Server started? */
+LOCAL ospl_bool telnetdInitialized = ospl_false; 	/* Server initialized? */
+LOCAL ospl_bool telnetdParserFlag = ospl_false; 	/* Parser access task registered? */
+LOCAL ospl_bool telnetdStartFlag = ospl_false;    /* Server started? */
 
-LOCAL TBOOL myOpts [256];	/* current option settings - this side */
-LOCAL TBOOL remOpts [256];	/* current option settings - other side */
+LOCAL ospl_bool myOpts [256];	/* current option settings - this side */
+LOCAL ospl_bool remOpts [256];	/* current option settings - other side */
 
-LOCAL BOOL raw;			/* TRUE = raw mode enabled */
-LOCAL BOOL echo;		/* TRUE = echo enabled */
+LOCAL ospl_bool raw;			/* ospl_true = raw mode enabled */
+LOCAL ospl_bool echo;		/* ospl_true = echo enabled */
 
 LOCAL FUNCPTR telnetdParserControl = NULL; /* Accesses command interpreter. */
 
-LOCAL BOOL remoteInitFlag = FALSE; 	/* No remote users have connected. */
+LOCAL ospl_bool remoteInitFlag = ospl_false; 	/* No remote users have connected. */
 LOCAL char *ptyRemoteName  = "/pty/rmt";    /* terminal for remote user */
 LOCAL int masterFd; 		/* master pty for remote users */
 
@@ -316,16 +316,16 @@ LOCAL void telnetdTaskDelete (int numTasks);
 
 LOCAL int tnInput (int state, int slaveFd, int clientSock, int inputFd, 
                    char *buf, int n);
-LOCAL STATUS remDoOpt (int opt, int slaveFd, BOOL enable, int clientSock, 
-                       BOOL remFlag);
-LOCAL STATUS localDoOpt (int opt, int slaveFd, BOOL enable, int clientSock, 
-                         BOOL remFlag);
-LOCAL void setMode (int slaveFd, int telnetOption, BOOL enable);
+LOCAL STATUS remDoOpt (int opt, int slaveFd, ospl_bool enable, int clientSock, 
+                       ospl_bool remFlag);
+LOCAL STATUS localDoOpt (int opt, int slaveFd, ospl_bool enable, int clientSock, 
+                         ospl_bool remFlag);
+LOCAL void setMode (int slaveFd, int telnetOption, ospl_bool enable);
 LOCAL STATUS telnetdIoTasksCreate (TELNETD_SESSION_DATA *pSlot);
 LOCAL STATUS telnetdSessionPtysCreate (TELNETD_SESSION_DATA *pSlot);
 LOCAL TELNETD_SESSION_DATA *telnetdSessionAdd (void);
 LOCAL void telnetdSessionDisconnect (TELNETD_SESSION_DATA *pSlot, 
-                                     BOOL pSlotdeAllocate);
+                                     ospl_bool pSlotdeAllocate);
 LOCAL void telnetdSessionDisconnectFromShell (TELNETD_SESSION_DATA *pSlot);
 LOCAL void telnetdSessionDisconnectFromRemote (TELNETD_SESSION_DATA *pSlot);
 
@@ -342,7 +342,7 @@ LOCAL void telnetdSessionDisconnectFromRemote (TELNETD_SESSION_DATA *pSlot);
 * <staticFlag> argument is equal to the TELNETD_TASKFLAG setting. It allows
 * the server to create all of the secondary input and output tasks and allocate
 * all required resources in advance of any connection. The default value of
-* FALSE causes the server to spawn a task pair and create the associated data
+* ospl_false causes the server to spawn a task pair and create the associated data
 * structures after each new connection.
 *
 * VXWORKS AE PROTECTION DOMAINS
@@ -356,7 +356,7 @@ LOCAL void telnetdSessionDisconnectFromRemote (TELNETD_SESSION_DATA *pSlot);
 STATUS telnetdInit
     (
     int numClients, /* maximum number of simultaneous sessions */
-    BOOL staticFlag /* TRUE: create all tasks in advance of any clients */
+    ospl_bool staticFlag /* ospl_true: create all tasks in advance of any clients */
     )
     {
     int count;
@@ -385,7 +385,7 @@ STATUS telnetdInit
     if (telnetdMutexSem == NULL)
         return (ERROR);
 
-    if (remoteInitFlag == FALSE)
+    if (remoteInitFlag == ospl_false)
         {
         /* Create pty device for all remote sessions. */
 
@@ -396,7 +396,7 @@ STATUS telnetdInit
             return ERROR;
             }
 
-        remoteInitFlag = TRUE;   /* Disable further device creation. */
+        remoteInitFlag = ospl_true;   /* Disable further device creation. */
         }
 
     telnetdTaskFlag = staticFlag;   /* Create input/output tasks early? */
@@ -439,8 +439,8 @@ STATUS telnetdInit
         telnetdTaskList[count].pSession->outputTask     = -1;      
         telnetdTaskList[count].pSession->inputTask      = -1;      
         telnetdTaskList[count].pSession->parserControl  = 0; 
-        telnetdTaskList[count].pSession->busyFlag       = FALSE;
-        telnetdTaskList[count].pSession->loggedIn       = FALSE;
+        telnetdTaskList[count].pSession->busyFlag       = ospl_false;
+        telnetdTaskList[count].pSession->loggedIn       = ospl_false;
 
         /* 
          * Static initialization has all resources and tasks created up front.
@@ -512,7 +512,7 @@ STATUS telnetdInit
             }
         }
 
-    telnetdInitialized = TRUE;
+    telnetdInitialized = ospl_true;
 
     return (OK);
     }
@@ -588,7 +588,7 @@ STATUS telnetdParserSet
 
     /* Allow client connections. */
 
-    telnetdParserFlag = TRUE; 	
+    telnetdParserFlag = ospl_true; 	
 
     return (OK);
     }
@@ -623,7 +623,7 @@ LOCAL STATUS telnetdIoTasksCreate
      * If created in advance (static) the task pend on a semaphore
      */
 
-    sprintf (sessionTaskName, "_%x", (unsigned int)pSlot);
+    sprintf (sessionTaskName, "_%x", (ospl_uint32)pSlot);
     sprintf (sessionInTaskName, "tTelnetIn%s", sessionTaskName);
     sprintf (sessionOutTaskName,"tTelnetOut%s", sessionTaskName);
   
@@ -755,7 +755,7 @@ LOCAL STATUS telnetdSessionPtysCreate
 *
 * By default, the server will spawn a pair of secondary input and output
 * tasks after each client connection. Changing the TELNETD_TASKFLAG setting
-* to TRUE causes this routine to create all of those tasks in advance of
+* to ospl_true causes this routine to create all of those tasks in advance of
 * any connection. In that case, it calls the current parser control routine
 * repeatedly to obtain file descriptors for each possible client based on
 * the <numClients> argument to the initialization routine. The server will
@@ -860,16 +860,16 @@ LOCAL void telnetdTaskDelete
     {
     int 	count;
 
-    BOOL telnetdTaskFlagSave; 
+    ospl_bool telnetdTaskFlagSave; 
 
     telnetdTaskFlagSave = telnetdTaskFlag; /* Save original state */
 
     /* 
-     * Make sure the flag is set to FALSE so we delete objects instead of
+     * Make sure the flag is set to ospl_false so we delete objects instead of
      * restart objects with  telnetdSessionDisconnectFromShell ()
      */
 
-    telnetdTaskFlag = FALSE;
+    telnetdTaskFlag = ospl_false;
 
     for (count = 0; count < numTasks; count++)
         {
@@ -879,7 +879,7 @@ LOCAL void telnetdTaskDelete
                                     0);  
         if (telnetdTaskList [count].pSession != NULL)
             {
-            telnetdSessionDisconnect (telnetdTaskList [count].pSession, TRUE);
+            telnetdSessionDisconnect (telnetdTaskList [count].pSession, ospl_true);
             free (telnetdTaskList [count].pSession);
             }
         }
@@ -986,8 +986,8 @@ LOCAL TELNETD_SESSION_DATA *telnetdSessionAdd (void)
        telnetdTaskList [count].pSession = pSlot;
        }
 
-    pSlot->busyFlag = TRUE;
-    pSlot->loggedIn = FALSE;
+    pSlot->busyFlag = ospl_true;
+    pSlot->loggedIn = ospl_false;
     telnetdCurrentClients++;
 
     if (!telnetdTaskFlag)
@@ -1029,7 +1029,7 @@ LOCAL TELNETD_SESSION_DATA *telnetdSessionAdd (void)
 LOCAL void telnetdSessionDisconnect 
      (
      TELNETD_SESSION_DATA *pSlot, 
-     BOOL pSlotDelete /* For DYNAMIC mode,  should pSlot be free'd when done? */
+     ospl_bool pSlotDelete /* For DYNAMIC mode,  should pSlot be free'd when done? */
      )
      {
 
@@ -1091,8 +1091,8 @@ LOCAL void telnetdSessionDisconnect
 
         pSlot->socket        = -1;
         pSlot->parserControl = telnetdParserControl;
-        pSlot->loggedIn      = FALSE;
-        pSlot->busyFlag      = FALSE;
+        pSlot->loggedIn      = ospl_false;
+        pSlot->busyFlag      = ospl_false;
 
         --telnetdCurrentClients;
         lstDelete (&telnetdSessionList, &pSlot->node);
@@ -1142,7 +1142,7 @@ LOCAL void telnetdSessionDisconnect
         pSlot->outputTask     = 0;      
         pSlot->inputTask      = 0;      
         pSlot->parserControl  = 0; 
-        pSlot->busyFlag       = FALSE;
+        pSlot->busyFlag       = ospl_false;
 
         --telnetdCurrentClients;
         lstDelete (&telnetdSessionList, &pSlot->node);
@@ -1153,11 +1153,11 @@ LOCAL void telnetdSessionDisconnect
          * free'd. This will be determined by the telnetd if parserControl == 0
          */
 
-        if ((pSlot->loggedIn == TRUE) && 
-            (pSlotDelete == TRUE))
+        if ((pSlot->loggedIn == ospl_true) && 
+            (pSlotDelete == ospl_true))
             free (pSlot);
         else
-            pSlot->loggedIn = FALSE; 
+            pSlot->loggedIn = ospl_false; 
         }
 
      semGive (telnetdMutexSem); 
@@ -1183,7 +1183,7 @@ LOCAL void telnetdSessionDisconnectFromShellJob (TELNETD_SESSION_DATA *pSlot)
 
     /* Shut down the connection */
 
-    telnetdSessionDisconnect (pSlot, FALSE);
+    telnetdSessionDisconnect (pSlot, ospl_false);
 
     if (*telnetdParserControl) 
         (*telnetdParserControl) (REMOTE_STOP, pSlot, 0);  
@@ -1232,12 +1232,12 @@ LOCAL void telnetdSessionDisconnectFromRemote (TELNETD_SESSION_DATA *pSlot)
 
     /* The shell will terminate the connection for us */
 
-    if (pSlot->loggedIn == TRUE)
+    if (pSlot->loggedIn == ospl_true)
         {
 
         /* Shut down the connection */
 
-        telnetdSessionDisconnect (pSlot, TRUE);
+        telnetdSessionDisconnect (pSlot, ospl_true);
         }
 
     taskDelay (sysClkRateGet()); 
@@ -1269,7 +1269,7 @@ void telnetd (void)
     int newSock;
     int optval;
     TELNETD_SESSION_DATA *pSlot;
-    BOOL startFlag;  /* Command interpreter started successfully? */
+    ospl_bool startFlag;  /* Command interpreter started successfully? */
 
     STATUS result;
 
@@ -1278,7 +1278,7 @@ void telnetd (void)
         clientAddrLen = sizeof (clientAddr);
         pSlot = NULL;
         result = OK;
-        startFlag = FALSE;
+        startFlag = ospl_false;
 
         newSock = accept (telnetdServerSock,
                           (struct sockaddr *) &clientAddr, &clientAddrLen);
@@ -1312,7 +1312,7 @@ void telnetd (void)
 
         /* If we haven't created the pseudo tty device, so so now */
 
-        if (remoteInitFlag == FALSE)
+        if (remoteInitFlag == ospl_false)
             {
 
             /* Create pty device for all remote sessions. */
@@ -1329,7 +1329,7 @@ void telnetd (void)
                 continue;
                 result = ERROR;
                 }
-            remoteInitFlag = TRUE;   /* Disable further device creation. */
+            remoteInitFlag = ospl_true;   /* Disable further device creation. */
             }
 
         /* Check if we are in the dynamic mode */
@@ -1357,7 +1357,7 @@ void telnetd (void)
                 /* Prevent denial of service attack by waiting 5 seconds */
 
                 taskDelay (sysClkRateGet () * 5); 
-                telnetdSessionDisconnect (pSlot, TRUE);
+                telnetdSessionDisconnect (pSlot, ospl_true);
                 result = ERROR;
                 continue;
                 }
@@ -1378,7 +1378,7 @@ void telnetd (void)
             /* Prevent denial of service attack by waiting 5 seconds */
 
             taskDelay (sysClkRateGet () * 5);  
-            telnetdSessionDisconnect (pSlot, TRUE);
+            telnetdSessionDisconnect (pSlot, ospl_true);
             continue;
             }
 
@@ -1402,12 +1402,12 @@ void telnetd (void)
 
         /* initialize modes and options and offer to do remote echo */
 
-        raw = FALSE;
-        echo = TRUE;
+        raw = ospl_false;
+        echo = ospl_true;
         bzero ((char *)myOpts, sizeof (myOpts));
         bzero ((char *)remOpts, sizeof (remOpts));
 
-        (void)localDoOpt (pSlot->slaveFd, TELOPT_ECHO, TRUE, newSock, FALSE);
+        (void)localDoOpt (pSlot->slaveFd, TELOPT_ECHO, ospl_true, newSock, ospl_false);
 
         /*
          * File descriptors are available. Save the corresponding
@@ -1445,7 +1445,7 @@ void telnetd (void)
 
         if (result == ERROR) /* No,  must have failed to login */
             {
-            telnetdSessionDisconnect (pSlot, TRUE);
+            telnetdSessionDisconnect (pSlot, ospl_true);
             continue;
             }
         else  
@@ -1461,7 +1461,7 @@ void telnetd (void)
              * REMOTE_STOP if the connection is ever broken.
              */
 
-            pSlot->loggedIn = TRUE; 
+            pSlot->loggedIn = ospl_true; 
             }
         }
     }
@@ -1478,7 +1478,7 @@ void telnetd (void)
 * 
 * This routine blocks within the read() call until the command interpreter
 * sends a response. When the telnet server creates all input/output tasks
-* during startup (i.e. telnetdTaskFlag is TRUE), this routine cannot send
+* during startup (i.e. telnetdTaskFlag is ospl_true), this routine cannot send
 * any data to the socket until the primary server task (telnetd) awakens 
 * the input routine.
 *
@@ -1630,7 +1630,7 @@ LOCAL int tnInput
     while (--n >= 0)
     {
         cc = *buf++;               /* get next character */
-        ci = (unsigned char) cc;   /* convert to int since many values
+        ci = (ospl_uint8) cc;   /* convert to int since many values
                                     * are negative characters */
     switch (state)
         {
@@ -1711,22 +1711,22 @@ LOCAL int tnInput
 		break;
 
 	    case TS_WILL:		/* remote side said it will do opt */
-		(void)remDoOpt (slaveFd, ci, TRUE, clientSock, TRUE);
+		(void)remDoOpt (slaveFd, ci, ospl_true, clientSock, ospl_true);
 		state = TS_DATA;
 		break;
 
 	    case TS_WONT:		/* remote side said it wont do opt */
-		(void)remDoOpt (slaveFd, ci, FALSE, clientSock, TRUE);
+		(void)remDoOpt (slaveFd, ci, ospl_false, clientSock, ospl_true);
 		state = TS_DATA;
 		break;
 
 	    case TS_DO:			/* remote wants us to do opt */
-		(void)localDoOpt (slaveFd, ci, TRUE, clientSock, TRUE);
+		(void)localDoOpt (slaveFd, ci, ospl_true, clientSock, ospl_true);
 		state = TS_DATA;
 		break;
 
 	    case TS_DONT:		/* remote wants us to not do opt */
-		(void)localDoOpt (slaveFd, ci, FALSE, clientSock, TRUE);
+		(void)localDoOpt (slaveFd, ci, ospl_false, clientSock, ospl_true);
 		state = TS_DATA;
 		break;
 
@@ -1758,12 +1758,12 @@ LOCAL STATUS remDoOpt
     (
     FAST int slaveFd,/* slave fd */
     FAST int opt,    /* option to be enabled/disabled */
-    BOOL enable,     /* TRUE = enable option, FALSE = disable */
+    ospl_bool enable,     /* ospl_true = enable option, ospl_false = disable */
     int clientSock,  /* socket connection to telnet client */
-    BOOL remFlag     /* TRUE = request is from remote */
+    ospl_bool remFlag     /* ospl_true = request is from remote */
     )
     {
-    BOOL doOpt = enable;
+    ospl_bool doOpt = enable;
 
     if (remOpts [opt] == enable)
 	return (OK);
@@ -1779,7 +1779,7 @@ LOCAL STATUS remDoOpt
 	    break;
 
 	default:
-	    doOpt = FALSE;
+	    doOpt = ospl_false;
 	    break;
 	}
 
@@ -1819,12 +1819,12 @@ LOCAL STATUS localDoOpt
     (
     FAST int slaveFd,     /* slave fd */
     FAST int opt,    /* option to be enabled/disabled */
-    BOOL enable,        /* TRUE = enable option, FALSE = disable */
+    ospl_bool enable,        /* ospl_true = enable option, ospl_false = disable */
     int clientSock,     /* socket connection to telnet client */
-    BOOL remFlag     /* TRUE = request is from remote */
+    ospl_bool remFlag     /* ospl_true = request is from remote */
     )
     {
-    BOOL will = enable;
+    ospl_bool will = enable;
 
     if (myOpts [opt] == enable)
 	return (OK);
@@ -1840,7 +1840,7 @@ LOCAL STATUS localDoOpt
 	    break;
 
 	default:
-	    will = FALSE;
+	    will = ospl_false;
 	    break;
 	}
 
@@ -1874,7 +1874,7 @@ LOCAL void setMode
     (
     int fd,
     int telnetOption,
-    BOOL enable
+    ospl_bool enable
     )
     {
     FAST int ioOptions;
@@ -1908,7 +1908,7 @@ LOCAL void setMode
 *
 * RETURNS  
 *
-* TRUE, if all tasks are pre-spawned; FALSE, if tasks are spawned at the 
+* ospl_true, if all tasks are pre-spawned; ospl_false, if tasks are spawned at the 
 * time a connection is requested.
 *
 * SEE ALSO: telnetdInit(), telnetdParserSet()
@@ -1918,7 +1918,7 @@ LOCAL void setMode
 * unsupported user shell echoShell.c
 *
 */
-BOOL telnetdStaticTaskInitializationGet()
+ospl_bool telnetdStaticTaskInitializationGet()
     {
     return (telnetdTaskFlag);
     } 

@@ -23,6 +23,10 @@
 #ifndef _ZEBRA_COMMAND_H
 #define _ZEBRA_COMMAND_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "hash.h"
 //#include "route_types.h"
 #include "vector.h"
@@ -141,7 +145,7 @@ struct cmd_node
   const char *prompt;			
 
   /* Is this node's configuration goes to vtysh ? */
-  int vtysh;
+  ospl_uint32 vtysh;
   
   /* Node's configuration write function */
   int (*func) (struct vty *);
@@ -163,11 +167,11 @@ enum
 struct cmd_element 
 {
   const char *string;			/* Command specification by string. */
-  int (*func) (struct cmd_element *, struct vty *, int, const char *[]);
+  int (*func) (struct cmd_element *, struct vty *, ospl_uint32, const char *[]);
   const char *doc;			/* Documentation of this command. */
-  int daemon;                   /* Daemon to which this command belong. */
+  ospl_uint32 daemon;                   /* Daemon to which this command belong. */
   vector tokens;		/* Vector of cmd_tokens */
-  u_char attr;			/* Command attributes */
+  ospl_uchar attr;			/* Command attributes */
 };
 
 
@@ -210,8 +214,8 @@ struct cmd_token
   vector keyword; /* vector of vector of cmd_tokens */
 
   /* Used for type == TERMINAL */
-  char *cmd;                    /* Command string. */
-  char *desc;                    /* Command's description. */
+  ospl_char *cmd;                    /* Command string. */
+  ospl_char *desc;                    /* Command's description. */
 };
 
 /* Return value of the commands. */
@@ -360,7 +364,7 @@ struct cmd_token
  * for a Terminal Token, the exception are optional variables and varag.
  *
  * There is one special case that is used in some places of Quagga that should be
- * pointed out here shortly. An example would be "password (8|) WORD". This
+ * pointed out here ospl_int16ly. An example would be "password (8|) WORD". This
  * construct is used to have fixed strings communicated as arguments. (The "8"
  * will be passed down as an argument in this case) It does not mean that
  * the "8" is optional. Another historic and possibly surprising property of
@@ -400,7 +404,7 @@ struct cmd_token
  * helpstr
  * =======
  *
- * The helpstr is used to show a short explantion for the commands that
+ * The helpstr is used to show a ospl_int16 explantion for the commands that
  * are available when the user presses '?' on the CLI. It is the concatenation
  * of the helpstrings for all the tokens that make up the command.
  *
@@ -628,24 +632,24 @@ extern void install_element (enum node_type, struct cmd_element *);
 /* Concatenates argv[shift] through argv[argc-1] into a single NUL-terminated
    string with a space between each element (allocated using
    XMALLOC(MTYPE_TMP)).  Returns NULL if shift >= argc. */
-extern char *argv_concat (const char **argv, int argc, int shift);
+extern ospl_char *argv_concat (const char **argv, ospl_uint32 argc, ospl_uint32 shift);
 
 extern vector cmd_make_strvec (const char *);
 extern void cmd_free_strvec (vector);
-extern vector cmd_describe_command (vector, struct vty *, int *status);
-extern char **cmd_complete_command (vector, struct vty *, int *status);
-extern char **cmd_complete_command_lib (vector, struct vty *, int *status, int islib);
+extern vector cmd_describe_command (vector, struct vty *, ospl_uint32 *status);
+extern ospl_char **cmd_complete_command (vector, struct vty *, ospl_uint32 *status);
+extern ospl_char **cmd_complete_command_lib (vector, struct vty *, ospl_uint32 *status, ospl_uint32 islib);
 extern const char *cmd_prompt (enum node_type);
-extern int command_config_read_one_line (struct vty *vty, struct cmd_element **, int use_config_node);
-extern int config_from_file (struct vty *, FILE *, unsigned int *line_num);
+extern int command_config_read_one_line (struct vty *vty, struct cmd_element **, ospl_uint32 use_config_node);
+extern int config_from_file (struct vty *, FILE *, ospl_uint32  *line_num);
 extern enum node_type node_parent (enum node_type);
-extern int cmd_execute_command (vector, struct vty *, struct cmd_element **, int);
+extern int cmd_execute_command (vector, struct vty *, struct cmd_element **, ospl_uint32);
 extern int cmd_execute_command_strict (vector, struct vty *, struct cmd_element **);
-extern void cmd_init (int);
+extern void cmd_init (ospl_bool);
 extern void cmd_terminate (void);
 extern vector cmd_node_vector (vector v, enum node_type ntype);
 extern void install_default_basic (enum node_type node);
-extern char * zencrypt (const char *passwd);
+extern ospl_char * zencrypt (const char *passwd);
 /* Export typical functions. */
 extern struct cmd_element config_end_cmd;
 extern struct cmd_element config_exit_cmd;
@@ -663,5 +667,11 @@ extern void print_version (const char *);
 
 
 /* "<cr>" global */
-extern char *command_cr;
+extern ospl_char *command_cr;
+
+ 
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _ZEBRA_COMMAND_H */

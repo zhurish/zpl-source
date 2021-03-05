@@ -139,7 +139,7 @@ zebra_server_send_message(struct zserv *client)
 }
 
 void
-zserv_create_header (struct stream *s, uint16_t cmd, vrf_id_t vrf_id)
+zserv_create_header (struct stream *s, ospl_uint16 cmd, vrf_id_t vrf_id)
 {
   /* length placeholder, caller can update */
   stream_putw (s, ZEBRA_HEADER_SIZE);
@@ -298,10 +298,10 @@ zsend_interface_link_params (struct zserv *client, struct interface *ifp)
  *
  */
 int
-zsend_interface_address (int cmd, struct zserv *client, 
+zsend_interface_address (ospl_uint16 cmd, struct zserv *client, 
                          struct interface *ifp, struct connected *ifc)
 {
-  int blen;
+  ospl_uint32 blen;
   struct stream *s;
   struct prefix *p;
 
@@ -356,7 +356,7 @@ zsend_interface_address (int cmd, struct zserv *client,
  * The ZEBRA_INTERFACE_DOWN message is sent when an if_down is detected.
  */
 int
-zsend_interface_state (int cmd, struct zserv *client, struct interface *ifp)
+zsend_interface_state (ospl_uint16 cmd, struct zserv *client, struct interface *ifp)
 {
   struct stream *s;
 
@@ -378,7 +378,7 @@ zsend_interface_state (int cmd, struct zserv *client, struct interface *ifp)
   return zebra_server_send_message(client);
 }
 
-int zsend_interface_mode (struct zserv *client, struct interface *ifp, u_int mode)
+int zsend_interface_mode (struct zserv *client, struct interface *ifp, ospl_uint32 mode)
 {
 	  struct stream *s;
 
@@ -417,15 +417,15 @@ int zsend_interface_mode (struct zserv *client, struct interface *ifp, u_int mod
  * duplication.
  */
 int
-zsend_route_multipath (int cmd, struct zserv *client, struct prefix *p,
+zsend_route_multipath (ospl_uint16 cmd, struct zserv *client, struct prefix *p,
                        struct rib *rib)
 {
-  int psize;
+  ospl_uint32 psize;
   struct stream *s;
   struct nexthop *nexthop;
-  unsigned long nhnummark = 0, messmark = 0;
-  int nhnum = 0;
-  u_char zapi_flags = 0;
+  ospl_ulong nhnummark = 0, messmark = 0;
+  ospl_uint32 nhnum = 0;
+  ospl_uchar zapi_flags = 0;
 
   /* Check this client need this route. */
   if (!vrf_bitmap_check (client->redist[rib->type], rib->vrf_id) &&
@@ -449,7 +449,7 @@ zsend_route_multipath (int cmd, struct zserv *client, struct prefix *p,
   /* Prefix. */
   psize = PSIZE (p->prefixlen);
   stream_putc (s, p->prefixlen);
-  stream_write (s, (u_char *) & p->u.prefix, psize);
+  stream_write (s, (ospl_uchar *) & p->u.prefix, psize);
 
   /* 
    * XXX The message format sent by zebra below does not match the format
@@ -486,7 +486,7 @@ zsend_route_multipath (int cmd, struct zserv *client, struct prefix *p,
               case NEXTHOP_TYPE_IPV6:
               case NEXTHOP_TYPE_IPV6_IFINDEX:
               case NEXTHOP_TYPE_IPV6_IFNAME:
-                stream_write (s, (u_char *) &nexthop->gate.ipv6, 16);
+                stream_write (s, (ospl_uchar *) &nexthop->gate.ipv6, 16);
                 break;
 #endif
               default:
@@ -495,13 +495,13 @@ zsend_route_multipath (int cmd, struct zserv *client, struct prefix *p,
                   {
                     struct in_addr empty;
                     memset (&empty, 0, sizeof (struct in_addr));
-                    stream_write (s, (u_char *) &empty, IPV4_MAX_BYTELEN);
+                    stream_write (s, (ospl_uchar *) &empty, IPV4_MAX_BYTELEN);
                   }
                 else
                   {
                     struct in6_addr empty;
                     memset (&empty, 0, sizeof (struct in6_addr));
-                    stream_write (s, (u_char *) &empty, IPV6_MAX_BYTELEN);
+                    stream_write (s, (ospl_uchar *) &empty, IPV6_MAX_BYTELEN);
                   }
               }
 
@@ -550,8 +550,8 @@ zsend_ipv6_nexthop_lookup (struct zserv *client, struct in6_addr *addr,
 {
   struct stream *s;
   struct rib *rib;
-  unsigned long nump;
-  u_char num;
+  ospl_ulong nump;
+  ospl_uchar num;
   struct nexthop *nexthop;
 
   /* Lookup nexthop. */
@@ -620,12 +620,12 @@ zsend_ipv6_nexthop_lookup (struct zserv *client, struct in6_addr *addr,
 */
 static int
 zsend_ipv4_nexthop_lookup (struct zserv *client, struct in_addr addr,
-			   int cmd, vrf_id_t vrf_id)
+			   ospl_uint16 cmd, vrf_id_t vrf_id)
 {
   struct stream *s;
   struct rib *rib;
-  unsigned long nump;
-  u_char num;
+  ospl_ulong nump;
+  ospl_uchar num;
   struct nexthop *nexthop;
 
   /* Get output stream. */
@@ -702,13 +702,13 @@ zsend_ipv4_nexthop_lookup (struct zserv *client, struct in_addr addr,
 
 /* Nexthop register */
 static int
-zserv_nexthop_register (struct zserv *client, int sock, u_short length, vrf_id_t vrf_id)
+zserv_nexthop_register (struct zserv *client, int sock, ospl_ushort length, vrf_id_t vrf_id)
 {
   struct rnh *rnh;
   struct stream *s;
   struct prefix p;
-  u_short l = 0;
-  u_char connected;
+  ospl_ushort l = 0;
+  ospl_uchar connected;
 
   if (IS_ZEBRA_DEBUG_NHT)
     zlog_debug(MODULE_NSM, "nexthop_register msg from client %s: length=%d\n",
@@ -740,12 +740,12 @@ zserv_nexthop_register (struct zserv *client, int sock, u_short length, vrf_id_t
 
 /* Nexthop register */
 static int
-zserv_nexthop_unregister (struct zserv *client, int sock, u_short length)
+zserv_nexthop_unregister (struct zserv *client, int sock, ospl_ushort length)
 {
   struct rnh *rnh;
   struct stream *s;
   struct prefix p;
-  u_short l = 0;
+  ospl_ushort l = 0;
 
   if (IS_ZEBRA_DEBUG_NHT)
     zlog_debug(MODULE_NSM, "nexthop_unregister msg from client %s: length=%d\n",
@@ -777,8 +777,8 @@ zsend_ipv4_import_lookup (struct zserv *client, struct prefix_ipv4 *p,
 {
   struct stream *s;
   struct rib *rib;
-  unsigned long nump;
-  u_char num;
+  ospl_ulong nump;
+  ospl_uchar num;
   struct nexthop *nexthop;
 
   /* Lookup nexthop. */
@@ -840,7 +840,7 @@ zsend_router_id_update (struct zserv *client, struct prefix *p,
     vrf_id_t vrf_id)
 {
   struct stream *s;
-  int blen;
+  ospl_uint32 blen;
 
   /* Check this client need interface information. */
   if (! vrf_bitmap_check (client->ridinfo, vrf_id))
@@ -867,7 +867,7 @@ zsend_router_id_update (struct zserv *client, struct prefix *p,
 /* Register zebra server interface information.  Send current all
    interface and address information. */
 static int
-zread_interface_add (struct zserv *client, u_short length, vrf_id_t vrf_id)
+zread_interface_add (struct zserv *client, ospl_ushort length, vrf_id_t vrf_id)
 {
   struct listnode *ifnode, *ifnnode;
   struct listnode *cnode, *cnnode;
@@ -899,7 +899,7 @@ zread_interface_add (struct zserv *client, u_short length, vrf_id_t vrf_id)
 
 /* Unregister zebra server interface information. */
 static int
-zread_interface_delete (struct zserv *client, u_short length, vrf_id_t vrf_id)
+zread_interface_delete (struct zserv *client, ospl_ushort length, vrf_id_t vrf_id)
 {
   vrf_bitmap_unset (client->ifinfo, vrf_id);
   return 0;
@@ -911,18 +911,18 @@ zread_interface_delete (struct zserv *client, u_short length, vrf_id_t vrf_id)
  * add kernel route. 
  */
 static int
-zread_ipv4_add (struct zserv *client, u_short length, vrf_id_t vrf_id)
+zread_ipv4_add (struct zserv *client, ospl_ushort length, vrf_id_t vrf_id)
 {
-  int i;
+  ospl_uint32 i = 0;
   struct rib *rib;
   struct prefix_ipv4 p;
-  u_char message;
+  ospl_uchar message;
   struct in_addr nexthop;
-  u_char nexthop_num;
-  u_char nexthop_type;
+  ospl_uchar nexthop_num;
+  ospl_uchar nexthop_type;
   struct stream *s;
   ifindex_t ifindex;
-  u_char ifname_len;
+  ospl_uchar ifname_len;
   safi_t safi;	
   int ret;
 
@@ -1016,17 +1016,17 @@ zread_ipv4_add (struct zserv *client, u_short length, vrf_id_t vrf_id)
 
 /* Zebra server IPv4 prefix delete function. */
 static int
-zread_ipv4_delete (struct zserv *client, u_short length, vrf_id_t vrf_id)
+zread_ipv4_delete (struct zserv *client, ospl_ushort length, vrf_id_t vrf_id)
 {
-  int i;
+  ospl_uint32 i = 0;
   struct stream *s;
   struct zapi_ipv4 api;
   struct in_addr nexthop, *nexthop_p;
-  unsigned long ifindex;
+  ospl_ulong ifindex;
   struct prefix_ipv4 p;
-  u_char nexthop_num;
-  u_char nexthop_type;
-  u_char ifname_len;
+  ospl_uchar nexthop_num;
+  ospl_uchar nexthop_type;
+  ospl_uchar ifname_len;
   
   s = client->ibuf;
   ifindex = 0;
@@ -1105,11 +1105,11 @@ zread_ipv4_delete (struct zserv *client, u_short length, vrf_id_t vrf_id)
 
 /* Nexthop lookup for IPv4. */
 static int
-zread_ipv4_nexthop_lookup (int cmd, struct zserv *client, u_short length,
+zread_ipv4_nexthop_lookup (ospl_uint32 cmd, struct zserv *client, ospl_ushort length,
     vrf_id_t vrf_id)
 {
   struct in_addr addr;
-  char buf[BUFSIZ];
+  ospl_char buf[BUFSIZ];
 
   addr.s_addr = stream_get_ipv4 (client->ibuf);
   if (IS_ZEBRA_DEBUG_PACKET && IS_ZEBRA_DEBUG_RECV)
@@ -1121,7 +1121,7 @@ zread_ipv4_nexthop_lookup (int cmd, struct zserv *client, u_short length,
 
 /* Nexthop lookup for IPv4. */
 static int
-zread_ipv4_import_lookup (struct zserv *client, u_short length,
+zread_ipv4_import_lookup (struct zserv *client, ospl_ushort length,
     vrf_id_t vrf_id)
 {
   struct prefix_ipv4 p;
@@ -1136,19 +1136,19 @@ zread_ipv4_import_lookup (struct zserv *client, u_short length,
 #ifdef HAVE_IPV6
 /* Zebra server IPv6 prefix add function. */
 static int
-zread_ipv6_add (struct zserv *client, u_short length, vrf_id_t vrf_id)
+zread_ipv6_add (struct zserv *client, ospl_ushort length, vrf_id_t vrf_id)
 {
-  int i;
+  ospl_uint32 i = 0;
   struct stream *s;
   struct in6_addr nexthop;
   struct rib *rib;
-  u_char message;
-  u_char gateway_num;
-  u_char nexthop_type;
+  ospl_uchar message;
+  ospl_uchar gateway_num;
+  ospl_uchar nexthop_type;
   struct prefix_ipv6 p;
   safi_t safi;
   static struct in6_addr nexthops[MULTIPATH_NUM];
-  static unsigned int ifindices[MULTIPATH_NUM];
+  static ospl_uint32  ifindices[MULTIPATH_NUM];
   int ret;
 
   /* Get input stream.  */
@@ -1178,10 +1178,10 @@ zread_ipv6_add (struct zserv *client, u_short length, vrf_id_t vrf_id)
    * next-hop-addr/next-hop-ifindices. */
   if (CHECK_FLAG (message, ZAPI_MESSAGE_NEXTHOP))
     {
-      int nh_count = 0;
-      int if_count = 0;
-      int max_nh_if = 0;
-      unsigned int ifindex;
+      ospl_uint32 nh_count = 0;
+      ospl_uint32 if_count = 0;
+      ospl_uint32 max_nh_if = 0;
+      ifindex_t  ifindex;
 
       gateway_num = stream_getc (s);
       for (i = 0; i < gateway_num; i++)
@@ -1254,13 +1254,13 @@ zread_ipv6_add (struct zserv *client, u_short length, vrf_id_t vrf_id)
 
 /* Zebra server IPv6 prefix delete function. */
 static int
-zread_ipv6_delete (struct zserv *client, u_short length, vrf_id_t vrf_id)
+zread_ipv6_delete (struct zserv *client, ospl_ushort length, vrf_id_t vrf_id)
 {
-  int i;
+  ospl_uint32 i = 0;
   struct stream *s;
   struct zapi_ipv6 api;
   struct in6_addr nexthop;
-  unsigned long ifindex;
+  ospl_ulong ifindex;
   struct prefix_ipv6 p;
   
   s = client->ibuf;
@@ -1282,7 +1282,7 @@ zread_ipv6_delete (struct zserv *client, u_short length, vrf_id_t vrf_id)
   /* Nexthop, ifindex, distance, metric. */
   if (CHECK_FLAG (api.message, ZAPI_MESSAGE_NEXTHOP))
     {
-      u_char nexthop_type;
+      ospl_uchar nexthop_type;
 
       api.nexthop_num = stream_getc (s);
       for (i = 0; i < api.nexthop_num; i++)
@@ -1331,11 +1331,11 @@ zread_ipv6_delete (struct zserv *client, u_short length, vrf_id_t vrf_id)
 }
 
 static int
-zread_ipv6_nexthop_lookup (struct zserv *client, u_short length,
+zread_ipv6_nexthop_lookup (struct zserv *client, ospl_ushort length,
     vrf_id_t vrf_id)
 {
   struct in6_addr addr;
-  char buf[BUFSIZ];
+  ospl_char buf[BUFSIZ];
 
   stream_get (&addr, client->ibuf, 16);
   if (IS_ZEBRA_DEBUG_PACKET && IS_ZEBRA_DEBUG_RECV)
@@ -1348,7 +1348,7 @@ zread_ipv6_nexthop_lookup (struct zserv *client, u_short length,
 
 /* Register zebra server router-id information.  Send current router-id */
 static int
-zread_router_id_add (struct zserv *client, u_short length, vrf_id_t vrf_id)
+zread_router_id_add (struct zserv *client, ospl_ushort length, vrf_id_t vrf_id)
 {
   struct prefix p;
 
@@ -1362,7 +1362,7 @@ zread_router_id_add (struct zserv *client, u_short length, vrf_id_t vrf_id)
 
 /* Unregister zebra server router-id information. */
 static int
-zread_router_id_delete (struct zserv *client, u_short length, vrf_id_t vrf_id)
+zread_router_id_delete (struct zserv *client, ospl_ushort length, vrf_id_t vrf_id)
 {
   vrf_bitmap_unset (client->ridinfo, vrf_id);
   return 0;
@@ -1373,7 +1373,7 @@ static void
 zread_hello (struct zserv *client)
 {
   /* type of protocol (lib/zebra.h) */
-  u_char proto;
+  ospl_uchar proto;
   proto = stream_getc (client->ibuf);
 
   /* accept only dynamic routing protocols */
@@ -1396,9 +1396,9 @@ zread_hello (struct zserv *client)
 
 /* Unregister all information in a VRF. */
 static int
-zread_vrf_unregister (struct zserv *client, u_short length, vrf_id_t vrf_id)
+zread_vrf_unregister (struct zserv *client, ospl_ushort length, vrf_id_t vrf_id)
 {
-  int i;
+  ospl_uint32 i = 0;
 
   for (i = 0; i < ZEBRA_ROUTE_MAX; i++)
     vrf_bitmap_unset (client->redist[i], vrf_id);
@@ -1415,7 +1415,7 @@ zread_vrf_unregister (struct zserv *client, u_short length, vrf_id_t vrf_id)
 static void
 zebra_score_rib (int client_sock)
 {
-  int i;
+  ospl_uint32 i = 0;
 
   for (i = ZEBRA_ROUTE_RIP; i < ZEBRA_ROUTE_MAX; i++)
     if (client_sock == route_type_oaths[i])
@@ -1468,7 +1468,7 @@ static void
 zebra_client_create (int sock)
 {
   struct zserv *client;
-  int i;
+  ospl_uint32 i = 0;
 
   client = XCALLOC (MTYPE_TMP, sizeof (struct zserv));
 
@@ -1502,9 +1502,9 @@ zebra_client_read (struct thread *thread)
 {
   int sock;
   struct zserv *client;
-  size_t already;
-  uint16_t length, command;
-  uint8_t marker, version;
+  ospl_size_t already;
+  ospl_uint16 length, command;
+  ospl_uint8 marker, version;
   vrf_id_t vrf_id;
 
   /* Get thread data.  Reset reading thread because I'm running. */
@@ -1861,11 +1861,11 @@ zebra_event (enum event event, int sock, struct zserv *client)
 }
 #if 0
 #define ZEBRA_TIME_BUF 32
-static char *
-zserv_time_buf(time_t *time1, char *buf, int buflen)
+static ospl_char *
+zserv_time_buf(ospl_time_t *time1, ospl_char *buf, int buflen)
 {
   struct tm *tm;
-  time_t now;
+  ospl_time_t now;
 
   assert (buf != NULL);
   assert (buflen >= ZEBRA_TIME_BUF);
@@ -1900,8 +1900,8 @@ zserv_time_buf(time_t *time1, char *buf, int buflen)
 static void
 zebra_show_client_detail (struct vty *vty, struct zserv *client)
 {
-  char cbuf[ZEBRA_TIME_BUF], rbuf[ZEBRA_TIME_BUF];
-  char wbuf[ZEBRA_TIME_BUF], nhbuf[ZEBRA_TIME_BUF], mbuf[ZEBRA_TIME_BUF];
+  ospl_char cbuf[ZEBRA_TIME_BUF], rbuf[ZEBRA_TIME_BUF];
+  ospl_char wbuf[ZEBRA_TIME_BUF], nhbuf[ZEBRA_TIME_BUF], mbuf[ZEBRA_TIME_BUF];
 
   vty_out (vty, "Client: %s %s",
 	   zebra_route_string(client->proto), VTY_NEWLINE);
@@ -1965,8 +1965,8 @@ zebra_show_client_detail (struct vty *vty, struct zserv *client)
 static void
 zebra_show_client_brief (struct vty *vty, struct zserv *client)
 {
-  char cbuf[ZEBRA_TIME_BUF], rbuf[ZEBRA_TIME_BUF];
-  char wbuf[ZEBRA_TIME_BUF];
+  ospl_char cbuf[ZEBRA_TIME_BUF], rbuf[ZEBRA_TIME_BUF];
+  ospl_char wbuf[ZEBRA_TIME_BUF];
 
   vty_out (vty, "%-8s%12s %12s%12s%8d/%-8d%8d/%-8d%s",
 	   zebra_route_string(client->proto),
@@ -1999,7 +1999,7 @@ DEFUN (config_table,
        "Configure target kernel routing table\n"
        "TABLE integer\n")
 {
-  zebrad.rtm_table_default = strtol (argv[0], (char**)0, 10);
+  zebrad.rtm_table_default = strtol (argv[0], (ospl_char**)0, 10);
   return CMD_SUCCESS;
 }
 

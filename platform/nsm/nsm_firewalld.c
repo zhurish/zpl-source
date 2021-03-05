@@ -22,11 +22,11 @@
 
 struct firewall_service_s
 {
-	char 		*name;
-	u_int16 	port;
-	u_int8		all;
-	u_int8		tcp;
-	u_int8		udp;	
+	ospl_char 		*name;
+	ospl_uint16 	port;
+	ospl_uint8		all;
+	ospl_uint8		tcp;
+	ospl_uint8		udp;	
 }firewall_service_default[] = 
 {
 	//{"FTP-Data", 	20, 0, 1, 0},
@@ -309,22 +309,22 @@ firewall_t * firewall_rule_lookup_api(firewall_zone_t *zone, firewall_t *value)
 	return node;
 }
 
-int firewall_rule_show_api(struct vty *vty, firewall_zone_t *zone, char * intype)
+int firewall_rule_show_api(struct vty *vty, firewall_zone_t *zone, ospl_char * intype)
 {
 	firewall_t *pstNode = NULL;
 	NODE index;
-	char id[16];
-	char type[16];
-	char action[16];
-	char proto[16];
-	char source[64];
-	char destination[64];
-	char s_port[16];
-	char d_port[16];
-	char s_ifindex[64];
-	char d_ifindex[64];
-	char s_mac[16];
-	char d_mac[16];
+	ospl_char id[16];
+	ospl_char type[16];
+	ospl_char action[16];
+	ospl_char proto[16];
+	ospl_char source[64];
+	ospl_char destination[64];
+	ospl_char s_port[16];
+	ospl_char d_port[16];
+	ospl_char s_ifindex[64];
+	ospl_char d_ifindex[64];
+	ospl_char s_mac[16];
+	ospl_char d_mac[16];
 	int head = 0, found = 0;
 	if(!zone || !zone->zone_list)
 		return ERROR;
@@ -390,14 +390,14 @@ int firewall_rule_show_api(struct vty *vty, firewall_zone_t *zone, char * intype
 
 			if(pstNode->source.family)
 			{
-				char tmp[64];
+				ospl_char tmp[64];
 				union prefix46constptr pa;
 				pa.p = &pstNode->source;
 				sprintf(source, "%s", prefix2str (pa, tmp, sizeof(tmp)));
 			}
 			if(pstNode->destination.family)
 			{
-				char tmp[64];
+				ospl_char tmp[64];
 				union prefix46constptr pa;
 				pa.p = &pstNode->destination;
 				sprintf(destination, "%s", prefix2str (pa, tmp, sizeof(tmp)));
@@ -701,7 +701,7 @@ static int firewall_rule_cleanup(firewall_zone_t *zone, firewall_t *value)
 	return OK;
 }
 /***********************************************************************/
-firewall_zone_t * nsm_firewall_zone_add(s_int8 	*zonename)
+firewall_zone_t * nsm_firewall_zone_add(ospl_int8 	*zonename)
 {
 	if(!gFirewalld.init)
 		return NULL;
@@ -719,7 +719,7 @@ firewall_zone_t * nsm_firewall_zone_add(s_int8 	*zonename)
 	return NULL;
 }
 
-firewall_zone_t * nsm_firewall_zone_lookup(s_int8 	*zonename)
+firewall_zone_t * nsm_firewall_zone_lookup(ospl_int8 	*zonename)
 {
 	firewall_zone_t *pstNode = NULL;
 	NODE index;
@@ -741,7 +741,7 @@ firewall_zone_t * nsm_firewall_zone_lookup(s_int8 	*zonename)
 	return pstNode;
 }
 
-int nsm_firewall_zone_del(s_int8 	*zonename)
+int nsm_firewall_zone_del(ospl_int8 	*zonename)
 {
 	if(!gFirewalld.init)
 		return ERROR;
@@ -771,7 +771,7 @@ int nsm_firewall_zone_del(s_int8 	*zonename)
 	return ERROR;
 }
 
-static int firewall_zone_cleanup(s_int8 	*zonename)
+static int firewall_zone_cleanup(ospl_int8 	*zonename)
 {
 	firewall_zone_t *pstNode = NULL;
 	NODE index;
@@ -822,7 +822,7 @@ int firewall_zone_foreach_api(int(*cb)(firewall_zone_t *, void *), void *p)
 /***********************************************************************/
 static int nsm_firewall_tcpudp_dport_default()
 {
-	int i = 0, j = 0;
+	ospl_uint32 i = 0, j = 0;
 	//开放的TCP/UDP目的端口
 	/*for(i = 0; i < sizeof(firewall_service_default)/sizeof(firewall_service_default[0]); i++)
 	{
@@ -856,9 +856,9 @@ static int nsm_firewall_tcpudp_dport_default()
 static int nsm_firewall_action_dport_default()
 {
 	//iptables -t filter -A INPUT -p tcp -m multiport --dport 21,22,23,25,53,67,68,69,80,110,161,443,513,2610,8080 -j ACCEPT
-	int i = 0, action = 0;
-	char cmd[512];
-	char tmp[32];
+	ospl_uint32 i = 0, action = 0;
+	ospl_char cmd[512];
+	ospl_char tmp[32];
 	/*
 	memset(cmd, 0, sizeof(cmd));
 	strcpy(cmd, "iptables -t filter -A INPUT  -p tcp -m multiport --dport ");
@@ -1003,7 +1003,7 @@ int nsm_firewall_init(void)
 	gFirewalld.firewall_list = malloc(sizeof(LIST));
 	gFirewalld.mutex = os_mutex_init();
 	lstInit(gFirewalld.firewall_list);
-	gFirewalld.init = TRUE;
+	gFirewalld.init = ospl_true;
 	nsm_firewall_default();
 	return OK;
 }
@@ -1016,7 +1016,7 @@ int nsm_firewall_exit(void)
 		lstFree(gFirewalld.firewall_list);
 		free(gFirewalld.firewall_list);
 		gFirewalld.firewall_list = NULL;
-		gFirewalld.init = FALSE;
+		gFirewalld.init = ospl_false;
 	}
 	if(gFirewalld.mutex)
 		os_mutex_exit(gFirewalld.mutex);

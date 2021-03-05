@@ -112,7 +112,7 @@ void FramedQueueSource::doFramedQueueSourceReadHandler(int fd)
     afterGetting(this); // we're preceded by a net read; no infinite recursion
 }
 
-Boolean FramedQueueSource::handleReadFramedQueue(unsigned char *buffer, unsigned bufferMaxSize,
+Boolean FramedQueueSource::handleReadFramedQueue(ospl_uint8 *buffer, unsigned bufferMaxSize,
                                                  unsigned &bytesRead)
 {
 
@@ -124,7 +124,7 @@ Boolean FramedQueueSource::handleReadFramedQueue(unsigned char *buffer, unsigned
       m_Queue->FramedQueuePost();
       return False;
     }
-    bytesRead = m_Queue->FramedQueueDataGet((unsigned char  *)buffer, bufferMaxSize);
+    bytesRead = m_Queue->FramedQueueDataGet((ospl_uint8  *)buffer, bufferMaxSize);
     if (bytesRead > 0)
     {
       m_Queue->FramedQueuePost();

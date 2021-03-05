@@ -53,9 +53,9 @@
 #define LOAD_FRAC(x) LOAD_INT(((x) & (FIXED_1 - 1)) * 100)
 
 
-int v9_cpu_load(u_int16 *use)
+int v9_cpu_load(ospl_uint16 *use)
 {
-	u_int16 val = 0;
+	ospl_uint16 val = 0;
 	struct sysinfo info;
 	sysinfo(&info);
 
@@ -74,7 +74,7 @@ int v9_cpu_load(u_int16 *use)
 
 
 
-int v9_memory_load(u_int32 *total, u_int8 *use)
+int v9_memory_load(ospl_uint32 *total, ospl_uint8 *use)
 {
 
 	struct host_system host_system;
@@ -93,15 +93,15 @@ int v9_memory_load(u_int32 *total, u_int8 *use)
 	return OK;
 }
 
-int v9_disk_load(char *path, u_int32 *total, u_int32 *use, u_int8 *puse)
+int v9_disk_load(char *path, ospl_uint32 *total, ospl_uint32 *use, ospl_uint8 *puse)
 {
 	struct statfs diskInfo;
 	if(statfs(path, &diskInfo) == 0)
 	{
-		unsigned long long totalBlocks = diskInfo.f_bsize;
-		unsigned long long totalSize = totalBlocks * diskInfo.f_blocks;
+		ospl_ullong  totalBlocks = diskInfo.f_bsize;
+		ospl_ullong  totalSize = totalBlocks * diskInfo.f_blocks;
 		size_t mbTotalsize = totalSize>>20;
-		unsigned long long freeDisk = diskInfo.f_bfree*totalBlocks;
+		ospl_ullong  freeDisk = diskInfo.f_bfree*totalBlocks;
 		size_t mbFreedisk = freeDisk >>20;
 
 		if(total)

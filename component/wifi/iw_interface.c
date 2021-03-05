@@ -50,7 +50,7 @@ iw_t * nsm_iw_get(struct interface *ifp)
 
 
 
-int nsm_iw_enable_api(struct interface *ifp, BOOL enable)
+int nsm_iw_enable_api(struct interface *ifp, ospl_bool enable)
 {
 	iw_t * iw = nsm_iw_get (ifp);
 	if(!iw)
@@ -95,14 +95,14 @@ int nsm_iw_enable_api(struct interface *ifp, BOOL enable)
 }
 
 
-BOOL nsm_iw_enable_get_api(struct interface *ifp)
+ospl_bool nsm_iw_enable_get_api(struct interface *ifp)
 {
 	iw_t * iw = nsm_iw_get (ifp);
 	if (iw)
 	{
 		return iw->enable;
 	}
-	return FALSE;
+	return ospl_false;
 }
 
 int nsm_iw_mode_set_api(struct interface *ifp, iw_mode_t mode)
@@ -110,7 +110,7 @@ int nsm_iw_mode_set_api(struct interface *ifp, iw_mode_t mode)
 	iw_t * iw = nsm_iw_get(ifp);
 	if(iw)
 	{
-//		iw->enable = TRUE;
+//		iw->enable = ospl_true;
 #ifdef PL_OPENWRT_UCI
 	//	os_uci_get_integer("wireless.radio0.disabled", &iw->enable);
 #endif
@@ -122,7 +122,7 @@ int nsm_iw_mode_set_api(struct interface *ifp, iw_mode_t mode)
 		if(iw->mode != mode)
 		{
 
-			//extern int iw_client_enable(iw_client_t *iw_client, BOOL enable);
+			//extern int iw_client_enable(iw_client_t *iw_client, ospl_bool enable);
 /*			if(iw->mode == IW_MODE_NONE)
 			{
 
@@ -302,7 +302,7 @@ static int nsm_iw_interface_default(struct interface *ifp, iw_t * iw)
 {
 	//iw_ap_t *ap = iw_ap_lookup_api(ifp);
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
-	iw->enable = TRUE;
+	iw->enable = ospl_true;
 	nsm_iw_mode_set_api(ifp, IW_MODE_AP);
 	if(strlen(host.serial))
 		iw_ap_ssid_set_api(&iw->private.ap, host.serial);
@@ -313,7 +313,7 @@ static int nsm_iw_interface_default(struct interface *ifp, iw_t * iw)
 	iw_ap_auth_set_api(&iw->private.ap, IW_ENCRY_WPA2WPA_PSK);
 	iw_ap_encryption_set_api(&iw->private.ap, IW_ALGO_AUTO);
 #else
-	iw->enable = FALSE;
+	iw->enable = ospl_false;
 #ifdef WEB_OPENWRT_PROCESS
 /*
 		if(strlen(host.serial))
@@ -376,7 +376,7 @@ static int nsm_iw_create_interface(struct interface *ifp)
 #ifdef PL_OPENWRT_UCI
 		os_uci_get_integer("wireless.radio0.disabled", &iw->enable);
 #endif
-		iw->enable = TRUE;
+		iw->enable = ospl_true;
 		kmode = iw_dev_mode(ifp);
 		//iw_mode_t iw_ap_dev_mode_get(struct interface *ifp);
 		printf("---%s------mode=%d enable=%s", __func__, kmode, iw->enable?"true":"false");

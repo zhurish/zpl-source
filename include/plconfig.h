@@ -1,96 +1,18 @@
 
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "plautoconf.h"
 
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_PL_BUILD */
 
-//#define USE_IPSTACK_KERNEL
-	//USE_IPSTACK_KERNEL
-//#undef BASE_DIR
-#ifndef BASE_DIR
-#define BASE_DIR	"/tmp/app"
-#endif
-
-#ifdef PL_BUILD_X86
-#ifndef SYS_REAL_DIR
-#define SYS_REAL_DIR		"/home/zhurish/workspace/SWPlatform/debug"
-#undef BASE_DIR
-#define BASE_DIR	SYS_REAL_DIR"/tmp/app"
-#endif
-#define SYSCONF_REAL_DIR 	SYS_REAL_DIR "/etc"
-#else
-#ifdef PL_BUILD_OPENWRT
-#ifndef SYS_REAL_DIR
-#define SYS_REAL_DIR		"/app"
-#endif
-#define SYSCONF_REAL_DIR 	SYS_REAL_DIR "/etc"
-#else
-#ifndef SYS_REAL_DIR
-#define SYS_REAL_DIR		"/home/app"
-#endif
-#define SYSCONF_REAL_DIR 	SYS_REAL_DIR "/etc"
-#endif
-#endif
-
-//#ifdef PL_BUILD_OPENWRT
-//#define SYSCONFDIR 		"/etc/app"
-//#else
-//#define SYSCONFDIR 		BASE_DIR "/etc"
-#define SYSCONFDIR 		SYSCONF_REAL_DIR	//flash的etc 目录
-#define RSYSLOGDIR 		SYS_REAL_DIR "/log"	//flash的log 目录
-#define RSYSWWWDIR 		SYS_REAL_DIR "/www"	//flash的www 目录
-#define SYSWEBDIR 		SYSCONF_REAL_DIR "/web"	//flash的/etc/web 目录
-//#endif
-
-#define PLSYSCONFDIR 	BASE_DIR "/etc"	//缓存目录
-#define SYSLIBDIR 		BASE_DIR "/lib"
-#define SYSSBINDIR 		BASE_DIR "/sbin"
-#define SYSBINDIR 		BASE_DIR "/bin"
-#define SYSRUNDIR 		BASE_DIR "/run"
-#define SYSLOGDIR 		BASE_DIR "/log"
-#define SYSVARDIR 		BASE_DIR "/var"
-#define SYSTMPDIR 		BASE_DIR "/tmp"
-#define SYSWWWDIR 		BASE_DIR "/www"
-#define SYSWWWCACHEDIR 		BASE_DIR "/www/cache"
-#define SYSTFTPBOOTDIR 		BASE_DIR "/tftpboot"
-#define SYSUPLOADDIR 		SYSTFTPBOOTDIR
-
-
-/* default daemon app root dir */
-#define DAEMON_CONFIG_DIR SYSCONFDIR
-
-/* default daemon logmsg directory */
-#define DAEMON_LOG_FILE_DIR SYSLOGDIR
-
-/* daemon vty directory */
-#define DAEMON_VTY_DIR SYSVARDIR
-
-/* daemon vty directory */
-#define DAEMON_ENV_DIR SYSRUNDIR
-
-
-#define CONF_BACKUP_EXT ".sav"
-
-#ifdef PL_BUILD_OPENWRT
-#define STARTUP_CONFIG_FILE	SYSCONFDIR "/startup-config.cfg"
-#define DEFAULT_CONFIG_FILE	SYSCONFDIR "/default-config.cfg"
-#define FACTORY_CONFIG_FILE	SYSCONFDIR "/factory-config.cfg"
-#else
-#ifdef PL_BUILD_X86
-#define STARTUP_CONFIG_FILE	PLSYSCONFDIR "/startup-config.cfg"
-#define DEFAULT_CONFIG_FILE	PLSYSCONFDIR "/default-config.cfg"
-#define FACTORY_CONFIG_FILE	PLSYSCONFDIR "/factory-config.cfg"
-#else
-#define STARTUP_CONFIG_FILE	SYSCONFDIR "/startup-config.cfg"
-#define DEFAULT_CONFIG_FILE	SYSCONFDIR "/default-config.cfg"
-#define FACTORY_CONFIG_FILE	SYSCONFDIR "/factory-config.cfg"
-#endif
-#endif
 
 #include "config_env.h"
+#include "oem_config.h"
 
 
 /* Mask for config files */
@@ -919,7 +841,7 @@
 /* Old readline */
 /* #undef rl_completion_matches */
 
-/* Define to `unsigned int' if <sys/types.h> does not define. */
+/* Define to `ospl_uint32' if <sys/types.h> does not define. */
 /* #undef size_t */
 
 /* Define to `int' if <sys/types.h> doesn't define. */
@@ -933,4 +855,7 @@
 /* #undef volatile */
 
 
-#include "oem_config.h"
+
+#ifdef __cplusplus
+}
+#endif

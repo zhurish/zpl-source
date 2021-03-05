@@ -31,7 +31,7 @@ const char * strchr_empty(char *src, const char em)
 	char *p = src;
 	assert(src);
 	atcmd_response_t response;
-	int i = 0, j = 0, count = os_strlen(src);
+	ospl_uint32 i = 0, j = 0, count = os_strlen(src);
 	os_memset(&response, '\0', sizeof(response));
 	response.len = count;
 
@@ -52,12 +52,12 @@ const char * strchr_empty(char *src, const char em)
 	return (char*)src;
 }
 
-const char * strchr_empty_step(char *src, const char em, int step)
+const char * strchr_empty_step(char *src, const char em, ospl_uint32 step)
 {
 	char *p = src;
 	assert(src);
 	atcmd_response_t response;
-	int i = 0, j = 0, k = 0, count = os_strlen(src);
+	ospl_uint32 i = 0, j = 0, k = 0, count = os_strlen(src);
 	os_memset(&response, 0, sizeof(response));
 	response.len = count;
 

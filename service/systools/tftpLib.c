@@ -166,9 +166,9 @@
 /* globals */
 //#define TFTPC_DEBUG
 
-BOOL tftpDebug = TRUE; /* debug mode		*/
-static BOOL tftpVerbose = TRUE; /* verbose mode		*/
-static BOOL tftpTrace = FALSE; /* packet tracing (debug detail) 	*/
+ospl_bool tftpDebug = ospl_true; /* debug mode		*/
+static ospl_bool tftpVerbose = ospl_true; /* verbose mode		*/
+static ospl_bool tftpTrace = ospl_false; /* packet tracing (debug detail) 	*/
 
 static int tftpTimeout = TFTP_TIMEOUT * 5; /* total timeout (sec.)	*/
 static int tftpReXmit = TFTP_TIMEOUT; /* rexmit value  (sec.) */
@@ -202,7 +202,7 @@ static int asciiToFile(int fd, /* file descriptor 	*/
 		char * pBuffer, /* buffer 		*/
 		int bufLen, /* buffer length	*/
 		char * charConv, /* char being converted */
-		BOOL isLastBuff /* last buffer?		*/
+		ospl_bool isLastBuff /* last buffer?		*/
 );
 
 static int tftpRequestCreate(TFTP_MSG * pTftpMsg, /* TFTP message pointer	*/
@@ -511,7 +511,7 @@ TFTP_DESC * tftpInit(void)
 	/* default mode is netascii */
 
 	strcpy(pTftpDesc->mode, "netascii");
-	pTftpDesc->connected = FALSE;
+	pTftpDesc->connected = ospl_false;
 	/* set up a datagram socket */
 
 	if ((pTftpDesc->sock = socket(AF_INET, SOCK_DGRAM, 0)) == ERROR)
@@ -523,7 +523,7 @@ TFTP_DESC * tftpInit(void)
 
 	bzero((char *) &localAddr, sizeof(struct sockaddr_in));
 	localAddr.sin_family = AF_INET;
-	localAddr.sin_port = htons((u_short) 0);
+	localAddr.sin_port = htons((ospl_ushort) 0);
 
 	if (bind(pTftpDesc->sock, (const struct sockaddr *) &localAddr,
 			sizeof(struct sockaddr_in)) == ERROR)
@@ -665,7 +665,7 @@ static int tftpPeerSet(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
     	}
     	else
     	{
-			pTftpDesc->connected = FALSE;
+			pTftpDesc->connected = ospl_false;
 
 			systools_error("TFTP %s: unknown host.", pHostname);
 #ifdef TFTPC_DEBUG
@@ -680,8 +680,8 @@ static int tftpPeerSet(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
 	bzero(pTftpDesc->serverName, sizeof(pTftpDesc->serverName));
 	strcpy(pTftpDesc->serverName, pHostname);
 	pTftpDesc->serverPort =
-			(port != 0) ? htons((u_short) port) : htons((u_short) TFTP_PORT);
-	pTftpDesc->connected = TRUE;
+			(port != 0) ? htons((ospl_ushort) port) : htons((ospl_ushort) TFTP_PORT);
+	pTftpDesc->connected = ospl_true;
 
 	if (tftpDebug)
 		systools_debug("TFTP Connected to %s [%d]", pHostname,
@@ -718,7 +718,7 @@ int tftpPut(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 	TFTP_MSG tftpAck; /* TFTP ack message     */
 	int port = 0; /* return port number   */
 	int block = 0; /* data block number    */
-	BOOL convert = FALSE; /* convert to ascii	*/
+	ospl_bool convert = ospl_false; /* convert to ascii	*/
 	char charTemp = 0; /* temp char holder	*/
 	int tftpwli = 0, wlicnt = 0;
 	if (pTftpDesc == NULL) /* validate arguments */
@@ -743,7 +743,7 @@ int tftpPut(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 		return (ERROR);
 	}
 	/* initialize variables */
-	convert = (strcmp(pTftpDesc->mode, "netascii") == 0) ? TRUE : FALSE;
+	convert = (strcmp(pTftpDesc->mode, "netascii") == 0) ? ospl_true : ospl_false;
 	charTemp = '\0';
 	bzero((char *) &tftpMsg, sizeof(TFTP_MSG));
 	bzero((char *) &tftpAck, sizeof(TFTP_MSG));
@@ -805,8 +805,8 @@ int tftpPut(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 		/* send data message and get an ACK back with same block no. */
 
 		block++;
-		tftpMsg.th_opcode = htons((u_short) TFTP_DATA);
-		tftpMsg.th_block = htons((u_short) block);
+		tftpMsg.th_opcode = htons((ospl_ushort) TFTP_DATA);
+		tftpMsg.th_block = htons((ospl_ushort) block);
 
 		if (tftpSend(pTftpDesc, &tftpMsg, size + TFTP_DATA_HDR_SIZE, &tftpAck,
 				TFTP_ACK, block, (int *) NULL) == ERROR)
@@ -862,7 +862,7 @@ int tftpGet(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 	int * pPort; /* port pointer		*/
 	int block; /* block expected	*/
 	char * pBuffer; /* pointer to buffer	*/
-	BOOL convert; /* convert from ascii 	*/
+	ospl_bool convert; /* convert from ascii 	*/
 	int numBytes; /* number of bytes 	*/
 	int sizeReply; /* number of data bytes */
 	char charTemp; /* temp char holder 	*/
@@ -894,7 +894,7 @@ int tftpGet(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 	bzero((char *) &tftpMsg, sizeof(TFTP_MSG));
 	bzero((char *) &tftpReply, sizeof(TFTP_MSG));
 	pPort = &port;
-	convert = (strcmp(pTftpDesc->mode, "netascii") == 0) ? TRUE : FALSE;
+	convert = (strcmp(pTftpDesc->mode, "netascii") == 0) ? ospl_true : ospl_false;
 	charTemp = '\0';
 	pTftpDesc->serverAddr.sin_port = pTftpDesc->serverPort;
 	block = 1;
@@ -910,8 +910,8 @@ int tftpGet(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 
 	if (clientOrServer == TFTP_SERVER)
 	{
-		tftpMsg.th_opcode = htons((u_short) TFTP_ACK);
-		tftpMsg.th_block = htons((u_short) (0));
+		tftpMsg.th_opcode = htons((ospl_ushort) TFTP_ACK);
+		tftpMsg.th_block = htons((ospl_ushort) (0));
 		sizeMsg = TFTP_ACK_SIZE;
 	}
 	else
@@ -1004,8 +1004,8 @@ int tftpGet(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 		}
 		/* create ACK message */
 
-		tftpMsg.th_opcode = htons((u_short) TFTP_ACK);
-		tftpMsg.th_block = htons((u_short) (block));
+		tftpMsg.th_opcode = htons((ospl_ushort) TFTP_ACK);
+		tftpMsg.th_block = htons((ospl_ushort) (block));
 		sizeMsg = TFTP_ACK_SIZE;
 
 		/*
@@ -1071,7 +1071,7 @@ static int tftpInfoShow(TFTP_DESC * pTftpDesc /* TFTP descriptor */
 
 /*    int	tftp_start_time;
 
-	if (pTftpDesc->connected == TRUE)
+	if (pTftpDesc->connected == ospl_true)
 		systools_printf("\tConnected to %s [%d]\r\n", pTftpDesc->serverName,
 				ntohs(pTftpDesc->serverPort));
 	else
@@ -1360,7 +1360,7 @@ static int fileToAscii(int fd, /* file descriptor	*/
 {
 	char * ptr; /* pointer to buffer	*/
 	char currentChar; /* current char 	*/
-	int index; /* count variable 	*/
+	ospl_uint32 index; /* count variable 	*/
 	int numBytes; /* num bytes read 	*/
 
 	for (index = 0, ptr = pBuffer; index < bufLen; index++)
@@ -1415,19 +1415,19 @@ static int asciiToFile(int fd, /* file descriptor 	*/
 	char * pBuffer, /* buffer 		*/
 	int bufLen, /* buffer length	*/
 	char * charConv, /* char being converted */
-	BOOL isLastBuff /* last buffer?		*/
+	ospl_bool isLastBuff /* last buffer?		*/
 )
 
 {
 	int count = bufLen; /* counter		*/
 	char * ptr = pBuffer; /* buffer pointer	*/
 	char currentChar; /* current character	*/
-	BOOL skipWrite; /* skip writing		*/
+	ospl_bool skipWrite; /* skip writing		*/
 
 	while (count--)
 	{
 		currentChar = *ptr++;
-		skipWrite = FALSE;
+		skipWrite = ospl_false;
 
 		if (*charConv == '\r')
 
@@ -1441,7 +1441,7 @@ static int asciiToFile(int fd, /* file descriptor 	*/
 			}
 
 			if (currentChar == '\0') /* skip writing (\0) for \r\0 */
-				skipWrite = TRUE;
+				skipWrite = ospl_true;
 		}
 
 		if ((!skipWrite) && (currentChar != '\r'))
@@ -1492,7 +1492,7 @@ static int tftpRequestCreate(TFTP_MSG * pTftpMsg, /* TFTP message pointer	*/
 {
 	register char * cp; /* character pointer 	*/
 
-	pTftpMsg->th_opcode = htons((u_short) opCode);
+	pTftpMsg->th_opcode = htons((ospl_ushort) opCode);
 
 	cp = pTftpMsg->th_request; /* fill in file name	*/
 	strcpy(cp, pFilename);
@@ -1561,8 +1561,8 @@ int tftpErrorCreate(TFTP_MSG * pTftpMsg, /* TFTP error message	*/
 	if (pError->e_code < 0) /* if not found, use EUNDEF */
 		pError = tftpErrors;
 	/* fill in error message */
-	pTftpMsg->th_opcode = htons((u_short) TFTP_ERROR);
-	pTftpMsg->th_error = htons((u_short) pError->e_code);
+	pTftpMsg->th_opcode = htons((ospl_ushort) TFTP_ERROR);
+	pTftpMsg->th_error = htons((ospl_ushort) pError->e_code);
 	strcpy(pTftpMsg->th_errMsg, pError->e_msg);
 
 	systools_printf("ERROR : Tftp module e_code : %d, emsg = %s\r\n", pError->e_code, pError->e_msg);
@@ -1575,7 +1575,7 @@ int tftpErrorCreate(TFTP_MSG * pTftpMsg, /* TFTP error message	*/
  * tftpPacketTrace - trace a TFTP packet
  *
  * tftpPacketTrace prints out diagnostic information about a TFTP packet.
- * Tracing is enabled when the global variable tftpTrace is TRUE.  <pMsg> is a
+ * Tracing is enabled when the global variable tftpTrace is ospl_true.  <pMsg> is a
  * pointer to a diagnostic message that gets printed with each trace.
  * <pTftpMsg> is the TFTP packet of <size> bytes.
  *
@@ -1588,7 +1588,7 @@ static void tftpPacketTrace(char * pMsg, /* diagnostic message 	*/
 )
 
 {
-	u_short op; /* message op code 	*/
+	ospl_ushort op; /* message op code 	*/
 	char * cp; /* temp char pointer 	*/
 	static char * tftpOpCodes[] = /* ascii op codes 	*/
 	{ "#0", "RRQ", /* read request		*/
@@ -1665,7 +1665,7 @@ static int connectOverLoopback(int * pSock1, /* socket 1 		*/
 
 	bzero((char *) &serverAddr, sizeof(struct sockaddr_in));
 	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_port = ntohs((u_short) 0);
+	serverAddr.sin_port = ntohs((ospl_ushort) 0);
 
 	if (/*(ifAddrGet ("lo0", loopAddr) == ERROR) ||*/
 	((serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1")) == ERROR)

@@ -24,14 +24,14 @@
 #include "hal_driver.h"
 
 
-int hal_mirror_enable(ifindex_t ifindex, BOOL enable)
+int hal_mirror_enable(ifindex_t ifindex, ospl_bool enable)
 {
 	if(hal_driver && hal_driver->mirror_tbl && hal_driver->mirror_tbl->sdk_mirror_enable_cb)
 		return hal_driver->mirror_tbl->sdk_mirror_enable_cb(hal_driver->driver, ifindex, enable);
 	return ERROR;
 }
 
-int hal_mirror_source_enable(ifindex_t ifindex, BOOL enable, hal_mirror_mode_t mode, hal_mirror_type_t type)
+int hal_mirror_source_enable(ifindex_t ifindex, ospl_bool enable, hal_mirror_mode_t mode, hal_mirror_type_t type)
 {
 	if(hal_driver && hal_driver->mirror_tbl && hal_driver->mirror_tbl->sdk_mirror_source_enable_cb)
 		return hal_driver->mirror_tbl->sdk_mirror_source_enable_cb(hal_driver->driver, enable, ifindex, mode, type);
@@ -39,7 +39,7 @@ int hal_mirror_source_enable(ifindex_t ifindex, BOOL enable, hal_mirror_mode_t m
 }
 
 
-int hal_mirror_source_filter_enable(BOOL enable, hal_mirror_filter_t filter, hal_mirror_type_t type, mac_t *mac, mac_t *mac1)
+int hal_mirror_source_filter_enable(ospl_bool enable, hal_mirror_filter_t filter, hal_mirror_type_t type, mac_t *mac, mac_t *mac1)
 {
 	if(hal_driver && hal_driver->mirror_tbl && hal_driver->mirror_tbl->sdk_mirror_source_filter_enable_cb)
 		return hal_driver->mirror_tbl->sdk_mirror_source_filter_enable_cb(hal_driver->driver, enable,

@@ -33,6 +33,10 @@
 #ifndef _SYS_QUEUE_H_
 #define	_SYS_QUEUE_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * This file defines four types of data structures: singly-linked lists,
  * singly-linked tail queues, lists and tail queues.
@@ -103,9 +107,9 @@
 #ifdef QUEUE_MACRO_DEBUG
 /* Store the last 2 places the queue element or head was altered */
 struct qm_trace {
-	char * lastfile;
+	ospl_char * lastfile;
 	int lastline;
-	char * prevfile;
+	ospl_char * prevfile;
 	int prevline;
 };
 
@@ -288,7 +292,7 @@ struct {								\
 	(STAILQ_EMPTY((head)) ?						\
 		NULL :							\
 	        ((struct type *)(void *)				\
-		((char *)((head)->stqh_last) - __offsetof(struct type, field))))
+		((ospl_char *)((head)->stqh_last) - __offsetof(struct type, field))))
 
 #define	STAILQ_NEXT(elm, field)	((elm)->field.stqe_next)
 
@@ -631,5 +635,11 @@ struct {								\
 	else								\
 		(head2)->tqh_last = &(head2)->tqh_first;		\
 } while (0)
+
+
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !_SYS_QUEUE_H_ */

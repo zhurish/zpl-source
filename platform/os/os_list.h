@@ -8,6 +8,10 @@
 #ifndef __OS_LIST_H__
 #define __OS_LIST_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* type definitions */
 
 typedef struct node		/* Node of a linked list. */
@@ -22,7 +26,7 @@ typedef struct node		/* Node of a linked list. */
 typedef struct			/* Header for a linked list. */
     {
     NODE node;			/* Header list node */
-    int count;			/* Number of nodes in list */
+    ospl_uint32 count;			/* Number of nodes in list */
     int (*free)(void *);
     int (*cmp)(void *, void *);
     } LIST;
@@ -38,11 +42,11 @@ extern void	lstLibInit (void);
 extern NODE *	lstFirst (LIST *pList);
 extern NODE *	lstGet (LIST *pList);
 extern NODE *	lstLast (LIST *pList);
-extern NODE *	lstNStep (NODE *pNode, int nStep);
+extern NODE *	lstNStep (NODE *pNode, ospl_uint32 nStep);
 extern NODE *	lstNext (NODE *pNode);
-extern NODE *	lstNth (LIST *pList, int nodenum);
+extern NODE *	lstNth (LIST *pList, ospl_uint32 nodenum);
 extern NODE *	lstPrevious (NODE *pNode);
-extern int 	lstCount (LIST *pList);
+extern ospl_uint32 	lstCount (LIST *pList);
 extern int 	lstFind (LIST *pList, NODE *pNode);
 extern void 	lstAdd (LIST *pList, NODE *pNode);
 extern void 	lstConcat (LIST *pDstList, LIST *pAddList);
@@ -56,5 +60,11 @@ extern void 	lstInsert (LIST *pList, NODE *pPrev, NODE *pNode);
 extern void 	lstSortInit (LIST *pList, int(*cmp)(void *, void *));
 extern void 	lstInitFree (LIST *pList, int(*freecb)(void *));
 extern void 	lstAddSort (LIST *pList, NODE *pNode);
+
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* __OS_LIST_H__ */

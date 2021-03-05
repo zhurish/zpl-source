@@ -38,9 +38,9 @@
 #include "tty_com.h"
 
 
-int xyz_modem_build_hdr(xyz_modem_t*xyz, xyz_modem_hdr_t *hdr, char *filename, int filesize)
+int xyz_modem_build_hdr(xyz_modem_t*xyz, xyz_modem_hdr_t *hdr, ospl_char *filename, ospl_uint32 filesize)
 {
-	u_int16 crc = 0, offset = 0;
+	ospl_uint16 crc = 0, offset = 0;
 
 	memset(hdr, 0, sizeof(xyz_modem_hdr_t));
 	xyz->total_SOH++;
@@ -61,9 +61,9 @@ int xyz_modem_build_hdr(xyz_modem_t*xyz, xyz_modem_hdr_t *hdr, char *filename, i
 	return OK;
 }
 
-int xyz_modem_build_data(xyz_modem_t*xyz, xyz_modem_data_t *hdr, char *data, int len)
+int xyz_modem_build_data(xyz_modem_t*xyz, xyz_modem_data_t *hdr, ospl_uchar *data, ospl_uint32 len)
 {
-	u_int16 crc = 0;
+	ospl_uint16 crc = 0;
 	memset(hdr, 0, sizeof(xyz_modem_data_t));
 	xyz->total_STX++;
 	xyz->len += len;
@@ -86,9 +86,9 @@ int xyz_modem_build_data(xyz_modem_t*xyz, xyz_modem_data_t *hdr, char *data, int
 	return OK;
 }
 
-int xyz_modem_build_data_last(xyz_modem_t*xyz, xyz_modem_data_last_t *hdr, char *data, int len)
+int xyz_modem_build_data_last(xyz_modem_t*xyz, xyz_modem_data_last_t *hdr, ospl_uchar *data, ospl_uint32 len)
 {
-	u_int16 crc = 0;
+	ospl_uint16 crc = 0;
 	memset(hdr, 0, sizeof(xyz_modem_data_last_t));
 	xyz->total_SOH++;
 	xyz->len += len;
@@ -113,7 +113,7 @@ int xyz_modem_build_data_last(xyz_modem_t*xyz, xyz_modem_data_last_t *hdr, char 
 
 int xyz_modem_build_finsh_empty(xyz_modem_t*xyz, xyz_modem_data_last_t *hdr)
 {
-	u_int16 crc = 0;
+	ospl_uint16 crc = 0;
 	memset(hdr, 0, sizeof(xyz_modem_data_last_t));
 	hdr->code = EOT ;
 	xyz->sequm = 0;
@@ -126,7 +126,7 @@ int xyz_modem_build_finsh_empty(xyz_modem_t*xyz, xyz_modem_data_last_t *hdr)
 	return OK;
 }
 
-int xyz_modem_build_finsh_eot(xyz_modem_t*xyz, int seq)
+int xyz_modem_build_finsh_eot(xyz_modem_t*xyz, ospl_uint32 seq)
 {
 	xyz->s_eof = seq;
 	//hdr->code = EOT ;
@@ -136,7 +136,7 @@ int xyz_modem_build_finsh_eot(xyz_modem_t*xyz, int seq)
 /************************************************************************/
 /************************************************************************/
 static int
-CYGACC_COMM_IF_GETC_TIMEOUT (char chan, char *c)
+CYGACC_COMM_IF_GETC_TIMEOUT (int chan, ospl_uchar *c)
 {
 	int ret = os_read_timeout(chan, c, 1, xyzModem_CHAR_TIMEOUT);
 	if(ret == 1)
@@ -157,17 +157,17 @@ CYGACC_COMM_IF_GETC_TIMEOUT (char chan, char *c)
 }
 
 static void
-CYGACC_COMM_IF_PUTC (char x, char y)
+CYGACC_COMM_IF_PUTC (int x, ospl_uchar y)
 {
   //putc (y);
-	char val = y;
+	ospl_uchar val = y;
 	os_write_timeout(x, &val, 1, xyzModem_CHAR_TIMEOUT);
 }
 
 
 /* Convert a single hex nibble */
 __inline__ static int
-_from_hex (char c)
+_from_hex (ospl_char c)
 {
 	int ret = 0;
 
@@ -187,8 +187,8 @@ _from_hex (char c)
 }
 
 /* Convert a character to lower case */
-__inline__ static char
-xyz__tolower (char c)
+__inline__ static ospl_char
+xyz__tolower (ospl_char c)
 {
 	if ((c >= 'A') && (c <= 'Z'))
 	{
@@ -198,14 +198,14 @@ xyz__tolower (char c)
 }
 
 /* Parse (scan) a number */
-static BOOL
-parse_num (char *s, unsigned long *val, char **es, char *delim)
+static ospl_bool
+parse_num (ospl_char *s, ospl_uint32 *val, ospl_char **es, ospl_char *delim)
 {
-	BOOL first = TRUE;
-	int radix = 10;
-	char c;
-	unsigned long result = 0;
-	int digit;
+	ospl_bool first = ospl_true;
+	ospl_uint32 radix = 10;
+	ospl_char c;
+	ospl_uint32 result = 0;
+	ospl_uint32 digit;
 
 	while (*s == ' ')
 		s++;
@@ -216,7 +216,7 @@ parse_num (char *s, unsigned long *val, char **es, char *delim)
 			radix = 16;
 			s += 2;
 		}
-		first = FALSE;
+		first = ospl_false;
 		c = *s++;
 		if (is_hex (c) && ((digit = _from_hex (c)) < radix))
 		{
@@ -225,31 +225,31 @@ parse_num (char *s, unsigned long *val, char **es, char *delim)
 		}
 		else
 		{
-			if (delim != (char *) 0)
+			if (delim != (ospl_char *) 0)
 			{
 				/* See if this character is one of the delimiters */
-				char *dp = delim;
+				ospl_char *dp = delim;
 				while (*dp && (c != *dp))
 					dp++;
 				if (*dp)
 					break; /* Found a good delimiter */
 			}
-			return FALSE; /* Malformatted number */
+			return ospl_false; /* Malformatted number */
 		}
 	}
 	*val = result;
-	if (es != (char **) 0)
+	if (es != (ospl_char **) 0)
 	{
 		*es = s;
 	}
-	return TRUE;
+	return ospl_true;
 }
 
-static int zm_dprintf (xyz_modem_t*xyz, char *fmt, ...)
+static int zm_dprintf (xyz_modem_t*xyz, ospl_char *fmt, ...)
 {
-	int len;
+	ospl_uint32 len;
 	va_list args;
-	char p[1024];
+	ospl_char p[1024];
 	memset(p, 0, sizeof(p));
 	va_start(args, fmt);
 	len = vsnprintf(p, sizeof(p), fmt, args);
@@ -268,8 +268,8 @@ static void
 xyz_modem_flush (xyz_modem_t *xyz)
 {
 	int res;
-	char c;
-	while (TRUE)
+	ospl_char c;
+	while (ospl_true)
 	{
 		res = CYGACC_COMM_IF_GETC_TIMEOUT(xyz->fd, &c);
 		if (!res)
@@ -280,11 +280,11 @@ xyz_modem_flush (xyz_modem_t *xyz)
 static int
 xyz_modem_get_hdr (xyz_modem_t *xyz)
 {
-	char c;
-	int res;
-	BOOL hdr_found = FALSE;
-	int i, can_total, hdr_chars;
-	unsigned short cksum;
+	ospl_uchar c;
+	ospl_uint32 res;
+	ospl_bool hdr_found = ospl_false;
+	ospl_uint32 i, can_total, hdr_chars;
+	ospl_int16 cksum;
 
 	ZM_DEBUG (zm_new ());
 	/* Find the start of a header */
@@ -294,7 +294,7 @@ xyz_modem_get_hdr (xyz_modem_t *xyz)
 	if (xyz->tx_ack)
 	{
 		CYGACC_COMM_IF_PUTC (xyz->fd, ACK);
-		xyz->tx_ack = FALSE;
+		xyz->tx_ack = ospl_false;
 	}
 	while (!hdr_found)
 	{
@@ -310,7 +310,7 @@ xyz_modem_get_hdr (xyz_modem_t *xyz)
 				case STX:
 					if (c == STX)
 						xyz->total_STX++;
-					hdr_found = TRUE;
+					hdr_found = ospl_true;
 					break;
 				case CAN:
 					xyz->total_CAN++;
@@ -349,14 +349,14 @@ xyz_modem_get_hdr (xyz_modem_t *xyz)
 	}
 
 	/* Header found, now read the data */
-	res = CYGACC_COMM_IF_GETC_TIMEOUT (xyz->fd, (char *) &xyz->blk);
+	res = CYGACC_COMM_IF_GETC_TIMEOUT (xyz->fd, (ospl_uchar *) &xyz->blk);
 	ZM_DEBUG (zm_save (xyz->blk));
 	if (!res)
 	{
 		ZM_DEBUG (zm_dump (__LINE__));
 		return xyzModem_timeout;
 	}
-	res = CYGACC_COMM_IF_GETC_TIMEOUT (xyz->fd, (char *) &xyz->cblk);
+	res = CYGACC_COMM_IF_GETC_TIMEOUT (xyz->fd, (ospl_uchar *) &xyz->cblk);
 	ZM_DEBUG (zm_save (xyz->cblk));
 	if (!res)
 	{
@@ -379,7 +379,7 @@ xyz_modem_get_hdr (xyz_modem_t *xyz)
 			return xyzModem_timeout;
 		}
 	}
-	res = CYGACC_COMM_IF_GETC_TIMEOUT (xyz->fd, (char *) &xyz->crc1);
+	res = CYGACC_COMM_IF_GETC_TIMEOUT (xyz->fd, (ospl_uchar *) &xyz->crc1);
 	ZM_DEBUG (zm_save (xyz->crc1));
 	if (!res)
 	{
@@ -388,7 +388,7 @@ xyz_modem_get_hdr (xyz_modem_t *xyz)
 	}
 	if (xyz->crc_mode)
 	{
-		res = CYGACC_COMM_IF_GETC_TIMEOUT (xyz->fd, (char *) &xyz->crc2);
+		res = CYGACC_COMM_IF_GETC_TIMEOUT (xyz->fd, (ospl_uchar *) &xyz->crc2);
 		ZM_DEBUG (zm_save (xyz->crc2));
 		if (!res)
 		{
@@ -397,7 +397,7 @@ xyz_modem_get_hdr (xyz_modem_t *xyz)
 		}
 	}ZM_DEBUG (zm_dump (__LINE__));
 	/* Validate the message */
-	if ((xyz->blk ^ xyz->cblk) != (unsigned char) 0xFF)
+	if ((xyz->blk ^ xyz->cblk) != (ospl_uchar) 0xFF)
 	{
 		zm_dprintf (xyz, "Framing error - blk: %x/%x/%x\n", xyz->blk, xyz->cblk,
 					(xyz->blk ^ xyz->cblk));
@@ -435,11 +435,11 @@ xyz_modem_get_hdr (xyz_modem_t *xyz)
 }
 
 static int
-xyz_modem_stream_open (xyz_modem_t *xyz, int *err)
+xyz_modem_stream_open (xyz_modem_t *xyz, ospl_uint32 *err)
 {
-	int stat = 0;
-	int retries = xyzModem_MAX_RETRIES;
-	int crc_retries = xyzModem_MAX_RETRIES_WITH_CRC;
+	ospl_uint32 stat = 0;
+	ospl_uint32 retries = xyzModem_MAX_RETRIES;
+	ospl_uint32 crc_retries = xyzModem_MAX_RETRIES_WITH_CRC;
 
 	/*    ZM_DEBUG(zm_out = zm_out_start); */
 #ifdef xyzModem_zmodem
@@ -454,9 +454,9 @@ xyz_modem_stream_open (xyz_modem_t *xyz, int *err)
 	//int dummy = 0;
 	//xyz->__chan = &dummy;
 	xyz->len = 0;
-	xyz->crc_mode = TRUE;
-	xyz->at_eof = FALSE;
-	xyz->tx_ack = FALSE;
+	xyz->crc_mode = ospl_true;
+	xyz->at_eof = ospl_false;
+	xyz->tx_ack = ospl_false;
 	// xyz->mode = info->mode;
 	xyz->total_retries = 0;
 	xyz->total_SOH = 0;
@@ -486,9 +486,9 @@ xyz_modem_stream_open (xyz_modem_t *xyz, int *err)
 				while (*xyz->bufp++)
 					;
 				/* get the length */
-				parse_num ((char *) xyz->bufp, &xyz->file_length, NULL, " ");
+				parse_num ((ospl_char *) xyz->bufp, &xyz->file_length, NULL, " ");
 				/* The rest of the file name data block quietly discarded */
-				xyz->tx_ack = TRUE;
+				xyz->tx_ack = ospl_true;
 			}
 			xyz->next_blk = 1;
 			xyz->len = 0;
@@ -497,7 +497,7 @@ xyz_modem_stream_open (xyz_modem_t *xyz, int *err)
 		else if (stat == xyzModem_timeout)
 		{
 			if (--crc_retries <= 0)
-				xyz->crc_mode = FALSE;
+				xyz->crc_mode = ospl_false;
 			CYGACC_CALL_IF_DELAY_US(5 * 100000); /* Extra delay for startup */
 			CYGACC_COMM_IF_PUTC (xyz->fd, (xyz->crc_mode ? 'C' : NAK));
 			xyz->total_retries++;
@@ -514,10 +514,10 @@ xyz_modem_stream_open (xyz_modem_t *xyz, int *err)
 }
 
 static int
-xyz_modem_stream_read (xyz_modem_t *xyz, char *buf, int size, int *err)
+xyz_modem_stream_read (xyz_modem_t *xyz, ospl_uchar *buf, ospl_uint32 size, ospl_uint32 *err)
 {
-	int stat, total, len;
-	int retries;
+	ospl_uint32 stat, total, len;
+	ospl_uint32 retries;
 
 	total = 0;
 	stat = xyzModem_cancel;
@@ -534,7 +534,7 @@ xyz_modem_stream_read (xyz_modem_t *xyz, char *buf, int size, int *err)
 				{
 					if (xyz->blk == xyz->next_blk)
 					{
-						xyz->tx_ack = TRUE;
+						xyz->tx_ack = ospl_true;
 						zm_dprintf (xyz, "ACK block %d (%d)\n", xyz->blk,
 						__LINE__);
 						xyz->next_blk = (xyz->next_blk + 1) & 0xFF;
@@ -603,7 +603,7 @@ xyz_modem_stream_read (xyz_modem_t *xyz, char *buf, int size, int *err)
 						CYGACC_COMM_IF_PUTC (xyz->fd, ACK);
 						zm_dprintf (xyz, "FINAL ACK (%d)\n", __LINE__);
 					}
-					xyz->at_eof = TRUE;
+					xyz->at_eof = ospl_true;
 					break;
 				}
 				CYGACC_COMM_IF_PUTC (xyz->fd, (xyz->crc_mode ? 'C' : NAK));
@@ -635,7 +635,7 @@ xyz_modem_stream_read (xyz_modem_t *xyz, char *buf, int size, int *err)
 }
 
 static void
-xyz_modem_stream_close (xyz_modem_t *xyz, int *err)
+xyz_modem_stream_close (xyz_modem_t *xyz, ospl_uint32 *err)
 {
 	zm_dprintf(xyz,
 			"xyzModem - %s mode, %d(SOH)/%d(STX)/%d(CAN) packets, %d retries\n",
@@ -647,9 +647,9 @@ xyz_modem_stream_close (xyz_modem_t *xyz, int *err)
 /* Need to be able to clean out the input buffer, so have to take the */
 /* getc */
 static void
-xyz_modem_stream_terminate (xyz_modem_t *xyz, BOOL abort, int (*xyz_getc) (xyz_modem_t *))
+xyz_modem_stream_terminate (xyz_modem_t *xyz, ospl_bool abort, int (*xyz_getc) (xyz_modem_t *))
 {
-	int c;
+	ospl_uchar c;
 
 	if (abort)
 	{
@@ -671,7 +671,7 @@ xyz_modem_stream_terminate (xyz_modem_t *xyz, BOOL abort, int (*xyz_getc) (xyz_m
 				/* Now consume the rest of what's waiting on the line. */
 				zm_dprintf (xyz, "Flushing serial line.\n");
 				xyz_modem_flush (xyz);
-				xyz->at_eof = TRUE;
+				xyz->at_eof = ospl_true;
 				break;
 #ifdef xyzModem_zmodem
 				case xyzModem_zmodem:
@@ -698,13 +698,13 @@ xyz_modem_stream_terminate (xyz_modem_t *xyz, BOOL abort, int (*xyz_getc) (xyz_m
 		 * time to get control again after their file transfer program
 		 * exits.
 		 */
-		CYGACC_CALL_IF_DELAY_US((int ) 250000);
+		CYGACC_CALL_IF_DELAY_US((ospl_uint32 ) 250000);
 	}
 	zm_dprintf (xyz, "----------------------------\n");
 }
 
-char *
-xyz_modem_error (int err)
+ospl_char *
+xyz_modem_error (ospl_uint32 err)
 {
 	switch (err) {
 	case xyzModem_access:
@@ -740,7 +740,7 @@ xyz_modem_error (int err)
 
 static int xyz_getcxmodem(xyz_modem_t *xyz) {
 
-	char c = 0;
+	ospl_uchar c = 0;
 	int ret = os_read_timeout(xyz->fd, &c, 1, xyzModem_CHAR_TIMEOUT);
 	if(ret == 1)
 		return 1;
@@ -751,13 +751,13 @@ static int xyz_getcxmodem(xyz_modem_t *xyz) {
 }
 
 
-static int xyz_putc_cb(int fd, int c)
+static int xyz_putc_cb(int fd, ospl_uchar c)
 {
-	char i = c & 0xff;
+	ospl_uchar i = c & 0xff;
 	return os_write_timeout(fd, &i, 1, xyzModem_CHAR_TIMEOUT);
 }
 
-static int xyz_getc_cb(int fd, unsigned char *c, int ms)
+static int xyz_getc_cb(int fd, ospl_uchar *c, ospl_uint32 ms)
 {
 	//return read(fd, c, 1);
 	//return xyz_getc_timeout(fd, c, 1, ms);
@@ -765,7 +765,7 @@ static int xyz_getc_cb(int fd, unsigned char *c, int ms)
 
 }
 
-static int write_wait_cb(int fd, unsigned char *c, int len, int ms)
+static int write_wait_cb(int fd, ospl_uchar *c, ospl_uint32 len, ospl_uint32 ms)
 {
 	//return write(fd, c, len);
 	return os_write_timeout(fd, c, len, xyzModem_CHAR_TIMEOUT);
@@ -791,13 +791,13 @@ static int xyz_modem_cb_default(xyz_modem_t *xyz)
 }
 
 
-int xyz_modem_load(xyz_modem_t *xyz, int mode, char *devi)
+int xyz_modem_load(xyz_modem_t *xyz, ospl_uint32 mode, ospl_char *devi)
 {
-	int size = 0;
-	int err = 0;
-	int res = 0;
+	ospl_uint32 size = 0;
+	ospl_uint32 err = 0;
+	ospl_uint32 res = 0;
 	struct tty_com	ttycom_tmp;
-	char ymodemBuf[XYZ_MAX_SIZE];
+	ospl_uchar ymodemBuf[XYZ_MAX_SIZE];
 
 	memset(&ttycom_tmp, 0, sizeof(ttycom_tmp));
 	xyz_modem_cb_default (xyz);
@@ -842,7 +842,7 @@ int xyz_modem_load(xyz_modem_t *xyz, int mode, char *devi)
 	}
 
 	xyz_modem_stream_close (xyz, &err);
-	xyz_modem_stream_terminate (xyz, FALSE, &xyz_getcxmodem);
+	xyz_modem_stream_terminate (xyz, ospl_false, &xyz_getcxmodem);
 	if(devi)
 	{
 		tty_com_close(&ttycom_tmp);

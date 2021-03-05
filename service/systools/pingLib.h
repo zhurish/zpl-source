@@ -25,9 +25,9 @@ modification history
                  TOR2_2-FCS-COPY label, tor2 branch, /wind/river VOB)
 01e,09may03,vvv  included ip_icmp.h
 01d,25jul02,ant  definitions ICMP_PROTO and ICMP_TYPENUM removed 
-01c,03may02,ant  u_char	bufTx [PING_MAXPACKET] in the struct PING_STAT changed
-		 to u_char *bufTx. It is allocated dynamically now. Receive
-		 buffer u_char bufRx[PING_MAXPACKET] changed in the same way.
+01c,03may02,ant  ospl_uchar	bufTx [PING_MAXPACKET] in the struct PING_STAT changed
+		 to ospl_uchar *bufTx. It is allocated dynamically now. Receive
+		 buffer ospl_uchar bufRx[PING_MAXPACKET] changed in the same way.
 		 New member int timing defined in the struct PING_STAT. 
 		 PING_MAXPACKET	increased to 65536.
 01b,14jan00,ham  changed PING_STAT for PD support.
@@ -87,29 +87,29 @@ typedef struct pingStat                         /* PING_STAT */
     char                *bufRx;                 /* receive buffer */
     struct icmp         *pBufIcmp;               /* ptr to icmp */
     struct timeval		*pBufTime;               /* ptr to time */
-    u_int16				rxmaxlen;
-    u_int16             dataLen;                /* size of data portion */
+    ospl_uint16				rxmaxlen;
+    ospl_uint16             dataLen;                /* size of data portion */
     int                 numPacket;              /* total # of packets to send */
-    u_int32             numTx;                  /* number of packets sent */
-    u_int32             numRx;                  /* number of packets received */
-    u_int32             idRx;                   /* id of Rx task */
-    u_int32             tMin;                   /* min RT time (ms) */
-    u_int32             tMax;                   /* max RT time (ms) */
-    u_int32             tSum;                   /* sum of all times */
-    u_int32             flags;                  /* option flags */
-    u_int32             timing;                 /* flag to do timing */
-    u_int16 			pingTxLen; /* size of icmp echo packet */
-    u_int8 				pingTxInterval; /* packet interval in seconds */
-    u_int8 				pingTxTmo; /* packet timeout in seconds */
-    u_int8              maxttl;
+    ospl_uint32             numTx;                  /* number of packets sent */
+    ospl_uint32             numRx;                  /* number of packets received */
+    ospl_uint32             idRx;                   /* id of Rx task */
+    ospl_uint32             tMin;                   /* min RT time (ms) */
+    ospl_uint32             tMax;                   /* max RT time (ms) */
+    ospl_uint32             tSum;                   /* sum of all times */
+    ospl_uint32             flags;                  /* option flags */
+    ospl_uint32             timing;                 /* flag to do timing */
+    ospl_uint16 			pingTxLen; /* size of icmp echo packet */
+    ospl_uint8 				pingTxInterval; /* packet interval in seconds */
+    ospl_uint8 				pingTxTmo; /* packet timeout in seconds */
+    ospl_uint8              maxttl;
     struct vty			*vty;
-    BOOL				quit;
+    ospl_bool				quit;
     } PING_STAT;
 
 
 /* forward declarations */
  
-extern int ping(struct vty *vty, char * host, int numPackets, int len, u_int32 options);
+extern int ping(struct vty *vty, char * host, int numPackets, int len, ospl_uint32 options);
 
 
 #ifdef __cplusplus

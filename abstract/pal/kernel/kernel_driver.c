@@ -143,8 +143,8 @@
  */
 
 struct ethhdr {
-	unsigned char	h_dest[ETH_ALEN];	/* destination eth addr	*/
-	unsigned char	h_source[ETH_ALEN];	/* source ether addr	*/
+	ospl_uint8	h_dest[ETH_ALEN];	/* destination eth addr	*/
+	ospl_uint8	h_source[ETH_ALEN];	/* source ether addr	*/
 	__be16		h_proto;		/* packet type ID field	*/
 } __attribute__((packed));
 
@@ -152,9 +152,9 @@ struct ethhdr {
 #endif
 
 static int sock = 0;
-static int kernel_driver_recv_handle(unsigned char *buf, int len);
+static int kernel_driver_recv_handle(ospl_uint8 *buf, ospl_uint32 len);
 
-static int kernel_driver_socket_init(int ifindex)
+static int kernel_driver_socket_init(ifindex_t ifindex)
 {
 	sock = raw_sock_create(SOCK_RAW, /*ETH_P_IP|ETH_P_ARP|*/ETH_P_ALL);
 	if(sock)
@@ -165,7 +165,7 @@ static int kernel_driver_socket_init(int ifindex)
 			 * 如果IP_HDRINCL未开启，由进程让内核发送的数据是从IP首部之后的第一个字节开始的，内核会自动构造合适的IP
 			 *	如果IP_HDRINGL开启，进程需要自行构造IP包
 			*/
-			int val = 1;
+			ospl_uint32 val = 1;
 			if (setsockopt(sock, IPPROTO_IP, IP_HDRINCL, val, sizeof(int)))
 			{
 				close(sock);
@@ -188,7 +188,7 @@ static int kernel_driver_recv(int fd)
 	struct sockaddr_storage	 ss;
 	//struct sockaddr_in	*sin4 = NULL;
 
-	unsigned char		 packetbuf[1024];
+	ospl_uint8		 packetbuf[1024];
 	//int ifindex = 0;
 
 
@@ -225,13 +225,13 @@ static int kernel_driver_thread(struct eloop *eloop)
 	return kernel_driver_recv(fd);
 }
 
-static int kernel_driver_recv_handle(unsigned char *buf, int len)
+static int kernel_driver_recv_handle(ospl_uint8 *buf, ospl_uint32 len)
 {
 	//struct ether_header *eth = NULL;
 	//eth = (struct ether_header *)(buf);
 	char debug_buf[1024];
 	char tmp[32];
-	int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < 64; i++)
 	{
 		sprintf(tmp, "0x02%x", buf[i]);
@@ -240,17 +240,17 @@ static int kernel_driver_recv_handle(unsigned char *buf, int len)
 	return 0;
 }
 
-/*static int kernel_driver_send_ip_handle(int sock, int ifindex, unsigned char *buf, int len)
+/*static int kernel_driver_send_ip_handle(int sock, int ifindex, ospl_uint8 *buf, ospl_uint32 len)
 {
 	return raw_sock_sendto(sock, AF_PACKET, ETH_P_IP, ifindex, buf, buf, len);
 }
 
-static int kernel_driver_send_arp_handle(int sock, int ifindex, unsigned char *buf, int len)
+static int kernel_driver_send_arp_handle(int sock, int ifindex, ospl_uint8 *buf, ospl_uint32 len)
 {
 	return raw_sock_sendto(sock, AF_PACKET, ETH_P_ARP, ifindex, buf, buf, len);
 }
 
-static int kernel_driver_send_rarp_handle(int sock, int ifindex, unsigned char *buf, int len)
+static int kernel_driver_send_rarp_handle(int sock, int ifindex, ospl_uint8 *buf, ospl_uint32 len)
 {
 	return raw_sock_sendto(sock, AF_PACKET, ETH_P_RARP, ifindex, buf, buf, len);
 }*/

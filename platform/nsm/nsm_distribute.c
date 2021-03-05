@@ -40,9 +40,9 @@ void (*distribute_delete_hook) (struct distribute *);
 */
 static struct distribute_master *d_master[3];
 
-static int distribute_master_get (int proto, struct distribute_master **dm)
+static int distribute_master_get (ospl_uint16 proto, struct distribute_master **dm)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < 3; i++)
 	{
 		if(d_master[i])
@@ -69,7 +69,7 @@ distribute_new (void)
 static void
 distribute_free (struct distribute *dist)
 {
-  int i = 0;
+  ospl_uint32 i = 0;
   if (dist->ifname)
     XFREE (MTYPE_DISTRIBUTE_IFNAME, dist->ifname);
 
@@ -87,7 +87,7 @@ distribute_free (struct distribute *dist)
 static void
 distribute_free_if_empty(struct distribute_master *dm, struct distribute *dist)
 {
-  int i;
+  ospl_uint32 i = 0;
   for (i=0; i < DISTRIBUTE_MAX; i++)
     if (dist->list[i] != NULL || dist->prefix[i] != NULL)
       return;
@@ -104,7 +104,7 @@ distribute_lookup (struct distribute_master *dm, const char *ifname)
   struct distribute *dist;
 
   /* temporary reference */
-  key.ifname = (char *)ifname;
+  key.ifname = (ospl_char *)ifname;
 
   dist = hash_lookup (dm->disthash, &key);
   
@@ -112,9 +112,9 @@ distribute_lookup (struct distribute_master *dm, const char *ifname)
 }
 
 void
-distribute_list_add_hook (int proto,void (*func) (struct distribute *))
+distribute_list_add_hook (ospl_uint16 proto,void (*func) (struct distribute *))
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < 3; i++)
 	{
 		if(d_master[i])
@@ -128,9 +128,9 @@ distribute_list_add_hook (int proto,void (*func) (struct distribute *))
 }
 
 void
-distribute_list_delete_hook (int proto, void (*func) (struct distribute *))
+distribute_list_delete_hook (ospl_uint16 proto, void (*func) (struct distribute *))
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < 3; i++)
 	{
 		if(d_master[i])
@@ -163,12 +163,12 @@ distribute_get (struct distribute_master *dm, const char *ifname)
   struct distribute key;
 
   /* temporary reference */
-  key.ifname = (char *)ifname;
+  key.ifname = (ospl_char *)ifname;
   
   return hash_get (dm->disthash, &key, (void * (*) (void *))distribute_hash_alloc);
 }
 
-static unsigned int
+static ospl_uint32 
 distribute_hash_make (void *arg)
 {
   const struct distribute *dist = arg;
@@ -191,7 +191,7 @@ distribute_cmp (const struct distribute *dist1, const struct distribute *dist2)
 
 /* Set access-list name to the distribute list. */
 static struct distribute *
-distribute_list_set (int proto, const char *ifname, enum distribute_type type,
+distribute_list_set (ospl_uint16 proto, const char *ifname, enum distribute_type type,
                      const char *alist_name)
 {
   struct distribute *dist;
@@ -214,7 +214,7 @@ distribute_list_set (int proto, const char *ifname, enum distribute_type type,
 /* Unset distribute-list.  If matched distribute-list exist then
    return 1. */
 static int
-distribute_list_unset (int proto, const char *ifname, enum distribute_type type,
+distribute_list_unset (ospl_uint16 proto, const char *ifname, enum distribute_type type,
 		       const char *alist_name)
 {
   struct distribute *dist;
@@ -244,7 +244,7 @@ distribute_list_unset (int proto, const char *ifname, enum distribute_type type,
 
 /* Set access-list name to the distribute list. */
 static struct distribute *
-distribute_list_prefix_set (int proto, const char *ifname, enum distribute_type type,
+distribute_list_prefix_set (ospl_uint16 proto, const char *ifname, enum distribute_type type,
 			    const char *plist_name)
 {
   struct distribute *dist;
@@ -267,7 +267,7 @@ distribute_list_prefix_set (int proto, const char *ifname, enum distribute_type 
 /* Unset distribute-list.  If matched distribute-list exist then
    return 1. */
 static int
-distribute_list_prefix_unset (int proto, const char *ifname, enum distribute_type type,
+distribute_list_prefix_unset (ospl_uint16 proto, const char *ifname, enum distribute_type type,
 			      const char *plist_name)
 {
   struct distribute *dist;
@@ -869,7 +869,7 @@ ALIAS (no_ipv6_distribute_list_prefix,
        "Interface name\n")
 
 static int
-distribute_print (struct vty *vty, char *tab[], int is_prefix,
+distribute_print (struct vty *vty, ospl_char *tab[], int is_prefix,
                   enum distribute_type type, int has_print)
 {
   if (tab[type]) {
@@ -885,7 +885,7 @@ distribute_print (struct vty *vty, char *tab[], int is_prefix,
 int
 config_show_distribute (struct distribute_master *dm, struct vty *vty)
 {
-  unsigned int i;
+  ospl_uint32  i;
   int has_print = 0;
   struct hash_backet *mp;
   struct distribute *dist;
@@ -983,7 +983,7 @@ config_show_distribute (struct distribute_master *dm, struct vty *vty)
 int
 config_write_distribute (struct distribute_master *dm, struct vty *vty)
 {
-  unsigned int i;
+  ospl_uint32  i;
   int j;
   int output, v6;
   struct hash_backet *mp;
@@ -1027,9 +1027,9 @@ config_write_distribute (struct distribute_master *dm, struct vty *vty)
 
 /* Clear all distribute list. */
 void
-distribute_list_reset (int proto)
+distribute_list_reset (ospl_uint16 proto)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < 3; i++)
 	{
 		if(d_master[i])
@@ -1043,7 +1043,7 @@ distribute_list_reset (int proto)
 	}
 }
 
-struct distribute_master * distribute_master_list_init(int protocol)
+struct distribute_master * distribute_master_list_init(ospl_uint16 protocol)
 {
 	struct distribute_master * dis_master;
 	dis_master = XCALLOC(MTYPE_DISTRIBUTE, sizeof(struct distribute_master));
@@ -1058,7 +1058,7 @@ struct distribute_master * distribute_master_list_init(int protocol)
 
 /* Initialize distribute list related hash. */
 void
-distribute_list_init (int node)
+distribute_list_init (ospl_uint32 node)
 {
   //disthash = hash_create (distribute_hash_make,
   //                        (int (*) (const void *, const void *)) distribute_cmp);

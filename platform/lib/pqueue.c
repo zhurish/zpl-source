@@ -43,7 +43,7 @@ Boston, MA 02111-1307, USA.  */
 #define HAVE_CHILD(x,q) (x < (q)->size / 2)
 
 void
-trickle_up (int index, struct pqueue *queue)
+trickle_up (ospl_uint32 index, struct pqueue *queue)
 {
   void *tmp;
 
@@ -69,7 +69,7 @@ trickle_up (int index, struct pqueue *queue)
 }
 
 void
-trickle_down (int index, struct pqueue *queue)
+trickle_down (ospl_uint32 index, struct pqueue *queue)
 {
   void *tmp;
   int which;
@@ -171,7 +171,7 @@ pqueue_dequeue (struct pqueue *queue)
 }
 
 void
-pqueue_remove_at (int index, struct pqueue *queue)
+pqueue_remove_at (ospl_uint32 index, struct pqueue *queue)
 {
   queue->array[index] = queue->array[--queue->size];
 
@@ -187,9 +187,9 @@ pqueue_remove_at (int index, struct pqueue *queue)
     }
 }
 
-BOOL pqueue_empty (struct pqueue *queue)
+ospl_bool pqueue_empty (struct pqueue *queue)
 {
 	if(queue->size)
-		return FALSE;
-	return TRUE;
+		return ospl_false;
+	return ospl_true;
 }

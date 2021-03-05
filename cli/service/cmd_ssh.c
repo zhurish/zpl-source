@@ -37,7 +37,7 @@ DEFUN (ssh_service_enable,
 		"Service configure\n"
 		"Enable\n")
 {
-	if(ssh_enable_api(TRUE) == OK)
+	if(ssh_enable_api(ospl_true) == OK)
 		return CMD_SUCCESS;
 	return CMD_WARNING;
 }
@@ -51,7 +51,7 @@ DEFUN (no_ssh_service_enable,
 		"Service configure\n"
 		"Enable\n")
 {
-	if(ssh_enable_api(FALSE) == OK)
+	if(ssh_enable_api(ospl_false) == OK)
 		return CMD_SUCCESS;
 	return CMD_WARNING;
 }
@@ -64,7 +64,7 @@ DEFUN (sftp_service_enable,
 		"Service configure\n"
 		"Enable\n")
 {
-	if(ssh_enable_api(TRUE) == OK)
+	if(ssh_enable_api(ospl_true) == OK)
 		return CMD_SUCCESS;
 	return CMD_WARNING;
 }
@@ -78,7 +78,7 @@ DEFUN (no_sftp_service_enable,
 		"Service configure\n"
 		"Enable\n")
 {
-	if(ssh_enable_api(FALSE) == OK)
+	if(ssh_enable_api(ospl_false) == OK)
 		return CMD_SUCCESS;
 	return CMD_WARNING;
 }
@@ -95,7 +95,7 @@ DEFUN (ssh_bind_address,
 	struct prefix cp;
 	if(ssh_is_running_api())
 	{
-		ssh_enable_api(FALSE);
+		ssh_enable_api(ospl_false);
 	}
 	if(argc == 1)
 	{
@@ -108,7 +108,7 @@ DEFUN (ssh_bind_address,
 			}
 			if(ssh_bind_address_api(&cp) == OK)
 			{
-				ssh_enable_api(TRUE);
+				ssh_enable_api(ospl_true);
 				return CMD_SUCCESS;
 			}
 		}
@@ -116,7 +116,7 @@ DEFUN (ssh_bind_address,
 		{
 			if(ssh_bind_port_api(atoi(argv[0])) == OK)
 			{
-				ssh_enable_api(TRUE);
+				ssh_enable_api(ospl_true);
 				return CMD_SUCCESS;
 			}
 		}
@@ -130,12 +130,12 @@ DEFUN (ssh_bind_address,
 		}
 		if(ssh_bind_address_api(&cp) != OK)
 		{
-			//ssh_enable_api(TRUE);
+			//ssh_enable_api(ospl_true);
 			return CMD_WARNING;
 		}
 		if(ssh_bind_port_api(atoi(argv[1])) == OK)
 		{
-			ssh_enable_api(TRUE);
+			ssh_enable_api(ospl_true);
 			return CMD_SUCCESS;
 		}
 	}
@@ -169,11 +169,11 @@ ALIAS(ssh_bind_address,
 {
 	if(ssh_is_running_api())
 	{
-		ssh_enable_api(FALSE);
+		ssh_enable_api(ospl_false);
 	}
 	if(ssh_bind_port_api(atoi(argv[0])) == OK)
 	{
-		ssh_enable_api(TRUE);
+		ssh_enable_api(ospl_true);
 		return CMD_SUCCESS;
 	}
 	return CMD_WARNING;
@@ -187,7 +187,7 @@ DEFUN (ssh_login_set,
 		"Login configure\n"
 		"Enbale login\n")
 {
-	if(ssh_login_api(TRUE) == OK)
+	if(ssh_login_api(ospl_true) == OK)
 	{
 		return CMD_SUCCESS;
 	}
@@ -203,7 +203,7 @@ DEFUN (no_ssh_login_set,
 		"Login configure\n"
 		"Enbale login\n")
 {
-	if(ssh_login_api(FALSE) == OK)
+	if(ssh_login_api(ospl_false) == OK)
 	{
 		return CMD_SUCCESS;
 	}
@@ -224,7 +224,7 @@ DEFUN (ssh_version_set,
 	int ver = 0;
 	if(ssh_is_running_api())
 	{
-		ssh_enable_api(FALSE);
+		ssh_enable_api(ospl_false);
 	}
 	if(strstr(argv[0], "all"))
 		ver = 3;
@@ -232,7 +232,7 @@ DEFUN (ssh_version_set,
 		ver = atoi(argv[0]);
 	if(ssh_version_api(ver) == OK)
 	{
-		ssh_enable_api(TRUE);
+		ssh_enable_api(ospl_true);
 		return CMD_SUCCESS;
 	}
 	return CMD_WARNING;
@@ -249,12 +249,12 @@ DEFUN (no_ssh_version_set,
 	int ver = 0;
 	if(ssh_is_running_api())
 	{
-		ssh_enable_api(FALSE);
+		ssh_enable_api(ospl_false);
 	}
 	ver = 3;
 	if(ssh_version_api(ver) == OK)
 	{
-		ssh_enable_api(TRUE);
+		ssh_enable_api(ospl_true);
 		return CMD_SUCCESS;
 	}
 	return CMD_WARNING;
@@ -363,7 +363,7 @@ DEFUN (ssh_key_generate,
 		"Ecdsa Key\n")
 {
 	int timeval = 0;
-	int type = SSH_KEYTYPE_UNKNOWN;
+	ospl_uint32 type = SSH_KEYTYPE_UNKNOWN;
 	if(memcmp(argv[0], "rsa", 2) == 0)
 		type = SSH_KEYTYPE_RSA;
 	else if(memcmp(argv[0], "dsa", 2) == 0)
@@ -408,7 +408,7 @@ DEFUN (ssh_key_import,
 		"Private Type\n"
 		"Key File Name\n")
 {
-	int type = 0;
+	ospl_uint32 type = 0;
 	if(memcmp(argv[1], "public", 2) == 0)
 		type = 1;
 	else if(memcmp(argv[1], "private", 2) == 0)
@@ -430,7 +430,7 @@ DEFUN (ssh_key_export,
 		"Private Type\n"
 		"Key File Name\n")
 {
-	int type = 0;
+	ospl_uint32 type = 0;
 	if(memcmp(argv[1], "public", 2) == 0)
 		type = 1;
 	else if(memcmp(argv[1], "private", 2) == 0)
@@ -452,7 +452,7 @@ DEFUN (ssh_key_set,
 		"Ecdsa Key\n"
 		"Key File Name\n")
 {
-	int type = 0;
+	ospl_uint32 type = 0;
 	if(memcmp(argv[0], "hostkey", 2) == 0)
 		type = SSH_BIND_OPTIONS_HOSTKEY;
 	else if(memcmp(argv[0], "rsakey", 2) == 0)
@@ -478,7 +478,7 @@ DEFUN (no_ssh_key_set,
 		"Dsa Key\n"
 		"Ecdsa Key\n")
 {
-	int type = 0;
+	ospl_uint32 type = 0;
 	if(memcmp(argv[0], "hostkey", 2) == 0)
 		type = SSH_BIND_OPTIONS_HOSTKEY;
 	else if(memcmp(argv[0], "rsakey", 2) == 0)

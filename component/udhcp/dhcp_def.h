@@ -8,6 +8,10 @@
 #ifndef UDHCP_DEF_H
 #define UDHCP_DEF_H 1
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "dhcp_config.h"
 //PUSH_AND_SET_FUNCTION_VISIBILITY_TO_HIDDEN
 
@@ -52,24 +56,24 @@
 
 //TODO: rename ciaddr/yiaddr/chaddr
 struct dhcp_packet {
-	uint8_t op;      /* BOOTREQUEST or BOOTREPLY */
-	uint8_t htype;   /* hardware address type. 1 = 10mb ethernet */
-	uint8_t hlen;    /* hardware address length */
-	uint8_t hops;    /* used by relay agents only */
-	uint32_t xid;    /* unique id */
-	uint16_t secs;   /* elapsed since client began acquisition/renewal */
-	uint16_t flags;  /* only one flag so far: */
-	uint32_t ciaddr; /* client IP (if client is in BOUND, RENEW or REBINDING state) */
-	uint32_t yiaddr; /* 'your' (client) IP address */
+	ospl_uint8 op;      /* BOOTREQUEST or BOOTREPLY */
+	ospl_uint8 htype;   /* hardware address type. 1 = 10mb ethernet */
+	ospl_uint8 hlen;    /* hardware address length */
+	ospl_uint8 hops;    /* used by relay agents only */
+	ospl_uint32  xid;    /* unique id */
+	ospl_uint16 secs;   /* elapsed since client began acquisition/renewal */
+	ospl_uint16 flags;  /* only one flag so far: */
+	ospl_uint32  ciaddr; /* client IP (if client is in BOUND, RENEW or REBINDING state) */
+	ospl_uint32  yiaddr; /* 'your' (client) IP address */
 	/* IP address of next server to use in bootstrap, returned in DHCPOFFER, DHCPACK by server */
-	uint32_t siaddr_nip; /*若 client 需要透过网络开机，从 server 送出之 DHCP OFFER、DHCPACK、DHCPNACK封包中，
+	ospl_uint32  siaddr_nip; /*若 client 需要透过网络开机，从 server 送出之 DHCP OFFER、DHCPACK、DHCPNACK封包中，
 							此栏填写开机程序代码所在 server 之地址*/
-	uint32_t gateway_nip; /* relay agent IP address */
-	uint8_t chaddr[DHCP_CHADDR_LEN];   /* link-layer client hardware address (MAC) */
-	uint8_t sname[DHCP_SNAME_LEN];    /* server host name (ASCIZ) */
-	uint8_t file[DHCP_FILE_LEN];    /* boot file name (ASCIZ) */
-	uint32_t cookie;      /* fixed first four option bytes (99,130,83,99 dec) */
-	uint8_t options[DHCP_OPTIONS_BUFSIZE + CONFIG_UDHCPC_SLACK_FOR_BUGGY_SERVERS];
+	ospl_uint32  gateway_nip; /* relay agent IP address */
+	ospl_uint8 chaddr[DHCP_CHADDR_LEN];   /* link-layer client hardware address (MAC) */
+	ospl_uint8 sname[DHCP_SNAME_LEN];    /* server host name (ASCIZ) */
+	ospl_uint8 file[DHCP_FILE_LEN];    /* boot file name (ASCIZ) */
+	ospl_uint32  cookie;      /* fixed first four option bytes (99,130,83,99 dec) */
+	ospl_uint8 options[DHCP_OPTIONS_BUFSIZE + CONFIG_UDHCPC_SLACK_FOR_BUGGY_SERVERS];
 } PACKED;
 
 struct ip_udp_dhcp_packet {
@@ -221,13 +225,13 @@ enum {
     0x0002表示后面是DUID*/
 
 struct dhcp_optflag {
-	uint8_t flags;
-	uint8_t code;
+	ospl_uint8 flags;
+	ospl_uint8 code;
 };
 
 /*
 struct option_set {
-	uint8_t *data;
+	ospl_uint8 *data;
 	struct option_set *next;
 };
 */
@@ -262,8 +266,8 @@ struct option_set {
 
 typedef struct dhcp_global_s
 {
-	int		task_id;
-	BOOL	init;
+	ospl_uint32		task_id;
+	ospl_bool	init;
 	LIST 	pool_list;
 	LIST 	client_list;
 	LIST 	relay_list;
@@ -271,11 +275,11 @@ typedef struct dhcp_global_s
 	void	*eloop_master;
 	void	*r_thread;
 
-	uint16_t server_port;
-	uint16_t client_port;
+	ospl_uint16 server_port;
+	ospl_uint16 client_port;
 
-	uint16_t server_port_v6;
-	uint16_t client_port_v6;
+	ospl_uint16 server_port_v6;
+	ospl_uint16 client_port_v6;
 
 	int		sock;		//udp socket, just for server
 	int		rawsock;	//raw socket, just for server send MSG to client
@@ -284,8 +288,8 @@ typedef struct dhcp_global_s
 	int		rawsock_v6;
 
 	int		client_sock;		//udp socket, just for client
-	int		client_cnt;
-	int		client_debug;
+	ospl_uint32		client_cnt;
+	ospl_uint32		client_debug;
 }dhcp_global_t;
 
 extern dhcp_global_t dhcp_global_config;
@@ -297,18 +301,18 @@ extern dhcp_global_t dhcp_global_config;
 //extern const struct dhcp_optflag dhcp_optflags[];
 //extern const char dhcp_option_strings[] ALIGN1;
 #endif
-//extern const uint8_t dhcp_option_lengths[] ALIGN1;
+//extern const ospl_uint8 dhcp_option_lengths[] ALIGN1;
 
 //unsigned FAST_FUNC udhcp_option_idx(const char *name, const char *option_strings);
-//unsigned int FAST_FUNC udhcp_option_idx(const int opc);
+//ospl_uint32 FAST_FUNC udhcp_option_idx(const int opc);
 
 
-//void udhcp_add_binary_option(struct dhcp_packet *packet, uint8_t *addopt) FAST_FUNC;
+//void udhcp_add_binary_option(struct dhcp_packet *packet, ospl_uint8 *addopt) FAST_FUNC;
 #if ENABLE_UDHCPC || ENABLE_UDHCPD
-//void udhcp_add_simple_option(struct dhcp_packet *packet, uint8_t code, uint32_t data) FAST_FUNC;
+//void udhcp_add_simple_option(struct dhcp_packet *packet, ospl_uint8 code, ospl_uint32  data) FAST_FUNC;
 #endif
 
-//struct option_set *udhcp_find_option(struct option_set *opt_list, uint8_t code) FAST_FUNC;
+//struct option_set *udhcp_find_option(struct option_set *opt_list, ospl_uint8 code) FAST_FUNC;
 
 
 // RFC 2131  Table 5: Fields and options used by DHCP clients
@@ -389,12 +393,16 @@ void udhcp_dump_packet(struct dhcp_packet *packet) FAST_FUNC;
 */
 
 struct udhcp_packet_cmd {
-	uint32_t ip;
-	uint16_t port;
+	ospl_uint32  ip;
+	ospl_uint16 port;
 } PACKED;
 
 
 
 //POP_SAVED_FUNCTION_VISIBILITY
-
+ 
+#ifdef __cplusplus
+}
+#endif
+ 
 #endif

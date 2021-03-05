@@ -8,6 +8,10 @@
 #ifndef __OS_ANSYNC_H__
 #define __OS_ANSYNC_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "sys/epoll.h"
 #include "os_list.h"
 
@@ -67,10 +71,10 @@ typedef struct os_ansync_s
 	os_ansync_cb	ansync_cb;
 	void			*pVoid;
 	struct timeval	timeout;	//时间轴
-	int				interval;	//定时间隔
-	char 			entryname[OS_ENTRY_NAME_MAX];
-	char 			filename[OS_ENTRY_NAME_MAX];
-	int 			line;
+	ospl_uint32				interval;	//定时间隔
+	ospl_char 			entryname[OS_ENTRY_NAME_MAX];
+	ospl_char 			filename[OS_ENTRY_NAME_MAX];
+	ospl_uint32 			line;
 	os_ansync_state	state;
 }os_ansync_t;
 
@@ -82,17 +86,17 @@ typedef struct
 	LIST	*unuselist;
 	void	*mutex;		//for list
 	void	*ansync_mutex;	//for execute
-	int		module;
-	int		taskid;
+	ospl_uint32		module;
+	ospl_uint32		taskid;
 
 	struct timeval 	timeout;		//最小定时时间轴 ms
-	int 	interval;				//最小定时时间 ms
+	ospl_uint32 	interval;				//最小定时时间 ms
 
 	int 	epoll_fd;
 	int 	max_fd;
 	struct epoll_event *events;
 	os_ansync_t		*os_ansync;
-	BOOL	bquit;
+	ospl_bool	bquit;
 }os_ansync_lst;
 
 #define OS_ANSYNC_FD(n)		(((os_ansync_t *)(n))->fd)
@@ -100,7 +104,7 @@ typedef struct
 #define OS_ANSYNC_ARGV(n)	(((os_ansync_t *)(n))->pVoid)
 
 
-extern os_ansync_lst *os_ansync_lst_create(int module, int maxfd);
+extern os_ansync_lst *os_ansync_lst_create(ospl_uint32 module, int maxfd);
 extern int os_ansync_lst_destroy(os_ansync_lst *lst);
 
 extern int os_ansync_lock(os_ansync_lst *lst);
@@ -110,7 +114,7 @@ extern os_ansync_t * os_ansync_lookup_api(os_ansync_lst *lst, os_ansync_t *value
 extern int os_ansync_add_api(os_ansync_lst *lst, os_ansync_t *value);
 extern int os_ansync_del_api(os_ansync_lst *lst, os_ansync_t *value);
 
-extern int os_ansync_timeout_api(os_ansync_lst *lst, int value);
+extern int os_ansync_timeout_api(os_ansync_lst *lst, ospl_uint32 value);
 
 //extern int os_ansync_wait(os_ansync_lst *lst);
 
@@ -136,10 +140,10 @@ extern int os_ansync_fetch_wait (os_ansync_lst *);
 
 
 extern int _os_ansync_register_api(os_ansync_lst *lst, os_ansync_type type, os_ansync_cb cb,
-		void *pVoid, int value, char *func_name, char *file, int line);
+		void *pVoid, int value, ospl_char *func_name, ospl_char *file, ospl_uint32 line);
 
 extern int _os_ansync_register_event_api(os_ansync_lst *lst, os_ansync_type type, os_ansync_cb cb,
-		void *pVoid, int value, char *func_name, char *file, int line);
+		void *pVoid, int value, ospl_char *func_name, ospl_char *file, ospl_uint32 line);
 
 extern int _os_ansync_unregister_api(os_ansync_lst *lst, os_ansync_type type, os_ansync_cb cb,
 		void *pVoid, int value);
@@ -148,21 +152,24 @@ extern int _os_ansync_unregister_all_api(os_ansync_lst *lst, os_ansync_type type
 		void *pVoid, int value);
 
 
-extern int os_ansync_show(os_ansync_lst *lst, int (*show)(void *, char *fmt,...), void *pVoid);
+extern int os_ansync_show(os_ansync_lst *lst, int (*show)(void *, ospl_char *fmt,...), void *pVoid);
 
 
 #ifdef OS_ANSYNC_GLOBAL_LIST
-extern os_ansync_lst * os_ansync_global_lookup(int taskid, int module);
+extern os_ansync_lst * os_ansync_global_lookup(ospl_uint32 taskid, ospl_uint32 module);
 #endif
 
 
 #ifdef __OS_ANSYNC_DEBUG
-extern void os_ansync_debug_printf(void *fp, char *func, int line,  const char *format, ...);
+extern void os_ansync_debug_printf(void *fp, ospl_char *func, ospl_uint32 line,  const char *format, ...);
 #define OS_ANSYNC_DEBUG(fmt,...)	os_ansync_debug_printf(stderr, __func__, __LINE__,fmt, ##__VA_ARGS__)
 #else
 #define OS_ANSYNC_DEBUG(fmt,...)
 
 #endif
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __OS_ANSYNC_H__ */

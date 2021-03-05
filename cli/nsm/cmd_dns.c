@@ -57,7 +57,7 @@ DEFUN (ip_dns_server_add,
 				vty_out (vty, "%% This DNS Server is already exist.%s", VTY_NEWLINE);
 				return CMD_WARNING;
 			}
-			ret = nsm_ip_dns_add_api(&address, FALSE);
+			ret = nsm_ip_dns_add_api(&address, ospl_false);
 		}
 		else if(argc == 2)
 		{
@@ -66,18 +66,18 @@ DEFUN (ip_dns_server_add,
 				vty_out (vty, "%% This DNS Server is already exist.%s", VTY_NEWLINE);
 				return CMD_WARNING;
 			}
-			ret = nsm_ip_dns_add_api(&address, TRUE);
+			ret = nsm_ip_dns_add_api(&address, ospl_true);
 		}
 	}
 	else
 	{
 		if(argc == 1)
 		{
-			ret = nsm_ip_dns_add_api(&address, FALSE);
+			ret = nsm_ip_dns_add_api(&address, ospl_false);
 		}
 		else if(argc == 2)
 		{
-			ret = nsm_ip_dns_add_api(&address, TRUE);
+			ret = nsm_ip_dns_add_api(&address, ospl_true);
 		}
 	}
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;

@@ -56,9 +56,9 @@
 #define STREAM_WARN_OFFSETS(S) \
   zlog_warn (MODULE_DEFAULT, "&(struct stream): %p, size: %lu, getp: %lu, endp: %lu\n", \
              (void *)(S), \
-             (unsigned long) (S)->size, \
-             (unsigned long) (S)->getp, \
-             (unsigned long) (S)->endp)\
+             (ospl_ulong) (S)->size, \
+             (ospl_ulong) (S)->getp, \
+             (ospl_ulong) (S)->endp)\
 
 #define STREAM_VERIFY_SANE(S) \
   do { \
@@ -81,7 +81,7 @@
     if (((S)->endp + (Z)) > (S)->size) \
       { \
         zlog_warn (MODULE_DEFAULT, "CHECK_SIZE: truncating requested size %lu\n", \
-                   (unsigned long) (Z)); \
+                   (ospl_ulong) (Z)); \
         STREAM_WARN_OFFSETS(S); \
         (Z) = (S)->size - (S)->endp; \
       } \
@@ -89,7 +89,7 @@
 
 /* Make stream buffer. */
 struct stream *
-stream_new (size_t size)
+stream_new (ospl_size_t size)
 {
   struct stream *s;
 
@@ -157,7 +157,7 @@ stream_dup (struct stream *s)
 }
 
 struct stream *
-stream_dupcat (struct stream *s1, struct stream *s2, size_t offset)
+stream_dupcat (struct stream *s1, struct stream *s2, ospl_size_t offset)
 {
   struct stream *new;
 
@@ -175,10 +175,10 @@ stream_dupcat (struct stream *s1, struct stream *s2, size_t offset)
   return new;
 }
 
-size_t
-stream_resize (struct stream *s, size_t newsize)
+ospl_size_t
+stream_resize (struct stream *s, ospl_size_t newsize)
 {
-  u_char *newdata;
+  ospl_uchar *newdata;
   STREAM_VERIFY_SANE (s);
   
   newdata = XREALLOC (MTYPE_STREAM_DATA, s->data, newsize);
@@ -199,21 +199,21 @@ stream_resize (struct stream *s, size_t newsize)
   return s->size;
 }
 
-size_t
+ospl_size_t
 stream_get_getp (struct stream *s)
 {
   STREAM_VERIFY_SANE(s);
   return s->getp;
 }
 
-size_t
+ospl_size_t
 stream_get_endp (struct stream *s)
 {
   STREAM_VERIFY_SANE(s);
   return s->endp;
 }
 
-size_t
+ospl_size_t
 stream_get_size (struct stream *s)
 {
   STREAM_VERIFY_SANE(s);
@@ -222,7 +222,7 @@ stream_get_size (struct stream *s)
 
 /* Stream structre' stream pointer related functions.  */
 void
-stream_set_getp (struct stream *s, size_t pos)
+stream_set_getp (struct stream *s, ospl_size_t pos)
 {
   STREAM_VERIFY_SANE(s);
   
@@ -236,7 +236,7 @@ stream_set_getp (struct stream *s, size_t pos)
 }
 
 void
-stream_set_endp (struct stream *s, size_t pos)
+stream_set_endp (struct stream *s, ospl_size_t pos)
 {
   STREAM_VERIFY_SANE(s);
 
@@ -261,7 +261,7 @@ stream_set_endp (struct stream *s, size_t pos)
 
 /* Forward pointer. */
 void
-stream_forward_getp (struct stream *s, size_t size)
+stream_forward_getp (struct stream *s, ospl_size_t size)
 {
   STREAM_VERIFY_SANE(s);
   
@@ -275,7 +275,7 @@ stream_forward_getp (struct stream *s, size_t size)
 }
 
 void
-stream_forward_endp (struct stream *s, size_t size)
+stream_forward_endp (struct stream *s, ospl_size_t size)
 {
   STREAM_VERIFY_SANE(s);
   
@@ -290,7 +290,7 @@ stream_forward_endp (struct stream *s, size_t size)
 
 /* Copy from stream to destination. */
 void
-stream_get (void *dst, struct stream *s, size_t size)
+stream_get (void *dst, struct stream *s, ospl_size_t size)
 {
   STREAM_VERIFY_SANE(s);
   
@@ -305,16 +305,16 @@ stream_get (void *dst, struct stream *s, size_t size)
 }
 
 /* Get next character from the stream. */
-u_char
+ospl_uchar
 stream_getc (struct stream *s)
 {
-  u_char c;
+  ospl_uchar c;
   
   STREAM_VERIFY_SANE (s);
 
-  if (STREAM_READABLE(s) < sizeof (u_char))
+  if (STREAM_READABLE(s) < sizeof (ospl_uchar))
     {
-      STREAM_BOUND_WARN (s, "get char");
+      STREAM_BOUND_WARN (s, "get ospl_char");
       return 0;
     }
   c = s->data[s->getp++];
@@ -323,16 +323,16 @@ stream_getc (struct stream *s)
 }
 
 /* Get next character from the stream. */
-u_char
-stream_getc_from (struct stream *s, size_t from)
+ospl_uchar
+stream_getc_from (struct stream *s, ospl_size_t from)
 {
-  u_char c;
+  ospl_uchar c;
 
   STREAM_VERIFY_SANE(s);
   
-  if (!GETP_VALID (s, from + sizeof (u_char)))
+  if (!GETP_VALID (s, from + sizeof (ospl_uchar)))
     {
-      STREAM_BOUND_WARN (s, "get char");
+      STREAM_BOUND_WARN (s, "get ospl_char");
       return 0;
     }
   
@@ -342,14 +342,14 @@ stream_getc_from (struct stream *s, size_t from)
 }
 
 /* Get next word from the stream. */
-u_int16_t
+ospl_uint16
 stream_getw (struct stream *s)
 {
-  u_int16_t w;
+  ospl_uint16 w;
 
   STREAM_VERIFY_SANE (s);
 
-  if (STREAM_READABLE (s) < sizeof (u_int16_t))
+  if (STREAM_READABLE (s) < sizeof (ospl_uint16))
     {
       STREAM_BOUND_WARN (s, "get ");
       return 0;
@@ -362,14 +362,14 @@ stream_getw (struct stream *s)
 }
 
 /* Get next word from the stream. */
-u_int16_t
-stream_getw_from (struct stream *s, size_t from)
+ospl_uint16
+stream_getw_from (struct stream *s, ospl_size_t from)
 {
-  u_int16_t w;
+  ospl_uint16 w;
 
   STREAM_VERIFY_SANE(s);
   
-  if (!GETP_VALID (s, from + sizeof (u_int16_t)))
+  if (!GETP_VALID (s, from + sizeof (ospl_uint16)))
     {
       STREAM_BOUND_WARN (s, "get ");
       return 0;
@@ -382,14 +382,14 @@ stream_getw_from (struct stream *s, size_t from)
 }
 
 /* Get next long word from the stream. */
-u_int32_t
-stream_getl_from (struct stream *s, size_t from)
+ospl_uint32
+stream_getl_from (struct stream *s, ospl_size_t from)
 {
-  u_int32_t l;
+  ospl_uint32 l;
 
   STREAM_VERIFY_SANE(s);
   
-  if (!GETP_VALID (s, from + sizeof (u_int32_t)))
+  if (!GETP_VALID (s, from + sizeof (ospl_uint32)))
     {
       STREAM_BOUND_WARN (s, "get long");
       return 0;
@@ -403,14 +403,14 @@ stream_getl_from (struct stream *s, size_t from)
   return l;
 }
 
-u_int32_t
+ospl_uint32
 stream_getl (struct stream *s)
 {
-  u_int32_t l;
+  ospl_uint32 l;
 
   STREAM_VERIFY_SANE(s);
   
-  if (STREAM_READABLE (s) < sizeof (u_int32_t))
+  if (STREAM_READABLE (s) < sizeof (ospl_uint32))
     {
       STREAM_BOUND_WARN (s, "get long");
       return 0;
@@ -426,7 +426,7 @@ stream_getl (struct stream *s)
 
 /* Get next quad word from the stream. */
 uint64_t
-stream_getq_from (struct stream *s, size_t from)
+stream_getq_from (struct stream *s, ospl_size_t from)
 {
   uint64_t q;
 
@@ -476,49 +476,49 @@ stream_getq (struct stream *s)
 }
 
 /* Get next long word from the stream. */
-u_int32_t
+ospl_uint32
 stream_get_ipv4 (struct stream *s)
 {
-  u_int32_t l;
+  ospl_uint32 l;
 
   STREAM_VERIFY_SANE(s);
   
-  if (STREAM_READABLE (s) < sizeof(u_int32_t))
+  if (STREAM_READABLE (s) < sizeof(ospl_uint32))
     {
       STREAM_BOUND_WARN (s, "get ipv4");
       return 0;
     }
   
-  memcpy (&l, s->data + s->getp, sizeof(u_int32_t));
-  s->getp += sizeof(u_int32_t);
+  memcpy (&l, s->data + s->getp, sizeof(ospl_uint32));
+  s->getp += sizeof(ospl_uint32);
 
   return l;
 }
 
-float
+ospl_float
 stream_getf (struct stream *s)
 {
 #if !defined(__STDC_IEC_559__) && __GCC_IEC_559 < 1
 #warning "Unknown floating-point format, __func__ may be wrong"
 #endif
-/* we assume 'float' is in the single precision IEC 60559 binary
+/* we assume 'ospl_float' is in the single precision IEC 60559 binary
    format, in host byte order */
   union {
-    float r;
-    uint32_t d;
+    ospl_float r;
+    ospl_uint32  d;
   } u;
   u.d = stream_getl (s);
   return u.r;
 }
 
-double
+ospl_double
 stream_getd (struct stream *s)
 {
 #if !defined(__STDC_IEC_559__) && __GCC_IEC_559 < 1
 #warning "Unknown floating-point format, __func__ may be wrong"
 #endif
   union {
-    double r;
+    ospl_double r;
     uint64_t d;
   } u;
   u.d = stream_getq (s);
@@ -533,7 +533,7 @@ stream_getd (struct stream *s)
  * stream_write() is saner
  */
 void
-stream_put (struct stream *s, const void *src, size_t size)
+stream_put (struct stream *s, const void *src, ospl_size_t size)
 {
 
   /* XXX: CHECK_SIZE has strange semantics. It should be deprecated */
@@ -557,54 +557,54 @@ stream_put (struct stream *s, const void *src, size_t size)
 
 /* Put character to the stream. */
 int
-stream_putc (struct stream *s, u_char c)
+stream_putc (struct stream *s, ospl_uchar c)
 {
   STREAM_VERIFY_SANE(s);
   
-  if (STREAM_WRITEABLE (s) < sizeof(u_char))
+  if (STREAM_WRITEABLE (s) < sizeof(ospl_uchar))
     {
       STREAM_BOUND_WARN (s, "put");
       return 0;
     }
   
   s->data[s->endp++] = c;
-  return sizeof (u_char);
+  return sizeof (ospl_uchar);
 }
 
 /* Put word to the stream. */
 int
-stream_putw (struct stream *s, u_int16_t w)
+stream_putw (struct stream *s, ospl_uint16 w)
 {
   STREAM_VERIFY_SANE (s);
 
-  if (STREAM_WRITEABLE (s) < sizeof (u_int16_t))
+  if (STREAM_WRITEABLE (s) < sizeof (ospl_uint16))
     {
       STREAM_BOUND_WARN (s, "put");
       return 0;
     }
   
-  s->data[s->endp++] = (u_char)(w >>  8);
-  s->data[s->endp++] = (u_char) w;
+  s->data[s->endp++] = (ospl_uchar)(w >>  8);
+  s->data[s->endp++] = (ospl_uchar) w;
 
   return 2;
 }
 
 /* Put long word to the stream. */
 int
-stream_putl (struct stream *s, u_int32_t l)
+stream_putl (struct stream *s, ospl_uint32 l)
 {
   STREAM_VERIFY_SANE (s);
 
-  if (STREAM_WRITEABLE (s) < sizeof (u_int32_t))
+  if (STREAM_WRITEABLE (s) < sizeof (ospl_uint32))
     {
       STREAM_BOUND_WARN (s, "put");
       return 0;
     }
   
-  s->data[s->endp++] = (u_char)(l >> 24);
-  s->data[s->endp++] = (u_char)(l >> 16);
-  s->data[s->endp++] = (u_char)(l >>  8);
-  s->data[s->endp++] = (u_char)l;
+  s->data[s->endp++] = (ospl_uchar)(l >> 24);
+  s->data[s->endp++] = (ospl_uchar)(l >> 16);
+  s->data[s->endp++] = (ospl_uchar)(l >>  8);
+  s->data[s->endp++] = (ospl_uchar)l;
 
   return 4;
 }
@@ -621,43 +621,43 @@ stream_putq (struct stream *s, uint64_t q)
       return 0;
     }
   
-  s->data[s->endp++] = (u_char)(q >> 56);
-  s->data[s->endp++] = (u_char)(q >> 48);
-  s->data[s->endp++] = (u_char)(q >> 40);
-  s->data[s->endp++] = (u_char)(q >> 32);
-  s->data[s->endp++] = (u_char)(q >> 24);
-  s->data[s->endp++] = (u_char)(q >> 16);
-  s->data[s->endp++] = (u_char)(q >>  8);
-  s->data[s->endp++] = (u_char)q;
+  s->data[s->endp++] = (ospl_uchar)(q >> 56);
+  s->data[s->endp++] = (ospl_uchar)(q >> 48);
+  s->data[s->endp++] = (ospl_uchar)(q >> 40);
+  s->data[s->endp++] = (ospl_uchar)(q >> 32);
+  s->data[s->endp++] = (ospl_uchar)(q >> 24);
+  s->data[s->endp++] = (ospl_uchar)(q >> 16);
+  s->data[s->endp++] = (ospl_uchar)(q >>  8);
+  s->data[s->endp++] = (ospl_uchar)q;
 
   return 8;
 }
 
 int
-stream_putf (struct stream *s, float f)
+stream_putf (struct stream *s, ospl_float f)
 {
 #if !defined(__STDC_IEC_559__) && __GCC_IEC_559 < 1
 #warning "Unknown floating-point format, __func__ may be wrong"
 #endif
 
-/* we can safely assume 'float' is in the single precision
+/* we can safely assume 'ospl_float' is in the single precision
    IEC 60559 binary format in host order */
   union {
-    float i;
-    uint32_t o;
+    ospl_float i;
+    ospl_uint32  o;
   } u;
   u.i = f;
   return stream_putl (s, u.o);
 }
 
 int
-stream_putd (struct stream *s, double d)
+stream_putd (struct stream *s, ospl_double d)
 {
 #if !defined(__STDC_IEC_559__) && __GCC_IEC_559 < 1
 #warning "Unknown floating-point format, __func__ may be wrong"
 #endif
   union {
-    double i;
+    ospl_double i;
     uint64_t o;
   } u;
   u.i = d;
@@ -665,11 +665,11 @@ stream_putd (struct stream *s, double d)
 }
 
 int
-stream_putc_at (struct stream *s, size_t putp, u_char c)
+stream_putc_at (struct stream *s, ospl_size_t putp, ospl_uchar c)
 {
   STREAM_VERIFY_SANE(s);
   
-  if (!PUT_AT_VALID (s, putp + sizeof (u_char)))
+  if (!PUT_AT_VALID (s, putp + sizeof (ospl_uchar)))
     {
       STREAM_BOUND_WARN (s, "put");
       return 0;
@@ -681,42 +681,42 @@ stream_putc_at (struct stream *s, size_t putp, u_char c)
 }
 
 int
-stream_putw_at (struct stream *s, size_t putp, u_int16_t w)
+stream_putw_at (struct stream *s, ospl_size_t putp, ospl_uint16 w)
 {
   STREAM_VERIFY_SANE(s);
   
-  if (!PUT_AT_VALID (s, putp + sizeof (u_int16_t)))
+  if (!PUT_AT_VALID (s, putp + sizeof (ospl_uint16)))
     {
       STREAM_BOUND_WARN (s, "put");
       return 0;
     }
   
-  s->data[putp] = (u_char)(w >>  8);
-  s->data[putp + 1] = (u_char) w;
+  s->data[putp] = (ospl_uchar)(w >>  8);
+  s->data[putp + 1] = (ospl_uchar) w;
   
   return 2;
 }
 
 int
-stream_putl_at (struct stream *s, size_t putp, u_int32_t l)
+stream_putl_at (struct stream *s, ospl_size_t putp, ospl_uint32 l)
 {
   STREAM_VERIFY_SANE(s);
   
-  if (!PUT_AT_VALID (s, putp + sizeof (u_int32_t)))
+  if (!PUT_AT_VALID (s, putp + sizeof (ospl_uint32)))
     {
       STREAM_BOUND_WARN (s, "put");
       return 0;
     }
-  s->data[putp] = (u_char)(l >> 24);
-  s->data[putp + 1] = (u_char)(l >> 16);
-  s->data[putp + 2] = (u_char)(l >>  8);
-  s->data[putp + 3] = (u_char)l;
+  s->data[putp] = (ospl_uchar)(l >> 24);
+  s->data[putp + 1] = (ospl_uchar)(l >> 16);
+  s->data[putp + 2] = (ospl_uchar)(l >>  8);
+  s->data[putp + 3] = (ospl_uchar)l;
   
   return 4;
 }
 
 int
-stream_putq_at (struct stream *s, size_t putp, uint64_t q)
+stream_putq_at (struct stream *s, ospl_size_t putp, uint64_t q)
 {
   STREAM_VERIFY_SANE(s);
   
@@ -725,33 +725,33 @@ stream_putq_at (struct stream *s, size_t putp, uint64_t q)
       STREAM_BOUND_WARN (s, "put");
       return 0;
     }
-  s->data[putp] =     (u_char)(q >> 56);
-  s->data[putp + 1] = (u_char)(q >> 48);
-  s->data[putp + 2] = (u_char)(q >> 40);
-  s->data[putp + 3] = (u_char)(q >> 32);
-  s->data[putp + 4] = (u_char)(q >> 24);
-  s->data[putp + 5] = (u_char)(q >> 16);
-  s->data[putp + 6] = (u_char)(q >>  8);
-  s->data[putp + 7] = (u_char)q;
+  s->data[putp] =     (ospl_uchar)(q >> 56);
+  s->data[putp + 1] = (ospl_uchar)(q >> 48);
+  s->data[putp + 2] = (ospl_uchar)(q >> 40);
+  s->data[putp + 3] = (ospl_uchar)(q >> 32);
+  s->data[putp + 4] = (ospl_uchar)(q >> 24);
+  s->data[putp + 5] = (ospl_uchar)(q >> 16);
+  s->data[putp + 6] = (ospl_uchar)(q >>  8);
+  s->data[putp + 7] = (ospl_uchar)q;
   
   return 8;
 }
 
 /* Put long word to the stream. */
 int
-stream_put_ipv4 (struct stream *s, u_int32_t l)
+stream_put_ipv4 (struct stream *s, ospl_uint32 l)
 {
   STREAM_VERIFY_SANE(s);
   
-  if (STREAM_WRITEABLE (s) < sizeof (u_int32_t))
+  if (STREAM_WRITEABLE (s) < sizeof (ospl_uint32))
     {
       STREAM_BOUND_WARN (s, "put");
       return 0;
     }
-  memcpy (s->data + s->endp, &l, sizeof (u_int32_t));
-  s->endp += sizeof (u_int32_t);
+  memcpy (s->data + s->endp, &l, sizeof (ospl_uint32));
+  s->endp += sizeof (ospl_uint32);
 
-  return sizeof (u_int32_t);
+  return sizeof (ospl_uint32);
 }
 
 /* Put long word to the stream. */
@@ -760,29 +760,29 @@ stream_put_in_addr (struct stream *s, struct in_addr *addr)
 {
   STREAM_VERIFY_SANE(s);
   
-  if (STREAM_WRITEABLE (s) < sizeof (u_int32_t))
+  if (STREAM_WRITEABLE (s) < sizeof (ospl_uint32))
     {
       STREAM_BOUND_WARN (s, "put");
       return 0;
     }
 
-  memcpy (s->data + s->endp, addr, sizeof (u_int32_t));
-  s->endp += sizeof (u_int32_t);
+  memcpy (s->data + s->endp, addr, sizeof (ospl_uint32));
+  s->endp += sizeof (ospl_uint32);
 
-  return sizeof (u_int32_t);
+  return sizeof (ospl_uint32);
 }
 
 /* Put prefix by nlri type format. */
 int
 stream_put_prefix (struct stream *s, struct prefix *p)
 {
-  size_t psize;
+  ospl_size_t psize;
   
   STREAM_VERIFY_SANE(s);
   
   psize = PSIZE (p->prefixlen);
   
-  if (STREAM_WRITEABLE (s) < (psize + sizeof (u_char)))
+  if (STREAM_WRITEABLE (s) < (psize + sizeof (ospl_uchar)))
     {
       STREAM_BOUND_WARN (s, "put");
       return 0;
@@ -797,9 +797,9 @@ stream_put_prefix (struct stream *s, struct prefix *p)
 
 /* Read size from fd. */
 int
-stream_read (struct stream *s, int fd, size_t size, int type)
+stream_read (struct stream *s, int fd, ospl_size_t size, ospl_uint32 type)
 {
-  int nbytes;
+  ospl_uint32 nbytes;
 
   STREAM_VERIFY_SANE(s);
   
@@ -818,7 +818,7 @@ stream_read (struct stream *s, int fd, size_t size, int type)
 }
 
 ssize_t
-stream_read_try(struct stream *s, int fd, size_t size, int type)
+stream_read_try(struct stream *s, int fd, ospl_size_t size, ospl_uint32 type)
 {
   ssize_t nbytes;
 
@@ -851,8 +851,8 @@ stream_read_try(struct stream *s, int fd, size_t size, int type)
  * whose arguments match the remaining arguments to this function
  */
 ssize_t 
-stream_recvfrom (struct stream *s, int fd, size_t size, int flags,
-                 struct sockaddr *from, socklen_t *fromlen, int type)
+stream_recvfrom (struct stream *s, int fd, ospl_size_t size, ospl_uint32 flags,
+                 struct sockaddr *from, socklen_t *fromlen, ospl_uint32 type)
 {
   ssize_t nbytes;
 
@@ -889,10 +889,10 @@ stream_recvfrom (struct stream *s, int fd, size_t size, int flags,
  * Stream need not be empty.
  */
 ssize_t
-stream_recvmsg (struct stream *s, int fd, struct msghdr *msgh, int flags, 
-                size_t size, int type)
+stream_recvmsg (struct stream *s, int fd, struct msghdr *msgh, ospl_uint32 flags, 
+                ospl_size_t size, ospl_uint32 type)
 {
-  int nbytes;
+  ospl_uint32 nbytes;
   struct iovec *iov;
   
   STREAM_VERIFY_SANE(s);
@@ -920,8 +920,8 @@ stream_recvmsg (struct stream *s, int fd, struct msghdr *msgh, int flags,
 }
   
 /* Write data to buffer. */
-size_t
-stream_write (struct stream *s, const void *ptr, size_t size)
+ospl_size_t
+stream_write (struct stream *s, const void *ptr, ospl_size_t size)
 {
 
   CHECK_SIZE(s, size);
@@ -945,7 +945,7 @@ stream_write (struct stream *s, const void *ptr, size_t size)
  * Use stream_get_pnt_to if you must, but decoding streams properly
  * is preferred
  */
-u_char *
+ospl_uchar *
 stream_pnt (struct stream *s)
 {
   STREAM_VERIFY_SANE(s);
@@ -997,9 +997,9 @@ stream_discard (struct stream *s)
 
 /* Write stream contens to the file discriptor. */
 int
-stream_flush (struct stream *s, int fd, int type)
+stream_flush (struct stream *s, int fd, ospl_uint32 type)
 {
-  int nbytes;
+  ospl_uint32 nbytes;
   
   STREAM_VERIFY_SANE(s);
   if(type == IPCOM_STACK)

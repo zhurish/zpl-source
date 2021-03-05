@@ -66,7 +66,7 @@ int modem_operator_split(modem_client_t *client, char *buf)
 	{
 		//+COPS: 0,0,\"CHINA MOBILE\",7  OK"
 		//
-		int offset = strchr_step(buf, ':', 1);
+		ospl_uint32 offset = strchr_step(buf, ':', 1);
 		if(offset)
 		{
 			//fprintf(stdout, "=========0=====%s\r\n", buf + offset + 1);

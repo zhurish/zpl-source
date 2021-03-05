@@ -22,6 +22,10 @@
 #ifndef _ZEBRA_ZCLIENT_H
 #define _ZEBRA_ZCLIENT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* For struct zapi_ipv{4,6}. */
 #include "prefix.h"
 
@@ -42,10 +46,10 @@ struct zclient
 
   /* Flag of communication to zebra is enabled or not.  Default is on.
      This flag is disabled by `no router zebra' statement. */
-  int enable;
+  ospl_bool enable;
 
   /* Connection failure count. */
-  int fail;
+  ospl_uint32 fail;
 
   /* Input buffer for zebra message. */
   struct stream *ibuf;
@@ -64,24 +68,24 @@ struct zclient
   struct thread *t_write;
 
   /* Redistribute information. */
-  u_char redist_default;
-  u_char redist[ZEBRA_ROUTE_MAX];
+  ospl_uchar redist_default;
+  ospl_uchar redist[ZEBRA_ROUTE_MAX];
 
   /* Redistribute defauilt. */
-  u_char default_information;
+  ospl_uchar default_information;
 
   /* Pointer to the callback functions. */
-  int (*router_id_update) (int, struct zclient *, uint16_t);
-  int (*interface_add) (int, struct zclient *, uint16_t);
-  int (*interface_delete) (int, struct zclient *, uint16_t);
-  int (*interface_up) (int, struct zclient *, uint16_t);
-  int (*interface_down) (int, struct zclient *, uint16_t);
-  int (*interface_address_add) (int, struct zclient *, uint16_t);
-  int (*interface_address_delete) (int, struct zclient *, uint16_t);
-  int (*ipv4_route_add) (int, struct zclient *, uint16_t);
-  int (*ipv4_route_delete) (int, struct zclient *, uint16_t);
-  int (*ipv6_route_add) (int, struct zclient *, uint16_t);
-  int (*ipv6_route_delete) (int, struct zclient *, uint16_t);
+  int (*router_id_update) (ospl_uint16, struct zclient *, ospl_uint16);
+  int (*interface_add) (ospl_uint16, struct zclient *, ospl_uint16);
+  int (*interface_delete) (ospl_uint16, struct zclient *, ospl_uint16);
+  int (*interface_up) (ospl_uint16, struct zclient *, ospl_uint16);
+  int (*interface_down) (ospl_uint16, struct zclient *, ospl_uint16);
+  int (*interface_address_add) (ospl_uint16, struct zclient *, ospl_uint16);
+  int (*interface_address_delete) (ospl_uint16, struct zclient *, ospl_uint16);
+  int (*ipv4_route_add) (ospl_uint16, struct zclient *, ospl_uint16);
+  int (*ipv4_route_delete) (ospl_uint16, struct zclient *, ospl_uint16);
+  int (*ipv6_route_add) (ospl_uint16, struct zclient *, ospl_uint16);
+  int (*ipv6_route_delete) (ospl_uint16, struct zclient *, ospl_uint16);
 };
 
 /* Zebra API message flag. */
@@ -94,73 +98,73 @@ struct zclient
 /* Zserv protocol message header */
 struct zserv_header
 {
-  uint16_t length;
-  uint8_t marker;	/* corresponds to command field in old zserv
+  ospl_uint16 length;
+  ospl_uint8 marker;	/* corresponds to command field in old zserv
                          * always set to 255 in new zserv.
                          */
-  uint8_t version;
+  ospl_uint8 version;
 #define ZSERV_VERSION	2
-  uint16_t command;
+  ospl_uint16 command;
 };
 
 /* Zebra IPv4 route message API. */
 struct zapi_ipv4
 {
-  u_char type;
+  ospl_uchar type;
 
-  u_char flags;
+  ospl_uchar flags;
 
-  u_char message;
+  ospl_uchar message;
 
   safi_t safi;
 
-  u_char nexthop_num;
+  ospl_uchar nexthop_num;
   struct in_addr **nexthop;
 
-  u_char ifindex_num;
-  unsigned int *ifindex;
+  ospl_uchar ifindex_num;
+  ospl_uint32  *ifindex;
 
-  u_char distance;
+  ospl_uchar distance;
 
-  u_int32_t metric;
+  ospl_uint32 metric;
 
-  u_int32_t tag;
+  ospl_uint32 tag;
 };
 
 /* Prototypes of zebra client service functions. */
 extern struct zclient *zclient_new (void);
-extern void zclient_init (struct zclient *, int);
+extern void zclient_init (struct zclient *, ospl_uint32);
 extern int zclient_start (struct zclient *);
 extern void zclient_stop (struct zclient *);
 extern void zclient_reset (struct zclient *);
 extern void zclient_free (struct zclient *);
 
 extern int  zclient_socket_connect (struct zclient *);
-extern void zclient_serv_path_set  (char *path);
+extern void zclient_serv_path_set  (ospl_char *path);
 extern const char *const zclient_serv_path_get (void);
 
 /* Send redistribute command to zebra daemon. Do not update zclient state. */
-extern int zebra_redistribute_send (int command, struct zclient *, int type);
+extern int zebra_redistribute_send (ospl_uint16 command, struct zclient *, ospl_uint32 type);
 
 /* If state has changed, update state and call zebra_redistribute_send. */
-extern void zclient_redistribute (int command, struct zclient *, int type);
+extern void zclient_redistribute (ospl_uint16 command, struct zclient *, ospl_uint32 type);
 
 /* If state has changed, update state and send the command to zebra. */
-extern void zclient_redistribute_default (int command, struct zclient *);
+extern void zclient_redistribute_default (ospl_uint16 command, struct zclient *);
 
 /* Send the message in zclient->obuf to the zebra daemon (or enqueue it).
    Returns 0 for success or -1 on an I/O error. */
 extern int zclient_send_message(struct zclient *);
 
 /* create header for command, length to be filled in by user later */
-extern void zclient_create_header (struct stream *, uint16_t);
+extern void zclient_create_header (struct stream *, ospl_uint16);
 
 extern struct interface *zebra_interface_add_read (struct stream *);
 extern struct interface *zebra_interface_state_read (struct stream *s);
-extern struct connected *zebra_interface_address_read (int, struct stream *);
+extern struct connected *zebra_interface_address_read (ospl_uint16, struct stream *);
 extern void zebra_interface_if_set_value (struct stream *, struct interface *);
 extern void zebra_router_id_update_read (struct stream *s, struct prefix *rid);
-extern int zapi_ipv4_route (u_char, struct zclient *, struct prefix_ipv4 *, 
+extern int zapi_ipv4_route (ospl_uint16, struct zclient *, struct prefix_ipv4 *, 
                             struct zapi_ipv4 *);
 
 #ifdef HAVE_IPV6
@@ -168,29 +172,33 @@ extern int zapi_ipv4_route (u_char, struct zclient *, struct prefix_ipv4 *,
 
 struct zapi_ipv6
 {
-  u_char type;
+  ospl_uchar type;
 
-  u_char flags;
+  ospl_uchar flags;
 
-  u_char message;
+  ospl_uchar message;
 
   safi_t safi;
 
-  u_char nexthop_num;
+  ospl_uchar nexthop_num;
   struct in6_addr **nexthop;
 
-  u_char ifindex_num;
-  unsigned int *ifindex;
+  ospl_uchar ifindex_num;
+  ospl_uint32  *ifindex;
 
-  u_char distance;
+  ospl_uchar distance;
 
-  u_int32_t metric;
+  ospl_uint32 metric;
 
-  u_int32_t tag;
+  ospl_uint32 tag;
 };
 
-extern int zapi_ipv6_route (u_char cmd, struct zclient *zclient, 
+extern int zapi_ipv6_route (ospl_uint16 cmd, struct zclient *zclient, 
                      struct prefix_ipv6 *p, struct zapi_ipv6 *api);
 #endif /* HAVE_IPV6 */
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ZEBRA_ZCLIENT_H */

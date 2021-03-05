@@ -18,7 +18,7 @@
 
 
 
-char * vty_user_setting (struct vty *vty, const char *name)
+ospl_char * vty_user_setting (struct vty *vty, const char *name)
 {
 	if(name == NULL)
 		return NULL;
@@ -73,7 +73,7 @@ static struct vty_user *vty_user_add (struct vty_user *user)
 
 static struct vty_user * vty_user_lookup (const char *name)
 {
-	char lname[VTY_USERNAME_MAX];
+	ospl_char lname[VTY_USERNAME_MAX];
 	struct listnode *node = NULL;
 	struct vty_user *user = NULL;
 	if(name == NULL || host.userlist == NULL)
@@ -95,19 +95,19 @@ static struct vty_user * vty_user_lookup (const char *name)
 	return NULL;
 }
 
-BOOL md5_encrypt_empty(unsigned char *ecrypt)
+ospl_bool md5_encrypt_empty(ospl_uchar *ecrypt)
 {
     if(os_memcmp(ecrypt,"*#@",3) == 0)
     {
-        return TRUE;
+        return ospl_true;
     }
-    return FALSE;
+    return ospl_false;
 }
 
-static int encrypt_XCH(unsigned char *pass, unsigned char *password)
+static int encrypt_XCH(ospl_uchar *pass, ospl_uchar *password)
 {
-	int i = 0;
-	//char password[VTY_PASSWORD_MAX];
+	ospl_uint32 i = 0;
+	//ospl_char password[VTY_PASSWORD_MAX];
 	//os_memset(password, '0', MD5_PASSWORD_MAX);
 	//可打印字符（0x20-0x7E）
 	for(i = 0; i < MD5_PASSWORD_MAX; i++)
@@ -154,11 +154,11 @@ static int encrypt_XCH(unsigned char *pass, unsigned char *password)
 	return OK;
 }
 
-int md5_encrypt_password(char *password, unsigned char *ecrypt)
+int md5_encrypt_password(ospl_char *password, ospl_uchar *ecrypt)
 {
-    //int i;
-    unsigned char decrypt[MD5_PASSWORD_MAX];
-    unsigned char md5ecrypt[MD5_PASSWORD_MAX];
+    //ospl_uint32 i;
+    ospl_uchar decrypt[MD5_PASSWORD_MAX];
+    ospl_uchar md5ecrypt[MD5_PASSWORD_MAX];
     if(md5_encrypt_empty(password))
     {
         os_memcpy(ecrypt, password, VTY_PASSWORD_MAX);
@@ -179,7 +179,7 @@ int md5_encrypt_password(char *password, unsigned char *ecrypt)
 
 
 
-int vty_user_encrypt_enable (BOOL encrypt)
+int vty_user_encrypt_enable (ospl_bool encrypt)
 {
 	struct listnode *node = NULL;
 	struct vty_user *user = NULL;
@@ -191,15 +191,15 @@ int vty_user_encrypt_enable (BOOL encrypt)
 	{
 		if(user)
 		{
-			if(/*user->encrypt && */encrypt == FALSE)
+			if(/*user->encrypt && */encrypt == ospl_false)
 			{
 				if(md5_encrypt_empty(user->password_encrypt))
 					os_memset(user->password_encrypt, 0, sizeof(user->password_encrypt));
 				if(md5_encrypt_empty(user->enable_encrypt))
 					os_memset(user->enable_encrypt, 0, sizeof(user->enable_encrypt));
-				user->encrypt = FALSE;
+				user->encrypt = ospl_false;
 			}
-			else if(/*user->encrypt == 0 && */encrypt == TRUE)
+			else if(/*user->encrypt == 0 && */encrypt == ospl_true)
 			{
 				if(md5_encrypt_empty(user->password_encrypt))
 					os_memset(user->password_encrypt, 0, sizeof(user->password_encrypt));
@@ -209,7 +209,7 @@ int vty_user_encrypt_enable (BOOL encrypt)
 					md5_encrypt_password(user->password, user->password_encrypt);
 				if(user->enable)
 					md5_encrypt_password(user->enable, user->enable_encrypt);
-				user->encrypt = TRUE;
+				user->encrypt = ospl_true;
 			}
 		}
 	}
@@ -218,14 +218,14 @@ int vty_user_encrypt_enable (BOOL encrypt)
 	return 0;
 }
 
-BOOL vty_user_enable_password (struct vty *vty, const char *name)
+ospl_bool vty_user_enable_password (struct vty *vty, const char *name)
 {
-	BOOL ret = FALSE;
+	ospl_bool ret = ospl_false;
 	if (host.mutx)
 		os_mutex_lock(host.mutx, OS_WAIT_FOREVER);
 	if(name)
 	{
-		char lname[VTY_USERNAME_MAX];
+		ospl_char lname[VTY_USERNAME_MAX];
 		struct vty_user * user = NULL;
 		os_memset(lname, 0, VTY_USERNAME_MAX);
 		os_memcpy(lname, name, MIN(os_strlen(name), VTY_USERNAME_MAX));
@@ -233,7 +233,7 @@ BOOL vty_user_enable_password (struct vty *vty, const char *name)
 		if(user)
 		{
 			if(user->enable && md5_encrypt_empty(user->enable_encrypt))
-				ret = TRUE;
+				ret = ospl_true;
 			if (host.mutx)
 				os_mutex_unlock(host.mutx);
 			return ret;
@@ -241,17 +241,17 @@ BOOL vty_user_enable_password (struct vty *vty, const char *name)
 	}
 	if (host.mutx)
 		os_mutex_unlock(host.mutx);
-	return FALSE;
+	return ospl_false;
 }
 
 
-int vty_user_getting_privilege (struct vty *vty, char *name)
+enum vty_privilege vty_user_getting_privilege (struct vty *vty, ospl_char *name)
 {
 	if (host.mutx)
 		os_mutex_lock(host.mutx, OS_WAIT_FOREVER);
 	if(name)
 	{
-		char lname[VTY_USERNAME_MAX];
+		ospl_char lname[VTY_USERNAME_MAX];
 		struct vty_user * user = NULL;
 		os_memset(lname, 0, VTY_USERNAME_MAX);
 		os_memcpy(lname, name, MIN(os_strlen(name), VTY_USERNAME_MAX));
@@ -279,13 +279,13 @@ int vty_user_getting_privilege (struct vty *vty, char *name)
 	return ENABLE_LEVEL;
 }
 
-int vty_user_setting_privilege (struct vty *vty, char *name, int privilege)
+int vty_user_setting_privilege (struct vty *vty, ospl_char *name, enum vty_privilege privilege)
 {
 	if (host.mutx)
 		os_mutex_lock(host.mutx, OS_WAIT_FOREVER);
 	if(name)
 	{
-		char lname[VTY_USERNAME_MAX];
+		ospl_char lname[VTY_USERNAME_MAX];
 		struct vty_user * user = NULL;
 		os_memset(lname, 0, VTY_USERNAME_MAX);
 		os_memcpy(lname, name, MIN(os_strlen(name), VTY_USERNAME_MAX));
@@ -318,13 +318,13 @@ int vty_user_setting_privilege (struct vty *vty, char *name, int privilege)
 	return CMD_WARNING;
 }
 
-int vty_user_getting_authen_type (struct vty *vty, char *name)
+enum vty_authen_type vty_user_getting_authen_type (struct vty *vty, ospl_char *name)
 {
 	if (host.mutx)
 		os_mutex_lock(host.mutx, OS_WAIT_FOREVER);
 	if(name)
 	{
-		char lname[VTY_USERNAME_MAX];
+		ospl_char lname[VTY_USERNAME_MAX];
 		struct vty_user * user = NULL;
 		os_memset(lname, 0, VTY_USERNAME_MAX);
 		os_memcpy(lname, name, MIN(os_strlen(name), VTY_USERNAME_MAX));
@@ -351,13 +351,13 @@ int vty_user_getting_authen_type (struct vty *vty, char *name)
 	return ENABLE_LEVEL;
 }
 
-int vty_user_setting_authen_type (struct vty *vty, char *name, int authen_type)
+int vty_user_setting_authen_type (struct vty *vty, ospl_char *name, enum vty_authen_type authen_type)
 {
 	if (host.mutx)
 		os_mutex_lock(host.mutx, OS_WAIT_FOREVER);
 	if(name)
 	{
-		char lname[VTY_USERNAME_MAX];
+		ospl_char lname[VTY_USERNAME_MAX];
 		struct vty_user * user = NULL;
 		os_memset(lname, 0, VTY_USERNAME_MAX);
 		os_memcpy(lname, name, MIN(os_strlen(name), VTY_USERNAME_MAX));
@@ -390,12 +390,12 @@ int vty_user_setting_authen_type (struct vty *vty, char *name, int authen_type)
 	return CMD_WARNING;
 }
 
-int vty_user_authentication (struct vty *vty, char *password)
+int vty_user_authentication (struct vty *vty, ospl_char *password)
 {
-	unsigned char *passwd = NULL;
+	ospl_uchar *passwd = NULL;
 	//enum node_type next_node = 0;
 	int fail = 1;
-	unsigned char encrypt[VTY_PASSWORD_MAX];
+	ospl_uchar encrypt[VTY_PASSWORD_MAX];
 	struct vty_user * user = NULL;
 	if (host.mutx)
 		os_mutex_lock(host.mutx, OS_WAIT_FOREVER);
@@ -473,11 +473,11 @@ int vty_user_authentication (struct vty *vty, char *password)
 	return CMD_WARNING;
 }
 
-int user_authentication (char *username, char *password)
+int user_authentication (ospl_char *username, ospl_char *password)
 {
-	unsigned char *passwd = NULL;
+	ospl_uchar *passwd = NULL;
 	int fail = ERROR;
-	unsigned char encrypt[VTY_PASSWORD_MAX];
+	ospl_uchar encrypt[VTY_PASSWORD_MAX];
 	struct vty_user * user = NULL;
 	if (host.mutx)
 		os_mutex_lock(host.mutx, OS_WAIT_FOREVER);
@@ -511,7 +511,7 @@ int user_authentication (char *username, char *password)
 	return fail;
 }
 
-int vty_user_authorization (struct vty *vty, char *cmd)
+int vty_user_authorization (struct vty *vty, ospl_char *cmd)
 {
 	return CMD_SUCCESS;
 }
@@ -573,9 +573,9 @@ int vty_user_config_write (struct vty *vty)
 	return CMD_SUCCESS;
 }
 
-int vty_user_create(struct vty *vty, char *name, char *password, BOOL enable, BOOL encrypt)
+int vty_user_create(struct vty *vty, ospl_char *name, ospl_char *password, ospl_bool enable, ospl_bool encrypt)
 {
-	char lname[VTY_USERNAME_MAX];
+	ospl_char lname[VTY_USERNAME_MAX];
 	struct vty_user * user = NULL;
 	if (host.mutx)
 		os_mutex_lock(host.mutx, OS_WAIT_FOREVER);
@@ -704,9 +704,9 @@ int vty_user_create(struct vty *vty, char *name, char *password, BOOL enable, BO
 	return CMD_WARNING;
 }
 
-int vty_user_delete(struct vty *vty, char *name, BOOL password, BOOL enable)
+int vty_user_delete(struct vty *vty, ospl_char *name, ospl_bool password, ospl_bool enable)
 {
-	char lname[VTY_USERNAME_MAX];
+	ospl_char lname[VTY_USERNAME_MAX];
 	struct vty_user * user = NULL;
 	if (host.mutx)
 		os_mutex_lock(host.mutx, OS_WAIT_FOREVER);
@@ -717,7 +717,7 @@ int vty_user_delete(struct vty *vty, char *name, BOOL password, BOOL enable)
 
 	if(user)
 	{
-		if(password == FALSE)
+		if(password == ospl_false)
 		{
 			/*
 			 * delete user
@@ -775,9 +775,9 @@ int vty_user_delete(struct vty *vty, char *name, BOOL password, BOOL enable)
 	return CMD_WARNING;
 }
 
-int vty_user_change(struct vty *vty, char *name)
+int vty_user_change(struct vty *vty, ospl_char *name)
 {
-	char lname[VTY_USERNAME_MAX];
+	ospl_char lname[VTY_USERNAME_MAX];
 	struct vty_user * user = NULL;
 	if (host.mutx)
 		os_mutex_lock(host.mutx, OS_WAIT_FOREVER);
@@ -843,7 +843,7 @@ int vty_user_foreach (int (*cb)(void *user, void *p), void *p)
 	return CMD_SUCCESS;
 }
 
-char * vty_user_get(struct vty *vty)
+ospl_char * vty_user_get(struct vty *vty)
 {
 	if(vty)
 	{

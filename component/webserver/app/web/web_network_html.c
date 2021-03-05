@@ -39,7 +39,7 @@ static int web_networkset_set_active(void *a)
 	if(ifp)
 	{
 		os_sleep(1);
-		nsm_iw_enable_api(ifp, FALSE);
+		nsm_iw_enable_api(ifp, ospl_false);
 	}
 #endif
 #else
@@ -52,7 +52,7 @@ static int web_networkset_set_active(void *a)
 	if(ifp)
 	{
 		os_sleep(2);
-		nsm_iw_enable_api(ifp, TRUE);
+		nsm_iw_enable_api(ifp, ospl_true);
 	}
 #endif
 #endif	
@@ -261,8 +261,8 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 			return web_return_text_plain(wp, ERROR);
 		}
 		nsm_interface_address_get_api(ifp, &ocp);
-		nsm_interface_address_unset_api(ifp, &ocp, FALSE);
-		if(nsm_interface_address_set_api(ifp, &cp, FALSE) != OK)
+		nsm_interface_address_unset_api(ifp, &ocp, ospl_false);
+		if(nsm_interface_address_set_api(ifp, &cp, ospl_false) != OK)
 		{
 			_WEB_DBG_TRAP("================%s=======================:nsm_interface_address_set_api\r\n", __func__);
 			return web_return_text_plain(wp, ERROR);
@@ -275,7 +275,7 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 				_WEB_DBG_TRAP("================%s=======================:dns str2prefix:%s\r\n", __func__, dns);
 				return web_return_text_plain(wp, ERROR);
 			}
-			if(nsm_ip_dns_add_api(&cp, FALSE) != OK)
+			if(nsm_ip_dns_add_api(&cp, ospl_false) != OK)
 			{
 				_WEB_DBG_TRAP("================%s=======================:dns\r\n", __func__);
 				return web_return_text_plain(wp, ERROR);
@@ -288,7 +288,7 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 				_WEB_DBG_TRAP("================%s=======================:dns2 str2prefix:%s\r\n", __func__,dns2);
 				return web_return_text_plain(wp, ERROR);
 			}
-			if(nsm_ip_dns_add_api(&cp, TRUE) != OK)
+			if(nsm_ip_dns_add_api(&cp, ospl_true) != OK)
 			{
 				_WEB_DBG_TRAP("================%s=======================:dns2\r\n", __func__);
 				return web_return_text_plain(wp, ERROR);

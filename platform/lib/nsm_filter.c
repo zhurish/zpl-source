@@ -164,8 +164,8 @@ filter_match_cisco (struct filter *mfilter, struct prefix *p)
 {
   struct filter_cisco *filter;
   struct in_addr mask;
-  u_int32_t check_addr;
-  u_int32_t check_mask;
+  ospl_uint32 check_addr;
+  ospl_uint32 check_mask;
 
   filter = &mfilter->u.cfilter;
   check_addr = p->u.prefix4.s_addr & ~filter->addr_mask.s_addr;
@@ -270,7 +270,7 @@ access_list_delete (struct access_list *access)
 static struct access_list *
 access_list_insert (afi_t afi, const char *name)
 {
-  unsigned int i;
+  ospl_uint32  i;
   long number;
   struct access_list *access;
   struct access_list *point;
@@ -426,32 +426,32 @@ access_list_apply (struct access_list *access, void *object)
 
 /* Add hook function. */
 void
-access_list_add_hook (int proto, void (*func) (struct access_list *access))
+access_list_add_hook (ospl_uint32 module, void (*func) (struct access_list *access))
 {
-	if(INT_MAX_MIN_SPACE(proto, MODULE_NONE, MODULE_MAX))
+	if(INT_MAX_MIN_SPACE(module, MODULE_NONE, MODULE_MAX))
 	{
-		access_master_ipv4.add_hook[proto] = func;
+		access_master_ipv4.add_hook[module] = func;
 #ifdef HAVE_IPV6
-		access_master_ipv6.add_hook[proto] = func;
+		access_master_ipv6.add_hook[module] = func;
 #endif /* HAVE_IPV6 */
 	}
 }
 
 /* Delete hook function. */
 void
-access_list_delete_hook (int proto, void (*func) (struct access_list *access))
+access_list_delete_hook (ospl_uint32 module, void (*func) (struct access_list *access))
 {
-  if(INT_MAX_MIN_SPACE(proto, MODULE_NONE, MODULE_MAX))
+  if(INT_MAX_MIN_SPACE(module, MODULE_NONE, MODULE_MAX))
   {
-	  access_master_ipv4.delete_hook[proto] = func;
+	  access_master_ipv4.delete_hook[module] = func;
 #ifdef HAVE_IPV6
-	  access_master_ipv6.delete_hook[proto] = func;
+	  access_master_ipv6.delete_hook[module] = func;
 #endif /* HAVE_IPV6 */
   }
 }
-static int access_list_hook_callback(int type, struct access_list *access)
+static int access_list_hook_callback(ospl_uint32 type, struct access_list *access)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0 ; i < MODULE_MAX; i++)
 	{
 		if(type == 1)
@@ -1800,7 +1800,7 @@ config_write_access_zebra (struct vty *vty, struct filter *mfilter)
 {
   struct filter_zebra *filter;
   struct prefix *p;
-  char buf[BUFSIZ];
+  ospl_char buf[BUFSIZ];
 
   filter = &mfilter->u.zfilter;
   p = &filter->prefix;

@@ -27,7 +27,7 @@
 #include "modem_atcmd.h"
 
 #ifdef MODEM_DHCPC_PROCESS
-static int _dhcpc_start(int id, char *process, char *ifname)
+static int _dhcpc_start(ospl_uint32 id, char *process, char *ifname)
 {
 	MODEM_HDCP_DEBUG("dhcpc %d", id);
 	char name[64];
@@ -35,11 +35,11 @@ static int _dhcpc_start(int id, char *process, char *ifname)
 	os_memset(name, 0, sizeof(name));
 	os_snprintf(name, sizeof(name), "dhcpc%d", id);
 	return os_process_register(PROCESS_START, name,
-			process, FALSE, argv);
+			process, ospl_false, argv);
 	return OK;
 }
 
-static int _dhcpc_stop(int process)
+static int _dhcpc_stop(ospl_uint32 process)
 {
 	MODEM_HDCP_DEBUG(" dhcpc");
 	return os_process_action(PROCESS_STOP, NULL, process);
@@ -59,12 +59,12 @@ static int _dhcpc_start(modem_t *modem, struct interface *ifp)
 			{
 				os_msleep(10);
 				if(!nsm_interface_dhcpc_is_running(ifp))
-					return nsm_interface_dhcpc_start(ifp, TRUE);
+					return nsm_interface_dhcpc_start(ifp, ospl_true);
 			}
 			break;
 		case DHCP_CLIENT:
 			if(!nsm_interface_dhcpc_is_running(ifp))
-				return nsm_interface_dhcpc_start(ifp, TRUE);
+				return nsm_interface_dhcpc_start(ifp, ospl_true);
 			break;
 		case DHCP_SERVER:
 			break;
@@ -87,7 +87,7 @@ static int _dhcpc_stop(modem_t *modem, struct interface *ifp)
 	if(type == DHCP_CLIENT)
 		return nsm_interface_dhcp_mode_set_api(ifp, DHCP_NONE, NULL);
 #endif
-		//return nsm_interface_dhcpc_start(ifp, FALSE);
+		//return nsm_interface_dhcpc_start(ifp, ospl_false);
 	//if(/*if_is_wireless(ifp) && */ifp->k_ifindex)
 	//{
 	//	return nsm_interface_dhcp_mode_set_api(ifp, DHCP_NONE);
@@ -98,9 +98,9 @@ static int _dhcpc_stop(modem_t *modem, struct interface *ifp)
 }
 #endif
 
-static int _modem_dhcp_nwcall(modem_client_t *client, BOOL enable)
+static int _modem_dhcp_nwcall(modem_client_t *client, ospl_bool enable)
 {
-	if(enable == FALSE)
+	if(enable == ospl_false)
 	{
 		if(modem_bitmap_chk(&client->hw_state, MODEM_STATE_HW_CGDCONT))
 		{
@@ -173,17 +173,17 @@ static int _modem_dhcpc_stop(modem_client_t *client)
 }
 
 
-BOOL modem_dhcpc_isconnect(modem_t *modem)
+ospl_bool modem_dhcpc_isconnect(modem_t *modem)
 {
 	assert(modem);
 	if(modem->pid[modem->dialtype])
 	{
-		return TRUE;
+		return ospl_true;
 	}
-	return FALSE;
+	return ospl_false;
 }
 
-BOOL modem_dhcpc_islinkup(modem_t *modem)
+ospl_bool modem_dhcpc_islinkup(modem_t *modem)
 {
 	assert(modem);
 	struct interface *ifp = modem->eth0;
@@ -197,11 +197,11 @@ BOOL modem_dhcpc_islinkup(modem_t *modem)
 				{
 					//modem_serial_interface_update_kernel(modem, ifp->k_name);
 				}
-				return TRUE;
+				return ospl_true;
 			}
 		}
 	}
-	return FALSE;
+	return ospl_false;
 }
 
 int modem_dhcpc_attach(modem_t *modem)
@@ -209,7 +209,7 @@ int modem_dhcpc_attach(modem_t *modem)
 	int ret = 0;
 	assert(modem);
 	assert(modem->client);
-	ret = _modem_dhcp_nwcall(modem->client, TRUE);
+	ret = _modem_dhcp_nwcall(modem->client, ospl_true);
 	//MODEM_HDCP_DEBUG("dhcpc start dial");
 	return ret;
 }
@@ -219,7 +219,7 @@ int modem_dhcpc_unattach(modem_t *modem)
 	int ret = 0;
 	assert(modem);
 	assert(modem->client);
-	ret = _modem_dhcp_nwcall(modem->client, FALSE);
+	ret = _modem_dhcp_nwcall(modem->client, ospl_false);
 	//MODEM_HDCP_DEBUG("dhcpc stop dial");
 	return ret;
 }

@@ -27,9 +27,9 @@
 
 /* Daemonize myself. */
 int
-daemon (int nochdir, int noclose)
+daemon (ospl_bool nochdir, ospl_bool noclose)
 {
-  pid_t pid;
+  ospl_pid_t pid;
 
   pid = fork ();
 

@@ -53,6 +53,10 @@
 #ifndef _FPM_H
 #define _FPM_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * The Forwarding Plane Manager (FPM) is an optional component that
  * may be used in scenarios where the router has a forwarding path
@@ -71,7 +75,7 @@
  * takes place over a stream socket. The FPM listens on a well-known
  * TCP port, and zebra initiates the connection.
  *
- * All messages sent over the connection start with a short FPM
+ * All messages sent over the connection start with a ospl_int16 FPM
  * header, fpm_msg_hdr_t. In the case of route add/delete messages,
  * the header is followed by a netlink message. Zebra should send a
  * complete copy of the forwarding table(s) to the FPM, including
@@ -114,18 +118,18 @@ typedef struct fpm_msg_hdr_t_
   /*
    * Protocol version.
    */
-  uint8_t version;
+  ospl_uint8 version;
 
   /*
    * Type of message, see below.
    */
-  uint8_t msg_type;
+  ospl_uint8 msg_type;
 
   /*
    * Length of entire message, including the header, in network byte
    * order.
    */
-  uint16_t msg_len;
+  ospl_uint16 msg_len;
 } __attribute__ ((packed)) fpm_msg_hdr_t;
 
 #ifdef __SUNPRO_C
@@ -167,8 +171,8 @@ typedef enum fpm_msg_type_e_ {
  *
  * **NB**: Alignment is required only when netlink messages are used.
  */
-static inline size_t
-fpm_msg_align (size_t len)
+static inline ospl_size_t
+fpm_msg_align (ospl_size_t len)
 {
   return (len + FPM_MSG_ALIGNTO - 1) & ~(FPM_MSG_ALIGNTO - 1);
 }
@@ -191,8 +195,8 @@ COMPILE_ASSERT(FPM_MSG_ALIGNTO == FPM_MSG_HDR_LEN);
  * The length value that should be placed in the msg_len field of the
  * header for a *payload* of size 'data_len'.
  */
-static inline size_t
-fpm_data_len_to_msg_len (size_t data_len)
+static inline ospl_size_t
+fpm_data_len_to_msg_len (ospl_size_t data_len)
 {
   return data_len + FPM_MSG_HDR_LEN;
 }
@@ -205,13 +209,13 @@ fpm_data_len_to_msg_len (size_t data_len)
 static inline void *
 fpm_msg_data (fpm_msg_hdr_t *hdr)
 {
-  return ((char*) hdr) + FPM_MSG_HDR_LEN;
+  return ((ospl_char*) hdr) + FPM_MSG_HDR_LEN;
 }
 
 /*
  * fpm_msg_len
  */
-static inline size_t
+static inline ospl_size_t
 fpm_msg_len (const fpm_msg_hdr_t *hdr)
 {
   return ntohs (hdr->msg_len);
@@ -220,7 +224,7 @@ fpm_msg_len (const fpm_msg_hdr_t *hdr)
 /*
  * fpm_msg_data_len
  */
-static inline size_t
+static inline ospl_size_t
 fpm_msg_data_len (const fpm_msg_hdr_t *hdr)
 {
   return (fpm_msg_len (hdr) - FPM_MSG_HDR_LEN);
@@ -232,9 +236,9 @@ fpm_msg_data_len (const fpm_msg_hdr_t *hdr)
  * Move to the next message in a buffer.
  */
 static inline fpm_msg_hdr_t *
-fpm_msg_next (fpm_msg_hdr_t *hdr, size_t *len)
+fpm_msg_next (fpm_msg_hdr_t *hdr, ospl_size_t *len)
 {
-  size_t msg_len;
+  ospl_size_t msg_len;
 
   msg_len = fpm_msg_len (hdr);
 
@@ -247,18 +251,18 @@ fpm_msg_next (fpm_msg_hdr_t *hdr, size_t *len)
     *len -= msg_len;
   }
 
-  return (fpm_msg_hdr_t *) (((char*) hdr) + msg_len);
+  return (fpm_msg_hdr_t *) (((ospl_char*) hdr) + msg_len);
 }
 
 /*
  * fpm_msg_hdr_ok
  *
- * Returns TRUE if a message header looks well-formed.
+ * Returns ospl_true if a message header looks well-formed.
  */
 static inline int
 fpm_msg_hdr_ok (const fpm_msg_hdr_t *hdr)
 {
-  size_t msg_len;
+  ospl_size_t msg_len;
 
   if (hdr->msg_type == FPM_MSG_TYPE_NONE)
     return 0;
@@ -281,12 +285,12 @@ fpm_msg_hdr_ok (const fpm_msg_hdr_t *hdr)
 /*
  * fpm_msg_ok
  *
- * Returns TRUE if a message looks well-formed.
+ * Returns ospl_true if a message looks well-formed.
  *
  * @param len The length in bytes from 'hdr' to the end of the buffer.
  */
 static inline int
-fpm_msg_ok (const fpm_msg_hdr_t *hdr, size_t len)
+fpm_msg_ok (const fpm_msg_hdr_t *hdr, ospl_size_t len)
 {
   if (len < FPM_MSG_HDR_LEN)
     return 0;
@@ -310,9 +314,13 @@ fpm_msg_ok (const fpm_msg_hdr_t *hdr, size_t len)
 /*
  * Externs.
  */
-extern int zfpm_init (struct thread_master *master, int enable, uint16_t port,
+extern int zfpm_init (struct thread_master *master, int enable, ospl_uint16 port,
 		      const char *message_format);
 extern void zfpm_trigger_update (struct route_node *rn, const char *reason);
 extern int fpm_remote_srv_write (struct vty *vty );
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FPM_H */

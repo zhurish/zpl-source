@@ -24,6 +24,10 @@
 #ifndef _QUAGGA_WORK_QUEUE_H
 #define _QUAGGA_WORK_QUEUE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Hold time for the initial schedule of a queue run, in  millisec */
 #define WORK_QUEUE_DEFAULT_HOLD  50 
 
@@ -44,7 +48,7 @@ typedef enum
 struct work_queue_item
 {
   void *data;                           /* opaque data */
-  unsigned short ran;			/* # of times item has been run */
+  ospl_ushort ran;			/* # of times item has been run */
 };
 
 #define WQ_UNPLUGGED	(1 << 0) /* available for draining */
@@ -56,7 +60,7 @@ struct work_queue
    */
   struct thread_master *master;       /* thread master */
   struct thread *thread;              /* thread, if one is active */
-  char *name;                         /* work queue name */
+  ospl_char *name;                         /* work queue name */
   
   /* Specification for this work queue.
    * Public, must be set before use by caller. May be modified at will.
@@ -81,25 +85,25 @@ struct work_queue
     void (*completion_func) (struct work_queue *);
     
     /* max number of retries to make for item that errors */
-    unsigned int max_retries;	
+    ospl_uint32  max_retries;	
 
-    unsigned int hold;	/* hold time for first run, in ms */
+    ospl_uint32  hold;	/* hold time for first run, in ms */
   } spec;
   
   /* remaining fields should be opaque to users */
   struct list *items;                 /* queue item list */
-  unsigned long runs;                 /* runs count */
-  unsigned long worst_usec;
+  ospl_ulong runs;                 /* runs count */
+  ospl_ulong worst_usec;
   
   struct {
-    unsigned int best;
-    unsigned int worst;
-    unsigned int granularity;
-    unsigned long total;
+    ospl_uint32  best;
+    ospl_uint32  worst;
+    ospl_uint32  granularity;
+    ospl_ulong total;
   } cycles;	/* cycle counts */
   
   /* private state */
-  u_int16_t flags;		/* user set flag */
+  ospl_uint16 flags;		/* user set flag */
 };
 
 /* User API */
@@ -126,4 +130,11 @@ bool work_queue_is_scheduled (struct work_queue *);
 /* Helpers, exported for thread.c and command.c */
 extern int work_queue_run (struct thread *);
 extern struct cmd_element show_work_queues_cmd;
+
+
+ 
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _QUAGGA_WORK_QUEUE_H */

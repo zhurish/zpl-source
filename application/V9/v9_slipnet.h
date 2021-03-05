@@ -9,6 +9,10 @@
 #define __V9_SLIPNET_H__
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #ifdef V9_SLIPNET_ENABLE
 
@@ -20,9 +24,9 @@
 
 typedef struct app_slipnet_data_s
 {
-	u_int8 type;
-	u_int16 len;
-	u_int8 data[APP_SLIPNET_QUEUE_SIZE];
+	ospl_uint8 type;
+	ospl_uint16 len;
+	ospl_uint8 data[APP_SLIPNET_QUEUE_SIZE];
 } app_slipnet_data_t;
 
 #pragma pack()
@@ -37,8 +41,12 @@ typedef struct app_slipnet_data_s
 #define V9_SLIPNET_SPEED_RATE 115200
 #endif
 
-extern int v9_app_slipnet_init(v9_serial_t *serial, char *devname, u_int32 speed);
+extern int v9_app_slipnet_init(v9_serial_t *serial, char *devname, ospl_uint32 speed);
 extern int v9_app_slipnet_exit(v9_serial_t *serial);
 #endif /* V9_SLIPNET_ENABLE */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __V9_SLIPNET_H__ */

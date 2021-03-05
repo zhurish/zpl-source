@@ -22,7 +22,7 @@
 struct logfilter
 {
 	struct vty *vty;
-	int module;
+	ospl_uint32 module;
 	int priority;
 	int size;
 	int total;
@@ -563,11 +563,11 @@ DEFUN (no_config_log_record_priority,
 
 DEFUN (config_log_timestamp,
 		config_log_timestamp_cmd,
-		"log timestamp (date|short|bsd|iso|rfc3164|rfc3339)",
+		"log timestamp (date|ospl_int16|bsd|iso|rfc3164|rfc3339)",
 		"Logging control\n"
 		"Timestamp configuration\n"
 		"Timestamp format date\n"
-		"Timestamp format short\n"
+		"Timestamp format ospl_int16\n"
 		"Timestamp format bsd\n"
 		"Timestamp format iso\n"
 		"Timestamp format rfc3164\n"
@@ -580,7 +580,7 @@ DEFUN (config_log_timestamp,
 	}
 	if(os_memcmp(argv[0],"date", 3) == 0)
 		value = ZLOG_TIMESTAMP_DATE;
-	else if(os_memcmp(argv[0],"short", 3) == 0)
+	else if(os_memcmp(argv[0],"ospl_int16", 3) == 0)
 		value = ZLOG_TIMESTAMP_SHORT;
 	else if(os_memcmp(argv[0],"bsd", 3) == 0)
 		value = ZLOG_TIMESTAMP_BSD;
@@ -627,7 +627,7 @@ DEFUN (config_log_testing,
 			return CMD_ERR_NO_MATCH;
 	}
 	if(!zlog_testing_enabled())
-		zlog_testing_enable(TRUE);
+		zlog_testing_enable(ospl_true);
 	zlog_testing_priority(level);
 	return CMD_SUCCESS;
 }
@@ -652,7 +652,7 @@ DEFUN (no_config_log_testing,
 	else
 	{
 		zlog_testing_priority(LOG_ERR);
-		zlog_testing_enable(FALSE);
+		zlog_testing_enable(ospl_false);
 	}
 	return CMD_SUCCESS;
 }
@@ -680,7 +680,7 @@ DEFUN (config_log_testing_file,
 			return CMD_ERR_NO_MATCH;
 	}
 	if(!zlog_testing_enabled())
-		zlog_testing_enable(TRUE);
+		zlog_testing_enable(ospl_true);
 	zlog_testing_priority(level);
 	zlog_testing_file(argv[0]);
 	return CMD_SUCCESS;
@@ -708,13 +708,13 @@ DEFUN (no_config_log_testing_file,
 	{
 		zlog_testing_file(NULL);
 		zlog_testing_priority(LOG_DEBUG);
-		zlog_testing_enable(FALSE);
+		zlog_testing_enable(ospl_false);
 	}
 	else
 	{
 		zlog_testing_file(NULL);
 		zlog_testing_priority(LOG_DEBUG);
-		zlog_testing_enable(FALSE);
+		zlog_testing_enable(ospl_false);
 	}
 	return CMD_SUCCESS;
 }
@@ -840,7 +840,7 @@ DEFUN (show_logging,
 	else if(zl->timestamp == ZLOG_TIMESTAMP_DATE)
 		vty_out(vty, "Timestamp           : data%s",VTY_NEWLINE);
 	else if(zl->timestamp == ZLOG_TIMESTAMP_SHORT)
-		vty_out(vty, "Timestamp           : short%s",VTY_NEWLINE);
+		vty_out(vty, "Timestamp           : ospl_int16%s",VTY_NEWLINE);
 	else if(zl->timestamp == ZLOG_TIMESTAMP_BSD)
 		vty_out(vty, "Timestamp           : bsd%s",VTY_NEWLINE);
 	else if(zl->timestamp == ZLOG_TIMESTAMP_ISO)

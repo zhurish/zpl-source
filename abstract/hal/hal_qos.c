@@ -22,17 +22,17 @@
 
 
 
-int hal_qos_enable(BOOL enable)
+int hal_qos_enable(ospl_bool enable)
 {
 	if(hal_driver && hal_driver->qos_tbl && hal_driver->qos_tbl->sdk_qos_enable_cb)
 		return hal_driver->qos_tbl->sdk_qos_enable_cb(hal_driver->driver, enable);
 	return ERROR;
 }
 
-int hal_qos_ipg_enable(BOOL enable)
+int hal_qos_ipg_enable(ospl_bool enable)
 {
 	if(hal_driver && hal_driver->qos_tbl && hal_driver->qos_tbl->sdk_qos_ipg_cb)
-		return hal_driver->qos_tbl->sdk_qos_ipg_cb(hal_driver->driver, TRUE, enable);
+		return hal_driver->qos_tbl->sdk_qos_ipg_cb(hal_driver->driver, ospl_true, enable);
 	return ERROR;
 }
 
@@ -65,7 +65,7 @@ int hal_qos_port_map_queue(ifindex_t ifindex, nsm_qos_priority_e pri, nsm_qos_qu
 	return ERROR;
 }
 
-int hal_qos_diffserv_map_queue(ifindex_t ifindex, int diffserv, nsm_qos_queue_e queue)
+int hal_qos_diffserv_map_queue(ifindex_t ifindex, ospl_uint32 diffserv, nsm_qos_queue_e queue)
 {
 	if(hal_driver && hal_driver->qos_tbl && hal_driver->qos_tbl->sdk_qos_diffserv_map_queue_cb)
 		return hal_driver->qos_tbl->sdk_qos_diffserv_map_queue_cb(hal_driver->driver, ifindex, diffserv, queue);
@@ -88,7 +88,7 @@ int hal_qos_queue_scheduling(nsm_qos_class_e class, nsm_class_sched_t type)
 	return ERROR;
 }
 
-int hal_qos_queue_weight(nsm_qos_class_e class, int weight)
+int hal_qos_queue_weight(nsm_qos_class_e class, ospl_uint32 weight)
 {
 	if(hal_driver && hal_driver->qos_tbl && hal_driver->qos_tbl->sdk_qos_class_weight_cb)
 		return hal_driver->qos_tbl->sdk_qos_class_weight_cb(hal_driver->driver, class, weight);
@@ -96,14 +96,14 @@ int hal_qos_queue_weight(nsm_qos_class_e class, int weight)
 }
 
 //风暴
-int hal_qos_storm_mode(ifindex_t ifindex, BOOL enable, int mode)
+int hal_qos_storm_mode(ifindex_t ifindex, ospl_bool enable, ospl_uint32 mode)
 {
 	if(hal_driver && hal_driver->qos_tbl && hal_driver->qos_tbl->sdk_qos_storm_enable_cb)
 		return hal_driver->qos_tbl->sdk_qos_storm_enable_cb(hal_driver->driver, ifindex, enable, mode);
 	return ERROR;
 }
 
-int hal_qos_storm_rate_limit(ifindex_t ifindex, u_int limit, u_int burst_size)
+int hal_qos_storm_rate_limit(ifindex_t ifindex, ospl_uint32 limit, ospl_uint32 burst_size)
 {
 	if(hal_driver && hal_driver->qos_tbl && hal_driver->qos_tbl->sdk_qos_storm_rate_cb)
 		return hal_driver->qos_tbl->sdk_qos_storm_rate_cb(hal_driver->driver, ifindex, limit, burst_size);
@@ -113,14 +113,14 @@ int hal_qos_storm_rate_limit(ifindex_t ifindex, u_int limit, u_int burst_size)
 
 //端口限速
 
-int hal_qos_egress_rate_limit(ifindex_t ifindex, u_int limit, u_int burst_size)
+int hal_qos_egress_rate_limit(ifindex_t ifindex, ospl_uint32 limit, ospl_uint32 burst_size)
 {
 	if(hal_driver && hal_driver->qos_tbl && hal_driver->qos_tbl->sdk_qos_port_egress_rate_cb)
 		return hal_driver->qos_tbl->sdk_qos_port_egress_rate_cb(hal_driver->driver, ifindex, limit, burst_size);
 	return ERROR;
 }
 
-int hal_qos_ingress_rate_limit(ifindex_t ifindex, u_int limit, u_int burst_size)
+int hal_qos_ingress_rate_limit(ifindex_t ifindex, ospl_uint32 limit, ospl_uint32 burst_size)
 {
 	if(hal_driver && hal_driver->qos_tbl && hal_driver->qos_tbl->sdk_qos_port_ingress_rate_cb)
 		return hal_driver->qos_tbl->sdk_qos_port_ingress_rate_cb(hal_driver->driver, ifindex, limit, burst_size);
@@ -128,7 +128,7 @@ int hal_qos_ingress_rate_limit(ifindex_t ifindex, u_int limit, u_int burst_size)
 }
 
 //CPU
-int hal_qos_cpu_rate_limit(u_int limit, u_int burst_size)
+int hal_qos_cpu_rate_limit(ospl_uint32 limit, ospl_uint32 burst_size)
 {
 	if(hal_driver && hal_driver->qos_tbl && hal_driver->qos_tbl->sdk_qos_cpu_rate_cb)
 		return hal_driver->qos_tbl->sdk_qos_cpu_rate_cb(hal_driver->driver, limit, burst_size);

@@ -8,6 +8,10 @@
 #ifndef __TTY_COM_H__
 #define __TTY_COM_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <termios.h>
 
 #define TTY_COM_DEVNAME_MAX 64
@@ -59,10 +63,10 @@ typedef enum
 
 struct tty_com
 {
-	char 	devname[TTY_COM_DEVNAME_MAX];
+	ospl_char 	devname[TTY_COM_DEVNAME_MAX];
 	int		fd;
 	FILE	*fp;
-	u_int32 		speed;		// speed bit
+	ospl_uint32 		speed;		// speed bit
 	enum tty_data_bit 	databit;	// data bit
 	enum tty_stop_bit	stopbit;	// stop bit
 	enum parity_mode 	parity;		// parity
@@ -73,19 +77,19 @@ struct tty_com
 	struct termios termios;
 	struct termios old_termios;
 
-	int	(*encapsulation)(char *, int, char *, int);
-	int	(*decapsulation)(char *, int, char *, int);
+	int	(*encapsulation)(ospl_uchar *, ospl_uint32, ospl_uchar *, ospl_uint32);
+	int	(*decapsulation)(ospl_uchar *, ospl_uint32, ospl_uchar *, ospl_uint32);
 };
 
 
 struct tty_slip
 {
 	/* These are pointers to the malloc()ed frame buffers. */
-	unsigned char		*slipbuf;		/* receiver buffer		*/
-	int               sliplen;         /* received chars counter       */
-	int               buffsize;       /* Max buffers sizes            */
+	ospl_uchar		*slipbuf;		/* receiver buffer		*/
+	ospl_uint32               sliplen;         /* received chars counter       */
+	ospl_uint32               buffsize;       /* Max buffers sizes            */
 
-	unsigned int		flags;		/* Flag values/ mode etc	*/
+	ospl_uint32		flags;		/* Flag values/ mode etc	*/
 #define TTY_COM_SLF_INUSE	0		/* Channel in use               */
 #define TTY_COM_SLF_ESCAPE	1               /* ESC received                 */
 #define TTY_COM_SLF_ERROR	2               /* Parity, etc. error           */
@@ -94,22 +98,26 @@ struct tty_slip
 };
 
 
-extern BOOL tty_iscom(struct tty_com *com);
-extern BOOL tty_isopen(struct tty_com *com);
+extern ospl_bool tty_iscom(struct tty_com *com);
+extern ospl_bool tty_isopen(struct tty_com *com);
 extern int tty_com_open(struct tty_com *com);
 extern int tty_com_close(struct tty_com *com);
 extern int tty_com_update_option(struct tty_com *com);
-extern int tty_com_write(struct tty_com *com, char *buf, int len);
-extern int tty_com_read(struct tty_com *com, char *buf, int len);
+extern int tty_com_write(struct tty_com *com, ospl_uchar *buf, ospl_uint32 len);
+extern int tty_com_read(struct tty_com *com, ospl_uchar *buf, ospl_uint32 len);
 
-extern int tty_com_putc(struct tty_com *com, unsigned char c);
-extern int tty_com_getc(struct tty_com *com, unsigned char *c);
+extern int tty_com_putc(struct tty_com *com, ospl_uchar c);
+extern int tty_com_getc(struct tty_com *com, ospl_uchar *c);
 
-extern int tty_com_slip_write(struct tty_com *com, char *p, int len);
-extern int tty_com_slip_read(struct tty_com *com, char *p, int len);
+extern int tty_com_slip_write(struct tty_com *com, ospl_uchar *p, ospl_uint32 len);
+extern int tty_com_slip_read(struct tty_com *com, ospl_uchar *p, ospl_uint32 len);
 
-extern int tty_com_slip_encapsulation(struct tty_slip *sl, unsigned char *s, int len);
-extern int tty_com_slip_decapsulation(struct tty_slip *sl, unsigned char *s, int len);
-extern int tty_com_slip_decode_byte(struct tty_slip *sl, unsigned char s);
+extern int tty_com_slip_encapsulation(struct tty_slip *sl, ospl_uchar *s, ospl_uint32 len);
+extern int tty_com_slip_decapsulation(struct tty_slip *sl, ospl_uchar *s, ospl_uint32 len);
+extern int tty_com_slip_decode_byte(struct tty_slip *sl, ospl_uchar s);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __TTY_COM_H__ */

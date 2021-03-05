@@ -85,17 +85,17 @@ int vpxDecoder::videoDecoderSetup(const int width, const int height, const int f
     	max_res = ((int)isqrt(max_fs * 8)) * 16;
     }
     this->dec_buf_size = (max_res * max_res * 3 >> 1) + (max_res);
-    this->dec_buf = new unsigned char [this->dec_buf_size];
+    this->dec_buf = new ospl_uint8 [this->dec_buf_size];
     return 0;
 }
 
 #if 0
-int vpxDecoder::vpx_unpacketize(const unsigned char *buf,
+int vpxDecoder::vpx_unpacketize(const ospl_uint8 *buf,
                                 size_t packet_size,
                                 unsigned *p_desc_len)
 {
     unsigned desc_len = 1;
-    unsigned char *p = (unsigned char *)buf;
+    ospl_uint8 *p = (ospl_uint8 *)buf;
 
 #define INC_DESC_LEN()                 \
     {                                  \
@@ -160,7 +160,7 @@ int vpxDecoder::vpx_unpacketize(const unsigned char *buf,
 	 */
         if ((p[0] & 0x10) && (p[0] & 0x80) && (p[0] & 0x40))
         {
-            unsigned char *q = p + desc_len;
+            ospl_uint8 *q = p + desc_len;
 
             INC_DESC_LEN();
             if (*q & 0x1)
@@ -177,7 +177,7 @@ int vpxDecoder::vpx_unpacketize(const unsigned char *buf,
         /* V: Scalability structure (SS) data present. */
         if (p[0] & 0x2)
         {
-            unsigned char *q = p + desc_len;
+            ospl_uint8 *q = p + desc_len;
             unsigned N_S = (*q >> 5) + 1;
 
             INC_DESC_LEN();
@@ -213,8 +213,8 @@ int vpxDecoder::vpx_unpacketize(const unsigned char *buf,
 }
 #endif
 
-int vpxDecoder::vpx_decode_framed(const unsigned char *packets, const  int in_size,
-                                  unsigned char *output, unsigned out_size)
+int vpxDecoder::vpx_decode_framed(const ospl_uint8 *packets, const  int in_size,
+                                  ospl_uint8 *output, unsigned out_size)
 {
     bool has_frame = false;
     unsigned i, whole_len = 0;
@@ -225,7 +225,7 @@ int vpxDecoder::vpx_decode_framed(const unsigned char *packets, const  int in_si
     int plane = 0;
 
     /* Decode */
-    res = vpx_codec_decode(&dec, (const uint8_t *)packets, in_size, 0, VPX_DL_REALTIME);
+    res = vpx_codec_decode(&dec, (const ospl_uint8 *)packets, in_size, 0, VPX_DL_REALTIME);
     if (res)
     {
         printf ("Failed to decode frame %s",
@@ -251,7 +251,7 @@ int vpxDecoder::vpx_decode_framed(const unsigned char *packets, const  int in_si
 
     for (plane = 0; plane < 3; ++plane)
     {
-        const unsigned char *buf = img->planes[plane];
+        const ospl_uint8 *buf = img->planes[plane];
         const int stride = img->stride[plane];
         const int w = (plane ? img->d_w / 2 : img->d_w);
         const int h = (plane ? img->d_h / 2 : img->d_h);
@@ -269,23 +269,23 @@ int vpxDecoder::vpx_decode_framed(const unsigned char *packets, const  int in_si
     return pos;
 }
 
-int vpxDecoder::videoDecoderInput(const  unsigned char *frame, const int len)
+int vpxDecoder::videoDecoderInput(const  ospl_uint8 *frame, const int len)
 {
-    return vpx_decode_framed((unsigned char *)frame, len,
+    return vpx_decode_framed((ospl_uint8 *)frame, len,
                                   dec_buf, dec_buf_size);
 }
 
-int vpxDecoder::videoDecoderOutput(unsigned char *frame, const int len)
+int vpxDecoder::videoDecoderOutput(ospl_uint8 *frame, const int len)
 {
     int ret = m_out_size > len ? len:m_out_size;
     memcpy((char *)frame, dec_buf, ret);
     return ret;
 }
 
-unsigned char *vpxDecoder::videoDecoderOutput()
+ospl_uint8 *vpxDecoder::videoDecoderOutput()
 {
     if(dec_buf != nullptr && m_out_size > 0)
-        return (unsigned char *)dec_buf;
+        return (ospl_uint8 *)dec_buf;
     return nullptr;
 }
 

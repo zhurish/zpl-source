@@ -63,7 +63,7 @@ extern int 	ftpdDelete (void);
 extern int   ftpdAnonymousAllow (const char * rootDir, const char * uploadDir);
 extern void     ftpdEnableSecurity (void);
 extern void     ftpdDisableSecurity (void);
-extern void     ftpdLingerSecondsSet (unsigned long seconds);
+extern void     ftpdLingerSecondsSet (ospl_ulong seconds);
 
 extern int ftpdEnable(char *address, int port);
 extern int ftpdDisable(void);

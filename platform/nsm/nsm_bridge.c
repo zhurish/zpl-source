@@ -28,7 +28,7 @@ nsm_bridge_t * nsm_bridge_get(struct interface *ifp)
 
 static int nsm_bridge_member_lookup(nsm_bridge_t *bridge, ifindex_t ifindex)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < BRIDGE_MEMBER_MAX; i++)
 	{
 		if(bridge->member[i] == ifindex)
@@ -81,7 +81,7 @@ static int nsm_bridge_member_del(nsm_bridge_t *bridge, ifindex_t ifindex)
 
 static int nsm_bridge_member_del_all(nsm_bridge_t *bridge)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	struct interface *ifp = NULL;
 	for(i = 0; i < BRIDGE_MEMBER_MAX; i++)
 	{
@@ -95,7 +95,7 @@ static int nsm_bridge_member_del_all(nsm_bridge_t *bridge)
 	return 0;
 }
 
-static int nsm_bridge_interface_add_check(BOOL add, struct interface *ifp)
+static int nsm_bridge_interface_add_check(ospl_bool add, struct interface *ifp)
 {
 	if(add)
 	{
@@ -123,7 +123,7 @@ int nsm_bridge_add_interface_api(struct interface *bridge, struct interface *ifp
 	if(if_is_brigde(bridge))
 	{
 		int ret = -1;
-		if(!nsm_bridge_interface_add_check(TRUE, ifp))
+		if(!nsm_bridge_interface_add_check(ospl_true, ifp))
 			return ERROR;
 		nsm_bridge_t * bri = nsm_bridge_get(bridge);
 		if(bri)
@@ -146,7 +146,7 @@ int nsm_bridge_del_interface_api(struct interface *bridge, struct interface *ifp
 	if(if_is_brigde(bridge))
 	{
 		int ret = -1;
-		if(!nsm_bridge_interface_add_check(FALSE, ifp))
+		if(!nsm_bridge_interface_add_check(ospl_false, ifp))
 			return ERROR;
 		nsm_bridge_t * bri = nsm_bridge_get(bridge);
 		if(bri)
@@ -178,7 +178,7 @@ int nsm_bridge_update_member_api(struct interface *bridge)
 				ret = bri->get_member_cb(bri, kifindex);
 			if (ret)
 			{
-				int i = 0;
+				ospl_uint32 i = 0;
 				nsm_bridge_member_del_all(bri);
 				for(i = 0; i < BRIDGE_MEMBER_MAX; i++)
 				{
@@ -197,7 +197,7 @@ int nsm_bridge_update_member_api(struct interface *bridge)
 }
 
 
-int nsm_bridge_interface_stp_set_api(struct interface *bridge, BOOL stp)
+int nsm_bridge_interface_stp_set_api(struct interface *bridge, ospl_bool stp)
 {
 	if(if_is_brigde(bridge))
 	{
@@ -212,7 +212,7 @@ int nsm_bridge_interface_stp_set_api(struct interface *bridge, BOOL stp)
 	return ERROR;
 }
 
-int nsm_bridge_interface_max_age_set_api(struct interface *bridge, int max_age)
+int nsm_bridge_interface_max_age_set_api(struct interface *bridge, ospl_uint32 max_age)
 {
 	if(if_is_brigde(bridge))
 	{
@@ -227,7 +227,7 @@ int nsm_bridge_interface_max_age_set_api(struct interface *bridge, int max_age)
 	return ERROR;
 }
 
-int nsm_bridge_interface_hello_time_set_api(struct interface *bridge, int hello_time)
+int nsm_bridge_interface_hello_time_set_api(struct interface *bridge, ospl_uint32 hello_time)
 {
 	if(if_is_brigde(bridge))
 	{
@@ -242,7 +242,7 @@ int nsm_bridge_interface_hello_time_set_api(struct interface *bridge, int hello_
 	return ERROR;
 }
 
-int nsm_bridge_interface_forward_delay_set_api(struct interface *bridge, int forward_delay)
+int nsm_bridge_interface_forward_delay_set_api(struct interface *bridge, ospl_uint32 forward_delay)
 {
 	if(if_is_brigde(bridge))
 	{
@@ -294,7 +294,7 @@ static int nsm_bridge_delete_interface(struct interface *ifp)
 
 static int nsm_bridge_interface_write_config(struct vty *vty, struct interface *ifp)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	if(if_is_brigde(ifp))
 	{
 		nsm_bridge_t * bridge = nsm_bridge_get(ifp);

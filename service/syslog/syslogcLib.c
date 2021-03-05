@@ -48,7 +48,7 @@ static struct syslog_client *syslog_client = NULL;
  static struct in_addr client->address;
  static char  hostname[DFT_HOST_NAME_LEN];
  static int   client->sock = 0;
- static int  syslogcLibInitDone = FALSE;
+ static int  syslogcLibInitDone = ospl_false;
  */
 
 static char * monthStr[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
@@ -56,12 +56,12 @@ static char * monthStr[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
 
 /* local function prototypes */
 
-static int syslogMsgSend(struct syslog_client *, void *, int, char *, unsigned short, unsigned long,
-		int);
+static int syslogMsgSend(struct syslog_client *, void *, ospl_uint32, char *, ospl_uint16, ospl_ulong,
+		ospl_uint32);
 //static int mdataToSyslogBuf (M_BLK_ID,int, char *, int);
-static int num100LessToAsc(int, char *);
+static int num100LessToAsc(ospl_uint32, char *);
 static int timestampStrGet(char *);
-static int syslogcBinToAscStrConvert(unsigned char *, int, char *, int);
+static int syslogcBinToAscStrConvert(ospl_uint8 *, ospl_uint32, char *, ospl_uint32);
 static char * syslogHostNameStrGet(struct syslog_client *);
 /******************************************************************************
  *
@@ -78,10 +78,10 @@ static char * syslogHostNameStrGet(struct syslog_client *);
 static int syslogc_socket_init(struct syslog_client *client) {
 	struct sockaddr_in sin;
 	int sFd;
-	int family = SOCK_DGRAM;
+	ospl_family_t family = SOCK_DGRAM;
 	if(!client)
 		return ERROR;
-	if (client && client->enable == TRUE)
+	if (client && client->enable == ospl_true)
 	{
 		if(client->sock)
 			ip_close(client->sock);
@@ -181,7 +181,7 @@ static int syslogc_socket_init(struct syslog_client *client) {
 	}
 
 	client->sock = sFd;
-	client->connect = TRUE;
+	client->connect = ospl_true;
 	return sFd;
 }
 
@@ -202,11 +202,11 @@ static int syslogc_reconnect(struct syslog_client *client)
 static int syslogcShutdown(struct syslog_client *client) {
 	if(!client)
 		return ERROR;
-	if (client->enable == TRUE) {
+	if (client->enable == ospl_true) {
 		if(client->sock)
 			ip_close(client->sock);
-		client->connect = FALSE;
-		//client->enable = FALSE;
+		client->connect = ospl_false;
+		//client->enable = ospl_false;
 		return OK;
 	}
 	return OK;
@@ -226,12 +226,12 @@ int syslogcMdataSend
 		M_BLK_ID pMblk, /* point to the mbuf */
 		int pktLogLen, /* the number of bytes of the packet to be logged */
 		char * pMsgId, /* The message ID string, optional */
-		unsigned short code, /* syslog facility and severity code, default used if 0 */
-		unsigned long serverIpAddr /* binary server IP address in network byte  order,
+		ospl_uint16 code, /* syslog facility and severity code, default used if 0 */
+		ospl_ulong serverIpAddr /* binary server IP address in network byte  order,
 		 * default used if value is 0 */
 )
 {
-	if (syslogcLibInitDone == FALSE)
+	if (syslogcLibInitDone == ospl_false)
 	return ERROR;
 
 	return syslogMsgSend((void *)pMblk,pktLogLen,pMsgId,code,
@@ -247,16 +247,16 @@ int syslogcMdataSend
  * RETURNS: OK or ERROR
  */
 #if 0
-static int syslogcBinDataSend(struct syslog_client *client, unsigned char * pData, /* point to the data stream */
+static int syslogcBinDataSend(struct syslog_client *client, ospl_uint8 * pData, /* point to the data stream */
 int len, /* length of the data stream */
 char * pMsgId, /* The message ID string, optional. */
-unsigned short code, /* syslog facility and severity code, default used if 0 */
-unsigned long serverIpAddr /* binary server IP address in network byte order,
+ospl_uint16 code, /* syslog facility and severity code, default used if 0 */
+ospl_ulong serverIpAddr /* binary server IP address in network byte order,
  * default used if value is 0 */
 ) {
 	if(!client)
 		return ERROR;
-	if (client->enable == FALSE)
+	if (client->enable == ospl_false)
 		return ERROR;
 
 	return syslogMsgSend(client, (void *) pData, len, pMsgId, code, serverIpAddr,
@@ -273,13 +273,13 @@ unsigned long serverIpAddr /* binary server IP address in network byte order,
  */
 
 static int syslogcStringSend(struct syslog_client *client, char * pStr, /* point to the NULL terminated string */
-unsigned short code, /* syslog facility and severity code, default used if 0 */
-unsigned long serverIpAddr /* binary server IP address in network byte order,
+ospl_uint16 code, /* syslog facility and severity code, default used if 0 */
+ospl_ulong serverIpAddr /* binary server IP address in network byte order,
  * default used if value is 0 */
 ) {
 	if(!client)
 		return ERROR;
-	if (client->enable == FALSE)
+	if (client->enable == ospl_false)
 		return ERROR;
 
 	return syslogMsgSend(client, (void *) pStr, 0, NULL, code, serverIpAddr, CDATA_TYPE);
@@ -296,19 +296,19 @@ unsigned long serverIpAddr /* binary server IP address in network byte order,
  *
  */
 static int syslogMsgSend(struct syslog_client *client, void * pData, /* point to the data message */
-int dataLen, /* length of the message */
+ospl_uint32 dataLen, /* length of the message */
 char * pMsgIdStr, /* message Id string */
-unsigned short code, /* syslog facility and severity code, default used if 0 */
-unsigned long serverIpAddr, int dataType) {
+ospl_uint16 code, /* syslog facility and severity code, default used if 0 */
+ospl_ulong serverIpAddr, ospl_uint32 dataType) {
 	char  pLogMsg[SYSLOG_MSG_MAX_LEN];
-	int cnt = 0;
-	int remainder;
-	int digit;
+	ospl_uint32 cnt = 0;
+	ospl_uint32 remainder;
+	ospl_uint32 digit;
 	char * pTmp;
-	int len;
+	ospl_uint32 len;
 //	struct sockaddr_in serverSockAddr;
-	unsigned char fCode; /* syslog facility code */
-	unsigned char sCode; /* syslog severity code */
+	ospl_uint8 fCode; /* syslog facility code */
+	ospl_uint8 sCode; /* syslog severity code */
 
 	/* safety check */
 
@@ -316,7 +316,7 @@ unsigned long serverIpAddr, int dataType) {
 		return ERROR;
 
 	fCode = (code >> 8) & 0xff;
-	sCode = (unsigned char) (code & 0xff);
+	sCode = (ospl_uint8) (code & 0xff);
 
 	/* check facility code, use default if not specified or invalid */
 
@@ -429,13 +429,13 @@ unsigned long serverIpAddr, int dataType) {
 		break;
 
 	case BDATA_TYPE:
-		cnt += syslogcBinToAscStrConvert((unsigned char *) pData, dataLen,
+		cnt += syslogcBinToAscStrConvert((ospl_uint8 *) pData, dataLen,
 				&pLogMsg[cnt],
 				SYSLOG_MSG_MAX_LEN - cnt);
 		break;
 
 	case CDATA_TYPE: {
-		int copyLen;
+		ospl_uint32 copyLen;
 
 		copyLen = MIN(strlen((char * )pData), (SYSLOG_MSG_MAX_LEN - cnt));
 
@@ -480,14 +480,14 @@ unsigned long serverIpAddr, int dataType) {
  * RETURN: number of ASCII bytes written to buffer
  */
 
-static int syslogcBinToAscStrConvert(unsigned char * pData, /* point to a block of data */
-int dataLen, /* data length */
+static int syslogcBinToAscStrConvert(ospl_uint8 * pData, /* point to a block of data */
+ospl_uint32 dataLen, /* data length */
 char * pBuf, /* buffer to store converted ASCII value */
-int bufLen /* length of the buffer */
+ospl_uint32 bufLen /* length of the buffer */
 ) {
-	int i;
-	int cnt = 0;
-	int copyLen;
+	ospl_uint32 i;
+	ospl_uint32 cnt = 0;
+	ospl_uint32 copyLen;
 
 	/* make sure not write beyond the buffer limit */
 
@@ -532,7 +532,7 @@ static int mdataToSyslogBuf
 {
 	int mdataLen;
 	int copyLen;
-	unsigned char * pData;
+	ospl_uint8 * pData;
 	int cnt = 0;
 
 	/* each 8 bit binary data consumes 3 bytes(data + space) of ASCII buffer */
@@ -550,7 +550,7 @@ static int mdataToSyslogBuf
 	{
 		mdataLen = MIN(pMblk->mBlkHdr.mLen, copyLen);
 
-		pData = (unsigned char *)pMblk->mBlkHdr.mData;
+		pData = (ospl_uint8 *)pMblk->mBlkHdr.mData;
 
 		cnt += syslogcBinToAscStrConvert(pData,mdataLen,&pBuf[cnt],bufLen-cnt);
 
@@ -577,15 +577,15 @@ static int mdataToSyslogBuf
 #if 1
 static int timestampStrGet(char * pBuf)
 {
-	int cnt = 0;
-	time_t timeSec = 0;
+	ospl_uint32 cnt = 0;
+	ospl_time_t timeSec = 0;
 	struct tm *tm;
 	char buf[50];
 	timeSec = time(NULL);
 	if (!timeSec)
 		return cnt;
 	os_memset(buf, 0, sizeof(buf));
-	tm = localtime((time_t *) &timeSec);
+	tm = localtime((ospl_time_t *) &timeSec);
 	strftime(buf,50,"%d %H:%M:%S",tm);
 	strcpy(pBuf, monthStr[tm->tm_mon]);
 	cnt += strlen(monthStr[tm->tm_mon]);
@@ -599,7 +599,7 @@ static int timestampStrGet(char * pBuf)
 static int timestampStrGet(char * pBuf /* buffer to store the timestamp string */
 ) {
 	int cnt = 0;
-	unsigned int timeSec = 0;
+	ospl_uint32 timeSec = 0;
 	int digit;
 	struct timespec ts;
 	struct tm timeFields;
@@ -614,7 +614,7 @@ static int timestampStrGet(char * pBuf /* buffer to store the timestamp string *
 	if (!timeSec)
 		return cnt;
 
-	localtime_r((time_t *) &timeSec, &timeFields);
+	localtime_r((ospl_time_t *) &timeSec, &timeFields);
 
 	/* month field */
 
@@ -660,11 +660,11 @@ static int timestampStrGet(char * pBuf /* buffer to store the timestamp string *
  * RETURN: number of bytes of the ASCII data
  */
 
-static int num100LessToAsc(int number, /* numeric value */
+static int num100LessToAsc(ospl_uint32 number, /* numeric value */
 char * pBuf /* buffer to store the converted ASCII data */
 ) {
-	int digit;
-	int cnt = 0;
+	ospl_uint32 digit;
+	ospl_uint32 cnt = 0;
 
 	digit = number / 10;
 	pBuf[cnt++] = digit + ASCII_ZERO;
@@ -734,8 +734,8 @@ int syslogc_enable(char *hostname)
 		return ERROR;
 	if(syslog_client->mutx)
 		os_mutex_lock(syslog_client->mutx, OS_WAIT_FOREVER);
-	if(syslog_client->enable == FALSE)
-		syslog_client->enable = TRUE;
+	if(syslog_client->enable == ospl_false)
+		syslog_client->enable = ospl_true;
 	if(hostname)
 	{
 /*		if(syslog_client->hostname)
@@ -756,10 +756,10 @@ int syslogc_enable(char *hostname)
 	return OK;
 }
 
-BOOL syslogc_is_enable(void)
+ospl_bool syslogc_is_enable(void)
 {
 	if(!syslog_client)
-		return FALSE;
+		return ospl_false;
 	return syslog_client->enable;
 }
 
@@ -767,12 +767,12 @@ int syslogc_disable(void)
 {
 	if(!syslog_client)
 		return ERROR;
-	if(syslog_client->enable == FALSE)
+	if(syslog_client->enable == ospl_false)
 		return OK;
 	if(syslog_client->mutx)
 		os_mutex_lock(syslog_client->mutx, OS_WAIT_FOREVER);
 	syslogcShutdown(syslog_client);
-	syslog_client->enable = FALSE;
+	syslog_client->enable = ospl_false;
 	if(syslog_client->mutx)
 		os_mutex_unlock(syslog_client->mutx);
 	return OK;
@@ -791,7 +791,7 @@ int syslogc_dynamics_enable(void)
 		return ERROR;
 	if(!syslog_client->dynamics)
 		os_memset(syslog_client->address_string, 0, sizeof(syslog_client->address_string));
-	syslog_client->dynamics = TRUE;
+	syslog_client->dynamics = ospl_true;
 	return OK;
 }
 
@@ -801,15 +801,15 @@ int syslogc_dynamics_disable(void)
 		return ERROR;
 	if(syslog_client->dynamics)
 		os_memset(syslog_client->address_string, 0, sizeof(syslog_client->address_string));
-	syslog_client->dynamics = FALSE;
+	syslog_client->dynamics = ospl_false;
 	return OK;
 }
 
-int syslogc_host_config_set(char *address_string, int port, int facility)
+int syslogc_host_config_set(char *address_string, ospl_uint16 port, ospl_uint32 facility)
 {
 	if(!syslog_client)
 		return ERROR;
-	if(syslog_client->enable == FALSE)
+	if(syslog_client->enable == ospl_false)
 		return ERROR;
 	if(syslog_client->mutx)
 		os_mutex_lock(syslog_client->mutx, OS_WAIT_FOREVER);
@@ -836,7 +836,7 @@ int syslogc_host_config_set(char *address_string, int port, int facility)
 	return OK;
 }
 
-int syslogc_host_config_get(char *hostname, int *port, int *facility)
+int syslogc_host_config_get(char *hostname, ospl_uint16 *port, ospl_uint32 *facility)
 {
 	if(!syslog_client)
 		return ERROR;
@@ -854,11 +854,11 @@ int syslogc_host_config_get(char *hostname, int *port, int *facility)
 	return OK;
 }
 
-int syslogc_mode_set(int mode)
+int syslogc_mode_set(ospl_uint32 mode)
 {
 	if(!syslog_client)
 		return ERROR;
-	if(syslog_client->enable == FALSE)
+	if(syslog_client->enable == ospl_false)
 		return ERROR;
 
 	if(syslog_client->mode == mode)
@@ -882,11 +882,11 @@ int syslogc_mode_set(int mode)
 	return OK;
 }
 
-int syslogc_mode_get(int *mode)
+int syslogc_mode_get(ospl_uint32 *mode)
 {
 	if(!syslog_client)
 		return ERROR;
-	if(syslog_client->enable == FALSE)
+	if(syslog_client->enable == ospl_false)
 		return ERROR;
 	if(syslog_client->mutx)
 		os_mutex_lock(syslog_client->mutx, OS_WAIT_FOREVER);
@@ -897,11 +897,11 @@ int syslogc_mode_get(int *mode)
 	return OK;
 }
 
-int syslogc_facility_set(int facility)
+int syslogc_facility_set(ospl_uint32 facility)
 {
 	if(!syslog_client)
 		return ERROR;
-	if(syslog_client->enable == FALSE)
+	if(syslog_client->enable == ospl_false)
 		return ERROR;
 	if(syslog_client->mutx)
 		os_mutex_lock(syslog_client->mutx, OS_WAIT_FOREVER);
@@ -911,11 +911,11 @@ int syslogc_facility_set(int facility)
 	return OK;
 }
 
-int syslogc_facility_get(int *facility)
+int syslogc_facility_get(ospl_uint32 *facility)
 {
 	if(!syslog_client)
 		return ERROR;
-	if(syslog_client->enable == FALSE)
+	if(syslog_client->enable == ospl_false)
 		return ERROR;
 	if(syslog_client->mutx)
 		os_mutex_lock(syslog_client->mutx, OS_WAIT_FOREVER);
@@ -926,9 +926,9 @@ int syslogc_facility_get(int *facility)
 	return OK;
 }
 
-static int syslogc_format(struct syslog_client *client, int pri, char * pStr, int len)
+static int syslogc_format(struct syslog_client *client, ospl_uint32 pri, char * pStr, ospl_uint32 len)
 {
-	unsigned short code = 0;
+	ospl_uint16 code = 0;
 	if(!client)
 		return ERROR;
 	code = ((client->facility & 0xff) << 5);
@@ -938,14 +938,14 @@ static int syslogc_format(struct syslog_client *client, int pri, char * pStr, in
 		code, client->address.s_addr);
 }
 
-int vsysclog (int priority, int facility, char *format, va_list arglist)
+int vsysclog (ospl_uint32 priority, ospl_uint32 facility, char *format, va_list arglist)
 {
-	int len = 0;
+	ospl_uint32 len = 0;
 	char log_msg[SYSLOG_MSG_MAX_LEN];
     va_list ac;
 	if(!syslog_client)
 		return ERROR;
-	if(syslog_client->enable == FALSE)
+	if(syslog_client->enable == ospl_false)
 		return ERROR;
 	syslog_client->facility = facility;
     va_copy(ac, arglist);
@@ -956,15 +956,15 @@ int vsysclog (int priority, int facility, char *format, va_list arglist)
     return OK;
 }
 
-int syslogc_out(int priority, int facility, char * pStr, int len)
+int syslogc_out(ospl_uint32 priority, ospl_uint32 facility, char * pStr, ospl_uint32 len)
 {
 	if(!syslog_client)
 		return ERROR;
-	if(syslog_client->enable == FALSE)
+	if(syslog_client->enable == ospl_false)
 		return ERROR;
 	if(pStr == NULL)
 		return ERROR;
-	if(syslog_client->connect == FALSE)
+	if(syslog_client->connect == ospl_false)
 		return ERROR;
 	syslog_client->facility = facility;
 	return syslogc_format(syslog_client, priority, pStr, len);

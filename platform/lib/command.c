@@ -37,7 +37,7 @@ Boston, MA 02111-1307, USA.  */
 vector cmdvec = NULL;
 
 struct cmd_token token_cr;
-char *command_cr = NULL;
+ospl_char *command_cr = NULL;
 
 
 enum filter_type
@@ -88,13 +88,13 @@ print_version (const char *progname)
 
 /* Utility function to concatenate argv argument into a single string
    with inserting ' ' character between each argument.  */
-char *
-argv_concat (const char **argv, int argc, int shift)
+ospl_char *
+argv_concat (const char **argv, ospl_uint32 argc, ospl_uint32 shift)
 {
-  int i;
-  size_t len;
-  char *str;
-  char *p;
+  ospl_uint32 i;
+  ospl_size_t len;
+  ospl_char *str;
+  ospl_char *p;
 
   len = 0;
   for (i = shift; i < argc; i++)
@@ -104,7 +104,7 @@ argv_concat (const char **argv, int argc, int shift)
   p = str = XMALLOC(MTYPE_TMP, len);
   for (i = shift; i < argc; i++)
     {
-      size_t arglen;
+      ospl_size_t arglen;
       memcpy(p, argv[i], (arglen = strlen(argv[i])));
       p += arglen;
       *p++ = ' ';
@@ -113,7 +113,7 @@ argv_concat (const char **argv, int argc, int shift)
   return str;
 }
 
-static unsigned int
+static ospl_uint32 
 cmd_hash_key (void *p)
 {
   return (uintptr_t) p;
@@ -147,13 +147,13 @@ reinstall_node (enum node_type node,
 
 /* Breaking up string into each command piece. I assume given
    character is separated by a space character. Return value is a
-   vector which includes char ** data element. */
+   vector which includes ospl_char ** data element. */
 vector
 cmd_make_strvec (const char *string)
 {
   const char *cp, *start;
-  char *token;
-  int strlen;
+  ospl_char *token;
+  ospl_uint32 strlen;
   vector strvec;
   
   if (string == NULL)
@@ -201,8 +201,8 @@ cmd_make_strvec (const char *string)
 void
 cmd_free_strvec (vector v)
 {
-  unsigned int i;
-  char *cp;
+  ospl_uint32  i;
+  ospl_char *cp;
 
   if (!v)
     return;
@@ -228,16 +228,16 @@ struct format_parser_state
   const char *dp;  /* pointer in description string, moved along while
                      parsing */
 
-  int in_keyword; /* flag to remember if we are in a keyword group */
-  int in_multiple; /* flag to remember if we are in a multiple group */
-  int just_read_word; /* flag to remember if the last thing we red was a
+  ospl_uint32 in_keyword; /* flag to remember if we are in a keyword group */
+  ospl_uint32 in_multiple; /* flag to remember if we are in a multiple group */
+  ospl_uint32 just_read_word; /* flag to remember if the last thing we red was a
                        * real word and not some abstract token */
 };
 
 static void
 format_parser_error(struct format_parser_state *state, const char *message)
 {
-  int offset = state->cp - state->string + 1;
+  ospl_uint32 offset = state->cp - state->string + 1;
 
   fprintf(stderr, "\nError parsing command: \"%s\"\n", state->string);
   fprintf(stderr, "                        %*c\n", offset, '^');
@@ -246,12 +246,12 @@ format_parser_error(struct format_parser_state *state, const char *message)
   exit(1);
 }
 
-static char *
+static ospl_char *
 format_parser_desc_str(struct format_parser_state *state)
 {
   const char *cp, *start;
-  char *token;
-  int strlen;
+  ospl_char *token;
+  ospl_uint32 strlen;
 
   cp = state->dp;
 
@@ -348,7 +348,7 @@ format_parser_end_keyword(struct format_parser_state *state)
 static void
 format_parser_end_multiple(struct format_parser_state *state)
 {
-  char *dummy;
+  ospl_char *dummy;
 
   if (!state->in_multiple)
     format_parser_error(state, "Unexpected ')'");
@@ -411,8 +411,8 @@ static void
 format_parser_read_word(struct format_parser_state *state)
 {
   const char *start;
-  int len;
-  char *cmd;
+  ospl_uint32 len;
+  ospl_char *cmd;
   struct cmd_token *token;
 
   start = state->cp;
@@ -572,11 +572,11 @@ install_element (enum node_type ntype, struct cmd_element *cmd)
     install_element (ENABLE_NODE, cmd);
 }
 
-static const unsigned char itoa64[] =
+static const ospl_uchar itoa64[] =
 "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 static void
-to64(char *s, long v, int n)
+to64(ospl_char *s, long v, ospl_uint32 n)
 {
   while (--n >= 0) 
     {
@@ -585,10 +585,10 @@ to64(char *s, long v, int n)
     }
 }
 
-char *
+ospl_char *
 zencrypt (const char *passwd)
 {
-  char salt[6];
+  ospl_char salt[6];
   struct timeval tv;
   char *crypt (const char *, const char *);
 
@@ -630,8 +630,8 @@ static enum match_type
 cmd_ipv4_match (const char *str)
 {
   const char *sp;
-  int dots = 0, nums = 0;
-  char buf[4];
+  ospl_uint32 dots = 0, nums = 0;
+  ospl_char buf[4];
 
   if (str == NULL)
     return partly_match;
@@ -687,8 +687,8 @@ static enum match_type
 cmd_ipv4_prefix_match (const char *str)
 {
   const char *sp;
-  int dots = 0;
-  char buf[4];
+  ospl_uint32 dots = 0;
+  ospl_char buf[4];
 
   if (str == NULL)
     return partly_match;
@@ -801,11 +801,11 @@ cmd_ipv6_match (const char *str)
 static enum match_type
 cmd_ipv6_prefix_match (const char *str)
 {
-  int state = STATE_START;
-  int colons = 0, nums = 0, double_colon = 0;
-  int mask;
+  ospl_uint32 state = STATE_START;
+  ospl_uint32 colons = 0, nums = 0, double_colon = 0;
+  ospl_uint32 mask;
   const char *sp = NULL;
-  char *endptr = NULL;
+  ospl_char *endptr = NULL;
 
   if (str == NULL)
     return partly_match;
@@ -933,10 +933,10 @@ cmd_ipv6_prefix_match (const char *str)
 static int
 cmd_range_match (const char *range, const char *str)
 {
-  char *p;
-  char buf[DECIMAL_STRLEN_MAX + 1];
-  char *endptr = NULL;
-  unsigned long min, max, val;
+  ospl_char *p;
+  ospl_char buf[DECIMAL_STRLEN_MAX + 1];
+  ospl_char *endptr = NULL;
+  ospl_ulong min, max, val;
 
   if (str == NULL)
     return 1;
@@ -979,9 +979,9 @@ static int
 cmd_iuspv_match (const char *range, const char *str)
 {
 	//IF_USP_STR
-	int count = 0;
-	char *base = "0123456789/.";
-	char *math = (char *)range;
+	ospl_uint32 count = 0;
+	ospl_char *base = "0123456789/.";
+	ospl_char *math = (ospl_char *)range;
 //	fprintf(stdout,"%s:%s -> %s\r\n",__func__,range,str);
 	if(range == NULL)
 		return 0;
@@ -998,7 +998,7 @@ cmd_iuspv_match (const char *range, const char *str)
 		else
 			break;
 	}
-	math = (char *)str;
+	math = (ospl_char *)str;
 	while(1)
 	{
 		math = strstr(math,"/");
@@ -1026,9 +1026,9 @@ static int
 cmd_mac_match (const char *range, const char *str)
 {
 	//IF_MAC_STR
-	int count = 0;
-	char *base = "0123456789abcdefABCDEF-";
-	char *math = (char *)range;
+	ospl_uint32 count = 0;
+	ospl_char *base = "0123456789abcdefABCDEF-";
+	ospl_char *math = (ospl_char *)range;
 //	fprintf(stdout,"%s:%s -> %s\r\n",__func__,range,str);
 	if(range == NULL)
 		return 0;
@@ -1045,7 +1045,7 @@ cmd_mac_match (const char *range, const char *str)
 		else
 			break;
 	}
-	math = (char *)str;
+	math = (ospl_char *)str;
 	while(1)
 	{
 		math = strstr(math,"-");
@@ -1160,17 +1160,17 @@ struct cmd_matcher
   struct cmd_element *cmd; /* The command element the matcher is using */
   enum filter_type filter; /* Whether to use strict or relaxed matching */
   vector vline; /* The tokenized commandline which is to be matched */
-  unsigned int index; /* The index up to which matching should be done */
+  ospl_uint32  index; /* The index up to which matching should be done */
 
   /* If set, construct a list of matches at the position given by index */
   enum match_type *match_type;
   vector *match;
 
-  unsigned int word_index; /* iterating over vline */
+  ospl_uint32  word_index; /* iterating over vline */
 };
 
 static int
-push_argument(int *argc, const char **argv, const char *arg)
+push_argument(ospl_uint32 *argc, const char **argv, const char *arg)
 {
   if (!arg || !strlen(arg))
     arg = NULL;
@@ -1224,7 +1224,7 @@ cmd_matcher_get_word(struct cmd_matcher *matcher)
 static enum matcher_rv
 cmd_matcher_match_terminal(struct cmd_matcher *matcher,
                            struct cmd_token *token,
-                           int *argc, const char **argv)
+                           ospl_uint32 *argc, const char **argv)
 {
   const char *word;
   enum match_type word_match;
@@ -1272,10 +1272,10 @@ cmd_matcher_match_terminal(struct cmd_matcher *matcher,
 static enum matcher_rv
 cmd_matcher_match_multiple(struct cmd_matcher *matcher,
                            struct cmd_token *token,
-                           int *argc, const char **argv)
+                           ospl_uint32 *argc, const char **argv)
 {
   enum match_type multiple_match;
-  unsigned int multiple_index;
+  ospl_uint32  multiple_index;
   const char *word;
   const char *arg = NULL;
   struct cmd_token *word_token;
@@ -1326,15 +1326,15 @@ cmd_matcher_read_keywords(struct cmd_matcher *matcher,
                           struct cmd_token *token,
                           vector args_vector)
 {
-  unsigned int i;
-  unsigned long keyword_mask;
-  unsigned int keyword_found;
+  ospl_uint32  i;
+  ospl_ulong keyword_mask;
+  ospl_uint32  keyword_found;
   enum match_type keyword_match;
   enum match_type word_match;
   vector keyword_vector;
   struct cmd_token *word_token;
   const char *word;
-  int keyword_argc;
+  ospl_uint32 keyword_argc;
   const char **keyword_argv;
   enum matcher_rv rv = MATCHER_NO_MATCH;
 
@@ -1374,7 +1374,7 @@ cmd_matcher_read_keywords(struct cmd_matcher *matcher,
             }
         }
 
-      if (keyword_found == (unsigned int)-1)
+      if (keyword_found == (ospl_uint32 )-1)
         return MATCHER_NO_MATCH;
 
       matcher->word_index++;
@@ -1387,7 +1387,7 @@ cmd_matcher_read_keywords(struct cmd_matcher *matcher,
       if (args_vector)
         {
           keyword_argc = 0;
-          keyword_argv = XMALLOC(MTYPE_TMP, (CMD_ARGC_MAX + 1) * sizeof(char*));
+          keyword_argv = XMALLOC(MTYPE_TMP, (CMD_ARGC_MAX + 1) * sizeof(ospl_char*));
           /* We use -1 as a marker for unused fields as NULL might be a valid value */
           for (i = 0; i < CMD_ARGC_MAX + 1; i++)
             keyword_argv[i] = (void*)-1;
@@ -1436,10 +1436,10 @@ cmd_matcher_read_keywords(struct cmd_matcher *matcher,
 static enum matcher_rv
 cmd_matcher_build_keyword_args(struct cmd_matcher *matcher,
                                struct cmd_token *token,
-                               int *argc, const char **argv,
+                               ospl_uint32 *argc, const char **argv,
                                vector keyword_args_vector)
 {
-  unsigned int i, j;
+  ospl_uint32  i, j;
   const char **keyword_args;
   vector keyword_vector;
   struct cmd_token *word_token;
@@ -1508,7 +1508,7 @@ cmd_matcher_build_keyword_args(struct cmd_matcher *matcher,
 static enum matcher_rv
 cmd_matcher_match_keyword(struct cmd_matcher *matcher,
                           struct cmd_token *token,
-                          int *argc, const char **argv)
+                          ospl_uint32 *argc, const char **argv)
 {
   vector keyword_args_vector;
   enum matcher_rv reader_rv;
@@ -1537,7 +1537,7 @@ cmd_matcher_init(struct cmd_matcher *matcher,
                  struct cmd_element *cmd,
                  enum filter_type filter,
                  vector vline,
-                 unsigned int index,
+                 ospl_uint32  index,
                  enum match_type *match_type,
                  vector *match)
 {
@@ -1560,14 +1560,14 @@ static enum matcher_rv
 cmd_element_match(struct cmd_element *cmd_element,
                   enum filter_type filter,
                   vector vline,
-                  unsigned int index,
+                  ospl_uint32  index,
                   enum match_type *match_type,
                   vector *match,
-                  int *argc,
+                  ospl_uint32 *argc,
                   const char **argv)
 {
   struct cmd_matcher matcher;
-  unsigned int token_index;
+  ospl_uint32  token_index;
   enum matcher_rv rv = MATCHER_NO_MATCH;
 
   cmd_matcher_init(&matcher, cmd_element, filter,
@@ -1611,7 +1611,7 @@ cmd_element_match(struct cmd_element *cmd_element,
   /* return MATCHER_COMPLETE also if only an empty word is left. */
   if (matcher.word_index == vector_active(vline) - 1
       && (!vector_slot(vline, matcher.word_index)
-          || !strlen((char*)vector_slot(vline, matcher.word_index))))
+          || !strlen((ospl_char*)vector_slot(vline, matcher.word_index))))
     return MATCHER_COMPLETE;
 
   return MATCHER_NO_MATCH; /* command is too long to match */
@@ -1627,7 +1627,7 @@ cmd_element_match(struct cmd_element *cmd_element,
  * @param filter Either FILTER_RELAXED or FILTER_STRICT. This basically
  *               determines how incomplete commands are handled, compare with
  *               cmd_word_match for details.
- * @param vline A vector of char* containing the tokenized commandline.
+ * @param vline A vector of ospl_char* containing the tokenized commandline.
  * @param index Only match up to the given token of the commandline.
  * @param match_type Record the type of the best match here.
  * @param matches Record the matches here. For each cmd_element in the commands
@@ -1642,11 +1642,11 @@ static int
 cmd_vector_filter(vector commands,
                   enum filter_type filter,
                   vector vline,
-                  unsigned int index,
+                  ospl_uint32  index,
                   enum match_type *match_type,
                   vector *matches)
 {
-  unsigned int i;
+  ospl_uint32  i;
   struct cmd_element *cmd_element;
   enum match_type best_match;
   enum match_type element_match;
@@ -1718,7 +1718,7 @@ cmd_is_complete(struct cmd_element *cmd_element,
 static int
 cmd_parse(struct cmd_element *cmd_element,
           vector vline,
-          int *argc, const char **argv)
+          ospl_uint32 *argc, const char **argv)
 {
   enum matcher_rv rv = cmd_element_match(cmd_element,
                                          FILTER_RELAXED,
@@ -1751,8 +1751,8 @@ is_cmd_ambiguous (vector cmd_vector,
                   vector matches,
                   enum match_type type)
 {
-  unsigned int i;
-  unsigned int j;
+  ospl_uint32  i;
+  ospl_uint32  j;
   const char *str = NULL;
   const char *matched = NULL;
   vector match_vector;
@@ -1764,7 +1764,7 @@ is_cmd_ambiguous (vector cmd_vector,
   for (i = 0; i < vector_active (matches); i++)
     if ((match_vector = vector_slot (matches, i)) != NULL)
       {
-	int match = 0;
+	ospl_uint32 match = 0;
 
 	for (j = 0; j < vector_active (match_vector); j++)
 	  if ((cmd_token = vector_slot (match_vector, j)) != NULL)
@@ -1969,15 +1969,15 @@ cmd_entry_function_desc (const char *src, struct cmd_token *token)
 
 /**
  * Check whether a string is already present in a vector of strings.
- * @param v A vector of char*.
- * @param str A char*.
+ * @param v A vector of ospl_char*.
+ * @param str A ospl_char*.
  * @return 0 if str is already present in the vector, 1 otherwise.
  */
 static int
 cmd_unique_string (vector v, const char *str)
 {
-  unsigned int i;
-  char *match;
+  ospl_uint32  i;
+  ospl_char *match;
 
   for (i = 0; i < vector_active (v); i++)
     if ((match = vector_slot (v, i)) != NULL)
@@ -1990,14 +1990,14 @@ cmd_unique_string (vector v, const char *str)
  * Check whether a struct cmd_token matching a given string is already
  * present in a vector of struct cmd_token.
  * @param v A vector of struct cmd_token*.
- * @param str A char* which should be searched for.
+ * @param str A ospl_char* which should be searched for.
  * @return 0 if there is a struct cmd_token* with its cmd matching str,
  *         1 otherwise.
  */
 static int
 desc_unique_string (vector v, const char *str)
 {
-  unsigned int i;
+  ospl_uint32  i;
   struct cmd_token *token;
 
   for (i = 0; i < vector_active (v); i++)
@@ -2008,7 +2008,7 @@ desc_unique_string (vector v, const char *str)
 }
 
 static int 
-cmd_try_do_shortcut (enum node_type node, char* first_word) {
+cmd_try_do_ospl_int16cut (enum node_type node, ospl_char* first_word) {
   if ( first_word != NULL &&
        node != AUTH_NODE &&
        node != VIEW_NODE &&
@@ -2023,7 +2023,7 @@ cmd_try_do_shortcut (enum node_type node, char* first_word) {
 static void
 cmd_matches_free(vector *matches)
 {
-  unsigned int i;
+  ospl_uint32  i;
   vector cmd_matches;
 
   for (i = 0; i < vector_active(*matches); i++)
@@ -2051,20 +2051,20 @@ cmd_describe_sort(vector matchvec)
 
 /* '?' describe command support. */
 static vector
-cmd_describe_command_real (vector vline, struct vty *vty, int *status)
+cmd_describe_command_real (vector vline, struct vty *vty, ospl_uint32 *status)
 {
-  unsigned int i;
+  ospl_uint32  i;
   vector cmd_vector;
 #define INIT_MATCHVEC_SIZE 10
   vector matchvec;
   struct cmd_element *cmd_element;
-  unsigned int index;
+  ospl_uint32  index;
   int ret;
   enum match_type match;
-  char *command;
+  ospl_char *command;
   vector matches = NULL;
   vector match_vector;
-  uint32_t command_found = 0;
+  ospl_uint32  command_found = 0;
   const char *last_word;
 
   /* Set index. */
@@ -2113,7 +2113,7 @@ cmd_describe_command_real (vector vline, struct vty *vty, int *status)
 	{
 	  /* We found a vararg match - so we can throw out the current matches here
 	   * and don't need to continue checking the command input */
-	  unsigned int j, k;
+	  ospl_uint32  j, k;
 
 	  for (j = 0; j < vector_active (matches); j++)
 	    if ((match_vector = vector_slot (matches, j)) != NULL)
@@ -2155,7 +2155,7 @@ cmd_describe_command_real (vector vline, struct vty *vty, int *status)
     {
       if ((cmd_element = vector_slot (cmd_vector, i)) != NULL)
 	{
-	  unsigned int j;
+	  ospl_uint32  j;
 	  vector vline_trimmed;
 
 #ifdef HAVE_ROUTE_OPTIMIZE
@@ -2222,15 +2222,15 @@ cmd_describe_command_real (vector vline, struct vty *vty, int *status)
 }
 
 vector
-cmd_describe_command (vector vline, struct vty *vty, int *status)
+cmd_describe_command (vector vline, struct vty *vty, ospl_uint32 *status)
 {
   vector ret;
 
-  if ( cmd_try_do_shortcut(vty->node, vector_slot(vline, 0) ) )
+  if ( cmd_try_do_ospl_int16cut(vty->node, vector_slot(vline, 0) ) )
     {
       enum node_type onode;
       vector shifted_vline;
-      unsigned int index;
+      ospl_uint32  index;
 
       onode = vty->node;
       vty->node = ENABLE_NODE;
@@ -2257,13 +2257,13 @@ cmd_describe_command (vector vline, struct vty *vty, int *status)
 
 /* Check LCD of matched command. */
 static int
-cmd_lcd (char **matched)
+cmd_lcd (ospl_char **matched)
 {
-  int i;
-  int j;
-  int lcd = -1;
-  char *s1, *s2;
-  char c1, c2;
+  ospl_uint32 i;
+  ospl_uint32 j;
+  ospl_uint32 lcd = -1;
+  ospl_char *s1, *s2;
+  ospl_char c1, c2;
 
   if (matched[0] == NULL || matched[1] == NULL)
     return 0;
@@ -2291,8 +2291,8 @@ cmd_lcd (char **matched)
 static int
 cmd_complete_cmp(const void *a, const void *b)
 {
-  const char *first = *(char * const *)a;
-  const char *second = *(char * const *)b;
+  const char *first = *(ospl_char * const *)a;
+  const char *second = *(ospl_char * const *)b;
 
   if (!first)
     {
@@ -2314,18 +2314,18 @@ cmd_complete_sort(vector matchvec)
 }
 
 /* Command line completion support. */
-static char **
-cmd_complete_command_real (vector vline, struct vty *vty, int *status, int islib)
+static ospl_char **
+cmd_complete_command_real (vector vline, struct vty *vty, ospl_uint32 *status, ospl_uint32 islib)
 {
-  unsigned int i;
+  ospl_uint32  i;
   vector cmd_vector = vector_copy (cmd_node_vector (cmdvec, vty->node));
 #define INIT_MATCHVEC_SIZE 10
   vector matchvec;
-  unsigned int index;
-  char **match_str;
+  ospl_uint32  index;
+  ospl_char **match_str;
   struct cmd_token *token;
-  char *command;
-  int lcd;
+  ospl_char *command;
+  ospl_uint32 lcd;
   vector matches = NULL;
   vector match_vector;
 #ifdef HAVE_ROUTE_OPTIMIZE
@@ -2397,7 +2397,7 @@ cmd_complete_command_real (vector vline, struct vty *vty, int *status, int islib
     if ((match_vector = vector_slot (matches, i)))
       {
 	const char *string;
-	unsigned int j;
+	ospl_uint32  j;
 
 	for (j = 0; j < vector_active (match_vector); j++)
 	  if ((token = vector_slot (match_vector, j)))
@@ -2431,7 +2431,7 @@ cmd_complete_command_real (vector vline, struct vty *vty, int *status, int islib
   /* Only one matched */
   if (vector_slot (matchvec, 1) == NULL)
     {
-      match_str = (char **) matchvec->index;
+      match_str = (ospl_char **) matchvec->index;
       vector_only_wrapper_free (matchvec);
       *status = CMD_COMPLETE_FULL_MATCH;
       return match_str;
@@ -2442,15 +2442,15 @@ cmd_complete_command_real (vector vline, struct vty *vty, int *status, int islib
   /* Check LCD of matched strings. */
   if (vector_slot (vline, index) != NULL)
     {
-      lcd = cmd_lcd ((char **) matchvec->index);
+      lcd = cmd_lcd ((ospl_char **) matchvec->index);
 
       if (lcd)
 	{
-	  int len = strlen (vector_slot (vline, index));
+	  ospl_uint32 len = strlen (vector_slot (vline, index));
 
 	  if (len < lcd)
 	    {
-	      char *lcdstr;
+	      ospl_char *lcdstr;
 
 	      lcdstr = (islib != 0 ?
                         XMALLOC (MTYPE_TMP, lcd + 1) :
@@ -2474,7 +2474,7 @@ cmd_complete_command_real (vector vline, struct vty *vty, int *status, int islib
 	      /* Make new matchvec. */
 	      matchvec = vector_init (INIT_MATCHVEC_SIZE);
 	      vector_set (matchvec, lcdstr);
-	      match_str = (char **) matchvec->index;
+	      match_str = (ospl_char **) matchvec->index;
 	      vector_only_wrapper_free (matchvec);
 
 	      *status = CMD_COMPLETE_MATCH;
@@ -2483,23 +2483,23 @@ cmd_complete_command_real (vector vline, struct vty *vty, int *status, int islib
 	}
     }
 
-  match_str = (char **) matchvec->index;
+  match_str = (ospl_char **) matchvec->index;
   cmd_complete_sort(matchvec);
   vector_only_wrapper_free (matchvec);
   *status = CMD_COMPLETE_LIST_MATCH;
   return match_str;
 }
 
-char **
-cmd_complete_command_lib (vector vline, struct vty *vty, int *status, int islib)
+ospl_char **
+cmd_complete_command_lib (vector vline, struct vty *vty, ospl_uint32 *status, ospl_uint32 islib)
 {
-  char **ret;
+  ospl_char **ret;
 
-  if ( cmd_try_do_shortcut(vty->node, vector_slot(vline, 0) ) )
+  if ( cmd_try_do_ospl_int16cut(vty->node, vector_slot(vline, 0) ) )
     {
       enum node_type onode;
       vector shifted_vline;
-      unsigned int index;
+      ospl_uint32  index;
 
       onode = vty->node;
       vty->node = ENABLE_NODE;
@@ -2522,8 +2522,8 @@ cmd_complete_command_lib (vector vline, struct vty *vty, int *status, int islib)
   return cmd_complete_command_real (vline, vty, status, islib);
 }
 
-char **
-cmd_complete_command (vector vline, struct vty *vty, int *status)
+ospl_char **
+cmd_complete_command (vector vline, struct vty *vty, ospl_uint32 *status)
 {
   return cmd_complete_command_lib (vline, vty, status, 0);
 }
@@ -2570,16 +2570,16 @@ cmd_execute_command_real (vector vline,
 			  struct vty *vty,
 			  struct cmd_element **cmd)
 {
-  unsigned int i;
-  unsigned int index;
+  ospl_uint32  i;
+  ospl_uint32  index;
   vector cmd_vector;
   struct cmd_element *cmd_element;
   struct cmd_element *matched_element;
-  unsigned int matched_count, incomplete_count;
-  int argc;
+  ospl_uint32  matched_count, incomplete_count;
+  ospl_uint32 argc;
   const char *argv[CMD_ARGC_MAX];
   enum match_type match = 0;
-  char *command;
+  ospl_char *command;
   int ret;
   vector matches;
 
@@ -2676,7 +2676,7 @@ cmd_execute_command_real (vector vline,
  * whether the given command might apply at a parent node if doesn't
  * apply for the current node.
  *
- * @param vline Command line input, vector of char* where each element is
+ * @param vline Command line input, vector of ospl_char* where each element is
  *              one input token.
  * @param vty The vty context in which the command should be executed.
  * @param cmd Pointer where the struct cmd_element of the matched command
@@ -2688,16 +2688,16 @@ cmd_execute_command_real (vector vline,
  */
 int
 cmd_execute_command (vector vline, struct vty *vty, struct cmd_element **cmd,
-		     int vtysh) {
+		     ospl_uint32 vtysh) {
   int ret, saved_ret, tried = 0;
   enum node_type onode, try_node;
 
   onode = try_node = vty->node;
 
-  if ( cmd_try_do_shortcut(vty->node, vector_slot(vline, 0) ) )
+  if ( cmd_try_do_ospl_int16cut(vty->node, vector_slot(vline, 0) ) )
     {
       vector shifted_vline;
-      unsigned int index;
+      ospl_uint32  index;
 
       vty->node = ENABLE_NODE;
       /* We can try it on enable node, cos' the vty is authenticated */
@@ -2747,7 +2747,7 @@ cmd_execute_command (vector vline, struct vty *vty, struct cmd_element **cmd,
  * Execute a given command, matching it strictly against the current node.
  * This mode is used when reading config files.
  *
- * @param vline Command line input, vector of char* where each element is
+ * @param vline Command line input, vector of ospl_char* where each element is
  *              one input token.
  * @param vty The vty context in which the command should be executed.
  * @param cmd Pointer where the struct cmd_element* of the matched command
@@ -2776,10 +2776,10 @@ cmd_execute_command_strict (vector vline, struct vty *vty,
  *         as to why no command could be executed.
  */
 int
-command_config_read_one_line (struct vty *vty, struct cmd_element **cmd, int use_daemon)
+command_config_read_one_line (struct vty *vty, struct cmd_element **cmd, ospl_uint32 use_daemon)
 {
   vector vline;
-  int saved_node;
+  ospl_uint32 saved_node;
   int ret;
 
   vline = cmd_make_strvec (vty->buf);
@@ -2816,7 +2816,7 @@ command_config_read_one_line (struct vty *vty, struct cmd_element **cmd, int use
 
 /* Configration make from file. */
 int
-config_from_file (struct vty *vty, FILE *fp, unsigned int *line_num)
+config_from_file (struct vty *vty, FILE *fp, ospl_uint32  *line_num)
 {
   int ret;
   *line_num = 0;
@@ -2869,7 +2869,7 @@ install_default (enum node_type node)
 
 /* Initialize command interface. Install basic nodes and commands. */
 void
-cmd_init (int terminal)
+cmd_init (ospl_bool terminal)
 {
   command_cr = XSTRDUP(MTYPE_CMD_TOKENS, "<cr>");
   token_cr.type = TOKEN_TERMINAL;
@@ -2889,7 +2889,7 @@ cmd_init (int terminal)
 static void
 cmd_terminate_token(struct cmd_token *token)
 {
-  unsigned int i, j;
+  ospl_uint32  i, j;
   vector keyword_vect;
 
   if (token->multiple)
@@ -2922,7 +2922,7 @@ cmd_terminate_token(struct cmd_token *token)
 static void
 cmd_terminate_element(struct cmd_element *cmd)
 {
-  unsigned int i;
+  ospl_uint32  i;
 
   if (cmd->tokens == NULL)
     return;
@@ -2937,7 +2937,7 @@ cmd_terminate_element(struct cmd_element *cmd)
 void
 cmd_terminate ()
 {
-  unsigned int i, j;
+  ospl_uint32  i, j;
   struct cmd_node *cmd_node;
   struct cmd_element *cmd_element;
   vector cmd_node_v;

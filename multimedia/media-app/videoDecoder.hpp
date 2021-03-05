@@ -9,7 +9,13 @@
 ** -------------------------------------------------------------------------*/
 #ifndef __VIDEO_DECODER_HPP__
 #define __VIDEO_DECODER_HPP__
-
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "ospl_type.h"
+#ifdef __cplusplus
+}
+#endif
 class videoDecoder
 {
 public:
@@ -32,9 +38,9 @@ public:
           return 0;
     }
     */
-    virtual int videoDecoderInput(const unsigned char *frame, const int len) = 0;
-    virtual int videoDecoderOutput(unsigned char *frame, const int len) = 0;
-    virtual unsigned char *videoDecoderOutput() = 0;
+    virtual int videoDecoderInput(const ospl_uint8 *frame, const int len) = 0;
+    virtual int videoDecoderOutput(ospl_uint8 *frame, const int len) = 0;
+    virtual ospl_uint8 *videoDecoderOutput() = 0;
     virtual int videoDecoderOutputSize(const bool clear = true) = 0;
     virtual int videoDecoderDestroy() = 0;
 public:

@@ -8,6 +8,10 @@
 #ifndef __APP_WEB_JST_H__
 #define __APP_WEB_JST_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //#include "webgui_app.h"
 
 
@@ -34,6 +38,10 @@ extern int web_serial_jst_init(void);
 extern int web_tunnel_jst_init(void);
 extern int web_vlan_jst_init(void);
 
-
+ 
+#ifdef __cplusplus
+}
+#endif
+ 
 
 #endif /* __APP_WEB_JST_H__ */

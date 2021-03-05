@@ -79,11 +79,11 @@ static int vrf_disable(struct vrf *vrf);
 #define VRF_BITMAP_INDEX_IN_GROUP(_bit_offset) \
   ((_bit_offset) / CHAR_BIT)
 #define VRF_BITMAP_FLAG(_bit_offset) \
-  (((u_char)1) << ((_bit_offset) % CHAR_BIT))
+  (((ospl_uchar)1) << ((_bit_offset) % CHAR_BIT))
 
 struct vrf_bitmap
 {
-  u_char *groups[VRF_BITMAP_NUM_OF_GROUPS];
+  ospl_uchar *groups[VRF_BITMAP_NUM_OF_GROUPS];
 };
 
 vrf_bitmap_t
@@ -95,7 +95,7 @@ vrf_bitmap_init(void)
 void vrf_bitmap_free(vrf_bitmap_t bmap)
 {
   struct vrf_bitmap *bm = (struct vrf_bitmap *)bmap;
-  int i;
+  ospl_uint32 i;
 
   if (bmap == VRF_BITMAP_NULL)
     return;
@@ -110,8 +110,8 @@ void vrf_bitmap_free(vrf_bitmap_t bmap)
 void vrf_bitmap_set(vrf_bitmap_t bmap, vrf_id_t vrf_id)
 {
   struct vrf_bitmap *bm = (struct vrf_bitmap *)bmap;
-  u_char group = VRF_BITMAP_GROUP(vrf_id);
-  u_char offset = VRF_BITMAP_BIT_OFFSET(vrf_id);
+  ospl_uchar group = VRF_BITMAP_GROUP(vrf_id);
+  ospl_uchar offset = VRF_BITMAP_BIT_OFFSET(vrf_id);
 
   if (bmap == VRF_BITMAP_NULL)
     return;
@@ -127,8 +127,8 @@ void vrf_bitmap_set(vrf_bitmap_t bmap, vrf_id_t vrf_id)
 void vrf_bitmap_unset(vrf_bitmap_t bmap, vrf_id_t vrf_id)
 {
   struct vrf_bitmap *bm = (struct vrf_bitmap *)bmap;
-  u_char group = VRF_BITMAP_GROUP(vrf_id);
-  u_char offset = VRF_BITMAP_BIT_OFFSET(vrf_id);
+  ospl_uchar group = VRF_BITMAP_GROUP(vrf_id);
+  ospl_uchar offset = VRF_BITMAP_BIT_OFFSET(vrf_id);
 
   if (bmap == VRF_BITMAP_NULL || bm->groups[group] == NULL)
     return;
@@ -137,19 +137,19 @@ void vrf_bitmap_unset(vrf_bitmap_t bmap, vrf_id_t vrf_id)
              VRF_BITMAP_FLAG(offset));
 }
 
-int vrf_bitmap_check(vrf_bitmap_t bmap, vrf_id_t vrf_id)
+ospl_bool vrf_bitmap_check(vrf_bitmap_t bmap, vrf_id_t vrf_id)
 {
   struct vrf_bitmap *bm = (struct vrf_bitmap *)bmap;
-  u_char group = VRF_BITMAP_GROUP(vrf_id);
-  u_char offset = VRF_BITMAP_BIT_OFFSET(vrf_id);
+  ospl_uchar group = VRF_BITMAP_GROUP(vrf_id);
+  ospl_uchar offset = VRF_BITMAP_BIT_OFFSET(vrf_id);
 
   if (bmap == VRF_BITMAP_NULL || bm->groups[group] == NULL)
     return 0;
 
   return CHECK_FLAG(bm->groups[group][VRF_BITMAP_INDEX_IN_GROUP(offset)],
                     VRF_BITMAP_FLAG(offset))
-             ? 1
-             : 0;
+             ? ospl_true
+             : ospl_false;
 }
 
 /***********************************************************************/
@@ -243,7 +243,7 @@ vrf_lookup_by_name(const char *name)
   return NULL;
 }
 
-char *vrf_vrfid2name(vrf_id_t vrf_id)
+ospl_char *vrf_vrfid2name(vrf_id_t vrf_id)
 {
   struct vrf *vrf = vrf_lookup(vrf_id);
   if (vrf)
@@ -289,7 +289,7 @@ vrf_disable(struct vrf *vrf)
 }
 
 /* Add a VRF hook. Please add hooks before calling vrf_init(). */
-void vrf_add_hook(int type, int (*func)(vrf_id_t, void **))
+void vrf_add_hook(ospl_uint32 type, int (*func)(vrf_id_t, void **))
 {
   switch (type)
   {

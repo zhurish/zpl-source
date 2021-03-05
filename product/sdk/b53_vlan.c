@@ -16,8 +16,8 @@
  *
  * 基于8021Q的vlan 用于配置trunk接口
  */
-int b53125_enable_vlan(struct b53125_device *dev, BOOL enable,
-		BOOL enable_filtering)
+int b53125_enable_vlan(struct b53125_device *dev, ospl_bool enable,
+		ospl_bool enable_filtering)
 {
 	int ret = 0;
 	u8 mgmt, vc0, vc1, vc4 = 0, vc5;
@@ -76,7 +76,7 @@ int b53125_enable_vlan(struct b53125_device *dev, BOOL enable,
 static int b53125_do_vlan_op(struct b53125_device *dev, u8 op)
 {
 	int ret = 0;
-	unsigned int i;
+	ospl_uint32 i;
 	ret |= b53125_write8(dev, B53_ARLIO_PAGE, dev->vta_regs[0], VTA_START_CMD | op);
 	for (i = 0; i < 1000; i++) {
 		u8 vta;
@@ -133,7 +133,7 @@ int b53125_del_vlan_entry(struct b53125_device *dev, u16 vid)
 	return ret;
 }
 
-int b53125_add_vlan_port(struct b53125_device *dev, u16 vid, int port, BOOL tag)
+int b53125_add_vlan_port(struct b53125_device *dev, u16 vid, int port, ospl_bool tag)
 {
 	int ret = 0;
 	u32 entry = 0;
@@ -170,7 +170,7 @@ int b53125_add_vlan_port(struct b53125_device *dev, u16 vid, int port, BOOL tag)
 	return ret;
 }
 
-int b53125_del_vlan_port(struct b53125_device *dev, u16 vid, int port, BOOL tag)
+int b53125_del_vlan_port(struct b53125_device *dev, u16 vid, int port, ospl_bool tag)
 {
 	int ret = 0;
 	u32 entry = 0;
@@ -204,7 +204,7 @@ int b53125_del_vlan_port(struct b53125_device *dev, u16 vid, int port, BOOL tag)
 }
 
 /**************************************************************************************/
-int b53125_port_vlan(struct b53125_device *dev, int port, BOOL enable)
+int b53125_port_vlan(struct b53125_device *dev, int port, ospl_bool enable)
 {
 	int ret = 0;
 	u16 entry = 0;
@@ -232,7 +232,7 @@ int b53125_vlan_double_tagging_tpid(struct b53125_device *dev, u16 tpid)
 	return ret;
 }
 
-int b53125_ISP_port(struct b53125_device *dev, int port, BOOL enable)
+int b53125_ISP_port(struct b53125_device *dev, int port, ospl_bool enable)
 {
 	int ret = 0;
 	u16 reg = 0;
@@ -356,7 +356,7 @@ int b53_vlan_filtering(struct dsa_switch *ds, int port, bool vlan_filtering)
 {
 	struct b53_device *dev = ds->priv;
 	struct net_device *bridge_dev;
-	unsigned int i;
+	ospl_uint32 i;
 	u16 pvid, new_pvid;
 
 	/* Handle the case were multiple bridges span the same switch device

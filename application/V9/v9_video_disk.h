@@ -1,6 +1,10 @@
 #ifndef __V9_VIDEO_DISK_H__
 #define __V9_VIDEO_DISK_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define V9_VIDEO_DISK_BASE
 
 //#define V9_VIDEO_MOUNT_BASE		"/mnt/diska1"
@@ -44,22 +48,26 @@ enum
 
 int v9_video_disk_count(void);
 
-char * v9_video_disk_root_dir(u_int32 id);
-char * v9_video_disk_base_dir(u_int32 id);
-char * v9_video_disk_db_dir(u_int32 id);
-char * v9_video_disk_cap_dir(u_int32 id);
-char * v9_video_disk_warn_dir(u_int32 id);
-//char * v9_video_disk_user_dir(u_int32 id);
-char * v9_video_disk_capdb_dir(u_int32 id);
-char * v9_video_disk_recg_dir(u_int32 id);
+char * v9_video_disk_root_dir(ospl_uint32 id);
+char * v9_video_disk_base_dir(ospl_uint32 id);
+char * v9_video_disk_db_dir(ospl_uint32 id);
+char * v9_video_disk_cap_dir(ospl_uint32 id);
+char * v9_video_disk_warn_dir(ospl_uint32 id);
+//char * v9_video_disk_user_dir(ospl_uint32 id);
+char * v9_video_disk_capdb_dir(ospl_uint32 id);
+char * v9_video_disk_recg_dir(ospl_uint32 id);
 
 char * v9_video_disk_urlpath(int id, char *picpath);
 
 int v9_video_disk_dir_init(void);
 
-int v9_video_disk_keep_day_set(u_int32 day);
+int v9_video_disk_keep_day_set(ospl_uint32 day);
 int v9_video_disk_keep_day_get(void);
 
-int v9_video_disk_monitor_start(BOOL enable);
+int v9_video_disk_monitor_start(ospl_bool enable);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __V9_VIDEO_DISK_H__ */

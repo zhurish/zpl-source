@@ -33,12 +33,12 @@ int modem_main_change_set_api(modem_t *modem, modem_event event)
 		return OK;
 	char *start = &modem->dialtype;
 	char *end = &modem->eth2;
-	u_int32 checksum = crc_checksum(start, end - start + sizeof(void));
+	ospl_uint32 checksum = crc_checksum(start, end - start + sizeof(void));
 	if(modem->checksum != checksum)
 	{
 		modem->checksum = checksum;
 		if(modem_machine_state_get(modem) >= MODEM_MACHINE_STATE_NETWORK_ACTIVE)
-			modem_event_reload(modem, event, TRUE );
+			modem_event_reload(modem, event, ospl_true );
 	}
 	return OK;
 }
@@ -95,7 +95,7 @@ int modem_main_ip_get_api(modem_t *modem, modem_stack_type *type)
 	return OK;
 }
 
-int modem_main_secondary_set_api(modem_t *modem, BOOL bSecondary)
+int modem_main_secondary_set_api(modem_t *modem, ospl_bool bSecondary)
 {
 	assert (modem);
 	if(gModemmain.mutex)
@@ -109,7 +109,7 @@ int modem_main_secondary_set_api(modem_t *modem, BOOL bSecondary)
 	return OK;
 }
 
-int modem_main_secondary_get_api(modem_t *modem, BOOL *bSecondary)
+int modem_main_secondary_get_api(modem_t *modem, ospl_bool *bSecondary)
 {
 	assert (modem);
 	if(gModemmain.mutex)
@@ -188,7 +188,7 @@ int modem_main_puk_set_api(modem_t *modem, char *puk)
 }
 
 
-int modem_main_profile_set_api(modem_t *modem, int profile)
+int modem_main_profile_set_api(modem_t *modem, ospl_uint32 profile)
 {
 	assert (modem);
 	if(gModemmain.mutex)
@@ -203,7 +203,7 @@ int modem_main_profile_set_api(modem_t *modem, int profile)
 	return OK;
 }
 
-int modem_main_profile_get_api(modem_t *modem, int *profile)
+int modem_main_profile_get_api(modem_t *modem, ospl_uint32 *profile)
 {
 	assert (modem);
 	if(gModemmain.mutex)
@@ -356,7 +356,7 @@ modem_t * modem_lookup_by_interface(char *name)
  * interface modem 0/1/1
  *  bind modem-profile <name>
  */
-int modem_bind_interface_api(modem_t *modem, char *name, int number)
+int modem_bind_interface_api(modem_t *modem, char *name, ospl_uint32 number)
 {
 	int ret = ERROR;
 	assert (name);
@@ -434,7 +434,7 @@ int modem_bind_interface_api(modem_t *modem, char *name, int number)
  * interface modem 0/1/1
  *  no bind modem-profile
  */
-int modem_unbind_interface_api(modem_t *modem, BOOL ppp, int number)
+int modem_unbind_interface_api(modem_t *modem, ospl_bool ppp, ospl_uint32 number)
 {
 	int ret = ERROR;
 	//assert (name);
@@ -526,7 +526,7 @@ int modem_interface_add_api(char *name)
 	{
 		//ifp->ll_type = ZEBRA_LLT_MODEM;
 		//ifp->if_mode = IF_MODE_L3;
-		//ifp->dynamic = TRUE;
+		//ifp->dynamic = ospl_true;
 /*		if_manage_kernel_update(ifp);
 		zebra_interface_add_update(ifp);*/
 		return OK;

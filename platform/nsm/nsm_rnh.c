@@ -60,8 +60,8 @@ static int compare_state(struct rib *r1, struct rib *r2);
 static int send_client(struct rnh *rnh, struct zserv *client, vrf_id_t vrf_id);
 static void print_rnh(struct route_node *rn, struct vty *vty);
 
-char *
-rnh_str (struct rnh *rnh, char *buf, int size)
+ospl_char *
+rnh_str (struct rnh *rnh, ospl_char *buf, ospl_size_t size)
 {
   prefix2str(&(rnh->node->p), buf, size);
   return buf;
@@ -76,7 +76,7 @@ zebra_add_rnh (struct prefix *p, vrf_id_t vrfid)
 
   if (IS_ZEBRA_DEBUG_NHT)
     {
-      char buf[INET6_ADDRSTRLEN];
+      ospl_char buf[INET6_ADDRSTRLEN];
       prefix2str(p, buf, INET6_ADDRSTRLEN);
       zlog_debug(MODULE_NSM, "add rnh %s in vrf %d", buf, vrfid);
     }
@@ -138,7 +138,7 @@ zebra_delete_rnh (struct rnh *rnh)
 
   if (IS_ZEBRA_DEBUG_NHT)
     {
-      char buf[INET6_ADDRSTRLEN];
+      ospl_char buf[INET6_ADDRSTRLEN];
       zlog_debug(MODULE_NSM,"delete rnh %s", rnh_str(rnh, buf, INET6_ADDRSTRLEN));
     }
 
@@ -155,7 +155,7 @@ zebra_add_rnh_client (struct rnh *rnh, struct zserv *client, vrf_id_t vrf_id)
 {
   if (IS_ZEBRA_DEBUG_NHT)
     {
-      char buf[INET6_ADDRSTRLEN];
+      ospl_char buf[INET6_ADDRSTRLEN];
       zlog_debug(MODULE_NSM, "client %s registers rnh %s",
 		 zebra_route_string(client->proto),
 		 rnh_str(rnh, buf, INET6_ADDRSTRLEN));
@@ -172,7 +172,7 @@ zebra_remove_rnh_client (struct rnh *rnh, struct zserv *client)
 {
   if (IS_ZEBRA_DEBUG_NHT)
     {
-      char buf[INET6_ADDRSTRLEN];
+      ospl_char buf[INET6_ADDRSTRLEN];
       zlog_debug(MODULE_NSM, "client %s unregisters rnh %s",
 		 zebra_route_string(client->proto),
 		 rnh_str(rnh, buf, INET6_ADDRSTRLEN));
@@ -183,7 +183,7 @@ zebra_remove_rnh_client (struct rnh *rnh, struct zserv *client)
 }
 
 int
-zebra_evaluate_rnh_table (vrf_id_t vrfid, int family)
+zebra_evaluate_rnh_table (vrf_id_t vrfid, ospl_family_t family)
 {
   struct route_table *ptable;
   struct route_table *ntable;
@@ -251,8 +251,8 @@ zebra_evaluate_rnh_table (vrf_id_t vrfid, int family)
 	{
 	  if (IS_ZEBRA_DEBUG_NHT)
 	    {
-	      char bufn[INET6_ADDRSTRLEN];
-	      char bufp[INET6_ADDRSTRLEN];
+	      ospl_char bufn[INET6_ADDRSTRLEN];
+	      ospl_char bufp[INET6_ADDRSTRLEN];
 	      prefix2str(&nrn->p, bufn, INET6_ADDRSTRLEN);
 	      if (prn)
 		prefix2str(&prn->p, bufp, INET6_ADDRSTRLEN);
@@ -271,7 +271,7 @@ zebra_evaluate_rnh_table (vrf_id_t vrfid, int family)
 }
 
 int
-zebra_dispatch_rnh_table (vrf_id_t vrfid, int family, struct zserv *client)
+zebra_dispatch_rnh_table (vrf_id_t vrfid, ospl_family_t family, struct zserv *client)
 {
   struct route_table *ntable;
   struct route_node *nrn;
@@ -292,7 +292,7 @@ zebra_dispatch_rnh_table (vrf_id_t vrfid, int family, struct zserv *client)
       rnh = nrn->info;
       if (IS_ZEBRA_DEBUG_NHT)
 	{
-	  char bufn[INET6_ADDRSTRLEN];
+	  ospl_char bufn[INET6_ADDRSTRLEN];
 	  prefix2str(&nrn->p, bufn, INET6_ADDRSTRLEN);
 	  zlog_debug(MODULE_NSM, "rnh %s - sending nexthop %s event to client %s", bufn,
 		     rnh->state ? "reachable" : "unreachable",
@@ -304,12 +304,12 @@ zebra_dispatch_rnh_table (vrf_id_t vrfid, int family, struct zserv *client)
 }
 
 void
-zebra_print_rnh_table (vrf_id_t vrfid, int af, struct vty *vty)
+zebra_print_rnh_table (vrf_id_t vrfid, ospl_family_t family, struct vty *vty)
 {
   struct route_table *table;
   struct route_node *rn;
 
-  table = lookup_rnh_table(vrfid, af);
+  table = lookup_rnh_table(vrfid, family);
   if (!table)
     {
       zlog_debug(MODULE_NSM, "print_rnhs: rnh table not found\n");
@@ -322,7 +322,7 @@ zebra_print_rnh_table (vrf_id_t vrfid, int af, struct vty *vty)
 }
 
 int
-zebra_cleanup_rnh_client (vrf_id_t vrfid, int family, struct zserv *client)
+zebra_cleanup_rnh_client (vrf_id_t vrfid, ospl_family_t family, struct zserv *client)
 {
   struct route_table *ntable;
   struct route_node *nrn;
@@ -343,7 +343,7 @@ zebra_cleanup_rnh_client (vrf_id_t vrfid, int family, struct zserv *client)
       rnh = nrn->info;
       if (IS_ZEBRA_DEBUG_NHT)
 	{
-	  char bufn[INET6_ADDRSTRLEN];
+	  ospl_char bufn[INET6_ADDRSTRLEN];
 	  prefix2str(&nrn->p, bufn, INET6_ADDRSTRLEN);
 	  zlog_debug(MODULE_NSM, "rnh %s - cleaning state for client %s", bufn,
 		     zebra_route_string(client->proto));
@@ -422,7 +422,7 @@ compare_state (struct rib *r1, struct rib *r2)
 {
   struct nexthop *nh1 = NULL;
   struct nexthop *nh2 = NULL;
-  u_char found_nh = 0;
+  ospl_uchar found_nh = 0;
 
   if (!r1 && !r2)
     return 0;
@@ -443,10 +443,10 @@ compare_state (struct rib *r1, struct rib *r2)
    * via NEXTHOP_FLAG_MATCHED. Clear this flag for all r2 nexthops when you
    * are finished.
    *
-   * TRUE:  r1 [a,b], r2 [a,b]
-   * TRUE:  r1 [a,b], r2 [b,a]
-   * FALSE: r1 [a,b], r2 [a,c]
-   * FALSE: r1 [a,a], r2 [a,b]
+   * ospl_true:  r1 [a,b], r2 [a,b]
+   * ospl_true:  r1 [a,b], r2 [b,a]
+   * ospl_false: r1 [a,b], r2 [a,c]
+   * ospl_false: r1 [a,a], r2 [a,b]
    */
   for (nh1 = r1->nexthop; nh1; nh1 = nh1->next)
     {
@@ -485,8 +485,8 @@ send_client (struct rnh *rnh, struct zserv *client, vrf_id_t vrf_id)
 {
   struct stream *s;
   struct rib *rib;
-  unsigned long nump;
-  u_char num;
+  ospl_ulong nump;
+  ospl_uchar num;
   struct nexthop *nexthop;
   struct route_node *rn;
 
@@ -562,7 +562,7 @@ send_client (struct rnh *rnh, struct zserv *client, vrf_id_t vrf_id)
 static void
 print_nh (struct nexthop *nexthop, struct vty *vty)
 {
-  char buf[BUFSIZ];
+  ospl_char buf[BUFSIZ];
 
   switch (nexthop->type)
     {
@@ -607,7 +607,7 @@ print_rnh (struct route_node *rn, struct vty *vty)
   struct nexthop *nexthop;
   struct listnode *node;
   struct zserv *client;
-  char buf[BUFSIZ];
+  ospl_char buf[BUFSIZ];
 
   rnh = rn->info;
   vty_out(vty, "%s%s", inet_ntop(rn->p.family, &rn->p.u.prefix, buf, BUFSIZ),

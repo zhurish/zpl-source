@@ -17,7 +17,7 @@
 
 
 //8021X
-int b53125_eap_enable(struct b53125_device *dev, BOOL enable)
+int b53125_eap_enable(struct b53125_device *dev, ospl_bool enable)
 {
 	int ret = 0;
 	u8 port_ctrl = 0;
@@ -35,7 +35,7 @@ int b53125_eap_enable(struct b53125_device *dev, BOOL enable)
 	return ret;
 }
 
-int b53125_eap_ip_address_bypass_enable(struct b53125_device *dev, BOOL enable)
+int b53125_eap_ip_address_bypass_enable(struct b53125_device *dev, ospl_bool enable)
 {
 	int ret = 0;
 	u8 port_ctrl = 0;
@@ -52,7 +52,7 @@ int b53125_eap_ip_address_bypass_enable(struct b53125_device *dev, BOOL enable)
 	return ret;
 }
 
-int b53125_eap_mult_address_bypass_enable(struct b53125_device *dev, BOOL enable, u32 address)
+int b53125_eap_mult_address_bypass_enable(struct b53125_device *dev, ospl_bool enable, u32 address)
 {
 	int ret = 0;
 	u8 port_ctrl = 0;
@@ -70,7 +70,7 @@ int b53125_eap_mult_address_bypass_enable(struct b53125_device *dev, BOOL enable
 }
 
 
-int b53125_eap_ip_address_set(struct b53125_device *dev, int index, u32 address, u32 mask)
+int b53125_eap_ip_address_set(struct b53125_device *dev, ospl_uint32 index, u32 address, u32 mask)
 {
 	int ret = 0;
 	u64 port_ctrl = address << 32 | mask;
@@ -105,14 +105,14 @@ int b53125_eap_blk_mode_set(struct b53125_device *dev, int port, u32 mode)
 }
 
 //EEE
-/*static int sdk_eee_enable(ifindex_t ifindex, BOOL enable)
+/*static int sdk_eee_enable(ifindex_t ifindex, ospl_bool enable)
 {
 	struct b53xxx_ioctl data;
 	memset(&data, 0, sizeof(data));
 	data.cmd = CMD_EEE_ENABLE;
 	data.module = SDK_MODULE_EEE;
 	data.port = if_ifindex2phy(ifindex);
-	data.enable = enable ? TRUE:FALSE;
+	data.enable = enable ? ospl_true:ospl_false;
 	return sdk_cmd_ioctl(&data);
 }
 

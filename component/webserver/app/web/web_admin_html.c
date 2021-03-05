@@ -72,7 +72,7 @@ static int web_admin_user(Webs *wp, char *path, char *query)
 	{
 		zlog_debug(MODULE_WEB, " get goform/adminuser username:%s password:%s authlevel:%s", username,password,authlevel);
 	}
-	if(vty_user_create(NULL, username, password, FALSE , TRUE ) == CMD_SUCCESS)
+	if(vty_user_create(NULL, username, password, ospl_false , ospl_true ) == CMD_SUCCESS)
 	{
 		if(strstr(authlevel, "mana"))
 			ret = vty_user_setting_privilege(NULL, username, ADMIN_LEVEL);
@@ -120,7 +120,7 @@ static int web_admin_change_password(Webs *wp, char *path, char *query)
 	{
 		zlog_debug(MODULE_WEB, " get goform/admin-password username:%s password:%s", wp->username, password);
 	}
-	if(vty_user_create(NULL, wp->username, password, FALSE , TRUE ) == CMD_SUCCESS)
+	if(vty_user_create(NULL, wp->username, password, ospl_false , ospl_true ) == CMD_SUCCESS)
 	{
 		return web_return_text_plain(wp, OK);
 	}
@@ -147,7 +147,7 @@ static int web_admin_deluser(Webs *wp, void *p)
 	}
 	strcpy(username, strval);
 
-	if(vty_user_delete(NULL, wp->username, FALSE , TRUE ) == CMD_SUCCESS)
+	if(vty_user_delete(NULL, wp->username, ospl_false , ospl_true ) == CMD_SUCCESS)
 	{
 		return web_return_text_plain(wp, OK);
 	}
@@ -274,7 +274,7 @@ static int web_change_password(Webs *wp, char *path, char *query)
 	oldpass = sclone(wp->password);
 
 	ret = webs_authentication_verify(wp, username, oldpassword);
-	if(ret == FALSE)
+	if(ret == ospl_false)
 	{
 	    wfree(wp->username);
 	    wp->username = sclone(olduser);
@@ -329,7 +329,7 @@ static int web_change_password(Webs *wp, char *path, char *query)
 
 		return web_return_text_plain(wp, ERROR);
 	}
-	if(vty_user_create(NULL, wp->username, newpassword, FALSE , TRUE ) != CMD_SUCCESS)
+	if(vty_user_create(NULL, wp->username, newpassword, ospl_false , ospl_true ) != CMD_SUCCESS)
 	{
 		if(WEB_IS_DEBUG(EVENT))
 		{

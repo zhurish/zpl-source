@@ -25,7 +25,13 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include "FramedSource.hh"
 #endif
 #include "FramedQueue.hpp"
-
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "ospl_type.h"
+#ifdef __cplusplus
+}
+#endif
 class FramedQueueSource: public FramedSource {
 public:
   static FramedQueueSource* createNew(UsageEnvironment& env, FramedQueue *queue);
@@ -39,7 +45,7 @@ private:
   static void FramedQueueSourceReadableHandler(FramedQueueSource* source, int mask);
   void doFramedQueueSourceReadHandler(int fd);
 
-  Boolean handleReadFramedQueue(unsigned char* buffer, unsigned bufferMaxSize,
+  Boolean handleReadFramedQueue(ospl_uint8* buffer, unsigned bufferMaxSize,
 			      unsigned& bytesRead);
 
             

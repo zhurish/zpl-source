@@ -64,13 +64,13 @@ typedef struct
     int         socket;              /* socket connection */
     int         ptyFd;             /* input to command interpreter */
 
-    BOOL        loggedIn;            /* Has shell been started on this slot? */
-    BOOL        shuttingDown;        /* Is session shutting down? */
+    ospl_bool        loggedIn;            /* Has shell been started on this slot? */
+    ospl_bool        shuttingDown;        /* Is session shutting down? */
 
-	BOOL 		raw;			/* TRUE = raw mode enabled */
-	BOOL 		echo;		/* TRUE = echo enabled */
-    u_int8 		myOpts[256];	/* current option settings - this side */
-	u_int8 		remOpts[256];	/* current option settings - other side */
+	ospl_bool 		raw;			/* ospl_true = raw mode enabled */
+	ospl_bool 		echo;		/* ospl_true = echo enabled */
+    ospl_uint8 		myOpts[256];	/* current option settings - this side */
+	ospl_uint8 		remOpts[256];	/* current option settings - other side */
 
     void		*master;
     void		*t_lread;
@@ -81,15 +81,15 @@ typedef struct
 typedef struct 
      {
 	 char	hostname[64];
-     u_char state;
+     ospl_uchar state;
 #define SCTD_EMPTY 1
 #define SCTD_USED  2
      int    loutfd;                 /* local host's socket */
      int	linfd;
      int    hostFd;                  /* remote host's socket */
-     BOOL   echoIsDone;              /* TRUE when echo transaction complete */
-     BOOL   sgaIsDone;               /* TRUE when SGA transaction complete */
-     BOOL	connect;
+     ospl_bool   echoIsDone;              /* ospl_true when echo transaction complete */
+     ospl_bool   sgaIsDone;               /* ospl_true when SGA transaction complete */
+     ospl_bool	connect;
      int    hostStreamState;         /* state of host input stream */
      char   cmd;
      int    saveOpts;

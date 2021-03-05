@@ -22,6 +22,10 @@
 #ifndef _ZEBRA_ROUTEMAP_H
 #define _ZEBRA_ROUTEMAP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "prefix.h"
 
 /* Route map's type. */
@@ -113,10 +117,10 @@ struct route_map_rule_list
 struct route_map_index
 {
   struct route_map *map;
-  char *description;
+  ospl_char *description;
 
   /* Preference of this route map rule. */
-  int pref;
+  ospl_uint32 pref;
 
   /* Route map type permit or deny. */
   enum route_map_type type;			
@@ -125,10 +129,10 @@ struct route_map_index
   route_map_end_t exitpolicy;
 
   /* If we're using "GOTO", to where do we go? */
-  int nextpref;
+  ospl_uint32 nextpref;
 
   /* If we're using "CALL", to which route-map do ew go? */
-  char *nextrm;
+  ospl_char *nextrm;
 
   /* Matching rule list. */
   struct route_map_rule_list match_list;
@@ -143,7 +147,7 @@ struct route_map_index
 struct route_map
 {
   /* Name of route map. */
-  char *name;
+  ospl_char *name;
 
   /* Route map's rule. */
   struct route_map_index *head;
@@ -200,5 +204,11 @@ extern void route_map_event_hook (void (*func) (route_map_event_t, const char *)
 
 extern void *route_map_rule_tag_compile (const char *arg);
 extern void route_map_rule_tag_free (void *rule);
+ 
+
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ZEBRA_ROUTEMAP_H */

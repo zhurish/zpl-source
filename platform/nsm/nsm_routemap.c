@@ -44,7 +44,7 @@ struct route_map_rule
   struct route_map_rule_cmd *cmd;
 
   /* For pretty printing. */
-  char *rule_str;
+  ospl_char *rule_str;
 
   /* Pre-compiled match rule. */
   void *value;
@@ -73,7 +73,7 @@ route_map_rule_delete (struct route_map_rule_list *,
 		       struct route_map_rule *);
 
 static void
-route_map_index_delete (struct route_map_index *, int);
+route_map_index_delete (struct route_map_index *, ospl_uint32);
 
 /* New route map allocation. Please note route map's name must be
    specified. */
@@ -118,7 +118,7 @@ route_map_delete (struct route_map *map)
 {
   struct route_map_list *list;
   struct route_map_index *index;
-  char *name;
+  ospl_char *name;
   
   while ((index = map->head) != NULL)
     route_map_index_delete (index, 0);
@@ -293,7 +293,7 @@ route_map_index_new (void)
 
 /* Free route map index. */
 static void
-route_map_index_delete (struct route_map_index *index, int notify)
+route_map_index_delete (struct route_map_index *index, ospl_uint32 notify)
 {
   struct route_map_rule *rule;
 
@@ -316,7 +316,7 @@ route_map_index_delete (struct route_map_index *index, int notify)
   else
     index->map->head = index->next;
 
-  /* Free 'char *nextrm' if not NULL */
+  /* Free 'ospl_char *nextrm' if not NULL */
   if (index->nextrm)
     XFREE (MTYPE_ROUTE_MAP_NAME, index->nextrm);
 
@@ -331,7 +331,7 @@ route_map_index_delete (struct route_map_index *index, int notify)
 /* Lookup index from route map. */
 static struct route_map_index *
 route_map_index_lookup (struct route_map *map, enum route_map_type type,
-			int pref)
+			ospl_uint32 pref)
 {
   struct route_map_index *index;
 
@@ -345,7 +345,7 @@ route_map_index_lookup (struct route_map *map, enum route_map_type type,
 /* Add new index to route map. */
 static struct route_map_index *
 route_map_index_add (struct route_map *map, enum route_map_type type,
-		     int pref)
+		     ospl_uint32 pref)
 {
   struct route_map_index *index;
   struct route_map_index *point;
@@ -397,7 +397,7 @@ route_map_index_add (struct route_map *map, enum route_map_type type,
 /* Get route map index. */
 static struct route_map_index *
 route_map_index_get (struct route_map *map, enum route_map_type type, 
-		     int pref)
+		     ospl_uint32 pref)
 {
   struct route_map_index *index;
 
@@ -441,7 +441,7 @@ route_map_install_set (struct route_map_rule_cmd *cmd)
 static struct route_map_rule_cmd *
 route_map_lookup_match (const char *name)
 {
-  unsigned int i;
+  ospl_uint32  i;
   struct route_map_rule_cmd *rule;
 
   for (i = 0; i < vector_active (route_match_vec); i++)
@@ -455,7 +455,7 @@ route_map_lookup_match (const char *name)
 static struct route_map_rule_cmd *
 route_map_lookup_set (const char *name)
 {
-  unsigned int i;
+  ospl_uint32  i;
   struct route_map_rule_cmd *rule;
 
   for (i = 0; i < vector_active (route_set_vec); i++)
@@ -840,7 +840,7 @@ route_map_apply (struct route_map *map, struct prefix *prefix,
                     {
                       /* Find the next clause to jump to */
                       struct route_map_index *next = index->next;
-                      int nextpref = index->nextpref;
+                      ospl_uint32 nextpref = index->nextpref;
 
                       while (next && next->pref < nextpref)
                         {
@@ -914,11 +914,11 @@ DEFUN (route_map,
        "Route map permits set operations\n"
        "Sequence to insert to/delete from existing route-map entry\n")
 {
-  int permit;
-  unsigned long pref;
+  ospl_uint32 permit;
+  ospl_uint32 pref;
   struct route_map *map;
   struct route_map_index *index;
-  char *endptr = NULL;
+  ospl_char *endptr = NULL;
 
   /* Permit check. */
   if (strncmp (argv[1], "permit", strlen (argv[1])) == 0)
@@ -986,11 +986,11 @@ DEFUN (no_route_map,
        "Route map permits set operations\n"
        "Sequence to insert to/delete from existing route-map entry\n")
 {
-  int permit;
-  unsigned long pref;
+  ospl_uint32 permit;
+  ospl_uint32 pref;
   struct route_map *map;
   struct route_map_index *index;
-  char *endptr = NULL;
+  ospl_char *endptr = NULL;
 
   /* Permit check. */
   if (strncmp (argv[1], "permit", strlen (argv[1])) == 0)
@@ -1086,7 +1086,7 @@ DEFUN (rmap_onmatch_goto,
        "Number\n")
 {
   struct route_map_index *index = vty->index;
-  int d = 0;
+  ospl_uint32 d = 0;
 
   if (index)
     {
@@ -1253,8 +1253,8 @@ route_map_config_write (struct vty *vty)
   struct route_map *map;
   struct route_map_index *index;
   struct route_map_rule *rule;
-  int first = 1;
-  int write = 0;
+  ospl_uint32 first = 1;
+  ospl_uint32 write = 0;
 
   for (map = route_map_master.head; map; map = map->next)
     for (index = map->head; index; index = index->next)
@@ -1306,8 +1306,8 @@ static struct cmd_node rmap_node =
 void *
 route_map_rule_tag_compile (const char *arg)
 {
-  unsigned long int tmp;
-  char *endptr;
+  ospl_uint64 tmp;
+  ospl_char *endptr;
   route_tag_t *tag;
 
   errno = 0;

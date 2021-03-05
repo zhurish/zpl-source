@@ -23,6 +23,10 @@
 #ifndef _ZEBRA_TABLE_H
 #define _ZEBRA_TABLE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Forward declarations.
  */
@@ -59,7 +63,7 @@ struct route_table
    */
   route_table_delegate_t *delegate;
   
-  unsigned long count;
+  ospl_ulong count;
   
   /*
    * User data.
@@ -82,7 +86,7 @@ struct route_table
   struct route_node *link[2];			\
 						\
   /* Lock of this radix */			\
-  unsigned int lock;				\
+  ospl_uint32  lock;				\
 						\
   /* Each node of route. */			\
   void *info;					\
@@ -101,7 +105,7 @@ struct route_node
   struct route_node *parent;
   struct route_node *link[2];
   /* Lock of this radix */
-  unsigned int lock;
+  ospl_uint32  lock;
   /* Each node of route. */
   void *info;
   /* Aggregation. */
@@ -173,7 +177,7 @@ extern struct route_node *route_node_match_ipv6 (const struct route_table *,
 						 const struct in6_addr *);
 #endif /* HAVE_IPV6 */
 
-extern unsigned long route_table_count (const struct route_table *);
+extern ospl_ulong route_table_count (const struct route_table *);
 
 extern struct route_node *
 route_table_get_next (const struct route_table *table, struct prefix *p);
@@ -244,7 +248,7 @@ route_table_iter_next (route_table_iter_t * iter)
 /*
  * route_table_iter_is_done
  *
- * Returns TRUE if the iteration is complete.
+ * Returns ospl_true if the iteration is complete.
  */
 static inline int
 route_table_iter_is_done (route_table_iter_t *iter)
@@ -255,12 +259,19 @@ route_table_iter_is_done (route_table_iter_t *iter)
 /*
  * route_table_iter_started
  *
- * Returns TRUE if this iterator has started iterating over the tree.
+ * Returns ospl_true if this iterator has started iterating over the tree.
  */
 static inline int
 route_table_iter_started (route_table_iter_t *iter)
 {
   return iter->state != RT_ITER_STATE_INIT;
 }
+
+
+
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ZEBRA_TABLE_H */

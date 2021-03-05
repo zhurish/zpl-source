@@ -1011,7 +1011,7 @@ static void on_transport_state(pjsip_transport *tp,
 /*
  * Notification on ICE error.
  */
-static void on_ice_transport_error(int index, pj_ice_strans_op op,
+static void on_ice_transport_error(ospl_uint32 index, pj_ice_strans_op op,
 				   pj_status_t status, void *param)
 {
 	__PL_PJSIP_DEBUG( "===========%s=======%s\r\n",THIS_FILE, __func__);;
@@ -1977,7 +1977,7 @@ int pjsua_app_restart(void)
 {
 	//cli_destroy();
 	//pj_cli_destroy(pjsua_cli_config.cli);
-	app_config.app_cli_running = FALSE;
+	app_config.app_cli_running = ospl_false;
 
 /*	if (app_config.cli_cfg.cli_fe & CLI_FE_CONSOLE)
 		pj_cli_quit(pjsua_cli_config.cli, pjsua_cli_config.cli_cons_sess, PJ_TRUE);
@@ -1992,7 +1992,7 @@ int pjsua_app_restart(void)
 
 int pjsua_app_exit(void)
 {
-	app_config.app_cli_running = FALSE;
+	app_config.app_cli_running = ospl_false;
 	return 0;
 }
 

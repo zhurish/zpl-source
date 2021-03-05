@@ -108,8 +108,8 @@ SEE ALSO: sntpcLib, RFC 1769
 /* forward declarations */
 
 static struct sntp_server *sntp_server = NULL;
-static BOOL sntpsClockHookRtn(int , void *);
-static STATUS sntpsClockSet (struct sntp_server *, BOOL (*)(int, void *));
+static ospl_bool sntpsClockHookRtn(ospl_uint32 , void *);
+static STATUS sntpsClockSet (struct sntp_server *, ospl_bool (*)(ospl_uint32, void *));
 
 struct module_list module_list_sntps = 
 { 
@@ -119,7 +119,7 @@ struct module_list module_list_sntps =
 	.module_exit=NULL, 
 	.module_task_init=NULL, 
 	.module_task_exit=NULL, 
-	.module_cmd_init=cmd_sntps_init, 
+	.module_cmd_init=NULL, 
 	.module_write_config=NULL, 
 	.module_show_config=NULL,
 	.module_show_debug=NULL, 
@@ -183,9 +183,9 @@ static INT8 sntpsLog2Get
     ULONG inval 	/* input value for calculation */
     )
 {
-	u_int32 loop;
-	u_int32 floor; /* Nearest power of two for smaller value */
-	u_int32 limit; /* Nearest power of two for larger value */
+	ospl_uint32 loop;
+	ospl_uint32 floor; /* Nearest power of two for smaller value */
+	ospl_uint32 limit; /* Nearest power of two for larger value */
 	int result;
 	ULONG mask; /* Bitmask for log2 calculation */
 
@@ -249,7 +249,7 @@ static ULONG sntpsNsecToFraction
 	ULONG mask = 100000000; /* Pulls digits of factor from left to right. */
 	int loop;
 	ULONG fraction = 0;
-	BOOL shift = FALSE; /* Shifted to avoid overflow? */
+	ospl_bool shift = ospl_false; /* Shifted to avoid overflow? */
 
 	/*
 	 * Adjust large values so that no intermediate calculation exceeds
@@ -259,7 +259,7 @@ static ULONG sntpsNsecToFraction
 
 	if (nsecs & 0xF0000000) {
 		nsecs >>= 4; /* Exclude rightmost hex digit. */
-		shift = TRUE;
+		shift = ospl_true;
 	}
 
 	/*
@@ -319,7 +319,7 @@ static STATUS sntpsConfigSet
     )
 {
 	struct in_addr target;
-	short interval;
+	ospl_int16 interval;
 	int result = OK;
 
 	/* Don't change settings if message transmission in progress. */
@@ -334,10 +334,10 @@ static STATUS sntpsConfigSet
 		} else
 			sntp_server->address.s_addr = target.s_addr;
 	} else if (setting == SNTPS_DELAY) {
-		interval = (short) (*((int *) pValue));
+		interval = (ospl_int16) (*((int *) pValue));
 		sntp_server->sntpsInterval = interval;
 	} else if (setting == SNTPS_MODE) {
-		interval = (short) (*((int *) pValue));
+		interval = (ospl_int16) (*((int *) pValue));
 		sntp_server->mode = interval;
 	} else {
 //        errnoSet (S_sntpsLib_INVALID_PARAMETER);
@@ -369,7 +369,7 @@ static int sntpsMsgSend (struct sntp_server *server)
 	SNTP_PACKET sntpReply;
 	int result;
 	//int optval;
-	//short interval;
+	//ospl_int16 interval;
 	SNTP_TIMESTAMP refTime;
 //	int sntpSocket;
 	struct sockaddr_in dstAddr;
@@ -526,7 +526,7 @@ static int sntps_time(struct thread *thread)
 static STATUS sntpsClockSet
     (
     struct sntp_server *server,
-	BOOL (*pClockHookRtn)(int, void *) 	 	/* new interface to reference clock */
+	ospl_bool (*pClockHookRtn)(ospl_uint32, void *) 	 	/* new interface to reference clock */
     )
 {
 	STATUS result;
@@ -563,7 +563,7 @@ static STATUS sntpsClockSet
 	}
 
 	if (!server->sntpsClockReady)
-		server->sntpsClockReady = TRUE; /* Enable transmission of messages. */
+		server->sntpsClockReady = ospl_true; /* Enable transmission of messages. */
 
 //    semGive (sntpsMutexSem);
 
@@ -597,7 +597,7 @@ LOCAL int sntpsRead (struct sntp_server *server)
 	int result;
 	int addrLen;
 	SNTP_TIMESTAMP refTime;
-	BOOL unsync;
+	ospl_bool unsync;
 
 	addrLen = sizeof(dstAddr);
 
@@ -656,11 +656,11 @@ LOCAL int sntpsRead (struct sntp_server *server)
 		sntpReply.precision = server->sntpsPrecision;
 		sntpReply.referenceIdentifier = server->sntpsClockId;
 
-		unsync = FALSE;
+		unsync = ospl_false;
 		/* confirm if local time is sync */
         result = (* server->sntpsClockHookRtn) (SNTPS_TIME, &refTime);
 		if (result == ERROR)
-			unsync = TRUE;
+			unsync = ospl_true;
 
 //        semGive (sntpsMutexSem);
 
@@ -721,10 +721,10 @@ LOCAL int sntpsRead (struct sntp_server *server)
 	return result;
 }
 
-static BOOL sntpsClockHookRtn(int type, void *pVoid)
+static ospl_bool sntpsClockHookRtn(ospl_uint32 type, void *pVoid)
 {
 	extern int sntpc_is_sync(void);
-	BOOL ret = FALSE;
+	ospl_bool ret = ospl_false;
 	SNTP_TIMESTAMP *tp = (SNTP_TIMESTAMP *)pVoid;
 	ULONG *value = (ULONG *)pVoid;
 	struct timespec sntpTime;
@@ -737,18 +737,18 @@ static BOOL sntpsClockHookRtn(int type, void *pVoid)
 		{
 			tp->seconds = sntpTime.tv_sec;
 			tp->fraction = sntpsNsecToFraction(sntpTime.tv_nsec);
-			ret = TRUE;
+			ret = ospl_true;
 		}
 		break;
 	case SNTPS_ID:
 		if(value)
 			*value= 1;
-		ret = TRUE;
+		ret = ospl_true;
 		break;
 	case SNTPS_RESOLUTION:
 		if(value)
 			*value= rand();
-		ret = TRUE;
+		ret = ospl_true;
 		break;
 	}
 	//extern struct in_addr sntpc_server_address(void);
@@ -829,7 +829,7 @@ static int sntps_socket_init(struct sntp_server *server)
 		return OK;
 }
 
-static int sntpsEnable(u_short port, int time_interval, int version, int mode)
+static int sntpsEnable(ospl_ushort port, ospl_uint32 time_interval, ospl_uint32 version, ospl_uint32 mode)
 {
 	int ret = 0;
 	if(sntp_server)
@@ -1277,7 +1277,7 @@ int vty_show_sntps_server(struct vty *vty)
 	return CMD_SUCCESS;
 }
 #ifndef SNTPS_CLI_ENABLE
-int sntp_server_set_api(struct vty *vty, int cmd, const char *value)
+int sntp_server_set_api(struct vty *vty, ospl_uint32 cmd, const char *value)
 {
 	int ret = CMD_WARNING;
 	char *argv[2] = {NULL, NULL};
@@ -1336,7 +1336,7 @@ int sntp_server_set_api(struct vty *vty, int cmd, const char *value)
 		os_mutex_unlock(sntp_server->mutex);
 	return ret;
 }
-int sntp_server_get_api(struct vty *vty, int cmd, const char *value)
+int sntp_server_get_api(struct vty *vty, ospl_uint32 cmd, const char *value)
 {
 	int ret = ERROR;
 	int *intValue = (int *)value;

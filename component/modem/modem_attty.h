@@ -8,6 +8,10 @@
 #ifndef __MODEM_ATTTY_H__
 #define __MODEM_ATTTY_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "os_list.h"
 
 #include "modem.h"
@@ -53,17 +57,17 @@ extern int modem_attty_close(modem_client_t *client);
 extern md_res_en modem_attty_write(modem_client_t *client, const char *format, ...);
 
 extern md_res_en modem_attty(modem_client_t *client,
-		int timeout, const char *waitkey, const char *format, ...);
+		ospl_uint32 timeout, const char *waitkey, const char *format, ...);
 
 extern md_res_en modem_attty_respone(modem_client_t *client,
-		int timeout, char *buf, int size, const char *format, ...);
+		ospl_uint32 timeout, char *buf, ospl_size_t size, const char *format, ...);
 
 
 extern md_res_en modem_attty_proxy_respone(modem_client_t *client,
-		int timeout, char *buf, int size, const char *format, int len);
+		ospl_uint32 timeout, char *buf, ospl_size_t size, const char *format, ospl_size_t len);
 
 extern md_res_en modem_attty_massage_respone(modem_client_t *client,
-		int timeout, const char *msg_cmd, const char *buf, int size);
+		ospl_uint32 timeout, const char *msg_cmd, const char *buf, ospl_size_t size);
 
 #ifdef __MODEM_TTY_DEBUG
 #define MODEM_TTY_DEBUG(fmt,...)	modem_debug_printf(stderr, __func__, __LINE__,fmt, ##__VA_ARGS__)
@@ -73,6 +77,10 @@ extern md_res_en modem_attty_massage_respone(modem_client_t *client,
 #define MODEM_TTY_DEBUG(fmt,...)
 #define MODEM_TTY_WARN(fmt,...)
 #define MODEM_TTY_ERROR(fmt,...)
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __MODEM_ATTTY_H__ */

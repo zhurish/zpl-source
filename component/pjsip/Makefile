@@ -146,8 +146,8 @@ install-lib:
 	@install -m 755 $(PJSUA2LIBS) $(LIB_DIR)
 	@$(STRIP) $(PLSTRIP_CFLAGS) $(LIB_DIR)/$(PJSUA2LIBS)
 	 
-install: install-lib $(PJSUA2TEST_BIN)
-	@install -m 755 ${PJSUA2TEST_BIN} ${DSTSBINDIR}
+install: install-lib 
+#	@install -m 755 ${PJSUA2TEST_BIN} ${DSTSBINDIR}
 
 clean: $(SDL2CLEAN) objclean
 	@$(RM) $(LIB_DIR)/$(LIBS)

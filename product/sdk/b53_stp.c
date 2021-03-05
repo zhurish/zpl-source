@@ -48,7 +48,7 @@ int b53125_set_stp_state(struct b53125_device *dev, int port, u8 state)
 	return ret;
 }
 /****************************************************************************************/
-int b53125_mstp_enable(struct b53125_device *dev, BOOL enable)
+int b53125_mstp_enable(struct b53125_device *dev, ospl_bool enable)
 {
 	int ret = 0;
 	u8 reg = 0;
@@ -80,7 +80,7 @@ int b53125_mstp_state(struct b53125_device *dev, int id, int port, int state)
 	return ret;
 }
 
-int b53125_mstp_bypass(struct b53125_device *dev, int id, BOOL enable)
+int b53125_mstp_bypass(struct b53125_device *dev, int id, ospl_bool enable)
 {
 	int ret = 0;
 	u32 reg = 0;

@@ -7,6 +7,10 @@
 #ifndef UDHCP_D6_COMMON_H
 #define UDHCP_D6_COMMON_H 1
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <netinet/ip6.h>
 
 //PUSH_AND_SET_FUNCTION_VISIBILITY_TO_HIDDEN
@@ -31,10 +35,10 @@
 
 struct d6_packet {
 	union {
-		uint8_t d6_msg_type;
-		uint32_t d6_xid32;
+		ospl_uint8 d6_msg_type;
+		ospl_uint32  d6_xid32;
 	} d6_u;
-	uint8_t d6_options[576 - sizeof(struct iphdr) - sizeof(struct udphdr) - 4
+	ospl_uint8 d6_options[576 - sizeof(struct iphdr) - sizeof(struct udphdr) - 4
 			+ CONFIG_UDHCPC_SLACK_FOR_BUGGY_SERVERS];
 } PACKED;
 #define d6_msg_type d6_u.d6_msg_type
@@ -54,11 +58,11 @@ struct udp_d6_packet {
 /*** Options ***/
 
 struct d6_option {
-	uint8_t code_hi;
-	uint8_t code;
-	uint8_t len_hi;
-	uint8_t len;
-	uint8_t data[1];
+	ospl_uint8 code_hi;
+	ospl_uint8 code;
+	ospl_uint8 len_hi;
+	ospl_uint8 len;
+	ospl_uint8 data[1];
 } PACKED;
 
 #define D6_OPT_CLIENTID       1
@@ -141,9 +145,9 @@ struct client6_data_t {
 
 #define client6_data (*(struct client6_data_t*)(&bb_common_bufsiz1[COMMON_BUFSIZE - sizeof(struct client6_data_t)]))
 
-int FAST_FUNC d6_read_interface(const char *interface, int *ifindex, struct in6_addr *nip6, uint8_t *mac);
+int FAST_FUNC d6_read_interface(const char *interface, ifindex_t *ifindex, struct in6_addr *nip6, ospl_uint8 *mac);
 
-int FAST_FUNC d6_listen_socket(int port, const char *inf);
+int FAST_FUNC d6_listen_socket(ospl_uint16 port, const char *inf);
 
 int FAST_FUNC d6_recv_kernel_packet(
 		struct in6_addr *peer_ipv6,
@@ -152,16 +156,16 @@ int FAST_FUNC d6_recv_kernel_packet(
 
 int FAST_FUNC d6_send_raw_packet(
 		struct d6_packet *d6_pkt, unsigned d6_pkt_size,
-		struct in6_addr *src_ipv6, int source_port,
-		struct in6_addr *dst_ipv6, int dest_port, const uint8_t *dest_arp,
-		int ifindex
+		struct in6_addr *src_ipv6, ospl_uint16 source_port,
+		struct in6_addr *dst_ipv6, ospl_uint16 dest_port, const ospl_uint8 *dest_arp,
+		ifindex_t ifindex
 );
 
 int FAST_FUNC d6_send_kernel_packet(
 		struct d6_packet *d6_pkt, unsigned d6_pkt_size,
-		struct in6_addr *src_ipv6, int source_port,
-		struct in6_addr *dst_ipv6, int dest_port,
-		int ifindex
+		struct in6_addr *src_ipv6, ospl_uint16 source_port,
+		struct in6_addr *dst_ipv6, ospl_uint16 dest_port,
+		ifindex_t ifindex
 );
 
 #if defined CONFIG_UDHCP_DEBUG && CONFIG_UDHCP_DEBUG >= 2
@@ -172,5 +176,9 @@ void FAST_FUNC d6_dump_packet(struct d6_packet *packet);
 
 
 //POP_SAVED_FUNCTION_VISIBILITY
-
+ 
+#ifdef __cplusplus
+}
+#endif
+ 
 #endif

@@ -45,7 +45,7 @@ struct modem_vty_cb
 {
 	struct vty *vty;
 	char name[128];
-	BOOL detail;
+	ospl_bool detail;
 };
 /***********************************************************************/
 /************************  modem-profile ******************************/
@@ -348,7 +348,7 @@ DEFUN (modem_secondary_set,
 	modem_t *modem = vty->index;
 	if(modem)
 	{
-		BOOL oldtype = FALSE, type = TRUE;
+		ospl_bool oldtype = ospl_false, type = ospl_true;
 		if(modem_main_secondary_get_api(modem, &oldtype) != OK)
 		{
 			vty_out(vty, "Can not get modem Secondary APN%s",VTY_NEWLINE);
@@ -374,7 +374,7 @@ DEFUN (no_modem_secondary_set,
 	modem_t *modem = vty->index;
 	if(modem)
 	{
-		BOOL oldtype = FALSE, type = FALSE;
+		ospl_bool oldtype = ospl_false, type = ospl_false;
 		if(modem_main_secondary_get_api(modem, &oldtype) != OK)
 		{
 			vty_out(vty, "Can not get modem Secondary APN%s",VTY_NEWLINE);
@@ -857,12 +857,12 @@ DEFUN (no_modem_bind_interface_set,
 	}*/
 	if(os_strstr(argv[0], "serial") && modem->ppp_serial)
 	{
-		if(modem_unbind_interface_api(modem, TRUE, 1) == OK)
+		if(modem_unbind_interface_api(modem, ospl_true, 1) == OK)
 			return CMD_SUCCESS;
 	}
 	else if((os_strstr(argv[0], "ethernet")|| os_strstr(argv[0], "wireless")) && modem->eth0)
 	{
-		if(modem_unbind_interface_api(modem, FALSE, 1) == OK)
+		if(modem_unbind_interface_api(modem, ospl_false, 1) == OK)
 			return CMD_SUCCESS;
 	}
 	return CMD_SUCCESS;
@@ -883,7 +883,7 @@ DEFUN (no_modem_bind_interface_vals_set,
 	{
 		if(os_strstr(argv[0], "serial") && modem->ppp_serial)
 		{
-			if(modem_unbind_interface_api(modem, TRUE, 1) == OK)
+			if(modem_unbind_interface_api(modem, ospl_true, 1) == OK)
 				return CMD_SUCCESS;
 		}
 /*
@@ -897,7 +897,7 @@ DEFUN (no_modem_bind_interface_vals_set,
 	{
 		if(os_strstr(argv[0], "serial") && modem->dial_serial)
 		{
-			if(modem_unbind_interface_api(modem, TRUE, 2) == OK)
+			if(modem_unbind_interface_api(modem, ospl_true, 2) == OK)
 				return CMD_SUCCESS;
 		}
 /*		if(modem->dial_serial == NULL)
@@ -925,7 +925,7 @@ DEFUN (no_modem_bind_interface_vale_set,
 	{
 		if((os_strstr(argv[0], "ethernet")|| os_strstr(argv[0], "wireless")) && modem->eth1)
 		{
-			if(modem_unbind_interface_api(modem, FALSE, 2) == OK)
+			if(modem_unbind_interface_api(modem, ospl_false, 2) == OK)
 				return CMD_SUCCESS;
 		}
 /*		if(modem->eth1 == NULL)
@@ -938,7 +938,7 @@ DEFUN (no_modem_bind_interface_vale_set,
 	{
 		if((os_strstr(argv[0], "ethernet")|| os_strstr(argv[0], "wireless")) && modem->eth2)
 		{
-			if(modem_unbind_interface_api(modem, FALSE, 3) == OK)
+			if(modem_unbind_interface_api(modem, ospl_false, 3) == OK)
 				return CMD_SUCCESS;
 		}
 /*		if(modem->eth2 == NULL)
@@ -1238,10 +1238,10 @@ DEFUN (show_modem_profile,
 		if(strstr(argv[0], "detail"))
 			strcpy(user.name, argv[0]);
 		else
-			user.detail = TRUE;
+			user.detail = ospl_true;
 
 		if(argc == 2)
-			user.detail = TRUE;
+			user.detail = ospl_true;
 	}
 	modem_main_callback_api(show_modem_information_cb, &user);
 	return CMD_SUCCESS;
@@ -1297,7 +1297,7 @@ DEFUN (show_modem_machine_state,
 	user.vty = vty;
 	if(argc == 1 && argv[0])
 	{
-		user.detail = TRUE;
+		user.detail = ospl_true;
 	}
 	modem_main_callback_api(show_modem_machine_state_cb, &user);
 	return CMD_SUCCESS;
@@ -1530,10 +1530,10 @@ DEFUN (show_modem_channel,
 		if(strstr(argv[0], "detail"))
 			strcpy(user.name, argv[0]);
 		else
-			user.detail = TRUE;
+			user.detail = ospl_true;
 
 		if(argc == 2)
-			user.detail = TRUE;
+			user.detail = ospl_true;
 	}
 	modem_serial_callback_api(show_modem_channel_information_cb, &user);
 	return CMD_SUCCESS;
@@ -1685,10 +1685,10 @@ DEFUN (show_modem_client,
 		if(strstr(argv[0], "detail"))
 			strcpy(user.name, argv[0]);
 		else
-			user.detail = TRUE;
+			user.detail = ospl_true;
 
 		if(argc == 2)
-			user.detail = TRUE;
+			user.detail = ospl_true;
 	}
 	modem_client_callback_api(show_modem_client_cb, &user);
 	return CMD_SUCCESS;

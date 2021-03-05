@@ -24,7 +24,7 @@
 #define TTY_COM_SLIP_ESC_END 0XDC /*ESC ESC_END用于包中数据和和END相同时的转意字符*/
 #define TTY_COM_SLIP_ESC_ESC 0XDD /*ESC ESC_ESC用于包中数据和和ESC相同时的转意字符*/
 
-/* SLIP protocol characters. */
+/* SLIP protocol ospl_ucharacters. */
 #define TTY_COM_END             0300		/* indicates end of frame	*/
 #define TTY_COM_ESC             0333		/* indicates byte stuffing	*/
 #define TTY_COM_ESC_END         0334		/* ESC ESC_END means END 'data'	*/
@@ -33,8 +33,8 @@
 
 struct tty_speed_table
 {
-	uint speed;
-	uint p;
+	ospl_uint32 speed;
+	ospl_uint32 p;
 };
 
 struct tty_speed_table speed_table[] =
@@ -52,7 +52,7 @@ struct tty_speed_table speed_table[] =
 
 static int _tty_com_speed(struct tty_com *com)
 {
-	u_int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < array_size(speed_table); i++)
 	{
 		if(com->speed == speed_table[i].speed)
@@ -277,7 +277,7 @@ int tty_com_update_option(struct tty_com *com)
 	return _tty_com_option(com);
 }
 
-int tty_com_write(struct tty_com *com, char *buf, int len)
+int tty_com_write(struct tty_com *com, ospl_uchar *buf, ospl_uint32 len)
 {
 	int ret = 0;
 	//tcflush(com->fd, TCIOFLUSH);
@@ -290,7 +290,7 @@ int tty_com_write(struct tty_com *com, char *buf, int len)
 	return ret;
 }
 
-int tty_com_read(struct tty_com *com, char *buf, int len)
+int tty_com_read(struct tty_com *com, ospl_uchar *buf, ospl_uint32 len)
 {
 	int ret = 0;
 	if(com->mode == TTY_COM_MODE_SLIP)
@@ -300,19 +300,19 @@ int tty_com_read(struct tty_com *com, char *buf, int len)
 	return ret;
 }
 
-int tty_com_putc(struct tty_com *com, unsigned char c)
+int tty_com_putc(struct tty_com *com, ospl_uchar c)
 {
 	int ret = 0;
-	char ic = c;
+	ospl_uchar ic = c;
 	//tcflush(com->fd, TCIOFLUSH);
 	ret = write(com->fd, &ic, 1);
 	tcdrain(com->fd);
 	return ret;
 }
 
-int tty_com_getc(struct tty_com *com, unsigned char *c)
+int tty_com_getc(struct tty_com *com, ospl_uchar *c)
 {
-	unsigned char oc = 0;
+	ospl_uchar oc = 0;
 	int ret = read(com->fd, &oc, 1);
 	if(ret == 1)
 	{
@@ -322,20 +322,20 @@ int tty_com_getc(struct tty_com *com, unsigned char *c)
 	return ret;
 }
 
-BOOL tty_iscom(struct tty_com *com)
+ospl_bool tty_iscom(struct tty_com *com)
 {
 	if(strstr(com->devname, "ttyS"))
-		return TRUE;
+		return ospl_true;
 	else if(strstr(com->devname, "ttyUSB"))
-		return TRUE;
-	return FALSE;
+		return ospl_true;
+	return ospl_false;
 }
 
-BOOL tty_isopen(struct tty_com *com)
+ospl_bool tty_isopen(struct tty_com *com)
 {
 	if(com->fd > 0)
-		return TRUE;
-	return FALSE;
+		return ospl_true;
+	return ospl_false;
 }
 
 /*
@@ -345,10 +345,10 @@ int tty_com_update_option(struct tty_com *com)
 }*/
 
 
-int tty_com_slip_write (struct tty_com *com, char *p, int len)
+int tty_com_slip_write (struct tty_com *com, ospl_uchar *p, ospl_uint32 len)
 {
 	int slen = len;
-	unsigned char sc = 0;
+	ospl_uchar sc = 0;
 	/*发送一个END字符*/
 	tty_com_putc (com, TTY_COM_SLIP_END);
 
@@ -380,9 +380,9 @@ int tty_com_slip_write (struct tty_com *com, char *p, int len)
 }
 
 /* RECV_PACKET:接收包数据，存储于P位置，如果接收到的数据大于LEN，则被截断，函数返回接收到的字节数*/
-int tty_com_slip_read (struct tty_com *com, char *p, int len)
+int tty_com_slip_read (struct tty_com *com, ospl_uchar *p, ospl_uint32 len)
 {
-	unsigned char c = 0;
+	ospl_uchar c = 0;
 	int received = 0;
 	while (1)
 	{
@@ -443,19 +443,19 @@ int tty_com_slip_read (struct tty_com *com, char *p, int len)
 
 
 
-int tty_com_slip_encapsulation(struct tty_slip *sl, unsigned char *s, int len)
+int tty_com_slip_encapsulation(struct tty_slip *sl, ospl_uchar *s, ospl_uint32 len)
 {
-	unsigned char c;
+	ospl_uchar c;
 	sl->sliplen = 0;
 	/*
-	 * Send an initial END character to flush out any
+	 * Send an initial END ospl_ucharacter to flush out any
 	 * data that may have accumulated in the receiver
 	 * due to line noise.
 	 */
 	sl->slipbuf[sl->sliplen++] = TTY_COM_END;
 	/*
 	 * For each byte in the packet, send the appropriate
-	 * character sequence, according to the SLIP protocol.
+	 * ospl_ucharacter sequence, according to the SLIP protocol.
 	 */
 	while (len-- > 0)
 	{
@@ -480,9 +480,9 @@ int tty_com_slip_encapsulation(struct tty_slip *sl, unsigned char *s, int len)
 	return sl->sliplen;
 }
 
-int tty_com_slip_decapsulation(struct tty_slip *sl, unsigned char *s, int len)
+int tty_com_slip_decapsulation(struct tty_slip *sl, ospl_uchar *s, ospl_uint32 len)
 {
-	unsigned char c = 0, flags = 0;
+	ospl_uchar c = 0, flags = 0;
 	sl->sliplen = 0;
 	RESET_FLAG(sl->flags);
 	while (len-- > 0)
@@ -545,9 +545,9 @@ int tty_com_slip_decapsulation(struct tty_slip *sl, unsigned char *s, int len)
 
 
 
-int tty_com_slip_decode_byte(struct tty_slip *sl, unsigned char s)
+int tty_com_slip_decode_byte(struct tty_slip *sl, ospl_uchar s)
 {
-	unsigned char c = s;
+	ospl_uchar c = s;
 	switch (s)
 	{
 	case TTY_COM_END:

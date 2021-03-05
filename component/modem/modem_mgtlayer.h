@@ -9,6 +9,10 @@
 #define __MODEM_MGTLAYER_H__
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int modem_mgtlayer_open(modem_client_t *client);
 extern int modem_mgtlayer_close(modem_client_t *client);
 
@@ -94,6 +98,10 @@ extern int modem_mgtlayer_dialog(modem_t *modem);
  */
 extern int modem_mgtlayer_message(modem_t *modem);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* __MODEM_MGTLAYER_H__ */

@@ -26,7 +26,7 @@
 
 
 
-int dhcpc_interface_enable_api(struct interface *ifp, BOOL enable)
+int dhcpc_interface_enable_api(struct interface *ifp, ospl_bool enable)
 {
 	if(dhcp_client_lookup_interface(&dhcp_global_config, ifp->ifindex))
 	{
@@ -41,7 +41,7 @@ int dhcpc_interface_enable_api(struct interface *ifp, BOOL enable)
 		return ERROR;
 }
 
-int dhcpc_interface_start_api(struct interface *ifp, BOOL enable)
+int dhcpc_interface_start_api(struct interface *ifp, ospl_bool enable)
 {
 	if(dhcp_client_lookup_interface(&dhcp_global_config, ifp->ifindex))
 	{
@@ -51,7 +51,7 @@ int dhcpc_interface_start_api(struct interface *ifp, BOOL enable)
 	return ERROR;
 }
 
-int dhcpc_interface_option_api(struct interface *ifp, BOOL enable, int index, char *option)
+int dhcpc_interface_option_api(struct interface *ifp, ospl_bool enable, ospl_uint32 index, char *option)
 {
 	client_interface_t * ifter = dhcp_client_lookup_interface(&dhcp_global_config, ifp->ifindex);
 	if(ifter)
@@ -137,7 +137,7 @@ int dhcpc_interface_config(struct interface *ifp, struct vty *vty)
 	return OK;
 }
 
-static int dhcpc_interface_lease_show_one(struct vty *vty, client_interface_t *pstNode, BOOL detail)
+static int dhcpc_interface_lease_show_one(struct vty *vty, client_interface_t *pstNode, ospl_bool detail)
 {
 	char tmp[128];
 	vty_out(vty, " Interface %s:%s", ifindex2ifname(pstNode->ifindex), VTY_NEWLINE);
@@ -234,15 +234,15 @@ static int dhcpc_interface_lease_show_one(struct vty *vty, client_interface_t *p
 		vty_out(vty, "  relay address  :%s%s", inet_address(ntohl(pstNode->lease.gateway_nip)), VTY_NEWLINE);
 	}
 
-/*	uint8_t				opt_mask[256];
+/*	ospl_uint8				opt_mask[256];
 	dhcp_option_set_t	options[256];
 
 	void				*master;
 	void				*r_thread;	//read thread
 	void				*t_thread;	//time thread,
 
-	u_int32				first_secs;
-	u_int32				last_secs;
+	ospl_uint32				first_secs;
+	ospl_uint32				last_secs;
 
 	client_state_t		state;
 	client_lease_t		lease;*/
@@ -250,7 +250,7 @@ static int dhcpc_interface_lease_show_one(struct vty *vty, client_interface_t *p
 	return OK;
 }
 
-int dhcpc_interface_lease_show(struct vty *vty, struct interface *ifp, BOOL detail)
+int dhcpc_interface_lease_show(struct vty *vty, struct interface *ifp, ospl_bool detail)
 {
 	client_interface_t *pstNode = NULL;
 	NODE index;
@@ -276,7 +276,7 @@ int dhcpc_interface_lease_show(struct vty *vty, struct interface *ifp, BOOL deta
 	return OK;
 }
 /************************************************************************************/
-static int dhcp_pool_show_one(struct vty *vty, dhcp_pool_t *pstNode, BOOL detail)
+static int dhcp_pool_show_one(struct vty *vty, dhcp_pool_t *pstNode, ospl_bool detail)
 {
 	//char tmp[128];
 	int init = 0;
@@ -346,7 +346,7 @@ static int dhcp_pool_show_one(struct vty *vty, dhcp_pool_t *pstNode, BOOL detail
 	return OK;
 }
 
-int dhcp_pool_show(struct vty *vty, BOOL detail)
+int dhcp_pool_show(struct vty *vty, ospl_bool detail)
 {
 	NODE index;
 	dhcp_pool_t *pstNode = NULL;

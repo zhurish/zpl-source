@@ -25,9 +25,9 @@ modification history
                  TOR2_2-FCS-COPY label, tor2 branch, /wind/river VOB)
 01e,09may03,vvv  included ip_icmp.h
 01d,25jul02,ant  definitions ICMP_PROTO and ICMP_TYPENUM removed 
-01c,03may02,ant  u_char	bufTx [TRACEROUTE_MAXPACKET] in the struct TRACEROUTE_STAT changed
-		 to u_char *bufTx. It is allocated dynamically now. Receive
-		 buffer u_char bufRx[TRACEROUTE_MAXPACKET] changed in the same way.
+01c,03may02,ant  ospl_uchar	bufTx [TRACEROUTE_MAXPACKET] in the struct TRACEROUTE_STAT changed
+		 to ospl_uchar *bufTx. It is allocated dynamically now. Receive
+		 buffer ospl_uchar bufRx[TRACEROUTE_MAXPACKET] changed in the same way.
 		 New member int timing defined in the struct TRACEROUTE_STAT.
 		 TRACEROUTE_MAXPACKET	increased to 65536.
 01b,14jan00,ham  changed TRACEROUTE_STAT for PD support.
@@ -89,20 +89,20 @@ typedef struct tracerouteStat                         /* TRACEROUTE_STAT */
     char                *bufRx;                 /* receive buffer */
     struct icmp *       pBufIcmp;               /* ptr to icmp */
     struct timeval		*pBufTime;               /* ptr to time */
-    u_int16             dataLen;                /* size of data portion */
-    u_int16             rxmaxlen;
-    u_int16				tracerouteTxLen;
-    u_int32             idRx;                   /* id of Rx task */
-    u_int32             flags;                  /* option flags */
-    u_int8 				tracerouteTxTmo; /* packet timeout in seconds */
-    u_int8              maxttl;
+    ospl_uint16             dataLen;                /* size of data portion */
+    ospl_uint16             rxmaxlen;
+    ospl_uint16				tracerouteTxLen;
+    ospl_uint32             idRx;                   /* id of Rx task */
+    ospl_uint32             flags;                  /* option flags */
+    ospl_uint8 				tracerouteTxTmo; /* packet timeout in seconds */
+    ospl_uint8              maxttl;
     struct vty			*vty;
     } TRACEROUTE_STAT;
 
 
 /* forward declarations */
  
-extern int traceroute(struct vty *vty, char * host, int maxttl, int len, u_int32 options);
+extern int traceroute(struct vty *vty, char * host, int maxttl, int len, ospl_uint32 options);
 
 
 #ifdef __cplusplus

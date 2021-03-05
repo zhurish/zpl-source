@@ -79,14 +79,14 @@ void nsm_client_free (struct nsm_client *client)
 
 /* Initialize zebra client.  Argument redist_default is unwanted
    redistribute route type. */
-void nsm_client_install (struct nsm_client *client, int module)
+void nsm_client_install (struct nsm_client *client, ospl_uint32 module)
 {
 	client->module = module;
 	listnode_add_sort(nsmlist, client);
 	//listnode_add (nsmlist, client);
 }
 
-struct nsm_client * nsm_client_lookup (int module)
+struct nsm_client * nsm_client_lookup (ospl_uint32 module)
 {
 	struct listnode *node = NULL;
 	struct nsm_client *client = NULL;
@@ -106,7 +106,7 @@ void nsm_client_init (void)
 }
 
 
-int nsm_client_write_config (int module, struct vty *vty)
+int nsm_client_write_config (ospl_uint32 module, struct vty *vty)
 {
 	int ret = 0;
 	struct listnode *node;
@@ -134,7 +134,7 @@ int nsm_client_write_config (int module, struct vty *vty)
 	return ret;
 }
 
-int nsm_client_service_write_config (int module, struct vty *vty)
+int nsm_client_service_write_config (ospl_uint32 module, struct vty *vty)
 {
 	int ret = 0;
 	struct listnode *node;
@@ -159,11 +159,11 @@ int nsm_client_service_write_config (int module, struct vty *vty)
 			}
 		}
 	}
-	nsm_hook_execute (NSM_HOOK_SERVICE, vty, NULL, FALSE);
+	nsm_hook_execute (NSM_HOOK_SERVICE, vty, NULL, ospl_false);
 	return ret;
 }
 
-int nsm_client_debug_write_config (int module, struct vty *vty)
+int nsm_client_debug_write_config (ospl_uint32 module, struct vty *vty)
 {
 	int ret = 0;
 	struct listnode *node;
@@ -181,11 +181,11 @@ int nsm_client_debug_write_config (int module, struct vty *vty)
 				ret |= (client->debug_write_config_cb)(vty);
 		}
 	}
-	nsm_hook_execute (NSM_HOOK_DEBUG, vty, NULL, FALSE);
+	nsm_hook_execute (NSM_HOOK_DEBUG, vty, NULL, ospl_false);
 	return ret;
 }
 
-int nsm_client_interface_write_config (int module, struct vty *vty, struct interface *ifp)
+int nsm_client_interface_write_config (ospl_uint32 module, struct vty *vty, struct interface *ifp)
 {
 	int ret = 0;
 	struct listnode *node;
@@ -203,7 +203,7 @@ int nsm_client_interface_write_config (int module, struct vty *vty, struct inter
 				ret |= (client->interface_write_config_cb)(vty, ifp);
 		}
 	}
-	nsm_hook_execute (NSM_HOOK_IFP_CONFIG, ifp, vty, FALSE);
+	nsm_hook_execute (NSM_HOOK_IFP_CONFIG, ifp, vty, ospl_false);
 	return ret;
 }
 
@@ -220,7 +220,7 @@ int nsm_client_notify_interface_add(struct interface *ifp)
 			ret |= (client->notify_add_cb)(ifp);
 		}
 	}
-	//nsm_hook_execute (NSM_HOOK_IFP_ADD, ifp, NULL, TRUE);
+	//nsm_hook_execute (NSM_HOOK_IFP_ADD, ifp, NULL, ospl_true);
 	return ret;
 }
 
@@ -236,7 +236,7 @@ int nsm_client_notify_interface_delete (struct interface *ifp)
 			ret |= (client->notify_delete_cb)(ifp);
 		}
 	}
-	//nsm_hook_execute (NSM_HOOK_IFP_DEL, ifp, NULL, FALSE);
+	//nsm_hook_execute (NSM_HOOK_IFP_DEL, ifp, NULL, ospl_false);
 	return ret;
 }
 
@@ -252,7 +252,7 @@ int nsm_client_notify_interface_update (struct interface *ifp)
 			ret |= (client->notify_update_cb)(ifp);
 		}
 	}
-	//nsm_hook_execute (NSM_HOOK_IFP_DEL, ifp, NULL, FALSE);
+	//nsm_hook_execute (NSM_HOOK_IFP_DEL, ifp, NULL, ospl_false);
 	return ret;
 }
 
@@ -268,7 +268,7 @@ int nsm_client_notify_interface_up (struct interface *ifp)
 			ret |= (client->notify_up_cb)(ifp);
 		}
 	}
-	//nsm_hook_execute (NSM_HOOK_IFP_UP, ifp, NULL, TRUE);
+	//nsm_hook_execute (NSM_HOOK_IFP_UP, ifp, NULL, ospl_true);
 	return ret;
 }
 
@@ -284,11 +284,11 @@ int nsm_client_notify_interface_down (struct interface *ifp)
 			ret |= (client->notify_down_cb)(ifp);
 		}
 	}
-	//nsm_hook_execute (NSM_HOOK_IFP_DOWN, ifp, NULL, FALSE);
+	//nsm_hook_execute (NSM_HOOK_IFP_DOWN, ifp, NULL, ospl_false);
 	return ret;
 }
 
-int nsm_client_notify_interface_add_ip (struct interface *ifp, struct connected *ifc, int sec)
+int nsm_client_notify_interface_add_ip (struct interface *ifp, struct connected *ifc, ospl_bool sec)
 {
 	int ret = 0;
 	struct listnode *node;
@@ -300,11 +300,11 @@ int nsm_client_notify_interface_add_ip (struct interface *ifp, struct connected 
 			ret |= (client->notify_address_add_cb)(ifp, ifc, sec);
 		}
 	}
-	//nsm_hook_execute (NSM_HOOK_IP_ADD, ifp, ifc, TRUE);
+	//nsm_hook_execute (NSM_HOOK_IP_ADD, ifp, ifc, ospl_true);
 	return ret;
 }
 
-int nsm_client_notify_interface_del_ip (struct interface *ifp, struct connected *ifc, int sec)
+int nsm_client_notify_interface_del_ip (struct interface *ifp, struct connected *ifc, ospl_bool sec)
 {
 	int ret = 0;
 	struct listnode *node;
@@ -316,7 +316,7 @@ int nsm_client_notify_interface_del_ip (struct interface *ifp, struct connected 
 			ret |= (client->notify_address_del_cb)(ifp, ifc, sec);
 		}
 	}
-	//nsm_hook_execute (NSM_HOOK_IP_DEL, ifp, ifc, FALSE);
+	//nsm_hook_execute (NSM_HOOK_IP_DEL, ifp, ifc, ospl_false);
 	return ret;
 }
 
@@ -332,7 +332,7 @@ int nsm_client_notify_parameter_change (struct interface *ifp)
 			ret |= (client->notify_parameter_change_cb)(ifp);
 		}
 	}
-	//nsm_hook_execute (NSM_HOOK_IFP_CHANGE, ifp, NULL, TRUE);
+	//nsm_hook_execute (NSM_HOOK_IFP_CHANGE, ifp, NULL, ospl_true);
 	return ret;
 }
 
@@ -387,7 +387,7 @@ int nsm_pal_interface_down (struct interface *ifp)
 }
 
 
-int nsm_pal_interface_mtu (struct interface *ifp, int mtu)
+int nsm_pal_interface_mtu (struct interface *ifp, ospl_uint32 mtu)
 {
 	int ret = 0;
 	ret = pal_interface_set_mtu(ifp, mtu);
@@ -399,7 +399,7 @@ int nsm_pal_interface_mtu (struct interface *ifp, int mtu)
 	return ret;
 }
 
-int nsm_pal_interface_metric (struct interface *ifp, int metric)
+int nsm_pal_interface_metric (struct interface *ifp, ospl_uint32 metric)
 {
 	int ret = 0;
 #ifdef PL_HAL_MODULE
@@ -408,7 +408,7 @@ int nsm_pal_interface_metric (struct interface *ifp, int metric)
 	return ret;
 }
 
-int nsm_pal_interface_vrf (struct interface *ifp, int vrf)
+int nsm_pal_interface_vrf (struct interface *ifp, ospl_uint32 vrf)
 {
 	int ret = 0;
 	ret = pal_interface_set_vr(ifp, (vrf_id_t)vrf);
@@ -420,7 +420,7 @@ int nsm_pal_interface_vrf (struct interface *ifp, int vrf)
 	return ret;
 }
 
-int nsm_pal_interface_multicast (struct interface *ifp, int multicast)
+int nsm_pal_interface_multicast (struct interface *ifp, ospl_uint32 multicast)
 {
 	int ret = 0;
 #ifdef PL_HAL_MODULE
@@ -429,7 +429,7 @@ int nsm_pal_interface_multicast (struct interface *ifp, int multicast)
 	return ret;
 }
 
-int nsm_pal_interface_bandwidth (struct interface *ifp, int bandwidth)
+int nsm_pal_interface_bandwidth (struct interface *ifp, ospl_uint32 bandwidth)
 {
 	int ret = 0;
 #ifdef PL_HAL_MODULE
@@ -438,7 +438,7 @@ int nsm_pal_interface_bandwidth (struct interface *ifp, int bandwidth)
 	return ret;
 }
 
-int nsm_pal_interface_set_address (struct interface *ifp, struct connected *ifc, int secondry)
+int nsm_pal_interface_set_address (struct interface *ifp, struct connected *ifc, ospl_bool secondry)
 {
 	//printf("%s\r\n", __func__);
 	int ret = 0;
@@ -449,7 +449,7 @@ int nsm_pal_interface_set_address (struct interface *ifp, struct connected *ifc,
 	return ret;
 }
 
-int nsm_pal_interface_unset_address (struct interface *ifp, struct connected *ifc, int secondry)
+int nsm_pal_interface_unset_address (struct interface *ifp, struct connected *ifc, ospl_bool secondry)
 {
 	int ret = 0;
 	//ret = hal_port_address_unset(ifp->ifindex, cp, secondry);
@@ -459,7 +459,7 @@ int nsm_pal_interface_unset_address (struct interface *ifp, struct connected *if
 	return ret;
 }
 
-int nsm_pal_interface_mac (struct interface *ifp, unsigned char *mac, int len)
+int nsm_pal_interface_mac (struct interface *ifp, ospl_uchar *mac, ospl_uint32 len)
 {
 	int ret = 0;
 	ret = pal_interface_set_lladdr(ifp, mac, len);
@@ -478,7 +478,7 @@ int nsm_pal_interface_get_statistics (struct interface *ifp)
 	return ret;
 }
 
-int nsm_pal_interface_speed (struct interface *ifp,  int speed )
+int nsm_pal_interface_speed (struct interface *ifp,  ospl_uint32 speed )
 {
 	int ret = 0;
 #ifdef PL_HAL_MODULE
@@ -489,7 +489,7 @@ int nsm_pal_interface_speed (struct interface *ifp,  int speed )
 
 
 
-int nsm_pal_interface_mode (struct interface *ifp, int mode)
+int nsm_pal_interface_mode (struct interface *ifp, ospl_uint32 mode)
 {
 	int ret = 0;
 #ifdef PL_HAL_MODULE
@@ -499,7 +499,7 @@ int nsm_pal_interface_mode (struct interface *ifp, int mode)
 }
 
 
-int nsm_pal_interface_enca (struct interface *ifp, int mode, int value)
+int nsm_pal_interface_enca (struct interface *ifp, ospl_uint32 mode, ospl_uint32 value)
 {
 	int ret = 0;
 	if(if_is_serial(ifp))
@@ -515,7 +515,7 @@ int nsm_pal_interface_enca (struct interface *ifp, int mode, int value)
 }
 
 
-int nsm_pal_interface_linkdetect (struct interface *ifp, int link)
+int nsm_pal_interface_linkdetect (struct interface *ifp, ospl_uint32 link)
 {
 	int ret = 0;
 #ifdef PL_HAL_MODULE
@@ -524,7 +524,7 @@ int nsm_pal_interface_linkdetect (struct interface *ifp, int link)
 	return ret;
 }
 
-int nsm_pal_interface_stp (struct interface *ifp,  int stp )
+int nsm_pal_interface_stp (struct interface *ifp,  ospl_uint32 stp )
 {
 	int ret = 0;
 #ifdef PL_HAL_MODULE
@@ -534,7 +534,7 @@ int nsm_pal_interface_stp (struct interface *ifp,  int stp )
 	return ret;
 }
 
-int nsm_pal_interface_loop (struct interface *ifp,  int loop )
+int nsm_pal_interface_loop (struct interface *ifp,  ospl_uint32 loop )
 {
 	int ret = 0;
 #ifdef PL_HAL_MODULE
@@ -543,7 +543,7 @@ int nsm_pal_interface_loop (struct interface *ifp,  int loop )
 	return ret;
 }
 
-int nsm_pal_interface_8021x (struct interface *ifp, int mode)
+int nsm_pal_interface_8021x (struct interface *ifp, ospl_uint32 mode)
 {
 	int ret = 0;
 #ifdef PL_HAL_MODULE
@@ -552,7 +552,7 @@ int nsm_pal_interface_8021x (struct interface *ifp, int mode)
 	return ret;
 }
 
-int nsm_pal_interface_duplex (struct interface *ifp, int duplex)
+int nsm_pal_interface_duplex (struct interface *ifp, ospl_uint32 duplex)
 {
 	int ret = 0;
 #ifdef PL_HAL_MODULE

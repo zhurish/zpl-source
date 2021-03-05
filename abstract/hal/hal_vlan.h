@@ -8,9 +8,13 @@
 #ifndef ABSTRACT_HAL_HAL_VLAN_H_
 #define ABSTRACT_HAL_HAL_VLAN_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct sdk_vlan_s
 {
-    int    (*sdk_vlan_enable)(void *, BOOL);
+    int    (*sdk_vlan_enable)(void *, ospl_bool);
     int    (*sdk_vlan_create)(void *, vlan_t);
     int    (*sdk_vlan_delete)(void *, vlan_t);
     int    (*sdk_vlan_batch_create)(void *, vlan_t, vlan_t);
@@ -55,7 +59,7 @@ typedef struct sdk_vlan_s
 }sdk_vlan_t;
 
 
-extern int hal_vlan_enable(BOOL enable);
+extern int hal_vlan_enable(ospl_bool enable);
 extern int hal_vlan_create(vlan_t vlan);
 extern int hal_vlan_destroy(vlan_t vlan);
 
@@ -76,5 +80,9 @@ extern int hal_port_del_allowed_tag_batch_vlan(ifindex_t ifindex, vlan_t start, 
 
 extern int hal_port_set_vlan(ifindex_t ifindex, vlan_t vlan);
 extern int hal_port_unset_vlan(ifindex_t ifindex, vlan_t vlan);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ABSTRACT_HAL_HAL_VLAN_H_ */

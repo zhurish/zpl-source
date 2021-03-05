@@ -23,7 +23,7 @@
 
 static Gdot1x_t gDot1x_t;
 
-static int dot1x_cleanup(ifindex_t ifindex, BOOL all);
+static int dot1x_cleanup(ifindex_t ifindex, ospl_bool all);
 
 struct module_list module_list_nsmdot1x = 
 { 
@@ -54,7 +54,7 @@ int nsm_dot1x_exit(void)
 {
 	if(lstCount(gDot1x_t.dot1xList))
 	{
-		dot1x_cleanup(0, TRUE);
+		dot1x_cleanup(0, ospl_true);
 		lstFree(gDot1x_t.dot1xList);
 		free(gDot1x_t.dot1xList);
 		gDot1x_t.dot1xList = NULL;
@@ -66,7 +66,7 @@ int nsm_dot1x_exit(void)
 	return OK;
 }
 
-static int dot1x_cleanup(ifindex_t ifindex, BOOL all)
+static int dot1x_cleanup(ifindex_t ifindex, ospl_bool all)
 {
 	dot1x_t *pstNode = NULL;
 	NODE index;
@@ -169,7 +169,7 @@ int dot1x_callback_api(dot1x_cb cb, void *pVoid)
 	return ret;
 }
 
-int nsm_dot1x_global_enable(BOOL enable)
+int nsm_dot1x_global_enable(ospl_bool enable)
 {
 	if(gDot1x_t.mutex)
 		os_mutex_lock(gDot1x_t.mutex, OS_WAIT_FOREVER);
@@ -179,9 +179,9 @@ int nsm_dot1x_global_enable(BOOL enable)
 	return OK;
 }
 
-BOOL nsm_dot1x_global_is_enable()
+ospl_bool nsm_dot1x_global_is_enable()
 {
-	BOOL enable;
+	ospl_bool enable;
 	if(gDot1x_t.mutex)
 		os_mutex_lock(gDot1x_t.mutex, OS_WAIT_FOREVER);
 	enable = gDot1x_t.enable;
@@ -190,7 +190,7 @@ BOOL nsm_dot1x_global_is_enable()
 	return enable;
 }
 
-int nsm_dot1x_enable_set_api(ifindex_t ifindex, BOOL enable, dot1x_type_en type)
+int nsm_dot1x_enable_set_api(ifindex_t ifindex, ospl_bool enable, dot1x_type_en type)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -199,14 +199,14 @@ int nsm_dot1x_enable_set_api(ifindex_t ifindex, BOOL enable, dot1x_type_en type)
 	dot1x = dot1x_lookup_node(ifindex);
 	if(!dot1x)
 	{
-		if(enable == TRUE)
+		if(enable == ospl_true)
 		{
 			dot1x_t value;
 			os_memset(&value, 0, sizeof(dot1x_t));
 			value.ifindex = ifindex;
-			value.enable = TRUE;
+			value.enable = ospl_true;
 			value.type = type;
-			value.port_mode = TRUE;
+			value.port_mode = ospl_true;
 			ret = dot1x_add_node(&value);
 		}
 		else
@@ -214,15 +214,15 @@ int nsm_dot1x_enable_set_api(ifindex_t ifindex, BOOL enable, dot1x_type_en type)
 	}
 	else
 	{
-		if(enable == TRUE)
+		if(enable == ospl_true)
 		{
-			dot1x->enable = TRUE;
+			dot1x->enable = ospl_true;
 			dot1x->type = type;
 			ret = OK;
 		}
 		else
 		{
-			dot1x->enable = FALSE;
+			dot1x->enable = ospl_false;
 			ret = dot1x_del_node(dot1x);
 		}
 	}
@@ -231,7 +231,7 @@ int nsm_dot1x_enable_set_api(ifindex_t ifindex, BOOL enable, dot1x_type_en type)
 	return ret;
 }
 
-int nsm_dot1x_enable_get_api(ifindex_t ifindex, BOOL *enable, dot1x_type_en *type)
+int nsm_dot1x_enable_get_api(ifindex_t ifindex, ospl_bool *enable, dot1x_type_en *type)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -255,9 +255,9 @@ int nsm_dot1x_enable_get_api(ifindex_t ifindex, BOOL *enable, dot1x_type_en *typ
 	return ret;
 }
 
-BOOL nsm_dot1x_is_enable_api(ifindex_t ifindex)
+ospl_bool nsm_dot1x_is_enable_api(ifindex_t ifindex)
 {
-	BOOL ret = FALSE;
+	ospl_bool ret = ospl_false;
 	dot1x_t *dot1x = NULL;
 	if(gDot1x_t.mutex)
 		os_mutex_lock(gDot1x_t.mutex, OS_WAIT_FOREVER);
@@ -265,7 +265,7 @@ BOOL nsm_dot1x_is_enable_api(ifindex_t ifindex)
 	if(dot1x)
 	{
 		if(dot1x->enable)
-			ret = TRUE;
+			ret = ospl_true;
 	}
 	if(gDot1x_t.mutex)
 		os_mutex_unlock(gDot1x_t.mutex);
@@ -359,7 +359,7 @@ int nsm_dot1x_auth_state_get_api(ifindex_t ifindex, dot1x_state_en *state)
 	return ret;
 }
 
-int nsm_dot1x_auth_version_set_api(ifindex_t ifindex, u_int version)
+int nsm_dot1x_auth_version_set_api(ifindex_t ifindex, ospl_uint32 version)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -380,7 +380,7 @@ int nsm_dot1x_auth_version_set_api(ifindex_t ifindex, u_int version)
 	return ret;
 }
 
-int nsm_dot1x_auth_version_get_api(ifindex_t ifindex, u_int *version)
+int nsm_dot1x_auth_version_get_api(ifindex_t ifindex, ospl_uint32 *version)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -402,7 +402,7 @@ int nsm_dot1x_auth_version_get_api(ifindex_t ifindex, u_int *version)
 	return ret;
 }
 
-int nsm_dot1x_reauthentication_set_api(ifindex_t ifindex, BOOL enable)
+int nsm_dot1x_reauthentication_set_api(ifindex_t ifindex, ospl_bool enable)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -423,7 +423,7 @@ int nsm_dot1x_reauthentication_set_api(ifindex_t ifindex, BOOL enable)
 	return ret;
 }
 
-int nsm_dot1x_reauthentication_get_api(ifindex_t ifindex, BOOL *enable)
+int nsm_dot1x_reauthentication_get_api(ifindex_t ifindex, ospl_bool *enable)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -445,7 +445,7 @@ int nsm_dot1x_reauthentication_get_api(ifindex_t ifindex, BOOL *enable)
 	return ret;
 }
 
-int nsm_dot1x_port_mode_set_api(ifindex_t ifindex, BOOL port)
+int nsm_dot1x_port_mode_set_api(ifindex_t ifindex, ospl_bool port)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -466,7 +466,7 @@ int nsm_dot1x_port_mode_set_api(ifindex_t ifindex, BOOL port)
 	return ret;
 }
 
-int nsm_dot1x_port_mode_get_api(ifindex_t ifindex, BOOL *port)
+int nsm_dot1x_port_mode_get_api(ifindex_t ifindex, ospl_bool *port)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -488,7 +488,7 @@ int nsm_dot1x_port_mode_get_api(ifindex_t ifindex, BOOL *port)
 	return ret;
 }
 
-int nsm_dot1x_mac_auth_bypass_set_api(ifindex_t ifindex, BOOL enable)
+int nsm_dot1x_mac_auth_bypass_set_api(ifindex_t ifindex, ospl_bool enable)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -509,7 +509,7 @@ int nsm_dot1x_mac_auth_bypass_set_api(ifindex_t ifindex, BOOL enable)
 	return ret;
 }
 
-int nsm_dot1x_mac_auth_bypass_get_api(ifindex_t ifindex, BOOL *enable)
+int nsm_dot1x_mac_auth_bypass_get_api(ifindex_t ifindex, ospl_bool *enable)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -574,7 +574,7 @@ int nsm_dot1x_guest_vlan_get_api(ifindex_t ifindex, vlan_t *vlan)
 	return ret;
 }
 
-int nsm_dot1x_max_user_set_api(ifindex_t ifindex, u_int maxUser)
+int nsm_dot1x_max_user_set_api(ifindex_t ifindex, ospl_uint32 maxUser)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -595,7 +595,7 @@ int nsm_dot1x_max_user_set_api(ifindex_t ifindex, u_int maxUser)
 	return ret;
 }
 
-int nsm_dot1x_max_user_get_api(ifindex_t ifindex, u_int *maxUser)
+int nsm_dot1x_max_user_get_api(ifindex_t ifindex, ospl_uint32 *maxUser)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -617,7 +617,7 @@ int nsm_dot1x_max_user_get_api(ifindex_t ifindex, u_int *maxUser)
 	return ret;
 }
 
-int nsm_dot1x_reauth_timeout_set_api(ifindex_t ifindex, u_int timeout)
+int nsm_dot1x_reauth_timeout_set_api(ifindex_t ifindex, ospl_uint32 timeout)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -638,7 +638,7 @@ int nsm_dot1x_reauth_timeout_set_api(ifindex_t ifindex, u_int timeout)
 	return ret;
 }
 
-int nsm_dot1x_reauth_timeout_get_api(ifindex_t ifindex, u_int *timeout)
+int nsm_dot1x_reauth_timeout_get_api(ifindex_t ifindex, ospl_uint32 *timeout)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -660,7 +660,7 @@ int nsm_dot1x_reauth_timeout_get_api(ifindex_t ifindex, u_int *timeout)
 	return ret;
 }
 
-int nsm_dot1x_server_timeout_set_api(ifindex_t ifindex, u_int timeout)
+int nsm_dot1x_server_timeout_set_api(ifindex_t ifindex, ospl_uint32 timeout)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -681,7 +681,7 @@ int nsm_dot1x_server_timeout_set_api(ifindex_t ifindex, u_int timeout)
 	return ret;
 }
 
-int nsm_dot1x_server_timeout_get_api(ifindex_t ifindex, u_int *timeout)
+int nsm_dot1x_server_timeout_get_api(ifindex_t ifindex, ospl_uint32 *timeout)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -703,7 +703,7 @@ int nsm_dot1x_server_timeout_get_api(ifindex_t ifindex, u_int *timeout)
 	return ret;
 }
 
-int nsm_dot1x_supp_timeout_set_api(ifindex_t ifindex, u_int timeout)
+int nsm_dot1x_supp_timeout_set_api(ifindex_t ifindex, ospl_uint32 timeout)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -724,7 +724,7 @@ int nsm_dot1x_supp_timeout_set_api(ifindex_t ifindex, u_int timeout)
 	return ret;
 }
 
-int nsm_dot1x_supp_timeout_get_api(ifindex_t ifindex, u_int *timeout)
+int nsm_dot1x_supp_timeout_get_api(ifindex_t ifindex, ospl_uint32 *timeout)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -746,7 +746,7 @@ int nsm_dot1x_supp_timeout_get_api(ifindex_t ifindex, u_int *timeout)
 	return ret;
 }
 
-int nsm_dot1x_period_timeout_set_api(ifindex_t ifindex, u_int timeout)
+int nsm_dot1x_period_timeout_set_api(ifindex_t ifindex, ospl_uint32 timeout)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -767,7 +767,7 @@ int nsm_dot1x_period_timeout_set_api(ifindex_t ifindex, u_int timeout)
 	return ret;
 }
 
-int nsm_dot1x_period_timeout_get_api(ifindex_t ifindex, u_int *timeout)
+int nsm_dot1x_period_timeout_get_api(ifindex_t ifindex, ospl_uint32 *timeout)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -789,7 +789,7 @@ int nsm_dot1x_period_timeout_get_api(ifindex_t ifindex, u_int *timeout)
 	return ret;
 }
 
-int nsm_dot1x_quiet_period_timeout_set_api(ifindex_t ifindex, u_int timeout)
+int nsm_dot1x_quiet_period_timeout_set_api(ifindex_t ifindex, ospl_uint32 timeout)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -810,7 +810,7 @@ int nsm_dot1x_quiet_period_timeout_set_api(ifindex_t ifindex, u_int timeout)
 	return ret;
 }
 
-int nsm_dot1x_quiet_period_timeout_get_api(ifindex_t ifindex, u_int *timeout)
+int nsm_dot1x_quiet_period_timeout_get_api(ifindex_t ifindex, ospl_uint32 *timeout)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -833,7 +833,7 @@ int nsm_dot1x_quiet_period_timeout_get_api(ifindex_t ifindex, u_int *timeout)
 }
 
 
-int nsm_dot1x_max_req_set_api(ifindex_t ifindex, u_int count)
+int nsm_dot1x_max_req_set_api(ifindex_t ifindex, ospl_uint32 count)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;
@@ -854,7 +854,7 @@ int nsm_dot1x_max_req_set_api(ifindex_t ifindex, u_int count)
 	return ret;
 }
 
-int nsm_dot1x_max_req_get_api(ifindex_t ifindex, u_int *count)
+int nsm_dot1x_max_req_get_api(ifindex_t ifindex, ospl_uint32 *count)
 {
 	int ret = 0;
 	dot1x_t *dot1x = NULL;

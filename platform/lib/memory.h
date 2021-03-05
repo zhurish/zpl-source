@@ -21,12 +21,16 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #ifndef _ZEBRA_MEMORY_H
 #define _ZEBRA_MEMORY_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define array_size(ar) (sizeof(ar) / sizeof(ar[0]))
 
 /* For pretty printing of memory allocate information. */
 struct memory_list
 {
-  int index;
+  ospl_uint32 index;
   const char *format;
 };
 
@@ -66,38 +70,42 @@ extern struct mlist mlists[];
 #endif /* MEMORY_LOG */
 
 /* Prototypes of memory function. */
-extern void *zmalloc (int type, size_t size);
-extern void *zzcalloc (int type, size_t size);
-extern void *z_zcalloc (int type, int n, size_t size);
-extern void *zrealloc (int type, void *ptr, size_t size);
-extern void  zfree (int type, void *ptr);
-extern char *zstrdup (int type, const char *str);
-extern void *cjson_malloc (size_t size);
+extern void *zmalloc (ospl_uint32 type, ospl_size_t size);
+extern void *zzcalloc (ospl_uint32 type, ospl_size_t size);
+extern void *z_zcalloc (ospl_uint32 type, ospl_uint32 n, ospl_size_t size);
+extern void *zrealloc (ospl_uint32 type, void *ptr, ospl_size_t size);
+extern void  zfree (ospl_uint32 type, void *ptr);
+extern ospl_char *zstrdup (ospl_uint32 type, const char *str);
+extern void *cjson_malloc (ospl_size_t size);
 extern void cjson_free (void *ptr);
 
-extern void *mtype_zmalloc (const char *file, int line, int type, size_t size);
+extern void *mtype_zmalloc (const char *file, ospl_uint32 line, ospl_uint32 type, ospl_size_t size);
 
-extern void *mtype_zcalloc (const char *file, int line, int type, size_t size);
+extern void *mtype_zcalloc (const char *file, ospl_uint32 line, ospl_uint32 type, ospl_size_t size);
 
-extern void *mtype_zrealloc (const char *file, int line, int type, void *ptr,
-		             size_t size);
+extern void *mtype_zrealloc (const char *file, ospl_uint32 line, ospl_uint32 type, void *ptr,
+		             ospl_size_t size);
 
-extern void mtype_zfree (const char *file, int line, int type,
+extern void mtype_zfree (const char *file, ospl_uint32 line, ospl_uint32 type,
 		         void *ptr);
 
-extern char *mtype_zstrdup (const char *file, int line, int type,
+extern ospl_char *mtype_zstrdup (const char *file, ospl_uint32 line, ospl_uint32 type,
 		            const char *str);
 extern void memory_init (void);
 extern void log_memstats_stderr (const char *);
 
 /* return number of allocations outstanding for the type */
-extern unsigned long mtype_stats_alloc (int);
+extern ospl_ulong mtype_stats_alloc (ospl_uint32);
 
 /* Human friendly string for given byte count */
 #define MTYPE_MEMSTR_LEN 20
-extern const char *mtype_memstr (char *, size_t, unsigned long);
+extern const char *mtype_memstr (ospl_char *, ospl_size_t, ospl_ulong);
 
 extern void cmd_memory_init (void);
 extern int vty_show_memory_cmd(void *vty);
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ZEBRA_MEMORY_H */

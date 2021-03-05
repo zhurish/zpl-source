@@ -29,7 +29,7 @@
 
 /* 1. None of the callers expects it to ever fail */
 /* 2. ip was always INADDR_ANY */
-int udhcp_udp_socket(/*uint32_t ip,*/int port)
+int udhcp_udp_socket(/*ospl_uint32  ip,*/ospl_uint16 port)
 {
 	int fd = 0;
 	fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -66,7 +66,7 @@ int udhcp_raw_socket(void)
 }
 
 
-int udhcp_client_socket_bind(int fd, int ifindex)
+int udhcp_client_socket_bind(int fd, ifindex_t ifindex)
 {
 	int ret = 0;
 	ifindex_t kifindex = ifindex2ifkernel(ifindex);
@@ -75,7 +75,7 @@ int udhcp_client_socket_bind(int fd, int ifindex)
 	return ret;
 }
 
-int udhcp_client_socket_filter(int fd, int port)
+int udhcp_client_socket_filter(int fd, ospl_uint16 port)
 {
 	/* Several users reported breakage when BPF filter is used */
 	{

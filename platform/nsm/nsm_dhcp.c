@@ -136,7 +136,7 @@ nsm_dhcp_type nsm_interface_dhcp_mode_get_api(struct interface *ifp)
 }
 
 
-int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type, char *name)
+int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type, ospl_char *name)
 {
 	nsm_dhcp_ifp_t *nsm_dhcp = NULL;
 	nsm_dhcp = nsm_dhcp_get(ifp);
@@ -144,20 +144,20 @@ int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type, c
 	{
 		if(!ifp->dhcp)
 		{
-			ifp->dhcp = TRUE;
+			ifp->dhcp = ospl_true;
 		}
 		if(nsm_dhcp->type != type)
 		{
 #ifdef PL_DHCPC_MODULE
 			if(nsm_dhcp->type == DHCP_NONE && type == DHCP_CLIENT)
 			{
-				nsm_interface_dhcpc_enable(ifp,  TRUE);
-				ifp->dhcp = TRUE;
+				nsm_interface_dhcpc_enable(ifp,  ospl_true);
+				ifp->dhcp = ospl_true;
 			}
 			if(nsm_dhcp->type == DHCP_CLIENT && type == DHCP_NONE)
 			{
-				nsm_interface_dhcpc_enable(ifp,  FALSE);
-				ifp->dhcp = FALSE;
+				nsm_interface_dhcpc_enable(ifp,  ospl_false);
+				ifp->dhcp = ospl_false;
 			}
 #endif
 #ifdef PL_DHCPC_MODULE
@@ -166,9 +166,9 @@ int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type, c
 				nsm_dhcps_t * pool = nsm_dhcps_lookup_api(name);
 				if(pool)
 				{
-					nsm_interface_dhcps_enable(pool, ifp->ifindex, TRUE);
+					nsm_interface_dhcps_enable(pool, ifp->ifindex, ospl_true);
 					nsm_dhcp->server = pool;
-					ifp->dhcp = TRUE;
+					ifp->dhcp = ospl_true;
 				}
 				else
 					return ERROR;
@@ -178,9 +178,9 @@ int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type, c
 				nsm_dhcps_t * pool = nsm_dhcps_lookup_api(name);
 				if(pool)
 				{
-					nsm_interface_dhcps_enable(pool, ifp->ifindex, FALSE);
+					nsm_interface_dhcps_enable(pool, ifp->ifindex, ospl_false);
 					nsm_dhcp->server = pool;
-					ifp->dhcp = FALSE;
+					ifp->dhcp = ospl_false;
 				}
 				else
 					return ERROR;
@@ -189,13 +189,13 @@ int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type, c
 #ifdef PL_DHCPC_MODULE
 			if(nsm_dhcp->type == DHCP_NONE && type == DHCP_RELAY)
 			{
-				//dhcpc_interface_enable_api(ifp,  TRUE);
-				ifp->dhcp = TRUE;
+				//dhcpc_interface_enable_api(ifp,  ospl_true);
+				ifp->dhcp = ospl_true;
 			}
 			if(nsm_dhcp->type == DHCP_RELAY && type == DHCP_NONE)
 			{
-				//dhcpc_interface_enable_api(ifp,  FALSE);
-				ifp->dhcp = FALSE;
+				//dhcpc_interface_enable_api(ifp,  ospl_false);
+				ifp->dhcp = ospl_false;
 			}
 #endif
 			nsm_dhcp->type = type;

@@ -30,18 +30,18 @@ DEFUN (webserver_template,
 		"Template configure\n"
 		"Webserver configure\n")
 {
-	template_t * temp = nsm_template_lookup_name (FALSE, "webserver");
+	template_t * temp = nsm_template_lookup_name (ospl_false, "webserver");
 	if(temp)
 	{
 		vty->node = TEMPLATE_NODE;
 		memset(vty->prompt, 0, sizeof(vty->prompt));
 		sprintf(vty->prompt, "%s", temp->prompt);
-		web_app_enable_set_api(TRUE);
+		web_app_enable_set_api(ospl_true);
 		return CMD_SUCCESS;
 	}
 	else
 	{
-		temp = nsm_template_new (FALSE);
+		temp = nsm_template_new (ospl_false);
 		if(temp)
 		{
 			temp->module = 0;
@@ -54,7 +54,7 @@ DEFUN (webserver_template,
 			vty->node = TEMPLATE_NODE;
 			memset(vty->prompt, 0, sizeof(vty->prompt));
 			sprintf(vty->prompt, "%s", temp->prompt);
-			web_app_enable_set_api(TRUE);
+			web_app_enable_set_api(ospl_true);
 			return CMD_SUCCESS;
 		}
 	}
@@ -68,10 +68,10 @@ DEFUN (no_webserver_template,
 		"Template configure\n"
 		"Webserver configure\n")
 {
-	template_t * temp = nsm_template_lookup_name (FALSE, "webserver");
+	template_t * temp = nsm_template_lookup_name (ospl_false, "webserver");
 	if(temp)
 	{
-		web_app_enable_set_api(FALSE);
+		web_app_enable_set_api(ospl_false);
 		nsm_template_free(temp);
 		return CMD_SUCCESS;
 	}
@@ -143,9 +143,9 @@ DEFUN (webserver_port,
 {
 	int ret = ERROR;
 	if(web_app_proto_get_api() == WEB_PROTO_HTTP)
-		ret = web_app_port_set_api(FALSE, atoi(argv[0]));
+		ret = web_app_port_set_api(ospl_false, atoi(argv[0]));
 	else
-		ret = web_app_port_set_api(TRUE, atoi(argv[0]));
+		ret = web_app_port_set_api(ospl_true, atoi(argv[0]));
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -160,9 +160,9 @@ DEFUN (no_webserver_port,
 {
 	int ret = ERROR;
 	if(web_app_proto_get_api() == WEB_PROTO_HTTP)
-		ret = web_app_port_set_api(FALSE, 0);
+		ret = web_app_port_set_api(ospl_false, 0);
 	else
-		ret = web_app_port_set_api(TRUE, 0);
+		ret = web_app_port_set_api(ospl_true, 0);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -304,7 +304,7 @@ static int webserver_write_config(struct vty *vty, void *pVoid)
 void cmd_webserver_init(void)
 {
 	{
-		template_t * temp = nsm_template_new (FALSE);
+		template_t * temp = nsm_template_new (ospl_false);
 		if(temp)
 		{
 			temp->module = 1;

@@ -8,6 +8,10 @@
 #ifndef __NSM_FIREWALLD_H__
 #define __NSM_FIREWALLD_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "zebra.h"
 
 /*
@@ -109,16 +113,16 @@ typedef enum firewall_type_s
 
 typedef struct firewall_port_s
 {
-	u_int16				port[FIREWALL_DEFAULT_PORT_MAX];
+	ospl_uint16				port[FIREWALL_DEFAULT_PORT_MAX];
 	ifindex_t			ifindex;
 }firewall_port_t;
 
 typedef struct firewall_s
 {
 	NODE					node;
-	u_int32				ID;
-	u_int8				family;
-	s_int8 				name[FIREWALL_NAME_MAX];
+	ospl_uint32				ID;
+	ospl_uint8				family;
+	ospl_int8 				name[FIREWALL_NAME_MAX];
 	firewall_class_t  class;
 	firewall_type_t	type;
 	firewall_action_t action;
@@ -127,21 +131,21 @@ typedef struct firewall_s
 
 	struct prefix   	source;
 	struct prefix   	destination;
-	u_int16				s_port;
-	u_int16				d_port;
+	ospl_uint16				s_port;
+	ospl_uint16				d_port;
 
 	ifindex_t			s_ifindex;
 	ifindex_t			d_ifindex;
 
-	u_int8 				s_mac[NSM_MAC_MAX];
-	u_int8 				d_mac[NSM_MAC_MAX];
+	ospl_uint8 				s_mac[NSM_MAC_MAX];
+	ospl_uint8 				d_mac[NSM_MAC_MAX];
 
 }firewall_t;
 
 typedef struct firewall_zone_s
 {
 	NODE					node;
-	s_int8 	zonename[FIREWALL_NAME_MAX];
+	ospl_int8 	zonename[FIREWALL_NAME_MAX];
 	LIST	*zone_list;
 	void	*mutex;
 
@@ -151,14 +155,14 @@ typedef struct Gfirewall_s
 {
 	LIST	*firewall_list;
 	void	*mutex;
-	BOOL	init;
+	ospl_bool	init;
 
 		//默认基础参数
 	firewall_port_t all_port;	//开放的TCP/UDP目的端口
 	firewall_port_t tcp_port;	//开放的TCP目的端口
 	firewall_port_t udp_port;	//开放的UDP目的端口
 
-	u_int32		rule_id[FIREWALL_TYPE_MAX];
+	ospl_uint32		rule_id[FIREWALL_TYPE_MAX];
 }Gfirewall_t;
 
 
@@ -170,13 +174,13 @@ extern firewall_t * firewall_rule_lookup_api(firewall_zone_t *zone, firewall_t *
 extern int firewall_rule_del_api(firewall_zone_t *zone, firewall_t *value);
 extern int firewall_rule_add_api(firewall_zone_t *zone, firewall_t *value);
 
-extern int firewall_rule_show_api(struct vty *vty, firewall_zone_t *zone, char * intype);
+extern int firewall_rule_show_api(struct vty *vty, firewall_zone_t *zone, ospl_char * intype);
 extern int firewall_rule_foreach_api(firewall_zone_t *zone, int(*cb)(firewall_t *, void *), void *);
 
 
-extern int nsm_firewall_zone_del(s_int8 	*zonename);
-extern firewall_zone_t * nsm_firewall_zone_lookup(s_int8 	*zonename);
-extern firewall_zone_t * nsm_firewall_zone_add(s_int8 	*zonename);
+extern int nsm_firewall_zone_del(ospl_int8 	*zonename);
+extern firewall_zone_t * nsm_firewall_zone_lookup(ospl_int8 	*zonename);
+extern firewall_zone_t * nsm_firewall_zone_add(ospl_int8 	*zonename);
 extern int firewall_zone_foreach_api(int(*cb)(firewall_zone_t *, void *), void *p);
 
 extern int nsm_firewall_init(void);
@@ -187,15 +191,19 @@ extern int nsm_firewall_exit(void);
 extern void cmd_firewall_init (void);
 
 
-extern int pal_firewall_portmap_rule_set(firewall_t *rule, int action);
-extern int pal_firewall_port_filter_rule_set(firewall_t *rule, int action);
+extern int pal_firewall_portmap_rule_set(firewall_t *rule, ospl_action action);
+extern int pal_firewall_port_filter_rule_set(firewall_t *rule, ospl_action action);
 
-extern int pal_firewall_mangle_rule_set(firewall_t *rule, int action);
-extern int pal_firewall_raw_rule_set(firewall_t *rule, int action);
+extern int pal_firewall_mangle_rule_set(firewall_t *rule, ospl_action action);
+extern int pal_firewall_raw_rule_set(firewall_t *rule, ospl_action action);
 
 
-extern int pal_firewall_snat_rule_set(firewall_t *rule, int action);
-extern int pal_firewall_dnat_rule_set(firewall_t *rule, int action);
+extern int pal_firewall_snat_rule_set(firewall_t *rule, ospl_action action);
+extern int pal_firewall_dnat_rule_set(firewall_t *rule, ospl_action action);
 
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __NSM_FIREWALLD_H__ */

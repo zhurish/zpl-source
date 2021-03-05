@@ -69,7 +69,7 @@ while (<STDIN>) {
 		"type" => $f[0],
 		"cname" => $f[1],
 		"daemon" => $f[2],
-		"char" => $f[3],
+		"ospl_char" => $f[3],
 		"ipv4" => int($f[4]),
 		"ipv6" => int($f[5]),
 		"shorthelp" => $f[6],
@@ -108,7 +108,7 @@ sub codelist {
 	my $str = "  \"Codes: ";
 	for my $p (@protos) {
 		my $s = sprintf("%s - %s, ",
-			$protodetail{$p}->{"char"},
+			$protodetail{$p}->{"ospl_char"},
 			$protodetail{$p}->{"shorthelp"});
 		if (length($str . $s) > 70) {
 			$str =~ s/ $//;
@@ -173,9 +173,9 @@ print <<EOF;
 
 struct zebra_desc_table
 {
-  unsigned int type;
+  ospl_uint32  type;
   const char *string;
-  char chr;
+  ospl_char chr;
 };
 
 #define DESC_ENTRY(T,S,C) [(T)] = { (T), (S), (C) }
@@ -185,7 +185,7 @@ EOF
 for (my $c = 0; $c < @protos; $c++) {
 	my $p = $protos[$c];
 	printf "  DESC_ENTRY\t(%s\t \"%s\",\t'%s' ),\n",
-	       $p.",", $protodetail{$p}->{"cname"}, $protodetail{$p}->{"char"};
+	       $p.",", $protodetail{$p}->{"cname"}, $protodetail{$p}->{"ospl_char"};
 }
 
 print <<EOF;

@@ -26,7 +26,7 @@
 #include "vty_user.h"
 
 extern vector vtyvec;
-extern int exec_timeout(struct vty *vty, const char *min_str,
+extern int vty_exec_timeout(struct vty *vty, const char *min_str,
 		const char *sec_str);
 extern int do_log_commands;
 
@@ -35,7 +35,7 @@ DEFUN (who,
 		"who",
 		"Display who is on vty\n")
 {
-	unsigned int i;
+	ospl_uint32  i;
 	struct vty *v;
 
 	for (i = 0; i < vector_active(vtyvec); i++)
@@ -62,7 +62,7 @@ DEFUN (exec_timeout_min,
 		"Set timeout value\n"
 		"Timeout value in minutes\n")
 {
-	return exec_timeout(vty, argv[0], NULL);
+	return vty_exec_timeout(vty, argv[0], NULL);
 }
 
 DEFUN (exec_timeout_sec,
@@ -72,7 +72,7 @@ DEFUN (exec_timeout_sec,
 		"Timeout in minutes\n"
 		"Timeout in seconds\n")
 {
-	return exec_timeout(vty, argv[0], argv[1]);
+	return vty_exec_timeout(vty, argv[0], argv[1]);
 }
 
 DEFUN (no_exec_timeout,
@@ -81,7 +81,7 @@ DEFUN (no_exec_timeout,
 		NO_STR
 		"Set the EXEC timeout\n")
 {
-	return exec_timeout(vty, NULL, NULL);
+	return vty_exec_timeout(vty, NULL, NULL);
 }
 
 /* Set vty access class. */
@@ -242,7 +242,7 @@ DEFUN (show_history,
 		SHOW_STR
 		"Display the session command history\n")
 {
-	int index;
+	ospl_uint32 index;
 
 	for (index = vty->hindex + 1; index != vty->hindex;) {
 		if (index == VTY_MAXHIST) {

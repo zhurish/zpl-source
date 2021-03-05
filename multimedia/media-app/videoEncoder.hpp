@@ -20,7 +20,13 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 
 #ifndef __VIDEO_ENCODER_HPP__
 #define __VIDEO_ENCODER_HPP__
-
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "ospl_type.h"
+#ifdef __cplusplus
+}
+#endif
 class videoEncoder
 {
 public:
@@ -43,9 +49,9 @@ public:
           return 0;
     }
     */
-    virtual int videoEncoderInput(const unsigned char *frame, const int len, bool keyframe) = 0;
-    virtual int videoEncoderOutput(unsigned char *frame, const int len) = 0;
-    virtual unsigned char *videoEncoderOutput() = 0;
+    virtual int videoEncoderInput(const ospl_uint8 *frame, const int len, bool keyframe) = 0;
+    virtual int videoEncoderOutput(ospl_uint8 *frame, const int len) = 0;
+    virtual ospl_uint8 *videoEncoderOutput() = 0;
     virtual int videoEncoderOutputSize(const bool clear = true) = 0;
     virtual int videoEncoderDestroy() = 0;
 public:

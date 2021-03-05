@@ -8,6 +8,10 @@
 #ifndef __MODEM_ENUM_H__
 #define __MODEM_ENUM_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum
 {
 	MODEM_DIAL_NONE = 0,
@@ -225,6 +229,10 @@ typedef enum
 
 
 
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* __MODEM_ENUM_H__ */

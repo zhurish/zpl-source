@@ -49,7 +49,7 @@ DEFUN (monitor_session_source,
 	ifindex_t	ifindex = 0;
 	mirror_dir_en dir = MIRROR_BOTH;
 	if(!nsm_mirror_global_is_enable())
-		ret = nsm_mirror_global_enable(TRUE);
+		ret = nsm_mirror_global_enable(ospl_true);
 
 	if (argv[0] && argv[1])
 	{
@@ -72,7 +72,7 @@ DEFUN (monitor_session_source,
 					dir = MIRROR_BOTH;
 			}
 			if(dir)
-				ret = nsm_mirror_source_set_api(ifindex, TRUE, dir);
+				ret = nsm_mirror_source_set_api(ifindex, ospl_true, dir);
 		}
 	}
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -117,12 +117,12 @@ DEFUN (no_monitor_session_source,
 		ifindex = if_ifindex_make(argv[0], argv[1]);
 		if(ifindex)
 		{
-			BOOL enable = FALSE;
+			ospl_bool enable = ospl_false;
 			//mirror_dir_en odir= MIRROR_NONE;
 			ret = nsm_mirror_source_get_api(ifindex, &enable, &dir);
 			if(ret == OK && enable)
 			{
-				ret = nsm_mirror_source_set_api(ifindex, FALSE, dir);
+				ret = nsm_mirror_source_set_api(ifindex, ospl_false, dir);
 			}
 			else
 			{
@@ -151,10 +151,10 @@ DEFUN (monitor_session_source_filter,
 {
 	int ret = ERROR;
 	mirror_dir_en	dir = MIRROR_NONE;
-	BOOL	dst = FALSE;
-	u_char	mac[NSM_MAC_MAX];
+	ospl_bool	dst = ospl_false;
+	ospl_uchar	mac[NSM_MAC_MAX];
 	if(!nsm_mirror_global_is_enable())
-		ret = nsm_mirror_global_enable(TRUE);
+		ret = nsm_mirror_global_enable(ospl_true);
 
 	if(os_memcmp(argv[0], "ingress", 3) == 0)
 		dir = MIRROR_INGRESS;
@@ -162,13 +162,13 @@ DEFUN (monitor_session_source_filter,
 		dir = MIRROR_EGRESS;
 
 	if(os_memcmp(argv[1], "source", 3) == 0)
-		dst = FALSE;
+		dst = ospl_false;
 	else if(os_memcmp(argv[1], "destination", 3) == 0)
-		dst = TRUE;
+		dst = ospl_true;
 
 	os_memset(mac, 0, sizeof(mac));
 	VTY_IMAC_GET(argv[0], mac);
-	ret = nsm_mirror_source_mac_filter_set_api(TRUE, mac,  dst,  dir);
+	ret = nsm_mirror_source_mac_filter_set_api(ospl_true, mac,  dst,  dir);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -188,7 +188,7 @@ DEFUN (no_monitor_session_source_filter,
 {
 	int ret = ERROR;
 	mirror_dir_en	dir = MIRROR_NONE;
-	BOOL	dst = FALSE;
+	ospl_bool	dst = ospl_false;
 
 	if(!nsm_mirror_global_is_enable())
 		return CMD_WARNING;
@@ -199,11 +199,11 @@ DEFUN (no_monitor_session_source_filter,
 		dir = MIRROR_EGRESS;
 
 	if(os_memcmp(argv[1], "source", 3) == 0)
-		dst = FALSE;
+		dst = ospl_false;
 	else if(os_memcmp(argv[1], "destination", 3) == 0)
-		dst = TRUE;
+		dst = ospl_true;
 
-	ret = nsm_mirror_source_mac_filter_set_api(FALSE, NULL,  dst,  dir);
+	ret = nsm_mirror_source_mac_filter_set_api(ospl_false, NULL,  dst,  dir);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 /*
@@ -218,18 +218,18 @@ DEFUN (monitor_session_source_mac,
 		CMD_MAC_STR_HELP)
 {
 	int ret = ERROR;
-	u_char	mac[NSM_MAC_MAX];
-	BOOL	bMac = FALSE;
+	ospl_uchar	mac[NSM_MAC_MAX];
+	ospl_bool	bMac = ospl_false;
 	mirror_dir_en dir = MIRROR_BOTH;
 	if(!nsm_mirror_global_is_enable())
-		ret = nsm_mirror_global_enable(TRUE);
+		ret = nsm_mirror_global_enable(ospl_true);
 
 	if(nsm_mirror_is_source_api())
 	{
 		vty_out(vty, "ERROR: this mirror session base interface mode is already configure.%s", VTY_NEWLINE);
 		return CMD_WARNING;
 	}
-	ret = nsm_mirror_mode_set_api(TRUE);
+	ret = nsm_mirror_mode_set_api(ospl_true);
 	VTY_IMAC_GET(argv[0], mac);
 
 	if (ret == OK)
@@ -245,7 +245,7 @@ DEFUN (monitor_session_source_mac,
 				dir = MIRROR_BOTH;
 		}
 		if(dir)
-			ret = nsm_mirror_source_mac_set_api(TRUE, mac, dir);
+			ret = nsm_mirror_source_mac_set_api(ospl_true, mac, dir);
 	}
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -272,9 +272,9 @@ DEFUN (no_monitor_session_source_mac,
 		"specify MAC address\n")
 {
 	int ret = ERROR;
-	BOOL bMac = FALSE;
+	ospl_bool bMac = ospl_false;
 	if(!nsm_mirror_global_is_enable())
-		ret = nsm_mirror_global_enable(TRUE);
+		ret = nsm_mirror_global_enable(ospl_true);
 
 	if(nsm_mirror_is_source_api())
 	{
@@ -289,7 +289,7 @@ DEFUN (no_monitor_session_source_mac,
 			return CMD_WARNING;
 		}
 	}
-	ret = nsm_mirror_mode_set_api(FALSE);
+	ret = nsm_mirror_mode_set_api(ospl_false);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 */
@@ -310,7 +310,7 @@ DEFUN (monitor_session_destination,
 	int ret = ERROR;
 	ifindex_t	ifindex = 0;
 	if(!nsm_mirror_global_is_enable())
-		ret = nsm_mirror_global_enable(TRUE);
+		ret = nsm_mirror_global_enable(ospl_true);
 
 	if (argv[0] && argv[1])
 	{
@@ -323,7 +323,7 @@ DEFUN (monitor_session_destination,
 				return CMD_WARNING;
 			}
 			if(!nsm_mirror_is_enable_api(ifindex))
-				ret = nsm_mirror_destination_set_api(ifindex, TRUE);
+				ret = nsm_mirror_destination_set_api(ifindex, ospl_true);
 			else
 			{
 				vty_out(vty, "ERROR: this mirror destination interface is already configure.%s", VTY_NEWLINE);
@@ -349,7 +349,7 @@ DEFUN (no_monitor_session_destination,
 	int ret = ERROR;
 	ifindex_t	ifindex = 0;
 	if(!nsm_mirror_global_is_enable())
-		ret = nsm_mirror_global_enable(TRUE);
+		ret = nsm_mirror_global_enable(ospl_true);
 
 	if (argv[0] && argv[1])
 	{
@@ -362,7 +362,7 @@ DEFUN (no_monitor_session_destination,
 				return CMD_WARNING;
 			}
 			if(nsm_mirror_is_enable_api(ifindex))
-				ret = nsm_mirror_destination_set_api(ifindex, FALSE);
+				ret = nsm_mirror_destination_set_api(ifindex, ospl_false);
 			else
 			{
 				vty_out(vty, "ERROR: this mirror destination interface is not configure.%s", VTY_NEWLINE);
@@ -428,12 +428,12 @@ static int bulid_mirror_one(nsm_mirror_t *node, struct vty *vty)
 static int bulid_mirror_config(struct vty *vty)
 {
 	//int ret = 0;
-	//BOOL enable = FALSE;
+	//ospl_bool enable = ospl_false;
 	mirror_callback_api((mirror_cb)bulid_mirror_one, vty);
 /*	ret = nsm_mirror_mode_get_api(&enable);
 	if(enable)
 	{
-		u_char	mac[NSM_MAC_MAX];
+		ospl_uchar	mac[NSM_MAC_MAX];
 		mirror_dir_en dir = MIRROR_BOTH;
 		os_memset(mac, 0, sizeof(mac));
 		if(nsm_mirror_source_mac_get_api(&enable, mac, &dir) == OK)

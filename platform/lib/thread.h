@@ -23,6 +23,10 @@
 #define _ZEBRA_THREAD_H
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #include "zebra.h"
 #include "vty.h"
@@ -32,7 +36,7 @@ struct thread_list
 {
   struct thread *head;
   struct thread *tail;
-  int count;
+  ospl_uint32 count;
 };
 
 struct pqueue;
@@ -47,7 +51,7 @@ typedef fd_set thread_fd_set;
 #define OS_THREAD_CPU_MAX	128
 struct thread_cpu
 {
-	int key;
+	ospl_uint32 key;
 	void *data;
 };
 
@@ -75,19 +79,19 @@ struct thread_master
   thread_fd_set writefd;
   thread_fd_set exceptfd;
 
-  unsigned long alloc;
+  ospl_ulong alloc;
 
-  u_int module;
+  ospl_uint32 module;
 
   int max_fd;
   struct thread_cpu cpu_record[OS_THREAD_CPU_MAX];
   struct timeval relative_time;
   struct thread *thread_current;
   void *mutex;
-  BOOL	bquit;
+  ospl_bool	bquit;
 };
 
-typedef unsigned char thread_type;
+typedef ospl_uchar thread_type;
 
 /* Thread itself. */
 struct thread
@@ -100,22 +104,22 @@ struct thread
   int (*func) (struct thread *); /* event function */
   void *arg;			/* event argument */
   union {
-    int val;			/* second argument of the event. */
+    ospl_uint32 val;			/* second argument of the event. */
     int fd;			/* file descriptor in case of read/write. */
     struct timeval sands;	/* rest of time sands value. */
   } u;
-  int index;			/* used for timers to store position in queue */
+  ospl_uint32 index;			/* used for timers to store position in queue */
   struct timeval real;
   struct cpu_thread_history *hist; /* cache pointer to cpu_history */
   const char *funcname;
   const char *schedfrom;
-  int schedfrom_line;
+  ospl_uint32 schedfrom_line;
 };
 
 struct cpu_thread_history 
 {
   int (*func)(struct thread *);
-  unsigned int total_calls;
+  ospl_uint32  total_calls;
   struct os_time_stats real;
   thread_type types;
   const char *funcname;
@@ -176,7 +180,7 @@ struct cpu_thread_history
 #define THREAD_WRITE_OFF(thread)  THREAD_OFF(thread)
 #define THREAD_TIMER_OFF(thread)  THREAD_OFF(thread)
 
-#define debugargdef  const char *funcname, const char *schedfrom, int fromln
+#define debugargdef  const char *funcname, const char *schedfrom, ospl_uint32 fromln
 
 #define thread_add_read(m,f,a,v) funcname_thread_add_read(m,f,a,v,#f,__FILE__,__LINE__)
 #define thread_add_write(m,f,a,v) funcname_thread_add_write(m,f,a,v,#f,__FILE__,__LINE__)
@@ -193,7 +197,7 @@ struct cpu_thread_history
 /* Prototypes. */
 extern struct thread_master *thread_master_create (void);
 
-extern struct thread_master *thread_master_module_create (int );
+extern struct thread_master *thread_master_module_create (ospl_uint32 );
 
 extern void thread_master_free (struct thread_master *);
 
@@ -230,10 +234,10 @@ extern struct thread *funcname_thread_ready (struct thread_master *,
 #undef debugargdef
 
 extern void thread_cancel (struct thread *);
-extern unsigned int thread_cancel_event (struct thread_master *, void *);
+extern ospl_uint32  thread_cancel_event (struct thread_master *, void *);
 extern struct thread *thread_fetch (struct thread_master *, struct thread *);
 extern void thread_call (struct thread *);
-extern unsigned long thread_timer_remain_second (struct thread *);
+extern ospl_ulong thread_timer_remain_second (struct thread *);
 extern struct timeval thread_timer_remain(struct thread*);
 extern int thread_should_yield (struct thread *);
 extern int thread_fetch_quit (struct thread_master *);
@@ -241,8 +245,8 @@ extern int thread_wait_quit (struct thread_master *);
 
 extern void thread_getrusage (struct timeval *real);
 /* Returns elapsed real (wall clock) time. */
-extern unsigned long thread_consumed_time(struct timeval *after, struct timeval *before,
-					  unsigned long *cpu_time_elapsed);
+extern ospl_ulong thread_consumed_time(struct timeval *after, struct timeval *before,
+					  ospl_ulong *cpu_time_elapsed);
 
 extern struct thread_master * master_thread[];
 extern struct thread *thread_current_get();
@@ -250,5 +254,9 @@ extern struct thread *thread_current_get();
 
 extern int cpu_thread_show(struct thread_master *m, struct vty *vty);
 
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ZEBRA_THREAD_H */

@@ -35,7 +35,7 @@
 
 //static iw_client_t gIw_client_t;
 
-/*static int iw_client_db_cleanup(ifindex_t ifindex, BOOL all);
+/*static int iw_client_db_cleanup(ifindex_t ifindex, ospl_bool all);
 static int iw_client_ap_cleanup(void);*/
 static int iw_client_db_add_node(iw_client_t *iw_client, iw_client_db_t *value);
 
@@ -181,7 +181,7 @@ static int iw_client_db_load(iw_client_t *iw_client)
 }
 
 
-static int iw_client_db_cleanup(iw_client_t *iw_client, ifindex_t ifindex, BOOL all)
+static int iw_client_db_cleanup(iw_client_t *iw_client, ifindex_t ifindex, ospl_bool all)
 {
 	iw_client_db_t *pstNode = NULL;
 	NODE index;
@@ -356,7 +356,7 @@ int iw_client_db_set_api(iw_client_t *iw_client, char *ssid, char *pass)
 	return ret;
 }
 
-int iw_client_db_del_api(iw_client_t *iw_client, char *ssid, BOOL pass)
+int iw_client_db_del_api(iw_client_t *iw_client, char *ssid, ospl_bool pass)
 {
 	int ret = 0;
 	char SSID[IW_SSID_NAME_MAX];
@@ -474,7 +474,7 @@ iw_client_t * iw_client_lookup_api(struct interface *ifp)
 }
 
 
-static int iw_client_ap_cleanup(iw_client_t *iw_client, BOOL use)
+static int iw_client_ap_cleanup(iw_client_t *iw_client, ospl_bool use)
 {
 	NODE index;
 	LIST *list = NULL;
@@ -573,12 +573,12 @@ static int iw_client_ap_del_node(iw_client_t *iw_client, iw_client_ap_t *node)
 	return ERROR;
 }
 
-static iw_client_ap_t * iw_client_ap_lookup_node(iw_client_t *iw_client, u_int8 *bssid, char *ssid)
+static iw_client_ap_t * iw_client_ap_lookup_node(iw_client_t *iw_client, ospl_uint8 *bssid, char *ssid)
 {
 	iw_client_ap_t *pstNode = NULL;
 	NODE index;
 	char SSID[IW_SSID_NAME_MAX];
-	u_int8 BSSID[IW_SSID_NAME_MAX];
+	ospl_uint8 BSSID[IW_SSID_NAME_MAX];
 	assert(iw_client != NULL);
 	if(!iw_client->ap_list)
 		return NULL;
@@ -642,10 +642,10 @@ static int iw_client_scan_update(iw_client_t *iw_client)
 	return OK;
 }
 
-int iw_client_ap_set_api(iw_client_t *iw_client, u_int8 *bssid, iw_client_ap_t *ap)
+int iw_client_ap_set_api(iw_client_t *iw_client, ospl_uint8 *bssid, iw_client_ap_t *ap)
 {
 	int ret = 0;
-	u_int8 BSSID[IW_SSID_NAME_MAX];
+	ospl_uint8 BSSID[IW_SSID_NAME_MAX];
 	iw_client_ap_t *client = NULL;
 	if(!iw_client || !bssid || !ap)
 		return ERROR;
@@ -688,7 +688,7 @@ int iw_client_ap_set_api(iw_client_t *iw_client, u_int8 *bssid, iw_client_ap_t *
 	return ret;
 }
 
-int iw_client_ap_del_api(iw_client_t *iw_client, u_int8 *bssid, char *ssid)
+int iw_client_ap_del_api(iw_client_t *iw_client, ospl_uint8 *bssid, char *ssid)
 {
 	int ret = 0;
 	iw_client_ap_t *client = NULL;
@@ -724,7 +724,7 @@ int iw_client_ap_del_api(iw_client_t *iw_client, u_int8 *bssid, char *ssid)
 	return ret;
 }
 
-iw_client_ap_t * iw_client_ap_lookup_api(iw_client_t *iw_client, u_int8 *bssid, char *ssid)
+iw_client_ap_t * iw_client_ap_lookup_api(iw_client_t *iw_client, ospl_uint8 *bssid, char *ssid)
 {
 	iw_client_ap_t *client = NULL;
 	if(!iw_client || (!bssid && !ssid))
@@ -766,7 +766,7 @@ int iw_client_neighbor_callback_api(iw_client_t *iw_client, int (*cb)(iw_client_
 }
 
 
-int iw_client_connect_interval_api(iw_client_t *iw_client, int connect_interval)
+int iw_client_connect_interval_api(iw_client_t *iw_client, ospl_uint32 connect_interval)
 {
 	int ret = OK;
 	if(!iw_client)
@@ -779,7 +779,7 @@ int iw_client_connect_interval_api(iw_client_t *iw_client, int connect_interval)
 	return ret;
 }
 
-int iw_client_scan_interval_api(iw_client_t *iw_client, int scan_interval)
+int iw_client_scan_interval_api(iw_client_t *iw_client, ospl_uint32 scan_interval)
 {
 	int ret = OK;
 	if(!iw_client)
@@ -792,7 +792,7 @@ int iw_client_scan_interval_api(iw_client_t *iw_client, int scan_interval)
 	return ret;
 }
 
-int iw_client_scan_max_api(iw_client_t *iw_client, int scan_max)
+int iw_client_scan_max_api(iw_client_t *iw_client, ospl_uint32 scan_max)
 {
 	int ret = OK;
 	if(!iw_client)
@@ -805,7 +805,7 @@ int iw_client_scan_max_api(iw_client_t *iw_client, int scan_max)
 	return ret;
 }
 
-static int iw_client_is_connect(struct interface *ifp, iw_client_ap_t *ap, u_int8 *bssid)
+static int iw_client_is_connect(struct interface *ifp, iw_client_ap_t *ap, ospl_uint8 *bssid)
 {
 	if(!ifp || !bssid)
 		return ERROR;
@@ -852,7 +852,7 @@ static int iw_client_try_connect(iw_client_t *iw_client, iw_client_ap_t *ap, int
 }
 
 
-static int iw_client_connect(iw_client_t *iw_client, iw_client_ap_t *ap, u_int8 *bssid)
+static int iw_client_connect(iw_client_t *iw_client, iw_client_ap_t *ap, ospl_uint8 *bssid)
 {
 	int count = 10;
 	if(!iw_client || !ap || !bssid)
@@ -871,7 +871,7 @@ static int iw_client_connect(iw_client_t *iw_client, iw_client_ap_t *ap, u_int8 
 #ifdef PL_DHCPC_MODULE
 			if(DHCP_CLIENT == nsm_interface_dhcp_mode_get_api(ifp))
 			{
-				return nsm_interface_dhcpc_start(ifp, TRUE);
+				return nsm_interface_dhcpc_start(ifp, ospl_true);
 			}
 			else if((DHCP_RELAY == nsm_interface_dhcp_mode_get_api(ifp)) ||
 					(DHCP_SERVER == nsm_interface_dhcp_mode_get_api(ifp)) )
@@ -880,7 +880,7 @@ static int iw_client_connect(iw_client_t *iw_client, iw_client_ap_t *ap, u_int8 
 			{
 				//nsm_interface_address_dhcpc_set_api
 				if(nsm_interface_dhcp_mode_set_api(ifp, DHCP_CLIENT, NULL) == OK)
-					return nsm_interface_dhcpc_start(ifp, TRUE);
+					return nsm_interface_dhcpc_start(ifp, ospl_true);
 			}
 #else
 			return iw_client_dev_start_dhcpc(ifp);
@@ -899,7 +899,7 @@ static int iw_client_connect_process(iw_client_t *iw_client)
 	int ret = ERROR;
 	iw_client_ap_t *pstNode = NULL;
 	NODE index;
-	u_int8 bssid[8] = { 0 };
+	ospl_uint8 bssid[8] = { 0 };
 	if(!iw_client)
 		return ERROR;
 	if(!iw_client->ap_list)
@@ -963,7 +963,7 @@ int iw_client_disconnect_api(iw_client_t *iw_client)
 #ifdef PL_DHCPC_MODULE
 	if(DHCP_CLIENT == nsm_interface_dhcp_mode_get_api(ifp))
 	{
-		nsm_interface_dhcpc_start(ifp, FALSE);
+		nsm_interface_dhcpc_start(ifp, ospl_false);
 	}
 #endif
 	iw_client_dev_disconnect(ifp);
@@ -1001,7 +1001,7 @@ static int iw_client_disconnect_process(iw_client_t *iw_client)
 #ifdef PL_DHCPC_MODULE
 				if(DHCP_CLIENT == nsm_interface_dhcp_mode_get_api(ifp))
 				{
-					nsm_interface_dhcpc_start(ifp, FALSE);
+					nsm_interface_dhcpc_start(ifp, ospl_false);
 				}
 #endif
 				iw_client_dev_disconnect(ifp);
@@ -1156,7 +1156,7 @@ int iw_client_connect_start(iw_client_t *iw_client)
 {
 	if(!iw_client)
 		return ERROR;
-	iw_client->connect_enable = TRUE;
+	iw_client->connect_enable = ospl_true;
 #ifdef IW_ONCE_TASK
 	if(iw_client->master)
 	{
@@ -1182,12 +1182,12 @@ int iw_client_connect_exit(iw_client_t *iw_client)
 		thread_cancel(iw_client->connect_thread);
 	iw_client->connect_thread = NULL;
 #endif
-	iw_client->connect_enable = FALSE;
+	iw_client->connect_enable = ospl_false;
 	iw_client_disconnect_process(iw_client);
 	return OK;
 }
 
-int iw_client_connect_api(iw_client_t *iw_client, BOOL auto_connect)
+int iw_client_connect_api(iw_client_t *iw_client, ospl_bool auto_connect)
 {
 	if(!iw_client)
 		return ERROR;
@@ -1208,7 +1208,7 @@ int iw_client_scan_start(iw_client_t *iw_client)
 	int scan_interval = 0;
 	if(!iw_client)
 		return ERROR;
-	iw_client->scan_enable = TRUE;
+	iw_client->scan_enable = ospl_true;
 #ifdef IW_ONCE_TASK
 	if(iw_client->scan_thread)
 	{
@@ -1238,7 +1238,7 @@ int iw_client_scan_exit(iw_client_t *iw_client)
 		thread_cancel(iw_client->scan_thread);
 	iw_client->scan_thread = NULL;
 #endif
-	iw_client->scan_enable = FALSE;
+	iw_client->scan_enable = ospl_false;
 
 	iw_client_scan_process_exit(iw_client);
 	return OK;
@@ -1294,7 +1294,7 @@ static int iw_client_neighbor_show_one(iw_client_ap_t *ap, struct vty *vty)
 	return OK;
 }
 
-int iw_client_neighbor_show(iw_client_t *iw_client, struct vty *vty, BOOL all)
+int iw_client_neighbor_show(iw_client_t *iw_client, struct vty *vty, ospl_bool all)
 {
 	assert(iw_client != NULL);
 	assert(vty != NULL);
@@ -1424,7 +1424,7 @@ int iw_client_exit(iw_client_t *iw_client)
 #endif
 	if(iw_client->db_list && lstCount(iw_client->db_list))
 	{
-		iw_client_db_cleanup(iw_client, 0, TRUE);
+		iw_client_db_cleanup(iw_client, 0, ospl_true);
 		lstFree(iw_client->db_list);
 		//iw_client->db_list = NULL;
 	}
@@ -1433,13 +1433,13 @@ int iw_client_exit(iw_client_t *iw_client)
 
 	if(iw_client->ap_list && lstCount(iw_client->ap_list))
 	{
-		iw_client_ap_cleanup(iw_client, TRUE);
+		iw_client_ap_cleanup(iw_client, ospl_true);
 		lstFree(iw_client->ap_list);
 		//iw_client->ap_list = NULL;
 	}
 	if(iw_client->ap_unlist && lstCount(iw_client->ap_unlist))
 	{
-		iw_client_ap_cleanup(iw_client, FALSE);
+		iw_client_ap_cleanup(iw_client, ospl_false);
 		lstFree(iw_client->ap_unlist);
 		//iw_client->ap_unlist = NULL;
 	}
@@ -1470,7 +1470,7 @@ int iw_client_exit(iw_client_t *iw_client)
 	return OK;
 }
 
-int iw_client_enable(iw_client_t *iw_client, BOOL enable)
+int iw_client_enable(iw_client_t *iw_client, ospl_bool enable)
 {
 	if(!iw_client)
 		return ERROR;
@@ -1494,12 +1494,12 @@ int iw_client_enable(iw_client_t *iw_client, BOOL enable)
 		iw_client_connect_exit(iw_client);
 		if(iw_client->ap_list && lstCount(iw_client->ap_list))
 		{
-			iw_client_ap_cleanup(iw_client, TRUE);
+			iw_client_ap_cleanup(iw_client, ospl_true);
 			//lstFree(iw_client->ap_list);
 		}
 		if(iw_client->ap_unlist && lstCount(iw_client->ap_unlist))
 		{
-			iw_client_ap_cleanup(iw_client, FALSE);
+			iw_client_ap_cleanup(iw_client, ospl_false);
 			//lstFree(iw_client->ap_unlist);
 		}
 		if(iw_client->mutex)

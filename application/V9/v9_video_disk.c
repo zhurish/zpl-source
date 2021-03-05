@@ -32,8 +32,8 @@
  * 获取当前挂载硬盘数量
  */
 static int _disk_count = 0;
-static u_int32 _disk_timer = 0;
-static u_int32 _disk_keep_day = 0;
+static ospl_uint32 _disk_timer = 0;
+static ospl_uint32 _disk_keep_day = 0;
 static int v9_video_disk_info_load(void);
 
 int v9_video_disk_count(void)
@@ -44,7 +44,7 @@ int v9_video_disk_count(void)
 	return _disk_count;
 }
 
-char * v9_video_disk_root_dir(u_int32 id)
+char * v9_video_disk_root_dir(ospl_uint32 id)
 {
 	static char dirbase[V9_APP_DIR_NAME_MAX];
 	memset(dirbase, 0, sizeof(dirbase));
@@ -63,7 +63,7 @@ char * v9_video_disk_root_dir(u_int32 id)
 }
 
 
-char * v9_video_disk_base_dir(u_int32 id)
+char * v9_video_disk_base_dir(ospl_uint32 id)
 {
 	static char dirbase[V9_APP_DIR_NAME_MAX];
 	memset (dirbase, 0, sizeof(dirbase));
@@ -82,7 +82,7 @@ char * v9_video_disk_base_dir(u_int32 id)
 }
 
 
-char * v9_video_disk_db_dir(u_int32 id)
+char * v9_video_disk_db_dir(ospl_uint32 id)
 {
 	static char dirbase[V9_APP_DIR_NAME_MAX];
 	memset(dirbase, 0, sizeof(dirbase));
@@ -100,7 +100,7 @@ char * v9_video_disk_db_dir(u_int32 id)
     return dirbase;
 }
 
-char * v9_video_disk_cap_dir(u_int32 id)
+char * v9_video_disk_cap_dir(ospl_uint32 id)
 {
 	static char dirbase[V9_APP_DIR_NAME_MAX];
 	memset(dirbase, 0, sizeof(dirbase));
@@ -119,7 +119,7 @@ char * v9_video_disk_cap_dir(u_int32 id)
 }
 
 
-char * v9_video_disk_capdb_dir(u_int32 id)
+char * v9_video_disk_capdb_dir(ospl_uint32 id)
 {
 	static char dirbase[V9_APP_DIR_NAME_MAX];
 	memset(dirbase, 0, sizeof(dirbase));
@@ -137,7 +137,7 @@ char * v9_video_disk_capdb_dir(u_int32 id)
     return dirbase;
 }
 
-char * v9_video_disk_recg_dir(u_int32 id)
+char * v9_video_disk_recg_dir(ospl_uint32 id)
 {
 	static char dirbase[V9_APP_DIR_NAME_MAX];
 	memset(dirbase, 0, sizeof(dirbase));
@@ -155,7 +155,7 @@ char * v9_video_disk_recg_dir(u_int32 id)
     return dirbase;
 }
 
-char * v9_video_disk_warn_dir(u_int32 id)
+char * v9_video_disk_warn_dir(ospl_uint32 id)
 {
 	static char dirbase[V9_APP_DIR_NAME_MAX];
 	memset(dirbase, 0, sizeof(dirbase));
@@ -173,7 +173,7 @@ char * v9_video_disk_warn_dir(u_int32 id)
     return dirbase;
 }
 
-/*char * v9_video_disk_user_dir(u_int32 id)
+/*char * v9_video_disk_user_dir(ospl_uint32 id)
 {
 	static char dirbase[V9_APP_DIR_NAME_MAX];
 	memset(dirbase, 0, sizeof(dirbase));
@@ -335,7 +335,7 @@ int v9_video_disk_dir_init(void)
 #ifdef PL_OPENWRT_UCI
 		os_uci_get_integer("product.global.keepday", &_disk_keep_day);
 #endif
-		v9_video_disk_monitor_start(TRUE);
+		v9_video_disk_monitor_start(ospl_true);
 	}
 	return 0;
 }
@@ -346,7 +346,7 @@ int v9_video_disk_dir_init(void)
  * disk monitor
  */
 
-int v9_video_disk_keep_day_set(u_int32 day)
+int v9_video_disk_keep_day_set(ospl_uint32 day)
 {
 #ifdef PL_OPENWRT_UCI
 	if(os_uci_set_integer("product.global.keepday", day) == OK)
@@ -421,7 +421,7 @@ static int isdirempty(char *dirname)
     return 0;
 }
 
-static int v9_video_sqltbl_monitor_datetime(u_int32 id, u_int32 table, u_int32 datecnt)
+static int v9_video_sqltbl_monitor_datetime(ospl_uint32 id, ospl_uint32 table, ospl_uint32 datecnt)
 {
 	sqlite3 *db = NULL;
 	int datetime = os_time(NULL);
@@ -443,7 +443,7 @@ static int v9_video_sqltbl_monitor_datetime(u_int32 id, u_int32 table, u_int32 d
 }
 
 
-static int v9_video_sqltbl_monitor(u_int32 id, u_int32 table, u_int32 limit, u_int32 delcnt)
+static int v9_video_sqltbl_monitor(ospl_uint32 id, ospl_uint32 table, ospl_uint32 limit, ospl_uint32 delcnt)
 {
 	sqlite3 *db = NULL;
 	int getlimit = 0;
@@ -467,7 +467,7 @@ static int v9_video_sqltbl_monitor(u_int32 id, u_int32 table, u_int32 limit, u_i
 
 static int v9_video_disk_monitor_task(void *p)
 {
-	u_int diskload1 = 0, diskload2 = 0;
+	ospl_uint32 diskload1 = 0, diskload2 = 0;
 	if(v9_video_board_isactive(APP_BOARD_CALCU_1))
 	{
 		v9_video_sqltbl_monitor_datetime(APP_BOARD_CALCU_1, 0, _disk_keep_day?_disk_keep_day:V9_APP_DISK_KEEP_DAY);
@@ -546,7 +546,7 @@ static int v9_video_disk_monitor_task(void *p)
 	return OK;
 }
 
-int v9_video_disk_monitor_start(BOOL enable)
+int v9_video_disk_monitor_start(ospl_bool enable)
 {
 	if(enable)
 	{

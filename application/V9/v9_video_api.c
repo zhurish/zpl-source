@@ -70,8 +70,8 @@ subtype: 码流类型，主码流为0（即subtype=0），辅码流为1（即sub
 例如，请求某设备的通道2的辅码流，Url如下
 rtsp://admin:admin@10.12.4.84:554/cam/realmonitor?channel=2&subtype=1
  */
-int v9_video_board_stream_add_api(u_int8 id, u_int8 ch, u_int32 address, u_int16 port,
-							   char *username, char *password, u_int32 fps, char *param, char *secondary)
+int v9_video_board_stream_add_api(ospl_uint8 id, ospl_uint8 ch, ospl_uint32 address, ospl_uint16 port,
+							   char *username, char *password, ospl_uint32 fps, char *param, char *secondary)
 {
 	int iid = id, chid = ch, ret = 0;
 	v9_video_stream_t *stream = NULL;
@@ -117,7 +117,7 @@ int v9_video_board_stream_add_api(u_int8 id, u_int8 ch, u_int32 address, u_int16
 		else
 			stream->type = V9_VIDEO_STREAM_TYPE_DYNAMIC;
 */
-		ret = v9_video_board_stream_add( iid,  stream, TRUE);
+		ret = v9_video_board_stream_add( iid,  stream, ospl_true);
 		v9_video_board_unlock();
 		return ret;
 	}
@@ -128,7 +128,7 @@ int v9_video_board_stream_add_api(u_int8 id, u_int8 ch, u_int32 address, u_int16
 }
 
 
-int v9_video_board_stream_del_api(u_int8 id, u_int8 ch, u_int32 address, u_int16 port)
+int v9_video_board_stream_del_api(ospl_uint8 id, ospl_uint8 ch, ospl_uint32 address, ospl_uint16 port)
 {
 	int ret = 0;
 	v9_video_stream_t *stream = NULL;

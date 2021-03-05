@@ -25,11 +25,11 @@
 #include <libssh/sftp.h>
 
 
-static int ssh_do_sftp(ssh_session session, BOOL download, ssh_sftp_connect *src, char *localfile)
+static int ssh_do_sftp(ssh_session session, ospl_bool download, ssh_sftp_connect *src, char *localfile)
 {
     sftp_session sftp=sftp_new(session);
     sftp_file fichier = NULL;
-    int len = 0;
+    ospl_uint32 len = 0;
     char data[2048]={0};
 
     if(!sftp){
@@ -111,7 +111,7 @@ static int ssh_do_sftp(ssh_session session, BOOL download, ssh_sftp_connect *src
 }
 
 
-int sftp_action(struct vty *vty, BOOL download, char *url, char *localfile)
+int sftp_action(struct vty *vty, ospl_bool download, char *url, char *localfile)
 {
 	ssh_sftp_connect src;
 	int ret = 0;

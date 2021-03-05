@@ -152,7 +152,7 @@ static const char opt_fqdn_req[] = {
 
 /*** Utility functions ***/
 
-static void *d6_find_option(uint8_t *option, uint8_t *option_end, unsigned code)
+static void *d6_find_option(ospl_uint8 *option, ospl_uint8 *option_end, unsigned code)
 {
 	/* "length minus 4" */
 	int len_m4 = option_end - option - 4;
@@ -176,9 +176,9 @@ static void *d6_find_option(uint8_t *option, uint8_t *option_end, unsigned code)
 	return NULL;
 }
 
-static void *d6_copy_option(uint8_t *option, uint8_t *option_end, unsigned code)
+static void *d6_copy_option(ospl_uint8 *option, ospl_uint8 *option_end, unsigned code)
 {
-	uint8_t *opt = d6_find_option(option, option_end, code);
+	ospl_uint8 *opt = d6_find_option(option, option_end, code);
 	if (!opt)
 		return opt;
 	return xmemdup(opt, opt[3] + 4);
@@ -194,7 +194,7 @@ static char** new_env(void)
 }
 
 /* put all the parameters into the environment */
-static void option_to_env(uint8_t *option, uint8_t *option_end)
+static void option_to_env(ospl_uint8 *option, ospl_uint8 *option_end)
 {
 #if ENABLE_FEATURE_UDHCPC6_RFC3646
 	int addrs, option_offset;
@@ -203,7 +203,7 @@ static void option_to_env(uint8_t *option, uint8_t *option_end)
 	int len_m4 = option_end - option - 4;
 
 	while (len_m4 >= 0) {
-		uint32_t v32;
+		ospl_uint32  v32;
 		char ipv6str[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")];
 
 		if (option[0] != 0 || option[2] != 0)
@@ -402,14 +402,14 @@ static void d6_run_script(struct d6_packet *packet, const char *name)
 
 /*** Sending/receiving packets ***/
 
-static uint32_t random_xid(void)
+static ospl_uint32  random_xid(void)
 {
-	uint32_t t = rand() & htonl(0x00ffffff);
+	ospl_uint32  t = rand() & htonl(0x00ffffff);
 	return t;
 }
 
 /* Initialize the packet with the proper defaults */
-static uint8_t *init_d6_packet(struct d6_packet *packet, char type, uint32_t xid)
+static ospl_uint8 *init_d6_packet(struct d6_packet *packet, char type, ospl_uint32  xid)
 {
 	struct d6_option *clientid;
 
@@ -422,9 +422,9 @@ static uint8_t *init_d6_packet(struct d6_packet *packet, char type, uint32_t xid
 	return mempcpy(packet->d6_options, clientid, clientid->len + 2+2);
 }
 
-static uint8_t *add_d6_client_options(uint8_t *ptr)
+static ospl_uint8 *add_d6_client_options(ospl_uint8 *ptr)
 {
-	uint8_t *start = ptr;
+	ospl_uint8 *start = ptr;
 	unsigned option;
 
 	ptr += 4;
@@ -453,15 +453,15 @@ static uint8_t *add_d6_client_options(uint8_t *ptr)
 	return ptr;
 }
 
-static int d6_mcast_from_client_config_ifindex(struct d6_packet *packet, uint8_t *end)
+static int d6_mcast_from_client_config_ifindex(struct d6_packet *packet, ospl_uint8 *end)
 {
-	static const uint8_t FF02__1_2[16] = {
+	static const ospl_uint8 FF02__1_2[16] = {
 		0xFF, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02,
 	};
 
 	return d6_send_raw_packet(
-		packet, (end - (uint8_t*) packet),
+		packet, (end - (ospl_uint8*) packet),
 		/*src*/ &client6_data.ll_ip6, CLIENT_PORT6,
 		/*dst*/ (struct in6_addr*)FF02__1_2, SERVER_PORT6, MAC_BCAST_ADDR,
 		client_config.ifindex
@@ -550,10 +550,10 @@ static int d6_mcast_from_client_config_ifindex(struct d6_packet *packet, uint8_t
       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 /* NOINLINE: limit stack usage in caller */
-static  int send_d6_discover(uint32_t xid, struct in6_addr *requested_ipv6)
+static  int send_d6_discover(ospl_uint32  xid, struct in6_addr *requested_ipv6)
 {
 	struct d6_packet packet;
-	uint8_t *opt_ptr;
+	ospl_uint8 *opt_ptr;
 	unsigned len;
 
 	/* Fill in: msg type, client id */
@@ -565,7 +565,7 @@ static  int send_d6_discover(uint32_t xid, struct in6_addr *requested_ipv6)
 	client6_data.ia_na = malloc(len);
 	client6_data.ia_na->code = D6_OPT_IA_NA;
 	client6_data.ia_na->len = len - 4;
-	*(uint32_t*)client6_data.ia_na->data = rand(); /* IAID */
+	*(ospl_uint32 *)client6_data.ia_na->data = rand(); /* IAID */
 	if (requested_ipv6) {
 		struct d6_option *iaaddr = (void*)(client6_data.ia_na->data + 4+4+4);
 		iaaddr->code = D6_OPT_IAADDR;
@@ -614,10 +614,10 @@ static  int send_d6_discover(uint32_t xid, struct in6_addr *requested_ipv6)
  * messages from the server.
  */
 /* NOINLINE: limit stack usage in caller */
-static int send_d6_select(uint32_t xid)
+static int send_d6_select(ospl_uint32  xid)
 {
 	struct d6_packet packet;
-	uint8_t *opt_ptr;
+	ospl_uint8 *opt_ptr;
 
 	/* Fill in: msg type, client id */
 	opt_ptr = init_d6_packet(&packet, D6_MSG_REQUEST, xid);
@@ -683,10 +683,10 @@ static int send_d6_select(uint32_t xid)
  * about parameter values the client would like to have returned.
  */
 /* NOINLINE: limit stack usage in caller */
-static  int send_d6_renew(uint32_t xid, struct in6_addr *server_ipv6, struct in6_addr *our_cur_ipv6)
+static  int send_d6_renew(ospl_uint32  xid, struct in6_addr *server_ipv6, struct in6_addr *our_cur_ipv6)
 {
 	struct d6_packet packet;
-	uint8_t *opt_ptr;
+	ospl_uint8 *opt_ptr;
 
 	/* Fill in: msg type, client id */
 	opt_ptr = init_d6_packet(&packet, DHCPREQUEST, xid);
@@ -704,7 +704,7 @@ static  int send_d6_renew(uint32_t xid, struct in6_addr *server_ipv6, struct in6
 	zlog_err(MODULE_DHCP,"sending %s", "renew");
 	if (server_ipv6)
 		return d6_send_kernel_packet(
-			&packet, (opt_ptr - (uint8_t*) &packet),
+			&packet, (opt_ptr - (ospl_uint8*) &packet),
 			our_cur_ipv6, CLIENT_PORT6,
 			server_ipv6, SERVER_PORT6,
 			client_config.ifindex
@@ -716,7 +716,7 @@ static  int send_d6_renew(uint32_t xid, struct in6_addr *server_ipv6, struct in6
 static int send_d6_release(struct in6_addr *server_ipv6, struct in6_addr *our_cur_ipv6)
 {
 	struct d6_packet packet;
-	uint8_t *opt_ptr;
+	ospl_uint8 *opt_ptr;
 
 	/* Fill in: msg type, client id */
 	opt_ptr = init_d6_packet(&packet, D6_MSG_RELEASE, random_xid());
@@ -727,7 +727,7 @@ static int send_d6_release(struct in6_addr *server_ipv6, struct in6_addr *our_cu
 
 	zlog_err(MODULE_DHCP,"sending %s", "release");
 	return d6_send_kernel_packet(
-		&packet, (opt_ptr - (uint8_t*) &packet),
+		&packet, (opt_ptr - (ospl_uint8*) &packet),
 		our_cur_ipv6, CLIENT_PORT6,
 		server_ipv6, SERVER_PORT6,
 		client_config.ifindex
@@ -749,7 +749,7 @@ static  int d6_recv_raw_packet(struct in6_addr *peer_ipv6, struct d6_packet *d6_
 	}
 
 	if (bytes < (int) (sizeof(packet.ip6) + sizeof(packet.udp))) {
-		zlog_err(MODULE_DHCP,"packet is too short, ignoring");
+		zlog_err(MODULE_DHCP,"packet is too ospl_int16, ignoring");
 		return -2;
 	}
 
@@ -780,7 +780,7 @@ static  int d6_recv_raw_packet(struct in6_addr *peer_ipv6, struct d6_packet *d6_
 //	packet.ip.tot_len = packet.udp.len; /* yes, this is needed */
 //	check = packet.udp.check;
 //	packet.udp.check = 0;
-//	if (check && check != inet_cksum((uint16_t *)&packet, bytes)) {
+//	if (check && check != inet_cksum((ospl_uint16 *)&packet, bytes)) {
 //		log1("packet with bad UDP checksum received, ignoring");
 //		return -2;
 //	}
@@ -972,9 +972,9 @@ static void perform_d6_release(struct in6_addr *server_ipv6, struct in6_addr *ou
 	state = RELEASED;
 }
 
-///static uint8_t* alloc_dhcp_option(int code, const char *str, int extra)
+///static ospl_uint8* alloc_dhcp_option(int code, const char *str, int extra)
 ///{
-///	uint8_t *storage;
+///	ospl_uint8 *storage;
 ///	int len = strnlen(str, 255);
 ///	storage = malloc(len + extra + OPT_DATA);
 ///	storage[OPT_CODE] = code;
@@ -1088,7 +1088,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 	struct in6_addr srv6_buf;
 	struct in6_addr ipv6_buf;
 	struct in6_addr *requested_ipv6;
-	uint32_t xid = 0;
+	ospl_uint32  xid = 0;
 	int packet_num;
 	int timeout; /* must be signed */
 	unsigned already_waited_sec;
@@ -1225,7 +1225,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 		int tv;
 		struct pollfd pfds[2];
 		struct d6_packet packet;
-		uint8_t *packet_end;
+		ospl_uint8 *packet_end;
 		/* silence "uninitialized!" warning */
 		unsigned timestamp_before_wait = timestamp_before_wait;
 
@@ -1440,7 +1440,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 			already_waited_sec += (unsigned)monotonic_sec() - timestamp_before_wait;
 			if (len < 0)
 				continue;
-			packet_end = (uint8_t*)&packet + len;
+			packet_end = (ospl_uint8*)&packet + len;
 		}
 
 		if ((packet.d6_xid32 & htonl(0x00ffffff)) != xid) {
@@ -1462,7 +1462,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 		case RENEW_REQUESTED:
 		case REBINDING:
 			if (packet.d6_msg_type == D6_MSG_REPLY) {
-				uint32_t lease_seconds;
+				ospl_uint32  lease_seconds;
 				struct d6_option *option, *iaaddr;
  type_is_ok:
 				option = d6_find_option(packet.d6_options, packet_end, D6_OPT_STATUS_CODE);
@@ -1594,7 +1594,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 					continue;
 				}
 				if (client6_data.ia_na->len < (4 + 4 + 4) + (2 + 2 + 16 + 4 + 4)) {
-					zlog_err(MODULE_DHCP,"IA_NA option is too short:%d bytes", client6_data.ia_na->len);
+					zlog_err(MODULE_DHCP,"IA_NA option is too ospl_int16:%d bytes", client6_data.ia_na->len);
 					continue;
 				}
 				iaaddr = d6_find_option(client6_data.ia_na->data + 4 + 4 + 4,
@@ -1606,7 +1606,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 					continue;
 				}
 				if (iaaddr->len < (16 + 4 + 4)) {
-					zlog_err(MODULE_DHCP,"IAADDR option is too short:%d bytes", iaaddr->len);
+					zlog_err(MODULE_DHCP,"IAADDR option is too ospl_int16:%d bytes", iaaddr->len);
 					continue;
 				}
 				/* Note: the address is sufficiently aligned for cast:

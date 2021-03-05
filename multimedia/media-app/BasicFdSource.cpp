@@ -95,7 +95,7 @@ Boolean BasicFdSource::doReadFromFd()
   //FramedSource::afterGetting(this);
 }
 
-Boolean BasicFdSource::handleReadFd(unsigned char *buffer, unsigned bufferMaxSize,
+Boolean BasicFdSource::handleReadFd(ospl_uint8 *buffer, unsigned bufferMaxSize,
                                     unsigned &bytesRead)
 {
   // Read data from the socket, and relay it across any attached tunnels

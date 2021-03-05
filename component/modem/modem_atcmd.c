@@ -35,7 +35,7 @@ int modem_atcmd_isopen(modem_client_t *client)
 	return ERROR;
 }
 
-int modem_echo_atcmd_set(modem_client_t *client, BOOL enable)
+int modem_echo_atcmd_set(modem_client_t *client, ospl_bool enable)
 {
 	assert(client);
 	if (client->driver->atcmd.md_echo_cmd)
@@ -100,7 +100,7 @@ int modem_open_atcmd_set(modem_client_t *client)
 {
 	assert(client);
 	if (client->driver->atcmd.md_open_cmd)
-		return (client->driver->atcmd.md_open_cmd)(&client->driver, 1);
+		return (client->driver->atcmd.md_open_cmd)(&client->driver, ospl_true);
 	else
 	{
 		if (modem_attty(client, MODEM_TIMEOUT(5), "OK", "AT+CFUN=%d,0\r\n", 1)
@@ -421,7 +421,7 @@ int modem_nwpdp_atcmd_set(modem_client_t *client)
 	return ERROR;
 }
 
-int modem_nwpdp_atcmd_enable(modem_client_t *client, BOOL enable)
+int modem_nwpdp_atcmd_enable(modem_client_t *client, ospl_bool enable)
 {
 	assert(client);
 	//modem_t *modem = client->modem;
@@ -458,7 +458,7 @@ int modem_nwaddr_atcmd_get(modem_client_t *client)
 			"AT+CGPADDR=%d\r\n", 1) > RES_OK)
 	{
 		//+CGPADDR: 1,"10.76.51.180"
-		int offset = 0;
+		ospl_uint32 offset = 0;
 		char address[128];
 		char *brk = NULL;
 
@@ -504,11 +504,11 @@ int modem_nwservingcell_atcmd_get(modem_client_t *client)
 	return ERROR;
 }
 
-int modem_nwcell_atcmd_set(modem_client_t *client, BOOL enable)
+int modem_nwcell_atcmd_set(modem_client_t *client, ospl_bool enable)
 {
 	assert(client);
 
-	if(enable == FALSE)
+	if(enable == ospl_false)
 	{
 		if (modem_attty(client, MODEM_TIMEOUT(5), "OK", "AT$QCRMCALL=0,1\r\n") == RES_OK)
 		{
@@ -537,7 +537,7 @@ int modem_nwreq_addr_atcmd_get(modem_client_t *client)
 			"AT+CQPADDR=%d\r\n", modem->profile) > RES_OK)
 	{
 		//+CGPADDR: 1,"10.76.51.180"
-		int offset = 0;
+		ospl_uint32 offset = 0;
 		char *brk = NULL;
 		if(os_strstr(client->response->buf, "ERROR"))
 		{

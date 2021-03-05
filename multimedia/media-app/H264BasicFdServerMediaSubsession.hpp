@@ -23,7 +23,13 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #ifndef _H265_FD_SERVER_MEDIA_SUBSESSION_HH
 #define _H265_FD_SERVER_MEDIA_SUBSESSION_HH
 
-
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "ospl_type.h"
+#ifdef __cplusplus
+}
+#endif
 class H264BasicFdServerMediaSubsession: public OnDemandServerMediaSubsession {
 public:
   static H264BasicFdServerMediaSubsession*
@@ -40,7 +46,7 @@ protected: // redefined virtual functions
   virtual FramedSource* createNewStreamSource(unsigned clientSessionId,
 					      unsigned& estBitrate);
   virtual RTPSink* createNewRTPSink(Groupsock* rtpGroupsock,
-				    unsigned char rtpPayloadTypeIfDynamic,
+				    ospl_uint8 rtpPayloadTypeIfDynamic,
 				    FramedSource* inputSource);
 protected:
   int input_fd;

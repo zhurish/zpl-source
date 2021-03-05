@@ -215,7 +215,7 @@ static void rtsp_client_AfterPLAY(RTSPClient *rtspClient, int resultCode, char *
     // Set a timer to be handled at the end of the stream's expected duration (if the stream does not already signal its end
     // using a RTCP "BYE").  This is optional.  If, instead, you want to keep the stream active - e.g., so you can later
     // 'seek' back within it and do another RTSP "PLAY" - then you can omit this code.
-    // (Alternatively, if you don't want to receive the entire stream, you could set this timer for some shorter value.)
+    // (Alternatively, if you don't want to receive the entire stream, you could set this timer for some ospl_int16er value.)
     if (m_rtspcState.m_duration > 0)
     {
       unsigned const delaySlop = 2; // number of seconds extra to delay, after the stream's expected duration.  (This is optional.)
@@ -464,11 +464,11 @@ void rtspcDummySink::handleFrame()
     /*
      if(firstFrame)
      {
-         unsigned int num;
+         ospl_uint32 num;
          SPropRecord *sps = parseSPropParameterSets(m_fSubsession.fmtp_spropparametersets(), num);
          // For H.264 video stream, we use a special sink that insert start_codes:
          struct timeval tv= {0,0};
-         unsigned char start_code[4] = {0x00, 0x00, 0x00, 0x01};
+         ospl_uint8 start_code[4] = {0x00, 0x00, 0x00, 0x01};
          FILE *fp = fopen("test.264", "a+b");
          if(fp)
          {

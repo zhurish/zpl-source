@@ -122,12 +122,12 @@ int vpxEncoder::videoEncoderSetup(const int width, const int height, const int f
 }
 
 #if 0
-int vpxEncoder::vpx_unpacketize(const unsigned char *buf,
+int vpxEncoder::vpx_unpacketize(const ospl_uint8 *buf,
                                 size_t packet_size,
                                 unsigned *p_desc_len)
 {
     unsigned desc_len = 1;
-    unsigned char *p = (unsigned char *)buf;
+    ospl_uint8 *p = (ospl_uint8 *)buf;
 
 #define INC_DESC_LEN()                 \
     {                                  \
@@ -192,7 +192,7 @@ int vpxEncoder::vpx_unpacketize(const unsigned char *buf,
 	 */
         if ((p[0] & 0x10) && (p[0] & 0x80) && (p[0] & 0x40))
         {
-            unsigned char *q = p + desc_len;
+            ospl_uint8 *q = p + desc_len;
 
             INC_DESC_LEN();
             if (*q & 0x1)
@@ -209,7 +209,7 @@ int vpxEncoder::vpx_unpacketize(const unsigned char *buf,
         /* V: Scalability structure (SS) data present. */
         if (p[0] & 0x2)
         {
-            unsigned char *q = p + desc_len;
+            ospl_uint8 *q = p + desc_len;
             unsigned N_S = (*q >> 5) + 1;
 
             INC_DESC_LEN();
@@ -259,8 +259,8 @@ int vpxEncoder::vpx_unpacketize(const unsigned char *buf,
   VPX_IMG_FMT_I44416 = VPX_IMG_FMT_I444 | VPX_IMG_FMT_HIGHBITDEPTH,
   VPX_IMG_FMT_I44016 = VPX_IMG_FMT_I440 | VPX_IMG_FMT_HIGHBITDEPTH
 */
-int vpxEncoder::vpx_encode_framed(const unsigned char *packets, const int in_size,
-                                  unsigned char *output, unsigned out_size, const bool force_keyframe)
+int vpxEncoder::vpx_encode_framed(const ospl_uint8 *packets, const int in_size,
+                                  ospl_uint8 *output, unsigned out_size, const bool force_keyframe)
 {
     struct vpx_codec_data *vpx_data;
     vpx_image_t img;
@@ -270,7 +270,7 @@ int vpxEncoder::vpx_encode_framed(const unsigned char *packets, const int in_siz
     vpx_img_wrap(&img, VPX_IMG_FMT_I420,
                  this->m_width,
                  this->m_height,
-                 1, (unsigned char *)packets);
+                 1, (ospl_uint8 *)packets);
 
     if (force_keyframe)
     {
@@ -300,7 +300,7 @@ int vpxEncoder::vpx_encode_framed(const unsigned char *packets, const int in_siz
         if (pkt->kind == VPX_CODEC_CX_FRAME_PKT)
         {
             /* We have a valid frame packet */
-            enc_frame_whole = (unsigned char *)pkt->data.frame.buf;
+            enc_frame_whole = (ospl_uint8 *)pkt->data.frame.buf;
             enc_frame_size = pkt->data.frame.sz;
             enc_processed = 0;
             if (pkt->data.frame.flags & VPX_FRAME_IS_KEY)
@@ -328,7 +328,7 @@ int vpxEncoder::vpx_encode_framed(const unsigned char *packets, const int in_siz
         unsigned remaining_size = this->enc_frame_size -
                                   this->enc_processed;
         unsigned payload_len = (remaining_size > max_size)? max_size:remaining_size;
-        uint8_t *p = (uint8_t *)output;
+        ospl_uint8 *p = (ospl_uint8 *)output;
 
         if (payload_len + payload_desc_size > out_size)
             return -1;
@@ -380,23 +380,23 @@ int vpxEncoder::vpx_encode_framed(const unsigned char *packets, const int in_siz
     return 0;
 }
 
-int vpxEncoder::videoEncoderInput(const unsigned char *frame, const int len,const bool keyframe)
+int vpxEncoder::videoEncoderInput(const ospl_uint8 *frame, const int len,const bool keyframe)
 {
     return vpx_encode_framed(frame, len,
                              enc_frame_whole, enc_input_size, keyframe);
 }
 
-int vpxEncoder::videoEncoderOutput(unsigned char *frame, const int len)
+int vpxEncoder::videoEncoderOutput(ospl_uint8 *frame, const int len)
 {
     int ret = m_out_size > len ? len : m_out_size;
-    memcpy((unsigned char *)frame, enc_frame_whole, ret);
+    memcpy((ospl_uint8 *)frame, enc_frame_whole, ret);
     return ret;
 }
 
-unsigned char *vpxEncoder::videoEncoderOutput()
+ospl_uint8 *vpxEncoder::videoEncoderOutput()
 {
     if (enc_frame_whole != nullptr && m_out_size > 0)
-        return (unsigned char *)enc_frame_whole;
+        return (ospl_uint8 *)enc_frame_whole;
     return nullptr;
 }
 

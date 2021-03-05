@@ -8,6 +8,10 @@
 #ifndef __NSM_VLAN_H__
 #define __NSM_VLAN_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "os_list.h"
 #include "product.h"
 
@@ -16,7 +20,7 @@
 #endif
 
 
-typedef unsigned short vlan_t;
+typedef ospl_ushort vlan_t;
 
 
 
@@ -35,7 +39,7 @@ typedef struct nsm_vlan_s
 {
 	vlan_t	native;
 	vlan_t	access;
-	BOOL all;
+	ospl_bool all;
 	trunk_vlan_t trunk_allowed[VLAN_TABLE_MAX];
 	vlan_t	allowed_max;
 }nsm_vlan_t;
@@ -63,19 +67,19 @@ typedef struct l2vlan_s
 	vlan_t	vlan;
 	vlan_t 	minvlan;
 	vlan_t	maxvlan;
-	int		stp;
-	int		dscp;
+	ospl_uint32		stp;
+	ospl_uint32		dscp;
 	ifindex_t tagport[PHY_PORT_MAX];
 	ifindex_t untagport[PHY_PORT_MAX];
-	char *vlan_name;
-	unsigned int name_hash;
+	ospl_char *vlan_name;
+	ospl_uint32  name_hash;
 }l2vlan_t;
 
 typedef struct Gl2vlan_s
 {
 	LIST	*vlanList;
 	void	*mutex;
-	BOOL	enable;
+	ospl_bool	enable;
 }Gl2vlan_t;
 
 typedef int (*l2vlan_cb)(l2vlan_t *, void *);
@@ -85,7 +89,7 @@ extern int nsm_vlan_exit();
 extern int nsm_vlan_cleanall(void);
 
 extern int nsm_vlan_enable(void);
-extern BOOL nsm_vlan_is_enable(void);
+extern ospl_bool nsm_vlan_is_enable(void);
 
 
 extern int nsm_vlan_list_create_api(const char *str);
@@ -130,5 +134,9 @@ extern int nsm_interface_trunk_allowed_vlan_list_api(int add, struct interface *
 
 
 extern void cmd_vlan_init (void);
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __NSM_VLAN_H__ */

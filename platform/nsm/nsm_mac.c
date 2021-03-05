@@ -25,7 +25,7 @@ static Gl2mac_t gMac;
 
 int nsm_mac_init(void)
 {
-	unsigned char kmac[NSM_MAC_MAX] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
+	ospl_uchar kmac[NSM_MAC_MAX] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
 	gMac.macList = malloc(sizeof(LIST));
 	gMac.mutex = os_mutex_init();
 	lstInit(gMac.macList);
@@ -38,7 +38,7 @@ int nsm_mac_init(void)
 	return OK;
 }
 
-static int l2mac_cleanup(mac_type_t type, BOOL all, vlan_t vlan, ifindex_t ifindex)
+static int l2mac_cleanup(mac_type_t type, ospl_bool all, vlan_t vlan, ifindex_t ifindex)
 {
 	l2mac_t *pstNode = NULL;
 	NODE index;
@@ -82,7 +82,7 @@ int nsm_mac_exit(void)
 {
 	if(lstCount(gMac.macList))
 	{
-		l2mac_cleanup(0, TRUE, 0, 0);
+		l2mac_cleanup(0, ospl_true, 0, 0);
 		lstFree(gMac.macList);
 		free(gMac.macList);
 		gMac.macList = NULL;
@@ -95,17 +95,17 @@ int nsm_mac_exit(void)
 
 int nsm_mac_cleanall_api(void)
 {
-	return l2mac_cleanup(0, TRUE, 0, 0);
+	return l2mac_cleanup(0, ospl_true, 0, 0);
 }
 
 int nsm_mac_clean_ifindex_api(mac_type_t type, ifindex_t ifindex)
 {
-	return l2mac_cleanup(type, TRUE, 0, ifindex);
+	return l2mac_cleanup(type, ospl_true, 0, ifindex);
 }
 
 int nsm_mac_clean_vlan_api(mac_type_t type, vlan_t vlan)
 {
-	return l2mac_cleanup(type, TRUE, vlan, 0);
+	return l2mac_cleanup(type, ospl_true, vlan, 0);
 }
 
 
@@ -258,7 +258,7 @@ int nsm_mac_get_api(mac_t *mac, vlan_t vlan, l2mac_t *gmac)
 }
 
 
-int nsm_mac_ageing_time_set_api(int ageing)
+int nsm_mac_ageing_time_set_api(ospl_uint32 ageing)
 {
 	int ret = ERROR;
 	//l2mac_t *value;
@@ -276,7 +276,7 @@ int nsm_mac_ageing_time_set_api(int ageing)
 	return ret;
 }
 
-int nsm_mac_ageing_time_get_api(int *ageing)
+int nsm_mac_ageing_time_get_api(ospl_uint32 *ageing)
 {
 	int ret = ERROR;
 	//l2mac_t *value;
@@ -292,7 +292,7 @@ int nsm_mac_ageing_time_get_api(int *ageing)
 }
 
 
-int nsm_gmac_set_api(int indx, mac_t *mac, int len)
+int nsm_gmac_set_api(int indx, mac_t *mac, ospl_uint32 len)
 {
 	int ret = ERROR;
 	//l2mac_t *value;
@@ -311,7 +311,7 @@ int nsm_gmac_set_api(int indx, mac_t *mac, int len)
 	return ret;
 }
 
-int nsm_gmac_get_api(int indx, mac_t *mac, int len)
+int nsm_gmac_get_api(int indx, mac_t *mac, ospl_uint32 len)
 {
 	int ret = ERROR;
 	//l2mac_t *value;

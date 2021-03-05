@@ -21,21 +21,21 @@
 #include "hal_mac.h"
 #include "hal_driver.h"
 
-int hal_mac_age(int age)
+int hal_mac_age(ospl_uint32 age)
 {
 	if(hal_driver && hal_driver->mac_tbl && hal_driver->mac_tbl->sdk_mac_age_cb)
 		return hal_driver->mac_tbl->sdk_mac_age_cb(hal_driver->driver, age);
 	return ERROR;
 }
 
-int hal_mac_add(ifindex_t ifindex, vlan_t vlan, mac_t *mac, int pri)
+int hal_mac_add(ifindex_t ifindex, vlan_t vlan, mac_t *mac, ospl_uint32 pri)
 {
 	if(hal_driver && hal_driver->mac_tbl && hal_driver->mac_tbl->sdk_mac_add_cb)
 		return hal_driver->mac_tbl->sdk_mac_add_cb(hal_driver->driver, ifindex, vlan, mac, pri);
 	return ERROR;
 }
 
-int hal_mac_del(ifindex_t ifindex, vlan_t vlan, mac_t *mac, int pri)
+int hal_mac_del(ifindex_t ifindex, vlan_t vlan, mac_t *mac, ospl_uint32 pri)
 {
 	if(hal_driver && hal_driver->mac_tbl && hal_driver->mac_tbl->sdk_mac_del_cb)
 		return hal_driver->mac_tbl->sdk_mac_del_cb(hal_driver->driver, ifindex, vlan, mac, pri);

@@ -24,6 +24,10 @@
 #ifndef _ROUTER_ID_H_
 #define _ROUTER_ID_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <zebra.h>
 
 #include "memory.h"
@@ -41,5 +45,9 @@ extern void router_id_set (struct prefix *, vrf_id_t );
 
 extern void cmd_router_id_init(void);
 extern void router_id_write(struct vty *);
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

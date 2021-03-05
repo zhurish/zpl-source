@@ -83,9 +83,9 @@ static int web_factory_action(Webs *wp, char *path, char *query)
 		return web_return_text_plain(wp, ERROR);
 	}
 	if(strstr(strval, "X5CM"))
-		glinfo.X5CM = (TRUE);
+		glinfo.X5CM = (ospl_true);
 	else
-		glinfo.X5CM = (FALSE);
+		glinfo.X5CM = (ospl_false);
 
 	strval = webs_get_var(wp, T("device"), T(""));
 	if (NULL == strval)
@@ -119,9 +119,9 @@ static int web_factory_action(Webs *wp, char *path, char *query)
 		return web_return_text_plain(wp, ERROR);
 	}
 	if(strstr(strval, "out"))
-		glinfo.out_direction = (TRUE);
+		glinfo.out_direction = (ospl_true);
 	else
-		glinfo.out_direction = (FALSE);
+		glinfo.out_direction = (ospl_false);
 
 	strval = webs_get_var(wp, T("server"), T(""));
 	if (NULL == strval)
@@ -132,9 +132,9 @@ static int web_factory_action(Webs *wp, char *path, char *query)
 
 	strval = webs_get_var(wp, T("doorcontact"), T(""));
 	if(strstr(strval, "true"))
-		glinfo.doorcontact = TRUE;
+		glinfo.doorcontact = ospl_true;
 	else
-		glinfo.doorcontact = FALSE;
+		glinfo.doorcontact = ospl_false;
 
 	strval = webs_get_var(wp, T("topf"), T(""));
 	if (NULL == strval)
@@ -146,10 +146,10 @@ static int web_factory_action(Webs *wp, char *path, char *query)
 	if(glinfo.doorcontact != x5b_app_global->doorcontact)
 	{
 		x5b_app_global->doorcontact = glinfo.doorcontact;
-		x5b_app_open_option_action(x5b_app_open, FALSE, TRUE);
+		x5b_app_open_option_action(x5b_app_open, ospl_false, ospl_true);
 	}
 
-	ret = x5b_app_global_config_action(&glinfo, TRUE);
+	ret = x5b_app_global_config_action(&glinfo, ospl_true);
 
 	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);
@@ -231,9 +231,9 @@ static int web_openconfig_action(Webs *wp, char *path, char *query)
 		return web_return_text_plain(wp, ERROR);
 	}
 	if(strstr(strval, "true"))
-		openconf.openalarm = TRUE;
+		openconf.openalarm = ospl_true;
 	else
-		openconf.openalarm = FALSE;
+		openconf.openalarm = ospl_false;
 
 	if(openconf.openalarm)
 	{
@@ -250,17 +250,17 @@ static int web_openconfig_action(Webs *wp, char *path, char *query)
 		return web_return_text_plain(wp, ERROR);
 	}
 	if(strstr(strval, "true"))
-		openconf.tamperalarm = TRUE;
+		openconf.tamperalarm = ospl_true;
 	else
-		openconf.tamperalarm = FALSE;
+		openconf.tamperalarm = ospl_false;
 
 /*	strval = webs_get_var(wp, T("doorcontact"), T(""));
 	if (NULL != strval)
 	{
 		if(strstr(strval, "true"))
-			x5b_app_open.rev = TRUE;
+			x5b_app_open.rev = ospl_true;
 		else
-			x5b_app_open.rev = FALSE;
+			x5b_app_open.rev = ospl_false;
 	}*/
 
 	strval = webs_get_var(wp, T("opentype"), T(""));
@@ -276,9 +276,9 @@ static int web_openconfig_action(Webs *wp, char *path, char *query)
 		return web_return_text_plain(wp, ERROR);
 	}
 	if(strstr(strval, "HIGH"))
-		openconf.outrelay = TRUE;
+		openconf.outrelay = ospl_true;
 	else
-		openconf.outrelay = FALSE;
+		openconf.outrelay = ospl_false;
 
 	strval = webs_get_var(wp, T("wiggins"), T(""));
 	if (NULL == strval)
@@ -287,7 +287,7 @@ static int web_openconfig_action(Webs *wp, char *path, char *query)
 	}
 	openconf.wiggins = atoi(strval);
 
-	ret = x5b_app_open_option_action(&openconf, TRUE, TRUE);
+	ret = x5b_app_open_option_action(&openconf, ospl_true, ospl_true);
 	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);
 	websWriteHeader(wp, "Content-Type", "text/plain");
@@ -334,7 +334,7 @@ static int web_faceconfig_get(Webs *wp, char *path, char *query)
 	strcat(cmdbuf, tmp);
 
 	memset(tmp, 0, sizeof(tmp));
-	sprintf(tmp, "\"success_intervals\":\"%d\",", x5b_app_face->faceOKContinuousTime);
+	sprintf(tmp, "\"succesospl_intervals\":\"%d\",", x5b_app_face->faceOKContinuousTime);
 	strcat(cmdbuf, tmp);
 
 	memset(tmp, 0, sizeof(tmp));
@@ -404,9 +404,9 @@ static int web_faceconfig_set(Webs *wp, char *path, char *query)
 		return web_return_text_plain(wp, ERROR);
 	}
 	if(strstr(strval, "true"))
-		info.livenessSwitch = TRUE;
+		info.livenessSwitch = ospl_true;
 	else
-		info.livenessSwitch = FALSE;
+		info.livenessSwitch = ospl_false;
 
 	//if(info.livenessSwitch)
 	{
@@ -493,7 +493,7 @@ static int web_faceconfig_set(Webs *wp, char *path, char *query)
 	}
 	info.faceRecognizeHeight = atoi(strval);
 
-	strval = webs_get_var(wp, T("success_intervals"), T(""));
+	strval = webs_get_var(wp, T("succesospl_intervals"), T(""));
 	if (NULL == strval)
 	{
 		return web_return_text_plain(wp, ERROR);
@@ -506,7 +506,7 @@ static int web_faceconfig_set(Webs *wp, char *path, char *query)
 		return web_return_text_plain(wp, ERROR);
 	}
 	info.faceERRContinuousTime = atoi(strval);
-	return x5b_app_face_config_action(&info, TRUE);
+	return x5b_app_face_config_action(&info, ospl_true);
 /*	if(x5b_app_mgt && x5b_app_mode_X5CM())
 	{
 		if(x5b_app_face_config_json(NULL, &info, E_CMD_TO_C) == OK)

@@ -24,6 +24,10 @@
 #ifndef _QUAGGA_SIGNAL_H
 #define _QUAGGA_SIGNAL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <thread.h>
 
 
@@ -54,5 +58,9 @@ extern void signal_init (int sigc,
 /* check whether there are signals to handle, process any found */
 extern int quagga_sigevent_process (void);
 
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _QUAGGA_SIGNAL_H */

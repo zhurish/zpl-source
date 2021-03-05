@@ -9,6 +9,10 @@
 #define __NSM_DHCP_H__
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef PL_DHCP_MODULE
 
 #define DHCPS_NAME_MAX	64
@@ -70,15 +74,15 @@ enum
 typedef struct nsm_dhcps_host_s
 {
 	NODE			node;
-	u_int8 			mac[ETHER_ADDR_LEN];
+	ospl_uint8 			mac[ETHER_ADDR_LEN];
 	struct prefix 	address;
-	u_int8 			hostname[DHCPS_NAME_MAX];
+	ospl_uint8 			hostname[DHCPS_NAME_MAX];
 }nsm_dhcps_host_t;
 
 typedef struct nsm_dhcps_exclude_s
 {
 	NODE			node;
-	BOOL			range;
+	ospl_bool			range;
 	struct prefix 	start_address;
 	struct prefix 	end_address;
 
@@ -87,7 +91,7 @@ typedef struct nsm_dhcps_exclude_s
 typedef struct nsm_dhcps_s
 {
 	NODE			node;
-	char 			name[DHCPS_NAME_MAX];
+	ospl_char 			name[DHCPS_NAME_MAX];
 
 	struct prefix 	address;
 	struct prefix 	start_address;
@@ -102,14 +106,14 @@ typedef struct nsm_dhcps_s
 	struct prefix 	netbios;
 	struct prefix 	netbios_secondary;
 	struct prefix 	tftp;
-	char 			domain_name[DHCPS_NAME_MAX];
+	ospl_char 			domain_name[DHCPS_NAME_MAX];
 
-	int				lease_time;
+	ospl_uint32				lease_time;
 
 	LIST			hostlist;
 	LIST			excludedlist;
 
-	BOOL			active;
+	ospl_bool			active;
 
 	void			*pool;
 
@@ -119,7 +123,7 @@ typedef struct nsm_dhcps_s
 
 typedef struct Gnsm_dhcps_s
 {
-	BOOL	enable;
+	ospl_bool	enable;
 	LIST	*dhcpslist;
 	void	*mutex;
 }Gnsm_dhcps_t;
@@ -132,8 +136,8 @@ typedef struct nsm_dhcp_ifp_s
 {
 	struct interface	*ifp;
 	nsm_dhcp_type 		type;
-	BOOL				hiden;
-	BOOL				running;
+	ospl_bool				hiden;
+	ospl_bool				running;
 	void				*client;
 	void				*server;
 	void				*relay;
@@ -143,7 +147,7 @@ typedef struct nsm_dhcp_ifp_s
 extern nsm_dhcp_ifp_t *nsm_dhcp_get(struct interface *ifp);
 
 extern nsm_dhcp_type nsm_interface_dhcp_mode_get_api(struct interface *ifp);
-extern int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type, char *name);
+extern int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type, ospl_char *name);
 
 
 extern int nsm_dhcp_interface_set_pravite(struct interface *ifp, nsm_dhcp_type type, void *pVoid);
@@ -156,28 +160,28 @@ extern int nsm_interface_dhcp_config(struct vty *vty, struct interface *ifp);
 extern int nsm_dhcps_init(void);
 extern int nsm_dhcps_exit(void);
 
-extern nsm_dhcps_t * nsm_dhcps_lookup_api(char *name);
-extern int nsm_dhcps_add_api(char *name);
-extern int nsm_dhcps_del_api(char *name);
+extern nsm_dhcps_t * nsm_dhcps_lookup_api(ospl_char *name);
+extern int nsm_dhcps_add_api(ospl_char *name);
+extern int nsm_dhcps_del_api(ospl_char *name);
 
-extern int nsm_dhcps_set_api(nsm_dhcps_t *dhcps, int cmd, void *val);
-extern int nsm_dhcps_unset_api(nsm_dhcps_t *dhcps, int cmd);
-extern int nsm_dhcps_get_api(nsm_dhcps_t *dhcps, int cmd, void *val);
+extern int nsm_dhcps_set_api(nsm_dhcps_t *dhcps, ospl_uint32 cmd, void *val);
+extern int nsm_dhcps_unset_api(nsm_dhcps_t *dhcps, ospl_uint32 cmd);
+extern int nsm_dhcps_get_api(nsm_dhcps_t *dhcps, ospl_uint32 cmd, void *val);
 
-extern nsm_dhcps_host_t * nsm_dhcps_host_lookup_api(nsm_dhcps_t *dhcps, char *address, u_int8 *mac);
-extern int nsm_dhcps_add_host_api(nsm_dhcps_t *dhcps, char *address, u_int8 *mac);
-extern int nsm_dhcps_del_host_api(nsm_dhcps_t *dhcps, char *address, u_int8 *mac);
+extern nsm_dhcps_host_t * nsm_dhcps_host_lookup_api(nsm_dhcps_t *dhcps, ospl_char *address, ospl_uint8 *mac);
+extern int nsm_dhcps_add_host_api(nsm_dhcps_t *dhcps, ospl_char *address, ospl_uint8 *mac);
+extern int nsm_dhcps_del_host_api(nsm_dhcps_t *dhcps, ospl_char *address, ospl_uint8 *mac);
 /******************************* exclude list **********************************/
-extern nsm_dhcps_exclude_t * nsm_dhcps_exclude_list_lookup_api(nsm_dhcps_t *dhcps, char *address, char *endaddress);
-extern int nsm_dhcps_add_exclude_list_api(nsm_dhcps_t *dhcps, char *address, char *endaddress);
-extern int nsm_dhcps_del_exclude_list_api(nsm_dhcps_t *dhcps, char *address, char *endaddress);
+extern nsm_dhcps_exclude_t * nsm_dhcps_exclude_list_lookup_api(nsm_dhcps_t *dhcps, ospl_char *address, ospl_char *endaddress);
+extern int nsm_dhcps_add_exclude_list_api(nsm_dhcps_t *dhcps, ospl_char *address, ospl_char *endaddress);
+extern int nsm_dhcps_del_exclude_list_api(nsm_dhcps_t *dhcps, ospl_char *address, ospl_char *endaddress);
 
 extern int nsm_dhcps_lease_foreach(int(*cb)(void *, void *), void *p);
 
 extern int nsm_dhcps_write_config(struct vty *vty);
-extern int nsm_dhcps_lease_show(struct vty *vty, struct interface *ifp, char *poolname, BOOL detail);
-extern int nsm_dhcps_pool_show(struct vty *vty, BOOL detail);
-extern int nsm_interface_dhcps_enable(nsm_dhcps_t *pool, ifindex_t kifindex, BOOL enable);
+extern int nsm_dhcps_lease_show(struct vty *vty, struct interface *ifp, ospl_char *poolname, ospl_bool detail);
+extern int nsm_dhcps_pool_show(struct vty *vty, ospl_bool detail);
+extern int nsm_interface_dhcps_enable(nsm_dhcps_t *pool, ifindex_t kifindex, ospl_bool enable);
 
 extern void cmd_dhcps_init(void);
 #endif
@@ -185,13 +189,13 @@ extern void cmd_dhcps_init(void);
 
 #ifdef PL_DHCPC_MODULE
 
-extern int nsm_interface_dhcpc_enable(struct interface *ifp, BOOL enable);
-extern int nsm_interface_dhcpc_start(struct interface *ifp, BOOL enable);
-extern BOOL nsm_interface_dhcpc_is_running(struct interface *ifp);
-extern int nsm_interface_dhcpc_option(struct interface *ifp,  BOOL enable, int index, char *option);
+extern int nsm_interface_dhcpc_enable(struct interface *ifp, ospl_bool enable);
+extern int nsm_interface_dhcpc_start(struct interface *ifp, ospl_bool enable);
+extern ospl_bool nsm_interface_dhcpc_is_running(struct interface *ifp);
+extern int nsm_interface_dhcpc_option(struct interface *ifp,  ospl_bool enable, ospl_uint32 index, ospl_char *option);
 
 extern int nsm_interface_dhcpc_write_config(struct interface *ifp, struct vty *vty);
-extern int nsm_interface_dhcpc_client_show(struct interface *ifp, struct vty *vty, BOOL detail);
+extern int nsm_interface_dhcpc_client_show(struct interface *ifp, struct vty *vty, ospl_bool detail);
 
 extern void cmd_dhcpc_init(void);
 #endif
@@ -207,6 +211,10 @@ extern int nsm_dhcp_task_init ();
 extern int nsm_dhcp_task_exit ();
 
 
+#endif
+ 
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __NSM_DHCP_H__ */

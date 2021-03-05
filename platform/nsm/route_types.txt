@@ -8,7 +8,7 @@
 #
 ####
 # 7 field line has format:
-# ZServ route type, canonical name, daemon, route char, ipv4, ipv6, short desc
+# ZServ route type, canonical name, daemon, route ospl_char, ipv4, ipv6, short desc
 #
 # Zserv route type: 	Corresponding with zebra.h. Key field.
 # canonical name:	Typically derived from the route type definition.
@@ -19,7 +19,7 @@
 #			NULL if not applicable.
 #			M:N definitions of type:daemon are allowed.
 #			Used to construct vty command strings.
-# route char:		Single character to denote the route, if applicable.
+# route ospl_char:		Single character to denote the route, if applicable.
 #			Used to denote route type where space is tight,
 #			e.g. 'show ip route' / 'show ipv6 route'.
 #			'X' is reserved as the 'not needed' placeholder.

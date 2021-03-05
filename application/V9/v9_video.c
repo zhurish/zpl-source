@@ -40,7 +40,7 @@
 
 
 
-int v9_sqldb_debug_api(BOOL enable, u_int32 flag)
+int v9_sqldb_debug_api(ospl_bool enable, ospl_uint32 flag)
 {
 	if(enable)
 		_sqldb_debug |= flag;
@@ -49,7 +49,7 @@ int v9_sqldb_debug_api(BOOL enable, u_int32 flag)
 	return OK;
 }
 
-int v9_user_debug_api(BOOL enable, u_int32 flag)
+int v9_user_debug_api(ospl_bool enable, ospl_uint32 flag)
 {
 	if(enable)
 		__user_debug_flag |= flag;
@@ -58,7 +58,7 @@ int v9_user_debug_api(BOOL enable, u_int32 flag)
 	return OK;
 }
 
-int v9_video_sdk_debug_api(BOOL enable, u_int32 flag)
+int v9_video_sdk_debug_api(ospl_bool enable, ospl_uint32 flag)
 {
 	if(enable)
 		__sdk_debug_flag |= flag;
@@ -67,7 +67,7 @@ int v9_video_sdk_debug_api(BOOL enable, u_int32 flag)
 	return OK;
 }
 
-int v9_serial_debug_api(BOOL enable, u_int32 flag)
+int v9_serial_debug_api(ospl_bool enable, ospl_uint32 flag)
 {
 	if(v9_serial)
 	{
@@ -80,7 +80,7 @@ int v9_serial_debug_api(BOOL enable, u_int32 flag)
 }
 
 
-int v9_video_debug_config(struct vty *vty, BOOL detail)
+int v9_video_debug_config(struct vty *vty, ospl_bool detail)
 {
 	if(V9_SQLDB_DEBUG(MSG))
 		vty_out (vty, " debug video sqldb msg%s", VTY_NEWLINE);
@@ -134,11 +134,11 @@ int v9_video_debug_config(struct vty *vty, BOOL detail)
 	return OK;
 }
 
-int v9_app_snapfea_key_alloc(sql_snapfea_key *key, BOOL nomem)
+int v9_app_snapfea_key_alloc(sql_snapfea_key *key, ospl_bool nomem)
 {
 	if(nomem)
 		return OK;
-	key->feature.feature_data = key->feature.ckey_data = XMALLOC(MTYPE_VIDEO_KEY, APP_FEATURE_MAX * sizeof(float));									// 特征值
+	key->feature.feature_data = key->feature.ckey_data = XMALLOC(MTYPE_VIDEO_KEY, APP_FEATURE_MAX * sizeof(ospl_float));									// 特征值
 	if(key->feature.ckey_data)
 	{
 		return OK;
@@ -158,7 +158,7 @@ int v9_app_snapfea_key_free(sql_snapfea_key *key)
 }
 
 
-char * v9_app_age_string(u_int32 age)
+char * v9_app_age_string(ospl_uint32 age)
 {
 	if(age == 0)
 		return "儿童";

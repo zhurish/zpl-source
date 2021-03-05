@@ -45,8 +45,8 @@ struct if_master
 {
 	int (*interface_add_cb)(struct interface *);
 	int (*interface_delete_cb)(struct interface *);
-	int llc;
-	int mode;
+	ospl_uint32 llc;
+	ospl_uint32 mode;
 };
 
 struct if_master if_master =
@@ -81,7 +81,7 @@ int if_hook_add(int (*add_cb)(struct interface *), int (*del_cb)(struct interfac
 	return OK;
 }
 
-int if_new_llc_type_mode(int llc, int mode)
+int if_new_llc_type_mode(ospl_uint32 llc, ospl_uint32 mode)
 {
 	if_master.llc = llc;
 	if_master.mode = mode;
@@ -98,9 +98,9 @@ int if_new_llc_type_mode(int llc, int mode)
  */
 int if_cmp_func(struct interface *ifp1, struct interface *ifp2)
 {
-	unsigned int l1, l2;
-	long int x1, x2;
-	char *p1, *p2;
+	ospl_uint32  l1, l2;
+	ospl_uint32 x1, x2;
+	ospl_char *p1, *p2;
 	int res;
 
 	p1 = ifp1->name;
@@ -179,7 +179,7 @@ int if_cmp_func(struct interface *ifp1, struct interface *ifp2)
 
 /* Create new interface structure. */
 
-static int if_create_make_ifname(struct interface *ifp, const char *name, int namelen)
+static int if_create_make_ifname(struct interface *ifp, const char *name, ospl_uint32 namelen)
 {
 	if (ifp->if_type == IF_SERIAL ||
 		ifp->if_type == IF_ETHERNET ||
@@ -294,7 +294,7 @@ static int if_make_ifindex_type(struct interface *ifp)
 }
 
 struct interface *
-if_create_vrf_dynamic(const char *name, int namelen, vrf_id_t vrf_id)
+if_create_vrf_dynamic(const char *name, ospl_uint32 namelen, vrf_id_t vrf_id)
 {
 	struct interface *ifp;
 	struct list *intf_list = intfList;
@@ -306,7 +306,7 @@ if_create_vrf_dynamic(const char *name, int namelen, vrf_id_t vrf_id)
 	assert(namelen <= INTERFACE_NAMSIZ); /* Need space for '\0' at end. */
 	ifp->if_type = if_iftype_make(name);
 
-	ifp->dynamic = TRUE;
+	ifp->dynamic = ospl_true;
 
 	if (if_create_make_ifname(ifp, name, namelen) != OK)
 	{
@@ -361,7 +361,7 @@ if_create_vrf_dynamic(const char *name, int namelen, vrf_id_t vrf_id)
 }
 
 struct interface *
-if_create_vrf(const char *name, int namelen, vrf_id_t vrf_id)
+if_create_vrf(const char *name, ospl_uint32 namelen, vrf_id_t vrf_id)
 {
 	struct interface *ifp;
 	struct list *intf_list = intfList;
@@ -373,7 +373,7 @@ if_create_vrf(const char *name, int namelen, vrf_id_t vrf_id)
 	assert(namelen <= INTERFACE_NAMSIZ); /* Need space for '\0' at end. */
 	ifp->if_type = if_iftype_make(name);
 
-	ifp->dynamic = FALSE;
+	ifp->dynamic = ospl_false;
 
 	if (if_create_make_ifname(ifp, name, namelen) != OK)
 	{
@@ -426,13 +426,13 @@ if_create_vrf(const char *name, int namelen, vrf_id_t vrf_id)
 }
 
 struct interface *
-if_create(const char *name, int namelen)
+if_create(const char *name, ospl_uint32 namelen)
 {
 	return if_create_vrf(name, namelen, VRF_DEFAULT);
 }
 
 struct interface *
-if_create_dynamic(const char *name, int namelen)
+if_create_dynamic(const char *name, ospl_uint32 namelen)
 {
 	return if_create_vrf_dynamic(name, namelen, VRF_DEFAULT);
 }
@@ -638,7 +638,7 @@ if_lookup_by_name(const char *name)
 }
 
 struct interface *
-if_lookup_by_name_len_vrf(const char *name, size_t namelen, vrf_id_t vrf_id)
+if_lookup_by_name_len_vrf(const char *name, ospl_uint32 namelen, vrf_id_t vrf_id)
 {
 	struct listnode *node;
 	struct interface *ifp;
@@ -655,19 +655,19 @@ if_lookup_by_name_len_vrf(const char *name, size_t namelen, vrf_id_t vrf_id)
 }
 
 struct interface *
-if_lookup_by_name_len(const char *name, size_t namelen)
+if_lookup_by_name_len(const char *name, ospl_uint32 namelen)
 {
 	return if_lookup_by_name(name);
 }
 
-unsigned int ifindex2vlan(ifindex_t ifindex)
+ospl_uint32  ifindex2vlan(ifindex_t ifindex)
 {
 
 	struct interface *ifp = if_lookup_by_index(ifindex);
 	return ifp ? ifp->encavlan : IFINDEX_INTERNAL;
 }
 
-struct interface *if_lookup_by_encavlan(unsigned short encavlan)
+struct interface *if_lookup_by_encavlan(ospl_ushort encavlan)
 {
 	struct listnode *node;
 	struct interface *ifp;
@@ -721,7 +721,7 @@ if_lookup_address_vrf(struct in_addr src, vrf_id_t vrf_id)
 {
 	struct listnode *node;
 	struct prefix addr;
-	int bestlen = 0;
+	ospl_uint32 bestlen = 0;
 	struct listnode *cnode;
 	struct interface *ifp;
 	struct connected *c;
@@ -788,7 +788,7 @@ if_lookup_prefix(struct prefix *prefix)
 	return if_lookup_prefix_vrf(prefix, VRF_DEFAULT);
 }
 
-int if_count_lookup_type(if_type_t type)
+ospl_uint32 if_count_lookup_type(if_type_t type)
 {
 	struct listnode *node;
 	//struct listnode *cnode;
@@ -863,26 +863,26 @@ int if_down(struct interface *ifp)
 	return OK;
 }
 /* Does interface up ? */
-int if_is_up(struct interface *ifp)
+ospl_bool if_is_up(struct interface *ifp)
 {
 	return ifp->flags & IFF_UP;
 }
 
 /* Is interface running? */
-int if_is_running(struct interface *ifp)
+ospl_bool if_is_running(struct interface *ifp)
 {
 	return ifp->flags & IFF_RUNNING;
 }
 
 /* Is the interface operative, eg. either UP & RUNNING
  or UP & !ZEBRA_INTERFACE_LINK_DETECTION */
-int if_is_operative(struct interface *ifp)
+ospl_bool if_is_operative(struct interface *ifp)
 {
 	return ((ifp->flags & IFF_UP) && (ifp->flags & IFF_RUNNING || !CHECK_FLAG(ifp->status, ZEBRA_INTERFACE_LINKDETECTION)));
 }
 
 /* Is this loopback interface ? */
-int if_is_loopback(struct interface *ifp)
+ospl_bool if_is_loopback(struct interface *ifp)
 {
 	/* XXX: Do this better, eg what if IFF_WHATEVER means X on platform M
 	 * but Y on platform N?
@@ -891,24 +891,24 @@ int if_is_loopback(struct interface *ifp)
 }
 
 /* Does this interface support broadcast ? */
-int if_is_broadcast(struct interface *ifp)
+ospl_bool if_is_broadcast(struct interface *ifp)
 {
 	return ifp->flags & IFF_BROADCAST;
 }
 
 /* Does this interface support broadcast ? */
-int if_is_pointopoint(struct interface *ifp)
+ospl_bool if_is_pointopoint(struct interface *ifp)
 {
 	return ifp->flags & IFF_POINTOPOINT;
 }
 
 /* Does this interface support multicast ? */
-int if_is_multicast(struct interface *ifp)
+ospl_bool if_is_multicast(struct interface *ifp)
 {
 	return ifp->flags & IFF_MULTICAST;
 }
 
-int if_is_serial(struct interface *ifp)
+ospl_bool if_is_serial(struct interface *ifp)
 {
 	if (os_strstr(ifp->name, "serial"))
 		return 1;
@@ -919,7 +919,7 @@ int if_is_serial(struct interface *ifp)
 	return 0;
 }
 
-int if_is_ethernet(struct interface *ifp)
+ospl_bool if_is_ethernet(struct interface *ifp)
 {
 	if (os_strstr(ifp->name, "ethernet"))
 		return 1;
@@ -928,7 +928,7 @@ int if_is_ethernet(struct interface *ifp)
 	return 0;
 }
 
-int if_is_tunnel(struct interface *ifp)
+ospl_bool if_is_tunnel(struct interface *ifp)
 {
 	if (os_strstr(ifp->name, "tunnel"))
 		return 1;
@@ -937,7 +937,7 @@ int if_is_tunnel(struct interface *ifp)
 	return 0;
 }
 
-int if_is_lag(struct interface *ifp)
+ospl_bool if_is_lag(struct interface *ifp)
 {
 	if (os_strstr(ifp->name, "port-channel"))
 		return 1;
@@ -946,12 +946,12 @@ int if_is_lag(struct interface *ifp)
 	return 0;
 }
 
-int if_is_lag_member(struct interface *ifp)
+ospl_bool if_is_lag_member(struct interface *ifp)
 {
 	return CHECK_FLAG(ifp->ifmember, IF_TRUNK_MEM);
 }
 
-int if_is_vlan(struct interface *ifp)
+ospl_bool if_is_vlan(struct interface *ifp)
 {
 	if (os_strstr(ifp->name, "vlan"))
 		return 1;
@@ -960,26 +960,26 @@ int if_is_vlan(struct interface *ifp)
 	return 0;
 }
 
-int if_is_brigde(struct interface *ifp)
+ospl_bool if_is_brigde(struct interface *ifp)
 {
 	if (ifp->if_type == IF_BRIGDE)
 		return 1;
 	return 0;
 }
 
-int if_is_brigde_member(struct interface *ifp)
+ospl_bool if_is_brigde_member(struct interface *ifp)
 {
 	return CHECK_FLAG(ifp->ifmember, IF_BRIDGE_MEM);
 }
 
-int if_is_loop(struct interface *ifp)
+ospl_bool if_is_loop(struct interface *ifp)
 {
 	if (ifp->if_type == IF_LOOPBACK)
 		return 1;
 	return 0;
 }
 
-int if_is_wireless(struct interface *ifp)
+ospl_bool if_is_wireless(struct interface *ifp)
 {
 	if (os_strstr(ifp->name, "wireless"))
 		return 1;
@@ -1000,7 +1000,7 @@ int if_kname_set(struct interface *ifp, const char *str)
 {
 	if (strlen(str))
 	{
-		char buf[INTERFACE_NAMSIZ + 1];
+		ospl_char buf[INTERFACE_NAMSIZ + 1];
 		os_memset(buf, 0, sizeof(buf));
 		os_strcpy(buf, str);
 		os_memset(ifp->k_name, 0, sizeof(ifp->k_name));
@@ -1210,12 +1210,12 @@ connected_check(struct interface *ifp, struct prefix *p)
 
 /* Print if_addr structure. */
 static void __attribute__((unused))
-connected_log(struct connected *connected, char *str)
+connected_log(struct connected *connected, ospl_char *str)
 {
 	struct prefix *p;
 	struct interface *ifp;
-	char logbuf[BUFSIZ];
-	char buf[BUFSIZ];
+	ospl_char logbuf[BUFSIZ];
+	ospl_char buf[BUFSIZ];
 
 	ifp = connected->ifp;
 	p = connected->address;
@@ -1235,10 +1235,10 @@ connected_log(struct connected *connected, char *str)
 
 /* Printout flag information into log */
 const char *
-if_flag_dump(unsigned long flag)
+if_flag_dump(ospl_ulong flag)
 {
-	int separator = 0;
-	static char logbuf[BUFSIZ];
+	ospl_uint32 separator = 0;
+	static ospl_char logbuf[BUFSIZ];
 
 #define IFF_OUT_LOG(X, STR)               \
 	if (flag & (X))                       \
@@ -1316,7 +1316,7 @@ void if_init()
 		intfList = list_new();
 		if (ifMutex == NULL)
 			ifMutex = os_mutex_init();
-		(intfList)->cmp = (int (*)(void *, void *))if_cmp_func;
+		(intfList)->cmp = (ospl_int (*)(void *, void *))if_cmp_func;
 	}
 }
 
@@ -1379,7 +1379,7 @@ if_link_type_str(enum zebra_link_type llt)
 }
 
 enum zebra_link_type
-netlink_to_zebra_link_type(unsigned int hwt)
+netlink_to_zebra_link_type(ospl_uint32  hwt)
 {
 	switch (hwt)
 	{

@@ -53,25 +53,25 @@ config switch_vlan
 #define SWITCH_PORT_CPU		6
 typedef struct sw_port
 {
-	u_int8		port;
-	u_int8		is_active:1;
-	u_int8		tagged:1;
-	u_int8		wan:1;
-	u_int8		is_cpu:1;
-	u_int8		disable:1;
-	u_int8		res:3;
+	ospl_uint8		port;
+	ospl_uint8		is_active:1;
+	ospl_uint8		tagged:1;
+	ospl_uint8		wan:1;
+	ospl_uint8		is_cpu:1;
+	ospl_uint8		disable:1;
+	ospl_uint8		res:3;
 }sw_port_t;
 
 typedef struct sw_vlan
 {
-	u_int16		vlan;
-	u_int8		wanlan;
+	ospl_uint16		vlan;
+	ospl_uint8		wanlan;
 	sw_port_t	ports[SWITCH_PORTS_MAX];
 }sw_vlan_t;
 
 typedef struct switch_dev
 {
-	BOOL			vlan_enable;
+	ospl_bool			vlan_enable;
 	sw_vlan_t 		vlan[SWITCH_VLAN_MAX];
 }switch_dev_t;
 
@@ -370,7 +370,7 @@ static int _switch_dev_vlan_clean_by_noport(switch_dev_t *dev)
 	return OK;
 }
 
-static int _switch_dev_vlan_create(switch_dev_t *dev, u_int16 vlan)
+static int _switch_dev_vlan_create(switch_dev_t *dev, ospl_uint16 vlan)
 {
 	int i = 0;
 	for(i = 0; i < SWITCH_VLAN_MAX; i++)
@@ -391,7 +391,7 @@ static int _switch_dev_vlan_create(switch_dev_t *dev, u_int16 vlan)
 	return OK;
 }
 
-static int _switch_dev_vlan_get_port(switch_dev_t *dev, u_int16 *vlan, u_int8 port)
+static int _switch_dev_vlan_get_port(switch_dev_t *dev, ospl_uint16 *vlan, ospl_uint8 port)
 {
 	int i = 0, j = 0;
 	for(i = 0; i < SWITCH_VLAN_MAX; i++)
@@ -412,7 +412,7 @@ static int _switch_dev_vlan_get_port(switch_dev_t *dev, u_int16 *vlan, u_int8 po
 	return ERROR;
 }
 
-static int _switch_dev_vlan_add_port(switch_dev_t *dev, u_int16 vlan, u_int8 port, u_int8 tag, u_int8 wan)
+static int _switch_dev_vlan_add_port(switch_dev_t *dev, ospl_uint16 vlan, ospl_uint8 port, ospl_uint8 tag, ospl_uint8 wan)
 {
 	int i = 0, j = 0;
 	for(i = 0; i < SWITCH_VLAN_MAX; i++)
@@ -440,7 +440,7 @@ static int _switch_dev_vlan_add_port(switch_dev_t *dev, u_int16 vlan, u_int8 por
 	return ERROR;
 }
 
-static int _switch_dev_vlan_del_port(switch_dev_t *dev, u_int16 vlan, u_int8 port)
+static int _switch_dev_vlan_del_port(switch_dev_t *dev, ospl_uint16 vlan, ospl_uint8 port)
 {
 	int i = 0, j = 0;
 	for(i = 0; i < SWITCH_VLAN_MAX; i++)
@@ -462,8 +462,8 @@ static int _switch_dev_vlan_del_port(switch_dev_t *dev, u_int16 vlan, u_int8 por
 	return ERROR;
 }
 
-static int _switch_dev_vlan_update_port(switch_dev_t *dev, u_int16 vlan,
-		u_int8 port, u_int8 tag, u_int8 wan)
+static int _switch_dev_vlan_update_port(switch_dev_t *dev, ospl_uint16 vlan,
+		ospl_uint8 port, ospl_uint8 tag, ospl_uint8 wan)
 {
 	int i = 0, j = 0;
 	for(i = 0; i < SWITCH_VLAN_MAX; i++)
@@ -486,7 +486,7 @@ static int _switch_dev_vlan_update_port(switch_dev_t *dev, u_int16 vlan,
 	return ERROR;
 }
 
-static int _switch_dev_vlan_port_disable(switch_dev_t *dev, u_int8 port, u_int8 disable)
+static int _switch_dev_vlan_port_disable(switch_dev_t *dev, ospl_uint8 port, ospl_uint8 disable)
 {
 	int i = 0, j = 0;
 	char cmd[128];
@@ -519,10 +519,10 @@ static int web_switch_save_handle(Webs *wp, void *p)
 	//argv = "ACTION=switch&BTNID=" + obj.id + "&port=" + port + "&vlanid=" + vlanid +
 	//"&tagged=" + tagged + "&wanlan=" + wanlan;
 	int ret = 0;
-	u_int8 port = 0;
-	u_int16 vlan = 0;
-	u_int8 tagged = 0;
-	u_int8 wanlan = 0;
+	ospl_uint8 port = 0;
+	ospl_uint16 vlan = 0;
+	ospl_uint8 tagged = 0;
+	ospl_uint8 wanlan = 0;
 	char *strval = NULL;
 	strval = webs_get_var(wp, T("port"), T(""));
 	if (NULL == strval)
@@ -560,7 +560,7 @@ static int web_switch_save_handle(Webs *wp, void *p)
 	ret = 0;
 	if(switch_dev && (_switch_dev_vlan_create(switch_dev, vlan) == OK))
 	{
-		u_int16 oldvlan = 0;//获取该接口所在的VLAN
+		ospl_uint16 oldvlan = 0;//获取该接口所在的VLAN
 		if(_switch_dev_vlan_get_port(switch_dev, &oldvlan, port) == OK)
 		{
 			if(oldvlan == vlan)//该接口所在的VLAN和配置的VLAN一致；更新接口信息

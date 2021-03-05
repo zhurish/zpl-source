@@ -26,7 +26,7 @@
 
 /* Initialize vector : allocate memory and return vector. */
 vector
-vector_init (unsigned int size)
+vector_init (ospl_uint32  size)
 {
   vector v = XCALLOC (MTYPE_VECTOR, sizeof (struct _vector));
 
@@ -62,7 +62,7 @@ vector_free (vector v)
 vector
 vector_copy (vector v)
 {
-  unsigned int size;
+  ospl_uint32  size;
   vector new = XCALLOC (MTYPE_VECTOR, sizeof (struct _vector));
 
   new->active = v->active;
@@ -75,9 +75,9 @@ vector_copy (vector v)
   return new;
 }
 
-/* Check assigned index, and if it runs short double index pointer */
+/* Check assigned index, and if it runs ospl_int16 ospl_double index pointer */
 void
-vector_ensure (vector v, unsigned int num)
+vector_ensure (vector v, ospl_uint32  num)
 {
   if (v->alloced > num)
     return;
@@ -97,7 +97,7 @@ vector_ensure (vector v, unsigned int num)
 int
 vector_empty_slot (vector v)
 {
-  unsigned int i;
+  ospl_uint32  i;
 
   if (v->active == 0)
     return 0;
@@ -113,7 +113,7 @@ vector_empty_slot (vector v)
 int
 vector_set (vector v, void *val)
 {
-  unsigned int i;
+  ospl_uint32  i;
 
   i = vector_empty_slot (v);
   vector_ensure (v, i);
@@ -128,7 +128,7 @@ vector_set (vector v, void *val)
 
 /* Set value to specified index slot. */
 int
-vector_set_index (vector v, unsigned int i, void *val)
+vector_set_index (vector v, ospl_uint32  i, void *val)
 {
   vector_ensure (v, i);
 
@@ -142,7 +142,7 @@ vector_set_index (vector v, unsigned int i, void *val)
 
 /* Look up vector.  */
 void *
-vector_lookup (vector v, unsigned int i)
+vector_lookup (vector v, ospl_uint32  i)
 {
   if (i >= v->active)
     return NULL;
@@ -151,7 +151,7 @@ vector_lookup (vector v, unsigned int i)
 
 /* Lookup vector, ensure it. */
 void *
-vector_lookup_ensure (vector v, unsigned int i)
+vector_lookup_ensure (vector v, ospl_uint32  i)
 {
   vector_ensure (v, i);
   return v->index[i];
@@ -159,7 +159,7 @@ vector_lookup_ensure (vector v, unsigned int i)
 
 /* Unset value at specified index slot. */
 void
-vector_unset (vector v, unsigned int i)
+vector_unset (vector v, ospl_uint32  i)
 {
   if (i >= v->alloced)
     return;
@@ -175,10 +175,10 @@ vector_unset (vector v, unsigned int i)
 }
 
 /* Count the number of not emplty slot. */
-unsigned int
+ospl_uint32 
 vector_count (vector v)
 {
-  unsigned int i;
+  ospl_uint32  i;
   unsigned count = 0;
 
   for (i = 0; i < v->active; i++) 

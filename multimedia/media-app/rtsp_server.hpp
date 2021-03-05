@@ -15,7 +15,13 @@
 #include <iostream>
 #include <fstream>
 #include <list>
-
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "ospl_type.h"
+#ifdef __cplusplus
+}
+#endif
 // live555
 //#include <liveMedia/liveMedia.hh>
 //#include <BasicUsageEnvironment/BasicUsageEnvironment.hh>
@@ -45,7 +51,7 @@ class rtsp_server {
 #endif
     public:
         int rtsp_server_initalize();
-        int rtsp_server_start(Port ourPort, unsigned int reclamationTestSeconds = 65);
+        int rtsp_server_start(Port ourPort, ospl_uint32 reclamationTestSeconds = 65);
         int rtsp_server_tunneling_over_HTTP(int rtspOverHTTPPort);
 
         int rtsp_server_event_loop_running(char * stop);

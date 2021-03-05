@@ -276,21 +276,21 @@ typedef struct
 	void			*master;
 
 	struct in_addr	address;
-	u_int16			port;
+	ospl_uint16			port;
 	void			*aceppt_thread;
-	BOOL 			init;
+	ospl_bool 			init;
 
 	int 			(*loginVerifyRtn)(char *, char *);
     char 			baseDirName [MAX_DIR_NAME_LEN];
 
-	int 			ftpdDebug;	/* TRUE: debugging messages */
-	u_int16 		ftpdWindowSize;
-	u_int8 			ftpsMaxClients; 	/* Default max. for simultaneous connections */
-	u_int8 			ftpsCurrentClients;
+	int 			ftpdDebug;	/* ospl_true: debugging messages */
+	ospl_uint16 		ftpdWindowSize;
+	ospl_uint8 			ftpsMaxClients; 	/* Default max. for simultaneous connections */
+	ospl_uint8 			ftpsCurrentClients;
 
 
-	BOOL 			ftpsActive; 	/* Server started? */
-	BOOL 			ftpsShutdownFlag; 	/* Server halt requested? */
+	ospl_bool 			ftpsActive; 	/* Server started? */
+	ospl_bool 			ftpsShutdownFlag; 	/* Server halt requested? */
 	int 			ftpdServerSock;
 
     }FTPD_CONFIG;
@@ -389,7 +389,7 @@ static int ftpdDataConnGet (FTPD_SESSION_DATA *);
 static void ftpdDataStreamSend (FTPD_SESSION_DATA *, FILE *);
 static void ftpdDataStreamReceive (FTPD_SESSION_DATA *, FILE *outStream);
 static void ftpdSockFree (int *);
-static int ftpdDirListGet (int, char *, BOOL);
+static int ftpdDirListGet (int, char *, ospl_bool);
 
 static void unImplementedType (FTPD_SESSION_DATA *pSlot);
 static void dataError (FTPD_SESSION_DATA *pSlot);
@@ -521,7 +521,7 @@ static void ftpdTask (void)
 
 	/* Fatal error - update state of server. */
 
-	ftpsActive = FALSE;
+	ftpsActive = ospl_false;
 
 	return;
 }
@@ -616,10 +616,10 @@ int ftpdInit
 	ftpd_config.master = master;
 	ftpd_config.loginVerifyRtn = pLoginRtn;
 
-	ftpd_config.ftpsShutdownFlag = FALSE;
+	ftpd_config.ftpsShutdownFlag = ospl_false;
 	ftpd_config.ftpsCurrentClients = 0;
 
-	ftpd_config.ftpdDebug	= 0;	/* TRUE: debugging messages */
+	ftpd_config.ftpdDebug	= 0;	/* ospl_true: debugging messages */
 
 	ftpd_config.ftpdWindowSize = FTPD_WINDOW_SIZE;
 	ftpd_config.ftpsMaxClients = 4; 	/* Default max. for simultaneous connections */
@@ -634,7 +634,7 @@ int ftpdInit
 	lstInit(&ftpsSessionList);
 
 
-	ftpd_config.init = TRUE;
+	ftpd_config.init = ospl_true;
 
 	return (OK);
 }
@@ -703,7 +703,7 @@ int ftpdEnable(char *address, int port)
 
 	/* Create a FTP server task to receive client requests. */
 	ftpd_config.aceppt_thread = eloop_add_read(ftpd_config.master, ftpdTask, &ftpd_config, ftpd_config.ftpdServerSock);
-	ftpd_config.ftpsActive = TRUE;
+	ftpd_config.ftpsActive = ospl_true;
 	return OK;
 }
 
@@ -751,7 +751,7 @@ int ftpdDisable(void)
 
 int ftpdDelete (void)
 {
-	BOOL serverActive = FALSE;
+	ospl_bool serverActive = ospl_false;
 	FTPD_SESSION_DATA * pData;
 
 	if (!ftpd_config.ftpsActive) /* Automatic success if server is not running. */
@@ -763,7 +763,7 @@ int ftpdDelete (void)
 	 */
 
 	if (ftpd_config.ftpsCurrentClients != 0)
-		serverActive = TRUE;
+		serverActive = ospl_true;
 
 	/*
 	 * Set the shutdown flag so that any secondary server tasks will exit
@@ -776,7 +776,7 @@ int ftpdDelete (void)
 	 * in incorrect use of the signalling semaphore.
 	 */
 
-	ftpd_config.ftpsShutdownFlag = TRUE;
+	ftpd_config.ftpsShutdownFlag = ospl_true;
 
 	/*
 	 * Close the command sockets of any active sessions to prevent further
@@ -820,7 +820,7 @@ int ftpdDelete (void)
 
 	lstFree(&ftpsSessionList); /* Sanity check - should already be empty. */
 
-	ftpd_config.ftpsActive = FALSE;
+	ftpd_config.ftpsActive = ospl_false;
 
 	return (OK);
 }
@@ -1651,15 +1651,15 @@ static int ftpdWorkTask
 				pSlot->status |= FTPD_PASSIVE;
 
 				value = pSlot->dataAddr.sin_addr.s_addr;
-				outval1 = ((u_char *) &value)[0];
-				outval2 = ((u_char *) &value)[1];
-				outval3 = ((u_char *) &value)[2];
-				outval4 = ((u_char *) &value)[3];
+				outval1 = ((ospl_uchar *) &value)[0];
+				outval2 = ((ospl_uchar *) &value)[1];
+				outval3 = ((ospl_uchar *) &value)[2];
+				outval4 = ((ospl_uchar *) &value)[3];
 
 				/* Separate port number into bytes. */
 
-				outval5 = ((u_char *) &pSlot->dataAddr.sin_port)[0];
-				outval6 = ((u_char *) &pSlot->dataAddr.sin_port)[1];
+				outval5 = ((ospl_uchar *) &pSlot->dataAddr.sin_port)[0];
+				outval6 = ((ospl_uchar *) &pSlot->dataAddr.sin_port)[1];
 
 				/* tell the client to which port to connect */
 
@@ -2175,7 +2175,7 @@ static void ftpdDataStreamReceive
 	register FILE *inStream; /* buffered input file stream for data socket */
 	register int fileFd; /* output file descriptor */
 	register int netFd; /* network file descriptor */
-	register BOOL dontPutc; /* flag to prevent bogus chars */
+	register ospl_bool dontPutc; /* flag to prevent bogus chars */
 	register int cnt; /* number of chars read/written */
 
 	/* get a fresh data connection or reuse the old one */
@@ -2204,7 +2204,7 @@ static void ftpdDataStreamReceive
 
 		while ((ch = getc(inStream)) != (char) '\0')
 		{
-			dontPutc = FALSE;
+			dontPutc = ospl_false;
 
 			pSlot->byteCount++;
 
@@ -2227,13 +2227,13 @@ static void ftpdDataStreamReceive
 
 					if (ch == '\0' || ch == (char) '\0')
 					{
-						dontPutc = TRUE;
+						dontPutc = ospl_true;
 						break;
 					}
 				}
 			}
 
-			if (dontPutc == FALSE)
+			if (dontPutc == ospl_false)
 				(void) putc(ch, outStream);
 
 			/* Abort file transfer if a shutdown is in progress. */
@@ -2369,9 +2369,9 @@ static void ftpdSockFree
 * stat() does not work on RT-11 filesystem drivers, it is simply not supported.
 *
 * This command is similar to UNIX ls.  It lists the contents of a directory
-* in one of two formats.  If <doLong> is FALSE, only the names of the files
+* in one of two formats.  If <doLong> is ospl_false, only the names of the files
 * (or subdirectories) in the specified directory are displayed.  If <doLong>
-* is TRUE, then the file name, size, date, and time are displayed.  If
+* is ospl_true, then the file name, size, date, and time are displayed.  If
 * doing a long listing, any entries that describe subdirectories will also
 * be flagged with a "DIR" comment.
 *
@@ -2394,7 +2394,7 @@ static int ftpdDirListGet
     (
     int         sd,             /* socket descriptor to write on */
     char        *dirName,       /* name of the directory to be listed */
-    BOOL        doLong          /* if TRUE, do long listing */
+    ospl_bool        doLong          /* if ospl_true, do long listing */
     )
 {
 	register int status; /* return status */
@@ -2403,7 +2403,7 @@ static int ftpdDirListGet
 	struct stat fileStat; /* file status info    (long listing) */
 	struct tm fileDate; /* file date/time      (long listing) */
 	char *pDirComment; /* dir comment         (long listing) */
-	BOOL firstFile; /* first file flag     (long listing) */
+	ospl_bool firstFile; /* first file flag     (long listing) */
 	char fileName[MAX_FILENAME_LENGTH];
 	/* buffer for building file name */
 	static char *monthNames[] =
@@ -2426,7 +2426,7 @@ static int ftpdDirListGet
 	/* List files */
 
 	status = OK;
-	firstFile = TRUE;
+	firstFile = ospl_true;
 
 	do
 	{
@@ -2450,7 +2450,7 @@ static int ftpdDirListGet
 							== ERROR)
 						return (ERROR | closedir(pDir));
 
-					firstFile = FALSE;
+					firstFile = ospl_false;
 				}
 
 				/* Construct path/filename for stat */
@@ -2595,7 +2595,7 @@ static int ftpdCmdSend
     int                 buflen;
     char		buf [BUFSIZE];		/* local buffer */
     register char 		*pBuf = &buf [0];	/* pointer to buffer */
-    BOOL 		lineContinue =
+    ospl_bool 		lineContinue =
 				(code & FTPD_MULTI_LINE) == FTPD_MULTI_LINE;
 
     /*

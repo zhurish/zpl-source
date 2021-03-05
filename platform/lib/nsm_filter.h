@@ -23,6 +23,10 @@
 #ifndef _ZEBRA_FILTER_H
 #define _ZEBRA_FILTER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "if.h"
 
 /* Filter direction.  */
@@ -47,8 +51,8 @@ enum access_type
 /* Access list */
 struct access_list
 {
-  char *name;
-  char *remark;
+  ospl_char *name;
+  ospl_char *remark;
 
   struct access_master *master;
 
@@ -64,9 +68,13 @@ struct access_list
 /* Prototypes for access-list. */
 extern void access_list_init (void);
 extern void access_list_reset (void);
-extern void access_list_add_hook (int, void (*func)(struct access_list *));
-extern void access_list_delete_hook (int, void (*func)(struct access_list *));
+extern void access_list_add_hook (ospl_uint32, void (*func)(struct access_list *));
+extern void access_list_delete_hook (ospl_uint32, void (*func)(struct access_list *));
 extern struct access_list *access_list_lookup (afi_t, const char *);
 extern enum filter_type access_list_apply (struct access_list *, void *);
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ZEBRA_FILTER_H */

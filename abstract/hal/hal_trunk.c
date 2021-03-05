@@ -22,33 +22,33 @@
 #include "hal_driver.h"
 
 
-int hal_trunkid(int trunkid)
+int hal_trunkid(ospl_uint32 trunkid)
 {
 	return (trunkid);
 }
 
-int hal_trunk_enable(BOOL enable)
+int hal_trunk_enable(ospl_bool enable)
 {
 	if(hal_driver && hal_driver->trunk_tbl && hal_driver->trunk_tbl->sdk_trunk_enable_cb)
 		return hal_driver->trunk_tbl->sdk_trunk_enable_cb(hal_driver->driver, enable);
 	return OK;
 }
 
-int hal_trunk_mode(int mode)
+int hal_trunk_mode(ospl_uint32 mode)
 {
 	if(hal_driver && hal_driver->trunk_tbl && hal_driver->trunk_tbl->sdk_trunk_mode_cb)
 		return hal_driver->trunk_tbl->sdk_trunk_mode_cb(hal_driver->driver, mode);
 	return OK;
 }
 
-int hal_trunk_interface_enable(ifindex_t ifindex, int trunkid)
+int hal_trunk_interface_enable(ifindex_t ifindex, ospl_uint32 trunkid)
 {
 	if(hal_driver && hal_driver->trunk_tbl && hal_driver->trunk_tbl->sdk_trunk_add_cb)
 		return hal_driver->trunk_tbl->sdk_trunk_add_cb(hal_driver->driver, ifindex, trunkid);
 	return OK;
 }
 
-int hal_trunk_interface_disable(ifindex_t ifindex, int trunkid)
+int hal_trunk_interface_disable(ifindex_t ifindex, ospl_uint32 trunkid)
 {
 	if(hal_driver && hal_driver->trunk_tbl && hal_driver->trunk_tbl->sdk_trunk_del_cb)
 		return hal_driver->trunk_tbl->sdk_trunk_del_cb(hal_driver->driver, ifindex, trunkid);

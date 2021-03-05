@@ -72,7 +72,7 @@ int codec_payload_index(char *cmdname)
 	return -1;
 }
 
-char * codec_payload_name(int index)
+char * codec_payload_name(ospl_uint32 index)
 {
 	int i = 0;
 	for(i = 0; i < array_size(_voip_payload_table); i++)
@@ -85,7 +85,7 @@ char * codec_payload_name(int index)
 	return NULL;
 }
 
-char * codec_cmdname(int index)
+char * codec_cmdname(ospl_uint32 index)
 {
 	int i = 0;
 	for(i = 0; i < array_size(_voip_payload_table); i++)
@@ -100,7 +100,7 @@ char * codec_cmdname(int index)
 /*************************************************************************/
 /*************************************************************************/
 
-u_int32 voip_get_address(u_int32 ifindex)
+ospl_uint32 voip_get_address(ospl_uint32 ifindex)
 {
 	struct interface * ifp = if_lookup_by_index (ifindex);
 	if(ifp)
@@ -118,7 +118,7 @@ u_int32 voip_get_address(u_int32 ifindex)
 }
 
 #if 0
-int phone_string_to_hex(char * room, u_int8 *phone)
+int phone_string_to_hex(char * room, ospl_uint8 *phone)
 {
 	zassert(room != NULL);
 	int i = 0, ln = strlen(room);
@@ -132,11 +132,11 @@ int phone_string_to_hex(char * room, u_int8 *phone)
 	return i;
 }
 
-int phone_string_to_compress(char * room, u_int8 *phone)
+int phone_string_to_compress(char * room, ospl_uint8 *phone)
 {
 	zassert(room != NULL);
 	int i = 0, j = 0;
-	u_int8 phonetmp[64];
+	ospl_uint8 phonetmp[64];
 	memset(phonetmp, 0, sizeof(phonetmp));
 	int n = phone_string_to_hex(room, phonetmp);
 	if(n & 0x01)
@@ -158,7 +158,7 @@ int phone_string_to_compress(char * room, u_int8 *phone)
 	return j;
 }
 
-int phone_compress_to_uncompress(u_int8 *phonetmp, int len, u_int8 *phone)
+int phone_compress_to_uncompress(ospl_uint8 *phonetmp, int len, ospl_uint8 *phone)
 {
 	int i = 0, j = 0;
 	if(len & 0x01)

@@ -22,26 +22,30 @@
 #ifndef _ZEBRA_KEYCHAIN_H
 #define _ZEBRA_KEYCHAIN_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct keychain
 {
-  char *name;
+  ospl_char *name;
 
   struct list *key;
 };
 
 struct key_range
 {
-  time_t start;
-  time_t end;
+  ospl_time_t start;
+  ospl_time_t end;
 
-  u_char duration;
+  ospl_uchar duration;
 };
 
 struct key
 {
-  u_int32_t index;
+  ospl_uint32 index;
 
-  char *string;
+  ospl_char *string;
 
   struct key_range send;
   struct key_range accept;
@@ -49,8 +53,12 @@ struct key
 
 extern void keychain_init (void);
 extern struct keychain *keychain_lookup (const char *);
-extern struct key *key_lookup_for_accept (const struct keychain *, u_int32_t);
+extern struct key *key_lookup_for_accept (const struct keychain *, ospl_uint32);
 extern struct key *key_match_for_accept (const struct keychain *, const char *);
 extern struct key *key_lookup_for_send (const struct keychain *);
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ZEBRA_KEYCHAIN_H */

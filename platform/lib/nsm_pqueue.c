@@ -73,7 +73,7 @@ int nsm_pqueue_fetch (struct nsm_pqueue *queue)
 	return pstNode;
 }
 
-struct nsm_pqueue * nsm_pqueue_create (u_int num)
+struct nsm_pqueue * nsm_pqueue_create (ospl_uint32 num)
 {
   struct nsm_pqueue *queue;
 

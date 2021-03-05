@@ -125,7 +125,7 @@ int	modem_machine_state_action(modem_t *modem)
 	{
 		modem->delay = MODEM_DELAY_CHK_TIME;
 		modem->dedelay = MODEM_DELAY_CHK_TIME;
-		modem_event_add_api(modem, MODEM_EV_DELAY, FALSE);
+		modem_event_add_api(modem, MODEM_EV_DELAY, ospl_false);
 	}
 	if(modem->state == MDMS(NETWORK_ACTIVE) && modem->newstate != MDMS(NETWORK_ACTIVE))
 	{
@@ -135,7 +135,7 @@ int	modem_machine_state_action(modem_t *modem)
 
 	if(event != MODEM_EV_NONE)
 	{
-		modem_event_add_api(modem, event, FALSE);
+		modem_event_add_api(modem, event, ospl_false);
 		//modem->state = modem->newstate;
 
 		MODEM_DEBUG("event > %s",modem_event_string(event));
@@ -201,7 +201,7 @@ int modem_machine_state(modem_t *modem)
 }
 
 
-int modem_machine_state_show(modem_t *modem, struct vty *vty, BOOL detail)
+int modem_machine_state_show(modem_t *modem, struct vty *vty, ospl_bool detail)
 {
 	assert(modem);
 	assert(modem->client);

@@ -22,6 +22,10 @@
 #ifndef _ZEBRA_RT_NETLINK_H
 #define _ZEBRA_RT_NETLINK_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef HAVE_NETLINK
 
 #define NL_PKT_BUF_SIZE 8192
@@ -33,34 +37,34 @@
 /*
  * kernel_netlink.c
  */
-extern const char * nl_msg_type_to_str(uint16_t msg_type);
-extern const char * nl_rtproto_to_str(u_char rtproto);
+extern const char * nl_msg_type_to_str(ospl_uint16 msg_type);
+extern const char * nl_rtproto_to_str(ospl_uchar rtproto);
 
-extern int addattr_l(struct nlmsghdr *n, size_t maxlen, int type, void *data,
+extern int addattr_l(struct nlmsghdr *n, size_t maxlen, ospl_uint32 type, void *data,
 		size_t alen);
-extern int rta_addattr_l(struct rtattr *rta, size_t maxlen, int type,
+extern int rta_addattr_l(struct rtattr *rta, size_t maxlen, ospl_uint32 type,
 		void *data, size_t alen);
-extern int addattr32(struct nlmsghdr *n, size_t maxlen, int type, int data);
+extern int addattr32(struct nlmsghdr *n, size_t maxlen, ospl_uint32 type, ospl_uint32 data);
 
-extern struct rtattr *addattr_nest(struct nlmsghdr *n, int maxlen, int type);
+extern struct rtattr *addattr_nest(struct nlmsghdr *n, size_t maxlen, ospl_uint32 type);
 extern int addattr_nest_end(struct nlmsghdr *n, struct rtattr *nest);
 
 
 
-extern void netlink_parse_rtattr(struct rtattr **tb, int max, struct rtattr *rta, int len);
+extern void netlink_parse_rtattr(struct rtattr **tb, ospl_uint32 max, struct rtattr *rta, ospl_uint32 len);
 extern void netlink_interface_update_hw_addr(struct rtattr **tb, struct interface *ifp);
 
 
-extern void _netlink_route_debug(int cmd, struct prefix *p,
-		struct nexthop *nexthop, const char *routedesc, int family,
+extern void _netlink_route_debug(ospl_uint32 cmd, struct prefix *p,
+		struct nexthop *nexthop, const char *routedesc, ospl_family_t family,
 		struct nsm_vrf *zvrf);
 
 
 extern void set_ifindex(struct interface *ifp, ifindex_t ifi_index);
 
-extern int netlink_socket(struct nlsock *nl, unsigned long groups, vrf_id_t vrf_id);
+extern int netlink_socket(struct nlsock *nl, ospl_ulong groups, vrf_id_t vrf_id);
 
-extern int netlink_request(int family, int type, struct nlsock *nl);
+extern int netlink_request(ospl_family_t family, ospl_uint32 type, struct nlsock *nl);
 
 extern int netlink_talk(struct nlmsghdr *n, struct nlsock *nl,
 		struct nsm_vrf *zvrf);
@@ -105,5 +109,9 @@ extern int kernel_interface_load(struct nsm_vrf *zvrf);
 
 
 #endif /* HAVE_NETLINK */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ZEBRA_RT_NETLINK_H */

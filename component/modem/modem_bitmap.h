@@ -9,9 +9,13 @@
 #define __MODEM_BITMAP_H__
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct modem_bitmap_s
 {
-	unsigned char bit[16];
+	ospl_uint8 bit[16];
 }modem_bitmap_t;
 
 
@@ -27,10 +31,14 @@ typedef struct modem_bitmap_s
 #define MODEM_BITMAP_CHK(v, n)		modem_bitmap_chk((v), (n))
 #define MODEM_BITMAP_CLR(v, n)		modem_bitmap_clr((v), (n))
 
-extern int modem_bitmap_set(modem_bitmap_t *bitmap, int bit);
-extern int modem_bitmap_clr(modem_bitmap_t *bitmap, int bit);
-extern int modem_bitmap_chk(modem_bitmap_t *bitmap, int bit);
+extern int modem_bitmap_set(modem_bitmap_t *bitmap, ospl_uint32 bit);
+extern int modem_bitmap_clr(modem_bitmap_t *bitmap, ospl_uint32 bit);
+extern int modem_bitmap_chk(modem_bitmap_t *bitmap, ospl_uint32 bit);
 extern int modem_bitmap_bzero(modem_bitmap_t *bitmap);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MODEM_BITMAP_H__ */

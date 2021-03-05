@@ -75,37 +75,37 @@ typedef struct zfpm_rnodes_iter_t_
  * Statistics.
  */
 typedef struct zfpm_stats_t_ {
-  unsigned long connect_calls;
-  unsigned long connect_no_sock;
+  ospl_ulong connect_calls;
+  ospl_ulong connect_no_sock;
 
-  unsigned long read_cb_calls;
+  ospl_ulong read_cb_calls;
 
-  unsigned long write_cb_calls;
-  unsigned long write_calls;
-  unsigned long partial_writes;
-  unsigned long max_writes_hit;
-  unsigned long t_write_yields;
+  ospl_ulong write_cb_calls;
+  ospl_ulong write_calls;
+  ospl_ulong partial_writes;
+  ospl_ulong max_writes_hit;
+  ospl_ulong t_write_yields;
 
-  unsigned long nop_deletes_skipped;
-  unsigned long route_adds;
-  unsigned long route_dels;
+  ospl_ulong nop_deletes_skipped;
+  ospl_ulong route_adds;
+  ospl_ulong route_dels;
 
-  unsigned long updates_triggered;
-  unsigned long redundant_triggers;
-  unsigned long non_fpm_table_triggers;
+  ospl_ulong updates_triggered;
+  ospl_ulong redundant_triggers;
+  ospl_ulong non_fpm_table_triggers;
 
-  unsigned long dests_del_after_update;
+  ospl_ulong dests_del_after_update;
 
-  unsigned long t_conn_down_starts;
-  unsigned long t_conn_down_dests_processed;
-  unsigned long t_conn_down_yields;
-  unsigned long t_conn_down_finishes;
+  ospl_ulong t_conn_down_starts;
+  ospl_ulong t_conn_down_dests_processed;
+  ospl_ulong t_conn_down_yields;
+  ospl_ulong t_conn_down_finishes;
 
-  unsigned long t_conn_up_starts;
-  unsigned long t_conn_up_dests_processed;
-  unsigned long t_conn_up_yields;
-  unsigned long t_conn_up_aborts;
-  unsigned long t_conn_up_finishes;
+  ospl_ulong t_conn_up_starts;
+  ospl_ulong t_conn_up_dests_processed;
+  ospl_ulong t_conn_up_yields;
+  ospl_ulong t_conn_up_aborts;
+  ospl_ulong t_conn_up_finishes;
 
 } zfpm_stats_t;
 
@@ -218,8 +218,8 @@ typedef struct zfpm_glob_t_
     zfpm_rnodes_iter_t iter;
   } t_conn_up_state;
 
-  unsigned long connect_calls;
-  time_t last_connect_call_time;
+  ospl_ulong connect_calls;
+  ospl_time_t last_connect_call_time;
 
   /*
    * Stats from the start of the current statistics interval up to
@@ -246,7 +246,7 @@ typedef struct zfpm_glob_t_
   /*
    * If non-zero, the last time when statistics were cleared.
    */
-  time_t last_stats_clear_time;
+  ospl_time_t last_stats_clear_time;
 
 } zfpm_glob_t;
 
@@ -298,7 +298,7 @@ zfpm_state_to_str (zfpm_state_t state)
 /*
  * zfpm_get_time
  */
-static time_t
+static ospl_time_t
 zfpm_get_time (void)
 {
   struct timeval tv;
@@ -317,10 +317,10 @@ zfpm_get_time (void)
  *
  * Returns the time elapsed (in seconds) since the given time.
  */
-static time_t
-zfpm_get_elapsed_time (time_t reference)
+static ospl_time_t
+zfpm_get_elapsed_time (ospl_time_t reference)
 {
-  time_t now;
+  ospl_time_t now;
 
   now = zfpm_get_time ();
 
@@ -336,7 +336,7 @@ zfpm_get_elapsed_time (time_t reference)
 /*
  * zfpm_is_table_for_fpm
  *
- * Returns TRUE if the the given table is to be communicated to the
+ * Returns ospl_true if the the given table is to be communicated to the
  * FPM.
  */
 static inline int
@@ -475,15 +475,15 @@ static void
 zfpm_stats_compose (const zfpm_stats_t *s1, const zfpm_stats_t *s2,
 		    zfpm_stats_t *result)
 {
-  const unsigned long *p1, *p2;
-  unsigned long *result_p;
-  int i, num_counters;
+  const ospl_ulong *p1, *p2;
+  ospl_ulong *result_p;
+  ospl_uint32 i = 0, num_counters;
 
-  p1 = (const unsigned long *) s1;
-  p2 = (const unsigned long *) s2;
-  result_p = (unsigned long *) result;
+  p1 = (const ospl_ulong *) s1;
+  p2 = (const ospl_ulong *) s2;
+  result_p = (ospl_ulong *) result;
 
-  num_counters = (sizeof (zfpm_stats_t) / sizeof (unsigned long));
+  num_counters = (sizeof (zfpm_stats_t) / sizeof (ospl_ulong));
 
   for (i = 0; i < num_counters; i++)
     {
@@ -763,9 +763,9 @@ zfpm_connection_down (const char *detail)
 static int
 zfpm_read_cb (struct thread *thread)
 {
-  size_t already;
+  ospl_size_t already;
   struct stream *ibuf;
-  uint16_t msg_len;
+  ospl_uint16 msg_len;
   fpm_msg_hdr_t *hdr;
 
   zfpm_g->stats.read_cb_calls++;
@@ -850,7 +850,7 @@ zfpm_read_cb (struct thread *thread)
 /*
  * zfpm_writes_pending
  *
- * Returns TRUE if we may have something to write to the FPM.
+ * Returns ospl_true if we may have something to write to the FPM.
  */
 static int
 zfpm_writes_pending (void)
@@ -881,11 +881,11 @@ zfpm_writes_pending (void)
  * value indicates an error.
  */
 static inline int
-zfpm_encode_route (rib_dest_t *dest, struct rib *rib, char *in_buf,
-		   size_t in_buf_len, fpm_msg_type_e *msg_type)
+zfpm_encode_route (rib_dest_t *dest, struct rib *rib, ospl_char *in_buf,
+		   ospl_size_t in_buf_len, fpm_msg_type_e *msg_type)
 {
-  size_t len;
-  int cmd;
+  ospl_size_t len;
+  ospl_uint32 cmd;
   len = 0;
 
   *msg_type = FPM_MSG_TYPE_NONE;
@@ -894,7 +894,7 @@ zfpm_encode_route (rib_dest_t *dest, struct rib *rib, char *in_buf,
 
   case ZFPM_MSG_FORMAT_PROTOBUF:
 #ifdef HAVE_PROTOBUF
-    len = zfpm_protobuf_encode_route (dest, rib, (uint8_t *) in_buf,
+    len = zfpm_protobuf_encode_route (dest, rib, (ospl_uint8 *) in_buf,
 				      in_buf_len);
     *msg_type = FPM_MSG_TYPE_PROTOBUF;
 #endif
@@ -953,9 +953,9 @@ zfpm_build_updates (void)
 {
   struct stream *s;
   rib_dest_t *dest;
-  unsigned char *buf, *data, *buf_end;
-  size_t msg_len;
-  size_t data_len;
+  ospl_uchar *buf, *data, *buf_end;
+  ospl_size_t msg_len;
+  ospl_size_t data_len;
   fpm_msg_hdr_t *hdr;
   struct rib *rib;
   int is_add, write_msg;
@@ -1003,7 +1003,7 @@ zfpm_build_updates (void)
       }
 
     if (write_msg) {
-      data_len = zfpm_encode_route (dest, rib, (char *) data, buf_end - data,
+      data_len = zfpm_encode_route (dest, rib, (ospl_char *) data, buf_end - data,
 				    &msg_type);
 
       assert (data_len);
@@ -1268,7 +1268,7 @@ zfpm_set_state (zfpm_state_t state, const char *reason)
 static long
 zfpm_calc_connect_delay (void)
 {
-  time_t elapsed;
+  ospl_time_t elapsed;
 
   /*
    * Return 0 if this is our first attempt to connect.
@@ -1313,7 +1313,7 @@ zfpm_start_connect_timer (const char *reason)
 /*
  * zfpm_is_enabled
  *
- * Returns TRUE if the zebra FPM module has been enabled.
+ * Returns ospl_true if the zebra FPM module has been enabled.
  */
 static inline int
 zfpm_is_enabled (void)
@@ -1324,7 +1324,7 @@ zfpm_is_enabled (void)
 /*
  * zfpm_conn_is_up
  *
- * Returns TRUE if the connection to the FPM is up.
+ * Returns ospl_true if the connection to the FPM is up.
  */
 static inline int
 zfpm_conn_is_up (void)
@@ -1347,7 +1347,7 @@ void
 zfpm_trigger_update (struct route_node *rn, const char *reason)
 {
   rib_dest_t *dest;
-  char buf[PREFIX_STRLEN];
+  ospl_char buf[PREFIX_STRLEN];
 
   /*
    * Ignore if the connection is down. We will update the FPM about
@@ -1466,7 +1466,7 @@ static void
 zfpm_show_stats (struct vty *vty)
 {
   zfpm_stats_t total_stats;
-  time_t elapsed;
+  ospl_time_t elapsed;
 
   vty_out (vty, "%s%-40s %10s     Last %2d secs%s%s", VTY_NEWLINE, "Counter",
 	   "Total", ZFPM_STATS_IVL_SECS, VTY_NEWLINE, VTY_NEWLINE);
@@ -1508,7 +1508,7 @@ zfpm_show_stats (struct vty *vty)
   elapsed = zfpm_get_elapsed_time (zfpm_g->last_stats_clear_time);
 
   vty_out (vty, "%sStats were cleared %lu seconds ago%s", VTY_NEWLINE,
-	   (unsigned long) elapsed, VTY_NEWLINE);
+	   (ospl_ulong) elapsed, VTY_NEWLINE);
 }
 
 /*
@@ -1577,7 +1577,7 @@ DEFUN ( fpm_remote_ip,
 {
 
    in_addr_t fpm_server;
-   uint32_t port_no;
+   ospl_uint32  port_no;
 
    fpm_server = inet_addr (argv[0]);
    if (fpm_server == INADDR_NONE)
@@ -1699,13 +1699,13 @@ int fpm_remote_srv_write (struct vty *vty )
  * One-time initialization of the Zebra FPM module.
  *
  * @param[in] port port at which FPM is running.
- * @param[in] enable TRUE if the zebra FPM module should be enabled
+ * @param[in] enable ospl_true if the zebra FPM module should be enabled
  * @param[in] format to use to talk to the FPM. Can be 'netink' or 'protobuf'.
  *
- * Returns TRUE on success.
+ * Returns ospl_true on success.
  */
 int
-zfpm_init (struct thread_master *master, int enable, uint16_t port,
+zfpm_init (struct thread_master *master, int enable, ospl_uint16 port,
 	   const char *format)
 {
   static int initialized = 0;

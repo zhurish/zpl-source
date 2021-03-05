@@ -48,7 +48,7 @@ DEFUN (app_template,
 		"ESP configure\n")
 {
 	//int ret = ERROR;
-	template_t * temp = nsm_template_lookup_name (FALSE, "app esp");
+	template_t * temp = nsm_template_lookup_name (ospl_false, "app esp");
 	if(temp)
 	{
 		vty->node = TEMPLATE_NODE;
@@ -58,7 +58,7 @@ DEFUN (app_template,
 	}
 	else
 	{
-		temp = nsm_template_new (FALSE);
+		temp = nsm_template_new (ospl_false);
 		if(temp)
 		{
 			temp->module = 0;
@@ -85,7 +85,7 @@ DEFUN (no_app_template,
 		"APP configure\n"
 		"ESP configure\n")
 {
-	template_t * temp = nsm_template_lookup_name (FALSE, "app esp");
+	template_t * temp = nsm_template_lookup_name (ospl_false, "app esp");
 	if(temp)
 	{
 		x5b_app_free();
@@ -424,7 +424,7 @@ DEFUN (x5b_app_cardid_test,
 		"X5-B Mgt A configure\n"
 		"Config Information\n")
 {
-	u_int8     ID[8];
+	ospl_uint8     ID[8];
 	card_id_string_to_hex(argv[0], strlen(((char *)argv[0])), ID);
 	x5b_app_open_door_by_cardid(NULL, ID, strlen(((char *)argv[0]))/2, E_CMD_TO_A);
 	return CMD_SUCCESS;
@@ -518,7 +518,7 @@ void cmd_app_x5b_init(void)
 	if(voip_global_enabled())
 #endif
 	{
-		template_t * temp = nsm_template_new (FALSE);
+		template_t * temp = nsm_template_new (ospl_false);
 		if(temp)
 		{
 			temp->module = 0;
@@ -537,8 +537,8 @@ void cmd_app_x5b_init(void)
 		}
 	/*
 		extern void nsm_template_free (template_t *template);
-		extern void nsm_template_install (template_t *template, int module);
-		extern template_t* nsm_template_lookup (int module);
+		extern void nsm_template_install (template_t *template, ospl_uint32 module);
+		extern template_t* nsm_template_lookup (ospl_uint32 module);
 		extern template_t* nsm_template_lookup_name (char * name);
 	*/
 		install_element(CONFIG_NODE, &app_template_cmd);

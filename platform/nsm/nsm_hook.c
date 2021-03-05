@@ -82,7 +82,7 @@ void nsm_hook_module_exit (void)
 
 void * nsm_hook_lookup (nsm_hook_em type)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	nsm_hook_node_t *hooklist = NULL;
 	switch(type)
 	{
@@ -178,7 +178,7 @@ void * nsm_hook_lookup (nsm_hook_em type)
 
 int nsm_hook_install (nsm_hook_em type, void *hook)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	nsm_hook_node_t *hooklist = NULL;
 	switch(type)
 	{
@@ -401,7 +401,7 @@ int nsm_hook_install (nsm_hook_em type, void *hook)
 
 int nsm_hook_uninstall (nsm_hook_em type, void *hook)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	nsm_hook_node_t *hooklist = NULL;
 	switch(type)
 	{
@@ -527,9 +527,9 @@ int nsm_hook_uninstall (nsm_hook_em type, void *hook)
 }
 
 
-int nsm_hook_execute (nsm_hook_em type, void *p1, void *p2, BOOL b)
+int nsm_hook_execute (nsm_hook_em type, void *p1, void *p2, ospl_bool b)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	nsm_hook_node_t *hooklist = NULL;
 	switch(type)
 	{

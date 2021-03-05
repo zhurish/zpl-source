@@ -28,7 +28,7 @@ static struct list *service_list = NULL;
 
 
 /* Allocate template structure. */
-template_t * nsm_template_new (BOOL service)
+template_t * nsm_template_new (ospl_bool service)
 {
   template_t *template;
   template = XCALLOC (MTYPE_ZCLIENT, sizeof (template_t));
@@ -53,14 +53,14 @@ void nsm_template_free (template_t *template)
 
 /* Initialize zebra template.  Argument redist_default is unwanted
    redistribute route type. */
-void nsm_template_install (template_t *template, int module)
+void nsm_template_install (template_t *template, ospl_uint32 module)
 {
 	template->module = module;
 	//listnode_add_sort(template_list, template);
 	listnode_add (template->service?service_list:template_list, template);
 }
 
-template_t* nsm_template_lookup (BOOL service, int module)
+template_t* nsm_template_lookup (ospl_bool service, ospl_uint32 module)
 {
 	struct listnode *node = NULL;
 	template_t *template = NULL;
@@ -73,7 +73,7 @@ template_t* nsm_template_lookup (BOOL service, int module)
 }
 
 
-template_t* nsm_template_lookup_name (BOOL service, char * name)
+template_t* nsm_template_lookup_name (ospl_bool service, ospl_char * name)
 {
 	struct listnode *node = NULL;
 	template_t *template = NULL;
@@ -123,7 +123,7 @@ int nsm_template_write_config (struct vty *vty)
 	return ret;
 }
 
-int nsm_template_show_config (struct vty *vty, BOOL detail)
+int nsm_template_show_config (struct vty *vty, ospl_bool detail)
 {
 	int ret = 0;
 	struct listnode *node;
@@ -159,7 +159,7 @@ int nsm_template_service_write_config (struct vty *vty)
 	return ret;
 }
 
-int nsm_template_service_show_config (struct vty *vty, BOOL detail)
+int nsm_template_service_show_config (struct vty *vty, ospl_bool detail)
 {
 	int ret = 0;
 	struct listnode *node;
@@ -178,7 +178,7 @@ int nsm_template_service_show_config (struct vty *vty, BOOL detail)
 }
 
 
-int nsm_template_debug_show_config (struct vty *vty, BOOL detail)
+int nsm_template_debug_show_config (struct vty *vty, ospl_bool detail)
 {
 	int ret = 0;
 	struct listnode *node;
@@ -206,7 +206,7 @@ int nsm_template_debug_write_config (struct vty *vty)
 		if(template->show_debug)
 		{
 			ret = 0;
-			ret = (template->show_debug)(vty, template->pVoid, FALSE);
+			ret = (template->show_debug)(vty, template->pVoid, ospl_false);
 			if(ret)
 				vty_out(vty, "!%s", VTY_NEWLINE);
 		}

@@ -8,6 +8,9 @@
 #ifndef OS_START_H_
 #define OS_START_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define OS_START_TEST
 
@@ -29,7 +32,7 @@ extern int os_exit_all_module();
 extern int os_start_pid(int pro, char *pid_file, int *pid);
 
 extern int os_load_config(char *config);
-extern BOOL os_load_config_done(void);
+extern ospl_bool os_load_config_done(void);
 
 extern int os_shell_start(char *shell_path, char *shell_addr, int shell_port, const char *);
 
@@ -37,6 +40,10 @@ extern int os_start_running(void *master, module_t pro);
 
 extern int eloop_start_running(void *master, module_t pro);
 
+ 
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* OS_START_H_ */

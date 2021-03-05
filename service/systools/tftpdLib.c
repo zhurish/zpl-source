@@ -73,7 +73,7 @@ tftpLib, RFC 783 "TFTP Protocol"
 
 /* GLOBALS */
 
-//BOOL tftpdDebug			= FALSE;	/* TRUE: debugging messages */
+//ospl_bool tftpdDebug			= ospl_false;	/* ospl_true: debugging messages */
 //static int tftpdErrorSendTries		= 3;
 //int tftpdMaxConnections		= 10;
 
@@ -90,8 +90,8 @@ static int tftpdRequestDecode (TFTP_MSG *pTftpMsg, int *opCode,
 static int tftpdFileRead (TFTP_DESC *pReplyDesc);
 static int tftpdFileWrite (TFTP_DESC *pReplyDesc);
 
-static TFTP_DESC *tftpdDescriptorCreate (TFTP_DESC *mode, BOOL connected,
-					 int sock, u_short clientPort,
+static TFTP_DESC *tftpdDescriptorCreate (TFTP_DESC *mode, ospl_bool connected,
+					 int sock, ospl_ushort clientPort,
 					 struct sockaddr_in *pClientAddr);
 static int tftpdDescriptorDelete (TFTP_DESC *descriptor);
 static int tftpdDirectoryValidate (char *fileName);
@@ -119,14 +119,14 @@ static int tftpdTask( struct eloop *thread);
 * Setting <maxConnections> to zero will result in the maximum number of
 * connections being set to the default, which is 10.
 *
-* If <noControl> is TRUE, the server will be set up to transfer any
+* If <noControl> is ospl_true, the server will be set up to transfer any
 * file in any location.  Otherwise, it will only transfer files in the
 * directories in '/tftpboot' or the <nDirectories> directories in the
 * <directoryNames> list, and will send an
 * access violation error to clients that attempt to access files outside of
 * these directories.
 *
-* By default, <noControl> is FALSE, <directoryNames> is empty, <nDirectories>
+* By default, <noControl> is ospl_false, <directoryNames> is empty, <nDirectories>
 * is zero, and access is restricted to the '/tftpboot' directory.
 *
 * Directories can be added to the access list after initialization by using
@@ -154,9 +154,9 @@ static int tftpd_socket_init(TFTPD_CONFIG *config)
 
     serverAddr.sin_family	= AF_INET;
     if(config->port)
-        serverAddr.sin_port		= htons((u_short) config->port);
+        serverAddr.sin_port		= htons((ospl_ushort) config->port);
     else
-    	serverAddr.sin_port		= htons((u_short) TFTP_PORT);
+    	serverAddr.sin_port		= htons((ospl_ushort) TFTP_PORT);
 
     serverAddr.sin_addr.s_addr	= INADDR_ANY;
 
@@ -205,7 +205,7 @@ int tftpdInit(void *master, char *basedir)
 			strcpy(tftpd_config->dirName, TFTPD_BASEDIR_DEFAULT);
 
 		tftpd_config->master = master;
-		tftpd_config->tftpdDebug = FALSE;	/* TRUE: debugging messages */
+		tftpd_config->tftpdDebug = ospl_false;	/* ospl_true: debugging messages */
 		tftpd_config->tftpdErrorSendTries = 3;
 		tftpd_config->tftpdMaxConnections = 10;
 	}
@@ -226,7 +226,7 @@ int tftpdInit(void *master, char *basedir)
 	    	mkdir(tftpd_config->dirName, 0766);
 	    }
 
-		tftpd_config->tftpdDebug = FALSE;	/* TRUE: debugging messages */
+		tftpd_config->tftpdDebug = ospl_false;	/* ospl_true: debugging messages */
 		tftpd_config->tftpdErrorSendTries = 3;
 		tftpd_config->tftpdMaxConnections = 10;
 	}
@@ -254,7 +254,7 @@ int tftpdUnInit(void)
 	return OK;
 }
 
-int tftpdEnable(BOOL enable, char *localipaddress, int port)
+int tftpdEnable(ospl_bool enable, char *localipaddress, int port)
 {
 	if(tftpd_config && enable)
 	{
@@ -280,7 +280,7 @@ int tftpdEnable(BOOL enable, char *localipaddress, int port)
 		if(tftpd_config->sock > 0)
 		{
 			tftpd_config->t_read = eloop_add_read(tftpd_config->master, tftpdTask, tftpd_config, tftpd_config->sock);
-			tftpd_config->enable = TRUE;
+			tftpd_config->enable = ospl_true;
 			return OK;
 		}
 		return OK;
@@ -313,7 +313,7 @@ int tftpdInit
     int	 stackSize,		/* stack size for the tftpdTask		*/
     int  nDirectories,		/* number of directories allowed read	*/
     char **directoryNames,	/* array of dir names			*/
-    BOOL noControl,		/* TRUE if no access control required	*/
+    ospl_bool noControl,		/* ospl_true if no access control required	*/
     int	 maxConnections
     )
     {
@@ -341,7 +341,7 @@ int tftpdInit
      * to the list
      */
 
-    if (noControl != TRUE)
+    if (noControl != ospl_true)
         tftpdDirectoryAdd (tftpdDirectoryDefault);
 
     /*
@@ -416,7 +416,7 @@ int tftpdTask
     bzero ((char *) &clientAddr, sizeof (struct sockaddr_in));
 
     serverAddr.sin_family	= AF_INET;
-    serverAddr.sin_port		= htons((u_short) TFTP_PORT);
+    serverAddr.sin_port		= htons((ospl_ushort) TFTP_PORT);
 
 
     serverAddr.sin_addr.s_addr	= INADDR_ANY;
@@ -494,7 +494,7 @@ int tftpdTask
 	    continue;
 	    }
 
-	serverAddr.sin_port = htons((u_short) 0);
+	serverAddr.sin_port = htons((ospl_ushort) 0);
 	if (bind (replySocket, (SOCKADDR *) &serverAddr,
 		  sizeof (struct sockaddr_in)) == ERROR)
 	    {
@@ -523,7 +523,7 @@ int tftpdTask
 	 * Get a reply descriptor.  This will pend until one is available.
 	 */
 
-	pReplyDesc = tftpdDescriptorCreate (mode, TRUE, replySocket,
+	pReplyDesc = tftpdDescriptorCreate (mode, ospl_true, replySocket,
 					    clientAddr.sin_port, &clientAddr);
 	if (pReplyDesc == NULL)
 	    {
@@ -684,11 +684,11 @@ static int tftpdTask( struct eloop *thread)
 	/*
 	 * Get a reply descriptor.  This will pend until one is available.
 	 */
-	clientSocket = sock_create(FALSE);
+	clientSocket = sock_create(ospl_false);
 	if(clientSocket <= 0)
 		return ERROR;
 	sock_bind(clientSocket, NULL, 0);
-	pReplyDesc = tftpdDescriptorCreate(&tftpdDesc, TRUE, clientSocket, clientAddr.sin_port, &clientAddr);
+	pReplyDesc = tftpdDescriptorCreate(&tftpdDesc, ospl_true, clientSocket, clientAddr.sin_port, &clientAddr);
 	if (pReplyDesc == NULL)
 	{
 		/*
@@ -981,9 +981,9 @@ static int tftpdFileWrite
 static TFTP_DESC *tftpdDescriptorCreate
     (
     TFTP_DESC	*desc,			/* mode 		*/
-    BOOL	connected,		/* state		*/
+    ospl_bool	connected,		/* state		*/
     int		sock,			/* socket number	*/
-    u_short	clientPort,		/* client port number	*/
+    ospl_ushort	clientPort,		/* client port number	*/
     struct sockaddr_in *pClientAddr 	/* client address	*/
     )
     {

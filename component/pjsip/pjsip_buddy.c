@@ -314,7 +314,7 @@ pjsip_buddy_t * pjsip_buddy_lookup_by_username(char *username)
 	return pjsip_buddy_node_lookup_by_username(username);
 }
 
-int pjsip_buddy_username_add(char *username, u_int32	userid)
+int pjsip_buddy_username_add(char *username, ospl_uint32	userid)
 {
 	pjsip_buddy_t *user = pjsip_buddy_node_lookup_by_username(username);
 	if(user)
@@ -328,7 +328,7 @@ int pjsip_buddy_username_add(char *username, u_int32	userid)
 	return OK;
 }
 
-int pjsip_buddy_username_del(char *username, u_int32 userid)
+int pjsip_buddy_username_del(char *username, ospl_uint32 userid)
 {
 	pjsip_buddy_t *user = pjsip_buddy_node_lookup_by_username(username);
 	if(!user)

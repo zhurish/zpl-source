@@ -529,7 +529,7 @@ DEFUN (nsm_interface_ip_dhcp_server,
 		"DHCP Pool Name\n")
 {
 	int ret = 0;
-	//BOOL mode = FALSE;
+	//ospl_bool mode = ospl_false;
 	struct interface *ifp = (struct interface *) vty->index;
 	if(!nsm_dhcps_lookup_api(argv[0]))
 	{
@@ -550,7 +550,7 @@ DEFUN (nsm_interface_ip_dhcp_server,
 			}
 		}
 /*
-		if(nsm_interface_dhcp_enable(ifp, TRUE) != OK)
+		if(nsm_interface_dhcp_enable(ifp, ospl_true) != OK)
 		{
 			vty_out (vty, "%% Can not enable dhcp on this interface%s", VTY_NEWLINE);
 			return CMD_WARNING;
@@ -573,7 +573,7 @@ DEFUN (no_nsm_interface_ip_dhcp_server,
 		"DHCP server\n")
 {
 	int ret = 0;
-	//BOOL mode = FALSE;
+	//ospl_bool mode = ospl_false;
 	struct interface *ifp = (struct interface *) vty->index;
 	if(ifp)
 	{
@@ -603,7 +603,7 @@ DEFUN (show_dhcps_lease,
 		"Lease Information\n"
 		"Dhcp Pool name\n")
 {
-	nsm_dhcps_lease_show(vty, NULL, (argc == 1)? argv[0]:NULL, TRUE);
+	nsm_dhcps_lease_show(vty, NULL, (argc == 1)? argv[0]:NULL, ospl_true);
 	return CMD_SUCCESS;
 }
 
@@ -625,7 +625,7 @@ DEFUN (show_dhcps_lease_interface,
 		ifp = if_lookup_by_name (if_ifname_format(argv[0], argv[1]));
 		if(ifp)
 		{
-			nsm_dhcps_lease_show(vty, ifp, NULL, TRUE);
+			nsm_dhcps_lease_show(vty, ifp, NULL, ospl_true);
 			return CMD_SUCCESS;
 		}
 	}
@@ -641,7 +641,7 @@ DEFUN (show_dhcps_pool,
 		"DHCP configure\n"
 		"Dhcp Pool\n")
 {
-	nsm_dhcps_pool_show(vty, TRUE);
+	nsm_dhcps_pool_show(vty, ospl_true);
 	return CMD_SUCCESS;
 }
 
@@ -701,10 +701,15 @@ static void cmd_show_dhcps_init(int node)
 	install_element(node, &nsm_show_dhcp_client_detail_cmd);
 	install_element(node, &nsm_show_dhcp_client_detail_interface_cmd);*/
 }
+static struct cmd_node dhcps_node =
+{
+	DHCPS_NODE,
+	"%s(config-dhcps)# ",
+};
 
 void cmd_dhcps_init(void)
 {
-
+	install_node(&dhcps_node, nsm_dhcps_write_config);
 	install_default(DHCPS_NODE);
 	install_default_basic(DHCPS_NODE);
 	reinstall_node(DHCPS_NODE, nsm_dhcps_write_config);

@@ -23,6 +23,10 @@
 #ifndef _QUAGGA_PLIST_INT_H
 #define _QUAGGA_PLIST_INT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum prefix_name_type
 {
   PREFIX_TYPE_STRING,
@@ -31,8 +35,8 @@ enum prefix_name_type
 
 struct prefix_list
 {
-  char *name;
-  char *desc;
+  ospl_char *name;
+  ospl_char *desc;
 
   struct prefix_master *master;
 
@@ -61,11 +65,15 @@ struct prefix_list_entry
   int any;
   struct prefix prefix;
 
-  unsigned long refcnt;
-  unsigned long hitcnt;
+  ospl_ulong refcnt;
+  ospl_ulong hitcnt;
 
   struct prefix_list_entry *next;
   struct prefix_list_entry *prev;
 };
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _QUAGGA_PLIST_INT_H */

@@ -164,7 +164,7 @@ struct module_list module_list_kernel =
 
 int pl_module_name_init(const char * name)
 {
-	u_int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
 		if(module_lists_tbl[i].tbl && os_strcmp(module_lists_tbl[i].tbl->name, name) == 0)
@@ -176,12 +176,12 @@ int pl_module_name_init(const char * name)
 	return -1;
 }
 
-int pl_module_init(int module)
+int pl_module_init(ospl_uint32 module)
 {
-	u_int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (u_int)module)
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (ospl_uint32)module)
 		{
 			if(module_lists_tbl[i].tbl->module_init)
 				return (module_lists_tbl[i].tbl->module_init)();
@@ -190,12 +190,12 @@ int pl_module_init(int module)
 	return -1;
 }
 
-int pl_module_exit(int module)
+int pl_module_exit(ospl_uint32 module)
 {
-	u_int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (u_int)module)
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (ospl_uint32)module)
 		{
 			if(module_lists_tbl[i].tbl->module_exit)
 				return (module_lists_tbl[i].tbl->module_exit)();
@@ -206,7 +206,7 @@ int pl_module_exit(int module)
 
 int pl_module_task_name_init(const char * name)
 {
-	u_int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
 		if(module_lists_tbl[i].tbl && os_strcmp(module_lists_tbl[i].tbl->name, name) == 0)
@@ -218,12 +218,12 @@ int pl_module_task_name_init(const char * name)
 	return -1;
 }
 
-int pl_module_task_init(int module)
+int pl_module_task_init(ospl_uint32 module)
 {
-	u_int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (u_int)module)
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (ospl_uint32)module)
 		{
 			if(module_lists_tbl[i].tbl->module_task_init)
 				return (module_lists_tbl[i].tbl->module_task_init)();
@@ -232,12 +232,12 @@ int pl_module_task_init(int module)
 	return -1;
 }
 
-int pl_module_task_exit(int module)
+int pl_module_task_exit(ospl_uint32 module)
 {
-	u_int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (u_int)module)
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (ospl_uint32)module)
 		{
 			if(module_lists_tbl[i].tbl->module_task_exit)
 				return (module_lists_tbl[i].tbl->module_task_exit)();
@@ -248,7 +248,7 @@ int pl_module_task_exit(int module)
 
 int pl_module_cmd_name_init(const char * name)
 {
-	u_int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
 		if(module_lists_tbl[i].tbl && os_strcmp(module_lists_tbl[i].tbl->name, name) == 0)
@@ -260,12 +260,12 @@ int pl_module_cmd_name_init(const char * name)
 	return -1;
 }
 
-int pl_module_cmd_init(int module)
+int pl_module_cmd_init(ospl_uint32 module)
 {
-	u_int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (u_int)module)
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (ospl_uint32)module)
 		{
 			if(module_lists_tbl[i].tbl->module_cmd_init)
 				return (module_lists_tbl[i].tbl->module_cmd_init)();
@@ -274,20 +274,20 @@ int pl_module_cmd_init(int module)
 	return -1;
 }
 
-const char * module2name(int module)
+const char * module2name(ospl_uint32 module)
 {
-	u_int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (u_int)module)
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (ospl_uint32)module)
 			return module_lists_tbl[i].tbl->name;
 	}
 	return "Unknow";
 }
 
-int name2module(const char *name)
+ospl_uint32 name2module(const char *name)
 {
-	u_int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
 		if(module_lists_tbl[i].tbl && os_strcmp(module_lists_tbl[i].tbl->name, name) == 0)
@@ -296,32 +296,32 @@ int name2module(const char *name)
 	return 0;
 }
 
-int module2task(int module)
+ospl_uint32 module2task(ospl_uint32 module)
 {
-	u_int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (u_int)module)
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (ospl_uint32)module)
 			return module_lists_tbl[i].tbl->taskid;
 	}
 	return 0;
 }
 
-int task2module(int taskid)
+ospl_uint32 task2module(ospl_uint32 taskid)
 {
-	u_int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->taskid == (u_int)taskid)
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->taskid == (ospl_uint32)taskid)
 			return module_lists_tbl[i].tbl->module;
 	}
 	return 0;
 }
 
-int task_module_self(void)
+ospl_uint32 task_module_self(void)
 {
-	u_int i = 0;
-	u_int taskid = os_task_id_self ();
+	ospl_uint32 i = 0;
+	ospl_uint32 taskid = os_task_id_self ();
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
 		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->taskid == taskid)
@@ -331,23 +331,23 @@ int task_module_self(void)
 }
 
 
-int module_setup_task(int module, int taskid)
+int module_setup_task(ospl_uint32 module, ospl_uint32 taskid)
 {
-	u_int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (u_int)module)
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (ospl_uint32)module)
 		{
-			module_lists_tbl[i].tbl->taskid = (u_int)taskid;
+			module_lists_tbl[i].tbl->taskid = (ospl_uint32)taskid;
 			return 0;
 		}
 	}
 	return 0;
 }
 
-char *zlog_backtrace_module()
+ospl_char *zlog_backtrace_module()
 {
-	static char backtrace_string[128];
+	static ospl_char backtrace_string[128];
 	os_memset(backtrace_string, 0, sizeof(backtrace_string));
 	os_snprintf(backtrace_string, sizeof(backtrace_string), "%s [%s]",
 			os_task_2_name(os_task_id_self()), module2name(task_module_self()));
@@ -355,7 +355,7 @@ char *zlog_backtrace_module()
 	return backtrace_string;
 }
 
-char *zlog_backtrace_funcname()
+ospl_char *zlog_backtrace_funcname()
 {
 #ifdef OS_THREAD
 	struct thread *thread_current = thread_current_get();
@@ -378,7 +378,7 @@ char *zlog_backtrace_funcname()
 	return "NULL";
 }
 
-char *zlog_backtrace_schedfrom()
+ospl_char *zlog_backtrace_schedfrom()
 {
 #ifdef OS_THREAD
 	struct thread *thread_current = thread_current_get();
@@ -401,7 +401,7 @@ char *zlog_backtrace_schedfrom()
 	return "NULL";
 }
 
-int zlog_backtrace_schedfrom_line()
+ospl_uint32 zlog_backtrace_schedfrom_line()
 {
 #ifdef OS_THREAD
 	struct thread *thread_current = thread_current_get();

@@ -37,7 +37,7 @@ DEFUN (nsm_interface_ip_dhcp,
 		"DHCP configure\n")
 {
 	int ret = 0;
-	//BOOL mode = FALSE;
+	//ospl_bool mode = ospl_false;
 	struct interface *ifp = (struct interface *) vty->index;
 	if(ifp)
 	{
@@ -51,7 +51,7 @@ DEFUN (nsm_interface_ip_dhcp,
 		}
 
 /*
-		if(nsm_interface_dhcp_enable(ifp, TRUE) != OK)
+		if(nsm_interface_dhcp_enable(ifp, ospl_true) != OK)
 		{
 			vty_out (vty, "%% Can not enable dhcp on this interface%s", VTY_NEWLINE);
 			return CMD_WARNING;
@@ -75,7 +75,7 @@ DEFUN (no_nsm_interface_ip_dhcp,
 		"DHCP configure\n")
 {
 	int ret = 0;
-	//BOOL mode = FALSE;
+	//ospl_bool mode = ospl_false;
 	struct interface *ifp = (struct interface *) vty->index;
 	if(ifp)
 	{
@@ -116,7 +116,7 @@ DEFUN (nsm_interface_dhcp_option,
 	struct interface *ifp = (struct interface *) vty->index;
 	if(ifp)
 	{
-		ret = nsm_interface_dhcp_option_set_api(ifp, TRUE, atoi(argv[0]), argv[1]);
+		ret = nsm_interface_dhcp_option_set_api(ifp, ospl_true, atoi(argv[0]), argv[1]);
 		if(ret == ERROR)
 			vty_out (vty, "%% Can't set interface IP address dhcp.%s",VTY_NEWLINE);
 		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -138,7 +138,7 @@ DEFUN (no_nsm_interface_dhcp_option,
 	struct interface *ifp = (struct interface *) vty->index;
 	if(ifp)
 	{
-		ret = nsm_interface_dhcp_option_set_api(ifp, FALSE, atoi(argv[0]), argv[1]);
+		ret = nsm_interface_dhcp_option_set_api(ifp, ospl_false, atoi(argv[0]), argv[1]);
 		if(ret == ERROR)
 			vty_out (vty, "%% Can't set interface IP address dhcp.%s",VTY_NEWLINE);
 		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -212,7 +212,7 @@ DEFUN (nsm_dhcp_client_request,
 
 			if(option)
 			{
-				ret = nsm_interface_dhcpc_option(ifp, TRUE, option, NULL);
+				ret = nsm_interface_dhcpc_option(ifp, ospl_true, option, NULL);
 				if(ret == ERROR)
 					vty_out (vty, "%% Can't set interface dhcp client request option.%s",VTY_NEWLINE);
 				return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -292,7 +292,7 @@ DEFUN (no_nsm_dhcp_client_request,
 			}
 			if(option)
 			{
-				ret = nsm_interface_dhcpc_option(ifp, FALSE, option, NULL);
+				ret = nsm_interface_dhcpc_option(ifp, ospl_false, option, NULL);
 				if(ret == ERROR)
 					vty_out (vty, "%% Can't set interface dhcp client request option.%s",VTY_NEWLINE);
 				return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -323,7 +323,7 @@ DEFUN (nsm_dhcp_client_id,
 	{
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 		{
-			ret = nsm_interface_dhcpc_option(ifp, TRUE, 61, argv[1]);
+			ret = nsm_interface_dhcpc_option(ifp, ospl_true, 61, argv[1]);
 			if(ret == ERROR)
 				vty_out (vty, "%% Can't set interface dhcp client client-id.%s",VTY_NEWLINE);
 			return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -348,7 +348,7 @@ DEFUN (no_nsm_dhcp_client_id,
 	{
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 		{
-			ret = nsm_interface_dhcpc_option(ifp, FALSE, 61, NULL);
+			ret = nsm_interface_dhcpc_option(ifp, ospl_false, 61, NULL);
 			if(ret == ERROR)
 				vty_out (vty, "%% Can't set interface dhcp client client-id.%s",VTY_NEWLINE);
 			return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -376,7 +376,7 @@ DEFUN (nsm_dhcp_class_id,
 	{
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 		{
-			ret = nsm_interface_dhcpc_option(ifp, TRUE, 60, argv[0]);
+			ret = nsm_interface_dhcpc_option(ifp, ospl_true, 60, argv[0]);
 			if(ret == ERROR)
 				vty_out (vty, "%% Can't set interface dhcp client class-id.%s",VTY_NEWLINE);
 			return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -401,7 +401,7 @@ DEFUN (no_nsm_dhcp_class_id,
 	{
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 		{
-			ret = nsm_interface_dhcpc_option(ifp, FALSE, 60, NULL);
+			ret = nsm_interface_dhcpc_option(ifp, ospl_false, 60, NULL);
 			if(ret == ERROR)
 				vty_out (vty, "%% Can't set interface dhcp client class-id.%s",VTY_NEWLINE);
 			return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -426,7 +426,7 @@ DEFUN (nsm_dhcp_client_lease,
 	{
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 		{
-			ret = nsm_interface_dhcpc_option(ifp, FALSE, 51, argv[0]);
+			ret = nsm_interface_dhcpc_option(ifp, ospl_false, 51, argv[0]);
 			if(ret == ERROR)
 				vty_out (vty, "%% Can't set interface dhcp client lease time.%s",VTY_NEWLINE);
 			return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -451,7 +451,7 @@ DEFUN (no_nsm_dhcp_client_lease,
 	{
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 		{
-			ret = nsm_interface_dhcpc_option(ifp, FALSE, 51, NULL);
+			ret = nsm_interface_dhcpc_option(ifp, ospl_false, 51, NULL);
 			if(ret == ERROR)
 				vty_out (vty, "%% Can't set interface dhcp client lease time.%s",VTY_NEWLINE);
 			return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -476,7 +476,7 @@ DEFUN (nsm_dhcp_client_hostname,
 	{
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 		{
-			ret = nsm_interface_dhcpc_option(ifp, TRUE, 12, argv[0]);
+			ret = nsm_interface_dhcpc_option(ifp, ospl_true, 12, argv[0]);
 			if(ret == ERROR)
 				vty_out (vty, "%% Can't set interface dhcp client lease time.%s",VTY_NEWLINE);
 			return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -501,7 +501,7 @@ DEFUN (no_nsm_dhcp_client_hostname,
 	{
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 		{
-			ret = nsm_interface_dhcpc_option(ifp, FALSE, 12, NULL);
+			ret = nsm_interface_dhcpc_option(ifp, ospl_false, 12, NULL);
 			if(ret == ERROR)
 				vty_out (vty, "%% Can't set interface dhcp client hostname.%s",VTY_NEWLINE);
 			return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -526,7 +526,7 @@ DEFUN (nsm_debug_dhcp_client_default_metric,
 	{
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 		{
-			ret = nsm_interface_dhcpc_option(ifp, TRUE, 255+'m', argv[0]);
+			ret = nsm_interface_dhcpc_option(ifp, ospl_true, 255+'m', argv[0]);
 			if(ret == ERROR)
 				vty_out (vty, "%% Can't set interface dhcp client default route instance instance.%s",VTY_NEWLINE);
 			return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -551,7 +551,7 @@ DEFUN (no_nsm_debug_dhcp_client_default_metric,
 	{
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 		{
-			ret = nsm_interface_dhcpc_option(ifp, FALSE, 255+'m', NULL);
+			ret = nsm_interface_dhcpc_option(ifp, ospl_false, 255+'m', NULL);
 			if(ret == ERROR)
 				vty_out (vty, "%% Can't set interface dhcp client default route instance instance.%s",VTY_NEWLINE);
 			return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -578,7 +578,7 @@ DEFUN (nsm_debug_dhcp_client,
 	struct interface *ifp = (struct interface *) vty->index;
 	if(ifp)
 	{
-/*		ret = nsm_interface_dhcpc_option_set_api(ifp, TRUE, atoi(argv[0]), argv[1]);
+/*		ret = nsm_interface_dhcpc_option_set_api(ifp, ospl_true, atoi(argv[0]), argv[1]);
 		if(ret == ERROR)
 			vty_out (vty, "%% Can't set interface IP address dhcp.%s",VTY_NEWLINE);
 		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;*/
@@ -602,7 +602,7 @@ DEFUN (no_nsm_debug_dhcp_client,
 	struct interface *ifp = (struct interface *) vty->index;
 	if(ifp)
 	{
-/*		ret = nsm_interface_dhcpc_option_set_api(ifp, TRUE, atoi(argv[0]), argv[1]);
+/*		ret = nsm_interface_dhcpc_option_set_api(ifp, ospl_true, atoi(argv[0]), argv[1]);
 		if(ret == ERROR)
 			vty_out (vty, "%% Can't set interface IP address dhcp.%s",VTY_NEWLINE);
 		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;*/
@@ -627,7 +627,7 @@ DEFUN (nsm_show_dhcp_client,
 		{
 			if (ifp)
 			{
-				nsm_interface_dhcpc_client_show(ifp, vty, FALSE);
+				nsm_interface_dhcpc_client_show(ifp, vty, ospl_false);
 			}
 		}
 		//if_list_each(nsm_interface_dhcpc_client_show, vty);
@@ -638,7 +638,7 @@ DEFUN (nsm_show_dhcp_client,
 		ifindex_t ifindex = if_ifindex_make(argv[0], argv[1]);
 		ifp = if_lookup_by_index(ifindex);
 		if(ifp)
-			nsm_interface_dhcpc_client_show(ifp, vty, FALSE);
+			nsm_interface_dhcpc_client_show(ifp, vty, ospl_false);
 	}
 	return CMD_SUCCESS;
 }
@@ -674,7 +674,7 @@ DEFUN (nsm_show_dhcp_client_detail,
 		{
 			if (ifp)
 			{
-				nsm_interface_dhcpc_client_show(ifp, vty, TRUE);
+				nsm_interface_dhcpc_client_show(ifp, vty, ospl_true);
 			}
 		}
 		//if_list_each(nsm_dhcpc_client_show_detail, vty);
@@ -685,7 +685,7 @@ DEFUN (nsm_show_dhcp_client_detail,
 		ifindex_t ifindex = if_ifindex_make(argv[0], argv[1]);
 		ifp = if_lookup_by_index(ifindex);
 		if(ifp)
-			nsm_interface_dhcpc_client_show(ifp, vty, TRUE);
+			nsm_interface_dhcpc_client_show(ifp, vty, ospl_true);
 	}
 	return CMD_SUCCESS;
 }

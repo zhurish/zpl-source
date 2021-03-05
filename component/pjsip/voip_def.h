@@ -9,6 +9,10 @@
 #define __VOIP_DEF_H__
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #include "plconfig.h"
 #include "zassert.h"
@@ -44,5 +48,9 @@
 
 //typedef struct voip_app_s voip_app_t;
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __VOIP_DEF_H__ */

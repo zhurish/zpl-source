@@ -121,7 +121,7 @@ DEFUN (nsm_interface,
 		ifp = if_lookup_by_name (if_ifname_format(argv[0], argv[1]));
 		if(!ifp)
 		{
-			if(nsm_interface_create_check_api(vty, argv[0], argv[1]) == FALSE)
+			if(nsm_interface_create_check_api(vty, argv[0], argv[1]) == ospl_false)
 				return CMD_WARNING;
 			ret = nsm_interface_create_api(if_ifname_format(argv[0], argv[1]));
 			if(ret == OK)
@@ -155,7 +155,7 @@ static int nsm_interface_other_create(int argc, char *name, char *uspv, struct v
 		ifp = if_lookup_by_name (if_ifname_format(name, uspv));
 		if(!ifp)
 		{
-			if(nsm_interface_create_check_api(vty, name, uspv) == FALSE)
+			if(nsm_interface_create_check_api(vty, name, uspv) == ospl_false)
 				return CMD_WARNING;
 			ret = nsm_interface_create_api(if_ifname_format(name, uspv));
 			if(ret == OK)
@@ -288,7 +288,7 @@ DEFUN_HIDDEN(hidden_nsm_interface,
 		ifp = if_lookup_by_name(argv[0]);
 		if(!ifp)
 		{
-			if(nsm_interface_create_check_api(vty, argv[0], NULL) == FALSE)
+			if(nsm_interface_create_check_api(vty, argv[0], NULL) == ospl_false)
 				return CMD_WARNING;
 			if(nsm_interface_create_api(argv[0])!= OK)
 			{
@@ -351,7 +351,7 @@ DEFUN (nsm_wifi_interface,
 		ifp = if_lookup_by_name (if_ifname_format(argv[0], argv[1]));
 		if(!ifp)
 		{
-			if(nsm_interface_create_check_api(vty, argv[0], argv[1]) == FALSE)
+			if(nsm_interface_create_check_api(vty, argv[0], argv[1]) == ospl_false)
 				return CMD_WARNING;
 			ret = nsm_interface_create_api(if_ifname_format(argv[0], argv[1]));
 			if(ret == OK)
@@ -532,7 +532,7 @@ DEFUN (nsm_interface_multicast,
 	struct interface *ifp = vty->index;
 	if(ifp)
 	{
-		ret = nsm_interface_multicast_set_api(ifp, TRUE);
+		ret = nsm_interface_multicast_set_api(ifp, ospl_true);
 		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 	}
 	return CMD_WARNING;
@@ -549,7 +549,7 @@ DEFUN (no_nsm_interface_multicast,
 	struct interface *ifp = vty->index;
 	if(ifp)
 	{
-		ret = nsm_interface_multicast_set_api(ifp, FALSE);
+		ret = nsm_interface_multicast_set_api(ifp, ospl_false);
 		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 	}
 	return CMD_WARNING;
@@ -563,7 +563,7 @@ DEFUN (nsm_interface_bandwidth,
 		"Bandwidth in kilobits\n")
 {
 	int ret = 0;
-	unsigned int bandwidth;
+	ospl_uint32  bandwidth;
 	struct interface *ifp = (struct interface *) vty->index;
 	bandwidth = strtol(argv[0], NULL, 10);
 
@@ -608,7 +608,7 @@ DEFUN (nsm_interface_mtu,
 		"Mtu in interface\n")
 {
 	int ret = 0;
-	unsigned int mtu;
+	ospl_uint32  mtu;
 	struct interface *ifp = (struct interface *) vty->index;
 	mtu = strtol(argv[0], NULL, 10);
 
@@ -652,7 +652,7 @@ DEFUN (nsm_interface_metric,
 		"metric in Interface\n")
 {
 	int ret = 0;
-	unsigned int metric;
+	ospl_uint32  metric;
 	struct interface *ifp = (struct interface *) vty->index;
 	metric = strtol(argv[0], NULL, 10);
 
@@ -740,7 +740,7 @@ DEFUN (nsm_interface_mac,
 		CMD_MAC_STR_HELP)
 {
 	int ret = 0;
-	unsigned char mac[6];
+	ospl_uint8 mac[6];
 	struct interface *ifp = (struct interface *) vty->index;
 	VTY_IMAC_GET(argv[0], mac);
 	if(ifp)
@@ -1037,7 +1037,7 @@ DEFUN (nsm_interface_ip_address,
 			vty_out (vty, "%% Malformed address %s", VTY_NEWLINE);
 			return CMD_WARNING;
 		}
-		ret = nsm_interface_address_set_api(ifp, &cp, FALSE);
+		ret = nsm_interface_address_set_api(ifp, &cp, ospl_false);
 		if(ret == ERROR)
 			vty_out (vty, "%% Can't set interface IP address.%s",VTY_NEWLINE);
 		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -1076,7 +1076,7 @@ DEFUN (no_nsm_interface_ip_address,
 			vty_out (vty, "%% Malformed address %s", VTY_NEWLINE);
 			return CMD_WARNING;
 		}
-		ret = nsm_interface_address_unset_api(ifp, &cp, FALSE);
+		ret = nsm_interface_address_unset_api(ifp, &cp, ospl_false);
 		if(ret == ERROR)
 			vty_out (vty, "%% Can't unset interface IP address.%s",VTY_NEWLINE);
 		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -1115,7 +1115,7 @@ DEFUN (nsm_interface_ipv6_address,
 			vty_out (vty, "%% Malformed address %s", VTY_NEWLINE);
 			return CMD_WARNING;
 		}
-		ret = nsm_interface_address_set_api(ifp, &cp, FALSE);
+		ret = nsm_interface_address_set_api(ifp, &cp, ospl_false);
 		if(ret == ERROR)
 			vty_out (vty, "%% Can't set interface IP address.%s",VTY_NEWLINE);
 		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -1154,7 +1154,7 @@ DEFUN (no_nsm_interface_ipv6_address,
 			vty_out (vty, "%% Malformed address %s", VTY_NEWLINE);
 			return CMD_WARNING;
 		}
-		ret = nsm_interface_address_unset_api(ifp, &cp, FALSE);
+		ret = nsm_interface_address_unset_api(ifp, &cp, ospl_false);
 		if(ret == ERROR)
 			vty_out (vty, "%% Can't unset interface IP address.%s",VTY_NEWLINE);
 		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -1270,12 +1270,12 @@ static int _show_interface_info(int argc, char *name, char *uspv, struct vty *vt
 	}
 	else if(argc == 1)//brief
 	{
-		BOOL brief = FALSE, head = TRUE;
-		//nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, BOOL status)
+		ospl_bool brief = ospl_false, head = ospl_true;
+		//nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, ospl_bool status)
 		if(os_memcmp(name, "brief", 3) == 0)
-			brief = FALSE;
+			brief = ospl_false;
 		else if(os_memcmp(name, "status", 3) == 0)
-			brief = TRUE;
+			brief = ospl_true;
 		if_list = if_list_get();
 		if (if_list)
 		{

@@ -30,7 +30,7 @@
  * returns a newly allocated string containing the space-separated domains,
  * prefixed with the contents of string pre, or NULL if an error occurs.
  */
-char* FAST_FUNC dname_dec(const uint8_t *cstr, int clen, const char *pre)
+char* FAST_FUNC dname_dec(const ospl_uint8 *cstr, ospl_uint32 clen, const char *pre)
 {
 	char *ret = ret; /* for compiler */
 	char *dst = NULL;
@@ -45,7 +45,7 @@ char* FAST_FUNC dname_dec(const uint8_t *cstr, int clen, const char *pre)
 	while (1) {
 		/* note: "return NULL" below are leak-safe since
 		 * dst isn't allocated yet */
-		const uint8_t *c;
+		const ospl_uint8 *c;
 		unsigned crtpos, retpos, depth, len;
 
 		crtpos = retpos = depth = len = 0;
@@ -114,9 +114,9 @@ char* FAST_FUNC dname_dec(const uint8_t *cstr, int clen, const char *pre)
  * RFC1035 encoding "\003foo\004blah\003com\000". Return allocated string, or
  * NULL if an error occurs.
  */
-static uint8_t *convert_dname(const char *src)
+static ospl_uint8 *convert_dname(const char *src)
 {
-	uint8_t c, *res, *lenptr, *dst;
+	ospl_uint8 c, *res, *lenptr, *dst;
 	int len;
 
 	res = malloc(strlen(src) + 2);
@@ -124,10 +124,10 @@ static uint8_t *convert_dname(const char *src)
 	dst++;
 
 	for (;;) {
-		c = (uint8_t)*src++;
+		c = (ospl_uint8)*src++;
 		if (c == '.' || c == '\0') {  /* end of label */
 			len = dst - lenptr - 1;
-			/* label too long, too short, or two '.'s in a row? abort */
+			/* label too long, too ospl_int16, or two '.'s in a row? abort */
 			if (len > NS_MAXLABEL || len == 0 || (c == '.' && *src == '.')) {
 				free(res);
 				return NULL;
@@ -153,10 +153,10 @@ static uint8_t *convert_dname(const char *src)
 }
 
 /* Returns the offset within cstr at which dname can be found, or -1 */
-static int find_offset(const uint8_t *cstr, int clen, const uint8_t *dname)
+static int find_offset(const ospl_uint8 *cstr, ospl_uint32 clen, const ospl_uint8 *dname)
 {
-	const uint8_t *c, *d;
-	int off;
+	const ospl_uint8 *c, *d;
+	ospl_uint32 off;
 
 	/* find all labels in cstr */
 	off = 0;
@@ -196,10 +196,10 @@ static int find_offset(const uint8_t *cstr, int clen, const uint8_t *dname)
  * The computed string is returned directly; its length is returned via retlen;
  * NULL and 0, respectively, are returned if an error occurs.
  */
-uint8_t* FAST_FUNC dname_enc(const uint8_t *cstr, int clen, const char *src, int *retlen)
+ospl_uint8* FAST_FUNC dname_enc(const ospl_uint8 *cstr, ospl_uint32 clen, const char *src, ospl_uint32 *retlen)
 {
-	uint8_t *d, *dname;
-	int off;
+	ospl_uint8 *d, *dname;
+	ospl_uint32 off;
 
 	dname = convert_dname(src);
 	if (dname == NULL) {
@@ -229,19 +229,19 @@ uint8_t* FAST_FUNC dname_enc(const uint8_t *cstr, int clen, const char *src, int
 int main(int argc, char **argv)
 {
 	int len;
-	uint8_t *encoded;
+	ospl_uint8 *encoded;
 
-        uint8_t str[6] = { 0x00, 0x00, 0x02, 0x65, 0x65, 0x00 };
+        ospl_uint8 str[6] = { 0x00, 0x00, 0x02, 0x65, 0x65, 0x00 };
         printf("NUL:'%s'\n",   dname_dec(str, 6, ""));
 
-#define DNAME_DEC(encoded,pre) dname_dec((uint8_t*)(encoded), sizeof(encoded), (pre))
+#define DNAME_DEC(encoded,pre) dname_dec((ospl_uint8*)(encoded), sizeof(encoded), (pre))
 	printf("'%s'\n",       DNAME_DEC("\4host\3com\0", "test1:"));
 	printf("test2:'%s'\n", DNAME_DEC("\4host\3com\0\4host\3com\0", ""));
 	printf("test3:'%s'\n", DNAME_DEC("\4host\3com\0\xC0\0", ""));
 	printf("test4:'%s'\n", DNAME_DEC("\4host\3com\0\xC0\5", ""));
 	printf("test5:'%s'\n", DNAME_DEC("\4host\3com\0\xC0\5\1z\xC0\xA", ""));
 
-#define DNAME_ENC(cache,source,lenp) dname_enc((uint8_t*)(cache), sizeof(cache), (source), (lenp))
+#define DNAME_ENC(cache,source,lenp) dname_enc((ospl_uint8*)(cache), sizeof(cache), (source), (lenp))
 	encoded = dname_enc(NULL, 0, "test.net", &len);
 	printf("test6:'%s' len:%d\n", dname_dec(encoded, len, ""), len);
 	encoded = DNAME_ENC("\3net\0", "test.net", &len);

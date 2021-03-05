@@ -51,7 +51,7 @@ int modem_client_exit(void)
 }
 
 
-static modem_client_t * modem_client_lookup_node(int vendor, int product)
+static modem_client_t * modem_client_lookup_node(ospl_uint32 vendor, ospl_uint32 product)
 {
 	modem_client_t *pstNode = NULL;
 	NODE index;
@@ -112,7 +112,7 @@ static modem_client_t * modem_client_lookup_node_by_name(char *name)
 	return ERROR;
 }*/
 
-modem_client_t * modem_client_alloc(int vendor, int product)
+modem_client_t * modem_client_alloc(ospl_uint32 vendor, ospl_uint32 product)
 {
 	if(modem_client_lookup_node(vendor, product) == NULL )
 	{
@@ -196,7 +196,7 @@ int modem_client_del_api(modem_client_t *client)
 	return ret;
 }
 
-int modem_client_del_by_product_api(int vendor, int product)
+int modem_client_del_by_product_api(ospl_uint32 vendor, ospl_uint32 product)
 {
 	int ret = ERROR;
 	modem_client_t *node = NULL;
@@ -283,7 +283,7 @@ int modem_client_register_api(modem_client_t *client)
 	return ret;
 }
 
-modem_client_t * modem_client_lookup_api(int vendor, int product)
+modem_client_t * modem_client_lookup_api(ospl_uint32 vendor, ospl_uint32 product)
 {
 	modem_client_t *pstNode = NULL;
 	if(gModemClient.mutex)

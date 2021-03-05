@@ -8,6 +8,10 @@
 #ifndef __MODEM_EVENT_H__
 #define __MODEM_EVENT_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //#include "modem.h"
 
 //#define __MODEM_EVENT_DEBUG
@@ -57,9 +61,9 @@ typedef enum modem_event_s
 }modem_event;
 
 
-extern int modem_event_add_api(modem_t *, modem_event, BOOL );
-extern int modem_event_del_api(modem_t *, modem_event, BOOL );
-extern int modem_event_reload(modem_t *, modem_event, BOOL );
+extern int modem_event_add_api(modem_t *, modem_event, ospl_bool );
+extern int modem_event_del_api(modem_t *, modem_event, ospl_bool );
+extern int modem_event_reload(modem_t *, modem_event, ospl_bool );
 
 
 extern const char *modem_event_string(modem_event );
@@ -98,5 +102,9 @@ extern modem_event modem_event_process(modem_t *, modem_event );
 #define MODEM_EV_ERROR(fmt,...)
 #endif
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MODEM_EVENT_H__ */

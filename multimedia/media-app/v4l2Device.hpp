@@ -28,7 +28,13 @@ extern "C"
 
 #include "videoEncoder.hpp"
 #include "FramedQueue.hpp"
-
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "ospl_type.h"
+#ifdef __cplusplus
+}
+#endif
 class v4l2Device
 {
 public:

@@ -18,7 +18,7 @@
 #define PROC_BASE "/proc"
 
 
-static int os_log_file_printf(FILE *fp, const char *buf, va_list args)
+static int os_log_file_printf(FILE *fp, const ospl_char *buf, va_list args)
 {
 	if(fp)
 	{
@@ -29,7 +29,7 @@ static int os_log_file_printf(FILE *fp, const char *buf, va_list args)
 	return OK;
 }
 
-void os_log(char *file, const char *format, ...)
+void os_log(ospl_char *file, const ospl_char *format, ...)
 {
 	FILE *fp = fopen(file, "a+");
 	if(fp)
@@ -44,7 +44,7 @@ void os_log(char *file, const char *format, ...)
 }
 
 
-int super_system(const char *cmd)
+int super_system(const ospl_char *cmd)
 {
 	int ret = 0;
 	errno = 0;
@@ -74,13 +74,13 @@ int super_system(const char *cmd)
 }
 
 
-int super_output_system(const char *cmd, char *output, int len)
+int super_output_system(const ospl_char *cmd, ospl_char *output, ospl_uint32 len)
 {
 	FILE * fp = NULL;
 	fp = popen(cmd, "r");
 	if(fp)
 	{
-		int offset = 0;
+		ospl_uint32 offset = 0;
 		while(fgets(output + offset, len - offset, fp) != NULL)
 		{
 		   //printf("%s", output);
@@ -98,7 +98,7 @@ int super_output_system(const char *cmd, char *output, int len)
 	return ERROR;
 }
 
-int super_input_system(const char *cmd, char *input)
+int super_input_system(const ospl_char *cmd, ospl_char *input)
 {
 	FILE * fp = NULL;
 	fp = popen(cmd, "w");
@@ -116,16 +116,16 @@ int super_input_system(const char *cmd, char *input)
 	return ERROR;
 }
 
-int super_system_execvp(const char *cmd, char **input)
+int super_system_execvp(const ospl_char *cmd, ospl_char **input)
 {
 	return execvp(cmd, input);
 }
 
-char * pid2name(int pid)
+ospl_char * pid2name(ospl_pid_t pid)
 {
-	static char name[128];
+	static ospl_char name[128];
 	FILE *fp = NULL;
-	char filepath[256];
+	ospl_char filepath[256];
 	os_memset(filepath, 0, sizeof(filepath));
 	snprintf(filepath, sizeof(filepath), "%s/%d/comm",PROC_BASE, pid);
 	fp = fopen(filepath, "r");
@@ -143,13 +143,14 @@ char * pid2name(int pid)
 }
 
 
-int name2pid(const char *name)
+ospl_pid_t name2pid(const ospl_char *name)
 {
 	DIR *dir;
 	struct dirent *d;
-	int pid, i;
-	char *s;
-	int pnlen;
+	ospl_pid_t pid;
+	ospl_uint32 i;
+	ospl_char *s;
+	ospl_uint32 pnlen;
 	i = 0;
 	pnlen = strlen(name);
 	/* Open the /proc directory. */
@@ -164,10 +165,10 @@ int name2pid(const char *name)
 	while ((d = readdir(dir)) != NULL)
 	{
 
-		char comm[PATH_MAX + 1];
-		char path[PATH_MAX + 1];
-		int len;
-		int namelen;
+		ospl_char comm[PATH_MAX + 1];
+		ospl_char path[PATH_MAX + 1];
+		ospl_uint32 len;
+		ospl_uint32 namelen;
 
 		/* See if this is a process */
 		if ((pid = atoi(d->d_name)) == 0)
@@ -207,10 +208,10 @@ int name2pid(const char *name)
 #undef PROC_BASE
 
 
-pid_t os_pid_set (const char *path)
+ospl_pid_t os_pid_set (const ospl_char *path)
 {
 	FILE *fp = NULL;
-	pid_t pid = 0;
+	ospl_pid_t pid = 0;
 	mode_t oldumask = 0;
 
 	pid = getpid();
@@ -233,10 +234,10 @@ pid_t os_pid_set (const char *path)
 }
 
 
-pid_t os_pid_get (const char *path)
+ospl_pid_t os_pid_get (const ospl_char *path)
 {
 	FILE *fp = NULL;
-	pid_t pid = 0;
+	ospl_pid_t pid = 0;
 	mode_t oldumask = 0;
 	if (access(path, 0) == 0)
 	{
@@ -258,14 +259,14 @@ pid_t os_pid_get (const char *path)
 	return -1;
 }
 
-int child_process_create()
+ospl_pid_t child_process_create()
 {
-	pid_t pid = 0;
+	ospl_pid_t pid = 0;
 	pid = fork();
 	return pid;
 }
 
-int child_process_destroy(int pid)
+int child_process_destroy(ospl_pid_t pid)
 {
 	if(pid)
 	{
@@ -275,7 +276,7 @@ int child_process_destroy(int pid)
 	return OK;
 }
 
-int child_process_kill(int pid)
+int child_process_kill(ospl_pid_t pid)
 {
 	if(pid)
 	{
@@ -285,7 +286,7 @@ int child_process_kill(int pid)
 	return OK;
 }
 
-int child_process_wait(int pid, int wait)
+int child_process_wait(ospl_pid_t pid, ospl_uint32 wait)
 {
 	if(wait == 0)
 		return waitpid(pid, NULL, WNOHANG);
@@ -304,7 +305,7 @@ int child_process_kill(int pid)
 }*/
 
 
-int os_write_file(const char *name, const char *string, int len)
+int os_write_file(const ospl_char *name, const ospl_char *string, ospl_uint32 len)
 {
 	FILE *fp = fopen(name, "w+");
 	if(fp)
@@ -318,7 +319,7 @@ int os_write_file(const char *name, const char *string, int len)
 	return ERROR;
 }
 
-int os_read_file(const char *name, const char *string, int len)
+int os_read_file(const ospl_char *name, const ospl_char *string, ospl_uint32 len)
 {
 	FILE *fp = fopen(name, "r");
 	if(fp)
@@ -332,7 +333,7 @@ int os_read_file(const char *name, const char *string, int len)
 
 int os_get_blocking(int fd)
 {
-	int flags = 0;
+	ospl_uint32 flags = 0;
 
 	/* According to the Single UNIX Spec, the return value for F_GETFL should
 	 never be negative. */
@@ -348,7 +349,7 @@ int os_get_blocking(int fd)
 }
 int os_set_nonblocking(int fd)
 {
-	int flags = 0;
+	ospl_uint32 flags = 0;
 
 	/* According to the Single UNIX Spec, the return value for F_GETFL should
 	 never be negative. */
@@ -369,7 +370,7 @@ int os_set_nonblocking(int fd)
 
 int os_set_blocking(int fd)
 {
-	int flags = 0;
+	ospl_uint32 flags = 0;
 	/* According to the Single UNIX Spec, the return value for F_GETFL should
 	 never be negative. */
 	if ((flags = fcntl(fd, F_GETFL)) < 0)
@@ -388,10 +389,10 @@ int os_set_blocking(int fd)
 	return 0;
 }
 
-int os_pipe_create(char *name, int mode)
+int os_pipe_create(ospl_char *name, ospl_uint32 mode)
 {
 	int fd = 0;
-	char path[128];
+	ospl_char path[128];
 	os_memset(path, 0, sizeof(path));
 	os_snprintf(path, sizeof(path), "%s/%s.pipe", OS_PIPE_BASE, name);
 	if(access(path, 0) != 0)
@@ -418,16 +419,16 @@ int os_pipe_close(int fd)
 	return OK;
 }
 
-int os_file_access(char *filename)
+int os_file_access(ospl_char *filename)
 {
 	if(access(filename, F_OK) != 0)
 		return ERROR;
 	return OK;
 }
 
-int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, int timeout_ms)
+int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, ospl_uint32 timeout_ms)
 {
-	int num = 0;
+	ospl_uint32 num = 0;
 	struct timeval timer_wait = { .tv_sec = 1, .tv_usec = 0 };
 	timer_wait.tv_sec = timeout_ms/1000;
 	timer_wait.tv_usec = (timeout_ms%1000) * 1000;
@@ -458,7 +459,7 @@ int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, int timeout_ms)
 }
 
 
-int os_write_timeout(int fd, char *buf, int len, int timeout_ms)
+int os_write_timeout(int fd, ospl_char *buf, ospl_uint32 len, ospl_uint32 timeout_ms)
 {
 	int ret = 0;
 	fd_set writefds;
@@ -483,7 +484,7 @@ int os_write_timeout(int fd, char *buf, int len, int timeout_ms)
 	return write(fd, buf, len);
 }
 
-int os_read_timeout(int fd, char *buf, int len, int timeout_ms)
+int os_read_timeout(int fd, ospl_char *buf, ospl_uint32 len, ospl_uint32 timeout_ms)
 {
 	int ret = 0;
 	fd_set readfds;
@@ -508,7 +509,7 @@ int os_read_timeout(int fd, char *buf, int len, int timeout_ms)
 	return read(fd, buf, len);
 }
 
-int os_register_signal(int sig, void (*handler)(int
+int os_register_signal(ospl_int sig, void (*handler)(ospl_int
 #ifdef SA_SIGINFO
 	     , siginfo_t *siginfo, void *context
 #endif
@@ -539,13 +540,13 @@ int os_register_signal(int sig, void (*handler)(int
 
 
 
-int os_mkdir(const char *dirpath, int mode, int pathflag)
+int os_mkdir(const ospl_char *dirpath, ospl_uint32 mode, ospl_uint32 pathflag)
 {
 	int ret = 0;
-	char tmp[128];
-	char *p = NULL;
-	static char cupwdtmp[128];
-	static unsigned char cupflag = 0;
+	ospl_char tmp[128];
+	ospl_char *p = NULL;
+	static ospl_char cupwdtmp[128];
+	static ospl_uchar cupflag = 0;
 	if(cupflag == 0)
 	{
 		cupflag = 1;
@@ -609,7 +610,7 @@ int os_mkdir(const char *dirpath, int mode, int pathflag)
 }
 
 
-int os_rmdir(const char *dirpath, int pathflag)
+int os_rmdir(const ospl_char *dirpath, ospl_uint32 pathflag)
 {
 	if (strlen (dirpath) == 0 || dirpath == NULL)
 	{
@@ -617,7 +618,7 @@ int os_rmdir(const char *dirpath, int pathflag)
 		return -1;
 	}
 
-	char tmp[128];
+	ospl_char tmp[128];
 	memset (tmp, '\0', sizeof(tmp));
 	snprintf (tmp, sizeof(tmp), "rm %s %s", pathflag?"-rf":" ",dirpath);
 	if( access(dirpath,   NULL) == 0)
@@ -630,7 +631,7 @@ int os_rmdir(const char *dirpath, int pathflag)
 	return 0;
 }
 
-int os_getpwddir(const char *path, int pathsize)
+int os_getpwddir(const ospl_char *path, ospl_uint32 pathsize)
 {
 	if(getcwd(path, pathsize))
 		return OK;
@@ -643,7 +644,7 @@ int os_register_signal(int sig)
 }
 */
 
-int os_file_size (const char *filename)
+int os_file_size (const ospl_char *filename)
 {
 #if 0
 	if(!filename)
@@ -673,10 +674,10 @@ int os_file_size (const char *filename)
 
 #define KB_SIZE_MASK	(0X000003FF)
 
-const char * os_file_size_string(u_int32 len)
+const ospl_char * os_file_size_string(ospl_uint32 len)
 {
-	u_int glen = 0, mlen = 0, klen = 0, tlen = 0;
-	static char buf[64];
+	ospl_uint32 glen = 0, mlen = 0, klen = 0, tlen = 0;
+	static ospl_char buf[64];
 	memset(buf, 0, sizeof(buf));
 	tlen = (len >> 40) & KB_SIZE_MASK;
 	glen = (len >> 30) & KB_SIZE_MASK;
@@ -705,7 +706,7 @@ const char * os_file_size_string(u_int32 len)
 	return buf;
 }
 
-/*const char * os_stream_size(long long len)
+/*const ospl_char * os_stream_size(long long len)
 {
 	return os_file_size(len);
 }*/
@@ -744,14 +745,14 @@ const char * os_file_size_string(u_int32 len)
  * rtsp://admin:abc123456@192.168.3.64:554/av0_0
  * rtsp://admin:abc123456@192.168.1.64/av0_0
  */
-int os_url_split(const char * URL, os_url_t *spliurl)
+int os_url_split(const ospl_char * URL, os_url_t *spliurl)
 {
-	char tmp[128];
-	char buf[128];
+	ospl_char tmp[128];
+	ospl_char buf[128];
 	if(URL == NULL || !spliurl)
 		return ERROR;
-	char *url_dup = URL;
-	char *p_slash = NULL, *p = NULL;
+	ospl_char *url_dup = URL;
+	ospl_char *p_slash = NULL, *p = NULL;
 
 	p_slash = strstr(url_dup, "://");
 
@@ -875,7 +876,7 @@ split_agent:
 }
 
 #if 0
-static int os_url_debug_test(char *URL)
+static int os_url_debug_test(ospl_char *URL)
 {
 	os_url_t spliurl;
 	memset(&spliurl, 0, sizeof(os_url_t));
@@ -950,13 +951,13 @@ int os_url_test()
 }
 #endif
 #if 0
-int os_url_split(const char * URL, os_url_t *spliurl)
+int os_url_split(const ospl_char * URL, os_url_t *spliurl)
 {
-	char tmp[128];
+	ospl_char tmp[128];
 	if(URL == NULL || !spliurl)
 		return ERROR;
-	char *url_dup = URL;
-	char *p_slash = NULL;
+	ospl_char *url_dup = URL;
+	ospl_char *p_slash = NULL;
 	if(!strstr(url_dup, "://"))
 		return ERROR;
 
@@ -1107,9 +1108,9 @@ int os_url_free(os_url_t *spliurl)
 	return OK;
 }
 
-int os_thread_once(int (*entry)(void *), void *p)
+ospl_pthread_t os_thread_once(int (*entry)(void *), void *p)
 {
-	int td_thread = 0;
+	ospl_pthread_t td_thread = 0;
 	if (pthread_create(&td_thread, NULL,
 			entry, (void *) p) == 0)
 		return td_thread;
@@ -1120,12 +1121,12 @@ int os_thread_once(int (*entry)(void *), void *p)
 int fdprintf
     (
     int fd,       /* fd of control connection socket */
-	const char *format, ...
+	const ospl_char *format, ...
     )
     {
 		va_list args;
-		char buf[1024];
-		int len = 0;
+		ospl_char buf[1024];
+		ospl_uint32 len = 0;
 		memset(buf, 0, sizeof(buf));
 		va_start(args, format);
 		len = vsnprintf(buf, sizeof(buf), format, args);
@@ -1137,7 +1138,7 @@ int fdprintf
     }
 
 
-int hostname_ipv4_address(char *hostname, struct in_addr *addr)
+int hostname_ipv4_address(ospl_char *hostname, struct in_addr *addr)
 {
 	if(!addr)
 		return ERROR;
@@ -1155,7 +1156,7 @@ int hostname_ipv4_address(char *hostname, struct in_addr *addr)
 	return OK;
 }
 
-int hostname_ipv6_address(char *hostname, struct in6_addr *addr)
+int hostname_ipv6_address(ospl_char *hostname, struct in6_addr *addr)
 {
 	if(!addr)
 		return ERROR;
@@ -1181,10 +1182,10 @@ int hostname_ipv6_address(char *hostname, struct in6_addr *addr)
 static int os_process_sock = 0;
 
 
-static int os_process_split(process_head *head, process_action action, char *name,
-		char *process, BOOL restart, char *argv[])
+static int os_process_split(process_head *head, process_action action, ospl_char *name,
+		ospl_char *process, ospl_bool restart, ospl_char *argv[])
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	head->action = action;
 	head->restart = restart;
 	if(name)
@@ -1208,14 +1209,14 @@ static int os_process_split(process_head *head, process_action action, char *nam
 	return OK;
 }
 
-int os_process_register(process_action action, char *name,
-		char *process, BOOL restart, char *argv[])
+int os_process_register(process_action action, ospl_char *name,
+		ospl_char *process, ospl_bool restart, ospl_char *argv[])
 {
 	int ret = 0;
 	process_head head;
 	if(os_process_sock == 0)
 	{
-		os_process_sock = unix_sock_client_create(TRUE, PROCESS_MGT_UNIT_NAME);
+		os_process_sock = unix_sock_client_create(ospl_true, PROCESS_MGT_UNIT_NAME);
 	}
 	if(os_process_sock <= 0)
 		return ERROR;
@@ -1228,14 +1229,14 @@ int os_process_register(process_action action, char *name,
 	//zlog_debug(MODULE_NSM, "%s:name:%s(%d byte(%s))",__func__, head.name, ret, strerror(errno));
 	if( ret == sizeof(process_head))
 	{
-		int num = 0;
+		ospl_uint32 num = 0;
 		fd_set rfdset;
 		FD_ZERO(&rfdset);
 		FD_SET(os_process_sock, &rfdset);
 		num = os_select_wait(os_process_sock + 1, &rfdset, NULL, 5000);
 		if(num)
 		{
-			int respone = 0;
+			ospl_uint32 respone = 0;
 			if(FD_ISSET(os_process_sock, &rfdset))
 			{
 				if(read(os_process_sock, &respone, 4) == 4)
@@ -1274,19 +1275,19 @@ int os_process_register(process_action action, char *name,
 	return ret;
 }
 
-int os_process_action(process_action action, char *name, int id)
+int os_process_action(process_action action, ospl_char *name, ospl_uint32 id)
 {
-	int ret = 0;
+	ospl_uint32 ret = 0;
 	process_head head;
 	if(os_process_sock == 0)
 	{
-		os_process_sock = unix_sock_client_create(TRUE, PROCESS_MGT_UNIT_NAME);
+		os_process_sock = unix_sock_client_create(ospl_true, PROCESS_MGT_UNIT_NAME);
 	}
 	if(os_process_sock <= 0)
 		return ERROR;
 	os_memset(&head, 0, sizeof(head));
 	os_process_split(&head,  action, name,
-			NULL,  FALSE, NULL);
+			NULL,  ospl_false, NULL);
 	head.id = id;
 	errno = 0;
 	ret = write(os_process_sock, &head, sizeof(process_head));
@@ -1294,14 +1295,14 @@ int os_process_action(process_action action, char *name, int id)
 	//zlog_debug(MODULE_NSM, "%s:name:%s(%d byte(%s))",__func__, head.name, ret, strerror(errno));
 	if( ret == sizeof(process_head))
 	{
-		int num = 0;
+		ospl_uint32 num = 0;
 		fd_set rfdset;
 		FD_ZERO(&rfdset);
 		FD_SET(os_process_sock, &rfdset);
 		num = os_select_wait(os_process_sock + 1, &rfdset, NULL, 5000);
 		if(num)
 		{
-			int respone = 0;
+			ospl_uint32 respone = 0;
 			if(FD_ISSET(os_process_sock, &rfdset))
 			{
 				if(read(os_process_sock, &respone, 4) == 4)
@@ -1340,9 +1341,9 @@ int os_process_action(process_action action, char *name, int id)
 	return ret;
 }
 
-int os_process_action_respone(int fd, int respone)
+int os_process_action_respone(int fd, ospl_uint32 respone)
 {
-	int value = respone;
+	ospl_uint32 value = respone;
 	if(fd)
 		return write(fd, &value, 4);
 	return ERROR;
@@ -1350,12 +1351,12 @@ int os_process_action_respone(int fd, int respone)
 
 int os_process_start()
 {
-	int os_process_id = 0;
+	ospl_uint32 os_process_id = 0;
 	os_process_id = child_process_create();
 	if(os_process_id == 0)
 	{
-		char *plogfile = DAEMON_LOG_FILE_DIR"/ProcessMU.log";
-		char *argvp[] = {"-D", "-d", "6", "-l", plogfile, NULL};
+		ospl_char *plogfile = DAEMON_LOG_FILE_DIR"/ProcessMU.log";
+		ospl_char *argvp[] = {"-D", "-d", "6", "-l", plogfile, NULL};
 		super_system_execvp("ProcessMU", argvp);
 	}
 	return 0;
@@ -1363,7 +1364,7 @@ int os_process_start()
 
 int os_process_stop()
 {
-	int os_process_id = os_pid_get(BASE_DIR"/run/process.pid");
+	ospl_uint32 os_process_id = os_pid_get(BASE_DIR"/run/process.pid");
 	if(os_process_id > 0)
 		return child_process_destroy(os_process_id);
 	return 0;

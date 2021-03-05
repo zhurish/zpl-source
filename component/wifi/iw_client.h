@@ -8,6 +8,10 @@
 #ifndef __IW_CLIENT_H__
 #define __IW_CLIENT_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "zebra.h"
 #include "vty.h"
 #include "if.h"
@@ -25,45 +29,45 @@ typedef struct iw_client_db_s
 	char 				SSID[IW_SSID_NAME_MAX];
 	char 				password[IW_SSID_PASS_MAX];
 	char 				encrypt_password[IW_SSID_PASS_MAX];
-	int					ifindex;
+	ifindex_t					ifindex;
 }iw_client_db_t;
 
 typedef struct iw_client_ap_s
 {
 	NODE				node;
-	u_int8 				BSSID[IW_SSID_NAME_MAX];
+	ospl_uint8 				BSSID[IW_SSID_NAME_MAX];
 	char 				SSID[IW_SSID_NAME_MAX];
-	u_int8				channel;
+	ospl_uint8				channel;
 	double				freq;
-	u_int8				qaul;
-	u_int8				max_qaul;
+	ospl_uint8				qaul;
+	ospl_uint8				max_qaul;
 	int					signal;
 	int					nosie;
-	u_int16				bitrate;
-	u_int8				beacon;
+	ospl_uint16				bitrate;
+	ospl_uint8				beacon;
 	iw_authentication_t	auth;
-	int					ifindex;
+	ifindex_t					ifindex;
 
-	u_int8				ttl;
-	u_int8				connect;
+	ospl_uint8				ttl;
+	ospl_uint8				connect;
 }iw_client_ap_t;
 
 
 typedef struct iw_client_s
 {
-	int					ifindex;
+	ifindex_t					ifindex;
 #ifndef IW_ONCE_TASK
-	int					taskid;
+	ospl_uint32					taskid;
 #endif
-	BOOL				scan_enable;
-	u_int8				scan_interval;
-	BOOL				connect_enable;
-	u_int8				connect_delay;
+	ospl_bool				scan_enable;
+	ospl_uint32				scan_interval;
+	ospl_bool				connect_enable;
+	ospl_uint32				connect_delay;
 
-	BOOL				auto_connect;
+	ospl_bool				auto_connect;
 	void				*mutex;
 
-	u_int8				scan_max;
+	ospl_uint32				scan_max;
 	LIST				*ap_list;
 	LIST				*ap_unlist;
 	void				*ap_mutex;
@@ -85,7 +89,7 @@ typedef struct iw_client_s
 
 extern int iw_client_init(iw_client_t *, ifindex_t ifindex);
 extern int iw_client_exit(iw_client_t *);
-extern int iw_client_enable(iw_client_t *iw_client, BOOL enable);
+extern int iw_client_enable(iw_client_t *iw_client, ospl_bool enable);
 
 extern int iw_client_task_start(iw_client_t *iw_client);
 extern int iw_client_task_exit(iw_client_t *iw_client);
@@ -98,7 +102,7 @@ extern iw_client_t * iw_client_lookup_api(struct interface *ifp);
 extern int iw_client_connect_start(iw_client_t *);
 extern int iw_client_connect_exit(iw_client_t *);
 
-extern int iw_client_connect_api(iw_client_t *iw_client, BOOL auto_connect);
+extern int iw_client_connect_api(iw_client_t *iw_client, ospl_bool auto_connect);
 extern int iw_client_disconnect_api(iw_client_t *iw_client);
 
 //show current connect information 显示当前连接的wifi
@@ -107,15 +111,15 @@ extern int iw_client_connect_ap_show(iw_client_t *iw_client, struct vty *vty);
 extern int iw_client_scan_ap_show(iw_client_t *iw_client, struct vty *vty);
 extern int iw_client_station_dump_show(iw_client_t *iw_client, struct vty *vty);
 
-extern int iw_client_connect_interval_api(iw_client_t *iw_client, int connect_interval);
+extern int iw_client_connect_interval_api(iw_client_t *iw_client, ospl_uint32 connect_interval);
 //扫描附近wifi时间间隔
-extern int iw_client_scan_interval_api(iw_client_t *iw_client, int scan_interval);
-extern int iw_client_scan_max_api(iw_client_t *iw_client, int scan_max);
+extern int iw_client_scan_interval_api(iw_client_t *iw_client, ospl_uint32 scan_interval);
+extern int iw_client_scan_max_api(iw_client_t *iw_client, ospl_uint32 scan_max);
 /*
  * DB
  */
 extern int iw_client_db_set_api(iw_client_t *, char *ssid, char *pass);
-extern int iw_client_db_del_api(iw_client_t *, char *ssid, BOOL pass);
+extern int iw_client_db_del_api(iw_client_t *, char *ssid, ospl_bool pass);
 
 extern iw_client_db_t * iw_client_db_lookup_api(iw_client_t *, char *ssid);
 extern int iw_client_db_callback_api(iw_client_t *, int (*cb)(iw_client_db_t *, void *), void *pVoid);
@@ -124,14 +128,18 @@ extern int iw_client_db_callback_api(iw_client_t *, int (*cb)(iw_client_db_t *, 
  * AP scan
  */
 //显示附近wifi
-extern int iw_client_neighbor_show(iw_client_t *, struct vty *vty, BOOL all);
-extern int iw_client_ap_set_api(iw_client_t *, u_int8 *bssid, iw_client_ap_t *ap);
-extern int iw_client_ap_del_api(iw_client_t *, u_int8 *bssid, char *ssid);
-extern iw_client_ap_t * iw_client_ap_lookup_api(iw_client_t *, u_int8 *bssid, char *ssid);
+extern int iw_client_neighbor_show(iw_client_t *, struct vty *vty, ospl_bool all);
+extern int iw_client_ap_set_api(iw_client_t *, ospl_uint8 *bssid, iw_client_ap_t *ap);
+extern int iw_client_ap_del_api(iw_client_t *, ospl_uint8 *bssid, char *ssid);
+extern iw_client_ap_t * iw_client_ap_lookup_api(iw_client_t *, ospl_uint8 *bssid, char *ssid);
 extern int iw_client_neighbor_callback_api(iw_client_t *, int (*cb)(iw_client_ap_t *, void *), void *pVoid);
 
 extern int iw_client_scan_start(iw_client_t *);
 extern int iw_client_scan_exit(iw_client_t *);
 
-
+ 
+#ifdef __cplusplus
+}
+#endif
+ 
 #endif /* __IW_CLIENT_H__ */

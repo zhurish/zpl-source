@@ -14,7 +14,13 @@
 #include "liveMedia.hh"
 #include "BasicUsageEnvironment.hh"
 #include "FramedQueue.hpp"
-
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "ospl_type.h"
+#ifdef __cplusplus
+}
+#endif
 
 // Even though we're not going to be doing anything with the incoming data, we still need to receive it.
 // Define the size of the buffer that we'll use:

@@ -34,7 +34,7 @@
 
 int x5b_app_update_mode(x5b_app_mgt_t *app, void *info, int to)
 {
-	int len = 0;
+	ospl_uint32 len = 0;
 	x5b_app_mgt_t *mgt = app;
 	if(app == NULL)
 		mgt = x5b_app_mgt;
@@ -42,7 +42,7 @@ int x5b_app_update_mode(x5b_app_mgt_t *app, void *info, int to)
 	zassert(info != NULL);
 	if(mgt->mutex)
 		os_mutex_lock(mgt->mutex, OS_WAIT_FOREVER);
-	x5b_app_update_mode_enable(mgt, TRUE, E_CMD_TO_A);
+	x5b_app_update_mode_enable(mgt, ospl_true, E_CMD_TO_A);
 	x5b_app_make_update(mgt, to);
 	if(!mgt->app->reg_state)
 	{
@@ -62,8 +62,8 @@ int x5b_app_update_mode(x5b_app_mgt_t *app, void *info, int to)
 	}
 	if(info)
 	{
-		mgt->sync_ack = TRUE;
-		mgt->not_debug = TRUE;
+		mgt->sync_ack = ospl_true;
+		mgt->not_debug = ospl_true;
 		x5b_app_hdr_make(mgt);
 		len = os_tlv_set_octet(mgt->app->sbuf + mgt->app->offset,
 				E_CMD_MAKE(E_CMD_MODULE_B, E_CMD_UPDATE, E_CMD_UPDATE_MODE), sizeof(x5b_app_update_mode_t), info);
@@ -73,8 +73,8 @@ int x5b_app_update_mode(x5b_app_mgt_t *app, void *info, int to)
 			zlog_debug(MODULE_APP, "Update Mode MSG to %s:%d %d byte", inet_address(mgt->app->address),
 					mgt->app->remote_port, mgt->app->slen);
 		len = x5b_app_send_msg(mgt);
-		mgt->upgrade = TRUE;
-		//x5b_app_update_mode_enable(mgt, TRUE, E_CMD_TO_A);
+		mgt->upgrade = ospl_true;
+		//x5b_app_update_mode_enable(mgt, ospl_true, E_CMD_TO_A);
 /*		if(mgt->mutex)
 			os_mutex_unlock(mgt->mutex);*/
 		return len;
@@ -90,7 +90,7 @@ int x5b_app_update_mode_exit(x5b_app_mgt_t *app)
 	if(app == NULL)
 		mgt = x5b_app_mgt;
 	zassert(mgt != NULL);
-	x5b_app_update_mode_enable(mgt, FALSE, E_CMD_TO_A);
+	x5b_app_update_mode_enable(mgt, ospl_false, E_CMD_TO_A);
 	if(mgt->mutex)
 		os_mutex_unlock(mgt->mutex);
 	//zlog_debug(MODULE_APP, "----x5b_app_update_mode_exit OK" );
@@ -99,7 +99,7 @@ int x5b_app_update_mode_exit(x5b_app_mgt_t *app)
 
 int x5b_app_update_data(x5b_app_mgt_t *app, void *info, int inlen, int to)
 {
-	int len = 0;
+	ospl_uint32 len = 0;
 	x5b_app_mgt_t *mgt = app;
 	if(app == NULL)
 		mgt = x5b_app_mgt;
@@ -126,8 +126,8 @@ int x5b_app_update_data(x5b_app_mgt_t *app, void *info, int inlen, int to)
 	}
 	if(info)
 	{
-		mgt->sync_ack = TRUE;
-		mgt->not_debug = TRUE;
+		mgt->sync_ack = ospl_true;
+		mgt->not_debug = ospl_true;
 		x5b_app_hdr_make(mgt);
 		len = os_tlv_set_octet(mgt->app->sbuf + mgt->app->offset,
 				E_CMD_MAKE(E_CMD_MODULE_B, E_CMD_UPDATE, E_CMD_UPDATE_DATA), inlen, info);
@@ -156,8 +156,8 @@ int x5b_app_update_data(x5b_app_mgt_t *app, void *info, int inlen, int to)
 
 /*
 extern int xyz_modem_build_hdr(xyz_modem_t*xyz, xyz_modem_hdr_t *hdr, char *filename, int filesize);
-extern int xyz_modem_build_data(xyz_modem_t*xyz, xyz_modem_data_t *hdr, char *data, int len);
-extern int xyz_modem_build_data_last(xyz_modem_t*xyz, xyz_modem_data_last_t *hdr, char *data, int len);
+extern int xyz_modem_build_data(xyz_modem_t*xyz, xyz_modem_data_t *hdr, char *data, ospl_uint32 len);
+extern int xyz_modem_build_data_last(xyz_modem_t*xyz, xyz_modem_data_last_t *hdr, char *data, ospl_uint32 len);
 extern int xyz_modem_build_finsh(xyz_modem_t*xyz, xyz_modem_data_last_t *hdr);
 */
 static int xyz_modem_wait_start_transmit_data(xyz_modem_t *xyz, int timeout)
@@ -184,7 +184,7 @@ static int xyz_modem_wait_start_transmit_data(xyz_modem_t *xyz, int timeout)
 	return ERROR;
 }
 
-static int xyz_modem_transmit_data(xyz_modem_t *xyz, void *p, int len, int timeout)
+static int xyz_modem_transmit_data(xyz_modem_t *xyz, void *p, ospl_uint32 len, int timeout)
 {
 	int ret = 0, cnt = 0;
 	char buf[6];
@@ -280,7 +280,7 @@ int ymodem_send(int fd, char *filename, int filesize)
 	ret = xyz_modem_wait_start_transmit_data(&xyz, xyzModem_CHAR_TIMEOUT);
 	if(ret != OK)
 	{
-		//x5b_app_update_mode_enable(NULL, FALSE, E_CMD_TO_A);
+		//x5b_app_update_mode_enable(NULL, ospl_false, E_CMD_TO_A);
 		zlog_debug(MODULE_APP, "waiting timeout or error...");
 		return ret;
 	}
@@ -291,14 +291,14 @@ int ymodem_send(int fd, char *filename, int filesize)
 	ret = xyz_modem_transmit_data(&xyz, &hdr, sizeof(xyz_modem_hdr_t), xyzModem_PACK_TIMEOUT);
 	if (ret == ERROR)
 	{
-		//x5b_app_update_mode_enable(NULL, FALSE, E_CMD_TO_A);
+		//x5b_app_update_mode_enable(NULL, ospl_false, E_CMD_TO_A);
 		zlog_debug(MODULE_APP, "Error: No ACK received in 5 attempts\n");
 		return ERROR;
 	}
 	ret = xyz_modem_wait_start_transmit_data(&xyz, xyzModem_CHAR_TIMEOUT);
 	if(ret != OK)
 	{
-		//x5b_app_update_mode_enable(NULL, FALSE, E_CMD_TO_A);
+		//x5b_app_update_mode_enable(NULL, ospl_false, E_CMD_TO_A);
 		zlog_debug(MODULE_APP, "waiting timeout or error...");
 		return ERROR;
 	}
@@ -325,7 +325,7 @@ int ymodem_send(int fd, char *filename, int filesize)
 		if (ret == ERROR)
 		{
 			ymodem_send_finsh(&xyz);
-			//x5b_app_update_mode_enable(NULL, FALSE, E_CMD_TO_A);
+			//x5b_app_update_mode_enable(NULL, ospl_false, E_CMD_TO_A);
 			//if(X5_B_ESP32_DEBUG(UPDATE))
 				zlog_debug(MODULE_APP, "Error: No ACK received in 10 attempts\n");
 			return ERROR;
@@ -333,7 +333,7 @@ int ymodem_send(int fd, char *filename, int filesize)
 		else if (ret == xyzModem_cancel)
 		{
 			ymodem_send_finsh(&xyz);
-			//x5b_app_update_mode_enable(NULL, FALSE, E_CMD_TO_A);
+			//x5b_app_update_mode_enable(NULL, ospl_false, E_CMD_TO_A);
 			//if(X5_B_ESP32_DEBUG(UPDATE))
 				zlog_debug(MODULE_APP, "Error: Cancel Ymodem\n");
 			return ERROR;
@@ -341,7 +341,7 @@ int ymodem_send(int fd, char *filename, int filesize)
 		else if (ret == xyzModem_eof)
 		{
 			ymodem_send_finsh(&xyz);
-			//x5b_app_update_mode_enable(NULL, FALSE, E_CMD_TO_A);
+			//x5b_app_update_mode_enable(NULL, ospl_false, E_CMD_TO_A);
 			//if(X5_B_ESP32_DEBUG(UPDATE))
 				zlog_debug(MODULE_APP, "Error: EOF And Cancel Ymodem\n");
 			return ERROR;
@@ -349,7 +349,7 @@ int ymodem_send(int fd, char *filename, int filesize)
 		else if (ret == xyzModem_timeout)
 		{
 			ymodem_send_finsh(&xyz);
-			//x5b_app_update_mode_enable(NULL, FALSE, E_CMD_TO_A);
+			//x5b_app_update_mode_enable(NULL, ospl_false, E_CMD_TO_A);
 			//if(X5_B_ESP32_DEBUG(UPDATE))
 				zlog_debug(MODULE_APP, "Error: EOF Timeout Cancel Ymodem\n");
 			return ERROR;
@@ -375,25 +375,25 @@ int ymodem_send(int fd, char *filename, int filesize)
 					if (ret == OK)
 					{
 						ymodem_send_finsh(&xyz);
-						//x5b_app_update_mode_enable(NULL, FALSE, E_CMD_TO_A);
+						//x5b_app_update_mode_enable(NULL, ospl_false, E_CMD_TO_A);
 						return OK;
 					}
 					else
 					{
 						ymodem_send_finsh(&xyz);
-						//x5b_app_update_mode_enable(NULL, FALSE, E_CMD_TO_A);
+						//x5b_app_update_mode_enable(NULL, ospl_false, E_CMD_TO_A);
 						return ERROR;
 					}
 				}
 			}
 			ymodem_send_finsh(&xyz);
-			//x5b_app_update_mode_enable(NULL, FALSE, E_CMD_TO_A);
+			//x5b_app_update_mode_enable(NULL, ospl_false, E_CMD_TO_A);
 			return OK;
 		}
 		else if (ret == ERROR)
 		{
 			ymodem_send_finsh(&xyz);
-			//x5b_app_update_mode_enable(NULL, FALSE, E_CMD_TO_A);
+			//x5b_app_update_mode_enable(NULL, ospl_false, E_CMD_TO_A);
 			//if(X5_B_ESP32_DEBUG(UPDATE))
 				zlog_debug(MODULE_APP, "Error: No ACK received in 5 attempts\n");
 			return ERROR;
@@ -401,7 +401,7 @@ int ymodem_send(int fd, char *filename, int filesize)
 		else if (ret == xyzModem_cancel)
 		{
 			ymodem_send_finsh(&xyz);
-			//x5b_app_update_mode_enable(NULL, FALSE, E_CMD_TO_A);
+			//x5b_app_update_mode_enable(NULL, ospl_false, E_CMD_TO_A);
 			return OK;
 		}
 		else if (ret == xyzModem_eof)
@@ -414,7 +414,7 @@ int ymodem_send(int fd, char *filename, int filesize)
 		else if (ret == xyzModem_timeout)
 		{
 			ymodem_send_finsh(&xyz);
-			//x5b_app_update_mode_enable(NULL, FALSE, E_CMD_TO_A);
+			//x5b_app_update_mode_enable(NULL, ospl_false, E_CMD_TO_A);
 			return OK;
 		}
 		pos++;
@@ -422,7 +422,7 @@ int ymodem_send(int fd, char *filename, int filesize)
 			break;
 	}
 	ymodem_send_finsh(&xyz);
-	//x5b_app_update_mode_enable(NULL, FALSE, E_CMD_TO_A);
+	//x5b_app_update_mode_enable(NULL, ospl_false, E_CMD_TO_A);
 	return ERROR;
 }
 

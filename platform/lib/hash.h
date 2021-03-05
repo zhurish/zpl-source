@@ -21,6 +21,10 @@ Boston, MA 02111-1307, USA.  */
 #ifndef _ZEBRA_HASH_H
 #define _ZEBRA_HASH_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Default hash table size.  */ 
 #define HASH_INITIAL_SIZE     256	/* initial number of backets. */
 #define HASH_THRESHOLD	      10	/* expand when backet. */
@@ -31,7 +35,7 @@ struct hash_backet
   struct hash_backet *next;
 
   /* Hash key. */
-  unsigned int key;
+  ospl_uint32  key;
 
   /* Data.  */
   void *data;
@@ -43,24 +47,24 @@ struct hash
   struct hash_backet **index;
 
   /* Hash table size. Must be power of 2 */
-  unsigned int size;
+  ospl_uint32  size;
 
   /* If expansion failed. */
-  int no_expand;
+  ospl_uint32 no_expand;
 
   /* Key make function. */
-  unsigned int (*hash_key) (void *);
+  ospl_uint32  (*hash_key) (void *);
 
   /* Data compare function. */
   int (*hash_cmp) (const void *, const void *);
 
   /* Backet alloc. */
-  unsigned long count;
+  ospl_ulong count;
 };
 
-extern struct hash *hash_create (unsigned int (*) (void *), 
+extern struct hash *hash_create (ospl_uint32  (*) (void *), 
 				 int (*) (const void *, const void *));
-extern struct hash *hash_create_size (unsigned int, unsigned int (*) (void *), 
+extern struct hash *hash_create_size (ospl_uint32 , ospl_uint32  (*) (void *), 
                                              int (*) (const void *, const void *));
 
 extern void *hash_get (struct hash *, void *, void * (*) (void *));
@@ -74,6 +78,10 @@ extern void hash_iterate (struct hash *,
 extern void hash_clean (struct hash *, void (*) (void *));
 extern void hash_free (struct hash *);
 
-extern unsigned int string_hash_make (const char *);
+extern ospl_uint32  string_hash_make (const char *);
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ZEBRA_HASH_H */

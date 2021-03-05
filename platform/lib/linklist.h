@@ -22,6 +22,10 @@
 #ifndef _ZEBRA_LINKLIST_H
 #define _ZEBRA_LINKLIST_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* listnodes must always contain data to be valid. Adding an empty node
  * to a list is invalid
  */
@@ -40,13 +44,13 @@ struct list
   struct listnode *tail;
 
   /* invariant: count is the number of listnodes in the list */
-  unsigned int count;
+  ospl_uint32  count;
 
   /*
    * Returns -1 if val1 < val2, 0 if equal?, 1 if val1 > val2.
    * Used as definition of sorted for listnode_add_sort
    */
-  int (*cmp) (void *val1, void *val2);
+  ospl_int (*cmp) (void *val1, void *val2);
 
   /* callback to free user-owned data when listnode is deleted. supplying
    * this callback is very much encouraged!
@@ -147,5 +151,9 @@ extern void list_add_list (struct list *, struct list *);
 #define LIST_LOOP(L,V,N) \
   for (ALL_LIST_ELEMENTS_RO (L,N,V))
 #endif /* QUAGGA_NO_DEPRECATED_INTERFACES */
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ZEBRA_LINKLIST_H */

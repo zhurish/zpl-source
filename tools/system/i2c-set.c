@@ -15,8 +15,8 @@
 
 static const struct codec_reg
 {
-	unsigned char reg;
-	unsigned short val;
+	ospl_uint8 reg;
+	ospl_uint16 val;
 }old_codec_list[] = {
 		{ 0x00, 0x0000 },
 		{ 0x02, 0x8888 },

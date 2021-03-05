@@ -37,8 +37,8 @@ DEFUN (app_start_test,
 	int ret = ERROR;
 	if(argc == 1)
 	{
-		//extern int voip_app_start_call_event_cli_web(app_call_source_t source, u_int8 building,
-		//		u_int8 unit, u_int16 room, char *number);
+		//extern int voip_app_start_call_event_cli_web(app_call_source_t source, ospl_uint8 building,
+		//		ospl_uint8 unit, ospl_uint16 room, char *number);
 
 		ret = voip_app_start_call_event_cli_web(APP_CALL_ID_CLI, 0, 0, 0, argv[0]);
 	}

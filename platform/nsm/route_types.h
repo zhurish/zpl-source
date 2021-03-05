@@ -372,9 +372,9 @@
 
 struct zebra_desc_table
 {
-  unsigned int type;
+  ospl_uint32  type;
   const char *string;
-  char chr;
+  ospl_char chr;
 };
 
 #define DESC_ENTRY(T,S,C) [(T)] = { (T), (S), (C) }

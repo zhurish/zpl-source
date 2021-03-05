@@ -193,7 +193,7 @@ int webs_json_get_var(Webs *wp, const char *var,
 /*
  *
  */
-static int web_return_message_format(Webs *wp, char * header, int type, int ret, char * msg, char * json)
+static int web_return_message_format(Webs *wp, char * header, ospl_uint32 type, int ret, char * msg, char * json)
 {
 	web_assert(wp);
 	web_assert(header);
@@ -402,7 +402,7 @@ int webs_username_password_update(void *pwp, char *username, char *password)
 #endif
 
 #if !ME_GOAHEAD_AUTO_LOGIN
-	if(vty_user_create(NULL, username, password, FALSE , TRUE ) != CMD_SUCCESS)
+	if(vty_user_create(NULL, username, password, ospl_false , ospl_true ) != CMD_SUCCESS)
 	{
 		if(WEB_IS_DEBUG(EVENT))
 		{

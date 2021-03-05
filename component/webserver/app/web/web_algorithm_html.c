@@ -30,8 +30,8 @@
 static int web_video_detecting_get(Webs *wp, char *path, char *query)
 {
 	char *strval = NULL;
-	u_int32 id = 0;
-	u_int32 ch = 0;
+	ospl_uint32 id = 0;
+	ospl_uint32 ch = 0;
 	web_assert(wp);
 	strval = webs_get_var(wp, T("ID"), T(""));
 	if (NULL == strval)
@@ -88,8 +88,8 @@ static int web_video_detecting_handle(Webs *wp, char *path, char *query)
 {
 	int ret = 0;
 	char *strval = NULL;
-	u_int32 id = 0;
-	u_int32 ch = 0;
+	ospl_uint32 id = 0;
+	ospl_uint32 ch = 0;
 	web_assert(wp);
 #ifdef V9_VIDEO_SDK_API
 	ST_SDKSnapInfo stSnapInfo;
@@ -211,11 +211,11 @@ static int web_video_recognize_get(Webs *wp, char *path, char *query)
 #ifdef V9_VIDEO_SDK_API
 	int nOutSimilarity = 0;
 	int nRegisterQuality = 0;
-	BOOL nOpenUpload = FALSE;
+	ospl_bool nOpenUpload = ospl_false;
 #endif
 	char *strval = NULL;
-	u_int32 id = 0;
-	//u_int32 ch = 0;
+	ospl_uint32 id = 0;
+	//ospl_uint32 ch = 0;
 	web_assert(wp);
 	strval = webs_get_var(wp, T("ID"), T(""));
 	if (NULL == strval)
@@ -267,11 +267,11 @@ static int web_video_recognize_handle(Webs *wp, char *path, char *query)
 {
 	int ret = 0;
 	char *strval = NULL;
-	u_int32 id = 0;
-	//u_int32 ch = 0;
+	ospl_uint32 id = 0;
+	//ospl_uint32 ch = 0;
 	int nOutSimilarity = 0;
 	int nRegisterQuality = 0;
-	BOOL nOpenUpload = FALSE;
+	ospl_bool nOpenUpload = ospl_false;
 	web_assert(wp);
 	strval = webs_get_var(wp, T("ACTION"), T(""));
 	if (NULL == strval)
@@ -348,8 +348,8 @@ static int web_video_helmet_get(Webs *wp, char *path, char *query)
 {
 	//int ret = 0;
 	char *strval = NULL;
-	u_int32 id = 0;
-	u_int32 ch = 0;
+	ospl_uint32 id = 0;
+	ospl_uint32 ch = 0;
 	strval = webs_get_var(wp, T("ID"), T(""));
 	if (NULL == strval)
 	{
@@ -414,8 +414,8 @@ static int web_video_helmet_handle(Webs *wp, char *path, char *query)
 {
 	int ret = 0;
 	char *strval = NULL;
-	u_int32 id = 0;
-	u_int32 ch = 0;
+	ospl_uint32 id = 0;
+	ospl_uint32 ch = 0;
 #ifdef V9_VIDEO_SDK_API
 	ST_SDKHelmetInfo stSnapInfo;
 	ST_SDKHelmetInfo stSnapInfoOld;

@@ -9,17 +9,15 @@
 #define _OS_TLV_H__
 
 #ifdef __cplusplus
-
 extern "C" {
-
 #endif
 
 
 #include <endian.h>
 
-typedef unsigned char val_t;
-typedef unsigned int tag_t;
-typedef unsigned int len_t;
+typedef ospl_uint8 val_t;
+typedef ospl_uint32 tag_t;
+typedef ospl_uint32 len_t;
 
 
 //���TLV������ݽṹ
@@ -30,10 +28,10 @@ typedef struct os_tlv_s
 	len_t len;  		//��big_endianģʽ���棬ע����Ҫ�ʵ�ת��
 	union
 	{
-		unsigned char 	*pval;
-		unsigned char 	val8;
-		unsigned short 	val16;
-		unsigned int 	val32;
+		ospl_uint8 	*pval;
+		ospl_uint8 	val8;
+		ospl_uint16 	val16;
+		ospl_uint32 	val32;
 		//val_t *val;  	//���ȿɱ�
 	}val;
 } os_tlv_t;
@@ -47,17 +45,15 @@ extern int os_tlv_set_zero(char *input, tag_t tag, len_t len);
 extern int os_tlv_set_octet(char *input, tag_t tag, len_t len, void * val);
 
 extern int os_tlv_get(char *input, os_tlv_t *tlv);
-extern int os_tlv_value_get(char *input, os_tlv_t *tlv, int len);
+extern int os_tlv_value_get(char *input, os_tlv_t *tlv, len_t len);
 
-extern int os_tlv_get_integer(os_tlv_t *tlv, u_int32 *out);
-extern int os_tlv_get_short(os_tlv_t *tlv, u_int16 *out);
-extern int os_tlv_get_byte(os_tlv_t *tlv, u_int8 *out);
+extern int os_tlv_get_integer(os_tlv_t *tlv, ospl_uint32 *out);
+extern int os_tlv_get_ospl_int16(os_tlv_t *tlv, ospl_uint16 *out);
+extern int os_tlv_get_byte(os_tlv_t *tlv, ospl_uint8 *out);
 
 
 #ifdef __cplusplus
-
 }
-
 #endif
 
 

@@ -37,7 +37,7 @@ DEFUN (show_debuging_config,
 		SHOW_STR
 		 "Debugging information\n")
 {
-	nsm_template_debug_show_config (vty, TRUE);
+	nsm_template_debug_show_config (vty, ospl_true);
 	return CMD_SUCCESS;
 }
 

@@ -444,7 +444,7 @@ avl_rotation(avl_tree_t *tree, avl_node_t *node, int balance)
 	else
 		tree->avl_root = gchild;
 
-	return (1);	/* the new tree is always shorter */
+	return (1);	/* the new tree is always ospl_int16er */
 }
 
 
@@ -761,7 +761,7 @@ avl_remove(avl_tree_t *tree, void *data)
 
 
 	/*
-	 * Since the subtree is now shorter, begin adjusting parent balances
+	 * Since the subtree is now ospl_int16er, begin adjusting parent balances
 	 * and performing any needed rotations.
 	 */
 	do {

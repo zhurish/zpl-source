@@ -46,8 +46,8 @@ static int web_system_handle(Webs *wp, char *path, char *query)
 	}
 	if(strstr(strval, "GET"))
 	{
-		u_int8 sysmac[8];
-		s_int8	serial[64];
+		ospl_uint8 sysmac[8];
+		ospl_int8	serial[64];
 		memset(sysmac, 0, sizeof(sysmac));
 		memset(serial, 0, sizeof(serial));
 		host_config_get_api(API_GET_SYSMAC_CMD, sysmac);
@@ -81,8 +81,8 @@ static int web_system_handle(Webs *wp, char *path, char *query)
 
 	if(ret == OK)
 	{
-		u_int8 sysmac[8];
-		s_int8	serial[64];
+		ospl_uint8 sysmac[8];
+		ospl_int8	serial[64];
 		memset(sysmac, 0, sizeof(sysmac));
 		memset(serial, 0, sizeof(serial));
 		host_config_get_api(API_GET_SYSMAC_CMD, sysmac);
@@ -115,7 +115,7 @@ static int web_admin_change_password(Webs *wp, char *path, char *query)
 
 	}
 	strcpy(password, strval);
-	if(vty_user_create(NULL, wp->username, password, FALSE , TRUE ) == CMD_SUCCESS)
+	if(vty_user_create(NULL, wp->username, password, ospl_false , ospl_true ) == CMD_SUCCESS)
 	{
 		return web_return_text_plain(wp, OK);
 	}
@@ -190,7 +190,7 @@ static int web_localtime(Webs *wp, char *path, char *query)
 
 
 
-static u_int8 web_reset_flag = 0;
+static ospl_uint8 web_reset_flag = 0;
 
 static int web_system_app_action_job(void *a)
 {
@@ -228,9 +228,9 @@ static int web_system_app_action(Webs *wp, void *p)
 	if(strstr(strval, "reboot"))
 	{
 #ifdef APP_X5BA_MODULE
-		ret = x5b_app_reboot_request(NULL, E_CMD_TO_A, FALSE);
+		ret = x5b_app_reboot_request(NULL, E_CMD_TO_A, ospl_false);
 		if(x5b_app_mgt && x5b_app_mode_X5CM())
-			ret |= x5b_app_reboot_request(NULL, E_CMD_TO_C, FALSE);
+			ret |= x5b_app_reboot_request(NULL, E_CMD_TO_C, ospl_false);
 #endif/* APP_X5BA_MODULE */
 		if(ret == OK)
 		{
@@ -242,9 +242,9 @@ static int web_system_app_action(Webs *wp, void *p)
 	{
 		web_reset_flag = 1;
 #ifdef APP_X5BA_MODULE
-		ret = x5b_app_reboot_request(NULL, E_CMD_TO_A, TRUE);
+		ret = x5b_app_reboot_request(NULL, E_CMD_TO_A, ospl_true);
 		if(x5b_app_mgt && x5b_app_mode_X5CM())
-			ret |= x5b_app_reboot_request(NULL, E_CMD_TO_C, TRUE);
+			ret |= x5b_app_reboot_request(NULL, E_CMD_TO_C, ospl_true);
 #endif/* APP_X5BA_MODULE */
 		if(ret == OK)
 		{

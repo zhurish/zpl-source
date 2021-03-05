@@ -22,10 +22,10 @@ static os_mutex_t *card_mutex = NULL;
 static int voip_card_update_save(void);
 static int voip_card_load_from_file(void);
 
-int card_id_string_to_hex(const char *id, int len, u_int8 *cardNumber)
+int card_id_string_to_hex(const char *id, ospl_uint32 len, ospl_uint8 *cardNumber)
 {
 	char tmp[8], cid[64];
-	int i = 0, offset = 0;
+	ospl_uint32 i = 0, offset = 0;
 	if(cardNumber == NULL)
 		return 0;
 	memset(tmp, 0, sizeof(tmp));
@@ -658,12 +658,12 @@ int show_voip_card_info(struct vty *vty)
 	return OK;
 }
 
-static char *card_time_fmt (char *fmt, time_t t)
+static char *card_time_fmt (char *fmt, ospl_time_t t)
 {
-	int len = 0;
+	ospl_uint32 len = 0;
 	struct tm tm;
 	static char data[128];
-	time_t ticlock = t;
+	ospl_time_t ticlock = t;
 	os_memset(data, 0, sizeof(data));
 	os_memset(&tm, 0, sizeof(tm));
 	//localtime_r(&ticlock, &tm);

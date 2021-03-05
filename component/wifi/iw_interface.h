@@ -8,6 +8,10 @@
 #ifndef __NSM_IW_H__
 #define __NSM_IW_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "zebra.h"
 #include "vty.h"
 #include "if.h"
@@ -19,7 +23,7 @@
 typedef struct iw_s
 {
 	struct interface	*ifp;
-	BOOL				enable;
+	ospl_bool				enable;
 	iw_mode_t			mode;
 	union
 	{
@@ -38,8 +42,8 @@ extern iw_t * nsm_iw_get(struct interface *ifp);
 extern int nsm_iw_mode_set_api(struct interface *ifp, iw_mode_t mode);
 extern int nsm_iw_mode_get_api(struct interface *ifp, iw_mode_t *mode);
 
-extern int nsm_iw_enable_api(struct interface *ifp, BOOL enable);
-extern BOOL nsm_iw_enable_get_api(struct interface *ifp);
+extern int nsm_iw_enable_api(struct interface *ifp, ospl_bool enable);
+extern ospl_bool nsm_iw_enable_get_api(struct interface *ifp);
 extern iw_mode_t nsm_iw_mode(struct interface *ifp);
 
 
@@ -52,5 +56,9 @@ extern int nsm_iw_debug_write_config(struct vty *vty);
 
 extern void cmd_wireless_init(void);
 
-
+ 
+#ifdef __cplusplus
+}
+#endif
+ 
 #endif /* __NSM_IW_H__ */

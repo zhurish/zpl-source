@@ -34,7 +34,7 @@ static int x5b_app_test_read_eloop(struct eloop *eloop);
 
 static int x5b_app_test_send_msg_without_ack(x5b_app_mgt_t *mgt)
 {
-	int len = 0;
+	ospl_uint32 len = 0;
 	zassert(mgt != NULL);
 	zassert(mgt->app != NULL);
 	zassert(mgt->app->address != 0);
@@ -58,7 +58,7 @@ static int x5b_app_test_send_msg_without_ack(x5b_app_mgt_t *mgt)
 
 static int x5b_app_test_send_msg(x5b_app_mgt_t *mgt)
 {
-	int len = 0;
+	ospl_uint32 len = 0;
 	zassert(mgt != NULL);
 	zassert(mgt->app != NULL);
 	zassert(mgt->app->address != 0);
@@ -93,11 +93,11 @@ static int x5b_app_test_send_msg(x5b_app_mgt_t *mgt)
 }
 
 
-static int x5b_app_test_ack_api(x5b_app_mgt_t *mgt, u_int8 seqnum, int to)
+static int x5b_app_test_ack_api(x5b_app_mgt_t *mgt, ospl_uint8 seqnum, int to)
 {
 	int ret = 0;
-	u_int8 val = (u_int8)seqnum;
-	int len = 0;
+	ospl_uint8 val = (ospl_uint8)seqnum;
+	ospl_uint32 len = 0;
 	zassert(mgt != NULL);
 	mgt->app = &mgt->app_c;
 	if(!mgt->app->reg_state)
@@ -129,7 +129,7 @@ static int x5b_app_test_ack_api(x5b_app_mgt_t *mgt, u_int8 seqnum, int to)
 
 static int x5b_app_test_keepalive_send(x5b_app_mgt_t *mgt)
 {
-	int len = 0;
+	ospl_uint32 len = 0;
 	zassert(mgt != NULL);
 	mgt->app = &mgt->app_c;
 	if(!mgt->app->reg_state)
@@ -160,7 +160,7 @@ static int x5b_app_test_keepalive_send(x5b_app_mgt_t *mgt)
 
 static int x5b_app_test_register_send(x5b_app_mgt_t *mgt)
 {
-	int len = 0, id = X5B_APP_MODULE_ID_C;
+	ospl_uint32 len = 0, id = X5B_APP_MODULE_ID_C;
 	zassert(mgt != NULL);
 	mgt->app = &mgt->app_c;
 
@@ -186,7 +186,7 @@ static int x5b_app_test_register_send(x5b_app_mgt_t *mgt)
 
 static int x5b_app_test_version_send(x5b_app_mgt_t *mgt)
 {
-	int len = 0;
+	ospl_uint32 len = 0;
 	zassert(mgt != NULL);
 	mgt->app = &mgt->app_c;
 	if(!mgt->app->reg_state)
@@ -218,7 +218,7 @@ static int x5b_app_test_version_send(x5b_app_mgt_t *mgt)
 
 static int x5b_app_test_read_handle(x5b_app_mgt_t *mgt)
 {
-	int len = 0, offset = 0, ack = 0;
+	ospl_uint32 len = 0, offset = 0, ack = 0;
 	os_tlv_t tlv;
 	zassert(mgt != NULL);
 	{
@@ -254,7 +254,7 @@ static int x5b_app_test_read_handle(x5b_app_mgt_t *mgt)
 				{
 					case E_CMD_REGISTER_OK:
 						mgt->app = &mgt->app_c;
-						mgt->app->reg_state = TRUE;
+						mgt->app->reg_state = ospl_true;
 						zlog_debug(MODULE_APP, "C Module Register OK and start up");
 						break;
 					case E_CMD_OPEN:
@@ -352,7 +352,7 @@ static int x5b_app_test_timer_eloop(struct eloop *eloop)
 	if(mgt->mutex)
 		os_mutex_lock(mgt->mutex, OS_WAIT_FOREVER);
 	mgt_test->app_c.t_thread = NULL;
-	//zlog_debug(MODULE_APP, "x5b_app_test_timer_eloop X5CM:%s reg-state:%d", x5b_app_mode_X5CM() ? "TRUE":"FALSE", mgt->app_c.reg_state);
+	//zlog_debug(MODULE_APP, "x5b_app_test_timer_eloop X5CM:%s reg-state:%d", x5b_app_mode_X5CM() ? "ospl_true":"ospl_false", mgt->app_c.reg_state);
 	if(x5b_app_mode_X5CM())
 	{
 		if(!mgt->app_c.reg_state)
@@ -434,7 +434,7 @@ static int x5b_app_test_socket_init()
 	zassert(mgt_test != NULL);
 	if(mgt_test->r_fd > 0)
 		return OK;
-	int fd = sock_create(FALSE);
+	int fd = sock_create(ospl_false);
 	if(fd)
 	{
 		if(mgt_test->local_port == 0)
@@ -497,17 +497,17 @@ static int x5b_app_test_socket_exit(x5b_app_mgt_t *mgt)
 
 
 
-static int x5b_app_test_module_init(char *local, u_int16 port)
+static int x5b_app_test_module_init(char *local, ospl_uint16 port)
 {
 	if(mgt_test == NULL)
 	{
 		mgt_test = malloc(sizeof(x5b_app_mgt_t));
 		memset(mgt_test, 0, sizeof(x5b_app_mgt_t));
 
-		if(master_eloop[MODULE_APP_START + 1] == NULL)
-			master_eloop[MODULE_APP_START + 1] = eloop_master_module_create(MODULE_APP_START + 1);
+		if(master_eloop[MODULE_APP + 1] == NULL)
+			master_eloop[MODULE_APP + 1] = eloop_master_module_create(MODULE_APP + 1);
 
-		mgt_test->master = master_eloop[MODULE_APP_START + 1];
+		mgt_test->master = master_eloop[MODULE_APP + 1];
 
 		mgt_test->mutex = os_mutex_init();
 
@@ -529,7 +529,7 @@ static int x5b_app_test_module_init(char *local, u_int16 port)
 			mgt_test->app_a.address = x5b_app_mgt->app_c.address;
 			x5b_app_mgt->app_c.address = ntohl(inet_addr("127.0.0.1"));
 		}
-		mgt_test->sync_ack = TRUE;
+		mgt_test->sync_ack = ospl_true;
 		x5b_app_test_socket_init();
 		//mgt_test->debug = X5_B_ESP32_DEBUG_TIME | X5_B_ESP32_DEBUG_EVENT;
 	}
@@ -564,7 +564,7 @@ static int x5b_app_test_mgt_task(void *argv)
 	zassert(argv != NULL);
 	x5b_app_mgt_t *mgt = (x5b_app_mgt_t *)argv;
 	zassert(mgt != NULL);
-	module_setup_task(MODULE_APP_START + 1, os_task_id_self());
+	module_setup_task(MODULE_APP + 1, os_task_id_self());
 	while(!os_load_config_done())
 	{
 		os_sleep(1);
@@ -574,7 +574,7 @@ static int x5b_app_test_mgt_task(void *argv)
 		os_sleep(5);
 	}
 	//x5b_app_state_load(mgt);
-	eloop_start_running(master_eloop[MODULE_APP_START + 1], MODULE_APP_START + 1);
+	eloop_start_running(master_eloop[MODULE_APP + 1], MODULE_APP + 1);
 	return OK;
 }
 
@@ -582,10 +582,10 @@ static int x5b_app_test_mgt_task(void *argv)
 static int x5b_app_test_task_init (x5b_app_mgt_t *mgt)
 {
 	zassert(mgt != NULL);
-	if(master_eloop[MODULE_APP_START + 1] == NULL)
-		master_eloop[MODULE_APP_START + 1] = eloop_master_module_create(MODULE_APP_START + 1);
+	if(master_eloop[MODULE_APP + 1] == NULL)
+		master_eloop[MODULE_APP + 1] = eloop_master_module_create(MODULE_APP + 1);
 
-	mgt->enable = TRUE;
+	mgt->enable = ospl_true;
 	mgt->task_id = os_task_create("appTest", OS_TASK_DEFAULT_PRIORITY,
 	               0, x5b_app_test_mgt_task, mgt, OS_TASK_DEFAULT_STACK);
 	if(mgt->task_id)
@@ -625,7 +625,7 @@ int x5b_app_test_stop()
 /********************************************************************************/
 static int x5b_app_test_call_send(x5b_app_mgt_t *mgt, char *jsonstr, int jsonlen)
 {
-	int len = 0;
+	ospl_uint32 len = 0;
 	zassert(mgt != NULL);
 	mgt->app = &mgt->app_c;
 
@@ -705,7 +705,7 @@ static int x5b_app_test_call_json_one(char *jsonstr, char *num)
 }
 static int x5b_app_test_call_json_more(char *jsonstr, char *phone[], int num)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	char *szJSON = NULL;
 	cJSON* pRoot = cJSON_CreateArray();
 	if(pRoot && num)

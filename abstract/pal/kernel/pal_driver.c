@@ -23,7 +23,7 @@
 #include "pal_driver.h"
 
 pal_stack_t pal_stack;
-static int kernel_task_id = 0;
+static ospl_uint32 kernel_task_id = 0;
 
 struct module_list module_list_pal = 
 { 
@@ -54,7 +54,7 @@ int pal_interface_down(struct interface *ifp)
     return OK;
 }
 
-int pal_interface_update_flag(struct interface *ifp, int flags)
+int pal_interface_update_flag(struct interface *ifp, ospl_uint32 flags)
 {
 	if(pal_stack.ip_stack_update_flag/* && ifp->k_ifindex*/)
 		return pal_stack.ip_stack_update_flag(ifp, flags);
@@ -83,14 +83,14 @@ int pal_interface_set_vr(struct interface *ifp, vrf_id_t vrf_id)
 }
 
 
-int pal_interface_set_mtu(struct interface *ifp, int mtu)
+int pal_interface_set_mtu(struct interface *ifp, ospl_uint32 mtu)
 {
 	if(pal_stack.ip_stack_set_mtu && ifp->k_ifindex)
 		return pal_stack.ip_stack_set_mtu(ifp, mtu);
     return OK;
 }
 
-int pal_interface_set_lladdr(struct interface *ifp, unsigned char *mac, int len)
+int pal_interface_set_lladdr(struct interface *ifp, ospl_uint8 *mac, ospl_uint32 len)
 {
 	if(pal_stack.ip_stack_set_lladdr && ifp->k_ifindex)
 		return pal_stack.ip_stack_set_lladdr(ifp, mac, len);
@@ -126,7 +126,7 @@ int pal_interface_change(struct interface *ifp)
     return OK;
 }
 
-int pal_interface_vlan_set(struct interface *ifp, int vlan)
+int pal_interface_vlan_set(struct interface *ifp, vlan_t vlan)
 {
 	if(pal_stack.ip_stack_set_vlan)
 		return pal_stack.ip_stack_set_vlan(ifp, vlan);
@@ -134,14 +134,14 @@ int pal_interface_vlan_set(struct interface *ifp, int vlan)
 }
 
 
-int pal_interface_vlanpri_set(struct interface *ifp, int pri)
+int pal_interface_vlanpri_set(struct interface *ifp, ospl_uint32 pri)
 {
 	if(pal_stack.ip_stack_set_vlanpri && ifp->k_ifindex)
 		return pal_stack.ip_stack_set_vlanpri(ifp, pri);
     return OK;
 }
 
-int pal_interface_promisc_link(struct interface *ifp, BOOL enable)
+int pal_interface_promisc_link(struct interface *ifp, ospl_bool enable)
 {
 	if(pal_stack.ip_stack_promisc && ifp->k_ifindex)
 		return pal_stack.ip_stack_promisc(ifp, enable);
@@ -149,7 +149,7 @@ int pal_interface_promisc_link(struct interface *ifp, BOOL enable)
 }
 
 
-int pal_interface_change_dhcp(struct interface *ifp, BOOL enable)
+int pal_interface_change_dhcp(struct interface *ifp, ospl_bool enable)
 {
 	if(pal_stack.ip_stack_dhcp && ifp->k_ifindex)
 		return pal_stack.ip_stack_dhcp(ifp, enable);
@@ -191,14 +191,14 @@ int pal_interface_ipv4_delete(struct interface *ifp, struct connected *ifc)
     return OK;
 }
 
-int pal_interface_ipv6_add(struct interface *ifp,struct connected *ifc, int secondry)
+int pal_interface_ipv6_add(struct interface *ifp,struct connected *ifc, ospl_bool secondry)
 {
 	if(pal_stack.ip_stack_ipv6_add && ifp->k_ifindex)
 		return pal_stack.ip_stack_ipv6_add(ifp, ifc, secondry);
     return OK;
 }
 
-int pal_interface_ipv6_delete(struct interface *ifp, struct connected *ifc, int secondry)
+int pal_interface_ipv6_delete(struct interface *ifp, struct connected *ifc, ospl_bool secondry)
 {
 	if(pal_stack.ip_stack_ipv6_delete && ifp->k_ifindex)
 		return pal_stack.ip_stack_ipv6_delete(ifp, ifc, secondry);
@@ -206,7 +206,7 @@ int pal_interface_ipv6_delete(struct interface *ifp, struct connected *ifc, int 
 }
 
 // ip arp
-int pal_interface_arp_add(struct interface *ifp, struct prefix *address, unsigned char *mac)
+int pal_interface_arp_add(struct interface *ifp, struct prefix *address, ospl_uint8 *mac)
 {
 	if(pal_stack.ip_stack_arp_add && ifp->k_ifindex)
 		return pal_stack.ip_stack_arp_add(ifp, address, mac);
@@ -227,28 +227,28 @@ int pal_interface_arp_request(struct interface *ifp, struct prefix *address)
     return OK;
 }
 
-int pal_arp_gratuitousarp_enable(int enable)
+int pal_arp_gratuitousarp_enable(ospl_bool enable)
 {
 	if(pal_stack.ip_stack_arp_gratuitousarp_enable)
 		return pal_stack.ip_stack_arp_gratuitousarp_enable(enable);
     return OK;
 }
 
-int pal_arp_ttl(int ttl)
+int pal_arp_ttl(ospl_uint32 ttl)
 {
 	if(pal_stack.ip_stack_arp_ttl)
 		return pal_stack.ip_stack_arp_ttl(ttl);
     return OK;
 }
 
-int pal_arp_age_timeout(int timeout)
+int pal_arp_age_timeout(ospl_uint32 timeout)
 {
 	if(pal_stack.ip_stack_arp_age_timeout)
 		return pal_stack.ip_stack_arp_age_timeout(timeout);
     return OK;
 }
 
-int pal_arp_retry_interval(int interval)
+int pal_arp_retry_interval(ospl_uint32 interval)
 {
 	if(pal_stack.ip_stack_arp_retry_interval)
 		return pal_stack.ip_stack_arp_retry_interval(interval);

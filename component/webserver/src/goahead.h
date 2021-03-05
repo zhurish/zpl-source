@@ -14,7 +14,7 @@
 #define ME_MAX_IP 64                /**< Maximum IP address size */
 
 /************************************ Includes ********************************/
-
+#include "zebra.h"
 #include    "me.h"
 #include    "osdep.h"
 

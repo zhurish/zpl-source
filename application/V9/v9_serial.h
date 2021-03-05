@@ -8,6 +8,10 @@
 #ifndef __V9_SERIAL_H__
 #define __V9_SERIAL_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "v9_video.h"
 
 #define V9_SERIAL_CTL_NAME	"/dev/ttyS2"
@@ -28,10 +32,10 @@
 
 typedef struct v9_serial_s
 {
-	BOOL			enable;
+	ospl_bool			enable;
 	void			*master;
 	void			*mutex;
-	u_int32			task_id;
+	ospl_uint32			task_id;
 	void			*r_thread;
 
 	struct tty_com *tty;
@@ -39,13 +43,13 @@ typedef struct v9_serial_s
 	struct tty_com *slipnet;
 	void			*r_slipnet;
 #else
-	u_int8			timer_sync;
+	ospl_uint8			timer_sync;
 #endif /* V9_SLIPNET_ENABLE */
-	u_int8			sntp_sync;
-	u_int8			status;
+	ospl_uint8			sntp_sync;
+	ospl_uint8			status;
 
-	u_int8			id;
-	u_int8			seqnum;
+	ospl_uint8			id;
+	ospl_uint8			seqnum;
 	char			buf[V9_SERIAL_BUF_MAX];
 	int				len;
 
@@ -58,7 +62,7 @@ typedef struct v9_serial_s
 
 extern v9_serial_t *v9_serial;
 
-extern int v9_serial_init(char *devname, u_int32 speed);
+extern int v9_serial_init(char *devname, ospl_uint32 speed);
 extern int v9_serial_exit(void);
 
 
@@ -70,5 +74,9 @@ extern void cmd_app_v9_init(void);
 
 int v9_app_hex_debug(v9_serial_t *mgt, char *hdr, int rx);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __V9_SERIAL_H__ */

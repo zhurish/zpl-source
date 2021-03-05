@@ -8,6 +8,10 @@
 #ifndef __OS_MEMORY_H__
 #define __OS_MEMORY_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define os_malloc	malloc
 #define os_calloc	calloc
 #define os_free		free
@@ -42,5 +46,9 @@
 #define os_atof 		atof
 #define os_atol 		atol
 //#define os_printf 		snprintf
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __OS_MEMORY_H__ */

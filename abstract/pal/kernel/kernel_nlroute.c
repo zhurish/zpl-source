@@ -54,7 +54,7 @@
  * @param nlmsg: nlmsghdr structure to fill in.
  * @param req_size: The size allocated for the message.
  */
-static void _netlink_route_build_singlepath(const char *routedesc, int bytelen,
+static void _netlink_route_build_singlepath(const char *routedesc, ospl_uint32 bytelen,
 		struct nexthop *nexthop, struct nlmsghdr *nlmsg, struct rtmsg *rtmsg,
 		size_t req_size)
 {
@@ -131,7 +131,7 @@ static void _netlink_route_build_singlepath(const char *routedesc, int bytelen,
  * @param src: pointer pointing to a location where
  *             the prefsrc should be stored.
  */
-static void _netlink_route_build_multipath(const char *routedesc, int bytelen,
+static void _netlink_route_build_multipath(const char *routedesc, ospl_uint32 bytelen,
 		struct nexthop *nexthop, struct rtattr *rta, struct rtnexthop *rtnh,
 		union g_addr **src)
 {
@@ -203,15 +203,15 @@ static void _netlink_route_build_multipath(const char *routedesc, int bytelen,
 }
 
 /* Routing table change via netlink interface. */
-static int netlink_route_multipath(int cmd, struct prefix *p, struct rib *rib)
+static int netlink_route_multipath(ospl_uint32 cmd, struct prefix *p, struct rib *rib)
 {
-	int bytelen;
+	ospl_uint32 bytelen;
 	struct sockaddr_nl snl;
 	struct nexthop *nexthop = NULL, *tnexthop;
-	int recursing;
-	int nexthop_num;
-	int discard;
-	int family = PREFIX_FAMILY(p);
+	ospl_uint32 recursing;
+	ospl_uint32 nexthop_num;
+	ospl_uint32 discard;
+	ospl_family_t family = PREFIX_FAMILY(p);
 	const char *routedesc;
 
 	struct
@@ -265,7 +265,7 @@ static int netlink_route_multipath(int cmd, struct prefix *p, struct rib *rib)
 	{
 		char buf[NL_PKT_BUF_SIZE];
 		struct rtattr *rta = (void *) buf;
-		u_int32_t mtu = rib->mtu;
+		ospl_uint32 mtu = rib->mtu;
 		if (!mtu || (rib->nexthop_mtu && rib->nexthop_mtu < mtu))
 			mtu = rib->nexthop_mtu;
 		rta->rta_type = RTA_METRICS;

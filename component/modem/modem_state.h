@@ -8,6 +8,10 @@
 #ifndef __MODEM_STATE_H__
 #define __MODEM_STATE_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //#include "modem.h"
 #include "modem.h"
 #include "modem_client.h"
@@ -36,8 +40,12 @@ extern int modem_signal_state_update(modem_client_t *client);
 extern modem_signal_state modem_signal_state_get(modem_client_t *client);
 
 
-extern int modem_register_state(modem_client_t *client, int code);
+extern int modem_register_state(modem_client_t *client, ospl_uint32 code);
 extern modem_cpin_en modem_usim_state(modem_t *modem);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MODEM_STATE_H__ */

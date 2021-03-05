@@ -74,7 +74,7 @@ DEFUN (bridge_protocol_ieee,
 	int ret = ERROR;
 	struct interface *ifp = vty->index;
 	if(ifp)
-		ret = nsm_bridge_interface_stp_set_api(ifp, TRUE);
+		ret = nsm_bridge_interface_stp_set_api(ifp, ospl_true);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -88,7 +88,7 @@ DEFUN (no_bridge_protocol_ieee,
 	int ret = ERROR;
 	struct interface *ifp = vty->index;
 	if(ifp)
-		ret = nsm_bridge_interface_stp_set_api(ifp, FALSE);
+		ret = nsm_bridge_interface_stp_set_api(ifp, ospl_false);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 

@@ -8,6 +8,9 @@
 #ifndef __OS_UTIL_H__
 #define __OS_UTIL_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define OS_PIPE_BASE	SYSRUNDIR
 
@@ -40,18 +43,18 @@ typedef enum p_action
 #pragma pack(1)
 typedef struct process_head_s
 {
-	char 			name[P_NAME_MAX];
-	char 			process[P_PATH_MAX];
-	char 			argvs[P_PATH_MAX];
-	unsigned char	action;
-	unsigned char   restart;
-	int				id;
+	ospl_char 			name[P_NAME_MAX];
+	ospl_char 			process[P_PATH_MAX];
+	ospl_char 			argvs[P_PATH_MAX];
+	ospl_uint8	action;
+	ospl_uint8   restart;
+	ospl_uint32				id;
 }process_head;
 #pragma pack(0)
 
-extern int os_process_register(process_action action, char *name, char *process, BOOL restart, char *argv[]);
-extern int os_process_action(process_action action, char *name, int id);
-extern int os_process_action_respone(int fd, int respone);
+extern int os_process_register(process_action action, ospl_char *name, ospl_char *process, ospl_bool restart, ospl_char *argv[]);
+extern int os_process_action(process_action action, ospl_char *name, ospl_uint32 id);
+extern int os_process_action_respone(int fd, ospl_uint32 respone);
 
 extern int os_process_start();
 extern int os_process_stop();
@@ -59,51 +62,51 @@ extern int os_process_stop();
 #endif
 
 
-extern void os_log(char *file, const char *format, ...);
+extern void os_log(ospl_char *file, const ospl_char *format, ...);
 
 
-extern int super_system(const char *cmd);
-extern int super_output_system(const char *cmd, char *output, int len);
-extern int super_input_system(const char *cmd, char *input);
+extern int super_system(const ospl_char *cmd);
+extern int super_output_system(const ospl_char *cmd, ospl_char *output, ospl_uint32 len);
+extern int super_input_system(const ospl_char *cmd, ospl_char *input);
 
 
-extern char * pid2name(int pid);
-extern int name2pid(const char *name);
+extern ospl_char * pid2name(ospl_pid_t pid);
+extern ospl_pid_t name2pid(const ospl_char *name);
 
-extern pid_t os_pid_set (const char *path);
-extern pid_t os_pid_get (const char *path);
+extern ospl_pid_t os_pid_set (const ospl_char *path);
+extern ospl_pid_t os_pid_get (const ospl_char *path);
 
-extern int child_process_create();
-extern int child_process_destroy(int pid);
-extern int child_process_kill(int pid);
-extern int child_process_wait(int pid, int wait);
+extern ospl_pid_t child_process_create();
+extern int child_process_destroy(ospl_pid_t pid);
+extern int child_process_kill(ospl_pid_t pid);
+extern int child_process_wait(ospl_pid_t pid, ospl_uint32 wait);
 
-extern int super_system_execvp(const char *cmd, char **input);
+extern int super_system_execvp(const ospl_char *cmd, ospl_char **input);
 
-extern int os_mkdir(const char *dirpath, int mode, int pathflag);
-extern int os_rmdir(const char *dirpath, int pathflag);
-extern int os_getpwddir(const char *path, int pathsize);
+extern int os_mkdir(const ospl_char *dirpath, ospl_uint32 mode, ospl_uint32 pathflag);
+extern int os_rmdir(const ospl_char *dirpath, ospl_uint32 pathflag);
+extern int os_getpwddir(const ospl_char *path, ospl_uint32 pathsize);
 
 
 extern int os_get_blocking(int fd);
 extern int os_set_nonblocking(int fd);
 extern int os_set_blocking(int fd);
-extern int os_pipe_create(char *name, int mode);
+extern int os_pipe_create(ospl_char *name, ospl_uint32 mode);
 extern int os_pipe_close(int fd);
 
-extern int os_file_access(char *filename);
+extern int os_file_access(ospl_char *filename);
 
-extern int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, int timeout_ms);
-
-
-extern int os_write_file(const char *name, const char *string, int len);
-extern int os_read_file(const char *name, const char *string, int len);
-
-extern int os_write_timeout(int fd, char *buf, int len, int timeout_ms);
-extern int os_read_timeout(int fd, char *buf, int len, int timeout_ms);
+extern int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, ospl_uint32 timeout_ms);
 
 
-extern int os_register_signal(int sig, void (*handler)(int
+extern int os_write_file(const ospl_char *name, const ospl_char *string, ospl_uint32 len);
+extern int os_read_file(const ospl_char *name, const ospl_char *string, ospl_uint32 len);
+
+extern int os_write_timeout(int fd, ospl_char *buf, ospl_uint32 len, ospl_uint32 timeout_ms);
+extern int os_read_timeout(int fd, ospl_char *buf, ospl_uint32 len, ospl_uint32 timeout_ms);
+
+
+extern int os_register_signal(ospl_int sig, void (*handler)(ospl_int
 #ifdef SA_SIGINFO
 	     , siginfo_t *siginfo, void *context
 #endif
@@ -121,10 +124,10 @@ extern int os_register_signal(int sig, void (*handler)(int
 #define MPLS_X_M(n)	(n >> 20)
 #define MPLS_X_G(n)	(n >> 30)
 
-extern int os_file_size (const char *filename);
-extern const char * os_file_size_string(u_int32 len);
+extern int os_file_size (const ospl_char *filename);
+extern const ospl_char * os_file_size_string(ospl_uint32 len);
 
-//extern const char * os_stream_size(long long len);
+//extern const ospl_char * os_stream_size(long long len);
 
 /*
  * URL
@@ -132,30 +135,33 @@ extern const char * os_file_size_string(u_int32 len);
 
 typedef struct os_url_s
 {
-	char 		*proto;
-	char 		*host;
-	u_int16		port;
-	char 		*user;
-	char 		*pass;
-	char 		*path;
-	char 		*filename;
+	ospl_char 		*proto;
+	ospl_char 		*host;
+	ospl_uint16		port;
+	ospl_char 		*user;
+	ospl_char 		*pass;
+	ospl_char 		*path;
+	ospl_char 		*filename;
 }os_url_t;
 
-extern int os_url_split(const char * URL, os_url_t *spliurl);
+extern int os_url_split(const ospl_char * URL, os_url_t *spliurl);
 //extern int os_url_show(os_url_t *spliurl);
 extern int os_url_free(os_url_t *spliurl);
 //extern int os_url_test();
 /*
  * thread
  */
-extern int os_thread_once(int (*entry)(void *), void *p);
+extern ospl_pthread_t os_thread_once(int (*entry)(void *), void *p);
 
 
 
-extern int fdprintf ( int fd, const char *format, ...);
+extern int fdprintf ( int fd, const ospl_char *format, ...);
 
-extern int hostname_ipv4_address(char *hostname, struct in_addr *addr);
-extern int hostname_ipv6_address(char *hostname, struct in6_addr *addr);
+extern int hostname_ipv4_address(ospl_char *hostname, struct in_addr *addr);
+extern int hostname_ipv6_address(ospl_char *hostname, struct in6_addr *addr);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __OS_UTIL_H__ */

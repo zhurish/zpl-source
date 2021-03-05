@@ -16,7 +16,7 @@
 
 
 //
-int b53125_phy_loopback(struct b53125_device *dev, int port, BOOL enable)
+int b53125_phy_loopback(struct b53125_device *dev, int port, ospl_bool enable)
 {
 	int ret = 0;
 	u16 port_ctrl = 0;
@@ -34,7 +34,7 @@ int b53125_phy_loopback(struct b53125_device *dev, int port, BOOL enable)
 }
 
 
-int b53125_snooping_enable(struct b53125_device *dev, int type, BOOL enable)
+int b53125_snooping_enable(struct b53125_device *dev, ospl_uint32 type, ospl_bool enable)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;

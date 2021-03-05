@@ -22,7 +22,7 @@
 
 static Gip_arp_t gIparp;
 
-static int ip_arp_cleanup(arp_class_t type, BOOL all, ifindex_t ifindex, vrf_id_t id);
+static int ip_arp_cleanup(arp_class_t type, ospl_bool all, ifindex_t ifindex, vrf_id_t id);
 static int ip_arp_dynamic_update(void *pVoid);
 
 #define ARP_DYNAMIC_INC(n)	(gIparp.dynamic_cnt) += (n)
@@ -59,7 +59,7 @@ int nsm_ip_arp_exit(void)
 {
 	if(lstCount(gIparp.arpList))
 	{
-		ip_arp_cleanup(0, TRUE, 0, 0);
+		ip_arp_cleanup(0, ospl_true, 0, 0);
 		lstFree(gIparp.arpList);
 		free(gIparp.arpList);
 		gIparp.arpList = NULL;
@@ -150,7 +150,7 @@ int nsm_ip_arp_lookup_api(struct prefix *address)
 }
 
 
-int nsm_ip_arp_add_api(struct interface *ifp, struct prefix *address, char *mac)
+int nsm_ip_arp_add_api(struct interface *ifp, struct prefix *address, ospl_char *mac)
 {
 	int ret = ERROR;
 	ip_arp_t value;
@@ -228,7 +228,7 @@ int nsm_ip_arp_get_api(struct prefix *address, ip_arp_t *gip_arp)
 }
 
 
-int nsm_ip_arp_ageing_time_set_api(int ageing)
+int nsm_ip_arp_ageing_time_set_api(ospl_uint32 ageing)
 {
 	int ret = ERROR;
 	if(gIparp.mutex)
@@ -241,7 +241,7 @@ int nsm_ip_arp_ageing_time_set_api(int ageing)
 	return ret;
 }
 
-int nsm_ip_arp_ageing_time_get_api(int *ageing)
+int nsm_ip_arp_ageing_time_get_api(ospl_uint32 *ageing)
 {
 	int ret = ERROR;
 	//ip_arp_t *value;
@@ -256,7 +256,7 @@ int nsm_ip_arp_ageing_time_get_api(int *ageing)
 	return ret;
 }
 
-int nsm_ip_arp_timeout_set_api(int ageing)
+int nsm_ip_arp_timeout_set_api(ospl_uint32 ageing)
 {
 	int ret = ERROR;
 	if(gIparp.mutex)
@@ -268,7 +268,7 @@ int nsm_ip_arp_timeout_set_api(int ageing)
 		os_mutex_unlock(gIparp.mutex);
 	return ret;
 }
-int nsm_ip_arp_timeout_get_api(int *ageing)
+int nsm_ip_arp_timeout_get_api(ospl_uint32 *ageing)
 {
 	int ret = ERROR;
 	//ip_arp_t *value;
@@ -284,7 +284,7 @@ int nsm_ip_arp_timeout_get_api(int *ageing)
 }
 
 
-int nsm_ip_arp_retry_interval_set_api(int ageing)
+int nsm_ip_arp_retry_interval_set_api(ospl_uint32 ageing)
 {
 	int ret = ERROR;
 	if(gIparp.mutex)
@@ -296,7 +296,7 @@ int nsm_ip_arp_retry_interval_set_api(int ageing)
 		os_mutex_unlock(gIparp.mutex);
 	return ret;
 }
-int nsm_ip_arp_retry_interval_get_api(int *ageing)
+int nsm_ip_arp_retry_interval_get_api(ospl_uint32 *ageing)
 {
 	int ret = ERROR;
 	//ip_arp_t *value;
@@ -311,7 +311,7 @@ int nsm_ip_arp_retry_interval_get_api(int *ageing)
 	return ret;
 }
 
-int nsm_ip_arp_proxy_set_api(int ageing)
+int nsm_ip_arp_proxy_set_api(ospl_uint32 ageing)
 {
 	int ret = ERROR;
 	if(gIparp.mutex)
@@ -323,7 +323,7 @@ int nsm_ip_arp_proxy_set_api(int ageing)
 		os_mutex_unlock(gIparp.mutex);
 	return ret;
 }
-int nsm_ip_arp_proxy_get_api(int *ageing)
+int nsm_ip_arp_proxy_get_api(ospl_uint32 *ageing)
 {
 	int ret = ERROR;
 	//ip_arp_t *value;
@@ -338,7 +338,7 @@ int nsm_ip_arp_proxy_get_api(int *ageing)
 	return ret;
 }
 
-int nsm_ip_arp_proxy_local_set_api(int ageing)
+int nsm_ip_arp_proxy_local_set_api(ospl_uint32 ageing)
 {
 	int ret = ERROR;
 	if(gIparp.mutex)
@@ -351,7 +351,7 @@ int nsm_ip_arp_proxy_local_set_api(int ageing)
 	return ret;
 }
 
-int nsm_ip_arp_proxy_local_get_api(int *ageing)
+int nsm_ip_arp_proxy_local_get_api(ospl_uint32 *ageing)
 {
 	int ret = ERROR;
 	//ip_arp_t *value;
@@ -366,7 +366,7 @@ int nsm_ip_arp_proxy_local_get_api(int *ageing)
 	return ret;
 }
 
-static int ip_arp_cleanup(arp_class_t type, BOOL all, ifindex_t ifindex, vrf_id_t vrf)
+static int ip_arp_cleanup(arp_class_t type, ospl_bool all, ifindex_t ifindex, vrf_id_t vrf)
 {
 	ip_arp_t *pstNode = NULL;
 	NODE index;
@@ -488,7 +488,7 @@ static int ip_arp_cleanup(arp_class_t type, BOOL all, ifindex_t ifindex, vrf_id_
 }
 
 
-int ip_arp_cleanup_api(arp_class_t type, BOOL all, ifindex_t ifindex)
+int ip_arp_cleanup_api(arp_class_t type, ospl_bool all, ifindex_t ifindex)
 {
 	return ip_arp_cleanup( type,  all,  ifindex, 0);
 }
@@ -535,12 +535,13 @@ static int ip_arp_dynamic_del_cb(ip_arp_t *value)
 	return ret;
 }
 
-int ip_arp_dynamic_cb(int action, void *pVoid)
+int ip_arp_dynamic_cb(ospl_action action, void *pVoid)
 {
-	if(action)
+	if(action == ospl_add)
 		return os_job_add(ip_arp_dynamic_add_cb, pVoid);
-	else
+	else if(action == ospl_delete)
 		return os_job_add(ip_arp_dynamic_del_cb, pVoid);
+	return ERROR;	
 }
 
 
@@ -571,10 +572,10 @@ static int ip_arp_dynamic_update(void *pVoid)
 
 static int _nsm_ip_arp_table_config(ip_arp_t *node, struct vty *vty)
 {
-	char mac[32], ip[128], ifname[32];
+	ospl_char mac[32], ip[128], ifname[32];
 	union prefix46constptr pu;
 	//struct vty *vty = user->vty;
-	if(node->class  != MAC_STATIC)
+	if(node->class  != ARP_STATIC)
 		return 0;
 	os_memset(mac, 0, sizeof(mac));
 	os_memset(ip, 0, sizeof(ip));
@@ -610,7 +611,7 @@ int nsm_ip_arp_config(struct vty *vty)
 
 int nsm_ip_arp_ageing_config(struct vty *vty)
 {
-	int agtime = 0;
+	ospl_uint32 agtime = 0;
 	nsm_ip_arp_ageing_time_get_api(&agtime);
 	//ip arp ageing-time 33
 	vty_out(vty, "ip arp ageing-time %d %s", agtime, VTY_NEWLINE);

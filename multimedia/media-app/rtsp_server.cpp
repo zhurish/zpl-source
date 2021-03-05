@@ -91,7 +91,7 @@ int rtsp_server::rtsp_server_add_username(const std::string &username, const std
     return -1;
 }
 
-int rtsp_server::rtsp_server_start(Port ourPort, unsigned int reclamationTestSeconds)
+int rtsp_server::rtsp_server_start(Port ourPort, ospl_uint32 reclamationTestSeconds)
 {
     /*int ourSocket = RTSPServer::setUpOurSocket(m_env, ourPort);
     if (ourSocket == -1) 
@@ -213,8 +213,8 @@ ServerMediaSession *rtsp_server::rtsp_server_add_session_node(const std::string 
 #ifdef STREAM_USING_ADUS
             useADUs = True;
 #ifdef INTERLEAVE_ADUS
-            unsigned char interleaveCycle[] = {0, 2, 1, 3}; // or choose your own...
-            unsigned const interleaveCycleSize = (sizeof interleaveCycle) / (sizeof(unsigned char));
+            ospl_uint8 interleaveCycle[] = {0, 2, 1, 3}; // or choose your own...
+            unsigned const interleaveCycleSize = (sizeof interleaveCycle) / (sizeof(ospl_uint8));
             interleaving = new Interleaving(interleaveCycleSize, interleaveCycle);
 #endif
 #endif

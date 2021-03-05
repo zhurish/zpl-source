@@ -37,24 +37,24 @@ int h264Decoder::videoDecoderSetup(const int width, const int height, const int 
 #endif
 }
 
-int h264Decoder::videoDecoderInput(const unsigned char *frame, const int len)
+int h264Decoder::videoDecoderInput(const ospl_uint8 *frame, const int len)
 {
 #ifdef PL_OPENH264_MODULE
     return openh264_decoder_input(frame, len);
 #endif
 }
 
-int h264Decoder::videoDecoderOutput(unsigned char *frame, const int len)
+int h264Decoder::videoDecoderOutput(ospl_uint8 *frame, const int len)
 {
 #ifdef PL_OPENH264_MODULE
     return openh264_decoder_output(frame, len);
 #endif
 }
 
-unsigned char *h264Decoder::videoDecoderOutput()
+ospl_uint8 *h264Decoder::videoDecoderOutput()
 {
 #ifdef PL_OPENH264_MODULE
-    return (unsigned char *)m_out_frame_payload;
+    return (ospl_uint8 *)m_out_frame_payload;
 #endif
 }
 
@@ -101,7 +101,7 @@ int h264Decoder::openh264_decoder_setup(const int width, const int height, const
     //param.eOutputColorFormat = videoFormatI420;
 #endif
     param.sVideoProperty.size = sizeof(param.sVideoProperty);
-    param.uiTargetDqLayer = (unsigned char)-1;
+    param.uiTargetDqLayer = (ospl_uint8)-1;
     param.eEcActiveIdc = ERROR_CON_SLICE_COPY;
     param.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_DEFAULT;
 
@@ -117,18 +117,18 @@ int h264Decoder::openh264_decoder_setup(const int width, const int height, const
     return 0;
 }
 
-int h264Decoder::openh264_write_yuv(unsigned char *buf,
+int h264Decoder::openh264_write_yuv(ospl_uint8 *buf,
                                     const int dst_len,
-                                    const unsigned char *pData[3],
+                                    const ospl_uint8 *pData[3],
                                     const int *iStride,
                                     const int iWidth,
                                     const int iHeight)
 {
     unsigned req_size;
-    unsigned char *dst = buf;
-    unsigned char *max = dst + dst_len;
+    ospl_uint8 *dst = buf;
+    ospl_uint8 *max = dst + dst_len;
     int i;
-    unsigned char *pPtr = NULL;
+    ospl_uint8 *pPtr = NULL;
     int miWidth = 0;
     int miHeight = 0;
     req_size = (iWidth * iHeight) + (iWidth / 2 * iHeight / 2) +
@@ -136,7 +136,7 @@ int h264Decoder::openh264_write_yuv(unsigned char *buf,
     if (dst_len < req_size)
         return -1;
 
-    pPtr = (unsigned char *)pData[0];
+    pPtr = (ospl_uint8 *)pData[0];
     for (i = 0; i < iHeight && (dst + iWidth < max); i++)
     {
         memcpy(dst, pPtr, iWidth);
@@ -149,7 +149,7 @@ int h264Decoder::openh264_write_yuv(unsigned char *buf,
 
     miHeight = iHeight / 2;
     miWidth = iWidth / 2;
-    pPtr = (unsigned char *)pData[1];
+    pPtr = (ospl_uint8 *)pData[1];
     for (i = 0; i < miHeight && (dst + miWidth <= max); i++)
     {
         memcpy(dst, pPtr, miWidth);
@@ -160,7 +160,7 @@ int h264Decoder::openh264_write_yuv(unsigned char *buf,
     if (i < miHeight)
         return -1;
 
-    pPtr = (unsigned char *)pData[2];
+    pPtr = (ospl_uint8 *)pData[2];
     for (i = 0; i < miHeight && (dst + miWidth <= max); i++)
     {
         memcpy(dst, pPtr, miWidth);
@@ -175,15 +175,15 @@ int h264Decoder::openh264_write_yuv(unsigned char *buf,
 }
 
 int h264Decoder::openh264_got_decoded_frame(
-    const unsigned char *pData[3],
+    const ospl_uint8 *pData[3],
     const SBufferInfo *sDstBufInfo,
     uint64_t *timestamp)
 {
-    unsigned char *pDst[3] = {NULL};
+    ospl_uint8 *pDst[3] = {NULL};
 
-    pDst[0] = (unsigned char *)pData[0];
-    pDst[1] = (unsigned char *)pData[1];
-    pDst[2] = (unsigned char *)pData[2];
+    pDst[0] = (ospl_uint8 *)pData[0];
+    pDst[1] = (ospl_uint8 *)pData[1];
+    pDst[2] = (ospl_uint8 *)pData[2];
 
     /* Do not reset size as it may already contain frame
     output->size = 0;
@@ -201,8 +201,8 @@ int h264Decoder::openh264_got_decoded_frame(
     iStride[0] = sDstBufInfo->UsrData.sSystemBuffer.iStride[0];
     iStride[1] = sDstBufInfo->UsrData.sSystemBuffer.iStride[1];
 
-    int len = openh264_write_yuv((unsigned char*)m_out_frame_payload, (const int)m_out_size,
-                                 (const unsigned char **)pDst, (const int *)iStride, (const int)iWidth, (const int)iHeight);
+    int len = openh264_write_yuv((ospl_uint8*)m_out_frame_payload, (const int)m_out_size,
+                                 (const ospl_uint8 **)pDst, (const int *)iStride, (const int)iWidth, (const int)iHeight);
     if (len > 0)
     {
         //output->timestamp = *timestamp;
@@ -219,10 +219,10 @@ int h264Decoder::openh264_got_decoded_frame(
     return 0;
 }
 
-int h264Decoder::openh264_decoder_input(const unsigned char *frame, const int len)
+int h264Decoder::openh264_decoder_input(const ospl_uint8 *frame, const int len)
 {
     SBufferInfo info = {0};
-    uint8_t *ptrs[3];
+    ospl_uint8 *ptrs[3];
     int ret, linesize[3];
     DECODING_STATE state;
 
@@ -246,7 +246,7 @@ int h264Decoder::openh264_decoder_input(const unsigned char *frame, const int le
         // B-frames.
         state = m_decoder->DecodeFrameNoDelay(m_decoder, frame, len, ptrs, &info);
 #else
-        state = m_decoder->DecodeFrame2((const uint8_t*)frame, len, ptrs, &info);
+        state = m_decoder->DecodeFrame2((const ospl_uint8*)frame, len, ptrs, &info);
 #endif
     }
     if (state != dsErrorFree)
@@ -263,7 +263,7 @@ int h264Decoder::openh264_decoder_input(const unsigned char *frame, const int le
     {
         uint64_t ptimestamp;
         /* May overwrite existing frame but that's ok. */
-        int status = openh264_got_decoded_frame((const unsigned char**)ptrs,
+        int status = openh264_got_decoded_frame((const ospl_uint8**)ptrs,
                                             (const SBufferInfo *)&info,
                                             (uint64_t *)&ptimestamp);
         if(status > 0)
@@ -273,7 +273,7 @@ int h264Decoder::openh264_decoder_input(const unsigned char *frame, const int le
     return 0;
 }
 
-int h264Decoder::openh264_decoder_output(unsigned char *frame, const int len)
+int h264Decoder::openh264_decoder_output(ospl_uint8 *frame, const int len)
 {
     if (m_out_size > 0 && m_out_frame_payload != nullptr)
     {

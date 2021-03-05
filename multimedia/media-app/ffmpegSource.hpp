@@ -27,7 +27,13 @@ extern "C"
 
 #include "ffmpegDevice.hpp"
 #include "ffmpegEncoder.hpp"
-
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "ospl_type.h"
+#ifdef __cplusplus
+}
+#endif
 
 class ffmpegSource {
     public:

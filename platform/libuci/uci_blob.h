@@ -21,7 +21,7 @@
 #define bool int
 
 struct blob_attr {
-	uint32_t id_len;
+	int  id_len;
 	char data[];
 } __packed;
 
@@ -58,8 +58,8 @@ enum blobmsg_type {
 };
 
 struct blobmsg_hdr {
-	uint16_t namelen;
-	uint8_t name[];
+	unsigned short namelen;
+	unsigned char name[];
 } __packed;
 
 struct blobmsg_policy {

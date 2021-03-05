@@ -41,7 +41,7 @@
 //#include "sdk_config.h"
 /*************************************************************************/
 /****************************    DOS   ***********************************/
-static int drv_dos_enable(sdk_driver_t *dev, BOOL enable, dos_type_en type)
+static int drv_dos_enable(sdk_driver_t *dev, ospl_bool enable, dos_type_en type)
 {
 	int ret = 0;
 	if(dev && dev->b53_device)
@@ -71,7 +71,7 @@ static int drv_dos_enable(sdk_driver_t *dev, BOOL enable, dos_type_en type)
 			break;
 
 		case TCP_SHORTHDR_DROP:
-			ret = b53125_dos_tcp_shorthdr_drop(dev->b53_device, enable);
+			ret = b53125_dos_tcp_ospl_int16hdr_drop(dev->b53_device, enable);
 			break;
 		case TCP_FRAGERROR_DROP:
 			ret = b53125_dos_tcp_fragerror_drop(dev->b53_device, enable);
@@ -93,7 +93,7 @@ static int drv_dos_enable(sdk_driver_t *dev, BOOL enable, dos_type_en type)
 			ret = ERROR;
 			break;
 		}
-		//int b53125_dos_disable_lean(struct b53125_device *dev, BOOL enable);
+		//int b53125_dos_disable_lean(struct b53125_device *dev, ospl_bool enable);
 		return ret;
 	}
 	return ERROR;
@@ -106,7 +106,7 @@ static int drv_dos_tcp_hdr_size(sdk_driver_t *dev, int size)
 	return ERROR;
 }
 
-static int drv_dos_icmp_maxsize(sdk_driver_t *dev, BOOL ipv6, int size)
+static int drv_dos_icmp_maxsize(sdk_driver_t *dev, ospl_bool ipv6, int size)
 {
 	if(dev && dev->b53_device)
 	{
@@ -126,7 +126,7 @@ static int drv_stp_state(sdk_driver_t *dev, ifindex_t ifindex, hal_port_stp_stat
 	return ERROR;
 }
 
-static int drv_mstp_enable(sdk_driver_t *dev, BOOL enable)
+static int drv_mstp_enable(sdk_driver_t *dev, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 		return b53125_mstp_enable(dev->b53_device, enable);
@@ -147,7 +147,7 @@ static int drv_mstp_state(sdk_driver_t *dev, int id, ifindex_t ifindex, hal_port
 	return ERROR;
 }
 
-static int drv_mstp_bypass(sdk_driver_t *dev, int id, BOOL enable)
+static int drv_mstp_bypass(sdk_driver_t *dev, int id, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 		return b53125_mstp_bypass(dev->b53_device, id, enable);
@@ -164,7 +164,7 @@ static int drv_mstp_vlan_id(sdk_driver_t *dev, u16 vid, int id)
 
 /*
 int b53125_fdb_dump(struct b53125_device *priv, int port,
-		int (*cb)(u8 *, u16, BOOL, void *), void *data);
+		int (*cb)(u8 *, u16, ospl_bool, void *), void *data);
 */
 
 /******************************** MAC ***************************/
@@ -197,13 +197,13 @@ static int drv_mac_clr(sdk_driver_t *dev, ifindex_t ifindex, vlan_t vlan)
 static int drv_mac_read(sdk_driver_t *dev, ifindex_t ifindex, vlan_t vlan)
 {
 /*	return b53125_fdb_dump(b53_device, if_ifindex2phy(ifindex),
-			int (*cb)(u8 *, u16, BOOL, void *), void *data);*/
+			int (*cb)(u8 *, u16, ospl_bool, void *), void *data);*/
 	return OK;
 }
 
 
 /******************************** trunk ***************************/
-static int drv_trunk_enable(sdk_driver_t *dev, BOOL enable)
+static int drv_trunk_enable(sdk_driver_t *dev, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 		return b53125_trunk_mac_base_enable(dev->b53_device, enable);
@@ -233,7 +233,7 @@ static int drv_trunk_del(sdk_driver_t *dev, ifindex_t ifindex, int id)
 
 
 /******************************** mirror ***************************/
-static int drv_mirror_enable(sdk_driver_t *dev, ifindex_t ifindex, BOOL enable)
+static int drv_mirror_enable(sdk_driver_t *dev, ifindex_t ifindex, ospl_bool enable)
 {
 	if(b53125_mirror_enable(dev->b53_device, enable) == OK)
 	{
@@ -242,7 +242,7 @@ static int drv_mirror_enable(sdk_driver_t *dev, ifindex_t ifindex, BOOL enable)
 	return ERROR;
 }
 
-static int drv_mirror_source_enable(sdk_driver_t *dev, BOOL enable, ifindex_t ifindex,
+static int drv_mirror_source_enable(sdk_driver_t *dev, ospl_bool enable, ifindex_t ifindex,
 		hal_mirror_mode_t mode, hal_mirror_type_t type)
 {
 	int ret = -1;
@@ -267,10 +267,10 @@ static int drv_mirror_source_enable(sdk_driver_t *dev, BOOL enable, ifindex_t if
 	return ret;
 }
 
-static int drv_mirror_source_filter(sdk_driver_t *dev, BOOL enable,
+static int drv_mirror_source_filter(sdk_driver_t *dev, ospl_bool enable,
 		hal_mirror_filter_t filter, hal_mirror_type_t type, mac_t *mac, mac_t *mac1)
 {
-	//	int (*sdk_mirror_source_filter_enable_cb) (BOOL enable, BOOL dst, mac_t *mac, int mode);
+	//	int (*sdk_mirror_source_filter_enable_cb) (ospl_bool enable, ospl_bool dst, mac_t *mac, int mode);
 	int ret = -1;
 	if(dev && dev->b53_device)
 	{
@@ -310,7 +310,7 @@ static int drv_dos_jumbo_size(sdk_driver_t *dev, int size)
 	return ERROR;
 }
 
-static int drv_jumbo_enable(sdk_driver_t *dev, ifindex_t ifindex, BOOL enable)
+static int drv_jumbo_enable(sdk_driver_t *dev, ifindex_t ifindex, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 		return b53125_jumbo_enable(dev->b53_device, if_ifindex2phy(ifindex), enable);
@@ -330,7 +330,7 @@ static int drv_cpu_limit_rate(sdk_driver_t *dev, int bps, int b)
 	return ERROR;
 }
 
-static int drv_port_limit_egress_rate(sdk_driver_t *dev, ifindex_t ifindex, u_int limitkb, u_int burst_size)
+static int drv_port_limit_egress_rate(sdk_driver_t *dev, ifindex_t ifindex, ospl_uint32 limitkb, ospl_uint32 burst_size)
 {
 	//1000Mbps/((64B+8B+12B)×8bit)=1.488095pps
 	int burst = 0, cnt = 0;
@@ -374,7 +374,7 @@ static int drv_port_limit_egress_rate(sdk_driver_t *dev, ifindex_t ifindex, u_in
     return ERROR;
 }
 
-static int drv_port_limit_ingress_rate(sdk_driver_t *dev, ifindex_t ifindex, u_int limitkb, u_int burst_size)
+static int drv_port_limit_ingress_rate(sdk_driver_t *dev, ifindex_t ifindex, ospl_uint32 limitkb, ospl_uint32 burst_size)
 {
 	//1000Mbps/((64B+8B+12B)×8bit)=1.488095pps
 	int burst = 0, cnt = 0;
@@ -408,16 +408,16 @@ static int drv_port_limit_ingress_rate(sdk_driver_t *dev, ifindex_t ifindex, u_i
 	}*/
     if(dev && dev->b53_device)
     {
-		b53125_qos_buck_mode(dev->b53_device, 0, TRUE);
+		b53125_qos_buck_mode(dev->b53_device, 0, ospl_true);
 		b53125_qos_buck_type(dev->b53_device, 0, 0x3f);
-		b53125_qos_ingress_rate_mode(dev->b53_device, if_ifindex2phy(ifindex),  3, TRUE);
+		b53125_qos_ingress_rate_mode(dev->b53_device, if_ifindex2phy(ifindex),  3, ospl_true);
 
 		return b53125_qos_ingress_rate(dev->b53_device, if_ifindex2phy(ifindex), 0, burst, limitkb);
     }
     return ERROR;
 }
 
-static int drv_port_strom_rate(sdk_driver_t *dev, ifindex_t ifindex, u_int limitkb, u_int burst_size)
+static int drv_port_strom_rate(sdk_driver_t *dev, ifindex_t ifindex, ospl_uint32 limitkb, ospl_uint32 burst_size)
 {
 	//1000Mbps/((64B+8B+12B)×8bit)=1.488095pps
 	int burst = 0, cnt = 0;
@@ -451,7 +451,7 @@ static int drv_port_strom_rate(sdk_driver_t *dev, ifindex_t ifindex, u_int limit
 	}*/
     if(dev && dev->b53_device)
     {
-		b53125_qos_buck_mode(dev->b53_device, 1, TRUE);
+		b53125_qos_buck_mode(dev->b53_device, 1, ospl_true);
 		b53125_qos_buck_type(dev->b53_device, 1, 0x3f);
 
 		return b53125_qos_ingress_rate(dev->b53_device, if_ifindex2phy(ifindex), 1, burst, limitkb);
@@ -459,7 +459,7 @@ static int drv_port_strom_rate(sdk_driver_t *dev, ifindex_t ifindex, u_int limit
     return ERROR;
 }
 
-static int drv_port_strom_mode(sdk_driver_t *dev, ifindex_t ifindex, BOOL enable, int mode)
+static int drv_port_strom_mode(sdk_driver_t *dev, ifindex_t ifindex, ospl_bool enable, int mode)
 {
 	if(dev && dev->b53_device)
 		return b53125_qos_ingress_rate_mode(dev->b53_device, if_ifindex2phy(ifindex),  mode, enable);
@@ -467,31 +467,31 @@ static int drv_port_strom_mode(sdk_driver_t *dev, ifindex_t ifindex, BOOL enable
 }
 
 /******************************** qos ***************************/
-static int drv_qos_ipg(sdk_driver_t *dev, BOOL tx, BOOL enable)
+static int drv_qos_ipg(sdk_driver_t *dev, ospl_bool tx, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 		return b53125_qos_ingress_ipg(dev->b53_device, tx, enable);
 	return ERROR;
 }
 
-static int drv_qos_enable(sdk_driver_t *dev, BOOL enable)
+static int drv_qos_enable(sdk_driver_t *dev, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 	{
-		b53125_qos_base_port(dev->b53_device, FALSE);
+		b53125_qos_base_port(dev->b53_device, ospl_false);
 		return b53125_qos_layer_sel(dev->b53_device, 3);
 	}
 	return ERROR;
 }
 
-static int drv_qos_8021q_enable(sdk_driver_t *dev, ifindex_t ifindex, BOOL enable)
+static int drv_qos_8021q_enable(sdk_driver_t *dev, ifindex_t ifindex, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 		return b53125_qos_8021p(dev->b53_device, if_ifindex2phy(ifindex), enable);
 	return ERROR;
 }
 
-static int drv_qos_diffserv_enable(sdk_driver_t *dev, ifindex_t ifindex, BOOL enable)
+static int drv_qos_diffserv_enable(sdk_driver_t *dev, ifindex_t ifindex, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 		return b53125_qos_diffserv(dev->b53_device, if_ifindex2phy(ifindex), enable);
@@ -544,14 +544,14 @@ static int drv_qos_class_scheduling(sdk_driver_t *dev, nsm_qos_class_e class, ns
 		}
 		else if(class == NSM_QOS_CLASS_4)
 		{
-			return b53125_qos_class4_weight(dev->b53_device, TRUE,  -1);
+			return b53125_qos_class4_weight(dev->b53_device, ospl_true,  -1);
 		}
 	}
 	else
 		sched_mode = 0;
 	if(class == NSM_QOS_CLASS_4)
 	{
-		return b53125_qos_class4_weight(dev->b53_device, FALSE,  -1);
+		return b53125_qos_class4_weight(dev->b53_device, ospl_false,  -1);
 	}
 	/*
 	00 = all queues are weighted round robin
@@ -569,7 +569,7 @@ static int drv_qos_class_weight(sdk_driver_t *dev, nsm_qos_class_e class, int we
 	if(dev && dev->b53_device)
 	{
 		if(class == NSM_QOS_CLASS_4)
-			return b53125_qos_class4_weight(dev->b53_device, FALSE,  weight);
+			return b53125_qos_class4_weight(dev->b53_device, ospl_false,  weight);
 		return b53125_qos_class_weight(dev->b53_device, class - 1, weight);
 	}
 	return ERROR;
@@ -577,11 +577,11 @@ static int drv_qos_class_weight(sdk_driver_t *dev, nsm_qos_class_e class, int we
 
 
 /******************************** vlan ***************************/
-static int drv_vlan_enable(sdk_driver_t *dev, BOOL enable)
+static int drv_vlan_enable(sdk_driver_t *dev, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 	return b53125_enable_vlan(dev->b53_device,  enable,
-			FALSE);
+			ospl_false);
 	return ERROR;
 }
 
@@ -602,42 +602,42 @@ static int drv_vlan_destroy(sdk_driver_t *dev, vlan_t vlan)
 static int drv_vlan_add_untag_port(sdk_driver_t *dev, ifindex_t ifindex, vlan_t vlan)
 {
 	if(dev && dev->b53_device)
-	return b53125_add_vlan_port(dev->b53_device, vlan, if_ifindex2phy(ifindex), FALSE);
+	return b53125_add_vlan_port(dev->b53_device, vlan, if_ifindex2phy(ifindex), ospl_false);
 	return ERROR;
 }
 
 static int drv_vlan_del_untag_port(sdk_driver_t *dev, ifindex_t ifindex, vlan_t vlan)
 {
 	if(dev && dev->b53_device)
-	return b53125_del_vlan_port(dev->b53_device, vlan, if_ifindex2phy(ifindex), FALSE);
+	return b53125_del_vlan_port(dev->b53_device, vlan, if_ifindex2phy(ifindex), ospl_false);
 	return ERROR;
 }
 
 static int drv_vlan_add_tag_port(sdk_driver_t *dev, ifindex_t ifindex, vlan_t vlan)
 {
 	if(dev && dev->b53_device)
-	return b53125_add_vlan_port(dev->b53_device, vlan, if_ifindex2phy(ifindex), TRUE);
+	return b53125_add_vlan_port(dev->b53_device, vlan, if_ifindex2phy(ifindex), ospl_true);
 	return ERROR;
 }
 
 static int drv_vlan_del_tag_port(sdk_driver_t *dev, ifindex_t ifindex, vlan_t vlan)
 {
 	if(dev && dev->b53_device)
-	return b53125_del_vlan_port(dev->b53_device, vlan, if_ifindex2phy(ifindex), TRUE);
+	return b53125_del_vlan_port(dev->b53_device, vlan, if_ifindex2phy(ifindex), ospl_true);
 	return ERROR;
 }
 
 static int drv_port_add_allowed_tag_vlan(sdk_driver_t *dev, ifindex_t ifindex, vlan_t vlan)
 {
 	if(dev && dev->b53_device)
-	return b53125_add_vlan_port(dev->b53_device, vlan, if_ifindex2phy(ifindex), TRUE);
+	return b53125_add_vlan_port(dev->b53_device, vlan, if_ifindex2phy(ifindex), ospl_true);
 	return ERROR;
 }
 
 static int drv_port_del_allowed_tag_vlan(sdk_driver_t *dev, ifindex_t ifindex, vlan_t vlan)
 {
 	if(dev && dev->b53_device)
-	return b53125_del_vlan_port(dev->b53_device, vlan, if_ifindex2phy(ifindex), TRUE);
+	return b53125_del_vlan_port(dev->b53_device, vlan, if_ifindex2phy(ifindex), ospl_true);
 	return ERROR;
 }
 
@@ -645,10 +645,10 @@ static int drv_port_add_allowed_tag_batch_vlan(sdk_driver_t *dev, ifindex_t ifin
 {
 	if(!dev || !dev->b53_device)
 		return ERROR;
-	int i = 0, ret = 0;
+	ospl_uint32 i = 0, ret = 0;
 	for(i = start; i <= end; i++)
 	{
-		ret |= b53125_add_vlan_port(dev->b53_device, i, if_ifindex2phy(ifindex), TRUE);
+		ret |= b53125_add_vlan_port(dev->b53_device, i, if_ifindex2phy(ifindex), ospl_true);
 		if(ret != 0)
 			break;
 	}
@@ -659,10 +659,10 @@ static int drv_port_del_allowed_tag_batch_vlan(sdk_driver_t *dev, ifindex_t ifin
 {
 	if(!dev || !dev->b53_device)
 		return ERROR;
-	int i = 0, ret = 0;
+	ospl_uint32 i = 0, ret = 0;
 	for(i = start; i <= end; i++)
 	{
-		ret |= b53125_del_vlan_port(dev->b53_device, i, if_ifindex2phy(ifindex), TRUE);
+		ret |= b53125_del_vlan_port(dev->b53_device, i, if_ifindex2phy(ifindex), ospl_true);
 		if(ret != 0)
 			break;
 	}
@@ -683,7 +683,7 @@ static int drv_port_del_native_vlan(sdk_driver_t *dev, ifindex_t ifindex, vlan_t
 	return ERROR;
 }
 
-/*static int drv_port_vlan_enable(sdk_driver_t *dev, ifindex_t ifindex, BOOL enable)
+/*static int drv_port_vlan_enable(sdk_driver_t *dev, ifindex_t ifindex, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 	return b53125_port_vlan(dev->b53_device, if_ifindex2phy(ifindex), enable);
@@ -701,44 +701,44 @@ static int drv_port_vlan_default(sdk_driver_t *dev, ifindex_t ifindex, u16 vid)
 
 int b53125_vlan_double_tagging_tpid(struct b53125_device *dev, u16 tpid)
 
-int b53125_ISP_port(struct b53125_device *dev, int port, BOOL enable)
+int b53125_ISP_port(struct b53125_device *dev, int port, ospl_bool enable)
 */
 
 
 /******************************** global ***************************/
-static int drv_switch_manage(sdk_driver_t *dev, BOOL enable)
+static int drv_switch_manage(sdk_driver_t *dev, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 		return b53125_switch_manege(dev->b53_device, enable);
 	return ERROR;
 }
-static int drv_switch_forwarding(sdk_driver_t *dev, BOOL enable)
+static int drv_switch_forwarding(sdk_driver_t *dev, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 		return b53125_switch_forwarding(dev->b53_device, enable);
 	return ERROR;
 }
-static int drv_multicast_flood(sdk_driver_t *dev, BOOL enable)
+static int drv_multicast_flood(sdk_driver_t *dev, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 		return b53125_multicast_flood(dev->b53_device, enable);
 	return ERROR;
 }
-static int drv_unicast_flood(sdk_driver_t *dev, BOOL enable)
+static int drv_unicast_flood(sdk_driver_t *dev, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 		return b53125_unicast_flood(dev->b53_device, enable);
 	return ERROR;
 }
 
-static int drv_multicast_learning(sdk_driver_t *dev, BOOL enable)
+static int drv_multicast_learning(sdk_driver_t *dev, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 		return b53125_multicast_learning(dev->b53_device, enable);
 	return ERROR;
 }
 
-static int drv_enable_bpdu(sdk_driver_t *dev, BOOL enable)
+static int drv_enable_bpdu(sdk_driver_t *dev, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 		return b53125_enable_bpdu(dev->b53_device, enable);
@@ -752,31 +752,31 @@ static int drv_aging_time(sdk_driver_t *dev, int enable)
 	return ERROR;
 }
 
-//int b53125_bpdu_forward(struct b53125_device *dev, u8 *mac, BOOL enable);
+//int b53125_bpdu_forward(struct b53125_device *dev, u8 *mac, ospl_bool enable);
 
 /******************************** cpu port ***************************/
-static int drv_global_imp_enable(sdk_driver_t *dev, BOOL enable)
+static int drv_global_imp_enable(sdk_driver_t *dev, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 		return b53125_imp_enable(dev->b53_device, enable);
 	return ERROR;
 }
 
-static int drv_imp_speed(sdk_driver_t *dev, u_int speed)
+static int drv_imp_speed(sdk_driver_t *dev, ospl_uint32 speed)
 {
 	if(dev && dev->b53_device)
 		return b53125_imp_speed(dev->b53_device, speed);
 	return ERROR;
 }
 
-static int drv_imp_duplex(sdk_driver_t *dev, u_int duplex)
+static int drv_imp_duplex(sdk_driver_t *dev, ospl_uint32 duplex)
 {
 	if(dev && dev->b53_device)
 		return b53125_imp_duplex(dev->b53_device, duplex);
 	return ERROR;
 }
 
-static int drv_imp_flow(sdk_driver_t *dev, BOOL rx, BOOL tx)
+static int drv_imp_flow(sdk_driver_t *dev, ospl_bool rx, ospl_bool tx)
 {
 	if(dev && dev->b53_device)
 		return b53125_imp_flow(dev->b53_device, rx, tx);
@@ -784,7 +784,7 @@ static int drv_imp_flow(sdk_driver_t *dev, BOOL rx, BOOL tx)
 }
 
 /******************************** port ***************************/
-static int drv_port_protected_enable(sdk_driver_t *dev, ifindex_t ifindex, BOOL enable)
+static int drv_port_protected_enable(sdk_driver_t *dev, ifindex_t ifindex, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 		return b53125_port_protected_enable(dev->b53_device, if_ifindex2phy(ifindex), enable);
@@ -792,40 +792,40 @@ static int drv_port_protected_enable(sdk_driver_t *dev, ifindex_t ifindex, BOOL 
 }
 
 /*
-static int drv_port_pasue_transmit_enable(sdk_driver_t *dev, ifindex_t ifindex, BOOL enable)
+static int drv_port_pasue_transmit_enable(sdk_driver_t *dev, ifindex_t ifindex, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 		return b53125_pasue_transmit_enable(dev->b53_device, if_ifindex2phy(ifindex), enable);
 	return ERROR;
 }
 
-static int drv_port_pasue_receive_enable(sdk_driver_t *dev, ifindex_t ifindex, BOOL enable)
+static int drv_port_pasue_receive_enable(sdk_driver_t *dev, ifindex_t ifindex, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 		return b53125_pasue_receive_enable(dev->b53_device, if_ifindex2phy(ifindex), enable);
 	return ERROR;
 }
 
-static int drv_port_pasue_pass_enable(sdk_driver_t *dev, ifindex_t ifindex, BOOL rx)
+static int drv_port_pasue_pass_enable(sdk_driver_t *dev, ifindex_t ifindex, ospl_bool rx)
 {
 	if(dev && dev->b53_device)
 	{
 		if(rx)
-			return b53125_pause_pass_rx(dev->b53_device, if_ifindex2phy(ifindex), TRUE);
+			return b53125_pause_pass_rx(dev->b53_device, if_ifindex2phy(ifindex), ospl_true);
 		else
-			return b53125_pause_pass_tx(dev->b53_device, if_ifindex2phy(ifindex), TRUE);
+			return b53125_pause_pass_tx(dev->b53_device, if_ifindex2phy(ifindex), ospl_true);
 	}
 	return ERROR;
 }
 
-static int drv_port_pasue_pass_disable(sdk_driver_t *dev, ifindex_t ifindex, BOOL rx)
+static int drv_port_pasue_pass_disable(sdk_driver_t *dev, ifindex_t ifindex, ospl_bool rx)
 {
 	if(dev && dev->b53_device)
 	{
 		if(rx)
-			return b53125_pause_pass_rx(dev->b53_device, if_ifindex2phy(ifindex), FALSE);
+			return b53125_pause_pass_rx(dev->b53_device, if_ifindex2phy(ifindex), ospl_false);
 		else
-			return b53125_pause_pass_tx(dev->b53_device, if_ifindex2phy(ifindex), FALSE);
+			return b53125_pause_pass_tx(dev->b53_device, if_ifindex2phy(ifindex), ospl_false);
 	}
 	return ERROR;
 }
@@ -833,7 +833,7 @@ static int drv_port_pasue_pass_disable(sdk_driver_t *dev, ifindex_t ifindex, BOO
 
 
 
-static int drv_port_wan_enable(sdk_driver_t *dev, ifindex_t ifindex, BOOL enable)
+static int drv_port_wan_enable(sdk_driver_t *dev, ifindex_t ifindex, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 		return b53125_port_wan_enable(dev->b53_device, if_ifindex2phy(ifindex), enable);
@@ -841,69 +841,69 @@ static int drv_port_wan_enable(sdk_driver_t *dev, ifindex_t ifindex, BOOL enable
 }
 
 
-static int drv_port_enable(sdk_driver_t *dev, ifindex_t ifindex, BOOL enable)
+static int drv_port_enable(sdk_driver_t *dev, ifindex_t ifindex, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 		return b53125_port_enable(dev->b53_device, if_ifindex2phy(ifindex), enable);
 	return ERROR;
 }
 
-static int drv_port_learning_enable(sdk_driver_t *dev, ifindex_t ifindex, BOOL enable)
+static int drv_port_learning_enable(sdk_driver_t *dev, ifindex_t ifindex, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 		return b53125_enable_learning(dev->b53_device, if_ifindex2phy(ifindex), enable);
 	return ERROR;
 }
 
-static int drv_port_software_learning_enable(sdk_driver_t *dev, ifindex_t ifindex, BOOL enable)
+static int drv_port_software_learning_enable(sdk_driver_t *dev, ifindex_t ifindex, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 		return b53125_software_learning(dev->b53_device, if_ifindex2phy(ifindex), enable);
 	return ERROR;
 }
 
-static BOOL drv_port_get_link(sdk_driver_t *dev, ifindex_t ifindex)
+static ospl_bool drv_port_get_link(sdk_driver_t *dev, ifindex_t ifindex)
 {
 	if(dev && dev->b53_device)
 		return b53125_port_get_link(dev->b53_device, if_ifindex2phy(ifindex));
-	return FALSE;
+	return ospl_false;
 }
 
-static u_int drv_port_get_speed(sdk_driver_t *dev, ifindex_t ifindex)
+static ospl_uint32 drv_port_get_speed(sdk_driver_t *dev, ifindex_t ifindex)
 {
 	if(dev && dev->b53_device)
 		return b53125_port_get_speed(dev->b53_device, if_ifindex2phy(ifindex));
-	return FALSE;
+	return ospl_false;
 }
-static u_int drv_port_get_duplex(sdk_driver_t *dev, ifindex_t ifindex)
+static ospl_uint32 drv_port_get_duplex(sdk_driver_t *dev, ifindex_t ifindex)
 {
 	if(dev && dev->b53_device)
 		return b53125_port_get_duplex(dev->b53_device, if_ifindex2phy(ifindex));
-	return FALSE;
+	return ospl_false;
 }
 
-static int drv_port_speed(sdk_driver_t *dev, ifindex_t ifindex, u_int value)
+static int drv_port_speed(sdk_driver_t *dev, ifindex_t ifindex, ospl_uint32 value)
 {
 	if(dev && dev->b53_device)
 		return b53125_port_set_speed(dev->b53_device, if_ifindex2phy(ifindex), value);
 	return ERROR;
 }
 
-static int drv_port_duplex(sdk_driver_t *dev, ifindex_t ifindex, u_int value)
+static int drv_port_duplex(sdk_driver_t *dev, ifindex_t ifindex, ospl_uint32 value)
 {
 	if(dev && dev->b53_device)
 		return b53125_port_set_duplex(dev->b53_device, if_ifindex2phy(ifindex), value);
 	return ERROR;
 }
 
-static int drv_port_flow(sdk_driver_t *dev, ifindex_t ifindex, u_int value)
+static int drv_port_flow(sdk_driver_t *dev, ifindex_t ifindex, ospl_uint32 value)
 {
 	if(dev && dev->b53_device)
 		return b53125_port_set_flow(dev->b53_device, if_ifindex2phy(ifindex), value);
 	return ERROR;
 }
 
-static int drv_port_set_link(sdk_driver_t *dev, ifindex_t ifindex, BOOL enable)
+static int drv_port_set_link(sdk_driver_t *dev, ifindex_t ifindex, ospl_bool enable)
 {
 	if(dev && dev->b53_device)
 		return b53125_port_set_link_force(dev->b53_device, if_ifindex2phy(ifindex), enable);

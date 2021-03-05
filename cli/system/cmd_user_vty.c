@@ -22,17 +22,17 @@ DEFUN (username,
 		"Establish User Name Authentication\n"
 		"User Name\n")
 {
-	BOOL enc = FALSE;
+	ospl_bool enc = ospl_false;
 	int encrypt = 0;
 	if (host_config_get_api(API_GET_ENCRYPT_CMD, &encrypt) != OK) {
 		return CMD_WARNING;
 	}
 	if(encrypt)
-		enc = TRUE;
+		enc = ospl_true;
 	if (argc == 1)
-		return vty_user_create(vty, argv[0], NULL, FALSE, enc);
+		return vty_user_create(vty, argv[0], NULL, ospl_false, enc);
 	else if (argc == 2)
-		return vty_user_create(vty, argv[0], argv[1], FALSE, enc);
+		return vty_user_create(vty, argv[0], argv[1], ospl_false, enc);
 	return CMD_WARNING;
 }
 
@@ -52,7 +52,7 @@ DEFUN (no_username,
 		"User Name\n") {
 
 	if (argc == 1)
-		return vty_user_delete(vty, argv[0], FALSE, FALSE);
+		return vty_user_delete(vty, argv[0], ospl_false, ospl_false);
 	return CMD_WARNING;
 }
 
@@ -65,7 +65,7 @@ DEFUN (no_username_password,
 		"Specify the password for the user\n") {
 
 	if (argc == 1)
-		return vty_user_delete(vty, argv[0], TRUE, FALSE);
+		return vty_user_delete(vty, argv[0], ospl_true, ospl_false);
 	return CMD_WARNING;
 
 }
@@ -79,15 +79,15 @@ DEFUN (username_enable_password,
 		"Specify the password for the user\n"
 		"The UNENCRYPTED (cleartext) user password\n")
 {
-	BOOL enc = FALSE;
+	ospl_bool enc = ospl_false;
 	int encrypt = 0;
 	if (host_config_get_api(API_GET_ENCRYPT_CMD, &encrypt) != OK) {
 		return CMD_WARNING;
 	}
 	if(encrypt)
-		enc = TRUE;
+		enc = ospl_true;
 	if (argc == 2)
-		return vty_user_create(vty, argv[0], argv[1], TRUE, enc);
+		return vty_user_create(vty, argv[0], argv[1], ospl_true, enc);
 	return CMD_WARNING;
 
 }
@@ -102,7 +102,7 @@ DEFUN (no_username_enable_password,
 		"Specify the password for the user\n") {
 
 	if (argc == 2)
-		return vty_user_delete(vty, argv[0], TRUE, TRUE);
+		return vty_user_delete(vty, argv[0], ospl_true, ospl_true);
 	return CMD_WARNING;
 
 }

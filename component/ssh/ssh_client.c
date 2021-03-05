@@ -23,13 +23,13 @@
 
 
 
-static int ssh_client_auth_callback(const char *prompt, char *buf, size_t len,
-    int echo, int verify, void *userdata) {
+static int ssh_client_auth_callback(const char *prompt, char *buf, ospl_size_t len,
+    ospl_uint32 echo, ospl_uint32 verify, void *userdata) {
     (void) verify;
     struct vty *vty = (struct vty *)userdata;
     if(vty)
     {
-    	int slen = ssh_getpass(vty->fd, prompt, buf, len, echo, verify);
+    	ospl_size_t slen = ssh_getpass(vty->fd, prompt, buf, len, echo, verify);
     	vty_out(vty, "get password:%s%s", buf, VTY_NEWLINE);
     	return slen;
     	//return ssh_getpass(vty->fd, prompt, buf, len, echo, verify);
@@ -61,10 +61,10 @@ static void ssh_client_select_loop(ssh_session session,ssh_channel channel)
 	 * outchannels will contain the result of the poll
 	 */
 	ssh_channel channels[2], outchannels[2];
-	int lus = 0;
-	int eof = 0;
+	ospl_uint32 lus = 0;
+	ospl_uint32 eof = 0;
 	int maxfd = 0;
-	unsigned int r = 0;
+	ospl_uint32 r = 0;
 	int ret = 0;
 	struct vty *vty = ssh_get_session_private(session);
 	while (channel)
@@ -192,7 +192,7 @@ static int ssh_client_exit(ssh_session session)
 	if(vty)
 	{
 		ssh_printf(NULL, "taskout ============vty_ansync_enable\n");
-		vty_ansync_enable(vty, FALSE);
+		vty_ansync_enable(vty, ospl_false);
 		vty_resume(vty);
 	}
 	ssh_printf(NULL, "taskout ============ssh_stdout_set\n");
@@ -228,16 +228,16 @@ static void ssh_client_shell(ssh_session session)
 }
 
 
-int ssh_client(struct vty *vty, char *remotehost, int port, char *user, char *pasword)
+int ssh_client(struct vty *vty, char *remotehost, ospl_uint16 port, char *user, char *pasword)
 {
     ssh_session session;
-	vty_ansync_enable(vty, TRUE);
+	vty_ansync_enable(vty, ospl_true);
 	vty_cancel(vty);
 	vty_out(vty, "%sTrying %s...%s", VTY_NEWLINE, remotehost, VTY_NEWLINE);
 	session = ssh_new();
 	if(!session)
 	{
-		vty_ansync_enable(vty, FALSE);
+		vty_ansync_enable(vty, ospl_false);
 		vty_resume(vty);
 		return -1;
 	}
@@ -250,15 +250,15 @@ int ssh_client(struct vty *vty, char *remotehost, int port, char *user, char *pa
 		if(os_task_create("ssh-client", OS_TASK_DEFAULT_PRIORITY,
 				   0, ssh_client_shell, session, OS_TASK_DEFAULT_STACK) > 0)
 		{
-			//vty_ansync_enable(vty, FALSE);
+			//vty_ansync_enable(vty, ospl_false);
 			return OK;
 		}
     }
     else
     {
-		vty_ansync_enable(vty, FALSE);
+		vty_ansync_enable(vty, ospl_false);
 		vty_resume(vty);
     }
-	//vty_ansync_enable(vty, FALSE);
+	//vty_ansync_enable(vty, ospl_false);
     return 0;
 }

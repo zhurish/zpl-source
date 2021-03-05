@@ -8,6 +8,10 @@
 #ifndef __OS_SEM_H__
 #define __OS_SEM_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "pthread.h"
 #include "semaphore.h"
 
@@ -23,10 +27,10 @@
 
 typedef struct
 {
-	unsigned short key;
-	unsigned char init;
-	unsigned char cnt;		//记录当前信号量有几个进程在使用
-	unsigned char type;
+	ospl_uint16 key;
+	ospl_uint8 init;
+	ospl_uint8 cnt;		//记录当前信号量有几个进程在使用
+	ospl_uint8 type;
 	union
 	{
 		pthread_mutex_t mutex;
@@ -57,14 +61,14 @@ int os_mutex_obj_exit();
 /*
 * 进程之间互斥信号量
 */
-extern os_mutex_t * os_mutex_init(int key);
+extern os_mutex_t * os_mutex_init(ospl_uint32 key);
 /*
 *	wait:
 *		0: 不等待
 *	   -1: 永远等待，直到资源可用
 *	   >0: 等待 时间 (s)
 */
-extern int os_mutex_lock(os_mutex_t *, int wait);
+extern int os_mutex_lock(os_mutex_t *, ospl_int32 wait);
 extern int os_mutex_unlock(os_mutex_t *);
 extern int os_mutex_exit(os_mutex_t *);
 /*
@@ -78,7 +82,7 @@ extern os_sem_t * os_sem_init(int key);
 *	   >0: 等待 时间 (s)
 */
 extern int os_sem_give(os_sem_t *);
-extern int os_sem_take(os_sem_t *, int wait);
+extern int os_sem_take(os_sem_t *, ospl_int32 wait);
 extern int os_sem_exit(os_sem_t *);
 
 
@@ -104,12 +108,12 @@ typedef struct os_spin_s
 
 extern os_sem_t * os_sem_init();
 extern int os_sem_give(os_sem_t *);
-extern int os_sem_take(os_sem_t *, int wait);
+extern int os_sem_take(os_sem_t *, ospl_int32 wait);
 extern int os_sem_exit(os_sem_t *);
 
 
 extern os_mutex_t * os_mutex_init();
-extern int os_mutex_lock(os_mutex_t *, int wait);
+extern int os_mutex_lock(os_mutex_t *, ospl_int32 wait);
 extern int os_mutex_unlock(os_mutex_t *);
 extern int os_mutex_exit(os_mutex_t *);
 
@@ -119,5 +123,11 @@ extern int os_spin_lock(os_spin_t *);
 extern int os_spin_unlock(os_spin_t *);
 extern int os_spin_exit(os_spin_t *);
 #endif
+
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* __OS_SEM_H__ */

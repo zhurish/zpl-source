@@ -110,7 +110,7 @@ bool work_queue_is_scheduled(struct work_queue *wq)
 	return (wq->thread != NULL);
 }
 
-static int work_queue_schedule(struct work_queue *wq, unsigned int delay)
+static int work_queue_schedule(struct work_queue *wq, ospl_uint32  delay)
 {
 	/* if appropriate, schedule work queue thread */
 	if ( CHECK_FLAG(wq->flags, WQ_UNPLUGGED) && (wq->thread == NULL)
@@ -190,7 +190,7 @@ DEFUN(show_work_queues,
 				(CHECK_FLAG (wq->flags, WQ_UNPLUGGED) ? ' ' : 'P'),
 				listcount(wq->items), wq->spec.hold, wq->runs, wq->cycles.best,
 				MIN(wq->cycles.best, wq->cycles.worst), wq->cycles.granularity,
-				(wq->runs) ? (unsigned int) (wq->cycles.total / wq->runs) : 0,
+				(wq->runs) ? (ospl_uint32 ) (wq->cycles.total / wq->runs) : 0,
 				wq->worst_usec, wq->name,
 				VTY_NEWLINE);
 	}
@@ -230,11 +230,11 @@ int work_queue_run(struct thread *thread)
 {
 	struct work_queue *wq;
 	struct work_queue_item *item;
-	unsigned long took;
+	ospl_ulong took;
 	wq_item_status ret;
-	unsigned int cycles = 0;
+	ospl_uint32  cycles = 0;
 	struct listnode *node, *nnode;
-	char yielded = 0;
+	ospl_char yielded = 0;
 
 	wq = THREAD_ARG(thread);
 	wq->thread = NULL;

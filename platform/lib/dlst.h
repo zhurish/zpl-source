@@ -16,6 +16,10 @@
 #ifndef __DLIST_H__
 #define __DLIST_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * struct dl_list - Doubly-linked list
  */
@@ -53,15 +57,15 @@ static inline void dl_list_del(struct dl_list *item)
 	item->prev = NULL;
 }
 
-static inline int dl_list_empty(struct dl_list *list)
+static inline ospl_bool dl_list_empty(struct dl_list *list)
 {
 	return list->next == list;
 }
 
-static inline unsigned int dl_list_len(struct dl_list *list)
+static inline ospl_uint32  dl_list_len(struct dl_list *list)
 {
 	struct dl_list *item;
-	int count = 0;
+	ospl_uint32 count = 0;
 	for (item = list->next; item != list; item = item->next)
 		count++;
 	return count;
@@ -72,7 +76,7 @@ static inline unsigned int dl_list_len(struct dl_list *list)
 #endif
 
 #define dl_list_entry(item, type, member) \
-	((type *) ((char *) item - offsetof(type, member)))
+	((type *) ((ospl_char *) item - offsetof(type, member)))
 
 #define dl_list_first(list, type, member) \
 	(dl_list_empty((list)) ? NULL : \
@@ -100,5 +104,9 @@ static inline unsigned int dl_list_len(struct dl_list *list)
 
 #define DEFINE_DL_LIST(name) \
 	struct dl_list name = { &(name), &(name) }
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __DLIST_H__ */

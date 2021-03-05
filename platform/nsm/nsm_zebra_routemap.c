@@ -134,7 +134,7 @@ route_match_interface (void *rule, struct prefix *prefix,
 {
   struct nexthop_vrfid *nh_vrf;
   struct nexthop *nexthop;
-  char *ifname = rule;
+  ospl_char *ifname = rule;
   ifindex_t ifindex;
 
   if (type == RMAP_ZEBRA)
@@ -447,7 +447,7 @@ route_match_ip_next_hop (void *rule, struct prefix *prefix,
       default:
         return RMAP_NOMATCH;
       }
-      alist = access_list_lookup (AFI_IP, (char *) rule);
+      alist = access_list_lookup (AFI_IP, (ospl_char *) rule);
       if (alist == NULL)
 	return RMAP_NOMATCH;
 
@@ -511,7 +511,7 @@ route_match_ip_next_hop_prefix_list (void *rule, struct prefix *prefix,
       default:
         return RMAP_NOMATCH;
       }
-      plist = prefix_list_lookup (AFI_IP, (char *) rule);
+      plist = prefix_list_lookup (AFI_IP, (ospl_char *) rule);
       if (plist == NULL)
         return RMAP_NOMATCH;
 
@@ -553,7 +553,7 @@ route_match_ip_address (void *rule, struct prefix *prefix,
 
   if (type == RMAP_ZEBRA)
     {
-      alist = access_list_lookup (AFI_IP, (char *) rule);
+      alist = access_list_lookup (AFI_IP, (ospl_char *) rule);
       if (alist == NULL)
 	return RMAP_NOMATCH;
     
@@ -597,7 +597,7 @@ route_match_ip_address_prefix_list (void *rule, struct prefix *prefix,
 
   if (type == RMAP_ZEBRA)
     {
-      plist = prefix_list_lookup (AFI_IP, (char *) rule);
+      plist = prefix_list_lookup (AFI_IP, (ospl_char *) rule);
       if (plist == NULL)
 	return RMAP_NOMATCH;
     

@@ -240,7 +240,7 @@ static int web_handle_upgrade(Webs *wp, void *p)
  Dump the file upload details. Don't actually do anything with the uploaded file.
  */
 /*
-static char *base64_encode(const unsigned char *str, int str_len)
+static char *base64_encode(const ospl_uint8 *str, int str_len)
 {
 	int len = 0;
 	//long str_len;
@@ -257,7 +257,7 @@ static char *base64_encode(const unsigned char *str, int str_len)
 	else
 		len = (str_len / 3 + 1) * 4;
 
-	res = malloc (sizeof(unsigned char) * len + 1);
+	res = malloc (sizeof(ospl_uint8) * len + 1);
 	res[len] = '\0';
 
 	//以3个8位字符为一组进行编码
@@ -283,7 +283,7 @@ static char *base64_encode(const unsigned char *str, int str_len)
 }
 
 
-unsigned char *base64_decode(unsigned char *code)
+ospl_uint8 *base64_decode(ospl_uint8 *code)
 {
 	//根据base64表，以字符找到对应的十进制数据
 	int table[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -295,7 +295,7 @@ unsigned char *base64_decode(unsigned char *code)
 			46, 47, 48, 49, 50, 51 };
 	long len;
 	long str_len;
-	unsigned char *res;
+	ospl_uint8 *res;
 	int i, j;
 
 	//计算解码后的字符串长度
@@ -308,18 +308,18 @@ unsigned char *base64_decode(unsigned char *code)
 	else
 		str_len = len / 4 * 3;
 
-	res = malloc (sizeof(unsigned char) * str_len + 1);
+	res = malloc (sizeof(ospl_uint8) * str_len + 1);
 	res[str_len] = '\0';
 
 	//以4个字符为一位进行解码
 	for (i = 0, j = 0; i < len - 2; j += 3, i += 4)
 	{
-		res[j] = ((unsigned char) table[code[i]]) << 2
-				| (((unsigned char) table[code[i + 1]]) >> 4); //取出第一个字符对应base64表的十进制数的前6位与第二个字符对应base64表的十进制数的后2位进行组合
-		res[j + 1] = (((unsigned char) table[code[i + 1]]) << 4)
-				| (((unsigned char) table[code[i + 2]]) >> 2); //取出第二个字符对应base64表的十进制数的后4位与第三个字符对应bas464表的十进制数的后4位进行组合
-		res[j + 2] = (((unsigned char) table[code[i + 2]]) << 6)
-				| ((unsigned char) table[code[i + 3]]); //取出第三个字符对应base64表的十进制数的后2位与第4个字符进行组合
+		res[j] = ((ospl_uint8) table[code[i]]) << 2
+				| (((ospl_uint8) table[code[i + 1]]) >> 4); //取出第一个字符对应base64表的十进制数的前6位与第二个字符对应base64表的十进制数的后2位进行组合
+		res[j + 1] = (((ospl_uint8) table[code[i + 1]]) << 4)
+				| (((ospl_uint8) table[code[i + 2]]) >> 2); //取出第二个字符对应base64表的十进制数的后4位与第三个字符对应bas464表的十进制数的后4位进行组合
+		res[j + 2] = (((ospl_uint8) table[code[i + 2]]) << 6)
+				| ((ospl_uint8) table[code[i + 3]]); //取出第三个字符对应base64表的十进制数的后2位与第4个字符进行组合
 	}
 	return res;
 }
@@ -412,8 +412,8 @@ static int other_upload_cb(Webs *wp, WebsUpload *up, void *p)
 #ifdef APP_V9_MODULE
 struct v9_web_load_dir
 {
-	u_int32 tid;
-	u_int32 id;
+	ospl_uint32 tid;
+	ospl_uint32 id;
 	char dirpath[APP_PATH_MAX];
 };
 
@@ -627,7 +627,7 @@ static bool downloadFileHandler(Webs *wp)
 	if (ID == NULL)
 	{
 		_WEB_DBG_TRAP("%s: can not get 'ID' option\r\n", __func__);
-		return TRUE;
+		return ospl_true;
 	}
 
 	//_WEB_DBG_TRAP("%s: ID=%s\r\n", __func__, ID);
@@ -636,7 +636,7 @@ static bool downloadFileHandler(Webs *wp)
 	if (tmp == NULL)
 	{
 		_WEB_DBG_TRAP("%s: can not get 'filename' option\r\n", __func__);
-		return TRUE;
+		return ospl_true;
 	}
 
 	//_WEB_DBG_TRAP("%s: filename=%s\r\n", __func__, tmp);
@@ -646,7 +646,7 @@ static bool downloadFileHandler(Webs *wp)
 	if(web_download_call_hook("filename", ID, wp, &filename) != OK)
 	{
 		_WEB_DBG_TRAP("%s: web_download_call_hook ERROR\r\n", __func__);
-		return TRUE;
+		return ospl_true;
 	}
 	//filename = sclone("boot.log");
 /*
@@ -677,20 +677,20 @@ static bool downloadFileHandler(Webs *wp)
 		websRedirect(wp, tmp);
 		wfree(tmp);
 		free(filename);
-		return TRUE;
+		return ospl_true;
 	}
 	if (websPageOpen(wp, O_RDONLY | O_BINARY, 0666) < 0)
 	{
 		websError(wp, HTTP_CODE_NOT_FOUND, "Cannot open document for: %s",
 				wp->path);
 		free(filename);
-		return TRUE;
+		return ospl_true;
 	}
 	if (websPageStat(wp, &info) < 0)
 	{
 		websError(wp, HTTP_CODE_NOT_FOUND, "Cannot stat page for URL");
 		free(filename);
-		return TRUE;
+		return ospl_true;
 	}
 	code = HTTP_CODE_OK;
 	if (wp->since && info.mtime <= wp->since)
@@ -720,10 +720,10 @@ static bool downloadFileHandler(Webs *wp)
 	if (smatch(wp->method, "HEAD"))
 	{
 		websDone(wp);
-		return TRUE;
+		return ospl_true;
 	}
 	websSetBackgroundWriter(wp, downloadFileWriteEvent);
-	return TRUE;
+	return ospl_true;
 }
 
 static int web_action_downLoad(Webs *wp, char *path, char *query)

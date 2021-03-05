@@ -16,7 +16,13 @@
 /* OpenH264: */
 #include <wels/codec_api.h>
 #include <wels/codec_app_def.h>
-
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "ospl_type.h"
+#ifdef __cplusplus
+}
+#endif
 #define OPENH264_VER_AT_LEAST(maj, min) \
     ((OPENH264_MAJOR  > (maj)) || \
      (OPENH264_MAJOR == (maj) && OPENH264_MINOR >= (min)))

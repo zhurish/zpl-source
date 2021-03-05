@@ -8,6 +8,11 @@
 #ifndef __LIB_MODULE_H__
 #define __LIB_MODULE_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "ospl_type.h"
 #include "moduletypes.h"
 /*
 typedef enum
@@ -55,7 +60,7 @@ typedef enum
 /* For pretty printing of memory allocate information. */
 struct module_list
 {
-  int module;
+  ospl_uint32 module;
 	const char 	*name;
 
   int	(*module_init)(void);
@@ -65,10 +70,10 @@ struct module_list
 	int	(*module_cmd_init)(void);
 
   int	(*module_write_config)(struct vty *, void *);
-	int	(*module_show_config)(struct vty *, void *, BOOL);
-	int	(*module_show_debug)(struct vty *, void *, BOOL);
+	int	(*module_show_config)(struct vty *, void *, ospl_bool);
+	int	(*module_show_debug)(struct vty *, void *, ospl_bool);
 
-	u_int		taskid;
+	ospl_uint32		taskid;
 };
 
 struct module_alllist
@@ -80,27 +85,31 @@ struct module_alllist
 extern struct module_alllist module_lists_tbl[MODULE_MAX];
 
 extern int pl_module_name_init(const char * name);
-extern int pl_module_init(int module);
-extern int pl_module_exit(int module);
+extern int pl_module_init(ospl_uint32 module);
+extern int pl_module_exit(ospl_uint32 module);
 extern int pl_module_task_name_init(const char * name);
-extern int pl_module_task_init(int module);
-extern int pl_module_task_exit(int module);
+extern int pl_module_task_init(ospl_uint32 module);
+extern int pl_module_task_exit(ospl_uint32 module);
 extern int pl_module_cmd_name_init(const char * name);
-extern int pl_module_cmd_init(int module);
+extern int pl_module_cmd_init(ospl_uint32 module);
 
-extern const char * module2name(int module);
-extern int name2module(const char *name);
-extern int module2task(int module);
-extern int task2module(int taskid);
-extern int task_module_self(void);
-extern int module_setup_task(int module, int taskid);
-
-
-extern char *zlog_backtrace_module();
-extern char *zlog_backtrace_funcname();
-extern char *zlog_backtrace_schedfrom();
-extern int zlog_backtrace_schedfrom_line();
+extern const char * module2name(ospl_uint32 module);
+extern ospl_uint32 name2module(const char *name);
+extern ospl_uint32 module2task(ospl_uint32 module);
+extern ospl_uint32 task2module(ospl_uint32 taskid);
+extern ospl_uint32 task_module_self(void);
+extern int module_setup_task(ospl_uint32 module, ospl_uint32 taskid);
 
 
+extern ospl_char *zlog_backtrace_module();
+extern ospl_char *zlog_backtrace_funcname();
+extern ospl_char *zlog_backtrace_schedfrom();
+extern ospl_uint32 zlog_backtrace_schedfrom_line();
+
+
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __LIB_MODULE_H__ */

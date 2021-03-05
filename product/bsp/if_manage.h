@@ -8,6 +8,10 @@
 #ifndef IF_USP_H_
 #define IF_USP_H_
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 //#include "zebra.h"
 //#include "linklist.h"
 
@@ -37,4 +41,12 @@ extern const char * if_kernel_name_lookup(ifindex_t ifindex);
 extern int if_slot_set_port_phy(ifindex_t ifindex, char *name);
 extern int if_slot_show_port_phy(struct vty *vty);
 #endif
+
+
+ 
+#ifdef __cplusplus
+}
+#endif
+
+
 #endif /* IF_USP_H_ */

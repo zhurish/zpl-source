@@ -56,6 +56,13 @@ ifeq ($(strip $(PL_LIBX264_MODULE)),true)
 TESTLIBS += -lx264
 endif
 
+files = $(patsubst %.o,%.c,$(OBJS))
+make_prepare:
+	@for i in $(files); do	\
+		$(MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+	done
+
+
 test_main : $(OBJS_DIR)/testmain.o 
 	$(CXX) $(OBJS_DIR)/testmain.o $(PLCPPFLAGS) $(TESTPLLDCLFLAG) -Xlinker "-(" $(TESTLIBS) -Xlinker "-)" -o testmain 
 #
@@ -76,6 +83,6 @@ clean: objclean
 objclean: 
 	@$(RM) $(OBJS_DIR)/* -rf
 
-all: lib install test_main
+all: lib install
 
 .PHONY:	obj all lib install objclean clean test_main

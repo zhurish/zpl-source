@@ -9,6 +9,10 @@
 #define __OS_TIME_H__
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //#define OS_TIMER_TEST
 
 //#define OS_TIMER_DEBUG
@@ -40,7 +44,7 @@ enum os_clkid {
 
 struct os_time_stats
 {
-  unsigned long total, max;
+  ospl_ulong total, max;
 };
 
 #define TIMER_SECOND_MICRO 1000000L
@@ -49,9 +53,9 @@ struct os_time_stats
 #define TIMER_USEC(n) (n)*TIMER_SECOND_MICRO
 #define TIMER_MSEC(n) (n)*TIMER_MSEC_MICRO
 
-extern int os_system_time_base(char *dt);
-extern time_t os_time (time_t *t);
-extern time_t os_monotonic_time (void);
+extern int os_system_time_base(ospl_char *dt);
+extern ospl_time_t os_time (ospl_time_t *t);
+extern ospl_time_t os_monotonic_time (void);
 extern int os_gettime (enum os_clkid clkid, struct timeval *tv);
 
 
@@ -63,29 +67,29 @@ extern int os_get_realtime (struct timeval *tv);
 extern int os_get_monotonic (struct timeval *tv);
 extern int os_get_monotonic_msec ();
 
-extern unsigned int os_timeval_elapsed (struct timeval a, struct timeval b);
+extern ospl_uint32 os_timeval_elapsed (struct timeval a, struct timeval b);
 
 extern struct timeval os_time_min(struct timeval a, struct timeval b);
 extern struct timeval os_time_max(struct timeval a, struct timeval b);
-extern u_int32 os_timestamp_spilt(time_t t,  char *input);
+extern ospl_uint32 os_timestamp_spilt(ospl_time_t t,  ospl_char *input);
 
-extern int os_usleep(unsigned int us);
-extern int os_msleep(unsigned int);
-extern int os_sleep(unsigned int);
-extern void os_msleep_interrupt (int mseconds);
-extern void os_usleep_interrupt (int useconds);
+extern int os_usleep(ospl_uint32 us);
+extern int os_msleep(ospl_uint32);
+extern int os_sleep(ospl_uint32);
+extern void os_msleep_interrupt (ospl_uint32 mseconds);
+extern void os_usleep_interrupt (ospl_uint32 useconds);
 
-extern int os_tmtime_get (enum os_tmtime_id type, time_t t, struct tm *ptm);
+extern int os_tmtime_get (enum os_tmtime_id type, ospl_time_t t, struct tm *ptm);
 
-extern char *os_time_fmt (char *fmt, time_t t);
-extern char *os_time_string(time_t tInput);
+extern ospl_char *os_time_fmt (ospl_char *fmt, ospl_time_t t);
+extern ospl_char *os_time_string(ospl_time_t tInput);
 
-extern const char *os_build_time2date(char *str);
-extern const char *os_date2build_time(char *str);
+extern const ospl_char *os_build_time2date(ospl_char *str);
+extern const ospl_char *os_date2build_time(ospl_char *str);
 
-extern int os_time_set_api(int timesp);
-extern int os_timezone_offset_api(char * res);
-extern int os_timezone_set_api(int tizone, char *timzstr);
+extern int os_time_set_api(ospl_uint32 timesp);
+extern int os_timezone_offset_api(ospl_char * res);
+extern int os_timezone_set_api(ospl_uint32 tizone, ospl_char *timzstr);
 
 #define OS_TIMER_FOREVER 0X0FFFFFFF
 
@@ -98,13 +102,13 @@ typedef enum
 typedef struct os_time_s
 {
 	NODE	node;
-	u_int32 t_id;
+	ospl_uint32 t_id;
 	int		(*time_entry)(void *);
 	void	*pVoid;
-	unsigned int msec;
+	ospl_uint32 msec;
 
 	//struct timeval interval;
-	unsigned int interrupt_timestamp;
+	ospl_uint32 interrupt_timestamp;
 
 	os_time_type type;
 	enum {OS_TIMER_FALSE, OS_TIMER_TRUE, OS_TIMER_CANCEL} state;
@@ -117,20 +121,20 @@ extern int os_time_init();
 extern int os_time_exit();
 extern int os_time_load();
 
-extern int os_time_clean(BOOL all);
-extern os_time_t *os_time_lookup(u_int32 id);
+extern int os_time_clean(ospl_bool all);
+extern os_time_t *os_time_lookup(ospl_uint32 id);
 
-extern int os_time_destroy(u_int32 id);
+extern int os_time_destroy(ospl_uint32 id);
 
-extern int os_time_cancel(u_int32 id);
+extern int os_time_cancel(ospl_uint32 id);
 
-extern int os_time_restart(u_int32 id, int msec);
+extern int os_time_restart(ospl_uint32 id, ospl_uint32 msec);
 
-extern int os_time_show(int (*show)(void *, char *fmt,...), void *pVoid);
+extern int os_time_show(int (*show)(void *, ospl_char *fmt,...), void *pVoid);
 //extern int os_time_create(int (*time_entry)(void *), void *pVoid, int msec);
 
-extern u_int32 os_time_create_entry(os_time_type type, int (*time_entry)(void *),
-		void *pVoid, int msec, char *func_name);
+extern ospl_uint32 os_time_create_entry(os_time_type type, int (*time_entry)(void *),
+		void *pVoid, ospl_uint32 msec, const ospl_char *func_name);
 
 
 #define os_time_create(f,p,v)		os_time_create_entry(OS_TIMER_DEFAULE,f,p,v,#f)
@@ -140,8 +144,12 @@ extern u_int32 os_time_create_entry(os_time_type type, int (*time_entry)(void *)
 #define quagga_gettime os_gettime
 
 #ifdef OS_TIMER_TEST
-extern int timer_test(int time, int type);
-extern int timer_test_exit(int type);
+extern int timer_test(int time, ospl_uint32 type);
+extern int timer_test_exit(ospl_uint32 type);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __OS_TIME_H__ */

@@ -55,9 +55,9 @@ int ssh_keymgt_delete(ssh_config_t *ssh, char *keyname)
 }
 
 
-int ssh_keymgt_add(ssh_config_t *ssh, struct vty *vty, int type, char *keyname)
+int ssh_keymgt_add(ssh_config_t *ssh, struct vty *vty, ospl_uint32 type, char *keyname)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	char *typestr;
 	for(i = 0; i < SSH_KEY_MAX; i++)
 	{
@@ -73,7 +73,7 @@ int ssh_keymgt_add(ssh_config_t *ssh, struct vty *vty, int type, char *keyname)
 			 * dsa : length of the key in bits (e.g. 1024, 2048, 3072)
 			 * ecdsa : bits of the key (e.g. 256, 384, 512)
 			 */
-			int parameter = 0;
+			ospl_uint32 parameter = 0;
 			switch(type)
 			{
 			case SSH_KEYTYPE_DSS:
@@ -119,7 +119,7 @@ int ssh_keymgt_add(ssh_config_t *ssh, struct vty *vty, int type, char *keyname)
 }
 
 
-int ssh_keymgt_export_set(ssh_config_t *ssh, char *keyname, int type, char *filename, char *password)
+int ssh_keymgt_export_set(ssh_config_t *ssh, char *keyname, ospl_uint32 type, char *filename, char *password)
 {
 	ssh_keymgt_t * sshkey = ssh_keymgt_lookup(ssh, keyname);
 	if(sshkey)
@@ -142,7 +142,7 @@ int ssh_keymgt_export_set(ssh_config_t *ssh, char *keyname, int type, char *file
 }
 
 
-int ssh_keymgt_import_set(ssh_config_t *ssh, char *keyname, int type, char *filename, char *password)
+int ssh_keymgt_import_set(ssh_config_t *ssh, char *keyname, ospl_uint32 type, char *filename, char *password)
 {
 	ssh_keymgt_t * sshkey = ssh_keymgt_lookup(ssh, keyname);
 	if(sshkey)
@@ -176,9 +176,9 @@ int ssh_options_set(ssh_session session, enum ssh_options_e type,
 }*/
 
 static void sshd_set_default_keys(ssh_bind sshbind,
-                             int rsa_already_set,
-                             int dsa_already_set,
-                             int ecdsa_already_set)
+                             ospl_uint32 rsa_already_set,
+                             ospl_uint32 dsa_already_set,
+                             ospl_uint32 ecdsa_already_set)
 {
     if (!rsa_already_set) {
         ssh_bind_options_set(sshbind, SSH_BIND_OPTIONS_RSAKEY,

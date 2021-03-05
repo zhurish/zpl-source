@@ -112,7 +112,7 @@ LOCAL ULONG sntpcFractionToNsec
     ULONG mask = 1000000000;   /* Pulls digits of factor from left to right. */
     int loop;
     ULONG nsec = 0;
-    BOOL shift = FALSE;        /* Shifted to avoid overflow? */
+    ospl_bool shift = ospl_false;        /* Shifted to avoid overflow? */
     /* 
      * Adjust large values so that no intermediate calculation exceeds 
      * 32 bits. (This test is overkill, since the fourth MSB can be set 
@@ -121,7 +121,7 @@ LOCAL ULONG sntpcFractionToNsec
     if (sntpFraction & 0xF0000000)
     {
         sntpFraction /= 10;
-        shift = TRUE;
+        shift = ospl_true;
     }
     /* 
      * In order to increase portability, the following conversion avoids
@@ -340,7 +340,7 @@ static int sntp_read(struct thread *thread)
 	ret = sntp_socket_read(client);
 	if(ret == OK)
 	{
-		time_t	time_sec = 0;
+		ospl_time_t	time_sec = 0;
 		int timezone = 0;
 		clock_settime(CLOCK_REALTIME, &client->sntpTime);//SET SYSTEM LOCAL TIME
 		time_sec = time(NULL);
@@ -376,7 +376,7 @@ static int sntp_time(struct thread *thread)
 	return OK;
 }
 /*******************************************************************************/
-static int sntpcEnable(u_short port, char *ip, int time_interval, int type, int mode)
+static int sntpcEnable(ospl_ushort port, char *ip, int time_interval, ospl_uint32 type, int mode)
 {
 	int ret = 0;
 	if(sntp_client)
@@ -468,7 +468,7 @@ int sntpc_dynamics_enable(void)
 		return ERROR;
 	if(!sntp_client->dynamics)
 		sntp_client->address.s_addr = 0;
-	sntp_client->dynamics = TRUE;
+	sntp_client->dynamics = ospl_true;
 	return OK;
 }
 
@@ -478,7 +478,7 @@ int sntpc_dynamics_disable(void)
 		return ERROR;
 	if(sntp_client->dynamics)
 		sntp_client->address.s_addr = 0;
-	sntp_client->dynamics = FALSE;
+	sntp_client->dynamics = ospl_false;
 	return OK;
 }
 
@@ -529,7 +529,7 @@ DEFUN (sntp_enable,
 		return CMD_WARNING;
 	}
 //	vty_out(vty,"sntp server %s %d %d %s",argv[0],port,time_interval,VTY_NEWLINE);
-	sntpcEnable((u_short)port, argv[0], time_interval, sntp_client->type, sntp_client->leapVerMode);
+	sntpcEnable((ospl_ushort)port, argv[0], time_interval, sntp_client->type, sntp_client->leapVerMode);
 	return CMD_SUCCESS;
 }
 
@@ -796,7 +796,7 @@ int vty_show_sntpc_client(struct vty *vty)
 }
 
 #ifndef SNTPC_CLI_ENABLE
-static int sntpc_client_set_api_hw(struct vty *vty, int cmd, const char *value, BOOL dynamics)
+static int sntpc_client_set_api_hw(struct vty *vty, ospl_uint32 cmd, const char *value, ospl_bool dynamics)
 {
 
 	int ret = CMD_WARNING;
@@ -876,17 +876,17 @@ static int sntpc_client_set_api_hw(struct vty *vty, int cmd, const char *value, 
 		os_mutex_unlock(sntp_client->mutex);
 	return ret;
 }
-int sntpc_client_set_api(struct vty *vty, int cmd, const char *value)
+int sntpc_client_set_api(struct vty *vty, ospl_uint32 cmd, const char *value)
 {
-	return sntpc_client_set_api_hw(vty,  cmd, value,  FALSE);
+	return sntpc_client_set_api_hw(vty,  cmd, value,  ospl_false);
 }
 
-int sntpc_client_dynamics_set_api(struct vty *vty, int cmd, const char *value)
+int sntpc_client_dynamics_set_api(struct vty *vty, ospl_uint32 cmd, const char *value)
 {
-	return sntpc_client_set_api_hw(vty,  cmd, value,  TRUE);
+	return sntpc_client_set_api_hw(vty,  cmd, value,  ospl_true);
 }
 
-static int sntpc_client_get_api_hw(struct vty *vty, int cmd, const char *value, BOOL dynamics)
+static int sntpc_client_get_api_hw(struct vty *vty, ospl_uint32 cmd, const char *value, ospl_bool dynamics)
 {
 	int ret = ERROR;
 	int *intValue = (int *)value;
@@ -947,14 +947,14 @@ static int sntpc_client_get_api_hw(struct vty *vty, int cmd, const char *value, 
 	return ret;
 }
 
-int sntpc_client_get_api(struct vty *vty, int cmd, const char *value)
+int sntpc_client_get_api(struct vty *vty, ospl_uint32 cmd, const char *value)
 {
-	return sntpc_client_get_api_hw(vty,  cmd, value, FALSE);
+	return sntpc_client_get_api_hw(vty,  cmd, value, ospl_false);
 }
 
-int sntpc_client_dynamics_get_api(struct vty *vty, int cmd, const char *value)
+int sntpc_client_dynamics_get_api(struct vty *vty, ospl_uint32 cmd, const char *value)
 {
-	return sntpc_client_get_api_hw(vty,  cmd, value, TRUE);
+	return sntpc_client_get_api_hw(vty,  cmd, value, ospl_true);
 }
 
 #endif
@@ -976,7 +976,7 @@ int sntpc_config(struct vty *vty)
 			os_mutex_unlock(sntp_client->mutex);
 		return CMD_SUCCESS;
 	}
-	if(sntp_client->dynamics == FALSE)
+	if(sntp_client->dynamics == ospl_false)
 	{
 		vty_out(vty, "sntp server %s",inet_ntoa(sntp_client->address));
 

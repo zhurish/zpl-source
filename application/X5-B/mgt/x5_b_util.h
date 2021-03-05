@@ -8,6 +8,10 @@
 #ifndef __X5_B_UTIL_H__
 #define __X5_B_UTIL_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum
 {
 	X5B_KEEPALIVE_EV,
@@ -24,7 +28,7 @@ typedef enum
 } x5_b_event_t;
 
 int x5b_app_statistics(x5b_app_mgt_t *mgt, int tx, int from);
-uint16_t Data_CRC16Check ( uint8_t * data, uint16_t leng );
+ospl_uint16 Data_CRC16Check ( ospl_uint8 * data, ospl_uint16 leng );
 
 int x5b_app_hex_debug(x5b_app_mgt_t *mgt, char *hdr, int rx);
 int x5b_app_event_inactive(x5b_app_mgt_t *mgt, x5_b_event_t ev, int who);
@@ -38,5 +42,9 @@ int x5b_app_send_msg(x5b_app_mgt_t *mgt);
 
 int x5b_app_socket_init(x5b_app_mgt_t *mgt);
 int x5b_app_socket_exit(x5b_app_mgt_t *mgt);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __X5_B_UTIL_H__ */

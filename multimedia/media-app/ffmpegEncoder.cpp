@@ -209,7 +209,7 @@ int ffmpegEncoder::ffmpegEncoderOpen(int enc /*, std::function <int(void*, int)>
 
 	//pFrame = av_frame_alloc();
 	int picture_size = avpicture_get_size(m_CodecCtx->pix_fmt, m_CodecCtx->width, m_CodecCtx->height);
-	//picture_buf = (uint8_t *)av_malloc(picture_size);
+	//picture_buf = (ospl_uint8 *)av_malloc(picture_size);
 	//avpicture_fill((AVPicture *)pFrame, picture_buf, m_CodecCtx->pix_fmt, m_CodecCtx->width, m_CodecCtx->height);
 #ifdef FFMPEG_ENCODE_OUTPUT_FILE
 	//Write File Header
@@ -251,7 +251,7 @@ int ffmpegEncoder::ffmpegEncoderFrame(AVFrame *input, AVPacket *out)
             // new encoded data is available (one NALU)
             if (onEncodedDataCallback) {
                 NALU_START_CODE_BYTES_NUMBER=4
-                onEncodedDataCallback(std::vector<uint8_t>(encodingPacket->data + NALU_START_CODE_BYTES_NUMBER,
+                onEncodedDataCallback(std::vector<ospl_uint8>(encodingPacket->data + NALU_START_CODE_BYTES_NUMBER,
                                                          encodingPacket->data + encodingPacket->size));
             }
         }*/

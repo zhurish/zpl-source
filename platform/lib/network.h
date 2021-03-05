@@ -23,11 +23,15 @@
 #ifndef _ZEBRA_NETWORK_H
 #define _ZEBRA_NETWORK_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Both readn and writen are deprecated and will be removed.  They are not
    suitable for use with non-blocking file descriptors.
  */
-extern int readn (int, u_char *, int, int);
-extern int writen (int, const u_char *, int, int);
+extern int readn (int, ospl_uchar *, ospl_uint32, ospl_uint32);
+extern int writen (int, const ospl_uchar *, ospl_uint32, ospl_uint32);
 
 /* Set the file descriptor to use non-blocking I/O.  Returns 0 for success,
    -1 on error. */
@@ -37,7 +41,11 @@ extern int set_blocking(int fd);
 #define ERRNO_IO_RETRY(EN) \
 	(((EN) == EAGAIN) || ((EN) == EWOULDBLOCK) || ((EN) == EINTR))
 
-extern float htonf (float);
-extern float ntohf (float);
+extern ospl_float htonf (ospl_float);
+extern ospl_float ntohf (ospl_float);
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ZEBRA_NETWORK_H */

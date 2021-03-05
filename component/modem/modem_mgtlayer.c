@@ -173,7 +173,7 @@ int modem_mgtlayer_open(modem_client_t *client)
 	assert(client);
 	if(!client->init)
 	{
-		client->init = TRUE;
+		client->init = ospl_true;
 		return modem_echo_atcmd_set(client, client->echo);
 	}
 	else
@@ -191,7 +191,7 @@ int modem_mgtlayer_close(modem_client_t *client)
 	assert(client);
 	if(client->init)
 	{
-		client->init = FALSE;
+		client->init = ospl_false;
 	}
 	client->activity = CPAS_NONE;
 	modem_bitmap_bzero(&client->hw_state);
@@ -382,16 +382,16 @@ int modem_mgtlayer_delay(modem_t *modem)
 		switch(modem->state)
 		{
 		case MDMS(NO_USIM_CARD):
-			modem_event_add_api(modem, MODEM_EV_INSTER_CARD, FALSE);
+			modem_event_add_api(modem, MODEM_EV_INSTER_CARD, ospl_false);
 			break;
 		case MDMS(NO_SIGNAL):
-			modem_event_add_api(modem, MODEM_EV_DETECTION, FALSE);
+			modem_event_add_api(modem, MODEM_EV_DETECTION, ospl_false);
 			break;
 		case MDMS(NO_ADDR):
-			modem_event_add_api(modem, MODEM_EV_DETECTION, FALSE);
+			modem_event_add_api(modem, MODEM_EV_DETECTION, ospl_false);
 			break;
 		case MDMS(NO_SERVICE):
-			modem_event_add_api(modem, MODEM_EV_DETECTION, FALSE);
+			modem_event_add_api(modem, MODEM_EV_DETECTION, ospl_false);
 			break;
 		default:
 			break;

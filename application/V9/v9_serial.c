@@ -52,26 +52,26 @@ int v9_app_hex_debug(v9_serial_t *mgt, char *hdr, int rx)
 {
 	char buf[1200];
 	char tmp[16];
-	u_int8 *p = NULL;
-	int i = 0;
-	int len = 0;
+	ospl_uint8 *p = NULL;
+	ospl_uint32 i = 0;
+	ospl_uint32 len = 0;
 	zassert(mgt != NULL);
 	zassert(hdr != NULL);
 	if(rx)
 	{
 		len = (int)mgt->len;
-		p = (u_int8 *)mgt->buf;
+		p = (ospl_uint8 *)mgt->buf;
 	}
 	else
 	{
 		len = (int)mgt->slen;
-		p = (u_int8 *)mgt->sbuf;
+		p = (ospl_uint8 *)mgt->sbuf;
 	}
 	memset(buf, 0, sizeof(buf));
 	for(i = 0; i < MIN(len, 128); i++)
 	{
 		memset(tmp, 0, sizeof(tmp));
-		sprintf(tmp, "0x%02x ", (u_int8)p[i]);
+		sprintf(tmp, "0x%02x ", (ospl_uint8)p[i]);
 		if(i%6 == 0)
 			strcat(buf, " ");
 		if(i%12 == 0)
@@ -168,7 +168,7 @@ static int v9_app_read_handle(v9_serial_t *mgt)
 
 static int v9_app_read_eloop(struct eloop *eloop)
 {
-	int len = 0;
+	ospl_uint32 len = 0;
 	v9_serial_t *mgt = ELOOP_ARG(eloop);
 	zassert(mgt != NULL);
 
@@ -199,7 +199,7 @@ static int v9_app_read_eloop(struct eloop *eloop)
 		if(len <= V9_APP_HDR_LEN  || len > V9_APP_HDR_LEN_MAX)
 		{
 			zlog_err(MODULE_APP, "MSG from %d byte", mgt->len);
-			v9_app_hex_debug(mgt, "RECV", TRUE);
+			v9_app_hex_debug(mgt, "RECV", ospl_true);
 
 			mgt->r_thread = eloop_add_read(mgt->master, v9_app_read_eloop, mgt, mgt->tty->fd);
 
@@ -211,7 +211,7 @@ static int v9_app_read_eloop(struct eloop *eloop)
 		if(V9_APP_DEBUG(RECV))
 		{
 			zlog_debug(MODULE_APP, "MSG from %d byte", mgt->len);
-			v9_app_hex_debug(mgt, "RECV", TRUE);
+			v9_app_hex_debug(mgt, "RECV", ospl_true);
 		}
 		v9_app_read_handle(mgt);
 	}
@@ -239,7 +239,7 @@ static int v9_job_cb_action(void *p)
 		if(strstr(serial->tmpbuf + 4, "sync"))
 		{
 #ifdef V9_SLIPNET_ENABLE
-			u_int32 timesp = os_time(NULL);
+			ospl_uint32 timesp = os_time(NULL);
 			ret = v9_cmd_sync_time_to_rtc(serial, timesp);
 #else
 			if(serial->timer_sync == 0)
@@ -250,7 +250,7 @@ static int v9_job_cb_action(void *p)
 	else if(strstr(serial->tmpbuf, "led"))
 	{
 #ifdef V9_SLIPNET_ENABLE
-		//static u_int8 led = 0;
+		//static ospl_uint8 led = 0;
 		if(strstr(serial->tmpbuf, "up"))
 		{
 			//if(led == 0)
@@ -273,7 +273,7 @@ static int v9_job_cb_action(void *p)
 	return ret;
 }
 
-static int v9_ntp_time_update_cb(void *p, char *buf, int len)
+static int v9_ntp_time_update_cb(void *p, char *buf, ospl_uint32 len)
 {
 	if(!v9_serial)
 		return 0;
@@ -340,7 +340,7 @@ static int _v9_serial_hw_exit(void)
 
 
 
-int v9_serial_init(char *devname, u_int32 speed)
+int v9_serial_init(char *devname, ospl_uint32 speed)
 {
 	if(_v9_serial_hw_init() == OK)
 	{
@@ -437,7 +437,7 @@ static int v9_app_task_init (v9_serial_t *mgt)
 	if(master_eloop[MODULE_APP_START] == NULL)
 		mgt->master = master_eloop[MODULE_APP_START] = eloop_master_module_create(MODULE_APP_START);
 
-	mgt->enable = TRUE;
+	mgt->enable = ospl_true;
 	mgt->task_id = os_task_create("appTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, v9_app_mgt_task, mgt, OS_TASK_DEFAULT_STACK * 2);
 	if(mgt->task_id)

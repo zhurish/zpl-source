@@ -16,7 +16,7 @@
 
 static ubus_sync_t ubus_sync_ctx;
 
-int ubus_sync_debug(BOOL enable)
+int ubus_sync_debug(ospl_bool enable)
 {
 	if(enable)
 		ubus_sync_ctx.debug |= UBUS_SYNC_DEBUG;
@@ -27,7 +27,7 @@ int ubus_sync_debug(BOOL enable)
 
 int ubus_sync_hook_install(ubus_sync_cb *cb, void *p)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < UBUS_SYNC_CB_MAX; i++)
 	{
 		if(ubus_sync_ctx.cb[i] == NULL)
@@ -42,7 +42,7 @@ int ubus_sync_hook_install(ubus_sync_cb *cb, void *p)
 
 int ubus_sync_hook_uninstall(ubus_sync_cb *cb, void *p)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < UBUS_SYNC_CB_MAX; i++)
 	{
 		if(ubus_sync_ctx.cb[i] == cb)
@@ -87,7 +87,7 @@ static int ubus_sync_handle(ubus_sync_t *uci)
 	uci->len = ret = read(uci->sock, uci->buf, sizeof(uci->buf));
 	if(uci->len > 0)
 	{
-		int i = 0;
+		ospl_uint32 i = 0;
 		if(uci->debug & UBUS_SYNC_DEBUG)
 			zlog_debug(MODULE_UTILS, "UCI UBUS read %d byte:'%s'",uci->len, uci->buf);
 		ret = 0;
@@ -193,7 +193,7 @@ static int ubus_sync_accept_eloop(struct eloop *thread)
 
 int ubus_sync_init(void *m)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	int accept = 0;
 
 	os_uci_init();
@@ -207,20 +207,20 @@ int ubus_sync_init(void *m)
 	{
 		ubus_sync_ctx.cb[i] = NULL;
 	}
-	accept = unix_sock_server_create(TRUE, "lualuci");
+	accept = unix_sock_server_create(ospl_true, "lualuci");
 	if(accept <= 0)
 		return ERROR;
 	os_set_nonblocking(accept);
 	ubus_sync_ctx.accept = accept;
 	ubus_sync_ctx.master = m;
 	ubus_sync_ctx.t_accept = eloop_add_read(ubus_sync_ctx.master, ubus_sync_accept_eloop, &ubus_sync_ctx, accept);
-	//ubus_sync_debug(TRUE);
+	//ubus_sync_debug(ospl_true);
 	return OK;
 }
 
 int ubus_sync_reset(void)
 {
-	//int i = 0;
+	//ospl_uint32 i = 0;
 	int accept = 0;
 	if(ubus_sync_ctx.t_read)
 	{
@@ -238,7 +238,7 @@ int ubus_sync_reset(void)
 	//ubus_sync_ctx.master = NULL;
 	ubus_sync_ctx.len = 0;
 	memset(ubus_sync_ctx.buf, 0, sizeof(ubus_sync_ctx.buf));
-	accept = unix_sock_server_create(TRUE, "lualuci");
+	accept = unix_sock_server_create(ospl_true, "lualuci");
 	if(accept <= 0)
 		return ERROR;
 	//os_set_nonblocking(sock);
@@ -250,7 +250,7 @@ int ubus_sync_reset(void)
 
 int ubus_sync_exit(void)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	if(ubus_sync_ctx.t_read)
 	{
 		eloop_cancel(ubus_sync_ctx.t_read);

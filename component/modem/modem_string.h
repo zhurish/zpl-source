@@ -9,6 +9,10 @@
 #define __MODEM_STRING_H__
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * 去掉 \r\n
  */
@@ -18,6 +22,10 @@
  * 去掉 ""
  */
 extern const char * strchr_empty(char *, const char );
-extern const char * strchr_empty_step(char *src, const char em, int step);
+extern const char * strchr_empty_step(char *src, const char em, ospl_uint32 step);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MODEM_STRING_H__ */

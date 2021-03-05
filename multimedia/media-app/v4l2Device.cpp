@@ -207,12 +207,12 @@ int v4l2Device::v4l2DeviceStartCapture(FramedQueue *m_queue)
           fwrite(obuf.start, ret, 1, fp);
           fclose(fp);
           */
-        ret = m_videoEncoder->videoEncoderInput((const unsigned char *)obuf.start, ret, false);
+        ret = m_videoEncoder->videoEncoderInput((const ospl_uint8 *)obuf.start, ret, false);
         if (ret > 0)
-          m_queue->FramedQueueDataPut((unsigned char *)m_videoEncoder->videoEncoderOutput(), m_videoEncoder->videoEncoderOutputSize(true));
+          m_queue->FramedQueueDataPut((ospl_uint8 *)m_videoEncoder->videoEncoderOutput(), m_videoEncoder->videoEncoderOutputSize(true));
       }
       else
-        m_queue->FramedQueueDataPut((unsigned char *)obuf.start, ret);
+        m_queue->FramedQueueDataPut((ospl_uint8 *)obuf.start, ret);
     }
   }
   return 0;

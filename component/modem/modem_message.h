@@ -8,6 +8,10 @@
 #ifndef __MODEM_MESSAGE_H__
 #define __MODEM_MESSAGE_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 typedef enum
 {
@@ -25,5 +29,9 @@ typedef struct modem_message_s
 
 }modem_message_t;
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MODEM_MESSAGE_H__ */

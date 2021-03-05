@@ -35,7 +35,7 @@
 #endif
 
 Gnsm_dhcps_t dhcps_list;
-static int nsm_dhcps_cleanup( BOOL all);
+static int nsm_dhcps_cleanup( ospl_bool all);
 
 static int nsm_dhcps_host_cleanup(nsm_dhcps_t *dhcps);
 static int nsm_dhcps_exclude_list_cleanup(nsm_dhcps_t *dhcps);
@@ -55,7 +55,7 @@ int nsm_dhcps_exit(void)
 {
 	if(lstCount(dhcps_list.dhcpslist))
 	{
-		nsm_dhcps_cleanup(TRUE);
+		nsm_dhcps_cleanup(ospl_true);
 		lstFree(dhcps_list.dhcpslist);
 	}
 	if(dhcps_list.dhcpslist)
@@ -65,7 +65,7 @@ int nsm_dhcps_exit(void)
 	return OK;
 }
 
-static int nsm_dhcps_cleanup( BOOL all)
+static int nsm_dhcps_cleanup( ospl_bool all)
 {
 	nsm_dhcps_t *pstNode = NULL;
 	NODE index;
@@ -101,7 +101,7 @@ static int nsm_dhcps_add_node(nsm_dhcps_t *node)
 		//os_memset(node, 0, sizeof(nsm_dhcps_t));
 		//os_memcpy(node, value, sizeof(nsm_dhcps_t));
 		node->lease_time = DHCPS_LEASE_DEFAULT;
-		node->active = FALSE;
+		node->active = ospl_false;
 		lstInit(&node->hostlist);
 		lstInit(&node->excludedlist);
 		lstAdd(dhcps_list.dhcpslist, (NODE *)node);
@@ -110,7 +110,7 @@ static int nsm_dhcps_add_node(nsm_dhcps_t *node)
 	return ERROR;
 }
 
-static nsm_dhcps_t * nsm_dhcps_lookup_node(char *name)
+static nsm_dhcps_t * nsm_dhcps_lookup_node(ospl_char *name)
 {
 	nsm_dhcps_t *pstNode = NULL;
 	NODE index;
@@ -126,7 +126,7 @@ static nsm_dhcps_t * nsm_dhcps_lookup_node(char *name)
 	return NULL;
 }
 
-nsm_dhcps_t * nsm_dhcps_lookup_api(char *name)
+nsm_dhcps_t * nsm_dhcps_lookup_api(ospl_char *name)
 {
 	if(dhcps_list.mutex)
 		os_mutex_lock(dhcps_list.mutex, OS_WAIT_FOREVER);
@@ -137,7 +137,7 @@ nsm_dhcps_t * nsm_dhcps_lookup_api(char *name)
 }
 
 
-int nsm_dhcps_add_api(char *name)
+int nsm_dhcps_add_api(ospl_char *name)
 {
 	int ret = ERROR;
 	nsm_dhcps_t *node = NULL;
@@ -168,7 +168,7 @@ int nsm_dhcps_add_api(char *name)
 }
 
 
-int nsm_dhcps_del_api(char *name)
+int nsm_dhcps_del_api(ospl_char *name)
 {
 	int ret = ERROR;
 	nsm_dhcps_t *value = NULL;
@@ -214,7 +214,7 @@ static int nsm_dhcps_host_cleanup(nsm_dhcps_t *dhcps)
 	return OK;
 }
 
-static nsm_dhcps_host_t * nsm_dhcps_host_lookup_node(nsm_dhcps_t *dhcps, char *address, u_int8 *mac)
+static nsm_dhcps_host_t * nsm_dhcps_host_lookup_node(nsm_dhcps_t *dhcps, ospl_char *address, ospl_uint8 *mac)
 {
 	nsm_dhcps_host_t *pstNode = NULL;
 	NODE index;
@@ -243,7 +243,7 @@ static nsm_dhcps_host_t * nsm_dhcps_host_lookup_node(nsm_dhcps_t *dhcps, char *a
 	return NULL;
 }
 
-nsm_dhcps_host_t * nsm_dhcps_host_lookup_api(nsm_dhcps_t *dhcps, char *address, u_int8 *mac)
+nsm_dhcps_host_t * nsm_dhcps_host_lookup_api(nsm_dhcps_t *dhcps, ospl_char *address, ospl_uint8 *mac)
 {
 	nsm_dhcps_host_t *node = NULL;
 	if(dhcps_list.mutex)
@@ -254,7 +254,7 @@ nsm_dhcps_host_t * nsm_dhcps_host_lookup_api(nsm_dhcps_t *dhcps, char *address, 
 	return node;
 }
 
-int nsm_dhcps_add_host_api(nsm_dhcps_t *dhcps, char *address, u_int8 *mac)
+int nsm_dhcps_add_host_api(nsm_dhcps_t *dhcps, ospl_char *address, ospl_uint8 *mac)
 {
 	int ret = ERROR, create_node = 0;
 	nsm_dhcps_host_t *node = NULL;
@@ -287,7 +287,7 @@ int nsm_dhcps_add_host_api(nsm_dhcps_t *dhcps, char *address, u_int8 *mac)
 }
 
 
-int nsm_dhcps_del_host_api(nsm_dhcps_t *dhcps, char *address, u_int8 *mac)
+int nsm_dhcps_del_host_api(nsm_dhcps_t *dhcps, ospl_char *address, ospl_uint8 *mac)
 {
 	int ret = ERROR;
 	nsm_dhcps_host_t *node = NULL;
@@ -325,7 +325,7 @@ static int nsm_dhcps_exclude_list_cleanup(nsm_dhcps_t *dhcps)
 	return OK;
 }
 
-static nsm_dhcps_exclude_t * nsm_dhcps_exclude_list_lookup_node(nsm_dhcps_t *dhcps, char *address, char *endaddress)
+static nsm_dhcps_exclude_t * nsm_dhcps_exclude_list_lookup_node(nsm_dhcps_t *dhcps, ospl_char *address, ospl_char *endaddress)
 {
 	nsm_dhcps_exclude_t *pstNode = NULL;
 	NODE index;
@@ -379,7 +379,7 @@ static nsm_dhcps_exclude_t * nsm_dhcps_exclude_list_lookup_node(nsm_dhcps_t *dhc
 	return NULL;
 }
 
-nsm_dhcps_exclude_t * nsm_dhcps_exclude_list_lookup_api(nsm_dhcps_t *dhcps, char *address, char *endaddress)
+nsm_dhcps_exclude_t * nsm_dhcps_exclude_list_lookup_api(nsm_dhcps_t *dhcps, ospl_char *address, ospl_char *endaddress)
 {
 	nsm_dhcps_exclude_t *node = NULL;
 	if(dhcps_list.mutex)
@@ -391,7 +391,7 @@ nsm_dhcps_exclude_t * nsm_dhcps_exclude_list_lookup_api(nsm_dhcps_t *dhcps, char
 }
 
 
-int nsm_dhcps_add_exclude_list_api(nsm_dhcps_t *dhcps, char *address, char *endaddress)
+int nsm_dhcps_add_exclude_list_api(nsm_dhcps_t *dhcps, ospl_char *address, ospl_char *endaddress)
 {
 	int ret = ERROR, create_node = 0;
 	nsm_dhcps_exclude_t *node = NULL;
@@ -412,7 +412,7 @@ int nsm_dhcps_add_exclude_list_api(nsm_dhcps_t *dhcps, char *address, char *enda
 			{
 				if(endaddress && str2prefix_ipv4 (endaddress, (struct prefix_ipv4 *)&node->end_address))
 				{
-					node->range = TRUE;
+					node->range = ospl_true;
 					if(create_node)
 						lstAdd(&dhcps->excludedlist, (NODE *)node);
 					ret = OK;
@@ -433,7 +433,7 @@ int nsm_dhcps_add_exclude_list_api(nsm_dhcps_t *dhcps, char *address, char *enda
 }
 
 
-int nsm_dhcps_del_exclude_list_api(nsm_dhcps_t *dhcps, char *address, char *endaddress)
+int nsm_dhcps_del_exclude_list_api(nsm_dhcps_t *dhcps, ospl_char *address, ospl_char *endaddress)
 {
 	int ret = ERROR;
 	nsm_dhcps_exclude_t *node = NULL;
@@ -455,7 +455,7 @@ int nsm_dhcps_del_exclude_list_api(nsm_dhcps_t *dhcps, char *address, char *enda
 /***************************************************************/
 
 
-static int nsm_dhcps_address_check(nsm_dhcps_t *dhcps, int cmd, void *val)
+static int nsm_dhcps_address_check(nsm_dhcps_t *dhcps, ospl_uint32 cmd, void *val)
 {
 	int ret = ERROR;
 	switch(cmd)
@@ -528,9 +528,9 @@ static int nsm_dhcps_address_check(nsm_dhcps_t *dhcps, int cmd, void *val)
 	return ret;
 }
 
-int nsm_dhcps_set_api(nsm_dhcps_t *dhcps, int cmd, void *val)
+int nsm_dhcps_set_api(nsm_dhcps_t *dhcps, ospl_uint32 cmd, void *val)
 {
-	char prefix[128];
+	ospl_char prefix[128];
 	union prefix46constptr pu;
 	int ret = ERROR;
 	if(!val)
@@ -634,7 +634,7 @@ int nsm_dhcps_set_api(nsm_dhcps_t *dhcps, int cmd, void *val)
 		{
 			if(dhcps->gateway.u.prefix4.s_addr)
 			{
-				char prefix_sec[128];
+				ospl_char prefix_sec[128];
 				memset(prefix, 0, sizeof(prefix));
 				pu.p = &dhcps->gateway;
 				prefix_2_address_str (pu, prefix, sizeof(prefix));
@@ -657,7 +657,7 @@ int nsm_dhcps_set_api(nsm_dhcps_t *dhcps, int cmd, void *val)
 	case DHCPS_CMD_DOMAIN_NAME:
 		memset(dhcps->domain_name, 0, sizeof(dhcps->domain_name));
 		if(val)
-			strcpy(dhcps->domain_name, (char *)val);
+			strcpy(dhcps->domain_name, (ospl_char *)val);
 #ifdef PL_UDHCP_MODULE
 		if(strlen(dhcps->domain_name))
 			dhcpd_pool_set_option(dhcps->pool, 15/*"routers"*/, dhcps->domain_name);
@@ -683,7 +683,7 @@ int nsm_dhcps_set_api(nsm_dhcps_t *dhcps, int cmd, void *val)
 		{
 			if(dhcps->netbios.u.prefix4.s_addr)
 			{
-				char prefix_sec[128];
+				ospl_char prefix_sec[128];
 				memset(prefix, 0, sizeof(prefix));
 				pu.p = &dhcps->netbios;
 				prefix_2_address_str (pu, prefix, sizeof(prefix));
@@ -720,7 +720,7 @@ int nsm_dhcps_set_api(nsm_dhcps_t *dhcps, int cmd, void *val)
 		{
 			if(dhcps->dns.u.prefix4.s_addr)
 			{
-				char prefix_sec[128];
+				ospl_char prefix_sec[128];
 				memset(prefix, 0, sizeof(prefix));
 				pu.p = &dhcps->dns;
 				prefix_2_address_str (pu, prefix, sizeof(prefix));
@@ -772,9 +772,9 @@ int nsm_dhcps_set_api(nsm_dhcps_t *dhcps, int cmd, void *val)
 	return ret;
 }
 
-int nsm_dhcps_unset_api(nsm_dhcps_t *dhcps, int cmd)
+int nsm_dhcps_unset_api(nsm_dhcps_t *dhcps, ospl_uint32 cmd)
 {
-	char prefix[128];
+	ospl_char prefix[128];
 	union prefix46constptr pu;
 	int ret = ERROR;
 	if(dhcps_list.mutex)
@@ -912,7 +912,7 @@ int nsm_dhcps_unset_api(nsm_dhcps_t *dhcps, int cmd)
 	return ret;
 }
 
-int nsm_dhcps_get_api(nsm_dhcps_t *dhcps, int cmd, void *val)
+int nsm_dhcps_get_api(nsm_dhcps_t *dhcps, ospl_uint32 cmd, void *val)
 {
 	int ret = ERROR;
 	if(dhcps_list.mutex)
@@ -983,7 +983,7 @@ int nsm_dhcps_get_api(nsm_dhcps_t *dhcps, int cmd, void *val)
 
 int nsm_dhcps_write_config(struct vty *vty)
 {
-	char prefix[128];
+	ospl_char prefix[128];
 	union prefix46constptr pu;
 	NODE index;
 	nsm_dhcps_t *pstNode = NULL;
@@ -1089,7 +1089,7 @@ int nsm_dhcps_write_config(struct vty *vty)
 }
 
 
-int nsm_interface_dhcps_enable(nsm_dhcps_t *pool, ifindex_t kifindex, BOOL enable)
+int nsm_interface_dhcps_enable(nsm_dhcps_t *pool, ifindex_t kifindex, ospl_bool enable)
 {
 #ifdef PL_UDHCP_MODULE
 	if(enable)
@@ -1108,7 +1108,7 @@ int nsm_dhcps_lease_foreach(int(*cb)(void *, void *), void *p)
 	return OK;
 #endif
 }
-int nsm_dhcps_lease_show(struct vty *vty, struct interface *ifp, char *poolname, BOOL detail)
+int nsm_dhcps_lease_show(struct vty *vty, struct interface *ifp, ospl_char *poolname, ospl_bool detail)
 {
 #ifdef PL_UDHCP_MODULE
 	return dhcp_lease_show(vty, poolname, ifp ? ifp->ifindex : 0,  detail);
@@ -1117,7 +1117,7 @@ int nsm_dhcps_lease_show(struct vty *vty, struct interface *ifp, char *poolname,
 #endif
 }
 
-int nsm_dhcps_pool_show(struct vty *vty, BOOL detail)
+int nsm_dhcps_pool_show(struct vty *vty, ospl_bool detail)
 {
 #ifdef PL_UDHCP_MODULE
 	return dhcp_pool_show(vty, detail);

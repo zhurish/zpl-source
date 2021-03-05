@@ -42,7 +42,7 @@
 
 
 
-int x5b_app_local_mac_address_get(u_int8 *address)
+int x5b_app_local_mac_address_get(ospl_uint8 *address)
 {
 	int ret = 0;
 	struct interface *ifp = if_lookup_by_name("ethernet 0/0/2");
@@ -54,7 +54,7 @@ int x5b_app_local_mac_address_get(u_int8 *address)
 	return ERROR;
 }
 
-int x5b_app_local_address_get(u_int32 *address)
+int x5b_app_local_address_get(ospl_uint32 *address)
 {
 	int ret = 0;
 	struct interface *ifp = if_lookup_by_name("ethernet 0/0/2");
@@ -72,7 +72,7 @@ int x5b_app_local_address_get(u_int32 *address)
 	return ERROR;
 }
 #ifdef PL_OPENWRT_UCI
-static int x5b_app_local_address_set(char *address, u_int32 mask)
+static int x5b_app_local_address_set(char *address, ospl_uint32 mask)
 {
 	int ret = 0;
 	struct prefix cp;
@@ -96,7 +96,7 @@ static int x5b_app_local_address_set(char *address, u_int32 mask)
 		pl_pjsip_source_interface_set_api(ifp->ifindex);
 #endif
 #endif
-		ret = nsm_interface_address_set_api(ifp, &cp, FALSE);
+		ret = nsm_interface_address_set_api(ifp, &cp, ospl_false);
 		return  ret;
 	}
 	return ERROR;
@@ -231,7 +231,7 @@ int x5b_app_rtc_tm_set(int timesp)
  * call
  */
 
-int x5b_app_start_call(BOOL start, x5b_app_call_t *call)
+int x5b_app_start_call(ospl_bool start, x5b_app_call_t *call)
 {
 	if(call /*&& strlen(call->data) >= 4*/)
 	{
@@ -253,7 +253,7 @@ int x5b_app_start_call(BOOL start, x5b_app_call_t *call)
 	return ERROR;
 }
 
-int x5b_app_start_call_phone(BOOL start, char *call)
+int x5b_app_start_call_phone(ospl_bool start, char *call)
 {
 	if(call /*&& strlen(call->data) >= 4*/)
 	{
@@ -275,7 +275,7 @@ int x5b_app_start_call_phone(BOOL start, char *call)
 	return ERROR;
 }
 
-int x5b_app_start_call_user(BOOL start, char *call)
+int x5b_app_start_call_user(ospl_bool start, char *call)
 {
 	if(call /*&& strlen(call->data) >= 4*/)
 	{
@@ -297,7 +297,7 @@ int x5b_app_start_call_user(BOOL start, char *call)
 	return ERROR;
 }
 
-int x5b_app_stop_call(BOOL start, x5b_app_call_t *call)
+int x5b_app_stop_call(ospl_bool start, x5b_app_call_t *call)
 {
 	if(1/* call && strlen(call->data) >= 4*/)
 	{
@@ -344,7 +344,7 @@ static int x5b_route_lookup_default_one(struct route_node *rn, struct rib *rib, 
 	return ERROR;
 }
 
-static int x5b_route_lookup_default(ifindex_t ifindex, u_int32 *local_gateway)
+static int x5b_route_lookup_default(ifindex_t ifindex, ospl_uint32 *local_gateway)
 {
 	struct route_table *table;
 	struct route_node *rn;
@@ -369,7 +369,7 @@ static int x5b_route_lookup_default(ifindex_t ifindex, u_int32 *local_gateway)
 	return ERROR;
 }
 
-static int x5b_route_lookup_dns(u_int32 *local_dns)
+static int x5b_route_lookup_dns(ospl_uint32 *local_dns)
 {
 	FILE *f = NULL;
 	char buf[512];
@@ -449,8 +449,8 @@ int x5b_app_local_register_info_get(x5b_app_phone_register_ack_t *info)
 	return ERROR;
 }
 
-int x5b_app_call_room_param_get(void *data, u_int8 *building,
-		u_int8 *unit, u_int16 *room)
+int x5b_app_call_room_param_get(void *data, ospl_uint8 *building,
+		ospl_uint8 *unit, ospl_uint16 *room)
 {
 	x5b_app_call_t *input = (x5b_app_call_t *)data;
 	zassert(data != NULL);
@@ -572,7 +572,7 @@ static int x5b_app_network_port_status_event(struct eloop *eloop)
 			{
 				if(app->wan_state.link_phy == E_CMD_NETWORK_STATE_PHY_UP)
 				{
-					voip_app_sip_register_start(FALSE);
+					voip_app_sip_register_start(ospl_false);
 					app->wan_state.link_phy = E_CMD_NETWORK_STATE_PHY_DOWN;
 					x5b_app_network_port_status_api(app, E_CMD_NETWORK_STATE_PHY_DOWN, E_CMD_TO_AUTO);
 					app->wan_state.t_thread = eloop_add_timer(app->master, x5b_app_network_port_status_event, app, app->wan_state.interval);
@@ -589,7 +589,7 @@ static int x5b_app_network_port_status_event(struct eloop *eloop)
 		{
 			app->wan_state.address = wan_state.address;
 			x5b_app_network_port_status_api(app, E_CMD_NETWORK_STATE_UP, E_CMD_TO_AUTO);
-			voip_app_sip_register_start(TRUE);
+			voip_app_sip_register_start(ospl_true);
 		}
 	}
 	if(wan_state.address == ERROR || wan_state.address == 0)
@@ -597,7 +597,7 @@ static int x5b_app_network_port_status_event(struct eloop *eloop)
 		// net link down
 		if(app->wan_state.address != 0)
 		{
-			voip_app_sip_register_start(FALSE);
+			voip_app_sip_register_start(ospl_false);
 			x5b_app_network_port_status_api(app, E_CMD_NETWORK_STATE_DOWN, E_CMD_TO_AUTO);
 			app->wan_state.address = 0;
 		}
@@ -620,11 +620,11 @@ static int x5b_app_network_port_status_event(struct eloop *eloop)
 }
 #endif
 
-BOOL x5b_app_port_status_get()
+ospl_bool x5b_app_port_status_get()
 {
 	if(x5b_app_mgt)
-		return (x5b_app_mgt->wan_state.link_phy == E_CMD_NETWORK_STATE_PHY_UP) ? TRUE:FALSE;
-	return FALSE;
+		return (x5b_app_mgt->wan_state.link_phy == E_CMD_NETWORK_STATE_PHY_UP) ? ospl_true:ospl_false;
+	return ospl_false;
 }
 
 int x5b_app_network_event_init(x5b_app_mgt_t *app)
@@ -675,28 +675,28 @@ int x5b_app_network_event_exit(x5b_app_mgt_t *app)
 
 typedef struct
 {
-    u_int8 effective;
-    u_int8 logType;
-    u_int8 openType;
-    u_int8 openResult;
-    u_int32 openTime;
-    u_int32 eraseCnt;
-    u_int32 cnt;
+    ospl_uint8 effective;
+    ospl_uint8 logType;
+    ospl_uint8 openType;
+    ospl_uint8 openResult;
+    ospl_uint32 openTime;
+    ospl_uint32 eraseCnt;
+    ospl_uint32 cnt;
 }openLogHeardType;
 
 
 typedef struct
 {
     openLogHeardType    hdr;
-    u_int8             data[48];
+    ospl_uint8             data[48];
 }openLogType;
 
 typedef struct
 {
-	u_int8 cardIssueType;
-	u_int8 cardType;
-	u_int8 cardNumber[8];
-	u_int8 cardNumberLength;
+	ospl_uint8 cardIssueType;
+	ospl_uint8 cardType;
+	ospl_uint8 cardNumber[8];
+	ospl_uint8 cardNumberLength;
 }openLogUseCardDataType;
 
 
@@ -760,21 +760,21 @@ int x5b_app_a_thlog_log(char *format)
 {
 /*
 	char data_tmp[128];
-	int len = 0;
+	ospl_uint32 len = 0;
 	struct tm stm;
 	os_memset(data_tmp, 0, sizeof(data_tmp));
-	time_t openTime = 0;
+	ospl_time_t openTime = 0;
 */
 	//face_card_t *card = NULL;
 	user_face_card_t  *card = NULL;
-	int i = 0, offset = 0;
+	ospl_uint32 i = 0, offset = 0;
 	char cardNumber[128];
 	char *type = NULL, *result = NULL, *card_type = NULL, *card_level = NULL;
 	openLogType *a_log = (openLogType *)format;
 	openLogUseCardDataType *card_data = a_log->data;
 	a_log->hdr.openTime = ntohl(a_log->hdr.openTime);
 /*
-	openTime = (time_t)a_log->hdr.openTime + SEC_DAY_V;
+	openTime = (ospl_time_t)a_log->hdr.openTime + SEC_DAY_V;
 
 	memset(&stm, 0, sizeof(struct tm));
 	localtime_r(&openTime, &stm);

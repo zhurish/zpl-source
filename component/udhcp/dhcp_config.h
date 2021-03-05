@@ -8,6 +8,10 @@
 #ifndef __UDHCP_CONFIG_H__
 #define __UDHCP_CONFIG_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //#include "libbb.h"
 #include "zebra.h"
 #include "prefix.h"
@@ -101,10 +105,10 @@
 # define BB_UNALIGNED_MEMACCESS_OK 1
 # define move_from_unaligned_int(v, intp)  ((v) = *(int*)(intp))
 # define move_from_unaligned_long(v, longp) ((v) = *(long*)(longp))
-# define move_from_unaligned16(v, u16p) ((v) = *(uint16_t*)(u16p))
-# define move_from_unaligned32(v, u32p) ((v) = *(uint32_t*)(u32p))
-# define move_to_unaligned16(u16p, v)   (*(uint16_t*)(u16p) = (v))
-# define move_to_unaligned32(u32p, v)   (*(uint32_t*)(u32p) = (v))
+# define move_from_unaligned16(v, u16p) ((v) = *(ospl_uint16*)(u16p))
+# define move_from_unaligned32(v, u32p) ((v) = *(ospl_uint32 *)(u32p))
+# define move_to_unaligned16(u16p, v)   (*(ospl_uint16*)(u16p) = (v))
+# define move_to_unaligned32(u32p, v)   (*(ospl_uint32 *)(u32p) = (v))
 /* #elif ... - add your favorite arch today! */
 #else
 # define BB_UNALIGNED_MEMACCESS_OK 0
@@ -114,17 +118,17 @@
 # define move_from_unaligned16(v, u16p) (memcpy(&(v), (u16p), 2))
 # define move_from_unaligned32(v, u32p) (memcpy(&(v), (u32p), 4))
 # define move_to_unaligned16(u16p, v) do { \
-	uint16_t __t = (v); \
+	ospl_uint16 __t = (v); \
 	memcpy((u16p), &__t, 2); \
 } while (0)
 # define move_to_unaligned32(u32p, v) do { \
-	uint32_t __t = (v); \
+	ospl_uint32  __t = (v); \
 	memcpy((u32p), &__t, 4); \
 } while (0)
 #endif
 
 # define move_get_unaligned32(v, u32p) do { \
-	uint32_t *p = (uint32_t *)(v); \
+	ospl_uint32  *p = (ospl_uint32  *)(v); \
 	u32p = *p; \
 } while (0)
 /* Useful for defeating gcc's alignment of "char message[]"-like data */
@@ -185,5 +189,9 @@
 //#define	spawn_and_wait(n)
 
 
-
+ 
+#ifdef __cplusplus
+}
+#endif
+ 
 #endif /* __UDHCP_CONFIG_H__ */

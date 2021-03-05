@@ -32,7 +32,7 @@
 static int iw_ap_start(iw_ap_t *iw_ap);
 static int iw_ap_stop(iw_ap_t *iw_ap);
 
-static int iw_ap_connect_cleanup(iw_ap_t *iw_ap, BOOL use)
+static int iw_ap_connect_cleanup(iw_ap_t *iw_ap, ospl_bool use)
 {
 	NODE index;
 	LIST *list = NULL;
@@ -90,11 +90,11 @@ static int iw_ap_connect_del_node(iw_ap_t *iw_ap, iw_ap_connect_t *node)
 	return ERROR;
 }
 
-static iw_ap_connect_t * iw_ap_connect_lookup_node(iw_ap_t *iw_ap, u_int8 *bssid)
+static iw_ap_connect_t * iw_ap_connect_lookup_node(iw_ap_t *iw_ap, ospl_uint8 *bssid)
 {
 	iw_ap_connect_t *pstNode = NULL;
 	NODE index;
-	u_int8 BSSID[IW_SSID_NAME_MAX];
+	ospl_uint8 BSSID[IW_SSID_NAME_MAX];
 	memset(BSSID, 0, IW_SSID_NAME_MAX);
 	if(!iw_ap || !bssid || !iw_ap->ap_list)
 		return NULL;
@@ -148,7 +148,7 @@ int iw_ap_connect_add_api(iw_ap_t *iw_ap, iw_ap_connect_t *value)
 	return ERROR;
 }
 
-int iw_ap_connect_del_api(iw_ap_t *iw_ap, u_int8 *bssid)
+int iw_ap_connect_del_api(iw_ap_t *iw_ap, ospl_uint8 *bssid)
 {
 	iw_ap_connect_t *client = NULL;
 	if(!iw_ap || !bssid || !iw_ap->ap_list)
@@ -170,7 +170,7 @@ int iw_ap_connect_del_api(iw_ap_t *iw_ap, u_int8 *bssid)
 }
 
 
-static int iw_ap_connect_update(iw_ap_t *iw_ap, u_int8 TTL)
+static int iw_ap_connect_update(iw_ap_t *iw_ap, ospl_uint8 TTL)
 {
 	NODE index;
 	iw_ap_connect_t *client = NULL;
@@ -204,7 +204,7 @@ static int iw_ap_connect_update(iw_ap_t *iw_ap, u_int8 TTL)
 	return ERROR;
 }
 
-iw_ap_connect_t * iw_ap_connect_lookup_api(iw_ap_t *iw_ap, u_int8 *bssid)
+iw_ap_connect_t * iw_ap_connect_lookup_api(iw_ap_t *iw_ap, ospl_uint8 *bssid)
 {
 	iw_ap_connect_t *client = NULL;
 	if(!iw_ap || !bssid || !iw_ap->ap_list)
@@ -315,7 +315,7 @@ static int iw_ap_connect_show_one(iw_ap_connect_t *ap, struct vty *vty)
 	return OK;
 }
 
-int iw_ap_connect_show(iw_ap_t *iw_ap, struct vty *vty, BOOL detail)
+int iw_ap_connect_show(iw_ap_t *iw_ap, struct vty *vty, ospl_bool detail)
 {
 	if(iw_ap && vty && iw_ap->ap_list && lstCount(iw_ap->ap_list))
 	{
@@ -333,7 +333,7 @@ int iw_ap_connect_show(iw_ap_t *iw_ap, struct vty *vty, BOOL detail)
 		}
 		vty->detail = detail;
 		iw_ap_connect_callback_api(iw_ap, iw_ap_connect_show_one, vty);
-		vty->detail = FALSE;
+		vty->detail = ospl_false;
 		return OK;//iw_ap_connect_callback_api(iw_ap, iw_ap_connect_show_one, vty);
 	}
 	return OK;
@@ -438,7 +438,7 @@ int iw_ap_password_del_api(iw_ap_t *iw_ap)
 	return OK;
 }
 
-int iw_ap_channel_set_api(iw_ap_t *iw_ap, int channel)
+int iw_ap_channel_set_api(iw_ap_t *iw_ap, ospl_uint8 channel)
 {
 	char channel_str[64];
 	if(!iw_ap )
@@ -458,7 +458,7 @@ int iw_ap_channel_set_api(iw_ap_t *iw_ap, int channel)
 	return OK;
 }
 
-int iw_ap_channel_del_api(iw_ap_t *iw_ap, int channel)
+int iw_ap_channel_del_api(iw_ap_t *iw_ap, ospl_uint8 channel)
 {
 	char channel_str[64];
 	if(!iw_ap )
@@ -478,7 +478,7 @@ int iw_ap_channel_del_api(iw_ap_t *iw_ap, int channel)
 	return OK;
 }
 
-int iw_ap_power_set_api(iw_ap_t *iw_ap, int power)
+int iw_ap_power_set_api(iw_ap_t *iw_ap, ospl_uint8 power)
 {
 	if(!iw_ap )
 		return ERROR;
@@ -491,7 +491,7 @@ int iw_ap_power_set_api(iw_ap_t *iw_ap, int power)
 	return OK;
 }
 
-int iw_ap_power_del_api(iw_ap_t *iw_ap, int power)
+int iw_ap_power_del_api(iw_ap_t *iw_ap, ospl_uint8 power)
 {
 	if(!iw_ap )
 		return ERROR;
@@ -527,7 +527,7 @@ int iw_ap_signal_set_api(iw_ap_t *iw_ap, int signal)
 	return OK;
 }
 
-int iw_ap_beacon_set_api(iw_ap_t *iw_ap, int beacon)
+int iw_ap_beacon_set_api(iw_ap_t *iw_ap, ospl_uint8 beacon)
 {
 	if(!iw_ap )
 		return ERROR;
@@ -540,7 +540,7 @@ int iw_ap_beacon_set_api(iw_ap_t *iw_ap, int beacon)
 	return OK;
 }
 
-int iw_ap_bitrate_set_api(iw_ap_t *iw_ap, int bitrate)
+int iw_ap_bitrate_set_api(iw_ap_t *iw_ap, ospl_int bitrate)
 {
 	//k|M|G
 	char value_str[64];
@@ -572,7 +572,7 @@ int iw_ap_bitrate_set_api(iw_ap_t *iw_ap, int bitrate)
 	return OK;
 }
 
-int iw_ap_isolate_set_api(iw_ap_t *iw_ap, BOOL enable)
+int iw_ap_isolate_set_api(iw_ap_t *iw_ap, ospl_bool enable)
 {
 	if(!iw_ap )
 		return ERROR;
@@ -599,7 +599,7 @@ int iw_ap_bridge_set_api(iw_ap_t *iw_ap, ifindex_t bridge)
 }
 
 
-int iw_ap_rts_threshold_set_api(iw_ap_t *iw_ap, int rts_threshold)
+int iw_ap_rts_threshold_set_api(iw_ap_t *iw_ap, ospl_int rts_threshold)
 {
 	char value_str[64];
 	if(!iw_ap )
@@ -624,7 +624,7 @@ int iw_ap_rts_threshold_set_api(iw_ap_t *iw_ap, int rts_threshold)
 	return OK;
 }
 
-int iw_ap_frag_set_api(iw_ap_t *iw_ap, int frag)
+int iw_ap_frag_set_api(iw_ap_t *iw_ap, ospl_int frag)
 {
 	char value_str[64];
 	if(!iw_ap )
@@ -649,7 +649,7 @@ int iw_ap_frag_set_api(iw_ap_t *iw_ap, int frag)
 	return OK;
 }
 
-int iw_ap_country_set_api(iw_ap_t *iw_ap, int country)
+int iw_ap_country_set_api(iw_ap_t *iw_ap, ospl_uint8 country)
 {
 	if(!iw_ap )
 		return ERROR;
@@ -662,7 +662,7 @@ int iw_ap_country_set_api(iw_ap_t *iw_ap, int country)
 	return OK;
 }
 
-int iw_ap_wmm_set_api(iw_ap_t *iw_ap, BOOL enable)
+int iw_ap_wmm_set_api(iw_ap_t *iw_ap, ospl_bool enable)
 {
 	if(!iw_ap )
 		return ERROR;
@@ -675,7 +675,7 @@ int iw_ap_wmm_set_api(iw_ap_t *iw_ap, BOOL enable)
 	return OK;
 }
 
-int iw_ap_freq_set_api(iw_ap_t *iw_ap, double freq)
+int iw_ap_freq_set_api(iw_ap_t *iw_ap, ospl_double freq)
 {
 	if(!iw_ap )
 		return ERROR;
@@ -688,7 +688,7 @@ int iw_ap_freq_set_api(iw_ap_t *iw_ap, double freq)
 	return OK;
 }
 
-int iw_ap_scan_num_set_api(iw_ap_t *iw_ap, int value)
+int iw_ap_scan_num_set_api(iw_ap_t *iw_ap, ospl_uint16 value)
 {
 	if(!iw_ap )
 		return ERROR;
@@ -701,7 +701,7 @@ int iw_ap_scan_num_set_api(iw_ap_t *iw_ap, int value)
 	return OK;
 }
 
-int iw_ap_client_num_set_api(iw_ap_t *iw_ap, int value)
+int iw_ap_client_num_set_api(iw_ap_t *iw_ap, ospl_uint16 value)
 {
 	if(!iw_ap )
 		return ERROR;
@@ -823,7 +823,7 @@ iw_ap_t * iw_ap_lookup_api(struct interface *ifp)
 
 
 
-static int iw_ap_maclist_cleanup(iw_ap_t *iw_ap, BOOL accept)
+static int iw_ap_maclist_cleanup(iw_ap_t *iw_ap, ospl_bool accept)
 {
 	NODE index;
 	LIST *list = NULL;
@@ -855,12 +855,12 @@ static int iw_ap_maclist_cleanup(iw_ap_t *iw_ap, BOOL accept)
 }
 
 
-iw_ap_mac_t * iw_ap_mac_lookup_api(iw_ap_t *iw_ap, u_int8 *mac, BOOL accept)
+iw_ap_mac_t * iw_ap_mac_lookup_api(iw_ap_t *iw_ap, ospl_uint8 *mac, ospl_bool accept)
 {
 	iw_ap_mac_t *pstNode = NULL;
 	NODE index;
 	LIST *list = NULL;
-	u_int8 MAC[IW_SSID_NAME_MAX];
+	ospl_uint8 MAC[IW_SSID_NAME_MAX];
 	memset(MAC, 0, IW_SSID_NAME_MAX);
 	if(!iw_ap || !mac)
 		return NULL;
@@ -896,7 +896,7 @@ iw_ap_mac_t * iw_ap_mac_lookup_api(iw_ap_t *iw_ap, u_int8 *mac, BOOL accept)
 }
 
 
-int iw_ap_mac_add_api(iw_ap_t *iw_ap, u_int8 *mac, BOOL accept)
+int iw_ap_mac_add_api(iw_ap_t *iw_ap, ospl_uint8 *mac, ospl_bool accept)
 {
 	iw_ap_mac_t *node = NULL;
 	if(!iw_ap || !mac)
@@ -937,7 +937,7 @@ int iw_ap_mac_add_api(iw_ap_t *iw_ap, u_int8 *mac, BOOL accept)
 	return ERROR;
 }
 
-int iw_ap_mac_del_api(iw_ap_t *iw_ap, u_int8 *mac, BOOL accept)
+int iw_ap_mac_del_api(iw_ap_t *iw_ap, ospl_uint8 *mac, ospl_bool accept)
 {
 	iw_ap_mac_t *node = NULL;
 	if(!iw_ap || !mac)
@@ -1299,16 +1299,16 @@ static int iw_ap_start(iw_ap_t *iw_ap)
 	//if(iw_ap->ap_mutex)
 	//	os_mutex_lock(iw_ap->ap_mutex, OS_WAIT_FOREVER);
 #ifndef IW_ONCE_TASK
-	//int size = sizeof(u_int8) + sizeof(BOOL) + sizeof(u_int32) + sizeof(int);
+	//int size = sizeof(ospl_uint8) + sizeof(ospl_bool) + sizeof(ospl_uint32) + sizeof(int);
 #else
-	//int size = sizeof(u_int8) + sizeof(BOOL) + sizeof(u_int32) + sizeof(void) * 3;
+	//int size = sizeof(ospl_uint8) + sizeof(ospl_bool) + sizeof(ospl_uint32) + sizeof(void) * 3;
 #endif
 
-	crc_sum = crc_checksum((unsigned char *)iw_ap,  (int)(&iw_ap->ap_client_delay) - (int)(iw_ap));
+	crc_sum = crc_checksum((ospl_uint8 *)iw_ap,  (int)(&iw_ap->ap_client_delay) - (int)(iw_ap));
 	if(iw_ap->crc_sum != crc_sum)
 	{
 		iw_ap->crc_sum = crc_sum;
-		iw_ap->change = TRUE;
+		iw_ap->change = ospl_true;
 		//zlog_debug(MODULE_WIFI, "=======%s====change==", __func__);
 	}
 	//zlog_debug(MODULE_WIFI, "%s", __func__);
@@ -1343,7 +1343,7 @@ static int iw_ap_stop(iw_ap_t *iw_ap)
 	iw_ap->s_thread = NULL;
 	//iw_ap->t_thread = NULL;
 	//iw_ap->s_thread = NULL;
-	iw_ap->change = FALSE;
+	iw_ap->change = ospl_false;
 	//zlog_debug(MODULE_WIFI, "%s", __func__);
 	iw_ap_stop_script(iw_ap);
 
@@ -1502,19 +1502,19 @@ int iw_ap_exit(iw_ap_t *iw_ap)
 
 	if(lstCount(iw_ap->ap_list))
 	{
-		iw_ap_connect_cleanup(iw_ap, TRUE);
+		iw_ap_connect_cleanup(iw_ap, ospl_true);
 		lstFree(iw_ap->ap_list);
 		//iw_ap->ap_list = NULL;
 	}
 	if(lstCount(iw_ap->mac_list))
 	{
-		iw_ap_maclist_cleanup(iw_ap, TRUE);
+		iw_ap_maclist_cleanup(iw_ap, ospl_true);
 		lstFree(iw_ap->mac_list);
 		//iw_ap->ap_list = NULL;
 	}
 	if(lstCount(iw_ap->dmac_list))
 	{
-		iw_ap_maclist_cleanup(iw_ap, FALSE);
+		iw_ap_maclist_cleanup(iw_ap, ospl_false);
 		lstFree(iw_ap->dmac_list);
 		//iw_ap->ap_list = NULL;
 	}
@@ -1562,7 +1562,7 @@ int iw_ap_exit(iw_ap_t *iw_ap)
 	return OK;
 }
 
-int iw_ap_enable(iw_ap_t *iw_ap, BOOL enable)
+int iw_ap_enable(iw_ap_t *iw_ap, ospl_bool enable)
 {
 	if(!iw_ap)
 		return ERROR;
@@ -1592,7 +1592,7 @@ int iw_ap_enable(iw_ap_t *iw_ap, BOOL enable)
 		printf("============%s==============:level iw_ap_stop\r\n", __func__);
 		if(iw_ap->ap_list && lstCount(iw_ap->ap_list))
 		{
-			iw_ap_connect_cleanup(iw_ap, TRUE);
+			iw_ap_connect_cleanup(iw_ap, ospl_true);
 			//lstFree(iw_ap->ap_list);
 		}
 

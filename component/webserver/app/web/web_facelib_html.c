@@ -29,11 +29,11 @@
 
 typedef struct
 {
-	//u_int8 flag;
-	u_int8 offset;
-	u_int32 count;
-	u_int32 total;
-	u_int8 board;
+	//ospl_uint8 flag;
+	ospl_uint8 offset;
+	ospl_uint32 count;
+	ospl_uint32 total;
+	ospl_uint8 board;
 	int group;
 	void *pweb;
 }v9_web_user_t;
@@ -100,7 +100,7 @@ static int web_facelib_all_detail(Webs *wp, char *path, char *query)
 {
 	web_assert(wp);
 	char *tmp = NULL;
-	u_int32 id = 1;
+	ospl_uint32 id = 1;
 	int group = 0;
 	websAppPrivate_t *websPrivData = websAppPrivateGet(wp->wid);
 	web_assert(websPrivData);
@@ -207,7 +207,7 @@ static int web_facelib_all_detail(Webs *wp, char *path, char *query)
 
 static int web_video_facelib_delete(Webs *wp, void *p)
 {
-	u_int32 id = 0;
+	ospl_uint32 id = 0;
 	int ret = 0;
 	char *strID = NULL;
 	char *tmp = NULL;
@@ -285,8 +285,8 @@ err_out:
 #if 0
 static void web_video_facelib_and_upload(Webs *wp, char *path, char *query)
 {
-	u_int32 id = 0;
-	BOOL gender = FALSE;
+	ospl_uint32 id = 0;
+	ospl_bool gender = ospl_false;
 	int group = 0, ret = ERROR;
 	char *user = NULL;
 	char *user_id = NULL;
@@ -398,8 +398,8 @@ err_out:
 
 static int web_video_facelib_add(Webs *wp, char *path, char *query)
 {
-	u_int32 id = 0;
-	BOOL gender = FALSE;
+	ospl_uint32 id = 0;
+	ospl_bool gender = ospl_false;
 	int group = 0, ret = ERROR;
 	char *user = NULL;
 	char *user_id = NULL;
@@ -507,8 +507,8 @@ static int web_video_facelib_add(Webs *wp, char *path, char *query)
 static int web_facegroup_all(Webs *wp, char *path, char *query)
 {
 	char *tmp = NULL;
-	u_int32 i = 0;
-	u_int32 id = 1;
+	ospl_uint32 i = 0;
+	ospl_uint32 id = 1;
 	web_assert(wp);
 	tmp = webs_get_var(wp, "ID", NULL);
 	if (tmp == NULL)
@@ -552,7 +552,7 @@ static int web_facegroup_all(Webs *wp, char *path, char *query)
 
 static int web_video_facegroup_handle(Webs *wp, char *path, char *query)
 {
-	u_int32 id = 0;
+	ospl_uint32 id = 0;
 	int ret = ERROR;
 
 	char *tmp = NULL;

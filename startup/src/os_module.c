@@ -164,7 +164,6 @@ int os_module_init(void)
 
 
 #ifdef PL_PAL_MODULE
-	extern int pal_abstract_init();
 	pal_abstract_init();
 #endif
 #ifdef PL_SERVICE_MODULE
@@ -304,7 +303,6 @@ int os_module_task_init(void)
 
 	os_msleep(50);
 
-	//ospf_task_init ();
 #ifdef PL_OSPF_MODULE
 	//ospfd_task_init ();
 #endif

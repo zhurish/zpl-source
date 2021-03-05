@@ -24,7 +24,13 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #define _BASIC_QUEUE_SERVER_MEDIA_SUBSESSION_HH
 
 #include "FramedQueue.hpp"
-
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "ospl_type.h"
+#ifdef __cplusplus
+}
+#endif
 class BasicQueueServerMediaSubsession: public OnDemandServerMediaSubsession {
 public:
   static BasicQueueServerMediaSubsession*
@@ -43,14 +49,14 @@ protected: // redefined virtual functions
   virtual FramedSource* createNewStreamSource(unsigned clientSessionId,
 					      unsigned& estBitrate);
   virtual RTPSink* createNewRTPSink(Groupsock* rtpGroupsock,
-				    unsigned char rtpPayloadTypeIfDynamic,
+				    ospl_uint8 rtpPayloadTypeIfDynamic,
 				    FramedSource* inputSource);
 private:
 
   FramedSource* BasicQueueCreateStreamSource(unsigned clientSessionId,
 					      unsigned& estBitrate, FramedSource* videoES, int format);
   RTPSink* BasicQueueCreateNewRTPSink(Groupsock* rtpGroupsock,
-				    unsigned char rtpPayloadTypeIfDynamic,
+				    ospl_uint8 rtpPayloadTypeIfDynamic,
 				    FramedSource* inputSource, int format);
 
   FramedSource* m_streamSource = nullptr;

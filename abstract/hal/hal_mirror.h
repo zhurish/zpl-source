@@ -7,7 +7,9 @@
 
 #ifndef __HAL_MIRROR_H__
 #define __HAL_MIRROR_H__
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "nsm_mac.h"
 
 typedef enum hal_mirror_mode_e {
@@ -32,17 +34,21 @@ typedef enum hal_mirror_filter_e {
 
 typedef struct sdk_mirror_s
 {
-	int (*sdk_mirror_enable_cb) (void *, ifindex_t, BOOL);
-	int (*sdk_mirror_source_enable_cb) (void *, BOOL enable, ifindex_t ifindex,
+	int (*sdk_mirror_enable_cb) (void *, ifindex_t, ospl_bool);
+	int (*sdk_mirror_source_enable_cb) (void *, ospl_bool enable, ifindex_t ifindex,
 			hal_mirror_mode_t mode, hal_mirror_type_t type);
-	int (*sdk_mirror_source_filter_enable_cb) (void *, BOOL enable,
+	int (*sdk_mirror_source_filter_enable_cb) (void *, ospl_bool enable,
 			hal_mirror_filter_t filter, hal_mirror_type_t type, mac_t *mac, mac_t *mac1);
 	void *sdk_driver;
 }sdk_mirror_t;
 
 
-int hal_mirror_enable(ifindex_t ifindex, BOOL enable);
-int hal_mirror_source_enable(ifindex_t ifindex, BOOL enable, hal_mirror_mode_t mode, hal_mirror_type_t type);
-int hal_mirror_source_filter_enable(BOOL enable, hal_mirror_filter_t filter, hal_mirror_type_t type, mac_t *mac, mac_t *mac1);
+int hal_mirror_enable(ifindex_t ifindex, ospl_bool enable);
+int hal_mirror_source_enable(ifindex_t ifindex, ospl_bool enable, hal_mirror_mode_t mode, hal_mirror_type_t type);
+int hal_mirror_source_filter_enable(ospl_bool enable, hal_mirror_filter_t filter, hal_mirror_type_t type, mac_t *mac, mac_t *mac1);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __HAL_MIRROR_H__ */

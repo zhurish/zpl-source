@@ -10,6 +10,7 @@
 #include "memory.h"
 
 
+
 struct memory_list memory_list_lib[] =
 {
   { MTYPE_TMP,			"Temporary memory"		},
@@ -314,7 +315,7 @@ struct memory_list memory_list_nhrp[] =
   { MTYPE_NHRP_CACHE,		"NHRP cache entry"		},
   { MTYPE_NHRP_NHS,		"NHRP next hop server"		},
   { MTYPE_NHRP_REGISTRATION,	"NHRP registration entries"	},
-  { MTYPE_NHRP_SHORTCUT,	"NHRP shortcut"			},
+  { MTYPE_NHRP_SHORTCUT,	"NHRP ospl_int16cut"			},
   { MTYPE_NHRP_ROUTE,		"NHRP routing entry"		},
   { -1, NULL }
 };

@@ -221,7 +221,7 @@ void lstConcat
 * The number of nodes in the list.
 */
 
-int lstCount
+ospl_uint32 lstCount
     (
     LIST *pList         /* pointer to list descriptor */
     )
@@ -276,7 +276,7 @@ void lstExtract
     FAST LIST *pDstList       /* ptr to list where to put extracted list */
     )
     {
-    FAST int i;
+    FAST ospl_uint32 i;
     FAST NODE *pNode;
 
     /* fix pointers in original list */
@@ -528,7 +528,7 @@ NODE *lstNext
 NODE *lstNth
     (
     FAST LIST *pList,           /* pointer to list descriptor */
-    FAST int nodenum            /* number of node to be found */
+    FAST ospl_uint32 nodenum            /* number of node to be found */
     )
     {
     FAST NODE *pNode;
@@ -597,10 +597,10 @@ NODE *lstPrevious
 NODE *lstNStep
     (
     FAST NODE *pNode,           /* the known node */
-    int nStep                   /* number of steps away to find */
+    ospl_uint32 nStep                   /* number of steps away to find */
     )
     {
-    int i;
+    ospl_uint32 i;
 
     for (i = 0; i < abs (nStep); i++)
 	{

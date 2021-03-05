@@ -38,7 +38,7 @@ DEFUN (wireless_enable,
 {
 	int ret = ERROR;
 	struct interface *ifp = vty->index;
-	ret = nsm_iw_enable_api(ifp, TRUE);
+	ret = nsm_iw_enable_api(ifp, ospl_true);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -51,7 +51,7 @@ DEFUN (no_wireless_enable,
 {
 	int ret = ERROR;
 	struct interface *ifp = vty->index;
-	ret = nsm_iw_enable_api(ifp, FALSE);
+	ret = nsm_iw_enable_api(ifp, ospl_false);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -342,7 +342,7 @@ DEFUN (no_netwotrk_name,
 	if(ifp/* && iw_ap_lookup_api(ifp)*/)
 	{
 		if((nsm_iw_mode(ifp) == IW_MODE_MANAGE || nsm_iw_mode(ifp) == IW_MODE_CLIENT) && iw_client_lookup_api(ifp))
-			ret = iw_client_db_del_api(iw_client_lookup_api(ifp), NULL, FALSE);
+			ret = iw_client_db_del_api(iw_client_lookup_api(ifp), NULL, ospl_false);
 
 		if(nsm_iw_mode(ifp) == IW_MODE_AP && iw_ap_lookup_api(ifp))
 			ret = iw_ap_ssid_del_api(iw_ap_lookup_api(ifp));
@@ -386,7 +386,7 @@ DEFUN (no_authentication_password,
 		if((nsm_iw_mode(ifp) == IW_MODE_MANAGE || nsm_iw_mode(ifp) == IW_MODE_CLIENT))
 		{
 			iw_client_t *client = iw_client_lookup_api(ifp);
-			ret = iw_client_db_del_api(client, client->cu.SSID, TRUE);
+			ret = iw_client_db_del_api(client, client->cu.SSID, ospl_true);
 		}
 		if(nsm_iw_mode(ifp) == IW_MODE_AP && iw_ap_lookup_api(ifp))
 			ret = iw_ap_password_del_api(iw_ap_lookup_api(ifp));
@@ -500,17 +500,17 @@ DEFUN (ap_mac_acl,
 		CMD_MAC_STR_HELP)
 {
 	int ret = ERROR;
-	u_int8 mac[8];
-	BOOL accept = FALSE;
+	ospl_uint8 mac[8];
+	ospl_bool accept = ospl_false;
 	struct interface *ifp = vty->index;
 	if(ifp && (nsm_iw_mode(ifp) == IW_MODE_AP))
 	{
 		memset(mac, 0, sizeof(mac));
 		VTY_IMAC_GET(argv[1], mac);
 		if(strstr(argv[0], "permit"))
-			accept = TRUE;
+			accept = ospl_true;
 		else
-			accept = FALSE;
+			accept = ospl_false;
 		if(iw_ap_lookup_api(ifp))
 		{
 			if(!iw_ap_mac_lookup_api(iw_ap_lookup_api(ifp), mac, accept))
@@ -530,17 +530,17 @@ DEFUN (no_ap_mac_acl,
 		CMD_MAC_STR_HELP)
 {
 	int ret = ERROR;
-	u_int8 mac[8];
-	BOOL accept = FALSE;
+	ospl_uint8 mac[8];
+	ospl_bool accept = ospl_false;
 	struct interface *ifp = vty->index;
 	if(ifp && (nsm_iw_mode(ifp) == IW_MODE_AP))
 	{
 		memset(mac, 0, sizeof(mac));
 		VTY_IMAC_GET(argv[1], mac);
 		if(strstr(argv[0], "permit"))
-			accept = TRUE;
+			accept = ospl_true;
 		else
-			accept = FALSE;
+			accept = ospl_false;
 		if(iw_ap_lookup_api(ifp))
 		{
 			if(iw_ap_mac_lookup_api(iw_ap_lookup_api(ifp), mac, accept))
@@ -744,7 +744,7 @@ DEFUN (ap_isolate_enable,
 	if(ifp && nsm_iw_mode(ifp) == IW_MODE_AP)
 	{
 		if(iw_ap_lookup_api(ifp))
-			ret = iw_ap_isolate_set_api(iw_ap_lookup_api(ifp), TRUE);
+			ret = iw_ap_isolate_set_api(iw_ap_lookup_api(ifp), ospl_true);
 	}
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -761,7 +761,7 @@ DEFUN (no_ap_isolate_enable,
 	if(ifp && nsm_iw_mode(ifp) == IW_MODE_AP)
 	{
 		if(iw_ap_lookup_api(ifp))
-			ret = iw_ap_isolate_set_api(iw_ap_lookup_api(ifp), FALSE);
+			ret = iw_ap_isolate_set_api(iw_ap_lookup_api(ifp), ospl_false);
 	}
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -776,7 +776,7 @@ DEFUN (ap_wmm_enable,
 	if(ifp && nsm_iw_mode(ifp) == IW_MODE_AP)
 	{
 		if(iw_ap_lookup_api(ifp))
-			ret = iw_ap_wmm_set_api(iw_ap_lookup_api(ifp), TRUE);
+			ret = iw_ap_wmm_set_api(iw_ap_lookup_api(ifp), ospl_true);
 	}
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -792,7 +792,7 @@ DEFUN (no_ap_wmm_enable,
 	if(ifp && nsm_iw_mode(ifp) == IW_MODE_AP)
 	{
 		if(iw_ap_lookup_api(ifp))
-			ret = iw_ap_wmm_set_api(iw_ap_lookup_api(ifp), FALSE);
+			ret = iw_ap_wmm_set_api(iw_ap_lookup_api(ifp), ospl_false);
 	}
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -1051,7 +1051,7 @@ static int iw_dev_show_cmd(struct vty *vty, int ifindex, char *cmd)
 	return OK;
 }
 
-static int iw_client_show_cmd(struct vty *vty, int ifindex, int cmd)
+static int iw_client_show_cmd(struct vty *vty, int ifindex, ospl_uint32 cmd)
 {
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
@@ -1070,7 +1070,7 @@ static int iw_client_show_cmd(struct vty *vty, int ifindex, int cmd)
 			{
 				vty_out(vty, "%s", VTY_NEWLINE);
 				if(strstr(cmd, "neighbor"))
-					iw_client_neighbor_show(iw_client_lookup_api(ifp), vty, TRUE);
+					iw_client_neighbor_show(iw_client_lookup_api(ifp), vty, ospl_true);
 				else if(strstr(cmd, "connect"))
 					iw_client_connect_ap_show(iw_client_lookup_api(ifp), vty);
 				else if(strstr(cmd, "scan"))
@@ -1097,7 +1097,7 @@ static int iw_client_show_cmd(struct vty *vty, int ifindex, int cmd)
 				{
 					vty_out(vty, "%s", VTY_NEWLINE);
 					if(strstr(cmd, "neighbor"))//显示附近wifi
-						iw_client_neighbor_show(iw_client_lookup_api(ifp), vty, TRUE);
+						iw_client_neighbor_show(iw_client_lookup_api(ifp), vty, ospl_true);
 					else if(strstr(cmd, "connect"))
 						iw_client_connect_ap_show(iw_client_lookup_api(ifp), vty);
 					else if(strstr(cmd, "scan"))
@@ -1112,7 +1112,7 @@ static int iw_client_show_cmd(struct vty *vty, int ifindex, int cmd)
 	return OK;
 }
 //显示当前连接到AP的设备
-static int iw_ap_show_cmd(struct vty *vty, int ifindex, BOOL detail)
+static int iw_ap_show_cmd(struct vty *vty, int ifindex, ospl_bool detail)
 {
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
@@ -1332,20 +1332,20 @@ DEFUN (show_wireless_client,
 	if(argc == 2)
 	{
 		ifindex = if_ifindex_make("wireless", argv[0]);
-		iw_ap_show_cmd(vty, ifindex, TRUE);
+		iw_ap_show_cmd(vty, ifindex, ospl_true);
 	}
 	else if(argc == 1)
 	{
 		if(strncmp(argv[0], "detail", 3) == 0)
-			iw_ap_show_cmd(vty, ifindex, TRUE);
+			iw_ap_show_cmd(vty, ifindex, ospl_true);
 		else
 		{
 			ifindex = if_ifindex_make("wireless", argv[0]);
-			iw_ap_show_cmd(vty, ifindex, FALSE);
+			iw_ap_show_cmd(vty, ifindex, ospl_false);
 		}
 	}
 	else
-		iw_ap_show_cmd(vty, ifindex, FALSE);
+		iw_ap_show_cmd(vty, ifindex, ospl_false);
 
 	return CMD_SUCCESS;
 }

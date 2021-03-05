@@ -21,7 +21,7 @@
 
 
 
-int nsm_ppp_interface_redisconnect(nsm_pppd_t *ppp, BOOL enable)
+int nsm_ppp_interface_redisconnect(nsm_pppd_t *ppp, ospl_bool enable)
 {
 	if(ppp->enable && !enable)
 	{
@@ -32,7 +32,7 @@ int nsm_ppp_interface_redisconnect(nsm_pppd_t *ppp, BOOL enable)
 }
 
 
-int nsm_ppp_interface_enable(struct interface *ifp, BOOL enable)
+int nsm_ppp_interface_enable(struct interface *ifp, ospl_bool enable)
 {
 	nsm_pppd_t *ppp = NULL;
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
@@ -88,10 +88,10 @@ static int nsm_ppp_del_interface(struct interface *ifp)
 
 static int nsm_ppp_interface_config(struct vty *vty, struct interface *ifp)
 {
-	//int i = 0;
+	//ospl_uint32 = 0;
 	//int count = 0;
-	//char tmp[128];
-	char tmpcli_str[256];
+	//ospl_char tmp[128];
+	ospl_char tmpcli_str[256];
 	struct nsm_interface *nsm_ifp = NULL;
 	nsm_pppd_t *nsm_ppp = NULL;
 	if(!if_is_serial(ifp))

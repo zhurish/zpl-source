@@ -22,6 +22,10 @@
 #ifndef __NSM_CLIENT_H__
 #define __NSM_CLIENT_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* For struct zapi_ipv{4,6}. */
 #include "if.h"
 #include "prefix.h"
@@ -60,7 +64,7 @@ enum
 
 struct nsm_client
 {
-  int module;
+  ospl_uint32 module;
   int (*write_config_cb) (struct vty *);
   int (*service_write_config_cb) (struct vty *);
   int (*debug_write_config_cb) (struct vty *);
@@ -75,8 +79,8 @@ struct nsm_client
   int (*notify_up_cb) (struct interface *);
   int (*notify_down_cb) (struct interface *);
 
-  int (*notify_address_add_cb) (struct interface *, struct connected *, int );
-  int (*notify_address_del_cb) (struct interface *, struct connected *, int );
+  int (*notify_address_add_cb) (struct interface *, struct connected *, ospl_bool );
+  int (*notify_address_del_cb) (struct interface *, struct connected *, ospl_bool );
 
   int (*notify_parameter_change_cb) (struct interface *);
 };
@@ -84,16 +88,16 @@ struct nsm_client
 
 
 extern struct nsm_client *nsm_client_new (void);
-extern void nsm_client_install (struct nsm_client *, int);
-extern struct nsm_client * nsm_client_lookup (int module);
+extern void nsm_client_install (struct nsm_client *, ospl_uint32 module);
+extern struct nsm_client * nsm_client_lookup (ospl_uint32 module);
 extern void nsm_client_init (void);
 extern void nsm_client_free (struct nsm_client *client);
 
 
-extern int nsm_client_write_config (int module, struct vty *vty);
-extern int nsm_client_service_write_config (int module, struct vty *vty);
-extern int nsm_client_debug_write_config (int module, struct vty *vty);
-extern int nsm_client_interface_write_config (int module, struct vty *vty, struct interface *ifp);
+extern int nsm_client_write_config (ospl_uint32 module, struct vty *vty);
+extern int nsm_client_service_write_config (ospl_uint32 module, struct vty *vty);
+extern int nsm_client_debug_write_config (ospl_uint32 module, struct vty *vty);
+extern int nsm_client_interface_write_config (ospl_uint32 module, struct vty *vty, struct interface *ifp);
 
 
 extern int nsm_client_notify_interface_add(struct interface *ifp);
@@ -101,8 +105,8 @@ extern int nsm_client_notify_interface_delete (struct interface *ifp);
 extern int nsm_client_notify_interface_update (struct interface *ifp);
 extern int nsm_client_notify_interface_up (struct interface *ifp);
 extern int nsm_client_notify_interface_down (struct interface *ifp);
-extern int nsm_client_notify_interface_add_ip (struct interface *ifp, struct connected *, int );
-extern int nsm_client_notify_interface_del_ip (struct interface *ifp, struct connected *, int );
+extern int nsm_client_notify_interface_add_ip (struct interface *ifp, struct connected *, ospl_bool );
+extern int nsm_client_notify_interface_del_ip (struct interface *ifp, struct connected *, ospl_bool );
 
 extern int nsm_client_notify_parameter_change (struct interface *ifp);
 
@@ -112,28 +116,32 @@ extern int nsm_pal_interface_delete (struct interface *ifp);
 extern int nsm_pal_interface_up (struct interface *ifp);
 extern int nsm_pal_interface_down (struct interface *ifp);
 
-extern int nsm_pal_interface_set_address (struct interface *ifp, struct connected *cp, int secondry);
-extern int nsm_pal_interface_unset_address (struct interface *ifp, struct connected *cp, int secondry);
-extern int nsm_pal_interface_mac (struct interface *ifp, unsigned char *mac, int len);
-extern int nsm_pal_interface_mtu (struct interface *ifp, int mtu);
-extern int nsm_pal_interface_vrf (struct interface *ifp, int vrf);
-extern int nsm_pal_interface_multicast (struct interface *ifp, int multicast);
+extern int nsm_pal_interface_set_address (struct interface *ifp, struct connected *cp, ospl_bool secondry);
+extern int nsm_pal_interface_unset_address (struct interface *ifp, struct connected *cp, ospl_bool secondry);
+extern int nsm_pal_interface_mac (struct interface *ifp, ospl_uchar *mac, ospl_uint32 len);
+extern int nsm_pal_interface_mtu (struct interface *ifp, ospl_uint32 mtu);
+extern int nsm_pal_interface_vrf (struct interface *ifp, ospl_uint32 vrf);
+extern int nsm_pal_interface_multicast (struct interface *ifp, ospl_uint32 multicast);
 
-extern int nsm_pal_interface_bandwidth (struct interface *ifp, int bandwidth);
-extern int nsm_pal_interface_speed (struct interface *ifp, int );
+extern int nsm_pal_interface_bandwidth (struct interface *ifp, ospl_uint32 bandwidth);
+extern int nsm_pal_interface_speed (struct interface *ifp, ospl_uint32 );
 extern int nsm_pal_interface_get_statistics (struct interface *ifp);
 
 //hal
-extern int nsm_pal_interface_enca (struct interface *ifp, int mode, int value);
-extern int nsm_pal_interface_mode (struct interface *ifp, int mode);
-extern int nsm_pal_interface_metric (struct interface *ifp, int metric);
-extern int nsm_pal_interface_linkdetect (struct interface *ifp, int link);
+extern int nsm_pal_interface_enca (struct interface *ifp, ospl_uint32 mode, ospl_uint32 value);
+extern int nsm_pal_interface_mode (struct interface *ifp, ospl_uint32 mode);
+extern int nsm_pal_interface_metric (struct interface *ifp, ospl_uint32 metric);
+extern int nsm_pal_interface_linkdetect (struct interface *ifp, ospl_uint32 link);
 
-extern int nsm_pal_interface_stp (struct interface *ifp, int );
-extern int nsm_pal_interface_loop (struct interface *ifp, int );
-extern int nsm_pal_interface_8021x (struct interface *ifp, int );
-extern int nsm_pal_interface_duplex (struct interface *ifp, int );
+extern int nsm_pal_interface_stp (struct interface *ifp, ospl_uint32 );
+extern int nsm_pal_interface_loop (struct interface *ifp, ospl_uint32 );
+extern int nsm_pal_interface_8021x (struct interface *ifp, ospl_uint32 );
+extern int nsm_pal_interface_duplex (struct interface *ifp, ospl_uint32 );
 
 
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __NSM_CLIENT_H__ */

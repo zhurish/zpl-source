@@ -38,8 +38,8 @@
 /*
  * SIP Global
  */
-//int pl_pjsip_global_set_api(BOOL enable);
-//int pl_pjsip_global_get_api(BOOL *enable);
+//int pl_pjsip_global_set_api(ospl_bool enable);
+//int pl_pjsip_global_get_api(ospl_bool *enable);
 static int pjsip_write_config(struct vty *vty, void *pVoid);
 
 
@@ -56,14 +56,14 @@ DEFUN (ip_sip_enable,
 	if(strstr(argv[0], "enable"))
 	{
 		if(!pl_pjsip_global_isenable())
-			ret = pl_pjsip_global_set_api(TRUE);
+			ret = pl_pjsip_global_set_api(ospl_true);
 		else
 			ret = OK;
 	}
 	else
 	{
 		if(pl_pjsip_global_isenable())
-			ret = pl_pjsip_global_set_api(FALSE);
+			ret = pl_pjsip_global_set_api(ospl_false);
 		else
 			ret = OK;
 	}
@@ -78,11 +78,11 @@ DEFUN (ip_sip_service,
 		"Service configure\n"
 		"SIP Protocol\n")
 {
-	template_t * temp = nsm_template_lookup_name (TRUE, "service pjsip");
+	template_t * temp = nsm_template_lookup_name (ospl_true, "service pjsip");
 	if(temp)
 	{
 		if(!pl_pjsip_global_isenable())
-			pl_pjsip_global_set_api(TRUE);
+			pl_pjsip_global_set_api(ospl_true);
 		vty->node = ALL_SERVICE_NODE;
 		memset(vty->prompt, 0, sizeof(vty->prompt));
 		sprintf(vty->prompt, "%s", temp->prompt);
@@ -90,7 +90,7 @@ DEFUN (ip_sip_service,
 	}
 	else
 	{
-		temp = nsm_template_new (TRUE);
+		temp = nsm_template_new (ospl_true);
 		if(temp)
 		{
 			temp->module = 0;
@@ -100,7 +100,7 @@ DEFUN (ip_sip_service,
 			//temp->pVoid = v9_video_app_tmp();
 			nsm_template_install(temp, 0);
 			if(!pl_pjsip_global_isenable())
-				pl_pjsip_global_set_api(TRUE);
+				pl_pjsip_global_set_api(ospl_true);
 			vty->node = ALL_SERVICE_NODE;
 			memset(vty->prompt, 0, sizeof(vty->prompt));
 			sprintf(vty->prompt, "%s", temp->prompt);
@@ -111,7 +111,7 @@ DEFUN (ip_sip_service,
 /*
 	int ret = ERROR;
 	if(!pl_pjsip_global_isenable())
-		ret = pl_pjsip_global_set_api(TRUE);
+		ret = pl_pjsip_global_set_api(ospl_true);
 	else
 		ret = OK;
 	if(ret == OK)
@@ -126,11 +126,11 @@ DEFUN (no_ip_sip_service,
 		"Service configure\n"
 		"SIP Protocol\n")
 {
-	template_t * temp = nsm_template_lookup_name (TRUE, "service pjsip");
+	template_t * temp = nsm_template_lookup_name (ospl_true, "service pjsip");
 	if(temp)
 	{
 		if(pl_pjsip_global_isenable())
-			pl_pjsip_global_set_api(FALSE);
+			pl_pjsip_global_set_api(ospl_false);
 		nsm_template_free(temp);
 		return CMD_SUCCESS;
 	}
@@ -138,7 +138,7 @@ DEFUN (no_ip_sip_service,
 
 /*	int ret = ERROR;
 	if(pl_pjsip_global_isenable())
-		ret = pl_pjsip_global_set_api(FALSE);
+		ret = pl_pjsip_global_set_api(ospl_false);
 	else
 		ret = OK;
 	if(ret == OK)
@@ -274,9 +274,9 @@ DEFUN (ip_sip_server,
 		return CMD_WARNING;
 	}
 	if(argc == 2)
-		ret = pl_pjsip_server_set_api(argv[0], pl_pjsip->sip_server_sec.sip_port, TRUE);
+		ret = pl_pjsip_server_set_api(argv[0], pl_pjsip->sip_server_sec.sip_port, ospl_true);
 	else
-		ret = pl_pjsip_server_set_api(argv[0], pl_pjsip->sip_server.sip_port, FALSE);
+		ret = pl_pjsip_server_set_api(argv[0], pl_pjsip->sip_server.sip_port, ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -299,9 +299,9 @@ DEFUN (no_ip_sip_server,
 {
 	int ret = 0;
 	if(argc == 1)
-		ret = pl_pjsip_server_set_api(NULL, pl_pjsip->sip_server_sec.sip_port, TRUE);
+		ret = pl_pjsip_server_set_api(NULL, pl_pjsip->sip_server_sec.sip_port, ospl_true);
 	else
-		ret = pl_pjsip_server_set_api(NULL, pl_pjsip->sip_server.sip_port, FALSE);
+		ret = pl_pjsip_server_set_api(NULL, pl_pjsip->sip_server.sip_port, ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -326,7 +326,7 @@ DEFUN (ip_sip_server_port,
 {
 	int ret = ERROR;
 	int value = 0;
-	s_int8		sip_address[PJSIP_ADDRESS_MAX];
+	ospl_int8		sip_address[PJSIP_ADDRESS_MAX];
 	value = atoi (argv[0]);
 	if (value <= 0)
 	{
@@ -336,14 +336,14 @@ DEFUN (ip_sip_server_port,
 	if(argc == 2)
 	{
 		memset(sip_address, 0, sizeof(sip_address));
-		pl_pjsip_server_get_api(sip_address, NULL, TRUE);
-		ret = pl_pjsip_server_set_api(sip_address, value, TRUE);
+		pl_pjsip_server_get_api(sip_address, NULL, ospl_true);
+		ret = pl_pjsip_server_set_api(sip_address, value, ospl_true);
 	}
 	else
 	{
 		memset(sip_address, 0, sizeof(sip_address));
-		pl_pjsip_server_get_api(sip_address, NULL, FALSE);
-		ret = pl_pjsip_server_set_api(sip_address, value, FALSE);
+		pl_pjsip_server_get_api(sip_address, NULL, ospl_false);
+		ret = pl_pjsip_server_set_api(sip_address, value, ospl_false);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -368,18 +368,18 @@ DEFUN (no_ip_sip_server_port,
 		"SIP server port configure\n")
 {
 	int ret = 0;
-	s_int8		sip_address[PJSIP_ADDRESS_MAX];
+	ospl_int8		sip_address[PJSIP_ADDRESS_MAX];
 	if(argc == 1)
 	{
 		memset(sip_address, 0, sizeof(sip_address));
-		pl_pjsip_server_get_api(sip_address, NULL, TRUE);
-		ret = pl_pjsip_server_set_api(sip_address, 0, TRUE);
+		pl_pjsip_server_get_api(sip_address, NULL, ospl_true);
+		ret = pl_pjsip_server_set_api(sip_address, 0, ospl_true);
 	}
 	else
 	{
 		memset(sip_address, 0, sizeof(sip_address));
-		pl_pjsip_server_get_api(sip_address, NULL, FALSE);
-		ret = pl_pjsip_server_set_api(sip_address, 0, FALSE);
+		pl_pjsip_server_get_api(sip_address, NULL, ospl_false);
+		ret = pl_pjsip_server_set_api(sip_address, 0, ospl_false);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -416,9 +416,9 @@ DEFUN (ip_sip_proxy_server,
 		return CMD_WARNING;
 	}
 	if(argc == 2)
-		ret = pl_pjsip_proxy_set_api(argv[0], pl_pjsip->sip_proxy_sec.sip_port, TRUE);
+		ret = pl_pjsip_proxy_set_api(argv[0], pl_pjsip->sip_proxy_sec.sip_port, ospl_true);
 	else
-		ret = pl_pjsip_proxy_set_api(argv[0], pl_pjsip->sip_proxy.sip_port, FALSE);
+		ret = pl_pjsip_proxy_set_api(argv[0], pl_pjsip->sip_proxy.sip_port, ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -441,9 +441,9 @@ DEFUN (no_ip_sip_proxy_server,
 {
 	int ret = 0;
 	if(argc == 1)
-		ret = pl_pjsip_proxy_set_api(NULL, pl_pjsip->sip_proxy_sec.sip_port, TRUE);
+		ret = pl_pjsip_proxy_set_api(NULL, pl_pjsip->sip_proxy_sec.sip_port, ospl_true);
 	else
-		ret = pl_pjsip_proxy_set_api(NULL, pl_pjsip->sip_proxy.sip_port, FALSE);
+		ret = pl_pjsip_proxy_set_api(NULL, pl_pjsip->sip_proxy.sip_port, ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -468,7 +468,7 @@ DEFUN (ip_sip_proxy_server_port,
 {
 	int ret = ERROR;
 	int value = 0;
-	s_int8		sip_address[PJSIP_ADDRESS_MAX];
+	ospl_int8		sip_address[PJSIP_ADDRESS_MAX];
 	value = atoi (argv[0]);
 	if (value <= 0)
 	{
@@ -478,14 +478,14 @@ DEFUN (ip_sip_proxy_server_port,
 	if(argc == 2)
 	{
 		memset(sip_address, 0, sizeof(sip_address));
-		pl_pjsip_proxy_get_api(sip_address, NULL, TRUE);
-		ret = pl_pjsip_proxy_set_api(sip_address, value, TRUE);
+		pl_pjsip_proxy_get_api(sip_address, NULL, ospl_true);
+		ret = pl_pjsip_proxy_set_api(sip_address, value, ospl_true);
 	}
 	else
 	{
 		memset(sip_address, 0, sizeof(sip_address));
-		pl_pjsip_proxy_get_api(sip_address, NULL, FALSE);
-		ret = pl_pjsip_proxy_set_api(sip_address, value, FALSE);
+		pl_pjsip_proxy_get_api(sip_address, NULL, ospl_false);
+		ret = pl_pjsip_proxy_set_api(sip_address, value, ospl_false);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -510,18 +510,18 @@ DEFUN (no_ip_sip_proxy_server_port,
 		"SIP proxy server port configure\n")
 {
 	int ret = 0;
-	s_int8		sip_address[PJSIP_ADDRESS_MAX];
+	ospl_int8		sip_address[PJSIP_ADDRESS_MAX];
 	if(argc == 1)
 	{
 		memset(sip_address, 0, sizeof(sip_address));
-		pl_pjsip_proxy_get_api(sip_address, NULL, TRUE);
-		ret = pl_pjsip_proxy_set_api(sip_address, 0, TRUE);
+		pl_pjsip_proxy_get_api(sip_address, NULL, ospl_true);
+		ret = pl_pjsip_proxy_set_api(sip_address, 0, ospl_true);
 	}
 	else
 	{
 		memset(sip_address, 0, sizeof(sip_address));
-		pl_pjsip_proxy_get_api(sip_address, NULL, FALSE);
-		ret = pl_pjsip_proxy_set_api(sip_address, 0, FALSE);
+		pl_pjsip_proxy_get_api(sip_address, NULL, ospl_false);
+		ret = pl_pjsip_proxy_set_api(sip_address, 0, ospl_false);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -635,7 +635,7 @@ DEFUN (ip_sip_100_rel,
 		"rel-100\n")
 {
 	int ret = ERROR;
-	ret = pl_pjsip_100rel_set_api(TRUE);
+	ret = pl_pjsip_100rel_set_api(ospl_true);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -648,7 +648,7 @@ DEFUN (no_ip_sip_100_rel,
 		"rel-100\n")
 {
 	int ret = ERROR;
-	ret = pl_pjsip_100rel_set_api(FALSE);
+	ret = pl_pjsip_100rel_set_api(ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -700,14 +700,14 @@ DEFUN (no_ip_sip_register_interval,
 	if(argc == 2)
 	{
 		memset(sip_password, 0, sizeof(sip_password));
-		pl_pjsip_username_get_api(NULL, sip_password, TRUE);
-		ret = pl_pjsip_username_set_api(argv[0], sip_password, TRUE);
+		pl_pjsip_username_get_api(NULL, sip_password, ospl_true);
+		ret = pl_pjsip_username_set_api(argv[0], sip_password, ospl_true);
 	}
 	else
 	{
 		memset(sip_password, 0, sizeof(sip_password));
-		pl_pjsip_username_get_api(NULL, sip_password, FALSE);
-		ret = pl_pjsip_username_set_api(argv[0], sip_password, FALSE);
+		pl_pjsip_username_get_api(NULL, sip_password, ospl_false);
+		ret = pl_pjsip_username_set_api(argv[0], sip_password, ospl_false);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -735,14 +735,14 @@ DEFUN (no_ip_sip_phone,
 	if(argc == 1)
 	{
 		memset(sip_password, 0, sizeof(sip_password));
-		pl_pjsip_username_get_api(NULL, sip_password, TRUE);
-		ret = pl_pjsip_username_set_api(NULL, sip_password, TRUE);
+		pl_pjsip_username_get_api(NULL, sip_password, ospl_true);
+		ret = pl_pjsip_username_set_api(NULL, sip_password, ospl_true);
 	}
 	else
 	{
 		memset(sip_password, 0, sizeof(sip_password));
-		pl_pjsip_username_get_api(NULL, sip_password, FALSE);
-		ret = pl_pjsip_username_set_api(NULL, sip_password, FALSE);
+		pl_pjsip_username_get_api(NULL, sip_password, ospl_false);
+		ret = pl_pjsip_username_set_api(NULL, sip_password, ospl_false);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -773,14 +773,14 @@ DEFUN (ip_sip_username,
 	if(argc == 2)
 	{
 		memset(sip_password, 0, sizeof(sip_password));
-		pl_pjsip_username_get_api(NULL, sip_password, TRUE);
-		ret = pl_pjsip_username_set_api(argv[0], sip_password, TRUE);
+		pl_pjsip_username_get_api(NULL, sip_password, ospl_true);
+		ret = pl_pjsip_username_set_api(argv[0], sip_password, ospl_true);
 	}
 	else
 	{
 		memset(sip_password, 0, sizeof(sip_password));
-		pl_pjsip_username_get_api(NULL, sip_password, FALSE);
-		ret = pl_pjsip_username_set_api(argv[0], sip_password, FALSE);
+		pl_pjsip_username_get_api(NULL, sip_password, ospl_false);
+		ret = pl_pjsip_username_set_api(argv[0], sip_password, ospl_false);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -809,14 +809,14 @@ DEFUN (no_ip_sip_username,
 	if(argc == 1)
 	{
 		memset(sip_password, 0, sizeof(sip_password));
-		pl_pjsip_username_get_api(NULL, sip_password, TRUE);
-		ret = pl_pjsip_username_set_api(NULL, sip_password, TRUE);
+		pl_pjsip_username_get_api(NULL, sip_password, ospl_true);
+		ret = pl_pjsip_username_set_api(NULL, sip_password, ospl_true);
 	}
 	else
 	{
 		memset(sip_password, 0, sizeof(sip_password));
-		pl_pjsip_username_get_api(NULL, sip_password, FALSE);
-		ret = pl_pjsip_username_set_api(NULL, sip_password, FALSE);
+		pl_pjsip_username_get_api(NULL, sip_password, ospl_false);
+		ret = pl_pjsip_username_set_api(NULL, sip_password, ospl_false);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -846,14 +846,14 @@ DEFUN (ip_sip_password,
 	if(argc == 2)
 	{
 		memset(sip_phone, 0, sizeof(sip_phone));
-		pl_pjsip_username_get_api(sip_phone, NULL, TRUE);
-		ret = pl_pjsip_username_set_api(sip_phone, argv[0], TRUE);
+		pl_pjsip_username_get_api(sip_phone, NULL, ospl_true);
+		ret = pl_pjsip_username_set_api(sip_phone, argv[0], ospl_true);
 	}
 	else
 	{
 		memset(sip_phone, 0, sizeof(sip_phone));
-		pl_pjsip_username_get_api(sip_phone, NULL, FALSE);
-		ret = pl_pjsip_username_set_api(sip_phone, argv[0], FALSE);
+		pl_pjsip_username_get_api(sip_phone, NULL, ospl_false);
+		ret = pl_pjsip_username_set_api(sip_phone, argv[0], ospl_false);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -882,14 +882,14 @@ DEFUN (no_ip_sip_password,
 	if(argc == 1)
 	{
 		memset(sip_phone, 0, sizeof(sip_phone));
-		pl_pjsip_username_get_api(sip_phone, NULL, TRUE);
-		ret = pl_pjsip_username_set_api(sip_phone, NULL, TRUE);
+		pl_pjsip_username_get_api(sip_phone, NULL, ospl_true);
+		ret = pl_pjsip_username_set_api(sip_phone, NULL, ospl_true);
 	}
 	else
 	{
 		memset(sip_phone, 0, sizeof(sip_phone));
-		pl_pjsip_username_get_api(sip_phone, NULL, FALSE);
-		ret = pl_pjsip_username_set_api(sip_phone, NULL, FALSE);
+		pl_pjsip_username_get_api(sip_phone, NULL, ospl_false);
+		ret = pl_pjsip_username_set_api(sip_phone, NULL, ospl_false);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -944,7 +944,7 @@ DEFUN (no_ip_sip_realm,
 {
 	int ret = ERROR;
 /*	if(argc == 1)
-		ret = voip_sip_realm_set_api(NULL, TRUE);
+		ret = voip_sip_realm_set_api(NULL, ospl_true);
 	else*/
 		ret = pl_pjsip_realm_set_api(NULL);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -1037,11 +1037,11 @@ DEFUN (ip_sip_option_set,
 {
 	int ret = ERROR;
 	if(strstr(argv[0], "publish"))
-		ret = pl_pjsip_publish_set_api(TRUE);
+		ret = pl_pjsip_publish_set_api(ospl_true);
 	else if(strstr(argv[0], "mwi"))
-		ret = pl_pjsip_mwi_set_api(TRUE);
+		ret = pl_pjsip_mwi_set_api(ospl_true);
 	else if(strstr(argv[0], "ims"))
-		ret = pl_pjsip_ims_set_api(TRUE);
+		ret = pl_pjsip_ims_set_api(ospl_true);
 
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -1059,11 +1059,11 @@ DEFUN (no_ip_sip_option_set,
 {
 	int ret = ERROR;
 	if(strstr(argv[0], "publish"))
-		ret = pl_pjsip_publish_set_api(FALSE);
+		ret = pl_pjsip_publish_set_api(ospl_false);
 	else if(strstr(argv[0], "mwi"))
-		ret = pl_pjsip_mwi_set_api(FALSE);
+		ret = pl_pjsip_mwi_set_api(ospl_false);
 	else if(strstr(argv[0], "ims"))
-		ret = pl_pjsip_ims_set_api(FALSE);
+		ret = pl_pjsip_ims_set_api(ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -1265,7 +1265,7 @@ DEFUN (ip_sip_auto_update_nat_set,
 		"nat\n")
 {
 	int ret = ERROR;
-	ret = pl_pjsip_auto_update_nat_set_api(TRUE);
+	ret = pl_pjsip_auto_update_nat_set_api(ospl_true);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -1280,7 +1280,7 @@ DEFUN (no_ip_sip_auto_update_nat_set,
 		"nat\n")
 {
 	int ret = ERROR;
-	ret = pl_pjsip_auto_update_nat_set_api(FALSE);
+	ret = pl_pjsip_auto_update_nat_set_api(ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -1295,9 +1295,9 @@ DEFUN (ip_sip_stun_enable_set,
 {
 	int ret = ERROR;
 	if(strstr(argv[0], "disable"))
-		ret = pl_pjsip_stun_set_api(FALSE);
+		ret = pl_pjsip_stun_set_api(ospl_false);
 	else
-		ret = pl_pjsip_stun_set_api(TRUE);
+		ret = pl_pjsip_stun_set_api(ospl_true);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -1310,7 +1310,7 @@ DEFUN (no_ip_sip_stun_enable_set,
 		"Stun Configure\n")
 {
 	int ret = ERROR;
-	ret = pl_pjsip_stun_set_api(FALSE);
+	ret = pl_pjsip_stun_set_api(ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -1326,9 +1326,9 @@ DEFUN (ip_sip_ipv6_enable_set,
 {
 	int ret = ERROR;
 	if(strstr(argv[0], "disable"))
-		ret = pl_pjsip_ipv6_set_api(FALSE);
+		ret = pl_pjsip_ipv6_set_api(ospl_false);
 	else
-		ret = pl_pjsip_ipv6_set_api(TRUE);
+		ret = pl_pjsip_ipv6_set_api(ospl_true);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -1341,7 +1341,7 @@ DEFUN (no_ip_sip_ipv6_enable_set,
 		"ipv6 Configure\n")
 {
 	int ret = ERROR;
-	ret = pl_pjsip_ipv6_set_api(FALSE);
+	ret = pl_pjsip_ipv6_set_api(ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -1356,9 +1356,9 @@ DEFUN (ip_sip_tagging_qos_set,
 {
 	int ret = ERROR;
 	if(strstr(argv[0], "disable"))
-		ret = pl_pjsip_qos_set_api(FALSE);
+		ret = pl_pjsip_qos_set_api(ospl_false);
 	else
-		ret = pl_pjsip_qos_set_api(TRUE);
+		ret = pl_pjsip_qos_set_api(ospl_true);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -1371,7 +1371,7 @@ DEFUN (no_ip_sip_tagging_qos_set,
 		"Tagging Qos Configure\n")
 {
 	int ret = ERROR;
-	ret = pl_pjsip_qos_set_api(FALSE);
+	ret = pl_pjsip_qos_set_api(ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -1390,16 +1390,16 @@ DEFUN (ip_sip_transport_tcpudp_set,
 	if(strstr(argv[0], "udp"))
 	{
 		if(strstr(argv[1], "disable"))
-			ret = pl_pjsip_noudp_set_api(FALSE);
+			ret = pl_pjsip_noudp_set_api(ospl_false);
 		else
-			ret = pl_pjsip_noudp_set_api(TRUE);
+			ret = pl_pjsip_noudp_set_api(ospl_true);
 	}
 	else
 	{
 		if(strstr(argv[1], "disable"))
-			ret = pl_pjsip_notcp_set_api(FALSE);
+			ret = pl_pjsip_notcp_set_api(ospl_false);
 		else
-			ret = pl_pjsip_notcp_set_api(TRUE);
+			ret = pl_pjsip_notcp_set_api(ospl_true);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -1414,9 +1414,9 @@ DEFUN (no_ip_sip_transport_tcpudp_set,
 {
 	int ret = ERROR;
 	if(strstr(argv[0], "udp"))
-		ret = pl_pjsip_noudp_set_api(FALSE);
+		ret = pl_pjsip_noudp_set_api(ospl_false);
 	else
-		ret = pl_pjsip_notcp_set_api(FALSE);
+		ret = pl_pjsip_notcp_set_api(ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -1473,7 +1473,7 @@ DEFUN (ip_sip_nameserver_port,
 {
 	int ret = ERROR;
 	int value = 0;
-	s_int8		sip_address[PJSIP_ADDRESS_MAX];
+	ospl_int8		sip_address[PJSIP_ADDRESS_MAX];
 	value = atoi (argv[0]);
 	if (value <= 0)
 	{
@@ -1564,7 +1564,7 @@ DEFUN (ip_sip_outbound_port,
 {
 	int ret = ERROR;
 	int value = 0;
-	s_int8		sip_address[PJSIP_ADDRESS_MAX];
+	ospl_int8		sip_address[PJSIP_ADDRESS_MAX];
 	value = atoi (argv[0]);
 	if (value <= 0)
 	{
@@ -1655,7 +1655,7 @@ DEFUN (ip_sip_stun_server_port,
 {
 	int ret = ERROR;
 	int value = 0;
-	s_int8		sip_address[PJSIP_ADDRESS_MAX];
+	ospl_int8		sip_address[PJSIP_ADDRESS_MAX];
 	value = atoi (argv[0]);
 	if (value <= 0)
 	{
@@ -1707,7 +1707,7 @@ DEFUN (ip_sip_tls_enable_set,
 		"enabled\n")
 {
 	int ret = ERROR;
-	ret = pl_pjsip_tls_set_api(TRUE);
+	ret = pl_pjsip_tls_set_api(ospl_true);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -1720,7 +1720,7 @@ DEFUN (no_ip_sip_tls_enable_set,
 		"Tls Configure\n")
 {
 	int ret = ERROR;
-	ret = pl_pjsip_tls_set_api(FALSE);
+	ret = pl_pjsip_tls_set_api(ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -1880,7 +1880,7 @@ DEFUN (ip_sip_verify_server_port,
 {
 	int ret = ERROR;
 	int value = 0;
-	s_int8		sip_address[PJSIP_ADDRESS_MAX];
+	ospl_int8		sip_address[PJSIP_ADDRESS_MAX];
 	value = atoi (argv[0]);
 	if (value <= 0)
 	{
@@ -1971,7 +1971,7 @@ DEFUN (ip_sip_verify_client_port,
 {
 	int ret = ERROR;
 	int value = 0;
-	s_int8		sip_address[PJSIP_ADDRESS_MAX];
+	ospl_int8		sip_address[PJSIP_ADDRESS_MAX];
 	value = atoi (argv[0]);
 	if (value <= 0)
 	{
@@ -2266,15 +2266,15 @@ DEFUN (ip_sip_auto_option_set,
 	int ret = ERROR;
 	if(strstr(argv[0], "play"))
 	{
-		ret = pl_pjsip_auto_play_set_api(TRUE);
+		ret = pl_pjsip_auto_play_set_api(ospl_true);
 	}
 	else if(strstr(argv[0], "loop"))
 	{
-		ret = pl_pjsip_auto_loop_set_api(TRUE);
+		ret = pl_pjsip_auto_loop_set_api(ospl_true);
 	}
 	else if(strstr(argv[0], "confured"))
 	{
-		ret = pl_pjsip_auto_conf_set_api(TRUE);
+		ret = pl_pjsip_auto_conf_set_api(ospl_true);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -2290,15 +2290,15 @@ DEFUN (no_ip_sip_auto_option_set,
 	int ret = ERROR;
 	if(strstr(argv[0], "play"))
 	{
-		ret = pl_pjsip_auto_play_set_api(FALSE);
+		ret = pl_pjsip_auto_play_set_api(ospl_false);
 	}
 	else if(strstr(argv[0], "loop"))
 	{
-		ret = pl_pjsip_auto_loop_set_api(FALSE);
+		ret = pl_pjsip_auto_loop_set_api(ospl_false);
 	}
 	else if(strstr(argv[0], "confured"))
 	{
-		ret = pl_pjsip_auto_conf_set_api(FALSE);
+		ret = pl_pjsip_auto_conf_set_api(ospl_false);
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -2367,7 +2367,7 @@ DEFUN (ip_sip_vad_silence,
 		"disabled\n")
 {
 	int ret = ERROR;
-	ret = pl_pjsip_no_vad_set_api(TRUE);
+	ret = pl_pjsip_no_vad_set_api(ospl_true);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -2381,7 +2381,7 @@ DEFUN (no_ip_sip_vad_silence,
 		"disabled\n")
 {
 	int ret = ERROR;
-	ret = pl_pjsip_no_vad_set_api(FALSE);
+	ret = pl_pjsip_no_vad_set_api(ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -2495,7 +2495,7 @@ DEFUN (ip_sip_ice_enable,
 		"Enable\n")
 {
 	int ret = ERROR;
-	ret = pl_pjsip_ice_enable_set_api(TRUE);
+	ret = pl_pjsip_ice_enable_set_api(ospl_true);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -2509,7 +2509,7 @@ DEFUN (no_ip_sip_ice_enable,
 		"Enable\n")
 {
 	int ret = ERROR;
-	ret = pl_pjsip_ice_enable_set_api(FALSE);
+	ret = pl_pjsip_ice_enable_set_api(ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -2579,7 +2579,7 @@ DEFUN (ip_sip_ice_notcp,
 		"notcp\n")
 {
 	int ret = ERROR;
-	ret = pl_pjsip_ice_nortcp_set_api(TRUE);
+	ret = pl_pjsip_ice_nortcp_set_api(ospl_true);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -2593,7 +2593,7 @@ DEFUN (no_ip_sip_ice_notcp,
 		"notcp\n")
 {
 	int ret = ERROR;
-	ret = pl_pjsip_ice_nortcp_set_api(FALSE);
+	ret = pl_pjsip_ice_nortcp_set_api(ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -2673,7 +2673,7 @@ DEFUN (ip_sip_turn_enable,
 		"Enable\n")
 {
 	int ret = ERROR;
-	ret = pl_pjsip_turn_enable_set_api(TRUE);
+	ret = pl_pjsip_turn_enable_set_api(ospl_true);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -2687,7 +2687,7 @@ DEFUN (no_ip_sip_turn_enable,
 		"Enable\n")
 {
 	int ret = ERROR;
-	ret = pl_pjsip_turn_enable_set_api(FALSE);
+	ret = pl_pjsip_turn_enable_set_api(ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -2701,7 +2701,7 @@ DEFUN (ip_sip_turn_tcp_enable,
 		"Enable\n")
 {
 	int ret = ERROR;
-	ret = pl_pjsip_turn_tcp_set_api(TRUE);
+	ret = pl_pjsip_turn_tcp_set_api(ospl_true);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -2715,7 +2715,7 @@ DEFUN (no_ip_sip_turn_tcp_enable,
 		"Enable\n")
 {
 	int ret = ERROR;
-	ret = pl_pjsip_turn_tcp_set_api(FALSE);
+	ret = pl_pjsip_turn_tcp_set_api(ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -2773,7 +2773,7 @@ DEFUN (ip_sip_turn_server_port,
 {
 	int ret = ERROR;
 	int value = 0;
-	s_int8		sip_address[PJSIP_ADDRESS_MAX];
+	ospl_int8		sip_address[PJSIP_ADDRESS_MAX];
 	value = atoi (argv[0]);
 	if (value <= 0)
 	{
@@ -2969,7 +2969,7 @@ DEFUN (ip_sip_norefersub_enable,
 		"Enable\n")
 {
 	int ret = ERROR;
-	ret = pl_pjsip_norefersub_set_api(TRUE);
+	ret = pl_pjsip_norefersub_set_api(ospl_true);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -2983,7 +2983,7 @@ DEFUN (no_ip_sip_norefersub_enable,
 		"Enable\n")
 {
 	int ret = ERROR;
-	ret = pl_pjsip_norefersub_set_api(FALSE);
+	ret = pl_pjsip_norefersub_set_api(ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -3226,7 +3226,7 @@ DEFUN (pjsip_call_stop_cli,
 		"Stop\n"
 		"PhoneNumber\n")
 {
-	pl_pjsip_app_stop_call(app_config.current_call, FALSE);
+	pl_pjsip_app_stop_call(app_config.current_call, ospl_false);
 	return  CMD_SUCCESS;
 }
 
@@ -3263,7 +3263,7 @@ DEFUN (show_ip_sip_server,
 		"SIP configure\n"
 		"Service\n")
 {
-	pl_pjsip_show_config(vty, FALSE);
+	pl_pjsip_show_config(vty, ospl_false);
 	return CMD_SUCCESS;
 }
 
@@ -3329,9 +3329,9 @@ DEFUN (show_voip_facecard,
 {
 	int ret = ERROR;
 	if(argc == 1)
-		ret = voip_facecard_cli_show_all(vty, TRUE);
+		ret = voip_facecard_cli_show_all(vty, ospl_true);
 	else
-		ret = voip_facecard_cli_show_all(vty, FALSE);
+		ret = voip_facecard_cli_show_all(vty, ospl_false);
 	return  CMD_SUCCESS;
 }
 
@@ -3406,7 +3406,7 @@ DEFUN (debug_ip_sip_detail,
 		LOG_LEVEL_DESC)
 {
 	int ret = ERROR;
-	ret = pl_pjsip_debug_detail_set_api(TRUE);
+	ret = pl_pjsip_debug_detail_set_api(ospl_true);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -3420,7 +3420,7 @@ DEFUN (no_debug_ip_sip_detail,
 		LOG_LEVEL_DESC)
 {
 	int ret = ERROR;
-	ret = pl_pjsip_debug_detail_set_api(FALSE);
+	ret = pl_pjsip_debug_detail_set_api(ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -3432,7 +3432,7 @@ DEFUN (show_debugging_voip,
 	   "VOIP Configure\n")
 {
 	int debug_level = 0;
-	BOOL debug_enable = FALSE;
+	ospl_bool debug_enable = ospl_false;
 	vty_out (vty, "Voip debugging status:%s", VTY_NEWLINE);
 	if (VOIP_APP_DEBUG(EVENT))
 		vty_out (vty, "  Voip event debugging is on%s", VTY_NEWLINE);
@@ -3808,7 +3808,7 @@ void cmd_voip_init(void)
 	//install_default_basic(SIP_SERVICE_NODE);
 	//reinstall_node(SIP_SERVICE_NODE, pl_pjsip_write_config);
 
-	template_t * temp = nsm_template_new (TRUE);
+	template_t * temp = nsm_template_new (ospl_true);
 	if(temp)
 	{
 		temp->module = 0;

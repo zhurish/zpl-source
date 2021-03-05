@@ -8,6 +8,10 @@
 #ifndef __MODEM_ATCMD_H__
 #define __MODEM_ATCMD_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //#define __MODEM_CMD_DEBUG
 #ifdef __MODEM_CMD_DEBUG
 #define MODEM_CMD_DEBUG(fmt,...)	modem_debug_printf(stderr, __func__, __LINE__,fmt, ##__VA_ARGS__)
@@ -64,9 +68,9 @@ extern int modem_signal_atcmd_get(modem_client_t *);
 extern int modem_serial_number_atcmd_get(modem_client_t *client);
 extern int modem_IMEI_atcmd_get(modem_client_t *client);
 
-extern int modem_nwcell_atcmd_set(modem_client_t *client, BOOL enable);
+extern int modem_nwcell_atcmd_set(modem_client_t *client, ospl_bool enable);
 
-extern int modem_echo_atcmd_set(modem_client_t *client, BOOL enable);
+extern int modem_echo_atcmd_set(modem_client_t *client, ospl_bool enable);
 extern int modem_swreset_atcmd_set(modem_client_t *client);
 extern int modem_reboot_atcmd_set(modem_client_t *client);
 extern int modem_save_atcmd_set(modem_client_t *client);
@@ -83,7 +87,7 @@ extern int modem_hsupacat_atcmd_set(modem_client_t *client);
 extern int modem_sgsn_atcmd_set(modem_client_t *client);
 extern int modem_tdscsq_atcmd_set(modem_client_t *client);
 extern int modem_nwpdp_atcmd_set(modem_client_t *client);
-extern int modem_nwpdp_atcmd_enable(modem_client_t *client, BOOL enable);
+extern int modem_nwpdp_atcmd_enable(modem_client_t *client, ospl_bool enable);
 extern int modem_nwinfo_atcmd_get(modem_client_t *client);
 extern int modem_nwaddr_atcmd_get(modem_client_t *client);
 extern int modem_nwservingcell_atcmd_get(modem_client_t *client);
@@ -96,5 +100,9 @@ extern int modem_cell_information_atcmd_get(modem_client_t *client);
 extern int modem_operator_atcmd_get(modem_client_t *client);
 
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MODEM_ATCMD_H__ */

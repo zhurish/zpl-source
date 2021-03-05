@@ -30,7 +30,7 @@ int ssh_set_log_userdata(void *data)
 */
 static struct vty *ssh_vty = NULL;
 
-void ssh_log_callback_func(int priority,
+void ssh_log_callback_func(ospl_uint32 priority,
         const char *function,
         const char *buffer,
         void *userdata)
@@ -113,9 +113,10 @@ int ssh_stdin_get(ssh_session session)
     return -1;
 }
 
-int ssh_get_input(int fd, char *buf, int len)
+int ssh_get_input(int fd, char *buf, ospl_uint32 len)
 {
-	int c = 0, i = 0;
+	int c = 0;
+	ospl_uint32 i = 0;
 	while(1)
 	{
 		c = vty_getc_input(ssh_vty);
@@ -156,7 +157,7 @@ int ssh_printf(ssh_session session, const char *fmt,...)
 	}
     if(vty)
     {
-    	int len = 0;
+    	ospl_uint32 len = 0;
         char buffer[1024];
         memset(buffer, 0, sizeof(buffer));
         va_list va;
@@ -171,7 +172,7 @@ int ssh_printf(ssh_session session, const char *fmt,...)
     }
     else
     {
-    	int len = 0;
+    	ospl_uint32 len = 0;
         char buffer[1024];
         memset(buffer, 0, sizeof(buffer));
         va_list va;
@@ -183,7 +184,7 @@ int ssh_printf(ssh_session session, const char *fmt,...)
     return OK;
 }
 
-BOOL sshd_acl_action(ssh_config_t *ssh, ssh_session session)
+ospl_bool sshd_acl_action(ssh_config_t *ssh, ssh_session session)
 {
-	return TRUE;
+	return ospl_true;
 }

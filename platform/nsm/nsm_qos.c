@@ -21,14 +21,14 @@
 #include "nsm_qos.h"
 
 
-int nsm_dscp_to_cos(int dscp)
+int nsm_dscp_to_cos(ospl_uint32 dscp)
 {
 	return (dscp >> 3);
 //	内部DSCP值	0~7		8~15	16~23	24~31	32~39	40~47	48~55	56~63
 //	COS值		0		1		2		3		4		5		6		7
 }
 
-int nsm_cos_to_dscp(int cos)
+int nsm_cos_to_dscp(ospl_uint32 cos)
 {
 	if(cos == 0)
 		return 0;
@@ -48,7 +48,7 @@ int nsm_qos_storm_enable_set_api(struct interface *ifp)
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if(qos)
 	{
-		qos->qos_storm_enable = TRUE;
+		qos->qos_storm_enable = ospl_true;
 		return OK;
 	}
 	return ERROR;
@@ -57,18 +57,18 @@ int nsm_qos_storm_enable_set_api(struct interface *ifp)
 /*
  * port storm control
  */
-BOOL nsm_qos_storm_enable_get_api(struct interface *ifp)
+ospl_bool nsm_qos_storm_enable_get_api(struct interface *ifp)
 {
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if(qos)
 	{
 		return qos->qos_storm_enable;
 	}
-	return FALSE;
+	return ospl_false;
 }
 
-int nsm_qos_storm_set_api(struct interface *ifp, u_int qos_unicast,
-		u_int qos_multicast, u_int qos_broadcast)
+int nsm_qos_storm_set_api(struct interface *ifp, ospl_uint32 qos_unicast,
+		ospl_uint32 qos_multicast, ospl_uint32 qos_broadcast)
 {
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if(qos)
@@ -81,8 +81,8 @@ int nsm_qos_storm_set_api(struct interface *ifp, u_int qos_unicast,
 	return ERROR;
 }
 
-int nsm_qos_storm_get_api(struct interface *ifp, u_int *qos_unicast,
-		u_int *qos_multicast, u_int *qos_broadcast)
+int nsm_qos_storm_get_api(struct interface *ifp, ospl_uint32 *qos_unicast,
+		ospl_uint32 *qos_multicast, ospl_uint32 *qos_broadcast)
 {
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if(qos)
@@ -175,12 +175,12 @@ int nsm_qos_class_set_api(struct interface *ifp, nsm_qos_queue_e queue, nsm_qos_
 	if(qos)
 	{
 		nsm_qos_queue_e i = 0;
-		qos->qos_class_enable = FALSE;
+		qos->qos_class_enable = ospl_false;
 		qos->qos_class[queue] = class;
 		for(i = NSM_QOS_QUEUE_0; i <= NSM_QOS_QUEUE_7; i++)
 		{
 			if(qos->qos_class[i])
-				qos->qos_class_enable = TRUE;
+				qos->qos_class_enable = ospl_true;
 		}
 		return OK;
 	}
@@ -210,12 +210,12 @@ int nsm_qos_priority_map_queue_set_api(struct interface *ifp, nsm_qos_queue_e qu
 	if(qos)
 	{
 		nsm_qos_queue_e i = 0;
-		qos->qos_priority_enable = FALSE;
+		qos->qos_priority_enable = ospl_false;
 		qos->qos_queue[queue] = pri;
 		for(i = NSM_QOS_QUEUE_0; i <= NSM_QOS_QUEUE_7; i++)
 		{
 			if(qos->qos_queue[i])
-				qos->qos_priority_enable = TRUE;
+				qos->qos_priority_enable = ospl_true;
 		}
 		return OK;
 	}
@@ -268,7 +268,7 @@ int nsm_qos_user_pri_map_priority_set_api(struct interface *ifp, nsm_qos_priorit
 	if(qos)
 	{
 		//nsm_qos_queue_e i = 0;
-		qos->qos_map_enable = FALSE;
+		qos->qos_map_enable = ospl_false;
 		qos->qos_map[priority] = map;
 		return OK;
 	}
@@ -317,7 +317,7 @@ static int nsm_qos_del_interface(struct interface *ifp)
 }
 
 
-static int nsm_qos_interface_config(struct vty *vty, struct interface *ifp)
+static int nsm_qoospl_interface_config(struct vty *vty, struct interface *ifp)
 {
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if(qos && !if_is_loop(ifp))
@@ -376,7 +376,7 @@ static int nsm_qos_interface_config(struct vty *vty, struct interface *ifp)
 		if(qos->qos_map_enable)
 		{
 			nsm_qos_priority_e i = 0;
-			char *map[] = {"none", "cos","ip-pre","dscp","exp","none"};
+			ospl_char *map[] = {"none", "cos","ip-pre","dscp","exp","none"};
 			if(qos->qos_map_type)
 			{
 				vty_out(vty, " qos priority map %s %s",
@@ -399,7 +399,7 @@ static int nsm_qos_client_init()
 	struct nsm_client *nsm = nsm_client_new ();
 	nsm->notify_add_cb = nsm_qos_add_interface;
 	nsm->notify_delete_cb = nsm_qos_del_interface;
-	nsm->interface_write_config_cb = nsm_qos_interface_config;
+	nsm->interface_write_config_cb = nsm_qoospl_interface_config;
 	nsm_client_install (nsm, NSM_QOS);
 	return OK;
 }

@@ -22,6 +22,10 @@
 #ifndef _ZEBRA_IF_RMAP_H
 #define _ZEBRA_IF_RMAP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum if_rmap_type
 {
   IF_RMAP_IN,
@@ -32,16 +36,20 @@ enum if_rmap_type
 struct if_rmap
 {
   /* Name of the interface. */
-  char *ifname;
+  ospl_char *ifname;
 
-  char *routemap[IF_RMAP_MAX];
+  ospl_char *routemap[IF_RMAP_MAX];
 };
 
 extern void if_rmap_init (int);
 extern void if_rmap_reset (void);
-extern void if_rmap_hook_add (int, void (*) (struct if_rmap *));
-extern void if_rmap_hook_delete (int, void (*) (struct if_rmap *));
+extern void if_rmap_hook_add (ospl_uint16, void (*) (struct if_rmap *));
+extern void if_rmap_hook_delete (ospl_uint16, void (*) (struct if_rmap *));
 extern struct if_rmap *if_rmap_lookup (const char *);
 extern int config_write_if_rmap (struct vty *);
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ZEBRA_IF_RMAP_H */

@@ -43,15 +43,15 @@ extern "C" {
 
 typedef struct tftpd_config
 {
-	BOOL	enable;
+	ospl_bool	enable;
     char	dirName [TFTP_FILENAME_SIZE];
     char    address[TFTP_FILENAME_SIZE];
-    u_short	port;
+    ospl_ushort	port;
     int 	sock;
     void	*master;
     void	*t_read;
     int 	count;
-    BOOL 	tftpdDebug;	/* TRUE: debugging messages */
+    ospl_bool 	tftpdDebug;	/* ospl_true: debugging messages */
     int tftpdErrorSendTries;
     int tftpdMaxConnections;
 } TFTPD_CONFIG;
@@ -59,10 +59,10 @@ typedef struct tftpd_config
 extern int tftpdInit(void *master, char *basedir);
 extern int tftpdUnInit(void);
 
-extern int tftpdEnable(BOOL enable, char *localipaddress, int port);
+extern int tftpdEnable(ospl_bool enable, char *localipaddress, int port);
 
 /*extern int 	tftpdInit (int stackSize, int nDirectories,
-			   char * directoryNames, BOOL noControl,
+			   char * directoryNames, ospl_bool noControl,
 			   int maxConnections);*/
 
 

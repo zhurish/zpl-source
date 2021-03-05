@@ -1,6 +1,10 @@
 #ifndef __V9_CMD_H__
 #define __V9_CMD_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define V9_APP_CMD_ID		0
 #define V9_APP_CMD_ADD(n)	(n)
 
@@ -43,57 +47,57 @@ enum
 
 typedef struct app_cmd_hdr_s
 {
-	u_int8		id;
-	//u_int8		addr;
-	u_int8		seqnum;
-	u_int16		len;
+	ospl_uint8		id;
+	//ospl_uint8		addr;
+	ospl_uint8		seqnum;
+	ospl_uint16		len;
 }app_cmd_hdr_t;
 
 #define V9_APP_HDR_LEN		sizeof(app_cmd_hdr_t)
 
 typedef struct app_cmd_ack_s
 {
-	u_int16		cmd;
-	u_int8		status;
+	ospl_uint16		cmd;
+	ospl_uint8		status;
 }app_cmd_ack_t, app_cmd_startup_t;
 
 typedef struct app_cmd_reboot_s
 {
-	u_int16		cmd;
+	ospl_uint16		cmd;
 }app_cmd_reboot_t, app_cmd_status_t, app_cmd_autoip_t;
 
 typedef struct app_cmd_keepalive_s
 {
-	u_int16		cmd;
-	s_int8		zone;
-	u_int32		timesp;
+	ospl_uint16		cmd;
+	ospl_int8		zone;
+	ospl_uint32		timesp;
 }app_cmd_keepalive_t;
 
 typedef struct app_cmd_route_s
 {
-	u_int16		cmd;
-	u_int8		port;
-	u_int32		address;
-	u_int32		netmask;
-	u_int32		gateway;
-	u_int32		dns;
+	ospl_uint16		cmd;
+	ospl_uint8		port;
+	ospl_uint32		address;
+	ospl_uint32		netmask;
+	ospl_uint32		gateway;
+	ospl_uint32		dns;
 }app_cmd_route_t;
 
 
 typedef struct app_cmd_status_ack_s
 {
-	u_int16		cmd;
-	u_int8		temp;			//温度
-	u_int8		status;			//状态
-	u_int8		vch;			//处理视频路数
-	u_int8		synctime;		//时间是否已经同步
-	u_int16		cpuload;		//CPU负载（百分比）
-	u_int32		memtotal;		//内存(M)
-	u_int8		memload;		//内存占用（百分比）
-	u_int32		disktatol1;		//硬盘(M)
-	u_int8		diskload1;		//硬盘占用（百分比）
-	u_int32		disktatol2;		//硬盘(M)
-	u_int8		diskload2;		//硬盘占用（百分比）
+	ospl_uint16		cmd;
+	ospl_uint8		temp;			//温度
+	ospl_uint8		status;			//状态
+	ospl_uint8		vch;			//处理视频路数
+	ospl_uint8		synctime;		//时间是否已经同步
+	ospl_uint16		cpuload;		//CPU负载（百分比）
+	ospl_uint32		memtotal;		//内存(M)
+	ospl_uint8		memload;		//内存占用（百分比）
+	ospl_uint32		disktatol1;		//硬盘(M)
+	ospl_uint8		diskload1;		//硬盘占用（百分比）
+	ospl_uint32		disktatol2;		//硬盘(M)
+	ospl_uint8		diskload2;		//硬盘占用（百分比）
 
 }app_cmd_status_ack_t;
 
@@ -101,27 +105,27 @@ typedef struct app_cmd_status_ack_s
 
 typedef struct app_cmd_rtc_s
 {
-	u_int16		cmd;
-	s_int8		zone;
-	u_int32		timesp;
+	ospl_uint16		cmd;
+	ospl_int8		zone;
+	ospl_uint32		timesp;
 }app_cmd_rtc_t, app_cmd_led_t;
 
 typedef struct app_cmd_device_s
 {
-	u_int16 cmd;
-	s_int8 devicename[16];	 // 设备名称
-	s_int8 deviceid[16];	 // 设备Id
-	s_int8 serialno[16];	 // SN
-	s_int8 manufacturer[16]; // 厂商名称
-	s_int8 kervel_version[16];
-	s_int8 app_version[16];
-	s_int8 buildtime[32];
+	ospl_uint16 cmd;
+	ospl_int8 devicename[16];	 // 设备名称
+	ospl_int8 deviceid[16];	 // 设备Id
+	ospl_int8 serialno[16];	 // SN
+	ospl_int8 manufacturer[16]; // 厂商名称
+	ospl_int8 kervel_version[16];
+	ospl_int8 app_version[16];
+	ospl_int8 buildtime[32];
 } app_cmd_device_t;
 
 typedef struct
 {
-	u_int16 cmd;
-	u_int16 filelen;
+	ospl_uint16 cmd;
+	ospl_uint16 filelen;
 } app_cmd_bios_t;
 
 #define V9_APP_HDR_LEN_MAX		V9_APP_HDR_LEN + sizeof(app_cmd_status_ack_t)*4 + sizeof(app_cmd_device_t)
@@ -131,7 +135,7 @@ typedef struct
 extern app_cmd_device_t bios_device;
 
 int v9_cmd_get(v9_serial_t *mgt);
-int v9_cmd_send_ack(v9_serial_t *mgt, u_int8 status);
+int v9_cmd_send_ack(v9_serial_t *mgt, ospl_uint8 status);
 int v9_cmd_handle_keepalive(v9_serial_t *mgt);
 int v9_cmd_handle_reboot(v9_serial_t *mgt);
 int v9_cmd_handle_route(v9_serial_t *mgt);
@@ -144,14 +148,20 @@ int v9_web_device_info(char *buf);
 
 int v9_cmd_handle_pass_reset(v9_serial_t *mgt);
 #ifdef V9_SLIPNET_ENABLE
-int v9_cmd_sync_time_to_rtc(v9_serial_t *mgt, u_int32 timesp);
+int v9_cmd_sync_time_to_rtc(v9_serial_t *mgt, ospl_uint32 timesp);
 int v9_cmd_sync_time_test(void);
 int v9_cmd_web_reboot();
-int v9_cmd_sync_led(v9_serial_t *mgt, u_int32 led, int status);
-int v9_cmd_update_bios(u_int32 state);
+int v9_cmd_sync_led(v9_serial_t *mgt, ospl_uint32 led, int status);
+int v9_cmd_update_bios(ospl_uint32 state);
 int v9_cmd_update_bios_ack(v9_serial_t *mgt);
 int v9_cmd_update_bios_finsh();
 #else
 int v9_cmd_handle_sntp_sync(v9_serial_t *mgt);
 #endif/* V9_SLIPNET_ENABLE */
+
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __V9_CMD_H__ */

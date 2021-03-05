@@ -169,7 +169,7 @@ int voip_thlog_log(const char *format, ...)
 	return ERROR;
 }
 
-int voip_thlog_log1(u_int8 building, u_int8 unit, u_int16 room, char *id,
+int voip_thlog_log1(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room, char *id,
 					char *phone, const char *format, ...)
 {
 	if(!thlog_db)
@@ -255,7 +255,7 @@ int voip_thlog_log3(char *type, char *result, const char *format, ...)
 	return ERROR;
 }
 
-int voip_thlog_log4(const time_t ti, char *type, char *result, const char *format, ...)
+int voip_thlog_log4(const ospl_time_t ti, char *type, char *result, const char *format, ...)
 {
 	if(!thlog_db)
 		return ERROR;

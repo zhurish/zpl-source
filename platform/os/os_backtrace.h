@@ -8,13 +8,21 @@
 #ifndef __OS_BACKTRACE_H__
 #define __OS_BACKTRACE_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-inline unsigned int * __getsp(void)
+inline ospl_uint32 * __getsp(void)
 {
-unsigned int *sp;
+ospl_uint32 *sp;
 __asm__ volatile ("move %0, $29" : "=r"(sp));
 return sp;
 }
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* __OS_BACKTRACE_H__ */

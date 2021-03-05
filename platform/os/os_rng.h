@@ -20,27 +20,27 @@ extern "C" {
 
 typedef struct		/* RING - ring buffer */
     {
-    int pToBuf;		/* offset from start of buffer where to write next */
-    int pFromBuf;	/* offset from start of buffer where to read next */
-    int bufSize;	/* size of ring in bytes */
-    char *buf;		/* pointer to start of buffer */
+    ospl_uint32 pToBuf;		/* offset from start of buffer where to write next */
+    ospl_uint32 pFromBuf;	/* offset from start of buffer where to read next */
+    ospl_uint32 bufSize;	/* size of ring in bytes */
+    ospl_char *buf;		/* pointer to start of buffer */
     } RING;
 
 /* END_HIDDEN */
 
 typedef RING *RING_ID;
 
-extern BOOL 	rngIsEmpty (RING_ID ringId);
-extern BOOL 	rngIsFull (RING_ID ringId);
-extern RING_ID 	rngCreate (int nbytes);
-extern int 	rngBufGet (RING_ID rngId, char *buffer, int maxbytes);
-extern int 	rngBufPut (RING_ID rngId, char *buffer, int nbytes);
+extern ospl_bool 	rngIsEmpty (RING_ID ringId);
+extern ospl_bool 	rngIsFull (RING_ID ringId);
+extern RING_ID 	rngCreate (ospl_uint32 nbytes);
+extern int 	rngBufGet (RING_ID rngId, ospl_char *buffer, ospl_uint32 maxbytes);
+extern int 	rngBufPut (RING_ID rngId, ospl_char *buffer, ospl_uint32 nbytes);
 extern int 	rngFreeBytes (RING_ID ringId);
 extern int 	rngNBytes (RING_ID ringId);
 extern void 	rngDelete (RING_ID ringId);
 extern void 	rngFlush (RING_ID ringId);
-extern void 	rngMoveAhead (RING_ID ringId, int n);
-extern void 	rngPutAhead (RING_ID ringId, char byte, int offset);
+extern void 	rngMoveAhead (RING_ID ringId, ospl_uint32 n);
+extern void 	rngPutAhead (RING_ID ringId, ospl_char byte, ospl_uint32 offset);
 
 
 #ifdef __cplusplus

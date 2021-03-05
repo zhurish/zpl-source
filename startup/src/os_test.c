@@ -138,7 +138,7 @@ DEFUN (os_process_test,
 	if(memcmp(argv[0], "start", 3) == 0)
 	{
 		char *argve[] = {"call", "file", "/etc/ppp/peers/dial-auto", NULL};
-		taskid = os_process_register(PROCESS_START, "pppd", "pppd", TRUE, argve);
+		taskid = os_process_register(PROCESS_START, "pppd", "pppd", ospl_true, argve);
 		if(taskid)
 		{
 			vty_out(vty, "pppd task start OK(%d).%s", taskid, VTY_NEWLINE);
@@ -174,28 +174,28 @@ DEFUN (process_test,
 	{
 	case 1:
 		res = os_process_register(PROCESS_START, "dhcpc-eth0",
-					"dhcpc", FALSE, inargv);
+					"dhcpc", ospl_false, inargv);
 		break;
 	case 2:
 		res = os_process_register(PROCESS_STOP, "dhcpc-eth0",
-					"dhcpc", FALSE, inargv);
+					"dhcpc", ospl_false, inargv);
 		break;
 	case 3:
 		res = os_process_register(PROCESS_RESTART, "dhcpc-eth0",
-					"dhcpc", FALSE, inargv);
+					"dhcpc", ospl_false, inargv);
 		break;
 
 	case 4:
 		res = os_process_register(PROCESS_START, "dhcpc-eth1",
-					"dhcpc1", TRUE, inargv1);
+					"dhcpc1", ospl_true, inargv1);
 		break;
 	case 5:
 		res = os_process_register(PROCESS_STOP, "dhcpc-eth2",
-					"dhcpc1", TRUE, inargv1);
+					"dhcpc1", ospl_true, inargv1);
 		break;
 	case 6:
 		res = os_process_register(PROCESS_RESTART, "dhcpc-eth2",
-					"dhcpc1", TRUE, inargv1);
+					"dhcpc1", ospl_true, inargv1);
 		break;
 	}
 	if((res == ERROR))
@@ -357,7 +357,7 @@ int os_test()
 	 fprintf(stderr,"input:%d-%d\r\n", base, end);*/
 	// vlan_listvalue_format(value,  num, NULL);
 /*
-	unsigned char mac[7];
+	ospl_uint8 mac[7];
 	int unit, slot, port, vlan;
 	vty_iusp_format ("1/2", &unit, &slot, &port, &vlan);
 	vty_iusp_format ("3/4.3", &unit, &slot, &port, &vlan);

@@ -47,7 +47,7 @@ zebra_check_addr (struct prefix *p)
 {
   if (p->family == AF_INET)
     {
-      u_int32_t addr;
+      ospl_uint32 addr;
 
       addr = p->u.prefix4.s_addr;
       addr = ntohl (addr);
@@ -141,7 +141,7 @@ zebra_redistribute_default (struct zserv *client, vrf_id_t vrf_id)
 
 /* Redistribute routes. */
 static void
-zebra_redistribute (struct zserv *client, int type, vrf_id_t vrf_id)
+zebra_redistribute (struct zserv *client, ospl_uint32 type, vrf_id_t vrf_id)
 {
   struct rib *newrib;
   struct route_table *table;
@@ -250,10 +250,10 @@ redistribute_delete (struct prefix *p, struct rib *rib)
 }
 
 void
-zebra_redistribute_add (int command, struct zserv *client, int length,
+zebra_redistribute_add (ospl_uint16 command, struct zserv *client, ospl_size_t length,
     vrf_id_t vrf_id)
 {
-  int type;
+  ospl_uint32 type;
 
   type = stream_getc (client->ibuf);
 
@@ -268,10 +268,10 @@ zebra_redistribute_add (int command, struct zserv *client, int length,
 }
 
 void
-zebra_redistribute_delete (int command, struct zserv *client, int length,
+zebra_redistribute_delete (ospl_uint16 command, struct zserv *client, ospl_size_t length,
     vrf_id_t vrf_id)
 {
-  int type;
+  ospl_uint32 type;
 
   type = stream_getc (client->ibuf);
 
@@ -282,7 +282,7 @@ zebra_redistribute_delete (int command, struct zserv *client, int length,
 }
 
 void
-zebra_redistribute_default_add (int command, struct zserv *client, int length,
+zebra_redistribute_default_add (ospl_uint16 command, struct zserv *client, ospl_size_t length,
     vrf_id_t vrf_id)
 {
   vrf_bitmap_set (client->redist_default, vrf_id);
@@ -290,8 +290,8 @@ zebra_redistribute_default_add (int command, struct zserv *client, int length,
 }     
 
 void
-zebra_redistribute_default_delete (int command, struct zserv *client,
-    int length, vrf_id_t vrf_id)
+zebra_redistribute_default_delete (ospl_uint16 command, struct zserv *client,
+    ospl_size_t length, vrf_id_t vrf_id)
 {
   vrf_bitmap_unset (client->redist_default, vrf_id);
 }     
@@ -377,7 +377,7 @@ zebra_interface_address_add_update (struct interface *ifp,
 
   if (IS_ZEBRA_DEBUG_EVENT)
     {
-      char buf[PREFIX_STRLEN];
+      ospl_char buf[PREFIX_STRLEN];
 
       p = ifc->address;
       zlog_debug (MODULE_NSM, "MESSAGE: ZEBRA_INTERFACE_ADDRESS_ADD %s on %s",
@@ -411,7 +411,7 @@ zebra_interface_address_delete_update (struct interface *ifp,
 
   if (IS_ZEBRA_DEBUG_EVENT)
     {
-      char buf[PREFIX_STRLEN];
+      ospl_char buf[PREFIX_STRLEN];
 
       p = ifc->address;
       zlog_debug (MODULE_NSM, "MESSAGE: ZEBRA_INTERFACE_ADDRESS_DELETE %s on %s",
@@ -431,7 +431,7 @@ zebra_interface_address_delete_update (struct interface *ifp,
 
 /* Interface mode update */
 void
-zebra_interface_mode_update (struct interface *ifp, uint32_t mode)
+zebra_interface_mode_update (struct interface *ifp, ospl_uint32  mode)
 {
   struct listnode *node, *nnode;
   struct zserv *client;

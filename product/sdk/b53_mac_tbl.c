@@ -13,7 +13,7 @@
 /****************************************************************************************/
 static int b53125_flush_mac_tbl(struct b53125_device *dev, u8 mask)
 {
-	unsigned int i;
+	ospl_uint32 i;
 	b53125_write8(dev, B53_CTRL_PAGE, B53_FAST_AGE_CTRL,
 		   FAST_AGE_DONE | FAST_AGE_DYNAMIC | mask);
 	for (i = 0; i < 1000; i++) {
@@ -72,7 +72,7 @@ static void b53125_mac_tbl_from_entry(u64 *mac_vid, u32 *fwd_entry,
 /* Address Resolution Logic routines */
 static int b53125_mac_tbl_op_wait(struct b53125_device *dev)
 {
-	unsigned int timeout = 1000;
+	ospl_uint32 timeout = 1000;
 	u8 reg;
 
 	do {
@@ -85,7 +85,7 @@ static int b53125_mac_tbl_op_wait(struct b53125_device *dev)
 	return OS_TIMEOUT;
 }
 
-static int b53125_mac_tbl_rw_op(struct b53125_device *dev, unsigned int op)
+static int b53125_mac_tbl_rw_op(struct b53125_device *dev, ospl_uint32 op)
 {
 	u8 reg;
 	if (op > ARLTBL_RW)
@@ -104,7 +104,7 @@ static int b53125_mac_tbl_read(struct b53125_device *dev, u64 mac,
 			u16 vid, struct b53125_mac_arl_entry *ent, u8 *idx,
 			bool is_valid)
 {
-	unsigned int i;
+	ospl_uint32 i;
 	int ret = 0;
 
 	ret = b53125_mac_tbl_op_wait(dev);
@@ -133,7 +133,7 @@ static int b53125_mac_tbl_read(struct b53125_device *dev, u64 mac,
 }
 
 static int b53125_mac_tbl_op(struct b53125_device *dev, int op, int port,
-		      const unsigned char *addr, u16 vid, BOOL is_valid)
+		      const ospl_uint8 *addr, u16 vid, ospl_bool is_valid)
 {
 	struct b53125_mac_arl_entry ent;
 	u32 fwd_entry;
@@ -168,7 +168,7 @@ static int b53125_mac_tbl_op(struct b53125_device *dev, int op, int port,
 	ent.port = port;
 	ent.is_valid = is_valid;
 	ent.vid = vid;
-	ent.is_static = TRUE;
+	ent.is_static = ospl_true;
 	memcpy(ent.mac, addr, ETH_ALEN);
 	b53125_mac_tbl_from_entry(&mac_vid, &fwd_entry, &ent);
 
@@ -181,22 +181,22 @@ static int b53125_mac_tbl_op(struct b53125_device *dev, int op, int port,
 }
 
 int b53125_mac_tbl_add(struct b53125_device *dev, int port,
-		const unsigned char *addr, u16 vid)
+		const ospl_uint8 *addr, u16 vid)
 {
-	return b53125_mac_tbl_op(dev, 0, port, addr, vid, TRUE);
+	return b53125_mac_tbl_op(dev, 0, port, addr, vid, ospl_true);
 }
 
 
 int b53125_mac_tbl_del(struct b53125_device *dev, int port,
-		const unsigned char *addr, u16 vid)
+		const ospl_uint8 *addr, u16 vid)
 {
-	return b53125_mac_tbl_op(dev, 0, port, addr, vid, FALSE);
+	return b53125_mac_tbl_op(dev, 0, port, addr, vid, ospl_false);
 }
 
 
 static int b53125_mac_tbl_search_wait(struct b53125_device *dev)
 {
-	unsigned int timeout = 1000;
+	ospl_uint32 timeout = 1000;
 	u8 reg;
 	do {
 		b53125_read8(dev, B53_ARLIO_PAGE, B53_ARL_SRCH_CTL, &reg);
@@ -224,7 +224,7 @@ static void b53125_mac_tbl_search_rd(struct b53125_device *dev, u8 idx,
 }
 
 static int b53125_fdb_copy(int port, const struct b53125_mac_arl_entry *ent,
-			int (*cb)(u8 *, u16, BOOL, void *), void *data)
+			int (*cb)(u8 *, u16, ospl_bool, void *), void *data)
 {
 	if (!ent->is_valid)
 		return 0;
@@ -236,10 +236,10 @@ static int b53125_fdb_copy(int port, const struct b53125_mac_arl_entry *ent,
 }
 
 int b53125_fdb_dump(struct b53125_device *priv, int port,
-		int (*cb)(u8 *, u16, BOOL, void *), void *data)
+		int (*cb)(u8 *, u16, ospl_bool, void *), void *data)
 {
 	struct b53125_mac_arl_entry results[2];
-	unsigned int count = 0;
+	ospl_uint32 count = 0;
 	int ret;
 	u8 reg;
 
@@ -280,7 +280,7 @@ int b53_br_join(struct dsa_switch *ds, int port, struct net_device *br)
 	struct b53125_device *dev = ds->priv;
 	s8 cpu_port = ds->ports[port].cpu_dp->index;
 	u16 pvlan, reg;
-	unsigned int i;
+	ospl_uint32 i;
 
 	/* Make this port leave the all VLANs join since we will have proper
 	 * VLAN entries from now on
@@ -324,7 +324,7 @@ void b53_br_leave(struct dsa_switch *ds, int port, struct net_device *br)
 	struct b53125_device *dev = ds->priv;
 	struct b53_vlan *vl = &dev->vlans[0];
 	s8 cpu_port = ds->ports[port].cpu_dp->index;
-	unsigned int i;
+	ospl_uint32 i;
 	u16 pvlan, reg, pvid;
 
 	b53_read16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(port), &pvlan);

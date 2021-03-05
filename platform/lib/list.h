@@ -21,12 +21,12 @@ extern "C" {
  * @member:	the name of the member within the struct.
  *
  */
-#define _offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+#define _offsetof(TYPE, MEMBER) ((ospl_size_t) &((TYPE *)0)->MEMBER)
 
 
 #define container_of(ptr, type, member) ({			\
 	const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
-	(type *)( (char *)__mptr - _offsetof(type,member) );})
+	(type *)( (ospl_char *)__mptr - _offsetof(type,member) );})
 	
 
 
@@ -254,7 +254,7 @@ INLINE void list_splice_tail_init(struct list_head *list,
  *
  * This variant differs from list_for_each() in that it's the
  * simplest possible list iteration code, no prefetching is done.
- * Use this for code that knows the list to be very short (empty
+ * Use this for code that knows the list to be very ospl_int16 (empty
  * or 1 entry) most of the time.
  */
 #define __list_for_each(pos, head) \

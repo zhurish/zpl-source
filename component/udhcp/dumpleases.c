@@ -107,7 +107,7 @@ int dumpleases_main(int argc UNUSED_PARAM, char **argv)
 			/* -d: decimal time */
 			if (!(opt & OPT_a))
 				expires_abs -= curr;
-			printf("%llu\n", (unsigned long long) expires_abs);
+			printf("%llu\n", (ospl_ullong ) expires_abs);
 			continue;
 		}
 		if (!(opt & OPT_a)) { /* no -a */
@@ -120,7 +120,7 @@ int dumpleases_main(int argc UNUSED_PARAM, char **argv)
 				printf("%u days ", d);
 			printf("%02u:%02u:%02u\n", h, m, (unsigned)expires);
 		} else { /* -a */
-			time_t t = expires_abs;
+			ospl_time_t t = expires_abs;
 			fputs(ctime(&t), stdout);
 		}
 	}

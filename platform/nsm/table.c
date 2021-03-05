@@ -136,7 +136,7 @@ route_table_free (struct route_table *rt)
 }
 
 /* Utility mask array. */
-static const u_char maskbit[] =
+static const ospl_uchar maskbit[] =
 {
   0x00, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff
 };
@@ -145,13 +145,13 @@ static const u_char maskbit[] =
 static void
 route_common (const struct prefix *n, const struct prefix *p, struct prefix *new)
 {
-  int i;
-  u_char diff;
-  u_char mask;
+  ospl_uint32 i = 0;
+  ospl_uchar diff;
+  ospl_uchar mask;
 
-  const u_char *np = (const u_char *)&n->u.prefix;
-  const u_char *pp = (const u_char *)&p->u.prefix;
-  u_char *newp = (u_char *)&new->u.prefix;
+  const ospl_uchar *np = (const ospl_uchar *)&n->u.prefix;
+  const ospl_uchar *pp = (const ospl_uchar *)&p->u.prefix;
+  ospl_uchar *newp = (ospl_uchar *)&new->u.prefix;
 
   for (i = 0; i < p->prefixlen / 8; i++)
     {
@@ -179,7 +179,7 @@ route_common (const struct prefix *n, const struct prefix *p, struct prefix *new
 static void
 set_link (struct route_node *node, struct route_node *new)
 {
-  unsigned int bit = prefix_bit (&new->p.u.prefix, node->p.prefixlen);
+  ospl_uint32  bit = prefix_bit (&new->p.u.prefix, node->p.prefixlen);
 
   node->link[bit] = new;
   new->parent = node;
@@ -270,8 +270,8 @@ struct route_node *
 route_node_lookup (const struct route_table *table, const struct prefix *p)
 {
   struct route_node *node;
-  u_char prefixlen = p->prefixlen;
-  const u_char *prefix = &p->u.prefix;
+  ospl_uchar prefixlen = p->prefixlen;
+  const ospl_uchar *prefix = &p->u.prefix;
 
   node = table->top;
 
@@ -294,8 +294,8 @@ route_node_get (struct route_table *const table, const struct prefix *p)
   struct route_node *new;
   struct route_node *node;
   struct route_node *match;
-  u_char prefixlen = p->prefixlen;
-  const u_char *prefix = &p->u.prefix;
+  ospl_uchar prefixlen = p->prefixlen;
+  const ospl_uchar *prefix = &p->u.prefix;
 
   match = NULL;
   node = table->top;
@@ -482,7 +482,7 @@ route_next_until (struct route_node *node, struct route_node *limit)
   return NULL;
 }
 
-unsigned long
+ospl_ulong
 route_table_count (const struct route_table *table)
 {
   return table->count;

@@ -23,6 +23,10 @@
 #ifndef _ZEBRA_CONNECTED_H
 #define _ZEBRA_CONNECTED_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int connected_same (struct connected *ifc1, struct connected *ifc2);
 extern void connected_up_ipv4 (struct interface *, struct connected *);
 extern void connected_down_ipv4 (struct interface *, struct connected *);
@@ -35,21 +39,25 @@ extern void connected_down_ipv6 (struct interface *ifp, struct connected *);
 
 #ifdef USE_IPSTACK_KERNEL
 extern void
-connected_add_ipv4 (struct interface *ifp, int flags, struct in_addr *addr,
-		    u_char prefixlen, struct in_addr *broad,
+connected_add_ipv4 (struct interface *ifp, ospl_uint32 flags, struct in_addr *addr,
+		    ospl_uchar prefixlen, struct in_addr *broad,
 		    const char *label);
 extern void
-connected_delete_ipv4 (struct interface *ifp, int flags, struct in_addr *addr,
-		       u_char prefixlen, struct in_addr *broad);
+connected_delete_ipv4 (struct interface *ifp, ospl_uint32 flags, struct in_addr *addr,
+		       ospl_uchar prefixlen, struct in_addr *broad);
 #ifdef HAVE_IPV6
 extern void
-connected_add_ipv6 (struct interface *ifp, int flags, struct in6_addr *address,
-		    u_char prefixlen, struct in6_addr *broad,
+connected_add_ipv6 (struct interface *ifp, ospl_uint32 flags, struct in6_addr *address,
+		    ospl_uchar prefixlen, struct in6_addr *broad,
 		    const char *label);
 extern void
 connected_delete_ipv6 (struct interface *ifp, struct in6_addr *address,
-		       u_char prefixlen, struct in6_addr *broad);
+		       ospl_uchar prefixlen, struct in6_addr *broad);
 #endif /* HAVE_IPV6 */
+#endif
+ 
+#ifdef __cplusplus
+}
 #endif
 
 #endif /*_ZEBRA_CONNECTED_H */

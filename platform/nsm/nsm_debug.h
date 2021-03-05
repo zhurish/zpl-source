@@ -23,6 +23,10 @@
 #ifndef _ZEBRA_DEBUG_H
 #define _ZEBRA_DEBUG_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Debug flags. */
 #define ZEBRA_DEBUG_EVENT   0x01
 
@@ -55,16 +59,20 @@
 #define IS_ZEBRA_DEBUG_FPM (zebra_debug_fpm & ZEBRA_DEBUG_FPM)
 #define IS_ZEBRA_DEBUG_NHT  (zebra_debug_nht & ZEBRA_DEBUG_NHT)
 
-extern unsigned long zebra_debug_event;
-extern unsigned long zebra_debug_packet;
-extern unsigned long zebra_debug_kernel;
-extern unsigned long zebra_debug_rib;
-extern unsigned long zebra_debug_fpm;
-extern unsigned long zebra_debug_nht;
+extern ospl_ulong zebra_debug_event;
+extern ospl_ulong zebra_debug_packet;
+extern ospl_ulong zebra_debug_kernel;
+extern ospl_ulong zebra_debug_rib;
+extern ospl_ulong zebra_debug_fpm;
+extern ospl_ulong zebra_debug_nht;
 
 extern int cmd_debug_init();
 
 //extern int config_zebra_write_debug (struct vty *vty);
 extern void zebra_debug_init (void);
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ZEBRA_DEBUG_H */

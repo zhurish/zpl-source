@@ -128,7 +128,7 @@ int ffmpegDevice::ffmpegDeviceReady()
     
     //Initialize the buffer to store YUV frames to be encoded.
 	pFrameYUV = av_frame_alloc();
-    uint8_t *out_buffer = (uint8_t *)av_malloc(avpicture_get_size(AV_PIX_FMT_YUV422P, m_EncoderCodecCtx->width, m_EncoderCodecCtx->height));
+    ospl_uint8 *out_buffer = (ospl_uint8 *)av_malloc(avpicture_get_size(AV_PIX_FMT_YUV422P, m_EncoderCodecCtx->width, m_EncoderCodecCtx->height));
     avpicture_fill((AVPicture *)pFrameYUV, out_buffer, AV_PIX_FMT_YUV422P, m_EncoderCodecCtx->width, m_EncoderCodecCtx->height);
 */
 
@@ -137,7 +137,7 @@ int ffmpegDevice::ffmpegDeviceReady()
     //申请AVFrame，用于yuv视频
     pFrameYUV = av_frame_alloc();
     //分配内存，用于图像格式转换
-    uint8_t *out_buffer = (uint8_t *)av_malloc(av_image_get_buffer_size(AV_PIX_FMT_YUV422P, m_DecoderCodecCtx->width, m_DecoderCodecCtx->height, 1));
+    ospl_uint8 *out_buffer = (ospl_uint8 *)av_malloc(av_image_get_buffer_size(AV_PIX_FMT_YUV422P, m_DecoderCodecCtx->width, m_DecoderCodecCtx->height, 1));
     av_image_fill_arrays(pFrameYUV->data, pFrameYUV->linesize, out_buffer, AV_PIX_FMT_YUV422P, m_DecoderCodecCtx->width, m_DecoderCodecCtx->height, 1);
     dec_pkt = (AVPacket *)av_malloc(sizeof(AVPacket));
 
@@ -187,7 +187,7 @@ int ffmpegDevice::ffmpegDeviceDecoderFrame()
     }
     if (dec_got_frame)
     {
-        sws_scale(m_ImgConvertCtx, (const uint8_t *const *)m_raw_frame->data, m_raw_frame->linesize, 0,
+        sws_scale(m_ImgConvertCtx, (const ospl_uint8 *const *)m_raw_frame->data, m_raw_frame->linesize, 0,
                   m_DecoderCodecCtx->height, pFrameYUV->data, pFrameYUV->linesize);
         pFrameYUV->width = m_DecoderCodecCtx->width;
         pFrameYUV->height = m_DecoderCodecCtx->height;
@@ -224,7 +224,7 @@ int ffmpegDevice::ffmpegDeviceDecoderFrameFinish()
             break;
         }
 
-        sws_scale(m_ImgConvertCtx, (const unsigned char *const *)m_raw_frame->data, m_raw_frame->linesize, 0, m_DecoderCodecCtx->height,
+        sws_scale(m_ImgConvertCtx, (const ospl_uint8 *const *)m_raw_frame->data, m_raw_frame->linesize, 0, m_DecoderCodecCtx->height,
                   pFrameYUV->data, pFrameYUV->linesize);
 
         //pFrameYUV->width = m_raw_frame->width;

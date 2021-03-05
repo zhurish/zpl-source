@@ -8,6 +8,10 @@
 #ifndef __NSM_NSM_QOS_H_
 #define __NSM_NSM_QOS_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 //#define
 /*
@@ -112,18 +116,18 @@ typedef enum
 
 typedef struct nsm_qos_limit_s
 {
-	u_int			qos_cir;
-	u_int			qos_pir;
-	u_int			qos_bir;
+	ospl_uint32			qos_cir;
+	ospl_uint32			qos_pir;
+	ospl_uint32			qos_bir;
 }nsm_qos_limit_t;
 
 
 typedef struct nsm_qos_storm_s
 {
 	enum {STORM_RATE, STORM_PER} qos_storm_type;
-	u_int			qos_unicast;
-	u_int			qos_multicast;
-	u_int			qos_broadcast;
+	ospl_uint32			qos_unicast;
+	ospl_uint32			qos_multicast;
+	ospl_uint32			qos_broadcast;
 }nsm_qos_storm_t;
 
 typedef enum
@@ -138,11 +142,11 @@ typedef enum
 
 typedef union
 {
-	u_int			port;	//port
-	u_int			cos;	//802.1q
-	u_int			ip_pre;
-	u_int			dscp;
-	u_int			exp;
+	ospl_uint32			port;	//port
+	ospl_uint32			cos;	//802.1q
+	ospl_uint32			ip_pre;
+	ospl_uint32			dscp;
+	ospl_uint32			exp;
 } nsm_qos_map_t;
 
 
@@ -150,18 +154,18 @@ typedef struct nsm_qos_s
 {
 	ifindex_t			ifindex;
 	// input
-	BOOL				qos_storm_enable;
+	ospl_bool				qos_storm_enable;
 	nsm_qos_storm_t		qos_storm;			//storm control
 	nsm_qos_trust_e 	qos_trust;
 
-	BOOL				qos_class_enable;
+	ospl_bool				qos_class_enable;
 	nsm_qos_class_e		qos_class[NSM_QOS_QUEUE_MAX]; //queue map to class
 
-	BOOL				qos_priority_enable;
+	ospl_bool				qos_priority_enable;
 	nsm_qos_priority_e	qos_queue[NSM_QOS_QUEUE_MAX]; //priority map to queue
 
 	//USER priority map to LOCAL priority
-	BOOL				qos_map_enable;
+	ospl_bool				qos_map_enable;
 	nsm_qos_map_e		qos_map_type;
 	//nsm_qos_priority_e	qos_map_priority[NSM_QOS_PRI_MAX];	//pri map to priority
 	nsm_qos_map_t		qos_map[NSM_QOS_PRI_MAX];
@@ -195,16 +199,16 @@ IP优先级     0	1	2	3	4	5	6	7
 内部DSCP值	0~7		8~15	16~23	24~31	32~39	40~47	48~55	56~63
 COS值		0		1		2		3		4		5		6		7
 */
-extern int nsm_dscp_to_cos(int dscp);
-extern int nsm_cos_to_dscp(int cos);
+extern int nsm_dscp_to_cos(ospl_uint32 dscp);
+extern int nsm_cos_to_dscp(ospl_uint32 cos);
 
 extern int nsm_qos_storm_enable_set_api(struct interface *ifp);
-extern BOOL nsm_qos_storm_enable_get_api(struct interface *ifp);
+extern ospl_bool nsm_qos_storm_enable_get_api(struct interface *ifp);
 
-extern int nsm_qos_storm_set_api(struct interface *ifp, u_int qos_unicast,
-		u_int qos_multicast, u_int qos_broadcast);
-extern int nsm_qos_storm_get_api(struct interface *ifp, u_int *qos_unicast,
-		u_int *qos_multicast, u_int *qos_broadcast);
+extern int nsm_qos_storm_set_api(struct interface *ifp, ospl_uint32 qos_unicast,
+		ospl_uint32 qos_multicast, ospl_uint32 qos_broadcast);
+extern int nsm_qos_storm_get_api(struct interface *ifp, ospl_uint32 *qos_unicast,
+		ospl_uint32 *qos_multicast, ospl_uint32 *qos_broadcast);
 extern int nsm_qos_rate_set_api(struct interface *ifp, nsm_qos_dir_e qos_dir,
 		nsm_qos_limit_t *rate);
 extern int nsm_qos_rate_get_api(struct interface *ifp, nsm_qos_dir_e qos_dir,
@@ -225,5 +229,9 @@ extern int nsm_qos_user_pri_map_priority_get_api(struct interface *ifp, nsm_qos_
 extern int nsm_qos_init();
 extern int nsm_qos_exit();
 
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __NSM_NSM_QOS_H_ */

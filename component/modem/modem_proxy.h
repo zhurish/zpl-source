@@ -9,7 +9,15 @@
 #define __MODEM_PROXY_H__
 
 
-extern int modem_proxy_enable(const char *name, int fd, BOOL close);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern int modem_proxy_enable(const char *name, int fd, ospl_bool close);
 extern int modem_proxy_disable(const char *name);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MODEM_PROXY_H__ */

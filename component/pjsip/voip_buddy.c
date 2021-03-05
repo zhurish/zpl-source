@@ -314,7 +314,7 @@ buddy_user_t * buddy_dbase_lookup_by_username(char *username)
 	return buddy_dbase_node_lookup_by_username(username);
 }
 
-int buddy_dbase_username_add(char *username, u_int32	userid)
+int buddy_dbase_username_add(char *username, ospl_uint32	userid)
 {
 	buddy_user_t *user = buddy_dbase_node_lookup_by_username(username);
 	if(user)
@@ -328,7 +328,7 @@ int buddy_dbase_username_add(char *username, u_int32	userid)
 	return OK;
 }
 
-int buddy_dbase_username_del(char *username, u_int32 userid)
+int buddy_dbase_username_del(char *username, ospl_uint32 userid)
 {
 	buddy_user_t *user = buddy_dbase_node_lookup_by_username(username);
 	if(!user)

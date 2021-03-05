@@ -36,7 +36,7 @@ DEFUN (hal_test_manage_mode,
 		"Manage\n")
 {
 	int ret = 0;
-	ret = hal_switch_mode(TRUE);
+	ret = hal_switch_mode(ospl_true);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 DEFUN (no_hal_test_manage_mode,
@@ -47,7 +47,7 @@ DEFUN (no_hal_test_manage_mode,
 		"Manage\n")
 {
 	int ret = 0;
-	ret = hal_switch_mode(FALSE);
+	ret = hal_switch_mode(ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -58,7 +58,7 @@ DEFUN (hal_test_forward_mode,
 		"Manage\n")
 {
 	int ret = 0;
-	ret = hal_switch_forward(TRUE);
+	ret = hal_switch_forward(ospl_true);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 DEFUN (no_hal_test_forward_mode,
@@ -69,7 +69,7 @@ DEFUN (no_hal_test_forward_mode,
 		"Manage\n")
 {
 	int ret = 0;
-	ret = hal_switch_forward(FALSE);
+	ret = hal_switch_forward(ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -80,7 +80,7 @@ DEFUN (hal_test_multicast_learning,
 		"Manage\n")
 {
 	int ret = 0;
-	ret = hal_multicast_learning(TRUE);
+	ret = hal_multicast_learning(ospl_true);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 DEFUN (no_hal_test_multicast_learning,
@@ -91,7 +91,7 @@ DEFUN (no_hal_test_multicast_learning,
 		"Manage\n")
 {
 	int ret = 0;
-	ret = hal_multicast_learning(FALSE);
+	ret = hal_multicast_learning(ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -104,7 +104,7 @@ DEFUN (hal_test_bpdu,
 		"Manage\n")
 {
 	int ret = 0;
-	ret = hal_global_bpdu_enable(TRUE);
+	ret = hal_global_bpdu_enable(ospl_true);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 DEFUN (no_hal_test_bpdu,
@@ -115,7 +115,7 @@ DEFUN (no_hal_test_bpdu,
 		"Manage\n")
 {
 	int ret = 0;
-	ret = hal_global_bpdu_enable(FALSE);
+	ret = hal_global_bpdu_enable(ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -129,7 +129,7 @@ DEFUN (hal_test_icmp_size,
 		"Manage\n")
 {
 	int ret = 0;
-	ret = hal_dos_icmp_size(FALSE, atoi(argv[0]));
+	ret = hal_dos_icmp_size(ospl_false, atoi(argv[0]));
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -147,7 +147,7 @@ DEFUN (hal_test_tcp_hdr_size,
 DEFUN (hal_test_dos_enable,
 		hal_test_dos_enable_cmd,
 		"sdk dos-enable (iplan|tcp-blat|udp-blat|tcp-nullscan|tcp-xmasscan|tcp-synfinscan|"
-		"tcp-synerror|tcp-shorthdr|tcp-fragerror|icmpv4-fragment|icmpv6-fragment|icmpv4-long|icmpv4-long)",
+		"tcp-synerror|tcp-ospl_int16hdr|tcp-fragerror|icmpv4-fragment|icmpv6-fragment|icmpv4-long|icmpv4-long)",
 		"sdk\n"
 		"Manage\n")
 {
@@ -167,7 +167,7 @@ DEFUN (hal_test_dos_enable,
 		type = TCP_SYNFINSCAN_DROP;
 	else if(strstr(argv[0], "synerror"))
 		type = TCP_SYNERROR_DROP;
-	else if(strstr(argv[0], "shorthdr"))
+	else if(strstr(argv[0], "ospl_int16hdr"))
 		type = TCP_SHORTHDR_DROP;
 	else if(strstr(argv[0], "fragerror"))
 		type = TCP_FRAGERROR_DROP;
@@ -179,14 +179,14 @@ DEFUN (hal_test_dos_enable,
 		type = ICMPv4_LONGPING_DROP;
 	else if(strstr(argv[0], "icmpv6-long"))
 		type = ICMPv6_LONGPING_DROP;
-	ret = hal_dos_enable(TRUE, type);
+	ret = hal_dos_enable(ospl_true, type);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
 DEFUN (no_hal_test_dos_enable,
 		no_hal_test_dos_enable_cmd,
 		"no sdk dos-enable (iplan|tcp-blat|udp-blat|tcp-nullscan|tcp-xmasscan|tcp-synfinscan|"
-		"tcp-synerror|tcp-shorthdr|tcp-fragerror|icmpv4-fragment|icmpv6-fragment|icmpv4-long|icmpv4-long)",
+		"tcp-synerror|tcp-ospl_int16hdr|tcp-fragerror|icmpv4-fragment|icmpv6-fragment|icmpv4-long|icmpv4-long)",
 		NO_STR
 		"sdk\n"
 		"Manage\n")
@@ -207,7 +207,7 @@ DEFUN (no_hal_test_dos_enable,
 		type = TCP_SYNFINSCAN_DROP;
 	else if(strstr(argv[0], "synerror"))
 		type = TCP_SYNERROR_DROP;
-	else if(strstr(argv[0], "shorthdr"))
+	else if(strstr(argv[0], "ospl_int16hdr"))
 		type = TCP_SHORTHDR_DROP;
 	else if(strstr(argv[0], "fragerror"))
 		type = TCP_FRAGERROR_DROP;
@@ -219,7 +219,7 @@ DEFUN (no_hal_test_dos_enable,
 		type = ICMPv4_LONGPING_DROP;
 	else if(strstr(argv[0], "icmpv6-long"))
 		type = ICMPv6_LONGPING_DROP;
-	ret = hal_dos_enable(FALSE, type);
+	ret = hal_dos_enable(ospl_false, type);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -245,7 +245,7 @@ DEFUN (hal_test_mirror_enable,
 		"Manage\n")
 {
 	int ret = 0;
-	ret = hal_mirror_enable(if_ifindex_make(argv[0], argv[1]), TRUE);
+	ret = hal_mirror_enable(if_ifindex_make(argv[0], argv[1]), ospl_true);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -256,7 +256,7 @@ DEFUN (no_hal_test_mirror_enable,
 		"Manage\n")
 {
 	int ret = 0;
-	ret = hal_mirror_enable(if_ifindex_make(argv[0], argv[1]), FALSE);
+	ret = hal_mirror_enable(if_ifindex_make(argv[0], argv[1]), ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -267,7 +267,7 @@ DEFUN (hal_test_mirror_src_enable,
 		"Manage\n")
 {
 	int ret = 0;
-	ret = hal_mirror_source_enable(if_ifindex_make(argv[0], argv[1]), TRUE, HAL_MIRROR_SOURCE_PORT, HAL_MIRROR_BOTH);
+	ret = hal_mirror_source_enable(if_ifindex_make(argv[0], argv[1]), ospl_true, HAL_MIRROR_SOURCE_PORT, HAL_MIRROR_BOTH);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -278,7 +278,7 @@ DEFUN (no_hal_test_mirror_src_enable,
 		"Manage\n")
 {
 	int ret = 0;
-	ret = hal_mirror_source_enable(if_ifindex_make(argv[0], argv[1]), FALSE, HAL_MIRROR_SOURCE_PORT, HAL_MIRROR_BOTH);
+	ret = hal_mirror_source_enable(if_ifindex_make(argv[0], argv[1]), ospl_false, HAL_MIRROR_SOURCE_PORT, HAL_MIRROR_BOTH);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -337,7 +337,7 @@ DEFUN (hal_test_jumbo_enable,
 		"Manage\n")
 {
 	int ret = 0;
-	ret = hal_port_jumbo_set(if_ifindex_make(argv[0], argv[1]), TRUE);
+	ret = hal_port_jumbo_set(if_ifindex_make(argv[0], argv[1]), ospl_true);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -348,7 +348,7 @@ DEFUN (no_hal_test_jumbo_enable,
 		"Manage\n")
 {
 	int ret = 0;
-	ret = hal_port_jumbo_set(if_ifindex_make(argv[0], argv[1]), FALSE);
+	ret = hal_port_jumbo_set(if_ifindex_make(argv[0], argv[1]), ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -359,7 +359,7 @@ DEFUN (hal_test_enable_enable,
 		"Manage\n")
 {
 	int ret = 0;
-	ret = hal_port_enable_set(if_ifindex_make(argv[0], argv[1]), TRUE);
+	ret = hal_port_enable_set(if_ifindex_make(argv[0], argv[1]), ospl_true);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -370,7 +370,7 @@ DEFUN (no_hal_test_enable_enable,
 		"Manage\n")
 {
 	int ret = 0;
-	ret = hal_port_enable_set(if_ifindex_make(argv[0], argv[1]), FALSE);
+	ret = hal_port_enable_set(if_ifindex_make(argv[0], argv[1]), ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -382,7 +382,7 @@ DEFUN (hal_test_learning_enable,
 		"Manage\n")
 {
 	int ret = 0;
-	ret = hal_port_learning_set(if_ifindex_make(argv[0], argv[1]), TRUE);
+	ret = hal_port_learning_set(if_ifindex_make(argv[0], argv[1]), ospl_true);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -393,7 +393,7 @@ DEFUN (no_hal_test_learning_enable,
 		"Manage\n")
 {
 	int ret = 0;
-	ret = hal_port_learning_set(if_ifindex_make(argv[0], argv[1]), FALSE);
+	ret = hal_port_learning_set(if_ifindex_make(argv[0], argv[1]), ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -404,7 +404,7 @@ DEFUN (hal_test_swlearning_enable,
 		"Manage\n")
 {
 	int ret = 0;
-	ret = hal_port_software_learning_set(if_ifindex_make(argv[0], argv[1]), TRUE);
+	ret = hal_port_software_learning_set(if_ifindex_make(argv[0], argv[1]), ospl_true);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -415,7 +415,7 @@ DEFUN (no_hal_test_swlearning_enable,
 		"Manage\n")
 {
 	int ret = 0;
-	ret = hal_port_software_learning_set(if_ifindex_make(argv[0], argv[1]), FALSE);
+	ret = hal_port_software_learning_set(if_ifindex_make(argv[0], argv[1]), ospl_false);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -423,8 +423,8 @@ DEFUN (no_hal_test_swlearning_enable,
 /*
  * QOS
  */
-int hal_qos_enable(BOOL enable);
-int hal_qos_ipg_enable(BOOL enable);
+int hal_qos_enable(ospl_bool enable);
+int hal_qos_ipg_enable(ospl_bool enable);
 int hal_qos_base_mode(ifindex_t ifindex, nsm_qos_trust_e enable);
 int hal_qos_8021q_enable(ifindex_t ifindex, nsm_qos_trust_e enable);
 int hal_qos_diffserv_enable(ifindex_t ifindex, nsm_qos_trust_e enable);
@@ -437,19 +437,19 @@ int hal_qos_queue_scheduling(nsm_qos_class_e class, nsm_class_sched_t type);
 int hal_qos_queue_weight(nsm_qos_class_e class, int weight);
 
 //风暴
-int hal_qos_storm_mode(ifindex_t ifindex, BOOL enable, int mode);
-int hal_qos_storm_rate_limit(ifindex_t ifindex, u_int limit, u_int burst_size);
+int hal_qos_storm_mode(ifindex_t ifindex, ospl_bool enable, int mode);
+int hal_qos_storm_rate_limit(ifindex_t ifindex, ospl_uint32 limit, ospl_uint32 burst_size);
 
 //端口限速
-int hal_qos_egress_rate_limit(ifindex_t ifindex, u_int limit, u_int burst_size);
-int hal_qos_ingress_rate_limit(ifindex_t ifindex, u_int limit, u_int burst_size);
+int hal_qos_egress_rate_limit(ifindex_t ifindex, ospl_uint32 limit, ospl_uint32 burst_size);
+int hal_qos_ingress_rate_limit(ifindex_t ifindex, ospl_uint32 limit, ospl_uint32 burst_size);
 //CPU
-int hal_qos_cpu_rate_limit(u_int limit, u_int burst_size);
+int hal_qos_cpu_rate_limit(ospl_uint32 limit, ospl_uint32 burst_size);
 
 /*
  * TRUNK
  */
-int hal_trunk_enable(BOOL enable);
+int hal_trunk_enable(ospl_bool enable);
 int hal_trunk_mode(int mode);
 int hal_trunk_interface_enable(ifindex_t ifindex, int trunkid);
 int hal_trunk_interface_disable(ifindex_t ifindex, int trunkid);
@@ -460,7 +460,7 @@ int hal_trunkid(int trunkid);
 /*
  *VLAN
  */
-extern int hal_vlan_enable(BOOL enable);
+extern int hal_vlan_enable(ospl_bool enable);
 extern int hal_vlan_create(vlan_t vlan);
 extern int hal_vlan_destroy(vlan_t vlan);
 

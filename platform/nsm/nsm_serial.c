@@ -22,11 +22,11 @@
 #include "nsm_serial.h"
 
 
-int serial_index_make(const char *sname)
+ospl_uint32 serial_index_make(const char *sname)
 {
-	int i;
-	char *p = sname;
-	int	inde = 0;
+	ospl_uint32 i = 0;
+	ospl_char *p = sname;
+	ospl_uint32	inde = 0;
 	tty_type_en type = 0;
 	if(os_strstr(sname, "USB"))
 		type = IF_TTY_USB;
@@ -89,7 +89,7 @@ static int nsm_serial_del_interface(struct interface *ifp)
 	return OK;
 }
 
-int nsm_serial_interface_kernel(struct interface *ifp, char *kname)
+int nsm_serial_interface_kernel(struct interface *ifp, ospl_char *kname)
 {
 	//nsm_serial_t * serial = nsm_serial_get(ifp);
 	if(ifp)
@@ -106,7 +106,7 @@ int nsm_serial_interface_kernel(struct interface *ifp, char *kname)
 	return ERROR;
 }
 
-int nsm_serial_interface_clock(struct interface *ifp, int clock)
+int nsm_serial_interface_clock(struct interface *ifp, ospl_uint32 clock)
 {
 	nsm_serial_t * serial = nsm_serial_get(ifp);
 	if(serial)
@@ -117,7 +117,7 @@ int nsm_serial_interface_clock(struct interface *ifp, int clock)
 	return ERROR;
 }
 
-int nsm_serial_interface_data(struct interface *ifp, int data)
+int nsm_serial_interface_data(struct interface *ifp, ospl_uint32 data)
 {
 	nsm_serial_t * serial = nsm_serial_get(ifp);
 	if(serial)
@@ -128,7 +128,7 @@ int nsm_serial_interface_data(struct interface *ifp, int data)
 	return ERROR;
 }
 
-int nsm_serial_interface_stop(struct interface *ifp, int stop)
+int nsm_serial_interface_stop(struct interface *ifp, ospl_uint32 stop)
 {
 	nsm_serial_t * serial = nsm_serial_get(ifp);
 	if(serial)
@@ -139,7 +139,7 @@ int nsm_serial_interface_stop(struct interface *ifp, int stop)
 	return ERROR;
 }
 
-int nsm_serial_interface_parity(struct interface *ifp, int parity)
+int nsm_serial_interface_parity(struct interface *ifp, ospl_uint32 parity)
 {
 	nsm_serial_t * serial = nsm_serial_get(ifp);
 	if(serial)
@@ -150,7 +150,7 @@ int nsm_serial_interface_parity(struct interface *ifp, int parity)
 	return ERROR;
 }
 
-int nsm_serial_interface_flow_control(struct interface *ifp, int flow_control)
+int nsm_serial_interface_flow_control(struct interface *ifp, ospl_uint32 flow_control)
 {
 	nsm_serial_t * serial = nsm_serial_get(ifp);
 	if(serial)
@@ -162,14 +162,14 @@ int nsm_serial_interface_flow_control(struct interface *ifp, int flow_control)
 }
 
 
-int nsm_serial_interface_devname(struct interface *ifp, char * devname)
+int nsm_serial_interface_devname(struct interface *ifp, ospl_char * devname)
 {
 	nsm_serial_t * serial = nsm_serial_get(ifp);
 	if(serial)
 	{
 		if(devname)
 		{
-			char *p;//, *k;
+			ospl_char *p;//, *k;
 			os_memset(serial->serial.devname, 0, sizeof(serial->serial.devname));
 			p = devname;
 			while(p)
@@ -204,22 +204,22 @@ int nsm_serial_interface_enca_set_api(struct interface *ifp, if_enca_t mode)
 
 
 
-int nsm_serial_ppp_encapsulation(char *input, int inlen, char *output, int outlen)
+int nsm_serial_ppp_encapsulation(ospl_char *input, ospl_uint32 inlen, ospl_char *output, ospl_uint32 outlen)
 {
 	return OK;
 }
 
-int nsm_serial_ppp_decapsulation(char *input, int inlen, char *output, int outlen)
+int nsm_serial_ppp_decapsulation(ospl_char *input, ospl_uint32 inlen, ospl_char *output, ospl_uint32 outlen)
 {
 	return OK;
 }
 
-int nsm_serial_slip_encapsulation(char *input, int inlen, char *output, int outlen)
+int nsm_serial_slip_encapsulation(ospl_char *input, ospl_uint32 inlen, ospl_char *output, ospl_uint32 outlen)
 {
 	return OK;
 }
 
-int nsm_serial_slip_decapsulation(char *input, int inlen, char *output, int outlen)
+int nsm_serial_slip_decapsulation(ospl_char *input, ospl_uint32 inlen, ospl_char *output, ospl_uint32 outlen)
 {
 	return OK;
 }
@@ -231,9 +231,9 @@ int nsm_serial_interface_write_config(struct vty *vty, struct interface *ifp)
 {
 	if(if_is_serial(ifp))
 	{
-		char *parity[] = { "none", "even", "odd", "mark", "space" };
-		char *flow[] = { "none", "sorfware", "hardware"};
-		//char *parity[] = { "none", "even", "odd", "mark", "space" };
+		ospl_char *parity[] = { "none", "even", "odd", "mark", "space" };
+		ospl_char *flow[] = { "none", "sorfware", "hardware"};
+		//ospl_char *parity[] = { "none", "even", "odd", "mark", "space" };
 
 		nsm_serial_t * serial = nsm_serial_get(ifp);
 		if(serial)

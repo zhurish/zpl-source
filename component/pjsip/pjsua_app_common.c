@@ -146,7 +146,7 @@ void send_request(char *cstr_method, const pj_str_t *dst_uri)
  * printing it is a bit tricky, it should be printed part by part as long 
  * as the logger can accept.
  */
-void log_call_dump(int call_id) 
+void log_call_dump(pjsua_call_id call_id) 
 {
     unsigned call_dump_len;
     unsigned part_len;
@@ -275,13 +275,13 @@ void arrange_window(pjsua_vid_win_id wid)
 
 
 #if PJSUA_HAS_VIDEO
-void vid_print_dev(int id, const pjmedia_vid_dev_info *vdi, const char *title)
+void vid_print_dev(ospl_uint32 id, const pjmedia_vid_dev_info *vdi, const char *title)
 {
     char capnames[120];
     char formats[200];
     const char *dirname;
     unsigned i;
-    int st_len;
+    ospl_uint32 st_len;
 
     if (vdi->dir == PJMEDIA_DIR_CAPTURE_RENDER) {
 	dirname = "capture, render";
@@ -368,7 +368,7 @@ void vid_list_devs()
     }
 }
 
-void app_config_show_video(int acc_id, const pjsua_acc_config *acc_cfg)
+void app_config_show_video(ospl_uint32 acc_id, const pjsua_acc_config *acc_cfg)
 {
     PJ_LOG(3,(THIS_FILE,
 	      "Account %d:\r\n"

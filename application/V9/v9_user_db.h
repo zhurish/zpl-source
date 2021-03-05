@@ -1,6 +1,10 @@
 #ifndef __V9_USER_SQLDB_H__
 #define __V9_USER_SQLDB_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #include "sqlite3.h"
 #include "v9_video.h"
@@ -38,38 +42,42 @@
 
 
 
-extern u_int32 _sqldb_debug;
+extern ospl_uint32 _sqldb_debug;
 
 
 
-extern sqlite3 * v9_user_sqldb_open(u_int32 id);
-extern int v9_user_sqldb_close(sqlite3 *db, u_int32 id);
+extern sqlite3 * v9_user_sqldb_open(ospl_uint32 id);
+extern int v9_user_sqldb_close(sqlite3 *db, ospl_uint32 id);
 
-extern int v9_user_sqldb_count(sqlite3 *db, u_int32 id, int group, int *pValue);
+extern int v9_user_sqldb_count(sqlite3 *db, ospl_uint32 id, int group, int *pValue);
 
-extern int v9_user_sqldb_add(sqlite3 *db, u_int32 id, BOOL gender, int group, char *user, char *user_id, char *pic, char *text);
-//extern int v9_user_sqldb_add_qurey(sqlite3 *db, u_int32 id, BOOL gender, int group, char *user, char *user_id, char *pic);
+extern int v9_user_sqldb_add(sqlite3 *db, ospl_uint32 id, ospl_bool gender, int group, char *user, char *user_id, char *pic, char *text);
+//extern int v9_user_sqldb_add_qurey(sqlite3 *db, ospl_uint32 id, ospl_bool gender, int group, char *user, char *user_id, char *pic);
 
-extern int v9_user_sqldb_update(sqlite3 *db, u_int32 id, BOOL gender, int group, char *user, char *user_id, char *pic, char *text);
+extern int v9_user_sqldb_update(sqlite3 *db, ospl_uint32 id, ospl_bool gender, int group, char *user, char *user_id, char *pic, char *text);
 
-extern int v9_user_sqldb_key_update(sqlite3 *db, u_int32 id, char *user_id, sql_snapfea_key *key);
+extern int v9_user_sqldb_key_update(sqlite3 *db, ospl_uint32 id, char *user_id, sql_snapfea_key *key);
 
-extern int v9_user_sqldb_key_select(sqlite3 *db, u_int32 id, char *user_id, sql_snapfea_key *key);
+extern int v9_user_sqldb_key_select(sqlite3 *db, ospl_uint32 id, char *user_id, sql_snapfea_key *key);
 
-extern int v9_user_sqldb_del(sqlite3 *db, u_int32 id, char *user_id);
+extern int v9_user_sqldb_del(sqlite3 *db, ospl_uint32 id, char *user_id);
 
-extern int v9_user_sqldb_del_group(sqlite3 *db, u_int32 id, int group);
-extern int v9_user_sqldb_cleanup(u_int32 id);
+extern int v9_user_sqldb_del_group(sqlite3 *db, ospl_uint32 id, int group);
+extern int v9_user_sqldb_cleanup(ospl_uint32 id);
 
-extern int v9_user_sqldb_lookup_user(sqlite3 *db,u_int32 id, char *user_id, void *user);
-extern int v9_user_sqldb_foreach(sqlite3 *db, u_int32 id, int groupid, char *user_id, void * cb, void *pVoid);
+extern int v9_user_sqldb_lookup_user(sqlite3 *db,ospl_uint32 id, char *user_id, void *user);
+extern int v9_user_sqldb_foreach(sqlite3 *db, ospl_uint32 id, int groupid, char *user_id, void * cb, void *pVoid);
 
 
-extern int v9_user_sqldb_key_foreach(sqlite3 *db, u_int32 id, sql_snapfea_key *key, char *user_id, float* p_fResult);
+extern int v9_user_sqldb_key_foreach(sqlite3 *db, ospl_uint32 id, sql_snapfea_key *key, char *user_id, ospl_float* p_fResult);
 
 #ifdef V9_SQLDB_TEST
-extern int v9_user_sqldb_test(int i, void *pArg);
+extern int v9_user_sqldb_test(ospl_uint32 i, void *pArg);
 #endif
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __V9_USER_SQLDB_H__ */

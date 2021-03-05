@@ -16,6 +16,10 @@
 #ifndef LIST_TREE_H
 #define LIST_TREE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * struct dl_list - Doubly-linked list
  */
@@ -28,18 +32,18 @@ struct tree_node {
 
 struct list_tree{
 	struct tree_node *root;
-	int	(*cmp)(void *, void *);
-	int	(*del)(void *);
-	int count;
+	ospl_int	(*cmp)(void *, void *);
+	ospl_int	(*del)(void *);
+	ospl_uint32 count;
 };
 
 
-static inline int list_tree_empty(struct list_tree *tree)
+static inline ospl_bool list_tree_empty(struct list_tree *tree)
 {
 	return (tree->root == NULL)? 1:0;
 }
 
-static inline int list_tree_count(struct list_tree *tree)
+static inline ospl_uint32 list_tree_count(struct list_tree *tree)
 {
 	return tree->count;
 }
@@ -149,5 +153,9 @@ static inline int list_tree_del(struct list_tree *tree, struct tree_node *root, 
 	return 0;
 }
 
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LIST_TREE_H */

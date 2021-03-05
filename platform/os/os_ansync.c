@@ -14,7 +14,7 @@
 
 #ifdef OS_ANSYNC_GLOBAL_LIST
 static LIST	*ansyncList = NULL;
-static u_int8	g_ansync_init = 0;
+static ospl_uint8	g_ansync_init = 0;
 
 static int os_ansync_global_init()
 {
@@ -31,7 +31,7 @@ static int os_ansync_global_init()
 	return ERROR;
 }
 
-os_ansync_lst * os_ansync_global_lookup(int taskid, int module)
+os_ansync_lst * os_ansync_global_lookup(ospl_uint32 taskid, ospl_uint32 module)
 {
 	NODE index;
 	os_ansync_lst *pstNode = NULL;
@@ -53,7 +53,7 @@ os_ansync_lst * os_ansync_global_lookup(int taskid, int module)
 static os_ansync_t * os_ansync_lookup_node(os_ansync_lst *lst, os_ansync_t *value);
 
 
-os_ansync_lst *os_ansync_lst_create(int module, int maxfd)
+os_ansync_lst *os_ansync_lst_create(ospl_uint32 module, int maxfd)
 {
 	os_ansync_lst *lst = os_malloc(sizeof(os_ansync_lst));
 #ifdef OS_ANSYNC_GLOBAL_LIST
@@ -109,7 +109,7 @@ os_ansync_lst *os_ansync_lst_create(int module, int maxfd)
 		lst->max_fd = maxfd;
 		lstInit(lst->list);
 		lstInit(lst->unuselist);
-		lst->bquit = FALSE;
+		lst->bquit = ospl_false;
 #ifdef OS_ANSYNC_GLOBAL_LIST
 		lstAdd(ansyncList, (NODE *)lst);
 #endif
@@ -155,17 +155,17 @@ int os_ansync_lst_destroy(os_ansync_lst *lst)
 	return OK;
 }
 
-static BOOL os_ansync_lst_chk(os_ansync_lst *lst)
+static ospl_bool os_ansync_lst_chk(os_ansync_lst *lst)
 {
 	if (!lst)
-		return FALSE;
+		return ospl_false;
 	if (!lst->mutex)
-		return FALSE;
+		return ospl_false;
 	if (!lst->list)
-		return FALSE;
+		return ospl_false;
 	if (!lst->unuselist)
-		return FALSE;
-	return TRUE;
+		return ospl_false;
+	return ospl_true;
 }
 
 static int os_ansync_epoll_event_add(os_ansync_lst *lst, os_ansync_t *value)
@@ -423,7 +423,7 @@ int os_ansync_add_api(os_ansync_lst *lst, os_ansync_t *value)
 	return ret;
 }
 
-int os_ansync_timeout_api(os_ansync_lst *lst, int value)
+int os_ansync_timeout_api(os_ansync_lst *lst, ospl_uint32 value)
 {
 	int ret = OK;
 	if(!lst)
@@ -482,7 +482,7 @@ static os_ansync_t * os_ansync_get(os_ansync_lst *lst)
 }
 
 int _os_ansync_register_api(os_ansync_lst *lst, os_ansync_type type, os_ansync_cb cb,
-		void *pVoid, int value, char *func_name, char *file, int line)
+		void *pVoid, int value, ospl_char *func_name, ospl_char *file, ospl_uint32 line)
 {
 	//int ret = 0;
 	os_ansync_t *node = NULL;
@@ -568,7 +568,7 @@ int _os_ansync_unregister_all_api(os_ansync_lst *lst, os_ansync_type type, os_an
 {
 	NODE index;
 	os_ansync_t *pstNode = NULL;
-	//time_t cut = os_time(NULL);
+	//ospl_time_t cut = os_time(NULL);
 	if(!os_ansync_lst_chk(lst))
 		return ERROR;
 	if(lst->mutex)
@@ -624,7 +624,7 @@ int _os_ansync_unregister_all_api(os_ansync_lst *lst, os_ansync_type type, os_an
 }
 
 int _os_ansync_register_event_api(os_ansync_lst *lst, os_ansync_type type, os_ansync_cb cb,
-		void *pVoid, int value, char *func_name, char *file, int line)
+		void *pVoid, int value, ospl_char *func_name, ospl_char *file, ospl_uint32 line)
 {
 	int ret = 0;
 	if(lst->ansync_mutex)
@@ -637,9 +637,9 @@ int _os_ansync_register_event_api(os_ansync_lst *lst, os_ansync_type type, os_an
 	return ret;
 }
 
-static int os_ansync_io_helper(os_ansync_lst *lst, int num)
+static int os_ansync_io_helper(os_ansync_lst *lst, ospl_uint32 num)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	//NODE index;
 	os_ansync_t value;
 	os_ansync_t *node = NULL;
@@ -694,7 +694,7 @@ static int os_ansync_timer_helper(os_ansync_lst *lst, struct timeval *wait_tv)
 {
 	NODE index;
 	os_ansync_t *pstNode = NULL;
-	//time_t cut = os_time(NULL);
+	//ospl_time_t cut = os_time(NULL);
 	if(!os_ansync_lst_chk(lst))
 		return ERROR;
 	if(lst->mutex)
@@ -783,7 +783,7 @@ int os_ansync_fetch_quit (os_ansync_lst *lst)
 {
 	if(lst)
 	{
-		lst->bquit = TRUE;
+		lst->bquit = ospl_true;
 	}
 	return OK;
 }
@@ -819,7 +819,7 @@ os_ansync_t *os_ansync_fetch(os_ansync_lst *lst)
 		if(lst->bquit)
 		{
 			//fetch = NULL;
-			lst->bquit = FALSE;
+			lst->bquit = ospl_false;
 			return NULL;
 		}
 		os_gettime (OS_CLK_MONOTONIC, &wait_tv);
@@ -980,10 +980,10 @@ int os_ansync_unlock(os_ansync_lst *lst)
 	return OK;
 }
 
-int os_ansync_show(os_ansync_lst *lst, int (*show)(void *, char *fmt,...), void *pVoid)
+int os_ansync_show(os_ansync_lst *lst, int (*show)(void *, ospl_char *fmt,...), void *pVoid)
 {
 	int head = 0;
-	char type[16], value[8], state[8];
+	ospl_char type[16], value[8], state[8];
 	NODE index;
 	os_ansync_t *pstNode = NULL;
 	if(!os_ansync_lst_chk(lst))
@@ -1092,7 +1092,7 @@ int os_ansync_test()
 */
 
 #ifdef __OS_ANSYNC_DEBUG
-void os_ansync_debug_printf(void *fp, char *func, int line,  const char *format, ...)
+void os_ansync_debug_printf(void *fp, ospl_char *func, ospl_uint32 line,  const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);

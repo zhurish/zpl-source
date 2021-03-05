@@ -10,7 +10,7 @@
 #include <ifaddrs.h>
 #include <netpacket/packet.h>
 
-int FAST_FUNC d6_read_interface(const char *interface, int *ifindex, struct in6_addr *nip6, uint8_t *mac)
+int FAST_FUNC d6_read_interface(const char *interface, ifindex_t *ifindex, struct in6_addr *nip6, ospl_uint8 *mac)
 {
 	int retval = 3;
 	struct ifaddrs *ifap, *ifa;

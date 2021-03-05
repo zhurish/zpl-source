@@ -89,7 +89,7 @@ pid_output (const char *path)
   int tmp;
   int fd;
   pid_t pid;
-  char buf[16];
+  ospl_char buf[16];
   struct flock lock;  
   mode_t oldumask;
 
@@ -106,7 +106,7 @@ pid_output (const char *path)
     }
   else
     {
-      size_t pidsize;
+      ospl_size_t pidsize;
 
       umask(oldumask);
       memset (&lock, 0, sizeof(lock));
@@ -128,7 +128,7 @@ pid_output (const char *path)
 	         (int)pid,path,tmp,safe_strerror(errno));
       else if (ftruncate(fd, pidsize) < 0)
         zlog_err(MODULE_DEFAULT, "Could not truncate pid_file %s to %u bytes: %s",
-	         path,(u_int)pidsize,safe_strerror(errno));
+	         path,(ospl_uint32)pidsize,safe_strerror(errno));
     }
   return pid;
 }

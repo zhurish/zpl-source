@@ -122,7 +122,7 @@ static void tracerouteFinish (TRACEROUTE_STAT * pPS);
  *
  * The second parameter, <numPackets>, specifies the number of ICMP packets
  * to receive from the remote host.  If <numPackets> is 1, this routine waits
- * for a single echo reply packet, and then prints a short message
+ * for a single echo reply packet, and then prints a ospl_int16 message
  * indicating whether the remote host is reachable.  For all other values
  * of <numPackets>, timing and sequence information is printed as echoed
  * packets are received.  If <numPackets> is 0, this routine runs continuously.
@@ -245,7 +245,7 @@ send_next:
 			memcpy(&now, pPS->pBufTime, sizeof(struct timeval));
 			pPS->pBufIcmp->icmp_seq = seq++; /* increment seq number */
 			pPS->pBufIcmp->icmp_cksum = 0;
-			pPS->pBufIcmp->icmp_cksum = in_cksum((u_short *) pPS->pBufIcmp,
+			pPS->pBufIcmp->icmp_cksum = in_cksum((ospl_ushort *) pPS->pBufIcmp,
 					pPS->tracerouteTxLen);
 
 			if ((ix = sendto(pPS->tracerouteFd, (char *) pPS->pBufIcmp,
@@ -334,7 +334,7 @@ release:
 	return (status);
 }
 
-int traceroute(struct vty *vty, char * host, int maxttl, int len, u_int32 options)
+int traceroute(struct vty *vty, char * host, int maxttl, int len, ospl_uint32 options)
 {
 	TRACEROUTE_STAT * pPS = NULL;
 	struct in_addr addr;
@@ -389,11 +389,11 @@ int traceroute(struct vty *vty, char * host, int maxttl, int len, u_int32 option
     	strcpy(pPS->toHostName, host);
     }
 
-    vty_ansync_enable(vty, TRUE);
+    vty_ansync_enable(vty, ospl_true);
     vty_out(vty,"%s", VTY_NEWLINE);
     traceroute_thread(pPS);
 
-    vty_ansync_enable(vty, FALSE);
+    vty_ansync_enable(vty, ospl_false);
 
 	if(pPS->bufRx != NULL)
 		XFREE(MTYPE_DATA, pPS->bufRx);
@@ -435,7 +435,7 @@ static int tracerouteRxPrint(TRACEROUTE_STAT * pPS, /* traceroute stats structur
 	if (len < hlen + ICMP_MINLEN) /* at least min length ? */
 	{
 		if (pPS->flags & TRACEROUTE_OPT_DEBUG)
-			vty_out(vty, "packet too short (%d bytes) from %s%s", len,
+			vty_out(vty, "packet too ospl_int16 (%d bytes) from %s%s", len,
 					inet_ntoa(from->sin_addr), VTY_NEWLINE);
 		return (ERROR);
 	}
@@ -449,7 +449,7 @@ static int tracerouteRxPrint(TRACEROUTE_STAT * pPS, /* traceroute stats structur
 		if(ip->ip_p == IPPROTO_ICMP)
 		{
 			//struct icmp *hicmp;
-			icp = (struct icmp *)((unsigned char *)ip + hlen);
+			icp = (struct icmp *)((ospl_uint8 *)ip + hlen);
 			if (ntohs(icp->icmp_id) != (pPS->idRx & 0xffff))
 			{
 				return ERROR;
@@ -467,7 +467,7 @@ static int tracerouteRxPrint(TRACEROUTE_STAT * pPS, /* traceroute stats structur
 		}
 /*		if(ip->ip_p == IPPROTO_UDP)
 		{
-			icp = (struct icmp *)((unsigned char *)ip + hlen);
+			icp = (struct icmp *)((ospl_uint8 *)ip + hlen);
 			if (ntohs(icp->icmp_id) != (pPS->idRx & 0xffff))
 			{
 				return ERROR;

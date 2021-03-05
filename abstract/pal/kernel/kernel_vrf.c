@@ -358,7 +358,7 @@ int os_vrf_stack_init()
  }*/
 
 /* Create a socket for the VRF. */
-int vrf_socket(int domain, int type, int protocol, vrf_id_t vrf_id)
+int vrf_socket(int domain, ospl_uint32 type, ospl_uint16 protocol, vrf_id_t vrf_id)
 {
 	struct vrf *vrf = vrf_lookup(vrf_id);
 	int ret = -1;

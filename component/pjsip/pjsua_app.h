@@ -20,6 +20,10 @@
 #ifndef __PJSUA_APP_H__
 #define __PJSUA_APP_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Interface for user application to use pjsua with CLI/menu based UI. 
  */
@@ -93,5 +97,9 @@ int pjsua_app_exit(void);
 int log_refresh_proc(void *arg);
 
 PJ_END_DECL
-    
+ 
+#ifdef __cplusplus
+}
+#endif
+   
 #endif	/* __PJSUA_APP_H__ */

@@ -22,8 +22,12 @@
 #ifndef _QUAGGA_ASSERT_H
 #define _QUAGGA_ASSERT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern void _zlog_assert_failed (const char *assertion, const char *file,
-				 unsigned int line, const char *function)
+				 ospl_uint32  line, const char *function)
 				 __attribute__ ((noreturn));
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
@@ -44,5 +48,9 @@ extern void _zlog_assert_failed (const char *assertion, const char *file,
 
 #undef assert
 #define assert(EX) zassert(EX)
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _QUAGGA_ASSERT_H */

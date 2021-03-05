@@ -37,7 +37,7 @@
 <th>解码状态</th>
 <th>连接状态</th>
 */
-static int _web_video_stream_one_detail(Webs *wp, v9_video_stream_t *pstNode, BOOL detail)
+static int _web_video_stream_one_detail(Webs *wp, v9_video_stream_t *pstNode, ospl_bool detail)
 {
 	web_assert(wp);
 	if (pstNode)
@@ -79,7 +79,7 @@ static int _web_video_stream_one_detail(Webs *wp, v9_video_stream_t *pstNode, BO
 			strlen(pstNode->username) ? pstNode->username:" ",
 			pstNode->fps,
 			rtsp_status,
-			(pstNode->decode_status==TRUE) ? "OK":"Failed",
+			(pstNode->decode_status==ospl_true) ? "OK":"Failed",
 			pstNode->connect ? "OK":"Failed",
 			str_isempty(pstNode->mainstream, sizeof(pstNode->mainstream))? " ":pstNode->mainstream,
 			str_isempty(pstNode->secondary, sizeof(pstNode->secondary))? " ":pstNode->secondary);
@@ -91,9 +91,9 @@ static int _web_video_stream_one_detail(Webs *wp, v9_video_stream_t *pstNode, BO
 
 static int web_video_stream_all(Webs *wp, char *path, char *query)
 {
-	u_int32 i = 0, j = 0;
+	ospl_uint32 i = 0, j = 0;
 	char *strval = NULL;
-	u_int32 id = 0;
+	ospl_uint32 id = 0;
 	web_assert(wp);
 	strval = webs_get_var(wp, T("ID"), T(""));
 	if (NULL == strval)
@@ -123,7 +123,7 @@ static int web_video_stream_all(Webs *wp, char *path, char *query)
 			{
 				if(v9_video_board[i].channel[j] && v9_video_board[i].video_stream[j])
 				{
-					_web_video_stream_one_detail(wp, v9_video_board[i].video_stream[j], FALSE);
+					_web_video_stream_one_detail(wp, v9_video_board[i].video_stream[j], ospl_false);
 				}
 			}
 		}
@@ -137,8 +137,8 @@ static int web_video_stream_all(Webs *wp, char *path, char *query)
 
 static int web_video_stream_detail(Webs *wp, void *p)
 {
-	u_int32 i = 0, j = 0;
-	//u_int32 id = 0;
+	ospl_uint32 i = 0, j = 0;
+	//ospl_uint32 id = 0;
 	//char *value = NULL;
 	web_assert(wp);
 	websSetStatus(wp, 200);
@@ -156,7 +156,7 @@ static int web_video_stream_detail(Webs *wp, void *p)
 			{
 				if(v9_video_board[i].channel[j] && v9_video_board[i].video_stream[j])
 				{
-					_web_video_stream_one_detail(wp, v9_video_board[i].video_stream[j], FALSE);
+					_web_video_stream_one_detail(wp, v9_video_board[i].video_stream[j], ospl_false);
 				}
 			}
 		}
@@ -170,8 +170,8 @@ static int web_video_stream_detail(Webs *wp, void *p)
 /*
 static int web_video_stream_detail(Webs *wp, char *path, char *query)
 {
-	u_int32 i = 0;
-	u_int32 id = 0;
+	ospl_uint32 i = 0;
+	ospl_uint32 id = 0;
 	char *value = NULL;
 	value = webs_get_var(wp, T("ID"), T(""));
 	if (NULL == value)
@@ -278,13 +278,13 @@ static int web_video_stream_add(Webs *wp, char *path, char *query)
 }
 
 
-static int web_video_stream_delete_one(Webs *wp, char *path, char *query, int type)
+static int web_video_stream_delete_one(Webs *wp, char *path, char *query, ospl_uint32 type)
 {
 	int ret = 0;
 	char *strID = NULL;
 	char *strch = NULL;
-	u_int8 id = 0;
-	u_int8 ch = 0;
+	ospl_uint8 id = 0;
+	ospl_uint8 ch = 0;
 	web_assert(wp);
 	strID = webs_get_var(wp, T("ID"), T(""));
 	if (NULL == strID)
@@ -383,8 +383,8 @@ static int web_video_stream_show_one(Webs *wp, void *p)
 	char ffmpegcmd[1024];
 	v9_video_stream_t *stream = NULL;
 	char *strval = NULL;
-	u_int8 id = 0;
-	u_int8 ch = 0;
+	ospl_uint8 id = 0;
+	ospl_uint8 ch = 0;
 	int ffmpegpid = 0;
 	web_assert(wp);
 	strval = webs_get_var(wp, T("ID"), T(""));
@@ -421,7 +421,7 @@ static int web_video_stream_show_one(Webs *wp, void *p)
 		if(stream && (stream->id != APP_BOARD_MAIN))
 			v9_video_sdk_get_rtsp_status_api(stream->id);
 	}
-	if(stream && stream->decode_status==TRUE && !str_isempty(stream->secondary, sizeof(stream->secondary)))
+	if(stream && stream->decode_status==ospl_true && !str_isempty(stream->secondary, sizeof(stream->secondary)))
 	{
 		sid = id;
 		sch = ch;
@@ -474,7 +474,7 @@ static int web_video_stream_show_one(Webs *wp, void *p)
 			super_system(ffmpegcmd);
 		}
 
-		if(stream && stream->decode_status!=TRUE)
+		if(stream && stream->decode_status!=ospl_true)
 		{
 			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
 				zlog_debug(MODULE_WEB, "decode Status Failed");

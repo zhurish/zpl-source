@@ -8,6 +8,10 @@
 #ifndef __PROCESS_H__
 #define __PROCESS_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "plconfig.h"
 #include "os_list.h"
 #include "os_util.h"
@@ -36,8 +40,8 @@ typedef struct process_s
 {
 	NODE	node;
 	char 	name[P_NAME_MAX];
-	BOOL	active;
-	BOOL	restart;
+	ospl_bool	active;
+	ospl_bool	restart;
 	char 	process[P_PATH_MAX];
 	char 	*argv[P_ARGV_MAX];
 	int		pid;
@@ -100,6 +104,10 @@ extern void process_log_print(int priority, const char *func, int line, const ch
 #define process_log_debug(fmt,...)		process_log_print(LOG_DEBUG, __func__, __LINE__,fmt, ##__VA_ARGS__)
 #define process_log_err(fmt,...)	process_log_print(LOG_ERR, __func__, __LINE__,fmt, ##__VA_ARGS__)
 
+#endif
+ 
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __PROCESS_H__ */

@@ -40,7 +40,7 @@ struct mac_user
 	int				broadcast;
 	int				discard;
 	int				forward;
-	BOOL			all;
+	ospl_bool			all;
 };
 
 static int show_nsm_mac_address_table(struct vty *vty, const char *type);
@@ -362,7 +362,7 @@ static int show_nsm_mac_address_table(struct vty *vty, const char *type)
 	user.vty = vty;
 	if(type == NULL)
 	{
-		user.all = TRUE;
+		user.all = ospl_true;
 		nsm_mac_callback_api((l2mac_cb)nsm_mac_address_table_summary, &user);
 		show_nsm_mac_address_table_head(&user);
 		nsm_mac_callback_api((l2mac_cb)show_nsm_mac_address_table_detail, &user);
@@ -371,7 +371,7 @@ static int show_nsm_mac_address_table(struct vty *vty, const char *type)
 	{
 		if(memcpy(type, "count", 4)==0)
 		{
-			user.all = TRUE;
+			user.all = ospl_true;
 			nsm_mac_callback_api((l2mac_cb)nsm_mac_address_table_summary, &user);
 			show_nsm_mac_address_table_head(&user);
 		}

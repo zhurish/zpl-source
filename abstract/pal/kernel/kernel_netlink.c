@@ -89,7 +89,7 @@ static const struct message rtproto_str[] =
  * nl_msg_type_to_str
  */
 const char *
-nl_msg_type_to_str(uint16_t msg_type)
+nl_msg_type_to_str(ospl_uint16 msg_type)
 {
 	return lookup(nlmsg_str, msg_type);
 }
@@ -98,14 +98,14 @@ nl_msg_type_to_str(uint16_t msg_type)
  * nl_rtproto_to_str
  */
 const char *
-nl_rtproto_to_str(u_char rtproto)
+nl_rtproto_to_str(ospl_uchar rtproto)
 {
 	return lookup(rtproto_str, rtproto);
 }
 
 /* Utility function  comes from iproute2.
  Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru> */
-int addattr_l(struct nlmsghdr *n, size_t maxlen, int type, void *data,
+int addattr_l(struct nlmsghdr *n, size_t maxlen, ospl_uint32 type, void *data,
 		size_t alen)
 {
 	size_t len;
@@ -126,7 +126,7 @@ int addattr_l(struct nlmsghdr *n, size_t maxlen, int type, void *data,
 	return 0;
 }
 
-int rta_addattr_l(struct rtattr *rta, size_t maxlen, int type, void *data,
+int rta_addattr_l(struct rtattr *rta, size_t maxlen, ospl_uint32 type, void *data,
 		size_t alen)
 {
 	size_t len;
@@ -149,7 +149,7 @@ int rta_addattr_l(struct rtattr *rta, size_t maxlen, int type, void *data,
 
 /* Utility function comes from iproute2.
  Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru> */
-int addattr32(struct nlmsghdr *n, size_t maxlen, int type, int data)
+int addattr32(struct nlmsghdr *n, size_t maxlen, ospl_uint32 type, ospl_uint32 data)
 {
 	size_t len;
 	struct rtattr *rta;
@@ -168,7 +168,7 @@ int addattr32(struct nlmsghdr *n, size_t maxlen, int type, int data)
 	return 0;
 }
 
-struct rtattr *addattr_nest(struct nlmsghdr *n, int maxlen, int type)
+struct rtattr *addattr_nest(struct nlmsghdr *n, size_t maxlen, ospl_uint32 type)
 {
 	struct rtattr *nest = NLMSG_TAIL(n);
 
@@ -183,8 +183,8 @@ int addattr_nest_end(struct nlmsghdr *n, struct rtattr *nest)
 }
 
 /* Utility function for parse rtattr. */
-void netlink_parse_rtattr(struct rtattr **tb, int max, struct rtattr *rta,
-		int len)
+void netlink_parse_rtattr(struct rtattr **tb, ospl_uint32 max, struct rtattr *rta,
+		ospl_uint32 len)
 {
 	while (RTA_OK(rta, len))
 	{
@@ -197,7 +197,7 @@ void netlink_parse_rtattr(struct rtattr **tb, int max, struct rtattr *rta,
 /* Utility function to parse hardware link-layer address and update ifp */
 void netlink_interface_update_hw_addr(struct rtattr **tb, struct interface *ifp)
 {
-	int i;
+	ospl_uint32 i;
 
 	if (tb[IFLA_ADDRESS])
 	{
@@ -235,8 +235,8 @@ void netlink_interface_update_hw_addr(struct rtattr **tb, struct interface *ifp)
  *                     (recursive, multipath, etc.)
  * @param family: Address family which the change concerns
  */
-void _netlink_route_debug(int cmd, struct prefix *p, struct nexthop *nexthop,
-		const char *routedesc, int family, struct nsm_vrf *zvrf)
+void _netlink_route_debug(ospl_uint32 cmd, struct prefix *p, struct nexthop *nexthop,
+		const char *routedesc, ospl_family_t family, struct nsm_vrf *zvrf)
 {
 	if (IS_ZEBRA_DEBUG_KERNEL)
 	{
@@ -280,7 +280,7 @@ void set_ifindex(struct interface *ifp, ifindex_t ifi_index)
 }
 
 /* Get type specified information from netlink. */
-int netlink_request(int family, int type, struct nlsock *nl)
+int netlink_request(ospl_family_t family, ospl_uint32 type, struct nlsock *nl)
 {
 	int ret;
 	struct sockaddr_nl snl;
@@ -329,7 +329,7 @@ int netlink_parse_info(
 		int (*filter)(struct sockaddr_nl *, struct nlmsghdr *, vrf_id_t),
 		struct nlsock *nl, struct nsm_vrf *zvrf)
 {
-	int status;
+	ospl_uint32 status;
 	int ret = 0;
 	int error;
 	struct sockaddr_nl snl;
@@ -377,7 +377,7 @@ int netlink_parse_info(
 		}
 
 		for (h = (struct nlmsghdr *) nl_rcvbuf.p;
-				NLMSG_OK(h, (unsigned int) status); h = NLMSG_NEXT(h, status))
+				NLMSG_OK(h, (ospl_uint32) status); h = NLMSG_NEXT(h, status))
 		{
 			/* Finish of reading. */
 			if (h->nlmsg_type == NLMSG_DONE)
@@ -516,7 +516,7 @@ static int netlink_talk_filter(struct sockaddr_nl *snl, struct nlmsghdr *h,
 /* sendmsg() to netlink socket then recvmsg(). */
 int netlink_talk(struct nlmsghdr *n, struct nlsock *nl, struct nsm_vrf *zvrf)
 {
-	int status;
+	ospl_uint32 status;
 	struct sockaddr_nl snl;
 	struct iovec iov =
 	{ .iov_base = (void *) n, .iov_len = n->nlmsg_len };
@@ -554,9 +554,10 @@ int netlink_talk(struct nlmsghdr *n, struct nlsock *nl, struct nsm_vrf *zvrf)
 	return netlink_parse_info(NULL, nl, zvrf);
 }
 
-static int netlink_recvbuf(struct nlsock *nl, int sock, int newsize)
+static int netlink_recvbuf(struct nlsock *nl, int sock, ospl_uint32 newsize)
 {
-	int ret = 0, nl_rcvbufsize = newsize;
+	int ret = 0;
+	ospl_uint32 nl_rcvbufsize = newsize;
 
 	ret = setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &nl_rcvbufsize,
 			sizeof(nl_rcvbufsize));
@@ -578,12 +579,12 @@ static int netlink_recvbuf(struct nlsock *nl, int sock, int newsize)
 }
 
 /* Make socket for Linux netlink interface. */
-int netlink_socket(struct nlsock *nl, unsigned long groups, vrf_id_t vrf_id)
+int netlink_socket(struct nlsock *nl, ospl_ulong groups, vrf_id_t vrf_id)
 {
 	int ret;
 	struct sockaddr_nl snl;
 	int sock;
-	int namelen;
+	ospl_uint32 namelen;
 	int save_errno;
 
 	sock = vrf_socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE, vrf_id);
@@ -670,7 +671,7 @@ static void netlink_install_filter(int sock, __u32 pid)
  netlink_socket (). */
 static void kernel_nl_open(struct nsm_vrf *zvrf)
 {
-	unsigned long groups;
+	ospl_ulong groups;
 
 	groups = RTMGRP_LINK | RTMGRP_IPV4_ROUTE | RTMGRP_IPV4_IFADDR;
 #ifdef HAVE_IPV6

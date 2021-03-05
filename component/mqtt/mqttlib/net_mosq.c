@@ -371,7 +371,7 @@ int net__try_connect(const char *host, uint16_t port, mosq_sock_t *sock, const c
 #ifdef PL_MQTT_MODULE
 	int rc = MOSQ_ERR_SUCCESS, sk = 0;
 
-	sk = sock_create(TRUE);
+	sk = sock_create(ospl_true);
 	if(sk == ERROR)
 	{
 		return MOSQ_ERR_EAI;

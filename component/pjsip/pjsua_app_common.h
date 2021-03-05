@@ -19,12 +19,16 @@
 #ifndef __PJSUA_APP_COMMON_H__
 #define __PJSUA_APP_COMMON_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <pjsua-lib/pjsua.h>
 #include "pjsua_app_cb.h"
 #include <zebra.h>
 #include <log.h>
 
-#define __PL_PJSIP_DEBUG(fmt,...)		zlog_debug(MODULE_SIP, fmt, ##__VA_ARGS__)
+#define __PL_PJSIP_DEBUG(fmt,...)		zlog_debug(MODULE_PJSIP, fmt, ##__VA_ARGS__)
 
 
 PJ_BEGIN_DECL
@@ -142,7 +146,7 @@ typedef struct pjsua_app_config
     pjsua_conf_port_id	    sc_ch1_slot;
 #endif
 
-    float		    mic_level,
+    ospl_float		    mic_level,
 			    speaker_level;
 
     int			    capture_dev, playback_dev;
@@ -201,7 +205,7 @@ pj_bool_t find_next_call();
 pj_bool_t find_prev_call();
 pjsua_call_id find_current_call();
 void send_request(char *cstr_method, const pj_str_t *dst_uri);
-void log_call_dump(int call_id);
+void log_call_dump(pjsua_call_id call_id);
 //int write_settings(pjsua_app_config *cfg, char *buf, pj_size_t max);
 void app_config_init_video(pjsua_acc_config *acc_cfg);
 void arrange_window(pjsua_vid_win_id wid);
@@ -236,9 +240,9 @@ void cli_get_info(char *info, pj_size_t size);
 void legacy_main();
 
 #if PJSUA_HAS_VIDEO
-void vid_print_dev(int id, const pjmedia_vid_dev_info *vdi, const char *title);
+void vid_print_dev(ospl_uint32 id, const pjmedia_vid_dev_info *vdi, const char *title);
 void vid_list_devs();
-void app_config_show_video(int acc_id, const pjsua_acc_config *acc_cfg);
+void app_config_show_video(ospl_uint32 acc_id, const pjsua_acc_config *acc_cfg);
 #endif
 
 #ifdef HAVE_MULTIPART_TEST
@@ -254,6 +258,10 @@ void app_config_show_video(int acc_id, const pjsua_acc_config *acc_cfg);
 
 
 PJ_END_DECL
-    
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif	/* __PJSUA_APP_COMMON_H__ */
 

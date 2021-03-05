@@ -14,21 +14,21 @@
 
 struct arpMsg {
 	/* Ethernet header */
-	uint8_t  h_dest[6];     /* 00 destination ether addr */
-	uint8_t  h_source[6];   /* 06 source ether addr */
-	uint16_t h_proto;       /* 0c packet type ID field */
+	ospl_uint8  h_dest[6];     /* 00 destination ether addr */
+	ospl_uint8  h_source[6];   /* 06 source ether addr */
+	ospl_uint16 h_proto;       /* 0c packet type ID field */
 
 	/* ARP packet */
-	uint16_t htype;         /* 0e hardware type (must be ARPHRD_ETHER) */
-	uint16_t ptype;         /* 10 protocol type (must be ETH_P_IP) */
-	uint8_t  hlen;          /* 12 hardware address length (must be 6) */
-	uint8_t  plen;          /* 13 protocol address length (must be 4) */
-	uint16_t operation;     /* 14 ARP opcode */
-	uint8_t  sHaddr[6];     /* 16 sender's hardware address */
-	uint8_t  sInaddr[4];    /* 1c sender's IP address */
-	uint8_t  tHaddr[6];     /* 20 target's hardware address */
-	uint8_t  tInaddr[4];    /* 26 target's IP address */
-	uint8_t  pad[18];       /* 2a pad for min. ethernet payload (60 bytes) */
+	ospl_uint16 htype;         /* 0e hardware type (must be ARPHRD_ETHER) */
+	ospl_uint16 ptype;         /* 10 protocol type (must be ETH_P_IP) */
+	ospl_uint8  hlen;          /* 12 hardware address length (must be 6) */
+	ospl_uint8  plen;          /* 13 protocol address length (must be 4) */
+	ospl_uint16 operation;     /* 14 ARP opcode */
+	ospl_uint8  sHaddr[6];     /* 16 sender's hardware address */
+	ospl_uint8  sInaddr[4];    /* 1c sender's IP address */
+	ospl_uint8  tHaddr[6];     /* 20 target's hardware address */
+	ospl_uint8  tInaddr[4];    /* 26 target's IP address */
+	ospl_uint8  pad[18];       /* 2a pad for min. ethernet payload (60 bytes) */
 } PACKED;
 
 enum {
@@ -36,12 +36,12 @@ enum {
 };
 
 /* Returns 1 if no reply received */
-int icmp_echo_request(uint32_t test_nip,
-		const uint8_t *safe_mac,
-		uint32_t from_ip,
-		uint8_t *from_mac,
+int icmp_echo_request(ospl_uint32  test_nip,
+		const ospl_uint8 *safe_mac,
+		ospl_uint32  from_ip,
+		ospl_uint8 *from_mac,
 		const char *interface,
-		unsigned int timeo)
+		ospl_uint32 timeo)
 {
 	int timeout_ms = 0;
 	struct pollfd pfd[2];
@@ -89,7 +89,7 @@ int icmp_echo_request(uint32_t test_nip,
 	/* wait for arp reply, and check it */
 	timeout_ms = (int)timeo;
 	do {
-		typedef uint32_t aliased_uint32_t FIX_ALIASING;
+		typedef ospl_uint32  aliased_uint32_t FIX_ALIASING;
 		int r;
 		unsigned prevTime = os_get_monotonic_msec();
 
@@ -139,12 +139,12 @@ int icmp_echo_request(uint32_t test_nip,
 
 
 
-int icmp_echo_request_mac(uint32_t test_nip,
-		uint32_t from_ip,
-		uint8_t *from_mac,
+int icmp_echo_request_mac(ospl_uint32  test_nip,
+		ospl_uint32  from_ip,
+		ospl_uint8 *from_mac,
 		const char *interface,
-		unsigned int timeo,
-		uint8_t *safe_mac)
+		ospl_uint32 timeo,
+		ospl_uint8 *safe_mac)
 {
 	int timeout_ms = 0;
 	struct pollfd pfd[2];
@@ -192,7 +192,7 @@ int icmp_echo_request_mac(uint32_t test_nip,
 	/* wait for arp reply, and check it */
 	timeout_ms = (int)timeo;
 	do {
-		typedef uint32_t aliased_uint32_t FIX_ALIASING;
+		typedef ospl_uint32  aliased_uint32_t FIX_ALIASING;
 		int r;
 		unsigned prevTime = os_get_monotonic_msec();
 

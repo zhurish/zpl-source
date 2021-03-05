@@ -8,6 +8,10 @@
 #ifndef COMPONENT_SSH_SSHD_MAIN_H_
 #define COMPONENT_SSH_SSHD_MAIN_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "libssh_config.h"
 
 #include <libssh/callbacks.h>
@@ -61,9 +65,9 @@
 
 /*typedef struct sshd_s
 {
-	BOOL			init;
-	BOOL			quit;
-	BOOL			running;
+	ospl_bool			init;
+	ospl_bool			quit;
+	ospl_bool			running;
 	int				sshd_taskid;
     ssh_bind 		sshbind;
     ssh_event 		event;
@@ -72,7 +76,7 @@
 
 struct scpd_data
 {
-	int 	mode;
+	ospl_uint32 	mode;
 	char	 *filename;
     socket_t input;
     socket_t output;
@@ -92,8 +96,8 @@ typedef struct sshd_client_s
 
     ssh_channel 		channel;
 
-    int 				auth_attempts;
-    int 				authenticated;
+    ospl_uint32 				auth_attempts;
+    ospl_uint32 				authenticated;
 
     enum
 	{
@@ -113,7 +117,7 @@ typedef struct sshd_client_s
 //extern sshd_t sshd_config;
 
 
-extern int sshd_accept(socket_t fd, int revents, void *userdata);
+extern int sshd_accept(socket_t fd, ospl_uint32 revents, void *userdata);
 extern int sshd_task(void *argv);
 /*
 extern int sshd_enable(char *address, int port);
@@ -131,5 +135,9 @@ extern int sshd_module_task_exit ();
  */
 //extern void sshd_session_userdata_close(ssh_session session);
 
-
+ 
+#ifdef __cplusplus
+}
+#endif
+ 
 #endif /* COMPONENT_SSH_SSHD_MAIN_H_ */

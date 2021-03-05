@@ -8,6 +8,10 @@
 #ifndef __VOIP_VOLUME_H__
 #define __VOIP_VOLUME_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define VOIP_AMP_DEV_ENABLE
 //#define _VOIP_VOLUME_DEBUG(fmt,...)		zlog_debug(MODULE_VOIP, fmt, ##__VA_ARGS__)
 #define _VOIP_VOLUME_DEBUG(fmt,...)
@@ -41,21 +45,21 @@ typedef enum
 typedef struct voip_volume_s
 {
 	//Playback
-	BOOL		power;
-	u_int8		out_volume;
-	u_int8		dac_volume;
-	u_int8		mono_volume;
+	ospl_bool		power;
+	ospl_uint8		out_volume;
+	ospl_uint8		dac_volume;
+	ospl_uint8		mono_volume;
 	//Capture
-	BOOL		record ;
-	u_int8		in_volume;
-	u_int8		adc_volume;
-	u_int8		in_mono_volume;
-	u_int8		in_boost;
-	u_int8		in_boost_gain;
+	ospl_bool		record ;
+	ospl_uint8		in_volume;
+	ospl_uint8		adc_volume;
+	ospl_uint8		in_mono_volume;
+	ospl_uint8		in_boost;
+	ospl_uint8		in_boost_gain;
 
-	BOOL		isconfig;
-	BOOL		p_isopen;
-	BOOL		c_isopen;
+	ospl_bool		isconfig;
+	ospl_bool		p_isopen;
+	ospl_bool		c_isopen;
 } voip_volume_t;
 
 
@@ -66,46 +70,50 @@ extern int voip_volume_module_exit();
 
 extern int voip_volume_open_api(voip_volume_mode mode);
 extern int voip_volume_close_api(voip_volume_mode mode);
-extern int voip_volume_control_api(BOOL enable);
+extern int voip_volume_control_api(ospl_bool enable);
 #ifndef VOIP_AMP_DEV_ENABLE
 /*
  * open power amplifier
  */
-extern int voip_volume_power(BOOL enable);
+extern int voip_volume_power(ospl_bool enable);
 extern int voip_volume_ispower(void);
 #endif
 
 /*
  * Playback
  */
-extern int voip_playback_volume_out_set_api(u_int8 value);
-extern int voip_playback_volume_out_get_api(u_int8 *value);
-extern int voip_playback_volume_dac_set_api(u_int8 value);
-extern int voip_playback_volume_dac_get_api(u_int8 *value);
-extern int voip_playback_volume_mono_set_api(u_int8 value);
-extern int voip_playback_volume_mono_get_api(u_int8 *value);
+extern int voip_playback_volume_out_set_api(ospl_uint8 value);
+extern int voip_playback_volume_out_get_api(ospl_uint8 *value);
+extern int voip_playback_volume_dac_set_api(ospl_uint8 value);
+extern int voip_playback_volume_dac_get_api(ospl_uint8 *value);
+extern int voip_playback_volume_mono_set_api(ospl_uint8 value);
+extern int voip_playback_volume_mono_get_api(ospl_uint8 *value);
 
-extern int voip_playback_open_api(BOOL enable);
+extern int voip_playback_open_api(ospl_bool enable);
 /*
  * Capture
  */
-extern int voip_capture_volume_in_set_api(u_int8 value);
-extern int voip_capture_volume_in_get_api(u_int8 *value);
-extern int voip_capture_volume_adc_set_api(u_int8 value);
-extern int voip_capture_volume_adc_get_api(u_int8 *value);
-extern int voip_capture_volume_mono_set_api(u_int8 value);
-extern int voip_capture_volume_mono_get_api(u_int8 *value);
+extern int voip_capture_volume_in_set_api(ospl_uint8 value);
+extern int voip_capture_volume_in_get_api(ospl_uint8 *value);
+extern int voip_capture_volume_adc_set_api(ospl_uint8 value);
+extern int voip_capture_volume_adc_get_api(ospl_uint8 *value);
+extern int voip_capture_volume_mono_set_api(ospl_uint8 value);
+extern int voip_capture_volume_mono_get_api(ospl_uint8 *value);
 
-extern int voip_volume_boost_set_api(u_int8 value);
-extern int voip_volume_boost_get_api(u_int8 *value);
-extern int voip_volume_boost_gain_set_api(u_int8 value);
-extern int voip_volume_boost_gain_get_api(u_int8 *value);
+extern int voip_volume_boost_set_api(ospl_uint8 value);
+extern int voip_volume_boost_get_api(ospl_uint8 *value);
+extern int voip_volume_boost_gain_set_api(ospl_uint8 value);
+extern int voip_volume_boost_gain_get_api(ospl_uint8 *value);
 
-extern int voip_capture_open_api(BOOL enable);
+extern int voip_capture_open_api(ospl_bool enable);
 
 
 extern int voip_volume_show_config(struct vty *vty, int detail);
 extern int voip_volume_write_config(struct vty *vty);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* __VOIP_VOLUME_H__ */

@@ -23,28 +23,28 @@
 #include "hal_mstp.h"
 #include "hal_driver.h"
 
-int hal_mstp_enable(BOOL enable)
+int hal_mstp_enable(ospl_bool enable)
 {
 	if(hal_driver && hal_driver->mstp_tbl && hal_driver->mstp_tbl->sdk_mstp_enable_cb)
 		return hal_driver->mstp_tbl->sdk_mstp_enable_cb(hal_driver->driver, enable);
 	return ERROR;
 }
 
-int hal_mstp_age(int age)
+int hal_mstp_age(ospl_uint32 age)
 {
 	if(hal_driver && hal_driver->mstp_tbl && hal_driver->mstp_tbl->sdk_mstp_age_cb)
 		return hal_driver->mstp_tbl->sdk_mstp_age_cb(hal_driver->driver, age);
 	return ERROR;
 }
 
-int hal_mstp_bypass(BOOL enable, int type)
+int hal_mstp_bypass(ospl_bool enable, ospl_uint32 type)
 {
 	if(hal_driver && hal_driver->mstp_tbl && hal_driver->mstp_tbl->sdk_mstp_bypass_cb)
 		return hal_driver->mstp_tbl->sdk_mstp_bypass_cb(hal_driver->driver, enable, type);
 	return ERROR;
 }
 
-int hal_mstp_state(ifindex_t ifindex, int mstp, hal_port_stp_state_t state)
+int hal_mstp_state(ifindex_t ifindex, ospl_uint32 mstp, hal_port_stp_state_t state)
 {
 	if(hal_driver && hal_driver->mstp_tbl && hal_driver->mstp_tbl->sdk_mstp_state_cb)
 		return hal_driver->mstp_tbl->sdk_mstp_state_cb(hal_driver->driver, ifindex, mstp, state);

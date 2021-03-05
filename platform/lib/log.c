@@ -50,9 +50,9 @@ static const char *zlog_priority[] = { "emergencies", "alerts", "critical", "err
 		"warnings", "notifications", "informational", "debugging", "trapping", NULL, };
 
 static const struct facility_map {
-	int facility;
+	ospl_uint32 facility;
 	const char *name;
-	size_t match;
+	ospl_size_t match;
 } syslog_facilities[] = { { LOG_KERN, "kern", 1 }, { LOG_USER, "user", 2 }, {
 		LOG_MAIL, "mail", 1 }, { LOG_DAEMON, "daemon", 1 }, { LOG_AUTH, "auth",
 		1 }, { LOG_SYSLOG, "syslog", 1 }, { LOG_LPR, "lpr", 2 }, { LOG_NEWS,
@@ -67,14 +67,14 @@ static const struct facility_map {
 
 
 static int zlog_buffer_format(struct zlog *zl, zlog_buffer_t *buffer,
-		int module, int level, char *format, va_list args);
+		ospl_uint32 module, ospl_uint32 level, ospl_char *format, va_list args);
 
 static int zlog_check_file (struct zlog *zl);
 #ifdef ZLOG_TESTING_ENABLE
 static int zlog_testing_check_file (struct zlog *zl);
 #endif
 const char *
-zlog_facility_name(int facility) {
+zlog_facility_name(ospl_uint32 facility) {
 	const struct facility_map *fm;
 
 	for (fm = syslog_facilities; fm->name; fm++)
@@ -83,7 +83,7 @@ zlog_facility_name(int facility) {
 	return "";
 }
 
-int zlog_facility_match(const char *str) {
+ospl_uint32 zlog_facility_match(const char *str) {
 	const struct facility_map *fm;
 
 	for (fm = syslog_facilities; fm->name; fm++)
@@ -92,8 +92,8 @@ int zlog_facility_match(const char *str) {
 	return -1;
 }
 
-int zlog_priority_match(const char *s) {
-	int level;
+ospl_uint32 zlog_priority_match(const char *s) {
+	ospl_uint32 level;
 
 	for (level = 0; zlog_priority[level] != NULL; level++)
 		if (!strncmp(s, zlog_priority[level], 2))
@@ -101,7 +101,7 @@ int zlog_priority_match(const char *s) {
 	return ZLOG_DISABLED;
 }
 
-const char * zlog_priority_name(int level) {
+const char * zlog_priority_name(ospl_uint32 level) {
 	if(level >= 0 && level <= LOG_TRAP)
 		return zlog_priority[level];
 	//if(level == ZLOG_DISABLED)
@@ -119,15 +119,15 @@ const char * zlog_proto_names(zlog_proto_t module) {
 
 /* For time string format. */
 
-size_t quagga_timestamp(zlog_timestamp_t timestamp, char *buf, size_t buflen)
+ospl_size_t quagga_timestamp(zlog_timestamp_t timestamp, ospl_char *buf, ospl_size_t buflen)
 {
 
 #if 0
-	time_t clock = 0;
+	ospl_time_t clock = 0;
 	struct tm tm;
 	struct tm *ptm = NULL;
-	char data[128];
-	int len = 0;
+	ospl_char data[128];
+	ospl_uint32 len = 0;
 	clock = os_time(NULL);
 	os_memset(data, 0, sizeof(data));
 	switch(timestamp)
@@ -169,12 +169,12 @@ size_t quagga_timestamp(zlog_timestamp_t timestamp, char *buf, size_t buflen)
 	default:
 		return 0;
 	}
-	//char * asctime(const struct tm * timeptr);
-	//char * ctime(const time_t *timer);
+	//ospl_char * asctime(const struct tm * timeptr);
+	//ospl_char * ctime(const ospl_time_t *timer);
 #else
-	u_int len = 0;
-	char data[128];
-	time_t clock = os_time(NULL);;
+	ospl_uint32 len = 0;
+	ospl_char data[128];
+	ospl_time_t clock = os_time(NULL);;
 	os_memset(data, 0, sizeof(data));
 	switch(timestamp)
 	{
@@ -189,7 +189,7 @@ size_t quagga_timestamp(zlog_timestamp_t timestamp, char *buf, size_t buflen)
 		len = snprintf(data, sizeof(data), "%s", os_time_fmt ("date", clock));
 		break;
 	case ZLOG_TIMESTAMP_SHORT:
-		len = snprintf(data, sizeof(data), "%s", os_time_fmt ("short", clock));
+		len = snprintf(data, sizeof(data), "%s", os_time_fmt ("ospl_int16", clock));
 		break;
 	case ZLOG_TIMESTAMP_ISO:
 		len = snprintf(data, sizeof(data), "%s", os_time_fmt ("iso", clock));
@@ -223,23 +223,23 @@ size_t quagga_timestamp(zlog_timestamp_t timestamp, char *buf, size_t buflen)
 /* Utility routine for current time printing. */
 void time_print(FILE *fp, zlog_timestamp_t ctl)
 {
-	char data[128];
+	ospl_char data[128];
 	os_memset(data, 0, sizeof(data));
 	if(quagga_timestamp(ctl, data, sizeof(data)))
 		fprintf(fp, "%s ", data);
 }
 
-static int zlog_depth_debug_detail(FILE *fp, char *buf, int depth, const char *file,
-		const char *func, const int line)
+static int zlog_depth_debug_detail(FILE *fp, ospl_char *buf, ospl_uint32 depth, const char *file,
+		const char *func, const ospl_uint32 line)
 {
 	if(depth != ZLOG_DEPTH_NONE)
 	{
 		if(file)
 		{
-			char *bk = strrchr(file, '/');
+			ospl_char *bk = strrchr(file, '/');
 			if(buf)
 			{
-				int offset = 0;
+				ospl_uint32 offset = 0;
 				if(depth == ZLOG_DEPTH_LEVEL1)
 				{
 					if(bk)
@@ -316,9 +316,9 @@ static int zlog_depth_debug_detail(FILE *fp, char *buf, int depth, const char *f
 
 #ifdef ZLOG_TASK_ENABLE
 /* va_list version of zlog. */
-static void vzlog_output(struct zlog *zl, int module, int priority, const char *format,
+static void vzlog_output(struct zlog *zl, ospl_uint32 module, ospl_uint32 priority, const char *format,
 		va_list args) {
-	int protocol = 0;
+	ospl_uint16 protocol = 0;
 	int original_errno = errno;
 
 	/* If zlog is not specified, use default one. */
@@ -424,7 +424,7 @@ static void vzlog_output(struct zlog *zl, int module, int priority, const char *
 		os_mutex_unlock(zl->mutex);
 }
 
-static void zlog_out(struct zlog *zl, int module, int priority, const char *format, ...)
+static void zlog_out(struct zlog *zl, ospl_uint32 module, ospl_uint32 priority, const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);
@@ -432,11 +432,11 @@ static void zlog_out(struct zlog *zl, int module, int priority, const char *form
 	va_end(args);
 }
 
-void pl_vzlog(const char *file, const char *func, const int line,
-		struct zlog *zl, int module, int priority, const char *format,
+void pl_vzlog(const char *file, const char *func, const ospl_uint32 line,
+		struct zlog *zl, ospl_uint32 module, ospl_uint32 priority, const char *format,
 		va_list args)
 {
-	int protocol = 0;
+	ospl_uint16 protocol = 0;
 
 	/* If zlog is not specified, use default one. */
 	if (zl == NULL)
@@ -469,7 +469,7 @@ void pl_vzlog(const char *file, const char *func, const int line,
 #endif
 			priority <= zl->maxlvl[ZLOG_DEST_STDOUT])
 	{
-		int offset = 0;
+		ospl_uint32 offset = 0;
 		va_list ac;
 		zlog_hdr_t loghdr;
 		memset(&loghdr, 0, sizeof(loghdr));
@@ -493,7 +493,7 @@ void pl_vzlog(const char *file, const char *func, const int line,
 
 static int zlog_task(struct zlog *zl)
 {
-	int retval = 0;
+	ospl_uint32 retval = 0;
 	fd_set rfds;
 	zlog_hdr_t loghdr;
 	os_sleep(1);
@@ -599,10 +599,10 @@ static int zlog_task_exit(struct zlog *zl)
 }
 #else
 /* va_list version of zlog. */
-void vzlog(const char *file, const char *func, const int line,
-		struct zlog *zl, int module, int priority, const char *format,
+void vzlog(const char *file, const char *func, const ospl_uint32 line,
+		struct zlog *zl, ospl_uint32 module, ospl_uint32 priority, const char *format,
 		va_list args) {
-	int protocol = 0;
+	ospl_uint16 protocol = 0;
 	int original_errno = errno;
 	/* If zlog is not specified, use default one. */
 	if (zl == NULL)
@@ -729,17 +729,17 @@ void vzlog(const char *file, const char *func, const int line,
 }
 #endif
 
-static char *
-str_append(char *dst, int len, const char *src) {
+static ospl_char *
+str_append(ospl_char *dst, ospl_uint32 len, const char *src) {
 	while ((len-- > 0) && *src)
 		*dst++ = *src++;
 	return dst;
 }
 
-static char *
-num_append(char *s, int len, u_long x) {
-	char buf[30];
-	char *t;
+static ospl_char *
+num_append(ospl_char *s, ospl_uint32 len, u_long x) {
+	ospl_char buf[30];
+	ospl_char *t;
 
 	if (!x)
 		return str_append(s, len, "0");
@@ -752,18 +752,18 @@ num_append(char *s, int len, u_long x) {
 }
 
 #if defined(SA_SIGINFO) || defined(HAVE_STACK_TRACE)
-static char *
-hex_append(char *s, int len, u_long x)
+static ospl_char *
+hex_append(ospl_char *s, ospl_uint32 len, u_long x)
 {
-	char buf[30];
-	char *t;
+	ospl_char buf[30];
+	ospl_char *t;
 
 	if (!x)
 	return str_append(s,len,"0");
 	*(t = &buf[sizeof(buf)-1]) = '\0';
 	while (x && (t > buf))
 	{
-		u_int cc = (x % 16);
+		ospl_uint32 cc = (x % 16);
 		*--t = ((cc < 10) ? ('0'+cc) : ('a'+cc-10));
 		x /= 16;
 	}
@@ -777,7 +777,7 @@ static int syslog_connect(void) {
 	return -1;
 #else
 	int fd;
-	char *s;
+	ospl_char *s;
 	struct sockaddr_un addr;
 
 	if ((fd = socket(AF_UNIX, SOCK_DGRAM, 0)) < 0)
@@ -799,10 +799,10 @@ static int syslog_connect(void) {
 #endif
 }
 
-static void syslog_sigsafe(int priority, const char *msg, size_t msglen) {
+static void syslog_sigsafe(ospl_uint32 priority, const char *msg, ospl_size_t msglen) {
 	static int syslog_fd = -1;
-	char buf[strlen("<1234567890>ripngd[1234567890]: ") + msglen + 50];
-	char *s;
+	ospl_char buf[strlen("<1234567890>ripngd[1234567890]: ") + msglen + 50];
+	ospl_char *s;
 
 	if ((syslog_fd < 0) && ((syslog_fd = syslog_connect()) < 0))
 		return;
@@ -830,14 +830,14 @@ static int open_crashlog(void) {
 	if (zlog_default && zlog_default->ident) {
 		/* Avoid strlen since it is not async-signal-safe. */
 		const char *p;
-		size_t ilen;
+		ospl_size_t ilen;
 
 		for (p = zlog_default->ident, ilen = 0; *p; p++)
 			ilen++;
 		{
-			char buf[sizeof(CRASHLOG_PREFIX) + ilen + sizeof(CRASHLOG_SUFFIX)
+			ospl_char buf[sizeof(CRASHLOG_PREFIX) + ilen + sizeof(CRASHLOG_SUFFIX)
 					+ 3];
-			char *s = buf;
+			ospl_char *s = buf;
 #define LOC s,buf+sizeof(buf)-s
 			s = str_append(LOC, CRASHLOG_PREFIX);
 			s = str_append(LOC, zlog_default->ident);
@@ -861,11 +861,11 @@ void zlog_signal(int signo, const char *action
 		, siginfo_t *siginfo, void *program_counter
 #endif
 		) {
-	time_t now;
-	char buf[strlen("DEFAULT: Received signal S at T (si_addr 0xP, PC 0xP); aborting...")
+	ospl_time_t now;
+	ospl_char buf[strlen("DEFAULT: Received signal S at T (si_addr 0xP, PC 0xP); aborting...")
 			+ 200];
-	char *s = buf;
-	char *msgstart = buf;
+	ospl_char *s = buf;
+	ospl_char *msgstart = buf;
 #define LOC s,buf+sizeof(buf)-s
 
 	time(&now);
@@ -963,19 +963,19 @@ void zlog_signal(int signo, const char *action
 
 /* Log a backtrace using only async-signal-safe functions.
  Needs to be enhanced to support syslog logging. */
-void zlog_backtrace_sigsafe(int priority, void *program_counter)
+void zlog_backtrace_sigsafe(ospl_uint32 priority, void *program_counter)
 {
 #ifdef HAVE_STACK_TRACE
 	static const char pclabel[] = "Program counter: ";
 	void *array[64];
-	int size;
-	char buf[200];
-	char *s, **bt = NULL;
+	ospl_uint32 size;
+	ospl_char buf[200];
+	ospl_char *s, **bt = NULL;
 #define LOC s,buf+sizeof(buf)-s
 
 #ifdef HAVE_GLIBC_BACKTRACE
 	size = backtrace(array, array_size(array));
-	if (size <= 0 || (size_t)size > array_size(array))
+	if (size <= 0 || (ospl_size_t)size > array_size(array))
 	return;
 
 #define DUMP(FD) { \
@@ -1016,7 +1016,7 @@ void zlog_backtrace_sigsafe(int priority, void *program_counter)
 		if (priority <= zlog_default->maxlvl[ZLOG_DEST_SYSLOG])
 			syslog_sigsafe(priority|zlog_default->facility,buf,s-buf);
 		{
-			int i;
+			ospl_uint32 i;
 #ifdef HAVE_GLIBC_BACKTRACE
 			bt = backtrace_symbols(array, size);
 #endif
@@ -1048,20 +1048,20 @@ void zlog_backtrace_sigsafe(int priority, void *program_counter)
 #endif /* HAVE_STRACK_TRACE */
 }
 
-void zlog_backtrace(int priority)
+void zlog_backtrace(ospl_uint32 priority)
 {
 #ifndef HAVE_GLIBC_BACKTRACE
 	zlog(NULL, priority, "No backtrace available on this platform.");
 #else
 	void *array[20];
-	int size, i;
-	char **strings;
+	ospl_uint32 size, i;
+	ospl_char **strings;
 	size = backtrace(array, array_size(array));
-	if (size <= 0 || (size_t)size > array_size(array))
+	if (size <= 0 || (ospl_size_t)size > array_size(array))
 	{
 		zlog_err(MODULE_DEFAULT, "Cannot get backtrace, returned invalid # of frames %d "
 				"(valid range is between 1 and %lu)",
-				size, (unsigned long)(array_size(array)));
+				size, (ospl_ulong)(array_size(array)));
 		return;
 	}
 	zlog(MODULE_DEFAULT, priority, "Backtrace for %d stack frames:", size);
@@ -1081,7 +1081,7 @@ void zlog_backtrace(int priority)
 }
 
 
-void pl_zlog(const char *file, const char *func, const int line, int module, int priority, const char *format, ...)
+void pl_zlog(const char *file, const char *func, const ospl_uint32 line, ospl_uint32 module, ospl_uint32 priority, const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);
@@ -1091,7 +1091,7 @@ void pl_zlog(const char *file, const char *func, const int line, int module, int
 
 #define ZLOG_FUNC(FUNCNAME,PRIORITY) \
 void \
-FUNCNAME(const char *file, const char *func, const int line, int module, const char *format, ...) \
+FUNCNAME(const char *file, const char *func, const ospl_uint32 line, ospl_uint32 module, const char *format, ...) \
 { \
   va_list args; \
   va_start(args, format); \
@@ -1114,7 +1114,7 @@ ZLOG_FUNC(pl_zlog_trap, LOG_TRAP)
 #undef ZLOG_FUNC
 
 #if 0
-void pl_zlog(int module, int priority, const char *format, ...) {
+void pl_zlog(ospl_uint32 module, ospl_uint32 priority, const char *format, ...) {
 	va_list args;
 	va_start(args, format);
 	pl_vzlog(zlog_default, module, priority, format, args);
@@ -1123,7 +1123,7 @@ void pl_zlog(int module, int priority, const char *format, ...) {
 
 #define ZLOG_FUNC(FUNCNAME,PRIORITY) \
 void \
-FUNCNAME(int module, const char *format, ...) \
+FUNCNAME(ospl_uint32 module, const char *format, ...) \
 { \
   va_list args; \
   va_start(args, format); \
@@ -1147,7 +1147,7 @@ ZLOG_FUNC(pl_zlog_trap, LOG_TRAP)
 #endif
 
 /*
-static void zlog_thread_info(int log_level)
+static void zlog_thread_info(ospl_uint32 log_level)
 {
 	zlog(MODULE_DEFAULT, log_level,
 		"Current thread/eloop function %s, scheduled from "
@@ -1157,7 +1157,7 @@ static void zlog_thread_info(int log_level)
 */
 
 void _zlog_assert_failed(const char *assertion, const char *file,
-		unsigned int line, const char *function)
+		ospl_uint32  line, const char *function)
 {
 	/* Force fallback file logging? */
 	if (zlog_default && !zlog_default->fp
@@ -1174,10 +1174,10 @@ void _zlog_assert_failed(const char *assertion, const char *file,
 
 /* Open log stream */
 struct zlog *
-openzlog(const char *progname, zlog_proto_t protocol, int syslog_flags,
-		int syslog_facility) {
+openzlog(const char *progname, zlog_proto_t protocol, ospl_uint32 syslog_flags,
+		ospl_uint32 syslog_facility) {
 	struct zlog *zl;
-	u_int i;
+	ospl_uint32 i;
 
 	zl = XCALLOC(MTYPE_ZLOG, sizeof(struct zlog));
 
@@ -1187,7 +1187,7 @@ openzlog(const char *progname, zlog_proto_t protocol, int syslog_flags,
 	zl->facility = syslog_facility;
 	zl->syslog_options = syslog_flags;
 	zl->filesize = ZLOG_FILE_SIZE;
-	zl->record_priority = TRUE;
+	zl->record_priority = ospl_true;
 	/* Set default logging levels. */
 	for (i = 0; i < array_size(zl->maxlvl); i++)
 	{
@@ -1222,7 +1222,7 @@ openzlog(const char *progname, zlog_proto_t protocol, int syslog_flags,
 #endif
 	zl->depth_debug = ZLOG_DEPTH_DEBUG_DEFAULT;
 #ifdef ZLOG_TESTING_ENABLE
-	zl->testing = FALSE;
+	zl->testing = ospl_false;
 	zl->testlog.priority = LOG_WARNING;
 	zl->testlog.fp = NULL;
 	zl->testlog.filesize = 8;
@@ -1261,9 +1261,9 @@ void closezlog(struct zlog *zl) {
 
 /* Called from command.c. */
 
-void zlog_set_trap(int level) {
+void zlog_set_trap(ospl_uint32 level) {
 
-	int i = 0;
+	ospl_uint32 i = 0;
 	if (zlog_default == NULL)
 		return;
 	if (zlog_default->mutex)
@@ -1277,7 +1277,7 @@ void zlog_set_trap(int level) {
 }
 
 
-void zlog_get_trap(int *level)
+void zlog_get_trap(ospl_uint32 *level)
 {
 	if (zlog_default == NULL)
 		return;
@@ -1289,7 +1289,7 @@ void zlog_get_trap(int *level)
 		os_mutex_unlock(zlog_default->mutex);
 }
 
-void zlog_set_facility(int facility) {
+void zlog_set_facility(ospl_uint32 facility) {
 
 	if (zlog_default == NULL)
 		return;
@@ -1304,7 +1304,7 @@ void zlog_set_facility(int facility) {
 }
 
 
-void zlog_get_facility(int *facility)
+void zlog_get_facility(ospl_uint32 *facility)
 {
 	if (zlog_default == NULL)
 		return;
@@ -1316,7 +1316,7 @@ void zlog_get_facility(int *facility)
 		os_mutex_unlock(zlog_default->mutex);
 }
 
-void zlog_set_record_priority(int record_priority) {
+void zlog_set_record_priority(ospl_uint32 record_priority) {
 
 	if (zlog_default == NULL)
 		return;
@@ -1328,7 +1328,7 @@ void zlog_set_record_priority(int record_priority) {
 }
 
 
-void zlog_get_record_priority(int *record_priority)
+void zlog_get_record_priority(ospl_uint32 *record_priority)
 {
 	if (zlog_default == NULL)
 		return;
@@ -1365,7 +1365,7 @@ void zlog_get_timestamp(zlog_timestamp_t *value)
 		os_mutex_unlock(zlog_default->mutex);
 }
 
-void zlog_set_level(zlog_dest_t dest, int log_level) {
+void zlog_set_level(zlog_dest_t dest, ospl_uint32 log_level) {
 
 	if (zlog_default == NULL)
 		return;
@@ -1377,7 +1377,7 @@ void zlog_set_level(zlog_dest_t dest, int log_level) {
 }
 
 
-void zlog_get_level(zlog_dest_t dest, int *log_level)
+void zlog_get_level(zlog_dest_t dest, ospl_uint32 *log_level)
 {
 	if (zlog_default == NULL)
 		return;
@@ -1391,9 +1391,9 @@ void zlog_get_level(zlog_dest_t dest, int *log_level)
 
 
 /* Reset opend file. */
-int zlog_reset_file(BOOL bOpen)
+int zlog_reset_file(ospl_bool bOpen)
 {
-	char filetmp[256];
+	ospl_char filetmp[256];
 	if (zlog_default == NULL)
 		return 0;
 	if (zlog_default->mutex)
@@ -1433,21 +1433,21 @@ int zlog_reset_file(BOOL bOpen)
 	return OK;
 }
 
-int zlog_set_file(const char *filename, int log_level)
+int zlog_set_file(const char *filename, ospl_uint32 log_level)
 {
 	FILE *fp;
 	mode_t oldumask;
-	char filetmp[256];
-	char *file_name = NULL;
+	ospl_char filetmp[256];
+	ospl_char *file_name = NULL;
 	const char *default_file = ZLOG_FILE_DEFAULT;
 	if (zlog_default == NULL)
 		return ERROR;
 	if(filename)
-		file_name = (char *)filename;
+		file_name = (ospl_char *)filename;
 	else
-		file_name = (char *)default_file;
+		file_name = (ospl_char *)default_file;
 
-	zlog_reset_file(FALSE);
+	zlog_reset_file(ospl_false);
 
 	if (zlog_default->mutex)
 		os_mutex_lock(zlog_default->mutex, OS_WAIT_FOREVER);
@@ -1489,7 +1489,7 @@ int zlog_set_file(const char *filename, int log_level)
 	return OK;
 }
 
-int zlog_get_file(const char *filename, int *log_level)
+int zlog_get_file(const char *filename, ospl_uint32 *log_level)
 {
 	if (zlog_default == NULL)
 		return 0;
@@ -1511,11 +1511,11 @@ int zlog_get_file(const char *filename, int *log_level)
 int zlog_close_file()
 {
 
-	//char filetmp[256];
+	//ospl_char filetmp[256];
 	if (zlog_default == NULL)
 		return 0;
 
-	zlog_reset_file(FALSE);
+	zlog_reset_file(ospl_false);
 
 	if (zlog_default->mutex)
 		os_mutex_lock(zlog_default->mutex, OS_WAIT_FOREVER);
@@ -1535,8 +1535,9 @@ int zlog_close_file()
 		os_mutex_unlock(zlog_default->mutex);
 	return OK;
 }
-int
-zlog_set_file_size (int filesize)
+
+
+int zlog_set_file_size (ospl_uint32 filesize)
 {
 	if (zlog_default == NULL)
 		return 0;
@@ -1552,7 +1553,7 @@ zlog_set_file_size (int filesize)
 }
 
 int
-zlog_get_file_size (int *filesize)
+zlog_get_file_size (ospl_uint32 *filesize)
 {
 	if (zlog_default == NULL)
 		return 0;
@@ -1567,14 +1568,14 @@ zlog_get_file_size (int *filesize)
 
 #ifdef ZLOG_TESTING_ENABLE
 
-int zlog_testing_enable (BOOL enable)
+int zlog_testing_enable (ospl_bool enable)
 {
 	if (zlog_default == NULL)
 		return 0;
 	if (zlog_default->mutex)
 		os_mutex_lock(zlog_default->mutex, OS_WAIT_FOREVER);
 	zlog_default->testing = enable;
-	if(enable == FALSE)
+	if(enable == ospl_false)
 	{
 		if(zlog_default->testlog.fp)
 		{
@@ -1588,14 +1589,14 @@ int zlog_testing_enable (BOOL enable)
 	return OK;
 }
 
-BOOL zlog_testing_enabled (void)
+ospl_bool zlog_testing_enabled (void)
 {
 	if (zlog_default == NULL)
 		return 0;
 	return zlog_default->testing;
 }
 
-int zlog_testing_priority (int priority)
+int zlog_testing_priority (ospl_uint32 priority)
 {
 	if (zlog_default == NULL)
 		return 0;
@@ -1607,9 +1608,9 @@ int zlog_testing_priority (int priority)
 	return OK;
 }
 
-int zlog_testing_file (char * filename)
+int zlog_testing_file (ospl_char * filename)
 {
-	char filetmp[256];
+	ospl_char filetmp[256];
 	if (zlog_default == NULL)
 		return 0;
 	if (zlog_default->mutex)
@@ -1653,7 +1654,7 @@ int zlog_testing_file (char * filename)
 static int zlog_testing_check_file (struct zlog *zl)
 {
 	struct stat fsize;
-	char filetmp[256];
+	ospl_char filetmp[256];
 	if (zlog_default == NULL)
 		return ERROR;
 	memset (filetmp, 0, sizeof(filetmp));
@@ -1683,8 +1684,8 @@ static int zlog_testing_check_file (struct zlog *zl)
 
 static int zlog_file_move(const char *src, const char *dest)
 {
-	char buff[1024];
-	int len;
+	ospl_char buff[1024];
+	ospl_uint32 len;
 	FILE *in,*out;
 	in = fopen(src, "r+");
 	out = fopen(dest, "w+");
@@ -1703,9 +1704,9 @@ static int zlog_file_move(const char *src, const char *dest)
 
 int zlog_file_save (void)
 {
-	char filetmp[256];
-	char filereal[256];
-	char filereal2[256];
+	ospl_char filetmp[256];
+	ospl_char filereal[256];
+	ospl_char filereal2[256];
 	if (zlog_default == NULL)
 		return ERROR;
 	memset (filetmp, 0, sizeof(filetmp));
@@ -1721,7 +1722,7 @@ int zlog_file_save (void)
 			fclose (zlog_default->fp);
 		}
 #ifdef ZLOG_TESTING_ENABLE
-		if(zlog_default->testing == FALSE)
+		if(zlog_default->testing == ospl_false)
 #endif
 		{
 			sprintf (filereal, "%s%s", ZLOG_REAL_PATH, zlog_default->filename);
@@ -1748,7 +1749,7 @@ int zlog_file_save (void)
 static int zlog_check_file (struct zlog *zl)
 {
 	struct stat fsize;
-	char filetmp[256];
+	ospl_char filetmp[256];
 	if (zlog_default == NULL)
 		return ERROR;
 	memset (filetmp, 0, sizeof(filetmp));
@@ -1774,11 +1775,11 @@ static int zlog_check_file (struct zlog *zl)
 			fclose (zl->fp);
 		}
 #ifdef ZLOG_TESTING_ENABLE
-		if(zl->testing == FALSE)
+		if(zl->testing == ospl_false)
 #endif
 		{
-			char filereal[256];
-			char filereal2[256];
+			ospl_char filereal[256];
+			ospl_char filereal2[256];
 			memset (filereal, 0, sizeof(filereal));
 			memset (filereal2, 0, sizeof(filereal2));
 			sprintf (filereal, "%s%s", ZLOG_REAL_PATH, zl->filename);
@@ -1808,9 +1809,9 @@ static int zlog_check_file (struct zlog *zl)
 	return OK;
 }
 /******************************************************/
-/*static int zlog_buffer_insert_one(zlog_buffer_t *buffer, int module, int level, int len, const char *log)
+/*static int zlog_buffer_insert_one(zlog_buffer_t *buffer, ospl_uint32 module, ospl_uint32 level, ospl_uint32 len, const char *log)
 {
-	int index = buffer->start;
+	ospl_uint32 index = buffer->start;
 
 	if(index == buffer->max_size)
 		index = 0;
@@ -1825,11 +1826,11 @@ static int zlog_check_file (struct zlog *zl)
 }*/
 
 static int zlog_buffer_format(struct zlog *zl, zlog_buffer_t *buffer,
-		int module, int level, char *format, va_list args)
+		ospl_uint32 module, ospl_uint32 level, ospl_char *format, va_list args)
 {
 	va_list ac;
-	int len;
-	int index = buffer->start;
+	ospl_uint32 len;
+	ospl_uint32 index = buffer->start;
 	if(index == buffer->max_size)
 		index = 0;
 
@@ -1861,7 +1862,7 @@ int zlog_buffer_reset(void)
 		return 0;
 	if (zlog_default->mutex)
 		os_mutex_lock(zlog_default->mutex, OS_WAIT_FOREVER);
-	int size = sizeof(zbuffer_t)*zlog_default->log_buffer.max_size;
+	ospl_uint32 size = sizeof(zbuffer_t)*zlog_default->log_buffer.max_size;
 	if(zlog_default->log_buffer.buffer)
 		XFREE(MTYPE_ZLOG, zlog_default->log_buffer.buffer);
 	zlog_default->log_buffer.start = 0;
@@ -1873,7 +1874,7 @@ int zlog_buffer_reset(void)
 }
 
 
-int zlog_set_buffer_size (int size)
+int zlog_set_buffer_size (ospl_uint32 size)
 {
 	if (zlog_default == NULL)
 		return 0;
@@ -1889,7 +1890,7 @@ int zlog_set_buffer_size (int size)
 	return zlog_buffer_reset();
 }
 
-int zlog_get_buffer_size (int *size)
+int zlog_get_buffer_size (ospl_uint32 *size)
 {
 	if (zlog_default == NULL)
 		return 0;
@@ -1904,9 +1905,9 @@ int zlog_get_buffer_size (int *size)
 
 int zlog_buffer_save(void)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	FILE	 *fp = NULL;
-	char filereal[256];
+	ospl_char filereal[256];
 	if (zlog_default == NULL)
 		return 0;
 	if (zlog_default->mutex)
@@ -1914,7 +1915,7 @@ int zlog_buffer_save(void)
 	if(zlog_default->maxlvl[ZLOG_DEST_BUFFER])
 	{
 #ifdef ZLOG_TESTING_ENABLE
-		if(zlog_default->testing == FALSE)
+		if(zlog_default->testing == ospl_false)
 		{
 			sprintf (filereal, "%s%s", ZLOG_REAL_PATH, zlog_default->filename);
 		}
@@ -1953,7 +1954,7 @@ int zlog_buffer_save(void)
 
 int zlog_buffer_callback_api (zlog_buffer_cb cb, void *pVoid)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	int ret = 0;
 	if (zlog_default == NULL)
 		return 0;
@@ -1999,7 +2000,7 @@ int zlog_buffer_callback_api (zlog_buffer_cb cb, void *pVoid)
 /* Reopen log file. */
 int zlog_rotate()
 {
-	int level;
+	ospl_uint32 level;
 
 	if (zlog_default == NULL)
 		return 0;
@@ -2014,7 +2015,7 @@ int zlog_rotate()
 
 	if (zlog_default->filename)
 	{
-		char filetmp[128];
+		ospl_char filetmp[128];
 		mode_t oldumask;
 		int save_errno;
 		memset(filetmp, 0, sizeof(filetmp));
@@ -2042,7 +2043,7 @@ int zlog_rotate()
 
 /* Message lookup function. */
 const char *
-lookup(const struct message *mes, int key) {
+lookup(const struct message *mes, ospl_uint32 key) {
 	const struct message *pnt;
 
 	for (pnt = mes; pnt->key != 0; pnt++)
@@ -2059,9 +2060,9 @@ lookup(const struct message *mes, int key) {
  * provided otherwise.
  */
 const char *
-mes_lookup(const struct message *meslist, int max, int index, const char *none,
+mes_lookup(const struct message *meslist, ospl_uint32 max, ospl_uint32 index, const char *none,
 		const char *mesname) {
-	int pos = index - meslist[0].key;
+	ospl_uint32 pos = index - meslist[0].key;
 
 	/* first check for best case: index is in range and matches the key
 	 * value in that slot.
@@ -2073,7 +2074,7 @@ mes_lookup(const struct message *meslist, int max, int index, const char *none,
 
 	/* fall back to linear search */
 	{
-		int i;
+		ospl_uint32 i;
 
 		for (i = 0; i < max; i++, meslist++) {
 			if (meslist->key == index) {
@@ -2133,8 +2134,8 @@ DESC_ENTRY (ZEBRA_NEXTHOP_UPDATE), };
 static const struct zebra_desc_table unknown = { 0, "unknown", '?' };
 
 static const struct zebra_desc_table *
-zroute_lookup(u_int zroute) {
-	u_int i;
+zroute_lookup(ospl_uint32 zroute) {
+	ospl_uint32 i;
 
 	if (zroute >= array_size(route_types)) {
 		zlog_err(MODULE_DEFAULT, "unknown zebra route type: %u", zroute);
@@ -2157,16 +2158,16 @@ zroute_lookup(u_int zroute) {
 }
 
 const char *
-zebra_route_string(u_int zroute) {
+zebra_route_string(ospl_uint32 zroute) {
 	return zroute_lookup(zroute)->string;
 }
 
-char zebra_route_char(u_int zroute) {
+ospl_char zebra_route_char(ospl_uint32 zroute) {
 	return zroute_lookup(zroute)->chr;
 }
 
 const char *
-zserv_command_string(unsigned int command) {
+zserv_command_string(ospl_uint32  command) {
 	if (command >= array_size(command_types)) {
 		zlog_err(MODULE_DEFAULT, "unknown zserv command type: %u", command);
 		return unknown.string;
@@ -2174,7 +2175,7 @@ zserv_command_string(unsigned int command) {
 	return command_types[command].string;
 }
 
-int proto_name2num(const char *s) {
+ospl_proto_t proto_name2num(const char *s) {
 	unsigned i;
 
 	for (i = 0; i < array_size(route_types); ++i)
@@ -2183,7 +2184,7 @@ int proto_name2num(const char *s) {
 	return -1;
 }
 
-int proto_redistnum(int afi, const char *s) {
+ospl_proto_t proto_redistnum(ospl_uint16 afi, const char *s) {
 	if (!s)
 		return -1;
 	if (afi == AFI_IP) {
@@ -2254,22 +2255,22 @@ int proto_redistnum(int afi, const char *s) {
 }
 #endif
 
-void zlog_hexdump(void *mem, unsigned int len) {
-	unsigned long i = 0;
-	unsigned int j = 0;
-	unsigned int columns = 8;
-	char buf[(len * 4) + ((len / 4) * 20) + 30];
-	char *s = buf;
+void zlog_hexdump(void *mem, ospl_uint32  len) {
+	ospl_ulong i = 0;
+	ospl_uint32  j = 0;
+	ospl_uint32  columns = 8;
+	ospl_char buf[(len * 4) + ((len / 4) * 20) + 30];
+	ospl_char *s = buf;
 
 	for (i = 0; i < len + ((len % columns) ? (columns - len % columns) : 0);
 			i++) {
 		/* print offset */
 		if (i % columns == 0)
-			s += sprintf(s, "0x%016lx: ", (unsigned long) mem + i);
+			s += sprintf(s, "0x%016lx: ", (ospl_ulong) mem + i);
 
 		/* print hex data */
 		if (i < len)
-			s += sprintf(s, "%02x ", 0xFF & ((char*) mem)[i]);
+			s += sprintf(s, "%02x ", 0xFF & ((ospl_char*) mem)[i]);
 
 		/* end of block, just aligning for ASCII dump */
 		else
@@ -2281,11 +2282,11 @@ void zlog_hexdump(void *mem, unsigned int len) {
 				if (j >= len) /* end of block, not really printing */
 					s += sprintf(s, " ");
 
-				else if (isprint((int) ((char*) mem)[j])) /* printable char */
-					s += sprintf(s, "%c", 0xFF & ((char*) mem)[j]);
+				else if (isprint((int) ((ospl_char*) mem)[j])) /* printable ospl_char */
+					s += sprintf(s, "%c", 0xFF & ((ospl_char*) mem)[j]);
 
 				else
-					/* other char */
+					/* other ospl_char */
 					s += sprintf(s, ".");
 			}
 			s += sprintf(s, "\n");

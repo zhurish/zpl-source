@@ -52,7 +52,7 @@ FramedSource *H264BasicFdServerMediaSubsession ::createNewStreamSource(unsigned 
   return H264VideoStreamFramer::createNew(envir(), transportStreamSource);
 }
 
-RTPSink *H264BasicFdServerMediaSubsession ::createNewRTPSink(Groupsock *rtpGroupsock, unsigned char rtpPayloadTypeIfDynamic, FramedSource *inputSource)
+RTPSink *H264BasicFdServerMediaSubsession ::createNewRTPSink(Groupsock *rtpGroupsock, ospl_uint8 rtpPayloadTypeIfDynamic, FramedSource *inputSource)
 {
   return H264VideoRTPSink::createNew(envir(), rtpGroupsock, rtpPayloadTypeIfDynamic);
   //return SimpleRTPSink::createNew(envir(), rtpGroupsock,
@@ -61,7 +61,7 @@ RTPSink *H264BasicFdServerMediaSubsession ::createNewRTPSink(Groupsock *rtpGroup
 }
 /*
 SimpleRTPSink::SimpleRTPSink(UsageEnvironment& env, Groupsock* RTPgs,
-			     unsigned char rtpPayloadFormat,
+			     ospl_uint8 rtpPayloadFormat,
 			     unsigned rtpTimestampFrequency,
 			     char const* sdpMediaTypeString,
 			     char const* rtpPayloadFormatName,

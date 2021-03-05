@@ -23,6 +23,10 @@
 #ifndef _ZEBRA_VRF_H
 #define _ZEBRA_VRF_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //#include "linklist.h"
 #include "os_list.h"
 /* The default VRF ID */
@@ -59,7 +63,7 @@ struct vrf
   /* Identifier, same as the vector index */
   vrf_id_t vrf_id;
   /* Name */
-  char *name;
+  ospl_char *name;
   /* File descriptor */
   int fd;
   /* User data */
@@ -74,7 +78,7 @@ struct vrf
  *          - param 2: the address of the user data pointer (the user data
  *                     can be stored in or freed from there)
  */
-extern void vrf_add_hook (int, int (*)(vrf_id_t, void **));
+extern void vrf_add_hook (ospl_uint32, int (*)(vrf_id_t, void **));
 
 /*
  * VRF iteration
@@ -121,7 +125,7 @@ extern void *vrf_info_lookup (vrf_id_t);
 struct vrf * vrf_lookup (vrf_id_t vrf_id);
 struct vrf * vrf_lookup_by_name (const char *name);
 
-char * vrf_vrfid2name (vrf_id_t vrf_id);
+ospl_char * vrf_vrfid2name (vrf_id_t vrf_id);
 vrf_id_t vrf_name2vrfid (const char *name);
 /*
  * Utilities to obtain the interface list
@@ -143,7 +147,7 @@ extern vrf_bitmap_t vrf_bitmap_init (void);
 extern void vrf_bitmap_free (vrf_bitmap_t);
 extern void vrf_bitmap_set (vrf_bitmap_t, vrf_id_t);
 extern void vrf_bitmap_unset (vrf_bitmap_t, vrf_id_t);
-extern int vrf_bitmap_check (vrf_bitmap_t, vrf_id_t);
+extern ospl_bool vrf_bitmap_check (vrf_bitmap_t, vrf_id_t);
 
 /*
  * VRF initializer/destructor
@@ -164,8 +168,12 @@ extern void nsm_vrf_init (void);
 void cmd_ip_vrf_init (void);
 /* Create a socket serving for the given VRF */
 //extern int vrf_socket (int, int, int, vrf_id_t);
-extern int vrf_socket(int domain, int type, int protocol, vrf_id_t vrf_id);
+extern int vrf_socket(int domain, ospl_uint32 type, ospl_uint16 protocol, vrf_id_t vrf_id);
 
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*_ZEBRA_VRF_H*/
 

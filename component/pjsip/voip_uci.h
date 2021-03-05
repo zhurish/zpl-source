@@ -8,6 +8,10 @@
 #ifndef __VOIP_UCI_H__
 #define __VOIP_UCI_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //#define PL_OPENWRT_UCI
 #ifdef PL_OPENWRT_UCI
 
@@ -22,12 +26,16 @@ extern int voip_ubus_uci_update_cb(void *p, char *buf, int len);
 
 #endif
 
-extern BOOL voip_global_enabled();
+extern ospl_bool voip_global_enabled();
 
 extern int voip_status_register_api(int reg);
-extern int voip_status_register_main_api(BOOL reg);
-extern int voip_status_talk_api(BOOL reg);
-extern int voip_status_enable_api(BOOL reg);
+extern int voip_status_register_main_api(ospl_bool reg);
+extern int voip_status_talk_api(ospl_bool reg);
+extern int voip_status_enable_api(ospl_bool reg);
 extern int voip_status_clear_api();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __VOIP_UCI_H__ */

@@ -153,11 +153,11 @@ extern "C" {
 
 /* externals */
 
-//extern BOOL ftplDebug;        /*  print error message, defined in funcBind.c */
+//extern ospl_bool ftplDebug;        /*  print error message, defined in funcBind.c */
 
 /* disable passive mode - XXX this will be removed in the next release XXX */
 
-//extern BOOL ftplPasvModeDisable;
+//extern ospl_bool ftplPasvModeDisable;
 
 /* function declarations */
 
@@ -175,12 +175,12 @@ extern int ftpDataConnGet (int dataSock);
 extern int ftpDataConnInit (int ctrlSock);
 extern int ftpDataConnInitPassiveMode (int ctrlSock);
 extern int ftpHookup (char *host);
-extern void ftpLibDebugOptionsSet (u_int32 options);
-extern int ftpReplyGet (int ctrlSock, BOOL expecteof);
-extern int ftpReplyGetEnhanced (int ctrlSock, BOOL expecteof, char *replyString,
+extern void ftpLibDebugOptionsSet (ospl_uint32 options);
+extern int ftpReplyGet (int ctrlSock, ospl_bool expecteof);
+extern int ftpReplyGetEnhanced (int ctrlSock, ospl_bool expecteof, char *replyString,
                                 int replyStringLength);
-extern int ftpTransientConfigSet (u_int32 maxRetryCount, u_int32 retryInterval);
-extern int ftpTransientConfigGet (u_int32 *maxRetryCount, u_int32 *retryInterval);
+extern int ftpTransientConfigSet (ospl_uint32 maxRetryCount, ospl_uint32 retryInterval);
+extern int ftpTransientConfigGet (ospl_uint32 *maxRetryCount, ospl_uint32 *retryInterval);
 extern int ftpTransientFatalInstall (void * configlette);
 
 

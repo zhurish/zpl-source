@@ -22,10 +22,10 @@ dhcp_global_t dhcp_global_config;
 
 static int dhcpd_config_init(dhcp_global_t *config)
 {
-	if(config->init == TRUE)
+	if(config->init == ospl_true)
 		return OK;
 	memset(config, 0, sizeof(dhcp_global_t));
-	config->init = TRUE;
+	config->init = ospl_true;
 	lstInit(&config->pool_list);
 	lstInit(&config->client_list);
 	lstInit(&config->relay_list);
@@ -46,13 +46,13 @@ static int dhcpd_config_init(dhcp_global_t *config)
 
 static int dhcpd_config_uninit(dhcp_global_t *config)
 {
-	if(config->init != TRUE)
+	if(config->init != ospl_true)
 		return OK;
 
 	if(master_eloop[MODULE_DHCP])
 		eloop_master_free(master_eloop[MODULE_DHCP]);
 	master_eloop[MODULE_DHCP] = NULL;
-	config->init = FALSE;
+	config->init = ospl_false;
 	lstFree(&config->pool_list);
 	lstFree(&config->client_list);
 	lstFree(&config->relay_list);
@@ -65,7 +65,7 @@ int udhcp_read_thread(struct eloop *eloop)
 	struct dhcp_packet packet;
 	int bytes = 0;
 	int sock = -1;
-	u_int32 ifindex = 0;
+	ospl_uint32 ifindex = 0;
 	dhcp_pool_t *pool = NULL;
 	dhcpd_interface_t * ifter = NULL;
 	dhcp_global_t *config = NULL;
@@ -186,10 +186,10 @@ int udhcp_module_init()
 		 int dhcpd_pool_set_static_lease(pool, char *str);
 		 //POP_SAVED_FUNCTION_VISIBILITY
 
-		 int dhcpd_pool_add_interface(pool, u_int32 ifindex);
-		 int dhcpd_pool_del_interface(pool, u_int32 ifindex);
-		 dhcpd_interface_t * dhcpd_lookup_interface(pool, u_int32 ifindex);
-		 uint32_t dhcpd_lookup_address_on_interface(pool, u_int32 ifindex);
+		 int dhcpd_pool_add_interface(pool, ospl_uint32 ifindex);
+		 int dhcpd_pool_del_interface(pool, ospl_uint32 ifindex);
+		 dhcpd_interface_t * dhcpd_lookup_interface(pool, ospl_uint32 ifindex);
+		 ospl_uint32  dhcpd_lookup_address_on_interface(pool, ospl_uint32 ifindex);
 		 */
 		/**********************************************************************/
 		/**********************************************************************/

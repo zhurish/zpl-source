@@ -77,11 +77,11 @@ static int x5b_app_global_mode_config_load(x5b_app_global_t *gl)
 	if(ret == OK && strlen(tmp))
 	{
 		if(strcasestr (tmp, "X5BM"))
-			gl->X5CM = FALSE;
+			gl->X5CM = ospl_false;
 		else if(strcasestr (tmp, "X5CM"))
-			gl->X5CM = TRUE;
+			gl->X5CM = ospl_true;
 		else
-			gl->X5CM = FALSE;
+			gl->X5CM = ospl_false;
 	}
 	//zlog_debug(MODULE_APP, "===========%s %s X5CM=%d", __func__, tmp, gl->X5CM);
 	memset(tmp, 0, sizeof(tmp));
@@ -145,9 +145,9 @@ static int x5b_app_global_mode_config_load(x5b_app_global_t *gl)
 	if(ret == OK && strlen(tmp))
 	{
 		if(strcasestr (tmp, "out"))
-			x5b_app_out_direction_set_api(TRUE);
+			x5b_app_out_direction_set_api(ospl_true);
 		else
-			x5b_app_out_direction_set_api(FALSE);
+			x5b_app_out_direction_set_api(ospl_false);
 	}
 
 	memset(tmp, 0, sizeof(tmp));
@@ -176,11 +176,11 @@ static int x5b_app_global_mode_config_load(x5b_app_global_t *gl)
 	ret = os_uci_get_integer("product.global.doorcontact", &gl->doorcontact);
 	ret = os_uci_get_integer("product.global.topf", &gl->topf);
 #else
-	gl->X5CM = TRUE;
+	gl->X5CM = ospl_true;
 	gl->opentype = OPEN_FACE_AND_CARD;
 	gl->customizer = CUSTOMIZER_SECOM;
 	gl->install_scene = APP_SCENE_BUSSINESS;
-	x5b_app_out_direction_set_api(TRUE);
+	x5b_app_out_direction_set_api(ospl_true);
 #endif
 	return OK;
 }
@@ -269,11 +269,11 @@ int x5b_app_open_config_load(x5b_app_open_t *fct)
 	if(ret == OK && strlen(tmp))
 	{
 		if(strcasestr(tmp, "HIGH"))
-			fct->outrelay = TRUE;
+			fct->outrelay = ospl_true;
 		else if(strcasestr(tmp, "LOW"))
-			fct->outrelay = FALSE;
+			fct->outrelay = ospl_false;
 		else
-			fct->outrelay = FALSE;
+			fct->outrelay = ospl_false;
 	}
 
 	memset(tmp, 0, sizeof(tmp));
@@ -295,12 +295,12 @@ int x5b_app_open_config_load(x5b_app_open_t *fct)
 	ret = os_uci_get_integer("openconfig.open.openholdtime", &fct->waitclose);
 
 	ret = os_uci_get_integer("openconfig.open.tamperalarm", &val);
-	fct->tamperalarm = (val==0)? FALSE:TRUE;
+	fct->tamperalarm = (val==0)? ospl_false:ospl_true;
 	ret = os_uci_get_integer("openconfig.open.advanced", &val);
 	if(val)
 	{
 		ret = os_uci_get_integer("openconfig.open.keep_open_alarm", &val);
-		fct->openalarm = (val==0)? FALSE:TRUE;
+		fct->openalarm = (val==0)? ospl_false:ospl_true;
 	}
 #else
 #endif
@@ -464,7 +464,7 @@ int x5b_app_face_config_load(make_face_config_t *fct)
 	}
 
 
-	ret |= os_uci_get_integer("openconfig.faceopt.success_intervals", &info.faceOKContinuousTime);
+	ret |= os_uci_get_integer("openconfig.faceopt.succesospl_intervals", &info.faceOKContinuousTime);
 	if(ret != OK)
 	{
 		zlog_debug(MODULE_APP, "successful_intervals ====== %d", info.faceOKContinuousTime);
@@ -503,7 +503,7 @@ int x5b_app_face_config_save(void)
 	ret |= os_uci_set_integer("openconfig.faceopt.living_detection", x5b_app_face->livenessSwitch);
 	ret |= os_uci_set_integer("openconfig.faceopt.face_roi_width", x5b_app_face->faceRoiWidth);
 	ret |= os_uci_set_integer("openconfig.faceopt.face_roi_height", x5b_app_face->faceRoiHeight);
-	ret |= os_uci_set_integer("openconfig.faceopt.success_intervals", x5b_app_face->faceOKContinuousTime);
+	ret |= os_uci_set_integer("openconfig.faceopt.succesospl_intervals", x5b_app_face->faceOKContinuousTime);
 	ret |= os_uci_set_integer("openconfig.faceopt.failure_intervals", x5b_app_face->faceERRContinuousTime);
 	os_uci_save_config("openconfig");
 #endif
@@ -530,7 +530,7 @@ int x5b_app_global_config_load(void)
 
 int x5b_app_global_device_config(void *app, int to)
 {
-	int len = 0;
+	ospl_uint32 len = 0;
 	global_config_t gl_config;
 	x5b_app_mgt_t *mgt = app;
 	if(app == NULL)
@@ -608,10 +608,10 @@ int x5b_app_global_mode_free()
 	return OK;
 }
 
-BOOL x5b_app_mode_X5CM()
+ospl_bool x5b_app_mode_X5CM()
 {
 	if(!x5b_app_global)
-		return FALSE;
+		return ospl_false;
 	return x5b_app_global->X5CM;
 }
 
@@ -629,7 +629,7 @@ int x5b_app_customizer()
 	return x5b_app_global->customizer;
 }
 
-int x5b_app_mode_set_api(BOOL X5CM)
+int x5b_app_mode_set_api(ospl_bool X5CM)
 {
 	if(x5b_app_global)
 		x5b_app_global->X5CM = X5CM;
@@ -651,7 +651,7 @@ int x5b_app_customizer_set_api(x5b_app_customizer_t customizer)
 }
 
 
-int x5b_app_bluetooth_set_api(BOOL bluetooth)
+int x5b_app_bluetooth_set_api(ospl_bool bluetooth)
 {
 	if(x5b_app_global)
 		x5b_app_global->bluetooth = bluetooth;
@@ -661,11 +661,11 @@ int x5b_app_bluetooth_set_api(BOOL bluetooth)
 int x5b_app_bluetooth_get_api()
 {
 	if(!x5b_app_global)
-		return FALSE;
+		return ospl_false;
 	return x5b_app_global->bluetooth;
 }
 
-int x5b_app_nfc_set_api(BOOL nfc_enable)
+int x5b_app_nfc_set_api(ospl_bool nfc_enable)
 {
 	if(x5b_app_global)
 		x5b_app_global->nfc_enable = nfc_enable;
@@ -675,7 +675,7 @@ int x5b_app_nfc_set_api(BOOL nfc_enable)
 int x5b_app_nfc_get_api()
 {
 	if(!x5b_app_global)
-		return FALSE;
+		return ospl_false;
 	return x5b_app_global->nfc_enable;
 }
 
@@ -744,17 +744,17 @@ char * x5b_app_location_address_get_api(void)
 	return x5b_app_global->location_address;
 }
 
-int x5b_app_out_direction_set_api(BOOL out_direction)
+int x5b_app_out_direction_set_api(ospl_bool out_direction)
 {
 	if(x5b_app_global)
 		x5b_app_global->out_direction = out_direction;
 	return OK;
 }
 
-BOOL x5b_app_out_direction_get_api(void)
+ospl_bool x5b_app_out_direction_get_api(void)
 {
 	if(!x5b_app_global)
-		return FALSE;
+		return ospl_false;
 	return x5b_app_global->out_direction;
 }
 
@@ -938,7 +938,7 @@ static int _x5b_app_face_show(struct vty *vty)
 	return OK;
 }
 
-int x5b_app_show_param(struct vty *vty, int type)
+int x5b_app_show_param(struct vty *vty, ospl_uint32 type)
 {
 	if(type == 0 && x5b_app_global)
 	{

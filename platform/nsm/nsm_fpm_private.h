@@ -25,6 +25,10 @@
 #ifndef _ZEBRA_FPM_PRIVATE_H
 #define _ZEBRA_FPM_PRIVATE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "nsm_debug.h"
 
 #if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
@@ -50,12 +54,18 @@ static inline void zfpm_debug(const char *format, ...) { return; }
  * Externs
  */
 extern int
-zfpm_netlink_encode_route (int cmd, rib_dest_t *dest, struct rib *rib,
-			   char *in_buf, size_t in_buf_len);
+zfpm_netlink_encode_route (ospl_uint32 cmd, rib_dest_t *dest, struct rib *rib,
+			   ospl_char *in_buf, ospl_size_t in_buf_len);
 
 extern int
 zfpm_protobuf_encode_route (rib_dest_t *dest, struct rib *rib,
-			    uint8_t *in_buf, size_t in_buf_len);
+			    ospl_uint8 *in_buf, ospl_size_t in_buf_len);
 
 extern struct rib *zfpm_route_for_update (rib_dest_t *dest);
+
+ 
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _ZEBRA_FPM_PRIVATE_H */

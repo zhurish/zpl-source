@@ -23,6 +23,10 @@
 #ifndef _LIBOSPFD_H
 #define _LIBOSPFD_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* IP precedence. */
 #ifndef IPTOS_PREC_INTERNETCONTROL
 #define IPTOS_PREC_INTERNETCONTROL	0xC0
@@ -88,5 +92,9 @@
 
 #define OSPF_LSA_MAXAGE_CHECK_INTERVAL		30
 #define OSPF_LSA_MAXAGE_REMOVE_DELAY_DEFAULT	60
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _LIBOSPFD_H */

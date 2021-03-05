@@ -146,8 +146,8 @@ DEFUN (no_dos_frag_error_enable,
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
-DEFUN (dos_short_hdr_enable,
-		dos_short_hdr_enable_cmd,
+DEFUN (doospl_ospl_int16_hdr_enable,
+		doospl_ospl_int16_hdr_enable_cmd,
 		"ip tcp short-hdr",
 		IP_STR
 		"TCP \n"
@@ -164,8 +164,8 @@ DEFUN (dos_short_hdr_enable,
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
-DEFUN (no_dos_short_hdr_enable,
-		no_dos_short_hdr_enable_cmd,
+DEFUN (no_doospl_ospl_int16_hdr_enable,
+		no_doospl_ospl_int16_hdr_enable_cmd,
 		"no ip tcp short-hdr",
 		NO_STR
 		IP_STR
@@ -400,8 +400,8 @@ void cmd_dos_init (void)
 	  install_element (CONFIG_NODE, &dos_frag_error_enable_cmd);
 	  install_element (CONFIG_NODE, &no_dos_frag_error_enable_cmd);
 
-	  install_element (CONFIG_NODE, &dos_short_hdr_enable_cmd);
-	  install_element (CONFIG_NODE, &no_dos_short_hdr_enable_cmd);
+	  install_element (CONFIG_NODE, &doospl_ospl_int16_hdr_enable_cmd);
+	  install_element (CONFIG_NODE, &no_doospl_ospl_int16_hdr_enable_cmd);
 	  install_element (CONFIG_NODE, &dos_tcp_enable_cmd);
 	  install_element (CONFIG_NODE, &no_dos_tcp_enable_cmd);
 	  install_element (CONFIG_NODE, &dos_blat_enable_cmd);

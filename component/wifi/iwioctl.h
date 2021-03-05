@@ -8,6 +8,10 @@
 #ifndef __WIFI_H__
 #define __WIFI_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "zebra.h"
 #include "vty.h"
 #include "if.h"
@@ -70,17 +74,17 @@ extern int iw_client_dev_station_dump_show(struct interface *ifp, struct vty *vt
 /*
  * scanning AP
  */
-extern int iw_client_dev_scan_ap_show(struct interface *ifp, struct vty *vty, int detail);
+extern int iw_client_dev_scan_ap_show(struct interface *ifp, struct vty *vty, ospl_bool detail);
 /*
  * show current connect information
  */
 extern int iw_client_dev_connect_show(struct interface *ifp, struct vty *vty);
-extern int iw_client_dev_connect_get(struct interface *ifp, u_int8 essid[]);
+extern int iw_client_dev_connect_get(struct interface *ifp, ospl_uint8 essid[]);
 
 extern int iw_client_dev_connect(struct interface *ifp, iw_client_ap_t *ap, char *ssid, char *password);
 extern int iw_client_dev_start_dhcpc(struct interface *ifp);
 extern int iw_client_dev_disconnect(struct interface *ifp);
-extern int iw_client_dev_is_connect(char *ifname, u_int8 *bssid);
+extern int iw_client_dev_is_connect(char *ifname, ospl_uint8 *bssid);
 
 
 
@@ -93,5 +97,9 @@ extern int iw_ap_connect_scanning(iw_ap_t *iw_ap);
 extern int iw_dev_mode(struct interface *ifp);
 
 
-
+ 
+#ifdef __cplusplus
+}
+#endif
+ 
 #endif /* __WIFI_H__ */

@@ -25,13 +25,13 @@
 pl_pjsip_t *pl_pjsip = NULL;
 
 
-static int pl_pjsip_source_change(struct interface *ifp, BOOL change)
+static int pl_pjsip_source_change(struct interface *ifp, ospl_bool change)
 {
 	if(pl_pjsip && ifp && ifp->ifindex > 0 && ifp->ifindex == pl_pjsip->sip_source_interface)
 	{
 		if(change)
 		{
-			u_int32 address = voip_get_address(pl_pjsip->sip_source_interface);
+			ospl_uint32 address = voip_get_address(pl_pjsip->sip_source_interface);
 			if(address)
 			{
 				memset(pl_pjsip->sip_local.sip_address, 0, sizeof(pl_pjsip->sip_local.sip_address));
@@ -75,7 +75,7 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 	int (*app_dtmf_cb)(int , int);
 	void				*mutex;
 */
-	sip->sip_proxy_enable = FALSE;
+	sip->sip_proxy_enable = ospl_false;
 
 	//"SIP Account options:"
 	strcpy(sip->sip_realm, "*");
@@ -83,9 +83,9 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 	//sip->sip_reg_timeout = PJSUA_REG_INTERVAL;		//Optional registration interval (default %d)
 	sip->sip_rereg_delay = PJSUA_REG_RETRY_INTERVAL;		//Optional auto retry registration interval (default %d)
 	sip->sip_reg_proxy = PJSIP_REGISTER_ALL;			//Control the use of proxy settings in REGISTER.0=no proxy, 1=outbound only, 2=acc only, 3=all (default)
-	sip->sip_publish = FALSE;			//Send presence PUBLISH for this account
-	sip->sip_mwi = FALSE;				//Subscribe to message summary/waiting indication
-	sip->sip_ims_enable = FALSE;			//Enable 3GPP/IMS related settings on this account
+	sip->sip_publish = ospl_false;			//Send presence PUBLISH for this account
+	sip->sip_mwi = ospl_false;				//Subscribe to message summary/waiting indication
+	sip->sip_ims_enable = ospl_false;			//Enable 3GPP/IMS related settings on this account
 #if defined(PJMEDIA_HAS_SRTP) && (PJMEDIA_HAS_SRTP != 0)
 	sip->sip_srtp_mode = PJSIP_SRTP_DISABLE;			//Use SRTP?  0:disabled, 1:optional, 2:mandatory,3:optional by duplicating media offer (def:0)
 	sip->sip_srtp_secure = PJSIP_SRTP_SEC_TLS;		//SRTP require secure SIP? 0:no, 1:tls, 2:sips (def:1)
@@ -94,17 +94,17 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 	sip->sip_timer = PJSIP_TIMER_OPTIONAL;				//Use SIP session timers? (default=1) 0:inactive, 1:optional, 2:mandatory, 3:always"
 	sip->sip_timer_sec = PJSIP_SESS_TIMER_DEF_SE;
 	sip->sip_outb_rid = 1;			//Set SIP outbound reg-id (default:1)
-	sip->sip_auto_update_nat = TRUE;	//Where N is 0 or 1 to enable/disable SIP traversal behind symmetric NAT (default 1)
-	sip->sip_stun_disable = TRUE;		//Disable STUN for this account
+	sip->sip_auto_update_nat = ospl_true;	//Where N is 0 or 1 to enable/disable SIP traversal behind symmetric NAT (default 1)
+	sip->sip_stun_disable = ospl_true;		//Disable STUN for this account
 
 
 	//Transport Options:
 #if defined(PJ_HAS_IPV6) && PJ_HAS_IPV6
-	sip->sip_ipv6_enable = FALSE;
+	sip->sip_ipv6_enable = ospl_false;
 #endif
-	sip->sip_set_qos = TRUE;
-	sip->sip_noudp = FALSE;
-	sip->sip_notcp = TRUE;
+	sip->sip_set_qos = ospl_true;
+	sip->sip_noudp = ospl_false;
+	sip->sip_notcp = ospl_true;
 
 	//pjsip_server_t		sip_nameserver;			//Add the specified nameserver to enable SRV resolution This option can be specified multiple times.
 	//pjsip_server_t		sip_outbound;			//Set the URL of global outbound proxy server May be specified multiple times
@@ -112,7 +112,7 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 
 	//TLS Options:
 #if defined(PJSIP_HAS_TLS_TRANSPORT) && (PJSIP_HAS_TLS_TRANSPORT != 0)
-	sip->sip_tls_enable = FALSE;
+	sip->sip_tls_enable = ospl_false;
 	/*
 	char				sip_tls_ca_file[PJSIP_FILE_MAX];		//Specify TLS CA file (default=none)
 	char				sip_tls_cert_file[PJSIP_FILE_MAX];		//Specify TLS certificate file (default=none)
@@ -120,7 +120,7 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 	char				sip_tls_password[PJSIP_PASSWORD_MAX];	//Specify TLS password to private key file (default=none)
 	pjsip_server_t		sip_tls_verify_server;					//Verify server's certificate (default=no)
 	pjsip_server_t		sip_tls_verify_client;					//Verify client's certificate (default=no)
-	u_int16				sip_neg_timeout;						//Specify TLS negotiation timeout (default=no)
+	ospl_uint16				sip_neg_timeout;						//Specify TLS negotiation timeout (default=no)
 	char				sip_tls_cipher[PJSIP_DATA_MAX];			//Specify prefered TLS cipher (optional).May be specified multiple times
 	*/
 #endif
@@ -130,13 +130,13 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 	//char				sip_discodec[PJSIP_DATA_MAX];
 	sip->sip_clock_rate = PJSIP_DEFAULT_CLOCK_RATE;
 	sip->sip_snd_clock_rate = PJSIP_DEFAULT_CLOCK_RATE;
-	sip->sip_stereo = FALSE;
-	sip->sip_audio_null = FALSE;
+	sip->sip_stereo = ospl_false;
+	sip->sip_audio_null = ospl_false;
 	//char				sip_play_file[PJSIP_FILE_MAX];
 	//char				sip_play_tone[PJSIP_DATA_MAX];
-	sip->sip_auto_play = FALSE;
-	sip->sip_auto_loop = FALSE;
-	sip->sip_auto_conf = TRUE;
+	sip->sip_auto_play = ospl_false;
+	sip->sip_auto_loop = ospl_false;
+	sip->sip_auto_conf = ospl_true;
 
 
 
@@ -144,7 +144,7 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 
 	sip->sip_quality = PJSUA_DEFAULT_CODEC_QUALITY;							//Specify media quality (0-10, default=2)
 	sip->sip_ptime = PJSUA_DEFAULT_AUDIO_FRAME_PTIME;								//Override codec ptime to MSEC (default=specific)
-	sip->sip_no_vad = FALSE;												//Disable VAD/silence detector (default=vad enabled)
+	sip->sip_no_vad = ospl_false;												//Disable VAD/silence detector (default=vad enabled)
 	sip->sip_echo_tail = PJSUA_DEFAULT_EC_TAIL_LEN;							//Set echo canceller tail length
 	//sip->sip_echo_mode = PJSIP_ECHO_SPEEX;//PJSIP_ECHO_DEFAULT;//PJSIP_ECHO_DISABLE;	//Select echo canceller algorithm (0=default, 1=speex, 2=suppressor, 3=WebRtc)
 	//sip->sip_echo_mode = PJSIP_ECHO_SUPPRESSER;
@@ -154,34 +154,34 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 	sip->sip_playback_lat = PJMEDIA_SND_DEFAULT_PLAY_LATENCY;						//Audio capture latency, in ms
 	sip->sip_snd_auto_close = 0;						//Auto close audio device when idle for N secs (default=1)
 																//		Specify N=-1 to disable this feature. Specify N=0 for instant close when unused.
-	sip->sip_notones = FALSE;//回铃音							//Disable audible tones
+	sip->sip_notones = ospl_false;//回铃音							//Disable audible tones
 	sip->sip_jb_max_size = -1;						//指定最大值抖动缓冲(帧，默认= 1)Specify jitter buffer maximum size, in frames (default=-1)");
 
 #if PJSUA_HAS_VIDEO
 	//Video Options:
-	sip->sip_video = FALSE;
-	//u_int32				sip_vcapture_dev;
-	//u_int32				sip_vrender_dev;
+	sip->sip_video = ospl_false;
+	//ospl_uint32				sip_vcapture_dev;
+	//ospl_uint32				sip_vrender_dev;
 	//char				sip_play_avi[PJSIP_FILE_MAX];
-	sip->sip_auto_play_avi = FALSE;
+	sip->sip_auto_play_avi = ospl_false;
 #endif
 	//Media Transport Options:
-	sip->sip_ice = FALSE;				//Enable ICE (default:no)
-	sip->sip_ice_regular = FALSE;		//Use ICE regular nomination (default: aggressive)
+	sip->sip_ice = ospl_false;				//Enable ICE (default:no)
+	sip->sip_ice_regular = ospl_false;		//Use ICE regular nomination (default: aggressive)
 	sip->sip_ice_max_host = 5;		//Set maximum number of ICE host candidates
-	sip->sip_ice_nortcp = FALSE;			//Disable RTCP component in ICE (default: no)
+	sip->sip_ice_nortcp = ospl_false;			//Disable RTCP component in ICE (default: no)
 	sip->sip_rtp_port = PJSIP_RTP_PORT_DEFAULT;
 	sip->sip_rx_drop_pct = 0;		//Drop PCT percent of RX RTP (for pkt lost sim, default: 0)
 	sip->sip_tx_drop_pct = 0;		//Drop PCT percent of TX RTP (for pkt lost sim, default: 0)
-	sip->sip_turn = FALSE;
-	//BOOL				sip_turn;				//Enable TURN relay with ICE (default:no)
+	sip->sip_turn = ospl_false;
+	//ospl_bool				sip_turn;				//Enable TURN relay with ICE (default:no)
 	//pjsip_server_t		sip_turn_srv;			//Domain or host name of TURN server (\"NAME:PORT\" format)
-	sip->sip_turn_tcp = FALSE;
-	//BOOL				sip_turn_tcp;			//Use TCP connection to TURN server (default no)
+	sip->sip_turn_tcp = ospl_false;
+	//ospl_bool				sip_turn_tcp;			//Use TCP connection to TURN server (default no)
 	//char				sip_turn_user[PJSIP_USERNAME_MAX];
 	//char				sip_turn_password[PJSIP_PASSWORD_MAX];
-	sip->sip_rtcp_mux = FALSE;
-	//u_int16				sip_rtcp_mux;			//Enable RTP & RTCP multiplexing (default: no)
+	sip->sip_rtcp_mux = ospl_false;
+	//ospl_uint16				sip_rtcp_mux;			//Enable RTP & RTCP multiplexing (default: no)
 	//Buddy List (can be more than one):
 	//void				*buddy_list;
 	//User Agent options:
@@ -198,25 +198,25 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 												//	2: follow + replace To header (default), 3: ask
 
 /*	strcpy(pl_pjsip->sip_codec.payload_name, "PCMU");
-	pl_pjsip->sip_codec.is_active = TRUE;
+	pl_pjsip->sip_codec.is_active = ospl_true;
 
 	strcpy(pl_pjsip->codec[0].payload_name, "PCMU");
-	pl_pjsip->codec[0].is_active = TRUE;
+	pl_pjsip->codec[0].is_active = ospl_true;
 	strcpy(pl_pjsip->codec[1].payload_name, "PCMA");
-	pl_pjsip->codec[1].is_active = TRUE;
+	pl_pjsip->codec[1].is_active = ospl_true;
 	strcpy(pl_pjsip->codec[2].payload_name, "GSM");
-	pl_pjsip->codec[2].is_active = TRUE;
+	pl_pjsip->codec[2].is_active = ospl_true;
 	strcpy(pl_pjsip->codec[3].payload_name, "G722");
-	pl_pjsip->codec[3].is_active = TRUE;
+	pl_pjsip->codec[3].is_active = ospl_true;
 
 	strcpy(pl_pjsip->dicodec[0].payload_name, "speex/8000");
-	pl_pjsip->dicodec[0].is_active = TRUE;
+	pl_pjsip->dicodec[0].is_active = ospl_true;
 	strcpy(pl_pjsip->dicodec[1].payload_name, "speex/16000");
-	pl_pjsip->dicodec[1].is_active = TRUE;
+	pl_pjsip->dicodec[1].is_active = ospl_true;
 	strcpy(pl_pjsip->dicodec[2].payload_name, "speex/32000");
-	pl_pjsip->dicodec[2].is_active = TRUE;
+	pl_pjsip->dicodec[2].is_active = ospl_true;
 	strcpy(pl_pjsip->dicodec[3].payload_name, "iLBC/8000");
-	pl_pjsip->dicodec[3].is_active = TRUE;*/
+	pl_pjsip->dicodec[3].is_active = ospl_true;*/
 
 	pl_pjsip_codec_default_set_api("pcmu");
 	pl_pjsip_codec_add_api("pcmu");
@@ -237,7 +237,7 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 #endif
 
 	sip->debug_level = LOG_ERR;
-	sip->debug_detail = FALSE;
+	sip->debug_detail = ospl_false;
 /*
 	pl_pjsip_username(&app_config, "100");//Set authentication username
 	pl_pjsip_password(&app_config, "100");//Set authentication password
@@ -282,9 +282,6 @@ int pl_pjsip_module_init()
 #ifdef APP_X5BA_MODULE
 	void_module_init(pl_pjsip);
 #endif
-
-
-
 	return OK;
 }
 
@@ -320,6 +317,21 @@ int pl_pjsip_module_task_exit()
 	return OK;
 }
 
+
+struct module_list module_list_pjsip = 
+{ 
+	.module=MODULE_PJSIP, 
+	.name="PJSIP", 
+	.module_init=pl_pjsip_module_init, 
+	.module_exit=pl_pjsip_module_exit, 
+	.module_task_init=pl_pjsip_module_task_init, 
+	.module_task_exit=pl_pjsip_module_task_exit, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};
 /***************************************************************************************/
 /***************************************************************************************/
 char *pl_pjsip_dtmf_name(pjsip_dtmf_t dtmf)
@@ -571,7 +583,7 @@ char *pl_pjsip_call_state_name(pjsip_call_state_t dtmf)
 }
 
 /***************************************************************************************/
-int pl_pjsip_global_set_api(BOOL enable)
+int pl_pjsip_global_set_api(ospl_bool enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -583,7 +595,7 @@ int pl_pjsip_global_set_api(BOOL enable)
 	return OK;
 }
 
-int pl_pjsip_global_get_api(BOOL *enable)
+int pl_pjsip_global_get_api(ospl_bool *enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -595,9 +607,9 @@ int pl_pjsip_global_get_api(BOOL *enable)
 	return OK;
 }
 
-BOOL pl_pjsip_global_isenable()
+ospl_bool pl_pjsip_global_isenable()
 {
-	BOOL enable = FALSE;
+	ospl_bool enable = ospl_false;
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
 		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
@@ -607,7 +619,7 @@ BOOL pl_pjsip_global_isenable()
 	return enable;
 }
 
-int pl_pjsip_server_set_api(s_int8 *ip, u_int16 port, BOOL sec)
+int pl_pjsip_server_set_api(ospl_int8 *ip, ospl_uint16 port, ospl_bool sec)
 {
 	zassert(pl_pjsip != NULL);
 	if (pl_pjsip->mutex)
@@ -647,7 +659,7 @@ int pl_pjsip_server_set_api(s_int8 *ip, u_int16 port, BOOL sec)
 	return OK;
 }
 
-int pl_pjsip_server_get_api(s_int8 *ip, u_int16 *port, BOOL sec)
+int pl_pjsip_server_get_api(ospl_int8 *ip, ospl_uint16 *port, ospl_bool sec)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -671,14 +683,14 @@ int pl_pjsip_server_get_api(s_int8 *ip, u_int16 *port, BOOL sec)
 	return OK;
 }
 
-int pl_pjsip_proxy_set_api(s_int8 *ip, u_int16 port, BOOL sec)
+int pl_pjsip_proxy_set_api(ospl_int8 *ip, ospl_uint16 port, ospl_bool sec)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
 		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
 	if(sec)
 	{
-		pl_pjsip->sip_proxy_enable = TRUE;
+		pl_pjsip->sip_proxy_enable = ospl_true;
 		pl_pjsip->sip_proxy_sec.sip_port = port ? port:PJSIP_PORT_DEFAULT;
 		memset(pl_pjsip->sip_proxy_sec.sip_address, 0, sizeof(pl_pjsip->sip_proxy_sec.sip_address));
 		if(ip)
@@ -692,7 +704,7 @@ int pl_pjsip_proxy_set_api(s_int8 *ip, u_int16 port, BOOL sec)
 	}
 	else
 	{
-		pl_pjsip->sip_proxy_enable = TRUE;
+		pl_pjsip->sip_proxy_enable = ospl_true;
 		pl_pjsip->sip_proxy_cnt = 1;
 		pl_pjsip->sip_proxy.sip_port = port ? port:PJSIP_PORT_DEFAULT;
 		memset(pl_pjsip->sip_proxy.sip_address, 0, sizeof(pl_pjsip->sip_proxy.sip_address));
@@ -710,7 +722,7 @@ int pl_pjsip_proxy_set_api(s_int8 *ip, u_int16 port, BOOL sec)
 	return OK;
 }
 
-int pl_pjsip_proxy_get_api(s_int8 *ip, u_int16 *port, BOOL sec)
+int pl_pjsip_proxy_get_api(ospl_int8 *ip, ospl_uint16 *port, ospl_bool sec)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -735,7 +747,7 @@ int pl_pjsip_proxy_get_api(s_int8 *ip, u_int16 *port, BOOL sec)
 }
 
 
-int pl_pjsip_local_address_set_api(s_int8 *address)
+int pl_pjsip_local_address_set_api(ospl_int8 *address)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -752,7 +764,7 @@ int pl_pjsip_local_address_set_api(s_int8 *address)
 	return OK;
 }
 
-int pl_pjsip_local_address_get_api(s_int8 *address)
+int pl_pjsip_local_address_get_api(ospl_int8 *address)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -768,9 +780,9 @@ int pl_pjsip_local_address_get_api(s_int8 *address)
 	return OK;
 }
 
-int pl_pjsip_source_interface_set_api(u_int32 ifindex)
+int pl_pjsip_source_interface_set_api(ifindex_t ifindex)
 {
-	u_int32 address = 0;
+	ospl_uint32 address = 0;
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
 		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
@@ -789,7 +801,7 @@ int pl_pjsip_source_interface_set_api(u_int32 ifindex)
 	return OK;
 }
 
-int pl_pjsip_source_interface_get_api(u_int32 *ifindex)
+int pl_pjsip_source_interface_get_api(ifindex_t *ifindex)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -801,7 +813,7 @@ int pl_pjsip_source_interface_get_api(u_int32 *ifindex)
 	return OK;
 }
 
-int pl_pjsip_local_port_set_api(u_int16 port)
+int pl_pjsip_local_port_set_api(ospl_uint16 port)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -811,7 +823,7 @@ int pl_pjsip_local_port_set_api(u_int16 port)
 		os_mutex_unlock(pl_pjsip->mutex);
 	return OK;
 }
-int pl_pjsip_local_port_get_api(u_int16 *port)
+int pl_pjsip_local_port_get_api(ospl_uint16 *port)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -871,7 +883,7 @@ int pl_pjsip_dtmf_get_api(pjsip_dtmf_t *dtmf)
 	return OK;
 }
 
-int pl_pjsip_username_set_api(s_int8 *user, s_int8 *pass, BOOL sec)
+int pl_pjsip_username_set_api(ospl_int8 *user, ospl_int8 *pass, ospl_bool sec)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -915,7 +927,7 @@ int pl_pjsip_username_set_api(s_int8 *user, s_int8 *pass, BOOL sec)
 	return OK;
 }
 
-int pl_pjsip_username_get_api(s_int8 *user, s_int8 *pass, BOOL sec)
+int pl_pjsip_username_get_api(ospl_int8 *user, ospl_int8 *pass, ospl_bool sec)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -940,7 +952,7 @@ int pl_pjsip_username_get_api(s_int8 *user, s_int8 *pass, BOOL sec)
 }
 
 
-int pl_pjsip_phonenumber_set_api(s_int8 *sip_phone, BOOL sec)
+int pl_pjsip_phonenumber_set_api(ospl_int8 *sip_phone, ospl_bool sec)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -974,7 +986,7 @@ int pl_pjsip_phonenumber_set_api(s_int8 *sip_phone, BOOL sec)
 	return OK;
 }
 
-int pl_pjsip_phonenumber_get_api(s_int8 *sip_phone, BOOL sec)
+int pl_pjsip_phonenumber_get_api(ospl_int8 *sip_phone, ospl_bool sec)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -994,7 +1006,7 @@ int pl_pjsip_phonenumber_get_api(s_int8 *sip_phone, BOOL sec)
 	return OK;
 }
 
-int pl_pjsip_expires_set_api(u_int16 sip_expires)
+int pl_pjsip_expires_set_api(ospl_uint16 sip_expires)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1005,7 +1017,7 @@ int pl_pjsip_expires_set_api(u_int16 sip_expires)
 	return OK;
 }
 
-int pl_pjsip_expires_get_api(u_int16 *sip_expires)
+int pl_pjsip_expires_get_api(ospl_uint16 *sip_expires)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1017,7 +1029,7 @@ int pl_pjsip_expires_get_api(u_int16 *sip_expires)
 	return OK;
 }
 
-int pl_pjsip_100rel_set_api(BOOL sip_100_rel)
+int pl_pjsip_100rel_set_api(ospl_bool sip_100_rel)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1028,7 +1040,7 @@ int pl_pjsip_100rel_set_api(BOOL sip_100_rel)
 	return OK;
 }
 
-int pl_pjsip_100rel_get_api(BOOL *sip_100_rel)
+int pl_pjsip_100rel_get_api(ospl_bool *sip_100_rel)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1070,7 +1082,7 @@ int pl_pjsip_realm_get_api(char *realm)
 	return OK;
 }
 
-/*int pl_pjsip_registration_interval_set_api(u_int16 sip_reg_timeout)
+/*int pl_pjsip_registration_interval_set_api(ospl_uint16 sip_reg_timeout)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1081,7 +1093,7 @@ int pl_pjsip_realm_get_api(char *realm)
 	return OK;
 }
 
-int pl_pjsip_registration_interval_get_api(u_int16 *sip_reg_timeout)
+int pl_pjsip_registration_interval_get_api(ospl_uint16 *sip_reg_timeout)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1093,7 +1105,7 @@ int pl_pjsip_registration_interval_get_api(u_int16 *sip_reg_timeout)
 	return OK;
 }*/
 
-int pl_pjsip_reregist_delay_set_api(u_int16 sip_rereg_delay)
+int pl_pjsip_reregist_delay_set_api(ospl_uint16 sip_rereg_delay)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1104,7 +1116,7 @@ int pl_pjsip_reregist_delay_set_api(u_int16 sip_rereg_delay)
 	return OK;
 }
 
-int pl_pjsip_reregist_delay_get_api(u_int16 *sip_rereg_delay)
+int pl_pjsip_reregist_delay_get_api(ospl_uint16 *sip_rereg_delay)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1139,7 +1151,7 @@ int pl_pjsip_reregister_proxy_get_api(pjsip_reg_proxy_t *sip_reg_proxy)
 	return OK;
 }
 
-int pl_pjsip_publish_set_api(BOOL sip_publish)
+int pl_pjsip_publish_set_api(ospl_bool sip_publish)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1150,7 +1162,7 @@ int pl_pjsip_publish_set_api(BOOL sip_publish)
 	return OK;
 }
 
-int pl_pjsip_publish_get_api(BOOL *sip_publish)
+int pl_pjsip_publish_get_api(ospl_bool *sip_publish)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1162,7 +1174,7 @@ int pl_pjsip_publish_get_api(BOOL *sip_publish)
 	return OK;
 }
 
-int pl_pjsip_mwi_set_api(BOOL sip_mwi)
+int pl_pjsip_mwi_set_api(ospl_bool sip_mwi)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1173,7 +1185,7 @@ int pl_pjsip_mwi_set_api(BOOL sip_mwi)
 	return OK;
 }
 
-int pl_pjsip_mwi_get_api(BOOL *sip_mwi)
+int pl_pjsip_mwi_get_api(ospl_bool *sip_mwi)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1185,7 +1197,7 @@ int pl_pjsip_mwi_get_api(BOOL *sip_mwi)
 	return OK;
 }
 
-int pl_pjsip_ims_set_api(BOOL sip_ims_enable)
+int pl_pjsip_ims_set_api(ospl_bool sip_ims_enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1196,7 +1208,7 @@ int pl_pjsip_ims_set_api(BOOL sip_ims_enable)
 	return OK;
 }
 
-int pl_pjsip_ims_get_api(BOOL *sip_ims_enable)
+int pl_pjsip_ims_get_api(ospl_bool *sip_ims_enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1277,7 +1289,7 @@ int pl_pjsip_timer_get_api(pjsip_timer_t *sip_timer)
 	return OK;
 }
 
-int pl_pjsip_timer_sec_set_api(u_int16 sip_timer_sec)
+int pl_pjsip_timer_sec_set_api(ospl_uint16 sip_timer_sec)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1288,7 +1300,7 @@ int pl_pjsip_timer_sec_set_api(u_int16 sip_timer_sec)
 	return OK;
 }
 
-int pl_pjsip_timer_sec_get_api(u_int16 *sip_timer_sec)
+int pl_pjsip_timer_sec_get_api(ospl_uint16 *sip_timer_sec)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1300,7 +1312,7 @@ int pl_pjsip_timer_sec_get_api(u_int16 *sip_timer_sec)
 	return OK;
 }
 
-int pl_pjsip_outb_rid_set_api(u_int16 sip_outb_rid)
+int pl_pjsip_outb_rid_set_api(ospl_uint16 sip_outb_rid)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1311,7 +1323,7 @@ int pl_pjsip_outb_rid_set_api(u_int16 sip_outb_rid)
 	return OK;
 }
 
-int pl_pjsip_outb_rid_get_api(u_int16 *sip_outb_rid)
+int pl_pjsip_outb_rid_get_api(ospl_uint16 *sip_outb_rid)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1323,7 +1335,7 @@ int pl_pjsip_outb_rid_get_api(u_int16 *sip_outb_rid)
 	return OK;
 }
 
-int pl_pjsip_auto_update_nat_set_api(BOOL sip_auto_update_nat)
+int pl_pjsip_auto_update_nat_set_api(ospl_bool sip_auto_update_nat)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1334,7 +1346,7 @@ int pl_pjsip_auto_update_nat_set_api(BOOL sip_auto_update_nat)
 	return OK;
 }
 
-int pl_pjsip_auto_update_nat_get_api(BOOL *sip_auto_update_nat)
+int pl_pjsip_auto_update_nat_get_api(ospl_bool *sip_auto_update_nat)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1346,7 +1358,7 @@ int pl_pjsip_auto_update_nat_get_api(BOOL *sip_auto_update_nat)
 	return OK;
 }
 
-int pl_pjsip_stun_set_api(BOOL enable)
+int pl_pjsip_stun_set_api(ospl_bool enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1357,7 +1369,7 @@ int pl_pjsip_stun_set_api(BOOL enable)
 	return OK;
 }
 
-int pl_pjsip_stun_get_api(BOOL *enable)
+int pl_pjsip_stun_get_api(ospl_bool *enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1370,7 +1382,7 @@ int pl_pjsip_stun_get_api(BOOL *enable)
 }
 /***************************************************************************/
 //Transport Options:
-int pl_pjsip_ipv6_set_api(BOOL enable)
+int pl_pjsip_ipv6_set_api(ospl_bool enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1381,7 +1393,7 @@ int pl_pjsip_ipv6_set_api(BOOL enable)
 	return OK;
 }
 
-int pl_pjsip_ipv6_get_api(BOOL *enable)
+int pl_pjsip_ipv6_get_api(ospl_bool *enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1393,7 +1405,7 @@ int pl_pjsip_ipv6_get_api(BOOL *enable)
 	return OK;
 }
 
-int pl_pjsip_qos_set_api(BOOL enable)
+int pl_pjsip_qos_set_api(ospl_bool enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1404,7 +1416,7 @@ int pl_pjsip_qos_set_api(BOOL enable)
 	return OK;
 }
 
-int pl_pjsip_qos_get_api(BOOL *enable)
+int pl_pjsip_qos_get_api(ospl_bool *enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1416,7 +1428,7 @@ int pl_pjsip_qos_get_api(BOOL *enable)
 	return OK;
 }
 
-int pl_pjsip_noudp_set_api(BOOL enable)
+int pl_pjsip_noudp_set_api(ospl_bool enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1427,7 +1439,7 @@ int pl_pjsip_noudp_set_api(BOOL enable)
 	return OK;
 }
 
-int pl_pjsip_noudp_get_api(BOOL *enable)
+int pl_pjsip_noudp_get_api(ospl_bool *enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1439,7 +1451,7 @@ int pl_pjsip_noudp_get_api(BOOL *enable)
 	return OK;
 }
 
-int pl_pjsip_notcp_set_api(BOOL enable)
+int pl_pjsip_notcp_set_api(ospl_bool enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1450,7 +1462,7 @@ int pl_pjsip_notcp_set_api(BOOL enable)
 	return OK;
 }
 
-int pl_pjsip_notcp_get_api(BOOL *enable)
+int pl_pjsip_notcp_get_api(ospl_bool *enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1462,7 +1474,7 @@ int pl_pjsip_notcp_get_api(BOOL *enable)
 	return OK;
 }
 
-int pl_pjsip_nameserver_set_api(char * address, u_int16 port)
+int pl_pjsip_nameserver_set_api(char * address, ospl_uint16 port)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1478,7 +1490,7 @@ int pl_pjsip_nameserver_set_api(char * address, u_int16 port)
 	return OK;
 }
 
-int pl_pjsip_nameserver_get_api(char * address, u_int16 *port)
+int pl_pjsip_nameserver_get_api(char * address, ospl_uint16 *port)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1494,7 +1506,7 @@ int pl_pjsip_nameserver_get_api(char * address, u_int16 *port)
 	return OK;
 }
 
-int pl_pjsip_outbound_set_api(char * address, u_int16 port)
+int pl_pjsip_outbound_set_api(char * address, ospl_uint16 port)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1510,7 +1522,7 @@ int pl_pjsip_outbound_set_api(char * address, u_int16 port)
 	return OK;
 }
 
-int pl_pjsip_outbound_get_api(char * address, u_int16 *port)
+int pl_pjsip_outbound_get_api(char * address, ospl_uint16 *port)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1526,7 +1538,7 @@ int pl_pjsip_outbound_get_api(char * address, u_int16 *port)
 	return OK;
 }
 
-int pl_pjsip_stun_server_set_api(char * address, u_int16 port)
+int pl_pjsip_stun_server_set_api(char * address, ospl_uint16 port)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1542,7 +1554,7 @@ int pl_pjsip_stun_server_set_api(char * address, u_int16 port)
 	return OK;
 }
 
-int pl_pjsip_stun_server_get_api(char * address, u_int16 *port)
+int pl_pjsip_stun_server_get_api(char * address, ospl_uint16 *port)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1560,7 +1572,7 @@ int pl_pjsip_stun_server_get_api(char * address, u_int16 *port)
 /***************************************************************************/
 //TLS Options:
 #if defined(PJSIP_HAS_TLS_TRANSPORT) && (PJSIP_HAS_TLS_TRANSPORT != 0)
-int pl_pjsip_tls_set_api(BOOL enable)
+int pl_pjsip_tls_set_api(ospl_bool enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1571,7 +1583,7 @@ int pl_pjsip_tls_set_api(BOOL enable)
 	return OK;
 }
 
-int pl_pjsip_tls_get_api(BOOL *enable)
+int pl_pjsip_tls_get_api(ospl_bool *enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1698,7 +1710,7 @@ int pl_pjsip_tls_password_get_api(char * password)
 	return OK;
 }
 
-int pl_pjsip_tls_verify_server_set_api(char * address, u_int16 port)
+int pl_pjsip_tls_verify_server_set_api(char * address, ospl_uint16 port)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1714,7 +1726,7 @@ int pl_pjsip_tls_verify_server_set_api(char * address, u_int16 port)
 	return OK;
 }
 
-int pl_pjsip_tls_verify_server_get_api(char * address, u_int16 *port)
+int pl_pjsip_tls_verify_server_get_api(char * address, ospl_uint16 *port)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1730,7 +1742,7 @@ int pl_pjsip_tls_verify_server_get_api(char * address, u_int16 *port)
 	return OK;
 }
 
-int pl_pjsip_tls_verify_client_set_api(char * address, u_int16 port)
+int pl_pjsip_tls_verify_client_set_api(char * address, ospl_uint16 port)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1746,7 +1758,7 @@ int pl_pjsip_tls_verify_client_set_api(char * address, u_int16 port)
 	return OK;
 }
 
-int pl_pjsip_tls_verify_client_get_api(char * address, u_int16 *port)
+int pl_pjsip_tls_verify_client_get_api(char * address, ospl_uint16 *port)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1792,7 +1804,7 @@ int pl_pjsip_tls_cipher_get_api(char * cipher)
 }
 #endif
 
-int pl_pjsip_neg_timeout_set_api(u_int16 sip_neg_timeout)
+int pl_pjsip_neg_timeout_set_api(ospl_uint16 sip_neg_timeout)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1803,7 +1815,7 @@ int pl_pjsip_neg_timeout_set_api(u_int16 sip_neg_timeout)
 	return OK;
 }
 
-int pl_pjsip_neg_timeout_get_api(u_int16 *sip_neg_timeout)
+int pl_pjsip_neg_timeout_get_api(ospl_uint16 *sip_neg_timeout)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1824,12 +1836,12 @@ int pl_pjsip_codec_default_set_api(char * sip_codec)
 		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
 	if(sip_codec)
 	{
-		int val = codec_payload_index(sip_codec);
+		ospl_uint32 val = codec_payload_index(sip_codec);
 		if(codec_payload_name(val))
 		{
 			memset(pl_pjsip->sip_codec.payload_name, 0, sizeof(pl_pjsip->sip_codec.payload_name));
 			strcpy(pl_pjsip->sip_codec.payload_name, codec_payload_name(val));
-			pl_pjsip->sip_codec.is_active = TRUE;
+			pl_pjsip->sip_codec.is_active = ospl_true;
 			pl_pjsip->sip_codec.payload = val;
 			if(pl_pjsip->mutex)
 				os_mutex_unlock(pl_pjsip->mutex);
@@ -1839,7 +1851,7 @@ int pl_pjsip_codec_default_set_api(char * sip_codec)
 	else
 	{
 		memset(pl_pjsip->sip_codec.payload_name, 0, sizeof(pl_pjsip->sip_codec.payload_name));
-		pl_pjsip->sip_codec.is_active = FALSE;
+		pl_pjsip->sip_codec.is_active = ospl_false;
 		pl_pjsip->sip_codec.payload = 0;
 	}
 	if(pl_pjsip->mutex)
@@ -1909,7 +1921,7 @@ int pl_pjsip_discodec_del_api(char * sip_discodec)
 	return OK;*/
 }
 
-int pl_pjsip_clock_rate_set_api(u_int16 sip_clock_rate)
+int pl_pjsip_clock_rate_set_api(ospl_uint16 sip_clock_rate)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1920,7 +1932,7 @@ int pl_pjsip_clock_rate_set_api(u_int16 sip_clock_rate)
 	return OK;
 }
 
-int pl_pjsip_clock_rate_get_api(u_int16 *sip_clock_rate)
+int pl_pjsip_clock_rate_get_api(ospl_uint16 *sip_clock_rate)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1932,7 +1944,7 @@ int pl_pjsip_clock_rate_get_api(u_int16 *sip_clock_rate)
 	return OK;
 }
 
-int pl_pjsip_snd_clock_rate_set_api(u_int16 sip_snd_clock_rate)
+int pl_pjsip_snd_clock_rate_set_api(ospl_uint16 sip_snd_clock_rate)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1943,7 +1955,7 @@ int pl_pjsip_snd_clock_rate_set_api(u_int16 sip_snd_clock_rate)
 	return OK;
 }
 
-int pl_pjsip_snd_clock_rate_get_api(u_int16 *sip_snd_clock_rate)
+int pl_pjsip_snd_clock_rate_get_api(ospl_uint16 *sip_snd_clock_rate)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1955,7 +1967,7 @@ int pl_pjsip_snd_clock_rate_get_api(u_int16 *sip_snd_clock_rate)
 	return OK;
 }
 
-int pl_pjsip_stereo_set_api(BOOL enable)
+int pl_pjsip_stereo_set_api(ospl_bool enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1966,7 +1978,7 @@ int pl_pjsip_stereo_set_api(BOOL enable)
 	return OK;
 }
 
-int pl_pjsip_stereo_get_api(BOOL *enable)
+int pl_pjsip_stereo_get_api(ospl_bool *enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1978,7 +1990,7 @@ int pl_pjsip_stereo_get_api(BOOL *enable)
 	return OK;
 }
 
-int pl_pjsip_audio_null_set_api(BOOL enable)
+int pl_pjsip_audio_null_set_api(ospl_bool enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -1989,7 +2001,7 @@ int pl_pjsip_audio_null_set_api(BOOL enable)
 	return OK;
 }
 
-int pl_pjsip_audio_null_get_api(BOOL *enable)
+int pl_pjsip_audio_null_get_api(ospl_bool *enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2059,7 +2071,7 @@ int pl_pjsip_play_tone_get_api(char * filename)
 	return OK;
 }
 
-int pl_pjsip_auto_play_set_api(BOOL enable)
+int pl_pjsip_auto_play_set_api(ospl_bool enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2070,7 +2082,7 @@ int pl_pjsip_auto_play_set_api(BOOL enable)
 	return OK;
 }
 
-int pl_pjsip_auto_play_get_api(BOOL *enable)
+int pl_pjsip_auto_play_get_api(ospl_bool *enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2082,7 +2094,7 @@ int pl_pjsip_auto_play_get_api(BOOL *enable)
 	return OK;
 }
 
-int pl_pjsip_auto_loop_set_api(BOOL enable)
+int pl_pjsip_auto_loop_set_api(ospl_bool enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2093,7 +2105,7 @@ int pl_pjsip_auto_loop_set_api(BOOL enable)
 	return OK;
 }
 
-int pl_pjsip_auto_loop_get_api(BOOL *enable)
+int pl_pjsip_auto_loop_get_api(ospl_bool *enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2105,7 +2117,7 @@ int pl_pjsip_auto_loop_get_api(BOOL *enable)
 	return OK;
 }
 
-int pl_pjsip_auto_conf_set_api(BOOL enable)
+int pl_pjsip_auto_conf_set_api(ospl_bool enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2116,7 +2128,7 @@ int pl_pjsip_auto_conf_set_api(BOOL enable)
 	return OK;
 }
 
-int pl_pjsip_auto_conf_get_api(BOOL *enable)
+int pl_pjsip_auto_conf_get_api(ospl_bool *enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2157,7 +2169,7 @@ int pl_pjsip_rec_file_get_api(char * filename)
 	return OK;
 }
 
-int pl_pjsip_quality_set_api(u_int16 sip_quality)
+int pl_pjsip_quality_set_api(ospl_uint16 sip_quality)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2168,7 +2180,7 @@ int pl_pjsip_quality_set_api(u_int16 sip_quality)
 	return OK;
 }
 
-int pl_pjsip_quality_get_api(u_int16 *sip_quality)
+int pl_pjsip_quality_get_api(ospl_uint16 *sip_quality)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2180,7 +2192,7 @@ int pl_pjsip_quality_get_api(u_int16 *sip_quality)
 	return OK;
 }
 
-int pl_pjsip_ptime_set_api(u_int16 sip_ptime)
+int pl_pjsip_ptime_set_api(ospl_uint16 sip_ptime)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2191,7 +2203,7 @@ int pl_pjsip_ptime_set_api(u_int16 sip_ptime)
 	return OK;
 }
 
-int pl_pjsip_ptime_get_api(u_int16 *sip_ptime)
+int pl_pjsip_ptime_get_api(ospl_uint16 *sip_ptime)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2203,7 +2215,7 @@ int pl_pjsip_ptime_get_api(u_int16 *sip_ptime)
 	return OK;
 }
 
-int pl_pjsip_no_vad_set_api(BOOL enable)
+int pl_pjsip_no_vad_set_api(ospl_bool enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2214,7 +2226,7 @@ int pl_pjsip_no_vad_set_api(BOOL enable)
 	return OK;
 }
 
-int pl_pjsip_no_vad_get_api(BOOL *enable)
+int pl_pjsip_no_vad_get_api(ospl_bool *enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2226,7 +2238,7 @@ int pl_pjsip_no_vad_get_api(BOOL *enable)
 	return OK;
 }
 
-int pl_pjsip_echo_tail_set_api(u_int16 sip_echo_tail)
+int pl_pjsip_echo_tail_set_api(ospl_uint16 sip_echo_tail)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2237,7 +2249,7 @@ int pl_pjsip_echo_tail_set_api(u_int16 sip_echo_tail)
 	return OK;
 }
 
-int pl_pjsip_echo_tail_get_api(u_int16 *sip_echo_tail)
+int pl_pjsip_echo_tail_get_api(ospl_uint16 *sip_echo_tail)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2272,7 +2284,7 @@ int pl_pjsip_echo_mode_get_api(pjsip_echo_mode_t *sip_echo_mode)
 	return OK;
 }
 
-int pl_pjsip_ilbc_mode_set_api(u_int16 sip_ilbc_mode)
+int pl_pjsip_ilbc_mode_set_api(ospl_uint16 sip_ilbc_mode)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2283,7 +2295,7 @@ int pl_pjsip_ilbc_mode_set_api(u_int16 sip_ilbc_mode)
 	return OK;
 }
 
-int pl_pjsip_ilbc_mode_get_api(u_int16 *sip_ilbc_mode)
+int pl_pjsip_ilbc_mode_get_api(ospl_uint16 *sip_ilbc_mode)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2296,7 +2308,7 @@ int pl_pjsip_ilbc_mode_get_api(u_int16 *sip_ilbc_mode)
 }
 
 
-int pl_pjsip_capture_lat_set_api(u_int16 sip_capture_lat)
+int pl_pjsip_capture_lat_set_api(ospl_uint16 sip_capture_lat)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2307,7 +2319,7 @@ int pl_pjsip_capture_lat_set_api(u_int16 sip_capture_lat)
 	return OK;
 }
 
-int pl_pjsip_capture_lat_get_api(u_int16 *sip_capture_lat)
+int pl_pjsip_capture_lat_get_api(ospl_uint16 *sip_capture_lat)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2319,7 +2331,7 @@ int pl_pjsip_capture_lat_get_api(u_int16 *sip_capture_lat)
 	return OK;
 }
 
-int pl_pjsip_playback_lat_set_api(u_int16 sip_playback_lat)
+int pl_pjsip_playback_lat_set_api(ospl_uint16 sip_playback_lat)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2330,7 +2342,7 @@ int pl_pjsip_playback_lat_set_api(u_int16 sip_playback_lat)
 	return OK;
 }
 
-int pl_pjsip_playback_lat_get_api(u_int16 *sip_playback_lat)
+int pl_pjsip_playback_lat_get_api(ospl_uint16 *sip_playback_lat)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2342,7 +2354,7 @@ int pl_pjsip_playback_lat_get_api(u_int16 *sip_playback_lat)
 	return OK;
 }
 
-int pl_pjsip_auto_close_delay_set_api(s_int32 sip_snd_auto_close)
+int pl_pjsip_auto_close_delay_set_api(ospl_int32 sip_snd_auto_close)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2353,7 +2365,7 @@ int pl_pjsip_auto_close_delay_set_api(s_int32 sip_snd_auto_close)
 	return OK;
 }
 
-int pl_pjsip_auto_close_delay_get_api(s_int32 *sip_snd_auto_close)
+int pl_pjsip_auto_close_delay_get_api(ospl_int32 *sip_snd_auto_close)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2365,7 +2377,7 @@ int pl_pjsip_auto_close_delay_get_api(s_int32 *sip_snd_auto_close)
 	return OK;
 }
 
-int pl_pjsip_no_tones_set_api(BOOL enable)
+int pl_pjsip_no_tones_set_api(ospl_bool enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2376,7 +2388,7 @@ int pl_pjsip_no_tones_set_api(BOOL enable)
 	return OK;
 }
 
-int pl_pjsip_no_tones_get_api(BOOL *enable)
+int pl_pjsip_no_tones_get_api(ospl_bool *enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2388,7 +2400,7 @@ int pl_pjsip_no_tones_get_api(BOOL *enable)
 	return OK;
 }
 
-int pl_pjsip_jb_max_size_set_api(s_int32 sip_jb_max_size)
+int pl_pjsip_jb_max_size_set_api(ospl_int32 sip_jb_max_size)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2399,7 +2411,7 @@ int pl_pjsip_jb_max_size_set_api(s_int32 sip_jb_max_size)
 	return OK;
 }
 
-int pl_pjsip_jb_max_size_get_api(s_int32 *sip_jb_max_size)
+int pl_pjsip_jb_max_size_get_api(ospl_int32 *sip_jb_max_size)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2413,7 +2425,7 @@ int pl_pjsip_jb_max_size_get_api(s_int32 *sip_jb_max_size)
 /***************************************************************************/
 //Video Options:
 #if PJSUA_HAS_VIDEO
-int pl_pjsip_video_enable_set_api(BOOL enable)
+int pl_pjsip_video_enable_set_api(ospl_bool enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2424,7 +2436,7 @@ int pl_pjsip_video_enable_set_api(BOOL enable)
 	return OK;
 }
 
-int pl_pjsip_video_enable_get_api(BOOL *enable)
+int pl_pjsip_video_enable_get_api(ospl_bool *enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2465,7 +2477,7 @@ int pl_pjsip_video_play_file_get_api(char * filename)
 	return OK;
 }
 
-int pl_pjsip_video_auto_play_set_api(BOOL enable)
+int pl_pjsip_video_auto_play_set_api(ospl_bool enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2476,7 +2488,7 @@ int pl_pjsip_video_auto_play_set_api(BOOL enable)
 	return OK;
 }
 
-int pl_pjsip_video_auto_play_get_api(BOOL *enable)
+int pl_pjsip_video_auto_play_get_api(ospl_bool *enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2490,7 +2502,7 @@ int pl_pjsip_video_auto_play_get_api(BOOL *enable)
 #endif
 /***************************************************************************/
 //Media Transport Options:
-int pl_pjsip_ice_enable_set_api(BOOL enable)
+int pl_pjsip_ice_enable_set_api(ospl_bool enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2501,7 +2513,7 @@ int pl_pjsip_ice_enable_set_api(BOOL enable)
 	return OK;
 }
 
-int pl_pjsip_ice_enable_get_api(BOOL *enable)
+int pl_pjsip_ice_enable_get_api(ospl_bool *enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2513,7 +2525,7 @@ int pl_pjsip_ice_enable_get_api(BOOL *enable)
 	return OK;
 }
 
-int pl_pjsip_ice_nortcp_set_api(BOOL enable)
+int pl_pjsip_ice_nortcp_set_api(ospl_bool enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2524,7 +2536,7 @@ int pl_pjsip_ice_nortcp_set_api(BOOL enable)
 	return OK;
 }
 
-int pl_pjsip_ice_nortcp_get_api(BOOL *enable)
+int pl_pjsip_ice_nortcp_get_api(ospl_bool *enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2536,7 +2548,7 @@ int pl_pjsip_ice_nortcp_get_api(BOOL *enable)
 	return OK;
 }
 
-int pl_pjsip_ice_regular_set_api(u_int32 value)
+int pl_pjsip_ice_regular_set_api(ospl_uint32 value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2547,7 +2559,7 @@ int pl_pjsip_ice_regular_set_api(u_int32 value)
 	return OK;
 }
 
-int pl_pjsip_ice_regular_get_api(u_int32 *value)
+int pl_pjsip_ice_regular_get_api(ospl_uint32 *value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2559,7 +2571,7 @@ int pl_pjsip_ice_regular_get_api(u_int32 *value)
 	return OK;
 }
 
-int pl_pjsip_ice_max_host_set_api(u_int32 value)
+int pl_pjsip_ice_max_host_set_api(ospl_uint32 value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2570,7 +2582,7 @@ int pl_pjsip_ice_max_host_set_api(u_int32 value)
 	return OK;
 }
 
-int pl_pjsip_ice_max_host_get_api(u_int32 *value)
+int pl_pjsip_ice_max_host_get_api(ospl_uint32 *value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2582,7 +2594,7 @@ int pl_pjsip_ice_max_host_get_api(u_int32 *value)
 	return OK;
 }
 
-int pl_pjsip_rtp_port_set_api(u_int16 value)
+int pl_pjsip_rtp_port_set_api(ospl_uint16 value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2593,7 +2605,7 @@ int pl_pjsip_rtp_port_set_api(u_int16 value)
 	return OK;
 }
 
-int pl_pjsip_rtp_port_get_api(u_int16 *value)
+int pl_pjsip_rtp_port_get_api(ospl_uint16 *value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2605,7 +2617,7 @@ int pl_pjsip_rtp_port_get_api(u_int16 *value)
 	return OK;
 }
 
-int pl_pjsip_rx_drop_pct_set_api(u_int16 value)
+int pl_pjsip_rx_drop_pct_set_api(ospl_uint16 value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2616,7 +2628,7 @@ int pl_pjsip_rx_drop_pct_set_api(u_int16 value)
 	return OK;
 }
 
-int pl_pjsip_rx_drop_pct_get_api(u_int16 *value)
+int pl_pjsip_rx_drop_pct_get_api(ospl_uint16 *value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2628,7 +2640,7 @@ int pl_pjsip_rx_drop_pct_get_api(u_int16 *value)
 	return OK;
 }
 
-int pl_pjsip_tx_drop_pct_set_api(u_int16 value)
+int pl_pjsip_tx_drop_pct_set_api(ospl_uint16 value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2639,7 +2651,7 @@ int pl_pjsip_tx_drop_pct_set_api(u_int16 value)
 	return OK;
 }
 
-int pl_pjsip_tx_drop_pct_get_api(u_int16 *value)
+int pl_pjsip_tx_drop_pct_get_api(ospl_uint16 *value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2651,7 +2663,7 @@ int pl_pjsip_tx_drop_pct_get_api(u_int16 *value)
 	return OK;
 }
 
-int pl_pjsip_turn_enable_set_api(BOOL enable)
+int pl_pjsip_turn_enable_set_api(ospl_bool enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2662,7 +2674,7 @@ int pl_pjsip_turn_enable_set_api(BOOL enable)
 	return OK;
 }
 
-int pl_pjsip_turn_enable_get_api(BOOL *enable)
+int pl_pjsip_turn_enable_get_api(ospl_bool *enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2675,7 +2687,7 @@ int pl_pjsip_turn_enable_get_api(BOOL *enable)
 }
 
 
-int pl_pjsip_turn_server_set_api(char * address, u_int16 port)
+int pl_pjsip_turn_server_set_api(char * address, ospl_uint16 port)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2691,7 +2703,7 @@ int pl_pjsip_turn_server_set_api(char * address, u_int16 port)
 	return OK;
 }
 
-int pl_pjsip_turn_server_get_api(char * address, u_int16 *port)
+int pl_pjsip_turn_server_get_api(char * address, ospl_uint16 *port)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2707,7 +2719,7 @@ int pl_pjsip_turn_server_get_api(char * address, u_int16 *port)
 	return OK;
 }
 
-int pl_pjsip_turn_tcp_set_api(BOOL enable)
+int pl_pjsip_turn_tcp_set_api(ospl_bool enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2718,7 +2730,7 @@ int pl_pjsip_turn_tcp_set_api(BOOL enable)
 	return OK;
 }
 
-int pl_pjsip_turn_tcp_get_api(BOOL *enable)
+int pl_pjsip_turn_tcp_get_api(ospl_bool *enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2788,7 +2800,7 @@ int pl_pjsip_turn_password_get_api(char * password)
 	return OK;
 }
 
-int pl_pjsip_rtcp_mux_set_api(BOOL value)
+int pl_pjsip_rtcp_mux_set_api(ospl_bool value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2799,7 +2811,7 @@ int pl_pjsip_rtcp_mux_set_api(BOOL value)
 	return OK;
 }
 
-int pl_pjsip_rtcp_mux_get_api(BOOL *value)
+int pl_pjsip_rtcp_mux_get_api(ospl_bool *value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2836,7 +2848,7 @@ int pl_pjsip_srtp_keying_get_api(pjsip_srtp_keying_t *value)
 
 //User Agent options:
 
-int pl_pjsip_auto_answer_code_set_api(u_int16 value)
+int pl_pjsip_auto_answer_code_set_api(ospl_uint16 value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2847,7 +2859,7 @@ int pl_pjsip_auto_answer_code_set_api(u_int16 value)
 	return OK;
 }
 
-int pl_pjsip_auto_answer_code_get_api(u_int16 *value)
+int pl_pjsip_auto_answer_code_get_api(ospl_uint16 *value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2859,7 +2871,7 @@ int pl_pjsip_auto_answer_code_get_api(u_int16 *value)
 	return OK;
 }
 
-int pl_pjsip_max_calls_set_api(u_int16 value)
+int pl_pjsip_max_calls_set_api(ospl_uint16 value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2870,7 +2882,7 @@ int pl_pjsip_max_calls_set_api(u_int16 value)
 	return OK;
 }
 
-int pl_pjsip_max_calls_get_api(u_int16 *value)
+int pl_pjsip_max_calls_get_api(ospl_uint16 *value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2882,7 +2894,7 @@ int pl_pjsip_max_calls_get_api(u_int16 *value)
 	return OK;
 }
 
-int pl_pjsip_max_thread_set_api(u_int16 value)
+int pl_pjsip_max_thread_set_api(ospl_uint16 value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2893,7 +2905,7 @@ int pl_pjsip_max_thread_set_api(u_int16 value)
 	return OK;
 }
 
-int pl_pjsip_max_thread_get_api(u_int16 *value)
+int pl_pjsip_max_thread_get_api(ospl_uint16 *value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2905,7 +2917,7 @@ int pl_pjsip_max_thread_get_api(u_int16 *value)
 	return OK;
 }
 
-int pl_pjsip_duration_set_api(u_int32 value)
+int pl_pjsip_duration_set_api(ospl_uint32 value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2916,7 +2928,7 @@ int pl_pjsip_duration_set_api(u_int32 value)
 	return OK;
 }
 
-int pl_pjsip_duration_get_api(u_int32 *value)
+int pl_pjsip_duration_get_api(ospl_uint32 *value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2928,7 +2940,7 @@ int pl_pjsip_duration_get_api(u_int32 *value)
 	return OK;
 }
 
-int pl_pjsip_norefersub_set_api(u_int16 value)
+int pl_pjsip_norefersub_set_api(ospl_uint16 value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2939,7 +2951,7 @@ int pl_pjsip_norefersub_set_api(u_int16 value)
 	return OK;
 }
 
-int pl_pjsip_norefersub_get_api(u_int16 *value)
+int pl_pjsip_norefersub_get_api(ospl_uint16 *value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2952,7 +2964,7 @@ int pl_pjsip_norefersub_get_api(u_int16 *value)
 }
 
 
-int pl_pjsip_use_compact_form_set_api(u_int16 value)
+int pl_pjsip_use_compact_form_set_api(ospl_uint16 value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2963,7 +2975,7 @@ int pl_pjsip_use_compact_form_set_api(u_int16 value)
 	return OK;
 }
 
-int pl_pjsip_use_compact_form_get_api(u_int16 *value)
+int pl_pjsip_use_compact_form_get_api(ospl_uint16 *value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2975,7 +2987,7 @@ int pl_pjsip_use_compact_form_get_api(u_int16 *value)
 	return OK;
 }
 
-int pl_pjsip_no_force_lr_set_api(u_int16 value)
+int pl_pjsip_no_force_lr_set_api(ospl_uint16 value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -2986,7 +2998,7 @@ int pl_pjsip_no_force_lr_set_api(u_int16 value)
 	return OK;
 }
 
-int pl_pjsip_no_force_lr_get_api(u_int16 *value)
+int pl_pjsip_no_force_lr_get_api(ospl_uint16 *value)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -3023,7 +3035,7 @@ int pl_pjsip_accept_redirect_get_api(pjsip_accept_redirect_t *value)
 /***************************************************************************/
 /***************************************************************************/
 /***************************************************************************/
-static int pl_pjsip_url_get_id(char *url, char *id, char *ip, int *port)
+static int pl_pjsip_url_get_id(char *url, char *id, char *ip, ospl_uint16 *port)
 {
 	char tmp[128];
 	char *p = url, *brk = NULL;
@@ -3072,7 +3084,7 @@ static int pl_pjsip_url_get_id(char *url, char *id, char *ip, int *port)
 	return OK;
 }
 /********************************** debug log ************************************/
-int pl_pjsip_debug_level_set_api(int level)
+int pl_pjsip_debug_level_set_api(ospl_uint32 level)
 {
 	/*	static const char *ltexts[] = { "FATAL:", "ERROR:", " WARN:",
 				      " INFO:", "DEBUG:", "TRACE:", "DETRC:"};*/
@@ -3107,7 +3119,7 @@ int pl_pjsip_debug_level_set_api(int level)
 	return OK;
 }
 
-int pl_pjsip_debug_level_get_api(int *level)
+int pl_pjsip_debug_level_get_api(ospl_uint32 *level)
 {
 /*	int outlevel = pj_log_get_level();
 	switch(outlevel)
@@ -3140,11 +3152,11 @@ int pl_pjsip_debug_level_get_api(int *level)
 		*level = pl_pjsip->debug_level;
 	return OK;
 }
-int pl_pjsip_debug_detail_set_api(BOOL enable)
+int pl_pjsip_debug_detail_set_api(ospl_bool enable)
 {
 	if(enable)
 	{
-		unsigned int opt = pj_log_get_decor();
+		ospl_uint32 opt = pj_log_get_decor();
 		opt |=  PJ_LOG_HAS_LEVEL_TEXT|
 				PJ_LOG_HAS_SENDER|
 				PJ_LOG_HAS_THREAD_ID|
@@ -3153,7 +3165,7 @@ int pl_pjsip_debug_detail_set_api(BOOL enable)
 	}
 	else
 	{
-		unsigned int opt = pj_log_get_decor();
+		ospl_uint32 opt = pj_log_get_decor();
 		opt &= ~(PJ_LOG_HAS_LEVEL_TEXT|
 				PJ_LOG_HAS_SENDER|
 				PJ_LOG_HAS_THREAD_ID|
@@ -3165,22 +3177,22 @@ int pl_pjsip_debug_detail_set_api(BOOL enable)
 			PJ_LOG_HAS_SENDER|PJ_LOG_HAS_THREAD_ID);*/
 	return OK;
 }
-int pl_pjsip_debug_detail_get_api(BOOL *enable)
+int pl_pjsip_debug_detail_get_api(ospl_bool *enable)
 {
 	if(enable)
 	{
 		*enable = pl_pjsip->debug_detail;
-/*		unsigned int opt = pj_log_get_decor();
+/*		ospl_uint32 opt = pj_log_get_decor();
 		if(opt & PJ_LOG_HAS_SENDER)
-			*enable = TRUE;
+			*enable = ospl_true;
 		else
-			*enable = FALSE;*/
+			*enable = ospl_false;*/
 	}
 	return OK;
 }
 /***************************************************************************/
 /***************************************************************************/
-int pl_pjsip_account_set_api(int id, void *p)
+int pl_pjsip_account_set_api(pjsua_acc_id id, void *p)
 {
 	pjsua_acc_info *info = p;
 	zassert(pl_pjsip != NULL);
@@ -3246,7 +3258,7 @@ int pl_pjsip_account_set_api(int id, void *p)
 			sip_user->id = info->id;
 
 			sip_user->is_default = info->is_default;
-			sip_user->is_current = ((id == current_acc)? TRUE:FALSE);
+			sip_user->is_current = ((id == current_acc)? ospl_true:ospl_false);
 
 			sip_user->register_svr = sip_srv ? sip_srv:NULL;
 		}
@@ -3266,7 +3278,7 @@ int pl_pjsip_account_set_api(int id, void *p)
 	return OK;
 }
 
-int pl_pjsip_account_get_api(int id, pjsip_username_t *p)
+int pl_pjsip_account_get_api(pjsua_acc_id id, pjsip_username_t *p)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
@@ -3276,21 +3288,21 @@ int pl_pjsip_account_get_api(int id, pjsip_username_t *p)
 		os_mutex_unlock(pl_pjsip->mutex);
 	return OK;
 }
-BOOL pl_pjsip_isregister_api(void)
+ospl_bool pl_pjsip_isregister_api(void)
 {
-	BOOL reg = FALSE;
+	ospl_bool reg = ospl_false;
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->mutex)
 		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
 /*
 	pjsip_username_t	sip_user;
 	pjsip_username_t	sip_user_sec;
-	u_int16				sip_user_cnt;
+	ospl_uint16				sip_user_cnt;
 	pjsip_server_t		sip_server;
 	pjsip_server_t		sip_server_sec;
 */
 #ifndef PL_BUILD_X86
-	if(x5b_app_port_status_get() == FALSE)
+	if(x5b_app_port_status_get() == ospl_false)
 	{
 		if(pl_pjsip->mutex)
 			os_mutex_unlock(pl_pjsip->mutex);
@@ -3305,7 +3317,7 @@ BOOL pl_pjsip_isregister_api(void)
 		if(pl_pjsip->sip_user.sip_state == PJSIP_STATE_REGISTER_SUCCESS/* &&
 				pl_pjsip->sip_user.register_svr->state*/)
 		{
-			reg = TRUE;
+			reg = ospl_true;
 		}
 	}
 	else if((strlen(pl_pjsip->sip_user_sec.sip_phone)||
@@ -3315,7 +3327,7 @@ BOOL pl_pjsip_isregister_api(void)
 	{
 		if(pl_pjsip->sip_user_sec.sip_state == PJSIP_STATE_REGISTER_SUCCESS)
 		{
-			reg = TRUE;
+			reg = ospl_true;
 		}
 	}
 
@@ -3326,7 +3338,7 @@ BOOL pl_pjsip_isregister_api(void)
 /***************************************************************************/
 int pl_pjsip_payload_name_add_api(char * value)
 {
-	int i = 0, val = 0;
+	ospl_uint32 i = 0, val = 0;
 	zassert(value != NULL);
 	zassert(pl_pjsip != NULL);
 	val = codec_payload_index(value);
@@ -3350,7 +3362,7 @@ int pl_pjsip_payload_name_add_api(char * value)
 			memset(pl_pjsip->codec[i].payload_name, 0, sizeof(pl_pjsip->codec[i].payload_name));
 			strcpy(pl_pjsip->codec[i].payload_name, codec_payload_name(val));
 			pl_pjsip->codec[i].payload = val;
-			pl_pjsip->codec[i].is_active = TRUE;
+			pl_pjsip->codec[i].is_active = ospl_true;
 			if(pl_pjsip->mutex)
 				os_mutex_unlock(pl_pjsip->mutex);
 			return OK;
@@ -3363,7 +3375,7 @@ int pl_pjsip_payload_name_add_api(char * value)
 
 int pl_pjsip_payload_name_del_api(char * value)
 {
-	int i = 0, val = 0;
+	ospl_uint32 i = 0, val = 0;
 	zassert(value != NULL);
 	zassert(pl_pjsip != NULL);
 	val = codec_payload_index(value);
@@ -3378,7 +3390,7 @@ int pl_pjsip_payload_name_del_api(char * value)
 				/*strcasecmp(pl_pjsip->codec[i].payload_name, value) == 0*/	)
 		{
 			memset(pl_pjsip->codec[i].payload_name, 0, sizeof(pl_pjsip->codec[i].payload_name));
-			pl_pjsip->codec[i].is_active = FALSE;
+			pl_pjsip->codec[i].is_active = ospl_false;
 			pl_pjsip->codec[i].payload = 0;
 			if(pl_pjsip->mutex)
 				os_mutex_unlock(pl_pjsip->mutex);
@@ -3392,7 +3404,7 @@ int pl_pjsip_payload_name_del_api(char * value)
 
 int pl_pjsip_dis_payload_name_add_api(char * value)
 {
-	int i = 0, val = 0;
+	ospl_uint32 i = 0, val = 0;
 	zassert(value != NULL);
 	zassert(pl_pjsip != NULL);
 	val = codec_payload_index(value);
@@ -3417,7 +3429,7 @@ int pl_pjsip_dis_payload_name_add_api(char * value)
 			//strcpy(pl_pjsip->dicodec[i].payload_name, value);
 			strcpy(pl_pjsip->codec[i].payload_name, codec_payload_name(val));
 			pl_pjsip->dicodec[i].payload = val;
-			pl_pjsip->dicodec[i].is_active = TRUE;
+			pl_pjsip->dicodec[i].is_active = ospl_true;
 			if(pl_pjsip->mutex)
 				os_mutex_unlock(pl_pjsip->mutex);
 			return OK;
@@ -3430,7 +3442,7 @@ int pl_pjsip_dis_payload_name_add_api(char * value)
 
 int pl_pjsip_dis_payload_name_del_api(char * value)
 {
-	int i = 0, val = 0;
+	ospl_uint32 i = 0, val = 0;
 	zassert(value != NULL);
 	zassert(pl_pjsip != NULL);
 	val = codec_payload_index(value);
@@ -3445,7 +3457,7 @@ int pl_pjsip_dis_payload_name_del_api(char * value)
 				/*strcasecmp(pl_pjsip->dicodec[i].payload_name, value) == 0*/ )
 		{
 			memset(pl_pjsip->dicodec[i].payload_name, 0, sizeof(pl_pjsip->dicodec[i].payload_name));
-			pl_pjsip->dicodec[i].is_active = FALSE;
+			pl_pjsip->dicodec[i].is_active = ospl_false;
 			pl_pjsip->dicodec[i].payload = 0;
 			if(pl_pjsip->mutex)
 				os_mutex_unlock(pl_pjsip->mutex);
@@ -3459,7 +3471,7 @@ int pl_pjsip_dis_payload_name_del_api(char * value)
 /***************************************************************************/
 /***************************************************************************/
 int pl_pjsip_app_add_acc(char *sip_url, char *sip_srv, char *realm,
-		char *user, char *pass, int *accid)
+		char *user, char *pass, pjsua_acc_id *accid)
 {
 #ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
@@ -3502,7 +3514,7 @@ int pl_pjsip_app_add_acc(char *sip_url, char *sip_srv, char *realm,
 	return ERROR;
 }
 
-int pl_pjsip_app_del_acc(int accid)
+int pl_pjsip_app_del_acc(pjsua_acc_id accid)
 {
 #ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
@@ -3527,7 +3539,7 @@ int pl_pjsip_app_del_acc(int accid)
 	return ERROR;
 }
 
-int pl_pjsip_app_mod_acc(int accid, char *sip_url, char *sip_srv, char *realm,
+int pl_pjsip_app_mod_acc(pjsua_acc_id accid, char *sip_url, char *sip_srv, char *realm,
 		char *user, char *pass)
 {
 #ifdef PL_PJSIP_CALL_SHELL
@@ -3546,7 +3558,7 @@ int pl_pjsip_app_mod_acc(int accid, char *sip_url, char *sip_srv, char *realm,
 	return ERROR;
 }
 
-int pl_pjsip_app_select_acc(int accid, int type)
+int pl_pjsip_app_select_acc(pjsua_acc_id accid, ospl_uint32 type)
 {
 #ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
@@ -3574,7 +3586,7 @@ int pl_pjsip_app_select_acc(int accid, int type)
 	return ERROR;
 }
 
-int pl_pjsip_app_reg_acc(BOOL reg)
+int pl_pjsip_app_reg_acc(ospl_bool reg)
 {
 #ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
@@ -3594,7 +3606,7 @@ int pl_pjsip_app_reg_acc(BOOL reg)
 	return ERROR;
 }
 
-int pl_pjsip_app_list_acc(int accid)
+int pl_pjsip_app_list_acc(pjsua_acc_id accid)
 {
 #ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
@@ -3606,8 +3618,8 @@ int pl_pjsip_app_list_acc(int accid)
 	}
 #else
 	pjsua_acc_id acc_ids[16];
-	unsigned count = PJ_ARRAY_SIZE(acc_ids);
-	int i;
+	ospl_uint32 count = PJ_ARRAY_SIZE(acc_ids);
+	ospl_uint32 i;
 	//static const pj_str_t header = { "Account list:\n", 15 };
 	pjsua_enum_accs (acc_ids, &count);
 
@@ -3657,7 +3669,7 @@ int pl_pjsip_app_list_acc(int accid)
 }
 
 
-int pl_pjsip_app_start_call(int accid, char *num, int *callid)
+int pl_pjsip_app_start_call(pjsua_acc_id accid, char *num, pjsua_call_id *callid)
 {
 #ifndef PL_PJSIP_CALL_SHELL
 	pj_str_t call_uri_arg;
@@ -3729,7 +3741,7 @@ int pl_pjsip_app_start_call(int accid, char *num, int *callid)
 	if(app_config.current_call != PJSUA_INVALID_ID)
 		return ERROR;
 	//zlog_debug(MODULE_VOIP, "========%s->voip_volume_control_api", __func__);
-	voip_volume_control_api(TRUE);
+	voip_volume_control_api(ospl_true);
 	//zlog_debug(MODULE_VOIP, "========%s-> enter pl_pjsip_app_start_call", __func__);
 
 #ifndef PL_PJSIP_CALL_SHELL
@@ -3759,11 +3771,11 @@ int pl_pjsip_app_start_call(int accid, char *num, int *callid)
  * handle SIGUSR2 nostop noprint
 */
 	//zlog_debug(MODULE_VOIP, "========%s-> level pl_pjsip_app_start_call", __func__);
-	voip_volume_control_api(FALSE);
+	voip_volume_control_api(ospl_false);
 	return ERROR;
 }
 
-int pl_pjsip_app_stop_call(int callid, BOOL all)
+int pl_pjsip_app_stop_call(pjsua_call_id callid, ospl_bool all)
 {
 #ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
@@ -3774,7 +3786,7 @@ int pl_pjsip_app_stop_call(int callid, BOOL all)
 	if(pj_cli_execute_cmd(cmd) == PJ_SUCCESS)
 	{
 		fprintf(stdout, "===========%s=======%s(current_call=%d)\r\n",__FILE__, __func__, app_config.current_call);
-		voip_volume_control_api(FALSE);
+		voip_volume_control_api(ospl_false);
 		return OK;
 	}
 #else
@@ -3788,7 +3800,7 @@ int pl_pjsip_app_stop_call(int callid, BOOL all)
 		if (all)
 		{
 			pjsua_call_hangup_all();
-			//voip_volume_control_api(FALSE);
+			//voip_volume_control_api(ospl_false);
 			return OK;
 		}
 		else
@@ -3799,18 +3811,18 @@ int pl_pjsip_app_stop_call(int callid, BOOL all)
 				ret = pjsua_call_hangup(app_config.current_call, 0, NULL, NULL);
 			if(ret == PJ_SUCCESS)
 			{
-				//voip_volume_control_api(FALSE);
+				//voip_volume_control_api(ospl_false);
 				return OK;
 			}
 		}
     }
 #endif
-	//voip_volume_control_api(FALSE);
+	//voip_volume_control_api(ospl_false);
 	return ERROR;
 }
 /* Make multi call */
 #if 0
-int pl_pjsip_app_start_multi_call(int accid, char *num, int *callid)
+int pl_pjsip_app_start_multi_call(pjsua_acc_id accid, char *num, int *callid)
 //static pj_status_t cmd_make_multi_call(pj_cli_cmd_val *cval)
 {
 	struct input_result result;
@@ -3860,7 +3872,7 @@ int pl_pjsip_app_start_multi_call(int accid, char *num, int *callid)
 }
 #endif
 /***************************************************************************/
-int pl_pjsip_app_answer_call(int callid, int st_code)
+int pl_pjsip_app_answer_call(pjsua_call_id callid, ospl_uint32 st_code)
 {
 #ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
@@ -3939,7 +3951,7 @@ int pl_pjsip_app_answer_call(int callid, int st_code)
 	return ERROR;
 }
 
-int pl_pjsip_app_hold_call(int callid)
+int pl_pjsip_app_hold_call(pjsua_call_id callid)
 {
 #ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
@@ -3965,7 +3977,7 @@ int pl_pjsip_app_hold_call(int callid)
 	return ERROR;
 }
 
-int pl_pjsip_app_reinvite_call(int callid)
+int pl_pjsip_app_reinvite_call(pjsua_call_id callid)
 {
 #ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
@@ -3995,7 +4007,7 @@ int pl_pjsip_app_reinvite_call(int callid)
 	return ERROR;
 }
 
-int pl_pjsip_app_dtmf_call(int callid, int type, int code)
+int pl_pjsip_app_dtmf_call(pjsua_call_id callid, ospl_uint32 type, ospl_uint32 code)
 {
 #ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
@@ -4016,7 +4028,7 @@ int pl_pjsip_app_dtmf_call(int callid, int type, int code)
 	if (type == 1)
 	{
 		char body[64];
-		int call = app_config.current_call;
+		ospl_uint32 call = app_config.current_call;
 		pj_status_t status;
 		pj_str_t dtmf_digi = pj_str("INFO");
 		memset(body, 0, sizeof(body));
@@ -4050,7 +4062,7 @@ int pl_pjsip_app_dtmf_call(int callid, int type, int code)
 	{
 		char body[64];
 		const pj_str_t SIP_INFO = pj_str("INFO");
-		int call = app_config.current_call;
+		ospl_uint32 call = app_config.current_call;
 		pj_status_t status;
 
 		if (call != app_config.current_call)
@@ -4079,7 +4091,7 @@ int pl_pjsip_app_dtmf_call(int callid, int type, int code)
 	return ERROR;
 }
 
-int pl_pjsip_app_select_call(int callid, int type)
+int pl_pjsip_app_select_call(pjsua_call_id callid, ospl_uint32 type)
 {
 #ifdef PL_PJSIP_CALL_SHELL
 	char cmd[512];
@@ -4123,7 +4135,7 @@ int pl_pjsip_app_select_call(int callid, int type)
 /***************************************************************************/
 /***************************************************************************/
 /***************************************************************************/
-int pl_pjsip_multiuser_set_api(BOOL enable)
+int pl_pjsip_multiuser_set_api(ospl_bool enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->sip_multi_user == enable)
@@ -4136,13 +4148,13 @@ int pl_pjsip_multiuser_set_api(BOOL enable)
 	return OK;
 }
 
-BOOL pl_pjsip_multiuser_get_api()
+ospl_bool pl_pjsip_multiuser_get_api()
 {
 	zassert(pl_pjsip != NULL);
 	return pl_pjsip->sip_multi_user;
 }
 
-int pl_pjsip_active_standby_set_api(BOOL enable)
+int pl_pjsip_active_standby_set_api(ospl_bool enable)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip->sip_active_standby == enable)
@@ -4156,16 +4168,16 @@ int pl_pjsip_active_standby_set_api(BOOL enable)
 	return OK;
 }
 
-BOOL pl_pjsip_active_standby_get_api()
+ospl_bool pl_pjsip_active_standby_get_api()
 {
 	zassert(pl_pjsip != NULL);
 	return pl_pjsip->sip_active_standby;
 }
 /***************************************************************************/
 /***************************************************************************/
-static int pl_pjsip_account_options_write_config(pl_pjsip_t *sip, struct vty *vty, BOOL detail, BOOL bwrt)
+static int pl_pjsip_account_options_write_config(pl_pjsip_t *sip, struct vty *vty, ospl_bool detail, ospl_bool bwrt)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	zassert(sip != NULL);
 	zassert(vty != NULL);
 	//char buftmp[128];
@@ -4373,7 +4385,7 @@ static int pl_pjsip_account_options_write_config(pl_pjsip_t *sip, struct vty *vt
 	return OK;
 }
 
-static int pl_pjsip_transport_options_write_config(pl_pjsip_t *sip, struct vty *vty, BOOL detail, BOOL bwrt)
+static int pl_pjsip_transport_options_write_config(pl_pjsip_t *sip, struct vty *vty, ospl_bool detail, ospl_bool bwrt)
 {
 	zassert(sip != NULL);
 	zassert(vty != NULL);
@@ -4410,7 +4422,7 @@ static int pl_pjsip_transport_options_write_config(pl_pjsip_t *sip, struct vty *
 	return OK;
 }
 
-static int pl_pjsip_tls_options_write_config(pl_pjsip_t *sip, struct vty *vty, BOOL detail, BOOL bwrt)
+static int pl_pjsip_tls_options_write_config(pl_pjsip_t *sip, struct vty *vty, ospl_bool detail, ospl_bool bwrt)
 {
 	zassert(sip != NULL);
 	zassert(vty != NULL);
@@ -4446,7 +4458,7 @@ static int pl_pjsip_tls_options_write_config(pl_pjsip_t *sip, struct vty *vty, B
 	return OK;
 }
 
-static int pl_pjsip_audio_options_write_config(pl_pjsip_t *sip, struct vty *vty, BOOL detail, BOOL bwrt)
+static int pl_pjsip_audio_options_write_config(pl_pjsip_t *sip, struct vty *vty, ospl_bool detail, ospl_bool bwrt)
 {
 	zassert(sip != NULL);
 	zassert(vty != NULL);
@@ -4500,8 +4512,8 @@ static int pl_pjsip_audio_options_write_config(pl_pjsip_t *sip, struct vty *vty,
 		vty_out(vty, " ip sip echo canceller algorithm webrtc%s", VTY_NEWLINE);
 	if(sip->sip_ilbc_mode != PJSUA_DEFAULT_ILBC_MODE)
 		vty_out(vty, " ip sip ilbc fps %d%s", sip->sip_ilbc_mode, VTY_NEWLINE);
-	//u_int32				sip_capture_dev;
-	//u_int32				sip_playback_dev;
+	//ospl_uint32				sip_capture_dev;
+	//ospl_uint32				sip_playback_dev;
 #if 0
 	if(sip->sip_capture_lat != PJMEDIA_SND_DEFAULT_REC_LATENCY)
 		vty_out(vty, " ip sip capture latency %d%s", sip->sip_capture_lat, VTY_NEWLINE);
@@ -4519,7 +4531,7 @@ static int pl_pjsip_audio_options_write_config(pl_pjsip_t *sip, struct vty *vty,
 	return OK;
 }
 
-static int pl_pjsip_video_options_write_config(pl_pjsip_t *sip, struct vty *vty, BOOL detail, BOOL bwrt)
+static int pl_pjsip_video_options_write_config(pl_pjsip_t *sip, struct vty *vty, ospl_bool detail, ospl_bool bwrt)
 {
 #if PJSUA_HAS_VIDEO
 	zassert(sip != NULL);
@@ -4536,7 +4548,7 @@ static int pl_pjsip_video_options_write_config(pl_pjsip_t *sip, struct vty *vty,
 }
 
 
-static int pl_pjsip_media_transport_options_write_config(pl_pjsip_t *sip, struct vty *vty, BOOL detail, BOOL bwrt)
+static int pl_pjsip_media_transport_options_write_config(pl_pjsip_t *sip, struct vty *vty, ospl_bool detail, ospl_bool bwrt)
 {
 	zassert(sip != NULL);
 	zassert(vty != NULL);
@@ -4587,7 +4599,7 @@ static int pl_pjsip_media_transport_options_write_config(pl_pjsip_t *sip, struct
 	return OK;
 }
 
-static int pl_pjsip_user_agent_options_write_config(pl_pjsip_t *sip, struct vty *vty, BOOL detail, BOOL bwrt)
+static int pl_pjsip_user_agent_options_write_config(pl_pjsip_t *sip, struct vty *vty, ospl_bool detail, ospl_bool bwrt)
 {
 	zassert(sip != NULL);
 	zassert(vty != NULL);
@@ -4633,12 +4645,12 @@ static int pl_pjsip_user_agent_options_write_config(pl_pjsip_t *sip, struct vty 
 	return OK;
 }
 /***************************************************************************/
-static int pl_pjsip_account_options_show(pl_pjsip_t *sip, struct vty *vty, BOOL detail, BOOL bwrt)
+static int pl_pjsip_account_options_show(pl_pjsip_t *sip, struct vty *vty, ospl_bool detail, ospl_bool bwrt)
 {
 	zassert(sip != NULL);
 	zassert(vty != NULL);
 	char buftmp[4096];
-	int i = 0;
+	ospl_uint32 i = 0;
 	vty_out(vty, " sip username                 : %s%s",
 			strlen(sip->sip_user.sip_user)? sip->sip_user.sip_user:" ", VTY_NEWLINE);
 	vty_out(vty, " sip local-phone              : %s%s",
@@ -4663,7 +4675,7 @@ static int pl_pjsip_account_options_show(pl_pjsip_t *sip, struct vty *vty, BOOL 
 	vty_out(vty, " sip server                   : %s secondary%s",(sip->sip_server_sec.sip_address), VTY_NEWLINE);
 	vty_out(vty, " sip server port              : %d secondary%s", (sip->sip_server_sec.sip_port), VTY_NEWLINE);
 
-	vty_out(vty, " sip proxy                    : %s%s", sip->sip_proxy_enable ? "TRUE":"FALSE", VTY_NEWLINE);
+	vty_out(vty, " sip proxy                    : %s%s", sip->sip_proxy_enable ? "ospl_true":"ospl_false", VTY_NEWLINE);
 	vty_out(vty, " sip proxy-server             : %s%s", (sip->sip_proxy.sip_address), VTY_NEWLINE);
 	vty_out(vty, " sip proxy-server port        : %d%s", (sip->sip_proxy.sip_port), VTY_NEWLINE);
 	vty_out(vty, " sip proxy-server             : %s secondary%s", (sip->sip_proxy_sec.sip_address), VTY_NEWLINE);
@@ -4717,14 +4729,14 @@ static int pl_pjsip_account_options_show(pl_pjsip_t *sip, struct vty *vty, BOOL 
 		}
 	}
 	vty_out(vty, " sip discodec                 : %s%s", buftmp, VTY_NEWLINE);
-	//vty_out(vty, " sip time-sync        : %s%s", sip->sip_time_sync ? "TRUE":"FALSE",VTY_NEWLINE);
+	//vty_out(vty, " sip time-sync        : %s%s", sip->sip_time_sync ? "ospl_true":"ospl_false",VTY_NEWLINE);
 	//vty_out(vty, " sip ring             : %d%s", sip->sip_ring ,VTY_NEWLINE);
 
 	vty_out(vty, " sip expires                  : %d%s", sip->sip_expires, VTY_NEWLINE);
-	vty_out(vty, " sip publish                  : %s%s", sip->sip_publish? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip mwi                      : %s%s", sip->sip_mwi? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip rel-100                  : %s%s", sip->sip_100_rel ? "TRUE":"FALSE", VTY_NEWLINE);
-	vty_out(vty, " sip ims                      : %s%s", sip->sip_ims_enable? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip publish                  : %s%s", sip->sip_publish? "ospl_true":"ospl_false",VTY_NEWLINE);
+	vty_out(vty, " sip mwi                      : %s%s", sip->sip_mwi? "ospl_true":"ospl_false",VTY_NEWLINE);
+	vty_out(vty, " sip rel-100                  : %s%s", sip->sip_100_rel ? "ospl_true":"ospl_false", VTY_NEWLINE);
+	vty_out(vty, " sip ims                      : %s%s", sip->sip_ims_enable? "ospl_true":"ospl_false",VTY_NEWLINE);
 	vty_out(vty, " sip rereg-delay              : %d%s", sip->sip_rereg_delay, VTY_NEWLINE);
 	vty_out(vty, " sip realm                    : %s%s", strlen(sip->sip_realm)? sip->sip_realm:" ", VTY_NEWLINE);
 
@@ -4758,21 +4770,21 @@ static int pl_pjsip_account_options_show(pl_pjsip_t *sip, struct vty *vty, BOOL 
 
 	vty_out(vty, " sip outbound reg-id          : %d%s", sip->sip_outb_rid,VTY_NEWLINE);
 
-	vty_out(vty, " sip auto update nat          : %s%s", sip->sip_auto_update_nat? "TRUE":"FALSE", VTY_NEWLINE);
-	vty_out(vty, " sip stun                     : %s%s", sip->sip_stun_disable? "TRUE":"FALSE", VTY_NEWLINE); //Disable STUN for this account
+	vty_out(vty, " sip auto update nat          : %s%s", sip->sip_auto_update_nat? "ospl_true":"ospl_false", VTY_NEWLINE);
+	vty_out(vty, " sip stun                     : %s%s", sip->sip_stun_disable? "ospl_true":"ospl_false", VTY_NEWLINE); //Disable STUN for this account
 	return OK;
 }
 
-static int pl_pjsip_transport_options_show(pl_pjsip_t *sip, struct vty *vty, BOOL detail, BOOL bwrt)
+static int pl_pjsip_transport_options_show(pl_pjsip_t *sip, struct vty *vty, ospl_bool detail, ospl_bool bwrt)
 {
 	zassert(sip != NULL);
 	zassert(vty != NULL);
 	//Transport Options:
 	//vty_out(vty, " sip expires          : %d%s", sip->sip_expires, VTY_NEWLINE);
-	vty_out(vty, " sip ipv6                     : %s%s", sip->sip_ipv6_enable? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip tagging-qos              : %s%s", sip->sip_set_qos? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip transport udp            : %s%s", sip->sip_noudp? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip transport tcp            : %s%s", sip->sip_notcp? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip ipv6                     : %s%s", sip->sip_ipv6_enable? "ospl_true":"ospl_false",VTY_NEWLINE);
+	vty_out(vty, " sip tagging-qos              : %s%s", sip->sip_set_qos? "ospl_true":"ospl_false",VTY_NEWLINE);
+	vty_out(vty, " sip transport udp            : %s%s", sip->sip_noudp? "ospl_true":"ospl_false",VTY_NEWLINE);
+	vty_out(vty, " sip transport tcp            : %s%s", sip->sip_notcp? "ospl_true":"ospl_false",VTY_NEWLINE);
 	vty_out(vty, " sip nameserver               : %s%s", (sip->sip_nameserver.sip_address), VTY_NEWLINE);
 	vty_out(vty, " sip nameserver port          : %d%s", (sip->sip_nameserver.sip_port), VTY_NEWLINE);
 	vty_out(vty, " sip outbound                 : %s%s", (sip->sip_outbound.sip_address), VTY_NEWLINE);
@@ -4782,12 +4794,12 @@ static int pl_pjsip_transport_options_show(pl_pjsip_t *sip, struct vty *vty, BOO
 	return OK;
 }
 
-static int pl_pjsip_tls_options_show(pl_pjsip_t *sip, struct vty *vty, BOOL detail, BOOL bwrt)
+static int pl_pjsip_tls_options_show(pl_pjsip_t *sip, struct vty *vty, ospl_bool detail, ospl_bool bwrt)
 {
 	zassert(sip != NULL);
 	zassert(vty != NULL);
 	//TLS Options:
-	vty_out(vty, " sip tls                      : %s%s", sip->sip_tls_enable? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip tls                      : %s%s", sip->sip_tls_enable? "ospl_true":"ospl_false",VTY_NEWLINE);
 	vty_out(vty, " sip tls-ca-file              : %s%s", sip->sip_tls_ca_file, VTY_NEWLINE);
 	vty_out(vty, " sip tls-cert-file            : %s%s", sip->sip_tls_cert_file, VTY_NEWLINE);
 	vty_out(vty, " sip tls-private-file         :%s%s", sip->sip_tls_privkey_file, VTY_NEWLINE);
@@ -4801,25 +4813,25 @@ static int pl_pjsip_tls_options_show(pl_pjsip_t *sip, struct vty *vty, BOOL deta
 	return OK;
 }
 
-static int pl_pjsip_audio_options_show(pl_pjsip_t *sip, struct vty *vty, BOOL detail, BOOL bwrt)
+static int pl_pjsip_audio_options_show(pl_pjsip_t *sip, struct vty *vty, ospl_bool detail, ospl_bool bwrt)
 {
 	zassert(sip != NULL);
 	zassert(vty != NULL);
 	//Audio Options:
 /*	char				sip_codec[PJSIP_DATA_MAX];
 	char				sip_discodec[PJSIP_DATA_MAX];*/
-	//vty_out(vty, " sip tls              : %s%s", sip->sip_tls_enable? "TRUE":"FALSE",VTY_NEWLINE);
+	//vty_out(vty, " sip tls              : %s%s", sip->sip_tls_enable? "ospl_true":"ospl_false",VTY_NEWLINE);
 	vty_out(vty, " sip clock-rate               : %d%s", sip->sip_clock_rate, VTY_NEWLINE);
 	vty_out(vty, " sip snd-clock-rate           : %d%s", sip->sip_snd_clock_rate, VTY_NEWLINE);
-	vty_out(vty, " sip stereo                   : %s%s", sip->sip_stereo? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip audio-null               : %s%s", sip->sip_audio_null? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip stereo                   : %s%s", sip->sip_stereo? "ospl_true":"ospl_false",VTY_NEWLINE);
+	vty_out(vty, " sip audio-null               : %s%s", sip->sip_audio_null? "ospl_true":"ospl_false",VTY_NEWLINE);
 
 	vty_out(vty, " sip play-file                : %s%s", sip->sip_play_file, VTY_NEWLINE);
 	vty_out(vty, " sip play-tones               : %s%s", sip->sip_play_tone, VTY_NEWLINE);
-	vty_out(vty, " sip auto-play                : %s%s", sip->sip_auto_play? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip auto-loop                : %s%s", sip->sip_auto_loop? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip auto-confured            : %s%s", sip->sip_auto_conf? "TRUE":"FALSE",VTY_NEWLINE);
-	vty_out(vty, " sip vad-silence              : %s%s", sip->sip_no_vad? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip auto-play                : %s%s", sip->sip_auto_play? "ospl_true":"ospl_false",VTY_NEWLINE);
+	vty_out(vty, " sip auto-loop                : %s%s", sip->sip_auto_loop? "ospl_true":"ospl_false",VTY_NEWLINE);
+	vty_out(vty, " sip auto-confured            : %s%s", sip->sip_auto_conf? "ospl_true":"ospl_false",VTY_NEWLINE);
+	vty_out(vty, " sip vad-silence              : %s%s", sip->sip_no_vad? "ospl_true":"ospl_false",VTY_NEWLINE);
 	vty_out(vty, " sip rec-file                 : %s%s", sip->sip_rec_file, VTY_NEWLINE);
 	vty_out(vty, " sip media-quality            : %d%s", sip->sip_quality, VTY_NEWLINE);
 	vty_out(vty, " sip codec-ptime              : %d%s", sip->sip_ptime, VTY_NEWLINE);
@@ -4839,47 +4851,47 @@ static int pl_pjsip_audio_options_show(pl_pjsip_t *sip, struct vty *vty, BOOL de
 	vty_out(vty, " sip playback latency         : %d%s", sip->sip_playback_lat, VTY_NEWLINE);
 	vty_out(vty, " sip auto-close delay         : %d%s", sip->sip_snd_auto_close, VTY_NEWLINE);
 	vty_out(vty, " sip jitter max-size          : %d%s", sip->sip_jb_max_size, VTY_NEWLINE);//Specify jitter buffer maximum size, in frames (default=-1)");
-	vty_out(vty, " sip audible tones            : %s%s", sip->sip_notones? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip audible tones            : %s%s", sip->sip_notones? "ospl_true":"ospl_false",VTY_NEWLINE);
 
 	return OK;
 }
 
-static int pl_pjsip_video_options_show(pl_pjsip_t *sip, struct vty *vty, BOOL detail, BOOL bwrt)
+static int pl_pjsip_video_options_show(pl_pjsip_t *sip, struct vty *vty, ospl_bool detail, ospl_bool bwrt)
 {
 #if PJSUA_HAS_VIDEO
 	zassert(sip != NULL);
 	zassert(vty != NULL);
 	//Video Options:
-	vty_out(vty, " sip video                    : %s%s", sip->sip_video? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip video                    : %s%s", sip->sip_video? "ospl_true":"ospl_false",VTY_NEWLINE);
 	vty_out(vty, " sip video play-file          : %s%s", sip->sip_play_avi, VTY_NEWLINE);
-	vty_out(vty, " sip video auto-play          : %s%s", sip->sip_auto_play_avi? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip video auto-play          : %s%s", sip->sip_auto_play_avi? "ospl_true":"ospl_false",VTY_NEWLINE);
 #endif
 	return OK;
 }
 
 
-static int pl_pjsip_media_transport_options_show(pl_pjsip_t *sip, struct vty *vty, BOOL detail, BOOL bwrt)
+static int pl_pjsip_media_transport_options_show(pl_pjsip_t *sip, struct vty *vty, ospl_bool detail, ospl_bool bwrt)
 {
 	zassert(sip != NULL);
 	zassert(vty != NULL);
 	//Media Transport Options:
 
-	vty_out(vty, " sip ice                      : %s%s", sip->sip_ice? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip ice                      : %s%s", sip->sip_ice? "ospl_true":"ospl_false",VTY_NEWLINE);
 	vty_out(vty, " sip ice regular              : %d%s", sip->sip_ice_regular, VTY_NEWLINE);
 	vty_out(vty, " sip ice max-host             : %d%s", sip->sip_ice_max_host, VTY_NEWLINE);
-	vty_out(vty, " sip ice notcp                : %s%s", sip->sip_ice_nortcp? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip ice notcp                : %s%s", sip->sip_ice_nortcp? "ospl_true":"ospl_false",VTY_NEWLINE);
 
 	vty_out(vty, " sip rtp port                 : %d%s", sip->sip_rtp_port, VTY_NEWLINE);
 	vty_out(vty, " sip drop rx-rtp              : %d%s", sip->sip_rx_drop_pct, VTY_NEWLINE);
 	vty_out(vty, " sip drop tx-rtp              : %d%s", sip->sip_rx_drop_pct, VTY_NEWLINE);
-	vty_out(vty, " sip turn                     : %s%s", sip->sip_turn? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip turn                     : %s%s", sip->sip_turn? "ospl_true":"ospl_false",VTY_NEWLINE);
 	vty_out(vty, " sip turn-server              : %s%s", (sip->sip_turn_srv.sip_address), VTY_NEWLINE);
 	vty_out(vty, " sip turn-server port         : %d%s", (sip->sip_turn_srv.sip_port), VTY_NEWLINE);
-	vty_out(vty, " sip turn-tcp                 : %s%s", sip->sip_turn_tcp? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip turn-tcp                 : %s%s", sip->sip_turn_tcp? "ospl_true":"ospl_false",VTY_NEWLINE);
 
 	vty_out(vty, " sip turn username            : %s%s", sip->sip_turn_user, VTY_NEWLINE);
 	vty_out(vty, " sip turn password            : %s%s", sip->sip_turn_password, VTY_NEWLINE);
-	vty_out(vty, " sip rtp-multiplexing         : %s%s", sip->sip_rtcp_mux? "TRUE":"FALSE", VTY_NEWLINE);
+	vty_out(vty, " sip rtp-multiplexing         : %s%s", sip->sip_rtcp_mux? "ospl_true":"ospl_false", VTY_NEWLINE);
 
 	if(sip->sip_srtp_keying == PJSIP_SRTP_KEYING_SDES)
 		vty_out(vty, " sip srtp keying              : sdes%s", VTY_NEWLINE);
@@ -4888,7 +4900,7 @@ static int pl_pjsip_media_transport_options_show(pl_pjsip_t *sip, struct vty *vt
 	return OK;
 }
 
-static int pl_pjsip_user_agent_options_show(pl_pjsip_t *sip, struct vty *vty, BOOL detail, BOOL bwrt)
+static int pl_pjsip_user_agent_options_show(pl_pjsip_t *sip, struct vty *vty, ospl_bool detail, ospl_bool bwrt)
 {
 	zassert(sip != NULL);
 	zassert(vty != NULL);
@@ -4902,9 +4914,9 @@ static int pl_pjsip_user_agent_options_show(pl_pjsip_t *sip, struct vty *vty, BO
 		vty_out(vty, " sip max call duration        : no-limit%s", VTY_NEWLINE);
 	else
 		vty_out(vty, " sip max call duration        : %d%s", sip->sip_duration, VTY_NEWLINE);
-	vty_out(vty, " sip refer subscription       : %s%s", sip->sip_norefersub? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip refer subscription       : %s%s", sip->sip_norefersub? "ospl_true":"ospl_false",VTY_NEWLINE);
 	vty_out(vty, " sip message min-size         : %d%s", sip->sip_use_compact_form, VTY_NEWLINE);
-	vty_out(vty, " sip force-lr                 : %s%s", sip->sip_no_force_lr? "TRUE":"FALSE",VTY_NEWLINE);
+	vty_out(vty, " sip force-lr                 : %s%s", sip->sip_no_force_lr? "ospl_true":"ospl_false",VTY_NEWLINE);
 	if(sip->sip_accept_redirect == PJSIP_ACCEPT_REDIRECT_REJECT)
 		vty_out(vty, " sip redirect method          : redirect%s", VTY_NEWLINE);
 	else if(sip->sip_accept_redirect == PJSIP_ACCEPT_REDIRECT_FOLLOW)
@@ -5014,13 +5026,13 @@ int pl_pjsip_write_config(void *p)
 	{
 		vty_out(vty, "service sip%s", VTY_NEWLINE);
 
-		pl_pjsip_account_options_write_config(sip, vty, FALSE, TRUE);
-		pl_pjsip_transport_options_write_config(sip, vty, FALSE, TRUE);
-		pl_pjsip_tls_options_write_config(sip, vty, FALSE, TRUE);
-		pl_pjsip_audio_options_write_config(sip, vty, FALSE, TRUE);
-		pl_pjsip_video_options_write_config(sip, vty, FALSE, TRUE);
-		pl_pjsip_media_transport_options_write_config(sip, vty, FALSE, TRUE);
-		pl_pjsip_user_agent_options_write_config(sip, vty, FALSE, TRUE);
+		pl_pjsip_account_options_write_config(sip, vty, ospl_false, ospl_true);
+		pl_pjsip_transport_options_write_config(sip, vty, ospl_false, ospl_true);
+		pl_pjsip_tls_options_write_config(sip, vty, ospl_false, ospl_true);
+		pl_pjsip_audio_options_write_config(sip, vty, ospl_false, ospl_true);
+		pl_pjsip_video_options_write_config(sip, vty, ospl_false, ospl_true);
+		pl_pjsip_media_transport_options_write_config(sip, vty, ospl_false, ospl_true);
+		pl_pjsip_user_agent_options_write_config(sip, vty, ospl_false, ospl_true);
 		voip_volume_write_config(vty);
 		vty_out(vty, "!%s",VTY_NEWLINE);
 	}
@@ -5029,7 +5041,7 @@ int pl_pjsip_write_config(void *p)
 	return OK;
 }
 
-int pl_pjsip_show_config(void *p, BOOL detail)
+int pl_pjsip_show_config(void *p, ospl_bool detail)
 {
 	pl_pjsip_t *sip = pl_pjsip;
 	struct vty *vty = (struct vty *)p;
@@ -5040,15 +5052,15 @@ int pl_pjsip_show_config(void *p, BOOL detail)
 	if(sip->sip_enable)
 	{
 		vty_out(vty, "SIP Service :%s", VTY_NEWLINE);
-		pl_pjsip_account_options_show(sip, vty, FALSE, TRUE);
-		pl_pjsip_transport_options_show(sip, vty, FALSE, TRUE);
-		pl_pjsip_tls_options_show(sip, vty, FALSE, TRUE);
-		pl_pjsip_audio_options_show(sip, vty, FALSE, TRUE);
-		pl_pjsip_video_options_show(sip, vty, FALSE, TRUE);
-		pl_pjsip_media_transport_options_show(sip, vty, FALSE, TRUE);
-		pl_pjsip_user_agent_options_show(sip, vty, FALSE, TRUE);
+		pl_pjsip_account_options_show(sip, vty, ospl_false, ospl_true);
+		pl_pjsip_transport_options_show(sip, vty, ospl_false, ospl_true);
+		pl_pjsip_tls_options_show(sip, vty, ospl_false, ospl_true);
+		pl_pjsip_audio_options_show(sip, vty, ospl_false, ospl_true);
+		pl_pjsip_video_options_show(sip, vty, ospl_false, ospl_true);
+		pl_pjsip_media_transport_options_show(sip, vty, ospl_false, ospl_true);
+		pl_pjsip_user_agent_options_show(sip, vty, ospl_false, ospl_true);
 
-		voip_volume_show_config(vty, FALSE);
+		voip_volume_show_config(vty, ospl_false);
 		vty_out(vty, "%s",VTY_NEWLINE);
 	}
 	else
@@ -5057,3 +5069,4 @@ int pl_pjsip_show_config(void *p, BOOL detail)
 		os_mutex_unlock(pl_pjsip->mutex);
 	return OK;
 }
+

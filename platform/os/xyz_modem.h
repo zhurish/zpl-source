@@ -8,6 +8,10 @@
 #ifndef __XYZ_MODEM_H__
 #define __XYZ_MODEM_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define xyzModem_xmodem 1
 #define xyzModem_ymodem 2
 /* Don't define this until the protocol support is in place */
@@ -57,46 +61,46 @@
 #pragma pack(1)
 typedef struct xyz_modem_hdr_s
 {
-    u_int8 code;
-    u_int8 sequm;
-    u_int8 sequm_inv;
-    u_int8 data[XYZ_MIN_SIZE];
-    u_int8 crc_h;
-    u_int8 crc_l;
+    ospl_uint8 code;
+    ospl_uint8 sequm;
+    ospl_uint8 sequm_inv;
+    ospl_uint8 data[XYZ_MIN_SIZE];
+    ospl_uint8 crc_h;
+    ospl_uint8 crc_l;
 }xyz_modem_hdr_t, xyz_modem_data_last_t;
 
 typedef struct xyz_modem_data_s
 {
-    u_int8 code;
-    u_int8 sequm;
-    u_int8 sequm_inv;
-    u_int8 data[XYZ_MAX_SIZE];
-    u_int8 crc_h;
-    u_int8 crc_l;
+    ospl_uint8 code;
+    ospl_uint8 sequm;
+    ospl_uint8 sequm_inv;
+    ospl_uint8 data[XYZ_MAX_SIZE];
+    ospl_uint8 crc_h;
+    ospl_uint8 crc_l;
 }xyz_modem_data_t;
 #pragma pack(0)
 
 /* Data & state local to the protocol */
 typedef struct
 {
-  u_int8 sequm;
+  ospl_uint8 sequm;
 
-  u_int8 s_eof, s_ack, s_nak;
+  ospl_uint8 s_eof, s_ack, s_nak;
 
   int fd;
-  unsigned char pkt[XYZ_MAX_SIZE], *bufp;
-  unsigned char blk, cblk, crc1, crc2;
-  unsigned char next_blk;	/* Expected block */
-  int len, mode, total_retries;
-  int total_SOH, total_STX, total_CAN;
-  BOOL crc_mode, at_eof, tx_ack;
-  unsigned long file_length, read_length;
+  ospl_uchar pkt[XYZ_MAX_SIZE], *bufp;
+  ospl_uchar blk, cblk, crc1, crc2;
+  ospl_uchar next_blk;	/* Expected block */
+  ospl_uint32 len, mode, total_retries;
+  ospl_uint32 total_SOH, total_STX, total_CAN;
+  ospl_bool crc_mode, at_eof, tx_ack;
+  ospl_uint32 file_length, read_length;
 
   /*
    * recv data callback
    */
   void		*pravi;
-  int		(*data_cb)(void *, unsigned char *, int);
+  int		(*data_cb)(void *, ospl_uchar *, ospl_uint32);
 
   /*
    * debug info show callback
@@ -107,12 +111,12 @@ typedef struct
   /*
    * xy modem hw control function callback
    */
-  int		(*write_cb)(int, unsigned char *, int);
-  int		(*write_wait_cb)(int, unsigned char *, int, int);
-  int		(*read_cb)(int, unsigned char *, int);
+  int		(*write_cb)(int, ospl_uchar *, ospl_uint32);
+  int		(*write_wait_cb)(int, ospl_uchar *, ospl_uint32, ospl_uint32);
+  int		(*read_cb)(int, ospl_uchar *, ospl_uint32);
 
-  int		(*putc_cb)(int, int);
-  int		(*getc_cb)(int, unsigned char *, int);
+  int		(*putc_cb)(int, ospl_uint32);
+  int		(*getc_cb)(int, ospl_uchar *, ospl_uint32);
 
 
 } xyz_modem_t;
@@ -123,15 +127,18 @@ typedef struct
 #define xyzModem_CAN_COUNT                3	/* Wait for 3 CAN before quitting */
 #define xyzModem_PACK_TIMEOUT            3000	/* 2 seconds */
 
-extern int xyz_modem_build_hdr(xyz_modem_t*xyz, xyz_modem_hdr_t *hdr, char *filename, int filesize);
-extern int xyz_modem_build_data(xyz_modem_t*xyz, xyz_modem_data_t *hdr, char *data, int len);
-extern int xyz_modem_build_data_last(xyz_modem_t*xyz, xyz_modem_data_last_t *hdr, char *data, int len);
+extern int xyz_modem_build_hdr(xyz_modem_t*xyz, xyz_modem_hdr_t *hdr, ospl_char *filename, ospl_uint32 filesize);
+extern int xyz_modem_build_data(xyz_modem_t*xyz, xyz_modem_data_t *hdr, ospl_uchar *data, ospl_uint32 len);
+extern int xyz_modem_build_data_last(xyz_modem_t*xyz, xyz_modem_data_last_t *hdr, ospl_uchar *data, ospl_uint32 len);
 extern int xyz_modem_build_finsh_empty(xyz_modem_t*xyz, xyz_modem_data_last_t *hdr);;
-extern int xyz_modem_build_finsh_eot(xyz_modem_t*xyz, int);
+extern int xyz_modem_build_finsh_eot(xyz_modem_t*xyz, ospl_uint32);
 
-extern char * xyz_modem_error(int err);
-extern int xyz_modem_load(xyz_modem_t *xyz, int mode, char *devi);
+extern ospl_char * xyz_modem_error(ospl_uint32 err);
+extern int xyz_modem_load(xyz_modem_t *xyz, ospl_uint32 mode, ospl_char *devi);
 
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __XYZ_MODEM_H__ */

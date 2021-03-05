@@ -49,7 +49,7 @@
 #include <mach/mach_time.h>
 #endif
 
-static int os_mt_init = 0;
+static ospl_uint32 os_mt_init = 0;
 struct eloop_master * master_eloop[MODULE_MAX];
 
 #if 0
@@ -57,7 +57,7 @@ struct eloop_master * master_eloop[MODULE_MAX];
 struct timeval
 eloop_recent_relative_time (void)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	static struct timeval relative_time;
 	for(i = 0; i < MODULE_MAX; i++ )
 	{
@@ -98,7 +98,7 @@ eloop_master_create()
 	struct eloop_master *rv;
 	if (os_mt_init == 0)
 	{
-		int i = 0;
+		ospl_uint32 i = 0;
 		for (i = 0; i < MODULE_MAX; i++)
 		{
 			master_eloop[i] = NULL;
@@ -128,7 +128,7 @@ eloop_master_create()
 	}*/
 
 	//rv->ptid = os_task_pthread_self ();
-	rv->bquit = FALSE;
+	rv->bquit = ospl_false;
 	/* Initialize the timer queues */
 	//rv->timer = pqueue_create();
 	//rv->background = pqueue_create();
@@ -138,9 +138,9 @@ eloop_master_create()
 	return rv;
 }
 
-struct eloop_master *eloop_master_module_create(int module)
+struct eloop_master *eloop_master_module_create(ospl_uint32 module)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	if (os_mt_init == 0)
 	{
 		for (i = 0; i < MODULE_MAX; i++)
@@ -154,7 +154,7 @@ struct eloop_master *eloop_master_module_create(int module)
 
 	for (i = 0; i < MODULE_MAX; i++)
 	{
-		if (master_eloop[i] && master_eloop[i]->module == (u_int)module)
+		if (master_eloop[i] && master_eloop[i]->module == (ospl_uint32)module)
 			return master_eloop[i];
 	}
 	struct eloop_master * m = eloop_master_create();
@@ -238,7 +238,7 @@ void eloop_master_free(struct eloop_master *m)
 }
 
 /* Thread list is empty or not.  */
-static int eloop_empty(struct eloop_list *list)
+static ospl_bool eloop_empty(struct eloop_list *list)
 {
 	return list->head ? 0 : 1;
 }
@@ -257,7 +257,7 @@ eloop_trim_head(struct eloop_list *list)
 }
 
 /* Return remain time in second. */
-unsigned long eloop_timer_remain_second(struct eloop *eloop)
+ospl_ulong eloop_timer_remain_second(struct eloop *eloop)
 {
 	os_get_monotonic(&eloop->master->relative_time);
 
@@ -279,12 +279,12 @@ static int eloop_max_fd_update(struct eloop_master *m, int fd)
 	return 0;
 }
 
-#define debugargdef  const char *funcname, const char *schedfrom, int fromln
+#define debugargdef  const char *funcname, const char *schedfrom, ospl_uint32 fromln
 #define debugargpass funcname, schedfrom, fromln
 
 /* Get new eloop.  */
 static struct eloop *
-eloop_get(struct eloop_master *m, u_char type, int (*func)(struct eloop *),
+eloop_get(struct eloop_master *m, ospl_uchar type, int (*func)(struct eloop *),
 		void *arg, debugargdef)
 {
 	struct eloop *eloop = eloop_trim_head(&m->unuse);
@@ -310,18 +310,18 @@ eloop_get(struct eloop_master *m, u_char type, int (*func)(struct eloop *),
 
 #define fd_copy_fd_set(X) (X)
 
-static int fd_select(int size, eloop_fd_set *read, eloop_fd_set *write,
+static ospl_int fd_select(ospl_uint32 size, eloop_fd_set *read, eloop_fd_set *write,
 		eloop_fd_set *except, struct timeval *t)
 {
 	return (ip_select(size, read, write, except, t));
 }
 
-static int fd_is_set(int fd, eloop_fd_set *fdset)
+static ospl_int fd_is_set(int fd, eloop_fd_set *fdset)
 {
 	return FD_ISSET(fd, fdset);
 }
 
-static int fd_clear_read_write(int fd, eloop_fd_set *fdset)
+static ospl_int fd_clear_read_write(int fd, eloop_fd_set *fdset)
 {
 	if (!FD_ISSET(fd, fdset))
 		return 0;
@@ -331,7 +331,7 @@ static int fd_clear_read_write(int fd, eloop_fd_set *fdset)
 }
 
 static struct eloop *
-funcname_eloop_add_read_write(int dir, struct eloop_master *m,
+funcname_eloop_add_read_write(ospl_uint32 dir, struct eloop_master *m,
 		int (*func)(struct eloop *), void *arg, int fd,
 		debugargdef)
 {
@@ -404,7 +404,7 @@ static void eloop_list_add_before(struct eloop_list *list,
 
 static struct eloop *
 funcname_eloop_add_timer_timeval(struct eloop_master *m,
-		int (*func)(struct eloop *), int type, void *arg,
+		int (*func)(struct eloop *), ospl_uint32 type, void *arg,
 		struct timeval *time_relative,
 		debugargdef)
 {
@@ -602,9 +602,9 @@ void eloop_cancel(struct eloop *eloop)
 }
 
 /* Delete all events which has argument value arg. */
-unsigned int eloop_cancel_event(struct eloop_master *m, void *arg)
+ospl_uint32  eloop_cancel_event(struct eloop_master *m, void *arg)
 {
-	unsigned int ret = 0;
+	ospl_uint32  ret = 0;
 	struct eloop *eloop;
 	if (m->mutex)
 		os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
@@ -662,7 +662,7 @@ eloop_timer_wait(struct eloop_list *list, struct timeval *timer_val)
 	}
 	return NULL;
 	/*	struct eloop *thread;
-	 unsigned int ready = 0;
+	 ospl_uint32  ready = 0;
 
 	 for (thread = list->head; thread; thread = thread->next)
 	 {
@@ -701,14 +701,14 @@ eloop_run(struct eloop_master *m, struct eloop *eloop, struct eloop *fetch)
 	return fetch;
 }
 
-static int eloop_process_fds_helper(struct eloop_master *m, struct eloop_list *list,
+static ospl_uint32 eloop_process_fds_helper(struct eloop_master *m, struct eloop_list *list,
 		eloop_fd_set *fdset)
 {
 	eloop_fd_set *mfdset = NULL;
 	//struct eloop *list;
 	struct eloop *eloop;
 	struct eloop *next;
-	unsigned int ready = 0;
+	ospl_uint32  ready = 0;
 	if (!list)
 		return 0;
 
@@ -751,10 +751,10 @@ static int eloop_process_fds_helper(struct eloop_master *m, struct eloop_list *l
 	//return 0;
 }
 
-static int eloop_process_fds(struct eloop_master *m, eloop_fd_set *rset,
-		eloop_fd_set *wset, int num)
+static ospl_uint32 eloop_process_fds(struct eloop_master *m, eloop_fd_set *rset,
+		eloop_fd_set *wset, ospl_uint32 num)
 {
-	int ready = 0;//, index;
+	ospl_uint32 ready = 0;//, index;
 	if (m->mutex)
 		os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
 	//for (index = 0; index < m->fd_limit && ready < num; ++index)
@@ -768,11 +768,11 @@ static int eloop_process_fds(struct eloop_master *m, eloop_fd_set *rset,
 }
 
 /* Add all timers that have popped to the ready list. */
-/*static unsigned int
+/*static ospl_uint32 
  eloop_timer_process (struct pqueue *queue, struct timeval *timenow)
  {
  struct eloop *eloop;
- unsigned int ready = 0;
+ ospl_uint32  ready = 0;
 
  while (queue->size)
  {
@@ -788,14 +788,14 @@ static int eloop_process_fds(struct eloop_master *m, eloop_fd_set *rset,
  }
  return ready;
  }*/
-static unsigned int eloop_timer_process(struct eloop_list *list,
+static ospl_uint32  eloop_timer_process(struct eloop_list *list,
 		struct timeval *timenow)
 {
 	struct timeval timer_val =
 	{ .tv_sec = 0, .tv_usec = 0 };
 	struct eloop *thread;
 	struct eloop *next;
-	unsigned int ready = 0;
+	ospl_uint32  ready = 0;
 
 	for (thread = list->head; thread != NULL; thread = next)
 	{
@@ -815,11 +815,11 @@ static unsigned int eloop_timer_process(struct eloop_list *list,
 	return ready;
 }
 /* process a list en masse, e.g. for event eloop lists */
-static unsigned int eloop_process(struct eloop_list *list)
+static ospl_uint32  eloop_process(struct eloop_list *list)
 {
 	struct eloop *eloop;
 	struct eloop *next;
-	unsigned int ready = 0;
+	ospl_uint32  ready = 0;
 	for (eloop = list->head; eloop; eloop = next)
 	{
 		next = eloop->next;
@@ -835,7 +835,7 @@ int eloop_fetch_quit (struct eloop_master *m)
 {
 	if(m)
 	{
-		m->bquit = TRUE;
+		m->bquit = ospl_true;
 	}
 	return OK;
 }
@@ -862,7 +862,7 @@ eloop_fetch(struct eloop_master *m, struct eloop *fetch)
 	struct timeval timer_val = { .tv_sec = 1, .tv_usec = TIMER_SECOND_MICRO };
 	struct timeval timer_val_bg;
 	struct timeval *timer_wait = &timer_val;
-	int num = 0;
+	ospl_uint32 num = 0;
 	//struct timeval *timer_wait_bg;
 
 	//extern void * vty_eloop_master ();
@@ -888,7 +888,7 @@ eloop_fetch(struct eloop_master *m, struct eloop *fetch)
 		if(m->bquit)
 		{
 			fetch = NULL;
-			m->bquit = FALSE;
+			m->bquit = ospl_false;
 			return NULL;
 		}
 		/* To be fair to all kinds of eloops, and avoid starvation, we
@@ -991,8 +991,8 @@ eloop_fetch(struct eloop_master *m, struct eloop *fetch)
 	}
 }
 
-unsigned long eloop_consumed_time(struct timeval *now, struct timeval *start,
-		unsigned long *cputime)
+ospl_ulong eloop_consumed_time(struct timeval *now, struct timeval *start,
+		ospl_ulong *cputime)
 {
 	return os_timeval_elapsed(*now, *start);
 }
@@ -1010,7 +1010,7 @@ int eloop_should_yield(struct eloop *eloop)
 {
 
 	os_get_monotonic(&eloop->master->relative_time);
-	unsigned long t = os_timeval_elapsed(eloop->master->relative_time,
+	ospl_ulong t = os_timeval_elapsed(eloop->master->relative_time,
 			eloop->real);
 	return ((t > ELOOP_YIELD_TIME_SLOT) ? t : 0);
 }
@@ -1022,9 +1022,9 @@ void eloop_getrusage(struct timeval *real)
 
 struct eloop *eloop_current_get()
 {
-	u_int module = task_module_self();
+	ospl_uint32 module = task_module_self();
 	return master_eloop[module]->eloop_current;
-	/*	int i = 0;
+	/*	ospl_uint32 i = 0;
 	 for(i = 0; i < MODULE_MAX; i++ )
 	 {
 	 if(master_eloop[i] && master_eloop[i]->ptid == os_task_pthread_self() )
@@ -1037,7 +1037,7 @@ struct eloop *eloop_current_get()
 static void * eloop_cpu_get_alloc(struct eloop_master *m,
 		struct cpu_eloop_history *cpu)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	if (m == NULL)
 		return NULL;
 	for (i = 0; i < OS_ELOOP_CPU_MAX; i++)
@@ -1049,7 +1049,7 @@ static void * eloop_cpu_get_alloc(struct eloop_master *m,
 			if (m->cpu_record[i].data)
 			{
 				struct cpu_eloop_history *hist;
-				m->cpu_record[i].key = (int) cpu->func;
+				m->cpu_record[i].key = (ospl_uint32) cpu->func;
 				hist = (struct cpu_eloop_history *) m->cpu_record[i].data;
 				os_memset(hist, 0, sizeof(struct cpu_eloop_history));
 				hist->func = cpu->func;
@@ -1063,12 +1063,12 @@ static void * eloop_cpu_get_alloc(struct eloop_master *m,
 static void * eloop_cpu_get(struct eloop_master *m,
 		struct cpu_eloop_history *cpu)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	if (m == NULL)
 		return NULL;
 	for (i = 0; i < OS_ELOOP_CPU_MAX; i++)
 	{
-		if (m->cpu_record[i].key && m->cpu_record[i].key == (int) cpu->func)
+		if (m->cpu_record[i].key && m->cpu_record[i].key == (ospl_uint32) cpu->func)
 			return m->cpu_record[i].data;
 	}
 	return eloop_cpu_get_alloc(m, cpu);
@@ -1079,7 +1079,7 @@ static void * eloop_cpu_get(struct eloop_master *m,
  to wall clock time stats from gettimeofday. */
 void eloop_call(struct eloop *eloop)
 {
-	unsigned long realtime, cputime;
+	ospl_ulong realtime, cputime;
 	struct timeval before, after;
 
 	/* Cache a pointer to the relevant cpu history eloop, if the eloop
@@ -1131,7 +1131,7 @@ void eloop_call(struct eloop *eloop)
 		 */
 /*		zlog_warn(MODULE_DEFAULT,
 				"SLOW ELOOP: task %s (%lx) ran for %lums (cpu time %lums)",
-				eloop->funcname, (unsigned long) eloop->func, realtime / 1000,
+				eloop->funcname, (ospl_ulong) eloop->func, realtime / 1000,
 				cputime / 1000);*/
 	}
 #endif /* CONSUMED_TIME_CHECK */
@@ -1183,7 +1183,7 @@ funcname_eloop_execute(struct eloop_master *m, int (*func)(struct eloop *),
 static int vty_eloop_cpu_show_history(struct vty* vty,
 		struct cpu_eloop_history *a)
 {
-	char type[8];
+	ospl_char type[8];
 	vty_out(vty, "%7ld.%03ld %9d %8ld %9ld", a->real.total / 1000,
 			a->real.total % 1000, a->total_calls,
 			a->real.total / a->total_calls, a->real.max);
@@ -1209,7 +1209,7 @@ static int vty_eloop_cpu_show_history(struct vty* vty,
 	 a->types & (1 << ELOOP_EXECUTE) ? 'X':' ',
 	 a->types & (1 << ELOOP_BACKGROUND) ? 'B' : ' ',
 	 a->funcname, VTY_NEWLINE);*/
-	return 0;
+	return OK;
 }
 
 static void vty_eloop_cpu_show_head(struct vty *vty)
@@ -1218,9 +1218,9 @@ static void vty_eloop_cpu_show_head(struct vty *vty)
 	vty_out(vty, "  Type  Thread%s", VTY_NEWLINE);
 }
 
-static int vty_eloop_cpu_get_history(struct eloop_master *m)
+static ospl_bool vty_eloop_cpu_get_history(struct eloop_master *m)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	if (m == NULL)
 		return 0;
 	for (i = 0; i < OS_ELOOP_CPU_MAX; i++)
@@ -1229,17 +1229,17 @@ static int vty_eloop_cpu_get_history(struct eloop_master *m)
 		{
 			if (m->cpu_record[i].data)
 			{
-				return 1;
+				return ospl_true;
 			}
 		}
 	}
-	return 0;
+	return ospl_false;
 }
 
 static int vty_eloop_cpu_show_detail(struct eloop_master *m, struct vty *vty,
-		int detail, eloop_type type)
+		ospl_bool detail, eloop_type type)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	if (m == NULL)
 		return 0;
 	for (i = 0; i < OS_ELOOP_CPU_MAX; i++)
@@ -1255,13 +1255,13 @@ static int vty_eloop_cpu_show_detail(struct eloop_master *m, struct vty *vty,
 			}
 		}
 	}
-	return 0;
+	return OK;
 }
 
 static int vty_clear_eloop_cpu(struct eloop_master *m, struct vty *vty,
 		eloop_type type)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	if (m == NULL)
 		return 0;
 	for (i = 0; i < OS_ELOOP_CPU_MAX; i++)
@@ -1280,12 +1280,12 @@ static int vty_clear_eloop_cpu(struct eloop_master *m, struct vty *vty,
 			}
 		}
 	}
-	return 0;
+	return OK;
 }
 
 static eloop_type vty_eloop_cpu_filter(struct vty *vty, const char *argv)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	eloop_type filter = (eloop_type) -1U;
 	if (argv)
 	{
@@ -1335,9 +1335,9 @@ static eloop_type vty_eloop_cpu_filter(struct vty *vty, const char *argv)
 }
 
 #if 0
-static int strncasecmp(const char* s1, const char* s2, size_t n)
+static int strncasecmp(const char* s1, const char* s2, ospl_size_t n)
 {
-	char c1, c2;
+	ospl_char c1, c2;
 	if (!n)
 	return 0;
 	do
@@ -1358,7 +1358,7 @@ DEFUN(show_eloop_cpu,
 		"Thread CPU usage\n"
 		"Display filter (rwtexb)\n")
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	eloop_type filter = 0xff;
 	if (argc == 1)
 	{
@@ -1405,12 +1405,12 @@ DEFUN(show_eloop_task_cpu,
 		"Thread CPU usage\n"
 		"Display filter (rwtexb)\n")
 {
-	int i = 0, index = 0;
+	ospl_uint32 i = 0, index = 0;
 	eloop_type filter = 0xff;
 	if (argc > 1)
 	{
-		//char module[16];
-		char input[16];
+		//ospl_char module[16];
+		ospl_char input[16];
 		if (argc == 2)
 		{
 			filter = vty_eloop_cpu_filter(vty, argv[1]);
@@ -1459,7 +1459,7 @@ DEFUN(clear_eloop_cpu,
 		"Thread CPU usage\n"
 		"Display filter (rwtexb)\n")
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	eloop_type filter = 0xff;
 	if (argc == 1)
 	{
@@ -1489,12 +1489,12 @@ DEFUN(clear_eloop_task_cpu,
 		"Thread CPU usage\n"
 		"Display filter (rwtexb)\n")
 {
-	int i = 0, index = 0;
+	ospl_uint32 i = 0, index = 0;
 	eloop_type filter = 0xff;
 	if (argc > 1)
 	{
-		//char module[16];
-		char input[16];
+		//ospl_char module[16];
+		ospl_char input[16];
 		if (argc == 2)
 		{
 			filter = vty_eloop_cpu_filter(vty, argv[1]);
@@ -1537,7 +1537,7 @@ static int cpu_eloop_read_write_show(struct eloop *lst, struct vty *vty)
 {
 	if (lst && lst->funcname)
 	{
-		char type[24];
+		ospl_char type[24];
 		os_memset(type, 0, sizeof(type));
 		switch (lst->add_type)
 		{
@@ -1577,7 +1577,7 @@ static int cpu_eloop_read_write_show(struct eloop *lst, struct vty *vty)
 
 static int cpu_eloop_list_show(struct eloop_list *m, struct vty *vty)
 {
-	//unsigned int ret = 0;
+	//ospl_uint32  ret = 0;
 	struct eloop *eloop;
 	eloop = m->head;
 	while (eloop)
@@ -1596,7 +1596,7 @@ static int cpu_eloop_list_show(struct eloop_list *m, struct vty *vty)
 /*static int cpu_eloop_pqueue_show(struct pqueue *m, struct vty *vty)
  {
  struct eloop *eloop;
- int i = 0;
+ ospl_uint32 i = 0;
  for(i = 0; i < m->size; i++)
  {
  eloop = m->array[i];
@@ -1624,7 +1624,7 @@ DEFUN (show_eloop_dump,
 		"system eloop information\n"
 		"eloop dump information\n")
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	for (i = 0; i < MODULE_MAX; i++)
 	{
 		if (master_eloop[i])

@@ -31,7 +31,7 @@
 /****************************************************************************
 	Auxiliary routines
  ****************************************************************************/
-static int xioctl(int fd, unsigned long int request, void *arg)
+static int xioctl(int fd, ospl_uint64 request, void *arg)
 {
 	int r;
 
@@ -97,7 +97,7 @@ static char *v4l2_memory_names[] = {
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(*arr))
 #define prt_names(a, arr) (((a) < ARRAY_SIZE(arr)) ? arr[a] : "unknown")
 
-static char *prt_caps(uint32_t caps)
+static char *prt_caps(ospl_uint32  caps)
 {
 	static char s[4096] = "";
 
@@ -247,7 +247,7 @@ int v4l2_enum_stds (struct v4l2_driver *drv)
 		if (drv->debug) {
 			printf ("STANDARD: index=%d, id=0x%08x, name=%s, fps=%.3f, "
 				"framelines=%d\n", p->index,
-				(unsigned int)p->id, p->name,
+				(ospl_uint32)p->id, p->name,
 				1.*p->frameperiod.denominator/p->frameperiod.numerator,
 				p->framelines);
 		}
@@ -289,7 +289,7 @@ int v4l2_enum_input (struct v4l2_driver *drv)
 			printf ("INPUT: index=%d, name=%s, type=%d, audioset=%d, "
 				"tuner=%d, std=%08x, status=%d\n",
 				p->index,p->name,p->type,p->audioset, p->tuner,
-				(unsigned int)p->std, p->status);
+				(ospl_uint32)p->std, p->status);
 		}
 		if (list->curr) {
 			list->next=calloc(1,sizeof(*list->next));
@@ -356,7 +356,7 @@ int v4l2_setget_std (struct v4l2_driver *drv, enum v4l2_direction dir, v4l2_std_
 			ret=errno;
 
 			sprintf (s,"while trying to set STD to %08x",
-								(unsigned int) *id);
+								(ospl_uint32) *id);
 			perror(s);
 		}
 	}
@@ -374,12 +374,12 @@ int v4l2_setget_std (struct v4l2_driver *drv, enum v4l2_direction dir, v4l2_std_
 			if (*id != s_id) {
 				printf ("Warning: Received a std subset (%08x"
 					" std) while trying to adjust to %08x\n",
-					(unsigned int) s_id,(unsigned int) *id);
+					(ospl_uint32) s_id,(ospl_uint32) *id);
 			}
 		} else {
 			fprintf (stderr,"Error: Received %08x std while trying"
 				" to adjust to %08x\n",
-				(unsigned int) s_id,(unsigned int) *id);
+				(ospl_uint32) s_id,(ospl_uint32) *id);
 		}
 	}
 	return ret;
@@ -388,7 +388,7 @@ int v4l2_setget_std (struct v4l2_driver *drv, enum v4l2_direction dir, v4l2_std_
 int v4l2_setget_input (struct v4l2_driver *drv, enum v4l2_direction dir, struct v4l2_input *input)
 {
 	int			ok=0,ret;
-	unsigned int		inp=input->index;
+	ospl_uint32		inp=input->index;
 	char			s[256];
 
 	if (dir & V4L2_SET) {
@@ -430,8 +430,8 @@ int v4l2_get_fmt_cap(struct v4l2_driver *drv, struct v4l2_format *fmt)
 	return ret;
 }
 
-int v4l2_set_fmt_cap(struct v4l2_driver *drv, struct v4l2_format *fmt, uint32_t width, uint32_t height,
-					 uint32_t pixelformat, enum v4l2_field field)
+int v4l2_set_fmt_cap(struct v4l2_driver *drv, struct v4l2_format *fmt, ospl_uint32  width, ospl_uint32  height,
+					 ospl_uint32  pixelformat, enum v4l2_field field)
 {
 	int ret = 0;
 	struct v4l2_pix_format *pix = &(fmt->fmt.pix);
@@ -493,8 +493,8 @@ int v4l2_set_fmt_cap(struct v4l2_driver *drv, struct v4l2_format *fmt, uint32_t 
 }
 /*
 int v4l2_gettryset_fmt_cap (struct v4l2_driver *drv, enum v4l2_direction dir,
-		      struct v4l2_format *fmt,uint32_t width, uint32_t height,
-		      uint32_t pixelformat, enum v4l2_field field)
+		      struct v4l2_format *fmt,ospl_uint32  width, ospl_uint32  height,
+		      ospl_uint32  pixelformat, enum v4l2_field field)
 {
 	struct v4l2_pix_format  *pix=&(fmt->fmt.pix);
 	int			ret=0;
@@ -628,7 +628,7 @@ int v4l2_set_parm(struct v4l2_driver *drv, int fps)
  ****************************************************************************/
 int v4l2_free_bufs(struct v4l2_driver *drv)
 {
-	unsigned int i;
+	ospl_uint32 i;
 
 	if (!drv->n_bufs)
 		return 0;
@@ -678,7 +678,7 @@ int v4l2_free_bufs(struct v4l2_driver *drv)
 	return 0;
 }
 
-int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers)
+int v4l2_mmap_bufs(struct v4l2_driver *drv, ospl_uint32 num_buffers)
 {
 	/* Frees previous allocations, if required */
 	v4l2_free_bufs(drv);
@@ -863,7 +863,7 @@ int v4l2_read_outbuf(struct v4l2_driver *drv, struct v4l2_t_buf *obuf)
 
 int v4l2_start_streaming(struct v4l2_driver *drv)
 {
-	uint32_t i;
+	ospl_uint32  i;
 	struct v4l2_buffer buf;
 
 	if (drv->debug)
@@ -969,7 +969,7 @@ int v4l2_getset_freq(struct v4l2_driver *drv, enum v4l2_direction dir,
 	}
 	else
 	{
-		frq.frequency = (uint32_t)(((*freq) + d / 2) / d);
+		frq.frequency = (ospl_uint32 )(((*freq) + d / 2) / d);
 
 		if (-1 == xioctl(drv->fd, VIDIOC_S_FREQUENCY, &frq))
 		{

@@ -66,7 +66,7 @@ static int kernel_arp_del(struct interface *ifp, struct prefix *address)
 }
 
 /* Set an entry in the ARP cache. */
-static int kernel_arp_set(struct interface *ifp, struct prefix *address, unsigned char *mac)
+static int kernel_arp_set(struct interface *ifp, struct prefix *address, ospl_uint8 *mac)
 {
 	struct arpreq arpreq;
 	struct sockaddr_in *sin;
@@ -79,7 +79,7 @@ static int kernel_arp_set(struct interface *ifp, struct prefix *address, unsigne
 	sin->sin_family = address->family;
 	memcpy(&sin->sin_addr, (char *) &address->u.prefix4, sizeof(struct in_addr));
 	strcpy(arpreq.arp_dev, ifp->k_name);
-	memcpy((unsigned char *) arpreq.arp_ha.sa_data, mac, 6);
+	memcpy((ospl_uint8 *) arpreq.arp_ha.sa_data, mac, 6);
 
 	arpreq.arp_flags = ATF_PERM | ATF_COM; //note, must set flag, if not,you will get error
 
@@ -91,7 +91,7 @@ static int kernel_arp_set(struct interface *ifp, struct prefix *address, unsigne
 	return 0;
 }
 
-static int kernel_arp_get(struct interface *ifp, struct prefix *address, unsigned char *mac)
+static int kernel_arp_get(struct interface *ifp, struct prefix *address, ospl_uint8 *mac)
 {
 	struct arpreq arpreq;
 	struct sockaddr_in *sin;
@@ -111,7 +111,7 @@ static int kernel_arp_get(struct interface *ifp, struct prefix *address, unsigne
 	{
 		return -1;
 	}
-	memcpy(mac, (unsigned char *) arpreq.arp_ha.sa_data, 6);
+	memcpy(mac, (ospl_uint8 *) arpreq.arp_ha.sa_data, 6);
 	return 0;
 }
 
@@ -144,7 +144,7 @@ static int kernel_arp_init()
 	return skfd;
 }
 
-static int kernel_arp_relay_handle(int ifindex, struct sockaddr_in	*from, unsigned char *buf, int len)
+static int kernel_arp_relay_handle(ifindex_t ifindex, struct sockaddr_in	*from, ospl_uint8 *buf, ospl_uint32 len)
 {
 	struct interface * ifp = NULL;
 	struct ether_header *eth = NULL;
@@ -184,8 +184,8 @@ static int kernel_arp_recv(int	sock)
 #ifdef IP_RECVIF
 	struct sockaddr_dl	*sdl = NULL;
 #endif
-	unsigned char		 packetbuf[1024];
-	int ifindex = 0;
+	ospl_uint8		 packetbuf[1024];
+	ifindex_t ifindex = 0;
 
 
 	memset(&ss, 0, sizeof(ss));
@@ -265,9 +265,9 @@ static int kernel_arp_request(struct interface *ifp, struct prefix *address)
 	struct sockaddr_ll sll;
 
 	int skfd = 0;
-	int n = 0, len = 0;
+	ospl_uint32 n = 0, len = 0;
 
-	unsigned char buf[1024];
+	ospl_uint8 buf[1024];
 
 	//daddr.s_addr = 0xffffffff;
 	/* 伪造 源IP */

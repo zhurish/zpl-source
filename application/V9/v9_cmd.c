@@ -54,7 +54,7 @@ static int v9_cmd_make_hdr(v9_serial_t *mgt)
 	return OK;
 }
 
-int v9_cmd_send_ack(v9_serial_t *mgt, u_int8 status)
+int v9_cmd_send_ack(v9_serial_t *mgt, ospl_uint8 status)
 {
 	zassert(mgt != NULL);
 	app_cmd_hdr_t *hdr = (app_cmd_hdr_t *)mgt->sbuf;
@@ -85,10 +85,10 @@ int v9_cmd_handle_keepalive(v9_serial_t *mgt)
 
 	if(v9_app_rtc_tm_set(ntohl(ack->timesp)) == OK)
 	{
-		state->synctime = TRUE;		//时间是否已经同步
+		state->synctime = ospl_true;		//时间是否已经同步
 	}
 	else
-		state->synctime = FALSE;		//时间是否已经同步
+		state->synctime = ospl_false;		//时间是否已经同步
 	if(mgt->id == 0 && hdr->id != 0)
 	{
 		if(hdr->id != APP_BOARD_MAIN)
@@ -178,7 +178,7 @@ int v9_cmd_handle_reboot(v9_serial_t *mgt)
 int v9_cmd_handle_autoip(v9_serial_t *mgt)
 {
 	int ret = 0;
-	u_int32 address = APP_BOARD_ADDRESS_PREFIX;
+	ospl_uint32 address = APP_BOARD_ADDRESS_PREFIX;
 	app_cmd_hdr_t *hdr = (app_cmd_hdr_t *)mgt->buf;
 	app_cmd_autoip_t *ack = (app_cmd_autoip_t *)(mgt->buf + sizeof(app_cmd_hdr_t));
 	if(mgt->id == 0 || mgt->id != hdr->id)
@@ -236,7 +236,7 @@ int v9_cmd_handle_startup(v9_serial_t *mgt)
 	if(V9_APP_DEBUG(EVENT))
 		zlog_debug(MODULE_APP, "MSG STARTUP(%d) -> id=%d(id=%d) ACK seqnum = %d", ack->status, hdr->id, mgt->id, hdr->seqnum);
 
-	//if(v9_video_board_active(ack->status, TRUE) == OK)
+	//if(v9_video_board_active(ack->status, ospl_true) == OK)
 	//{
 		return v9_cmd_send_ack (mgt, V9_APP_ACK_OK);
 /*	}
@@ -389,7 +389,7 @@ int v9_cmd_handle_device(v9_serial_t *mgt)
 
 int v9_web_device_info(char *buf)
 {
-	int offset = 0;
+	ospl_uint32 offset = 0;
 	sprintf (buf + offset, "\"serialno\":\"%s\",", bios_device.serialno);
 
 	offset = strlen(buf);
@@ -439,11 +439,11 @@ int v9_cmd_handle_pass_reset(v9_serial_t *mgt)
 }
 
 #ifdef V9_SLIPNET_ENABLE
-int v9_cmd_sync_time_to_rtc(v9_serial_t *mgt, u_int32 timesp)
+int v9_cmd_sync_time_to_rtc(v9_serial_t *mgt, ospl_uint32 timesp)
 {
 	int ret = 0;
     //struct tm p_tm;
-    u_int32 ptimesp = timesp;
+    ospl_uint32 ptimesp = timesp;
 	zassert(mgt != NULL);
 	app_slipnet_data_t slipdata;
 	app_cmd_hdr_t *hdr = (app_cmd_hdr_t *)slipdata.data;
@@ -486,7 +486,7 @@ int v9_cmd_sync_time_to_rtc(v9_serial_t *mgt, u_int32 timesp)
 #endif
 	if(ret > OK)
 	{
-		mgt->sntp_sync = TRUE;
+		mgt->sntp_sync = ospl_true;
 	}
 	if(mgt->mutex)
 		os_mutex_unlock(mgt->mutex);
@@ -496,7 +496,7 @@ int v9_cmd_sync_time_to_rtc(v9_serial_t *mgt, u_int32 timesp)
 
 int v9_cmd_sync_time_test(void)
 {
-	u_int32 timesp = os_time(NULL);//返回UTC时间
+	ospl_uint32 timesp = os_time(NULL);//返回UTC时间
 	//zlog_debug(MODULE_APP, "---------%s--------- %d", __func__, timesp);
 	v9_cmd_sync_time_to_rtc(v9_serial, timesp);
 	return OK;
@@ -543,7 +543,7 @@ int v9_cmd_web_reboot()
 	return (ret);
 }
 
-int v9_cmd_sync_led(v9_serial_t *mgt, u_int32 led, int status)
+int v9_cmd_sync_led(v9_serial_t *mgt, ospl_uint32 led, int status)
 {
 	int ret = 0;
 	zassert(mgt != NULL);
@@ -585,14 +585,14 @@ int v9_cmd_sync_led(v9_serial_t *mgt, u_int32 led, int status)
 #endif
 	if(ret > OK)
 	{
-		mgt->sntp_sync = TRUE;
+		mgt->sntp_sync = ospl_true;
 	}
 	if(mgt->mutex)
 		os_mutex_unlock(mgt->mutex);
 	return (ret);
 }
 
-int v9_cmd_update_bios(u_int32 state)
+int v9_cmd_update_bios(ospl_uint32 state)
 {
 	int ret = 0;
 	zassert(v9_serial != NULL);

@@ -39,7 +39,7 @@ inet_aton (const char *cp, struct in_addr *inaddr)
 
   do
     {
-      register char c = *cp;
+      register ospl_char c = *cp;
 
       switch (c)
 	{
@@ -72,7 +72,7 @@ inet_aton (const char *cp, struct in_addr *inaddr)
 
 #ifndef HAVE_INET_PTON
 int
-inet_pton (int family, const char *strptr, void *addrptr)
+inet_pton (ospl_family_t family, const char *strptr, void *addrptr)
 {
   if (family == AF_INET)
     {
@@ -92,13 +92,13 @@ inet_pton (int family, const char *strptr, void *addrptr)
 
 #ifndef HAVE_INET_NTOP
 const char *
-inet_ntop (int family, const void *addrptr, char *strptr, size_t len)
+inet_ntop (ospl_family_t family, const void *addrptr, ospl_char *strptr, ospl_size_t len)
 {
-  unsigned char *p = (unsigned char *) addrptr;
+  ospl_uchar *p = (ospl_uchar *) addrptr;
 
   if (family == AF_INET) 
     {
-      char temp[INET_ADDRSTRLEN];
+      ospl_char temp[INET_ADDRSTRLEN];
 
       snprintf(temp, sizeof(temp), "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
 
@@ -117,7 +117,7 @@ inet_ntop (int family, const void *addrptr, char *strptr, size_t len)
 #endif /* ! HAVE_INET_NTOP */
 
 const char *
-inet_sutop (const union sockunion *su, char *str)
+inet_sutop (const union sockunion *su, ospl_char *str)
 {
   switch (su->sa.sa_family)
     {
@@ -164,7 +164,7 @@ str2sockunion (const char *str, union sockunion *su)
 }
 
 const char *
-sockunion2str (const union sockunion *su, char *buf, size_t len)
+sockunion2str (const union sockunion *su, ospl_char *buf, ospl_size_t len)
 {
   switch (sockunion_family(su))
     {
@@ -207,7 +207,7 @@ sockunion_normalise_mapped (union sockunion *su)
       memset (&sin, 0, sizeof (struct sockaddr_in));
       sin.sin_family = AF_INET;
       sin.sin_port = su->sin6.sin6_port;
-      memcpy (&sin.sin_addr, ((char *)&su->sin6.sin6_addr) + 12, 4);
+      memcpy (&sin.sin_addr, ((ospl_char *)&su->sin6.sin6_addr) + 12, 4);
       memcpy (su, &sin, sizeof (struct sockaddr_in));
     }
 #endif /* HAVE_IPV6 */
@@ -266,7 +266,7 @@ sockunion_sizeof (const union sockunion *su)
 
 /* return sockunion structure : this function should be revised. */
 static const char *
-sockunion_log (const union sockunion *su, char *buf, size_t len)
+sockunion_log (const union sockunion *su, ospl_char *buf, ospl_size_t len)
 {
   switch (su->sa.sa_family) 
     {
@@ -290,11 +290,11 @@ sockunion_log (const union sockunion *su, char *buf, size_t len)
    0 : connect success
    1 : connect is in progress */
 enum connect_result
-sockunion_connect (int fd, const union sockunion *peersu, unsigned short port,
+sockunion_connect (int fd, const union sockunion *peersu, ospl_ushort port,
 		   ifindex_t ifindex)
 {
   int ret;
-  int val;
+  ospl_uint32 val;
   union sockunion su;
 
   memcpy (&su, peersu, sizeof (union sockunion));
@@ -339,7 +339,7 @@ sockunion_connect (int fd, const union sockunion *peersu, unsigned short port,
     {
       if (errno != EINPROGRESS)
 	{
-	  char str[SU_ADDRSTRLEN];
+	  ospl_char str[SU_ADDRSTRLEN];
 	  zlog_info (MODULE_DEFAULT, "can't connect to %s fd %d : %s",
 		     sockunion_log (&su, str, sizeof str),
 		     fd, safe_strerror (errno));
@@ -371,7 +371,7 @@ sockunion_stream_socket (union sockunion *su)
 
 /* Bind socket to specified address. */
 int
-sockunion_bind (int sock, union sockunion *su, unsigned short port, 
+sockunion_bind (int sock, union sockunion *su, ospl_ushort port, 
 		union sockunion *su_addr)
 {
   int size = 0;
@@ -489,7 +489,7 @@ int sockopt_bindtodevice(int fd, const char *iface)
 	/* NB: passing (iface, strlen(iface) + 1) does not work!
 	 * (maybe it works on _some_ kernels, but not on 2.6.26)
 	 * Actually, ifr_name is at offset 0, and in practice
-	 * just giving char[IFNAMSIZ] instead of struct ifreq works too.
+	 * just giving ospl_char[IFNAMSIZ] instead of struct ifreq works too.
 	 * But just in case it's not true on some obscure arch... */
 	r = setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr));
 	if (r)
@@ -506,7 +506,7 @@ int sockopt_bindtodevice(int fd,
 #endif
 
 int
-sockopt_ttl (int family, int sock, int ttl)
+sockopt_ttl (ospl_family_t family, int sock, int ttl)
 {
   int ret;
 
@@ -551,7 +551,7 @@ sockopt_cork (int sock, int onoff)
 }
 
 int
-sockopt_minttl (int family, int sock, int minttl)
+sockopt_minttl (ospl_family_t family, int sock, int minttl)
 {
 #ifdef IP_MINTTL
   if (family == AF_INET)
@@ -581,7 +581,7 @@ sockopt_minttl (int family, int sock, int minttl)
 }
 
 int
-sockopt_v6only (int family, int sock)
+sockopt_v6only (ospl_family_t family, int sock)
 {
   int ret, on = 1;
 
@@ -632,7 +632,7 @@ sockunion_same (const union sockunion *su1, const union sockunion *su2)
     return 0;
 }
 
-unsigned int
+ospl_uint32 
 sockunion_hash (const union sockunion *su)
 {
   switch (sockunion_family(su))
@@ -647,8 +647,8 @@ sockunion_hash (const union sockunion *su)
   return 0;
 }
 
-size_t
-family2addrsize(int family)
+ospl_size_t
+family2addrsize(ospl_family_t family)
 {
   switch (family)
     {
@@ -662,28 +662,28 @@ family2addrsize(int family)
   return 0;
 }
 
-size_t
+ospl_size_t
 sockunion_get_addrlen(const union sockunion *su)
 {
   return family2addrsize(sockunion_family(su));
 }
 
-const u_char *
+const ospl_uchar *
 sockunion_get_addr(const union sockunion *su)
 {
   switch (sockunion_family(su))
     {
     case AF_INET:
-      return (const u_char *) &su->sin.sin_addr.s_addr;
+      return (const ospl_uchar *) &su->sin.sin_addr.s_addr;
 #ifdef HAVE_IPV6
     case AF_INET6:
-      return (const u_char *) &su->sin6.sin6_addr;
+      return (const ospl_uchar *) &su->sin6.sin6_addr;
 #endif /* HAVE_IPV6 */
     }
   return NULL;
 }
 
-unsigned short
+ospl_ushort
 sockunion_get_port (const union sockunion *su)
 {
   switch (sockunion_family (su))
@@ -699,7 +699,7 @@ sockunion_get_port (const union sockunion *su)
 }
 
 void
-sockunion_set(union sockunion *su, int family, const u_char *addr, size_t bytes)
+sockunion_set(union sockunion *su, ospl_family_t family, const ospl_uchar *addr, ospl_size_t bytes)
 {
   if (family2addrsize(family) != bytes)
     return;
@@ -731,7 +731,7 @@ sockunion_getsockname (int fd)
 #ifdef HAVE_IPV6
     struct sockaddr_in6 sin6;
 #endif /* HAVE_IPV6 */
-    char tmp_buffer[128];
+    ospl_char tmp_buffer[128];
   } name;
   union sockunion *su;
 
@@ -777,7 +777,7 @@ sockunion_getpeername (int fd)
 #ifdef HAVE_IPV6
     struct sockaddr_in6 sin6;
 #endif /* HAVE_IPV6 */
-    char tmp_buffer[128];
+    ospl_char tmp_buffer[128];
   } name;
   union sockunion *su;
 
@@ -824,7 +824,7 @@ sockunion_print (const union sockunion *su)
 #ifdef HAVE_IPV6
     case AF_INET6:
       {
-	char buf [SU_ADDRSTRLEN];
+	ospl_char buf [SU_ADDRSTRLEN];
 
 	printf ("%s\n", inet_ntop (AF_INET6, &(su->sin6.sin6_addr),
 				 buf, sizeof (buf)));
@@ -852,11 +852,11 @@ sockunion_print (const union sockunion *su)
 static int
 in6addr_cmp (const struct in6_addr *addr1, const struct in6_addr *addr2)
 {
-  unsigned int i;
-  u_char *p1, *p2;
+  ospl_uint32  i;
+  ospl_uchar *p1, *p2;
 
-  p1 = (u_char *)addr1;
-  p2 = (u_char *)addr2;
+  p1 = (ospl_uchar *)addr1;
+  p2 = (ospl_uchar *)addr2;
 
   for (i = 0; i < sizeof (struct in6_addr); i++)
     {

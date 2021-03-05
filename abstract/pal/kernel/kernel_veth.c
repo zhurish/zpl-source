@@ -36,7 +36,7 @@ static int _ipkernel_veth_create (nsm_veth_t *kifp)
 {
 	struct ifreq ifr;
 	struct interface *ifp;
-    u_char macadd[6] = {0x20,0x5f,0x87,0x65,0x66,0x00};
+    ospl_uchar macadd[6] = {0x20,0x5f,0x87,0x65,0x66,0x00};
 	if (!kifp || !kifp->ifp)
 		return -1;
 	ifp = kifp->ifp;
@@ -130,7 +130,7 @@ static int _ipkernel_veth_destroy (nsm_veth_t *kifp)
 
 
 
-static int ip_vlan_create(const char *name, int vid)
+static int ip_vlan_create(const char *name, vlan_t vid)
 {
 	int ret = -1;
 	struct vlan_ioctl_args v_req;
@@ -142,7 +142,7 @@ static int ip_vlan_create(const char *name, int vid)
 	return ret;
 }
 
-static int ip_vlan_delete(const char *name, int vid)
+static int ip_vlan_delete(const char *name, vlan_t vid)
 {
 	int ret = -1;
 	struct vlan_ioctl_args v_req;
@@ -156,7 +156,7 @@ static int ip_vlan_delete(const char *name, int vid)
 }
 
 #if 0
-static int ip_vlan_name_type(int type)
+static int ip_vlan_name_type(ospl_uint32 type)
 {
 	int ret = -1;
 	struct vlan_ioctl_args v_req;
@@ -247,7 +247,7 @@ int _ipkernel_linux_destroy (nsm_veth_t *kifp)
 	return ERROR;
 }
 
-int _ipkernel_linux_change (nsm_veth_t *kifp, int vlan)
+int _ipkernel_linux_change (nsm_veth_t *kifp, vlan_t vlan)
 {
 	if(if_is_ethernet(kifp->ifp) && kifp->root && IF_ID_GET(kifp->ifp->ifindex))
 	{
@@ -258,7 +258,7 @@ int _ipkernel_linux_change (nsm_veth_t *kifp, int vlan)
 		kifp->vlanid = vlan;
 		if(_ipkernel_vlan_create(kifp) == 0)
 		{
-			kifp->active = TRUE;
+			kifp->active = ospl_true;
 			return OK;
 		}
 	}

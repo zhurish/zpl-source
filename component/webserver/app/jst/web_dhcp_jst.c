@@ -67,7 +67,7 @@ static int web_dhcpd_get_config(Webs *wp, const char *poolname)
 
 		if(dhcps->address.prefixlen)
 		{
-			u_int32 addr = 0;
+			ospl_uint32 addr = 0;
 			struct in_addr innetmask;
 			memset(startip, 0, sizeof(startip));
 			memcpy(&address, &dhcps->address, sizeof(address));
@@ -393,7 +393,7 @@ static int web_dhcp_client_tbl(Webs *wp, char *path, char *query)
 	return 0;
 }
 
-static int web_dhcp_static_lease(int type, char *devname, char *devip, u_int8 *devmac, char *expires)
+static int web_dhcp_static_lease(ospl_uint32 type, char *devname, char *devip, ospl_uint8 *devmac, char *expires)
 {
 	nsm_dhcps_host_t *dhcphost = NULL;
 	nsm_dhcps_t * dhcps = nsm_dhcps_lookup_api("lantest");

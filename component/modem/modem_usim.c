@@ -45,7 +45,7 @@
  *
  */
 
-static int modem_cpin_lock_atcmd_get(modem_client_t *client, BOOL *enable)
+static int modem_cpin_lock_atcmd_get(modem_client_t *client, ospl_bool *enable)
 {
 	assert(client);
 	assert(enable);
@@ -61,7 +61,7 @@ static int modem_cpin_lock_atcmd_get(modem_client_t *client, BOOL *enable)
 
 }
 
-/*static int modem_cpin_lock_atcmd_set(modem_client_t *client, BOOL enable, char *pin)
+/*static int modem_cpin_lock_atcmd_set(modem_client_t *client, ospl_bool enable, char *pin)
 {
 	assert(client);
 	if (modem_attty(client, MODEM_TIMEOUT(5), "OK", "AT+CLCK=\"SC\",%d,\"%s\"",

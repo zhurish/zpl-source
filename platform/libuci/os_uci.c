@@ -72,7 +72,7 @@ static char *uci_result = NULL;
 static char *uci_list_result[LIST_MAX_CNT];
 static unsigned int uci_list_rescnt = 0;
 
-static int uci_result_add(int type, char *input)
+static int uci_result_add(ospl_uint32 type, char *input)
 {
 #if 0
 	if(uci_result)
@@ -234,7 +234,7 @@ static void cli_error(const char *fmt, ...)
 	va_end(ap);
 }
 
-static void uci_print_value(int type, FILE *f, const char *v)
+static void uci_print_value(ospl_uint32 type, FILE *f, const char *v)
 {
 #if 1
 	char *p = v;
@@ -274,10 +274,10 @@ static void uci_print_value(int type, FILE *f, const char *v)
 #endif
 }
 
-static void uci_show_value(struct uci_option *o, BOOL quote)
+static void uci_show_value(struct uci_option *o, ospl_bool quote)
 {
 	struct uci_element *e = NULL;
-	BOOL sep = FALSE;
+	ospl_bool sep = ospl_false;
 	char *space = NULL;
 	if(!o)
 		return;
@@ -304,7 +304,7 @@ static void uci_show_value(struct uci_option *o, BOOL quote)
 			{
 				uci_print_value(1, stdout, e->name);
 			}
-			sep = TRUE;
+			sep = ospl_true;
 		}
 		_UCI_DEBUG("uci_show_section---->\r\n");
 		break;
@@ -314,7 +314,7 @@ static void uci_show_value(struct uci_option *o, BOOL quote)
 	}
 }
 
-static void uci_show_option(struct uci_option *o, BOOL quote)
+static void uci_show_option(struct uci_option *o, ospl_bool quote)
 {
 /*	printf("uci_show_option---->%s.%s.%s=",
 		o->section->package->e.name,
@@ -338,7 +338,7 @@ static void uci_show_section(struct uci_section *s)
 		uci_result_add(0, s->type);
 	//printf("uci_show_section---->%s.%s=%s\r\n", cname, sname, s->type);
 	uci_foreach_element(&s->options, e) {
-		uci_show_option(uci_to_option(e), TRUE);
+		uci_show_option(uci_to_option(e), ospl_true);
 	}
 }
 
@@ -390,7 +390,7 @@ static void uci_show_changes(struct uci_package *p)
 	}
 }
 
-static int package_cmd(int cmd, char *tuple)
+static int package_cmd(ospl_uint32 cmd, char *tuple)
 {
 	struct uci_element *e = NULL;
 	struct uci_ptr ptr;
@@ -398,7 +398,7 @@ static int package_cmd(int cmd, char *tuple)
 	if(!tuple)
 		return 1;
 	memset(&ptr, 0, sizeof(struct uci_ptr));
-	if (uci_lookup_ptr(uci_ctx, &ptr, tuple, TRUE) != UCI_OK) {
+	if (uci_lookup_ptr(uci_ctx, &ptr, tuple, ospl_true) != UCI_OK) {
 		//printf("==========%s==========uci_lookup_ptr\r\n", __func__);
 		cli_perror();
 		return 1;
@@ -414,14 +414,14 @@ static int package_cmd(int cmd, char *tuple)
 			ret = 0;
 			goto out;
 		}
-		if (uci_commit(uci_ctx, &ptr.p, FALSE) != UCI_OK) {
+		if (uci_commit(uci_ctx, &ptr.p, ospl_false) != UCI_OK) {
 			//printf("==========%s==========uci_commit\r\n", __func__);
 			cli_perror();
 			goto out;
 		}
 		break;
 	case CMD_EXPORT:
-		if (uci_export(uci_ctx, stdout, ptr.p, TRUE) != UCI_OK) {
+		if (uci_export(uci_ctx, stdout, ptr.p, ospl_true) != UCI_OK) {
 			goto out;
 		}
 		break;
@@ -440,7 +440,7 @@ static int package_cmd(int cmd, char *tuple)
 				uci_show_section(ptr.s);
 				break;
 			case UCI_TYPE_OPTION:
-				uci_show_option(ptr.o, TRUE);
+				uci_show_option(ptr.o, ospl_true);
 				break;
 			default:
 				/* should not happen */
@@ -462,7 +462,7 @@ static int uci_do_import(int uci_argc, char **uci_argv)
 	struct uci_package *package = NULL;
 	char *name = NULL;
 	int ret = UCI_OK;
-	BOOL merge = FALSE;
+	ospl_bool merge = ospl_false;
 
 	if (uci_argc > 2)
 		return 255;
@@ -477,7 +477,7 @@ static int uci_do_import(int uci_argc, char **uci_argv)
 		if (uci_load(uci_ctx, name, &package) != UCI_OK)
 			package = NULL;
 		else
-			merge = TRUE;
+			merge = ospl_true;
 	}
 	//printf("dddddddddddddddddddd--uci_import--dddddddddddddddddddddddd\r\n");
 	ret = uci_import(uci_ctx, uci_input, name, &package, (name != NULL));
@@ -490,7 +490,7 @@ static int uci_do_import(int uci_argc, char **uci_argv)
 			uci_foreach_element(&uci_ctx->root, e) {
 				struct uci_package *p = uci_to_package(e);
 				if(p)
-					ret = uci_commit(uci_ctx, &p, TRUE);
+					ret = uci_commit(uci_ctx, &p, ospl_true);
 			}
 		}
 	}
@@ -504,7 +504,7 @@ static int uci_do_import(int uci_argc, char **uci_argv)
 	return 0;
 }
 
-static int uci_do_package_cmd(int cmd, int uci_argc, char **uci_argv)
+static int uci_do_package_cmd(ospl_uint32 cmd, int uci_argc, char **uci_argv)
 {
 	char **configs = NULL;
 	char **p = NULL;
@@ -564,7 +564,7 @@ done:
 	return ret;
 }
 
-static int uci_do_section_cmd(int cmd, int uci_argc, char **uci_argv)
+static int uci_do_section_cmd(ospl_uint32 cmd, int uci_argc, char **uci_argv)
 {
 	struct uci_element *e = NULL;
 	struct uci_ptr ptr;
@@ -577,7 +577,7 @@ static int uci_do_section_cmd(int cmd, int uci_argc, char **uci_argv)
 		return 255;
 	}
 	memset(&ptr, 0, sizeof(struct uci_ptr));
-	if (uci_lookup_ptr(uci_ctx, &ptr, uci_argv[1], TRUE) != UCI_OK) {
+	if (uci_lookup_ptr(uci_ctx, &ptr, uci_argv[1], ospl_true) != UCI_OK) {
 		//printf("==========%s==========uci_lookup_ptr\r\n", __func__);
 		cli_perror();
 		_UCI_DEBUG("uci_do_section_cmd uci_lookup_ptr\r\n");
@@ -615,7 +615,7 @@ static int uci_do_section_cmd(int cmd, int uci_argc, char **uci_argv)
 			//printf("uci_do_section_cmd--->%s\r\n", ptr.s->type);
 			break;
 		case UCI_TYPE_OPTION:
-			uci_show_value(ptr.o, FALSE);
+			uci_show_value(ptr.o, ospl_false);
 			break;
 		default:
 			_UCI_DEBUG("uci_do_section_cmd--->e->type=%d\r\n", e->type);
@@ -747,7 +747,7 @@ static int uci_batch(void)
 
 static int uci_cmd(int uci_argc, char **uci_argv)
 {
-	int cmd = 0;
+	ospl_uint32 cmd = 0;
 	_UCI_DEBUG("uci_cmd: %s \r\n", uci_argv[0]);
 	if (!strcasecmp(uci_argv[0], "batch") && !(uci_flags & CLI_FLAG_BATCH))
 		return uci_batch();
@@ -967,7 +967,7 @@ int os_uci_set_integer(char *name, int value)
 	return ERROR;
 }
 
-int os_uci_set_float(char *name, char *fmt, float value)
+int os_uci_set_float(char *name, char *fmt, ospl_float value)
 {
 	char cmd_value[512];
 	char tmp[32];
@@ -1087,7 +1087,7 @@ int os_uci_get_integer(char *name, int *value)
 	return ERROR;
 }
 
-int os_uci_get_float(char *name, char *fmt, float *value)
+int os_uci_get_float(char *name, char *fmt, ospl_float *value)
 {
 	char cmd_value[512];
 	char *cmd_argv[5] = {"uci", "get", cmd_value, NULL, NULL};
@@ -1102,7 +1102,7 @@ int os_uci_get_float(char *name, char *fmt, float *value)
 		if(uci_result_get())
 		{
 			if(value)
-				*value = (float)atof(uci_result_get());
+				*value = (ospl_float)atof(uci_result_get());
 			//if(value)
 			//	sscanf(uci_result_get(), fmt, value);
 			return OK;
@@ -1511,7 +1511,7 @@ int os_uci_set_integer(char *name, int value)
 	return os_uci_option_value_set(name, itoa(value, 0), NULL);
 }
 
-int os_uci_set_float(char *name, char *fmt, float value)
+int os_uci_set_float(char *name, char *fmt, ospl_float value)
 {
 	char tmp[32];
 	memset(tmp, 0, sizeof(tmp));
@@ -1552,14 +1552,14 @@ int os_uci_get_integer(char *name, int *value)
 	return ERROR;
 }
 
-int os_uci_get_float(char *name, char *fmt, float *value)
+int os_uci_get_float(char *name, char *fmt, ospl_float *value)
 {
 	char ret_value[512];
 	memset(ret_value, 0, sizeof(ret_value));
 	if( os_uci_option_value_lookup(name, ret_value, NULL) == OK)
 	{
 		if(value)
-			*value = (float)atof(ret_value);
+			*value = (ospl_float)atof(ret_value);
 		//if(value)
 		//	sscanf(ret_value, fmt, value);
 		return OK;

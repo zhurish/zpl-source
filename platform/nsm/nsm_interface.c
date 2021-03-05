@@ -225,7 +225,7 @@ static int nsm_interface_kname_set(struct interface *ifp)
 
 static int nsm_interface_kmac_set(struct interface *ifp)
 {
-	char kmac[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
+	ospl_char kmac[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
 	switch (ifp->if_type)
 	{
 	case IF_SERIAL:
@@ -262,7 +262,7 @@ static int nsm_interface_kmac_set(struct interface *ifp)
 #else
 static int nsm_interface_kname_set(struct interface *ifp)
 {
-	char k_name[64];
+	ospl_char k_name[64];
 	os_memset(k_name, 0, sizeof(k_name));
 	switch (ifp->if_type)
 	{
@@ -316,7 +316,7 @@ static int nsm_interface_kname_set(struct interface *ifp)
 
 static int nsm_interface_kmac_set(struct interface *ifp)
 {
-	unsigned char kmac[NSM_MAC_MAX] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
+	ospl_uchar kmac[NSM_MAC_MAX] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
 	nsm_gmac_get_api(0, kmac, NSM_MAC_MAX);
 	switch (ifp->if_type)
 	{
@@ -388,7 +388,7 @@ static int nsm_interface_new_hook(struct interface *ifp)
 
 
 #ifdef USE_IPSTACK_KERNEL
-	if(ifp->dynamic == FALSE && if_kernel_name_lookup(ifp->ifindex))
+	if(ifp->dynamic == ospl_false && if_kernel_name_lookup(ifp->ifindex))
 	{
 		//zlog_debug(MODULE_NSM, "=====%s: %s -> %s",__func__, ifp->name, if_kernel_name_lookup(ifp->ifindex));
 		if_kname_set(ifp, if_kernel_name_lookup(ifp->ifindex));
@@ -415,9 +415,9 @@ static int nsm_interface_new_hook(struct interface *ifp)
 }
 
 
-int nsm_interface_update_kernel(struct interface *ifp, char *kname)
+int nsm_interface_update_kernel(struct interface *ifp, ospl_char *kname)
 {
-	if(ifp/* && ifp->dynamic == FALSE*/)
+	if(ifp/* && ifp->dynamic == ospl_false*/)
 	{
 		if_kname_set(ifp, kname);
 		SET_FLAG(ifp->status, ZEBRA_INTERFACE_ATTACH);
@@ -445,7 +445,7 @@ static int nsm_interface_delete_hook(struct interface *ifp)
 
 
 
-BOOL nsm_interface_create_check_api(struct vty *vty, const char *ifname, const char *uspv)
+ospl_bool nsm_interface_create_check_api(struct vty *vty, const char *ifname, const char *uspv)
 {
 	ifindex_t ifindex = if_ifindex_make(ifname, uspv);
 	if_type_t type = IF_TYPE_GET(ifindex);
@@ -456,54 +456,54 @@ BOOL nsm_interface_create_check_api(struct vty *vty, const char *ifname, const c
 	case IF_WIRELESS:
 		if (IF_ID_GET(ifindex))
 		{
-			return TRUE;
+			return ospl_true;
 		}
 		else
 		{
 			vty_out(vty,"Can not create PHY interface%s",VTY_NEWLINE);
-			return FALSE;
+			return ospl_false;
 		}
 		break;
 
 	case IF_BRIGDE:
 		if(IF_BRIGDE_MAX > if_count_lookup_type(IF_BRIGDE))
 		{
-			return TRUE;
+			return ospl_true;
 		}
 		vty_out(vty,"Too much brigde interface%s",VTY_NEWLINE);
 		break;
 	case IF_SERIAL:
 		vty_out(vty,"Can not create serial interface%s",VTY_NEWLINE);
-		return FALSE;
+		return ospl_false;
 		break;
 #ifdef CUSTOM_INTERFACE
 	case IF_WIFI:
 	case IF_MODEM:
-		return FALSE;
+		return ospl_false;
 		break;
 #endif
 	case IF_TUNNEL:
 		if (IF_SLOT_GET(ifindex) != IF_TUNNEL_SLOT)
 		{
 			vty_out(vty,"Tunnel interface of slot may be '%d'%s",IF_TUNNEL_SLOT, VTY_NEWLINE);
-			return FALSE;
+			return ospl_false;
 		}
 /*		if (IF_ID_GET(ifindex) > IF_TUNNEL_MAX || IF_ID_GET(ifindex) < 1)
 		{
 			vty_out(vty,"Tunnel interface of slot may be '<%d-%d>'%s", 1, IF_TUNNEL_SLOT, VTY_NEWLINE);
-			return FALSE;
+			return ospl_false;
 		}*/
 		if(if_count_lookup_type(IF_TUNNEL) >= IF_TUNNEL_MAX)
 		{
 			vty_out(vty,"Too much tunnel interface%s",VTY_NEWLINE);
-			return FALSE;
+			return ospl_false;
 		}
-		return TRUE;
+		return ospl_true;
 		break;
 	case IF_LOOPBACK:
 		if(IF_LOOPBACK_MAX > if_count_lookup_type(IF_LOOPBACK))
 		{
-			return TRUE;
+			return ospl_true;
 		}
 		vty_out(vty,"Too much loopback interface%s",VTY_NEWLINE);
 		break;
@@ -511,7 +511,7 @@ BOOL nsm_interface_create_check_api(struct vty *vty, const char *ifname, const c
 	case IF_VLAN:
 		if(IF_VLAN_MAX > if_count_lookup_type(IF_VLAN))
 		{
-			return TRUE;
+			return ospl_true;
 		}
 		vty_out(vty,"Too much vlan interface%s",VTY_NEWLINE);
 		break;
@@ -519,7 +519,7 @@ BOOL nsm_interface_create_check_api(struct vty *vty, const char *ifname, const c
 	case IF_LAG:
 		if(IF_LAG_MAX > if_count_lookup_type(IF_LAG))
 		{
-			return TRUE;
+			return ospl_true;
 		}
 		vty_out(vty,"Too much lag interface%s",VTY_NEWLINE);
 		break;
@@ -527,13 +527,13 @@ BOOL nsm_interface_create_check_api(struct vty *vty, const char *ifname, const c
 		break;
 	}
 	vty_out(vty,"Can not Create interface %s %s(unknown error)%s",ifname, uspv, VTY_NEWLINE);
-	return FALSE;
+	return ospl_false;
 }
 
 
 static int nsm_interface_delete(struct interface *ifp)
 {
-	int delete = 0;
+	ospl_uint32 delete = 0;
 	if (ifp->if_type == IF_ETHERNET
 			|| ifp->if_type == IF_GIGABT_ETHERNET
 			|| ifp->if_type == IF_SERIAL
@@ -555,7 +555,7 @@ static int nsm_interface_delete(struct interface *ifp)
 		#ifdef PL_NSM_TRUNK
 		if(ifp->if_type == IF_LAG)
 		{
-			u_int trunkId = 0;
+			ospl_uint32 trunkId = 0;
 			if(nsm_trunk_get_ID_interface_api(ifp->ifindex, &trunkId) == OK)
 			{
 				if(l2trunk_lookup_interface_count_api(trunkId))
@@ -594,7 +594,7 @@ int nsm_interface_create_api(const char *ifname)
 	ifp = if_create(ifname, os_strlen(ifname));
 	if(ifp)
 	{
-		if(ifp->dynamic == FALSE)
+		if(ifp->dynamic == ospl_false)
 			zebra_interface_add_update(ifp);
 		IF_DATA_UNLOCK();
 		return OK;
@@ -775,7 +775,7 @@ static int nsm_interface_ip_address_uninstall(struct interface *ifp, struct pref
 #ifdef HAVE_IPV6
 static int
 nsm_interface_ipv6_address_install (struct interface *ifp,
-		struct prefix_ipv6 *cp, int secondary)
+		struct prefix_ipv6 *cp, ospl_bool secondary)
 {
 	struct nsm_interface *if_data;
 	struct connected *ifc;
@@ -852,7 +852,7 @@ nsm_interface_ipv6_address_install (struct interface *ifp,
 
 static int
 nsm_interface_ipv6_address_uninstall (struct interface *ifp,
-		struct prefix_ipv6 *cp, int secondry)
+		struct prefix_ipv6 *cp, ospl_bool secondry)
 {
 	struct connected *ifc;
 	//int ret;
@@ -925,7 +925,7 @@ nsm_interface_ipv6_address_uninstall (struct interface *ifp,
 /********************************************************************/
 
 int nsm_interface_ip_address_add(struct interface *ifp, struct prefix *cp,
-		int secondary, int value)
+		ospl_bool secondary, ospl_uint32 value)
 {
 	//int ret;
 	struct nsm_interface *if_data;
@@ -984,7 +984,7 @@ int nsm_interface_ip_address_add(struct interface *ifp, struct prefix *cp,
 }
 
 int nsm_interface_ip_address_del(struct interface *ifp, struct prefix *cp,
-		int secondary, int value)
+		ospl_bool secondary, ospl_uint32 value)
 {
 	//int ret;
 	//struct nsm_interface *if_data;
@@ -1073,7 +1073,7 @@ int nsm_interface_mode_get_api(struct interface *ifp, if_mode_t *mode)
 	return OK;
 }
 
-int nsm_interface_enca_set_api(struct interface *ifp, if_enca_t enca, int value)
+int nsm_interface_enca_set_api(struct interface *ifp, if_enca_t enca, ospl_uint16 value)
 {
 	int ret = ERROR;
 	zassert(ifp);
@@ -1088,7 +1088,7 @@ int nsm_interface_enca_set_api(struct interface *ifp, if_enca_t enca, int value)
 		{
 			ifindex_t root_kifindex = ifindex2ifkernel(IF_IFINDEX_ROOT_GET(ifp->ifindex));
 			const char *root_kname = ifkernelindex2kernelifname(root_kifindex);
-			char k_name[64];
+			ospl_char k_name[64];
 			os_memset(k_name, 0, sizeof(k_name));
 			if(root_kname)
 				sprintf(k_name, "%s.%d", root_kname, value);
@@ -1113,7 +1113,7 @@ int nsm_interface_enca_set_api(struct interface *ifp, if_enca_t enca, int value)
 	return ret;
 }
 
-int nsm_interface_enca_get_api(struct interface *ifp, if_enca_t *enca, int *value)
+int nsm_interface_enca_get_api(struct interface *ifp, if_enca_t *enca, ospl_uint16 *value)
 {
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
@@ -1237,7 +1237,7 @@ int nsm_interface_statistics_get_api(struct interface *ifp, struct if_stats *sta
 	return OK;
 }
 
-int nsm_interface_address_set_api(struct interface *ifp, struct prefix *cp, int secondry)
+int nsm_interface_address_set_api(struct interface *ifp, struct prefix *cp, ospl_bool secondry)
 {
 	int ret = ERROR;
 	IF_DATA_LOCK();
@@ -1256,7 +1256,7 @@ int nsm_interface_address_set_api(struct interface *ifp, struct prefix *cp, int 
 	return ret;
 }
 
-int nsm_interface_address_unset_api(struct interface *ifp, struct prefix *cp, int secondry)
+int nsm_interface_address_unset_api(struct interface *ifp, struct prefix *cp, ospl_bool secondry)
 {
 	int ret = ERROR;
 	IF_DATA_LOCK();
@@ -1277,18 +1277,18 @@ int nsm_interface_address_unset_api(struct interface *ifp, struct prefix *cp, in
 }
 
 
-int nsm_interface_multicast_set_api(struct interface *ifp, BOOL enable)
+int nsm_interface_multicast_set_api(struct interface *ifp, ospl_bool enable)
 {
 	int ret = ERROR;
 	struct nsm_interface *if_data;
-	u_char	multicast = enable ? IF_ZEBRA_MULTICAST_ON:IF_ZEBRA_MULTICAST_OFF;
+	ospl_uchar	multicast = enable ? IF_ZEBRA_MULTICAST_ON:IF_ZEBRA_MULTICAST_OFF;
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	IF_DATA_LOCK();
 	if_data = ifp->info[MODULE_NSM];
 	if(if_data->multicast != multicast)
 	{
-		ret = nsm_pal_interface_multicast(ifp, (int)enable);
+		ret = nsm_pal_interface_multicast(ifp, (ospl_bool)enable);
 		if(ret == OK)
 			if_data->multicast = multicast;
 		if(ret == OK)
@@ -1298,7 +1298,7 @@ int nsm_interface_multicast_set_api(struct interface *ifp, BOOL enable)
 	return ret;
 }
 
-int nsm_interface_multicast_get_api(struct interface *ifp, BOOL *enable)
+int nsm_interface_multicast_get_api(struct interface *ifp, ospl_bool *enable)
 {
 	int ret = OK;
 	struct nsm_interface *if_data;
@@ -1309,18 +1309,18 @@ int nsm_interface_multicast_get_api(struct interface *ifp, BOOL *enable)
 	if(if_data->multicast == IF_ZEBRA_MULTICAST_ON)
 	{
 		if(enable)
-			*enable = TRUE;
+			*enable = ospl_true;
 	}
 	else if(if_data->multicast == IF_ZEBRA_MULTICAST_OFF)
 	{
 		if(enable)
-			*enable = FALSE;
+			*enable = ospl_false;
 	}
 	IF_DATA_UNLOCK();
 	return ret;
 }
 
-int nsm_interface_bandwidth_set_api(struct interface *ifp, uint32_t bandwidth)
+int nsm_interface_bandwidth_set_api(struct interface *ifp, ospl_uint32  bandwidth)
 {
 	int ret = ERROR;
 	zassert(ifp);
@@ -1328,7 +1328,7 @@ int nsm_interface_bandwidth_set_api(struct interface *ifp, uint32_t bandwidth)
 	IF_DATA_LOCK();
 	if(ifp->bandwidth != bandwidth)
 	{
-		ret = nsm_pal_interface_bandwidth(ifp, (int)bandwidth);
+		ret = nsm_pal_interface_bandwidth(ifp, (ospl_uint32)bandwidth);
 		if(ret == OK)
 			ifp->bandwidth = bandwidth;
 		if(ret == OK)
@@ -1338,7 +1338,7 @@ int nsm_interface_bandwidth_set_api(struct interface *ifp, uint32_t bandwidth)
 	return ret;
 }
 
-int nsm_interface_bandwidth_get_api(struct interface *ifp, uint32_t *bandwidth)
+int nsm_interface_bandwidth_get_api(struct interface *ifp, ospl_uint32  *bandwidth)
 {
 	int ret = OK;
 	zassert(ifp);
@@ -1358,7 +1358,7 @@ int nsm_interface_vrf_set_api(struct interface *ifp, vrf_id_t vrf_id)
 	IF_DATA_LOCK();
 	if(ifp->vrf_id != vrf_id)
 	{
-		ret = nsm_pal_interface_vrf(ifp, (int)vrf_id);
+		ret = nsm_pal_interface_vrf(ifp, (vrf_id_t)vrf_id);
 		if(ret == OK)
 			ifp->vrf_id = vrf_id;
 		if(ret == OK)
@@ -1380,7 +1380,7 @@ int nsm_interface_vrf_get_api(struct interface *ifp, vrf_id_t *vrf_id)
 	return ret;
 }
 
-int nsm_interface_metric_set_api(struct interface *ifp, int metric)
+int nsm_interface_metric_set_api(struct interface *ifp, ospl_uint32 metric)
 {
 	int ret = ERROR;
 	zassert(ifp);
@@ -1388,7 +1388,7 @@ int nsm_interface_metric_set_api(struct interface *ifp, int metric)
 	IF_DATA_LOCK();
 	if(ifp->metric != metric)
 	{
-		ret = nsm_pal_interface_metric(ifp, (int)metric);
+		ret = nsm_pal_interface_metric(ifp, (ospl_uint32)metric);
 		if(ret == OK)
 			ifp->metric = metric;
 		if(ret == OK)
@@ -1398,7 +1398,7 @@ int nsm_interface_metric_set_api(struct interface *ifp, int metric)
 	return ret;
 }
 
-int nsm_interface_metric_get_api(struct interface *ifp, int *metric)
+int nsm_interface_metric_get_api(struct interface *ifp, ospl_uint32 *metric)
 {
 	int ret = OK;
 	zassert(ifp);
@@ -1410,18 +1410,18 @@ int nsm_interface_metric_get_api(struct interface *ifp, int *metric)
 	return ret;
 }
 
-int nsm_interface_mtu_set_api(struct interface *ifp, int mtu)
+int nsm_interface_mtu_set_api(struct interface *ifp, ospl_uint32 mtu)
 {
 	int ret = ERROR;
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	IF_DATA_LOCK();
-	if(ifp->mtu != (uint)mtu)
+	if(ifp->mtu != (ospl_uint32)mtu)
 	{
 		if(if_is_tunnel(ifp))
-			ret = nsm_tunnel_mtu_set_api(ifp, (int)mtu);
+			ret = nsm_tunnel_mtu_set_api(ifp, (ospl_uint32)mtu);
 		else
-			ret = nsm_pal_interface_mtu(ifp, (int)mtu);
+			ret = nsm_pal_interface_mtu(ifp, (ospl_uint32)mtu);
 		if(ret == OK)
 			ifp->mtu = mtu;
 		if(ret == OK)
@@ -1431,7 +1431,7 @@ int nsm_interface_mtu_set_api(struct interface *ifp, int mtu)
 	return ret;
 }
 
-int nsm_interface_mtu_get_api(struct interface *ifp, int *mtu)
+int nsm_interface_mtu_get_api(struct interface *ifp, ospl_uint32 *mtu)
 {
 	int ret = OK;
 	zassert(ifp);
@@ -1443,7 +1443,7 @@ int nsm_interface_mtu_get_api(struct interface *ifp, int *mtu)
 	return ret;
 }
 
-int nsm_interface_mac_set_api(struct interface *ifp, unsigned char *mac, int maclen)
+int nsm_interface_mac_set_api(struct interface *ifp, ospl_uchar *mac, ospl_uint32 maclen)
 {
 	int ret = ERROR;
 	zassert(ifp);
@@ -1461,7 +1461,7 @@ int nsm_interface_mac_set_api(struct interface *ifp, unsigned char *mac, int mac
 	return ret;
 }
 
-int nsm_interface_mac_get_api(struct interface *ifp, unsigned char *mac, int maclen)
+int nsm_interface_mac_get_api(struct interface *ifp, ospl_uchar *mac, ospl_uint32 maclen)
 {
 	int ret = OK;
 	zassert(ifp);
@@ -1551,7 +1551,7 @@ int nsm_interface_speed_get_api(struct interface *ifp, nsm_speed_en *speed)
 /* Output prefix string to vty. */
 static int prefix_vty_out(struct vty *vty, struct prefix *p)
 {
-	char str[INET6_ADDRSTRLEN];
+	ospl_char str[INET6_ADDRSTRLEN];
 
 	inet_ntop(p->family, &p->u.prefix, str, sizeof(str));
 	vty_out(vty, "%s", str);
@@ -1636,7 +1636,7 @@ void nsm_interface_show_api(struct vty *vty, struct interface *ifp)
 	vty_out(vty, "  Type: %s%s", if_link_type_str(ifp->ll_type), VTY_NEWLINE);
 	if (ifp->hw_addr_len != 0)
 	{
-		int i;
+		ospl_uint32 i;
 		if(if_is_pointopoint(ifp))
 			vty_out(vty, "  Unspec: ");
 		else
@@ -1691,14 +1691,14 @@ void nsm_interface_show_api(struct vty *vty, struct interface *ifp)
 	return;
 }
 
-void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, BOOL status, BOOL *head)
+void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, ospl_bool status, ospl_bool *head)
 {
 	struct connected *connected;
 	struct listnode *node;
 	struct prefix *p;
 	struct nsm_interface *nsm_interface;
-	char pstatus[32];
-	int offset = 0;
+	ospl_char pstatus[32];
+	ospl_uint32 offset = 0;
 	nsm_interface = ifp->info[MODULE_NSM];
 	if(status)
 	{
@@ -1709,7 +1709,7 @@ void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, BOOL s
 			vty_out(vty, "%-24s %-16s%s", "Interface", "Protocol/PHY", VTY_NEWLINE);
 			vty_out(vty, "%-24s %-16s%s", "------------------------",
 					"----------------", VTY_NEWLINE);
-			*head = FALSE;
+			*head = ospl_false;
 		}
 	}
 	else
@@ -1722,7 +1722,7 @@ void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, BOOL s
 					"IP Address", "MAC Address", "VRF Name", VTY_NEWLINE);
 			vty_out(vty, "%-24s %-16s %-16s %-18s %-16s %s", "------------------------",
 					"----------------", "----------------", "----------------", "----------------", VTY_NEWLINE);
-			*head = FALSE;
+			*head = ospl_false;
 		}
 	}
 	os_memset(pstatus, 0, sizeof(pstatus));
@@ -1747,7 +1747,7 @@ void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, BOOL s
 		vty_out(vty, " %-16s", pstatus);
 		if (ifp->hw_addr_len != 0)
 		{
-			int i;
+			ospl_uint32 i = 0;
 			offset = 0;
 			os_memset(pstatus, 0, sizeof(pstatus));
 			for (i = 0; i < ifp->hw_addr_len; i++)

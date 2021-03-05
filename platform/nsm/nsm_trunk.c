@@ -23,7 +23,7 @@
 #endif
 static Gl2trunk_t gtrunk;
 
-static l2trunk_group_t * l2trunk_group_lookup_node(u_int trunkid);
+static l2trunk_group_t * l2trunk_group_lookup_node(ospl_uint32 trunkid);
 static int _trunk_interface_show_one(struct vty *vty, struct interface *ifp);
 
 l2trunk_group_t * nsm_port_channel_get(struct interface *ifp)
@@ -86,7 +86,7 @@ static int nsm_port_channel_client_exit()
 
 int nsm_trunk_init()
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	os_memset(&gtrunk, 0, sizeof(Gl2trunk_t));
 	gtrunk.group = XMALLOC(MTYPE_TRUNK, sizeof(l2trunk_group_t) * NSM_TRUNK_ID_MAX);
 	if(!gtrunk.group)
@@ -100,7 +100,7 @@ int nsm_trunk_init()
 		//gtrunk.load_balance = LOAD_BALANCE_DEFAULT;
 		lstInit(gtrunk.group[i].trunkList);
 	}
-	gtrunk.enable = TRUE;
+	gtrunk.enable = ospl_true;
 	gtrunk.mutex = os_mutex_init();
 	nsm_port_channel_client_init();
 	return OK;
@@ -125,7 +125,7 @@ static int l2trunk_cleanup(l2trunk_group_t *group)
 
 int nsm_trunk_exit()
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
 	nsm_port_channel_client_exit();
@@ -151,27 +151,27 @@ int nsm_trunk_enable(void)
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
 #ifdef PL_HAL_MODULE
-	ret = hal_trunk_enable(TRUE);
+	ret = hal_trunk_enable(ospl_true);
 #else
 	ret = OK;
 #endif
 	if(ret == OK)
-		gtrunk.enable = TRUE;
+		gtrunk.enable = ospl_true;
 	if(gtrunk.mutex)
 		os_mutex_unlock(gtrunk.mutex);
 	return ret;
 }
 
-BOOL nsm_trunk_is_enable(void)
+ospl_bool nsm_trunk_is_enable(void)
 {
 	return gtrunk.enable;
 }
 
 
 //
-static l2trunk_group_t * l2trunk_group_lookup_node(u_int trunkid)
+static l2trunk_group_t * l2trunk_group_lookup_node(ospl_uint32 trunkid)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < NSM_TRUNK_ID_MAX; i++)
 	{
 		if(gtrunk.group[i].trunkId == trunkid)
@@ -184,7 +184,7 @@ static l2trunk_group_t * l2trunk_group_lookup_node(u_int trunkid)
 /*
 static int l2trunk_add_sort_node(l2trunk_t *value)
 {
-	int i = 1;
+	ospl_uint32 = 1;
 	l2trunk_t *node = l2trunk_lookup_node(value->trunkId);
 	while(!node)
 		node = l2trunk_lookup_node(value->trunkId);
@@ -252,7 +252,7 @@ static int l2trunk_del_node(l2trunk_group_t *group, l2trunk_t *value)
 
 static l2trunk_t * l2trunk_lookup_port(ifindex_t ifindex)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	l2trunk_t *pstNode = NULL;
 	for(i = 0; i < NSM_TRUNK_ID_MAX; i++)
 	{
@@ -266,7 +266,7 @@ static l2trunk_t * l2trunk_lookup_port(ifindex_t ifindex)
 
 static int l2trunk_add_port(l2trunk_group_t *group, l2trunk_t *value)
 {
-//	int i = 0;
+//	ospl_uint32 i = 0;
 #ifdef PL_HAL_MODULE
 	if(hal_trunk_interface_enable(value->ifindex, group->trunkId) == OK)
 #else
@@ -300,7 +300,7 @@ static int l2trunk_del_port(l2trunk_group_t *group, l2trunk_t *value)
 		return ERROR;
 }
 
-BOOL l2trunk_lookup_api(u_int trunkid)
+ospl_bool l2trunk_lookup_api(ospl_uint32 trunkid)
 {
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
@@ -308,14 +308,14 @@ BOOL l2trunk_lookup_api(u_int trunkid)
 	{
 		if(gtrunk.mutex)
 			os_mutex_unlock(gtrunk.mutex);
-		return TRUE;
+		return ospl_true;
 	}
 	if(gtrunk.mutex)
 		os_mutex_unlock(gtrunk.mutex);
-	return FALSE;
+	return ospl_false;
 }
 
-int l2trunk_lookup_interface_count_api(u_int trunkid)
+int l2trunk_lookup_interface_count_api(ospl_uint32 trunkid)
 {
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
@@ -332,7 +332,7 @@ int l2trunk_lookup_interface_count_api(u_int trunkid)
 	return -1;
 }
 
-int nsm_trunk_create_api(u_int trunkid, trunk_type_t type)
+int nsm_trunk_create_api(ospl_uint32 trunkid, trunk_type_t type)
 {
 	int ret = ERROR;
 	l2trunk_group_t *pstNode = NULL;
@@ -341,7 +341,7 @@ int nsm_trunk_create_api(u_int trunkid, trunk_type_t type)
 	pstNode = l2trunk_group_lookup_node(trunkid);
 	if(!pstNode)
 	{
-		int i = 0;
+		ospl_uint32 i = 0;
 		for(i = 0; i < NSM_TRUNK_ID_MAX; i++)
 		{
 			if(gtrunk.group[i].trunkId == 0)
@@ -364,7 +364,7 @@ int nsm_trunk_create_api(u_int trunkid, trunk_type_t type)
 }
 
 
-int nsm_trunk_destroy_api(u_int trunkid)
+int nsm_trunk_destroy_api(ospl_uint32 trunkid)
 {
 	int ret = ERROR;
 	l2trunk_group_t *pstNode = NULL;
@@ -390,7 +390,7 @@ int nsm_trunk_destroy_api(u_int trunkid)
 }
 
 
-BOOL l2trunk_lookup_interface_api(ifindex_t ifindex)
+ospl_bool l2trunk_lookup_interface_api(ifindex_t ifindex)
 {
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
@@ -398,14 +398,14 @@ BOOL l2trunk_lookup_interface_api(ifindex_t ifindex)
 	{
 		if(gtrunk.mutex)
 			os_mutex_unlock(gtrunk.mutex);
-		return TRUE;
+		return ospl_true;
 	}
 	if(gtrunk.mutex)
 		os_mutex_unlock(gtrunk.mutex);
-	return FALSE;
+	return ospl_false;
 }
 
-int nsm_trunk_get_ID_interface_api(ifindex_t ifindex, u_int *trunkId)
+int nsm_trunk_get_ID_interface_api(ifindex_t ifindex, ospl_uint32 *trunkId)
 {
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
@@ -423,7 +423,7 @@ int nsm_trunk_get_ID_interface_api(ifindex_t ifindex, u_int *trunkId)
 	return -1;
 }
 
-int nsm_trunk_add_interface_api(u_int trunkid, trunk_type_t type, trunk_mode_t mode, struct interface *ifp)
+int nsm_trunk_add_interface_api(ospl_uint32 trunkid, trunk_type_t type, trunk_mode_t mode, struct interface *ifp)
 {
 	int ret = ERROR;
 	l2trunk_t *value = NULL;
@@ -454,9 +454,9 @@ int nsm_trunk_add_interface_api(u_int trunkid, trunk_type_t type, trunk_mode_t m
 }
 
 
-int nsm_trunk_del_interface_api(u_int trunkid, struct interface *ifp)
+int nsm_trunk_del_interface_api(ospl_uint32 trunkid, struct interface *ifp)
 {
-	//int i = 0;
+	//ospl_uint32 i = 0;
 	int ret = ERROR;
 	l2trunk_t *value;
 	if(gtrunk.mutex)
@@ -472,7 +472,7 @@ int nsm_trunk_del_interface_api(u_int trunkid, struct interface *ifp)
 }
 
 
-int nsm_trunk_load_balance_api(u_int trunkid, load_balance_t mode)
+int nsm_trunk_load_balance_api(ospl_uint32 trunkid, load_balance_t mode)
 {
 	int ret = ERROR;
 	l2trunk_group_t *value;
@@ -513,9 +513,9 @@ int nsm_trunk_load_balance_api(u_int trunkid, load_balance_t mode)
 	return ret;
 }
 
-int nsm_trunk_lacp_port_priority_api(ifindex_t ifindex, u_int pri)
+int nsm_trunk_lacp_port_priority_api(ifindex_t ifindex, ospl_uint32 pri)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	int ret = ERROR;
 	l2trunk_t *value;
 	if(gtrunk.mutex)
@@ -543,9 +543,9 @@ int nsm_trunk_lacp_port_priority_api(ifindex_t ifindex, u_int pri)
 	return ret;
 }
 
-int nsm_trunk_lacp_timeout_api(ifindex_t ifindex, u_int timeout)
+int nsm_trunk_lacp_timeout_api(ifindex_t ifindex, ospl_uint32 timeout)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	int ret = ERROR;
 	l2trunk_t *value;
 	if(gtrunk.mutex)
@@ -572,7 +572,7 @@ int nsm_trunk_lacp_timeout_api(ifindex_t ifindex, u_int timeout)
 	return ret;
 }
 
-int nsm_trunk_lacp_system_priority_api(u_int trunkid, u_int pri)
+int nsm_trunk_lacp_system_priority_api(ospl_uint32 trunkid, ospl_uint32 pri)
 {
 	int ret = ERROR;
 	l2trunk_group_t *value;
@@ -601,7 +601,7 @@ int nsm_trunk_lacp_system_priority_api(u_int trunkid, u_int pri)
 
 int nsm_trunk_group_callback_api(l2trunk_group_cb cb, void *pVoid)
 {
-	int i = 0, ret = 0;
+	ospl_uint32 i = 0, ret = 0;
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
 	for(i = 0; i < NSM_TRUNK_ID_MAX; i++)
@@ -618,7 +618,7 @@ int nsm_trunk_group_callback_api(l2trunk_group_cb cb, void *pVoid)
 
 int nsm_trunk_callback_api(l2trunk_cb cb, void *pVoid)
 {
-	int i = 0, ret = 0;
+	ospl_uint32 i = 0, ret = 0;
 	l2trunk_t *pstNode = NULL;
 	NODE index;
 	if(gtrunk.mutex)

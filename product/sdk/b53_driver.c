@@ -30,7 +30,7 @@
 
 #if 0
 /******************************** trunk ***************************/
-static int drv_trunk_enable(BOOL enable)
+static int drv_trunk_enable(ospl_bool enable)
 {
 	return b53125_trunk_mac_base_enable(b53_device, enable);
 }
@@ -56,7 +56,7 @@ static int drv_stp_state(ifindex_t ifindex, drv_port_stp_state_t state)
 	return b53125_set_stp_state(b53_device, if_ifindex2phy(ifindex), state);
 }
 
-static int drv_mstp_enable(BOOL enable)
+static int drv_mstp_enable(ospl_bool enable)
 {
 	return b53125_mstp_enable(b53_device, enable);
 }
@@ -77,7 +77,7 @@ static int drv_mstp_id_vlan(int id, vlan_t vlan)
 }
 
 /******************************** mirror ***************************/
-static int drv_mirror_enable(ifindex_t ifindex, BOOL enable)
+static int drv_mirror_enable(ifindex_t ifindex, ospl_bool enable)
 {
 	if(b53125_mirror_enable(b53_device, enable) == OK)
 	{
@@ -86,7 +86,7 @@ static int drv_mirror_enable(ifindex_t ifindex, BOOL enable)
 	return ERROR;
 }
 
-static int drv_mirror_source_enable(BOOL enable, ifindex_t ifindex,
+static int drv_mirror_source_enable(ospl_bool enable, ifindex_t ifindex,
 		drv_mirror_mode_t mode, drv_mirror_type_t type)
 {
 	int ret = -1;
@@ -108,10 +108,10 @@ static int drv_mirror_source_enable(BOOL enable, ifindex_t ifindex,
 	return ret;
 }
 
-static int drv_mirror_source_filter(BOOL enable,
+static int drv_mirror_source_filter(ospl_bool enable,
 		drv_mirror_filter_t filter, drv_mirror_type_t type, mac_t *mac, mac_t *mac1)
 {
-	//	int (*sdk_mirror_source_filter_enable_cb) (BOOL enable, BOOL dst, mac_t *mac, int mode);
+	//	int (*sdk_mirror_source_filter_enable_cb) (ospl_bool enable, ospl_bool dst, mac_t *mac, int mode);
 	int ret = -1;
 	switch(type)
 	{
@@ -139,7 +139,7 @@ static int drv_mirror_source_filter(BOOL enable,
 	return ret;
 }
 /******************************** DOS ***************************/
-static int drv_dos_enable(BOOL enable, drv_dos_type_t type)
+static int drv_dos_enable(ospl_bool enable, drv_dos_type_t type)
 {
 	int ret = -1;
 	switch(type)
@@ -166,7 +166,7 @@ static int drv_dos_enable(BOOL enable, drv_dos_type_t type)
 		ret = b53125_dos_tcp_synerror_drop(b53_device, enable);
 		break;
 	case DRV_DOS_TCP_SHORT_HDR:
-		ret = b53125_dos_tcp_shorthdr_drop(b53_device, enable);
+		ret = b53125_dos_tcp_ospl_int16hdr_drop(b53_device, enable);
 		break;
 	case DRV_DOS_TCP_FRAG_ERROR:
 		ret = b53125_dos_tcp_fragerror_drop(b53_device, enable);
@@ -193,7 +193,7 @@ static int drv_dos_tcp_hdr_size(int size)
 {
 	return b53125_dos_tcphdr_minsize(b53_device, size);
 }
-static int drv_dos_icmp_size(BOOL ipv6, int size)
+static int drv_dos_icmp_size(ospl_bool ipv6, int size)
 {
     if(ipv6)
     	return b53125_dos_icmp6_maxsize(b53_device, size);
@@ -201,7 +201,7 @@ static int drv_dos_icmp_size(BOOL ipv6, int size)
     	return b53125_dos_icmp4_maxsize(b53_device, size);
 }
 
-static int drv_dos_disable_lean(BOOL enable)
+static int drv_dos_disable_lean(ospl_bool enable)
 {
 	return b53125_dos_disable_lean(b53_device, enable);
 }
@@ -211,7 +211,7 @@ static int drv_dos_jumbo_size(int size)
    return b53125_jumbo_size(b53_device, size);
 }
 
-static int drv_jumbo_enable(ifindex_t ifindex, BOOL enable)
+static int drv_jumbo_enable(ifindex_t ifindex, ospl_bool enable)
 {
 	return b53125_jumbo_enable(b53_device, if_ifindex2phy(ifindex), enable);
 }
@@ -237,16 +237,16 @@ static int drv_mac_clr(ifindex_t ifindex, vlan_t vlan)
 static int drv_mac_read(ifindex_t ifindex, vlan_t vlan)
 {
 /*	return b53125_fdb_dump(b53_device, if_ifindex2phy(ifindex),
-			int (*cb)(u8 *, u16, BOOL, void *), void *data);*/
+			int (*cb)(u8 *, u16, ospl_bool, void *), void *data);*/
 	return OK;
 }
 
 
 /******************************** vlan ***************************/
-static int drv_vlan_enable(BOOL enable)
+static int drv_vlan_enable(ospl_bool enable)
 {
 	return b53125_enable_vlan(b53_device,  enable,
-			FALSE);
+			ospl_false);
 }
 
 static int drv_vlan_create(vlan_t vlan)
@@ -261,40 +261,40 @@ static int drv_vlan_destroy(vlan_t vlan)
 
 static int drv_vlan_add_untag_port(ifindex_t ifindex, vlan_t vlan)
 {
-	return b53125_add_vlan_port(b53_device, vlan, if_ifindex2phy(ifindex), FALSE);
+	return b53125_add_vlan_port(b53_device, vlan, if_ifindex2phy(ifindex), ospl_false);
 }
 
 static int drv_vlan_del_untag_port(ifindex_t ifindex, vlan_t vlan)
 {
-	return b53125_del_vlan_port(b53_device, vlan, if_ifindex2phy(ifindex), FALSE);
+	return b53125_del_vlan_port(b53_device, vlan, if_ifindex2phy(ifindex), ospl_false);
 }
 
 static int drv_vlan_add_tag_port(ifindex_t ifindex, vlan_t vlan)
 {
-	return b53125_add_vlan_port(b53_device, vlan, if_ifindex2phy(ifindex), TRUE);
+	return b53125_add_vlan_port(b53_device, vlan, if_ifindex2phy(ifindex), ospl_true);
 }
 
 static int drv_vlan_del_tag_port(ifindex_t ifindex, vlan_t vlan)
 {
-	return b53125_del_vlan_port(b53_device, vlan, if_ifindex2phy(ifindex), TRUE);
+	return b53125_del_vlan_port(b53_device, vlan, if_ifindex2phy(ifindex), ospl_true);
 }
 
 static int drv_port_add_allowed_tag_vlan(ifindex_t ifindex, vlan_t vlan)
 {
-	return b53125_add_vlan_port(b53_device, vlan, if_ifindex2phy(ifindex), TRUE);
+	return b53125_add_vlan_port(b53_device, vlan, if_ifindex2phy(ifindex), ospl_true);
 }
 
 static int drv_port_del_allowed_tag_vlan(ifindex_t ifindex, vlan_t vlan)
 {
-	return b53125_del_vlan_port(b53_device, vlan, if_ifindex2phy(ifindex), TRUE);
+	return b53125_del_vlan_port(b53_device, vlan, if_ifindex2phy(ifindex), ospl_true);
 }
 
 static int drv_port_add_allowed_tag_batch_vlan(ifindex_t ifindex, vlan_t start, vlan_t end)
 {
-	int i = 0, ret = 0;
+	ospl_uint32 i = 0, ret = 0;
 	for(i = start; i <= end; i++)
 	{
-		ret |= b53125_add_vlan_port(b53_device, i, if_ifindex2phy(ifindex), TRUE);
+		ret |= b53125_add_vlan_port(b53_device, i, if_ifindex2phy(ifindex), ospl_true);
 		if(ret != 0)
 			break;
 	}
@@ -303,10 +303,10 @@ static int drv_port_add_allowed_tag_batch_vlan(ifindex_t ifindex, vlan_t start, 
 
 static int drv_port_del_allowed_tag_batch_vlan(ifindex_t ifindex, vlan_t start, vlan_t end)
 {
-	int i = 0, ret = 0;
+	ospl_uint32 i = 0, ret = 0;
 	for(i = start; i <= end; i++)
 	{
-		ret |= b53125_del_vlan_port(b53_device, i, if_ifindex2phy(ifindex), TRUE);
+		ret |= b53125_del_vlan_port(b53_device, i, if_ifindex2phy(ifindex), ospl_true);
 		if(ret != 0)
 			break;
 	}
@@ -330,7 +330,7 @@ static int drv_port_unset_vlan(ifindex_t ifindex, vlan_t vlan);
 
 int b53125_port_pvid(struct b53125_device *dev, u16 vid, int port, int pri);
 int b53125_vlan_double_tagging_tpid(struct b53125_device *dev, u16 tpid);
-int b53125_ISP_port(struct b53125_device *dev, int port, BOOL enable);
+int b53125_ISP_port(struct b53125_device *dev, int port, ospl_bool enable);
 */
 
 /******************************** rate limite ***************************/
@@ -410,9 +410,9 @@ static int drv_port_limit_ingress_rate(ifindex_t ifindex, int limitkb, int burst
 	} else {
 		return ERROR;
 	}
-	b53125_qos_buck_mode(b53_device, 0, TRUE);
+	b53125_qos_buck_mode(b53_device, 0, ospl_true);
 	b53125_qos_buck_type(b53_device, 0, 0x3f);
-	b53125_qos_ingress_rate_mode(b53_device, if_ifindex2phy(ifindex),  3, TRUE)
+	b53125_qos_ingress_rate_mode(b53_device, if_ifindex2phy(ifindex),  3, ospl_true)
 
 	return b53125_qos_ingress_rate(b53_device, if_ifindex2phy(ifindex), 0, burst, limitbps)
 }
@@ -449,36 +449,36 @@ static int drv_port_strom_rate(ifindex_t ifindex, int limitkb, int burst_size)
 	} else {
 		return ERROR;
 	}
-	b53125_qos_buck_mode(b53_device, 1, TRUE);
+	b53125_qos_buck_mode(b53_device, 1, ospl_true);
 	b53125_qos_buck_type(b53_device, 1, 0x3f);
 
 	return b53125_qos_ingress_rate(b53_device, if_ifindex2phy(ifindex), 1, burst, limitbps);
 }
 
-static int drv_port_strom_mode(ifindex_t ifindex, BOOL enable, int mode)
+static int drv_port_strom_mode(ifindex_t ifindex, ospl_bool enable, int mode)
 {
 	return b53125_qos_ingress_rate_mode(b53_device, if_ifindex2phy(ifindex),  mode, enable);
 }
 
 /******************************** qos ***************************/
-static int drv_qos_ipg(BOOL tx, BOOL enable)
+static int drv_qos_ipg(ospl_bool tx, ospl_bool enable)
 {
 	return b53125_qos_ingress_ipg(b53_device, tx, enable);
 }
 
-static int drv_qos_enable(BOOL enable)
+static int drv_qos_enable(ospl_bool enable)
 {
-	b53125_qos_base_port(b53_device, FALSE);
+	b53125_qos_base_port(b53_device, ospl_false);
 	b53125_qos_layer_sel(b53_device, 3);
 	return 0;
 }
 
-static int drv_qos_8021q_enable(ifindex_t ifindex, BOOL enable)
+static int drv_qos_8021q_enable(ifindex_t ifindex, ospl_bool enable)
 {
 	return b53125_qos_8021p(b53_device, if_ifindex2phy(ifindex), enable);
 }
 
-static int drv_qos_diffserv_enable(ifindex_t ifindex, BOOL enable)
+static int drv_qos_diffserv_enable(ifindex_t ifindex, ospl_bool enable)
 {
 	return b53125_qos_diffserv(b53_device, if_ifindex2phy(ifindex), enable);
 }
@@ -521,14 +521,14 @@ static int drv_qos_class_scheduling(drv_class_t class, drv_class_sched_t mode)
 		}
 		else if(class == DRV_CLASS_ID_4)
 		{
-			return b53125_qos_class4_weight(b53_device, TRUE,  -1);
+			return b53125_qos_class4_weight(b53_device, ospl_true,  -1);
 		}
 	}
 	else
 		sched_mode = 0;
 	if(class == DRV_CLASS_ID_4)
 	{
-		return b53125_qos_class4_weight(b53_device, FALSE,  -1);
+		return b53125_qos_class4_weight(b53_device, ospl_false,  -1);
 	}
 	/*
 	00 = all queues are weighted round robin
@@ -544,29 +544,29 @@ static int drv_qos_class_scheduling(drv_class_t class, drv_class_sched_t mode)
 static int drv_qos_class_weight(drv_class_t class, int weight)
 {
 	if(class == DRV_CLASS_ID_4)
-		return b53125_qos_class4_weight(b53_device, FALSE,  weight);
+		return b53125_qos_class4_weight(b53_device, ospl_false,  weight);
 	return b53125_qos_class_weight(b53_device, class, weight);
 }
 
 
 /******************************** global ***************************/
-static int drv_global_manage(BOOL enable)
+static int drv_global_manage(ospl_bool enable)
 {
 	return b53125_manege_enable(b53_device, enable);
 }
-static int drv_global_forwarding_enable(BOOL enable)
+static int drv_global_forwarding_enable(ospl_bool enable)
 {
 	return b53125_forwarding_enable(b53_device, enable);
 }
 
-int b53125_multicast_flood(struct b53125_device *dev, BOOL enable);
-int b53125_unicast_flood(struct b53125_device *dev, BOOL enable);
-int b53125_multicast_learning(struct b53125_device *dev, BOOL enable);
-int b53125_enable_bpdu(struct b53125_device *dev, BOOL enable);
+int b53125_multicast_flood(struct b53125_device *dev, ospl_bool enable);
+int b53125_unicast_flood(struct b53125_device *dev, ospl_bool enable);
+int b53125_multicast_learning(struct b53125_device *dev, ospl_bool enable);
+int b53125_enable_bpdu(struct b53125_device *dev, ospl_bool enable);
 int b53125_aging_time(struct b53125_device *dev, int agetime);
-int b53125_bpdu_forward(struct b53125_device *dev, u8 *mac, BOOL enable);
+int b53125_bpdu_forward(struct b53125_device *dev, u8 *mac, ospl_bool enable);
 /******************************** cpu port ***************************/
-static int drv_global_imp_enable(BOOL enable)
+static int drv_global_imp_enable(ospl_bool enable)
 {
 	return b53125_imp_enable(b53_device, enable);
 }
@@ -581,40 +581,40 @@ static int drv_imp_duplex(int duplex)
 	return b53125_imp_duplex(b53_device, duplex);
 }
 
-static int drv_imp_flow(BOOL rx, BOOL tx)
+static int drv_imp_flow(ospl_bool rx, ospl_bool tx)
 {
 	return b53125_imp_flow(b53_device, rx, tx);
 }
 
 /******************************** port ***************************/
-static int drv_port_protected_enable(ifindex_t ifindex, BOOL enable)
+static int drv_port_protected_enable(ifindex_t ifindex, ospl_bool enable)
 {
 	return b53125_protected_enable(b53_device, if_ifindex2phy(ifindex), enable);
 }
 
-static int drv_port_pasue_transmit_enable(ifindex_t ifindex, BOOL enable)
+static int drv_port_pasue_transmit_enable(ifindex_t ifindex, ospl_bool enable)
 {
 	return b53125_pasue_transmit_enable(b53_device, if_ifindex2phy(ifindex), enable);
 }
 
-static int drv_port_pasue_receive_enable(ifindex_t ifindex, BOOL enable)
+static int drv_port_pasue_receive_enable(ifindex_t ifindex, ospl_bool enable)
 {
 	return b53125_pasue_receive_enable(b53_device, if_ifindex2phy(ifindex), enable);
 }
 
-static int drv_port_pasue_receive_enable(ifindex_t ifindex, BOOL enable)
+static int drv_port_pasue_receive_enable(ifindex_t ifindex, ospl_bool enable)
 {
 	return b53125_pasue_receive_enable(b53_device, if_ifindex2phy(ifindex), enable);
 }
 
-int b53125_unicast_map(struct b53125_device *dev, int port, BOOL enable);
-int b53125_multicast_map(struct b53125_device *dev, int port, BOOL enable);
-int b53125_ip_multicast_map(struct b53125_device *dev, int port, BOOL enable);
+int b53125_unicast_map(struct b53125_device *dev, int port, ospl_bool enable);
+int b53125_multicast_map(struct b53125_device *dev, int port, ospl_bool enable);
+int b53125_ip_multicast_map(struct b53125_device *dev, int port, ospl_bool enable);
 //IEEE 802.3x 是全双工以太网数据链路层的流控方法。当客户终端向服务器发出请求后，自身系统或网络产生拥塞时，它会向服务器发出PAUSE帧，以延缓服务器向客户终端的数据传输
-int b53125_pause_pass_rx(struct b53125_device *dev, int port, BOOL enable);
-int b53125_pause_pass_tx(struct b53125_device *dev, int port, BOOL enable);
-int b53125_enable_learning(struct b53125_device *dev, int port, BOOL enable);
-int b53125_software_learning(struct b53125_device *dev, int port, BOOL enable);
+int b53125_pause_pass_rx(struct b53125_device *dev, int port, ospl_bool enable);
+int b53125_pause_pass_tx(struct b53125_device *dev, int port, ospl_bool enable);
+int b53125_enable_learning(struct b53125_device *dev, int port, ospl_bool enable);
+int b53125_software_learning(struct b53125_device *dev, int port, ospl_bool enable);
 
 int b53125_port_state_override_speed(struct b53125_device *dev, int port, int speed);
 int b53125_port_state_override_duplex(struct b53125_device *dev, int port, int duplex);
@@ -622,7 +622,7 @@ int b53125_port_state_override_flow(struct b53125_device *dev, int port, int flo
 int b53125_port_state_override_link_force(struct b53125_device *dev, int port, int link);
 
 
-int b53125_enable_port(struct b53125_device *dev, int port, BOOL enable);
-BOOL b53125_port_link(struct b53125_device *dev, int port);
+int b53125_enable_port(struct b53125_device *dev, int port, ospl_bool enable);
+ospl_bool b53125_port_link(struct b53125_device *dev, int port);
 
 #endif

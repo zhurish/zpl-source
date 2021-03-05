@@ -48,7 +48,7 @@ DEFUN (dot1x_system_auth_ctrl,
 {
 	int ret = ERROR;
 	if(!nsm_dot1x_global_is_enable())
-		ret = nsm_dot1x_global_enable(TRUE);
+		ret = nsm_dot1x_global_enable(ospl_true);
 	else
 		ret = OK;
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -63,7 +63,7 @@ DEFUN (no_dot1x_system_auth_ctrl,
 {
 	int ret = ERROR;
 	if(nsm_dot1x_global_is_enable())
-		ret = nsm_dot1x_global_enable(FALSE);
+		ret = nsm_dot1x_global_enable(ospl_false);
 	else
 		ret = OK;
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -107,8 +107,8 @@ DEFUN (dot1x_port_control,
 		}
 		else
 		{
-			ret = nsm_dot1x_enable_set_api(ifp->ifindex, TRUE, type);
-			//ret |= nsm_dot1x_port_mode_set_api(ifp->ifindex, TRUE);
+			ret = nsm_dot1x_enable_set_api(ifp->ifindex, ospl_true, type);
+			//ret |= nsm_dot1x_port_mode_set_api(ifp->ifindex, ospl_true);
 		}
 	}
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -124,7 +124,7 @@ DEFUN (no_dot1x_port_control,
 	int ret = ERROR;
 	struct interface *ifp = vty->index;
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
-		ret = nsm_dot1x_enable_set_api(ifp->ifindex, FALSE, DOT1X_NONE);
+		ret = nsm_dot1x_enable_set_api(ifp->ifindex, ospl_false, DOT1X_NONE);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -151,7 +151,7 @@ DEFUN (dot1x_max_req,
 		"Request count")
 {
 	int ret = ERROR;
-	u_int value = 0;
+	ospl_uint32 value = 0;
 	struct interface *ifp = vty->index;
 	value = atoi(argv[0]);
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
@@ -181,7 +181,7 @@ DEFUN (dot1x_protocol_version,
 		"Version number\n")
 {
 	int ret = ERROR;
-	u_int value = 0;
+	ospl_uint32 value = 0;
 	struct interface *ifp = vty->index;
 	value = atoi(argv[0]);
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
@@ -212,7 +212,7 @@ DEFUN (dot1x_reauthentication,
 	int ret = ERROR;
 	struct interface *ifp = vty->index;
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
-		ret = nsm_dot1x_reauthentication_set_api(ifp->ifindex, TRUE);
+		ret = nsm_dot1x_reauthentication_set_api(ifp->ifindex, ospl_true);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -226,7 +226,7 @@ DEFUN (no_dot1x_reauthentication,
 	int ret = ERROR;
 	struct interface *ifp = vty->index;
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
-		ret = nsm_dot1x_reauthentication_set_api(ifp->ifindex, FALSE);
+		ret = nsm_dot1x_reauthentication_set_api(ifp->ifindex, ospl_false);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -270,7 +270,7 @@ DEFUN (dot1x_mac_auth_bypass,
 	int ret = ERROR;
 	struct interface *ifp = vty->index;
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
-		ret = nsm_dot1x_mac_auth_bypass_set_api(ifp->ifindex, TRUE);
+		ret = nsm_dot1x_mac_auth_bypass_set_api(ifp->ifindex, ospl_true);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -284,7 +284,7 @@ DEFUN (no_dot1x_mac_auth_bypass,
 	int ret = ERROR;
 	struct interface *ifp = vty->index;
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
-		ret = nsm_dot1x_mac_auth_bypass_set_api(ifp->ifindex, FALSE);
+		ret = nsm_dot1x_mac_auth_bypass_set_api(ifp->ifindex, ospl_false);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -297,12 +297,12 @@ DEFUN (dot1x_port_mode,
 		"Eap mac mode\n")
 {
 	int ret = ERROR;
-	BOOL mode = TRUE;
+	ospl_bool mode = ospl_true;
 	struct interface *ifp = vty->index;
 	if(os_memcmp(argv[0], "port", 3) == 0)
-		mode = TRUE;
+		mode = ospl_true;
 	else
-		mode = FALSE;
+		mode = ospl_false;
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_port_mode_set_api(ifp->ifindex, mode);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -318,7 +318,7 @@ DEFUN (no_dot1x_port_mode,
 	int ret = ERROR;
 	struct interface *ifp = vty->index;
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
-		ret = nsm_dot1x_port_mode_set_api(ifp->ifindex, TRUE);
+		ret = nsm_dot1x_port_mode_set_api(ifp->ifindex, ospl_true);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -336,8 +336,8 @@ DEFUN (dot1x_max_user,
 	value = atoi(argv[0]);
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 	{
-		BOOL mode = TRUE;
-		if(nsm_dot1x_port_mode_get_api(ifp->ifindex, &mode) == OK && mode == FALSE)
+		ospl_bool mode = ospl_true;
+		if(nsm_dot1x_port_mode_get_api(ifp->ifindex, &mode) == OK && mode == ospl_false)
 			ret = nsm_dot1x_max_user_set_api(ifp->ifindex, value);
 		else
 		{

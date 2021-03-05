@@ -8,6 +8,10 @@
 #ifndef __MODEM_MACHINE_H__
 #define __MODEM_MACHINE_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "modem_event.h"
 
 #define MDMS(n)		MODEM_MACHINE_STATE_## n
@@ -41,8 +45,12 @@ extern modem_machine modem_machine_state_get(modem_t *modem);
 extern int modem_machine_state(modem_t *modem);
 
 
-extern int modem_machine_state_show(modem_t *modem, struct vty *vty, BOOL detail);
+extern int modem_machine_state_show(modem_t *modem, struct vty *vty, ospl_bool detail);
 
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MODEM_MACHINE_H__ */

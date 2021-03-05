@@ -18,18 +18,18 @@
 typedef struct os_job_s
 {
 	NODE	node;
-	int 	t_id;
+	ospl_uint32 	t_id;
 	int		(*job_entry)(void *);
-	void	*pVoid;
-	char    entry_name[OS_JOB_NAME_MAX];
-	int		cnt;
+	ospl_void	*pVoid;
+	ospl_char    entry_name[OS_JOB_NAME_MAX];
+	ospl_uint32		cnt;
 }os_job_t;
 
 static LIST *job_list = NULL;
 static LIST *job_unused_list = NULL;
 static os_sem_t *job_sem = NULL;
 static os_mutex_t *job_mutex = NULL;
-static unit32 job_task_id = 0;
+static ospl_uint32 job_task_id = 0;
 static int os_job_task(void);
 
 int os_job_init()
@@ -100,7 +100,7 @@ int os_job_load()
 	return ERROR;
 }
 
-static os_job_t * os_job_entry_create(int	(*job_entry)(void *), void *pVoid, char *entry_name)
+static os_job_t * os_job_entry_create(int (*job_entry)(void *), void *pVoid, ospl_char *entry_name)
 {
 	os_job_t *t = NULL;
 	if(job_unused_list)
@@ -109,7 +109,7 @@ static os_job_t * os_job_entry_create(int	(*job_entry)(void *), void *pVoid, cha
 		t = os_malloc(sizeof(os_job_t));
 	if(t)
 	{
-		t->t_id = (int)t;
+		t->t_id = (ospl_uint32)t;
 		t->pVoid = pVoid;
 		t->job_entry = job_entry;
 		os_memset(t->entry_name, 0, sizeof(t->entry_name));
@@ -141,7 +141,7 @@ int os_job_del(int (*job_entry)(void *), void *pVoid)
 	return OK;
 }
 
-int os_job_add_entry(int (*job_entry)(void *), void *pVoid, char *entry_name)
+int os_job_add_entry(int (*job_entry)(void *), void *pVoid, const ospl_char *entry_name)
 {
 	os_job_t * t = os_job_entry_create(job_entry, pVoid, entry_name);
 	if(t)
@@ -219,7 +219,7 @@ static int os_job_task(void)
 
 int os_job_show(void *pvoid)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	NODE *node;
 	os_job_t *t;
 	struct vty *vty = (struct vty *)pvoid;

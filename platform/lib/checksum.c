@@ -13,20 +13,20 @@
 #define INITIAL_REMAINDER   0xFFFF
 #define FINAL_XOR_VALUE     0x0000
 
-typedef unsigned short width_t;
+typedef ospl_ushort width_t;
 #define WIDTH (8 * sizeof(width_t))
 #define TOPBIT (1 << (WIDTH - 1))
 
 static width_t crcTable[256];
-static u_int8	crc_table_init = 0;
+static ospl_uint8	crc_table_init = 0;
 
-int			/* return checksum in low-order 16 bits */
-in_cksum(void *parg, int nbytes)
+ospl_uint16			/* return checksum in low-order 16 bits */
+in_cksum(void *parg, ospl_uint32 nbytes)
 {
-	u_short *ptr = parg;
+	ospl_ushort *ptr = parg;
 	register long		sum;		/* assumes long == 32 bits */
-	u_short			oddbyte;
-	register u_short	answer;		/* assumes u_short == 16 bits */
+	ospl_ushort			oddbyte;
+	register ospl_ushort	answer;		/* assumes ospl_ushort == 16 bits */
 
 	/*
 	 * Our algorithm is simple, using a 32-bit accumulator (sum),
@@ -43,7 +43,7 @@ in_cksum(void *parg, int nbytes)
 				/* mop up an odd byte, if necessary */
 	if (nbytes == 1) {
 		oddbyte = 0;		/* make sure top half is zero */
-		*((u_char *) &oddbyte) = *(u_char *)ptr;   /* one byte only */
+		*((ospl_uchar *) &oddbyte) = *(ospl_uchar *)ptr;   /* one byte only */
 		sum += oddbyte;
 	}
 
@@ -64,14 +64,14 @@ in_cksum(void *parg, int nbytes)
    index required in the specification ISO 8473, Annex C.1 */
 /* calling with offset == FLETCHER_CHECKSUM_VALIDATE will validate the checksum
    without modifying the buffer; a valid checksum returns 0 */
-u_int16_t
-fletcher_checksum(u_char * buffer, const size_t len, const uint16_t offset)
+ospl_uint16
+fletcher_checksum(ospl_uchar * buffer, const ospl_size_t len, const ospl_uint16 offset)
 {
-  u_int8_t *p;
-  int x, y, c0, c1;
-  u_int16_t checksum;
-  u_int16_t *csum;
-  size_t partial_len, i, left = len;
+  ospl_uint8 *p;
+  ospl_uint32 x, y, c0, c1;
+  ospl_uint16 checksum;
+  ospl_uint16 *csum;
+  ospl_size_t partial_len, i, left = len;
   
   checksum = 0;
 
@@ -80,7 +80,7 @@ fletcher_checksum(u_char * buffer, const size_t len, const uint16_t offset)
     /* Zero the csum in the packet. */
     {
       assert (offset < (len - 1)); /* account for two bytes of checksum */
-      csum = (u_int16_t *) (buffer + offset);
+      csum = (ospl_uint16 *) (buffer + offset);
       *(csum) = 0;
     }
 
@@ -143,7 +143,7 @@ static void crcInit(void)
 {
     width_t remainder;
     width_t dividend;
-    int bit;
+    ospl_uint32 bit;
     /* Perform binary long division, a bit at a time. */
     for(dividend = 0; dividend < 256; dividend++)
     {
@@ -175,10 +175,10 @@ static void crcInit(void)
  * @note This function expects that crcInit() has been called
  *       first to initialize the CRC lookup table.
  */
-u_int16_t crc_checksum(unsigned char * message, unsigned int nBytes)
+ospl_uint16 crc_checksum(ospl_uchar * message, ospl_uint32  nBytes)
 {
-    unsigned int offset;
-    unsigned char byte;
+    ospl_uint32  offset;
+    ospl_uchar byte;
     width_t remainder = INITIAL_REMAINDER;
     if(crc_table_init == 0)
     {
@@ -197,7 +197,7 @@ u_int16_t crc_checksum(unsigned char * message, unsigned int nBytes)
 
 
 /* Table of CRC constants - implements x^16+x^12+x^5+1 */
-static const uint16_t crc16_tab[] = {
+static const ospl_uint16 crc16_tab[] = {
 	0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7,
 	0x8108, 0x9129, 0xa14a, 0xb16b, 0xc18c, 0xd1ad, 0xe1ce, 0xf1ef,
 	0x1231, 0x0210, 0x3273, 0x2252, 0x52b5, 0x4294, 0x72f7, 0x62d6,
@@ -232,10 +232,10 @@ static const uint16_t crc16_tab[] = {
 	0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0,
 };
 
-uint16_t crc16_ccitt(uint16_t crc_start, unsigned char *buf, int len)
+ospl_uint16 crc16_ccitt(ospl_uint16 crc_start, ospl_uchar *buf, ospl_uint32 len)
 {
-	int i;
-	uint16_t cksum;
+	ospl_uint32 i;
+	ospl_uint16 cksum;
 
 	cksum = crc_start;
 	for (i = 0;  i < len;  i++)
@@ -244,11 +244,11 @@ uint16_t crc16_ccitt(uint16_t crc_start, unsigned char *buf, int len)
 	return cksum;
 }
 /*
-unsigned int crc8(const unsigned char *vptr, int len)
+ospl_uint32  crc8(const ospl_uchar *vptr, ospl_uint32 len)
 {
-	const unsigned char *data = vptr;
-	unsigned int crc = 0;
-	int i, j;
+	const ospl_uchar *data = vptr;
+	ospl_uint32  crc = 0;
+	ospl_uint32 i, j;
 
 	for (j = len; j; j--, data++) {
 		crc ^= (*data << 8);

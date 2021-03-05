@@ -31,7 +31,7 @@
 static modem_serial_main gModemSerialmain;
 
 static int modem_serial_cleanall(void);
-//static u_int8 modem_channel_db[MODEM_CHANNEL_DB_MAX];
+//static ospl_uint8 modem_channel_db[MODEM_CHANNEL_DB_MAX];
 
 int modem_serial_init(void)
 {
@@ -63,7 +63,7 @@ int modem_serial_exit(void)
 }
 
 
-static modem_serial_t * modem_serial_lookup_node(const char *name, u_int8 hw_channel)
+static modem_serial_t * modem_serial_lookup_node(const char *name, ospl_uint8 hw_channel)
 {
 	NODE index;
 	modem_serial_t *pstNode = NULL;
@@ -173,7 +173,7 @@ int modem_serial_del_api(const char *name)
 }
 
 
-int modem_serial_channel_api(const char *name, u_int8 hw_channel)
+int modem_serial_channel_api(const char *name, ospl_uint8 hw_channel)
 {
 	int ret = 0;
 	modem_serial_t *node = NULL;
@@ -189,7 +189,7 @@ int modem_serial_channel_api(const char *name, u_int8 hw_channel)
 	return ret;
 }
 
-int modem_serial_bind_api(const char *name, u_int8 hw_channel, void *client)
+int modem_serial_bind_api(const char *name, ospl_uint8 hw_channel, void *client)
 {
 	int ret = 0;
 	modem_serial_t *node = NULL;
@@ -199,7 +199,7 @@ int modem_serial_bind_api(const char *name, u_int8 hw_channel, void *client)
 	if(node)
 	{
 		node->client = client;
-		node->active = TRUE;
+		node->active = ospl_true;
 		node->driver = ((modem_client_t *)client)->driver;
 		if(node->modem)
 		{
@@ -222,7 +222,7 @@ int modem_serial_bind_api(const char *name, u_int8 hw_channel, void *client)
 	return ret;
 }
 
-int modem_serial_unbind_api(const char *name, u_int8 hw_channel)
+int modem_serial_unbind_api(const char *name, ospl_uint8 hw_channel)
 {
 	int ret = 0;
 	modem_serial_t *node = NULL;
@@ -244,7 +244,7 @@ int modem_serial_unbind_api(const char *name, u_int8 hw_channel)
 		}
 		node->driver = NULL;
 		node->client = NULL;
-		node->active = FALSE;
+		node->active = ospl_false;
 	}
 	if(gModemSerialmain.mutex)
 		os_mutex_unlock(gModemSerialmain.mutex);
@@ -296,7 +296,7 @@ int modem_serial_interface_unbind_api(const char *name)
 	return ret;
 }*/
 
-modem_serial_t * modem_serial_lookup_api(const char *name, u_int8 hw_channel)
+modem_serial_t * modem_serial_lookup_api(const char *name, ospl_uint8 hw_channel)
 {
 	modem_serial_t *node = NULL;
 	if(gModemSerialmain.mutex)

@@ -8,6 +8,10 @@
 #ifndef PRODUCT_SDK_B53_REGS_H_
 #define PRODUCT_SDK_B53_REGS_H_
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 #define BIT(n)		(1)<<(n)
 /*
  * B53 register definitions
@@ -793,6 +797,10 @@
 
 #endif /* !__B53_REGS_H */
 
+ 
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* PRODUCT_SDK_B53_REGS_H_ */

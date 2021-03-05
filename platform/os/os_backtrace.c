@@ -8,9 +8,9 @@
 
 
 
-static unsigned int * __getpc(void) __attribute__((noinline))
+static ospl_uint32 * __getpc(void) __attribute__((noinline))
 {
-unsigned int *rtaddr;
+ospl_uint32 *rtaddr;
 __asm__ volatile ("move %0, $31" : "=r"(rtaddr));
 return rtaddr;
 }

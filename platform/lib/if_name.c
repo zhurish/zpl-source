@@ -53,12 +53,12 @@ struct if_name_mgt if_name_mgt[] =
 };
 
 
-static int vty_iusp_explain (const char *string, int *unit, int *slot, int *port, int *id);
+static int vty_iusp_explain (const char *string, ospl_uint32 *unit, ospl_uint32 *slot, ospl_uint32 *port, ospl_uint32 *id);
 
 
 const char *getkernelname(if_type_t	type)
 {
-	u_int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < array_size(if_name_mgt); i++)
 	{
 		if(if_name_mgt[i].type && if_name_mgt[i].type == type)
@@ -69,7 +69,7 @@ const char *getkernelname(if_type_t	type)
 
 const char *getabstractname(if_type_t	type)
 {
-	u_int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < array_size(if_name_mgt); i++)
 	{
 		if(if_name_mgt[i].type && if_name_mgt[i].type == type)
@@ -80,7 +80,7 @@ const char *getabstractname(if_type_t	type)
 
 const char *getifpname(if_type_t	type)
 {
-	u_int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < array_size(if_name_mgt); i++)
 	{
 		if(if_name_mgt[i].type && if_name_mgt[i].type == type)
@@ -91,7 +91,7 @@ const char *getifpname(if_type_t	type)
 
 if_type_t kernelname2type(const char *name)
 {
-	u_int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < array_size(if_name_mgt); i++)
 	{
 		if(if_name_mgt[i].type && (os_memcmp(if_name_mgt[i].kname, name, 3) == 0))
@@ -102,7 +102,7 @@ if_type_t kernelname2type(const char *name)
 
 if_type_t abstractname2type(const char *name)
 {
-	u_int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < array_size(if_name_mgt); i++)
 	{
 		if(if_name_mgt[i].type && (os_memcmp(if_name_mgt[i].aname, name, 3) == 0))
@@ -113,7 +113,7 @@ if_type_t abstractname2type(const char *name)
 
 if_type_t name2type(const char *name)
 {
-	u_int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < array_size(if_name_mgt); i++)
 	{
 		if(if_name_mgt[i].type && (os_memcmp(if_name_mgt[i].name, name, 3) == 0))
@@ -122,7 +122,7 @@ if_type_t name2type(const char *name)
 	return 0;
 }
 
-unsigned int if_name_hash_make(const char *name)
+ospl_uint32  if_name_hash_make(const char *name)
 {
 	if(name == NULL)
 	{
@@ -140,7 +140,7 @@ unsigned int if_name_hash_make(const char *name)
 static const char * _if_name_make_argv(const char *ifname, const char *uspv)
 {
 	if_type_t type = 0;
-	static char buf[INTERFACE_NAMSIZ];
+	static ospl_char buf[INTERFACE_NAMSIZ];
 	if(ifname == NULL || uspv == NULL)
 	{
 		zlog_err(MODULE_DEFAULT,"if type or uspv is NULL ifname when make ifname");
@@ -185,8 +185,8 @@ const char * if_ifname_format(const char *ifname, const char *uspv)
  */
 const char * if_ifname_split(const char *name)
 {
-	u_int n = 0;
-	static char buf[INTERFACE_NAMSIZ];
+	ospl_uint32 n = 0;
+	static ospl_char buf[INTERFACE_NAMSIZ];
 	//p = strstr(name," ");
 /*	n = os_strcspn(name, " ");
 	if(n && n != os_strlen(name))
@@ -215,9 +215,9 @@ const char * if_ifname_split(const char *name)
 ifindex_t if_ifindex_make(const char *ifname, const char *uspv)
 {
 	ifindex_t ifindex = 0;
-	int unit = 0, slot = 0, port = 0, id = 0, iuspv = 0;
+	ospl_uint32 unit = 0, slot = 0, port = 0, id = 0, iuspv = 0;
 	if_type_t type = 0;
-	char *uspvstring = ifname;
+	ospl_char *uspvstring = ifname;
 
 	type = if_iftype_make(ifname);
 	if(uspv)
@@ -267,11 +267,11 @@ ifindex_t if_ifindex_make(const char *ifname, const char *uspv)
 	return ifindex;
 }
 
-static const char * if_ifname_make_by_ifindex(int abstract, ifindex_t ifindex)
+static const char * if_ifname_make_by_ifindex(ospl_bool abstract, ifindex_t ifindex)
 {
-	static char buf[INTERFACE_NAMSIZ];
+	static ospl_char buf[INTERFACE_NAMSIZ];
 
-	char *type_str = NULL;
+	ospl_char *type_str = NULL;
 	if(abstract)
 		type_str = getabstractname(IF_TYPE_GET(ifindex));
 	else
@@ -343,9 +343,9 @@ if_type_t if_iftype_make(const char *str)
 	return type;
 }
 
-const char *if_mac_out_format(unsigned char *mac)
+const char *if_mac_out_format(ospl_uchar *mac)
 {
-	static char buf[32];
+	static ospl_char buf[32];
 	os_memset(buf, 0, sizeof(buf));
 	os_snprintf(buf, sizeof(buf), "%02x%02x-%02x%02x-%02x%02x",
 	        mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
@@ -356,8 +356,8 @@ const char *if_mac_out_format(unsigned char *mac)
 int if_uspv_type_setting(struct interface *ifp)
 {
 	//int iuspv = 0;
-	char *str = NULL;
-	int unit = 0, slot = 0, port = 0, id = 0;
+	ospl_char *str = NULL;
+	ospl_uint32 unit = 0, slot = 0, port = 0, id = 0;
 	if(ifp == NULL || ifp->name == NULL)
 	{
 		zlog_err(MODULE_DEFAULT,"ifp is NULL when setting unit/solt/port code");
@@ -396,15 +396,15 @@ int if_uspv_type_setting(struct interface *ifp)
 
 
 #if 1
-static int vty_iusp_explain (const char *string, int *unit, int *slot, int *port, int *id)
+static int vty_iusp_explain (const char *string, ospl_uint32 *unit, ospl_uint32 *slot, ospl_uint32 *port, ospl_uint32 *id)
 {
-	char *str = NULL;
-	int ounit = 0, oslot = 0, oport = 0,  oid= 0;
-	u_int  count = 0;
+	ospl_char *str = NULL;
+	ospl_uint32 ounit = 0, oslot = 0, oport = 0,  oid= 0;
+	ospl_uint32  count = 0;
 #ifdef CMD_IUSPV_SUPPORT
-	char *base2 = "0123456789/.";
+	ospl_char *base2 = "0123456789/.";
 #else
-	char *base2 = "0123456789/";
+	ospl_char *base2 = "0123456789/";
 #endif
 	if (string == NULL)
 	{
@@ -470,10 +470,10 @@ static int vty_iusp_explain (const char *string, int *unit, int *slot, int *port
 	return 1;
 }
 
-int vty_iusp_get (const char *str, int *uspv)
+int vty_iusp_get (const char *str, ospl_uint32 *uspv)
 {
-	int unit = 0, slot = 0, port = 0, id = 0;
-	char *uspv_str = strstr(str, " ");
+	ospl_uint32 unit = 0, slot = 0, port = 0, id = 0;
+	ospl_char *uspv_str = strstr(str, " ");
 	if_type_t type = if_iftype_make(str);
 	if(type == IF_SERIAL || type == IF_ETHERNET ||
 			type == IF_GIGABT_ETHERNET || type == IF_TUNNEL ||
@@ -512,12 +512,12 @@ int vty_iusp_get (const char *str, int *uspv)
 /*
  * 0000-0000-0000 --> 00:00:00:00:00:00
  */
-int vty_mac_get (const char *str, unsigned char *mac)
+int vty_mac_get (const char *str, ospl_uchar *mac)
 {
-	u_int count = 0,i = 0;
-	char buf[16];
-	char *p,*v = NULL;
-	char *base2 = "0123456789abcdefABCDEF-";
+	ospl_uint32 count = 0,i = 0;
+	ospl_char buf[16];
+	ospl_char *p,*v = NULL;
+	ospl_char *base2 = "0123456789abcdefABCDEF-";
 	if (str == NULL)
 	{
 		zlog_err(MODULE_DEFAULT,"mac address format ERROR input NULL");
@@ -532,7 +532,7 @@ int vty_mac_get (const char *str, unsigned char *mac)
 	}
 	//base = os_strdup(str);
 	//if(base)
-	v = p = (char *)str;
+	v = p = (ospl_char *)str;
 	while(1)
 	{
 		v = p;
@@ -566,14 +566,14 @@ int vty_mac_get (const char *str, unsigned char *mac)
 //vty_iusp_explain
 static int vty_iusp_explain (const char *string, int *unit, int *slot, int *port, int *id)
 {
-	int len = 0;
-	char buf[16];
-	char *p, *v, *str;
+	ospl_uint32 len = 0;
+	ospl_char buf[16];
+	ospl_char *p, *v, *str;
 	int num = 0, count = 0;
 #ifdef CMD_IUSPV_SUPPORT
-	char *base2 = "0123456789/.";
+	ospl_char *base2 = "0123456789/.";
 #else
-	char *base2 = "0123456789/";
+	ospl_char *base2 = "0123456789/";
 #endif
 	if (string == NULL)
 	{
@@ -599,7 +599,7 @@ static int vty_iusp_explain (const char *string, int *unit, int *slot, int *port
 		zlog_err(MODULE_DEFAULT,"if iusp format ERROR input is:%s",str);
 		return 0;
 	}
-	v = p = (char *)str;
+	v = p = (ospl_char *)str;
 	while (1)
 	{
 		p = strchr (p, '/');
@@ -620,7 +620,7 @@ static int vty_iusp_explain (const char *string, int *unit, int *slot, int *port
 		*port = 0;
 	if(id)
 		*id = 0;
-	v = (char *)str;
+	v = (ospl_char *)str;
 	p = strchr (str, '/');
 	if (p == NULL)
 	{
@@ -719,7 +719,7 @@ static int vty_iusp_explain (const char *string, int *unit, int *slot, int *port
 int vty_iusp_get (const char *str, int *uspv)
 {
 	int unit = 0, slot = 0, port = 0, id = 0;
-	char *uspv_str = strstr(str, " ");
+	ospl_char *uspv_str = strstr(str, " ");
 	if_type_t type = if_iftype_make(str);
 	if(type == IF_SERIAL || type == IF_ETHERNET ||
 			type == IF_GIGABT_ETHERNET || type == IF_TUNNEL ||
@@ -745,12 +745,12 @@ int vty_iusp_get (const char *str, int *uspv)
 }
 
 
-int vty_mac_get (const char *str, unsigned char *mac)
+int vty_mac_get (const char *str, ospl_uchar *mac)
 {
 	int count = 0,i = 0;
-	char buf[16];
-	char *p,*v = NULL;
-	char *base2 = "0123456789abcdefABCDEF-";
+	ospl_char buf[16];
+	ospl_char *p,*v = NULL;
+	ospl_char *base2 = "0123456789abcdefABCDEF-";
 	if (str == NULL)
 	{
 		zlog_err(MODULE_DEFAULT,"mac address format ERROR input NULL");
@@ -765,7 +765,7 @@ int vty_mac_get (const char *str, unsigned char *mac)
 	}
 	//base = os_strdup(str);
 	//if(base)
-	v = p = (char *)str;
+	v = p = (ospl_char *)str;
 	while(1)
 	{
 		v = p;
@@ -799,10 +799,10 @@ int vty_mac_get (const char *str, unsigned char *mac)
 
 int if_loopback_ifindex_create(if_type_t type, const char *name)
 {
-	int i = 0;
-	char strc[16];
+	ospl_uint32 i = 0;
+	ospl_char strc[16];
 	memset(strc, 0, sizeof(strc));
-	char *str = name;
+	ospl_char *str = name;
 	for (; *str != '\0'; str++)
 	{
 		if (isdigit ((int) *str))
@@ -812,10 +812,10 @@ int if_loopback_ifindex_create(if_type_t type, const char *name)
 		return atoi(strc);
 	return 0;
 /*
-	int i = 0;
-	char strc[16];
+	ospl_uint32 i = 0;
+	ospl_char strc[16];
 	memset(strc, 0, sizeof(strc));
-	char *str = name;
+	ospl_char *str = name;
 	while(str)
 	{
 		if(isdigit(*str))

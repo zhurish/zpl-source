@@ -96,7 +96,7 @@ static void * encoder_task(void *a)
                         {
                             if(m_queue->FramedQueueDataIsFull())
                                 m_queue->FramedQueueDataFlush();
-                            m_queue->FramedQueueDataPut((unsigned char *)ffmpeg_source->enc_pkt.data, getsize);
+                            m_queue->FramedQueueDataPut((ospl_uint8 *)ffmpeg_source->enc_pkt.data, getsize);
                             //udp_write("127.0.0.1", 9696, (char *)&getsize, 4);
                         }
                         else

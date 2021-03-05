@@ -209,7 +209,7 @@ static int x5b_user_update_save(void)
 /***********************************************/
 user_face_card_t * x5b_user_lookup_by_username(char *username, char *userid)
 {
-	//int i = 0;
+	//ospl_uint32 i = 0;
 	char name[APP_USERNAME_MAX];
 	char user_id[APP_ID_MAX];
 	NODE node;
@@ -255,14 +255,14 @@ user_face_card_t * x5b_user_lookup_by_username(char *username, char *userid)
 	return NULL;
 }
 #ifndef APP_CARDID_UINT_64
-user_face_card_t * x5b_user_lookup_by_cardid(s_int8 *cardid)
+user_face_card_t * x5b_user_lookup_by_cardid(ospl_int8 *cardid)
 #else
-user_face_card_t * x5b_user_lookup_by_cardid(u_int64 cardid)
+user_face_card_t * x5b_user_lookup_by_cardid(ospl_uint64 cardid)
 #endif
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 #ifndef APP_CARDID_UINT_64
-	u_int8 lphone[APP_CARD_ID_MAX];
+	ospl_uint8 lphone[APP_CARD_ID_MAX];
 #endif
 	NODE node;
 	user_face_card_t *dbase = NULL;
@@ -305,9 +305,9 @@ user_face_card_t * x5b_user_lookup_by_cardid(u_int64 cardid)
 }
 
 
-user_face_card_t * x5b_user_lookup_by_faceid(u_int32 faceid)
+user_face_card_t * x5b_user_lookup_by_faceid(ospl_uint32 faceid)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	NODE node;
 	user_face_card_t *dbase = NULL;
 	if (facecard_table == NULL)
@@ -358,12 +358,12 @@ static int x5b_user_del_one_node(user_face_card_t *dbase)
 }
 /**************************************************************/
 #ifndef APP_CARDID_UINT_64
-static int x5b_user_add_card_hw(user_face_card_t *dbase, s_int8 *cardid, u_int32 start, u_int32 stop, u_int8 type)
+static int x5b_user_add_card_hw(user_face_card_t *dbase, ospl_int8 *cardid, ospl_uint32 start, ospl_uint32 stop, ospl_uint8 type)
 #else
-static int x5b_user_add_card_hw(user_face_card_t *dbase, u_int64 cardid, u_int32 start, u_int32 stop, u_int8 type)
+static int x5b_user_add_card_hw(user_face_card_t *dbase, ospl_uint64 cardid, ospl_uint32 start, ospl_uint32 stop, ospl_uint8 type)
 #endif
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < APP_MULTI_CARD_MAX; i++)
 	{
 		if(dbase->cardtbl[i].use_flag == 0)
@@ -394,12 +394,12 @@ static int x5b_user_add_card_hw(user_face_card_t *dbase, u_int64 cardid, u_int32
 	return ERROR;
 }
 #ifndef APP_CARDID_UINT_64
-static int x5b_user_del_card_hw(user_face_card_t *dbase, s_int8 *cardid)
+static int x5b_user_del_card_hw(user_face_card_t *dbase, ospl_int8 *cardid)
 #else
-static int x5b_user_del_card_hw(user_face_card_t *dbase, u_int64 cardid)
+static int x5b_user_del_card_hw(user_face_card_t *dbase, ospl_uint64 cardid)
 #endif
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < APP_MULTI_CARD_MAX; i++)
 	{
 		if(dbase->cardtbl[i].use_flag == 1)
@@ -432,9 +432,9 @@ static int x5b_user_del_card_hw(user_face_card_t *dbase, u_int64 cardid)
 	return ERROR;
 }
 
-static int x5b_user_del_card_hw_cid(user_face_card_t *dbase, u_int8 cid)
+static int x5b_user_del_card_hw_cid(user_face_card_t *dbase, ospl_uint8 cid)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < APP_MULTI_CARD_MAX; i++)
 	{
 		if(dbase->cardtbl[i].use_flag == 1 && i == cid)
@@ -455,9 +455,9 @@ static int x5b_user_del_card_hw_cid(user_face_card_t *dbase, u_int8 cid)
 	return ERROR;
 }
 /**************************************************************/
-static int x5b_user_add_face_hw(user_face_card_t *dbase, char *img, u_int32 faceid)
+static int x5b_user_add_face_hw(user_face_card_t *dbase, char *img, ospl_uint32 faceid)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < APP_MULTI_FACE_MAX; i++)
 	{
 		if(dbase->facetbl[i].use_flag == 0)
@@ -475,9 +475,9 @@ static int x5b_user_add_face_hw(user_face_card_t *dbase, char *img, u_int32 face
 	return ERROR;
 }
 
-static int x5b_user_del_face_hw(user_face_card_t *dbase, u_int32 faceid)
+static int x5b_user_del_face_hw(user_face_card_t *dbase, ospl_uint32 faceid)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	for(i = 0; i < APP_MULTI_FACE_MAX; i++)
 	{
 		if(dbase->facetbl[i].use_flag == 1)
@@ -535,9 +535,9 @@ int x5b_user_del(char *username, char *userid)
 
 /*************************************************************************/
 #ifndef APP_CARDID_UINT_64
-int x5b_user_add_card(char *username, char *userid, s_int8 *cardid, u_int32 start, u_int32 stop, u_int8 type)
+int x5b_user_add_card(char *username, char *userid, ospl_int8 *cardid, ospl_uint32 start, ospl_uint32 stop, ospl_uint8 type)
 #else
-int x5b_user_add_card(char *username, char *userid, u_int64 cardid, u_int32 start, u_int32 stop, u_int8 type)
+int x5b_user_add_card(char *username, char *userid, ospl_uint64 cardid, ospl_uint32 start, ospl_uint32 stop, ospl_uint8 type)
 #endif
 {
 	int ret = ERROR;
@@ -576,11 +576,11 @@ int x5b_user_add_card(char *username, char *userid, u_int64 cardid, u_int32 star
 }
 
 #ifndef APP_CARDID_UINT_64
-int x5b_user_update_card(char *username, char *userid, s_int8 *cardid, u_int32 start,
-					  u_int32 stop, u_int8 type, u_int8 cid)
+int x5b_user_update_card(char *username, char *userid, ospl_int8 *cardid, ospl_uint32 start,
+					  ospl_uint32 stop, ospl_uint8 type, ospl_uint8 cid)
 #else
-int x5b_user_update_card(char *username, char *userid, u_int64 cardid, u_int32 start,
-					  u_int32 stop, u_int8 type, u_int8 cid)
+int x5b_user_update_card(char *username, char *userid, ospl_uint64 cardid, ospl_uint32 start,
+					  ospl_uint32 stop, ospl_uint8 type, ospl_uint8 cid)
 #endif
 {
 	int ret = ERROR;
@@ -621,9 +621,9 @@ int x5b_user_update_card(char *username, char *userid, u_int64 cardid, u_int32 s
 }
 
 #ifndef APP_CARDID_UINT_64
-int x5b_user_del_card(char *username, char *userid, s_int8 *cardid)
+int x5b_user_del_card(char *username, char *userid, ospl_int8 *cardid)
 #else
-int x5b_user_del_card(char *username, char *userid, u_int64 cardid)
+int x5b_user_del_card(char *username, char *userid, ospl_uint64 cardid)
 #endif
 {
 	int ret = ERROR;
@@ -647,9 +647,9 @@ int x5b_user_del_card(char *username, char *userid, u_int64 cardid)
 }
 
 #ifndef APP_CARDID_UINT_64
-int x5b_user_get_card(char *username, char *userid, s_int8 *cardid, u_int8 cid)
+int x5b_user_get_card(char *username, char *userid, ospl_int8 *cardid, ospl_uint8 cid)
 #else
-int x5b_user_get_card(char *username, char *userid, u_int64 *cardid, u_int8 cid)
+int x5b_user_get_card(char *username, char *userid, ospl_uint64 *cardid, ospl_uint8 cid)
 #endif
 {
 	//int ret = ERROR;
@@ -658,7 +658,7 @@ int x5b_user_get_card(char *username, char *userid, u_int64 *cardid, u_int8 cid)
 		os_mutex_lock(facecard_mutex, OS_WAIT_FOREVER);
 	if(dbase)
 	{
-		int i = 0;
+		ospl_uint32 i = 0;
 		for(i = 0; i < APP_MULTI_CARD_MAX; i++)
 		{
 			if(dbase->cardtbl[i].use_flag == 1 && i == cid)
@@ -696,7 +696,7 @@ int x5b_user_get_card(char *username, char *userid, u_int64 *cardid, u_int8 cid)
 	return ERROR;
 }
 /*************************************************************************/
-int x5b_user_add_face(char *username, char *userid, char *img, u_int32 faceid)
+int x5b_user_add_face(char *username, char *userid, char *img, ospl_uint32 faceid)
 {
 	int ret = ERROR;
 	user_face_card_t *dbase = x5b_user_lookup_by_username(NULL, userid);
@@ -733,7 +733,7 @@ int x5b_user_add_face(char *username, char *userid, char *img, u_int32 faceid)
 	return ERROR;
 }
 
-int x5b_user_update_face(char *username, char *userid, char *img, u_int32 faceid)
+int x5b_user_update_face(char *username, char *userid, char *img, ospl_uint32 faceid)
 {
 	int ret = ERROR;
 	user_face_card_t *dbase = x5b_user_lookup_by_username(NULL, userid);
@@ -772,7 +772,7 @@ int x5b_user_update_face(char *username, char *userid, char *img, u_int32 faceid
 	return ERROR;
 }
 
-int x5b_user_get_face(char *username, char *user_id, u_int32 *face_id, u_int8 fid)
+int x5b_user_get_face(char *username, char *user_id, ospl_uint32 *face_id, ospl_uint8 fid)
 {
 	//int ret = ERROR;
 	user_face_card_t *dbase = x5b_user_lookup_by_username(NULL, user_id);
@@ -780,7 +780,7 @@ int x5b_user_get_face(char *username, char *user_id, u_int32 *face_id, u_int8 fi
 		os_mutex_lock(facecard_mutex, OS_WAIT_FOREVER);
 	if(dbase)
 	{
-		int i = 0;
+		ospl_uint32 i = 0;
 		for(i = 0; i < APP_MULTI_FACE_MAX; i++)
 		{
 			if(dbase->facetbl[i].use_flag == 1 && i == fid)
@@ -800,7 +800,7 @@ int x5b_user_get_face(char *username, char *user_id, u_int32 *face_id, u_int8 fi
 	return ERROR;
 }
 
-int x5b_user_del_face(char *username, char *userid, u_int32 faceid)
+int x5b_user_del_face(char *username, char *userid, ospl_uint32 faceid)
 {
 	int ret = ERROR;
 	user_face_card_t *dbase = x5b_user_lookup_by_username(NULL, userid);
@@ -824,14 +824,14 @@ int x5b_user_del_face(char *username, char *userid, u_int32 faceid)
 /*************************************************************************/
 /*************************************************************************/
 #ifndef APP_CARDID_UINT_64
-user_card_t * x5b_user_get_card_info(s_int8 *cardid)
+user_card_t * x5b_user_get_card_info(ospl_int8 *cardid)
 #else
-user_card_t * x5b_user_get_card_info(u_int64 cardid)
+user_card_t * x5b_user_get_card_info(ospl_uint64 cardid)
 #endif
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 #ifndef APP_CARDID_UINT_64
-	u_int8 lphone[APP_CARD_ID_MAX];
+	ospl_uint8 lphone[APP_CARD_ID_MAX];
 #endif
 	NODE node;
 	user_face_card_t *dbase = NULL;
@@ -874,9 +874,9 @@ user_card_t * x5b_user_get_card_info(u_int64 cardid)
 }
 
 
-user_face_t * x5b_user_get_face_info(u_int32 faceid)
+user_face_t * x5b_user_get_face_info(ospl_uint32 faceid)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	NODE node;
 	user_face_card_t *dbase = NULL;
 	if (facecard_table == NULL)
@@ -922,12 +922,12 @@ int x5b_user_save_config(void)
 /*************************************************************************/
 /*************************************************************************/
 
-static char *facecard_time_fmt (char *fmt, time_t t)
+static char *facecard_time_fmt (char *fmt, ospl_time_t t)
 {
-	int len = 0;
+	ospl_uint32 len = 0;
 	struct tm tm;
 	static char data[128];
-	time_t ticlock = t;
+	ospl_time_t ticlock = t;
 	os_memset(data, 0, sizeof(data));
 	os_memset(&tm, 0, sizeof(tm));
 	//localtime_r(&ticlock, &tm);
@@ -941,11 +941,11 @@ static char *facecard_time_fmt (char *fmt, time_t t)
 	return "UNKNOWN";
 }
 
-static int voip_facecard_cli_show_detail(struct vty *vty, user_face_card_t *card, BOOL detail)
+static int voip_facecard_cli_show_detail(struct vty *vty, user_face_card_t *card, ospl_bool detail)
 {
 	if(vty)
 	{
-		int i = 0;
+		ospl_uint32 i = 0;
 		char ptype[16];
 		char imgid[16];
 		char starttime[128];
@@ -1018,7 +1018,7 @@ static int voip_facecard_cli_show_detail(struct vty *vty, user_face_card_t *card
 	return OK;
 }
 
-int voip_facecard_cli_show_all(struct vty *vty, BOOL detail)
+int voip_facecard_cli_show_all(struct vty *vty, ospl_bool detail)
 {
 	NODE node;
 	user_face_card_t *dbase = NULL;
@@ -1082,8 +1082,8 @@ static int voip_facecard_web_select_detail(FILE *fp, user_face_card_t *card)
 {
 	if(fp)
 	{
-		int i = 0;
-		u_int16 room_number = 0;
+		ospl_uint32 i = 0;
+		ospl_uint16 room_number = 0;
 		char phone[32];
 		memset(phone, 0, sizeof(phone));
 		voip_dbase_get_room_phone_by_user(card->userid, &room_number, phone, NULL);

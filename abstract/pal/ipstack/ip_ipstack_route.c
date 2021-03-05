@@ -249,7 +249,7 @@ ip_ipstack_route_change(Ip_fd sock, Ipnet_cmd_route *cmd)
 }
 
 static int
-ip_ipstack_route_rib(int cmd, struct prefix *p, struct rib *rib)
+ip_ipstack_route_rib(ospl_uint32 cmd, struct prefix *p, struct rib *rib)
 {
 	Ipnet_cmd_route cmd;
 	int sock_addr_len = 0, max_prefixlen = 0;
@@ -416,7 +416,7 @@ ipnet_cmd_route_parse_arg(int argc, char **argv, Ipnet_cmd_route *cmd)
 		{	IPNET_CMD_ROUTE_SWITCH_VR_BYNAME, "-addbyname"},
 		/* Table index */
 		{	IPNET_CMD_ROUTE_SWITCH_RT_TABLE, "-T"},
-		/* MPLS shortcut route */
+		/* MPLS ospl_int16cut route */
 #ifdef IPMPLS
 		{	IPNET_CMD_ROUTE_SWITCH_MPLS_PW, "-mpls"},
 #endif
@@ -424,7 +424,7 @@ ipnet_cmd_route_parse_arg(int argc, char **argv, Ipnet_cmd_route *cmd)
 	};
 	int max_prefixlen;
 	int sock_addr_len;
-	int i;
+	ospl_uint32 i;
 	int arg;
 	Ip_bool silent = IP_FALSE;
 
@@ -596,7 +596,7 @@ ipnet_cmd_route_parse_arg(int argc, char **argv, Ipnet_cmd_route *cmd)
 						return -IP_ERRNO_EINVAL;
 					}
 					{
-						int val;
+						ospl_uint32 val;
 						val = ipcom_atoi(argv[arg]);
 						if (val < 0)
 						{
@@ -786,20 +786,20 @@ static const struct message nlmsg_str[] =
 { RTM_GETADDR, "RTM_GETADDR" },
 { 0, NULL } };
 
-static int addattr32(struct nlmsghdr *n, size_t maxlen, int type, int data);
-static int addattr_l(struct nlmsghdr *n, size_t maxlen, int type, void *data,
+static int addattr32(struct nlmsghdr *n, size_t maxlen, ospl_uint32 type, int data);
+static int addattr_l(struct nlmsghdr *n, size_t maxlen, ospl_uint32 type, void *data,
 		size_t alen);
-static int rta_addattr_l(struct rtattr *rta, size_t maxlen, int type,
+static int rta_addattr_l(struct rtattr *rta, size_t maxlen, ospl_uint32 type,
 		void *data, size_t alen);
-static const char * nl_msg_type_to_str(uint16_t msg_type);
-static const char * nl_rtproto_to_str(u_char rtproto);
+static const char * nl_msg_type_to_str(ospl_uint16 msg_type);
+static const char * nl_rtproto_to_str(ospl_uchar rtproto);
 
 #ifndef SO_RCVBUFFORCE
 #define SO_RCVBUFFORCE  (33)
 #endif
 
 /* Make socket for Linux netlink interface. */
-static int netlink_socket(struct nlsock *nl, unsigned long groups,
+static int netlink_socket(struct nlsock *nl, ospl_ulong groups,
 		vrf_id_t vrf_id)
 {
 	int ret;
@@ -898,7 +898,7 @@ static int netlink_parse_info(
 		}
 
 		for (h = (struct nlmsghdr *) nl_rcvbuf.p;
-				NLMSG_OK(h, (unsigned int) status); h = NLMSG_NEXT(h, status))
+				NLMSG_OK(h, (ospl_uint32) status); h = NLMSG_NEXT(h, status))
 		{
 			/* Finish of reading. */
 			if (h->nlmsg_type == NLMSG_DONE)
@@ -1028,7 +1028,7 @@ static const struct message rtproto_str[] =
 
 /* Utility function  comes from iproute2.
  Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru> */
-static int addattr_l(struct nlmsghdr *n, size_t maxlen, int type, void *data,
+static int addattr_l(struct nlmsghdr *n, size_t maxlen, ospl_uint32 type, void *data,
 		size_t alen)
 {
 	size_t len;
@@ -1048,7 +1048,7 @@ static int addattr_l(struct nlmsghdr *n, size_t maxlen, int type, void *data,
 	return 0;
 }
 
-static int rta_addattr_l(struct rtattr *rta, size_t maxlen, int type,
+static int rta_addattr_l(struct rtattr *rta, size_t maxlen, ospl_uint32 type,
 		void *data, size_t alen)
 {
 	size_t len;
@@ -1071,7 +1071,7 @@ static int rta_addattr_l(struct rtattr *rta, size_t maxlen, int type,
 /* Utility function comes from iproute2.
  Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru> */
 
-static int addattr32(struct nlmsghdr *n, size_t maxlen, int type, int data)
+static int addattr32(struct nlmsghdr *n, size_t maxlen, ospl_uint32 type, int data)
 {
 	size_t len;
 	struct rtattr *rta;
@@ -1153,9 +1153,9 @@ static int netlink_talk(struct nlmsghdr *n, struct nlsock *nl,
  * @param nlmsg: nlmsghdr structure to fill in.
  * @param req_size: The size allocated for the message.
  */
-static void _netlink_route_build_singlepath(const char *routedesc, int bytelen,
+static void _netlink_route_build_singlepath(const char *routedesc, ospl_uint32 bytelen,
 		struct nexthop *nexthop, struct nlmsghdr *nlmsg, struct rtmsg *rtmsg,
-		size_t req_size)
+		ospl_size_t req_size)
 {
 	if (CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_ONLINK))
 		rtmsg->rtm_flags |= RTNH_F_ONLINK;
@@ -1233,7 +1233,7 @@ static void _netlink_route_build_singlepath(const char *routedesc, int bytelen,
  * @param src: pointer pointing to a location where
  *             the prefsrc should be stored.
  */
-static void _netlink_route_build_multipath(const char *routedesc, int bytelen,
+static void _netlink_route_build_multipath(const char *routedesc, ospl_uint32 bytelen,
 		struct nexthop *nexthop, struct rtattr *rta, struct rtnexthop *rtnh,
 		union g_addr **src)
 {
@@ -1317,8 +1317,8 @@ static void _netlink_route_build_multipath(const char *routedesc, int bytelen,
  *                     (recursive, multipath, etc.)
  * @param family: Address family which the change concerns
  */
-static void _netlink_route_debug(int cmd, struct prefix *p,
-		struct nexthop *nexthop, const char *routedesc, int family,
+static void _netlink_route_debug(ospl_uint32 cmd, struct prefix *p,
+		struct nexthop *nexthop, const char *routedesc, ospl_family_t family,
 		struct nsm_vrf *zvrf)
 {
 	if (IS_ZEBRA_DEBUG_KERNEL)
@@ -1334,7 +1334,7 @@ static void _netlink_route_debug(int cmd, struct prefix *p,
 #ifdef IP_STACK_DEBUG
 int kernel_rib_table_debug(struct prefix *p, struct rib *rib)
 {
-	int recursing;
+	ospl_uint32 recursing;
 	struct nexthop *nexthop = NULL, *tnexthop = NULL;
 	char prefix[PREFIX_STRLEN], buf[256];
 	//rib_table_info_t *info = rn->table->info;
@@ -1360,15 +1360,15 @@ int kernel_rib_table_debug(struct prefix *p, struct rib *rib)
 }
 #endif
 /* Routing table change via netlink interface. */
-static int netlink_route_multipath(int cmd, struct prefix *p, struct rib *rib)
+static int netlink_route_multipath(ospl_uint32 cmd, struct prefix *p, struct rib *rib)
 {
-	int bytelen;
+	ospl_uint32 bytelen;
 	struct sockaddr_nl snl;
 	struct nexthop *nexthop = NULL, *tnexthop;
-	int recursing;
-	int nexthop_num;
-	int discard;
-	int family = PREFIX_FAMILY(p);
+	ospl_uint32 recursing;
+	ospl_uint32 nexthop_num;
+	ospl_uint32 discard;
+	ospl_family_t family = PREFIX_FAMILY(p);
 	const char *routedesc;
 
 	struct
@@ -1436,7 +1436,7 @@ static int netlink_route_multipath(int cmd, struct prefix *p, struct rib *rib)
 	{
 		char buf[NL_PKT_BUF_SIZE];
 		struct rtattr *rta = (void *) buf;
-		u_int32_t mtu = rib->mtu;
+		ospl_uint32 mtu = rib->mtu;
 		if (!mtu || (rib->nexthop_mtu && rib->nexthop_mtu < mtu))
 			mtu = rib->nexthop_mtu;
 		rta->rta_type = RTA_METRICS;
@@ -1634,7 +1634,7 @@ void kernel_init(struct nsm_vrf *zvrf)
  * nl_msg_type_to_str
  */
 static const char *
-nl_msg_type_to_str(uint16_t msg_type)
+nl_msg_type_to_str(ospl_uint16 msg_type)
 {
 	return lookup(nlmsg_str, msg_type);
 }
@@ -1643,7 +1643,7 @@ nl_msg_type_to_str(uint16_t msg_type)
  * nl_rtproto_to_str
  */
 static const char *
-nl_rtproto_to_str(u_char rtproto)
+nl_rtproto_to_str(ospl_uchar rtproto)
 {
 	return lookup(rtproto_str, rtproto);
 }

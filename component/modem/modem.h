@@ -8,6 +8,10 @@
 #ifndef __MODEM_H__
 #define __MODEM_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "os_list.h"
 #include "modem_enum.h"
 #include "modem_machine.h"
@@ -54,15 +58,15 @@ typedef struct modem_s
 {
 	NODE				node;
 	char				name[MODEM_STRING_MAX];
-	BOOL				bSecondary;
-	BOOL				active;
-	BOOL				proxy;
+	ospl_bool				bSecondary;
+	ospl_bool				active;
+	ospl_bool				proxy;
 	modem_dial_type		dialtype;
 	modem_stack_type	ipstack;
 
 	char				apn[MODEM_STRING_MAX];
 
-	u_int32				profile;
+	ospl_uint32				profile;
 
 	char				svc[MODEM_STRING_MAX];				//service code
 
@@ -94,30 +98,30 @@ typedef struct modem_s
 	modem_event			event;
 	modem_event			nextevent;
 
-	u_int32				uptime;		//network UP time
-	u_int32				downtime;	//network DOWN time
+	ospl_uint32				uptime;		//network UP time
+	ospl_uint32				downtime;	//network DOWN time
 
 	/*
 	 * for detection event
 	 */
-	u_int32				dedelay;
-	u_int32				detime_base;
-	u_int32				detime_axis;
+	ospl_uint32				dedelay;
+	ospl_uint32				detime_base;
+	ospl_uint32				detime_axis;
 	/*
 	 * for delay event
 	 */
-	u_int32				delay;
-	u_int32				time_base;
-	u_int32				time_axis;
+	ospl_uint32				delay;
+	ospl_uint32				time_base;
+	ospl_uint32				time_axis;
 
 	void				*proxy_data;
 
 
 	modem_event			a_event;
-	u_int32				t_time;
-	u_int32				checksum;
+	ospl_uint32				t_time;
+	ospl_uint32				checksum;
 
-	int					pid[MODEM_DIAL_MAX+1];
+	ospl_pid_t					pid[MODEM_DIAL_MAX+1];
 }modem_t;
 
 
@@ -128,7 +132,7 @@ typedef struct modem_main_s
 
 }modem_main_t;
 
-extern int modem_debug_conf;
+extern ospl_uint32 modem_debug_conf;
 
 extern modem_main_t gModemmain;
 
@@ -139,7 +143,7 @@ typedef int (*modem_cb)(modem_t *, void *);
 extern int modem_main_init(void);
 extern int modem_main_exit(void);
 
-extern int modem_main_trywait(int);
+extern int modem_main_trywait(ospl_uint32);
 
 extern int modem_main_add_api(char *name);
 extern modem_t * modem_main_lookup_api(char *name);
@@ -189,7 +193,7 @@ extern int modem_debug_config(struct vty *vty);
 
 
 #ifdef __MODEM_DEBUG
-extern void modem_debug_printf(void *fp,char *func, int line, const char *format, ...);
+extern void modem_debug_printf(void *fp,char *func, ospl_uint32 line, const char *format, ...);
 #if 1
 #define MODEM_DEBUG(fmt,...)	modem_debug_printf(stderr, __func__, __LINE__,fmt, ##__VA_ARGS__)
 #define MODEM_WARN(fmt,...)		modem_debug_printf(stderr, __func__, __LINE__,fmt, ##__VA_ARGS__)
@@ -230,5 +234,9 @@ SMS：                        短消息服务
 V24-V25;V42：         是一种数据压缩法则。
  */
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MODEM_H__ */

@@ -20,12 +20,16 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #ifndef __LIB_FIFO_H__
 #define __LIB_FIFO_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* FIFO -- first in first out structure and macros.  */
 struct fifo
 {
   struct fifo *next;
   struct fifo *prev;
-  u_int32_t count;
+  ospl_uint32 count;
 };
 
 #define FIFO_INIT(F)                                  \
@@ -59,5 +63,9 @@ struct fifo
 
 #define FIFO_TOP(F)                                   \
   (FIFO_EMPTY(F) ? NULL : ((struct fifo *)(F))->next)
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __LIB_FIFO_H__ */

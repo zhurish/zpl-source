@@ -7,7 +7,9 @@
 
 #ifndef INCLUDE_OEM_CONFIG_H_
 #define INCLUDE_OEM_CONFIG_H_
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "gitversion.h"
 
 #define OEM_BUG_ADDRESS "https://bugzilla.quagga.net"
@@ -74,5 +76,8 @@
 
 #define OEM_BASE_VERSION(a,b,c)	((a)<<16)|((b)<<8)|(c)
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_OEM_CONFIG_H_ */

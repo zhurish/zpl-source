@@ -8,6 +8,10 @@
 #ifndef IF_USP_H_
 #define IF_USP_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "if.h"
 
 extern const char *getkernelname(if_type_t	type);
@@ -20,7 +24,7 @@ extern if_type_t kernelname2type(const char *name);
 extern if_type_t name2type(const char *name);
 extern if_type_t abstractname2type(const char *name);
 
-extern unsigned int if_name_hash_make(const char *name);
+extern ospl_uint32  if_name_hash_make(const char *name);
 //two argv : ethernet 0/1/1 ->  (one argv)ethernet 0/1/1
 extern const char * if_ifname_format(const char *ifname, const char *uspv);
 
@@ -45,13 +49,17 @@ extern int if_uspv_type_setting(struct interface *ifp);
 
 extern int if_loopback_ifindex_create(if_type_t type, const char *name);
 
-extern const char *if_mac_out_format(unsigned char *mac);
-extern int vty_iusp_get (const char *str, int *uspv);
-extern int vty_mac_get (const char *str, unsigned char *mac);
+extern const char *if_mac_out_format(ospl_uchar *mac);
+extern int vty_iusp_get (const char *str, ospl_uint32 *uspv);
+extern int vty_mac_get (const char *str, ospl_uchar *mac);
 
 //extern int serial_kifindex_make(const char *name);
 
 #define VTY_IUSP_GET(s,uspv)	vty_iusp_get(s, &uspv)
 #define VTY_IMAC_GET(s,m)		vty_mac_get(s, m)
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* IF_USP_H_ */

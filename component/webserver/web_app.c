@@ -222,7 +222,7 @@ int
 web_app_module_task_exit ()
 {
 	zassert(web_app != NULL);
-	web_app->finished = TRUE;
+	web_app->finished = ospl_true;
 	return OK;
 }
 
@@ -251,12 +251,12 @@ web_app_init (web_app_t *web)
 	{
 		return -1;
 	}
-	web->init = TRUE;
+	web->init = ospl_true;
 	return 0;
 }
 
 #if !ME_GOAHEAD_EXTLOG
-static void webLogDefaultHandler(int flags, cchar *buf)
+static void webLogDefaultHandler(ospl_uint32 flags, cchar *buf)
 {
 /*    char    prefix[ME_GOAHEAD_LIMIT_STRING];
 
@@ -336,7 +336,7 @@ web_app_start (web_app_t *web)
 	web_app_init (web);
 
 	web_app_html_init (web);
-	web->init = TRUE;
+	web->init = ospl_true;
 	return OK;
 }
 
@@ -346,10 +346,10 @@ web_app_exit (web_app_t *web)
 	if (web->enable && web->init)
 	{
 		websClose ();
-		web->enable = FALSE;
-		web->finished = FALSE;
-		web->init = FALSE;
-		web->reload = FALSE;
+		web->enable = ospl_false;
+		web->finished = ospl_false;
+		web->init = ospl_false;
+		web->reload = ospl_false;
 	}
 	return OK;
 }
@@ -371,7 +371,7 @@ web_app_task (void *argv)
 	{
 		os_sleep (1);
 	}
-	web->enable = TRUE;
+	web->enable = ospl_true;
 	while (!web->enable)
 	{
 		os_sleep (1);
@@ -384,7 +384,7 @@ web_app_task (void *argv)
 			os_sleep (1);
 			continue;
 		}
-		if (web->init == FALSE)
+		if (web->init == ospl_false)
 		{
 			web_app_init (web);
 		}

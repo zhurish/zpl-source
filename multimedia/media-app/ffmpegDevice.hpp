@@ -25,7 +25,13 @@ extern "C"
 #include "libavutil/imgutils.h"
 };
 
-
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "ospl_type.h"
+#ifdef __cplusplus
+}
+#endif
 
 class ffmpegDevice {
     public:

@@ -194,7 +194,7 @@ prefix_list_entry_free (struct prefix_list_entry *pentry)
 static struct prefix_list *
 prefix_list_insert (afi_t afi, int orf, const char *name)
 {
-  unsigned int i;
+  ospl_uint32  i;
   long number;
   struct prefix_list *plist;
   struct prefix_list *point;
@@ -613,7 +613,7 @@ prefix_list_print (struct prefix_list *plist)
       else
 	{
 	  struct prefix *p;
-	  char buf[BUFSIZ];
+	  ospl_char buf[BUFSIZ];
 	  
 	  p = &pentry->prefix;
 	  
@@ -996,7 +996,7 @@ vty_show_prefix_entry (struct vty *vty, afi_t afi, struct prefix_list *plist,
 	  else
 	    {
 	      struct prefix *p = &pentry->prefix;
-	      char buf[BUFSIZ];
+	      ospl_char buf[BUFSIZ];
 
 	      vty_out (vty, "%s/%d",
 		       inet_ntop (p->family, &p->u.prefix, buf, BUFSIZ),
@@ -1108,7 +1108,7 @@ vty_show_prefix_list_prefix (struct vty *vty, afi_t afi, const char *name,
 	  else
 	    {
 	      struct prefix *pp = &pentry->prefix;
-	      char buf[BUFSIZ];
+	      ospl_char buf[BUFSIZ];
 	      
 	      vty_out (vty, "%s/%d",
 		       inet_ntop (pp->family, &pp->u.prefix, buf, BUFSIZ),
@@ -2426,7 +2426,7 @@ config_write_prefix_afi (afi_t afi, struct vty *vty)
 	  else
 	    {
 	      struct prefix *p = &pentry->prefix;
-	      char buf[BUFSIZ];
+	      ospl_char buf[BUFSIZ];
 
 	      vty_out (vty, "%s/%d",
 		       inet_ntop (p->family, &p->u.prefix, buf, BUFSIZ),
@@ -2469,7 +2469,7 @@ config_write_prefix_afi (afi_t afi, struct vty *vty)
 	  else
 	    {
 	      struct prefix *p = &pentry->prefix;
-	      char buf[BUFSIZ];
+	      ospl_char buf[BUFSIZ];
 
 	      vty_out (vty, " %s/%d",
 		       inet_ntop (p->family, &p->u.prefix, buf, BUFSIZ),
@@ -2490,7 +2490,7 @@ config_write_prefix_afi (afi_t afi, struct vty *vty)
 
 struct stream *
 prefix_bgp_orf_entry (struct stream *s, struct prefix_list *plist,
-		      u_char init_flag, u_char permit_flag, u_char deny_flag)
+		      ospl_uchar init_flag, ospl_uchar permit_flag, ospl_uchar deny_flag)
 {
   struct prefix_list_entry *pentry;
 
@@ -2499,15 +2499,15 @@ prefix_bgp_orf_entry (struct stream *s, struct prefix_list *plist,
 
   for (pentry = plist->head; pentry; pentry = pentry->next)
     {
-      u_char flag = init_flag;
+      ospl_uchar flag = init_flag;
       struct prefix *p = &pentry->prefix;
 
       flag |= (pentry->type == PREFIX_PERMIT ?
                permit_flag : deny_flag);
       stream_putc (s, flag);
-      stream_putl (s, (u_int32_t)pentry->seq);
-      stream_putc (s, (u_char)pentry->ge);
-      stream_putc (s, (u_char)pentry->le);
+      stream_putl (s, (ospl_uint32)pentry->seq);
+      stream_putc (s, (ospl_uchar)pentry->ge);
+      stream_putc (s, (ospl_uchar)pentry->le);
       stream_put_prefix (s, p);
     }
 
@@ -2515,7 +2515,7 @@ prefix_bgp_orf_entry (struct stream *s, struct prefix_list *plist,
 }
 
 int
-prefix_bgp_orf_set (char *name, afi_t afi, struct orf_prefix *orfp,
+prefix_bgp_orf_set (ospl_char *name, afi_t afi, struct orf_prefix *orfp,
 		    int permit, int set)
 {
   struct prefix_list *plist;
@@ -2566,7 +2566,7 @@ prefix_bgp_orf_set (char *name, afi_t afi, struct orf_prefix *orfp,
 }
 
 void
-prefix_bgp_orf_remove_all (afi_t afi, char *name)
+prefix_bgp_orf_remove_all (afi_t afi, ospl_char *name)
 {
   struct prefix_list *plist;
 
@@ -2577,7 +2577,7 @@ prefix_bgp_orf_remove_all (afi_t afi, char *name)
 
 /* return prefix count */
 int
-prefix_bgp_show_prefix_list (struct vty *vty, afi_t afi, char *name)
+prefix_bgp_show_prefix_list (struct vty *vty, afi_t afi, ospl_char *name)
 {
   struct prefix_list *plist;
   struct prefix_list_entry *pentry;
@@ -2596,7 +2596,7 @@ prefix_bgp_show_prefix_list (struct vty *vty, afi_t afi, char *name)
   for (pentry = plist->head; pentry; pentry = pentry->next)
     {
       struct prefix *p = &pentry->prefix;
-      char buf[BUFSIZ];
+      ospl_char buf[BUFSIZ];
 
       vty_out (vty, "   seq %d %s %s/%d", pentry->seq,
 	       prefix_list_type_str (pentry),

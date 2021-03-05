@@ -12,7 +12,7 @@
 
 /****************************************************************************************/
 //禁止使能镜像功能
-int b53125_mirror_enable(struct b53125_device *dev, BOOL enable)
+int b53125_mirror_enable(struct b53125_device *dev, ospl_bool enable)
 {
 	u16 reg;//, loc;
 	int ret = 0;
@@ -42,7 +42,7 @@ int b53125_mirror_ingress_mac(struct b53125_device *dev, u8 *mac)
 	u64 reg = 0;
 	u16 value;
 	int ret = 0;
-	unsigned int i;
+	ospl_uint32 i;
 	for (i = 0; i < 6; i+=2)
 	{
 		value = mac[i]<<16 | mac[i+1];
@@ -59,7 +59,7 @@ int b53125_mirror_egress_mac(struct b53125_device *dev, u8 *mac)
 	u64 reg = 0;
 	u16 value;
 	int ret = 0;
-	unsigned int i;
+	ospl_uint32 i;
 	for (i = 0; i < 6; i+=2)
 	{
 		value = mac[i]<<16 | mac[i+1];
@@ -125,7 +125,7 @@ int b53125_mirror_egress_source(struct b53125_device *dev, int port)
 	return ret;
 }
 /***************************************************************************************************/
-int b53125_mirror_ingress_filter(struct b53125_device *dev, int type)
+int b53125_mirror_ingress_filter(struct b53125_device *dev, ospl_uint32 type)
 {
 	int ret = 0;
 	u16 source = 0;
@@ -136,7 +136,7 @@ int b53125_mirror_ingress_filter(struct b53125_device *dev, int type)
 	return ret;
 }
 
-int b53125_mirror_egress_filter(struct b53125_device *dev, int type)
+int b53125_mirror_egress_filter(struct b53125_device *dev, ospl_uint32 type)
 {
 	int ret = 0;
 	u16 source = 0;

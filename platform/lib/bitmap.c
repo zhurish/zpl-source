@@ -2,7 +2,7 @@
 #include "zebra.h"
 #include "bitmap.h"
 
-static const unsigned char bitMask[8] = {
+static const ospl_uchar bitMask[8] = {
     0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01
 };
 
@@ -13,8 +13,8 @@ static const unsigned char bitMask[8] = {
 */
  INLINE void BIT_LST_SET
     (
-    unsigned char *bitList,
-    unsigned long  bit
+    ospl_uchar *bitList,
+    ospl_ulong  bit
     )
 {
     bitList[bit/8] |= bitMask[bit%8];
@@ -26,8 +26,8 @@ static const unsigned char bitMask[8] = {
 */
  INLINE void BIT_LST_CLR
     (
-    unsigned char *bitList,
-    unsigned long  bit
+    ospl_uchar *bitList,
+    ospl_ulong  bit
     )
 {
     bitList[bit/8] &= ~bitMask[bit%8];
@@ -37,10 +37,10 @@ static const unsigned char bitMask[8] = {
 *
 * bitListTst - Return True if the bit is set, else False.
 */
- INLINE unsigned long BIT_LST_TST
+ INLINE ospl_ulong BIT_LST_TST
     (
-    unsigned char *bitList,
-    unsigned long  bit
+    ospl_uchar *bitList,
+    ospl_ulong  bit
     )
 {
     return (bitList[bit/8] & bitMask[bit%8])? 1 : 0;
@@ -54,11 +54,11 @@ static const unsigned char bitMask[8] = {
 ��nbit��1��ʼ
 */
 
- INLINE void BIT_LST_XOR(unsigned char *dst, const unsigned char *src1,
-			const unsigned char *src2, unsigned long nbit)
+ INLINE void BIT_LST_XOR(ospl_uchar *dst, const ospl_uchar *src1,
+			const ospl_uchar *src2, ospl_ulong nbit)
 {
 	int k;
-	unsigned char mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
+	ospl_uchar mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
 	int nr = nbit/8;
 	
 	for (k = 0; k < nr; k++)
@@ -79,11 +79,11 @@ static const unsigned char bitMask[8] = {
 ��nbit��1��ʼ
 */
 
- INLINE void BIT_LST_AND(unsigned char *dst, const unsigned char *src1,
-			const unsigned char *src2, unsigned long nbit)
+ INLINE void BIT_LST_AND(ospl_uchar *dst, const ospl_uchar *src1,
+			const ospl_uchar *src2, ospl_ulong nbit)
 {
 	int k;
-	unsigned char mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
+	ospl_uchar mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
 	int nr = nbit/8;
 	
 	for (k = 0; k < nr; k++)
@@ -104,11 +104,11 @@ static const unsigned char bitMask[8] = {
 ��nbit��1��ʼ
 */
 
- INLINE void BIT_LST_OR(unsigned char *dst, const unsigned char *src1,
-			const unsigned char *src2, unsigned long nbit)
+ INLINE void BIT_LST_OR(ospl_uchar *dst, const ospl_uchar *src1,
+			const ospl_uchar *src2, ospl_ulong nbit)
 {
 	int k;
-	unsigned char mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
+	ospl_uchar mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
 	int nr = nbit/8;
 
 	for (k = 0; k < nr; k++)
@@ -128,11 +128,11 @@ static const unsigned char bitMask[8] = {
 *
 ��nbit����1��ʼ
 */
- INLINE int BIT_LST_EMPTY(unsigned char *src, unsigned long nbit)
+ INLINE ospl_bool BIT_LST_EMPTY(ospl_uchar *src, ospl_ulong nbit)
 {
-	int k;
-	unsigned char mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
-	int nr = nbit/8;
+	ospl_uint32 k;
+	ospl_uchar mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
+	ospl_uint32 nr = nbit/8;
 	
 	for (k = 0; k < nr; k++)
 		if(src[k] != 0)
@@ -151,11 +151,11 @@ static const unsigned char bitMask[8] = {
 *
 ��nbit����1��ʼ
 */
- INLINE int BIT_LST_CMP(const unsigned char *src1, const unsigned char *src2, unsigned long nbit)
+ INLINE int BIT_LST_CMP(const ospl_uchar *src1, const ospl_uchar *src2, ospl_ulong nbit)
 {
-	int k;
-	unsigned char mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
-	int nr = nbit/8;
+	ospl_uint32 k;
+	ospl_uchar mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
+	ospl_uint32 nr = nbit/8;
 	
 	for (k = 0; k < nr; k++)
 	{
@@ -185,10 +185,10 @@ static const unsigned char bitMask[8] = {
 *
 ��nbit����1��ʼ
 */
- INLINE void BIT_LST_COPY(const unsigned char *src, unsigned char *dst, unsigned long nbit)
+ INLINE void BIT_LST_COPY(const ospl_uchar *src, ospl_uchar *dst, ospl_ulong nbit)
 {
 	int k;
-	unsigned char mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
+	ospl_uchar mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
 	int nr = nbit/8;
 	
 	bcopy(src, dst, nr);
@@ -207,12 +207,12 @@ static const unsigned char bitMask[8] = {
 *
 ��nbit����1��ʼ
 */
- INLINE int BIT_LST_MAX(unsigned char *src, unsigned long nbit)
+ INLINE ospl_uint32 BIT_LST_MAX(ospl_uchar *src, ospl_ulong nbit)
 {
-	int i,k;
-	unsigned char mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
-	unsigned char tmp=0;
-	int nr = nbit/8;
+	ospl_uint32 i,k;
+	ospl_uchar mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
+	ospl_uchar tmp=0;
+	ospl_uint32 nr = nbit/8;
 
 	k = (nbit % 8);
 	if(k)
@@ -238,11 +238,11 @@ static const unsigned char bitMask[8] = {
 ����bitΪ1�ĸ���
 */
 
- INLINE int BIT_LST_CNT(unsigned char *src, unsigned long nbit)
+ INLINE ospl_uint32 BIT_LST_CNT(ospl_uchar *src, ospl_ulong nbit)
 {
-	int nr = nbit/8;
-	unsigned char mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
-	int n,k,count=0;
+	ospl_uint32 nr = nbit/8;
+	ospl_uchar mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
+	ospl_uint32 n,k,count=0;
 
 /*
 	�������㷨�ĺ��ģ�ֻ�����2��������

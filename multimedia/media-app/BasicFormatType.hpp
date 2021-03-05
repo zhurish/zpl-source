@@ -22,7 +22,13 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 
 #ifndef _BASIC_FORMAT_TYPE_HH
 #define _BASIC_FORMAT_TYPE_HH
-
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "ospl_type.h"
+#ifdef __cplusplus
+}
+#endif
 
 class BasicFormatType {
 public:

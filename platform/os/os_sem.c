@@ -27,10 +27,10 @@
 
 typedef struct
 {
-	int	 shmid;
+	ospl_uint32	 shmid;
 	pthread_mutex_t mutex;	//对共享内存信号量集的保护
-	char shm_cnt;			//记录当前共享内存有几个进程还在使用
-	char *p;
+	ospl_char shm_cnt;			//记录当前共享内存有几个进程还在使用
+	ospl_char *p;
 }os_mshm_t;
 
 static os_mutex_t	*os_local_mutex = NULL;
@@ -39,8 +39,8 @@ static os_mshm_t	*os_local_shm = NULL;
 /*************************************************/
 int os_mutex_obj_init()
 {
-	int size = sizeof(os_mutex_t)*OS_MUTEX_SEM_MAX + sizeof(os_mshm_t) + 8;
-	int shmid;
+	ospl_uint32 size = sizeof(os_mutex_t)*OS_MUTEX_SEM_MAX + sizeof(os_mshm_t) + 8;
+	ospl_uint32 shmid;
 	//创建共享内存 ，相当于打开文件，文件不存在则创建
 	shmid = shmget(65530, size, IPC_CREAT | 0666);
 	if(shmid == -1)
@@ -74,7 +74,7 @@ int os_mutex_obj_exit()
 {
 	if(os_local_shm)
 	{
-		int delete = 0, shmid = os_local_shm->shmid;
+		ospl_uint32 delete = 0, shmid = os_local_shm->shmid;
 		os_local_shm->shm_cnt--;
 		if(os_local_shm->shm_cnt == 0)
 		{
@@ -97,9 +97,9 @@ int os_mutex_obj_exit()
 /*************************************************/
 
 
-static os_mutex_t * os_mutex_sem_lookup(int key, int type)
+static os_mutex_t * os_mutex_sem_lookup(ospl_uint32 key, ospl_uint32 type)
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	if(!os_local_shm || !os_local_mutex)
 		return NULL;
 	for(i = 0; i < OS_MUTEX_SEM_MAX; i++)
@@ -114,7 +114,7 @@ static os_mutex_t * os_mutex_sem_lookup(int key, int type)
 
 static os_mutex_t * os_mutex_sem_get_empty()
 {
-	int i = 0;
+	ospl_uint32 i = 0;
 	if(!os_local_shm || !os_local_mutex)
 		return NULL;
 	for(i = 0; i < OS_MUTEX_SEM_MAX; i++)
@@ -127,9 +127,9 @@ static os_mutex_t * os_mutex_sem_get_empty()
 }
 
 
-static os_mutex_t * os_mutex_sem_init(int key, int type)
+static os_mutex_t * os_mutex_sem_init(ospl_uint32 key, ospl_uint32 type)
 {
-	int ret = 0;
+	ospl_uint32 ret = 0;
 	if(!os_local_shm || !os_local_mutex)
 		return NULL;
 	pthread_mutex_lock(&os_local_shm->mutex);
@@ -209,7 +209,7 @@ static int os_mutex_sem_exit(os_mutex_t * mutex)
 }
 
 
-static int os_mutex_sem_lock(os_mutex_t * mutex, int wait)
+static int os_mutex_sem_lock(os_mutex_t * mutex, ospl_int32 wait)
 {
 	if(!os_local_shm || !os_local_mutex || !mutex)
 		return ERROR;
@@ -280,7 +280,7 @@ static int os_mutex_sem_unlock(os_mutex_t * mutex)
 
 
 
-os_mutex_t * os_mutex_init(int key)
+os_mutex_t * os_mutex_init(ospl_uint32 key)
 {
 	return os_mutex_sem_init(key, OS_MUTEX_TYPE);
 }
@@ -290,7 +290,7 @@ int os_mutex_exit(os_mutex_t * mutex)
 	return os_mutex_sem_exit(mutex);
 }
 
-int os_mutex_lock(os_mutex_t * mutex, int wait)
+int os_mutex_lock(os_mutex_t * mutex, ospl_int32 wait)
 {
 	return os_mutex_sem_lock(mutex, wait);
 }
@@ -301,7 +301,7 @@ int os_mutex_unlock(os_mutex_t * mutex)
 }
 
 
-os_sem_t * os_sem_init(int key)
+os_sem_t * os_sem_init(ospl_uint32 key)
 {
 	return os_mutex_sem_init(key, OS_SEM_TYPE);
 }
@@ -311,7 +311,7 @@ int os_sem_exit(os_sem_t * sem)
 	return os_mutex_sem_exit(sem);
 }
 
-int os_sem_take(os_sem_t * sem, int wait)
+int os_sem_take(os_sem_t * sem, ospl_int32 wait)
 {
 	return os_mutex_sem_lock(sem, wait);
 }
@@ -346,7 +346,7 @@ int os_sem_give(os_sem_t *ossem)
 	return ERROR;
 }
 
-int os_sem_take(os_sem_t *ossem, int wait)
+int os_sem_take(os_sem_t *ossem, ospl_int32 wait)
 {
 	if(ossem == NULL)
 		return ERROR;
@@ -410,7 +410,7 @@ int os_mutex_unlock(os_mutex_t *osmutex)
 	return ERROR;
 }
 
-int os_mutex_lock(os_mutex_t *osmutex, int wait)
+int os_mutex_lock(os_mutex_t *osmutex, ospl_int32 wait)
 {
 	if(osmutex == NULL)
 		return ERROR;

@@ -232,14 +232,13 @@ endif
 #
 #
 
-files = $(patsubst %.o,%.c,$(OBJS))
+files = $(patsubst %.o,%.c,$(WEBOBJS))
 make_prepare:
 	@for i in $(files); do	\
 		$(MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
 	done
 #
 lib: $(LIBS)
-
 
 
 obj: $(MODULE_OBJS) $(MODULE_LIBOBJS)

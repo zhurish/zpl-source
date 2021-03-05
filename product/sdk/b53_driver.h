@@ -8,6 +8,10 @@
 #ifndef __B53_DRIVER_H__
 #define __B53_DRIVER_H__
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 
 typedef enum drv_port_stp_state_e {
     DRV_PORT_STP_DISABLE = 1,
@@ -148,5 +152,9 @@ typedef enum drv_dos_type_e {
     DRV_DOS_MAX_ICMPV6_SIZE,
     DRV_DOS_DISABLE_LEARN
 } drv_dos_type_t;
+ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __B53_DRIVER_H__ */

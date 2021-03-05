@@ -8,6 +8,10 @@
 #ifndef __V9_VIDEO_H__
 #define __V9_VIDEO_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define V9_VIDEO_SDK_API
 
 #ifdef V9_VIDEO_SDK_API
@@ -118,32 +122,36 @@ enum
 // 抓拍特征值
 typedef struct
 {
-	int							feature_len;									// 特征值个数，长度=个数*sizoof(float)
+	int							feature_len;									// 特征值个数，长度=个数*sizoof(ospl_float)
 	union
 	{
 		void*						ckey_data;
-		float*						feature_data;
+		ospl_float*						feature_data;
 	}feature;																	// 特征值
-	float						input_value;									// 相似度（输入）
-	float						output_result;									// 相似度（输出）
-	int							(*feature_memcmp)(float *, float *, int,  float *);
-	BOOL						nomem;
+	ospl_float						input_value;									// 相似度（输入）
+	ospl_float						output_result;									// 相似度（输出）
+	int							(*feature_memcmp)(ospl_float *, ospl_float *, int,  ospl_float *);
+	ospl_bool						nomem;
 }sql_snapfea_key;
 
 
-extern int v9_app_snapfea_key_alloc(sql_snapfea_key *key, BOOL nomem);
+extern int v9_app_snapfea_key_alloc(sql_snapfea_key *key, ospl_bool nomem);
 extern int v9_app_snapfea_key_free(sql_snapfea_key *key);
-extern char * v9_app_age_string(u_int32 age);
+extern char * v9_app_age_string(ospl_uint32 age);
 
-extern int v9_sqldb_debug_api(BOOL enable, u_int32 flag);
-extern int v9_user_debug_api(BOOL enable, u_int32 flag);
-extern int v9_video_sdk_debug_api(BOOL enable, u_int32 flag);
-extern int v9_serial_debug_api(BOOL enable, u_int32 flag);
-extern int v9_video_debug_config(struct vty *vty, BOOL detail);
+extern int v9_sqldb_debug_api(ospl_bool enable, ospl_uint32 flag);
+extern int v9_user_debug_api(ospl_bool enable, ospl_uint32 flag);
+extern int v9_video_sdk_debug_api(ospl_bool enable, ospl_uint32 flag);
+extern int v9_serial_debug_api(ospl_bool enable, ospl_uint32 flag);
+extern int v9_video_debug_config(struct vty *vty, ospl_bool detail);
 
 extern int v9_app_module_init();
 extern int v9_app_module_exit();
 extern int v9_app_module_task_init(void);
 extern int v9_app_module_task_exit(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __V9_VIDEO_H__ */
