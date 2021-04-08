@@ -21,7 +21,7 @@
  * MA 02111-1307, USA.
  */
 
-#include "libssh_config.h"
+#include "libssh_autoconfig.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -50,11 +50,10 @@ static int ssh_gets(const char *prompt, char *buf, size_t len, int verify) {
     char *ptr = NULL;
     int ok = 0;
 
-    tmp = ssh_malloc(len);
+    tmp = calloc(1, len);
     if (tmp == NULL) {
         return 0;
     }
-    memset(tmp,'\0',len);
 
     /* read the password */
     while (!ok) {
@@ -65,7 +64,7 @@ static int ssh_gets(const char *prompt, char *buf, size_t len, int verify) {
         }
         fflush(stdout);
         if (fgets(tmp, len, stdin) == NULL) {
-            SAFE_FREE(tmp);
+            free(tmp);
             return 0;
         }
 
@@ -81,16 +80,15 @@ static int ssh_gets(const char *prompt, char *buf, size_t len, int verify) {
         if (verify) {
             char *key_string;
 
-            key_string = ssh_malloc(len);
+            key_string = calloc(1, len);
             if (key_string == NULL) {
                 break;
             }
-	          memset(key_string, '\0', len);
 
             fprintf(stdout, "\nVerifying, please re-enter. %s", prompt);
             fflush(stdout);
             if (! fgets(key_string, len, stdin)) {
-                memset(key_string, '\0', len);
+                explicit_bzero(key_string, len);
                 SAFE_FREE(key_string);
                 clearerr(stdin);
                 continue;
@@ -100,19 +98,19 @@ static int ssh_gets(const char *prompt, char *buf, size_t len, int verify) {
             }
             fprintf(stdout, "\n");
             if (strcmp(buf, key_string)) {
-            	fprintf(stdout, "\n\07\07Mismatch - try again\n");
-                memset(key_string, '\0', len);
+                printf("\n\07\07Mismatch - try again\n");
+                explicit_bzero(key_string, len);
                 SAFE_FREE(key_string);
                 fflush(stdout);
                 continue;
             }
-            memset(key_string, '\0', len);
+            explicit_bzero(key_string, len);
             SAFE_FREE(key_string);
         }
         ok = 1;
     }
-    memset(tmp, '\0', len);
-    SAFE_FREE(tmp);
+    explicit_bzero(tmp, len);
+    free(tmp);
 
     return ok;
 }
@@ -187,7 +185,6 @@ static int ssh_gets(int fd, const char *prompt, char *buf, size_t len, int verif
     return ok;
 }
 #endif
-
 #ifdef _WIN32
 #include <windows.h>
 
@@ -224,7 +221,7 @@ int ssh_getpass(const char *prompt,
     SetConsoleMode(h, mode);
 
     if (!ok) {
-        memset (buf, '\0', len);
+        explicit_bzero(buf, len);
         return -1;
     }
 
@@ -346,7 +343,7 @@ int ssh_getpass(const char *prompt,
     }
 
     if (!ok) {
-        memset (buf, '\0', len);
+        explicit_bzero(buf, len);
         return -1;
     }
 
@@ -356,6 +353,7 @@ int ssh_getpass(const char *prompt,
     return 0;
 }
 #else
+ 
 
 int ssh_getpass(int fd, const char *prompt,
                 char *buf,
@@ -383,5 +381,3 @@ int ssh_getpass(int fd, const char *prompt,
 }
 #endif
 #endif
-
-/* vim: set ts=4 sw=4 et cindent syntax=c.doxygen: */

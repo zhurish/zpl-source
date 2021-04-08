@@ -59,7 +59,7 @@ extern "C" {
 /* #undef HAVE_BSD_STRUCT_IP_MREQ_HACK */
 
 /* capabilities */
-#ifdef PL_BUILD_X86
+#ifdef PL_BUILD_ARCH_X86
 #define HAVE_CAPABILITIES 1
 #endif
 /* Define to 1 if your system has a working `chown' function. */
@@ -182,7 +182,7 @@ extern "C" {
 /* #undef HAVE_KVM_H */
 
 /* Capabilities */
-#ifdef PL_BUILD_X86
+#ifdef PL_BUILD_ARCH_X86
 #define HAVE_LCAPS 1
 #endif
 /* Define to 1 if you have the `crypt' library (-lcrypt). */

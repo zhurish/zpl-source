@@ -19,7 +19,7 @@
 #include "eloop.h"
 #include "os_task.h"
 
-#include "libssh_config.h"
+#include "libssh_autoconfig.h"
 
 #include "libssh/priv.h"
 #include "libssh/libssh.h"
@@ -217,7 +217,7 @@ static int sshd_start(ssh_config_t *sshconfig)
 
 
 
-static int ssh_ctl_thread(socket_t fd, ospl_uint32 revents, void *userdata)
+static int ssh_ctl_thread(socket_t fd, int revents, void *userdata)
 {
     char buf[64];
     int n = -1;//, ret = 0;

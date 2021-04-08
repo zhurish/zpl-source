@@ -355,7 +355,7 @@ extern void vty_log (const char *level, const char *proto,
 extern void vty_log_debug(const char *level, const char *proto_str, const char *format,
 		zlog_timestamp_t ctl, va_list va, const char *file, const char *func, const ospl_uint32 line);
 
-extern void vty_trap_log (const char *level, const char *proto_str,
+extern int vty_trap_log (const char *level, const char *proto_str,
 	 const char *format, zlog_timestamp_t ctl, va_list);
 extern void vty_log_fixed (ospl_char *buf, ospl_size_t len);
 

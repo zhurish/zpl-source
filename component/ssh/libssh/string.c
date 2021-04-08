@@ -21,10 +21,10 @@
  * MA 02111-1307, USA.
  */
 
+#include "libssh_autoconfig.h"
+
 #include <errno.h>
 #include <limits.h>
-#include <stdlib.h>
-#include <string.h>
 
 #ifndef _WIN32
 #include <netinet/in.h>
@@ -33,6 +33,9 @@
 
 #include "libssh/priv.h"
 #include "libssh/string.h"
+
+/* String maximum size is 256M */
+#define STRING_SIZE_MAX 0x10000000
 
 /**
  * @defgroup libssh_string The SSH string functions
@@ -50,22 +53,24 @@
  *
  * @return               The newly allocated string, NULL on error.
  */
-struct ssh_string_struct *ssh_string_new(size_t size) {
-  struct ssh_string_struct *str = NULL;
+struct ssh_string_struct *ssh_string_new(size_t size)
+{
+    struct ssh_string_struct *str = NULL;
 
-  if (size > UINT_MAX - sizeof(struct ssh_string_struct)) {
-      return NULL;
-  }
+    if (size > STRING_SIZE_MAX) {
+        errno = EINVAL;
+        return NULL;
+    }
 
-  str = ssh_malloc(sizeof(struct ssh_string_struct) + size);
-  if (str == NULL) {
-    return NULL;
-  }
+    str = malloc(sizeof(struct ssh_string_struct) + size);
+    if (str == NULL) {
+        return NULL;
+    }
 
-  str->size = htonl(size);
-  str->data[0] = 0;
+    str->size = htonl(size);
+    str->data[0] = 0;
 
-  return str;
+    return str;
 }
 
 /**
@@ -136,7 +141,7 @@ size_t ssh_string_len(struct ssh_string_struct *s) {
     }
 
     size = ntohl(s->size);
-    if (size > 0 && size < UINT_MAX) {
+    if (size > 0 && size <= STRING_SIZE_MAX) {
         return size;
     }
 
@@ -186,7 +191,7 @@ char *ssh_string_to_char(struct ssh_string_struct *s) {
     return NULL;
   }
 
-  new = ssh_malloc(len + 1);
+  new = malloc(len + 1);
   if (new == NULL) {
     return NULL;
   }
@@ -246,7 +251,7 @@ void ssh_string_burn(struct ssh_string_struct *s) {
         return;
     }
 
-    BURN_BUFFER(s->data, ssh_string_len(s));
+    explicit_bzero(s->data, ssh_string_len(s));
 }
 
 /**
@@ -274,5 +279,3 @@ void ssh_string_free(struct ssh_string_struct *s) {
 }
 
 /** @} */
-
-/* vim: set ts=4 sw=4 et cindent: */

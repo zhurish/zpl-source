@@ -15,7 +15,7 @@ extern "C" {
 #include "zebra.h"
 #include "prefix.h"
 
-#include "libssh_config.h"
+#include "libssh_autoconfig.h"
 
 #include "libssh/priv.h"
 #include "libssh/libssh.h"

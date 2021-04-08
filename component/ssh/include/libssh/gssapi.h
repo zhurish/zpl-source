@@ -21,7 +21,7 @@
 #ifndef GSSAPI_H_
 #define GSSAPI_H_
 
-#include "libssh_config.h"
+#include "libssh_autoconfig.h"
 #include "session.h"
 
 /* all OID begin with the tag identifier + length */

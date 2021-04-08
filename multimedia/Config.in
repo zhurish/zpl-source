@@ -55,7 +55,12 @@ config PL_FFMPEG_MODULE
 	help
 	Build Ffmpeg Module.
 
-
+config PL_EXOSIP_MODULE
+	bool "eXosip of Multimedia Module"
+	default n
+	depends on PL_MULTIMEDIA_MODULE
+	help
+	Build eXosip Module.
 
 config PL_PJPROJECT_MODULE
 	bool "SIP of Pjproject Module"

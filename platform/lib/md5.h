@@ -71,36 +71,36 @@ typedef struct {
 
 	uint	md5_i;
 	ospl_uint8	md5_buf[MD5_BUFLEN];
-} md5_ctxt;
+} os_md5_ctxt;
 
-extern void md5_init (md5_ctxt *);
-extern void md5_loop (md5_ctxt *, const void *, ospl_uint32);
-extern void md5_pad (md5_ctxt *);
-extern void md5_result (ospl_uint8 *, md5_ctxt *);
+extern void os_md5_init (os_md5_ctxt *);
+extern void os_md5_loop (os_md5_ctxt *, const void *, ospl_uint32);
+extern void os_md5_pad (os_md5_ctxt *);
+extern void os_md5_result (ospl_uint8 *, os_md5_ctxt *);
 
 /* compatibility */
-#define MD5_CTX		md5_ctxt
-#define MD5Init(x)	md5_init((x))
-#define MD5Update(x, y, z)	md5_loop((x), (y), (z))
-#define MD5Final(x, y) \
+#define OS_MD5_CTX		os_md5_ctxt
+#define OS_MD5Init(x)	os_md5_init((x))
+#define OS_MD5Update(x, y, z)	os_md5_loop((x), (y), (z))
+#define OS_MD5Final(x, y) \
 do {				\
-	md5_pad((y));		\
-	md5_result((x), (y));	\
+	os_md5_pad((y));		\
+	os_md5_result((x), (y));	\
 } while (0)
 
 
-void	MD5_Init(MD5_CTX *);
-void	MD5_Update(MD5_CTX *, const ospl_uchar *, ospl_size_t);
-void	MD5_Final(ospl_uchar *, MD5_CTX *);
+void	OS_MD5_Init(OS_MD5_CTX *);
+void	OS_MD5_Update(OS_MD5_CTX *, const ospl_uchar *, ospl_size_t);
+void	OS_MD5_Final(ospl_uchar *, OS_MD5_CTX *);
 
 
 /* From RFC 2104 */
-void hmac_md5(ospl_uchar* text, ospl_uint32 text_len, ospl_uchar* key,
+void os_hmac_md5(ospl_uchar* text, ospl_uint32 text_len, ospl_uchar* key,
               ospl_uint32 key_len, ospl_uint8 *digest);
 
 
 #ifndef USE_IPSTACK_KERNEL
-ospl_uchar *MD5(const ospl_uchar *d, ospl_size_t n, ospl_uchar *md);
+ospl_uchar *OS_MD5(const ospl_uchar *d, ospl_size_t n, ospl_uchar *md);
 #endif
 
  

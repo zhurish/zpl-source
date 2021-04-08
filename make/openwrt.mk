@@ -22,7 +22,7 @@
 #CROSS_COMPILE_ROOT = /opt/toolchain/toolchain-mipsel_24kc_gcc-7.3.0_glibc
 #CROSS_COMPILE = $(CROSS_COMPILE_ROOT)/bin/mipsel-openwrt-linux-
 #
-#ifneq ($(PL_BUILD_TYPE),X86_64)
+#ifneq ($(PL_BUILD_ARCH),X86_64)
 ifneq ($(CROSS_COMPILE),)
 #$(error CROSS_COMPILE is not define)
 #endif
@@ -60,10 +60,10 @@ endif
 #
 #
 #
-ifeq ($(PL_BUILD_TYPE),X86_64)
+ifeq ($(PL_BUILD_ARCH),X86_64)
 PLOS_CFLAGS += -m64
 else
-ifneq ($(PL_BUILD_TYPE),AARCH64)
+ifneq ($(PL_BUILD_ARCH),AARCH64)
 PLOS_CFLAGS += -m64
 endif
 endif
@@ -73,7 +73,7 @@ export OPENEWRT_BASE = $(TOOLCHAIN_DIR)
 #
 
 #PL_CFLAGS += -L$(CROSS_COMPILE_ROOT)/lib -L$(CROSS_COMPILE_ROOT)/usr/lib
-PLOS_DEFINE += -DPL_BUILD_$(PL_BUILD_TYPE)
+
 #
 #
 #
@@ -102,7 +102,7 @@ ifeq ($(strip $(PL_LIBSSH_MODULE)),true)
 #-lz -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err
 endif
 #
-ifeq ($(PL_BUILD_TYPE),X86_64)
+ifeq ($(PL_BUILD_ARCH),X86_64)
 ifeq ($(strip $(PL_SQLITE_MODULE)),true)
 #PLOS_LDLIBS += -lsqlite3
 endif

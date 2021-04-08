@@ -41,12 +41,12 @@ LIBSSH_API int ssh_userauth_agent_pubkey(ssh_session session, const char *userna
 LIBSSH_API int ssh_userauth_autopubkey(ssh_session session, const char *passphrase);
 LIBSSH_API int ssh_userauth_privatekey_file(ssh_session session, const char *username,
     const char *filename, const char *passphrase);
-
-//SSH_DEPRECATED LIBSSH_API void buffer_free(ssh_buffer buffer);
+/*
+SSH_DEPRECATED LIBSSH_API void buffer_free(ssh_buffer buffer);
 SSH_DEPRECATED LIBSSH_API void *buffer_get(ssh_buffer buffer);
 SSH_DEPRECATED LIBSSH_API uint32_t buffer_get_len(ssh_buffer buffer);
-//SSH_DEPRECATED LIBSSH_API ssh_buffer buffer_new(void);
-
+SSH_DEPRECATED LIBSSH_API ssh_buffer buffer_new(void);
+*/
 SSH_DEPRECATED LIBSSH_API ssh_channel channel_accept_x11(ssh_channel channel, int timeout_ms);
 SSH_DEPRECATED LIBSSH_API int channel_change_pty_size(ssh_channel channel,int cols,int rows);
 SSH_DEPRECATED LIBSSH_API ssh_channel channel_forward_accept(ssh_session session, int timeout_ms);

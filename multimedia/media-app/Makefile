@@ -35,7 +35,7 @@ $(OBJS_DIR)/testmain.o: $(SRC_DIR)/testmain.cpp
 	@$(CXX) -fPIC $(PLCPPFLAGS) $(PLDEFINE) $(PLDEBUG) -g -c  $< -o $@ $(PLINCLUDE) 
 
 TESTPLLDCLFLAG += -L$(LIB_DIR) -L$(DSTROOTFSDIR)/lib
-ifeq ($(PL_BUILD_TYPE),X86_64)
+ifeq ($(PL_BUILD_ARCH),X86_64)
 TESTPLLDCLFLAG += -L/lib64 -L/usr/lib64 -L/usr/local/lib64
 else
 TESTPLLDCLFLAG += -L/lib -L/usr/lib -L/usr/local/lib

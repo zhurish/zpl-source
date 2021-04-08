@@ -91,7 +91,7 @@ namespace WelsDec {
 DECLARE_PROCTHREAD (pThrProcInit, p) {
   SWelsDecThreadInfo* sThreadInfo = (SWelsDecThreadInfo*)p;
 #if defined(WIN32)
-  _alloca (WELS_DEC_MAX_THREAD_STACK_SIZE * (sThreadInfo->uiThrNum + 1));
+  //_alloca (WELS_DEC_MAX_THREAD_STACK_SIZE * (sThreadInfo->uiThrNum + 1));
 #endif
   return sThreadInfo->pThrProcMain (p);
 }

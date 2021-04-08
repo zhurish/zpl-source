@@ -10,6 +10,7 @@ LIB_DIR = $(BASE_ROOT)/$(LIBDIR)
 
 MODULE_LIBOBJS  := $(addprefix $(OBJS_DIR)/,$(LIBSSHOBJS))
 
+
 SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
 
@@ -20,21 +21,37 @@ $(OBJS_DIR)/%.o: $(SSHSRC_DIR)/%.c
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
-	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
+	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(SSH_PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
+	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(SSH_PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
 	
-	
+$(OBJS_DIR)/%.o: $(SSHSRC_DIR)/external/%.c
+	@if test ! -d $(OBJS_DIR) ; \
+		then \
+		$(MKDIR) -p $(OBJS_DIR) ; \
+	fi
+	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(SSH_PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
+	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(SSH_PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
+
+$(OBJS_DIR)/%.o: $(SSHSRC_DIR)/threads/%.c
+	@if test ! -d $(OBJS_DIR) ; \
+		then \
+		$(MKDIR) -p $(OBJS_DIR) ; \
+	fi
+	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(SSH_PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
+	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(SSH_PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
+
+
 $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
-	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
+	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(SSH_PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
+	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(SSH_PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
 	
 
-$(LIBS) : $(MODULE_OBJS) $(MODULE_LIBOBJS)
-	@$(AR) -rs $(LIBS) $(MODULE_OBJS) $(MODULE_LIBOBJS)
+$(LIBS) :  $(MODULE_LIBOBJS) $(MODULE_OBJS)
+	@$(AR) -rs $(LIBS) $(MODULE_LIBOBJS) $(MODULE_OBJS)
 
 -include $(MODULE_LIBOBJS:.o=.d)
 

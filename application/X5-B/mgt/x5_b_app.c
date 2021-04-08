@@ -1446,7 +1446,7 @@ static int x5b_app_report_eloop(struct eloop *eloop)
 		}
 
 		x5b_app_hdr_make(mgt);
-#ifdef PL_BUILD_OPENWRT
+#ifdef PL_BUILD_OS_OPENWRT
 		if (x5b_app_network_port_status_get(mgt) == OK)
 		{
 			ospl_uint8 val = 0;
@@ -1751,7 +1751,7 @@ int x5b_app_module_init(char *local, ospl_uint16 port)
 #ifdef X5B_APP_DATABASE
 	x5b_user_load();
 #endif
-#ifdef PL_BUILD_X86
+#ifdef PL_BUILD_ARCH_X86
 	x5b_app_global->X5CM = ospl_true;
 	x5b_app_global->opentype = OPEN_FACE_AND_CARD;
 	x5b_app_global->customizer = CUSTOMIZER_SECOM;

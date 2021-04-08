@@ -17,12 +17,11 @@ export STRIP=strip
 export OBJCOPY=objcopy
 export OBJDUMP=objdump
 export RANLIB=ranlib
-PLOS_DEFINE += -DPL_BUILD_$(PL_BUILD_TYPE)
 #PLOS_DEFINE += -DSYS_REAL_DIR=\"$(BASE_ROOT)/$(RELEASEDIR)\"
 PLOS_INCLUDE += -I/usr/include -I/usr/local/include 
-ifeq ($(PL_BUILD_TYPE),X86_64)
+ifeq ($(PL_BUILD_ARCH),X86_64)
 PLOS_LDFLAGS += -L/lib64 -L/usr/lib64 -L/usr/local/lib64
-else ifeq ($(PL_BUILD_TYPE),X86)
+else ifeq ($(PL_BUILD_ARCH),X86)
 PLOS_LDFLAGS += -L/lib -L/usr/lib -L/usr/local/lib 
 endif
 #PLOS_LDFLAGS += -L/lib -L/usr/lib -L/lib64 -L/usr/lib64 -L/usr/local/lib -L/usr/local/lib64
@@ -49,14 +48,13 @@ export CROSS_COMPILE
 PLOS_INCLUDE += -I$(CROSS_COMPILE_PATH)/include -I$(CROSS_COMPILE_PATH)/usr/include 
 PLOS_LDFLAGS += -L$(CROSS_COMPILE_PATH)/lib -L$(CROSS_COMPILE_PATH)/usr/lib
 
-PLOS_DEFINE += -DPL_BUILD_$(PL_BUILD_TYPE)
 endif
 #
 #
 #
-ifeq ($(PL_BUILD_TYPE),X86_64)
+ifeq ($(PL_BUILD_ARCH),X86_64)
 PLOS_CFLAGS += -m64
-else ifeq ($(PL_BUILD_TYPE),AARCH64)
+else ifeq ($(PL_BUILD_ARCH),AARCH64)
 PLOS_CFLAGS += -m64
 endif
 #
@@ -87,7 +85,7 @@ ifeq ($(strip $(PL_LIBSSH_MODULE)),true)
 #-lz -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err
 endif
 #
-ifeq ($(PL_BUILD_TYPE),X86_64)
+ifeq ($(PL_BUILD_ARCH),X86_64)
 ifeq ($(strip $(PL_SQLITE_MODULE)),true)
 #PLOS_LDLIBS += -lsqlite3
 endif

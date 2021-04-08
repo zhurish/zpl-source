@@ -19,13 +19,13 @@ PL_REAL_SYSCONFIG_PATH="/dm/zhurish/work/busybox-1.28.4/SWPlatform/debug/etc"
 #
 _MODULELIST_PLATFORM = \
 	PL_SYSTEM_MODULE.true	 \
-	PL_USEING_LINUX.true	 \
-	PL_USEING_OPENWRT.false	 \
+	PL_SYSTEM_LINUX.true	 \
+	PL_SYSTEM_OPENWRT.false	 \
 	PL_ARCH_MODULE.true	 \
-	PL_USEING_ARM.false	 \
-	PL_USEING_ARM64.false	 \
-	PL_USEING_X86.false	 \
-	PL_USEING_X86_64.true	
+	PL_ARCH_ARM.false	 \
+	PL_ARCH_ARM64.false	 \
+	PL_ARCH_X86.false	 \
+	PL_ARCH_X86_64.true	
 
 #
 # Toolchain Config
@@ -120,15 +120,20 @@ _MODULELIST_COMPONENT = \
 	PL_PJSIP_PJSUA2.true	 \
 	PL_SQLITE_MODULE.true	 \
 	PL_SQLITE_EXE_MODULE.false	 \
-	PL_LIBSSH_MODULE.false	 \
+	PL_LIBSSH_MODULE.true	 \
 	PL_LIBSSH_NACL.false	 \
-	PL_LIBSSH_ZLIB.false	 \
-	PL_LIBSSH_SFTP.false	 \
-	PL_LIBSSH_SSH1.false	 \
+	PL_LIBSSH_ZLIB.true	 \
+	PL_LIBSSH_SFTP.true	 \
+	PL_LIBSSH_MBEDTLS.false	 \
 	PL_LIBSSH_GCRYPT.false	 \
-	PL_LIBSSH_SERVER.false	 \
-	PL_LIBSSH_PTHREAD.false	 \
+	PL_LIBSSH_CRYPTO.true	 \
+	PL_LIBSSH_OPENSSL_ED25519.false	 \
+	PL_LIBSSH_BLOWFISH.false	 \
+	PL_LIBSSH_SERVER.true	 \
+	PL_LIBSSH_PTHREAD.true	 \
 	PL_LIBSSH_GSSAPI.false	 \
+	PL_LIBSSH_GEX.false	 	\
+	PL_LIBSSH_PCAP.false	 \
 	PL_UDHCP_MODULE.true	 \
 	PL_UDHCPS_MODULE.true	 \
 	PL_UDHCPC_MODULE.true	 \

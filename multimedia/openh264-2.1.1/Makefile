@@ -15,7 +15,7 @@ vpath %.pc.in $(SRC_PATH)
 #OS=$(shell uname | tr A-Z a-z | tr -d \\-0-9. | sed -E 's/^(net|open|free)bsd/bsd/')
 #ARCH=$(shell uname -m)
 OS=$(PL_BUILD_OS)
-ARCH=$(PL_BUILD_TYPE)
+ARCH=$(PL_BUILD_ARCH)
 
 LIBPREFIX=lib
 LIBSUFFIX=a
@@ -61,7 +61,7 @@ endif
 # Configurations
 ifeq ($(BUILDTYPE), Release)
 CFLAGS += $(CFLAGS_OPT)
-CFLAGS += -DNDEBUG
+CFLAGS += -DNDEBUG -DBUILD_$(OS)
 USE_ASM = Yes
 ifeq ($(DEBUGSYMBOLS), True)
 CFLAGS += -g

@@ -15,7 +15,7 @@ extern "C" {
 #include "zebra.h"
 #include "vty.h"
 
-#include "libssh_config.h"
+#include "libssh_autoconfig.h"
 
 #include <libssh/callbacks.h>
 #include <libssh/poll.h>

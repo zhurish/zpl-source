@@ -57,6 +57,7 @@ extern "C" {
  * Note: LOG_CRIT, LOG_ALERT, and LOG_EMERG are currently not used anywhere,
  * please use LOG_ERR instead.
  */
+#define LOG_FORCE_TRAP		(LOG_DEBUG+2)
 #define LOG_TRAP		(LOG_DEBUG+1)
 
 typedef module_t zlog_proto_t;
@@ -134,7 +135,7 @@ struct zlog
   ospl_uint32 maxlvl[ZLOG_NUM_DESTS];	/* maximum priority to send to associated
   				   logging destination */
   ospl_uint32 default_lvl[ZLOG_NUM_DESTS];	/* maxlvl to use if none is specified */
-  ospl_uint32	trap_lvl;
+  ospl_bool	trap_lvl;
   FILE *fp;
   ospl_char *filename;
   ospl_uint32 filesize;
@@ -232,7 +233,7 @@ extern void pl_zlog_trap (const char *file, const char *func, const ospl_uint32 
 #define zlog_notice(module, format, ...) 			pl_zlog_notice (__FILE__, __FUNCTION__, __LINE__, module, format, ##__VA_ARGS__)
 #define zlog_debug(module, format, ...) 			pl_zlog_debug (__FILE__, __FUNCTION__, __LINE__, module, format, ##__VA_ARGS__)
 #define zlog_trap(module, format, ...) 				pl_zlog_trap (__FILE__, __FUNCTION__, __LINE__, module, format, ##__VA_ARGS__)
-
+#define zlog_force_trap(module, format, ...) 	pl_zlog (__FILE__, __FUNCTION__, __LINE__, module, LOG_FORCE_TRAP, format, ##__VA_ARGS__)
 
 #if 0
 
@@ -291,8 +292,8 @@ extern void zlog_get_timestamp(zlog_timestamp_t *value);
 extern void zlog_set_record_priority(ospl_uint32 record_priority);
 extern void zlog_get_record_priority(ospl_uint32 *record_priority);
 
-extern void zlog_set_trap(ospl_uint32 level);
-extern void zlog_get_trap(ospl_uint32 *level);
+extern void zlog_set_trap(ospl_bool level);
+extern void zlog_get_trap(ospl_bool *level);
 
 extern const char *zlog_facility_name(ospl_uint32 facility);
 extern ospl_uint32 zlog_facility_match(const char *str) ;

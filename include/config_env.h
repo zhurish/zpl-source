@@ -19,7 +19,7 @@ extern "C" {
 #define BASE_DIR	"/tmp/app"
 #endif
 
-#ifdef PL_BUILD_X86
+#ifdef PL_BUILD_ARCH_X86
 #ifndef SYS_REAL_DIR
 #define SYS_REAL_DIR		"/home/zhurish/workspace/SWPlatform/debug"
 #undef BASE_DIR
@@ -27,7 +27,7 @@ extern "C" {
 #endif
 #define SYSCONF_REAL_DIR 	SYS_REAL_DIR "/etc"
 #else
-#ifdef PL_BUILD_OPENWRT
+#ifdef PL_BUILD_OS_OPENWRT
 #ifndef SYS_REAL_DIR
 #define SYS_REAL_DIR		"/app"
 #endif
@@ -40,7 +40,7 @@ extern "C" {
 #endif
 #endif
 
-//#ifdef PL_BUILD_OPENWRT
+//#ifdef PL_BUILD_OS_OPENWRT
 //#define SYSCONFDIR 		"/etc/app"
 //#else
 //#define SYSCONFDIR 		BASE_DIR "/etc"
@@ -79,12 +79,12 @@ extern "C" {
 
 #define CONF_BACKUP_EXT ".sav"
 
-#ifdef PL_BUILD_OPENWRT
+#ifdef PL_BUILD_OS_OPENWRT
 #define STARTUP_CONFIG_FILE	SYSCONFDIR "/startup-config.cfg"
 #define DEFAULT_CONFIG_FILE	SYSCONFDIR "/default-config.cfg"
 #define FACTORY_CONFIG_FILE	SYSCONFDIR "/factory-config.cfg"
 #else
-#ifdef PL_BUILD_X86
+#ifdef PL_BUILD_ARCH_X86
 #define STARTUP_CONFIG_FILE	PLSYSCONFDIR "/startup-config.cfg"
 #define DEFAULT_CONFIG_FILE	PLSYSCONFDIR "/default-config.cfg"
 #define FACTORY_CONFIG_FILE	PLSYSCONFDIR "/factory-config.cfg"

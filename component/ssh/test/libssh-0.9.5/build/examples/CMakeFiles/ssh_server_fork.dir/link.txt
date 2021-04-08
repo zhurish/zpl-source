@@ -1,0 +1,1 @@
+/usr/bin/cc   -rdynamic CMakeFiles/ssh_server_fork.dir/ssh_server_fork.c.o  -o ssh_server_fork -Wl,-rpath,/home/zhurish/workspace/working/SWPlatform/source/component/ssh/test/libssh-0.9.5/build/lib ../lib/libssh.so.4.8.6 -lutil 

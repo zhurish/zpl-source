@@ -65,11 +65,22 @@ int nsm_module_init()
 	zebrad.master = master_thread[MODULE_NSM];
 
 	//if_init();
+
+	if_init();
+	nsm_vrf_init();
+	nsm_template_init();
 	zserv_init();
 	rib_init();
-	//nsm_vrf_init ();
 	nsm_interface_init();
 	nsm_client_init();
+	
+#ifdef PL_PAL_MODULE
+	pal_abstract_init();
+#endif
+
+#ifdef PL_HAL_MODULE
+	hal_module_init();
+#endif
 
 #ifdef PL_NSM_8021X
 	nsm_dot1x_init();
@@ -80,9 +91,7 @@ int nsm_module_init()
 #ifdef PL_NSM_BRIDGE
 
 #endif
-#ifdef PL_NSM_DHCP
 
-#endif
 #ifdef PL_NSM_DNS
 	nsm_ip_dns_init();
 #endif
@@ -244,6 +253,9 @@ int nsm_module_cmd_init()
 	cmd_router_id_init();
 	cmd_interface_init();
 	cmd_route_init();
+#ifdef USE_IPSTACK_IPCOM
+	cmd_ip_vrf_init();
+#endif
 
 #ifdef PL_NSM_MAC
 	cmd_mac_init();

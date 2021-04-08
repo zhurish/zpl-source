@@ -203,7 +203,7 @@ extern int iw_ap_mac_del_api(iw_ap_t *iw_ap, ospl_uint8 *mac, ospl_bool accept);
 
 
 
-#ifdef PL_BUILD_OPENWRT
+#ifdef PL_BUILD_OS_OPENWRT
 extern int _iw_bridge_check_interface(char *br, char *wa);
 #endif
 

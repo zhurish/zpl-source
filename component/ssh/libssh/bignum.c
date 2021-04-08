@@ -19,17 +19,19 @@
  * MA 02111-1307, USA.
  */
 
+#include "libssh_autoconfig.h"
+
 #include <stdio.h>
 
 #include "libssh/priv.h"
 #include "libssh/bignum.h"
 #include "libssh/string.h"
 
-ssh_string make_bignum_string(bignum num) {
+ssh_string ssh_make_bignum_string(bignum num) {
   ssh_string ptr = NULL;
-  int pad = 0;
-  unsigned int len = bignum_num_bytes(num);
-  unsigned int bits = bignum_num_bits(num);
+  size_t pad = 0;
+  size_t len = bignum_num_bytes(num);
+  size_t bits = bignum_num_bits(num);
 
   if (len == 0) {
       return NULL;
@@ -41,7 +43,9 @@ ssh_string make_bignum_string(bignum num) {
   }
 
 #ifdef DEBUG_CRYPTO
- ssh_printf(NULL, "%d bits, %d bytes, %d padding\n", bits, len, pad);
+  SSH_LOG(SSH_LOG_TRACE,
+          "%zu bits, %zu bytes, %zu padding\n",
+          bits, len, pad);
 #endif /* DEBUG_CRYPTO */
 
   ptr = ssh_string_new(len + pad);
@@ -54,58 +58,40 @@ ssh_string make_bignum_string(bignum num) {
     ptr->data[0] = 0;
   }
 
-#ifdef HAVE_LIBGCRYPT
   bignum_bn2bin(num, len, ptr->data + pad);
-#elif HAVE_LIBCRYPTO
-  bignum_bn2bin(num, ptr->data + pad);
-#endif
 
   return ptr;
 }
 
-bignum make_string_bn(ssh_string string){
-  bignum bn = NULL;
-  unsigned int len = ssh_string_len(string);
+bignum ssh_make_string_bn(ssh_string string)
+{
+    bignum bn = NULL;
+    size_t len = ssh_string_len(string);
 
 #ifdef DEBUG_CRYPTO
-  ssh_printf(NULL, "Importing a %d bits, %d bytes object ...\n",
-      len * 8, len);
+    SSH_LOG(SSH_LOG_TRACE,
+            "Importing a %zu bits, %zu bytes object ...\n",
+            len * 8, len);
 #endif /* DEBUG_CRYPTO */
 
-#ifdef HAVE_LIBGCRYPT
-  bignum_bin2bn(string->data, len, &bn);
-#elif defined HAVE_LIBCRYPTO
-  bn = bignum_bin2bn(string->data, len, NULL);
-#endif
+    bignum_bin2bn(string->data, len, &bn);
 
-  return bn;
-}
-
-void make_string_bn_inplace(ssh_string string, bignum bnout) {
-  unsigned int len = ssh_string_len(string);
-#ifdef HAVE_LIBGCRYPT
-  /* XXX: FIXME as needed for LIBGCRYPT ECDSA codepaths. */
-  (void) len;
-  (void) bnout;
-#elif defined HAVE_LIBCRYPTO
-  bignum_bin2bn(string->data, len, bnout);
-#endif
+    return bn;
 }
 
 /* prints the bignum on stderr */
-void ssh_print_bignum(const char *which, bignum num) {
+void ssh_print_bignum(const char *name, const_bignum num)
+{
+    unsigned char *hex = NULL;
+    if (num != NULL) {
+        bignum_bn2hex(num, &hex);
+    }
+    fprintf(stderr, "%s value: %s\n", name, (hex == NULL) ? "(null)" : (char *) hex);
 #ifdef HAVE_LIBGCRYPT
-  unsigned char *hex = NULL;
-  bignum_bn2hex(num, &hex);
+    SAFE_FREE(hex);
 #elif defined HAVE_LIBCRYPTO
-  char *hex = NULL;
-  hex = bignum_bn2hex(num);
-#endif
-  ssh_printf(NULL, "%s value: ", which);
-  ssh_printf(NULL, "%s\n", (hex == NULL) ? "(null)" : (char *) hex);
-#ifdef HAVE_LIBGCRYPT
-  SAFE_FREE(hex);
-#elif defined HAVE_LIBCRYPTO
-  OPENSSL_free(hex);
+    OPENSSL_free(hex);
+#elif defined HAVE_LIBMBEDCRYPTO
+    SAFE_FREE(hex);
 #endif
 }

@@ -24,7 +24,7 @@
  * compatibility
  */
 
-#include "libssh_config.h"
+#include "libssh_autoconfig.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -33,6 +33,7 @@
 #include <libssh/session.h>
 #include <libssh/server.h>
 #include <libssh/ssh_buffer.h>
+#include <libssh/dh.h>
 #include <libssh/pki.h>
 #include "libssh/pki_priv.h"
 #include <libssh/misc.h>
@@ -108,7 +109,7 @@ int ssh_userauth_privatekey_file(ssh_session session,
   int rc = SSH_AUTH_ERROR;
   size_t klen = strlen(filename) + 4 + 1;
 
-  pubkeyfile = ssh_malloc(klen);
+  pubkeyfile = malloc(klen);
   if (pubkeyfile == NULL) {
     ssh_set_error_oom(session);
 
@@ -140,20 +141,20 @@ error:
 }
 
 /* BUFFER FUNCTIONS */
-
-/*void buffer_free(ssh_buffer buffer){
+/*
+void buffer_free(ssh_buffer buffer){
   ssh_buffer_free(buffer);
-}*/
+}
 void *buffer_get(ssh_buffer buffer){
-  return ssh_buffer_get_begin(buffer);
+  return ssh_buffer_get(buffer);
 }
 uint32_t buffer_get_len(ssh_buffer buffer){
   return ssh_buffer_get_len(buffer);
 }
-/*ssh_buffer buffer_new(void){
+ssh_buffer buffer_new(void){
   return ssh_buffer_new();
-}*/
-
+}
+*/
 ssh_channel channel_accept_x11(ssh_channel channel, int timeout_ms){
   return ssh_channel_accept_x11(channel, timeout_ms);
 }
@@ -352,16 +353,18 @@ void publickey_free(ssh_public_key key) {
     case SSH_KEYTYPE_DSS:
 #ifdef HAVE_LIBGCRYPT
       gcry_sexp_release(key->dsa_pub);
-#elif HAVE_LIBCRYPTO
+#elif defined HAVE_LIBCRYPTO
       DSA_free(key->dsa_pub);
 #endif
       break;
     case SSH_KEYTYPE_RSA:
-    case SSH_KEYTYPE_RSA1:
 #ifdef HAVE_LIBGCRYPT
       gcry_sexp_release(key->rsa_pub);
 #elif defined HAVE_LIBCRYPTO
       RSA_free(key->rsa_pub);
+#elif defined HAVE_LIBMBEDCRYPTO
+      mbedtls_pk_free(key->rsa_pub);
+      SAFE_FREE(key->rsa_pub);
 #endif
       break;
     default:
@@ -428,7 +431,7 @@ ssh_private_key privatekey_from_file(ssh_session session,
         return NULL;
     }
 
-    privkey = ssh_malloc(sizeof(struct ssh_private_key_struct));
+    privkey = malloc(sizeof(struct ssh_private_key_struct));
     if (privkey == NULL) {
         ssh_key_free(key);
         return NULL;
@@ -463,6 +466,9 @@ void privatekey_free(ssh_private_key prv) {
 #elif defined HAVE_LIBCRYPTO
   DSA_free(prv->dsa_priv);
   RSA_free(prv->rsa_priv);
+#elif defined HAVE_LIBMBEDCRYPTO
+  mbedtls_pk_free(prv->rsa_priv);
+  SAFE_FREE(prv->rsa_priv);
 #endif
   memset(prv, 0, sizeof(struct ssh_private_key_struct));
   SAFE_FREE(prv);
@@ -515,7 +521,7 @@ ssh_public_key publickey_from_string(ssh_session session, ssh_string pubkey_s) {
         return NULL;
     }
 
-    pubkey = ssh_malloc(sizeof(struct ssh_public_key_struct));
+    pubkey = malloc(sizeof(struct ssh_public_key_struct));
     if (pubkey == NULL) {
         ssh_key_free(key);
         return NULL;
@@ -538,6 +544,10 @@ ssh_string publickey_to_string(ssh_public_key pubkey) {
     ssh_key key;
     ssh_string key_blob;
     int rc;
+
+    if (pubkey == NULL) {
+        return NULL;
+    }
 
     key = ssh_key_new();
     if (key == NULL) {
@@ -591,7 +601,7 @@ int ssh_publickey_to_file(ssh_session session,
         return SSH_ERROR;
     }
 
-    rc = ssh_gethostname(host, sizeof(host));
+    rc = gethostname(host, sizeof(host));
     if (rc < 0) {
         SAFE_FREE(user);
         SAFE_FREE(pubkey_64);
@@ -656,7 +666,7 @@ int ssh_try_publickey_from_file(ssh_session session,
     }
 
     len = strlen(keyfile) + 5;
-    pubkey_file = ssh_malloc(len);
+    pubkey_file = malloc(len);
     if (pubkey_file == NULL) {
         return -1;
     }
@@ -695,12 +705,24 @@ int ssh_try_publickey_from_file(ssh_session session,
     return 0;
 }
 
-ssh_string ssh_get_pubkey(ssh_session session){
-	if(session==NULL || session->current_crypto ==NULL ||
-      session->current_crypto->server_pubkey==NULL)
-    return NULL;
-	else
-    return ssh_string_copy(session->current_crypto->server_pubkey);
+ssh_string ssh_get_pubkey(ssh_session session)
+{
+    ssh_string pubkey_blob = NULL;
+    int rc;
+
+    if (session == NULL ||
+        session->current_crypto == NULL ||
+        session->current_crypto->server_pubkey == NULL) {
+        return NULL;
+    }
+
+    rc = ssh_dh_get_current_server_publickey_blob(session,
+                                                  &pubkey_blob);
+    if (rc != 0) {
+        return NULL;
+    }
+
+    return pubkey_blob;
 }
 
 /****************************************************************************

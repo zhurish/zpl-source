@@ -78,7 +78,7 @@ int ssh_authenticate_kbdint(int fd, ssh_session session, const char *password) {
                 } else {
                     buffer[0] = '\0';
 
-                    if (ssh_getpass(fd, prompt, buffer, sizeof(buffer), 0, 0) < 0) {
+                    if (ssh_getpass(fd, prompt, buffer, (size_t)sizeof(buffer), 0, 0) < 0) {
                         return SSH_AUTH_ERROR;
                     }
                     answer = buffer;

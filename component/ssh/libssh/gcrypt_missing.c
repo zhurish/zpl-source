@@ -21,13 +21,15 @@
  * MA 02111-1307, USA.
  */
 
+#include "libssh_autoconfig.h"
+
 #include <stdlib.h>
 
 #include "libssh/priv.h"
 #include "libssh/libgcrypt.h"
 
 #ifdef HAVE_LIBGCRYPT
-int my_gcry_dec2bn(bignum *bn, const char *data) {
+int ssh_gcry_dec2bn(bignum *bn, const char *data) {
   int count;
 
   *bn = bignum_new();
@@ -43,7 +45,7 @@ int my_gcry_dec2bn(bignum *bn, const char *data) {
   return count;
 }
 
-char *my_gcry_bn2dec(bignum bn) {
+char *ssh_gcry_bn2dec(bignum bn) {
   bignum bndup, num, ten;
   char *ret;
   int count, count2;
@@ -53,7 +55,7 @@ char *my_gcry_bn2dec(bignum bn) {
   size = gcry_mpi_get_nbits(bn) * 3;
   rsize = size / 10 + size / 1000 + 2;
 
-  ret = ssh_malloc(rsize + 1);
+  ret = malloc(rsize + 1);
   if (ret == NULL) {
     return NULL;
   }
@@ -70,7 +72,7 @@ char *my_gcry_bn2dec(bignum bn) {
     num = bignum_new();
     if (num == NULL) {
       SAFE_FREE(ret);
-      bignum_free(ten);
+      bignum_safe_free(ten);
       return NULL;
     }
 
@@ -89,13 +91,34 @@ char *my_gcry_bn2dec(bignum bn) {
       ret[count2] = ret[count2 + count];
     }
     ret[count2] = 0;
-    bignum_free(num);
-    bignum_free(bndup);
-    bignum_free(ten);
+    bignum_safe_free(num);
+    bignum_safe_free(bndup);
+    bignum_safe_free(ten);
   }
 
   return ret;
 }
 
+/** @brief generates a random integer between 0 and max
+ * @returns 1 in case of success, 0 otherwise
+ */
+int ssh_gcry_rand_range(bignum dest, bignum max)
+{
+    size_t bits;
+    bignum rnd;
+    int rc;
+
+    bits = bignum_num_bits(max) + 64;
+    rnd = bignum_new();
+    if (rnd == NULL) {
+        return 0;
+    }
+    rc = bignum_rand(rnd, bits);
+    if (rc != 1) {
+        return rc;
+    }
+    gcry_mpi_mod(dest, rnd, max);
+    bignum_safe_free(rnd);
+    return 1;
+}
 #endif
-/* vim: set ts=2 sw=2 et cindent: */

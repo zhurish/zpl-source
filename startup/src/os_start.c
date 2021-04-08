@@ -168,11 +168,11 @@ static int os_base_dir_init(void)
 
 static int os_base_dir_load(void)
 {
-#ifdef PL_BUILD_OPENWRT
+#ifdef PL_BUILD_OS_OPENWRT
 	if(access(DEFAULT_CONFIG_FILE, F_OK) != 0)
 		super_system("cp -af " SYSCONF_REAL_DIR"/default-config.cfg  " DEFAULT_CONFIG_FILE);
 #else
-#ifdef PL_BUILD_X86
+#ifdef PL_BUILD_ARCH_X86
 	if(access(DEFAULT_CONFIG_FILE, F_OK) != 0)
 		super_system("cp -af " SYSCONFDIR"/default-config.cfg  " DEFAULT_CONFIG_FILE);
 	super_system("cp -arf " SYSCONFDIR"/*" " " PLSYSCONFDIR"/");
@@ -198,7 +198,7 @@ static int os_base_dir_load(void)
 	}
 #endif
 
-#ifdef PL_BUILD_OPENWRT
+#ifdef PL_BUILD_OS_OPENWRT
 #ifdef APP_X5BA_MODULE
 	if(access("/etc/config/product", F_OK) != 0)
 	{

@@ -133,9 +133,9 @@ static const ospl_uint8 md5_paddat[MD5_BUFLEN] = {
 	0,	0,	0,	0,	0,	0,	0,	0,	
 };
 
-static void md5_calc (const ospl_uint8 *, md5_ctxt *);
+static void os_md5_calc (const ospl_uint8 *, os_md5_ctxt *);
 
-void md5_init(md5_ctxt *ctxt)
+void os_md5_init(os_md5_ctxt *ctxt)
 {
 	ctxt->md5_n = 0;
 	ctxt->md5_i = 0;
@@ -146,7 +146,7 @@ void md5_init(md5_ctxt *ctxt)
 	memset (ctxt->md5_buf, 0, sizeof(ctxt->md5_buf));
 }
 
-void md5_loop(md5_ctxt *ctxt, const void *vinput, uint len)
+void os_md5_loop(os_md5_ctxt *ctxt, const void *vinput, uint len)
 {
 	uint gap, i;
 	const ospl_uint8 *input = vinput;
@@ -156,10 +156,10 @@ void md5_loop(md5_ctxt *ctxt, const void *vinput, uint len)
 
 	if (len >= gap) {
 		memcpy (ctxt->md5_buf + ctxt->md5_i, input, gap);
-		md5_calc(ctxt->md5_buf, ctxt);
+		os_md5_calc(ctxt->md5_buf, ctxt);
 
 		for (i = gap; i + MD5_BUFLEN <= len; i += MD5_BUFLEN) {
-			md5_calc((input + i), ctxt);
+			os_md5_calc((input + i), ctxt);
 		}
 		
 		ctxt->md5_i = len - i;
@@ -170,7 +170,7 @@ void md5_loop(md5_ctxt *ctxt, const void *vinput, uint len)
 	}
 }
 
-void md5_pad(md5_ctxt *ctxt)
+void os_md5_pad(os_md5_ctxt *ctxt)
 {
 	uint gap;
 
@@ -182,7 +182,7 @@ void md5_pad(md5_ctxt *ctxt)
 	} else {
 		/* including gap == 8 */
 		memcpy (ctxt->md5_buf + ctxt->md5_i, md5_paddat, gap);
-		md5_calc (ctxt->md5_buf, ctxt);
+		os_md5_calc (ctxt->md5_buf, ctxt);
 		memcpy (ctxt->md5_buf, md5_paddat + gap,
 			MD5_BUFLEN - sizeof(ctxt->md5_n));
 	}
@@ -201,10 +201,10 @@ void md5_pad(md5_ctxt *ctxt)
 	    ctxt->md5_buf[62] = ctxt->md5_n8[1];
 	    ctxt->md5_buf[63] = ctxt->md5_n8[0];
 	  }
-	md5_calc(ctxt->md5_buf, ctxt);
+	os_md5_calc(ctxt->md5_buf, ctxt);
 }
 
-void md5_result(ospl_uint8 *digest, md5_ctxt *ctxt)
+void os_md5_result(ospl_uint8 *digest, os_md5_ctxt *ctxt)
 {
 	/* 4 byte words */
 	if (BYTE_ORDER == LITTLE_ENDIAN)
@@ -222,7 +222,7 @@ void md5_result(ospl_uint8 *digest, md5_ctxt *ctxt)
 	  }
 }
 
-static void md5_calc(const ospl_uint8 *b64, md5_ctxt * ctxt)
+static void os_md5_calc(const ospl_uint8 *b64, os_md5_ctxt * ctxt)
 {
 	ospl_uint32  A = ctxt->md5_sta;
 	ospl_uint32  B = ctxt->md5_stb;
@@ -299,24 +299,24 @@ static void md5_calc(const ospl_uint8 *b64, md5_ctxt * ctxt)
 	ctxt->md5_std += D;
 }
 
-void	MD5_Init(MD5_CTX *context)
+void	OS_MD5_Init(OS_MD5_CTX *context)
 {
-	md5_init(context);
+	os_md5_init(context);
 }
 
-void	MD5_Update(MD5_CTX *context, const ospl_uchar *buf, ospl_size_t len)
+void	OS_MD5_Update(OS_MD5_CTX *context, const ospl_uchar *buf, ospl_size_t len)
 {
-	md5_loop(context, buf, len);
+	os_md5_loop(context, buf, len);
 }
 
-void	MD5_Final(ospl_uchar *buf, MD5_CTX *context)
+void	OS_MD5_Final(ospl_uchar *buf, OS_MD5_CTX *context)
 {
-	md5_pad(context);
-	md5_result(buf, context);
+	os_md5_pad(context);
+	os_md5_result(buf, context);
 }
 /* From RFC 2104 */
 void
-hmac_md5(text, text_len, key, key_len, digest)
+os_hmac_md5(text, text_len, key, key_len, digest)
 ospl_uchar*  text;			/* pointer to data stream */
 ospl_uint32             text_len;		/* length of data stream */
 ospl_uchar*  key;			/* pointer to authentication key */
@@ -324,7 +324,7 @@ ospl_uint32             key_len;		/* length of authentication key */
 ospl_uint8 *       digest;			/* caller digest to be filled in */
 
 {
-    MD5_CTX context;
+    OS_MD5_CTX context;
     ospl_uchar k_ipad[65];    /* inner padding -
 				 * key XORd with ipad
 				 */
@@ -336,11 +336,11 @@ ospl_uint8 *       digest;			/* caller digest to be filled in */
     /* if key is longer than 64 bytes reset it to key=MD5(key) */
     if (key_len > 64) {
 
-       MD5_CTX      tctx;
+       OS_MD5_CTX      tctx;
 
-       MD5Init(&tctx);
-       MD5Update(&tctx, key, key_len);
-       MD5Final(tk, &tctx);
+       OS_MD5Init(&tctx);
+       OS_MD5Update(&tctx, key, key_len);
+       OS_MD5Final(tk, &tctx);
 
        key = tk;
        key_len = 16;
@@ -371,20 +371,20 @@ ospl_uint8 *       digest;			/* caller digest to be filled in */
     /*
      * perform inner MD5
      */
-    MD5Init(&context);			/* init context for 1st
+    OS_MD5Init(&context);			/* init context for 1st
 					 * pass */
-    MD5Update(&context, k_ipad, 64);	/* start with inner pad */
-    MD5Update(&context, text, text_len); /* then text of datagram */
-    MD5Final(digest, &context);	/* finish up 1st pass */
+    OS_MD5Update(&context, k_ipad, 64);	/* start with inner pad */
+    OS_MD5Update(&context, text, text_len); /* then text of datagram */
+    OS_MD5Final(digest, &context);	/* finish up 1st pass */
     /*
      * perform outer MD5
      */
-    MD5Init(&context);			/* init context for 2nd
+    OS_MD5Init(&context);			/* init context for 2nd
 					 * pass */
-    MD5Update(&context, k_opad, 64);	/* start with outer pad */
-    MD5Update(&context, digest, 16);	/* then results of 1st
+    OS_MD5Update(&context, k_opad, 64);	/* start with outer pad */
+    OS_MD5Update(&context, digest, 16);	/* then results of 1st
 					 * hash */
-    MD5Final(digest, &context);	/* finish up 2nd pass */
+    OS_MD5Final(digest, &context);	/* finish up 2nd pass */
 }
 
 #ifndef USE_IPSTACK_KERNEL
@@ -405,16 +405,16 @@ void OPENSSL_cleanse(void *ptr, ospl_size_t len)
 	cleanse_ctr = (ospl_uchar)ctr;
 	}
 
-ospl_uchar *MD5(const ospl_uchar *d, ospl_size_t n, ospl_uchar *md)
+ospl_uchar *OS_MD5(const ospl_uchar *d, ospl_size_t n, ospl_uchar *md)
 	{
-	MD5_CTX c;
+	OS_MD5_CTX c;
 	static ospl_uchar m[MD5_DIGEST_LENGTH];
 
 	if (md == NULL)
 		md=m;
-	MD5Init(&c);
+	OS_MD5Init(&c);
 #ifndef CHARSET_EBCDIC
-	MD5Update(&c,d,n);
+	OS_MD5Update(&c,d,n);
 #else
 	{
 		ospl_char temp[1024];
@@ -424,13 +424,13 @@ ospl_uchar *MD5(const ospl_uchar *d, ospl_size_t n, ospl_uchar *md)
 		{
 			chunk = (n > sizeof(temp)) ? sizeof(temp) : n;
 			ebcdic2ascii(temp, d, chunk);
-			MD5_Update(&c,temp,chunk);
+			OS_MD5_Update(&c,temp,chunk);
 			n -= chunk;
 			d += chunk;
 		}
 	}
 #endif
-	MD5Final(md,&c);
+	OS_MD5Final(md,&c);
 	OPENSSL_cleanse(&c,sizeof(c)); /* security consideration */
 	return(md);
 	}

@@ -77,7 +77,7 @@ static int sshd_close(struct vty *vty)
 	    zlog_debug(MODULE_UTILS, "%s :", __func__);
 
 	    vty->ssh = NULL;
-        vty->ssh_enable = FALSE;
+        vty->ssh_enable = ospl_false;
         if(sshclient->sock)
         	close(sshclient->sock);
     	sshclient->sock = 0;
@@ -684,7 +684,7 @@ int sshd_task(void *argv)
 			os_sleep(1);
 		}*/
 	}
-	sshd->quit = FALSE;
+	sshd->quit = ospl_false;
 	if(!sshd->event)
 		return OK;
 	if(ssh_event_session_count(sshd->event))

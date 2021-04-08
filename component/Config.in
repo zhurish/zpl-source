@@ -91,18 +91,38 @@ config PL_LIBSSH_SFTP
 	default y
 	help
 	Build Libssh whih SFTP Module.
-config PL_LIBSSH_SSH1
-	bool "Libssh SSH1"
-	depends on PL_LIBSSH_MODULE
-	default y
-	help
-	Build Libssh whih SSH1 Module.
+
 config PL_LIBSSH_GCRYPT
 	bool "Libssh GCRYPT"
 	depends on PL_LIBSSH_MODULE
 	default n
 	help
 	Build Libssh whih GCRYPT Module.
+config PL_LIBSSH_MBEDTLS
+	bool "Libssh MBEDTLS"
+	depends on PL_LIBSSH_MODULE
+	default n
+	help
+	Build Libssh whih MBEDTLS Module.
+config PL_LIBSSH_CRYPTO
+	bool "Libssh CRYPTO"
+	depends on PL_LIBSSH_MODULE
+	default n
+	help
+	Build Libssh whih CRYPTO Module.
+config PL_LIBSSH_OPENSSL_ED25519
+	bool "Libssh OPENSSL ED25519"
+	depends on PL_LIBSSH_CRYPTO
+	default n
+	help
+	Build Libssh whih OPENSSL ED25519 Module.
+config PL_LIBSSH_BLOWFISH
+	bool "Libssh BLOWFISH"
+	depends on PL_LIBSSH_CRYPTO
+	default n
+	help
+	Build Libssh whih BLOWFISH Module.
+
 config PL_LIBSSH_SERVER
 	bool "Libssh SERVER"
 	depends on PL_LIBSSH_MODULE
@@ -121,6 +141,19 @@ config PL_LIBSSH_GSSAPI
 	default n
 	help
 	Build Libssh whih GSSAPI Module.
+
+config PL_LIBSSH_GEX
+	bool "Libssh GEX"
+	depends on PL_LIBSSH_MODULE
+	default n
+	help
+	Build Libssh whih GEX Module.
+config PL_LIBSSH_PCAP
+	bool "Libssh PCAP"
+	depends on PL_LIBSSH_MODULE
+	default n
+	help
+	Build Libssh whih PCAP Module.
 
 config PL_UDHCP_MODULE
 	bool "UDHCP Module"
@@ -178,5 +211,12 @@ config PL_WIFI_MODULE
 	select PL_TOOLS_PROCESS
 	help
 	Build WIFI Module.
+
+config PL_MODBUS_MODULE
+	bool "Libmodbus Module"
+	default n
+	depends on PL_COMPONENT_MODULE  && PL_NSM_MODULE
+	help
+	Build Libmodbus Module.
 
 endmenu

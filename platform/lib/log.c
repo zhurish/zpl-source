@@ -47,7 +47,7 @@ struct zlog *zlog_default = NULL;
 
 
 static const char *zlog_priority[] = { "emergencies", "alerts", "critical", "errors",
-		"warnings", "notifications", "informational", "debugging", "trapping", NULL, };
+		"warnings", "notifications", "informational", "debugging", "trapping", "forcetrapping", NULL, };
 
 static const struct facility_map {
 	ospl_uint32 facility;
@@ -412,9 +412,23 @@ static void vzlog_output(struct zlog *zl, ospl_uint32 module, ospl_uint32 priori
 				zlog_proto_names(zl->protocol), format, zl->timestamp, args);
 	}
 	//trapping
-	if (priority == zl->trap_lvl)
-		vty_trap_log((zl->record_priority ? zlog_priority[priority] : NULL),
-				zlog_proto_names(zl->protocol), format, zl->timestamp, args);
+	if ((priority == LOG_TRAP || priority == LOG_FORCE_TRAP) && zl->trap_lvl)
+	{
+		if(vty_trap_log((zl->record_priority ? zlog_priority[priority] : NULL),
+				zlog_proto_names(zl->protocol), format, zl->timestamp, args) != OK)
+		{
+			va_list ac;
+			time_print(stdout, zl->timestamp);
+			if (zl->record_priority)
+				fprintf(stdout, "%s: ", zlog_priority[priority]);
+			fprintf(stdout, "%s: ", zlog_proto_names(zl->protocol));
+			va_copy(ac, args);
+			vfprintf(stdout, format, ac);
+			va_end(ac);
+			fprintf(stdout, "\r\n");
+			fflush(stdout);
+		}
+	}
 
 	if (module != MODULE_NONE) {
 		zl->protocol = protocol;
@@ -463,7 +477,7 @@ void pl_vzlog(const char *file, const char *func, const ospl_uint32 line,
 			priority <= zl->maxlvl[ZLOG_DEST_BUFFER] ||
 			((priority <= zl->maxlvl[ZLOG_DEST_FILE]) && zl->fp) ||
 			priority <= zl->maxlvl[ZLOG_DEST_MONITOR] ||
-			priority == zl->trap_lvl ||
+			((priority == LOG_TRAP || priority == LOG_FORCE_TRAP) && zl->trap_lvl) ||
 #ifdef ZLOG_TESTING_ENABLE
 			(zl->testing && (priority <= zl->testlog.priority) && zl->testlog.fp) ||
 #endif
@@ -478,12 +492,26 @@ void pl_vzlog(const char *file, const char *func, const ospl_uint32 line,
 		loghdr.len = 0;
 		//loghdr.logbuf[LOG_MSG_SIZE];
 		offset = zlog_depth_debug_detail(NULL, loghdr.logbuf, zl->depth_debug, file, func, line);
-
 		va_copy(ac, args);
 		loghdr.len += vsnprintf(loghdr.logbuf + offset, sizeof(loghdr.logbuf) - offset, format, ac);
 		va_end(ac);
-		if(zl->lfd)
+		if(priority == LOG_FORCE_TRAP)
+		{
+			if (zl->mutex)
+				os_mutex_unlock(zl->mutex);
+			zlog_out(zl, loghdr.module, loghdr.priority, loghdr.logbuf);
+			return;
+		}
+		if(zl->lfd && zl->taskid)
 			write(zl->lfd, &loghdr, sizeof(loghdr));
+		else
+		{
+			//printf("==========pl_vzlog priority == LOG_TRAP\r\n");
+			if (zl->mutex)
+				os_mutex_unlock(zl->mutex);
+			zlog_out(zl, loghdr.module, loghdr.priority, loghdr.logbuf);
+			return;
+		}
 	}
 	if (zl->mutex)
 		os_mutex_unlock(zl->mutex);
@@ -584,7 +612,6 @@ static int zlog_task_init(struct zlog *zl)
 
 static int zlog_task_exit(struct zlog *zl)
 {
-
 	if(zl->taskid)
 	{
 		os_task_destroy(zl->taskid);
@@ -716,7 +743,7 @@ void vzlog(const char *file, const char *func, const ospl_uint32 line,
 				zlog_proto_names(zl->protocol), format, zl->timestamp, args);
 	}
 	//trapping
-	if (priority == zl->trap_lvl)
+	if ((priority == LOG_TRAP) && zl->trap_lvl)
 		vty_trap_log((zl->record_priority ? zlog_priority[priority] : NULL),
 				zlog_proto_names(zl->protocol), format, zl->timestamp, args);
 
@@ -1201,7 +1228,7 @@ openzlog(const char *progname, zlog_proto_t protocol, ospl_uint32 syslog_flags,
 	zl->default_lvl[ZLOG_DEST_MONITOR] = LOG_NOTICE;
 	zl->default_lvl[ZLOG_DEST_FILE] = LOG_ERR;
 
-	zl->trap_lvl = LOG_TRAP;
+	zl->trap_lvl = ospl_true;//LOG_TRAP;
 
 	openlog(progname, syslog_flags, zl->facility);
 #ifdef PL_SERVICE_SYSLOG
@@ -1261,7 +1288,7 @@ void closezlog(struct zlog *zl) {
 
 /* Called from command.c. */
 
-void zlog_set_trap(ospl_uint32 level) {
+void zlog_set_trap(ospl_bool level) {
 
 	ospl_uint32 i = 0;
 	if (zlog_default == NULL)
@@ -1277,7 +1304,7 @@ void zlog_set_trap(ospl_uint32 level) {
 }
 
 
-void zlog_get_trap(ospl_uint32 *level)
+void zlog_get_trap(ospl_bool *level)
 {
 	if (zlog_default == NULL)
 		return;

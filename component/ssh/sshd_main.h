@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-#include "libssh_config.h"
+#include "libssh_autoconfig.h"
 
 #include <libssh/callbacks.h>
 #include <libssh/poll.h>
@@ -43,7 +43,7 @@ extern "C" {
 
 #include "zebra.h"
 
-#ifdef PL_BUILD_X86
+#ifdef PL_BUILD_ARCH_X86
 #define KEYS_FOLDER 		"/home/zhurish/.ssh/"
 #define USER 				"zhurish"
 #define PASS 				"centos"

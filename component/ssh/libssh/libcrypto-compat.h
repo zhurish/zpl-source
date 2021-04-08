@@ -2,6 +2,7 @@
 #define LIBCRYPTO_COMPAT_H
 
 #include <openssl/opensslv.h>
+
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 
 #include <openssl/rsa.h>
@@ -10,6 +11,7 @@
 #include <openssl/dh.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#include <openssl/bn.h>
 
 int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d);
 int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q);
@@ -33,9 +35,21 @@ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx);
 EVP_MD_CTX *EVP_MD_CTX_new(void);
 void EVP_MD_CTX_free(EVP_MD_CTX *ctx);
 
+int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx);
+
 HMAC_CTX *HMAC_CTX_new(void);
 int HMAC_CTX_reset(HMAC_CTX *ctx);
 void HMAC_CTX_free(HMAC_CTX *ctx);
+
+void DH_get0_pqg(const DH *dh,
+                 const BIGNUM **p, const BIGNUM **q, const BIGNUM **g);
+int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g);
+void DH_get0_key(const DH *dh,
+                 const BIGNUM **pub_key, const BIGNUM **priv_key);
+int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key);
+
+const char *OpenSSL_version(int type);
+unsigned long OpenSSL_version_num(void);
 
 #endif /* OPENSSL_VERSION_NUMBER */
 

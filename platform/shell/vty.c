@@ -3674,24 +3674,32 @@ void vty_log_debug(const char *level, const char *proto_str, const char *format,
 			}
 }
 
-void vty_trap_log(const char *level, const char *proto_str, const char *format,
+int vty_trap_log(const char *level, const char *proto_str, const char *format,
 		zlog_timestamp_t ctl, va_list va)
 {
-	ospl_uint32  i;
+	ospl_uint32  i = 0, flag = 0;
 	struct vty *vty;
 
 	if (!vtyvec)
-		return;
+		return ERROR;
 
 	for (i = 0; i < vector_active(vtyvec); i++)
+	{
 		if ((vty = vector_slot(vtyvec, i)) != NULL)
+		{
 			if (vty->trapping && (!vty->cancel))
 			{
 				va_list ac;
 				va_copy(ac, va);
 				vty_log_out(vty, level, proto_str, format, ctl, ac, NULL, NULL, 0);
 				va_end(ac);
+				flag++;
 			}
+		}
+	}
+	if(flag)
+		return OK;
+	return ERROR;
 }
 
 /* Async-signal-safe version of vty_log for fixed strings. */

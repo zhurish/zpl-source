@@ -64,7 +64,7 @@ int nsm_iw_enable_api(struct interface *ifp, ospl_bool enable)
 	{
 		if (iw->mode == IW_MODE_AP)
 		{
-#ifdef PL_BUILD_OPENWRT
+#ifdef PL_BUILD_OS_OPENWRT
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
 			if(_iw_bridge_check_interface("br-lan", "wlan0") != OK)
 			{
@@ -358,7 +358,7 @@ static int nsm_iw_create_interface(struct interface *ifp)
 
 		if(master_thread[PL_WIFI_MODULE])
 			iw->n_thread = thread_add_timer(master_thread[PL_WIFI_MODULE], iw_empty_thread, iw, 10);
-#ifdef PL_BUILD_OPENWRT
+#ifdef PL_BUILD_OS_OPENWRT
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
 			if(_iw_bridge_check_interface("br-lan", "wlan0") != OK)
 			{

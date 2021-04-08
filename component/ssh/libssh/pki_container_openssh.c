@@ -26,10 +26,11 @@
  * @{
  */
 
-#include "libssh_config.h"
+#include "libssh_autoconfig.h"
 
 #include <ctype.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "libssh/libssh.h"
 #include "libssh/priv.h"
@@ -60,7 +61,6 @@ static int pki_openssh_import_privkey_blob(ssh_buffer key_blob_buffer,
     enum ssh_keytypes_e type;
     char *type_s = NULL;
     ssh_key key = NULL;
-    ssh_string pubkey = NULL, privkey = NULL;
     int rc;
 
     if (pkey == NULL) {
@@ -69,61 +69,20 @@ static int pki_openssh_import_privkey_blob(ssh_buffer key_blob_buffer,
 
     rc = ssh_buffer_unpack(key_blob_buffer, "s", &type_s);
     if (rc == SSH_ERROR){
-        ssh_pki_log("Unpack error");
+        SSH_LOG(SSH_LOG_WARN, "Unpack error");
         return SSH_ERROR;
     }
 
     type = ssh_key_type_from_name(type_s);
     if (type == SSH_KEYTYPE_UNKNOWN) {
-        ssh_pki_log("Unknown key type found!");
+        SSH_LOG(SSH_LOG_WARN, "Unknown key type '%s' found!", type_s);
         return SSH_ERROR;
     }
     SAFE_FREE(type_s);
 
-    key = ssh_key_new();
-    if (key == NULL) {
-        ssh_pki_log("Out of memory");
-        return SSH_ERROR;
-    }
-
-    key->type = type;
-    key->type_c = ssh_key_type_to_char(type);
-    key->flags = SSH_KEY_FLAG_PRIVATE | SSH_KEY_FLAG_PUBLIC;
-
-    switch (type) {
-    case SSH_KEYTYPE_ED25519:
-        rc = ssh_buffer_unpack(key_blob_buffer, "SS", &pubkey, &privkey);
-        if (rc != SSH_OK){
-            ssh_pki_log("Unpack error");
-            goto fail;
-        }
-        if(ssh_string_len(pubkey) != ED25519_PK_LEN ||
-                ssh_string_len(privkey) != ED25519_SK_LEN){
-            ssh_pki_log("Invalid ed25519 key len");
-            goto fail;
-        }
-        key->ed25519_privkey = ssh_malloc(ED25519_SK_LEN);
-        key->ed25519_pubkey = ssh_malloc(ED25519_PK_LEN);
-        if(key->ed25519_privkey == NULL || key->ed25519_pubkey == NULL){
-            goto fail;
-        }
-        memcpy(key->ed25519_privkey, ssh_string_data(privkey), ED25519_SK_LEN);
-        memcpy(key->ed25519_pubkey, ssh_string_data(pubkey), ED25519_PK_LEN);
-        memset(ssh_string_data(privkey), 0, ED25519_SK_LEN);
-        SAFE_FREE(privkey);
-        SAFE_FREE(pubkey);
-        break;
-    case SSH_KEYTYPE_DSS:
-        /* p,q,g,pub_key,priv_key */
-    case SSH_KEYTYPE_RSA:
-        /* n,e,d,iqmp,p,q */
-    case SSH_KEYTYPE_RSA1:
-    case SSH_KEYTYPE_ECDSA:
-        /* curve_name, group, privkey */
-        ssh_pki_log("Unsupported private key method %s", key->type_c);
-        goto fail;
-    case SSH_KEYTYPE_UNKNOWN:
-        ssh_pki_log("Unknown private key protocol %s", key->type_c);
+    rc = pki_import_privkey_buffer(type, key_blob_buffer, &key);
+    if (rc != SSH_OK) {
+        SSH_LOG(SSH_LOG_WARN, "Failed to read key in OpenSSH format");
         goto fail;
     }
 
@@ -131,17 +90,12 @@ static int pki_openssh_import_privkey_blob(ssh_buffer key_blob_buffer,
     return SSH_OK;
 fail:
     ssh_key_free(key);
-    if(privkey != NULL){
-        memset(ssh_string_data(privkey), 0, ssh_string_len(privkey));
-    }
-    SAFE_FREE(pubkey);
-    SAFE_FREE(privkey);
 
     return SSH_ERROR;
 }
 
 /**
- * @brief decrypts an encrypted ed25519 private key blob
+ * @brief decrypts an encrypted private key blob in OpenSSH format.
  *
  */
 static int pki_private_key_decrypt(ssh_string blob,
@@ -154,11 +108,11 @@ static int pki_private_key_decrypt(ssh_string blob,
 {
     struct ssh_cipher_struct *ciphers = ssh_get_ciphertab();
     struct ssh_cipher_struct cipher;
-    uint8_t key_material[128];
-    char passphrase_buffer[128];
+    uint8_t key_material[128] = {0};
+    char passphrase_buffer[128] = {0};
     size_t key_material_len;
-    ssh_buffer buffer;
-    ssh_string salt;
+    ssh_buffer buffer = NULL;
+    ssh_string salt = NULL;
     uint32_t rounds;
     int cmp;
     int rc;
@@ -205,7 +159,7 @@ static int pki_private_key_decrypt(ssh_string blob,
     if (rc != SSH_ERROR){
         rc = ssh_buffer_unpack(buffer, "Sd", &salt, &rounds);
     }
-    ssh_buffer_free(buffer);
+    SSH_BUFFER_FREE(buffer);
     if (rc == SSH_ERROR){
         return SSH_ERROR;
     }
@@ -213,18 +167,21 @@ static int pki_private_key_decrypt(ssh_string blob,
     /* We need material for key (keysize bits / 8) and IV (blocksize)  */
     key_material_len =  cipher.keysize/8 + cipher.blocksize;
     if (key_material_len > sizeof(key_material)) {
-        ssh_pki_log("Key material too big");
+        SSH_LOG(SSH_LOG_WARN, "Key material too big");
         return SSH_ERROR;
     }
 
-    ssh_pki_log("Decryption: %d key, %d IV, %d rounds, %zu bytes salt",
-                cipher.keysize/8,
-                cipher.blocksize, rounds, ssh_string_len(salt));
+    SSH_LOG(SSH_LOG_DEBUG,
+            "Decryption: %d key, %d IV, %d rounds, %zu bytes salt",
+            cipher.keysize/8,
+            cipher.blocksize,
+            rounds,
+            ssh_string_len(salt));
 
     if (passphrase == NULL) {
         if (auth_fn == NULL) {
             SAFE_FREE(salt);
-            ssh_pki_log("No passphrase provided");
+            SSH_LOG(SSH_LOG_WARN, "No passphrase provided");
             return SSH_ERROR;
         }
         rc = auth_fn("Passphrase",
@@ -251,7 +208,7 @@ static int pki_private_key_decrypt(ssh_string blob,
     if (rc < 0){
         return SSH_ERROR;
     }
-    BURN_BUFFER(passphrase_buffer, sizeof(passphrase_buffer));
+    explicit_bzero(passphrase_buffer, sizeof(passphrase_buffer));
 
     cipher.set_decrypt_key(&cipher,
                            key_material,
@@ -269,12 +226,14 @@ static int pki_private_key_decrypt(ssh_string blob,
  * @brief Import a private key in OpenSSH (new) format. This format is
  * typically used with ed25519 keys but can be used for others.
  */
-ssh_key ssh_pki_openssh_privkey_import(const char *text_key,
-                                       const char *passphrase,
-                                       ssh_auth_callback auth_fn,
-                                       void *auth_data)
+static ssh_key
+ssh_pki_openssh_import(const char *text_key,
+                       const char *passphrase,
+                       ssh_auth_callback auth_fn,
+                       void *auth_data,
+                       bool private)
 {
-    const char *ptr=text_key;
+    const char *ptr = text_key;
     const char *end;
     char *base64;
     int cmp;
@@ -282,7 +241,7 @@ ssh_key ssh_pki_openssh_privkey_import(const char *text_key,
     int i;
     ssh_buffer buffer = NULL, privkey_buffer=NULL;
     char *magic = NULL, *ciphername = NULL, *kdfname = NULL;
-    uint32_t nkeys = 0, checkint1, checkint2;
+    uint32_t nkeys = 0, checkint1 = 0, checkint2 = 0xFFFF;
     ssh_string kdfoptions = NULL;
     ssh_string pubkey0 = NULL;
     ssh_string privkeys = NULL;
@@ -291,24 +250,24 @@ ssh_key ssh_pki_openssh_privkey_import(const char *text_key,
     uint8_t padding;
 
     cmp = strncmp(ptr, OPENSSH_HEADER_BEGIN, strlen(OPENSSH_HEADER_BEGIN));
-    if (cmp != 0){
+    if (cmp != 0) {
         SSH_LOG(SSH_LOG_WARN, "Not an OpenSSH private key (no header)");
-        goto error;
+        goto out;
     }
     ptr += strlen(OPENSSH_HEADER_BEGIN);
     while(ptr[0] != '\0' && !isspace((int)ptr[0])) {
         ptr++;
     }
     end = strstr(ptr, OPENSSH_HEADER_END);
-    if (end == NULL){
+    if (end == NULL) {
         SSH_LOG(SSH_LOG_WARN, "Not an OpenSSH private key (no footer)");
-        goto error;
+        goto out;
     }
-    base64 = ssh_malloc(end - ptr + 1);
-    if (base64 == NULL){
-        goto error;
+    base64 = malloc(end - ptr + 1);
+    if (base64 == NULL) {
+        goto out;
     }
-    for (i = 0; ptr < end; ptr++){
+    for (i = 0; ptr < end; ptr++) {
         if (!isspace((int)ptr[0])) {
             base64[i] = ptr[0];
             i++;
@@ -317,9 +276,9 @@ ssh_key ssh_pki_openssh_privkey_import(const char *text_key,
     base64[i] = '\0';
     buffer = base64_to_bin(base64);
     SAFE_FREE(base64);
-    if (buffer == NULL){
+    if (buffer == NULL) {
         SSH_LOG(SSH_LOG_WARN, "Not an OpenSSH private key (base64 error)");
-        goto error;
+        goto out;
     }
     rc = ssh_buffer_unpack(buffer, "PssSdSS",
                            strlen(OPENSSH_AUTH_MAGIC) + 1,
@@ -330,20 +289,37 @@ ssh_key ssh_pki_openssh_privkey_import(const char *text_key,
                            &nkeys,
                            &pubkey0,
                            &privkeys);
-    if (rc == SSH_ERROR){
+    if (rc == SSH_ERROR) {
         SSH_LOG(SSH_LOG_WARN, "Not an OpenSSH private key (unpack error)");
-        goto error;
+        goto out;
     }
     cmp = strncmp(magic, OPENSSH_AUTH_MAGIC, strlen(OPENSSH_AUTH_MAGIC));
-    if (cmp != 0){
+    if (cmp != 0) {
         SSH_LOG(SSH_LOG_WARN, "Not an OpenSSH private key (bad magic)");
-        goto error;
+        goto out;
     }
-    ssh_pki_log("Opening OpenSSH private key: ciphername: %s, kdf: %s, nkeys: %d\n", ciphername, kdfname, nkeys);
-    if (nkeys != 1){
+    SSH_LOG(SSH_LOG_INFO,
+            "Opening OpenSSH private key: ciphername: %s, kdf: %s, nkeys: %d",
+            ciphername,
+            kdfname,
+            nkeys);
+    if (nkeys != 1) {
         SSH_LOG(SSH_LOG_WARN, "Opening OpenSSH private key: only 1 key supported (%d available)", nkeys);
-        goto error;
+        goto out;
     }
+
+    /* If we are interested only in public key do not progress
+     * to the key decryption later
+     */
+    if (!private) {
+        rc = ssh_pki_import_pubkey_blob(pubkey0, &key);
+        if (rc != SSH_OK) {
+            SSH_LOG(SSH_LOG_WARN, "Failed to import public key blob");
+        }
+        /* in either case we clean up here */
+        goto out;
+    }
+
     rc = pki_private_key_decrypt(privkeys,
                                  passphrase,
                                  ciphername,
@@ -351,14 +327,13 @@ ssh_key ssh_pki_openssh_privkey_import(const char *text_key,
                                  kdfoptions,
                                  auth_fn,
                                  auth_data);
-    if (rc == SSH_ERROR){
-        goto error;
+    if (rc == SSH_ERROR) {
+        goto out;
     }
 
     privkey_buffer = ssh_buffer_new();
     if (privkey_buffer == NULL) {
-        rc = SSH_ERROR;
-        goto error;
+        goto out;
     }
 
     ssh_buffer_set_secure(privkey_buffer);
@@ -367,33 +342,33 @@ ssh_key ssh_pki_openssh_privkey_import(const char *text_key,
                         ssh_string_len(privkeys));
 
     rc = ssh_buffer_unpack(privkey_buffer, "dd", &checkint1, &checkint2);
-    if (rc == SSH_ERROR || checkint1 != checkint2){
+    if (rc == SSH_ERROR || checkint1 != checkint2) {
         SSH_LOG(SSH_LOG_WARN, "OpenSSH private key unpack error (correct password?)");
-        goto error;
+        goto out;
     }
     rc = pki_openssh_import_privkey_blob(privkey_buffer, &key);
-    if (rc == SSH_ERROR){
-        goto error;
+    if (rc == SSH_ERROR) {
+        goto out;
     }
     comment = ssh_buffer_get_ssh_string(privkey_buffer);
     SAFE_FREE(comment);
     /* verify that the remaining data is correct padding */
-    for (i=1; ssh_buffer_get_rest_len(privkey_buffer) > 0; ++i){
+    for (i = 1; ssh_buffer_get_len(privkey_buffer) > 0; ++i) {
         ssh_buffer_get_u8(privkey_buffer, &padding);
-        if (padding != i){
+        if (padding != i) {
             ssh_key_free(key);
             key = NULL;
-            ssh_pki_log("Invalid padding");
-            goto error;
+            SSH_LOG(SSH_LOG_WARN, "Invalid padding");
+            goto out;
         }
     }
-error:
-    if(buffer != NULL){
-        ssh_buffer_free(buffer);
+out:
+    if (buffer != NULL) {
+        SSH_BUFFER_FREE(buffer);
         buffer = NULL;
     }
-    if(privkey_buffer != NULL){
-        ssh_buffer_free(privkey_buffer);
+    if (privkey_buffer != NULL) {
+        SSH_BUFFER_FREE(privkey_buffer);
         privkey_buffer = NULL;
     }
     SAFE_FREE(magic);
@@ -403,6 +378,19 @@ error:
     SAFE_FREE(pubkey0);
     SAFE_FREE(privkeys);
     return key;
+}
+
+ssh_key ssh_pki_openssh_privkey_import(const char *text_key,
+                                       const char *passphrase,
+                                       ssh_auth_callback auth_fn,
+                                       void *auth_data)
+{
+    return ssh_pki_openssh_import(text_key, passphrase, auth_fn, auth_data, true);
+}
+
+ssh_key ssh_pki_openssh_pubkey_import(const char *text_key)
+{
+    return ssh_pki_openssh_import(text_key, NULL, NULL, NULL, false);
 }
 
 
@@ -419,20 +407,21 @@ static int pki_openssh_export_privkey_blob(const ssh_key privkey,
     int rc;
 
     if (privkey->type != SSH_KEYTYPE_ED25519) {
-        ssh_pki_log("Type %s not supported", privkey->type_c);
+        SSH_LOG(SSH_LOG_WARN, "Type %s not supported", privkey->type_c);
         return SSH_ERROR;
     }
     if (privkey->ed25519_privkey == NULL ||
-            privkey->ed25519_pubkey == NULL){
+        privkey->ed25519_pubkey == NULL) {
         return SSH_ERROR;
     }
     rc = ssh_buffer_pack(buffer,
-                         "sdPdP",
+                         "sdPdPP",
                          privkey->type_c,
-                         (uint32_t)ED25519_PK_LEN,
-                         (size_t)ED25519_PK_LEN, privkey->ed25519_pubkey,
-                         (uint32_t)ED25519_SK_LEN,
-                         (size_t)ED25519_SK_LEN, privkey->ed25519_privkey);
+                         (uint32_t)ED25519_KEY_LEN,
+                         (size_t)ED25519_KEY_LEN, privkey->ed25519_pubkey,
+                         (uint32_t)(2 * ED25519_KEY_LEN),
+                         (size_t)ED25519_KEY_LEN, privkey->ed25519_privkey,
+                         (size_t)ED25519_KEY_LEN, privkey->ed25519_pubkey);
     return rc;
 }
 
@@ -451,12 +440,11 @@ static int pki_private_key_encrypt(ssh_buffer privkey_buffer,
 {
     struct ssh_cipher_struct *ciphers = ssh_get_ciphertab();
     struct ssh_cipher_struct cipher;
-    uint8_t key_material[128];
+    uint8_t key_material[128] = {0};
     size_t key_material_len;
-    char passphrase_buffer[128];
+    char passphrase_buffer[128] = {0};
     int rc;
     int i;
-    uint8_t padding = 1;
     int cmp;
 
     cmp = strcmp(ciphername, "none");
@@ -483,28 +471,20 @@ static int pki_private_key_encrypt(ssh_buffer privkey_buffer,
         SSH_LOG(SSH_LOG_WARN, "Unsupported KDF %s", kdfname);
         return SSH_ERROR;
     }
-    while (ssh_buffer_get_len(privkey_buffer) % cipher.blocksize != 0) {
-        rc = ssh_buffer_add_u8(privkey_buffer, padding);
-        if (rc < 0) {
-            return SSH_ERROR;
-        }
-        padding++;
-    }
-
     /* We need material for key (keysize bits / 8) and IV (blocksize)  */
     key_material_len =  cipher.keysize/8 + cipher.blocksize;
     if (key_material_len > sizeof(key_material)){
-        ssh_pki_log("Key material too big");
+        SSH_LOG(SSH_LOG_WARN, "Key material too big");
         return SSH_ERROR;
     }
 
-    ssh_pki_log("Encryption: %d key, %d IV, %d rounds, %zu bytes salt",
+    SSH_LOG(SSH_LOG_WARN, "Encryption: %d key, %d IV, %d rounds, %zu bytes salt",
                 cipher.keysize/8,
                 cipher.blocksize, rounds, ssh_string_len(salt));
 
     if (passphrase == NULL){
         if (auth_fn == NULL){
-            ssh_pki_log("No passphrase provided");
+            SSH_LOG(SSH_LOG_WARN, "No passphrase provided");
             return SSH_ERROR;
         }
         rc = auth_fn("Passphrase",
@@ -534,11 +514,11 @@ static int pki_private_key_encrypt(ssh_buffer privkey_buffer,
                            key_material,
                            key_material + cipher.keysize/8);
     cipher.encrypt(&cipher,
-                   ssh_buffer_get_begin(privkey_buffer),
-                   ssh_buffer_get_begin(privkey_buffer),
+                   ssh_buffer_get(privkey_buffer),
+                   ssh_buffer_get(privkey_buffer),
                    ssh_buffer_get_len(privkey_buffer));
     ssh_cipher_clear(&cipher);
-    BURN_BUFFER(passphrase_buffer, sizeof(passphrase_buffer));
+    explicit_bzero(passphrase_buffer, sizeof(passphrase_buffer));
 
     return SSH_OK;
 }
@@ -567,17 +547,19 @@ ssh_string ssh_pki_openssh_privkey_export(const ssh_key privkey,
     int to_encrypt=0;
     unsigned char *b64;
     uint32_t str_len, len;
+    uint8_t padding = 1;
+    int ok;
     int rc;
 
     if (privkey == NULL) {
         return NULL;
     }
     if (privkey->type != SSH_KEYTYPE_ED25519){
-        ssh_pki_log("Unsupported key type %s", privkey->type_c);
+        SSH_LOG(SSH_LOG_WARN, "Unsupported key type %s", privkey->type_c);
         return NULL;
     }
     if (passphrase != NULL || auth_fn != NULL){
-        ssh_pki_log("Enabling encryption for private key export");
+        SSH_LOG(SSH_LOG_INFO, "Enabling encryption for private key export");
         to_encrypt = 1;
     }
     buffer = ssh_buffer_new();
@@ -585,7 +567,11 @@ ssh_string ssh_pki_openssh_privkey_export(const ssh_key privkey,
     if(buffer == NULL || pubkey_s == NULL){
         goto error;
     }
-    ssh_get_random(&rnd, sizeof(rnd), 0);
+
+    ok = ssh_get_random(&rnd, sizeof(rnd), 0);
+    if (!ok) {
+        goto error;
+    }
 
     privkey_buffer = ssh_buffer_new();
     if (privkey_buffer == NULL) {
@@ -612,6 +598,18 @@ ssh_string ssh_pki_openssh_privkey_export(const ssh_key privkey,
         goto error;
     }
 
+    /* Add padding regardless encryption because it is expected
+     * by OpenSSH tools.
+     * XXX Using 16 B as we use only AES cipher below anyway.
+     */
+    while (ssh_buffer_get_len(privkey_buffer) % 16 != 0) {
+        rc = ssh_buffer_add_u8(privkey_buffer, padding);
+        if (rc < 0) {
+            goto error;
+        }
+        padding++;
+    }
+
     if (to_encrypt){
         ssh_buffer kdf_buf;
 
@@ -622,20 +620,26 @@ ssh_string ssh_pki_openssh_privkey_export(const ssh_key privkey,
 
         salt = ssh_string_new(16);
         if (salt == NULL){
-            ssh_buffer_free(kdf_buf);
+            SSH_BUFFER_FREE(kdf_buf);
             goto error;
         }
-        ssh_get_random(ssh_string_data(salt),16, 0);
+
+        ok = ssh_get_random(ssh_string_data(salt), 16, 0);
+        if (!ok) {
+            SSH_BUFFER_FREE(kdf_buf);
+            goto error;
+        }
+
         ssh_buffer_pack(kdf_buf, "Sd", salt, rounds);
         kdf_options = ssh_string_new(ssh_buffer_get_len(kdf_buf));
         if (kdf_options == NULL){
-            ssh_buffer_free(kdf_buf);
+            SSH_BUFFER_FREE(kdf_buf);
             goto error;
         }
         memcpy(ssh_string_data(kdf_options),
-               ssh_buffer_get_begin(kdf_buf),
+               ssh_buffer_get(kdf_buf),
                ssh_buffer_get_len(kdf_buf));
-        ssh_buffer_free(kdf_buf);
+        SSH_BUFFER_FREE(kdf_buf);
         rc = pki_private_key_encrypt(privkey_buffer,
                                      passphrase,
                                      "aes128-cbc",
@@ -661,12 +665,12 @@ ssh_string ssh_pki_openssh_privkey_export(const ssh_key privkey,
                          pubkey_s,
                          (uint32_t)ssh_buffer_get_len(privkey_buffer),
                          /* rest of buffer is a string */
-                         (size_t)ssh_buffer_get_len(privkey_buffer), ssh_buffer_get_begin(privkey_buffer));
+                         (size_t)ssh_buffer_get_len(privkey_buffer), ssh_buffer_get(privkey_buffer));
     if (rc != SSH_OK) {
         goto error;
     }
 
-    b64 = bin_to_base64(ssh_buffer_get_begin(buffer),
+    b64 = bin_to_base64(ssh_buffer_get(buffer),
                         ssh_buffer_get_len(buffer));
     if (b64 == NULL){
         goto error;
@@ -682,7 +686,7 @@ ssh_string ssh_pki_openssh_privkey_export(const ssh_key privkey,
                          "\n",
                          OPENSSH_HEADER_END,
                          "\n");
-    BURN_BUFFER(b64, strlen((char *)b64));
+    explicit_bzero(b64, strlen((char *)b64));
     SAFE_FREE(b64);
 
     if (rc != SSH_OK){
@@ -697,21 +701,21 @@ ssh_string ssh_pki_openssh_privkey_export(const ssh_key privkey,
     str_len = ssh_buffer_get_len(buffer);
     len = ssh_buffer_get_data(buffer, ssh_string_data(str), str_len);
     if (str_len != len) {
-        ssh_string_free(str);
+        SSH_STRING_FREE(str);
         str = NULL;
     }
 
 error:
     if (privkey_buffer != NULL) {
-        void *bufptr = ssh_buffer_get_begin(privkey_buffer);
-        BURN_BUFFER(bufptr, ssh_buffer_get_len(privkey_buffer));
-        ssh_buffer_free(privkey_buffer);
+        void *bufptr = ssh_buffer_get(privkey_buffer);
+        explicit_bzero(bufptr, ssh_buffer_get_len(privkey_buffer));
+        SSH_BUFFER_FREE(privkey_buffer);
     }
     SAFE_FREE(pubkey_s);
     SAFE_FREE(kdf_options);
     SAFE_FREE(salt);
     if (buffer != NULL) {
-        ssh_buffer_free(buffer);
+        SSH_BUFFER_FREE(buffer);
     }
 
     return str;

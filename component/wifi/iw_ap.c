@@ -1152,7 +1152,7 @@ root@OpenWrt:/#
 */
 
 
-#ifdef PL_BUILD_OPENWRT
+#ifdef PL_BUILD_OS_OPENWRT
 int _iw_bridge_check_interface(char *br, char *wa)
 {
 	char buf[512];
@@ -1196,7 +1196,7 @@ static int iw_ap_scan_thread(struct thread * thread)
 	iw_ap_t *iw_ap = THREAD_ARG(thread);
 	if(iw_ap && iw_ap->master)
 	{
-#ifdef PL_BUILD_OPENWRT
+#ifdef PL_BUILD_OS_OPENWRT
 		struct interface *ifp = NULL;
 		char cmdtmp[128];
 		ifp = if_lookup_by_index(iw_ap->ifindex);
@@ -1248,7 +1248,7 @@ static int iw_ap_start_thread(struct thread * thread)
 	iw_ap_t *iw_ap = THREAD_ARG(thread);
 	if(iw_ap && iw_ap->master)
 	{
-#ifdef PL_BUILD_OPENWRT
+#ifdef PL_BUILD_OS_OPENWRT
 		struct interface *ifp = NULL;
 		char cmdtmp[128];
 		ifp = if_lookup_by_index(iw_ap->ifindex);
@@ -1420,7 +1420,7 @@ static int iw_ap_default_init(iw_ap_t *iw_ap, ifindex_t ifindex)
 	struct interface *ifp = NULL;
 	assert(iw_ap != NULL);
 	assert(ifindex);
-#ifdef PL_BUILD_OPENWRT
+#ifdef PL_BUILD_OS_OPENWRT
 	char cmdtmp[128];
 #endif
 	iw_ap->hw_mode			= IW_AP_HW_MODE_DEFAULT;
@@ -1445,7 +1445,7 @@ static int iw_ap_default_init(iw_ap_t *iw_ap, ifindex_t ifindex)
 		   iw_ap->BSSID[0], iw_ap->BSSID[1],
 			iw_ap->BSSID[2], iw_ap->BSSID[3], iw_ap->BSSID[4], iw_ap->BSSID[5]);
 
-#ifdef PL_BUILD_OPENWRT
+#ifdef PL_BUILD_OS_OPENWRT
 	if(ifp)
 	{
 		if(_iw_bridge_check_interface("br-lan", ifp->k_name) != OK)
@@ -1493,7 +1493,7 @@ int iw_ap_init(iw_ap_t *iw_ap, ifindex_t ifindex)
 
 int iw_ap_exit(iw_ap_t *iw_ap)
 {
-#ifdef PL_BUILD_OPENWRT
+#ifdef PL_BUILD_OS_OPENWRT
 	char cmdtmp[128];
 	struct interface *ifp = NULL;
 #endif
@@ -1538,7 +1538,7 @@ int iw_ap_exit(iw_ap_t *iw_ap)
 		os_mutex_exit(iw_ap->mutex);
 	iw_ap->mutex = NULL;
 
-#ifdef PL_BUILD_OPENWRT
+#ifdef PL_BUILD_OS_OPENWRT
 	ifp = if_lookup_by_index(iw_ap->ifindex);
 	if(ifp)
 	{

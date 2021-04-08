@@ -127,8 +127,8 @@ typedef time_t ospl_time_t;
 typedef void ospl_void;
 
 #ifdef WIN32
-typedef unsigned long int ospl_pthread_t;
-typedef pid_t ospl_pid_t;
+typedef HANDLE ospl_pthread_t;
+typedef DWORD ospl_pid_t;
 typedef sem_t ospl_sem_t;
 typedef pthread_mutex_t ospl_pthread_mutex_t;
 typedef pthread_cond_t ospl_pthread_cond_t;

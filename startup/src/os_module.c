@@ -134,17 +134,27 @@ int os_ip_stack_init(int localport)
 #endif
 	return OK;
 }
-
+/*
+extern int pl_module_name_init(const char * name);
+extern int pl_module_init(ospl_uint32 module);
+extern int pl_module_exit(ospl_uint32 module);
+extern int pl_module_task_name_init(const char * name);
+extern int pl_module_task_init(ospl_uint32 module);
+extern int pl_module_task_exit(ospl_uint32 module);
+extern int pl_module_cmd_name_init(const char * name);
+extern int pl_module_cmd_init(ospl_uint32 module);
+*/
 int os_module_init(void)
 {
 	os_default_start();
 
-	if_init();
-	nsm_vrf_init();
-	nsm_template_init();
+	pl_module_name_show();
 
 	if (master_eloop[MODULE_DEFAULT] == NULL)
 		master_eloop[MODULE_DEFAULT] = eloop_master_module_create(MODULE_DEFAULT);
+
+	pl_def_module_init();
+
 #ifdef PL_SERVICE_SNTPS
 	sntpsInit(master_eloop[MODULE_DEFAULT]);
 #endif
@@ -153,65 +163,6 @@ int os_module_init(void)
 #endif
 #ifdef PL_SERVICE_SYSLOG
 	syslogc_lib_init(master_eloop[MODULE_DEFAULT], NULL);
-#endif
-
-
-
-#ifdef PL_NSM_MODULE
-	nsm_module_init();
-#endif
-
-
-
-#ifdef PL_PAL_MODULE
-	pal_abstract_init();
-#endif
-#ifdef PL_SERVICE_MODULE
-	systools_module_init();
-#endif
-
-#ifdef PL_WIFI_MODULE
-	nsm_iw_client_init();
-#endif
-
-#ifdef PL_MODEM_MODULE
-	modem_module_init();
-#endif
-
-#ifdef PL_DHCP_MODULE
-	nsm_dhcp_module_init();
-#endif
-
-#ifdef PL_LIBSSH_MODULE
-	ssh_module_init();
-#endif
-
-#ifdef PL_OSPF_MODULE
-	//ospfd_module_init();
-#endif
-
-#ifdef PL_PJSIP_MODULE
-	pl_pjsip_module_init();
-#endif
-
-#ifdef PL_WEBGUI_MODULE
-	web_app_module_init();
-#endif
-
-#ifdef PL_MQTT_MODULE
-	mqtt_module_init();
-#endif
-
-#ifdef PL_HAL_MODULE
-	hal_module_init();
-#endif
-
-#ifdef PL_APP_MODULE
-	app_module_init();
-#endif
-
-#ifdef PL_BSP_MODULE
-	bsp_usp_module_init();
 #endif
 
 	sleep(1);
@@ -229,58 +180,9 @@ int os_module_exit(void)
 	prefix_list_add_hook(NULL);
 	prefix_list_delete_hook(NULL);
 	prefix_list_reset();
-#ifdef PL_SERVICE_MODULE
-	systools_module_exit();
 
-#ifdef PL_SERVICE_SYSLOG
-	syslogc_lib_uninit();
-#endif
-#endif
+	pl_def_module_exit();
 
-#ifdef PL_WIFI_MODULE
-	nsm_iw_client_exit();
-#endif
-
-#ifdef PL_MODEM_MODULE
-	modem_module_exit();
-#endif
-
-#ifdef PL_DHCP_MODULE
-	nsm_dhcp_module_exit();
-#endif
-
-#ifdef PL_NSM_MODULE
-	nsm_module_exit();
-#endif
-#ifdef PL_OSPF_MODULE
-	//ospfd_module_exit();
-#endif
-
-#ifdef PL_APP_MODULE
-	app_module_exit();
-#endif
-
-#ifdef PL_MQTT_MODULE
-	mqtt_module_exit();
-#endif
-
-	nsm_template_exit();
-
-
-#ifdef PL_LIBSSH_MODULE
-	ssh_module_exit();
-#endif
-
-#ifdef PL_PJSIP_MODULE
-	pl_pjsip_module_exit();
-#endif
-
-#ifdef PL_WEBGUI_MODULE
-	web_app_module_exit();
-#endif
-#ifdef PL_NSM_MODULE
-	nsm_module_exit();
-#endif
 	return OK;
 }
 
@@ -293,49 +195,8 @@ int os_module_task_init(void)
 		cli_console_task_init();
 	cli_telnet_task_init();
 
-#if 0
 	pl_def_module_task_init();
-#else
 
-#ifdef PL_NSM_MODULE
-	nsm_task_init();
-#endif
-
-	os_msleep(50);
-
-#ifdef PL_OSPF_MODULE
-	//ospfd_task_init ();
-#endif
-#ifdef PL_MODEM_MODULE
-	modem_task_init();
-#endif
-#ifdef PL_DHCP_MODULE
-	nsm_dhcp_task_init();
-#endif
-#ifdef PL_SERVICE_MODULE
-	systools_task_init();
-#endif
-
-#ifdef PL_LIBSSH_MODULE
-	ssh_module_task_init();
-#endif
-
-#ifdef PL_PJSIP_MODULE
-	pl_pjsip_module_task_init();
-#endif
-
-#ifdef PL_WEBGUI_MODULE
-	web_app_module_task_init();
-#endif
-
-#ifdef PL_APP_MODULE
-	app_module_task_init();
-#endif
-
-#ifdef PL_MQTT_MODULE
-	mqtt_module_task_init();
-#endif
-#endif
 	return OK;
 }
 
@@ -345,40 +206,7 @@ int os_module_task_exit(void)
 	os_process_stop();
 #endif
 
-#ifdef PL_OSPF_MODULE
-	//ospfd_task_init ();
-#endif
-#ifdef PL_MODEM_MODULE
-	//modem_task_exit ();
-#endif
-#ifdef PL_DHCP_MODULE
-	//nsm_dhcp_task_exit ();
-#endif
-
-
-
-#ifdef PL_WEBGUI_MODULE
-	web_app_module_task_exit();
-#endif
-
-#ifdef PL_APP_MODULE
-	app_module_task_exit();
-#endif
-
-#ifdef PL_MQTT_MODULE
-	mqtt_module_task_exit();
-#endif
-#ifdef PL_SERVICE_MODULE
-	systools_task_exit();
-#endif
-
-#ifdef PL_LIBSSH_MODULE
-	ssh_module_task_exit();
-#endif
-
-#ifdef PL_PJSIP_MODULE
-	pl_pjsip_module_task_exit();
-#endif
+	pl_def_module_task_exit();
 
 #ifdef PL_NSM_MODULE
 	nsm_task_exit ();
@@ -410,52 +238,6 @@ int os_module_cmd_init(int terminal)
 #ifdef PL_NSM_MODULE
 	nsm_module_cmd_init();
 #endif
-
-#ifdef USE_IPSTACK_IPCOM
-	cmd_ip_vrf_init();
-#endif
-
-#ifdef PL_SERVICE_SNTPC
-	cmd_sntpc_init();
-#endif
-
-#ifdef PL_SERVICE_SNTPS
-	cmd_sntps_init();
-#endif
-	//service_module_cmd_init();
-
-#ifdef PL_WIFI_MODULE
-	cmd_wireless_init();
-#endif
-
-#ifdef PL_MODEM_MODULE
-	cmd_modem_init();
-#endif
-#ifdef PL_DHCP_MODULE
-	cmd_dhcp_init();
-#endif
-
-	//systools_cmd_init();
-#ifdef PL_LIBSSH_MODULE
-	ssh_cmd_init();
-#endif
-
-#ifdef PL_PJSIP_MODULE
-	cmd_voip_init();
-#endif
-
-#ifdef PL_WEBGUI_MODULE
-	cmd_webserver_init();
-#endif
-
-#ifdef PL_APP_MODULE
-	cmd_app_init();
-#endif
-
-#ifdef PL_MQTT_MODULE
-	cmd_mqtt_init();
-#endif
-
 
 
 #ifdef OS_START_TEST

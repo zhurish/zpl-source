@@ -13,11 +13,20 @@ config PL_SYSTEM_MODULE
 choice
 	prompt "OS systems"
 	depends on PL_SYSTEM_MODULE
-	default PL_USEING_LINUX
-config PL_USEING_LINUX
+	default PL_SYSTEM_LINUX
+
+config PL_SYSTEM_LINUX
 	bool "Linux systems"
-config PL_USEING_OPENWRT
+config PL_SYSTEM_OPENWRT
 	bool "Openwrt systems"
+config PL_SYSTEM_MINGW32
+	bool "Mingw32 systems"	
+config PL_SYSTEM_MINGW64
+	bool "Mingw64 systems"	
+config PL_SYSTEM_MSVC32
+	bool "MSVC32 systems"	
+config PL_SYSTEM_MSVC64
+	bool "MSVC64 systems"
 endchoice
 
 config PL_ARCH_MODULE
@@ -25,19 +34,19 @@ config PL_ARCH_MODULE
 	default y
 
 choice
-	prompt "OS systems"
+	prompt "ARCH CPU Family"
 	depends on PL_ARCH_MODULE
-	default PL_USEING_X86_64
+	default PL_ARCH_X86_64
 
-config PL_USEING_ARM
+config PL_ARCH_ARM
 	bool "ARM"
-config PL_USEING_ARM64
+config PL_ARCH_ARM64
 	bool "ARM64"
-config PL_USEING_AARCH64
+config PL_ARCH_AARCH64
 	bool "AARCH64"
-config PL_USEING_X86
+config PL_ARCH_X86
 	bool "X86"
-config PL_USEING_X86_64
+config PL_ARCH_X86_64
 	bool "X86-64"	
 endchoice
 

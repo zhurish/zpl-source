@@ -4312,7 +4312,7 @@ PUBLIC int websSetSessionVar(Webs *wp, cchar *name, cchar *value);
     typedef WebsHash sym_fd_t;
     typedef WebsKey sym_t;
     typedef WebsMime websMimeType;
-    typedef WebsSocket socket_t;
+    //typedef WebsSocket socket_t;
     typedef WebsStat gstat_t;
     typedef WebsValue value_t;
 

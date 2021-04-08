@@ -62,10 +62,10 @@ struct host_system
 {
 	ospl_uint8		process;
 	ospl_double		freq;
-#ifdef PL_BUILD_X86
+#ifdef PL_BUILD_ARCH_X86
 	ospl_char		*model_name;
 #else
-#ifdef PL_BUILD_MIPS
+#ifdef PL_BUILD_ARCH_MIPS
 //#error "aaaaaaaaaaaaaaaaaaaa"
 #endif
 	ospl_char		*system_type;

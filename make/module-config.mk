@@ -186,12 +186,12 @@ PLPRODS += $(LIBSSH_ROOT)
 PL_INCLUDE += -I$(LIBSSH_ROOT)
 PL_INCLUDE += -I$(LIBSSH_ROOT)/include
 
-ifeq ($(PL_BUILD_TYPE),X86_64)
+ifeq ($(PL_BUILD_ARCH),X86_64)
 PL_INCLUDE += -I$(LIBSSH_ROOT)/include
 #PLOS_LDLIBS += -lutil -lssl -lcrypto -lz
-endif #($(PL_BUILD_TYPE),X86_64)
+endif #($(PL_BUILD_ARCH),X86_64)
 
-ifeq ($(PL_BUILD_TYPE),MIPS)
+ifeq ($(PL_BUILD_ARCH),MIPS)
 ifneq ($(OPENEWRT_BASE),)
 OPENWRT_INCLUDE := -I$(OPENEWRT_BASE)/include -I$(OPENEWRT_BASE)/usr/include
 OPENWRT_LDFLAGS := -L$(OPENEWRT_BASE)/lib -L$(OPENEWRT_BASE)/usr/lib
@@ -202,7 +202,7 @@ PLEX_INCLUDE += -I$(EXTERNSION_ROOT)/zlib/mipsl/zlib/include
 PLEX_LDFLAGS += -L$(EXTERNSION_ROOT)/zlib/mipsl/zlib/lib
 endif #($(OPENEWRT_BASE),)
 #PLEX_LDLIBS += -lutil -lssl -lcrypto -lz
-endif #($(PL_BUILD_TYPE),MIPS)
+endif #($(PL_BUILD_ARCH),MIPS)
 
 PL_DEFINE += -DPL_LIBSSH_MODULE
 #PLEX_LDLIBS += -lutil -lssl -lcrypto -lz
@@ -211,7 +211,7 @@ endif #($(strip $(PL_LIBSSH_MODULE)),true)
 
 
 ifeq ($(strip $(PL_OPENSSL_MODULE)),true)
-ifneq ($(PL_BUILD_TYPE),X86_64)
+ifneq ($(PL_BUILD_ARCH),X86_64)
 PLEX_DIR += $(EXTERNSION_ROOT)/openssl/openssl-1.1.1/
 export PLATFORM=linux-armv4
 PLEX_INCLUDE += -I$(DSTROOTFSDIR)/include
@@ -223,7 +223,7 @@ PLEX_LDFLAGS += -L$(DSTROOTFSDIR)/lib
 PLEX_LDLIBS += -lz
 else 
 PLOS_LDLIBS += -lutil -lssl -lcrypto -lz
-endif #($(PL_BUILD_TYPE),X86_64)
+endif #($(PL_BUILD_ARCH),X86_64)
 PL_DEFINE += -DPL_OPENSSL_MODULE
 endif #($(strip $(PL_OPENSSL_MODULE)),true)
 
@@ -269,6 +269,14 @@ PLPRODS += $(WEBGUI_ROOT)
 PL_INCLUDE += -I$(WEBGUI_ROOT)
 PL_INCLUDE += -I$(WEBGUI_ROOT)/include
 PL_DEFINE += -DPL_WEBGUI_MODULE
+endif
+
+ifeq ($(strip $(PL_MODBUS_MODULE)),true)
+MODBUS_ROOT=$(COMPONENT_ROOT)/modbus
+PLPRODS += $(MODBUS_ROOT)
+PL_INCLUDE += -I$(MODBUS_ROOT)
+PL_INCLUDE += -I$(MODBUS_ROOT)/include
+PL_DEFINE += -DPL_MODBUS_MODULE
 endif
 
 endif#($(strip $(PL_COMPONENT_MODULE)),true)

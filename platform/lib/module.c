@@ -162,6 +162,19 @@ struct module_list module_list_kernel =
 	.taskid=0,
 };
 
+int pl_module_name_show()
+{
+	ospl_uint32 i = 0;
+	for(i = 0; i < array_size(module_lists_tbl); i++)
+	{
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->name != NULL)
+		{
+			zlog_force_trap(MODULE_DEFAULT, "module : %s", module_lists_tbl[i].tbl->name);	
+		}	
+	}
+	return -1;
+}
+
 int pl_module_name_init(const char * name)
 {
 	ospl_uint32 i = 0;

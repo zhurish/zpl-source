@@ -166,10 +166,10 @@ int md5_encrypt_password(ospl_char *password, ospl_uchar *ecrypt)
     }
     os_memset(decrypt, 0, sizeof(decrypt));
     os_memset(md5ecrypt, 0, sizeof(md5ecrypt));
-    MD5_CTX md5;
-    MD5Init(&md5);
-    MD5Update(&md5, password, os_strlen(password));
-    MD5Final(decrypt, &md5);
+    OS_MD5_CTX md5;
+    OS_MD5Init(&md5);
+    OS_MD5Update(&md5, password, os_strlen(password));
+    OS_MD5Final(decrypt, &md5);
 
     encrypt_XCH(decrypt, md5ecrypt);
     os_memcpy(ecrypt, "*#@", 3);

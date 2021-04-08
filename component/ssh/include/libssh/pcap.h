@@ -21,7 +21,7 @@
 #ifndef PCAP_H_
 #define PCAP_H_
 
-#include "libssh_config.h"
+#include "libssh_autoconfig.h"
 #include "libssh/libssh.h"
 
 #ifdef WITH_PCAP
@@ -43,4 +43,3 @@ int ssh_pcap_context_write(ssh_pcap_context,enum ssh_pcap_direction direction, v
 
 #endif /* WITH_PCAP */
 #endif /* PCAP_H_ */
-/* vim: set ts=2 sw=2 et cindent: */

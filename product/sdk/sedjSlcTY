@@ -1,0 +1,201 @@
+/*
+ * b53_mac_tbl.c
+ *
+ *  Created on: May 3, 2019
+ *      Author: zhurish
+ */
+
+#include <zebra.h>
+#include "b53_mdio.h"
+#include "b53_regs.h"
+#include "sdk_driver.h"
+
+/****************************************************************************************/
+static int b53125_flush_mac_tbl(struct b53125_device *dev, u8 mask)
+{
+	ospl_uint32 i;
+	b53125_write8(dev, B53_CTRL_PAGE, B53_FAST_AGE_CTRL,
+		   FAST_AGE_DONE | FAST_AGE_DYNAMIC | mask);
+	for (i = 0; i < 1000; i++) {
+		u8 fast_age_ctrl;
+		b53125_read8(dev, B53_CTRL_PAGE, B53_FAST_AGE_CTRL, &fast_age_ctrl);
+		if (!(fast_age_ctrl & FAST_AGE_DONE))
+			goto out;
+		os_msleep(1);
+	}
+	return OS_TIMEOUT;
+out:
+	/* Only age dynamic entries (default behavior) */
+	b53125_write8(dev, B53_CTRL_PAGE, B53_FAST_AGE_CTRL, FAST_AGE_DYNAMIC);
+	return OK;
+}
+
+int b53125_clear_mac_tbl_port(struct b53125_device *dev, int port)
+{
+	b53125_write8(dev, B53_CTRL_PAGE, B53_FAST_AGE_PORT_CTRL, port);
+
+	return b53125_flush_mac_tbl(dev, FAST_AGE_PORT);
+}
+
+int b53125_clear_mac_tbl_vlan(struct b53125_device *dev, u16 vid)
+{
+	b53125_write16(dev, B53_CTRL_PAGE, B53_FAST_AGE_VID_CTRL, vid);
+	return b53125_flush_mac_tbl(dev, FAST_AGE_VLAN);
+}
+/****************************************************************************************/
+/****************************************************************************************/
+static void b53125_mac_tbl_to_entry(struct b53125_mac_arl_entry *ent,
+				    u64 mac_vid, u32 fwd_entry)
+{
+	memset(ent, 0, sizeof(*ent));
+	ent->port = fwd_entry & ARLTBL_DATA_PORT_ID_MASK;
+	ent->is_valid = !!(fwd_entry & ARLTBL_VALID);
+	ent->is_age = !!(fwd_entry & ARLTBL_AGE);
+	ent->is_static = !!(fwd_entry & ARLTBL_STATIC);
+	u64_to_ether_addr(mac_vid, ent->mac);
+	ent->vid = mac_vid >> ARLTBL_VID_S;
+}
+
+static void b53125_mac_tbl_from_entry(u64 *mac_vid, u32 *fwd_entry,
+				      const struct b53125_mac_arl_entry *ent)
+{
+	*mac_vid = ether_addr_to_u64(ent->mac);
+	*mac_vid |= (u64)(ent->vid & ARLTBL_VID_MASK) << ARLTBL_VID_S;
+	*fwd_entry = ent->port & ARLTBL_DATA_PORT_ID_MASK;
+	if (ent->is_valid)
+		*fwd_entry |= ARLTBL_VALID;
+	if (ent->is_static)
+		*fwd_entry |= ARLTBL_STATIC;
+	if (ent->is_age)
+		*fwd_entry |= ARLTBL_AGE;
+}
+/* Address Resolution Logic routines */
+static int b53125_mac_tbl_op_wait(struct b53125_device *dev)
+{
+	ospl_uint32 timeout = 1000;
+	u8 reg;
+
+	do {
+		b53125_read8(dev, B53_ARLIO_PAGE, B53_ARLTBL_RW_CTRL, &reg);
+		if (!(reg & ARLTBL_START_DONE))
+			return 0;
+
+		os_usleep(2000);
+	} while (timeout--);
+	return OS_TIMEOUT;
+}
+
+static int b53125_mac_tbl_rw_op(struct b53125_device *dev, ospl_uint32 op)
+{
+	u8 reg;
+	if (op > ARLTBL_RW)
+		return ERROR;
+	b53125_read8(dev, B53_ARLIO_PAGE, B53_ARLTBL_RW_CTRL, &reg);
+	reg |= ARLTBL_START_DONE;
+	if (op)
+		reg |= ARLTBL_RW;
+	else
+		reg &= ~ARLTBL_RW;
+	b53125_write8(dev, B53_ARLIO_PAGE, B53_ARLTBL_RW_CTRL, reg);
+	return b53125_mac_tbl_op_wait(dev);
+}
+
+static int b53125_mac_tbl_read(struct b53125_device *dev, u64 mac,
+			u16 vid, struct b53125_mac_arl_entry *ent, u8 *idx,
+			bool is_valid)
+{
+	ospl_uint32 i;
+	int ret = 0;
+
+	ret = b53125_mac_tbl_op_wait(dev);
+	if (ret)
+		return ret;
+
+	/* Read the bins */
+	for (i = 0; i < dev->num_arl_entries; i++) {
+		u64 mac_vid;
+		u32 fwd_entry;
+
+		b53125_read64(dev, B53_ARLIO_PAGE,
+			   B53_ARLTBL_MAC_VID_ENTRY(i), &mac_vid);
+		b53125_read32(dev, B53_ARLIO_PAGE,
+			   B53_ARLTBL_DATA_ENTRY(i), &fwd_entry);
+		b53125_mac_tbl_to_entry(ent, mac_vid, fwd_entry);
+
+		if (!(fwd_entry & ARLTBL_VALID))
+			continue;
+		if ((mac_vid & ARLTBL_MAC_MASK) != mac)
+			continue;
+		*idx = i;
+	}
+
+	return ERROR;
+}
+
+static int b53125_mac_tbl_op(struct b53125_device *dev, int op, int port,
+		      const ospl_uint8 *addr, u16 vid, ospl_bool is_valid)
+{
+	struct b53125_mac_arl_entry ent;
+	u32 fwd_entry;
+	u64 mac, mac_vid = 0;
+	u8 idx = 0;
+	int ret;
+
+	/* Convert the array into a 64-bit MAC */
+	mac = ether_addr_to_u64(addr);
+
+	/* Perform a read for the given MAC and VID */
+	b53125_write48(dev, B53_ARLIO_PAGE, B53_MAC_ADDR_IDX, mac);
+	b53125_write16(dev, B53_ARLIO_PAGE, B53_VLAN_ID_IDX, vid);
+
+	/* Issue a read operation for this MAC */
+	ret = b53125_mac_tbl_rw_op(dev, 1);
+	if (ret)
+		return ret;
+
+	ret = b53125_mac_tbl_read(dev, mac, vid, &ent, &idx, is_valid);
+	/* If this is a read, just finish now */
+	if (op)
+		return ret;
+
+	/* We could not find a matching MAC, so reset to a new entry */
+	if (ret) {
+		fwd_entry = 0;
+		idx = 1;
+	}
+
+	memset(&ent, 0, sizeof(ent));
+	ent.port = port;
+	ent.is_valid = is_valid;
+	ent.vid = vid;
+	ent.is_static = ospl_true;
+	memcpy(ent.mac, addr, ETH_ALEN);
+	b53125_mac_tbl_from_entry(&mac_vid, &fwd_entry, &ent);
+
+	b53125_write64(dev, B53_ARLIO_PAGE,
+		    B53_ARLTBL_MAC_VID_ENTRY(idx), mac_vid);
+	b53125_write32(dev, B53_ARLIO_PAGE,
+		    B53_ARLTBL_DATA_ENTRY(idx), fwd_entry);
+
+	return b53125_mac_tbl_rw_op(dev, 0);
+}
+
+int b53125_mac_tbl_add(struct b53125_device *dev, int port,
+		const ospl_uint8 *addr, u16 vid)
+{
+	return b53125_mac_tbl_op(dev, 0, port, addr, vid, ospl_true);
+}
+
+
+int b53125_mac_tbl_del(struct b53125_device *dev, int port,
+		const ospl_uint8 *addr, u16 vid)
+{
+	return b53125_mac_tbl_op(dev, 0, port, addr, vid, ospl_false);
+}
+
+
+static int b53125_mac_tbl_search_wait(struct b53125_device *dev)
+{
+	ospl_uint32 timeout = 1000;
+	u8 reg;
+	do {

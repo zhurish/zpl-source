@@ -1807,7 +1807,7 @@ int os_timezone_offset_api(ospl_char * res)
 	else
 	{
 		memset(tmp, 0, sizeof(tmp));
-#ifdef PL_OPENWRT_UCI
+#if 0//def PL_OPENWRT_UCI
 		ret |= os_uci_get_string("system.@system[0].zonename", tmp);
 #else
 		ret = OK;

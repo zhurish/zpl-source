@@ -1,8 +1,11 @@
 #
 #
+#SHELL :=C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe
+SHELL := sh
 #
-export TOP_DIR =$(shell pwd)
-#TOP_DIR=/home/zhurish/workspace/SWPlatform
+export TOP_DIR =$(CURDIR)
+#export TOP_DIR =$(shell pwd)
+#export TOP_DIR=D:\source\SWPlatform\source
 #
 #
 #
@@ -17,7 +20,7 @@ export TOP_DIR =$(shell pwd)
 #include/gitversion.h: 
 #$(GITVER_FILE):
 #	@/bin/sh $(TOP_DIR)/make/version.sh
-	#/usr/bin/perl $(SRC_DIR)/route_types.pl < $(SRC_DIR)/route_types.txt > $@
+#	#/usr/bin/perl $(SRC_DIR)/route_types.pl < $(SRC_DIR)/route_types.txt > $@
 #
 #
 #
@@ -49,7 +52,7 @@ endif
 LIBS1 = $(shell $(CD) $(BASE_ROOT)/$(LIBDIR)/ && ls *.a)
 LIBS2 = $(subst .a,,$(LIBS1))
 LIBC += $(subst lib,-l,$(LIBS2))
-ifneq ($(PL_BUILD_TYPE),X86)
+ifneq ($(PL_BUILD_ARCH),X86)
 LIBSO1 = $(shell $(CD) $(BASE_ROOT)/$(LIBDIR)/ && ls *.so)
 LIBSO2 = $(subst .so,,$(LIBSO1))
 LIBC += $(subst lib,-l,$(LIBSO2))

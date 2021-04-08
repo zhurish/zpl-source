@@ -36,9 +36,11 @@ extern int web_netservice_app(void);
 extern int web_wireless_app(void);
 #endif
 
+extern int web_sip_app(void);
+
 #ifdef APP_X5BA_MODULE
 #ifdef PL_PJSIP_MODULE
-extern int web_sip_app(void);
+
 #endif /*PL_PJSIP_MODULE*/
 extern int web_factory_app(void);
 extern int web_card_app(void);

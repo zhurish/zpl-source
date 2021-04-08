@@ -43,23 +43,6 @@
 #+= 是添加等号后面的值
 #
 #
-#
-ifneq ($(TOP_DIR),)
-ROOT_DIR = $(TOP_DIR)
-else
-ROOT_DIR = $(shell pwd)
-endif
-
-BASE_ROOT = $(ROOT_DIR)
-
-export MAKE_DIR = $(BASE_ROOT)/make
-export BASE_ROOT = $(ROOT_DIR)
-#
-#
-include $(MAKE_DIR)/board.mk
-#
-#
-#
 ECHO = echo
 CD = cd
 RM = rm
@@ -70,9 +53,29 @@ MKDIR = mkdir
 TAR = tar
 INSTALL = install -c
 LN = ln -s
+#SHELL := C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe
+SHELL := sh
 #
 #
-PL_BUILD_TYPE	=$(ARCH_TYPE)
+#
+ifneq ($(TOP_DIR),)
+ROOT_DIR = $(TOP_DIR)
+else
+ROOT_DIR = $(CURDIR)
+#$(shell pwd)
+endif
+#ROOT_DIR = D:/source/SWPlatform/source
+BASE_ROOT = $(ROOT_DIR)
+
+export MAKE_DIR = $(BASE_ROOT)/make
+export BASE_ROOT = $(ROOT_DIR)
+#
+#
+include $(MAKE_DIR)/board.mk
+#
+#
+#
+PL_BUILD_ARCH	=$(ARCH_TYPE)
 #
 PL_BUILD_DEBUG	=$(ARCH_DEBUG)
 #
@@ -83,7 +86,37 @@ PL_BUILD_OS	=$(ARCH_OS)
 PL_BUILD_IPV6	= $(IPV6_ENABLE)
 #
 #
-
+#
+ifeq ($(PL_BUILD_DEBUG),NO)
+RELEASEDIR = debug
+#release
+OBJDIR = $(RELEASEDIR)/obj
+LIBDIR = $(RELEASEDIR)/lib
+BINDIR = $(RELEASEDIR)/bin
+SBINDIR = $(RELEASEDIR)/sbin
+ETCDIR = $(RELEASEDIR)/etc
+ULIBDIR = $(RELEASEDIR)/usr/lib
+WWWDIR = $(RELEASEDIR)/www
+PLOS_CFLAGS += -s
+PLOS_MAP =
+else
+RELEASEDIR = debug
+OBJDIR = $(RELEASEDIR)/obj
+LIBDIR = $(RELEASEDIR)/lib
+BINDIR = $(RELEASEDIR)/bin
+SBINDIR = $(RELEASEDIR)/sbin
+ETCDIR = $(RELEASEDIR)/etc
+ULIBDIR = $(RELEASEDIR)/usr/lib
+WWWDIR = $(RELEASEDIR)/www
+#ULIBDIR = $(RELEASEDIR)/www/spool
+#ULIBDIR = $(RELEASEDIR)/www/spool/cache
+#PLOS_MAP = -Wl,-Map,target-app.map
+PLOS_MAP = -Wl,-Map,
+endif
+#
+#
+#
+#
 #
 #PLOS_LDLIBS += -std=c99 
 PLOS_CFLAGS += -std=gnu99 -fgnu89-inline
@@ -135,33 +168,6 @@ PLOS_CFLAGS += -fmessage-length=0 -Wcast-align
 PLOS_CFLAGS += -fsigned-char
 #
 #
-#
-ifeq ($(PL_BUILD_DEBUG),NO)
-RELEASEDIR = debug
-#release
-OBJDIR = $(RELEASEDIR)/obj
-LIBDIR = $(RELEASEDIR)/lib
-BINDIR = $(RELEASEDIR)/bin
-SBINDIR = $(RELEASEDIR)/sbin
-ETCDIR = $(RELEASEDIR)/etc
-ULIBDIR = $(RELEASEDIR)/usr/lib
-WWWDIR = $(RELEASEDIR)/www
-PLOS_CFLAGS += -s
-PLOS_MAP =
-else
-RELEASEDIR = debug
-OBJDIR = $(RELEASEDIR)/obj
-LIBDIR = $(RELEASEDIR)/lib
-BINDIR = $(RELEASEDIR)/bin
-SBINDIR = $(RELEASEDIR)/sbin
-ETCDIR = $(RELEASEDIR)/etc
-ULIBDIR = $(RELEASEDIR)/usr/lib
-WWWDIR = $(RELEASEDIR)/www
-#ULIBDIR = $(RELEASEDIR)/www/spool
-#ULIBDIR = $(RELEASEDIR)/www/spool/cache
-#PLOS_MAP = -Wl,-Map,target-app.map
-PLOS_MAP = -Wl,-Map,
-endif
 
 ROOTFS_DIR = rootfs_install
 export DSTROOTFSDIR = $(BASE_ROOT)/$(ROOTFS_DIR)
@@ -169,12 +175,25 @@ export DSTROOTFSDIR = $(BASE_ROOT)/$(ROOTFS_DIR)
 #
 ifeq ($(PL_BUILD_OPENWRT),true)
 include $(MAKE_DIR)/openwrt.mk
-PLOS_DEFINE += -DPL_BUILD_OPENWRT
-else
+#PLOS_DEFINE += -DPL_BUILD_OPENWRT
+endif
+ifeq ($(PL_SYSTEM_LINUX),true)
 include $(MAKE_DIR)/linux.mk
-PLOS_DEFINE += -DPL_BUILD_LINUX
+#PLOS_DEFINE += -DPL_BUILD_LINUX
 endif
 #
+ifeq ($(PL_SYSTEM_MINGW32),true)
+include $(MAKE_DIR)/mingw.mk #mingw_nt
+endif
+ifeq ($(PL_SYSTEM_MINGW64),true)
+include $(MAKE_DIR)/mingw.mk
+endif
+ifeq ($(PL_SYSTEM_MSVC32),true)
+include $(MAKE_DIR)/mingw.mk
+endif
+ifeq ($(PL_SYSTEM_MSVC64),true)
+include $(MAKE_DIR)/mingw.mk
+endif
 #
 ifeq ($(GCC_TYPE),UCLIBC)
 PLOS_CFLAGS += -D__UCLIBC__
@@ -190,6 +209,8 @@ PLOS_CPPFLAGS += -O1
 endif
 #
 #
+PLOS_DEFINE += -DPL_BUILD_ARCH_$(PL_BUILD_ARCH)
+PLOS_DEFINE += -DPL_BUILD_OS_$(PL_BUILD_OS)
 #
 #
 #

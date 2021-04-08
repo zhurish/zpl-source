@@ -17,7 +17,7 @@
 #include "host.h"
 #include "eloop.h"
 
-#include "libssh_config.h"
+#include "libssh_autoconfig.h"
 #include "libssh/priv.h"
 #include "libssh/scp.h"
 #include "ssh_api.h"
