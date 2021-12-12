@@ -13,9 +13,11 @@ typedef enum {
   MODULE_UTILS, 
   MODULE_IMISH, 
   MODULE_KERNEL, 
-  MODULE_NSMDEBUG, 
+  MODULE_DHCP, 
   MODULE_NSM,
+  MODULE_SDK, 
   MODULE_PAL, 
+  MODULE_HAL, 
 	MODULE_MAX,
 } module_t;
  

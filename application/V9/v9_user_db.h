@@ -42,37 +42,37 @@ extern "C" {
 
 
 
-extern ospl_uint32 _sqldb_debug;
+extern zpl_uint32 _sqldb_debug;
 
 
 
-extern sqlite3 * v9_user_sqldb_open(ospl_uint32 id);
-extern int v9_user_sqldb_close(sqlite3 *db, ospl_uint32 id);
+extern sqlite3 * v9_user_sqldb_open(zpl_uint32 id);
+extern int v9_user_sqldb_close(sqlite3 *db, zpl_uint32 id);
 
-extern int v9_user_sqldb_count(sqlite3 *db, ospl_uint32 id, int group, int *pValue);
+extern int v9_user_sqldb_count(sqlite3 *db, zpl_uint32 id, int group, int *pValue);
 
-extern int v9_user_sqldb_add(sqlite3 *db, ospl_uint32 id, ospl_bool gender, int group, char *user, char *user_id, char *pic, char *text);
-//extern int v9_user_sqldb_add_qurey(sqlite3 *db, ospl_uint32 id, ospl_bool gender, int group, char *user, char *user_id, char *pic);
+extern int v9_user_sqldb_add(sqlite3 *db, zpl_uint32 id, zpl_bool gender, int group, char *user, char *user_id, char *pic, char *text);
+//extern int v9_user_sqldb_add_qurey(sqlite3 *db, zpl_uint32 id, zpl_bool gender, int group, char *user, char *user_id, char *pic);
 
-extern int v9_user_sqldb_update(sqlite3 *db, ospl_uint32 id, ospl_bool gender, int group, char *user, char *user_id, char *pic, char *text);
+extern int v9_user_sqldb_update(sqlite3 *db, zpl_uint32 id, zpl_bool gender, int group, char *user, char *user_id, char *pic, char *text);
 
-extern int v9_user_sqldb_key_update(sqlite3 *db, ospl_uint32 id, char *user_id, sql_snapfea_key *key);
+extern int v9_user_sqldb_key_update(sqlite3 *db, zpl_uint32 id, char *user_id, sql_snapfea_key *key);
 
-extern int v9_user_sqldb_key_select(sqlite3 *db, ospl_uint32 id, char *user_id, sql_snapfea_key *key);
+extern int v9_user_sqldb_key_select(sqlite3 *db, zpl_uint32 id, char *user_id, sql_snapfea_key *key);
 
-extern int v9_user_sqldb_del(sqlite3 *db, ospl_uint32 id, char *user_id);
+extern int v9_user_sqldb_del(sqlite3 *db, zpl_uint32 id, char *user_id);
 
-extern int v9_user_sqldb_del_group(sqlite3 *db, ospl_uint32 id, int group);
-extern int v9_user_sqldb_cleanup(ospl_uint32 id);
+extern int v9_user_sqldb_del_group(sqlite3 *db, zpl_uint32 id, int group);
+extern int v9_user_sqldb_cleanup(zpl_uint32 id);
 
-extern int v9_user_sqldb_lookup_user(sqlite3 *db,ospl_uint32 id, char *user_id, void *user);
-extern int v9_user_sqldb_foreach(sqlite3 *db, ospl_uint32 id, int groupid, char *user_id, void * cb, void *pVoid);
+extern int v9_user_sqldb_lookup_user(sqlite3 *db,zpl_uint32 id, char *user_id, void *user);
+extern int v9_user_sqldb_foreach(sqlite3 *db, zpl_uint32 id, int groupid, char *user_id, void * cb, void *pVoid);
 
 
-extern int v9_user_sqldb_key_foreach(sqlite3 *db, ospl_uint32 id, sql_snapfea_key *key, char *user_id, ospl_float* p_fResult);
+extern int v9_user_sqldb_key_foreach(sqlite3 *db, zpl_uint32 id, sql_snapfea_key *key, char *user_id, zpl_float* p_fResult);
 
 #ifdef V9_SQLDB_TEST
-extern int v9_user_sqldb_test(ospl_uint32 i, void *pArg);
+extern int v9_user_sqldb_test(zpl_uint32 i, void *pArg);
 #endif
 
 

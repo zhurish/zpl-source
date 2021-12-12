@@ -5,17 +5,9 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "getopt.h"
-#include <log.h>
-#include "command.h"
-#include "memory.h"
-#include "prefix.h"
-#include "network.h"
-#include "vty.h"
-#include "buffer.h"
-#include "host.h"
-#include "eloop.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
 #include "ssh_api.h"
 #include "ssh_util.h"
@@ -29,7 +21,7 @@ int ssh_authenticate_kbdint(int fd, ssh_session session, const char *password) {
         const char *instruction;
         const char *name;
         char buffer[128];
-        ospl_uint32 i, n;
+        zpl_uint32 i, n;
 
         name = ssh_userauth_kbdint_getname(session);
         instruction = ssh_userauth_kbdint_getinstruction(session);
@@ -99,9 +91,9 @@ int ssh_authenticate_kbdint(int fd, ssh_session session, const char *password) {
 int ssh_verify_knownhost(int fd, ssh_session session)
 {
 	char *hexa;
-	ospl_uint32 state;
+	zpl_uint32 state;
 	char buf[10];
-	ospl_uint8 *hash = NULL;
+	zpl_uint8 *hash = NULL;
 	size_t hlen;
 	ssh_key srv_pubkey;
 	int rc;
@@ -198,7 +190,7 @@ int ssh_verify_knownhost(int fd, ssh_session session)
 int ssh_authenticate_api (ssh_session session, char *pass)
 {
 	int rc = SSH_AUTH_DENIED;
-	ospl_uint32 method = 0;
+	zpl_uint32 method = 0;
 	char *banner = NULL;
 	char password[128];
 	int fd = ssh_stdin_get(session);

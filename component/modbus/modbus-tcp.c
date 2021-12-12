@@ -3,7 +3,9 @@
  *
  * SPDX-License-Identifier: LGPL-2.1+
  */
-
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
 #if defined(_WIN32)
 # define OS_WIN32
 /* ws2_32.dll has getaddrinfo and freeaddrinfo on Windows XP and later.
@@ -169,7 +171,7 @@ static ssize_t _modbus_tcp_send(modbus_t *ctx, const uint8_t *req, int req_lengt
        Requests not to send SIGPIPE on errors on stream oriented
        sockets when the other end breaks the connection.  The EPIPE
        error is still returned. */
-    return send(ctx->s, (const char *)req, req_length, MSG_NOSIGNAL);
+    return ipstack_send(ctx->s, (const char *)req, req_length, MSG_NOSIGNAL);
 }
 
 static int _modbus_tcp_receive(modbus_t *ctx, uint8_t *req) {
@@ -177,7 +179,7 @@ static int _modbus_tcp_receive(modbus_t *ctx, uint8_t *req) {
 }
 
 static ssize_t _modbus_tcp_recv(modbus_t *ctx, uint8_t *rsp, int rsp_length) {
-    return recv(ctx->s, (char *)rsp, rsp_length, 0);
+    return ipstack_recv(ctx->s, (char *)rsp, rsp_length, 0);
 }
 
 static int _modbus_tcp_check_integrity(modbus_t *ctx, uint8_t *msg, const int msg_length)
@@ -219,7 +221,7 @@ static int _modbus_tcp_set_ipv4_options(int s)
     /* Set the TCP no delay flag */
     /* SOL_TCP = IPPROTO_TCP */
     option = 1;
-    rc = setsockopt(s, IPPROTO_TCP, TCP_NODELAY,
+    rc = ipstack_setsockopt(s, IPPROTO_TCP, TCP_NODELAY,
                     (const void *)&option, sizeof(int));
     if (rc == -1) {
         return -1;
@@ -233,11 +235,11 @@ static int _modbus_tcp_set_ipv4_options(int s)
     {
         /* Setting FIONBIO expects an unsigned long according to MSDN */
         u_long loption = 1;
-        ioctlsocket(s, FIONBIO, &loption);
+        ipstack_ioctl(s, FIONBIO, &loption);
     }
 #else
     option = 1;
-    ioctl(s, FIONBIO, &option);
+    ipstack_ioctl(s, FIONBIO, &option);
 #endif
 #endif
 
@@ -248,7 +250,7 @@ static int _modbus_tcp_set_ipv4_options(int s)
      **/
     /* Set the IP low delay option */
     option = IPTOS_LOWDELAY;
-    rc = setsockopt(s, IPPROTO_IP, IP_TOS,
+    rc = ipstack_setsockopt(s, IPPROTO_IP, IP_TOS,
                     (const void *)&option, sizeof(int));
     if (rc == -1) {
         return -1;
@@ -261,7 +263,7 @@ static int _modbus_tcp_set_ipv4_options(int s)
 static int _connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen,
                     const struct timeval *ro_tv)
 {
-    int rc = connect(sockfd, addr, addrlen);
+    int rc = ipstack_connect(sockfd, addr, addrlen);
 
 #ifdef OS_WIN32
     int wsaError = 0;
@@ -281,14 +283,14 @@ static int _connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen,
         /* Wait to be available in writing */
         FD_ZERO(&wset);
         FD_SET(sockfd, &wset);
-        rc = select(sockfd + 1, NULL, &wset, NULL, &tv);
+        rc = ipstack_select(IPCOM_STACK, sockfd + 1, NULL, &wset, NULL, &tv);
         if (rc <= 0) {
             /* Timeout or fail */
             return -1;
         }
 
         /* The connection is established if SO_ERROR and optval are set to 0 */
-        rc = getsockopt(sockfd, SOL_SOCKET, SO_ERROR, (void *)&optval, &optlen);
+        rc = ipstack_getsockopt(sockfd, SOL_SOCKET, SO_ERROR, (void *)&optval, &optlen);
         if (rc == 0 && optval == 0) {
             return 0;
         } else {
@@ -322,14 +324,14 @@ static int _modbus_tcp_connect(modbus_t *ctx)
     flags |= SOCK_NONBLOCK;
 #endif
 
-    ctx->s = socket(PF_INET, flags, 0);
+    ctx->s = ipstack_socket(IPCOM_STACK, PF_INET, flags, 0);
     if (ctx->s == -1) {
         return -1;
     }
 
     rc = _modbus_tcp_set_ipv4_options(ctx->s);
     if (rc == -1) {
-        close(ctx->s);
+        ipstack_close(ctx->s);
         ctx->s = -1;
         return -1;
     }
@@ -343,7 +345,7 @@ static int _modbus_tcp_connect(modbus_t *ctx)
     addr.sin_addr.s_addr = inet_addr(ctx_tcp->ip);
     rc = _connect(ctx->s, (struct sockaddr *)&addr, sizeof(addr), &ctx->response_timeout);
     if (rc == -1) {
-        close(ctx->s);
+        ipstack_close(ctx->s);
         ctx->s = -1;
         return -1;
     }
@@ -377,7 +379,7 @@ static int _modbus_tcp_pi_connect(modbus_t *ctx)
     ai_hints.ai_next = NULL;
 
     ai_list = NULL;
-    rc = getaddrinfo(ctx_tcp_pi->node, ctx_tcp_pi->service,
+    rc = ipstack_getaddrinfo(ctx_tcp_pi->node, ctx_tcp_pi->service,
                      &ai_hints, &ai_list);
     if (rc != 0) {
         if (ctx->debug) {
@@ -399,7 +401,7 @@ static int _modbus_tcp_pi_connect(modbus_t *ctx)
         flags |= SOCK_NONBLOCK;
 #endif
 
-        s = socket(ai_ptr->ai_family, flags, ai_ptr->ai_protocol);
+        s = ipstack_socket(IPCOM_STACK, ai_ptr->ai_family, flags, ai_ptr->ai_protocol);
         if (s < 0)
             continue;
 
@@ -412,7 +414,7 @@ static int _modbus_tcp_pi_connect(modbus_t *ctx)
 
         rc = _connect(s, ai_ptr->ai_addr, ai_ptr->ai_addrlen, &ctx->response_timeout);
         if (rc == -1) {
-            close(s);
+            ipstack_close(s);
             continue;
         }
 
@@ -433,8 +435,8 @@ static int _modbus_tcp_pi_connect(modbus_t *ctx)
 static void _modbus_tcp_close(modbus_t *ctx)
 {
     if (ctx->s != -1) {
-        shutdown(ctx->s, SHUT_RDWR);
-        close(ctx->s);
+        ipstack_shutdown(ctx->s, SHUT_RDWR);
+        ipstack_close(ctx->s);
         ctx->s = -1;
     }
 }
@@ -448,7 +450,7 @@ static int _modbus_tcp_flush(modbus_t *ctx)
         /* Extract the garbage from the socket */
         char devnull[MODBUS_TCP_MAX_ADU_LENGTH];
 #ifndef OS_WIN32
-        rc = recv(ctx->s, devnull, MODBUS_TCP_MAX_ADU_LENGTH, MSG_DONTWAIT);
+        rc = ipstack_recv(ctx->s, devnull, MODBUS_TCP_MAX_ADU_LENGTH, MSG_DONTWAIT);
 #else
         /* On Win32, it's a bit more complicated to not wait */
         fd_set rset;
@@ -458,14 +460,14 @@ static int _modbus_tcp_flush(modbus_t *ctx)
         tv.tv_usec = 0;
         FD_ZERO(&rset);
         FD_SET(ctx->s, &rset);
-        rc = select(ctx->s+1, &rset, NULL, NULL, &tv);
+        rc = ipstack_select(ctx->s+1, &rset, NULL, NULL, &tv);
         if (rc == -1) {
             return -1;
         }
 
         if (rc == 1) {
             /* There is data to flush */
-            rc = recv(ctx->s, devnull, MODBUS_TCP_MAX_ADU_LENGTH, 0);
+            rc = ipstack_recv(ctx->s, devnull, MODBUS_TCP_MAX_ADU_LENGTH, 0);
         }
 #endif
         if (rc > 0) {
@@ -504,15 +506,15 @@ int modbus_tcp_listen(modbus_t *ctx, int nb_connection)
     flags |= SOCK_CLOEXEC;
 #endif
 
-    new_s = socket(PF_INET, flags, IPPROTO_TCP);
+    new_s = ipstack_socket(IPCOM_STACK, PF_INET, flags, IPPROTO_TCP);
     if (new_s == -1) {
         return -1;
     }
 
     enable = 1;
-    if (setsockopt(new_s, SOL_SOCKET, SO_REUSEADDR,
+    if (ipstack_setsockopt(new_s, SOL_SOCKET, SO_REUSEADDR,
                    (char *)&enable, sizeof(enable)) == -1) {
-        close(new_s);
+        ipstack_close(new_s);
         return -1;
     }
 
@@ -527,13 +529,13 @@ int modbus_tcp_listen(modbus_t *ctx, int nb_connection)
         /* Listen only specified IP address */
         addr.sin_addr.s_addr = inet_addr(ctx_tcp->ip);
     }
-    if (bind(new_s, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
-        close(new_s);
+    if (ipstack_bind(new_s, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
+        ipstack_close(new_s);
         return -1;
     }
 
-    if (listen(new_s, nb_connection) == -1) {
-        close(new_s);
+    if (ipstack_listen(new_s, nb_connection) == -1) {
+        ipstack_close(new_s);
         return -1;
     }
 
@@ -589,7 +591,7 @@ int modbus_tcp_pi_listen(modbus_t *ctx, int nb_connection)
     ai_hints.ai_next = NULL;
 
     ai_list = NULL;
-    rc = getaddrinfo(node, service, &ai_hints, &ai_list);
+    rc = ipstack_getaddrinfo(node, service, &ai_hints, &ai_list);
     if (rc != 0) {
         if (ctx->debug) {
             fprintf(stderr, "Error returned by getaddrinfo: %s\n", gai_strerror(rc));
@@ -607,7 +609,7 @@ int modbus_tcp_pi_listen(modbus_t *ctx, int nb_connection)
         flags |= SOCK_CLOEXEC;
 #endif
 
-        s = socket(ai_ptr->ai_family, flags, ai_ptr->ai_protocol);
+        s = ipstack_socket(IPCOM_STACK, ai_ptr->ai_family, flags, ai_ptr->ai_protocol);
         if (s < 0) {
             if (ctx->debug) {
                 perror("socket");
@@ -615,10 +617,10 @@ int modbus_tcp_pi_listen(modbus_t *ctx, int nb_connection)
             continue;
         } else {
             int enable = 1;
-            rc = setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
+            rc = ipstack_setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
                             (void *)&enable, sizeof (enable));
             if (rc != 0) {
-                close(s);
+                ipstack_close(s);
                 if (ctx->debug) {
                     perror("setsockopt");
                 }
@@ -626,18 +628,18 @@ int modbus_tcp_pi_listen(modbus_t *ctx, int nb_connection)
             }
         }
 
-        rc = bind(s, ai_ptr->ai_addr, ai_ptr->ai_addrlen);
+        rc = ipstack_bind(s, ai_ptr->ai_addr, ai_ptr->ai_addrlen);
         if (rc != 0) {
-            close(s);
+            ipstack_close(s);
             if (ctx->debug) {
                 perror("bind");
             }
             continue;
         }
 
-        rc = listen(s, nb_connection);
+        rc = ipstack_listen(s, nb_connection);
         if (rc != 0) {
-            close(s);
+            ipstack_close(s);
             if (ctx->debug) {
                 perror("listen");
             }
@@ -647,7 +649,7 @@ int modbus_tcp_pi_listen(modbus_t *ctx, int nb_connection)
         new_s = s;
         break;
     }
-    freeaddrinfo(ai_list);
+    ipstack_freeaddrinfo(ai_list);
 
     if (new_s < 0) {
         return -1;
@@ -671,7 +673,7 @@ int modbus_tcp_accept(modbus_t *ctx, int *s)
     /* Inherit socket flags and use accept4 call */
     ctx->s = accept4(*s, (struct sockaddr *)&addr, &addrlen, SOCK_CLOEXEC);
 #else
-    ctx->s = accept(*s, (struct sockaddr *)&addr, &addrlen);
+    ctx->s = ipstack_accept(*s, (struct sockaddr *)&addr, &addrlen);
 #endif
 
     if (ctx->s == -1) {
@@ -701,7 +703,7 @@ int modbus_tcp_pi_accept(modbus_t *ctx, int *s)
     /* Inherit socket flags and use accept4 call */
     ctx->s = accept4(*s, (struct sockaddr *)&addr, &addrlen, SOCK_CLOEXEC);
 #else
-    ctx->s = accept(*s, (struct sockaddr *)&addr, &addrlen);
+    ctx->s = ipstack_accept(*s, (struct sockaddr *)&addr, &addrlen);
 #endif
 
     if (ctx->s == -1) {
@@ -718,7 +720,7 @@ int modbus_tcp_pi_accept(modbus_t *ctx, int *s)
 static int _modbus_tcp_select(modbus_t *ctx, fd_set *rset, struct timeval *tv, int length_to_read)
 {
     int s_rc;
-    while ((s_rc = select(ctx->s+1, rset, NULL, NULL, tv)) == -1) {
+    while ((s_rc = ipstack_select(IPCOM_STACK, ctx->s+1, rset, NULL, NULL, tv)) == -1) {
         if (errno == EINTR) {
             if (ctx->debug) {
                 fprintf(stderr, "A non blocked signal was caught\n");

@@ -5,15 +5,25 @@
  *      Author: zhurish
  */
 
-#ifndef __NSM_NSM_QOS_H_
-#define __NSM_NSM_QOS_H_
+#ifndef __NSM_QOS_H__
+#define __NSM_QOS_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#define NSM_QOS_PORT_QUEUE_NUM_4	4
+#define NSM_QOS_PORT_QUEUE_NUM_8	8
+#define NSM_QOS_PORT_QUEUE_NUM	NSM_QOS_PORT_QUEUE_NUM_4
 
-//#define
+#define NSM_QOS_USERPRI_MAP_PRIORITY //用户优先级到内部优先级映射
+#define NSM_QOS_PRIORITY_MAP_USERPRI  //内部优先级到用户优先级映射
+
+#define NSM_QOS_USERPRI_MAP_QUEUE //用户优先级到队列映射
+#define NSM_QOS_QUEUE_MAP_USERPRI  //队列到用户优先级映射
+
+#define NSM_QOS_PRIORITY_MAP_QUEUE //内部优先级到队列映射
+#define NSM_QOS_QUEUE_MAP_PRIORITY  //队列到内部优先级映射
 /*
  * trust pri on input
  */
@@ -40,6 +50,7 @@ typedef enum
     NSM_QOS_CLASS_MAX,
 }nsm_qos_class_e;
 
+
 typedef enum
 {
 	NSM_QOS_QUEUE_NONE = 0,
@@ -47,10 +58,12 @@ typedef enum
     NSM_QOS_QUEUE_1,
     NSM_QOS_QUEUE_2,
     NSM_QOS_QUEUE_3,
+#if NSM_QOS_PORT_QUEUE_NUM==NSM_QOS_PORT_QUEUE_NUM_8
     NSM_QOS_QUEUE_4,
     NSM_QOS_QUEUE_5,
     NSM_QOS_QUEUE_6,
     NSM_QOS_QUEUE_7,
+#endif
     NSM_QOS_QUEUE_MAX,
 }nsm_qos_queue_e;
 
@@ -69,40 +82,32 @@ typedef enum
     NSM_QOS_PRI_MAX,
 }nsm_qos_priority_e;
 
-typedef enum
+#define NSM_QOS_DSCP_PRI_MAX	64
+
+
+typedef enum nsm_queue_sched_e
 {
 	NSM_QOS_MODE_NONE = 0,
     NSM_QOS_MODE_PQ = 1,
+    NSM_QOS_MODE_SP = NSM_QOS_MODE_PQ,	//strict priority	
+    NSM_QOS_MODE_WRR,//weighted round robin
+	NSM_QOS_MODE_WRED,//random-detect
+	NSM_QOS_MODE_DRRW,//drr-weight
     NSM_QOS_MODE_WFQ,
     NSM_QOS_MODE_FQ,
-}nsm_qos_mode_e;
+}nsm_queue_sched_t;
+
 
 typedef enum nsm_class_sched_e {
-    NSM_CLASS_SCHED_WEIGHT = 0,
-	NSM_CLASS_SCHED_STRICT,
+    NSM_CLASS_SCHED_WRR = 0,//weighted round robin
+	NSM_CLASS_SCHED_PQ, //strict priority
 } nsm_class_sched_t;
-
 
 typedef enum
 {
 	NSM_QOS_DIR_INBOUND = 1,
 	NSM_QOS_DIR_OUTBOUND,
 }nsm_qos_dir_e;
-
-typedef enum
-{
-	NSM_QOS_REMARK_NONE = 0,
-	NSM_QOS_REMARK_8021P = 1,
-	NSM_QOS_REMARK_DSCP,
-	NSM_QOS_REMARK_IP_PRI,
-}nsm_qos_remark_e;
-
-typedef enum
-{
-	NSM_QOS_ACTION_NONE = 0,
-	NSM_QOS_PERIMIT = 1,
-	NSM_QOS_DENY,
-}nsm_qos_action_e;
 
 
 typedef enum
@@ -116,19 +121,31 @@ typedef enum
 
 typedef struct nsm_qos_limit_s
 {
-	ospl_uint32			qos_cir;
-	ospl_uint32			qos_pir;
-	ospl_uint32			qos_bir;
+	zpl_uint32			qos_cir;//承诺信息速率
+	zpl_uint32			qos_pir;//峰值信息速率
+	//zpl_uint32			qos_bir;
+	zpl_uint32			qos_cbs;//承诺突发尺寸突发尺寸
+	//zpl_uint32			qos_pbs;//峰值突发尺寸
+	//zpl_uint32			qos_ebs;//超出突发尺寸
 }nsm_qos_limit_t;
 
+typedef enum
+{
+	NSM_QOS_STORM_RATE = 0x00,
+	NSM_QOS_STORM_PERCENT = 0x01,
+	NSM_QOS_STORM_PACKET = 0x02,
+}nsm_strorm_mode_e;
 
 typedef struct nsm_qos_storm_s
 {
-	enum {STORM_RATE, STORM_PER} qos_storm_type;
-	ospl_uint32			qos_unicast;
-	ospl_uint32			qos_multicast;
-	ospl_uint32			qos_broadcast;
+	zpl_uint32			qos_unicast;
+	zpl_uint8			unicast_flags;
+	zpl_uint32			qos_multicast;
+	zpl_uint8			multicast_flags;
+	zpl_uint32			qos_broadcast;
+	zpl_uint8			broadcast_flags;
 }nsm_qos_storm_t;
+
 
 typedef enum
 {
@@ -140,51 +157,121 @@ typedef enum
 	QOS_MAP_EXP,
 } nsm_qos_map_e;
 
-typedef union
+/*
+typedef struct 
 {
-	ospl_uint32			port;	//port
-	ospl_uint32			cos;	//802.1q
-	ospl_uint32			ip_pre;
-	ospl_uint32			dscp;
-	ospl_uint32			exp;
-} nsm_qos_map_t;
-
+	nsm_qos_queue_e	cos[NSM_QOS_PRI_MAX];
+	nsm_qos_queue_e	ip_prec[NSM_QOS_PRI_MAX];
+	nsm_qos_queue_e	mplsexp[NSM_QOS_PRI_MAX];
+	nsm_qos_queue_e	dscp[NSM_QOS_DSCP_PRI_MAX];
+}nsm_qos_map_t;
+*/
+typedef struct 
+{
+	zpl_char	*service_policy;
+}nsm_service_policy_t;
 
 typedef struct nsm_qos_s
 {
 	ifindex_t			ifindex;
 	// input
-	ospl_bool				qos_storm_enable;
+	zpl_bool			qos_storm_enable;
 	nsm_qos_storm_t		qos_storm;			//storm control
-	nsm_qos_trust_e 	qos_trust;
 
-	ospl_bool				qos_class_enable;
+	//队列调度
+	//队列调度模式（出方向应用）
+	nsm_queue_sched_t		qos_queue_sched[NSM_QOS_QUEUE_MAX];
+	nsm_queue_sched_t		qos_queue_sched_default[NSM_QOS_QUEUE_MAX];
+	zpl_char				qos_queue_sched_weight[NSM_QOS_QUEUE_MAX];
+	//队列到class的映射
+	zpl_bool			qos_class_enable;
 	nsm_qos_class_e		qos_class[NSM_QOS_QUEUE_MAX]; //queue map to class
+	nsm_qos_class_e		qos_class_default[NSM_QOS_QUEUE_MAX];
+	nsm_class_sched_t	qos_class_sched[NSM_QOS_CLASS_MAX];
+	nsm_class_sched_t	qos_class_sched_default[NSM_QOS_CLASS_MAX];
+	nsm_class_sched_t	qos_class_sched_weight[NSM_QOS_CLASS_MAX];
 
-	ospl_bool				qos_priority_enable;
-	nsm_qos_priority_e	qos_queue[NSM_QOS_QUEUE_MAX]; //priority map to queue
+	nsm_qos_trust_e 	qos_trust;
+	nsm_qos_queue_e		qos_port_input_queue;//端口到优先级的映射
+	nsm_qos_queue_e		qos_port_input_queue_default;
+#ifdef NSM_QOS_USERPRI_MAP_QUEUE
+	//各类优先级到queue的映射
+	nsm_qos_queue_e	cos_map_queue[NSM_QOS_PRI_MAX];
+	nsm_qos_queue_e	cos_map_queue_default[NSM_QOS_PRI_MAX];
+	nsm_qos_queue_e	ip_prec_map_queue[NSM_QOS_PRI_MAX];
+	nsm_qos_queue_e	ip_prec_map_queue_default[NSM_QOS_PRI_MAX];
+	nsm_qos_queue_e	mplsexp_map_queue[NSM_QOS_PRI_MAX];
+	nsm_qos_queue_e	mplsexp_map_queue_default[NSM_QOS_PRI_MAX];
+	nsm_qos_queue_e	dscp_map_queue[NSM_QOS_DSCP_PRI_MAX];
+	nsm_qos_queue_e	dscp_map_queue_default[NSM_QOS_DSCP_PRI_MAX];
+#endif
 
-	//USER priority map to LOCAL priority
-	ospl_bool				qos_map_enable;
-	nsm_qos_map_e		qos_map_type;
-	//nsm_qos_priority_e	qos_map_priority[NSM_QOS_PRI_MAX];	//pri map to priority
-	nsm_qos_map_t		qos_map[NSM_QOS_PRI_MAX];
+#ifdef NSM_QOS_PRIORITY_MAP_QUEUE
+	//output 内部优先级到队列的映射
+	nsm_qos_queue_e	qos_priority_map_queue[NSM_QOS_PRI_MAX]; //priority map to queue
+	nsm_qos_queue_e qos_priority_map_queue_default[NSM_QOS_PRI_MAX];
+#endif
 
+#ifdef NSM_QOS_QUEUE_MAP_PRIORITY
+	//input 用户优先级到内部优先级的映射（队列到内部优先级的映射）
+	nsm_qos_priority_e	qos_queue_map_priority[NSM_QOS_QUEUE_MAX]; // priority map to priority
+	nsm_qos_priority_e  qos_queue_map_priority_default[NSM_QOS_QUEUE_MAX];
+#endif
+
+#ifdef NSM_QOS_USERPRI_MAP_PRIORITY
+	// user priority map to priority
+	nsm_qos_priority_e	cos_map_priority[NSM_QOS_PRI_MAX];
+	nsm_qos_priority_e	cos_map_priority_default[NSM_QOS_PRI_MAX];
+	nsm_qos_priority_e	ip_prec_map_priority[NSM_QOS_PRI_MAX];
+	nsm_qos_priority_e	ip_prec_map_priority_default[NSM_QOS_PRI_MAX];
+	nsm_qos_priority_e	mplsexp_map_priority[NSM_QOS_PRI_MAX];
+	nsm_qos_priority_e	mplsexp_map_priority_default[NSM_QOS_PRI_MAX];
+	nsm_qos_priority_e	dscp_map_priority[NSM_QOS_DSCP_PRI_MAX];
+	nsm_qos_priority_e	dscp_map_priority_default[NSM_QOS_DSCP_PRI_MAX];
+#endif
+
+	//端口优先级替换
+	nsm_qos_priority_e	qos_cos_replace;
+	nsm_qos_priority_e	qos_dscp_replace;
+	//端口限速
 	nsm_qos_limit_t		qos_input_limit;	//rate limit control
 	nsm_qos_limit_t		qos_output_limit;
-	//output
-	nsm_qos_map_t		qos_output_queue;
 
-	nsm_qos_dir_e		qos_dir;
+	//限速策略
+	zpl_char	*qos_policer_input_acl;//policer-aggregate
+	zpl_char	*qos_policer_output_acl;//policer-aggregate
 
-	nsm_qos_mode_e		qos_mode;
+	nsm_service_policy_t service_policy_output;
+	nsm_service_policy_t service_policy_input;
 
-	nsm_qos_remark_e	qos_remark;
-	//nsm_qos_color_e		qos_color;
-	nsm_qos_action_e	qos_action;
+	zpl_bool			qos_shaping;
 
 }nsm_qos_t;
 
+
+typedef struct Global_Qos_s
+{
+	zpl_bool			qos_enable;
+	zpl_bool			qos_shaping;
+	//队列到class的映射
+	zpl_bool			qos_class_enable;
+	nsm_qos_class_e		qos_class[NSM_QOS_QUEUE_MAX]; //queue map to class
+	nsm_class_sched_t	qos_class_sched[NSM_QOS_CLASS_MAX];
+
+	//各类优先级到queue的映射
+	//nsm_qos_map_t qos_pri_queue;
+	//nsm_qos_map_t qos_pri_queue_default;
+	//output 内部优先级到队列的映射
+	nsm_qos_queue_e	qos_pri_map_queue[NSM_QOS_PRI_MAX]; //priority map to queue
+	//input 用户优先级到内部优先级的映射（队列到内部优先级的映射）
+	nsm_qos_priority_e	qos_queue_map_pri[NSM_QOS_QUEUE_MAX]; // queue map to priority
+}Global_Qos_t;
+
+
+extern int nsm_qos_global_enable(zpl_bool enable);
+extern zpl_bool nsm_qos_global_get();
+extern int nsm_qos_shaping_global_enable(zpl_bool enable);
+extern zpl_bool nsm_qos_shaping_global_get();
 /*
 默认的映射关系表：
 COS到内部DSCP的映射关系表
@@ -199,39 +286,129 @@ IP优先级     0	1	2	3	4	5	6	7
 内部DSCP值	0~7		8~15	16~23	24~31	32~39	40~47	48~55	56~63
 COS值		0		1		2		3		4		5		6		7
 */
-extern int nsm_dscp_to_cos(ospl_uint32 dscp);
-extern int nsm_cos_to_dscp(ospl_uint32 cos);
+extern int nsm_dscp_to_cos(zpl_uint32 dscp);
+extern int nsm_cos_to_dscp(zpl_uint32 cos);
 
-extern int nsm_qos_storm_enable_set_api(struct interface *ifp);
-extern ospl_bool nsm_qos_storm_enable_get_api(struct interface *ifp);
+extern int nsm_qos_storm_enable_set_api(struct interface *ifp, zpl_bool enable);
+extern zpl_bool nsm_qos_storm_enable_get_api(struct interface *ifp);
 
-extern int nsm_qos_storm_set_api(struct interface *ifp, ospl_uint32 qos_unicast,
-		ospl_uint32 qos_multicast, ospl_uint32 qos_broadcast);
-extern int nsm_qos_storm_get_api(struct interface *ifp, ospl_uint32 *qos_unicast,
-		ospl_uint32 *qos_multicast, ospl_uint32 *qos_broadcast);
+extern int nsm_qos_storm_unicast_set_api(struct interface *ifp, zpl_uint32 qos_unicast,
+		zpl_uint8 unicastflag);
+extern int nsm_qos_storm_unicast_get_api(struct interface *ifp, zpl_uint32 *qos_unicast,
+		zpl_uint8 *unicastflag);
+
+extern int nsm_qos_storm_multicast_set_api(struct interface *ifp, zpl_uint32 qos_multicast,
+		zpl_uint8 multicastflag);
+extern int nsm_qos_storm_multicast_get_api(struct interface *ifp, zpl_uint32 *qos_multicast,
+		zpl_uint8 *multicastflag);
+
+extern int nsm_qos_storm_broadcast_set_api(struct interface *ifp, zpl_uint32 qos_broadcast,
+		zpl_uint8 broadcastflag);
+extern int nsm_qos_storm_broadcast_get_api(struct interface *ifp, zpl_uint32 *qos_broadcast,
+		zpl_uint8 *broadcastflag);
+
+
 extern int nsm_qos_rate_set_api(struct interface *ifp, nsm_qos_dir_e qos_dir,
 		nsm_qos_limit_t *rate);
 extern int nsm_qos_rate_get_api(struct interface *ifp, nsm_qos_dir_e qos_dir,
 		nsm_qos_limit_t *rate);
+
 extern int nsm_qos_trust_set_api(struct interface *ifp, nsm_qos_trust_e trust);
 extern int nsm_qos_trust_get_api(struct interface *ifp, nsm_qos_trust_e *trust);
-extern int nsm_qos_class_set_api(struct interface *ifp, nsm_qos_queue_e queue, nsm_qos_class_e class);
-extern int nsm_qos_class_get_api(struct interface *ifp, nsm_qos_queue_e queue, nsm_qos_class_e *class);
-extern int nsm_qos_priority_map_queue_set_api(struct interface *ifp, nsm_qos_queue_e queue, nsm_qos_priority_e pri);
-extern int nsm_qos_priority_map_queue_get_api(struct interface *ifp, nsm_qos_queue_e queue, nsm_qos_priority_e *pri);
-extern int nsm_qos_map_type_set_api(struct interface *ifp, nsm_qos_map_e type);
-extern int nsm_qos_map_type_get_api(struct interface *ifp, nsm_qos_map_e *type);
-extern int nsm_qos_user_pri_map_priority_set_api(struct interface *ifp, nsm_qos_priority_e priority, nsm_qos_map_t map);
-extern int nsm_qos_user_pri_map_priority_get_api(struct interface *ifp, nsm_qos_priority_e priority, nsm_qos_map_t *map);
+
+extern int nsm_qos_queue_sched_mode_get_api(struct interface *ifp, nsm_qos_queue_e queue, nsm_queue_sched_t *mode, int *sched_weight);
+extern int nsm_qos_queue_sched_mode_set_api(struct interface *ifp, nsm_qos_queue_e queue, nsm_queue_sched_t mode, int sched_weight);
+
+extern int nsm_qos_port_map_queue_set_api(struct interface *ifp, nsm_qos_queue_e queue);
+extern int nsm_qos_port_map_queue_get_api(struct interface *ifp, nsm_qos_queue_e *queue);
+
+
+#ifdef NSM_QOS_USERPRI_MAP_QUEUE
+extern int nsm_qos_cos_map_queue_set_api(struct interface *ifp, zpl_bool defaultmap, zpl_uint8 pri, nsm_qos_queue_e queue);
+extern int nsm_qos_cos_map_queue_get_api(struct interface *ifp, zpl_bool defaultmap, zpl_uint8 pri, nsm_qos_queue_e *queue);
+
+extern int nsm_qos_exp_map_queue_set_api(struct interface *ifp, zpl_bool defaultmap, zpl_uint8 pri, nsm_qos_queue_e queue);
+extern int nsm_qos_exp_map_queue_get_api(struct interface *ifp, zpl_bool defaultmap, zpl_uint8 pri, nsm_qos_queue_e *queue);
+
+extern int nsm_qos_ippre_map_queue_set_api(struct interface *ifp, zpl_bool defaultmap, zpl_uint8 pri, nsm_qos_queue_e queue);
+extern int nsm_qos_ippre_map_queue_get_api(struct interface *ifp, zpl_bool defaultmap, zpl_uint8 pri, nsm_qos_queue_e *queue);
+
+extern int nsm_qos_dscp_map_queue_set_api(struct interface *ifp, zpl_bool defaultmap, zpl_uint8 pri, nsm_qos_queue_e queue);
+extern int nsm_qos_dscp_map_queue_get_api(struct interface *ifp, zpl_bool defaultmap, zpl_uint8 pri, nsm_qos_queue_e *queue);
+#endif
+
+
+/*
+ * queue map to class
+ */
+extern int nsm_qos_class_map_set_api(struct interface *ifp, nsm_qos_queue_e queue, nsm_qos_class_e class);
+extern int nsm_qos_class_map_get_api(struct interface *ifp, nsm_qos_queue_e queue, nsm_qos_class_e *class);
+
+/*
+ * class sched
+ */
+extern int nsm_qos_class_sched_set_api(struct interface *ifp, nsm_qos_class_e class, nsm_class_sched_t mode, int sched_weight);
+extern int nsm_qos_class_sched_get_api(struct interface *ifp, nsm_qos_class_e class, nsm_class_sched_t *mode, int *sched_weight);
+
+/*
+ * flow shaping
+ */
+extern int nsm_qos_shaping_set_api(struct interface *ifp, zpl_bool enable);
+extern int nsm_qos_shaping_get_api(struct interface *ifp, zpl_bool *enable);
 
 
 
+#ifdef NSM_QOS_PRIORITY_MAP_QUEUE
+/*
+ * inside priority map to queue
+ */
+extern int nsm_qos_priority_map_queue_set_api(struct interface *ifp, nsm_qos_priority_e pri, nsm_qos_queue_e queue);
+extern int nsm_qos_priority_map_queue_get_api(struct interface *ifp, nsm_qos_priority_e pri, nsm_qos_queue_e *queue);
+#endif
+#ifdef NSM_QOS_QUEUE_MAP_PRIORITY
+/*
+ * queue map to inside priority
+ */
+extern int nsm_qos_queue_map_priority_set_api(struct interface *ifp, nsm_qos_queue_e queue, nsm_qos_priority_e priority);
+extern int nsm_qos_queue_map_priority_get_api(struct interface *ifp, nsm_qos_queue_e queue, nsm_qos_priority_e *priority);
+#endif
+
+#ifdef NSM_QOS_USERPRI_MAP_PRIORITY
+/*
+ * user priority map to inside priority
+ */
+extern int nsm_qos_cos_map_priority_set_api(struct interface *ifp, nsm_qos_priority_e pri, nsm_qos_priority_e priority);
+extern int nsm_qos_cos_map_priority_get_api(struct interface *ifp, nsm_qos_priority_e pri, nsm_qos_priority_e *priority);
+extern int nsm_qos_ipprec_map_priority_set_api(struct interface *ifp, nsm_qos_priority_e pri, nsm_qos_priority_e priority);
+extern int nsm_qos_ipprec_map_priority_get_api(struct interface *ifp, nsm_qos_priority_e pri, nsm_qos_priority_e *priority);
+extern int nsm_qos_mplsexp_map_priority_set_api(struct interface *ifp, nsm_qos_priority_e pri, nsm_qos_priority_e priority);
+extern int nsm_qos_mplsexp_map_priority_get_api(struct interface *ifp, nsm_qos_priority_e pri, nsm_qos_priority_e *priority);
+extern int nsm_qos_dscp_map_priority_set_api(struct interface *ifp, nsm_qos_priority_e pri, nsm_qos_priority_e priority);
+extern int nsm_qos_dscp_map_priority_get_api(struct interface *ifp, nsm_qos_priority_e pri, nsm_qos_priority_e *priority);
+#endif
+
+extern int nsm_qos_cos_replace_set_api(struct interface *ifp, nsm_qos_priority_e priority);
+extern int nsm_qos_cos_replace_get_api(struct interface *ifp, nsm_qos_priority_e *priority);
+
+extern int nsm_qos_dscp_replace_set_api(struct interface *ifp, nsm_qos_priority_e priority);
+extern int nsm_qos_dscp_replace_get_api(struct interface *ifp, nsm_qos_priority_e *priority);
+
+extern int nsm_qos_service_policy_set_api(struct interface *ifp, int input, zpl_char * service_policy);
+extern int nsm_qos_service_policy_get_api(struct interface *ifp, int input, zpl_char *service_policy);
+
+//extern int nsm_qos_interface_create_api(struct interface *ifp);
+//extern int nsm_qos_interface_del_api(struct interface *ifp);
 extern int nsm_qos_init();
 extern int nsm_qos_exit();
+#ifdef ZPL_SHELL_MODULE
+extern int cmd_qos_init();
+extern int nsm_qos_interface_write_config(struct vty *vty, struct interface *ifp);
+extern int nsm_qos_interface_show(struct vty *vty, struct interface *ifp);
+#endif 
 
- 
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __NSM_NSM_QOS_H_ */
+#endif /* __NSM_QOS_H__ */

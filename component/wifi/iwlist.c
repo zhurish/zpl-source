@@ -10,21 +10,22 @@
  * This file is released under the GPL license.
  *     Copyright (c) 1997-2007 Jean Tourrilhes <jt@hpl.hp.com>
  */
+
 #include "iw_config.h"
 #include "iwioctl.h"
 #include "iwlib.h"		/* Header */
 #include <sys/time.h>
 
 
-static ospl_bool iwlist_detail = ospl_true;
+static zpl_bool iwlist_detail = zpl_true;
 
-int iwlist_detail_set(ospl_bool value)
+int iwlist_detail_set(zpl_bool value)
 {
 	iwlist_detail = value;
 	return 0;
 }
 
-ospl_bool iwlist_detail_get()
+zpl_bool iwlist_detail_get()
 {
 	return iwlist_detail;
 }
@@ -45,7 +46,7 @@ typedef struct iwscan_state
  */
 typedef struct iwmask_name
 {
-	ospl_uint32 mask; /* bit mask for the value */
+	zpl_uint32 mask; /* bit mask for the value */
 	const char * name; /* human readable name for the value */
 } iwmask_name;
 
@@ -170,11 +171,11 @@ static const char * iw_ie_key_mgmt_name[] = { "none", "802.1x", "PSK", };
  * Print all names corresponding to a mask.
  * This may want to be used in iw_print_retry_value() ?
  */
-static void iw_print_mask_name(ospl_uint32 mask,
-		const struct iwmask_name names[], const ospl_uint32 num_names,
+static void iw_print_mask_name(zpl_uint32 mask,
+		const struct iwmask_name names[], const zpl_uint32 num_names,
 		const char * sep)
 {
-	ospl_uint32 i;
+	zpl_uint32 i;
 
 	/* Print out all names for the bitmask */
 	for (i = 0; i < num_names; i++)
@@ -196,8 +197,8 @@ static void iw_print_mask_name(ospl_uint32 mask,
 /*
  * Print the name corresponding to a value, with overflow check.
  */
-static void iw_print_value_name(ospl_uint32 value, const char * names[],
-		const ospl_uint32 num_names)
+static void iw_print_value_name(zpl_uint32 value, const char * names[],
+		const zpl_uint32 num_names)
 {
 	if (value >= num_names)
 		iw_printf(" unknown (%d)", value);
@@ -210,7 +211,7 @@ static void iw_print_value_name(ospl_uint32 value, const char * names[],
  * Parse, and display the results of an unknown IE.
  *
  */
-static void iw_print_ie_unknown(ospl_uint8 * iebuf, int buflen)
+static void iw_print_ie_unknown(zpl_uint8 * iebuf, int buflen)
 {
 	int ielen = iebuf[1] + 2;
 	int i;
@@ -229,18 +230,18 @@ static void iw_print_ie_unknown(ospl_uint8 * iebuf, int buflen)
  * Parse, and display the results of a WPA or WPA2 IE.
  *
  */
-static inline void iw_print_ie_wpa(ospl_uint8 * iebuf, int buflen)
+static inline void iw_print_ie_wpa(zpl_uint8 * iebuf, int buflen)
 {
 	int ielen = iebuf[1] + 2;
-	ospl_uint32 offset = 2; /* Skip the IE id, and the length. */
-	ospl_uint8 wpa1_oui[3] =
+	zpl_uint32 offset = 2; /* Skip the IE id, and the length. */
+	zpl_uint8 wpa1_oui[3] =
 	{ 0x00, 0x50, 0xf2 };
-	ospl_uint8 wpa2_oui[3] =
+	zpl_uint8 wpa2_oui[3] =
 	{ 0x00, 0x0f, 0xac };
-	ospl_uint8 * wpa_oui;
+	zpl_uint8 * wpa_oui;
 	int i;
-	ospl_uint16 ver = 0;
-	ospl_uint16 cnt = 0;
+	zpl_uint16 ver = 0;
+	zpl_uint16 cnt = 0;
 
 	if (ielen > buflen)
 		ielen = buflen;
@@ -300,7 +301,7 @@ static inline void iw_print_ie_wpa(ospl_uint8 * iebuf, int buflen)
 	/* Check if we are done */
 	if (ielen < (offset + 4))
 	{
-		/* We have a ospl_int16 IE.  So we should assume TKIP/TKIP. */
+		/* We have a zpl_int16 IE.  So we should assume TKIP/TKIP. */
 		iw_printf("                        Group Cipher : TKIP\n");
 		iw_printf("                        Pairwise Cipher : TKIP\n");
 		return;
@@ -398,9 +399,9 @@ static inline void iw_print_ie_wpa(ospl_uint8 * iebuf, int buflen)
  * for some of the most interesting ones.
  * For now, we only decode the WPA IEs.
  */
-static inline void iw_print_gen_ie(ospl_uint8 * buffer, int buflen)
+static inline void iw_print_gen_ie(zpl_uint8 * buffer, int buflen)
 {
-	ospl_uint32 offset = 0;
+	zpl_uint32 offset = 0;
 
 	/* Loop on each IE, each IE is minimum 2 bytes */
 	while (offset <= (buflen - 2))
@@ -501,7 +502,7 @@ int has_range)
 		break;
 	case SIOCGIWENCODE:
 	{
-		ospl_uint8 key[IW_ENCODING_TOKEN_MAX];
+		zpl_uint8 key[IW_ENCODING_TOKEN_MAX];
 		if (event->u.data.pointer)
 			memcpy(key, event->u.data.pointer, event->u.data.length);
 		else
@@ -547,7 +548,7 @@ int has_range)
 		break;
 	case SIOCGIWMODUL:
 	{
-		ospl_uint32 modul = event->u.param.value;
+		zpl_uint32 modul = event->u.param.value;
 		int i;
 		int n = 0;
 		iw_printf("                    Modulations :");
@@ -760,7 +761,7 @@ int has_range, int finsh)
 		break;
 	case SIOCGIWENCODE:
 	{
-		ospl_uint8 key[IW_ENCODING_TOKEN_MAX];
+		zpl_uint8 key[IW_ENCODING_TOKEN_MAX];
 		if (event->u.data.pointer)
 			memcpy(key, event->u.data.pointer, event->u.data.length);
 		else
@@ -817,7 +818,7 @@ int count, iw_user_cb_t *cb) /* Args count */
 	struct iwreq wrq;
 	struct iw_scan_req scanopt; /* Options for 'set' */
 	int scanflags = 0; /* Flags for scan */
-	ospl_uint8 * buffer = NULL; /* Results */
+	zpl_uint8 * buffer = NULL; /* Results */
 	int buflen = IW_SCAN_MAX_DATA; /* Min for compat WE<17 */
 	struct iw_range range;
 	int has_range;
@@ -981,7 +982,7 @@ int count, iw_user_cb_t *cb) /* Args count */
 		/* Check if there was a timeout */
 		if (ret == 0)
 		{
-			ospl_uint8 * newbuf;
+			zpl_uint8 * newbuf;
 
 			realloc:
 			/* (Re)allocate the buffer - realloc(NULL, len) == malloc(len) */
@@ -1155,7 +1156,7 @@ int iw_get_freq_info(char * ifname, iw_dev_t *iwdev)
 			for (k = 0; k < range.num_frequency; k++)
 			{
 				freq = iw_freq2float(&(range.freq[k]));
-				iwdev->freq[k].active = ospl_true;
+				iwdev->freq[k].active = zpl_true;
 				iwdev->freq[k].channel = range.freq[k].i;
 				iwdev->freq[k].freq = freq;
 
@@ -1260,7 +1261,7 @@ int iw_get_bitrate_info(char * ifname, iw_dev_t *iwdev)
 		{
 			for (k = 0; k < range.num_bitrates; k++)
 			{
-				iwdev->bitrates[k].active = ospl_true;
+				iwdev->bitrates[k].active = zpl_true;
 				iwdev->bitrates[k].channel = k;
 				iwdev->bitrates[k].bitrate = range.bitrate[k];
 			}
@@ -1272,7 +1273,7 @@ int iw_get_bitrate_info(char * ifname, iw_dev_t *iwdev)
 		if (iw_get_ext(skfd, ifname, SIOCGIWRATE, &wrq) >= 0)
 		{
 			iwdev->cu_bitrates.bitrate = wrq.u.bitrate.value;
-			iwdev->cu_bitrates.active = ospl_true;
+			iwdev->cu_bitrates.active = zpl_true;
 			//iw_print_bitrate(buffer, sizeof(buffer), wrq.u.bitrate.value);
 			//iw_printf("          Current Bit Rate%c%s\n",
 			//		(wrq.u.bitrate.fixed ? '=' : ':'), buffer);
@@ -1285,7 +1286,7 @@ int iw_get_bitrate_info(char * ifname, iw_dev_t *iwdev)
 			if (iw_get_ext(skfd, ifname, SIOCGIWRATE, &wrq) >= 0)
 			{
 				iwdev->broadcast_bitrates.bitrate = wrq.u.bitrate.value;
-				iwdev->broadcast_bitrates.active = ospl_true;
+				iwdev->broadcast_bitrates.active = zpl_true;
 
 				//iw_print_bitrate(buffer, sizeof(buffer), wrq.u.bitrate.value);
 				//iw_printf("          Broadcast Bit Rate%c%s\n",
@@ -1365,8 +1366,8 @@ int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	struct iw_range range;
-	ospl_uint8 key[IW_ENCODING_TOKEN_MAX];
-	ospl_uint32 k;
+	zpl_uint8 key[IW_ENCODING_TOKEN_MAX];
+	zpl_uint32 k;
 	char buffer[128];
 
 	/* Avoid "Unused parameter" warning */
@@ -1446,7 +1447,7 @@ int count, iw_user_cb_t *cb) /* Args count */
 /*
  * Print Power Management info for each device
  */
-static int get_pm_value(int skfd, char * ifname, struct iwreq * pwrq, ospl_uint32 flags,
+static int get_pm_value(int skfd, char * ifname, struct iwreq * pwrq, zpl_uint32 flags,
 		char * buffer, int buflen, int we_version_compiled)
 {
 	/* Get Another Power Management value */
@@ -1474,7 +1475,7 @@ static void print_pm_value_range(char * name, int mask, int iwr_flags,
 {
 	if (iwr_flags & mask)
 	{
-		ospl_uint32 flags = (iwr_flags & ~(IW_POWER_MIN | IW_POWER_MAX));
+		zpl_uint32 flags = (iwr_flags & ~(IW_POWER_MIN | IW_POWER_MAX));
 		/* Display if auto or fixed */
 		iw_printf("%s %s ; ", (iwr_flags & IW_POWER_MIN) ? "Auto " : "Fixed",
 				name);
@@ -1492,7 +1493,7 @@ static void print_pm_value_range(char * name, int mask, int iwr_flags,
 /*
  * Power Management types of values
  */
-static const ospl_uint32 pm_type_flags[] =
+static const zpl_uint32 pm_type_flags[] =
 {
 IW_POWER_PERIOD,
 IW_POWER_TIMEOUT,
@@ -1560,16 +1561,16 @@ int count, iw_user_cb_t *cb) /* Args count */
 		wrq.u.power.flags = 0;
 		if (iw_get_ext(skfd, ifname, SIOCGIWPOWER, &wrq) >= 0)
 		{
-			ospl_uint32 flags = wrq.u.power.flags;
+			zpl_uint32 flags = wrq.u.power.flags;
 
 			/* Is it disabled ? */
 			if (wrq.u.power.disabled)
 				iw_printf("Current mode:off\n");
 			else
 			{
-				ospl_uint32 pm_type = 0;
-				ospl_uint32 pm_mask = 0;
-				ospl_uint32 remain_mask = range.pm_capa & IW_POWER_TYPE;
+				zpl_uint32 pm_type = 0;
+				zpl_uint32 pm_mask = 0;
+				zpl_uint32 remain_mask = range.pm_capa & IW_POWER_TYPE;
 				int i = 0;
 
 				/* Let's check the mode */
@@ -1742,7 +1743,7 @@ int count, iw_user_cb_t *cb) /* Args count */
  * Print one retry value
  */
 static int get_retry_value(int skfd, char * ifname, struct iwreq * pwrq,
-		ospl_uint32 flags, char * buffer, int buflen, int we_version_compiled)
+		zpl_uint32 flags, char * buffer, int buflen, int we_version_compiled)
 {
 	/* Get Another retry value */
 	pwrq->u.retry.flags = flags;
@@ -1769,7 +1770,7 @@ static void print_retry_value_range(char * name, int mask, int iwr_flags,
 {
 	if (iwr_flags & mask)
 	{
-		ospl_uint32 flags = (iwr_flags & ~(IW_RETRY_MIN | IW_RETRY_MAX));
+		zpl_uint32 flags = (iwr_flags & ~(IW_RETRY_MIN | IW_RETRY_MAX));
 		/* Display if auto or fixed */
 		iw_printf("%s %s ; ", (iwr_flags & IW_POWER_MIN) ? "Auto " : "Fixed",
 				name);
@@ -1820,16 +1821,16 @@ int count, iw_user_cb_t *cb) /* Args count */
 		wrq.u.retry.flags = 0;
 		if (iw_get_ext(skfd, ifname, SIOCGIWRETRY, &wrq) >= 0)
 		{
-			ospl_uint32 flags = wrq.u.retry.flags;
+			zpl_uint32 flags = wrq.u.retry.flags;
 
 			/* Is it disabled ? */
 			if (wrq.u.retry.disabled)
 				iw_printf("Current mode:off\n          ");
 			else
 			{
-				ospl_uint32 retry_type = 0;
-				ospl_uint32 retry_mask = 0;
-				ospl_uint32 remain_mask = range.retry_capa & IW_RETRY_TYPE;
+				zpl_uint32 retry_type = 0;
+				zpl_uint32 retry_mask = 0;
+				zpl_uint32 remain_mask = range.retry_capa & IW_RETRY_TYPE;
 
 				/* Let's check the mode */
 				iw_printf("Current mode:on\n                 ");
@@ -1845,7 +1846,7 @@ int count, iw_user_cb_t *cb) /* Args count */
 
 				while (1)
 				{
-					/* Deal with min/max/ospl_int16/long for the current value */
+					/* Deal with min/max/zpl_int16/long for the current value */
 					retry_mask = 0;
 					/* If we have been returned a MIN value, ask for the MAX */
 					if (flags & IW_RETRY_MIN)
@@ -1877,7 +1878,7 @@ int count, iw_user_cb_t *cb) /* Args count */
 					/* Ask for this other type of value */
 					flags = get_retry_value(skfd, ifname, &wrq, retry_type,
 							buffer, sizeof(buffer), range.we_version_compiled);
-					/* Loop back for min/max/ospl_int16/long */
+					/* Loop back for min/max/zpl_int16/long */
 				}
 			}
 		}
@@ -1999,7 +2000,7 @@ static int print_event_capa_info(int skfd, char * ifname, char * args[], /* Comm
 int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iw_range range;
-	ospl_uint32 cmd;
+	zpl_uint32 cmd;
 
 	/* Avoid "Unused parameter" warning */
 	args = args;
@@ -2057,7 +2058,7 @@ int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	struct iw_range range;
-	ospl_uint32 k;
+	zpl_uint32 k;
 
 	/* Avoid "Unused parameter" warning */
 	args = args;
@@ -2116,9 +2117,9 @@ int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	struct iw_range range;
-	ospl_uint8 extbuf[IW_EXTKEY_SIZE];
+	zpl_uint8 extbuf[IW_EXTKEY_SIZE];
 	struct iw_encode_ext *extinfo;
-	ospl_uint32 k;
+	zpl_uint32 k;
 	char buffer[128];
 
 	/* Avoid "Unused parameter" warning */
@@ -2232,7 +2233,7 @@ static int print_gen_ie_info(int skfd, char * ifname, char * args[], /* Command 
 int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
-	ospl_uint8 buf[IW_GENERIC_IE_MAX];
+	zpl_uint8 buf[IW_GENERIC_IE_MAX];
 
 	/* Avoid "Unused parameter" warning */
 	args = args;
@@ -2299,7 +2300,7 @@ int count, iw_user_cb_t *cb) /* Args count */
 			wrq.u.param.flags = 0;
 			if (iw_get_ext(skfd, ifname, SIOCGIWMODUL, &wrq) >= 0)
 			{
-				ospl_uint32 modul = wrq.u.param.value;
+				zpl_uint32 modul = wrq.u.param.value;
 				int n = 0;
 
 				iw_printf("          Current modulations %c",
@@ -2340,7 +2341,7 @@ int count, iw_user_cb_t *cb) /* Args count */
  */
 typedef struct iwlist_entry
 {
-	const char * cmd; /* Command line ospl_int16hand */
+	const char * cmd; /* Command line zpl_int16hand */
 	iw_enum_handler fn; /* Subroutine */
 	int max_count;
 	const char * argsname; /* Args as human readable string */
@@ -2380,7 +2381,7 @@ find_command(const char * cmd)
 {
 	const iwlist_cmd * found = NULL;
 	int ambig = 0;
-	ospl_uint32 len = strlen(cmd);
+	zpl_uint32 len = strlen(cmd);
 	int i;
 
 	/* Go through all commands */

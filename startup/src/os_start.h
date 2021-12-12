@@ -31,8 +31,7 @@ extern int os_exit_all_module();
 
 extern int os_start_pid(int pro, char *pid_file, int *pid);
 
-extern int os_load_config(char *config);
-extern ospl_bool os_load_config_done(void);
+
 
 extern int os_shell_start(char *shell_path, char *shell_addr, int shell_port, const char *);
 

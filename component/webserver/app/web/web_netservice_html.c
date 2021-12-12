@@ -6,7 +6,7 @@
  */
 
 #define HAS_BOOL 1
-#include "zebra.h"
+#include "zpl_include.h"
 
 #include "module.h"
 #include "memory.h"
@@ -17,7 +17,7 @@
 #include "log.h"
 #include "vty.h"
 #include "vty_user.h"
-#ifdef PL_SERVICE_SYSLOG
+#ifdef ZPL_SERVICE_SYSLOG
 #include "syslogcLib.h"
 #endif
 #include "web_util.h"
@@ -30,7 +30,7 @@
 
 static int v9_app_sntp_config_save(int sntp, char *ip, char *ip1)
 {
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 	int ret = 0;
 	if(sntp == 0)
 	{
@@ -80,14 +80,14 @@ static int web_netservice_goform(Webs *wp, char *path, char *query)
 		char plataddress[32];
 		memset(address, 0, sizeof(address));
 		memset(plataddress, 0, sizeof(plataddress));
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 		os_uci_get_integer("system.ntp.enabled", &sntpen);
 		os_uci_get_list("system.ntp.server", sntp_addr, &sntp_cnt);
 		os_uci_get_integer("product.global.plat", &plat);
 		os_uci_get_address("product.global.platip", plataddress);
 #endif
 
-#ifdef PL_SERVICE_SYSLOG
+#ifdef ZPL_SERVICE_SYSLOG
 		syslogc_host_config_get(address, NULL, NULL);
 #endif
 		websSetStatus(wp, 200);
@@ -100,7 +100,7 @@ static int web_netservice_goform(Webs *wp, char *path, char *query)
 					"OK", plat, plataddress,
 					sntpen?"true":"false", sntp_addr[0]?sntp_addr[0]:" ",
 					sntp_addr[1]?sntp_addr[1]:" ",
-#ifdef PL_SERVICE_SYSLOG
+#ifdef ZPL_SERVICE_SYSLOG
 							syslogc_is_enable() ? "true" : "false",
 #else
 									"false",
@@ -165,7 +165,7 @@ static int web_netservice_goform(Webs *wp, char *path, char *query)
 			_WEB_DBG_TRAP("================%s=======================: can not get syslogip=%s\r\n", __func__, syslog_address);
 			return web_return_text_plain(wp, ERROR);
 		}
-#ifdef PL_SERVICE_SYSLOG
+#ifdef ZPL_SERVICE_SYSLOG
 		if (!syslogc_is_enable())
 			syslogc_enable(host.name);
 		zlog_set_level(ZLOG_DEST_SYSLOG, LOG_WARNING);
@@ -173,7 +173,7 @@ static int web_netservice_goform(Webs *wp, char *path, char *query)
 		syslogc_host_config_set(syslog_address, 0, 0);
 #endif
 	}
-#ifdef PL_SERVICE_SYSLOG
+#ifdef ZPL_SERVICE_SYSLOG
 	else
 	{
 		if (syslogc_is_enable())
@@ -184,7 +184,7 @@ static int web_netservice_goform(Webs *wp, char *path, char *query)
 	}
 #endif
 	v9_app_sntp_config_save(sntpen, sntp_address, sntp_address1);
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 	os_uci_set_integer("product.global.plat", plat);
 	if(plat_address)
 		os_uci_set_string("product.global.platip", plat_address);

@@ -108,7 +108,7 @@ modification history
 01h,17nov87,ecs  lint: added include of inetLib.h.
 01g,11nov87,jlf  documentation
 01f,06nov87,dnw  fixed bug in use of setsockopt().
-01e,01nov87,llk  changed remInetAddr() to UNIX compatible inet_addr().
+01e,01nov87,llk  changed remInetAddr() to UNIX compatible ipstack_inet_addr().
 01d,01apr87,ecs  hushed lint in ftpGetReply.
 		 changed "VARARGS 2" to "VARARGS2" in ftpCommand
 		 removed extraneous 4th arg from calls to bind, socket, accept,
@@ -214,17 +214,10 @@ INCLUDE FILES: ftpLib.h
 SEE ALSO: netDrv, logLib
 */
 
-#include "zebra.h"
-#include "buffer.h"
-#include "command.h"
-#include "linklist.h"
-#include "log.h"
-#include "memory.h"
-#include "vty.h"
-
+#include "systools.h"
 #include "tftpLib.h"
 #include <ftpLib.h>
-#include "systools.h"
+
 
 /* forward declarations */
 
@@ -244,16 +237,16 @@ typedef struct sockaddr_in SOCKADDR_IN;
 
 struct ftpc_config
 {
-	ospl_uint32  	ftplTransientMaxRetryCount;   /* Retry just once for now */
-	ospl_uint32  	ftplTransientRetryInterval;   /* Default with no delay */
-	ospl_uint32 	ftpReplyTimeout;
+	zpl_uint32  	ftplTransientMaxRetryCount;   /* Retry just once for now */
+	zpl_uint32  	ftplTransientRetryInterval;   /* Default with no delay */
+	zpl_uint32 	ftpReplyTimeout;
 
-	ospl_bool 		(*_func_ftpTransientFatal)(ospl_uint32);
+	zpl_bool 		(*_func_ftpTransientFatal)(zpl_uint32);
 
-	ospl_bool 		ftpVerbose;        /* ospl_true = print all incoming messages */
+	zpl_bool 		ftpVerbose;        /* zpl_true = print all incoming messages */
 
-	ospl_bool 		ftplPasvModeDisable;
-	ospl_uint16 	ftplDebug;
+	zpl_bool 		ftplPasvModeDisable;
+	zpl_uint16 	ftplDebug;
 	//char		baseDirName[MAX_DIR_NAME_LEN];
 	char loginUsername[MAX_LOGIN_NAME_LEN];
 	char loginPassword[MAX_LOGIN_NAME_LEN];
@@ -262,9 +255,9 @@ struct ftpc_config
 
 struct ftpc_config ftpc_config;
 
-static int ftpPasvReplyParse (char *, ospl_uint32 *, ospl_uint32 *, ospl_uint32 *,  \
-                                ospl_uint32 *, ospl_uint32 *, ospl_uint32 *);
-static ospl_bool ftpTransientFatal (ospl_uint32 reply);
+static int ftpPasvReplyParse (char *, zpl_uint32 *, zpl_uint32 *, zpl_uint32 *,  \
+                                zpl_uint32 *, zpl_uint32 *, zpl_uint32 *);
+static zpl_bool ftpTransientFatal (zpl_uint32 reply);
 
 
 
@@ -305,12 +298,12 @@ int ftpLibInit
     ftpc_config.ftplTransientRetryInterval = 0;   /* Default with no delay */
     ftpc_config._func_ftpTransientFatal = ftpTransientFatal;
 
-    ftpc_config.ftpVerbose = ospl_false;        /* ospl_true = print all incoming messages */
+    ftpc_config.ftpVerbose = zpl_false;        /* zpl_true = print all incoming messages */
 
     ftpc_config.ftpReplyTimeout = FTP_REPLYTIMEOUTDEFAULT;
 
-    ftpc_config.ftplPasvModeDisable = ospl_false;
-    ftpc_config.ftplDebug = ospl_true;
+    ftpc_config.ftplPasvModeDisable = zpl_false;
+    ftpc_config.ftplDebug = zpl_true;
 
     //strcpy(ftpc_config.baseDirName, FTPD_BASEDIR_DEFAULT);
     //logLevelChange (MODULE_NSM, 0x0);
@@ -525,7 +518,7 @@ int ftpCommandEnhanced
 *     if (nBytes < 0)             /@ read error? @/
 *         status = ERROR;
 *
-*     if (ftpReplyGet (ctrlSock, ospl_true) != FTP_COMPLETE)
+*     if (ftpReplyGet (ctrlSock, zpl_true) != FTP_COMPLETE)
 *         status = ERROR;
 *
 *     if (ftpCommand (ctrlSock, "QUIT", 0, 0, 0, 0, 0, 0) != FTP_COMPLETE)
@@ -557,12 +550,12 @@ int ftpXfer
     {
     register int ctrlSock = ERROR;
     register int dataSock = ERROR;
-    ospl_uint32 ftpReply   = 0;
-    ospl_uint32 retryCount = 0;
+    zpl_uint32 ftpReply   = 0;
+    zpl_uint32 retryCount = 0;
     int    cmdResult;      
     fd_set readFds; /* Used by select for PORT method */
     int    width;          /* Used by select for PORT method */
-    ospl_bool   dataSockPassive = ospl_true;
+    zpl_bool   dataSockPassive = zpl_true;
     char cmdResultErr[512];
     memset(cmdResultErr, 0, sizeof(cmdResultErr));
 
@@ -625,7 +618,7 @@ int ftpXfer
         if ((dataSock = ftpDataConnInitPassiveMode (ctrlSock)) != ERROR)
             {
             zlog_info (MODULE_NSM, "FTP mode succeeded.");
-            dataSockPassive = ospl_true; /* We need not listen() on the socket */
+            dataSockPassive = zpl_true; /* We need not listen() on the socket */
             }
         else
             {
@@ -638,7 +631,7 @@ int ftpXfer
                 return (ERROR);
                 } 
             else
-                dataSockPassive = ospl_false; /* We need to listen() on the socket */
+                dataSockPassive = zpl_false; /* We need to listen() on the socket */
             }
 
         /* Send the FTP command.  */
@@ -671,7 +664,7 @@ int ftpXfer
                 zlog_err (MODULE_NSM,
                 		"FTP calling user-supplied applette to see if 0x%08x"
                 		" FTP_TRANSIENT is fatal for this command.", cmdResult);
-                if ((* ftpc_config._func_ftpTransientFatal) (cmdResult) == ospl_true)
+                if ((* ftpc_config._func_ftpTransientFatal) (cmdResult) == zpl_true)
                     {
                     zlog_err (MODULE_NSM, "FTP applette says 0x%08x IS fatal", cmdResult);
                     close (ctrlSock);
@@ -711,7 +704,7 @@ int ftpXfer
                 }
             }
 
-        if ( dataSockPassive == ospl_false)
+        if ( dataSockPassive == zpl_false)
             {
             /* At this point do a select on the data & control socket */
 
@@ -744,7 +737,7 @@ int ftpXfer
 
                 zlog_warn (MODULE_NSM, "FTP Control socket ready but data socket is not");
 
-                if ((ftpReply = ftpReplyGet (ctrlSock, ospl_false)) == FTP_TRANSIENT)
+                if ((ftpReply = ftpReplyGet (ctrlSock, zpl_false)) == FTP_TRANSIENT)
                     continue; /* Try another port */
 
                 /* Regardless of response close sockets */
@@ -803,7 +796,7 @@ int ftpXfer
 * entry for ftpLibDebugOptionsSet()).
 *
 * If an EOF is encountered on the specified control socket, but no EOF was
-* expected (<expecteof> == ospl_false), then ERROR is returned.
+* expected (<expecteof> == zpl_false), then ERROR is returned.
 *
 * RETURNS:
 *  1 = FTP_PRELIM (positive preliminary)
@@ -818,7 +811,7 @@ int ftpXfer
 int ftpReplyGet
     (
     int ctrlSock,       /* control socket fd of FTP connection */
-    ospl_bool expecteof      /* ospl_true = EOF expected, ospl_false = EOF is error */
+    zpl_bool expecteof      /* zpl_true = EOF expected, zpl_false = EOF is error */
     )
     {
     /* return most significant digit of reply */
@@ -846,7 +839,7 @@ int ftpReplyGet
 * the parameter is ignored.
 *
 * If an EOF is encountered on the specified control socket, but no EOF was
-* expected (<expecteof> == ospl_false), then ERROR is returned.
+* expected (<expecteof> == zpl_false), then ERROR is returned.
 *
 * RETURNS:
 * The complete FTP response code (see RFC #959)
@@ -857,7 +850,7 @@ int ftpReplyGet
 int ftpReplyGetEnhanced
     (
     int ctrlSock,       /* control socket fd of FTP connection */
-    ospl_bool expecteof,     /* ospl_true = EOF expected, ospl_false = EOF is error */
+    zpl_bool expecteof,     /* zpl_true = EOF expected, zpl_false = EOF is error */
     char *replyString,  /* Location to store text of reply, or NULL */
     int  stringLengthMax /* Maximum length of reply (not including NULL) */ 
     )
@@ -897,7 +890,7 @@ int ftpReplyGetEnhanced
         dig  = 0;
         code = 0;
         stringIndex = 0;
-        continuation = ospl_false;
+        continuation = zpl_false;
 
         if ((num = select (ctrlSock +1, &readFds, (fd_set *) NULL,
                                 (fd_set *) NULL, &replyTimeOut)) == ERROR)
@@ -1018,12 +1011,12 @@ int ftpHookup
     {
     register int ctrlSock;
     register int inetAddr;
-    ospl_uint32 retryCount = 0;
+    zpl_uint32 retryCount = 0;
     SOCKADDR_IN ctrlAddr;
     struct linger optVal;
     int ctrlOptval;
 
-    if (((inetAddr = (int) inet_addr (host)) == ERROR)/* &&
+    if (((inetAddr = (int) ipstack_inet_addr (host)) == ERROR)/* &&
         ((inetAddr = hostGetByName (host)) == ERROR)*/)
         {
         return (ERROR);
@@ -1125,7 +1118,7 @@ int ftpHookup
 #endif
 
     /* read startup message from server */
-    if (ftpReplyGet (ctrlSock, ospl_false) != FTP_COMPLETE)
+    if (ftpReplyGet (ctrlSock, zpl_false) != FTP_COMPLETE)
         {
         zlog_err (MODULE_NSM, "FTP did not get the expected reply");
         close (ctrlSock);
@@ -1220,8 +1213,8 @@ int ftpDataConnInitPassiveMode
     register int dataSock;
     int result;
     int len;
-    ospl_uint32 portMsb;
-    ospl_uint32 portLsb;
+    zpl_uint32 portMsb;
+    zpl_uint32 portLsb;
     int hostDataPort;
     SOCKADDR_IN ctrlAddr;
     SOCKADDR_IN dataAddr;
@@ -1555,7 +1548,7 @@ int ftpLs
     
     /* Close the sockets opened by ftpXfer */
 
-    if (ftpReplyGet (cntrlSock, ospl_true) != FTP_COMPLETE) 
+    if (ftpReplyGet (cntrlSock, zpl_true) != FTP_COMPLETE) 
         {
         close (cntrlSock);
         close (dataSock);
@@ -1603,7 +1596,7 @@ int ftpLs
 
 void ftpLibDebugOptionsSet
     (
-    ospl_uint32 debugLevel
+    zpl_uint32 debugLevel
     )
     {
 	ftpc_config.ftplDebug = debugLevel;
@@ -1621,8 +1614,8 @@ void ftpLibDebugOptionsSet
 
 int ftpTransientConfigSet
     (
-    ospl_uint32 maxRetryCount, /* The maximum number of attempts to retry */
-    ospl_uint32 retryInterval  /* time (in system clock ticks) between retries */
+    zpl_uint32 maxRetryCount, /* The maximum number of attempts to retry */
+    zpl_uint32 retryInterval  /* time (in system clock ticks) between retries */
     )
     {
 
@@ -1649,8 +1642,8 @@ int ftpTransientConfigSet
 
 int ftpTransientConfigGet
     (
-    ospl_uint32 *maxRetryCount, /* The maximum number of attempts to retry */
-    ospl_uint32 *retryInterval  /* time (in system clock ticks) between retries */
+    zpl_uint32 *maxRetryCount, /* The maximum number of attempts to retry */
+    zpl_uint32 *retryInterval  /* time (in system clock ticks) between retries */
     )
     {
 
@@ -1676,7 +1669,7 @@ int ftpTransientConfigGet
 *
 * RETURNS 
 *
-* ospl_true, terminate retry attempts; ospl_false, continue retry attempts.
+* zpl_true, terminate retry attempts; zpl_false, continue retry attempts.
 *
 * INTERNAL 
 * 
@@ -1687,9 +1680,9 @@ int ftpTransientConfigGet
 *
 */
 
-static ospl_bool ftpTransientFatal
+static zpl_bool ftpTransientFatal
     (
-    ospl_uint32 reply /* Three digit code defined in RFC #959 */
+    zpl_uint32 reply /* Three digit code defined in RFC #959 */
     )
     {
     switch (reply)
@@ -1700,14 +1693,14 @@ static ospl_bool ftpTransientFatal
         case (452): /* insufficient storage */
             { 
             /* yes, these are actually non-recoverable replies */
-            return (ospl_true); 
+            return (zpl_true); 
             }
             /* attempt to retry the last command */
         default:
 	    break;
         }
 
-    return (ospl_false); 
+    return (zpl_false); 
     }
 
 /*******************************************************************************
@@ -1732,7 +1725,7 @@ static ospl_bool ftpTransientFatal
 
 int ftpTransientFatalInstall
     (
-    void * pApplette  /* function that returns ospl_true or ospl_false */
+    void * pApplette  /* function that returns zpl_true or zpl_false */
     )
     {
 
@@ -1766,21 +1759,21 @@ int ftpTransientFatalInstall
 static int ftpPasvReplyParse
     (
     char *responseString, /* NULL terminated string */
-    ospl_uint32 *argument1,    /* First argument */
-    ospl_uint32 *argument2,    /* Second argument */
-    ospl_uint32 *argument3,    /* Third argument */
-    ospl_uint32 *argument4,    /* Fourth argument */
-    ospl_uint32 *argument5,    /* Fifth argument */
-    ospl_uint32 *argument6     /* Six argument */
+    zpl_uint32 *argument1,    /* First argument */
+    zpl_uint32 *argument2,    /* Second argument */
+    zpl_uint32 *argument3,    /* Third argument */
+    zpl_uint32 *argument4,    /* Fourth argument */
+    zpl_uint32 *argument5,    /* Fifth argument */
+    zpl_uint32 *argument6     /* Six argument */
     )
     {
     char *index;
-    ospl_uint32 tmpArg1;
-    ospl_uint32 tmpArg2;
-    ospl_uint32 tmpArg3;
-    ospl_uint32 tmpArg4;
-    ospl_uint32 tmpArg5;
-    ospl_uint32 tmpArg6;
+    zpl_uint32 tmpArg1;
+    zpl_uint32 tmpArg2;
+    zpl_uint32 tmpArg3;
+    zpl_uint32 tmpArg4;
+    zpl_uint32 tmpArg5;
+    zpl_uint32 tmpArg6;
 
     if (responseString == NULL)
         return (ERROR);
@@ -1896,7 +1889,7 @@ int ftp_download(void *v, char *hostName, int port, char *path, char *fileName, 
 
 	/* Close the sockets opened by ftpXfer */
 
-	if (ftpReplyGet (cntrlSock, ospl_true) != FTP_COMPLETE)
+	if (ftpReplyGet (cntrlSock, zpl_true) != FTP_COMPLETE)
 	    {
 	    close (cntrlSock);
 	    close (dataSock);
@@ -1975,7 +1968,7 @@ int ftp_upload(void *v, char *hostName, int port, char *path, char *fileName, ch
 
 	/* Close the sockets opened by ftpXfer */
 
-	if (ftpReplyGet (cntrlSock, ospl_true) != FTP_COMPLETE)
+	if (ftpReplyGet (cntrlSock, zpl_true) != FTP_COMPLETE)
 	    {
 	    close (cntrlSock);
 	    close (dataSock);

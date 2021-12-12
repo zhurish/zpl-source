@@ -107,9 +107,9 @@ extern "C" {
 #ifdef QUEUE_MACRO_DEBUG
 /* Store the last 2 places the queue element or head was altered */
 struct qm_trace {
-	ospl_char * lastfile;
+	zpl_char * lastfile;
 	int lastline;
-	ospl_char * prevfile;
+	zpl_char * prevfile;
 	int prevline;
 };
 
@@ -292,7 +292,7 @@ struct {								\
 	(STAILQ_EMPTY((head)) ?						\
 		NULL :							\
 	        ((struct type *)(void *)				\
-		((ospl_char *)((head)->stqh_last) - __offsetof(struct type, field))))
+		((zpl_char *)((head)->stqh_last) - __offsetof(struct type, field))))
 
 #define	STAILQ_NEXT(elm, field)	((elm)->field.stqe_next)
 

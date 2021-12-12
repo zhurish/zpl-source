@@ -31,20 +31,20 @@ extern "C" {
 typedef struct
 {
 	char 		phone[BUDDY_PHONE_MAX];
-	ospl_uint8		active:1;
-	ospl_uint8		res:7;
+	zpl_uint8		active:1;
+	zpl_uint8		res:7;
 }pjsip_buddy_phone_t;
 
 typedef struct
 {
 	NODE				node;
 	char 				username[BUDDY_USERNAME_MAX];
-	ospl_uint32				userid;
+	zpl_uint32				userid;
 	char 				address[BUDDY_ADDRESS_MAX];
 	char 				email[BUDDY_EMAIL_MAX];
 	char 				company[BUDDY_COMPANY_MAX];
 	char 				group[BUDDY_GROUP_MAX];
-	ospl_uint32				groupid;
+	zpl_uint32				groupid;
 	pjsip_buddy_phone_t 		pjsip_buddy_phone[BUDDY_MULTI_NUMBER_MAX];
 	void				*pVoid;
 }pjsip_buddy_t;
@@ -60,8 +60,8 @@ pjsip_buddy_t * pjsip_buddy_node_lookup_by_phonenumber(char *phone);
 pjsip_buddy_t * pjsip_buddy_node_lookup_by_private_ID(int (*pri_cmp)(void *p1, void *p2), void *p2);
 pjsip_buddy_t * pjsip_buddy_lookup_by_username(char *username);
 
-int pjsip_buddy_username_add(char *username, ospl_uint32 userid);
-int pjsip_buddy_username_del(char *username, ospl_uint32 userid);
+int pjsip_buddy_username_add(char *username, zpl_uint32 userid);
+int pjsip_buddy_username_del(char *username, zpl_uint32 userid);
 
 int pjsip_buddy_username_add_phone(char *username, char *phone);
 int pjsip_buddy_username_del_phone(char *username, char *phone);

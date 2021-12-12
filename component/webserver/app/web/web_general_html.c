@@ -6,7 +6,7 @@
  */
 
 #define HAS_BOOL 1
-#include "zebra.h"
+#include "zpl_include.h"
 #include "module.h"
 #include "memory.h"
 #include "zassert.h"
@@ -23,7 +23,7 @@
 #include "web_app.h"
 #include "web_api.h"
 
-//#ifdef PL_APP_MODULE
+//#ifdef ZPL_APP_MODULE
 #include "application.h"
 
 

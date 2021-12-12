@@ -12,21 +12,15 @@
 extern "C" {
 #endif
 
-#include "os_list.h"
-#include "product.h"
+#include "os_include.h"
+#include "zpl_include.h"
+
 
 #ifdef PRODUCT_PORT_MAX
 #define PHY_PORT_MAX 	PRODUCT_PORT_MAX
 #endif
 
-
-typedef ospl_ushort vlan_t;
-
-
-
-#ifndef VLAN_TABLE_MAX
-#define VLAN_TABLE_MAX 4096
-#endif
+/* vlan 管理 */
 
 typedef struct trunk_vlan_s
 {
@@ -39,7 +33,7 @@ typedef struct nsm_vlan_s
 {
 	vlan_t	native;
 	vlan_t	access;
-	ospl_bool all;
+	zpl_bool all;
 	trunk_vlan_t trunk_allowed[VLAN_TABLE_MAX];
 	vlan_t	allowed_max;
 }nsm_vlan_t;
@@ -67,19 +61,19 @@ typedef struct l2vlan_s
 	vlan_t	vlan;
 	vlan_t 	minvlan;
 	vlan_t	maxvlan;
-	ospl_uint32		stp;
-	ospl_uint32		dscp;
+	zpl_uint32		stp;
+	zpl_uint32		dscp;
 	ifindex_t tagport[PHY_PORT_MAX];
 	ifindex_t untagport[PHY_PORT_MAX];
-	ospl_char *vlan_name;
-	ospl_uint32  name_hash;
+	zpl_char *vlan_name;
+	zpl_uint32  name_hash;
 }l2vlan_t;
 
 typedef struct Gl2vlan_s
 {
 	LIST	*vlanList;
 	void	*mutex;
-	ospl_bool	enable;
+	zpl_bool	enable;
 }Gl2vlan_t;
 
 typedef int (*l2vlan_cb)(l2vlan_t *, void *);
@@ -89,7 +83,10 @@ extern int nsm_vlan_exit();
 extern int nsm_vlan_cleanall(void);
 
 extern int nsm_vlan_enable(void);
-extern ospl_bool nsm_vlan_is_enable(void);
+extern zpl_bool nsm_vlan_is_enable(void);
+
+extern int nsm_vlan_interface_create_api(struct interface *ifp);
+extern int nsm_vlan_interface_del_api(struct interface *ifp);
 
 
 extern int nsm_vlan_list_create_api(const char *str);
@@ -132,9 +129,11 @@ extern int nsm_interface_trunk_allowed_vlan_list_api(int add, struct interface *
 //extern int vlan_string_explain(const char *str, vlan_t *value, int num, vlan_t *base, vlan_t *end);
 
 
-
+#ifdef ZPL_SHELL_MODULE
 extern void cmd_vlan_init (void);
- 
+extern int nsm_vlan_interface_write_config(struct vty *vty, struct interface *ifp);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

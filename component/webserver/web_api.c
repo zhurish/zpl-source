@@ -4,17 +4,10 @@
  *  Created on: Mar 23, 2019
  *      Author: zhurish
  */
-#include "zebra.h"
-#include "vty.h"
-#include "if.h"
-
-#include "buffer.h"
-#include "command.h"
-#include "if_name.h"
-#include "linklist.h"
-#include "log.h"
-#include "memory.h"
-#include "prefix.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "web_util.h"
 #include "web_jst.h"
@@ -41,33 +34,33 @@ struct module_list module_list_webserver =
 int web_app_quit_api()
 {
 	zassert(web_app != NULL);
-	web_app->finished = ospl_true;
+	web_app->finished = zpl_true;
 	return OK;
 }
 
 int web_app_reload_api()
 {
 	zassert(web_app != NULL);
-	web_app->finished = ospl_true;
-	web_app->reload = ospl_true;
+	web_app->finished = zpl_true;
+	web_app->reload = zpl_true;
 	return OK;
 }
 /****************************************************************************/
-int web_app_enable_set_api(ospl_bool enable)
+int web_app_enable_set_api(zpl_bool enable)
 {
 	zassert(web_app != NULL);
 	if(web_app->enable == enable)
 		return OK;
 	if(web_app->enable && !enable)
 	{
-		web_app->finished = ospl_true;
-		web_app->enable = ospl_false;
+		web_app->finished = zpl_true;
+		web_app->enable = zpl_false;
 		return OK;
 	}
 	if(!web_app->enable && enable)
 	{
-		web_app->finished = ospl_false;
-		web_app->enable = ospl_true;
+		web_app->finished = zpl_false;
+		web_app->enable = zpl_true;
 		return OK;
 	}
 	return ERROR;
@@ -225,7 +218,7 @@ int web_app_address_set_api(char *address)
 	return web_app_reload_api();
 }
 
-int web_app_port_set_api(ospl_bool ssl, ospl_uint16 port)
+int web_app_port_set_api(zpl_bool ssl, zpl_uint16 port)
 {
 	zassert(web_app != NULL);
 
@@ -302,7 +295,7 @@ int web_app_port_set_api(ospl_bool ssl, ospl_uint16 port)
 	return web_app_reload_api();
 }
 
-int web_app_debug_set_api(ospl_int32 level)
+int web_app_debug_set_api(zpl_int32 level)
 {
 	websSetDebug(level?1:0);
 //#if ME_GOAHEAD_LOGGING

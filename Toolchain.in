@@ -4,61 +4,61 @@
 
 menu "Toolchain Config"
 
-config PL_HOST_TOOLCHAIN_MODULE
+config ZPL_HOST_TOOLCHAIN_MODULE
 	bool "Use host's Toolchain"
 	default y
 
-config PL_EXTERNAL_TOOLCHAIN_MODULE
+config ZPL_EXTERNAL_TOOLCHAIN_MODULE
 	bool "Use external Toolchain"
 	default n
 
-config PL_EXTERNAL_TOOLCHAIN_PREFIX
+config ZPL_EXTERNAL_TOOLCHAIN_PREFIX
 	string "External Toolchain Prefix"
 	default ""
-	depends on PL_EXTERNAL_TOOLCHAIN_MODULE && !PL_HOST_TOOLCHAIN_MODULE
+	depends on ZPL_EXTERNAL_TOOLCHAIN_MODULE && !ZPL_HOST_TOOLCHAIN_MODULE
 
 	choice 
 		prompt "Toolchain libc"
-		depends on PL_EXTERNAL_TOOLCHAIN_MODULE && !PL_HOST_TOOLCHAIN_MODULE
-		default PL_EXTERNAL_TOOLCHAIN_GLIBC
+		depends on ZPL_EXTERNAL_TOOLCHAIN_MODULE && !ZPL_HOST_TOOLCHAIN_MODULE
+		default ZPL_EXTERNAL_TOOLCHAIN_GLIBC
 		help
 		  Specify the libc type used by the external toolchain. The given value
 		  is passed as -m flag to all gcc and g++ invocations. This is mainly
 		  intended for multilib toolchains which support glibc and uclibc at
 		  the same time. If no value is specified, no -m flag is passed.
-		config PL_EXTERNAL_TOOLCHAIN_GLIBC
+		config ZPL_EXTERNAL_TOOLCHAIN_GLIBC
 			bool "glibc"
 
-		config PL_EXTERNAL_TOOLCHAIN_UCLIBC
+		config ZPL_EXTERNAL_TOOLCHAIN_UCLIBC
 			bool "uClibc"
 	endchoice
 
-	config PL_TOOLCHAIN_PATH
+	config ZPL_TOOLCHAIN_PATH
 		string
 		prompt "Toolchain program path"
-		depends on PL_EXTERNAL_TOOLCHAIN_MODULE && !PL_HOST_TOOLCHAIN_MODULE
+		depends on ZPL_EXTERNAL_TOOLCHAIN_MODULE && !ZPL_HOST_TOOLCHAIN_MODULE
 		default "./usr/bin ./bin"
 		help
 			Specify additional directories searched for toolchain binaries.
 
-	config PL_TOOLCHAIN_INC_PATH
+	config ZPL_TOOLCHAIN_INC_PATH
 		string
 		prompt "Toolchain include path"
-		depends on PL_EXTERNAL_TOOLCHAIN_MODULE && !PL_HOST_TOOLCHAIN_MODULE
+		depends on ZPL_EXTERNAL_TOOLCHAIN_MODULE && !ZPL_HOST_TOOLCHAIN_MODULE
 		default "./usr/include ./include"
 		help
 			Specify additional directories searched for header files (override
 			CPPFLAGS). Use ./DIR for directories relative to the root above.
 
-	config PL_TOOLCHAIN_LIB_PATH
+	config ZPL_TOOLCHAIN_LIB_PATH
 		string
 		prompt "Toolchain library path"
-		depends on PL_EXTERNAL_TOOLCHAIN_MODULE && !PL_HOST_TOOLCHAIN_MODULE
+		depends on ZPL_EXTERNAL_TOOLCHAIN_MODULE && !ZPL_HOST_TOOLCHAIN_MODULE
 		default "./usr/lib ./lib"
 		help
 			Specify additional directories searched for libraries.
 
-config PL_COMPILE_OPTIONS
+config ZPL_COMPILE_OPTIONS
 	string "Target Compile Optimizations"
 	default "-g"
 

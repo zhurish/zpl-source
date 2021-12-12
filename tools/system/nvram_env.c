@@ -5,14 +5,10 @@
  *      Author: DELL
  */
 
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "getopt.h"
-#include "os_list.h"
-#include "os_nvram.h"
 
 static char *progname = NULL;
 /*

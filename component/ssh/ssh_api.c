@@ -6,18 +6,9 @@
  */
 
 
-#include "zebra.h"
-#include "getopt.h"
-#include <log.h>
-#include "command.h"
-#include "memory.h"
-#include "prefix.h"
-#include "network.h"
-#include "vty.h"
-#include "buffer.h"
-#include "host.h"
-#include "eloop.h"
-#include "os_task.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
 #include "libssh_autoconfig.h"
 
@@ -62,12 +53,12 @@ int ssh_module_init()
     }
     ssh_config.sshbind = ssh_bind_new();
     ssh_config.event = ssh_event_new();
-    ssh_config.initialized = ospl_true;
+    ssh_config.initialized = zpl_true;
     ssh_config.auth_type = SSH_AUTH_AUTO;
     ssh_config.auth_retries = 3;
     ssh_config.auth_waitting = 5;
     ssh_config.ssh_version = 3;
-    //ssh_config.shell_enable = ospl_true;
+    //ssh_config.shell_enable = zpl_true;
     //sshd_set_default_keys(ssh_config.sshbind, 0, 0, 0);
     sshd_set_keys(&ssh_config, ssh_config.sshbind);
 
@@ -83,7 +74,7 @@ int ssh_module_exit()
     ssh_event_free(ssh_config.event);
     ssh_bind_free(ssh_config.sshbind);
     ssh_finalize();
-    ssh_config.initialized = ospl_false;
+    ssh_config.initialized = zpl_false;
     return OK;
 }
 
@@ -100,7 +91,7 @@ int ssh_module_task_init ()
 
 int ssh_module_task_exit ()
 {
-	ssh_config.quit = ospl_true;
+	ssh_config.quit = zpl_true;
 /*	if(ssh_config.sshd_taskid)
 		os_task_destroy(ssh_config.sshd_taskid);*/
 	ssh_config.sshd_taskid = 0;
@@ -155,7 +146,7 @@ int sshd_enable(char *address, int port)
 
 static int sshd_stop(ssh_config_t *sshconfig)
 {
-	//ssh_config.running = ospl_false;
+	//ssh_config.running = zpl_false;
 	//close all channel
 	//close all session
 	zlog_debug(MODULE_UTILS, "%s", __func__);
@@ -177,7 +168,7 @@ static int sshd_stop(ssh_config_t *sshconfig)
 	close(ssh_bind_get_fd(sshconfig->sshbind));
 	sshconfig->sshbind->bindfd = SSH_INVALID_SOCKET;
 */
-    sshconfig->running = ospl_false;
+    sshconfig->running = zpl_false;
 	return OK;
 }
 
@@ -195,12 +186,12 @@ static int sshd_start(ssh_config_t *sshconfig)
 
     if(sshconfig->bind_prefix.u.prefix4.s_addr)
     {
-    	ssh_bind_options_set(sshconfig->sshbind, SSH_BIND_OPTIONS_BINDADDR, inet_ntoa(sshconfig->bind_prefix.u.prefix4));
+    	ssh_bind_options_set(sshconfig->sshbind, SSH_BIND_OPTIONS_BINDADDR, ipstack_inet_ntoa(sshconfig->bind_prefix.u.prefix4));
     }
 
     //ssh_bind_set_fd
     //sshd_set_default_keys(sshconfig->sshbind, 0, 1, 1);
-    sshconfig->shell_enable = ospl_true;
+    sshconfig->shell_enable = zpl_true;
 
     if(ssh_bind_listen(sshconfig->sshbind) < 0) {
     	ssh_printf(NULL, "%s\n", ssh_get_error(sshconfig->sshbind));
@@ -211,7 +202,7 @@ static int sshd_start(ssh_config_t *sshconfig)
     ssh_event_add_fd(sshconfig->event,
 			  ssh_bind_get_fd(sshconfig->sshbind), POLLIN, sshd_accept, &ssh_config);
 
-    sshconfig->running = ospl_true;
+    sshconfig->running = zpl_true;
     return OK;
 }
 
@@ -247,7 +238,7 @@ static int ssh_ctl_thread(socket_t fd, int revents, void *userdata)
     return n;
 }
 
-static int ssh_ctl_cmd(ospl_uint32 cmd)
+static int ssh_ctl_cmd(zpl_uint32 cmd)
 {
     char buf[64];
     int	*ctlcmd = (int*)buf;
@@ -267,7 +258,7 @@ int ssh_bind_address_api(struct prefix *address)
 }
 
 
-int ssh_bind_port_api(ospl_uint16 port)
+int ssh_bind_port_api(zpl_uint16 port)
 {
 	if(ssh_config.bindport == port)
 		return OK;
@@ -277,7 +268,7 @@ int ssh_bind_port_api(ospl_uint16 port)
 	return OK;
 }
 
-int ssh_version_api(ospl_uint32 version)
+int ssh_version_api(zpl_uint32 version)
 {
 	if(ssh_config.ssh_version == version)
 		return OK;
@@ -285,7 +276,7 @@ int ssh_version_api(ospl_uint32 version)
 	return OK;
 }
 
-int ssh_login_api(ospl_bool enable)
+int ssh_login_api(zpl_bool enable)
 {
 	if(ssh_config.shell_enable == enable)
 		return OK;
@@ -294,7 +285,7 @@ int ssh_login_api(ospl_bool enable)
 }
 
 
-int ssh_authentication_retries_api(ospl_uint32 value)
+int ssh_authentication_retries_api(zpl_uint32 value)
 {
 	if(ssh_config.auth_retries == value)
 		return OK;
@@ -302,7 +293,7 @@ int ssh_authentication_retries_api(ospl_uint32 value)
 	return OK;
 }
 
-int ssh_authentication_waitting_api(ospl_uint32 value)
+int ssh_authentication_waitting_api(zpl_uint32 value)
 {
 	if(ssh_config.auth_waitting == value)
 		return OK;
@@ -310,7 +301,7 @@ int ssh_authentication_waitting_api(ospl_uint32 value)
 	return OK;
 }
 
-int ssh_authentication_type_api(ospl_uint32 value)
+int ssh_authentication_type_api(zpl_uint32 value)
 {
 	if(ssh_config.auth_type == value)
 		return OK;
@@ -318,7 +309,7 @@ int ssh_authentication_type_api(ospl_uint32 value)
 	return OK;
 }
 
-int ssh_keyfile_api(ospl_uint32 type, char * value)
+int ssh_keyfile_api(zpl_uint32 type, char * value)
 {
 	switch(type)
 	{
@@ -349,7 +340,7 @@ int ssh_keyfile_api(ospl_uint32 type, char * value)
 }
 
 
-int ssh_generate_key_api(struct vty *vty, ospl_uint32 type, char * keyname)
+int ssh_generate_key_api(struct vty *vty, zpl_uint32 type, char * keyname)
 {
 	if(ssh_keymgt_lookup(&ssh_config, keyname))
 	{
@@ -364,17 +355,17 @@ int ssh_key_delete_api(char * keyname)
 	return ssh_keymgt_delete(&ssh_config, keyname);
 }
 
-int ssh_keymgt_export_api(char *keyname, ospl_uint32 type, char *filename, char *password)
+int ssh_keymgt_export_api(char *keyname, zpl_uint32 type, char *filename, char *password)
 {
 	return ssh_keymgt_export_set(&ssh_config, keyname,  type, filename, password);
 }
 
-int ssh_keymgt_import_api(char *keyname, ospl_uint32 type, char *filename, char *password)
+int ssh_keymgt_import_api(char *keyname, zpl_uint32 type, char *filename, char *password)
 {
 	return ssh_keymgt_import_set(&ssh_config, keyname,  type, filename, password);
 }
 
-int ssh_debug_api(ospl_uint32 type, ospl_uint32 debug)
+int ssh_debug_api(zpl_uint32 type, zpl_uint32 debug)
 {
 	if(type)
 	{
@@ -392,7 +383,7 @@ int ssh_debug_api(ospl_uint32 type, ospl_uint32 debug)
 }
 
 
-int ssh_enable_api(ospl_bool enable)
+int ssh_enable_api(zpl_bool enable)
 {
 	if(ssh_config.enable == enable)
 		return OK;
@@ -401,7 +392,7 @@ int ssh_enable_api(ospl_bool enable)
 	{
 		ssh_ctl_cmd(SSH_START_CMD);
 		os_msleep(10);
-		//ssh_config.running = ospl_true;
+		//ssh_config.running = zpl_true;
 	}
 	else
 	{
@@ -409,18 +400,18 @@ int ssh_enable_api(ospl_bool enable)
 		{
 			ssh_ctl_cmd(SSH_STOP_CMD);
 			os_msleep(10);
-			//ssh_config.running = ospl_false;
+			//ssh_config.running = zpl_false;
 		}
 	}
 	return OK;
 }
 
-ospl_bool ssh_is_enable_api(void)
+zpl_bool ssh_is_enable_api(void)
 {
 	return ssh_config.enable;
 }
 
-ospl_bool ssh_is_running_api(void)
+zpl_bool ssh_is_running_api(void)
 {
 	return ssh_config.running;
 }
@@ -491,12 +482,12 @@ static int _ssh_config_show(ssh_config_t *ssh, struct vty *vty)
 
 		if(ssh->bindport && ssh->bind_prefix.prefixlen)
 			vty_out(vty, "ip ssh bind-address %s port %d%s",
-							inet_ntoa(ssh->bind_prefix.u.prefix4), ssh->bindport, VTY_NEWLINE);
+							ipstack_inet_ntoa(ssh->bind_prefix.u.prefix4), ssh->bindport, VTY_NEWLINE);
 		else if(ssh->bindport && !ssh->bind_prefix.prefixlen)
 			vty_out(vty, "ip ssh bind-port %d%s", ssh->bindport, VTY_NEWLINE);
 		else if(!ssh->bindport && ssh->bind_prefix.prefixlen)
 			vty_out(vty, "ip ssh bind-address %s%s",
-							inet_ntoa(ssh->bind_prefix.u.prefix4), VTY_NEWLINE);
+							ipstack_inet_ntoa(ssh->bind_prefix.u.prefix4), VTY_NEWLINE);
 
 		if(ssh->shell_enable)
 			vty_out(vty, "ip ssh login enable%s", VTY_NEWLINE);

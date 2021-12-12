@@ -19,7 +19,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "ospl_type.h"
+#include "zpl_type.h"
 #ifdef __cplusplus
 }
 #endif
@@ -28,35 +28,35 @@ class h264Decoder:public videoDecoder {
         h264Decoder();
         ~h264Decoder();
         int videoDecoderSetup(const int width, const int height, const int fmt, const int fps);
-        int videoDecoderInput(const ospl_uint8 *frame, const int len);
-        int videoDecoderOutput(ospl_uint8 *frame, const int len);
-        ospl_uint8 * videoDecoderOutput();
+        int videoDecoderInput(const zpl_uint8 *frame, const int len);
+        int videoDecoderOutput(zpl_uint8 *frame, const int len);
+        zpl_uint8 * videoDecoderOutput();
         int videoDecoderOutputSize(const bool clear=true);
         int videoDecoderDestroy();
 
     private:
-#ifdef PL_OPENH264_MODULE
+#ifdef ZPL_OPENH264_MODULE
         int openh264_decoder_destroy();
         int openh264_decoder_setup(const int width, const int height, const int fmt, const int fps);
-        int openh264_decoder_input(const ospl_uint8 *frame, const int len);
-        int openh264_decoder_output( ospl_uint8 *frame, const int len);
-        int openh264_write_yuv(ospl_uint8 *buf,
+        int openh264_decoder_input(const zpl_uint8 *frame, const int len);
+        int openh264_decoder_output( zpl_uint8 *frame, const int len);
+        int openh264_write_yuv(zpl_uint8 *buf,
                      const int dst_len,
-                     const ospl_uint8* pData[3],
+                     const zpl_uint8* pData[3],
                      const int *iStride,
                      const int iWidth,
                      const int iHeight);
         int  openh264_got_decoded_frame(
-					   const ospl_uint8 *pData[3],
+					   const zpl_uint8 *pData[3],
 					   const SBufferInfo *sDstBufInfo,
 					   uint64_t *timestamp);
 #endif
     private:
 
-#ifdef PL_OPENH264_MODULE
+#ifdef ZPL_OPENH264_MODULE
         /* Encoder state */
-        ISVCDecoder *m_decoder = nullptr;
-        ospl_uint8 *m_out_frame_payload = nullptr;
+        ISVCDecoder *m_decoder = NULL;
+        zpl_uint8 *m_out_frame_payload = NULL;
 #endif
 };
 

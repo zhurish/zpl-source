@@ -10,7 +10,7 @@
 #include <ifaddrs.h>
 #include <netpacket/packet.h>
 
-int FAST_FUNC d6_read_interface(const char *interface, ifindex_t *ifindex, struct in6_addr *nip6, ospl_uint8 *mac)
+int FAST_FUNC d6_read_interface(const char *interface, ifindex_t *ifindex, struct in6_addr *nip6, zpl_uint8 *mac)
 {
 	int retval = 3;
 	struct ifaddrs *ifap, *ifa;
@@ -36,7 +36,7 @@ int FAST_FUNC d6_read_interface(const char *interface, ifindex_t *ifindex, struc
 #if 0
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			*nip = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
-			log1("IP %s", inet_ntoa(((struct sockaddr_in *)ifa->ifa_addr)->sin_addr));
+			log1("IP %s", ipstack_inet_ntoa(((struct sockaddr_in *)ifa->ifa_addr)->sin_addr));
 		}
 #endif
 		if (ifa->ifa_addr->sa_family == AF_INET6

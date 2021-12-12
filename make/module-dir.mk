@@ -1,12 +1,11 @@
 
-PLATFORM_ROOT	=$(PLBASE)/platform
-SERVICE_ROOT	=$(PLBASE)/service
-STARTUP_ROOT	=$(PLBASE)/startup
-PRODUCT_ROOT	=$(PLBASE)/product
-CLI_ROOT		=$(PLBASE)/cli
-ABSTRACT_ROOT	=$(PLBASE)/abstract
-COMPONENT_ROOT	=$(PLBASE)/component
-TOOLS_ROOT		=$(PLBASE)/tools
-APP_ROOT		=$(PLBASE)/application
-EXTERNSION_ROOT	=$(PLBASE)/externsions
-MULTIMEDIA_ROOT	=$(PLBASE)/multimedia
+PLATFORM_ROOT	=$(ZPLBASE)/platform
+SERVICE_ROOT	=$(ZPLBASE)/service
+STARTUP_ROOT	=$(ZPLBASE)/startup
+PRODUCT_ROOT	=$(ZPLBASE)/product
+ABSTRACT_ROOT	=$(ZPLBASE)/abstract
+COMPONENT_ROOT	=$(ZPLBASE)/component
+TOOLS_ROOT		=$(ZPLBASE)/tools
+APP_ROOT		=$(ZPLBASE)/application
+EXTERNSION_ROOT	=$(ZPLBASE)/externsions
+MULTIMEDIA_ROOT	=$(ZPLBASE)/multimedia

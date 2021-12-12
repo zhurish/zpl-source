@@ -7,7 +7,7 @@
  */
 #define HAS_BOOL 1
 
-#include <zebra.h>
+#include <zpl_include.h>
 #include "if.h"
 #include "vty.h"
 #include "sockunion.h"
@@ -26,14 +26,14 @@
 #include "web_app.h"
 #include "web_api.h"
 
-#ifdef PL_DHCP_MODULE
+#ifdef ZPL_DHCP_MODULE
 
 #ifdef WEB_OPENWRT_PROCESS
 //#else
 
-#ifdef PL_DHCPD_MODULE
+#ifdef ZPL_DHCPD_MODULE
 
-#ifdef PL_DHCP_MODULE
+#ifdef ZPL_DHCP_MODULE
 #include "dhcp_config.h"
 #include "dhcpd.h"
 #include "dhcp_lease.h"
@@ -67,7 +67,7 @@ static int web_dhcpd_get_config(Webs *wp, const char *poolname)
 
 		if(dhcps->address.prefixlen)
 		{
-			ospl_uint32 addr = 0;
+			zpl_uint32 addr = 0;
 			struct in_addr innetmask;
 			memset(startip, 0, sizeof(startip));
 			memcpy(&address, &dhcps->address, sizeof(address));
@@ -86,7 +86,7 @@ static int web_dhcpd_get_config(Webs *wp, const char *poolname)
 			masklen2ip (dhcps->address.prefixlen, &innetmask);
 
 			memset(netmask, 0, sizeof(netmask));
-			sprintf(netmask, "%s", inet_ntoa(innetmask));
+			sprintf(netmask, "%s", ipstack_inet_ntoa(innetmask));
 		}
 		else
 		{
@@ -104,7 +104,7 @@ static int web_dhcpd_get_config(Webs *wp, const char *poolname)
 
 				masklen2ip (dhcps->start_address.prefixlen, &innetmask);
 				memset(netmask, 0, sizeof(netmask));
-				sprintf(netmask, "%s", inet_ntoa(innetmask));
+				sprintf(netmask, "%s", ipstack_inet_ntoa(innetmask));
 			}
 
 		}
@@ -343,7 +343,7 @@ static int web_dhcpset_set(Webs *wp, char *path, char *query)
 	return OK;
 }
 
-#ifdef PL_DHCP_MODULE
+#ifdef ZPL_DHCP_MODULE
 static int web_dhcp_lease_cb(dyn_lease_t *lease, Webs *wp)
 {
 	//char *lease_type[3] = {"Unknow", "dynamic", "static"};
@@ -372,7 +372,7 @@ static int web_dhcp_client_tbl(Webs *wp, char *path, char *query)
 	websWriteEndHeaders(wp);
 	websWrite(wp, "%s", "[");
 	wp->iValue = 0;
-#ifdef PL_DHCP_MODULE
+#ifdef ZPL_DHCP_MODULE
 	nsm_dhcps_lease_foreach(web_dhcp_lease_cb, wp);
 #endif
 /*
@@ -393,7 +393,7 @@ static int web_dhcp_client_tbl(Webs *wp, char *path, char *query)
 	return 0;
 }
 
-static int web_dhcp_static_lease(ospl_uint32 type, char *devname, char *devip, ospl_uint8 *devmac, char *expires)
+static int web_dhcp_static_lease(zpl_uint32 type, char *devname, char *devip, zpl_uint8 *devmac, char *expires)
 {
 	nsm_dhcps_host_t *dhcphost = NULL;
 	nsm_dhcps_t * dhcps = nsm_dhcps_lookup_api("lantest");
@@ -558,7 +558,7 @@ static int web_dhcp_static_handle(Webs *wp, void *p)
 
 int web_dhcp_jst_init(void)
 {
-#ifdef PL_DHCPD_MODULE
+#ifdef ZPL_DHCPD_MODULE
 	websDefineJst("jst_dhcpd", jst_dhcpd);
 	websFormDefine("setdhcp", web_dhcpset_set);
 	websFormDefine("dhcp-client", web_dhcp_client_tbl);

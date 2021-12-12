@@ -35,10 +35,10 @@ extern "C" {
 
 struct d6_packet {
 	union {
-		ospl_uint8 d6_msg_type;
-		ospl_uint32  d6_xid32;
+		zpl_uint8 d6_msg_type;
+		zpl_uint32  d6_xid32;
 	} d6_u;
-	ospl_uint8 d6_options[576 - sizeof(struct iphdr) - sizeof(struct udphdr) - 4
+	zpl_uint8 d6_options[576 - sizeof(struct iphdr) - sizeof(struct udphdr) - 4
 			+ CONFIG_UDHCPC_SLACK_FOR_BUGGY_SERVERS];
 } PACKED;
 #define d6_msg_type d6_u.d6_msg_type
@@ -58,11 +58,11 @@ struct udp_d6_packet {
 /*** Options ***/
 
 struct d6_option {
-	ospl_uint8 code_hi;
-	ospl_uint8 code;
-	ospl_uint8 len_hi;
-	ospl_uint8 len;
-	ospl_uint8 data[1];
+	zpl_uint8 code_hi;
+	zpl_uint8 code;
+	zpl_uint8 len_hi;
+	zpl_uint8 len;
+	zpl_uint8 data[1];
 } PACKED;
 
 #define D6_OPT_CLIENTID       1
@@ -145,9 +145,9 @@ struct client6_data_t {
 
 #define client6_data (*(struct client6_data_t*)(&bb_common_bufsiz1[COMMON_BUFSIZE - sizeof(struct client6_data_t)]))
 
-int FAST_FUNC d6_read_interface(const char *interface, ifindex_t *ifindex, struct in6_addr *nip6, ospl_uint8 *mac);
+int FAST_FUNC d6_read_interface(const char *interface, ifindex_t *ifindex, struct in6_addr *nip6, zpl_uint8 *mac);
 
-int FAST_FUNC d6_listen_socket(ospl_uint16 port, const char *inf);
+int FAST_FUNC d6_listen_socket(zpl_uint16 port, const char *inf);
 
 int FAST_FUNC d6_recv_kernel_packet(
 		struct in6_addr *peer_ipv6,
@@ -156,15 +156,15 @@ int FAST_FUNC d6_recv_kernel_packet(
 
 int FAST_FUNC d6_send_raw_packet(
 		struct d6_packet *d6_pkt, unsigned d6_pkt_size,
-		struct in6_addr *src_ipv6, ospl_uint16 source_port,
-		struct in6_addr *dst_ipv6, ospl_uint16 dest_port, const ospl_uint8 *dest_arp,
+		struct in6_addr *src_ipv6, zpl_uint16 source_port,
+		struct in6_addr *dst_ipv6, zpl_uint16 dest_port, const zpl_uint8 *dest_arp,
 		ifindex_t ifindex
 );
 
 int FAST_FUNC d6_send_kernel_packet(
 		struct d6_packet *d6_pkt, unsigned d6_pkt_size,
-		struct in6_addr *src_ipv6, ospl_uint16 source_port,
-		struct in6_addr *dst_ipv6, ospl_uint16 dest_port,
+		struct in6_addr *src_ipv6, zpl_uint16 source_port,
+		struct in6_addr *dst_ipv6, zpl_uint16 dest_port,
 		ifindex_t ifindex
 );
 

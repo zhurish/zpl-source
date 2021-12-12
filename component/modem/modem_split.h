@@ -18,7 +18,7 @@ extern modem_cpin_en modem_usim_state(modem_t *modem);
 extern const char * modem_client_module_name(modem_client_t *client);
 
 extern int modem_operator_split(modem_client_t *client, char *buf);
-extern int modem_register_state(modem_client_t *client, ospl_uint32 code);
+extern int modem_register_state(modem_client_t *client, zpl_uint32 code);
 
 extern int modem_pin_state_split(modem_client_t *client, char *buf);
 

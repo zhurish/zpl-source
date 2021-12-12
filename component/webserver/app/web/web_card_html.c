@@ -6,7 +6,7 @@
  */
 
 #define HAS_BOOL 1
-#include "zebra.h"
+#include "zpl_include.h"
 
 #include "module.h"
 #include "memory.h"
@@ -23,7 +23,7 @@
 #include "web_app.h"
 #include "web_api.h"
 
-#ifdef PL_APP_MODULE
+#ifdef ZPL_APP_MODULE
 #include "application.h"
 
 #ifdef APP_X5BA_MODULE
@@ -43,7 +43,7 @@ static int web_card_action(Webs *wp, char *path, char *query)
 		websWriteHeaders(wp, -1, 0);
 		websWriteHeader(wp, "Content-Type", "application/json");
 		websWriteEndHeaders(wp);
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 		os_uci_get_string("userauth.db.cardid", cardNumber);
 #endif
 		websWrite(wp,
@@ -60,7 +60,7 @@ static int web_card_action(Webs *wp, char *path, char *query)
 
 int web_card_app(void)
 {
-#ifdef PL_APP_MODULE
+#ifdef ZPL_APP_MODULE
 #ifdef APP_X5BA_MODULE
 	websFormDefine("card", web_card_action);
 #endif

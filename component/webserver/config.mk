@@ -4,37 +4,37 @@
 #
 MODULEDIR = component/webserver
 #
-#PLINCLUDE += -I$(WEBGUI_ROOT)/include
+#ZPLINCLUDE += -I$(WEBGUI_ROOT)/include
 #
 #
 ME_COM_COMPILER       = 1
 ME_COM_LIB            = 1
-ifeq ($(PL_WEBSERVER_MATRIXSSL),1)
+ifeq ($(ZPL_WEBSERVER_MATRIXSSL),true)
 ME_COM_MATRIXSSL      = 1
 else
 ME_COM_MATRIXSSL      = 0
 endif
-ifeq ($(PL_WEBSERVER_MBEDTLS),1)
+ifeq ($(ZPL_WEBSERVER_MBEDTLS),true)
 ME_COM_MBEDTLS        = 1
 else
 ME_COM_MBEDTLS        = 0
 endif
-ifeq ($(PL_WEBSERVER_NANOSSL),1)
+ifeq ($(ZPL_WEBSERVER_NANOSSL),true)
 ME_COM_NANOSSL        = 1
 else
 ME_COM_NANOSSL        = 0
 endif
-ifeq ($(PL_WEBSERVER_OPENSSL),1)
+ifeq ($(ZPL_WEBSERVER_OPENSSL),true)
 ME_COM_OPENSSL        = 1
 else
 ME_COM_OPENSSL        = 0
 endif
 ME_COM_OSDEP          = 0
-ifeq ($(ME_COM_OPENSSL),1)
-ME_COM_SSL            = 1
-else
-ME_COM_SSL            = 0
-endif
+#ifeq ($(ME_COM_OPENSSL),1)
+#ME_COM_SSL            = 1
+#else
+#ME_COM_SSL            = 0
+#endif
 ME_GOAHEAD_LOGIN_HTML = 0
 ME_GOAHEAD_LOGIN_JS   = 1
 ME_GOAHEAD_LOGIN_MAX   = 2
@@ -49,6 +49,10 @@ endif
 ifeq ($(ME_COM_OPENSSL),1)
     ME_COM_SSL = 1
 endif
+ifeq ($(ZPL_WEBSERVER_NONESSL),true)
+    ME_COM_SSL = 0
+endif
+
 #
 ME_DFLAGS = -D_REENTRANT -DPIC -DME_COM_COMPILER=$(ME_COM_COMPILER) \
 			-DME_COM_LIB=$(ME_COM_LIB) -DME_COM_MATRIXSSL=$(ME_COM_MATRIXSSL) \
@@ -99,7 +103,12 @@ WEBOBJS += web_app.o
 WEBOBJS += web_api.o
 WEBOBJS += web_util.o
 WEBOBJS += web_button.o
+ifeq ($(strip $(ZPL_SHELL_MODULE)),true)
+WEBOBJS += cmd_web.o
+endif
 
+APPWEBOBJS += web_login_html.o
+ifeq ($(strip $(ZPL_WEBAPP_MODULE)),true)
 #jst
 APPJSTOBJS += web_html_jst.o
 APPJSTOBJS += web_system_jst.o
@@ -121,7 +130,6 @@ APPJSTOBJS += web_route_jst.o
 #form and action
 
 
-APPWEBOBJS += web_login_html.o
 APPWEBOBJS += web_admin_html.o
 APPWEBOBJS += web_sntp_html.o
 APPWEBOBJS += web_syslog_html.o
@@ -132,19 +140,20 @@ APPWEBOBJS += web_system_html.o
 APPWEBOBJS += web_upgrade_html.o
 APPWEBOBJS += web_netservice_html.o
 
-ifeq ($(strip $(PL_APP_X5_MODULE)),true)
+ifeq ($(strip $(ZPL_APP_X5_MODULE)),true)
 APPWEBOBJS += web_switch_html.o
 APPWEBOBJS += web_sip_html.o
 APPWEBOBJS += web_factory_html.o
 APPWEBOBJS += web_card_html.o
 endif
-ifeq ($(strip $(PL_APP_V9_MODULE)),true)
+ifeq ($(strip $(ZPL_APP_V9_MODULE)),true)
 APPWEBOBJS += web_boardcard_html.o
 APPWEBOBJS += web_general_html.o
 APPWEBOBJS += web_rtsp_html.o
 APPWEBOBJS += web_algorithm_html.o
 APPWEBOBJS += web_facelib_html.o
 APPWEBOBJS += web_db_html.o
+endif
 endif
 
 #############################################################################

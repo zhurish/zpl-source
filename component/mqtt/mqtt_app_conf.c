@@ -4,9 +4,10 @@
  *  Created on: 2019年12月15日
  *      Author: zhurish
  */
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
-#include "zebra.h"
-#include "memory.h"
 #include "mqtt-config.h"
 #include <mqtt_protocol.h>
 #include <mosquitto.h>
@@ -51,14 +52,14 @@ void mqtt_config_default_init(struct mqtt_app_config *cfg, mqtt_mode_t pub_or_su
 	mqtt_connect_port_api(cfg, MQTT_PORT_DETAULT);
 
 	cfg->qos = 0;
-	cfg->retain = ospl_true;//如果指定该选项，该条消息将被保留做为最后一条收到的消息。下一个订阅消息者将能至少收到该条消息。
+	cfg->retain = zpl_true;//如果指定该选项，该条消息将被保留做为最后一条收到的消息。下一个订阅消息者将能至少收到该条消息。
 
 	mqtt_id_prefix_api(cfg, "aabbcc");//客户端ID/ID前缀
 
-	cfg->debug = ospl_true;
-	cfg->quiet = ospl_false;// 如果指定该选项，则不会有任何错误被打印，当然，这排除了无效的用户输入所引起的错误消息
+	cfg->debug = zpl_true;
+	cfg->quiet = zpl_false;// 如果指定该选项，则不会有任何错误被打印，当然，这排除了无效的用户输入所引起的错误消息
 
-	cfg->clean_session = ospl_true;//禁止'clean session'选项，即如果客户端断开连接，这个订阅仍然保留来接收随后到的QoS为1和2的
+	cfg->clean_session = zpl_true;//禁止'clean session'选项，即如果客户端断开连接，这个订阅仍然保留来接收随后到的QoS为1和2的
 									//消息，当改客户端重新连接之后，它将接收到已排在队列中的消息。建议使用此选项时，
 									//客户端id选 项设为--id
 	/*
@@ -105,7 +106,7 @@ void mqtt_config_default_init(struct mqtt_app_config *cfg, mqtt_mode_t pub_or_su
 
 void mqtt_config_default_cleanup(struct mqtt_app_config *cfg)
 {
-	ospl_uint32 i;
+	zpl_uint32 i;
 	zassert(cfg != NULL);
 	if(cfg->mutex)
 		os_mutex_exit(cfg->mutex);

@@ -29,7 +29,7 @@ struct fifo
 {
   struct fifo *next;
   struct fifo *prev;
-  ospl_uint32 count;
+  zpl_uint32 count;
 };
 
 #define FIFO_INIT(F)                                  \

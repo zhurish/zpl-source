@@ -8,24 +8,12 @@
 
 
 
-#include "zebra.h"
-#include "vty.h"
-#include "if.h"
 
-#include "buffer.h"
-#include "command.h"
-#include "if_name.h"
-#include "linklist.h"
-#include "log.h"
-#include "memory.h"
-#include "prefix.h"
-#include "sockunion.h"
-#include "str.h"
-#include "table.h"
-#include "vector.h"
-#include "nsm_vrf.h"
-#include "nsm_interface.h"
-#include "template.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
+#include "vty_include.h"
 
 #include "application.h"
 
@@ -44,7 +32,7 @@ DEFUN (app_template,
 		"Video configure\n")
 {
 	//int ret = ERROR;
-	template_t * temp = nsm_template_lookup_name (ospl_false, "app video");
+	template_t * temp = nsm_template_lookup_name (zpl_false, "app video");
 	if(temp)
 	{
 		vty->node = TEMPLATE_NODE;
@@ -54,7 +42,7 @@ DEFUN (app_template,
 	}
 	else
 	{
-		temp = nsm_template_new (ospl_false);
+		temp = nsm_template_new (zpl_false);
 		if(temp)
 		{
 			temp->module = 0;
@@ -81,7 +69,7 @@ DEFUN (no_app_template,
 		"APP configure\n"
 		"Video configure\n")
 {
-	template_t * temp = nsm_template_lookup_name (ospl_false, "app video");
+	template_t * temp = nsm_template_lookup_name (zpl_false, "app video");
 	if(temp)
 	{
 		//x5b_app_free();
@@ -102,9 +90,9 @@ DEFUN (v9_app_board_disabled,
 		"Disable\n")
 {
 	if(strstr(argv[1], "enable"))
-		v9_video_board_disabled(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), ospl_false);
+		v9_video_board_disabled(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), zpl_false);
 	else
-		v9_video_board_disabled(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), ospl_true);
+		v9_video_board_disabled(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), zpl_true);
 	return CMD_SUCCESS;
 }
 
@@ -241,9 +229,9 @@ DEFUN (v9_app_board_active,
 		"Inactive\n")
 {
 	if(strstr(argv[1], "enable"))
-		v9_video_board_active(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), ospl_true);
+		v9_video_board_active(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), zpl_true);
 	else
-		v9_video_board_active(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), ospl_false);
+		v9_video_board_active(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), zpl_false);
 	return CMD_SUCCESS;
 }
 
@@ -258,9 +246,9 @@ DEFUN (v9_app_board_show,
 		"Status Information\n")
 {
 	if(argc == 1)
-		v9_video_board_show(vty, ospl_true);
+		v9_video_board_show(vty, zpl_true);
 	else
-		v9_board_show(vty, 0, ospl_true);
+		v9_board_show(vty, 0, zpl_true);
 	return CMD_SUCCESS;
 }
 
@@ -274,9 +262,9 @@ DEFUN (v9_app_video_rtsp_show,
 		"Status Information\n")
 {
 	if(argc == 1 && argv[0])
-		v9_video_board_stream_show(vty, V9_APP_BOARD_CALCU_ID(atoi(argv[0])), ospl_true);
+		v9_video_board_stream_show(vty, V9_APP_BOARD_CALCU_ID(atoi(argv[0])), zpl_true);
 	else
-		v9_video_board_stream_show(vty, 0, ospl_true);
+		v9_video_board_stream_show(vty, 0, zpl_true);
 	return CMD_SUCCESS;
 }
 
@@ -337,7 +325,7 @@ DEFUN (v9_app_sdk_show,
 		"Video Configure\n"
 		"SDK Information\n")
 {
-	v9_video_sdk_show(vty, 0, ospl_true);
+	v9_video_sdk_show(vty, 0, zpl_true);
 	return CMD_SUCCESS;
 }
 
@@ -349,7 +337,7 @@ DEFUN (v9_app_user_show,
 		"Video Configure\n"
 		"User Information\n")
 {
-	v9_video_user_show(vty, ospl_true);
+	v9_video_user_show(vty, zpl_true);
 	return CMD_SUCCESS;
 }
 
@@ -416,14 +404,14 @@ DEFUN (v9_sdk_hw_original_pic_enable,
 {
 	if(strstr(argv[1], "enable"))
 	{
-		if(v9_video_sdk_original_pic_enable_set_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), ospl_true) == OK)
+		if(v9_video_sdk_original_pic_enable_set_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), zpl_true) == OK)
 		{
 			return CMD_SUCCESS;
 		}
 	}
 	else
 	{
-		if(v9_video_sdk_original_pic_enable_set_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), ospl_false) == OK)
+		if(v9_video_sdk_original_pic_enable_set_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), zpl_false) == OK)
 		{
 			return CMD_SUCCESS;
 		}
@@ -444,7 +432,7 @@ DEFUN (v9_sdk_hw_set_recognize,
 		"Registerquality Configure\n"
 		"Registerquality Value\n")
 {
-	ospl_bool nOpenUpload = ospl_false;
+	zpl_bool nOpenUpload = zpl_false;
 	if(v9_video_sdk_recognize_config_get_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), NULL, NULL, &nOpenUpload) == OK)
 	{
 		if(v9_video_sdk_recognize_config_set_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), atoi(argv[1]), atoi(argv[2]), nOpenUpload) == OK)
@@ -468,9 +456,9 @@ DEFUN (v9_sdk_hw_set_recognize_openupload,
 		"Disable Upload\n")
 {
 	int nOutSimilarity = 0, nRegisterQuality = 0;
-	ospl_bool nOpenUpload = ospl_false;
+	zpl_bool nOpenUpload = zpl_false;
 	if(strstr(argv[1], "enable"))
-		nOpenUpload = ospl_true;
+		nOpenUpload = zpl_true;
 	if(v9_video_sdk_recognize_config_get_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), &nOutSimilarity, &nRegisterQuality, NULL) == OK)
 	{
 		if(v9_video_sdk_recognize_config_set_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), nOutSimilarity, nRegisterQuality, nOpenUpload) == OK)
@@ -531,7 +519,7 @@ DEFUN (v9_sdk_hw_set_helmet_sentimage,
 	memset(&HelmetInfo, 0, sizeof(ST_SDKHelmetInfo));
 	if(v9_video_sdk_helmet_config_get_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), atoi(argv[1]), &HelmetInfo) == OK)
 	{
-		HelmetInfo.nSentImage = strstr(argv[2], "enable") ? ospl_true:ospl_false;
+		HelmetInfo.nSentImage = strstr(argv[2], "enable") ? zpl_true:zpl_false;
 		if(v9_video_sdk_helmet_config_get_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), atoi(argv[1]), &HelmetInfo) == OK)
 		{
 			return CMD_SUCCESS;
@@ -558,7 +546,7 @@ DEFUN (v9_sdk_hw_set_helmet_tracking,
 	memset(&HelmetInfo, 0, sizeof(ST_SDKHelmetInfo));
 	if(v9_video_sdk_helmet_config_get_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), atoi(argv[1]), &HelmetInfo) == OK)
 	{
-		HelmetInfo.nUseTracking = strstr(argv[2], "enable") ? ospl_true:ospl_false;
+		HelmetInfo.nUseTracking = strstr(argv[2], "enable") ? zpl_true:zpl_false;
 		if(v9_video_sdk_helmet_config_get_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), atoi(argv[1]), &HelmetInfo) == OK)
 		{
 			return CMD_SUCCESS;
@@ -585,7 +573,7 @@ DEFUN (v9_sdk_hw_set_helmet_drawrectangle,
 	memset(&HelmetInfo, 0, sizeof(ST_SDKHelmetInfo));
 	if(v9_video_sdk_helmet_config_get_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), atoi(argv[1]), &HelmetInfo) == OK)
 	{
-		HelmetInfo.nDrawRectangle = strstr(argv[2], "enable") ? ospl_true:ospl_false;
+		HelmetInfo.nDrawRectangle = strstr(argv[2], "enable") ? zpl_true:zpl_false;
 		if(v9_video_sdk_helmet_config_get_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), atoi(argv[1]), &HelmetInfo) == OK)
 		{
 			return CMD_SUCCESS;
@@ -801,7 +789,7 @@ DEFUN (v9_sdk_hw_set_sanp_attr,
 	memset(&pstSnapInfo, 0, sizeof(ST_SDKSnapInfo));
 	if(v9_video_sdk_snap_config_get_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), atoi(argv[1]), &pstSnapInfo) == OK)
 	{
-		pstSnapInfo.nAttrEnable = strstr(argv[2], "enable") ? ospl_true:ospl_false;
+		pstSnapInfo.nAttrEnable = strstr(argv[2], "enable") ? zpl_true:zpl_false;
 		if(v9_video_sdk_snap_config_set_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), atoi(argv[1]), &pstSnapInfo) == OK)
 		{
 			return CMD_SUCCESS;
@@ -829,7 +817,7 @@ DEFUN (v9_sdk_hw_set_sanp_feature,
 	memset(&pstSnapInfo, 0, sizeof(ST_SDKSnapInfo));
 	if(v9_video_sdk_snap_config_get_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), atoi(argv[1]), &pstSnapInfo) == OK)
 	{
-		pstSnapInfo.nFeatureEnable = strstr(argv[2], "enable") ? ospl_true:ospl_false;
+		pstSnapInfo.nFeatureEnable = strstr(argv[2], "enable") ? zpl_true:zpl_false;
 		if(v9_video_sdk_snap_config_set_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), atoi(argv[1]), &pstSnapInfo) == OK)
 		{
 			return CMD_SUCCESS;
@@ -856,7 +844,7 @@ DEFUN (v9_sdk_hw_set_sanp_align,
 	memset(&pstSnapInfo, 0, sizeof(ST_SDKSnapInfo));
 	if(v9_video_sdk_snap_config_get_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), atoi(argv[1]), &pstSnapInfo) == OK)
 	{
-		pstSnapInfo.nAlignEnable = strstr(argv[2], "enable") ? ospl_true:ospl_false;
+		pstSnapInfo.nAlignEnable = strstr(argv[2], "enable") ? zpl_true:zpl_false;
 		if(v9_video_sdk_snap_config_set_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), atoi(argv[1]), &pstSnapInfo) == OK)
 		{
 			return CMD_SUCCESS;
@@ -883,7 +871,7 @@ DEFUN (v9_sdk_hw_set_sanp_area,
 	memset(&pstSnapInfo, 0, sizeof(ST_SDKSnapInfo));
 	if(v9_video_sdk_snap_config_get_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), atoi(argv[1]), &pstSnapInfo) == OK)
 	{
-		pstSnapInfo.nAreaEnable = strstr(argv[2], "enable") ? ospl_true:ospl_false;
+		pstSnapInfo.nAreaEnable = strstr(argv[2], "enable") ? zpl_true:zpl_false;
 		if(v9_video_sdk_snap_config_set_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), atoi(argv[1]), &pstSnapInfo) == OK)
 		{
 			return CMD_SUCCESS;
@@ -911,7 +899,7 @@ DEFUN (v9_sdk_hw_set_sanp_tripwire,
 	memset(&pstSnapInfo, 0, sizeof(ST_SDKSnapInfo));
 	if(v9_video_sdk_snap_config_get_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), atoi(argv[1]), &pstSnapInfo) == OK)
 	{
-		pstSnapInfo.nTripWireEnable = strstr(argv[2], "enable") ? ospl_true:ospl_false;
+		pstSnapInfo.nTripWireEnable = strstr(argv[2], "enable") ? zpl_true:zpl_false;
 		if(v9_video_sdk_snap_config_set_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), atoi(argv[1]), &pstSnapInfo) == OK)
 		{
 			return CMD_SUCCESS;
@@ -1129,7 +1117,7 @@ DEFUN (v9_sdk_hw_get_recognize,
 		"Recognize Configure\n")
 {
 	int nOutSimilarity = 0, nRegisterQuality = 0;
-	ospl_bool nOpenUpload = ospl_false;
+	zpl_bool nOpenUpload = zpl_false;
 	if(v9_video_sdk_recognize_config_get_api(V9_APP_BOARD_CALCU_ID(atoi(argv[0])), &nOutSimilarity, &nRegisterQuality, &nOpenUpload) == OK)
 	{
 		vty_out(vty, " nOutSimilarity              :%d%s", nOutSimilarity, VTY_NEWLINE);
@@ -1149,11 +1137,11 @@ DEFUN (v9_sdk_hw_get_recognize,
  */
 
 /*
-int v9_video_sdk_add_user_api(ospl_uint32 id, ospl_bool gender, int group, char *user, char *ID, char *pic, ospl_bool edit);
-int v9_video_sdk_del_user_api(ospl_uint32 id, char *ID);
-int v9_video_sdk_del_group_user_api(ospl_uint32 id, void *p_pstUserList);
-int v9_video_sdk_del_group_api(ospl_uint32 id, int group);
-int v9_video_sdk_get_user_api(ospl_uint32 id, char* ID, void* UserInfo);
+int v9_video_sdk_add_user_api(zpl_uint32 id, zpl_bool gender, int group, char *user, char *ID, char *pic, zpl_bool edit);
+int v9_video_sdk_del_user_api(zpl_uint32 id, char *ID);
+int v9_video_sdk_del_group_user_api(zpl_uint32 id, void *p_pstUserList);
+int v9_video_sdk_del_group_api(zpl_uint32 id, int group);
+int v9_video_sdk_get_user_api(zpl_uint32 id, char* ID, void* UserInfo);
 */
 DEFUN (v9_sdk_hw_clean_user,
 	   v9_sdk_hw_clean_user_cmd,
@@ -1238,7 +1226,7 @@ DEFUN (v9_sdk_hw_get_user,
 		char						szUserID[EAIS_SDK_MAX_COMMON_LEN];				// 证件号
 		int							nGender;										// 人员性别  0： 女 1： 男
 		int        			        nFaceLen;										// 人脸图片数据长度（1, 1024 * 1024]字节
-		ospl_uint8*				szPictureData;									// 图片内容
+		zpl_uint8*				szPictureData;									// 图片内容
 		char						szComment[EAIS_SDK_USER_FACE_COMMENT_LEN];		// 用户自定义备注字段
 		int							nRegisterTime;									// 注册时间，从1970-01-01 00:00:00 (utc) 开始计时的秒数
 		char						szReserved[256];								// 预留位，便于拓展，默认置空
@@ -1316,29 +1304,29 @@ DEFUN (debug_video_event,
   if (strncmp ("user", argv[0], strlen (argv[0])) == 0)
   {
 	  if (strncmp ("event", argv[1], strlen (argv[1])) == 0)
-		  v9_user_debug_api(ospl_true, V9_USER_DEBUG_EVENT);
+		  v9_user_debug_api(zpl_true, V9_USER_DEBUG_EVENT);
 	  if (strncmp ("error", argv[1], strlen (argv[1])) == 0)
-		  v9_user_debug_api(ospl_true, V9_USER_DEBUG_ERROR);
+		  v9_user_debug_api(zpl_true, V9_USER_DEBUG_ERROR);
 	  if (strncmp ("warn", argv[1], strlen (argv[1])) == 0)
-		  v9_user_debug_api(ospl_true, V9_USER_DEBUG_WARN);
+		  v9_user_debug_api(zpl_true, V9_USER_DEBUG_WARN);
   }
   else if (strncmp ("serial", argv[0], strlen (argv[0])) == 0)
   {
 	  if (strncmp ("event", argv[1], strlen (argv[1])) == 0)
-		  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_EVENT);
+		  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_EVENT);
 	  if (strncmp ("error", argv[1], strlen (argv[1])) == 0)
-		  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_ERROR);
+		  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_ERROR);
 	  if (strncmp ("warn", argv[1], strlen (argv[1])) == 0)
-		  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_WARN);
+		  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_WARN);
   }
   else if (strncmp ("sdk", argv[0], strlen (argv[0])) == 0)
   {
 	  if (strncmp ("event", argv[1], strlen (argv[1])) == 0)
-		  v9_video_sdk_debug_api(ospl_true, V9_SDK_DEBUG_EVENT);
+		  v9_video_sdk_debug_api(zpl_true, V9_SDK_DEBUG_EVENT);
 	  if (strncmp ("error", argv[1], strlen (argv[1])) == 0)
-		  v9_video_sdk_debug_api(ospl_true, V9_SDK_DEBUG_ERROR);
+		  v9_video_sdk_debug_api(zpl_true, V9_SDK_DEBUG_ERROR);
 	  if (strncmp ("warn", argv[1], strlen (argv[1])) == 0)
-		  v9_video_sdk_debug_api(ospl_true, V9_SDK_DEBUG_WARN);
+		  v9_video_sdk_debug_api(zpl_true, V9_SDK_DEBUG_WARN);
   }
   return CMD_SUCCESS;
 }
@@ -1355,13 +1343,13 @@ DEFUN (debug_video_sqldb,
 	   "Debug option set sqlcmd\n")
 {
 	  if (strncmp ("msg", argv[1], strlen (argv[1])) == 0)
-		  v9_sqldb_debug_api(ospl_true, V9_USER_DEBUG_EVENT);
+		  v9_sqldb_debug_api(zpl_true, V9_USER_DEBUG_EVENT);
 	  if (strncmp ("db", argv[1], strlen (argv[1])) == 0)
-		  v9_sqldb_debug_api(ospl_true, V9_USER_DEBUG_ERROR);
+		  v9_sqldb_debug_api(zpl_true, V9_USER_DEBUG_ERROR);
 	  if (strncmp ("state", argv[1], strlen (argv[1])) == 0)
-		  v9_sqldb_debug_api(ospl_true, V9_USER_DEBUG_WARN);
+		  v9_sqldb_debug_api(zpl_true, V9_USER_DEBUG_WARN);
 	  if (strncmp ("sqlcmd", argv[1], strlen (argv[1])) == 0)
-		  v9_sqldb_debug_api(ospl_true, V9_USER_DEBUG_WARN);
+		  v9_sqldb_debug_api(zpl_true, V9_USER_DEBUG_WARN);
   return CMD_SUCCESS;
 }
 
@@ -1379,20 +1367,20 @@ DEFUN (debug_video_appsdk,
 	  if (strncmp ("sdk", argv[0], strlen (argv[0])) == 0)
 	  {
 		  if (strncmp ("msg", argv[1], strlen (argv[1])) == 0)
-			  v9_video_sdk_debug_api(ospl_true, V9_SDK_DEBUG_MSG);
+			  v9_video_sdk_debug_api(zpl_true, V9_SDK_DEBUG_MSG);
 		  if (strncmp ("web", argv[1], strlen (argv[1])) == 0)
-			  v9_video_sdk_debug_api(ospl_true, V9_SDK_DEBUG_WEB);
+			  v9_video_sdk_debug_api(zpl_true, V9_SDK_DEBUG_WEB);
 		  if (strncmp ("state", argv[1], strlen (argv[1])) == 0)
-			  v9_video_sdk_debug_api(ospl_true, V9_SDK_DEBUG_STATE);
+			  v9_video_sdk_debug_api(zpl_true, V9_SDK_DEBUG_STATE);
 	  }
 	  else if (strncmp ("serial", argv[0], strlen (argv[0])) == 0)
 	  {
 		  if (strncmp ("msg", argv[1], strlen (argv[1])) == 0)
-			  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_MSG);
+			  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_MSG);
 		  if (strncmp ("web", argv[1], strlen (argv[1])) == 0)
-			  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_WEB);
+			  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_WEB);
 		  if (strncmp ("state", argv[1], strlen (argv[1])) == 0)
-			  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_STATE);
+			  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_STATE);
 	  }
   return CMD_SUCCESS;
 }
@@ -1411,17 +1399,17 @@ DEFUN (debug_video_sreial,
 	   "Debug option set uci\n")
 {
 	  if (strncmp ("hex", argv[1], strlen (argv[1])) == 0)
-		  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_HEX);
+		  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_HEX);
 	  if (strncmp ("recv", argv[1], strlen (argv[1])) == 0)
-		  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_RECV);
+		  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_RECV);
 	  if (strncmp ("send", argv[1], strlen (argv[1])) == 0)
-		  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_SEND);
+		  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_SEND);
 	  if (strncmp ("update", argv[1], strlen (argv[1])) == 0)
-		  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_UPDATE);
+		  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_UPDATE);
 	  if (strncmp ("timer", argv[1], strlen (argv[1])) == 0)
-		  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_TIME);
+		  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_TIME);
 	  if (strncmp ("uci", argv[1], strlen (argv[1])) == 0)
-		  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_UCI);
+		  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_UCI);
   return CMD_SUCCESS;
 }
 
@@ -1441,29 +1429,29 @@ DEFUN (no_debug_video_event,
   if (strncmp ("user", argv[0], strlen (argv[0])) == 0)
   {
 	  if (strncmp ("event", argv[1], strlen (argv[1])) == 0)
-		  v9_user_debug_api(ospl_true, V9_USER_DEBUG_EVENT);
+		  v9_user_debug_api(zpl_true, V9_USER_DEBUG_EVENT);
 	  if (strncmp ("error", argv[1], strlen (argv[1])) == 0)
-		  v9_user_debug_api(ospl_true, V9_USER_DEBUG_ERROR);
+		  v9_user_debug_api(zpl_true, V9_USER_DEBUG_ERROR);
 	  if (strncmp ("warn", argv[1], strlen (argv[1])) == 0)
-		  v9_user_debug_api(ospl_true, V9_USER_DEBUG_WARN);
+		  v9_user_debug_api(zpl_true, V9_USER_DEBUG_WARN);
   }
   else if (strncmp ("serial", argv[0], strlen (argv[0])) == 0)
   {
 	  if (strncmp ("event", argv[1], strlen (argv[1])) == 0)
-		  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_EVENT);
+		  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_EVENT);
 	  if (strncmp ("error", argv[1], strlen (argv[1])) == 0)
-		  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_ERROR);
+		  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_ERROR);
 	  if (strncmp ("warn", argv[1], strlen (argv[1])) == 0)
-		  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_WARN);
+		  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_WARN);
   }
   else if (strncmp ("sdk", argv[0], strlen (argv[0])) == 0)
   {
 	  if (strncmp ("event", argv[1], strlen (argv[1])) == 0)
-		  v9_video_sdk_debug_api(ospl_true, V9_SDK_DEBUG_EVENT);
+		  v9_video_sdk_debug_api(zpl_true, V9_SDK_DEBUG_EVENT);
 	  if (strncmp ("error", argv[1], strlen (argv[1])) == 0)
-		  v9_video_sdk_debug_api(ospl_true, V9_SDK_DEBUG_ERROR);
+		  v9_video_sdk_debug_api(zpl_true, V9_SDK_DEBUG_ERROR);
 	  if (strncmp ("warn", argv[1], strlen (argv[1])) == 0)
-		  v9_video_sdk_debug_api(ospl_true, V9_SDK_DEBUG_WARN);
+		  v9_video_sdk_debug_api(zpl_true, V9_SDK_DEBUG_WARN);
   }
   return CMD_SUCCESS;
 }
@@ -1481,13 +1469,13 @@ DEFUN (no_debug_video_sqldb,
 	   "Debug option set sqlcmd\n")
 {
 	  if (strncmp ("msg", argv[1], strlen (argv[1])) == 0)
-		  v9_sqldb_debug_api(ospl_true, V9_USER_DEBUG_EVENT);
+		  v9_sqldb_debug_api(zpl_true, V9_USER_DEBUG_EVENT);
 	  if (strncmp ("db", argv[1], strlen (argv[1])) == 0)
-		  v9_sqldb_debug_api(ospl_true, V9_USER_DEBUG_ERROR);
+		  v9_sqldb_debug_api(zpl_true, V9_USER_DEBUG_ERROR);
 	  if (strncmp ("state", argv[1], strlen (argv[1])) == 0)
-		  v9_sqldb_debug_api(ospl_true, V9_USER_DEBUG_WARN);
+		  v9_sqldb_debug_api(zpl_true, V9_USER_DEBUG_WARN);
 	  if (strncmp ("sqlcmd", argv[1], strlen (argv[1])) == 0)
-		  v9_sqldb_debug_api(ospl_true, V9_USER_DEBUG_WARN);
+		  v9_sqldb_debug_api(zpl_true, V9_USER_DEBUG_WARN);
   return CMD_SUCCESS;
 }
 
@@ -1506,20 +1494,20 @@ DEFUN (no_debug_video_appsdk,
 	  if (strncmp ("sdk", argv[0], strlen (argv[0])) == 0)
 	  {
 		  if (strncmp ("msg", argv[1], strlen (argv[1])) == 0)
-			  v9_video_sdk_debug_api(ospl_true, V9_SDK_DEBUG_MSG);
+			  v9_video_sdk_debug_api(zpl_true, V9_SDK_DEBUG_MSG);
 		  if (strncmp ("web", argv[1], strlen (argv[1])) == 0)
-			  v9_video_sdk_debug_api(ospl_true, V9_SDK_DEBUG_WEB);
+			  v9_video_sdk_debug_api(zpl_true, V9_SDK_DEBUG_WEB);
 		  if (strncmp ("state", argv[1], strlen (argv[1])) == 0)
-			  v9_video_sdk_debug_api(ospl_true, V9_SDK_DEBUG_STATE);
+			  v9_video_sdk_debug_api(zpl_true, V9_SDK_DEBUG_STATE);
 	  }
 	  else if (strncmp ("serial", argv[0], strlen (argv[0])) == 0)
 	  {
 		  if (strncmp ("msg", argv[1], strlen (argv[1])) == 0)
-			  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_MSG);
+			  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_MSG);
 		  if (strncmp ("web", argv[1], strlen (argv[1])) == 0)
-			  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_WEB);
+			  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_WEB);
 		  if (strncmp ("state", argv[1], strlen (argv[1])) == 0)
-			  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_STATE);
+			  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_STATE);
 	  }
   return CMD_SUCCESS;
 }
@@ -1539,17 +1527,17 @@ DEFUN (no_debug_video_sreial,
 	   "Debug option set uci\n")
 {
 	  if (strncmp ("hex", argv[1], strlen (argv[1])) == 0)
-		  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_HEX);
+		  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_HEX);
 	  if (strncmp ("recv", argv[1], strlen (argv[1])) == 0)
-		  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_RECV);
+		  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_RECV);
 	  if (strncmp ("send", argv[1], strlen (argv[1])) == 0)
-		  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_SEND);
+		  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_SEND);
 	  if (strncmp ("update", argv[1], strlen (argv[1])) == 0)
-		  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_UPDATE);
+		  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_UPDATE);
 	  if (strncmp ("timer", argv[1], strlen (argv[1])) == 0)
-		  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_TIME);
+		  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_TIME);
 	  if (strncmp ("uci", argv[1], strlen (argv[1])) == 0)
-		  v9_serial_debug_api(ospl_true, V9_APP_DEBUG_UCI);
+		  v9_serial_debug_api(zpl_true, V9_APP_DEBUG_UCI);
   return CMD_SUCCESS;
 }
 
@@ -1560,7 +1548,7 @@ DEFUN (show_debug_video,
        DEBUG_STR
        "Video configuration\n")
 {
-	v9_video_debug_config(vty, ospl_true);
+	v9_video_debug_config(vty, zpl_true);
 	return CMD_SUCCESS;
 }
 
@@ -1577,111 +1565,111 @@ static int app_write_config(struct vty *vty, void *pVoid)
 
 static void cmd_app_global_init(void)
 {
-	install_element(ENABLE_NODE, &v9_app_board_show_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_app_board_show_cmd);
 
-	install_element(ENABLE_NODE, &v9_app_video_rtsp_show_cmd);
-	install_element(ENABLE_NODE, &v9_app_video_rtsp_id_show_cmd);
-	install_element(ENABLE_NODE, &v9_app_sdk_show_cmd);
-	install_element(ENABLE_NODE, &v9_app_sdk_show_config_cmd);
-	install_element(ENABLE_NODE, &v9_app_time_sync_cmd_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_app_video_rtsp_show_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_app_video_rtsp_id_show_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_app_sdk_show_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_app_sdk_show_config_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_app_time_sync_cmd_cmd);
 
-	install_element(ENABLE_NODE, &v9_app_video_usergroup_show_cmd);
-	install_element(ENABLE_NODE, &v9_app_video_usergroup_id_show_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_app_video_usergroup_show_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_app_video_usergroup_id_show_cmd);
 
-	install_element(ENABLE_NODE, &v9_app_user_show_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_app_user_show_cmd);
 }
 
 
 static void cmd_app_temp_init(int node)
 {
-	install_element(node, &v9_app_board_disabled_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_app_board_disabled_cmd);
 
-	install_element(node, &v9_app_stream_add_cmd);
-	install_element(node, &v9_app_stream_add_1_cmd);
-	install_element(node, &v9_app_stream_add_2_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_app_stream_add_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_app_stream_add_1_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_app_stream_add_2_cmd);
 
-	install_element(node, &v9_app_stream_param_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_app_stream_param_cmd);
 
-	install_element(node, &v9_sdk_hw_original_pic_enable_cmd);
-	install_element(node, &v9_sdk_hw_set_recognize_cmd);
-	install_element(node, &v9_sdk_hw_set_recognize_openupload_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_original_pic_enable_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_recognize_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_recognize_openupload_cmd);
 
-	install_element(node, &v9_sdk_hw_set_snapopen_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_snapopen_cmd);
 
 #if 0
-	install_element(node, &v9_sdk_hw_set_helmet_sentimage_cmd);
-	install_element(node, &v9_sdk_hw_set_helmet_tracking_cmd);
-	install_element(node, &v9_sdk_hw_set_helmet_drawrectangle_cmd);
-	install_element(node, &v9_sdk_hw_set_helmet_imageratio_cmd);
-	install_element(node, &v9_sdk_hw_set_helmet_snapinterval_cmd);
-	install_element(node, &v9_sdk_hw_set_helmet_alarminterval_cmd);
-	install_element(node, &v9_sdk_hw_set_helmet_snapratio_cmd);
-	install_element(node, &v9_sdk_hw_set_helmet_threshold_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_helmet_sentimage_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_helmet_tracking_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_helmet_drawrectangle_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_helmet_imageratio_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_helmet_snapinterval_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_helmet_alarminterval_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_helmet_snapratio_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_helmet_threshold_cmd);
 #endif
 
-	install_element(node, &v9_sdk_hw_set_sanp_confi_cmd);
-	install_element(node, &v9_sdk_hw_set_sanp_qulityscore_cmd);
-	install_element(node, &v9_sdk_hw_set_sanp_attr_cmd);
-	install_element(node, &v9_sdk_hw_set_sanp_feature_cmd);
-	install_element(node, &v9_sdk_hw_set_sanp_align_cmd);
-	install_element(node, &v9_sdk_hw_set_sanp_area_cmd);
-	install_element(node, &v9_sdk_hw_set_sanp_tripwire_cmd);
-	install_element(node, &v9_sdk_hw_set_sanp_snapmode_cmd);
-	install_element(node, &v9_sdk_hw_set_sanp_intervaltime_cmd);
-	install_element(node, &v9_sdk_hw_set_sanp_maxsize_cmd);
-	install_element(node, &v9_sdk_hw_set_sanp_minsize_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_sanp_confi_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_sanp_qulityscore_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_sanp_attr_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_sanp_feature_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_sanp_align_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_sanp_area_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_sanp_tripwire_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_sanp_snapmode_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_sanp_intervaltime_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_sanp_maxsize_cmd);
+	install_element(node, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_sanp_minsize_cmd);
 }
 
 
 static void cmd_app_debug_init(void)
 {
-	install_element(TEMPLATE_NODE, &v9_app_board_active_cmd);
+	install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &v9_app_board_active_cmd);
 
-	install_element(ENABLE_NODE, &debug_video_event_cmd);
-	install_element(ENABLE_NODE, &debug_video_sqldb_cmd);
-	install_element(ENABLE_NODE, &debug_video_appsdk_cmd);
-	install_element(ENABLE_NODE, &debug_video_sreial_cmd);
+	install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &debug_video_event_cmd);
+	install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &debug_video_sqldb_cmd);
+	install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &debug_video_appsdk_cmd);
+	install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &debug_video_sreial_cmd);
 
-	install_element(ENABLE_NODE, &no_debug_video_event_cmd);
-	install_element(ENABLE_NODE, &no_debug_video_sqldb_cmd);
-	install_element(ENABLE_NODE, &no_debug_video_appsdk_cmd);
-	install_element(ENABLE_NODE, &no_debug_video_sreial_cmd);
+	install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &no_debug_video_event_cmd);
+	install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &no_debug_video_sqldb_cmd);
+	install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &no_debug_video_appsdk_cmd);
+	install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &no_debug_video_sreial_cmd);
 
-	install_element(ENABLE_NODE, &show_debug_video_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &show_debug_video_cmd);
 
 #ifdef V9_VIDEO_SDK_API
-	install_element(ENABLE_NODE, &v9_sdk_hw_reboot_cmd);
-	install_element(ENABLE_NODE, &v9_sdk_hw_update_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_hw_reboot_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_hw_update_cmd);
 /*
-	install_element(ENABLE_NODE, &v9_sdk_hw_original_pic_enable_cmd);
-	install_element(ENABLE_NODE, &v9_sdk_hw_set_recognize_cmd);
-	install_element(ENABLE_NODE, &v9_sdk_hw_set_recognize_openupload_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_hw_original_pic_enable_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_recognize_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_recognize_openupload_cmd);
 
-	install_element(ENABLE_NODE, &v9_sdk_hw_set_snapopen_cmd);
-
-
-	install_element(ENABLE_NODE, &v9_sdk_hw_set_helmet_sentimage_cmd);
-	install_element(ENABLE_NODE, &v9_sdk_hw_set_helmet_tracking_cmd);
-	install_element(ENABLE_NODE, &v9_sdk_hw_set_helmet_drawrectangle_cmd);
-	install_element(ENABLE_NODE, &v9_sdk_hw_set_helmet_imageratio_cmd);
-	install_element(ENABLE_NODE, &v9_sdk_hw_set_helmet_snapinterval_cmd);
-	install_element(ENABLE_NODE, &v9_sdk_hw_set_helmet_alarminterval_cmd);
-	install_element(ENABLE_NODE, &v9_sdk_hw_set_helmet_snapratio_cmd);
-	install_element(ENABLE_NODE, &v9_sdk_hw_set_helmet_threshold_cmd);*/
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_snapopen_cmd);
 
 
-	install_element(ENABLE_NODE, &v9_sdk_hw_get_recognize_cmd);
-	install_element(ENABLE_NODE, &v9_sdk_hw_get_snapinfo_cmd);
-	install_element(ENABLE_NODE, &v9_sdk_hw_get_helmet_cmd);
-	install_element(ENABLE_NODE, &v9_sdk_hw_clean_user_cmd);
-	install_element(ENABLE_NODE, &v9_sdk_hw_clean_rtsp_cmd);
-	install_element(ENABLE_NODE, &v9_sdk_hw_del_user_cmd);
-	install_element(ENABLE_NODE, &v9_sdk_hw_get_user_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_helmet_sentimage_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_helmet_tracking_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_helmet_drawrectangle_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_helmet_imageratio_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_helmet_snapinterval_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_helmet_alarminterval_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_helmet_snapratio_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_hw_set_helmet_threshold_cmd);*/
+
+
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_hw_get_recognize_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_hw_get_snapinfo_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_hw_get_helmet_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_hw_clean_user_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_hw_clean_rtsp_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_hw_del_user_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_hw_get_user_cmd);
 #ifdef V9_SQLDB_TEST
-	install_element(ENABLE_NODE, &v9_sdk_sqldb_user_cmd);
-	install_element(ENABLE_NODE, &v9_sdk_sqldb_cap_tbl_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_sqldb_user_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_sdk_sqldb_cap_tbl_cmd);
 #ifdef V9_SLIPNET_ENABLE
-	install_element(ENABLE_NODE, &v9_led_ctl_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &v9_led_ctl_cmd);
 #endif
 #endif
 
@@ -1691,7 +1679,7 @@ static void cmd_app_debug_init(void)
 
 void cmd_app_v9_init(void)
 {
-	template_t * temp = nsm_template_new (ospl_false);
+	template_t * temp = nsm_template_new (zpl_false);
 	if(temp)
 	{
 		temp->module = 0;
@@ -1705,14 +1693,14 @@ void cmd_app_v9_init(void)
 		//temp->show_template = app_write_config;
 		nsm_template_install(temp, 0);
 
-		install_element(CONFIG_NODE, &app_template_cmd);
-		install_element(CONFIG_NODE, &no_app_template_cmd);
+		install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &app_template_cmd);
+		install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_app_template_cmd);
 
-/*		install_element(TEMPLATE_NODE, &v9_app_board_disabled_cmd);
-extern int v9_video_debug_config(struct vty *vty, ospl_bool detail);
-		install_element(TEMPLATE_NODE, &v9_app_stream_add_cmd);
-		install_element(TEMPLATE_NODE, &v9_app_stream_add_1_cmd);
-		install_element(TEMPLATE_NODE, &v9_app_stream_add_2_cmd);*/
+/*		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &v9_app_board_disabled_cmd);
+extern int v9_video_debug_config(struct vty *vty, zpl_bool detail);
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &v9_app_stream_add_cmd);
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &v9_app_stream_add_1_cmd);
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &v9_app_stream_add_2_cmd);*/
 
 		cmd_app_temp_init(TEMPLATE_NODE);
 

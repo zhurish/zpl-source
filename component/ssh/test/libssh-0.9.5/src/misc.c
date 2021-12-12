@@ -323,7 +323,7 @@ int ssh_is_ipaddr_v4(const char *str) {
     int rc = -1;
     struct in_addr dest;
 
-    rc = inet_pton(AF_INET, str, &dest);
+    rc = ipstack_inet_pton(AF_INET, str, &dest);
     if (rc > 0) {
         return 1;
     }
@@ -338,7 +338,7 @@ int ssh_is_ipaddr(const char *str) {
         struct in6_addr dest6;
 
         /* TODO link-local (IP:v6:addr%ifname). */
-        rc = inet_pton(AF_INET6, str, &dest6);
+        rc = ipstack_inet_pton(AF_INET6, str, &dest6);
         if (rc > 0) {
             return 1;
         }

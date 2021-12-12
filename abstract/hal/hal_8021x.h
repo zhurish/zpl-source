@@ -13,30 +13,40 @@ extern "C" {
 #endif
 
 
-typedef struct sdk_8021x_s
+enum hal_8021x_cmd 
 {
-	//8021x
-	int (*sdk_8021x_enable_cb) (void *, ifindex_t, ospl_bool);
-	int (*sdk_8021x_state_cb) (void *, ifindex_t, ospl_uint32);
-	int (*sdk_8021x_mode_cb) (void *, ifindex_t, ospl_uint32);
-	int (*sdk_8021x_auth_bypass_cb) (void *, ifindex_t, ospl_uint32);
+    HAL_8021X_NONE,
+	HAL_8021X_PORT,
+	HAL_8021X_PORT_MAC,
+	HAL_8021X_PORT_STATE,
+	HAL_8021X_PORT_MODE,
+	HAL_8021X_PORT_BYPASS,
+};
 
-/*	int (*sdk_8021x_dstmac_cb) (ifindex_t, ospl_uchar *mac);
-	int (*sdk_8021x_address_cb) (ospl_uint32 index, ospl_uint32 address, ospl_uint32 mask);
-	int (*sdk_8021x_mult_address_cb) (ospl_uint32 index, ospl_bool);
-	int (*sdk_8021x_mode_cb) (ospl_uint32 index, ospl_bool);*/
+typedef struct hal_8021x_param_s
+{
+	union hal_8021x
+	{
+	zpl_uint8 value;
+	mac_t mac[NSM_MAC_MAX];
+	}u;
 
-	void *sdk_driver;
-}sdk_8021x_t;
+}hal_8021x_param_t;
 
 
-extern int hal_8021x_interface_enable(ifindex_t ifindex, ospl_bool enable);
+extern int hal_8021x_interface_enable(ifindex_t ifindex, zpl_bool enable);
 
-extern int hal_8021x_state(ifindex_t ifindex, ospl_uint32 value);
+extern int hal_8021x_state(ifindex_t ifindex, zpl_uint32 value);
 
-extern int hal_8021x_mode(ifindex_t ifindex, ospl_uint32 value);
+extern int hal_8021x_mode(ifindex_t ifindex, zpl_uint32 value);
 
-extern int hal_8021x_auth_bypass(ifindex_t ifindex, ospl_uint32 value);
+extern int hal_8021x_auth_bypass(ifindex_t ifindex, zpl_uint32 value);
+
+extern int hal_8021x_interface_dstmac(ifindex_t ifindex, zpl_uchar *mac);
+
+extern int hal_8021x_auth_addmac(ifindex_t ifindex, mac_t *mac);
+extern int hal_8021x_auth_delmac(ifindex_t ifindex, mac_t *mac);
+extern int hal_8021x_auth_delallmac(ifindex_t ifindex);
 
 #ifdef __cplusplus
 }

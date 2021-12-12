@@ -6,7 +6,7 @@
  */
 
 
-#include "zebra.h"
+#include "zpl_include.h"
 #include "memory.h"
 #include "command.h"
 #include "memory.h"
@@ -23,109 +23,226 @@
 #include "hal_driver.h"
 
 
-int hal_vlan_enable(ospl_bool  enable)
+int hal_vlan_enable(zpl_bool  enable)
 {
-	if(hal_driver && hal_driver->vlan_tbl && hal_driver->vlan_tbl->sdk_vlan_enable)
-		return hal_driver->vlan_tbl->sdk_vlan_enable(hal_driver->driver, enable);
-	return ERROR;
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	command = IPCCMD_SET(HAL_MODULE_VLAN, enable?HAL_MODULE_CMD_ENABLE:HAL_MODULE_CMD_DISABLE, HAL_VLAN);
+	return hal_ipcmsg_send_message(-1, 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
 int hal_vlan_create(vlan_t vlan)
 {
-	if(hal_driver && hal_driver->vlan_tbl && hal_driver->vlan_tbl->sdk_vlan_create)
-		return hal_driver->vlan_tbl->sdk_vlan_create(hal_driver->driver, vlan);
-	return ERROR;
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	hal_ipcmsg_putw(&ipcmsg, vlan);
+	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_ADD, HAL_VLAN_CREATE);
+	return hal_ipcmsg_send_message(-1, 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
 int hal_vlan_destroy(vlan_t vlan)
 {
-	if(hal_driver && hal_driver->vlan_tbl && hal_driver->vlan_tbl->sdk_vlan_delete)
-		return hal_driver->vlan_tbl->sdk_vlan_delete(hal_driver->driver, vlan);
-	return ERROR;
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	hal_ipcmsg_putw(&ipcmsg, vlan);
+	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_DEL, HAL_VLAN_DELETE);
+	return hal_ipcmsg_send_message(-1, 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
+int hal_vlan_batch_create(vlan_t *vlan, int num)
+{
+	zpl_uint32 i = 0;
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	for(i = 0; i < num; i++)
+		hal_ipcmsg_putw(&ipcmsg, vlan[i]);
+	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_ADD, HAL_VLAN_RANGE_CREATE);
+	return hal_ipcmsg_send_message(-1, 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
+}
+
+int hal_vlan_batch_destroy(vlan_t *vlan, int num)
+{
+	zpl_uint32 i = 0;
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	for(i = 0; i < num; i++)
+		hal_ipcmsg_putw(&ipcmsg, vlan[i]);
+	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_DEL, HAL_VLAN_RANGE_DELETE);
+	return hal_ipcmsg_send_message(-1, 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
+}
 int hal_vlan_add_untag_port(ifindex_t ifindex, vlan_t vlan)
 {
-	if(hal_driver && hal_driver->vlan_tbl && hal_driver->vlan_tbl->sdk_vlan_add_untag_port)
-		return hal_driver->vlan_tbl->sdk_vlan_add_untag_port(hal_driver->driver, ifindex, vlan);
-	return ERROR;
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	hal_ipcmsg_port_set(&ipcmsg, ifindex);
+	hal_ipcmsg_putw(&ipcmsg, vlan);
+	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_ADD, HAL_VLAN_UNTAG);
+	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
 int hal_vlan_del_untag_port(ifindex_t ifindex, vlan_t vlan)
 {
-	if(hal_driver && hal_driver->vlan_tbl && hal_driver->vlan_tbl->sdk_vlan_del_untag_port)
-		return hal_driver->vlan_tbl->sdk_vlan_del_untag_port(hal_driver->driver, ifindex, vlan);
-	return ERROR;
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	hal_ipcmsg_port_set(&ipcmsg, ifindex);
+	hal_ipcmsg_putw(&ipcmsg, vlan);
+	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_DEL, HAL_VLAN_UNTAG);
+	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
 int hal_vlan_add_tag_port(ifindex_t ifindex, vlan_t vlan)
 {
-	if(hal_driver && hal_driver->vlan_tbl && hal_driver->vlan_tbl->sdk_vlan_add_tag_port)
-		return hal_driver->vlan_tbl->sdk_vlan_add_tag_port(hal_driver->driver, ifindex, vlan);
-	return ERROR;
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	hal_ipcmsg_port_set(&ipcmsg, ifindex);
+	hal_ipcmsg_putw(&ipcmsg, vlan);
+	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_ADD, HAL_VLAN_TAG);
+	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
 int hal_vlan_del_tag_port(ifindex_t ifindex, vlan_t vlan)
 {
-	if(hal_driver && hal_driver->vlan_tbl && hal_driver->vlan_tbl->sdk_vlan_del_tag_port)
-		return hal_driver->vlan_tbl->sdk_vlan_del_tag_port(hal_driver->driver, ifindex, vlan);
-	return ERROR;
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	hal_ipcmsg_port_set(&ipcmsg, ifindex);
+	hal_ipcmsg_putw(&ipcmsg, vlan);
+	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_DEL, HAL_VLAN_TAG);
+	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
 int hal_port_add_native_vlan(ifindex_t ifindex, vlan_t vlan)
 {
-	if(hal_driver && hal_driver->vlan_tbl && hal_driver->vlan_tbl->sdk_port_set_native_vlan)
-		return hal_driver->vlan_tbl->sdk_port_set_native_vlan(hal_driver->driver, ifindex, vlan);
-	return ERROR;
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	hal_ipcmsg_port_set(&ipcmsg, ifindex);
+	hal_ipcmsg_putw(&ipcmsg, vlan);
+	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_ADD, HAL_VLAN_NATIVE);
+	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
 int hal_port_del_native_vlan(ifindex_t ifindex, vlan_t vlan)
 {
-	if(hal_driver && hal_driver->vlan_tbl && hal_driver->vlan_tbl->sdk_port_unset_native_vlan)
-		return hal_driver->vlan_tbl->sdk_port_unset_native_vlan(hal_driver->driver, ifindex, vlan);
-	return ERROR;
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	hal_ipcmsg_port_set(&ipcmsg, ifindex);
+	hal_ipcmsg_putw(&ipcmsg, vlan);
+	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_DEL, HAL_VLAN_NATIVE);
+	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
 int hal_port_add_allowed_tag_vlan(ifindex_t ifindex, vlan_t vlan)
 {
-	if(hal_driver && hal_driver->vlan_tbl && hal_driver->vlan_tbl->sdk_port_add_allowed_tag_vlan)
-		return hal_driver->vlan_tbl->sdk_port_add_allowed_tag_vlan(hal_driver->driver, ifindex, vlan);
-	return ERROR;
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	hal_ipcmsg_port_set(&ipcmsg, ifindex);
+	hal_ipcmsg_putw(&ipcmsg, vlan);
+	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_ADD, HAL_VLAN_ALLOWE);
+	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
 int hal_port_del_allowed_tag_vlan(ifindex_t ifindex, vlan_t vlan)
 {
-	if(hal_driver && hal_driver->vlan_tbl && hal_driver->vlan_tbl->sdk_port_del_allowed_tag_vlan)
-		return hal_driver->vlan_tbl->sdk_port_del_allowed_tag_vlan(hal_driver->driver, ifindex, vlan);
-	return ERROR;
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	hal_ipcmsg_port_set(&ipcmsg, ifindex);
+	hal_ipcmsg_putw(&ipcmsg, vlan);
+	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_DEL, HAL_VLAN_ALLOWE);
+	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
 int hal_port_add_allowed_tag_batch_vlan(ifindex_t ifindex, vlan_t start, vlan_t end)
 {
-	if(hal_driver && hal_driver->vlan_tbl && hal_driver->vlan_tbl->sdk_port_add_allowed_tag_vlan)
-		return hal_driver->vlan_tbl->sdk_port_add_allowed_tag_batch_vlan(hal_driver->driver, ifindex, start, end);
-	return ERROR;
+	vlan_t i = 0;
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	hal_ipcmsg_port_set(&ipcmsg, ifindex);
+	for(i = start; i <= end; i++)
+		hal_ipcmsg_putw(&ipcmsg, i);
+	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_ADD, HAL_VLAN_RANGE_ALLOWE);
+	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
 int hal_port_del_allowed_tag_batch_vlan(ifindex_t ifindex, vlan_t start, vlan_t end)
 {
-	if(hal_driver && hal_driver->vlan_tbl && hal_driver->vlan_tbl->sdk_port_del_allowed_tag_vlan)
-		return hal_driver->vlan_tbl->sdk_port_del_allowed_tag_batch_vlan(hal_driver->driver, ifindex, start, end);
-	return ERROR;
+	vlan_t i = 0;
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	hal_ipcmsg_port_set(&ipcmsg, ifindex);
+	for(i = start; i <= end; i++)
+		hal_ipcmsg_putw(&ipcmsg, i);
+	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_DEL, HAL_VLAN_RANGE_ALLOWE);
+	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
 int hal_port_set_vlan(ifindex_t ifindex, vlan_t vlan)
 {
-	if(hal_driver && hal_driver->vlan_tbl && hal_driver->vlan_tbl->sdk_port_set_pvid_vlan)
-		return hal_driver->vlan_tbl->sdk_port_set_pvid_vlan(hal_driver->driver, ifindex, vlan);
-	return ERROR;
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	hal_ipcmsg_port_set(&ipcmsg, ifindex);
+	hal_ipcmsg_putw(&ipcmsg, vlan);
+	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_ADD, HAL_VLAN_PVID);
+	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
 int hal_port_unset_vlan(ifindex_t ifindex, vlan_t vlan)
 {
-	if(hal_driver && hal_driver->vlan_tbl && hal_driver->vlan_tbl->sdk_port_unset_pvid_vlan)
-		return hal_driver->vlan_tbl->sdk_port_unset_pvid_vlan(hal_driver->driver, ifindex, vlan);
-	return ERROR;
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	hal_ipcmsg_port_set(&ipcmsg, ifindex);
+	hal_ipcmsg_putw(&ipcmsg, vlan);
+	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_DEL, HAL_VLAN_PVID);
+	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
 #if 0

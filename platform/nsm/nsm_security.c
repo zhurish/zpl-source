@@ -6,19 +6,10 @@
  */
 
 
-#include "zebra.h"
-#include "memory.h"
-#include "command.h"
-#include "memory.h"
-#include "memtypes.h"
-#include "prefix.h"
-#include "if.h"
-#include "nsm_interface.h"
-#include <log.h>
-
-#include "os_list.h"
-
-#include "nsm_security.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "nsm_include.h"
 
 
 static nsm_security_t * _nsm_security_get(struct interface *ifp)
@@ -37,7 +28,7 @@ static nsm_security_t * _nsm_security_get(struct interface *ifp)
 
 
 
-static int nsm_security_add_interface(struct interface *ifp)
+int nsm_security_interface_create_api(struct interface *ifp)
 {
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	if(if_is_ethernet(ifp))
@@ -50,7 +41,7 @@ static int nsm_security_add_interface(struct interface *ifp)
 }
 
 
-static int nsm_security_del_interface(struct interface *ifp)
+int nsm_security_interface_del_api(struct interface *ifp)
 {
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	if(if_is_ethernet(ifp))
@@ -62,8 +53,8 @@ static int nsm_security_del_interface(struct interface *ifp)
 	return OK;
 }
 
-
-static int nsm_security_interface_config(struct vty *vty, struct interface *ifp)
+#ifdef ZPL_SHELL_MODULE
+int nsm_security_interface_write_config(struct vty *vty, struct interface *ifp)
 {
 	nsm_security_t *security = _nsm_security_get(ifp);
 	if(security && if_is_ethernet(ifp))
@@ -79,36 +70,26 @@ static int nsm_security_interface_config(struct vty *vty, struct interface *ifp)
 	}
 	return OK;
 }
+#endif
 
 
-static int nsm_security_client_init()
-{
-	struct nsm_client *nsm = nsm_client_new ();
-	nsm->notify_add_cb = nsm_security_add_interface;
-	nsm->notify_delete_cb = nsm_security_del_interface;
-	nsm->interface_write_config_cb = nsm_security_interface_config;
-	nsm_client_install (nsm, NSM_SEC);
-	return OK;
-}
 
 int nsm_security_init()
 {
-	nsm_firewall_init();
+	nsm_interface_hook_add(NSM_SEC, nsm_security_interface_create_api, nsm_security_interface_del_api);
+	//nsm_firewall_init();
 
-	return nsm_security_client_init();
+	return OK;
 }
 
 int nsm_security_exit()
 {
-	nsm_firewall_exit();
-	struct nsm_client *nsm = nsm_client_lookup (NSM_SEC);
-	if(nsm)
-		nsm_client_free (nsm);
+	//nsm_firewall_exit();
 	return OK;
 }
 
 
 void cmd_security_init()
 {
-	cmd_firewall_init ();
+	//cmd_firewall_init ();
 }

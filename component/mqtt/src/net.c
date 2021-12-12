@@ -564,8 +564,8 @@ int net__tls_load_verify(struct mosquitto__listener *listener)
 int net__socket_listen(struct mosquitto__listener *listener)
 {
 	mosq_sock_t sock = INVALID_SOCKET;
-	struct addrinfo hints;
-	struct addrinfo *ainfo, *rp;
+	struct ipstack_addrinfo hints;
+	struct ipstack_addrinfo *ainfo, *rp;
 	char service[10];
 	int rc;
 #ifndef WIN32
@@ -580,7 +580,7 @@ int net__socket_listen(struct mosquitto__listener *listener)
 	if(!listener) return MOSQ_ERR_INVAL;
 
 	snprintf(service, 10, "%d", listener->port);
-	memset(&hints, 0, sizeof(struct addrinfo));
+	memset(&hints, 0, sizeof(struct ipstack_addrinfo));
 	if(listener->socket_domain){
 		hints.ai_family = listener->socket_domain;
 	}else{
@@ -720,11 +720,11 @@ int net__socket_get_address(mosq_sock_t sock, char *buf, int len)
 	addrlen = sizeof(addr);
 	if(!getpeername(sock, (struct sockaddr *)&addr, &addrlen)){
 		if(addr.ss_family == AF_INET){
-			if(inet_ntop(AF_INET, &((struct sockaddr_in *)&addr)->sin_addr.s_addr, buf, len)){
+			if(ipstack_inet_ntop(AF_INET, &((struct sockaddr_in *)&addr)->sin_addr.s_addr, buf, len)){
 				return 0;
 			}
 		}else if(addr.ss_family == AF_INET6){
-			if(inet_ntop(AF_INET6, &((struct sockaddr_in6 *)&addr)->sin6_addr.s6_addr, buf, len)){
+			if(ipstack_inet_ntop(AF_INET6, &((struct sockaddr_in6 *)&addr)->sin6_addr.s6_addr, buf, len)){
 				return 0;
 			}
 		}

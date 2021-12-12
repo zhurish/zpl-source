@@ -40,7 +40,7 @@ extern int modem_signal_state_update(modem_client_t *client);
 extern modem_signal_state modem_signal_state_get(modem_client_t *client);
 
 
-extern int modem_register_state(modem_client_t *client, ospl_uint32 code);
+extern int modem_register_state(modem_client_t *client, zpl_uint32 code);
 extern modem_cpin_en modem_usim_state(modem_t *modem);
 
 

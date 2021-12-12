@@ -1,22 +1,14 @@
 
-#include "zebra.h"
-#include "getopt.h"
-#include <log.h>
-#include "command.h"
-#include "memory.h"
-#include "prefix.h"
-#include "network.h"
-#include "vty.h"
-#include "buffer.h"
-#include "host.h"
-#include "eloop.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
 #include "ssh_api.h"
 #include "sshd_main.h"
 #include "ssh_util.h"
 
 
-static int sshd_shell_output(socket_t fd, ospl_uint32 revents, void *userdata)
+static int sshd_shell_output(socket_t fd, zpl_uint32 revents, void *userdata)
 {
     char buf[4096];
     int n = -1, ret = 0;
@@ -47,7 +39,7 @@ static int sshd_shell_output(socket_t fd, ospl_uint32 revents, void *userdata)
     return n;
 }
 
-static int sshd_shell_input(sshd_client_t *client, char *buf, ospl_uint32 len)
+static int sshd_shell_input(sshd_client_t *client, char *buf, zpl_uint32 len)
 {
 	int ret = 0;
 	if(client && client->sock)
@@ -77,7 +69,7 @@ static int sshd_close(struct vty *vty)
 	    zlog_debug(MODULE_UTILS, "%s :", __func__);
 
 	    vty->ssh = NULL;
-        vty->ssh_enable = ospl_false;
+        vty->ssh_enable = zpl_false;
         if(sshclient->sock)
         	close(sshclient->sock);
     	sshclient->sock = 0;
@@ -205,7 +197,7 @@ static struct vty * sshd_shell_new(int vty_sock)
 	vty->type = VTY_TERM;
 	vty->node = ENABLE_NODE;
 	vty->login_type = VTY_LOGIN_SSH;
-	vty->ssh_enable = ospl_true;
+	vty->ssh_enable = zpl_true;
 	vty->ssh_close = sshd_close;
 
 	host_config_get_api(API_GET_VTY_TIMEOUT_CMD, &vty->v_timeout);
@@ -268,7 +260,7 @@ static int sshd_shell_create(sshd_client_t *sshclient, ssh_session sseion)
 }
 
 static int sshd_shell_window_open(ssh_session session, ssh_channel channel,
-                       const char *term, ospl_uint32 cols, ospl_uint32 rows, ospl_uint32 py, ospl_uint32 px,
+                       const char *term, zpl_uint32 cols, zpl_uint32 rows, zpl_uint32 py, zpl_uint32 px,
                        void *userdata) {
     sshd_client_t *client = (sshd_client_t *)userdata;
 
@@ -284,8 +276,8 @@ static int sshd_shell_window_open(ssh_session session, ssh_channel channel,
     return SSH_OK;
 }
 
-static int sshd_shell_window_change(ssh_session session, ssh_channel channel, ospl_uint32 cols,
-                      ospl_uint32 rows, ospl_uint32 py, ospl_uint32 px, void *userdata) {
+static int sshd_shell_window_change(ssh_session session, ssh_channel channel, zpl_uint32 cols,
+                      zpl_uint32 rows, zpl_uint32 py, zpl_uint32 px, void *userdata) {
 	sshd_client_t *client = (sshd_client_t *)userdata;
 
     (void) session;
@@ -414,7 +406,7 @@ static ssh_channel sshd_channel_open(ssh_session session, void *userdata) {
 
 
 static int sshd_data_function(ssh_session session, ssh_channel channel, void *data,
-                         ospl_uint32  len, int is_stderr, void *userdata) {
+                         zpl_uint32  len, int is_stderr, void *userdata) {
 	sshd_client_t *client = (sshd_client_t *)userdata;
     (void) session;
     (void) channel;
@@ -448,7 +440,7 @@ static int sshd_data_function(ssh_session session, ssh_channel channel, void *da
 
 static int sshd_userdata_set(sshd_client_t *client, ssh_config_t *ssh, ssh_session sseion)
 {
-	ospl_uint32 auth_methods = 0;
+	zpl_uint32 auth_methods = 0;
 	client->config = ssh;
 	client->session = sseion;
 
@@ -616,7 +608,7 @@ static int sshd_client_create(ssh_config_t *ssh, ssh_session sseion)
 	return SSH_OK;
 }
 
-int sshd_accept(socket_t fd, ospl_uint32 revents, void *userdata)
+int sshd_accept(socket_t fd, zpl_uint32 revents, void *userdata)
 {
 	ssh_session session = NULL;
 	ssh_config_t *ssh_config = userdata;
@@ -657,13 +649,10 @@ int sshd_accept(socket_t fd, ospl_uint32 revents, void *userdata)
 int sshd_task(void *argv)
 {
 	int ret = 0;
-	ospl_uint32 waittime = 2;
+	zpl_uint32 waittime = 2;
 
 	ssh_config_t *sshd = argv;
-	while(!os_load_config_done())
-	{
-		os_sleep(1);
-	}
+	host_config_load_waitting();
 	while(1)
 	{
 		if(sshd->quit)
@@ -684,7 +673,7 @@ int sshd_task(void *argv)
 			os_sleep(1);
 		}*/
 	}
-	sshd->quit = ospl_false;
+	sshd->quit = zpl_false;
 	if(!sshd->event)
 		return OK;
 	if(ssh_event_session_count(sshd->event))

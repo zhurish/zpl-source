@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-#include "zebra.h"
+#include "zpl_include.h"
 #include "vty.h"
 
 #include "libssh_autoconfig.h"
@@ -26,10 +26,10 @@ extern "C" {
 
 typedef struct ssh_scp_connect
 {
-  ospl_bool 			is_ssh;
+  zpl_bool 			is_ssh;
   char 			*user;
   char 			*host;
-  ospl_uint16			port;
+  zpl_uint16			port;
   char 			*path;
   char 			*password;
   ssh_session 	session;
@@ -43,13 +43,13 @@ typedef struct ssh_scp_connect
 /*
  * util
  */
-extern void ssh_log_callback_func(ospl_uint32 priority,
+extern void ssh_log_callback_func(zpl_uint32 priority,
         const char *function,
         const char *buffer,
         void *userdata);
 
 
-extern int ssh_get_input(int fd, char *buf, ospl_uint32 len);
+extern int ssh_get_input(int fd, char *buf, zpl_uint32 len);
 
 
 extern int ssh_url_setup(struct ssh_scp_connect *dest,  os_url_t *spliurl);
@@ -60,7 +60,7 @@ extern int ssh_stdout_set(void *v);
 
 extern int ssh_printf(ssh_session session, const char *fmt,...);
 
-extern ospl_bool sshd_acl_action(ssh_config_t *ssh, ssh_session session);
+extern zpl_bool sshd_acl_action(ssh_config_t *ssh, ssh_session session);
 /*
  * auth
  */
@@ -71,15 +71,15 @@ extern int ssh_authenticate_api (ssh_session session, char *password);
 /*
  * connect
  */
-extern ssh_session ssh_connect_api(struct vty *vty, const char *host, ospl_uint16 port, const char *user, char *password);
-extern ssh_session ssh_client_connect_api(ssh_session session, struct vty *vty, const char *host, ospl_uint16 port,
+extern ssh_session ssh_connect_api(struct vty *vty, const char *host, zpl_uint16 port, const char *user, char *password);
+extern ssh_session ssh_client_connect_api(ssh_session session, struct vty *vty, const char *host, zpl_uint16 port,
 		const char *user, char *password);
 
 /*
  * ssh scp client
  */
-extern int ssh_scp_download(struct vty *vty, ospl_bool download, char *url, char *localfile);
-extern int ssh_scp_upload(struct vty *vty, ospl_bool download, char *url, char *localfile);
+extern int ssh_scp_download(struct vty *vty, zpl_bool download, char *url, char *localfile);
+extern int ssh_scp_upload(struct vty *vty, zpl_bool download, char *url, char *localfile);
 
 /*
  *
@@ -91,14 +91,14 @@ extern int ssh_scpd_exit(sshd_client_t *sshclient);
 /*
  * ssh client
  */
-extern int ssh_client(struct vty *vty, char *host, ospl_uint16 port, char *user, char *pasword);
+extern int ssh_client(struct vty *vty, char *host, zpl_uint16 port, char *user, char *pasword);
 
 
 /*
  * sftp client
  */
 
-extern int sftp_action(struct vty *vty, ospl_bool download, char *url, char *localfile);
+extern int sftp_action(struct vty *vty, zpl_bool download, char *url, char *localfile);
 
 
 /*
@@ -112,9 +112,9 @@ extern int sshd_set_keys(ssh_config_t *ssh, ssh_bind sshbind);
 
 extern ssh_keymgt_t * ssh_keymgt_lookup(ssh_config_t *ssh, char *keyname);
 extern int ssh_keymgt_delete(ssh_config_t *ssh, char *keyname);
-extern int ssh_keymgt_add(ssh_config_t *ssh, struct vty *vty, ospl_uint32 type, char *keyname);
-extern int ssh_keymgt_export_set(ssh_config_t *ssh, char *keyname, ospl_uint32 type, char *filename, char *password);
-extern int ssh_keymgt_import_set(ssh_config_t *ssh, char *keyname, ospl_uint32 type, char *filename, char *password);
+extern int ssh_keymgt_add(ssh_config_t *ssh, struct vty *vty, zpl_uint32 type, char *keyname);
+extern int ssh_keymgt_export_set(ssh_config_t *ssh, char *keyname, zpl_uint32 type, char *filename, char *password);
+extern int ssh_keymgt_import_set(ssh_config_t *ssh, char *keyname, zpl_uint32 type, char *filename, char *password);
 
  
 #ifdef __cplusplus

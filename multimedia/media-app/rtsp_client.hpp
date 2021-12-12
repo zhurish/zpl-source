@@ -17,7 +17,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "ospl_type.h"
+#include "zpl_type.h"
 #ifdef __cplusplus
 }
 #endif
@@ -41,9 +41,9 @@ public:
   virtual ~rtspcStreamState();
 
 public:
-  MediaSubsessionIterator* m_iter = nullptr;
-  MediaSession* m_session = nullptr;
-  MediaSubsession* m_subsession = nullptr;
+  MediaSubsessionIterator* m_iter = NULL;
+  MediaSession* m_session = NULL;
+  MediaSubsession* m_subsession = NULL;
   TaskToken m_streamTimerTask;
   double m_duration;
 };
@@ -77,11 +77,11 @@ private:
   virtual Boolean continuePlaying();
 
 private:
-  u_int8_t* m_fReceiveBuffer = nullptr;
+  u_int8_t* m_fReceiveBuffer = NULL;
   MediaSubsession& m_fSubsession;
-  char* m_fStreamId = nullptr;
+  char* m_fStreamId = NULL;
 //private:
-//  FramedQueue *m_Queue = nullptr;
+//  FramedQueue *m_Queue = NULL;
 };
 
 // If you're streaming just a single stream (i.e., just from a single URL, once), then you can define and use just a single
@@ -105,7 +105,7 @@ protected:
 public:
   rtspcStreamState m_rtspcState;
 private:
-  FramedQueue *m_Queue = nullptr;
+  FramedQueue *m_Queue = NULL;
 };
 
 class rtsp_client
@@ -129,8 +129,8 @@ public:
 private:
     Boolean rtsp_client_available();
     char                m_stop = 0;
-    UsageEnvironment*   m_env = nullptr;
-    char * m_prog_name = nullptr;
+    UsageEnvironment*   m_env = NULL;
+    char * m_prog_name = NULL;
 };
 
 #endif /* __RTSP_CLIENT_APP_HPP__ */

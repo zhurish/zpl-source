@@ -29,12 +29,10 @@
 /* select timeout in sec. */
 #define DHCP_RELAY_SELECT_TIMEOUT (DHCP_RELAY_MAX_LIFETIME / 8)
 
-#include "zebra.h"
-#include "memory.h"
-#include "command.h"
-#include "prefix.h"
-#include "log.h"
-#include "eloop.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 
 #include "dhcp_def.h"
@@ -47,7 +45,7 @@
 
 /************************************************************************************/
 /**************************************************************/
-static dhcp_relay_t * dhcp_relay_create_interface(ospl_uint32 ifindex) {
+static dhcp_relay_t * dhcp_relay_create_interface(zpl_uint32 ifindex) {
 	dhcp_relay_t *ifter = XMALLOC(MTYPE_DHCPR_INFO,
 			sizeof(dhcp_relay_t));
 	if (ifter) {
@@ -74,7 +72,7 @@ static dhcp_relay_t * dhcp_relay_create_interface(ospl_uint32 ifindex) {
 }
 
 
-dhcp_relay_t * dhcp_relay_lookup_interface(dhcp_global_t*config, ospl_uint32 ifindex) {
+dhcp_relay_t * dhcp_relay_lookup_interface(dhcp_global_t*config, zpl_uint32 ifindex) {
 	dhcp_relay_t *pstNode = NULL;
 	NODE index;
 	if (!lstCount(&config->relay_list))
@@ -90,7 +88,7 @@ dhcp_relay_t * dhcp_relay_lookup_interface(dhcp_global_t*config, ospl_uint32 ifi
 	return NULL;
 }
 
-int dhcp_relay_add_interface(dhcp_global_t*config, ospl_uint32 ifindex) {
+int dhcp_relay_add_interface(dhcp_global_t*config, zpl_uint32 ifindex) {
 	dhcp_relay_t * ifter = dhcp_relay_create_interface(ifindex);
 	if (ifter) {
 		lstAdd(&config->relay_list, ifter);
@@ -113,7 +111,7 @@ int dhcp_relay_add_interface(dhcp_global_t*config, ospl_uint32 ifindex) {
 	return ERROR;
 }
 
-int dhcp_relay_del_interface(dhcp_global_t*config, ospl_uint32 ifindex) {
+int dhcp_relay_del_interface(dhcp_global_t*config, zpl_uint32 ifindex) {
 	dhcp_relay_t * ifter = dhcp_relay_lookup_interface(config, ifindex);
 	if (ifter) {
 		lstDelete(&config->relay_list, ifter);
@@ -133,7 +131,7 @@ int dhcp_relay_del_interface(dhcp_global_t*config, ospl_uint32 ifindex) {
  */
 static int dhcp_relay_get_packet_type(struct dhcp_packet *p)
 {
-	ospl_uint8 op = 0;
+	zpl_uint8 op = 0;
 	/* it must be either a BOOTREQUEST or a BOOTREPLY */
 	if (p->op != BOOTREQUEST && p->op != BOOTREPLY)
 		return -1;
@@ -163,7 +161,7 @@ static int dhcp_relay_forward(int sock, const void *msg, int msg_len, struct soc
 static void dhcp_relay_forward_server(dhcp_relay_t * ifter, struct dhcp_packet *p, int packet_len,
 			struct sockaddr_in *client_addr, struct sockaddr_in *server_addr)
 {
-	ospl_uint32 type;
+	zpl_uint32 type;
 	/* check packet_type */
 	type = dhcp_relay_get_packet_type(p);
 	if (type != DHCPDISCOVER && type != DHCPREQUEST
@@ -189,7 +187,7 @@ static void dhcp_relay_forward_server(dhcp_relay_t * ifter, struct dhcp_packet *
  */
 static void dhcp_relay_forward_client(dhcp_relay_t * ifter, struct dhcp_packet *p, int packet_len)
 {
-	ospl_uint32 type;
+	zpl_uint32 type;
 	struct dhcp_relay_xid_item *item;
 
 	/* check xid */
@@ -228,7 +226,7 @@ int udhcp_relay_handle_thread(dhcp_global_t *config, dhcp_relay_t * ifter,
 struct dhcp_relay_xid_item {
 	unsigned timestamp;
 	int client;
-	ospl_uint32  xid;
+	zpl_uint32  xid;
 	struct sockaddr_in ip;
 	struct xid_item *next;
 } FIX_ALIASING;
@@ -237,7 +235,7 @@ struct dhcp_relay_xid_item {
 
 #define INIT_G() do { setup_common_bufsiz(); } while (0)
 
-static struct dhcp_relay_xid_item *dhcp_relay_xid_add(ospl_uint32  xid, struct sockaddr_in *ip, int client)
+static struct dhcp_relay_xid_item *dhcp_relay_xid_add(zpl_uint32  xid, struct sockaddr_in *ip, int client)
 {
 	struct dhcp_relay_xid_item *item;
 
@@ -273,7 +271,7 @@ static void dhcp_relay_xid_expire(void)
 	}
 }
 
-static struct dhcp_relay_xid_item *dhcp_relay_xid_find(ospl_uint32  xid)
+static struct dhcp_relay_xid_item *dhcp_relay_xid_find(zpl_uint32  xid)
 {
 	struct dhcp_relay_xid_item *item = dhcprelay_xid_list.next;
 	while (item != NULL) {
@@ -285,7 +283,7 @@ static struct dhcp_relay_xid_item *dhcp_relay_xid_find(ospl_uint32  xid)
 	return item;
 }
 
-static void dhcp_relay_xid_del(ospl_uint32  xid)
+static void dhcp_relay_xid_del(zpl_uint32  xid)
 {
 	struct dhcp_relay_xid_item *item = dhcprelay_xid_list.next;
 	struct dhcp_relay_xid_item *last = &dhcprelay_xid_list;
@@ -377,7 +375,7 @@ static int dhcp_relay_sendto_ip4(int sock, const void *msg, int msg_len, struct 
 static void dhcp_relay_pass_to_server(struct dhcp_packet *p, int packet_len, int client, int *fds,
 			struct sockaddr_in *client_addr, struct sockaddr_in *server_addr)
 {
-	ospl_uint32 type;
+	zpl_uint32 type;
 
 	/* check packet_type */
 	type = dhcp_relay_get_packet_type(p);
@@ -405,7 +403,7 @@ static void dhcp_relay_pass_to_server(struct dhcp_packet *p, int packet_len, int
  */
 static void dhcp_relay_pass_to_client(struct dhcp_packet *p, int packet_len, int *fds)
 {
-	ospl_uint32 type;
+	zpl_uint32 type;
 	struct dhcp_relay_xid_item *item;
 
 	/* check xid */
@@ -439,7 +437,7 @@ int dhcprelay_main(int argc, char **argv)
 	char **iface_list;
 	int *fds;
 	int num_sockets, max_socket;
-	ospl_uint32  our_nip;
+	zpl_uint32  our_nip;
 
 	//INIT_G();
 
@@ -449,7 +447,7 @@ int dhcprelay_main(int argc, char **argv)
 
 	/* dhcprelay CLIENT_IFACE1[,CLIENT_IFACE2...] SERVER_IFACE [SERVER_IP] */
 	if (argc == 4) {
-		if (!inet_aton(argv[3], &server_addr.sin_addr))
+		if (!ipstack_inet_aton(argv[3], &server_addr.sin_addr))
 			bb_perror_msg_and_die("bad server IP");
 	} else if (argc != 3) {
 		bb_show_usage();

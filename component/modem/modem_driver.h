@@ -37,7 +37,7 @@ typedef struct modem_cmd_s
 	int (*md_reboot_cmd)(struct modem_driver *);
 	int (*md_save_cmd)(struct modem_driver *);
 
-	int (*md_open_cmd)(struct modem_driver *, ospl_bool);
+	int (*md_open_cmd)(struct modem_driver *, zpl_bool);
 	int (*md_factory_cmd)(struct modem_driver *, char *);
 	int (*md_product_cmd)(struct modem_driver *, char *);
 
@@ -49,8 +49,8 @@ typedef struct modem_cmd_s
 	/*
 	 * PPPD
 	 */
-	char (*md_pppd_connect)(struct modem_driver *, char *, ospl_size_t);
-	char (*md_pppd_disconnect)(struct modem_driver *, char *, ospl_size_t);
+	char (*md_pppd_connect)(struct modem_driver *, char *, zpl_size_t);
+	char (*md_pppd_disconnect)(struct modem_driver *, char *, zpl_size_t);
 
 }modem_cmd_t;
 
@@ -85,15 +85,15 @@ typedef enum
 
 typedef struct modem_driver
 {
-	ospl_uint32				id;
-	ospl_uint32				bus;
-	ospl_uint32				device;
-	ospl_uint32				vendor;
-	ospl_uint32				product;
+	zpl_uint32				id;
+	zpl_uint32				bus;
+	zpl_uint32				device;
+	zpl_uint32				vendor;
+	zpl_uint32				product;
 	char			module_name[MODEM_DRIVER_NAME_MAX];
 
 	ttytype_en		tty_type;
-	ospl_uint32				ttyidmax;
+	zpl_uint32				ttyidmax;
 
 	ttyseq_en		ttyseq[TTY_USB_MAX];
 
@@ -120,14 +120,14 @@ typedef struct modem_driver
 extern int modem_driver_register(modem_driver_t *);
 extern int modem_driver_unregister(modem_driver_t *);
 
-extern modem_driver_t * modem_driver_lookup(ospl_uint32 vendor, ospl_uint32 product);
+extern modem_driver_t * modem_driver_lookup(zpl_uint32 vendor, zpl_uint32 product);
 
-extern int modem_driver_remove(ospl_uint32 vendor, ospl_uint32 product);
-extern int modem_driver_inster(ospl_uint32 vendor, ospl_uint32 product);
+extern int modem_driver_remove(zpl_uint32 vendor, zpl_uint32 product);
+extern int modem_driver_inster(zpl_uint32 vendor, zpl_uint32 product);
 
 extern int modem_driver_tty_probe(modem_driver_t *, char *devname[]);
 
-extern int modem_driver_hw_channel(ospl_uint32 vendor, ospl_uint32 product, ospl_uint8 *hw_channel);
+extern int modem_driver_hw_channel(zpl_uint32 vendor, zpl_uint32 product, zpl_uint8 *hw_channel);
 
 extern int modem_driver_init(modem_driver_t *);
 extern int modem_driver_probe(modem_driver_t *);

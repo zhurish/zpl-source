@@ -14,16 +14,21 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
 // "liveMedia"
-// Copyright (c) 1996-2020 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2021 Live Networks, Inc.  All rights reserved.
 // Abstract class for parsing a byte stream
 // Implementation
 
 #include "StreamParser.hh"
-
+#include <iostream>
+#include <exception>
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef USE_RTSP_OPT
+#define BANK_SIZE 3000000
+#else
 #define BANK_SIZE 150000
+#endif
 
 void StreamParser::flushInput() {
   fCurParserIndex = fSavedParserIndex = 0;
@@ -52,7 +57,8 @@ StreamParser::StreamParser(FramedSource* inputSource,
 }
 
 StreamParser::~StreamParser() {
-  delete[] fBank[0]; delete[] fBank[1];
+  delete[] fBank[0]; 
+  delete[] fBank[1];
 }
 
 void StreamParser::saveParserState() {

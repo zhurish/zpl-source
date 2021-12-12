@@ -7,14 +7,14 @@
 
 
 
-#include <zebra.h>
+#include <zpl_include.h>
 #include "b53_mdio.h"
 #include "b53_regs.h"
 #include "sdk_driver.h"
 
 
 /*************************************************************************/
-int b53125_qos_aggreation_mode(struct b53125_device *dev, ospl_bool enable)
+int b53125_qos_aggreation_mode(struct b53125_device *dev, zpl_bool enable)
 {
 	int ret = 0;
 	u8 port_ctrl = 0;
@@ -30,7 +30,7 @@ int b53125_qos_aggreation_mode(struct b53125_device *dev, ospl_bool enable)
 
 /*************************************************************************/
 //设置使能基于端口的优先级(基于端口默认VLAN优先级)
-int b53125_qos_base_port(struct b53125_device *dev, ospl_bool enable)
+int b53125_qos_base_port(struct b53125_device *dev, zpl_bool enable)
 {
 	int ret = 0;
 	u8 port_ctrl = 0;
@@ -64,7 +64,7 @@ int b53125_qos_layer_sel(struct b53125_device *dev, int sel)
 }
 /*************************************************************************/
 //禁止使能8021p优先级
-int b53125_qos_8021p(struct b53125_device *dev, int port, ospl_bool enable)
+int b53125_qos_8021p(struct b53125_device *dev, int port, zpl_bool enable)
 {
 	int ret = 0;
 	u16 port_ctrl = 0;
@@ -79,7 +79,7 @@ int b53125_qos_8021p(struct b53125_device *dev, int port, ospl_bool enable)
 }
 /*************************************************************************/
 //禁止使能差分服务优先级
-int b53125_qos_diffserv(struct b53125_device *dev, int port, ospl_bool enable)
+int b53125_qos_diffserv(struct b53125_device *dev, int port, zpl_bool enable)
 {
 	int ret = 0;
 	u16 port_ctrl = 0;
@@ -174,7 +174,7 @@ round robin.
 }
 /*************************************************************************/
 //设置进入CPU报文到队列的映射
-int b53125_qos_cpu_map_queue(struct b53125_device *dev, int traffic, ospl_bool enable)
+int b53125_qos_cpu_map_queue(struct b53125_device *dev, int traffic, zpl_bool enable)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;
@@ -197,7 +197,7 @@ int b53125_qos_class_weight(struct b53125_device *dev, int class, int weight)
 	return ret;
 }
 /*************************************************************************/
-int b53125_qos_class4_weight(struct b53125_device *dev, ospl_bool strict, int weight)
+int b53125_qos_class4_weight(struct b53125_device *dev, zpl_bool strict, int weight)
 {
 	int ret = 0;
 	u16 port_ctrl = 0;
@@ -216,7 +216,7 @@ int b53125_qos_class4_weight(struct b53125_device *dev, ospl_bool strict, int we
 /*************************************************************************/
 /*************************************************************************/
 //禁止使能流量IPG
-int b53125_qos_ingress_ipg(struct b53125_device *dev, ospl_bool tx, ospl_bool enable)
+int b53125_qos_ingress_ipg(struct b53125_device *dev, zpl_bool tx, zpl_bool enable)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;
@@ -230,7 +230,7 @@ int b53125_qos_ingress_ipg(struct b53125_device *dev, ospl_bool tx, ospl_bool en
 	return ret;
 }
 /*************************************************************************/
-int b53125_qos_buck_mode(struct b53125_device *dev, int id, ospl_bool mode)
+int b53125_qos_buck_mode(struct b53125_device *dev, int id, zpl_bool mode)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;
@@ -244,7 +244,7 @@ int b53125_qos_buck_mode(struct b53125_device *dev, int id, ospl_bool mode)
 	return ret;
 }
 /*************************************************************************/
-int b53125_qos_buck_type(struct b53125_device *dev, int id, ospl_uint32 type)
+int b53125_qos_buck_type(struct b53125_device *dev, int id, zpl_uint32 type)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;
@@ -264,7 +264,7 @@ int b53125_qos_buck_type(struct b53125_device *dev, int id, ospl_uint32 type)
 }
 /*************************************************************************/
 //端口限速（网络风暴）
-int b53125_qos_ingress_rate_mode(struct b53125_device *dev, int port,  ospl_uint32 type, ospl_bool enable)
+int b53125_qos_ingress_rate_mode(struct b53125_device *dev, int port,  zpl_uint32 type, zpl_bool enable)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;
@@ -308,7 +308,7 @@ int b53125_qos_ingress_rate_mode(struct b53125_device *dev, int port,  ospl_uint
 	return ret;
 }
 
-int b53125_qos_ingress_rate(struct b53125_device *dev, int port, ospl_uint32 index, int bucket, int cnt)
+int b53125_qos_ingress_rate(struct b53125_device *dev, int port, zpl_uint32 index, int bucket, int cnt)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;
@@ -353,7 +353,7 @@ int b53125_qos_egress_rate(struct b53125_device *dev, int port, int bucket, int 
 /*************************************************************************/
 static int cpu_rate_tbl(int rate)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	int rate_tbl[] = { 384, 512, 639, 786, 1024, 1280, 1536, 1791, 2048, 2303, 2559, 2815,
 		3328, 3840, 4352, 4863, 5376, 5887, 6400, 6911, 7936, 8960, 9984, 11008, 12030,
 	    13054, 14076, 15105, 17146, 19201, 21240, 23299, 25354, 27382, 29446, 31486, 25561,
@@ -383,7 +383,7 @@ int b53125_qos_cpu_rate(struct b53125_device *dev, int rate)
 /*************************************************************************/
 /*************************************************************************/
 /* Traffic Remarking Register */
-int b53125_qos_cfi_remarking(struct b53125_device *dev, int port, ospl_bool enable)
+int b53125_qos_cfi_remarking(struct b53125_device *dev, int port, zpl_bool enable)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;
@@ -396,7 +396,7 @@ int b53125_qos_cfi_remarking(struct b53125_device *dev, int port, ospl_bool enab
 	return ret;
 }
 
-int b53125_qos_pcp_remarking(struct b53125_device *dev, int port, ospl_bool enable)
+int b53125_qos_pcp_remarking(struct b53125_device *dev, int port, zpl_bool enable)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;
@@ -410,7 +410,7 @@ int b53125_qos_pcp_remarking(struct b53125_device *dev, int port, ospl_bool enab
 }
 
 /* Jumbo Frame Control Register */
-int b53125_jumbo_enable(struct b53125_device *dev, int port, ospl_bool enable)
+int b53125_jumbo_enable(struct b53125_device *dev, int port, zpl_bool enable)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;

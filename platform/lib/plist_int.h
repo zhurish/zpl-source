@@ -35,8 +35,8 @@ enum prefix_name_type
 
 struct prefix_list
 {
-  ospl_char *name;
-  ospl_char *desc;
+  zpl_char *name;
+  zpl_char *desc;
 
   struct prefix_master *master;
 
@@ -65,8 +65,8 @@ struct prefix_list_entry
   int any;
   struct prefix prefix;
 
-  ospl_ulong refcnt;
-  ospl_ulong hitcnt;
+  zpl_ulong refcnt;
+  zpl_ulong hitcnt;
 
   struct prefix_list_entry *next;
   struct prefix_list_entry *prev;

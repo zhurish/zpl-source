@@ -14,21 +14,21 @@
 
 struct arpMsg {
 	/* Ethernet header */
-	ospl_uint8  h_dest[6];     /* 00 destination ether addr */
-	ospl_uint8  h_source[6];   /* 06 source ether addr */
-	ospl_uint16 h_proto;       /* 0c packet type ID field */
+	zpl_uint8  h_dest[6];     /* 00 destination ether addr */
+	zpl_uint8  h_source[6];   /* 06 source ether addr */
+	zpl_uint16 h_proto;       /* 0c packet type ID field */
 
 	/* ARP packet */
-	ospl_uint16 htype;         /* 0e hardware type (must be ARPHRD_ETHER) */
-	ospl_uint16 ptype;         /* 10 protocol type (must be ETH_P_IP) */
-	ospl_uint8  hlen;          /* 12 hardware address length (must be 6) */
-	ospl_uint8  plen;          /* 13 protocol address length (must be 4) */
-	ospl_uint16 operation;     /* 14 ARP opcode */
-	ospl_uint8  sHaddr[6];     /* 16 sender's hardware address */
-	ospl_uint8  sInaddr[4];    /* 1c sender's IP address */
-	ospl_uint8  tHaddr[6];     /* 20 target's hardware address */
-	ospl_uint8  tInaddr[4];    /* 26 target's IP address */
-	ospl_uint8  pad[18];       /* 2a pad for min. ethernet payload (60 bytes) */
+	zpl_uint16 htype;         /* 0e hardware type (must be ARPHRD_ETHER) */
+	zpl_uint16 ptype;         /* 10 protocol type (must be ETH_P_IP) */
+	zpl_uint8  hlen;          /* 12 hardware address length (must be 6) */
+	zpl_uint8  plen;          /* 13 protocol address length (must be 4) */
+	zpl_uint16 operation;     /* 14 ARP opcode */
+	zpl_uint8  sHaddr[6];     /* 16 sender's hardware address */
+	zpl_uint8  sInaddr[4];    /* 1c sender's IP address */
+	zpl_uint8  tHaddr[6];     /* 20 target's hardware address */
+	zpl_uint8  tInaddr[4];    /* 26 target's IP address */
+	zpl_uint8  pad[18];       /* 2a pad for min. ethernet payload (60 bytes) */
 } PACKED;
 
 enum {
@@ -36,29 +36,28 @@ enum {
 };
 
 /* Returns 1 if no reply received */
-int icmp_echo_request(ospl_uint32  test_nip,
-		const ospl_uint8 *safe_mac,
-		ospl_uint32  from_ip,
-		ospl_uint8 *from_mac,
+int icmp_echo_request(zpl_uint32  test_nip,
+		const zpl_uint8 *safe_mac,
+		zpl_uint32  from_ip,
+		zpl_uint8 *from_mac,
 		const char *interface,
-		ospl_uint32 timeo)
+		zpl_uint32 timeo)
 {
 	int timeout_ms = 0;
-	struct pollfd pfd[2];
-#define s (pfd[0].fd)           /* socket */
+	zpl_socket_t pfd;
 	int rv = 1;             /* "no reply received" yet */
-	struct sockaddr addr;   /* for interface name */
+	struct ipstack_sockaddr addr;   /* for interface name */
 	struct arpMsg arp;
 
 	if (!timeo)
 		return 1;
 
-	s = socket(PF_PACKET, SOCK_PACKET, htons(ETH_P_ARP));
-	if (s == -1) {
+	pfd = ipstack_socket(IPCOM_STACK, PF_PACKET, SOCK_PACKET, htons(ETH_P_ARP));
+	if (ipstack_invalid(pfd)) {
 		zlog_err(MODULE_DHCP, "can't create raw socket");
 		return -1;
 	}
-	if (setsockopt(s, SOL_SOCKET, SO_BROADCAST, &rv, sizeof(int)) == -1) {
+	if (ipstack_setsockopt(pfd, SOL_SOCKET, SO_BROADCAST, &rv, sizeof(int)) == -1) {
 		zlog_err(MODULE_DHCP, "can't enable bcast on raw socket");
 		goto ret;
 	}
@@ -80,7 +79,7 @@ int icmp_echo_request(ospl_uint32  test_nip,
 
 	memset(&addr, 0, sizeof(addr));
 	strncpy(addr.sa_data, interface, sizeof(addr.sa_data));
-	if (sendto(s, &arp, sizeof(arp), 0, &addr, sizeof(addr)) < 0) {
+	if (ipstack_sendto(pfd, &arp, sizeof(arp), 0, &addr, sizeof(addr)) < 0) {
 		// TODO: error message? caller didn't expect us to fail,
 		// just returning 1 "no reply received" misleads it.
 		goto ret;
@@ -89,17 +88,15 @@ int icmp_echo_request(ospl_uint32  test_nip,
 	/* wait for arp reply, and check it */
 	timeout_ms = (int)timeo;
 	do {
-		typedef ospl_uint32  aliased_uint32_t FIX_ALIASING;
+		typedef zpl_uint32  aliased_uint32_t FIX_ALIASING;
 		int r;
 		unsigned prevTime = os_get_monotonic_msec();
-
-		pfd[0].events = POLLIN;
 
 		r = safe_poll(pfd, 1, timeout_ms);
 		if (r < 0)
 			break;
 		if (r) {
-			r = safe_read(s, &arp, sizeof(arp));
+			r = safe_read(pfd, &arp, sizeof(arp));
 			if (r < 0)
 				break;
 
@@ -132,36 +129,35 @@ int icmp_echo_request(ospl_uint32  test_nip,
 	} while ((unsigned)timeout_ms <= timeo);
 
  ret:
-	close(s);
+	ipstack_close(pfd);
 	zlog_err(MODULE_DHCP, "%srp reply received for this address", rv ? "no a" : "A");
 	return rv;
 }
 
 
 
-int icmp_echo_request_mac(ospl_uint32  test_nip,
-		ospl_uint32  from_ip,
-		ospl_uint8 *from_mac,
+int icmp_echo_request_mac(zpl_uint32  test_nip,
+		zpl_uint32  from_ip,
+		zpl_uint8 *from_mac,
 		const char *interface,
-		ospl_uint32 timeo,
-		ospl_uint8 *safe_mac)
+		zpl_uint32 timeo,
+		zpl_uint8 *safe_mac)
 {
 	int timeout_ms = 0;
-	struct pollfd pfd[2];
-#define s (pfd[0].fd)           /* socket */
+	zpl_socket_t s;          /* socket */
 	int rv = 1;             /* "no reply received" yet */
-	struct sockaddr addr;   /* for interface name */
+	struct ipstack_sockaddr addr;   /* for interface name */
 	struct arpMsg arp;
 
 	if (!timeo)
 		return 1;
 
-	s = socket(PF_PACKET, SOCK_PACKET, htons(ETH_P_ARP));
-	if (s == -1) {
+	s = ipstack_socket(IPCOM_STACK, PF_PACKET, SOCK_PACKET, htons(ETH_P_ARP));
+	if (ipstack_invalid(s)) {
 		zlog_err(MODULE_DHCP, "can't create raw socket");
 		return -1;
 	}
-	if (setsockopt(s, SOL_SOCKET, SO_BROADCAST, &rv, sizeof(int)) == -1) {
+	if (ipstack_setsockopt(s, SOL_SOCKET, SO_BROADCAST, &rv, sizeof(int)) == -1) {
 		zlog_err(MODULE_DHCP, "can't enable bcast on raw socket");
 		goto ret;
 	}
@@ -183,7 +179,7 @@ int icmp_echo_request_mac(ospl_uint32  test_nip,
 
 	memset(&addr, 0, sizeof(addr));
 	strncpy(addr.sa_data, interface, sizeof(addr.sa_data));
-	if (sendto(s, &arp, sizeof(arp), 0, &addr, sizeof(addr)) < 0) {
+	if (ipstack_sendto(s, &arp, sizeof(arp), 0, &addr, sizeof(addr)) < 0) {
 		// TODO: error message? caller didn't expect us to fail,
 		// just returning 1 "no reply received" misleads it.
 		goto ret;
@@ -192,13 +188,11 @@ int icmp_echo_request_mac(ospl_uint32  test_nip,
 	/* wait for arp reply, and check it */
 	timeout_ms = (int)timeo;
 	do {
-		typedef ospl_uint32  aliased_uint32_t FIX_ALIASING;
+		typedef zpl_uint32  aliased_uint32_t FIX_ALIASING;
 		int r;
 		unsigned prevTime = os_get_monotonic_msec();
 
-		pfd[0].events = POLLIN;
-
-		r = safe_poll(pfd, 1, timeout_ms);
+		r = safe_poll(s, 1, timeout_ms);
 		if (r < 0)
 			break;
 		if (r) {
@@ -238,7 +232,7 @@ int icmp_echo_request_mac(ospl_uint32  test_nip,
 	} while ((unsigned)timeout_ms <= timeo);
 
  ret:
-	close(s);
+	ipstack_close(s);
 	zlog_err(MODULE_DHCP, "%srp reply received for this address", rv ? "no a" : "A");
 	return rv;
 }

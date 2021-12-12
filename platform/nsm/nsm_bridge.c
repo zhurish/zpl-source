@@ -5,19 +5,10 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "memory.h"
-#include "command.h"
-#include "memory.h"
-#include "memtypes.h"
-#include "prefix.h"
-#include "if.h"
-#include "nsm_interface.h"
-#include <log.h>
-#include "nsm_client.h"
-
-#include "nsm_bridge.h"
-
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "nsm_include.h"
 
 
 nsm_bridge_t * nsm_bridge_get(struct interface *ifp)
@@ -28,7 +19,7 @@ nsm_bridge_t * nsm_bridge_get(struct interface *ifp)
 
 static int nsm_bridge_member_lookup(nsm_bridge_t *bridge, ifindex_t ifindex)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < BRIDGE_MEMBER_MAX; i++)
 	{
 		if(bridge->member[i] == ifindex)
@@ -81,7 +72,7 @@ static int nsm_bridge_member_del(nsm_bridge_t *bridge, ifindex_t ifindex)
 
 static int nsm_bridge_member_del_all(nsm_bridge_t *bridge)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	struct interface *ifp = NULL;
 	for(i = 0; i < BRIDGE_MEMBER_MAX; i++)
 	{
@@ -95,7 +86,7 @@ static int nsm_bridge_member_del_all(nsm_bridge_t *bridge)
 	return 0;
 }
 
-static int nsm_bridge_interface_add_check(ospl_bool add, struct interface *ifp)
+static int nsm_bridge_interface_add_check(zpl_bool add, struct interface *ifp)
 {
 	if(add)
 	{
@@ -123,7 +114,7 @@ int nsm_bridge_add_interface_api(struct interface *bridge, struct interface *ifp
 	if(if_is_brigde(bridge))
 	{
 		int ret = -1;
-		if(!nsm_bridge_interface_add_check(ospl_true, ifp))
+		if(!nsm_bridge_interface_add_check(zpl_true, ifp))
 			return ERROR;
 		nsm_bridge_t * bri = nsm_bridge_get(bridge);
 		if(bri)
@@ -131,7 +122,7 @@ int nsm_bridge_add_interface_api(struct interface *bridge, struct interface *ifp
 		if(ret == 0)
 		{
 			SET_FLAG(ifp->ifmember, IF_BRIDGE_MEM);
-#ifdef PL_WIFI_MODULE
+#ifdef ZPL_WIFI_MODULE
 			if(iw_ap_lookup_api(ifp))
 				iw_ap_bridge_set_api(iw_ap_lookup_api(ifp), bridge->ifindex);
 #endif
@@ -146,7 +137,7 @@ int nsm_bridge_del_interface_api(struct interface *bridge, struct interface *ifp
 	if(if_is_brigde(bridge))
 	{
 		int ret = -1;
-		if(!nsm_bridge_interface_add_check(ospl_false, ifp))
+		if(!nsm_bridge_interface_add_check(zpl_false, ifp))
 			return ERROR;
 		nsm_bridge_t * bri = nsm_bridge_get(bridge);
 		if(bri)
@@ -154,7 +145,7 @@ int nsm_bridge_del_interface_api(struct interface *bridge, struct interface *ifp
 		if(ret == 0)
 		{
 			UNSET_FLAG(ifp->ifmember, IF_BRIDGE_MEM);
-#ifdef PL_WIFI_MODULE
+#ifdef ZPL_WIFI_MODULE
 			if(iw_ap_lookup_api(ifp))
 				iw_ap_bridge_set_api(iw_ap_lookup_api(ifp), 0);
 #endif
@@ -178,7 +169,7 @@ int nsm_bridge_update_member_api(struct interface *bridge)
 				ret = bri->get_member_cb(bri, kifindex);
 			if (ret)
 			{
-				ospl_uint32 i = 0;
+				zpl_uint32 i = 0;
 				nsm_bridge_member_del_all(bri);
 				for(i = 0; i < BRIDGE_MEMBER_MAX; i++)
 				{
@@ -197,7 +188,7 @@ int nsm_bridge_update_member_api(struct interface *bridge)
 }
 
 
-int nsm_bridge_interface_stp_set_api(struct interface *bridge, ospl_bool stp)
+int nsm_bridge_interface_stp_set_api(struct interface *bridge, zpl_bool stp)
 {
 	if(if_is_brigde(bridge))
 	{
@@ -212,7 +203,7 @@ int nsm_bridge_interface_stp_set_api(struct interface *bridge, ospl_bool stp)
 	return ERROR;
 }
 
-int nsm_bridge_interface_max_age_set_api(struct interface *bridge, ospl_uint32 max_age)
+int nsm_bridge_interface_max_age_set_api(struct interface *bridge, zpl_uint32 max_age)
 {
 	if(if_is_brigde(bridge))
 	{
@@ -227,7 +218,7 @@ int nsm_bridge_interface_max_age_set_api(struct interface *bridge, ospl_uint32 m
 	return ERROR;
 }
 
-int nsm_bridge_interface_hello_time_set_api(struct interface *bridge, ospl_uint32 hello_time)
+int nsm_bridge_interface_hello_time_set_api(struct interface *bridge, zpl_uint32 hello_time)
 {
 	if(if_is_brigde(bridge))
 	{
@@ -242,7 +233,7 @@ int nsm_bridge_interface_hello_time_set_api(struct interface *bridge, ospl_uint3
 	return ERROR;
 }
 
-int nsm_bridge_interface_forward_delay_set_api(struct interface *bridge, ospl_uint32 forward_delay)
+int nsm_bridge_interface_forward_delay_set_api(struct interface *bridge, zpl_uint32 forward_delay)
 {
 	if(if_is_brigde(bridge))
 	{
@@ -257,7 +248,7 @@ int nsm_bridge_interface_forward_delay_set_api(struct interface *bridge, ospl_ui
 	return ERROR;
 }
 
-static int nsm_bridge_create_interface(struct interface *ifp)
+int nsm_bridge_interface_create_api(struct interface *ifp)
 {
 	nsm_bridge_t * bridge = NULL;
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
@@ -276,7 +267,7 @@ static int nsm_bridge_create_interface(struct interface *ifp)
 }
 
 
-static int nsm_bridge_delete_interface(struct interface *ifp)
+int nsm_bridge_interface_del_api(struct interface *ifp)
 {
 	if(if_is_brigde(ifp))
 	{
@@ -291,10 +282,10 @@ static int nsm_bridge_delete_interface(struct interface *ifp)
 	}
 	return OK;
 }
-
-static int nsm_bridge_interface_write_config(struct vty *vty, struct interface *ifp)
+#ifdef ZPL_SHELL_MODULE
+int nsm_bridge_interface_write_config(struct vty *vty, struct interface *ifp)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	if(if_is_brigde(ifp))
 	{
 		nsm_bridge_t * bridge = nsm_bridge_get(ifp);
@@ -321,38 +312,15 @@ static int nsm_bridge_interface_write_config(struct vty *vty, struct interface *
 	}
 	return OK;
 }
-
-int nsm_bridge_client_init()
+#endif
+int nsm_bridge_init()
 {
-	struct nsm_client *nsm = nsm_client_new ();
-	nsm->notify_add_cb = nsm_bridge_create_interface;
-	nsm->notify_delete_cb = nsm_bridge_delete_interface;
-	nsm->interface_write_config_cb = nsm_bridge_interface_write_config;
-	nsm->notify_update_cb = nsm_bridge_update_member_api;
-
-	nsm_client_install (nsm, NSM_BRIDGE);
+	nsm_interface_hook_add(NSM_BRIDGE, nsm_bridge_interface_create_api, nsm_bridge_interface_del_api);
 	return OK;
 }
 
-int nsm_bridge_client_exit()
+int nsm_bridge_exit()
 {
-	struct nsm_client *nsm = nsm_client_lookup (NSM_BRIDGE);
-	if(nsm)
-		nsm_client_free (nsm);
 	return OK;
 }
 
-struct module_list module_list_nsmbridge = 
-{ 
-	.module=MODULE_NSMBRIDGE, 
-	.name="NSMBRIDGE", 
-	.module_init=nsm_bridge_client_init, 
-	.module_exit=nsm_bridge_client_exit, 
-	.module_task_init=NULL, 
-	.module_task_exit=NULL, 
-	.module_cmd_init=NULL, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
-	.taskid=0,
-};

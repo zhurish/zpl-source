@@ -45,7 +45,7 @@ extern modem_machine modem_machine_state_get(modem_t *modem);
 extern int modem_machine_state(modem_t *modem);
 
 
-extern int modem_machine_state_show(modem_t *modem, struct vty *vty, ospl_bool detail);
+extern int modem_machine_state_show(modem_t *modem, struct vty *vty, zpl_bool detail);
 
 
 

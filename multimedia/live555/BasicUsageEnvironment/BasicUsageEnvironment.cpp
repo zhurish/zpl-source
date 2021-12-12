@@ -13,13 +13,13 @@ You should have received a copy of the GNU Lesser General Public License
 along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
-// Copyright (c) 1996-2020 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2021 Live Networks, Inc.  All rights reserved.
 // Basic Usage Environment: for a simple, non-scripted, console application
 // Implementation
 
 #include "BasicUsageEnvironment.hh"
 #include <stdio.h>
-
+#include <stdlib.h>
 ////////// BasicUsageEnvironment //////////
 
 #if defined(__WIN32__) || defined(_WIN32)
@@ -53,28 +53,58 @@ int BasicUsageEnvironment::getErrno() const {
 #endif
 }
 
+
 UsageEnvironment& BasicUsageEnvironment::operator<<(char const* str) {
-  if (str == NULL) str = "(NULL)"; // sanity check
-  fprintf(stderr, "%s", str);
+  if(logcallback != NULL)
+    (logcallback)("%s", str);
+  else
+  {
+    fprintf(stdout, "%s", str);
+    fflush(stdout);
+  }
   return *this;
 }
 
 UsageEnvironment& BasicUsageEnvironment::operator<<(int i) {
-  fprintf(stderr, "%d", i);
+  if(logcallback != NULL)
+    (logcallback)("%d", i);
+  else
+  {
+    fprintf(stdout, "%d", i);
+    fflush(stdout);
+  }
   return *this;
 }
 
 UsageEnvironment& BasicUsageEnvironment::operator<<(unsigned u) {
-  fprintf(stderr, "%u", u);
+  if(logcallback != NULL)
+    (logcallback)("%u", u);
+  else
+  {
+    fprintf(stdout, "%u", u);
+    fflush(stdout);
+  }
   return *this;
 }
 
 UsageEnvironment& BasicUsageEnvironment::operator<<(double d) {
-  fprintf(stderr, "%f", d);
+  if(logcallback != NULL)
+    (logcallback)("%f", d);
+  else
+  {
+    fprintf(stdout, "%f", d);
+    fflush(stdout);
+  }
   return *this;
 }
 
 UsageEnvironment& BasicUsageEnvironment::operator<<(void* p) {
-  fprintf(stderr, "%p", p);
+  if(logcallback != NULL)
+    (logcallback)("%p", p);
+  else
+  {
+    fprintf(stdout, "%p", p);
+    fflush(stdout);
+  }
   return *this;
 }

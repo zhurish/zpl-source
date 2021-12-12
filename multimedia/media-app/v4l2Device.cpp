@@ -37,18 +37,19 @@ v4l2Device::v4l2Device(int width, int height, int fps, int fmt)
   this->m_width = width;
   this->m_height = height;
   this->m_fmt = V4L2_PIX_FMT_YUYV;
+  this->m_fmt = V4L2_PIX_FMT_MJPEG;
   this->m_fps = fps;
-  m_videoEncoder = nullptr;
-  obuf.start = nullptr;
+  m_videoEncoder = NULL;
+  obuf.start = NULL;
   obuf.length = 0;
 }
 
 v4l2Device::~v4l2Device()
 {
-  if (obuf.start != nullptr)
+  if (obuf.start != NULL)
   {
     delete[] obuf.start;
-    obuf.start = nullptr;
+    obuf.start = NULL;
   }
   if (video_drv.fd)
   {
@@ -61,7 +62,7 @@ int v4l2Device::v4l2DeviceTryOpen(char *device)
 {
   int ret = 0;
   struct v4l2_format fmt;
-  if (v4l2_open(device, 1, &video_drv) < 0)
+  if (v4l2_open(device, 0, &video_drv) < 0)
   {
     std::cout << "Faile open " << device << std::endl;
     return -1;
@@ -146,7 +147,7 @@ int v4l2Device::v4l2DeviceStop()
   return -1;
 }
 
-int v4l2Device::v4l2DeviceStartCapture(struct v4l2_t_buf *buf, int timeout)
+int v4l2Device::v4l2DeviceStartCaptureHw(struct v4l2_t_buf *buf, int timeout)
 {
   fd_set fds;
   struct timeval tv;
@@ -155,7 +156,7 @@ int v4l2Device::v4l2DeviceStartCapture(struct v4l2_t_buf *buf, int timeout)
   {
     FD_ZERO(&fds);
     FD_SET(video_drv.fd, &fds);
-    /* Timeout. */
+
     tv.tv_sec = timeout / 1000;
     tv.tv_usec = (timeout % 1000) * 1000;
     while (1)
@@ -182,24 +183,16 @@ int v4l2Device::v4l2DeviceStartCapture(struct v4l2_t_buf *buf, int timeout)
   return r;
 }
 
-int v4l2Device::v4l2DeviceStartCapture(FramedQueue *m_queue)
+int v4l2Device::v4l2DeviceStartCapture(lst_data_queue_t *m_queue)
 {
-  if (m_queue != nullptr)
+  if (m_queue != NULL)
   {
-    if (!m_queue->FramedQueueIsStart())
-    {
-      return -1;
-    }
-  }
-  if (m_queue != nullptr)
-  {
-    m_queue->FramedQueueWait();
-    int ret = v4l2DeviceStartCapture(&obuf, 500);
+    int length = 0;
+    int ret = v4l2DeviceStartCaptureHw(&obuf, 500);
     if (ret > 0)
     {
-      if (m_queue->FramedQueueDataIsFull())
-        m_queue->FramedQueueDataFlush();
-      if (m_videoEncoder != nullptr)
+      length = ret;
+      if (m_videoEncoder != NULL && this->m_fmt != V4L2_PIX_FMT_MJPEG)
       {
         //h264Core->h264Encoder_setup(m_width, m_height, X264_CSP_I422);
         /*
@@ -207,12 +200,29 @@ int v4l2Device::v4l2DeviceStartCapture(FramedQueue *m_queue)
           fwrite(obuf.start, ret, 1, fp);
           fclose(fp);
           */
-        ret = m_videoEncoder->videoEncoderInput((const ospl_uint8 *)obuf.start, ret, false);
+        	
+        ret = m_videoEncoder->videoEncoderInput((const zpl_uint8 *)obuf.start, ret, false);
         if (ret > 0)
-          m_queue->FramedQueueDataPut((ospl_uint8 *)m_videoEncoder->videoEncoderOutput(), m_videoEncoder->videoEncoderOutputSize(true));
+        {
+          if(!lst_data_queue_isready (m_queue))
+          {
+              return 0;
+          }
+          lst_data_queue_enqueue(m_queue, LST_DATA_TYPE_VIDEO, 
+            (zpl_uint8 *)m_videoEncoder->videoEncoderOutput(), 
+            m_videoEncoder->videoEncoderOutputSize(true));
+        }
+          //m_queue->FramedQueueDataPut((zpl_uint8 *)m_videoEncoder->videoEncoderOutput(), m_videoEncoder->videoEncoderOutputSize(true));
       }
       else
-        m_queue->FramedQueueDataPut((ospl_uint8 *)obuf.start, ret);
+      {
+          if(!lst_data_queue_isready (m_queue))
+          {
+              return 0;
+          }
+          lst_data_queue_enqueue(m_queue, LST_DATA_TYPE_VIDEO, (zpl_uint8 *)obuf.start, ret);
+      }
+        //m_queue->FramedQueueDataPut((zpl_uint8 *)obuf.start, ret);
     }
   }
   return 0;

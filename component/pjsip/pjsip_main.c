@@ -29,7 +29,7 @@
 #include "pjsua_app.h"
 #include "pjsip_main.h"
 #include "pjsip_app_api.h"
-#ifdef PL_APP_MODULE
+#ifdef ZPL_APP_MODULE
 #include "voip_app.h"
 #endif
 #define THIS_FILE	"pjsip_main.c"
@@ -70,7 +70,7 @@ static int main_func(int argc, char *argv[])
 
 	while (cfg.running)
 	{
-		//__PL_PJSIP_DEBUG( "%s:pjsua_app_init","main_func");
+		//__ZPL_PJSIP_DEBUG( "%s:pjsua_app_init","main_func");
 		status = pjsua_app_init(&cfg);
 		if (status == PJ_SUCCESS)
 		{
@@ -83,10 +83,10 @@ static int main_func(int argc, char *argv[])
 		}
 		if (status == PJ_SUCCESS)
 			break;
-		//__PL_PJSIP_DEBUG("======================================================3\r\n");
+		//__ZPL_PJSIP_DEBUG("======================================================3\r\n");
 
 		pjsua_app_destroy();
-		//__PL_PJSIP_DEBUG("======================================================4\r\n");
+		//__ZPL_PJSIP_DEBUG("======================================================4\r\n");
 
 		if(cfg.restart)
 		{
@@ -124,7 +124,7 @@ static int pl_pjsip_task_add(char *name, int pri, int op, void *entry, void *arg
 	//int Priority = 0;
 	os_task_add_name(name, pri, 0, entry, name, arg, stacksize, td_thread);
 	//os_task_priority_get(id, &Priority);
-	//__PL_PJSIP_DEBUG("===============%s=================:%s\r\n", __func__, name);
+	//__ZPL_PJSIP_DEBUG("===============%s=================:%s\r\n", __func__, name);
 	if (os_task_priv_get(0, td_thread) == NULL)
 		os_task_priv_set(0, td_thread, p);
 	return 0;
@@ -136,7 +136,7 @@ static int _pl_pjsip_task_create(void *p)
 	if(task && strstr(task->td_name, "alsa"))
 	{
 		cfg.media_quit++;
-		//__PL_PJSIP_DEBUG( "==============%s===========%d", __func__, cfg.media_quit);
+		//__ZPL_PJSIP_DEBUG( "==============%s===========%d", __func__, cfg.media_quit);
 	}
 	return OK;
 }
@@ -147,14 +147,14 @@ static int _pl_pjsip_task_destroy(void *p)
 	if(task && strstr(task->td_name, "alsa"))
 	{
 		cfg.media_quit--;
-		//__PL_PJSIP_DEBUG( "==============%s===========%d", __func__, cfg.media_quit);
+		//__ZPL_PJSIP_DEBUG( "==============%s===========%d", __func__, cfg.media_quit);
 	}
 	return OK;
 }
 
 int pjsip_media_wait_quit(void)
 {
-	//__PL_PJSIP_DEBUG( "==============%s===========%d", __func__, cfg.media_quit);
+	//__ZPL_PJSIP_DEBUG( "==============%s===========%d", __func__, cfg.media_quit);
 	while(cfg.media_quit > 0)
 	{
 		os_msleep(50);
@@ -176,10 +176,7 @@ static int pjmain(void *p)
 //	pj_task_cb_init(pl_pjsip_task_add, os_task_del, os_task_refresh_id, pl_pjsip_task_self);
 //	cli_callback_init(0, pl_pjsip_account_set_api);
 
-	while(!os_load_config_done())
-	{
-		os_sleep(1);
-	}
+	host_config_load_waitting();
 
 	cfg.running = PJ_TRUE;
 

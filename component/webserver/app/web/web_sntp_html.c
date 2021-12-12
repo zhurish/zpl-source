@@ -6,7 +6,7 @@
  */
 
 #define HAS_BOOL 1
-#include "zebra.h"
+#include "zpl_include.h"
 
 #include "module.h"
 #include "memory.h"
@@ -18,7 +18,7 @@
 #include "vty.h"
 #include "vty_user.h"
 
-#ifdef PL_SERVICE_SNTPC
+#ifdef ZPL_SERVICE_SNTPC
 #include "sntpcLib.h"
 
 #include "web_util.h"
@@ -50,7 +50,7 @@ static int jst_sntp_timezone_list(int eid, webs_t wp, int argc, char **argv)
 
 static int web_sntp_set(Webs *wp, char *path, char *query)
 {
-	ospl_bool	enable = ospl_false;
+	zpl_bool	enable = zpl_false;
 	char *strval = NULL;
 	char *sntp_address = NULL;
 	char *sntp_timezone = NULL;
@@ -64,7 +64,7 @@ static int web_sntp_set(Webs *wp, char *path, char *query)
 	sntpc_client_get_api(NULL, API_SNTPC_GET_ENABLE, &enable);
 	if (strstr(strval, "GET"))
 	{
-		ospl_uint32	address = 0, port = 0, interval = 0, timezone = 0;
+		zpl_uint32	address = 0, port = 0, interval = 0, timezone = 0;
 		char timezonestr[32];
 
 		sntpc_client_get_api(NULL, API_SNTPC_GET_ADDRESS, &address);
@@ -138,7 +138,7 @@ static int web_sntp_set(Webs *wp, char *path, char *query)
 	sntp_timezone_val = atoi(sntp_syncinterval);
 	sntpc_client_set_api(NULL, API_SNTPC_SET_INTERVAL, &sntp_timezone_val);
 
-	enable = ospl_true;
+	enable = zpl_true;
 	sntpc_client_set_api(NULL, API_SNTPC_SET_ENABLE, &enable);
 
 	websSetStatus(wp, 200);
@@ -165,4 +165,4 @@ int web_sntp_app(void)
 	return 0;
 }
 
-#endif /* PL_SERVICE_SNTPC */
+#endif /* ZPL_SERVICE_SNTPC */

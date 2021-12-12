@@ -4,7 +4,7 @@
 #
 MODULEDIR = component/modbus
 #
-PLINCLUDE += -I$(MODBUS_ROOT)/include
+ZPLINCLUDE += -I$(MODBUS_ROOT)/include
 #
 #
 #OS

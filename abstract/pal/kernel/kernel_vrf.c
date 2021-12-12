@@ -20,7 +20,10 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include <zebra.h>
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #ifdef HAVE_NETNS
 #undef  _GNU_SOURCE
@@ -29,14 +32,6 @@
 #include <sched.h>
 #endif
 
-#include "if.h"
-#include "nsm_vrf.h"
-#include "prefix.h"
-#include "table.h"
-#include "log.h"
-#include "memory.h"
-#include "command.h"
-#include "vty.h"
 
 #include "pal_driver.h"
 #ifndef CLONE_NEWNET
@@ -125,9 +120,9 @@ vrf_netns_pathname(const char *name)
 static int vrf_is_enabled(struct vrf *vrf)
 {
 	if (have_netns())
-		return vrf && vrf->fd >= 0;
+		return vrf && vrf->fd._fd >= 0;
 	else
-		return vrf && vrf->fd == -2 && vrf->vrf_id == VRF_DEFAULT;
+		return vrf && vrf->fd._fd == -2 && vrf->vrf_id == VRF_DEFAULT;
 }
 
 /*
@@ -145,11 +140,11 @@ static int vrf_enable(vrf_id_t vrf_id)
 	{
 		if (have_netns())
 		{
-			vrf->fd = open(pathname, O_RDONLY);
+			vrf->fd._fd = open(pathname, O_RDONLY);
 		}
 		else
 		{
-			vrf->fd = -2; /* Remember that vrf_enable_hook has been called */
+			vrf->fd._fd = -2; /* Remember that vrf_enable_hook has been called */
 			errno = -ENOTSUP;
 			return -1;
 		}
@@ -182,9 +177,9 @@ static int vrf_disable(vrf_id_t vrf_id)
 	{
 		zlog_info(MODULE_PAL, "VRF %u is to be disabled.", vrf->vrf_id);
 		if (have_netns())
-			close(vrf->fd);
+			close(vrf->fd._fd);
 
-		vrf->fd = -1;
+		vrf->fd._fd = -1;
 		return 0;
 	}
 	return -1;
@@ -337,8 +332,8 @@ int os_vrf_stack_init()
  {
  Install VRF commands.
  install_node (&vrf_node, vrf_config_write);
- install_element (CONFIG_NODE, &vrf_netns_cmd);
- install_element (CONFIG_NODE, &no_vrf_netns_cmd);
+ install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &vrf_netns_cmd);
+ install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &no_vrf_netns_cmd);
  }
  }
 
@@ -358,11 +353,11 @@ int os_vrf_stack_init()
  }*/
 
 /* Create a socket for the VRF. */
-int vrf_socket(int domain, ospl_uint32 type, ospl_uint16 protocol, vrf_id_t vrf_id)
+zpl_socket_t vrf_socket(int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id_t vrf_id)
 {
 	struct vrf *vrf = vrf_lookup(vrf_id);
 	int ret = -1;
-
+	zpl_socket_t sock;
 /*
 	if (!vrf_is_enabled(vrf))
 	{
@@ -373,16 +368,16 @@ int vrf_socket(int domain, ospl_uint32 type, ospl_uint16 protocol, vrf_id_t vrf_
 
 	if (have_netns())
 	{
-		ret = (vrf_id != VRF_DEFAULT) ? setns(vrf->fd, CLONE_NEWNET) : 0;
+		ret = (vrf_id != VRF_DEFAULT) ? setns(vrf->fd._fd, CLONE_NEWNET) : 0;
 		if (ret >= 0)
 		{
-			ret = socket(domain, type, protocol);
+			sock = ipstack_socket(IPCOM_STACK, domain, type, protocol);
 			if (vrf_id != VRF_DEFAULT)
-				setns(vrf_lookup(VRF_DEFAULT)->fd, CLONE_NEWNET);
+				setns(vrf_lookup(VRF_DEFAULT)->fd._fd, CLONE_NEWNET);
 		}
 	}
 	else
-		ret = socket(domain, type, protocol);
+		sock = ipstack_socket(IPCOM_STACK, domain, type, protocol);
 
-	return ret;
+	return sock;
 }

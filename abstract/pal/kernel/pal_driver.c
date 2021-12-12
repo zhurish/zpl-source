@@ -8,28 +8,22 @@
 
 
 
-#include "zebra.h"
-#include "memory.h"
-#include "command.h"
-#include "memory.h"
-#include "memtypes.h"
-#include "prefix.h"
-#include "if.h"
-#include "nsm_interface.h"
-#include <log.h>
-#include "thread.h"
-#include "eloop.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "pal_driver.h"
 
 pal_stack_t pal_stack;
-static ospl_uint32 kernel_task_id = 0;
+static zpl_uint32 kernel_task_id = 0;
+static void *master_eloop_kernel = NULL;
 
 struct module_list module_list_pal = 
 { 
 	.module=MODULE_PAL, 
 	.name="PAL", 
-	.module_init=pal_abstract_init, 
+	.module_init=pal_module_init, 
 	.module_exit=NULL, 
 	.module_task_init=NULL, 
 	.module_task_exit=NULL, 
@@ -54,7 +48,7 @@ int pal_interface_down(struct interface *ifp)
     return OK;
 }
 
-int pal_interface_update_flag(struct interface *ifp, ospl_uint32 flags)
+int pal_interface_update_flag(struct interface *ifp, zpl_uint32 flags)
 {
 	if(pal_stack.ip_stack_update_flag/* && ifp->k_ifindex*/)
 		return pal_stack.ip_stack_update_flag(ifp, flags);
@@ -83,14 +77,14 @@ int pal_interface_set_vr(struct interface *ifp, vrf_id_t vrf_id)
 }
 
 
-int pal_interface_set_mtu(struct interface *ifp, ospl_uint32 mtu)
+int pal_interface_set_mtu(struct interface *ifp, zpl_uint32 mtu)
 {
 	if(pal_stack.ip_stack_set_mtu && ifp->k_ifindex)
 		return pal_stack.ip_stack_set_mtu(ifp, mtu);
     return OK;
 }
 
-int pal_interface_set_lladdr(struct interface *ifp, ospl_uint8 *mac, ospl_uint32 len)
+int pal_interface_set_lladdr(struct interface *ifp, zpl_uint8 *mac, zpl_uint32 len)
 {
 	if(pal_stack.ip_stack_set_lladdr && ifp->k_ifindex)
 		return pal_stack.ip_stack_set_lladdr(ifp, mac, len);
@@ -134,14 +128,14 @@ int pal_interface_vlan_set(struct interface *ifp, vlan_t vlan)
 }
 
 
-int pal_interface_vlanpri_set(struct interface *ifp, ospl_uint32 pri)
+int pal_interface_vlanpri_set(struct interface *ifp, zpl_uint32 pri)
 {
 	if(pal_stack.ip_stack_set_vlanpri && ifp->k_ifindex)
 		return pal_stack.ip_stack_set_vlanpri(ifp, pri);
     return OK;
 }
 
-int pal_interface_promisc_link(struct interface *ifp, ospl_bool enable)
+int pal_interface_promisc_link(struct interface *ifp, zpl_bool enable)
 {
 	if(pal_stack.ip_stack_promisc && ifp->k_ifindex)
 		return pal_stack.ip_stack_promisc(ifp, enable);
@@ -149,7 +143,7 @@ int pal_interface_promisc_link(struct interface *ifp, ospl_bool enable)
 }
 
 
-int pal_interface_change_dhcp(struct interface *ifp, ospl_bool enable)
+int pal_interface_change_dhcp(struct interface *ifp, zpl_bool enable)
 {
 	if(pal_stack.ip_stack_dhcp && ifp->k_ifindex)
 		return pal_stack.ip_stack_dhcp(ifp, enable);
@@ -191,22 +185,22 @@ int pal_interface_ipv4_delete(struct interface *ifp, struct connected *ifc)
     return OK;
 }
 
-int pal_interface_ipv6_add(struct interface *ifp,struct connected *ifc, ospl_bool secondry)
+int pal_interface_ipv6_add(struct interface *ifp,struct connected *ifc, zpl_bool secondry)
 {
 	if(pal_stack.ip_stack_ipv6_add && ifp->k_ifindex)
 		return pal_stack.ip_stack_ipv6_add(ifp, ifc, secondry);
     return OK;
 }
 
-int pal_interface_ipv6_delete(struct interface *ifp, struct connected *ifc, ospl_bool secondry)
+int pal_interface_ipv6_delete(struct interface *ifp, struct connected *ifc, zpl_bool secondry)
 {
 	if(pal_stack.ip_stack_ipv6_delete && ifp->k_ifindex)
 		return pal_stack.ip_stack_ipv6_delete(ifp, ifc, secondry);
     return OK;
 }
-
+#ifdef ZPL_NSM_ARP
 // ip arp
-int pal_interface_arp_add(struct interface *ifp, struct prefix *address, ospl_uint8 *mac)
+int pal_interface_arp_add(struct interface *ifp, struct prefix *address, zpl_uint8 *mac)
 {
 	if(pal_stack.ip_stack_arp_add && ifp->k_ifindex)
 		return pal_stack.ip_stack_arp_add(ifp, address, mac);
@@ -227,34 +221,34 @@ int pal_interface_arp_request(struct interface *ifp, struct prefix *address)
     return OK;
 }
 
-int pal_arp_gratuitousarp_enable(ospl_bool enable)
+int pal_arp_gratuitousarp_enable(zpl_bool enable)
 {
 	if(pal_stack.ip_stack_arp_gratuitousarp_enable)
 		return pal_stack.ip_stack_arp_gratuitousarp_enable(enable);
     return OK;
 }
 
-int pal_arp_ttl(ospl_uint32 ttl)
+int pal_arp_ttl(zpl_uint32 ttl)
 {
 	if(pal_stack.ip_stack_arp_ttl)
 		return pal_stack.ip_stack_arp_ttl(ttl);
     return OK;
 }
 
-int pal_arp_age_timeout(ospl_uint32 timeout)
+int pal_arp_age_timeout(zpl_uint32 timeout)
 {
 	if(pal_stack.ip_stack_arp_age_timeout)
 		return pal_stack.ip_stack_arp_age_timeout(timeout);
     return OK;
 }
 
-int pal_arp_retry_interval(ospl_uint32 interval)
+int pal_arp_retry_interval(zpl_uint32 interval)
 {
 	if(pal_stack.ip_stack_arp_retry_interval)
 		return pal_stack.ip_stack_arp_retry_interval(interval);
     return OK;
 }
-
+#endif
 //route
 int pal_create_vr(vrf_id_t vrf_id)
 {
@@ -280,37 +274,36 @@ int pal_interface_update_statistics(struct interface *ifp)
 
 /***************************************************************/
 
-static int pal_abstract_task(void *argv)
+static int pal_main_task(void *argv)
 {
 	module_setup_task(MODULE_KERNEL, os_task_id_self());
-	while(!os_load_config_done())
-	{
-		os_sleep(1);
-	}
-	eloop_start_running(master_eloop[MODULE_KERNEL], MODULE_KERNEL);
+	host_config_load_waitting();
+	eloop_start_running(master_eloop_kernel, MODULE_KERNEL);
 	return OK;
 }
 
 
 static int kernel_task_init ()
 {
-	if(master_eloop[MODULE_KERNEL] == NULL)
-		master_eloop[MODULE_KERNEL] = eloop_master_module_create(MODULE_KERNEL);
-	//master_thread[PL_SERVICE_TELNET] = thread_master_module_create(PL_SERVICE_TELNET);
+	if(master_eloop_kernel == NULL)
+		master_eloop_kernel = eloop_master_module_create(MODULE_KERNEL);
+	//master_thread[ZPL_SERVICE_TELNET] = thread_master_module_create(ZPL_SERVICE_TELNET);
 	kernel_task_id = os_task_create("kernelTask", OS_TASK_DEFAULT_PRIORITY,
-	               0, pal_abstract_task, NULL, OS_TASK_DEFAULT_STACK);
+	               0, pal_main_task, NULL, OS_TASK_DEFAULT_STACK);
 	if(kernel_task_id)
 		return OK;
 	return ERROR;
 }
 
-int pal_abstract_init()
+int pal_module_init()
 {
-	if(master_eloop[MODULE_KERNEL] == NULL)
-		master_eloop[MODULE_KERNEL] = eloop_master_module_create(MODULE_KERNEL);
+	if(master_eloop_kernel == NULL)
+		master_eloop_kernel = eloop_master_module_create(MODULE_KERNEL);
 	kernel_task_init ();
 	ip_ifp_stack_init();
+	#ifdef ZPL_NSM_ARP
 	ip_arp_stack_init();
+	#endif
 	kernel_driver_init();
 	return 0;//ip_stack_init();
 }

@@ -32,13 +32,13 @@ extern "C" {
 #pragma pack(1)
 typedef struct
 {
-	ospl_uint8			groupid;					   // 组ID  0： 黑名单 1： 白名单
+	zpl_uint8			groupid;					   // 组ID  0： 黑名单 1： 白名单
 	char			groupname[APP_USERNAME_MAX];// 组名
 }user_group_t;
 
 typedef struct
 {
-	//ospl_uint8			ID;
+	//zpl_uint8			ID;
 	user_group_t	gtbl[APP_GROUP_MAX];
 }v9_user_group_t;
 #pragma pack(0)
@@ -53,11 +53,11 @@ typedef struct
 
 typedef struct
 {
-	ospl_uint8			ID;									// 计算板ID
-	ospl_uint8			group;								// 所属组ID  0： 黑名单 1： 白名单
+	zpl_uint8			ID;									// 计算板ID
+	zpl_uint8			group;								// 所属组ID  0： 黑名单 1： 白名单
 	char			username[APP_USERNAME_MAX];			// 姓名
 	char			userid[APP_USERNAME_MAX];			// 证件号
-	ospl_uint8			gender;								// 人员性别  0： 女 1： 男
+	zpl_uint8			gender;								// 人员性别  0： 女 1： 男
 	char			picname[APP_PATH_MAX];
 	char			text[APP_USER_TEXT_MAX];			//备注信息
 	sql_snapfea_key	key;								// 预留位，便于拓展，默认置空
@@ -71,33 +71,33 @@ extern int __user_debug_flag;
 
 extern v9_user_group_t _group_tbl[ID_INDEX(APP_BOARD_CALCU_4)];
 
-extern int v9_video_usergroup_add(ospl_uint32 id, const char * groupname);
-extern int v9_video_usergroup_del(ospl_uint32 id, const int group);
-extern int v9_video_usergroup_rename(ospl_uint32 id, const int group, const char * groupname);
-extern const char * v9_video_usergroup_idtoname(ospl_uint32 id, const int group);
-extern ospl_uint32 v9_video_usergroup_nametoid(ospl_uint32 id, const char * groupname);
-extern int v9_video_usergroup_show(ospl_uint32 id, struct vty *vty);
+extern int v9_video_usergroup_add(zpl_uint32 id, const char * groupname);
+extern int v9_video_usergroup_del(zpl_uint32 id, const int group);
+extern int v9_video_usergroup_rename(zpl_uint32 id, const int group, const char * groupname);
+extern const char * v9_video_usergroup_idtoname(zpl_uint32 id, const int group);
+extern zpl_uint32 v9_video_usergroup_nametoid(zpl_uint32 id, const char * groupname);
+extern int v9_video_usergroup_show(zpl_uint32 id, struct vty *vty);
 
 typedef int (*v9_vidoe_callback)(v9_video_user_t *, void*);
 
-extern int v9_video_user_foreach(ospl_uint32 id, int groupid, v9_vidoe_callback cb, void *pVoid);
+extern int v9_video_user_foreach(zpl_uint32 id, int groupid, v9_vidoe_callback cb, void *pVoid);
 
 
 extern int v9_video_user_load();
 extern int v9_video_user_clean(void);
 extern int v9_video_user_exit();
 
-extern int v9_video_user_count(ospl_uint32 id, int group, int *pValue);
+extern int v9_video_user_count(zpl_uint32 id, int group, int *pValue);
 
-extern int v9_video_user_add_user(ospl_uint32 id, ospl_bool gender, int group, char *user, char *user_id, char *pic, char *text);
-extern int v9_video_user_update_user(ospl_uint32 id, ospl_bool gender, int group, char *user, char *user_id, char *pic, char *text);
-extern int v9_video_user_del_user(ospl_uint32 id, char *user_id);
-extern int v9_video_user_del_group(ospl_uint32 id,  ospl_uint8 group);
-extern int v9_video_user_lookup_user(ospl_uint32 id, char *user_id, v9_video_user_t *user);
-extern int v9_video_user_lookup_user_url(ospl_uint32 id, char *user_id, v9_video_user_t *user);
-extern int v9_video_user_dir_add(ospl_uint32 id, const char *dirname);
+extern int v9_video_user_add_user(zpl_uint32 id, zpl_bool gender, int group, char *user, char *user_id, char *pic, char *text);
+extern int v9_video_user_update_user(zpl_uint32 id, zpl_bool gender, int group, char *user, char *user_id, char *pic, char *text);
+extern int v9_video_user_del_user(zpl_uint32 id, char *user_id);
+extern int v9_video_user_del_group(zpl_uint32 id,  zpl_uint8 group);
+extern int v9_video_user_lookup_user(zpl_uint32 id, char *user_id, v9_video_user_t *user);
+extern int v9_video_user_lookup_user_url(zpl_uint32 id, char *user_id, v9_video_user_t *user);
+extern int v9_video_user_dir_add(zpl_uint32 id, const char *dirname);
 
-extern int v9_video_user_show(struct vty *vty, ospl_bool detail);
+extern int v9_video_user_show(struct vty *vty, zpl_bool detail);
 
 
 

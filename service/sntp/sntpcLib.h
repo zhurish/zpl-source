@@ -37,20 +37,20 @@ extern "C" {
 
 struct sntp_client
 {
-	ospl_uint8 enable;
+	zpl_uint8 enable;
 	int sock;
-	ospl_uint8 type;
+	zpl_uint8 type;
 #define SNTP_PASSIVE	1
-	ospl_uint8 leapVerMode;
-//    ospl_uint32 timezone;
-    ospl_uint32 sync_clock;/* local clock is sync flag */
+	zpl_uint8 leapVerMode;
+//    zpl_uint32 timezone;
+    zpl_uint32 sync_clock;/* local clock is sync flag */
 
-	ospl_uint8 time_debug;
+	zpl_uint8 time_debug;
 
-    ospl_ushort sntpcPort;
-    ospl_ushort sntpc_interval;
+    zpl_ushort sntpcPort;
+    zpl_ushort sntpc_interval;
     struct in_addr address;
-    ospl_bool		dynamics;
+    zpl_bool		dynamics;
 
     struct timespec sntpTime;	/* storage for retrieved time value */
 
@@ -65,12 +65,12 @@ struct sntp_client
 /* SNTP data retrived from SNTP IPv4 protocol message in mSntpcTimeGet */
 typedef struct sntpData
     {
-    ospl_uint8     stratum;                 
+    zpl_uint8     stratum;                 
     char              poll;
     char              precision;
     } SNTP_DATA;
 
-IMPORT STATUS mSntpcTimeGet (char *, ospl_uint32, struct timespec *, char *, 
+IMPORT STATUS mSntpcTimeGet (char *, zpl_uint32, struct timespec *, char *, 
                              SNTP_DATA *);
 
 #endif
@@ -115,10 +115,10 @@ enum
 
 extern int vty_show_sntpc_client(struct vty *vty);
 
-extern int sntpc_client_set_api(struct vty *, ospl_uint32 cmd, const char *value);
-extern int sntpc_client_dynamics_set_api(struct vty *, ospl_uint32 cmd, const char *value);
-extern int sntpc_client_get_api(struct vty *, ospl_uint32 cmd, const char *value);
-extern int sntpc_client_dynamics_get_api(struct vty *vty, ospl_uint32 cmd, const char *value);
+extern int sntpc_client_set_api(struct vty *, zpl_uint32 cmd, const char *value);
+extern int sntpc_client_dynamics_set_api(struct vty *, zpl_uint32 cmd, const char *value);
+extern int sntpc_client_get_api(struct vty *, zpl_uint32 cmd, const char *value);
+extern int sntpc_client_dynamics_get_api(struct vty *vty, zpl_uint32 cmd, const char *value);
 
 #endif
 

@@ -20,15 +20,12 @@
  * Boston, MA 02111-1307, USA. 
  */
 
-#include <zebra.h>
-
+#include "os_include.h"
+#include "zpl_include.h"
 #include "memory.h"
 #include "buffer.h"
 #include "log.h"
 #include "network.h"
-#include "buffer.h"
-#include "vty.h"
-
 
 /* Data container. */
 struct buffer_data
@@ -36,13 +33,13 @@ struct buffer_data
 	struct buffer_data *next;
 
 	/* Location to add new data. */
-	ospl_size_t cp;
+	zpl_size_t cp;
 
 	/* Pointer to data not yet flushed. */
-	ospl_size_t sp;
+	zpl_size_t sp;
 
 	/* Actual data stream (variable length). */
-	ospl_uchar data[]; /* real dimension is buffer->size */
+	zpl_uchar data[]; /* real dimension is buffer->size */
 };
 
 /* Buffer master. */
@@ -53,7 +50,7 @@ struct buffer
 	struct buffer_data *tail;
 
 	/* Size of each buffer_data chunk. */
-	ospl_size_t size;
+	zpl_size_t size;
 };
 /* It should always be true that: 0 <= sp <= cp <= size */
 
@@ -65,7 +62,7 @@ struct buffer
 
 /* Make new buffer. */
 struct buffer *
-buffer_new(ospl_size_t size)
+buffer_new(zpl_size_t size)
 {
 	struct buffer *b;
 
@@ -75,7 +72,7 @@ buffer_new(ospl_size_t size)
 		b->size = size;
 	else
 	{
-		static ospl_size_t default_size;
+		static zpl_size_t default_size;
 		if (!default_size)
 		{
 			long pgsz = sysconf(_SC_PAGESIZE);
@@ -95,13 +92,13 @@ void buffer_free(struct buffer *b)
 }
 
 /* Make string clone. */
-ospl_char *
+zpl_char *
 buffer_getstr(struct buffer *b)
 {
-	ospl_size_t totlen = 0;
+	zpl_size_t totlen = 0;
 	struct buffer_data *data;
-	ospl_char *s;
-	ospl_char *p;
+	zpl_char *s;
+	zpl_char *p;
 
 	for (data = b->head; data; data = data->next)
 		totlen += data->cp - data->sp;
@@ -118,7 +115,7 @@ buffer_getstr(struct buffer *b)
 }
 
 /* Return 1 if buffer is empty. */
-ospl_bool buffer_empty(struct buffer *b)
+zpl_bool buffer_empty(struct buffer *b)
 {
 	return (b->head == NULL);
 }
@@ -157,7 +154,7 @@ buffer_add(struct buffer *b)
 }
 
 /* Write data to buffer. */
-void buffer_put(struct buffer *b, const void *p, ospl_size_t size)
+void buffer_put(struct buffer *b, const void *p, zpl_size_t size)
 {
 	struct buffer_data *data = b->tail;
 	const char *ptr = p;
@@ -165,7 +162,7 @@ void buffer_put(struct buffer *b, const void *p, ospl_size_t size)
 	/* We use even last one byte of data buffer. */
 	while (size)
 	{
-		ospl_size_t chunk;
+		zpl_size_t chunk;
 
 		/* If there is no data buffer add it. */
 		if (data == NULL || data->cp == b->size)
@@ -180,7 +177,7 @@ void buffer_put(struct buffer *b, const void *p, ospl_size_t size)
 }
 
 /* Insert character into the buffer. */
-void buffer_putc(struct buffer *b, ospl_uchar c)
+void buffer_putc(struct buffer *b, zpl_uchar c)
 {
 	buffer_put(b, &c, 1);
 }
@@ -193,17 +190,17 @@ void buffer_putstr(struct buffer *b, const char *c)
 
 /* Keep flushing data to the fd until the buffer is empty or an error is
  encountered or the operation would block. */
-buffer_status_t buffer_flush_all(struct buffer *b, int fd, ospl_uint32 type)
+buffer_status_t buffer_flush_all(struct buffer *b, zpl_socket_t fd)
 {
 	buffer_status_t ret;
 	struct buffer_data *head;
-	ospl_size_t head_sp;
+	zpl_size_t head_sp;
 
 	if (!b->head)
 		return BUFFER_EMPTY;
 	head_sp = (head = b->head)->sp;
 	/* Flush all data. */
-	while ((ret = buffer_flush_available(b, fd, type)) == BUFFER_PENDING)
+	while ((ret = buffer_flush_available(b, fd)) == BUFFER_PENDING)
 	{
 		if ((b->head == head) && (head_sp == head->sp) && (errno != EINTR))
 			/* No data was flushed, so kernel buffer must be full. */
@@ -216,21 +213,21 @@ buffer_status_t buffer_flush_all(struct buffer *b, int fd, ospl_uint32 type)
 
 /* Flush enough data to fill a terminal window of the given scene (used only
  by vty telnet interface). */
-buffer_status_t buffer_flush_window(struct buffer *b, int fd, ospl_uint32 width,
-		ospl_uint32 height, ospl_uint32 erase_flag, ospl_uint32 no_more_flag, ospl_uint32 type)
+buffer_status_t buffer_flush_window(struct buffer *b, zpl_socket_t fd, zpl_uint32 width,
+		zpl_uint32 height, zpl_uint32 erase_flag, zpl_uint32 no_more_flag)
 {
-	ospl_uint32 nbytes;
-	ospl_uint32 iov_alloc;
-	ospl_uint32 iov_index;
+	zpl_uint32 nbytes;
+	zpl_uint32 iov_alloc;
+	zpl_uint32 iov_index;
 	struct iovec *iov;
 	struct iovec small_iov[3];
-	ospl_char more[] = " --More-- ";
-	ospl_char erase[] =
+	zpl_char more[] = " --More-- ";
+	zpl_char erase[] =
 	{ 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, ' ', ' ', ' ',
 			' ', ' ', ' ', ' ', ' ', ' ', ' ', 0x08, 0x08, 0x08, 0x08, 0x08,
 			0x08, 0x08, 0x08, 0x08, 0x08 };
 	struct buffer_data *data;
-	ospl_uint32 column;
+	zpl_uint32 column;
 
 	if (!b->head)
 		return BUFFER_EMPTY;
@@ -277,7 +274,7 @@ buffer_status_t buffer_flush_window(struct buffer *b, int fd, ospl_uint32 width,
 	column = 1; /* Column position of next character displayed. */
 	for (data = b->head; data && (height > 0); data = data->next)
 	{
-		ospl_size_t cp;
+		zpl_size_t cp;
 
 		cp = data->sp;
 		while ((cp < data->cp) && (height > 0))
@@ -295,7 +292,7 @@ buffer_status_t buffer_flush_window(struct buffer *b, int fd, ospl_uint32 width,
 				column++;
 			cp++;
 		}
-		iov[iov_index].iov_base = (ospl_char *) (data->data + data->sp);
+		iov[iov_index].iov_base = (zpl_char *) (data->data + data->sp);
 		iov[iov_index++].iov_len = cp - data->sp;
 		data->sp = cp;
 
@@ -341,13 +338,10 @@ buffer_status_t buffer_flush_window(struct buffer *b, int fd, ospl_uint32 width,
 
 		while (iov_index > 0)
 		{
-			ospl_uint32 iov_size;
+			zpl_uint32 iov_size;
 
 			iov_size = ((iov_index > IOV_MAX) ? IOV_MAX : iov_index);
-			if(type == IPCOM_STACK)
-			nbytes = ip_writev(fd, c_iov, iov_size);
-			else
-			nbytes = writev(fd, c_iov, iov_size);
+			nbytes = ipstack_writev(fd, c_iov, iov_size);
 			if (nbytes < 0)
 			{
 				zlog_warn(MODULE_DEFAULT, "%s: writev to fd %d failed: %s",
@@ -361,10 +355,7 @@ buffer_status_t buffer_flush_window(struct buffer *b, int fd, ospl_uint32 width,
 		}
 	}
 #else  /* IOV_MAX */
-	if (type == IPCOM_STACK)
-		nbytes = ip_writev(fd, iov, iov_index);
-	else
-		nbytes = writev(fd, iov, iov_index);
+		nbytes = ipstack_writev(fd, iov, iov_index);
 	if (nbytes < 0)
 		zlog_warn(MODULE_DEFAULT, "%s: writev to fd %d failed: %s", __func__, fd,
 				safe_strerror(errno));
@@ -391,7 +382,7 @@ buffer_status_t buffer_flush_window(struct buffer *b, int fd, ospl_uint32 width,
  all of the queued data, just a "big" chunk.  It returns 0 if it was
  able to empty out the buffers completely, 1 if more flushing is
  required later, or -1 on a fatal write error. */
-buffer_status_t buffer_flush_available(struct buffer *b, int fd, ospl_uint32 type)
+buffer_status_t buffer_flush_available(struct buffer *b, zpl_socket_t fd)
 {
 
 	/* These are just reasonable values to make sure a significant amount of
@@ -405,10 +396,10 @@ buffer_status_t buffer_flush_available(struct buffer *b, int fd, ospl_uint32 typ
 #define MAX_FLUSH 131072
 
 	struct buffer_data *d = NULL;
-	ospl_size_t written = 0;
+	zpl_size_t written = 0;
 	struct iovec iov[MAX_CHUNKS];
-	ospl_size_t iovcnt = 0;
-	ospl_size_t nbyte = 0;
+	zpl_size_t iovcnt = 0;
+	zpl_size_t nbyte = 0;
 
 	for (d = b->head; d && (iovcnt < MAX_CHUNKS) && (nbyte < MAX_FLUSH);
 			d = d->next, iovcnt++)
@@ -421,11 +412,7 @@ buffer_status_t buffer_flush_available(struct buffer *b, int fd, ospl_uint32 typ
 		/* No data to flush: should we issue a warning message? */
 		return BUFFER_EMPTY;
 
-	if (type == IPCOM_STACK)
-		written = ip_writev(fd, iov, iovcnt);
-	else
-		written = writev(fd, iov, iovcnt);
-
+		written = ipstack_writev(fd, iov, iovcnt);
 	/* only place where written should be sign compared */
 	if (written < 0)
 	{
@@ -470,8 +457,8 @@ buffer_status_t buffer_flush_available(struct buffer *b, int fd, ospl_uint32 typ
 #undef MAX_FLUSH
 }
 
-buffer_status_t buffer_write(struct buffer *b, int fd, const void *p,
-		ospl_size_t size, ospl_uint32 type)
+buffer_status_t buffer_write(struct buffer *b, zpl_socket_t fd, const void *p,
+		zpl_size_t size)
 {
 	ssize_t nbytes;
 
@@ -488,10 +475,7 @@ buffer_status_t buffer_write(struct buffer *b, int fd, const void *p,
 		nbytes = 0;
 	else
 	{
-		if (type == IPCOM_STACK)
-			nbytes = ip_write(fd, p, size);
-		else
-			nbytes = write(fd, p, size);
+		nbytes = ipstack_writev(fd, p, size);
 		if (nbytes < 0)
 		{
 			if (ERRNO_IO_RETRY(errno))
@@ -506,7 +490,7 @@ buffer_status_t buffer_write(struct buffer *b, int fd, const void *p,
 	}
 	/* Add any remaining data to the buffer. */
 	{
-		ospl_size_t written = nbytes;
+		zpl_size_t written = nbytes;
 		if (written < size)
 			buffer_put(b, ((const char *) p) + written, size - written);
 	}

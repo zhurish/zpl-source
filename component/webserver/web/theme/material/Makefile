@@ -1,4 +1,4 @@
-include $(MAKE_DIR)/makelinux.mk
+include $(ZPL_MAKE_DIR)/makelinux.mk
 
 #
 #
@@ -10,62 +10,62 @@ include $(MAKE_DIR)/makelinux.mk
 #
 #	
 web_js_install:
-	install -d $(DSTWWWDIR)/js
-	$(CP) -arf ./js/* $(DSTWWWDIR)/js/
+	install -d $(ZPL_INSTALL_WWW_DIR)/js
+	$(CP) -arf ./js/* $(ZPL_INSTALL_WWW_DIR)/js/
 	
 #
 #
 web_cgi_install: 
-	install -d $(DSTWWWDIR)/cgi-bin
-	#install -m 755 ./cgi-bin/test.cgi $(DSTWWWDIR)/cgi-bin
+	install -d $(ZPL_INSTALL_WWW_DIR)/cgi-bin
+	#install -m 755 ./cgi-bin/test.cgi $(ZPL_INSTALL_WWW_DIR)/cgi-bin
 #
 #	
 web_css_install:
-	install -d $(DSTWWWDIR)/css
-	$(CP) ./cascade.css $(DSTWWWDIR)/css/cascade.css
+	install -d $(ZPL_INSTALL_WWW_DIR)/css
+	$(CP) ./cascade.css $(ZPL_INSTALL_WWW_DIR)/css/cascade.css
 #
 #	
 web_res_install:
-	install -d $(DSTWWWDIR)/res
-	$(CP) -arf ./res/* $(DSTWWWDIR)/res/
-	$(CP) -arf ./logo.png $(DSTWWWDIR)/res/
-	$(CP) -arf ./favicon.ico $(DSTWWWDIR)/res/	
+	install -d $(ZPL_INSTALL_WWW_DIR)/res
+	$(CP) -arf ./res/* $(ZPL_INSTALL_WWW_DIR)/res/
+	$(CP) -arf ./logo.png $(ZPL_INSTALL_WWW_DIR)/res/
+	$(CP) -arf ./favicon.ico $(ZPL_INSTALL_WWW_DIR)/res/	
 #
 #
 web_fonts_install:
-	install -d $(DSTWWWDIR)/fonts
-	$(CP) -arf ./fonts/* $(DSTWWWDIR)/fonts/
+	install -d $(ZPL_INSTALL_WWW_DIR)/fonts
+	$(CP) -arf ./fonts/* $(ZPL_INSTALL_WWW_DIR)/fonts/
 #
 #
 #				
 #
 #
 web_html_install:
-	install -d $(DSTWWWDIR)/html
-	$(CP) ./html/login.html $(DSTWWWDIR)/html/login.html
-	#$(CP) ./html/upload.html $(DSTWWWDIR)/html/upload.html
-	#$(CP) ./html/test.html $(DSTWWWDIR)/html/test.html
-	#$(CP) ./html/login.html $(DSTWWWDIR)/html/login.html		
-	#$(CP) .//html/main.html $(DSTWWWDIR)/html/main.html
-	#$(CP) ./html/upload.html $(DSTWWWDIR)/html/upload.html
-	#$(CP) ./html/overview.html $(DSTWWWDIR)/html/overview.html
-	#$(CP) ./html/version.html $(DSTWWWDIR)/html/version.html	
-	#$(CP) ./html/menu.html $(DSTWWWDIR)/html/menu.html
-	#$(CP) ./html/header.html $(DSTWWWDIR)/html/header.html	
-	#$(CP) ./html/footer.html $(DSTWWWDIR)/html/footer.html	
-	#$(CP) ./html/*.html $(DSTWWWDIR)/html/
+	install -d $(ZPL_INSTALL_WWW_DIR)/html
+	$(CP) ./html/login.html $(ZPL_INSTALL_WWW_DIR)/html/login.html
+	#$(CP) ./html/upload.html $(ZPL_INSTALL_WWW_DIR)/html/upload.html
+	#$(CP) ./html/test.html $(ZPL_INSTALL_WWW_DIR)/html/test.html
+	#$(CP) ./html/login.html $(ZPL_INSTALL_WWW_DIR)/html/login.html		
+	#$(CP) .//html/main.html $(ZPL_INSTALL_WWW_DIR)/html/main.html
+	#$(CP) ./html/upload.html $(ZPL_INSTALL_WWW_DIR)/html/upload.html
+	#$(CP) ./html/overview.html $(ZPL_INSTALL_WWW_DIR)/html/overview.html
+	#$(CP) ./html/version.html $(ZPL_INSTALL_WWW_DIR)/html/version.html	
+	#$(CP) ./html/menu.html $(ZPL_INSTALL_WWW_DIR)/html/menu.html
+	#$(CP) ./html/header.html $(ZPL_INSTALL_WWW_DIR)/html/header.html	
+	#$(CP) ./html/footer.html $(ZPL_INSTALL_WWW_DIR)/html/footer.html	
+	#$(CP) ./html/*.html $(ZPL_INSTALL_WWW_DIR)/html/
 
 #	
 	
 #
 #	
 webinstall: 
-	install -d $(DSTWWWDIR)
-	$(CP) ./html/index.html $(DSTWWWDIR)/index.html	
+	install -d $(ZPL_INSTALL_WWW_DIR)
+	$(CP) ./html/index.html $(ZPL_INSTALL_WWW_DIR)/index.html	
 
 
 webclean:
-	$(RM) -rf $(DSTWWWDIR)/*
+	$(RM) -rf $(ZPL_INSTALL_WWW_DIR)/*
 #
 #
 install: webinstall web_cgi_install web_css_install web_res_install web_html_install \

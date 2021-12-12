@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-#include "zebra.h"
+#include "zpl_include.h"
 #include "log.h"
 
 
@@ -32,11 +32,11 @@ extern int voip_thlog_close();
 extern int voip_thlog_reload();
 extern int voip_thlog_clean();
 extern int voip_thlog_log(const char *format, ...);
-extern int voip_thlog_log1(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room, char *id,
+extern int voip_thlog_log1(zpl_uint8 building, zpl_uint8 unit, zpl_uint16 room, char *id,
 						   char *phone, const char *format, ...);
 extern int voip_thlog_log2(const char *format, ...);
 extern int voip_thlog_log3(char *type, char *result, const char *format, ...);
-extern int voip_thlog_log4(const ospl_time_t ti, char *type, char *result, const char *format, ...);
+extern int voip_thlog_log4(const zpl_time_t ti, char *type, char *result, const char *format, ...);
 
 #ifdef __cplusplus
 }

@@ -5,9 +5,9 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 #include "mqtt-config.h"
 #include <mqtt_protocol.h>
 #include <mosquitto.h>
@@ -21,9 +21,9 @@
 int mqtt_client_connect(struct mqtt_app_config *cfg)
 {
 #ifndef WIN32
-	ospl_char *err = NULL;
+	zpl_char *err = NULL;
 #else
-	ospl_char err[1024];
+	zpl_char err[1024];
 #endif
 	int rc = 0;
 	int port = 0;
@@ -103,7 +103,7 @@ int mqtt_client_id_generate(struct mqtt_app_config *cfg)
 }
 
 
-int mqtt_client_add_topic(struct mqtt_app_config *cfg, ospl_char *topic)
+int mqtt_client_add_topic(struct mqtt_app_config *cfg, zpl_char *topic)
 {
 	zassert(cfg != NULL);
 
@@ -139,7 +139,7 @@ int mqtt_client_add_topic(struct mqtt_app_config *cfg, ospl_char *topic)
 		}
 /*		if (!cfg->sub.topics)
 		{
-			cfg->sub.topics = XMALLOC(MTYPE_MQTT_TOPIC, MQTT_TOPICS_MAX * sizeof(ospl_char *));
+			cfg->sub.topics = XMALLOC(MTYPE_MQTT_TOPIC, MQTT_TOPICS_MAX * sizeof(zpl_char *));
 		}
 		if (!cfg->sub.topics)
 		{
@@ -152,7 +152,7 @@ int mqtt_client_add_topic(struct mqtt_app_config *cfg, ospl_char *topic)
 	return 0;
 }
 
-int mqtt_client_del_topic(struct mqtt_app_config *cfg, ospl_char *topic)
+int mqtt_client_del_topic(struct mqtt_app_config *cfg, zpl_char *topic)
 {
 	int i = 0;
 	zassert(cfg != NULL);
@@ -279,10 +279,10 @@ int mqtt_client_opts_config(struct mqtt_app_config *cfg)
  * connect user-property key value
  */
 
-int mqtt_client_property(struct mqtt_app_config *cfg, ospl_char *cmdname,
-		ospl_char *propname, ospl_char *key, ospl_char *value)
+int mqtt_client_property(struct mqtt_app_config *cfg, zpl_char *cmdname,
+		zpl_char *propname, zpl_char *key, zpl_char *value)
 {
-	ospl_uint32 cmd = 0, identifier = 0, type = 0;
+	zpl_uint32 cmd = 0, identifier = 0, type = 0;
 	mosquitto_property **proplist = NULL;
 	int rc = 0;
 	zassert(cfg != NULL);
@@ -420,8 +420,8 @@ int mqtt_client_property(struct mqtt_app_config *cfg, ospl_char *cmdname,
 	return MOSQ_ERR_SUCCESS;
 }
 
-void mqtt_log_error_callback(const ospl_char *file, const ospl_char *func, const ospl_uint32 line,
-		const struct mqtt_app_config *cfg, const ospl_char *fmt, ...)
+void mqtt_log_error_callback(const zpl_char *file, const zpl_char *func, const zpl_uint32 line,
+		const struct mqtt_app_config *cfg, const zpl_char *fmt, ...)
 {
 	va_list va;
 
@@ -432,17 +432,17 @@ void mqtt_log_error_callback(const ospl_char *file, const ospl_char *func, const
 	//vfprintf(stderr, fmt, va);
 	va_end(va);
 
-	//extern void pl_vzlog(const ospl_char *file, const ospl_char *func, const int line, struct zlog *zl, int module, int priority, const ospl_char *format,
+	//extern void pl_vzlog(const zpl_char *file, const zpl_char *func, const int line, struct zlog *zl, int module, int priority, const zpl_char *format,
 	//		va_list args);
 	//	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBLISH (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))",
 		//mosq->id, dup, qos, retain, mid, topic, (long)payloadlen);
 }
 
 
-void mqtt_log_callback(const ospl_char *file, const ospl_char *func, const ospl_uint32 line,
-		struct mosquitto *mosq, void *obj, ospl_uint32 level, const ospl_char *str)
+void mqtt_log_callback(const zpl_char *file, const zpl_char *func, const zpl_uint32 line,
+		struct mosquitto *mosq, void *obj, zpl_uint32 level, const zpl_char *str)
 {
-	ospl_uint32 loglevel = 0;
+	zpl_uint32 loglevel = 0;
 	if(level & MOSQ_LOG_ERR)
 		loglevel = LOG_ERR;
 	if(level & MOSQ_LOG_WARNING)

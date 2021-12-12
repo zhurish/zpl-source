@@ -58,6 +58,9 @@ MQTT_OBJS+=mqtt_app_publish.o
 MQTT_OBJS+=mqtt_app_subscribed.o
 MQTT_OBJS+=mqtt_app_show.o
 MQTT_OBJS+=mqtt_app_api.o
+ifeq ($(strip $(ZPL_SHELL_MODULE)),true)
+MQTT_OBJS += cmd_mqtt.o
+endif
 #############################################################################
 # LIB
 ###########################################################################

@@ -5,7 +5,7 @@
  *      Author: DELL
  */
 
-#include "zebra.h"
+#include "zpl_include.h"
 #include "zassert.h"
 #include "vty.h"
 #include "if.h"
@@ -31,7 +31,7 @@
 
 #ifndef THEME_V9UI
 
-#ifdef PL_BUILD_OS_OPENWRT
+#ifdef ZPL_BUILD_OS_OPENWRT
 /*
 config switch
         option name 'switch0'
@@ -53,25 +53,25 @@ config switch_vlan
 #define SWITCH_PORT_CPU		6
 typedef struct sw_port
 {
-	ospl_uint8		port;
-	ospl_uint8		is_active:1;
-	ospl_uint8		tagged:1;
-	ospl_uint8		wan:1;
-	ospl_uint8		is_cpu:1;
-	ospl_uint8		disable:1;
-	ospl_uint8		res:3;
+	zpl_uint8		port;
+	zpl_uint8		is_active:1;
+	zpl_uint8		tagged:1;
+	zpl_uint8		wan:1;
+	zpl_uint8		is_cpu:1;
+	zpl_uint8		disable:1;
+	zpl_uint8		res:3;
 }sw_port_t;
 
 typedef struct sw_vlan
 {
-	ospl_uint16		vlan;
-	ospl_uint8		wanlan;
+	zpl_uint16		vlan;
+	zpl_uint8		wanlan;
 	sw_port_t	ports[SWITCH_PORTS_MAX];
 }sw_vlan_t;
 
 typedef struct switch_dev
 {
-	ospl_bool			vlan_enable;
+	zpl_bool			vlan_enable;
 	sw_vlan_t 		vlan[SWITCH_VLAN_MAX];
 }switch_dev_t;
 
@@ -79,7 +79,7 @@ static switch_dev_t		*switch_dev = NULL;
 
 
 
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 /*
 network.wan6.ifname='eth0.2'
 network.@switch[0]=switch
@@ -337,7 +337,7 @@ static int switch_dev_init()
 			return ERROR;
 	}
 	memset(switch_dev, 0, sizeof(switch_dev_t));
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 	switch_dev_config_load(switch_dev);
 #endif
 	return OK;
@@ -370,7 +370,7 @@ static int _switch_dev_vlan_clean_by_noport(switch_dev_t *dev)
 	return OK;
 }
 
-static int _switch_dev_vlan_create(switch_dev_t *dev, ospl_uint16 vlan)
+static int _switch_dev_vlan_create(switch_dev_t *dev, zpl_uint16 vlan)
 {
 	int i = 0;
 	for(i = 0; i < SWITCH_VLAN_MAX; i++)
@@ -391,7 +391,7 @@ static int _switch_dev_vlan_create(switch_dev_t *dev, ospl_uint16 vlan)
 	return OK;
 }
 
-static int _switch_dev_vlan_get_port(switch_dev_t *dev, ospl_uint16 *vlan, ospl_uint8 port)
+static int _switch_dev_vlan_get_port(switch_dev_t *dev, zpl_uint16 *vlan, zpl_uint8 port)
 {
 	int i = 0, j = 0;
 	for(i = 0; i < SWITCH_VLAN_MAX; i++)
@@ -412,7 +412,7 @@ static int _switch_dev_vlan_get_port(switch_dev_t *dev, ospl_uint16 *vlan, ospl_
 	return ERROR;
 }
 
-static int _switch_dev_vlan_add_port(switch_dev_t *dev, ospl_uint16 vlan, ospl_uint8 port, ospl_uint8 tag, ospl_uint8 wan)
+static int _switch_dev_vlan_add_port(switch_dev_t *dev, zpl_uint16 vlan, zpl_uint8 port, zpl_uint8 tag, zpl_uint8 wan)
 {
 	int i = 0, j = 0;
 	for(i = 0; i < SWITCH_VLAN_MAX; i++)
@@ -440,7 +440,7 @@ static int _switch_dev_vlan_add_port(switch_dev_t *dev, ospl_uint16 vlan, ospl_u
 	return ERROR;
 }
 
-static int _switch_dev_vlan_del_port(switch_dev_t *dev, ospl_uint16 vlan, ospl_uint8 port)
+static int _switch_dev_vlan_del_port(switch_dev_t *dev, zpl_uint16 vlan, zpl_uint8 port)
 {
 	int i = 0, j = 0;
 	for(i = 0; i < SWITCH_VLAN_MAX; i++)
@@ -462,8 +462,8 @@ static int _switch_dev_vlan_del_port(switch_dev_t *dev, ospl_uint16 vlan, ospl_u
 	return ERROR;
 }
 
-static int _switch_dev_vlan_update_port(switch_dev_t *dev, ospl_uint16 vlan,
-		ospl_uint8 port, ospl_uint8 tag, ospl_uint8 wan)
+static int _switch_dev_vlan_update_port(switch_dev_t *dev, zpl_uint16 vlan,
+		zpl_uint8 port, zpl_uint8 tag, zpl_uint8 wan)
 {
 	int i = 0, j = 0;
 	for(i = 0; i < SWITCH_VLAN_MAX; i++)
@@ -486,7 +486,7 @@ static int _switch_dev_vlan_update_port(switch_dev_t *dev, ospl_uint16 vlan,
 	return ERROR;
 }
 
-static int _switch_dev_vlan_port_disable(switch_dev_t *dev, ospl_uint8 port, ospl_uint8 disable)
+static int _switch_dev_vlan_port_disable(switch_dev_t *dev, zpl_uint8 port, zpl_uint8 disable)
 {
 	int i = 0, j = 0;
 	char cmd[128];
@@ -519,10 +519,10 @@ static int web_switch_save_handle(Webs *wp, void *p)
 	//argv = "ACTION=switch&BTNID=" + obj.id + "&port=" + port + "&vlanid=" + vlanid +
 	//"&tagged=" + tagged + "&wanlan=" + wanlan;
 	int ret = 0;
-	ospl_uint8 port = 0;
-	ospl_uint16 vlan = 0;
-	ospl_uint8 tagged = 0;
-	ospl_uint8 wanlan = 0;
+	zpl_uint8 port = 0;
+	zpl_uint16 vlan = 0;
+	zpl_uint8 tagged = 0;
+	zpl_uint8 wanlan = 0;
 	char *strval = NULL;
 	strval = webs_get_var(wp, T("port"), T(""));
 	if (NULL == strval)
@@ -560,7 +560,7 @@ static int web_switch_save_handle(Webs *wp, void *p)
 	ret = 0;
 	if(switch_dev && (_switch_dev_vlan_create(switch_dev, vlan) == OK))
 	{
-		ospl_uint16 oldvlan = 0;//获取该接口所在的VLAN
+		zpl_uint16 oldvlan = 0;//获取该接口所在的VLAN
 		if(_switch_dev_vlan_get_port(switch_dev, &oldvlan, port) == OK)
 		{
 			if(oldvlan == vlan)//该接口所在的VLAN和配置的VLAN一致；更新接口信息
@@ -583,7 +583,7 @@ static int web_switch_save_handle(Webs *wp, void *p)
 
 	if(ret == 0)
 	{
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 		switch_dev_config_save();
 #endif
 		web_return_text_plain(wp, OK);
@@ -761,7 +761,7 @@ static int web_switch_port_tbl(Webs *wp, char *path, char *query)
 int web_switch_app(void)
 {
 #ifndef THEME_V9UI
-#ifdef PL_BUILD_OS_OPENWRT
+#ifdef ZPL_BUILD_OS_OPENWRT
 	switch_dev_init();
 	websFormDefine("port-tbl", web_switch_port_tbl);
 	web_button_add_hook("switch", "save", web_switch_handle, NULL);

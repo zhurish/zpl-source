@@ -14,7 +14,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
 // "liveMedia"
-// Copyright (c) 1996-2020 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2021 Live Networks, Inc.  All rights reserved.
 // RTP source for a common kind of payload format: Those that pack multiple,
 // complete codec frames (as many as possible) into each RTP packet.
 // Implementation
@@ -73,7 +73,11 @@ MultiFramedRTPSource
   fReorderingBuffer = new ReorderingPacketBuffer(packetFactory);
 
   // Try to use a big receive buffer for RTP:
+#ifdef USE_RTSP_OPT
+  increaseReceiveBufferTo(env, RTPgs->socketNum(), 2*1024*1024);
+#else
   increaseReceiveBufferTo(env, RTPgs->socketNum(), 50*1024);
+#endif
 }
 
 void MultiFramedRTPSource::reset() {
@@ -236,7 +240,7 @@ void MultiFramedRTPSource::networkReadHandler1() {
   // Read the network packet, and perform sanity checks on the RTP header:
   Boolean readSuccess = False;
   do {
-    struct sockaddr_in fromAddress;
+    struct sockaddr_storage fromAddress;
     Boolean packetReadWasIncomplete = fPacketReadInProgress != NULL;
     if (!bPacket->fillInData(fRTPInterface, fromAddress, packetReadWasIncomplete)) {
       if (bPacket->bytesAvailable() == 0) { // should not happen??
@@ -392,7 +396,7 @@ void BufferedPacket
   frameDurationInMicroseconds = 0; // by default.  Subclasses should correct this.
 }
 
-Boolean BufferedPacket::fillInData(RTPInterface& rtpInterface, struct sockaddr_in& fromAddress,
+Boolean BufferedPacket::fillInData(RTPInterface& rtpInterface, struct sockaddr_storage& fromAddress,
 				   Boolean& packetReadWasIncomplete) {
   if (!packetReadWasIncomplete) reset();
 

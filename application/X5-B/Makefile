@@ -1,11 +1,11 @@
 
 #EXTRA_DEFINE += -DX5_B_A_DEBUG
 
-include $(MAKE_DIR)/makelinux.mk
+include $(ZPL_MAKE_DIR)/makelinux.mk
 
 include config.mk
 
-#PL_DEBUG += -DX5_B_A_DEBUG
+#ZPL_DEBUG += -DX5_B_A_DEBUG
 
 .PHONY:	obj all demo lib clean rebuild install objclean make_prepare
 

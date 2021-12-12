@@ -10,7 +10,7 @@
 /* Define to 1 if you have the <byteswap.h> header file. */
 //#define HAVE_BYTESWAP_H 1
 
-#ifdef OS_LINUX
+#ifdef ZPL_BUILD_LINUX
 /* Define to 1 if you have the declaration of `TIOCM_RTS', and to 0 if you
    don't. */
 #define HAVE_DECL_TIOCM_RTS 1
@@ -47,7 +47,7 @@
 /* Define to 1 if you have the `gettimeofday' function. */
 #define HAVE_GETTIMEOFDAY 1
 
-/* Define to 1 if you have the `inet_ntoa' function. */
+/* Define to 1 if you have the `ipstack_inet_ntoa' function. */
 #define HAVE_INET_NTOA 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */

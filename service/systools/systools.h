@@ -8,6 +8,10 @@
 #ifndef __SYSTOOLS_H__
 #define __SYSTOOLS_H__
 
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+
 #ifndef BUFSIZE
 #define BUFSIZE 512
 #endif

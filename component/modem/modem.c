@@ -6,12 +6,10 @@
  */
 
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "os_util.h"
-#include "tty_com.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "modem_enum.h"
 #include "modem.h"
@@ -28,7 +26,7 @@
 #include "modem_product.h"
 
 
-ospl_uint32 modem_debug_conf = 0;
+zpl_uint32 modem_debug_conf = 0;
 
 modem_main_t gModemmain;
 
@@ -88,10 +86,10 @@ static modem_t * modem_main_lookup_node(char *name)
 static int modem_main_default_node(modem_t *modem)
 {
 	assert(modem);
-	modem->active 		= ospl_true;
+	modem->active 		= zpl_true;
 	modem->dialtype 	= MODEM_DIAL_NONE;
 	modem->ipstack 		= MODEM_IPV4;
-	modem->bSecondary 	= ospl_false;
+	modem->bSecondary 	= zpl_false;
 	modem->profile		= 1;
 	modem->network = NETWORK_AUTO;
 
@@ -222,12 +220,12 @@ int modem_main_bind_api(char *name, char *serialname)
 		//modem->ifp = serial->ifp;
 		modem->state = MODEM_MACHINE_STATE_NONE;
 		//modem->event = MODEM_EV_NONE;
-		modem->active = ospl_true;
-		//modem->pppdActive = ospl_false;
+		modem->active = zpl_true;
+		//modem->pppdActive = zpl_false;
 		if(client && client->driver && client->driver->modem_driver_probe)
 		{
 			(client->driver->modem_driver_probe)(client->driver);
-			//modem_process_add_api(MODEM_EV_INSTER, modem, ospl_true);
+			//modem_process_add_api(MODEM_EV_INSTER, modem, zpl_true);
 		}
 	}
 	else
@@ -254,12 +252,12 @@ int modem_main_unbind_api(char *name, char *serialname)
 			if(client && client->driver && client->driver->modem_driver_exit)
 			{
 				(client->driver->modem_driver_exit)(client->driver);
-				//modem_process_add_api(MODEM_EV_INSTER, modem, ospl_true);
+				//modem_process_add_api(MODEM_EV_INSTER, modem, zpl_true);
 			}
-			modem_event_del_api(modem, MODEM_EV_MAX, ospl_true);
+			modem_event_del_api(modem, MODEM_EV_MAX, zpl_true);
 			((modem_client_t *)modem->client)->modem = NULL;
 			//modem_event_remove(modem, MODEM_EV_REMOVE);
-			//modem_process_add_api(MODEM_EV_REMOVE, modem, ospl_true);
+			//modem_process_add_api(MODEM_EV_REMOVE, modem, zpl_true);
 		}
 		serial = modem->serial;
 		if(serial)
@@ -269,9 +267,9 @@ int modem_main_unbind_api(char *name, char *serialname)
 		modem->client = NULL;
 		modem->state = MODEM_MACHINE_STATE_NONE;
 		//modem->event = MODEM_EV_NONE;
-		modem->active = ospl_false;
+		modem->active = zpl_false;
 		//modem->ifp = NULL;
-		//modem->pppdActive = ospl_false;
+		//modem->pppdActive = zpl_false;
 	}
 	else
 		ret = ERROR;
@@ -376,16 +374,16 @@ int modem_main_unlock(modem_t *modem)
 /*************************************************************************/
 /*************************************************************************/
 /*************************************************************************/
-int modem_main_trywait(ospl_uint32 s)
+int modem_main_trywait(zpl_uint32 s)
 {
-	static ospl_uint32 time_base = 0;
+	static zpl_uint32 time_base = 0;
 	if(time_base == 0)
 	{
 		time_base = os_time(NULL);
 	}
 	else
 	{
-		ospl_uint32 now = os_time(NULL);
+		zpl_uint32 now = os_time(NULL);
 		if((now - time_base) > 1)
 		{
 			time_base = now;
@@ -397,7 +395,7 @@ int modem_main_trywait(ospl_uint32 s)
 }
 /*************************************************************************/
 /*************************************************************************/
-static int modem_interface_system_up(ospl_bool up,  char *name)
+static int modem_interface_system_up(zpl_bool up,  char *name)
 {
 	char cmd[128];
 	memset(cmd, 0, sizeof(cmd));
@@ -412,7 +410,7 @@ int modem_interface_update_kernel(modem_t *modem, char *name)
 	{
 		struct interface *ifp = modem->eth0;
 		MODEM_DEBUG("modem update kernel interface %s -> %s", ifp->name, name);
-		modem_interface_system_up(ospl_true, name);
+		modem_interface_system_up(zpl_true, name);
 		if_kname_set(modem->eth0, name);
 		//((struct interface *)modem->eth0)->k_ifindex = pal_interface_ifindex(name);
 		nsm_pal_interface_up(modem->eth0);
@@ -431,7 +429,7 @@ int modem_serial_interface_update_kernel(modem_t *modem, char *name)
 	if(modem && modem->ppp_serial)
 	{
 		MODEM_DEBUG("modem update kernel interface %s -> %s", ((struct interface *)modem->ppp_serial)->name, name);
-		modem_interface_system_up(ospl_true, name);
+		modem_interface_system_up(zpl_true, name);
 		if_kname_set(modem->ppp_serial, name);
 		//((struct interface *)modem->eth0)->k_ifindex = pal_interface_ifindex(name);
 		nsm_pal_interface_up(modem->ppp_serial);
@@ -494,7 +492,7 @@ int modem_main_init(void)
 
 #if 1//def __MODEM_DEBUG
 	modem_serial_add_api("quectelec20");
-#ifdef PL_BUILD_ARCH_X86
+#ifdef ZPL_BUILD_ARCH_X86
 	modem_serial_channel_api("quectelec20", 5);
 #else
 	modem_serial_channel_api("quectelec20", 1);
@@ -520,7 +518,7 @@ int modem_main_exit(void)
 /*************************************************************************/
 
 #ifdef __MODEM_DEBUG
-void modem_debug_printf(void *fp, char *func, ospl_uint32 line,  const char *format, ...)
+void modem_debug_printf(void *fp, char *func, zpl_uint32 line,  const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope
+    xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope"
+    xmlns:SOAP-ENC="http://www.w3.org/2003/05/soap-encoding"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing"
+    xmlns:wsdd="http://schemas.xmlsoap.org/ws/2005/04/discovery"
+    xmlns:chan="http://schemas.microsoft.com/ws/2005/02/duplex"
+    xmlns:wsa5="http://www.w3.org/2005/08/addressing"
+    xmlns:xmime="http://tempuri.org/xmime.xsd"
+    xmlns:xop="http://www.w3.org/2004/08/xop/include"
+    xmlns:ns1="http://www.onvif.org/ver20/analytics/humanface"
+    xmlns:ns2="http://www.onvif.org/ver20/analytics/humanbody"
+    xmlns:tt="http://www.onvif.org/ver10/schema"
+    xmlns:wsrfbf="http://docs.oasis-open.org/wsrf/bf-2"
+    xmlns:wstop="http://docs.oasis-open.org/wsn/t-1"
+    xmlns:wsrfr="http://docs.oasis-open.org/wsrf/r-2"
+    xmlns:tad="http://www.onvif.org/ver10/analyticsdevice/wsdl"
+    xmlns:tan="http://www.onvif.org/ver20/analytics/wsdl"
+    xmlns:tdn="http://www.onvif.org/ver10/network/wsdl"
+    xmlns:tds="http://www.onvif.org/ver10/device/wsdl"
+    xmlns:tev="http://www.onvif.org/ver10/events/wsdl"
+    xmlns:wsnt="http://docs.oasis-open.org/wsn/b-2"
+    xmlns:timg="http://www.onvif.org/ver20/imaging/wsdl"
+    xmlns:tls="http://www.onvif.org/ver10/display/wsdl"
+    xmlns:tmd="http://www.onvif.org/ver10/deviceIO/wsdl"
+    xmlns:tptz="http://www.onvif.org/ver20/ptz/wsdl"
+    xmlns:trc="http://www.onvif.org/ver10/recording/wsdl"
+    xmlns:trp="http://www.onvif.org/ver10/replay/wsdl"
+    xmlns:trt="http://www.onvif.org/ver10/media/wsdl"
+    xmlns:trv="http://www.onvif.org/ver10/receiver/wsdl"
+    xmlns:tse="http://www.onvif.org/ver10/search/wsdl">
+ <SOAP-ENV:Body>
+  <tse:GetMediaAttributesResponse>
+   <tse:MediaAttributes xsi:type="tt:MediaAttributes">
+    <tt:RecordingToken xsi:type="tt:RecordingReference"></tt:RecordingToken>
+    <tt:TrackAttributes xsi:type="tt:TrackAttributes">
+     <tt:TrackInformation xsi:type="tt:TrackInformation">
+      <tt:TrackToken xsi:type="tt:TrackReference"></tt:TrackToken>
+      <tt:TrackType xsi:type="tt:TrackType">Video</tt:TrackType>
+      <tt:Description xsi:type="tt:Description"></tt:Description>
+      <tt:DataFrom xsi:type="xsd:dateTime">2021-05-24T03:37:12Z</tt:DataFrom>
+      <tt:DataTo xsi:type="xsd:dateTime">2021-05-24T03:37:12Z</tt:DataTo>
+      <!-- extensibility element(s) -->
+
+     </tt:TrackInformation>
+     <tt:VideoAttributes xsi:type="tt:VideoAttributes">
+      <tt:Bitrate xsi:type="xsd:int">0</tt:Bitrate>
+      <tt:Width xsi:type="xsd:int">0</tt:Width>
+      <tt:Height xsi:type="xsd:int">0</tt:Height>
+      <tt:Encoding xsi:type="xsd:string"></tt:Encoding>
+      <tt:Framerate xsi:type="xsd:float">0.0</tt:Framerate>
+      <!-- extensibility element(s) -->
+
+     </tt:VideoAttributes>
+     <tt:AudioAttributes xsi:type="tt:AudioAttributes">
+      <tt:Bitrate xsi:type="xsd:int">0</tt:Bitrate>
+      <tt:Encoding xsi:type="xsd:string"></tt:Encoding>
+      <tt:Samplerate xsi:type="xsd:int">0</tt:Samplerate>
+      <!-- extensibility element(s) -->
+
+     </tt:AudioAttributes>
+     <tt:MetadataAttributes xsi:type="tt:MetadataAttributes" PtzSpaces="">
+      <tt:CanContainPTZ xsi:type="xsd:boolean">false</tt:CanContainPTZ>
+      <tt:CanContainAnalytics xsi:type="xsd:boolean">false</tt:CanContainAnalytics>
+      <tt:CanContainNotifications xsi:type="xsd:boolean">false</tt:CanContainNotifications>
+      <!-- extensibility element(s) -->
+
+     </tt:MetadataAttributes>
+     <tt:Extension xsi:type="tt:TrackAttributesExtension">
+      <!-- extensibility element(s) -->
+
+     </tt:Extension>
+    </tt:TrackAttributes>
+    <tt:From xsi:type="xsd:dateTime">2021-05-24T03:37:12Z</tt:From>
+    <tt:Until xsi:type="xsd:dateTime">2021-05-24T03:37:12Z</tt:Until>
+    <!-- extensibility element(s) -->
+
+   </tse:MediaAttributes>
+  </tse:GetMediaAttributesResponse>
+ </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

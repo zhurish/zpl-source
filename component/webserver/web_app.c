@@ -5,7 +5,7 @@
  *      Author: DELL
  */
 
-#include "zebra.h"
+#include "zpl_include.h"
 #include "vty.h"
 #include "if.h"
 
@@ -222,7 +222,7 @@ int
 web_app_module_task_exit ()
 {
 	zassert(web_app != NULL);
-	web_app->finished = ospl_true;
+	web_app->finished = zpl_true;
 	return OK;
 }
 
@@ -251,12 +251,12 @@ web_app_init (web_app_t *web)
 	{
 		return -1;
 	}
-	web->init = ospl_true;
+	web->init = zpl_true;
 	return 0;
 }
 
 #if !ME_GOAHEAD_EXTLOG
-static void webLogDefaultHandler(ospl_uint32 flags, cchar *buf)
+static void webLogDefaultHandler(zpl_uint32 flags, cchar *buf)
 {
 /*    char    prefix[ME_GOAHEAD_LIMIT_STRING];
 
@@ -336,7 +336,7 @@ web_app_start (web_app_t *web)
 	web_app_init (web);
 
 	web_app_html_init (web);
-	web->init = ospl_true;
+	web->init = zpl_true;
 	return OK;
 }
 
@@ -346,10 +346,10 @@ web_app_exit (web_app_t *web)
 	if (web->enable && web->init)
 	{
 		websClose ();
-		web->enable = ospl_false;
-		web->finished = ospl_false;
-		web->init = ospl_false;
-		web->reload = ospl_false;
+		web->enable = zpl_false;
+		web->finished = zpl_false;
+		web->init = zpl_false;
+		web->reload = zpl_false;
 	}
 	return OK;
 }
@@ -367,11 +367,8 @@ web_app_task (void *argv)
 {
 	zassert(argv != NULL);
 	web_app_t *web = argv;
-	while (!os_load_config_done ())
-	{
-		os_sleep (1);
-	}
-	web->enable = ospl_true;
+	host_config_load_waitting();
+	web->enable = zpl_true;
 	while (!web->enable)
 	{
 		os_sleep (1);
@@ -384,7 +381,7 @@ web_app_task (void *argv)
 			os_sleep (1);
 			continue;
 		}
-		if (web->init == ospl_false)
+		if (web->init == zpl_false)
 		{
 			web_app_init (web);
 		}
@@ -412,11 +409,12 @@ web_app_html_init (web_app_t *web)
 	web_button_init ();
 
 	web_updownload_cb_init ();
-
+	//web_login_app ();
+#ifdef ZPL_WEBAPP_MODULE
 	web_system_jst_init ();
 	web_html_jst_init ();
 	web_arp_jst_init ();
-#ifdef PL_DHCP_MODULE
+#ifdef ZPL_DHCP_MODULE
 	web_dhcp_jst_init ();
 #endif
 	web_dns_jst_init ();
@@ -432,20 +430,19 @@ web_app_html_init (web_app_t *web)
 	web_tunnel_jst_init ();
 	web_vlan_jst_init ();
 
-	web_login_app ();
 	web_updownload_app ();
 	web_admin_app ();
-#ifdef PL_SERVICE_SNTPC
+#ifdef ZPL_SERVICE_SNTPC
 	web_sntp_app ();
 #endif
-#ifdef PL_SERVICE_SYSLOG
+#ifdef ZPL_SERVICE_SYSLOG
 	web_syslog_app ();
 #endif
 
 	web_network_app ();
 	web_netservice_app();
 
-#ifdef PL_WIFI_MODULE
+#ifdef ZPL_WIFI_MODULE
 	web_wireless_app ();
 #endif
 
@@ -466,6 +463,7 @@ web_app_html_init (web_app_t *web)
 #endif
 	web_upgrade_app();
 	web_system_app ();
+#endif
 
 	return OK;
 }

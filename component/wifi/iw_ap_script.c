@@ -5,30 +5,17 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "vty.h"
-#include "if.h"
-
-#include "buffer.h"
-#include "command.h"
-#include "if_name.h"
-#include "linklist.h"
-#include "log.h"
-#include "memory.h"
-#include "prefix.h"
-#include "sockunion.h"
-#include "str.h"
-#include "table.h"
-#include "vector.h"
-#include "nsm_vrf.h"
-#include "nsm_interface.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "iw_config.h"
 #include "iw_ap.h"
 #include "iw_interface.h"
 
 
-static int iw_ap_macacl_default_config(iw_ap_t *iw_ap, ospl_bool deny, FILE *fp)
+static int iw_ap_macacl_default_config(iw_ap_t *iw_ap, zpl_bool deny, FILE *fp)
 {
 	NODE index;
 	iw_ap_mac_t *pstNode = NULL;
@@ -73,7 +60,7 @@ static int iw_ap_macacl_config(iw_ap_t *iw_ap, FILE *fp, int mode)
 		mfp = fopen(path, "w+");
 		if(mfp)
 		{
-			iw_ap_macacl_default_config(iw_ap,  ospl_true, mfp);
+			iw_ap_macacl_default_config(iw_ap,  zpl_true, mfp);
 			fflush(mfp);
 			fclose(mfp);
 		}
@@ -91,7 +78,7 @@ static int iw_ap_macacl_config(iw_ap_t *iw_ap, FILE *fp, int mode)
 		mfp = fopen(path, "w+");
 		if(mfp)
 		{
-			iw_ap_macacl_default_config(iw_ap,  ospl_false, mfp);
+			iw_ap_macacl_default_config(iw_ap,  zpl_false, mfp);
 			fflush(mfp);
 			fclose(mfp);
 		}
@@ -456,7 +443,7 @@ int iw_ap_make_script(iw_ap_t *iw_ap)
 	return ERROR;
 }
 
-#if 1//def DOUBLE_PROCESS
+#if 1//def ZPL_TOOLS_PROCESS
 int iw_ap_running_script(iw_ap_t *iw_ap)
 {
 	///usr/sbin/hostapd -s -P /var/run/wifi-phy0.pid -B /var/run/hostapd-phy0.conf
@@ -494,13 +481,13 @@ int iw_ap_running_script(iw_ap_t *iw_ap)
 
 	if(iw_ap_make_script(iw_ap) == OK)
 	{
-		iw_ap->change = ospl_false;
+		iw_ap->change = zpl_false;
 		if(IW_DEBUG(EVENT))
 		{
 			zlog_debug(MODULE_WIFI, "running AP domain process on interface %s ",ifindex2ifname(iw_ap->ifindex));
 		}
-#ifdef DOUBLE_PROCESS
-		os_process_register(PROCESS_DEAMON, path, "/usr/sbin/hostapd", ospl_false, argv);
+#ifdef ZPL_TOOLS_PROCESS
+		os_process_register(PROCESS_DEAMON, path, "/usr/sbin/hostapd", zpl_false, argv);
 #endif
 		return OK;
 	}
@@ -854,14 +841,14 @@ fragm_threshold=2346
 #basic_rates=60 120 240
 
 # Short Preamble
-# This parameter can be used to enable optional use of ospl_int16 preamble for
+# This parameter can be used to enable optional use of zpl_int16 preamble for
 # frames sent at 2 Mbps, 5.5 Mbps, and 11 Mbps to improve network performance.
 # This applies only to IEEE 802.11b-compatible networks and this should only be
-# enabled if the local hardware supports use of ospl_int16 preamble. If any of the
-# associated STAs do not support ospl_int16 preamble, use of ospl_int16 preamble will be
+# enabled if the local hardware supports use of zpl_int16 preamble. If any of the
+# associated STAs do not support zpl_int16 preamble, use of zpl_int16 preamble will be
 # disabled (and enabled when such STAs disassociate) dynamically.
-# 0 = do not allow use of ospl_int16 preamble (default)
-# 1 = allow use of ospl_int16 preamble
+# 0 = do not allow use of zpl_int16 preamble (default)
+# 1 = allow use of zpl_int16 preamble
 #preamble=1
 
 # Station MAC address -based authentication
@@ -1138,7 +1125,7 @@ wmm_ac_vo_acm=0
 # This parameter sets the interval in seconds between these scans. This
 # is useful only for testing that stations properly set the OBSS interval,
 # since the other parameters in the OBSS scan parameters IE are set to 0.
-#obsospl_interval=0
+#obszpl_interval=0
 
 ##### IEEE 802.11ac related configuration #####################################
 
@@ -1170,13 +1157,13 @@ wmm_ac_vo_acm=0
 # 1 = Supported
 #
 # Short GI for 80 MHz: [SHORT-GI-80]
-# Indicates ospl_int16 GI support for reception of packets transmitted with TXVECTOR
+# Indicates zpl_int16 GI support for reception of packets transmitted with TXVECTOR
 # params format equal to VHT and CBW = 80Mhz
 # 0 = Not supported (default)
 # 1 = Supported
 #
 # Short GI for 160 MHz: [SHORT-GI-160]
-# Indicates ospl_int16 GI support for reception of packets transmitted with TXVECTOR
+# Indicates zpl_int16 GI support for reception of packets transmitted with TXVECTOR
 # params format equal to VHT and CBW = 160Mhz
 # 0 = Not supported (default)
 # 1 = Supported

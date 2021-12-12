@@ -4,16 +4,9 @@
  *  Created on: May 12, 2018
  *      Author: zhurish
  */
-#include "zebra.h"
-#include "stream.h"
-#include "log.h"
-#include "memory.h"
-#include "network.h"
-#include "prefix.h"
-#include "vty.h"
-#include "os_sem.h"
-
-#include "nsm_pqueue.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
 
 static int nsm_pqueue_add_stream (struct nsm_pqueue *queue, struct stream *s)
@@ -73,7 +66,7 @@ int nsm_pqueue_fetch (struct nsm_pqueue *queue)
 	return pstNode;
 }
 
-struct nsm_pqueue * nsm_pqueue_create (ospl_uint32 num)
+struct nsm_pqueue * nsm_pqueue_create (zpl_uint32 num)
 {
   struct nsm_pqueue *queue;
 

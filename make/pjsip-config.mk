@@ -1,83 +1,83 @@
-#include $(MAKE_DIR)/module-dir.mk
+#include $(ZPL_MAKE_DIR)/module-dir.mk
 
-ifeq ($(strip $(PL_PJPROJECT_MODULE)),true)
+ifeq ($(strip $(ZPL_PJPROJECT_MODULE)),true)
 PJPROJECT_ROOT=$(MULTIMEDIA_ROOT)/pjproject-2.10
-PLEX_DIR += $(MULTIMEDIA_ROOT)/pjproject-2.10
+ZPLEX_DIR += $(MULTIMEDIA_ROOT)/pjproject-2.10
 
-ifeq ($(PL_PJ_RESAMPLE_ENABLE),true)
+ifeq ($(ZPL_PJ_RESAMPLE_ENABLE),true)
 export PJMEDIA_RESAMPLE_ENABLE = true
 else
 export PJMEDIA_RESAMPLE_ENABLE = false
 endif
-ifeq ($(PL_PJ_SIMPLE_ENABLE),true)
+ifeq ($(ZPL_PJ_SIMPLE_ENABLE),true)
 export PJMEDIA_SIMPLE_ENABLE = true
 else
 export PJMEDIA_SIMPLE_ENABLE = false
 endif
-ifeq ($(PL_PJ_SRTP_ENABLE),true)
+ifeq ($(ZPL_PJ_SRTP_ENABLE),true)
 export PJMEDIA_SRTP_ENABLE = true
 else
 export PJMEDIA_SRTP_ENABLE = false
 endif
-ifeq ($(PL_PJ_VIDEO_ENABLE),true)
+ifeq ($(ZPL_PJ_VIDEO_ENABLE),true)
 export PJMEDIA_VIDEODEV_ENABLE = true
 else
 export PJMEDIA_VIDEODEV_ENABLE = false
 endif
-ifeq ($(PL_PJ_VIDEO_YUV_ENABLE),true)
+ifeq ($(ZPL_PJ_VIDEO_YUV_ENABLE),true)
 export PJMEDIA_YUV_ENABLE = true
 else
 export PJMEDIA_YUV_ENABLE = false
 endif
-ifeq ($(PL_PJ_VIDEO_H264_ENABLE),true)
+ifeq ($(ZPL_PJ_VIDEO_H264_ENABLE),true)
 export PJMEDIA_H264_ENABLE = true
 else
 export PJMEDIA_H264_ENABLE = false
 endif
-ifeq ($(PL_PJ_CODEC_GSM_ENABLE),true)
+ifeq ($(ZPL_PJ_CODEC_GSM_ENABLE),true)
 export PJMEDIA_GSM_ENABLE = true
 else
 export PJMEDIA_GSM_ENABLE = false
 endif
-ifeq ($(PL_PJ_CODEC_SPEEX_ENABLE),true)
+ifeq ($(ZPL_PJ_CODEC_SPEEX_ENABLE),true)
 export PJMEDIA_SPEEX_ENABLE = true
 else
 export PJMEDIA_SPEEX_ENABLE = false
 endif
-ifeq ($(PL_PJ_CODEC_ILBC_ENABLE),true)
+ifeq ($(ZPL_PJ_CODEC_ILBC_ENABLE),true)
 export PJMEDIA_ILBC_ENABLE = true
 else
 export PJMEDIA_ILBC_ENABLE = false
 endif
-ifeq ($(PL_PJ_CODEC_G722_ENABLE),true)
+ifeq ($(ZPL_PJ_CODEC_G722_ENABLE),true)
 export PJMEDIA_G722_ENABLE = true
 else
 export PJMEDIA_G722_ENABLE = false
 endif
-ifeq ($(PL_PJ_CODEC_WEBRTC_ENABLE),true)
+ifeq ($(ZPL_PJ_CODEC_WEBRTC_ENABLE),true)
 export PJMEDIA_WEBRTC_ENABLE = true
 else
 export PJMEDIA_WEBRTC_ENABLE = false
 endif
-ifeq ($(PL_PJ_AUDIO_ALSA),true)
+ifeq ($(ZPL_PJ_AUDIO_ALSA),true)
 export PJMEDIA_AUDIO_ALSA = true
 export PJMEDIA_AUDIO_PORTAUDIO = false
 endif
-ifeq ($(PL_PJ_AUDIO_PORTAUDIO),true)
+ifeq ($(ZPL_PJ_AUDIO_PORTAUDIO),true)
 export PJMEDIA_AUDIO_ALSA = false
 export PJMEDIA_AUDIO_PORTAUDIO = true
 endif
-ifeq ($(PL_PJ_CODEC_VPX_ENABLE),true)
+ifeq ($(ZPL_PJ_CODEC_VPX_ENABLE),true)
 export PJMEDIA_VPX_ENABLE = true
 else
 export PJMEDIA_VPX_ENABLE = false
 endif
-ifeq ($(PL_PJ_FFMPEG_ENABLE),true)
+ifeq ($(ZPL_PJ_FFMPEG_ENABLE),true)
 export PJMEDIA_FFMPEG_ENABLE = true
 else
 export PJMEDIA_FFMPEG_ENABLE = false
 endif
-ifeq ($(PL_PJ_SDL_ENABLE),true)
+ifeq ($(ZPL_PJ_SDL_ENABLE),true)
 export PJMEDIA_SDL2_ENABLE = true
 else
 export PJMEDIA_SDL2_ENABLE = false
@@ -90,7 +90,7 @@ export PJMEDIA_AUDIODEV_ENABLE = true
 export PJMEDIA_CODEC_ENABLE = true
 export PJMEDIA_NATH_ENABLE = true
 export PJMEDIA_UA_ENABLE = true
-ifeq ($(PL_PJ_VIDEO_ENABLE),true)
+ifeq ($(ZPL_PJ_VIDEO_ENABLE),true)
 export PJMEDIA_V4L2_ENABLE = true
 endif
 
@@ -98,7 +98,7 @@ endif
 # SDL flags
 ifeq ($(PJMEDIA_SDL2_ENABLE),true)
 SDL2PROJDIR = $(EXTERNSION_ROOT)/SDL2-2.0.12
-SDL2_DIR = $(PL_PJ_SDL_LIB_PATH)
+SDL2_DIR = $(ZPL_PJ_SDL_LIB_PATH)
 
 SDL_CFLAGS ?= -DPJMEDIA_VIDEO_DEV_HAS_SDL=1 -D_REENTRANT -I$(SDL2_DIR)/include/SDL2 
 SDL_LDFLAGS ?= -Wl,--enable-new-dtags -lSDL2 -L$(SDL2_DIR)/lib 
@@ -109,10 +109,10 @@ endif
 
 # FFMPEG flags
 ifeq ($(PJMEDIA_FFMPEG_ENABLE),true)
-ifeq ($(strip $(PL_FFMPEG_MODULE)),true)
-FFMPEG_DIR = $(DSTROOTFSDIR)
+ifeq ($(strip $(ZPL_FFMPEG_MODULE)),true)
+FFMPEG_DIR = $(ZPL_INSTALL_ROOTFS_DIR)
 else
-FFMPEG_DIR = $(PL_PJ_FFMPEG_LIB_PATH)
+FFMPEG_DIR = $(ZPL_PJ_FFMPEG_LIB_PATH)
 endif
 
 FFMPEG_CFLAGS ?= \
@@ -140,10 +140,10 @@ endif
 
 # OPENH264 flags
 ifeq ($(PJMEDIA_H264_ENABLE),true)
-ifeq ($(strip $(PL_OPENH264_MODULE)),true)
-H264_DIR = $(DSTROOTFSDIR)
+ifeq ($(strip $(ZPL_OPENH264_MODULE)),true)
+H264_DIR = $(ZPL_INSTALL_ROOTFS_DIR)
 else
-H264_DIR = $(PL_PJ_CODEC_H264_LIB_PATH)
+H264_DIR = $(ZPL_PJ_CODEC_H264_LIB_PATH)
 endif
 OPENH264_CFLAGS ?= -DPJMEDIA_HAS_OPENH264_CODEC=1 -DPJMEDIA_HAS_VIDEO=1 -I$(H264_DIR)/include
 OPENH264_LDFLAGS ?= -L$(H264_DIR)/lib -lopenh264 -lstdc++
@@ -154,10 +154,10 @@ endif
 
 # VPX flags 
 ifeq ($(PJMEDIA_VPX_ENABLE),true)
-ifeq ($(strip $(PL_LIBVPX_MODULE)),true)
-VPX_DIR = $(DSTROOTFSDIR)
+ifeq ($(strip $(ZPL_LIBVPX_MODULE)),true)
+VPX_DIR = $(ZPL_INSTALL_ROOTFS_DIR)
 else
-VPX_DIR = $(PL_PJ_CODEC_VPX_LIB_PATH)
+VPX_DIR = $(ZPL_PJ_CODEC_VPX_LIB_PATH)
 endif
 VPX_CFLAGS ?= -DPJMEDIA_HAS_VPX_CODEC=1 -I$(VPX_DIR)/include 
 VPX_LDFLAGS ?=  -L$(VPX_DIR)/lib -lvpx
@@ -166,120 +166,119 @@ VPX_CFLAGS ?=
 VPX_LDFLAGS ?=
 endif
 
-endif #PL_PJPROJECT_MODULE
+endif #ZPL_PJPROJECT_MODULE
 
 
-ifeq ($(strip $(PL_PJSIP_MODULE)),true)
+ifeq ($(strip $(ZPL_PJSIP_MODULE)),true)
 PJSIP_ROOT=$(COMPONENT_ROOT)/pjsip
-#export PJPROJDIR = $(PLBASE)/externsions/pjproject-2.10
-#PL_INCLUDE += -I$(PLBASE)/externsions/pjproject-2.8
-PLPRODS += $(PJSIP_ROOT)
-PL_INCLUDE += -I$(PJSIP_ROOT)
-PL_DEFINE += -DPL_PJSIP_MODULE
-PLEX_INCLUDE += -I$(DSTROOTFSDIR)/include
+#export PJPROJDIR = $(ZPLBASE)/externsions/pjproject-2.10
+#ZPL_INCLUDE += -I$(ZPLBASE)/externsions/pjproject-2.8
+ZPLPRODS += $(PJSIP_ROOT)
+ZPL_INCLUDE += -I$(PJSIP_ROOT)
+ZPL_DEFINE += -DZPL_PJSIP_MODULE
+ZPLEX_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include
 
 
-PL_LDLIBS += -lpj -lpjlib-util -lpjsip  -lpjsua2
+ZPL_LDLIBS += -lpj -lpjlib-util -lpjsip  -lpjsua2
 			 
 	
 ifeq ($(PJSHARE_ENABLE),true)			 
 ifeq ($(PJMEDIA_ENABLE),true)
-PL_LDLIBS += -lpjmedia
+ZPL_LDLIBS += -lpjmedia
 endif
 ifeq ($(PJMEDIA_AUDIODEV_ENABLE),true)
-PL_LDLIBS += -lpjmedia-audiodev
+ZPL_LDLIBS += -lpjmedia-audiodev
 endif
 ifeq ($(PJMEDIA_CODEC_ENABLE),true)
-PL_LDLIBS += -lpjmedia-codec
+ZPL_LDLIBS += -lpjmedia-codec
 endif
 
 ifeq ($(PJMEDIA_VIDEODEV_ENABLE),true)
-PL_LDLIBS += -lpjmedia-videodev
+ZPL_LDLIBS += -lpjmedia-videodev
 
 # SDL flags
 ifeq ($(PJMEDIA_SDL2_ENABLE),true)
-PL_LDLIBS += -lSDL2 -L$(SDL2_DIR)/lib
+ZPL_LDLIBS += -lSDL2 -L$(SDL2_DIR)/lib
 endif
 
 ifeq ($(PJMEDIA_FFMPEG_ENABLE),true)
 # FFMPEG flags
-PL_LDLIBS += -lavdevice -lxcb -lxcb-shm \
+ZPL_LDLIBS += -lavdevice -lxcb -lxcb-shm \
 				-lxcb-shape -lxcb-xfixes -lasound -lavfilter  \
 				-lavformat -lbz2 -lavcodec -lz -lswresample -lswscale -lavutil
 endif
 
 ifeq ($(PJMEDIA_V4L2_ENABLE),true)
 # Video4Linux2
-PL_LDLIBS += -lv4l2
+ZPL_LDLIBS += -lv4l2
 endif
 
 # OPENH264 flags
 ifeq ($(PJMEDIA_H264_ENABLE),true)
-PL_LDLIBS += -lopenh264 
-PL_LDFLAGS += -L$(H264_DIR)/lib
+ZPL_LDLIBS += -lopenh264 
+ZPL_LDFLAGS += -L$(H264_DIR)/lib
 endif
 
 # VPX flags 
 ifeq ($(PJMEDIA_VPX_ENABLE),true)
-PL_LDLIBS += -lvpx -L$(VPX_DIR)/lib
+ZPL_LDLIBS += -lvpx -L$(VPX_DIR)/lib
 endif
 
 endif
 ifeq ($(PJMEDIA_NATH_ENABLE),true)
-PL_LDLIBS += -lpjnath
+ZPL_LDLIBS += -lpjnath
 endif
 ifeq ($(PJMEDIA_SIMPLE_ENABLE),true)
-PL_LDLIBS += -lpjsip-simple
+ZPL_LDLIBS += -lpjsip-simple
 endif
 ifeq ($(PJMEDIA_RESAMPLE_ENABLE),true)
-PL_LDLIBS += -lresample
+ZPL_LDLIBS += -lresample
 endif
 ifeq ($(PJMEDIA_UA_ENABLE),true)
-PL_LDLIBS += -lpjsua -lpjsip-ua
+ZPL_LDLIBS += -lpjsua -lpjsip-ua
 endif
 ifeq ($(PJMEDIA_SRTP_ENABLE),true)
-PL_LDLIBS += -lsrtp
+ZPL_LDLIBS += -lsrtp
 endif
 ifeq ($(PJMEDIA_YUV_ENABLE),true)
-PL_LDLIBS += -lyuv
+ZPL_LDLIBS += -lyuv
 endif
 ifeq ($(PJMEDIA_GSM_ENABLE),true)
-PL_LDLIBS += -lgsmcodec
+ZPL_LDLIBS += -lgsmcodec
 endif
 ifeq ($(PJMEDIA_SPEEX_ENABLE),true)
-PL_LDLIBS += -lspeex
+ZPL_LDLIBS += -lspeex
 endif
 ifeq ($(PJMEDIA_ILBC_ENABLE),true)
-PL_LDLIBS += -lilbccodec
+ZPL_LDLIBS += -lilbccodec
 endif
 ifeq ($(PJMEDIA_G722_ENABLE),true)
-PL_LDLIBS += -lg7221codec
+ZPL_LDLIBS += -lg7221codec
 endif
 ifeq ($(PJMEDIA_WEBRTC_ENABLE),true)
-PL_LDLIBS += -lwebrtc
+ZPL_LDLIBS += -lwebrtc
 endif
 
 endif
 
 
 ifeq ($(PJMEDIA_AUDIO_PORTAUDIO),true)
-PLOS_LDLIBS += -lportaudio
+ZPLOS_LDLIBS += -lportaudio
 endif
 
 #./configure  --prefix=/home/zhurish/workspace/home-work/pjproject-2.8-x86/_install
 # --enable-epoll --enable-sound --enable-video --enable-speex-aec --enable-g711-codec
 # --enable-l16-codec --enable-gsm-codec --enable-g722-codec --enable-g7221-codec 
 #--enable-speex-codec --enable-ilbc-codec --enable-v4l2 --disable-ipp --enable-libwebrtc
-#PL_LDFLAGS += -L$(PLBASE)/externsions/pjproject-2.8/_install/lib 
-#PL_LDFLAGS += -L$(PLBASE)/externsions/pjproject-2.8/third_party/lib 
-#PL_LDLIBS += -lpj -lpjlib-util -lpjmedia -lpjmedia-audiodev -lpjmedia-codec\
+#ZPL_LDFLAGS += -L$(ZPLBASE)/externsions/pjproject-2.8/_install/lib 
+#ZPL_LDFLAGS += -L$(ZPLBASE)/externsions/pjproject-2.8/third_party/lib 
+#ZPL_LDLIBS += -lpj -lpjlib-util -lpjmedia -lpjmedia-audiodev -lpjmedia-codec\
 			 -lpjmedia-videodev -lpjnath -lpjsip -lpjsip-simple -lpjsip-ua \
 			 -lpjsua -lsrtp -lgsmcodec -lspeex -lilbccodec -lg7221codec 
 			 
-#PL_LDLIBS += -luuid -lasound
+#ZPL_LDLIBS += -luuid -lasound
 
-PLCLI_DIR += $(CLI_ROOT)/voip
 
-endif #($(strip $(PL_PJSIP_MODULE)),true)
+endif #($(strip $(ZPL_PJSIP_MODULE)),true)
 
 

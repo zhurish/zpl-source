@@ -32,6 +32,7 @@ live555MediaServer$(EXE):	$(MEDIA_SERVER_OBJS) $(LOCAL_LIBS)
 
 clean:
 	-rm -rf *.$(OBJ) $(ALL) core *.core *~ include/*~
+	-rm -rf $(DESTDIR)$(PREFIX)/bin/$(MEDIA_SERVER)* *.d
 
 install: $(MEDIA_SERVER)
 	  install -d $(DESTDIR)$(PREFIX)/bin

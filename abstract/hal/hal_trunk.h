@@ -11,28 +11,28 @@
 extern "C" {
 #endif
 
-typedef enum {
-    HAL_TRUNK_MODE_MACDASA = 0x0,
-    HAL_TRUNK_MODE_MACDA = 0x1,
-    HAL_TRUNK_MODE_MACSA = 0x2,
-} hal_trunk_mode_t;
-
-
-typedef struct sdk_trunk_s
+enum hal_trunk_cmd 
 {
-	int (*sdk_trunk_enable_cb) (void *, ospl_bool);
-	int (*sdk_trunk_mode_cb) (void *, ospl_uint32);
-	int (*sdk_trunk_add_cb) (void *, ifindex_t, ospl_uint32);
-	int (*sdk_trunk_del_cb) (void *, ifindex_t, ospl_uint32);
-	  void *sdk_driver;
-}sdk_trunk_t;
+    HAL_TRUNK_CMD_NONE,
+	HAL_TRUNK_CMD_ENABLE,
+	HAL_TRUNK_CMD_ADDIF,
+	HAL_TRUNK_CMD_DELIF,
+	HAL_TRUNK_CMD_MODE,
+    HAL_TRUNK_CMD_MAX,
+};
 
-int hal_trunk_enable(ospl_bool enable);
-int hal_trunk_mode(ospl_uint32 mode);
-int hal_trunk_interface_enable(ifindex_t ifindex, ospl_uint32 trunkid);
-int hal_trunk_interface_disable(ifindex_t ifindex, ospl_uint32 trunkid);
+typedef struct hal_trunk_param_s
+{
+	zpl_uint32 trunkid;
+	zpl_uint32 mode;
+}hal_trunk_param_t;
 
-int hal_trunkid(ospl_uint32 trunkid);
+int hal_trunk_enable(zpl_bool enable);
+int hal_trunk_mode(zpl_uint32 trunkid, zpl_uint32 mode);
+int hal_trunk_interface_enable(ifindex_t ifindex, zpl_uint32 trunkid);
+int hal_trunk_interface_disable(ifindex_t ifindex, zpl_uint32 trunkid);
+
+int hal_trunkid(zpl_uint32 trunkid);
 
 
 #ifdef __cplusplus

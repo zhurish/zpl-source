@@ -6,20 +6,10 @@
  */
 
 
-#include "zebra.h"
-#include "memory.h"
-#include "command.h"
-#include "memory.h"
-#include "memtypes.h"
-#include "prefix.h"
-#include "if.h"
-#include "nsm_interface.h"
-#include <log.h>
-
-#include "os_list.h"
-
-#include "nsm_mac.h"
-#include "nsm_dns.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "nsm_include.h"
 
 
 typedef struct ip_dns_job_s
@@ -29,21 +19,21 @@ typedef struct ip_dns_job_s
 	void *p;
 }ip_dns_job_t;
 
-ospl_uint8 _dns_debug = IP_DNS_DEBUG|IP_DNS_EVENT_DEBUG;
+zpl_uint8 _dns_debug = IP_DNS_DEBUG|IP_DNS_EVENT_DEBUG;
 static Gip_dns_t gIpdns;
 
 static ip_dns_job_t *head_list = NULL;
 static ip_dns_job_t *free_list = NULL;
 
-static int ip_dns_cleanup(dns_class_t type, ospl_bool all);
+static int ip_dns_cleanup(dns_class_t type, zpl_bool all);
 
 static int ip_dns_start_job(dns_cmd_t cmd, void *p);
 
 //kernel
-static int ip_dns_kernel_add(ospl_char *domain1, ospl_char *domain2, ip_dns_t *dns1, ip_dns_t *dns2, ip_dns_t *dns3);
+static int ip_dns_kernel_add(zpl_char *domain1, zpl_char *domain2, ip_dns_t *dns1, ip_dns_t *dns2, ip_dns_t *dns3);
 static int ip_dns_kernel_del(void);
 static int ip_host_kernel_load_backup(void);
-static int ip_host_kernel_add(ip_host_t *dns1, ospl_char *name);
+static int ip_host_kernel_add(ip_host_t *dns1, zpl_char *name);
 static int ip_host_kernel_del(ip_host_t *dns1);
 
 
@@ -61,7 +51,7 @@ int nsm_ip_dns_exit(void)
 {
 	if(lstCount(gIpdns.dnsList))
 	{
-		ip_dns_cleanup(0, ospl_true);
+		ip_dns_cleanup(0, zpl_true);
 		lstFree(gIpdns.dnsList);
 		free(gIpdns.dnsList);
 		gIpdns.dnsList = NULL;
@@ -75,7 +65,7 @@ int nsm_ip_dns_exit(void)
 }
 
 
-static int ip_dns_cleanup(dns_class_t type, ospl_bool all)
+static int ip_dns_cleanup(dns_class_t type, zpl_bool all)
 {
 	ip_dns_t *pstNode = NULL;
 	NODE index;
@@ -137,7 +127,7 @@ static int ip_dns_add_node(ip_dns_t *value)
 
 		if(_dns_debug & IP_DNS_DEBUG)
 		{
-			ospl_char buf[128];
+			zpl_char buf[128];
 			union prefix46constptr pu;
 			memset(buf, 0, sizeof(buf));
 			pu.p = &value->address;
@@ -257,7 +247,7 @@ ip_host_t * nsm_ip_host_lookup_api(struct prefix *address, dns_class_t type)
 
 
 
-int nsm_ip_dns_add(struct prefix *address, ip_dns_opt_t *opt,  ospl_bool	secondly, dns_class_t type)
+int nsm_ip_dns_add(struct prefix *address, ip_dns_opt_t *opt,  zpl_bool	secondly, dns_class_t type)
 {
 	int ret = ERROR;
 	ip_dns_t value;
@@ -288,12 +278,12 @@ int nsm_ip_dns_add(struct prefix *address, ip_dns_opt_t *opt,  ospl_bool	secondl
 	return ret;
 }
 
-int nsm_ip_dns_add_api(struct prefix *address, ospl_bool	secondly)
+int nsm_ip_dns_add_api(struct prefix *address, zpl_bool	secondly)
 {
 	return nsm_ip_dns_add(address, NULL, secondly, IP_DNS_STATIC);
 }
 
-int nsm_ip_dns_get_api(ifindex_t ifindex, struct prefix *address, ospl_bool	secondly)
+int nsm_ip_dns_get_api(ifindex_t ifindex, struct prefix *address, zpl_bool	secondly)
 {
 	ip_dns_t *pstNode = NULL;
 	NODE index;
@@ -338,7 +328,7 @@ int nsm_ip_dns_del_by_ifindex(ifindex_t ifindex, dns_class_t type)
 			{
 				if(_dns_debug & IP_DNS_DEBUG)
 				{
-					ospl_char buf[128];
+					zpl_char buf[128];
 					union prefix46constptr pu;
 					memset(buf, 0, sizeof(buf));
 					pu.p = &pstNode->address;
@@ -395,7 +385,7 @@ int nsm_ip_dns_del(struct prefix *address, dns_class_t type)
 
 		if(_dns_debug & IP_DNS_DEBUG)
 		{
-			ospl_char buf[128];
+			zpl_char buf[128];
 			union prefix46constptr pu;
 			memset(buf, 0, sizeof(buf));
 			pu.p = &value->address;
@@ -423,7 +413,7 @@ int nsm_ip_dns_del_api(struct prefix *address)
 }
 
 
-int nsm_ip_host_add(struct prefix *address, ospl_char *name, dns_class_t type)
+int nsm_ip_host_add(struct prefix *address, zpl_char *name, dns_class_t type)
 {
 	int ret = ERROR;
 	ip_host_t value;
@@ -454,7 +444,7 @@ int nsm_ip_host_add(struct prefix *address, ospl_char *name, dns_class_t type)
 	return ret;
 }
 
-int nsm_ip_host_add_api(struct prefix *address, ospl_char *name)
+int nsm_ip_host_add_api(struct prefix *address, zpl_char *name)
 {
 	return nsm_ip_host_add(address, name, IP_HOST_STATIC);
 }
@@ -475,7 +465,7 @@ int nsm_ip_host_del(struct prefix *address, dns_class_t type)
 
 		if(_dns_debug & IP_DNS_DEBUG)
 		{
-			ospl_char buf[128];
+			zpl_char buf[128];
 			union prefix46constptr pu;
 			memset(buf, 0, sizeof(buf));
 			pu.p = &value->address;
@@ -503,7 +493,7 @@ int nsm_ip_host_del_api(struct prefix *address)
 }
 
 
-int nsm_dns_domain_name_add_api(ospl_char *name, ospl_bool secondly)
+int nsm_dns_domain_name_add_api(zpl_char *name, zpl_bool secondly)
 {
 	int ret = ERROR;
 
@@ -526,7 +516,7 @@ int nsm_dns_domain_name_add_api(ospl_char *name, ospl_bool secondly)
 	return ret;
 }
 
-int nsm_dns_domain_name_del_api(ospl_bool secondly)
+int nsm_dns_domain_name_del_api(zpl_bool secondly)
 {
 	int ret = ERROR;
 
@@ -536,20 +526,20 @@ int nsm_dns_domain_name_del_api(ospl_bool secondly)
 	{
 		os_memset(gIpdns.domain_name2, 0, sizeof(gIpdns.domain_name2));
 		ip_dns_start_job(IP_DNS_DEL_DOMAIN, NULL);
-		gIpdns.domain_dynamic2 = ospl_false;
+		gIpdns.domain_dynamic2 = zpl_false;
 	}
 	else
 	{
 		os_memset(gIpdns.domain_name1, 0, sizeof(gIpdns.domain_name1));
 		ip_dns_start_job(IP_DNS_DEL_DOMAIN, NULL);
-		gIpdns.domain_dynamic1 = ospl_false;
+		gIpdns.domain_dynamic1 = zpl_false;
 	}
 	if(gIpdns.mutex)
 		os_mutex_unlock(gIpdns.mutex);
 	return ret;
 }
 
-int nsm_dns_domain_name_dynamic_api(ospl_bool dynamic, ospl_bool secondly)
+int nsm_dns_domain_name_dynamic_api(zpl_bool dynamic, zpl_bool secondly)
 {
 	int ret = ERROR;
 
@@ -567,12 +557,12 @@ int nsm_dns_domain_name_dynamic_api(ospl_bool dynamic, ospl_bool secondly)
 		os_mutex_unlock(gIpdns.mutex);
 	return ret;
 }
-
+#ifdef ZPL_SHELL_MODULE
 int nsm_ip_dns_host_config(struct vty *vty)
 {
 	ip_dns_t *pstNode = NULL;
 	NODE index;
-	ospl_char buf[128];
+	zpl_char buf[128];
 	union prefix46constptr pu;
 	memset(buf, 0, sizeof(buf));
 	if(gIpdns.mutex)
@@ -632,8 +622,8 @@ int nsm_ip_dns_host_show(struct vty *vty)
 {
 	ip_dns_t *pstNode = NULL;
 	NODE index;
-	ospl_char tmp[20], flag = 0;
-	ospl_char buf[128];
+	zpl_char tmp[20], flag = 0;
+	zpl_char buf[128];
 	union prefix46constptr pu;
 	memset(buf, 0, sizeof(buf));
 
@@ -701,7 +691,7 @@ int nsm_ip_dns_host_show(struct vty *vty)
 
 				memset(tmp, 0, sizeof(tmp));
 				sprintf(tmp, "%s/%s", pstNode->_dns_active ? "UP":"DOWN",
-						pstNode->_dns_secondly ? "ospl_true":"ospl_false");
+						pstNode->_dns_secondly ? "zpl_true":"zpl_false");
 				vty_out(vty, "%-16s %-4s%s", tmp, (pstNode->type == IP_DNS_DYNAMIC)? "D":"S",VTY_NEWLINE);
 			}
 		}
@@ -710,7 +700,7 @@ int nsm_ip_dns_host_show(struct vty *vty)
 		os_mutex_unlock(gIpdns.mutex);
 	return OK;
 }
-
+#endif
 
 static int ip_dns_static_update_interface(ip_dns_t *value)
 {
@@ -725,7 +715,7 @@ static int ip_dns_static_update_interface(ip_dns_t *value)
 			value->_dns_ifindex = ifp->ifindex;
 			if(_dns_debug & IP_DNS_EVENT_DEBUG)
 			{
-				ospl_char buf[128];
+				zpl_char buf[128];
 				union prefix46constptr pu;
 				memset(buf, 0, sizeof(buf));
 				pu.p = &value->address;
@@ -749,15 +739,15 @@ static int ip_dns_static_check_active(ip_dns_t *value)
 		//struct interface *ifp = if_lookup_prefix(&value->address);
 		if(ifp)
 		{
-			ospl_bool old = value->_dns_active;
+			zpl_bool old = value->_dns_active;
 			if(if_is_operative(ifp))
-				value->_dns_active = ospl_true;
+				value->_dns_active = zpl_true;
 			else
-				value->_dns_active = ospl_false;
+				value->_dns_active = zpl_false;
 
 			if((_dns_debug & IP_DNS_EVENT_DEBUG) && (old != value->_dns_active))
 			{
-				ospl_char buf[128];
+				zpl_char buf[128];
 				union prefix46constptr pu;
 				memset(buf, 0, sizeof(buf));
 				pu.p = &value->address;
@@ -789,7 +779,7 @@ static int ip_dns_choose_best_metric(ip_dns_t *value)
 			gIpdns.dns2 = value;
 		else
 		{
-			if(gIpdns.dns2->_dns_active == ospl_true)
+			if(gIpdns.dns2->_dns_active == zpl_true)
 			{
 				if(value->_dns_metric < gIpdns.dns2->_dns_metric)
 					gIpdns.dns2 = value;
@@ -804,7 +794,7 @@ static int ip_dns_choose_best_metric(ip_dns_t *value)
 			gIpdns.dns1 = value;
 		else
 		{
-			if(gIpdns.dns1->_dns_active == ospl_true)
+			if(gIpdns.dns1->_dns_active == zpl_true)
 			{
 				if(value->_dns_metric < gIpdns.dns1->_dns_metric)
 					gIpdns.dns1 = value;
@@ -819,7 +809,7 @@ static int ip_dns_choose_best_metric(ip_dns_t *value)
 
 static int ip_dns_choose_best(ip_dns_t *value)
 {
-	if(value->_dns_active == ospl_true)
+	if(value->_dns_active == zpl_true)
 	{
 		if(value->type == IP_DNS_STATIC)
 		{
@@ -882,7 +872,7 @@ static int ip_dns_choose_best(ip_dns_t *value)
 	}
 	if((_dns_debug & IP_DNS_EVENT_DEBUG))
 	{
-		ospl_char buf[128];
+		zpl_char buf[128];
 		union prefix46constptr pu;
 		memset(buf, 0, sizeof(buf));
 		if(gIpdns.dns1)
@@ -962,12 +952,12 @@ static int ip_dns_inactive_process_update(dns_cmd_t cmd, void *p)
 
 					if(gIpdns.dns1 == pstNode)
 					{
-						if(gIpdns.dns1->_dns_active == ospl_false)
+						if(gIpdns.dns1->_dns_active == zpl_false)
 							gIpdns.dns1 = NULL;
 					}
 					if(gIpdns.dns2 == pstNode)
 					{
-						if(gIpdns.dns2->_dns_active == ospl_false)
+						if(gIpdns.dns2->_dns_active == zpl_false)
 							gIpdns.dns2 = NULL;
 					}
 					ip_dns_choose_best(pstNode);
@@ -1123,11 +1113,11 @@ int ip_dns_add_job(dns_cmd_t cmd, void *p)
 /*
  * KERNEL
  */
-static int ip_dns_kernel_add(ospl_char *domain1, ospl_char *domain2, ip_dns_t *dns1, ip_dns_t *dns2, ip_dns_t *dns3)
+static int ip_dns_kernel_add(zpl_char *domain1, zpl_char *domain2, ip_dns_t *dns1, ip_dns_t *dns2, ip_dns_t *dns3)
 {
 	FILE *fp = NULL;
-	ospl_char path[128];
-	ospl_char buf[128];
+	zpl_char path[128];
+	zpl_char buf[128];
 	union prefix46constptr pu;
 	memset(buf, 0, sizeof(buf));
 	memset(path, 0, sizeof(path));
@@ -1184,7 +1174,7 @@ static int ip_dns_kernel_add(ospl_char *domain1, ospl_char *domain2, ip_dns_t *d
 static int ip_dns_kernel_del(void)
 {
 	FILE *fp = NULL;
-	ospl_char path[128];
+	zpl_char path[128];
 	memset(path, 0, sizeof(path));
 	snprintf(path, sizeof(path), "%s/resolv-nsm.conf", DAEMON_ENV_DIR);
 
@@ -1207,7 +1197,7 @@ static int ip_dns_kernel_del(void)
 static int ip_host_kernel_make_backup(void)
 {
 /*	FILE *fp = NULL;
-	ospl_char path[128];
+	zpl_char path[128];
 	memset(path, 0, sizeof(path));
 	snprintf(path, sizeof(path), "/etc/.hosts-back");*/
 	if(access("/etc/.hosts-back", F_OK) == 0)
@@ -1225,7 +1215,7 @@ static int ip_host_kernel_make_backup(void)
 static int ip_host_kernel_load_backup(void)
 {
 /*	FILE *fp = NULL;
-	ospl_char path[128];
+	zpl_char path[128];
 	memset(path, 0, sizeof(path));
 	snprintf(path, sizeof(path), "/etc/.hosts-back");*/
 	if(access("/etc/.hosts-back", F_OK) != 0)
@@ -1240,10 +1230,10 @@ static int ip_host_kernel_load_backup(void)
 	return OK;
 }
 
-static int ip_host_kernel_add(ip_host_t *dns1, ospl_char *name)
+static int ip_host_kernel_add(ip_host_t *dns1, zpl_char *name)
 {
 	FILE *fp = NULL;
-	ospl_char buf[128];
+	zpl_char buf[128];
 	union prefix46constptr pu;
 	memset(buf, 0, sizeof(buf));
 	if(ip_host_kernel_make_backup() != OK)
@@ -1268,10 +1258,10 @@ static int ip_host_kernel_add(ip_host_t *dns1, ospl_char *name)
 
 static int ip_host_kernel_del(ip_host_t *dns1)
 {
-	ospl_char buf[512];
+	zpl_char buf[512];
 	FILE *fp1 = NULL;
 	FILE *fp2 = NULL;
-	ospl_char tmp[128];
+	zpl_char tmp[128];
 	union prefix46constptr pu;
 	memset(tmp, 0, sizeof(tmp));
 	if(ip_host_kernel_make_backup() != OK)
@@ -1285,7 +1275,7 @@ static int ip_host_kernel_del(ip_host_t *dns1)
 	}
 	if(fp1 && fp2)
 	{
-		ospl_char *s = NULL;
+		zpl_char *s = NULL;
 		memset(buf, 0, sizeof(buf));
 		pu.p = &dns1->address;
 		prefix_2_address_str (pu, tmp, sizeof(tmp));

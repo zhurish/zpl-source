@@ -20,39 +20,34 @@
  * 02111-1307, USA.  
  */
 
-#include <zebra.h>
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 /* malloc.h is generally obsolete, however GNU Libc mallinfo wants it. */
 #if !defined(HAVE_STDLIB_H) || (defined(GNU_LINUX) && defined(HAVE_MALLINFO))
 #include <malloc.h>
 #endif /* !HAVE_STDLIB_H || HAVE_MALLINFO */
 
-#include "log.h"
-#include "memory.h"
-#include "vector.h"
-#include "vty.h"
-#include "command.h"
+static void alloc_inc(zpl_uint32);
+static void alloc_dec(zpl_uint32);
+static void log_memstats(zpl_uint32 log_priority);
 
-
-static void alloc_inc (ospl_uint32);
-static void alloc_dec (ospl_uint32);
-static void log_memstats(ospl_uint32 log_priority);
-
-static const struct message mstr [] =
-{
-  { MTYPE_THREAD, "thread" },
-  { MTYPE_THREAD_MASTER, "thread_master" },
-  { MTYPE_VECTOR, "vector" },
-  { MTYPE_VECTOR_INDEX, "vector_index" },
-  { MTYPE_IF, "interface" },
-  { 0, NULL },
+static const struct message mstr[] =
+    {
+        {MTYPE_THREAD, "thread"},
+        {MTYPE_THREAD_MASTER, "thread_master"},
+        {MTYPE_VECTOR, "vector"},
+        {MTYPE_VECTOR_INDEX, "vector_index"},
+        {MTYPE_IF, "interface"},
+        {0, NULL},
 };
 
 /* Fatal memory allocation error occured. */
-static void __attribute__ ((noreturn))
-zerror (const char *fname, ospl_uint32 type, ospl_size_t size)
+static void __attribute__((noreturn))
+zerror(const char *fname, zpl_uint32 type, zpl_size_t size)
 {
-  zlog_err (MODULE_DEFAULT, "%s : can't allocate memory for `%s' size %d: %s\n",
-	    fname, lookup (mstr, type), (ospl_uint32) size, safe_strerror(errno));
+  zlog_err(MODULE_DEFAULT, "%s : can't allocate memory for `%s' size %d: %s\n",
+           fname, lookup(mstr, type), (zpl_uint32)size, safe_strerror(errno));
   log_memstats(LOG_WARNING);
   /* N.B. It might be preferable to call zlog_backtrace_sigsafe here, since
      that function should definitely be safe in an OOM condition.  But
@@ -68,16 +63,16 @@ zerror (const char *fname, ospl_uint32 type, ospl_size_t size)
  * be allocated, aborts execution.
  */
 void *
-zmalloc (ospl_uint32 type, ospl_size_t size)
+zmalloc(zpl_uint32 type, zpl_size_t size)
 {
   void *memory;
 
-  memory = malloc (size);
+  memory = malloc(size);
 
   if (memory == NULL)
-    zerror ("malloc", type, size);
+    zerror("malloc", type, size);
   os_memset(memory, 0, size);
-  alloc_inc (type);
+  alloc_inc(type);
 
   return memory;
 }
@@ -88,31 +83,31 @@ zmalloc (ospl_uint32 type, ospl_size_t size)
  * statically with zlib that exports the 'zcalloc' symbol.
  */
 void *
-zzcalloc (ospl_uint32 type, ospl_size_t size)
+zzcalloc(zpl_uint32 type, zpl_size_t size)
 {
   void *memory;
 
-  memory = calloc (1, size);
+  memory = calloc(1, size);
 
   if (memory == NULL)
-    zerror ("calloc", type, size);
+    zerror("calloc", type, size);
   os_memset(memory, 0, size);
-  alloc_inc (type);
+  alloc_inc(type);
 
   return memory;
 }
 
 void *
-z_zcalloc (ospl_uint32 type, ospl_uint32 n, ospl_size_t size)
+z_zcalloc(zpl_uint32 type, zpl_uint32 n, zpl_size_t size)
 {
   void *memory;
 
-  memory = calloc (n, size);
+  memory = calloc(n, size);
 
   if (memory == NULL)
-    zerror ("calloc", type, size);
+    zerror("calloc", type, size);
   os_memset(memory, 0, size);
-  alloc_inc (type);
+  alloc_inc(type);
   //mstat[type].alloc++;
   return memory;
 }
@@ -124,18 +119,18 @@ z_zcalloc (ospl_uint32 type, ospl_uint32 n, ospl_size_t size)
  * Effects: Returns a pointer to the new memory, or aborts.
  */
 void *
-zrealloc (ospl_uint32 type, void *ptr, ospl_size_t size)
+zrealloc(zpl_uint32 type, void *ptr, zpl_size_t size)
 {
   void *memory;
 
-  if (ptr == NULL)              /* is really alloc */
-      return zzcalloc(type, size);
+  if (ptr == NULL) /* is really alloc */
+    return zzcalloc(type, size);
 
-  memory = realloc (ptr, size);
+  memory = realloc(ptr, size);
   if (memory == NULL)
-    zerror ("realloc", type, size);
+    zerror("realloc", type, size);
   if (ptr == NULL)
-    alloc_inc (type);
+    alloc_inc(type);
 
   return memory;
 }
@@ -146,23 +141,22 @@ zrealloc (ospl_uint32 type, void *ptr, ospl_size_t size)
  * same type.
  * Effects: The memory is freed and may no longer be referenced.
  */
-void
-zfree (ospl_uint32 type, void *ptr)
+void zfree(zpl_uint32 type, void *ptr)
 {
   if (ptr != NULL)
-    {
-      alloc_dec (type);
-      free (ptr);
-    }
+  {
+    alloc_dec(type);
+    free(ptr);
+  }
 }
 
-void *cjson_malloc (ospl_size_t size)
+void *cjson_malloc(zpl_size_t size)
 {
-	return zmalloc(MTYPE_CJSON, size);
+  return zmalloc(MTYPE_CJSON, size);
 }
-void cjson_free (void *ptr)
+void cjson_free(void *ptr)
 {
-	zfree(MTYPE_CJSON, ptr);
+  zfree(MTYPE_CJSON, ptr);
 }
 /*
  * Duplicate a string, counting memory usage by type.
@@ -170,253 +164,250 @@ void cjson_free (void *ptr)
  * eventually be passed to zfree with the same type.  The function will
  * succeed or abort.
  */
-ospl_char *
-zstrdup (ospl_uint32 type, const char *str)
+zpl_char *
+zstrdup(zpl_uint32 type, const char *str)
 {
   void *dup;
 
-  dup = strdup (str);
+  dup = strdup(str);
   if (dup == NULL)
-    zerror ("strdup", type, strlen (str));
-  alloc_inc (type);
+    zerror("strdup", type, strlen(str));
+  alloc_inc(type);
   return dup;
 }
 
 #ifdef MEMORY_LOG
-static struct 
+static struct
 {
   const char *name;
   long alloc;
-  ospl_ulong t_malloc;
-  ospl_ulong c_malloc;
-  ospl_ulong t_calloc;
-  ospl_ulong c_calloc;
-  ospl_ulong t_realloc;
-  ospl_ulong t_free;
-  ospl_ulong c_strdup;
-} mstat [MTYPE_MAX];
+  zpl_ulong t_malloc;
+  zpl_ulong c_malloc;
+  zpl_ulong t_calloc;
+  zpl_ulong c_calloc;
+  zpl_ulong t_realloc;
+  zpl_ulong t_free;
+  zpl_ulong c_strdup;
+} mstat[MTYPE_MAX];
 
 static void
-mtype_log (ospl_char *func, void *memory, const char *file, ospl_uint32 line, ospl_uint32 type)
+mtype_log(zpl_char *func, void *memory, const char *file, zpl_uint32 line, zpl_uint32 type)
 {
-  zlog_debug (MODULE_DEFAULT, "%s: %s %p %s %d", func, lookup (mstr, type), memory, file, line);
+  zlog_debug(MODULE_DEFAULT, "%s: %s %p %s %d", func, lookup(mstr, type), memory, file, line);
 }
 
 void *
-mtype_zmalloc (const char *file, ospl_uint32 line, ospl_uint32 type, ospl_size_t size)
+mtype_zmalloc(const char *file, zpl_uint32 line, zpl_uint32 type, zpl_size_t size)
 {
   void *memory;
 
   mstat[type].c_malloc++;
   mstat[type].t_malloc++;
 
-  memory = zmalloc (type, size);
-  mtype_log ("zmalloc", memory, file, line, type);
+  memory = zmalloc(type, size);
+  mtype_log("zmalloc", memory, file, line, type);
 
   return memory;
 }
 
 void *
-mtype_zcalloc (const char *file, ospl_uint32 line, ospl_uint32 type, ospl_size_t size)
+mtype_zcalloc(const char *file, zpl_uint32 line, zpl_uint32 type, zpl_size_t size)
 {
   void *memory;
 
   mstat[type].c_calloc++;
   mstat[type].t_calloc++;
 
-  memory = zzcalloc (type, size);
-  mtype_log ("xcalloc", memory, file, line, type);
+  memory = zzcalloc(type, size);
+  mtype_log("xcalloc", memory, file, line, type);
 
   return memory;
 }
 
 void *
-mtype_zrealloc (const char *file, ospl_uint32 line, ospl_uint32 type, void *ptr, ospl_size_t size)
+mtype_zrealloc(const char *file, zpl_uint32 line, zpl_uint32 type, void *ptr, zpl_size_t size)
 {
   void *memory;
 
   /* Realloc need before allocated pointer. */
   mstat[type].t_realloc++;
 
-  memory = zrealloc (type, ptr, size);
+  memory = zrealloc(type, ptr, size);
 
-  mtype_log ("xrealloc", memory, file, line, type);
+  mtype_log("xrealloc", memory, file, line, type);
 
   return memory;
 }
 
 /* Important function. */
-void 
-mtype_zfree (const char *file, ospl_uint32 line, ospl_uint32 type, void *ptr)
+void mtype_zfree(const char *file, zpl_uint32 line, zpl_uint32 type, void *ptr)
 {
   mstat[type].t_free++;
 
-  mtype_log ("xfree", ptr, file, line, type);
+  mtype_log("xfree", ptr, file, line, type);
 
-  zfree (type, ptr);
+  zfree(type, ptr);
 }
 
-ospl_char *
-mtype_zstrdup (const char *file, ospl_uint32 line, ospl_uint32 type, const char *str)
+zpl_char *
+mtype_zstrdup(const char *file, zpl_uint32 line, zpl_uint32 type, const char *str)
 {
-  ospl_char *memory;
+  zpl_char *memory;
 
   mstat[type].c_strdup++;
 
-  memory = zstrdup (type, str);
-  
-  mtype_log ("xstrdup", memory, file, line, type);
+  memory = zstrdup(type, str);
+
+  mtype_log("xstrdup", memory, file, line, type);
 
   return memory;
 }
 #else
-static struct 
+static struct
 {
-  ospl_char *name;
+  zpl_char *name;
   long alloc;
-} mstat [MTYPE_MAX];
+} mstat[MTYPE_MAX];
 #endif /* MEMORY_LOG */
 
 /* Increment allocation counter. */
 static void
-alloc_inc (ospl_uint32 type)
+alloc_inc(zpl_uint32 type)
 {
   mstat[type].alloc++;
 }
 
 /* Decrement allocation counter. */
 static void
-alloc_dec (ospl_uint32 type)
+alloc_dec(zpl_uint32 type)
 {
   mstat[type].alloc--;
 }
 
 /* Looking up memory status from vty interface. */
 
-
 static void
-log_memstats(ospl_uint32 pri)
+log_memstats(zpl_uint32 pri)
 {
   struct mlist *ml;
 
   for (ml = mlists; ml->list; ml++)
-    {
-      struct memory_list *m;
+  {
+    struct memory_list *m;
 
-      zlog (MODULE_DEFAULT, pri, "Memory utilization in module %s:", ml->name);
-      for (m = ml->list; m->index >= 0; m++)
-	if (m->index && mstat[m->index].alloc)
-	  zlog (MODULE_DEFAULT, pri, "  %-30s: %10ld", m->format, mstat[m->index].alloc);
-    }
+    zlog(MODULE_DEFAULT, pri, "Memory utilization in module %s:", ml->name);
+    for (m = ml->list; m->index >= 0; m++)
+      if (m->index && mstat[m->index].alloc)
+        zlog(MODULE_DEFAULT, pri, "  %-30s: %10ld", m->format, mstat[m->index].alloc);
+  }
 }
 
-void
-log_memstats_stderr (const char *prefix)
+void log_memstats_stderr(const char *prefix)
 {
   struct mlist *ml;
   struct memory_list *m;
-  ospl_uint32 i;
-  ospl_uint32 j = 0;
+  zpl_uint32 i;
+  zpl_uint32 j = 0;
 
   for (ml = mlists; ml->list; ml++)
-    {
-      i = 0;
+  {
+    i = 0;
 
-      for (m = ml->list; m->index >= 0; m++)
-        if (m->index && mstat[m->index].alloc)
-          {
-            if (!i)
-              fprintf (stderr,
-                       "%s: memstats: Current memory utilization in module %s:\r\n",
-                       prefix,
-                       ml->name);
-            fprintf (stderr,
-                     "%s: memstats:  %-30s: %10ld%s\r\n",
-                     prefix,
-                     m->format,
-                     mstat[m->index].alloc,
-                     mstat[m->index].alloc < 0 ? " (REPORT THIS BUG!)" : "");
-            i = j = 1;
-          }
-    }
+    for (m = ml->list; m->index >= 0; m++)
+      if (m->index && mstat[m->index].alloc)
+      {
+        if (!i)
+          fprintf(stderr,
+                  "%s: memstats: Current memory utilization in module %s:\r\n",
+                  prefix,
+                  ml->name);
+        fprintf(stderr,
+                "%s: memstats:  %-30s: %10ld%s\r\n",
+                prefix,
+                m->format,
+                mstat[m->index].alloc,
+                mstat[m->index].alloc < 0 ? " (REPORT THIS BUG!)" : "");
+        i = j = 1;
+      }
+  }
 
   if (j)
-    fprintf (stderr,
-             "%s: memstats: NOTE: If configuration exists, utilization may be "
-             "expected.\r\n",
-             prefix);
+    fprintf(stderr,
+            "%s: memstats: NOTE: If configuration exists, utilization may be "
+            "expected.\r\n",
+            prefix);
   else
-    fprintf (stderr,
-             "%s: memstats: No remaining tracked memory utilization.\r\n",
-             prefix);
+    fprintf(stderr,
+            "%s: memstats: No remaining tracked memory utilization.\r\n",
+            prefix);
 }
-
+#ifdef ZPL_SHELL_MODULE
 static void
 show_separator(struct vty *vty)
 {
-  vty_out (vty, "-----------------------------\r\n");
+  vty_out(vty, "-----------------------------\r\n");
 }
 
 static int
-show_memory_vty (struct vty *vty, struct memory_list *list)
+show_memory_vty(struct vty *vty, struct memory_list *list)
 {
   struct memory_list *m;
-  ospl_uint32 needsep = 0;
+  zpl_uint32 needsep = 0;
 
   for (m = list; m->index >= 0; m++)
     if (m->index == 0)
+    {
+      if (needsep)
       {
-	if (needsep)
-	  {
-	    show_separator (vty);
-	    needsep = 0;
-	  }
+        show_separator(vty);
+        needsep = 0;
       }
+    }
     else if (mstat[m->index].alloc)
-      {
-	vty_out (vty, "%-30s: %10ld\r\n", m->format, mstat[m->index].alloc);
-	needsep = 1;
-      }
+    {
+      vty_out(vty, "%-30s: %10ld\r\n", m->format, mstat[m->index].alloc);
+      needsep = 1;
+    }
   return needsep;
 }
 
 #ifdef HAVE_MALLINFO
 static int
-show_memory_mallinfo (struct vty *vty)
+show_memory_mallinfo(struct vty *vty)
 {
   struct mallinfo minfo = mallinfo();
-  ospl_char buf[MTYPE_MEMSTR_LEN];
-  
-  vty_out (vty, "System allocator statistics:%s", VTY_NEWLINE);
-  vty_out (vty, "  Total heap allocated:  %s%s",
-           mtype_memstr (buf, MTYPE_MEMSTR_LEN, minfo.arena),
-           VTY_NEWLINE);
-  vty_out (vty, "  Holding block headers: %s%s",
-           mtype_memstr (buf, MTYPE_MEMSTR_LEN, minfo.hblkhd),
-           VTY_NEWLINE);
-  vty_out (vty, "  Used small blocks:     %s%s",
-           mtype_memstr (buf, MTYPE_MEMSTR_LEN, minfo.usmblks),
-           VTY_NEWLINE);
-  vty_out (vty, "  Used ordinary blocks:  %s%s",
-           mtype_memstr (buf, MTYPE_MEMSTR_LEN, minfo.uordblks),
-           VTY_NEWLINE);
-  vty_out (vty, "  Free small blocks:     %s%s",
-           mtype_memstr (buf, MTYPE_MEMSTR_LEN, minfo.fsmblks),
-           VTY_NEWLINE);
-  vty_out (vty, "  Free ordinary blocks:  %s%s",
-           mtype_memstr (buf, MTYPE_MEMSTR_LEN, minfo.fordblks),
-           VTY_NEWLINE);
-  vty_out (vty, "  Ordinary blocks:       %ld%s",
-           (ospl_ulong)minfo.ordblks,
-           VTY_NEWLINE);
-  vty_out (vty, "  Small blocks:          %ld%s",
-           (ospl_ulong)minfo.smblks,
-           VTY_NEWLINE);
-  vty_out (vty, "  Holding blocks:        %ld%s",
-           (ospl_ulong)minfo.hblks,
-           VTY_NEWLINE);
-  vty_out (vty, "(see system documentation for 'mallinfo' for meaning)%s",
-           VTY_NEWLINE);
+  zpl_char buf[MTYPE_MEMSTR_LEN];
+
+  vty_out(vty, "System allocator statistics:%s", VTY_NEWLINE);
+  vty_out(vty, "  Total heap allocated:  %s%s",
+          mtype_memstr(buf, MTYPE_MEMSTR_LEN, minfo.arena),
+          VTY_NEWLINE);
+  vty_out(vty, "  Holding block headers: %s%s",
+          mtype_memstr(buf, MTYPE_MEMSTR_LEN, minfo.hblkhd),
+          VTY_NEWLINE);
+  vty_out(vty, "  Used small blocks:     %s%s",
+          mtype_memstr(buf, MTYPE_MEMSTR_LEN, minfo.usmblks),
+          VTY_NEWLINE);
+  vty_out(vty, "  Used ordinary blocks:  %s%s",
+          mtype_memstr(buf, MTYPE_MEMSTR_LEN, minfo.uordblks),
+          VTY_NEWLINE);
+  vty_out(vty, "  Free small blocks:     %s%s",
+          mtype_memstr(buf, MTYPE_MEMSTR_LEN, minfo.fsmblks),
+          VTY_NEWLINE);
+  vty_out(vty, "  Free ordinary blocks:  %s%s",
+          mtype_memstr(buf, MTYPE_MEMSTR_LEN, minfo.fordblks),
+          VTY_NEWLINE);
+  vty_out(vty, "  Ordinary blocks:       %ld%s",
+          (zpl_ulong)minfo.ordblks,
+          VTY_NEWLINE);
+  vty_out(vty, "  Small blocks:          %ld%s",
+          (zpl_ulong)minfo.smblks,
+          VTY_NEWLINE);
+  vty_out(vty, "  Holding blocks:        %ld%s",
+          (zpl_ulong)minfo.hblks,
+          VTY_NEWLINE);
+  vty_out(vty, "(see system documentation for 'mallinfo' for meaning)%s",
+          VTY_NEWLINE);
   return 1;
 }
 #endif /* HAVE_MALLINFO */
@@ -429,8 +420,8 @@ DEFUN (show_memory,
        "Memory statistics\n")
 {
   struct mlist *ml;
-  ospl_uint32 needsep = 0;
-  
+  zpl_uint32 needsep = 0;
+
 #ifdef HAVE_MALLINFO
   needsep = show_memory_mallinfo (vty);
 #endif /* HAVE_MALLINFO */
@@ -450,28 +441,28 @@ int vty_show_memory_cmd(void *p)
 {
   struct vty *vty = (struct vty *)p;
   struct mlist *ml;
-  ospl_uint32 needsep = 0;
+  zpl_uint32 needsep = 0;
 
 #ifdef HAVE_MALLINFO
-  needsep = show_memory_mallinfo (vty);
+  needsep = show_memory_mallinfo(vty);
 #endif /* HAVE_MALLINFO */
 
   for (ml = mlists; ml->list; ml++)
-    {
-      if (needsep)
-	show_separator (vty);
-      needsep = show_memory_vty (vty, ml->list);
-    }
+  {
+    if (needsep)
+      show_separator(vty);
+    needsep = show_memory_vty(vty, ml->list);
+  }
 
   return CMD_SUCCESS;
 }
+#endif
 
-void
-memory_init (void)
+void memory_init(void)
 {
-	/*  install_element (RESTRICTED_NODE, &show_memory_cmd);*/
+  /*  install_element (RESTRICTED_NODE, CMD_VIEW_LEVEL, &show_memory_cmd);*/
 
-	//install_element (VIEW_NODE, &show_memory_cmd);
+  //install_element (VIEW_NODE, CMD_VIEW_LEVEL, &show_memory_cmd);
 }
 
 /* Stats querying from users */
@@ -483,9 +474,9 @@ memory_init (void)
  * or point to the given buffer, or point to static storage.
  */
 const char *
-mtype_memstr (ospl_char *buf, ospl_size_t len, ospl_ulong bytes)
+mtype_memstr(zpl_char *buf, zpl_size_t len, zpl_ulong bytes)
 {
-  ospl_uint32  m, k;
+  zpl_uint32 m, k;
 
   /* easy cases */
   if (!bytes)
@@ -506,26 +497,26 @@ mtype_memstr (ospl_char *buf, ospl_size_t len, ospl_ulong bytes)
   m = bytes >> 20;
   k = bytes >> 10;
 
- if (m > 10)
-    {
-      if (bytes & (1 << 19))
-        m++;
-      snprintf (buf, len, "%d MiB", m);
-    }
+  if (m > 10)
+  {
+    if (bytes & (1 << 19))
+      m++;
+    snprintf(buf, len, "%d MiB", m);
+  }
   else if (k > 10)
-    {
-      if (bytes & (1 << 9))
-        k++;
-      snprintf (buf, len, "%d KiB", k);
-    }
+  {
+    if (bytes & (1 << 9))
+      k++;
+    snprintf(buf, len, "%d KiB", k);
+  }
   else
-    snprintf (buf, len, "%ld bytes", bytes);
-  
+    snprintf(buf, len, "%ld bytes", bytes);
+
   return buf;
 }
 
-ospl_ulong
-mtype_stats_alloc (ospl_uint32 type)
+zpl_ulong
+mtype_stats_alloc(zpl_uint32 type)
 {
   return mstat[type].alloc;
 }

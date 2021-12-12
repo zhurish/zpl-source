@@ -5,7 +5,7 @@
  *      Author: zhurish
  */
 
-#include <zebra.h>
+#include <zpl_include.h>
 
 
 #include "b53_mdio.h"
@@ -13,7 +13,7 @@
 #include "sdk_driver.h"
 
 //使能禁止IMP接口收发功能
-int b53125_imp_enable(struct b53125_device *dev, ospl_bool enable)
+int b53125_imp_enable(struct b53125_device *dev, zpl_bool enable)
 {
 	int ret = 0;
 	u8 port_ctrl = 0;
@@ -57,7 +57,7 @@ int b53125_imp_duplex(struct b53125_device *dev, int duplex)
 	return ret;
 }
 
-int b53125_imp_flow(struct b53125_device *dev, ospl_bool rx, ospl_bool tx)
+int b53125_imp_flow(struct b53125_device *dev, zpl_bool rx, zpl_bool tx)
 {
 	int ret = 0;
 	u8 reg = 0;
@@ -72,7 +72,7 @@ int b53125_imp_flow(struct b53125_device *dev, ospl_bool rx, ospl_bool tx)
 /*************************************************************************/
 /*************************************************************************/
 //禁止使能接口收发功能
-int b53125_port_enable(struct b53125_device *dev, int port, ospl_bool enable)
+int b53125_port_enable(struct b53125_device *dev, int port, zpl_bool enable)
 {
 	int ret = 0;
 	if(enable)
@@ -93,7 +93,7 @@ int b53125_port_enable(struct b53125_device *dev, int port, ospl_bool enable)
 }
 /*************************************************************************/
 //禁止使能端口保护
-int b53125_port_protected_enable(struct b53125_device *dev, int port, ospl_bool enable)
+int b53125_port_protected_enable(struct b53125_device *dev, int port, zpl_bool enable)
 {
 	int ret = 0;
 	u16 reg = 0;
@@ -117,7 +117,7 @@ int b53125_port_protected_enable(struct b53125_device *dev, int port, ospl_bool 
 }
 
 //禁止使能wan接口（设置某个接口作为wan接口使用）
-int b53125_port_wan_enable(struct b53125_device *dev, int port, ospl_bool enable)
+int b53125_port_wan_enable(struct b53125_device *dev, int port, zpl_bool enable)
 {
 	int ret = 0;
 	u16 reg = 0;
@@ -132,7 +132,7 @@ int b53125_port_wan_enable(struct b53125_device *dev, int port, ospl_bool enable
 	return ret;
 }
 /*************************************************************************/
-int b53125_pasue_transmit_enable(struct b53125_device *dev, int port, ospl_bool enable)
+int b53125_pasue_transmit_enable(struct b53125_device *dev, int port, zpl_bool enable)
 {
 	int ret = 0;
 	u32 reg = 0;
@@ -156,7 +156,7 @@ int b53125_pasue_transmit_enable(struct b53125_device *dev, int port, ospl_bool 
 	return ret;
 }
 
-int b53125_pasue_receive_enable(struct b53125_device *dev, int port, ospl_bool enable)
+int b53125_pasue_receive_enable(struct b53125_device *dev, int port, zpl_bool enable)
 {
 	int ret = 0;
 	u32 reg = 0;
@@ -182,7 +182,7 @@ int b53125_pasue_receive_enable(struct b53125_device *dev, int port, ospl_bool e
 
 /*************************************************************************/
 //设置非管理模式下BPDU报文转发还是丢弃
-int b53125_bpdu_forward(struct b53125_device *dev, u8 *mac, ospl_bool enable)
+int b53125_bpdu_forward(struct b53125_device *dev, u8 *mac, zpl_bool enable)
 {
 	int ret = 0;
 	u8 reg = 0;
@@ -217,7 +217,7 @@ int b53125_bpdu_forward(struct b53125_device *dev, u8 *mac, ospl_bool enable)
 }
 /*************************************************************************/
 //设置MAC地址表查找失败的报文转发的目的端口
-int b53125_unknow_unicast_forward_port(struct b53125_device *dev, int port, ospl_bool enable)
+int b53125_unknow_unicast_forward_port(struct b53125_device *dev, int port, zpl_bool enable)
 {
 	int ret = 0;
 	u16 reg = 0;
@@ -240,7 +240,7 @@ int b53125_unknow_unicast_forward_port(struct b53125_device *dev, int port, ospl
 	return ret;
 }
 
-int b53125_unknow_multicast_forward_port(struct b53125_device *dev, int port, ospl_bool enable)
+int b53125_unknow_multicast_forward_port(struct b53125_device *dev, int port, zpl_bool enable)
 {
 	int ret = 0;
 	u16 reg = 0;
@@ -263,7 +263,7 @@ int b53125_unknow_multicast_forward_port(struct b53125_device *dev, int port, os
 	return ret;
 }
 
-int b53125_unknow_ipmulticast_forward_port(struct b53125_device *dev, int port, ospl_bool enable)
+int b53125_unknow_ipmulticast_forward_port(struct b53125_device *dev, int port, zpl_bool enable)
 {
 	int ret = 0;
 	u16 reg = 0;
@@ -286,7 +286,7 @@ int b53125_unknow_ipmulticast_forward_port(struct b53125_device *dev, int port, 
 	return ret;
 }
 /*************************************************************************/
-int b53125_pause_pass_rx(struct b53125_device *dev, int port, ospl_bool enable)
+int b53125_pause_pass_rx(struct b53125_device *dev, int port, zpl_bool enable)
 {
 	int ret = 0;
 	u16 reg = 0;
@@ -309,7 +309,7 @@ int b53125_pause_pass_rx(struct b53125_device *dev, int port, ospl_bool enable)
 	return ret;
 }
 
-int b53125_pause_pass_tx(struct b53125_device *dev, int port, ospl_bool enable)
+int b53125_pause_pass_tx(struct b53125_device *dev, int port, zpl_bool enable)
 {
 	int ret = 0;
 	u16 reg = 0;
@@ -333,7 +333,7 @@ int b53125_pause_pass_tx(struct b53125_device *dev, int port, ospl_bool enable)
 }
 /*************************************************************************/
 //禁止使能端口学习
-int b53125_enable_learning(struct b53125_device *dev, int port, ospl_bool enable)
+int b53125_enable_learning(struct b53125_device *dev, int port, zpl_bool enable)
 {
 	int ret = 0;
 	u16 port_ctrl = 0;
@@ -357,7 +357,7 @@ int b53125_enable_learning(struct b53125_device *dev, int port, ospl_bool enable
 }
 
 //禁止使能端口软学习（未知报文进入CPU）
-int b53125_software_learning(struct b53125_device *dev, int port, ospl_bool enable)
+int b53125_software_learning(struct b53125_device *dev, int port, zpl_bool enable)
 {
 	int ret = 0;
 	u16 port_ctrl = 0;
@@ -493,9 +493,9 @@ int b53125_port_set_link_force(struct b53125_device *dev, int port, int link)
 /*************************************************************************/
 
 //获取端口状态
-ospl_bool b53125_port_get_link(struct b53125_device *dev, int port)
+zpl_bool b53125_port_get_link(struct b53125_device *dev, int port)
 {
-	ospl_bool link;
+	zpl_bool link;
 	u16 sts;
 
 	b53125_read16(dev, B53_STAT_PAGE, B53_LINK_STAT, &sts);
@@ -504,7 +504,7 @@ ospl_bool b53125_port_get_link(struct b53125_device *dev, int port)
 	return link;
 }
 
-ospl_uint32 b53125_port_get_speed(struct b53125_device *dev, int port)
+zpl_uint32 b53125_port_get_speed(struct b53125_device *dev, int port)
 {
 	u32 sts;
 
@@ -513,7 +513,7 @@ ospl_uint32 b53125_port_get_speed(struct b53125_device *dev, int port)
 	return SPEED_PORT_GE(sts, port);
 }
 
-ospl_uint32 b53125_port_get_duplex(struct b53125_device *dev, int port)
+zpl_uint32 b53125_port_get_duplex(struct b53125_device *dev, int port)
 {
 	u16 sts;
 

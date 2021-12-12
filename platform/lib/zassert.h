@@ -27,7 +27,7 @@ extern "C" {
 #endif
 
 extern void _zlog_assert_failed (const char *assertion, const char *file,
-				 ospl_uint32  line, const char *function)
+				 zpl_uint32  line, const char *function)
 				 __attribute__ ((noreturn));
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L

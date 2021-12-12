@@ -30,14 +30,15 @@ BasicHashTable.$(CPP):		include/BasicHashTable.hh
 
 clean:
 	-rm -rf *.$(OBJ) $(ALL) core *.core *~ include/*~
+	-rm -rf $(LIBDIR)/$(NAME)* *.d 
 
 install: install1 $(INSTALL2)
 install1: libBasicUsageEnvironment.$(LIB_SUFFIX)
-	  install -d $(DESTDIR)$(PREFIX)/include/BasicUsageEnvironment $(DESTDIR)$(LIBDIR)
-	  install -m 644 include/*.hh $(DESTDIR)$(PREFIX)/include/BasicUsageEnvironment
-	  install -m 644 libBasicUsageEnvironment.$(LIB_SUFFIX) $(DESTDIR)$(LIBDIR)
+	  install -d $(INCDIR)/BasicUsageEnvironment $(LIBDIR)
+	  install -m 644 include/*.hh $(INCDIR)/BasicUsageEnvironment
+	  install -m 644 libBasicUsageEnvironment.$(LIB_SUFFIX) $(LIBDIR)
 install_shared_libraries: libBasicUsageEnvironment.$(LIB_SUFFIX)
-	  ln -fs $(NAME).$(LIB_SUFFIX) $(DESTDIR)$(LIBDIR)/$(NAME).$(SHORT_LIB_SUFFIX)
-	  ln -fs $(NAME).$(LIB_SUFFIX) $(DESTDIR)$(LIBDIR)/$(NAME).so
+	  ln -fs $(NAME).$(LIB_SUFFIX) $(LIBDIR)/$(NAME).$(SHORT_LIB_SUFFIX)
+	  ln -fs $(NAME).$(LIB_SUFFIX) $(LIBDIR)/$(NAME).so
 
 ##### Any additional, platform-specific rules come here:

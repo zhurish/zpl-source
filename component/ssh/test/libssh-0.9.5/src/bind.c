@@ -74,8 +74,8 @@
 static socket_t bind_socket(ssh_bind sshbind, const char *hostname,
     int port) {
     char port_c[6];
-    struct addrinfo *ai;
-    struct addrinfo hints;
+    struct ipstack_addrinfo *ai;
+    struct ipstack_addrinfo hints;
     int opt = 1;
     socket_t s;
     int rc;

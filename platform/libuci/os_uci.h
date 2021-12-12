@@ -8,20 +8,20 @@
 #ifndef __OS_UCI_H__
 #define __OS_UCI_H__
 
-//#define PL_OPENWRT_UCI
+//#define ZPL_OPENWRT_UCI
 
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 
 #define OS_UCI_DEBUG
 //#define _UCI_DEBUG(fmt,...)	printf(fmt, ##__VA_ARGS__)
 #define _UCI_DEBUG(fmt,...)
 
-//#if 1//def PL_BUILD_OS_OPENWRT
-//#define PL_OPENWRT_UCI_LIB
+//#if 1//def ZPL_BUILD_OS_OPENWRT
+//#define ZPL_OPENWRT_UCI_LIB
 //#endif
-//#define PL_OPENWRT_UCI_SH
+//#define ZPL_OPENWRT_UCI_SH
 
-#ifndef PL_OPENWRT_UCI_LIB
+#ifndef ZPL_OPENWRT_UCI_LIB
 enum
 {
 	UCI_OK = 0,
@@ -60,6 +60,6 @@ extern int os_uci_save_config(char *name);
 
 extern int os_uci_init();
 
-#endif /* PL_OPENWRT_UCI */
+#endif /* ZPL_OPENWRT_UCI */
 
 #endif /* __OS_UCI_H__ */

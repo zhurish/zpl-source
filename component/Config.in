@@ -4,219 +4,213 @@
 
 menu "Component Module Config"
 
-config PL_COMPONENT_MODULE
+config ZPL_COMPONENT_MODULE
 	bool "Component Module"
 	default y
 
-config PL_MODEM_MODULE
+config ZPL_MODEM_MODULE
 	bool "MODEM Module"
 	default n
-	depends on PL_COMPONENT_MODULE && PL_NSM_MODULE
+	depends on ZPL_COMPONENT_MODULE && ZPL_NSM_MODULE
 	help
 	Build MODEM Module.
 
-config PL_MQTT_MODULE
+config ZPL_MQTT_MODULE
 	bool "MQTT Module"
 	default n
-	depends on PL_COMPONENT_MODULE
+	depends on ZPL_COMPONENT_MODULE
 	help
 	Build MQTT Module.
 
-config PL_MQTT_SSL
+config ZPL_MQTT_SSL
 	bool "MQTT SSL Module"
 	default n
-	depends on PL_MQTT_MODULE
+	depends on ZPL_MQTT_MODULE
 	help
 	Build MQTT SSL Module.
 
-config PL_MQTT_SRV
+config ZPL_MQTT_SRV
 	bool "MQTT Server Module"
 	default n
-	depends on PL_MQTT_MODULE
+	depends on ZPL_MQTT_MODULE
 	help
 	Build MQTT Server Module.
 
 
-config PL_PJSIP_MODULE
+config ZPL_PJSIP_MODULE
 	bool "Pjsip Module"
-	depends on PL_PJPROJECT_MODULE && PL_COMPONENT_MODULE
+	depends on ZPL_PJPROJECT_MODULE && ZPL_COMPONENT_MODULE
 	default n
 	help
 	Build Pjsip Module.
 
-config PL_PJSIP_PJSUA2
+config ZPL_PJSIP_PJSUA2
 	bool "Pjsip pjsua2 Module"
 	default y
-	depends on PL_PJSIP_MODULE
+	depends on ZPL_PJSIP_MODULE
 	help
 	Build Pjsip pjsua2 Module.
 
-config PL_SQLITE_MODULE
+config ZPL_SQLITE_MODULE
 	bool "Sqlite Module"
 	default y
-	depends on PL_COMPONENT_MODULE
+	depends on ZPL_COMPONENT_MODULE
 	help
 	Build Sqlite Module.
 
-config PL_SQLITE_EXE_MODULE
-	bool "Sqlite app Module"
+config ZPL_SQLITE_EXE_MODULE
+	bool "Sqlite Shell Module"
 	default y
-	depends on PL_SQLITE_MODULE
+	depends on ZPL_SQLITE_MODULE
 	help
-	Build Sqlite exe app Module.
+	Build Sqlite Shell Module.
 
-config PL_LIBSSH_MODULE
+config ZPL_LIBSSH_MODULE
 	bool "LIBSSH Module"
-	depends on PL_OPENSSL_MODULE && PL_COMPONENT_MODULE
+	depends on ZPL_OPENSSL_MODULE && ZPL_COMPONENT_MODULE
 	default n
 	help
 	Build SHH Module.
 
-config PL_LIBSSH_NACL
+config ZPL_LIBSSH_NACL
 	bool "Libssh NACL"
-	depends on PL_LIBSSH_MODULE
+	depends on ZPL_LIBSSH_MODULE
 	default n
 	help
 	Build Libssh whih NACL Module.
 
-config PL_LIBSSH_ZLIB
+config ZPL_LIBSSH_ZLIB
 	bool "Libssh ZLIB"
-	depends on PL_LIBSSH_MODULE
+	depends on ZPL_LIBSSH_MODULE
 	default y
 	help
 	Build Libssh whih ZLIB Module.
-config PL_LIBSSH_SFTP
+config ZPL_LIBSSH_SFTP
 	bool "Libssh SFTP"
-	depends on PL_LIBSSH_MODULE
+	depends on ZPL_LIBSSH_MODULE
 	default y
 	help
 	Build Libssh whih SFTP Module.
 
-config PL_LIBSSH_GCRYPT
+config ZPL_LIBSSH_GCRYPT
 	bool "Libssh GCRYPT"
-	depends on PL_LIBSSH_MODULE
+	depends on ZPL_LIBSSH_MODULE
 	default n
 	help
 	Build Libssh whih GCRYPT Module.
-config PL_LIBSSH_MBEDTLS
+config ZPL_LIBSSH_MBEDTLS
 	bool "Libssh MBEDTLS"
-	depends on PL_LIBSSH_MODULE
+	depends on ZPL_LIBSSH_MODULE
 	default n
 	help
 	Build Libssh whih MBEDTLS Module.
-config PL_LIBSSH_CRYPTO
+config ZPL_LIBSSH_CRYPTO
 	bool "Libssh CRYPTO"
-	depends on PL_LIBSSH_MODULE
+	depends on ZPL_LIBSSH_MODULE
 	default n
 	help
 	Build Libssh whih CRYPTO Module.
-config PL_LIBSSH_OPENSSL_ED25519
+config ZPL_LIBSSH_OPENSSL_ED25519
 	bool "Libssh OPENSSL ED25519"
-	depends on PL_LIBSSH_CRYPTO
+	depends on ZPL_LIBSSH_CRYPTO
 	default n
 	help
 	Build Libssh whih OPENSSL ED25519 Module.
-config PL_LIBSSH_BLOWFISH
+config ZPL_LIBSSH_BLOWFISH
 	bool "Libssh BLOWFISH"
-	depends on PL_LIBSSH_CRYPTO
+	depends on ZPL_LIBSSH_CRYPTO
 	default n
 	help
 	Build Libssh whih BLOWFISH Module.
 
-config PL_LIBSSH_SERVER
+config ZPL_LIBSSH_SERVER
 	bool "Libssh SERVER"
-	depends on PL_LIBSSH_MODULE
+	depends on ZPL_LIBSSH_MODULE
 	default y
 	help
 	Build Libssh whih SERVER Module.
-config PL_LIBSSH_PTHREAD
+config ZPL_LIBSSH_PTHREAD
 	bool "Libssh PTHREAD"
-	depends on PL_LIBSSH_MODULE
+	depends on ZPL_LIBSSH_MODULE
 	default y
 	help
 	Build Libssh whih PTHREAD Module.
-config PL_LIBSSH_GSSAPI
+config ZPL_LIBSSH_GSSAPI
 	bool "Libssh GSSAPI"
-	depends on PL_LIBSSH_MODULE
+	depends on ZPL_LIBSSH_MODULE
 	default n
 	help
 	Build Libssh whih GSSAPI Module.
 
-config PL_LIBSSH_GEX
+config ZPL_LIBSSH_GEX
 	bool "Libssh GEX"
-	depends on PL_LIBSSH_MODULE
+	depends on ZPL_LIBSSH_MODULE
 	default n
 	help
 	Build Libssh whih GEX Module.
-config PL_LIBSSH_PCAP
+config ZPL_LIBSSH_PCAP
 	bool "Libssh PCAP"
-	depends on PL_LIBSSH_MODULE
+	depends on ZPL_LIBSSH_MODULE
 	default n
 	help
 	Build Libssh whih PCAP Module.
 
-config PL_UDHCP_MODULE
-	bool "UDHCP Module"
-	default y
-	depends on PL_COMPONENT_MODULE  && PL_NSM_MODULE
-	help
-	Build UDHCP Module.
-
-config PL_UDHCPS_MODULE
-	bool "UDHCP Server Module"
-	depends on PL_UDHCP_MODULE 
-	default y
-	select PL_NSM_DHCP
-	help
-	Build UDHCP Server Module.
-
-config PL_UDHCPC_MODULE
-	bool "UDHCP Client Module"
-	depends on PL_UDHCP_MODULE
-	default y
-	help
-	Build UDHCP Client Module.
-
-config PL_UDHCPR_MODULE
-	bool "UDHCP Relay Module"
-	depends on PL_UDHCP_MODULE
-	default y
-	help
-	Build UDHCP Relay Module.
-
-config PL_WEBSERVER_MODULE
+config ZPL_WEBSERVER_MODULE
 	bool "WEB Server Module"
 	default y
-	depends on PL_COMPONENT_MODULE
+	depends on ZPL_COMPONENT_MODULE
 	help
 		Build WEB Server Module.
 	choice 
 		prompt "WEB Server SSL"
-		depends on PL_WEBSERVER_MODULE
-		default PL_WEBSERVER_OPENSSL
-		config PL_WEBSERVER_OPENSSL
+		depends on ZPL_WEBSERVER_MODULE
+		default ZPL_WEBSERVER_NONESSL
+		config ZPL_WEBSERVER_NONESSL
+			bool "WEB Server NONE SSL"
+		config ZPL_WEBSERVER_OPENSSL
 			bool "WEB Server OPENSSL"
-		config PL_WEBSERVER_MATRIXSSL
+		config ZPL_WEBSERVER_MATRIXSSL
 			bool "WEB Server MATRIXSSL"
-		config PL_WEBSERVER_MBEDTLS
+		config ZPL_WEBSERVER_MBEDTLS
 			bool "WEB Server MBEDTLS"
-		config PL_WEBSERVER_NANOSSL
+		config ZPL_WEBSERVER_NANOSSL
 			bool "WEB Server NANOSSL"
 	endchoice
 
-config PL_WIFI_MODULE
+config ZPL_WEBAPP_MODULE
+	bool "Webapp Module"
+	default n
+	depends on ZPL_WEBSERVER_MODULE
+	help
+	Build Webapp Module.
+
+
+config ZPL_WIFI_MODULE
 	bool "WIFI Module"
 	default n
-	depends on PL_COMPONENT_MODULE  && PL_NSM_MODULE
-	select PL_TOOLS_PROCESS
+	depends on ZPL_COMPONENT_MODULE  && ZPL_NSM_MODULE
 	help
 	Build WIFI Module.
 
-config PL_MODBUS_MODULE
+config ZPL_MODBUS_MODULE
 	bool "Libmodbus Module"
 	default n
-	depends on PL_COMPONENT_MODULE  && PL_NSM_MODULE
+	depends on ZPL_COMPONENT_MODULE  && ZPL_NSM_MODULE
 	help
 	Build Libmodbus Module.
+
+config ZPL_ONVIF_MODULE
+	bool "LibOnvif Module"
+	default n
+	depends on ZPL_COMPONENT_MODULE
+	help
+	Build LibOnvif Module.
+
+config ZPL_ONVIF_SSL
+	bool "Onvif SSL"
+	depends on ZPL_ONVIF_MODULE
+	default n
+	help
+	Build Onvif SSL Module.
 
 endmenu

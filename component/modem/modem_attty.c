@@ -4,14 +4,10 @@
  *  Created on: Jul 24, 2018
  *      Author: zhurish
  */
-
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-
-#include "os_util.h"
-#include "tty_com.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "modem.h"
 #include "modem_attty.h"
@@ -113,16 +109,16 @@ static const char * atcmd_split(char *src, int len, int *out)
 	return (char*)src;
 }
 
-static ospl_bool atsms_finish(char *src, int len)
+static zpl_bool atsms_finish(char *src, int len)
 {
 	int i = 0;
 	char *str = src;
 	for (i = 0; *str != '\0' && i < len; str++,i++)
 	{
 		if (((int) *str) == MD_CTRL_Z)
-			return ospl_true;
+			return zpl_true;
 	}
-	return ospl_false;
+	return zpl_false;
 }
 
 static int tty_attty_fdopen(struct tty_com *attty)
@@ -585,7 +581,7 @@ md_res_en modem_attty_write(modem_client_t *client, const char *format, ...)
     if(client->bSms)
     {
     	if(atsms_finish(client->atcmd->buf, client->atcmd->len))
-    		client->bSms = ospl_false;
+    		client->bSms = zpl_false;
     }
     if(client->atcmd->buf[client->atcmd->len-1] == '\n')
     	client->atcmd->buf[client->atcmd->len-1] = '\0';
@@ -601,7 +597,7 @@ md_res_en modem_attty_write(modem_client_t *client, const char *format, ...)
 
 
 md_res_en modem_attty(modem_client_t *client,
-		ospl_uint32 timeout, const char *waitkey, const char *format, ...)
+		zpl_uint32 timeout, const char *waitkey, const char *format, ...)
 {
 	md_res_en res = RES_ERROR;
     va_list args;
@@ -632,7 +628,7 @@ md_res_en modem_attty(modem_client_t *client,
     if(client->bSms)
     {
     	if(atsms_finish(client->atcmd->buf, client->atcmd->len))
-    		client->bSms = ospl_false;
+    		client->bSms = zpl_false;
     }
 	os_msleep(50);
     os_memset(client->response, 0, sizeof(atcmd_response_t));
@@ -644,7 +640,7 @@ md_res_en modem_attty(modem_client_t *client,
     		res =  RES_OK;
     	if(strstr(client->response->buf, ">"))
     	{
-    		client->bSms = ospl_true;
+    		client->bSms = zpl_true;
     		res =  RES_OK;
     	}
     	if(strstr(client->response->buf, "ERROR"))
@@ -664,7 +660,7 @@ md_res_en modem_attty(modem_client_t *client,
 }
 
 md_res_en modem_attty_respone(modem_client_t *client,
-		ospl_uint32 timeout, char *buf, ospl_size_t size, const char *format, ...)
+		zpl_uint32 timeout, char *buf, zpl_size_t size, const char *format, ...)
 {
 	md_res_en res = RES_ERROR;
     va_list args;
@@ -696,7 +692,7 @@ md_res_en modem_attty_respone(modem_client_t *client,
     if(client->bSms)
     {
     	if(atsms_finish(client->atcmd->buf, client->atcmd->len))
-    		client->bSms = ospl_false;
+    		client->bSms = zpl_false;
     }
 	os_msleep(50);
     os_memset(client->response, 0, sizeof(atcmd_response_t));
@@ -707,7 +703,7 @@ md_res_en modem_attty_respone(modem_client_t *client,
 
     	if(strstr(client->response->buf, ">"))
     	{
-    		client->bSms = ospl_true;
+    		client->bSms = zpl_true;
     	}
 
     	if(!client->bSms)
@@ -729,7 +725,7 @@ md_res_en modem_attty_respone(modem_client_t *client,
 
 
 md_res_en modem_attty_proxy_respone(modem_client_t *client,
-		ospl_uint32 timeout, char *buf, ospl_size_t size, const char *format, ospl_size_t len)
+		zpl_uint32 timeout, char *buf, zpl_size_t size, const char *format, zpl_size_t len)
 {
 	md_res_en res = RES_ERROR;
     //assert (buf);
@@ -759,7 +755,7 @@ md_res_en modem_attty_proxy_respone(modem_client_t *client,
     if(client->bSms)
     {
     	if(atsms_finish(client->atcmd->buf, client->atcmd->len))
-    		client->bSms = ospl_false;
+    		client->bSms = zpl_false;
     }
 	os_msleep(50);
     os_memset(client->response, 0, sizeof(atcmd_response_t));
@@ -770,7 +766,7 @@ md_res_en modem_attty_proxy_respone(modem_client_t *client,
 
     	if(strstr(client->response->buf, ">"))
     	{
-    		client->bSms = ospl_true;
+    		client->bSms = zpl_true;
     	}
 
     	if(!client->bSms)
@@ -790,7 +786,7 @@ md_res_en modem_attty_proxy_respone(modem_client_t *client,
     return RES_ERROR;
 }
 md_res_en modem_attty_massage_respone(modem_client_t *client,
-		ospl_uint32 timeout, const char *msg_cmd, const char *buf, ospl_size_t size)
+		zpl_uint32 timeout, const char *msg_cmd, const char *buf, zpl_size_t size)
 {
 	//char msg_cmd[128];
 	md_res_en res = RES_ERROR;
@@ -821,7 +817,7 @@ md_res_en modem_attty_massage_respone(modem_client_t *client,
             	if(strstr(client->response->buf, "ERROR"))
             		res =  RES_ERROR;
             	modem_main_unlock(client->modem);
-            	client->bSms = ospl_false;
+            	client->bSms = zpl_false;
             }
             else
             {

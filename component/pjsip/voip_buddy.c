@@ -5,18 +5,12 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "memory.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "linklist.h"
-#include "prefix.h"
-#include "table.h"
-#include "vector.h"
-#include "eloop.h"
-#include "network.h"
-#include "vty.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
+#include "vty_include.h"
+
 
 #include "voip_buddy.h"
 
@@ -314,7 +308,7 @@ buddy_user_t * buddy_dbase_lookup_by_username(char *username)
 	return buddy_dbase_node_lookup_by_username(username);
 }
 
-int buddy_dbase_username_add(char *username, ospl_uint32	userid)
+int buddy_dbase_username_add(char *username, zpl_uint32	userid)
 {
 	buddy_user_t *user = buddy_dbase_node_lookup_by_username(username);
 	if(user)
@@ -328,7 +322,7 @@ int buddy_dbase_username_add(char *username, ospl_uint32	userid)
 	return OK;
 }
 
-int buddy_dbase_username_del(char *username, ospl_uint32 userid)
+int buddy_dbase_username_del(char *username, zpl_uint32 userid)
 {
 	buddy_user_t *user = buddy_dbase_node_lookup_by_username(username);
 	if(!user)

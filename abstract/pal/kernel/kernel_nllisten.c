@@ -19,41 +19,25 @@
  * 02111-1307, USA.  
  */
 
-#include <zebra.h>
-
-#include "linklist.h"
-#include "if.h"
-#include "nsm_connected.h"
-#include "log.h"
-#include "prefix.h"
-#include "table.h"
-#include "memory.h"
-#include "nsm_rib.h"
-#include "thread.h"
-#include "nsm_vrf.h"
-#include "nexthop.h"
-
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 #include "nsm_zserv.h"
-
-#include "nsm_redistribute.h"
-#include "nsm_interface.h"
-#include "nsm_debug.h"
-#include "nsm_hook.h"
 #include "kernel_netlink.h"
 
-extern struct zebra_t zebrad;
 
 /* Lookup interface IPv4/IPv6 address. */
 static int netlink_interface_addr(struct sockaddr_nl *snl, struct nlmsghdr *h,
 		vrf_id_t vrf_id)
 {
-	ospl_uint32 len;
+	zpl_uint32 len;
 	struct ifaddrmsg *ifa;
 	struct rtattr *tb[IFA_MAX + 1];
 	struct interface *ifp;
 	void *addr = NULL;
 	void *broad = NULL;
-	ospl_uchar flags = 0;
+	zpl_uchar flags = 0;
 	char *label = NULL;
 	char ifkname[64];
 	ifa = NLMSG_DATA(h);
@@ -210,14 +194,18 @@ static int netlink_interface_addr(struct sockaddr_nl *snl, struct nlmsghdr *h,
 		if (ifp && h->nlmsg_type == RTM_NEWADDR)
 		{
 			//nsm_client_notify_parameter_change(ifp);
-			//nsm_hook_execute (NSM_HOOK_IP_DEL, ifp, ifc, ospl_false);
-			nsm_hook_execute (NSM_HOOK_IFP_CHANGE, ifp, NULL, ospl_true);
+			//nsm_hook_execute (NSM_HOOK_IP_DEL, ifp, ifc, zpl_false);
+			#ifdef NSM_HOOK
+			nsm_hook_execute (NSM_HOOK_IFP_CHANGE, ifp, NULL, zpl_true);
+			#endif
 		}
 		else if(ifp)
 		{
 			//nsm_client_notify_parameter_change(ifp);
-			//nsm_hook_execute (NSM_HOOK_IP_DEL, ifp, ifc, ospl_false);
-			nsm_hook_execute (NSM_HOOK_IFP_CHANGE, ifp, NULL, ospl_false);
+			//nsm_hook_execute (NSM_HOOK_IP_DEL, ifp, ifc, zpl_false);
+			#ifdef NSM_HOOK
+			nsm_hook_execute (NSM_HOOK_IFP_CHANGE, ifp, NULL, zpl_false);
+			#endif
 		}
 	}
 	return 0;
@@ -227,17 +215,17 @@ static int netlink_interface_addr(struct sockaddr_nl *snl, struct nlmsghdr *h,
 static int netlink_route_change(struct sockaddr_nl *snl, struct nlmsghdr *h,
 		vrf_id_t vrf_id)
 {
-	ospl_uint32 len;
+	zpl_uint32 len;
 	struct rtmsg *rtm;
 	struct rtattr *tb[RTA_MAX + 1];
-	ospl_uchar zebra_flags = 0;
+	zpl_uchar zebra_flags = 0;
 
 	char anyaddr[16] =
 	{ 0 };
 
 	ifindex_t ifkindex;
-	ospl_uint32 table;
-	ospl_uint32 mtu = 0;
+	zpl_uint32 table;
+	zpl_uint32 mtu = 0;
 
 	void *dest;
 	void *gate;
@@ -267,7 +255,7 @@ static int netlink_route_change(struct sockaddr_nl *snl, struct nlmsghdr *h,
 	}
 
 	table = rtm->rtm_table;
-	if (table != RT_TABLE_MAIN && table != zebrad.rtm_table_default)
+	if (table != RT_TABLE_MAIN && table != nsm_srv->rtm_table_default)
 	{
 		return 0;
 	}
@@ -331,7 +319,7 @@ static int netlink_route_change(struct sockaddr_nl *snl, struct nlmsghdr *h,
 					RTA_PAYLOAD(tb[RTA_METRICS]));
 
 			if (mxrta[RTAX_MTU])
-				mtu = *(ospl_uint32 *) RTA_DATA(mxrta[RTAX_MTU]);
+				mtu = *(zpl_uint32 *) RTA_DATA(mxrta[RTAX_MTU]);
 		}
 	}
 
@@ -455,7 +443,7 @@ static int netlink_route_change(struct sockaddr_nl *snl, struct nlmsghdr *h,
 static int netlink_link_change(struct sockaddr_nl *snl, struct nlmsghdr *h,
 		vrf_id_t vrf_id)
 {
-	ospl_uint32 len;
+	zpl_uint32 len;
 	struct ifinfomsg *ifi;
 	struct rtattr *tb[IFLA_MAX + 1];
 	struct interface *ifp;
@@ -555,9 +543,11 @@ static int netlink_link_change(struct sockaddr_nl *snl, struct nlmsghdr *h,
 				ifp->flags = ifi->ifi_flags & 0x0000fffff;
 				if (!if_is_operative(ifp))
 					if_down(ifp);
+					#ifdef ZPL_RTPL_MODULE
 				else
 					/* Must notify client daemons of new interface status. */
 					zebra_interface_up_update(ifp);
+					#endif
 			}
 			else
 			{
@@ -626,7 +616,7 @@ static int kernel_listen(struct thread *thread)
 {
 	struct nsm_vrf *zvrf = (struct nsm_vrf *) THREAD_ARG(thread);
 	netlink_parse_info(netlink_information_fetch, &zvrf->netlink, zvrf);
-	zvrf->t_netlink = thread_add_read(zebrad.master, kernel_listen, zvrf,
+	zvrf->t_netlink = thread_add_read(nsm_srv->master, kernel_listen, zvrf,
 			zvrf->netlink.sock);
 
 	return 0;
@@ -636,7 +626,7 @@ int kernel_nllisten(struct nsm_vrf *zvrf)
 {
 	if(zvrf->netlink.snl.nl_pid == 0)
 		zvrf->netlink.snl.nl_pid = getpid();
-	zvrf->t_netlink = thread_add_read(zebrad.master, kernel_listen, zvrf,
+	zvrf->t_netlink = thread_add_read(nsm_srv->master, kernel_listen, zvrf,
 			zvrf->netlink.sock);
 	return 0;
 }

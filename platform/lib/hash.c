@@ -18,11 +18,11 @@
  * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
  * Boston, MA 02111-1307, USA.
  */
-#include "zebra.h"
+#include "zpl_include.h"
 #include "hash.h"
 
 #include "memory.h"
-
+#include "zassert.h"
 
 /* Allocate a new hash.  */
 struct hash *

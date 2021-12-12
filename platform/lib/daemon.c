@@ -20,16 +20,17 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include <zebra.h>
+#include "os_include.h"
+#include "zpl_include.h"
 #include <log.h>
 
 #ifndef HAVE_DAEMON
 
 /* Daemonize myself. */
 int
-daemon (ospl_bool nochdir, ospl_bool noclose)
+daemon (zpl_bool nochdir, zpl_bool noclose)
 {
-  ospl_pid_t pid;
+  zpl_pid_t pid;
 
   pid = fork ();
 

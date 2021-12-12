@@ -5,8 +5,10 @@
  *      Author: DELL
  */
 
-#include "zebra.h"
-#include "memory.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 #include "mqtt-config.h"
 #include <mqtt_protocol.h>
 #include <mosquitto.h>
@@ -90,9 +92,9 @@ static int mosquitto_new_reinit(struct mqtt_app_config *cfg)
 	return OK;
 }
 
-ospl_bool mqtt_isenable_api(struct mqtt_app_config *cfg)
+zpl_bool mqtt_isenable_api(struct mqtt_app_config *cfg)
 {
-	ospl_bool enable = ospl_false;
+	zpl_bool enable = zpl_false;
 	zassert(cfg != NULL);
 	if(cfg->mutex)
 		os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
@@ -102,7 +104,7 @@ ospl_bool mqtt_isenable_api(struct mqtt_app_config *cfg)
 	return enable;
 }
 
-int mqtt_enable_api(struct mqtt_app_config *cfg, ospl_bool enable)
+int mqtt_enable_api(struct mqtt_app_config *cfg, zpl_bool enable)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -119,7 +121,7 @@ int mqtt_reload_api(struct mqtt_app_config *cfg)
 	zassert(cfg != NULL);
 	if(cfg->mutex)
 		os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
-	cfg->reload = ospl_true;
+	cfg->reload = zpl_true;
 	ret = mosquitto__set_state(cfg->mosq, mosq_cs_disconnected);
 	if(cfg->mutex)
 		os_mutex_unlock(cfg->mutex);
@@ -128,7 +130,7 @@ int mqtt_reload_api(struct mqtt_app_config *cfg)
 
 
 int mqtt_bind_address_api(struct mqtt_app_config *cfg,
-		const ospl_char *bind_address)
+		const zpl_char *bind_address)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -144,7 +146,7 @@ int mqtt_bind_address_api(struct mqtt_app_config *cfg,
 	return OK;
 }
 
-int mqtt_connect_host_api(struct mqtt_app_config *cfg, const ospl_char * host)
+int mqtt_connect_host_api(struct mqtt_app_config *cfg, const zpl_char * host)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -162,7 +164,7 @@ int mqtt_connect_host_api(struct mqtt_app_config *cfg, const ospl_char * host)
 	return OK;
 }
 
-int mqtt_connect_port_api(struct mqtt_app_config *cfg, const ospl_uint16 port)
+int mqtt_connect_port_api(struct mqtt_app_config *cfg, const zpl_uint16 port)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -177,7 +179,7 @@ int mqtt_connect_port_api(struct mqtt_app_config *cfg, const ospl_uint16 port)
 }
 
 int mqtt_username_api(struct mqtt_app_config *cfg,
-		const ospl_char * username)
+		const zpl_char * username)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -196,7 +198,7 @@ int mqtt_username_api(struct mqtt_app_config *cfg,
 }
 
 int mqtt_password_api(struct mqtt_app_config *cfg,
-		const ospl_char * password)
+		const zpl_char * password)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -216,7 +218,7 @@ int mqtt_password_api(struct mqtt_app_config *cfg,
 
 
 #ifdef WITH_TLS
-int mqtt_tls_cafile_api(struct mqtt_app_config *cfg, const ospl_char *cafile)
+int mqtt_tls_cafile_api(struct mqtt_app_config *cfg, const zpl_char *cafile)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -232,7 +234,7 @@ int mqtt_tls_cafile_api(struct mqtt_app_config *cfg, const ospl_char *cafile)
 	return OK;
 }
 
-int mqtt_tls_capath_api(struct mqtt_app_config *cfg, const ospl_char *capath)
+int mqtt_tls_capath_api(struct mqtt_app_config *cfg, const zpl_char *capath)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -248,7 +250,7 @@ int mqtt_tls_capath_api(struct mqtt_app_config *cfg, const ospl_char *capath)
 	return OK;
 }
 
-int mqtt_tls_certfile_api(struct mqtt_app_config *cfg, const ospl_char *certfile)
+int mqtt_tls_certfile_api(struct mqtt_app_config *cfg, const zpl_char *certfile)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -264,7 +266,7 @@ int mqtt_tls_certfile_api(struct mqtt_app_config *cfg, const ospl_char *certfile
 	return OK;
 }
 
-int mqtt_tls_ciphers_api(struct mqtt_app_config *cfg, const ospl_char *ciphers)
+int mqtt_tls_ciphers_api(struct mqtt_app_config *cfg, const zpl_char *ciphers)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -280,7 +282,7 @@ int mqtt_tls_ciphers_api(struct mqtt_app_config *cfg, const ospl_char *ciphers)
 	return OK;
 }
 
-int mqtt_tls_insecure_api(struct mqtt_app_config *cfg, const ospl_bool insecure)
+int mqtt_tls_insecure_api(struct mqtt_app_config *cfg, const zpl_bool insecure)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -291,7 +293,7 @@ int mqtt_tls_insecure_api(struct mqtt_app_config *cfg, const ospl_bool insecure)
 	return OK;
 }
 
-int mqtt_tls_keyform_api(struct mqtt_app_config *cfg, const ospl_char *keyform)
+int mqtt_tls_keyform_api(struct mqtt_app_config *cfg, const zpl_char *keyform)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -307,7 +309,7 @@ int mqtt_tls_keyform_api(struct mqtt_app_config *cfg, const ospl_char *keyform)
 	return OK;
 }
 
-int mqtt_tls_keyfile_api(struct mqtt_app_config *cfg, const ospl_char *keyfile)
+int mqtt_tls_keyfile_api(struct mqtt_app_config *cfg, const zpl_char *keyfile)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -325,7 +327,7 @@ int mqtt_tls_keyfile_api(struct mqtt_app_config *cfg, const ospl_char *keyfile)
 #endif
 
 
-int mqtt_id_api(struct mqtt_app_config *cfg, const ospl_char * format)
+int mqtt_id_api(struct mqtt_app_config *cfg, const zpl_char * format)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -344,7 +346,7 @@ int mqtt_id_api(struct mqtt_app_config *cfg, const ospl_char * format)
 }
 
 int mqtt_id_prefix_api(struct mqtt_app_config *cfg,
-		const ospl_char * format)
+		const zpl_char * format)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -363,7 +365,7 @@ int mqtt_id_prefix_api(struct mqtt_app_config *cfg,
 }
 
 int mqtt_keepalive_api(struct mqtt_app_config *cfg,
-		const ospl_uint32 keepalive)
+		const zpl_uint32 keepalive)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -375,7 +377,7 @@ int mqtt_keepalive_api(struct mqtt_app_config *cfg,
 }
 
 int mqtt_max_inflight_api(struct mqtt_app_config *cfg,
-		const ospl_uint32 max_inflight)
+		const zpl_uint32 max_inflight)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -389,7 +391,7 @@ int mqtt_max_inflight_api(struct mqtt_app_config *cfg,
 
 
 #ifdef FINAL_WITH_TLS_PSK
-int mqtt_tls_psk_api(struct mqtt_app_config *cfg, const ospl_char * format)
+int mqtt_tls_psk_api(struct mqtt_app_config *cfg, const zpl_char * format)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -407,7 +409,7 @@ int mqtt_tls_psk_api(struct mqtt_app_config *cfg, const ospl_char * format)
 	return OK;
 }
 
-int mqtt_tls_psk_identity_api(struct mqtt_app_config *cfg, const ospl_char * format)
+int mqtt_tls_psk_identity_api(struct mqtt_app_config *cfg, const zpl_char * format)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -437,7 +439,7 @@ int mqtt_qos_api(struct mqtt_app_config *cfg, const mqtt_qos_level qos)
 	return OK;
 }
 
-int mqtt_retain_api(struct mqtt_app_config *cfg, const ospl_bool retain)
+int mqtt_retain_api(struct mqtt_app_config *cfg, const zpl_bool retain)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -449,7 +451,7 @@ int mqtt_retain_api(struct mqtt_app_config *cfg, const ospl_bool retain)
 }
 
 
-int mqtt_clean_session_api(struct mqtt_app_config *cfg, const ospl_bool clean_session)
+int mqtt_clean_session_api(struct mqtt_app_config *cfg, const zpl_bool clean_session)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -461,7 +463,7 @@ int mqtt_clean_session_api(struct mqtt_app_config *cfg, const ospl_bool clean_se
 }
 
 #ifdef WITH_SRV
-int mqtt_use_srv_api(struct mqtt_app_config *cfg, const ospl_bool use_srv)
+int mqtt_use_srv_api(struct mqtt_app_config *cfg, const zpl_bool use_srv)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -474,7 +476,7 @@ int mqtt_use_srv_api(struct mqtt_app_config *cfg, const ospl_bool use_srv)
 #endif
 
 #ifdef WITH_TLS
-int mqtt_tls_alpn_api(struct mqtt_app_config *cfg, const ospl_char * format)
+int mqtt_tls_alpn_api(struct mqtt_app_config *cfg, const zpl_char * format)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -492,7 +494,7 @@ int mqtt_tls_alpn_api(struct mqtt_app_config *cfg, const ospl_char * format)
 	return OK;
 }
 
-int mqtt_tls_engine_api(struct mqtt_app_config *cfg, const ospl_char * format)
+int mqtt_tls_engine_api(struct mqtt_app_config *cfg, const zpl_char * format)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -510,7 +512,7 @@ int mqtt_tls_engine_api(struct mqtt_app_config *cfg, const ospl_char * format)
 	return OK;
 }
 
-int mqtt_tls_engine_kpass_sha1_api(struct mqtt_app_config *cfg, const ospl_char * format)
+int mqtt_tls_engine_kpass_sha1_api(struct mqtt_app_config *cfg, const zpl_char * format)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -528,7 +530,7 @@ int mqtt_tls_engine_kpass_sha1_api(struct mqtt_app_config *cfg, const ospl_char 
 	return OK;
 }
 
-int mqtt_tls_version_api(struct mqtt_app_config *cfg, const ospl_char * format)
+int mqtt_tls_version_api(struct mqtt_app_config *cfg, const zpl_char * format)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -548,7 +550,7 @@ int mqtt_tls_version_api(struct mqtt_app_config *cfg, const ospl_char * format)
 #endif
 
 
-int mqtt_debug_api(struct mqtt_app_config *cfg, ospl_uint32 loglevel)
+int mqtt_debug_api(struct mqtt_app_config *cfg, zpl_uint32 loglevel)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -561,7 +563,7 @@ int mqtt_debug_api(struct mqtt_app_config *cfg, ospl_uint32 loglevel)
 
 
 int mqtt_version_api(struct mqtt_app_config *cfg,
-		const ospl_uint32 mqtt_version)
+		const zpl_uint32 mqtt_version)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -600,7 +602,7 @@ int mqtt_version_api(struct mqtt_app_config *cfg,
 	return OK;
 }
 
-int mqtt_session_expiry_interval_api(struct mqtt_app_config *cfg, ospl_uint32 interval)
+int mqtt_session_expiry_interval_api(struct mqtt_app_config *cfg, zpl_uint32 interval)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -613,7 +615,7 @@ int mqtt_session_expiry_interval_api(struct mqtt_app_config *cfg, ospl_uint32 in
 
 
 int mqtt_sub_filter_out_api(struct mqtt_app_config *cfg,
-		const ospl_char * filter)
+		const zpl_char * filter)
 {
 	zassert(cfg != NULL);
 	zassert(filter != NULL);
@@ -643,7 +645,7 @@ int mqtt_sub_filter_out_api(struct mqtt_app_config *cfg,
 
 /*	if (!cfg->sub.filter_outs)
 	{
-		cfg->sub.filter_outs = XMALLOC(MTYPE_MQTT_FILTER, MQTT_TOPICS_MAX * sizeof(ospl_char *));
+		cfg->sub.filter_outs = XMALLOC(MTYPE_MQTT_FILTER, MQTT_TOPICS_MAX * sizeof(zpl_char *));
 	}
 	if (!cfg->sub.filter_outs)
 	{
@@ -660,9 +662,9 @@ int mqtt_sub_filter_out_api(struct mqtt_app_config *cfg,
 	return OK;
 }
 
-int mqtt_sub_filter_out_del_api(struct mqtt_app_config *cfg, ospl_char *filter)
+int mqtt_sub_filter_out_del_api(struct mqtt_app_config *cfg, zpl_char *filter)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	zassert(cfg != NULL);
 	for(i = 0; i < cfg->sub.filter_out_count; i++)
 	{
@@ -679,7 +681,7 @@ int mqtt_sub_filter_out_del_api(struct mqtt_app_config *cfg, ospl_char *filter)
 
 
 int mqtt_sub_unsubscribe_api(struct mqtt_app_config *cfg,
-		const ospl_char * filter)
+		const zpl_char * filter)
 {
 	zassert(cfg != NULL);
 	zassert(filter != NULL);
@@ -709,7 +711,7 @@ int mqtt_sub_unsubscribe_api(struct mqtt_app_config *cfg,
 
 /*	if (!cfg->sub.unsub_topics)
 	{
-		cfg->sub.unsub_topics = XMALLOC(MTYPE_MQTT_TOPIC, MQTT_TOPICS_MAX * sizeof(ospl_char *));
+		cfg->sub.unsub_topics = XMALLOC(MTYPE_MQTT_TOPIC, MQTT_TOPICS_MAX * sizeof(zpl_char *));
 	}
 
 	if (!cfg->sub.unsub_topics)
@@ -727,9 +729,9 @@ int mqtt_sub_unsubscribe_api(struct mqtt_app_config *cfg,
 	return OK;
 }
 
-int mqtt_sub_unsubscribe_del_api(struct mqtt_app_config *cfg, ospl_char *topic)
+int mqtt_sub_unsubscribe_del_api(struct mqtt_app_config *cfg, zpl_char *topic)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	zassert(cfg != NULL);
 	for(i = 0; i < cfg->sub.unsub_topic_count; i++)
 	{
@@ -746,7 +748,7 @@ int mqtt_sub_unsubscribe_del_api(struct mqtt_app_config *cfg, ospl_char *topic)
 
 
 
-int mqtt_will_payload_api(struct mqtt_app_config *cfg, const ospl_char * format)
+int mqtt_will_payload_api(struct mqtt_app_config *cfg, const zpl_char * format)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -770,7 +772,7 @@ int mqtt_will_payload_api(struct mqtt_app_config *cfg, const ospl_char * format)
 }
 
 
-int mqtt_will_topic_api(struct mqtt_app_config *cfg, const ospl_char * will_topic)
+int mqtt_will_topic_api(struct mqtt_app_config *cfg, const zpl_char * will_topic)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -817,7 +819,7 @@ int mqtt_will_qos_api(struct mqtt_app_config *cfg, const mqtt_qos_level will_qos
 	return OK;
 }
 
-int mqtt_will_retain_api(struct mqtt_app_config *cfg, const ospl_bool will_retain)
+int mqtt_will_retain_api(struct mqtt_app_config *cfg, const zpl_bool will_retain)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -831,7 +833,7 @@ int mqtt_will_retain_api(struct mqtt_app_config *cfg, const ospl_bool will_retai
 
 
 /*int mqtt_sub_no_retain_api(struct mqtt_app_config *cfg,
-		const ospl_bool no_retain)
+		const zpl_bool no_retain)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -858,7 +860,7 @@ int mqtt_sub_retain_as_published_api(struct mqtt_app_config *cfg)
 }*/
 
 int mqtt_sub_remove_retained_api(struct mqtt_app_config *cfg,
-		const ospl_bool remove_retained)
+		const zpl_bool remove_retained)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -869,7 +871,7 @@ int mqtt_sub_remove_retained_api(struct mqtt_app_config *cfg,
 	return OK;
 }
 
-int mqtt_option_api(struct mqtt_app_config *cfg, const ospl_uint32 option, ospl_bool set)
+int mqtt_option_api(struct mqtt_app_config *cfg, const zpl_uint32 option, zpl_bool set)
 {
 	zassert(cfg != NULL);
 	if(cfg->mutex)
@@ -885,13 +887,13 @@ int mqtt_option_api(struct mqtt_app_config *cfg, const ospl_uint32 option, ospl_
 	{
 		cfg->sub.sub_opts |= option;
 		if(option & MQTT_SUB_OPT_SEND_RETAIN_NEVER)
-			cfg->sub.no_retain = ospl_true;
+			cfg->sub.no_retain = zpl_true;
 	}
 	else
 	{
 		cfg->sub.sub_opts &= ~option;
 		if(option & MQTT_SUB_OPT_SEND_RETAIN_NEVER)
-			cfg->sub.no_retain = ospl_false;
+			cfg->sub.no_retain = zpl_false;
 	}
 	if(cfg->mutex)
 		os_mutex_unlock(cfg->mutex);
@@ -903,12 +905,12 @@ int mqtt_module_commit_api(struct mqtt_app_config *cfg)
 	zassert(cfg != NULL);
 	if(cfg->mutex)
 			os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
-	if(os_load_config_done ())
+	if(host_config_load_done ())
 	{
-		if(cfg->connectd == ospl_true && cfg->mosq)
+		if(cfg->connectd == zpl_true && cfg->mosq)
 		{
 			mosquitto_disconnect(cfg->mosq);
-			cfg->connectd = ospl_false;
+			cfg->connectd = zpl_false;
 		}
 		if(cfg->mosq)
 		{
@@ -944,7 +946,7 @@ int mqtt_module_init(void)
 	/*
 	 * load config
 	 */
-	mqtt_config->enable = ospl_true;
+	mqtt_config->enable = zpl_true;
 	if (mqtt_client_id_generate(mqtt_config) != MOSQ_ERR_SUCCESS)
 	{
 		_MQTT_DBG_TRAP("------------%s-------------mqtt_client_id_generate",__func__);
@@ -959,7 +961,7 @@ int mqtt_module_init(void)
 		mqtt_config_default_cleanup(mqtt_config);
 		return ERROR;
 	}
-	if(os_load_config_done ())
+	if(host_config_load_done ())
 	{
 		if(mosquitto_new_reinit(mqtt_config) == ERROR)
 		{
@@ -995,10 +997,7 @@ static int mqtt_app_task (void *argv)
 	struct mqtt_app_config *cfg = argv;
 	zassert(cfg != NULL);
 
-	while (!os_load_config_done ())
-	{
-		os_sleep (1);
-	}
+	host_config_load_waitting();
 	while (!cfg->enable)
 	{
 		os_sleep (1);
@@ -1018,7 +1017,7 @@ static int mqtt_app_task (void *argv)
 		if(cfg->mutex)
 			os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
 
-		if(cfg->connectd != ospl_true && cfg->host)
+		if(cfg->connectd != zpl_true && cfg->host)
 		{
 			ret = mqtt_client_connect(cfg);
 		}
@@ -1030,7 +1029,7 @@ static int mqtt_app_task (void *argv)
 			os_sleep(1);
 			continue;
 		}
-		cfg->connectd = ospl_true;
+		cfg->connectd = zpl_true;
 
 #if 0
 		do
@@ -1043,10 +1042,10 @@ static int mqtt_app_task (void *argv)
 			state = mosquitto__get_state(cfg->mosq);
 			if(state == mosq_cs_disconnecting || state == mosq_cs_disconnected)
 			{
-				cfg->connectd = ospl_false;
+				cfg->connectd = zpl_false;
 				if(cfg->reload)
 				{
-					cfg->reload = ospl_false;
+					cfg->reload = zpl_false;
 					if(cfg->mosq)
 						mosquitto_destroy(cfg->mosq);
 
@@ -1073,10 +1072,10 @@ static int mqtt_app_task (void *argv)
 		state = mosquitto__get_state(cfg->mosq);
 		if(state == mosq_cs_disconnecting || state == mosq_cs_disconnected)
 		{
-			cfg->connectd = ospl_false;
+			cfg->connectd = zpl_false;
 			if(cfg->reload)
 			{
-				cfg->reload = ospl_false;
+				cfg->reload = zpl_false;
 				if(cfg->mosq)
 					mosquitto_destroy(cfg->mosq);
 
@@ -1096,7 +1095,7 @@ static int mqtt_app_task (void *argv)
 #endif
 	}
 
-	cfg->taskquit = ospl_false;
+	cfg->taskquit = zpl_false;
 
 	if(cfg->mutex)
 		os_mutex_unlock(cfg->mutex);
@@ -1124,8 +1123,8 @@ int mqtt_module_task_exit(void)
 	if(mqtt_config->mutex)
 		os_mutex_lock(mqtt_config->mutex, OS_WAIT_FOREVER);
 	if(mqtt_config->mosq)
-		mosquitto_loop_stop(mqtt_config->mosq, ospl_true);
-	mqtt_config->taskquit = ospl_true;
+		mosquitto_loop_stop(mqtt_config->mosq, zpl_true);
+	mqtt_config->taskquit = zpl_true;
 	if(mqtt_config->mutex)
 		os_mutex_unlock(mqtt_config->mutex);
 	return OK;

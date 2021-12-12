@@ -1,4 +1,4 @@
-PL_MQTT_BROKER=true
+ZPL_MQTT_BROKER=true
 include ../config-def.mk
 include ../config.mk
 

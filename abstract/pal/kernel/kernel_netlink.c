@@ -19,31 +19,16 @@
  * 02111-1307, USA.  
  */
 
-#include <zebra.h>
-//#include <net/if_arp.h>
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 /* Hack for GNU libc version 2. */
 #ifndef MSG_TRUNC
 #define MSG_TRUNC      0x20
 #endif /* MSG_TRUNC */
 
-#include "linklist.h"
-#include "if.h"
-#include "nsm_connected.h"
-#include "log.h"
-#include "prefix.h"
-#include "table.h"
-#include "memory.h"
-#include "nsm_rib.h"
-#include "thread.h"
-#include "nsm_vrf.h"
-#include "nexthop.h"
-
-#include "nsm_zserv.h"
-
-#include "nsm_redistribute.h"
-#include "nsm_interface.h"
-#include "nsm_debug.h"
 
 #include "kernel_netlink.h"
 
@@ -89,7 +74,7 @@ static const struct message rtproto_str[] =
  * nl_msg_type_to_str
  */
 const char *
-nl_msg_type_to_str(ospl_uint16 msg_type)
+nl_msg_type_to_str(zpl_uint16 msg_type)
 {
 	return lookup(nlmsg_str, msg_type);
 }
@@ -98,14 +83,14 @@ nl_msg_type_to_str(ospl_uint16 msg_type)
  * nl_rtproto_to_str
  */
 const char *
-nl_rtproto_to_str(ospl_uchar rtproto)
+nl_rtproto_to_str(zpl_uchar rtproto)
 {
 	return lookup(rtproto_str, rtproto);
 }
 
 /* Utility function  comes from iproute2.
  Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru> */
-int addattr_l(struct nlmsghdr *n, size_t maxlen, ospl_uint32 type, void *data,
+int addattr_l(struct nlmsghdr *n, size_t maxlen, zpl_uint32 type, void *data,
 		size_t alen)
 {
 	size_t len;
@@ -126,7 +111,7 @@ int addattr_l(struct nlmsghdr *n, size_t maxlen, ospl_uint32 type, void *data,
 	return 0;
 }
 
-int rta_addattr_l(struct rtattr *rta, size_t maxlen, ospl_uint32 type, void *data,
+int rta_addattr_l(struct rtattr *rta, size_t maxlen, zpl_uint32 type, void *data,
 		size_t alen)
 {
 	size_t len;
@@ -149,7 +134,7 @@ int rta_addattr_l(struct rtattr *rta, size_t maxlen, ospl_uint32 type, void *dat
 
 /* Utility function comes from iproute2.
  Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru> */
-int addattr32(struct nlmsghdr *n, size_t maxlen, ospl_uint32 type, ospl_uint32 data)
+int addattr32(struct nlmsghdr *n, size_t maxlen, zpl_uint32 type, zpl_uint32 data)
 {
 	size_t len;
 	struct rtattr *rta;
@@ -168,7 +153,7 @@ int addattr32(struct nlmsghdr *n, size_t maxlen, ospl_uint32 type, ospl_uint32 d
 	return 0;
 }
 
-struct rtattr *addattr_nest(struct nlmsghdr *n, size_t maxlen, ospl_uint32 type)
+struct rtattr *addattr_nest(struct nlmsghdr *n, size_t maxlen, zpl_uint32 type)
 {
 	struct rtattr *nest = NLMSG_TAIL(n);
 
@@ -183,8 +168,8 @@ int addattr_nest_end(struct nlmsghdr *n, struct rtattr *nest)
 }
 
 /* Utility function for parse rtattr. */
-void netlink_parse_rtattr(struct rtattr **tb, ospl_uint32 max, struct rtattr *rta,
-		ospl_uint32 len)
+void netlink_parse_rtattr(struct rtattr **tb, zpl_uint32 max, struct rtattr *rta,
+		zpl_uint32 len)
 {
 	while (RTA_OK(rta, len))
 	{
@@ -197,7 +182,7 @@ void netlink_parse_rtattr(struct rtattr **tb, ospl_uint32 max, struct rtattr *rt
 /* Utility function to parse hardware link-layer address and update ifp */
 void netlink_interface_update_hw_addr(struct rtattr **tb, struct interface *ifp)
 {
-	ospl_uint32 i;
+	zpl_uint32 i;
 
 	if (tb[IFLA_ADDRESS])
 	{
@@ -235,8 +220,8 @@ void netlink_interface_update_hw_addr(struct rtattr **tb, struct interface *ifp)
  *                     (recursive, multipath, etc.)
  * @param family: Address family which the change concerns
  */
-void _netlink_route_debug(ospl_uint32 cmd, struct prefix *p, struct nexthop *nexthop,
-		const char *routedesc, ospl_family_t family, struct nsm_vrf *zvrf)
+void _netlink_route_debug(zpl_uint32 cmd, struct prefix *p, struct nexthop *nexthop,
+		const char *routedesc, zpl_family_t family, struct nsm_vrf *zvrf)
 {
 	if (IS_ZEBRA_DEBUG_KERNEL)
 	{
@@ -280,20 +265,20 @@ void set_ifindex(struct interface *ifp, ifindex_t ifi_index)
 }
 
 /* Get type specified information from netlink. */
-int netlink_request(ospl_family_t family, ospl_uint32 type, struct nlsock *nl)
+int netlink_request(zpl_family_t family, zpl_uint32 type, struct nlsock *nl)
 {
 	int ret;
-	struct sockaddr_nl snl;
+	struct ipstack_sockaddr_nl snl;
 	int save_errno;
 
 	struct
 	{
-		struct nlmsghdr nlh;
-		struct rtgenmsg g;
+		struct ipstack_nlmsghdr nlh;
+		struct ipstack_rtgenmsg g;
 	} req;
 
 	/* Check netlink socket. */
-	if (nl->sock < 0)
+	if (ipstack_invalid(nl->sock))
 	{
 		zlog_err(MODULE_PAL, "%s socket isn't active.", nl->name);
 		return -1;
@@ -310,8 +295,8 @@ int netlink_request(ospl_family_t family, ospl_uint32 type, struct nlsock *nl)
 	req.nlh.nlmsg_seq = ++nl->seq;
 	req.g.rtgen_family = family;
 
-	ret = sendto(nl->sock, (void *) &req, sizeof req, 0,
-			(struct sockaddr *) &snl, sizeof snl);
+	ret = ipstack_sendto(nl->sock, (void *) &req, sizeof req, 0,
+			(struct ipstack_sockaddr *) &snl, sizeof snl);
 	save_errno = errno;
 
 	if (ret < 0)
@@ -329,11 +314,11 @@ int netlink_parse_info(
 		int (*filter)(struct sockaddr_nl *, struct nlmsghdr *, vrf_id_t),
 		struct nlsock *nl, struct nsm_vrf *zvrf)
 {
-	ospl_uint32 status;
+	zpl_uint32 status;
 	int ret = 0;
 	int error;
-	struct sockaddr_nl snl;
-	struct nlmsghdr *h;
+	struct ipstack_sockaddr_nl snl;
+	struct ipstack_nlmsghdr *h;
 	while (1)
 	{
 		struct iovec iov =
@@ -351,7 +336,7 @@ int netlink_parse_info(
 		};
 
 
-		status = recvmsg(nl->sock, &msg, 0);
+		status = ipstack_recvmsg(nl->sock, &msg, 0);
 		if (status < 0)
 		{
 			if (errno == EINTR)
@@ -377,7 +362,7 @@ int netlink_parse_info(
 		}
 
 		for (h = (struct nlmsghdr *) nl_rcvbuf.p;
-				NLMSG_OK(h, (ospl_uint32) status); h = NLMSG_NEXT(h, status))
+				NLMSG_OK(h, (zpl_uint32) status); h = NLMSG_NEXT(h, status))
 		{
 			/* Finish of reading. */
 			if (h->nlmsg_type == NLMSG_DONE)
@@ -516,7 +501,7 @@ static int netlink_talk_filter(struct sockaddr_nl *snl, struct nlmsghdr *h,
 /* sendmsg() to netlink socket then recvmsg(). */
 int netlink_talk(struct nlmsghdr *n, struct nlsock *nl, struct nsm_vrf *zvrf)
 {
-	ospl_uint32 status;
+	zpl_uint32 status;
 	struct sockaddr_nl snl;
 	struct iovec iov =
 	{ .iov_base = (void *) n, .iov_len = n->nlmsg_len };
@@ -538,7 +523,7 @@ int netlink_talk(struct nlmsghdr *n, struct nlsock *nl, struct nsm_vrf *zvrf)
 				lookup(nlmsg_str, n->nlmsg_type), n->nlmsg_type, n->nlmsg_seq);
 
 	/* Send message to netlink interface. */
-	status = sendmsg(nl->sock, &msg, 0);
+	status = ipstack_sendmsg(nl->sock, &msg, 0);
 	save_errno = errno;
 	if (status < 0)
 	{
@@ -554,12 +539,12 @@ int netlink_talk(struct nlmsghdr *n, struct nlsock *nl, struct nsm_vrf *zvrf)
 	return netlink_parse_info(NULL, nl, zvrf);
 }
 
-static int netlink_recvbuf(struct nlsock *nl, int sock, ospl_uint32 newsize)
+static int netlink_recvbuf(struct nlsock *nl, zpl_socket_t sock, zpl_uint32 newsize)
 {
 	int ret = 0;
-	ospl_uint32 nl_rcvbufsize = newsize;
+	zpl_uint32 nl_rcvbufsize = newsize;
 
-	ret = setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &nl_rcvbufsize,
+	ret = ipstack_setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &nl_rcvbufsize,
 			sizeof(nl_rcvbufsize));
 	if (ret < 0)
 	{
@@ -567,7 +552,7 @@ static int netlink_recvbuf(struct nlsock *nl, int sock, ospl_uint32 newsize)
 				safe_strerror(errno));
 		return -1;
 	}
-	ret = setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &nl_rcvbufsize,
+	ret = ipstack_setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &nl_rcvbufsize,
 			sizeof(nl_rcvbufsize));
 	if (ret < 0)
 	{
@@ -579,16 +564,16 @@ static int netlink_recvbuf(struct nlsock *nl, int sock, ospl_uint32 newsize)
 }
 
 /* Make socket for Linux netlink interface. */
-int netlink_socket(struct nlsock *nl, ospl_ulong groups, vrf_id_t vrf_id)
+int netlink_socket(struct nlsock *nl, zpl_ulong groups, vrf_id_t vrf_id)
 {
 	int ret;
 	struct sockaddr_nl snl;
-	int sock;
-	ospl_uint32 namelen;
+	zpl_socket_t sock;
+	zpl_uint32 namelen;
 	int save_errno;
 
 	sock = vrf_socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE, vrf_id);
-	if (sock < 0)
+	if (ipstack_invalid(sock))
 	{
 		zlog_err(MODULE_PAL, "Can't open %s socket: %s", nl->name,
 				safe_strerror(errno));
@@ -600,35 +585,35 @@ int netlink_socket(struct nlsock *nl, ospl_ulong groups, vrf_id_t vrf_id)
 	snl.nl_groups = groups;
 
 	/* Bind the socket to the netlink structure for anything. */
-	ret = bind(sock, (struct sockaddr *) &snl, sizeof snl);
+	ret = ipstack_bind(sock, (struct ipstack_sockaddr *) &snl, sizeof snl);
 	save_errno = errno;
 
 	if (ret < 0)
 	{
 		zlog_err(MODULE_PAL, "Can't bind %s socket to group 0x%x: %s", nl->name,
 				snl.nl_groups, safe_strerror(save_errno));
-		close(sock);
+		ipstack_close(sock);
 		return -1;
 	}
 	if (netlink_recvbuf(nl, sock, NL_PKT_BUF_SIZE) != 0)
 	{
-		close(sock);
+		ipstack_close(sock);
 		return -1;
 	}
 	/* multiple netlink sockets will have different nl_pid */
 	namelen = sizeof snl;
-	ret = getsockname(sock, (struct sockaddr *) &snl, (socklen_t *) &namelen);
+	ret = ipstack_getsockname(sock, (struct sockaddr *) &snl, (socklen_t *) &namelen);
 	if (ret < 0 || namelen != sizeof snl)
 	{
 		zlog_err(MODULE_PAL, "Can't get %s socket name: %s", nl->name,
 				safe_strerror(errno));
-		close(sock);
+		ipstack_close(sock);
 		return -1;
 	}
 	if (snl.nl_family != AF_NETLINK)
 	{
 		zlog_err(MODULE_PAL, "Wrong address family %d\n", snl.nl_family);
-		close(sock);
+		ipstack_close(sock);
 		return -1;
 	}
 	nl->snl = snl;
@@ -640,7 +625,7 @@ int netlink_socket(struct nlsock *nl, ospl_ulong groups, vrf_id_t vrf_id)
 /* Filter out messages from self that occur on listener socket,
  caused by our actions on the command socket
  */
-static void netlink_install_filter(int sock, __u32 pid)
+static void netlink_install_filter(zpl_socket_t sock, __u32 pid)
 {
 	struct sock_filter filter[] =
 	{
@@ -662,7 +647,7 @@ static void netlink_install_filter(int sock, __u32 pid)
 	struct sock_fprog prog =
 	{ .len = array_size(filter), .filter = filter, };
 
-	if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &prog, sizeof(prog)) < 0)
+	if (ipstack_setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &prog, sizeof(prog)) < 0)
 		zlog_warn(MODULE_PAL, "Can't install socket filter: %s\n",
 				safe_strerror(errno));
 }
@@ -671,7 +656,7 @@ static void netlink_install_filter(int sock, __u32 pid)
  netlink_socket (). */
 static void kernel_nl_open(struct nsm_vrf *zvrf)
 {
-	ospl_ulong groups;
+	zpl_ulong groups;
 
 	groups = RTMGRP_LINK | RTMGRP_IPV4_ROUTE | RTMGRP_IPV4_IFADDR;
 #ifdef HAVE_IPV6
@@ -681,20 +666,17 @@ static void kernel_nl_open(struct nsm_vrf *zvrf)
 	netlink_socket(&zvrf->netlink_cmd, 0, zvrf->vrf_id);
 
 	/* Register kernel socket. */
-	if (zvrf->netlink.sock > 0)
+	if (!ipstack_invalid(zvrf->netlink.sock))
 	{
 		/* Only want non-blocking on the netlink event socket */
-		if (fcntl(zvrf->netlink.sock, F_SETFL, O_NONBLOCK) < 0)
-			zlog_err(MODULE_PAL, "Can't set %s socket flags: %s",
-					zvrf->netlink.name, safe_strerror(errno));
-
+		ipstack_set_nonblocking(zvrf->netlink.sock);
 		/* Set receive buffer size if it's set from command line */
 		nl_rcvbuf.p = XMALLOC(MTYPE_STREAM, NL_PKT_BUF_SIZE);
 		nl_rcvbuf.size = NL_PKT_BUF_SIZE;
 
 		netlink_install_filter(zvrf->netlink.sock, zvrf->netlink.snl.nl_pid);
 
-		kernel_nllisten(zvrf);
+		//kernel_nllisten(zvrf);
 	}
 }
 
@@ -705,16 +687,14 @@ void kernel_close(struct nsm_vrf *zvrf)
 		THREAD_READ_OFF(zvrf->t_netlink);
 		zvrf->t_netlink = NULL;
 	}
-	if (zvrf->netlink.sock >= 0)
+	if (!ipstack_invalid(zvrf->netlink.sock))
 	{
-		close(zvrf->netlink.sock);
-		zvrf->netlink.sock = -1;
+		ipstack_close(zvrf->netlink.sock);
 	}
 
-	if (zvrf->netlink_cmd.sock >= 0)
+	if (!ipstack_invalid(zvrf->netlink_cmd.sock))
 	{
-		close(zvrf->netlink_cmd.sock);
-		zvrf->netlink_cmd.sock = -1;
+		ipstack_close(zvrf->netlink_cmd.sock);
 	}
 	if (zvrf->netlink.name)
 	{
@@ -735,11 +715,11 @@ void kernel_open(struct nsm_vrf *zvrf)
 	char nl_name[64];
 	/* Initialize netlink sockets */
 	snprintf(nl_name, 64, "nllisten-%u", zvrf->vrf_id);
-	zvrf->netlink.sock = -1;
+
 	zvrf->netlink.name = XSTRDUP(MTYPE_NETLINK_NAME, nl_name);
 
 	snprintf(nl_name, 64, "nlcmd-%u", zvrf->vrf_id);
-	zvrf->netlink_cmd.sock = -1;
+
 	zvrf->netlink_cmd.name = XSTRDUP(MTYPE_NETLINK_NAME, nl_name);
 
 	zvrf->netlink.snl.nl_pid = getpid();
@@ -762,8 +742,8 @@ void kernel_load_all()
 		{
 			kernel_open(zvrf);
 
-			kernel_interface_load(zvrf);
-			kernel_route_table_load(zvrf);
+			//kernel_interface_load(zvrf);
+			//kernel_route_table_load(zvrf);
 		}
 	}
 	return;

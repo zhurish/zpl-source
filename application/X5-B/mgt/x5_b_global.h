@@ -57,14 +57,14 @@ typedef enum
 
 typedef struct
 {
-	ospl_uint32 waitopen;
-	ospl_uint32 openhold;
-	ospl_bool	openalarm;
-	ospl_uint32 waitclose;
+	zpl_uint32 waitopen;
+	zpl_uint32 openhold;
+	zpl_bool	openalarm;
+	zpl_uint32 waitclose;
 	x5b_app_opentype_t opentype;
-	ospl_uint8 wiggins;
-	ospl_bool outrelay;
-	ospl_bool	tamperalarm;
+	zpl_uint8 wiggins;
+	zpl_bool outrelay;
+	zpl_bool	tamperalarm;
 
 }x5b_app_open_t;
 
@@ -94,8 +94,8 @@ typedef struct
 	double  		similarRecord;			//录入阈值
 	double  		similarRecognize;		//识别阈值
 	double  		similarSecRecognize;	//二级识别阈值
-	double  		similarLiving;			//活体阈值 ospl_float
-	ospl_bool			livenessSwitch;			//活体检测开关
+	double  		similarLiving;			//活体阈值 zpl_float
+	zpl_bool			livenessSwitch;			//活体检测开关
 
 	int 			faceOKContinuousTime;		//连续识别间隔时间（两次识别间隔成功）
 	int 			faceERRContinuousTime;		//连续识别间隔时间（两次识别间隔失败）
@@ -104,18 +104,18 @@ typedef struct
 
 typedef struct x5b_app_global_s
 {
-	ospl_bool X5CM;
-	ospl_bool bluetooth;
-	ospl_bool nfc_enable;
+	zpl_bool X5CM;
+	zpl_bool bluetooth;
+	zpl_bool nfc_enable;
 	x5b_app_opentype_t		opentype;
 	x5b_app_customizer_t	customizer;
 	x5b_app_scene_t 		install_scene;		//安装场景类型
 	x5b_app_housing_t			housing;
-	ospl_bool 					doorcontact;//是否有门磁
+	zpl_bool 					doorcontact;//是否有门磁
 	char devicename[X5B_APP_DEVICE_NAME_MAX];		//设备名称
 	char location_address[X5B_APP_DEVICE_NAME_MAX];		//设备安装地址
 
-	ospl_bool out_direction;		//进出方向
+	zpl_bool out_direction;		//进出方向
 	char docking_platform_address[X5B_APP_DEVICE_IP_MAX];		//对接平台地址
 	char docking_platform_address1[X5B_APP_DEVICE_IP_MAX];		//对接平台地址
 	char docking_platform_address2[X5B_APP_DEVICE_IP_MAX];		//对接平台地址
@@ -141,17 +141,17 @@ extern int x5b_app_face_config_save(void);
 
 extern int x5b_app_global_device_config(void *app, int to);
 
-extern ospl_bool x5b_app_mode_X5CM();
+extern zpl_bool x5b_app_mode_X5CM();
 extern int x5b_app_open_mode();
 extern int x5b_app_customizer();
 
-int x5b_app_mode_set_api(ospl_bool X5CM);
+int x5b_app_mode_set_api(zpl_bool X5CM);
 int x5b_app_open_mode_set_api(x5b_app_opentype_t opentype);
 int x5b_app_customizer_set_api(x5b_app_customizer_t customizer);
 
-int x5b_app_bluetooth_set_api(ospl_bool bluetooth);
+int x5b_app_bluetooth_set_api(zpl_bool bluetooth);
 int x5b_app_bluetooth_get_api();
-int x5b_app_nfc_set_api(ospl_bool nfc_enable);
+int x5b_app_nfc_set_api(zpl_bool nfc_enable);
 int x5b_app_nfc_get_api();
 
 int x5b_app_housing_set_api(x5b_app_housing_t housing);
@@ -166,8 +166,8 @@ char * x5b_app_devicename_get_api(void);
 int x5b_app_location_address_set_api(char * location_address);
 char * x5b_app_location_address_get_api(void);
 
-int x5b_app_out_direction_set_api(ospl_bool out_direction);
-ospl_bool x5b_app_out_direction_get_api(void);
+int x5b_app_out_direction_set_api(zpl_bool out_direction);
+zpl_bool x5b_app_out_direction_get_api(void);
 
 int x5b_app_docking_platform_address_set_api(char * address);
 char * x5b_app_docking_platform_address_get_api(void);
@@ -178,7 +178,7 @@ char * x5b_app_docking_platform_address1_get_api(void);
 int x5b_app_docking_platform_address2_set_api(char * address);
 char * x5b_app_docking_platform_address2_get_api(void);
 
-int x5b_app_show_param(struct vty *vty, ospl_uint32 type);
+int x5b_app_show_param(struct vty *vty, zpl_uint32 type);
 
 #ifdef __cplusplus
 }

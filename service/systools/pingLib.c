@@ -72,15 +72,9 @@
  #include "errnoLib.h"
  #include "kernelLib.h"
  */
-#include "zebra.h"
-#include "buffer.h"
-#include "command.h"
-#include "linklist.h"
-#include "log.h"
-#include "memory.h"
-#include "vty.h"
-#include "pingLib.h"
 #include "systools.h"
+#include "pingLib.h"
+
 /* defines */
 
 #define pingError(pPS)	{ pPS->flags |= PING_OPT_SILENT; goto release; }
@@ -122,7 +116,7 @@ static void pingFinish (PING_STAT * pPS);
  *
  * The second parameter, <numPackets>, specifies the number of ICMP packets
  * to receive from the remote host.  If <numPackets> is 1, this routine waits
- * for a single echo reply packet, and then prints a ospl_int16 message
+ * for a single echo reply packet, and then prints a zpl_int16 message
  * indicating whether the remote host is reachable.  For all other values
  * of <numPackets>, timing and sequence information is printed as echoed
  * packets are received.  If <numPackets> is 0, this routine runs continuously.
@@ -195,7 +189,7 @@ static int ping_thread(PING_STAT * pPS)
 	/* initialize the socket address struct */
 
 	to.sin_family = AF_INET;
-	to.sin_addr.s_addr = inet_addr(pPS->toInetName);
+	to.sin_addr.s_addr = ipstack_inet_addr(pPS->toInetName);
 
 	//strcpy(pPS->toHostName, host); /* save host name */
 
@@ -238,7 +232,7 @@ static int ping_thread(PING_STAT * pPS)
 		os_gettime(OS_CLK_MONOTONIC, pPS->pBufTime); /* load current tick count */
 		pPS->pBufIcmp->icmp_seq = pPS->numTx++; /* increment seq number */
 		pPS->pBufIcmp->icmp_cksum = 0;
-		pPS->pBufIcmp->icmp_cksum = in_cksum((ospl_ushort *) pPS->pBufIcmp,
+		pPS->pBufIcmp->icmp_cksum = in_cksum((zpl_ushort *) pPS->pBufIcmp,
 				pPS->pingTxLen);
 		/* transmit ICMP packet */
 
@@ -327,7 +321,7 @@ static int ping_ctrl_quit(struct vty *vty, int ctrl, void *p)
 	PING_STAT * pPS = (PING_STAT *)p;
 	if(pPS)
 	{
-		pPS->quit = ospl_true;
+		pPS->quit = zpl_true;
 	    //vty->shell_ctrl_cmd = NULL;
 	    //vty->ctrl = NULL;
 	}
@@ -335,7 +329,7 @@ static int ping_ctrl_quit(struct vty *vty, int ctrl, void *p)
 }
 */
 
-int ping(struct vty *vty, char * host, int numPackets, int len, ospl_uint32 options)
+int ping(struct vty *vty, char * host, int numPackets, int len, zpl_uint32 options)
 {
 	PING_STAT * pPS = NULL;
 	struct in_addr addr;
@@ -373,14 +367,14 @@ int ping(struct vty *vty, char * host, int numPackets, int len, ospl_uint32 opti
     pPS->numRx = 0;
     pPS->numTx = 0;
     pPS->vty = vty;
-    if(inet_aton (host, &addr) == 0)
+    if(ipstack_inet_aton (host, &addr) == 0)
 	{
     	struct hostent * hoste = NULL;
     	hoste = gethostbyname(host);
     	if (hoste && hoste->h_addr_list[0])
     	{
     		addr = *(struct in_addr*)hoste->h_addr_list[0];//hoste->h_addr_list[0];
-    		sprintf(pPS->toInetName, "%s", inet_ntoa(addr));
+    		sprintf(pPS->toInetName, "%s", ipstack_inet_ntoa(addr));
 			strcpy(pPS->toHostName, host);
 			//vty_out(vty, "PING -----> %s (%s)%s", pPS->toHostName, pPS->toInetName, VTY_NEWLINE);
     	}
@@ -391,14 +385,14 @@ int ping(struct vty *vty, char * host, int numPackets, int len, ospl_uint32 opti
 		strcpy(pPS->toHostName, host);
     }
 
-    vty_ansync_enable(vty, ospl_true);
+    vty_ansync_enable(vty, zpl_true);
     vty_out(vty,"%s", VTY_NEWLINE);
     ping_thread(pPS);
     //os_thread_once(ping_thread, pPS);
     //vty->shell_ctrl_cmd = ping_ctrl_quit;
     //vty->ctrl = pPS;
     //pingFinish(pPS);
-    vty_ansync_enable(vty, ospl_false);
+    vty_ansync_enable(vty, zpl_false);
 
 	if(pPS->bufRx != NULL)
 		XFREE(MTYPE_DATA, pPS->bufRx);
@@ -440,7 +434,7 @@ static int pingRxPrint(PING_STAT * pPS, /* ping stats structure */
 	if (len < hlen + ICMP_MINLEN) /* at least min length ? */
 	{
 		if (pPS->flags & PING_OPT_DEBUG)
-			vty_out(vty,"packet too ospl_int16 (%d bytes) from %s%s", len, inet_ntoa(from->sin_addr), VTY_NEWLINE);
+			vty_out(vty,"packet too zpl_int16 (%d bytes) from %s%s", len, ipstack_inet_ntoa(from->sin_addr), VTY_NEWLINE);
 		return (ERROR);
 	}
 
@@ -451,7 +445,7 @@ static int pingRxPrint(PING_STAT * pPS, /* ping stats structure */
 	{
 		if (pPS->flags & PING_OPT_DEBUG) /* debug odd message */
 		{
-			vty_out(vty,"%d bytes from %s: ", len, inet_ntoa(from->sin_addr));
+			vty_out(vty,"%d bytes from %s: ", len, ipstack_inet_ntoa(from->sin_addr));
 			//icp->icmp_type = min(icp->icmp_type, ICMP_TYPENUM);
 			vty_out(vty,"icmp_type=%d%s", icp->icmp_type, VTY_NEWLINE);
 			for (ix = 0; ix < 12; ix++)
@@ -473,7 +467,7 @@ static int pingRxPrint(PING_STAT * pPS, /* ping stats structure */
 	/* print out Rx packet stats */
 	if (!(pPS->flags & PING_OPT_SILENT) && pPS->numPacket != 1)
 	{
-		vty_out(vty,"%d bytes from %s: ", len, inet_ntoa(from->sin_addr));
+		vty_out(vty,"%d bytes from %s: ", len, ipstack_inet_ntoa(from->sin_addr));
 		vty_out(vty,"icmp_seq=%d. ", icp->icmp_seq);
 		triptime = os_timeval_elapsed(now, *ti)/1000;
 		vty_out(vty,"time=%d. ms%s", triptime, VTY_NEWLINE);
@@ -531,7 +525,7 @@ static void pingFinish(PING_STAT * pPS /* pointer to task control block */
 							pPS->tMin, pPS->tSum / pPS->numRx, pPS->tMax, VTY_NEWLINE);
 			}
 			else
-				/* ospl_int16 report */
+				/* zpl_int16 report */
 				vty_out(vty,"%s is alive%s", pPS->toInetName, VTY_NEWLINE);
 		}
 		else

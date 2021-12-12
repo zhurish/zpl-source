@@ -20,11 +20,11 @@ typedef struct dhcp_relay_s
 	int			sock;
 	ifindex_t  	ifindex;
 
-	ospl_uint8 	mac[ETHER_ADDR_LEN];          /* our MAC address (used only for ARP probing) */
-	ospl_uint32 	ipaddr;
+	zpl_uint8 	mac[ETHER_ADDR_LEN];          /* our MAC address (used only for ARP probing) */
+	zpl_uint32 	ipaddr;
 
-	ospl_uint32 	dhcp_server;
-	ospl_uint32 	dhcp_server2;
+	zpl_uint32 	dhcp_server;
+	zpl_uint32 	dhcp_server2;
 
 } dhcp_relay_t;
 

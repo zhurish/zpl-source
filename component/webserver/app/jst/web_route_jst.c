@@ -5,7 +5,7 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
+#include "zpl_include.h"
 #include "vty.h"
 #include "if.h"
 #include "buffer.h"
@@ -34,20 +34,20 @@
 
 
 #ifdef WEB_OPENWRT_PROCESS
-static int web_kernel_route_table_one(char *input, char *ifname, ospl_uint32 *dest,
-									  ospl_uint32 *gateway, ospl_uint32 *mask, ospl_uint32 *metric)
+static int web_kernel_route_table_one(char *input, char *ifname, zpl_uint32 *dest,
+									  zpl_uint32 *gateway, zpl_uint32 *mask, zpl_uint32 *metric)
 {
-	//ospl_uint32 flag = 0, ref = 0, use = 0;&flag, &ref, &use,
+	//zpl_uint32 flag = 0, ref = 0, use = 0;&flag, &ref, &use,
 	sscanf(input, "%[^\t] %x %x %*x%*d%*d %d %x", ifname, dest, gateway, metric, mask);
 	return 0;
 }
 
-int web_kernel_route_lookup_default(ifindex_t ifindex, ospl_uint32 *local_gateway)
+int web_kernel_route_lookup_default(ifindex_t ifindex, zpl_uint32 *local_gateway)
 {
 	FILE *f;
 	char buf[512];
 	char ifname[32];
-	ospl_uint32 dest = 0, gateway = 0, mask = 0, metric = 0;
+	zpl_uint32 dest = 0, gateway = 0, mask = 0, metric = 0;
 	ifindex_t ifkindex = 0;
 	f = fopen ("/proc/net/route", "r");
 	if (f)
@@ -80,11 +80,11 @@ int web_kernel_route_lookup_default(ifindex_t ifindex, ospl_uint32 *local_gatewa
 	return ERROR;
 }
 
-int web_kernel_dns_lookup_default(ifindex_t *ifindex, ospl_uint32 *dns1, ospl_uint32 *dns2)
+int web_kernel_dns_lookup_default(ifindex_t *ifindex, zpl_uint32 *dns1, zpl_uint32 *dns2)
 {
 	FILE *f;
 	char buf[512];
-	ospl_uint32 find = 0, in = 0;
+	zpl_uint32 find = 0, in = 0;
 	//ifindex_t ifkindex = 0;
 	f = fopen ("/tmp/resolv.conf.auto", "r");
 	if (f)
@@ -118,13 +118,13 @@ int web_kernel_dns_lookup_default(ifindex_t *ifindex, ospl_uint32 *dns1, ospl_ui
 				{
 					in++;
 					if(dns1)
-						*dns1 = ntohl(inet_addr(buf + strlen("nameserver ")));
+						*dns1 = ntohl(ipstack_inet_addr(buf + strlen("nameserver ")));
 				}
 				if(in == 1)
 				{
 					in++;
 					if(dns2)
-						*dns2 = ntohl(inet_addr(buf + strlen("nameserver ")));
+						*dns2 = ntohl(ipstack_inet_addr(buf + strlen("nameserver ")));
 				}
 			}
 			if(find == 1 && in != 0)
@@ -167,7 +167,7 @@ static int web_route_table_one(struct route_node *rn, struct rib *rib, ifindex_t
 	return ERROR;
 }
 
-int web_route_lookup_default(ifindex_t ifindex, ospl_uint32 *local_gateway)
+int web_route_lookup_default(ifindex_t ifindex, zpl_uint32 *local_gateway)
 {
 	struct route_table *table;
 	struct route_node *rn;
@@ -230,7 +230,7 @@ static void web_route_one (Webs *wp, struct route_node *rn, struct rib *rib)
 		{
 		case NEXTHOP_TYPE_IPV4:
 		case NEXTHOP_TYPE_IPV4_IFINDEX:
-			snprintf(gateway, sizeof(gateway), "%s", inet_ntoa(nexthop->gate.ipv4));
+			snprintf(gateway, sizeof(gateway), "%s", ipstack_inet_ntoa(nexthop->gate.ipv4));
 			if (nexthop->ifindex)
 			{
 				if(web_type_get() == WEB_TYPE_HOME_WIFI)
@@ -262,7 +262,7 @@ static void web_route_one (Webs *wp, struct route_node *rn, struct rib *rib)
 			case NEXTHOP_TYPE_IPV6:
 			case NEXTHOP_TYPE_IPV6_IFINDEX:
 			case NEXTHOP_TYPE_IPV6_IFNAME:
-				snprintf(gateway, sizeof(gateway), "%s", inet_ntop (AF_INET6, &nexthop->gate.ipv6, buf, BUFSIZ));
+				snprintf(gateway, sizeof(gateway), "%s", ipstack_inet_ntop (AF_INET6, &nexthop->gate.ipv6, buf, BUFSIZ));
 			if (nexthop->type == NEXTHOP_TYPE_IPV6_IFNAME)
 			{
 				if(web_type_get() == WEB_TYPE_HOME_WIFI)
@@ -487,12 +487,12 @@ int web_static_ipv4_safi (safi_t safi, int add_cmd,
 			const char *vrf_id_str)
 {
   int ret;
-  ospl_uchar distance;
+  zpl_uchar distance;
   struct prefix p;
   struct in_addr gate;
   struct in_addr mask;
   const char *ifname;
-  //ospl_uchar flag = 0;
+  //zpl_uchar flag = 0;
   route_tag_t tag = 0;
   vrf_id_t vrf_id = VRF_DEFAULT;
 
@@ -505,7 +505,7 @@ int web_static_ipv4_safi (safi_t safi, int add_cmd,
   /* Cisco like mask notation. */
   if (mask_str)
     {
-      ret = inet_aton (mask_str, &mask);
+      ret = ipstack_inet_aton (mask_str, &mask);
       if (ret == 0)
         {
           return CMD_WARNING;
@@ -563,7 +563,7 @@ int web_static_ipv4_safi (safi_t safi, int add_cmd,
 
   /* When gateway is A.B.C.D format, gate is treated as nexthop
      address other case gate is treated as interface name. */
-  ret = inet_aton (gate_str, &gate);
+  ret = ipstack_inet_aton (gate_str, &gate);
   if (ret)
     ifname = NULL;
   else
@@ -578,7 +578,7 @@ int web_static_ipv4_safi (safi_t safi, int add_cmd,
 }
 
 
-static int web_route_tbl_handle(Webs *wp, char *path, char *query, ospl_uint32 type)
+static int web_route_tbl_handle(Webs *wp, char *path, char *query, zpl_uint32 type)
 {
 
 	int ret = 0, gate_null = 0;

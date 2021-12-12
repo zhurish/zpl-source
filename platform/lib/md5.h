@@ -52,8 +52,8 @@ extern "C" {
 
 typedef struct {
 	union {
-		ospl_uint32 	md5_state32[4];
-		ospl_uint8	md5_state8[16];
+		zpl_uint32 	md5_state32[4];
+		zpl_uint8	md5_state8[16];
 	} md5_st;
 
 #define md5_sta		md5_st.md5_state32[0]
@@ -64,19 +64,19 @@ typedef struct {
 
 	union {
 		uint64_t	md5_count64;
-		ospl_uint8	md5_count8[8];
+		zpl_uint8	md5_count8[8];
 	} md5_count;
 #define md5_n	md5_count.md5_count64
 #define md5_n8	md5_count.md5_count8
 
 	uint	md5_i;
-	ospl_uint8	md5_buf[MD5_BUFLEN];
+	zpl_uint8	md5_buf[MD5_BUFLEN];
 } os_md5_ctxt;
 
 extern void os_md5_init (os_md5_ctxt *);
-extern void os_md5_loop (os_md5_ctxt *, const void *, ospl_uint32);
+extern void os_md5_loop (os_md5_ctxt *, const void *, zpl_uint32);
 extern void os_md5_pad (os_md5_ctxt *);
-extern void os_md5_result (ospl_uint8 *, os_md5_ctxt *);
+extern void os_md5_result (zpl_uint8 *, os_md5_ctxt *);
 
 /* compatibility */
 #define OS_MD5_CTX		os_md5_ctxt
@@ -90,17 +90,17 @@ do {				\
 
 
 void	OS_MD5_Init(OS_MD5_CTX *);
-void	OS_MD5_Update(OS_MD5_CTX *, const ospl_uchar *, ospl_size_t);
-void	OS_MD5_Final(ospl_uchar *, OS_MD5_CTX *);
+void	OS_MD5_Update(OS_MD5_CTX *, const zpl_uchar *, zpl_size_t);
+void	OS_MD5_Final(zpl_uchar *, OS_MD5_CTX *);
 
 
 /* From RFC 2104 */
-void os_hmac_md5(ospl_uchar* text, ospl_uint32 text_len, ospl_uchar* key,
-              ospl_uint32 key_len, ospl_uint8 *digest);
+void os_hmac_md5(zpl_uchar* text, zpl_uint32 text_len, zpl_uchar* key,
+              zpl_uint32 key_len, zpl_uint8 *digest);
 
 
-#ifndef USE_IPSTACK_KERNEL
-ospl_uchar *OS_MD5(const ospl_uchar *d, ospl_size_t n, ospl_uchar *md);
+#ifndef ZPL_KERNEL_STACK_MODULE
+zpl_uchar *OS_MD5(const zpl_uchar *d, zpl_size_t n, zpl_uchar *md);
 #endif
 
  

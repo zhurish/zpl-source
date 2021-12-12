@@ -3,7 +3,7 @@
 ###########################################################################
 MODULEDIR = service/syslog
 #OS
-ifeq ($(strip $(PL_SERVICE_SYSLOG)),true)
+ifeq ($(strip $(ZPL_SERVICE_SYSLOG)),true)
 OBJS	+= syslogcLib.o
 endif
 #############################################################################

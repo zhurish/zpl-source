@@ -90,18 +90,18 @@ typedef enum
 
 typedef struct web_app_s
 {
-	ospl_uint32 taskid;
-	ospl_bool enable;
-	ospl_bool finished;
-	ospl_bool init;
-	ospl_bool reload;
-	ospl_int32 debug_level;
+	zpl_uint32 taskid;
+	zpl_bool enable;
+	zpl_bool finished;
+	zpl_bool init;
+	zpl_bool reload;
+	zpl_int32 debug_level;
 
 	web_proto proto;
 	char *address;
-	ospl_uint16 port;
+	zpl_uint16 port;
 #if ME_COM_SSL
-	ospl_uint16 ssl_port;
+	zpl_uint16 ssl_port;
 #endif
 	char *endpoints;
 	char *documents;
@@ -129,12 +129,12 @@ extern int web_app_module_task_exit ();
 extern int web_app_quit_api();
 extern int web_app_reload_api();
 
-extern int web_app_enable_set_api(ospl_bool enable);
+extern int web_app_enable_set_api(zpl_bool enable);
 extern int web_app_proto_set_api(web_proto proto);
 extern web_proto web_app_proto_get_api();
 extern int web_app_address_set_api(char *address);
-extern int web_app_port_set_api(ospl_bool ssl, ospl_uint16 port);
-extern int web_app_debug_set_api(ospl_int32 level);
+extern int web_app_port_set_api(zpl_bool ssl, zpl_uint16 port);
+extern int web_app_debug_set_api(zpl_int32 level);
 extern int web_app_debug_get_api();
 
 extern int web_app_username_add_api(const char *username, const char *password, const char *roles);

@@ -5,34 +5,26 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "memory.h"
-#include "command.h"
-#include "memory.h"
-#include "memtypes.h"
-#include "prefix.h"
-#include "if.h"
-#include "nsm_interface.h"
-#include <log.h>
-#include "nsm_client.h"
-#include "os_list.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "nsm_include.h"
 
-#include "nsm_vlan.h"
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 #include "hal_vlan.h"
 #endif
 static Gl2vlan_t gvlan;
 
-static int nsm_vlan_client_init();
-static int nsm_vlan_client_exit();
+//static int nsm_vlan_client_init();
+//static int nsm_vlan_client_exit();
 static l2vlan_t * l2vlan_lookup_node(vlan_t value);
 #if 0
 int vlan_string_explain(const char *str, vlan_t *value, int num, vlan_t *base, vlan_t *end)
 {
-	ospl_char tmp[32];
+	zpl_char tmp[32];
 	int n = 0, i = 0, j = 0;
 	int ibase = 0, iend = 0;
-	ospl_char *nm = NULL;
+	zpl_char *nm = NULL;
 	n = strspn(str, "0123456789,-");
 	if(n != strlen(str))
 	{
@@ -98,8 +90,9 @@ int nsm_vlan_init()
 	gvlan.vlanList = malloc(sizeof(LIST));
 	gvlan.mutex = os_mutex_init();
 	lstInit(gvlan.vlanList);
-	nsm_vlan_client_init();
-	nsm_vlan_create_api(1);
+	nsm_interface_hook_add(NSM_VLAN, nsm_vlan_interface_create_api, nsm_vlan_interface_del_api);
+	//nsm_vlan_client_init();
+	//nsm_vlan_create_api(1);
 	//l2vlan_add_untag_port(1, ifindex_t ifindex);
 	return OK;
 }
@@ -144,7 +137,7 @@ int nsm_vlan_exit()
 	}
 	if(gvlan.mutex)
 		os_mutex_exit(gvlan.mutex);
-	nsm_vlan_client_exit();
+	//nsm_vlan_client_exit();
 	return OK;
 }
 
@@ -158,17 +151,17 @@ int nsm_vlan_enable(void)
 	int ret = 0;
 	if(gvlan.mutex)
 		os_mutex_lock(gvlan.mutex, OS_WAIT_FOREVER);
-#ifdef PL_HAL_MODULE
-	ret = hal_vlan_enable(ospl_true);
+#ifdef ZPL_HAL_MODULE
+	ret = hal_vlan_enable(zpl_true);
 #endif
 	if(ret == OK)
-		gvlan.enable = ospl_true;
+		gvlan.enable = zpl_true;
 	if(gvlan.mutex)
 		os_mutex_unlock(gvlan.mutex);
 	return ret;
 }
 
-ospl_bool nsm_vlan_is_enable(void)
+zpl_bool nsm_vlan_is_enable(void)
 {
 	return gvlan.enable;
 }
@@ -176,7 +169,7 @@ ospl_bool nsm_vlan_is_enable(void)
 
 static int nsm_vlan_index_max(nsm_vlan_t *nsm_vlan)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < VLAN_TABLE_MAX; i++)
 	{
 		if(nsm_vlan->trunk_allowed[i].maxvlan)
@@ -189,7 +182,7 @@ static int nsm_vlan_index_max(nsm_vlan_t *nsm_vlan)
 /*static int vlan_value_sort(vlan_t *value, int num)
 {
 	vlan_t temp = 0;
-	ospl_uint32 = 0, j = 0;
+	zpl_uint32 = 0, j = 0;
     for (i = 0; i < num; i++) // 10个数，10 - 1轮冒泡，每一轮都将当前最大的数推到最后
      {
            for (j = 0; j < num - i; j++) // 9 - i，意思是每当经过一轮冒泡后，就减少一次比较
@@ -207,7 +200,7 @@ static int nsm_vlan_index_max(nsm_vlan_t *nsm_vlan)
 
 static int l2vlan_add_sort_node(l2vlan_t *value)
 {
-	ospl_uint32 i = 1;
+	zpl_uint32 i = 1;
 	l2vlan_t *node = l2vlan_lookup_node(value->vlan - 1);
 	while(!node)
 		node = l2vlan_lookup_node(value->vlan - (i++));
@@ -235,7 +228,7 @@ static int l2vlan_add_node(l2vlan_t *value)
 		}
 /*		else
 		{
-			ospl_char name[64];
+			zpl_char name[64];
 			memset(name, 0, sizeof(name));
 			sprintf(name, "VLAN%04d", node->vlan);
 			node->vlan_name = XSTRDUP(MTYPE_VLAN, name);
@@ -284,7 +277,7 @@ static l2vlan_t * l2vlan_lookup_node_by_name(const char *name)
 
 static int l2vlan_lookup_port(l2vlan_t *node, ifindex_t ifindex, vlan_mode_t mode)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < PHY_PORT_MAX; i++)
 	{
 		if(mode == VLAN_TAG)
@@ -304,7 +297,7 @@ static int l2vlan_lookup_port(l2vlan_t *node, ifindex_t ifindex, vlan_mode_t mod
 
 static int l2vlan_add_port(l2vlan_t *node, ifindex_t ifindex, vlan_mode_t mode)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < PHY_PORT_MAX; i++)
 	{
 		if(mode == VLAN_TAG)
@@ -329,7 +322,7 @@ static int l2vlan_add_port(l2vlan_t *node, ifindex_t ifindex, vlan_mode_t mode)
 
 static int l2vlan_del_port(l2vlan_t *node, ifindex_t ifindex, vlan_mode_t mode)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < PHY_PORT_MAX; i++)
 	{
 		if(mode == VLAN_TAG)
@@ -361,7 +354,7 @@ int nsm_vlan_create_api(vlan_t vlan)
 	value.vlan = vlan;
 	if(gvlan.mutex)
 		os_mutex_lock(gvlan.mutex, OS_WAIT_FOREVER);
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 	ret = hal_vlan_create(vlan);
 #else
 	ret = OK;
@@ -383,7 +376,7 @@ int nsm_vlan_destroy_api(vlan_t vlan)
 	value = l2vlan_lookup_node(vlan);
 	if(value)
 	{
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 		ret = hal_vlan_destroy(vlan);
 #else
 		ret = OK;
@@ -404,7 +397,7 @@ int nsm_vlan_destroy_api(vlan_t vlan)
 
 int nsm_vlan_batch_create_api(vlan_t minvlan, vlan_t maxvlan)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	int ret = ERROR;
 	l2vlan_t value;
 	if(gvlan.mutex)
@@ -418,7 +411,7 @@ int nsm_vlan_batch_create_api(vlan_t minvlan, vlan_t maxvlan)
 			value.minvlan = minvlan;
 			value.maxvlan = maxvlan;
 		}
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 		ret = hal_vlan_create(i);
 #else
 		ret = OK;
@@ -435,7 +428,7 @@ int nsm_vlan_batch_create_api(vlan_t minvlan, vlan_t maxvlan)
 
 int nsm_vlan_batch_destroy_api(vlan_t minvlan, vlan_t maxvlan)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	int ret = ERROR;
 	l2vlan_t *value;
 	if(gvlan.mutex)
@@ -445,7 +438,7 @@ int nsm_vlan_batch_destroy_api(vlan_t minvlan, vlan_t maxvlan)
 		value = l2vlan_lookup_node(i);
 		if(value)
 		{
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 			ret = hal_vlan_destroy(value->vlan);
 #else
 			ret = OK;
@@ -471,11 +464,11 @@ int nsm_vlan_batch_destroy_api(vlan_t minvlan, vlan_t maxvlan)
 
 int nsm_vlan_list_create_api(const char *str)
 {
-	ospl_char tmp[32];
+	zpl_char tmp[32];
 	int n = 0, i = 0, ret = 0;
 	vlan_t ibase = 0, iend = 0;
 	vlan_t value = 0;
-	//ospl_char *nm = NULL;
+	//zpl_char *nm = NULL;
 	n = strspn(str, "0123456789,-");
 	if(n != strlen(str))
 	{
@@ -536,11 +529,11 @@ int nsm_vlan_list_create_api(const char *str)
 
 int nsm_vlan_list_destroy_api(const char *str)
 {
-	ospl_char tmp[32];
+	zpl_char tmp[32];
 	int n = 0, i = 0, ret = 0;
 	vlan_t ibase = 0, iend = 0;
 	vlan_t value = 0;
-	//ospl_char *nm = NULL;
+	//zpl_char *nm = NULL;
 	n = strspn(str, "0123456789,-");
 	if(n != strlen(str))
 	{
@@ -675,7 +668,7 @@ int nsm_interface_add_untag_vlan_api(vlan_t vlan, struct interface *ifp)
 	{
 		if(l2vlan_lookup_port(value,  ifp->ifindex, VLAN_UNTAG) == ERROR)
 		{
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 			ret = hal_vlan_add_untag_port(ifp->ifindex, value->vlan);
 #else
 			ret = OK;
@@ -702,7 +695,7 @@ int nsm_interface_del_untag_vlan_api(vlan_t vlan, struct interface *ifp)
 	{
 		if(l2vlan_lookup_port(value,  ifp->ifindex, VLAN_UNTAG) == OK)
 		{
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 			ret = hal_vlan_del_untag_port(ifp->ifindex, value->vlan);
 #else
 			ret = OK;
@@ -746,7 +739,7 @@ int nsm_interface_add_tag_vlan_api(vlan_t vlan, struct interface *ifp)
 	{
 		if(l2vlan_lookup_port(value,  ifp->ifindex, VLAN_TAG) != OK)
 		{
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 			ret = hal_vlan_add_tag_port(ifp->ifindex, value->vlan);
 #else
 			ret = OK;
@@ -772,7 +765,7 @@ int nsm_interface_del_tag_vlan_api(vlan_t vlan, struct interface *ifp)
 	{
 		if(l2vlan_lookup_port(value,  ifp->ifindex, VLAN_TAG) == OK)
 		{
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 			ret = hal_vlan_del_tag_port(ifp->ifindex, value->vlan);
 #else
 			ret = OK;
@@ -822,7 +815,7 @@ int nsm_interface_native_vlan_set_api(struct interface *ifp, vlan_t vlan)
 		{
 			if(vlan)
 			{
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 				ret = hal_port_add_native_vlan(ifp->ifindex, vlan);
 #else
 				ret = OK;
@@ -832,7 +825,7 @@ int nsm_interface_native_vlan_set_api(struct interface *ifp, vlan_t vlan)
 			}
 			else
 			{
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 				ret = hal_port_del_native_vlan(ifp->ifindex, nsm_vlan->native);
 #else
 				ret = OK;
@@ -954,7 +947,7 @@ int nsm_interface_access_vlan_get_api(struct interface *ifp, vlan_t *vlan)
 int nsm_interface_trunk_add_allowed_vlan_api(struct interface *ifp, vlan_t vlan)
 {
 	int ret = ERROR;
-	//ospl_uint32 =0;
+	//zpl_uint32 =0;
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
@@ -967,7 +960,7 @@ int nsm_interface_trunk_add_allowed_vlan_api(struct interface *ifp, vlan_t vlan)
 		{
 			if(nsm_vlan->trunk_allowed[vlan].vlan == 0)
 			{
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 				ret = hal_port_add_allowed_tag_vlan(ifp->ifindex, vlan);
 #else
 				ret = OK;
@@ -1006,7 +999,7 @@ int nsm_interface_trunk_del_allowed_vlan_api(struct interface *ifp, vlan_t vlan)
 		{
 			if(nsm_vlan->trunk_allowed[vlan].vlan)
 			{
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 				ret = hal_port_del_allowed_tag_vlan(ifp->ifindex, vlan);
 #else
 				ret = OK;
@@ -1035,7 +1028,7 @@ int nsm_interface_trunk_del_allowed_vlan_api(struct interface *ifp, vlan_t vlan)
 int nsm_interface_trunk_add_allowed_batch_vlan_api(struct interface *ifp, vlan_t minvlan, vlan_t maxvlan)
 {
 	int ret = OK;
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
@@ -1046,7 +1039,7 @@ int nsm_interface_trunk_add_allowed_batch_vlan_api(struct interface *ifp, vlan_t
 	{
 		if(nsm_vlan->trunk_allowed[i].vlan == 0)
 		{
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 			ret |= hal_port_add_allowed_tag_vlan(ifp->ifindex, i);
 #else
 			ret = OK;
@@ -1069,7 +1062,7 @@ int nsm_interface_trunk_add_allowed_batch_vlan_api(struct interface *ifp, vlan_t
 int nsm_interface_trunk_del_allowed_batch_vlan_api(struct interface *ifp, vlan_t minvlan, vlan_t maxvlan)
 {
 	int ret = OK;
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
@@ -1080,7 +1073,7 @@ int nsm_interface_trunk_del_allowed_batch_vlan_api(struct interface *ifp, vlan_t
 	{
 		if(nsm_vlan->trunk_allowed[i].vlan)
 		{
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 			ret |= hal_port_add_allowed_tag_vlan(ifp->ifindex, i);
 #else
 			ret = OK;
@@ -1104,11 +1097,11 @@ int nsm_interface_trunk_del_allowed_batch_vlan_api(struct interface *ifp, vlan_t
 
 int nsm_interface_trunk_allowed_vlan_list_api(int add, struct interface *ifp, const char *str)
 {
-	ospl_char tmp[32];
+	zpl_char tmp[32];
 	int n = 0, i = 0, ret = 0;
 	vlan_t ibase = 0, iend = 0;
 	vlan_t value = 0;
-	//ospl_char *nm = NULL;
+	//zpl_char *nm = NULL;
 	n = strspn(str, "0123456789,-");
 	if(n != strlen(str))
 	{
@@ -1184,7 +1177,7 @@ int nsm_interface_trunk_allowed_vlan_list_api(int add, struct interface *ifp, co
 
 
 
-static int nsm_vlan_add_interface(struct interface *ifp)
+int nsm_vlan_interface_create_api(struct interface *ifp)
 {
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	if(if_is_ethernet(ifp) && !IF_IS_SUBIF_GET(ifp->ifindex))
@@ -1200,7 +1193,7 @@ static int nsm_vlan_add_interface(struct interface *ifp)
 }
 
 
-static int nsm_vlan_del_interface(struct interface *ifp)
+int nsm_vlan_interface_del_api(struct interface *ifp)
 {
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	if(if_is_ethernet(ifp) && !IF_IS_SUBIF_GET(ifp->ifindex))
@@ -1214,13 +1207,13 @@ static int nsm_vlan_del_interface(struct interface *ifp)
 	return OK;
 }
 
-
-static int nsm_vlan_interface_config(struct vty *vty, struct interface *ifp)
+#ifdef ZPL_SHELL_MODULE
+int nsm_vlan_interface_write_config(struct vty *vty, struct interface *ifp)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	int count = 0;
-	ospl_char tmp[128];
-	ospl_char tmpcli_str[256];
+	zpl_char tmp[128];
+	zpl_char tmpcli_str[256];
 	struct nsm_interface *nsm_ifp = NULL;
 	nsm_vlan_t *nsm_vlan = NULL;
 	if(if_is_ethernet(ifp) && !IF_IS_SUBIF_GET(ifp->ifindex))
@@ -1230,7 +1223,7 @@ static int nsm_vlan_interface_config(struct vty *vty, struct interface *ifp)
 		nsm_vlan = (nsm_vlan_t *)nsm_ifp->nsm_client[NSM_VLAN];
 		if(!nsm_vlan)
 			return OK;
-#ifdef USE_IPSTACK_IPCOM
+#ifdef ZPL_IPCOM_STACK_MODULE
 		if(ifp->if_mode == IF_MODE_L3)
 			vty_out(vty, " no switchport%s", VTY_NEWLINE);
 		else if(ifp->if_mode == IF_MODE_ACCESS_L2)
@@ -1294,7 +1287,8 @@ static int nsm_vlan_interface_config(struct vty *vty, struct interface *ifp)
 	}
 	return OK;
 }
-
+#endif
+/*
 static int nsm_vlan_client_init()
 {
 	struct nsm_client *nsm = nsm_client_new ();
@@ -1312,3 +1306,4 @@ static int nsm_vlan_client_exit()
 		nsm_client_free (nsm);
 	return OK;
 }
+*/

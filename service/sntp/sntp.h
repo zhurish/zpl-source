@@ -107,21 +107,21 @@ extern "C" {
  *               See RFC1769 for details. 
  */
 
-typedef ospl_ulong u_long;
+typedef zpl_ulong u_long;
 typedef int STATUS;
-typedef ospl_uint16 ospl_ushort;
-typedef ospl_uint32 ospl_uint32;
-typedef ospl_ulong ULONG;
-typedef ospl_uint8 ospl_uchar;
-typedef ospl_uint8 INT8;
+//typedef zpl_uint16 zpl_ushort;
+//typedef zpl_uint32 zpl_uint32;
+typedef zpl_ulong ULONG;
+//typedef zpl_uint8 zpl_uchar;
+typedef zpl_uint8 INT8;
 
 //typedef int (*FUNCPTR)(int, void *);
 
 
 typedef struct sntpPacket
     {
-    ospl_uint8     leapVerMode;
-    ospl_uint8     stratum;                 
+    zpl_uint8     leapVerMode;
+    zpl_uint8     stratum;                 
     char              poll;
     char              precision;
     u_long            rootDelay;
@@ -151,7 +151,7 @@ typedef struct sntpPacket
 
  typedef struct sntp_global_config
 {
-	ospl_uint8     stratum;
+	zpl_uint8     stratum;
 //	char              poll;
 	char              precision;
    int 	  timezone;
@@ -159,13 +159,13 @@ typedef struct sntpPacket
 
 extern struct sntp_global_config sntp_global_config;
 
-static int inline sntp_global_stratum_set(ospl_uint8 stratum)
+static int inline sntp_global_stratum_set(zpl_uint8 stratum)
 {
-	sntp_global_config.stratum = (ospl_uint8 )stratum;
+	sntp_global_config.stratum = (zpl_uint8 )stratum;
 	return OK;
 }
 
-static int inline sntp_global_stratum_get(ospl_uint8 *stratum)
+static int inline sntp_global_stratum_get(zpl_uint8 *stratum)
 {
 	if(stratum)
 		*stratum = (int)sntp_global_config.stratum;

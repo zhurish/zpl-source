@@ -14,7 +14,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
 // "liveMedia"
-// Copyright (c) 1996-2020 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2021 Live Networks, Inc.  All rights reserved.
 // RTP sink for a common kind of payload format: Those which pack multiple,
 // complete codec frames (as many as possible) into each RTP packet.
 // C++ header
@@ -31,9 +31,9 @@ public:
   void setPacketSizes(unsigned preferredPacketSize, unsigned maxPacketSize);
 
   typedef void (onSendErrorFunc)(void* clientData);
-  void setOnSendErrorFunc(onSendErrorFunc* sendErrorFunc, void* onSendErrorFuncData) {
+  void setOnSendErrorFunc(onSendErrorFunc* onSendErrorFunc, void* onSendErrorFuncData) {
     // Can be used to set a callback function to be called if there's an error sending RTP packets on our socket.
-    fOnSendErrorFunc = sendErrorFunc;
+    fOnSendErrorFunc = onSendErrorFunc;
     fOnSendErrorData = onSendErrorFuncData;
   }
 

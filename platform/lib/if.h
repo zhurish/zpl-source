@@ -25,7 +25,7 @@ Boston, MA 02111-1307, USA.  */
 extern "C" {
 #endif
 
-#include "zebra.h"
+
 #include "log.h"
 #include "linklist.h"
 
@@ -104,33 +104,33 @@ typedef enum
 
 struct if_stats
 {
-   ospl_ulong rx_packets;   /* total packets received       */
-   ospl_ulong tx_packets;   /* total packets transmitted    */
-   ospl_ulong rx_bytes;     /* total bytes received         */
-   ospl_ulong tx_bytes;     /* total bytes transmitted      */
-   ospl_ulong rx_errors;    /* bad packets received         */
-   ospl_ulong tx_errors;    /* packet transmit problems     */
-   ospl_ulong rx_dropped;   /* no space in linux buffers    */
-   ospl_ulong tx_dropped;   /* no space available in linux  */
-   ospl_ulong rx_multicast; /* multicast packets received   */
-   ospl_ulong collisions;
+   zpl_ulong rx_packets;   /* total packets received       */
+   zpl_ulong tx_packets;   /* total packets transmitted    */
+   zpl_ulong rx_bytes;     /* total bytes received         */
+   zpl_ulong tx_bytes;     /* total bytes transmitted      */
+   zpl_ulong rx_errors;    /* bad packets received         */
+   zpl_ulong tx_errors;    /* packet transmit problems     */
+   zpl_ulong rx_dropped;   /* no space in linux buffers    */
+   zpl_ulong tx_dropped;   /* no space available in linux  */
+   zpl_ulong rx_multicast; /* multicast packets received   */
+   zpl_ulong collisions;
 
    /* detailed rx_errors: */
-   ospl_ulong rx_length_errors;
-   ospl_ulong rx_over_errors;   /* receiver ring buff overflow  */
-   ospl_ulong rx_crc_errors;    /* recved pkt with crc error    */
-   ospl_ulong rx_frame_errors;  /* recv'd frame alignment error */
-   ospl_ulong rx_fifo_errors;   /* recv'r fifo overrun          */
-   ospl_ulong rx_missed_errors; /* receiver missed packet     */
+   zpl_ulong rx_length_errors;
+   zpl_ulong rx_over_errors;   /* receiver ring buff overflow  */
+   zpl_ulong rx_crc_errors;    /* recved pkt with crc error    */
+   zpl_ulong rx_frame_errors;  /* recv'd frame alignment error */
+   zpl_ulong rx_fifo_errors;   /* recv'r fifo overrun          */
+   zpl_ulong rx_missed_errors; /* receiver missed packet     */
    /* detailed tx_errors */
-   ospl_ulong tx_aborted_errors;
-   ospl_ulong tx_carrier_errors;
-   ospl_ulong tx_fifo_errors;
-   ospl_ulong tx_heartbeat_errors;
-   ospl_ulong tx_window_errors;
+   zpl_ulong tx_aborted_errors;
+   zpl_ulong tx_carrier_errors;
+   zpl_ulong tx_fifo_errors;
+   zpl_ulong tx_heartbeat_errors;
+   zpl_ulong tx_window_errors;
    /* for cslip etc */
-   ospl_ulong rx_compressed;
-   ospl_ulong tx_compressed;
+   zpl_ulong rx_compressed;
+   zpl_ulong tx_compressed;
 };
 
 typedef enum if_type_s
@@ -140,15 +140,20 @@ typedef enum if_type_s
    IF_SERIAL,
    IF_ETHERNET,
    IF_GIGABT_ETHERNET,
+   IF_XGIGABT_ETHERNET,
+   IF_ETHERNET_SUB,
    IF_WIRELESS, //wireless interface
    IF_TUNNEL,
    IF_LAG,
    IF_BRIGDE, //brigde interface
    IF_VLAN,
+   IF_E1,
 #ifdef CUSTOM_INTERFACE
    IF_WIFI,  //wifi interface wireless
    IF_MODEM, //modem interface
 #endif
+   IF_EPON,
+   IF_GPON,
    IF_MAX
 } if_type_t;
 
@@ -188,50 +193,52 @@ struct interface
      To delete, just set ifindex to IFINDEX_INTERNAL to indicate that the
      interface does not exist in the kernel.
    */
-   ospl_char name[INTERFACE_NAMSIZ + 1];
-   ospl_uint32  name_hash;
+   zpl_char name[INTERFACE_NAMSIZ + 1];
+   zpl_uint32  name_hash;
    /* Interface index (should be IFINDEX_INTERNAL for non-kernel or
      deleted interfaces). */
    ifindex_t ifindex;
 #define IFINDEX_INTERNAL 0
 
-   ospl_uint32  uspv;
-   ospl_ushort encavlan; //子接口封装的VLAN ID
+   zpl_uint32  uspv;
+   zpl_vlan_t encavlan; //子接口封装的VLAN ID
 
-   ospl_char k_name[INTERFACE_NAMSIZ + 1];
-   ospl_uint32  k_name_hash;
+   zpl_char k_name[INTERFACE_NAMSIZ + 1];
+   zpl_uint32  k_name_hash;
    ifindex_t k_ifindex;
+
+   zpl_uint32  phyid;
 
    if_type_t if_type;
 
    if_mode_t if_mode;
    if_enca_t if_enca;
-   ospl_bool dynamic;
+   zpl_bool dynamic;
    /* Zebra internal interface status */
-   ospl_uchar status;
+   zpl_uchar status;
 #define ZEBRA_INTERFACE_ACTIVE (1 << 0)
 #define ZEBRA_INTERFACE_LINKDETECTION (1 << 2)
 #define ZEBRA_INTERFACE_ATTACH (1 << 3)
    /* Interface flags. */
-   ospl_uint64 flags;
+   zpl_uint64 flags;
 
    /* Interface metric */
-   ospl_uint32 metric;
+   zpl_uint32 metric;
 
    /* Interface MTU. */
-   ospl_uint32  mtu;  /* IPv4 MTU */
-   ospl_uint32  mtu6; /* IPv6 MTU - probably, but not neccessarily same as mtu */
+   zpl_uint32  mtu;  /* IPv4 MTU */
+   zpl_uint32  mtu6; /* IPv6 MTU - probably, but not neccessarily same as mtu */
 
    /* Link-layer information and hardware address */
    enum zebra_link_type ll_type;
-   ospl_uchar hw_addr[INTERFACE_HWADDR_MAX];
-   ospl_uint32 hw_addr_len;
+   zpl_uchar hw_addr[INTERFACE_HWADDR_MAX];
+   zpl_uint32 hw_addr_len;
 
    /* interface bandwidth, kbits */
-   ospl_uint32  bandwidth;
+   zpl_uint32  bandwidth;
 
    /* description of the interface. */
-   ospl_char *desc;
+   zpl_char *desc;
 
    /* Distribute list. */
    void *distribute_in;
@@ -239,7 +246,7 @@ struct interface
 
    /* Connected address list. */
    struct list *connected;
-   ospl_bool dhcp;
+   zpl_bool dhcp;
    /* Daemon specific interface data pointer. */
    //void *info[ZLOG_MAX];
    void *info[MODULE_MAX];
@@ -249,12 +256,12 @@ struct interface
 
    vrf_id_t vrf_id;
 
-   ospl_uint32  ifmember;
+   zpl_uint32  ifmember;
 #define IF_TRUNK_MEM (1 << 0)
 #define IF_BRIDGE_MEM (1 << 2)
 
-   ospl_uint32 count;
-   ospl_uint32 raw_status;
+   zpl_uint32 count;
+   zpl_uint32 raw_status;
 };
 
 /* Connected address structure. */
@@ -264,7 +271,7 @@ struct connected
    struct interface *ifp;
 
    /* Flags for configuration. */
-   ospl_uchar conf;
+   zpl_uchar conf;
 #define ZEBRA_IFC_CONFIGURED (1 << 1)
 #define ZEBRA_IFC_DHCPC (1 << 2)
    /*
@@ -279,7 +286,7 @@ struct connected
    */
 
    /* Flags for connected address. */
-   ospl_uchar flags;
+   zpl_uchar flags;
 #define ZEBRA_IFA_SECONDARY (1 << 0)
 #define ZEBRA_IFA_PEER (1 << 1)
 #define ZEBRA_IFA_UNNUMBERED (1 << 2)
@@ -298,21 +305,21 @@ struct connected
      Note: destination may be NULL if ZEBRA_IFA_PEER is not set. */
    struct prefix *destination;
 
-   ospl_uint32 count;
-   ospl_uint32 raw_status;
+   zpl_uint32 count;
+   zpl_uint32 raw_status;
 };
 
-#define IF_TYPE_GET(n) (((n) >> 28) & 0x0F)
-#define IF_UNIT_GET(n) (((n) >> 24) & 0x0F)
+#define IF_TYPE_GET(n) (((n) >> 27) & 0x1F)
+#define IF_UNIT_GET(n) (((n) >> 24) & 0x07)
 #define IF_SLOT_GET(n) (((n) >> 20) & 0x0F)
 #define IF_PORT_GET(n) (((n) >> 12) & 0xFF)
 #define IF_ID_GET(n) ((n)&0x0FFF)
 
-#define IF_VLAN_GET(n) ifindex2vlan((n))
+#define IF_VLAN_GET(n) if_ifindex2vlan((n))
 
-#define IF_TYPE_SET(n) (((n)&0x0F) << 28)
+#define IF_TYPE_SET(n) (((n)&0x1F) << 27)
 #define IF_TYPE_CLR(n) (((n)) & 0x0FFFFFFF)
-#define IF_USPV_SET(u, s, p, v) (((u)&0x0F) << 24) | (((s)&0x0F) << 20) | (((p)&0xFF) << 12) | ((v)&0x0FFF)
+#define IF_USPV_SET(u, s, p, v) (((u)&0x07) << 24) | (((s)&0x0F) << 20) | (((p)&0xFF) << 12) | ((v)&0x0FFF)
 
 #define IF_IFINDEX_TYPE_GET(n) IF_TYPE_GET(n)
 #define IF_IFINDEX_UNIT_GET(n) IF_UNIT_GET(n)
@@ -321,6 +328,8 @@ struct connected
 #define IF_IFINDEX_ID_GET(n) IF_ID_GET(n)
 
 #define IF_IFINDEX_VLAN_GET(n) IF_VLAN_GET(n)
+#define IF_IFINDEX_PHYID_GET(n) if_ifindex2phy(n)
+#define IF_IFINDEX_VRFID_GET(n) if_ifindex2vrfid(n)
 
 #define IF_IFINDEX_TYPE_SET(n) IF_TYPE_SET(n)
 
@@ -334,6 +343,8 @@ struct connected
 #define IF_IFINDEX_ROOT_GET(n) IF_IFINDEX_PARENT_GET(n)
 
 #define IF_IS_SUBIF_GET(n) IF_ID_GET(n)
+
+
 
 /* Does the destination field contain a peer address? */
 #define CONNECTED_PEER(C) CHECK_FLAG((C)->flags, ZEBRA_IFA_PEER)
@@ -385,19 +396,19 @@ struct connected
 #endif /* IFF_VIRTUAL */
 
 /* Prototypes. */
-extern struct list *if_list_get();
+extern struct list *if_list_get(void);
 extern int if_hook_add(int (*add_cb)(struct interface *), int (*del_cb)(struct interface *));
-extern int if_new_llc_type_mode(ospl_uint32 llc, ospl_uint32 mode);
+extern int if_new_llc_type_mode(zpl_uint32 llc, zpl_uint32 mode);
 extern int if_make_llc_type(struct interface *ifp);
 extern int if_cmp_func(struct interface *, struct interface *);
-extern struct interface *if_create(const char *name, ospl_uint32 namelen);
-extern struct interface *if_create_dynamic(const char *name, ospl_uint32 namelen);
+extern struct interface *if_create(const char *name, zpl_uint32 namelen);
+extern struct interface *if_create_dynamic(const char *name, zpl_uint32 namelen);
 extern struct interface *if_lookup_by_index(ifindex_t);
 extern struct interface *if_lookup_exact_address(struct in_addr);
 extern struct interface *if_lookup_address(struct in_addr);
 extern struct interface *if_lookup_prefix(struct prefix *prefix);
-extern struct interface *if_create_vrf_dynamic(const char *name, ospl_uint32 namelen, vrf_id_t vrf_id);
-extern struct interface *if_create_vrf(const char *name, ospl_uint32 namelen,
+extern struct interface *if_create_vrf_dynamic(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id);
+extern struct interface *if_create_vrf(const char *name, zpl_uint32 namelen,
                                        vrf_id_t vrf_id);
 extern struct interface *if_lookup_by_index_vrf(ifindex_t, vrf_id_t vrf_id);
 extern struct interface *if_lookup_exact_address_vrf(struct in_addr,
@@ -418,14 +429,14 @@ extern struct interface *if_lookup_by_name_vrf(const char *ifname,
    of the ifname string (not counting any optional trailing '\0' character).
    In most cases, strnlen should be used to calculate the namelen value. */
 extern struct interface *if_lookup_by_name_len(const char *ifname,
-                                               ospl_uint32 namelen);
+                                               zpl_uint32 namelen);
 
 extern struct interface *if_lookup_by_name_len_vrf(const char *ifname,
-                                                   ospl_uint32 namelen, vrf_id_t vrf_id);
+                                                   zpl_uint32 namelen, vrf_id_t vrf_id);
 
-extern struct interface *if_lookup_by_encavlan(ospl_ushort encavlan);
+extern struct interface *if_lookup_by_encavlan(zpl_ushort encavlan);
 
-extern ospl_uint32 if_count_lookup_type(if_type_t type);
+extern zpl_uint32 if_count_lookup_type(if_type_t type);
 
 extern const char *if_enca_string(if_enca_t enca);
 
@@ -436,31 +447,31 @@ extern int if_kname_set(struct interface *, const char *str);
    deletes it from the interface list and frees the structure. */
 extern void if_delete(struct interface *);
 
-extern ospl_bool if_is_up(struct interface *);
-extern ospl_bool if_is_running(struct interface *);
-extern ospl_bool if_is_operative(struct interface *);
-extern ospl_bool if_is_loopback(struct interface *);
-extern ospl_bool if_is_broadcast(struct interface *);
-extern ospl_bool if_is_pointopoint(struct interface *);
-extern ospl_bool if_is_multicast(struct interface *);
-extern ospl_bool if_is_serial(struct interface *ifp);
-extern ospl_bool if_is_ethernet(struct interface *ifp);
-extern ospl_bool if_is_tunnel(struct interface *ifp);
-extern ospl_bool if_is_lag(struct interface *ifp);
-extern ospl_bool if_is_lag_member(struct interface *ifp);
-extern ospl_bool if_is_vlan(struct interface *ifp);
-extern ospl_bool if_is_brigde(struct interface *ifp);
-extern ospl_bool if_is_brigde_member(struct interface *ifp);
-extern ospl_bool if_is_loop(struct interface *ifp);
-extern ospl_bool if_is_wireless(struct interface *ifp);
+extern zpl_bool if_is_up(struct interface *);
+extern zpl_bool if_is_running(struct interface *);
+extern zpl_bool if_is_operative(struct interface *);
+extern zpl_bool if_is_loopback(struct interface *);
+extern zpl_bool if_is_broadcast(struct interface *);
+extern zpl_bool if_is_pointopoint(struct interface *);
+extern zpl_bool if_is_multicast(struct interface *);
+extern zpl_bool if_is_serial(struct interface *ifp);
+extern zpl_bool if_is_ethernet(struct interface *ifp);
+extern zpl_bool if_is_tunnel(struct interface *ifp);
+extern zpl_bool if_is_lag(struct interface *ifp);
+extern zpl_bool if_is_lag_member(struct interface *ifp);
+extern zpl_bool if_is_vlan(struct interface *ifp);
+extern zpl_bool if_is_brigde(struct interface *ifp);
+extern zpl_bool if_is_brigde_member(struct interface *ifp);
+extern zpl_bool if_is_loop(struct interface *ifp);
+extern zpl_bool if_is_wireless(struct interface *ifp);
 extern int if_up(struct interface *ifp);
 extern int if_down(struct interface *ifp);
 
-extern void if_init();
-extern void if_terminate();
+extern void if_init(void);
+extern void if_terminate(void);
 
 extern void if_dump_all(void);
-extern const char *if_flag_dump(ospl_ulong);
+extern const char *if_flag_dump(zpl_ulong);
 extern const char *if_link_type_str(enum zebra_link_type);
 
 /* Please use ifindex2ifname instead of if_indextoname where possible;
@@ -488,7 +499,12 @@ extern ifindex_t ifkernel2ifindex(ifindex_t);
    make a system call. */
 extern ifindex_t ifname2ifindex(const char *ifname);
 extern ifindex_t ifname2ifindex_vrf(const char *ifname, vrf_id_t vrf_id);
-extern ospl_uint32  ifindex2vlan(ifindex_t ifindex);
+extern zpl_vlan_t  if_ifindex2vlan(ifindex_t ifindex);
+extern ifindex_t if_vlan2ifindex(zpl_vlan_t encavlan);
+extern zpl_uint32  if_ifindex2phy(ifindex_t ifindex);
+extern ifindex_t  if_phy2ifindex(zpl_uint32 phyid);
+extern vrf_id_t  if_ifindex2vrfid(ifindex_t ifindex);
+
 
 extern int if_list_each(int (*cb)(struct interface *ifp, void *pVoid), void *pVoid);
 
@@ -505,10 +521,10 @@ extern struct connected *connected_lookup_address(struct interface *,
                                                   struct in_addr);
 extern struct connected *connected_check(struct interface *ifp, struct prefix *p);
 
-extern int if_data_lock();
-extern int if_data_unlock();
+extern int if_data_lock(void);
+extern int if_data_unlock(void);
 
-extern enum zebra_link_type netlink_to_zebra_link_type(ospl_uint32  hwt);
+extern enum zebra_link_type netlink_to_zebra_link_type(zpl_uint32  hwt);
  
 #ifdef __cplusplus
 }

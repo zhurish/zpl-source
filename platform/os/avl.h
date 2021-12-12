@@ -32,8 +32,9 @@ extern "C" {
 #endif
 
 #include <sys/types.h>
-#include "ospl_type.h"
-typedef ospl_ulong	avl_uintptr_t;
+#include "os_include.h"
+#include "zpl_include.h"
+typedef zpl_ulong	avl_uintptr_t;
 
 
 #define COMPILE_32
@@ -60,18 +61,18 @@ typedef ospl_ulong	avl_uintptr_t;
 struct avl_node {
 	struct avl_node *avl_child[2];	/* left/right children */
 	struct avl_node *avl_parent;	/* this node's parent */
-	ospl_uint16 avl_child_index;	/* my index in parent's avl_child[] */
-	ospl_int16 avl_balance;		/* balance value: -1, 0, +1 */
+	zpl_uint16 avl_child_index;	/* my index in parent's avl_child[] */
+	zpl_int16 avl_balance;		/* balance value: -1, 0, +1 */
 };
 
 #define	AVL_XPARENT(n)		((n)->avl_parent)
 #define	AVL_SETPARENT(n, p)	((n)->avl_parent = (p))
 
 #define	AVL_XCHILD(n)		((n)->avl_child_index)
-#define	AVL_SETCHILD(n, c)	((n)->avl_child_index = (ospl_uint16)(c))
+#define	AVL_SETCHILD(n, c)	((n)->avl_child_index = (zpl_uint16)(c))
 
 #define	AVL_XBALANCE(n)		((n)->avl_balance)
-#define	AVL_SETBALANCE(n, b)	((n)->avl_balance = (ospl_int16)(b))
+#define	AVL_SETBALANCE(n, b)	((n)->avl_balance = (zpl_int16)(b))
 
 #else /* _LP64 */
 
@@ -136,7 +137,7 @@ struct avl_node {
 #define	AVL_MKINDEX(n, c)	((avl_index_t)(n) | (c))
 
 #ifndef ulong_t
-#define		ulong_t		ospl_ulong
+#define		ulong_t		zpl_ulong
 #endif
 
 #ifndef offsetof
@@ -151,9 +152,9 @@ struct avl_node {
 struct avl_tree {
 	struct avl_node *avl_root;	/* root node in tree */
 	int (*avl_compar)(const void *, const void *);
-	ospl_ulong avl_offset;		/* offsetof(type, avl_link_t field) */
-	ospl_ulong avl_numnodes;		/* number of nodes in the tree */
-	ospl_ulong avl_size;		/* sizeof user type struct */
+	zpl_ulong avl_offset;		/* offsetof(type, avl_link_t field) */
+	zpl_ulong avl_numnodes;		/* number of nodes in the tree */
+	zpl_ulong avl_size;		/* sizeof user type struct */
 };
 
 
@@ -529,7 +530,7 @@ struct avl_list{
 })
 
 #define avl_list_count(list) ({\
-    ospl_uint32 x = 0 ;\
+    zpl_uint32 x = 0 ;\
     x = avl_numnodes((&((list)->stAvlTree)));\
     x = x;\
 })

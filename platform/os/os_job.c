@@ -4,32 +4,28 @@
  *  Created on: Jun 2, 2017
  *      Author: zhurish
  */
-
-#include "zebra.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#ifdef ZPL_SHELL_MODULE
 #include "vty.h"
-#include "os_list.h"
-#include "os_memory.h"
-#include "os_sem.h"
-#include "os_task.h"
-#include "os_job.h"
-
+#endif
 #define OS_JOB_NAME_MAX 128
 
 typedef struct os_job_s
 {
 	NODE	node;
-	ospl_uint32 	t_id;
+	zpl_uint32 	t_id;
 	int		(*job_entry)(void *);
-	ospl_void	*pVoid;
-	ospl_char    entry_name[OS_JOB_NAME_MAX];
-	ospl_uint32		cnt;
+	zpl_void	*pVoid;
+	zpl_char    entry_name[OS_JOB_NAME_MAX];
+	zpl_uint32		cnt;
 }os_job_t;
 
 static LIST *job_list = NULL;
 static LIST *job_unused_list = NULL;
 static os_sem_t *job_sem = NULL;
 static os_mutex_t *job_mutex = NULL;
-static ospl_uint32 job_task_id = 0;
+static zpl_uint32 job_task_id = 0;
 static int os_job_task(void);
 
 int os_job_init()
@@ -100,7 +96,7 @@ int os_job_load()
 	return ERROR;
 }
 
-static os_job_t * os_job_entry_create(int (*job_entry)(void *), void *pVoid, ospl_char *entry_name)
+static os_job_t * os_job_entry_create(int (*job_entry)(void *), void *pVoid, zpl_char *entry_name)
 {
 	os_job_t *t = NULL;
 	if(job_unused_list)
@@ -109,7 +105,7 @@ static os_job_t * os_job_entry_create(int (*job_entry)(void *), void *pVoid, osp
 		t = os_malloc(sizeof(os_job_t));
 	if(t)
 	{
-		t->t_id = (ospl_uint32)t;
+		t->t_id = (zpl_uint32)t;
 		t->pVoid = pVoid;
 		t->job_entry = job_entry;
 		os_memset(t->entry_name, 0, sizeof(t->entry_name));
@@ -141,7 +137,7 @@ int os_job_del(int (*job_entry)(void *), void *pVoid)
 	return OK;
 }
 
-int os_job_add_entry(int (*job_entry)(void *), void *pVoid, const ospl_char *entry_name)
+int os_job_add_entry(int (*job_entry)(void *), void *pVoid, const zpl_char *entry_name)
 {
 	os_job_t * t = os_job_entry_create(job_entry, pVoid, entry_name);
 	if(t)
@@ -181,10 +177,7 @@ static int os_job_task(void)
 {
 	NODE node;
 	os_job_t *t;
-	while(!os_load_config_done())
-	{
-		os_sleep(1);
-	}
+	host_config_load_waitting();
 	while(1)
 	{
 		os_sem_take(job_sem, OS_WAIT_FOREVER);
@@ -219,12 +212,15 @@ static int os_job_task(void)
 
 int os_job_show(void *pvoid)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	NODE *node;
 	os_job_t *t;
+#ifdef ZPL_SHELL_MODULE	
 	struct vty *vty = (struct vty *)pvoid;
+#endif	
 	if (job_mutex)
 		os_mutex_lock(job_mutex, OS_WAIT_FOREVER);
+#ifdef ZPL_SHELL_MODULE
 	if(lstCount(job_list) || lstCount(job_unused_list) )
 	{
 		vty_out(vty, "%-4s %-4s %-6s %-16s %s", "----", "----", "------", "----------------", VTY_NEWLINE);
@@ -247,6 +243,31 @@ int os_job_show(void *pvoid)
 			vty_out(vty, "%-4d  %-4d %-6s %s%s", i++, t->cnt, "READY", t->entry_name, VTY_NEWLINE);
 		}
 	}
+#else
+	if(lstCount(job_list) || lstCount(job_unused_list) )
+	{
+		fprintf(stdout, "%-4s %-4s %-6s %-16s %s", "----", "----", "------", "----------------", VTY_NEWLINE);
+		fprintf(stdout, "%-4s %-4s %-6s %-16s %s", "ID", "CNT", "STATE", "NAME", VTY_NEWLINE);
+		fprintf(stdout, "%-4s %-4s %-6s %-16s %s", "----", "----", "------", "----------------", VTY_NEWLINE);
+	}
+	for (node = lstFirst(job_list); node != NULL; node = lstNext(node))
+	{
+		t = (os_job_t *) node;
+		if (node)
+		{
+			fprintf(stdout, "%-4d  %-4d %-6s %s%s", i++, t->cnt, "READY", t->entry_name, VTY_NEWLINE);
+		}
+	}
+	for (node = lstFirst(job_unused_list); node != NULL; node = lstNext(node))
+	{
+		t = (os_job_t *) node;
+		if (node)
+		{
+			fprintf(stdout, "%-4d  %-4d %-6s %s%s", i++, t->cnt, "READY", t->entry_name, VTY_NEWLINE);
+		}
+	}
+	fflush(stdout);
+#endif	
 	if (job_mutex)
 		os_mutex_unlock(job_mutex);
 	return OK;

@@ -5,10 +5,10 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "modem_operators.h"
 
@@ -541,9 +541,9 @@ static md_operators_t operators_table[] =
 	return "UNKNOWN";
 }*/
 
-const char * modem_operators_string(ospl_uint32 code)
+const char * modem_operators_string(zpl_uint32 code)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < sizeof(operators_table)/sizeof(operators_table[0]); i++)
 	{
 		if(operators_table[i].operator_code == code)
@@ -554,9 +554,9 @@ const char * modem_operators_string(ospl_uint32 code)
 	return "UNKNOWN";
 }
 
-const char * modem_country_string(ospl_uint32 code)
+const char * modem_country_string(zpl_uint32 code)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < sizeof(operators_table)/sizeof(operators_table[0]); i++)
 	{
 		if((operators_table[i].operator_code & 0xfff00) == (code << 8))
@@ -567,9 +567,9 @@ const char * modem_country_string(ospl_uint32 code)
 	return "UNKNOWN";
 }
 
-const char * modem_nation_string(ospl_uint32 code)
+const char * modem_nation_string(zpl_uint32 code)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < sizeof(operators_table)/sizeof(operators_table[0]); i++)
 	{
 		if((operators_table[i].operator_code & 0xfff00) == (code << 8))

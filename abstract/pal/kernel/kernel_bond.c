@@ -5,23 +5,13 @@
  *      Author: zhurish
  */
 
-#include <zebra.h>
-
-#include "if.h"
-#include "vty.h"
-#include "sockunion.h"
-#include "prefix.h"
-#include "command.h"
-#include "memory.h"
-#include "log.h"
-#include "nsm_zclient.h"
-#include "thread.h"
-#include "nsm_veth.h"
-#include "nsm_tunnel.h"
-#include "nsm_bridge.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "kernel_ioctl.h"
-#ifdef PL_NSM_TRUNK
+#ifdef ZPL_NSM_TRUNK
 //#include "linux/if_tunnel.h"
 //#include "linux/if_bonding.h"
 #include "linux/sockios.h"
@@ -169,7 +159,7 @@ int _if_bond_test()
 	strcpy(ifp.k_name, "bond1223");
 
 	//_if_bond_create(NULL, NULL);
-#ifdef PL_IPROUTE2_MODULE
+#ifdef ZPL_IPROUTE2_MODULE
 	int argc = 2;
 	char *argv[] = {"ip", "link", "show", NULL};
 	ip_main( argc, argv);

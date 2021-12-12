@@ -14,9 +14,9 @@ extern "C" {
 #endif
 
 
-int v9_memory_load(ospl_uint32 *total, ospl_uint8 *use);
-int v9_cpu_load(ospl_uint16 *use);
-int v9_disk_load(char *path, ospl_uint32 *total, ospl_uint32 *use, ospl_uint8 *puse);
+int v9_memory_load(zpl_uint32 *total, zpl_uint8 *use);
+int v9_cpu_load(zpl_uint16 *use);
+int v9_disk_load(char *path, zpl_uint32 *total, zpl_uint32 *use, zpl_uint8 *puse);
 
 
 #ifdef __cplusplus

@@ -264,11 +264,11 @@ int net__try_connect_step1(struct mosquitto *mosq, const char *host)
 {
 	int s;
 	void *sevp = NULL;
-	struct addrinfo *hints;
+	struct ipstack_addrinfo *hints;
 
 	if(mosq->adns){
 		gai_cancel(mosq->adns);
-		mosquitto__free((struct addrinfo *)mosq->adns->ar_request);
+		mosquitto__free((struct ipstack_addrinfo *)mosq->adns->ar_request);
 		mosquitto__free(mosq->adns);
 	}
 	mosq->adns = mosquitto__calloc(1, sizeof(struct gaicb));
@@ -276,7 +276,7 @@ int net__try_connect_step1(struct mosquitto *mosq, const char *host)
 		return MOSQ_ERR_NOMEM;
 	}
 
-	hints = mosquitto__calloc(1, sizeof(struct addrinfo));
+	hints = mosquitto__calloc(1, sizeof(struct ipstack_addrinfo));
 	if(!hints){
 		mosquitto__free(mosq->adns);
 		mosq->adns = NULL;
@@ -293,7 +293,7 @@ int net__try_connect_step1(struct mosquitto *mosq, const char *host)
 	if(s){
 		errno = s;
 		if(mosq->adns){
-			mosquitto__free((struct addrinfo *)mosq->adns->ar_request);
+			mosquitto__free((struct ipstack_addrinfo *)mosq->adns->ar_request);
 			mosquitto__free(mosq->adns);
 			mosq->adns = NULL;
 		}
@@ -306,7 +306,7 @@ int net__try_connect_step1(struct mosquitto *mosq, const char *host)
 /* Async connect part 2, the connection. */
 int net__try_connect_step2(struct mosquitto *mosq, uint16_t port, mosq_sock_t *sock)
 {
-	struct addrinfo *ainfo, *rp;
+	struct ipstack_addrinfo *ainfo, *rp;
 	int rc;
 
 	ainfo = mosq->adns->ar_result;
@@ -352,7 +352,7 @@ int net__try_connect_step2(struct mosquitto *mosq, uint16_t port, mosq_sock_t *s
 	freeaddrinfo(mosq->adns->ar_result);
 	mosq->adns->ar_result = NULL;
 
-	mosquitto__free((struct addrinfo *)mosq->adns->ar_request);
+	mosquitto__free((struct ipstack_addrinfo *)mosq->adns->ar_request);
 	mosquitto__free(mosq->adns);
 	mosq->adns = NULL;
 
@@ -368,10 +368,10 @@ int net__try_connect_step2(struct mosquitto *mosq, uint16_t port, mosq_sock_t *s
 
 int net__try_connect(const char *host, uint16_t port, mosq_sock_t *sock, const char *bind_address, bool blocking)
 {
-#ifdef PL_MQTT_MODULE
+#ifdef ZPL_MQTT_MODULE
 	int rc = MOSQ_ERR_SUCCESS, sk = 0;
 
-	sk = sock_create(ospl_true);
+	sk = os_sock_create(zpl_true);
 	if(sk == ERROR)
 	{
 		return MOSQ_ERR_EAI;
@@ -379,7 +379,7 @@ int net__try_connect(const char *host, uint16_t port, mosq_sock_t *sock, const c
 	*sock = sk;
 	if(bind_address)
 	{
-		if(sock_bind(*sock, bind_address, port) == ERROR)
+		if(os_sock_bind(*sock, bind_address, port) == ERROR)
 		{
 			COMPAT_CLOSE(*sock);
 			*sock = INVALID_SOCKET;
@@ -395,7 +395,7 @@ int net__try_connect(const char *host, uint16_t port, mosq_sock_t *sock, const c
 		}
 	}
 
-	rc = sock_connect(*sock, host, port);
+	rc = os_sock_connect(*sock, host, port);
 
 	if(rc == ERROR || errno == EINPROGRESS || errno == COMPAT_EWOULDBLOCK){
 		if(rc < 0 && (errno == EINPROGRESS || errno == COMPAT_EWOULDBLOCK)){
@@ -411,18 +411,18 @@ int net__try_connect(const char *host, uint16_t port, mosq_sock_t *sock, const c
 		}
 	}
 
-#else /* PL_MQTT_MODULE */
-	struct addrinfo hints;
-	struct addrinfo *ainfo, *rp;
-	struct addrinfo *ainfo_bind, *rp_bind;
-	int s;
+#else /* ZPL_MQTT_MODULE */
+	struct ipstack_addrinfo hints;
+	struct ipstack_addrinfo *ainfo, *rp;
+	struct ipstack_addrinfo *ainfo_bind, *rp_bind;
+	int s; 
 	int rc = MOSQ_ERR_SUCCESS;
 #ifdef WIN32
 	uint32_t val = 1;
 #endif
 
 	*sock = INVALID_SOCKET;
-	memset(&hints, 0, sizeof(struct addrinfo));
+	memset(&hints, 0, sizeof(struct ipstack_addrinfo));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
@@ -503,7 +503,7 @@ int net__try_connect(const char *host, uint16_t port, mosq_sock_t *sock, const c
 	if(!rp){
 		return MOSQ_ERR_ERRNO;
 	}
-#endif /* PL_MQTT_MODULE */
+#endif /* ZPL_MQTT_MODULE */
 	return rc;
 }
 
@@ -992,7 +992,7 @@ ssize_t net__write(struct mosquitto *mosq, void *buf, size_t count)
 int net__socket_nonblock(mosq_sock_t *sock)
 {
 #ifndef WIN32
-#ifdef PL_MQTT_MODULE
+#ifdef ZPL_MQTT_MODULE
 	if(os_set_nonblocking(*sock) != 0)
 	{
 		COMPAT_CLOSE(*sock);

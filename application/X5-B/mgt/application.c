@@ -6,21 +6,11 @@
  */
 
 
-#include "zebra.h"
-#include "network.h"
-#include "vty.h"
-#include "if.h"
-#include "buffer.h"
-#include "command.h"
-#include "if_name.h"
-#include "linklist.h"
-#include "log.h"
-#include "memory.h"
-#include "prefix.h"
-#include "str.h"
-#include "table.h"
-#include "vector.h"
-#include "eloop.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "nsm_include.h"
+
 
 #include "application.h"
 

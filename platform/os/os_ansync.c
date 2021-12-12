@@ -4,17 +4,15 @@
  *  Created on: Sep 3, 2018
  *      Author: zhurish
  */
-#include "zebra.h"
+#include "os_include.h"
+#include "zpl_include.h"
 #include "sys/epoll.h"
-#include "os_list.h"
-#include "os_memory.h"
-#include "os_sem.h"
-#include "os_task.h"
-#include "os_ansync.h"
+
 
 #ifdef OS_ANSYNC_GLOBAL_LIST
 static LIST	*ansyncList = NULL;
-static ospl_uint8	g_ansync_init = 0;
+static zpl_uint8	g_ansync_init = 0;
+static os_ansync_t *_m_os_ansync_current = NULL;
 
 static int os_ansync_global_init()
 {
@@ -31,7 +29,7 @@ static int os_ansync_global_init()
 	return ERROR;
 }
 
-os_ansync_lst * os_ansync_global_lookup(ospl_uint32 taskid, ospl_uint32 module)
+os_ansync_lst * os_ansync_global_lookup(zpl_uint32 taskid, zpl_uint32 module)
 {
 	NODE index;
 	os_ansync_lst *pstNode = NULL;
@@ -53,7 +51,7 @@ os_ansync_lst * os_ansync_global_lookup(ospl_uint32 taskid, ospl_uint32 module)
 static os_ansync_t * os_ansync_lookup_node(os_ansync_lst *lst, os_ansync_t *value);
 
 
-os_ansync_lst *os_ansync_lst_create(ospl_uint32 module, int maxfd)
+os_ansync_lst *os_ansync_lst_create(zpl_uint32 module, int maxfd)
 {
 	os_ansync_lst *lst = os_malloc(sizeof(os_ansync_lst));
 #ifdef OS_ANSYNC_GLOBAL_LIST
@@ -109,7 +107,7 @@ os_ansync_lst *os_ansync_lst_create(ospl_uint32 module, int maxfd)
 		lst->max_fd = maxfd;
 		lstInit(lst->list);
 		lstInit(lst->unuselist);
-		lst->bquit = ospl_false;
+		lst->bquit = zpl_false;
 #ifdef OS_ANSYNC_GLOBAL_LIST
 		lstAdd(ansyncList, (NODE *)lst);
 #endif
@@ -155,17 +153,17 @@ int os_ansync_lst_destroy(os_ansync_lst *lst)
 	return OK;
 }
 
-static ospl_bool os_ansync_lst_chk(os_ansync_lst *lst)
+static zpl_bool os_ansync_lst_chk(os_ansync_lst *lst)
 {
 	if (!lst)
-		return ospl_false;
+		return zpl_false;
 	if (!lst->mutex)
-		return ospl_false;
+		return zpl_false;
 	if (!lst->list)
-		return ospl_false;
+		return zpl_false;
 	if (!lst->unuselist)
-		return ospl_false;
-	return ospl_true;
+		return zpl_false;
+	return zpl_true;
 }
 
 static int os_ansync_epoll_event_add(os_ansync_lst *lst, os_ansync_t *value)
@@ -234,6 +232,7 @@ static int os_ansync_add_node(os_ansync_lst *lst, os_ansync_t *value)
 		return ERROR;
 	if(value)
 	{
+		value->master = lst;
 		if(value->fd && (value->type == OS_ANSYNC_INPUT || value->type == OS_ANSYNC_OUTPUT))
 		{
 /*
@@ -401,6 +400,7 @@ os_ansync_t * os_ansync_lookup_api(os_ansync_lst *lst, os_ansync_t *value)
 }
 
 
+
 int os_ansync_add_api(os_ansync_lst *lst, os_ansync_t *value)
 {
 	int ret = ERROR;
@@ -423,7 +423,7 @@ int os_ansync_add_api(os_ansync_lst *lst, os_ansync_t *value)
 	return ret;
 }
 
-int os_ansync_timeout_api(os_ansync_lst *lst, ospl_uint32 value)
+int os_ansync_timeout_api(os_ansync_lst *lst, zpl_uint32 value)
 {
 	int ret = OK;
 	if(!lst)
@@ -458,6 +458,8 @@ int os_ansync_del_api(os_ansync_lst *lst, os_ansync_t *value)
 	return ret;
 }
 
+
+
 static os_ansync_t * os_ansync_get(os_ansync_lst *lst)
 {
 	NODE index;
@@ -481,15 +483,15 @@ static os_ansync_t * os_ansync_get(os_ansync_lst *lst)
 	return pstNode;
 }
 
-int _os_ansync_register_api(os_ansync_lst *lst, os_ansync_type type, os_ansync_cb cb,
-		void *pVoid, int value, ospl_char *func_name, ospl_char *file, ospl_uint32 line)
+os_ansync_t * _os_ansync_register_api(os_ansync_lst *lst, os_ansync_type type, os_ansync_cb cb,
+		void *pVoid, int value, zpl_char *func_name, zpl_char *file, zpl_uint32 line)
 {
 	//int ret = 0;
 	os_ansync_t *node = NULL;
 	if(!lst)
-		return ERROR;
+		return NULL;
 	if(!os_ansync_lst_chk(lst))
-		return ERROR;
+		return NULL;
 	//OS_ANSYNC_DEBUG("%s", func_name);
 	if(lstCount(lst->unuselist))
 	{
@@ -524,9 +526,10 @@ int _os_ansync_register_api(os_ansync_lst *lst, os_ansync_type type, os_ansync_c
 		os_strcpy(node->entryname, func_name);
 		os_strcpy(node->filename, file);
 		node->line = line;
-		return os_ansync_add_api(lst, node);
+		if(os_ansync_add_api(lst, node) == OK)
+			return node;
 	}
-	return ERROR;
+	return NULL;
 }
 
 
@@ -568,7 +571,7 @@ int _os_ansync_unregister_all_api(os_ansync_lst *lst, os_ansync_type type, os_an
 {
 	NODE index;
 	os_ansync_t *pstNode = NULL;
-	//ospl_time_t cut = os_time(NULL);
+	//zpl_time_t cut = os_time(NULL);
 	if(!os_ansync_lst_chk(lst))
 		return ERROR;
 	if(lst->mutex)
@@ -623,10 +626,10 @@ int _os_ansync_unregister_all_api(os_ansync_lst *lst, os_ansync_type type, os_an
 	return OK;
 }
 
-int _os_ansync_register_event_api(os_ansync_lst *lst, os_ansync_type type, os_ansync_cb cb,
-		void *pVoid, int value, ospl_char *func_name, ospl_char *file, ospl_uint32 line)
+os_ansync_t * _os_ansync_register_event_api(os_ansync_lst *lst, os_ansync_type type, os_ansync_cb cb,
+		void *pVoid, int value, zpl_char *func_name, zpl_char *file, zpl_uint32 line)
 {
-	int ret = 0;
+	os_ansync_t * ret = 0;
 	if(lst->ansync_mutex)
 		os_mutex_lock(lst->ansync_mutex, OS_WAIT_FOREVER);
 
@@ -637,9 +640,9 @@ int _os_ansync_register_event_api(os_ansync_lst *lst, os_ansync_type type, os_an
 	return ret;
 }
 
-static int os_ansync_io_helper(os_ansync_lst *lst, ospl_uint32 num)
+static int os_ansync_io_helper(os_ansync_lst *lst, zpl_uint32 num)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	//NODE index;
 	os_ansync_t value;
 	os_ansync_t *node = NULL;
@@ -694,7 +697,7 @@ static int os_ansync_timer_helper(os_ansync_lst *lst, struct timeval *wait_tv)
 {
 	NODE index;
 	os_ansync_t *pstNode = NULL;
-	//ospl_time_t cut = os_time(NULL);
+	//zpl_time_t cut = os_time(NULL);
 	if(!os_ansync_lst_chk(lst))
 		return ERROR;
 	if(lst->mutex)
@@ -783,7 +786,7 @@ int os_ansync_fetch_quit (os_ansync_lst *lst)
 {
 	if(lst)
 	{
-		lst->bquit = ospl_true;
+		lst->bquit = zpl_true;
 	}
 	return OK;
 }
@@ -819,7 +822,7 @@ os_ansync_t *os_ansync_fetch(os_ansync_lst *lst)
 		if(lst->bquit)
 		{
 			//fetch = NULL;
-			lst->bquit = ospl_false;
+			lst->bquit = zpl_false;
 			return NULL;
 		}
 		os_gettime (OS_CLK_MONOTONIC, &wait_tv);
@@ -901,6 +904,16 @@ int os_ansync_execute(os_ansync_lst *lst, os_ansync_t *value, os_ansync_exe exe)
 	}
 	else if(value->type == OS_ANSYNC_TIMER || value->type == OS_ANSYNC_TIMER_ONCE)
 	{
+		if(value->ansync_cb)
+		{
+			//OS_ANSYNC_DEBUG("%s (%s)", value->entryname,  "timer");
+			if(exe == OS_ANSYNC_EXECUTE_NONE)
+				ret = (value->ansync_cb)(value);
+			else
+				ret = (value->ansync_cb)(value->pVoid);
+		}
+		value->state = OS_ANSYNC_STATE_NONE;
+
 		if(value->type == OS_ANSYNC_TIMER_ONCE)
 		{
 			if(lst->mutex)
@@ -924,15 +937,6 @@ int os_ansync_execute(os_ansync_lst *lst, os_ansync_t *value, os_ansync_exe exe)
 			if(lst->mutex)
 				os_mutex_unlock(lst->mutex);
 		}
-		if(value->ansync_cb)
-		{
-			//OS_ANSYNC_DEBUG("%s (%s)", value->entryname,  "timer");
-			if(exe == OS_ANSYNC_EXECUTE_NONE)
-				ret = (value->ansync_cb)(value);
-			else
-				ret = (value->ansync_cb)(value->pVoid);
-		}
-		value->state = OS_ANSYNC_STATE_NONE;
 	}
 	else if(value->type == OS_ANSYNC_EVENT)
 	{
@@ -942,14 +946,18 @@ int os_ansync_execute(os_ansync_lst *lst, os_ansync_t *value, os_ansync_exe exe)
 				os_mutex_lock(lst->mutex, OS_WAIT_FOREVER);
 			//lstDelete(lst->list, (NODE *)value);
 			lstAdd(lst->unuselist, (NODE *)value);
+			_m_os_ansync_current = value;
 			if(lst->mutex)
 				os_mutex_unlock(lst->mutex);
 
+			zpl_backtrace_symb_set(value->filename, value->entryname, value->line);
 			//OS_ANSYNC_DEBUG("io (%d) %s (%s)",value->fd,  value->entryname, (value->type == OS_ANSYNC_INPUT) ? "input":"output");
 			if(exe == OS_ANSYNC_EXECUTE_NONE)
 				ret = (value->ansync_cb)(value);
 			else
 				ret = (value->ansync_cb)(value->pVoid);
+			zpl_backtrace_symb_set(NULL, NULL, 0);
+			_m_os_ansync_current = NULL;
 		}
 		value->state = OS_ANSYNC_STATE_NONE;
 	}
@@ -960,6 +968,11 @@ int os_ansync_execute(os_ansync_lst *lst, os_ansync_t *value, os_ansync_exe exe)
 	if(lst->ansync_mutex)
 		os_mutex_unlock(lst->ansync_mutex);
 	return ret;
+}
+
+os_ansync_t *os_ansync_current_get()
+{
+	return _m_os_ansync_current;
 }
 
 int os_ansync_lock(os_ansync_lst *lst)
@@ -980,10 +993,10 @@ int os_ansync_unlock(os_ansync_lst *lst)
 	return OK;
 }
 
-int os_ansync_show(os_ansync_lst *lst, int (*show)(void *, ospl_char *fmt,...), void *pVoid)
+int os_ansync_show(os_ansync_lst *lst, int (*show)(void *, zpl_char *fmt,...), void *pVoid)
 {
 	int head = 0;
-	ospl_char type[16], value[8], state[8];
+	zpl_char type[16], value[8], state[8];
 	NODE index;
 	os_ansync_t *pstNode = NULL;
 	if(!os_ansync_lst_chk(lst))
@@ -1052,10 +1065,7 @@ int os_ansync_show(os_ansync_lst *lst, int (*show)(void *, ospl_char *fmt,...), 
 int os_ansync_main(os_ansync_lst *lst, os_ansync_exe exe)
 {
 	os_ansync_t *node;
-	while(!os_load_config_done())
-	{
-		os_sleep(1);
-	}
+	host_config_load_waitting();
 	while(lst)
 	{
 		while((node = os_ansync_fetch(lst)))
@@ -1092,7 +1102,7 @@ int os_ansync_test()
 */
 
 #ifdef __OS_ANSYNC_DEBUG
-void os_ansync_debug_printf(void *fp, ospl_char *func, ospl_uint32 line,  const char *format, ...)
+void os_ansync_debug_printf(void *fp, zpl_char *func, zpl_uint32 line,  const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);

@@ -5,14 +5,10 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "if.h"
-#include "os_list.h"
-#include "os_util.h"
-#include "tty_com.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "modem.h"
 #include "modem_client.h"
@@ -58,7 +54,7 @@ static int _qmi_start( char *process, char *apn, char *user, char *passwd, char 
 		argv[i++] = "-f";
 		argv[i++] = "gobinet.log";
 	}
-#ifndef DOUBLE_PROCESS
+#ifndef ZPL_TOOLS_PROCESS
 	id = child_process_create();
 	if(id == 0)
 	{
@@ -73,7 +69,7 @@ static int _qmi_start( char *process, char *apn, char *user, char *passwd, char 
 	char path[128];
 	memset(path, 0, sizeof(path));
 	snprintf(path, sizeof(path), "quectel-CM");
-	id = os_process_register(PROCESS_START, path, "quectel-CM", ospl_true, argv);
+	id = os_process_register(PROCESS_START, path, "quectel-CM", zpl_true, argv);
 	if(id)
 		return id;
 #endif
@@ -82,7 +78,7 @@ static int _qmi_start( char *process, char *apn, char *user, char *passwd, char 
 
 static int _qmi_stop(int process)
 {
-#ifndef DOUBLE_PROCESS
+#ifndef ZPL_TOOLS_PROCESS
 	MODEM_QMI_DEBUG(" qmi");
 	return child_process_destroy(process);
 #else
@@ -126,17 +122,17 @@ static int _modem_qmi_stop(modem_client_t *client)
 	return OK;
 }
 
-ospl_bool modem_qmi_isconnect(modem_t *modem)
+zpl_bool modem_qmi_isconnect(modem_t *modem)
 {
 	assert(modem);
 	if(modem->pid[modem->dialtype])
 	{
-		return ospl_true;
+		return zpl_true;
 	}
-	return ospl_false;
+	return zpl_false;
 }
 
-ospl_bool modem_qmi_islinkup(modem_t *modem)
+zpl_bool modem_qmi_islinkup(modem_t *modem)
 {
 	assert(modem);
 	struct interface *ifp = modem->eth0;
@@ -150,11 +146,11 @@ ospl_bool modem_qmi_islinkup(modem_t *modem)
 				{
 					modem_serial_interface_update_kernel(modem, ifp->k_name);
 				}
-				return ospl_true;
+				return zpl_true;
 			}
 		}
 	}
-	return ospl_false;
+	return zpl_false;
 }
 
 

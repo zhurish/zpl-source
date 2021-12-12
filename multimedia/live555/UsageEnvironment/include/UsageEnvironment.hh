@@ -13,7 +13,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
-// Copyright (c) 1996-2020 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2021 Live Networks, Inc.  All rights reserved.
 // Usage Environment
 // C++ header
 
@@ -85,7 +85,8 @@ public:
   virtual UsageEnvironment& operator<<(unsigned u) = 0;
   virtual UsageEnvironment& operator<<(double d) = 0;
   virtual UsageEnvironment& operator<<(void* p) = 0;
-
+  int UsageEnvironmentLogSet(int (*logcb)(const char *fmt,...));
+  
   // a pointer to additional, optional, client-specific state
   void* liveMediaPriv;
   void* groupsockPriv;
@@ -93,6 +94,7 @@ public:
 protected:
   UsageEnvironment(TaskScheduler& scheduler); // abstract base class
   virtual ~UsageEnvironment(); // we are deleted only by reclaim()
+  int (*logcallback)(const char *fmt,...) = NULL;
 
 private:
   TaskScheduler& fScheduler;
@@ -141,6 +143,7 @@ public:
         // Changes any socket handling for "oldSocketNum" so that occurs with "newSocketNum" instead.
 
   virtual void doEventLoop(char volatile* watchVariable = NULL) = 0;
+  virtual void doEventLoop(char volatile* watchVariable, unsigned maxDelayTime) = 0;
       // Causes further execution to take place within the event loop.
       // Delayed tasks, background I/O handling, and other events are handled, sequentially (as a single thread of control).
       // (If "watchVariable" is not NULL, then we return from this routine when *watchVariable != 0)

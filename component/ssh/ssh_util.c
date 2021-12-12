@@ -8,17 +8,9 @@
 
 
 
-#include "zebra.h"
-#include "getopt.h"
-#include <log.h>
-#include "command.h"
-#include "memory.h"
-#include "prefix.h"
-#include "network.h"
-#include "vty.h"
-#include "buffer.h"
-#include "host.h"
-#include "eloop.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
 #include "ssh_api.h"
 #include "ssh_util.h"
@@ -30,7 +22,7 @@ int ssh_set_log_userdata(void *data)
 */
 static struct vty *ssh_vty = NULL;
 
-void ssh_log_callback_func(ospl_uint32 priority,
+void ssh_log_callback_func(zpl_uint32 priority,
         const char *function,
         const char *buffer,
         void *userdata)
@@ -113,10 +105,10 @@ int ssh_stdin_get(ssh_session session)
     return -1;
 }
 
-int ssh_get_input(int fd, char *buf, ospl_uint32 len)
+int ssh_get_input(int fd, char *buf, zpl_uint32 len)
 {
 	int c = 0;
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	while(1)
 	{
 		c = vty_getc_input(ssh_vty);
@@ -157,7 +149,7 @@ int ssh_printf(ssh_session session, const char *fmt,...)
 	}
     if(vty)
     {
-    	ospl_uint32 len = 0;
+    	zpl_uint32 len = 0;
         char buffer[1024];
         memset(buffer, 0, sizeof(buffer));
         va_list va;
@@ -172,7 +164,7 @@ int ssh_printf(ssh_session session, const char *fmt,...)
     }
     else
     {
-    	ospl_uint32 len = 0;
+    	zpl_uint32 len = 0;
         char buffer[1024];
         memset(buffer, 0, sizeof(buffer));
         va_list va;
@@ -184,7 +176,7 @@ int ssh_printf(ssh_session session, const char *fmt,...)
     return OK;
 }
 
-ospl_bool sshd_acl_action(ssh_config_t *ssh, ssh_session session)
+zpl_bool sshd_acl_action(ssh_config_t *ssh, ssh_session session)
 {
-	return ospl_true;
+	return zpl_true;
 }

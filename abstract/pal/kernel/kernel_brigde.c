@@ -13,25 +13,14 @@
  */
 
 
-#include <zebra.h>
-
-#include "if.h"
-#include "vty.h"
-#include "sockunion.h"
-#include "prefix.h"
-#include "command.h"
-#include "memory.h"
-#include "log.h"
-#include "nsm_zclient.h"
-#include "thread.h"
-
-#include "nsm_veth.h"
-#include "nsm_tunnel.h"
-#include "nsm_bridge.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "kernel_ioctl.h"
 
-#ifdef PL_NSM_BRIDGE
+#ifdef ZPL_NSM_BRIDGE
 
 #define _LINUX_IP_H
 
@@ -51,7 +40,7 @@ int _ipkernel_bridge_create(nsm_bridge_t *br)
 #endif
 	{
 		char _br[IFNAMSIZ];
-		ospl_ulong arg[3] = { BRCTL_ADD_BRIDGE, (ospl_ulong) _br };
+		zpl_ulong arg[3] = { BRCTL_ADD_BRIDGE, (zpl_ulong) _br };
 		strncpy(_br, br->ifp->k_name, IFNAMSIZ);
 		ret = if_ioctl(SIOCSIFBR, (caddr_t)&arg);
 	}
@@ -67,7 +56,7 @@ int _ipkernel_bridge_delete(nsm_bridge_t *br)
 #endif
 	{
 		char _br[IFNAMSIZ];
-		ospl_ulong arg[3] = { BRCTL_DEL_BRIDGE, (ospl_ulong) _br };
+		zpl_ulong arg[3] = { BRCTL_DEL_BRIDGE, (zpl_ulong) _br };
 		strncpy(_br, br->ifp->k_name, IFNAMSIZ);
 		ret = if_ioctl(SIOCSIFBR, arg);
 	}
@@ -76,7 +65,7 @@ int _ipkernel_bridge_delete(nsm_bridge_t *br)
 
 int _ipkernel_bridge_add_interface(nsm_bridge_t *br, ifindex_t ifindex)
 {
-	struct ifreq ifr;
+	struct ipstack_ifreq ifr;
 	int err = -1;
 	strncpy(ifr.ifr_name, br->ifp->k_name, IFNAMSIZ);
 #ifdef SIOCBRADDIF
@@ -85,7 +74,7 @@ int _ipkernel_bridge_add_interface(nsm_bridge_t *br, ifindex_t ifindex)
 	if (err < 0)
 #endif
 	{
-		ospl_ulong args[4] = { BRCTL_ADD_IF, ifindex, 0, 0 };
+		zpl_ulong args[4] = { BRCTL_ADD_IF, ifindex, 0, 0 };
 		ifr.ifr_data = (char *) args;
 		err = if_ioctl(SIOCDEVPRIVATE, &ifr);
 	}
@@ -94,7 +83,7 @@ int _ipkernel_bridge_add_interface(nsm_bridge_t *br, ifindex_t ifindex)
 
 int _ipkernel_bridge_del_interface(nsm_bridge_t *br, ifindex_t ifindex)
 {
-	struct ifreq ifr;
+	struct ipstack_ifreq ifr;
 	int err = -1;
 	strncpy(ifr.ifr_name, br->ifp->k_name, IFNAMSIZ);
 #ifdef SIOCBRDELIF
@@ -103,7 +92,7 @@ int _ipkernel_bridge_del_interface(nsm_bridge_t *br, ifindex_t ifindex)
 	if (err < 0)
 #endif
 	{
-		ospl_ulong args[4] = { BRCTL_DEL_IF, ifindex, 0, 0 };
+		zpl_ulong args[4] = { BRCTL_DEL_IF, ifindex, 0, 0 };
 		ifr.ifr_data = (char *) args;
 		err = if_ioctl(SIOCDEVPRIVATE, &ifr);
 	}
@@ -113,10 +102,10 @@ int _ipkernel_bridge_del_interface(nsm_bridge_t *br, ifindex_t ifindex)
 
 int _ipkernel_bridge_list_interface(nsm_bridge_t *br, ifindex_t ifindex[])
 {
-	struct ifreq ifr;
+	struct ipstack_ifreq ifr;
 	int err = -1;
 	ifindex_t port_index[BRIDGE_MEMBER_MAX];
-	ospl_ulong args[4] = { BRCTL_GET_PORT_LIST,(ospl_ulong) &port_index, 0, 0 };
+	zpl_ulong args[4] = { BRCTL_GET_PORT_LIST,(zpl_ulong) &port_index, 0, 0 };
 	strncpy(ifr.ifr_name, br->ifp->k_name, IFNAMSIZ);
 	ifr.ifr_data = (char *) &args;
 
@@ -131,11 +120,11 @@ int _ipkernel_bridge_list_interface(nsm_bridge_t *br, ifindex_t ifindex[])
 
 int _ipkernel_bridge_check_interface(char *br, ifindex_t ifindex)
 {
-	struct ifreq ifr;
+	struct ipstack_ifreq ifr;
 	//int err = -1;
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	ifindex_t port_index[BRIDGE_MEMBER_MAX] = {0};
-	ospl_ulong bargs[4] = { BRCTL_GET_PORT_LIST,(ospl_ulong) &port_index, 0, 0 };
+	zpl_ulong bargs[4] = { BRCTL_GET_PORT_LIST,(zpl_ulong) &port_index, 0, 0 };
 	for(i = 0; i < BRIDGE_MEMBER_MAX; i++)
 	{
 		port_index[i] = 0;
@@ -169,42 +158,42 @@ int _ipkernel_bridge_check_interface(char *br, ifindex_t ifindex)
 #define UTILS_IF_VLAN (3)
 
 
-struct utilospl_interface
+struct utilzpl_interface
 {
 	struct interface *ifp;
-	ospl_uint32 type;//接口类型，tunnel，vlan，bridge
+	zpl_uint32 type;//接口类型，tunnel，vlan，bridge
 	char name[INTERFACE_NAMSIZ + 1];
 #ifdef HAVE_UTILS_BRCTL
-	ospl_uint32 br_mode;//接口状态，网桥，桥接接口
+	zpl_uint32 br_mode;//接口状态，网桥，桥接接口
 	char br_name[INTERFACE_NAMSIZ + 1];//桥接接口的网桥名称
-	ospl_uint32 br_stp;//网桥生成树
-	ospl_uint32 br_stp_state;//生成树状态
-	ospl_uint32 max_age;
-	ospl_uint32 hello_time;
-	ospl_uint32 forward_delay;
+	zpl_uint32 br_stp;//网桥生成树
+	zpl_uint32 br_stp_state;//生成树状态
+	zpl_uint32 max_age;
+	zpl_uint32 hello_time;
+	zpl_uint32 forward_delay;
 	//
 #define BR_PORT_MAX	32
-	ospl_uint32 br_ifindex[BR_PORT_MAX];
+	zpl_uint32 br_ifindex[BR_PORT_MAX];
 #endif
 	//int message_age_timer_value;
 	//int forward_delay_timer_value;
 	//int hold_timer_value;
 #ifdef HAVE_UTILS_TUNNEL
-	ospl_uint32 tun_index;//tunnel接口的隧道ID编号
-	ospl_uint32 tun_mode;//隧道模式
-	ospl_uint32 tun_ttl;//change: ip tunnel change tunnel0 ttl
-	ospl_uint32 tun_mtu;//change: ip link set dev tunnel0 mtu 1400
+	zpl_uint32 tun_index;//tunnel接口的隧道ID编号
+	zpl_uint32 tun_mode;//隧道模式
+	zpl_uint32 tun_ttl;//change: ip tunnel change tunnel0 ttl
+	zpl_uint32 tun_mtu;//change: ip link set dev tunnel0 mtu 1400
     struct in_addr source;//ip tunnel change tunnel1 local 192.168.122.1
     struct in_addr remote;//change: ip tunnel change tunnel1 remote 19.1.1.1
-    ospl_uint32 active;//隧道接口是否激活
+    zpl_uint32 active;//隧道接口是否激活
 #define TUNNEL_ACTIVE 1
 #endif
 #ifdef HAVE_UTILS_VLAN
 #define SKB_QOS_MAX	8
 	vlan_t vlanid;//vlan id
-	ospl_uint32 egress_vlan_qos[SKB_QOS_MAX];//出口skb的优先级到qos的映射
-	ospl_uint32 ingress_vlan_qos[SKB_QOS_MAX];//入口skb的优先级到qos的映射
-	//ospl_uint32 flag; /* Matches vlan_dev_priv flags */
+	zpl_uint32 egress_vlan_qos[SKB_QOS_MAX];//出口skb的优先级到qos的映射
+	zpl_uint32 ingress_vlan_qos[SKB_QOS_MAX];//入口skb的优先级到qos的映射
+	//zpl_uint32 flag; /* Matches vlan_dev_priv flags */
 #endif
 };
 //#define BRCTL_CMD_DEBUG
@@ -230,7 +219,7 @@ static int bridge_create(const char *brname)
 #endif
 	{
 		char _br[IFNAMSIZ];
-		ospl_ulong arg[3] = { BRCTL_ADD_BRIDGE, (ospl_ulong) _br };
+		zpl_ulong arg[3] = { BRCTL_ADD_BRIDGE, (zpl_ulong) _br };
 		strncpy(_br, brname, IFNAMSIZ);
 		ret = ioctl(br_sock_fd, SIOCSIFBR, arg);
 	}
@@ -246,15 +235,15 @@ static int bridge_delete(const char *brname)
 #endif
 	{
 		char _br[IFNAMSIZ];
-		ospl_ulong arg[3] = { BRCTL_DEL_BRIDGE, (ospl_ulong) _br };
+		zpl_ulong arg[3] = { BRCTL_DEL_BRIDGE, (zpl_ulong) _br };
 		strncpy(_br, brname, IFNAMSIZ);
 		ret = ioctl(br_sock_fd, SIOCSIFBR, arg);
 	}
 	return  ret < 0 ? errno : 0;
 }
-static int bridge_updown(struct utilospl_interface *ifp,  int value)
+static int bridge_updown(struct utilzpl_interface *ifp,  int value)
 {
-	return 0;//utilospl_interface_status (ifp,  value);
+	return 0;//utilzpl_interface_status (ifp,  value);
 }
 
 static int bridge_add_interface(const char *bridge, const char *dev)
@@ -271,7 +260,7 @@ static int bridge_add_interface(const char *bridge, const char *dev)
 	if (err < 0)
 #endif
 	{
-		ospl_ulong args[4] = { BRCTL_ADD_IF, ifindex, 0, 0 };
+		zpl_ulong args[4] = { BRCTL_ADD_IF, ifindex, 0, 0 };
 		ifr.ifr_data = (char *) args;
 		err = ioctl(br_sock_fd, SIOCDEVPRIVATE, &ifr);
 	}
@@ -292,24 +281,24 @@ static int bridge_del_interface(const char *bridge, const char *dev)
 	if (err < 0)
 #endif
 	{
-		ospl_ulong args[4] = { BRCTL_DEL_IF, ifindex, 0, 0 };
+		zpl_ulong args[4] = { BRCTL_DEL_IF, ifindex, 0, 0 };
 		ifr.ifr_data = (char *) args;
 		err = ioctl(br_sock_fd, SIOCDEVPRIVATE, &ifr);
 	}
 	return err < 0 ? errno : 0;
 }
 static int bridge_option_set(const char *bridge, const char *name,
-		  ospl_ulong value, ospl_ulong oldcode)
+		  zpl_ulong value, zpl_ulong oldcode)
 {
 	int ret = -1;
 	struct ifreq ifr;
-	ospl_ulong args[4] = { oldcode, value, 0, 0 };
+	zpl_ulong args[4] = { oldcode, value, 0, 0 };
 	strncpy(ifr.ifr_name, bridge, IFNAMSIZ);
 	ifr.ifr_data = (char *) &args;
 	ret = ioctl(br_sock_fd, SIOCDEVPRIVATE, &ifr);
 	return ret < 0 ? errno : 0;
 }
-static int bridge_cmd_error(struct vty *vty, ospl_uint32 type, const char *bridge, const char *dev,int ret)
+static int bridge_cmd_error(struct vty *vty, zpl_uint32 type, const char *bridge, const char *dev,int ret)
 {
 	switch(ret)
 	{
@@ -388,7 +377,7 @@ static int bridge_cmd_error(struct vty *vty, ospl_uint32 type, const char *bridg
 	}
 	return CMD_WARNING;
 }
-static int ip_bridge_dev_cmd(struct vty *vty, ospl_uint32 type, const char *bridge, const char *dev)
+static int ip_bridge_dev_cmd(struct vty *vty, zpl_uint32 type, const char *bridge, const char *dev)
 {
 	int ret = -1;
 	if(br_sock_fd == -1)
@@ -417,7 +406,7 @@ static int ip_bridge_dev_cmd(struct vty *vty, ospl_uint32 type, const char *brid
 		return CMD_WARNING;
 	return CMD_SUCCESS;
 }
-static int ip_bridge_option_cmd(struct vty *vty, ospl_uint32 type, const char *bridge, const char *dev, int value)
+static int ip_bridge_option_cmd(struct vty *vty, zpl_uint32 type, const char *bridge, const char *dev, int value)
 {
 	int ret = 0;
 	if(br_sock_fd == -1)
@@ -446,9 +435,9 @@ static int ip_bridge_option_cmd(struct vty *vty, ospl_uint32 type, const char *b
 		return bridge_cmd_error(vty, type, bridge, dev, ret);
 	return CMD_SUCCESS;
 }
-static void ip_bridge_jiffies(struct vty *vty, const char *str, ospl_ullong  jiffies)
+static void ip_bridge_jiffies(struct vty *vty, const char *str, zpl_ullong  jiffies)
 {
-	ospl_ullong  tvusec;
+	zpl_ullong  tvusec;
 	struct timeval tv;
 	//tvusec = (1000000ULL*jiffies)/HZ;
 	tvusec = (1000000ULL*jiffies)/100;
@@ -456,12 +445,12 @@ static void ip_bridge_jiffies(struct vty *vty, const char *str, ospl_ullong  jif
 	tv.tv_usec = tvusec - 1000000 * tv.tv_sec;
 	vty_out(vty,"  %s: %4i.%.2i", str, (int)tv.tv_sec, (int)tv.tv_usec/10000);
 }
-static int ip_bridge_port_get(struct utilospl_interface *uifp)
+static int ip_bridge_port_get(struct utilzpl_interface *uifp)
 {
 	struct ifreq ifr;
 	ifindex_t port_index[BR_PORT_MAX];
 
-	ospl_ulong args[4] = { BRCTL_GET_PORT_LIST,(ospl_ulong) &port_index, 0, 0 };
+	zpl_ulong args[4] = { BRCTL_GET_PORT_LIST,(zpl_ulong) &port_index, 0, 0 };
 	strncpy(ifr.ifr_name, uifp->name, IFNAMSIZ);
 	ifr.ifr_data = (char *) &args;
 
@@ -472,12 +461,12 @@ static int ip_bridge_port_get(struct utilospl_interface *uifp)
 	memcpy(uifp->br_ifindex, port_index, sizeof(port_index));
 	return CMD_SUCCESS;
 }
-static int ip_bridge_port_info_get(struct utilospl_interface *uifp)
+static int ip_bridge_port_info_get(struct utilzpl_interface *uifp)
 {
 	struct ifreq ifr;
 	struct __port_info port;
 
-	ospl_ulong args[4] = { BRCTL_GET_PORT_INFO,(ospl_ulong) &port, 0, 0 };
+	zpl_ulong args[4] = { BRCTL_GET_PORT_INFO,(zpl_ulong) &port, 0, 0 };
 	strncpy(ifr.ifr_name, uifp->name, IFNAMSIZ);
 	ifr.ifr_data = (char *) &args;
 
@@ -491,12 +480,12 @@ static int ip_bridge_port_info_get(struct utilospl_interface *uifp)
 	//uifp->hold_timer_value = port.hold_timer_value;
 	return CMD_SUCCESS;
 }
-int ip_bridge_startup_config(struct utilospl_interface *uifp)
+int ip_bridge_startup_config(struct utilzpl_interface *uifp)
 {
 	struct ifreq ifr;
 	struct __bridge_info i;
 
-	ospl_ulong args[4] = { BRCTL_GET_BRIDGE_INFO,(ospl_ulong) &i, 0, 0 };
+	zpl_ulong args[4] = { BRCTL_GET_BRIDGE_INFO,(zpl_ulong) &i, 0, 0 };
 
 	if(br_sock_fd == -1)
 		bridge_sock_init();
@@ -540,12 +529,12 @@ int ip_bridge_startup_config(struct utilospl_interface *uifp)
 	*/
 	return CMD_SUCCESS;
 }
-/*int ip_bridge_port_startup_config(struct utilospl_interface *uifp)
+/*int ip_bridge_port_startup_config(struct utilzpl_interface *uifp)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	struct interface *ifp = NULL;
 	struct listnode *node =  NULL;
-	struct utilospl_interface *bifp = NULL;
+	struct utilzpl_interface *bifp = NULL;
 	if(uifp->type == UTILS_IF_BRIDGE || uifp->type == UTILS_IF_TUNNEL )
 		return CMD_SUCCESS;
 	for (ALL_LIST_ELEMENTS_RO (iflist, node, ifp))
@@ -570,12 +559,12 @@ int ip_bridge_startup_config(struct utilospl_interface *uifp)
 }*/
 static int ip_bridge_info(struct vty *vty, const char *bridge)
 {
-	ospl_uint32 j = 0;
+	zpl_uint32 j = 0;
 	struct ifreq ifr;
 	struct __bridge_info i;
-	ospl_uint8 *val = NULL;
+	zpl_uint8 *val = NULL;
 	//char val_str[64];
-	ospl_ulong args[4] = { BRCTL_GET_BRIDGE_INFO,(ospl_ulong) &i, 0, 0 };
+	zpl_ulong args[4] = { BRCTL_GET_BRIDGE_INFO,(zpl_ulong) &i, 0, 0 };
 	if(br_sock_fd == -1)
 		bridge_sock_init();
 	strncpy(ifr.ifr_name, bridge, IFNAMSIZ);
@@ -595,7 +584,7 @@ static int ip_bridge_info(struct vty *vty, const char *bridge)
 	//vty_out(vty,"  bridge interface name: %s %s",bridge, VTY_NEWLINE);
 	//vty_out(vty,"  bridge protocol stp: %s %s",i.stp_enabled? "on":"off", VTY_NEWLINE);
 
-	val = (ospl_uint8 *)&i.bridge_id;
+	val = (zpl_uint8 *)&i.bridge_id;
 	vty_out(vty,"  bridge id: ");
 	for(j = 0; j < 8; j++)
 	{
@@ -640,7 +629,7 @@ int no_bridge_interface(struct vty *vty, const char *ifname)
 	char cmd[512];
 #endif
 	struct interface *ifp = NULL;
-	struct utilospl_interface *bifp = NULL;
+	struct utilzpl_interface *bifp = NULL;
 	if(ifname == NULL)
 	{
 		if(vty)
@@ -660,7 +649,7 @@ int no_bridge_interface(struct vty *vty, const char *ifname)
 		return CMD_WARNING;
 	}
 	//当前接口不是桥接口，返回
-	bifp = (struct utilospl_interface *)ifp->info;
+	bifp = (struct utilzpl_interface *)ifp->info;
 	if(bifp->type != UTILS_IF_BRIDGE)
 	{
 		return CMD_SUCCESS;
@@ -717,7 +706,7 @@ DEFUN (ip_bridge,
 	char cmd[512];
 #endif
 	char ifname[INTERFACE_NAMSIZ];
-	struct utilospl_interface *bifp = NULL;
+	struct utilzpl_interface *bifp = NULL;
 	if(argv[0] == NULL)
 	{
 	      vty_out (vty, "%% invalid input bridge interface name is null %s",VTY_NEWLINE);
@@ -725,10 +714,10 @@ DEFUN (ip_bridge,
 	}
 	memset(ifname, 0, sizeof(ifname));
 	sprintf(ifname, "bridge%d", atoi(argv[0]));
-	bifp = utilospl_interface_lookup_by_name (ifname);
+	bifp = utilzpl_interface_lookup_by_name (ifname);
 	if(!bifp)
 	{
-		bifp = utilospl_interface_create(ifname);
+		bifp = utilzpl_interface_create(ifname);
 		if(!bifp)
 		{
 			vty_out (vty, "%% Can't create bridge interface %s %s",ifname,VTY_NEWLINE);
@@ -739,14 +728,14 @@ DEFUN (ip_bridge,
 		sprintf(cmd, "brctl addbr %s",ifname);
 		if(super_system(cmd)!=CMD_SUCCESS)
 		{
-			utilospl_interface_delete(bifp);
+			utilzpl_interface_delete(bifp);
 			vty_out (vty, "%% Can't create bridge interface %s",ifname,VTY_NEWLINE);
 			return CMD_WARNING;
 		}
 #else
 		if(ip_bridge_dev_cmd(vty, BRCTL_ADD_BRIDGE, ifname, NULL)!=CMD_SUCCESS)
 		{
-			utilospl_interface_delete(bifp);
+			utilzpl_interface_delete(bifp);
 			vty_out (vty, "%% Can't create bridge interface %s%s",ifname,VTY_NEWLINE);
 			return CMD_WARNING;
 		}
@@ -797,7 +786,7 @@ DEFUN (ip_bridge_add_sub,
 	char cmd[512];
 #endif
 	struct interface *ifp = NULL;
-	struct utilospl_interface *bifp = NULL;
+	struct utilzpl_interface *bifp = NULL;
 	bifp = ((struct interface *)vty->index)->info;
 	//当前接口不是桥接口
 	if(bifp->type != UTILS_IF_BRIDGE)
@@ -864,7 +853,7 @@ DEFUN (no_ip_bridge_add_sub,
 	char cmd[512];
 #endif
 	struct interface *ifp = NULL;
-	struct utilospl_interface *bifp = NULL;
+	struct utilzpl_interface *bifp = NULL;
 	bifp = ((struct interface *)vty->index)->info;
 	//当前接口不是桥接口
 	if(bifp->type != UTILS_IF_BRIDGE)
@@ -930,9 +919,9 @@ DEFUN (ip_bridge_on,
 	char cmd[512];
 #endif
 	struct interface *ifp = NULL;
-	struct utilospl_interface *bifp = NULL;
+	struct utilzpl_interface *bifp = NULL;
 	ifp = vty->index;
-	bifp = (struct utilospl_interface *)ifp->info;
+	bifp = (struct utilzpl_interface *)ifp->info;
 	//接口是网桥，不能桥接
 	if((bifp->type == UTILS_IF_BRIDGE))
 	{
@@ -951,7 +940,7 @@ DEFUN (ip_bridge_on,
 	      return CMD_WARNING;
 	}
 	//查找网桥
-	bifp = utilospl_interface_lookup_by_name (argv[0]);
+	bifp = utilzpl_interface_lookup_by_name (argv[0]);
 	if(bifp == NULL)
 	{
 	      vty_out (vty, "%% Can't find bridge interface %s",VTY_NEWLINE);
@@ -980,7 +969,7 @@ DEFUN (ip_bridge_on,
 	//设置接口桥接状态
 	bifp = ifp->info;
 	bifp->br_mode = ZEBRA_INTERFACE_SUB;
-	strcpy(((struct utilospl_interface *)ifp->info)->br_name, argv[0]);
+	strcpy(((struct utilzpl_interface *)ifp->info)->br_name, argv[0]);
 	return CMD_SUCCESS;
 }
 DEFUN (no_ip_bridge_on,
@@ -996,9 +985,9 @@ DEFUN (no_ip_bridge_on,
 	char cmd[512];
 #endif
 	struct interface *ifp = NULL;
-	struct utilospl_interface *bifp = NULL;
+	struct utilzpl_interface *bifp = NULL;
 	ifp = vty->index;
-	bifp = (struct utilospl_interface *)ifp->info;
+	bifp = (struct utilzpl_interface *)ifp->info;
 	//当前是网桥，不能桥接
 	if((bifp->type == UTILS_IF_BRIDGE))
 	{
@@ -1016,7 +1005,7 @@ DEFUN (no_ip_bridge_on,
 	      vty_out (vty, "%% invalid input bridge interface name is null %s",VTY_NEWLINE);
 	      return CMD_WARNING;
 	}
-	bifp = utilospl_interface_lookup_by_name (argv[0]);
+	bifp = utilzpl_interface_lookup_by_name (argv[0]);
 	if(bifp == NULL)
 	{
 	      vty_out (vty, "%% Can't find bridge interface %s %s",argv[0],VTY_NEWLINE);
@@ -1060,7 +1049,7 @@ DEFUN (ip_bridge_stp_on,
 	char cmd[512];
 #endif
 	int ret = 0;
-	struct utilospl_interface *bifp = NULL;
+	struct utilzpl_interface *bifp = NULL;
 	bifp = ((struct interface *)vty->index)->info;
 	//接口不是网桥
 	if(bifp->type != UTILS_IF_BRIDGE)
@@ -1098,7 +1087,7 @@ DEFUN (no_ip_bridge_stp_on,
 	char cmd[512];
 #endif
 	int ret = 0;
-	struct utilospl_interface *bifp = NULL;
+	struct utilzpl_interface *bifp = NULL;
 	bifp = ((struct interface *)vty->index)->info;
 	//接口不是网桥
 	if(bifp->type != UTILS_IF_BRIDGE)
@@ -1127,13 +1116,13 @@ DEFUN (no_ip_bridge_stp_on,
 
 static int show_bridge_interface_detail(struct vty *vty, struct interface *ifp)
 {
-	ospl_uint32 i = 0;
-	struct utilospl_interface *uifp = ifp->info;
-	//show_utilospl_interface(vty, ifp);
+	zpl_uint32 i = 0;
+	struct utilzpl_interface *uifp = ifp->info;
+	//show_utilzpl_interface(vty, ifp);
 	if(uifp->type != UTILS_IF_BRIDGE && uifp->type == ZEBRA_INTERFACE_SUB)
 	{
 		const char *stp_str[] = {"Disable","Listening","Learning","Forwarding","Blocking"};
-		show_utilospl_interface(vty, ifp);
+		show_utilzpl_interface(vty, ifp);
 		vty_out (vty, "  bridge on %s",uifp->br_name);
 		if(uifp->br_stp_state >=BR_STATE_DISABLED && uifp->br_stp_state <= BR_STATE_BLOCKING)
 			vty_out (vty, " stp state %s%s",stp_str[uifp->br_stp_state],VTY_NEWLINE);
@@ -1142,7 +1131,7 @@ static int show_bridge_interface_detail(struct vty *vty, struct interface *ifp)
 	}
 	if(uifp->type == UTILS_IF_BRIDGE)
 	{
-		show_utilospl_interface(vty, ifp);
+		show_utilzpl_interface(vty, ifp);
 		vty_out (vty, "  stp protocol %s",uifp->br_stp? "on":"off");
 		vty_out (vty, " max age %d",uifp->max_age);
 		vty_out (vty, " hello time %d",uifp->hello_time);
@@ -1212,10 +1201,10 @@ DEFUN (show_bridge_table,
 {
 		  struct listnode *node;
 		  struct interface *ifp;
-		  struct utilospl_interface *uifp;
+		  struct utilzpl_interface *uifp;
 		  for (ALL_LIST_ELEMENTS_RO (iflist, node, ifp))
 		    {
-			  uifp = (struct utilospl_interface *)ifp->info;
+			  uifp = (struct utilzpl_interface *)ifp->info;
 			  //if(uifp->status == ZEBRA_INTERFACE_BRIDGE)
 			  {
 				  vty_out (vty, "Interface %s%s", ifp->name, VTY_NEWLINE);
@@ -1232,7 +1221,7 @@ DEFUN (show_bridge_table,
 
 int bridge_interface_config_write (struct vty *vty, struct interface *ifp)
 {
-	struct utilospl_interface *uifp = ifp->info;
+	struct utilzpl_interface *uifp = ifp->info;
 	if( (uifp && uifp->br_mode == ZEBRA_INTERFACE_SUB) && uifp->name)
 	{
 		vty_out (vty, " ip bridge on %s%s", uifp->br_name,VTY_NEWLINE);
@@ -1243,19 +1232,19 @@ int bridge_interface_config_write (struct vty *vty, struct interface *ifp)
 
 void utils_bridge_cmd_init (void)
 {
-	install_element (ENABLE_NODE, &show_bridge_interface_cmd);
-	install_element (ENABLE_NODE, &show_bridge_table_cmd);
+	install_element (ENABLE_NODE, CMD_VIEW_LEVEL, &show_bridge_interface_cmd);
+	install_element (ENABLE_NODE, CMD_VIEW_LEVEL, &show_bridge_table_cmd);
 
-	install_element (CONFIG_NODE, &ip_bridge_cmd);
-	install_element (CONFIG_NODE, &no_ip_bridge_cmd);
+	install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &ip_bridge_cmd);
+	install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &no_ip_bridge_cmd);
 
-	install_element (INTERFACE_NODE, &ip_bridge_add_sub_cmd);
-	install_element (INTERFACE_NODE, &no_ip_bridge_add_sub_cmd);
-	install_element (INTERFACE_NODE, &ip_bridge_on_cmd);
-	install_element (INTERFACE_NODE, &no_ip_bridge_on_cmd);
+	install_element(INTERFACE_NODE, CMD_CONFIG_LEVEL, &ip_bridge_add_sub_cmd);
+	install_element(INTERFACE_NODE, CMD_CONFIG_LEVEL, &no_ip_bridge_add_sub_cmd);
+	install_element(INTERFACE_NODE, CMD_CONFIG_LEVEL, &ip_bridge_on_cmd);
+	install_element(INTERFACE_NODE, CMD_CONFIG_LEVEL, &no_ip_bridge_on_cmd);
 
-	install_element (INTERFACE_NODE, &ip_bridge_stp_on_cmd);
-	install_element (INTERFACE_NODE, &no_ip_bridge_stp_on_cmd);
+	install_element(INTERFACE_NODE, CMD_CONFIG_LEVEL, &ip_bridge_stp_on_cmd);
+	install_element(INTERFACE_NODE, CMD_CONFIG_LEVEL, &no_ip_bridge_stp_on_cmd);
 }
 #endif
 #endif

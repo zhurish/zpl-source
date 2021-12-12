@@ -28,7 +28,7 @@
 extern "C" {
 #endif
 
-#include <thread.h>
+
 
 
 //#define QUAGGA_SIGNAL_TIMER_INTERVAL 2L
@@ -50,7 +50,7 @@ struct quagga_signal_t
  * - array of quagga_signal_t's describing signals to handle
  *   and handlers to use for each signal
  */
-extern void signal_init (int sigc,
+extern void signal_init (void *m, int sigc,
                          struct quagga_signal_t *signals);
 
 //extern int os_task_sigmask(int sigc, int signo[]);

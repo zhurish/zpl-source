@@ -14,12 +14,12 @@ extern "C" {
 
 //#include "x5b_dbase.h"
 
-extern int x5b_app_global_config_action(void *info, ospl_bool save);
+extern int x5b_app_global_config_action(void *info, zpl_bool save);
 
-extern int x5b_app_open_option_action(void *p, ospl_bool save, ospl_bool face);
+extern int x5b_app_open_option_action(void *p, zpl_bool save, zpl_bool face);
 
-extern int x5b_app_face_config_action(void *info, ospl_bool save);
-/*extern int x5b_app_A_unit_test_set_api(ospl_bool enable);
+extern int x5b_app_face_config_action(void *info, zpl_bool save);
+/*extern int x5b_app_A_unit_test_set_api(zpl_bool enable);
 extern int x5b_app_A_update_test(char *filename);*/
 
 #ifdef __cplusplus

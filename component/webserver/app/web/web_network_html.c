@@ -5,7 +5,7 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
+#include "zpl_include.h"
 #include "zassert.h"
 #include "vty.h"
 #include "if.h"
@@ -33,13 +33,13 @@
 static int web_networkset_set_active(void *a)
 {
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
-#ifdef PL_WIFI_MODULE
+#ifdef ZPL_WIFI_MODULE
 	struct interface *ifp = NULL;
 	ifp = if_lookup_by_name("wireless 0/0/1");
 	if(ifp)
 	{
 		os_sleep(1);
-		nsm_iw_enable_api(ifp, ospl_false);
+		nsm_iw_enable_api(ifp, zpl_false);
 	}
 #endif
 #else
@@ -48,11 +48,11 @@ static int web_networkset_set_active(void *a)
 	//super_system("/etc/init.d/network restart");
 #endif
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
-#ifdef PL_WIFI_MODULE
+#ifdef ZPL_WIFI_MODULE
 	if(ifp)
 	{
 		os_sleep(2);
-		nsm_iw_enable_api(ifp, ospl_true);
+		nsm_iw_enable_api(ifp, zpl_true);
 	}
 #endif
 #endif	
@@ -107,7 +107,7 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 	}
 	if(strstr(proto, "dhcp"))
 	{
-#ifdef PL_DHCP_MODULE
+#ifdef ZPL_DHCP_MODULE
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 		{
 			return web_return_text_plain(wp, OK);
@@ -261,8 +261,8 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 			return web_return_text_plain(wp, ERROR);
 		}
 		nsm_interface_address_get_api(ifp, &ocp);
-		nsm_interface_address_unset_api(ifp, &ocp, ospl_false);
-		if(nsm_interface_address_set_api(ifp, &cp, ospl_false) != OK)
+		nsm_interface_address_unset_api(ifp, &ocp, zpl_false);
+		if(nsm_interface_address_set_api(ifp, &cp, zpl_false) != OK)
 		{
 			_WEB_DBG_TRAP("================%s=======================:nsm_interface_address_set_api\r\n", __func__);
 			return web_return_text_plain(wp, ERROR);
@@ -275,7 +275,7 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 				_WEB_DBG_TRAP("================%s=======================:dns str2prefix:%s\r\n", __func__, dns);
 				return web_return_text_plain(wp, ERROR);
 			}
-			if(nsm_ip_dns_add_api(&cp, ospl_false) != OK)
+			if(nsm_ip_dns_add_api(&cp, zpl_false) != OK)
 			{
 				_WEB_DBG_TRAP("================%s=======================:dns\r\n", __func__);
 				return web_return_text_plain(wp, ERROR);
@@ -288,7 +288,7 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 				_WEB_DBG_TRAP("================%s=======================:dns2 str2prefix:%s\r\n", __func__,dns2);
 				return web_return_text_plain(wp, ERROR);
 			}
-			if(nsm_ip_dns_add_api(&cp, ospl_true) != OK)
+			if(nsm_ip_dns_add_api(&cp, zpl_true) != OK)
 			{
 				_WEB_DBG_TRAP("================%s=======================:dns2\r\n", __func__);
 				return web_return_text_plain(wp, ERROR);

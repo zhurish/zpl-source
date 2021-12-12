@@ -274,7 +274,7 @@ PUBLIC char *basename(char *name)
 #if TIDSP
 static char _inet_result[16];
 
-char *inet_ntoa(struct in_addr addr)
+char *ipstack_inet_ntoa(struct in_addr addr)
 {
     uchar       *bytes;
 

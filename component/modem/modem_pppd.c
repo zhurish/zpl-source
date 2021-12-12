@@ -5,14 +5,10 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-
-#include "os_list.h"
-#include "os_util.h"
-#include "tty_com.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "modem.h"
 #include "modem_client.h"
@@ -210,7 +206,7 @@ int modem_pppd_del_api(modem_pppd_t *pppd)
 
 int modem_pppd_update_api(modem_pppd_t *pppd)
 {
-	ospl_uint32 checksum = 0;
+	zpl_uint32 checksum = 0;
 	int ret = ERROR;
 	assert(pppd);
 	if(gModepppd.mutex)
@@ -271,7 +267,7 @@ static int modem_pppd_restart_thread(modem_pppd_t *pppd)
 			if(pppd->taskid == 0)
 			{
 				pppd->taskid = 0;
-				pppd->linkup = ospl_false;
+				pppd->linkup = zpl_false;
 			}
 			modem_pppd_task_connect(pppd);
 		}
@@ -419,15 +415,15 @@ static int modem_pppd_default(modem_t *modem, modem_pppd_t *pppd)
 	/*
 	 * PPP options
 	 */
-	pppd->pppd_options.hide_password = ospl_true;
-	pppd->pppd_options.show_password = ospl_false;
-	pppd->pppd_options.detach = ospl_false;
+	pppd->pppd_options.hide_password = zpl_true;
+	pppd->pppd_options.show_password = zpl_false;
+	pppd->pppd_options.detach = zpl_false;
 
 	//pppd->pppd_options.idle;// <n>
 	//pppd->pppd_options.holdoff;// <n>
 	//pppd->pppd_options.connect_delay;// <n>
 	//pppd->pppd_options.active_filter;// <filter_expression>
-	pppd->pppd_options.persist = ospl_true;
+	pppd->pppd_options.persist = zpl_true;
 #if 0
 	pppd->pppd_options.maxfail;// <n>
 	pppd->pppd_options.noipx;
@@ -436,7 +432,7 @@ static int modem_pppd_default(modem_t *modem, modem_pppd_t *pppd)
 	pppd->pppd_options.mn;
 	pppd->pppd_options.pc;
 #endif
-	pppd->pppd_options.vj = ospl_false;
+	pppd->pppd_options.vj = zpl_false;
 
 #if 0
 	pppd->pppd_options.passive;
@@ -448,14 +444,14 @@ static int modem_pppd_default(modem_t *modem, modem_pppd_t *pppd)
 	pppd->pppd_options.login;
 	pppd->pppd_options.asyncmap;
 #endif
-	pppd->pppd_options.auth = ospl_false;
+	pppd->pppd_options.auth = zpl_false;
 	//pppd->pppd_options.crtscts[PPPD_OPTIONS_MAX];
 	//pppd->pppd_options.xonxoff;
 	//pppd->pppd_options.escape[PPPD_OPTIONS_MAX];
-	pppd->pppd_options.local = ospl_true;
+	pppd->pppd_options.local = zpl_true;
 	//pppd->pppd_options.modem;
-	pppd->pppd_options.lock = ospl_true;
-	pppd->pppd_options.debug = ospl_true;
+	pppd->pppd_options.lock = zpl_true;
+	pppd->pppd_options.debug = zpl_true;
 	//pppd->pppd_options.logfile[MODEM_STRING_MAX];
 
 	/*
@@ -472,9 +468,9 @@ static int modem_pppd_default(modem_t *modem, modem_pppd_t *pppd)
 	pppd->pppd_options.usehostname[PPPD_OPTIONS_MAX];
 	pppd->pppd_options.remotename[PPPD_OPTIONS_MAX];// <n>
 #endif
-	pppd->pppd_options.noipdefault = ospl_true;
-	pppd->pppd_options.defaultroute = ospl_true;
-	pppd->pppd_options.usepeerdns = ospl_true;
+	pppd->pppd_options.noipdefault = zpl_true;
+	pppd->pppd_options.defaultroute = zpl_true;
+	pppd->pppd_options.usepeerdns = zpl_true;
 
 	/*
 	 * LCP options
@@ -493,8 +489,8 @@ static int modem_pppd_default(modem_t *modem, modem_pppd_t *pppd)
 	//pppd->pppd_options.ipcp_restart; //<n>
 	//pppd->pppd_options.ipcp_max_terminate;// <n>
 	//pppd->pppd_options.ipcp_max_configure;// <n>
-	pppd->pppd_options.ipcp_accept_local = ospl_true;
-	pppd->pppd_options.ipcp_accept_remote = ospl_true;
+	pppd->pppd_options.ipcp_accept_local = zpl_true;
+	pppd->pppd_options.ipcp_accept_remote = zpl_true;
 #if 0
 	/*
 	 * PAP options
@@ -952,8 +948,8 @@ static int modem_pppd_delete_action(modem_pppd_t *pppd)
 static int modem_pppd_task_connect(modem_pppd_t *pppd)
 {
 	assert(pppd);
-#ifndef DOUBLE_PROCESS
-	ospl_pid_t pid = child_process_create();
+#ifndef ZPL_TOOLS_PROCESS
+	zpl_pid_t pid = child_process_create();
 	if(pid < 0)
 	{
 		  zlog_warn(MODULE_DEFAULT, "Can't create child process (%s), continuing", safe_strerror(errno));
@@ -986,7 +982,7 @@ static int modem_pppd_task_connect(modem_pppd_t *pppd)
 	}
 	argv[2] = path;
 	MODEM_PPPD_DEBUG("PPPD connect on %s", ((modem_t *)pppd->modem)->name);
-	pppd->taskid = os_process_register(PROCESS_START, ((modem_t *)pppd->modem)->name, "pppd", ospl_true, argv);
+	pppd->taskid = os_process_register(PROCESS_START, ((modem_t *)pppd->modem)->name, "pppd", zpl_true, argv);
 	if(!pppd->taskid)
 		return ERROR;
 #endif
@@ -1013,7 +1009,7 @@ See pppd(8) for more options.
  */
 static int modem_pppd_task_disconnect(modem_pppd_t *pppd)
 {
-#ifndef DOUBLE_PROCESS
+#ifndef ZPL_TOOLS_PROCESS
 	assert(pppd);
 	return child_process_destroy(pppd->taskid);
 #else
@@ -1038,7 +1034,7 @@ static int modem_pppd_task_disconnect(modem_pppd_t *pppd)
 #endif
 }
 /***********************************************************************/
-ospl_bool modem_pppd_isconnect(modem_t *modem)
+zpl_bool modem_pppd_isconnect(modem_t *modem)
 {
 	assert(modem);
 	struct interface *ifp = modem->ppp_serial;
@@ -1047,15 +1043,15 @@ ospl_bool modem_pppd_isconnect(modem_t *modem)
 	{
 		if(pppd->taskid)
 		{
-			//MODEM_DEBUG("modem_pppd_isconnect ospl_true");
-			return ospl_true;
+			//MODEM_DEBUG("modem_pppd_isconnect zpl_true");
+			return zpl_true;
 		}
 	}
-	//MODEM_DEBUG("modem_pppd_isconnect ospl_false");
-	return ospl_false;
+	//MODEM_DEBUG("modem_pppd_isconnect zpl_false");
+	return zpl_false;
 }
 
-ospl_bool modem_pppd_islinkup(modem_t *modem)
+zpl_bool modem_pppd_islinkup(modem_t *modem)
 {
 	assert(modem);
 	struct interface *ifp = modem->ppp_serial;
@@ -1066,20 +1062,20 @@ ospl_bool modem_pppd_islinkup(modem_t *modem)
 		{
 			if(pal_interface_ifindex(ifp->k_name))
 			{
-				//MODEM_DEBUG("modem_pppd_islinkup ospl_true");
-				if(pppd->linkup == ospl_false)
+				//MODEM_DEBUG("modem_pppd_islinkup zpl_true");
+				if(pppd->linkup == zpl_false)
 				{
 					//MODEM_DEBUG("modem_pppd_islinkup UPDATE KERNEL");
 					modem_serial_interface_update_kernel(modem, ifp->k_name);
-					pppd->linkup = ospl_true;
+					pppd->linkup = zpl_true;
 				}
-				return ospl_true;
+				return zpl_true;
 			}
 		}
-		//MODEM_DEBUG("modem_pppd_islinkup ospl_false");
-		pppd->linkup = ospl_false;
+		//MODEM_DEBUG("modem_pppd_islinkup zpl_false");
+		pppd->linkup = zpl_false;
 	}
-	return ospl_false;
+	return zpl_false;
 }
 
 int modem_pppd_connect(modem_t *modem)
@@ -1116,7 +1112,7 @@ int modem_pppd_disconnect(modem_t *modem)
 			if(pppd->taskid == 0)
 			{
 				pppd->taskid = 0;
-				pppd->linkup = ospl_false;
+				pppd->linkup = zpl_false;
 				return OK;
 			}
 		}

@@ -6,17 +6,9 @@
  */
 
 
-#include "zebra.h"
-#include "getopt.h"
-#include <log.h>
-#include "command.h"
-#include "memory.h"
-#include "prefix.h"
-#include "network.h"
-#include "vty.h"
-#include "buffer.h"
-#include "host.h"
-#include "eloop.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
 #include "ssh_api.h"
 #include "ssh_util.h"

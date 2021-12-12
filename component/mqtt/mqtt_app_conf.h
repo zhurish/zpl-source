@@ -73,47 +73,47 @@ enum prop_type
 
 
 struct mqtt_app_sub {
-	ospl_uint32 sub_opts; /* sub */
+	zpl_uint32 sub_opts; /* sub */
 
-	ospl_char *topics[MQTT_TOPICS_MAX]; /* sub */ //指定消息所发布到哪个主题
-	ospl_uint32 topic_count; /* sub */
+	zpl_char *topics[MQTT_TOPICS_MAX]; /* sub */ //指定消息所发布到哪个主题
+	zpl_uint32 topic_count; /* sub */
 
-	ospl_char *unsub_topics[MQTT_TOPICS_MAX]; /* sub */
-	ospl_uint32 unsub_topic_count; /* sub */
+	zpl_char *unsub_topics[MQTT_TOPICS_MAX]; /* sub */
+	zpl_uint32 unsub_topic_count; /* sub */
 
-	ospl_char *filter_outs[MQTT_TOPICS_MAX]; /* sub */
-	ospl_uint32 filter_out_count; /* sub */
+	zpl_char *filter_outs[MQTT_TOPICS_MAX]; /* sub */
+	zpl_uint32 filter_out_count; /* sub */
 
-	ospl_bool no_retain; /* sub */
-	ospl_bool remove_retained; /* sub */
+	zpl_bool no_retain; /* sub */
+	zpl_bool remove_retained; /* sub */
 	//char *format; /* sub */
 
-	ospl_char 		*will_topic;//指定客户端意外断开时，Will消息发送到的主题
-	ospl_char 		*will_payload;//如果指定该选项，则万一客户端意外和代理服务器断开，则该消息将被保留在服务端并发送出去，
+	zpl_char 		*will_topic;//指定客户端意外断开时，Will消息发送到的主题
+	zpl_char 		*will_payload;//如果指定该选项，则万一客户端意外和代理服务器断开，则该消息将被保留在服务端并发送出去，
 									//该选项必须同 时用--will-topic指定主题
-	ospl_long 		will_payloadlen;
-	ospl_uint32 		will_qos;//指定Will的服务质量，默认是0.必须和选项 --will-topic同时使用.
-	ospl_bool 		will_retain;//如果指定该选项，则万一客户端意外断开，已被发送的消息将被当做retained消息。
+	zpl_long 		will_payloadlen;
+	zpl_uint32 		will_qos;//指定Will的服务质量，默认是0.必须和选项 --will-topic同时使用.
+	zpl_bool 		will_retain;//如果指定该选项，则万一客户端意外断开，已被发送的消息将被当做retained消息。
 								//必须和选项 --will-topic同时使 用.
 };
 #if 0
 struct mqtt_app_pub {
 
 	//int pub_mode; /* pub*/
-	ospl_char *file_input; /* pub*/
-	ospl_char *message; /* pub*/ //从命令行发送一条消息，-m后面跟发送的消息内容
-	ospl_long msglen; /* pub*/
-	ospl_char *topic; /* pub*/ //指定消息所发布到哪个主题。
-	ospl_uint32 repeat_count; /* pub */
+	zpl_char *file_input; /* pub*/
+	zpl_char *message; /* pub*/ //从命令行发送一条消息，-m后面跟发送的消息内容
+	zpl_long msglen; /* pub*/
+	zpl_char *topic; /* pub*/ //指定消息所发布到哪个主题。
+	zpl_uint32 repeat_count; /* pub */
 	struct timeval repeat_delay; /* pub */
-	ospl_bool have_topic_alias; /* pub */
+	zpl_bool have_topic_alias; /* pub */
 
-	ospl_char 		*will_topic;//指定客户端意外断开时，Will消息发送到的主题
-	ospl_char 		*will_payload;//如果指定该选项，则万一客户端意外和代理服务器断开，则该消息将被保留在服务端并发送出去，
+	zpl_char 		*will_topic;//指定客户端意外断开时，Will消息发送到的主题
+	zpl_char 		*will_payload;//如果指定该选项，则万一客户端意外和代理服务器断开，则该消息将被保留在服务端并发送出去，
 									//该选项必须同 时用--will-topic指定主题
-	ospl_long 		will_payloadlen;
-	ospl_uint32 		will_qos;//指定Will的服务质量，默认是0.必须和选项 --will-topic同时使用.
-	ospl_bool 		will_retain;//如果指定该选项，则万一客户端意外断开，已被发送的消息将被当做retained消息。
+	zpl_long 		will_payloadlen;
+	zpl_uint32 		will_qos;//指定Will的服务质量，默认是0.必须和选项 --will-topic同时使用.
+	zpl_bool 		will_retain;//如果指定该选项，则万一客户端意外断开，已被发送的消息将被当做retained消息。
 								//必须和选项 --will-topic同时使 用.
 };
 #endif
@@ -122,20 +122,20 @@ struct mqtt_app_config {
 
 	struct mosquitto *mosq;
 
-	ospl_uint32		taskid;
-	ospl_bool		reload;
-	ospl_bool		enable;
-	ospl_bool		taskquit;
-	ospl_bool		connectd;
+	zpl_uint32		taskid;
+	zpl_bool		reload;
+	zpl_bool		enable;
+	zpl_bool		taskquit;
+	zpl_bool		connectd;
 	void		*mutex;
 	mqtt_mode_t mqtt_mode;
 
-	ospl_uint32 		mqtt_version;
-	ospl_uint32 		keepalive;//给代理发送PING命令（目的在于告知代理该客户端连接保持且在正常工作）的间隔时间，默认是60s
+	zpl_uint32 		mqtt_version;
+	zpl_uint32 		keepalive;//给代理发送PING命令（目的在于告知代理该客户端连接保持且在正常工作）的间隔时间，默认是60s
 
-	ospl_char 		*bind_address;//服务绑定的IP地址
-	ospl_char 		*host;
-	ospl_uint16 		port;
+	zpl_char 		*bind_address;//服务绑定的IP地址
+	zpl_char 		*host;
+	zpl_uint16 		port;
 
 	mqtt_qos_level qos;
 	/*
@@ -145,53 +145,53 @@ struct mqtt_app_config {
 	0：仅仅为当前订阅者推送此消息。
 	假如服务器收到一个空消息体(zero-length payload)、RETAIN = 1、已存在Topic name的PUBLISH消息，服务器可以删除掉对应的已被持久化的PUBLISH消息。
 	*/
-	ospl_bool 		retain;//如果指定该选项，该条消息将被保留做为最后一条收到的消息。下一个订阅消息者将能至少收到该条消息。
+	zpl_bool 		retain;//如果指定该选项，该条消息将被保留做为最后一条收到的消息。下一个订阅消息者将能至少收到该条消息。
 
-	ospl_char 		*username;
-	ospl_char 		*password;
+	zpl_char 		*username;
+	zpl_char 		*password;
 
-	ospl_uint32 max_inflight;
+	zpl_uint32 max_inflight;
 
-	ospl_char 		*id;
-	ospl_char 		*id_prefix;
+	zpl_char 		*id;
+	zpl_char 		*id_prefix;
 
-	ospl_bool 		debug;
-	ospl_uint32			loglevel;
-	ospl_bool 		quiet;// 如果指定该选项，则不会有任何错误被打印，当然，这排除了无效的用户输入所引起的错误消息
+	zpl_bool 		debug;
+	zpl_uint32			loglevel;
+	zpl_bool 		quiet;// 如果指定该选项，则不会有任何错误被打印，当然，这排除了无效的用户输入所引起的错误消息
 
 	//仅针对SUBSCRIBED消息。不同值，不同含义：
-	ospl_bool 		clean_session;//禁止'clean session'选项，即如果客户端断开连接，这个订阅仍然保留来接收随后到的QoS为1和2的
+	zpl_bool 		clean_session;//禁止'clean session'选项，即如果客户端断开连接，这个订阅仍然保留来接收随后到的QoS为1和2的
 									//消息，当改客户端重新连接之后，它将接收到已排在队列中的消息。建议使用此选项时，
 
-	ospl_uint32 session_expiry_interval;
+	zpl_uint32 session_expiry_interval;
 
 #ifdef WITH_SRV
-	ospl_bool 		use_srv;
+	zpl_bool 		use_srv;
 #endif
 
 #ifdef WITH_TLS
-	ospl_char 		*cafile;//CA证书文件
-	ospl_char 		*capath;//CA证书目录
-	ospl_char 		*certfile;//PEM证书文件
-	ospl_char 		*keyfile;//PEM密钥文件
-	ospl_char 		*ciphers;//SSL/TSL加密算法，可以使用“openssl ciphers”命令获取
-	ospl_bool 		insecure;
-	ospl_char 		*tls_alpn;
-	ospl_char 		*tls_version;
-	ospl_char 		*tls_engine;
-	ospl_char 		*tls_engine_kpass_sha1;
-	ospl_char 		*keyform;
+	zpl_char 		*cafile;//CA证书文件
+	zpl_char 		*capath;//CA证书目录
+	zpl_char 		*certfile;//PEM证书文件
+	zpl_char 		*keyfile;//PEM密钥文件
+	zpl_char 		*ciphers;//SSL/TSL加密算法，可以使用“openssl ciphers”命令获取
+	zpl_bool 		insecure;
+	zpl_char 		*tls_alpn;
+	zpl_char 		*tls_version;
+	zpl_char 		*tls_engine;
+	zpl_char 		*tls_engine_kpass_sha1;
+	zpl_char 		*keyform;
 #  ifdef FINAL_WITH_TLS_PSK
-	ospl_char 		*psk;
-	ospl_char 		*psk_identity;
+	zpl_char 		*psk;
+	zpl_char 		*psk_identity;
 #  endif
 #endif
 
 #ifdef WITH_SOCKS
-	ospl_char 		*socks5_host;
-	ospl_uint16 		ocks5_port;
-	ospl_char 		*socks5_username;
-	ospl_char 		*socks5_password;
+	zpl_char 		*socks5_host;
+	zpl_uint16 		ocks5_port;
+	zpl_char 		*socks5_username;
+	zpl_char 		*socks5_password;
 #endif
 
 	mosquitto_property *connect_props;

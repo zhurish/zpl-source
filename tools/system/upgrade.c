@@ -4,14 +4,10 @@
  *  Created on: Aug 11, 2018
  *      Author: zhurish
  */
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
 #include "getopt.h"
-#include "os_list.h"
-#include "os_util.h"
-
 #include "upgrade.h"
 
 

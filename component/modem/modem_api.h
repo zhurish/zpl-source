@@ -21,11 +21,11 @@ extern int modem_main_puk_set_api(modem_t *modem, char *puk);
 
 extern int modem_main_ip_set_api(modem_t *modem, modem_stack_type type);
 extern int modem_main_ip_get_api(modem_t *modem, modem_stack_type *type);
-extern int modem_main_secondary_set_api(modem_t *modem, ospl_bool bSecondary);
-extern int modem_main_secondary_get_api(modem_t *modem, ospl_bool *bSecondary);
+extern int modem_main_secondary_set_api(modem_t *modem, zpl_bool bSecondary);
+extern int modem_main_secondary_get_api(modem_t *modem, zpl_bool *bSecondary);
 
-extern int modem_main_profile_set_api(modem_t *modem, ospl_uint32 profile);
-extern int modem_main_profile_get_api(modem_t *modem, ospl_uint32 *profile);
+extern int modem_main_profile_set_api(modem_t *modem, zpl_uint32 profile);
+extern int modem_main_profile_get_api(modem_t *modem, zpl_uint32 *profile);
 extern int modem_main_dial_set_api(modem_t *modem, modem_dial_type type);
 extern int modem_main_dial_get_api(modem_t *modem, modem_dial_type *type);
 
@@ -36,8 +36,8 @@ extern int modem_main_network_get_api(modem_t *modem, modem_network_type *profil
 modem_t * modem_lookup_by_interface(char *name);
 extern int modem_interface_add_api(char *name);
 
-extern int modem_bind_interface_api(modem_t *modem, char *name, ospl_uint32 number);
-extern int modem_unbind_interface_api(modem_t *modem, ospl_bool ppp, ospl_uint32 number);
+extern int modem_bind_interface_api(modem_t *modem, char *name, zpl_uint32 number);
+extern int modem_unbind_interface_api(modem_t *modem, zpl_bool ppp, zpl_uint32 number);
 
 
 

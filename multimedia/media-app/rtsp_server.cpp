@@ -41,7 +41,7 @@ rtsp_server::rtsp_server(UsageEnvironment &env, int ourSocket,
 {
     m_stop = 0;
     m_env = &env;	
-    //m_rtsp_server = nullptr;
+    //m_rtsp_server = NULL;
     m_auth_db = authDatabase;
     reuseSource = False;
 }
@@ -49,13 +49,13 @@ rtsp_server::rtsp_server(UsageEnvironment &env, int ourSocket,
 
 rtsp_server::~rtsp_server()
 {
-    if (m_rtsp_server != nullptr)
+    if (m_rtsp_server != NULL)
         Medium::close(m_rtsp_server);
-    if (m_env != nullptr)
+    if (m_env != NULL)
     {
         TaskScheduler *scheduler = &(m_env->taskScheduler());
         m_env->reclaim();
-        if (scheduler != nullptr)
+        if (scheduler != NULL)
             delete scheduler;
     }
 }
@@ -63,27 +63,27 @@ rtsp_server::~rtsp_server()
 int rtsp_server::rtsp_server_initalize()
 {
 #ifndef RTSP_SERVER_EXTERN
-    if (m_env == nullptr)
+    if (m_env == NULL)
     {
         TaskScheduler *scheduler = BasicTaskScheduler::createNew();
-        if (scheduler != nullptr)
+        if (scheduler != NULL)
         {
             m_env = BasicUsageEnvironment::createNew(*scheduler);
         }
     }
 #endif
-    if (m_env != nullptr)
+    if (m_env != NULL)
         return 0;
     return -1;
 }
 
 int rtsp_server::rtsp_server_add_username(const std::string &username, const std::string &password)
 {
-    if (m_auth_db == nullptr)
+    if (m_auth_db == NULL)
     {
         m_auth_db = new UserAuthenticationDatabase;
     }
-    if (m_auth_db != nullptr)
+    if (m_auth_db != NULL)
     {
         m_auth_db->addUserRecord(username.c_str(), password.c_str()); // replace these with real strings
         return 0;
@@ -91,15 +91,15 @@ int rtsp_server::rtsp_server_add_username(const std::string &username, const std
     return -1;
 }
 
-int rtsp_server::rtsp_server_start(Port ourPort, ospl_uint32 reclamationTestSeconds)
+int rtsp_server::rtsp_server_start(Port ourPort, zpl_uint32 reclamationTestSeconds)
 {
     /*int ourSocket = RTSPServer::setUpOurSocket(m_env, ourPort);
     if (ourSocket == -1) 
         return -1;*/
-    //if(m_auth_db != nullptr)
-    if (m_rtsp_server == nullptr)
+    //if(m_auth_db != NULL)
+    if (m_rtsp_server == NULL)
         m_rtsp_server = RTSPServer::createNew(*m_env, ourPort, m_auth_db, reclamationTestSeconds);
-    if (m_rtsp_server != nullptr)
+    if (m_rtsp_server != NULL)
         return 0;
     return -1;
 }
@@ -122,7 +122,7 @@ int rtsp_server::rtsp_server_tunneling_over_HTTP(int rtspOverHTTPPort)
 
 Boolean rtsp_server::rtsp_server_available()
 {
-    if ((m_env != nullptr) && (m_rtsp_server != nullptr))
+    if ((m_env != NULL) && (m_rtsp_server != NULL))
         return True;
     std::cout << "rtsp_server_available " << std::endl;
     return False;
@@ -169,7 +169,7 @@ ServerMediaSession *rtsp_server::rtsp_server_add_session_node(const std::string 
 {
     std::string extension = fileName.substr(fileName.find_last_of('.'));
     //if (extension.)
-    //    return nullptr;
+    //    return NULL;
     ServerMediaSession *sms = ServerMediaSession::createNew(*m_env, sessionName.c_str());
     if (sms)
     {
@@ -209,12 +209,12 @@ ServerMediaSession *rtsp_server::rtsp_server_add_session_node(const std::string 
         {
             // Assumed to be a MPEG-1 or 2 Audio file:
             Boolean useADUs = False;
-            Interleaving *interleaving = nullptr;
+            Interleaving *interleaving = NULL;
 #ifdef STREAM_USING_ADUS
             useADUs = True;
 #ifdef INTERLEAVE_ADUS
-            ospl_uint8 interleaveCycle[] = {0, 2, 1, 3}; // or choose your own...
-            unsigned const interleaveCycleSize = (sizeof interleaveCycle) / (sizeof(ospl_uint8));
+            zpl_uint8 interleaveCycle[] = {0, 2, 1, 3}; // or choose your own...
+            unsigned const interleaveCycleSize = (sizeof interleaveCycle) / (sizeof(zpl_uint8));
             interleaving = new Interleaving(interleaveCycleSize, interleaveCycle);
 #endif
 #endif
@@ -264,7 +264,7 @@ ServerMediaSession *rtsp_server::rtsp_server_add_session_node(const std::string 
 ServerMediaSession *rtsp_server::rtsp_server_add_session_node(const std::string &sessionName, ServerMediaSubsession *subSession)
 {
     if (!rtsp_server_available())
-        return nullptr;
+        return NULL;
     ServerMediaSession *sms = ServerMediaSession::createNew(*m_env, sessionName.c_str());
     if (sms)
     {
@@ -273,7 +273,7 @@ ServerMediaSession *rtsp_server::rtsp_server_add_session_node(const std::string 
         char *url = m_rtsp_server->rtspURL(sms);
         return sms;
     }
-    return nullptr;
+    return NULL;
 }
 
 int rtsp_server::rtsp_server_add_session(const std::string &sessionName, const std::string &fileName)

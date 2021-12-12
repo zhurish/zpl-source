@@ -46,7 +46,7 @@ TAR=tar
 SHELL=/bin/sh
 EXE=
 
-prefix =$(DSTROOTFSDIR)
+prefix =$(ZPL_INSTALL_ROOTFS_DIR)
 exec_prefix =${prefix}
 libdir =${exec_prefix}/lib
 sharedlibdir =${libdir}

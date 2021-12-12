@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-#include "zebra.h"
+#include "zpl_include.h"
 #include "prefix.h"
 #include "os_list.h"
 #include "modem.h"
@@ -26,31 +26,31 @@ extern "C" {
 typedef struct atcmd_response
 {
 	char buf[ATCMD_RESPONSE_MAX];
-	ospl_size_t len;
+	zpl_size_t len;
 }atcmd_response_t;
 
 typedef struct atcmd_request
 {
 	char buf[ATCMD_REQUEST_MAX];
-	ospl_size_t len;
+	zpl_size_t len;
 }atcmd_request_t;
 
 typedef struct modem_client_s
 {
 	NODE		node;
-	ospl_uint32			bus;
-	ospl_uint32			device;
-	ospl_uint32			vendor;
-	ospl_uint32			product;
+	zpl_uint32			bus;
+	zpl_uint32			device;
+	zpl_uint32			vendor;
+	zpl_uint32			product;
 	char		module_name[MODEM_PRODUCT_NAME_MAX];//EC25E 模块名称
 
-	ospl_bool		active;
+	zpl_bool		active;
 
-	//ospl_uint32			event;
+	//zpl_uint32			event;
 
-	ospl_bool		echo;
-	ospl_bool		echoold;
-	ospl_bool		init;
+	zpl_bool		echo;
+	zpl_bool		echoold;
+	zpl_bool		init;
 	/*
 	 * AT+CGMI
 	 */
@@ -84,8 +84,8 @@ typedef struct modem_client_s
 	/*
 	 * 天线 信息
 	 */
-	ospl_uint8 				signal;		//信号强度
-	ospl_uint8				bit_error;	//误码率
+	zpl_uint8 				signal;		//信号强度
+	zpl_uint8				bit_error;	//误码率
 	modem_signal_state	signal_state;
 
 	/*
@@ -104,13 +104,13 @@ typedef struct modem_client_s
 	 */
 	char				IMSI_number[MODEM_STRING_MAX];
 
-	ospl_bool 				pin_lock;		//USIM 锁状态
+	zpl_bool 				pin_lock;		//USIM 锁状态
 	modem_cpin_en		cpin_status;	//USIM 状态
 	char				CPIN[MODEM_STRING_MAX];//生产序列号 (CCID)
 
 	//AT+COPS？ Operator Selection
 
-	ospl_uint32					operator;		//当前注册运营商 (oper)
+	zpl_uint32					operator;		//当前注册运营商 (oper)
 	nw_network_state	nw_state;		//网络状态标识 (stat)
 	nw_rat_state		rat_state;		//无线接入技术 (Act) Wireless access technology
 
@@ -124,11 +124,11 @@ typedef struct modem_client_s
 
 	char				nw_act[MODEM_STRING_MAX];//当前无线接入技术
 	char				nw_band[MODEM_STRING_MAX];//当前频段
-	ospl_uint32					nw_channel;
+	zpl_uint32					nw_channel;
 
 
-	ospl_uint8				LAC[MODEM_STRING_MAX];	//小区信息
-	ospl_uint8				CI[MODEM_STRING_MAX];	//基站信息
+	zpl_uint8				LAC[MODEM_STRING_MAX];	//小区信息
+	zpl_uint8				CI[MODEM_STRING_MAX];	//基站信息
 
 	struct prefix		prefix;
 
@@ -143,7 +143,7 @@ typedef struct modem_client_s
 
 	atcmd_request_t	 *atcmd;
 	atcmd_response_t *response;
-	ospl_bool			bSms;
+	zpl_bool			bSms;
 
 }modem_client_t;
 
@@ -172,7 +172,7 @@ extern int modem_client_exit(void);
 
 extern const char * modem_client_product_name(modem_client_t *);
 
-extern modem_client_t * modem_client_alloc(ospl_uint32 vendor, ospl_uint32 product);
+extern modem_client_t * modem_client_alloc(zpl_uint32 vendor, zpl_uint32 product);
 extern int modem_client_free(modem_client_t *);
 
 extern int modem_client_add_api(modem_client_t *client);
@@ -183,10 +183,10 @@ extern int modem_client_register_api(modem_client_t *client);
 
 
 extern int modem_client_del_api(modem_client_t *client);
-extern int modem_client_del_by_product_api(ospl_uint32 vendor, ospl_uint32 product);
+extern int modem_client_del_by_product_api(zpl_uint32 vendor, zpl_uint32 product);
 extern int modem_client_del_by_product_name_api(char *name);
 
-extern modem_client_t * modem_client_lookup_api(ospl_uint32 vendor, ospl_uint32 product);
+extern modem_client_t * modem_client_lookup_api(zpl_uint32 vendor, zpl_uint32 product);
 extern modem_client_t * modem_client_lookup_by_name_api(char *name);
 
 extern int modem_client_callback_api(modem_client_cb cb, void *pVoid);

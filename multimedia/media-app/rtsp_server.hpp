@@ -18,7 +18,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "ospl_type.h"
+#include "zpl_type.h"
 #ifdef __cplusplus
 }
 #endif
@@ -51,7 +51,7 @@ class rtsp_server {
 #endif
     public:
         int rtsp_server_initalize();
-        int rtsp_server_start(Port ourPort, ospl_uint32 reclamationTestSeconds = 65);
+        int rtsp_server_start(Port ourPort, zpl_uint32 reclamationTestSeconds = 65);
         int rtsp_server_tunneling_over_HTTP(int rtspOverHTTPPort);
 
         int rtsp_server_event_loop_running(char * stop);
@@ -78,10 +78,10 @@ class rtsp_server {
 #endif
     protected:
         char                m_stop = 0;
-        //TaskScheduler*      scheduler = nullptr;
-        UsageEnvironment*   m_env = nullptr;	
-        RTSPServer*         m_rtsp_server = nullptr;
-        UserAuthenticationDatabase* m_auth_db = nullptr;
+        //TaskScheduler*      scheduler = NULL;
+        UsageEnvironment*   m_env = NULL;	
+        RTSPServer*         m_rtsp_server = NULL;
+        UserAuthenticationDatabase* m_auth_db = NULL;
         Boolean             reuseSource = False;
 };
 

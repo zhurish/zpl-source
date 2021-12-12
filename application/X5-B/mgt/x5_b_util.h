@@ -28,7 +28,7 @@ typedef enum
 } x5_b_event_t;
 
 int x5b_app_statistics(x5b_app_mgt_t *mgt, int tx, int from);
-ospl_uint16 Data_CRC16Check ( ospl_uint8 * data, ospl_uint16 leng );
+zpl_uint16 Data_CRC16Check ( zpl_uint8 * data, zpl_uint16 leng );
 
 int x5b_app_hex_debug(x5b_app_mgt_t *mgt, char *hdr, int rx);
 int x5b_app_event_inactive(x5b_app_mgt_t *mgt, x5_b_event_t ev, int who);

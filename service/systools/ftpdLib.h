@@ -39,7 +39,7 @@ modification history
 extern "C" {
 #endif
 
-#include <plconfig.h>
+#include <os_include.h>
 
 #define FTPD_BASEDIR_DEFAULT	BASE_DIR"/ftpboot"
 
@@ -63,7 +63,7 @@ extern int 	ftpdDelete (void);
 extern int   ftpdAnonymousAllow (const char * rootDir, const char * uploadDir);
 extern void     ftpdEnableSecurity (void);
 extern void     ftpdDisableSecurity (void);
-extern void     ftpdLingerSecondsSet (ospl_ulong seconds);
+extern void     ftpdLingerSecondsSet (zpl_ulong seconds);
 
 extern int ftpdEnable(char *address, int port);
 extern int ftpdDisable(void);

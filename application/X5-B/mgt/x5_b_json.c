@@ -4,25 +4,10 @@
  *  Created on: 2019年4月3日
  *      Author: DELL
  */
-#include "zebra.h"
-#include "vty.h"
-#include "if.h"
-
-#include "buffer.h"
-#include "command.h"
-#include "if_name.h"
-#include "linklist.h"
-#include "log.h"
-#include "memory.h"
-#include "prefix.h"
-#include "sockunion.h"
-#include "str.h"
-#include "table.h"
-#include "vector.h"
-#include "nsm_vrf.h"
-#include "nsm_interface.h"
-#include "eloop.h"
-#include "cJSON.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "nsm_include.h"
 /*
 #include <openssl/pem.h>
 #include <openssl/bio.h>
@@ -33,7 +18,7 @@
 #include "x5_b_cmd.h"
 #include "x5_b_web.h"
 
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 #include "voip_def.h"
 #include "voip_app.h"
 #endif
@@ -109,7 +94,7 @@ static int _x5b_app_face_config_cjson(char **output, make_face_config_t *card)
 
 int x5b_app_face_config_json(x5b_app_mgt_t *app, void *info, int to)
 {
-	ospl_uint32 len = 0;
+	zpl_uint32 len = 0;
 	char *output = NULL;
 	make_face_config_t *card = (make_face_config_t *)info;
 	x5b_app_mgt_t *mgt = app;
@@ -170,7 +155,7 @@ int x5b_app_face_config_json(x5b_app_mgt_t *app, void *info, int to)
 int x5b_app_device_json(x5b_app_mgt_t *app, char *device,
 						char *address, char *dire, int topf, int to)
 {
-	ospl_uint32 len = 0;
+	zpl_uint32 len = 0;
 	char output[512];
 	x5b_app_mgt_t *mgt = app;
 	if(app == NULL)
@@ -261,14 +246,14 @@ int x5b_app_device_json(x5b_app_mgt_t *app, char *device,
 	return ERROR;
 }
 
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 static int x5b_sip_load_from_json(char *input)
 {
 	char *us = NULL;
-	ospl_int8 user[128];
-	ospl_int8 pass[128];
+	zpl_int8 user[128];
+	zpl_int8 pass[128];
 	cJSON* pItem = cJSON_Parse (input);
 	cJSON* pj_tmp = NULL;
 	if (pItem == NULL)
@@ -283,7 +268,7 @@ static int x5b_sip_load_from_json(char *input)
 	us = pj_tmp->valuestring;
 /*	if(us)
 	{
-		pl_pjsip_local_number_set_api(us, ospl_false);
+		pl_pjsip_local_number_set_api(us, zpl_false);
 	}*/
 	pj_tmp = cJSON_GetObjectItem (pItem, "username");
 	if (pj_tmp)
@@ -293,8 +278,8 @@ static int x5b_sip_load_from_json(char *input)
 		{
 			memset(user, 0, sizeof(user));
 			memset(pass, 0, sizeof(pass));
-			pl_pjsip_username_get_api(user, pass, ospl_false);
-			pl_pjsip_username_set_api(us, pass, ospl_false);
+			pl_pjsip_username_get_api(user, pass, zpl_false);
+			pl_pjsip_username_set_api(us, pass, zpl_false);
 		}
 	}
 	pj_tmp = cJSON_GetObjectItem (pItem, "password");
@@ -305,8 +290,8 @@ static int x5b_sip_load_from_json(char *input)
 		{
 			memset(user, 0, sizeof(user));
 			memset(pass, 0, sizeof(pass));
-			pl_pjsip_username_get_api(user, pass, ospl_false);
-			pl_pjsip_username_set_api(user, us, ospl_false);
+			pl_pjsip_username_get_api(user, pass, zpl_false);
+			pl_pjsip_username_set_api(user, us, zpl_false);
 		}
 	}
 	pj_tmp = cJSON_GetObjectItem (pItem, "sip-address");
@@ -315,14 +300,14 @@ static int x5b_sip_load_from_json(char *input)
 		us = pj_tmp->valuestring;
 		if(us)
 		{
-			ospl_uint16 port = 0;
-			//ospl_uint32 ip = ntohl(inet_addr(us));
+			zpl_uint16 port = 0;
+			//zpl_uint32 ip = ntohl(inet_addr(us));
 			memset(user, 0, sizeof(user));
-			pl_pjsip_server_get_api(user, &port, ospl_false);
-			pl_pjsip_server_set_api(us, port, ospl_false);
+			pl_pjsip_server_get_api(user, &port, zpl_false);
+			pl_pjsip_server_set_api(us, port, zpl_false);
 
-/*			voip_sip_server_get_api(NULL, &port, ospl_false);
-			voip_sip_server_set_api(ip, port, ospl_false);*/
+/*			voip_sip_server_get_api(NULL, &port, zpl_false);
+			voip_sip_server_set_api(ip, port, zpl_false);*/
 		}
 	}
 	pj_tmp = cJSON_GetObjectItem (pItem, "sip-port");
@@ -330,14 +315,14 @@ static int x5b_sip_load_from_json(char *input)
 	{
 		if(pj_tmp->valueint)
 		{
-			ospl_uint16 port = 0;
+			zpl_uint16 port = 0;
 			memset(user, 0, sizeof(user));
-			pl_pjsip_server_get_api(user, &port, ospl_false);
-			pl_pjsip_server_set_api(user, pj_tmp->valueint, ospl_false);
+			pl_pjsip_server_get_api(user, &port, zpl_false);
+			pl_pjsip_server_set_api(user, pj_tmp->valueint, zpl_false);
 
-/*			ospl_uint32 ip = ntohl(inet_addr(us));
-			voip_sip_server_get_api(&ip, NULL, ospl_false);
-			voip_sip_server_set_api(ip, pj_tmp->valueint, ospl_false);*/
+/*			zpl_uint32 ip = ntohl(inet_addr(us));
+			voip_sip_server_get_api(&ip, NULL, zpl_false);
+			voip_sip_server_set_api(ip, pj_tmp->valueint, zpl_false);*/
 		}
 	}
 	pj_tmp = cJSON_GetObjectItem (pItem, "codec");
@@ -387,7 +372,7 @@ int x5b_app_sip_config_parse(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 		//if(X5_B_ESP32_DEBUG(MSG) && X5_B_ESP32_DEBUG(WEB))
 			zlog_debug(MODULE_APP,"Recv make Face IMG respone len=%d val=%s\r\n", tlv->len, temp);
 		//zlog_debug(MODULE_APP,"tlv->len=%d ->%s", tlv->len, temp);
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 		if(x5b_sip_load_from_json(temp) == OK)
 		{
 		}
@@ -398,7 +383,7 @@ int x5b_app_sip_config_parse(x5b_app_mgt_t *mgt, os_tlv_t *tlv)
 }
 
 
-int x5b_app_call_phone_number(x5b_app_mgt_t *mgt, os_tlv_t *tlv, ospl_bool list)
+int x5b_app_call_phone_number(x5b_app_mgt_t *mgt, os_tlv_t *tlv, zpl_bool list)
 {
 	char *temp = NULL;
 	zassert(mgt != NULL);
@@ -414,10 +399,10 @@ int x5b_app_call_phone_number(x5b_app_mgt_t *mgt, os_tlv_t *tlv, ospl_bool list)
 		memcpy(temp, tlv->val.pval, tlv->len);
 		temp[tlv->len] = '\0';
 		zlog_debug(MODULE_APP,"Recv Phone Call IMG respone len=%d val=%s\r\n", tlv->len, temp);
-		if(list == ospl_false)
-			x5b_app_start_call_phone(ospl_true, temp);
+		if(list == zpl_false)
+			x5b_app_start_call_phone(zpl_true, temp);
 		else
-			x5b_app_start_call_user(ospl_true, temp);
+			x5b_app_start_call_user(zpl_true, temp);
 		free(temp);
 	}
 	return OK;
@@ -432,10 +417,10 @@ typedef struct
 }call_phone_t;
 */
 
-int x5b_app_call_user_list(char *json, ospl_uint8 *building, ospl_uint8 *unit,
-		ospl_uint16 *room_number, void *call_phone)
+int x5b_app_call_user_list(char *json, zpl_uint8 *building, zpl_uint8 *unit,
+		zpl_uint16 *room_number, void *call_phone)
 {
-	ospl_uint32 i = 0, num = 0;
+	zpl_uint32 i = 0, num = 0;
 	call_phone_t *phone = (call_phone_t *)call_phone;
 	cJSON* pArray = cJSON_Parse(json);
 	cJSON* pItem = NULL;//cJSON_Parse (json);
@@ -504,7 +489,7 @@ int x5b_app_call_user_list_test()
 	char *json_test = "[{\"use\":\"abc\",\"ID\":\"123\",\"room\":\"2002\",\"phone\":\"1901212\"}]";
 	//if(strlen(json_test)<=0)
 	//	return 0;
-	ospl_uint16 room_number = 0;
+	zpl_uint16 room_number = 0;
 	memset(phonetab, 0, sizeof(phonetab));
 	x5b_app_call_user_list(json_test, NULL, NULL,
 			&room_number, phonetab);

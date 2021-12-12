@@ -6,17 +6,9 @@
  */
 
 
-#include "zebra.h"
-#include "getopt.h"
-#include <log.h>
-#include "command.h"
-#include "memory.h"
-#include "prefix.h"
-#include "network.h"
-#include "vty.h"
-#include "buffer.h"
-#include "host.h"
-#include "eloop.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
 #include "ssh_api.h"
 #include "sshd_main.h"
@@ -55,9 +47,9 @@ int ssh_keymgt_delete(ssh_config_t *ssh, char *keyname)
 }
 
 
-int ssh_keymgt_add(ssh_config_t *ssh, struct vty *vty, ospl_uint32 type, char *keyname)
+int ssh_keymgt_add(ssh_config_t *ssh, struct vty *vty, zpl_uint32 type, char *keyname)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	char *typestr;
 	for(i = 0; i < SSH_KEY_MAX; i++)
 	{
@@ -73,7 +65,7 @@ int ssh_keymgt_add(ssh_config_t *ssh, struct vty *vty, ospl_uint32 type, char *k
 			 * dsa : length of the key in bits (e.g. 1024, 2048, 3072)
 			 * ecdsa : bits of the key (e.g. 256, 384, 512)
 			 */
-			ospl_uint32 parameter = 0;
+			zpl_uint32 parameter = 0;
 			switch(type)
 			{
 			case SSH_KEYTYPE_DSS:
@@ -119,7 +111,7 @@ int ssh_keymgt_add(ssh_config_t *ssh, struct vty *vty, ospl_uint32 type, char *k
 }
 
 
-int ssh_keymgt_export_set(ssh_config_t *ssh, char *keyname, ospl_uint32 type, char *filename, char *password)
+int ssh_keymgt_export_set(ssh_config_t *ssh, char *keyname, zpl_uint32 type, char *filename, char *password)
 {
 	ssh_keymgt_t * sshkey = ssh_keymgt_lookup(ssh, keyname);
 	if(sshkey)
@@ -142,7 +134,7 @@ int ssh_keymgt_export_set(ssh_config_t *ssh, char *keyname, ospl_uint32 type, ch
 }
 
 
-int ssh_keymgt_import_set(ssh_config_t *ssh, char *keyname, ospl_uint32 type, char *filename, char *password)
+int ssh_keymgt_import_set(ssh_config_t *ssh, char *keyname, zpl_uint32 type, char *filename, char *password)
 {
 	ssh_keymgt_t * sshkey = ssh_keymgt_lookup(ssh, keyname);
 	if(sshkey)
@@ -176,9 +168,9 @@ int ssh_options_set(ssh_session session, enum ssh_options_e type,
 }*/
 
 static void sshd_set_default_keys(ssh_bind sshbind,
-                             ospl_uint32 rsa_already_set,
-                             ospl_uint32 dsa_already_set,
-                             ospl_uint32 ecdsa_already_set)
+                             zpl_uint32 rsa_already_set,
+                             zpl_uint32 dsa_already_set,
+                             zpl_uint32 ecdsa_already_set)
 {
     if (!rsa_already_set) {
         ssh_bind_options_set(sshbind, SSH_BIND_OPTIONS_RSAKEY,

@@ -4,14 +4,10 @@
  *  Created on: Apr 21, 2019
  *      Author: zhurish
  */
-#include "zebra.h"
-#include "if.h"
-#include "memory.h"
-#include "command.h"
-#include "prefix.h"
-#include "log.h"
-#include "eloop.h"
-#include "vty.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "dhcp_def.h"
 #include "dhcpd.h"
@@ -21,7 +17,7 @@
 
 //CONFIG_DHCPD_LEASES_FILE
 
-dyn_lease_t * dhcp_lease_lookup_by_lease_address(LIST *lst, lease_mode_t mode, ospl_uint32 lease_address)
+dyn_lease_t * dhcp_lease_lookup_by_lease_address(LIST *lst, lease_mode_t mode, zpl_uint32 lease_address)
 {
 	NODE index;
 	dyn_lease_t *pstNode = NULL;
@@ -40,7 +36,7 @@ dyn_lease_t * dhcp_lease_lookup_by_lease_address(LIST *lst, lease_mode_t mode, o
 }
 
 
-dyn_lease_t * dhcp_lease_lookup_by_lease_mac(LIST *lst, lease_mode_t mode, ospl_uint8 *lease_mac)
+dyn_lease_t * dhcp_lease_lookup_by_lease_mac(LIST *lst, lease_mode_t mode, zpl_uint8 *lease_mac)
 {
 	NODE index;
 	dyn_lease_t *pstNode = NULL;
@@ -62,7 +58,7 @@ dyn_lease_t * dhcp_lease_lookup_by_lease_mac(LIST *lst, lease_mode_t mode, ospl_
 dyn_lease_t * dhcp_lease_add(LIST *lst, dyn_lease_t *lease)
 {
 	dyn_lease_t *pstNode = NULL;
-	ospl_uint8 chaddr[ETHER_ADDR_LEN] = { 0, 0, 0, 0, 0, 0 };
+	zpl_uint8 chaddr[ETHER_ADDR_LEN] = { 0, 0, 0, 0, 0, 0 };
 	if ((memcmp(lease->lease_mac, chaddr, ETHER_ADDR_LEN) != 0))
 	{
 		pstNode = dhcp_lease_lookup_by_lease_mac(lst, lease->mode, lease->lease_mac);
@@ -106,7 +102,7 @@ int dhcp_lease_update(LIST *lst, dyn_lease_t *lease)
 	return ERROR;
 }
 
-int dhcp_lease_del_address(LIST *lst, ospl_uint32 lease_address)
+int dhcp_lease_del_address(LIST *lst, zpl_uint32 lease_address)
 {
 	dyn_lease_t *pstNode = dhcp_lease_lookup_by_lease_address(lst, LEASE_DYNAMIC, lease_address);
 	if (pstNode)
@@ -118,7 +114,7 @@ int dhcp_lease_del_address(LIST *lst, ospl_uint32 lease_address)
 	return ERROR;
 }
 
-int dhcp_lease_del_mac(LIST *lst, ospl_uint8 *lease_mac)
+int dhcp_lease_del_mac(LIST *lst, zpl_uint8 *lease_mac)
 {
 	dyn_lease_t *pstNode = dhcp_lease_lookup_by_lease_mac(lst, LEASE_DYNAMIC, lease_mac);
 	if (pstNode)
@@ -304,7 +300,7 @@ int dhcpd_lease_load()
 	return OK;
 }
 
-static int dhcp_lease_show_one(struct vty *vty, dyn_lease_t *lease, ospl_bool detail)
+static int dhcp_lease_show_one(struct vty *vty, dyn_lease_t *lease, zpl_bool detail)
 {
 	if(vty && lease)
 	{
@@ -338,7 +334,7 @@ static int dhcp_lease_show_one(struct vty *vty, dyn_lease_t *lease, ospl_bool de
 }
 
 
-static int dhcp_lease_show_one_in_pool(struct vty *vty, dhcp_pool_t *config, ifindex_t ifindex, ospl_bool detail)
+static int dhcp_lease_show_one_in_pool(struct vty *vty, dhcp_pool_t *config, ifindex_t ifindex, zpl_bool detail)
 {
 	NODE index;
 	dyn_lease_t *pstNode = NULL;
@@ -357,7 +353,7 @@ static int dhcp_lease_show_one_in_pool(struct vty *vty, dhcp_pool_t *config, ifi
 	return OK;
 }
 
-int dhcp_lease_show(struct vty *vty, char *poolname, ifindex_t ifindex, ospl_bool detail)
+int dhcp_lease_show(struct vty *vty, char *poolname, ifindex_t ifindex, zpl_bool detail)
 {
 	NODE index;
 	dhcp_pool_t *pstNode = NULL;

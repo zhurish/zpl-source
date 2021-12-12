@@ -4,31 +4,38 @@
 
 menu "Tools Module Config"
 
-config PL_TOOLS_MODULE
+config ZPL_TOOLS_MODULE
 	bool "Tools Module"
 	default y
 	help
 	Build Tools Module.
 
-config PL_TOOLS_PROCESS
+config ZPL_TOOLS_PROCESS
 	bool "Process Module"
-	depends on PL_TOOLS_MODULE
+	depends on ZPL_TOOLS_MODULE
 	default y
 	help
 	Build Process Module.
 
-config PL_TOOLS_QUECTEL_CM
+config ZPL_TOOLS_QUECTEL_CM
 	bool "Quectel-CM Module"
-	depends on PL_TOOLS_MODULE
+	depends on ZPL_TOOLS_MODULE
 	default y
 	help
 	Build Quectel-CM Module.
 	
-config PL_TOOLS_SYSTEM
+config ZPL_TOOLS_SYSTEM
 	bool "System Module"
-	depends on PL_TOOLS_MODULE
+	depends on ZPL_TOOLS_MODULE
 	default y
 	help
 	Build System Module.
-	
+
+config ZPL_VTYSH_MODULE
+	bool "Vtysh Module"
+	depends on ZPL_TOOLS_MODULE
+	default y
+	help
+	Build Vtysh Module.
+
 endmenu

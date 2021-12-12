@@ -22,7 +22,7 @@ extern "C" {
  * 去掉 ""
  */
 extern const char * strchr_empty(char *, const char );
-extern const char * strchr_empty_step(char *src, const char em, ospl_uint32 step);
+extern const char * strchr_empty_step(char *src, const char em, zpl_uint32 step);
 
 #ifdef __cplusplus
 }

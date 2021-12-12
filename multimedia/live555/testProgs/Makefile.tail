@@ -150,6 +150,7 @@ testGSMStreamer$(EXE):	$(GSM_STREAMER_OBJS) $(LOCAL_LIBS)
 
 clean:
 	-rm -rf *.$(OBJ) $(ALL) core *.core *~ include/*~
+	-cd $(DESTDIR)$(PREFIX)/bin/ && -rm -rf $(ALL)* *.d
 
 install: $(ALL)
 	  install -d $(DESTDIR)$(PREFIX)/bin

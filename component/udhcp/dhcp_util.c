@@ -5,13 +5,10 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "memory.h"
-#include "prefix.h"
-#include "log.h"
-
-#include "nsm_dns.h"
-#include "nsm_rib.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 
 #include "dhcp_def.h"
@@ -21,22 +18,22 @@
 #include "dhcpc.h"
 #include "dhcp_util.h"
 
-const ospl_uint8 DHCP_MAC_BCAST_ADDR[6] ALIGN2 = {
+const zpl_uint8 DHCP_MAC_BCAST_ADDR[6] ALIGN2 = {
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 };
 
 /* Parse string to IP in network order */
 int udhcp_str2nip(const char *str, void *arg)
 {
-	ospl_uint32 addr = 0;
-	addr = inet_addr(str);
+	zpl_uint32 addr = 0;
+	addr = ipstack_inet_addr(str);
 	/* arg maybe unaligned */
-	move_to_unaligned32((ospl_uint32 *)arg, addr);
+	move_to_unaligned32((zpl_uint32 *)arg, addr);
 	return 1;
 }
 
 /* note: ip is a pointer to an IPv6 in network order, possibly misaliged */
-int FAST_FUNC sprint_nip6(char *dest, /*const char *pre,*/ const ospl_uint8 *ip)
+int FAST_FUNC sprint_nip6(char *dest, /*const char *pre,*/ const zpl_uint8 *ip)
 {
 	char hexstrbuf[16 * 2];
 	bin2hex(hexstrbuf, (void*)ip, 16);
@@ -57,7 +54,7 @@ int FAST_FUNC sprint_nip6(char *dest, /*const char *pre,*/ const ospl_uint8 *ip)
 
 
 
-int udhcp_interface_mac(ifindex_t ifindex, ospl_uint32  *nip, ospl_uint8 *mac)
+int udhcp_interface_mac(ifindex_t ifindex, zpl_uint32  *nip, zpl_uint8 *mac)
 {
 	struct interface * ifp = if_lookup_by_index (ifindex);
 	if(ifp)
@@ -78,7 +75,7 @@ int udhcp_interface_mac(ifindex_t ifindex, ospl_uint32  *nip, ospl_uint8 *mac)
 }
 
 #if 0
-ospl_uint16 FAST_FUNC inet_cksum(ospl_uint16 *addr, ospl_uint32 nleft)
+zpl_uint16 FAST_FUNC inet_cksum(zpl_uint16 *addr, zpl_uint32 nleft)
 {
 	/*
 	 * Our algorithm is simple, using a 32 bit accumulator,
@@ -95,16 +92,16 @@ ospl_uint16 FAST_FUNC inet_cksum(ospl_uint16 *addr, ospl_uint32 nleft)
 	/* Mop up an odd byte, if necessary */
 	if (nleft == 1) {
 		if (BB_LITTLE_ENDIAN)
-			sum += *(ospl_uint8*)addr;
+			sum += *(zpl_uint8*)addr;
 		else
-			sum += *(ospl_uint8*)addr << 8;
+			sum += *(zpl_uint8*)addr << 8;
 	}
 
 	/* Add back carry outs from top 16 bits to low 16 bits */
 	sum = (sum >> 16) + (sum & 0xffff);     /* add hi 16 to low 16 */
 	sum += (sum >> 16);                     /* add carry */
 
-	return (ospl_uint16)~sum;
+	return (zpl_uint16)~sum;
 }
 #endif
 /*
@@ -123,7 +120,7 @@ void FAST_FUNC udhcp_sp_fd_set(struct pollfd pfds[], int extra_fd)
 /*
 void* FAST_FUNC xrealloc_vector(void *vector, unsigned sizeof_and_shift, int idx)
 {
-	int mask = 1 << (ospl_uint8)sizeof_and_shift;
+	int mask = 1 << (zpl_uint8)sizeof_and_shift;
 
 	if (!(idx & (mask - 1))) {
 		sizeof_and_shift >>= 8;
@@ -150,12 +147,12 @@ char* FAST_FUNC xasprintf(const char *format, ...)
 
 
 
-ssize_t FAST_FUNC safe_read(int fd, void *buf, ospl_uint32 count)
+ssize_t FAST_FUNC safe_read(zpl_socket_t fd, void *buf, zpl_uint32 count)
 {
 	ssize_t n;
 
 	do {
-		n = ip_read(fd, buf, count);
+		n = ipstack_read(fd, buf, count);
 	} while (n < 0 && errno == EINTR);
 
 	return n;
@@ -166,7 +163,7 @@ ssize_t FAST_FUNC safe_read(int fd, void *buf, ospl_uint32 count)
  * Read all of the supplied buffer from a file.
  * This does multiple reads as necessary.
  * Returns the amount read, or -1 on an error.
- * A ospl_int16 read is returned on an end of file.
+ * A zpl_int16 read is returned on an end of file.
  */
 ssize_t FAST_FUNC full_read(int fd, void *buf, size_t len)
 {
@@ -202,7 +199,7 @@ ssize_t FAST_FUNC safe_write(int fd, const void *buf, size_t count)
 	ssize_t n;
 
 	for (;;) {
-		n = ip_write(fd, buf, count);
+		n = ipstack_write(fd, buf, count);
 		if (n >= 0 || errno != EINTR)
 			break;
 		/* Some callers set errno=0, are upset when they see EINTR.
@@ -249,7 +246,7 @@ void FAST_FUNC xread(int fd, void *buf, size_t count)
 	if (count) {
 		ssize_t size = full_read(fd, buf, count);
 		if ((size_t)size != count)
-			;//bb_error_msg_and_die("ospl_int16 read");
+			;//bb_error_msg_and_die("zpl_int16 read");
 	}
 }
 #endif
@@ -257,8 +254,26 @@ void FAST_FUNC xread(int fd, void *buf, size_t count)
 /* Wrapper which restarts poll on EINTR or ENOMEM.
  * On other errors does perror("poll") and returns.
  * Warning! May take longer than timeout_ms to return! */
-int FAST_FUNC safe_poll(struct pollfd *ufds, nfds_t nfds, ospl_uint32 timeout)
+int FAST_FUNC safe_poll(zpl_socket_t ufds, int maxfd, zpl_uint32 timeout)
 {
+	int n = 0;
+	ipstack_fd_set rfdset;
+	while(1)
+	{
+		IPSTACK_FD_ZERO(&rfdset);
+		IPSTACK_FD_SET(ufds._fd, &rfdset);
+		n = ipstack_select_wait( maxfd, &rfdset, NULL, timeout);
+		if (n >= 0)
+			return n;
+		if (timeout > 0)
+			timeout--;
+		if (errno == EINTR)
+			continue;
+		if (errno == ENOMEM)
+			continue;
+		return n;
+	}
+#if 0
 	while (1) {
 		int n = poll(ufds, nfds, timeout);
 		if (n >= 0)
@@ -276,6 +291,7 @@ int FAST_FUNC safe_poll(struct pollfd *ufds, nfds_t nfds, ospl_uint32 timeout)
 		//bb_perror_msg("poll");
 		return n;
 	}
+#endif	
 }
 
 
@@ -301,11 +317,11 @@ int FAST_FUNC index_in_strings(const char *strings, const char *key)
 #endif
 
 /* Emit a string of hex representation of bytes */
-char* FAST_FUNC bin2hex(char *p, const char *cp, ospl_uint32 count)
+char* FAST_FUNC bin2hex(char *p, const char *cp, zpl_uint32 count)
 {
 	const char bb_hexdigits_upcase[] ALIGN1 = "0123456789ABCDEF";
 	while (count) {
-		ospl_uint8 c = *cp++;
+		zpl_uint8 c = *cp++;
 		/* put lowercase hex digits */
 		*p++ = 0x20 | bb_hexdigits_upcase[c >> 4];
 		*p++ = 0x20 | bb_hexdigits_upcase[c & 0xf];
@@ -315,12 +331,12 @@ char* FAST_FUNC bin2hex(char *p, const char *cp, ospl_uint32 count)
 }
 
 /* Convert "[x]x[:][x]x[:][x]x[:][x]x" hex string to binary, no more than COUNT bytes */
-char* FAST_FUNC hex2bin(char *dst, const char *str, ospl_uint32 count)
+char* FAST_FUNC hex2bin(char *dst, const char *str, zpl_uint32 count)
 {
 	errno = EINVAL;
 	while (*str && count) {
-		ospl_uint8 val;
-		ospl_uint8 c = *str++;
+		zpl_uint8 val;
+		zpl_uint8 c = *str++;
 		if (isdigit(c))
 			val = c - '0';
 		else if ((c|0x20) >= 'a' && (c|0x20) <= 'f')
@@ -430,7 +446,7 @@ static int dhcp_client_lease_set_kernel(client_interface_t *ifter, client_lease_
 			zlog_debug(MODULE_DHCP," dhcp set kernel dns %s ", inet_address(ntohl(lease->lease_dns1)));
 		}
 
-		nsm_ip_dns_add(&dnscp, &dnsopt, ospl_false, IP_DNS_DYNAMIC);
+		nsm_ip_dns_add(&dnscp, &dnsopt, zpl_false, IP_DNS_DYNAMIC);
 
 		if(lease->lease_dns2)
 		{
@@ -441,7 +457,7 @@ static int dhcp_client_lease_set_kernel(client_interface_t *ifter, client_lease_
 			dnscp.u.prefix4.s_addr = lease->lease_dns2;
 			dnsopt.ifindex = ifter->ifindex;
 			dnsopt.vrfid = ifp->vrf_id;
-			nsm_ip_dns_add(&dnscp, &dnsopt, ospl_false, IP_DNS_DYNAMIC);
+			nsm_ip_dns_add(&dnscp, &dnsopt, zpl_false, IP_DNS_DYNAMIC);
 		}
 	}
 	if(strlen(lease->domain_name))
@@ -450,8 +466,8 @@ static int dhcp_client_lease_set_kernel(client_interface_t *ifter, client_lease_
 		{
 			zlog_debug(MODULE_DHCP," dhcp set kernel domain name %s ", lease->domain_name);
 		}
-		nsm_dns_domain_name_add_api(lease->domain_name, ospl_false);
-		nsm_dns_domain_name_dynamic_api(ospl_true, ospl_false);
+		nsm_dns_domain_name_add_api(lease->domain_name, zpl_false);
+		nsm_dns_domain_name_dynamic_api(zpl_true, zpl_false);
 	}
 	if(lease->lease_gateway)
 	{
@@ -543,7 +559,7 @@ static int dhcp_client_lease_unset_kernel(client_interface_t *ifter, client_leas
 			nsm_ip_dns_del(&dnscp, IP_DNS_DYNAMIC);
 		}
 	}
-	nsm_dns_domain_name_del_api(ospl_false);
+	nsm_dns_domain_name_del_api(zpl_false);
 
 	if(lease->lease_address)
 	{
@@ -670,8 +686,8 @@ static char **fill_envp(struct dhcp_packet *packet)
 	int i;
 	char **envp, **curr;
 	const char *opt_name;
-	ospl_uint8 *temp;
-	ospl_uint8 overload = 0;
+	zpl_uint8 *temp;
+	zpl_uint8 overload = 0;
 
 #define BITMAP unsigned
 #define BBITS (sizeof(BITMAP) * 8)
@@ -716,27 +732,27 @@ static char **fill_envp(struct dhcp_packet *packet)
 		return envp;
 
 	/* Export BOOTP fields. Fields we don't (yet?) export:
-	 * ospl_uint8 op;      // always BOOTREPLY
-	 * ospl_uint8 htype;   // hardware address type. 1 = 10mb ethernet
-	 * ospl_uint8 hlen;    // hardware address length
-	 * ospl_uint8 hops;    // used by relay agents only
-	 * ospl_uint32  xid;
-	 * ospl_uint16 secs;   // elapsed since client began acquisition/renewal
-	 * ospl_uint16 flags;  // only one flag so far: bcast. Never set by server
-	 * ospl_uint32  ciaddr; // client IP (usually == yiaddr. can it be different
+	 * zpl_uint8 op;      // always BOOTREPLY
+	 * zpl_uint8 htype;   // hardware address type. 1 = 10mb ethernet
+	 * zpl_uint8 hlen;    // hardware address length
+	 * zpl_uint8 hops;    // used by relay agents only
+	 * zpl_uint32  xid;
+	 * zpl_uint16 secs;   // elapsed since client began acquisition/renewal
+	 * zpl_uint16 flags;  // only one flag so far: bcast. Never set by server
+	 * zpl_uint32  ciaddr; // client IP (usually == yiaddr. can it be different
 	 *                  // if during renew server wants to give us different IP?)
-	 * ospl_uint32  gateway_nip; // relay agent IP address
-	 * ospl_uint8 chaddr[16]; // link-layer client hardware address (MAC)
+	 * zpl_uint32  gateway_nip; // relay agent IP address
+	 * zpl_uint8 chaddr[16]; // link-layer client hardware address (MAC)
 	 * TODO: export gateway_nip as $giaddr?
 	 */
 	/* Most important one: yiaddr as $ip */
 	*curr = xmalloc(sizeof("ip=255.255.255.255"));
-	sprint_nip(*curr, "ip=", (ospl_uint8 *) &packet->yiaddr);
+	sprint_nip(*curr, "ip=", (zpl_uint8 *) &packet->yiaddr);
 	putenv(*curr++);
 	if (packet->siaddr_nip) {
 		/* IP address of next server to use in bootstrap */
 		*curr = xmalloc(sizeof("siaddr=255.255.255.255"));
-		sprint_nip(*curr, "siaddr=", (ospl_uint8 *) &packet->siaddr_nip);
+		sprint_nip(*curr, "siaddr=", (zpl_uint8 *) &packet->siaddr_nip);
 		putenv(*curr++);
 	}
 	if (!(overload & FILE_FIELD) && packet->file[0]) {
@@ -754,7 +770,7 @@ static char **fill_envp(struct dhcp_packet *packet)
 	opt_name = dhcp_option_strings;
 	i = 0;
 	while (*opt_name) {
-		ospl_uint8 code = dhcp_optflags[i].code;
+		zpl_uint8 code = dhcp_optflags[i].code;
 		BITMAP *found_ptr = &FOUND_OPTS(code);
 		BITMAP found_mask = BMASK(code);
 		if (!(*found_ptr & found_mask))
@@ -765,7 +781,7 @@ static char **fill_envp(struct dhcp_packet *packet)
 		putenv(*curr++);
 		if (code == DHCP_SUBNET) {
 			/* Subnet option: make things like "$ip/$mask" possible */
-			ospl_uint32  subnet;
+			zpl_uint32  subnet;
 			move_from_unaligned32(subnet, temp);
 			*curr = xasprintf("mask=%u", mton(subnet));
 			putenv(*curr++);
@@ -802,7 +818,7 @@ static char **fill_envp(struct dhcp_packet *packet)
 #endif
 
 /* really simple implementation, just count the bits */
-static int mton(ospl_uint32  mask)
+static int mton(zpl_uint32  mask)
 {
 	int i = 0;
 	mask = ntohl(mask); /* 111110000-like bit pattern */
@@ -957,14 +973,14 @@ void udhcp_run_script(void *p, const char *name)
 /*
 int nsm_pal_interface_set_address (struct interface *ifp, struct prefix *cp, int secondry);
 int nsm_pal_interface_unset_address (struct interface *ifp, struct prefix *cp, int secondry);
-extern int nsm_ip_dns_add(struct prefix *address, ip_dns_opt_t *, ospl_bool	secondly, dns_class_t type);
+extern int nsm_ip_dns_add(struct prefix *address, ip_dns_opt_t *, zpl_bool	secondly, dns_class_t type);
 extern int nsm_ip_dns_del(struct prefix *address, dns_class_t type);
-extern int rib_add_ipv4 (ospl_uint32 type, ospl_uint32 flags, struct prefix_ipv4 *p,
+extern int rib_add_ipv4 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
 			 struct in_addr *gate, struct in_addr *src,
 			 ifindex_t ifindex, vrf_id_t vrf_id, int table_id,
-			 ospl_uint32, ospl_uint32, ospl_uchar, safi_t);
+			 zpl_uint32, zpl_uint32, zpl_uchar, safi_t);
 
-extern int rib_delete_ipv4 (ospl_uint32 type, ospl_uint32 flags, struct prefix_ipv4 *p,
+extern int rib_delete_ipv4 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
 		            struct in_addr *gate, ifindex_t ifindex,
 		            vrf_id_t, safi_t safi);
 */

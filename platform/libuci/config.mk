@@ -11,7 +11,7 @@ OBJS	+= parse.o
 OBJS	+= ucimap.o
 OBJS	+= util.o
 OBJS	+= libuci.o
-ifeq ($(strip $(PL_OS_UCI)),true)
+ifeq ($(strip $(ZPL_OS_UCI)),true)
 OBJS	+= os_uci.o				
 endif
 #############################################################################

@@ -14,11 +14,7 @@ extern "C" {
 
 #include "nsm_vlan.h"
 
-typedef ospl_uchar mac_t;
 
-#ifndef NSM_MAC_MAX
-#define NSM_MAC_MAX	6
-#endif
 
 #define NSM_MAC_IS_MULTICAST(mac)                ((mac) & 0x01)
 #define NSM_MAC_IS_BROADCAST(mac)                (((mac) & 0xFF)==0XFF)
@@ -57,7 +53,7 @@ typedef struct l2mac_s
 
 typedef struct Gl2mac_s
 {
-	ospl_uint32		ageing_time;
+	zpl_uint32		ageing_time;
 	LIST	*macList;
 	void	*mutex;
 	mac_t	gmac[NSM_MAC_MAX];
@@ -81,18 +77,18 @@ extern int nsm_mac_del_api(l2mac_t *mac);
 extern int nsm_mac_lookup_api(mac_t *mac, vlan_t vlan);
 extern int nsm_mac_get_api(mac_t *mac, vlan_t vlan, l2mac_t *gmac);
 
-extern int nsm_mac_ageing_time_set_api(ospl_uint32 ageing);
-extern int nsm_mac_ageing_time_get_api(ospl_uint32 *ageing);
+extern int nsm_mac_ageing_time_set_api(zpl_uint32 ageing);
+extern int nsm_mac_ageing_time_get_api(zpl_uint32 *ageing);
 
 
-extern int nsm_gmac_set_api(int, mac_t *mac, ospl_uint32 len);
-extern int nsm_gmac_get_api(int, mac_t *mac, ospl_uint32 len);
+extern int nsm_gmac_set_api(int, mac_t *mac, zpl_uint32 len);
+extern int nsm_gmac_get_api(int, mac_t *mac, zpl_uint32 len);
 
-
+#ifdef ZPL_SHELL_MODULE
 extern int nsm_mac_address_table_config(struct vty *vty);
 extern int nsm_mac_address_table_ageing_config(struct vty *vty);
 extern void cmd_mac_init(void);
-
+#endif
  
 #ifdef __cplusplus
 }

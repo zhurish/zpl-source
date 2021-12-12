@@ -4,19 +4,17 @@
  *  Created on: Aug 25, 2018
  *      Author: zhurish
  */
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "os_util.h"
 #include "process.h"
 #include <sys/stat.h>
 
 #include "getopt.h"
 
-//#undef DOUBLE_PROCESS
-#ifdef DOUBLE_PROCESS
+//#undef ZPL_TOOLS_PROCESS
+#ifdef ZPL_TOOLS_PROCESS
 
 
 static char *progname = NULL;
@@ -96,7 +94,7 @@ static int process_manage_unit(int fd, process_head *head, int *errnum)
 {
 
 	int /*num = 0, */len = 0;
-	ospl_uint32 offset = 0;
+	zpl_uint32 offset = 0;
 	char buf[1024];
 	os_memset(buf, 0, sizeof(buf));
 	while(1)
@@ -236,7 +234,7 @@ int main(int argc, char *argv[])
 	debug = 7;
 	if(sock == 0)
 	{
-		sock = unix_sock_server_create(ospl_true, PROCESS_MGT_UNIT_NAME);
+		sock = os_sock_unix_server_create(zpl_true, PROCESS_MGT_UNIT_NAME);
 	}
 	if(sock <= 0)
 		return ERROR;
@@ -283,11 +281,11 @@ int main(int argc, char *argv[])
 		//process_log_debug("start os_select_wait(%d) %s", num, strerror(errno));
 		if(num > 0)
 		{
-			//process_log_debug("start unix_sock_accept %s", progname);
+			//process_log_debug("start os_sock_unix_accept %s", progname);
 			if(FD_ISSET(sock, &rfdset))
 			{
 				FD_CLR(sock, &rfdset);
-				tmp = unix_sock_accept(sock, NULL);
+				tmp = os_sock_unix_accept(sock, NULL);
 				if(tmp)
 				{
 					if(count == 6)
@@ -296,7 +294,7 @@ int main(int argc, char *argv[])
 						process_log_debug("too many client %s(max client=%d)", progname, count);
 						continue;
 					}
-					process_log_debug("start unix_sock_accept %s(%d)", progname, fd);
+					process_log_debug("start os_sock_unix_accept %s(%d)", progname, fd);
 					FD_SET(tmp, &rfdset);
 					maxfd = MAX(tmp, maxfd);
 					os_set_nonblocking(tmp);

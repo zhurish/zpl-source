@@ -53,36 +53,36 @@ extern "C" {
 
 typedef struct x5b_app_statistics_s
 {
-	ospl_uint32 rx_packet;
-	ospl_uint32 tx_packet;
+	zpl_uint32 rx_packet;
+	zpl_uint32 tx_packet;
 } x5b_app_statistics_t;
 
 
 typedef struct x5b_app_mgt_node_s
 {
-	ospl_uint32		id;				//module ID
+	zpl_uint32		id;				//module ID
 	void		*t_thread;
-	ospl_bool		reg_state;		//register state
-	ospl_uint8 		keep_cnt;			//>= 3: OK, else ERROR;
+	zpl_bool		reg_state;		//register state
+	zpl_uint8 		keep_cnt;			//>= 3: OK, else ERROR;
 #define X5B_APP_MGT_STATE_OK(n)		((n)->state)>=0
-	ospl_uint8		interval;		//keepalive interval
+	zpl_uint8		interval;		//keepalive interval
 
-	//ospl_bool 		msg_sync;		//注册同步
-	ospl_uint32		address;		//module address
+	//zpl_bool 		msg_sync;		//注册同步
+	zpl_uint32		address;		//module address
 	//char		*remote_address;
-	ospl_uint16		remote_port;	//module udp port
-	ospl_uint32		remote_timestmp;
+	zpl_uint16		remote_port;	//module udp port
+	zpl_uint32		remote_timestmp;
 
 	char		sbuf[X5B_APP_BUF_DEFAULT];
 	int			slen;
 	int			offset;
-	ospl_uint8		seqnum;
+	zpl_uint8		seqnum;
 
 	x5b_app_statistics_t statistics;
 	char		version[X5B_APP_VERSION_MAX];
 	char		ioversion[X5B_APP_VERSION_MAX];
-	//ospl_uint8		face_snyc;
-	ospl_uint8		wiggins;
+	//zpl_uint8		face_snyc;
+	zpl_uint8		wiggins;
 	void		*priv;
 	//char		*face_path;
 }x5b_app_mgt_node_t;
@@ -90,17 +90,17 @@ typedef struct x5b_app_mgt_node_s
 
 typedef struct wan_state_s
 {
-	ospl_uint32 link_phy;
-	//ospl_uint32 link;
-	ospl_uint32 address;
+	zpl_uint32 link_phy;
+	//zpl_uint32 link;
+	zpl_uint32 address;
 	void	*t_thread;
-	ospl_uint8	interval;
+	zpl_uint8	interval;
 }wan_state_t;
 
 
 typedef struct x5b_app_mgt_s
 {
-	ospl_bool	enable;
+	zpl_bool	enable;
 	int		task_id;
 	void	*master;
 	int		r_fd;
@@ -111,40 +111,40 @@ typedef struct x5b_app_mgt_s
 	void	*t_thread;
 
 	char	*local_address;
-	ospl_uint16	local_port;
+	zpl_uint16	local_port;
 
 	x5b_app_mgt_node_t	app_a;
 	x5b_app_mgt_node_t	app_c;
 	x5b_app_mgt_node_t	*app;
 
-	ospl_uint32	fromid;		//module ID from remote
+	zpl_uint32	fromid;		//module ID from remote
 	char	buf[X5B_APP_BUF_DEFAULT];
 	int		len;
-	ospl_uint8	seqnum;		//seqnum of recv MSG
+	zpl_uint8	seqnum;		//seqnum of recv MSG
 
-	ospl_uint8	ack_seqnum;		//应答报文中的ACK
+	zpl_uint8	ack_seqnum;		//应答报文中的ACK
 
-	ospl_uint32	debug;
-	ospl_bool	not_debug;
+	zpl_uint32	debug;
+	zpl_bool	not_debug;
 
-	ospl_bool	sync_ack;		//停等接收，一问一答
+	zpl_bool	sync_ack;		//停等接收，一问一答
 
-	ospl_bool	time_sync;		//时间是否已经同步
+	zpl_bool	time_sync;		//时间是否已经同步
 
-	ospl_bool	regsync;		//两个都注册上
-	ospl_uint16 wait_timeout;
+	zpl_bool	regsync;		//两个都注册上
+	zpl_uint16 wait_timeout;
 	void	*mutex;
 
 	struct sockaddr_in from;
 
-	ospl_bool	upgrade;		//upgrate A(STM32/ESP32)
+	zpl_bool	upgrade;		//upgrate A(STM32/ESP32)
 	char	up_buf[16];
-	ospl_uint8	up_buf_len;
+	zpl_uint8	up_buf_len;
 
 	wan_state_t wan_state;	//wan接口的状态
 
 	void	*report_thread;//自动上报
-	ospl_uint32	report_event;
+	zpl_uint32	report_event;
 	void	*k_thread;		//keepalive
 
 }x5b_app_mgt_t;
@@ -155,7 +155,7 @@ typedef struct x5b_app_mgt_s
 extern x5b_app_mgt_t *x5b_app_mgt;
 
 
-extern int x5b_app_module_init(char *local, ospl_uint16 port);
+extern int x5b_app_module_init(char *local, zpl_uint16 port);
 extern int x5b_app_module_exit();
 extern int x5b_app_module_task_init();
 extern int x5b_app_module_task_exit();
@@ -164,7 +164,7 @@ extern int x5b_app_module_task_exit();
 
 /*extern int x5b_app_update_mode_init(x5b_app_mgt_t *app);
 extern int x5b_app_update_mode_exit(x5b_app_mgt_t *app);*/
-extern int x5b_app_update_mode_enable(x5b_app_mgt_t *app, ospl_bool enable, int to);
+extern int x5b_app_update_mode_enable(x5b_app_mgt_t *app, zpl_bool enable, int to);
 extern int x5b_app_read_eloop_reload(x5b_app_mgt_t *mgt);
 /*
  * raw
@@ -181,14 +181,14 @@ extern int x5b_app_read_handle(x5b_app_mgt_t *mgt);
 //extern int x5b_app_mode_load(x5b_app_mgt_t *mgt);
 
 extern int x5b_app_local_address_set_api(char *address);
-extern int x5b_app_local_port_set_api(ospl_uint16 port);
-extern int x5b_app_port_set_api(int to, ospl_uint16 port);
-extern int x5b_app_interval_set_api(int to, ospl_uint8 interval);
+extern int x5b_app_local_port_set_api(zpl_uint16 port);
+extern int x5b_app_port_set_api(int to, zpl_uint16 port);
+extern int x5b_app_interval_set_api(int to, zpl_uint8 interval);
 
 
 
 extern int x5b_app_rtc_request(x5b_app_mgt_t *app, int to);
-extern int x5b_app_IP_address_api(x5b_app_mgt_t *app, ospl_uint32 address, int to);
+extern int x5b_app_IP_address_api(x5b_app_mgt_t *app, zpl_uint32 address, int to);
 
 extern int x5b_app_keepalive_send(x5b_app_mgt_t *mgt, int res, int to);
 
@@ -198,7 +198,7 @@ extern int x5b_app_version_request(x5b_app_mgt_t *app, int to);
 //WAN接口状态上报
 extern int x5b_app_network_port_status_api(x5b_app_mgt_t *app, int res, int to);
 
-extern int x5b_app_reboot_request(x5b_app_mgt_t *app, int to, ospl_bool reset);
+extern int x5b_app_reboot_request(x5b_app_mgt_t *app, int to, zpl_bool reset);
 
 
 /*
@@ -212,7 +212,7 @@ extern int x5b_app_show_state(struct vty *vty);
 
 #ifdef X5B_APP_TEST_DEBUG
 extern int x5b_app_test_register(int to, int p);
-extern int x5b_app_test_call(ospl_uint16 num);
+extern int x5b_app_test_call(zpl_uint16 num);
 #endif
 
 extern int x5b_app_debug_proc();

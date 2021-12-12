@@ -6,12 +6,10 @@
  */
 
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "os_util.h"
-#include "tty_com.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "modem.h"
 #include "modem_attty.h"
@@ -173,7 +171,7 @@ int modem_mgtlayer_open(modem_client_t *client)
 	assert(client);
 	if(!client->init)
 	{
-		client->init = ospl_true;
+		client->init = zpl_true;
 		return modem_echo_atcmd_set(client, client->echo);
 	}
 	else
@@ -191,7 +189,7 @@ int modem_mgtlayer_close(modem_client_t *client)
 	assert(client);
 	if(client->init)
 	{
-		client->init = ospl_false;
+		client->init = zpl_false;
 	}
 	client->activity = CPAS_NONE;
 	modem_bitmap_bzero(&client->hw_state);
@@ -382,16 +380,16 @@ int modem_mgtlayer_delay(modem_t *modem)
 		switch(modem->state)
 		{
 		case MDMS(NO_USIM_CARD):
-			modem_event_add_api(modem, MODEM_EV_INSTER_CARD, ospl_false);
+			modem_event_add_api(modem, MODEM_EV_INSTER_CARD, zpl_false);
 			break;
 		case MDMS(NO_SIGNAL):
-			modem_event_add_api(modem, MODEM_EV_DETECTION, ospl_false);
+			modem_event_add_api(modem, MODEM_EV_DETECTION, zpl_false);
 			break;
 		case MDMS(NO_ADDR):
-			modem_event_add_api(modem, MODEM_EV_DETECTION, ospl_false);
+			modem_event_add_api(modem, MODEM_EV_DETECTION, zpl_false);
 			break;
 		case MDMS(NO_SERVICE):
-			modem_event_add_api(modem, MODEM_EV_DETECTION, ospl_false);
+			modem_event_add_api(modem, MODEM_EV_DETECTION, zpl_false);
 			break;
 		default:
 			break;

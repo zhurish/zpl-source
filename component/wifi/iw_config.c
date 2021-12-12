@@ -4,7 +4,10 @@
  *  Created on: Oct 11, 2018
  *      Author: zhurish
  */
-#include "zebra.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 #include "iw_config.h"
 
 

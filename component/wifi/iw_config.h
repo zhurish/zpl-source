@@ -12,7 +12,10 @@
 extern "C" {
 #endif
 
-#include "ospl_type.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 /*
 #define IW_MAX_FREQUENCIES	32
 #define IW_MAX_BITRATES		32
@@ -149,17 +152,17 @@ typedef enum
 
 typedef struct iw_dev_freq_s
 {
-	ospl_uint8	active;
-	ospl_uint8	channel;
+	zpl_uint8	active;
+	zpl_uint8	channel;
 	double	freq;
 }iw_dev_freq_t, iw_dev_channel_s;
 
 
 typedef struct iw_dev_bitrate_s
 {
-	ospl_uint8	active;
-	ospl_uint8	channel;
-	ospl_uint32	bitrate;
+	zpl_uint8	active;
+	zpl_uint8	channel;
+	zpl_uint32	bitrate;
 }iw_dev_bitrate_t;
 
 //#include "wireless.h"
@@ -169,7 +172,7 @@ typedef struct iw_dev_s
 	iw_dev_freq_t 		freq[IW_DEV_CHANNEL_MAX];
 	iw_dev_freq_t 		cu_freq;
 
-	ospl_uint8		num_bitrates;
+	zpl_uint8		num_bitrates;
 	iw_dev_bitrate_t	bitrates[IW_DEV_BITRATES_MAX];
 	iw_dev_bitrate_t	cu_bitrates;
 	iw_dev_bitrate_t	broadcast_bitrates;

@@ -1,337 +1,378 @@
 
-include $(MAKE_DIR)/module-dir.mk
+include $(ZPL_MAKE_DIR)/module-dir.mk
 
-include $(MAKE_DIR)/multimedia-config.mk
-include $(MAKE_DIR)/pjsip-config.mk
+include $(ZPL_MAKE_DIR)/multimedia-config.mk
+include $(ZPL_MAKE_DIR)/pjsip-config.mk
 
-PLPRODS += $(PLATFORM_ROOT)/os
-PLPRODS += $(PLATFORM_ROOT)/lib
-
-PLPRODS += $(PLATFORM_ROOT)/shell
-
-PL_INCLUDE += -I$(PLATFORM_ROOT)/os
-PL_INCLUDE += -I$(PLATFORM_ROOT)/lib
-PL_INCLUDE += -I$(PLATFORM_ROOT)/shell
-
-ifeq ($(strip $(PL_NSM_MODULE)),true)
-
-PLPRODS += $(PLATFORM_ROOT)/nsm
-PL_INCLUDE += -I$(PLATFORM_ROOT)/nsm
-PL_DEFINE	+= -DPL_NSM_MODULE
-PLCLI_DIR += $(CLI_ROOT)/nsm
+ZPLPRODS += $(PLATFORM_ROOT)/os
+ZPLPRODS += $(PLATFORM_ROOT)/lib
+ifeq ($(strip $(ZPL_SHELL_MODULE)),true)
+ZPLPRODS += $(PLATFORM_ROOT)/shell
+ZPL_INCLUDE += -I$(PLATFORM_ROOT)/shell
+ZPL_DEFINE	+= -DZPL_SHELL_MODULE
 endif
-
-ifeq ($(strip $(PL_CLI_MODULE)),true)
-PLCLI_DIR += $(CLI_ROOT)/system
-endif
+ZPL_INCLUDE += -I$(PLATFORM_ROOT)/os
+ZPL_INCLUDE += -I$(PLATFORM_ROOT)/lib
 
 
-
-ifeq ($(strip $(PL_OS_CPPJSON)),true)
+ifeq ($(strip $(ZPL_OS_CPPJSON)),true)
 JSONCPP_ROOT=$(PLATFORM_ROOT)/jsoncpp
-PLPRODS += $(JSONCPP_ROOT)
-PL_INCLUDE += -I$(JSONCPP_ROOT)
+ZPLPRODS += $(JSONCPP_ROOT)
+ZPL_INCLUDE += -I$(JSONCPP_ROOT)
 endif
 
 
-ifeq ($(strip $(PL_OS_UCI)),true)
+ifeq ($(strip $(ZPL_OS_UCI)),true)
 ifneq ($(OPENEWRT_BASE),)
 OPENWRT_INCLUDE := -I$(OPENEWRT_BASE)/include -I$(OPENEWRT_BASE)/usr/include
 OPENWRT_LDFLAGS := -L$(OPENEWRT_BASE)/lib -L$(OPENEWRT_BASE)/usr/lib
-PLEX_LDLIBS += -luci
-PL_DEFINE += -DPL_OPENWRT_UCI -DPL_OPENWRT_UCI_LIB	
+ZPLEX_LDLIBS += -luci
+ZPL_DEFINE += -DZPL_OPENWRT_UCI -DZPL_OPENWRT_UCI_LIB	
 else
 LIBUCI_ROOT=$(PLATFORM_ROOT)/libuci
-PLPRODS += $(LIBUCI_ROOT)
-PL_INCLUDE += -I$(LIBUCI_ROOT)
-PL_DEFINE += -DPL_OPENWRT_UCI -DPL_OPENWRT_UCI_LIB
+ZPLPRODS += $(LIBUCI_ROOT)
+ZPL_INCLUDE += -I$(LIBUCI_ROOT)
+ZPL_DEFINE += -DZPL_OPENWRT_UCI -DZPL_OPENWRT_UCI_LIB
 endif #			
-endif #($(strip $(PL_OS_UCI)),true)
+endif #($(strip $(ZPL_OS_UCI)),true)
 
 
-
-
-ifeq ($(strip $(PL_SERVICE_MODULE)),true)
-PLPRODS += $(SERVICE_ROOT)/systools
-PLCLI_DIR += $(CLI_ROOT)/service
-PL_INCLUDE += -I$(SERVICE_ROOT)/systools
-
-ifeq ($(strip $(PL_SERVICE_SNTPC)),true)
-PLPRODS += $(SERVICE_ROOT)/sntp
-PL_INCLUDE += -I$(SERVICE_ROOT)/sntp
-endif
-
-ifeq ($(strip $(PL_SERVICE_SNTPS)),true)
-ifeq ($(strip $(PL_SERVICE_SNTPC)),false)
-PLPRODS += $(SERVICE_ROOT)/sntp
-PL_INCLUDE += -I$(SERVICE_ROOT)/sntp
+ifeq ($(strip $(ZPL_LIBEVENT_MODULE)),true)
+LIBEVENT_ROOT=$(PLATFORM_ROOT)/libevent
+ZPLPRODS += $(LIBEVENT_ROOT)
+ZPL_INCLUDE += -I$(LIBEVENT_ROOT)/include
+ZPL_INCLUDE += -I$(LIBEVENT_ROOT)
+ifeq ($(strip $(ZPL_LIBEVENT_SIGNAL)),true)
+ZPL_DEFINE += -DZPL_LIBEVENT_SIGNAL
 endif
 endif
 
-ifeq ($(strip $(PL_SERVICE_SNTPC)),true)
-PL_DEFINE += -DPL_SERVICE_SNTPC
+ifeq ($(strip $(ZPL_LIBMXML_MODULE)),true)
+LIBMXML_ROOT=$(PLATFORM_ROOT)/mxml
+ZPLPRODS += $(LIBMXML_ROOT)
+ZPL_INCLUDE += -I$(LIBMXML_ROOT)
+ZPL_DEFINE += -DZPL_LIBMXML_MODULE
 endif
 
-ifeq ($(strip $(PL_SERVICE_SNTPS)),true)
-PL_DEFINE += -DPL_SERVICE_SNTPS
+ifeq ($(strip $(ZPL_IPCBC_MODULE)),true)
+ZPLPRODS += $(PLATFORM_ROOT)/ipcbc
+ZPL_INCLUDE += -I$(PLATFORM_ROOT)/ipcbc
+ZPL_DEFINE += -DZPL_IPCBC_MODULE -DZPL_IPCBCBSP_MODULE
 endif
 
-ifeq ($(strip $(PL_SERVICE_SYSLOG)),true)
-PLPRODS += $(SERVICE_ROOT)/syslog
-PL_INCLUDE += -I$(SERVICE_ROOT)/syslog
-PL_DEFINE += -DPL_SERVICE_SYSLOG
+
+ifeq ($(strip $(ZPL_IPCBUS_MODULE)),true)
+ZPLPRODS += $(PLATFORM_ROOT)/ipcbus
+ZPL_INCLUDE += -I$(PLATFORM_ROOT)/ipcbus
+ZPL_DEFINE += -DZPL_IPCBUS_MODULE
 endif
 
-ifeq ($(strip $(PL_SERVICE_TFTPC)),true)
-PL_DEFINE += -DPL_SERVICE_TFTPC
-endif
-ifeq ($(strip $(PL_SERVICE_TFTPD)),true)
-PL_DEFINE += -DPL_SERVICE_TFTPD
-endif
-ifeq ($(strip $(PL_SERVICE_FTPC)),true)
-PL_DEFINE += -DPL_SERVICE_FTPC
-endif
-ifeq ($(strip $(PL_SERVICE_FTPD)),true)
-PL_DEFINE += -DPL_SERVICE_FTPD
-endif
-ifeq ($(strip $(PL_SERVICE_TELNET)),true)
-PL_DEFINE += -DPL_SERVICE_TELNET
-endif
-ifeq ($(strip $(PL_SERVICE_TELNETD)),true)
-PL_DEFINE += -DPL_SERVICE_TELNETD
-endif
-ifeq ($(strip $(PL_SERVICE_PING)),true)
-PL_DEFINE += -DPL_SERVICE_PING
-endif
-ifeq ($(strip $(PL_SERVICE_TRACEROUTE)),true)
-PL_DEFINE += -DPL_SERVICE_TRACEROUTE
-endif
-ifeq ($(strip $(PL_SERVICE_UBUS_SYNC)),true)
-PL_DEFINE += -DPL_SERVICE_UBUS_SYNC
-endif
-
-endif #($(strip $(PL_SERVICE_MODULE)),true)
 
 
-ifeq ($(strip $(PL_PRODUCT_MODULE)),true)
+ifeq ($(strip $(ZPL_NSM_MODULE)),true)
 
-PLPRODS += $(PRODUCT_ROOT)/bsp
-PL_INCLUDE += -I$(PRODUCT_ROOT)/bsp
-PL_DEFINE += -DPL_BSP_MODULE
+ZPLPRODS += $(PLATFORM_ROOT)/nsm
+ZPL_INCLUDE += -I$(PLATFORM_ROOT)/nsm
+ZPL_DEFINE	+= -DZPL_NSM_MODULE
+endif
+
+ifeq ($(strip $(ZPL_RTPL_MODULE)),true)
+ZPLPRODS += $(PLATFORM_ROOT)/rtpl
+ZPL_INCLUDE += -I$(PLATFORM_ROOT)/rtpl
+ZPL_DEFINE	+= -DZPL_NSM_RTPL
+endif
 
 
-ifeq ($(strip $(PL_PRODUCT_SDK_MODULE)),true)
+ifeq ($(strip $(ZPL_SERVICE_MODULE)),true)
+ZPLPRODS += $(SERVICE_ROOT)/systools
+ZPL_INCLUDE += -I$(SERVICE_ROOT)/systools
+
+ifeq ($(strip $(ZPL_SERVICE_SNTPC)),true)
+ZPLPRODS += $(SERVICE_ROOT)/sntp
+ZPL_INCLUDE += -I$(SERVICE_ROOT)/sntp
+endif
+
+ifeq ($(strip $(ZPL_SERVICE_SNTPS)),true)
+ifeq ($(strip $(ZPL_SERVICE_SNTPC)),false)
+ZPLPRODS += $(SERVICE_ROOT)/sntp
+ZPL_INCLUDE += -I$(SERVICE_ROOT)/sntp
+endif
+endif
+
+ifeq ($(strip $(ZPL_SERVICE_SNTPC)),true)
+ZPL_DEFINE += -DZPL_SERVICE_SNTPC
+endif
+
+ifeq ($(strip $(ZPL_SERVICE_SNTPS)),true)
+ZPL_DEFINE += -DZPL_SERVICE_SNTPS
+endif
+
+ifeq ($(strip $(ZPL_SERVICE_SYSLOG)),true)
+ZPLPRODS += $(SERVICE_ROOT)/syslog
+ZPL_INCLUDE += -I$(SERVICE_ROOT)/syslog
+ZPL_DEFINE += -DZPL_SERVICE_SYSLOG
+endif
+
+ifeq ($(strip $(ZPL_SERVICE_TFTPC)),true)
+ZPL_DEFINE += -DZPL_SERVICE_TFTPC
+endif
+ifeq ($(strip $(ZPL_SERVICE_TFTPD)),true)
+ZPL_DEFINE += -DZPL_SERVICE_TFTPD
+endif
+ifeq ($(strip $(ZPL_SERVICE_FTPC)),true)
+ZPL_DEFINE += -DZPL_SERVICE_FTPC
+endif
+ifeq ($(strip $(ZPL_SERVICE_FTPD)),true)
+ZPL_DEFINE += -DZPL_SERVICE_FTPD
+endif
+ifeq ($(strip $(ZPL_SERVICE_TELNET)),true)
+ZPL_DEFINE += -DZPL_SERVICE_TELNET
+endif
+ifeq ($(strip $(ZPL_SERVICE_TELNETD)),true)
+ZPL_DEFINE += -DZPL_SERVICE_TELNETD
+endif
+ifeq ($(strip $(ZPL_SERVICE_PING)),true)
+ZPL_DEFINE += -DZPL_SERVICE_PING
+endif
+ifeq ($(strip $(ZPL_SERVICE_TRACEROUTE)),true)
+ZPL_DEFINE += -DZPL_SERVICE_TRACEROUTE
+endif
+ifeq ($(strip $(ZPL_SERVICE_UBUS_SYNC)),true)
+ZPL_DEFINE += -DZPL_SERVICE_UBUS_SYNC
+endif
+
+endif #($(strip $(ZPL_SERVICE_MODULE)),true)
+
+
+ifeq ($(strip $(ZPL_PRODUCT_MODULE)),true)
+
+ZPLPRODS += $(PRODUCT_ROOT)/bsp
+ZPL_INCLUDE += -I$(PRODUCT_ROOT)/bsp
+ZPL_DEFINE += -DZPL_BSP_MODULE
+
+
+ifeq ($(strip $(ZPL_PRODUCT_SDK_MODULE)),true)
 SW_SDK_ROOT=$(PRODUCT_ROOT)/sdk
-PLPRODS += $(PRODUCT_ROOT)/sdk
-PL_INCLUDE += -I$(PRODUCT_ROOT)/sdk
-PL_DEFINE += -DPL_SDK_MODULE
-PL_DEFINE += -DPL_SDK_BCM53125
-endif #($(strip $(PL_PRODUCT_SDK_MODULE)),true)
+ZPLPRODS += $(PRODUCT_ROOT)/sdk
+ZPL_INCLUDE += -I$(PRODUCT_ROOT)/sdk
+ZPL_DEFINE += -DZPL_SDK_MODULE
+ZPL_DEFINE += -DZPL_SDK_BCM53125
+endif #($(strip $(ZPL_PRODUCT_SDK_MODULE)),true)
 
-endif #($(strip $(PL_PRODUCT_MODULE)),true)
+endif #($(strip $(ZPL_PRODUCT_MODULE)),true)
 
 
-#PL_ABSTRACT_MODULE
-ifeq ($(strip $(PL_ABSTRACT_MODULE)),true)
+#ZPL_ABSTRACT_MODULE
+ifeq ($(strip $(ZPL_ABSTRACT_MODULE)),true)
 
-PL_DEFINE += -DPL_PAL_MODULE
+ZPL_DEFINE += -DZPL_PAL_MODULE
 
-ifeq ($(strip $(PL_PAL_KERNEL_STACK)),true)
-PLPRODS += $(ABSTRACT_ROOT)/pal/kernel
-PL_INCLUDE += -I$(ABSTRACT_ROOT)/pal/kernel
+ifeq ($(strip $(ZPL_KERNEL_STACK_MODULE)),true)
+ZPLPRODS += $(ABSTRACT_ROOT)/pal/kernel
+ZPL_INCLUDE += -I$(ABSTRACT_ROOT)/pal/kernel
 endif
-ifeq ($(strip $(PL_PAL_IPCOM_STACK)),true)
-PLPRODS += $(ABSTRACT_ROOT)/pal/ipstack
-PL_INCLUDE += -I$(ABSTRACT_ROOT)/pal/ipstack
+ifeq ($(strip $(ZPL_IPCOM_STACK_MODULE)),true)
+ZPLPRODS += $(ABSTRACT_ROOT)/pal/ipstack
+ZPL_INCLUDE += -I$(ABSTRACT_ROOT)/pal/ipstack
 endif
 
-ifeq ($(strip $(PL_HAL_MODULE)),true)
-PLPRODS += $(ABSTRACT_ROOT)/hal
-PL_INCLUDE += -I$(ABSTRACT_ROOT)/hal
-PL_DEFINE += -DPL_HAL_MODULE
-endif #($(strip $(PL_HAL_MODULE)),true)
+ifeq ($(strip $(ZPL_HAL_MODULE)),true)
+ZPLPRODS += $(ABSTRACT_ROOT)/hal
+ZPL_INCLUDE += -I$(ABSTRACT_ROOT)/hal
+ZPL_DEFINE += -DZPL_HAL_MODULE
+endif #($(strip $(ZPL_HAL_MODULE)),true)
 
-endif #ifeq ($(strip $(PL_PAL_MODULE)),true)
+endif #ifeq ($(strip $(ZPL_PAL_MODULE)),true)
+
+ifeq ($(strip $(ZPL_NSM_DHCP)),true)
+DHCP_ROOT=$(COMPONENT_ROOT)/udhcp
+ZPLPRODS += $(DHCP_ROOT)
+ZPL_INCLUDE += -I$(DHCP_ROOT)
+
+ZPL_DEFINE += -DZPL_DHCP_MODULE
+ZPL_DEFINE += -DZPL_DHCPC_MODULE
+ZPL_DEFINE += -DZPL_DHCPD_MODULE
+
+endif
 
 
-ifeq ($(strip $(PL_COMPONENT_MODULE)),true)
+ifeq ($(strip $(ZPL_COMPONENT_MODULE)),true)
 
-ifeq ($(strip $(PL_MODEM_MODULE)),true)
+ifeq ($(strip $(ZPL_MODEM_MODULE)),true)
 MODEM_ROOT=$(COMPONENT_ROOT)/modem
-PLPRODS += $(MODEM_ROOT)
-PL_INCLUDE += -I$(MODEM_ROOT)
-PL_DEFINE += -DPL_MODEM_MODULE
-PLCLI_DIR += $(CLI_ROOT)/modem
-endif
-
-ifeq ($(strip $(PL_UDHCP_MODULE)),true)
-UDHCP_ROOT=$(COMPONENT_ROOT)/udhcp
-PLPRODS += $(UDHCP_ROOT)
-PL_INCLUDE += -I$(UDHCP_ROOT)
-
-PL_DEFINE += -DPL_UDHCP_MODULE
-
-PL_DEFINE += -DPL_DHCP_MODULE
-PL_DEFINE += -DPL_DHCPC_MODULE
-PL_DEFINE += -DPL_DHCPD_MODULE
-
-PLCLI_DIR += $(CLI_ROOT)/dhcp
+ZPLPRODS += $(MODEM_ROOT)
+ZPL_INCLUDE += -I$(MODEM_ROOT)
+ZPL_DEFINE += -DZPL_MODEM_MODULE
 endif
 
 
-ifeq ($(strip $(PL_LIBSSH_MODULE)),true)
+
+
+ifeq ($(strip $(ZPL_LIBSSH_MODULE)),true)
 LIBSSH_ROOT=$(COMPONENT_ROOT)/ssh
 
-PLPRODS += $(LIBSSH_ROOT)
-PL_INCLUDE += -I$(LIBSSH_ROOT)
-PL_INCLUDE += -I$(LIBSSH_ROOT)/include
+ZPLPRODS += $(LIBSSH_ROOT)
+ZPL_INCLUDE += -I$(LIBSSH_ROOT)
+ZPL_INCLUDE += -I$(LIBSSH_ROOT)/include
 
-ifeq ($(PL_BUILD_ARCH),X86_64)
-PL_INCLUDE += -I$(LIBSSH_ROOT)/include
-#PLOS_LDLIBS += -lutil -lssl -lcrypto -lz
-endif #($(PL_BUILD_ARCH),X86_64)
+ifeq ($(ZPL_BUILD_ARCH),X86_64)
+ZPL_INCLUDE += -I$(LIBSSH_ROOT)/include
+#ZPLOS_LDLIBS += -lutil -lssl -lcrypto -lz
+endif #($(ZPL_BUILD_ARCH),X86_64)
 
-ifeq ($(PL_BUILD_ARCH),MIPS)
+ifeq ($(ZPL_BUILD_ARCH),MIPS)
 ifneq ($(OPENEWRT_BASE),)
 OPENWRT_INCLUDE := -I$(OPENEWRT_BASE)/include -I$(OPENEWRT_BASE)/usr/include
 OPENWRT_LDFLAGS := -L$(OPENEWRT_BASE)/lib -L$(OPENEWRT_BASE)/usr/lib
 else
-PLEX_INCLUDE += -I$(EXTERNSION_ROOT)/openssl/mipsl/include
-PLEX_LDFLAGS += -L$(EXTERNSION_ROOT)/openssl/mipsl/lib 
-PLEX_INCLUDE += -I$(EXTERNSION_ROOT)/zlib/mipsl/zlib/include
-PLEX_LDFLAGS += -L$(EXTERNSION_ROOT)/zlib/mipsl/zlib/lib
+ZPLEX_INCLUDE += -I$(EXTERNSION_ROOT)/openssl/mipsl/include
+ZPLEX_LDFLAGS += -L$(EXTERNSION_ROOT)/openssl/mipsl/lib 
+ZPLEX_INCLUDE += -I$(EXTERNSION_ROOT)/zlib/mipsl/zlib/include
+ZPLEX_LDFLAGS += -L$(EXTERNSION_ROOT)/zlib/mipsl/zlib/lib
 endif #($(OPENEWRT_BASE),)
-#PLEX_LDLIBS += -lutil -lssl -lcrypto -lz
-endif #($(PL_BUILD_ARCH),MIPS)
+#ZPLEX_LDLIBS += -lutil -lssl -lcrypto -lz
+endif #($(ZPL_BUILD_ARCH),MIPS)
 
-PL_DEFINE += -DPL_LIBSSH_MODULE
-#PLEX_LDLIBS += -lutil -lssl -lcrypto -lz
+ZPL_DEFINE += -DZPL_LIBSSH_MODULE
+#ZPLEX_LDLIBS += -lutil -lssl -lcrypto -lz
 
-endif #($(strip $(PL_LIBSSH_MODULE)),true)
+endif #($(strip $(ZPL_LIBSSH_MODULE)),true)
 
 
-ifeq ($(strip $(PL_OPENSSL_MODULE)),true)
-ifneq ($(PL_BUILD_ARCH),X86_64)
-PLEX_DIR += $(EXTERNSION_ROOT)/openssl/openssl-1.1.1/
+ifeq ($(strip $(ZPL_OPENSSL_MODULE)),true)
+ifneq ($(ZPL_BUILD_ARCH),X86_64)
+ZPLEX_DIR += $(EXTERNSION_ROOT)/openssl/openssl-1.1.1/
 export PLATFORM=linux-armv4
-PLEX_INCLUDE += -I$(DSTROOTFSDIR)/include
-PLEX_LDFLAGS += -L$(DSTROOTFSDIR)/lib
-PLEX_LDLIBS += -lutil -lssl -lcrypto
-PLEX_DIR += $(EXTERNSION_ROOT)/zlib/zlib-1.2.11/
-PL_INCLUDE += -I$(DSTROOTFSDIR)/include
-PLEX_LDFLAGS += -L$(DSTROOTFSDIR)/lib
-PLEX_LDLIBS += -lz
+ZPLEX_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include
+ZPLEX_LDFLAGS += -L$(ZPL_INSTALL_ROOTFS_DIR)/lib
+ZPLEX_LDLIBS += -lutil -lssl -lcrypto
+ZPLEX_DIR += $(EXTERNSION_ROOT)/zlib/zlib-1.2.11/
+ZPL_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include
+ZPLEX_LDFLAGS += -L$(ZPL_INSTALL_ROOTFS_DIR)/lib
+ZPLEX_LDLIBS += -lz
 else 
-PLOS_LDLIBS += -lutil -lssl -lcrypto -lz
-endif #($(PL_BUILD_ARCH),X86_64)
-PL_DEFINE += -DPL_OPENSSL_MODULE
-endif #($(strip $(PL_OPENSSL_MODULE)),true)
+ZPLOS_LDLIBS += -lutil -lssl -lcrypto -lz
+endif #($(ZPL_BUILD_ARCH),X86_64)
+ZPL_DEFINE += -DZPL_OPENSSL_MODULE
+endif #($(strip $(ZPL_OPENSSL_MODULE)),true)
 
 
-ifeq ($(strip $(PL_SQLITE_MODULE)),true)
+ifeq ($(strip $(ZPL_SQLITE_MODULE)),true)
 SQLITE_ROOT=$(COMPONENT_ROOT)/sqlite
-PLPRODS += $(SQLITE_ROOT)
-PL_INCLUDE += -I$(SQLITE_ROOT)
-PL_DEFINE += -DPL_SQLITE_MODULE
-PL_LDLIBS += -lsqlite
-endif#($(strip $(PL_SQLITE_MODULE)),true)
+ZPLPRODS += $(SQLITE_ROOT)
+ZPL_INCLUDE += -I$(SQLITE_ROOT)
+ZPL_DEFINE += -DZPL_SQLITE_MODULE
+ZPL_LDLIBS += -lsqlite
+endif#($(strip $(ZPL_SQLITE_MODULE)),true)
 
-ifeq ($(strip $(PL_WIFI_MODULE)),true)
+ifeq ($(strip $(ZPL_WIFI_MODULE)),true)
 WIFI_ROOT=$(COMPONENT_ROOT)/wifi
-PLPRODS += $(WIFI_ROOT)
-PL_INCLUDE += -I$(WIFI_ROOT)
-PL_DEFINE += -DPL_WIFI_MODULE
-endif#($(strip $(PL_WIFI_MODULE)),true)
+ZPLPRODS += $(WIFI_ROOT)
+ZPL_INCLUDE += -I$(WIFI_ROOT)
+ZPL_DEFINE += -DZPL_WIFI_MODULE
+endif#($(strip $(ZPL_WIFI_MODULE)),true)
 
 
-ifeq ($(strip $(PL_MQTT_MODULE)),true)
+ifeq ($(strip $(ZPL_MQTT_MODULE)),true)
 MQTT_ROOT=$(COMPONENT_ROOT)/mqtt
-PLPRODS += $(MQTT_ROOT)
-PL_INCLUDE += -I$(MQTT_ROOT)
-PL_INCLUDE += -I$(MQTT_ROOT)/mqttlib
-#PL_INCLUDE += -I$(MQTT_ROOT)/mqttc
-#PL_INCLUDE += -I$(MQTT_ROOT)/mqtts
+ZPLPRODS += $(MQTT_ROOT)
+ZPL_INCLUDE += -I$(MQTT_ROOT)
+ZPL_INCLUDE += -I$(MQTT_ROOT)/mqttlib
+#ZPL_INCLUDE += -I$(MQTT_ROOT)/mqttc
+#ZPL_INCLUDE += -I$(MQTT_ROOT)/mqtts
 
-PL_DEFINE += -DPL_MQTT_MODULE
+ZPL_DEFINE += -DZPL_MQTT_MODULE
 
 export MQTT_SHARED_LIBRARIES = false
 ifeq ($(strip $(MQTT_SHARED_LIBRARIES)),true)
-PL_LDLIBS += -lmosquitto
+ZPL_LDLIBS += -lmosquitto
 endif
-
-PLCLI_DIR += $(CLI_ROOT)/mqtt
-endif #($(strip $(PL_MQTT_MODULE)),true)
+endif #($(strip $(ZPL_MQTT_MODULE)),true)
 
 
-ifeq ($(strip $(PL_WEBSERVER_MODULE)),true)
+ifeq ($(strip $(ZPL_WEBSERVER_MODULE)),true)
 WEBGUI_ROOT=$(COMPONENT_ROOT)/webserver
-PLPRODS += $(WEBGUI_ROOT)
-PL_INCLUDE += -I$(WEBGUI_ROOT)
-PL_INCLUDE += -I$(WEBGUI_ROOT)/include
-PL_DEFINE += -DPL_WEBGUI_MODULE
+ZPLPRODS += $(WEBGUI_ROOT)
+ZPL_INCLUDE += -I$(WEBGUI_ROOT)
+ZPL_INCLUDE += -I$(WEBGUI_ROOT)/include
+ZPL_DEFINE += -DZPL_WEBGUI_MODULE
 endif
 
-ifeq ($(strip $(PL_MODBUS_MODULE)),true)
+ifeq ($(strip $(ZPL_MODBUS_MODULE)),true)
 MODBUS_ROOT=$(COMPONENT_ROOT)/modbus
-PLPRODS += $(MODBUS_ROOT)
-PL_INCLUDE += -I$(MODBUS_ROOT)
-PL_INCLUDE += -I$(MODBUS_ROOT)/include
-PL_DEFINE += -DPL_MODBUS_MODULE
-endif
-
-endif#($(strip $(PL_COMPONENT_MODULE)),true)
-
-
-ifeq ($(strip $(PL_APPLICATION_MODULE)),true)
-PLPRODS += $(APP_ROOT)
-
-PL_INCLUDE += -I$(APP_ROOT)
-
-PL_DEFINE += -DPL_APP_MODULE
-
-ifeq ($(strip $(PL_APP_X5_MODULE)),true)
-PLM_DEFINE += -DAPP_X5BA_MODULE
-endif
-ifeq ($(strip $(PL_APP_V9_MODULE)),true)
-PLM_DEFINE += -DAPP_V9_MODULE
-PLM_DEFINE += -DPL_VIDEO_MODULE
-#PL_LDLIBS += -loal_privateProtocol
-endif
-PLCLI_DIR += $(CLI_ROOT)/app
+ZPLPRODS += $(MODBUS_ROOT)
+ZPL_INCLUDE += -I$(MODBUS_ROOT)
+ZPL_INCLUDE += -I$(MODBUS_ROOT)/include
+ZPL_DEFINE += -DZPL_MODBUS_MODULE
 endif
 
 
-ifeq ($(strip $(PL_TOOLS_MODULE)),true)
+ifeq ($(strip $(ZPL_ONVIF_MODULE)),true)
+ZPLPRODS += $(COMPONENT_ROOT)/onvif
+ZPL_INCLUDE += -I$(COMPONENT_ROOT)/onvif -I$(COMPONENT_ROOT)/onvif/gsoap -I$(COMPONENT_ROOT)/onvif/onvifgen
+ZPL_DEFINE += -DZPL_ONVIF_MODULE -DSOAP_MEM_DEBUG  -DSOAP_DEBUG -DDEBUG_STAMP -DWITH_DOM -DWITH_NONAMESPACES -D__GLIBC__
+ifeq ($(strip $(ZPL_ONVIF_SSL)),true)
+ZPL_DEFINE += -DZPL_ONVIF_SSL -DWITH_OPENSSL
+endif
+endif	
 
-ifeq ($(strip $(PL_TOOLS_PROCESS)),true)
-PLPRODS += $(TOOLS_ROOT)/process
-PL_INCLUDE += -I$(TOOLS_ROOT)/process
-PL_DEFINE += -DDOUBLE_PROCESS
+endif#($(strip $(ZPL_COMPONENT_MODULE)),true)
+
+
+ifeq ($(strip $(ZPL_APPLICATION_MODULE)),true)
+ZPLPRODS += $(APP_ROOT)
+
+ZPL_INCLUDE += -I$(APP_ROOT)
+
+ZPL_DEFINE += -DZPL_APP_MODULE
+
+ifeq ($(strip $(ZPL_APP_X5_MODULE)),true)
+ZPLM_DEFINE += -DAPP_X5BA_MODULE
+endif
+ifeq ($(strip $(ZPL_APP_V9_MODULE)),true)
+ZPLM_DEFINE += -DAPP_V9_MODULE
+ZPLM_DEFINE += -DZPL_VIDEO_MODULE
+#ZPL_LDLIBS += -loal_privateProtocol
+endif
 endif
 
-ifeq ($(strip $(PL_TOOLS_QUECTEL_CM)),true)
-PLPRODS += $(TOOLS_ROOT)/quectel-CM
-PL_INCLUDE += -I$(TOOLS_ROOT)/quectel-CM
+
+ifeq ($(strip $(ZPL_TOOLS_MODULE)),true)
+
+ifeq ($(strip $(ZPL_TOOLS_PROCESS)),true)
+ZPLPRODS += $(TOOLS_ROOT)/process
+ZPL_INCLUDE += -I$(TOOLS_ROOT)/process
+ZPL_DEFINE += -DZPL_TOOLS_PROCESS
 endif
 
-ifeq ($(strip $(PL_TOOLS_SYSTEM)),true)
-PLPRODS += $(TOOLS_ROOT)/system
-PL_INCLUDE += -I$(TOOLS_ROOT)/system
+ifeq ($(strip $(ZPL_TOOLS_QUECTEL_CM)),true)
+ZPLPRODS += $(TOOLS_ROOT)/quectel-CM
+ZPL_INCLUDE += -I$(TOOLS_ROOT)/quectel-CM
+endif
+
+ifeq ($(strip $(ZPL_TOOLS_SYSTEM)),true)
+ZPLPRODS += $(TOOLS_ROOT)/system
+ZPL_INCLUDE += -I$(TOOLS_ROOT)/system
+endif
+
+
+ifeq ($(strip $(ZPL_VTYSH_MODULE)),true)
+ZPLPRODS += $(TOOLS_ROOT)/vtysh
+ZPL_INCLUDE += -I$(TOOLS_ROOT)/vtysh
+ZPL_DEFINE += -DZPL_VTYSH_MODULE
 endif
 
 endif
 
 
+ZPLPRODS += $(ZPLPRODS_LAST)
 
 #
 # 下面两个模块保持在最后
 # 
-ifeq ($(strip $(PL_CLI_MODULE)),true)
-PLPRODS += $(PLCLI_DIR)
-endif
 
 
 #
-PLPRODS += $(STARTUP_ROOT)/src
-PL_INCLUDE += -I$(STARTUP_ROOT)/src
-PLPRODS += $(STARTUP_ROOT)/etc
+ZPLPRODS += $(STARTUP_ROOT)/src
+ZPL_INCLUDE += -I$(STARTUP_ROOT)/src
+ZPLPRODS += $(STARTUP_ROOT)/etc

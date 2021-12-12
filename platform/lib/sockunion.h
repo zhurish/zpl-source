@@ -27,17 +27,17 @@
 extern "C" {
 #endif
 
-#ifdef PL_NSM_MODULE
+#ifdef ZPL_NSM_MODULE
 #include "if.h"
 #else
-typedef ospl_uint32  ifindex_t;
+typedef zpl_uint32  ifindex_t;
 #endif
 #if 0
 union sockunion {
   struct sockinet {
-    ospl_uchar si_len;
-    ospl_family_t si_family;
-    ospl_ushort si_port;
+    zpl_uchar si_len;
+    zpl_family_t si_family;
+    zpl_ushort si_port;
   } su_si;
   struct sockaddr_in  su_sin;
   struct sockaddr_in6 su_sin6;
@@ -93,53 +93,53 @@ enum connect_result
 
 /* Prototypes. */
 extern int str2sockunion (const char *, union sockunion *);
-extern const char *sockunion2str (const union sockunion *, ospl_char *, ospl_size_t);
+extern const char *sockunion2str (const union sockunion *, zpl_char *, zpl_size_t);
 extern int sockunion_cmp (const union sockunion *, const union sockunion *);
 extern int sockunion_same (const union sockunion *, const union sockunion *);
-extern ospl_uint32  sockunion_hash (const union sockunion *);
+extern zpl_uint32  sockunion_hash (const union sockunion *);
 
-extern ospl_size_t family2addrsize(ospl_family_t family);
-extern ospl_size_t sockunion_get_addrlen(const union sockunion *);
-extern const ospl_uchar *sockunion_get_addr(const union sockunion *);
-extern ospl_ushort sockunion_get_port (const union sockunion *);
-extern void sockunion_set(union sockunion *, ospl_family_t family, const ospl_uchar *addr, ospl_size_t bytes);
+extern zpl_size_t family2addrsize(zpl_family_t family);
+extern zpl_size_t sockunion_get_addrlen(const union sockunion *);
+extern const zpl_uchar *sockunion_get_addr(const union sockunion *);
+extern zpl_ushort sockunion_get_port (const union sockunion *);
+extern void sockunion_set(union sockunion *, zpl_family_t family, const zpl_uchar *addr, zpl_size_t bytes);
 
 extern union sockunion *sockunion_str2su (const char *str);
-extern int sockunion_accept (int sock, union sockunion *);
-extern int sockunion_stream_socket (union sockunion *);
-extern int sockopt_reuseaddr (int);
-extern int sockopt_reuseport (int);
-extern int sockopt_int(int fd, int level, int optname, int optval);
-extern int sockopt_broadcast(int fd);
-extern int sockopt_keepalive(int fd);
-extern int sockopt_bindtodevice(int fd, const char *iface);
-extern int sockopt_v6only (ospl_family_t family, int sock);
-extern int sockunion_bind (int sock, union sockunion *, 
-                           ospl_ushort, union sockunion *);
-extern int sockopt_ttl (ospl_family_t family, int sock, int ttl);
-extern int sockopt_minttl (ospl_family_t family, int sock, int minttl);
-extern int sockopt_cork (int sock, int onoff);
-extern int sockunion_socket (const union sockunion *su);
-extern const char *inet_sutop (const union sockunion *su, ospl_char *str);
-extern enum connect_result sockunion_connect (int fd, const union sockunion *su,
-                                              ospl_ushort port,
+extern zpl_socket_t sockunion_accept (zpl_socket_t sock, union sockunion *);
+extern zpl_socket_t sockunion_stream_socket (union sockunion *);
+extern int sockopt_reuseaddr (zpl_socket_t);
+extern int sockopt_reuseport (zpl_socket_t);
+extern int sockopt_int(zpl_socket_t fd, int level, int optname, int optval);
+extern int sockopt_broadcast(zpl_socket_t fd);
+extern int sockopt_keepalive(zpl_socket_t fd);
+extern int sockopt_bindtodevice(zpl_socket_t fd, const char *iface);
+extern int sockopt_v6only (zpl_family_t family, zpl_socket_t sock);
+extern int sockunion_bind (zpl_socket_t sock, union sockunion *, 
+                           zpl_ushort, union sockunion *);
+extern int sockopt_ttl (zpl_family_t family, zpl_socket_t sock, int ttl);
+extern int sockopt_minttl (zpl_family_t family, zpl_socket_t sock, int minttl);
+extern int sockopt_cork (zpl_socket_t sock, int onoff);
+extern zpl_socket_t sockunion_socket (const union sockunion *su);
+extern const char *inet_sutop (const union sockunion *su, zpl_char *str);
+extern enum connect_result sockunion_connect (zpl_socket_t fd, const union sockunion *su,
+                                              zpl_ushort port,
                                               ifindex_t);
-extern union sockunion *sockunion_getsockname (int);
-extern union sockunion *sockunion_getpeername (int);
+extern union sockunion *sockunion_getsockname (zpl_socket_t);
+extern union sockunion *sockunion_getpeername (zpl_socket_t);
 extern union sockunion *sockunion_dup (const union sockunion *);
 extern void sockunion_free (union sockunion *);
 
 #ifndef HAVE_INET_NTOP
-extern const char * inet_ntop (ospl_family_t family, const void *addrptr, 
-                               ospl_char *strptr, ospl_size_t len);
+extern const char * ipstack_inet_ntop (zpl_family_t family, const void *addrptr, 
+                               zpl_char *strptr, zpl_size_t len);
 #endif /* HAVE_INET_NTOP */
 
 #ifndef HAVE_INET_PTON
-extern int inet_pton (ospl_family_t family, const char *strptr, void *addrptr);
+extern int ipstack_inet_pton (zpl_family_t family, const char *strptr, void *addrptr);
 #endif /* HAVE_INET_PTON */
 
 #ifndef HAVE_INET_ATON
-extern int inet_aton (const char *cp, struct in_addr *inaddr);
+extern int ipstack_inet_aton (const char *cp, struct in_addr *inaddr);
 #endif
  
 #ifdef __cplusplus

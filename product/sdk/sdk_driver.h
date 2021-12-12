@@ -137,13 +137,13 @@ typedef enum drv_dos_type_e {
 } drv_dos_type_t;
 
 */
-#define PL_SDK_BCM53125
+#define ZPL_SDK_BCM53125
 
 
 #include "hal_driver.h"
 
 
-#ifdef PL_SDK_BCM53125
+#ifdef ZPL_SDK_BCM53125
 #include "b53_mdio.h"
 #include "b53_regs.h"
 //#include "b53_driver.h"
@@ -154,7 +154,7 @@ typedef struct sdk_driver {
 	int		product;
 	int 	id;
 	char 	*name;
-#ifdef PL_SDK_BCM53125
+#ifdef ZPL_SDK_BCM53125
 	struct b53125_device *b53_device;
 #endif
 }sdk_driver_t;

@@ -6,7 +6,7 @@
  */
 
 #define HAS_BOOL 1
-#include "zebra.h"
+#include "zpl_include.h"
 #include "module.h"
 #include "memory.h"
 #include "zassert.h"
@@ -23,7 +23,7 @@
 #include "web_app.h"
 #include "web_api.h"
 
-//#ifdef PL_APP_MODULE
+//#ifdef ZPL_APP_MODULE
 #include "application.h"
 
 
@@ -184,7 +184,7 @@ static int web_video_snap_handle(Webs *wp, char *path, char *query)
 		/*
 		 * 根据ID获取抓拍或告警视频信息
 		 */
-		ospl_uint32 i = 0;
+		zpl_uint32 i = 0;
 		v9_video_cap_t cap;
 		memset (&cap, 0, sizeof(v9_video_cap_t));
 
@@ -297,7 +297,7 @@ static int web_video_pic_keywork_get(Webs *wp, char *path, char *query, v9_cap_k
 		return web_return_application_json_msg(wp, ERROR, "获取相似度失败", NULL);
 		//return web_return_text_plain(wp, ERROR);
 	}
-	keyw->key.input_value = (ospl_float)(atoi(strval)/100);
+	keyw->key.input_value = (zpl_float)(atoi(strval)/100);
 
 	zlog_debug(MODULE_WEB, "======================%s:keyw->key.input_value=%f(%s)\r\n",__func__, keyw->key.input_value, strval);
 
@@ -323,7 +323,7 @@ static int web_video_pic_keywork_get(Webs *wp, char *path, char *query, v9_cap_k
 
 	_WEB_DBG_TRAP("%s:starttime=%d endtime=%d\r\n",__func__,keyw->starttime,keyw->endtime);
 
-	if(v9_app_snapfea_key_alloc(&keyw->key, ospl_false) != OK)
+	if(v9_app_snapfea_key_alloc(&keyw->key, zpl_false) != OK)
 	{
 		return web_return_application_json_msg(wp, ERROR, "获取特征点存储失败", NULL);
 	}
@@ -434,7 +434,7 @@ static int web_video_snap_pichandle(Webs *wp, char *path, char *query)
 		/*
 		 * 根据ID获取抓拍或告警视频信息
 		 */
-		ospl_uint32 i = 0;
+		zpl_uint32 i = 0;
 		v9_video_cap_t cap;
 		memset (&cap, 0, sizeof(v9_video_cap_t));
 
@@ -619,7 +619,7 @@ static int web_video_warn_handle(Webs *wp, char *path, char *query)
 		/*
 		 * 根据ID获取抓拍或告警视频信息
 		 */
-		ospl_uint32 i = 0;
+		zpl_uint32 i = 0;
 
 		v9_video_cap_t cap;
 		//keywork.table = 1;
@@ -769,7 +769,7 @@ static int web_video_real_warn_handle(Webs *wp, char *path, char *query)
 		/*
 		 * 根据ID获取抓拍或告警视频信息
 		 */
-		ospl_uint32 i = 0;
+		zpl_uint32 i = 0;
 
 		v9_video_cap_t cap;
 		memset (&cap, 0, sizeof(v9_video_cap_t));

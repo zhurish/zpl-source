@@ -14,6 +14,9 @@ type Makefile.head ..\win32config Makefile.tail > UsageEnvironment.mak
 cd ../BasicUsageEnvironment
 del /Q BasicUsageEnvironment.mak
 type Makefile.head ..\win32config Makefile.tail > BasicUsageEnvironment.mak
+cd ../liveMediaUtil
+del /Q liveMediaUtil.mak
+type Makefile.head ..\win32config Makefile.tail > liveMediaUtil.mak
 cd ../testProgs
 del /Q testProgs.mak
 type Makefile.head ..\win32config Makefile.tail > testProgs.mak

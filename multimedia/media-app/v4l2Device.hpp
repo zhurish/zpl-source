@@ -24,14 +24,15 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 extern "C"
 {
 #include "device/v4l2_driver.h"
+#include "liveMediaUtil/rtsp_server_wrapper.h"
 };
 
 #include "videoEncoder.hpp"
-#include "FramedQueue.hpp"
+//#include "FramedQueue.hpp"
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "ospl_type.h"
+#include "zpl_type.h"
 #ifdef __cplusplus
 }
 #endif
@@ -44,13 +45,13 @@ public:
   int v4l2DeviceOpen(char *device);
   int v4l2DeviceStart(videoEncoder *encoder);
   int v4l2DeviceStop();
-  int v4l2DeviceStartCapture(struct v4l2_t_buf *buf, int timeout);
-  int v4l2DeviceStartCapture(FramedQueue *m_queue);
+  int v4l2DeviceStartCaptureHw(struct v4l2_t_buf *buf, int timeout);
+  int v4l2DeviceStartCapture(lst_data_queue_t *m_queue);
   //static int recebe_buffer (struct v4l2_buffer *v4l2_buf, struct v4l2_t_buf *buf);
 private:
   //int v4l2_read_capture(struct v4l2_driver *drv);
 private:
-  videoEncoder *m_videoEncoder = nullptr;
+  videoEncoder *m_videoEncoder = NULL;
   struct v4l2_driver video_drv;
   struct v4l2_t_buf obuf;
   int m_width;

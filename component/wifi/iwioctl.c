@@ -8,23 +8,9 @@
 
 
 
-
-#include "zebra.h"
-#include "vty.h"
-#include "if.h"
-
-#include "buffer.h"
-#include "command.h"
-#include "if_name.h"
-#include "linklist.h"
-#include "log.h"
-#include "memory.h"
-#include "prefix.h"
-#include "sockunion.h"
-#include "str.h"
-#include "table.h"
-#include "vector.h"
-#include "nsm_vrf.h"
+#include "zpl_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
 #include "iw_config.h"
 #include "iw_ap.h"
@@ -84,7 +70,7 @@ static int iw_vty_obuf_swap(struct vty *vty, char *buf, int len)
 			break;
 		i++;
 	}
-	buffer_put(vty->obuf, (ospl_uchar *) p, j);
+	buffer_put(vty->obuf, (zpl_uchar *) p, j);
 	XFREE(MTYPE_VTY_OUT_BUF, p);
 	return 0;
 }
@@ -139,9 +125,9 @@ int iw_printf(const char *format, ...)
 				p = buf;
 			/* Pointer p must point out buffer. */
 			if(vty->type == VTY_TERM)
-				iw_vty_obuf_swap(vty, (ospl_uchar *) p, len);
+				iw_vty_obuf_swap(vty, (zpl_uchar *) p, len);
 			else
-				buffer_put(vty->obuf, (ospl_uchar *) p, len);
+				buffer_put(vty->obuf, (zpl_uchar *) p, len);
 			/* If p is not different with buf, it is allocated buffer.  */
 			if (p != buf)
 				XFREE(MTYPE_VTY_OUT_BUF, p);
@@ -660,13 +646,13 @@ int iw_client_dev_connect_show(struct interface *ifp, struct vty *vty)
 
 static int iw_access_point_essid_get(void *p, void *input)
 {
-	ospl_uint8 *essid = p;
+	zpl_uint8 *essid = p;
 	struct ether_addr * ether_wap = (struct ether_addr *)input;
 	memcpy(essid, ether_wap->ether_addr_octet, 6);
 	return OK;
 }
 
-int iw_client_dev_connect_get(struct interface *ifp, ospl_uint8 essid[])
+int iw_client_dev_connect_get(struct interface *ifp, zpl_uint8 essid[])
 {
 	assert(ifp != NULL);
 	if(ifp->k_ifindex && if_is_wireless(ifp))
@@ -688,7 +674,7 @@ int iw_client_dev_connect_get(struct interface *ifp, ospl_uint8 essid[])
 /*
  * scanning AP
  */
-int iw_client_dev_scan_ap_show(struct interface *ifp, struct vty *vty, ospl_bool detail)
+int iw_client_dev_scan_ap_show(struct interface *ifp, struct vty *vty, zpl_bool detail)
 {
 	assert(ifp != NULL);
 	assert(vty != NULL);
@@ -782,7 +768,7 @@ static int iw_client_dev_connect_script(struct interface *ifp, iw_client_ap_t *a
 	return -1;
 }
 
-#if 1//def DOUBLE_PROCESS
+#if 1//def ZPL_TOOLS_PROCESS
 int iw_client_dev_connect(struct interface *ifp, iw_client_ap_t *ap, char *ssid, char *password)
 {
 	int pid = 0;
@@ -816,14 +802,14 @@ int iw_client_dev_connect(struct interface *ifp, iw_client_ap_t *ap, char *ssid,
 		{
 			zlog_debug(MODULE_WIFI, "running connect process on interface %s ",ifp->name);
 		}
-		os_process_register(PROCESS_DEAMON, path, "/usr/sbin/wpa_supplicant", ospl_false, argv);
+		os_process_register(PROCESS_DEAMON, path, "/usr/sbin/wpa_supplicant", zpl_false, argv);
 		//TODO check if is connect
 		return 0;
 	}
 	return -1;
 }
 
-#ifndef PL_DHCPC_MODULE
+#ifndef ZPL_DHCPC_MODULE
 int iw_client_dev_start_dhcpc(struct interface *ifp)
 {
 	int pid = 0;
@@ -852,7 +838,7 @@ int iw_client_dev_start_dhcpc(struct interface *ifp)
 	{
 		zlog_debug(MODULE_WIFI, "running dhcpc process on interface %s ",ifp->name);
 	}
-	os_process_register(PROCESS_DEAMON, path, "udhcpc", ospl_false, argv1);
+	os_process_register(PROCESS_DEAMON, path, "udhcpc", zpl_false, argv1);
 	//udhcpc -p /var/run/udhcpc-wlan0.pid -s /lib/netifd/dhcp.script -f -t 0
 	//  		-i wlan0 -x hostname:OpenWrt -C -O
 	return 0;
@@ -941,7 +927,7 @@ int iw_client_dev_disconnect(struct interface *ifp)
 	{
 		pid_t	pid = 0;
 		char pidpath[128];
-#ifndef PL_DHCPC_MODULE
+#ifndef ZPL_DHCPC_MODULE
 		memset(pidpath, 0, sizeof(pidpath));
 		snprintf(pidpath, sizeof(pidpath), "%s/udhcpc-%s.pid", DAEMON_VTY_DIR, ifp->k_name);
 		pid = os_pid_get(pidpath);
@@ -980,7 +966,7 @@ int iw_client_dev_disconnect(struct interface *ifp)
 }
 
 
-int iw_client_dev_is_connect(char *ifname, ospl_uint8 *bssid)
+int iw_client_dev_is_connect(char *ifname, zpl_uint8 *bssid)
 {
 	assert(ifname != NULL);
 	return iw_is_connect(ifname, bssid);
@@ -1080,7 +1066,7 @@ static int iw_client_scan_swap(struct wireless_scan * wscan, iw_client_ap_t *ap)
 int iw_client_scan_process(iw_client_t *iw_client)
 {
 	int ret = 0;
-	ospl_uint8 essid[8];
+	zpl_uint8 essid[8];
 	if(!iw_client)
 		return ERROR;
 	struct interface *ifp = if_lookup_by_index(iw_client->ifindex);
@@ -1111,7 +1097,7 @@ int iw_client_scan_process(iw_client_t *iw_client)
 
 				iw_client_dev_connect_get(ifp, essid);
 				if(memcmp(essid, ap.BSSID, NSM_MAC_MAX) == 0)
-					ap.connect = ospl_true;
+					ap.connect = zpl_true;
 				iw_client_ap_set_api(iw_client, ap.BSSID, &ap);
 				iw_client->scan_result = context.result;
 
@@ -1185,14 +1171,14 @@ Station 2c:57:31:7b:e3:88 (on wlan0)
         authorized:     yes
         authenticated:  yes
         associated:     yes
-        preamble:       ospl_int16
+        preamble:       zpl_int16
         WMM/WME:        yes
         MFP:            no
         TDLS peer:      no
         DTIM period:    2
         beacon interval:100
-        ospl_int16 preamble: yes
-        ospl_int16 slot time:yes
+        zpl_int16 preamble: yes
+        zpl_int16 slot time:yes
         connected time: 17 seconds
 root@OpenWrt:/#
  */
@@ -1356,32 +1342,32 @@ static int iw_dev_station_dump_add(iw_ap_t *iw_ap, struct interface *ifp)
 					else if(strstr(buf, "authorized"))
 					{
 						if(strstr(buf, "yes"))
-							connect.authorized = ospl_true;
+							connect.authorized = zpl_true;
 					}
 					else if(strstr(buf, "authenticated"))
 					{
 						if(strstr(buf, "yes"))
-							connect.authenticated = ospl_true;
+							connect.authenticated = zpl_true;
 					}
 					else if(strstr(buf, "associated"))
 					{
 						if(strstr(buf, "yes"))
-							connect.associated = ospl_true;
+							connect.associated = zpl_true;
 					}
 					else if(strstr(buf, "WMM/WME"))
 					{
 						if(strstr(buf, "yes"))
-							connect.WME_WMM = ospl_true;
+							connect.WME_WMM = zpl_true;
 					}
 					else if(strstr(buf, "MFP"))
 					{
 						if(strstr(buf, "yes"))
-							connect.MFP = ospl_true;
+							connect.MFP = zpl_true;
 					}
 					else if(strstr(buf, "TDLS"))
 					{
 						if(strstr(buf, "yes"))
-							connect.TDLS = ospl_true;
+							connect.TDLS = zpl_true;
 					}
 					else if(strstr(buf, "period"))
 					{

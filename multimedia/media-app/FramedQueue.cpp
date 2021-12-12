@@ -35,8 +35,8 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 
 ringBuffer::ringBuffer(const int maxsize)
 {
-  ospl_uint8 *buffer;
-  buffer = new ospl_uint8 [maxsize + 1];
+  zpl_uint8 *buffer;
+  buffer = new zpl_uint8 [maxsize + 1];
   this->bufSize = maxsize;
   this->pToBuf = 0;
   this->pFromBuf = 0;
@@ -53,7 +53,7 @@ void ringBuffer::rngFlush()
   this->pFromBuf = 0;
 }
 
-int ringBuffer::rngBufGet(ospl_uint8 *buffer, int maxbytes)
+int ringBuffer::rngBufGet(zpl_uint8 *buffer, int maxbytes)
 {
   int bytesgot = 0;
   int toBuf = this->pToBuf;
@@ -111,8 +111,8 @@ int ringBuffer::rngBufGet(ospl_uint8 *buffer, int maxbytes)
 * if there is insufficient room in the ring buffer at the time of the call.
 */
 
-int ringBuffer::rngBufPut(ospl_uint8 *buffer, /* buffer to get data from       */
-                          ospl_uint32 nbytes    /* number of bytes to try to put */
+int ringBuffer::rngBufPut(zpl_uint8 *buffer, /* buffer to get data from       */
+                          zpl_uint32 nbytes    /* number of bytes to try to put */
 )
 {
   int bytesput = 0;
@@ -169,7 +169,7 @@ int ringBuffer::rngBufPut(ospl_uint8 *buffer, /* buffer to get data from       *
 * This routine determines if a specified ring buffer is empty.
 *
 * RETURNS:
-* ospl_true if empty, ospl_false if not.
+* zpl_true if empty, zpl_false if not.
 */
 
 bool ringBuffer::rngIsEmpty()
@@ -183,7 +183,7 @@ bool ringBuffer::rngIsEmpty()
 * This routine determines if a specified ring buffer is completely full.
 *
 * RETURNS:
-* ospl_true if full, ospl_false if not.
+* zpl_true if full, zpl_false if not.
 */
 
 bool ringBuffer::rngIsFull()
@@ -211,11 +211,11 @@ int ringBuffer::rngFreeBytes()
 }
 
 //////////////////////listData///////////////////////
-listData::listData(ospl_uint8 *d, int len)
+listData::listData(zpl_uint8 *d, int len)
 {
   this->maxsize = ((len + 3) / 4) * 4;
   this->datasize = len;
-  this->data = new ospl_uint8 [this->maxsize];
+  this->data = new zpl_uint8 [this->maxsize];
   memcpy(this->data, d, len);
 }
 
@@ -226,7 +226,7 @@ listData::~listData()
 }
 
 //////////////////////vectorBuffer///////////////////////
-listData *vectorBuffer::vectorBufferDataCreate(ospl_uint8 *d, int l)
+listData *vectorBuffer::vectorBufferDataCreate(zpl_uint8 *d, int l)
 {
   listData *t = nullptr;
   if (data_unused_list.size())
@@ -287,7 +287,7 @@ bool vectorBuffer::vectorBufferDataIsEmpty()
   }
   return false;
 }
-int vectorBuffer::vectorBufferDataAdd(ospl_uint8 *d, int l)
+int vectorBuffer::vectorBufferDataAdd(zpl_uint8 *d, int l)
 {
   if ((data_list.size() + data_unused_list.size()) >= node_num)
   {
@@ -338,7 +338,7 @@ vectorBuffer::~vectorBuffer()
   data_unused_list.clear();
 }
 
-int vectorBuffer::vectorBufferDataGet(ospl_uint8 *d, int l)
+int vectorBuffer::vectorBufferDataGet(zpl_uint8 *d, int l)
 {
   if (data_list.size())
   {
@@ -358,7 +358,7 @@ int vectorBuffer::vectorBufferDataGet(ospl_uint8 *d, int l)
 }
 
 //////////////////////listBuffer///////////////////////
-listData *listBuffer::listBufferDataCreate(ospl_uint8 *d, int l)
+listData *listBuffer::listBufferDataCreate(zpl_uint8 *d, int l)
 {
   listData *t = nullptr;
   if (data_unused_list.size())
@@ -419,7 +419,7 @@ bool listBuffer::listBufferDataIsEmpty()
   }
   return false;
 }
-int listBuffer::listBufferDataAdd(ospl_uint8 *d, int l)
+int listBuffer::listBufferDataAdd(zpl_uint8 *d, int l)
 {
   if ((data_list.size() + data_unused_list.size()) >= node_num)
   {
@@ -470,7 +470,7 @@ listBuffer::~listBuffer()
   data_unused_list.clear();
 }
 
-int listBuffer::listBufferDataGet(ospl_uint8 *d, int l)
+int listBuffer::listBufferDataGet(zpl_uint8 *d, int l)
 {
   if (data_list.size())
   {
@@ -491,7 +491,7 @@ int listBuffer::listBufferDataGet(ospl_uint8 *d, int l)
 
 //////////////////////FramedQueue///////////////////////
 
-FramedQueue::FramedQueue(ospl_uint32 type)
+FramedQueue::FramedQueue(zpl_uint32 type)
 {
   m_type = type;
   m_fd[0] = m_fd[1] = 0;
@@ -501,7 +501,7 @@ FramedQueue::FramedQueue(ospl_uint32 type)
   ring_buffer = nullptr;
 }
 /*
-FramedQueue::FramedQueue(ospl_uint32 type, DT *p)
+FramedQueue::FramedQueue(zpl_uint32 type, DT *p)
 {
   m_type = type;
   m_fd[0] = m_fd[1] = 0;
@@ -595,7 +595,7 @@ void FramedQueue::FramedQueuePost()
 #endif
 }
 
-int FramedQueue::FramedQueueDataPut(ospl_uint8 *d, int l)
+int FramedQueue::FramedQueueDataPut(zpl_uint8 *d, int l)
 {
   int ret = 0;
   m_mutex.lock();
@@ -629,7 +629,7 @@ int FramedQueue::FramedQueueDataPut(ospl_uint8 *d, int l)
   return ret;
 }
 
-int FramedQueue::FramedQueueDataGet(ospl_uint8 *d, int l)
+int FramedQueue::FramedQueueDataGet(zpl_uint8 *d, int l)
 {
   int ret = 0;
   m_mutex.lock();

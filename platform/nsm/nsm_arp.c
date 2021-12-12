@@ -5,24 +5,14 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "memory.h"
-#include "command.h"
-#include "memory.h"
-#include "memtypes.h"
-#include "prefix.h"
-#include "if.h"
-#include "nsm_interface.h"
-#include <log.h>
-
-#include "os_list.h"
-
-#include "nsm_mac.h"
-#include "nsm_arp.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "nsm_include.h"
 
 static Gip_arp_t gIparp;
 
-static int ip_arp_cleanup(arp_class_t type, ospl_bool all, ifindex_t ifindex, vrf_id_t id);
+static int ip_arp_cleanup(arp_class_t type, zpl_bool all, ifindex_t ifindex, vrf_id_t id);
 static int ip_arp_dynamic_update(void *pVoid);
 
 #define ARP_DYNAMIC_INC(n)	(gIparp.dynamic_cnt) += (n)
@@ -30,21 +20,6 @@ static int ip_arp_dynamic_update(void *pVoid);
 
 #define ARP_STATIC_INC(n)	(gIparp.static_cnt) += (n)
 #define ARP_STATIC_SUB(n)	(gIparp.static_cnt) -= (n)
-
-struct module_list module_list_nsmarp = 
-{ 
-	.module=MODULE_NSMARP, 
-	.name="NSMARP", 
-	.module_init=nsm_ip_arp_init, 
-	.module_exit=nsm_ip_arp_exit, 
-	.module_task_init=NULL, 
-	.module_task_exit=NULL, 
-	.module_cmd_init=NULL, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
-	.taskid=0,
-};
 
 int nsm_ip_arp_init(void)
 {
@@ -59,7 +34,7 @@ int nsm_ip_arp_exit(void)
 {
 	if(lstCount(gIparp.arpList))
 	{
-		ip_arp_cleanup(0, ospl_true, 0, 0);
+		ip_arp_cleanup(0, zpl_true, 0, 0);
 		lstFree(gIparp.arpList);
 		free(gIparp.arpList);
 		gIparp.arpList = NULL;
@@ -150,7 +125,7 @@ int nsm_ip_arp_lookup_api(struct prefix *address)
 }
 
 
-int nsm_ip_arp_add_api(struct interface *ifp, struct prefix *address, ospl_char *mac)
+int nsm_ip_arp_add_api(struct interface *ifp, struct prefix *address, zpl_char *mac)
 {
 	int ret = ERROR;
 	ip_arp_t value;
@@ -163,7 +138,7 @@ int nsm_ip_arp_add_api(struct interface *ifp, struct prefix *address, ospl_char 
 		prefix_copy (&value.address, address);
 		value.class = ARP_STATIC;
 		value.ifindex = ifp->ifindex;
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 		if(pal_interface_arp_add(ifp, address, mac) == OK)
 #endif
 		{
@@ -192,7 +167,7 @@ int nsm_ip_arp_del_api(struct interface *ifp, struct prefix *address)
 	value = ip_arp_lookup_node(address);
 	if(value && value->class == ARP_STATIC)
 	{
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 		if(pal_interface_arp_delete(ifp, value->address) == OK)
 #endif
 		{
@@ -228,7 +203,7 @@ int nsm_ip_arp_get_api(struct prefix *address, ip_arp_t *gip_arp)
 }
 
 
-int nsm_ip_arp_ageing_time_set_api(ospl_uint32 ageing)
+int nsm_ip_arp_ageing_time_set_api(zpl_uint32 ageing)
 {
 	int ret = ERROR;
 	if(gIparp.mutex)
@@ -241,7 +216,7 @@ int nsm_ip_arp_ageing_time_set_api(ospl_uint32 ageing)
 	return ret;
 }
 
-int nsm_ip_arp_ageing_time_get_api(ospl_uint32 *ageing)
+int nsm_ip_arp_ageing_time_get_api(zpl_uint32 *ageing)
 {
 	int ret = ERROR;
 	//ip_arp_t *value;
@@ -256,7 +231,7 @@ int nsm_ip_arp_ageing_time_get_api(ospl_uint32 *ageing)
 	return ret;
 }
 
-int nsm_ip_arp_timeout_set_api(ospl_uint32 ageing)
+int nsm_ip_arp_timeout_set_api(zpl_uint32 ageing)
 {
 	int ret = ERROR;
 	if(gIparp.mutex)
@@ -268,7 +243,7 @@ int nsm_ip_arp_timeout_set_api(ospl_uint32 ageing)
 		os_mutex_unlock(gIparp.mutex);
 	return ret;
 }
-int nsm_ip_arp_timeout_get_api(ospl_uint32 *ageing)
+int nsm_ip_arp_timeout_get_api(zpl_uint32 *ageing)
 {
 	int ret = ERROR;
 	//ip_arp_t *value;
@@ -284,7 +259,7 @@ int nsm_ip_arp_timeout_get_api(ospl_uint32 *ageing)
 }
 
 
-int nsm_ip_arp_retry_interval_set_api(ospl_uint32 ageing)
+int nsm_ip_arp_retry_interval_set_api(zpl_uint32 ageing)
 {
 	int ret = ERROR;
 	if(gIparp.mutex)
@@ -296,7 +271,7 @@ int nsm_ip_arp_retry_interval_set_api(ospl_uint32 ageing)
 		os_mutex_unlock(gIparp.mutex);
 	return ret;
 }
-int nsm_ip_arp_retry_interval_get_api(ospl_uint32 *ageing)
+int nsm_ip_arp_retry_interval_get_api(zpl_uint32 *ageing)
 {
 	int ret = ERROR;
 	//ip_arp_t *value;
@@ -311,7 +286,7 @@ int nsm_ip_arp_retry_interval_get_api(ospl_uint32 *ageing)
 	return ret;
 }
 
-int nsm_ip_arp_proxy_set_api(ospl_uint32 ageing)
+int nsm_ip_arp_proxy_set_api(zpl_uint32 ageing)
 {
 	int ret = ERROR;
 	if(gIparp.mutex)
@@ -323,7 +298,7 @@ int nsm_ip_arp_proxy_set_api(ospl_uint32 ageing)
 		os_mutex_unlock(gIparp.mutex);
 	return ret;
 }
-int nsm_ip_arp_proxy_get_api(ospl_uint32 *ageing)
+int nsm_ip_arp_proxy_get_api(zpl_uint32 *ageing)
 {
 	int ret = ERROR;
 	//ip_arp_t *value;
@@ -338,7 +313,7 @@ int nsm_ip_arp_proxy_get_api(ospl_uint32 *ageing)
 	return ret;
 }
 
-int nsm_ip_arp_proxy_local_set_api(ospl_uint32 ageing)
+int nsm_ip_arp_proxy_local_set_api(zpl_uint32 ageing)
 {
 	int ret = ERROR;
 	if(gIparp.mutex)
@@ -351,7 +326,7 @@ int nsm_ip_arp_proxy_local_set_api(ospl_uint32 ageing)
 	return ret;
 }
 
-int nsm_ip_arp_proxy_local_get_api(ospl_uint32 *ageing)
+int nsm_ip_arp_proxy_local_get_api(zpl_uint32 *ageing)
 {
 	int ret = ERROR;
 	//ip_arp_t *value;
@@ -366,7 +341,7 @@ int nsm_ip_arp_proxy_local_get_api(ospl_uint32 *ageing)
 	return ret;
 }
 
-static int ip_arp_cleanup(arp_class_t type, ospl_bool all, ifindex_t ifindex, vrf_id_t vrf)
+static int ip_arp_cleanup(arp_class_t type, zpl_bool all, ifindex_t ifindex, vrf_id_t vrf)
 {
 	ip_arp_t *pstNode = NULL;
 	NODE index;
@@ -395,7 +370,7 @@ static int ip_arp_cleanup(arp_class_t type, ospl_bool all, ifindex_t ifindex, vr
 				ifp = if_lookup_by_index(pstNode->ifindex);
 				if(ifp)
 				{
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 					if(pal_interface_arp_delete(ifp, pstNode->address) == OK)
 #endif
 					{
@@ -420,7 +395,7 @@ static int ip_arp_cleanup(arp_class_t type, ospl_bool all, ifindex_t ifindex, vr
 				ifp = if_lookup_by_index(pstNode->ifindex);
 				if(ifp)
 				{
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 					if(pal_interface_arp_delete(ifp, pstNode->address) == OK)
 #endif
 					{
@@ -445,7 +420,7 @@ static int ip_arp_cleanup(arp_class_t type, ospl_bool all, ifindex_t ifindex, vr
 				ifp = if_lookup_by_index(pstNode->ifindex);
 				if(ifp)
 				{
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 					if(pal_interface_arp_delete(ifp, pstNode->address) == OK)
 #endif
 					{
@@ -470,7 +445,7 @@ static int ip_arp_cleanup(arp_class_t type, ospl_bool all, ifindex_t ifindex, vr
 				ifp = if_lookup_by_index(pstNode->ifindex);
 				if(ifp)
 				{
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 					if(pal_interface_arp_delete(ifp, pstNode->address) == OK)
 #endif
 					{
@@ -488,7 +463,7 @@ static int ip_arp_cleanup(arp_class_t type, ospl_bool all, ifindex_t ifindex, vr
 }
 
 
-int ip_arp_cleanup_api(arp_class_t type, ospl_bool all, ifindex_t ifindex)
+int ip_arp_cleanup_api(arp_class_t type, zpl_bool all, ifindex_t ifindex)
 {
 	return ip_arp_cleanup( type,  all,  ifindex, 0);
 }
@@ -535,11 +510,11 @@ static int ip_arp_dynamic_del_cb(ip_arp_t *value)
 	return ret;
 }
 
-int ip_arp_dynamic_cb(ospl_action action, void *pVoid)
+int ip_arp_dynamic_cb(zpl_action action, void *pVoid)
 {
-	if(action == ospl_add)
+	if(action == zpl_add)
 		return os_job_add(ip_arp_dynamic_add_cb, pVoid);
-	else if(action == ospl_delete)
+	else if(action == zpl_delete)
 		return os_job_add(ip_arp_dynamic_del_cb, pVoid);
 	return ERROR;	
 }
@@ -569,10 +544,10 @@ static int ip_arp_dynamic_update(void *pVoid)
 }
 
 
-
+#ifdef ZPL_SHELL_MODULE
 static int _nsm_ip_arp_table_config(ip_arp_t *node, struct vty *vty)
 {
-	ospl_char mac[32], ip[128], ifname[32];
+	zpl_char mac[32], ip[128], ifname[32];
 	union prefix46constptr pu;
 	//struct vty *vty = user->vty;
 	if(node->class  != ARP_STATIC)
@@ -591,7 +566,7 @@ static int _nsm_ip_arp_table_config(ip_arp_t *node, struct vty *vty)
 	pu.p = &node->address;
 	prefix_2_address_str (pu, ip, sizeof(ip));
 
-	vty_out(vty, "ip arp %s %s %s %s", /*inet_ntoa(node->address.u.prefix4)*/ip, mac, ifname, VTY_NEWLINE);
+	vty_out(vty, "ip arp %s %s %s %s", /*ipstack_inet_ntoa(node->address.u.prefix4)*/ip, mac, ifname, VTY_NEWLINE);
 /*	if(node->action == ARP_DYNAMIC)
 	{
 		vty_out(vty, "ip arp %s %s", mac, VTY_NEWLINE);
@@ -611,12 +586,12 @@ int nsm_ip_arp_config(struct vty *vty)
 
 int nsm_ip_arp_ageing_config(struct vty *vty)
 {
-	ospl_uint32 agtime = 0;
+	zpl_uint32 agtime = 0;
 	nsm_ip_arp_ageing_time_get_api(&agtime);
 	//ip arp ageing-time 33
 	vty_out(vty, "ip arp ageing-time %d %s", agtime, VTY_NEWLINE);
 	return 1;
 }
-
+#endif
 
 //

@@ -26,11 +26,38 @@
 extern "C" {
 #endif
 
-#include "nsm_redistribute.h"
+#include <os_include.h>
+#include <zpl_include.h>
+#include <lib_include.h>
+//#include "nsm_client.h"
 
-#include "nsm_client.h"
+enum
+{
+	NSM_NONE = 0,
+	NSM_PORT,
+	NSM_TRUNK,
+	NSM_VLAN,
+	NSM_MAC,
+	NSM_DOT1X,
+	NSM_SEC,	//security
+	NSM_QOS,
+	NSM_ACL,
+	NSM_MIRROR,
+	NSM_PPP,
+	NSM_PPPOE,
+	NSM_SERIAL,
+	//NSM_DHCP,
+	//NSM_DHCPS,
 
+	NSM_WIFI,
 
+	NSM_VETH,	// tun/tap interface
+	NSM_TUNNEL,	//tunnel interface
+	NSM_BRIDGE, //bridge interface
+
+	NSM_KERENL,
+	NSM_MAX,
+};
 
 
 /* For interface multicast configuration. */
@@ -73,15 +100,22 @@ typedef enum {
 
 } nsm_speed_en;
 
+struct nsm_interface_cb
+{
+	int (*nsm_intf_add_cb)(struct interface *);
+	int (*nsm_intf_del_cb)(struct interface *);
+	int (*nsm_intf_write_cb)(struct vty *, struct interface *);
+};
+
 /* `zebra' daemon local interface structure. */
 struct nsm_interface
 {
   struct interface *ifp;
   /* Shutdown configuration. */
-  ospl_uchar shutdown;
+  zpl_uchar shutdown;
 
   /* Multicast configuration. */
-  ospl_uchar multicast;
+  zpl_uchar multicast;
   
   nsm_duplex_en	duplex;
   nsm_speed_en	speed;
@@ -90,7 +124,7 @@ struct nsm_interface
   nsm_linkdetect_en linkdetect;
   
   void *nsm_client[NSM_MAX];
-
+  
 /*  void	*vlan;
 
   void	*l2switch;
@@ -100,62 +134,63 @@ struct nsm_interface
 };
 
 extern void nsm_interface_init(void);
-extern void cmd_interface_init(void);
 
+extern int nsm_interface_hook_add(int module, int (*add_cb)(struct interface *), int (*del_cb)(struct interface *));
+extern int nsm_interface_write_hook_add(int module, int (*show_cb)(struct vty *, struct interface *));
+extern int nsm_interface_write_hook_handler(int module, struct vty *vty, struct interface *ifp);
 
-
-extern ospl_bool nsm_interface_create_check_api(struct vty *vty, const char *ifname, const char *uspv);
+#ifdef ZPL_SHELL_MODULE
+extern zpl_bool nsm_interface_create_check_api(struct vty *vty, const char *ifname, const char *uspv);
+#endif
 extern int nsm_interface_create_api(const char *ifname);
 extern int nsm_interface_delete_api(struct interface *ifp);
 
 extern int nsm_interface_mode_set_api(struct interface *ifp, if_mode_t mode);
 extern int nsm_interface_mode_get_api(struct interface *ifp, if_mode_t *mode);
-extern int nsm_interface_enca_set_api(struct interface *ifp, if_enca_t enca, ospl_uint16 value);
-extern int nsm_interface_enca_get_api(struct interface *ifp, if_enca_t *enca, ospl_uint16 *value);
+extern int nsm_interface_enca_set_api(struct interface *ifp, if_enca_t enca, zpl_uint16 value);
+extern int nsm_interface_enca_get_api(struct interface *ifp, if_enca_t *enca, zpl_uint16 *value);
 extern int nsm_interface_desc_set_api(struct interface *ifp, const char *desc);
 extern int nsm_interface_down_set_api(struct interface *ifp);
 extern int nsm_interface_up_set_api(struct interface *ifp);
 
 extern int nsm_interface_linkdetect_set_api(struct interface *ifp, nsm_linkdetect_en linkdetect);
 extern int nsm_interface_linkdetect_get_api(struct interface *ifp, nsm_linkdetect_en *linkdetect);
-extern int nsm_interface_address_set_api(struct interface *ifp, struct prefix *cp, ospl_bool secondry);
-extern int nsm_interface_address_unset_api(struct interface *ifp, struct prefix *cp, ospl_bool secondry);
+extern int nsm_interface_address_set_api(struct interface *ifp, struct prefix *cp, zpl_bool secondry);
+extern int nsm_interface_address_unset_api(struct interface *ifp, struct prefix *cp, zpl_bool secondry);
 extern int nsm_interface_address_get_api(struct interface *ifp, struct prefix *address);
 extern int nsm_interface_ip_address_add(struct interface *ifp, struct prefix *cp,
-		ospl_bool secondary, ospl_uint32 value);
+		zpl_bool secondary, zpl_uint32 value);
 extern int nsm_interface_ip_address_del(struct interface *ifp, struct prefix *cp,
-		ospl_bool secondary, ospl_uint32 value);
+		zpl_bool secondary, zpl_uint32 value);
 
 extern int nsm_interface_statistics_get_api(struct interface *ifp, struct if_stats *stats);
-extern int nsm_interface_multicast_set_api(struct interface *ifp, ospl_bool enable);
-extern int nsm_interface_multicast_get_api(struct interface *ifp, ospl_bool *enable);
-extern int nsm_interface_bandwidth_set_api(struct interface *ifp, ospl_uint32  bandwidth);
-extern int nsm_interface_bandwidth_get_api(struct interface *ifp, ospl_uint32  *bandwidth);
+extern int nsm_interface_multicast_set_api(struct interface *ifp, zpl_bool enable);
+extern int nsm_interface_multicast_get_api(struct interface *ifp, zpl_bool *enable);
+extern int nsm_interface_bandwidth_set_api(struct interface *ifp, zpl_uint32  bandwidth);
+extern int nsm_interface_bandwidth_get_api(struct interface *ifp, zpl_uint32  *bandwidth);
 extern int nsm_interface_vrf_set_api(struct interface *ifp, vrf_id_t vrf_id);
 extern int nsm_interface_vrf_get_api(struct interface *ifp, vrf_id_t *vrf_id);
-extern int nsm_interface_metric_set_api(struct interface *ifp, ospl_uint32 metric);
-extern int nsm_interface_metric_get_api(struct interface *ifp, ospl_uint32 *metric);
-extern int nsm_interface_mtu_set_api(struct interface *ifp, ospl_uint32 mtu);
-extern int nsm_interface_mtu_get_api(struct interface *ifp, ospl_uint32 *mtu);
-extern int nsm_interface_mac_set_api(struct interface *ifp, ospl_uchar *mac, ospl_uint32 maclen);
-extern int nsm_interface_mac_get_api(struct interface *ifp, ospl_uchar *mac, ospl_uint32 maclen);
+extern int nsm_interface_metric_set_api(struct interface *ifp, zpl_uint32 metric);
+extern int nsm_interface_metric_get_api(struct interface *ifp, zpl_uint32 *metric);
+extern int nsm_interface_mtu_set_api(struct interface *ifp, zpl_uint32 mtu);
+extern int nsm_interface_mtu_get_api(struct interface *ifp, zpl_uint32 *mtu);
+extern int nsm_interface_mac_set_api(struct interface *ifp, zpl_uchar *mac, zpl_uint32 maclen);
+extern int nsm_interface_mac_get_api(struct interface *ifp, zpl_uchar *mac, zpl_uint32 maclen);
 extern int nsm_interface_duplex_set_api(struct interface *ifp, nsm_duplex_en duplex);
 extern int nsm_interface_duplex_get_api(struct interface *ifp, nsm_duplex_en *duplex);
 extern int nsm_interface_speed_set_api(struct interface *ifp, nsm_speed_en speed);
 extern int nsm_interface_speed_get_api(struct interface *ifp, nsm_speed_en *speed);
 
-extern int nsm_interface_update_kernel(struct interface *ifp, ospl_char *kname);
+extern int nsm_interface_update_kernel(struct interface *ifp, zpl_char *kname);
 extern int nsm_interface_update_api(struct interface *ifp);
 extern int nsm_interface_hw_update_api(struct interface *ifp);
-
+#ifdef ZPL_SHELL_MODULE
 extern void nsm_interface_show_api(struct vty *vty, struct interface *ifp);
-extern void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, ospl_bool status, ospl_bool *head);
-
-
+extern void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, zpl_bool status, zpl_bool *head);
 extern int nsm_port_interface_config(struct vty *vty, struct interface *ifp);
 extern void cmd_port_init (void);
-
-
+extern void cmd_interface_init(void);
+#endif
  
 #ifdef __cplusplus
 }

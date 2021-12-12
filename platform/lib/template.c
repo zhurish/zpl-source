@@ -5,30 +5,16 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "os_list.h"
-#include "linklist.h"
-//#include "if.h"
-#include "vty.h"
-#include "sockunion.h"
-#include "prefix.h"
-#include "command.h"
-#include "memory.h"
-#include "log.h"
-//#include "nsm_vrf.h"
-#include "command.h"
-//#include "nsm_interface.h"
-//#include "nsm_zclient.h"
-#include "module.h"
-//#include "nsm_client.h"
-#include "template.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
 static struct list *template_list = NULL;
 static struct list *service_list = NULL;
 
 
 /* Allocate template structure. */
-template_t * nsm_template_new (ospl_bool service)
+template_t * nsm_template_new (zpl_bool service)
 {
   template_t *template;
   template = XCALLOC (MTYPE_ZCLIENT, sizeof (template_t));
@@ -53,14 +39,14 @@ void nsm_template_free (template_t *template)
 
 /* Initialize zebra template.  Argument redist_default is unwanted
    redistribute route type. */
-void nsm_template_install (template_t *template, ospl_uint32 module)
+void nsm_template_install (template_t *template, zpl_uint32 module)
 {
 	template->module = module;
 	//listnode_add_sort(template_list, template);
 	listnode_add (template->service?service_list:template_list, template);
 }
 
-template_t* nsm_template_lookup (ospl_bool service, ospl_uint32 module)
+template_t* nsm_template_lookup (zpl_bool service, zpl_uint32 module)
 {
 	struct listnode *node = NULL;
 	template_t *template = NULL;
@@ -73,7 +59,7 @@ template_t* nsm_template_lookup (ospl_bool service, ospl_uint32 module)
 }
 
 
-template_t* nsm_template_lookup_name (ospl_bool service, ospl_char * name)
+template_t* nsm_template_lookup_name (zpl_bool service, zpl_char * name)
 {
 	struct listnode *node = NULL;
 	template_t *template = NULL;
@@ -123,7 +109,7 @@ int nsm_template_write_config (struct vty *vty)
 	return ret;
 }
 
-int nsm_template_show_config (struct vty *vty, ospl_bool detail)
+int nsm_template_show_config (struct vty *vty, zpl_bool detail)
 {
 	int ret = 0;
 	struct listnode *node;
@@ -159,7 +145,7 @@ int nsm_template_service_write_config (struct vty *vty)
 	return ret;
 }
 
-int nsm_template_service_show_config (struct vty *vty, ospl_bool detail)
+int nsm_template_service_show_config (struct vty *vty, zpl_bool detail)
 {
 	int ret = 0;
 	struct listnode *node;
@@ -178,7 +164,7 @@ int nsm_template_service_show_config (struct vty *vty, ospl_bool detail)
 }
 
 
-int nsm_template_debug_show_config (struct vty *vty, ospl_bool detail)
+int nsm_template_debug_show_config (struct vty *vty, zpl_bool detail)
 {
 	int ret = 0;
 	struct listnode *node;
@@ -206,7 +192,7 @@ int nsm_template_debug_write_config (struct vty *vty)
 		if(template->show_debug)
 		{
 			ret = 0;
-			ret = (template->show_debug)(vty, template->pVoid, ospl_false);
+			ret = (template->show_debug)(vty, template->pVoid, zpl_false);
 			if(ret)
 				vty_out(vty, "!%s", VTY_NEWLINE);
 		}

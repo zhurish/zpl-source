@@ -9,7 +9,7 @@
 #define __MQTT_APP_SHOW_H__
 
 
-int mqtt_app_config_show(struct mqtt_app_config  *cfg, struct vty *vty, ospl_bool detail, ospl_bool wrshow);
+int mqtt_app_config_show(struct mqtt_app_config  *cfg, struct vty *vty, zpl_bool detail, zpl_bool wrshow);
 int mqtt_app_debug_show(struct mqtt_app_config  *cfg, struct vty *vty);
 
 #endif /* __MQTT_APP_SHOW_H__ */

@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 extern int _pl_pjsip_module_init();
 extern int _pl_pjsip_module_exit();
 extern int _pl_pjsip_module_task_init();

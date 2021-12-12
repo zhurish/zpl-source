@@ -44,30 +44,33 @@ function awk_scandir() {
             #filename=${cur_dir}/${dirlist}
             #exittype=`echo "${dirlist##*.}"`
             #echo " ${cur_dir}/${dirlist}  $exittype"
-            if test "${dirlist##*.}" = "c"
+            if test "${dirlist##*.}" = "c" || "${dirlist##*.}" = "cpp"
             then
-               check=`grep "module_list_" ${cur_dir}/${dirlist}`
-               #echo " check  --$check--"
-               if test "${check}xx" != "xx"
-               then
-                  #echo "check-----$check--"
-                  eemodule_node=`awk 'BEGIN{ORS=""} /module_list_./ {print "extern struct module_list " $3 ";\n"}' ${cur_dir}/${dirlist}`
-                  module_node=`awk 'BEGIN{ORS=""} /module_list_./ {print "  &" $3 ",\n"}' ${cur_dir}/${dirlist}`
-                  #module_def=`awk 'BEGIN{IGNORECASE=0;ORS=""} /MODULE_[A-Z0-9]/' ${cur_dir}/${dirlist} | awk -F'=' 'BEGIN{ORS=""} {print $2}'`
-                  #module_def=`awk 'BEGIN{IGNORECASE=0;ORS=""} /MODULE_[A-Z0-9]/ {print $2}' ${cur_dir}/${dirlist}`
-                  module_def=`grep =MODULE_ ${cur_dir}/${dirlist} | awk -F'=' 'BEGIN{ORS="\n"}  { if(length($2)>1) print "  " $2 }' >> $module_def_file` 
-                  if test "${module_def}xx" != "xx"
-                  then
-                        #echo "	$module_def" >> $module_def_file
-                        echo "	$module_def"
-                  fi
-                  if test "${module_node}xx" != "xx"
-                  then
-                        echo "${eemodule_node}" >> $module_node_file
-                        echo "${module_node}" >> $module_node_tmp
-                        
-                  fi
-               fi
+                if [ -e ${cur_dir}/${dirlist} ]
+                then
+                    check=`grep "module_list_" ${cur_dir}/${dirlist}`
+                    #echo " check  --$check--"
+                    if test "${check}xx" != "xx"
+                    then
+                        #echo "check-----$check--"
+                        eemodule_node=`awk 'BEGIN{ORS=""} /module_list_./ {print "extern struct module_list " $3 ";\n"}' ${cur_dir}/${dirlist}`
+                        module_node=`awk 'BEGIN{ORS=""} /module_list_./ {print "  &" $3 ",\n"}' ${cur_dir}/${dirlist}`
+                        #module_def=`awk 'BEGIN{IGNORECASE=0;ORS=""} /MODULE_[A-Z0-9]/' ${cur_dir}/${dirlist} | awk -F'=' 'BEGIN{ORS=""} {print $2}'`
+                        #module_def=`awk 'BEGIN{IGNORECASE=0;ORS=""} /MODULE_[A-Z0-9]/ {print $2}' ${cur_dir}/${dirlist}`
+                        module_def=`grep =MODULE_ ${cur_dir}/${dirlist} | awk -F'=' 'BEGIN{ORS="\n"}  { if(length($2)>1) print "  " $2 }' >> $module_def_file` 
+                        if test "${module_def}xx" != "xx"
+                        then
+                                #echo "	$module_def" >> $module_def_file
+                                echo "	$module_def"
+                        fi
+                        if test "${module_node}xx" != "xx"
+                        then
+                                echo "${eemodule_node}" >> $module_node_file
+                                echo "${module_node}" >> $module_node_tmp
+                                
+                        fi
+                    fi
+                fi    
             fi   
         fi
     done
@@ -92,16 +95,18 @@ function awk_scanfile() {
     then
         return;
     fi
-
-    check=`grep "module_list_" ${scanfile}`
-    if test "${check}xx" != "xx"
+    if [ -e ${scanfile} ]
     then
-        awk 'BEGIN{ORS=""} /module_list_./ {print "extern struct module_list " $3 ";\n"}' ${scanfile} >> $module_node_file
-        awk 'BEGIN{ORS=""} /module_list_./ {print "  &" $3 ",\n"}' ${scanfile} >> $module_node_tmp
-        #grep MODULE_ ${scanfile} | awk -F'=' 'BEGIN{ORS="\n"}  { if((gsub(" ",$1)==".module") && length($2)>1) print "  " $2 }' >> $module_def_file
-        #awk 'BEGIN{ORS=""} /.module/&&/,/&&/MODULE_/ {print $1 "\n"}' ${scanfile} | awk -F'=' 'BEGIN{ORS="\n"} {if(length($2)>1)print "  " $2}'  >> $module_def_file
-        awk 'BEGIN{ORS=""} /.module/&&/=/&&/,/&&/MODULE_/ {print  $0 "\n"}' ${scanfile}  | awk '{match($0, /MODULE_.*/,str); print "  " str[0]}' >> $module_def_file
-    fi  
+        check=`grep "module_list_" ${scanfile}`
+        if test "${check}xx" != "xx"
+        then
+            awk 'BEGIN{ORS=""} /module_list_./ {print "extern struct module_list " $3 ";\n"}' ${scanfile} >> $module_node_file
+            awk 'BEGIN{ORS=""} /module_list_./ {print "  &" $3 ",\n"}' ${scanfile} >> $module_node_tmp
+            #grep MODULE_ ${scanfile} | awk -F'=' 'BEGIN{ORS="\n"}  { if((gsub(" ",$1)==".module") && length($2)>1) print "  " $2 }' >> $module_def_file
+            #awk 'BEGIN{ORS=""} /.module/&&/,/&&/MODULE_/ {print $1 "\n"}' ${scanfile} | awk -F'=' 'BEGIN{ORS="\n"} {if(length($2)>1)print "  " $2}'  >> $module_def_file
+            awk 'BEGIN{ORS=""} /.module/&&/=/&&/,/&&/MODULE_/ {print  $0 "\n"}' ${scanfile}  | awk '{match($0, /MODULE_.*/,str); print "  " str[0]}' >> $module_def_file
+        fi
+    fi 
 }
 
 if test "header" == "$1" ;then
@@ -112,8 +117,9 @@ if test "header" == "$1" ;then
     echo " " >> $module_def_file
     echo "typedef enum {" >> $module_def_file
     echo "	MODULE_NONE = 0," >> $module_def_file
-
-    echo "#include \"zebra.h\"" > $module_node_file
+    echo "#include \"os_include.h\"" > $module_node_file
+    echo "#include \"zpl_include.h\"" > $module_node_file
+    echo "#include \"module.h\"" >> $module_node_file
     echo "#include \"moduletypes.h\"" >> $module_node_file
     echo " " >> $module_node_file
 fi

@@ -21,7 +21,7 @@ extern "C"
 
 #include "h264Encoder.hpp"
 
-#ifdef PL_LIBX264_MODULE
+#ifdef ZPL_LIBX264_MODULE
 //#define X264_CSP_NONE           0x0000  /* Invalid mode     */
 static v4l2_codec_map_t v4l2_codec_map[] = 
 {
@@ -61,7 +61,7 @@ static v4l2_codec_map_t v4l2_codec_map[] =
 };
 #endif
 
-#ifdef PL_OPENH264_MODULE
+#ifdef ZPL_OPENH264_MODULE
 //#define X264_CSP_NONE           0x0000  /* Invalid mode     */
 static v4l2_codec_map_t v4l2_codec_map[] = 
 {
@@ -102,8 +102,8 @@ static v4l2_codec_map_t v4l2_codec_map[] =
         
 int v4l2_pixlfmt_h264(int fmt)
 {
-#if defined(PL_OPENH264_MODULE) || defined(PL_LIBX264_MODULE)
-    ospl_uint32 i = 0;
+#if defined(ZPL_OPENH264_MODULE) || defined(ZPL_LIBX264_MODULE)
+    zpl_uint32 i = 0;
     for(i = 0; i< sizeof(v4l2_codec_map)/sizeof(v4l2_codec_map[0]); i++)
     {
         if(v4l2_codec_map[i].v4l2_fmt == fmt)
@@ -117,8 +117,8 @@ int v4l2_pixlfmt_h264(int fmt)
 
 int v4l2_h264_pixlfmt(int fmt)
 {
-#if defined(PL_OPENH264_MODULE) || defined(PL_LIBX264_MODULE)
-    ospl_uint32 i = 0;
+#if defined(ZPL_OPENH264_MODULE) || defined(ZPL_LIBX264_MODULE)
+    zpl_uint32 i = 0;
     for(i = 0; i< sizeof(v4l2_codec_map)/sizeof(v4l2_codec_map[0]); i++)
     {
         if(v4l2_codec_map[i].h264_fmt == fmt)
@@ -153,41 +153,41 @@ int h264Encoder::videoEncoderSetup(const int width, const int height, const int 
         std::cout << "Not support this V4L2 FIX Format." << std::endl;
         return -1;
     }
-#ifdef PL_OPENH264_MODULE
+#ifdef ZPL_OPENH264_MODULE
     return openh264_encoder_setup(width, height, v4l2_pixlfmt_h264(fmt), fps);
 #endif
-#ifdef PL_LIBX264_MODULE
+#ifdef ZPL_LIBX264_MODULE
     return h264_encoder_setup(width, height, v4l2_pixlfmt_h264(fmt), fps);
 #endif
 }
 
-int h264Encoder::videoEncoderInput(const ospl_uint8 *frame, const int len,const  bool keyframe)
+int h264Encoder::videoEncoderInput(const zpl_uint8 *frame, const int len,const  bool keyframe)
 {
-#ifdef PL_LIBX264_MODULE
+#ifdef ZPL_LIBX264_MODULE
     return h264_encoder_input(frame, len, keyframe);
 #endif
-#ifdef PL_OPENH264_MODULE
+#ifdef ZPL_OPENH264_MODULE
     return openh264_encoder_input(frame, len, keyframe);
 #endif
 }
 
-int h264Encoder::videoEncoderOutput(ospl_uint8 *frame, const int len)
+int h264Encoder::videoEncoderOutput(zpl_uint8 *frame, const int len)
 {
-#ifdef PL_LIBX264_MODULE
+#ifdef ZPL_LIBX264_MODULE
     return h264_encoder_output(frame, len);
 #endif
-#ifdef PL_OPENH264_MODULE
+#ifdef ZPL_OPENH264_MODULE
     return openh264_encoder_output(frame, len);
 #endif
 }
 
-ospl_uint8 *h264Encoder::videoEncoderOutput()
+zpl_uint8 *h264Encoder::videoEncoderOutput()
 {
-#ifdef PL_LIBX264_MODULE
+#ifdef ZPL_LIBX264_MODULE
     return m_h264_nal->p_payload;
 #endif
-#ifdef PL_OPENH264_MODULE
-    return (ospl_uint8 *)m_out_frame_payload;
+#ifdef ZPL_OPENH264_MODULE
+    return (zpl_uint8 *)m_out_frame_payload;
 #endif
 }
 
@@ -203,18 +203,18 @@ int h264Encoder::videoEncoderOutputSize(const bool clear)
 
 int h264Encoder::videoEncoderDestroy()
 {
-#ifdef PL_LIBX264_MODULE
+#ifdef ZPL_LIBX264_MODULE
     if (m_h264)
         x264_encoder_close(m_h264);
     x264_picture_clean(&m_pic_in);
 #endif
-#ifdef PL_OPENH264_MODULE
+#ifdef ZPL_OPENH264_MODULE
     openh264_encoder_destroy();
 #endif
     return 0;
 }
 
-#ifdef PL_LIBX264_MODULE
+#ifdef ZPL_LIBX264_MODULE
 int h264Encoder::h264_encoder_setup(const int width, const int height, const int fmt, const int fps)
 {
     int _x264_profile_index = 0;
@@ -271,7 +271,7 @@ int h264Encoder::h264_encoder_setup(const int width, const int height, const int
     return 0;
 }
 
-int h264Encoder::h264_encoder_input(const ospl_uint8 *frame, const int len, const bool keyframe)
+int h264Encoder::h264_encoder_input(const zpl_uint8 *frame, const int len, const bool keyframe)
 {
     int i_nal = 0;
     x264_picture_t pic_out;
@@ -334,7 +334,7 @@ int h264Encoder::h264_encoder_input(const ospl_uint8 *frame, const int len, cons
     return -1;
 }
 
-int h264Encoder::h264_encoder_output(ospl_uint8 *frame, const int len)
+int h264Encoder::h264_encoder_output(zpl_uint8 *frame, const int len)
 {
     if (m_out_size > 0)
     {
@@ -347,10 +347,10 @@ int h264Encoder::h264_encoder_output(ospl_uint8 *frame, const int len)
 }
 #endif
 
-#ifdef PL_OPENH264_MODULE
+#ifdef ZPL_OPENH264_MODULE
 struct SLayerPEncCtx
 {
-    ospl_uint32 iDLayerQp;
+    zpl_uint32 iDLayerQp;
     SSliceArgument sSliceArgument;
 };
 
@@ -358,13 +358,13 @@ int h264Encoder::openh264_encoder_destroy()
 {
     if(m_esrc_pic.iColorFormat != v4l2_pixlfmt_h264(this->m_dfmt))
     {
-        if(m_yuv420 != nullptr)
+        if(m_yuv420 != NULL)
             delete [] m_yuv420;
     }
 
-    if (m_out_frame_payload != nullptr)
+    if (m_out_frame_payload != NULL)
         delete [] m_out_frame_payload;
-    if (m_encoder != nullptr)
+    if (m_encoder != NULL)
         WelsDestroySVCEncoder(m_encoder);
     return 0;
 }
@@ -502,7 +502,7 @@ int h264Encoder::openh264_encoder_setup(const int width, const int height, const
     return 0;
 }
 
-int h264Encoder::yuyv_yuv422_to_yuv420(const ospl_uint8 yuv422[], ospl_uint8 yuv420[], const int width, const int height)
+int h264Encoder::yuyv_yuv422_to_yuv420(const zpl_uint8 yuv422[], zpl_uint8 yuv420[], const int width, const int height)
 {
     int ynum = width * height;
     int i, j, k = 0;
@@ -541,7 +541,7 @@ int h264Encoder::yuyv_yuv422_to_yuv420(const ospl_uint8 yuv422[], ospl_uint8 yuv
     return 1;
 }
 
-int h264Encoder::openh264_encoder_input(const ospl_uint8 *frame, const int len,const  bool keyframe)
+int h264Encoder::openh264_encoder_input(const zpl_uint8 *frame, const int len,const  bool keyframe)
 {
     int rc = 0;
     //if (opt && opt->force_keyframe) {
@@ -549,17 +549,17 @@ int h264Encoder::openh264_encoder_input(const ospl_uint8 *frame, const int len,c
     //}
     if(m_esrc_pic.iColorFormat != v4l2_pixlfmt_h264(this->m_dfmt))
     {
-        if(m_yuv420 == nullptr)
+        if(m_yuv420 == NULL)
         {
-            m_yuv420 = new ospl_uint8 [len + 50];
+            m_yuv420 = new zpl_uint8 [len + 50];
         }
-        if(m_yuv420 != nullptr)
-            yuyv_yuv422_to_yuv420((ospl_uint8*)frame, m_yuv420, m_width, m_height);
-        m_esrc_pic.pData[0] = (ospl_uint8 *)m_yuv420;
+        if(m_yuv420 != NULL)
+            yuyv_yuv422_to_yuv420((zpl_uint8*)frame, m_yuv420, m_width, m_height);
+        m_esrc_pic.pData[0] = (zpl_uint8 *)m_yuv420;
     }
     else
     {
-        m_esrc_pic.pData[0] = (ospl_uint8 *)frame;
+        m_esrc_pic.pData[0] = (zpl_uint8 *)frame;
     }
 
     m_esrc_pic.iPicWidth = m_width;
@@ -604,7 +604,7 @@ int h264Encoder::openh264_encoder_input(const ospl_uint8 *frame, const int len,c
         return ret;
     }
     */
-    if (m_out_frame_payload == nullptr)
+    if (m_out_frame_payload == NULL)
         m_out_frame_payload = new char[m_out_size + 1];
     m_out_size = 0;
     for (m_ilayer = 0; m_ilayer < m_sfbsinfo.iLayerNum; m_ilayer++)
@@ -668,9 +668,9 @@ int h264Encoder::openh264_encoder_input(const ospl_uint8 *frame, const int len,c
     return -1;
 }
 
-int h264Encoder::openh264_encoder_output(ospl_uint8 *frame, const int len)
+int h264Encoder::openh264_encoder_output(zpl_uint8 *frame, const int len)
 {
-    if (m_out_size > 0 && m_out_frame_payload != nullptr)
+    if (m_out_size > 0 && m_out_frame_payload != NULL)
     {
         int ret = (m_out_size > len) ? len : m_out_size;
         memmove(frame, m_out_frame_payload, ret);
@@ -685,19 +685,19 @@ int h264Encoder::openh264_encoder_output(ospl_uint8 *frame, const int len)
 
 int openh264_test()
 {
-    ospl_uint8 *buf;
+    zpl_uint8 *buf;
     int rsize = 0;
     FILE *fp = fopen("bus_cif.yuv", "r");
     FILE *rfp = fopen("aa.h264", "ab");
     h264Encoder *h264Core = new h264Encoder();
     rsize = 352 * 288 * 3;
-    buf = new ospl_uint8 [rsize];
+    buf = new zpl_uint8 [rsize];
     h264Core->videoEncoderSetup(352, 288, V4L2_PIX_FMT_YUV420/*V4L2_PIX_FMT_YUYV*/, 30);
     int ret = 0;
     while(1)
     {
         ret = fread(buf, rsize, 1, fp);
-        ret = h264Core->videoEncoderInput((ospl_uint8 *)buf, ret, false);
+        ret = h264Core->videoEncoderInput((zpl_uint8 *)buf, ret, false);
         if (ret > 0)
         {
             

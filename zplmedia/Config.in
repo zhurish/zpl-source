@@ -1,0 +1,25 @@
+# DO NOT EDIT. This file is generated from Config.src
+#
+#
+
+menu "hwmedia Module Config"
+
+config ZPL_ZPLMEDIA_MODULE
+	bool "hWimedia Module"
+	default n
+
+config ZPL_HISIMPP_MODULE
+	bool "Hisi MPP Module"
+	default n
+	depends on ZPL_ZPLMEDIA_MODULE
+	help
+	Build Hisi MPP Module.
+
+config ZPL_HISIMPP_HWDEBUG
+	bool "Hisi MPP Module HWDebug"
+	default n
+	depends on ZPL_HISIMPP_MODULE
+	help
+	Build Hisi MPP Module HWDebug.
+
+endmenu

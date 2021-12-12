@@ -13,20 +13,30 @@ extern "C" {
 #include "nsm_vlan.h"
 #include "nsm_mac.h"
 
-typedef struct sdk_mac_s
+
+enum hal_mac_cmd 
 {
-	int (*sdk_mac_age_cb) (void *, ospl_uint32);
-	int (*sdk_mac_add_cb) (void *, ifindex_t, vlan_t, mac_t *, ospl_uint32);
-	int (*sdk_mac_del_cb) (void *, ifindex_t, vlan_t, mac_t *, ospl_uint32);
-	int (*sdk_mac_clr_cb) (void *, ifindex_t, vlan_t);
-	int (*sdk_mac_read_cb) (void *, ifindex_t, vlan_t);
-	void *sdk_driver;
-}sdk_mac_t;
+    HAL_MAC_CMD_NONE,
+	HAL_MAC_CMD_AGE,
+	HAL_MAC_CMD_ADD,
+	HAL_MAC_CMD_DEL,
+	HAL_MAC_CMD_CLEAR,
+	HAL_MAC_CMD_READ,
+    HAL_MAC_CMD_MAX,
+};
+
+typedef struct hal_mac_param_s
+{
+	vlan_t vlan;
+	zpl_uint32 value;
+	mac_t mac[NSM_MAC_MAX];
+}hal_mac_param_t;
 
 
-int hal_mac_age(ospl_uint32 age);
-int hal_mac_add(ifindex_t ifindex, vlan_t vlan, mac_t *mac, ospl_uint32 pri);
-int hal_mac_del(ifindex_t ifindex, vlan_t vlan, mac_t *mac, ospl_uint32 pri);
+
+int hal_mac_age(zpl_uint32 age);
+int hal_mac_add(ifindex_t ifindex, vlan_t vlan, mac_t *mac, zpl_uint32 pri);
+int hal_mac_del(ifindex_t ifindex, vlan_t vlan, mac_t *mac, zpl_uint32 pri);
 int hal_mac_clr(ifindex_t ifindex, vlan_t vlan);
 int hal_mac_read(ifindex_t ifindex, vlan_t vlan);
 

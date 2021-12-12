@@ -43,7 +43,7 @@ modification history
                  Added case-conversion changes (SPR #2035)
 02d,20aug93,jmm  Changed ioctl.h and socket.h to sys/ioctl.h and sys/socket.h
 02c,27feb93,kdl  Removed 01z case-conversion changes (SPR #2035).
-02b,05feb93,jag  Changed call to inet_ntoa to inet_ntoa_b. SPR# 1814
+02b,05feb93,jag  Changed call to ipstack_inet_ntoa to inet_ntoa_b. SPR# 1814
 02a,20jan93,jdi  documentation cleanup for 5.1.
 01z,09sep92,jmm  fixed spr 1568, ftpd now recognizes lower case commands
                  changed errnoGet() to errno to get rid of warning message
@@ -164,18 +164,9 @@ ftpLib, netDrv,
 .I "RFC-959 File Transfer Protocol"
 */
 
-#include "zebra.h"
-#include "buffer.h"
-#include "command.h"
-#include "linklist.h"
-#include "log.h"
-#include "memory.h"
-#include "vty.h"
-#include "eloop.h"
-#include <dirent.h>
-
-#include <ftpdLib.h>
 #include "systools.h"
+#include <ftpdLib.h>
+
 
 #ifndef BUFSIZE
 #define BUFSIZE 512
@@ -276,21 +267,21 @@ typedef struct
 	void			*master;
 
 	struct in_addr	address;
-	ospl_uint16			port;
+	zpl_uint16			port;
 	void			*aceppt_thread;
-	ospl_bool 			init;
+	zpl_bool 			init;
 
 	int 			(*loginVerifyRtn)(char *, char *);
     char 			baseDirName [MAX_DIR_NAME_LEN];
 
-	int 			ftpdDebug;	/* ospl_true: debugging messages */
-	ospl_uint16 		ftpdWindowSize;
-	ospl_uint8 			ftpsMaxClients; 	/* Default max. for simultaneous connections */
-	ospl_uint8 			ftpsCurrentClients;
+	int 			ftpdDebug;	/* zpl_true: debugging messages */
+	zpl_uint16 		ftpdWindowSize;
+	zpl_uint8 			ftpsMaxClients; 	/* Default max. for simultaneous connections */
+	zpl_uint8 			ftpsCurrentClients;
 
 
-	ospl_bool 			ftpsActive; 	/* Server started? */
-	ospl_bool 			ftpsShutdownFlag; 	/* Server halt requested? */
+	zpl_bool 			ftpsActive; 	/* Server started? */
+	zpl_bool 			ftpsShutdownFlag; 	/* Server halt requested? */
 	int 			ftpdServerSock;
 
     }FTPD_CONFIG;
@@ -389,7 +380,7 @@ static int ftpdDataConnGet (FTPD_SESSION_DATA *);
 static void ftpdDataStreamSend (FTPD_SESSION_DATA *, FILE *);
 static void ftpdDataStreamReceive (FTPD_SESSION_DATA *, FILE *outStream);
 static void ftpdSockFree (int *);
-static int ftpdDirListGet (int, char *, ospl_bool);
+static int ftpdDirListGet (int, char *, zpl_bool);
 
 static void unImplementedType (FTPD_SESSION_DATA *pSlot);
 static void dataError (FTPD_SESSION_DATA *pSlot);
@@ -462,7 +453,7 @@ static void ftpdTask (void)
 		setsockopt(newSock, SOL_SOCKET, SO_KEEPALIVE, (char *) &on, sizeof(on));
 
 		systools_debug("accepted a new client connection from %s\n",
-				inet_ntoa(addr.sin_addr));
+				ipstack_inet_ntoa(addr.sin_addr));
 
 		/* Create a new session entry for this connection, if possible. */
 
@@ -521,7 +512,7 @@ static void ftpdTask (void)
 
 	/* Fatal error - update state of server. */
 
-	ftpsActive = ospl_false;
+	ftpsActive = zpl_false;
 
 	return;
 }
@@ -549,7 +540,7 @@ static int ftpdTask (struct eloop *thread)
 
 	if(FTPD_IS_DEBUG(EVENT))
 		systools_debug("FTPD accepted a new client connection from %s\n",
-			inet_ntoa(addr.sin_addr));
+			ipstack_inet_ntoa(addr.sin_addr));
 
 	/* Create a new session entry for this connection, if possible. */
 
@@ -616,10 +607,10 @@ int ftpdInit
 	ftpd_config.master = master;
 	ftpd_config.loginVerifyRtn = pLoginRtn;
 
-	ftpd_config.ftpsShutdownFlag = ospl_false;
+	ftpd_config.ftpsShutdownFlag = zpl_false;
 	ftpd_config.ftpsCurrentClients = 0;
 
-	ftpd_config.ftpdDebug	= 0;	/* ospl_true: debugging messages */
+	ftpd_config.ftpdDebug	= 0;	/* zpl_true: debugging messages */
 
 	ftpd_config.ftpdWindowSize = FTPD_WINDOW_SIZE;
 	ftpd_config.ftpsMaxClients = 4; 	/* Default max. for simultaneous connections */
@@ -634,7 +625,7 @@ int ftpdInit
 	lstInit(&ftpsSessionList);
 
 
-	ftpd_config.init = ospl_true;
+	ftpd_config.init = zpl_true;
 
 	return (OK);
 }
@@ -650,13 +641,13 @@ int ftpdEnable(char *address, int port)
 		{
 			restart = 1;
 		}
-		if(address && ftpd_config.address.s_addr != inet_addr(address))
+		if(address && ftpd_config.address.s_addr != ipstack_inet_addr(address))
 			restart = 1;
 		if(!restart)
 			return (OK);
 	}
 	if(address)
-		ftpd_config.address.s_addr = inet_addr(address);
+		ftpd_config.address.s_addr = ipstack_inet_addr(address);
 	ftpd_config.port = port;
 
 	if(restart)
@@ -703,7 +694,7 @@ int ftpdEnable(char *address, int port)
 
 	/* Create a FTP server task to receive client requests. */
 	ftpd_config.aceppt_thread = eloop_add_read(ftpd_config.master, ftpdTask, &ftpd_config, ftpd_config.ftpdServerSock);
-	ftpd_config.ftpsActive = ospl_true;
+	ftpd_config.ftpsActive = zpl_true;
 	return OK;
 }
 
@@ -751,7 +742,7 @@ int ftpdDisable(void)
 
 int ftpdDelete (void)
 {
-	ospl_bool serverActive = ospl_false;
+	zpl_bool serverActive = zpl_false;
 	FTPD_SESSION_DATA * pData;
 
 	if (!ftpd_config.ftpsActive) /* Automatic success if server is not running. */
@@ -763,7 +754,7 @@ int ftpdDelete (void)
 	 */
 
 	if (ftpd_config.ftpsCurrentClients != 0)
-		serverActive = ospl_true;
+		serverActive = zpl_true;
 
 	/*
 	 * Set the shutdown flag so that any secondary server tasks will exit
@@ -776,7 +767,7 @@ int ftpdDelete (void)
 	 * in incorrect use of the signalling semaphore.
 	 */
 
-	ftpd_config.ftpsShutdownFlag = ospl_true;
+	ftpd_config.ftpsShutdownFlag = zpl_true;
 
 	/*
 	 * Close the command sockets of any active sessions to prevent further
@@ -820,7 +811,7 @@ int ftpdDelete (void)
 
 	lstFree(&ftpsSessionList); /* Sanity check - should already be empty. */
 
-	ftpd_config.ftpsActive = ospl_false;
+	ftpd_config.ftpsActive = zpl_false;
 
 	return (OK);
 }
@@ -924,7 +915,7 @@ static void ftpdSessionDelete
 	 * detected during normal processing.
 	 */
 	if(FTPD_IS_DEBUG(EVENT))
-		systools_debug("FTPD delete session : %s", inet_ntoa(pSlot->peerAddr.sin_addr));
+		systools_debug("FTPD delete session : %s", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 /*	if(pSlot->taskid)
 		os_task_destroy(pSlot->taskid);*/
 	pSlot->taskid = 0;
@@ -1132,7 +1123,7 @@ static int ftpdWorkTask
 			pSlot->status &= ~FTPD_USER_OK;
 
 			if(FTPD_IS_DEBUG(EVENT))
-				systools_debug("FTPD Password required on %s ", inet_ntoa(pSlot->peerAddr.sin_addr));
+				systools_debug("FTPD Password required on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			if (ftpdCmdSend(pSlot, sock, 331, messages[MSG_PASSWORD_REQUIRED]) == ERROR)
 			{
@@ -1151,7 +1142,7 @@ static int ftpdWorkTask
 				if ((ftpd_config.loginVerifyRtn)(pSlot->user, pBuf + 5) != OK)
 				{
 					if(FTPD_IS_DEBUG(EVENT))
-						systools_debug("FTPD User login failed on %s ", inet_ntoa(pSlot->peerAddr.sin_addr));
+						systools_debug("FTPD User login failed on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
 					if (ftpdCmdSend(pSlot, sock, 530,
 							messages[MSG_USER_LOGIN_FAILED])
@@ -1165,7 +1156,7 @@ static int ftpdWorkTask
 				}
 			}
 			if(FTPD_IS_DEBUG(EVENT))
-				systools_debug("FTPD User login successful on %s ", inet_ntoa(pSlot->peerAddr.sin_addr));
+				systools_debug("FTPD User login successful on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			pSlot->status |= FTPD_USER_OK;
 			if (ftpdCmdSend(pSlot, sock, 230, messages[MSG_USER_LOGGED_IN]) == ERROR)
@@ -1179,7 +1170,7 @@ static int ftpdWorkTask
 		{
 			/* sayonara */
 			if(FTPD_IS_DEBUG(EVENT))
-				systools_debug("FTPD User logout on %s ", inet_ntoa(pSlot->peerAddr.sin_addr));
+				systools_debug("FTPD User logout on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 			ftpdCmdSend(pSlot, sock, 221, messages[MSG_SEE_YOU_LATER]);
 			ftpdSessionDelete(pSlot);
 			return OK;
@@ -1217,7 +1208,7 @@ static int ftpdWorkTask
 		{
 			/* user is not validated yet.  tell him to log in first */
 			if(FTPD_IS_DEBUG(EVENT))
-				systools_debug("FTPD USER and PASS required on %s ", inet_ntoa(pSlot->peerAddr.sin_addr));
+				systools_debug("FTPD USER and PASS required on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			if (ftpdCmdSend(pSlot, sock, 530, messages[MSG_USER_PASS_REQ]) == ERROR)
 
@@ -1235,7 +1226,7 @@ static int ftpdWorkTask
 		{
 			int retVal;
 			if(FTPD_IS_DEBUG(EVENT))
-				systools_debug("FTPD LIST cmd on %s ", inet_ntoa(pSlot->peerAddr.sin_addr));
+				systools_debug("FTPD LIST cmd on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			/* client wants to list out the contents of a directory */
 
@@ -1322,7 +1313,7 @@ static int ftpdWorkTask
 				pFileName = &pBuf[5];
 
 			if(FTPD_IS_DEBUG(EVENT))
-				systools_debug("FTPD read file (%s) on %s ", pFileName, inet_ntoa(pSlot->peerAddr.sin_addr));
+				systools_debug("FTPD read file (%s) on %s ", pFileName, ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
 
 			if ((inStream = fopen(pFileName, "r")) == NULL)
@@ -1363,7 +1354,7 @@ static int ftpdWorkTask
 				pFileName = &pBuf[5];
 
 			if(FTPD_IS_DEBUG(EVENT))
-				systools_debug("FTPD write file (%s) on %s ", pFileName, inet_ntoa(pSlot->peerAddr.sin_addr));
+				systools_debug("FTPD write file (%s) on %s ", pFileName, ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			//systools_debug("STOR %s\n", pFileName);
 
@@ -1412,7 +1403,7 @@ static int ftpdWorkTask
 			chdir(newPath); /* condense ".." shit */
 
 			if(FTPD_IS_DEBUG(EVENT))
-				systools_debug("FTPD change DIR (-> %s) on %s ", newPath, inet_ntoa(pSlot->peerAddr.sin_addr));
+				systools_debug("FTPD change DIR (-> %s) on %s ", newPath, ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			/* remember where we are */
 
@@ -1432,7 +1423,7 @@ static int ftpdWorkTask
 		{
 			/* we only support BINARY and ASCII representation types */
 			if(FTPD_IS_DEBUG(EVENT))
-				systools_debug("FTPD SET TYPE on %s ", inet_ntoa(pSlot->peerAddr.sin_addr));
+				systools_debug("FTPD SET TYPE on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			if (pBuf[5] == 'I' || pBuf[5] == 'i' || pBuf[5] == 'L'
 					|| pBuf[5] == 'l')
@@ -1581,7 +1572,7 @@ static int ftpdWorkTask
 			 * socket
 			 */
 			if(FTPD_IS_DEBUG(EVENT))
-				systools_debug("FTPD Connect to client (PASV TYPE) on %s ", inet_ntoa(pSlot->peerAddr.sin_addr));
+				systools_debug("FTPD Connect to client (PASV TYPE) on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			ftpdSockFree(&pSlot->dataSock);
 
@@ -1651,15 +1642,15 @@ static int ftpdWorkTask
 				pSlot->status |= FTPD_PASSIVE;
 
 				value = pSlot->dataAddr.sin_addr.s_addr;
-				outval1 = ((ospl_uchar *) &value)[0];
-				outval2 = ((ospl_uchar *) &value)[1];
-				outval3 = ((ospl_uchar *) &value)[2];
-				outval4 = ((ospl_uchar *) &value)[3];
+				outval1 = ((zpl_uchar *) &value)[0];
+				outval2 = ((zpl_uchar *) &value)[1];
+				outval3 = ((zpl_uchar *) &value)[2];
+				outval4 = ((zpl_uchar *) &value)[3];
 
 				/* Separate port number into bytes. */
 
-				outval5 = ((ospl_uchar *) &pSlot->dataAddr.sin_port)[0];
-				outval6 = ((ospl_uchar *) &pSlot->dataAddr.sin_port)[1];
+				outval5 = ((zpl_uchar *) &pSlot->dataAddr.sin_port)[0];
+				outval6 = ((zpl_uchar *) &pSlot->dataAddr.sin_port)[1];
 
 				/* tell the client to which port to connect */
 
@@ -1700,7 +1691,7 @@ static int ftpdWorkTask
 			else
 				pFileName = &pBuf[5];
 			if(FTPD_IS_DEBUG(EVENT))
-				systools_debug("FTPD DELETE File (%s) on %s ", pFileName, inet_ntoa(pSlot->peerAddr.sin_addr));
+				systools_debug("FTPD DELETE File (%s) on %s ", pFileName, ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			if (remove(pFileName) != OK)
 			{
@@ -2175,7 +2166,7 @@ static void ftpdDataStreamReceive
 	register FILE *inStream; /* buffered input file stream for data socket */
 	register int fileFd; /* output file descriptor */
 	register int netFd; /* network file descriptor */
-	register ospl_bool dontPutc; /* flag to prevent bogus chars */
+	register zpl_bool dontPutc; /* flag to prevent bogus chars */
 	register int cnt; /* number of chars read/written */
 
 	/* get a fresh data connection or reuse the old one */
@@ -2204,7 +2195,7 @@ static void ftpdDataStreamReceive
 
 		while ((ch = getc(inStream)) != (char) '\0')
 		{
-			dontPutc = ospl_false;
+			dontPutc = zpl_false;
 
 			pSlot->byteCount++;
 
@@ -2227,13 +2218,13 @@ static void ftpdDataStreamReceive
 
 					if (ch == '\0' || ch == (char) '\0')
 					{
-						dontPutc = ospl_true;
+						dontPutc = zpl_true;
 						break;
 					}
 				}
 			}
 
-			if (dontPutc == ospl_false)
+			if (dontPutc == zpl_false)
 				(void) putc(ch, outStream);
 
 			/* Abort file transfer if a shutdown is in progress. */
@@ -2369,9 +2360,9 @@ static void ftpdSockFree
 * stat() does not work on RT-11 filesystem drivers, it is simply not supported.
 *
 * This command is similar to UNIX ls.  It lists the contents of a directory
-* in one of two formats.  If <doLong> is ospl_false, only the names of the files
+* in one of two formats.  If <doLong> is zpl_false, only the names of the files
 * (or subdirectories) in the specified directory are displayed.  If <doLong>
-* is ospl_true, then the file name, size, date, and time are displayed.  If
+* is zpl_true, then the file name, size, date, and time are displayed.  If
 * doing a long listing, any entries that describe subdirectories will also
 * be flagged with a "DIR" comment.
 *
@@ -2394,7 +2385,7 @@ static int ftpdDirListGet
     (
     int         sd,             /* socket descriptor to write on */
     char        *dirName,       /* name of the directory to be listed */
-    ospl_bool        doLong          /* if ospl_true, do long listing */
+    zpl_bool        doLong          /* if zpl_true, do long listing */
     )
 {
 	register int status; /* return status */
@@ -2403,7 +2394,7 @@ static int ftpdDirListGet
 	struct stat fileStat; /* file status info    (long listing) */
 	struct tm fileDate; /* file date/time      (long listing) */
 	char *pDirComment; /* dir comment         (long listing) */
-	ospl_bool firstFile; /* first file flag     (long listing) */
+	zpl_bool firstFile; /* first file flag     (long listing) */
 	char fileName[MAX_FILENAME_LENGTH];
 	/* buffer for building file name */
 	static char *monthNames[] =
@@ -2426,7 +2417,7 @@ static int ftpdDirListGet
 	/* List files */
 
 	status = OK;
-	firstFile = ospl_true;
+	firstFile = zpl_true;
 
 	do
 	{
@@ -2450,7 +2441,7 @@ static int ftpdDirListGet
 							== ERROR)
 						return (ERROR | closedir(pDir));
 
-					firstFile = ospl_false;
+					firstFile = zpl_false;
 				}
 
 				/* Construct path/filename for stat */
@@ -2595,7 +2586,7 @@ static int ftpdCmdSend
     int                 buflen;
     char		buf [BUFSIZE];		/* local buffer */
     register char 		*pBuf = &buf [0];	/* pointer to buffer */
-    ospl_bool 		lineContinue =
+    zpl_bool 		lineContinue =
 				(code & FTPD_MULTI_LINE) == FTPD_MULTI_LINE;
 
     /*

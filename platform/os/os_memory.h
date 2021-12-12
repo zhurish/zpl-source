@@ -14,6 +14,7 @@ extern "C" {
 
 #define os_malloc	malloc
 #define os_calloc	calloc
+#define os_realloc	realloc
 #define os_free		free
 
 #define os_memset	memset
@@ -35,17 +36,41 @@ extern "C" {
 
 #define os_strerror strerror
 
+#define os_printf 		printf
 #define os_sprintf 		sprintf
 #define os_fprintf 		fprintf
+
 #define os_snprintf 	snprintf
+#define os_vprintf 	    vprintf
+#define os_vsprintf 	vsprintf
+#define os_vsnprintf 	vsnprintf
+#define os_vfprintf 	vfprintf
+
 
 #define os_bzero 		bzero
-#define os_sscanf 		sscanf
 
 #define os_atoi 		atoi
 #define os_atof 		atof
 #define os_atol 		atol
-//#define os_printf 		snprintf
+#define os_strtof 		strtof
+#define os_strtod 		strtod
+#define os_strtol 		strtol
+#define os_strtoll 		strtoll
+
+#define os_scanf 		scanf
+#define os_sscanf 		sscanf
+#define os_fscanf 		fscanf
+
+#define os_rand 		rand
+#define os_srand 		srand
+#define os_system 		system
+#define os_qsort 		qsort
+#define os_abs 		    abs
+#define os_labs 		labs
+
+#define os_remove 		remove
+#define os_rename 		rename
+
 
 #ifdef __cplusplus
 }

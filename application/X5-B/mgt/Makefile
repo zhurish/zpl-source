@@ -1,13 +1,13 @@
-include $(MAKE_DIR)/makelinux.mk
+include $(ZPL_MAKE_DIR)/makelinux.mk
 
 include config.mk
 
 #OBJS = $(OSOBJ)
-PLCFLAGS += -Werror=format
+ZPLCFLAGS += -Werror=format
 
-OBJS_DIR = $(BASE_ROOT)/$(OBJDIR)/$(APP_OBJ_DIR)
+OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(APP_OBJ_DIR)
 SRC_DIR = $(BASE_ROOT)/$(APP_OBJ_DIR)
-LIB_DIR = $(BASE_ROOT)/$(LIBDIR)
+LIB_DIR = $(BASE_ROOT)/$(ZPL_LIB_DIR)
 
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(APP_OBJS))
 LIBS=$(APP_LIBS)
@@ -17,8 +17,8 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
-	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
+	@$(ECHO) CC '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) $(ZPLINCLUDE)' $@
+	@$(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
 
 $(LIBS) : $(MODULE_OBJS)
 	@$(AR) -rs  $(APP_LIBS) $(MODULE_OBJS)
@@ -32,7 +32,7 @@ $(LIBS) : $(MODULE_OBJS)
 files = $(patsubst %.o,%.c,$(APP_OBJS))
 make_prepare:
 	@for i in $(files); do	\
-		$(MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
 	done
 #
 lib: $(LIBS)
@@ -44,7 +44,7 @@ obj: $(MODULE_OBJS) $(MODULE_LIBOBJS)
 install: $(LIBS)
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
-	@$(STRIP) $(PLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
+	@$(STRIP) $(ZPLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
 #	$(STRIP) $(LIB_DIR)/$(LIBS)
 
 clean: objclean

@@ -20,40 +20,15 @@
  * 02111-1307, USA.  
  */
 
-#include <zebra.h>
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "nsm_include.h"
 
-#include "if.h"
-#include "vty.h"
-#include "sockunion.h"
-#include "prefix.h"
-#include "command.h"
-#include "memory.h"
-#include "log.h"
-#include "nsm_vrf.h"
-#include "command.h"
-#include "nsm_interface.h"
 
-#include "if_name.h"
-#include "nsm_rib.h"
-#include "nsm_zserv.h"
-#include "nsm_redistribute.h"
-#include "nsm_debug.h"
-#include "nsm_zclient.h"
-#include "nsm_mac.h"
-#include "nsm_vlan.h"
-#include "nsm_serial.h"
-#include "nsm_dhcp.h"
+static struct nsm_interface_cb nsm_client_cb[NSM_MAX];
 
-#include "nsm_tunnel.h"
-
-#ifdef PL_VLAN_MODULE
-#include "vlan.h"
-#endif
-
-#ifdef PL_PAL_MODULE
-//#include "pal.h"
-#endif
-
+static int nsm_interface_hook_handler(int add, int module, struct interface *ifp);
 
 /* helper only for nsm_interface_linkdetect */
 static void nsm_interface_linkdetect_set_val(struct interface *ifp,
@@ -179,7 +154,7 @@ static void if_addr_wakeup (struct interface *ifp)
 }
 
 
-#ifdef USE_IPSTACK_IPCOM
+#ifdef ZPL_IPCOM_STACK_MODULE
 static int nsm_interface_kname_set(struct interface *ifp)
 {
 	switch (ifp->if_type)
@@ -225,7 +200,7 @@ static int nsm_interface_kname_set(struct interface *ifp)
 
 static int nsm_interface_kmac_set(struct interface *ifp)
 {
-	ospl_char kmac[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
+	zpl_char kmac[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
 	switch (ifp->if_type)
 	{
 	case IF_SERIAL:
@@ -262,7 +237,7 @@ static int nsm_interface_kmac_set(struct interface *ifp)
 #else
 static int nsm_interface_kname_set(struct interface *ifp)
 {
-	ospl_char k_name[64];
+	zpl_char k_name[64];
 	os_memset(k_name, 0, sizeof(k_name));
 	switch (ifp->if_type)
 	{
@@ -316,8 +291,10 @@ static int nsm_interface_kname_set(struct interface *ifp)
 
 static int nsm_interface_kmac_set(struct interface *ifp)
 {
-	ospl_uchar kmac[NSM_MAC_MAX] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
+	zpl_uchar kmac[NSM_MAC_MAX] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
+	#ifdef ZPL_NSM_MAC
 	nsm_gmac_get_api(0, kmac, NSM_MAC_MAX);
+	#endif
 	switch (ifp->if_type)
 	{
 	case IF_SERIAL:
@@ -387,8 +364,8 @@ static int nsm_interface_new_hook(struct interface *ifp)
 	ifp->info[MODULE_NSM] = nsm_interface;
 
 
-#ifdef USE_IPSTACK_KERNEL
-	if(ifp->dynamic == ospl_false && if_kernel_name_lookup(ifp->ifindex))
+#if 0//def ZPL_KERNEL_STACK_MODULE
+	if(ifp->dynamic == zpl_false && if_kernel_name_lookup(ifp->ifindex))
 	{
 		//zlog_debug(MODULE_NSM, "=====%s: %s -> %s",__func__, ifp->name, if_kernel_name_lookup(ifp->ifindex));
 		if_kname_set(ifp, if_kernel_name_lookup(ifp->ifindex));
@@ -400,7 +377,7 @@ static int nsm_interface_new_hook(struct interface *ifp)
 			nsm_interface_kmac_set(ifp);
 	}
 
-	nsm_client_notify_interface_add(ifp);
+	//nsm_client_notify_interface_add(ifp);
 
 	ret = nsm_pal_interface_add(ifp);
 
@@ -411,13 +388,16 @@ static int nsm_interface_new_hook(struct interface *ifp)
 		pal_interface_refresh_flag(ifp);
 		pal_interface_get_lladdr(ifp);
 	}
+
+	nsm_interface_hook_handler(1, -1, ifp);
+
 	return OK;
 }
 
 
-int nsm_interface_update_kernel(struct interface *ifp, ospl_char *kname)
+int nsm_interface_update_kernel(struct interface *ifp, zpl_char *kname)
 {
-	if(ifp/* && ifp->dynamic == ospl_false*/)
+	if(ifp/* && ifp->dynamic == zpl_false*/)
 	{
 		if_kname_set(ifp, kname);
 		SET_FLAG(ifp->status, ZEBRA_INTERFACE_ATTACH);
@@ -433,6 +413,7 @@ int nsm_interface_update_kernel(struct interface *ifp, ospl_char *kname)
 static int nsm_interface_delete_hook(struct interface *ifp)
 {
 	struct nsm_interface *nsm_interface;
+	nsm_interface_hook_handler(0, -1, ifp);
 	nsm_pal_interface_delete(ifp);
 	if (ifp->info[MODULE_NSM])
 	{
@@ -444,8 +425,8 @@ static int nsm_interface_delete_hook(struct interface *ifp)
 }
 
 
-
-ospl_bool nsm_interface_create_check_api(struct vty *vty, const char *ifname, const char *uspv)
+#ifdef ZPL_SHELL_MODULE
+zpl_bool nsm_interface_create_check_api(struct vty *vty, const char *ifname, const char *uspv)
 {
 	ifindex_t ifindex = if_ifindex_make(ifname, uspv);
 	if_type_t type = IF_TYPE_GET(ifindex);
@@ -456,54 +437,54 @@ ospl_bool nsm_interface_create_check_api(struct vty *vty, const char *ifname, co
 	case IF_WIRELESS:
 		if (IF_ID_GET(ifindex))
 		{
-			return ospl_true;
+			return zpl_true;
 		}
 		else
 		{
 			vty_out(vty,"Can not create PHY interface%s",VTY_NEWLINE);
-			return ospl_false;
+			return zpl_false;
 		}
 		break;
 
 	case IF_BRIGDE:
 		if(IF_BRIGDE_MAX > if_count_lookup_type(IF_BRIGDE))
 		{
-			return ospl_true;
+			return zpl_true;
 		}
 		vty_out(vty,"Too much brigde interface%s",VTY_NEWLINE);
 		break;
 	case IF_SERIAL:
 		vty_out(vty,"Can not create serial interface%s",VTY_NEWLINE);
-		return ospl_false;
+		return zpl_false;
 		break;
 #ifdef CUSTOM_INTERFACE
 	case IF_WIFI:
 	case IF_MODEM:
-		return ospl_false;
+		return zpl_false;
 		break;
 #endif
 	case IF_TUNNEL:
 		if (IF_SLOT_GET(ifindex) != IF_TUNNEL_SLOT)
 		{
 			vty_out(vty,"Tunnel interface of slot may be '%d'%s",IF_TUNNEL_SLOT, VTY_NEWLINE);
-			return ospl_false;
+			return zpl_false;
 		}
 /*		if (IF_ID_GET(ifindex) > IF_TUNNEL_MAX || IF_ID_GET(ifindex) < 1)
 		{
 			vty_out(vty,"Tunnel interface of slot may be '<%d-%d>'%s", 1, IF_TUNNEL_SLOT, VTY_NEWLINE);
-			return ospl_false;
+			return zpl_false;
 		}*/
 		if(if_count_lookup_type(IF_TUNNEL) >= IF_TUNNEL_MAX)
 		{
 			vty_out(vty,"Too much tunnel interface%s",VTY_NEWLINE);
-			return ospl_false;
+			return zpl_false;
 		}
-		return ospl_true;
+		return zpl_true;
 		break;
 	case IF_LOOPBACK:
 		if(IF_LOOPBACK_MAX > if_count_lookup_type(IF_LOOPBACK))
 		{
-			return ospl_true;
+			return zpl_true;
 		}
 		vty_out(vty,"Too much loopback interface%s",VTY_NEWLINE);
 		break;
@@ -511,7 +492,7 @@ ospl_bool nsm_interface_create_check_api(struct vty *vty, const char *ifname, co
 	case IF_VLAN:
 		if(IF_VLAN_MAX > if_count_lookup_type(IF_VLAN))
 		{
-			return ospl_true;
+			return zpl_true;
 		}
 		vty_out(vty,"Too much vlan interface%s",VTY_NEWLINE);
 		break;
@@ -519,7 +500,7 @@ ospl_bool nsm_interface_create_check_api(struct vty *vty, const char *ifname, co
 	case IF_LAG:
 		if(IF_LAG_MAX > if_count_lookup_type(IF_LAG))
 		{
-			return ospl_true;
+			return zpl_true;
 		}
 		vty_out(vty,"Too much lag interface%s",VTY_NEWLINE);
 		break;
@@ -527,13 +508,14 @@ ospl_bool nsm_interface_create_check_api(struct vty *vty, const char *ifname, co
 		break;
 	}
 	vty_out(vty,"Can not Create interface %s %s(unknown error)%s",ifname, uspv, VTY_NEWLINE);
-	return ospl_false;
+	return zpl_false;
 }
+#endif
 
 
 static int nsm_interface_delete(struct interface *ifp)
 {
-	ospl_uint32 delete = 0;
+	zpl_uint32 delete = 0;
 	if (ifp->if_type == IF_ETHERNET
 			|| ifp->if_type == IF_GIGABT_ETHERNET
 			|| ifp->if_type == IF_SERIAL
@@ -552,10 +534,10 @@ static int nsm_interface_delete(struct interface *ifp)
 #endif
 			)
 	{
-		#ifdef PL_NSM_TRUNK
+		#ifdef ZPL_NSM_TRUNK
 		if(ifp->if_type == IF_LAG)
 		{
-			ospl_uint32 trunkId = 0;
+			zpl_uint32 trunkId = 0;
 			if(nsm_trunk_get_ID_interface_api(ifp->ifindex, &trunkId) == OK)
 			{
 				if(l2trunk_lookup_interface_count_api(trunkId))
@@ -569,8 +551,10 @@ static int nsm_interface_delete(struct interface *ifp)
 	}
 	if(delete)
 	{
+		#ifdef ZPL_RTPL_MODULE
 		zebra_interface_delete_update (ifp);
-		nsm_client_notify_interface_delete(ifp);
+		#endif
+		//nsm_client_notify_interface_delete(ifp);
 		return OK;
 	}
 	return ERROR;
@@ -578,12 +562,12 @@ static int nsm_interface_delete(struct interface *ifp)
 
 int nsm_interface_update_api(struct interface *ifp)
 {
-	return nsm_client_notify_interface_update (ifp);
+	return 0;//nsm_client_notify_interface_update (ifp);
 }
 
 int nsm_interface_hw_update_api(struct interface *ifp)
 {
-	return nsm_client_notify_interface_update (ifp);
+	return 0;//nsm_client_notify_interface_update (ifp);
 }
 
 int nsm_interface_create_api(const char *ifname)
@@ -594,8 +578,10 @@ int nsm_interface_create_api(const char *ifname)
 	ifp = if_create(ifname, os_strlen(ifname));
 	if(ifp)
 	{
-		if(ifp->dynamic == ospl_false)
+			#ifdef ZPL_RTPL_MODULE
+		if(ifp->dynamic == zpl_false)
 			zebra_interface_add_update(ifp);
+				#endif
 		IF_DATA_UNLOCK();
 		return OK;
 	}
@@ -661,7 +647,7 @@ static int nsm_interface_ip_address_install(struct interface *ifp, struct prefix
 			nsm_pal_interface_up(ifp);
 			pal_interface_refresh_flag(ifp);
 		}
-#ifdef PL_DHCP_MODULE
+#ifdef ZPL_DHCP_MODULE
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
 		else
@@ -686,8 +672,10 @@ static int nsm_interface_ip_address_install(struct interface *ifp, struct prefix
 		}
 #endif
 		connected_up_ipv4(ifp, ifc);
-		nsm_client_notify_interface_add_ip(ifp, ifc, 0);
+		//nsm_client_notify_interface_add_ip(ifp, ifc, 0);
+		#ifdef ZPL_RTPL_MODULE
 		zebra_interface_address_add_update (ifp, ifc);
+		#endif
 		return OK;
 	}
 	return OK;
@@ -713,9 +701,10 @@ static int nsm_interface_ip_address_uninstall(struct interface *ifp, struct pref
 	if (!CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED))
 		UNSET_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED);
 		//return ERROR;
-
+#ifdef ZPL_RTPL_MODULE
 	zebra_interface_address_delete_update (ifp, ifc);
-	nsm_client_notify_interface_del_ip(ifp, ifc, 0);
+	#endif
+	//nsm_client_notify_interface_del_ip(ifp, ifc, 0);
 	while(ifc->raw_status != 0)
 	{
 		os_msleep(10);
@@ -732,7 +721,7 @@ static int nsm_interface_ip_address_uninstall(struct interface *ifp, struct pref
 
 	if(ifc->raw_status == 0)
 	{
-#ifdef PL_DHCP_MODULE
+#ifdef ZPL_DHCP_MODULE
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
 		else
@@ -754,7 +743,9 @@ static int nsm_interface_ip_address_uninstall(struct interface *ifp, struct pref
 			return ERROR;
 		}
 #endif
+#ifdef ZPL_RTPL_MODULE
 		//zebra_interface_address_delete_update(ifp, ifc);
+		#endif
 		connected_down_ipv4(ifp, ifc);
 
 		UNSET_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED);
@@ -775,7 +766,7 @@ static int nsm_interface_ip_address_uninstall(struct interface *ifp, struct pref
 #ifdef HAVE_IPV6
 static int
 nsm_interface_ipv6_address_install (struct interface *ifp,
-		struct prefix_ipv6 *cp, ospl_bool secondary)
+		struct prefix_ipv6 *cp, zpl_bool secondary)
 {
 	struct nsm_interface *if_data;
 	struct connected *ifc;
@@ -816,7 +807,7 @@ nsm_interface_ipv6_address_install (struct interface *ifp,
 			nsm_pal_interface_up(ifp);
 			pal_interface_refresh_flag(ifp);
 		}
-#ifdef PL_DHCP_MODULE
+#ifdef ZPL_DHCP_MODULE
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
 		else
@@ -843,8 +834,10 @@ nsm_interface_ipv6_address_install (struct interface *ifp,
 		}
 #endif
 		connected_up_ipv6 (ifp, ifc);
-		nsm_client_notify_interface_add_ip(ifp, ifc, secondary);
+		//nsm_client_notify_interface_add_ip(ifp, ifc, secondary);
+		#ifdef ZPL_RTPL_MODULE
 		zebra_interface_address_add_update (ifp, ifc);
+		#endif
 		return OK;
 	}
 	return OK;
@@ -852,7 +845,7 @@ nsm_interface_ipv6_address_install (struct interface *ifp,
 
 static int
 nsm_interface_ipv6_address_uninstall (struct interface *ifp,
-		struct prefix_ipv6 *cp, ospl_bool secondry)
+		struct prefix_ipv6 *cp, zpl_bool secondry)
 {
 	struct connected *ifc;
 	//int ret;
@@ -866,10 +859,10 @@ nsm_interface_ipv6_address_uninstall (struct interface *ifp,
 	if (! CHECK_FLAG (ifc->conf, ZEBRA_IFC_CONFIGURED))
 		return ERROR;
 
-
+#ifdef ZPL_RTPL_MODULE
 	zebra_interface_address_delete_update (ifp, ifc);
-
-	nsm_client_notify_interface_del_ip(ifp, ifc, secondry);
+#endif
+	//nsm_client_notify_interface_del_ip(ifp, ifc, secondry);
 
 	while(ifc->raw_status != 0)
 	{
@@ -886,7 +879,7 @@ nsm_interface_ipv6_address_uninstall (struct interface *ifp,
 
 	if(ifc->raw_status == 0)
 	{
-#ifdef PL_DHCP_MODULE
+#ifdef ZPL_DHCP_MODULE
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
 		else
@@ -925,7 +918,7 @@ nsm_interface_ipv6_address_uninstall (struct interface *ifp,
 /********************************************************************/
 
 int nsm_interface_ip_address_add(struct interface *ifp, struct prefix *cp,
-		ospl_bool secondary, ospl_uint32 value)
+		zpl_bool secondary, zpl_uint32 value)
 {
 	//int ret;
 	struct nsm_interface *if_data;
@@ -957,7 +950,7 @@ int nsm_interface_ip_address_add(struct interface *ifp, struct prefix *cp,
 		}
 		if (!CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED))
 			SET_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED);
-#ifdef PL_DHCP_MODULE
+#ifdef ZPL_DHCP_MODULE
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
 #endif
@@ -971,8 +964,10 @@ int nsm_interface_ip_address_add(struct interface *ifp, struct prefix *cp,
 		else
 			connected_up_ipv6(ifp, ifc);
 #endif
-		nsm_client_notify_interface_add_ip(ifp, ifc, 0);
+		//nsm_client_notify_interface_add_ip(ifp, ifc, 0);
+		#ifdef ZPL_RTPL_MODULE
 		zebra_interface_address_add_update (ifp, ifc);
+		#endif
 		/* Add to linked list. */
 		listnode_add(ifp->connected, ifc);
 		return OK;
@@ -984,7 +979,7 @@ int nsm_interface_ip_address_add(struct interface *ifp, struct prefix *cp,
 }
 
 int nsm_interface_ip_address_del(struct interface *ifp, struct prefix *cp,
-		ospl_bool secondary, ospl_uint32 value)
+		zpl_bool secondary, zpl_uint32 value)
 {
 	//int ret;
 	//struct nsm_interface *if_data;
@@ -1001,10 +996,10 @@ int nsm_interface_ip_address_del(struct interface *ifp, struct prefix *cp,
 	/* This is not configured address. */
 	if (!CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED))
 		UNSET_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED);
-
+#ifdef ZPL_RTPL_MODULE
 	zebra_interface_address_delete_update (ifp, ifc);
-
-	nsm_client_notify_interface_del_ip(ifp, ifc, 0);
+#endif
+	//nsm_client_notify_interface_del_ip(ifp, ifc, 0);
 
 	if(cp->family == AF_INET)
 		connected_down_ipv4(ifp, ifc);
@@ -1051,7 +1046,9 @@ int nsm_interface_mode_set_api(struct interface *ifp, if_mode_t mode)
 		if(ret == OK)
 		{
 			ifp->if_mode = mode;
+			#ifdef ZPL_RTPL_MODULE
 			zebra_interface_mode_update (ifp, mode);
+			#endif
 		}
 	}
 	else
@@ -1073,7 +1070,7 @@ int nsm_interface_mode_get_api(struct interface *ifp, if_mode_t *mode)
 	return OK;
 }
 
-int nsm_interface_enca_set_api(struct interface *ifp, if_enca_t enca, ospl_uint16 value)
+int nsm_interface_enca_set_api(struct interface *ifp, if_enca_t enca, zpl_uint16 value)
 {
 	int ret = ERROR;
 	zassert(ifp);
@@ -1081,14 +1078,14 @@ int nsm_interface_enca_set_api(struct interface *ifp, if_enca_t enca, ospl_uint1
 	IF_DATA_LOCK();
 	if(ifp->if_enca != enca || ifp->encavlan != value)
 	{
-#ifdef USE_IPSTACK_KERNEL
+#ifdef ZPL_KERNEL_STACK_MODULE
 		if(if_is_ethernet(ifp) &&
 				IF_IS_SUBIF_GET(ifp->ifindex) &&
 				enca == IF_ENCA_DOT1Q)
 		{
 			ifindex_t root_kifindex = ifindex2ifkernel(IF_IFINDEX_ROOT_GET(ifp->ifindex));
 			const char *root_kname = ifkernelindex2kernelifname(root_kifindex);
-			ospl_char k_name[64];
+			zpl_char k_name[64];
 			os_memset(k_name, 0, sizeof(k_name));
 			if(root_kname)
 				sprintf(k_name, "%s.%d", root_kname, value);
@@ -1104,7 +1101,9 @@ int nsm_interface_enca_set_api(struct interface *ifp, if_enca_t enca, ospl_uint1
 		{
 			ifp->if_enca = enca;
 			ifp->encavlan = value;
+			#ifdef ZPL_RTPL_MODULE
 			//zebra_interface_mode_update (ifp, enca);
+			#endif
 		}
 	}
 	else
@@ -1113,7 +1112,7 @@ int nsm_interface_enca_set_api(struct interface *ifp, if_enca_t enca, ospl_uint1
 	return ret;
 }
 
-int nsm_interface_enca_get_api(struct interface *ifp, if_enca_t *enca, ospl_uint16 *value)
+int nsm_interface_enca_get_api(struct interface *ifp, if_enca_t *enca, zpl_uint16 *value)
 {
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
@@ -1144,8 +1143,10 @@ int nsm_interface_up_set_api(struct interface *ifp)
 			pal_interface_refresh_flag(ifp);
 			if_up(ifp);
 			zif->shutdown = IF_ZEBRA_SHUTDOWN_OFF;
-			nsm_client_notify_interface_up(ifp);
+			//nsm_client_notify_interface_up(ifp);
+			#ifdef ZPL_RTPL_MODULE
 			zebra_interface_up_update(ifp);
+			#endif
 		}
 	}
 	else
@@ -1169,8 +1170,10 @@ int nsm_interface_down_set_api(struct interface *ifp)
 			pal_interface_refresh_flag(ifp);
 			if_down(ifp);
 			zif->shutdown = IF_ZEBRA_SHUTDOWN_ON;
+			#ifdef ZPL_RTPL_MODULE
 			zebra_interface_down_update(ifp);
-			nsm_client_notify_interface_down(ifp);
+			#endif
+			//nsm_client_notify_interface_down(ifp);
 		}
 	}
 	else
@@ -1202,8 +1205,8 @@ int nsm_interface_linkdetect_set_api(struct interface *ifp, nsm_linkdetect_en li
 		ret =  nsm_pal_interface_linkdetect(ifp, linkdetect);
 		if(ret == OK)
 			ret |= nsm_interface_linkdetect_set(ifp, linkdetect);
-		if(ret == OK)
-			nsm_client_notify_parameter_change(ifp);
+		//if(ret == OK)
+		//	nsm_client_notify_parameter_change(ifp);
 	}
 	IF_DATA_UNLOCK();
 	return ret;
@@ -1237,7 +1240,7 @@ int nsm_interface_statistics_get_api(struct interface *ifp, struct if_stats *sta
 	return OK;
 }
 
-int nsm_interface_address_set_api(struct interface *ifp, struct prefix *cp, ospl_bool secondry)
+int nsm_interface_address_set_api(struct interface *ifp, struct prefix *cp, zpl_bool secondry)
 {
 	int ret = ERROR;
 	IF_DATA_LOCK();
@@ -1256,7 +1259,7 @@ int nsm_interface_address_set_api(struct interface *ifp, struct prefix *cp, ospl
 	return ret;
 }
 
-int nsm_interface_address_unset_api(struct interface *ifp, struct prefix *cp, ospl_bool secondry)
+int nsm_interface_address_unset_api(struct interface *ifp, struct prefix *cp, zpl_bool secondry)
 {
 	int ret = ERROR;
 	IF_DATA_LOCK();
@@ -1277,28 +1280,28 @@ int nsm_interface_address_unset_api(struct interface *ifp, struct prefix *cp, os
 }
 
 
-int nsm_interface_multicast_set_api(struct interface *ifp, ospl_bool enable)
+int nsm_interface_multicast_set_api(struct interface *ifp, zpl_bool enable)
 {
 	int ret = ERROR;
 	struct nsm_interface *if_data;
-	ospl_uchar	multicast = enable ? IF_ZEBRA_MULTICAST_ON:IF_ZEBRA_MULTICAST_OFF;
+	zpl_uchar	multicast = enable ? IF_ZEBRA_MULTICAST_ON:IF_ZEBRA_MULTICAST_OFF;
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	IF_DATA_LOCK();
 	if_data = ifp->info[MODULE_NSM];
 	if(if_data->multicast != multicast)
 	{
-		ret = nsm_pal_interface_multicast(ifp, (ospl_bool)enable);
+		ret = nsm_pal_interface_multicast(ifp, (zpl_bool)enable);
 		if(ret == OK)
 			if_data->multicast = multicast;
-		if(ret == OK)
-			nsm_client_notify_parameter_change(ifp);
+		//if(ret == OK)
+		//	nsm_client_notify_parameter_change(ifp);
 	}
 	IF_DATA_UNLOCK();
 	return ret;
 }
 
-int nsm_interface_multicast_get_api(struct interface *ifp, ospl_bool *enable)
+int nsm_interface_multicast_get_api(struct interface *ifp, zpl_bool *enable)
 {
 	int ret = OK;
 	struct nsm_interface *if_data;
@@ -1309,18 +1312,18 @@ int nsm_interface_multicast_get_api(struct interface *ifp, ospl_bool *enable)
 	if(if_data->multicast == IF_ZEBRA_MULTICAST_ON)
 	{
 		if(enable)
-			*enable = ospl_true;
+			*enable = zpl_true;
 	}
 	else if(if_data->multicast == IF_ZEBRA_MULTICAST_OFF)
 	{
 		if(enable)
-			*enable = ospl_false;
+			*enable = zpl_false;
 	}
 	IF_DATA_UNLOCK();
 	return ret;
 }
 
-int nsm_interface_bandwidth_set_api(struct interface *ifp, ospl_uint32  bandwidth)
+int nsm_interface_bandwidth_set_api(struct interface *ifp, zpl_uint32  bandwidth)
 {
 	int ret = ERROR;
 	zassert(ifp);
@@ -1328,17 +1331,17 @@ int nsm_interface_bandwidth_set_api(struct interface *ifp, ospl_uint32  bandwidt
 	IF_DATA_LOCK();
 	if(ifp->bandwidth != bandwidth)
 	{
-		ret = nsm_pal_interface_bandwidth(ifp, (ospl_uint32)bandwidth);
+		ret = nsm_pal_interface_bandwidth(ifp, (zpl_uint32)bandwidth);
 		if(ret == OK)
 			ifp->bandwidth = bandwidth;
-		if(ret == OK)
-			nsm_client_notify_parameter_change(ifp);
+		//if(ret == OK)
+		//	nsm_client_notify_parameter_change(ifp);
 	}
 	IF_DATA_UNLOCK();
 	return ret;
 }
 
-int nsm_interface_bandwidth_get_api(struct interface *ifp, ospl_uint32  *bandwidth)
+int nsm_interface_bandwidth_get_api(struct interface *ifp, zpl_uint32  *bandwidth)
 {
 	int ret = OK;
 	zassert(ifp);
@@ -1361,8 +1364,8 @@ int nsm_interface_vrf_set_api(struct interface *ifp, vrf_id_t vrf_id)
 		ret = nsm_pal_interface_vrf(ifp, (vrf_id_t)vrf_id);
 		if(ret == OK)
 			ifp->vrf_id = vrf_id;
-		if(ret == OK)
-			nsm_client_notify_parameter_change(ifp);
+		//if(ret == OK)
+		//	nsm_client_notify_parameter_change(ifp);
 	}
 	IF_DATA_UNLOCK();
 	return ret;
@@ -1380,7 +1383,7 @@ int nsm_interface_vrf_get_api(struct interface *ifp, vrf_id_t *vrf_id)
 	return ret;
 }
 
-int nsm_interface_metric_set_api(struct interface *ifp, ospl_uint32 metric)
+int nsm_interface_metric_set_api(struct interface *ifp, zpl_uint32 metric)
 {
 	int ret = ERROR;
 	zassert(ifp);
@@ -1388,17 +1391,17 @@ int nsm_interface_metric_set_api(struct interface *ifp, ospl_uint32 metric)
 	IF_DATA_LOCK();
 	if(ifp->metric != metric)
 	{
-		ret = nsm_pal_interface_metric(ifp, (ospl_uint32)metric);
+		ret = nsm_pal_interface_metric(ifp, (zpl_uint32)metric);
 		if(ret == OK)
 			ifp->metric = metric;
-		if(ret == OK)
-			nsm_client_notify_parameter_change(ifp);
+		//if(ret == OK)
+		//	nsm_client_notify_parameter_change(ifp);
 	}
 	IF_DATA_UNLOCK();
 	return ret;
 }
 
-int nsm_interface_metric_get_api(struct interface *ifp, ospl_uint32 *metric)
+int nsm_interface_metric_get_api(struct interface *ifp, zpl_uint32 *metric)
 {
 	int ret = OK;
 	zassert(ifp);
@@ -1410,28 +1413,30 @@ int nsm_interface_metric_get_api(struct interface *ifp, ospl_uint32 *metric)
 	return ret;
 }
 
-int nsm_interface_mtu_set_api(struct interface *ifp, ospl_uint32 mtu)
+int nsm_interface_mtu_set_api(struct interface *ifp, zpl_uint32 mtu)
 {
 	int ret = ERROR;
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	IF_DATA_LOCK();
-	if(ifp->mtu != (ospl_uint32)mtu)
+	if(ifp->mtu != (zpl_uint32)mtu)
 	{
+		#ifdef ZPL_NSM_TUNNEL
 		if(if_is_tunnel(ifp))
-			ret = nsm_tunnel_mtu_set_api(ifp, (ospl_uint32)mtu);
+			ret = nsm_tunnel_mtu_set_api(ifp, (zpl_uint32)mtu);
 		else
-			ret = nsm_pal_interface_mtu(ifp, (ospl_uint32)mtu);
+		#endif
+			ret = nsm_pal_interface_mtu(ifp, (zpl_uint32)mtu);
 		if(ret == OK)
 			ifp->mtu = mtu;
-		if(ret == OK)
-			nsm_client_notify_parameter_change(ifp);
+		//if(ret == OK)
+		//	nsm_client_notify_parameter_change(ifp);
 	}
 	IF_DATA_UNLOCK();
 	return ret;
 }
 
-int nsm_interface_mtu_get_api(struct interface *ifp, ospl_uint32 *mtu)
+int nsm_interface_mtu_get_api(struct interface *ifp, zpl_uint32 *mtu)
 {
 	int ret = OK;
 	zassert(ifp);
@@ -1443,7 +1448,7 @@ int nsm_interface_mtu_get_api(struct interface *ifp, ospl_uint32 *mtu)
 	return ret;
 }
 
-int nsm_interface_mac_set_api(struct interface *ifp, ospl_uchar *mac, ospl_uint32 maclen)
+int nsm_interface_mac_set_api(struct interface *ifp, zpl_uchar *mac, zpl_uint32 maclen)
 {
 	int ret = ERROR;
 	zassert(ifp);
@@ -1461,7 +1466,7 @@ int nsm_interface_mac_set_api(struct interface *ifp, ospl_uchar *mac, ospl_uint3
 	return ret;
 }
 
-int nsm_interface_mac_get_api(struct interface *ifp, ospl_uchar *mac, ospl_uint32 maclen)
+int nsm_interface_mac_get_api(struct interface *ifp, zpl_uchar *mac, zpl_uint32 maclen)
 {
 	int ret = OK;
 	zassert(ifp);
@@ -1547,13 +1552,13 @@ int nsm_interface_speed_get_api(struct interface *ifp, nsm_speed_en *speed)
 	return ret;
 }
 
-
+#ifdef ZPL_SHELL_MODULE
 /* Output prefix string to vty. */
 static int prefix_vty_out(struct vty *vty, struct prefix *p)
 {
-	ospl_char str[INET6_ADDRSTRLEN];
+	zpl_char str[INET6_ADDRSTRLEN];
 
-	inet_ntop(p->family, &p->u.prefix, str, sizeof(str));
+	ipstack_inet_ntop(p->family, &p->u.prefix, str, sizeof(str));
 	vty_out(vty, "%s", str);
 	return strlen(str);
 }
@@ -1636,7 +1641,7 @@ void nsm_interface_show_api(struct vty *vty, struct interface *ifp)
 	vty_out(vty, "  Type: %s%s", if_link_type_str(ifp->ll_type), VTY_NEWLINE);
 	if (ifp->hw_addr_len != 0)
 	{
-		ospl_uint32 i;
+		zpl_uint32 i;
 		if(if_is_pointopoint(ifp))
 			vty_out(vty, "  Unspec: ");
 		else
@@ -1691,14 +1696,14 @@ void nsm_interface_show_api(struct vty *vty, struct interface *ifp)
 	return;
 }
 
-void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, ospl_bool status, ospl_bool *head)
+void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, zpl_bool status, zpl_bool *head)
 {
 	struct connected *connected;
 	struct listnode *node;
 	struct prefix *p;
 	struct nsm_interface *nsm_interface;
-	ospl_char pstatus[32];
-	ospl_uint32 offset = 0;
+	zpl_char pstatus[32];
+	zpl_uint32 offset = 0;
 	nsm_interface = ifp->info[MODULE_NSM];
 	if(status)
 	{
@@ -1709,7 +1714,7 @@ void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, ospl_b
 			vty_out(vty, "%-24s %-16s%s", "Interface", "Protocol/PHY", VTY_NEWLINE);
 			vty_out(vty, "%-24s %-16s%s", "------------------------",
 					"----------------", VTY_NEWLINE);
-			*head = ospl_false;
+			*head = zpl_false;
 		}
 	}
 	else
@@ -1722,7 +1727,7 @@ void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, ospl_b
 					"IP Address", "MAC Address", "VRF Name", VTY_NEWLINE);
 			vty_out(vty, "%-24s %-16s %-16s %-18s %-16s %s", "------------------------",
 					"----------------", "----------------", "----------------", "----------------", VTY_NEWLINE);
-			*head = ospl_false;
+			*head = zpl_false;
 		}
 	}
 	os_memset(pstatus, 0, sizeof(pstatus));
@@ -1739,7 +1744,7 @@ void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, ospl_b
 		for (ALL_LIST_ELEMENTS_RO(ifp->connected, node, connected))
 		{
 			p = connected->address;
-			inet_ntop(p->family, &p->u.prefix, pstatus, sizeof(pstatus));
+			ipstack_inet_ntop(p->family, &p->u.prefix, pstatus, sizeof(pstatus));
 			offset = strlen(pstatus);
 			sprintf(pstatus + offset, "/%d", p->prefixlen);
 			break;
@@ -1747,7 +1752,7 @@ void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, ospl_b
 		vty_out(vty, " %-16s", pstatus);
 		if (ifp->hw_addr_len != 0)
 		{
-			ospl_uint32 i = 0;
+			zpl_uint32 i = 0;
 			offset = 0;
 			os_memset(pstatus, 0, sizeof(pstatus));
 			for (i = 0; i < ifp->hw_addr_len; i++)
@@ -1773,9 +1778,68 @@ void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, ospl_b
 	}
 	return ;
 }
+#endif
+
+static int nsm_interface_event_hook(nsm_event_e event, nsm_event_data_t *data)
+{
+	return OK;
+}
+
+int nsm_interface_hook_add(int module, int (*add_cb)(struct interface *), int (*del_cb)(struct interface *))
+{
+	nsm_client_cb[module].nsm_intf_add_cb = add_cb;
+	nsm_client_cb[module].nsm_intf_del_cb = del_cb;
+	return OK;
+}
+
+int nsm_interface_write_hook_add(int module, int (*write_cb)(struct vty *, struct interface *))
+{
+	nsm_client_cb[module].nsm_intf_write_cb = write_cb;
+	return OK;
+}
+
+static int nsm_interface_hook_handler(int add, int module, struct interface *ifp)
+{
+	if(module == -1)
+	{
+		int i = 0;
+		for(i = 0; i < NSM_MAX; i++)
+		{
+			if(add && nsm_client_cb[i].nsm_intf_add_cb)
+				(nsm_client_cb[i].nsm_intf_add_cb)(ifp);
+			else if(add==0 && nsm_client_cb[i].nsm_intf_del_cb)
+				(nsm_client_cb[i].nsm_intf_del_cb)(ifp);
+		}
+		return OK;
+	}
+	if(add && nsm_client_cb[module].nsm_intf_add_cb)
+		(nsm_client_cb[module].nsm_intf_add_cb)(ifp);
+	else if(add==0 && nsm_client_cb[module].nsm_intf_del_cb)
+		(nsm_client_cb[module].nsm_intf_del_cb)(ifp);
+	return OK;
+}
+
+int nsm_interface_write_hook_handler(int module, struct vty *vty, struct interface *ifp)
+{
+	if(module == -1)
+	{
+		int i = 0;
+		for(i = 0; i < NSM_MAX; i++)
+		{
+			if(nsm_client_cb[i].nsm_intf_write_cb)
+				(nsm_client_cb[i].nsm_intf_write_cb)(vty, ifp);
+		}
+		return OK;
+	}
+	if(nsm_client_cb[module].nsm_intf_write_cb)
+		(nsm_client_cb[module].nsm_intf_write_cb)(vty, ifp);
+	return OK;
+}
 
 /* Allocate and initialize interface vector. */
 void nsm_interface_init(void)
 {
-	 if_hook_add(nsm_interface_new_hook, nsm_interface_delete_hook);
+	memset(nsm_client_cb, 0, sizeof(nsm_client_cb));
+	if_hook_add(nsm_interface_new_hook, nsm_interface_delete_hook);
+	nsm_event_register_api(MODULE_NSM, nsm_interface_event_hook);
 }

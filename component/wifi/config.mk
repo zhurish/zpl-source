@@ -4,7 +4,7 @@
 #
 MODULEDIR = component/wifi
 #
-PLINCLUDE += -I$(WIFI_ROOT)/include
+ZPLINCLUDE += -I$(WIFI_ROOT)/include
 #
 #
 #OS

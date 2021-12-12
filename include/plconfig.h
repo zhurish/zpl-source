@@ -35,7 +35,9 @@ extern "C" {
 /* #undef GIT_VERSION */
 
 /* GNU Linux */
+#ifndef GNU_LINUX
 #define GNU_LINUX /**/
+#endif
 
 /* Define to 1 if you have the `alarm' function. */
 #define HAVE_ALARM 1
@@ -59,7 +61,7 @@ extern "C" {
 /* #undef HAVE_BSD_STRUCT_IP_MREQ_HACK */
 
 /* capabilities */
-#ifdef PL_BUILD_ARCH_X86
+#ifdef ZPL_BUILD_ARCH_X86
 #define HAVE_CAPABILITIES 1
 #endif
 /* Define to 1 if your system has a working `chown' function. */
@@ -163,7 +165,7 @@ extern "C" {
 #define HAVE_INTTYPES_H 1
 
 /* IPv6 */
-#ifdef PL_BUILD_IPV6
+#ifdef ZPL_BUILD_IPV6
 #define HAVE_IPV6 1
 #endif
 /* Have IP_PKTINFO */
@@ -182,7 +184,7 @@ extern "C" {
 /* #undef HAVE_KVM_H */
 
 /* Capabilities */
-#ifdef PL_BUILD_ARCH_X86
+#ifdef ZPL_BUILD_ARCH_X86
 #define HAVE_LCAPS 1
 #endif
 /* Define to 1 if you have the `crypt' library (-lcrypt). */
@@ -239,7 +241,7 @@ extern "C" {
 
 /* Define to 1 if you have the <netdb.h> header file. */
 #define HAVE_NETDB_H 1
-#ifdef PL_BUILD_IPV6
+#ifdef ZPL_BUILD_IPV6
 /* Define to 1 if you have the <netinet6/in6.h> header file. */
 /* #undef HAVE_NETINET6_IN6_H */
 
@@ -841,7 +843,7 @@ extern "C" {
 /* Old readline */
 /* #undef rl_completion_matches */
 
-/* Define to `ospl_uint32' if <sys/types.h> does not define. */
+/* Define to `zpl_uint32' if <sys/types.h> does not define. */
 /* #undef size_t */
 
 /* Define to `int' if <sys/types.h> doesn't define. */

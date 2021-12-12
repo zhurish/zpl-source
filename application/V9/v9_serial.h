@@ -32,10 +32,10 @@ extern "C" {
 
 typedef struct v9_serial_s
 {
-	ospl_bool			enable;
+	zpl_bool			enable;
 	void			*master;
 	void			*mutex;
-	ospl_uint32			task_id;
+	zpl_uint32			task_id;
 	void			*r_thread;
 
 	struct tty_com *tty;
@@ -43,13 +43,13 @@ typedef struct v9_serial_s
 	struct tty_com *slipnet;
 	void			*r_slipnet;
 #else
-	ospl_uint8			timer_sync;
+	zpl_uint8			timer_sync;
 #endif /* V9_SLIPNET_ENABLE */
-	ospl_uint8			sntp_sync;
-	ospl_uint8			status;
+	zpl_uint8			sntp_sync;
+	zpl_uint8			status;
 
-	ospl_uint8			id;
-	ospl_uint8			seqnum;
+	zpl_uint8			id;
+	zpl_uint8			seqnum;
 	char			buf[V9_SERIAL_BUF_MAX];
 	int				len;
 
@@ -62,7 +62,7 @@ typedef struct v9_serial_s
 
 extern v9_serial_t *v9_serial;
 
-extern int v9_serial_init(char *devname, ospl_uint32 speed);
+extern int v9_serial_init(char *devname, zpl_uint32 speed);
 extern int v9_serial_exit(void);
 
 

@@ -27,10 +27,10 @@ extern "C" {
 #endif
 
 
-#include "zebra.h"
-#include "vty.h"
+#include "zpl_include.h"
 
-#define ELOOP_THREAD
+#define THREAD_MASTER_LIST
+//#define ELOOP_THREAD
 
 
 /* Linked list of eloop. */
@@ -38,7 +38,7 @@ struct eloop_list
 {
   struct eloop *head;
   struct eloop *tail;
-  ospl_uint32 count;
+  zpl_uint32 count;
 };
 
 struct pqueue;
@@ -47,12 +47,12 @@ struct pqueue;
  * Abstract it so we can use different methodologies to
  * select on data.
  */
-typedef fd_set eloop_fd_set;
+typedef ipstack_fd_set eloop_fd_set;
 
 #define OS_ELOOP_CPU_MAX	128
 struct eloop_cpu
 {
-	ospl_uint32 key;
+	zpl_uint32 key;
 	void *data;
 };
 
@@ -60,6 +60,10 @@ struct eloop_cpu
 /* Master of the theads. */
 struct eloop_master
 {
+  #ifdef THREAD_MASTER_LIST
+  struct eloop_master *next;		/* next pointer of the thread */   
+  struct eloop_master *prev;		/* previous pointer of the thread */
+  #endif
   struct eloop_list read;
   struct eloop_list write;
   struct eloop_list timer;
@@ -71,19 +75,19 @@ struct eloop_master
   eloop_fd_set readfd;
   eloop_fd_set writefd;
   eloop_fd_set exceptfd;
-  ospl_ulong alloc;
+  zpl_ulong alloc;
 
-  ospl_uint32 module;
+  zpl_uint32 module;
 
   int max_fd;
   struct eloop_cpu cpu_record[OS_ELOOP_CPU_MAX];
   struct timeval relative_time;
   struct eloop *eloop_current;
   void *mutex;
-  ospl_bool bquit;
+  zpl_bool bquit;
 };
 
-typedef ospl_uchar eloop_type;
+typedef zpl_uchar eloop_type;
 
 /* Thread itself. */
 struct eloop
@@ -96,22 +100,22 @@ struct eloop
   int (*func) (struct eloop *); /* event function */
   void *arg;			/* event argument */
   union {
-    ospl_uint32 val;			/* second argument of the event. */
-    int fd;			/* file descriptor in case of read/write. */
+    zpl_uint32 val;			/* second argument of the event. */
+    zpl_socket_t fd;			/* file descriptor in case of read/write. */
     struct timeval sands;	/* rest of time sands value. */
   } u;
-  ospl_uint32 index;			/* used for timers to store position in queue */
+  zpl_uint32 index;			/* used for timers to store position in queue */
   struct timeval real;
   struct cpu_eloop_history *hist; /* cache pointer to cpu_history */
   const char *funcname;
   const char *schedfrom;
-  ospl_uint32 schedfrom_line;
+  zpl_uint32 schedfrom_line;
 };
 
 struct cpu_eloop_history
 {
   int (*func)(struct eloop *);
-  ospl_uint32  total_calls;
+  zpl_uint32  total_calls;
   struct os_time_stats real;
   eloop_type types;
   const char *funcname;
@@ -172,7 +176,7 @@ struct cpu_eloop_history
 #define ELOOP_WRITE_OFF(eloop)  ELOOP_OFF(eloop)
 #define ELOOP_TIMER_OFF(eloop)  ELOOP_OFF(eloop)
 
-#define debugargdef  const char *funcname, const char *schedfrom, ospl_uint32 fromln
+#define debugargdef  const char *funcname, const char *schedfrom, zpl_uint32 fromln
 
 #define eloop_add_read(m,f,a,v) funcname_eloop_add_read(m,f,a,v,#f,__FILE__,__LINE__)
 #define eloop_add_write(m,f,a,v) funcname_eloop_add_write(m,f,a,v,#f,__FILE__,__LINE__)
@@ -189,16 +193,17 @@ struct cpu_eloop_history
 /* Prototypes. */
 extern struct eloop_master *eloop_master_create (void);
 
-extern struct eloop_master *eloop_master_module_create (ospl_uint32 );
+extern struct eloop_master *eloop_master_module_create (zpl_uint32 );
+extern struct eloop_master *eloop_master_module_lookup (zpl_uint32 module);
 
 extern void eloop_master_free (struct eloop_master *);
 
 extern struct eloop *funcname_eloop_add_read (struct eloop_master *,
 				                int (*)(struct eloop *),
-				                void *, int, debugargdef);
+				                void *, zpl_socket_t, debugargdef);
 extern struct eloop *funcname_eloop_add_write (struct eloop_master *,
 				                 int (*)(struct eloop *),
-				                 void *, int, debugargdef);
+				                 void *, zpl_socket_t, debugargdef);
 extern struct eloop *funcname_eloop_add_timer (struct eloop_master *,
 				                 int (*)(struct eloop *),
 				                 void *, long, debugargdef);
@@ -226,10 +231,11 @@ extern struct eloop *funcname_eloop_ready (struct eloop_master *,
 #undef debugargdef
 
 extern void eloop_cancel (struct eloop *);
-extern ospl_uint32  eloop_cancel_event (struct eloop_master *, void *);
+extern zpl_uint32  eloop_cancel_event (struct eloop_master *, void *);
 extern struct eloop *eloop_fetch (struct eloop_master *, struct eloop *);
+extern struct eloop *eloop_fetch_main (struct eloop_master *);
 extern void eloop_call (struct eloop *);
-extern ospl_ulong eloop_timer_remain_second (struct eloop *);
+extern zpl_ulong eloop_timer_remain_second (struct eloop *);
 extern struct timeval eloop_timer_remain(struct eloop*);
 extern int eloop_should_yield (struct eloop *);
 extern int eloop_fetch_quit (struct eloop_master *);
@@ -238,15 +244,16 @@ extern int eloop_wait_quit (struct eloop_master *);
 extern void eloop_getrusage (struct timeval *);
 
 /* Returns elapsed real (wall clock) time. */
-extern ospl_ulong eloop_consumed_time(struct timeval *after, struct timeval *before,
-					  ospl_ulong *cpu_time_elapsed);
-
+extern zpl_ulong eloop_consumed_time(struct timeval *after, struct timeval *before,
+					  zpl_ulong *cpu_time_elapsed);
+#ifndef THREAD_MASTER_LIST
 extern struct eloop_master * master_eloop[];
+#endif
 extern struct eloop *eloop_current_get();
 //extern struct timeval eloop_recent_relative_time (void);
-
-extern int cpu_eloop_show(struct eloop_master *m, struct vty *vty);
-
+#ifdef ZPL_SHELL_MODULE
+//extern int cpu_eloop_show(struct eloop_master *m, struct vty *vty);
+#endif
  
 #ifdef __cplusplus
 }

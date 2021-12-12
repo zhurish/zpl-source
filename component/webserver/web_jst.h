@@ -22,7 +22,7 @@ extern "C" {
 extern int web_system_jst_init(void);
 extern int web_html_jst_init(void);
 extern int web_arp_jst_init(void);
-#ifdef PL_DHCP_MODULE
+#ifdef ZPL_DHCP_MODULE
 extern int web_dhcp_jst_init(void);
 #endif
 extern int web_dns_jst_init(void);

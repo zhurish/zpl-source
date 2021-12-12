@@ -35,17 +35,18 @@
  * 02111-1307, USA.  
  */
 
-#include <zebra.h>
-
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 #ifndef HAVE_SNPRINTF
 /*
  * snprint() is a real basic wrapper around the standard sprintf()
  * without any bounds checking
  */
 int
-snprintf(ospl_char *str, ospl_size_t size, const char *format, ...)
+snprintf(zpl_char *str, zpl_size_t size, const char *format, ...)
 {
-  ospl_uint32 len = 0;
+  zpl_uint32 len = 0;
   va_list args;
 
   va_start (args, format);
@@ -64,11 +65,11 @@ snprintf(ospl_char *str, ospl_size_t size, const char *format, ...)
  *
  * @return index of the terminating byte.
  **/
-ospl_size_t
-strlcpy(ospl_char *d, const char *s, ospl_size_t bufsize)
+zpl_size_t
+strlcpy(zpl_char *d, const char *s, zpl_size_t bufsize)
 {
-	ospl_size_t len = strlen(s);
-	ospl_size_t ret = len;
+	zpl_size_t len = strlen(s);
+	zpl_size_t ret = len;
 	if (bufsize > 0) {
 		if (len >= bufsize)
 			len = bufsize-1;
@@ -87,12 +88,12 @@ strlcpy(ospl_char *d, const char *s, ospl_size_t bufsize)
  * @param bufsize length of the buffer, which should be one more than
  * the maximum resulting string length.
  **/
-ospl_size_t
-strlcat(ospl_char *d, const char *s, ospl_size_t bufsize)
+zpl_size_t
+strlcat(zpl_char *d, const char *s, zpl_size_t bufsize)
 {
-	ospl_size_t len1 = strlen(d);
-	ospl_size_t len2 = strlen(s);
-	ospl_size_t ret = len1 + len2;
+	zpl_size_t len1 = strlen(d);
+	zpl_size_t len2 = strlen(s);
+	zpl_size_t ret = len1 + len2;
 
 	if (len1 < bufsize - 1) {
 		if (len2 >= bufsize - len1)
@@ -105,26 +106,26 @@ strlcat(ospl_char *d, const char *s, ospl_size_t bufsize)
 #endif
 
 #ifndef HAVE_STRNLEN
-ospl_size_t
-strnlen(const char *s, ospl_size_t maxlen)
+zpl_size_t
+strnlen(const char *s, zpl_size_t maxlen)
 {
   const char *p;
-  return (p = (const char *)memchr(s, '\0', maxlen)) ? (ospl_size_t)(p-s) : maxlen;
+  return (p = (const char *)memchr(s, '\0', maxlen)) ? (zpl_size_t)(p-s) : maxlen;
 }
 #endif
 
 #ifndef HAVE_STRNDUP
-ospl_char *
-strndup (const char *s, ospl_size_t maxlen)
+zpl_char *
+strndup (const char *s, zpl_size_t maxlen)
 {
-    ospl_size_t len = strnlen (s, maxlen);
-    ospl_char *new = (ospl_char *) malloc (len + 1);
+    zpl_size_t len = strnlen (s, maxlen);
+    zpl_char *new = (zpl_char *) malloc (len + 1);
 
     if (new == NULL)
       return NULL;
 
     new[len] = '\0';
-    return (ospl_char *) memcpy (new, s, len);
+    return (zpl_char *) memcpy (new, s, len);
 }
 #endif
 
@@ -132,9 +133,9 @@ strndup (const char *s, ospl_size_t maxlen)
 C库函数 int tolower(int c)转换给定的字母为小写。
 C库函数 int toupper(int c)转换给定的字母为大写。
  */
-const char *strupr(ospl_char* src)
+const char *strupr(zpl_char* src)
 {
-	ospl_char *p = src;
+	zpl_char *p = src;
 	/*
 	 * a -> A
 	 */
@@ -149,9 +150,9 @@ const char *strupr(ospl_char* src)
 	return src;
 }
 
-const char *strlwr(ospl_char* src)
+const char *strlwr(zpl_char* src)
 {
-	ospl_char *p = src;
+	zpl_char *p = src;
 	/*
 	 * A -> a
 	 */
@@ -164,9 +165,9 @@ const char *strlwr(ospl_char* src)
 	return src;
 }
 
-const char *string_have_space(ospl_char* src)
+const char *string_have_space(zpl_char* src)
 {
-	ospl_char *str = src;
+	zpl_char *str = src;
 	for (; *str != '\0'; str++)
 		if (isspace ((int) *str))
 			return src;
@@ -191,9 +192,19 @@ int all_space (const char *str)
   return 1;
 }
 
-const char *str_trim(ospl_char* src)
+
+int all_isdigit (const char *str)
 {
-	ospl_char *start = NULL, *end = NULL, *temp = NULL;			//定义去除空格后字符串的头尾指针和遍历指针
+  for (; *str != '\0'; str++)
+    if (!isdigit ((int) *str))
+      return 0;
+  return 1;
+
+}
+
+const char *str_trim(zpl_char* src)
+{
+	zpl_char *start = NULL, *end = NULL, *temp = NULL;			//定义去除空格后字符串的头尾指针和遍历指针
 	temp = src;
 	while (isspace(*temp))
 	{
@@ -220,26 +231,26 @@ const char *str_trim(ospl_char* src)
 
 const char *itoa(int value, int base)
 {
-	static ospl_char buf[32];
+	static zpl_char buf[32];
 	memset(buf, 0, sizeof(buf));
 	if(base == 0 || base == 10)
 		snprintf(buf, sizeof(buf), "%d", value);
 	else if(base == 16)
-		snprintf(buf, sizeof(buf), "%x", value);
+		snprintf(buf, sizeof(buf), "%02x", value);
 	return buf;
 }
 
-const char *ftoa(ospl_float value, ospl_char *fmt)
+const char *ftoa(zpl_float value, zpl_char *fmt)
 {
-	static ospl_char buf[16];
+	static zpl_char buf[16];
 	memset(buf, 0, sizeof(buf));
 	snprintf(buf, sizeof(buf), fmt, value);
 	return buf;
 }
 
-const char *dtoa(ospl_double value, ospl_char *fmt)
+const char *dtoa(zpl_double value, zpl_char *fmt)
 {
-	static ospl_char buf[32];
+	static zpl_char buf[32];
 	memset(buf, 0, sizeof(buf));
 	snprintf(buf, sizeof(buf), fmt, value);
 	return buf;
@@ -247,38 +258,38 @@ const char *dtoa(ospl_double value, ospl_char *fmt)
 
 
 /* Validate a hex character */
-ospl_bool is_hex (ospl_char c)
+zpl_bool is_hex (zpl_char c)
 {
   return (((c >= '0') && (c <= '9')) ||
 	  ((c >= 'A') && (c <= 'F')) || ((c >= 'a') && (c <= 'f')));
 }
 
-ospl_uint32 str_to_hex(ospl_char * room)
+zpl_uint32 str_to_hex(zpl_char * room)
 {
 	zassert(room != NULL);
 	return strtol(room, NULL, 16);
 }
 
-ospl_char * hex_to_str(ospl_uint32 hex)
+zpl_char * hex_to_str(zpl_uint32 hex)
 {
-	static ospl_char buf[64];
+	static zpl_char buf[64];
 	memset(buf, 0, sizeof(buf));
 	snprintf(buf, sizeof(buf), "%x", hex);
 	return buf;
 }
 
-ospl_uint8 atoascii(int a)
+zpl_uint8 atoascii(int a)
 {
 	return ((a) - 0x30);
 }
 
 
 
-int strchr_count(ospl_char *src, const char em)
+int strchr_count(zpl_char *src, const char em)
 {
-	ospl_char *p = src;
+	zpl_char *p = src;
 	assert(src);
-	ospl_uint32 i = 0, j = 0, count = os_strlen(src);
+	zpl_uint32 i = 0, j = 0, count = os_strlen(src);
 	for(i = 0; i < count; i++)
 	{
 		if(p[i] == em)
@@ -289,11 +300,11 @@ int strchr_count(ospl_char *src, const char em)
 	return j;
 }
 
-int strchr_step(ospl_char *src, const char em, int step)
+int strchr_step(zpl_char *src, const char em, int step)
 {
-	ospl_char *p = src;
+	zpl_char *p = src;
 	assert(src);
-	ospl_uint32 i = 0, j = 0, count = os_strlen(src);
+	zpl_uint32 i = 0, j = 0, count = os_strlen(src);
 	for(i = 0; i < count; i++)
 	{
 		if(p[i] == em)
@@ -306,11 +317,11 @@ int strchr_step(ospl_char *src, const char em, int step)
 	return (i < count)? i:0;
 }
 
-int strchr_next(ospl_char *src, const char em)
+int strchr_next(zpl_char *src, const char em)
 {
-	ospl_char *p = src;
+	zpl_char *p = src;
 	assert(src);
-	ospl_uint32 i = 0, j = 0, count = os_strlen(src);
+	zpl_uint32 i = 0, j = 0, count = os_strlen(src);
 	for(i = 0; i < count; i++)
 	{
 		if(p[i] == em)
@@ -323,26 +334,26 @@ int strchr_next(ospl_char *src, const char em)
 	return j ? i:0;
 }
 
-ospl_char *os_strstr_last(const char *dest,const char *src)
+zpl_char *os_strstr_last(const char *dest,const char *src)
 {
 	const char *ret=NULL;
-	static ospl_char *last = NULL;
+	static zpl_char *last = NULL;
 	assert(dest);
 	assert(src);
 	if(*src == '\0')
-		return (ospl_char *)dest;
+		return (zpl_char *)dest;
 	while((ret = os_strstr(dest,src)))
 	{
 		last=ret;
 		dest=ret+1;
 	}
-	return (ospl_char *)last;
+	return (zpl_char *)last;
 }
 
 
-int str_isempty(ospl_char *dest, ospl_uint32 len)
+int str_isempty(zpl_char *dest, zpl_uint32 len)
 {
-	ospl_char buf[2048];
+	zpl_char buf[2048];
 	os_memset(buf, 0, sizeof(buf));
 	if(os_memcmp(buf, dest, MIN(len, sizeof(buf))) == 0)
 		return 1;
@@ -352,11 +363,11 @@ int str_isempty(ospl_char *dest, ospl_uint32 len)
 
 
 /*
-int inet64_to_mac(ospl_uint64 value, ospl_uint8 *dst)
+int inet64_to_mac(zpl_uint64 value, zpl_uint8 *dst)
 {
 	unsigned i;
 	zassert(dst != NULL);
-	ospl_uint64 temp = value;
+	zpl_uint64 temp = value;
 	for (i = 0; i < 8; i++) {
 		dst[7-i] = temp & 0xff;
 		temp >>= 8;
@@ -364,10 +375,10 @@ int inet64_to_mac(ospl_uint64 value, ospl_uint8 *dst)
 	return OK;
 }
 
-ospl_uint64 mac_to_inet64(ospl_uint8 *dst)
+zpl_uint64 mac_to_inet64(zpl_uint8 *dst)
 {
 	unsigned i;
-	ospl_uint64 temp = 0;
+	zpl_uint64 temp = 0;
 	zassert(dst != NULL);
 	for (i = 0; i < 8; i++) {
 		temp |= dst[i] & 0xff;
@@ -383,62 +394,62 @@ ospl_uint64 mac_to_inet64(ospl_uint8 *dst)
  *
  *  DHCPD
  */
-ospl_uint32
-getULong(ospl_uchar *buf)
+zpl_uint32
+getULong(zpl_uchar *buf)
 {
-	ospl_uint32 ibuf;
+	zpl_uint32 ibuf;
 
 	memcpy(&ibuf, buf, sizeof(ibuf));
 	return (ntohl(ibuf));
 }
 
-ospl_uint16
-getUShort(ospl_uchar *buf)
+zpl_uint16
+getUShort(zpl_uchar *buf)
 {
-	ospl_uint16 ibuf;
+	zpl_uint16 ibuf;
 
 	memcpy(&ibuf, buf, sizeof(ibuf));
 	return (ntohs(ibuf));
 }
 
 void
-putULong(ospl_uchar *obuf, ospl_uint32 val)
+putULong(zpl_uchar *obuf, zpl_uint32 val)
 {
-	ospl_uint32 tmp = htonl(val);
+	zpl_uint32 tmp = htonl(val);
 
 	memcpy(obuf, &tmp, sizeof(tmp));
 }
 
 void
-putLong(ospl_uchar *obuf, ospl_int32 val)
+putLong(zpl_uchar *obuf, zpl_int32 val)
 {
-	ospl_int32 tmp = htonl(val);
+	zpl_int32 tmp = htonl(val);
 
 	memcpy(obuf, &tmp, sizeof(tmp));
 }
 
 void
-putUShort(ospl_uchar *obuf, ospl_int16  val)
+putUShort(zpl_uchar *obuf, zpl_int16  val)
 {
-	ospl_uint16 tmp = htons(val);
+	zpl_uint16 tmp = htons(val);
 
 	memcpy(obuf, &tmp, sizeof(tmp));
 }
 
 void
-putShort(ospl_uchar *obuf, ospl_int16 val)
+putShort(zpl_uchar *obuf, zpl_int16 val)
 {
-	ospl_int16 tmp = htons(val);
+	zpl_int16 tmp = htons(val);
 
 	memcpy(obuf, &tmp, sizeof(tmp));
 }
 
 void
-convert_num(ospl_uchar *buf, ospl_char *str, int base, int size)
+convert_num(zpl_uchar *buf, zpl_char *str, int base, int size)
 {
-	ospl_uint32 negative = 0, tval, max;
-	ospl_uint32 val = 0;
-	ospl_char *ptr = str;
+	zpl_uint32 negative = 0, tval, max;
+	zpl_uint32 val = 0;
+	zpl_char *ptr = str;
 
 	if (*ptr == '-') {
 		negative = 1;
@@ -451,8 +462,8 @@ convert_num(ospl_uchar *buf, ospl_char *str, int base, int size)
 			if (ptr[1] == 'x') {
 				base = 16;
 				ptr += 2;
-			} else if (isascii((ospl_uchar)ptr[1]) &&
-			    isdigit((ospl_uchar)ptr[1])) {
+			} else if (isascii((zpl_uchar)ptr[1]) &&
+			    isdigit((zpl_uchar)ptr[1])) {
 				base = 8;
 				ptr += 1;
 			} else
@@ -474,7 +485,7 @@ convert_num(ospl_uchar *buf, ospl_char *str, int base, int size)
 			//dhcpd_warning("Bogus number: %s.", str);
 			break;
 		}
-		if (tval >= (ospl_uint32)base) {
+		if (tval >= (zpl_uint32)base) {
 			//dhcpd_warning("Bogus number: %s: digit %d not in base %d",
 			//    str, tval, base);
 			break;
@@ -506,13 +517,13 @@ convert_num(ospl_uchar *buf, ospl_char *str, int base, int size)
 	if (negative) {
 		switch (size) {
 		case 8:
-			*buf = -(ospl_ulong)val;
+			*buf = -(zpl_ulong)val;
 			break;
 		case 16:
-			putShort(buf, -(ospl_ulong)val);
+			putShort(buf, -(zpl_ulong)val);
 			break;
 		case 32:
-			putLong(buf, -(ospl_ulong)val);
+			putLong(buf, -(zpl_ulong)val);
 			break;
 		default:
 			//dhcpd_warning("Unexpected integer size: %d", size);
@@ -521,10 +532,10 @@ convert_num(ospl_uchar *buf, ospl_char *str, int base, int size)
 	} else {
 		switch (size) {
 		case 8:
-			*buf = (ospl_uint8)val;
+			*buf = (zpl_uint8)val;
 			break;
 		case 16:
-			putUShort(buf, (ospl_uint16)val);
+			putUShort(buf, (zpl_uint16)val);
 			break;
 		case 32:
 			putULong(buf, val);
@@ -555,7 +566,7 @@ strtonum(const char *numstr, long long minval, long long maxval,
     const char **errstrp)
 {
 	long long ll = 0;
-	ospl_char *ep;
+	zpl_char *ep;
 	int error = 0;
 	struct errval {
 		const char *errstr;

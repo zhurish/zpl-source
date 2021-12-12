@@ -40,26 +40,26 @@ typedef struct nsm_tunnel_s
 	struct prefix source;		//ip tunnel change tunnel1 local 192.168.122.1
     struct prefix remote;		//change: ip tunnel change tunnel1 remote 19.1.1.1
 
-	ospl_uchar tun_ttl;		//change: ip tunnel change tunnel0 ttl
-	ospl_ushort tun_mtu;		//change: ip link set dev tunnel0 mtu 1400
+	zpl_uchar tun_ttl;		//change: ip tunnel change tunnel0 ttl
+	zpl_ushort tun_mtu;		//change: ip link set dev tunnel0 mtu 1400
 
-	ospl_uchar tun_tos;
-	ospl_uchar frag_off;
+	zpl_uchar tun_tos;
+	zpl_uchar frag_off;
 
-	ospl_bool	ready;
-    ospl_bool 	active;				//隧道接口是否激活
+	zpl_bool	ready;
+    zpl_bool 	active;				//隧道接口是否激活
 
 }nsm_tunnel_t;
 /*
-    ospl_uint8 tos;
-    ospl_uint16 tot_len;
-    ospl_uint16 id;
-    ospl_uint16 frag_off;
-    ospl_uint8 ttl;
-    ospl_uint8 protocol;
+    zpl_uint8 tos;
+    zpl_uint16 tot_len;
+    zpl_uint16 id;
+    zpl_uint16 frag_off;
+    zpl_uint8 ttl;
+    zpl_uint8 protocol;
 
 struct ip_tunnel_parm {
-	ospl_char			name[IFNAMSIZ];
+	zpl_char			name[IFNAMSIZ];
 	int			link;
 	__be16			i_flags;
 	__be16			o_flags;
@@ -69,8 +69,11 @@ struct ip_tunnel_parm {
 };
 */
 extern nsm_tunnel_t * nsm_tunnel_get(struct interface *ifp);
-extern int nsm_tunnel_client_init();
-extern int nsm_tunnel_client_exit();
+extern int nsm_tunnel_init();
+extern int nsm_tunnel_exit();
+
+extern int nsm_tunnel_interface_create_api(struct interface *ifp);
+extern int nsm_tunnel_interface_del_api(struct interface *ifp);
 
 extern int nsm_tunnel_mode_set_api(struct interface *ifp, tunnel_mode mode);
 extern int nsm_tunnel_mode_get_api(struct interface *ifp, tunnel_mode *mode);
@@ -78,12 +81,12 @@ extern int nsm_tunnel_source_set_api(struct interface *ifp, struct prefix  *sour
 extern int nsm_tunnel_source_get_api(struct interface *ifp, struct prefix *source);
 extern int nsm_tunnel_destination_set_api(struct interface *ifp, struct prefix *dest);
 extern int nsm_tunnel_destination_get_api(struct interface *ifp, struct prefix *dest);
-extern int nsm_tunnel_ttl_set_api(struct interface *ifp, ospl_uint32 ttl);
-extern int nsm_tunnel_ttl_get_api(struct interface *ifp, ospl_uint32 *ttl);
-extern int nsm_tunnel_mtu_set_api(struct interface *ifp, ospl_uint32 mtu);
-extern int nsm_tunnel_mtu_get_api(struct interface *ifp, ospl_uint32 *mtu);
-extern int nsm_tunnel_tos_set_api(struct interface *ifp, ospl_uint32 tos);
-extern int nsm_tunnel_tos_get_api(struct interface *ifp, ospl_uint32 *tos);
+extern int nsm_tunnel_ttl_set_api(struct interface *ifp, zpl_uint32 ttl);
+extern int nsm_tunnel_ttl_get_api(struct interface *ifp, zpl_uint32 *ttl);
+extern int nsm_tunnel_mtu_set_api(struct interface *ifp, zpl_uint32 mtu);
+extern int nsm_tunnel_mtu_get_api(struct interface *ifp, zpl_uint32 *mtu);
+extern int nsm_tunnel_tos_set_api(struct interface *ifp, zpl_uint32 tos);
+extern int nsm_tunnel_tos_get_api(struct interface *ifp, zpl_uint32 *tos);
 
 extern int nsm_tunnel_make_iphdr(nsm_tunnel_t *tunnel, struct iphdr *iph);
 

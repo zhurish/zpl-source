@@ -29,7 +29,8 @@ live555HLSProxy$(EXE):	$(HLS_PROXY_OBJS) $(LOCAL_LIBS)
 
 clean:
 	-rm -rf *.$(OBJ) $(ALL) core *.core *~ include/*~
-
+	-rm -rf $(DESTDIR)$(PREFIX)/bin/$(HLS_PROXY)* *.d
+	
 install: $(HLS_PROXY)
 	  install -d $(DESTDIR)$(PREFIX)/bin
 	  install -m 755 $(HLS_PROXY) $(DESTDIR)$(PREFIX)/bin

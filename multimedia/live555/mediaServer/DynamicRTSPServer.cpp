@@ -13,7 +13,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
-// Copyright (c) 1996-2020, Live Networks, Inc.  All rights reserved
+// Copyright (c) 1996-2021, Live Networks, Inc.  All rights reserved
 // A subclass of "RTSPServer" that creates "ServerMediaSession"s on demand,
 // based on whether or not the specified stream name exists as a file
 // Implementation
@@ -26,16 +26,18 @@ DynamicRTSPServer*
 DynamicRTSPServer::createNew(UsageEnvironment& env, Port ourPort,
 			     UserAuthenticationDatabase* authDatabase,
 			     unsigned reclamationTestSeconds) {
-  int ourSocket = setUpOurSocket(env, ourPort);
-  if (ourSocket == -1) return NULL;
+  int ourSocketIPv4 = setUpOurSocket(env, ourPort, AF_INET);
+  int ourSocketIPv6 = setUpOurSocket(env, ourPort, AF_INET6);
+  if (ourSocketIPv4 < 0 && ourSocketIPv6 < 0) return NULL;
 
-  return new DynamicRTSPServer(env, ourSocket, ourPort, authDatabase, reclamationTestSeconds);
+  return new DynamicRTSPServer(env, ourSocketIPv4, ourSocketIPv6, ourPort,
+			       authDatabase, reclamationTestSeconds);
 }
 
-DynamicRTSPServer::DynamicRTSPServer(UsageEnvironment& env, int ourSocket,
+DynamicRTSPServer::DynamicRTSPServer(UsageEnvironment& env, int ourSocketIPv4, int ourSocketIPv6,
 				     Port ourPort,
 				     UserAuthenticationDatabase* authDatabase, unsigned reclamationTestSeconds)
-  : RTSPServer(env, ourSocket, ourPort, authDatabase, reclamationTestSeconds) {
+  : RTSPServer(env, ourSocketIPv4, ourSocketIPv6, ourPort, authDatabase, reclamationTestSeconds) {
 }
 
 DynamicRTSPServer::~DynamicRTSPServer() {
@@ -44,14 +46,27 @@ DynamicRTSPServer::~DynamicRTSPServer() {
 static ServerMediaSession* createNewSMS(UsageEnvironment& env,
 					char const* fileName, FILE* fid); // forward
 
-ServerMediaSession* DynamicRTSPServer
-::lookupServerMediaSession(char const* streamName, Boolean isFirstLookupInSession) {
+void DynamicRTSPServer
+::lookupServerMediaSession(char const* streamName,
+			   lookupServerMediaSessionCompletionFunc* completionFunc,
+			   void* completionClientData,
+			   Boolean isFirstLookupInSession) {
   // First, check whether the specified "streamName" exists as a local file:
+    this->envir() << "======================lookupServerMediaSession====streamName:" << streamName << "\n";
+    if(strcmp(streamName, "cam") == 0)
+    {
+        ServerMediaSession* sms = getServerMediaSession(streamName);
+        if (completionFunc != NULL) {
+          (*completionFunc)(completionClientData, sms);
+        }
+        this->envir() << "======================lookupServerMediaSession==already==streamName:" << streamName << "\n";
+        return;
+    }
   FILE* fid = fopen(streamName, "rb");
   Boolean const fileExists = fid != NULL;
 
   // Next, check whether we already have a "ServerMediaSession" for this file:
-  ServerMediaSession* sms = RTSPServer::lookupServerMediaSession(streamName);
+  ServerMediaSession* sms = getServerMediaSession(streamName);
   Boolean const smsExists = sms != NULL;
 
   // Handle the four possibilities for "fileExists" and "smsExists":
@@ -59,10 +74,9 @@ ServerMediaSession* DynamicRTSPServer
     if (smsExists) {
       // "sms" was created for a file that no longer exists. Remove it:
       removeServerMediaSession(sms);
-      sms = NULL;
     }
 
-    return NULL;
+    sms = NULL;
   } else {
     if (smsExists && isFirstLookupInSession) { 
       // Remove the existing "ServerMediaSession" and create a new one, in case the underlying
@@ -77,7 +91,10 @@ ServerMediaSession* DynamicRTSPServer
     }
 
     fclose(fid);
-    return sms;
+  }
+
+  if (completionFunc != NULL) {
+    (*completionFunc)(completionClientData, sms);
   }
 }
 
@@ -115,8 +132,10 @@ static ServerMediaSession* createNewSMS(UsageEnvironment& env,
 					char const* fileName, FILE* /*fid*/) {
   // Use the file name extension to determine the type of "ServerMediaSession":
   char const* extension = strrchr(fileName, '.');
-  if (extension == NULL) return NULL;
-
+  if (extension == NULL)
+  {
+      return NULL;
+  }
   ServerMediaSession* sms = NULL;
   Boolean const reuseSource = False;
   if (strcmp(extension, ".aac") == 0) {
@@ -135,15 +154,15 @@ static ServerMediaSession* createNewSMS(UsageEnvironment& env,
     // Assumed to be a MPEG-4 Video Elementary Stream file:
     NEW_SMS("MPEG-4 Video");
     sms->addSubsession(MPEG4VideoFileServerMediaSubsession::createNew(env, fileName, reuseSource));
-  } else if (strcmp(extension, ".264") == 0) {
+  } else if (strcmp(extension, ".264") == 0 || strcmp(extension, ".h264") == 0) {
     // Assumed to be a H.264 Video Elementary Stream file:
     NEW_SMS("H.264 Video");
-    OutPacketBuffer::maxSize = 100000; // allow for some possibly large H.264 frames
+    OutPacketBuffer::maxSize = 3000000; // allow for some possibly large H.264 frames
     sms->addSubsession(H264VideoFileServerMediaSubsession::createNew(env, fileName, reuseSource));
-  } else if (strcmp(extension, ".265") == 0) {
+  } else if (strcmp(extension, ".265") == 0 || strcmp(extension, ".h265") == 0) {
     // Assumed to be a H.265 Video Elementary Stream file:
     NEW_SMS("H.265 Video");
-    OutPacketBuffer::maxSize = 100000; // allow for some possibly large H.265 frames
+    OutPacketBuffer::maxSize = 3000000; // allow for some possibly large H.265 frames
     sms->addSubsession(H265VideoFileServerMediaSubsession::createNew(env, fileName, reuseSource));
   } else if (strcmp(extension, ".mp3") == 0) {
     // Assumed to be a MPEG-1 or 2 Audio file:

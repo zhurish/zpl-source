@@ -5,8 +5,8 @@
  *      Author: zhurish
  */
 
-//#include "zebra.h"
-#include "zebra.h"
+//#include "zpl_include.h"
+#include "zpl_include.h"
 #include "module.h"
 #include "memory.h"
 #include "zassert.h"
@@ -22,7 +22,7 @@
 #include "web_app.h"
 #include "web_api.h"
 
-#ifdef PL_APP_MODULE
+#ifdef ZPL_APP_MODULE
 #include "application.h"
 #endif
 
@@ -71,7 +71,7 @@ static int jst_kernel_version(int eid, webs_t wp, int argc, char **argv)
 {
 	//Linux version 4.14.121
 #if LINUX_VERSION_CODE
-	ospl_uint32 mver = 0, sver = 0, lver = 0;
+	zpl_uint32 mver = 0, sver = 0, lver = 0;
 	mver = (LINUX_VERSION_CODE>>16) & 0xff;
 	sver = (LINUX_VERSION_CODE>>8) & 0xff;
 	lver = (LINUX_VERSION_CODE) & 0xff;
@@ -101,7 +101,7 @@ static int jst_kernel_version(int eid, webs_t wp, int argc, char **argv)
 
 static int jst_serial_number(int eid, webs_t wp, int argc, char **argv)
 {
-	ospl_int8	serial[64];
+	zpl_int8	serial[64];
 	memset(serial, 0, sizeof(serial));
 	host_config_get_api(API_GET_SERIAL_CMD, serial);
     websWrite(wp, "%s", serial);
@@ -117,7 +117,7 @@ static int jst_localtime(int eid, webs_t wp, int argc, char **argv)
 */
 static char *_web_uptime(char *tmp)
 {
-	ospl_uint32 updays = 0, uphours = 0, upminutes = 0;
+	zpl_uint32 updays = 0, uphours = 0, upminutes = 0;
 	struct sysinfo info;
 	sysinfo(&info);
 	updays = (unsigned) info.uptime / (unsigned)(60*60*24);
@@ -169,7 +169,7 @@ static int jst_cpu_load(int eid, webs_t wp, int argc, char **argv)
 
 static int web_firmware_version_get(char *argv, char *ver)
 {
-#ifdef PL_APP_MODULE
+#ifdef ZPL_APP_MODULE
 	if(strstr(argv, "VO"))
 	{
 		if(access("/etc/main_version", F_OK) == 0)
@@ -250,7 +250,7 @@ static int jst_firmware_version(int eid, webs_t wp, int argc, char **argv)
 		return 0;
 	}
 #else
-#ifdef PL_APP_MODULE
+#ifdef ZPL_APP_MODULE
 	if(strstr(argv[0], "VO"))
 	{
 		if(access("/etc/main_version", F_OK) == 0)
@@ -318,7 +318,7 @@ static int jst_arch(int eid, webs_t wp, int argc, char **argv)
 	struct host_system host_system;
 	memset(&host_system, 0, sizeof(struct host_system));
 	host_system_information_get(&host_system);
-#ifdef PL_BUILD_ARCH_X86
+#ifdef ZPL_BUILD_ARCH_X86
 	if(host_system.model_name)
 	{
 		websWrite(wp, "%s", host_system.model_name);
@@ -337,7 +337,7 @@ static int jst_platform(int eid, webs_t wp, int argc, char **argv)
 	struct host_system host_system;
 	memset(&host_system, 0, sizeof(struct host_system));
 	host_system_information_get(&host_system);
-#ifdef PL_BUILD_ARCH_X86
+#ifdef ZPL_BUILD_ARCH_X86
 	if(host_system.model_name)
 	{
 	    websWrite(wp, "%s", host_system.model_name);
@@ -455,7 +455,7 @@ static int jst_web_os(int eid, webs_t wp, int argc, char **argv)
 				websWrite(wp, "openwrt");
 			return 0;
 		}
-		else if(web_app->webtype == WEB_OS_LINUX)
+		else if(web_app->webtype == ZPL_BUILD_LINUX)
 		{
 			if(argv[0] && strstr(argv[0], "get"))
 				websWrite(wp, "linux");
@@ -616,7 +616,7 @@ static int jst_app_version(int eid, webs_t wp, int argc, char **argv)
 
 static int jst_systeminfo(Webs *wp, char *path, char *query)
 {
-	ospl_uint32 offset = 0;
+	zpl_uint32 offset = 0;
 	char buf[2048];
 	char tmp[128];
 	memset(buf, 0, sizeof(buf));
@@ -633,7 +633,7 @@ static int jst_systeminfo(Webs *wp, char *path, char *query)
 	//websWrite(wp, "%s", "[");
 
 	//websWrite(wp, "%s", host_name_get());
-#ifdef PL_BUILD_ARCH_X86
+#ifdef ZPL_BUILD_ARCH_X86
 	if(host_system.model_name)
 	{
 		 sprintf (buf, "{\"devname\":\"%s\", \"platfrom\":\"%s\",", host_name_get(), host_system.model_name);
@@ -647,7 +647,7 @@ static int jst_systeminfo(Webs *wp, char *path, char *query)
 #endif
 	offset = strlen(buf);
 #if LINUX_VERSION_CODE
-	ospl_uint32 mver = 0, sver = 0, lver = 0;
+	zpl_uint32 mver = 0, sver = 0, lver = 0;
 	mver = (LINUX_VERSION_CODE>>16) & 0xff;
 	sver = (LINUX_VERSION_CODE>>8) & 0xff;
 	lver = (LINUX_VERSION_CODE) & 0xff;

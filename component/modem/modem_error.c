@@ -5,14 +5,10 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-
-#include "os_list.h"
-#include "os_util.h"
-#include "tty_com.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "modem.h"
 #include "modem_client.h"
@@ -320,17 +316,17 @@ CMS ERROR: 42 Congestion
 CMS ERROR: 47 Recources unavailable
 CMS ERROR: 50 Requested facility not subscribed
 CMS ERROR: 69 Requested facility not implemented
-CMS ERROR: 81 Invalid ospl_int16 message transfer reference value
+CMS ERROR: 81 Invalid zpl_int16 message transfer reference value
 CMS ERROR: 95 Invalid message unspecified
 CMS ERROR: 96 Invalid mandatory information
 CMS ERROR: 97 Message type non existent or not implemented
-CMS ERROR: 98 Message not compatible with ospl_int16 message protocol
+CMS ERROR: 98 Message not compatible with zpl_int16 message protocol
 CMS ERROR: 99 Information element non-existent or not implemente
 CMS ERROR: 111 Protocol error, unspecified
 CMS ERROR: 127 Internetworking , unspecified
 CMS ERROR: 128 Telematic internetworking not supported
 CMS ERROR: 129 Short message type 0 not supported
-CMS ERROR: 130 Cannot replace ospl_int16 message
+CMS ERROR: 130 Cannot replace zpl_int16 message
 CMS ERROR: 143 Unspecified TP-PID error
 CMS ERROR: 144 Data code scheme not supported
 CMS ERROR: 145 Message class not supported

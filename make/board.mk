@@ -1,11 +1,11 @@
 #
 #
-# Define LINUX PL_BUILD
+# Define LINUX ZPL_BUILD
 #
 # X86, ARM, MIPS, PPC, SUN, SPARC, S390, PARISC, POWERPC, SH, AARCH, TILE
 #
-ifeq ($(MENUCONFIG_PL_BUILD),true)
-include $(MENUCONFIG_PL_CONFIG)
+ifeq ($(MENUCONFIG_ZPL_BUILD),true)
+include $(MENUCONFIG_ZPL_CONFIG)
 else
 ifeq ($(ARCH_TYPE),)
 #ARCH_TYPE=ARM
@@ -28,9 +28,9 @@ ARCH_OS	= linux
 IPV6_ENABLE = true
 #
 ifeq ($(OPENWRT),true)
-PL_BUILD_OPENWRT=true
+ZPL_BUILD_OPENWRT=true
 else
-PL_BUILD_OPENWRT=false
+ZPL_BUILD_OPENWRT=false
 endif
 #
 #
@@ -38,7 +38,7 @@ ARCH_DEBUG=YES
 #
 #
 ifneq ($(ARCH_TYPE),ARM)
-ifeq ($(PL_BUILD_OPENWRT),false)
+ifeq ($(ZPL_BUILD_OPENWRT),false)
 #ifeq ($(CROSS_COMPILE),)
 #CROSS_COMPILE_ROOT = /opt/toolchain/toolchain-mipsel_24kc_gcc-7.3.0_musl
 CROSS_COMPILE_ROOT = /opt/toolchain/toolchain-mipsel_24kc_gcc-7.3.0_glibc
@@ -51,16 +51,18 @@ export CROSS_COMPILE = $(CROSS_COMPILE_ROOT)/bin/mipsel-openwrt-linux-
 #endif
 else
 ifeq ($(CROSS_COMPILE),)
-#CROSS_COMPILE_ROOT = /opt/toolchain/toolchain-mipsel_24kec+dsp_gcc-4.8-linaro_uClibc-0.9.33.2
-#export CROSS_COMPILE = $(CROSS_COMPILE_ROOT)/bin/mipsel-openwrt-linux-
+CROSS_COMPILE_ROOT = /home/zhurish/arm-himix200-linux
+export CROSS_COMPILE = $(CROSS_COMPILE_ROOT)/bin/bin/arm-himix200-linux-
 endif
 endif
 endif
 #
 #
 ifeq ($(ARCH_TYPE),ARM)
-CROSS_COMPILE_ROOT = /opt/toolchain/arm-cortexa9/4.9.3/
-export CROSS_COMPILE = $(CROSS_COMPILE_ROOT)/bin/arm-cortexa9-linux-gnueabihf-
+#CROSS_COMPILE_ROOT = /opt/toolchain/arm-cortexa9/4.9.3/
+#export CROSS_COMPILE = $(CROSS_COMPILE_ROOT)/bin/arm-cortexa9-linux-gnueabihf-
+CROSS_COMPILE_ROOT = /home/zhurish/arm-himix200-linux
+export CROSS_COMPILE = $(CROSS_COMPILE_ROOT)/bin/bin/arm-himix200-linux-
 endif
 #
 #

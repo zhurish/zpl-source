@@ -37,27 +37,27 @@ typedef enum dos_type_e
 typedef struct Gl2dos_s
 {
 	void		*mutex;
-	ospl_bool		enable;
+	zpl_bool		enable;
 
-	ospl_bool		icmpv6_longping;
-	ospl_bool		icmpv4_longping;
-	ospl_bool		icmpv6_fragment;
-	ospl_bool		icmpv4_fragment;
+	zpl_bool		icmpv6_longping;
+	zpl_bool		icmpv4_longping;
+	zpl_bool		icmpv6_fragment;
+	zpl_bool		icmpv4_fragment;
 
-	ospl_bool		tcp_fragerror;
-	ospl_bool		tcp_ospl_int16hdr;
-	ospl_bool		tcp_synerror;
-	ospl_bool		tcp_synfinscan;
-	ospl_bool		tcp_xmasscan;
-	ospl_bool		tcp_nullscan;
+	zpl_bool		tcp_fragerror;
+	zpl_bool		tcp_zpl_int16hdr;
+	zpl_bool		tcp_synerror;
+	zpl_bool		tcp_synfinscan;
+	zpl_bool		tcp_xmasscan;
+	zpl_bool		tcp_nullscan;
 
-	ospl_bool		udp_blat;
-	ospl_bool		tcp_blat;
-	ospl_bool		ip_lan_drip;
+	zpl_bool		udp_blat;
+	zpl_bool		tcp_blat;
+	zpl_bool		ip_lan_drip;
 
-	ospl_uint32		tcp_hdr_min;
-	ospl_uint32		icmpv4_max;
-	ospl_uint32		icmpv6_max;
+	zpl_uint32		tcp_hdr_min;
+	zpl_uint32		icmpv4_max;
+	zpl_uint32		icmpv6_max;
 
 }Gl2dos_t;
 
@@ -66,14 +66,14 @@ int nsm_dos_init();
 int nsm_dos_exit();
 
 int nsm_dos_enable(void);
-ospl_bool nsm_dos_is_enable(void);
+zpl_bool nsm_dos_is_enable(void);
 int nsm_dos_enable_api(dos_type_en type);
 int nsm_dos_disable_api(dos_type_en type);
 
 
-int nsm_dos_tcp_hdr_min(ospl_uint32 size);
-int nsm_dos_icmpv4_max(ospl_uint32 size);
-int nsm_dos_icmpv6_max(ospl_uint32 size);
+int nsm_dos_tcp_hdr_min(zpl_uint32 size);
+int nsm_dos_icmpv4_max(zpl_uint32 size);
+int nsm_dos_icmpv6_max(zpl_uint32 size);
 
 typedef int (*l2dos_cb)(Gl2dos_t *, void *);
 

@@ -12,9 +12,9 @@
 extern "C" {
 #endif
 
-int v9_video_board_stream_add_api(ospl_uint8 id, ospl_uint8 ch, ospl_uint32 address, ospl_uint16 port,
-							   char *username, char *password, ospl_uint32 fps, char *param, char *secondary);
-int v9_video_board_stream_del_api(ospl_uint8 id, ospl_uint8 ch, ospl_uint32 address, ospl_uint16 port);
+int v9_video_board_stream_add_api(zpl_uint8 id, zpl_uint8 ch, zpl_uint32 address, zpl_uint16 port,
+							   char *username, char *password, zpl_uint32 fps, char *param, char *secondary);
+int v9_video_board_stream_del_api(zpl_uint8 id, zpl_uint8 ch, zpl_uint32 address, zpl_uint16 port);
 
 int v9_video_board_stream_cleanup_api();
 

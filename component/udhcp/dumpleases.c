@@ -90,13 +90,13 @@ int dumpleases_main(int argc UNUSED_PARAM, char **argv)
 #if ENABLE_UNICODE_SUPPORT
 		{
 			char *uni_name = unicode_conv_to_printable_fixedwidth(/*NULL,*/ lease.hostname, 19);
-			printf(" %-16s%s ", inet_ntoa(addr), uni_name);
+			printf(" %-16s%s ", ipstack_inet_ntoa(addr), uni_name);
 			free(uni_name);
 		}
 #else
 		/* actually, 15+1 and 19+1, +1 is a space between columns */
 		/* lease.hostname is char[20] and is always NUL terminated */
-		printf(" %-16s%-20s", inet_ntoa(addr), lease.hostname);
+		printf(" %-16s%-20s", ipstack_inet_ntoa(addr), lease.hostname);
 #endif
 		expires_abs = ntohl(lease.expires) + written_at;
 		if (expires_abs <= curr) {
@@ -107,7 +107,7 @@ int dumpleases_main(int argc UNUSED_PARAM, char **argv)
 			/* -d: decimal time */
 			if (!(opt & OPT_a))
 				expires_abs -= curr;
-			printf("%llu\n", (ospl_ullong ) expires_abs);
+			printf("%llu\n", (zpl_ullong ) expires_abs);
 			continue;
 		}
 		if (!(opt & OPT_a)) { /* no -a */
@@ -120,7 +120,7 @@ int dumpleases_main(int argc UNUSED_PARAM, char **argv)
 				printf("%u days ", d);
 			printf("%02u:%02u:%02u\n", h, m, (unsigned)expires);
 		} else { /* -a */
-			ospl_time_t t = expires_abs;
+			zpl_time_t t = expires_abs;
 			fputs(ctime(&t), stdout);
 		}
 	}

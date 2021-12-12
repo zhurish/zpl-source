@@ -24,9 +24,9 @@ extern "C" {
 
 typedef struct app_slipnet_data_s
 {
-	ospl_uint8 type;
-	ospl_uint16 len;
-	ospl_uint8 data[APP_SLIPNET_QUEUE_SIZE];
+	zpl_uint8 type;
+	zpl_uint16 len;
+	zpl_uint8 data[APP_SLIPNET_QUEUE_SIZE];
 } app_slipnet_data_t;
 
 #pragma pack()
@@ -41,7 +41,7 @@ typedef struct app_slipnet_data_s
 #define V9_SLIPNET_SPEED_RATE 115200
 #endif
 
-extern int v9_app_slipnet_init(v9_serial_t *serial, char *devname, ospl_uint32 speed);
+extern int v9_app_slipnet_init(v9_serial_t *serial, char *devname, zpl_uint32 speed);
 extern int v9_app_slipnet_exit(v9_serial_t *serial);
 #endif /* V9_SLIPNET_ENABLE */
 

@@ -86,18 +86,9 @@ SEE ALSO: sntpcLib, RFC 1769
 #include "usrLib.h"
 #include "errnoLib.h"
 */
-#include "zebra.h"
-#include "log.h"
-
-#include "command.h"
-#include "memory.h"
-#include "prefix.h"
-#include "sockunion.h"
-#include "str.h"
-#include "table.h"
-
-#include "vty.h"
-
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
 #include "sntpsLib.h"
 
 
@@ -108,8 +99,8 @@ SEE ALSO: sntpcLib, RFC 1769
 /* forward declarations */
 
 static struct sntp_server *sntp_server = NULL;
-static ospl_bool sntpsClockHookRtn(ospl_uint32 , void *);
-static STATUS sntpsClockSet (struct sntp_server *, ospl_bool (*)(ospl_uint32, void *));
+static zpl_bool sntpsClockHookRtn(zpl_uint32 , void *);
+static STATUS sntpsClockSet (struct sntp_server *, zpl_bool (*)(zpl_uint32, void *));
 
 struct module_list module_list_sntps = 
 { 
@@ -183,9 +174,9 @@ static INT8 sntpsLog2Get
     ULONG inval 	/* input value for calculation */
     )
 {
-	ospl_uint32 loop;
-	ospl_uint32 floor; /* Nearest power of two for smaller value */
-	ospl_uint32 limit; /* Nearest power of two for larger value */
+	zpl_uint32 loop;
+	zpl_uint32 floor; /* Nearest power of two for smaller value */
+	zpl_uint32 limit; /* Nearest power of two for larger value */
 	int result;
 	ULONG mask; /* Bitmask for log2 calculation */
 
@@ -249,7 +240,7 @@ static ULONG sntpsNsecToFraction
 	ULONG mask = 100000000; /* Pulls digits of factor from left to right. */
 	int loop;
 	ULONG fraction = 0;
-	ospl_bool shift = ospl_false; /* Shifted to avoid overflow? */
+	zpl_bool shift = zpl_false; /* Shifted to avoid overflow? */
 
 	/*
 	 * Adjust large values so that no intermediate calculation exceeds
@@ -259,7 +250,7 @@ static ULONG sntpsNsecToFraction
 
 	if (nsecs & 0xF0000000) {
 		nsecs >>= 4; /* Exclude rightmost hex digit. */
-		shift = ospl_true;
+		shift = zpl_true;
 	}
 
 	/*
@@ -319,7 +310,7 @@ static STATUS sntpsConfigSet
     )
 {
 	struct in_addr target;
-	ospl_int16 interval;
+	zpl_int16 interval;
 	int result = OK;
 
 	/* Don't change settings if message transmission in progress. */
@@ -327,17 +318,17 @@ static STATUS sntpsConfigSet
 //    semTake (sntpsMutexSem, WAIT_FOREVER);
 
 	if (setting == SNTPS_ADDRESS) {
-		target.s_addr = inet_addr((char *) pValue);
+		target.s_addr = ipstack_inet_addr((char *) pValue);
 		if (target.s_addr == ERROR) {
 //            errnoSet (S_sntpsLib_INVALID_PARAMETER);
 			result = ERROR;
 		} else
 			sntp_server->address.s_addr = target.s_addr;
 	} else if (setting == SNTPS_DELAY) {
-		interval = (ospl_int16) (*((int *) pValue));
+		interval = (zpl_int16) (*((int *) pValue));
 		sntp_server->sntpsInterval = interval;
 	} else if (setting == SNTPS_MODE) {
-		interval = (ospl_int16) (*((int *) pValue));
+		interval = (zpl_int16) (*((int *) pValue));
 		sntp_server->mode = interval;
 	} else {
 //        errnoSet (S_sntpsLib_INVALID_PARAMETER);
@@ -369,7 +360,7 @@ static int sntpsMsgSend (struct sntp_server *server)
 	SNTP_PACKET sntpReply;
 	int result;
 	//int optval;
-	//ospl_int16 interval;
+	//zpl_int16 interval;
 	SNTP_TIMESTAMP refTime;
 //	int sntpSocket;
 	struct sockaddr_in dstAddr;
@@ -404,7 +395,7 @@ static int sntpsMsgSend (struct sntp_server *server)
 	/* Enable broadcast option for socket. */
 #if 0
 	optval = 1;
-	result = ip_setsockopt(server->sock, SOL_SOCKET, SO_BROADCAST, (char *) &optval,
+	result = ipstack_setsockopt(server->sock, SOL_SOCKET, SO_BROADCAST, (char *) &optval,
 			sizeof(optval));
 	if (result == ERROR) {
 		close(sntpSocket);
@@ -415,7 +406,7 @@ static int sntpsMsgSend (struct sntp_server *server)
 #endif
 	if(server->mode == SNTPS_MULTICAST)
 	{
-		ip_setsockopt(server->sock, IPPROTO_IP, IP_MULTICAST_TTL,
+		ipstack_setsockopt(server->sock, IPPROTO_IP, IP_MULTICAST_TTL,
 				(void *)&server->sntps_ttl, sizeof(server->sntps_ttl));
 	}
 	/*
@@ -451,11 +442,11 @@ static int sntpsMsgSend (struct sntp_server *server)
 	sntpReply.originateTimestampSec = sntpReply.referenceTimestampSec;
 	sntpReply.originateTimestampFrac = sntpReply.referenceTimestampFrac;
 
-	result = ip_sendto(server->sock, (caddr_t) & sntpReply, sizeof(sntpReply), 0,
+	result = ipstack_sendto(server->sock, (caddr_t) & sntpReply, sizeof(sntpReply), 0,
 			(struct sockaddr *) &dstAddr, sizeof(dstAddr));
 
 
-	zlog_debug(MODULE_SNTPS, "%s:send %d byte to %s:%d",__func__, result, inet_ntoa(dstAddr.sin_addr),server->sntpsPort);
+	zlog_debug(MODULE_SNTPS, "%s:send %d byte to %s:%d",__func__, result, ipstack_inet_ntoa(dstAddr.sin_addr),server->sntpsPort);
 	/* Schedule a new transmission after the broadcast interval. */
 
 	/*    wdStart (sntpsTimer, interval * sysClkRateGet (),
@@ -526,7 +517,7 @@ static int sntps_time(struct thread *thread)
 static STATUS sntpsClockSet
     (
     struct sntp_server *server,
-	ospl_bool (*pClockHookRtn)(ospl_uint32, void *) 	 	/* new interface to reference clock */
+	zpl_bool (*pClockHookRtn)(zpl_uint32, void *) 	 	/* new interface to reference clock */
     )
 {
 	STATUS result;
@@ -563,7 +554,7 @@ static STATUS sntpsClockSet
 	}
 
 	if (!server->sntpsClockReady)
-		server->sntpsClockReady = ospl_true; /* Enable transmission of messages. */
+		server->sntpsClockReady = zpl_true; /* Enable transmission of messages. */
 
 //    semGive (sntpsMutexSem);
 
@@ -597,7 +588,7 @@ LOCAL int sntpsRead (struct sntp_server *server)
 	int result;
 	int addrLen;
 	SNTP_TIMESTAMP refTime;
-	ospl_bool unsync;
+	zpl_bool unsync;
 
 	addrLen = sizeof(dstAddr);
 
@@ -611,13 +602,13 @@ LOCAL int sntpsRead (struct sntp_server *server)
 
 	/* Create UDP socket and bind to the SNTP port. */
 
-	server->sock = ip_socket(AF_INET, SOCK_DGRAM, 0);
+	server->sock = ipstack_socket(AF_INET, SOCK_DGRAM, 0);
 	if (server->sock == -1)
 		return;
 
-	result = ip_bind(server->sock, (struct sockaddr *) &srcAddr, sizeof(srcAddr));
+	result = ipstack_bind(server->sock, (struct sockaddr *) &srcAddr, sizeof(srcAddr));
 	if (result == -1) {
-		ip_close(server->sock);
+		ipstack_close(server->sock);
 		return;
 	}
 #endif
@@ -630,7 +621,7 @@ LOCAL int sntpsRead (struct sntp_server *server)
 	 wdStart (sntpsTimer, sntpsInterval * sysClkRateGet (),
 	 (FUNCPTR)netJobAdd, (int)sntpsMsgSend);*/
 	//for (;;) {
-		result = ip_recvfrom(server->sock, (caddr_t) & sntpRequest,
+		result = ipstack_recvfrom(server->sock, (caddr_t) & sntpRequest,
 				sizeof(sntpRequest), 0, (struct sockaddr *) &dstAddr, &addrLen);
 		if (result == -1)
 			return -1;
@@ -656,11 +647,11 @@ LOCAL int sntpsRead (struct sntp_server *server)
 		sntpReply.precision = server->sntpsPrecision;
 		sntpReply.referenceIdentifier = server->sntpsClockId;
 
-		unsync = ospl_false;
+		unsync = zpl_false;
 		/* confirm if local time is sync */
         result = (* server->sntpsClockHookRtn) (SNTPS_TIME, &refTime);
 		if (result == ERROR)
-			unsync = ospl_true;
+			unsync = zpl_true;
 
 //        semGive (sntpsMutexSem);
 
@@ -713,7 +704,7 @@ LOCAL int sntpsRead (struct sntp_server *server)
 					sntpRequest.transmitTimestampFrac;
 		}
 
-		result = ip_sendto(server->sock, (caddr_t) & sntpReply, sizeof(sntpReply), 0,
+		result = ipstack_sendto(server->sock, (caddr_t) & sntpReply, sizeof(sntpReply), 0,
 				(struct sockaddr *) &dstAddr, sizeof(dstAddr));
 	//}
 	/* Not reached. */
@@ -721,10 +712,10 @@ LOCAL int sntpsRead (struct sntp_server *server)
 	return result;
 }
 
-static ospl_bool sntpsClockHookRtn(ospl_uint32 type, void *pVoid)
+static zpl_bool sntpsClockHookRtn(zpl_uint32 type, void *pVoid)
 {
 	extern int sntpc_is_sync(void);
-	ospl_bool ret = ospl_false;
+	zpl_bool ret = zpl_false;
 	SNTP_TIMESTAMP *tp = (SNTP_TIMESTAMP *)pVoid;
 	ULONG *value = (ULONG *)pVoid;
 	struct timespec sntpTime;
@@ -737,18 +728,18 @@ static ospl_bool sntpsClockHookRtn(ospl_uint32 type, void *pVoid)
 		{
 			tp->seconds = sntpTime.tv_sec;
 			tp->fraction = sntpsNsecToFraction(sntpTime.tv_nsec);
-			ret = ospl_true;
+			ret = zpl_true;
 		}
 		break;
 	case SNTPS_ID:
 		if(value)
 			*value= 1;
-		ret = ospl_true;
+		ret = zpl_true;
 		break;
 	case SNTPS_RESOLUTION:
 		if(value)
 			*value= rand();
-		ret = ospl_true;
+		ret = zpl_true;
 		break;
 	}
 	//extern struct in_addr sntpc_server_address(void);
@@ -778,25 +769,25 @@ static int sntps_socket_init(struct sntp_server *server)
 		srcAddr.sin_family = AF_INET;
 		srcAddr.sin_port = server->sntpsPort;
 		/* Create UDP socket and bind to the SNTP port. */
-		server->sock = ip_socket(AF_INET, SOCK_DGRAM, 0);
+		server->sock = ipstack_socket(IPCOM_STACK, AF_INET, SOCK_DGRAM, 0);
 		if (server->sock == -1)
 			return ERROR;
 
 		if(server->mode == SNTPS_UNICAST)
 		{
-			result = ip_bind(server->sock, (struct sockaddr *) &srcAddr, sizeof(srcAddr));
+			result = ipstack_bind(server->sock, (struct sockaddr *) &srcAddr, sizeof(srcAddr));
 			if (result == -1) {
-				ip_close(server->sock);
+				ipstack_close(server->sock);
 				return ERROR;
 			}
 		}
 		else if(sntp_server->mode == SNTPS_BROADCAST)
 		{
 			int optval = 1;
-			result = ip_setsockopt(server->sock, SOL_SOCKET, SO_BROADCAST, (char *) &optval,
+			result = ipstack_setsockopt(server->sock, SOL_SOCKET, SO_BROADCAST, (char *) &optval,
 					sizeof(optval));
 			if (result == ERROR) {
-				ip_close(server->sock);
+				ipstack_close(server->sock);
 				/*        wdStart (sntpsTimer, interval * sysClkRateGet (),
 				 (FUNCPTR)netJobAdd, (int)sntpsMsgSend);*/
 				return ERROR;
@@ -806,15 +797,15 @@ static int sntps_socket_init(struct sntp_server *server)
 		{
 			/*
 			 //��ʼ��socket,����Ϊ�ಥ���IP��ַ�Ͷ˿ں�
-			    send_socket = ip_socket(PF_INET,SOCK_DGRAM,0);
+			    send_socket = ipstack_socket(PF_INET,SOCK_DGRAM,0);
 			    memset(&multicast_addr,0,sizeof(multicast_addr));
 			    multicast_addr.sin_family = AF_INET;
 			    //��֮ǰ��UDP���÷�ʽһ����ֻ��������Ƕಥ���IP��ַ�Ͷ˿ں�
-			    multicast_addr.sin_addr.s_addr = inet_addr(argv[1]);
+			    multicast_addr.sin_addr.s_addr = ipstack_inet_addr(argv[1]);
 			    multicast_addr.sin_port = htons(atoi(argv[2]));
 
 			    //Ϊ�ಥ���ݱ������������ʱ��
-			    ip_setsockopt(send_socket,IPPROTO_IP,IP_MULTICAST_TTL,(void *)&live_time,sizeof(live_time));
+			    ipstack_setsockopt(send_socket,IPPROTO_IP,IP_MULTICAST_TTL,(void *)&live_time,sizeof(live_time));
 		*/
 		}
 		/*
@@ -829,7 +820,7 @@ static int sntps_socket_init(struct sntp_server *server)
 		return OK;
 }
 
-static int sntpsEnable(ospl_ushort port, ospl_uint32 time_interval, ospl_uint32 version, ospl_uint32 mode)
+static int sntpsEnable(zpl_ushort port, zpl_uint32 time_interval, zpl_uint32 version, zpl_uint32 mode)
 {
 	int ret = 0;
 	if(sntp_server)
@@ -888,7 +879,7 @@ static int sntpsDisable(void)
 		if(sntp_server->t_write)
 			thread_cancel(sntp_server->t_write);
 		if(sntp_server->sock)
-			ip_close (sntp_server->sock);
+			ipstack_close (sntp_server->sock);
 		//os_memset(sntp_server, 0, sizeof(struct sntp_client));
 		return (OK);
 	}
@@ -960,7 +951,7 @@ static int sntps_server_mode_cmd(char *argv[])
 		return CMD_WARNING;
 	if(os_memcmp(argv[0], "broadcast", 1) == 0)
 	{
-		sntp_server->address.s_addr = inet_addr("192.168.198.1");
+		sntp_server->address.s_addr = ipstack_inet_addr("192.168.198.1");
 		sntp_server->mode = SNTPS_BROADCAST;
 	}
 	else if(os_memcmp(argv[0], "unicast", 1) == 0)
@@ -969,7 +960,7 @@ static int sntps_server_mode_cmd(char *argv[])
 	}
 	else if(os_memcmp(argv[0], "multicast", 1) == 0)
 	{
-		sntp_server->address.s_addr = inet_addr(SNTP_MUTILCAST_ADDRESS);
+		sntp_server->address.s_addr = ipstack_inet_addr(SNTP_MUTILCAST_ADDRESS);
 		sntp_server->mode = SNTPS_MULTICAST;
 	}
 	if(sntpsIsEnable())
@@ -1261,7 +1252,7 @@ int vty_show_sntps_server(struct vty *vty)
 	vty_out(vty, "SNTP Server Version	: %d%s",sntp_server->version,VTY_NEWLINE);
 	vty_out(vty, "SNTP Server Mode	: %s%s",mode_str[sntp_server->mode-1],VTY_NEWLINE);
 
-	vty_out(vty, "SNTP Server Address	: %s%s",inet_ntoa(sntp_server->address),VTY_NEWLINE);
+	vty_out(vty, "SNTP Server Address	: %s%s",ipstack_inet_ntoa(sntp_server->address),VTY_NEWLINE);
 	vty_out(vty, "SNTP Server TTL		: %d%s",sntp_server->sntps_ttl,VTY_NEWLINE);
 
 	if(sntp_server->mode == SNTPS_UNICAST && sntp_server->sntpsPort)
@@ -1277,7 +1268,7 @@ int vty_show_sntps_server(struct vty *vty)
 	return CMD_SUCCESS;
 }
 #ifndef SNTPS_CLI_ENABLE
-int sntp_server_set_api(struct vty *vty, ospl_uint32 cmd, const char *value)
+int sntp_server_set_api(struct vty *vty, zpl_uint32 cmd, const char *value)
 {
 	int ret = CMD_WARNING;
 	char *argv[2] = {NULL, NULL};
@@ -1336,7 +1327,7 @@ int sntp_server_set_api(struct vty *vty, ospl_uint32 cmd, const char *value)
 		os_mutex_unlock(sntp_server->mutex);
 	return ret;
 }
-int sntp_server_get_api(struct vty *vty, ospl_uint32 cmd, const char *value)
+int sntp_server_get_api(struct vty *vty, zpl_uint32 cmd, const char *value)
 {
 	int ret = ERROR;
 	int *intValue = (int *)value;
@@ -1437,7 +1428,7 @@ int sntpsInit(void *m)
 	sntps_init(m);
 	if(sntp_server == NULL)
 	{
-		sntp_server->address.s_addr = inet_addr(SNTP_MUTILCAST_ADDRESS);
+		sntp_server->address.s_addr = ipstack_inet_addr(SNTP_MUTILCAST_ADDRESS);
 		sntp_server->mode = SNTPS_MULTICAST;
 		sntp_server->sntpsInterval = 180;
 		sntp_server->sntps_ttl = 2;
@@ -1453,29 +1444,29 @@ int sntpsInit(void *m)
 	//sntp_server->
 	//install_default (SERVICE_NODE);
 #ifdef SNTPS_CLI_ENABLE
-	install_element (ENABLE_NODE, &show_sntps_server_cmd);
+	install_element (ENABLE_NODE, CMD_VIEW_LEVEL, &show_sntps_server_cmd);
 
-	install_element (CONFIG_NODE, &sntps_server_enable_cmd);
-	install_element (CONFIG_NODE, &no_sntps_server_enable_cmd);
+	install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &sntps_server_enable_cmd);
+	install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &no_sntps_server_enable_cmd);
 
-	install_element (CONFIG_NODE, &sntps_server_listen_port_cmd);
-	install_element (CONFIG_NODE, &no_sntps_server_listen_port_cmd);
+	install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &sntps_server_listen_port_cmd);
+	install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &no_sntps_server_listen_port_cmd);
 
 
-	install_element (CONFIG_NODE, &sntps_version_cmd);
-	install_element (CONFIG_NODE, &no_sntps_version_cmd);
+	install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &sntps_version_cmd);
+	install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &no_sntps_version_cmd);
 
-	install_element (CONFIG_NODE, &sntps_server_interval_cmd);
-	install_element (CONFIG_NODE, &no_sntps_server_interval_cmd);
+	install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &sntps_server_interval_cmd);
+	install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &no_sntps_server_interval_cmd);
 
-	install_element (CONFIG_NODE, &sntps_server_mode_cmd);
-	install_element (CONFIG_NODE, &no_sntps_server_mode_cmd);
+	install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &sntps_server_mode_cmd);
+	install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &no_sntps_server_mode_cmd);
 
-	install_element (CONFIG_NODE, &sntps_mutilcast_ttl_cmd);
-	install_element (CONFIG_NODE, &no_sntps_mutilcast_ttl_cmd);
+	install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &sntps_mutilcast_ttl_cmd);
+	install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &no_sntps_mutilcast_ttl_cmd);
 
-	install_element (CONFIG_NODE, &sntps_debug_cmd);
-	install_element (CONFIG_NODE, &no_sntps_debug_cmd);
+	install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &sntps_debug_cmd);
+	install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &no_sntps_debug_cmd);
 #endif
 	return 0;
 }

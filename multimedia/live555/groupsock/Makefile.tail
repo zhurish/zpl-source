@@ -32,14 +32,15 @@ libgroupsock.$(LIB_SUFFIX): $(GROUPSOCK_LIB_OBJS) \
 
 clean:
 	-rm -rf *.$(OBJ) $(ALL) core *.core *~ include/*~
+	-rm -rf $(LIBDIR)/libgroupsock* *.d
 
 install: install1 $(INSTALL2)
 install1: libgroupsock.$(LIB_SUFFIX)
-	  install -d $(DESTDIR)$(PREFIX)/include/groupsock $(DESTDIR)$(LIBDIR)
-	  install -m 644 include/*.hh include/*.h $(DESTDIR)$(PREFIX)/include/groupsock
-	  install -m 644 libgroupsock.$(LIB_SUFFIX) $(DESTDIR)$(LIBDIR)
+	  install -d $(INCDIR)/groupsock $(LIBDIR)
+	  install -m 644 include/*.hh include/*.h $(INCDIR)/groupsock
+	  install -m 644 libgroupsock.$(LIB_SUFFIX) $(LIBDIR)
 install_shared_libraries: libgroupsock.$(LIB_SUFFIX)
-	  ln -fs libgroupsock.$(LIB_SUFFIX) $(DESTDIR)$(LIBDIR)/libgroupsock.$(SHORT_LIB_SUFFIX)
-	  ln -fs libgroupsock.$(LIB_SUFFIX) $(DESTDIR)$(LIBDIR)/libgroupsock.so
+	  ln -fs libgroupsock.$(LIB_SUFFIX) $(LIBDIR)/libgroupsock.$(SHORT_LIB_SUFFIX)
+	  ln -fs libgroupsock.$(LIB_SUFFIX) $(LIBDIR)/libgroupsock.so
 
 ##### Any additional, platform-specific rules come here:

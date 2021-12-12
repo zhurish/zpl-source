@@ -19,33 +19,19 @@
  * 02111-1307, USA.  
  */
 
-#include <zebra.h>
-#include "linklist.h"
-#include "if.h"
-#include "nsm_connected.h"
-#include "log.h"
-#include "prefix.h"
-#include "table.h"
-#include "memory.h"
-#include "nsm_rib.h"
-#include "thread.h"
-#include "nsm_vrf.h"
-#include "nexthop.h"
-
-#include "nsm_zserv.h"
-
-#include "nsm_redistribute.h"
-#include "nsm_interface.h"
-#include "nsm_debug.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "kernel_netlink.h"
 
 
 /* Interface address modification. */
-static int netlink_address(ospl_uint32 cmd, ospl_family_t family, struct interface *ifp,
+static int netlink_address(zpl_uint32 cmd, zpl_family_t family, struct interface *ifp,
 		struct connected *ifc)
 {
-	ospl_uint32 bytelen;
+	zpl_uint32 bytelen;
 	struct prefix *p;
 
 	struct

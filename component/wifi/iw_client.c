@@ -7,26 +7,11 @@
 
 
 
-#include "zebra.h"
-#include "vty.h"
-#include "if.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
-#include "buffer.h"
-#include "command.h"
-#include "if_name.h"
-#include "linklist.h"
-#include "log.h"
-#include "memory.h"
-#include "prefix.h"
-#include "sockunion.h"
-#include "str.h"
-#include "table.h"
-#include "vector.h"
-#include "nsm_vrf.h"
-#include "nsm_interface.h"
-#ifdef PL_DHCPC_MODULE
-#include "nsm_dhcp.h"
-#endif
 #include "iw_config.h"
 #include "iw_client.h"
 #include "iw_interface.h"
@@ -35,7 +20,7 @@
 
 //static iw_client_t gIw_client_t;
 
-/*static int iw_client_db_cleanup(ifindex_t ifindex, ospl_bool all);
+/*static int iw_client_db_cleanup(ifindex_t ifindex, zpl_bool all);
 static int iw_client_ap_cleanup(void);*/
 static int iw_client_db_add_node(iw_client_t *iw_client, iw_client_db_t *value);
 
@@ -181,7 +166,7 @@ static int iw_client_db_load(iw_client_t *iw_client)
 }
 
 
-static int iw_client_db_cleanup(iw_client_t *iw_client, ifindex_t ifindex, ospl_bool all)
+static int iw_client_db_cleanup(iw_client_t *iw_client, ifindex_t ifindex, zpl_bool all)
 {
 	iw_client_db_t *pstNode = NULL;
 	NODE index;
@@ -356,7 +341,7 @@ int iw_client_db_set_api(iw_client_t *iw_client, char *ssid, char *pass)
 	return ret;
 }
 
-int iw_client_db_del_api(iw_client_t *iw_client, char *ssid, ospl_bool pass)
+int iw_client_db_del_api(iw_client_t *iw_client, char *ssid, zpl_bool pass)
 {
 	int ret = 0;
 	char SSID[IW_SSID_NAME_MAX];
@@ -474,7 +459,7 @@ iw_client_t * iw_client_lookup_api(struct interface *ifp)
 }
 
 
-static int iw_client_ap_cleanup(iw_client_t *iw_client, ospl_bool use)
+static int iw_client_ap_cleanup(iw_client_t *iw_client, zpl_bool use)
 {
 	NODE index;
 	LIST *list = NULL;
@@ -573,12 +558,12 @@ static int iw_client_ap_del_node(iw_client_t *iw_client, iw_client_ap_t *node)
 	return ERROR;
 }
 
-static iw_client_ap_t * iw_client_ap_lookup_node(iw_client_t *iw_client, ospl_uint8 *bssid, char *ssid)
+static iw_client_ap_t * iw_client_ap_lookup_node(iw_client_t *iw_client, zpl_uint8 *bssid, char *ssid)
 {
 	iw_client_ap_t *pstNode = NULL;
 	NODE index;
 	char SSID[IW_SSID_NAME_MAX];
-	ospl_uint8 BSSID[IW_SSID_NAME_MAX];
+	zpl_uint8 BSSID[IW_SSID_NAME_MAX];
 	assert(iw_client != NULL);
 	if(!iw_client->ap_list)
 		return NULL;
@@ -642,10 +627,10 @@ static int iw_client_scan_update(iw_client_t *iw_client)
 	return OK;
 }
 
-int iw_client_ap_set_api(iw_client_t *iw_client, ospl_uint8 *bssid, iw_client_ap_t *ap)
+int iw_client_ap_set_api(iw_client_t *iw_client, zpl_uint8 *bssid, iw_client_ap_t *ap)
 {
 	int ret = 0;
-	ospl_uint8 BSSID[IW_SSID_NAME_MAX];
+	zpl_uint8 BSSID[IW_SSID_NAME_MAX];
 	iw_client_ap_t *client = NULL;
 	if(!iw_client || !bssid || !ap)
 		return ERROR;
@@ -688,7 +673,7 @@ int iw_client_ap_set_api(iw_client_t *iw_client, ospl_uint8 *bssid, iw_client_ap
 	return ret;
 }
 
-int iw_client_ap_del_api(iw_client_t *iw_client, ospl_uint8 *bssid, char *ssid)
+int iw_client_ap_del_api(iw_client_t *iw_client, zpl_uint8 *bssid, char *ssid)
 {
 	int ret = 0;
 	iw_client_ap_t *client = NULL;
@@ -724,7 +709,7 @@ int iw_client_ap_del_api(iw_client_t *iw_client, ospl_uint8 *bssid, char *ssid)
 	return ret;
 }
 
-iw_client_ap_t * iw_client_ap_lookup_api(iw_client_t *iw_client, ospl_uint8 *bssid, char *ssid)
+iw_client_ap_t * iw_client_ap_lookup_api(iw_client_t *iw_client, zpl_uint8 *bssid, char *ssid)
 {
 	iw_client_ap_t *client = NULL;
 	if(!iw_client || (!bssid && !ssid))
@@ -766,7 +751,7 @@ int iw_client_neighbor_callback_api(iw_client_t *iw_client, int (*cb)(iw_client_
 }
 
 
-int iw_client_connect_interval_api(iw_client_t *iw_client, ospl_uint32 connect_interval)
+int iw_client_connect_interval_api(iw_client_t *iw_client, zpl_uint32 connect_interval)
 {
 	int ret = OK;
 	if(!iw_client)
@@ -779,7 +764,7 @@ int iw_client_connect_interval_api(iw_client_t *iw_client, ospl_uint32 connect_i
 	return ret;
 }
 
-int iw_client_scan_interval_api(iw_client_t *iw_client, ospl_uint32 scan_interval)
+int iw_client_scan_interval_api(iw_client_t *iw_client, zpl_uint32 scan_interval)
 {
 	int ret = OK;
 	if(!iw_client)
@@ -792,7 +777,7 @@ int iw_client_scan_interval_api(iw_client_t *iw_client, ospl_uint32 scan_interva
 	return ret;
 }
 
-int iw_client_scan_max_api(iw_client_t *iw_client, ospl_uint32 scan_max)
+int iw_client_scan_max_api(iw_client_t *iw_client, zpl_uint32 scan_max)
 {
 	int ret = OK;
 	if(!iw_client)
@@ -805,7 +790,7 @@ int iw_client_scan_max_api(iw_client_t *iw_client, ospl_uint32 scan_max)
 	return ret;
 }
 
-static int iw_client_is_connect(struct interface *ifp, iw_client_ap_t *ap, ospl_uint8 *bssid)
+static int iw_client_is_connect(struct interface *ifp, iw_client_ap_t *ap, zpl_uint8 *bssid)
 {
 	if(!ifp || !bssid)
 		return ERROR;
@@ -852,7 +837,7 @@ static int iw_client_try_connect(iw_client_t *iw_client, iw_client_ap_t *ap, int
 }
 
 
-static int iw_client_connect(iw_client_t *iw_client, iw_client_ap_t *ap, ospl_uint8 *bssid)
+static int iw_client_connect(iw_client_t *iw_client, iw_client_ap_t *ap, zpl_uint8 *bssid)
 {
 	int count = 10;
 	if(!iw_client || !ap || !bssid)
@@ -868,10 +853,10 @@ static int iw_client_connect(iw_client_t *iw_client, iw_client_ap_t *ap, ospl_ui
 				zlog_debug(MODULE_WIFI, "running DHCPC on interface %s on \"%s\"",ifp->name, ap->SSID);
 			}
 			ap->connect = 1;
-#ifdef PL_DHCPC_MODULE
+#ifdef ZPL_DHCPC_MODULE
 			if(DHCP_CLIENT == nsm_interface_dhcp_mode_get_api(ifp))
 			{
-				return nsm_interface_dhcpc_start(ifp, ospl_true);
+				return nsm_interface_dhcpc_start(ifp, zpl_true);
 			}
 			else if((DHCP_RELAY == nsm_interface_dhcp_mode_get_api(ifp)) ||
 					(DHCP_SERVER == nsm_interface_dhcp_mode_get_api(ifp)) )
@@ -880,7 +865,7 @@ static int iw_client_connect(iw_client_t *iw_client, iw_client_ap_t *ap, ospl_ui
 			{
 				//nsm_interface_address_dhcpc_set_api
 				if(nsm_interface_dhcp_mode_set_api(ifp, DHCP_CLIENT, NULL) == OK)
-					return nsm_interface_dhcpc_start(ifp, ospl_true);
+					return nsm_interface_dhcpc_start(ifp, zpl_true);
 			}
 #else
 			return iw_client_dev_start_dhcpc(ifp);
@@ -899,7 +884,7 @@ static int iw_client_connect_process(iw_client_t *iw_client)
 	int ret = ERROR;
 	iw_client_ap_t *pstNode = NULL;
 	NODE index;
-	ospl_uint8 bssid[8] = { 0 };
+	zpl_uint8 bssid[8] = { 0 };
 	if(!iw_client)
 		return ERROR;
 	if(!iw_client->ap_list)
@@ -960,10 +945,10 @@ int iw_client_disconnect_api(iw_client_t *iw_client)
 	{
 		zlog_debug(MODULE_WIFI, "disconnect on interface %s ",ifp->name);
 	}
-#ifdef PL_DHCPC_MODULE
+#ifdef ZPL_DHCPC_MODULE
 	if(DHCP_CLIENT == nsm_interface_dhcp_mode_get_api(ifp))
 	{
-		nsm_interface_dhcpc_start(ifp, ospl_false);
+		nsm_interface_dhcpc_start(ifp, zpl_false);
 	}
 #endif
 	iw_client_dev_disconnect(ifp);
@@ -998,10 +983,10 @@ static int iw_client_disconnect_process(iw_client_t *iw_client)
 			ifp = if_lookup_by_index(pstNode->ifindex);
 			if(ifp)
 			{
-#ifdef PL_DHCPC_MODULE
+#ifdef ZPL_DHCPC_MODULE
 				if(DHCP_CLIENT == nsm_interface_dhcp_mode_get_api(ifp))
 				{
-					nsm_interface_dhcpc_start(ifp, ospl_false);
+					nsm_interface_dhcpc_start(ifp, zpl_false);
 				}
 #endif
 				iw_client_dev_disconnect(ifp);
@@ -1033,10 +1018,7 @@ static int iw_client_task(iw_client_t *iw_client)
 		pal_interface_get_lladdr(ifp);
 	}*/
 	os_sleep(5);
-	while(!os_load_config_done())
-	{
-		os_sleep(1);
-	}
+	host_config_load_waitting();
 	while(1)
 	{
 		if(iw_client->scan_enable)
@@ -1156,7 +1138,7 @@ int iw_client_connect_start(iw_client_t *iw_client)
 {
 	if(!iw_client)
 		return ERROR;
-	iw_client->connect_enable = ospl_true;
+	iw_client->connect_enable = zpl_true;
 #ifdef IW_ONCE_TASK
 	if(iw_client->master)
 	{
@@ -1182,12 +1164,12 @@ int iw_client_connect_exit(iw_client_t *iw_client)
 		thread_cancel(iw_client->connect_thread);
 	iw_client->connect_thread = NULL;
 #endif
-	iw_client->connect_enable = ospl_false;
+	iw_client->connect_enable = zpl_false;
 	iw_client_disconnect_process(iw_client);
 	return OK;
 }
 
-int iw_client_connect_api(iw_client_t *iw_client, ospl_bool auto_connect)
+int iw_client_connect_api(iw_client_t *iw_client, zpl_bool auto_connect)
 {
 	if(!iw_client)
 		return ERROR;
@@ -1208,7 +1190,7 @@ int iw_client_scan_start(iw_client_t *iw_client)
 	int scan_interval = 0;
 	if(!iw_client)
 		return ERROR;
-	iw_client->scan_enable = ospl_true;
+	iw_client->scan_enable = zpl_true;
 #ifdef IW_ONCE_TASK
 	if(iw_client->scan_thread)
 	{
@@ -1238,7 +1220,7 @@ int iw_client_scan_exit(iw_client_t *iw_client)
 		thread_cancel(iw_client->scan_thread);
 	iw_client->scan_thread = NULL;
 #endif
-	iw_client->scan_enable = ospl_false;
+	iw_client->scan_enable = zpl_false;
 
 	iw_client_scan_process_exit(iw_client);
 	return OK;
@@ -1294,7 +1276,7 @@ static int iw_client_neighbor_show_one(iw_client_ap_t *ap, struct vty *vty)
 	return OK;
 }
 
-int iw_client_neighbor_show(iw_client_t *iw_client, struct vty *vty, ospl_bool all)
+int iw_client_neighbor_show(iw_client_t *iw_client, struct vty *vty, zpl_bool all)
 {
 	assert(iw_client != NULL);
 	assert(vty != NULL);
@@ -1397,7 +1379,7 @@ int iw_client_init(iw_client_t *iw_client, ifindex_t ifindex)
 
 	iw_client_db_load(iw_client);
 #ifdef IW_ONCE_TASK
-	iw_client->master = master_thread[PL_WIFI_MODULE] = thread_master_module_create (PL_WIFI_MODULE);
+	iw_client->master = thread_master_module_create (MODULE_WIFI);
 #endif
 
 
@@ -1424,7 +1406,7 @@ int iw_client_exit(iw_client_t *iw_client)
 #endif
 	if(iw_client->db_list && lstCount(iw_client->db_list))
 	{
-		iw_client_db_cleanup(iw_client, 0, ospl_true);
+		iw_client_db_cleanup(iw_client, 0, zpl_true);
 		lstFree(iw_client->db_list);
 		//iw_client->db_list = NULL;
 	}
@@ -1433,13 +1415,13 @@ int iw_client_exit(iw_client_t *iw_client)
 
 	if(iw_client->ap_list && lstCount(iw_client->ap_list))
 	{
-		iw_client_ap_cleanup(iw_client, ospl_true);
+		iw_client_ap_cleanup(iw_client, zpl_true);
 		lstFree(iw_client->ap_list);
 		//iw_client->ap_list = NULL;
 	}
 	if(iw_client->ap_unlist && lstCount(iw_client->ap_unlist))
 	{
-		iw_client_ap_cleanup(iw_client, ospl_false);
+		iw_client_ap_cleanup(iw_client, zpl_false);
 		lstFree(iw_client->ap_unlist);
 		//iw_client->ap_unlist = NULL;
 	}
@@ -1470,7 +1452,7 @@ int iw_client_exit(iw_client_t *iw_client)
 	return OK;
 }
 
-int iw_client_enable(iw_client_t *iw_client, ospl_bool enable)
+int iw_client_enable(iw_client_t *iw_client, zpl_bool enable)
 {
 	if(!iw_client)
 		return ERROR;
@@ -1494,12 +1476,12 @@ int iw_client_enable(iw_client_t *iw_client, ospl_bool enable)
 		iw_client_connect_exit(iw_client);
 		if(iw_client->ap_list && lstCount(iw_client->ap_list))
 		{
-			iw_client_ap_cleanup(iw_client, ospl_true);
+			iw_client_ap_cleanup(iw_client, zpl_true);
 			//lstFree(iw_client->ap_list);
 		}
 		if(iw_client->ap_unlist && lstCount(iw_client->ap_unlist))
 		{
-			iw_client_ap_cleanup(iw_client, ospl_false);
+			iw_client_ap_cleanup(iw_client, zpl_false);
 			//lstFree(iw_client->ap_unlist);
 		}
 		if(iw_client->mutex)

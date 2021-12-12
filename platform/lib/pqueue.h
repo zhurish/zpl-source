@@ -28,11 +28,11 @@ extern "C" {
 struct pqueue
 {
   void **array;
-  ospl_uint32 array_size;
-  ospl_uint32 size;
+  zpl_uint32 array_size;
+  zpl_uint32 size;
 
   int (*cmp) (void *, void *);
-  void (*update) (void * node, ospl_uint32 actual_position);
+  void (*update) (void * node, zpl_uint32 actual_position);
 };
 
 #define PQUEUE_INIT_ARRAYSIZE  32
@@ -42,12 +42,12 @@ extern void pqueue_delete (struct pqueue *queue);
 
 extern void pqueue_enqueue (void *data, struct pqueue *queue);
 extern void *pqueue_dequeue (struct pqueue *queue);
-extern void pqueue_remove_at (ospl_uint32 index, struct pqueue *queue);
+extern void pqueue_remove_at (zpl_uint32 index, struct pqueue *queue);
 
-extern void trickle_down (ospl_uint32 index, struct pqueue *queue);
-extern void trickle_up (ospl_uint32 index, struct pqueue *queue);
+extern void trickle_down (zpl_uint32 index, struct pqueue *queue);
+extern void trickle_up (zpl_uint32 index, struct pqueue *queue);
 
-extern ospl_bool pqueue_empty (struct pqueue *queue);
+extern zpl_bool pqueue_empty (struct pqueue *queue);
  
 #ifdef __cplusplus
 }

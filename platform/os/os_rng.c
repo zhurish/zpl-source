@@ -5,7 +5,8 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
+#include "os_include.h"
+#include "zpl_include.h"
 #include "os_sem.h"
 #include "os_rng.h"
 
@@ -23,10 +24,10 @@
 
 RING_ID rngCreate
     (
-    ospl_uint32 nbytes          /* number of bytes in ring buffer */
+    zpl_uint32 nbytes          /* number of bytes in ring buffer */
     )
     {
-    ospl_char *buffer;
+    zpl_char *buffer;
     RING_ID ringId = (RING_ID) malloc (sizeof (RING));
 
     if (ringId == NULL)
@@ -35,11 +36,11 @@ RING_ID rngCreate
     /* bump number of bytes requested because ring buffer algorithm
      * always leaves at least one empty byte in buffer */
 
-    buffer = (ospl_char *) malloc ((unsigned) ++nbytes);
+    buffer = (zpl_char *) malloc ((unsigned) ++nbytes);
 
     if (buffer == NULL)
 	{
-	free ((ospl_char *)ringId);
+	free ((zpl_char *)ringId);
 	return (NULL);
 	}
 
@@ -66,7 +67,7 @@ void rngDelete
     )
     {
     free (ringId->buf);
-    free ((ospl_char *)ringId);
+    free ((zpl_char *)ringId);
     }
 /*******************************************************************************
 *
@@ -102,14 +103,14 @@ void rngFlush
 int rngBufGet
     (
     FAST RING_ID rngId,         /* ring buffer to get data from      */
-    ospl_char *buffer,               /* pointer to buffer to receive data */
-    ospl_uint32 maxbytes                /* maximum number of bytes to get    */
+    zpl_char *buffer,               /* pointer to buffer to receive data */
+    zpl_uint32 maxbytes                /* maximum number of bytes to get    */
     )
     {
     FAST int bytesgot = 0;
-    ospl_uint32 pToBuf = rngId->pToBuf;
-    ospl_uint32 bytes2;
-    ospl_uint32 pRngTmp = 0;
+    zpl_uint32 pToBuf = rngId->pToBuf;
+    zpl_uint32 bytes2;
+    zpl_uint32 pRngTmp = 0;
 
     if (pToBuf >= rngId->pFromBuf)
 	{
@@ -166,14 +167,14 @@ int rngBufGet
 int rngBufPut
     (
     FAST RING_ID rngId,         /* ring buffer to put data into  */
-    ospl_char *buffer,               /* buffer to get data from       */
-    ospl_uint32 nbytes                  /* number of bytes to try to put */
+    zpl_char *buffer,               /* buffer to get data from       */
+    zpl_uint32 nbytes                  /* number of bytes to try to put */
     )
     {
     FAST int bytesput = 0;
-    ospl_uint32 pFromBuf = rngId->pFromBuf;
-    ospl_uint32 bytes2;
-    ospl_uint32 pRngTmp = 0;
+    zpl_uint32 pFromBuf = rngId->pFromBuf;
+    zpl_uint32 bytes2;
+    zpl_uint32 pRngTmp = 0;
 
     if (pFromBuf > rngId->pToBuf)
 	{
@@ -224,10 +225,10 @@ int rngBufPut
 * This routine determines if a specified ring buffer is empty.
 *
 * RETURNS:
-* ospl_true if empty, ospl_false if not.
+* zpl_true if empty, zpl_false if not.
 */
 
-ospl_bool rngIsEmpty
+zpl_bool rngIsEmpty
     (
     RING_ID ringId      /* ring buffer to test */
     )
@@ -241,15 +242,15 @@ ospl_bool rngIsEmpty
 * This routine determines if a specified ring buffer is completely full.
 *
 * RETURNS:
-* ospl_true if full, ospl_false if not.
+* zpl_true if full, zpl_false if not.
 */
 
-ospl_bool rngIsFull
+zpl_bool rngIsFull
     (
     FAST RING_ID ringId         /* ring buffer to test */
     )
     {
-    ospl_uint32 n = ringId->pToBuf - ringId->pFromBuf + 1;
+    zpl_uint32 n = ringId->pToBuf - ringId->pFromBuf + 1;
 
     return ((n == 0) || (n == ringId->bufSize));
     }
@@ -268,7 +269,7 @@ int rngFreeBytes
     FAST RING_ID ringId         /* ring buffer to examine */
     )
     {
-    FAST ospl_uint32 n = ringId->pFromBuf - ringId->pToBuf - 1;
+    FAST zpl_uint32 n = ringId->pFromBuf - ringId->pToBuf - 1;
 
     if (n < 0)
 	n += ringId->bufSize;
@@ -290,7 +291,7 @@ int rngNBytes
     FAST RING_ID ringId         /* ring buffer to be enumerated */
     )
     {
-    FAST ospl_uint32 n = ringId->pToBuf - ringId->pFromBuf;
+    FAST zpl_uint32 n = ringId->pToBuf - ringId->pFromBuf;
 
     if (n < 0)
 	n += ringId->bufSize;
@@ -320,11 +321,11 @@ int rngNBytes
 void rngPutAhead
     (
     FAST RING_ID ringId,   /* ring buffer to put byte in    */
-    ospl_char byte,             /* byte to be put in ring        */
-    ospl_uint32 offset             /* offset beyond next input byte where to put byte */
+    zpl_char byte,             /* byte to be put in ring        */
+    zpl_uint32 offset             /* offset beyond next input byte where to put byte */
     )
     {
-    FAST ospl_uint32 n = ringId->pToBuf + offset;
+    FAST zpl_uint32 n = ringId->pToBuf + offset;
 
     if (n >= ringId->bufSize)
 	n -= ringId->bufSize;
@@ -345,7 +346,7 @@ void rngPutAhead
 void rngMoveAhead
     (
     FAST RING_ID ringId,  /* ring buffer to be advanced                  */
-    FAST ospl_uint32 n            /* number of bytes ahead to move input pointer */
+    FAST zpl_uint32 n            /* number of bytes ahead to move input pointer */
     )
     {
     n += ringId->pToBuf;

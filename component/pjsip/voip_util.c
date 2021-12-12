@@ -5,17 +5,12 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "memory.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "linklist.h"
-#include "prefix.h"
-#include "table.h"
-#include "vector.h"
-#include "if.h"
-#include "nsm_interface.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
+#include "vty_include.h"
+
 
 #include "pjsip_app_api.h"
 
@@ -72,7 +67,7 @@ int codec_payload_index(char *cmdname)
 	return -1;
 }
 
-char * codec_payload_name(ospl_uint32 index)
+char * codec_payload_name(zpl_uint32 index)
 {
 	int i = 0;
 	for(i = 0; i < array_size(_voip_payload_table); i++)
@@ -85,7 +80,7 @@ char * codec_payload_name(ospl_uint32 index)
 	return NULL;
 }
 
-char * codec_cmdname(ospl_uint32 index)
+char * codec_cmdname(zpl_uint32 index)
 {
 	int i = 0;
 	for(i = 0; i < array_size(_voip_payload_table); i++)
@@ -100,7 +95,7 @@ char * codec_cmdname(ospl_uint32 index)
 /*************************************************************************/
 /*************************************************************************/
 
-ospl_uint32 voip_get_address(ospl_uint32 ifindex)
+zpl_uint32 voip_get_address(zpl_uint32 ifindex)
 {
 	struct interface * ifp = if_lookup_by_index (ifindex);
 	if(ifp)
@@ -118,7 +113,7 @@ ospl_uint32 voip_get_address(ospl_uint32 ifindex)
 }
 
 #if 0
-int phone_string_to_hex(char * room, ospl_uint8 *phone)
+int phone_string_to_hex(char * room, zpl_uint8 *phone)
 {
 	zassert(room != NULL);
 	int i = 0, ln = strlen(room);
@@ -132,11 +127,11 @@ int phone_string_to_hex(char * room, ospl_uint8 *phone)
 	return i;
 }
 
-int phone_string_to_compress(char * room, ospl_uint8 *phone)
+int phone_string_to_compress(char * room, zpl_uint8 *phone)
 {
 	zassert(room != NULL);
 	int i = 0, j = 0;
-	ospl_uint8 phonetmp[64];
+	zpl_uint8 phonetmp[64];
 	memset(phonetmp, 0, sizeof(phonetmp));
 	int n = phone_string_to_hex(room, phonetmp);
 	if(n & 0x01)
@@ -158,7 +153,7 @@ int phone_string_to_compress(char * room, ospl_uint8 *phone)
 	return j;
 }
 
-int phone_compress_to_uncompress(ospl_uint8 *phonetmp, int len, ospl_uint8 *phone)
+int phone_compress_to_uncompress(zpl_uint8 *phonetmp, int len, zpl_uint8 *phone)
 {
 	int i = 0, j = 0;
 	if(len & 0x01)

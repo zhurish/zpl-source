@@ -4,26 +4,10 @@
  *  Created on: 2018年12月28日
  *      Author: DELL
  */
-
-#include "zebra.h"
-#include "vty.h"
-#include "if.h"
-
-#include "buffer.h"
-#include "command.h"
-#include "if_name.h"
-#include "linklist.h"
-#include "log.h"
-#include "memory.h"
-#include "prefix.h"
-#include "sockunion.h"
-#include "str.h"
-#include "table.h"
-#include "vector.h"
-#include "nsm_vrf.h"
-#include "nsm_interface.h"
-#include "eloop.h"
-#include "cJSON.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "nexthop.h"
 #include "nsm_rib.h"
@@ -35,14 +19,14 @@
 #include "x5_b_util.h"
 #include "x5_b_web.h"
 #include "x5b_facecard.h"
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 #include "voip_def.h"
 #endif
 
 
 
 
-int x5b_app_local_mac_address_get(ospl_uint8 *address)
+int x5b_app_local_mac_address_get(zpl_uint8 *address)
 {
 	int ret = 0;
 	struct interface *ifp = if_lookup_by_name("ethernet 0/0/2");
@@ -54,7 +38,7 @@ int x5b_app_local_mac_address_get(ospl_uint8 *address)
 	return ERROR;
 }
 
-int x5b_app_local_address_get(ospl_uint32 *address)
+int x5b_app_local_address_get(zpl_uint32 *address)
 {
 	int ret = 0;
 	struct interface *ifp = if_lookup_by_name("ethernet 0/0/2");
@@ -71,8 +55,8 @@ int x5b_app_local_address_get(ospl_uint32 *address)
 	}
 	return ERROR;
 }
-#ifdef PL_OPENWRT_UCI
-static int x5b_app_local_address_set(char *address, ospl_uint32 mask)
+#ifdef ZPL_OPENWRT_UCI
+static int x5b_app_local_address_set(char *address, zpl_uint32 mask)
 {
 	int ret = 0;
 	struct prefix cp;
@@ -90,13 +74,13 @@ static int x5b_app_local_address_set(char *address, ospl_uint32 mask)
 		cp.prefixlen = ip_masklen(netmask);
 		if(mask == 0)
 			cp.prefixlen = 24;
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 		pl_pjsip_source_interface_set_api(ifp->ifindex);
 #endif
 #endif
-		ret = nsm_interface_address_set_api(ifp, &cp, ospl_false);
+		ret = nsm_interface_address_set_api(ifp, &cp, zpl_false);
 		return  ret;
 	}
 	return ERROR;
@@ -108,7 +92,7 @@ int x5b_app_factory_set(x5b_app_factory_t *data)
 {
 	//data->local_address;			//����IP��ַ��IP/DHCP��
 	int ret = 0;
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 	zassert(data != NULL);
 	/*
 	option proto "static"
@@ -193,7 +177,7 @@ int x5b_app_rtc_tm_set(int timesp)
 			super_system("/etc/init.d/sysntpd restart");
 		return OK;
 	}
-#ifdef PL_BUILD_ARCH_X86
+#ifdef ZPL_BUILD_ARCH_X86
 	return OK;
 #endif
 	sntpTime.tv_sec = timesp;
@@ -231,13 +215,13 @@ int x5b_app_rtc_tm_set(int timesp)
  * call
  */
 
-int x5b_app_start_call(ospl_bool start, x5b_app_call_t *call)
+int x5b_app_start_call(zpl_bool start, x5b_app_call_t *call)
 {
 	if(call /*&& strlen(call->data) >= 4*/)
 	{
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 		voip_event_t event;
 		memset(&event, 0, sizeof(voip_event_t));
 		memcpy(event.data, call, sizeof(x5b_app_call_t));
@@ -253,13 +237,13 @@ int x5b_app_start_call(ospl_bool start, x5b_app_call_t *call)
 	return ERROR;
 }
 
-int x5b_app_start_call_phone(ospl_bool start, char *call)
+int x5b_app_start_call_phone(zpl_bool start, char *call)
 {
 	if(call /*&& strlen(call->data) >= 4*/)
 	{
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 		voip_event_t event;
 		memset(&event, 0, sizeof(voip_event_t));
 		memcpy(event.data, call, strlen(call));
@@ -275,13 +259,13 @@ int x5b_app_start_call_phone(ospl_bool start, char *call)
 	return ERROR;
 }
 
-int x5b_app_start_call_user(ospl_bool start, char *call)
+int x5b_app_start_call_user(zpl_bool start, char *call)
 {
 	if(call /*&& strlen(call->data) >= 4*/)
 	{
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 		voip_event_t event;
 		memset(&event, 0, sizeof(voip_event_t));
 		memcpy(event.data, call, strlen(call));
@@ -297,13 +281,13 @@ int x5b_app_start_call_user(ospl_bool start, char *call)
 	return ERROR;
 }
 
-int x5b_app_stop_call(ospl_bool start, x5b_app_call_t *call)
+int x5b_app_stop_call(zpl_bool start, x5b_app_call_t *call)
 {
 	if(1/* call && strlen(call->data) >= 4*/)
 	{
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 		voip_app_stop_call_event_ui(NULL);
 #endif
 #endif
@@ -344,7 +328,7 @@ static int x5b_route_lookup_default_one(struct route_node *rn, struct rib *rib, 
 	return ERROR;
 }
 
-static int x5b_route_lookup_default(ifindex_t ifindex, ospl_uint32 *local_gateway)
+static int x5b_route_lookup_default(ifindex_t ifindex, zpl_uint32 *local_gateway)
 {
 	struct route_table *table;
 	struct route_node *rn;
@@ -369,7 +353,7 @@ static int x5b_route_lookup_default(ifindex_t ifindex, ospl_uint32 *local_gatewa
 	return ERROR;
 }
 
-static int x5b_route_lookup_dns(ospl_uint32 *local_dns)
+static int x5b_route_lookup_dns(zpl_uint32 *local_dns)
 {
 	FILE *f = NULL;
 	char buf[512];
@@ -428,9 +412,9 @@ int x5b_app_local_network_info_get(x5b_app_netinfo_t *info)
 
 int x5b_app_local_register_info_get(x5b_app_phone_register_ack_t *info)
 {
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 	if(pl_pjsip && info)
 	{
 		info->iface = 0;
@@ -449,8 +433,8 @@ int x5b_app_local_register_info_get(x5b_app_phone_register_ack_t *info)
 	return ERROR;
 }
 
-int x5b_app_call_room_param_get(void *data, ospl_uint8 *building,
-		ospl_uint8 *unit, ospl_uint16 *room)
+int x5b_app_call_room_param_get(void *data, zpl_uint8 *building,
+		zpl_uint8 *unit, zpl_uint16 *room)
 {
 	x5b_app_call_t *input = (x5b_app_call_t *)data;
 	zassert(data != NULL);
@@ -479,7 +463,7 @@ int x5b_app_call_room_param_get(void *data, ospl_uint8 *building,
  *
  *
  */
-#ifdef PL_BUILD_OS_OPENWRT
+#ifdef ZPL_BUILD_OS_OPENWRT
 /*
  * swconfig dev switch0 port 2 show | grep link
  */
@@ -572,7 +556,7 @@ static int x5b_app_network_port_status_event(struct eloop *eloop)
 			{
 				if(app->wan_state.link_phy == E_CMD_NETWORK_STATE_PHY_UP)
 				{
-					voip_app_sip_register_start(ospl_false);
+					voip_app_sip_register_start(zpl_false);
 					app->wan_state.link_phy = E_CMD_NETWORK_STATE_PHY_DOWN;
 					x5b_app_network_port_status_api(app, E_CMD_NETWORK_STATE_PHY_DOWN, E_CMD_TO_AUTO);
 					app->wan_state.t_thread = eloop_add_timer(app->master, x5b_app_network_port_status_event, app, app->wan_state.interval);
@@ -589,7 +573,7 @@ static int x5b_app_network_port_status_event(struct eloop *eloop)
 		{
 			app->wan_state.address = wan_state.address;
 			x5b_app_network_port_status_api(app, E_CMD_NETWORK_STATE_UP, E_CMD_TO_AUTO);
-			voip_app_sip_register_start(ospl_true);
+			voip_app_sip_register_start(zpl_true);
 		}
 	}
 	if(wan_state.address == ERROR || wan_state.address == 0)
@@ -597,7 +581,7 @@ static int x5b_app_network_port_status_event(struct eloop *eloop)
 		// net link down
 		if(app->wan_state.address != 0)
 		{
-			voip_app_sip_register_start(ospl_false);
+			voip_app_sip_register_start(zpl_false);
 			x5b_app_network_port_status_api(app, E_CMD_NETWORK_STATE_DOWN, E_CMD_TO_AUTO);
 			app->wan_state.address = 0;
 		}
@@ -620,11 +604,11 @@ static int x5b_app_network_port_status_event(struct eloop *eloop)
 }
 #endif
 
-ospl_bool x5b_app_port_status_get()
+zpl_bool x5b_app_port_status_get()
 {
 	if(x5b_app_mgt)
-		return (x5b_app_mgt->wan_state.link_phy == E_CMD_NETWORK_STATE_PHY_UP) ? ospl_true:ospl_false;
-	return ospl_false;
+		return (x5b_app_mgt->wan_state.link_phy == E_CMD_NETWORK_STATE_PHY_UP) ? zpl_true:zpl_false;
+	return zpl_false;
 }
 
 int x5b_app_network_event_init(x5b_app_mgt_t *app)
@@ -637,7 +621,7 @@ int x5b_app_network_event_init(x5b_app_mgt_t *app)
 	}
 	if(app->wan_state.t_thread)
 		eloop_cancel(app->wan_state.t_thread);
-#ifdef PL_BUILD_OS_OPENWRT
+#ifdef ZPL_BUILD_OS_OPENWRT
 	if(app->master)
 		app->wan_state.t_thread = eloop_add_timer(app->master, x5b_app_network_port_status_event, app, app->wan_state.interval);
 #endif
@@ -675,28 +659,28 @@ int x5b_app_network_event_exit(x5b_app_mgt_t *app)
 
 typedef struct
 {
-    ospl_uint8 effective;
-    ospl_uint8 logType;
-    ospl_uint8 openType;
-    ospl_uint8 openResult;
-    ospl_uint32 openTime;
-    ospl_uint32 eraseCnt;
-    ospl_uint32 cnt;
+    zpl_uint8 effective;
+    zpl_uint8 logType;
+    zpl_uint8 openType;
+    zpl_uint8 openResult;
+    zpl_uint32 openTime;
+    zpl_uint32 eraseCnt;
+    zpl_uint32 cnt;
 }openLogHeardType;
 
 
 typedef struct
 {
     openLogHeardType    hdr;
-    ospl_uint8             data[48];
+    zpl_uint8             data[48];
 }openLogType;
 
 typedef struct
 {
-	ospl_uint8 cardIssueType;
-	ospl_uint8 cardType;
-	ospl_uint8 cardNumber[8];
-	ospl_uint8 cardNumberLength;
+	zpl_uint8 cardIssueType;
+	zpl_uint8 cardType;
+	zpl_uint8 cardNumber[8];
+	zpl_uint8 cardNumberLength;
 }openLogUseCardDataType;
 
 
@@ -760,21 +744,21 @@ int x5b_app_a_thlog_log(char *format)
 {
 /*
 	char data_tmp[128];
-	ospl_uint32 len = 0;
+	zpl_uint32 len = 0;
 	struct tm stm;
 	os_memset(data_tmp, 0, sizeof(data_tmp));
-	ospl_time_t openTime = 0;
+	zpl_time_t openTime = 0;
 */
 	//face_card_t *card = NULL;
 	user_face_card_t  *card = NULL;
-	ospl_uint32 i = 0, offset = 0;
+	zpl_uint32 i = 0, offset = 0;
 	char cardNumber[128];
 	char *type = NULL, *result = NULL, *card_type = NULL, *card_level = NULL;
 	openLogType *a_log = (openLogType *)format;
 	openLogUseCardDataType *card_data = a_log->data;
 	a_log->hdr.openTime = ntohl(a_log->hdr.openTime);
 /*
-	openTime = (ospl_time_t)a_log->hdr.openTime + SEC_DAY_V;
+	openTime = (zpl_time_t)a_log->hdr.openTime + SEC_DAY_V;
 
 	memset(&stm, 0, sizeof(struct tm));
 	localtime_r(&openTime, &stm);
@@ -798,7 +782,7 @@ int x5b_app_a_thlog_log(char *format)
 
 	//if(x5b_app_mgt->make_card/* || x5b_app_mgt->make_card && !x5b_app_mgt->make_edit*/)
 	{
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 		os_uci_set_string("facecard.db.cardid", cardNumber);
 		os_uci_save_config("facecard");
 		os_uci_set_string("userauth.db.cardid", cardNumber);
@@ -969,7 +953,7 @@ int x5b_app_c_log_card(char *format)
 	{
 		memset(cardNumber, 0, sizeof(cardNumber));
 		memcpy(cardNumber, str, brk-str);
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 		os_uci_set_string("facecard.db.cardid", cardNumber);
 		os_uci_save_config("facecard");
 		os_uci_set_string("userauth.db.cardid", cardNumber);

@@ -17,7 +17,13 @@ extern "C" {
 #define TTY_COM_DEVNAME_MAX 64
 
 
-
+enum tty_hwmode
+{
+	TTY_HWMODE_NONE = 0,
+	TTY_HWMODE_RS232 = TTY_HWMODE_NONE,	//全双工
+	TTY_HWMODE_RS485,					//半双工
+	TTY_HWMODE_RS422,
+};
 
 enum flow_ctl_mode
 {
@@ -63,10 +69,10 @@ typedef enum
 
 struct tty_com
 {
-	ospl_char 	devname[TTY_COM_DEVNAME_MAX];
+	zpl_char 	devname[TTY_COM_DEVNAME_MAX];
 	int		fd;
 	FILE	*fp;
-	ospl_uint32 		speed;		// speed bit
+	zpl_uint32 		speed;		// speed bit
 	enum tty_data_bit 	databit;	// data bit
 	enum tty_stop_bit	stopbit;	// stop bit
 	enum parity_mode 	parity;		// parity
@@ -74,22 +80,25 @@ struct tty_com
 
 	tty_com_mode	mode;
 
+	enum tty_hwmode	hwmode;
+
 	struct termios termios;
 	struct termios old_termios;
 
-	int	(*encapsulation)(ospl_uchar *, ospl_uint32, ospl_uchar *, ospl_uint32);
-	int	(*decapsulation)(ospl_uchar *, ospl_uint32, ospl_uchar *, ospl_uint32);
+	int	(*tty_rw_enable)(zpl_bool);
+	int	(*encapsulation)(zpl_uchar *, zpl_uint32, zpl_uchar *, zpl_uint32);
+	int	(*decapsulation)(zpl_uchar *, zpl_uint32, zpl_uchar *, zpl_uint32);
 };
 
 
 struct tty_slip
 {
 	/* These are pointers to the malloc()ed frame buffers. */
-	ospl_uchar		*slipbuf;		/* receiver buffer		*/
-	ospl_uint32               sliplen;         /* received chars counter       */
-	ospl_uint32               buffsize;       /* Max buffers sizes            */
+	zpl_uchar		*slipbuf;		/* receiver buffer		*/
+	zpl_uint32               sliplen;         /* received chars counter       */
+	zpl_uint32               buffsize;       /* Max buffers sizes            */
 
-	ospl_uint32		flags;		/* Flag values/ mode etc	*/
+	zpl_uint32		flags;		/* Flag values/ mode etc	*/
 #define TTY_COM_SLF_INUSE	0		/* Channel in use               */
 #define TTY_COM_SLF_ESCAPE	1               /* ESC received                 */
 #define TTY_COM_SLF_ERROR	2               /* Parity, etc. error           */
@@ -98,23 +107,27 @@ struct tty_slip
 };
 
 
-extern ospl_bool tty_iscom(struct tty_com *com);
-extern ospl_bool tty_isopen(struct tty_com *com);
+extern zpl_bool tty_iscom(struct tty_com *com);
+extern zpl_bool tty_isopen(struct tty_com *com);
 extern int tty_com_open(struct tty_com *com);
 extern int tty_com_close(struct tty_com *com);
 extern int tty_com_update_option(struct tty_com *com);
-extern int tty_com_write(struct tty_com *com, ospl_uchar *buf, ospl_uint32 len);
-extern int tty_com_read(struct tty_com *com, ospl_uchar *buf, ospl_uint32 len);
 
-extern int tty_com_putc(struct tty_com *com, ospl_uchar c);
-extern int tty_com_getc(struct tty_com *com, ospl_uchar *c);
+extern int tty_com_rw_begin(struct tty_com *com, zpl_bool enable);
+extern int tty_com_rw_end(struct tty_com *com, zpl_bool enable);
 
-extern int tty_com_slip_write(struct tty_com *com, ospl_uchar *p, ospl_uint32 len);
-extern int tty_com_slip_read(struct tty_com *com, ospl_uchar *p, ospl_uint32 len);
+extern int tty_com_write(struct tty_com *com, zpl_uchar *buf, zpl_uint32 len);
+extern int tty_com_read(struct tty_com *com, zpl_uchar *buf, zpl_uint32 len);
 
-extern int tty_com_slip_encapsulation(struct tty_slip *sl, ospl_uchar *s, ospl_uint32 len);
-extern int tty_com_slip_decapsulation(struct tty_slip *sl, ospl_uchar *s, ospl_uint32 len);
-extern int tty_com_slip_decode_byte(struct tty_slip *sl, ospl_uchar s);
+extern int tty_com_putc(struct tty_com *com, zpl_uchar c);
+extern int tty_com_getc(struct tty_com *com, zpl_uchar *c);
+
+extern int tty_com_slip_write(struct tty_com *com, zpl_uchar *p, zpl_uint32 len);
+extern int tty_com_slip_read(struct tty_com *com, zpl_uchar *p, zpl_uint32 len);
+
+extern int tty_com_slip_encapsulation(struct tty_slip *sl, zpl_uchar *s, zpl_uint32 len);
+extern int tty_com_slip_decapsulation(struct tty_slip *sl, zpl_uchar *s, zpl_uint32 len);
+extern int tty_com_slip_decode_byte(struct tty_slip *sl, zpl_uchar s);
 
 #ifdef __cplusplus
 }

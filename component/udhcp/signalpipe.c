@@ -26,7 +26,7 @@ static struct fd_pair signal_pipe;
 static void signal_handler(int sig)
 {
 	int sv = errno;
-	ospl_uint8 ch = sig; /* use char, avoid dealing with partial writes */
+	zpl_uint8 ch = sig; /* use char, avoid dealing with partial writes */
 	if (write(signal_pipe.wr, &ch, 1) != 1)
 		zlog_err(MODULE_DHCP,"can't send signal");
 	errno = sv;
@@ -71,7 +71,7 @@ void FAST_FUNC udhcp_sp_fd_set(struct pollfd pfds[2], int extra_fd)
  * your signal on success */
 int FAST_FUNC udhcp_sp_read(void)
 {
-	ospl_uint8 sig;
+	zpl_uint8 sig;
 
 	/* Can't block here, fd is in nonblocking mode */
 	if (safe_read(signal_pipe.rd, &sig, 1) != 1)

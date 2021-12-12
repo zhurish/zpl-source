@@ -4,7 +4,10 @@
 #endif
 #include <stdlib.h>
 #include <errno.h>
-
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "host.h"
 #include <modbus.h>
 #include "modbus-api.h"
 #include "os_task.h"
@@ -69,7 +72,7 @@ modbus_type_t modbus_type_get_api()
 	return MODBUS_TYPE_NONE;
 }
 
-int modbus_id_set_api(ospl_uint32 id)
+int modbus_id_set_api(zpl_uint32 id)
 {
 	if(modbus_config)
 	{
@@ -79,7 +82,7 @@ int modbus_id_set_api(ospl_uint32 id)
 	return ERROR;
 }
 
-ospl_uint32 modbus_id_get_api()
+zpl_uint32 modbus_id_get_api()
 {
 	if(modbus_config)
 	{
@@ -88,7 +91,7 @@ ospl_uint32 modbus_id_get_api()
 	return 0;
 }
 
-int modbus_port_set_api(ospl_uint16 port)
+int modbus_port_set_api(zpl_uint16 port)
 {
 	if(modbus_config)
 	{
@@ -98,7 +101,7 @@ int modbus_port_set_api(ospl_uint16 port)
 	return ERROR;
 }
 
-ospl_uint16 modbus_port_get_api()
+zpl_uint16 modbus_port_get_api()
 {
 	if(modbus_config)
 	{
@@ -107,7 +110,7 @@ ospl_uint16 modbus_port_get_api()
 	return 0;
 }
 
-int modbus_device_set_api(ospl_char *name)
+int modbus_device_set_api(zpl_char *name)
 {
 	if(modbus_config)
 	{
@@ -119,7 +122,7 @@ int modbus_device_set_api(ospl_char *name)
 	return ERROR;
 }
 
-ospl_char* modbus_device_get_api()
+zpl_char* modbus_device_get_api()
 {
 	if(modbus_config)
 	{
@@ -128,7 +131,7 @@ ospl_char* modbus_device_get_api()
 	return NULL;
 }
 
-int modbus_baudrate_set_api(ospl_uint32 baudrate)
+int modbus_baudrate_set_api(zpl_uint32 baudrate)
 {
 	if(modbus_config)
 	{
@@ -138,7 +141,7 @@ int modbus_baudrate_set_api(ospl_uint32 baudrate)
 	return ERROR;
 }
 
-ospl_uint32 modbus_baudrate_get_api()
+zpl_uint32 modbus_baudrate_get_api()
 {
 	if(modbus_config)
 	{
@@ -148,7 +151,7 @@ ospl_uint32 modbus_baudrate_get_api()
 }
 
 
-int modbus_hold_registers_set_api(ospl_double tempAverage, ospl_double tempMax, ospl_double tempMin)
+int modbus_hold_registers_set_api(zpl_double tempAverage, zpl_double tempMax, zpl_double tempMin)
 {
 	if(modbus_config && modbus_config->tab_registers)
 	{
@@ -160,7 +163,7 @@ int modbus_hold_registers_set_api(ospl_double tempAverage, ospl_double tempMax, 
 	return ERROR;
 }
 
-int modbus_input_registers_set_api(ospl_double tempAverage, ospl_double tempMax, ospl_double tempMin)
+int modbus_input_registers_set_api(zpl_double tempAverage, zpl_double tempMax, zpl_double tempMin)
 {
 	if(modbus_config && modbus_config->tab_registers)
 	{
@@ -176,7 +179,7 @@ int modbus_start_api()
 {
 	if(modbus_config)
 	{
-		ospl_uint32 i = 0;
+		zpl_uint32 i = 0;
 		if (modbus_config->type == MODBUS_TYPE_TCP && modbus_config->address) {
 			modbus_config->ctx = modbus_new_tcp(modbus_config->address, modbus_config->port ? modbus_config->port:1502);
 			modbus_config->query = malloc(MODBUS_TCP_MAX_ADU_LENGTH);
@@ -223,7 +226,7 @@ int modbus_start_api()
 		for (i=0; i < UT_REGISTERS_NB; i++) {
 			modbus_config->tab_registers->tab_registers[i] = UT_REGISTERS_TAB[i];;
 		}
-		modbus_config->running = ospl_true;
+		modbus_config->running = zpl_true;
 		return OK;
 	}
 	return ERROR;
@@ -237,8 +240,8 @@ int modbus_stop_api()
 	{
 		if(modbus_config->running)
 		{
-			modbus_config->running = ospl_false;
-			modbus_config->waiting = ospl_true;
+			modbus_config->running = zpl_false;
+			modbus_config->waiting = zpl_true;
 			while(modbus_config->waiting)
 			#ifdef OS_WIN32
 				Sleep(100);
@@ -275,7 +278,8 @@ static int modbus_main_task(void *p)
 {
     int s = -1;
     int rc = 0;
-	while (modbus_config && modbus_config->running == ospl_false)
+	host_config_load_waitting();
+	while (modbus_config && modbus_config->running == zpl_false)
 #ifdef OS_WIN32
 		Sleep(1000);
 #else
@@ -283,7 +287,7 @@ static int modbus_main_task(void *p)
 #endif
 	if(modbus_config && modbus_config->ctx && modbus_config->tab_registers && modbus_config->query)
 	{
-		while(modbus_config->running == ospl_false)
+		while(modbus_config->running == zpl_false)
 		#ifdef OS_WIN32
 			Sleep(1000);
 		#else
@@ -303,7 +307,7 @@ static int modbus_main_task(void *p)
 			if (rc == -1) {
 				fprintf(stderr, "Unable to connect %s\n", modbus_strerror(errno));
 				modbus_free(modbus_config->ctx);
-				modbus_config->waiting = ospl_false;
+				modbus_config->waiting = zpl_false;
 				return -1;
 			}
 		}
@@ -325,7 +329,7 @@ static int modbus_main_task(void *p)
 					if (rc == -1) {
 						fprintf(stderr, "Unable to connect %s\n", modbus_strerror(errno));
 						modbus_free(modbus_config->ctx);
-						modbus_config->waiting = ospl_false;
+						modbus_config->waiting = zpl_false;
 						return -1;
 					}
 				}
@@ -360,7 +364,7 @@ static int modbus_main_task(void *p)
 		#endif
 			}
 		}
-		modbus_config->waiting = ospl_false;
+		modbus_config->waiting = zpl_false;
 	}
     return 0;
 }

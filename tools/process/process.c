@@ -16,20 +16,17 @@
  */
 
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "os_util.h"
-#include "process.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
 #include <sys/stat.h>
 
+#include "process.h"
 
 
+//#undef ZPL_TOOLS_PROCESS
 
-//#undef DOUBLE_PROCESS
-
-#ifdef DOUBLE_PROCESS
+#ifdef ZPL_TOOLS_PROCESS
 
 static main_process_t gProcessMain;
 static int main_process_id = 100;
@@ -248,7 +245,7 @@ process_t * process_lookup_id_api(int id)
 
 int process_start(process_t *process)
 {
-	process->active = ospl_true;
+	process->active = zpl_true;
 	if(process->active && process->pid == 0)
 	{
 		int pid = 0;
@@ -288,7 +285,7 @@ int process_start(process_t *process)
 
 int process_deamon_start(process_t *process)
 {
-	process->active = ospl_true;
+	process->active = zpl_true;
 	if(process->active && process->pid == 0)
 	{
 		int i =0;
@@ -318,7 +315,7 @@ int process_stop(process_t *process)
 	process_log_debug("stop process :%s execp:%s", process->name, process->process);
 	if(process->active && process->pid)
 	{
-		process->active = ospl_false;
+		process->active = zpl_false;
 		child_process_kill(process->pid);
 		process->pid = 0;
 	}
@@ -330,7 +327,7 @@ int process_restart(process_t *process)
 {
 	process_stop(process);
 	//return process_start(process);
-	process->active = ospl_true;
+	process->active = zpl_true;
 	if(process->active && process->pid == 0)
 	{
 		int pid = 0;
@@ -480,7 +477,7 @@ static int process_argvs_split(process_t *process, char *argvs)
 			return ERROR;
 	}
 #else
-	ospl_uint32 offset = 0;
+	zpl_uint32 offset = 0;
 	char *brk = argvs;
 	char tmp[128];
 	while(brk && brk != '\0')
@@ -524,7 +521,7 @@ process_t * process_get(process_head *head)
 		if(os_strlen(head->process))
 			os_strcpy(node->process, head->process);
 		node->restart = head->restart;
-		node->active = ospl_true;
+		node->active = zpl_true;
 		node->id	= head->id;
 		if(os_strlen(head->argvs))
 		{

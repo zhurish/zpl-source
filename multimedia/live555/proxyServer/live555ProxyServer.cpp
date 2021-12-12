@@ -13,7 +13,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
-// Copyright (c) 1996-2020, Live Networks, Inc.  All rights reserved
+// Copyright (c) 1996-2021, Live Networks, Inc.  All rights reserved
 // LIVE555 Proxy Server
 // main program
 
@@ -35,7 +35,14 @@ char* password = NULL;
 Boolean proxyREGISTERRequests = False;
 char* usernameForREGISTER = NULL;
 char* passwordForREGISTER = NULL;
+int aaaaamain(int argc, char** argv);
 
+int testmain()
+{
+    int argc = 2;
+    char* argv[] = {"testmain", "rtsp://192.168.1.19:7554/media=0/channel=0&level=0",NULL};
+    aaaaamain(argc, argv);
+}
 static RTSPServer* createRTSPServer(Port port) {
   if (proxyREGISTERRequests) {
     return RTSPServerWithREGISTERProxying::createNew(*env, port, authDB, authDBForREGISTER, 65, streamRTPOverTCP, verbosityLevel, username, password);
@@ -55,7 +62,7 @@ void usage() {
   exit(1);
 }
 
-int main(int argc, char** argv) {
+int aaaaamain(int argc, char** argv) {
   // Increase the maximum size of video frames that we can 'proxy' without truncation.
   // (Such frames are unreasonably large; the back-end servers should really not be sending frames this large!)
   OutPacketBuffer::maxSize = 100000; // bytes

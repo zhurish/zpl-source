@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope
+    xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope"
+    xmlns:SOAP-ENC="http://www.w3.org/2003/05/soap-encoding"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing"
+    xmlns:wsdd="http://schemas.xmlsoap.org/ws/2005/04/discovery"
+    xmlns:chan="http://schemas.microsoft.com/ws/2005/02/duplex"
+    xmlns:wsa5="http://www.w3.org/2005/08/addressing"
+    xmlns:xmime="http://tempuri.org/xmime.xsd"
+    xmlns:xop="http://www.w3.org/2004/08/xop/include"
+    xmlns:ns1="http://www.onvif.org/ver20/analytics/humanface"
+    xmlns:ns2="http://www.onvif.org/ver20/analytics/humanbody"
+    xmlns:tt="http://www.onvif.org/ver10/schema"
+    xmlns:wsrfbf="http://docs.oasis-open.org/wsrf/bf-2"
+    xmlns:wstop="http://docs.oasis-open.org/wsn/t-1"
+    xmlns:wsrfr="http://docs.oasis-open.org/wsrf/r-2"
+    xmlns:tad="http://www.onvif.org/ver10/analyticsdevice/wsdl"
+    xmlns:tan="http://www.onvif.org/ver20/analytics/wsdl"
+    xmlns:tdn="http://www.onvif.org/ver10/network/wsdl"
+    xmlns:tds="http://www.onvif.org/ver10/device/wsdl"
+    xmlns:tev="http://www.onvif.org/ver10/events/wsdl"
+    xmlns:wsnt="http://docs.oasis-open.org/wsn/b-2"
+    xmlns:timg="http://www.onvif.org/ver20/imaging/wsdl"
+    xmlns:tls="http://www.onvif.org/ver10/display/wsdl"
+    xmlns:tmd="http://www.onvif.org/ver10/deviceIO/wsdl"
+    xmlns:tptz="http://www.onvif.org/ver20/ptz/wsdl"
+    xmlns:trc="http://www.onvif.org/ver10/recording/wsdl"
+    xmlns:trp="http://www.onvif.org/ver10/replay/wsdl"
+    xmlns:trt="http://www.onvif.org/ver10/media/wsdl"
+    xmlns:trv="http://www.onvif.org/ver10/receiver/wsdl"
+    xmlns:tse="http://www.onvif.org/ver10/search/wsdl">
+ <SOAP-ENV:Body>
+  <tptz:GetPresetTourOptionsResponse>
+   <tptz:Options xsi:type="tt:PTZPresetTourOptions">
+    <tt:AutoStart xsi:type="xsd:boolean">false</tt:AutoStart>
+    <tt:StartingCondition xsi:type="tt:PTZPresetTourStartingConditionOptions">
+     <tt:RecurringTime xsi:type="tt:IntRange">
+      <tt:Min xsi:type="xsd:int">0</tt:Min>
+      <tt:Max xsi:type="xsd:int">0</tt:Max>
+     </tt:RecurringTime>
+     <tt:RecurringDuration xsi:type="tt:DurationRange">
+      <tt:Min xsi:type="xsd:duration">PT0S</tt:Min>
+      <tt:Max xsi:type="xsd:duration">PT0S</tt:Max>
+     </tt:RecurringDuration>
+     <tt:Direction xsi:type="tt:PTZPresetTourDirection">Forward</tt:Direction>
+     <tt:Extension xsi:type="tt:PTZPresetTourStartingConditionOptionsExtension">
+      <!-- extensibility element(s) -->
+
+     </tt:Extension>
+    </tt:StartingCondition>
+    <tt:TourSpot xsi:type="tt:PTZPresetTourSpotOptions">
+     <tt:PresetDetail xsi:type="tt:PTZPresetTourPresetDetailOptions">
+      <tt:PresetToken xsi:type="tt:ReferenceToken"></tt:PresetToken>
+      <tt:Home xsi:type="xsd:boolean">false</tt:Home>
+      <tt:PanTiltPositionSpace xsi:type="tt:Space2DDescription">
+       <tt:URI xsi:type="xsd:anyURI">http://www.example.com/schema/anyURI</tt:URI>
+       <tt:XRange xsi:type="tt:FloatRange">
+        <tt:Min xsi:type="xsd:float">0.0</tt:Min>
+        <tt:Max xsi:type="xsd:float">0.0</tt:Max>
+       </tt:XRange>
+       <tt:YRange xsi:type="tt:FloatRange">
+        <tt:Min xsi:type="xsd:float">0.0</tt:Min>
+        <tt:Max xsi:type="xsd:float">0.0</tt:Max>
+       </tt:YRange>
+      </tt:PanTiltPositionSpace>
+      <tt:ZoomPositionSpace xsi:type="tt:Space1DDescription">
+       <tt:URI xsi:type="xsd:anyURI">http://www.example.com/schema/anyURI</tt:URI>
+       <tt:XRange xsi:type="tt:FloatRange">
+        <tt:Min xsi:type="xsd:float">0.0</tt:Min>
+        <tt:Max xsi:type="xsd:float">0.0</tt:Max>
+       </tt:XRange>
+      </tt:ZoomPositionSpace>
+      <tt:Extension xsi:type="tt:PTZPresetTourPresetDetailOptionsExtension">
+       <!-- extensibility element(s) -->
+
+      </tt:Extension>
+     </tt:PresetDetail>
+     <tt:StayTime xsi:type="tt:DurationRange">
+      <tt:Min xsi:type="xsd:duration">PT0S</tt:Min>
+      <tt:Max xsi:type="xsd:duration">PT0S</tt:Max>
+     </tt:StayTime>
+     <!-- extensibility element(s) -->
+
+    </tt:TourSpot>
+    <!-- extensibility element(s) -->
+
+   </tptz:Options>
+  </tptz:GetPresetTourOptionsResponse>
+ </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

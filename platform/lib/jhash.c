@@ -17,7 +17,8 @@
  * any bugs present are surely my fault.  -DaveM
  */
 
-#include "zebra.h"
+#include "os_include.h"
+#include "zpl_include.h"
 #include "jhash.h"
 
 /* The golden ration: an arbitrary value */
@@ -41,11 +42,11 @@
  * of bytes.  No alignment or length assumptions are made about
  * the input key.
  */
-ospl_uint32
-jhash (const void *key, ospl_uint32 length, ospl_uint32 initval)
+zpl_uint32
+jhash (const void *key, zpl_uint32 length, zpl_uint32 initval)
 {
-  ospl_uint32 a, b, c, len;
-  const ospl_uint8 *k = key;
+  zpl_uint32 a, b, c, len;
+  const zpl_uint8 *k = key;
 
   len = length;
   a = b = JHASH_GOLDEN_RATIO;
@@ -54,14 +55,14 @@ jhash (const void *key, ospl_uint32 length, ospl_uint32 initval)
   while (len >= 12)
     {
       a +=
-        (k[0] + ((ospl_uint32) k[1] << 8) + ((ospl_uint32) k[2] << 16) +
-         ((ospl_uint32) k[3] << 24));
+        (k[0] + ((zpl_uint32) k[1] << 8) + ((zpl_uint32) k[2] << 16) +
+         ((zpl_uint32) k[3] << 24));
       b +=
-        (k[4] + ((ospl_uint32) k[5] << 8) + ((ospl_uint32) k[6] << 16) +
-         ((ospl_uint32) k[7] << 24));
+        (k[4] + ((zpl_uint32) k[5] << 8) + ((zpl_uint32) k[6] << 16) +
+         ((zpl_uint32) k[7] << 24));
       c +=
-        (k[8] + ((ospl_uint32) k[9] << 8) + ((ospl_uint32) k[10] << 16) +
-         ((ospl_uint32) k[11] << 24));
+        (k[8] + ((zpl_uint32) k[9] << 8) + ((zpl_uint32) k[10] << 16) +
+         ((zpl_uint32) k[11] << 24));
 
       __jhash_mix (a, b, c);
 
@@ -73,25 +74,25 @@ jhash (const void *key, ospl_uint32 length, ospl_uint32 initval)
   switch (len)
     {
     case 11:
-      c += ((ospl_uint32) k[10] << 24);
+      c += ((zpl_uint32) k[10] << 24);
     case 10:
-      c += ((ospl_uint32) k[9] << 16);
+      c += ((zpl_uint32) k[9] << 16);
     case 9:
-      c += ((ospl_uint32) k[8] << 8);
+      c += ((zpl_uint32) k[8] << 8);
     case 8:
-      b += ((ospl_uint32) k[7] << 24);
+      b += ((zpl_uint32) k[7] << 24);
     case 7:
-      b += ((ospl_uint32) k[6] << 16);
+      b += ((zpl_uint32) k[6] << 16);
     case 6:
-      b += ((ospl_uint32) k[5] << 8);
+      b += ((zpl_uint32) k[5] << 8);
     case 5:
       b += k[4];
     case 4:
-      a += ((ospl_uint32) k[3] << 24);
+      a += ((zpl_uint32) k[3] << 24);
     case 3:
-      a += ((ospl_uint32) k[2] << 16);
+      a += ((zpl_uint32) k[2] << 16);
     case 2:
-      a += ((ospl_uint32) k[1] << 8);
+      a += ((zpl_uint32) k[1] << 8);
     case 1:
       a += k[0];
     };
@@ -101,13 +102,13 @@ jhash (const void *key, ospl_uint32 length, ospl_uint32 initval)
   return c;
 }
 
-/* A special optimized version that handles 1 or more of ospl_uint32s.
- * The length parameter here is the number of ospl_uint32s in the key.
+/* A special optimized version that handles 1 or more of zpl_uint32s.
+ * The length parameter here is the number of zpl_uint32s in the key.
  */
-ospl_uint32
-jhash2 (const ospl_uint32 *k, ospl_uint32 length, ospl_uint32 initval)
+zpl_uint32
+jhash2 (const zpl_uint32 *k, zpl_uint32 length, zpl_uint32 initval)
 {
-  ospl_uint32 a, b, c, len;
+  zpl_uint32 a, b, c, len;
 
   a = b = JHASH_GOLDEN_RATIO;
   c = initval;
@@ -145,8 +146,8 @@ jhash2 (const ospl_uint32 *k, ospl_uint32 length, ospl_uint32 initval)
  * NOTE: In partilar the "c += length; __jhash_mix(a,b,c);" normally
  *       done at the end is not done here.
  */
-ospl_uint32
-jhash_3words (ospl_uint32 a, ospl_uint32 b, ospl_uint32 c, ospl_uint32 initval)
+zpl_uint32
+jhash_3words (zpl_uint32 a, zpl_uint32 b, zpl_uint32 c, zpl_uint32 initval)
 {
   a += JHASH_GOLDEN_RATIO;
   b += JHASH_GOLDEN_RATIO;
@@ -157,14 +158,14 @@ jhash_3words (ospl_uint32 a, ospl_uint32 b, ospl_uint32 c, ospl_uint32 initval)
   return c;
 }
 
-ospl_uint32
-jhash_2words (ospl_uint32 a, ospl_uint32 b, ospl_uint32 initval)
+zpl_uint32
+jhash_2words (zpl_uint32 a, zpl_uint32 b, zpl_uint32 initval)
 {
   return jhash_3words (a, b, 0, initval);
 }
 
-ospl_uint32
-jhash_1word (ospl_uint32 a, ospl_uint32 initval)
+zpl_uint32
+jhash_1word (zpl_uint32 a, zpl_uint32 initval)
 {
   return jhash_3words (a, 0, 0, initval);
 }

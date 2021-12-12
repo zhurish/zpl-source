@@ -20,22 +20,20 @@
  * 02111-1307, USA.  
  */
 
-#include <zebra.h>
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 #include <net/if_arp.h>
-#include "linklist.h"
-#include "if.h"
-#include "prefix.h"
-#include "log.h"
-#include "nsm_rib.h"
-#include "nsm_interface.h"
 
-#ifdef PL_NSM_VETH
-#include "nsm_veth.h"
+
+#ifdef ZPL_NSM_VLANETH
+#include "nsm_vlaneth.h"
 #endif
-#ifdef PL_NSM_TUNNEL
+#ifdef ZPL_NSM_TUNNEL
 #include "nsm_tunnel.h"
 #endif
-#ifdef PL_NSM_BRIDGE
+#ifdef ZPL_NSM_BRIDGE
 #include "nsm_bridge.h"
 #endif
 #include "kernel_ioctl.h"
@@ -47,57 +45,57 @@
 #include "pal_driver.h"
 
 /* clear and set interface name string */
-void ifreq_set_name(struct ifreq *ifreq, struct interface *ifp)
+void ifreq_set_name(struct ipstack_ifreq *ifreq, struct interface *ifp)
 {
   strncpy(ifreq->ifr_name, ifp->k_name, IFNAMSIZ);
 }
 
 /* call ioctl system call */
-int if_ioctl(ospl_uint32 request, caddr_t buffer)
+int if_ioctl(zpl_uint32 request, caddr_t buffer)
 {
-  int sock = 0;
+  zpl_socket_t sock;
   int ret = -1;
 
-  sock = socket(AF_INET, SOCK_DGRAM, 0);
-  if (sock < 0)
+  sock = ipstack_socket(IPCOM_STACK, AF_INET, SOCK_DGRAM, 0);
+  if (ipstack_invalid(sock))
   {
     zlog_err(MODULE_PAL, "Cannot create datagram socket: %s",
              safe_strerror(errno));
     return ret;
   }
-  ret = ioctl(sock, request, buffer);
+  ret = ipstack_ioctl(sock, request, buffer);
   if (ret < 0)
   {
     zlog_err(MODULE_PAL, "Cannot ioctl (0x%x) : %s", request, safe_strerror(errno));
-    close(sock);
+    ipstack_close(sock);
     return ret;
   }
-  close(sock);
+  ipstack_close(sock);
   return 0;
 }
 
 #ifdef HAVE_IPV6
-int if_ioctl_ipv6(ospl_uint32 request, caddr_t buffer)
+int if_ioctl_ipv6(zpl_uint32 request, caddr_t buffer)
 {
-  int sock = 0;
+  zpl_socket_t sock;
   int ret = -1;
 
-  sock = socket(AF_INET6, SOCK_DGRAM, 0);
-  if (sock < 0)
+  sock = ipstack_socket(IPCOM_STACK, AF_INET6, SOCK_DGRAM, 0);
+  if (ipstack_invalid(sock))
   {
     zlog_err(MODULE_PAL, "Cannot create IPv6 datagram socket: %s",
              safe_strerror(errno));
     return ret;
   }
-  ret = ioctl(sock, request, buffer);
+  ret = ipstack_ioctl(sock, request, buffer);
   if (ret < 0)
   {
     zlog_err(MODULE_PAL, "Cannot ioctl (0x%x) : %s",
              request, safe_strerror(errno));
-    close(sock);
+    ipstack_close(sock);
     return ret;
   }
-  close(sock);
+  ipstack_close(sock);
   return 0;
 }
 #endif /* HAVE_IPV6 */
@@ -107,7 +105,7 @@ static int
 if_get_ifindex (char *name)
 {
 #ifdef SIOCGIFINDEX
-  struct ifreq ifreq;
+  struct ipstack_ifreq ifreq;
   strncpy (ifreq.ifr_name, name, IFNAMSIZ);
   if (if_ioctl (SIOCGIFINDEX, (caddr_t) &ifreq) < 0)
     return 0;
@@ -125,7 +123,7 @@ static int
 if_get_metric(struct interface *ifp)
 {
 #ifdef SIOCGIFMETRIC
-  struct ifreq ifreq;
+  struct ipstack_ifreq ifreq;
 
   ifreq_set_name(&ifreq, ifp);
 
@@ -141,10 +139,10 @@ if_get_metric(struct interface *ifp)
 }
 
 static int
-if_set_metric(struct interface *ifp, ospl_uint32 metric)
+if_set_metric(struct interface *ifp, zpl_uint32 metric)
 {
 #ifdef SIOCGIFMETRIC
-  struct ifreq ifreq;
+  struct ipstack_ifreq ifreq;
   ifreq_set_name(&ifreq, ifp);
   ifreq.ifr_metric = metric;
   if (if_ioctl(SIOCGIFMETRIC, (caddr_t)&ifreq) < 0)
@@ -159,7 +157,7 @@ if_set_metric(struct interface *ifp, ospl_uint32 metric)
 static int
 if_get_mtu(struct interface *ifp)
 {
-  struct ifreq ifreq;
+  struct ipstack_ifreq ifreq;
 
   ifreq_set_name(&ifreq, ifp);
 
@@ -178,9 +176,9 @@ if_get_mtu(struct interface *ifp)
 }
 
 static int
-if_set_mtu(struct interface *ifp, ospl_uint32 mtu)
+if_set_mtu(struct interface *ifp, zpl_uint32 mtu)
 {
-  struct ifreq ifreq;
+  struct ipstack_ifreq ifreq;
 
   ifreq_set_name(&ifreq, ifp);
 
@@ -200,7 +198,7 @@ if_set_mtu(struct interface *ifp, ospl_uint32 mtu)
 static int
 if_get_hwaddr(struct interface *ifp)
 {
-  struct ifreq ifreq;
+  struct ipstack_ifreq ifreq;
 
   ifreq_set_name(&ifreq, ifp);
 
@@ -222,7 +220,7 @@ static int
 if_get_flags(struct interface *ifp)
 {
   int ret;
-  struct ifreq ifreq;
+  struct ipstack_ifreq ifreq;
   ifreq_set_name(&ifreq, ifp);
 
   if (ifp->k_ifindex == 0)
@@ -246,9 +244,9 @@ static int
 if_set_flags(struct interface *ifp, uint64_t flags)
 {
   int ret;
-  struct ifreq ifreq;
+  struct ipstack_ifreq ifreq;
 
-  memset(&ifreq, 0, sizeof(struct ifreq));
+  memset(&ifreq, 0, sizeof(struct ipstack_ifreq));
   ifreq_set_name(&ifreq, ifp);
 
   ifreq.ifr_flags = ifp->flags;
@@ -269,9 +267,9 @@ static int
 if_unset_flags(struct interface *ifp, uint64_t flags)
 {
   int ret;
-  struct ifreq ifreq;
+  struct ipstack_ifreq ifreq;
 
-  memset(&ifreq, 0, sizeof(struct ifreq));
+  memset(&ifreq, 0, sizeof(struct ipstack_ifreq));
   ifreq_set_name(&ifreq, ifp);
 
   ifreq.ifr_flags = ifp->flags;
@@ -310,8 +308,8 @@ if_set_prefix(struct interface *ifp, struct connected *ifc)
 {
   int ret;
   struct ifaliasreq addreq;
-  struct sockaddr_in addr;
-  struct sockaddr_in mask;
+  struct ipstack_sockaddr_in addr;
+  struct ipstack_sockaddr_in mask;
   struct prefix_ipv4 *p;
 
   p = (struct prefix_ipv4 *)ifc->address;
@@ -319,21 +317,21 @@ if_set_prefix(struct interface *ifp, struct connected *ifc)
   memset(&addreq, 0, sizeof addreq);
   strncpy((char *)&addreq.ifra_name, ifp->name, sizeof addreq.ifra_name);
 
-  memset(&addr, 0, sizeof(struct sockaddr_in));
+  memset(&addr, 0, sizeof(struct ipstack_sockaddr_in));
   addr.sin_addr = p->prefix;
   addr.sin_family = p->family;
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
-  addr.sin_len = sizeof(struct sockaddr_in);
+  addr.sin_len = sizeof(struct ipstack_sockaddr_in);
 #endif
-  memcpy(&addreq.ifra_addr, &addr, sizeof(struct sockaddr_in));
+  memcpy(&addreq.ifra_addr, &addr, sizeof(struct ipstack_sockaddr_in));
 
-  memset(&mask, 0, sizeof(struct sockaddr_in));
+  memset(&mask, 0, sizeof(struct ipstack_sockaddr_in));
   masklen2ip(p->prefixlen, &mask.sin_addr);
   mask.sin_family = p->family;
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
-  mask.sin_len = sizeof(struct sockaddr_in);
+  mask.sin_len = sizeof(struct ipstack_sockaddr_in);
 #endif
-  memcpy(&addreq.ifra_mask, &mask, sizeof(struct sockaddr_in));
+  memcpy(&addreq.ifra_mask, &mask, sizeof(struct ipstack_sockaddr_in));
 
   ret = if_ioctl(SIOCAIFADDR, (caddr_t)&addreq);
   if (ret < 0)
@@ -347,9 +345,9 @@ static int
 if_unset_prefix(struct interface *ifp, struct connected *ifc)
 {
   int ret;
-  struct ifaliasreq addreq;
-  struct sockaddr_in addr;
-  struct sockaddr_in mask;
+  struct ipstack_ifaliasreq addreq;
+  struct ipstack_sockaddr_in addr;
+  struct ipstack_sockaddr_in mask;
   struct prefix_ipv4 *p;
 
   p = (struct prefix_ipv4 *)ifc->address;
@@ -357,21 +355,21 @@ if_unset_prefix(struct interface *ifp, struct connected *ifc)
   memset(&addreq, 0, sizeof addreq);
   strncpy((char *)&addreq.ifra_name, ifp->name, sizeof addreq.ifra_name);
 
-  memset(&addr, 0, sizeof(struct sockaddr_in));
+  memset(&addr, 0, sizeof(struct ipstack_sockaddr_in));
   addr.sin_addr = p->prefix;
   addr.sin_family = p->family;
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
-  addr.sin_len = sizeof(struct sockaddr_in);
+  addr.sin_len = sizeof(struct ipstack_sockaddr_in);
 #endif
-  memcpy(&addreq.ifra_addr, &addr, sizeof(struct sockaddr_in));
+  memcpy(&addreq.ifra_addr, &addr, sizeof(struct ipstack_sockaddr_in));
 
-  memset(&mask, 0, sizeof(struct sockaddr_in));
+  memset(&mask, 0, sizeof(struct ipstack_sockaddr_in));
   masklen2ip(p->prefixlen, &mask.sin_addr);
   mask.sin_family = p->family;
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
-  mask.sin_len = sizeof(struct sockaddr_in);
+  mask.sin_len = sizeof(struct ipstack_sockaddr_in);
 #endif
-  memcpy(&addreq.ifra_mask, &mask, sizeof(struct sockaddr_in));
+  memcpy(&addreq.ifra_mask, &mask, sizeof(struct ipstack_sockaddr_in));
 
   ret = if_ioctl(SIOCDIFADDR, (caddr_t)&addreq);
   if (ret < 0)
@@ -385,10 +383,10 @@ static int
 if_set_prefix(struct interface *ifp, struct connected *ifc)
 {
   int ret;
-  struct ifreq ifreq;
-  struct sockaddr_in addr;
-  struct sockaddr_in broad;
-  struct sockaddr_in mask;
+  struct ipstack_ifreq ifreq;
+  struct ipstack_sockaddr_in addr;
+  struct ipstack_sockaddr_in broad;
+  struct ipstack_sockaddr_in mask;
   struct prefix_ipv4 ifaddr;
   struct prefix_ipv4 *p;
 
@@ -400,7 +398,7 @@ if_set_prefix(struct interface *ifp, struct connected *ifc)
 
   addr.sin_addr = p->prefix;
   addr.sin_family = p->family;
-  memcpy(&ifreq.ifr_addr, &addr, sizeof(struct sockaddr_in));
+  memcpy(&ifreq.ifr_addr, &addr, sizeof(struct ipstack_sockaddr_in));
   ret = if_ioctl(SIOCSIFADDR, (caddr_t)&ifreq);
   if (ret < 0)
     return ret;
@@ -416,7 +414,7 @@ if_set_prefix(struct interface *ifp, struct connected *ifc)
     broad.sin_addr.s_addr = (addr.sin_addr.s_addr | ~mask.sin_addr.s_addr);
     broad.sin_family = p->family;
 
-    memcpy(&ifreq.ifr_broadaddr, &broad, sizeof(struct sockaddr_in));
+    memcpy(&ifreq.ifr_broadaddr, &broad, sizeof(struct ipstack_sockaddr_in));
     ret = if_ioctl(SIOCSIFBRDADDR, (caddr_t)&ifreq);
     if (ret < 0)
       return ret;
@@ -426,7 +424,7 @@ if_set_prefix(struct interface *ifp, struct connected *ifc)
 #ifdef SUNOS_5
   memcpy(&mask, &ifreq.ifr_addr, sizeof(mask));
 #else
-  memcpy(&ifreq.ifr_netmask, &mask, sizeof(struct sockaddr_in));
+  memcpy(&ifreq.ifr_netmask, &mask, sizeof(struct ipstack_sockaddr_in));
 #endif /* SUNOS5 */
   ret = if_ioctl(SIOCSIFNETMASK, (caddr_t)&ifreq);
   if (ret < 0)
@@ -441,17 +439,17 @@ static int
 if_unset_prefix(struct interface *ifp, struct connected *ifc)
 {
   int ret;
-  struct ifreq ifreq;
-  struct sockaddr_in addr;
+  struct ipstack_ifreq ifreq;
+  struct ipstack_sockaddr_in addr;
   struct prefix_ipv4 *p;
 
   p = (struct prefix_ipv4 *)ifc->address;
 
   ifreq_set_name(&ifreq, ifp);
 
-  memset(&addr, 0, sizeof(struct sockaddr_in));
+  memset(&addr, 0, sizeof(struct ipstack_sockaddr_in));
   addr.sin_family = p->family;
-  memcpy(&ifreq.ifr_addr, &addr, sizeof(struct sockaddr_in));
+  memcpy(&ifreq.ifr_addr, &addr, sizeof(struct ipstack_sockaddr_in));
   ret = if_ioctl(SIOCSIFADDR, (caddr_t)&ifreq);
   if (ret < 0)
     return ret;
@@ -465,8 +463,8 @@ static int
 if_set_dst_prefix(struct interface *ifp, struct connected *ifc)
 {
   int ret;
-  struct ifreq ifreq;
-  struct sockaddr_in addr;
+  struct ipstack_ifreq ifreq;
+  struct ipstack_sockaddr_in addr;
   struct prefix_ipv4 *p;
 
   p = (struct prefix_ipv4 *)ifc->destination;
@@ -475,7 +473,7 @@ if_set_dst_prefix(struct interface *ifp, struct connected *ifc)
 
   addr.sin_addr = p->prefix;
   addr.sin_family = p->family;
-  memcpy(&ifreq.ifr_addr, &addr, sizeof(struct sockaddr_in));
+  memcpy(&ifreq.ifr_addr, &addr, sizeof(struct ipstack_sockaddr_in));
   ret = if_ioctl(SIOCSIFDSTADDR, (caddr_t)&ifreq);
   if (ret < 0)
     return ret;
@@ -488,17 +486,17 @@ static int
 if_unset_dst_prefix(struct interface *ifp, struct connected *ifc)
 {
   int ret;
-  struct ifreq ifreq;
-  struct sockaddr_in addr;
+  struct ipstack_ifreq ifreq;
+  struct ipstack_sockaddr_in addr;
   struct prefix_ipv4 *p;
 
   p = (struct prefix_ipv4 *)ifc->destination;
 
   ifreq_set_name(&ifreq, ifp);
 
-  memset(&addr, 0, sizeof(struct sockaddr_in));
+  memset(&addr, 0, sizeof(struct ipstack_sockaddr_in));
   addr.sin_family = p->family;
-  memcpy(&ifreq.ifr_addr, &addr, sizeof(struct sockaddr_in));
+  memcpy(&ifreq.ifr_addr, &addr, sizeof(struct ipstack_sockaddr_in));
   ret = if_ioctl(SIOCSIFDSTADDR, (caddr_t)&ifreq);
   if (ret < 0)
     return ret;
@@ -513,8 +511,8 @@ if_unset_dst_prefix(struct interface *ifp, struct connected *ifc)
 /* linux/include/net/ipv6.h */
 struct in6_ifreq
 {
-  struct in6_addr ifr6_addr;
-  ospl_uint32 ifr6_prefixlen;
+  struct ipstack_in6_addr ifr6_addr;
+  zpl_uint32 ifr6_prefixlen;
   int ifr6_ifindex;
 };
 #endif /* _LINUX_IN6_H */
@@ -525,13 +523,13 @@ if_prefix_add_ipv6(struct interface *ifp, struct connected *ifc, int sec)
 {
   int ret;
   struct prefix_ipv6 *p;
-  struct in6_ifreq ifreq;
+  struct ipstack_in6_ifreq ifreq;
 
   p = (struct prefix_ipv6 *)ifc->address;
 
-  memset(&ifreq, 0, sizeof(struct in6_ifreq));
+  memset(&ifreq, 0, sizeof(struct ipstack_in6_ifreq));
 
-  memcpy(&ifreq.ifr6_addr, &p->prefix, sizeof(struct in6_addr));
+  memcpy(&ifreq.ifr6_addr, &p->prefix, sizeof(struct ipstack_in6_addr));
   ifreq.ifr6_ifindex = ifp->ifindex;
   ifreq.ifr6_prefixlen = p->prefixlen;
 
@@ -545,13 +543,13 @@ if_prefix_delete_ipv6(struct interface *ifp, struct connected *ifc, int sec)
 {
   int ret;
   struct prefix_ipv6 *p;
-  struct in6_ifreq ifreq;
+  struct ipstack_in6_ifreq ifreq;
 
   p = (struct prefix_ipv6 *)ifc->address;
 
-  memset(&ifreq, 0, sizeof(struct in6_ifreq));
+  memset(&ifreq, 0, sizeof(struct ipstack_in6_ifreq));
 
-  memcpy(&ifreq.ifr6_addr, &p->prefix, sizeof(struct in6_addr));
+  memcpy(&ifreq.ifr6_addr, &p->prefix, sizeof(struct ipstack_in6_addr));
   ifreq.ifr6_ifindex = ifp->ifindex;
   ifreq.ifr6_prefixlen = p->prefixlen;
 
@@ -568,9 +566,9 @@ static int
 if_prefix_add_ipv6(struct interface *ifp, struct connected *ifc)
 {
   int ret;
-  struct in6_aliasreq addreq;
-  struct sockaddr_in6 addr;
-  struct sockaddr_in6 mask;
+  struct ipstack_in6_aliasreq addreq;
+  struct ipstack_sockaddr_in6 addr;
+  struct ipstack_sockaddr_in6 mask;
   struct prefix_ipv6 *p;
 
   p = (struct prefix_ipv6 *)ifc->address;
@@ -578,21 +576,21 @@ if_prefix_add_ipv6(struct interface *ifp, struct connected *ifc)
   memset(&addreq, 0, sizeof addreq);
   strncpy((char *)&addreq.ifra_name, ifp->name, sizeof addreq.ifra_name);
 
-  memset(&addr, 0, sizeof(struct sockaddr_in6));
+  memset(&addr, 0, sizeof(struct ipstack_sockaddr_in6));
   addr.sin6_addr = p->prefix;
   addr.sin6_family = p->family;
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
-  addr.sin6_len = sizeof(struct sockaddr_in6);
+  addr.sin6_len = sizeof(struct ipstack_sockaddr_in6);
 #endif
-  memcpy(&addreq.ifra_addr, &addr, sizeof(struct sockaddr_in6));
+  memcpy(&addreq.ifra_addr, &addr, sizeof(struct ipstack_sockaddr_in6));
 
-  memset(&mask, 0, sizeof(struct sockaddr_in6));
+  memset(&mask, 0, sizeof(struct ipstack_sockaddr_in6));
   masklen2ip6(p->prefixlen, &mask.sin6_addr);
   mask.sin6_family = p->family;
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
-  mask.sin6_len = sizeof(struct sockaddr_in6);
+  mask.sin6_len = sizeof(struct ipstack_sockaddr_in6);
 #endif
-  memcpy(&addreq.ifra_prefixmask, &mask, sizeof(struct sockaddr_in6));
+  memcpy(&addreq.ifra_prefixmask, &mask, sizeof(struct ipstack_sockaddr_in6));
 
   addreq.ifra_lifetime.ia6t_vltime = 0xffffffff;
   addreq.ifra_lifetime.ia6t_pltime = 0xffffffff;
@@ -612,9 +610,9 @@ static int
 if_prefix_delete_ipv6(struct interface *ifp, struct connected *ifc)
 {
   int ret;
-  struct in6_aliasreq addreq;
-  struct sockaddr_in6 addr;
-  struct sockaddr_in6 mask;
+  struct ipstack_in6_aliasreq addreq;
+  struct ipstack_sockaddr_in6 addr;
+  struct ipstack_sockaddr_in6 mask;
   struct prefix_ipv6 *p;
 
   p = (struct prefix_ipv6 *)ifc->address;
@@ -622,21 +620,21 @@ if_prefix_delete_ipv6(struct interface *ifp, struct connected *ifc)
   memset(&addreq, 0, sizeof addreq);
   strncpy((char *)&addreq.ifra_name, ifp->name, sizeof addreq.ifra_name);
 
-  memset(&addr, 0, sizeof(struct sockaddr_in6));
+  memset(&addr, 0, sizeof(struct ipstack_sockaddr_in6));
   addr.sin6_addr = p->prefix;
   addr.sin6_family = p->family;
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
-  addr.sin6_len = sizeof(struct sockaddr_in6);
+  addr.sin6_len = sizeof(struct ipstack_sockaddr_in6);
 #endif
-  memcpy(&addreq.ifra_addr, &addr, sizeof(struct sockaddr_in6));
+  memcpy(&addreq.ifra_addr, &addr, sizeof(struct ipstack_sockaddr_in6));
 
-  memset(&mask, 0, sizeof(struct sockaddr_in6));
+  memset(&mask, 0, sizeof(struct ipstack_sockaddr_in6));
   masklen2ip6(p->prefixlen, &mask.sin6_addr);
   mask.sin6_family = p->family;
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
-  mask.sin6_len = sizeof(struct sockaddr_in6);
+  mask.sin6_len = sizeof(struct ipstack_sockaddr_in6);
 #endif
-  memcpy(&addreq.ifra_prefixmask, &mask, sizeof(struct sockaddr_in6));
+  memcpy(&addreq.ifra_prefixmask, &mask, sizeof(struct ipstack_sockaddr_in6));
 
 #ifdef HAVE_STRUCT_IF6_ALIASREQ_IFRA_LIFETIME
   addreq.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
@@ -666,12 +664,12 @@ if_prefix_delete_ipv6(struct interface *ifp, struct connected *ifc)
 
 #endif /* HAVE_IPV6 */
 
-static int if_set_mac(struct interface *ifp, ospl_uint8 *mac, ospl_uint32 len)
+static int if_set_mac(struct interface *ifp, zpl_uint8 *mac, zpl_uint32 len)
 {
   int ret;
-  struct ifreq ifreq;
+  struct ipstack_ifreq ifreq;
 
-  memset(&ifreq, 0, sizeof(struct ifreq));
+  memset(&ifreq, 0, sizeof(struct ipstack_ifreq));
   ifreq_set_name(&ifreq, ifp);
   ifreq.ifr_hwaddr.sa_family = ARPHRD_ETHER;
   memcpy(ifreq.ifr_hwaddr.sa_data, mac, len);
@@ -842,18 +840,18 @@ static int _ipkernel_create(struct interface *ifp)
   case IF_SERIAL:
   case IF_ETHERNET:
   case IF_GIGABT_ETHERNET:
-#ifdef PL_NSM_VETH
+#ifdef ZPL_NSM_VLANETH
   case IF_VLAN:
   {
-    nsm_veth_t *veth = nsm_veth_get(ifp);
-    if (veth)
+    nsm_vlaneth_t *vlaneth = nsm_vlaneth_get(ifp);
+    if (vlaneth)
     {
-      ret = _ipkernel_linux_create(veth);
+      ret = _ipkernel_linux_create(vlaneth);
     }
   }
 #endif
   break;
-#ifdef PL_NSM_TUNNEL
+#ifdef ZPL_NSM_TUNNEL
   case IF_TUNNEL:
   {
     nsm_tunnel_t *tunnel = nsm_tunnel_get(ifp);
@@ -864,14 +862,14 @@ static int _ipkernel_create(struct interface *ifp)
   }
   break;
 #endif
-#ifdef PL_NSM_TRUNK
+#ifdef ZPL_NSM_TRUNK
   case IF_LAG:
     ret = _ipkernel_bond_create(ifp);
     break;
 #endif
   case IF_LOOPBACK:
     break;
-#ifdef PL_NSM_BRIDGE
+#ifdef ZPL_NSM_BRIDGE
   case IF_BRIGDE:
   {
     nsm_bridge_t *bridge = nsm_bridge_get(ifp);
@@ -899,18 +897,18 @@ static int _ipkernel_destroy(struct interface *ifp)
   case IF_SERIAL:
   case IF_ETHERNET:
   case IF_GIGABT_ETHERNET:
-#ifdef PL_NSM_VETH
+#ifdef ZPL_NSM_VLANETH
   case IF_VLAN:
   {
-    nsm_veth_t *veth = nsm_veth_get(ifp);
-    if (veth)
+    nsm_vlaneth_t *vlaneth = nsm_vlaneth_get(ifp);
+    if (vlaneth)
     {
-      ret = _ipkernel_linux_destroy(veth);
+      ret = _ipkernel_linux_destroy(vlaneth);
     }
   }
 #endif
   break;
-#ifdef PL_NSM_TUNNEL
+#ifdef ZPL_NSM_TUNNEL
   case IF_TUNNEL:
   {
     nsm_tunnel_t *tunnel = nsm_tunnel_get(ifp);
@@ -921,12 +919,14 @@ static int _ipkernel_destroy(struct interface *ifp)
   }
   break;
 #endif
+#ifdef ZPL_NSM_TRUNK
   case IF_LAG:
     ret = _ipkernel_bond_delete(ifp);
     break;
+#endif
   case IF_LOOPBACK:
     break;
-#ifdef PL_NSM_TRUNK
+#ifdef ZPL_NSM_BRIDGE
   case IF_BRIGDE:
   {
     nsm_bridge_t *bridge = nsm_bridge_get(ifp);
@@ -975,7 +975,7 @@ static int _ipkernel_change(struct interface *ifp)
   case IF_GIGABT_ETHERNET:
   case IF_VLAN:
     break;
-#ifdef PL_NSM_TUNNEL
+#ifdef ZPL_NSM_TUNNEL
   case IF_TUNNEL:
   {
     nsm_tunnel_t *tunnel = nsm_tunnel_get(ifp);
@@ -1024,11 +1024,11 @@ static int _ipkernel_set_vlan(struct interface *ifp, vlan_t vlan)
 {
   if ((if_is_ethernet(ifp) && IF_ID_GET(ifp->ifindex)))
   {
-#ifdef PL_NSM_VETH
-    nsm_veth_t *veth = nsm_veth_get(ifp);
-    if (veth)
+#ifdef ZPL_NSM_VLANETH
+    nsm_vlaneth_t *vlaneth = nsm_vlaneth_get(ifp);
+    if (vlaneth)
     {
-      if (_ipkernel_linux_change(veth, vlan) == 0)
+      if (_ipkernel_linux_change(vlaneth, vlan) == 0)
       {
         //if(ret == 0)
         {

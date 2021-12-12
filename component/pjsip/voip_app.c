@@ -5,19 +5,12 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "memory.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "linklist.h"
-#include "prefix.h"
-#include "table.h"
-#include "vector.h"
-#include "eloop.h"
-#include "network.h"
-#include "os_util.h"
-#include "os_socket.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
+#include "vty_include.h"
+
 
 #include "pjsip_app_api.h"
 #include "pjsua_app_common.h"
@@ -46,7 +39,7 @@ static int voip_app_call_session_delete(voip_app_t *app, voip_call_t *call);
 
 static int voip_app_call_timeout(void *p);
 static int voip_app_call_next_number(void *p);
-static ospl_bool voip_app_call_next();
+static zpl_bool voip_app_call_next();
 
 int void_module_init(pl_pjsip_t *pj)
 {
@@ -68,7 +61,7 @@ int void_module_init(pl_pjsip_t *pj)
 #endif
 	voip_thlog_init();
 
-#ifdef PL_SERVICE_UBUS_SYNC
+#ifdef ZPL_SERVICE_UBUS_SYNC
 	//ubus_sync_hook_install(voip_ubus_uci_update_cb, NULL);
 #endif
 
@@ -89,7 +82,7 @@ int void_module_init(pl_pjsip_t *pj)
 	voip_volume_module_init();
 
 
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 	voip_uci_sip_config_load(pl_pjsip);
 	voip_stream_config_load(pl_pjsip);
 #endif
@@ -97,7 +90,7 @@ int void_module_init(pl_pjsip_t *pj)
 	return OK;
 }
 
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 int pl_pjsip_module_reload()
 {
 	voip_uci_sip_config_load(pl_pjsip);
@@ -234,7 +227,7 @@ static int voip_app_dtmf_recv_callback(int id, void *p, int input)
 #if 0
 		if (x5b_app_customizer () == CUSTOMIZER_SECOM)
 		{
-			ospl_int8 cardid[32];
+			zpl_int8 cardid[32];
 			memset (cardid, 0, sizeof(cardid));
 			if (VOIP_APP_DEBUG(EVENT))
 				zlog_debug(MODULE_PJSIP, "SECOM Product recv dtmf:%c and open door", input);
@@ -245,7 +238,7 @@ static int voip_app_dtmf_recv_callback(int id, void *p, int input)
 							cardid, 0);
 			if (ret == OK)
 			{
-				ospl_uint8 ID[8];
+				zpl_uint8 ID[8];
 				if (strlen (((char *) cardid)))
 				{
 					card_id_string_to_hex (cardid, strlen (((char *) cardid)),
@@ -304,10 +297,10 @@ static int voip_app_dtmf_recv_callback(int id, void *p, int input)
 						strlen(username)?username:"test",
 						strlen(user_id)?user_id:"testid");
 			}
-			//voip_update_dblog(0, ospl_true);
+			//voip_update_dblog(0, zpl_true);
 			//start_timer
 			//voip_thlog_log("Recv '#' Msg, and Open Door");
-			//voip_thlog_log1(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room, char *phone, const char *format, ...);
+			//voip_thlog_log1(zpl_uint8 building, zpl_uint8 unit, zpl_uint16 room, char *phone, const char *format, ...);
 			if(voip_app->session && voip_app->session->source == APP_CALL_ID_UI)
 			{
 				if (x5b_app_mode_X5CM ())
@@ -348,12 +341,12 @@ static int voip_app_register_state_callback(int id, void *p, int input)
 		if(pl_pjsip->sip_user.register_svr)
 		{
 			voip_status_register_api(pl_pjsip->sip_user.sip_state);
-			voip_status_register_main_api(ospl_true);
+			voip_status_register_main_api(zpl_true);
 		}
 		else if(pl_pjsip->sip_user_sec.register_svr)
 		{
 			voip_status_register_api(pl_pjsip->sip_user_sec.sip_state);
-			voip_status_register_main_api(ospl_false);
+			voip_status_register_main_api(zpl_false);
 		}
 
 		if(pl_pjsip->mutex)
@@ -518,9 +511,9 @@ static int voip_app_call_state_callback(int id, void *p, int input)
 							os_time_destroy(voip_app->session->time_id);
 							voip_app->session->time_id = 0;
 						}
-						if(voip_app->stop_and_next == ospl_false)//呼叫异常（未呼通）情况下呼叫下一个号码
+						if(voip_app->stop_and_next == zpl_false)//呼叫异常（未呼通）情况下呼叫下一个号码
 						{
-							//voip_app->callingnext = ospl_true;
+							//voip_app->callingnext = zpl_true;
 							//清除呼叫实例编号
 							voip_app->session->instance = -1;
 							//V_APP_DEBUG("================================%s-------> call next phone number", __func__);
@@ -581,7 +574,7 @@ static int voip_app_call_state_callback(int id, void *p, int input)
 				}
 			}
 			//voip_app_state_set(voip_app, APP_STATE_TALK_IDLE);
-			//voip_volume_control_api(ospl_false);
+			//voip_volume_control_api(zpl_false);
 		}
 	}
 	return OK;
@@ -664,7 +657,7 @@ static int voip_app_call_incoming_callback(int id, void *p, int input)
 									PJSIP_PORT_DEFAULT;
 						}
 
-						__PL_PJSIP_DEBUG(
+						__ZPL_PJSIP_DEBUG(
 								"----%s---> proto=%s, num=%s, remote=%s port=%d\r\n",
 								__func__,
 								voip_app->incoming_session->remote_proto,
@@ -691,7 +684,7 @@ static int voip_app_call_incoming_callback(int id, void *p, int input)
 						}
 
 						if (strstr(uurl, ".")) {
-							__PL_PJSIP_DEBUG(
+							__ZPL_PJSIP_DEBUG(
 									"----%s---> proto=%s, num=%s, remote=%s port=%d\r\n",
 									__func__,
 									voip_app->incoming_session->remote_proto,
@@ -699,7 +692,7 @@ static int voip_app_call_incoming_callback(int id, void *p, int input)
 									voip_app->incoming_session->remote_ip,
 									voip_app->incoming_session->port);
 						} else {
-							__PL_PJSIP_DEBUG(
+							__ZPL_PJSIP_DEBUG(
 									"----%s---> proto=%s, num=%s, url=%s\r\n",
 									__func__,
 									voip_app->incoming_session->remote_proto,
@@ -708,7 +701,7 @@ static int voip_app_call_incoming_callback(int id, void *p, int input)
 						}
 					}
 					//<sip:1111@192.168.3.254:5060>
-					/*					__PL_PJSIP_DEBUG("----%s---> Contact: %.*s\r\n", __func__, (int)call_info->remote_contact.slen,
+					/*					__ZPL_PJSIP_DEBUG("----%s---> Contact: %.*s\r\n", __func__, (int)call_info->remote_contact.slen,
 					 call_info->remote_contact.ptr);*/
 					voip_app->incoming_session->start_timer = os_time(NULL);
 					voip_app_state_set(voip_app, APP_STATE_TALK_CALLING);
@@ -730,7 +723,7 @@ static int voip_app_call_incoming_callback(int id, void *p, int input)
 				 (int)call_info.local_info.slen,
 				 call_info.local_info.ptr,
 
-				 __PL_PJSIP_DEBUG(
+				 __ZPL_PJSIP_DEBUG(
 				 "Incoming call for account %d!\r\n"
 				 "Media count: %d audio & %d video\r\n"
 				 "From: %.*s\r\n"
@@ -760,9 +753,9 @@ static int voip_app_call_default(voip_call_t *call, app_call_source_t source)
 	//app->state = APP_STATE_TALK_IDLE;
 	//voip_stream_remote_t remote;
 	//app->voip_call;
-	//app->local_stop		= ospl_false;		//local stop
+	//app->local_stop		= zpl_false;		//local stop
 	zassert(call != NULL);
-	call->active = ospl_false;
+	call->active = zpl_false;
 	//memset(call->username, 0, sizeof(call->username));
 	call->room_number = 0;
 #ifdef VOIP_MULTI_CALL_MAX
@@ -776,15 +769,15 @@ static int voip_app_call_default(voip_call_t *call, app_call_source_t source)
 	//call->phone[SIP_NUMBER_MAX];
 	//memset(call->phone, 0, sizeof(call->phone));
 	call->source = source;
-	call->talking = ospl_false;
+	call->talking = zpl_false;
 	call->building = 0;
 	//call->debug;
 	return OK;
 }
 
 
-int voip_app_call_make(voip_call_t *call, app_call_source_t source, ospl_uint8 building,
-		ospl_uint8 unit, ospl_uint16 room)
+int voip_app_call_make(voip_call_t *call, app_call_source_t source, zpl_uint8 building,
+		zpl_uint8 unit, zpl_uint16 room)
 {
 	zassert(call != NULL);
 	voip_app_call_default(call, source);
@@ -812,9 +805,9 @@ int voip_app_call_make(voip_call_t *call, app_call_source_t source, ospl_uint8 b
 						" error make Call Session phone number in number list");
 			return ERROR;
 	}*/
-	call->active = ospl_false;
+	call->active = zpl_false;
 	call->source = source;
-	call->talking = ospl_false;
+	call->talking = zpl_false;
 	return OK;
 }
 
@@ -842,9 +835,9 @@ static int voip_app_call_make_rebuild(voip_call_t *call, app_call_source_t sourc
 						" error make Call Session phone number in number list");
 			return ERROR;
 	}*/
-	call->active = ospl_false;
+	call->active = zpl_false;
 	call->source = source;
-	call->talking = ospl_false;
+	call->talking = zpl_false;
 	return OK;
 }
 
@@ -873,9 +866,9 @@ static int voip_app_call_make_cli(voip_call_t *call, char *num)
 						" error make Call Session phone number in number list");
 			return ERROR;
 	}*/
-	call->active = ospl_false;
+	call->active = zpl_false;
 	call->source = APP_CALL_ID_UI;
-	call->talking = ospl_false;
+	call->talking = zpl_false;
 	return OK;
 }
 
@@ -895,7 +888,7 @@ static int voip_app_call_session_create(voip_app_t *app, voip_call_t *call)
 			app->call_session[i] = XMALLOC(MTYPE_VOIP_SESSION, sizeof(voip_call_t));
 			memcpy(app->call_session[i], call, sizeof(voip_call_t));
 			app->call_session[i]->app = app;
-			app->call_session[i]->active = ospl_true;
+			app->call_session[i]->active = zpl_true;
 			app->call_session[i]->instance = -1;
 			app->session = app->call_session[i];
 			//V_APP_DEBUG("=========Create Call Session[%d]", i);
@@ -916,7 +909,7 @@ voip_call_t * voip_app_call_session_lookup_by_number(voip_app_t *app, char *numb
 	strcpy(phone, number);
 	for(i = 0; i < VOIP_MULTI_CALL_MAX; i++)
 	{
-		if(app->call_session[i] != NULL && app->call_session[i]->active == ospl_true)
+		if(app->call_session[i] != NULL && app->call_session[i]->active == zpl_true)
 		{
 			for(i = 0; i < app->call_session[i]->num; i++)
 			{
@@ -941,7 +934,7 @@ voip_call_t * voip_app_call_session_lookup_by_instance(voip_app_t *app, int inst
 	zassert(app != NULL);
 	for(i = 0; i < VOIP_MULTI_CALL_MAX; i++)
 	{
-		if(app->call_session[i] != NULL && app->call_session[i]->active == ospl_true)
+		if(app->call_session[i] != NULL && app->call_session[i]->active == zpl_true)
 		{
 			for(i = 0; i < app->call_session[i]->num; i++)
 			{
@@ -997,7 +990,7 @@ static int voip_app_call_session_delete(voip_app_t *app, voip_call_t *call)
 			app->session = NULL;
 	}
 	app->call_index = 0;
-	app->stop_and_next = ospl_false;
+	app->stop_and_next = zpl_false;
 	return OK;
 }
 
@@ -1054,8 +1047,8 @@ static int voip_app_pjsip_call_stop(voip_call_t *call)
 	sip = call->app->pjsip;
 	if(sip && call->instance >= 0)
 	{
-		//call->app->local_stop = ospl_true;
-		return pl_pjsip_app_stop_call(find_current_call(), ospl_true);
+		//call->app->local_stop = zpl_true;
+		return pl_pjsip_app_stop_call(find_current_call(), zpl_true);
 	}
 	zlog_err(MODULE_PJSIP,
 				"Can not Stop Call to '%s'", call->phonetab[call->index].phone);
@@ -1071,13 +1064,13 @@ static int voip_app_pjsip_call_stop(voip_call_t *call)
 /*
  * 可以呼叫下一个号码
  */
-static ospl_bool voip_app_call_next()
+static zpl_bool voip_app_call_next()
 {
 	zassert(voip_app != NULL);
 	if(voip_app->session && voip_app->session->active && voip_app->session->num &&
 			((voip_app->session->index + 1) < voip_app->session->num) )
-		return ospl_true;
-	return ospl_false;
+		return zpl_true;
+	return zpl_false;
 }
 
 static int voip_app_call_next_number(void *p)
@@ -1099,7 +1092,7 @@ static int voip_app_call_next_number(void *p)
 			call->time_id = 0;
 		}
 		if(call->app)
-			call->app->stop_and_next = ospl_false;
+			call->app->stop_and_next = zpl_false;
 		call->index++;
 		V_APP_DEBUG("================================%s-------> call next number", __func__);
 		voip_app_pjsip_call_start(call);
@@ -1151,7 +1144,7 @@ static int voip_app_call_timeout(void *p)
 		//挂断电话
 		voip_app_pjsip_call_stop(call);
 		if(call->app)
-			call->app->stop_and_next = ospl_true;
+			call->app->stop_and_next = zpl_true;
 		//等待媒体断开
 		//pjsip_media_wait_quit();
 		//os_sleep(1);
@@ -1163,7 +1156,7 @@ static int voip_app_call_timeout(void *p)
 				x5b_app_call_internal_result_api(NULL, E_CALL_RESULT_FAIL, 0, E_CMD_TO_AUTO);
 			if(call->app)
 			{
-				/*call->app->stop_and_next = ospl_false;
+				/*call->app->stop_and_next = zpl_false;
 				call->app->session = NULL;*/
 				voip_app_state_set(voip_app, APP_STATE_TALK_IDLE);
 				voip_app_call_session_delete(call->app, call);
@@ -1186,17 +1179,17 @@ static int voip_app_call_timeout(void *p)
 
 
 static int _voip_app_call_start_api(voip_app_t *app,
-		app_call_source_t source, ospl_uint8 building,
-		ospl_uint8 unit, ospl_uint16 room, char *number, ospl_bool rebuild)
+		app_call_source_t source, zpl_uint8 building,
+		zpl_uint8 unit, zpl_uint16 room, char *number, zpl_bool rebuild)
 {
 	int ret = 0;
 	voip_call_t call;
 	memset(&call, 0, sizeof(voip_call_t));
 	zassert(app != NULL);
-	app->stop_and_next = ospl_false;
+	app->stop_and_next = zpl_false;
 	if(voip_app_state_get(app) == APP_STATE_TALK_IDLE)
 	{
-		if(rebuild == ospl_false)
+		if(rebuild == zpl_false)
 		{
 			if(number)
 				ret = voip_app_call_make_cli(&call, number);
@@ -1272,14 +1265,14 @@ static int _voip_app_call_stop_api(voip_app_t *app, voip_call_t *call)
 	zassert(app != NULL);
 	zassert(call != NULL);
 	voip_app_state_t state = voip_app_state_get(app);
-	app->stop_and_next = ospl_false;
+	app->stop_and_next = zpl_false;
 	if(state != APP_STATE_TALK_IDLE)
 	{
 		if(voip_app_pjsip_call_stop(call) == OK)
 		{
 			if(call->source == APP_CALL_ID_UI)
 			{
-				if(app->local_stop != ospl_true &&
+				if(app->local_stop != zpl_true &&
 						voip_app_state_get(app) != APP_STATE_TALK_IDLE)
 					x5b_app_call_internal_result_api(NULL, E_CALL_RESULT_STOP, 0, E_CMD_TO_AUTO);
 				//voip_app_state_set(app, APP_STATE_TALK_IDLE);
@@ -1302,7 +1295,7 @@ static int _voip_app_call_stop_api(voip_app_t *app, voip_call_t *call)
 int voip_app_stop_call_event_ui(voip_event_t *ev)
 {
 	//zassert(ev != NULL);
-	if(pl_pjsip_isregister_api() == ospl_false)
+	if(pl_pjsip_isregister_api() == zpl_false)
 	{
 		//x5b_app_call_internal_result_api(NULL, E_CALL_RESULT_UNREGISTER, 0, E_CMD_TO_AUTO);
 		return OK;
@@ -1310,7 +1303,7 @@ int voip_app_stop_call_event_ui(voip_event_t *ev)
 	zassert(voip_app != NULL);
 	if(voip_app->session)
 	{
-		voip_app->local_stop = ospl_true;
+		voip_app->local_stop = zpl_true;
 		return _voip_app_call_stop_api(voip_app, voip_app->session);
 	}
 	return OK;
@@ -1323,12 +1316,12 @@ int voip_app_start_call_event_ui(voip_event_t *ev)
 {
 	zassert(ev != NULL);
 	zassert(voip_app != NULL);
-	ospl_uint16 room = 0;
-	ospl_uint8 building = 0;
-	ospl_uint8 unit = 0;
-	voip_app->local_stop = ospl_false;
+	zpl_uint16 room = 0;
+	zpl_uint8 building = 0;
+	zpl_uint8 unit = 0;
+	voip_app->local_stop = zpl_false;
 
-	if(pl_pjsip_isregister_api() == ospl_false)
+	if(pl_pjsip_isregister_api() == zpl_false)
 	{
 		x5b_app_call_internal_result_api(NULL, E_CALL_RESULT_UNREGISTER, 0, E_CMD_TO_AUTO);
 		return OK;
@@ -1342,7 +1335,7 @@ int voip_app_start_call_event_ui(voip_event_t *ev)
 	if(voip_app_state_get(voip_app) == APP_STATE_TALK_IDLE)
 	{
 		 return _voip_app_call_start_api(voip_app,
-				 APP_CALL_ID_UI, building, unit, room, NULL, ospl_false);
+				 APP_CALL_ID_UI, building, unit, room, NULL, zpl_false);
 	}
 	else
 		zlog_warn(MODULE_PJSIP, "voip app is on talking state %d", voip_app_state_get(voip_app));
@@ -1353,10 +1346,10 @@ int voip_app_start_call_event_ui_phone(voip_event_t *ev)
 {
 	zassert(ev != NULL);
 	zassert(voip_app != NULL);
-	ospl_uint16 room = 0;
-	ospl_uint8 building = 0;
-	ospl_uint8 unit = 0;
-	voip_app->local_stop = ospl_false;
+	zpl_uint16 room = 0;
+	zpl_uint8 building = 0;
+	zpl_uint8 unit = 0;
+	voip_app->local_stop = zpl_false;
 
 	if(ev->dlen <= 0)
 	{
@@ -1366,7 +1359,7 @@ int voip_app_start_call_event_ui_phone(voip_event_t *ev)
 	if(VOIP_APP_DEBUG(EVENT))
 		zlog_debug(MODULE_PJSIP, "app start call @'%s'", ev->data);
 
-	if(pl_pjsip_isregister_api() == ospl_false)
+	if(pl_pjsip_isregister_api() == zpl_false)
 	{
 		x5b_app_call_internal_result_api(NULL, E_CALL_RESULT_UNREGISTER, 0, E_CMD_TO_AUTO);
 		return OK;
@@ -1374,7 +1367,7 @@ int voip_app_start_call_event_ui_phone(voip_event_t *ev)
 	if(voip_app_state_get(voip_app) == APP_STATE_TALK_IDLE)
 	{
 		 return _voip_app_call_start_api(voip_app,
-				 APP_CALL_ID_UI, building, unit, room, ev->data, ospl_false);
+				 APP_CALL_ID_UI, building, unit, room, ev->data, zpl_false);
 	}
 	else
 		zlog_warn(MODULE_PJSIP, "voip app is on talking state %d", voip_app_state_get(voip_app));
@@ -1385,10 +1378,10 @@ int voip_app_start_call_event_ui_user(voip_event_t *ev)
 {
 	zassert(ev != NULL);
 	zassert(voip_app != NULL);
-	ospl_uint16 room = 0;
-	ospl_uint8 building = 0;
-	ospl_uint8 unit = 0;
-	voip_app->local_stop = ospl_false;
+	zpl_uint16 room = 0;
+	zpl_uint8 building = 0;
+	zpl_uint8 unit = 0;
+	voip_app->local_stop = zpl_false;
 	if(ev->dlen <= 0)
 	{
 		x5b_app_call_internal_result_api(NULL, E_CALL_RESULT_FAIL, 0, E_CMD_TO_AUTO);
@@ -1396,7 +1389,7 @@ int voip_app_start_call_event_ui_user(voip_event_t *ev)
 	}
 	if(VOIP_APP_DEBUG(EVENT))
 		zlog_debug(MODULE_PJSIP, "app start call @'%s'", ev->data);
-	if(pl_pjsip_isregister_api() == ospl_false)
+	if(pl_pjsip_isregister_api() == zpl_false)
 	{
 		x5b_app_call_internal_result_api(NULL, E_CALL_RESULT_UNREGISTER, 0, E_CMD_TO_AUTO);
 		return OK;
@@ -1404,7 +1397,7 @@ int voip_app_start_call_event_ui_user(voip_event_t *ev)
 	if(voip_app_state_get(voip_app) == APP_STATE_TALK_IDLE)
 	{
 		 return _voip_app_call_start_api(voip_app,
-				 APP_CALL_ID_UI, building, unit, room, ev->data, ospl_true);
+				 APP_CALL_ID_UI, building, unit, room, ev->data, zpl_true);
 	}
 	else
 		zlog_warn(MODULE_PJSIP, "voip app is on talking state %d", voip_app_state_get(voip_app));
@@ -1412,23 +1405,23 @@ int voip_app_start_call_event_ui_user(voip_event_t *ev)
 }
 
 
-int voip_app_start_call_event_cli_web(app_call_source_t source, ospl_uint8 building,
-		ospl_uint8 unit, ospl_uint16 room, char *number)
+int voip_app_start_call_event_cli_web(app_call_source_t source, zpl_uint8 building,
+		zpl_uint8 unit, zpl_uint16 room, char *number)
 {
 	zassert(voip_app != NULL);
 	if(VOIP_APP_DEBUG(EVENT))
 		zlog_debug(MODULE_PJSIP, "app start call @'%d'", room);
-	if(pl_pjsip_isregister_api() == ospl_false)
+	if(pl_pjsip_isregister_api() == zpl_false)
 	{
 		if(APP_CALL_ID_UI == source)
 			x5b_app_call_internal_result_api(NULL, E_CALL_RESULT_UNREGISTER, 0, E_CMD_TO_AUTO);
 		return OK;
 	}
-	voip_app->local_stop = ospl_false;
+	voip_app->local_stop = zpl_false;
 	if(voip_app_state_get(voip_app) == APP_STATE_TALK_IDLE)
 	{
 		 return _voip_app_call_start_api(voip_app,
-				 source, building, unit, room, number, ospl_false);
+				 source, building, unit, room, number, zpl_false);
 	}
 	else
 		zlog_warn(MODULE_PJSIP, "voip app is on talking state");
@@ -1440,31 +1433,31 @@ int voip_app_start_call_event_cli_web(app_call_source_t source, ospl_uint8 build
 int voip_app_stop_call_event_cli_web(voip_call_t *call)
 {
 	zassert(voip_app != NULL);
-	if(pl_pjsip_isregister_api() == ospl_false)
+	if(pl_pjsip_isregister_api() == zpl_false)
 	{
 		//x5b_app_call_internal_result_api(NULL, E_CALL_RESULT_UNREGISTER, 0, E_CMD_TO_AUTO);
 		return OK;
 	}
-	voip_app->local_stop = ospl_true;
+	voip_app->local_stop = zpl_true;
 	return _voip_app_call_stop_api(voip_app, call ? call:voip_app->session);
 }
 
-ospl_bool voip_app_call_event_from_ui()
+zpl_bool voip_app_call_event_from_ui()
 {
 	zassert(voip_app != NULL);
 	if(voip_app->session && voip_app->session->source == APP_CALL_ID_UI)
-		return ospl_true;
+		return zpl_true;
 	else
-		return ospl_false;
+		return zpl_false;
 }
-ospl_bool voip_app_call_event_from_cli_web()
+zpl_bool voip_app_call_event_from_cli_web()
 {
 	zassert(voip_app != NULL);
 	if(voip_app->session && (voip_app->session->source == APP_CALL_ID_CLI ||
 			voip_app->session->source == APP_CALL_ID_WEB))
-		return ospl_true;
+		return zpl_true;
 	else
-		return ospl_false;
+		return zpl_false;
 }
 
 void * voip_app_call_event_current()
@@ -1473,23 +1466,23 @@ void * voip_app_call_event_current()
 	return voip_app->session;
 }
 
-ospl_bool voip_app_already_call(voip_app_t *app)
+zpl_bool voip_app_already_call(voip_app_t *app)
 {
 	zassert(app != NULL);
 	if(app->state == APP_STATE_TALK_SUCCESS ||			//通话建立
 			app->state == APP_STATE_TALK_RUNNING)			//通话中
 	{
 		//if(app->voip_call.active)
-			return ospl_true;
+			return zpl_true;
 	}
-	return ospl_false;
+	return zpl_false;
 }
 
 /*
  * osip register
  */
 
-int voip_app_sip_register_start(ospl_bool reg)
+int voip_app_sip_register_start(zpl_bool reg)
 {
 	zassert(pl_pjsip != NULL);
 	if(pl_pjsip)

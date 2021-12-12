@@ -5,20 +5,10 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "network.h"
-#include "vty.h"
-#include "if.h"
-#include "buffer.h"
-#include "command.h"
-#include "if_name.h"
-#include "linklist.h"
-#include "log.h"
-#include "memory.h"
-#include "prefix.h"
-#include "str.h"
-#include "table.h"
-#include "vector.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "nsm_include.h"
 
 
 #include "x5_b_global.h"
@@ -30,7 +20,7 @@
 #include "x5_b_web.h"
 #include "x5b_dbase.h"
 
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 #include "pjsip_app_api.h"
 #endif
 
@@ -39,7 +29,7 @@
 /* send open door CMD by '#' signal */
 int x5b_app_open_door_api(x5b_app_mgt_t *app, int res, int to)
 {
-	ospl_uint32 len = 0;
+	zpl_uint32 len = 0;
 	x5b_app_mgt_t *mgt = app;
 	if(app == NULL)
 		mgt = x5b_app_mgt;
@@ -86,9 +76,9 @@ int x5b_app_open_door_api(x5b_app_mgt_t *app, int res, int to)
 /*
  * respone cardid(send card id to A module)
  */
-int x5b_app_open_door_by_cardid_api(x5b_app_mgt_t *app, ospl_uint8 *cardid, int clen, int to)
+int x5b_app_open_door_by_cardid_api(x5b_app_mgt_t *app, zpl_uint8 *cardid, int clen, int to)
 {
-	ospl_uint32 len = 0;
+	zpl_uint32 len = 0;
 	open_cardid_respone respone;
 	x5b_app_mgt_t *mgt = app;
 	if(app == NULL)
@@ -174,9 +164,9 @@ static char *x5b_app_call_result_event(int ret)
 /* phone register status change report */
 int x5b_app_register_status_api(x5b_app_mgt_t *app, int res, int to)
 {
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 	x5b_app_register_ack_t state;
-	ospl_uint32 len = 0;
+	zpl_uint32 len = 0;
 	x5b_app_mgt_t *mgt = app;
 	if(app == NULL)
 		mgt = x5b_app_mgt;
@@ -204,10 +194,10 @@ int x5b_app_register_status_api(x5b_app_mgt_t *app, int res, int to)
 
 	x5b_app_hdr_make(mgt);
 
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 	if(pl_pjsip_multiuser_get_api())
 	{
-		pl_pjsip_username_get_api(state.phone, NULL, ospl_false);
+		pl_pjsip_username_get_api(state.phone, NULL, zpl_false);
 
 		int rlen = (1 + strlen(state.phone));
 		if(pl_pjsip->sip_user.sip_state == PJSIP_STATE_REGISTER_SUCCESS)
@@ -220,7 +210,7 @@ int x5b_app_register_status_api(x5b_app_mgt_t *app, int res, int to)
 				E_CMD_MAKE(E_CMD_MODULE_B, E_CMD_STATUS, E_CMD_REG_STATUS), rlen, &state);
 		mgt->app->offset += len;
 
-		pl_pjsip_username_get_api(state.phone, NULL, ospl_true);
+		pl_pjsip_username_get_api(state.phone, NULL, zpl_true);
 		rlen = (1 + strlen(state.phone));
 		if(pl_pjsip->sip_user_sec.sip_state == PJSIP_STATE_REGISTER_SUCCESS)
 			state.reg_state = 1;
@@ -233,7 +223,7 @@ int x5b_app_register_status_api(x5b_app_mgt_t *app, int res, int to)
 	}
 	else
 	{
-		pl_pjsip_username_get_api(state.phone, NULL, ospl_false);
+		pl_pjsip_username_get_api(state.phone, NULL, zpl_false);
 
 		int rlen = (1 + strlen(state.phone));
 		if(pl_pjsip->sip_user.sip_state == PJSIP_STATE_REGISTER_SUCCESS)
@@ -263,7 +253,7 @@ int x5b_app_register_status_api(x5b_app_mgt_t *app, int res, int to)
 int x5b_app_register_information_ack(x5b_app_mgt_t *mgt, int to)
 {
 	x5b_app_phone_register_ack_t reginfo;
-	ospl_uint32 len = 0;
+	zpl_uint32 len = 0;
 	zassert(mgt != NULL);
 	memset(&reginfo, 0, sizeof(x5b_app_phone_register_ack_t));
 /*	if(mgt->mutex)
@@ -309,8 +299,8 @@ int x5b_app_register_information_ack(x5b_app_mgt_t *mgt, int to)
 
 int x5b_app_call_result_api(x5b_app_mgt_t *app, int res, int inde, int to)
 {
-	ospl_uint8 val[2];
-	ospl_uint32 len = 0;
+	zpl_uint8 val[2];
+	zpl_uint32 len = 0;
 	x5b_app_mgt_t *mgt = app;
 	if(app == NULL)
 		mgt = x5b_app_mgt;
@@ -359,8 +349,8 @@ int x5b_app_call_result_api(x5b_app_mgt_t *app, int res, int inde, int to)
 
 int x5b_app_call_internal_result_api(x5b_app_mgt_t *app, int res, int inde, int to)
 {
-	ospl_uint8 val[2];
-	ospl_uint32 len = 0;
+	zpl_uint8 val[2];
+	zpl_uint32 len = 0;
 	x5b_app_mgt_t *mgt = app;
 	if(app == NULL)
 		mgt = x5b_app_mgt;
@@ -418,7 +408,7 @@ int x5b_app_call_internal_result_api(x5b_app_mgt_t *app, int res, int inde, int 
 /* 房间号鉴权 应答 */
 int x5b_app_authentication_ack_api(x5b_app_mgt_t *mgt, voip_dbase_t *dbtest, int res, int to)
 {
-	ospl_uint32 len = 0;
+	zpl_uint32 len = 0;
 	x5b_app_room_auth_ack_t ack;
 	zassert(mgt != NULL);
 	zassert(dbtest != NULL);

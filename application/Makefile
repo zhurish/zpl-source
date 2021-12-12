@@ -1,4 +1,4 @@
-include $(MAKE_DIR)/makelinux.mk
+include $(ZPL_MAKE_DIR)/makelinux.mk
 
 include config.mk
 

@@ -4,13 +4,10 @@
  *  Created on: Apr 21, 2019
  *      Author: zhurish
  */
-#include "zebra.h"
-#include "if.h"
-#include "memory.h"
-#include "command.h"
-#include "prefix.h"
-#include "log.h"
-#include "eloop.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "dhcp_def.h"
 #include "dhcpd.h"
@@ -38,7 +35,7 @@ dhcp_pool_t * dhcpd_pool_lookup(char *name)
 	return NULL;
 }
 
-dhcp_pool_t * dhcpd_pool_lookup_by_poolid(ospl_uint32 poolid)
+dhcp_pool_t * dhcpd_pool_lookup_by_poolid(zpl_uint32 poolid)
 {
 	NODE index;
 	dhcp_pool_t *pstNode = NULL;
@@ -112,7 +109,7 @@ int dhcpd_pool_clean(void)
 	return OK;
 }
 
-dhcp_pool_t * dhcpd_pool_interface_lookup(ospl_uint32 ifindex)
+dhcp_pool_t * dhcpd_pool_interface_lookup(zpl_uint32 ifindex)
 {
 	NODE index;
 	dhcp_pool_t *pstNode = NULL;
@@ -128,7 +125,7 @@ dhcp_pool_t * dhcpd_pool_interface_lookup(ospl_uint32 ifindex)
 	return NULL;
 }
 
-char * dhcpd_pool_poolid2name(ospl_uint32 poolid)
+char * dhcpd_pool_poolid2name(zpl_uint32 poolid)
 {
 	dhcp_pool_t * pool = dhcpd_pool_lookup_by_poolid(poolid);
 	if(pool)
@@ -145,7 +142,7 @@ char * dhcpd_pool_poolid2name(ospl_uint32 poolid)
 }*/
 
 /*static int FAST_FUNC read_u32(const char *line, void *arg) {
-	*(ospl_uint32 *) arg = strtoul(line, NULL, 10);
+	*(zpl_uint32 *) arg = strtoul(line, NULL, 10);
 	return errno == 0;
 }*/
 
@@ -156,7 +153,7 @@ static int FAST_FUNC read_optset(const int opc, const char *line, void *arg) {
 #endif
 /************************************************************************************/
 /************************************************************************************/
-int dhcpd_pool_set_address_range(dhcp_pool_t *config, ospl_uint32  start, ospl_uint32  end)
+int dhcpd_pool_set_address_range(dhcp_pool_t *config, zpl_uint32  start, zpl_uint32  end)
 {
 	if(start && end)
 	{
@@ -175,34 +172,34 @@ int dhcpd_pool_set_address_range(dhcp_pool_t *config, ospl_uint32  start, ospl_u
 	return OK;
 }
 
-int dhcpd_pool_set_leases(dhcp_pool_t *config, ospl_uint32 max_lease_sec, ospl_uint32 min_lease_sec)
+int dhcpd_pool_set_leases(dhcp_pool_t *config, zpl_uint32 max_lease_sec, zpl_uint32 min_lease_sec)
 {
 	config->max_lease_sec = max_lease_sec;
 	config->min_lease_sec = min_lease_sec;
 	return OK;
 }
 
-int dhcpd_pool_set_autotime(dhcp_pool_t *config, ospl_uint32 autotime) {
+int dhcpd_pool_set_autotime(dhcp_pool_t *config, zpl_uint32 autotime) {
 	config->auto_time = autotime;
 	return OK;
 }
 
-int dhcpd_pool_set_decline_time(dhcp_pool_t *config, ospl_uint32 decline) {
+int dhcpd_pool_set_decline_time(dhcp_pool_t *config, zpl_uint32 decline) {
 	config->decline_time = decline;
 	return OK;
 }
 
-int dhcpd_pool_set_conflict_time(dhcp_pool_t *config, ospl_uint32 conflict) {
+int dhcpd_pool_set_conflict_time(dhcp_pool_t *config, zpl_uint32 conflict) {
 	config->conflict_time = conflict;
 	return OK;
 }
 
-int dhcpd_pool_set_offer_time(dhcp_pool_t *config, ospl_uint32 offer) {
+int dhcpd_pool_set_offer_time(dhcp_pool_t *config, zpl_uint32 offer) {
 	config->offer_time = offer;
 	return OK;
 }
 
-int dhcpd_pool_set_siaddr(dhcp_pool_t *config, ospl_uint32 saddr) {
+int dhcpd_pool_set_siaddr(dhcp_pool_t *config, zpl_uint32 saddr) {
 	config->siaddr_nip = ntohl(saddr);
 	return OK;
 }
@@ -247,7 +244,7 @@ int dhcpd_pool_set_boot_file(dhcp_pool_t *config, char *str) {
 	return OK;
 }
 #if 0
-static struct option_set* FAST_FUNC udhcp_find_option_prev(struct option_set *opt_list, ospl_uint8 code)
+static struct option_set* FAST_FUNC udhcp_find_option_prev(struct option_set *opt_list, zpl_uint8 code)
 {
 	struct option_set* next = opt_list;
 	struct option_set* prev = opt_list;
@@ -265,14 +262,14 @@ static struct option_set* FAST_FUNC udhcp_find_option_prev(struct option_set *op
 }
 #endif
 
-int dhcpd_pool_set_option(dhcp_pool_t *config, ospl_uint8 code, char *str)
+int dhcpd_pool_set_option(dhcp_pool_t *config, zpl_uint8 code, char *str)
 {
 #if 1
 	if(str)
 	{
 		if(config->gateway == 0 && code == DHCP_ROUTER)
 		{
-			config->gateway = inet_addr(str);
+			config->gateway = ipstack_inet_addr(str);
 		}
 		return dhcp_option_add(config->options,  code, str, strlen(str));
 	}

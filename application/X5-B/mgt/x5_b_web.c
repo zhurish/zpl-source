@@ -5,21 +5,10 @@
  *      Author: DELL
  */
 
-#include "zebra.h"
-#include "memory.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "linklist.h"
-#include "prefix.h"
-#include "table.h"
-#include "vector.h"
-#include "eloop.h"
-#include "network.h"
-#include "vty.h"
-#include "cJSON.h"
-#include "os_uci.h"
-#include "ubus_sync.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "x5_b_global.h"
 #include "x5_b_cmd.h"
@@ -31,7 +20,7 @@
 #include "x5b_dbase.h"
 
 
-int x5b_app_open_option_action(void *p, ospl_bool save, ospl_bool face)
+int x5b_app_open_option_action(void *p, zpl_bool save, zpl_bool face)
 {
 	//char tmp[128];
 	int ret = 0;
@@ -96,7 +85,7 @@ int x5b_app_open_option_action(void *p, ospl_bool save, ospl_bool face)
 
 
 
-int x5b_app_face_config_action(void *info, ospl_bool save)
+int x5b_app_face_config_action(void *info, zpl_bool save)
 {
 	if(x5b_app_mgt && x5b_app_mode_X5CM())
 	{
@@ -127,7 +116,7 @@ int x5b_app_face_config_action(void *info, ospl_bool save)
 	return ERROR;
 }
 
-int x5b_app_global_config_action(void *info, ospl_bool save)
+int x5b_app_global_config_action(void *info, zpl_bool save)
 {
 	x5b_app_global_t *glinfo = info;
 	if(x5b_app_mgt && x5b_app_mode_X5CM())
@@ -177,9 +166,9 @@ int x5b_app_global_config_action(void *info, ospl_bool save)
 }*/
 /*
 
-int x5b_app_A_unit_test_set_api(ospl_bool enable)
+int x5b_app_A_unit_test_set_api(zpl_bool enable)
 {
-	ospl_uint32 len = 0;
+	zpl_uint32 len = 0;
 	x5b_app_mgt_t *mgt = x5b_app_mgt;
 	zassert(mgt != NULL);
 	if(mgt->mutex)

@@ -1,10 +1,10 @@
-include $(MAKE_DIR)/makelinux.mk
+include $(ZPL_MAKE_DIR)/makelinux.mk
 
 include config.mk
 
-PL_PJINC = -I$(DSTROOTFSDIR)/include
+ZPL_PJINC = -I$(ZPL_INSTALL_ROOTFS_DIR)/include
 
-#PJPROJDIR=$(PLBASE)/externsions/pjproject-2.10
+#PJPROJDIR=$(ZPLBASE)/externsions/pjproject-2.10
 #PJCC=$(CC)
 #PJCXX=$(CXX)
 #$(PJLIBS): 
@@ -14,31 +14,39 @@ PL_PJINC = -I$(DSTROOTFSDIR)/include
 #	make -C $(PJPROJDIR)
 	
 	
-OBJS_DIR = $(BASE_ROOT)/$(OBJDIR)/$(MODULEDIR)
+OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODULEDIR)
 SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
-LIB_DIR = $(BASE_ROOT)/$(LIBDIR)
+LIB_DIR = $(BASE_ROOT)/$(ZPL_LIB_DIR)
 
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
+MODULE_OBJS_DEP:=$(MODULE_OBJS:%.o=%.d)
 
-ifeq ($(strip $(PL_PJSIP_PJSUA2)),true)
+-include $(MODULE_OBJS_DEP)
+
+ifeq ($(strip $(ZPL_PJSIP_PJSUA2)),true)
 MODULE_PJSUA2_OBJS  := $(addprefix $(OBJS_DIR)/,$(PJSUA2OBJ))
 PJSUA2TEST_OBJS  := $(addprefix $(OBJS_DIR)/,$(PJSUA2TEST))
+
+MODULE_2OBJS_DEP:=$(MODULE_PJSUA2_OBJS:%.o=%.d)
+MODULE_2OBJS_DEP +=$(PJSUA2TEST_OBJS:%.o=%.d)
+-include $(MODULE_2OBJS_DEP)
+
 endif
 
-PLCFLAGS +=-DPJ_AUTOCONF=1 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1
-PLCPPFLAGS += -g -DPJ_AUTOCONF=1 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1 
-#PLCFLAGS += -Werror=format
+ZPLCFLAGS +=-DPJ_AUTOCONF=1 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1
+ZPLCPPFLAGS += -g -DPJ_AUTOCONF=1 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1 
+#ZPLCFLAGS += -Werror=format
 #
 #CFLAGS += -UHAVE_CONFIG_H
 # It's a kind of magic...
 #
-#PL_LDLIBS += -lpj -lpjlib-util -lpjmedia -lpjmedia-audiodev -lpjmedia-codec\
+#ZPL_LDLIBS += -lpj -lpjlib-util -lpjmedia -lpjmedia-audiodev -lpjmedia-codec\
 #			 -lpjmedia-videodev -lpjnath -lpjsip -lpjsip-simple -lpjsip-ua \
 #				-lpjsua -lsrtp
 
 
 $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c 
-#ifeq ($(strip $(PL_PJPROJECT_MODULE)),true)
+#ifeq ($(strip $(ZPL_PJPROJECT_MODULE)),true)
 #	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl lib
 #	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl install
 #endif	
@@ -46,20 +54,20 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
-	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE) $(PL_PJINC)
+	@$(ECHO) CC '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) $(ZPLINCLUDE)' $@
+	@$(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE) $(ZPL_PJINC)
 
 #
 #
 #
-ifeq ($(strip $(PL_PJSIP_PJSUA2)),true)
+ifeq ($(strip $(ZPL_PJSIP_PJSUA2)),true)
 $(OBJS_DIR)/%.o: $(SRC_DIR)/pjsua2/%.cpp 
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(ECHO) CXX '$(PLCPPFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLINCLUDE)' $@
-	@$(CXX) -fPIC $(PLCPPFLAGS) $(PLDEFINE) $(PLDEBUG) -c  $< -o $@ $(PLINCLUDE) $(PL_PJINC)
+	@$(ECHO) CXX '$(ZPLCPPFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLINCLUDE)' $@
+	@$(CXX) -fPIC $(ZPLCPPFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) -c  $< -o $@ $(ZPLINCLUDE) $(ZPL_PJINC)
 
 #
 $(OBJS_DIR)/%.o: $(SRC_DIR)/pjsua2/%.c 
@@ -67,8 +75,8 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/pjsua2/%.c
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLINCLUDE)' $@
-	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) -c  $< -o $@ $(PLINCLUDE) $(PL_PJINC)
+	@$(ECHO) CC '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLINCLUDE)' $@
+	@$(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) -c  $< -o $@ $(ZPLINCLUDE) $(ZPL_PJINC)
 endif
 #	
 #
@@ -87,54 +95,54 @@ SDL2CLEAN:
 endif
 
 
-ifeq ($(strip $(PL_PJPROJECT_MODULE)),0)
-PL_PJPROJECT_LIBS:
+ifeq ($(strip $(ZPL_PJPROJECT_MODULE)),0)
+ZPL_PJPROJECT_LIBS:
 	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl lib
 	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl install
 
-PL_PJPROJECT_UNLIBS:
+ZPL_PJPROJECT_UNLIBS:
 	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl uninstall
 	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl clean
 
 else
-PL_PJPROJECT_LIBS:
+ZPL_PJPROJECT_LIBS:
 	@$(ECHO) " "
 
-PL_PJPROJECT_UNLIBS:
+ZPL_PJPROJECT_UNLIBS:
 	@$(ECHO) " "
 endif
 
 files = $(patsubst %.o,%.c,$(OBJS))
 make_prepare:
 	@for i in $(files); do	\
-		$(MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
 	done
 
-$(LIBS) : $(PL_PJPROJECT_LIBS) $(SDL2LIBS) $(MODULE_OBJS) 
+$(LIBS) : $(ZPL_PJPROJECT_LIBS) $(SDL2LIBS) $(MODULE_OBJS) 
 	@$(AR) -rs $(LIBS) $(MODULE_OBJS) 
 
-ifeq ($(strip $(PL_PJSIP_PJSUA2)),true)
+ifeq ($(strip $(ZPL_PJSIP_PJSUA2)),true)
 $(PJSUA2LIBS) : $(MODULE_PJSUA2_OBJS)
 	#$(CXX) -shared -o  $(PJSUA2LIBS) $(MODULE_PJSUA2_OBJS)
 	@$(AR) -rs $(PJSUA2LIBS) $(MODULE_PJSUA2_OBJS)
 
-PJPLLDCLFLAG += -L$(BASE_ROOT)/$(ULIBDIR) -L$(LIB_DIR) -L$(DSTROOTFSDIR)/lib
+PJPLLDCLFLAG += -L$(BASE_ROOT)/$(ZPL_ULIB_DIR) -L$(LIB_DIR) -L$(ZPL_INSTALL_ROOTFS_DIR)/lib
 
 
 $(PJSUA2TEST_BIN) : $(PJSUA2TEST_OBJS) 
-	$(CXX) $(PJSUA2TEST_OBJS) $(PLCPPFLAGS) $(PJPLLDCLFLAG) $(PLLDLIBS) -Xlinker "-(" -ljsoncpp -lpjsipc++ -Xlinker "-)" -o $(PJSUA2TEST_BIN) 
+	$(CXX) $(PJSUA2TEST_OBJS) $(ZPLCPPFLAGS) $(PJPLLDCLFLAG) $(ZPLLDLIBS) -Xlinker "-(" -ljsoncpp -lpjsipc++ -Xlinker "-)" -o $(PJSUA2TEST_BIN) 
 endif
 #
 #
 -include $(MODULE_OBJS:.o=.d)
-ifeq ($(strip $(PL_PJSIP_PJSUA2)),true)
+ifeq ($(strip $(ZPL_PJSIP_PJSUA2)),true)
 -include $(MODULE_PJSUA2_OBJS:.o=.d)
 -include $(PJSUA2TEST_OBJS:.o=.d)
 endif
 #
 #
 #
-ifeq ($(strip $(PL_PJSIP_PJSUA2)),true)
+ifeq ($(strip $(ZPL_PJSIP_PJSUA2)),true)
 lib: $(LIBS) $(PJSUA2LIBS)
 
 obj: $(MODULE_OBJS) $(MODULE_PJSUA2_OBJS) $(PJSUA2TEST_OBJS) 
@@ -142,12 +150,12 @@ obj: $(MODULE_OBJS) $(MODULE_PJSUA2_OBJS) $(PJSUA2TEST_OBJS)
 install-lib:
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
-	@$(STRIP) $(PLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
+	@$(STRIP) $(ZPLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
 	@install -m 755 $(PJSUA2LIBS) $(LIB_DIR)
-	@$(STRIP) $(PLSTRIP_CFLAGS) $(LIB_DIR)/$(PJSUA2LIBS)
+	@$(STRIP) $(ZPLSTRIP_CFLAGS) $(LIB_DIR)/$(PJSUA2LIBS)
 	 
 install: install-lib 
-#	@install -m 755 ${PJSUA2TEST_BIN} ${DSTSBINDIR}
+#	@install -m 755 ${PJSUA2TEST_BIN} ${ZPL_INSTALL_SBIN_DIR}
 
 clean: $(SDL2CLEAN) objclean
 	@$(RM) $(LIB_DIR)/$(LIBS)
@@ -162,7 +170,7 @@ obj: $(MODULE_OBJS)
 install-lib:
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
-	@$(STRIP) $(PLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
+	@$(STRIP) $(ZPLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
 	 
 install: install-lib
 
@@ -172,7 +180,7 @@ clean: objclean
 
 endif
 
-objclean: $(PL_PJPROJECT_LIBS) 
+objclean: $(ZPL_PJPROJECT_LIBS) 
 	@$(RM) $(OBJS_DIR)/*
 
 all: lib install

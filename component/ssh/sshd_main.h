@@ -41,9 +41,9 @@ extern "C" {
 #include <stdio.h>
 
 
-#include "zebra.h"
+#include "zpl_include.h"
 
-#ifdef PL_BUILD_ARCH_X86
+#ifdef ZPL_BUILD_ARCH_X86
 #define KEYS_FOLDER 		"/home/zhurish/.ssh/"
 #define USER 				"zhurish"
 #define PASS 				"centos"
@@ -65,9 +65,9 @@ extern "C" {
 
 /*typedef struct sshd_s
 {
-	ospl_bool			init;
-	ospl_bool			quit;
-	ospl_bool			running;
+	zpl_bool			init;
+	zpl_bool			quit;
+	zpl_bool			running;
 	int				sshd_taskid;
     ssh_bind 		sshbind;
     ssh_event 		event;
@@ -76,7 +76,7 @@ extern "C" {
 
 struct scpd_data
 {
-	ospl_uint32 	mode;
+	zpl_uint32 	mode;
 	char	 *filename;
     socket_t input;
     socket_t output;
@@ -96,8 +96,8 @@ typedef struct sshd_client_s
 
     ssh_channel 		channel;
 
-    ospl_uint32 				auth_attempts;
-    ospl_uint32 				authenticated;
+    zpl_uint32 				auth_attempts;
+    zpl_uint32 				authenticated;
 
     enum
 	{
@@ -117,7 +117,7 @@ typedef struct sshd_client_s
 //extern sshd_t sshd_config;
 
 
-extern int sshd_accept(socket_t fd, ospl_uint32 revents, void *userdata);
+extern int sshd_accept(socket_t fd, zpl_uint32 revents, void *userdata);
 extern int sshd_task(void *argv);
 /*
 extern int sshd_enable(char *address, int port);

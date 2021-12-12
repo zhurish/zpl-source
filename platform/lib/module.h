@@ -12,8 +12,10 @@
 extern "C" {
 #endif
 
-#include "ospl_type.h"
+#include "os_include.h"
+#include "zpl_include.h"
 #include "moduletypes.h"
+
 /*
 typedef enum
 {
@@ -60,7 +62,7 @@ typedef enum
 /* For pretty printing of memory allocate information. */
 struct module_list
 {
-  ospl_uint32 module;
+  zpl_uint32 module;
 	const char 	*name;
 
   int	(*module_init)(void);
@@ -68,12 +70,23 @@ struct module_list
 	int	(*module_task_init)(void);
 	int	(*module_task_exit)(void);
 	int	(*module_cmd_init)(void);
-
+#ifdef ZPL_SHELL_MODULE
   int	(*module_write_config)(struct vty *, void *);
-	int	(*module_show_config)(struct vty *, void *, ospl_bool);
-	int	(*module_show_debug)(struct vty *, void *, ospl_bool);
-
-	ospl_uint32		taskid;
+	int	(*module_show_config)(struct vty *, void *, zpl_bool);
+	int	(*module_show_debug)(struct vty *, void *, zpl_bool);
+#else
+  int	(*module_write_config)(void *, void *);
+	int	(*module_show_config)(void *, void *, zpl_bool);
+	int	(*module_show_debug)(void *, void *, zpl_bool);
+#endif
+  zpl_void		  *master;
+	zpl_uint32		taskid;
+  struct submodule
+  {
+    zpl_uint32 module;
+	  char 	*name;
+    zpl_uint32		taskid;
+  }submodule[ZPL_SUB_MODULE_MAX];
 };
 
 struct module_alllist
@@ -86,26 +99,26 @@ extern struct module_alllist module_lists_tbl[MODULE_MAX];
 
 extern int pl_module_name_show();
 extern int pl_module_name_init(const char * name);
-extern int pl_module_init(ospl_uint32 module);
-extern int pl_module_exit(ospl_uint32 module);
+extern int pl_module_init(zpl_uint32 module);
+extern int pl_module_exit(zpl_uint32 module);
 extern int pl_module_task_name_init(const char * name);
-extern int pl_module_task_init(ospl_uint32 module);
-extern int pl_module_task_exit(ospl_uint32 module);
+extern int pl_module_task_init(zpl_uint32 module);
+extern int pl_module_task_exit(zpl_uint32 module);
 extern int pl_module_cmd_name_init(const char * name);
-extern int pl_module_cmd_init(ospl_uint32 module);
+extern int pl_module_cmd_init(zpl_uint32 module);
 
-extern const char * module2name(ospl_uint32 module);
-extern ospl_uint32 name2module(const char *name);
-extern ospl_uint32 module2task(ospl_uint32 module);
-extern ospl_uint32 task2module(ospl_uint32 taskid);
-extern ospl_uint32 task_module_self(void);
-extern int module_setup_task(ospl_uint32 module, ospl_uint32 taskid);
+extern const char * module2name(zpl_uint32 module);
+extern zpl_uint32 name2module(const char *name);
+extern zpl_uint32 module2task(zpl_uint32 module);
+extern zpl_uint32 task2module(zpl_uint32 taskid);
+extern zpl_uint32 task_module_self(void);
+extern int module_setup_task(zpl_uint32 module, zpl_uint32 taskid);
+extern int submodule_setup(zpl_uint32 module, zpl_uint32 submodule, char *name, zpl_uint32 taskid);
 
-
-extern ospl_char *zlog_backtrace_module();
-extern ospl_char *zlog_backtrace_funcname();
-extern ospl_char *zlog_backtrace_schedfrom();
-extern ospl_uint32 zlog_backtrace_schedfrom_line();
+extern zpl_char *zlog_backtrace_module();
+extern zpl_char *zlog_backtrace_funcname();
+extern zpl_char *zlog_backtrace_schedfrom();
+extern zpl_uint32 zlog_backtrace_schedfrom_line();
 
 
  

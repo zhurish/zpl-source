@@ -5,18 +5,15 @@
  *      Author: DELL
  */
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "getopt.h"
-#include "os_util.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
 
 
 static const struct codec_reg
 {
-	ospl_uint8 reg;
-	ospl_uint16 val;
+	zpl_uint8 reg;
+	zpl_uint16 val;
 }old_codec_list[] = {
 		{ 0x00, 0x0000 },
 		{ 0x02, 0x8888 },

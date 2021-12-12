@@ -69,7 +69,7 @@ struct mosquitto *context__init(struct mosquitto_db *db, mosq_sock_t sock)
 			context->address = mosquitto__strdup(address);
 		}
 		if(!context->address){
-			/* getpeername and inet_ntop failed and not a bridge */
+			/* getpeername and ipstack_inet_ntop failed and not a bridge */
 			mosquitto__free(context);
 			return NULL;
 		}
@@ -183,7 +183,7 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 #if defined(WITH_BROKER) && defined(__GLIBC__) && defined(WITH_ADNS)
 	if(context->adns){
 		gai_cancel(context->adns);
-		mosquitto__free((struct addrinfo *)context->adns->ar_request);
+		mosquitto__free((struct ipstack_addrinfo *)context->adns->ar_request);
 		mosquitto__free(context->adns);
 	}
 #endif

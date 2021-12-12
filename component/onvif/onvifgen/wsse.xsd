@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <schema targetNamespace="http://tempuri.org/wsse.xsd"
+    xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope"
+    xmlns:SOAP-ENC="http://www.w3.org/2003/05/soap-encoding"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:c14n="http://www.w3.org/2001/10/xml-exc-c14n#"
+    xmlns:wsse="http://tempuri.org/wsse.xsd"
+    xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+    xmlns="http://www.w3.org/2001/XMLSchema"
+    elementFormDefault="unqualified"
+    attributeFormDefault="unqualified">
+    <import namespace="http://www.w3.org/2001/10/xml-exc-c14n#" schemaLocation="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+    <import namespace="http://www.w3.org/2000/09/xmldsig#" schemaLocation="http://www.w3.org/2000/09/xmldsig#"/>
+    <import namespace="http://www.w3.org/2003/05/soap-encoding"/>
+  </schema>
+

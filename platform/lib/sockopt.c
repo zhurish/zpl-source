@@ -19,23 +19,17 @@
  * 02111-1307, USA.  
  */
 
-#include <zebra.h>
-
-#ifdef SUNOS_5
-#include <ifaddrs.h>
-#endif
-
-#include "log.h"
-#include "sockopt.h"
-#include "sockunion.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
 int
-setsockopt_so_recvbuf (int sock, ospl_uint32 size)
+setsockopt_so_recvbuf (zpl_socket_t sock, zpl_uint32 size)
 {
   int ret;
   
-  if ( (ret = ip_setsockopt (sock, SOL_SOCKET, SO_RCVBUF, (ospl_char *)
-                          &size, sizeof (ospl_uint32))) < 0)
+  if ( (ret = ipstack_setsockopt (sock, SOL_SOCKET, SO_RCVBUF, (zpl_char *)
+                          &size, sizeof (zpl_uint32))) < 0)
     zlog_err (MODULE_DEFAULT, "fd %d: can't setsockopt SO_RCVBUF to %d: %s",
 	      sock,size,safe_strerror(errno));
 
@@ -43,10 +37,10 @@ setsockopt_so_recvbuf (int sock, ospl_uint32 size)
 }
 
 int
-setsockopt_so_sendbuf (const int sock, ospl_uint32 size)
+setsockopt_so_sendbuf (const zpl_socket_t sock, zpl_uint32 size)
 {
-  int ret = ip_setsockopt (sock, SOL_SOCKET, SO_SNDBUF,
-    (ospl_char *)&size, sizeof (ospl_uint32));
+  int ret = ipstack_setsockopt (sock, SOL_SOCKET, SO_SNDBUF,
+    (zpl_char *)&size, sizeof (zpl_uint32));
   
   if (ret < 0)
     zlog_err (MODULE_DEFAULT, "fd %d: can't setsockopt SO_SNDBUF to %d: %s",
@@ -56,12 +50,12 @@ setsockopt_so_sendbuf (const int sock, ospl_uint32 size)
 }
 
 int
-getsockopt_so_sendbuf (const int sock)
+getsockopt_so_sendbuf (const zpl_socket_t sock)
 {
-  ospl_uint32 optval;
+  zpl_uint32 optval;
   socklen_t optlen = sizeof (optval);
-  int ret = ip_getsockopt (sock, SOL_SOCKET, SO_SNDBUF,
-    (ospl_char *)&optval, &optlen);
+  int ret = ipstack_getsockopt (sock, SOL_SOCKET, SO_SNDBUF,
+    (zpl_char *)&optval, &optlen);
   if (ret < 0)
   {
     zlog_err (MODULE_DEFAULT, "fd %d: can't getsockopt SO_SNDBUF: %d (%s)",
@@ -72,7 +66,7 @@ getsockopt_so_sendbuf (const int sock)
 }
 
 static void *
-getsockopt_cmsg_data (struct msghdr *msgh, ospl_uint32 level, ospl_uint32 type)
+getsockopt_cmsg_data (struct msghdr *msgh, zpl_uint32 level, zpl_uint32 type)
 {
   struct cmsghdr *cmsg;
   void *ptr = NULL;
@@ -89,16 +83,16 @@ getsockopt_cmsg_data (struct msghdr *msgh, ospl_uint32 level, ospl_uint32 type)
 #ifdef HAVE_IPV6
 /* Set IPv6 packet info to the socket. */
 int
-setsockopt_ipv6_pktinfo (int sock, ospl_uint32 val)
+setsockopt_ipv6_pktinfo (zpl_socket_t sock, zpl_uint32 val)
 {
   int ret;
     
 #ifdef IPV6_RECVPKTINFO		/*2292bis-01*/
-  ret = ip_setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &val, sizeof(val));
+  ret = ipstack_setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &val, sizeof(val));
   if (ret < 0)
     zlog_warn (MODULE_DEFAULT, "can't setsockopt IPV6_RECVPKTINFO : %s", safe_strerror (errno));
 #else	/*RFC2292*/
-  ret = ip_setsockopt(sock, IPPROTO_IPV6, IPV6_PKTINFO, &val, sizeof(val));
+  ret = ipstack_setsockopt(sock, IPPROTO_IPV6, IPV6_PKTINFO, &val, sizeof(val));
   if (ret < 0)
     zlog_warn (MODULE_DEFAULT, "can't setsockopt IPV6_PKTINFO : %s", safe_strerror (errno));
 #endif /* INIA_IPV6 */
@@ -107,14 +101,14 @@ setsockopt_ipv6_pktinfo (int sock, ospl_uint32 val)
 
 /* Set multicast hops val to the socket. */
 int
-setsockopt_ipv6_checksum (int sock, ospl_uint32 val)
+setsockopt_ipv6_checksum (zpl_socket_t sock, zpl_uint32 val)
 {
   int ret;
 
 #ifdef GNU_LINUX
-  ret = ip_setsockopt(sock, IPPROTO_RAW, IPV6_CHECKSUM, &val, sizeof(val));
+  ret = ipstack_setsockopt(sock, IPPROTO_RAW, IPV6_CHECKSUM, &val, sizeof(val));
 #else
-  ret = ip_setsockopt(sock, IPPROTO_IPV6, IPV6_CHECKSUM, &val, sizeof(val));
+  ret = ipstack_setsockopt(sock, IPPROTO_IPV6, IPV6_CHECKSUM, &val, sizeof(val));
 #endif /* GNU_LINUX */
   if (ret < 0)
     zlog_warn (MODULE_DEFAULT, "can't setsockopt IPV6_CHECKSUM");
@@ -123,11 +117,11 @@ setsockopt_ipv6_checksum (int sock, ospl_uint32 val)
 
 /* Set multicast hops val to the socket. */
 int
-setsockopt_ipv6_multicast_hops (int sock, ospl_uint32 val)
+setsockopt_ipv6_multicast_hops (zpl_socket_t sock, zpl_uint32 val)
 {
   int ret;
 
-  ret = ip_setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &val, sizeof(val));
+  ret = ipstack_setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &val, sizeof(val));
   if (ret < 0)
     zlog_warn (MODULE_DEFAULT, "can't setsockopt IPV6_MULTICAST_HOPS");
   return ret;
@@ -135,27 +129,27 @@ setsockopt_ipv6_multicast_hops (int sock, ospl_uint32 val)
 
 /* Set multicast hops val to the socket. */
 int
-setsockopt_ipv6_unicast_hops (int sock, ospl_uint32 val)
+setsockopt_ipv6_unicast_hops (zpl_socket_t sock, zpl_uint32 val)
 {
   int ret;
 
-  ret = ip_setsockopt(sock, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &val, sizeof(val));
+  ret = ipstack_setsockopt(sock, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &val, sizeof(val));
   if (ret < 0)
     zlog_warn (MODULE_DEFAULT, "can't setsockopt IPV6_UNICAST_HOPS");
   return ret;
 }
 
 int
-setsockopt_ipv6_hoplimit (int sock, ospl_uint32 val)
+setsockopt_ipv6_hoplimit (zpl_socket_t sock, zpl_uint32 val)
 {
   int ret;
 
 #ifdef IPV6_RECVHOPLIMIT	/*2292bis-01*/
-  ret = ip_setsockopt (sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &val, sizeof(val));
+  ret = ipstack_setsockopt (sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &val, sizeof(val));
   if (ret < 0)
     zlog_warn (MODULE_DEFAULT, "can't setsockopt IPV6_RECVHOPLIMIT");
 #else	/*RFC2292*/
-  ret = ip_setsockopt (sock, IPPROTO_IPV6, IPV6_HOPLIMIT, &val, sizeof(val));
+  ret = ipstack_setsockopt (sock, IPPROTO_IPV6, IPV6_HOPLIMIT, &val, sizeof(val));
   if (ret < 0)
     zlog_warn (MODULE_DEFAULT, "can't setsockopt IPV6_HOPLIMIT");
 #endif
@@ -164,11 +158,11 @@ setsockopt_ipv6_hoplimit (int sock, ospl_uint32 val)
 
 /* Set multicast loop zero to the socket. */
 int
-setsockopt_ipv6_multicast_loop (int sock, ospl_uint32 val)
+setsockopt_ipv6_multicast_loop (zpl_socket_t sock, zpl_uint32 val)
 {
   int ret;
     
-  ret = ip_setsockopt (sock, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &val,
+  ret = ipstack_setsockopt (sock, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &val,
 		    sizeof (val));
   if (ret < 0)
     zlog_warn (MODULE_DEFAULT, "can't setsockopt IPV6_MULTICAST_LOOP");
@@ -186,12 +180,12 @@ getsockopt_ipv6_ifindex (struct msghdr *msgh)
 }
 
 int
-setsockopt_ipv6_tclass(int sock, ospl_uint32 tclass)
+setsockopt_ipv6_tclass(zpl_socket_t sock, zpl_uint32 tclass)
 {
   int ret = 0;
 
 #ifdef IPV6_TCLASS /* RFC3542 */
-  ret = ip_setsockopt (sock, IPPROTO_IPV6, IPV6_TCLASS, &tclass, sizeof (tclass));
+  ret = ipstack_setsockopt (sock, IPPROTO_IPV6, IPV6_TCLASS, &tclass, sizeof (tclass));
   if (ret < 0)
     zlog_warn (MODULE_DEFAULT, "Can't set IPV6_TCLASS option for fd %d to %#x: %s",
 	       sock, tclass, safe_strerror(errno));
@@ -222,9 +216,9 @@ setsockopt_ipv6_tclass(int sock, ospl_uint32 tclass)
  * allow leaves, or implicitly leave all groups joined to down interfaces.
  */
 int
-setsockopt_ipv4_multicast(int sock,
-			ospl_uint32 optname, 
-			ospl_uint32  mcast_addr,
+setsockopt_ipv4_multicast(zpl_socket_t sock,
+			zpl_uint32 optname, 
+			zpl_uint32  mcast_addr,
 			ifindex_t ifindex)
 {
 #ifdef HAVE_RFC3678
@@ -240,12 +234,12 @@ setsockopt_ipv4_multicast(int sock,
   si->sin_len = sizeof(struct sockaddr_in);
 #endif /* HAVE_STRUCT_SOCKADDR_IN_SIN_LEN */
   si->sin_addr.s_addr = mcast_addr;
-  ret = ip_setsockopt(sock, IPPROTO_IP, (optname == IP_ADD_MEMBERSHIP) ?
+  ret = ipstack_setsockopt(sock, IPPROTO_IP, (optname == IP_ADD_MEMBERSHIP) ?
     MCAST_JOIN_GROUP : MCAST_LEAVE_GROUP, (void *)&gr, sizeof(gr));
   if ((ret < 0) && (optname == IP_ADD_MEMBERSHIP) && (errno == EADDRINUSE))
     {
-	  ip_setsockopt(sock, IPPROTO_IP, MCAST_LEAVE_GROUP, (void *)&gr, sizeof(gr));
-      ret = ip_setsockopt(sock, IPPROTO_IP, MCAST_JOIN_GROUP, (void *)&gr, sizeof(gr));
+	  ipstack_setsockopt(sock, IPPROTO_IP, MCAST_LEAVE_GROUP, (void *)&gr, sizeof(gr));
+      ret = ipstack_setsockopt(sock, IPPROTO_IP, MCAST_JOIN_GROUP, (void *)&gr, sizeof(gr));
     }
   return ret;
 
@@ -259,20 +253,20 @@ setsockopt_ipv4_multicast(int sock,
   mreqn.imr_multiaddr.s_addr = mcast_addr;
   mreqn.imr_ifindex = k_ifindex;
   
-  ret = ip_setsockopt(sock, IPPROTO_IP, optname,
+  ret = ipstack_setsockopt(sock, IPPROTO_IP, optname,
                    (void *)&mreqn, sizeof(mreqn));
   if ((ret < 0) && (optname == IP_ADD_MEMBERSHIP) && (errno == EADDRINUSE))
     {
       /* see above: handle possible problem when interface comes back up */
-      ospl_char buf[1][INET_ADDRSTRLEN];
+      zpl_char buf[1][INET_ADDRSTRLEN];
       zlog_info(MODULE_DEFAULT, "setsockopt_ipv4_multicast attempting to drop and "
                 "re-add (fd %d, mcast %s, ifindex %u)",
                 sock,
-                inet_ntop(AF_INET, &mreqn.imr_multiaddr,
+                ipstack_inet_ntop(AF_INET, &mreqn.imr_multiaddr,
                           buf[0], sizeof(buf[0])), k_ifindex);
-      ip_setsockopt(sock, IPPROTO_IP, IP_DROP_MEMBERSHIP,
+      ipstack_setsockopt(sock, IPPROTO_IP, IP_DROP_MEMBERSHIP,
                  (void *)&mreqn, sizeof(mreqn));
-      ret = ip_setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+      ret = ipstack_setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP,
                        (void *)&mreqn, sizeof(mreqn));
     }
   return ret;
@@ -297,19 +291,19 @@ setsockopt_ipv4_multicast(int sock,
   mreq.imr_multiaddr.s_addr = mcast_addr;
   mreq.imr_interface = m;
   
-  ret = ip_setsockopt (sock, IPPROTO_IP, optname, (void *)&mreq, sizeof(mreq));
+  ret = ipstack_setsockopt (sock, IPPROTO_IP, optname, (void *)&mreq, sizeof(mreq));
   if ((ret < 0) && (optname == IP_ADD_MEMBERSHIP) && (errno == EADDRINUSE))
     {
       /* see above: handle possible problem when interface comes back up */
-      ospl_char buf[1][INET_ADDRSTRLEN];
+      zpl_char buf[1][INET_ADDRSTRLEN];
       zlog_info(MODULE_DEFAULT, "setsockopt_ipv4_multicast attempting to drop and "
                 "re-add (fd %d, mcast %s, ifindex %u)",
                 sock,
-                inet_ntop(AF_INET, &mreq.imr_multiaddr,
+                ipstack_inet_ntop(AF_INET, &mreq.imr_multiaddr,
                           buf[0], sizeof(buf[0])), k_ifindex);
-      ip_setsockopt (sock, IPPROTO_IP, IP_DROP_MEMBERSHIP,
+      ipstack_setsockopt (sock, IPPROTO_IP, IP_DROP_MEMBERSHIP,
                   (void *)&mreq, sizeof(mreq));
-      ret = ip_setsockopt (sock, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+      ret = ipstack_setsockopt (sock, IPPROTO_IP, IP_ADD_MEMBERSHIP,
                         (void *)&mreq, sizeof(mreq));
     }
   return ret;
@@ -324,7 +318,7 @@ setsockopt_ipv4_multicast(int sock,
  * Set IP_MULTICAST_IF socket option in an OS-dependent manner.
  */
 int
-setsockopt_ipv4_multicast_if(int sock, ifindex_t ifindex)
+setsockopt_ipv4_multicast_if(zpl_socket_t sock, ifindex_t ifindex)
 {
 
 #ifdef HAVE_STRUCT_IP_MREQN_IMR_IFINDEX
@@ -332,7 +326,7 @@ setsockopt_ipv4_multicast_if(int sock, ifindex_t ifindex)
   memset (&mreqn, 0, sizeof(mreqn));
   ifindex_t k_ifindex = ifindex2ifkernel( ifindex);
   mreqn.imr_ifindex = k_ifindex;
-  return ip_setsockopt(sock, IPPROTO_IP, IP_MULTICAST_IF, (void *)&mreqn, sizeof(mreqn));
+  return ipstack_setsockopt(sock, IPPROTO_IP, IP_MULTICAST_IF, (void *)&mreqn, sizeof(mreqn));
 
   /* Example defines for another OS, boilerplate off other code in this
      function */
@@ -343,9 +337,9 @@ setsockopt_ipv4_multicast_if(int sock, ifindex_t ifindex)
   ifindex_t k_ifindex = ifindex2ifkernel( ifindex);
   m.s_addr = htonl(k_ifindex);
 
-  return ip_setsockopt (sock, IPPROTO_IP, IP_MULTICAST_IF, (void *)&m, sizeof(m));
+  return ipstack_setsockopt (sock, IPPROTO_IP, IP_MULTICAST_IF, (void *)&m, sizeof(m));
 #elif defined(SUNOS_5)
-  ospl_char ifname[IF_NAMESIZE];
+  zpl_char ifname[IF_NAMESIZE];
   struct ifaddrs *ifa, *ifap;
   struct in_addr ifaddr;
 
@@ -372,23 +366,23 @@ setsockopt_ipv4_multicast_if(int sock, ifindex_t ifindex)
   if (!ifap) /* This means we did not find an IP */
     return -1;
 
-  return ip_setsockopt(sock, IPPROTO_IP, IP_MULTICAST_IF, (void *)&ifaddr, sizeof(ifaddr));
+  return ipstack_setsockopt(sock, IPPROTO_IP, IP_MULTICAST_IF, (void *)&ifaddr, sizeof(ifaddr));
 #else
   #error "Unsupported multicast API"
 #endif
 }
   
 static int
-setsockopt_ipv4_ifindex (int sock, ifindex_t val)
+setsockopt_ipv4_ifindex (zpl_socket_t sock, ifindex_t val)
 {
   int ret;
 
 #if defined (IP_PKTINFO)
-  if ((ret = ip_setsockopt (sock, IPPROTO_IP, IP_PKTINFO, &val, sizeof (val))) < 0)
+  if ((ret = ipstack_setsockopt (sock, IPPROTO_IP, IP_PKTINFO, &val, sizeof (val))) < 0)
     zlog_warn (MODULE_DEFAULT, "Can't set IP_PKTINFO option for fd %d to %d: %s",
 	       sock,val,safe_strerror(errno));
 #elif defined (IP_RECVIF)
-  if ((ret = ip_setsockopt (sock, IPPROTO_IP, IP_RECVIF, &val, sizeof (val))) < 0)
+  if ((ret = ipstack_setsockopt (sock, IPPROTO_IP, IP_RECVIF, &val, sizeof (val))) < 0)
     zlog_warn (MODULE_DEFAULT, "Can't set IP_RECVIF option for fd %d to %d: %s",
 	       sock,val,safe_strerror(errno));
 #else
@@ -402,11 +396,11 @@ setsockopt_ipv4_ifindex (int sock, ifindex_t val)
 }
 
 int
-setsockopt_ipv4_tos(int sock, ospl_uint32 tos)
+setsockopt_ipv4_tos(zpl_socket_t sock, zpl_uint32 tos)
 {
   int ret;
 
-  ret = ip_setsockopt (sock, IPPROTO_IP, IP_TOS, &tos, sizeof (tos));
+  ret = ipstack_setsockopt (sock, IPPROTO_IP, IP_TOS, &tos, sizeof (tos));
   if (ret < 0)
     zlog_warn (MODULE_DEFAULT, "Can't set IP_TOS option for fd %d to %#x: %s",
 	       sock, tos, safe_strerror(errno));
@@ -415,7 +409,7 @@ setsockopt_ipv4_tos(int sock, ospl_uint32 tos)
 
 
 int
-setsockopt_ifindex (ospl_family_t family, int sock, ifindex_t val)
+setsockopt_ifindex (zpl_family_t family, zpl_socket_t sock, ifindex_t val)
 {
   int ret = -1;
   
@@ -510,7 +504,7 @@ getsockopt_ipv4_ifindex (struct msghdr *msgh)
 
 /* return ifindex, 0 if none found */
 ifindex_t
-getsockopt_ifindex (ospl_family_t family, struct msghdr *msgh)
+getsockopt_ifindex (zpl_family_t family, struct msghdr *msgh)
 {
   switch (family)
     {
@@ -529,11 +523,11 @@ getsockopt_ifindex (ospl_family_t family, struct msghdr *msgh)
 }
 
 int
-setsockopt_ipv4_multicast_loop(int sock, ospl_uint32 opt)
+setsockopt_ipv4_multicast_loop(zpl_socket_t sock, zpl_uint32 opt)
 {
   int ret;
-  ospl_uint32 optval = opt;
-  ret = ip_setsockopt (sock, IPPROTO_IP, IP_MULTICAST_LOOP, &optval, sizeof (optval));
+  zpl_uint32 optval = opt;
+  ret = ipstack_setsockopt (sock, IPPROTO_IP, IP_MULTICAST_LOOP, &optval, sizeof (optval));
   if (ret < 0)
     zlog_warn (MODULE_DEFAULT, "Can't set IP_MULTICAST_LOOP option for fd %d to %#x: %s",
 	       sock, opt, safe_strerror(errno));
@@ -567,13 +561,13 @@ sockopt_iphdrincl_swab_systoh (struct ip *iph)
 }
 
 int
-sockopt_tcp_rtt (int sock)
+sockopt_tcp_rtt (zpl_socket_t sock)
 {
 #ifdef TCP_INFO
   struct tcp_info ti;
   socklen_t len = sizeof(ti);
 
-  if (ip_getsockopt (sock, IPPROTO_TCP, TCP_INFO, &ti, &len) != 0)
+  if (ipstack_getsockopt (sock, IPPROTO_TCP, TCP_INFO, &ti, &len) != 0)
     return 0;
 
   return ti.tcpi_rtt / 1000;
@@ -581,9 +575,9 @@ sockopt_tcp_rtt (int sock)
   return 0;
 #endif
 }
-#ifdef USE_IPSTACK_KERNEL
+#ifdef ZPL_KERNEL_STACK_MODULE
 int
-sockopt_tcp_signature (int sock, union sockunion *su, const char *password)
+sockopt_tcp_signature (zpl_socket_t sock, union sockunion *su, const char *password)
 {
 #if defined(HAVE_TCP_MD5_LINUX24) && defined(GNU_LINUX)
   /* Support for the old Linux 2.4 TCP-MD5 patch, taken from Hasso Tepper's
@@ -594,9 +588,9 @@ sockopt_tcp_signature (int sock, union sockunion *su, const char *password)
 #define TCP_MD5_AUTH_ADD 1
 #define TCP_MD5_AUTH_DEL 2
   struct tcp_rfc2385_cmd {
-    ospl_uint8     command;    /* Command - Add/Delete */
-    ospl_uint32    address;    /* IPV4 address associated */
-    ospl_uint8     keylen;     /* MD5 Key len (do NOT assume 0 terminated ascii) */
+    zpl_uint8     command;    /* Command - Add/Delete */
+    zpl_uint32    address;    /* IPV4 address associated */
+    zpl_uint8     keylen;     /* MD5 Key len (do NOT assume 0 terminated ascii) */
     void         *key;       /* MD5 Key */
   } cmd;
   struct in_addr *addr = &su->sin.sin_addr;
@@ -606,7 +600,7 @@ sockopt_tcp_signature (int sock, union sockunion *su, const char *password)
   cmd.keylen = (password != NULL ? strlen (password) : 0);
   cmd.key = password;
   
-  return ip_setsockopt (sock, IPPROTO_TCP, TCP_MD5_AUTH, &cmd, sizeof cmd);
+  return ipstack_setsockopt (sock, IPPROTO_TCP, TCP_MD5_AUTH, &cmd, sizeof cmd);
   
 #elif HAVE_DECL_TCP_MD5SIG
   int ret;
@@ -615,9 +609,9 @@ sockopt_tcp_signature (int sock, union sockunion *su, const char *password)
    * XXX Need to do PF_KEY operation here to add/remove an SA entry,
    * and add/remove an SP entry for this peer's packet flows also.
    */
-  ospl_uint32 md5sig = password && *password ? 1 : 0;
+  zpl_uint32 md5sig = password && *password ? 1 : 0;
 #else
-  ospl_uint32 keylen = password ? strlen (password) : 0;
+  zpl_uint32 keylen = password ? strlen (password) : 0;
   struct tcp_md5sig md5sig;
   union sockunion *su2, *susock;
   
@@ -667,7 +661,7 @@ sockopt_tcp_signature (int sock, union sockunion *su, const char *password)
     memcpy (md5sig.tcpm_key, password, keylen);
   sockunion_free (susock);
 #endif /* GNU_LINUX */
-  if ((ret = ip_setsockopt (sock, IPPROTO_TCP, TCP_MD5SIG, &md5sig, sizeof md5sig)) < 0)
+  if ((ret = ipstack_setsockopt (sock, IPPROTO_TCP, TCP_MD5SIG, &md5sig, sizeof md5sig)) < 0)
     {
       /* ENOENT is harmless.  It is returned when we clear a password for which
 	 one was not previously set. */

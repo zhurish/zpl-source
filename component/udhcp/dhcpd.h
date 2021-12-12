@@ -16,20 +16,20 @@ extern "C" {
 
 typedef struct dhcpd_lease_state_s
 {
-	ospl_uint32 offered_expiry;
+	zpl_uint32 offered_expiry;
 
 	//struct tree_cache *options[256];
 
-	ospl_uint32 requested_address;	/* True if client sent the
+	zpl_uint32 requested_address;	/* True if client sent the
 					   dhcp-requested-address option. */
-	ospl_uint32 server_identifier;	/* True if client sent the
+	zpl_uint32 server_identifier;	/* True if client sent the
 					   dhcp-server-identifier option. */
-	ospl_uint32 xid;
-	ospl_uint32 ciaddr;
-	ospl_uint32 giaddr;
-	ospl_uint8 req_mask[DHCP_OPTION_MAX];
+	zpl_uint32 xid;
+	zpl_uint32 ciaddr;
+	zpl_uint32 giaddr;
+	zpl_uint8 req_mask[DHCP_OPTION_MAX];
 
-	ospl_uint32 read_bytes;
+	zpl_uint32 read_bytes;
 } dhcpd_lease_state_t;
 
 
@@ -45,8 +45,8 @@ typedef struct dhcpd_interface_s
 	// if more than N seconds have passed after last use.
 	ifindex_t  	ifindex;
 
-	ospl_uint8 	server_mac[ETHER_ADDR_LEN];          /* our MAC address (used only for ARP probing) */
-	ospl_uint32 	ipaddr;
+	zpl_uint8 	server_mac[ETHER_ADDR_LEN];          /* our MAC address (used only for ARP probing) */
+	zpl_uint32 	ipaddr;
 
 	//dyn_lease_t *lease;
 	
@@ -67,7 +67,7 @@ typedef struct dhcpd_interface_s
 /* client_config sits in 2nd half of bb_common_bufsiz1 */
 
 
-ospl_uint32  dhcpd_lookup_address_on_interface(dhcp_pool_t*config, ifindex_t ifindex);
+zpl_uint32  dhcpd_lookup_address_on_interface(dhcp_pool_t*config, ifindex_t ifindex);
 dhcpd_interface_t * dhcpd_lookup_interface(dhcp_pool_t*config, ifindex_t ifindex);
 int dhcpd_pool_add_interface(dhcp_pool_t*config, ifindex_t ifindex);
 int dhcpd_pool_del_interface(dhcp_pool_t*config, ifindex_t ifindex);

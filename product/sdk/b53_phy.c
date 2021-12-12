@@ -5,7 +5,7 @@
  *      Author: DELL
  */
 
-#include <zebra.h>
+#include <zpl_include.h>
 #include "nsm_dos.h"
 #include "hal_dos.h"
 
@@ -16,7 +16,7 @@
 
 
 //
-int b53125_phy_loopback(struct b53125_device *dev, int port, ospl_bool enable)
+int b53125_phy_loopback(struct b53125_device *dev, int port, zpl_bool enable)
 {
 	int ret = 0;
 	u16 port_ctrl = 0;
@@ -34,7 +34,7 @@ int b53125_phy_loopback(struct b53125_device *dev, int port, ospl_bool enable)
 }
 
 
-int b53125_snooping_enable(struct b53125_device *dev, ospl_uint32 type, ospl_bool enable)
+int b53125_snooping_enable(struct b53125_device *dev, zpl_uint32 type, zpl_bool enable)
 {
 	int ret = 0;
 	u32 port_ctrl = 0;

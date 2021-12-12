@@ -34,12 +34,9 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "os_util.h"
-#include "tty_com.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
 #include "modem.h"
 #include "modem_client.h"
@@ -268,7 +265,7 @@ modem_signal_state modem_signal_state_get(modem_client_t *client)
 }*/
 
 
-int modem_register_state(modem_client_t *client, ospl_uint32 code)
+int modem_register_state(modem_client_t *client, zpl_uint32 code)
 {
 	assert(client);
 	client->nw_register_state = (nw_register_state)code;

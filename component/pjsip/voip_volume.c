@@ -5,16 +5,12 @@
  *      Author: DELL
  */
 
-#include "zebra.h"
-#include "memory.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "linklist.h"
-#include "prefix.h"
-#include "table.h"
-#include "vector.h"
-#include "vty.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
+#include "vty_include.h"
+
 
 
 #include "voip_volume.h"
@@ -97,13 +93,13 @@ static int voip_volume_playback_exit()
 static int voip_volume_playback_volume_init(int out, int dac, int mono)
 {
 	char cmd[128];
-	ospl_float v = 0.0;
+	zpl_float v = 0.0;
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
 	memset(cmd, 0, sizeof(cmd));
 
 	if(out >= 0)
 	{
-		v = (ospl_float)((ospl_float)out)/100 * 39;
+		v = (zpl_float)((zpl_float)out)/100 * 39;
 		_VOIP_VOLUME_DEBUG("=======%s:out=%.2f", __func__,v);
 		//v=30.0;
 		sprintf(cmd, "amixer cset numid=8 %d %d" VOIP_NOHUP, (int)v, (int)v);//OUT Playback Volume
@@ -111,7 +107,7 @@ static int voip_volume_playback_volume_init(int out, int dac, int mono)
 	}
 	if(dac >= 0)
 	{
-		v = (ospl_float)((ospl_float)dac)/100 * 175;
+		v = (zpl_float)((zpl_float)dac)/100 * 175;
 		_VOIP_VOLUME_DEBUG("=======%s:dac=%.2f", __func__,v);
 		//v=150.0;
 		sprintf(cmd, "amixer cset numid=10 %d %d" VOIP_NOHUP, (int)v, (int)v);//DAC1 Playback Volume
@@ -119,7 +115,7 @@ static int voip_volume_playback_volume_init(int out, int dac, int mono)
 	}
 	if(mono >= 0)
 	{
-		v = (ospl_float)((ospl_float)mono)/100 * 175;
+		v = (zpl_float)((zpl_float)mono)/100 * 175;
 		_VOIP_VOLUME_DEBUG("=======%s:mono=%.2f", __func__,v);
 		//v=150.0;
 		sprintf(cmd, "amixer cset numid=11 %d %d" VOIP_NOHUP, (int)v, (int)v);//Mono DAC Playback Volume
@@ -130,7 +126,7 @@ static int voip_volume_playback_volume_init(int out, int dac, int mono)
 
 	if(out >= 0)
 	{
-		v = (ospl_float)((ospl_float)out)/100 * 39;
+		v = (zpl_float)((zpl_float)out)/100 * 39;
 		_VOIP_VOLUME_DEBUG("=======%s:out=%.2f", __func__,v);
 		//v=30.0;
 		sprintf(cmd, "amixer cset numid=8 %d %d" VOIP_NOHUP, (int)v, (int)v);//OUT Playback Volume
@@ -138,7 +134,7 @@ static int voip_volume_playback_volume_init(int out, int dac, int mono)
 	}
 	if(dac >= 0)
 	{
-		v = (ospl_float)((ospl_float)dac)/100 * 175;
+		v = (zpl_float)((zpl_float)dac)/100 * 175;
 		_VOIP_VOLUME_DEBUG("=======%s:dac=%.2f", __func__,v);
 		//v=150.0;
 		sprintf(cmd, "amixer cset numid=10 %d %d" VOIP_NOHUP, (int)v, (int)v);//DAC1 Playback Volume
@@ -146,7 +142,7 @@ static int voip_volume_playback_volume_init(int out, int dac, int mono)
 	}
 	if(mono >= 0)
 	{
-		v = (ospl_float)((ospl_float)mono)/100 * 175;
+		v = (zpl_float)((zpl_float)mono)/100 * 175;
 		_VOIP_VOLUME_DEBUG("=======%s:mono=%.2f", __func__,v);
 		//v=150.0;
 		sprintf(cmd, "amixer cset numid=11 %d %d" VOIP_NOHUP, (int)v, (int)v);//Mono DAC Playback Volume
@@ -276,12 +272,12 @@ static int voip_volume_capture_boost_init(int value)
 static int voip_volume_capture_volume_init(int inv, int adc, int mono)
 {
 	char cmd[128];
-	ospl_float v = 0.0;
+	zpl_float v = 0.0;
 	memset(cmd, 0, sizeof(cmd));
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
 	if(inv >= 0)
 	{
-		v = (ospl_float)((ospl_float)inv)/100 * 31;
+		v = (zpl_float)((zpl_float)inv)/100 * 31;
 		_VOIP_VOLUME_DEBUG("=======%s:inv=%.2f", __func__,v);
 		//v=30.0;
 		sprintf(cmd, "amixer cset numid=16 %d %d" VOIP_NOHUP, (int)v, (int)v); //IN Capture Volume
@@ -289,7 +285,7 @@ static int voip_volume_capture_volume_init(int inv, int adc, int mono)
 	}
 	if(adc >= 0)
 	{
-		v = (ospl_float)((ospl_float)adc)/100 * 127;
+		v = (zpl_float)((zpl_float)adc)/100 * 127;
 		_VOIP_VOLUME_DEBUG("=======%s:adc=%.2f", __func__,v);
 		//v=120.0;
 		sprintf(cmd, "amixer cset numid=18 %d %d" VOIP_NOHUP, (int)v, (int)v); //ADC Capture Volume
@@ -297,7 +293,7 @@ static int voip_volume_capture_volume_init(int inv, int adc, int mono)
 	}
 	if(mono >= 0)
 	{
-		v = (ospl_float)((ospl_float)mono)/100 * 127;
+		v = (zpl_float)((zpl_float)mono)/100 * 127;
 		_VOIP_VOLUME_DEBUG("=======%s:mono=%.2f", __func__,v);
 		//v=120.0;
 		sprintf(cmd, "amixer cset numid=19 %d %d" VOIP_NOHUP, (int)v, (int)v); //Mono ADC Capture Volume
@@ -306,7 +302,7 @@ static int voip_volume_capture_volume_init(int inv, int adc, int mono)
 #else
 	if(inv >= 0)
 	{
-		v = (ospl_float)((ospl_float)inv)/100 * 31;
+		v = (zpl_float)((zpl_float)inv)/100 * 31;
 		_VOIP_VOLUME_DEBUG("=======%s:inv=%.2f", __func__,v);
 		//v=30.0;
 		sprintf(cmd, "amixer cset numid=16 %d %d" VOIP_NOHUP, (int)v, (int)v);
@@ -314,7 +310,7 @@ static int voip_volume_capture_volume_init(int inv, int adc, int mono)
 	}
 	if(adc >= 0)
 	{
-		v = (ospl_float)((ospl_float)adc)/100 * 127;
+		v = (zpl_float)((zpl_float)adc)/100 * 127;
 		_VOIP_VOLUME_DEBUG("=======%s:adc=%.2f", __func__,v);
 		//v=120.0;
 		sprintf(cmd, "amixer cset numid=18 %d %d" VOIP_NOHUP, (int)v, (int)v);
@@ -322,7 +318,7 @@ static int voip_volume_capture_volume_init(int inv, int adc, int mono)
 	}
 	if(mono >= 0)
 	{
-		v = (ospl_float)((ospl_float)mono)/100 * 127;
+		v = (zpl_float)((zpl_float)mono)/100 * 127;
 		_VOIP_VOLUME_DEBUG("=======%s:mono=%.2f", __func__,v);
 		//v=120.0;
 		sprintf(cmd, "amixer cset numid=19 %d %d" VOIP_NOHUP, (int)v, (int)v);
@@ -372,12 +368,12 @@ int voip_volume_module_init()
 	voip_volume = XMALLOC(MTYPE_VOIP_VOLUME, sizeof(voip_volume_t));
 	zassert(voip_volume != NULL);
 	memset(voip_volume, 0, sizeof(voip_volume_t));
-	voip_volume->power		= ospl_false;
+	voip_volume->power		= zpl_false;
 	voip_volume->out_volume	= VOIP_OUT_VOLUME;
 	voip_volume->dac_volume  = VOIP_OUT_STEREO_VOLUME;
 	voip_volume->mono_volume = VOIP_OUT_MONO_VOLUME;
 	//Capture
-	voip_volume->record      = ospl_false;
+	voip_volume->record      = zpl_false;
 	voip_volume->in_volume	= VOIP_IN_VOLUME;
 	voip_volume->adc_volume  = VOIP_IN_ADC_VOLUME;
 	voip_volume->in_mono_volume = VOIP_IN_MONO_VOLUME;
@@ -402,7 +398,7 @@ int voip_volume_module_exit()
 }
 
 
-int voip_playback_volume_out_set_api(ospl_uint8 value)
+int voip_playback_volume_out_set_api(zpl_uint8 value)
 {
 	zassert(voip_volume != NULL);
 #ifdef VOIP_VOLUME_USE_SHELL
@@ -412,7 +408,7 @@ int voip_playback_volume_out_set_api(ospl_uint8 value)
 	return OK;
 }
 
-int voip_playback_volume_out_get_api(ospl_uint8 *value)
+int voip_playback_volume_out_get_api(zpl_uint8 *value)
 {
 	zassert(voip_volume != NULL);
 	if(value)
@@ -420,7 +416,7 @@ int voip_playback_volume_out_get_api(ospl_uint8 *value)
 	return OK;
 }
 
-int voip_playback_volume_dac_set_api(ospl_uint8 value)
+int voip_playback_volume_dac_set_api(zpl_uint8 value)
 {
 	zassert(voip_volume != NULL);
 #ifdef VOIP_VOLUME_USE_SHELL
@@ -430,7 +426,7 @@ int voip_playback_volume_dac_set_api(ospl_uint8 value)
 	return OK;
 }
 
-int voip_playback_volume_dac_get_api(ospl_uint8 *value)
+int voip_playback_volume_dac_get_api(zpl_uint8 *value)
 {
 	zassert(voip_volume != NULL);
 	if(value)
@@ -438,7 +434,7 @@ int voip_playback_volume_dac_get_api(ospl_uint8 *value)
 	return OK;
 }
 
-int voip_playback_volume_mono_set_api(ospl_uint8 value)
+int voip_playback_volume_mono_set_api(zpl_uint8 value)
 {
 	zassert(voip_volume != NULL);
 #ifdef VOIP_VOLUME_USE_SHELL
@@ -448,7 +444,7 @@ int voip_playback_volume_mono_set_api(ospl_uint8 value)
 	return OK;
 }
 
-int voip_playback_volume_mono_get_api(ospl_uint8 *value)
+int voip_playback_volume_mono_get_api(zpl_uint8 *value)
 {
 	zassert(voip_volume != NULL);
 	if(value)
@@ -456,18 +452,18 @@ int voip_playback_volume_mono_get_api(ospl_uint8 *value)
 	return OK;
 }
 
-int voip_playback_open_api(ospl_bool enable)
+int voip_playback_open_api(zpl_bool enable)
 {
 	zassert(voip_volume != NULL);
 	if(enable)
 	{
 		voip_volume_playback_init();
 		voip_playback_volume_out_set_api(voip_volume->out_volume);
-/*		voip_volume->isconfig = ospl_false;
+/*		voip_volume->isconfig = zpl_false;
 		voip_volume_apply();*/
 		//voip_volume_playback_volume_init(voip_volume->out_volume,
 		//		voip_volume->dac_volume, voip_volume->mono_volume);
-		//voip_volume->isopen = ospl_true;
+		//voip_volume->isopen = zpl_true;
 	}
 	else
 	{
@@ -479,7 +475,7 @@ int voip_playback_open_api(ospl_bool enable)
 /*
  * Capture
  */
-int voip_capture_volume_in_set_api(ospl_uint8 value)
+int voip_capture_volume_in_set_api(zpl_uint8 value)
 {
 	zassert(voip_volume != NULL);
 #ifdef VOIP_VOLUME_USE_SHELL
@@ -489,7 +485,7 @@ int voip_capture_volume_in_set_api(ospl_uint8 value)
 	return OK;
 }
 
-int voip_capture_volume_in_get_api(ospl_uint8 *value)
+int voip_capture_volume_in_get_api(zpl_uint8 *value)
 {
 	zassert(voip_volume != NULL);
 	if(value)
@@ -497,7 +493,7 @@ int voip_capture_volume_in_get_api(ospl_uint8 *value)
 	return OK;
 }
 
-int voip_capture_volume_adc_set_api(ospl_uint8 value)
+int voip_capture_volume_adc_set_api(zpl_uint8 value)
 {
 	zassert(voip_volume != NULL);
 #ifdef VOIP_VOLUME_USE_SHELL
@@ -507,7 +503,7 @@ int voip_capture_volume_adc_set_api(ospl_uint8 value)
 	return OK;
 }
 
-int voip_capture_volume_adc_get_api(ospl_uint8 *value)
+int voip_capture_volume_adc_get_api(zpl_uint8 *value)
 {
 	zassert(voip_volume != NULL);
 	if(value)
@@ -515,7 +511,7 @@ int voip_capture_volume_adc_get_api(ospl_uint8 *value)
 	return OK;
 }
 
-int voip_capture_volume_mono_set_api(ospl_uint8 value)
+int voip_capture_volume_mono_set_api(zpl_uint8 value)
 {
 	zassert(voip_volume != NULL);
 #ifdef VOIP_VOLUME_USE_SHELL
@@ -525,7 +521,7 @@ int voip_capture_volume_mono_set_api(ospl_uint8 value)
 	return OK;
 }
 
-int voip_capture_volume_mono_get_api(ospl_uint8 *value)
+int voip_capture_volume_mono_get_api(zpl_uint8 *value)
 {
 	zassert(voip_volume != NULL);
 	if(value)
@@ -535,7 +531,7 @@ int voip_capture_volume_mono_get_api(ospl_uint8 *value)
 
 
 
-int voip_volume_boost_set_api(ospl_uint8 value)
+int voip_volume_boost_set_api(zpl_uint8 value)
 {
 	zassert(voip_volume != NULL);
 #ifdef VOIP_VOLUME_USE_SHELL
@@ -548,7 +544,7 @@ int voip_volume_boost_set_api(ospl_uint8 value)
 	return OK;
 }
 
-int voip_volume_boost_get_api(ospl_uint8 *value)
+int voip_volume_boost_get_api(zpl_uint8 *value)
 {
 	zassert(voip_volume != NULL);
 	//if(input)
@@ -559,7 +555,7 @@ int voip_volume_boost_get_api(ospl_uint8 *value)
 	return OK;
 }
 
-int voip_volume_boost_gain_set_api(ospl_uint8 value)
+int voip_volume_boost_gain_set_api(zpl_uint8 value)
 {
 	zassert(voip_volume != NULL);
 #ifdef VOIP_VOLUME_USE_SHELL
@@ -572,7 +568,7 @@ int voip_volume_boost_gain_set_api(ospl_uint8 value)
 	return OK;
 }
 
-int voip_volume_boost_gain_get_api(ospl_uint8 *value)
+int voip_volume_boost_gain_get_api(zpl_uint8 *value)
 {
 	zassert(voip_volume != NULL);
 	//if(input)
@@ -583,13 +579,13 @@ int voip_volume_boost_gain_get_api(ospl_uint8 *value)
 	return OK;
 }
 
-int voip_capture_open_api(ospl_bool enable)
+int voip_capture_open_api(zpl_bool enable)
 {
 	if(enable)
 	{
 		voip_volume_capture_init();
 		voip_capture_volume_adc_set_api(voip_volume->adc_volume);
-/*		voip_volume->isconfig = ospl_false;
+/*		voip_volume->isconfig = zpl_false;
 		voip_volume_apply();*/
 		//voip_volume_capture_volume_init(voip_volume->in_volume,
 		//		voip_volume->adc_volume, voip_volume->in_mono_volume);
@@ -612,17 +608,17 @@ int voip_volume_open_api(voip_volume_mode mode)
 		{
 			_VOIP_VOLUME_DEBUG( "======%s capture open", __func__);
 			voip_volume_dsp_init();
-			voip_capture_open_api(ospl_true);
-			voip_volume->c_isopen = ospl_true;
+			voip_capture_open_api(zpl_true);
+			voip_volume->c_isopen = zpl_true;
 		}
 		if(!voip_volume->p_isopen)
 		{
 			_VOIP_VOLUME_DEBUG( "======%s playback open", __func__);
 #ifndef VOIP_AMP_DEV_ENABLE
-			voip_volume_power(ospl_true);
+			voip_volume_power(zpl_true);
 #endif
-			voip_volume->p_isopen = ospl_true;
-			voip_playback_open_api(ospl_true);
+			voip_volume->p_isopen = zpl_true;
+			voip_playback_open_api(zpl_true);
 
 		}
 	}
@@ -632,10 +628,10 @@ int voip_volume_open_api(voip_volume_mode mode)
 		{
 			_VOIP_VOLUME_DEBUG( "======%s capture open", __func__);
 #ifndef VOIP_AMP_DEV_ENABLE
-			voip_volume_power(ospl_true);
+			voip_volume_power(zpl_true);
 #endif
-			voip_volume->p_isopen = ospl_true;
-			voip_playback_open_api(ospl_true);
+			voip_volume->p_isopen = zpl_true;
+			voip_playback_open_api(zpl_true);
 
 		}
 	}
@@ -645,8 +641,8 @@ int voip_volume_open_api(voip_volume_mode mode)
 		{
 			_VOIP_VOLUME_DEBUG( "======%s capture open", __func__);
 			voip_volume_dsp_init();
-			voip_capture_open_api(ospl_true);
-			voip_volume->c_isopen = ospl_true;
+			voip_capture_open_api(zpl_true);
+			voip_volume->c_isopen = zpl_true;
 		}
 	}
 	return OK;
@@ -661,17 +657,17 @@ int voip_volume_close_api(voip_volume_mode mode)
 		{
 			_VOIP_VOLUME_DEBUG( "======%s capture close", __func__);
 			voip_volume_dsp_exit();
-			voip_capture_open_api(ospl_false);
-			voip_volume->c_isopen = ospl_false;
+			voip_capture_open_api(zpl_false);
+			voip_volume->c_isopen = zpl_false;
 		}
 		if(voip_volume->p_isopen)
 		{
 			_VOIP_VOLUME_DEBUG( "======%s playback close", __func__);
 #ifndef VOIP_AMP_DEV_ENABLE
-			voip_volume_power(ospl_false);
+			voip_volume_power(zpl_false);
 #endif
-			voip_volume->p_isopen = ospl_false;
-			voip_playback_open_api(ospl_false);
+			voip_volume->p_isopen = zpl_false;
+			voip_playback_open_api(zpl_false);
 
 		}
 	}
@@ -681,10 +677,10 @@ int voip_volume_close_api(voip_volume_mode mode)
 		{
 			_VOIP_VOLUME_DEBUG( "======%s playback close", __func__);
 #ifndef VOIP_AMP_DEV_ENABLE
-			voip_volume_power(ospl_false);
+			voip_volume_power(zpl_false);
 #endif
-			voip_volume->p_isopen = ospl_false;
-			voip_playback_open_api(ospl_false);
+			voip_volume->p_isopen = zpl_false;
+			voip_playback_open_api(zpl_false);
 
 		}
 	}
@@ -694,8 +690,8 @@ int voip_volume_close_api(voip_volume_mode mode)
 		{
 			_VOIP_VOLUME_DEBUG( "======%s capture close", __func__);
 			voip_volume_dsp_exit();
-			voip_capture_open_api(ospl_false);
-			voip_volume->c_isopen = ospl_false;
+			voip_capture_open_api(zpl_false);
+			voip_volume->c_isopen = zpl_false;
 		}
 	}
 	return OK;
@@ -732,7 +728,7 @@ static int voip_volume_close_new_api(voip_volume_mode mode)
 }
 #endif
 
-int voip_volume_control_api(ospl_bool enable)
+int voip_volume_control_api(zpl_bool enable)
 {
 #if 0//LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
 	if(enable)
@@ -755,7 +751,7 @@ int voip_volume_control_api(ospl_bool enable)
 int voip_volume_show_config(struct vty *vty, int detail)
 {
 	zassert(voip_volume != NULL);
-	ospl_uint8 value = 0;
+	zpl_uint8 value = 0;
 	//if(voip_config.enable)
 	{
 		/*
@@ -793,7 +789,7 @@ int voip_volume_show_config(struct vty *vty, int detail)
 int voip_volume_write_config(struct vty *vty)
 {
 	zassert(voip_volume != NULL);
-	ospl_uint8 value = 0;
+	zpl_uint8 value = 0;
 //	if(voip_config.enable)
 	{
 		/*

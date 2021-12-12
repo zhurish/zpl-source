@@ -1,4 +1,4 @@
-CONFIG_OPTS =--prefix=$(DSTROOTFSDIR) \
+CONFIG_OPTS =--prefix=$(ZPL_INSTALL_ROOTFS_DIR) \
 --enable-static --enable-shared --disable-all --disable-programs --disable-doc --disable-htmlpages \
 --disable-manpages --disable-podpages --disable-txtpages \
 --enable-avdevice --enable-avcodec --enable-avformat --enable-swresample \
@@ -9,10 +9,10 @@ CONFIG_OPTS =--prefix=$(DSTROOTFSDIR) \
 --disable-decoders --disable-hwaccels --disable-muxers --disable-demuxers \
 --disable-parsers --disable-bsfs --disable-protocols --disable-indevs \
 --disable-outdevs --disable-filters
-ifeq ($(PL_LIBX264_MODULE),true)
+ifeq ($(ZPL_LIBX264_MODULE),true)
 CONFIG_OPTS += -L/home/zhurish/workspace/SWPlatform/source/rootfs_install/lib -lx264
 endif
-ifeq ($(PL_OPENH264_MODULE),true)
+ifeq ($(ZPL_OPENH264_MODULE),true)
 EXTRALIBS-avcodec += -L/home/zhurish/workspace/SWPlatform/source/rootfs_install/lib -lopenh264
 endif
 --enable-encoder="flv,g723_1,h261,h263,h264_v4l2m2m,hevc_v4l2m2m,libgsm,libopencore_amrnb,libopenh264,\

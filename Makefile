@@ -33,13 +33,13 @@ include make/makelinux.mk
 #
 #
 #
-TAGET=SWP-$(PLVER)
+TAGET=SWP-$(ZPLVER)
 #
 #
 #PLOS_MAP = -Wl,-Map,target-app.map
-ifneq ($(PLOS_MAP),)
-TAGETMAP=SWP-$(PLVER).map
-PLOS_MAP = -Wl,-Map,$(TAGETMAP)
+ifneq ($(ZPLOS_MAP),)
+TAGETMAP=SWP-$(ZPLVER).map
+ZPLOS_MAP = -Wl,-Map,$(TAGETMAP)
 endif
 #
 #
@@ -49,49 +49,54 @@ endif
 #
 #
 #
-LIBS1 = $(shell $(CD) $(BASE_ROOT)/$(LIBDIR)/ && ls *.a)
+LIBS1 = $(shell $(CD) $(BASE_ROOT)/$(ZPL_LIB_DIR)/ && ls *.a)
 LIBS2 = $(subst .a,,$(LIBS1))
 LIBC += $(subst lib,-l,$(LIBS2))
-ifneq ($(PL_BUILD_ARCH),X86)
-LIBSO1 = $(shell $(CD) $(BASE_ROOT)/$(LIBDIR)/ && ls *.so)
+ifneq ($(ZPL_BUILD_ARCH),X86)
+LIBSO1 = $(shell $(CD) $(BASE_ROOT)/$(ZPL_LIB_DIR)/ && ls *.so)
 LIBSO2 = $(subst .so,,$(LIBSO1))
 LIBC += $(subst lib,-l,$(LIBSO2))
 endif
 #
 #
-#PL_LDCLFLAG=$(PLOS_LDLIBS) $(PLEX_LDLIBS) $(PL_LDLIBS) 
-PLLSLIBS += $(LIBC)
-PLLDSOLIBS = $(PLLDLIBS)
+#ZPL_LDCLFLAG=$(ZPLOS_LDLIBS) $(ZPLEX_LDLIBS) $(ZPL_LDLIBS) 
+ZPLLSLIBS += $(LIBC)
+ZPLLDSOLIBS = $(ZPLLDLIBS)
 #
-#PLINCLUDE += -I$(BASE_ROOT)/include
+#ZPLINCLUDE += -I$(BASE_ROOT)/include
 #
-#PLINCLUDE += $(IPSTACK_INCLUDE)
+#ZPLINCLUDE += $(IPSTACK_INCLUDE)
 #IPSTACK_LIBDIR
 #
-ifeq ($(PL_IPCOM_STACK_MODULE),true)
+ifeq ($(ZPL_IPCOM_STACK_MODULE),true)
 IPLIBS1 = $(shell $(CD) $(IPSTACK_LIBDIR)/ && ls *.a)
 IPLIBS2 = $(subst .a,,$(IPLIBS1))
 IPLIBC += $(subst lib,-l,$(IPLIBS2))
 
-PLLDFLAGS += -L$(IPSTACK_LIBDIR)
+ZPLLDFLAGS += -L$(IPSTACK_LIBDIR)
 endif
 #
 #
 #
-#ULIBSOFILE = $(shell $(CD) $(BASE_ROOT)/$(ULIBDIR)/ && ls *.so)
-#ULIBSOFILE += $(shell $(CD) $(BASE_ROOT)/$(ULIBDIR)/ && ls *.so*)
+#ULIBSOFILE = $(shell $(CD) $(BASE_ROOT)/$(ZPL_ULIB_DIR)/ && ls *.so)
+#ULIBSOFILE += $(shell $(CD) $(BASE_ROOT)/$(ZPL_ULIB_DIR)/ && ls *.so*)
 #
 #
 #
-PLLDLIBS += $(IPLIBC)
+ZPLLDLIBS += $(IPLIBC)
+#ZPLLDLIBS += -lpj -lpjlib-util -lpjmedia -lpjmedia-audiodev -lpjmedia-codec\
+			 -lpjmedia-videodev -lpjnath -lpjsip -lpjsip-simple -lpjsip-ua \
+			 -lpjsua -lsrtp -lgsmcodec -lspeex -lilbccodec -lg7221codec \
+			 -lwebrtc -lyuv -lv4l2 -lopenh264 -lresample
 #
 #
-#export PLLDCLFLAG += -L$(BASE_ROOT)/$(LIBDIR)/  
-#$(PLDEFINE) $(PLINCLUDE) $(PL_DEBUG) -g #-lcrypto
-# $(PL_CFLAGS)
+#export ZPLLDCLFLAG += -L$(BASE_ROOT)/$(ZPL_LIB_DIR)/  
+#$(ZPLDEFINE) $(ZPLINCLUDE) $(ZPL_DEBUG) -g #-lcrypto
+# $(ZPL_CFLAGS)
 #
 %.o: %.c 
-	@$(CC) -fPIC $(PLDEFINE) $(PLDEBUG) $(PLCFLAGS) -g $(PLLDSOLIBS) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
+	$(ZPL_ECHO_CC)
+	@$(CC) -fPIC $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLCFLAGS) -g $(ZPLLDSOLIBS) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
 
 
 SOURCES = $(wildcard *.c *.cpp)
@@ -111,13 +116,13 @@ OBJS = $(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(SOURCES)))
 # ubuntu 系统要把链接库放在行的末尾处
 #
 #
-ifeq ($(PL_BUILD_DEBUG),YES)
-target : $(OBJS) $(BASE_ROOT)/$(LIBDIR)/*.a 
-	$(CC) -o $(TAGET) $(OBJS) -Xlinker "-(" $(PLLSLIBS) -Xlinker "-)" $(PLOS_MAP) $(PLLDFLAGS) $(PLLDSOLIBS)
+ifeq ($(ZPL_BUILD_DEBUG),YES)
+target : $(OBJS) $(BASE_ROOT)/$(ZPL_LIB_DIR)/*.a 
+	$(CC) -o $(TAGET) $(OBJS) -Xlinker "-(" $(ZPLLSLIBS) -Xlinker "-)" $(ZPLOS_MAP) $(ZPLLDFLAGS) $(ZPLLDSOLIBS)
 	$(CHMOD) a+x $(TAGET)
 else
-target : $(OBJS) $(BASE_ROOT)/$(LIBDIR)/*.a 
-	$(CC) -o $(TAGET) $(OBJS) -Xlinker "-(" $(PLLSLIBS) -Xlinker "-)" $(PLOS_MAP) $(PLLDFLAGS) $(PLLDSOLIBS)
+target : $(OBJS) $(BASE_ROOT)/$(ZPL_LIB_DIR)/*.a 
+	$(CC) -o $(TAGET) $(OBJS) -Xlinker "-(" $(ZPLLSLIBS) -Xlinker "-)" $(ZPLOS_MAP) $(ZPLLDFLAGS) $(ZPLLDSOLIBS)
 	$(CHMOD) a+x $(TAGET)
 	$(STRIP) $(TAGET)
 endif
@@ -176,30 +181,30 @@ endif
 #
 ifeq ($(BUILD_OPENWRT),true)
 openwrt_install:
-	$(INSTALL) -d ${DSTETCDIR} 
+	$(INSTALL) -d ${ZPL_INSTALL_ETC_DIR} 
 	cd make;./setup.sh $(TAGET)
 else
 openwrt_install:
-	$(INSTALL) -d ${DSTETCDIR} 
+	$(INSTALL) -d ${ZPL_INSTALL_ETC_DIR} 
 endif
 #
 #
 config_install: openwrt_install 
-	$(INSTALL) -d ${DSTETCDIR} 
-	$(INSTALL) -m 755 make/start-boot.sh ${DSTETCDIR}  	
-	$(INSTALL) -m 755 startup/etc/plat.conf ${DSTETCDIR}
-	$(INSTALL) -m 755 startup/etc/openconfig ${DSTETCDIR}
-	$(INSTALL) -m 755 startup/etc/product ${DSTETCDIR}
-	$(INSTALL) -m 755 startup/etc/voipconfig ${DSTETCDIR}
+	$(INSTALL) -d ${ZPL_INSTALL_ETC_DIR} 
+	$(INSTALL) -m 755 make/start-boot.sh ${ZPL_INSTALL_ETC_DIR}  	
+	$(INSTALL) -m 755 startup/etc/plat.conf ${ZPL_INSTALL_ETC_DIR}
+	$(INSTALL) -m 755 startup/etc/openconfig ${ZPL_INSTALL_ETC_DIR}
+	$(INSTALL) -m 755 startup/etc/product ${ZPL_INSTALL_ETC_DIR}
+	$(INSTALL) -m 755 startup/etc/voipconfig ${ZPL_INSTALL_ETC_DIR}
 #	
-#	$(INSTALL) -d ${BINDIR}
-#	$(INSTALL) -m 755 ${TAGET} ${BINDIR}
-#	$(STRIP) $(BINDIR)/$(TAGET) 
-#	$(INSTALL) -d ${DSTETCDIR} 
+#	$(INSTALL) -d ${ZPL_BIN_DIR}
+#	$(INSTALL) -m 755 ${TAGET} ${ZPL_BIN_DIR}
+#	$(STRIP) $(ZPL_BIN_DIR)/$(TAGET) 
+#	$(INSTALL) -d ${ZPL_INSTALL_ETC_DIR} 
 #	cd make;./setup.sh $(TAGET)
-#	$(INSTALL) -m 755 make/start-boot.sh ${DSTETCDIR}  	
-#	$(INSTALL) -m 755 startup/etc/plat.conf ${DSTETCDIR}
-	#$(INSTALL) -m 755 startup/etc/default-config.cfg ${DSTETCDIR}
+#	$(INSTALL) -m 755 make/start-boot.sh ${ZPL_INSTALL_ETC_DIR}  	
+#	$(INSTALL) -m 755 startup/etc/plat.conf ${ZPL_INSTALL_ETC_DIR}
+	#$(INSTALL) -m 755 startup/etc/default-config.cfg ${ZPL_INSTALL_ETC_DIR}
 	#$(CP) $(TAGET) /home/zhurish/Downloads/tftpboot/
 #
 #
@@ -274,18 +279,18 @@ obj:
 #install: obj
 install: config_install
 	${MAKE} -C  $(TOP_DIR)/make/ $@ 
-	$(INSTALL) -d ${BINDIR}
-	$(INSTALL) -m 755 ${TAGET} ${BINDIR}
-	#$(STRIP) $(BINDIR)/$(TAGET) 
+	$(INSTALL) -d ${ZPL_BIN_DIR}
+	$(INSTALL) -m 755 ${TAGET} ${ZPL_BIN_DIR}
+	#$(STRIP) $(ZPL_BIN_DIR)/$(TAGET) 
 	
-	#install -d ${DSTULIBDIR}
-	#$(CP) $(ULIBSOFILE) ${DSTULIBDIR}
+	#install -d ${ZPL_INSTALL_ULIB_DIR}
+	#$(CP) $(ULIBSOFILE) ${ZPL_INSTALL_ULIB_DIR}
 	
-	#install -d ${DSTETCDIR}
+	#install -d ${ZPL_INSTALL_ETC_DIR}
 	#cd make;./setup.sh $(TAGET)
-	#install -m 755 make/start-boot.sh ${DSTETCDIR}  	
-	#install -m 755 startup/etc/plat.conf ${DSTETCDIR}
-	#install -m 755 startup/etc/default-config.cfg ${DSTETCDIR}
+	#install -m 755 make/start-boot.sh ${ZPL_INSTALL_ETC_DIR}  	
+	#install -m 755 startup/etc/plat.conf ${ZPL_INSTALL_ETC_DIR}
+	#install -m 755 startup/etc/default-config.cfg ${ZPL_INSTALL_ETC_DIR}
 	#$(CP) $(TAGET) /home/zhurish/Downloads/tftpboot/
 	
 #all: install $(TAGET)

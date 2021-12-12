@@ -18,10 +18,9 @@ along with GNU Zebra; see the file COPYING.  If not, write to the
 Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#include <zebra.h>
-
-#include "memory.h"
-#include "pqueue.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
 /* priority queue using heap sort */
 
@@ -43,7 +42,7 @@ Boston, MA 02111-1307, USA.  */
 #define HAVE_CHILD(x,q) (x < (q)->size / 2)
 
 void
-trickle_up (ospl_uint32 index, struct pqueue *queue)
+trickle_up (zpl_uint32 index, struct pqueue *queue)
 {
   void *tmp;
 
@@ -69,7 +68,7 @@ trickle_up (ospl_uint32 index, struct pqueue *queue)
 }
 
 void
-trickle_down (ospl_uint32 index, struct pqueue *queue)
+trickle_down (zpl_uint32 index, struct pqueue *queue)
 {
   void *tmp;
   int which;
@@ -171,7 +170,7 @@ pqueue_dequeue (struct pqueue *queue)
 }
 
 void
-pqueue_remove_at (ospl_uint32 index, struct pqueue *queue)
+pqueue_remove_at (zpl_uint32 index, struct pqueue *queue)
 {
   queue->array[index] = queue->array[--queue->size];
 
@@ -187,9 +186,9 @@ pqueue_remove_at (ospl_uint32 index, struct pqueue *queue)
     }
 }
 
-ospl_bool pqueue_empty (struct pqueue *queue)
+zpl_bool pqueue_empty (struct pqueue *queue)
 {
 	if(queue->size)
-		return ospl_false;
-	return ospl_true;
+		return zpl_false;
+	return zpl_true;
 }

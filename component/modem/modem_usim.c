@@ -7,14 +7,11 @@
 
 
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
-#include "os_list.h"
-#include "os_util.h"
-#include "tty_com.h"
 #include "modem_enum.h"
 #include "modem.h"
 #include "modem_client.h"
@@ -45,7 +42,7 @@
  *
  */
 
-static int modem_cpin_lock_atcmd_get(modem_client_t *client, ospl_bool *enable)
+static int modem_cpin_lock_atcmd_get(modem_client_t *client, zpl_bool *enable)
 {
 	assert(client);
 	assert(enable);
@@ -61,7 +58,7 @@ static int modem_cpin_lock_atcmd_get(modem_client_t *client, ospl_bool *enable)
 
 }
 
-/*static int modem_cpin_lock_atcmd_set(modem_client_t *client, ospl_bool enable, char *pin)
+/*static int modem_cpin_lock_atcmd_set(modem_client_t *client, zpl_bool enable, char *pin)
 {
 	assert(client);
 	if (modem_attty(client, MODEM_TIMEOUT(5), "OK", "AT+CLCK=\"SC\",%d,\"%s\"",

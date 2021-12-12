@@ -27,112 +27,18 @@
 extern "C" {
 #endif
 
+#ifdef ZPL_SHELL_MODULE
+
 #include "hash.h"
-//#include "route_types.h"
 #include "vector.h"
 #include "vty.h"
 
 #ifdef IF_IUSPV_SUPPORT
 #define CMD_IUSPV_SUPPORT
 #endif
-/* There are some command levels which called from command node. */
-enum node_type 
-{
-  USER_NODE,
-  AUTH_NODE,			/* Authentication mode of vty interface. */
-//  RESTRICTED_NODE,		/* Restricted view mode */
-  VIEW_NODE,			/* View node. Default mode of vty interface. */
-  AUTH_ENABLE_NODE,		/* Authentication mode for change enable. */
-  ENABLE_NODE,			/* Enable node. */
-  CONFIG_NODE,			/* Config node. Default mode of config file. */
-  VLAN_DATABASE_NODE,	/* vlan database node*/
-  VLAN_NODE,			/* vlan node */
-  VRF_NODE,			/* VRF node. */
-  SERVICE_NODE, 		/* Service node. */
-  ALL_SERVICE_NODE, 		/* Service node. */
 
-/* 2016閿熸枻鎷�6閿熸枻鎷�27閿熸枻鎷� 21:01:23 zhurish: 浣块敓鏂ゆ嫹IMI Module缁熶竴CLI閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鏃堕敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鎵ч敓鏂ゆ嫹linux閿熻妭鏍哥鎷峰厓閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷疯瘶閿燂拷 */
-#ifdef IMISH_IMI_MODULE  
-  LINUX_SHELL_NODE,			/* IMI Module protocol node. */
-#endif//IMISH_IMI_MODULE   
-/* 2016閿熸枻鎷�6閿熸枻鎷�27閿熸枻鎷� 21:01:23  zhurish: 浣块敓鏂ゆ嫹IMI Module缁熶竴CLI閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鏃堕敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鎵ч敓鏂ゆ嫹linux閿熻妭鏍哥鎷峰厓閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷疯瘶閿燂拷 */
-  DEBUG_NODE,			/* Debug node. */
-  AAA_NODE,			/* AAA node. */
-  KEYCHAIN_NODE,		/* Key-chain node. */
-  KEYCHAIN_KEY_NODE,		/* Key-chain key node. */
-  DHCPS_NODE,				/* DHDP server*/
-
-  TEMPLATE_NODE,				/* templates server*/
-
-  LOOPBACK_INTERFACE_NODE,	/* Loopback Interface mode node. */
-
-  SERIAL_INTERFACE_NODE,	/* Serial Interface mode node. */
-
-  INTERFACE_NODE,			/* L2 Interface mode node(default). */
-
-  INTERFACE_L3_NODE,		/* Interface mode node. */
-  WIRELESS_INTERFACE_NODE,	/* Interface mode node. */
-  TUNNEL_INTERFACE_NODE,	/* Tunnel Interface mode node. */
-
-  LAG_INTERFACE_NODE,		/* Lag Interface mode node. */
-  LAG_INTERFACE_L3_NODE,	/* Lag L3 Interface mode node. */
-
-  BRIGDE_INTERFACE_NODE,	/* Brigde Interface mode node. */
-#ifdef CUSTOM_INTERFACE
-  WIFI_INTERFACE_NODE,	/* Wifi Interface mode node. */
-  MODEM_INTERFACE_NODE,		/* Modem Interface mode node. */
-#endif
-
-  TRUNK_NODE,			/* Trunk group mode node. */
-
-  MODEM_PROFILE_NODE,		/* Modem Profile node. */
-  MODEM_CHANNEL_NODE,		/* Modem Channel node. */
-
-  ZEBRA_NODE,			/* zebra connection node. */
-  TABLE_NODE,			/* rtm_table selection node. */
-  RIP_NODE,			/* RIP protocol mode node. */ 
-  RIPNG_NODE,			/* RIPng protocol mode node. */
-  BABEL_NODE,			/* Babel protocol mode node. */
-  BGP_NODE,			/* BGP protocol mode which includes BGP4+ */
-  BGP_VPNV4_NODE,		/* BGP MPLS-VPN PE exchange. */
-  BGP_VPNV6_NODE,		/* BGP MPLS-VPN PE exchange. */
-  BGP_IPV4_NODE,		/* BGP IPv4 unicast address family.  */
-  BGP_IPV4M_NODE,		/* BGP IPv4 multicast address family.  */
-  BGP_IPV6_NODE,		/* BGP IPv6 address family */
-  BGP_IPV6M_NODE,		/* BGP IPv6 multicast address family. */
-  BGP_ENCAP_NODE,		/* BGP ENCAP SAFI */
-  BGP_ENCAPV6_NODE,		/* BGP ENCAP SAFI */
-  OSPF_NODE,			/* OSPF protocol mode */
-  OSPF6_NODE,			/* OSPF protocol for IPv6 mode */
-  ISIS_NODE,			/* ISIS protocol mode */
-  PIM_NODE,			/* PIM protocol mode */
-
-  HSLS_NODE,			/* HSLS protocol node. */
-  OLSR_NODE,			/* OLSR protocol node. */
-  VRRP_NODE,                /* VRRP protocol node */
-  FRP_NODE,                /* FRP protocol node */
-  LLDP_NODE,
-  BFD_NODE,
-  LDP_NODE,
-
-  MASC_NODE,			/* MASC for multicast.  */
-  IRDP_NODE,			/* ICMP Router Discovery Protocol mode. */ 
-  IP_NODE,			/* Static ip route node. */
-  ACCESS_NODE,			/* Access list node. */
-  PREFIX_NODE,			/* Prefix list node. */
-  ACCESS_IPV6_NODE,		/* Access list node. */
-  PREFIX_IPV6_NODE,		/* Prefix list node. */
-  AS_LIST_NODE,			/* AS list node. */
-  COMMUNITY_LIST_NODE,		/* Community list node. */
-  RMAP_NODE,			/* Route map node. */
-  SMUX_NODE,			/* SNMP configuration node. */
-  DUMP_NODE,			/* Packet dump node. */
-  FORWARDING_NODE,		/* IP forwarding node. */
-  PROTOCOL_NODE,                /* protocol filtering node */
-  VTY_NODE,			/* Vty node. */
-  LINK_PARAMS_NODE,		/* Link-parameters node */
-  ZEBRA_IF_DEFAULTS_NODE,	/* If defaults dummy node */
-};
+#include "cli_node.h"
+#include "cli_helper.h"
 
 /* Node which has some commands and prompt string and configuration
    function pointer . */
@@ -145,7 +51,7 @@ struct cmd_node
   const char *prompt;			
 
   /* Is this node's configuration goes to vtysh ? */
-  ospl_uint32 vtysh;
+  zpl_uint32 vtysh;
   
   /* Node's configuration write function */
   int (*func) (struct vty *);
@@ -163,15 +69,24 @@ enum
   CMD_ATTR_HIDDEN,
 };
 
+enum cmd_privilege {
+	CMD_VIEW_LEVEL = 1,
+	CMD_ENABLE_LEVEL = 2,
+	CMD_CONFIG_LEVEL = 3,
+	CMD_ADMIN_LEVEL = 4,
+  CMD_ROOT_LEVEL = 5,
+};
+
 /* Structure of command element. */
 struct cmd_element 
 {
   const char *string;			/* Command specification by string. */
-  int (*func) (struct cmd_element *, struct vty *, ospl_uint32, const char *[]);
+  int (*func) (struct cmd_element *, struct vty *, zpl_uint32, const char *[]);
   const char *doc;			/* Documentation of this command. */
-  ospl_uint32 daemon;                   /* Daemon to which this command belong. */
+  zpl_uint32 daemon;                   /* Daemon to which this command belong. */
   vector tokens;		/* Vector of cmd_tokens */
-  ospl_uchar attr;			/* Command attributes */
+  zpl_uchar attr;			/* Command attributes */
+  enum cmd_privilege privilege;
 };
 
 
@@ -214,8 +129,8 @@ struct cmd_token
   vector keyword; /* vector of vector of cmd_tokens */
 
   /* Used for type == TERMINAL */
-  ospl_char *cmd;                    /* Command string. */
-  ospl_char *desc;                    /* Command's description. */
+  zpl_char *cmd;                    /* Command string. */
+  zpl_char *desc;                    /* Command's description. */
 };
 
 /* Return value of the commands. */
@@ -364,7 +279,7 @@ struct cmd_token
  * for a Terminal Token, the exception are optional variables and varag.
  *
  * There is one special case that is used in some places of Quagga that should be
- * pointed out here ospl_int16ly. An example would be "password (8|) WORD". This
+ * pointed out here zpl_int16ly. An example would be "password (8|) WORD". This
  * construct is used to have fixed strings communicated as arguments. (The "8"
  * will be passed down as an argument in this case) It does not mean that
  * the "8" is optional. Another historic and possibly surprising property of
@@ -404,7 +319,7 @@ struct cmd_token
  * helpstr
  * =======
  *
- * The helpstr is used to show a ospl_int16 explantion for the commands that
+ * The helpstr is used to show a zpl_int16 explantion for the commands that
  * are available when the user presses '?' on the CLI. It is the concatenation
  * of the helpstrings for all the tokens that make up the command.
  *
@@ -500,156 +415,35 @@ struct cmd_token
 
 
 /* Common descriptions. */
-#define SHOW_STR "Show running system information\n"
-#define IP_STR "IP information\n"
-#define IPV6_STR "IPv6 information\n"
-#define NO_STR "Negate a command or set its defaults\n"
-#define REDIST_STR "Redistribute information from another routing protocol\n"
-#define CLEAR_STR "Reset functions\n"
-#define RIP_STR "RIP information\n"
-#define BGP_STR "BGP information\n"
-#define BGP_SOFT_STR "Soft reconfig inbound and outbound updates\n"
-#define BGP_SOFT_IN_STR "Send route-refresh unless using 'soft-reconfiguration inbound'\n"
-#define BGP_SOFT_OUT_STR "Resend all outbound updates\n"
-#define BGP_SOFT_RSCLIENT_RIB_STR "Soft reconfig for rsclient RIB\n"
-#define OSPF_STR "OSPF information\n"
-#define NEIGHBOR_STR "Specify neighbor router\n"
-#define DEBUG_STR "Debugging functions (see also 'undebug')\n"
-#define UNDEBUG_STR "Disable debugging functions (see also 'debug')\n"
-#define ROUTER_STR "Enable a routing process\n"
-#define AS_STR "AS number\n"
-#define MBGP_STR "MBGP information\n"
-#define MATCH_STR "Match values from routing table\n"
-#define SET_STR "Set values in destination routing protocol\n"
-#define OUT_STR "Filter outgoing routing updates\n"
-#define IN_STR  "Filter incoming routing updates\n"
-#define V4NOTATION_STR "specify by IPv4 address notation(e.g. 0.0.0.0)\n"
-#define OSPF6_NUMBER_STR "Specify by number\n"
-#define INTERFACE_STR "Interface information\n"
-#define IFNAME_STR "Interface name(e.g. eth0/1/1)\n"
-#define IP6_STR "IPv6 Information\n"
-#define OSPF6_STR "Open Shortest Path First (OSPF) for IPv6\n"
-#define OSPF6_ROUTER_STR "Enable a routing process\n"
-#define OSPF6_INSTANCE_STR "<1-65535> Instance ID\n"
-#define SECONDS_STR "<1-65535> Seconds\n"
-#define ROUTE_STR "Routing Table\n"
-#define PREFIX_LIST_STR "Build a prefix list\n"
-#define OSPF6_DUMP_TYPE_LIST \
-"(neighbor|interface|area|lsa|zebra|config|dbex|spf|route|lsdb|redistribute|hook|asbr|prefix|abr)"
-#define ISIS_STR "IS-IS information\n"
-#define AREA_TAG_STR "[area tag]\n"
-#define MPLS_TE_STR "MPLS-TE specific commands\n"
-#define LINK_PARAMS_STR "Configure interface link parameters\n"
-#define OSPF_RI_STR "OSPF Router Information specific commands\n"
-#define PCE_STR "PCE Router Information specific commands\n"
 
-
-#define CMD_KEY_IPV4		"A.B.C.D"
-#define CMD_KEY_IPV4_PREFIX	"A.B.C.D/M"
-#define CMD_KEY_IPV6		"X:X::X:X"
-#define CMD_KEY_IPV6_PREFIX	"X:X::X:X/M"
-#define CMD_KEY_IPV4_HELP	"Specify IPv4 address notation(e.g. 0.0.0.0)\n"
-
-#define CMD_INTERFACE_STR	"interface"
-#define CMD_INTERFACE_STR_HELP	INTERFACE_STR
-
-#define CMD_IF_USPV_STR		"(serial|ethernet|gigabitethernet|wireless|tunnel|brigde)"
-#define CMD_IF_USPV_STR_HELP	"Serial interface\n Ethernet interface\n" \
-								"GigabitEthernet interface\n" \
-								"Wireless interface\n"\
-								"Tunnel interface\n Brigde interface\n"
-
-#define CMD_USP_STR			"<unit/slot/port>"
-#define CMD_USP_STR_HELP	"specify interface name:<unit/slot/port> (e.g. 0/1/3)\n"
-#ifdef CUSTOM_INTERFACE
-#define CMD_IF_MIP_STR		"(modem|wifi)"
-#define CMD_IF_MIP_STR_HELP	"Modem interface\n" "Wifi interface\n"
-#endif
-
-
-#define CMD_IF_VLAN_STR			"vlan <1-4094>"
-#define CMD_IF_VLAN_STR_HELP	"Super Vlan interface\n" \
-								"VLAN ID\n"
-
-#define CMD_IF_LOOP_STR			"loopback <1-1024>"
-#define CMD_IF_LOOP_STR_HELP	"Loopback interface\n" \
-								"Interface ID\n"
-
-#define CMD_IF_TRUNK_STR		"port-channel <1-64>"
-#define CMD_IF_TRUNK_STR_HELP	"Ethernet Channel of interface\n" \
-								"Channel ID\n"
-
-
-
-#define CMD_MAC_ADDRESS_STR	"mac-address-table"
-#define CMD_MAC_ADDRESS_STR_HELP	"mac-address-table\n"
-
-#define CMD_MAC_STR			"HHHH-HHHH-HHHH"
-#define CMD_MAC_STR_HELP	"specify MAC address:HHHH-HHHH-HHHH (e.g. 0012-2234-5631)\n"
-
-#define CMD_FORWARD_STR			"forward"
-#define CMD_FORWARD_STR_HELP	"forward\n"
-
-#define CMD_DISCARD_STR			"discard"
-#define CMD_DISCARD_STR_HELP	"discard\n"
-
-#define CMD_VLAN_DATABASE_STR		"vlan-database"
-#define CMD_VLAN_STR_DATABASE_HELP	"Vlan database\n"
-#define CMD_VLAN_STR		"vlan <2-4094>"
-#define CMD_VLAN_STR_HELP	"Vlan information\nVlan ID\n"
-
-#define CMD_AGEING_TIME_STR			"ageing-time"
-#define CMD_AGEING_TIME_STR_HELP	"ageing-time\n"
-
-#define CMD_ARP_STR			"arp"
-#define CMD_ARP_STR_HELP	"arp\n"
-
-
-/* IPv4 only machine should not accept IPv6 address for peer's IP
-   address.  So we replace VTY command string like below. */
-#ifdef HAVE_IPV6
-#define NEIGHBOR_CMD       "neighbor (A.B.C.D|X:X::X:X) "
-#define NO_NEIGHBOR_CMD    "no neighbor (A.B.C.D|X:X::X:X) "
-#define NEIGHBOR_ADDR_STR  "Neighbor address\nIPv6 address\n"
-#define NEIGHBOR_CMD2      "neighbor (A.B.C.D|X:X::X:X|WORD) "
-#define NO_NEIGHBOR_CMD2   "no neighbor (A.B.C.D|X:X::X:X|WORD) "
-#define NEIGHBOR_ADDR_STR2 "Neighbor address\nNeighbor IPv6 address\nNeighbor tag\n"
-#else
-#define NEIGHBOR_CMD       "neighbor A.B.C.D "
-#define NO_NEIGHBOR_CMD    "no neighbor A.B.C.D "
-#define NEIGHBOR_ADDR_STR  "Neighbor address\n"
-#define NEIGHBOR_CMD2      "neighbor (A.B.C.D|WORD) "
-#define NO_NEIGHBOR_CMD2   "no neighbor (A.B.C.D|WORD) "
-#define NEIGHBOR_ADDR_STR2 "Neighbor address\nNeighbor tag\n"
-#endif /* HAVE_IPV6 */
 
 /* Prototypes. */
 extern void install_node (struct cmd_node *, int (*) (struct vty *));
 extern void reinstall_node (enum node_type node, int (*func) (struct vty *));
 extern void install_default (enum node_type);
-extern void install_element (enum node_type, struct cmd_element *);
+extern void install_element (enum node_type, enum cmd_privilege privilege, struct cmd_element *);
 
 /* Concatenates argv[shift] through argv[argc-1] into a single NUL-terminated
    string with a space between each element (allocated using
    XMALLOC(MTYPE_TMP)).  Returns NULL if shift >= argc. */
-extern ospl_char *argv_concat (const char **argv, ospl_uint32 argc, ospl_uint32 shift);
+extern zpl_char *argv_concat (const char **argv, zpl_uint32 argc, zpl_uint32 shift);
 
 extern vector cmd_make_strvec (const char *);
 extern void cmd_free_strvec (vector);
-extern vector cmd_describe_command (vector, struct vty *, ospl_uint32 *status);
-extern ospl_char **cmd_complete_command (vector, struct vty *, ospl_uint32 *status);
-extern ospl_char **cmd_complete_command_lib (vector, struct vty *, ospl_uint32 *status, ospl_uint32 islib);
+extern vector cmd_describe_command (vector, struct vty *, zpl_uint32 *status);
+extern zpl_char **cmd_complete_command (vector, struct vty *, zpl_uint32 *status);
+extern zpl_char **cmd_complete_command_lib (vector, struct vty *, zpl_uint32 *status, zpl_uint32 islib);
 extern const char *cmd_prompt (enum node_type);
-extern int command_config_read_one_line (struct vty *vty, struct cmd_element **, ospl_uint32 use_config_node);
-extern int config_from_file (struct vty *, FILE *, ospl_uint32  *line_num);
-extern enum node_type node_parent (enum node_type);
-extern int cmd_execute_command (vector, struct vty *, struct cmd_element **, ospl_uint32);
+extern int command_config_read_one_line (struct vty *vty, struct cmd_element **, zpl_uint32 use_config_node);
+extern int config_from_file (struct vty *, FILE *, zpl_uint32  *line_num);
+//extern enum node_type node_parent (enum node_type);
+extern int cmd_execute_command (vector, struct vty *, struct cmd_element **, zpl_uint32);
 extern int cmd_execute_command_strict (vector, struct vty *, struct cmd_element **);
-extern void cmd_init (ospl_bool);
+extern void cmd_init (zpl_bool);
 extern void cmd_terminate (void);
 extern vector cmd_node_vector (vector v, enum node_type ntype);
 extern void install_default_basic (enum node_type node);
-extern ospl_char * zencrypt (const char *passwd);
+extern zpl_char * zencrypt (const char *passwd);
 /* Export typical functions. */
 extern struct cmd_element config_end_cmd;
 extern struct cmd_element config_exit_cmd;
@@ -667,9 +461,9 @@ extern void print_version (const char *);
 
 
 /* "<cr>" global */
-extern ospl_char *command_cr;
+extern zpl_char *command_cr;
 
- 
+#endif /* ZPL_SHELL_MODULE */ 
 #ifdef __cplusplus
 }
 #endif

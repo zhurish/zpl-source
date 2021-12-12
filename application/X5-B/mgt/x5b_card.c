@@ -1,15 +1,7 @@
-#include "zebra.h"
-#include "memory.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "linklist.h"
-#include "prefix.h"
-#include "table.h"
-#include "vector.h"
-#include "eloop.h"
-#include "network.h"
-#include "vty.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "nsm_include.h"
 
 
 #include "x5_b_global.h"
@@ -22,10 +14,10 @@ static os_mutex_t *card_mutex = NULL;
 static int voip_card_update_save(void);
 static int voip_card_load_from_file(void);
 
-int card_id_string_to_hex(const char *id, ospl_uint32 len, ospl_uint8 *cardNumber)
+int card_id_string_to_hex(const char *id, zpl_uint32 len, zpl_uint8 *cardNumber)
 {
 	char tmp[8], cid[64];
-	ospl_uint32 i = 0, offset = 0;
+	zpl_uint32 i = 0, offset = 0;
 	if(cardNumber == NULL)
 		return 0;
 	memset(tmp, 0, sizeof(tmp));
@@ -658,12 +650,12 @@ int show_voip_card_info(struct vty *vty)
 	return OK;
 }
 
-static char *card_time_fmt (char *fmt, ospl_time_t t)
+static char *card_time_fmt (char *fmt, zpl_time_t t)
 {
-	ospl_uint32 len = 0;
+	zpl_uint32 len = 0;
 	struct tm tm;
 	static char data[128];
-	ospl_time_t ticlock = t;
+	zpl_time_t ticlock = t;
 	os_memset(data, 0, sizeof(data));
 	os_memset(&tm, 0, sizeof(tm));
 	//localtime_r(&ticlock, &tm);

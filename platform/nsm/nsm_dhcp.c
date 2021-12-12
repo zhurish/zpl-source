@@ -5,29 +5,13 @@
  *      Author: zhurish
  */
 
-#include <zebra.h>
-
-#include "if.h"
-#include "vty.h"
-#include "sockunion.h"
-#include "prefix.h"
-#include "command.h"
-#include "memory.h"
-#include "log.h"
-#include "nsm_vrf.h"
-#include "command.h"
-#include "nsm_interface.h"
-
-#include "if_name.h"
-#include "nsm_rib.h"
-#include "nsm_zserv.h"
-#include "nsm_redistribute.h"
-#include "nsm_debug.h"
-#include "nsm_zclient.h"
-#include "nsm_dhcp.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "nsm_include.h"
 
 
-#ifdef PL_DHCP_MODULE
+#ifdef ZPL_DHCP_MODULE
 
 nsm_dhcp_ifp_t *nsm_dhcp_get(struct interface *ifp)
 {
@@ -42,7 +26,7 @@ nsm_dhcp_ifp_t *nsm_dhcp_get(struct interface *ifp)
 }
 
 
-static int nsm_dhcp_add_interface(struct interface *ifp)
+int nsm_dhcp_interface_create_api(struct interface *ifp)
 {
 	if(if_is_ethernet(ifp) || if_is_lag(ifp) || if_is_vlan(ifp) ||
 			if_is_brigde(ifp) || if_is_wireless(ifp))
@@ -64,7 +48,7 @@ static int nsm_dhcp_add_interface(struct interface *ifp)
 }
 
 
-static int nsm_dhcp_del_interface(struct interface *ifp)
+int nsm_dhcp_interface_del_api(struct interface *ifp)
 {
 	if(if_is_ethernet(ifp) || if_is_lag(ifp) || if_is_vlan(ifp) ||
 			if_is_brigde(ifp) || if_is_wireless(ifp))
@@ -136,7 +120,7 @@ nsm_dhcp_type nsm_interface_dhcp_mode_get_api(struct interface *ifp)
 }
 
 
-int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type, ospl_char *name)
+int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type, zpl_char *name)
 {
 	nsm_dhcp_ifp_t *nsm_dhcp = NULL;
 	nsm_dhcp = nsm_dhcp_get(ifp);
@@ -144,31 +128,31 @@ int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type, o
 	{
 		if(!ifp->dhcp)
 		{
-			ifp->dhcp = ospl_true;
+			ifp->dhcp = zpl_true;
 		}
 		if(nsm_dhcp->type != type)
 		{
-#ifdef PL_DHCPC_MODULE
+#ifdef ZPL_DHCPC_MODULE
 			if(nsm_dhcp->type == DHCP_NONE && type == DHCP_CLIENT)
 			{
-				nsm_interface_dhcpc_enable(ifp,  ospl_true);
-				ifp->dhcp = ospl_true;
+				nsm_interface_dhcpc_enable(ifp,  zpl_true);
+				ifp->dhcp = zpl_true;
 			}
 			if(nsm_dhcp->type == DHCP_CLIENT && type == DHCP_NONE)
 			{
-				nsm_interface_dhcpc_enable(ifp,  ospl_false);
-				ifp->dhcp = ospl_false;
+				nsm_interface_dhcpc_enable(ifp,  zpl_false);
+				ifp->dhcp = zpl_false;
 			}
 #endif
-#ifdef PL_DHCPC_MODULE
+#ifdef ZPL_DHCPC_MODULE
 			if(nsm_dhcp->type == DHCP_NONE && type == DHCP_SERVER)
 			{
 				nsm_dhcps_t * pool = nsm_dhcps_lookup_api(name);
 				if(pool)
 				{
-					nsm_interface_dhcps_enable(pool, ifp->ifindex, ospl_true);
+					nsm_interface_dhcps_enable(pool, ifp->ifindex, zpl_true);
 					nsm_dhcp->server = pool;
-					ifp->dhcp = ospl_true;
+					ifp->dhcp = zpl_true;
 				}
 				else
 					return ERROR;
@@ -178,24 +162,24 @@ int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type, o
 				nsm_dhcps_t * pool = nsm_dhcps_lookup_api(name);
 				if(pool)
 				{
-					nsm_interface_dhcps_enable(pool, ifp->ifindex, ospl_false);
+					nsm_interface_dhcps_enable(pool, ifp->ifindex, zpl_false);
 					nsm_dhcp->server = pool;
-					ifp->dhcp = ospl_false;
+					ifp->dhcp = zpl_false;
 				}
 				else
 					return ERROR;
 			}
 #endif
-#ifdef PL_DHCPC_MODULE
+#ifdef ZPL_DHCPC_MODULE
 			if(nsm_dhcp->type == DHCP_NONE && type == DHCP_RELAY)
 			{
-				//dhcpc_interface_enable_api(ifp,  ospl_true);
-				ifp->dhcp = ospl_true;
+				//dhcpc_interface_enable_api(ifp,  zpl_true);
+				ifp->dhcp = zpl_true;
 			}
 			if(nsm_dhcp->type == DHCP_RELAY && type == DHCP_NONE)
 			{
-				//dhcpc_interface_enable_api(ifp,  ospl_false);
-				ifp->dhcp = ospl_false;
+				//dhcpc_interface_enable_api(ifp,  zpl_false);
+				ifp->dhcp = zpl_false;
 			}
 #endif
 			nsm_dhcp->type = type;
@@ -204,7 +188,7 @@ int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type, o
 	}
 	return ERROR;
 }
-
+#ifdef ZPL_SHELL_MODULE
 int nsm_interface_dhcp_config(struct vty *vty, struct interface *ifp)
 {
 	nsm_dhcp_ifp_t *nsm_dhcp = NULL;
@@ -213,20 +197,20 @@ int nsm_interface_dhcp_config(struct vty *vty, struct interface *ifp)
 		return OK;
 	if (ifp->dhcp)
 	{
-#ifdef PL_DHCPC_MODULE
+#ifdef ZPL_DHCPC_MODULE
 		if(nsm_dhcp->type == DHCP_CLIENT)
 		{
 			vty_out(vty, " ip address dhcp%s", VTY_NEWLINE);
 			nsm_interface_dhcpc_write_config(ifp, vty);
 		}
 #endif
-#ifdef PL_DHCPD_MODULE
+#ifdef ZPL_DHCPD_MODULE
 		if(nsm_dhcp->type == DHCP_SERVER)
 		{
 			vty_out(vty, " dhcp select server%s", VTY_NEWLINE);
 		}
 #endif
-#ifdef PL_DHCPR_MODULE
+#ifdef ZPL_DHCPR_MODULE
 		if(nsm_dhcp->type == DHCP_RELAY)
 		{
 			vty_out(vty, " dhcp select relay%s", VTY_NEWLINE);
@@ -235,27 +219,18 @@ int nsm_interface_dhcp_config(struct vty *vty, struct interface *ifp)
 	}
 	return OK;
 }
+#endif
 
-
-static int nsm_dhcp_client_init()
-{
-	struct nsm_client *nsm = nsm_client_new ();
-	nsm->notify_add_cb = nsm_dhcp_add_interface;
-	nsm->notify_delete_cb = nsm_dhcp_del_interface;
-	//nsm->interface_write_config_cb = nsm_dhcp_interface_config;
-	nsm_client_install (nsm, NSM_DHCP);
-	return OK;
-}
 
 int nsm_dhcp_module_init ()
 {
-	nsm_dhcp_client_init();
-#ifdef PL_DHCPD_MODULE
+	//nsm_interface_hook_add(NSM_DHCP, nsm_dhcp_interface_create_api, nsm_dhcp_interface_del_api);
+#ifdef ZPL_DHCPD_MODULE
 	nsm_dhcps_init();
 	udhcp_module_init();
 
 #endif
-#ifdef PL_DHCPC_MODULE
+#ifdef ZPL_DHCPC_MODULE
 	udhcp_module_init();
 #endif
 	return OK;
@@ -263,10 +238,10 @@ int nsm_dhcp_module_init ()
 
 int nsm_dhcp_task_init ()
 {
-#ifdef PL_DHCPC_MODULE
+#ifdef ZPL_DHCPC_MODULE
 	udhcp_module_task_init();
 #endif
-#ifdef PL_DHCPD_MODULE
+#ifdef ZPL_DHCPD_MODULE
 	udhcp_module_task_init();
 #endif
 	return OK;
@@ -274,10 +249,10 @@ int nsm_dhcp_task_init ()
 
 int nsm_dhcp_task_exit ()
 {
-#ifdef PL_DHCPC_MODULE
+#ifdef ZPL_DHCPC_MODULE
 	udhcp_module_task_exit ();
 #endif
-#ifdef PL_DHCPD_MODULE
+#ifdef ZPL_DHCPD_MODULE
 	udhcp_module_task_exit ();
 #endif
 	return OK;
@@ -285,13 +260,10 @@ int nsm_dhcp_task_exit ()
 
 int nsm_dhcp_module_exit ()
 {
-	struct nsm_client *nsm = nsm_client_lookup (NSM_DHCP);
-	if(nsm)
-		nsm_client_free (nsm);
-#ifdef PL_DHCPC_MODULE
+#ifdef ZPL_DHCPC_MODULE
 	udhcp_module_exit();
 #endif
-#ifdef PL_DHCPD_MODULE
+#ifdef ZPL_DHCPD_MODULE
 	udhcp_module_exit();
 	nsm_dhcps_exit();
 #endif
@@ -300,8 +272,8 @@ int nsm_dhcp_module_exit ()
 
 struct module_list module_list_nsmdhcp = 
 { 
-	.module=MODULE_NSMDHCP, 
-	.name="NSMDHCP", 
+	.module=MODULE_DHCP, 
+	.name="DHCP", 
 	.module_init=nsm_dhcp_module_init, 
 	.module_exit=nsm_dhcp_module_exit, 
 	.module_task_init=nsm_dhcp_task_init, 

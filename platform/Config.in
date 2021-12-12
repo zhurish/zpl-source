@@ -4,220 +4,331 @@
 
 menu "Platform configuration"
 
-comment "Platform OS Abstract Layer Module"
+comment "OS Abstract Layer Module"
 
-config PL_OS_MODULE
-	bool "Platform OS Abstract Layer"
+config ZPL_OS_MODULE
+	bool "OS Abstract Layer"
 	default y
 	help
-	Build Platform OS Abstract Layer, timer, task, sem, list.
+	Build OS Abstract Layer, timer, task, sem, list.
 
-config PL_OS_JSON
+config ZPL_OS_JSON
 	bool "Platform OS JSON Module"
-	depends on PL_OS_MODULE
+	depends on ZPL_OS_MODULE
 	default y
 	help
 	Build cJSON Module.
 	
-config PL_OS_UCI
+config ZPL_OS_UCI
 	bool "Platform OS UCI Module"
-	depends on PL_OS_MODULE
+	depends on ZPL_OS_MODULE
 	default y
 	help
 	Build UCI Module.
 	
-config PL_OS_TLV
+config ZPL_OS_TLV
 	bool "Platform OS TLV Module"
-	depends on PL_OS_MODULE
+	depends on ZPL_OS_MODULE
 	default y
 	help
 	Build TLV Module.
 	
-config PL_OS_RNG
+config ZPL_OS_RNG
 	bool "Platform OS RNG Module"
-	depends on PL_OS_MODULE
+	depends on ZPL_OS_MODULE
 	default y
 	help
 	Build RNG Module.
 	
-config PL_OS_QUEUE
+config ZPL_OS_QUEUE
 	bool "Platform OS QUEUE Module"
-	depends on PL_OS_MODULE
+	depends on ZPL_OS_MODULE
 	default y
 	help
 	Build QUEUE Module.
 	
-config PL_OS_NVRAM
+config ZPL_OS_NVRAM
 	bool "Platform OS NVRAM Module"
-	depends on PL_OS_MODULE
+	depends on ZPL_OS_MODULE
 	default y
 	help
 	Build NVRAM Module.
 	
-config PL_OS_AVL
+config ZPL_OS_AVL
 	bool "Platform OS AVL Module"
-	depends on PL_OS_MODULE
+	depends on ZPL_OS_MODULE
 	default y
 	help
 	Build AVL Module.
 
-config PL_OS_TTYCOM
+config ZPL_OS_TTYCOM
 	bool "Platform TTYCOM Module"
-	depends on PL_OS_MODULE
+	depends on ZPL_OS_MODULE
 	default y
 	help
 	Build TTYCOM Module.
 	
-config PL_OS_XYZ_MODEM
+config ZPL_OS_XYZ_MODEM
 	bool "Platform XYZ-MODEM Module"
-	depends on PL_OS_MODULE
+	depends on ZPL_OS_MODULE
 	default y
 	help
 	Build XYZ MODEM Module.
 
-config PL_OS_CPPJSON
+config ZPL_OS_CPPJSON
 	bool "Platform OS CPPJSON Module"
-	depends on PL_OS_MODULE
+	depends on ZPL_OS_MODULE
 	default y
 	help
 	Build CPPJSON Module.
 
-	
-comment "Platform NSM Layer Module"
+comment "Platform Lib Module"
 
-config PL_NSM_MODULE
-	bool "Platform NSM Abstract Layer"
+config ZPL_WORKQUEUE
+	bool "Library Workqueue Module"
 	default y
 	help
-	Build Platform NSM Abstract Layer.
+	Build Workqueue Module.
 
-config PL_NSM_8021X
-	bool "Platform NSM 8021x Module"
-	default n
-	depends on PL_NSM_MODULE
-	help
-	Build NSM 8021x Module.
-	
-config PL_NSM_ARP
-	bool "Platform NSM ARP Module"
+config ZPL_KEYCHAIN
+	bool "Library Keychain Module"
 	default y
-	depends on PL_NSM_MODULE
 	help
-	Build NSM ARP Module.
-	
-config PL_NSM_BRIDGE
-	bool "Platform NSM Bridge Module"
-	default n
-	depends on PL_NSM_MODULE
-	help
-	Build NSM Bridge Module.
-	
-config PL_NSM_DHCP
-	bool "Platform NSM Dhcp Module"
-	default y
-	depends on PL_NSM_MODULE
-	select PL_UDHCP_MODULE
-	help
-	Build NSM Dhcp Module.
-	
-config PL_NSM_DNS
-	bool "Platform NSM Dns Module"
-	default y
-	depends on PL_NSM_MODULE
-	help
-	Build NSM Dns Module.
-	
-config PL_NSM_DOS
-	bool "Platform NSM Dos Module"
-	default n
-	depends on PL_NSM_MODULE
-	help
-	Build NSM Dos Module.
-	
-config PL_NSM_FIREWALLD
-	bool "Platform NSM Firewalld Module"
-	default y
-	depends on PL_NSM_MODULE
-	help
-	Build NSM Firewalld Module.
-	
-config PL_NSM_MAC
-	bool "Platform NSM MAC Module"
-	default y
-	depends on PL_NSM_MODULE
-	help
-	Build NSM MAC Module.
-	
-config PL_NSM_MIRROR
-	bool "Platform NSM Mirror Module"
-	default n
-	depends on PL_NSM_MODULE
-	help
-	Build NSM Mirror Module.
-	
-config PL_NSM_PPP
-	bool "Platform NSM PPP Module"
-	default y
-	depends on PL_NSM_MODULE
-	help
-	Build NSM PPP Module.
-	
-config PL_NSM_QOS
-	bool "Platform NSM QOS Module"
-	default n
-	depends on PL_NSM_MODULE
-	help
-	Build NSM QOS Module.
-	
-config PL_NSM_SERIAL
-	bool "Platform NSM Serial Module"
-	default y
-	depends on PL_NSM_MODULE
-	help
-	Build NSM Serial Module.
-	
-config PL_NSM_TRUNK
-	bool "Platform NSM Trunk Module"
-	default n
-	depends on PL_NSM_MODULE
-	help
-	Build NSM Trunk Module.
+	Build Keychain Module.
 
-config PL_NSM_TUNNEL
-	bool "Platform NSM Tunnel Module"
+config ZPL_DISTRIBUTE
+	bool "Library Distribute Module"
 	default y
-	depends on PL_NSM_MODULE
 	help
-	Build NSM Tunnel Module.
-	
-config PL_NSM_VLAN
-	bool "Platform NSM VLAN Module"
-	default n
-	depends on PL_NSM_MODULE
-	help
-	Build NSM VLAN Module.
-	
-config PL_NSM_VETH
-	bool "Platform NSM Veth Module"
+	Build Distribute Module.
+
+config ZPL_IP_FILTER
+	bool "Library Filter Module"
 	default y
-	depends on PL_NSM_MODULE
 	help
-	Build NSM Veth Module.
-	
-config PL_NSM_SECURITY
-	bool "Platform NSM Security Module"
+	Build IP Filter Module.
+
+config ZPL_IP_PLIST
+	bool "Library IP Plist Module"
+	default y
+	help
+	Build IP Plist Module.
+
+config ZPL_LIBEVENT_MODULE
+	bool "Libevent Module"
+	default y
+	help
+	Build Libevent Module.
+
+config ZPL_LIBEVENT_SIGNAL
+	bool "Libevent Signal Module"
 	default n
-	depends on PL_NSM_MODULE
+	depends on ZPL_LIBEVENT_MODULE
 	help
-	Build NSM Security Module.
+	Build Libevent Signal Module.
+
+config ZPL_LIBMXML_MODULE
+	bool "Libmxml Module"
+	default n
+	help
+	Build Libmxml Module.
 
 comment "Platform Shell Module"
 
-config PL_SHELL_MODULE
+config ZPL_SHELL_MODULE
 	bool "Platform Shell Module" 
-	depends on PL_OS_MODULE
+	depends on ZPL_OS_MODULE
 	default y
 	help
 	Build Shell Module.
 	
+comment "NSM Layer Module"
+
+config ZPL_NSM_MODULE
+	bool "Network Service Module"
+	default y
+	help
+	Build Network Service Module.
+
+config ZPL_NSM_8021X
+	bool "Platform NSM 8021x Module"
+	default n
+	depends on ZPL_NSM_MODULE
+	help
+	Build NSM 8021x Module.
+	
+config ZPL_NSM_ARP
+	bool "Platform NSM ARP Module"
+	default y
+	depends on ZPL_NSM_MODULE
+	help
+	Build NSM ARP Module.
+	
+config ZPL_NSM_BRIDGE
+	bool "Platform NSM Bridge Module"
+	default n
+	depends on ZPL_NSM_MODULE
+	help
+	Build NSM Bridge Module.
+	
+config ZPL_NSM_DHCP
+	bool "Platform NSM Dhcp Module"
+	default y
+	depends on ZPL_NSM_MODULE
+	help
+	Build NSM Dhcp Module.
+
+config ZPL_DHCPS_MODULE
+	bool "DHCP Server Module"
+	depends on ZPL_NSM_DHCP 
+	default y
+	help
+	Build DHCP Server Module.
+
+config ZPL_DHCPC_MODULE
+	bool "DHCP Client Module"
+	depends on ZPL_NSM_DHCP
+	default y
+	help
+	Build DHCP Client Module.
+
+config ZPL_DHCPR_MODULE
+	bool "DHCP Relay Module"
+	depends on ZPL_NSM_DHCP
+	default y
+	help
+	Build DHCP Relay Module.
+
+config ZPL_NSM_DNS
+	bool "Platform NSM Dns Module"
+	default y
+	depends on ZPL_NSM_MODULE
+	help
+	Build NSM Dns Module.
+	
+config ZPL_NSM_DOS
+	bool "Platform NSM Dos Module"
+	default n
+	depends on ZPL_NSM_MODULE
+	help
+	Build NSM Dos Module.
+	
+config ZPL_NSM_FIREWALLD
+	bool "Platform NSM Firewalld Module"
+	default y
+	depends on ZPL_NSM_MODULE
+	help
+	Build NSM Firewalld Module.
+	
+config ZPL_NSM_MAC
+	bool "Platform NSM MAC Module"
+	default y
+	depends on ZPL_NSM_MODULE
+	help
+	Build NSM MAC Module.
+	
+config ZPL_NSM_MIRROR
+	bool "Platform NSM Mirror Module"
+	default n
+	depends on ZPL_NSM_MODULE
+	help
+	Build NSM Mirror Module.
+	
+config ZPL_NSM_PPP
+	bool "Platform NSM PPP Module"
+	default y
+	depends on ZPL_NSM_MODULE
+	help
+	Build NSM PPP Module.
+	
+config ZPL_NSM_QOS
+	bool "Platform NSM QOS Module"
+	default n
+	depends on ZPL_NSM_MODULE
+	help
+	Build NSM QOS Module.
+	
+config ZPL_NSM_SERIAL
+	bool "Platform NSM Serial Module"
+	default y
+	depends on ZPL_NSM_MODULE
+	help
+	Build NSM Serial Module.
+	
+config ZPL_NSM_TRUNK
+	bool "Platform NSM Trunk Module"
+	default n
+	depends on ZPL_NSM_MODULE
+	help
+	Build NSM Trunk Module.
+
+config ZPL_NSM_TUNNEL
+	bool "Platform NSM Tunnel Module"
+	default y
+	depends on ZPL_NSM_MODULE
+	help
+	Build NSM Tunnel Module.
+	
+config ZPL_NSM_VLAN
+	bool "Platform NSM VLAN Module"
+	default n
+	depends on ZPL_NSM_MODULE
+	help
+	Build NSM VLAN Module.
+	
+config ZPL_NSM_VLANETH
+	bool "Platform NSM Veth Module"
+	default y
+	depends on ZPL_NSM_MODULE
+	help
+	Build NSM VLAN eth Module.
+	
+config ZPL_NSM_SECURITY
+	bool "Platform NSM Security Module"
+	default n
+	depends on ZPL_NSM_MODULE
+	help
+	Build NSM Security Module.
+
+comment "RTPL Layer Module"
+
+config ZPL_RTPL_MODULE
+	bool "Router Platform Module"
+	default y
+	help
+	Build Router Platform Module.
+
+config ZPL_RTPL_SRV
+	bool "Router Server Service Module"
+	default n
+	depends on ZPL_RTPL_MODULE
+	help
+	Build Router Server Service Module.
+
+config ZPL_RTPL_RNH
+	bool "Router rnh Module"
+	default n
+	depends on ZPL_RTPL_MODULE
+	help
+	Build Router rnh Module.
+
+config ZPL_RTPL_ROUTEMAP
+	bool "Router Routemap Module"
+	default n
+	depends on ZPL_RTPL_MODULE
+	help
+	Build Router Routemap Module.
+
+config ZPL_IPCBC_MODULE
+	bool "IPC BoardCard Module"
+	default y
+	help
+	Build IPC BoardCard Module.
+
+config ZPL_IPCBUS_MODULE
+	bool "IPC Bus Module"
+	default y
+	help
+	Build IPC Bus Module.
+
 endmenu

@@ -4,13 +4,13 @@
  *  Created on: Apr 30, 2017
  *      Author: zhurish
  */
-//#define USE_IPSTACK_KERNEL
-#ifdef USE_IPSTACK_KERNEL
+//#define ZPL_KERNEL_STACK_MODULE
+#ifdef ZPL_KERNEL_STACK_MODULE
 
 #endif
 
 
-#include "zebra.h"
+#include "zpl_include.h"
 #include "getopt.h"
 #include <log.h>
 
@@ -25,8 +25,8 @@
 #include "os_start.h"
 #include "os_module.h"
 
-//#include "platform/nsm/nsm_filter.h"
-//#include "platform/nsm/nsm_plist.h"
+//#include "platform/nsm/filter.h"
+//#include "platform/nsm/plist.h"
 
 //extern struct zebra_privs_t os_privs;
 //extern struct quagga_signal_t os_signals[];
@@ -67,7 +67,8 @@ struct os_main_option
 
 	int vty_port;
 	int daemon_mode;
-
+	char *user;
+	char *group;
 	char *tty;
 	/* process id. */
 	pid_t pid;
@@ -76,18 +77,6 @@ struct os_main_option
 struct os_main_option main_data;
 
 /*
-static char *progname;
-static char config_default[] = DEFAULT_CONFIG_FILE;//SYSCONFDIR
-static char *config_file = NULL;
-static char *pid_file = PATH_ZEBRA_PID;
-static char *vty_addr = NULL;
-static char *zserv_path = NULL;
-
-static int vty_port = ZEBRA_VTY_PORT;
-static int daemon_mode = 0;
-static pid_t pid;
-
-
 gdbserver 1.1.1.2:50000 SWP-V0.0.1.bin
 
 /opt/toolchain/toolchain-mipsel_24kc_gcc-7.3.0_glibc/bin/mipsel-openwrt-linux-gdb SWP-V0.0.1.bin
@@ -102,8 +91,9 @@ c
 /******************************************************/
 #ifdef BUILD_MAIN
 /* Command line options. */
-struct option longopts[] =
+static struct option zpllongopts[] =
 {
+  //df:i:z:hA:P:t:u:g:v
   { "daemon",      no_argument,       NULL, 'd'},
   { "config_file", required_argument, NULL, 'f'},
   { "pid_file",    required_argument, NULL, 'i'},
@@ -111,10 +101,7 @@ struct option longopts[] =
   { "help",        no_argument,       NULL, 'h'},
   { "vty_addr",    required_argument, NULL, 'A'},
   { "vty_port",    required_argument, NULL, 'P'},
-  { "tty",    required_argument, NULL, 't'},
-#ifdef HAVE_NETLINK
-  { "nl-bufsize",  required_argument, NULL, 's'},
-#endif /* HAVE_NETLINK */
+  { "tty",    	   required_argument, NULL, 't'},
   { "user",        required_argument, NULL, 'u'},
   { "group",       required_argument, NULL, 'g'},
   { "version",     no_argument,       NULL, 'v'},
@@ -140,9 +127,6 @@ usage (char *progname, int status)
 	      "-t, --tty          Set tty for shell\n"\
 	      "-u, --user         User to run as\n"\
 	      "-g, --group	  Group to run as\n", progname);
-#ifdef HAVE_NETLINK
-      printf ("-s, --nl-bufsize   Set netlink receive buffer size\n");
-#endif /* HAVE_NETLINK */
       printf ("-v, --version      Print program version\n"\
 	      "-h, --help         Display this help and exit\n"\
 	      "\n"\
@@ -152,20 +136,15 @@ usage (char *progname, int status)
   exit (status);
 }
 
-static int main_getopt(int argc, char **argv)
+static int zplmain_getopt(int argc, char **argv)
 {
 	while (1)
 	{
-	      int opt;
-#ifdef HAVE_NETLINK
-	      opt = getopt_long (argc, argv, "df:i:z:hA:P:t:ru:g:vs", longopts, 0);
-#else
-	      opt = getopt_long (argc, argv, "df:i:z:hA:P:t:ru:g:vC", longopts, 0);
-#endif /* HAVE_NETLINK */
-
-	      if (opt == EOF)
+	      int opt = getopt_long (argc, argv, "df:i:z:hA:P:t:u:g:v", zpllongopts, NULL);
+	      if (opt == EOF || opt == -1)
+		  {
 	    	  break;
-
+		  }
 	      switch (opt)
 	      {
 	      case 0:
@@ -212,12 +191,12 @@ static int main_getopt(int argc, char **argv)
 	    	  if (main_data.vty_port <= 0 || main_data.vty_port > 0xffff)
 	    		  main_data.vty_port = ZEBRA_VTY_PORT;
 	    	  break;
-/*	      case 'u':
-	    	  os_privs.user = optarg;
+	      case 'u':
+	    	  main_data.user = optarg;
 	    	  break;
 	      case 'g':
-	    	  os_privs.group = optarg;
-	    	  break;*/
+	    	  main_data.group = optarg;
+	    	  break;
 	      case 't':
 	    	  if(main_data.tty)
 	    		  free(main_data.tty);
@@ -255,19 +234,11 @@ static int os_privs_low()
 	return 0;
 }*/
 
-/*static int main_timer_thread(struct thread *thread)
-{
-	//int sock = THREAD_FD(thread);
-	//ospf_thread_check();
-	//thread_add_timer(thread->master, main_timer_thread, NULL, 1);
-	return 0;
-}*/
-
 
 /* Main startup routine. */
 int main (int argc, char **argv)
 {
-	char *p;
+	char *p = NULL;
 	//extern int console_enable;
 #ifdef OS_SIGNAL_SIGWAIT
 	int signo[] = {SIGUSR2};
@@ -291,15 +262,9 @@ int main (int argc, char **argv)
 	/* preserve my name */
 	main_data.progname = ((p = strrchr (argv[0], '/')) ? ++p : argv[0]);
 
-	//voip_test();
+	zplmain_getopt (argc, argv);
 
-	main_getopt (argc, argv);
 
-/*	if(os_nvram_voip_is_enable() == 0)
-	{
-		fprintf(stdout, "voip is disable\r\n");
-		return 0;
-	}*/
 	os_limit_stack_size(10240);
 #ifdef OS_SIGNAL_SIGWAIT
 	os_task_sigmaskall();
@@ -307,18 +272,8 @@ int main (int argc, char **argv)
 	os_base_init();
 
 	os_base_load();
-/*	if(child_process_create() == 0)
-	{
-		chdir("/app");
-		super_system_execvp("./TimerMgr", NULL);
-	}
-	if(child_process_create() == 0)
-	{
-		chdir("/app");
-		super_system_execvp("./VmrMgr", NULL);
-	}
-	*/
-#ifdef DOUBLE_PROCESS
+
+#ifdef ZPL_TOOLS_PROCESS
 /*	if(name2pid("ProcessMU") <= 0)
 		super_system("cd /app;./ProcessMU -D");*/
 
@@ -329,14 +284,12 @@ int main (int argc, char **argv)
 	super_system("cd /app;./ProcessMU -D");
 #endif
 
-	//pl_pjsip_json_test();
 	
 	if(main_data.tty)
 		console_enable = 1;
-	//console_enable = 1;
+	console_enable = 1;
 
-
-	//b53125_mdio_probe();
+	os_signal_default();
 
 	os_start_init(main_data.progname, MODULE_DEFAULT, main_data.daemon_mode, main_data.tty);
 
@@ -358,26 +311,26 @@ int main (int argc, char **argv)
 	/*
 	 * load config file
 	 */
-	os_load_config (main_data.config_file);
-	zlog_notice(MODULE_DEFAULT, "Zebra os_load_config");
+	host_config_loading (main_data.config_file);
+	zlog_notice(MODULE_DEFAULT, "Zebra host_config_loading");
 
-	//thread_add_timer(master_thread[MODULE_DEFAULT], main_timer_thread, NULL, 1);
-
-	//os_start_running(NULL, MODULE_DEFAULT);
 #ifdef OS_SIGNAL_SIGWAIT
 	os_task_sigmask(1, signo, &mask);
 #endif
+
 	while(1)
 	{
 #ifdef QUAGGA_SIGNAL_REAL_TIMER
 		real_sigevent_process (2);
 #else
+		//rtpmain_test();
+		//os_signal_process();
 		quagga_sigevent_process();
-		os_msleep_interrupt(2000);
+		//os_msleep_interrupt(2000);
 		//sleep(2);
 #endif
 	}
-#ifdef DOUBLE_PROCESS
+#ifdef ZPL_TOOLS_PROCESS
 	os_process_stop();
 #endif
 	return 0;

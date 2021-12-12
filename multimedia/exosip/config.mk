@@ -117,15 +117,15 @@ eXosip_include_HEADERS = eXosip.h eX_setup.h \
 libexosip2_lib = libeXosip2.a
 libexosip2_libso = libeXosip2.so
 
-ifeq ($(strip $(PL_OPENH264_MODULE)),true)
+ifeq ($(strip $(ZPL_OPENH264_MODULE)),true)
 
-else ifeq ($(strip $(PL_LIBX264_MODULE)),true)
-
-endif
-ifeq ($(strip $(PL_LIBVPX_MODULE)),true)
+else ifeq ($(strip $(ZPL_LIBX264_MODULE)),true)
 
 endif
-ifeq ($(strip $(PL_FFMPEG_MODULE)),true)
+ifeq ($(strip $(ZPL_LIBVPX_MODULE)),true)
+
+endif
+ifeq ($(strip $(ZPL_FFMPEG_MODULE)),true)
 
 endif
 #############################################################################

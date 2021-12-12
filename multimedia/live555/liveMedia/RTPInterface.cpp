@@ -14,7 +14,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
 // "liveMedia"
-// Copyright (c) 1996-2020 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2021 Live Networks, Inc.  All rights reserved.
 // An abstraction of a network interface used for RTP (or RTCP).
 // (This allows the RTP-over-TCP hack (RFC 2326, section 10.12) to
 // be implemented transparently.)
@@ -23,7 +23,11 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include "RTPInterface.hh"
 #include <GroupsockHelper.hh>
 #include <stdio.h>
-
+#include <stdlib.h>
+#if defined(USE_RTSP_OPT) && defined(LINUX)
+#include <unistd.h>
+#include <sys/uio.h>
+#endif
 ////////// Helper Functions - Definition //////////
 
 // Helper routines and data structures, used to implement
@@ -137,7 +141,11 @@ RTPInterface::RTPInterface(Medium* owner, Groupsock* gs)
   // even if the socket was previously reported (e.g., by "select()") as having data available.
   // (This can supposedly happen if the UDP checksum fails, for example.)
   makeSocketNonBlocking(fGS->socketNum());
-  increaseSendBufferTo(envir(), fGS->socketNum(), 50*1024);
+#ifdef USE_RTSP_OPT
+  increaseSendBufferTo(envir(), fGS->socketNum(), 512*1024);
+#else
+	increaseSendBufferTo(envir(), fGS->socketNum(), 50*1024);
+#endif
 }
 
 RTPInterface::~RTPInterface() {
@@ -263,7 +271,7 @@ void RTPInterface
 }
 
 Boolean RTPInterface::handleRead(unsigned char* buffer, unsigned bufferMaxSize,
-				 unsigned& bytesRead, struct sockaddr_in& fromAddress,
+				 unsigned& bytesRead, struct sockaddr_storage& fromAddress,
 				 int& tcpSocketNum, unsigned char& tcpStreamChannelId,
 				 Boolean& packetReadWasIncomplete) {
   packetReadWasIncomplete = False; // by default
@@ -342,13 +350,21 @@ Boolean RTPInterface::sendRTPorRTCPPacketOverTCP(u_int8_t* packet, unsigned pack
     framingHeader[1] = streamChannelId;
     framingHeader[2] = (u_int8_t) ((packetSize&0xFF00)>>8);
     framingHeader[3] = (u_int8_t) (packetSize&0xFF);
+#if defined(USE_RTSP_OPT) && defined(LINUX)
+	struct iovec iov[2];
+    iov[0].iov_base = framingHeader;
+    iov[0].iov_len = 4;
+    iov[1].iov_base = packet;
+    iov[1].iov_len = packetSize;
+    writev(socketNum, iov, 2);
+#else
     if (!sendDataOverTCP(socketNum, framingHeader, 4, False)) break;
 
     if (!sendDataOverTCP(socketNum, packet, packetSize, True)) break;
+#endif
 #ifdef DEBUG_SEND
     fprintf(stderr, "sendRTPorRTCPPacketOverTCP: completed\n"); fflush(stderr);
 #endif
-
     return True;
   } while (0);
 
@@ -505,7 +521,7 @@ Boolean SocketDescriptor::tcpReadHandler1(int mask) {
   // However, because the socket is being read asynchronously, this data might arrive in pieces.
   
   u_int8_t c;
-  struct sockaddr_in fromAddress;
+  struct sockaddr_storage fromAddress;
   if (fTCPReadingState != AWAITING_PACKET_DATA) {
     int result = readSocket(fEnv, fOurSocketNum, &c, 1, fromAddress);
     if (result == 0) { // There was no more data to read

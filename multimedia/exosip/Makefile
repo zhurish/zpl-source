@@ -1,11 +1,11 @@
-include $(MAKE_DIR)/makelinux.mk
+include $(ZPL_MAKE_DIR)/makelinux.mk
 
 include config.mk
 
 
-OBJS_DIR = $(BASE_ROOT)/$(OBJDIR)/$(MODULEDIR)
+OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODULEDIR)
 SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
-LIB_DIR = $(BASE_ROOT)/$(LIBDIR)
+LIB_DIR = $(BASE_ROOT)/$(ZPL_LIB_DIR)
 
 osip_OBJS  := $(addprefix $(OBJS_DIR)/osip/,$(libosip2_obj))
 osipparser_OBJS  := $(addprefix $(OBJS_DIR)/osipparser/,$(libosipparser2_obj))

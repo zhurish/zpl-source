@@ -20747,8 +20747,8 @@ static int ecp_mod_p256k1( mbedtls_mpi *N )
 
 #if defined(MBEDTLS_TEST_NULL_ENTROPY)
 #warning "**** WARNING!  MBEDTLS_TEST_NULL_ENTROPY defined! "
-#warning "**** THIS PL_BUILD HAS NO DEFINED ENTROPY SOURCES "
-#warning "**** THIS PL_BUILD IS *NOT* SUITABLE FOR PRODUCTION USE "
+#warning "**** THIS ZPL_BUILD HAS NO DEFINED ENTROPY SOURCES "
+#warning "**** THIS ZPL_BUILD IS *NOT* SUITABLE FOR PRODUCTION USE "
 #endif
 
 
@@ -27973,7 +27973,7 @@ int mbedtls_net_connect( mbedtls_net_context *ctx, const char *host,
                          const char *port, int proto )
 {
     int ret;
-    struct addrinfo hints, *addr_list, *cur;
+    struct ipstack_addrinfo hints, *addr_list, *cur;
 
     if( ( ret = net_prepare() ) != 0 )
         return( ret );
@@ -28020,7 +28020,7 @@ int mbedtls_net_connect( mbedtls_net_context *ctx, const char *host,
 int mbedtls_net_bind( mbedtls_net_context *ctx, const char *bind_ip, const char *port, int proto )
 {
     int n, ret;
-    struct addrinfo hints, *addr_list, *cur;
+    struct ipstack_addrinfo hints, *addr_list, *cur;
 
     if( ( ret = net_prepare() ) != 0 )
         return( ret );

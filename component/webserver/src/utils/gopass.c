@@ -9,7 +9,7 @@
 
 /********************************* Includes ***********************************/
 #define HAS_BOOL 1
-#include "zebra.h"
+#include "zpl_include.h"
 #include    "goahead.h"
 #include    "web_util.h"
 /********************************** Locals ************************************/

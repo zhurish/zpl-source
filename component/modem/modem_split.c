@@ -5,13 +5,10 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-
-#include "os_util.h"
-#include "tty_com.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "modem.h"
 #include "modem_client.h"
@@ -66,7 +63,7 @@ int modem_operator_split(modem_client_t *client, char *buf)
 	{
 		//+COPS: 0,0,\"CHINA MOBILE\",7  OK"
 		//
-		ospl_uint32 offset = strchr_step(buf, ':', 1);
+		zpl_uint32 offset = strchr_step(buf, ':', 1);
 		if(offset)
 		{
 			//fprintf(stdout, "=========0=====%s\r\n", buf + offset + 1);

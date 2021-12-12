@@ -4,19 +4,15 @@
  *  Created on: 2019年2月11日
  *      Author: DELL
  */
-#include "zebra.h"
-#include "log.h"
-#include "eloop.h"
-#include "network.h"
-#include "eloop.h"
+#include "systools.h"
 
-#ifdef PL_SERVICE_UBUS_SYNC
+#ifdef ZPL_SERVICE_UBUS_SYNC
 
 #include "ubus_sync.h"
 
 static ubus_sync_t ubus_sync_ctx;
 
-int ubus_sync_debug(ospl_bool enable)
+int ubus_sync_debug(zpl_bool enable)
 {
 	if(enable)
 		ubus_sync_ctx.debug |= UBUS_SYNC_DEBUG;
@@ -27,7 +23,7 @@ int ubus_sync_debug(ospl_bool enable)
 
 int ubus_sync_hook_install(ubus_sync_cb *cb, void *p)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < UBUS_SYNC_CB_MAX; i++)
 	{
 		if(ubus_sync_ctx.cb[i] == NULL)
@@ -42,7 +38,7 @@ int ubus_sync_hook_install(ubus_sync_cb *cb, void *p)
 
 int ubus_sync_hook_uninstall(ubus_sync_cb *cb, void *p)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < UBUS_SYNC_CB_MAX; i++)
 	{
 		if(ubus_sync_ctx.cb[i] == cb)
@@ -87,7 +83,7 @@ static int ubus_sync_handle(ubus_sync_t *uci)
 	uci->len = ret = read(uci->sock, uci->buf, sizeof(uci->buf));
 	if(uci->len > 0)
 	{
-		ospl_uint32 i = 0;
+		zpl_uint32 i = 0;
 		if(uci->debug & UBUS_SYNC_DEBUG)
 			zlog_debug(MODULE_UTILS, "UCI UBUS read %d byte:'%s'",uci->len, uci->buf);
 		ret = 0;
@@ -166,7 +162,7 @@ static int ubus_sync_accept_eloop(struct eloop *thread)
 	ubus->t_accept = NULL;//eloop_add_read(ubus_sync_ctx.master, ubus_sync_accept_eloop, ubus, accept);
 	if(ubus)
 	{
-		sock = unix_sock_accept(accept, NULL);
+		sock = os_sock_unix_accept(accept, NULL);
 		if(sock > 0)
 		{
 			//zlog_debug(MODULE_DEFAULT, "--------%s:%d", __func__, sock);
@@ -193,7 +189,7 @@ static int ubus_sync_accept_eloop(struct eloop *thread)
 
 int ubus_sync_init(void *m)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	int accept = 0;
 
 	os_uci_init();
@@ -207,20 +203,20 @@ int ubus_sync_init(void *m)
 	{
 		ubus_sync_ctx.cb[i] = NULL;
 	}
-	accept = unix_sock_server_create(ospl_true, "lualuci");
+	accept = os_sock_unix_server_create(zpl_true, "lualuci");
 	if(accept <= 0)
 		return ERROR;
 	os_set_nonblocking(accept);
 	ubus_sync_ctx.accept = accept;
 	ubus_sync_ctx.master = m;
 	ubus_sync_ctx.t_accept = eloop_add_read(ubus_sync_ctx.master, ubus_sync_accept_eloop, &ubus_sync_ctx, accept);
-	//ubus_sync_debug(ospl_true);
+	//ubus_sync_debug(zpl_true);
 	return OK;
 }
 
 int ubus_sync_reset(void)
 {
-	//ospl_uint32 i = 0;
+	//zpl_uint32 i = 0;
 	int accept = 0;
 	if(ubus_sync_ctx.t_read)
 	{
@@ -238,7 +234,7 @@ int ubus_sync_reset(void)
 	//ubus_sync_ctx.master = NULL;
 	ubus_sync_ctx.len = 0;
 	memset(ubus_sync_ctx.buf, 0, sizeof(ubus_sync_ctx.buf));
-	accept = unix_sock_server_create(ospl_true, "lualuci");
+	accept = os_sock_unix_server_create(zpl_true, "lualuci");
 	if(accept <= 0)
 		return ERROR;
 	//os_set_nonblocking(sock);
@@ -250,7 +246,7 @@ int ubus_sync_reset(void)
 
 int ubus_sync_exit(void)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	if(ubus_sync_ctx.t_read)
 	{
 		eloop_cancel(ubus_sync_ctx.t_read);
@@ -278,5 +274,5 @@ int ubus_sync_exit(void)
 	}
 	return OK;
 }
-#endif /* PL_SERVICE_UBUS_SYNC */
+#endif /* ZPL_SERVICE_UBUS_SYNC */
 

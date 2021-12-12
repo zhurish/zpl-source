@@ -4,7 +4,7 @@
 #
 MODULEDIR = component/pjsip
 #
-PLINCLUDE += -I$(PJSIP_ROOT)/include
+ZPLINCLUDE += -I$(PJSIP_ROOT)/include
 #
 #
 #OS
@@ -20,22 +20,24 @@ OBJS += pjsip_cfg.o
 OBJS += pjsip_main.o
 OBJS += pjsip_app_api.o
 
-ifeq ($(strip $(PL_APPLICATION_MODULE)),true)
+ifeq ($(strip $(ZPL_APPLICATION_MODULE)),true)
 OBJS += voip_volume.o
 OBJS += voip_util.o
 OBJS += voip_uci.o
 OBJS += voip_log.o
 OBJS += voip_app.o
 endif
-
-
+ifeq ($(strip $(ZPL_SHELL_MODULE)),true)
+OBJS += cmd_pjsip.o
+OBJS += cmd_voip_test.o
+endif
 #############################################################################
 # LIB
 ###########################################################################
 LIBS = libpjsipvoip.a
 
 
-ifeq ($(strip $(PL_PJSIP_PJSUA2)),true)
+ifeq ($(strip $(ZPL_PJSIP_PJSUA2)),true)
 PJSUA2OBJ := pjsipjsonconfig.o \
 				pjsipaccount.o \
 				pjsipcall.o \

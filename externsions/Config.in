@@ -4,22 +4,45 @@
 
 menu "Externsions Module Config"
 
-config PL_EXTERNSIONS_MODULE
+config ZPL_EXTERNSIONS_MODULE
 	bool "Externsions Module"
 	default y
 
-config PL_ZLIB_MODULE
+config ZPL_ZLIB_MODULE
 	bool "zlib Module"
 	default n
-	depends on PL_EXTERNSIONS_MODULE
+	depends on ZPL_EXTERNSIONS_MODULE
 	help
 	Build zlib Module.
 
-config PL_OPENSSL_MODULE
+config ZPL_OPENSSL_MODULE
 	bool "OpenSSL Module"
 	default n
-	depends on PL_EXTERNSIONS_MODULE
+	depends on ZPL_EXTERNSIONS_MODULE
 	help
 	Build OpenSSL Module.
+
+config ZPL_EXFREETYPE_MODULE
+	bool "extern Freetype Module"
+	default n
+	depends on ZPL_EXTERNSIONS_MODULE
+	help
+	Build extern Freetype Module.
+
+config ZPL_EXFREETYPE_LIB_PATH
+	string
+	prompt "Freetype lib path"
+	depends on ZPL_EXFREETYPE_MODULE
+	default "./exlibs/libs"
+	help
+		Specify additional directories searched for Freetype library.
+
+config ZPL_EXFREETYPE_INC_PATH
+	string
+	prompt "Freetype include path"
+	depends on ZPL_EXFREETYPE_MODULE
+	default "./exlibs/include "
+	help
+		Specify additional directories searched for Freetype include.
 
 endmenu

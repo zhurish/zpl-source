@@ -4,7 +4,7 @@
 
 menu "Platform Arch Config"
 
-config PL_SYSTEM_MODULE
+config ZPL_SYSTEM_MODULE
 	bool "OS systems type"
 	default y
 	help
@@ -12,41 +12,41 @@ config PL_SYSTEM_MODULE
 
 choice
 	prompt "OS systems"
-	depends on PL_SYSTEM_MODULE
-	default PL_SYSTEM_LINUX
+	depends on ZPL_SYSTEM_MODULE
+	default ZPL_SYSTEM_LINUX
 
-config PL_SYSTEM_LINUX
+config ZPL_SYSTEM_LINUX
 	bool "Linux systems"
-config PL_SYSTEM_OPENWRT
+config ZPL_SYSTEM_OPENWRT
 	bool "Openwrt systems"
-config PL_SYSTEM_MINGW32
+config ZPL_SYSTEM_MINGW32
 	bool "Mingw32 systems"	
-config PL_SYSTEM_MINGW64
+config ZPL_SYSTEM_MINGW64
 	bool "Mingw64 systems"	
-config PL_SYSTEM_MSVC32
+config ZPL_SYSTEM_MSVC32
 	bool "MSVC32 systems"	
-config PL_SYSTEM_MSVC64
+config ZPL_SYSTEM_MSVC64
 	bool "MSVC64 systems"
 endchoice
 
-config PL_ARCH_MODULE
+config ZPL_ARCH_MODULE
 	bool "ARCH CPU type"
 	default y
 
 choice
 	prompt "ARCH CPU Family"
-	depends on PL_ARCH_MODULE
-	default PL_ARCH_X86_64
+	depends on ZPL_ARCH_MODULE
+	default ZPL_ARCH_X86_64
 
-config PL_ARCH_ARM
+config ZPL_ARCH_ARM
 	bool "ARM"
-config PL_ARCH_ARM64
+config ZPL_ARCH_ARM64
 	bool "ARM64"
-config PL_ARCH_AARCH64
+config ZPL_ARCH_AARCH64
 	bool "AARCH64"
-config PL_ARCH_X86
+config ZPL_ARCH_X86
 	bool "X86"
-config PL_ARCH_X86_64
+config ZPL_ARCH_X86_64
 	bool "X86-64"	
 endchoice
 

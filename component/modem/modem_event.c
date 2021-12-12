@@ -6,12 +6,10 @@
  */
 
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "os_util.h"
-#include "tty_com.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "modem.h"
 #include "modem_attty.h"
@@ -104,7 +102,7 @@ const char *modem_event_string(modem_event event)
 /*
  *添加事件
  */
-int modem_event_add_api(modem_t *modem, modem_event event, ospl_bool lock)
+int modem_event_add_api(modem_t *modem, modem_event event, zpl_bool lock)
 {
 	assert(modem);
 	if(modem)
@@ -123,7 +121,7 @@ int modem_event_add_api(modem_t *modem, modem_event event, ospl_bool lock)
 /*
  *添加事件
  */
-int modem_event_del_api(modem_t *modem, modem_event event, ospl_bool lock)
+int modem_event_del_api(modem_t *modem, modem_event event, zpl_bool lock)
 {
 	assert(modem);
 	if(modem)
@@ -142,8 +140,8 @@ static int modem_event_reload_thread(modem_t *modem)
 {
 	if(modem && modem->event)
 	{
-		modem_event_del_api(modem, MODEM_EV_MAX, ospl_true);
-		modem_event_add_api(modem, modem->a_event, ospl_true);
+		modem_event_del_api(modem, MODEM_EV_MAX, zpl_true);
+		modem_event_add_api(modem, modem->a_event, zpl_true);
 		modem->state = MODEM_MACHINE_STATE_NONE;
 		MODEM_EV_DEBUG("Into %s",__func__);
 		if(MODEM_IS_DEBUG(EVENT))
@@ -156,7 +154,7 @@ static int modem_event_reload_thread(modem_t *modem)
 }
 
 
-int modem_event_reload(modem_t *modem, modem_event event, ospl_bool lock)
+int modem_event_reload(modem_t *modem, modem_event event, zpl_bool lock)
 {
 	if(modem->t_time)
 	{
@@ -311,7 +309,7 @@ modem_event modem_event_remove(modem_t *modem, modem_event event)
 	else
 	{
 		modem->state = modem->newstate;
-		modem_event_del_api(modem, MODEM_EV_MAX, ospl_false);
+		modem_event_del_api(modem, MODEM_EV_MAX, zpl_false);
 	}
 	MODEM_EV_DEBUG("Level %s",__func__);
 	return nextevent;
@@ -729,7 +727,7 @@ modem_event modem_event_process(modem_t *modem, modem_event event)
 		modem_machine_state_action(modem);
 
 		if(nextevent != MODEM_EV_NONE)
-			modem_event_add_api(modem, nextevent, ospl_false);
+			modem_event_add_api(modem, nextevent, zpl_false);
 	}
 	return nextevent;
 }

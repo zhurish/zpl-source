@@ -280,7 +280,7 @@ on_error:
     return status;
 }
 
-#ifdef PL_PJSIP_CALL_SHELL
+#ifdef ZPL_PJSIP_CALL_SHELL
 static int pj_cli_socket_write_cmd(pjsua_app_config *cfg, char *cmd)
 {
 	int len = 0, ret = 0;
@@ -1366,7 +1366,7 @@ static pj_status_t cmd_media_connect(pj_cli_cmd_val *cval, pj_bool_t connect)
 static pj_status_t cmd_adjust_vol(pj_cli_cmd_val *cval)
 {
     char buf[80];
-    ospl_float orig_level;
+    zpl_float orig_level;
     char *err;
     char level_val[16] = {0};
     pj_str_t tmp = pj_str(level_val);
@@ -1374,7 +1374,7 @@ static pj_status_t cmd_adjust_vol(pj_cli_cmd_val *cval)
     /* Adjust mic level */
     orig_level = app_config.mic_level;
     pj_strncpy_with_null(&tmp, &cval->argv[1], sizeof(level_val));
-    app_config.mic_level = (ospl_float)strtod(level_val, &err);
+    app_config.mic_level = (zpl_float)strtod(level_val, &err);
     pjsua_conf_adjust_rx_level(0, app_config.mic_level);
 
     pj_ansi_snprintf(buf, sizeof(buf),
@@ -1386,7 +1386,7 @@ static pj_status_t cmd_adjust_vol(pj_cli_cmd_val *cval)
     /* Adjust speaker level */
     orig_level = app_config.speaker_level;
     pj_strncpy_with_null(&tmp, &cval->argv[2], sizeof(level_val));
-    app_config.speaker_level = (ospl_float)strtod(level_val, &err);
+    app_config.speaker_level = (zpl_float)strtod(level_val, &err);
     pjsua_conf_adjust_tx_level(0, app_config.speaker_level);
 
     pj_ansi_snprintf(buf, sizeof(buf),

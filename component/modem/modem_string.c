@@ -6,13 +6,10 @@
  */
 
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-
-#include "os_util.h"
-#include "tty_com.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "modem.h"
 #include "modem_client.h"
@@ -31,7 +28,7 @@ const char * strchr_empty(char *src, const char em)
 	char *p = src;
 	assert(src);
 	atcmd_response_t response;
-	ospl_uint32 i = 0, j = 0, count = os_strlen(src);
+	zpl_uint32 i = 0, j = 0, count = os_strlen(src);
 	os_memset(&response, '\0', sizeof(response));
 	response.len = count;
 
@@ -52,12 +49,12 @@ const char * strchr_empty(char *src, const char em)
 	return (char*)src;
 }
 
-const char * strchr_empty_step(char *src, const char em, ospl_uint32 step)
+const char * strchr_empty_step(char *src, const char em, zpl_uint32 step)
 {
 	char *p = src;
 	assert(src);
 	atcmd_response_t response;
-	ospl_uint32 i = 0, j = 0, k = 0, count = os_strlen(src);
+	zpl_uint32 i = 0, j = 0, k = 0, count = os_strlen(src);
 	os_memset(&response, 0, sizeof(response));
 	response.len = count;
 

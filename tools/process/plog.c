@@ -5,18 +5,15 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "os_util.h"
-#include "process.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
 #include <sys/stat.h>
+#include "process.h"
 
 
-
-//#undef DOUBLE_PROCESS
-#ifdef DOUBLE_PROCESS
+//#undef ZPL_TOOLS_PROCESS
+#ifdef ZPL_TOOLS_PROCESS
 int debug = LOG_WARNING;
 static FILE * logfp = NULL;
 char *logfile = NULL;
@@ -39,7 +36,7 @@ int open_log(char *file)
 static int plog_timestamp(char *buf, size_t buflen)
 {
 
-	ospl_time_t ticlock;
+	zpl_time_t ticlock;
 	struct tm tm;
 	char data[128];
 	int len = 0;

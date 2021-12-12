@@ -35,7 +35,7 @@
 
 
 
-int v9_board_init(ospl_uint8 id, v9_board_t *board)
+int v9_board_init(zpl_uint8 id, v9_board_t *board)
 {
 	zassert(board);
 	memset(&bios_device, 0, sizeof(bios_device));
@@ -43,18 +43,18 @@ int v9_board_init(ospl_uint8 id, v9_board_t *board)
 	switch(id)
 	{
 	case APP_BOARD_MAIN:
-		board->use = ospl_true;
+		board->use = zpl_true;
 		board->id = APP_BOARD_MAIN;
-		board->online = ospl_true;
-		board->power = ospl_true;
-		board->active = ospl_true;
+		board->online = zpl_true;
+		board->power = zpl_true;
+		board->active = zpl_true;
 		board->ip = APP_BOARD_ADDRESS_PREFIX + APP_BOARD_ADDRESS_MAIN;
 
 		board->temp = 65;	//温度
 		board->vch = 0;			//处理视频路数
 		break;
 	case APP_BOARD_CALCU_1:
-		board->use = ospl_true;
+		board->use = zpl_true;
 		board->id = APP_BOARD_CALCU_1;
 		board->ip = APP_BOARD_ADDRESS_PREFIX + APP_BOARD_CALCU_1;
 
@@ -62,7 +62,7 @@ int v9_board_init(ospl_uint8 id, v9_board_t *board)
 		board->vch = 0;			//处理视频路数
 		break;
 	case APP_BOARD_CALCU_2:
-		board->use = ospl_true;
+		board->use = zpl_true;
 		board->id = APP_BOARD_CALCU_2;
 		board->ip = APP_BOARD_ADDRESS_PREFIX + APP_BOARD_CALCU_2;
 
@@ -70,7 +70,7 @@ int v9_board_init(ospl_uint8 id, v9_board_t *board)
 		board->vch = 0;			//处理视频路数
 		break;
 	case APP_BOARD_CALCU_3:
-		board->use = ospl_true;
+		board->use = zpl_true;
 		board->id = APP_BOARD_CALCU_3;
 		board->ip = APP_BOARD_ADDRESS_PREFIX + APP_BOARD_CALCU_3;
 
@@ -78,7 +78,7 @@ int v9_board_init(ospl_uint8 id, v9_board_t *board)
 		board->vch = 0;			//处理视频路数
 		break;
 	case APP_BOARD_CALCU_4:
-		board->use = ospl_true;
+		board->use = zpl_true;
 		board->id = APP_BOARD_CALCU_4;
 		board->ip = APP_BOARD_ADDRESS_PREFIX + APP_BOARD_CALCU_4;
 
@@ -91,9 +91,9 @@ int v9_board_init(ospl_uint8 id, v9_board_t *board)
 	return OK;
 }
 
-v9_board_t * v9_board_lookup(ospl_uint8 id)
+v9_board_t * v9_board_lookup(zpl_uint8 id)
 {
-	ospl_uint32 i =0;
+	zpl_uint32 i =0;
 	if(v9_video_board)
 	{
 		for(i = 0; i < V9_APP_BOARD_MAX; i++)
@@ -107,9 +107,9 @@ v9_board_t * v9_board_lookup(ospl_uint8 id)
 	return NULL;
 }
 
-int v9_board_update_board(ospl_uint8 id, v9_board_t *board)
+int v9_board_update_board(zpl_uint8 id, v9_board_t *board)
 {
-	ospl_uint32 i =0;
+	zpl_uint32 i =0;
 	if(v9_video_board)
 	{
 		for(i = 0; i < V9_APP_BOARD_MAX; i++)
@@ -128,9 +128,9 @@ int v9_board_update_board(ospl_uint8 id, v9_board_t *board)
 
 static void _v9_app_board_show(struct vty * vty, int id, int debug)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	char tmp[128];
-	ospl_uint32 glen = 0, tlen = 0, mlen = 0;
+	zpl_uint32 glen = 0, tlen = 0, mlen = 0;
 	vty_out(vty, "BIOS Information : %s",VTY_NEWLINE);
 	vty_out(vty, " Serial NO                  : %s%s", bios_device.serialno, VTY_NEWLINE);
 	vty_out(vty, " Device ID                  : %s%s", bios_device.deviceid, VTY_NEWLINE);
@@ -144,7 +144,7 @@ static void _v9_app_board_show(struct vty * vty, int id, int debug)
 
 	for (i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
-		if (v9_video_board[i].board.use == ospl_true)
+		if (v9_video_board[i].board.use == zpl_true)
 		{
 			if ((id == 0) || (id > 0 && id == v9_video_board[i].board.id))
 			{
@@ -154,13 +154,13 @@ static void _v9_app_board_show(struct vty * vty, int id, int debug)
 				else
 					vty_out(vty, " Board ID                   : %d%s", V9_APP_BOARD_HW_ID(v9_video_board[i].id), VTY_NEWLINE);
 				vty_out(vty, "  IP Address                : %s%s", inet_address(v9_video_board[i].address), VTY_NEWLINE);
-				vty_out(vty, "  Online Status             : %s%s", v9_video_board[i].board.online ? "ospl_true":"ospl_false", VTY_NEWLINE);
-				vty_out(vty, "  Power Status              : %s%s", v9_video_board[i].board.online ? "ospl_true":"ospl_false", VTY_NEWLINE);
-				vty_out(vty, "  Active Status             : %s%s", v9_video_board[i].board.active ? "ospl_true":"ospl_false", VTY_NEWLINE);
+				vty_out(vty, "  Online Status             : %s%s", v9_video_board[i].board.online ? "zpl_true":"zpl_false", VTY_NEWLINE);
+				vty_out(vty, "  Power Status              : %s%s", v9_video_board[i].board.online ? "zpl_true":"zpl_false", VTY_NEWLINE);
+				vty_out(vty, "  Active Status             : %s%s", v9_video_board[i].board.active ? "zpl_true":"zpl_false", VTY_NEWLINE);
 				if (debug)
 				{
-					vty_out(vty, "  AutoIP Status             : %s%s", v9_video_board[i].board.autoip ? "ospl_true":"ospl_false", VTY_NEWLINE);
-					vty_out(vty, "  Startup Status            : %s%s", v9_video_board[i].board.startup ? "ospl_true":"ospl_false", VTY_NEWLINE);
+					vty_out(vty, "  AutoIP Status             : %s%s", v9_video_board[i].board.autoip ? "zpl_true":"zpl_false", VTY_NEWLINE);
+					vty_out(vty, "  Startup Status            : %s%s", v9_video_board[i].board.startup ? "zpl_true":"zpl_false", VTY_NEWLINE);
 				}
 				vty_out(vty, "  Board Temp                : %d C%s", v9_video_board[i].board.temp, VTY_NEWLINE);
 				vty_out(vty, "  Vidio Channel             : %d%s", v9_video_board[i].board.vch, VTY_NEWLINE);
@@ -226,7 +226,7 @@ static void _v9_app_board_show(struct vty * vty, int id, int debug)
 				}
 				if (debug)
 				{
-					vty_out(vty, "  Time Sync                 : %s%s", v9_video_board[i].board.synctime ? "ospl_true":"ospl_false", VTY_NEWLINE);
+					vty_out(vty, "  Time Sync                 : %s%s", v9_video_board[i].board.synctime ? "zpl_true":"zpl_false", VTY_NEWLINE);
 					vty_out(vty, "  Keep Alive                : %d%s", v9_video_board[i].board.cnt, VTY_NEWLINE);
 				}
 				if (id > 0)

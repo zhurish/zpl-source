@@ -4,19 +4,10 @@
  *  Created on: Sep 13, 2018
  *      Author: zhurish
  */
-#include "zebra.h"
-#include "memory.h"
-#include "command.h"
-#include "memory.h"
-#include "memtypes.h"
-#include "prefix.h"
-#include "if.h"
-#include "nsm_interface.h"
-#include <log.h>
-#include "nsm_client.h"
-#include "os_list.h"
-#include "tty_com.h"
-#include "nsm_tunnel.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "nsm_include.h"
 
 // ip_tunnel.c
 extern int _ipkernel_tunnel_create(nsm_tunnel_t *tunnel);
@@ -93,7 +84,7 @@ int nsm_tunnel_make_iphdr(nsm_tunnel_t *tunnel, struct iphdr *iph)
 
 static int nsm_tunnel_kname(nsm_tunnel_t *tunnel)
 {
-	ospl_char kname[65];
+	zpl_char kname[65];
 	os_memset(kname, 0, sizeof(kname));
 	switch(tunnel->mode)
 	{
@@ -157,8 +148,8 @@ static int nsm_tunnel_ipkernel_destroy(nsm_tunnel_t *tunnel)
 		if((ipkernel_tunnel_delete)(tunnel) == OK)
 		{
 			if_kname_set(tunnel->ifp, NULL);
-			tunnel->active = ospl_false;
-			tunnel->ready = ospl_false;
+			tunnel->active = zpl_false;
+			tunnel->ready = zpl_false;
 			return OK;
 		}
 	}
@@ -181,22 +172,22 @@ static int nsm_tunnel_state_update(nsm_tunnel_t *tunnel)
 		{
 /*			if(!tunnel->source.u.prefix4.s_addr || !tunnel->remote.u.prefix4.s_addr)
 			{
-				tunnel->active = ospl_false;
-				tunnel->ready = ospl_false;
+				tunnel->active = zpl_false;
+				tunnel->ready = zpl_false;
 				return OK;
 			}
 			else*/
 			{
-				tunnel->active = ospl_false;
-				tunnel->ready = ospl_false;
+				tunnel->active = zpl_false;
+				tunnel->ready = zpl_false;
 				nsm_interface_down_set_api(tunnel->ifp);
 				return OK;
 			}
 		}
 		if(!tunnel->source.u.prefix4.s_addr || !tunnel->remote.u.prefix4.s_addr)
 		{
-			tunnel->active = ospl_false;
-			tunnel->ready = ospl_false;
+			tunnel->active = zpl_false;
+			tunnel->ready = zpl_false;
 			nsm_interface_down_set_api(tunnel->ifp);
 			return OK;
 		}
@@ -217,7 +208,7 @@ static int nsm_tunnel_create_update(nsm_tunnel_t *tunnel)
 	{
 		if(tunnel->source.u.prefix4.s_addr && tunnel->remote.u.prefix4.s_addr)
 		{
-			tunnel->ready = ospl_true;
+			tunnel->ready = zpl_true;
 			nsm_tunnel_kname(tunnel);
 			os_job_add(nsm_tunnel_create_thread, tunnel->ifp);
 			return OK;
@@ -301,7 +292,7 @@ int nsm_tunnel_destination_get_api(struct interface *ifp, struct prefix *dest)
 	return ERROR;
 }
 
-int nsm_tunnel_ttl_set_api(struct interface *ifp, ospl_uint32 ttl)
+int nsm_tunnel_ttl_set_api(struct interface *ifp, zpl_uint32 ttl)
 {
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
@@ -313,7 +304,7 @@ int nsm_tunnel_ttl_set_api(struct interface *ifp, ospl_uint32 ttl)
 	return ERROR;
 }
 
-int nsm_tunnel_ttl_get_api(struct interface *ifp, ospl_uint32 *ttl)
+int nsm_tunnel_ttl_get_api(struct interface *ifp, zpl_uint32 *ttl)
 {
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
@@ -326,7 +317,7 @@ int nsm_tunnel_ttl_get_api(struct interface *ifp, ospl_uint32 *ttl)
 }
 
 
-int nsm_tunnel_mtu_set_api(struct interface *ifp, ospl_uint32 mtu)
+int nsm_tunnel_mtu_set_api(struct interface *ifp, zpl_uint32 mtu)
 {
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
@@ -338,7 +329,7 @@ int nsm_tunnel_mtu_set_api(struct interface *ifp, ospl_uint32 mtu)
 	return ERROR;
 }
 
-int nsm_tunnel_mtu_get_api(struct interface *ifp, ospl_uint32 *mtu)
+int nsm_tunnel_mtu_get_api(struct interface *ifp, zpl_uint32 *mtu)
 {
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
@@ -350,7 +341,7 @@ int nsm_tunnel_mtu_get_api(struct interface *ifp, ospl_uint32 *mtu)
 	return ERROR;
 }
 
-int nsm_tunnel_tos_set_api(struct interface *ifp, ospl_uint32 tos)
+int nsm_tunnel_tos_set_api(struct interface *ifp, zpl_uint32 tos)
 {
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
@@ -362,7 +353,7 @@ int nsm_tunnel_tos_set_api(struct interface *ifp, ospl_uint32 tos)
 	return ERROR;
 }
 
-int nsm_tunnel_tos_get_api(struct interface *ifp, ospl_uint32 *tos)
+int nsm_tunnel_tos_get_api(struct interface *ifp, zpl_uint32 *tos)
 {
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
@@ -374,7 +365,7 @@ int nsm_tunnel_tos_get_api(struct interface *ifp, ospl_uint32 *tos)
 	return ERROR;
 }
 
-static int nsm_tunnel_add_interface(struct interface *ifp)
+int nsm_tunnel_interface_create_api(struct interface *ifp)
 {
 	nsm_tunnel_t * tunnel = NULL;
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
@@ -396,7 +387,7 @@ static int nsm_tunnel_add_interface(struct interface *ifp)
 }
 
 
-static int nsm_tunnel_del_interface(struct interface *ifp)
+int nsm_tunnel_interface_del_api(struct interface *ifp)
 {
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
@@ -410,26 +401,17 @@ static int nsm_tunnel_del_interface(struct interface *ifp)
 }
 
 
-int nsm_tunnel_client_init()
+int nsm_tunnel_init()
 {
-	struct nsm_client *nsm = nsm_client_new ();
-	nsm->notify_add_cb = nsm_tunnel_add_interface;
-	nsm->notify_delete_cb = nsm_tunnel_del_interface;
-	nsm->interface_write_config_cb = NULL;//nsm_tunnel_interface_write_config;
-	nsm_client_install (nsm, NSM_TUNNEL);
-
+	nsm_interface_hook_add(NSM_TUNNEL, nsm_tunnel_interface_create_api, nsm_tunnel_interface_del_api);
 	ipkernel_tunnel_create = _ipkernel_tunnel_create;
 	ipkernel_tunnel_delete = _ipkernel_tunnel_delete;
 	ipkernel_tunnel_change = _ipkernel_tunnel_change;
-
 	return OK;
 }
 
 
-int nsm_tunnel_client_exit()
+int nsm_tunnel_exit()
 {
-	struct nsm_client *nsm = nsm_client_lookup (NSM_TUNNEL);
-	if(nsm)
-		nsm_client_free (nsm);
 	return OK;
 }

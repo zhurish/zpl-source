@@ -39,7 +39,8 @@
  * SUCH DAMAGE.
  */
 
-#include <zebra.h>
+#include "os_include.h"
+#include "zpl_include.h"
 #include "md5.h"
 
 #define SHIFT(X, s) (((X) << (s)) | ((X) >> (32 - (s))))
@@ -99,7 +100,7 @@
 #define MD5_D0	0x10325476
 
 /* Integer part of 4294967296 times abs(sin(i)), where i is in radians. */
-static const ospl_uint32  T[65] = {
+static const zpl_uint32  T[65] = {
 	0,
 	0xd76aa478, 	0xe8c7b756,	0x242070db,	0xc1bdceee,
 	0xf57c0faf,	0x4787c62a, 	0xa8304613,	0xfd469501,
@@ -122,7 +123,7 @@ static const ospl_uint32  T[65] = {
 	0xf7537e82, 	0xbd3af235, 	0x2ad7d2bb, 	0xeb86d391,
 };
 
-static const ospl_uint8 md5_paddat[MD5_BUFLEN] = {
+static const zpl_uint8 md5_paddat[MD5_BUFLEN] = {
 	0x80,	0,	0,	0,	0,	0,	0,	0,
 	0,	0,	0,	0,	0,	0,	0,	0,
 	0,	0,	0,	0,	0,	0,	0,	0,
@@ -133,7 +134,7 @@ static const ospl_uint8 md5_paddat[MD5_BUFLEN] = {
 	0,	0,	0,	0,	0,	0,	0,	0,	
 };
 
-static void os_md5_calc (const ospl_uint8 *, os_md5_ctxt *);
+static void os_md5_calc (const zpl_uint8 *, os_md5_ctxt *);
 
 void os_md5_init(os_md5_ctxt *ctxt)
 {
@@ -149,7 +150,7 @@ void os_md5_init(os_md5_ctxt *ctxt)
 void os_md5_loop(os_md5_ctxt *ctxt, const void *vinput, uint len)
 {
 	uint gap, i;
-	const ospl_uint8 *input = vinput;
+	const zpl_uint8 *input = vinput;
 
 	ctxt->md5_n += len * 8; /* byte to bit */
 	gap = MD5_BUFLEN - ctxt->md5_i;
@@ -204,7 +205,7 @@ void os_md5_pad(os_md5_ctxt *ctxt)
 	os_md5_calc(ctxt->md5_buf, ctxt);
 }
 
-void os_md5_result(ospl_uint8 *digest, os_md5_ctxt *ctxt)
+void os_md5_result(zpl_uint8 *digest, os_md5_ctxt *ctxt)
 {
 	/* 4 byte words */
 	if (BYTE_ORDER == LITTLE_ENDIAN)
@@ -222,22 +223,22 @@ void os_md5_result(ospl_uint8 *digest, os_md5_ctxt *ctxt)
 	  }
 }
 
-static void os_md5_calc(const ospl_uint8 *b64, os_md5_ctxt * ctxt)
+static void os_md5_calc(const zpl_uint8 *b64, os_md5_ctxt * ctxt)
 {
-	ospl_uint32  A = ctxt->md5_sta;
-	ospl_uint32  B = ctxt->md5_stb;
-	ospl_uint32  C = ctxt->md5_stc;
-	ospl_uint32  D = ctxt->md5_std;
+	zpl_uint32  A = ctxt->md5_sta;
+	zpl_uint32  B = ctxt->md5_stb;
+	zpl_uint32  C = ctxt->md5_stc;
+	zpl_uint32  D = ctxt->md5_std;
 #if (BYTE_ORDER == LITTLE_ENDIAN)
-	const ospl_uint32  *X = (const ospl_uint32  *)b64;
+	const zpl_uint32  *X = (const zpl_uint32  *)b64;
 #elif (BYTE_ORDER == BIG_ENDIAN)
-	ospl_uint32  X[16];
+	zpl_uint32  X[16];
 
 	if (BYTE_ORDER == BIG_ENDIAN)
 	  {
 	    /* 4 byte words */
 	    /* what a brute force but fast! */
-	    ospl_uint8 *y = (ospl_uint8 *)X;
+	    zpl_uint8 *y = (zpl_uint8 *)X;
 	    y[ 0] = b64[ 3]; y[ 1] = b64[ 2]; y[ 2] = b64[ 1]; y[ 3] = b64[ 0];
 	    y[ 4] = b64[ 7]; y[ 5] = b64[ 6]; y[ 6] = b64[ 5]; y[ 7] = b64[ 4];
 	    y[ 8] = b64[11]; y[ 9] = b64[10]; y[10] = b64[ 9]; y[11] = b64[ 8];
@@ -304,12 +305,12 @@ void	OS_MD5_Init(OS_MD5_CTX *context)
 	os_md5_init(context);
 }
 
-void	OS_MD5_Update(OS_MD5_CTX *context, const ospl_uchar *buf, ospl_size_t len)
+void	OS_MD5_Update(OS_MD5_CTX *context, const zpl_uchar *buf, zpl_size_t len)
 {
 	os_md5_loop(context, buf, len);
 }
 
-void	OS_MD5_Final(ospl_uchar *buf, OS_MD5_CTX *context)
+void	OS_MD5_Final(zpl_uchar *buf, OS_MD5_CTX *context)
 {
 	os_md5_pad(context);
 	os_md5_result(buf, context);
@@ -317,22 +318,22 @@ void	OS_MD5_Final(ospl_uchar *buf, OS_MD5_CTX *context)
 /* From RFC 2104 */
 void
 os_hmac_md5(text, text_len, key, key_len, digest)
-ospl_uchar*  text;			/* pointer to data stream */
-ospl_uint32             text_len;		/* length of data stream */
-ospl_uchar*  key;			/* pointer to authentication key */
-ospl_uint32             key_len;		/* length of authentication key */
-ospl_uint8 *       digest;			/* caller digest to be filled in */
+zpl_uchar*  text;			/* pointer to data stream */
+zpl_uint32             text_len;		/* length of data stream */
+zpl_uchar*  key;			/* pointer to authentication key */
+zpl_uint32             key_len;		/* length of authentication key */
+zpl_uint8 *       digest;			/* caller digest to be filled in */
 
 {
     OS_MD5_CTX context;
-    ospl_uchar k_ipad[65];    /* inner padding -
+    zpl_uchar k_ipad[65];    /* inner padding -
 				 * key XORd with ipad
 				 */
-    ospl_uchar k_opad[65];    /* outer padding -
+    zpl_uchar k_opad[65];    /* outer padding -
 				 * key XORd with opad
 				 */
-    ospl_uchar tk[16];
-    ospl_uint32 i;
+    zpl_uchar tk[16];
+    zpl_uint32 i;
     /* if key is longer than 64 bytes reset it to key=MD5(key) */
     if (key_len > 64) {
 
@@ -387,28 +388,28 @@ ospl_uint8 *       digest;			/* caller digest to be filled in */
     OS_MD5Final(digest, &context);	/* finish up 2nd pass */
 }
 
-#ifndef USE_IPSTACK_KERNEL
-ospl_uchar cleanse_ctr = 0;
+#ifndef ZPL_KERNEL_STACK_MODULE
+zpl_uchar cleanse_ctr = 0;
 
-void OPENSSL_cleanse(void *ptr, ospl_size_t len)
+void OPENSSL_cleanse(void *ptr, zpl_size_t len)
 	{
-	ospl_uchar *p = ptr;
-	ospl_size_t loop = len, ctr = cleanse_ctr;
+	zpl_uchar *p = ptr;
+	zpl_size_t loop = len, ctr = cleanse_ctr;
 	while(loop--)
 		{
-		*(p++) = (ospl_uchar)ctr;
-		ctr += (17 + ((ospl_size_t)p & 0xF));
+		*(p++) = (zpl_uchar)ctr;
+		ctr += (17 + ((zpl_size_t)p & 0xF));
 		}
-	p=memchr(ptr, (ospl_uchar)ctr, len);
+	p=memchr(ptr, (zpl_uchar)ctr, len);
 	if(p)
-		ctr += (63 + (ospl_size_t)p);
-	cleanse_ctr = (ospl_uchar)ctr;
+		ctr += (63 + (zpl_size_t)p);
+	cleanse_ctr = (zpl_uchar)ctr;
 	}
 
-ospl_uchar *OS_MD5(const ospl_uchar *d, ospl_size_t n, ospl_uchar *md)
+zpl_uchar *OS_MD5(const zpl_uchar *d, zpl_size_t n, zpl_uchar *md)
 	{
 	OS_MD5_CTX c;
-	static ospl_uchar m[MD5_DIGEST_LENGTH];
+	static zpl_uchar m[MD5_DIGEST_LENGTH];
 
 	if (md == NULL)
 		md=m;
@@ -417,8 +418,8 @@ ospl_uchar *OS_MD5(const ospl_uchar *d, ospl_size_t n, ospl_uchar *md)
 	OS_MD5Update(&c,d,n);
 #else
 	{
-		ospl_char temp[1024];
-		ospl_ulong chunk;
+		zpl_char temp[1024];
+		zpl_ulong chunk;
 
 		while (n > 0)
 		{

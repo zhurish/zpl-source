@@ -1,14 +1,7 @@
-#include "zebra.h"
-#include "memory.h"
-#include "command.h"
-#include "prefix.h"
-#include "sigevent.h"
-#include "version.h"
-#include "log.h"
-#include "getopt.h"
-#include "eloop.h"
-#include "os_start.h"
-#include "os_module.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "dhcp_def.h"
 #include "dhcp_lease.h"
@@ -19,18 +12,19 @@
 #include "dhcp_api.h"
 
 dhcp_global_t dhcp_global_config;
+static void *master_eloop_dhcp = NULL;
 
 static int dhcpd_config_init(dhcp_global_t *config)
 {
-	if(config->init == ospl_true)
+	if(config->init == zpl_true)
 		return OK;
 	memset(config, 0, sizeof(dhcp_global_t));
-	config->init = ospl_true;
+	config->init = zpl_true;
 	lstInit(&config->pool_list);
 	lstInit(&config->client_list);
 	lstInit(&config->relay_list);
-	if (master_eloop[MODULE_DHCP] == NULL)
-		config->eloop_master = master_eloop[MODULE_DHCP] =
+	if (master_eloop_dhcp == NULL)
+		config->eloop_master = master_eloop_dhcp =
 		eloop_master_module_create(MODULE_DHCP);
 
 	config->server_port = DHCP_SERVER_PORT;
@@ -39,20 +33,20 @@ static int dhcpd_config_init(dhcp_global_t *config)
 	config->server_port_v6 = DHCP_SERVER_PORT6;
 	config->client_port_v6 = DHCP_CLIENT_PORT6;
 	config->r_thread = NULL;
-	config->sock = 0;
-	config->rawsock = 0;
+	ipstack_init(IPCOM_STACK, config->sock);
+	ipstack_init(IPCOM_STACK, config->rawsock);
 	return OK;
 }
 
 static int dhcpd_config_uninit(dhcp_global_t *config)
 {
-	if(config->init != ospl_true)
+	if(config->init != zpl_true)
 		return OK;
 
-	if(master_eloop[MODULE_DHCP])
-		eloop_master_free(master_eloop[MODULE_DHCP]);
-	master_eloop[MODULE_DHCP] = NULL;
-	config->init = ospl_false;
+	if(master_eloop_dhcp)
+		eloop_master_free(master_eloop_dhcp);
+	master_eloop_dhcp = NULL;
+	config->init = zpl_false;
 	lstFree(&config->pool_list);
 	lstFree(&config->client_list);
 	lstFree(&config->relay_list);
@@ -64,8 +58,8 @@ int udhcp_read_thread(struct eloop *eloop)
 {
 	struct dhcp_packet packet;
 	int bytes = 0;
-	int sock = -1;
-	ospl_uint32 ifindex = 0;
+	zpl_socket_t sock;
+	zpl_uint32 ifindex = 0;
 	dhcp_pool_t *pool = NULL;
 	dhcpd_interface_t * ifter = NULL;
 	dhcp_global_t *config = NULL;
@@ -80,8 +74,7 @@ int udhcp_read_thread(struct eloop *eloop)
 		if (bytes == -1 && errno != EINTR) {
 			zlog_err(MODULE_DHCP,
 					"read error: "STRERROR_FMT", reopening socket" STRERROR_ERRNO);
-			close(sock);
-			sock = -1;
+			ipstack_close(sock);
 			//config->r_thread = eloop_add_read(config->eloop_master, udhcp_read_thread, config, server_socket);
 			return ERROR;
 		}
@@ -108,14 +101,12 @@ int udhcp_read_thread(struct eloop *eloop)
 	return OK;
 }
 
-static int udhcp_task_main(void *p)
+static int udhcp_main_task(void *p)
 {
 	//dhcp_pool_t *pool = NULL;
 	dhcp_global_t *config = (dhcp_global_t *) p;
 	module_setup_task(MODULE_DHCP, os_task_id_self());
-	while (!os_load_config_done()) {
-		os_sleep(1);
-	}
+	host_config_load_waitting();
 /*	os_sleep(5);
 	struct interface * ifp = if_lookup_by_name("ethernet 0/0/2");
 	if (ifp) {
@@ -159,7 +150,7 @@ int udhcp_module_init()
 #if 0
 	pool = dhcpd_pool_create("test");
 	if (pool) {
-		dhcpd_pool_set_address_range(pool, inet_addr("10.10.10.1"), inet_addr("10.10.10.253"));
+		dhcpd_pool_set_address_range(pool, ipstack_inet_addr("10.10.10.1"), ipstack_inet_addr("10.10.10.253"));
 		dhcpd_pool_set_leases(pool, 3600, 60);
 		dhcpd_pool_set_autotime(pool, 7200);
 		dhcpd_pool_set_decline_time(pool, 3600);
@@ -186,10 +177,10 @@ int udhcp_module_init()
 		 int dhcpd_pool_set_static_lease(pool, char *str);
 		 //POP_SAVED_FUNCTION_VISIBILITY
 
-		 int dhcpd_pool_add_interface(pool, ospl_uint32 ifindex);
-		 int dhcpd_pool_del_interface(pool, ospl_uint32 ifindex);
-		 dhcpd_interface_t * dhcpd_lookup_interface(pool, ospl_uint32 ifindex);
-		 ospl_uint32  dhcpd_lookup_address_on_interface(pool, ospl_uint32 ifindex);
+		 int dhcpd_pool_add_interface(pool, zpl_uint32 ifindex);
+		 int dhcpd_pool_del_interface(pool, zpl_uint32 ifindex);
+		 dhcpd_interface_t * dhcpd_lookup_interface(pool, zpl_uint32 ifindex);
+		 zpl_uint32  dhcpd_lookup_address_on_interface(pool, zpl_uint32 ifindex);
 		 */
 		/**********************************************************************/
 		/**********************************************************************/
@@ -225,7 +216,7 @@ int udhcp_module_task_init()
 {
 	if(dhcp_global_config.task_id == 0)
 		dhcp_global_config.task_id = os_task_create("udhcpTask", OS_TASK_DEFAULT_PRIORITY, 0,
-			udhcp_task_main, &dhcp_global_config,
+			udhcp_main_task, &dhcp_global_config,
 			OS_TASK_DEFAULT_STACK);
 	if(dhcp_global_config.task_id)
 		return OK;
@@ -241,46 +232,32 @@ int udhcp_module_task_exit ()
 		eloop_cancel(dhcp_global_config.r_thread);
 		dhcp_global_config.r_thread = NULL;
 	}
-	if(dhcp_global_config.sock)		//udp socket, just for server
-		close(dhcp_global_config.sock);
+	if(!ipstack_invalid(dhcp_global_config.sock))		//udp socket, just for server
+		ipstack_close(dhcp_global_config.sock);
 
-	if(dhcp_global_config.rawsock)	//raw socket, just for server send MSG to client
-		close(dhcp_global_config.rawsock);
+	if(!ipstack_invalid(dhcp_global_config.rawsock))	//raw socket, just for server send MSG to client
+		ipstack_close(dhcp_global_config.rawsock);
 
-	if(dhcp_global_config.sock_v6)
-		close(dhcp_global_config.sock_v6);
+	if(!ipstack_invalid(dhcp_global_config.sock_v6))
+		ipstack_close(dhcp_global_config.sock_v6);
 
-	if(dhcp_global_config.rawsock_v6)
-		close(dhcp_global_config.rawsock_v6);
+	if(!ipstack_invalid(dhcp_global_config.rawsock_v6))
+		ipstack_close(dhcp_global_config.rawsock_v6);
 
-	if(dhcp_global_config.client_sock)		//udp socket, just for client
-		close(dhcp_global_config.client_sock);
+	if(!ipstack_invalid(dhcp_global_config.client_sock))		//udp socket, just for client
+		ipstack_close(dhcp_global_config.client_sock);
 
 	dhcp_client_interface_clean();
 	dhcpd_pool_clean();
 	if(dhcp_global_config.task_id)
 		os_task_destroy(dhcp_global_config.task_id);
 	dhcp_global_config.task_id = 0;
-	if(master_eloop[MODULE_DHCP])
-		eloop_master_free(master_eloop[MODULE_DHCP]);
-	master_eloop[MODULE_DHCP] = NULL;
+	if(master_eloop_dhcp)
+		eloop_master_free(master_eloop_dhcp);
+	master_eloop_dhcp = NULL;
 	return OK;
 }
 
-struct module_list module_list_dhcp = 
-{ 
-	.module=MODULE_DHCP, 
-	.name="DHCP", 
-	.module_init=udhcp_module_init, 
-	.module_exit=udhcp_module_exit, 
-	.module_task_init=udhcp_module_task_init, 
-	.module_task_exit=udhcp_module_task_exit, 
-	.module_cmd_init=NULL, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
-	.taskid=0,
-};
 /*
 int dhcpc_enable_test()
 {

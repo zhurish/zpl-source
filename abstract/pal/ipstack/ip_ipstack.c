@@ -8,7 +8,7 @@
 
 #define IPCOM_USE_HOOK
 
-#include "zebra.h"
+#include "zpl_include.h"
 #include "memory.h"
 #include "command.h"
 #include "memory.h"
@@ -28,7 +28,7 @@
 
 
 
-#ifdef USE_IPSTACK_KERNEL
+#ifdef ZPL_KERNEL_STACK_MODULE
 
 #else
 
@@ -42,7 +42,7 @@ static void ifreq_set_name (struct Ip_ifreq *ifreq, struct interface *ifp)
   return;
 }
 
-static int ip_stack_ioctl(ospl_ulong cmd, void *data, vrf_id_t vrf_id)
+static int ip_stack_ioctl(zpl_ulong cmd, void *data, vrf_id_t vrf_id)
 {
 	int ret = 0;
 	int fd = ipcom_socket(IP_AF_INET, IP_SOCK_DGRAM, 0);
@@ -62,7 +62,7 @@ static int ip_stack_ioctl(ospl_ulong cmd, void *data, vrf_id_t vrf_id)
             return -1;
         }
     }
-	ret = ipcom_socketioctl(fd, (ospl_ulong)cmd, data);
+	ret = ipcom_socketioctl(fd, (zpl_ulong)cmd, data);
 	if(fd < 0)
 	{
 		zlog_err(MODULE_PAL,"failed to ioctl socket");
@@ -74,7 +74,7 @@ static int ip_stack_ioctl(ospl_ulong cmd, void *data, vrf_id_t vrf_id)
 }
 
 
-static int ip_stack_change_state(struct interface *ifp, ospl_bool if_up)
+static int ip_stack_change_state(struct interface *ifp, zpl_bool if_up)
 {
     struct Ip_ifreq ifreq;
     os_memset(&ifreq, 0, sizeof(struct Ip_ifreq));
@@ -100,12 +100,12 @@ static int ip_stack_change_state(struct interface *ifp, ospl_bool if_up)
 
 static int ip_stack_change_up(struct interface *ifp)
 {
-    return ip_stack_change_state(ifp, ospl_true);
+    return ip_stack_change_state(ifp, zpl_true);
 }
 
 static int ip_stack_change_down(struct interface *ifp)
 {
-    return ip_stack_change_state(ifp, ospl_false);
+    return ip_stack_change_state(ifp, zpl_false);
 }
 
 static int ip_stack_update_flag(struct interface *ifp)
@@ -158,7 +158,7 @@ static int ip_stack_set_mtu(struct interface *ifp, int mtu)
 
 
 
-static int ip_stack_set_lladdr(struct interface *ifp, ospl_uint8 *mac, ospl_uint32 len)
+static int ip_stack_set_lladdr(struct interface *ifp, zpl_uint8 *mac, zpl_uint32 len)
 {
     struct Ip_ifreq       ifreq;
 
@@ -198,7 +198,7 @@ static int ip_stack_create(struct interface *ifp)
         return -ipcom_errno;
     }
     ifp->k_ifindex = ifreq.ip_ifr_ifindex;
-    ip_stack_change_state(ifp, ospl_true);
+    ip_stack_change_state(ifp, zpl_true);
     if(ifp->hw_addr_len)
     	ip_stack_set_lladdr(ifp, ifp->hw_addr, ifp->hw_addr_len);
 
@@ -230,7 +230,7 @@ static int ip_stack_vlan_set(struct interface *ifp, int vlan)
 	ifreq_set_name(&ifreq, ifp);
 
     strcpy (vlanreq.vlr_parent, strtok(ifreq.ifr_name, "."));
-    ip_stack_change_state(ifp, ospl_false);
+    ip_stack_change_state(ifp, zpl_false);
     vlanreq.vlr_tag = vlan;
 
     ifreq.ip_ifr_data = &vlanreq;
@@ -241,7 +241,7 @@ static int ip_stack_vlan_set(struct interface *ifp, int vlan)
                      ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
     }
-    ip_stack_change_state(ifp, ospl_true);
+    ip_stack_change_state(ifp, zpl_true);
     return 0;
 }
 
@@ -254,7 +254,7 @@ static int ip_stack_vlanpri_set(struct interface *ifp, int pri)
 	ifreq_set_name(&ifreq, ifp);
     strcpy (vlanreq.vlr_parent, strtok(ifreq.ifr_name, "."));
     vlanreq.vlr_pri = pri;
-    ip_stack_change_state(ifp, ospl_false);
+    ip_stack_change_state(ifp, zpl_false);
     ifreq.ip_ifr_data = &vlanreq;
     if (ip_stack_ioctl(IP_SIOCSETVLANPRI, &ifreq, ifp->vrf_id) < 0)
     {
@@ -263,11 +263,11 @@ static int ip_stack_vlanpri_set(struct interface *ifp, int pri)
                      ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
     }
-    ip_stack_change_state(ifp, ospl_true);
+    ip_stack_change_state(ifp, zpl_true);
     return 0;
 }
 
-static int ip_stack_promisc_link(struct interface *ifp, ospl_bool enable)
+static int ip_stack_promisc_link(struct interface *ifp, zpl_bool enable)
 {
     struct Ip_ifreq ifreq;
 	os_memset(&ifreq, 0, sizeof(struct Ip_ifreq));
@@ -283,7 +283,7 @@ static int ip_stack_promisc_link(struct interface *ifp, ospl_bool enable)
 }
 
 
-static int ip_stack_change_dhcp(struct interface *ifp, ospl_bool enable)
+static int ip_stack_change_dhcp(struct interface *ifp, zpl_bool enable)
 {
     struct Ip_ifreq ifreq;
 
@@ -535,7 +535,7 @@ static int ip_stack_ipv6_delete(struct interface *ifp,struct connected *ifc)
 }
 #endif
 
-static int ip_stack_arp_add(struct interface *ifp, struct prefix *address, ospl_uint8 *mac)
+static int ip_stack_arp_add(struct interface *ifp, struct prefix *address, zpl_uint8 *mac)
 {
 	int ret = 0;
     struct Ip_arpreq arpreq;
@@ -660,7 +660,7 @@ static int ip_stack_arp_request(struct interface *ifp,  struct prefix *address)
 
 
 /* call route system call */
-static int ip_stack_route_ioctl (ospl_ulong request, void * buffer)
+static int ip_stack_route_ioctl (zpl_ulong request, void * buffer)
 {
 	int sock;
 	int ret;
@@ -672,7 +672,7 @@ static int ip_stack_route_ioctl (ospl_ulong request, void * buffer)
 				safe_strerror(save_errno));
 		return -1;
 	}
-	ret = ipcom_socketioctl(sock, (ospl_ulong)request, buffer);
+	ret = ipcom_socketioctl(sock, (zpl_ulong)request, buffer);
 
 	if (ret < 0)
 	{
@@ -772,7 +772,7 @@ static int ip_stack_del_vr (vrf_id_t vr)
 #if 0
 int if_lag_add_mem(struct interface *ifp_lag, const char *ifp_mem_name)
 {
-#ifndef USE_LINUX_OS
+#ifndef ZPL_BUILD_LINUX
   int ret;
   struct ifreq ifreq;
   struct Ip_ebondreq ebondreq;
@@ -805,7 +805,7 @@ int if_lag_add_mem(struct interface *ifp_lag, const char *ifp_mem_name)
 int if_lag_delete_mem(struct interface *ifp_lag, const char *ifp_mem_name)
 {
 
-#ifndef USE_LINUX_OS
+#ifndef ZPL_BUILD_LINUX
   int ret;
   struct ifreq ifreq;
   struct Ip_ebondreq ebondreq;
@@ -838,7 +838,7 @@ int if_lag_delete_mem(struct interface *ifp_lag, const char *ifp_mem_name)
 
 int if_lag_set_mem_flag(struct interface *ifp_lag, const char *ifp_mem_name, int master_slave_flag)
 {
-#ifndef USE_LINUX_OS
+#ifndef ZPL_BUILD_LINUX
   int ret;
   struct ifreq ifreq;
   struct Ip_ebondreq ebondreq;

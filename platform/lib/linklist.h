@@ -44,13 +44,13 @@ struct list
   struct listnode *tail;
 
   /* invariant: count is the number of listnodes in the list */
-  ospl_uint32  count;
+  zpl_uint32  count;
 
   /*
    * Returns -1 if val1 < val2, 0 if equal?, 1 if val1 > val2.
    * Used as definition of sorted for listnode_add_sort
    */
-  ospl_int (*cmp) (void *val1, void *val2);
+  zpl_int (*cmp) (void *val1, void *val2);
 
   /* callback to free user-owned data when listnode is deleted. supplying
    * this callback is very much encouraged!

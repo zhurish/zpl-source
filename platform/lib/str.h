@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 #ifndef HAVE_SNPRINTF
-extern int snprintf(ospl_char *, ospl_size_t, const char *, ...);
+extern int snprintf(zpl_char *, zpl_size_t, const char *, ...);
 #endif
 
 #ifndef HAVE_VSNPRINTF
@@ -18,59 +18,60 @@ extern int snprintf(ospl_char *, ospl_size_t, const char *, ...);
 #endif
 
 #ifndef HAVE_STRLCPY
-extern ospl_size_t strlcpy(ospl_char *, const char *, ospl_size_t);
+extern zpl_size_t strlcpy(zpl_char *, const char *, zpl_size_t);
 #endif
 
 #ifndef HAVE_STRLCAT
-extern ospl_size_t strlcat(ospl_char *, const char *, ospl_size_t);
+extern zpl_size_t strlcat(zpl_char *, const char *, zpl_size_t);
 #endif
 
 #ifndef HAVE_STRNLEN
-extern ospl_size_t strnlen(const char *s, ospl_size_t maxlen);
+extern zpl_size_t strnlen(const char *s, zpl_size_t maxlen);
 #endif
 
 #ifndef HAVE_STRNDUP
-extern ospl_char * strndup (const char *, ospl_size_t);
+extern zpl_char * strndup (const char *, zpl_size_t);
 #endif
 
-extern const char *strupr(ospl_char* src);
-extern const char *strlwr(ospl_char* src);
-extern const char *string_have_space(ospl_char* src);
+extern const char *strupr(zpl_char* src);
+extern const char *strlwr(zpl_char* src);
+extern const char *string_have_space(zpl_char* src);
 extern int all_space (const char *str);
-extern const char *str_trim(ospl_char* src);
+extern int all_isdigit (const char *str);
+extern const char *str_trim(zpl_char* src);
 
 extern const char *itoa(int value, int base);
-extern const char *ftoa(ospl_float value, ospl_char *fmt);
-extern const char *dtoa(ospl_double value, ospl_char *fmt);
+extern const char *ftoa(zpl_float value, zpl_char *fmt);
+extern const char *dtoa(zpl_double value, zpl_char *fmt);
 
-extern ospl_uint8 atoascii(int a);
-extern ospl_bool is_hex (ospl_char c);
-extern ospl_uint32 str_to_hex(ospl_char * room);
-extern ospl_char * hex_to_str(ospl_uint32 hex);
-
-
-extern int strchr_count(ospl_char *src, const char em);
-
-extern int strchr_step(ospl_char *src, const char em, int step);
-extern int strchr_next(ospl_char *src, const char em);
-
-extern ospl_char *strstr_last(const char *dest,const char *src);
-
-extern int str_isempty(ospl_char *dest, ospl_uint32 len);
-
-extern ospl_char *os_strstr_last(const char *dest,const char *src);
+extern zpl_uint8 atoascii(int a);
+extern zpl_bool is_hex (zpl_char c);
+extern zpl_uint32 str_to_hex(zpl_char * room);
+extern zpl_char * hex_to_str(zpl_uint32 hex);
 
 
-extern ospl_uint32 getULong(ospl_uchar *);
-extern ospl_int32 getLong(ospl_uchar *);
-extern ospl_uint16 getUShort(ospl_uchar *);
-extern ospl_int16 getShort(ospl_uchar *);
-extern void putULong(ospl_uchar *, ospl_uint32);
-extern void putLong(ospl_uchar *, ospl_int32);
-extern void putUShort(ospl_uchar *, ospl_int16 );
-extern void putShort(ospl_uchar *, ospl_int16);
+extern int strchr_count(zpl_char *src, const char em);
 
-extern void convert_num(ospl_uchar *buf, ospl_char *str, int base, int size);
+extern int strchr_step(zpl_char *src, const char em, int step);
+extern int strchr_next(zpl_char *src, const char em);
+
+extern zpl_char *strstr_last(const char *dest,const char *src);
+
+extern int str_isempty(zpl_char *dest, zpl_uint32 len);
+
+extern zpl_char *os_strstr_last(const char *dest,const char *src);
+
+
+extern zpl_uint32 getULong(zpl_uchar *);
+extern zpl_int32 getLong(zpl_uchar *);
+extern zpl_uint16 getUShort(zpl_uchar *);
+extern zpl_int16 getShort(zpl_uchar *);
+extern void putULong(zpl_uchar *, zpl_uint32);
+extern void putLong(zpl_uchar *, zpl_int32);
+extern void putUShort(zpl_uchar *, zpl_int16 );
+extern void putShort(zpl_uchar *, zpl_int16);
+
+extern void convert_num(zpl_uchar *buf, zpl_char *str, int base, int size);
 
 
 extern long long

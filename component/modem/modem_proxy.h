@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-extern int modem_proxy_enable(const char *name, int fd, ospl_bool close);
+extern int modem_proxy_enable(const char *name, int fd, zpl_bool close);
 extern int modem_proxy_disable(const char *name);
 
 #ifdef __cplusplus

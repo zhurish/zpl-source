@@ -4,7 +4,7 @@ VERSION=1.6.9
 #
 
 
-ifeq ($(PL_MQTT_SSL),true)
+ifeq ($(ZPL_MQTT_SSL),true)
 WITH_TLS:=yes
 # Comment out to disable TLS/PSK support in the broker and client. Requires
 # WITH_TLS=yes.
@@ -18,7 +18,7 @@ WITH_TLS:=no
 WITH_TLS_PSK:=no
 endif
 # Comment out to disable client threading support.
-ifeq ($(PL_MQTT_BROKER),true)
+ifeq ($(ZPL_MQTT_BROKER),true)
 WITH_THREADING:=yes
 else
 WITH_THREADING:=no
@@ -27,7 +27,7 @@ endif
 # to connect to other brokers and subscribe/publish to topics. You probably
 # want to leave this included unless you want to save a very small amount of
 # memory size and CPU time.
-ifeq ($(PL_MQTT_BROKER),true)
+ifeq ($(ZPL_MQTT_BROKER),true)
 WITH_BRIDGE:=yes
 else
 WITH_BRIDGE:=no
@@ -36,7 +36,7 @@ endif
 # allows the broker to store retained messages and durable subscriptions to a
 # file periodically and on shutdown. This is usually desirable (and is
 # suggested by the MQTT spec), but it can be disabled if required.
-ifeq ($(PL_MQTT_BROKER),true)
+ifeq ($(ZPL_MQTT_BROKER),true)
 WITH_PERSISTENCE:=yes
 else
 WITH_PERSISTENCE:=no
@@ -64,7 +64,7 @@ WITH_EC:=yes
 # Build man page documentation by default.
 WITH_DOCS:=no
 # Build with client support for SOCK5 proxy.
-ifeq ($(PL_MQTT_BROKER),true)
+ifeq ($(ZPL_MQTT_BROKER),true)
 WITH_SOCKS:=yes
 else
 WITH_SOCKS:=no
@@ -86,7 +86,7 @@ WITH_STATIC_LIBRARIES:=yes
 # Build with epoll support.
 WITH_EPOLL:=yes
 # Build with bundled uthash.h
-ifeq ($(PL_MQTT_BROKER),true)
+ifeq ($(ZPL_MQTT_BROKER),true)
 WITH_BUNDLED_DEPS:=yes
 else
 WITH_BUNDLED_DEPS:=no
@@ -95,64 +95,64 @@ endif
 # Build with coverage options
 #WITH_COVERAGE:=no
 #
-ifeq ($(PL_MQTT_BROKER),false)
+ifeq ($(ZPL_MQTT_BROKER),false)
 ###############################CLIENT###################################
 #
 ifeq ($(WITH_TLS),yes)
-	PLM_DEFINE += -DWITH_TLS
+	ZPLM_DEFINE += -DWITH_TLS
 	ifeq ($(WITH_TLS_PSK),yes)
-	PLM_DEFINE += -DWITH_TLS_PSK
+	ZPLM_DEFINE += -DWITH_TLS_PSK
 	endif
 endif
 
 ifeq ($(WITH_THREADING),yes)
-	PLM_DEFINE += -DWITH_THREADING
+	ZPLM_DEFINE += -DWITH_THREADING
 endif
 
 ifeq ($(WITH_BRIDGE),yes)
-	PLM_DEFINE += -DWITH_BRIDGE
+	ZPLM_DEFINE += -DWITH_BRIDGE
 endif
 
 ifeq ($(WITH_PERSISTENCE),yes)
-	PLM_DEFINE += -DWITH_PERSISTENCE
+	ZPLM_DEFINE += -DWITH_PERSISTENCE
 endif
 
 ifeq ($(WITH_MEMORY_TRACKING),yes)
-	PLM_DEFINE +=  -DWITH_MEMORY_TRACKING
+	ZPLM_DEFINE +=  -DWITH_MEMORY_TRACKING
 endif
 
 ifeq ($(WITH_SYS_TREE),yes)
-	PLM_DEFINE += -DWITH_SYS_TREE
+	ZPLM_DEFINE += -DWITH_SYS_TREE
 endif
 ifeq ($(WITH_EC),yes)
-	PLM_DEFINE += -DWITH_EC
+	ZPLM_DEFINE += -DWITH_EC
 endif
 ifeq ($(WITH_SRV),yes)
-	PLM_DEFINE += -DWITH_SRV
-	PLOS_LDLIBS += -lcares
+	ZPLM_DEFINE += -DWITH_SRV
+	ZPLOS_LDLIBS += -lcares
 endif
 
 ifeq ($(WITH_ADNS),yes)
-	PLOS_LDLIBS += -lanl
-	PLM_DEFINE += -DWITH_ADNS
+	ZPLOS_LDLIBS += -lanl
+	ZPLM_DEFINE += -DWITH_ADNS
 endif
 
 ifeq ($(WITH_WEBSOCKETS),yes)
-	PLM_DEFINE += -DWITH_WEBSOCKETS
-	PLOS_LDLIBS += -lwebsockets
+	ZPLM_DEFINE += -DWITH_WEBSOCKETS
+	ZPLOS_LDLIBS += -lwebsockets
 endif
 #
 ifeq ($(WITH_SOCKS),yes)
-	PLM_DEFINE:= -DWITH_SOCKS
+	ZPLM_DEFINE:= -DWITH_SOCKS
 endif
 
 ifeq ($(WITH_EPOLL),yes)
-	PLM_DEFINE += -DWITH_EPOLL
+	ZPLM_DEFINE += -DWITH_EPOLL
 endif
 
 ifeq ($(WITH_SYSTEMD),yes)
-	PLM_DEFINE += -DWITH_SYSTEMD
-	PLOS_LDLIBS += -lsystemd
+	ZPLM_DEFINE += -DWITH_SYSTEMD
+	ZPLOS_LDLIBS += -lsystemd
 endif
 
 else

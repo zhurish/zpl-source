@@ -47,57 +47,57 @@ enum
 
 typedef struct app_cmd_hdr_s
 {
-	ospl_uint8		id;
-	//ospl_uint8		addr;
-	ospl_uint8		seqnum;
-	ospl_uint16		len;
+	zpl_uint8		id;
+	//zpl_uint8		addr;
+	zpl_uint8		seqnum;
+	zpl_uint16		len;
 }app_cmd_hdr_t;
 
 #define V9_APP_HDR_LEN		sizeof(app_cmd_hdr_t)
 
 typedef struct app_cmd_ack_s
 {
-	ospl_uint16		cmd;
-	ospl_uint8		status;
+	zpl_uint16		cmd;
+	zpl_uint8		status;
 }app_cmd_ack_t, app_cmd_startup_t;
 
 typedef struct app_cmd_reboot_s
 {
-	ospl_uint16		cmd;
+	zpl_uint16		cmd;
 }app_cmd_reboot_t, app_cmd_status_t, app_cmd_autoip_t;
 
 typedef struct app_cmd_keepalive_s
 {
-	ospl_uint16		cmd;
-	ospl_int8		zone;
-	ospl_uint32		timesp;
+	zpl_uint16		cmd;
+	zpl_int8		zone;
+	zpl_uint32		timesp;
 }app_cmd_keepalive_t;
 
 typedef struct app_cmd_route_s
 {
-	ospl_uint16		cmd;
-	ospl_uint8		port;
-	ospl_uint32		address;
-	ospl_uint32		netmask;
-	ospl_uint32		gateway;
-	ospl_uint32		dns;
+	zpl_uint16		cmd;
+	zpl_uint8		port;
+	zpl_uint32		address;
+	zpl_uint32		netmask;
+	zpl_uint32		gateway;
+	zpl_uint32		dns;
 }app_cmd_route_t;
 
 
 typedef struct app_cmd_status_ack_s
 {
-	ospl_uint16		cmd;
-	ospl_uint8		temp;			//温度
-	ospl_uint8		status;			//状态
-	ospl_uint8		vch;			//处理视频路数
-	ospl_uint8		synctime;		//时间是否已经同步
-	ospl_uint16		cpuload;		//CPU负载（百分比）
-	ospl_uint32		memtotal;		//内存(M)
-	ospl_uint8		memload;		//内存占用（百分比）
-	ospl_uint32		disktatol1;		//硬盘(M)
-	ospl_uint8		diskload1;		//硬盘占用（百分比）
-	ospl_uint32		disktatol2;		//硬盘(M)
-	ospl_uint8		diskload2;		//硬盘占用（百分比）
+	zpl_uint16		cmd;
+	zpl_uint8		temp;			//温度
+	zpl_uint8		status;			//状态
+	zpl_uint8		vch;			//处理视频路数
+	zpl_uint8		synctime;		//时间是否已经同步
+	zpl_uint16		cpuload;		//CPU负载（百分比）
+	zpl_uint32		memtotal;		//内存(M)
+	zpl_uint8		memload;		//内存占用（百分比）
+	zpl_uint32		disktatol1;		//硬盘(M)
+	zpl_uint8		diskload1;		//硬盘占用（百分比）
+	zpl_uint32		disktatol2;		//硬盘(M)
+	zpl_uint8		diskload2;		//硬盘占用（百分比）
 
 }app_cmd_status_ack_t;
 
@@ -105,27 +105,27 @@ typedef struct app_cmd_status_ack_s
 
 typedef struct app_cmd_rtc_s
 {
-	ospl_uint16		cmd;
-	ospl_int8		zone;
-	ospl_uint32		timesp;
+	zpl_uint16		cmd;
+	zpl_int8		zone;
+	zpl_uint32		timesp;
 }app_cmd_rtc_t, app_cmd_led_t;
 
 typedef struct app_cmd_device_s
 {
-	ospl_uint16 cmd;
-	ospl_int8 devicename[16];	 // 设备名称
-	ospl_int8 deviceid[16];	 // 设备Id
-	ospl_int8 serialno[16];	 // SN
-	ospl_int8 manufacturer[16]; // 厂商名称
-	ospl_int8 kervel_version[16];
-	ospl_int8 app_version[16];
-	ospl_int8 buildtime[32];
+	zpl_uint16 cmd;
+	zpl_int8 devicename[16];	 // 设备名称
+	zpl_int8 deviceid[16];	 // 设备Id
+	zpl_int8 serialno[16];	 // SN
+	zpl_int8 manufacturer[16]; // 厂商名称
+	zpl_int8 kervel_version[16];
+	zpl_int8 app_version[16];
+	zpl_int8 buildtime[32];
 } app_cmd_device_t;
 
 typedef struct
 {
-	ospl_uint16 cmd;
-	ospl_uint16 filelen;
+	zpl_uint16 cmd;
+	zpl_uint16 filelen;
 } app_cmd_bios_t;
 
 #define V9_APP_HDR_LEN_MAX		V9_APP_HDR_LEN + sizeof(app_cmd_status_ack_t)*4 + sizeof(app_cmd_device_t)
@@ -135,7 +135,7 @@ typedef struct
 extern app_cmd_device_t bios_device;
 
 int v9_cmd_get(v9_serial_t *mgt);
-int v9_cmd_send_ack(v9_serial_t *mgt, ospl_uint8 status);
+int v9_cmd_send_ack(v9_serial_t *mgt, zpl_uint8 status);
 int v9_cmd_handle_keepalive(v9_serial_t *mgt);
 int v9_cmd_handle_reboot(v9_serial_t *mgt);
 int v9_cmd_handle_route(v9_serial_t *mgt);
@@ -148,11 +148,11 @@ int v9_web_device_info(char *buf);
 
 int v9_cmd_handle_pass_reset(v9_serial_t *mgt);
 #ifdef V9_SLIPNET_ENABLE
-int v9_cmd_sync_time_to_rtc(v9_serial_t *mgt, ospl_uint32 timesp);
+int v9_cmd_sync_time_to_rtc(v9_serial_t *mgt, zpl_uint32 timesp);
 int v9_cmd_sync_time_test(void);
 int v9_cmd_web_reboot();
-int v9_cmd_sync_led(v9_serial_t *mgt, ospl_uint32 led, int status);
-int v9_cmd_update_bios(ospl_uint32 state);
+int v9_cmd_sync_led(v9_serial_t *mgt, zpl_uint32 led, int status);
+int v9_cmd_update_bios(zpl_uint32 state);
 int v9_cmd_update_bios_ack(v9_serial_t *mgt);
 int v9_cmd_update_bios_finsh();
 #else

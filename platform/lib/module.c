@@ -6,11 +6,9 @@
  */
 
 
-#include <zebra.h>
-#include "module.h"
-#include "thread.h"
-#include "eloop.h"
-#include "os_ansync.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
 
 
@@ -164,7 +162,7 @@ struct module_list module_list_kernel =
 
 int pl_module_name_show()
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
 		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->name != NULL)
@@ -177,7 +175,7 @@ int pl_module_name_show()
 
 int pl_module_name_init(const char * name)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
 		if(module_lists_tbl[i].tbl && os_strcmp(module_lists_tbl[i].tbl->name, name) == 0)
@@ -189,12 +187,12 @@ int pl_module_name_init(const char * name)
 	return -1;
 }
 
-int pl_module_init(ospl_uint32 module)
+int pl_module_init(zpl_uint32 module)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (ospl_uint32)module)
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (zpl_uint32)module)
 		{
 			if(module_lists_tbl[i].tbl->module_init)
 				return (module_lists_tbl[i].tbl->module_init)();
@@ -203,12 +201,12 @@ int pl_module_init(ospl_uint32 module)
 	return -1;
 }
 
-int pl_module_exit(ospl_uint32 module)
+int pl_module_exit(zpl_uint32 module)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (ospl_uint32)module)
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (zpl_uint32)module)
 		{
 			if(module_lists_tbl[i].tbl->module_exit)
 				return (module_lists_tbl[i].tbl->module_exit)();
@@ -219,7 +217,7 @@ int pl_module_exit(ospl_uint32 module)
 
 int pl_module_task_name_init(const char * name)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
 		if(module_lists_tbl[i].tbl && os_strcmp(module_lists_tbl[i].tbl->name, name) == 0)
@@ -231,12 +229,12 @@ int pl_module_task_name_init(const char * name)
 	return -1;
 }
 
-int pl_module_task_init(ospl_uint32 module)
+int pl_module_task_init(zpl_uint32 module)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (ospl_uint32)module)
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (zpl_uint32)module)
 		{
 			if(module_lists_tbl[i].tbl->module_task_init)
 				return (module_lists_tbl[i].tbl->module_task_init)();
@@ -245,12 +243,12 @@ int pl_module_task_init(ospl_uint32 module)
 	return -1;
 }
 
-int pl_module_task_exit(ospl_uint32 module)
+int pl_module_task_exit(zpl_uint32 module)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (ospl_uint32)module)
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (zpl_uint32)module)
 		{
 			if(module_lists_tbl[i].tbl->module_task_exit)
 				return (module_lists_tbl[i].tbl->module_task_exit)();
@@ -261,7 +259,7 @@ int pl_module_task_exit(ospl_uint32 module)
 
 int pl_module_cmd_name_init(const char * name)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
 		if(module_lists_tbl[i].tbl && os_strcmp(module_lists_tbl[i].tbl->name, name) == 0)
@@ -273,12 +271,12 @@ int pl_module_cmd_name_init(const char * name)
 	return -1;
 }
 
-int pl_module_cmd_init(ospl_uint32 module)
+int pl_module_cmd_init(zpl_uint32 module)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (ospl_uint32)module)
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (zpl_uint32)module)
 		{
 			if(module_lists_tbl[i].tbl->module_cmd_init)
 				return (module_lists_tbl[i].tbl->module_cmd_init)();
@@ -287,80 +285,169 @@ int pl_module_cmd_init(ospl_uint32 module)
 	return -1;
 }
 
-const char * module2name(ospl_uint32 module)
+const char * module2name(zpl_uint32 module)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (ospl_uint32)module)
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (zpl_uint32)module)
 			return module_lists_tbl[i].tbl->name;
+		else
+		{
+			zpl_uint32 j = 0;
+			for(j = 0; j < ZPL_SUB_MODULE_MAX; j++)
+			{
+				if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->submodule[j].module == (zpl_uint32)module)
+					return module_lists_tbl[i].tbl->submodule[j].name;
+			}
+		}	
 	}
 	return "Unknow";
 }
 
-ospl_uint32 name2module(const char *name)
+zpl_uint32 name2module(const char *name)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
 	{
 		if(module_lists_tbl[i].tbl && os_strcmp(module_lists_tbl[i].tbl->name, name) == 0)
 			return module_lists_tbl[i].tbl->module;
-	}
-	return 0;
-}
-
-ospl_uint32 module2task(ospl_uint32 module)
-{
-	ospl_uint32 i = 0;
-	for(i = 0; i < array_size(module_lists_tbl); i++)
-	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (ospl_uint32)module)
-			return module_lists_tbl[i].tbl->taskid;
-	}
-	return 0;
-}
-
-ospl_uint32 task2module(ospl_uint32 taskid)
-{
-	ospl_uint32 i = 0;
-	for(i = 0; i < array_size(module_lists_tbl); i++)
-	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->taskid == (ospl_uint32)taskid)
-			return module_lists_tbl[i].tbl->module;
-	}
-	return 0;
-}
-
-ospl_uint32 task_module_self(void)
-{
-	ospl_uint32 i = 0;
-	ospl_uint32 taskid = os_task_id_self ();
-	for(i = 0; i < array_size(module_lists_tbl); i++)
-	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->taskid == taskid)
-			return module_lists_tbl[i].tbl->module;
-	}
-	return 0;
-}
-
-
-int module_setup_task(ospl_uint32 module, ospl_uint32 taskid)
-{
-	ospl_uint32 i = 0;
-	for(i = 0; i < array_size(module_lists_tbl); i++)
-	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (ospl_uint32)module)
+		else
 		{
-			module_lists_tbl[i].tbl->taskid = (ospl_uint32)taskid;
-			return 0;
+			zpl_uint32 j = 0;
+			for(j = 0; j < ZPL_SUB_MODULE_MAX; j++)
+			{
+				if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->submodule[j].name && 
+					os_strcmp(module_lists_tbl[i].tbl->submodule[j].name, name) == 0)
+					return module_lists_tbl[i].tbl->submodule[j].module;
+			}
 		}
 	}
 	return 0;
 }
 
-ospl_char *zlog_backtrace_module()
+zpl_uint32 module2task(zpl_uint32 module)
 {
-	static ospl_char backtrace_string[128];
+	zpl_uint32 i = 0;
+	for(i = 0; i < array_size(module_lists_tbl); i++)
+	{
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (zpl_uint32)module)
+			return module_lists_tbl[i].tbl->taskid;
+		else
+		{
+			zpl_uint32 j = 0;
+			for(j = 0; j < ZPL_SUB_MODULE_MAX; j++)
+			{
+				if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->submodule[j].module == (zpl_uint32)module)
+					return module_lists_tbl[i].tbl->submodule[j].taskid;
+			}
+		}
+	}
+	return 0;
+}
+
+zpl_uint32 task2module(zpl_uint32 taskid)
+{
+	zpl_uint32 i = 0;
+	for(i = 0; i < array_size(module_lists_tbl); i++)
+	{
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->taskid == (zpl_uint32)taskid)
+			return module_lists_tbl[i].tbl->module;
+		else
+		{
+			zpl_uint32 j = 0;
+			for(j = 0; j < ZPL_SUB_MODULE_MAX; j++)
+			{
+				if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->submodule[j].taskid == (zpl_uint32)taskid)
+					return module_lists_tbl[i].tbl->submodule[j].module;
+			}		
+		}
+	}
+	return 0;
+}
+
+zpl_uint32 task_module_self(void)
+{
+	zpl_uint32 i = 0;
+	zpl_uint32 taskid = os_task_id_self ();
+	for(i = 0; i < array_size(module_lists_tbl); i++)
+	{
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->taskid == taskid)
+			return module_lists_tbl[i].tbl->module;
+		else
+		{
+			zpl_uint32 j = 0;
+			for(j = 0; j < ZPL_SUB_MODULE_MAX; j++)
+			{
+				if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->submodule[j].taskid == (zpl_uint32)taskid)
+					return module_lists_tbl[i].tbl->submodule[j].module;
+			}		
+		}
+	}
+	return 0;
+}
+
+
+int module_setup_task(zpl_uint32 module, zpl_uint32 taskid)
+{
+	zpl_uint32 i = 0;
+	for(i = 0; i < array_size(module_lists_tbl); i++)
+	{
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (zpl_uint32)module)
+		{
+			module_lists_tbl[i].tbl->taskid = (zpl_uint32)taskid;
+			return 0;
+		}
+		else
+		{
+			zpl_uint32 j = 0;
+			for(j = 0; j < ZPL_SUB_MODULE_MAX; j++)
+			{
+				if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->submodule[j].module == (zpl_uint32)module)
+				{
+					module_lists_tbl[i].tbl->submodule[j].taskid = (zpl_uint32)taskid;
+					return 0;
+				}
+			}
+		}
+	}
+	return 0;
+}
+
+int submodule_setup(zpl_uint32 module, zpl_uint32 submodule, char *name, zpl_uint32 taskid)
+{
+	zpl_uint32 i = 0;
+	for(i = 0; i < array_size(module_lists_tbl); i++)
+	{
+		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (zpl_uint32)module)
+		{
+			if(submodule)
+			{
+				zpl_uint32 j = 0;
+				for(j = 0; j < ZPL_SUB_MODULE_MAX; j++)
+				{
+					if(module_lists_tbl[i].tbl->submodule[j].module == (zpl_uint32)submodule)
+					{
+						module_lists_tbl[i].tbl->submodule[j].taskid = (zpl_uint32)taskid;
+						if(name)
+							module_lists_tbl[i].tbl->submodule[j].name = strdup(name);
+						return 0;
+					}
+				}
+			}
+			else
+			{
+				module_lists_tbl[i].tbl->taskid = (zpl_uint32)taskid;
+				return 0;
+			}
+		}
+	}
+	return 0;
+}
+
+zpl_char *zlog_backtrace_module()
+{
+	static zpl_char backtrace_string[128];
 	os_memset(backtrace_string, 0, sizeof(backtrace_string));
 	os_snprintf(backtrace_string, sizeof(backtrace_string), "%s [%s]",
 			os_task_2_name(os_task_id_self()), module2name(task_module_self()));
@@ -368,7 +455,7 @@ ospl_char *zlog_backtrace_module()
 	return backtrace_string;
 }
 
-ospl_char *zlog_backtrace_funcname()
+zpl_char *zlog_backtrace_funcname()
 {
 #ifdef OS_THREAD
 	struct thread *thread_current = thread_current_get();
@@ -384,20 +471,20 @@ ospl_char *zlog_backtrace_funcname()
 	}
 #endif
 #ifdef OS_ANSYNC_GLOBAL_LIST
-	os_ansync_lst * gansync = os_ansync_global_lookup(os_task_id_self(), task_module_self());
+	//os_ansync_lst * gansync = os_ansync_global_lookup(os_task_id_self(), task_module_self());
+	os_ansync_lst * gansync = os_ansync_current_get();
 	if (gansync && gansync->os_ansync)
 		return gansync->os_ansync->entryname;
 #endif
 	return "NULL";
 }
 
-ospl_char *zlog_backtrace_schedfrom()
+zpl_char *zlog_backtrace_schedfrom()
 {
 #ifdef OS_THREAD
 	struct thread *thread_current = thread_current_get();
 	if (thread_current)
 		return thread_current->schedfrom;
-	else
 #endif
 #ifdef ELOOP_THREAD
 	{
@@ -407,20 +494,20 @@ ospl_char *zlog_backtrace_schedfrom()
 	}
 #endif
 #ifdef OS_ANSYNC_GLOBAL_LIST
-	os_ansync_lst * gansync = os_ansync_global_lookup(os_task_id_self(), task_module_self());
+	//os_ansync_lst * gansync = os_ansync_global_lookup(os_task_id_self(), task_module_self());
+	os_ansync_lst * gansync = os_ansync_current_get();
 	if (gansync && gansync->os_ansync)
 		return gansync->os_ansync->filename;
 #endif
 	return "NULL";
 }
 
-ospl_uint32 zlog_backtrace_schedfrom_line()
+zpl_uint32 zlog_backtrace_schedfrom_line()
 {
 #ifdef OS_THREAD
 	struct thread *thread_current = thread_current_get();
 	if (thread_current)
 		return thread_current->schedfrom_line;
-	else
 #endif
 #ifdef ELOOP_THREAD
 	{
@@ -430,7 +517,8 @@ ospl_uint32 zlog_backtrace_schedfrom_line()
 	}
 #endif
 #ifdef OS_ANSYNC_GLOBAL_LIST
-	os_ansync_lst * gansync = os_ansync_global_lookup(os_task_id_self(), task_module_self());
+	//os_ansync_lst * gansync = os_ansync_global_lookup(os_task_id_self(), task_module_self());
+	os_ansync_lst * gansync = os_ansync_current_get();
 	if (gansync && gansync->os_ansync)
 		return gansync->os_ansync->line;
 #endif

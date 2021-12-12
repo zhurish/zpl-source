@@ -15,22 +15,22 @@ extern "C" {
 #define OS_QUEUE_NAME_MAX	32
 
 
-typedef struct queue_s
+typedef struct os_queue_data_s
 {
 	NODE	node;
-	ospl_uint32	size;
-	ospl_char	*data;
-}queue_t;
+	zpl_uint32	size;
+	zpl_char	*data;
+}os_queue_data_t;
 
 
 typedef struct os_queue
 {
 	os_sem_t	*sem;
 	os_mutex_t	*mutex;
-	ospl_uint32	max;
-	ospl_uint32	size;
-	ospl_uint32	use;
-	ospl_char	name[OS_QUEUE_NAME_MAX];
+	zpl_uint32	max;
+	zpl_uint32	size;
+	zpl_uint32	use;
+	zpl_char	name[OS_QUEUE_NAME_MAX];
 	LIST	list;
 	LIST	ulist;
 
@@ -41,11 +41,11 @@ extern int os_msgq_init();
 extern int os_msgq_exit();
 
 
-extern os_queue_t *os_queue_create(ospl_uint32 max, ospl_uint32 size);
-extern int os_queue_name(os_queue_t *queue, ospl_char *name);
-//int os_queue_info(os_queue_t *queue, ospl_char *name);
-extern int os_queue_send(os_queue_t *queue, ospl_char *data, ospl_uint32 len, ospl_uint32 op);
-extern int os_queue_recv(os_queue_t *queue, ospl_char *name, ospl_uint32 len, ospl_uint32 timeout);
+extern os_queue_t *os_queue_create(zpl_uint32 max, zpl_uint32 size);
+extern int os_queue_name(os_queue_t *queue, zpl_char *name);
+//int os_queue_info(os_queue_t *queue, zpl_char *name);
+extern int os_queue_send(os_queue_t *queue, zpl_char *data, zpl_uint32 len, zpl_uint32 op);
+extern int os_queue_recv(os_queue_t *queue, zpl_char *name, zpl_uint32 len, zpl_uint32 timeout);
 extern int os_queue_delete(os_queue_t *queue);
 
 #ifdef __cplusplus

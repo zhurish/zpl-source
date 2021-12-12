@@ -6,7 +6,7 @@
  */
 
 #define HAS_BOOL 1
-#include "zebra.h"
+#include "zpl_include.h"
 #include "vty.h"
 #include "if.h"
 
@@ -31,8 +31,8 @@
 #include "web_api.h"
 
 
-//#define PL_PJSIP_MODULE
-#ifdef PL_PJSIP_MODULE
+//#define ZPL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 
 //#include <pjlib-util/cli_socket.h>
 #include "pjsua_app_common.h"
@@ -42,7 +42,7 @@
 
 static int web_sip_config_get(char *buf)
 {
-	ospl_uint8 vol = 0;
+	zpl_uint8 vol = 0;
 	zassert(pl_pjsip != NULL);
 
 	if(pl_pjsip->mutex)
@@ -279,8 +279,8 @@ static int web_sip_config_get(char *buf)
 static int web_sip_config_set(Webs *wp)
 {
 	char *strval = NULL;
-	//ospl_int8 *cbuf = NULL;
-	//ospl_int32 ival = 0;
+	//zpl_int8 *cbuf = NULL;
+	//zpl_int32 ival = 0;
 	zassert(pl_pjsip != NULL);
 
 	if(pl_pjsip->mutex)
@@ -446,7 +446,7 @@ static int web_sip_config_set(Webs *wp)
 	strval = webs_get_var(wp, T("sip_100_rel"), T(""));
 	if (NULL != strval)
 	{
-		pl_pjsip->sip_100_rel = ospl_true;
+		pl_pjsip->sip_100_rel = zpl_true;
 	}
 
 	if(pl_pjsip->mutex)
@@ -457,7 +457,7 @@ static int web_sip_config_set(Webs *wp)
 		pl_pjsip_discodec_del_api("pcmu");
 		pl_pjsip_codec_add_api("pcmu");
 
-/*		pl_pjsip->codec[0].is_active = ospl_true;
+/*		pl_pjsip->codec[0].is_active = zpl_true;
 		pl_pjsip->codec[0].payload = voip_sip_payload_index("PCMU");
 		memset(pl_pjsip->codec[0].payload_name, 0, sizeof(pl_pjsip->codec[0].payload_name));
 		strcpy(pl_pjsip->codec[0].payload_name,"PCMU");*/
@@ -472,7 +472,7 @@ static int web_sip_config_set(Webs *wp)
 	{
 		pl_pjsip_discodec_del_api("pcma");
 		pl_pjsip_codec_add_api("pcma");
-/*		pl_pjsip->codec[0].is_active = ospl_true;
+/*		pl_pjsip->codec[0].is_active = zpl_true;
 		pl_pjsip->codec[0].payload = voip_sip_payload_index("PCMA");
 		memset(pl_pjsip->codec[0].payload_name, 0, sizeof(pl_pjsip->codec[0].payload_name));
 		strcpy(pl_pjsip->codec[0].payload_name,"PCMA");*/
@@ -487,7 +487,7 @@ static int web_sip_config_set(Webs *wp)
 	{
 		pl_pjsip_discodec_del_api("GSM");
 		pl_pjsip_codec_add_api("GSM");
-/*		pl_pjsip->codec[0].is_active = ospl_true;
+/*		pl_pjsip->codec[0].is_active = zpl_true;
 		pl_pjsip->codec[0].payload = voip_sip_payload_index("GSM");
 		memset(pl_pjsip->codec[0].payload_name, 0, sizeof(pl_pjsip->codec[0].payload_name));
 		strcpy(pl_pjsip->codec[0].payload_name,"GSM");*/
@@ -502,7 +502,7 @@ static int web_sip_config_set(Webs *wp)
 	{
 		pl_pjsip_discodec_del_api("G722");
 		pl_pjsip_codec_add_api("G722");
-/*		pl_pjsip->codec[0].is_active = ospl_true;
+/*		pl_pjsip->codec[0].is_active = zpl_true;
 		pl_pjsip->codec[0].payload = voip_sip_payload_index("G722");
 		memset(pl_pjsip->codec[0].payload_name, 0, sizeof(pl_pjsip->codec[0].payload_name));
 		strcpy(pl_pjsip->codec[0].payload_name,"G722");*/
@@ -517,7 +517,7 @@ static int web_sip_config_set(Webs *wp)
 	{
 		pl_pjsip_discodec_del_api("speex-nb");
 		pl_pjsip_codec_add_api("speex-nb");
-/*		pl_pjsip->codec[0].is_active = ospl_true;
+/*		pl_pjsip->codec[0].is_active = zpl_true;
 		pl_pjsip->codec[0].payload = voip_sip_payload_index("SPEEX-NB");
 		memset(pl_pjsip->codec[0].payload_name, 0, sizeof(pl_pjsip->codec[0].payload_name));
 		strcpy(pl_pjsip->codec[0].payload_name,"SPEEX-NB");*/
@@ -532,7 +532,7 @@ static int web_sip_config_set(Webs *wp)
 	{
 		pl_pjsip_discodec_del_api("ilbc");
 		pl_pjsip_codec_add_api("ilbc");
-/*		pl_pjsip->codec[0].is_active = ospl_true;
+/*		pl_pjsip->codec[0].is_active = zpl_true;
 		pl_pjsip->codec[0].payload = voip_sip_payload_index("iLBC");
 		memset(pl_pjsip->codec[0].payload_name, 0, sizeof(pl_pjsip->codec[0].payload_name));
 		strcpy(pl_pjsip->codec[0].payload_name,"iLBC");*/
@@ -627,7 +627,7 @@ static int web_sip_set(Webs *wp, char *path, char *query)
 	if(web_sip_config_set(wp) == OK)
 	{
 		_WEB_DBG_TRAP("%s: ------_pjsip->proto = %d\r\n", __func__,pl_pjsip->proto);
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 		voip_uci_sip_config_save(pl_pjsip);
 		voip_stream_config_save(pl_pjsip);
 #endif
@@ -738,12 +738,12 @@ static int web_sip_register(Webs *wp, void *p)
 	if(strstr(btnid, "register"))
 	{
 		if(!pl_pjsip_isregister_api())
-			voip_app_sip_register_start(ospl_true);
+			voip_app_sip_register_start(zpl_true);
 	}
 	if(strstr(btnid, "unregister"))
 	{
 		if(pl_pjsip_isregister_api())
-			voip_app_sip_register_start(ospl_false);
+			voip_app_sip_register_start(zpl_false);
 	}
 	return web_return_text_plain(wp, OK);
 	//return OK;
@@ -790,7 +790,7 @@ static int web_volume_change(Webs *wp, void *p)
 
 int web_sip_app(void)
 {
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 	websFormDefine("setsip", web_sip_set);
 	websFormDefine("sipstate", web_sipstate);
 

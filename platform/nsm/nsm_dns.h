@@ -63,9 +63,9 @@ typedef struct dns_opt
 {
 	ifindex_t		ifindex;
 	vrf_id_t		vrfid;
-	ospl_uint32				metric;
-	ospl_bool			secondly;
-	ospl_bool			active;
+	zpl_uint32				metric;
+	zpl_bool			secondly;
+	zpl_bool			active;
 }ip_dns_opt_t;
 
 typedef struct ip_dns_s
@@ -75,7 +75,7 @@ typedef struct ip_dns_s
 	struct prefix   address;
 	union
 	{
-		ospl_char 			name[IP_DNS_NAME_MAX];
+		zpl_char 			name[IP_DNS_NAME_MAX];
 		struct dns_opt	dns_opt;
 
 	}data;
@@ -94,10 +94,10 @@ typedef struct Gip_dns_s
 {
 	LIST			*dnsList;
 	void			*mutex;
-	ospl_char 			domain_name1[IP_DNS_NAME_MAX];
-	ospl_char 			domain_name2[IP_DNS_NAME_MAX];
-	ospl_bool			domain_dynamic1;
-	ospl_bool			domain_dynamic2;
+	zpl_char 			domain_name1[IP_DNS_NAME_MAX];
+	zpl_char 			domain_name2[IP_DNS_NAME_MAX];
+	zpl_bool			domain_dynamic1;
+	zpl_bool			domain_dynamic2;
 	ip_dns_t		*dns1;
 	ip_dns_t		*dns2;
 	ip_dns_t		*dns3;
@@ -107,7 +107,7 @@ typedef int (*ip_dns_cb)(ip_dns_t *, void *);
 typedef int (*ip_host_cb)(ip_host_t *, void *);
 
 
-extern ospl_uint8 _dns_debug;
+extern zpl_uint8 _dns_debug;
 
 
 extern int nsm_ip_dns_init(void);
@@ -115,38 +115,38 @@ extern int nsm_ip_dns_exit(void);
 
 extern int ip_dns_add_job(dns_cmd_t cmd, void *p);
 
-extern int nsm_ip_dns_add(struct prefix *address, ip_dns_opt_t *, ospl_bool	secondly, dns_class_t type);
+extern int nsm_ip_dns_add(struct prefix *address, ip_dns_opt_t *, zpl_bool	secondly, dns_class_t type);
 extern int nsm_ip_dns_del(struct prefix *address, dns_class_t type);
 extern int nsm_ip_dns_del_by_ifindex(ifindex_t ifindex, dns_class_t type);
 
-extern int nsm_ip_dns_add_api(struct prefix *address, ospl_bool	secondly);
+extern int nsm_ip_dns_add_api(struct prefix *address, zpl_bool	secondly);
 extern int nsm_ip_dns_del_api(struct prefix *address);
-extern int nsm_ip_dns_get_api(ifindex_t ifindex, struct prefix *address, ospl_bool	secondly);
+extern int nsm_ip_dns_get_api(ifindex_t ifindex, struct prefix *address, zpl_bool	secondly);
 
 extern ip_dns_t * nsm_ip_dns_lookup_api(struct prefix *address, dns_class_t type);
 extern int nsm_ip_dns_callback_api(ip_dns_cb cb, void *pVoid);
 
 
 
-extern int nsm_ip_host_add(struct prefix *address, ospl_char *name, dns_class_t type);
+extern int nsm_ip_host_add(struct prefix *address, zpl_char *name, dns_class_t type);
 extern int nsm_ip_host_del(struct prefix *address, dns_class_t type);
 
-extern int nsm_ip_host_add_api(struct prefix *address, ospl_char *name);
+extern int nsm_ip_host_add_api(struct prefix *address, zpl_char *name);
 extern int nsm_ip_host_del_api(struct prefix *address);
 
 
 extern ip_host_t * nsm_ip_host_lookup_api(struct prefix *address, dns_class_t type);
 extern int nsm_ip_host_callback_api(ip_host_cb cb, void *pVoid);
 
-extern int nsm_dns_domain_name_add_api(ospl_char *name, ospl_bool secondly);
-extern int nsm_dns_domain_name_del_api(ospl_bool secondly);
-extern int nsm_dns_domain_name_dynamic_api(ospl_bool dynamic, ospl_bool secondly);
-
+extern int nsm_dns_domain_name_add_api(zpl_char *name, zpl_bool secondly);
+extern int nsm_dns_domain_name_del_api(zpl_bool secondly);
+extern int nsm_dns_domain_name_dynamic_api(zpl_bool dynamic, zpl_bool secondly);
+#ifdef ZPL_SHELL_MODULE
 extern int nsm_ip_dns_host_show(struct vty *vty);
 extern int nsm_ip_dns_host_config(struct vty *vty);
 
 extern int nsm_dns_debug_write(struct vty *vty);
-
+#endif
 extern void cmd_dns_init(void);
 
  

@@ -13,11 +13,11 @@ extern "C" {
 #endif
 
 
-ospl_pid_t pid_output (const char *);
-ospl_pid_t pid_input (const char *);
+zpl_pid_t pid_output (const char *);
+zpl_pid_t pid_input (const char *);
 
 #ifndef HAVE_DAEMON
-int daemon(ospl_bool, ospl_bool);
+int daemon(zpl_bool, zpl_bool);
 #endif
 
 

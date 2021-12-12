@@ -30,7 +30,7 @@ typedef struct pjsip_ua_config
      * limit, the library must be recompiled with new PJSUA_MAX_CALLS
      * value.
      */
-    ospl_uint32		maxCalls;
+    zpl_uint32		maxCalls;
 
     /**
      * Number of worker threads. Normally application will want to have at
@@ -38,7 +38,7 @@ typedef struct pjsip_ua_config
      * periodically, which in this case the worker thread can be set to
      * zero.
      */
-    ospl_uint32		threadCnt;
+    zpl_uint32		threadCnt;
 
     /**
      * When this flag is non-zero, all callbacks that come from thread
@@ -102,7 +102,7 @@ typedef struct pjsip_ua_config
      * the STUN servers if the IPv4 resolution fails. It can be useful
      * in an IPv6-only environment, including on NAT64.
      *
-     * Default: ospl_false
+     * Default: zpl_false
      */
     bool	    	stunTryIpv6;
 
@@ -111,7 +111,7 @@ typedef struct pjsip_ua_config
      * STUN servers. If this is set to PJ_FALSE, the library will refuse to
      * start if it fails to resolve or contact any of the STUN servers.
      *
-     * Default: ospl_true
+     * Default: zpl_true
      */
     bool		stunIgnoreFailure;
 
@@ -151,16 +151,16 @@ typedef struct pjsip_ua_config
 typedef struct pjsip_log_config
 {
     /** Log incoming and outgoing SIP message? Yes!  */
-    ospl_uint32		msgLogging;
+    zpl_uint32		msgLogging;
 
     /** Input verbosity level. Value 5 is reasonable. */
-    ospl_uint32		level;
+    zpl_uint32		level;
 
     /** Verbosity level for console. Value 4 is reasonable. */
-    ospl_uint32		consoleLevel;
+    zpl_uint32		consoleLevel;
 
     /** Log decoration. */
-    ospl_uint32		decor;
+    zpl_uint32		decor;
 
     /** Optional log filename if app wishes the library to write to log file.
      */
@@ -174,7 +174,7 @@ typedef struct pjsip_log_config
      *
      * Default is 0.
      */
-    ospl_uint32		fileFlags;
+    zpl_uint32		fileFlags;
 
 
 }pjsip_log_config_t;
@@ -190,19 +190,19 @@ typedef struct pjsip_media_config
      * If value is zero, default clock rate will be used
      * (PJSUA_DEFAULT_CLOCK_RATE, which by default is 16KHz).
      */
-    ospl_uint32		clockRate;
+    zpl_uint32		clockRate;
 
     /**
      * Clock rate to be applied when opening the sound device.
      * If value is zero, conference bridge clock rate will be used.
      */
-    ospl_uint32		sndClockRate;
+    zpl_uint32		sndClockRate;
 
     /**
      * Channel count be applied when opening the sound device and
      * conference bridge.
      */
-    ospl_uint32		channelCount;
+    zpl_uint32		channelCount;
 
     /**
      * Specify audio frame ptime. The value here will affect the
@@ -212,7 +212,7 @@ typedef struct pjsip_media_config
      *
      * Default value: PJSUA_DEFAULT_AUDIO_FRAME_PTIME
      */
-    ospl_uint32		audioFramePtime;
+    zpl_uint32		audioFramePtime;
 
     /**
      * Specify maximum number of media ports to be created in the
@@ -223,7 +223,7 @@ typedef struct pjsip_media_config
      *
      * Default value: PJSUA_MAX_CONF_PORTS
      */
-    ospl_uint32		maxMediaPorts;
+    zpl_uint32		maxMediaPorts;
 
     /**
      * Specify whether the media manager should manage its own
@@ -241,7 +241,7 @@ typedef struct pjsip_media_config
      * Specify the number of worker threads to handle incoming RTP
      * packets. A value of one is recommended for most applications.
      */
-    ospl_uint32		threadCnt;
+    zpl_uint32		threadCnt;
 
     /**
      * Media quality, 0-10, according to this table:
@@ -253,14 +253,14 @@ typedef struct pjsip_media_config
      *
      * Default: 5 (PJSUA_DEFAULT_CODEC_QUALITY).
      */
-    ospl_uint32		quality;
+    zpl_uint32		quality;
 
     /**
      * Specify default codec ptime.
      *
      * Default: 0 (codec specific)
      */
-    ospl_uint32		ptime;
+    zpl_uint32		ptime;
 
     /**
      * Disable VAD?
@@ -274,7 +274,7 @@ typedef struct pjsip_media_config
      *
      * Default: 30 (PJSUA_DEFAULT_ILBC_MODE)
      */
-    ospl_uint32		ilbcMode;
+    zpl_uint32		ilbcMode;
 
     /**
      * Percentage of RTP packet to drop in TX direction
@@ -282,7 +282,7 @@ typedef struct pjsip_media_config
      *
      * Default: 0
      */
-    ospl_uint32		txDropPct;
+    zpl_uint32		txDropPct;
 
     /**
      * Percentage of RTP packet to drop in RX direction
@@ -290,14 +290,14 @@ typedef struct pjsip_media_config
      *
      * Default: 0
      */
-    ospl_uint32		rxDropPct;
+    zpl_uint32		rxDropPct;
 
     /**
      * Echo canceller options (see pjmedia_echo_create())
      *
      * Default: 0.
      */
-    ospl_uint32		ecOptions;
+    zpl_uint32		ecOptions;
 
     /**
      * Echo canceller tail length, in miliseconds. Setting this to zero
@@ -305,21 +305,21 @@ typedef struct pjsip_media_config
      *
      * Default: PJSUA_DEFAULT_EC_TAIL_LEN
      */
-    ospl_uint32		ecTailLen;
+    zpl_uint32		ecTailLen;
 
     /**
      * Audio capture buffer length, in milliseconds.
      *
      * Default: PJMEDIA_SND_DEFAULT_REC_LATENCY
      */
-    ospl_uint32		sndRecLatency;
+    zpl_uint32		sndRecLatency;
 
     /**
      * Audio playback buffer length, in milliseconds.
      *
      * Default: PJMEDIA_SND_DEFAULT_PLAY_LATENCY
      */
-    ospl_uint32		sndPlayLatency;
+    zpl_uint32		sndPlayLatency;
 
     /**
      * Jitter buffer initial prefetch delay in msec. The value must be
@@ -504,7 +504,7 @@ typedef struct pjsip_tls_config
      *
      * Default is PJSIP_SSL_DEFAULT_PROTO.
      */
-    ospl_uint32		proto;
+    zpl_uint32		proto;
 
     /**
      * Ciphers and order preference. The Endpoint::utilSslGetAvailableCiphers()
@@ -566,7 +566,7 @@ typedef struct pjsip_tls_config
      *
      * Default: zero
      */
-    ospl_uint32		msecTimeout;
+    zpl_uint32		msecTimeout;
 
     /**
      * QoS traffic type to be set on this transport. When application wants
@@ -607,7 +607,7 @@ typedef struct pjsip_transport_config
      * transport will be bound to any available port, and application
      * can query the port by querying the transport info.
      */
-    ospl_uint32		port;
+    zpl_uint32		port;
 
     /**
      * Specify the port range for socket binding, relative to the start
@@ -616,7 +616,7 @@ typedef struct pjsip_transport_config
      *
      * Default value is zero.
      */
-    ospl_uint32		portRange;
+    zpl_uint32		portRange;
 
     /**
      * Optional address to advertise as the address of this transport.
@@ -721,7 +721,7 @@ typedef struct pjsip_account_reg_config
      * Optional interval for registration, in seconds. If the value is zero,
      * default interval will be used (PJSUA_REG_INTERVAL, 300 seconds).
      */
-    ospl_uint32		timeoutSec;
+    zpl_uint32		timeoutSec;
 
     /**
      * Specify interval of auto registration retry upon registration failure
@@ -738,7 +738,7 @@ typedef struct pjsip_account_reg_config
      *
      * Default: PJSUA_REG_RETRY_INTERVAL
      */
-    ospl_uint32		retryIntervalSec;
+    zpl_uint32		retryIntervalSec;
 
     /**
      * This specifies the interval for the first registration retry. The
@@ -751,7 +751,7 @@ typedef struct pjsip_account_reg_config
      *
      * Default: 0
      */
-    ospl_uint32		firstRetryIntervalSec;
+    zpl_uint32		firstRetryIntervalSec;
 
     /**
      * This specifies maximum randomized value to be added/substracted
@@ -766,7 +766,7 @@ typedef struct pjsip_account_reg_config
      *
      * Default: 10
      */
-    ospl_uint32		randomRetryIntervalSec;
+    zpl_uint32		randomRetryIntervalSec;
 
     /**
      * Specify the number of seconds to refresh the client registration
@@ -774,14 +774,14 @@ typedef struct pjsip_account_reg_config
      *
      * Default: PJSIP_REGISTER_CLIENT_DELAY_BEFORE_REFRESH, 5 seconds
      */
-    ospl_uint32		delayBeforeRefreshSec;
+    zpl_uint32		delayBeforeRefreshSec;
 
     /**
      * Specify whether calls of the configured account should be dropped
      * after registration failure and an attempt of re-registration has
      * also failed.
      *
-     * Default: ospl_false (disabled)
+     * Default: zpl_false (disabled)
      */
     bool		dropCallsOnFail;
 
@@ -791,7 +791,7 @@ typedef struct pjsip_account_reg_config
      *
      * Default: PJSUA_UNREG_TIMEOUT
      */
-    ospl_uint32		unregWaitMsec;
+    zpl_uint32		unregWaitMsec;
 
     /**
      * Specify how the registration uses the outbound and account proxy
@@ -803,7 +803,7 @@ typedef struct pjsip_account_reg_config
      *
      * Default: 3 (PJSUA_REG_USE_OUTBOUND_PROXY | PJSUA_REG_USE_ACC_PROXY)
      */
-    ospl_uint32		proxyUse;
+    zpl_uint32		proxyUse;
 
 }pjsip_account_reg_config_t;
 
@@ -926,13 +926,13 @@ typedef struct pjsip_account_call_config
      * Specify minimum Session Timer expiration period, in seconds.
      * Must not be lower than 90. Default is 90.
      */
-    ospl_uint32		timerMinSESec;
+    zpl_uint32		timerMinSESec;
 
     /**
      * Specify Session Timer expiration period, in seconds.
      * Must not be lower than timerMinSE. Default is 1800.
      */
-    ospl_uint32		timerSessExpiresSec;
+    zpl_uint32		timerSessExpiresSec;
 
 }pjsip_account_call_config_t;
 
@@ -962,7 +962,7 @@ typedef struct pjsip_account_pres_config
      * on the PUBLISH request if there is another PUBLISH transaction still
      * in progress.
      *
-     * Default: PJSIP_PUBLISHC_QUEUE_REQUEST (ospl_true)
+     * Default: PJSIP_PUBLISHC_QUEUE_REQUEST (zpl_true)
      */
     bool		publishQueue;
 
@@ -971,7 +971,7 @@ typedef struct pjsip_account_pres_config
      * during shutdown process, before sending unregistration. The library
      * tries to wait for the unpublication (un-PUBLISH) to complete before
      * sending REGISTER request to unregister the account, during library
-     * shutdown process. If the value is set too ospl_int16, it is possible that
+     * shutdown process. If the value is set too zpl_int16, it is possible that
      * the unregistration is sent before unpublication completes, causing
      * unpublication request to fail.
      *
@@ -979,7 +979,7 @@ typedef struct pjsip_account_pres_config
      *
      * Default: PJSUA_UNPUBLISH_MAX_WAIT_TIME_MSEC (2000)
      */
-    ospl_uint32		publishShutdownWaitMsec;
+    zpl_uint32		publishShutdownWaitMsec;
 
     /**
      * Optional PIDF tuple ID for outgoing PUBLISH and NOTIFY. If this value
@@ -999,7 +999,7 @@ typedef struct pjsip_account_mwi_config
      *
      * See also UaConfig.mwiUnsolicitedEnabled setting.
      *
-     * Default: ospl_false
+     * Default: zpl_false
      */
     bool		enabled;
 
@@ -1010,7 +1010,7 @@ typedef struct pjsip_account_mwi_config
      *
      * Default: PJSIP_MWI_DEFAULT_EXPIRES (3600)
      */
-    ospl_uint32		expirationSec;
+    zpl_uint32		expirationSec;
 }pjsip_account_mwi_config_t;
 
 /**
@@ -1068,7 +1068,7 @@ typedef struct pjsip_account_nat_config
      *
      * Default value is PJ_ICE_NOMINATED_CHECK_DELAY.
      */
-    ospl_uint32		iceNominatedCheckDelayMsec;
+    zpl_uint32		iceNominatedCheckDelayMsec;
 
     /**
      * For a controlled agent, specify how long it wants to wait (in
@@ -1148,7 +1148,7 @@ typedef struct pjsip_account_nat_config
      *
      * See also contactRewriteMethod field.
      *
-     * Default: ospl_true
+     * Default: zpl_true
      */
     int			contactRewriteUse;
 
@@ -1183,15 +1183,15 @@ typedef struct pjsip_account_nat_config
      * the REGISTER request, as long as the request uses the same transport
      * instance as the previous REGISTER request.
      *
-     * Default: ospl_true
+     * Default: zpl_true
      */
     int			viaRewriteUse;
 
     /**
      * This option controls whether the IP address in SDP should be replaced
      * with the IP address found in Via header of the REGISTER response, ONLY
-     * when STUN and ICE are not used. If the value is ospl_false (the original
-     * behavior), then the local IP address will be used. If ospl_true, and when
+     * when STUN and ICE are not used. If the value is zpl_false (the original
+     * behavior), then the local IP address will be used. If zpl_true, and when
      * STUN and ICE are disabled, then the IP address found in registration
      * response will be used.
      *
@@ -1210,7 +1210,7 @@ typedef struct pjsip_account_nat_config
      * transports. If UDP is used for the registration, the SIP outbound
      * feature will be silently ignored for the account.
      *
-     * Default: ospl_true
+     * Default: zpl_true
      */
     int			sipOutboundUse;
 
@@ -1242,7 +1242,7 @@ typedef struct pjsip_account_nat_config
      *
      * Default: 15 (seconds)
      */
-    ospl_uint32		udpKaIntervalSec;
+    zpl_uint32		udpKaIntervalSec;
 
     /**
      * Specify the data to be transmitted as keep-alive packets.
@@ -1270,7 +1270,7 @@ typedef struct pjsip_srtp_crypto
     /**
      * Flags, bitmask from #pjmedia_srtp_crypto_option
      */
-    ospl_uint32	flags;
+    zpl_uint32	flags;
 }pjsip_srtp_crypto_t;
 
 /* Array of SRTP cryptos. */
@@ -1465,7 +1465,7 @@ typedef struct pjsip_account_video_config
      *
      * Default: 0
      */
-    ospl_uint32			windowFlags;
+    zpl_uint32			windowFlags;
 
     /**
      * Specify the default capture device to be used by this account. If
@@ -1496,21 +1496,21 @@ typedef struct pjsip_account_video_config
      *
      * Default: 0 (follow codec maximum bitrate).
      */
-    ospl_uint32			rateControlBandwidth;
+    zpl_uint32			rateControlBandwidth;
 
     /**
      * The number of keyframe to be sent after the stream is created.
      *
      * Default: PJMEDIA_VID_STREAM_START_KEYFRAME_CNT
      */
-    ospl_uint32			    startKeyframeCount;
+    zpl_uint32			    startKeyframeCount;
 
     /**
      * The keyframe sending interval after the stream is created.
      *
      * Default: PJMEDIA_VID_STREAM_START_KEYFRAME_INTERVAL_MSEC
      */
-    ospl_uint32			    startKeyframeInterval;
+    zpl_uint32			    startKeyframeInterval;
 
 }pjsip_account_video_config_t;
 
@@ -1545,7 +1545,7 @@ typedef struct pjsip_account_IpChange_config
      * Default: PJSUA_CALL_REINIT_MEDIA | PJSUA_CALL_UPDATE_CONTACT |
      *          PJSUA_CALL_UPDATE_VIA
      */
-    ospl_uint32		reinviteFlags;
+    zpl_uint32		reinviteFlags;
 
 } pjsip_account_IpChange_config_t;
 

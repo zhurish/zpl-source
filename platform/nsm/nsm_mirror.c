@@ -6,25 +6,15 @@
  */
 
 
-#include "zebra.h"
-#include "memory.h"
-#include "command.h"
-#include "memory.h"
-#include "memtypes.h"
-#include "prefix.h"
-#include "if.h"
-#include "nsm_interface.h"
-#include <log.h>
-#include "nsm_client.h"
-
-#include "os_list.h"
-
-#include "nsm_mirror.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "nsm_include.h"
 
 static Gmirror_t gMirror;
 
 
-static int mirror_cleanup(ifindex_t ifindex, ospl_bool all);
+static int mirror_cleanup(ifindex_t ifindex, zpl_bool all);
 
 
 
@@ -42,7 +32,7 @@ int nsm_mirror_exit(void)
 {
 	if(lstCount(gMirror.mirrorList))
 	{
-		mirror_cleanup(0, ospl_true);
+		mirror_cleanup(0, zpl_true);
 		lstFree(gMirror.mirrorList);
 		free(gMirror.mirrorList);
 		gMirror.mirrorList = NULL;
@@ -52,7 +42,7 @@ int nsm_mirror_exit(void)
 	return OK;
 }
 
-static int mirror_cleanup(ifindex_t ifindex, ospl_bool all)
+static int mirror_cleanup(ifindex_t ifindex, zpl_bool all)
 {
 	nsm_mirror_t *pstNode = NULL;
 	NODE index;
@@ -158,7 +148,7 @@ int mirror_callback_api(mirror_cb cb, void *pVoid)
 	return ret;
 }
 
-int nsm_mirror_global_enable(ospl_bool enable)
+int nsm_mirror_global_enable(zpl_bool enable)
 {
 	if(gMirror.mutex)
 		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
@@ -168,9 +158,9 @@ int nsm_mirror_global_enable(ospl_bool enable)
 	return OK;
 }
 
-ospl_bool nsm_mirror_global_is_enable()
+zpl_bool nsm_mirror_global_is_enable()
 {
-	ospl_bool enable;
+	zpl_bool enable;
 	if(gMirror.mutex)
 		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
 	enable = gMirror.enable;
@@ -179,7 +169,7 @@ ospl_bool nsm_mirror_global_is_enable()
 	return enable;
 }
 
-int nsm_mirror_destination_set_api(ifindex_t ifindex, ospl_bool enable)
+int nsm_mirror_destination_set_api(ifindex_t ifindex, zpl_bool enable)
 {
 	int ret = 0;
 	nsm_mirror_t *mirror = NULL;
@@ -188,14 +178,14 @@ int nsm_mirror_destination_set_api(ifindex_t ifindex, ospl_bool enable)
 	mirror = mirror_lookup_node(ifindex);
 	if(!mirror)
 	{
-		if(enable == ospl_true)
+		if(enable == zpl_true)
 		{
 			nsm_mirror_t value;
 			os_memset(&value, 0, sizeof(nsm_mirror_t));
 			value.ifindex = ifindex;
-			value.mirror_dst = ospl_true;
-			value.enable = ospl_true;
-#ifdef PL_HAL_MODULE
+			value.mirror_dst = zpl_true;
+			value.enable = zpl_true;
+#ifdef ZPL_HAL_MODULE
 			if(hal_mirror_enable(ifindex, value.enable) == OK)
 #endif
 				ret = mirror_add_node(&value);
@@ -205,20 +195,20 @@ int nsm_mirror_destination_set_api(ifindex_t ifindex, ospl_bool enable)
 	}
 	else
 	{
-		if(enable == ospl_true)
+		if(enable == zpl_true)
 		{
 			mirror->ifindex = ifindex;
-			mirror->mirror_dst = ospl_true;
-			mirror->enable = ospl_true;
-#ifdef PL_HAL_MODULE
+			mirror->mirror_dst = zpl_true;
+			mirror->enable = zpl_true;
+#ifdef ZPL_HAL_MODULE
 			if(hal_mirror_enable(ifindex, mirror->enable) == OK)
 #endif
 				ret = OK;
 		}
 		else
 		{
-#ifdef PL_HAL_MODULE
-			if(hal_mirror_enable(ifindex, ospl_false) == OK)
+#ifdef ZPL_HAL_MODULE
+			if(hal_mirror_enable(ifindex, zpl_false) == OK)
 #endif
 				ret = mirror_del_node(mirror);
 		}
@@ -228,7 +218,7 @@ int nsm_mirror_destination_set_api(ifindex_t ifindex, ospl_bool enable)
 	return ret;
 }
 
-int nsm_mirror_destination_get_api(ifindex_t ifindex, ospl_bool *enable)
+int nsm_mirror_destination_get_api(ifindex_t ifindex, zpl_bool *enable)
 {
 	int ret = 0;
 	nsm_mirror_t *mirror = NULL;
@@ -252,9 +242,9 @@ int nsm_mirror_destination_get_api(ifindex_t ifindex, ospl_bool *enable)
 	return ret;
 }
 
-ospl_bool nsm_mirror_is_enable_api(ifindex_t ifindex)
+zpl_bool nsm_mirror_is_enable_api(ifindex_t ifindex)
 {
-	ospl_bool ret = ospl_false;
+	zpl_bool ret = zpl_false;
 	nsm_mirror_t *mirror = NULL;
 	if(gMirror.mutex)
 		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
@@ -262,16 +252,16 @@ ospl_bool nsm_mirror_is_enable_api(ifindex_t ifindex)
 	if(mirror)
 	{
 		if(mirror->enable)
-			ret = ospl_true;
+			ret = zpl_true;
 	}
 	if(gMirror.mutex)
 		os_mutex_unlock(gMirror.mutex);
 	return ret;
 }
 
-ospl_bool nsm_mirror_is_destination_api(ifindex_t ifindex)
+zpl_bool nsm_mirror_is_destination_api(ifindex_t ifindex)
 {
-	ospl_bool ret = ospl_false;
+	zpl_bool ret = zpl_false;
 	nsm_mirror_t *mirror = NULL;
 	if(gMirror.mutex)
 		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
@@ -279,14 +269,14 @@ ospl_bool nsm_mirror_is_destination_api(ifindex_t ifindex)
 	if(mirror)
 	{
 		if(mirror->enable && mirror->mirror_dst)
-			ret = ospl_true;
+			ret = zpl_true;
 	}
 	if(gMirror.mutex)
 		os_mutex_unlock(gMirror.mutex);
 	return ret;
 }
 /*
-int nsm_mirror_mode_set_api(ospl_bool mac)
+int nsm_mirror_mode_set_api(zpl_bool mac)
 {
 	int ret = ERROR;
 
@@ -301,7 +291,7 @@ int nsm_mirror_mode_set_api(ospl_bool mac)
 	return ret;
 }
 
-int nsm_mirror_mode_get_api(ospl_bool *mac)
+int nsm_mirror_mode_get_api(zpl_bool *mac)
 {
 	int ret = ERROR;
 
@@ -316,7 +306,7 @@ int nsm_mirror_mode_get_api(ospl_bool *mac)
 	return ret;
 }
 
-int nsm_mirror_source_mac_set_api(ospl_bool enable, ospl_uchar *mac, mirror_dir_en dir)
+int nsm_mirror_source_mac_set_api(zpl_bool enable, zpl_uchar *mac, mirror_dir_en dir)
 {
 	int ret = ERROR;
 
@@ -335,7 +325,7 @@ int nsm_mirror_source_mac_set_api(ospl_bool enable, ospl_uchar *mac, mirror_dir_
 	return ret;
 }
 
-int nsm_mirror_source_mac_get_api(ospl_bool *enable, ospl_uchar *mac, mirror_dir_en *dir)
+int nsm_mirror_source_mac_get_api(zpl_bool *enable, zpl_uchar *mac, mirror_dir_en *dir)
 {
 	int ret = ERROR;
 
@@ -356,7 +346,7 @@ int nsm_mirror_source_mac_get_api(ospl_bool *enable, ospl_uchar *mac, mirror_dir
 }*/
 
 
-int nsm_mirror_source_set_api(ifindex_t ifindex, ospl_bool enable, mirror_dir_en dir)
+int nsm_mirror_source_set_api(ifindex_t ifindex, zpl_bool enable, mirror_dir_en dir)
 {
 	int ret = 0;
 	nsm_mirror_t *mirror = NULL;
@@ -365,16 +355,16 @@ int nsm_mirror_source_set_api(ifindex_t ifindex, ospl_bool enable, mirror_dir_en
 	mirror = mirror_lookup_node(ifindex);
 	if(!mirror)
 	{
-		if(enable == ospl_true)
+		if(enable == zpl_true)
 		{
 			nsm_mirror_t value;
 			os_memset(&value, 0, sizeof(nsm_mirror_t));
 			value.ifindex = ifindex;
-			value.mirror_dst = ospl_false;
-			value.enable = ospl_true;
+			value.mirror_dst = zpl_false;
+			value.enable = zpl_true;
 			value.dir = dir;
-#ifdef PL_HAL_MODULE
-			if(hal_mirror_source_enable(ifindex, NULL, dir, ospl_true) == OK)
+#ifdef ZPL_HAL_MODULE
+			if(hal_mirror_source_enable(ifindex, NULL, dir, zpl_true) == OK)
 #endif
 				ret = mirror_add_node(&value);
 		}
@@ -383,21 +373,21 @@ int nsm_mirror_source_set_api(ifindex_t ifindex, ospl_bool enable, mirror_dir_en
 	}
 	else
 	{
-		if(enable == ospl_true)
+		if(enable == zpl_true)
 		{
 			mirror->ifindex = ifindex;
-			mirror->mirror_dst = ospl_false;
-			mirror->enable = ospl_true;
+			mirror->mirror_dst = zpl_false;
+			mirror->enable = zpl_true;
 			mirror->dir = dir;
-#ifdef PL_HAL_MODULE
-			if(hal_mirror_source_enable(ifindex, NULL, dir, ospl_true) == OK)
+#ifdef ZPL_HAL_MODULE
+			if(hal_mirror_source_enable(ifindex, NULL, dir, zpl_true) == OK)
 #endif
 				ret = OK;
 		}
 		else
 		{
-#ifdef PL_HAL_MODULE
-			if(hal_mirror_source_enable(ifindex, NULL, dir, ospl_false) == OK)
+#ifdef ZPL_HAL_MODULE
+			if(hal_mirror_source_enable(ifindex, NULL, dir, zpl_false) == OK)
 #endif
 				ret = mirror_del_node(mirror);
 		}
@@ -407,7 +397,7 @@ int nsm_mirror_source_set_api(ifindex_t ifindex, ospl_bool enable, mirror_dir_en
 	return ret;
 }
 
-int nsm_mirror_source_get_api(ifindex_t ifindex, ospl_bool *enable, mirror_dir_en *dir)
+int nsm_mirror_source_get_api(ifindex_t ifindex, zpl_bool *enable, mirror_dir_en *dir)
 {
 	int ret = 0;
 	nsm_mirror_t *mirror = NULL;
@@ -431,9 +421,9 @@ int nsm_mirror_source_get_api(ifindex_t ifindex, ospl_bool *enable, mirror_dir_e
 	return ret;
 }
 
-ospl_bool nsm_mirror_is_source_api()
+zpl_bool nsm_mirror_is_source_api()
 {
-	ospl_bool ret = ospl_false;
+	zpl_bool ret = zpl_false;
 	nsm_mirror_t *pstNode = NULL;
 	NODE index;
 	if(gMirror.mutex)
@@ -442,9 +432,9 @@ ospl_bool nsm_mirror_is_source_api()
 			pstNode != NULL;  pstNode = (nsm_mirror_t *)lstNext((NODE*)&index))
 	{
 		index = pstNode->node;
-		if(pstNode->ifindex && pstNode->enable && pstNode->mirror_dst == ospl_false)
+		if(pstNode->ifindex && pstNode->enable && pstNode->mirror_dst == zpl_false)
 		{
-			ret = ospl_true;
+			ret = zpl_true;
 			break;
 		}
 	}
@@ -453,29 +443,29 @@ ospl_bool nsm_mirror_is_source_api()
 	return ret;
 }
 
-int nsm_mirror_source_mac_filter_set_api(ospl_bool enable, ospl_uchar *mac, ospl_bool dst,  mirror_dir_en dir)
+int nsm_mirror_source_mac_filter_set_api(zpl_bool enable, zpl_uchar *mac, zpl_bool dst,  mirror_dir_en dir)
 {
 	int ret = 0;
 	if(gMirror.mutex)
 		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
-	if(enable == ospl_true)
+	if(enable == zpl_true)
 	{
 		if(mac)
 		{
 			if(dir == MIRROR_INGRESS)
 			{
-				gMirror.in_enable = ospl_true;
+				gMirror.in_enable = zpl_true;
 				gMirror.ingress_dst = dst;
 				os_memcpy(gMirror.ingress_mac, mac, NSM_MAC_MAX);
 			}
 			else if(dir == MIRROR_EGRESS)
 			{
-				gMirror.out_enable = ospl_true;
+				gMirror.out_enable = zpl_true;
 				gMirror.egress_dst = dst;
 				os_memcpy(gMirror.egress_mac, mac, NSM_MAC_MAX);
 			}
-#ifdef PL_HAL_MODULE
-			if(hal_mirror_source_filter_enable(ospl_true, dst, mac, dir) == OK)
+#ifdef ZPL_HAL_MODULE
+			if(hal_mirror_source_filter_enable(zpl_true, dst, mac, dir) == OK)
 #endif
 				ret = OK;
 		}
@@ -483,18 +473,18 @@ int nsm_mirror_source_mac_filter_set_api(ospl_bool enable, ospl_uchar *mac, ospl
 		{
 			if(dir == MIRROR_INGRESS)
 			{
-				gMirror.in_enable = ospl_false;
-				gMirror.ingress_dst = ospl_false;
+				gMirror.in_enable = zpl_false;
+				gMirror.ingress_dst = zpl_false;
 				os_memset(gMirror.ingress_mac, 0, NSM_MAC_MAX);
 			}
 			else if(dir == MIRROR_EGRESS)
 			{
-				gMirror.out_enable = ospl_false;
-				gMirror.egress_dst = ospl_false;
+				gMirror.out_enable = zpl_false;
+				gMirror.egress_dst = zpl_false;
 				os_memset(gMirror.egress_mac, 0, NSM_MAC_MAX);
 			}
-#ifdef PL_HAL_MODULE
-			if(hal_mirror_source_filter_enable(ospl_false, dst, NULL, dir) == OK)
+#ifdef ZPL_HAL_MODULE
+			if(hal_mirror_source_filter_enable(zpl_false, dst, NULL, dir) == OK)
 #endif
 				ret = OK;
 		}
@@ -505,7 +495,7 @@ int nsm_mirror_source_mac_filter_set_api(ospl_bool enable, ospl_uchar *mac, ospl
 		os_mutex_unlock(gMirror.mutex);
 	return ret;
 }
-int nsm_mirror_source_mac_filter_get_api(mirror_dir_en dir, ospl_bool *enable, ospl_uchar *mac, ospl_bool *dst)
+int nsm_mirror_source_mac_filter_get_api(mirror_dir_en dir, zpl_bool *enable, zpl_uchar *mac, zpl_bool *dst)
 {
 	int ret = 0;
 	if(gMirror.mutex)
@@ -530,34 +520,3 @@ int nsm_mirror_source_mac_filter_get_api(mirror_dir_en dir, ospl_bool *enable, o
 		os_mutex_unlock(gMirror.mutex);
 	return ret;
 }
-
-/*static int nsm_vlan_add_interface(struct interface *ifp)
-{
-	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	nsm->nsm_client[NSM_MIRROR] = XMALLOC(MTYPE_IF, sizeof(nsm_vlan_t));
-	os_memset(nsm->nsm_client[NSM_MIRROR], 0, sizeof(nsm_vlan_t));
-	nsm_interface_add_untag_vlan_api(1,  ifp);
-	nsm_interface_add_tag_vlan_api(1,  ifp);
-	return OK;
-}
-
-
-static int nsm_vlan_del_interface(struct interface *ifp)
-{
-	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	nsm_interface_del_untag_vlan_api(1,  ifp);
-	nsm_interface_del_tag_vlan_api(1,  ifp);
-	if(nsm->nsm_client[NSM_MIRROR])
-		XFREE(MTYPE_IF, nsm->nsm_client[NSM_MIRROR]);
-	return OK;
-}
-
-static int nsm_vlan_client_init()
-{
-	struct nsm_client *nsm = nsm_client_new ();
-	nsm->interface_add_cb = nsm_vlan_add_interface;
-	nsm->interface_delete_cb = nsm_vlan_del_interface;
-	nsm->interface_write_config_cb = nsm_vlan_interface_config;
-	nsm_client_install (nsm, NSM_MIRROR);
-	return OK;
-}*/

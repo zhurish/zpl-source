@@ -5,7 +5,7 @@
  *      Author: zhurish
  */
 
-#include <zebra.h>
+#include <zpl_include.h>
 
 #include "hal_driver.h"
 
@@ -14,7 +14,7 @@
 #include "sdk_driver.h"
 
 
-void b53_brcm_hdr_setup(struct b53125_device *dev, ospl_bool enable, int port)
+void b53_brcm_hdr_setup(struct b53125_device *dev, zpl_bool enable, int port)
 {
 	u8 hdr_ctl, val;
 	u16 reg;
@@ -65,7 +65,7 @@ void b53_brcm_hdr_setup(struct b53125_device *dev, ospl_bool enable, int port)
 }
 
 //设置管理非管理功能
-int b53125_switch_manege(struct b53125_device *dev, ospl_bool manege)
+int b53125_switch_manege(struct b53125_device *dev, zpl_bool manege)
 {
 	int ret = 0;
 	u8 mgmt;
@@ -81,7 +81,7 @@ int b53125_switch_manege(struct b53125_device *dev, ospl_bool manege)
 }
 
 //禁止使能交换转发功能
-int b53125_switch_forwarding(struct b53125_device *dev, ospl_bool enable)
+int b53125_switch_forwarding(struct b53125_device *dev, zpl_bool enable)
 {
 	int ret = 0;
 	u8 mgmt;
@@ -104,7 +104,7 @@ int b53125_switch_forwarding(struct b53125_device *dev, ospl_bool enable)
 
 /*************************************************************************/
 //禁止使能多播泛洪
-int b53125_multicast_flood(struct b53125_device *dev, ospl_bool enable)
+int b53125_multicast_flood(struct b53125_device *dev, zpl_bool enable)
 {
 	int ret = 0;
 	u8 reg = 0;
@@ -115,7 +115,7 @@ int b53125_multicast_flood(struct b53125_device *dev, ospl_bool enable)
 	return ret;
 }
 //禁止使能单播泛洪
-int b53125_unicast_flood(struct b53125_device *dev, ospl_bool enable)
+int b53125_unicast_flood(struct b53125_device *dev, zpl_bool enable)
 {
 	int ret = 0;
 	u8 reg = 0;
@@ -126,7 +126,7 @@ int b53125_unicast_flood(struct b53125_device *dev, ospl_bool enable)
 	return ret;
 }
 
-int b53125_range_error(struct b53125_device *dev, ospl_bool enable)
+int b53125_range_error(struct b53125_device *dev, zpl_bool enable)
 {
 	int ret = 0;
 	u8 reg = 0;
@@ -139,7 +139,7 @@ int b53125_range_error(struct b53125_device *dev, ospl_bool enable)
 
 /*************************************************************************/
 //禁止使能学习多播报文源MAC地址
-int b53125_multicast_learning(struct b53125_device *dev, ospl_bool enable)
+int b53125_multicast_learning(struct b53125_device *dev, zpl_bool enable)
 {
 	int ret = 0;
 	u8 reg = 0;
@@ -153,7 +153,7 @@ int b53125_multicast_learning(struct b53125_device *dev, ospl_bool enable)
 
 
 /* Pause Frame Detection Control Register (8 bit) */
-int b53125_puase_frame_detection(struct b53125_device *dev, ospl_bool enable)
+int b53125_puase_frame_detection(struct b53125_device *dev, zpl_bool enable)
 {
 	int ret = 0;
 	u8 reg = 0;
@@ -166,7 +166,7 @@ int b53125_puase_frame_detection(struct b53125_device *dev, ospl_bool enable)
 
 /*************************************************************************/
 //禁止使能BPDU报文进入CPU
-int b53125_enable_bpdu(struct b53125_device *dev, ospl_bool enable)
+int b53125_enable_bpdu(struct b53125_device *dev, zpl_bool enable)
 {
 	int ret = 0;
 	u8 port_ctrl = 0;

@@ -16,7 +16,7 @@ extern "C" {
 
 typedef struct  md_operators_s
 {
-    ospl_uint32 operator_code;	//运营商代码
+    zpl_uint32 operator_code;	//运营商代码
     char *name;			//运营商英文名简称
     char *country; 		//运营商所在国家英文名
     char *nation;		//运营商所在国家中文名
@@ -29,9 +29,9 @@ typedef struct  md_operators_s
 }md_operators_t;
 
 
-extern const char * modem_operators_string(ospl_uint32 code);
-extern const char * modem_country_string(ospl_uint32 code);
-extern const char * modem_nation_string(ospl_uint32 code);
+extern const char * modem_operators_string(zpl_uint32 code);
+extern const char * modem_country_string(zpl_uint32 code);
+extern const char * modem_nation_string(zpl_uint32 code);
 
 #ifdef __cplusplus
 }

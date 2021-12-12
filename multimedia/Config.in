@@ -4,214 +4,263 @@
 
 menu "Multimedia Module Config"
 
-config PL_MULTIMEDIA_MODULE
+config ZPL_MULTIMEDIA_MODULE
 	bool "Multimedia Module"
 	default y
 
-config PL_LIVE555_MODULE
+config ZPL_LIVE555_MODULE
 	bool "Live555 of Multimedia Module"
 	default n
-	depends on PL_MULTIMEDIA_MODULE
+	depends on ZPL_MULTIMEDIA_MODULE
 	help
 	Build Live555 Module.
 
+config ZPL_SOFTCODEC_MODULE
+	bool "Soft codec of Multimedia Module"
+	default n
+	depends on ZPL_MULTIMEDIA_MODULE
+	help
+	Build Soft codec Module.
+
 choice
 	prompt "H264 Codec Library"
-	depends on PL_MULTIMEDIA_MODULE
-	default PL_LIBX264_MODULE
+	depends on ZPL_SOFTCODEC_MODULE
+	default ZPL_LIBX264_MODULE
 
-	config PL_LIBX264_MODULE
+	config ZPL_LIBX264_MODULE
 		bool "Libx264 Library"
-	config PL_OPENH264_MODULE
+	config ZPL_OPENH264_MODULE
 		bool "openh264 Library"
 
 endchoice
 #
-#config PL_LIBX264_MODULE
+#config ZPL_LIBX264_MODULE
 #	bool "Libx264 of Multimedia Module"
 #	default n
-#	depends on PL_MULTIMEDIA_MODULE && !PL_OPENH264_MODULE
+#	depends on ZPL_MULTIMEDIA_MODULE && !ZPL_OPENH264_MODULE
 #	help
 #	Build Libx264 Module.
 
-#config PL_OPENH264_MODULE
+#config ZPL_OPENH264_MODULE
 #	bool "Libopenh264 of Multimedia Module"
 #	default n
-#	depends on PL_MULTIMEDIA_MODULE && !PL_LIBX264_MODULE
+#	depends on ZPL_MULTIMEDIA_MODULE && !ZPL_LIBX264_MODULE
 #	help
 #	Build Libopenh264 Module.
 #
-config PL_LIBVPX_MODULE
+config ZPL_LIBVPX_MODULE
 	bool "Libvpx of Multimedia Module"
 	default n
-	depends on PL_MULTIMEDIA_MODULE
+	depends on ZPL_MULTIMEDIA_MODULE
 	help
 	Build Libvpx Module.
 
-config PL_FFMPEG_MODULE
+config ZPL_FFMPEG_MODULE
 	bool "Ffmpeg of Multimedia Module"
 	default n
-	depends on PL_MULTIMEDIA_MODULE
+	depends on ZPL_MULTIMEDIA_MODULE
 	help
 	Build Ffmpeg Module.
 
-config PL_EXOSIP_MODULE
+config ZPL_EXOSIP_MODULE
 	bool "eXosip of Multimedia Module"
 	default n
-	depends on PL_MULTIMEDIA_MODULE
+	depends on ZPL_MULTIMEDIA_MODULE
 	help
 	Build eXosip Module.
 
-config PL_PJPROJECT_MODULE
+config ZPL_LIBRTMP_MODULE
+	bool "Librtmp Module"
+	default n
+	depends on ZPL_MULTIMEDIA_MODULE
+	help
+	Build Librtmp Module.
+
+config ZPL_PJPROJECT_MODULE
 	bool "SIP of Pjproject Module"
 	default n
-	depends on PL_EXTERNSIONS_MODULE
-	select PL_PJSIP_MODULE
+	depends on ZPL_EXTERNSIONS_MODULE
 	help
 	Build Pjproject Module.
 
-menuconfig PL_PJPROJECT_OPTIONS
+menuconfig ZPL_PJPROJECT_OPTIONS
 	bool "pjproject Options"
-	depends on PL_PJPROJECT_MODULE
+	depends on ZPL_PJPROJECT_MODULE
 
-	config PL_PJ_RESAMPLE_ENABLE
+	config ZPL_PJ_RESAMPLE_ENABLE
 		bool "pjproject Resample Module"
 		default n
-		depends on PL_PJPROJECT_OPTIONS
+		depends on ZPL_PJPROJECT_OPTIONS
 		help
 		Build Resample of pjproject Module.
 
-	config PL_PJ_SIMPLE_ENABLE
+	config ZPL_PJ_SIMPLE_ENABLE
 		bool "pjproject Simple Module"
 		default y
-		depends on PL_PJPROJECT_OPTIONS
+		depends on ZPL_PJPROJECT_OPTIONS
 		help
 		Build Simple of pjproject Module.
 
-	config PL_PJ_SRTP_ENABLE
+	config ZPL_PJ_SRTP_ENABLE
 		bool "pjproject Srtp Module"
 		default y
-		depends on PL_PJPROJECT_OPTIONS
+		depends on ZPL_PJPROJECT_OPTIONS
 		help
 		Build Srtp of pjproject Module.
 
-	config PL_PJ_VIDEO_ENABLE
+	config ZPL_PJ_VIDEO_ENABLE
 		bool "pjproject Video Module"
 		default n
-		depends on PL_PJPROJECT_OPTIONS
+		depends on ZPL_PJPROJECT_OPTIONS
 		help
 		Build Video of pjproject Module.
 
-	config PL_PJ_VIDEO_YUV_ENABLE
+	config ZPL_PJ_VIDEO_YUV_ENABLE
 		bool "pjproject YUV Module"
 		default y
-		depends on PL_PJ_VIDEO_ENABLE
+		depends on ZPL_PJ_VIDEO_ENABLE
 		help
 		Build YUV of Video Module.
 
-	config PL_PJ_VIDEO_H264_ENABLE
+	config ZPL_PJ_VIDEO_H264_ENABLE
 		bool "pjproject H264 Module"
 		default y
-		depends on PL_PJ_VIDEO_ENABLE
+		depends on ZPL_PJ_VIDEO_ENABLE
 		help
 		Build H264 Codec of Video Module.
-	config PL_PJ_CODEC_H264_LIB_PATH
+	config ZPL_PJ_CODEC_H264_LIB_PATH
 		string
 		prompt "H264 CODEC LIB Root Path"
 		default "/usr/local"
-		depends on PL_PJ_VIDEO_H264_ENABLE
+		depends on ZPL_PJ_VIDEO_H264_ENABLE
 		help
 			Specify directories H264 Lib
 
-	config PL_PJ_CODEC_GSM_ENABLE
+	config ZPL_PJ_CODEC_GSM_ENABLE
 		bool "pjproject GSM Codec Module"
 		default y
-		depends on PL_PJPROJECT_OPTIONS
+		depends on ZPL_PJPROJECT_OPTIONS
 		help
 		Build GSM Codec Module.
 
-	config PL_PJ_CODEC_SPEEX_ENABLE
+	config ZPL_PJ_CODEC_SPEEX_ENABLE
 		bool "pjproject SPEEX Codec Module"
 		default y
-		depends on PL_PJPROJECT_OPTIONS
+		depends on ZPL_PJPROJECT_OPTIONS
 		help
 		Build SPEEX Codec Module.
 
-	config PL_PJ_CODEC_ILBC_ENABLE
+	config ZPL_PJ_CODEC_ILBC_ENABLE
 		bool "pjproject ILBC Codec Module"
 		default y
-		depends on PL_PJPROJECT_OPTIONS
+		depends on ZPL_PJPROJECT_OPTIONS
 		help
 		Build ILBC Codec Module.
 
-	config PL_PJ_CODEC_G722_ENABLE
+	config ZPL_PJ_CODEC_G722_ENABLE
 		bool "pjproject G722 Codec Module"
 		default y
-		depends on PL_PJPROJECT_OPTIONS
+		depends on ZPL_PJPROJECT_OPTIONS
 		help
 		Build G722 Codec Module.
 
-	config PL_PJ_CODEC_WEBRTC_ENABLE
+	config ZPL_PJ_CODEC_WEBRTC_ENABLE
 		bool "pjproject WEBRTC Codec Module"
 		default n
-		depends on PL_PJPROJECT_OPTIONS
+		depends on ZPL_PJPROJECT_OPTIONS
 		help
 		Build WEBRTC Codec Module.
 
-	config PL_PJ_CODEC_VPX_ENABLE
+	config ZPL_PJ_CODEC_VPX_ENABLE
 		bool "pjproject VPX Module"
 		default n
-		depends on PL_PJPROJECT_OPTIONS && PL_PJ_VIDEO_ENABLE
+		depends on ZPL_PJPROJECT_OPTIONS && ZPL_PJ_VIDEO_ENABLE
 		help
 		Build VPX Codec of Video Module.
 
-	config PL_PJ_CODEC_VPX_LIB_PATH
+	config ZPL_PJ_CODEC_VPX_LIB_PATH
 		string
 		prompt "VPX CODEC LIB Root Path"
 		default "/usr/local"
-		depends on PL_PJ_CODEC_VPX_ENABLE
+		depends on ZPL_PJ_CODEC_VPX_ENABLE
 		help
 			Specify directories VPX Lib
 
-	config PL_PJ_FFMPEG_ENABLE
+	config ZPL_PJ_FFMPEG_ENABLE
 		bool "pjproject FFMPEG Module"
 		default n
-		depends on PL_PJPROJECT_OPTIONS && PL_PJ_VIDEO_ENABLE
+		depends on ZPL_PJPROJECT_OPTIONS && ZPL_PJ_VIDEO_ENABLE
 		help
 		Build FFMPEG of Video Module.
 
-	config PL_PJ_FFMPEG_LIB_PATH
+	config ZPL_PJ_FFMPEG_LIB_PATH
 		string
 		prompt "FFMPEG LIB Root Path"
 		default "/usr/local"
-		depends on PL_PJ_FFMPEG_ENABLE
+		depends on ZPL_PJ_FFMPEG_ENABLE
 		help
 			Specify directories FFMPEG Lib
-	config PL_PJ_SDL_ENABLE
+	config ZPL_PJ_SDL_ENABLE
 		bool "pjproject SDL Module"
 		default n
-		depends on PL_PJPROJECT_OPTIONS && PL_PJ_VIDEO_ENABLE
+		depends on ZPL_PJPROJECT_OPTIONS && ZPL_PJ_VIDEO_ENABLE
 		help
 		Build SDL Codec of Video Module.
 
-	config PL_PJ_SDL_LIB_PATH
+	config ZPL_PJ_SDL_LIB_PATH
 		string
 		prompt "SDL LIB Root Path"
 		default "/usr/local"
-		depends on PL_PJ_SDL_ENABLE
+		depends on ZPL_PJ_SDL_ENABLE
 		help
 			Specify directories SDL Lib
 
 	choice 
 		prompt "Audio dev"
-		depends on PL_PJPROJECT_OPTIONS
-		default PL_PJ_AUDIO_ALSA
+		depends on ZPL_PJPROJECT_OPTIONS
+		default ZPL_PJ_AUDIO_ALSA
 
-		config PL_PJ_AUDIO_ALSA
+		config ZPL_PJ_AUDIO_ALSA
 			bool "ALSA"
 
-		config PL_PJ_AUDIO_PORTAUDIO
+		config ZPL_PJ_AUDIO_PORTAUDIO
 			bool "PortAudio"
 	endchoice
 
+config ZPL_MEDIAAPP_MODULE
+	bool "Multimedia app Module"
+	default n
+	depends on ZPL_LIVE555_MODULE
+	help
+	Build Multimedia app Module.
+	
+config ZPL_LIBMEDIA_MODULE
+	bool "Multimedia Lib Module"
+	default n
+	depends on ZPL_MULTIMEDIA_MODULE
+	help
+	Build Multimedia Lib Module.
+
+config ZPL_LIBRTSP_MODULE
+	bool "Librtsp Module"
+	default n
+	depends on ZPL_MULTIMEDIA_MODULE
+	help
+	Build Librtsp Module.
+
+
+config ZPL_LIBORTP_MODULE
+	bool "Libortp Module"
+	default n
+	depends on ZPL_MULTIMEDIA_MODULE
+	help
+	Build Libortp Module.
+
+config ZPL_LIBJPEG_MODULE
+	bool "Libjpeg Module"
+	default n
+	depends on ZPL_MULTIMEDIA_MODULE
+	help
+	Build Libjpeg Module.
+	
 endmenu

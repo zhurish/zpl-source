@@ -14,7 +14,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
 // "liveMedia"
-// Copyright (c) 1996-2020 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2021 Live Networks, Inc.  All rights reserved.
 // RTP sink for a common kind of payload format: Those which pack multiple,
 // complete codec frames (as many as possible) into each RTP packet.
 // Implementation
@@ -35,8 +35,8 @@ void MultiFramedRTPSink::setPacketSizes(unsigned preferredPacketSize,
 }
 
 #ifndef RTP_PAYLOAD_MAX_SIZE
-#define RTP_PAYLOAD_MAX_SIZE 1456
-      // Default max packet size (1500, minus allowance for IP, UDP, UMTP headers)
+#define RTP_PAYLOAD_MAX_SIZE 1452
+      // Default max packet size (1500, minus allowance for IP, UDP headers)
       // (Also, make it a multiple of 4 bytes, just in case that matters.)
 #endif
 #ifndef RTP_PAYLOAD_PREFERRED_SIZE
@@ -53,7 +53,11 @@ MultiFramedRTPSink::MultiFramedRTPSink(UsageEnvironment& env,
 	    rtpPayloadFormatName, numChannels),
     fOutBuf(NULL), fCurFragmentationOffset(0), fPreviousFrameEndedFragmentation(False),
     fOnSendErrorFunc(NULL), fOnSendErrorData(NULL) {
+#ifdef USE_RTSP_OPT
+  setPacketSizes((RTP_PAYLOAD_PREFERRED_SIZE), (8192));
+#else
   setPacketSizes((RTP_PAYLOAD_PREFERRED_SIZE), (RTP_PAYLOAD_MAX_SIZE));
+#endif
 }
 
 MultiFramedRTPSink::~MultiFramedRTPSink() {
@@ -400,6 +404,7 @@ void MultiFramedRTPSink::sendPacketIfNecessary() {
     // We're done:
     onSourceClosure();
   } else {
+    #ifndef USE_RTSP_OPT
     // We have more frames left to send.  Figure out when the next frame
     // is due to start playing, then make sure that we wait this long before
     // sending the next packet.
@@ -413,6 +418,9 @@ void MultiFramedRTPSink::sendPacketIfNecessary() {
 
     // Delay this amount of time:
     nextTask() = envir().taskScheduler().scheduleDelayedTask(uSecondsToGo, (TaskFunc*)sendNext, this);
+    #else
+    sendNext(this);
+    #endif
   }
 }
 

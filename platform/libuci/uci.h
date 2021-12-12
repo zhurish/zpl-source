@@ -594,7 +594,7 @@ static void uci_typecast_error(int from, int to)
 	fprintf(stderr, "Invalid typecast from '%s' to '%s'\n", uci_typestr[from], uci_typestr[to]);
 }
 
-#define PL_BUILD_CAST(_type) \
+#define ZPL_BUILD_CAST(_type) \
 	static inline struct uci_ ## _type *uci_to_ ## _type (struct uci_element *e) \
 	{ \
 		if (e->type != uci_type_ ## _type) { \
@@ -603,11 +603,11 @@ static void uci_typecast_error(int from, int to)
 		return (struct uci_ ## _type *) e; \
 	}
 
-PL_BUILD_CAST(backend)
-PL_BUILD_CAST(delta)
-PL_BUILD_CAST(package)
-PL_BUILD_CAST(section)
-PL_BUILD_CAST(option)
+ZPL_BUILD_CAST(backend)
+ZPL_BUILD_CAST(delta)
+ZPL_BUILD_CAST(package)
+ZPL_BUILD_CAST(section)
+ZPL_BUILD_CAST(option)
 
 #else
 #define uci_to_backend(ptr) container_of(ptr, struct uci_backend, e)

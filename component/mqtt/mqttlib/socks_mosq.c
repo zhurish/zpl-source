@@ -155,8 +155,8 @@ int socks5__send(struct mosquitto *mosq)
 		packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
 		if(!packet) return MOSQ_ERR_NOMEM;
 
-		ipv4_pton_result = inet_pton(AF_INET, mosq->host, &addr_ipv4);
-		ipv6_pton_result = inet_pton(AF_INET6, mosq->host, &addr_ipv6);
+		ipv4_pton_result = ipstack_inet_pton(AF_INET, mosq->host, &addr_ipv4);
+		ipv6_pton_result = ipstack_inet_pton(AF_INET6, mosq->host, &addr_ipv6);
 
 		if(ipv4_pton_result == 1){
 			packet->packet_length = 10;

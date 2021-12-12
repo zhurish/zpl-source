@@ -45,7 +45,7 @@ void v9_video_db_unlock()
 	}
 }
 
-static char * v9_video_sqldb_file(ospl_uint32 id)
+static char * v9_video_sqldb_file(zpl_uint32 id)
 {
 	static char dirbase[V9_APP_DIR_NAME_MAX];
 	memset(dirbase, 0, sizeof(dirbase));
@@ -54,7 +54,7 @@ static char * v9_video_sqldb_file(ospl_uint32 id)
     return dirbase;
 }
 
-static sqlite3 * v9_video_sqldb_init(ospl_uint32 id)
+static sqlite3 * v9_video_sqldb_init(zpl_uint32 id)
 {
 	int ret = 0;
 	sqlite3 *db = NULL;
@@ -85,7 +85,7 @@ static  int v9_video_sqldb_exit(sqlite3 *db)
 	return ERROR;
 }
 
-static  int v9_video_sqldb_sync(sqlite3 *db, ospl_uint32 id)
+static  int v9_video_sqldb_sync(sqlite3 *db, zpl_uint32 id)
 {
 	if( db )
 	{
@@ -95,7 +95,7 @@ static  int v9_video_sqldb_sync(sqlite3 *db, ospl_uint32 id)
 	return ERROR;
 }
 
-static ospl_bool v9_video_sqldb_table_exist(sqlite3 *db, ospl_uint32 table)
+static zpl_bool v9_video_sqldb_table_exist(sqlite3 *db, zpl_uint32 table)
 {
 	char sqlcmd[256];
 	char *zErrMsg =NULL;
@@ -105,7 +105,7 @@ static ospl_bool v9_video_sqldb_table_exist(sqlite3 *db, ospl_uint32 table)
 	else
 		snprintf(sqlcmd, sizeof(sqlcmd), "select * from "V9_VIDEO_WARN_TBL_NAME";");
 	if(sqlite3_exec(db, sqlcmd, NULL, NULL, &zErrMsg) == SQLITE_OK)
-		return ospl_true;
+		return zpl_true;
 	if(V9_SQLDB_DEBUG(MSG))
 	{
 		if(table == 0)
@@ -114,13 +114,13 @@ static ospl_bool v9_video_sqldb_table_exist(sqlite3 *db, ospl_uint32 table)
 			zlog_err(MODULE_APP, " SQL Table '%s' exist check (%s)", V9_VIDEO_WARN_TBL_NAME, zErrMsg);
 	}
 	sqlite3_free(zErrMsg);
-	return ospl_false;
+	return zpl_false;
 }
 
 
 
 
-static int v9_video_sqldb_table_create(sqlite3 *db, ospl_uint32 table)
+static int v9_video_sqldb_table_create(sqlite3 *db, zpl_uint32 table)
 {
 	char sqlcmd[1024];
 	char *zErrMsg =NULL;
@@ -143,7 +143,7 @@ static int v9_video_sqldb_table_create(sqlite3 *db, ospl_uint32 table)
 }
 
 
-int v9_video_sqldb_load(ospl_uint32 id)
+int v9_video_sqldb_load(zpl_uint32 id)
 {
 	if(!_db_cap_mutex)
 	{
@@ -152,29 +152,29 @@ int v9_video_sqldb_load(ospl_uint32 id)
 	return OK;
 }
 
-sqlite3 * v9_video_sqldb_open(ospl_uint32 id, ospl_uint32 table)
+sqlite3 * v9_video_sqldb_open(zpl_uint32 id, zpl_uint32 table)
 {
 	sqlite3 *db = NULL;
 	if(db == NULL)
 		db = v9_video_sqldb_init( id);
 	if(!db)
 		return NULL;
-	if(v9_video_sqldb_table_exist(db, table) != ospl_true)
+	if(v9_video_sqldb_table_exist(db, table) != zpl_true)
 	{
 		v9_video_sqldb_table_create(db, table);
 	}
 	return db;
 }
 
-int v9_video_sqldb_close(sqlite3 *db, ospl_uint32 id)
+int v9_video_sqldb_close(sqlite3 *db, zpl_uint32 id)
 {
 	v9_video_sqldb_sync(db, id);
 	v9_video_sqldb_exit(db);
 	return OK;
 }
 
-int v9_video_sqldb_add_node(sqlite3 *db, ospl_uint32 id, ospl_uint32 table, ospl_bool gender, int group,
-							char *user, char *user_id, ospl_uint32 channel, ospl_uint32 age, char *pic, char *video)
+int v9_video_sqldb_add_node(sqlite3 *db, zpl_uint32 id, zpl_uint32 table, zpl_bool gender, int group,
+							char *user, char *user_id, zpl_uint32 channel, zpl_uint32 age, char *pic, char *video)
 {
 	char sqlcmd[1024];
 	char *zErrMsg =NULL;
@@ -221,15 +221,15 @@ int v9_video_sqldb_add_node(sqlite3 *db, ospl_uint32 id, ospl_uint32 table, ospl
 }
 
 
-int v9_video_sqldb_keyvalue_update(sqlite3 *db, ospl_uint32 id, ospl_uint32 table, ospl_uint32 nid, sql_snapfea_key *key)
+int v9_video_sqldb_keyvalue_update(sqlite3 *db, zpl_uint32 id, zpl_uint32 table, zpl_uint32 nid, sql_snapfea_key *key)
 {
 	char sqlcmd[512];
 	sqlite3_stmt *stmt = NULL;
-	ospl_uint32 tiid = nid;
+	zpl_uint32 tiid = nid;
 	memset (sqlcmd, 0, sizeof(sqlcmd));
 
 	if(nid <= 0)
-		tiid = (ospl_uint32)sqlite3_last_insert_rowid(db);
+		tiid = (zpl_uint32)sqlite3_last_insert_rowid(db);
 
 	if(table == 0)
 	{
@@ -255,7 +255,7 @@ int v9_video_sqldb_keyvalue_update(sqlite3 *db, ospl_uint32 id, ospl_uint32 tabl
 		return ERROR;
 	}
 	if (sqlite3_bind_blob (stmt, 1, key->feature.feature_data,
-						   key->feature_len * sizeof(ospl_float),
+						   key->feature_len * sizeof(zpl_float),
 						   SQLITE_STATIC) != SQLITE_OK)
 	{
 		if(V9_SQLDB_DEBUG(MSG))
@@ -277,7 +277,7 @@ int v9_video_sqldb_keyvalue_update(sqlite3 *db, ospl_uint32 id, ospl_uint32 tabl
 
 static int v9_video_sqldb_count_callback(void *NotUsed, int argc, char **argv, char **azColName)
 {
-   ospl_uint32 i;
+   zpl_uint32 i;
 	int *value = NotUsed;
    for(i=0; i<argc; i++)
 	{
@@ -290,7 +290,7 @@ static int v9_video_sqldb_count_callback(void *NotUsed, int argc, char **argv, c
 /*
  * 获取表格行数
  */
-int v9_video_sqldb_count(sqlite3 *db, ospl_uint32 id, ospl_uint32 table, int *pValue)
+int v9_video_sqldb_count(sqlite3 *db, zpl_uint32 id, zpl_uint32 table, int *pValue)
 {
 	int value = 0;
 	char sqlcmd[512];
@@ -331,8 +331,8 @@ int v9_video_sqldb_count(sqlite3 *db, ospl_uint32 id, ospl_uint32 table, int *pV
 //删除小于某个时间的记录
 static int v9_video_sqldb_delete_callback(void *NotUsed, int argc, char **argv, char **azColName)
 {
-	ospl_uint32 i = 0, j = 0, k = 0;
-	ospl_uint32 *bid = NotUsed;
+	zpl_uint32 i = 0, j = 0, k = 0;
+	zpl_uint32 *bid = NotUsed;
 	if(!bid || !(*bid))
 		return 0;
 	for (i = 0; i < argc; i++)
@@ -369,11 +369,11 @@ static int v9_video_sqldb_delete_callback(void *NotUsed, int argc, char **argv, 
 	return 0;
 }
 
-int v9_video_sqldb_del_by_datetime(sqlite3 *db, ospl_uint32 id, ospl_uint32 table, char *datetime)
+int v9_video_sqldb_del_by_datetime(sqlite3 *db, zpl_uint32 id, zpl_uint32 table, char *datetime)
 {
 	char sqlcmd[256];
 	char *zErrMsg =NULL;
-	ospl_uint32 bid = id;
+	zpl_uint32 bid = id;
 	memset(sqlcmd, 0, sizeof(sqlcmd));
 	if(table == 0)
 		snprintf(sqlcmd, sizeof(sqlcmd), "DELETE FROM "V9_VIDEO_SNAP_TBL_NAME " \
@@ -400,11 +400,11 @@ int v9_video_sqldb_del_by_datetime(sqlite3 *db, ospl_uint32 id, ospl_uint32 tabl
 	return ERROR;
 }
 
-int v9_video_sqldb_del_by_channel(sqlite3 *db, ospl_uint32 id, ospl_uint32 table, ospl_uint32 channel)
+int v9_video_sqldb_del_by_channel(sqlite3 *db, zpl_uint32 id, zpl_uint32 table, zpl_uint32 channel)
 {
 	char sqlcmd[256];
 	char *zErrMsg =NULL;
-	ospl_uint32 bid = id;
+	zpl_uint32 bid = id;
 	memset(sqlcmd, 0, sizeof(sqlcmd));
 	if(table == 0)
 		snprintf(sqlcmd, sizeof(sqlcmd), "DELETE FROM "V9_VIDEO_SNAP_TBL_NAME " \
@@ -430,11 +430,11 @@ int v9_video_sqldb_del_by_channel(sqlite3 *db, ospl_uint32 id, ospl_uint32 table
 	return ERROR;
 }
 
-int v9_video_sqldb_del_by_gender(sqlite3 *db, ospl_uint32 id, ospl_uint32 table, ospl_bool gender)
+int v9_video_sqldb_del_by_gender(sqlite3 *db, zpl_uint32 id, zpl_uint32 table, zpl_bool gender)
 {
 	char sqlcmd[256];
 	char *zErrMsg =NULL;
-	ospl_uint32 bid = id;
+	zpl_uint32 bid = id;
 	memset(sqlcmd, 0, sizeof(sqlcmd));
 	if(table == 0)
     	snprintf(sqlcmd, sizeof(sqlcmd), "DELETE FROM "V9_VIDEO_SNAP_TBL_NAME " \
@@ -461,11 +461,11 @@ int v9_video_sqldb_del_by_gender(sqlite3 *db, ospl_uint32 id, ospl_uint32 table,
 	return ERROR;
 }
 
-int v9_video_sqldb_del_by_userid(sqlite3 *db, ospl_uint32 id, ospl_uint32 table, char * userid)
+int v9_video_sqldb_del_by_userid(sqlite3 *db, zpl_uint32 id, zpl_uint32 table, char * userid)
 {
 	char sqlcmd[256];
 	char *zErrMsg =NULL;
-	ospl_uint32 bid = id;
+	zpl_uint32 bid = id;
 	memset(sqlcmd, 0, sizeof(sqlcmd));
 	if(table == 0)
 		snprintf(sqlcmd, sizeof(sqlcmd), "DELETE FROM "V9_VIDEO_SNAP_TBL_NAME " \
@@ -492,11 +492,11 @@ int v9_video_sqldb_del_by_userid(sqlite3 *db, ospl_uint32 id, ospl_uint32 table,
 	return ERROR;
 }
 
-int v9_video_sqldb_del_by_index_id(sqlite3 *db, ospl_uint32 id, ospl_uint32 table, ospl_uint32 start, ospl_uint32 end)
+int v9_video_sqldb_del_by_index_id(sqlite3 *db, zpl_uint32 id, zpl_uint32 table, zpl_uint32 start, zpl_uint32 end)
 {
 	char sqlcmd[256];
 	char *zErrMsg =NULL;
-	ospl_uint32 bid = id;
+	zpl_uint32 bid = id;
 	memset(sqlcmd, 0, sizeof(sqlcmd));
 	if(table == 0)
     {
@@ -537,10 +537,10 @@ int v9_video_sqldb_del_by_index_id(sqlite3 *db, ospl_uint32 id, ospl_uint32 tabl
 
 
 
-int v9_video_sqldb_select_by_oldid(sqlite3 *db, ospl_uint32 id, ospl_uint32 table, ospl_uint32 limit)
+int v9_video_sqldb_select_by_oldid(sqlite3 *db, zpl_uint32 id, zpl_uint32 table, zpl_uint32 limit)
 {
 	char sqlcmd[1024];
-	ospl_uint32 bid = id;
+	zpl_uint32 bid = id;
 	char *zErrMsg =NULL;
 	memset(sqlcmd, 0, sizeof(sqlcmd));
 
@@ -594,7 +594,7 @@ int v9_video_sqldb_select_by_oldid(sqlite3 *db, ospl_uint32 id, ospl_uint32 tabl
  */
 static int v9_video_sqldb_select_sqlcmd_by_keywork(v9_cap_keywork_t *keywork, char *sqlcmd, int maxsize)
 {
-	ospl_uint32 offset = 0, i = 0;
+	zpl_uint32 offset = 0, i = 0;
 	char *sqlstr = sqlcmd;
 	if (keywork->limit)
 	{
@@ -780,14 +780,14 @@ int v9_video_sqldb_select_count_by_keywork(sqlite3 *db, v9_cap_keywork_t *keywor
  * 根据条件获取ID表
  */
 int v9_video_sqldb_select_by_keywork(sqlite3 *db, v9_cap_keywork_t *keywork,
-									 ospl_uint32 *outid, ospl_uint32 *cnt)
+									 zpl_uint32 *outid, zpl_uint32 *cnt)
 {
 	int ret = 0, i = 0;
 	char sqlcmd[1024];
 	sqlite3_stmt *stmt = NULL;
-	ospl_uint32 len = 0;
+	zpl_uint32 len = 0;
 	void *pReadBolbData = NULL;
-	//ospl_float fresult = 0.0f;
+	//zpl_float fresult = 0.0f;
 	memset(sqlcmd, 0, sizeof(sqlcmd));
 
 	ret = v9_video_sqldb_select_sqlcmd_by_keywork(keywork, sqlcmd, sizeof(sqlcmd));
@@ -833,14 +833,14 @@ int v9_video_sqldb_select_by_keywork(sqlite3 *db, v9_cap_keywork_t *keywork,
 
 
 int v9_video_sqldb_select_by_new(sqlite3 *db, v9_cap_keywork_t *keywork,
-									 ospl_uint32 *outid, ospl_uint32 *cnt)
+									 zpl_uint32 *outid, zpl_uint32 *cnt)
 {
 	int ret = 0, i = 0;//, offset = 0;
 	char sqlcmd[1024];
 	sqlite3_stmt *stmt = NULL;
-	ospl_uint32 len = 0;
+	zpl_uint32 len = 0;
 	void *pReadBolbData = NULL;
-	//ospl_float fresult = 0.0f;
+	//zpl_float fresult = 0.0f;
 	memset(sqlcmd, 0, sizeof(sqlcmd));
 
 	if(keywork->table == 0)
@@ -886,14 +886,14 @@ int v9_video_sqldb_select_by_new(sqlite3 *db, v9_cap_keywork_t *keywork,
 /*
  * 根据特征值获取ID表
  */
-int v9_video_sqldb_select_by_keyvalue(sqlite3 *db, ospl_uint32 id, ospl_uint32 table, ospl_uint32 limit, sql_snapfea_key *key, ospl_uint32 *outid, ospl_uint32 *cnt)
+int v9_video_sqldb_select_by_keyvalue(sqlite3 *db, zpl_uint32 id, zpl_uint32 table, zpl_uint32 limit, sql_snapfea_key *key, zpl_uint32 *outid, zpl_uint32 *cnt)
 {
 	int ret = 0, i = 0, offset = 0;
     char sqlcmd[512];
     sqlite3_stmt *stmt = NULL;
-	ospl_uint32 len = 0;
+	zpl_uint32 len = 0;
 	void *pReadBolbData = NULL;
-	ospl_float fresult = 0.0f;
+	zpl_float fresult = 0.0f;
     memset(sqlcmd, 0, sizeof(sqlcmd));
 	if(limit)
 	{
@@ -954,7 +954,7 @@ int v9_video_sqldb_select_by_keyvalue(sqlite3 *db, ospl_uint32 id, ospl_uint32 t
 			// 获取特征值余弦相似度
  			if(key->feature_memcmp)
  			{
- 				ret = (key->feature_memcmp)(key->feature.feature_data, pReadBolbData, MIN(len/sizeof(ospl_float),key->feature_len) , &fresult);
+ 				ret = (key->feature_memcmp)(key->feature.feature_data, pReadBolbData, MIN(len/sizeof(zpl_float),key->feature_len) , &fresult);
  				if( ret == OK)
  				{
  					//zlog_debug(MODULE_APP, "======================%s:keyw->key.input_value=%f\r\n",__func__, key->input_value);
@@ -991,7 +991,7 @@ int v9_video_sqldb_select_by_keyvalue(sqlite3 *db, ospl_uint32 id, ospl_uint32 t
 /*
  * 取特征值
  */
-int v9_video_sqldb_get_keyvalue(sqlite3 *db, ospl_uint32 id, ospl_uint32 table, ospl_uint32 inid, sql_snapfea_key *key)
+int v9_video_sqldb_get_keyvalue(sqlite3 *db, zpl_uint32 id, zpl_uint32 table, zpl_uint32 inid, sql_snapfea_key *key)
 {
 	int ret = 0;
     char sqlcmd[512];
@@ -1017,17 +1017,17 @@ int v9_video_sqldb_get_keyvalue(sqlite3 *db, ospl_uint32 id, ospl_uint32 table, 
     ret = sqlite3_step(stmt);
  	if(/*ret == SQLITE_DONE || */ret == SQLITE_ROW)
  	{
- 		ospl_uint32 len = sqlite3_column_bytes(stmt, 1);
+ 		zpl_uint32 len = sqlite3_column_bytes(stmt, 1);
  		void *pReadBolbData = sqlite3_column_blob(stmt, 1);
 
  		if(key && len && pReadBolbData)
  		{
-			key->feature_len = len/sizeof(ospl_float);
+			key->feature_len = len/sizeof(zpl_float);
 			//key->feature.feature_data = key->feature.ckey_data = XMALLOC(MTYPE_VIDEO_KEY,len + 1);
 			if(len > APP_FEATURE_MAX)
 			{
 				key->feature.feature_data = key->feature.ckey_data = XREALLOC(MTYPE_VIDEO_KEY,
-					key->feature.ckey_data, len + sizeof(ospl_float));									// 特征值
+					key->feature.ckey_data, len + sizeof(zpl_float));									// 特征值
 			}
 			if(key->feature.ckey_data && pReadBolbData)
 			{
@@ -1048,7 +1048,7 @@ int v9_video_sqldb_get_keyvalue(sqlite3 *db, ospl_uint32 id, ospl_uint32 table, 
  */
 static int v9_video_sqldb_get_callback(void *NotUsed, int argc, char **argv, char **azColName)
 {
-	ospl_uint32 i;
+	zpl_uint32 i;
 	v9_video_cap_t *user = NotUsed;
 	for (i = 0; i < argc; i++)
 	{
@@ -1151,7 +1151,7 @@ static int v9_video_sqldb_get_callback(void *NotUsed, int argc, char **argv, cha
 /*
  * 根据ID获取抓拍或告警视频信息
  */
-int v9_video_sqldb_get_capinfo(sqlite3 *db,ospl_uint32 id, ospl_uint32 table, ospl_uint32 inid, void *pArgv)
+int v9_video_sqldb_get_capinfo(sqlite3 *db,zpl_uint32 id, zpl_uint32 table, zpl_uint32 inid, void *pArgv)
 {
 	char sqlcmd[1024];
 	char *zErrMsg =NULL;
@@ -1218,12 +1218,12 @@ int v9_video_sqldb_get_capinfo(sqlite3 *db,ospl_uint32 id, ospl_uint32 table, os
 }
 
 
-int v9_video_sqldb_select_by_userid(sqlite3 *db, ospl_uint32 id, ospl_uint32 table, char *userid, ospl_uint32 *outid, ospl_uint32 *cnt)
+int v9_video_sqldb_select_by_userid(sqlite3 *db, zpl_uint32 id, zpl_uint32 table, char *userid, zpl_uint32 *outid, zpl_uint32 *cnt)
 {
 	int ret = 0, i = 0;
 	char sqlcmd[256];
 	sqlite3_stmt *stmt = NULL;
-	ospl_uint32 len = 0;
+	zpl_uint32 len = 0;
 	void *pReadBolbData = NULL;
 	memset(sqlcmd, 0, sizeof(sqlcmd));
 
@@ -1294,7 +1294,7 @@ int v9_video_sqldb_select_by_userid(sqlite3 *db, ospl_uint32 id, ospl_uint32 tab
 	return ERROR;
 }*/
 
-int v9_video_sqldb_test(ospl_uint32 i, int tbl, void *pArg)
+int v9_video_sqldb_test(zpl_uint32 i, int tbl, void *pArg)
 {
 	sqlite3 * db = v9_video_sqldb_open(APP_BOARD_CALCU_1, tbl);
 	if(db)
@@ -1310,12 +1310,12 @@ int v9_video_sqldb_test(ospl_uint32 i, int tbl, void *pArg)
 		}
 		else if(i == 2)
 		{
-/*			int v9_video_sqldb_del_by_datetime(sqlite3 *db, ospl_uint32 id, ospl_uint32 table, char *datetime);
-			int v9_video_sqldb_del_by_channel(sqlite3 *db, ospl_uint32 id, ospl_uint32 table, ospl_uint32 channel);
-			int v9_video_sqldb_del_by_gender(sqlite3 *db, ospl_uint32 id, ospl_uint32 table, ospl_bool gender);
+/*			int v9_video_sqldb_del_by_datetime(sqlite3 *db, zpl_uint32 id, zpl_uint32 table, char *datetime);
+			int v9_video_sqldb_del_by_channel(sqlite3 *db, zpl_uint32 id, zpl_uint32 table, zpl_uint32 channel);
+			int v9_video_sqldb_del_by_gender(sqlite3 *db, zpl_uint32 id, zpl_uint32 table, zpl_bool gender);
 
-			int v9_video_sqldb_del_by_userid(sqlite3 *db, ospl_uint32 id, ospl_uint32 table, char * userid);
-			int v9_video_sqldb_del_by_index_id(sqlite3 *db, ospl_uint32 id, ospl_uint32 table, ospl_uint32 start, ospl_uint32 end);*/
+			int v9_video_sqldb_del_by_userid(sqlite3 *db, zpl_uint32 id, zpl_uint32 table, char * userid);
+			int v9_video_sqldb_del_by_index_id(sqlite3 *db, zpl_uint32 id, zpl_uint32 table, zpl_uint32 start, zpl_uint32 end);*/
 		}
 		v9_video_sqldb_close(db, APP_BOARD_CALCU_1);
 	}

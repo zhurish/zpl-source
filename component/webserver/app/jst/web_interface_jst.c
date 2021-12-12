@@ -5,7 +5,7 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
+#include "zpl_include.h"
 #include "zassert.h"
 #include "vty.h"
 #include "if.h"
@@ -22,7 +22,7 @@
 #include "vector.h"
 #include "nsm_vrf.h"
 #include "nsm_interface.h"
-#ifdef PL_WIFI_MODULE
+#ifdef ZPL_WIFI_MODULE
 #include "iw_config.h"
 #include "iw_ap.h"
 #include "iw_client.h"
@@ -188,7 +188,7 @@ static int web_network_workmode(struct interface *ifp, char *workmode, char *ifn
 {
 	if (if_is_wireless (ifp))
 	{
-#ifdef PL_WIFI_MODULE
+#ifdef ZPL_WIFI_MODULE
 		if(nsm_iw_mode(ifp) == IW_MODE_MANAGE)
 		sprintf(workmode, "wireless-sta");
 		else if(nsm_iw_mode(ifp) == IW_MODE_AP)
@@ -290,10 +290,10 @@ static int web_network_address_netmask(struct interface *ifp, char *address_str,
 
 static int web_network_gateway_dns(struct interface *ifp, char *gateway_str, char *dns_str)
 {
-	ospl_uint32 local_gateway;
+	zpl_uint32 local_gateway;
 #ifdef WEB_OPENWRT_PROCESS
 	ifindex_t ifindex;
-	ospl_uint32 dns1 = 0, dns2 = 0;
+	zpl_uint32 dns1 = 0, dns2 = 0;
 	if (web_kernel_route_lookup_default (ifp->ifindex, &local_gateway) == OK)
 #else
 	struct prefix dns;
@@ -314,7 +314,7 @@ static int web_network_gateway_dns(struct interface *ifp, char *gateway_str, cha
 		sprintf (dns_str, "%s", " ");
 #else
 	//memset (dns_str, 0, sizeof(dns_str));
-	if (nsm_ip_dns_get_api (ifp->ifindex, &dns, ospl_false) == OK)
+	if (nsm_ip_dns_get_api (ifp->ifindex, &dns, zpl_false) == OK)
 	{
 		union prefix46constptr pu;
 		pu.p = &dns;
@@ -443,7 +443,7 @@ static int web_network_list(struct interface *ifp, void *pVoid)
 				gateway_str,
 				dns_str,
 				if_is_up (ifp) ? "up" : "down",
-#ifdef PL_DHCP_MODULE
+#ifdef ZPL_DHCP_MODULE
 				(ifp->dhcp && nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)? "dhcp":"static",
 #else
 				proto,
@@ -492,7 +492,7 @@ static int web_network_list(struct interface *ifp, void *pVoid)
 			gateway_str,
 			dns_str,
 			if_is_up (ifp) ? "up" : "down",
-#ifdef PL_DHCP_MODULE
+#ifdef ZPL_DHCP_MODULE
 			(ifp->dhcp && nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)? "dhcp":"static",
 #else
 			proto,

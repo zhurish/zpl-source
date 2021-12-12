@@ -301,7 +301,7 @@ int main(void)
 	printf("Quit the loop: %s\n", modbus_strerror(errno));
 
 	if (s != -1) {
-#ifdef PL_BUILD_OS_LINUX
+#ifdef ZPL_BUILD_LINUX
 		close(s);
 #else
 		closesocket(s);

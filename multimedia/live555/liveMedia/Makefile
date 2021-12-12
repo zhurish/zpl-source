@@ -1,10 +1,15 @@
-INCLUDES = -Iinclude -I../UsageEnvironment/include -I../groupsock/include
-PREFIX ?= /usr/local
-LIBDIR ?= $(PREFIX)/lib
 ##### Change the following for your environment:
-include $(MAKE_DIR)/makelinux.mk
-export PREFIX = $(DSTROOTFSDIR)
-export LIBDIR = $(PREFIX)/lib
+-include $(ZPL_MAKE_DIR)/makelinux.mk
+#export PREFIX = $(DSTROOTFSDIR)
+#export LIBDIR = $(PREFIX)/lib
+export PREFIX = $(BASE_ROOT)/$(ZPL_RELEASEDIR)
+export LIBDIR = $(BASE_ROOT)/$(ZPL_ULIB_DIR)
+export INCDIR = $(BASE_ROOT)/$(ZPL_UINC_DIR)
+export BINDIR = $(BASE_ROOT)/$(ZPL_RELEASEDIR)
+
+
+INCLUDES = -I$(ZPL_INCLUDE) -Iinclude -I../UsageEnvironment/include -I../groupsock/include -I../liveMedia/include -I../BasicUsageEnvironment/include
+
 LIVE555_SHARED_ENABLE=true
 
 
@@ -27,19 +32,25 @@ libgroupsock_VERSION_CURRENT=10
 libgroupsock_VERSION_REVISION=4
 libgroupsock_VERSION_AGE=2
 libgroupsock_LIB_SUFFIX=so.$(shell expr $(libgroupsock_VERSION_CURRENT) - $(libgroupsock_VERSION_AGE)).$(libgroupsock_VERSION_AGE).$(libgroupsock_VERSION_REVISION)
-#####
 
-DEBUG_OPTS = -DDEBUG=1 -DDEBUG_LOOPBACK_CHECKING=1 -DDEBUG_SEND=1 -DDEBUG_RECEIVE=1 -DDEBUG_CONTENTS=1 -DDEBUG_ERRORS -DDEBUG_RR
+libliveMediaUtil_VERSION_CURRENT=1
+libliveMediaUtil_VERSION_REVISION=0
+libliveMediaUtil_VERSION_AGE=0
+libliveMediaUtil_LIB_SUFFIX=so.$(shell expr $(libliveMediaUtil_VERSION_CURRENT) - $(libliveMediaUtil_VERSION_AGE)).$(libliveMediaUtil_VERSION_AGE).$(libliveMediaUtil_VERSION_REVISION)
 
-COMPILE_OPTS =	$(INCLUDES) -I/usr/local/include -I. -O2 -DSOCKLEN_T=socklen_t \
-                -DNO_SSTREAM=1 -D_LARGEFILE_SOURCE=1 -D_FILE_OFFSET_BITS=64 $(DEBUG_OPTS)
+##### 
+DEBUG_OPTS = -DDEBUG_LOOPBACK_CHECKING=1 
+DEBUG_OPTS += -DDEBUG=1 -DDEBUG_SEND=1 -DDEBUG_RECEIVE=1 -DDEBUG_CONTENTS=1 -DDEBUG_ERRORS -DDEBUG_RR 
+
+COMPILE_OPTS = $(ZPLOS_CPPFLAGS) $(ZPLOS_DEFINE) $(ZPL_DEFINE) -g $(INCLUDES) -I/usr/local/include -I. -DSOCKLEN_T=socklen_t \
+                -DNO_SSTREAM=1 -D_LARGEFILE_SOURCE=1 -D_FILE_OFFSET_BITS=64 -DLOCALE_NOT_USED $(DEBUG_OPTS)
 
 	
 ifeq ($(strip $(LIVE555_SHARED_ENABLE)),true)
 COMPILE_OPTS += -fPIC
 endif			
              
-ifneq ($(strip $(PL_OPENSSL_MODULE)),true)
+ifneq ($(strip $(ZPL_OPENSSL_MODULE)),true)
 COMPILE_OPTS += -DNO_OPENSSL=1
 endif
 C =			c
@@ -70,7 +81,7 @@ LIBRARY_LINK =		$(AR) cr
 LIBRARY_LINK_OPTS =	$(LINK_OPTS)
 LIB_SUFFIX =			a
 endif
-ifeq ($(strip $(PL_OPENSSL_MODULE)),true)
+ifeq ($(strip $(ZPL_OPENSSL_MODULE)),true)
 LIBS_FOR_CONSOLE_APPLICATION = -lssl -lcrypto
 else
 LIBS_FOR_CONSOLE_APPLICATION = 
@@ -514,14 +525,15 @@ include/liveMedia.hh:: include/RTSPClient.hh include/SIPClient.hh include/QuickT
 
 clean:
 	-rm -rf *.$(OBJ) $(ALL) core *.core *~ include/*~
+	-rm -rf $(LIBDIR)/$(NAME)* *.d
 
 install: install1 $(INSTALL2)
 install1: $(LIVEMEDIA_LIB)
-	 install -d $(DESTDIR)$(PREFIX)/include/liveMedia $(DESTDIR)$(LIBDIR)
-	 install -m 644 include/*.hh $(DESTDIR)$(PREFIX)/include/liveMedia
-	 install -m 644 $(LIVEMEDIA_LIB) $(DESTDIR)$(LIBDIR)
+	 install -d $(INCDIR)/liveMedia $(LIBDIR)
+	 install -m 644 include/*.hh $(INCDIR)/liveMedia
+	 install -m 644 $(LIVEMEDIA_LIB) $(LIBDIR)
 install_shared_libraries: $(LIVEMEDIA_LIB)
-	 ln -fs $(NAME).$(LIB_SUFFIX) $(DESTDIR)$(LIBDIR)/$(NAME).$(SHORT_LIB_SUFFIX)
-	 ln -fs $(NAME).$(LIB_SUFFIX) $(DESTDIR)$(LIBDIR)/$(NAME).so
+	 ln -fs $(NAME).$(LIB_SUFFIX) $(LIBDIR)/$(NAME).$(SHORT_LIB_SUFFIX)
+	 ln -fs $(NAME).$(LIB_SUFFIX) $(LIBDIR)/$(NAME).so
 
 ##### Any additional, platform-specific rules come here:

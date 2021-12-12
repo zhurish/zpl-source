@@ -303,7 +303,7 @@ static void uci_show_changes(struct uci_package *p)
 	}
 }
 
-static int package_cmd(ospl_uint32 cmd, char *tuple)
+static int package_cmd(zpl_uint32 cmd, char *tuple)
 {
 	struct uci_element *e = NULL;
 	struct uci_ptr ptr;
@@ -409,7 +409,7 @@ static int uci_do_import(int argc, char **argv)
 	return 0;
 }
 
-static int uci_do_package_cmd(ospl_uint32 cmd, int argc, char **argv)
+static int uci_do_package_cmd(zpl_uint32 cmd, int argc, char **argv)
 {
 	char **configs = NULL;
 	char **p;
@@ -464,7 +464,7 @@ done:
 	return ret;
 }
 
-static int uci_do_section_cmd(ospl_uint32 cmd, int argc, char **argv)
+static int uci_do_section_cmd(zpl_uint32 cmd, int argc, char **argv)
 {
 	struct uci_element *e;
 	struct uci_ptr ptr;
@@ -618,7 +618,7 @@ static int uci_batch(void)
 
 static int uci_cmd(int argc, char **argv)
 {
-	ospl_uint32 cmd = 0;
+	zpl_uint32 cmd = 0;
 
 	if (!strcasecmp(argv[0], "batch") && !(flags & CLI_FLAG_BATCH))
 		return uci_batch();

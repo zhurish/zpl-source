@@ -5,19 +5,10 @@
  *      Author: zhurish
  */
 
-#include <zebra.h>
-#include <net/if_arp.h>
-#include "linklist.h"
-#include "if.h"
-#include "prefix.h"
-#include "log.h"
-#include "nsm_rib.h"
-#include "nsm_interface.h"
-
-#include "nsm_veth.h"
-#include "nsm_tunnel.h"
-#include "nsm_bridge.h"
-#include "nsm_firewalld.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 //#include "pal_interface.h"
 #include "kernel_ioctl.h"
@@ -32,7 +23,7 @@ iptables -t filter -L -n -v --line-numbers
 /*
  * 端口映射
  */
-int pal_firewall_portmap_rule_set(firewall_t *rule, ospl_action action)
+int pal_firewall_portmap_rule_set(firewall_t *rule, zpl_action action)
 {
 	char cmd[512];
 	char proto[16];
@@ -43,9 +34,9 @@ int pal_firewall_portmap_rule_set(firewall_t *rule, ospl_action action)
 	//iptables -t nat -A PREROUTING -d 192.168.88.134 -p tcp --dport 80 -j DNAT --to 192.168.88.134:8080
 	if (rule && rule->class == FIREWALL_C_PORT)
 	{
-		sprintf(cmd, "iptables -t nat -%s %s %d ", (action==ospl_add) ? "I":"D", firewall_type_string(rule->type), rule->ID);
+		sprintf(cmd, "iptables -t nat -%s %s %d ", (action==zpl_add) ? "I":"D", firewall_type_string(rule->type), rule->ID);
 
-		if(action == ospl_delete)
+		if(action == zpl_delete)
 		{
 			printf("---%s---:%s\r\n", __func__, cmd);
 			return super_system(cmd);
@@ -113,7 +104,7 @@ int pal_firewall_portmap_rule_set(firewall_t *rule, ospl_action action)
 /*
  * 端口开放
  */
-int pal_firewall_port_filter_rule_set(firewall_t *rule, ospl_action action)
+int pal_firewall_port_filter_rule_set(firewall_t *rule, zpl_action action)
 {
 	char cmd[512];
 	char proto[16];
@@ -123,8 +114,8 @@ int pal_firewall_port_filter_rule_set(firewall_t *rule, ospl_action action)
 	if (rule && rule->class == FIREWALL_C_FILTER)
 	{
 
-		sprintf(cmd, "iptables -t filter -%s %s %d ", (action==ospl_add) ? "I":"D", firewall_type_string(rule->type), rule->ID);
-		if(action == ospl_delete)
+		sprintf(cmd, "iptables -t filter -%s %s %d ", (action==zpl_add) ? "I":"D", firewall_type_string(rule->type), rule->ID);
+		if(action == zpl_delete)
 		{
 			printf("---%s---:%s\r\n", __func__, cmd);
 			return super_system(cmd);
@@ -226,14 +217,14 @@ int pal_firewall_port_filter_rule_set(firewall_t *rule, ospl_action action)
 
 
 
-int pal_firewall_mangle_rule_set(firewall_t *rule, ospl_action action)
+int pal_firewall_mangle_rule_set(firewall_t *rule, zpl_action action)
 {
 	if (rule && rule->class == FIREWALL_C_MANGLE)
 		return OK;
 	return ERROR;
 }
 
-int pal_firewall_raw_rule_set(firewall_t *rule, ospl_action action)
+int pal_firewall_raw_rule_set(firewall_t *rule, zpl_action action)
 {
 	if (rule && rule->class == FIREWALL_C_RAW)
 		return OK;
@@ -288,7 +279,7 @@ iptables -t nat -A POSTROUTING -s 10.0.2.0/22 -o eth0 -j SNAT --to-source 124.42
 2.7 系统防火墙与网络内核优化标准参数
 */
 
-int pal_firewall_snat_rule_set(firewall_t *rule, ospl_action action)
+int pal_firewall_snat_rule_set(firewall_t *rule, zpl_action action)
 {
 	/*
 	需要将192.168.10.10转换为111.196.211.212，iptables命令如下：
@@ -301,8 +292,8 @@ int pal_firewall_snat_rule_set(firewall_t *rule, ospl_action action)
 	memset(cmd, 0, sizeof(cmd));
 	if (rule && rule->class == FIREWALL_C_SNAT)
 	{
-		sprintf(cmd, "iptables -t nat -%s %s %d ", (action==ospl_add) ? "I":"D", firewall_type_string(rule->type), rule->ID);
-		if(action == ospl_delete)
+		sprintf(cmd, "iptables -t nat -%s %s %d ", (action==zpl_add) ? "I":"D", firewall_type_string(rule->type), rule->ID);
+		if(action == zpl_delete)
 		{
 			printf("---%s---:%s\r\n", __func__, cmd);
 			return super_system(cmd);
@@ -402,7 +393,7 @@ int pal_firewall_snat_rule_set(firewall_t *rule, ospl_action action)
 }
 
 
-int pal_firewall_dnat_rule_set(firewall_t *rule, ospl_action action)
+int pal_firewall_dnat_rule_set(firewall_t *rule, zpl_action action)
 {
 	/*
 目标地址192.168.10.6在路由前就转换成61.240.149.149，需在网关上运行iptables命令如下：
@@ -414,8 +405,8 @@ eth1网口传入，且想要使用 port 80 的服务时，将该封包重新传�
 	memset(cmd, 0, sizeof(cmd));
 	if (rule && rule->class == FIREWALL_C_DNAT)
 	{
-		sprintf(cmd, "iptables -t nat -%s %s %d ", (action==ospl_add) ? "I":"D", firewall_type_string(rule->type), rule->ID);
-		if(action == ospl_delete)
+		sprintf(cmd, "iptables -t nat -%s %s %d ", (action==zpl_add) ? "I":"D", firewall_type_string(rule->type), rule->ID);
+		if(action == zpl_delete)
 		{
 			printf("---%s---:%s\r\n", __func__, cmd);
 			return super_system(cmd);

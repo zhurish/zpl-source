@@ -12,9 +12,8 @@
 extern "C" {
 #endif
 
-#include "zebra.h"
-#include "vty.h"
-#include "if.h"
+#include "zpl_include.h"
+
 
 #include "iw_config.h"
 #include "iw_ap.h"
@@ -74,17 +73,17 @@ extern int iw_client_dev_station_dump_show(struct interface *ifp, struct vty *vt
 /*
  * scanning AP
  */
-extern int iw_client_dev_scan_ap_show(struct interface *ifp, struct vty *vty, ospl_bool detail);
+extern int iw_client_dev_scan_ap_show(struct interface *ifp, struct vty *vty, zpl_bool detail);
 /*
  * show current connect information
  */
 extern int iw_client_dev_connect_show(struct interface *ifp, struct vty *vty);
-extern int iw_client_dev_connect_get(struct interface *ifp, ospl_uint8 essid[]);
+extern int iw_client_dev_connect_get(struct interface *ifp, zpl_uint8 essid[]);
 
 extern int iw_client_dev_connect(struct interface *ifp, iw_client_ap_t *ap, char *ssid, char *password);
 extern int iw_client_dev_start_dhcpc(struct interface *ifp);
 extern int iw_client_dev_disconnect(struct interface *ifp);
-extern int iw_client_dev_is_connect(char *ifname, ospl_uint8 *bssid);
+extern int iw_client_dev_is_connect(char *ifname, zpl_uint8 *bssid);
 
 
 

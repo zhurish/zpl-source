@@ -48,7 +48,7 @@ typedef enum
 struct work_queue_item
 {
   void *data;                           /* opaque data */
-  ospl_ushort ran;			/* # of times item has been run */
+  zpl_ushort ran;			/* # of times item has been run */
 };
 
 #define WQ_UNPLUGGED	(1 << 0) /* available for draining */
@@ -60,7 +60,7 @@ struct work_queue
    */
   struct thread_master *master;       /* thread master */
   struct thread *thread;              /* thread, if one is active */
-  ospl_char *name;                         /* work queue name */
+  zpl_char *name;                         /* work queue name */
   
   /* Specification for this work queue.
    * Public, must be set before use by caller. May be modified at will.
@@ -85,25 +85,25 @@ struct work_queue
     void (*completion_func) (struct work_queue *);
     
     /* max number of retries to make for item that errors */
-    ospl_uint32  max_retries;	
+    zpl_uint32  max_retries;	
 
-    ospl_uint32  hold;	/* hold time for first run, in ms */
+    zpl_uint32  hold;	/* hold time for first run, in ms */
   } spec;
   
   /* remaining fields should be opaque to users */
   struct list *items;                 /* queue item list */
-  ospl_ulong runs;                 /* runs count */
-  ospl_ulong worst_usec;
+  zpl_ulong runs;                 /* runs count */
+  zpl_ulong worst_usec;
   
   struct {
-    ospl_uint32  best;
-    ospl_uint32  worst;
-    ospl_uint32  granularity;
-    ospl_ulong total;
+    zpl_uint32  best;
+    zpl_uint32  worst;
+    zpl_uint32  granularity;
+    zpl_ulong total;
   } cycles;	/* cycle counts */
   
   /* private state */
-  ospl_uint16 flags;		/* user set flag */
+  zpl_uint16 flags;		/* user set flag */
 };
 
 /* User API */

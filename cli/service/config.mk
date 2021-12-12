@@ -3,11 +3,19 @@
 ###########################################################################
 MODULEDIR = cli/service
 #OS
+ifeq ($(strip $(ZPL_SERVICE_SNTPC)),true)
 OBJS	+= cmd_sntp.o
-OBJS	+= cmd_systools.o
+endif
 
+ifeq ($(strip $(ZPL_SERVICE_MODULE)),true)
+OBJS	+= cmd_systools.o
+endif
+
+ifeq ($(strip $(ZPL_LIBSSH_MODULE)),true)
 OBJS	+= cmd_ssh.o
-ifeq ($(strip $(PL_WEBSERVER_MODULE)),true)
+endif
+
+ifeq ($(strip $(ZPL_WEBSERVER_MODULE)),true)
 OBJS	+= cmd_web.o
 endif
 

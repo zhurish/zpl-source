@@ -58,15 +58,15 @@ typedef struct modem_s
 {
 	NODE				node;
 	char				name[MODEM_STRING_MAX];
-	ospl_bool				bSecondary;
-	ospl_bool				active;
-	ospl_bool				proxy;
+	zpl_bool				bSecondary;
+	zpl_bool				active;
+	zpl_bool				proxy;
 	modem_dial_type		dialtype;
 	modem_stack_type	ipstack;
 
 	char				apn[MODEM_STRING_MAX];
 
-	ospl_uint32				profile;
+	zpl_uint32				profile;
 
 	char				svc[MODEM_STRING_MAX];				//service code
 
@@ -98,30 +98,30 @@ typedef struct modem_s
 	modem_event			event;
 	modem_event			nextevent;
 
-	ospl_uint32				uptime;		//network UP time
-	ospl_uint32				downtime;	//network DOWN time
+	zpl_uint32				uptime;		//network UP time
+	zpl_uint32				downtime;	//network DOWN time
 
 	/*
 	 * for detection event
 	 */
-	ospl_uint32				dedelay;
-	ospl_uint32				detime_base;
-	ospl_uint32				detime_axis;
+	zpl_uint32				dedelay;
+	zpl_uint32				detime_base;
+	zpl_uint32				detime_axis;
 	/*
 	 * for delay event
 	 */
-	ospl_uint32				delay;
-	ospl_uint32				time_base;
-	ospl_uint32				time_axis;
+	zpl_uint32				delay;
+	zpl_uint32				time_base;
+	zpl_uint32				time_axis;
 
 	void				*proxy_data;
 
 
 	modem_event			a_event;
-	ospl_uint32				t_time;
-	ospl_uint32				checksum;
+	zpl_uint32				t_time;
+	zpl_uint32				checksum;
 
-	ospl_pid_t					pid[MODEM_DIAL_MAX+1];
+	zpl_pid_t					pid[MODEM_DIAL_MAX+1];
 }modem_t;
 
 
@@ -132,7 +132,7 @@ typedef struct modem_main_s
 
 }modem_main_t;
 
-extern ospl_uint32 modem_debug_conf;
+extern zpl_uint32 modem_debug_conf;
 
 extern modem_main_t gModemmain;
 
@@ -143,7 +143,7 @@ typedef int (*modem_cb)(modem_t *, void *);
 extern int modem_main_init(void);
 extern int modem_main_exit(void);
 
-extern int modem_main_trywait(ospl_uint32);
+extern int modem_main_trywait(zpl_uint32);
 
 extern int modem_main_add_api(char *name);
 extern modem_t * modem_main_lookup_api(char *name);
@@ -193,7 +193,7 @@ extern int modem_debug_config(struct vty *vty);
 
 
 #ifdef __MODEM_DEBUG
-extern void modem_debug_printf(void *fp,char *func, ospl_uint32 line, const char *format, ...);
+extern void modem_debug_printf(void *fp,char *func, zpl_uint32 line, const char *format, ...);
 #if 1
 #define MODEM_DEBUG(fmt,...)	modem_debug_printf(stderr, __func__, __LINE__,fmt, ##__VA_ARGS__)
 #define MODEM_WARN(fmt,...)		modem_debug_printf(stderr, __func__, __LINE__,fmt, ##__VA_ARGS__)

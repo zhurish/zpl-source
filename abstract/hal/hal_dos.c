@@ -6,7 +6,7 @@
  */
 
 
-#include "zebra.h"
+#include "zpl_include.h"
 #include "memory.h"
 #include "command.h"
 #include "memory.h"
@@ -17,32 +17,50 @@
 #include <log.h>
 #include "os_list.h"
 
-#include "nsm_client.h"
+//#include "nsm_client.h"
 #include "nsm_dos.h"
 
 #include "hal_dos.h"
 #include "hal_driver.h"
 
 
-int hal_dos_enable(ospl_bool enable, dos_type_en type)
+int hal_dos_enable(zpl_bool enable, dos_type_en type)
 {
-	if(hal_driver && hal_driver->dos_tbl && hal_driver->dos_tbl->sdk_dos_enable_cb)
-		return hal_driver->dos_tbl->sdk_dos_enable_cb(hal_driver->driver, enable, type);
-	return ERROR;
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	//hal_ipcmsg_putc(&ipcmsg, enable);
+	command = IPCCMD_SET(HAL_MODULE_DOS, enable?HAL_MODULE_CMD_ENABLE:HAL_MODULE_CMD_DISABLE, type);
+	return hal_ipcmsg_send_message(-1, 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
-int hal_dos_tcp_hdr_size(ospl_uint32 size)
+int hal_dos_tcp_hdr_size(zpl_uint32 size)
 {
-	if(hal_driver && hal_driver->dos_tbl && hal_driver->dos_tbl->sdk_dos_tcp_hdr_size_cb)
-		return hal_driver->dos_tbl->sdk_dos_tcp_hdr_size_cb(hal_driver->driver, size);
-	return ERROR;
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	hal_ipcmsg_putl(&ipcmsg, size);
+	command = IPCCMD_SET(HAL_MODULE_DOS, HAL_MODULE_CMD_SET, HAL_DOS_CMD_TCP_HDR_SIZE);
+	return hal_ipcmsg_send_message(-1, 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
-int hal_dos_icmp_size(ospl_bool ipv6, ospl_uint32 size)
+int hal_dos_icmp_size(zpl_bool ipv6, zpl_uint32 size)
 {
-	if(hal_driver && hal_driver->dos_tbl && hal_driver->dos_tbl->sdk_dos_icmp_size_cb)
-		return hal_driver->dos_tbl->sdk_dos_icmp_size_cb(hal_driver->driver, ipv6, size);
-	return ERROR;
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	hal_ipcmsg_putl(&ipcmsg, size);
+	if(ipv6)
+	command = IPCCMD_SET(HAL_MODULE_DOS, HAL_MODULE_CMD_SET, HAL_DOS_CMD_ICMPv6_SIZE);
+	else
+	command = IPCCMD_SET(HAL_MODULE_DOS, HAL_MODULE_CMD_SET, HAL_DOS_CMD_ICMPv4_SIZE);
+	return hal_ipcmsg_send_message(-1, 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
 

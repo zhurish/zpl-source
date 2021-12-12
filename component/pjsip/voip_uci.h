@@ -12,8 +12,8 @@
 extern "C" {
 #endif
 
-//#define PL_OPENWRT_UCI
-#ifdef PL_OPENWRT_UCI
+//#define ZPL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 
 extern int voip_uci_sip_config_load(void *sip);
 extern int voip_uci_sip_config_save(void *sip);
@@ -26,12 +26,12 @@ extern int voip_ubus_uci_update_cb(void *p, char *buf, int len);
 
 #endif
 
-extern ospl_bool voip_global_enabled();
+extern zpl_bool voip_global_enabled();
 
 extern int voip_status_register_api(int reg);
-extern int voip_status_register_main_api(ospl_bool reg);
-extern int voip_status_talk_api(ospl_bool reg);
-extern int voip_status_enable_api(ospl_bool reg);
+extern int voip_status_register_main_api(zpl_bool reg);
+extern int voip_status_talk_api(zpl_bool reg);
+extern int voip_status_enable_api(zpl_bool reg);
 extern int voip_status_clear_api();
 
 #ifdef __cplusplus

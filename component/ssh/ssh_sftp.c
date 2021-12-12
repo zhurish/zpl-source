@@ -6,17 +6,9 @@
  */
 
 
-#include "zebra.h"
-#include "getopt.h"
-#include <log.h>
-#include "command.h"
-#include "memory.h"
-#include "prefix.h"
-#include "network.h"
-#include "vty.h"
-#include "buffer.h"
-#include "host.h"
-#include "eloop.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
 #include "ssh_api.h"
 #include "ssh_util.h"
@@ -25,11 +17,11 @@
 #include <libssh/sftp.h>
 
 
-static int ssh_do_sftp(ssh_session session, ospl_bool download, ssh_sftp_connect *src, char *localfile)
+static int ssh_do_sftp(ssh_session session, zpl_bool download, ssh_sftp_connect *src, char *localfile)
 {
     sftp_session sftp=sftp_new(session);
     sftp_file fichier = NULL;
-    ospl_uint32 len = 0;
+    zpl_uint32 len = 0;
     char data[2048]={0};
 
     if(!sftp){
@@ -111,7 +103,7 @@ static int ssh_do_sftp(ssh_session session, ospl_bool download, ssh_sftp_connect
 }
 
 
-int sftp_action(struct vty *vty, ospl_bool download, char *url, char *localfile)
+int sftp_action(struct vty *vty, zpl_bool download, char *url, char *localfile)
 {
 	ssh_sftp_connect src;
 	int ret = 0;

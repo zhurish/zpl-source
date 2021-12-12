@@ -22,17 +22,10 @@
 //kbuild:lib-$(CONFIG_UDHCPC) += dhcpc.o
 //kbuild:lib-$(CONFIG_FEATURE_UDHCPC_ARPING) += arpping.o
 //kbuild:lib-$(CONFIG_FEATURE_UDHCP_RFC3397) += domain_codec.o
-#include "zebra.h"
-#include "memory.h"
-#include "command.h"
-#include "prefix.h"
-#include "sigevent.h"
-#include "version.h"
-#include "log.h"
-#include "getopt.h"
-#include "eloop.h"
-#include "os_start.h"
-#include "os_module.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 /* Override ENABLE_FEATURE_PIDFILE - ifupdown needs our pidfile to always exist */
 #define WANT_PIDFILE 1
@@ -50,13 +43,13 @@
  #ifndef PACKET_AUXDATA
  # define PACKET_AUXDATA 8
  struct tpacket_auxdata {
- ospl_uint32  tp_status;
- ospl_uint32  tp_len;
- ospl_uint32  tp_snaplen;
- ospl_uint16 tp_mac;
- ospl_uint16 tp_net;
- ospl_uint16 tp_vlan_tci;
- ospl_uint16 tp_padding;
+ zpl_uint32  tp_status;
+ zpl_uint32  tp_len;
+ zpl_uint32  tp_snaplen;
+ zpl_uint16 tp_mac;
+ zpl_uint16 tp_net;
+ zpl_uint16 tp_vlan_tci;
+ zpl_uint16 tp_padding;
  };
  #endif
  */
@@ -64,7 +57,7 @@
 static int udhcpc_raw_read_thread(struct eloop *eloop);
 static int udhcpc_udp_read_thread(struct eloop *eloop);
 static int udhcpc_discover_event(struct eloop *eloop);
-static int udhcpc_client_socket(int ifindex);
+static zpl_socket_t udhcpc_client_socket(int ifindex);
 static int udhcpc_state_mode_change(client_interface_t * ifter, int mode);
 
 /* Call a script with a par file and env vars */
@@ -75,7 +68,7 @@ static int udhcpc_state_mode_change(client_interface_t * ifter, int mode);
 
 /*** Sending/receiving packets ***/
 
-static ospl_uint32  udhcpc_get_xid(void)
+static zpl_uint32  udhcpc_get_xid(void)
 {
 	return rand();
 }
@@ -84,7 +77,7 @@ static ospl_uint32  udhcpc_get_xid(void)
 static void udhcpc_packet_init(client_interface_t *inter,
 		struct dhcp_packet *packet, char type)
 {
-	ospl_uint16 secs;
+	zpl_uint16 secs;
 
 	/* Fill in: op, htype, hlen, cookie fields; message type option: */
 	udhcp_header_init(packet, type);
@@ -103,8 +96,8 @@ static void udhcpc_packet_init(client_interface_t *inter,
 	//udhcp_add_binary_option(packet, inter->clientid);
 }
 
-/*static ospl_uint8* alloc_dhcp_option(int code, const char *str, int extra) {
- ospl_uint8 *storage = NULL;
+/*static zpl_uint8* alloc_dhcp_option(int code, const char *str, int extra) {
+ zpl_uint8 *storage = NULL;
  int len = 0;
  if (str)
  len = strnlen(str, 255);
@@ -145,7 +138,7 @@ static void udhcpc_add_client_options(client_interface_t *inter,
 		packet->options[end + OPT_DATA + len] = DHCP_END;
 	}
 
-	//int dhcp_option_packet_set_value(char *data, int len, ospl_uint8 code, ospl_uint32  oplen, ospl_uint8 *opt)
+	//int dhcp_option_packet_set_value(char *data, int len, zpl_uint8 code, zpl_uint32  oplen, zpl_uint8 *opt)
 
 	/* Request broadcast replies if we have no IP addr */
 	if (/*(option_mask32 & OPT_B) && */packet->ciaddr == 0)
@@ -176,8 +169,8 @@ static void udhcpc_add_client_options(client_interface_t *inter,
  * client reverts to using the IP broadcast address.
  */
 
-static int udhcpc_raw_packet_bcast(int sock, struct dhcp_packet *packet,
-		ospl_uint32  src_nip, ospl_uint32 ifindex)
+static int udhcpc_raw_packet_bcast(zpl_socket_t sock, struct dhcp_packet *packet,
+		zpl_uint32  src_nip, zpl_uint32 ifindex)
 {
 	struct udhcp_packet_cmd source;
 	struct udhcp_packet_cmd dest;
@@ -191,8 +184,8 @@ static int udhcpc_raw_packet_bcast(int sock, struct dhcp_packet *packet,
 			DHCP_MAC_BCAST_ADDR, ifindex);
 }
 
-static int udhcpc_packet_bcast_ucast(int sock, struct dhcp_packet *packet,
-		ospl_uint32  ciaddr, ospl_uint32  server, ospl_uint32 ifindex)
+static int udhcpc_packet_bcast_ucast(zpl_socket_t sock, struct dhcp_packet *packet,
+		zpl_uint32  ciaddr, zpl_uint32  server, zpl_uint32 ifindex)
 {
 	if (server)
 	{
@@ -216,7 +209,7 @@ static int udhcpc_packet_bcast_ucast(int sock, struct dhcp_packet *packet,
 
 /* Broadcast a DHCP discover packet to the network, with an optionally requested IP */
 /* NOINLINE: limit stack usage in caller */
-static int udhcpc_send_discover(client_interface_t *inter, ospl_uint32  requested)
+static int udhcpc_send_discover(client_interface_t *inter, zpl_uint32  requested)
 {
 	struct dhcp_packet packet;
 
@@ -252,8 +245,8 @@ static int udhcpc_send_discover(client_interface_t *inter, ospl_uint32  requeste
  * "The client _broadcasts_ a DHCPREQUEST message..."
  */
 /* NOINLINE: limit stack usage in caller */
-static int udhcpc_send_request(client_interface_t *inter, ospl_uint32  server,
-		ospl_uint32  requested)
+static int udhcpc_send_request(client_interface_t *inter, zpl_uint32  server,
+		zpl_uint32  requested)
 {
 	struct dhcp_packet packet;
 	/*
@@ -292,7 +285,7 @@ static int udhcpc_send_request(client_interface_t *inter, ospl_uint32  server,
 		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCPREQUEST packet on interface %s",
 				ifindex2ifname(inter->ifindex));
 		zlog_debug(MODULE_DHCP, "DHCP Client  request ip address %s",
-				inet_ntoa(temp_addr));
+				ipstack_inet_ntoa(temp_addr));
 	}
 	if (inter->state.mode == DHCP_RAW_MODE)
 		return udhcpc_raw_packet_bcast(inter->sock, &packet, INADDR_ANY,
@@ -302,8 +295,8 @@ static int udhcpc_send_request(client_interface_t *inter, ospl_uint32  server,
 
 /* Unicast or broadcast a DHCP renew message */
 /* NOINLINE: limit stack usage in caller */
-static int udhcpc_send_renew(client_interface_t *inter, ospl_uint32  server,
-		ospl_uint32  ciaddr)
+static int udhcpc_send_renew(client_interface_t *inter, zpl_uint32  server,
+		zpl_uint32  ciaddr)
 {
 	struct dhcp_packet packet;
 
@@ -349,7 +342,7 @@ static int udhcpc_send_renew(client_interface_t *inter, ospl_uint32  server,
 		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCPREQUEST packet on interface %s",
 				ifindex2ifname(inter->ifindex));
 		zlog_debug(MODULE_DHCP, "DHCP Client renew ip address %s from %s",
-				tmpbug, inet_ntoa(temp_addr));
+				tmpbug, ipstack_inet_ntoa(temp_addr));
 	}
 	//return udhcpc_packet_bcast_ucast(inter->sock, &packet, ciaddr, server, inter->ifindex);
 	if (inter->state.mode == DHCP_RAW_MODE)
@@ -364,8 +357,8 @@ static int udhcpc_send_renew(client_interface_t *inter, ospl_uint32  server,
 #if ENABLE_FEATURE_UDHCPC_ARPING
 /* Broadcast a DHCP decline message */
 /* NOINLINE: limit stack usage in caller */
-static int udhcpc_send_decline(client_interface_t *inter, ospl_uint32  server,
-		ospl_uint32  requested)
+static int udhcpc_send_decline(client_interface_t *inter, zpl_uint32  server,
+		zpl_uint32  requested)
 {
 	struct dhcp_packet packet;
 
@@ -396,7 +389,7 @@ static int udhcpc_send_decline(client_interface_t *inter, ospl_uint32  server,
 		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCPDECLINE packet on interface %s",
 				ifindex2ifname(inter->ifindex));
 		zlog_debug(MODULE_DHCP, "DHCP Client decline ip address %s from %s",
-				tmpbug, inet_ntoa(temp_addr));
+				tmpbug, ipstack_inet_ntoa(temp_addr));
 	}
 	if (inter->state.mode == DHCP_RAW_MODE)
 		return udhcpc_packet_bcast_ucast(inter->sock, &packet, requested,
@@ -409,8 +402,8 @@ static int udhcpc_send_decline(client_interface_t *inter, ospl_uint32  server,
 #endif
 
 /* Unicast a DHCP release message */
-static int udhcpc_send_release(client_interface_t *inter, ospl_uint32  server,
-		ospl_uint32  ciaddr)
+static int udhcpc_send_release(client_interface_t *inter, zpl_uint32  server,
+		zpl_uint32  ciaddr)
 {
 	struct dhcp_packet packet;
 
@@ -435,7 +428,7 @@ static int udhcpc_send_release(client_interface_t *inter, ospl_uint32  server,
 		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCPRELEASE packet on interface %s",
 				ifindex2ifname(inter->ifindex));
 		zlog_debug(MODULE_DHCP, "DHCP Client release ip address %s from %s",
-				tmpbug, inet_ntoa(temp_addr));
+				tmpbug, ipstack_inet_ntoa(temp_addr));
 	}
 	/* Note: normally we unicast here since "server" is not zero.
 	 * However, there _are_ people who run "address-less" DHCP servers,
@@ -451,8 +444,8 @@ static int udhcpc_send_release(client_interface_t *inter, ospl_uint32  server,
 	//udhcp_run_script(NULL, "deconfig");
 }
 
-static int udhcpc_send_inform(client_interface_t *inter, ospl_uint32  server,
-		ospl_uint32  ciaddr)
+static int udhcpc_send_inform(client_interface_t *inter, zpl_uint32  server,
+		zpl_uint32  ciaddr)
 {
 	struct dhcp_packet packet;
 
@@ -478,7 +471,7 @@ static int udhcpc_send_inform(client_interface_t *inter, ospl_uint32  server,
 		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCPINFORM packet on interface %s",
 				ifindex2ifname(inter->ifindex));
 		zlog_debug(MODULE_DHCP, "DHCP Client inform ip address %s from %s",
-				tmpbug, inet_ntoa(temp_addr));
+				tmpbug, ipstack_inet_ntoa(temp_addr));
 	}
 	/* Note: normally we unicast here since "server" is not zero.
 	 * However, there _are_ people who run "address-less" DHCP servers,
@@ -494,11 +487,11 @@ static int udhcpc_send_inform(client_interface_t *inter, ospl_uint32  server,
 	}
 }
 /************************************************************************************/
-static int udhcpc_client_socket(int ifindex)
+static zpl_socket_t udhcpc_client_socket(int ifindex)
 {
-	int fd = 0;
+	zpl_socket_t fd;
 	fd = udhcp_raw_socket();
-	if (fd > 0)
+	if (!ipstack_invalid(fd))
 	{
 		//setsockopt_ifindex (AF_INET, fd, 1);
 		if (udhcp_client_socket_bind(fd, ifindex) == OK)
@@ -508,10 +501,10 @@ static int udhcpc_client_socket(int ifindex)
 			return fd;
 		}
 		zlog_err(MODULE_DHCP, "Can not bind raw socket(%s)", strerror(errno));
-		close(fd);
-		return 0;
+		ipstack_close(fd);
+		return fd;
 	}
-	return 0;
+	return fd;
 }
 
 /************************************************************************************/
@@ -544,8 +537,8 @@ static int perform_renew(client_interface_t * ifter)
 #endif
 
 
-static int udhcp_client_release(client_interface_t * ifter, ospl_uint32  server_addr,
-		ospl_uint32  requested_ip)
+static int udhcp_client_release(client_interface_t * ifter, zpl_uint32  server_addr,
+		zpl_uint32  requested_ip)
 {
 	/* send release packet */
 	if (ifter->state.state == DHCP_BOUND || ifter->state.state == DHCP_RENEWING
@@ -561,7 +554,7 @@ static int udhcp_client_release(client_interface_t * ifter, ospl_uint32  server_
 			zlog_debug(MODULE_DHCP, "DHCP Client sending DHCPRELEASE packet on interface %s",
 					ifindex2ifname(ifter->ifindex));
 			zlog_debug(MODULE_DHCP, "DHCP Client release ip address %s from %s",
-					tmpbug, inet_ntoa(temp_addr));
+					tmpbug, ipstack_inet_ntoa(temp_addr));
 		}
 		udhcpc_send_release(ifter, server_addr, requested_ip); /* unicast */
 	}
@@ -585,7 +578,7 @@ static int udhcp_client_explain_lease(struct dhcp_packet *packet,
 		client_interface_t * ifter)
 {
 	int optlen = 0;
-	ospl_uint8 *temp = NULL;
+	zpl_uint8 *temp = NULL;
 	ifter->lease.lease_address = packet->yiaddr;
 	dhcp_option_get_address(packet->options, DHCP_SERVER_ID,
 			&ifter->lease.server_address);
@@ -951,30 +944,30 @@ static int udhcpc_state_mode_change(client_interface_t * ifter, int mode)
 				zlog_debug(MODULE_DHCP, "DHCP Client change to RAW MODE");
 			}
 
-			if (ifter->udp_sock)
-				ifter->udp_sock = 0;
+			if (!ipstack_invalid(ifter->udp_sock))
+				ipstack_close(ifter->udp_sock);
 			if (dhcp_global_config.client_cnt)
 				dhcp_global_config.client_cnt--;
 			if (dhcp_global_config.client_cnt == 0)
 			{
-				close(dhcp_global_config.client_sock);
-				dhcp_global_config.client_sock = 0;
+				ipstack_close(dhcp_global_config.client_sock);
+				//dhcp_global_config.client_sock = 0;
 			}
 		}
 		else
 		{
-			close(ifter->sock);
-			ifter->sock = 0;
+			ipstack_close(ifter->sock);
+			//ifter->sock = 0;
 		}
-		if (ifter->sock == 0)
+		if (ipstack_invalid(ifter->sock))
 		{
 			ifter->sock = udhcpc_client_socket(ifter->ifindex);
-			if (ifter->sock > 0)
+			if (!ipstack_invalid(ifter->sock))
 			{
 				zlog_debug(MODULE_DHCP,
 						"udhcpc_state_mode_change DHCP_RAW_MODE open raw socket=%d\r\n",
-						ifter->sock);
-				if (ifter->r_thread == NULL && ifter->sock)
+						ifter->sock._fd);
+				if (ifter->r_thread == NULL && !ipstack_invalid(ifter->sock))
 					ifter->r_thread = eloop_add_read(
 							dhcp_global_config.eloop_master, udhcpc_raw_read_thread,
 							ifter, ifter->sock);
@@ -987,21 +980,21 @@ static int udhcpc_state_mode_change(client_interface_t * ifter, int mode)
 		{
 			zlog_debug(MODULE_DHCP,
 					"udhcpc_state_mode_change DHCP_UDP_MODE close raw socket=%d\r\n",
-					ifter->sock);
+					ifter->sock._fd);
 			if (DHCPC_DEBUG_ISON(STATE))
 			{
 				zlog_debug(MODULE_DHCP, "DHCP Client change to UDP MODE");
 			}
-			if (ifter->sock)
-				close(ifter->sock);
-			ifter->sock = 0;
+			if (!ipstack_invalid(ifter->sock))
+				ipstack_close(ifter->sock);
+			//ifter->sock = 0;
 		}
 		else
 		{
-			close(dhcp_global_config.client_sock);
-			dhcp_global_config.client_sock = 0;
+			ipstack_close(dhcp_global_config.client_sock);
+			//dhcp_global_config.client_sock = 0;
 		}
-		if (dhcp_global_config.client_sock == 0)
+		if (ipstack_invalid(dhcp_global_config.client_sock))
 			dhcp_global_config.client_sock = udhcp_udp_socket(
 					dhcp_global_config.client_port);
 
@@ -1010,9 +1003,9 @@ static int udhcpc_state_mode_change(client_interface_t * ifter, int mode)
 
 		zlog_debug(MODULE_DHCP,
 				"udhcpc_state_mode_change DHCP_UDP_MODE open udp socket=%d\r\n",
-				ifter->udp_sock);
+				ifter->udp_sock._fd);
 
-		if (ifter->r_thread == NULL && ifter->udp_sock)
+		if (ifter->r_thread == NULL && !ipstack_invalid(ifter->udp_sock))
 			ifter->r_thread = eloop_add_read(dhcp_global_config.eloop_master,
 					udhcpc_udp_read_thread, NULL, ifter->udp_sock);
 	}
@@ -1023,7 +1016,7 @@ static int udhcpc_state_mode_change(client_interface_t * ifter, int mode)
 static int udhcp_client_recv_handle(struct dhcp_packet *packet,
 		client_interface_t * ifter)
 {
-	ospl_uint8 message = 0;
+	zpl_uint8 message = 0;
 
 	if (ntohl(packet->xid) != ifter->state.xid)
 	{
@@ -1069,7 +1062,7 @@ static int udhcp_client_recv_handle(struct dhcp_packet *packet,
 		{
 			ifter->state.renew_timeout1 = ifter->lease.expires >> DHCP_T1;
 			ifter->state.renew_timeout2 =
-					(ospl_uint32) ((ospl_float) ifter->lease.expires * DHCP_T2);
+					(zpl_uint32) ((zpl_float) ifter->lease.expires * DHCP_T2);
 			ifter->state.state = DHCP_BOUND;
 			if (DHCPC_DEBUG_ISON(STATE))
 			{
@@ -1085,7 +1078,7 @@ static int udhcp_client_recv_handle(struct dhcp_packet *packet,
 		{
 			ifter->state.renew_timeout1 = ifter->lease.expires >> DHCP_T1;
 			ifter->state.renew_timeout2 =
-					(ospl_uint32) ((ospl_float) ifter->lease.expires * DHCP_T2);
+					(zpl_uint32) ((zpl_float) ifter->lease.expires * DHCP_T2);
 			ifter->state.state = DHCP_BOUND;
 			if (DHCPC_DEBUG_ISON(STATE))
 			{
@@ -1101,7 +1094,7 @@ static int udhcp_client_recv_handle(struct dhcp_packet *packet,
 		{
 			ifter->state.renew_timeout1 = ifter->lease.expires >> DHCP_T1;
 			ifter->state.renew_timeout2 =
-					(ospl_uint32) ((ospl_float) ifter->lease.expires * DHCP_T2);
+					(zpl_uint32) ((zpl_float) ifter->lease.expires * DHCP_T2);
 			ifter->state.state = DHCP_BOUND;
 			if (DHCPC_DEBUG_ISON(STATE))
 			{
@@ -1148,15 +1141,15 @@ static int udhcp_client_recv_handle(struct dhcp_packet *packet,
 }
 /* Returns -1 on errors that are fatal for the socket, -2 for those that aren't */
 /* NOINLINE: limit stack usage in caller */
-static int udhcp_recv_raw_packet(struct dhcp_packet *dhcp_pkt, int fd,
-		ospl_uint32 *ifindex)
+static int udhcp_recv_raw_packet(struct dhcp_packet *dhcp_pkt, zpl_socket_t fd,
+		zpl_uint32 *ifindex)
 {
 	int bytes;
 	struct ip_udp_dhcp_packet packet;
-	ospl_uint16 check;
-	ospl_uint8 cmsgbuf[CMSG_SPACE(SOPT_SIZE_CMSG_IFINDEX_IPV4())];
-	struct iovec iov;
-	struct msghdr msg;
+	zpl_uint16 check;
+	zpl_uint8 cmsgbuf[CMSG_SPACE(SOPT_SIZE_CMSG_IFINDEX_IPV4())];
+	struct ipstack_iovec iov;
+	struct ipstack_msghdr msg;
 
 	/* used to use just safe_read(fd, &packet, sizeof(packet))
 	 * but we need to check for TP_STATUS_CSUMNOTREADY :(
@@ -1170,7 +1163,7 @@ static int udhcp_recv_raw_packet(struct dhcp_packet *dhcp_pkt, int fd,
 	msg.msg_controllen = sizeof(cmsgbuf);
 	for (;;)
 	{
-		bytes = recvmsg(fd, &msg, 0);
+		bytes = ipstack_recvmsg(fd, &msg, 0);
 		if (bytes < 0)
 		{
 			if (errno == EINTR)
@@ -1183,7 +1176,7 @@ static int udhcp_recv_raw_packet(struct dhcp_packet *dhcp_pkt, int fd,
 	}
 	if (bytes < (int) (sizeof(packet.ip) + sizeof(packet.udp)))
 	{
-		zlog_err(MODULE_DHCP, "packet is too ospl_int16, ignoring");
+		zlog_err(MODULE_DHCP, "packet is too zpl_int16, ignoring");
 		return -2;
 	}
 
@@ -1202,7 +1195,7 @@ static int udhcp_recv_raw_packet(struct dhcp_packet *dhcp_pkt, int fd,
 			|| packet.ip.ihl != (sizeof(packet.ip) >> 2)
 			|| packet.udp.dest != htons(DHCP_CLIENT_PORT)
 			/* || bytes > (int) sizeof(packet) - can't happen */
-			|| ntohs(packet.udp.len) != (ospl_uint16) (bytes - sizeof(packet.ip)))
+			|| ntohs(packet.udp.len) != (zpl_uint16) (bytes - sizeof(packet.ip)))
 	{
 		zlog_err(MODULE_DHCP, "unrelated/bogus packet, ignoring");
 		return -2;
@@ -1211,7 +1204,7 @@ static int udhcp_recv_raw_packet(struct dhcp_packet *dhcp_pkt, int fd,
 	/* verify IP checksum */
 	check = packet.ip.check;
 	packet.ip.check = 0;
-	if (check != in_cksum((ospl_uint16 *) &packet.ip, sizeof(packet.ip)))
+	if (check != in_cksum((zpl_uint16 *) &packet.ip, sizeof(packet.ip)))
 	{
 		zlog_err(MODULE_DHCP, "bad IP header checksum, ignoring");
 		return -2;
@@ -1226,7 +1219,7 @@ static int udhcp_recv_raw_packet(struct dhcp_packet *dhcp_pkt, int fd,
 	packet.ip.tot_len = packet.udp.len; /* yes, this is needed */
 	check = packet.udp.check;
 	packet.udp.check = 0;
-	if (check && check != in_cksum((ospl_uint16 *) &packet, bytes))
+	if (check && check != in_cksum((zpl_uint16 *) &packet, bytes))
 	{
 		zlog_err(MODULE_DHCP, "packet with bad UDP checksum received, ignoring");
 		return -2;
@@ -1246,7 +1239,7 @@ static int udhcpc_raw_read_thread(struct eloop *eloop)
 {
 	struct dhcp_packet packet;
 	int bytes = 0;
-	int sock = -1;
+	zpl_socket_t sock;
 	client_interface_t * ifter = NULL;
 	sock = ELOOP_FD(eloop);
 	ifter = ELOOP_ARG(eloop);
@@ -1298,8 +1291,8 @@ static int udhcpc_udp_read_thread(struct eloop *eloop)
 {
 	struct dhcp_packet packet;
 	int bytes = 0;
-	int sock = -1;
-	ospl_uint32 ifindex = 0;
+	zpl_socket_t sock;
+	zpl_uint32 ifindex = 0;
 	client_interface_t * ifter = NULL;
 	sock = ELOOP_FD(eloop);
 
@@ -1362,7 +1355,7 @@ static int dhcp_client_interface_option_default(client_interface_t *ifter)
 	return OK;
 }
 /************************************************************************************/
-static client_interface_t * dhcp_client_create_interface(ospl_uint32 ifindex)
+static client_interface_t * dhcp_client_create_interface(zpl_uint32 ifindex)
 {
 	client_interface_t *ifter = XMALLOC(MTYPE_DHCPC_INFO,
 			sizeof(client_interface_t));
@@ -1422,7 +1415,7 @@ int dhcp_client_add_interface(dhcp_global_t*config, ifindex_t ifindex)
 	{
 		ifter->master = config->eloop_master;
 		ifter->sock = udhcpc_client_socket(ifter->ifindex);
-		if (ifter->sock > 0)
+		if (!ipstack_invalid(ifter->sock))
 		{
 			lstAdd(&config->client_list, ifter);
 			ifter->state.mode = DHCP_RAW_MODE;
@@ -1454,10 +1447,10 @@ int dhcp_client_del_interface(dhcp_global_t*config, ifindex_t ifindex)
 			eloop_cancel(ifter->r_thread);
 			ifter->r_thread = NULL;
 		}
-		if (ifter->sock)
+		if (!ipstack_invalid(ifter->sock))
 		{
-			close(ifter->sock);
-			ifter->sock = 0;
+			ipstack_close(ifter->sock);
+			//ifter->sock = 0;
 		}
 
 		//dhcp_client_lease_unset(ifter);
@@ -1468,8 +1461,8 @@ int dhcp_client_del_interface(dhcp_global_t*config, ifindex_t ifindex)
 	return ERROR;
 }
 
-int dhcp_client_interface_option_set(client_interface_t * ifter, ospl_uint16 code,
-		ospl_uint8 *str, ospl_uint32 len)
+int dhcp_client_interface_option_set(client_interface_t * ifter, zpl_uint16 code,
+		zpl_uint8 *str, zpl_uint32 len)
 {
 	if (code > DHCP_OPTION_MAX)
 	{
@@ -1480,12 +1473,12 @@ int dhcp_client_interface_option_set(client_interface_t * ifter, ospl_uint16 cod
 		}
 		return ERROR;
 	}
-	dhcp_option_add(ifter->options, (ospl_uint8) code, str, len);
+	dhcp_option_add(ifter->options, (zpl_uint8) code, str, len);
 	return OK;
 }
 
-int dhcp_client_interface_request_set(client_interface_t * ifter, ospl_uint16 code,
-		ospl_bool enable)
+int dhcp_client_interface_request_set(client_interface_t * ifter, zpl_uint16 code,
+		zpl_bool enable)
 {
 	ifter->opt_mask[code] = enable;
 	return OK;
@@ -1514,10 +1507,10 @@ int dhcp_client_interface_clean(void)
 				eloop_cancel(pstNode->r_thread);
 				pstNode->r_thread = NULL;
 			}
-			if (pstNode->sock)
+			if (!ipstack_invalid(pstNode->sock))
 			{
-				close(pstNode->sock);
-				pstNode->sock = 0;
+				ipstack_close(pstNode->sock);
+				//pstNode->sock = 0;
 			}
 
 			dhcp_client_lease_unset(pstNode);

@@ -10,16 +10,16 @@
 #ifndef __H264_CONFIG_HPP__
 #define __H264_CONFIG_HPP__
 
-#undef PL_LIBX264_MODULE
+#undef ZPL_LIBX264_MODULE
 
-#ifdef PL_OPENH264_MODULE
+#ifdef ZPL_OPENH264_MODULE
 /* OpenH264: */
 #include <wels/codec_api.h>
 #include <wels/codec_app_def.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "ospl_type.h"
+#include "zpl_type.h"
 #ifdef __cplusplus
 }
 #endif
@@ -30,7 +30,7 @@ extern "C" {
 #endif
 
 
-#ifdef PL_LIBX264_MODULE
+#ifdef ZPL_LIBX264_MODULE
 /* x264: */
 #include <x264.h>
 #endif

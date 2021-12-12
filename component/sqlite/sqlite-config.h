@@ -62,7 +62,7 @@
 #define HAVE_DECL_STRERROR_R       1
 #define HAVE_STRERROR_R       1
 //#define HAVE_READLINE_READLINE_H       1
-#define HAVE_READLINE       1
+//#define HAVE_READLINE       1
 //#define HAVE_POSIX_FALLOCATE       1
 //#define HAVE_ZLIB_H       1
 

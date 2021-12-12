@@ -19,24 +19,10 @@
  * 02111-1307, USA.  
  */
 
-#include <zebra.h>
-#include "linklist.h"
-#include "if.h"
-#include "nsm_connected.h"
-#include "log.h"
-#include "prefix.h"
-#include "table.h"
-#include "memory.h"
-#include "nsm_rib.h"
-#include "thread.h"
-#include "nsm_vrf.h"
-#include "nexthop.h"
-
-#include "nsm_zserv.h"
-
-#include "nsm_redistribute.h"
-#include "nsm_interface.h"
-#include "nsm_debug.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "kernel_netlink.h"
 
@@ -44,10 +30,10 @@
 
 
 /* Interface address modification. AF_UNSPEC */
-static int netlink_ioctl_interface(ospl_uint32 cmd, ospl_family_t family, struct interface *ifp)
+static int netlink_ioctl_interface(zpl_uint32 cmd, zpl_family_t family, struct interface *ifp)
 {
-	ospl_bool create = ospl_false;
-	ospl_uint32 flags = 0;
+	zpl_bool create = zpl_false;
+	zpl_uint32 flags = 0;
 	struct
 	{
 		struct nlmsghdr n;
@@ -106,19 +92,19 @@ static int netlink_ioctl_interface(ospl_uint32 cmd, ospl_family_t family, struct
 		break;
 	case IF_TUNNEL:
 		addattr_l(&req.n, sizeof(req), IFLA_INFO_KIND, "tunnel", strlen("tunnel"));
-		create = ospl_true;
+		create = zpl_true;
 		break;
 	case IF_LAG:
 		addattr_l(&req.n, sizeof(req), IFLA_INFO_KIND, "bond", strlen("bond"));
-		create = ospl_true;
+		create = zpl_true;
 		break;
 	case IF_BRIGDE:		//brigde interface
 		addattr_l(&req.n, sizeof(req), IFLA_INFO_KIND, "bridge", strlen("bridge"));
-		create = ospl_true;
+		create = zpl_true;
 		break;
 	case IF_VLAN:
 		addattr_l(&req.n, sizeof(req), IFLA_INFO_KIND, "vlan", strlen("vlan"));
-		create = ospl_true;
+		create = zpl_true;
 		break;
 #ifdef CUSTOM_INTERFACE
 	case IF_WIFI:		//wifi interface
@@ -130,7 +116,7 @@ static int netlink_ioctl_interface(ospl_uint32 cmd, ospl_family_t family, struct
 		break;
 	}
 	addattr_nest_end(&req.n, linkinfo);
-	if(create == ospl_true)
+	if(create == zpl_true)
 		return netlink_talk(&req.n, &zvrf->netlink_cmd, zvrf);
 	return ERROR;
 }

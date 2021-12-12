@@ -7,6 +7,7 @@
 enum
 {
   MTYPE_TMP = 1,
+  MTYPE_GLOBAL,
   MTYPE_STRVEC,
   MTYPE_VECTOR,
   MTYPE_VECTOR_INDEX,
@@ -332,6 +333,15 @@ enum
   MTYPE_QOS,
   MTYPE_DOT1X,
   MTYPE_MIRROR,
+  MTYPE_HALIPCSRV,
+  MTYPE_HALIPCCLIENT,
+  MTYPE_HALIPCMSG,
+  MTYPE_IPCBC,
+  MTYPE_IPCBCCLIENT,
+  MTYPE_IPCBCMSG,
+  MTYPE_IPCBUS,
+  MTYPE_IPCBUSCLIENT,
+  MTYPE_IPCBUSMSG,
   MTYPE_SSH,
   MTYPE_SSHD,
   MTYPE_SSH_CLIENT,
@@ -383,6 +393,13 @@ enum
   MTYPE_MQTT_PUB,
   MTYPE_MQTT_KEY,
   MTYPE_MQTT_TMP,
+  MTYPE_QOS_ACL_TOP,
+  MTYPE_QOS_ACL,
+  MTYPE_QOS_ACL_NODE,
+  MTYPE_QOS_CLASS,
+  MTYPE_QOS_CLASS_MAP,
+  MTYPE_QOS_POLICY,
+  MTYPE_QOS_POLICY_MAP,
   MTYPE_MAX,
 };
 
@@ -411,6 +428,7 @@ extern struct memory_list memory_list_voip[];
 extern struct memory_list memory_list_web[];
 extern struct memory_list memory_list_video[];
 extern struct memory_list memory_list_mqtt[];
+extern struct memory_list memory_list_qosacl[];
 
 #endif /* _QUAGGA_MEMTYPES_H */
 

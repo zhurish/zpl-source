@@ -35,7 +35,7 @@ struct hash_backet
   struct hash_backet *next;
 
   /* Hash key. */
-  ospl_uint32  key;
+  zpl_uint32  key;
 
   /* Data.  */
   void *data;
@@ -47,24 +47,24 @@ struct hash
   struct hash_backet **index;
 
   /* Hash table size. Must be power of 2 */
-  ospl_uint32  size;
+  zpl_uint32  size;
 
   /* If expansion failed. */
-  ospl_uint32 no_expand;
+  zpl_uint32 no_expand;
 
   /* Key make function. */
-  ospl_uint32  (*hash_key) (void *);
+  zpl_uint32  (*hash_key) (void *);
 
   /* Data compare function. */
   int (*hash_cmp) (const void *, const void *);
 
   /* Backet alloc. */
-  ospl_ulong count;
+  zpl_ulong count;
 };
 
-extern struct hash *hash_create (ospl_uint32  (*) (void *), 
+extern struct hash *hash_create (zpl_uint32  (*) (void *), 
 				 int (*) (const void *, const void *));
-extern struct hash *hash_create_size (ospl_uint32 , ospl_uint32  (*) (void *), 
+extern struct hash *hash_create_size (zpl_uint32 , zpl_uint32  (*) (void *), 
                                              int (*) (const void *, const void *));
 
 extern void *hash_get (struct hash *, void *, void * (*) (void *));
@@ -78,7 +78,7 @@ extern void hash_iterate (struct hash *,
 extern void hash_clean (struct hash *, void (*) (void *));
 extern void hash_free (struct hash *);
 
-extern ospl_uint32  string_hash_make (const char *);
+extern zpl_uint32  string_hash_make (const char *);
  
 #ifdef __cplusplus
 }

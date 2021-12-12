@@ -8,8 +8,8 @@ include makelinux.mk
 #
 # mkdir OBJ dir
 #
-PLPRODS_OBJ = $(PLPRODS)
-PLPRODS_OBJ += $(BASE_ROOT)/empty
+ZPLPRODS_OBJ = $(ZPLPRODS)
+ZPLPRODS_OBJ += $(BASE_ROOT)/empty
 #
 #
 #
@@ -17,10 +17,10 @@ PLPRODS_OBJ += $(BASE_ROOT)/empty
 ifeq ($(MKDIR_TEST),true)
 define _MODULE_OBJ
 TMP_OBJ := $$(shell basename $(strip $(1)))
-MK_OBJ := $$(shell $(MAKE_DIR) -p  $(BASE_ROOT)/$(OBJDIR)/$(TMP_OBJ) $(BASE_ROOT)/$(LIBDIR))
+MK_OBJ := $$(shell $(ZPL_MAKE_DIR) -p  $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(TMP_OBJ) $(BASE_ROOT)/$(ZPL_LIB_DIR))
 endef
 #
-$(foreach objdir,$(PLPRODS_OBJ), $(eval $(call _MODULE_OBJ,$(objdir))))
+$(foreach objdir,$(ZPLPRODS_OBJ), $(eval $(call _MODULE_OBJ,$(objdir))))
 endif
 #
 #
@@ -47,25 +47,25 @@ usage:
 	@$(ECHO) "  Make Command          = mk.make"					
 	@$(ECHO) ""
 	@$(ECHO) "Configuration:"
-	@$(ECHO) "  PLOBJDIR   = $(PLOBJDIR)"
-	@$(ECHO) "  PLPRODOBJ  = $(PLPRODOBJ)"
-	@$(ECHO) "  PLLIB      = $(PLLDLIBS)"
-	@$(ECHO) "  PLLDFLAGS  = $(PLLDFLAGS)"
-	@$(ECHO) "  PLCFLAGS   = $(PLCFLAGS)"	
-	@$(ECHO) "  PLCPPFLAGS = $(PLCPPFLAGS)"	
-	@$(ECHO) "  PLASFLAGS  = $(PLASFLAGS)"	
-	@$(ECHO) "  PLDEFINE   = $(PLDEFINE)"	
-	@$(ECHO) "  PLINCLUDE  = $(PLINCLUDE)"				
-ifeq ($(PL_BUILD_DEBUG),YES)
-	@$(ECHO) "  PLDEBUG    = $(PLDEBUG)"
+	@$(ECHO) "  ZPLOBJDIR   = $(ZPLOBJDIR)"
+	@$(ECHO) "  ZPLPRODOBJ  = $(ZPLPRODOBJ)"
+	@$(ECHO) "  ZPLLIB      = $(ZPLLDLIBS)"
+	@$(ECHO) "  ZPLLDFLAGS  = $(ZPLLDFLAGS)"
+	@$(ECHO) "  ZPLCFLAGS   = $(ZPLCFLAGS)"	
+	@$(ECHO) "  ZPLCPPFLAGS = $(ZPLCPPFLAGS)"	
+	@$(ECHO) "  ZPLASFLAGS  = $(ZPLASFLAGS)"	
+	@$(ECHO) "  ZPLDEFINE   = $(ZPLDEFINE)"	
+	@$(ECHO) "  ZPLINCLUDE  = $(ZPLINCLUDE)"				
+ifeq ($(ZPL_BUILD_DEBUG),YES)
+	@$(ECHO) "  ZPLDEBUG    = $(ZPLDEBUG)"
 endif
 	@$(ECHO) ""
 	@$(ECHO) "Products:"
 
-	@$(PLVERB)for prod in $(PLPRODS); do \
+	@$(ZPLVERB)for prod in $(ZPLPRODS); do \
 		$(ECHO) "  $$prod"; \
         done
-	@$(PLVERB)for prod in $(PLEX_DIR); do \
+	@$(ZPLVERB)for prod in $(ZPLEX_DIR); do \
 		$(ECHO) "EX ：$$prod"; \
         done
 	@$(ECHO) "Targets:"
@@ -82,82 +82,82 @@ endif
 #
 prebuilts:
 	./moduletypes.sh header make $(PLATFORM_ROOT)
-	@for i in $(PLPRODS); do	\
+	@for i in $(ZPLPRODS); do	\
 		./moduletypes.sh def $$i $(PLATFORM_ROOT); \
 	done
 	./moduletypes.sh tail make $(PLATFORM_ROOT)
 #	
 make_prepare:
 	./moduletypes.sh header make $(PLATFORM_ROOT)
-	@for i in $(PLPRODS); do	\
+	@for i in $(ZPLPRODS); do	\
 		$(MAKE) -C $$i make_prepare || exit "$$?"; 	\
 	done
 	./moduletypes.sh tail make $(PLATFORM_ROOT)
 #
 objclean:
-	@for i in $(PLPRODS); do	\
+	@for i in $(ZPLPRODS); do	\
 		$(MAKE) -C $$i objclean || exit "$$?"; 	\
 	done
 #
 obj:
-	@for i in $(PLPRODS); do	\
+	@for i in $(ZPLPRODS); do	\
 		$(MAKE) -C $$i obj || exit "$$?"; 	\
 	done
 	
 install: 
-	@for i in $(PLPRODS); do	\
+	@for i in $(ZPLPRODS); do	\
 		$(MAKE) -C $$i install || exit "$$?"; 	\
 	done
-	install -d ${DSTETCDIR}
-	install -m 755 upgradeapp.sh ${DSTETCDIR} 
+	install -d ${ZPL_INSTALL_ETC_DIR}
+	install -m 755 upgradeapp.sh ${ZPL_INSTALL_ETC_DIR} 
 
 #
 clean: 
-	@for i in $(PLEX_DIR); do	\
+	@for i in $(ZPLEX_DIR); do	\
 		$(MAKE) -C $$i clean; 	\
 	done
-	@for i in $(PLPRODS); do	\
+	@for i in $(ZPLPRODS); do	\
 		$(MAKE) -C $$i clean; 	\
 	done
 
 demo: 	
 
-	@for i in $(PLPRODS); do	\
+	@for i in $(ZPLPRODS); do	\
 		$(MAKE) -C $$i demo || exit "$$?"; 	\
 	done
 
 lib: 
-	@for i in $(PLEX_DIR); do	\
+	@for i in $(ZPLEX_DIR); do	\
 		$(MAKE) -C $$i all || exit "$$?"; 	\
 		$(MAKE) -C $$i install || exit "$$?"; 	\
 	done
-	@for i in $(PLPRODS); do	\
+	@for i in $(ZPLPRODS); do	\
 		$(MAKE) -C $$i lib || exit "$$?"; 	\
 	done
 		
 all: 
-	@for i in $(PLEX_DIR); do	\
+	@for i in $(ZPLEX_DIR); do	\
 		$(MAKE) -C $$i all || exit "$$?"; 	\
 		$(MAKE) -C $$i install || exit "$$?"; 	\
 	done
-	@for i in $(PLPRODS); do	\
+	@for i in $(ZPLPRODS); do	\
 		$(MAKE) -C $$i all || exit "$$?"; 	\
 	done
 
 debug:
 	@$(ECHO) " CROSS_COMPILE: $(CROSS_COMPILE)"
-	@$(ECHO) " PL_BUILD_ARCH: $(PL_BUILD_ARCH)"
+	@$(ECHO) " ZPL_BUILD_ARCH: $(ZPL_BUILD_ARCH)"
 	@$(ECHO) " ARCH_TYPE: $(ARCH_TYPE)"
 	@$(ECHO) " GCC_TYPE: $(GCC_TYPE)"
-	@$(ECHO) " PL_BUILD_OPENWRT: $(PL_BUILD_OPENWRT)"
+	@$(ECHO) " ZPL_BUILD_OPENWRT: $(ZPL_BUILD_OPENWRT)"
 	@$(ECHO) " ARCH_DEBUG: $(ARCH_DEBUG)"	
-	@$(ECHO) " PL_COMPILE_OPTIONS: $(PL_COMPILE_OPTIONS)"
+	@$(ECHO) " ZPL_COMPILE_OPTIONS: $(ZPL_COMPILE_OPTIONS)"
 
 
 rebuild: clean all
 
 packet:
-	$(CD) $(RELEASEDIR); $(MKDIR) install; $(CP) -arf sbin install/; \
+	$(CD) $(ZPL_RELEASEDIR); $(MKDIR) install; $(CP) -arf sbin install/; \
 		$(CP) -arf bin install/; $(CP) -arf etc install/ $(CP) -arf lib install/; \
 		$(CP) -arf usr install/;$(CP) -arf www install/; \
 		$(TAR) -zcvf install.tar.gz sbin bin etc lib usr

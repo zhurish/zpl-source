@@ -102,10 +102,10 @@ int ffmpegEncoder::ffmpegEncoderOpen(int enc /*, std::function <int(void*, int)>
 	m_CodecCtx->codec_type = AVMEDIA_TYPE_VIDEO;
 	//openh264 -> AV_PIX_FMT_YUV420P
 	//libx264 -> AV_PIX_FMT_YUV422P
-#ifdef PL_LIBX264_MODULE
+#ifdef ZPL_LIBX264_MODULE
 	m_CodecCtx->pix_fmt = AV_PIX_FMT_YUV422P;//AV_PIX_FMT_YUYV422;//AV_PIX_FMT_YUV422P;
 #endif
-#ifdef PL_OPENH264_MODULE
+#ifdef ZPL_OPENH264_MODULE
 	m_CodecCtx->pix_fmt = AV_PIX_FMT_YUV420P;//AV_PIX_FMT_YUYV422;//AV_PIX_FMT_YUV422P;
 #endif
 	m_CodecCtx->width = this->m_width;
@@ -209,7 +209,7 @@ int ffmpegEncoder::ffmpegEncoderOpen(int enc /*, std::function <int(void*, int)>
 
 	//pFrame = av_frame_alloc();
 	int picture_size = avpicture_get_size(m_CodecCtx->pix_fmt, m_CodecCtx->width, m_CodecCtx->height);
-	//picture_buf = (ospl_uint8 *)av_malloc(picture_size);
+	//picture_buf = (zpl_uint8 *)av_malloc(picture_size);
 	//avpicture_fill((AVPicture *)pFrame, picture_buf, m_CodecCtx->pix_fmt, m_CodecCtx->width, m_CodecCtx->height);
 #ifdef FFMPEG_ENCODE_OUTPUT_FILE
 	//Write File Header
@@ -251,7 +251,7 @@ int ffmpegEncoder::ffmpegEncoderFrame(AVFrame *input, AVPacket *out)
             // new encoded data is available (one NALU)
             if (onEncodedDataCallback) {
                 NALU_START_CODE_BYTES_NUMBER=4
-                onEncodedDataCallback(std::vector<ospl_uint8>(encodingPacket->data + NALU_START_CODE_BYTES_NUMBER,
+                onEncodedDataCallback(std::vector<zpl_uint8>(encodingPacket->data + NALU_START_CODE_BYTES_NUMBER,
                                                          encodingPacket->data + encodingPacket->size));
             }
         }*/

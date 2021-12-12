@@ -6,7 +6,7 @@
  */
 
 #define HAS_BOOL 1
-#include "zebra.h"
+#include "zpl_include.h"
 #include "module.h"
 #include "memory.h"
 #include "zassert.h"
@@ -24,7 +24,7 @@
 #include "web_app.h"
 #include "web_api.h"
 
-//#ifdef PL_APP_MODULE
+//#ifdef ZPL_APP_MODULE
 #include "application.h"
 
 static int web_board_tbl(Webs *wp, char *path, char *query)
@@ -41,9 +41,9 @@ static int web_board_tbl(Webs *wp, char *path, char *query)
 	v9_video_board_lock();
 	for (i = 0; i < V9_APP_BOARD_MAX; i++)
 	{
-		if (v9_video_board[i].board.use == ospl_true && v9_video_board[i].id != APP_BOARD_MAIN)
+		if (v9_video_board[i].board.use == zpl_true && v9_video_board[i].id != APP_BOARD_MAIN)
 		{
-			//if (v9_video_board[i].board.online == ospl_true)
+			//if (v9_video_board[i].board.online == zpl_true)
 			{
 				if(wp->iValue > 0)
 					websWrite(wp, "%s", ",");
@@ -126,7 +126,7 @@ static int web_board_sdk_detail_one(Webs *wp, v9_video_sdk_t *sdk)
 static int web_board_detail(Webs *wp, void *p)
 {
 	char *strID = NULL;
-	ospl_uint8 id = 0;
+	zpl_uint8 id = 0;
 	v9_video_sdk_t * sdk = NULL;
 	web_assert(wp);
 	strID = webs_get_var(wp, T("ID"), T(""));
@@ -160,10 +160,10 @@ static int web_board_detail(Webs *wp, void *p)
 static int web_board_diskinfo_tbl(Webs *wp, char *path, char *query)
 {
 	char tmp[128];
-	ospl_uint32 disktatol1 = 0;
-	ospl_uint32 diskuse1 = 0;
-	ospl_uint32 diskload1 = 0;
-	ospl_uint32 glen = 0, tlen = 0,  mlen = 0;
+	zpl_uint32 disktatol1 = 0;
+	zpl_uint32 diskuse1 = 0;
+	zpl_uint32 diskload1 = 0;
+	zpl_uint32 glen = 0, tlen = 0,  mlen = 0;
 	web_assert(wp);
 	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);

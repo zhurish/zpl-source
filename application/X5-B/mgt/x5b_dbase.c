@@ -6,23 +6,15 @@
  */
 
 
-#include "zebra.h"
-#include "memory.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "linklist.h"
-#include "prefix.h"
-#include "table.h"
-#include "vector.h"
-#include "eloop.h"
-#include "network.h"
-#include "vty.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "x5_b_global.h"
 #ifdef X5B_APP_DATABASE
 
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 #include "voip_app.h"
 #endif
 #include "x5b_dbase.h"
@@ -33,21 +25,21 @@ static os_mutex_t *dbase_mutex = NULL;
 static int voip_dbase_update_save(void);
 static int voip_dbase_load_from_file(void);
 
-#ifdef PL_OPENWRT_UCI
-static int voip_ubus_dbase_select_one(ospl_bool enable);
+#ifdef ZPL_OPENWRT_UCI
+static int voip_ubus_dbase_select_one(zpl_bool enable);
 #endif
-static ospl_bool _voip_dbase = ospl_false;
+static zpl_bool _voip_dbase = zpl_false;
 
-int voip_dbase_enable(ospl_bool enable)
+int voip_dbase_enable(zpl_bool enable)
 {
 	_voip_dbase = enable;
 	return OK;
 }
 
 
-ospl_bool voip_dbase_isenable()
+zpl_bool voip_dbase_isenable()
 {
-	return ospl_false;//_voip_dbase;
+	return zpl_false;//_voip_dbase;
 }
 
 int voip_dbase_clean(void)
@@ -113,11 +105,11 @@ int voip_dbase_load()
 			if(dbase_mutex)
 				os_mutex_unlock(dbase_mutex);
 			if (access(X5B_DBASE_FILE, F_OK) == 0)
-				_voip_dbase = ospl_true;
+				_voip_dbase = zpl_true;
 
 			voip_card_load();
-#ifdef PL_OPENWRT_UCI
-			voip_ubus_dbase_select_one(ospl_false);
+#ifdef ZPL_OPENWRT_UCI
+			voip_ubus_dbase_select_one(zpl_false);
 #endif
 			return OK;
 		}
@@ -243,7 +235,7 @@ static int voip_dbase_update_save(void)
 /***********************************************/
 voip_dbase_t * voip_dbase_node_lookup_by_username(char *username, char *user_id)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	char name[APP_USERNAME_MAX];
 	char userid[APP_ID_MAX];
 	NODE node;
@@ -311,7 +303,7 @@ voip_dbase_t * voip_dbase_node_lookup_by_username(char *username, char *user_id)
 
 voip_dbase_t * voip_dbase_node_lookup_by_phonenumber(char *phone)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	char lphone[APP_USERNAME_MAX];
 	NODE node;
 	voip_dbase_t *dbase = NULL;
@@ -348,7 +340,7 @@ voip_dbase_t * voip_dbase_node_lookup_by_phonenumber(char *phone)
 }
 
 
-static voip_dbase_t * voip_dbase_node_lookup_by_room(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room_number)
+static voip_dbase_t * voip_dbase_node_lookup_by_room(zpl_uint8 building, zpl_uint8 unit, zpl_uint16 room_number)
 {
 	NODE node;
 	voip_dbase_t *dbase = NULL;
@@ -388,7 +380,7 @@ static int voip_dbase_del_one_node(voip_dbase_t *dbase)
 
 static int voip_dbase_add_phonenumber(voip_dbase_t *dbase, char *number, char *username, char *user_id)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < APP_MULTI_NUMBER_MAX; i++)
 	{
 		if(strlen(dbase->phonetab[i].phone) == 0)
@@ -414,7 +406,7 @@ static int voip_dbase_add_phonenumber(voip_dbase_t *dbase, char *number, char *u
 
 static int voip_dbase_del_phonenumber(voip_dbase_t *dbase, char *number, char *username, char *user_id)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	char phone[APP_ID_MAX];
 	char name[APP_USERNAME_MAX];
 	char userid[APP_ID_MAX];
@@ -496,7 +488,7 @@ static int voip_dbase_del_phonenumber(voip_dbase_t *dbase, char *number, char *u
 }
 
 
-static int voip_dbase_add_one_room(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room_number)
+static int voip_dbase_add_one_room(zpl_uint8 building, zpl_uint8 unit, zpl_uint16 room_number)
 {
 	voip_dbase_t *dbase = XMALLOC(MTYPE_VOIP_DBTEST, sizeof(voip_dbase_t));
 	if(!dbase)
@@ -508,7 +500,7 @@ static int voip_dbase_add_one_room(ospl_uint8 building, ospl_uint8 unit, ospl_ui
 	return voip_dbase_add_one_node(dbase);
 }
 
-static int voip_dbase_del_one_room(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room_number)
+static int voip_dbase_del_one_room(zpl_uint8 building, zpl_uint8 unit, zpl_uint16 room_number)
 {
 	voip_dbase_t * dbase = voip_dbase_node_lookup_by_room(building, unit, room_number);
 	if(dbase)
@@ -518,7 +510,7 @@ static int voip_dbase_del_one_room(ospl_uint8 building, ospl_uint8 unit, ospl_ui
 	return ERROR;
 }
 
-voip_dbase_t * voip_dbase_lookup_by_room(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room_number)
+voip_dbase_t * voip_dbase_lookup_by_room(zpl_uint8 building, zpl_uint8 unit, zpl_uint16 room_number)
 {
 	if(dbase_mutex)
 		os_mutex_lock(dbase_mutex, OS_WAIT_FOREVER);
@@ -528,7 +520,7 @@ voip_dbase_t * voip_dbase_lookup_by_room(ospl_uint8 building, ospl_uint8 unit, o
 	return dbase;
 }
 
-int voip_dbase_add_room(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room_number)
+int voip_dbase_add_room(zpl_uint8 building, zpl_uint8 unit, zpl_uint16 room_number)
 {
 	if(dbase_mutex)
 		os_mutex_lock(dbase_mutex, OS_WAIT_FOREVER);
@@ -540,7 +532,7 @@ int voip_dbase_add_room(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room_n
 	return ret;
 }
 
-int voip_dbase_del_room(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room_number)
+int voip_dbase_del_room(zpl_uint8 building, zpl_uint8 unit, zpl_uint16 room_number)
 {
 	if(dbase_mutex)
 		os_mutex_lock(dbase_mutex, OS_WAIT_FOREVER);
@@ -555,9 +547,9 @@ int voip_dbase_del_room(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room_n
 int voip_dbase_del_user(char *user_id)
 {
 	int ret = ERROR;
-	//ospl_uint8 building;
-	//ospl_uint8 unit;
-	//ospl_uint16 room_number;
+	//zpl_uint8 building;
+	//zpl_uint8 unit;
+	//zpl_uint16 room_number;
 	voip_dbase_t * dbase = NULL;
 	if(user_id)
 	{
@@ -583,7 +575,7 @@ int voip_dbase_del_user(char *user_id)
 	return ERROR;
 }
 
-int voip_dbase_add_room_phone(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room_number, char *phone, char *username, char *user_id)
+int voip_dbase_add_room_phone(zpl_uint8 building, zpl_uint8 unit, zpl_uint16 room_number, char *phone, char *username, char *user_id)
 {
 	int ret = ERROR;
 	if(phone)
@@ -629,7 +621,7 @@ int voip_dbase_add_room_phone(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 
 	return ERROR;
 }
 
-int voip_dbase_del_room_phone(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room_number,
+int voip_dbase_del_room_phone(zpl_uint8 building, zpl_uint8 unit, zpl_uint16 room_number,
 		char *phone, char *username, char *user_id)
 {
 	int ret = ERROR;
@@ -682,7 +674,7 @@ int voip_dbase_del_room_phone(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 
 	return ERROR;
 }
 
-int voip_dbase_update_room_phone(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room_number,
+int voip_dbase_update_room_phone(zpl_uint8 building, zpl_uint8 unit, zpl_uint16 room_number,
 										char *phone, char *username, char *user_id)
 {
 	int ret = ERROR;
@@ -720,9 +712,9 @@ int voip_dbase_update_room_phone(ospl_uint8 building, ospl_uint8 unit, ospl_uint
 }
 
 
-int voip_dbase_get_room_phone(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room_number, char *phone)
+int voip_dbase_get_room_phone(zpl_uint8 building, zpl_uint8 unit, zpl_uint16 room_number, char *phone)
 {
-	ospl_uint32 i = 0, num = 0;
+	zpl_uint32 i = 0, num = 0;
 	zassert(phone != NULL);
 	if(dbase_mutex)
 		os_mutex_lock(dbase_mutex, OS_WAIT_FOREVER);
@@ -749,10 +741,10 @@ int voip_dbase_get_room_phone(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 
 		os_mutex_unlock(dbase_mutex);
 	return 0;
 }
-#ifdef PL_PJSIP_MODULE
-int voip_dbase_get_call_phone(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room_number, void *call_phone)
+#ifdef ZPL_PJSIP_MODULE
+int voip_dbase_get_call_phone(zpl_uint8 building, zpl_uint8 unit, zpl_uint16 room_number, void *call_phone)
 {
-	ospl_uint32 i = 0, num = 0;
+	zpl_uint32 i = 0, num = 0;
 	call_phone_t *phone = (call_phone_t *)call_phone;
 	zassert(phone != NULL);
 	if(dbase_mutex)
@@ -783,7 +775,7 @@ int voip_dbase_get_call_phone(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 
 #endif
 int voip_dbase_get_user_by_phone(char *phone, char *username, char *user_id)
 {
-	ospl_uint32 i = 0;//, num = 0;
+	zpl_uint32 i = 0;//, num = 0;
 	char lphone[APP_USERNAME_MAX];
 	memset(lphone, 0, sizeof(lphone));
 	zassert(phone != NULL);
@@ -815,9 +807,9 @@ int voip_dbase_get_user_by_phone(char *phone, char *username, char *user_id)
 	return ERROR;
 }
 
-int voip_dbase_get_phone_by_user(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room_number, char *username, char *user_id, char *phone)
+int voip_dbase_get_phone_by_user(zpl_uint8 building, zpl_uint8 unit, zpl_uint16 room_number, char *username, char *user_id, char *phone)
 {
-	ospl_uint32 i = 0, num = 0;
+	zpl_uint32 i = 0, num = 0;
 	char name[APP_USERNAME_MAX];
 	char userid[APP_ID_MAX];
 	memset(name, 0, sizeof(name));
@@ -890,7 +882,7 @@ int voip_dbase_get_phone_by_user(ospl_uint8 building, ospl_uint8 unit, ospl_uint
 }
 
 
-int voip_dbase_get_room_phone_by_user(char *user_id, ospl_uint16 *room_number,
+int voip_dbase_get_room_phone_by_user(char *user_id, zpl_uint16 *room_number,
 		char *phone, char *username)
 {
 	int ret = ERROR, i = 0;
@@ -949,12 +941,12 @@ int voip_dbase_get_room_phone_by_user(char *user_id, ospl_uint16 *room_number,
 
 
 
-static int voip_dbase_show_room_phone_1(struct vty *vty, ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room_number)
+static int voip_dbase_show_room_phone_1(struct vty *vty, zpl_uint8 building, zpl_uint8 unit, zpl_uint16 room_number)
 {
-	ospl_uint32 i =0, cnt = 0;
+	zpl_uint32 i =0, cnt = 0;
 	NODE node;
 	voip_dbase_t *dbase = NULL;
-	ospl_int8 building_str[8], unit_str[8], room_number_str[8];
+	zpl_int8 building_str[8], unit_str[8], room_number_str[8];
 
 	memset(building_str, 0, sizeof(building_str));
 	memset(unit_str, 0, sizeof(unit_str));
@@ -1076,12 +1068,12 @@ static int voip_dbase_show_room_phone_1(struct vty *vty, ospl_uint8 building, os
 	return cnt;
 }
 
-static int voip_dbase_show_room_phone_2(struct vty *vty, ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room_number)
+static int voip_dbase_show_room_phone_2(struct vty *vty, zpl_uint8 building, zpl_uint8 unit, zpl_uint16 room_number)
 {
-	ospl_uint32 i =0, cnt = 0;
+	zpl_uint32 i =0, cnt = 0;
 	NODE node;
 	voip_dbase_t *dbase = NULL;
-	ospl_int8 building_str[8], unit_str[8], room_number_str[8];
+	zpl_int8 building_str[8], unit_str[8], room_number_str[8];
 
 	memset(building_str, 0, sizeof(building_str));
 	memset(unit_str, 0, sizeof(unit_str));
@@ -1212,12 +1204,12 @@ static int voip_dbase_show_room_phone_2(struct vty *vty, ospl_uint8 building, os
 	return cnt;
 }
 
-static int voip_dbase_show_room_phone_3(struct vty *vty, ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room_number, char *username, char *user_id)
+static int voip_dbase_show_room_phone_3(struct vty *vty, zpl_uint8 building, zpl_uint8 unit, zpl_uint16 room_number, char *username, char *user_id)
 {
-	ospl_uint32 i =0, cnt = 0;
+	zpl_uint32 i =0, cnt = 0;
 	NODE node;
 	voip_dbase_t *dbase = NULL;
-	ospl_int8 building_str[8], unit_str[8], room_number_str[8];
+	zpl_int8 building_str[8], unit_str[8], room_number_str[8];
 	char name[APP_USERNAME_MAX];
 	char userid[APP_ID_MAX];
 	memset(name, 0, sizeof(name));
@@ -1485,7 +1477,7 @@ static int voip_dbase_show_room_phone_3(struct vty *vty, ospl_uint8 building, os
 	return cnt;
 }
 
-int voip_dbase_show_room_phone(struct vty *vty, ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room_number, char *username, char *user_id)
+int voip_dbase_show_room_phone(struct vty *vty, zpl_uint8 building, zpl_uint8 unit, zpl_uint16 room_number, char *username, char *user_id)
 {
 	int cnt = 0;
 	if(dbase_mutex)
@@ -1528,13 +1520,13 @@ int voip_dbase_show_room_phone(struct vty *vty, ospl_uint8 building, ospl_uint8 
 }
 
 
-#ifdef PL_OPENWRT_UCI
-static int voip_ubus_dbase_sync_one(ospl_bool badd)
+#ifdef ZPL_OPENWRT_UCI
+static int voip_ubus_dbase_sync_one(zpl_bool badd)
 {
 	int	 ret = ERROR;
-	ospl_uint8 building = 0;
-	ospl_uint8 unit = 0;
-	ospl_uint16 room_number = 0;
+	zpl_uint8 building = 0;
+	zpl_uint8 unit = 0;
+	zpl_uint16 room_number = 0;
 
 	char 			phone[APP_ID_MAX];
 	char 			username[APP_USERNAME_MAX];
@@ -1589,7 +1581,7 @@ static int voip_ubus_dbase_sync_one(ospl_bool badd)
 
 /*static int voip_ubus_dbase_select_swap(char *input, char *output)
 {
-	ospl_uint32 i = 0, j = 0, sph = 0, n = 0;
+	zpl_uint32 i = 0, j = 0, sph = 0, n = 0;
 	FILE *fi, *fo;
 	char ibuf[512];
 	char obuf[512];
@@ -1633,12 +1625,12 @@ static int voip_ubus_dbase_sync_one(ospl_bool badd)
 }*/
 
 
-static int voip_ubus_dbase_select_one(ospl_bool selsel)
+static int voip_ubus_dbase_select_one(zpl_bool selsel)
 {
 	int	 ret = ERROR;
-	ospl_uint8 building = 0;
-	ospl_uint8 unit = 0;
-	ospl_uint16 room_number = 0;
+	zpl_uint8 building = 0;
+	zpl_uint8 unit = 0;
+	zpl_uint16 room_number = 0;
 	int fd;
 	struct vty *file_vty = NULL;
 	char 			username[APP_USERNAME_MAX];
@@ -1670,7 +1662,7 @@ static int voip_ubus_dbase_select_one(ospl_bool selsel)
 		file_vty->wfd = fd;
 		file_vty->type = VTY_FILE;
 		file_vty->fd_type = OS_STACK;
-		file_vty->res0 = ospl_true;
+		file_vty->res0 = zpl_true;
 		if(selsel)
 			voip_dbase_show_room_phone(file_vty,  building,  unit,  room_number,
 					strlen(username)?username:NULL, strlen(user_id)?user_id:NULL);
@@ -1691,21 +1683,21 @@ static int voip_ubus_dbase_select_one(ospl_bool selsel)
 }
 #endif
 
-int voip_ubus_dbase_sync(ospl_uint32 cmd)
+int voip_ubus_dbase_sync(zpl_uint32 cmd)
 {
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 	if(cmd == 1)
 	{
-		voip_ubus_dbase_sync_one(ospl_true);
-		voip_ubus_dbase_select_one(ospl_false);
+		voip_ubus_dbase_sync_one(zpl_true);
+		voip_ubus_dbase_select_one(zpl_false);
 	}
 	else if(cmd == -1)
 	{
-		voip_ubus_dbase_sync_one(ospl_false);
-		voip_ubus_dbase_select_one(ospl_false);
+		voip_ubus_dbase_sync_one(zpl_false);
+		voip_ubus_dbase_select_one(zpl_false);
 	}
 	else if(cmd == 2)
-		voip_ubus_dbase_select_one(ospl_true);
+		voip_ubus_dbase_select_one(zpl_true);
 #endif
 	return OK;
 }

@@ -12,12 +12,12 @@
 extern "C" {
 #endif
 
-#include "plconfig.h"
-#include "os_list.h"
-#include "os_util.h"
+#include "os_include.h"
+#include <zpl_include.h>
 
-//#undef DOUBLE_PROCESS
-#ifdef DOUBLE_PROCESS
+
+//#undef ZPL_TOOLS_PROCESS
+#ifdef ZPL_TOOLS_PROCESS
 
 #define _PROCESS_DEBUG
 
@@ -40,8 +40,8 @@ typedef struct process_s
 {
 	NODE	node;
 	char 	name[P_NAME_MAX];
-	ospl_bool	active;
-	ospl_bool	restart;
+	zpl_bool	active;
+	zpl_bool	restart;
 	char 	process[P_PATH_MAX];
 	char 	*argv[P_ARGV_MAX];
 	int		pid;

@@ -21,13 +21,9 @@
  * 02111-1307, USA.  
  */
 
-#include <zebra.h>
-#include "thread.h"
-#include "memory.h"
-#include "workqueue.h"
-#include "linklist.h"
-#include "command.h"
-#include "log.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
 /* master list of work_queues */
 static struct list _work_queues;
@@ -110,7 +106,7 @@ bool work_queue_is_scheduled(struct work_queue *wq)
 	return (wq->thread != NULL);
 }
 
-static int work_queue_schedule(struct work_queue *wq, ospl_uint32  delay)
+static int work_queue_schedule(struct work_queue *wq, zpl_uint32  delay)
 {
 	/* if appropriate, schedule work queue thread */
 	if ( CHECK_FLAG(wq->flags, WQ_UNPLUGGED) && (wq->thread == NULL)
@@ -167,7 +163,7 @@ static void work_queue_item_requeue(struct work_queue *wq, struct listnode *ln)
 	LISTNODE_DETACH(wq->items, ln);
 	LISTNODE_ATTACH(wq->items, ln); /* attach to end of list */
 }
-
+#ifdef ZPL_SHELL_MODULE
 DEFUN(show_work_queues,
 		show_work_queues_cmd,
 		"show work-queues",
@@ -190,14 +186,14 @@ DEFUN(show_work_queues,
 				(CHECK_FLAG (wq->flags, WQ_UNPLUGGED) ? ' ' : 'P'),
 				listcount(wq->items), wq->spec.hold, wq->runs, wq->cycles.best,
 				MIN(wq->cycles.best, wq->cycles.worst), wq->cycles.granularity,
-				(wq->runs) ? (ospl_uint32 ) (wq->cycles.total / wq->runs) : 0,
+				(wq->runs) ? (zpl_uint32 ) (wq->cycles.total / wq->runs) : 0,
 				wq->worst_usec, wq->name,
 				VTY_NEWLINE);
 	}
 
 	return CMD_SUCCESS;
 }
-
+#endif
 /* 'plug' a queue: Stop it from being scheduled,
  * ie: prevent the queue from draining.
  */
@@ -230,11 +226,11 @@ int work_queue_run(struct thread *thread)
 {
 	struct work_queue *wq;
 	struct work_queue_item *item;
-	ospl_ulong took;
+	zpl_ulong took;
 	wq_item_status ret;
-	ospl_uint32  cycles = 0;
+	zpl_uint32  cycles = 0;
 	struct listnode *node, *nnode;
-	ospl_char yielded = 0;
+	zpl_char yielded = 0;
 
 	wq = THREAD_ARG(thread);
 	wq->thread = NULL;

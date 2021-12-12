@@ -4,26 +4,12 @@
  *  Created on: Apr 30, 2017
  *      Author: zhurish
  */
-#include "zebra.h"
-
-
-#include "command.h"
-#include "memory.h"
-#include "prefix.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 #include "sigevent.h"
-#include "version.h"
-#include <log.h>
-#include "getopt.h"
-//#include "nsm_filter.h"
-//#include "nsm_plist.h"
-#include "host.h"
-#include "eloop.h"
-#include "os_job.h"
-#include "os_list.h"
-//#include "os_log.h"
-#include "os_memory.h"
-#include "os_sem.h"
-#include "os_task.h"
+
 #include "os_module.h"
 #include "os_start.h"
 
@@ -33,10 +19,12 @@
 static void os_sighup(void)
 {
 #ifdef APP_V9_MODULE
-	v9_app_module_exit();
+	//v9_app_module_exit();
 #endif
 	vty_terminate();
-	os_log("/app/signo.log", "%s:%d",__func__, os_task_gettid());
+	os_log(SYSCONFDIR"/signo.log", "%s:%d",__func__, os_task_gettid());
+	fprintf(stdout, "%s\r\n",__func__);
+	fflush(stdout);
 	//zlog_notice(MODULE_DEFAULT, "%s: SIGHUP received\r\n",__func__);
 	//os_msgq_exit();
 	//os_exit_all_module();
@@ -48,15 +36,15 @@ static void os_sighup(void)
 static void os_sigint(void)
 {
 #ifdef APP_V9_MODULE
-	v9_app_module_exit();
+	//v9_app_module_exit();
 #endif
 	vty_terminate();
-	os_log("/app/signo.log", "%s:%d",__func__, os_task_gettid());
+	os_log(SYSCONFDIR"/signo.log", "%s:%d",__func__, os_task_gettid());
+	fprintf(stdout, "%s\r\n",__func__);
+	fflush(stdout);
 	//zlog_notice(MODULE_DEFAULT, "%s: Terminating on signal\r\n",__func__);
 	//os_msgq_exit();
 	//os_exit_all_module();
-
-
 	_exit(0);
 }
 
@@ -64,8 +52,10 @@ static void os_sigint(void)
 static void os_sigkill(void)
 {
 #ifdef APP_V9_MODULE
-	v9_app_module_exit();
+	//v9_app_module_exit();
 #endif
+	fprintf(stdout, "%s\r\n",__func__);
+	fflush(stdout);
 	vty_terminate();
 	exit(0);
 }
@@ -73,17 +63,23 @@ static void os_sigkill(void)
 /* SIGUSR1 handler. */
 static void os_sigusr1(void)
 {
-	os_log("/app/signo.log", "%s:%d",__func__, os_task_gettid());
+	os_log(SYSCONFDIR"/signo.log", "%s:%d",__func__, os_task_gettid());
 	fprintf(stdout, "%s\r\n",__func__);
+	fflush(stdout);
 }
 
 /* SIGCHLD handler. */
-/*static void os_sighld(void)
+static void os_sighld(void)
 {
-	os_log("/app/signo.log", "%s:%d",__func__, os_task_gettid());
+	os_log(SYSCONFDIR"/signo.log", "%s:%d",__func__, os_task_gettid());
 	fprintf(stdout, "%s\r\n",__func__);
-}*/
-
+}
+/*
+- SIGTERM：正常退出，清理数据
+- SIGHUP，并不退出，通常用来重新装载配置文件，进行某些初始化
+- SIGINT，处理Ctrl-C
+- SIGCHLD，子进程退出
+*/
 static struct quagga_signal_t os_signals[] =
 {
 	{
@@ -102,18 +98,18 @@ static struct quagga_signal_t os_signals[] =
 		.signal = SIGTERM,
 		.handler = &os_sigint,
 	},
-	{
+	/*{
 		.signal = SIGKILL,
 	 	.handler = &os_sigkill,
-	},
+	},*/
 	{
 		.signal = SIGSEGV,
 	 	.handler = &os_sigkill,
 	},
-/*	{
+	{
 		.signal = SIGCHLD,
 	 	.handler = &os_sighld,
-	},*/
+	},
 /*
  {
  .signal = SIGKILL,
@@ -168,18 +164,18 @@ static int os_base_dir_init(void)
 
 static int os_base_dir_load(void)
 {
-#ifdef PL_BUILD_OS_OPENWRT
+#ifdef ZPL_BUILD_OS_OPENWRT
 	if(access(DEFAULT_CONFIG_FILE, F_OK) != 0)
 		super_system("cp -af " SYSCONF_REAL_DIR"/default-config.cfg  " DEFAULT_CONFIG_FILE);
 #else
-#ifdef PL_BUILD_ARCH_X86
+#ifdef ZPL_BUILD_ARCH_X86
 	if(access(DEFAULT_CONFIG_FILE, F_OK) != 0)
 		super_system("cp -af " SYSCONFDIR"/default-config.cfg  " DEFAULT_CONFIG_FILE);
 	super_system("cp -arf " SYSCONFDIR"/*" " " PLSYSCONFDIR"/");
 #endif
 #endif
 
-#ifdef PL_WEBGUI_MODULE
+#ifdef ZPL_WEBGUI_MODULE
 	if(access(RSYSWWWDIR"/build.tar.gz", F_OK) == 0)
 	{
 		//super_system("cp -arf " RSYSWWWDIR"/build.tar.gz /tmp/");
@@ -198,7 +194,7 @@ static int os_base_dir_load(void)
 	}
 #endif
 
-#ifdef PL_BUILD_OS_OPENWRT
+#ifdef ZPL_BUILD_OS_OPENWRT
 #ifdef APP_X5BA_MODULE
 	if(access("/etc/config/product", F_OK) != 0)
 	{
@@ -244,17 +240,17 @@ int os_start_init(char *progname, module_t pro, int daemon_mode, char *tty)
 	}
 
 	/* Make master thread emulator. */
-	master_thread[pro] = thread_master_module_create(pro);
+	//master_thread[pro] = thread_master_module_create(pro);
 
 	/* Vty related initialize. */
 	remove("/app/signo.log");
-	signal_init(array_size(os_signals), os_signals);
+	signal_init(NULL, array_size(os_signals), os_signals);
 
 	if (os_task_init() == ERROR)
 		return ERROR;
 
 	openzlog (progname, pro, LOG_LOCAL7, 0);
-	if(tty)
+	//if(tty)
 		vty_tty_init(tty);
 	return OK;
 }
@@ -262,7 +258,7 @@ int os_start_init(char *progname, module_t pro, int daemon_mode, char *tty)
 
 int os_start_early(module_t pro, char *logpipe)
 {
-	master_thread[pro] = thread_master_module_create(pro);
+	//master_thread[pro] = thread_master_module_create(pro);
 
 	if (os_time_init() == ERROR)
 		return ERROR;
@@ -270,6 +266,7 @@ int os_start_early(module_t pro, char *logpipe)
 	if (os_job_init() == ERROR)
 		return ERROR;
 	//nsm_log_init(master_eloop[pro], logpipe);
+
 	return OK;
 }
 
@@ -297,8 +294,13 @@ int os_start_all_module()
 	 */
 	os_module_task_init();
 	os_msleep(500);
-#ifdef PL_PAL_MODULE
-#ifdef USE_IPSTACK_KERNEL
+
+#ifdef ZPL_IPCBCBSP_MODULE
+	bsp_usp_module_init();
+#endif
+
+#ifdef ZPL_PAL_MODULE
+#ifdef ZPL_KERNEL_STACK_MODULE
 	kernel_load_all();
 #endif
 #endif
@@ -335,26 +337,8 @@ int os_start_pid(int pro, char *pid_file, int *pid)
 	return OK;
 }
 
-int os_load_config(char *config)
-{
-	host.load = LOAD_NONE;
-	fprintf(stdout, "==================os_load_config %s\r\n",config);
-	vty_load_config(config);
-	fprintf(stdout, "++++++++++++++++++os_load_config %s\r\n",config);
-	fflush(stdout);
-//	sleep(1);
-	host.load = LOAD_DONE;
-	signal_init(array_size(os_signals), os_signals);
-	//os_task_give_broadcast();
-	return OK;
-}
 
-ospl_bool os_load_config_done(void)
-{
-	if(host.load == LOAD_DONE)
-		return ospl_true;
-	return ospl_false;
-}
+
 
 static int os_thread_start(void *m, module_t pro)
 {
@@ -365,10 +349,7 @@ static int os_thread_start(void *m, module_t pro)
 	if (master == NULL)
 		return ERROR;
 	module_setup_task(master->module, os_task_id_self());
-	while(!os_load_config_done())
-	{
-		os_sleep(1);
-	}
+	host_config_load_waitting();
 	/* Output pid of zebra. */
 //	pid_output (pid_file);
 	/* Needed for BSD routing socket. */
@@ -399,10 +380,7 @@ static int os_eloop_start(void *m, module_t pro)
 	if (master == NULL)
 		return ERROR;
 	module_setup_task(master->module, os_task_id_self());
-	while(!os_load_config_done())
-	{
-		os_sleep(1);
-	}
+	host_config_load_waitting();
 	//master->ptid = os_task_pthread_self();
 	//master->taskId = os_task_id_self();
 	//os_log_reopen(master->module);

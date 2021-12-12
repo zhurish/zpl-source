@@ -226,7 +226,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 			}
 			easy_address(libwebsocket_get_socket_fd(wsi), mosq);
 			if(!mosq->address){
-				/* getpeername and inet_ntop failed and not a bridge */
+				/* getpeername and ipstack_inet_ntop failed and not a bridge */
 				mosquitto__free(mosq);
 				u->mosq = NULL;
 				return -1;

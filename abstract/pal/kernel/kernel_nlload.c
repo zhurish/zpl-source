@@ -19,24 +19,10 @@
  * 02111-1307, USA.  
  */
 
-#include <zebra.h>
-#include "linklist.h"
-#include "if.h"
-#include "nsm_connected.h"
-#include "log.h"
-#include "prefix.h"
-#include "table.h"
-#include "memory.h"
-#include "nsm_rib.h"
-#include "thread.h"
-#include "nsm_vrf.h"
-#include "nexthop.h"
-
-#include "nsm_zserv.h"
-
-#include "nsm_redistribute.h"
-#include "nsm_interface.h"
-#include "nsm_debug.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "kernel_netlink.h"
 
@@ -45,7 +31,7 @@
 static int netlink_interface_load(struct sockaddr_nl *snl, struct nlmsghdr *h,
 		vrf_id_t vrf_id)
 {
-	ospl_uint32 len;
+	zpl_uint32 len;
 	struct ifinfomsg *ifi;
 	struct rtattr *tb[IFLA_MAX + 1];
 	struct interface *ifp;
@@ -104,7 +90,7 @@ static int netlink_interface_load(struct sockaddr_nl *snl, struct nlmsghdr *h,
 		if_kname_set(ifp, name);
 		set_ifindex(ifp, ifi->ifi_index);
 		ifp->flags = ifi->ifi_flags & 0x0000fffff;
-		ifp->mtu6 = ifp->mtu = *(ospl_uint32  *) RTA_DATA(tb[IFLA_MTU]);
+		ifp->mtu6 = ifp->mtu = *(zpl_uint32  *) RTA_DATA(tb[IFLA_MTU]);
 		//ifp->metric = 0;
 
 		/* Hardware type and address. */
@@ -120,13 +106,13 @@ static int netlink_interface_load(struct sockaddr_nl *snl, struct nlmsghdr *h,
 static int netlink_interface_address_load(struct sockaddr_nl *snl, struct nlmsghdr *h,
 		vrf_id_t vrf_id)
 {
-	ospl_uint32 len;
+	zpl_uint32 len;
 	struct ifaddrmsg *ifa;
 	struct rtattr *tb[IFA_MAX + 1];
 	struct interface *ifp;
 	void *addr = NULL;
 	void *broad = NULL;
-	ospl_uchar flags = 0;
+	zpl_uchar flags = 0;
 	char *label = NULL;
 
 	ifa = NLMSG_DATA(h);
@@ -266,17 +252,17 @@ static int netlink_interface_address_load(struct sockaddr_nl *snl, struct nlmsgh
 static int netlink_routing_table_load(struct sockaddr_nl *snl, struct nlmsghdr *h,
 		vrf_id_t vrf_id)
 {
-	ospl_uint32 len;
+	zpl_uint32 len;
 	struct rtmsg *rtm;
 	struct rtattr *tb[RTA_MAX + 1];
-	ospl_uchar flags = 0;
+	zpl_uchar flags = 0;
 
 	char anyaddr[16] =
 	{ 0 };
 
-	ospl_uint32 index;
-	ospl_uint32 table;
-	ospl_uint32 mtu = 0;
+	zpl_uint32 index;
+	zpl_uint32 table;
+	zpl_uint32 mtu = 0;
 
 	void *dest;
 	void *gate;
@@ -344,7 +330,7 @@ static int netlink_routing_table_load(struct sockaddr_nl *snl, struct nlmsghdr *
 				RTA_PAYLOAD(tb[RTA_METRICS]));
 
 		if (mxrta[RTAX_MTU])
-			mtu = *(ospl_uint32 *) RTA_DATA(mxrta[RTAX_MTU]);
+			mtu = *(zpl_uint32 *) RTA_DATA(mxrta[RTAX_MTU]);
 	}
 
 	if (rtm->rtm_family == AF_INET)

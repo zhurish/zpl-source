@@ -3,11 +3,11 @@
 extern "C" {
 #endif
 
-extern ospl_uint16 in_cksum(void *, ospl_uint32);
+extern zpl_uint16 in_cksum(void *, zpl_uint32);
 #define FLETCHER_CHECKSUM_VALIDATE 0xffff
-extern ospl_uint16 fletcher_checksum(ospl_uchar *, const ospl_size_t len, const ospl_uint16 offset);
-extern ospl_uint16 crc_checksum(ospl_uchar * message, ospl_uint32  nBytes);
-extern ospl_uint16 crc16_ccitt(ospl_uint16 crc_start, ospl_uchar *buf, ospl_uint32 len);
+extern zpl_uint16 fletcher_checksum(zpl_uchar *, const zpl_size_t len, const zpl_uint16 offset);
+extern zpl_uint16 crc_checksum(zpl_uchar * message, zpl_uint32  nBytes);
+extern zpl_uint16 crc16_ccitt(zpl_uint16 crc_start, zpl_uchar *buf, zpl_uint32 len);
  
 #ifdef __cplusplus
 }

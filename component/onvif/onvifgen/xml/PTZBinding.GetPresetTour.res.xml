@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope
+    xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope"
+    xmlns:SOAP-ENC="http://www.w3.org/2003/05/soap-encoding"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing"
+    xmlns:wsdd="http://schemas.xmlsoap.org/ws/2005/04/discovery"
+    xmlns:chan="http://schemas.microsoft.com/ws/2005/02/duplex"
+    xmlns:wsa5="http://www.w3.org/2005/08/addressing"
+    xmlns:xmime="http://tempuri.org/xmime.xsd"
+    xmlns:xop="http://www.w3.org/2004/08/xop/include"
+    xmlns:ns1="http://www.onvif.org/ver20/analytics/humanface"
+    xmlns:ns2="http://www.onvif.org/ver20/analytics/humanbody"
+    xmlns:tt="http://www.onvif.org/ver10/schema"
+    xmlns:wsrfbf="http://docs.oasis-open.org/wsrf/bf-2"
+    xmlns:wstop="http://docs.oasis-open.org/wsn/t-1"
+    xmlns:wsrfr="http://docs.oasis-open.org/wsrf/r-2"
+    xmlns:tad="http://www.onvif.org/ver10/analyticsdevice/wsdl"
+    xmlns:tan="http://www.onvif.org/ver20/analytics/wsdl"
+    xmlns:tdn="http://www.onvif.org/ver10/network/wsdl"
+    xmlns:tds="http://www.onvif.org/ver10/device/wsdl"
+    xmlns:tev="http://www.onvif.org/ver10/events/wsdl"
+    xmlns:wsnt="http://docs.oasis-open.org/wsn/b-2"
+    xmlns:timg="http://www.onvif.org/ver20/imaging/wsdl"
+    xmlns:tls="http://www.onvif.org/ver10/display/wsdl"
+    xmlns:tmd="http://www.onvif.org/ver10/deviceIO/wsdl"
+    xmlns:tptz="http://www.onvif.org/ver20/ptz/wsdl"
+    xmlns:trc="http://www.onvif.org/ver10/recording/wsdl"
+    xmlns:trp="http://www.onvif.org/ver10/replay/wsdl"
+    xmlns:trt="http://www.onvif.org/ver10/media/wsdl"
+    xmlns:trv="http://www.onvif.org/ver10/receiver/wsdl"
+    xmlns:tse="http://www.onvif.org/ver10/search/wsdl">
+ <SOAP-ENV:Body>
+  <tptz:GetPresetTourResponse>
+   <tptz:PresetTour xsi:type="tt:PresetTour" token="">
+    <tt:Name xsi:type="tt:Name"></tt:Name>
+    <tt:Status xsi:type="tt:PTZPresetTourStatus">
+     <tt:State xsi:type="tt:PTZPresetTourState">Idle</tt:State>
+     <tt:CurrentTourSpot xsi:type="tt:PTZPresetTourSpot">
+      <tt:PresetDetail xsi:type="tt:PTZPresetTourPresetDetail">
+       <tt:PresetToken xsi:type="tt:ReferenceToken"></tt:PresetToken>
+       <!-- extensibility element(s) -->
+
+      </tt:PresetDetail>
+      <tt:Speed xsi:type="tt:PTZSpeed">
+       <tt:PanTilt xsi:type="tt:Vector2D" x="0.0" y="0.0" space="http://www.example.com/schema/anyURI">
+       </tt:PanTilt>
+       <tt:Zoom xsi:type="tt:Vector1D" x="0.0" space="http://www.example.com/schema/anyURI">
+       </tt:Zoom>
+      </tt:Speed>
+      <tt:StayTime xsi:type="xsd:duration">PT0S</tt:StayTime>
+      <tt:Extension xsi:type="tt:PTZPresetTourSpotExtension">
+       <!-- extensibility element(s) -->
+
+      </tt:Extension>
+     </tt:CurrentTourSpot>
+     <tt:Extension xsi:type="tt:PTZPresetTourStatusExtension">
+      <!-- extensibility element(s) -->
+
+     </tt:Extension>
+    </tt:Status>
+    <tt:AutoStart xsi:type="xsd:boolean">false</tt:AutoStart>
+    <tt:StartingCondition xsi:type="tt:PTZPresetTourStartingCondition" RandomPresetOrder="false">
+     <tt:RecurringTime xsi:type="xsd:int">0</tt:RecurringTime>
+     <tt:RecurringDuration xsi:type="xsd:duration">PT0S</tt:RecurringDuration>
+     <tt:Direction xsi:type="tt:PTZPresetTourDirection">Forward</tt:Direction>
+     <tt:Extension xsi:type="tt:PTZPresetTourStartingConditionExtension">
+      <!-- extensibility element(s) -->
+
+     </tt:Extension>
+    </tt:StartingCondition>
+    <tt:TourSpot xsi:type="tt:PTZPresetTourSpot">
+     <tt:PresetDetail xsi:type="tt:PTZPresetTourPresetDetail">
+      <tt:PresetToken xsi:type="tt:ReferenceToken"></tt:PresetToken>
+      <!-- extensibility element(s) -->
+
+     </tt:PresetDetail>
+     <tt:Speed xsi:type="tt:PTZSpeed">
+      <tt:PanTilt xsi:type="tt:Vector2D" x="0.0" y="0.0" space="http://www.example.com/schema/anyURI">
+      </tt:PanTilt>
+      <tt:Zoom xsi:type="tt:Vector1D" x="0.0" space="http://www.example.com/schema/anyURI">
+      </tt:Zoom>
+     </tt:Speed>
+     <tt:StayTime xsi:type="xsd:duration">PT0S</tt:StayTime>
+     <tt:Extension xsi:type="tt:PTZPresetTourSpotExtension">
+      <!-- extensibility element(s) -->
+
+     </tt:Extension>
+    </tt:TourSpot>
+    <tt:Extension xsi:type="tt:PTZPresetTourExtension">
+     <!-- extensibility element(s) -->
+
+    </tt:Extension>
+   </tptz:PresetTour>
+  </tptz:GetPresetTourResponse>
+ </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

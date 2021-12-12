@@ -1,4 +1,4 @@
-include $(MAKE_DIR)/makelinux.mk
+include $(ZPL_MAKE_DIR)/makelinux.mk
 
 include config.mk
 
@@ -36,25 +36,33 @@ ifeq ($(THEME_V9UI),true)
 WEB_DEFINE += -DTHEME_V9UI
 endif
 
-OBJS_DIR = $(BASE_ROOT)/$(OBJDIR)/$(MODULEDIR)
+OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODULEDIR)
 SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)/src
-LIB_DIR = $(BASE_ROOT)/$(LIBDIR)
+LIB_DIR = $(BASE_ROOT)/$(ZPL_LIB_DIR)
 
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
+MODULE_OBJS_DEP:=$(MODULE_OBJS:%.o=%.d)
+
+
 
 WEB_DIR = $(BASE_ROOT)/$(MODULEDIR)
-PL_WEBSERVER_MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(WEBOBJS))
+ZPL_WEBSERVER_MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(WEBOBJS))
+MODULE_OBJS_DEP +=$(ZPL_WEBSERVER_MODULE_OBJS:%.o=%.d)
 
 APP_WEB_DIR = $(BASE_ROOT)/$(MODULEDIR)/app/web
-PL_APPLICATION_MODULE_WEB_OBJS  := $(addprefix $(OBJS_DIR)/,$(APPWEBOBJS))
+ZPL_APPLICATION_MODULE_WEB_OBJS  := $(addprefix $(OBJS_DIR)/,$(APPWEBOBJS))
+MODULE_OBJS_DEP +=$(ZPL_APPLICATION_MODULE_WEB_OBJS:%.o=%.d)
 
 APP_JST_DIR = $(BASE_ROOT)/$(MODULEDIR)/app/jst
-PL_APPLICATION_MODULE_JST_OBJS  := $(addprefix $(OBJS_DIR)/,$(APPJSTOBJS))
+ZPL_APPLICATION_MODULE_JST_OBJS  := $(addprefix $(OBJS_DIR)/,$(APPJSTOBJS))
+MODULE_OBJS_DEP +=$(ZPL_APPLICATION_MODULE_JST_OBJS:%.o=%.d)
+
+-include $(MODULE_OBJS_DEP)
 
 
-PLCFLAGS +=$(ME_DFLAGS) $(WEB_DEFINE) 
+ZPLCFLAGS +=$(ME_DFLAGS) $(WEB_DEFINE) 
 #-DME_GOAHEAD_UPLOAD_DIR=\"/tmp/app/tftpboot\"
-PLINCLUDE +=-I$(WEBGUI_ROOT)/src
+ZPLINCLUDE +=-I$(WEBGUI_ROOT)/src
 
 ifeq ($(ME_COM_MBEDTLS),1)
 mbedtls_DIR = $(BASE_ROOT)/$(MODULEDIR)/src/mbedtls
@@ -108,16 +116,16 @@ $(OBJS_DIR)/%.o: $(mbedtls_DIR)/%.c
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
-	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
+	@$(ECHO) CC '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) $(ZPLINCLUDE)' $@
+	@$(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
 	
 $(OBJS_DIR)/%.o: $(goahead_mbedtls_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
-	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
+	@$(ECHO) CC '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) $(ZPLINCLUDE)' $@
+	@$(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
 endif
 
 ifeq ($(ME_COM_OPENSSL),1)	
@@ -126,8 +134,8 @@ $(OBJS_DIR)/%.o: $(goahead_openssl_DIR)/%.c
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
-	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
+	@$(ECHO) CC '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) $(ZPLINCLUDE)' $@
+	@$(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
 endif
 	
 $(OBJS_DIR)/%.o: $(gopass_DIR)/%.c
@@ -135,55 +143,55 @@ $(OBJS_DIR)/%.o: $(gopass_DIR)/%.c
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
-	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)		
+	@$(ECHO) CC '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) $(ZPLINCLUDE)' $@
+	@$(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)		
 					
 $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
-	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
+	@$(ECHO) CC '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) $(ZPLINCLUDE)' $@
+	@$(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
 	
 $(OBJS_DIR)/%.o: $(WEB_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
-	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
+	@$(ECHO) CC '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) $(ZPLINCLUDE)' $@
+	@$(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
 
 $(OBJS_DIR)/%.o: $(APP_WEB_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
-	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)	
+	@$(ECHO) CC '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) $(ZPLINCLUDE)' $@
+	@$(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)	
 
 $(OBJS_DIR)/%.o: $(APP_JST_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
-	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
+	@$(ECHO) CC '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) $(ZPLINCLUDE)' $@
+	@$(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
 	
 		
 #
 #
 $(LIBS) : $(DEP_H) $(MODULE_OBJS) $(mbedtls_MODULE_OBJS) $(goahead_mbedtls_MODULE_OBJS) \
-		  $(goahead_openssl_MODULE_OBJS) $(gopass_MODULE_OBJS) $(PL_WEBSERVER_MODULE_OBJS) \
-		  $(PL_APPLICATION_MODULE_WEB_OBJS) $(PL_APPLICATION_MODULE_JST_OBJS)
+		  $(goahead_openssl_MODULE_OBJS) $(gopass_MODULE_OBJS) $(ZPL_WEBSERVER_MODULE_OBJS) \
+		  $(ZPL_APPLICATION_MODULE_WEB_OBJS) $(ZPL_APPLICATION_MODULE_JST_OBJS)
 	@$(AR) -rs $(LIBS) $(MODULE_OBJS) $(mbedtls_MODULE_OBJS) \
 	 $(goahead_mbedtls_MODULE_OBJS) $(goahead_openssl_MODULE_OBJS) \
-	 $(gopass_MODULE_OBJS) $(PL_WEBSERVER_MODULE_OBJS) $(PL_APPLICATION_MODULE_WEB_OBJS) $(PL_APPLICATION_MODULE_JST_OBJS)
+	 $(gopass_MODULE_OBJS) $(ZPL_WEBSERVER_MODULE_OBJS) $(ZPL_APPLICATION_MODULE_WEB_OBJS) $(ZPL_APPLICATION_MODULE_JST_OBJS)
 
 
--include $(PL_WEBSERVER_MODULE_OBJS:.o=.d)
--include $(PL_APPLICATION_MODULE_WEB_OBJS:.o=.d)
--include $(PL_APPLICATION_MODULE_JST_OBJS:.o=.d)
+-include $(ZPL_WEBSERVER_MODULE_OBJS:.o=.d)
+-include $(ZPL_APPLICATION_MODULE_WEB_OBJS:.o=.d)
+-include $(ZPL_APPLICATION_MODULE_JST_OBJS:.o=.d)
 
 ifeq ($(ME_COM_MBEDTLS),1)
 -include $(mbedtls_MODULE_OBJS:.o=.d)
@@ -198,24 +206,24 @@ endif
 
 ifeq ($(ME_COM_SSL),1)
 sslinstall: 
-	@install -d $(DSTETCDIR)/web
-	@$(CP) src/certs/samples/ca.crt $(DSTETCDIR)/web/ca.crt
-	@$(CP) src/certs/samples/ca.key $(DSTETCDIR)/web/ca.key
-	@$(CP) src/certs/samples/ec.crt $(DSTETCDIR)/web/ec.crt
-	@$(CP) src/certs/samples/ec.key $(DSTETCDIR)/web/ec.key
-	@$(CP) src/certs/samples/roots.crt $(DSTETCDIR)/web/roots.crt
-	@$(CP) src/certs/samples/self.crt $(DSTETCDIR)/web/self.crt
-	@$(CP) src/certs/samples/self.key $(DSTETCDIR)/web/self.key
+	@install -d $(ZPL_INSTALL_ETC_DIR)/web
+	@$(CP) src/certs/samples/ca.crt $(ZPL_INSTALL_ETC_DIR)/web/ca.crt
+	@$(CP) src/certs/samples/ca.key $(ZPL_INSTALL_ETC_DIR)/web/ca.key
+	@$(CP) src/certs/samples/ec.crt $(ZPL_INSTALL_ETC_DIR)/web/ec.crt
+	@$(CP) src/certs/samples/ec.key $(ZPL_INSTALL_ETC_DIR)/web/ec.key
+	@$(CP) src/certs/samples/roots.crt $(ZPL_INSTALL_ETC_DIR)/web/roots.crt
+	@$(CP) src/certs/samples/self.crt $(ZPL_INSTALL_ETC_DIR)/web/self.crt
+	@$(CP) src/certs/samples/self.key $(ZPL_INSTALL_ETC_DIR)/web/self.key
 #
 #
 sslclean: 
-	@$(RM) $(DSTETCDIR)/web/ca.crt
-	@$(RM) $(DSTETCDIR)/web/ca.key
-	@$(RM) $(DSTETCDIR)/web/ec.crt
-	@$(RM) $(DSTETCDIR)/web/ec.key
-	@$(RM) $(DSTETCDIR)/web/roots.crt
-	@$(RM) $(DSTETCDIR)/web/self.crt
-	@$(RM) $(DSTETCDIR)/web/self.key
+	@$(RM) $(ZPL_INSTALL_ETC_DIR)/web/ca.crt
+	@$(RM) $(ZPL_INSTALL_ETC_DIR)/web/ca.key
+	@$(RM) $(ZPL_INSTALL_ETC_DIR)/web/ec.crt
+	@$(RM) $(ZPL_INSTALL_ETC_DIR)/web/ec.key
+	@$(RM) $(ZPL_INSTALL_ETC_DIR)/web/roots.crt
+	@$(RM) $(ZPL_INSTALL_ETC_DIR)/web/self.crt
+	@$(RM) $(ZPL_INSTALL_ETC_DIR)/web/self.key
 #
 #
 else
@@ -235,7 +243,7 @@ endif
 files = $(patsubst %.o,%.c,$(WEBOBJS))
 make_prepare:
 	@for i in $(files); do	\
-		$(MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
 	done
 #
 lib: $(LIBS)
@@ -251,7 +259,7 @@ webclean:
 install: $(LIBS) webinstall sslinstall
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
-	@$(STRIP) $(PLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
+	@$(STRIP) $(ZPLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
 
 clean: objclean webclean sslclean
 	@$(RM) $(LIB_DIR)/$(LIBS)

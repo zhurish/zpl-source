@@ -20,10 +20,10 @@
  * 02111-1307, USA.  
  */
 
-#include <fcntl.h>
-#include "zebra.h"
-#include "log.h"
-#include "daemon.h"
+
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
 
 #define PIDFILE_MASK 0644
@@ -89,7 +89,7 @@ pid_output (const char *path)
   int tmp;
   int fd;
   pid_t pid;
-  ospl_char buf[16];
+  zpl_char buf[16];
   struct flock lock;  
   mode_t oldumask;
 
@@ -106,7 +106,7 @@ pid_output (const char *path)
     }
   else
     {
-      ospl_size_t pidsize;
+      zpl_size_t pidsize;
 
       umask(oldumask);
       memset (&lock, 0, sizeof(lock));
@@ -128,7 +128,7 @@ pid_output (const char *path)
 	         (int)pid,path,tmp,safe_strerror(errno));
       else if (ftruncate(fd, pidsize) < 0)
         zlog_err(MODULE_DEFAULT, "Could not truncate pid_file %s to %u bytes: %s",
-	         path,(ospl_uint32)pidsize,safe_strerror(errno));
+	         path,(zpl_uint32)pidsize,safe_strerror(errno));
     }
   return pid;
 }

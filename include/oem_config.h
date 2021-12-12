@@ -45,9 +45,9 @@ extern "C" {
 #define OEM_VERSION GIT_VERSION
 #endif
 */
-#ifdef PL_BUILD_VERSION
+#ifdef ZPL_BUILD_VERSION
 #undef OEM_VERSION
-#define OEM_VERSION PL_BUILD_VERSION
+#define OEM_VERSION ZPL_BUILD_VERSION
 #endif
 
 #ifdef GIT_RELEASE

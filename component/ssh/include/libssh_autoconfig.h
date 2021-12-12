@@ -1,10 +1,9 @@
 #ifndef __LIBSSH_CONFIG_H__
 #define __LIBSSH_CONFIG_H__
 
-#include "plconfig.h"
-#include "zebra.h"
-#include "memory.h"
-#include "memtypes.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 /*
 #include "vector.h"
 #include "host.h"

@@ -1,5 +1,5 @@
 #############################################################################
-PLM_INCLUDE += -I-$(PLBASE)/$(COMPONENTDIR)/$(UDHCPDIR)
+#ZPLM_INCLUDE += -I-$(ZPLBASE)/$(COMPONENTDIR)/$(DHCP_ROOT)
 ###########################################################################
 MODULEDIR = component/udhcp
 #OS

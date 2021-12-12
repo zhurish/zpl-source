@@ -5,14 +5,14 @@
  *      Author: zhurish
  */
 
-#include <zebra.h>
+#include <zpl_include.h>
 #include "b53_mdio.h"
 #include "b53_regs.h"
 #include "b53_driver.h"
 
 /* Trunk Registers */
 /*************************************************************************/
-int b53125_trunk_mac_base_enable(struct b53125_device *dev, ospl_bool enable)
+int b53125_trunk_mac_base_enable(struct b53125_device *dev, zpl_bool enable)
 {
 	int ret = 0;
 	u8 port_ctrl = 0;

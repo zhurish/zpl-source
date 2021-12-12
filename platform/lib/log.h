@@ -27,19 +27,21 @@
 extern "C" {
 #endif
 
-#include <plconfig.h>
+#include "os_include.h"
+#include "zpl_include.h"
 #include <syslog.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
 
 #include "moduletypes.h"
+#include "zassert.h"
 
 #define ZLOG_TASK_ENABLE
 #define ZLOG_TESTING_ENABLE
 
-//#define PL_SERVICE_SYSLOG
-#ifdef PL_SERVICE_SYSLOG
+//#define ZPL_SERVICE_SYSLOG
+#ifdef ZPL_SERVICE_SYSLOG
 #include "syslogcLib.h"
 #endif
 /* Here is some guidance on logging levels to use:
@@ -78,7 +80,8 @@ typedef module_t zlog_proto_t;
 
 /* If maxlvl is set to ZLOG_DISABLED, then no messages will be sent
    to that logging destination. */
-#define ZLOG_DISABLED	(LOG_EMERG-1)
+#define ZLOG_DISABLED	(LOG_EMERG)
+//#define ZLOG_DISABLED	0
 
 typedef enum
 {
@@ -104,27 +107,27 @@ typedef enum
 
 typedef struct zbuffer_s
 {
-	ospl_uint32 	module;
-	ospl_uint32 	level;
-	ospl_uint32		size;
-	ospl_char 	log[LOG_MSG_SIZE];
+	zpl_uint32 	module;
+	zpl_uint32 	level;
+	zpl_uint32		size;
+	zpl_char 	log[LOG_MSG_SIZE];
 }zbuffer_t;
 
 typedef struct zlog_buffer_s
 {
-	ospl_uint32 max_size;
-	ospl_uint32 start;
+	zpl_uint32 max_size;
+	zpl_uint32 start;
 	zbuffer_t 	*buffer;
 }zlog_buffer_t;
 
 #ifdef ZLOG_TESTING_ENABLE
 typedef struct zlog_testing_s
 {
-	ospl_char 	*filename;
-	ospl_uint32		priority;
+	zpl_char 	*filename;
+	zpl_uint32		priority;
 	FILE 	*fp;
-	ospl_uint32 	filesize;
-	ospl_uint32 	file_check_interval;
+	zpl_uint32 	filesize;
+	zpl_uint32 	file_check_interval;
 }zlog_testing_t;
 #endif
 
@@ -132,18 +135,18 @@ struct zlog
 {
   const char *ident;	/* daemon name (first arg to openlog) */
   zlog_proto_t protocol;
-  ospl_uint32 maxlvl[ZLOG_NUM_DESTS];	/* maximum priority to send to associated
+  zpl_uint32 maxlvl[ZLOG_NUM_DESTS];	/* maximum priority to send to associated
   				   logging destination */
-  ospl_uint32 default_lvl[ZLOG_NUM_DESTS];	/* maxlvl to use if none is specified */
-  ospl_bool	trap_lvl;
+  zpl_uint32 default_lvl[ZLOG_NUM_DESTS];	/* maxlvl to use if none is specified */
+  zpl_bool	trap_lvl;
   FILE *fp;
-  ospl_char *filename;
-  ospl_uint32 filesize;
-  ospl_uint32 file_check_interval;
-  ospl_uint32 facility;		/* as per syslog facility */
-  ospl_uint32 record_priority;	/* should messages logged through stdio include the
+  zpl_char *filename;
+  zpl_uint32 filesize;
+  zpl_uint32 file_check_interval;
+  zpl_uint32 facility;		/* as per syslog facility */
+  zpl_uint32 record_priority;	/* should messages logged through stdio include the
   			   priority of the message? */
-  ospl_uint32 syslog_options;	/* 2nd arg to openlog */
+  zpl_uint32 syslog_options;	/* 2nd arg to openlog */
   zlog_timestamp_t timestamp;	/* # of digits of subsecond precision */
 
   zlog_buffer_t	log_buffer;
@@ -158,24 +161,33 @@ struct zlog
   }depth_debug;
 #define ZLOG_DEPTH_DEBUG_DEFAULT ZLOG_DEPTH_LEVEL2
 #ifdef ZLOG_TASK_ENABLE
-  ospl_uint32	taskid;
+  zpl_uint32	taskid;
   int	lfd;
   FILE  *lfp;
 #endif
 #ifdef ZLOG_TESTING_ENABLE
-  ospl_bool	testing;
+  zpl_bool	testing;
   zlog_testing_t testlog;
 #endif
 };
 #ifdef ZLOG_TASK_ENABLE
 typedef struct zlog_hdr_s
 {
-	ospl_uint32 	module;
-	ospl_uint32 	priority;
-	ospl_uint32		len;
-	ospl_char 	logbuf[LOG_MSG_SIZE];
+	zpl_uint32 	module;
+	zpl_uint32 	priority;
+	zpl_uint32		len;
+	zpl_char 	logbuf[LOG_MSG_SIZE];
 }zlog_hdr_t;
 #endif
+
+struct zpl_backtrace_symb
+{
+  char *funcname;
+  char *schedfrom;
+  zpl_uint32 schedfrom_line;
+};
+
+extern int zpl_backtrace_symb_set(char *funcname, char *schedfrom, zpl_uint32 schedfrom_line);
 
 
 typedef int(*zlog_buffer_cb)(zbuffer_t *, void *pVoid);
@@ -183,7 +195,7 @@ typedef int(*zlog_buffer_cb)(zbuffer_t *, void *pVoid);
 /* Message structure. */
 struct message
 {
-  ospl_uint32 key;
+  zpl_uint32 key;
   const char *str;
 };
 
@@ -192,7 +204,7 @@ extern struct zlog *zlog_default;
 
 /* Open zlog function */
 extern struct zlog *openzlog (const char *progname, zlog_proto_t protocol,
-		              ospl_uint32 syslog_options, ospl_uint32 syslog_facility);
+		              zpl_uint32 syslog_options, zpl_uint32 syslog_facility);
 
 /* Close zlog function. */
 extern void closezlog (struct zlog *zl);
@@ -207,19 +219,19 @@ extern void closezlog (struct zlog *zl);
 
 
 
-extern void pl_vzlog(const char *file, const char *func, const ospl_uint32 line, struct zlog *zl, ospl_uint32 module, ospl_uint32 priority, const char *format,
+extern void pl_vzlog(const char *file, const char *func, const zpl_uint32 line, struct zlog *zl, zpl_uint32 module, zpl_uint32 priority, const char *format,
 		va_list args);
 /* Generic function for zlog. */
-extern void pl_zlog (const char *file, const char *func, const ospl_uint32 line, ospl_uint32 module, ospl_uint32 priority, const char *format, ...)
+extern void pl_zlog (const char *file, const char *func, const zpl_uint32 line, zpl_uint32 module, zpl_uint32 priority, const char *format, ...)
   PRINTF_ATTRIBUTE(6, 7);
 
 /* Handy zlog functions. */
-extern void pl_zlog_err (const char *file, const char *func, const ospl_uint32 line, ospl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
-extern void pl_zlog_warn (const char *file, const char *func, const ospl_uint32 line, ospl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
-extern void pl_zlog_info (const char *file, const char *func, const ospl_uint32 line, ospl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
-extern void pl_zlog_notice (const char *file, const char *func, const ospl_uint32 line, ospl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
-extern void pl_zlog_debug (const char *file, const char *func, const ospl_uint32 line, ospl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
-extern void pl_zlog_trap (const char *file, const char *func, const ospl_uint32 line, ospl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
+extern void pl_zlog_err (const char *file, const char *func, const zpl_uint32 line, zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
+extern void pl_zlog_warn (const char *file, const char *func, const zpl_uint32 line, zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
+extern void pl_zlog_info (const char *file, const char *func, const zpl_uint32 line, zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
+extern void pl_zlog_notice (const char *file, const char *func, const zpl_uint32 line, zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
+extern void pl_zlog_debug (const char *file, const char *func, const zpl_uint32 line, zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
+extern void pl_zlog_trap (const char *file, const char *func, const zpl_uint32 line, zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
 
 
 #define vzlog(obj, module, pri, format, arg) 		pl_vzlog (__FILE__, __FUNCTION__, __LINE__, obj, module, pri, format, arg)
@@ -237,45 +249,45 @@ extern void pl_zlog_trap (const char *file, const char *func, const ospl_uint32 
 
 #if 0
 
-extern void vzlog(struct zlog *zl, ospl_uint32 module, ospl_uint32 priority, const char *format,
+extern void vzlog(struct zlog *zl, zpl_uint32 module, zpl_uint32 priority, const char *format,
 		va_list args);
 
 /* Generic function for zlog. */
-extern void zlog (ospl_uint32 module, ospl_uint32 priority, const char *format, ...)
+extern void zlog (zpl_uint32 module, zpl_uint32 priority, const char *format, ...)
   PRINTF_ATTRIBUTE(3, 4);
 
 /* Handy zlog functions. */
-extern void zlog_err (ospl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
-extern void zlog_warn (ospl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
-extern void zlog_info (ospl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
-extern void zlog_notice (ospl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
-extern void zlog_debug (ospl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
-extern void zlog_trap (ospl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
+extern void zlog_err (zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
+extern void zlog_warn (zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
+extern void zlog_info (zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
+extern void zlog_notice (zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
+extern void zlog_debug (zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
+extern void zlog_trap (zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
 #endif
 
 /* Set logging level for the given destination.  If the log_level
    argument is ZLOG_DISABLED, then the destination is disabled.
    This function should not be used for file logging (use zlog_set_file
    or zlog_reset_file instead). */
-extern void zlog_set_level (zlog_dest_t, ospl_uint32 log_level);
-extern void zlog_get_level(zlog_dest_t dest, ospl_uint32 *log_level);
+extern void zlog_set_level (zlog_dest_t, zpl_uint32 log_level);
+extern void zlog_get_level(zlog_dest_t dest, zpl_uint32 *log_level);
 /* Set logging to the given filename at the specified level. */
-extern int zlog_set_file (const char *filename, ospl_uint32 log_level);
-extern int zlog_get_file(const char *filename, ospl_uint32 *log_level);
-extern int zlog_set_file_size (ospl_uint32 filesize);
-extern int zlog_get_file_size (ospl_uint32 *filesize);
-extern int zlog_reset_file (ospl_bool bOpen);
+extern int zlog_set_file (const char *filename, zpl_uint32 log_level);
+extern int zlog_get_file(const char *filename, zpl_uint32 *log_level);
+extern int zlog_set_file_size (zpl_uint32 filesize);
+extern int zlog_get_file_size (zpl_uint32 *filesize);
+extern int zlog_reset_file (zpl_bool bOpen);
 extern int zlog_close_file();
 extern int zlog_file_save (void);
-//extern ospl_uint32 zlog_check_file (void);
+//extern zpl_uint32 zlog_check_file (void);
 #ifdef ZLOG_TESTING_ENABLE
-extern int zlog_testing_enable (ospl_bool);
-extern ospl_bool zlog_testing_enabled (void);
-extern int zlog_testing_file (ospl_char * file);
-extern int zlog_testing_priority (ospl_uint32 priority);
+extern int zlog_testing_enable (zpl_bool);
+extern zpl_bool zlog_testing_enabled (void);
+extern int zlog_testing_file (zpl_char * file);
+extern int zlog_testing_priority (zpl_uint32 priority);
 #endif
-extern int zlog_set_buffer_size (ospl_uint32 size);
-extern int zlog_get_buffer_size (ospl_uint32 *size);
+extern int zlog_set_buffer_size (zpl_uint32 size);
+extern int zlog_get_buffer_size (zpl_uint32 *size);
 extern int zlog_buffer_reset(void);
 extern int zlog_buffer_save(void);
 extern int zlog_buffer_callback_api (zlog_buffer_cb cb, void *pVoid);
@@ -283,22 +295,22 @@ extern int zlog_buffer_callback_api (zlog_buffer_cb cb, void *pVoid);
 /* Rotate log. */
 extern int zlog_rotate ();
 
-extern void zlog_set_facility(ospl_uint32 facility);
-extern void zlog_get_facility(ospl_uint32 *facility);
+extern void zlog_set_facility(zpl_uint32 facility);
+extern void zlog_get_facility(zpl_uint32 *facility);
 
 extern void zlog_set_timestamp(zlog_timestamp_t value);
 extern void zlog_get_timestamp(zlog_timestamp_t *value);
 
-extern void zlog_set_record_priority(ospl_uint32 record_priority);
-extern void zlog_get_record_priority(ospl_uint32 *record_priority);
+extern void zlog_set_record_priority(zpl_uint32 record_priority);
+extern void zlog_get_record_priority(zpl_uint32 *record_priority);
 
-extern void zlog_set_trap(ospl_bool level);
-extern void zlog_get_trap(ospl_bool *level);
+extern void zlog_set_trap(zpl_bool level);
+extern void zlog_get_trap(zpl_bool *level);
 
-extern const char *zlog_facility_name(ospl_uint32 facility);
-extern ospl_uint32 zlog_facility_match(const char *str) ;
-extern ospl_uint32 zlog_priority_match(const char *s);
-extern const char *zlog_priority_name(ospl_uint32 level);
+extern const char *zlog_facility_name(zpl_uint32 facility);
+extern zpl_uint32 zlog_facility_match(const char *str) ;
+extern zpl_uint32 zlog_priority_match(const char *s);
+extern const char *zlog_priority_name(zpl_uint32 level);
 
 extern const char * zlog_proto_names(zlog_proto_t module);
 
@@ -306,9 +318,9 @@ extern const char * zlog_proto_names(zlog_proto_t module);
 #define LOOKUP_DEF(x, y, def) mes_lookup(x, x ## _max, y, def, #x)
 #define LOOKUP(x, y) LOOKUP_DEF(x, y, "(no item found)")
 
-extern const char *lookup (const struct message *, ospl_uint32);
+extern const char *lookup (const struct message *, zpl_uint32);
 extern const char *mes_lookup (const struct message *meslist, 
-                               ospl_uint32 max, ospl_uint32 index,
+                               zpl_uint32 max, zpl_uint32 index,
                                const char *no_item, const char *mesname);
 
 /* Safe version of strerror -- never returns NULL. */
@@ -322,13 +334,13 @@ extern void zlog_signal(int signo, const char *action
 		       );
 
 /* Log a backtrace. */
-extern void zlog_backtrace(ospl_uint32 priority);
+extern void zlog_backtrace(zpl_uint32 priority);
 
 /* Log a backtrace, but in an async-signal-safe way.  Should not be
    called unless the program is about to exit or abort, since it messes
    up the state of zlog file pointers.  If program_counter is non-NULL,
    that is logged in addition to the current backtrace. */
-extern void zlog_backtrace_sigsafe(ospl_uint32 priority, void *program_counter);
+extern void zlog_backtrace_sigsafe(zpl_uint32 priority, void *program_counter);
 
 /* Puts a current timestamp in buf and returns the number of characters
    written (not including the terminating NUL).  The purpose of
@@ -337,12 +349,28 @@ extern void zlog_backtrace_sigsafe(ospl_uint32 priority, void *program_counter);
    avoid multiple calls within the same second.  If buflen is too small,
    *buf will be set to '\0', and 0 will be returned. */
 #define QUAGGA_TIMESTAMP_LEN 40
-extern ospl_size_t quagga_timestamp(zlog_timestamp_t timestamp /* # subsecond digits */,
-			       ospl_char *buf, ospl_size_t buflen);
+extern zpl_size_t quagga_timestamp(zlog_timestamp_t timestamp /* # subsecond digits */,
+			       zpl_char *buf, zpl_size_t buflen);
 
 extern void time_print(FILE *fp, zlog_timestamp_t ctl);
 
-extern void zlog_hexdump(void *mem, ospl_uint32  len);
+extern void zlog_hexdump(void *mem, zpl_uint32  len);
+
+/* Map a route type to a string.  For example, ZEBRA_ROUTE_RIPNG -> "ripng". */
+extern const char *zebra_route_string(zpl_uint32 route_type);
+/* Map a route type to a char.  For example, ZEBRA_ROUTE_RIPNG -> 'R'. */
+extern char zebra_route_char(zpl_uint32 route_type);
+/* Map a zserv command type to the same string, 
+ * e.g. ZEBRA_INTERFACE_ADD -> "ZEBRA_INTERFACE_ADD" */
+/* Map a protocol name to its number. e.g. ZEBRA_ROUTE_BGP->9*/
+extern zpl_proto_t proto_name2num(const char *s);
+/* Map redistribute X argument to protocol number.
+ * unlike proto_name2num, this accepts zpl_int16hands and takes
+ * an AFI value to restrict input */
+extern zpl_proto_t proto_redistnum(zpl_uint16 afi, const char *s);
+
+extern const char *zserv_command_string (zpl_uint32 command);
+
 
 /* Defines for use in command construction: */
 

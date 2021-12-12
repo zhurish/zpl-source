@@ -28,18 +28,18 @@
 int mqtt_client_connect(struct mqtt_app_config *cfg);
 int mqtt_client_id_generate(struct mqtt_app_config *cfg);
 int mqtt_client_opts_config(struct mqtt_app_config *cfg);
-int mqtt_client_add_topic(struct mqtt_app_config *cfg, ospl_char *topic);
-int mqtt_client_del_topic(struct mqtt_app_config *cfg, ospl_char *topic);
+int mqtt_client_add_topic(struct mqtt_app_config *cfg, zpl_char *topic);
+int mqtt_client_del_topic(struct mqtt_app_config *cfg, zpl_char *topic);
 
-int mqtt_client_property(struct mqtt_app_config *cfg, ospl_char *cmdname,
-		ospl_char *propname, ospl_char *key, ospl_char *value);
+int mqtt_client_property(struct mqtt_app_config *cfg, zpl_char *cmdname,
+		zpl_char *propname, zpl_char *key, zpl_char *value);
 
 
-void mqtt_log_callback(const ospl_char *file, const ospl_char *func, const ospl_uint32 line,
-		struct mosquitto *mosq, void *obj, ospl_uint32 level, const ospl_char *str);
+void mqtt_log_callback(const zpl_char *file, const zpl_char *func, const zpl_uint32 line,
+		struct mosquitto *mosq, void *obj, zpl_uint32 level, const zpl_char *str);
 
-void mqtt_log_error_callback(const ospl_char *file, const ospl_char *func, const ospl_uint32 line,
-		const struct mqtt_app_config *cfg, const ospl_char *fmt, ...);
+void mqtt_log_error_callback(const zpl_char *file, const zpl_char *func, const zpl_uint32 line,
+		const struct mqtt_app_config *cfg, const zpl_char *fmt, ...);
 
 #define mqtt_err_printf(cfg, format, ...) 	mqtt_log_error_callback (__FILE__, __FUNCTION__, __LINE__, cfg, format, ##__VA_ARGS__)
 

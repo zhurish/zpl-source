@@ -1020,7 +1020,7 @@ static int print_info(int skfd, char * ifname, char * args[], int count, iw_user
  */
 typedef struct iwconfig_modifier
 {
-	const char * cmd; /* Command line ospl_int16hand */
+	const char * cmd; /* Command line zpl_int16hand */
 	__u16 flag; /* Flags to add */
 	__u16 exclude; /* Modifiers to exclude */
 } iwconfig_modifier;
@@ -1047,7 +1047,7 @@ static const struct iwconfig_modifier iwmod_retry[] =
 {
 { "min", IW_RETRY_MIN, IW_RETRY_MAX },
 { "max", IW_RETRY_MAX, IW_RETRY_MIN },
-{ "ospl_int16", IW_RETRY_SHORT, IW_RETRY_LONG },
+{ "zpl_int16", IW_RETRY_SHORT, IW_RETRY_LONG },
 { "long", IW_RETRY_LONG, IW_RETRY_SHORT },
 { "limit", IW_RETRY_LIMIT, IW_RETRY_LIFETIME },
 { "lifetime", IW_RETRY_LIFETIME, IW_RETRY_LIMIT }, };
@@ -1202,7 +1202,7 @@ static int set_mode_info(int skfd, char * ifname, char * args[], /* Command line
 int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
-	ospl_uint32 k; /* Must be unsigned */
+	zpl_uint32 k; /* Must be unsigned */
 
 	/* Avoid "Unused parameter" warning */
 	count = count;
@@ -1388,7 +1388,7 @@ int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
 	int i = 1;
-	ospl_uint8 key[IW_ENCODING_TOKEN_MAX];
+	zpl_uint8 key[IW_ENCODING_TOKEN_MAX];
 
 	if (!strcasecmp(args[0], "on"))
 	{
@@ -1525,7 +1525,7 @@ int count, iw_user_cb_t *cb) /* Args count */
 		if (unit != args[i])
 		{
 			struct iw_range range;
-			ospl_uint32 flags;
+			zpl_uint32 flags;
 			/* Extract range info to handle properly 'relative' */
 			if (iw_get_range_info(skfd, ifname, &range) < 0)
 				memset(&range, 0, sizeof(range));
@@ -1642,7 +1642,7 @@ static int set_nwid_info(int skfd, char * ifname, char * args[], /* Command line
 int count, iw_user_cb_t *cb) /* Args count */
 {
 	struct iwreq wrq;
-	ospl_ulong temp;
+	zpl_ulong temp;
 
 	/* Avoid "Unused parameter" warning */
 	count = count;
@@ -1781,7 +1781,7 @@ int count, iw_user_cb_t *cb) /* Args count */
 				}
 
 				/* Check if milliWatt
-				 * We authorise a single 'm' as a ospl_int16hand for 'mW',
+				 * We authorise a single 'm' as a zpl_int16hand for 'mW',
 				 * on the other hand a 'd' probably means 'dBm'... */
 				ismwatt = ((strchr(args[0], 'm') != NULL)
 						&& (strchr(args[0], 'd') == NULL));
@@ -1963,7 +1963,7 @@ int count, iw_user_cb_t *cb) /* Args count */
 		else
 		{ /* Should be a numeric value */
 			long temp;
-			if (sscanf(args[0], "%li", (ospl_ulong *) &(temp)) != 1)
+			if (sscanf(args[0], "%li", (zpl_ulong *) &(temp)) != 1)
 			{
 				errarg = 0;
 				return (IWERR_ARG_TYPE);
@@ -2147,7 +2147,7 @@ int count, iw_user_cb_t *cb) /* Args count */
  */
 typedef struct iwconfig_entry
 {
-	const char * cmd; /* Command line ospl_int16hand */
+	const char * cmd; /* Command line zpl_int16hand */
 	iw_enum_handler fn; /* Subroutine */
 	int min_count;
 	int request; /* WE numerical ID */
@@ -2190,7 +2190,7 @@ find_command(const char * cmd)
 {
 	const iwconfig_cmd * found = NULL;
 	int ambig = 0;
-	ospl_uint32 len = strlen(cmd);
+	zpl_uint32 len = strlen(cmd);
 	int i;
 
 	/* Go through all commands */

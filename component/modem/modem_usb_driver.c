@@ -7,14 +7,10 @@
 
 
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "vty.h"
-#include "os_util.h"
-#include "tty_com.h"
-#include "os_ansync.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 #include <dirent.h>
 #include <fcntl.h>
 #include <sys/socket.h>
@@ -31,7 +27,7 @@
 
 #ifdef USB_KERNEL_UEVENT
 #define UEVENT_BUFFER_SIZE 2048
-static int usb_event_socket_handle(ospl_uint32 timeout);
+static int usb_event_socket_handle(zpl_uint32 timeout);
 #endif
 
 static modem_usb_driver musb_driver[MODEM_USB_DRIVER_MAX];
@@ -72,7 +68,7 @@ int modem_usb_driver_exit(void)
 
 static int modem_usb_key_channel(char *usbkey)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < USB_KEY_CHANNEL_MAX; i++)
 	{
 		if(strstr(usbkey, usbkey_channel[i]))
@@ -84,7 +80,7 @@ static int modem_usb_key_channel(char *usbkey)
 
 static int modem_usb_driver_get_empty(void)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < MODEM_USB_DRIVER_MAX; i++)
 	{
 		if(musb_driver[i].flag == USB_DRIVER_NONE)
@@ -95,7 +91,7 @@ static int modem_usb_driver_get_empty(void)
 
 int modem_usb_driver_lookup(modem_usb_driver *driver)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	assert(driver);
 	for(i = 0; i < MODEM_USB_DRIVER_MAX; i++)
 	{
@@ -114,7 +110,7 @@ int modem_usb_driver_lookup(modem_usb_driver *driver)
 
 int modem_usb_driver_add(modem_usb_driver *driver)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	assert(driver);
 	if(modem_usb_driver_lookup(driver) != ERROR)
 	{
@@ -163,7 +159,7 @@ int modem_usb_driver_add(modem_usb_driver *driver)
 int modem_usb_driver_del(modem_usb_driver *driver)
 {
 	assert(driver);
-	ospl_uint32 i = modem_usb_driver_lookup(driver);
+	zpl_uint32 i = modem_usb_driver_lookup(driver);
 	if(i == ERROR)
 		return -1;
 	if(i >= 0)
@@ -196,9 +192,9 @@ int modem_usb_driver_del(modem_usb_driver *driver)
 }
 
 
-int modem_usb_driver_hardware_channel(ospl_uint32 vendor, ospl_uint32 product)
+int modem_usb_driver_hardware_channel(zpl_uint32 vendor, zpl_uint32 product)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < MODEM_USB_DRIVER_MAX; i++)
 	{
 		if(musb_driver[i].flag > USB_DRIVER_NONE)
@@ -218,7 +214,7 @@ int modem_usb_driver_hardware_channel(ospl_uint32 vendor, ospl_uint32 product)
 
 static int modem_usb_driver_lookup_ttyusb(modem_usb_driver *driver, char *devname)
 {
-	ospl_uint32 j = 0;
+	zpl_uint32 j = 0;
 	tty_devname tmp;
 	os_memset(&tmp, 0, sizeof(tmp));
 	os_strcpy(tmp.devname, "/dev/");
@@ -239,10 +235,10 @@ static int modem_usb_driver_lookup_ttyusb(modem_usb_driver *driver, char *devnam
 	return 0;
 }
 
-static int modem_usb_driver_ttyusb_sort(tty_devname *arr, ospl_uint32 sz)
+static int modem_usb_driver_ttyusb_sort(tty_devname *arr, zpl_uint32 sz)
 {
-    ospl_uint32 i = 0;
-    ospl_uint32 j = 0;
+    zpl_uint32 i = 0;
+    zpl_uint32 j = 0;
     tty_devname tmp;
     assert(arr);
     for(i = 0; i < sz - 1; i++)
@@ -267,7 +263,7 @@ static int modem_usb_driver_ttyusb_sort(tty_devname *arr, ospl_uint32 sz)
 
 static int modem_usb_driver_add_ttyusb(modem_usb_driver *driver, char *devname)
 {
-	ospl_uint32 j = 0;
+	zpl_uint32 j = 0;
 	if(modem_usb_driver_lookup_ttyusb(driver, devname))
 		return 0;
 	for(j = 0; j < TTY_USB_MAX; j++)
@@ -290,7 +286,7 @@ static int modem_usb_driver_add_ttyusb(modem_usb_driver *driver, char *devname)
 
 static int modem_usb_driver_usbkey_lookup(char *usbkey)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	assert(usbkey);
 	char key[USB_SERIAL_NAME_MAX];
 	os_memset(key, 0, sizeof(key));
@@ -309,7 +305,7 @@ static int modem_usb_driver_usbkey_lookup(char *usbkey)
 
 int show_modem_usb_driver(struct vty *vty)
 {
-	ospl_uint32 i = 0, j;
+	zpl_uint32 i = 0, j;
 	assert(vty);
 	for(i = 0; i < MODEM_USB_DRIVER_MAX; i++)
 	{
@@ -338,7 +334,7 @@ int show_modem_usb_driver(struct vty *vty)
 
 int show_modem_usb_key_driver(struct vty *vty)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	assert(vty);
 	for(i = 0; i < USB_KEY_CHANNEL_MAX; i++)
 	{
@@ -352,7 +348,7 @@ int show_modem_usb_key_driver(struct vty *vty)
 
 static int modem_usb_driver_tty_probe(modem_usb_driver *driver)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	assert(driver);
 	char *devname[TTY_USB_MAX];
 	modem_driver_t *modem_driver = modem_driver_lookup(driver->vendor, driver->product);
@@ -378,7 +374,7 @@ static int modem_usb_driver_tty_probe(modem_usb_driver *driver)
 
 static int modem_usb_driver_commit(void)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < MODEM_USB_DRIVER_MAX; i++)
 	{
 		if(musb_driver[i].flag == USB_DRIVER_ACTIVE)
@@ -401,7 +397,7 @@ static int modem_usb_driver_commit(void)
 #ifndef USB_KERNEL_UEVENT
 static int modem_usb_driver_update_ttl(void)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < MODEM_USB_DRIVER_MAX; i++)
 	{
 		if(musb_driver[i].active == MODEM_USB_DRIVER_ACTIVE)
@@ -425,7 +421,7 @@ static int modem_usb_driver_update_ttl(void)
  */
 static int modem_proc_usb_driver_devname_update(char * input)
 {
-	ospl_uint32 i = 0;//, j = 0;
+	zpl_uint32 i = 0;//, j = 0;
 	assert(input);
 	char devname0[USB_SERIAL_NAME_MAX];
 	modem_driver_t *modem_driver = NULL;
@@ -593,7 +589,7 @@ static int modem_sys_usb_detection_netdevname(modem_usb_driver *driver, char *us
 //: /sys/devices/pci0000:00/0000:00:14.0/usb2/2-2/2-2:1.0/ttyUSB0
 static int modem_usb_key_detection(char *input, char *output)
 {
-	ospl_uint32 offset = 0;
+	zpl_uint32 offset = 0;
 	if(!input || !os_strlen(input))
 		return ERROR;
 	char *brk = os_strstr(input, "usb");
@@ -631,9 +627,9 @@ static int modem_usb_key_detection(char *input, char *output)
 static int modem_sys_usb_detection_devname(modem_usb_driver *driver)
 {
 	DIR *dir;
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	struct dirent *d;
-	ospl_uint32 offset = 0;
+	zpl_uint32 offset = 0;
 	char fullpath[256];
 	char path[256];
 	char path1[512];
@@ -798,7 +794,7 @@ static int modem_sys_product_load(void)
 
 #ifdef USB_KERNEL_UEVENT
 
-static int usb_event_isok_string(char *buf, ospl_uint32 len)
+static int usb_event_isok_string(char *buf, zpl_uint32 len)
 {
 	/*
 	add@/devices/platform/101c0000.ehci/usb2/2-1/2-1:1.0/ttyUSB0/tty/ttyUSB0
@@ -826,12 +822,12 @@ static int usb_event_isok_string(char *buf, ospl_uint32 len)
 	return ERROR;
 }
 
-static int usb_vendor_product_read(modem_usb_driver *driver, char *buf, ospl_uint32 len)
+static int usb_vendor_product_read(modem_usb_driver *driver, char *buf, zpl_uint32 len)
 {
 	if (driver->product == 0 && driver->vendor == 0)
 	{
 		char *brk = NULL, *brk1 = NULL;
-		ospl_uint32 offset = 0;
+		zpl_uint32 offset = 0;
 		if(strchr_count(buf, '/') >= 6)
 		{
 			offset = strchr_step(buf, '/', 1);
@@ -872,13 +868,13 @@ static int usb_vendor_product_read(modem_usb_driver *driver, char *buf, ospl_uin
 	return OK;
 }
 
-static int usb_event_key_detection(modem_usb_driver *driver, char *buf, ospl_uint32 len)
+static int usb_event_key_detection(modem_usb_driver *driver, char *buf, zpl_uint32 len)
 {
 	////add@/devices/platform/101c0000.ehci/usb2/2-1/2-1:1.0/ttyUSB0
 	return modem_usb_key_detection(buf, driver->usbkey);
 }
 
-static int usb_event_add_detection(modem_usb_driver *driver, char *buf, ospl_uint32 len)
+static int usb_event_add_detection(modem_usb_driver *driver, char *buf, zpl_uint32 len)
 {
 	if(os_strstr(buf, "add@/"))
 	{
@@ -922,7 +918,7 @@ static int usb_event_add_detection(modem_usb_driver *driver, char *buf, ospl_uin
 }
 
 
-static int usb_event_del_detection(char *buf, ospl_uint32 len)
+static int usb_event_del_detection(char *buf, zpl_uint32 len)
 {
 	if(os_strstr(buf, "remove@/"))
 	{
@@ -950,7 +946,7 @@ static int usb_event_del_detection(char *buf, ospl_uint32 len)
 	return OK;
 }
 
-static int usb_event_handle_detection(char *buf, ospl_uint32 len)
+static int usb_event_handle_detection(char *buf, zpl_uint32 len)
 {
 	if(os_strstr(buf, "add@/"))
 	{
@@ -1012,7 +1008,7 @@ static int usb_event_handle_finsh_one(modem_usb_driver *driver)
 
 static int usb_event_handle_finsh(void)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < MODEM_USB_DRIVER_MAX; i++)
 	{
 		if(musb_driver[i].active == MODEM_USB_DRIVER_ACTIVE)
@@ -1119,7 +1115,7 @@ static int usb_event_socket_handle(int timeout)
 
 static int usb_event_socket_read(void *pVoid);
 
-static int usb_event_socket_handle(ospl_uint32 timeout)
+static int usb_event_socket_handle(zpl_uint32 timeout)
 {
 	int sock = 0;
 	struct sockaddr_nl client;
@@ -1127,7 +1123,7 @@ static int usb_event_socket_handle(ospl_uint32 timeout)
     sock = socket(AF_NETLINK, SOCK_RAW, NETLINK_KOBJECT_UEVENT);
 	if(sock)
 	{
-		ospl_uint32 buffersize = UEVENT_BUFFER_SIZE * 4;
+		zpl_uint32 buffersize = UEVENT_BUFFER_SIZE * 4;
 		client.nl_family = AF_NETLINK;
 		client.nl_pid = getpid();
 		client.nl_groups = 1; /* receive broadcast message*/
@@ -1148,7 +1144,7 @@ static int usb_event_socket_handle(ospl_uint32 timeout)
 
 static int usb_event_socket_read(void *pVoid)
 {
-	ospl_uint32 rcvlen;//, ret;
+	zpl_uint32 rcvlen;//, ret;
 	char buf[UEVENT_BUFFER_SIZE] = { 0 };
 	int fd = OS_ANSYNC_FD(pVoid);
 try_agent:

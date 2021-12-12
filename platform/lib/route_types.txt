@@ -10,7 +10,7 @@
 # 7 field line has format:
 # ZServ route type, canonical name, daemon, route char, ipv4, ipv6, short desc
 #
-# Zserv route type: 	Corresponding with zebra.h. Key field.
+# Zserv route type: 	Corresponding with zpl_include.h. Key field.
 # canonical name:	Typically derived from the route type definition.
 #			Used in 'redistribute' commands in daemons.
 #			Key field.

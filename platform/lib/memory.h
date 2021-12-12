@@ -30,7 +30,7 @@ extern "C" {
 /* For pretty printing of memory allocate information. */
 struct memory_list
 {
-  ospl_uint32 index;
+  zpl_uint32 index;
   const char *format;
 };
 
@@ -70,36 +70,36 @@ extern struct mlist mlists[];
 #endif /* MEMORY_LOG */
 
 /* Prototypes of memory function. */
-extern void *zmalloc (ospl_uint32 type, ospl_size_t size);
-extern void *zzcalloc (ospl_uint32 type, ospl_size_t size);
-extern void *z_zcalloc (ospl_uint32 type, ospl_uint32 n, ospl_size_t size);
-extern void *zrealloc (ospl_uint32 type, void *ptr, ospl_size_t size);
-extern void  zfree (ospl_uint32 type, void *ptr);
-extern ospl_char *zstrdup (ospl_uint32 type, const char *str);
-extern void *cjson_malloc (ospl_size_t size);
+extern void *zmalloc (zpl_uint32 type, zpl_size_t size);
+extern void *zzcalloc (zpl_uint32 type, zpl_size_t size);
+extern void *z_zcalloc (zpl_uint32 type, zpl_uint32 n, zpl_size_t size);
+extern void *zrealloc (zpl_uint32 type, void *ptr, zpl_size_t size);
+extern void  zfree (zpl_uint32 type, void *ptr);
+extern zpl_char *zstrdup (zpl_uint32 type, const char *str);
+extern void *cjson_malloc (zpl_size_t size);
 extern void cjson_free (void *ptr);
 
-extern void *mtype_zmalloc (const char *file, ospl_uint32 line, ospl_uint32 type, ospl_size_t size);
+extern void *mtype_zmalloc (const char *file, zpl_uint32 line, zpl_uint32 type, zpl_size_t size);
 
-extern void *mtype_zcalloc (const char *file, ospl_uint32 line, ospl_uint32 type, ospl_size_t size);
+extern void *mtype_zcalloc (const char *file, zpl_uint32 line, zpl_uint32 type, zpl_size_t size);
 
-extern void *mtype_zrealloc (const char *file, ospl_uint32 line, ospl_uint32 type, void *ptr,
-		             ospl_size_t size);
+extern void *mtype_zrealloc (const char *file, zpl_uint32 line, zpl_uint32 type, void *ptr,
+		             zpl_size_t size);
 
-extern void mtype_zfree (const char *file, ospl_uint32 line, ospl_uint32 type,
+extern void mtype_zfree (const char *file, zpl_uint32 line, zpl_uint32 type,
 		         void *ptr);
 
-extern ospl_char *mtype_zstrdup (const char *file, ospl_uint32 line, ospl_uint32 type,
+extern zpl_char *mtype_zstrdup (const char *file, zpl_uint32 line, zpl_uint32 type,
 		            const char *str);
 extern void memory_init (void);
 extern void log_memstats_stderr (const char *);
 
 /* return number of allocations outstanding for the type */
-extern ospl_ulong mtype_stats_alloc (ospl_uint32);
+extern zpl_ulong mtype_stats_alloc (zpl_uint32);
 
 /* Human friendly string for given byte count */
 #define MTYPE_MEMSTR_LEN 20
-extern const char *mtype_memstr (ospl_char *, ospl_size_t, ospl_ulong);
+extern const char *mtype_memstr (zpl_char *, zpl_size_t, zpl_ulong);
 
 extern void cmd_memory_init (void);
 extern int vty_show_memory_cmd(void *vty);

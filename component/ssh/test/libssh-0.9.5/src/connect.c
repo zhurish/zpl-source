@@ -111,10 +111,10 @@ static int ssh_connect_socket_close(socket_t s)
 #endif
 }
 
-static int getai(const char *host, int port, struct addrinfo **ai)
+static int getai(const char *host, int port, struct ipstack_addrinfo **ai)
 {
     const char *service = NULL;
-    struct addrinfo hints;
+    struct ipstack_addrinfo hints;
     char s_port[10];
 
     ZERO_STRUCT(hints);
@@ -167,8 +167,8 @@ socket_t ssh_connect_host_nonblocking(ssh_session session, const char *host,
 {
     socket_t s = -1;
     int rc;
-    struct addrinfo *ai = NULL;
-    struct addrinfo *itr = NULL;
+    struct ipstack_addrinfo *ai = NULL;
+    struct ipstack_addrinfo *itr = NULL;
 
     rc = getai(host, port, &ai);
     if (rc != 0) {
@@ -189,8 +189,8 @@ socket_t ssh_connect_host_nonblocking(ssh_session session, const char *host,
         }
 
         if (bind_addr) {
-            struct addrinfo *bind_ai;
-            struct addrinfo *bind_itr;
+            struct ipstack_addrinfo *bind_ai;
+            struct ipstack_addrinfo *bind_itr;
 
             SSH_LOG(SSH_LOG_PACKET, "Resolving %s", bind_addr);
 

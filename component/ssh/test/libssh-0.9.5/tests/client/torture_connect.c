@@ -168,7 +168,7 @@ static void torture_connect_socket(void **state) {
     struct sockaddr_in server_addr = {
         .sin_family = AF_INET,
         .sin_port = htons(22),
-        .sin_addr.s_addr = inet_addr(TORTURE_SSH_SERVER),
+        .sin_addr.s_addr = ipstack_inet_addr(TORTURE_SSH_SERVER),
     };
 
     sock_fd = socket(AF_INET, SOCK_STREAM, 0);

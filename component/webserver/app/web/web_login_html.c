@@ -5,7 +5,7 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
+#include "zpl_include.h"
 #include "vty.h"
 #include "if.h"
 

@@ -20,7 +20,7 @@ typedef int ssize_t;
 
 #include "modbus.h"
 
-#include "zebra.h"
+#include "zpl_include.h"
 
 MODBUS_BEGIN_DECLS
 
@@ -40,24 +40,24 @@ typedef enum {
 }modbus_mode_t;
 
 typedef struct _modbus_config_t {
-    ospl_uint32 id;
+    zpl_uint32 id;
 #ifdef OS_WIN32
     HANDLE taskhandle;
     DWORD  taskid;
 #else
-    ospl_uint32 taskid;
+    zpl_uint32 taskid;
 #endif
     modbus_mode_t mode;
     modbus_type_t type;
     modbus_t    *ctx;
-    ospl_uint32 slave_id;
-    ospl_uint16     port;
-    ospl_char       *address;
-    ospl_uint32     baudrate;
+    zpl_uint32 slave_id;
+    zpl_uint16     port;
+    zpl_char       *address;
+    zpl_uint32     baudrate;
     modbus_mapping_t *tab_registers;		//指向保持寄存器值
-    ospl_uint8 *query;
-    ospl_bool   running;
-    ospl_bool   waiting;
+    zpl_uint8 *query;
+    zpl_bool   running;
+    zpl_bool   waiting;
 } modbus_config_t;
 
 
@@ -67,20 +67,20 @@ MODBUS_API modbus_mode_t modbus_mode_get_api();
 MODBUS_API int modbus_type_set_api(modbus_type_t);
 MODBUS_API modbus_type_t modbus_type_get_api();
 
-MODBUS_API int modbus_id_set_api(ospl_uint32);
-MODBUS_API ospl_uint32 modbus_id_get_api();
+MODBUS_API int modbus_id_set_api(zpl_uint32);
+MODBUS_API zpl_uint32 modbus_id_get_api();
 
-MODBUS_API int modbus_port_set_api(ospl_uint16);
-MODBUS_API ospl_uint16 modbus_port_get_api();
+MODBUS_API int modbus_port_set_api(zpl_uint16);
+MODBUS_API zpl_uint16 modbus_port_get_api();
 
-MODBUS_API int modbus_device_set_api(ospl_char*);
-MODBUS_API ospl_char* modbus_device_get_api();
+MODBUS_API int modbus_device_set_api(zpl_char*);
+MODBUS_API zpl_char* modbus_device_get_api();
 
-MODBUS_API int modbus_baudrate_set_api(ospl_uint32);
-MODBUS_API ospl_uint32 modbus_baudrate_get_api();
+MODBUS_API int modbus_baudrate_set_api(zpl_uint32);
+MODBUS_API zpl_uint32 modbus_baudrate_get_api();
 
-MODBUS_API int modbus_hold_registers_set_api(ospl_double, ospl_double, ospl_double);
-MODBUS_API int modbus_input_registers_set_api(ospl_double, ospl_double, ospl_double);
+MODBUS_API int modbus_hold_registers_set_api(zpl_double, zpl_double, zpl_double);
+MODBUS_API int modbus_input_registers_set_api(zpl_double, zpl_double, zpl_double);
 
 MODBUS_API int modbus_start_api();
 MODBUS_API int modbus_stop_api();

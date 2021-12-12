@@ -20,7 +20,10 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include <zebra.h>
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #ifdef HAVE_NETNS
 #undef _GNU_SOURCE
@@ -29,18 +32,7 @@
 #include <sched.h>
 #endif
 
-#include "if.h"
-#include "nsm_vrf.h"
-#include "prefix.h"
-#include "log.h"
-#include "memory.h"
-#include "command.h"
-#include "vty.h"
-#include "os_list.h"
-#ifdef PL_NSM_MODULE
-#include "table.h"
-#include "nsm_rib.h"
-#endif
+
 /* Holding VRF hooks  */
 struct vrf_master
 {
@@ -79,11 +71,11 @@ static int vrf_disable(struct vrf *vrf);
 #define VRF_BITMAP_INDEX_IN_GROUP(_bit_offset) \
   ((_bit_offset) / CHAR_BIT)
 #define VRF_BITMAP_FLAG(_bit_offset) \
-  (((ospl_uchar)1) << ((_bit_offset) % CHAR_BIT))
+  (((zpl_uchar)1) << ((_bit_offset) % CHAR_BIT))
 
 struct vrf_bitmap
 {
-  ospl_uchar *groups[VRF_BITMAP_NUM_OF_GROUPS];
+  zpl_uchar *groups[VRF_BITMAP_NUM_OF_GROUPS];
 };
 
 vrf_bitmap_t
@@ -95,7 +87,7 @@ vrf_bitmap_init(void)
 void vrf_bitmap_free(vrf_bitmap_t bmap)
 {
   struct vrf_bitmap *bm = (struct vrf_bitmap *)bmap;
-  ospl_uint32 i;
+  zpl_uint32 i;
 
   if (bmap == VRF_BITMAP_NULL)
     return;
@@ -110,8 +102,8 @@ void vrf_bitmap_free(vrf_bitmap_t bmap)
 void vrf_bitmap_set(vrf_bitmap_t bmap, vrf_id_t vrf_id)
 {
   struct vrf_bitmap *bm = (struct vrf_bitmap *)bmap;
-  ospl_uchar group = VRF_BITMAP_GROUP(vrf_id);
-  ospl_uchar offset = VRF_BITMAP_BIT_OFFSET(vrf_id);
+  zpl_uchar group = VRF_BITMAP_GROUP(vrf_id);
+  zpl_uchar offset = VRF_BITMAP_BIT_OFFSET(vrf_id);
 
   if (bmap == VRF_BITMAP_NULL)
     return;
@@ -127,8 +119,8 @@ void vrf_bitmap_set(vrf_bitmap_t bmap, vrf_id_t vrf_id)
 void vrf_bitmap_unset(vrf_bitmap_t bmap, vrf_id_t vrf_id)
 {
   struct vrf_bitmap *bm = (struct vrf_bitmap *)bmap;
-  ospl_uchar group = VRF_BITMAP_GROUP(vrf_id);
-  ospl_uchar offset = VRF_BITMAP_BIT_OFFSET(vrf_id);
+  zpl_uchar group = VRF_BITMAP_GROUP(vrf_id);
+  zpl_uchar offset = VRF_BITMAP_BIT_OFFSET(vrf_id);
 
   if (bmap == VRF_BITMAP_NULL || bm->groups[group] == NULL)
     return;
@@ -137,19 +129,19 @@ void vrf_bitmap_unset(vrf_bitmap_t bmap, vrf_id_t vrf_id)
              VRF_BITMAP_FLAG(offset));
 }
 
-ospl_bool vrf_bitmap_check(vrf_bitmap_t bmap, vrf_id_t vrf_id)
+zpl_bool vrf_bitmap_check(vrf_bitmap_t bmap, vrf_id_t vrf_id)
 {
   struct vrf_bitmap *bm = (struct vrf_bitmap *)bmap;
-  ospl_uchar group = VRF_BITMAP_GROUP(vrf_id);
-  ospl_uchar offset = VRF_BITMAP_BIT_OFFSET(vrf_id);
+  zpl_uchar group = VRF_BITMAP_GROUP(vrf_id);
+  zpl_uchar offset = VRF_BITMAP_BIT_OFFSET(vrf_id);
 
   if (bmap == VRF_BITMAP_NULL || bm->groups[group] == NULL)
     return 0;
 
   return CHECK_FLAG(bm->groups[group][VRF_BITMAP_INDEX_IN_GROUP(offset)],
                     VRF_BITMAP_FLAG(offset))
-             ? ospl_true
-             : ospl_false;
+             ? zpl_true
+             : zpl_false;
 }
 
 /***********************************************************************/
@@ -243,7 +235,7 @@ vrf_lookup_by_name(const char *name)
   return NULL;
 }
 
-ospl_char *vrf_vrfid2name(vrf_id_t vrf_id)
+zpl_char *vrf_vrfid2name(vrf_id_t vrf_id)
 {
   struct vrf *vrf = vrf_lookup(vrf_id);
   if (vrf)
@@ -289,7 +281,7 @@ vrf_disable(struct vrf *vrf)
 }
 
 /* Add a VRF hook. Please add hooks before calling vrf_init(). */
-void vrf_add_hook(ospl_uint32 type, int (*func)(vrf_id_t, void **))
+void vrf_add_hook(zpl_uint32 type, int (*func)(vrf_id_t, void **))
 {
   switch (type)
   {
@@ -397,17 +389,17 @@ int nsm_vrf_set_vrfid(struct vrf *vrf, vrf_id_t vrf_id)
 {
   if (vrf)
   {
-#ifdef PL_NSM_MODULE
+#ifdef ZPL_NSM_MODULE
     struct nsm_vrf *zvrf;
 #endif
     if (vrfMutex)
       os_mutex_lock(vrfMutex, OS_WAIT_FOREVER);
     vrf->vrf_id = vrf_id;
-#ifdef PL_NSM_MODULE
+#ifdef ZPL_NSM_MODULE
     zvrf = vrf->info;
     zvrf->vrf_id = vrf_id;
 #endif
-#ifdef PL_PAL_MODULE
+#ifdef ZPL_PAL_MODULE
     if (vrf_id)
       pal_create_vr(vrf_id);
 #endif
@@ -422,13 +414,15 @@ int nsm_vrf_set_vrfid(struct vrf *vrf, vrf_id_t vrf_id)
 static int
 nsm_vrf_new(vrf_id_t vrf_id, void **info)
 {
-#ifdef PL_NSM_MODULE
+#ifdef ZPL_NSM_MODULE
   struct nsm_vrf *zvrf = *info;
   if (!zvrf)
   {
     zvrf = nsm_vrf_alloc(vrf_id);
     *info = (void *)zvrf;
+    #ifdef ZPL_NSM_RTPL
     router_id_init(zvrf);
+    #endif
     if (vrf_id)
       pal_create_vr(vrf_id);
   }
@@ -440,7 +434,7 @@ nsm_vrf_new(vrf_id_t vrf_id, void **info)
 static int
 nsm_vrf_enable(vrf_id_t vrf_id, void **info)
 {
-#ifdef PL_NSM_MODULE
+#ifdef ZPL_NSM_MODULE
   struct nsm_vrf *zvrf = (struct nsm_vrf *)(*info);
 
   assert(zvrf);
@@ -452,7 +446,7 @@ nsm_vrf_enable(vrf_id_t vrf_id, void **info)
 static int
 nsm_vrf_disable(vrf_id_t vrf_id, void **info)
 {
-#ifdef PL_NSM_MODULE
+#ifdef ZPL_NSM_MODULE
   struct nsm_vrf *zvrf = (struct nsm_vrf *)(*info);
 
   assert(zvrf);

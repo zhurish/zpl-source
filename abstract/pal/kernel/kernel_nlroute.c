@@ -19,25 +19,10 @@
  * 02111-1307, USA.  
  */
 
-#include <zebra.h>
-
-#include "linklist.h"
-#include "if.h"
-#include "nsm_connected.h"
-#include "log.h"
-#include "prefix.h"
-#include "table.h"
-#include "memory.h"
-#include "nsm_rib.h"
-#include "thread.h"
-#include "nsm_vrf.h"
-#include "nexthop.h"
-
-#include "nsm_zserv.h"
-
-#include "nsm_redistribute.h"
-#include "nsm_interface.h"
-#include "nsm_debug.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "kernel_netlink.h"
 
@@ -54,7 +39,7 @@
  * @param nlmsg: nlmsghdr structure to fill in.
  * @param req_size: The size allocated for the message.
  */
-static void _netlink_route_build_singlepath(const char *routedesc, ospl_uint32 bytelen,
+static void _netlink_route_build_singlepath(const char *routedesc, zpl_uint32 bytelen,
 		struct nexthop *nexthop, struct nlmsghdr *nlmsg, struct rtmsg *rtmsg,
 		size_t req_size)
 {
@@ -131,7 +116,7 @@ static void _netlink_route_build_singlepath(const char *routedesc, ospl_uint32 b
  * @param src: pointer pointing to a location where
  *             the prefsrc should be stored.
  */
-static void _netlink_route_build_multipath(const char *routedesc, ospl_uint32 bytelen,
+static void _netlink_route_build_multipath(const char *routedesc, zpl_uint32 bytelen,
 		struct nexthop *nexthop, struct rtattr *rta, struct rtnexthop *rtnh,
 		union g_addr **src)
 {
@@ -203,15 +188,15 @@ static void _netlink_route_build_multipath(const char *routedesc, ospl_uint32 by
 }
 
 /* Routing table change via netlink interface. */
-static int netlink_route_multipath(ospl_uint32 cmd, struct prefix *p, struct rib *rib)
+static int netlink_route_multipath(zpl_uint32 cmd, struct prefix *p, struct rib *rib)
 {
-	ospl_uint32 bytelen;
+	zpl_uint32 bytelen;
 	struct sockaddr_nl snl;
 	struct nexthop *nexthop = NULL, *tnexthop;
-	ospl_uint32 recursing;
-	ospl_uint32 nexthop_num;
-	ospl_uint32 discard;
-	ospl_family_t family = PREFIX_FAMILY(p);
+	zpl_uint32 recursing;
+	zpl_uint32 nexthop_num;
+	zpl_uint32 discard;
+	zpl_family_t family = PREFIX_FAMILY(p);
 	const char *routedesc;
 
 	struct
@@ -265,7 +250,7 @@ static int netlink_route_multipath(ospl_uint32 cmd, struct prefix *p, struct rib
 	{
 		char buf[NL_PKT_BUF_SIZE];
 		struct rtattr *rta = (void *) buf;
-		ospl_uint32 mtu = rib->mtu;
+		zpl_uint32 mtu = rib->mtu;
 		if (!mtu || (rib->nexthop_mtu && rib->nexthop_mtu < mtu))
 			mtu = rib->nexthop_mtu;
 		rta->rta_type = RTA_METRICS;

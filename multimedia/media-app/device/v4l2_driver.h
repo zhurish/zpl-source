@@ -24,7 +24,7 @@ extern "C" {
 #include <linux/videodev2.h>
 
 
-#include "ospl_type.h"
+#include "zpl_type.h"
 
 /*
 struct drv_list {
@@ -73,10 +73,10 @@ struct v4l2_driver {
 	struct v4l2_requestbuffers	reqbuf;
 	struct v4l2_buffer		**v4l2_bufs;
 	struct v4l2_t_buf 		*bufs;
-	ospl_uint32 			sizeimage,n_bufs;
+	zpl_uint32 			sizeimage,n_bufs;
 
 	/* Queue control */
-	ospl_uint32 			waitq, currq;
+	zpl_uint32 			waitq, currq;
 };
 
 enum v4l2_direction {
@@ -96,15 +96,15 @@ int v4l2_get_parm (struct v4l2_driver *drv);
 int v4l2_set_parm (struct v4l2_driver *drv, int fps);
 /*
 int v4l2_gettryset_fmt_cap (struct v4l2_driver *drv, enum v4l2_direction dir,
-		      struct v4l2_format *fmt,ospl_uint32  width, ospl_uint32  height,
-		      ospl_uint32  pixelformat, enum v4l2_field field);
+		      struct v4l2_format *fmt,zpl_uint32  width, zpl_uint32  height,
+		      zpl_uint32  pixelformat, enum v4l2_field field);
 */			  
 int v4l2_enum_fmt (struct v4l2_driver *drv,enum v4l2_buf_type type);
 int v4l2_get_fmt_cap (struct v4l2_driver *drv, struct v4l2_format *fmt);
-int v4l2_set_fmt_cap (struct v4l2_driver *drv, struct v4l2_format *fmt, ospl_uint32  width, ospl_uint32  height,
-		      ospl_uint32  pixelformat, enum v4l2_field field);
+int v4l2_set_fmt_cap (struct v4l2_driver *drv, struct v4l2_format *fmt, zpl_uint32  width, zpl_uint32  height,
+		      zpl_uint32  pixelformat, enum v4l2_field field);
 
-int v4l2_mmap_bufs(struct v4l2_driver *drv, ospl_uint32 num_buffers);
+int v4l2_mmap_bufs(struct v4l2_driver *drv, zpl_uint32 num_buffers);
 int v4l2_free_bufs(struct v4l2_driver *drv);
 int v4l2_start_streaming(struct v4l2_driver *drv);
 int v4l2_stop_streaming(struct v4l2_driver *drv);

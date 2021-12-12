@@ -5,28 +5,18 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "memory.h"
-#include "command.h"
-#include "memory.h"
-#include "memtypes.h"
-#include "prefix.h"
-#include "if.h"
-#include "nsm_interface.h"
-#include <log.h>
-
-
-
-#include "nsm_firewalld.h"
-
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "nsm_include.h"
 
 struct firewall_service_s
 {
-	ospl_char 		*name;
-	ospl_uint16 	port;
-	ospl_uint8		all;
-	ospl_uint8		tcp;
-	ospl_uint8		udp;	
+	zpl_char 		*name;
+	zpl_uint16 	port;
+	zpl_uint8		all;
+	zpl_uint8		tcp;
+	zpl_uint8		udp;	
 }firewall_service_default[] = 
 {
 	//{"FTP-Data", 	20, 0, 1, 0},
@@ -218,7 +208,7 @@ int firewall_rule_add_api(firewall_zone_t *zone, firewall_t *value)
 	node = firewall_rule_lookup_node(zone, value);
 	if(node == NULL)
 	{
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 		//ret = hal_mac_add(mac->ifindex, mac->vlan, mac->mac, 0);
 #else
 
@@ -271,7 +261,7 @@ int firewall_rule_del_api(firewall_zone_t *zone, firewall_t *value)
 	else
 	{
 		printf("--------------%s-----------------\r\n", __func__);
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 		//ret = hal_mac_add(mac->ifindex, mac->vlan, mac->mac, 0);
 #else
 
@@ -308,23 +298,23 @@ firewall_t * firewall_rule_lookup_api(firewall_zone_t *zone, firewall_t *value)
 		os_mutex_unlock(zone->mutex);
 	return node;
 }
-
-int firewall_rule_show_api(struct vty *vty, firewall_zone_t *zone, ospl_char * intype)
+#ifdef ZPL_SHELL_MODULE
+int firewall_rule_show_api(struct vty *vty, firewall_zone_t *zone, zpl_char * intype)
 {
 	firewall_t *pstNode = NULL;
 	NODE index;
-	ospl_char id[16];
-	ospl_char type[16];
-	ospl_char action[16];
-	ospl_char proto[16];
-	ospl_char source[64];
-	ospl_char destination[64];
-	ospl_char s_port[16];
-	ospl_char d_port[16];
-	ospl_char s_ifindex[64];
-	ospl_char d_ifindex[64];
-	ospl_char s_mac[16];
-	ospl_char d_mac[16];
+	zpl_char id[16];
+	zpl_char type[16];
+	zpl_char action[16];
+	zpl_char proto[16];
+	zpl_char source[64];
+	zpl_char destination[64];
+	zpl_char s_port[16];
+	zpl_char d_port[16];
+	zpl_char s_ifindex[64];
+	zpl_char d_ifindex[64];
+	zpl_char s_mac[16];
+	zpl_char d_mac[16];
 	int head = 0, found = 0;
 	if(!zone || !zone->zone_list)
 		return ERROR;
@@ -390,14 +380,14 @@ int firewall_rule_show_api(struct vty *vty, firewall_zone_t *zone, ospl_char * i
 
 			if(pstNode->source.family)
 			{
-				ospl_char tmp[64];
+				zpl_char tmp[64];
 				union prefix46constptr pa;
 				pa.p = &pstNode->source;
 				sprintf(source, "%s", prefix2str (pa, tmp, sizeof(tmp)));
 			}
 			if(pstNode->destination.family)
 			{
-				ospl_char tmp[64];
+				zpl_char tmp[64];
 				union prefix46constptr pa;
 				pa.p = &pstNode->destination;
 				sprintf(destination, "%s", prefix2str (pa, tmp, sizeof(tmp)));
@@ -633,6 +623,7 @@ int firewall_rule_show_api(struct vty *vty, firewall_zone_t *zone, ospl_char * i
 	vty_out(vty, "%s",VTY_NEWLINE);
 	return OK;
 }
+#endif
 
 int firewall_rule_foreach_api(firewall_zone_t *zone, int(*cb)(firewall_t *, void *), void *p)
 {
@@ -701,7 +692,7 @@ static int firewall_rule_cleanup(firewall_zone_t *zone, firewall_t *value)
 	return OK;
 }
 /***********************************************************************/
-firewall_zone_t * nsm_firewall_zone_add(ospl_int8 	*zonename)
+firewall_zone_t * nsm_firewall_zone_add(zpl_int8 	*zonename)
 {
 	if(!gFirewalld.init)
 		return NULL;
@@ -719,7 +710,7 @@ firewall_zone_t * nsm_firewall_zone_add(ospl_int8 	*zonename)
 	return NULL;
 }
 
-firewall_zone_t * nsm_firewall_zone_lookup(ospl_int8 	*zonename)
+firewall_zone_t * nsm_firewall_zone_lookup(zpl_int8 	*zonename)
 {
 	firewall_zone_t *pstNode = NULL;
 	NODE index;
@@ -741,7 +732,7 @@ firewall_zone_t * nsm_firewall_zone_lookup(ospl_int8 	*zonename)
 	return pstNode;
 }
 
-int nsm_firewall_zone_del(ospl_int8 	*zonename)
+int nsm_firewall_zone_del(zpl_int8 	*zonename)
 {
 	if(!gFirewalld.init)
 		return ERROR;
@@ -771,7 +762,7 @@ int nsm_firewall_zone_del(ospl_int8 	*zonename)
 	return ERROR;
 }
 
-static int firewall_zone_cleanup(ospl_int8 	*zonename)
+static int firewall_zone_cleanup(zpl_int8 	*zonename)
 {
 	firewall_zone_t *pstNode = NULL;
 	NODE index;
@@ -822,7 +813,7 @@ int firewall_zone_foreach_api(int(*cb)(firewall_zone_t *, void *), void *p)
 /***********************************************************************/
 static int nsm_firewall_tcpudp_dport_default()
 {
-	ospl_uint32 i = 0, j = 0;
+	zpl_uint32 i = 0, j = 0;
 	//开放的TCP/UDP目的端口
 	/*for(i = 0; i < sizeof(firewall_service_default)/sizeof(firewall_service_default[0]); i++)
 	{
@@ -856,9 +847,9 @@ static int nsm_firewall_tcpudp_dport_default()
 static int nsm_firewall_action_dport_default()
 {
 	//iptables -t filter -A INPUT -p tcp -m multiport --dport 21,22,23,25,53,67,68,69,80,110,161,443,513,2610,8080 -j ACCEPT
-	ospl_uint32 i = 0, action = 0;
-	ospl_char cmd[512];
-	ospl_char tmp[32];
+	zpl_uint32 i = 0, action = 0;
+	zpl_char cmd[512];
+	zpl_char tmp[32];
 	/*
 	memset(cmd, 0, sizeof(cmd));
 	strcpy(cmd, "iptables -t filter -A INPUT  -p tcp -m multiport --dport ");
@@ -936,7 +927,7 @@ static int nsm_firewall_default(void)
 	iptables -t filter -N wan_input	//创建一条新的链
 	iptables -t filter -A INPUT -j wan_input	//把INPUT链过滤的转到 wan_input 链
 	*/
-#ifdef PL_BUILD_ARCH_X86
+#ifdef ZPL_BUILD_ARCH_X86
 	return OK;
 #endif
 
@@ -1003,7 +994,7 @@ int nsm_firewall_init(void)
 	gFirewalld.firewall_list = malloc(sizeof(LIST));
 	gFirewalld.mutex = os_mutex_init();
 	lstInit(gFirewalld.firewall_list);
-	gFirewalld.init = ospl_true;
+	gFirewalld.init = zpl_true;
 	nsm_firewall_default();
 	return OK;
 }
@@ -1016,7 +1007,7 @@ int nsm_firewall_exit(void)
 		lstFree(gFirewalld.firewall_list);
 		free(gFirewalld.firewall_list);
 		gFirewalld.firewall_list = NULL;
-		gFirewalld.init = ospl_false;
+		gFirewalld.init = zpl_false;
 	}
 	if(gFirewalld.mutex)
 		os_mutex_exit(gFirewalld.mutex);

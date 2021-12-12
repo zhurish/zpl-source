@@ -6,27 +6,17 @@
  */
 
 
-#include "zebra.h"
-#include "memory.h"
-#include "command.h"
-#include "memory.h"
-#include "memtypes.h"
-#include "prefix.h"
-#include "if.h"
-#include "nsm_interface.h"
-#include <log.h>
-#include "nsm_client.h"
-#include "os_list.h"
-#include "tty_com.h"
-
-#include "nsm_serial.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "nsm_include.h"
 
 
-ospl_uint32 serial_index_make(const char *sname)
+zpl_uint32 serial_index_make(const char *sname)
 {
-	ospl_uint32 i = 0;
-	ospl_char *p = sname;
-	ospl_uint32	inde = 0;
+	zpl_uint32 i = 0;
+	zpl_char *p = sname;
+	zpl_uint32	inde = 0;
 	tty_type_en type = 0;
 	if(os_strstr(sname, "USB"))
 		type = IF_TTY_USB;
@@ -54,7 +44,7 @@ static nsm_serial_t * nsm_serial_get(struct interface *ifp)
 }
 
 
-static int nsm_serial_add_interface(struct interface *ifp)
+int nsm_serial_interface_create_api(struct interface *ifp)
 {
 	nsm_serial_t * serial = NULL;
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
@@ -78,7 +68,7 @@ static int nsm_serial_add_interface(struct interface *ifp)
 }
 
 
-static int nsm_serial_del_interface(struct interface *ifp)
+int nsm_serial_interface_del_api(struct interface *ifp)
 {
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	if(!if_is_serial(ifp))
@@ -89,7 +79,7 @@ static int nsm_serial_del_interface(struct interface *ifp)
 	return OK;
 }
 
-int nsm_serial_interface_kernel(struct interface *ifp, ospl_char *kname)
+int nsm_serial_interface_kernel(struct interface *ifp, zpl_char *kname)
 {
 	//nsm_serial_t * serial = nsm_serial_get(ifp);
 	if(ifp)
@@ -106,7 +96,7 @@ int nsm_serial_interface_kernel(struct interface *ifp, ospl_char *kname)
 	return ERROR;
 }
 
-int nsm_serial_interface_clock(struct interface *ifp, ospl_uint32 clock)
+int nsm_serial_interface_clock(struct interface *ifp, zpl_uint32 clock)
 {
 	nsm_serial_t * serial = nsm_serial_get(ifp);
 	if(serial)
@@ -117,29 +107,29 @@ int nsm_serial_interface_clock(struct interface *ifp, ospl_uint32 clock)
 	return ERROR;
 }
 
-int nsm_serial_interface_data(struct interface *ifp, ospl_uint32 data)
+int nsm_serial_interface_databit(struct interface *ifp, zpl_uint32 databit)
 {
 	nsm_serial_t * serial = nsm_serial_get(ifp);
 	if(serial)
 	{
-		serial->serial.databit = data;
+		serial->serial.databit = databit;
 		return OK;
 	}
 	return ERROR;
 }
 
-int nsm_serial_interface_stop(struct interface *ifp, ospl_uint32 stop)
+int nsm_serial_interface_stopbit(struct interface *ifp, zpl_uint32 stopbit)
 {
 	nsm_serial_t * serial = nsm_serial_get(ifp);
 	if(serial)
 	{
-		serial->serial.stopbit = stop;
+		serial->serial.stopbit = stopbit;
 		return OK;
 	}
 	return ERROR;
 }
 
-int nsm_serial_interface_parity(struct interface *ifp, ospl_uint32 parity)
+int nsm_serial_interface_parity(struct interface *ifp, zpl_uint32 parity)
 {
 	nsm_serial_t * serial = nsm_serial_get(ifp);
 	if(serial)
@@ -150,7 +140,7 @@ int nsm_serial_interface_parity(struct interface *ifp, ospl_uint32 parity)
 	return ERROR;
 }
 
-int nsm_serial_interface_flow_control(struct interface *ifp, ospl_uint32 flow_control)
+int nsm_serial_interface_flow_control(struct interface *ifp, zpl_uint32 flow_control)
 {
 	nsm_serial_t * serial = nsm_serial_get(ifp);
 	if(serial)
@@ -162,14 +152,14 @@ int nsm_serial_interface_flow_control(struct interface *ifp, ospl_uint32 flow_co
 }
 
 
-int nsm_serial_interface_devname(struct interface *ifp, ospl_char * devname)
+int nsm_serial_interface_devname(struct interface *ifp, zpl_char * devname)
 {
 	nsm_serial_t * serial = nsm_serial_get(ifp);
 	if(serial)
 	{
 		if(devname)
 		{
-			ospl_char *p;//, *k;
+			zpl_char *p;//, *k;
 			os_memset(serial->serial.devname, 0, sizeof(serial->serial.devname));
 			p = devname;
 			while(p)
@@ -204,36 +194,36 @@ int nsm_serial_interface_enca_set_api(struct interface *ifp, if_enca_t mode)
 
 
 
-int nsm_serial_ppp_encapsulation(ospl_char *input, ospl_uint32 inlen, ospl_char *output, ospl_uint32 outlen)
+int nsm_serial_ppp_encapsulation(zpl_char *input, zpl_uint32 inlen, zpl_char *output, zpl_uint32 outlen)
 {
 	return OK;
 }
 
-int nsm_serial_ppp_decapsulation(ospl_char *input, ospl_uint32 inlen, ospl_char *output, ospl_uint32 outlen)
+int nsm_serial_ppp_decapsulation(zpl_char *input, zpl_uint32 inlen, zpl_char *output, zpl_uint32 outlen)
 {
 	return OK;
 }
 
-int nsm_serial_slip_encapsulation(ospl_char *input, ospl_uint32 inlen, ospl_char *output, ospl_uint32 outlen)
+int nsm_serial_slip_encapsulation(zpl_char *input, zpl_uint32 inlen, zpl_char *output, zpl_uint32 outlen)
 {
 	return OK;
 }
 
-int nsm_serial_slip_decapsulation(ospl_char *input, ospl_uint32 inlen, ospl_char *output, ospl_uint32 outlen)
+int nsm_serial_slip_decapsulation(zpl_char *input, zpl_uint32 inlen, zpl_char *output, zpl_uint32 outlen)
 {
 	return OK;
 }
 
 
 
-
+#ifdef ZPL_SHELL_MODULE
 int nsm_serial_interface_write_config(struct vty *vty, struct interface *ifp)
 {
 	if(if_is_serial(ifp))
 	{
-		ospl_char *parity[] = { "none", "even", "odd", "mark", "space" };
-		ospl_char *flow[] = { "none", "sorfware", "hardware"};
-		//ospl_char *parity[] = { "none", "even", "odd", "mark", "space" };
+		zpl_char *parity[] = { "none", "even", "odd", "mark", "space" };
+		zpl_char *flow[] = { "none", "sorfware", "hardware"};
+		//zpl_char *parity[] = { "none", "even", "odd", "mark", "space" };
 
 		nsm_serial_t * serial = nsm_serial_get(ifp);
 		if(serial)
@@ -259,23 +249,16 @@ int nsm_serial_interface_write_config(struct vty *vty, struct interface *ifp)
 	}
 	return OK;
 }
+#endif
 
 
-
-int nsm_serial_client_init()
+int nsm_serial_init()
 {
-	struct nsm_client *nsm = nsm_client_new ();
-	nsm->notify_add_cb = nsm_serial_add_interface;
-	nsm->notify_delete_cb = nsm_serial_del_interface;
-	nsm->interface_write_config_cb = nsm_serial_interface_write_config;
-	nsm_client_install (nsm, NSM_SERIAL);
+	nsm_interface_hook_add(NSM_SERIAL, nsm_serial_interface_create_api, nsm_serial_interface_del_api);
 	return OK;
 }
 
-int nsm_serial_client_exit()
+int nsm_serial_exit()
 {
-	struct nsm_client *nsm = nsm_client_lookup (NSM_SERIAL);
-	if(nsm)
-		nsm_client_free (nsm);
 	return OK;
 }

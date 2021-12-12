@@ -1,5 +1,5 @@
 MAIN_MAKEFILE=1
-include $(MAKE_DIR)/makelinux.mk
+include $(ZPL_MAKE_DIR)/makelinux.mk
 include ffbuild/config-module.mk
 
 vpath %.c    $(SRC_PATH)

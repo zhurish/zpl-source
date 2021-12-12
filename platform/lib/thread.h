@@ -27,16 +27,17 @@
 extern "C" {
 #endif
 
+#include "os_include.h"
+#include "zpl_include.h"
 
-#include "zebra.h"
-#include "vty.h"
+#define THREAD_MASTER_LIST
 
 /* Linked list of thread. */
 struct thread_list
 {
   struct thread *head;
   struct thread *tail;
-  ospl_uint32 count;
+  zpl_uint32 count;
 };
 
 struct pqueue;
@@ -51,7 +52,7 @@ typedef fd_set thread_fd_set;
 #define OS_THREAD_CPU_MAX	128
 struct thread_cpu
 {
-	ospl_uint32 key;
+	zpl_uint32 key;
 	void *data;
 };
 
@@ -64,6 +65,10 @@ enum thread_mode
 /* Master of the theads. */
 struct thread_master
 {
+  #ifdef THREAD_MASTER_LIST
+  struct thread_master *next;		/* next pointer of the thread */   
+  struct thread_master *prev;		/* previous pointer of the thread */
+  #endif
   enum thread_mode workmode;
 
   struct thread_list read;
@@ -79,19 +84,20 @@ struct thread_master
   thread_fd_set writefd;
   thread_fd_set exceptfd;
 
-  ospl_ulong alloc;
+  zpl_ulong alloc;
 
-  ospl_uint32 module;
+  zpl_uint32 module;
 
   int max_fd;
   struct thread_cpu cpu_record[OS_THREAD_CPU_MAX];
   struct timeval relative_time;
   struct thread *thread_current;
   void *mutex;
-  ospl_bool	bquit;
+  zpl_bool	bquit;
+  zpl_uint32 debug;
 };
 
-typedef ospl_uchar thread_type;
+typedef zpl_uchar thread_type;
 
 /* Thread itself. */
 struct thread
@@ -104,22 +110,22 @@ struct thread
   int (*func) (struct thread *); /* event function */
   void *arg;			/* event argument */
   union {
-    ospl_uint32 val;			/* second argument of the event. */
-    int fd;			/* file descriptor in case of read/write. */
+    zpl_uint32 val;			/* second argument of the event. */
+    zpl_socket_t fd;			/* file descriptor in case of read/write. */
     struct timeval sands;	/* rest of time sands value. */
   } u;
-  ospl_uint32 index;			/* used for timers to store position in queue */
+  zpl_uint32 index;			/* used for timers to store position in queue */
   struct timeval real;
   struct cpu_thread_history *hist; /* cache pointer to cpu_history */
   const char *funcname;
   const char *schedfrom;
-  ospl_uint32 schedfrom_line;
+  zpl_uint32 schedfrom_line;
 };
 
 struct cpu_thread_history 
 {
   int (*func)(struct thread *);
-  ospl_uint32  total_calls;
+  zpl_uint32  total_calls;
   struct os_time_stats real;
   thread_type types;
   const char *funcname;
@@ -180,7 +186,7 @@ struct cpu_thread_history
 #define THREAD_WRITE_OFF(thread)  THREAD_OFF(thread)
 #define THREAD_TIMER_OFF(thread)  THREAD_OFF(thread)
 
-#define debugargdef  const char *funcname, const char *schedfrom, ospl_uint32 fromln
+#define debugargdef  const char *funcname, const char *schedfrom, zpl_uint32 fromln
 
 #define thread_add_read(m,f,a,v) funcname_thread_add_read(m,f,a,v,#f,__FILE__,__LINE__)
 #define thread_add_write(m,f,a,v) funcname_thread_add_write(m,f,a,v,#f,__FILE__,__LINE__)
@@ -197,16 +203,16 @@ struct cpu_thread_history
 /* Prototypes. */
 extern struct thread_master *thread_master_create (void);
 
-extern struct thread_master *thread_master_module_create (ospl_uint32 );
-
+extern struct thread_master *thread_master_module_create (zpl_uint32 );
+extern struct thread_master *thread_master_module_lookup (zpl_uint32 module);
 extern void thread_master_free (struct thread_master *);
 
 extern struct thread *funcname_thread_add_read (struct thread_master *, 
 				                int (*)(struct thread *),
-				                void *, int, debugargdef);
+				                void *, zpl_socket_t, debugargdef);
 extern struct thread *funcname_thread_add_write (struct thread_master *,
 				                 int (*)(struct thread *),
-				                 void *, int, debugargdef);
+				                 void *, zpl_socket_t, debugargdef);
 extern struct thread *funcname_thread_add_timer (struct thread_master *,
 				                 int (*)(struct thread *),
 				                 void *, long, debugargdef);
@@ -234,10 +240,11 @@ extern struct thread *funcname_thread_ready (struct thread_master *,
 #undef debugargdef
 
 extern void thread_cancel (struct thread *);
-extern ospl_uint32  thread_cancel_event (struct thread_master *, void *);
+extern zpl_uint32  thread_cancel_event (struct thread_master *, void *);
 extern struct thread *thread_fetch (struct thread_master *, struct thread *);
+extern struct thread *thread_fetch_main(struct thread_master *m);
 extern void thread_call (struct thread *);
-extern ospl_ulong thread_timer_remain_second (struct thread *);
+extern zpl_ulong thread_timer_remain_second (struct thread *);
 extern struct timeval thread_timer_remain(struct thread*);
 extern int thread_should_yield (struct thread *);
 extern int thread_fetch_quit (struct thread_master *);
@@ -245,14 +252,15 @@ extern int thread_wait_quit (struct thread_master *);
 
 extern void thread_getrusage (struct timeval *real);
 /* Returns elapsed real (wall clock) time. */
-extern ospl_ulong thread_consumed_time(struct timeval *after, struct timeval *before,
-					  ospl_ulong *cpu_time_elapsed);
-
+extern zpl_ulong thread_consumed_time(struct timeval *after, struct timeval *before,
+					  zpl_ulong *cpu_time_elapsed);
+#ifndef THREAD_MASTER_LIST
 extern struct thread_master * master_thread[];
+#endif
 extern struct thread *thread_current_get();
 //extern struct timeval recent_relative_time (void);
 
-extern int cpu_thread_show(struct thread_master *m, struct vty *vty);
+//extern int cpu_thread_show(struct thread_master *m, struct vty *vty);
 
  
 #ifdef __cplusplus

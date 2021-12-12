@@ -25,9 +25,9 @@ modification history
                  TOR2_2-FCS-COPY label, tor2 branch, /wind/river VOB)
 01e,09may03,vvv  included ip_icmp.h
 01d,25jul02,ant  definitions ICMP_PROTO and ICMP_TYPENUM removed 
-01c,03may02,ant  ospl_uchar	bufTx [TRACEROUTE_MAXPACKET] in the struct TRACEROUTE_STAT changed
-		 to ospl_uchar *bufTx. It is allocated dynamically now. Receive
-		 buffer ospl_uchar bufRx[TRACEROUTE_MAXPACKET] changed in the same way.
+01c,03may02,ant  zpl_uchar	bufTx [TRACEROUTE_MAXPACKET] in the struct TRACEROUTE_STAT changed
+		 to zpl_uchar *bufTx. It is allocated dynamically now. Receive
+		 buffer zpl_uchar bufRx[TRACEROUTE_MAXPACKET] changed in the same way.
 		 New member int timing defined in the struct TRACEROUTE_STAT.
 		 TRACEROUTE_MAXPACKET	increased to 65536.
 01b,14jan00,ham  changed TRACEROUTE_STAT for PD support.
@@ -42,7 +42,7 @@ extern "C" {
 #endif
 
 /* includes */
-#include <zebra.h>
+#include <os_include.h>
 #include <vty.h>
 #include <netinet/ip_icmp.h>
 
@@ -89,20 +89,20 @@ typedef struct tracerouteStat                         /* TRACEROUTE_STAT */
     char                *bufRx;                 /* receive buffer */
     struct icmp *       pBufIcmp;               /* ptr to icmp */
     struct timeval		*pBufTime;               /* ptr to time */
-    ospl_uint16             dataLen;                /* size of data portion */
-    ospl_uint16             rxmaxlen;
-    ospl_uint16				tracerouteTxLen;
-    ospl_uint32             idRx;                   /* id of Rx task */
-    ospl_uint32             flags;                  /* option flags */
-    ospl_uint8 				tracerouteTxTmo; /* packet timeout in seconds */
-    ospl_uint8              maxttl;
+    zpl_uint16             dataLen;                /* size of data portion */
+    zpl_uint16             rxmaxlen;
+    zpl_uint16				tracerouteTxLen;
+    zpl_uint32             idRx;                   /* id of Rx task */
+    zpl_uint32             flags;                  /* option flags */
+    zpl_uint8 				tracerouteTxTmo; /* packet timeout in seconds */
+    zpl_uint8              maxttl;
     struct vty			*vty;
     } TRACEROUTE_STAT;
 
 
 /* forward declarations */
  
-extern int traceroute(struct vty *vty, char * host, int maxttl, int len, ospl_uint32 options);
+extern int traceroute(struct vty *vty, char * host, int maxttl, int len, zpl_uint32 options);
 
 
 #ifdef __cplusplus

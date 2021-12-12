@@ -19,7 +19,7 @@ extern int os_job_load();
 
 extern int os_job_show(void *);
 
-extern int os_job_add_entry(int (*job_entry)(void *), void *pVoid, const ospl_char *func_name);
+extern int os_job_add_entry(int (*job_entry)(void *), void *pVoid, const zpl_char *func_name);
 
 #define os_job_add(f,p)		os_job_add_entry(f,p,#f)
 

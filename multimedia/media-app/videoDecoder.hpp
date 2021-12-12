@@ -12,7 +12,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "ospl_type.h"
+#include "zpl_type.h"
 #ifdef __cplusplus
 }
 #endif
@@ -26,7 +26,7 @@ public:
         this->m_fmt = 0;
         this->m_fps = 0;
         this->m_out_size = 0;
-        this->m_out_buf = nullptr;
+        this->m_out_buf = NULL;
     }
     virtual ~videoDecoder() = default;
     virtual int videoDecoderSetup(const int width, const int height, const int fmt, const int fps) = 0;
@@ -38,9 +38,9 @@ public:
           return 0;
     }
     */
-    virtual int videoDecoderInput(const ospl_uint8 *frame, const int len) = 0;
-    virtual int videoDecoderOutput(ospl_uint8 *frame, const int len) = 0;
-    virtual ospl_uint8 *videoDecoderOutput() = 0;
+    virtual int videoDecoderInput(const zpl_uint8 *frame, const int len) = 0;
+    virtual int videoDecoderOutput(zpl_uint8 *frame, const int len) = 0;
+    virtual zpl_uint8 *videoDecoderOutput() = 0;
     virtual int videoDecoderOutputSize(const bool clear = true) = 0;
     virtual int videoDecoderDestroy() = 0;
 public:
@@ -49,7 +49,7 @@ public:
     int m_fmt = 0;
     int m_fps = 0;
     int m_out_size = 0;
-    char *m_out_buf = nullptr;
+    char *m_out_buf = NULL;
 };
 
 #endif /* __VIDEO_DECODER_HPP__ */

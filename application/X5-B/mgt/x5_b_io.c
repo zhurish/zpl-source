@@ -4,15 +4,10 @@
  *  Created on: 2019年10月19日
  *      Author: zhurish
  */
-#include "zebra.h"
-#include "vty.h"
-#include "if.h"
-#include "log.h"
-#include "memory.h"
-#include "prefix.h"
-#include "str.h"
-#include "table.h"
-#include "vector.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "x5_b_global.h"
 #include "x5_b_cmd.h"
@@ -28,7 +23,7 @@
 /* A 模块开门参数设置 */
 int x5b_app_open_option(x5b_app_mgt_t *app, void *info, int to)
 {
-	ospl_uint32 len = 0;
+	zpl_uint32 len = 0;
 	//ConfiglockType *card = (ConfiglockType *)info;
 	x5b_app_mgt_t *mgt = app;
 	if(app == NULL)
@@ -66,9 +61,9 @@ int x5b_app_open_option(x5b_app_mgt_t *app, void *info, int to)
 				E_CMD_MAKE(E_CMD_MODULE_B, E_CMD_SET, E_CMD_OPEN_OPTION), sizeof(ConfiglockType), info);
 		else if(to == E_CMD_TO_C)
 		{
-			//ospl_uint8 open_type =(*(ospl_uint8)info);//x5b_app_open_mode();
+			//zpl_uint8 open_type =(*(zpl_uint8)info);//x5b_app_open_mode();
 			len = os_tlv_set_octet(mgt->app->sbuf + mgt->app->offset,
-				E_CMD_MAKE(E_CMD_MODULE_B, E_CMD_SET, E_CMD_OPEN_OPTION), sizeof(ospl_uint8), info);
+				E_CMD_MAKE(E_CMD_MODULE_B, E_CMD_SET, E_CMD_OPEN_OPTION), sizeof(zpl_uint8), info);
 		}
 		mgt->app->offset += len;
 		x5b_app_crc_make(mgt);
@@ -88,8 +83,8 @@ int x5b_app_open_option(x5b_app_mgt_t *app, void *info, int to)
 
 int x5b_app_wiggins_setting(x5b_app_mgt_t *app, int wiggins, int to)
 {
-	ospl_uint32 len = 0;
-	ospl_uint8 val = wiggins & 0xff;
+	zpl_uint32 len = 0;
+	zpl_uint8 val = wiggins & 0xff;
 	x5b_app_mgt_t *mgt = app;
 	if(app == NULL)
 		mgt = x5b_app_mgt;
@@ -136,7 +131,7 @@ int x5b_app_wiggins_setting(x5b_app_mgt_t *app, int wiggins, int to)
  */
 int x5b_app_add_card(x5b_app_mgt_t *app, void *info, int to)
 {
-	ospl_uint32 len = 0;
+	zpl_uint32 len = 0;
 	permiListType *card  = (permiListType *)info;
 	x5b_app_mgt_t *mgt = app;
 	//make_face_card_t *inputcard = (make_face_card_t *)info;
@@ -207,7 +202,7 @@ int x5b_app_add_card(x5b_app_mgt_t *app, void *info, int to)
 
 int x5b_app_delete_card(x5b_app_mgt_t *app, void *info, int to)
 {
-	ospl_uint32 len = 0;
+	zpl_uint32 len = 0;
 	x5b_app_mgt_t *mgt = app;
 	if(app == NULL)
 		mgt = x5b_app_mgt;
@@ -242,8 +237,8 @@ int x5b_app_delete_card(x5b_app_mgt_t *app, void *info, int to)
 
 	if(to == E_CMD_TO_A)
 	{
-		ospl_int8     cardid[APP_CARD_ID_MAX + 1];
-		ospl_uint8     ID[8];
+		zpl_int8     cardid[APP_CARD_ID_MAX + 1];
+		zpl_uint8     ID[8];
 		memset(cardid, 0, sizeof(cardid));
 		memcpy(cardid, info, APP_CARD_ID_MAX);
 		if(strlen(cardid) <= 16)

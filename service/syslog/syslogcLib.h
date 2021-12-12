@@ -18,7 +18,7 @@ extern "C" {
 #endif
 
 //#include "vxWorks.h"
-#ifdef PL_SERVICE_SYSLOG
+#ifdef ZPL_SERVICE_SYSLOG
 /* syslog port */
 
 #define SYSLOGC_DEFAULT_PORT   514
@@ -133,19 +133,19 @@ extern "C" {
 
 struct syslog_client
 {
-	ospl_bool enable;
+	zpl_bool enable;
 	enum { SYSLOG_UDP_MODE, SYSLOG_TCP_MODE } mode;
 	int sock;
-	ospl_uint16 port;
+	zpl_uint16 port;
 	struct in_addr address;
 	char  address_string[DFT_HOST_NAME_LEN];
-	ospl_bool		dynamics;
+	zpl_bool		dynamics;
 	char  *hostname;//[DFT_HOST_NAME_LEN];
 	char  *processname;//[DFT_HOST_NAME_LEN];
 
-	ospl_uint32 facility;
+	zpl_uint32 facility;
 
-	ospl_bool connect;
+	zpl_bool connect;
 
 	void *master;
 
@@ -158,27 +158,27 @@ struct syslog_client
 
 extern int syslogc_lib_init(void *, char *);
 extern int syslogc_lib_uninit(void);
-extern int syslogc_host_config_set(char *, ospl_uint16, ospl_uint32 );
-extern int syslogc_host_config_get(char *, ospl_uint16 *, ospl_uint32 *);
+extern int syslogc_host_config_set(char *, zpl_uint16, zpl_uint32 );
+extern int syslogc_host_config_get(char *, zpl_uint16 *, zpl_uint32 *);
 
 extern int syslogc_enable(char *);
-extern ospl_bool syslogc_is_enable(void);
+extern zpl_bool syslogc_is_enable(void);
 extern int syslogc_disable(void);
 extern int syslogc_is_dynamics(void);
 extern int syslogc_dynamics_enable(void);
 extern int syslogc_dynamics_disable(void);
-extern int syslogc_mode_set(ospl_uint32 );
-extern int syslogc_mode_get(ospl_uint32 *);
-extern int syslogc_facility_set(ospl_uint32 );
-extern int syslogc_facility_get(ospl_uint32 *);
+extern int syslogc_mode_set(zpl_uint32 );
+extern int syslogc_mode_get(zpl_uint32 *);
+extern int syslogc_facility_set(zpl_uint32 );
+extern int syslogc_facility_get(zpl_uint32 *);
 
-extern int vsysclog (ospl_uint32 , ospl_uint32, char *, va_list );
-extern int syslogc_out(ospl_uint32 , ospl_uint32, char * , ospl_uint32 );
+extern int vsysclog (zpl_uint32 , zpl_uint32, char *, va_list );
+extern int syslogc_out(zpl_uint32 , zpl_uint32, char * , zpl_uint32 );
 /*
 extern int syslogcLibInit (char *);
 //extern STATUS syslogcMdataSend(M_BLK_ID,int,char *, UINT16,ULONG);
-extern int syslogcBinDataSend (ospl_uint8 *, int, char *,ospl_uint16, ospl_ulong);
-extern int syslogcStringSend (char *, ospl_uint16, ospl_ulong);
+extern int syslogcBinDataSend (zpl_uint8 *, int, char *,zpl_uint16, zpl_ulong);
+extern int syslogcStringSend (char *, zpl_uint16, zpl_ulong);
 */
 
 #else	/* __STDC__ */

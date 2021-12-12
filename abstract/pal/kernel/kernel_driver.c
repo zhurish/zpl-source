@@ -6,17 +6,10 @@
  */
 
 
-#include <zebra.h>
-
-#include "if.h"
-#include "vty.h"
-#include "sockunion.h"
-#include "prefix.h"
-#include "command.h"
-#include "memory.h"
-#include "log.h"
-#include "nsm_zclient.h"
-#include "eloop.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include <netinet/if_ether.h>
 #include <net/if_arp.h>
@@ -143,32 +136,32 @@
  */
 
 struct ethhdr {
-	ospl_uint8	h_dest[ETH_ALEN];	/* destination eth addr	*/
-	ospl_uint8	h_source[ETH_ALEN];	/* source ether addr	*/
+	zpl_uint8	h_dest[ETH_ALEN];	/* destination eth addr	*/
+	zpl_uint8	h_source[ETH_ALEN];	/* source ether addr	*/
 	__be16		h_proto;		/* packet type ID field	*/
 } __attribute__((packed));
 
 
 #endif
 
-static int sock = 0;
-static int kernel_driver_recv_handle(ospl_uint8 *buf, ospl_uint32 len);
+static zpl_socket_t sock;
+static int kernel_driver_recv_handle(zpl_uint8 *buf, zpl_uint32 len);
 
 static int kernel_driver_socket_init(ifindex_t ifindex)
 {
-	sock = raw_sock_create(SOCK_RAW, /*ETH_P_IP|ETH_P_ARP|*/ETH_P_ALL);
-	if(sock)
+	sock = ipstack_sock_raw_create(IPCOM_STACK, SOCK_RAW, /*ETH_P_IP|ETH_P_ARP|*/ETH_P_ALL);
+	if(!ipstack_invalid(sock))
 	{
-		if(raw_sock_bind(sock, AF_PACKET, /*ETH_P_IP|ETH_P_ARP|*/ETH_P_ALL, ifindex) == OK)
+		if(ipstack_sock_raw_bind(sock, AF_PACKET, /*ETH_P_IP|ETH_P_ARP|*/ETH_P_ALL, ifindex) == OK)
 		{
 			/*
 			 * 如果IP_HDRINCL未开启，由进程让内核发送的数据是从IP首部之后的第一个字节开始的，内核会自动构造合适的IP
 			 *	如果IP_HDRINGL开启，进程需要自行构造IP包
 			*/
-			ospl_uint32 val = 1;
-			if (setsockopt(sock, IPPROTO_IP, IP_HDRINCL, val, sizeof(int)))
+			zpl_uint32 val = 1;
+			if (ipstack_setsockopt(sock, IPPROTO_IP, IP_HDRINCL, val, sizeof(int)))
 			{
-				close(sock);
+				ipstack_close(sock);
 				return ERROR;
 			}
 			return OK;
@@ -178,17 +171,17 @@ static int kernel_driver_socket_init(ifindex_t ifindex)
 }
 
 
-static int kernel_driver_recv(int fd)
+static int kernel_driver_recv(zpl_socket_t fd)
 {
 	char 				cbuf [256];
 	ssize_t			 	len;
-	struct msghdr		 m;
-	//struct cmsghdr		*cm = NULL;
-	struct iovec		 iov[1];
-	struct sockaddr_storage	 ss;
+	struct ipstack_msghdr		 m;
+	//struct ipstack_cmsghdr		*cm = NULL;
+	struct ipstack_iovec		 iov[1];
+	struct ipstack_sockaddr_storage	 ss;
 	//struct sockaddr_in	*sin4 = NULL;
 
-	ospl_uint8		 packetbuf[1024];
+	zpl_uint8		 packetbuf[1024];
 	//int ifindex = 0;
 
 
@@ -203,7 +196,7 @@ static int kernel_driver_recv(int fd)
 	m.msg_control = cbuf;
 	m.msg_controllen = sizeof(cbuf);
 
-	if ((len = recvmsg(fd, &m, 0)) < 0) {
+	if ((len = ipstack_recvmsg(fd, &m, 0)) < 0) {
 		zlog_warn(MODULE_PAL, "receiving a ARP message failed: %s", strerror(errno));
 		return -1;
 	}
@@ -217,21 +210,21 @@ static int kernel_driver_recv(int fd)
 
 static int kernel_driver_thread(struct eloop *eloop)
 {
-	int fd = ELOOP_FD(eloop);
+	zpl_socket_t fd = ELOOP_FD(eloop);
 
-	if(master_eloop[MODULE_KERNEL])
-		eloop_add_read(master_eloop[MODULE_KERNEL], kernel_driver_thread, NULL, fd);
+	if(eloop_master_module_lookup(MODULE_KERNEL))
+		eloop_add_read(eloop_master_module_lookup(MODULE_KERNEL), kernel_driver_thread, NULL, fd);
 
 	return kernel_driver_recv(fd);
 }
 
-static int kernel_driver_recv_handle(ospl_uint8 *buf, ospl_uint32 len)
+static int kernel_driver_recv_handle(zpl_uint8 *buf, zpl_uint32 len)
 {
 	//struct ether_header *eth = NULL;
 	//eth = (struct ether_header *)(buf);
 	char debug_buf[1024];
 	char tmp[32];
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < 64; i++)
 	{
 		sprintf(tmp, "0x02%x", buf[i]);
@@ -240,27 +233,27 @@ static int kernel_driver_recv_handle(ospl_uint8 *buf, ospl_uint32 len)
 	return 0;
 }
 
-/*static int kernel_driver_send_ip_handle(int sock, int ifindex, ospl_uint8 *buf, ospl_uint32 len)
+/*static int kernel_driver_send_ip_handle(int sock, int ifindex, zpl_uint8 *buf, zpl_uint32 len)
 {
-	return raw_sock_sendto(sock, AF_PACKET, ETH_P_IP, ifindex, buf, buf, len);
+	return os_sock_raw_sendto(sock, AF_PACKET, ETH_P_IP, ifindex, buf, buf, len);
 }
 
-static int kernel_driver_send_arp_handle(int sock, int ifindex, ospl_uint8 *buf, ospl_uint32 len)
+static int kernel_driver_send_arp_handle(int sock, int ifindex, zpl_uint8 *buf, zpl_uint32 len)
 {
-	return raw_sock_sendto(sock, AF_PACKET, ETH_P_ARP, ifindex, buf, buf, len);
+	return os_sock_raw_sendto(sock, AF_PACKET, ETH_P_ARP, ifindex, buf, buf, len);
 }
 
-static int kernel_driver_send_rarp_handle(int sock, int ifindex, ospl_uint8 *buf, ospl_uint32 len)
+static int kernel_driver_send_rarp_handle(int sock, int ifindex, zpl_uint8 *buf, zpl_uint32 len)
 {
-	return raw_sock_sendto(sock, AF_PACKET, ETH_P_RARP, ifindex, buf, buf, len);
+	return os_sock_raw_sendto(sock, AF_PACKET, ETH_P_RARP, ifindex, buf, buf, len);
 }*/
 
 int kernel_driver_init()
 {
 	if(kernel_driver_socket_init(if_nametoindex("eth0")) == OK)
 	{
-		if(master_eloop[MODULE_KERNEL])
-			eloop_add_read(master_eloop[MODULE_KERNEL], kernel_driver_thread, NULL, sock);
+		if(eloop_master_module_lookup(MODULE_KERNEL))
+			eloop_add_read(eloop_master_module_lookup(MODULE_KERNEL), kernel_driver_thread, NULL, sock);
 	}
 	return OK;
 }

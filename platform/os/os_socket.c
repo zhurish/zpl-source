@@ -5,209 +5,198 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include <stdio.h>
-#include <sys/types.h>
-#include <dirent.h>
-#include <stdlib.h>
-#include <string.h>
-//#include <string.h>
+#include "os_include.h"
+#include "zpl_include.h"
 #include <log.h>
-#include <os_socket.h>
 #include <sys/un.h>
 
-
-
-int sock_create(ospl_bool tcp)
+int os_sock_create(zpl_bool tcp)
 {
-	int rc = 0;//, ret;
-	//struct sockaddr_in serv;
-	//int flag = 1;
+	int rc = 0; //, ret;
+	// struct sockaddr_in serv;
+	// int flag = 1;
 
 	/* socket creation */
-	rc = socket(AF_INET, tcp ? SOCK_STREAM : SOCK_DGRAM, tcp ? IPPROTO_TCP:IPPROTO_UDP);
+	rc = socket(AF_INET, tcp ? SOCK_STREAM : SOCK_DGRAM, tcp ? IPPROTO_TCP : IPPROTO_UDP);
 	if (rc < 0)
 	{
-		fprintf(stderr, "cannot open socket\n");
+		_OS_ERROR( "cannot open socket\n");
 		return ERROR;
 	}
 
-/*	if (setsockopt(rc, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int)) < 0)
-	{
-		fprintf(stderr, "cannot SO_REUSEADDR socket\n");
-		close(rc);
-		return ERROR;
-	}*/
+	/*	if (setsockopt(rc, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int)) < 0)
+		{
+			_OS_ERROR( "cannot SO_REUSEADDR socket\n");
+			close(rc);
+			return ERROR;
+		}*/
 	return rc;
 }
 
-int sock_bind(int sock, char *ipaddress, ospl_uint16 port)
+int os_sock_bind(int sock, char *ipaddress, zpl_uint16 port)
 {
 	struct sockaddr_in serv;
-	int ret = 0;//, flag = 1;
+	int ret = 0; //, flag = 1;
 	/* bind local server port */
 	serv.sin_family = AF_INET;
 	if (ipaddress)
-		serv.sin_addr.s_addr = inet_addr(ipaddress);
+		serv.sin_addr.s_addr = ipstack_inet_addr(ipaddress);
 	else
 		serv.sin_addr.s_addr = htonl(INADDR_ANY);
 	serv.sin_port = htons(port);
 
-	ret = bind(sock, (struct sockaddr *) &serv, sizeof(serv));
+	ret = bind(sock, (struct sockaddr *)&serv, sizeof(serv));
 	if (ret < 0)
 	{
-		fprintf(stderr, "cannot bind port number %d(%s) \n", port,
-				strerror(errno));
-		return ERROR;;
+		_OS_ERROR( "cannot bind(%d) port number %d(%s) \n", sock, port,strerror(errno));
+		return ERROR;
+		;
 	}
 	return OK;
 }
 
-int sock_listen(int sock, ospl_uint32 listennum)
+int os_sock_listen(int sock, zpl_uint32 listennum)
 {
-	//struct sockaddr_in serv;
+	// struct sockaddr_in serv;
 	int ret = 0;
 	ret = listen(sock, listennum);
 	if (ret < 0)
 	{
-		fprintf(stderr, "cannot listen %s \n",
-				strerror(errno));
-		return ERROR;;
+		_OS_ERROR( "cannot listen(%d) %s \n",sock,strerror(errno));
+		return ERROR;
+		;
 	}
 	return OK;
 }
 
-int sock_accept (int accept_sock, void *p)
+int os_sock_accept(int accept_sock, void *p)
 {
 	int sock;
-	ospl_uint32 client_len;
+	zpl_uint32 client_len;
 	struct sockaddr_in client;
 
-	memset (&client, 0, sizeof (struct sockaddr_in));
-	client_len = sizeof (struct sockaddr_in);
+	memset(&client, 0, sizeof(struct sockaddr_in));
+	client_len = sizeof(struct sockaddr_in);
 
-	sock = accept (accept_sock, (struct sockaddr *) &client,
-			(socklen_t *) &client_len);
-	if((char *)p)
+	sock = accept(accept_sock, (struct sockaddr *)&client,
+				  (socklen_t *)&client_len);
+	if ((char *)p)
 	{
-		os_memcpy((char*)p, &client, sizeof(client));
+		os_memcpy((char *)p, &client, sizeof(client));
 	}
 	return sock;
 }
 
-
-
-
-int tcp_sock_state (int sock)
+int os_tcp_sock_state(int sock)
 {
-	ospl_uint32 client_len;
+	zpl_uint32 client_len;
 	struct tcp_info client;
 
-	memset (&client, 0, sizeof (struct tcp_info));
-	client_len = sizeof (struct tcp_info);
+	memset(&client, 0, sizeof(struct tcp_info));
+	client_len = sizeof(struct tcp_info);
 
-	sock = getsockopt (sock, IPPROTO_TCP, TCP_INFO,  &client,
-			(socklen_t *) &client_len);
+	sock = getsockopt(sock, IPPROTO_TCP, TCP_INFO, &client,
+					  (socklen_t *)&client_len);
 
 	return client.tcpi_state;
 }
 
-int sock_connect(int sock, char *ipaddress, ospl_uint16 port)
+int os_sock_connect(int sock, char *ipaddress, zpl_uint16 port)
 {
 	int ret = 0;
-	//printf("----------%s-----------------host=%s\r\n",__func__,ipaddress);
+	// _OS_ERROR("----------%s-----------------host=%s\r\n",__func__,ipaddress);
 	if (ipaddress)
 	{
 		struct sockaddr_in serv;
 		/* bind local server port */
 		serv.sin_family = AF_INET;
-		serv.sin_addr.s_addr = inet_addr(ipaddress);
+		serv.sin_addr.s_addr = ipstack_inet_addr(ipaddress);
 		serv.sin_port = htons(port);
 
-		ret = connect(sock, (struct sockaddr *) &serv, sizeof(serv));
+		ret = connect(sock, (struct sockaddr *)&serv, sizeof(serv));
 		if (ret < 0)
 		{
-			fprintf(stderr, "cannot connect to %s:%d(%s) \n", ipaddress, port,
+			_OS_ERROR( "cannot connect(%d) to %s:%d(%s) \n", sock, ipaddress, port,
 					strerror(errno));
-			return ERROR;;
+			return ERROR;
+			;
 		}
 		return OK;
 	}
 	return ERROR;
 }
 
-int sock_connect_timeout(int sock, char *ipaddress, ospl_uint16 port, ospl_uint32 timeout_ms)
+int os_sock_connect_timeout(int sock, char *ipaddress, zpl_uint16 port, zpl_uint32 timeout_ms)
 {
 	int ret = 0;
 
 	if (ipaddress && sock > 0)
 	{
-	    fd_set writefds;
-	    int sockerror = 0;
-	    socklen_t length = sizeof( sockerror );
+		fd_set writefds;
+		int sockerror = 0;
+		socklen_t length = sizeof(sockerror);
 		struct sockaddr_in serv;
 		/* bind local server port */
 		serv.sin_family = AF_INET;
-		serv.sin_addr.s_addr = inet_addr(ipaddress);
+		serv.sin_addr.s_addr = ipstack_inet_addr(ipaddress);
 		serv.sin_port = htons(port);
-		if(os_get_blocking(sock) == 1)
+		if (os_get_blocking(sock) == 1)
 			os_set_nonblocking(sock);
-		ret = connect(sock, (struct sockaddr *) &serv, sizeof(serv));
+		ret = connect(sock, (struct sockaddr *)&serv, sizeof(serv));
 		if (ret < 0)
 		{
-		    //unblock mode --> connect return immediately! ret = -1 & errno=EINPROGRESS
-		    if ( errno != EINPROGRESS )
-		    {
-		        printf( "unblock connect failed!\n" );
-		        return ERROR;
-		    }
-		    else if (errno == EINPROGRESS)
-		    {
-		        printf( "unblock mode socket is connecting...\n" );
-		    }
-			fprintf(stderr, "cannot connect to %s:%d(%s) \n", ipaddress, port,
+			// unblock mode --> connect return immediately! ret = -1 & errno=EINPROGRESS
+			if (errno != EINPROGRESS)
+			{
+				_OS_ERROR("unblock connect(%d) failed!\n", sock);
+				return ERROR;
+			}
+			else if (errno == EINPROGRESS)
+			{
+				_OS_ERROR("unblock mode socket(%d) is connecting...\n",sock);
+			}
+			_OS_ERROR( "cannot connect(%d) to %s:%d(%s) \n", sock,ipaddress, port,
 					strerror(errno));
-			return ERROR;;
+			return ERROR;
+			;
 		}
-	    FD_ZERO( &writefds );
-	    FD_SET( sock, &writefds );
-		ret = os_select_wait(sock+1, NULL, &writefds, timeout_ms);
-	    //use select to check write event, if the socket is writable, then
-	    //connect is complete successfully!
-		if(ret == OS_TIMEOUT)
+		FD_ZERO(&writefds);
+		FD_SET(sock, &writefds);
+		ret = os_select_wait(sock + 1, NULL, &writefds, timeout_ms);
+		// use select to check write event, if the socket is writable, then
+		// connect is complete successfully!
+		if (ret == OS_TIMEOUT)
 		{
-	        printf( "connect timeout:%s\n", ipaddress);
-	        return OS_TIMEOUT;
+			_OS_WARN("connect(%d) timeout:%s\n", sock, ipaddress);
+			return OS_TIMEOUT;
 		}
-		if(ret < 0)
+		if (ret < 0)
 		{
-	        printf( "connect error %s\n" ,strerror(errno));
-	        return ERROR;
+			_OS_ERROR("connect(%d) %s error %s\n", sock, ipaddress, strerror(errno));
+			return ERROR;
 		}
-	    if ( ! FD_ISSET( sock, &writefds  ) )
-	    {
-	        printf( "no events on sockfd found\n" );
-	        return ERROR;
-	    }
-	    if( getsockopt( sock, SOL_SOCKET, SO_ERROR, &sockerror, &length ) < 0 )
-	    {
-	        printf( "get socket option failed\n" );
-	        return ERROR;
-	    }
+		if (!FD_ISSET(sock, &writefds))
+		{
+			_OS_ERROR("no events on sockfd(%d) found\n", sock);
+			return ERROR;
+		}
+		if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &sockerror, &length) < 0)
+		{
+			_OS_ERROR("get socket(%d) option failed\n",sock);
+			return ERROR;
+		}
 
-	    if( sockerror != 0 )
-	    {
-	        printf( "connection failed after select with the error: %d \n", sockerror );
-	        return ERROR;
-	    }
+		if (sockerror != 0)
+		{
+			_OS_ERROR("connection failed after select(%d) with the error: %d \n", sock, sockerror);
+			return ERROR;
+		}
 		return OK;
 	}
 	return ERROR;
 }
 
-
-
-int sock_client_write(int fd, char *ipaddress, ospl_uint16 port, char *buf, ospl_uint32 len)
+int os_sock_client_write(int fd, char *ipaddress, zpl_uint16 port, char *buf, zpl_uint32 len)
 {
 	int ret = ERROR;
 	if (buf && ipaddress)
@@ -215,34 +204,34 @@ int sock_client_write(int fd, char *ipaddress, ospl_uint16 port, char *buf, ospl
 		struct sockaddr_in serv;
 		/* bind local server port */
 		serv.sin_family = AF_INET;
-		serv.sin_addr.s_addr = inet_addr(ipaddress);
+		serv.sin_addr.s_addr = ipstack_inet_addr(ipaddress);
 		serv.sin_port = htons(port);
 
-		ret = sendto(fd, buf, len, 0, (struct sockaddr *) &serv, sizeof(serv));
+		ret = sendto(fd, buf, len, 0, (struct sockaddr *)&serv, sizeof(serv));
 		if (ret < 0)
 		{
-			fprintf(stderr, "cannot sendto to %s:%d(%s) \n", ipaddress, port,
+			_OS_ERROR( "cannot sendto(%d) to %s:%d(%s) \n", fd, ipaddress, port,
 					strerror(errno));
-			return ERROR;;
+			return ERROR;
+			;
 		}
 		return ret;
 	}
 	return ret;
 }
 
-
-int raw_sock_create(ospl_int style, ospl_uint16 protocol)
+int os_sock_raw_create(zpl_int style, zpl_uint16 protocol)
 {
 	int fd = 0;
 	if ((fd = socket(AF_PACKET, style, htons(protocol))) < 0)
 	{
-		fprintf(stderr, "failed to open raw socket (%s)", strerror(errno));
+		_OS_ERROR( "failed to open raw socket (%s)", strerror(errno));
 		return (-1);
 	}
 	return fd;
 }
 
-int raw_sock_bind(int fd, ospl_int family, ospl_uint16 protocol, ospl_int ifindex)
+int os_sock_raw_bind(int fd, zpl_int family, zpl_uint16 protocol, zpl_int ifindex)
 {
 	int ret = 0;
 	struct sockaddr_ll sock;
@@ -250,19 +239,19 @@ int raw_sock_bind(int fd, ospl_int family, ospl_uint16 protocol, ospl_int ifinde
 	sock.sll_family = family;
 	sock.sll_protocol = htons(protocol);
 	sock.sll_ifindex = ifindex;
-	//zlog_debug(MODULE_DHCP, "Can not bind raw socket(%s)", strerror(errno));
+	// zlog_debug(MODULE_DHCP, "Can not bind raw socket(%s)", strerror(errno));
 	/*sock.sll_hatype = ARPHRD_???;*/
 	/*sock.sll_pkttype = PACKET_???;*/
 	/*sock.sll_halen = ???;*/
 	/*sock.sll_addr[8] = ???;*/
-	ret = bind(fd, (struct sockaddr *) &sock, sizeof(sock));
-	if(ret == 0)
+	ret = bind(fd, (struct sockaddr *)&sock, sizeof(sock));
+	if (ret == 0)
 		return OK;
 	return ERROR;
 }
 
-int raw_sock_sendto(int fd, ospl_int family, ospl_uint16 protocol, ospl_int ifindex,
-		ospl_uint8 *dstmac, const char *data, ospl_uint32 len)
+int os_sock_raw_sendto(int fd, zpl_int family, zpl_uint16 protocol, zpl_int ifindex,
+					   zpl_uint8 *dstmac, const char *data, zpl_uint32 len)
 {
 	struct sockaddr_ll dest_sll;
 
@@ -279,30 +268,29 @@ int raw_sock_sendto(int fd, ospl_int family, ospl_uint16 protocol, ospl_int ifin
 	memcpy(dest_sll.sll_addr, dstmac, 6);
 
 	result = sendto(fd, data, len, /*flags:*/ 0,
-			(struct sockaddr *) &dest_sll, sizeof(dest_sll));
+					(struct sockaddr *)&dest_sll, sizeof(dest_sll));
 	return result;
 }
 
-
-int unix_sockpair_create(ospl_bool tcp, int *rfd, int *wfd)
+int os_unix_sockpair_create(zpl_bool tcp, int *rfd, int *wfd)
 {
 	int fd[2];
-	if(socketpair (AF_UNIX, tcp ? SOCK_STREAM : SOCK_DGRAM, tcp ? IPPROTO_TCP:IPPROTO_UDP, fd) == 0)
+	if (socketpair(AF_UNIX, tcp ? SOCK_STREAM : SOCK_DGRAM, tcp ? IPPROTO_TCP : IPPROTO_UDP, fd) == 0)
 	{
-		if(rfd)
+		if (rfd)
 			*rfd = fd[0];
-		if(wfd)
+		if (wfd)
 			*wfd = fd[1];
 		return OK;
 	}
 	return ERROR;
 }
 
-int unix_sock_server_create(ospl_bool tcp, const char *name)
+int os_sock_unix_server_create(zpl_bool tcp, const char *name)
 {
 	int ret = 0;
 	int sock = 0;
-	ospl_uint32 len = 0;
+	zpl_uint32 len = 0;
 	char path[128];
 	mode_t old_mask;
 	struct sockaddr_un serv;
@@ -311,13 +299,13 @@ int unix_sock_server_create(ospl_bool tcp, const char *name)
 	os_memset(path, 0, sizeof(path));
 	os_snprintf(path, sizeof(path), "%s/%s.sock", OS_SOCKET_BASE, name);
 	/* Set umask */
-	old_mask = umask (0007);
+	old_mask = umask(0007);
 	unlink(path);
 	/* Make UNIX domain socket. */
-	sock = socket(AF_UNIX, tcp ? SOCK_STREAM : SOCK_DGRAM, 0/*tcp ? IPPROTO_TCP:IPPROTO_UDP*/);
+	sock = socket(AF_UNIX, tcp ? SOCK_STREAM : SOCK_DGRAM, 0 /*tcp ? IPPROTO_TCP:IPPROTO_UDP*/);
 	if (sock < 0)
 	{
-		fprintf(stderr, "Cannot create unix stream socket: %s",
+		_OS_ERROR( "Cannot create unix stream socket: %s",
 				strerror(errno));
 		return ERROR;
 	}
@@ -332,10 +320,10 @@ int unix_sock_server_create(ospl_bool tcp, const char *name)
 	len = sizeof(serv.sun_family) + strlen(serv.sun_path);
 #endif /* HAVE_STRUCT_SOCKADDR_UN_SUN_LEN */
 
-	ret = bind(sock, (struct sockaddr *) &serv, len);
+	ret = bind(sock, (struct sockaddr *)&serv, len);
 	if (ret < 0)
 	{
-		fprintf(stderr, "Cannot bind path %s: %s", path, strerror(errno));
+		_OS_ERROR( "Cannot bind(%d) path %s: %s", sock, path, strerror(errno));
 		close(sock); /* Avoid sd leak. */
 		return ERROR;
 	}
@@ -344,40 +332,39 @@ int unix_sock_server_create(ospl_bool tcp, const char *name)
 		ret = listen(sock, 5);
 		if (ret < 0)
 		{
-			fprintf(stderr, "listen(fd %d) failed: %s", sock, strerror(errno));
+			_OS_ERROR( "listen(fd %d) failed: %s", sock, strerror(errno));
 			close(sock); /* Avoid sd leak. */
 			return ERROR;
 		}
 	}
-	umask (old_mask);
+	umask(old_mask);
 
 	return sock;
 }
 
-int unix_sock_accept (int accept_sock, void *p)
+int os_sock_unix_accept(int accept_sock, void *p)
 {
 	int sock = 0;
-	ospl_uint32 client_len = 0;
+	zpl_uint32 client_len = 0;
 	struct sockaddr_un client;
 
-	memset (&client, 0, sizeof (struct sockaddr_un));
-	client_len = sizeof (struct sockaddr_un);
+	memset(&client, 0, sizeof(struct sockaddr_un));
+	client_len = sizeof(struct sockaddr_un);
 
-	sock = accept (accept_sock, (struct sockaddr *) &client,
-			(socklen_t *) &client_len);
-	if(sock && (char *)p)
+	sock = accept(accept_sock, (struct sockaddr *)&client,
+				  (socklen_t *)&client_len);
+	if (sock && (char *)p)
 	{
-		os_memcpy((char*)p, &client, sizeof(client));
+		os_memcpy((char *)p, &client, sizeof(client));
 	}
 	return sock;
 }
 
-
-int unix_sock_client_create (ospl_bool tcp, const char *name)
+int os_sock_unix_client_create(zpl_bool tcp, const char *name)
 {
 	int ret;
 	int sock;
-	ospl_uint32 len;
+	zpl_uint32 len;
 	struct sockaddr_un addr;
 	struct stat s_stat;
 	char path[128];
@@ -390,7 +377,7 @@ int unix_sock_client_create (ospl_bool tcp, const char *name)
 	ret = stat(path, &s_stat);
 	if (ret < 0 && errno != ENOENT)
 	{
-		fprintf(stderr, "vtysh_connect(%s): stat = %s\n", path,
+		_OS_ERROR( "sock(%s): stat = %s\n", path,
 				strerror(errno));
 		return ERROR;
 	}
@@ -399,15 +386,15 @@ int unix_sock_client_create (ospl_bool tcp, const char *name)
 	{
 		if (!S_ISSOCK(s_stat.st_mode))
 		{
-			fprintf(stderr, "vtysh_connect(%s): Not a socket\n", path);
+			_OS_ERROR( "sock(%s): Not a socket\n", path);
 			return ERROR;
 		}
 	}
 
-	sock = socket(AF_UNIX, tcp ? SOCK_STREAM : SOCK_DGRAM, 0/*tcp ? IPPROTO_TCP:IPPROTO_UDP*/);
+	sock = socket(AF_UNIX, tcp ? SOCK_STREAM : SOCK_DGRAM, 0 /*tcp ? IPPROTO_TCP:IPPROTO_UDP*/);
 	if (sock < 0)
 	{
-		fprintf(stderr, "vtysh_connect(%s): socket = %s\n", path,
+		_OS_ERROR( "sock(%s): socket = %s\n", path,
 				strerror(errno));
 		return ERROR;
 	}
@@ -421,10 +408,10 @@ int unix_sock_client_create (ospl_bool tcp, const char *name)
 	len = sizeof(addr.sun_family) + strlen(addr.sun_path);
 #endif /* HAVE_STRUCT_SOCKADDR_UN_SUN_LEN */
 
-	ret = connect(sock, (struct sockaddr *) &addr, len);
+	ret = connect(sock, (struct sockaddr *)&addr, len);
 	if (ret < 0)
 	{
-		fprintf(stderr, "vtysh_connect(%s): connect = %s\n", path,
+		_OS_ERROR( "ipstack sock(%d) (%s): connect = %s\n", sock, path,
 				strerror(errno));
 		close(sock);
 		return ERROR;
@@ -435,7 +422,7 @@ int unix_sock_client_create (ospl_bool tcp, const char *name)
 /*
  * just for unix UDP
  */
-int unix_sock_client_write(int fd, char *name, char *buf, ospl_uint32 len)
+int os_sock_unix_client_write(int fd, char *name, char *buf, zpl_uint32 len)
 {
 	int ret = ERROR;
 	if (buf && name)
@@ -456,15 +443,866 @@ int unix_sock_client_write(int fd, char *name, char *buf, ospl_uint32 len)
 		len = sizeof(serv.sun_family) + strlen(serv.sun_path);
 #endif /* HAVE_STRUCT_SOCKADDR_UN_SUN_LEN */
 
-		ret = sendto(fd, buf, len, 0, (struct sockaddr *) &serv, sizeof(serv));
+		ret = sendto(fd, buf, len, 0, (struct sockaddr *)&serv, sizeof(serv));
 		if (ret < 0)
 		{
-			fprintf(stderr, "cannot sendto to %s(%s) \n", path,
+			_OS_ERROR( "cannot sendto(%d) to %s(%s) \n", fd, path,
 					strerror(errno));
-			return ERROR;;
+			return ERROR;
+			;
 		}
 		return ret;
 	}
 	return ret;
 }
+
+int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, zpl_uint32 timeout_ms)
+{
+	zpl_uint32 num = 0;
+	struct timeval timer_wait = {.tv_sec = 1, .tv_usec = 0};
+	timer_wait.tv_sec = timeout_ms / 1000;
+	timer_wait.tv_usec = (timeout_ms % 1000) * 1000;
+	while (1)
+	{
+		num = select(maxfd, rfdset, wfdset, NULL, timeout_ms ? &timer_wait : NULL);
+		if (num < 0)
+		{
+			// fprintf(stdout, "%s (errno=%d -> %s)", __func__, errno, strerror(errno));
+			if (errno == EINTR || errno == EAGAIN)
+			{
+				// fprintf(stdout, "%s (errno=%d -> %s)", __func__, errno, strerror(errno));
+				continue;
+			}
+			/*			if (errno == EPIPE || errno == EBADF || errno == EIO ECONNRESET ECONNABORTED ENETRESET ECONNREFUSED)
+						{
+							return RES_CLOSE;
+						}*/
+			return -1;
+		}
+		else if (num == 0)
+		{
+			return OS_TIMEOUT;
+		}
+		return num;
+	}
+	return -1;
+}
+
+int os_write_timeout(int fd, zpl_char *buf, zpl_uint32 len, zpl_uint32 timeout_ms)
+{
+	int ret = 0;
+	fd_set writefds;
+	FD_ZERO(&writefds);
+	FD_SET(fd, &writefds);
+	ret = os_select_wait(fd + 1, NULL, &writefds, timeout_ms);
+	if (ret == OS_TIMEOUT)
+	{
+		_OS_WARN("os_select_wait (%d) timeout on write\n",fd);
+		return OS_TIMEOUT;
+	}
+	if (ret < 0)
+	{
+		_OS_ERROR("os_select_wait to write(%d) %s\n", fd, strerror(errno));
+		return ERROR;
+	}
+	if (!FD_ISSET(fd, &writefds))
+	{
+		_OS_ERROR("no events on sockfd(%d) found\n",fd);
+		return ERROR;
+	}
+	return write(fd, buf, len);
+}
+
+int os_read_timeout(int fd, zpl_char *buf, zpl_uint32 len, zpl_uint32 timeout_ms)
+{
+	int ret = 0;
+	fd_set readfds;
+	FD_ZERO(&readfds);
+	FD_SET(fd, &readfds);
+	ret = os_select_wait(fd + 1, &readfds, NULL, timeout_ms);
+	if (ret == OS_TIMEOUT)
+	{
+		//_OS_WARN("os_select_wait timeout on read\n");
+		return OS_TIMEOUT;
+	}
+	if (ret < 0)
+	{
+		_OS_ERROR("os_select_wait to read(%d) %s\n", fd, strerror(errno));
+		return ERROR;
+	}
+	if (!FD_ISSET(fd, &readfds))
+	{
+		_OS_ERROR("no events on sockfd(%d) found\n", fd);
+		return ERROR;
+	}
+	return read(fd, buf, len);
+}
+
+int os_write_iov(int fd, int type, struct iovec *iov, int iovcnt)
+{
+	int written = 0;
+
+		written = writev(fd, iov, iovcnt);
+
+	/* only place where written should be sign compared */
+	if (written < 0)
+	{
+		if (!((((errno) == EAGAIN) || ((errno) == EWOULDBLOCK) || ((errno) == EINTR))))
+			return ERROR;
+	}
+	return written;
+}
+
+int os_writemsg(int sock, char *m, int len, char *m1, int len1)
+{
+	struct msghdr msg;
+	struct iovec iov[3];
+	int iovlen = 2;
+	int error = 0;
+
+	iov[0].iov_base = m;
+	iov[0].iov_len = len;
+
+	iov[1].iov_base = m1;
+	iov[1].iov_len = len1;
+	msg.msg_iov = &iov[0];
+	msg.msg_iovlen = iovlen;
+	msg.msg_flags = 0;
+	error = sendmsg((int)sock, &msg, 0);
+
+	if (error == -1 && (errno == EINVAL || errno == ENETUNREACH || errno == EFAULT))
+	{
+		fprintf(stdout, "============rtp_sendmsg=========%s\r\n", strerror(errno));
+		msg.msg_controllen = 0;
+		msg.msg_control = NULL;
+		error = sendmsg((int)sock, &msg, 0);
+	}
+	else if (error < 0 && errno == EAGAIN)
+	{
+		fprintf(stdout, "============rtp_sendmsg====aaa=====%s\r\n", strerror(errno));
+		error = sendmsg((int)sock, &msg, 0);
+	}
+	return error;
+}
+
+/*
+static int rtp_recvmsg(ortp_socket_t socket, mblk_t *msg, int flags, struct sockaddr *from, socklen_t *fromlen, struct msghdr *msghdr, int bufsz) {
+	struct iovec iov;
+	int error = 0;
+
+	memset(&iov, 0, sizeof(iov));
+	iov.iov_base = msg->b_wptr;
+	iov.iov_len = bufsz;
+	if ((from != NULL) && (fromlen != NULL)) {
+		msghdr->msg_name = from;
+		msghdr->msg_namelen = *fromlen;
+	}
+	msghdr->msg_iov = &iov;
+	msghdr->msg_iovlen = 1;
+	error = recvmsg(socket, msghdr, flags);
+	if (fromlen != NULL)
+		*fromlen = msghdr->msg_namelen;
+	return error;
+}
+*/
+
+/*************************************************************************/
+
+zpl_socket_t ipstack_sock_create(zpl_ipstack stack, zpl_bool tcp)
+{
+	zpl_socket_t rc; //, ret;
+	// struct sockaddr_in serv;
+	// int flag = 1;
+
+	/* socket creation */
+	rc = ipstack_socket(stack, AF_INET, tcp ? SOCK_STREAM : SOCK_DGRAM, tcp ? IPPROTO_TCP : IPPROTO_UDP);
+	if (ipstack_invalid(rc))
+	{
+		_OS_ERROR( "cannot open ipstack socket\n");
+		return rc;
+	}
+
+	/*	if (setsockopt(rc, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int)) < 0)
+		{
+			_OS_ERROR( "cannot SO_REUSEADDR socket\n");
+			close(rc);
+			return ERROR;
+		}*/
+	return rc;
+}
+
+int ipstack_sock_bind(zpl_socket_t sock, char *ipaddress, zpl_uint16 port)
+{
+	struct ipstack_sockaddr_in serv;
+	int ret = 0; //, flag = 1;
+	/* bind local server port */
+	serv.sin_family = AF_INET;
+	if (ipaddress)
+		serv.sin_addr.s_addr = ipstack_inet_addr(ipaddress);
+	else
+		serv.sin_addr.s_addr = htonl(INADDR_ANY);
+	serv.sin_port = htons(port);
+
+	ret = ipstack_bind(sock, (struct ipstack_sockaddr *)&serv, sizeof(serv));
+	if (ret < 0)
+	{
+		_OS_ERROR( "ipstack sock(%d) cannot bind port number %d(%s) \n",sock._fd, port,
+				strerror(errno));
+		return ERROR;
+		;
+	}
+	return OK;
+}
+
+int ipstack_sock_listen(zpl_socket_t sock, zpl_uint32 listennum)
+{
+	// struct sockaddr_in serv;
+	int ret = 0;
+	ret = ipstack_listen(sock, listennum);
+	if (ret < 0)
+	{
+		_OS_ERROR( "ipstack sock(%d) cannot listen %s \n",sock._fd,
+				strerror(errno));
+		return ERROR;
+		;
+	}
+	return OK;
+}
+
+zpl_socket_t ipstack_sock_accept(zpl_socket_t accept_sock, void *p)
+{
+	zpl_socket_t sock;
+	zpl_uint32 client_len;
+	struct ipstack_sockaddr_in client;
+
+	memset(&client, 0, sizeof(struct ipstack_sockaddr_in));
+	client_len = sizeof(struct ipstack_sockaddr_in);
+
+	sock = ipstack_accept(accept_sock, (struct ipstack_sockaddr *)&client,
+				  (socklen_t *)&client_len);
+	if ((char *)p)
+	{
+		os_memcpy((char *)p, &client, sizeof(client));
+	}
+	return sock;
+}
+
+int ipstack_tcp_sock_state(zpl_socket_t sock)
+{
+	zpl_uint32 client_len;
+	struct tcp_info client;
+
+	memset(&client, 0, sizeof(struct tcp_info));
+	client_len = sizeof(struct tcp_info);
+
+	ipstack_getsockopt(sock, IPPROTO_TCP, TCP_INFO, &client,
+					  (socklen_t *)&client_len);
+
+	return client.tcpi_state;
+}
+
+int ipstack_sock_connect(zpl_socket_t sock, char *ipaddress, zpl_uint16 port)
+{
+	int ret = 0;
+	// _OS_ERROR("----------%s-----------------host=%s\r\n",__func__,ipaddress);
+	if (ipaddress)
+	{
+		struct ipstack_sockaddr_in serv;
+		/* bind local server port */
+		serv.sin_family = AF_INET;
+		serv.sin_addr.s_addr = ipstack_inet_addr(ipaddress);
+		serv.sin_port = htons(port);
+
+		ret = ipstack_connect(sock, (struct ipstack_sockaddr *)&serv, sizeof(serv));
+		if (ret < 0)
+		{
+			_OS_ERROR( "ipstack sock(%d) cannot connect to %s:%d(%s) \n",sock._fd, ipaddress, port,
+					strerror(errno));
+			return ERROR;
+			;
+		}
+		return OK;
+	}
+	return ERROR;
+}
+
+int ipstack_sock_connect_timeout(zpl_socket_t sock, char *ipaddress, zpl_uint16 port, zpl_uint32 timeout_ms)
+{
+	int ret = 0;
+
+	if (ipaddress && !ipstack_invalid(sock))
+	{
+		int sockerror = 0;
+		socklen_t length = sizeof(sockerror);
+		struct ipstack_sockaddr_in serv;
+		/* bind local server port */
+		serv.sin_family = AF_INET;
+		serv.sin_addr.s_addr = ipstack_inet_addr(ipaddress);
+		serv.sin_port = htons(port);
+		if (ipstack_get_blocking(sock) == 1)
+			ipstack_set_nonblocking(sock);
+		ret = ipstack_connect(sock, (struct ipstack_sockaddr *)&serv, sizeof(serv));
+		if (ret < 0)
+		{
+			// unblock mode --> connect return immediately! ret = -1 & errno=EINPROGRESS
+			if (errno != EINPROGRESS)
+			{
+				_OS_ERROR("ipstack sock(%d) unblock connect failed!\n",sock._fd);
+				return ERROR;
+			}
+			else if (errno == EINPROGRESS)
+			{
+				_OS_ERROR("ipstack sock(%d) unblock mode socket is connecting...\n",sock._fd);
+			}
+			_OS_ERROR( "ipstack sock(%d) cannot connect to %s:%d(%s) \n",sock._fd, ipaddress, port,
+					strerror(errno));
+			return ERROR;
+			;
+		}
+		if(is_os_stack(sock))
+		{
+			fd_set writefds;
+			FD_ZERO(&writefds);
+			FD_SET(sock._fd, &writefds);
+			ret = ipstack_select_wait(sock._fd + 1, NULL, &writefds, timeout_ms);
+			// use select to check write event, if the socket is writable, then
+			// connect is complete successfully!
+			if (ret == OS_TIMEOUT)
+			{
+				_OS_WARN("ipstack sock(%d) connect timeout:%s\n",sock._fd, ipaddress);
+				return OS_TIMEOUT;
+			}
+			if (ret < 0)
+			{
+				_OS_ERROR("ipstack sock(%d) connect %s error %s\n",sock._fd, ipaddress, strerror(errno));
+				return ERROR;
+			}
+			if (!FD_ISSET(sock._fd, &writefds))
+			{
+				_OS_ERROR("no events on sockfd(%d) found\n",sock._fd);
+				return ERROR;
+			}
+			if (ipstack_getsockopt(sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_ERROR, &sockerror, &length) < 0)
+			{
+				_OS_ERROR("ipstack sock(%d) get socket option failed\n",sock._fd);
+				return ERROR;
+			}
+			if (sockerror != 0)
+			{
+				_OS_ERROR("ipstack sock(%d) connection failed after select with the error: %d \n",sock._fd, sockerror);
+				return ERROR;
+			}
+		}
+		else if(is_ipcom_stack(sock))
+		{
+			ipstack_fd_set writefds;
+			IPSTACK_FD_ZERO(&writefds);
+			IPSTACK_FD_SET(sock._fd, &writefds);
+			ret = ipstack_select_wait(sock._fd + 1, NULL, &writefds, timeout_ms);
+			// use select to check write event, if the socket is writable, then
+			// connect is complete successfully!
+			if (ret == OS_TIMEOUT)
+			{
+				_OS_WARN("ipstack sock(%d) connect timeout:%s\n",sock._fd, ipaddress);
+				return OS_TIMEOUT;
+			}
+			if (ret < 0)
+			{
+				_OS_ERROR("ipstack sock(%d) connect %s error %s\n",sock._fd, ipaddress, strerror(errno));
+				return ERROR;
+			}
+			if (!IPSTACK_FD_ISSET(sock._fd, &writefds))
+			{
+				_OS_ERROR("no events on sockfd(%d) found\n",sock._fd);
+				return ERROR;
+			}
+			if (ipstack_getsockopt(sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_ERROR, &sockerror, &length) < 0)
+			{
+				_OS_ERROR("ipstack sock(%d) get socket option failed\n",sock._fd);
+				return ERROR;
+			}
+			if (sockerror != 0)
+			{
+				_OS_ERROR("ipstack sock(%d) connection failed after select with the error: %d \n",sock._fd, sockerror);
+				return ERROR;
+			}
+		}
+		return OK;
+	}
+	return ERROR;
+}
+
+int ipstack_sock_client_write(zpl_socket_t fd, char *ipaddress, zpl_uint16 port, char *buf, zpl_uint32 len)
+{
+	int ret = ERROR;
+	if (buf && ipaddress)
+	{
+		struct ipstack_sockaddr_in serv;
+		/* bind local server port */
+		serv.sin_family = AF_INET;
+		serv.sin_addr.s_addr = ipstack_inet_addr(ipaddress);
+		serv.sin_port = htons(port);
+
+		ret = ipstack_sendto(fd, buf, len, 0, (struct ipstack_sockaddr *)&serv, sizeof(serv));
+		if (ret < 0)
+		{
+			_OS_ERROR( "ipstack sock(%d) cannot sendto to %s:%d(%s) \n",fd._fd, ipaddress, port,
+					strerror(errno));
+			return ERROR;
+			;
+		}
+		return ret;
+	}
+	return ret;
+}
+
+zpl_socket_t ipstack_sock_raw_create(zpl_ipstack stack, zpl_int style, zpl_uint16 protocol)
+{
+	zpl_socket_t fd;
+	fd = ipstack_socket(stack, AF_PACKET, style, htons(protocol));
+	if (ipstack_invalid(fd))
+	{
+		_OS_ERROR( "ipstack sock failed to open raw socket(%d) (%s)",fd._fd, strerror(errno));
+		return (fd);
+	}
+	return fd;
+}
+
+int ipstack_sock_raw_bind(zpl_socket_t fd, zpl_int family, zpl_uint16 protocol, zpl_int ifindex)
+{
+	int ret = 0;
+	struct ipstack_sockaddr_ll sock;
+	memset(&sock, 0, sizeof(sock)); /* let's be deterministic */
+	sock.sll_family = family;
+	sock.sll_protocol = htons(protocol);
+	sock.sll_ifindex = ifindex;
+	// zlog_debug(MODULE_DHCP, "Can not bind raw socket(%s)", strerror(errno));
+	/*sock.sll_hatype = ARPHRD_???;*/
+	/*sock.sll_pkttype = PACKET_???;*/
+	/*sock.sll_halen = ???;*/
+	/*sock.sll_addr[8] = ???;*/
+	ret = ipstack_bind(fd, (struct ipstack_sockaddr *)&sock, sizeof(sock));
+	if (ret == 0)
+		return OK;
+	return ERROR;
+}
+
+int ipstack_sock_raw_sendto(zpl_socket_t fd, zpl_int family, zpl_uint16 protocol, zpl_int ifindex,
+					   zpl_uint8 *dstmac, const char *data, zpl_uint32 len)
+{
+	struct ipstack_sockaddr_ll dest_sll;
+
+	int result = -1;
+
+	memset(&dest_sll, 0, sizeof(dest_sll));
+
+	dest_sll.sll_family = family;
+	dest_sll.sll_protocol = htons(protocol);
+	dest_sll.sll_ifindex = (ifindex);
+	/*dest_sll.sll_hatype = ARPHRD_???;*/
+	/*dest_sll.sll_pkttype = PACKET_???;*/
+	dest_sll.sll_halen = 6;
+	memcpy(dest_sll.sll_addr, dstmac, 6);
+
+	result = ipstack_sendto(fd, data, len, /*flags:*/ 0,
+					(struct ipstack_sockaddr *)&dest_sll, sizeof(dest_sll));
+	return result;
+}
+
+int ipstack_unix_sockpair_create(zpl_ipstack stack, zpl_bool tcp, zpl_socket_t *rfd, zpl_socket_t *wfd)
+{
+	zpl_socket_t tpmd[2];
+	if (ipstack_socketpair(stack, AF_UNIX, tcp ? SOCK_STREAM : SOCK_DGRAM, tcp ? IPPROTO_TCP : IPPROTO_UDP, tpmd) == 0)
+	{
+		if(ipstack_invalid(tpmd[0]) || ipstack_invalid(tpmd[1]))
+		{
+			return ERROR;
+		}
+		if (rfd)
+			*rfd = tpmd[0];
+		if (wfd)
+			*wfd = tpmd[1];
+		return OK;
+	}
+	return ERROR;
+}
+
+zpl_socket_t ipstack_sock_unix_server_create(zpl_ipstack stack, zpl_bool tcp, const char *name)
+{
+	int ret = 0;
+	zpl_socket_t sock;
+	zpl_uint32 len = 0;
+	char path[128];
+	mode_t old_mask;
+	struct ipstack_sockaddr_un serv;
+	/* First of all, unlink existing socket */
+
+	os_memset(path, 0, sizeof(path));
+	os_snprintf(path, sizeof(path), "%s/%s.sock", OS_SOCKET_BASE, name);
+	/* Set umask */
+	old_mask = umask(0007);
+	unlink(path);
+	/* Make UNIX domain socket. */
+	sock = ipstack_socket(stack, AF_UNIX, tcp ? SOCK_STREAM : SOCK_DGRAM, 0 /*tcp ? IPPROTO_TCP:IPPROTO_UDP*/);
+	if (ipstack_invalid(sock))
+	{
+		_OS_ERROR( "ipstack sock Cannot create unix stream socket: %s",
+				strerror(errno));
+		return sock;
+	}
+
+	/* Make server socket. */
+	memset(&serv, 0, sizeof(struct ipstack_sockaddr_un));
+	serv.sun_family = AF_UNIX;
+	strncpy(serv.sun_path, path, strlen(path));
+#ifdef HAVE_STRUCT_SOCKADDR_UN_SUN_LEN
+	len = serv.sun_len = SUN_LEN(&serv);
+#else
+	len = sizeof(serv.sun_family) + strlen(serv.sun_path);
+#endif /* HAVE_STRUCT_SOCKADDR_UN_SUN_LEN */
+
+	ret = ipstack_bind(sock, (struct ipstack_sockaddr *)&serv, len);
+	if (ret < 0)
+	{
+		_OS_ERROR( "ipstack sock Cannot bind path %s: %s", path, strerror(errno));
+		ipstack_close(sock); /* Avoid sd leak. */
+		return sock;
+	}
+	if (tcp)
+	{
+		ret = ipstack_listen(sock, 5);
+		if (ret < 0)
+		{
+			_OS_ERROR( "ipstack sock listen(fd %d) failed: %s", sock._fd, strerror(errno));
+			ipstack_close(sock); /* Avoid sd leak. */
+			return sock;
+		}
+	}
+	umask(old_mask);
+
+	return sock;
+}
+
+zpl_socket_t ipstack_sock_unix_accept(zpl_socket_t accept_sock, void *p)
+{
+	zpl_socket_t sock;
+	zpl_uint32 client_len = 0;
+	struct ipstack_sockaddr_un client;
+
+	memset(&client, 0, sizeof(struct ipstack_sockaddr_un));
+	client_len = sizeof(struct ipstack_sockaddr_un);
+
+	sock = ipstack_accept(accept_sock, (struct ipstack_sockaddr *)&client,
+				  (socklen_t *)&client_len);
+	if (!ipstack_invalid(sock) && (char *)p)
+	{
+		os_memcpy((char *)p, &client, sizeof(client));
+	}
+	return sock;
+}
+
+zpl_socket_t ipstack_sock_unix_client_create(zpl_ipstack stack, zpl_bool tcp, const char *name)
+{
+	int ret;
+	zpl_socket_t sock;
+	zpl_uint32 len;
+	struct ipstack_sockaddr_un addr;
+	struct stat s_stat;
+	char path[128];
+	/* First of all, unlink existing socket */
+
+	os_memset(path, 0, sizeof(path));
+	os_snprintf(path, sizeof(path), "%s/%s.sock", OS_SOCKET_BASE, name);
+
+	/* Stat socket to see if we have permission to access it. */
+	ret = stat(path, &s_stat);
+	if (ret < 0 && errno != ENOENT)
+	{
+		_OS_ERROR( "ipstack sock (%s): stat = %s\n", path,
+				strerror(errno));
+		return sock;
+	}
+
+	if (ret >= 0)
+	{
+		if (!S_ISSOCK(s_stat.st_mode))
+		{
+			_OS_ERROR( "ipstack sock(%s): Not a socket\n", path);
+			return sock;
+		}
+	}
+
+	sock = ipstack_socket(stack, AF_UNIX, tcp ? SOCK_STREAM : SOCK_DGRAM, 0 /*tcp ? IPPROTO_TCP:IPPROTO_UDP*/);
+	if (ipstack_invalid(sock))
+	{
+		_OS_ERROR( "ipstack sock(%d) (%s): socket = %s\n",sock._fd, path, strerror(errno));
+		return sock;
+	}
+
+	memset(&addr, 0, sizeof(struct ipstack_sockaddr_un));
+	addr.sun_family = AF_UNIX;
+	strncpy(addr.sun_path, path, strlen(path));
+#ifdef HAVE_STRUCT_SOCKADDR_UN_SUN_LEN
+	len = addr.sun_len = SUN_LEN(&addr);
+#else
+	len = sizeof(addr.sun_family) + strlen(addr.sun_path);
+#endif /* HAVE_STRUCT_SOCKADDR_UN_SUN_LEN */
+
+	ret = ipstack_connect(sock, (struct ipstack_sockaddr *)&addr, len);
+	if (ret < 0)
+	{
+		_OS_ERROR( "ipstack sock(%d) (%s): connect = %s\n",sock._fd, path,
+				strerror(errno));
+		ipstack_close(sock);
+		return sock;
+	}
+	return sock;
+}
+
+/*
+ * just for unix UDP
+ */
+int ipstack_sock_unix_client_write(zpl_socket_t fd, char *name, char *buf, zpl_uint32 len)
+{
+	int ret = ERROR;
+	if (buf && name)
+	{
+		struct ipstack_sockaddr_un serv;
+		char path[128];
+		/* First of all, unlink existing socket */
+
+		os_memset(path, 0, sizeof(path));
+		os_snprintf(path, sizeof(path), "%s/%s.sock", OS_SOCKET_BASE, name);
+
+		memset(&serv, 0, sizeof(struct ipstack_sockaddr_un));
+		serv.sun_family = AF_UNIX;
+		strncpy(serv.sun_path, path, strlen(path));
+#ifdef HAVE_STRUCT_SOCKADDR_UN_SUN_LEN
+		len = serv.sun_len = SUN_LEN(&serv);
+#else
+		len = sizeof(serv.sun_family) + strlen(serv.sun_path);
+#endif /* HAVE_STRUCT_SOCKADDR_UN_SUN_LEN */
+
+		ret = ipstack_sendto(fd, buf, len, 0, (struct sockaddr *)&serv, sizeof(serv));
+		if (ret < 0)
+		{
+			_OS_ERROR( "ipstack sock cannot(%d) sendto to %s(%s) \n",fd._fd, path,
+					strerror(errno));
+			return ERROR;
+		}
+		return ret;
+	}
+	return ret;
+}
+
+
+
+int ipstack_select_wait(int maxfd, ipstack_fd_set *rfdset, ipstack_fd_set *wfdset, zpl_uint32 timeout_ms)
+{
+	zpl_uint32 num = 0;
+	struct ipstack_timeval timer_wait = {.tv_sec = 1, .tv_usec = 0};
+	timer_wait.tv_sec = timeout_ms / 1000;
+	timer_wait.tv_usec = (timeout_ms % 1000) * 1000;
+	while (1)
+	{
+		num = ipstack_select(IPCOM_STACK, maxfd, rfdset, wfdset, NULL, timeout_ms ? &timer_wait : NULL);
+		if (num < 0)
+		{
+			// fprintf(stdout, "%s (errno=%d -> %s)", __func__, errno, strerror(errno));
+			if (errno == EINTR || errno == EAGAIN)
+			{
+				// fprintf(stdout, "%s (errno=%d -> %s)", __func__, errno, strerror(errno));
+				continue;
+			}
+			/*			if (errno == EPIPE || errno == EBADF || errno == EIO ECONNRESET ECONNABORTED ENETRESET ECONNREFUSED)
+						{
+							return RES_CLOSE;
+						}*/
+			return -1;
+		}
+		else if (num == 0)
+		{
+			return OS_TIMEOUT;
+		}
+		return num;
+	}
+	return -1;
+}
+
+int ipstack_write_timeout(zpl_socket_t fd, zpl_char *buf, zpl_uint32 len, zpl_uint32 timeout_ms)
+{
+	int ret = 0;
+	if(is_os_stack(fd))
+	{
+		fd_set writefds;
+		FD_ZERO(&writefds);
+		FD_SET(fd._fd, &writefds);
+		ret = os_select_wait(fd._fd + 1, NULL, &writefds, timeout_ms);
+		if (ret == OS_TIMEOUT)
+		{
+			_OS_ERROR("os_select_wait timeout on write(%d)\n",fd._fd);
+			return OS_TIMEOUT;
+		}
+		if (ret < 0)
+		{
+			_OS_ERROR("os_select_wait to write(%d) error %s\n", fd._fd,strerror(errno));
+			return ERROR;
+		}
+		if (!FD_ISSET(fd._fd, &writefds))
+		{
+			_OS_ERROR("no events on sockfd(%d) found\n",fd._fd);
+			return ERROR;
+		}
+	}
+	else if(is_ipcom_stack(fd))
+	{
+		ipstack_fd_set writefds;
+		IPSTACK_FD_ZERO(&writefds);
+		IPSTACK_FD_SET(fd._fd, &writefds);
+		ret = ipstack_select_wait(fd._fd + 1, NULL, &writefds, timeout_ms);
+		if (ret == OS_TIMEOUT)
+		{
+			_OS_ERROR("ipstack_select_wait timeout on write(%d)\n",fd._fd);
+			return OS_TIMEOUT;
+		}
+		if (ret < 0)
+		{
+			_OS_ERROR("ipstack_select_wait write(%d) error %s\n",fd._fd, strerror(errno));
+			return ERROR;
+		}
+		if (!IPSTACK_FD_ISSET(fd._fd, &writefds))
+		{
+			_OS_ERROR("no events on sockfd(%d) found\n",fd._fd);
+			return ERROR;
+		}
+	}
+	return ipstack_write(fd, buf, len);
+}
+
+int ipstack_read_timeout(zpl_socket_t fd, zpl_char *buf, zpl_uint32 len, zpl_uint32 timeout_ms)
+{
+	int ret = 0;
+	if(is_os_stack(fd))
+	{
+		fd_set readfds;
+		FD_ZERO(&readfds);
+		FD_SET(fd._fd, &readfds);
+		ret = os_select_wait(fd._fd + 1, &readfds, NULL, timeout_ms);
+		if (ret == OS_TIMEOUT)
+		{
+			//_OS_ERROR("os_select_wait timeout on read\n");
+			return OS_TIMEOUT;
+		}
+		if (ret < 0)
+		{
+			_OS_ERROR("os_select_wait read(%d) error %s\n",fd._fd, strerror(errno));
+			return ERROR;
+		}
+		if (!FD_ISSET(fd._fd, &readfds))
+		{
+			_OS_ERROR("no events on sockfd(%d) found\n",fd._fd);
+			return ERROR;
+		}
+	}
+	else if(is_ipcom_stack(fd))
+	{
+		ipstack_fd_set readfds;
+		IPSTACK_FD_ZERO(&readfds);
+		IPSTACK_FD_SET(fd._fd, &readfds);
+		ret = ipstack_select_wait(fd._fd + 1, &readfds, NULL, timeout_ms);
+		if (ret == OS_TIMEOUT)
+		{
+			//_OS_ERROR("os_select_wait timeout on read\n");
+			return OS_TIMEOUT;
+		}
+		if (ret < 0)
+		{
+			_OS_ERROR("ipstack_select_wait read(%d) error %s\n",fd._fd, strerror(errno));
+			return ERROR;
+		}
+		if (!IPSTACK_FD_ISSET(fd._fd, &readfds))
+		{
+			_OS_ERROR("no events on sockfd(%d) found\n",fd._fd);
+			return ERROR;
+		}
+	}
+	return ipstack_read(fd, buf, len);
+}
+
+int ipstack_write_iov(zpl_socket_t fd, int type, struct iovec *iov, int iovcnt)
+{
+	int written = 0;
+
+		written = ipstack_writev(fd, iov, iovcnt);
+
+	/* only place where written should be sign compared */
+	if (written < 0)
+	{
+		if (!((((errno) == EAGAIN) || ((errno) == EWOULDBLOCK) || ((errno) == EINTR))))
+			return ERROR;
+	}
+	return written;
+}
+
+int ipstack_writemsg(zpl_socket_t sock, char *m, int len, char *m1, int len1)
+{
+	struct ipstack_msghdr msg;
+	struct ipstack_iovec iov[3];
+	int iovlen = 2;
+	int error = 0;
+
+	iov[0].iov_base = m;
+	iov[0].iov_len = len;
+
+	iov[1].iov_base = m1;
+	iov[1].iov_len = len1;
+	msg.msg_iov = &iov[0];
+	msg.msg_iovlen = iovlen;
+	msg.msg_flags = 0;
+	error = ipstack_sendmsg(sock, &msg, 0);
+
+	if (error == -1 && (errno == EINVAL || errno == ENETUNREACH || errno == EFAULT))
+	{
+		fprintf(stdout, "============rtp_sendmsg=========%s\r\n", strerror(errno));
+		msg.msg_controllen = 0;
+		msg.msg_control = NULL;
+		error = ipstack_sendmsg(sock, &msg, 0);
+	}
+	else if (error < 0 && errno == EAGAIN)
+	{
+		fprintf(stdout, "============rtp_sendmsg====aaa=====%s\r\n", strerror(errno));
+		error = ipstack_sendmsg(sock, &msg, 0);
+	}
+	return error;
+}
+
+/*
+static int rtp_recvmsg(ortp_socket_t socket, mblk_t *msg, int flags, struct sockaddr *from, socklen_t *fromlen, struct msghdr *msghdr, int bufsz) {
+	struct iovec iov;
+	int error = 0;
+
+	memset(&iov, 0, sizeof(iov));
+	iov.iov_base = msg->b_wptr;
+	iov.iov_len = bufsz;
+	if ((from != NULL) && (fromlen != NULL)) {
+		msghdr->msg_name = from;
+		msghdr->msg_namelen = *fromlen;
+	}
+	msghdr->msg_iov = &iov;
+	msghdr->msg_iovlen = 1;
+	error = recvmsg(socket, msghdr, flags);
+	if (fromlen != NULL)
+		*fromlen = msghdr->msg_namelen;
+	return error;
+}
+*/
+
+
+
+
+
+
+
+
+
 

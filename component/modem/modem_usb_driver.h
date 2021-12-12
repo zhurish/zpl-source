@@ -44,27 +44,27 @@ extern "C" {
 typedef struct tty_devname_s
 {
 	char		devname[USB_SERIAL_NAME_MAX];
-	ospl_uint8 flag;
+	zpl_uint8 flag;
 }tty_devname;
 
 typedef struct modem_usb_driver_s
 {
-	ospl_uint32			bus;
-	ospl_uint32			device;
-	ospl_uint32			vendor;
-	ospl_uint32			product;
-	ospl_uint32			active;
+	zpl_uint32			bus;
+	zpl_uint32			device;
+	zpl_uint32			vendor;
+	zpl_uint32			product;
+	zpl_uint32			active;
 	tty_devname devname[TTY_USB_MAX];
-	ospl_uint32			devcnt;
+	zpl_uint32			devcnt;
 	char		netdevname[USB_SERIAL_NAME_MAX];
 	char		usbkey[USB_SERIAL_NAME_MAX];
-	ospl_uint8		hw_channel;					//1-16
+	zpl_uint8		hw_channel;					//1-16
 	enum		{ USB_DRIVER_NONE, USB_DRIVER_ACTIVE, USB_DRIVER_LOAD } flag;
 #ifdef USB_KERNEL_UEVENT
 	enum		{ USB_EVENT_NONE, USB_EVENT_ADD, USB_EVENT_DEL } change;
-	ospl_uint32			commit;
+	zpl_uint32			commit;
 #else
-	ospl_uint32			ttl;
+	zpl_uint32			ttl;
 #endif
 }modem_usb_driver;
 
@@ -75,7 +75,7 @@ extern int modem_usb_driver_lookup(modem_usb_driver *driver);
 extern int modem_usb_driver_add(modem_usb_driver *driver);
 extern int modem_usb_driver_del(modem_usb_driver *driver);
 
-extern int modem_usb_driver_hardware_channel(ospl_uint32 vendor, ospl_uint32 product);
+extern int modem_usb_driver_hardware_channel(zpl_uint32 vendor, zpl_uint32 product);
 //extern int modem_usb_driver_detection(modem_usb_driver *driver);
 
 extern int show_modem_usb_driver(struct vty *vty);

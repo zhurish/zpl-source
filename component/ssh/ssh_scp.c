@@ -5,17 +5,9 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "getopt.h"
-#include <log.h>
-#include "command.h"
-#include "memory.h"
-#include "prefix.h"
-#include "network.h"
-#include "vty.h"
-#include "buffer.h"
-#include "host.h"
-#include "eloop.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
 #include "libssh_autoconfig.h"
 #include "libssh/priv.h"
@@ -31,7 +23,7 @@
 
 int ssh_url_setup(struct ssh_scp_connect *dest,  os_url_t *spliurl)
 {
-	dest->is_ssh = ospl_true;
+	dest->is_ssh = zpl_true;
 	dest->user = spliurl->user;
 	dest->host = spliurl->host;
 	dest->port = spliurl->port;
@@ -55,9 +47,9 @@ int ssh_url_setup(struct ssh_scp_connect *dest,  os_url_t *spliurl)
 
 static int ssh_read_local_file(ssh_session session, ssh_scp scp, struct ssh_scp_connect *src)
 {
-	ospl_uint32 filesize = 0;
+	zpl_uint32 filesize = 0;
 	char buffer[2048];
-	ospl_uint32 r = 0, total = 0, w = 0;
+	zpl_uint32 r = 0, total = 0, w = 0;
 	int fd = 0;
 	struct stat s;
 	/* Get the file name and size*/
@@ -110,10 +102,10 @@ static int ssh_read_local_file(ssh_session session, ssh_scp scp, struct ssh_scp_
 }
 
 
-static int ssh_write_local_file(ssh_session session, ssh_scp scp, struct ssh_scp_connect *src, ospl_uint32 filesize)
+static int ssh_write_local_file(ssh_session session, ssh_scp scp, struct ssh_scp_connect *src, zpl_uint32 filesize)
 {
 	char buffer[2048];
-	ospl_uint32 r= 0, total = 0, w = 0;
+	zpl_uint32 r= 0, total = 0, w = 0;
 	do
 	{
 		r = ssh_scp_read(scp, buffer, sizeof(buffer));
@@ -184,9 +176,9 @@ static int ssh_upload_files(ssh_session session, struct ssh_scp_connect *src, ch
 
 static int ssh_download_files(ssh_session session, struct ssh_scp_connect *src, char *localfile)
 {
-	ospl_uint32 size = 0;
+	zpl_uint32 size = 0;
 	//char buffer[2048];
-	ospl_uint32 mode = 0;
+	zpl_uint32 mode = 0;
 	char *filename;
 	int r= 0;//, total = 0, w = 0;
 	ssh_scp scp = ssh_scp_new(session, SSH_SCP_READ | SSH_SCP_RECURSIVE, src->path);
@@ -257,7 +249,7 @@ end:
 	return 0;
 }
 
-int ssh_scp_upload(struct vty *vty, ospl_bool download, char *url, char *localfile)
+int ssh_scp_upload(struct vty *vty, zpl_bool download, char *url, char *localfile)
 {
 	struct ssh_scp_connect src;
 	int ret = 0;
@@ -290,7 +282,7 @@ int ssh_scp_upload(struct vty *vty, ospl_bool download, char *url, char *localfi
 	return ret;
 }
 
-int ssh_scp_download(struct vty *vty, ospl_bool download, char *url, char *localfile)
+int ssh_scp_download(struct vty *vty, zpl_bool download, char *url, char *localfile)
 {
 	struct ssh_scp_connect src;
 	int ret = 0;
@@ -332,7 +324,7 @@ int ssh_scp_download(struct vty *vty, ospl_bool download, char *url, char *local
  */
 static int ssh_scpd_thread(sshd_client_t *sshclient);
 
-static int ssh_scpd_output(socket_t fd, ospl_uint32 revents, void *userdata)
+static int ssh_scpd_output(socket_t fd, zpl_uint32 revents, void *userdata)
 {
     char buf[4096];
     int n = -1, ret = 0;
@@ -423,7 +415,7 @@ int ssh_scpd_exit(sshd_client_t *sshclient)
 
 static int _ssh_scpd_waiting_respone(sshd_client_t *sshclient)
 {
-	ospl_uint8 code = -1;
+	zpl_uint8 code = -1;
 	int ret = 0;
 	ret = read(sshclient->scp_data.input, &code, 1);
 	if(ret == 1 && code == 0)
@@ -433,7 +425,7 @@ static int _ssh_scpd_waiting_respone(sshd_client_t *sshclient)
 	return ERROR;
 }
 
-static int _ssh_scpd_read_buffer(sshd_client_t *sshclient, char *buf, ospl_uint32 len)
+static int _ssh_scpd_read_buffer(sshd_client_t *sshclient, char *buf, zpl_uint32 len)
 {
 	int ret = 0;
 	ret = read(sshclient->scp_data.input, buf, len);
@@ -444,9 +436,9 @@ static int _ssh_scpd_read_buffer(sshd_client_t *sshclient, char *buf, ospl_uint3
 	return ERROR;
 }
 
-static int _ssh_scpd_write_buffer(sshd_client_t *sshclient, char *buf, ospl_uint32 len)
+static int _ssh_scpd_write_buffer(sshd_client_t *sshclient, char *buf, zpl_uint32 len)
 {
-	ospl_uint8 code = -1;
+	zpl_uint8 code = -1;
 	int ret = 0;
 	ret = write(sshclient->scp_data.output, buf, len);
 	if(ret >= 0)
@@ -456,11 +448,11 @@ static int _ssh_scpd_write_buffer(sshd_client_t *sshclient, char *buf, ospl_uint
 	return ERROR;
 }
 
-static int ssh_scpd_write(sshd_client_t *sshclient, const void *buffer, ospl_uint32 len)
+static int ssh_scpd_write(sshd_client_t *sshclient, const void *buffer, zpl_uint32 len)
 {
   int w;
   int r;
-  ospl_uint8 code;
+  zpl_uint8 code;
   ssh_scp scp = sshclient->scp_data.scp;
   if(scp==NULL)
       return SSH_ERROR;
@@ -501,11 +493,11 @@ static int ssh_scpd_write(sshd_client_t *sshclient, const void *buffer, ospl_uin
   return SSH_OK;
 }
 
-static int ssh_scpd_start_file(sshd_client_t *sshclient, const char *filename, ospl_uint32 size, ospl_uint32 mode)
+static int ssh_scpd_start_file(sshd_client_t *sshclient, const char *filename, zpl_uint32 size, zpl_uint32 mode)
 {
   char buffer[1024];
   int r;
-  ospl_uint8 code;
+  zpl_uint8 code;
   char *file;
   char *perms;
   ssh_scp scp = sshclient->scp_data.scp;

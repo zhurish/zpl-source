@@ -5,8 +5,9 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "memory.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 #include "mqtt-config.h"
 #include <mqtt_protocol.h>
 #include <mosquitto.h>

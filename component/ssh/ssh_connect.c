@@ -6,17 +6,9 @@
  */
 
 
-#include "zebra.h"
-#include "getopt.h"
-#include <log.h>
-#include "command.h"
-#include "memory.h"
-#include "prefix.h"
-#include "network.h"
-#include "vty.h"
-#include "buffer.h"
-#include "host.h"
-#include "eloop.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
 #include "ssh_api.h"
 #include "ssh_util.h"
@@ -24,12 +16,12 @@
 
 
 
-ssh_session ssh_connect_api(struct vty *vty, const char *remotehost, ospl_uint16 port,
+ssh_session ssh_connect_api(struct vty *vty, const char *remotehost, zpl_uint16 port,
 		const char *user, char *password)
 {
 	ssh_session session;
-	ospl_uint32 auth = 0;
-	ospl_uint32 verbosity=7;
+	zpl_uint32 auth = 0;
+	zpl_uint32 verbosity=7;
 	session = ssh_new();
 	if (session == NULL)
 	{
@@ -45,7 +37,7 @@ ssh_session ssh_connect_api(struct vty *vty, const char *remotehost, ospl_uint16
 	}
 	if (port != 0)
 	{
-		ospl_uint16 cport = port;
+		zpl_uint16 cport = port;
 		if (ssh_options_set(session, SSH_OPTIONS_PORT, &cport) < 0)
 		{
 			ssh_free(session);
@@ -101,12 +93,12 @@ ssh_session ssh_connect_api(struct vty *vty, const char *remotehost, ospl_uint16
 	return NULL;
 }
 
-ssh_session ssh_client_connect_api(ssh_session session, struct vty *vty, const char *remotehost, ospl_uint16 port,
+ssh_session ssh_client_connect_api(ssh_session session, struct vty *vty, const char *remotehost, zpl_uint16 port,
 		const char *user, char *password)
 {
 	//ssh_session session;
-	ospl_uint32 auth = 0;
-	ospl_uint32 verbosity = 3;
+	zpl_uint32 auth = 0;
+	zpl_uint32 verbosity = 3;
 	//session = ssh_new();
 	if (session == NULL)
 	{
@@ -122,7 +114,7 @@ ssh_session ssh_client_connect_api(ssh_session session, struct vty *vty, const c
 	}
 	if (port != 0)
 	{
-		ospl_uint16 cport = port;
+		zpl_uint16 cport = port;
 		if (ssh_options_set(session, SSH_OPTIONS_PORT, &cport) < 0)
 		{
 			ssh_free(session);

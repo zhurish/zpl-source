@@ -20,24 +20,23 @@ typedef enum hal_port_stp_state_e {
     HAL_PORT_STP_FORWARD
 } hal_port_stp_state_t;
 
-
-typedef struct sdk_mstp_s
+enum hal_mstp_cmd 
 {
-	int (*sdk_mstp_enable_cb) (void *, ospl_bool);
-	int (*sdk_mstp_age_cb) (void *, ospl_uint32);
-	int (*sdk_mstp_bypass_cb) (void *, ospl_bool, ospl_uint32);
-	int (*sdk_mstp_state_cb) (void *, ifindex_t, ospl_uint32, hal_port_stp_state_t);
-	int (*sdk_mstp_vlan_cb) (void *, vlan_t,  ospl_uint32);
-	int (*sdk_stp_state_cb) (void *, ifindex_t,  hal_port_stp_state_t);
+    HAL_MSTP_NONE,
+	HAL_MSTP,
+	HAL_MSTP_AGE,
+	HAL_MSTP_BYPASS,
+	HAL_MSTP_STATE,
+	HAL_MSTP_VLAN,
+    HAL_STP_STATE,
+};
 
-	void *sdk_driver;
-}sdk_mstp_t;
 
 
-int hal_mstp_enable(ospl_bool enable);
-int hal_mstp_age(ospl_uint32 age);
-int hal_mstp_bypass(ospl_bool enable, ospl_uint32 type);
-int hal_mstp_state(ifindex_t ifindex, ospl_uint32 mstp, hal_port_stp_state_t state);
+int hal_mstp_enable(zpl_bool enable);
+int hal_mstp_age(zpl_uint32 age);
+int hal_mstp_bypass(zpl_bool enable, zpl_uint32 type);
+int hal_mstp_state(ifindex_t ifindex, zpl_uint32 mstp, hal_port_stp_state_t state);
 int hal_stp_state(ifindex_t ifindex, hal_port_stp_state_t state);
 
 #ifdef __cplusplus

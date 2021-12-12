@@ -6,7 +6,8 @@
  * The script is sensitive to the format (though not whitespace), see
  * the top of memtypes.awk for more details.
  */
-#include "zebra.h"
+#include "os_include.h"
+#include "zpl_include.h"
 #include "memory.h"
 
 
@@ -14,6 +15,7 @@
 struct memory_list memory_list_lib[] =
 {
   { MTYPE_TMP,			"Temporary memory"		},
+  { MTYPE_GLOBAL,			"Lib Global memory"		},
   { MTYPE_STRVEC,		"String vector"			},
   { MTYPE_VECTOR,		"Vector"			},
   { MTYPE_VECTOR_INDEX,		"Vector index"			},
@@ -315,7 +317,7 @@ struct memory_list memory_list_nhrp[] =
   { MTYPE_NHRP_CACHE,		"NHRP cache entry"		},
   { MTYPE_NHRP_NHS,		"NHRP next hop server"		},
   { MTYPE_NHRP_REGISTRATION,	"NHRP registration entries"	},
-  { MTYPE_NHRP_SHORTCUT,	"NHRP ospl_int16cut"			},
+  { MTYPE_NHRP_SHORTCUT,	"NHRP zpl_int16cut"			},
   { MTYPE_NHRP_ROUTE,		"NHRP routing entry"		},
   { -1, NULL }
 };
@@ -391,7 +393,7 @@ struct memory_list memory_list_lldp[] =
 };
 #endif
 
-#ifdef PL_MODEM_MODULE
+#ifdef ZPL_MODEM_MODULE
 struct memory_list memory_list_modem[] =
 {
   { MTYPE_MODEM,             "MODEM structure"		},
@@ -402,7 +404,7 @@ struct memory_list memory_list_modem[] =
   { -1, NULL }
 };
 #endif
-#ifdef PL_DHCP_MODULE
+#ifdef ZPL_DHCP_MODULE
 struct memory_list memory_list_dhcp[] =
 {
   { MTYPE_DHCP,                "DHCP structure"				},
@@ -420,7 +422,7 @@ struct memory_list memory_list_dhcp[] =
 };
 #endif
 
-#ifdef PL_WIFI_MODULE
+#ifdef ZPL_WIFI_MODULE
 struct memory_list memory_list_wifi[] =
 {
   { MTYPE_WIFI,              "WIFI structure"				},
@@ -432,7 +434,7 @@ struct memory_list memory_list_wifi[] =
 #endif
 
 
-//#ifdef PL_WIFI_MODULE
+//#ifdef ZPL_WIFI_MODULE
 struct memory_list memory_list_firewall[] =
 {
   { MTYPE_FIREWALL,             "Firewall structure"				},
@@ -460,6 +462,16 @@ struct memory_list memory_list_port[] =
 	{ MTYPE_QOS,			"QOS information"			},
 	{ MTYPE_DOT1X,			"DOT1X information"			},
 	{ MTYPE_MIRROR,			"MIRROR information"		},
+
+	{ MTYPE_HALIPCSRV,			"HAL IPCSrv information"			},
+	{ MTYPE_HALIPCCLIENT,			"HAL IPC Client information"			},
+	{ MTYPE_HALIPCMSG,			"HAL IPC Msg information"			},
+	{ MTYPE_IPCBC,			"IPCBC information"			},
+	{ MTYPE_IPCBCCLIENT,			"IPCBC Client information"		},
+  { MTYPE_IPCBCMSG,			"IPCBC IPC Msg information"			},
+	{ MTYPE_IPCBUS,			"IPCBUS information"			},
+	{ MTYPE_IPCBUSCLIENT,			"IPCBUS Client information"		},
+  { MTYPE_IPCBUSMSG,			"IPCBUS IPC Msg information"			},
 	{ -1, NULL },
 };
 
@@ -477,7 +489,7 @@ struct memory_list memory_list_ssh[] =
   { -1, NULL },
 };
 
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 struct memory_list memory_list_voip[] =
 {
   { MTYPE_VOIP,				"VOIP information"	},
@@ -500,7 +512,7 @@ struct memory_list memory_list_voip[] =
 
 #endif
 
-#ifdef PL_WEBGUI_MODULE
+#ifdef ZPL_WEBGUI_MODULE
 struct memory_list memory_list_web[] =
 {
   { MTYPE_WEB,			"WEB information"	},
@@ -513,7 +525,7 @@ struct memory_list memory_list_web[] =
 };
 #endif
 
-#ifdef PL_VIDEO_MODULE
+#ifdef ZPL_VIDEO_MODULE
 struct memory_list memory_list_video[] =
 {
   { MTYPE_VIDEO,				"Video information"	},
@@ -533,7 +545,7 @@ struct memory_list memory_list_video[] =
 #endif
 
 
-#ifdef PL_MQTT_MODULE
+#ifdef ZPL_MQTT_MODULE
 struct memory_list memory_list_mqtt[] =
 {
   { MTYPE_MQTT,				"Mqtt information"	},
@@ -552,6 +564,17 @@ struct memory_list memory_list_mqtt[] =
 };
 #endif
 
+struct memory_list memory_list_qosacl[] =
+{
+  { MTYPE_QOS_ACL_TOP,			"Qos ACL List information"	},
+  { MTYPE_QOS_ACL,				  "Qos ACL information"	},
+  { MTYPE_QOS_ACL_NODE,			"Qos ACL Node information"	},
+  { MTYPE_QOS_CLASS,		    "Qos Class information"	},
+  { MTYPE_QOS_CLASS_MAP,		"Qos Class Node information"	},
+  { MTYPE_QOS_POLICY,		    "Qos Policy information"	},
+  { MTYPE_QOS_POLICY_MAP,		"Qos Policy Node information"	},
+  { -1, NULL },
+};
 
 struct mlist mlists[] __attribute__ ((unused)) = {
   { memory_list_lib,	"LIB"	},
@@ -576,13 +599,13 @@ struct mlist mlists[] __attribute__ ((unused)) = {
 #ifdef ZEBRA_ROUTE_LLDP
   { memory_list_lldp,	"LLDP"	},
 #endif
-#ifdef PL_MODEM_MODULE
+#ifdef ZPL_MODEM_MODULE
   { memory_list_modem,	"MODEM"	},
 #endif
-#ifdef PL_DHCP_MODULE
+#ifdef ZPL_DHCP_MODULE
   { memory_list_dhcp,	"DHCP"	},
 #endif
-#ifdef PL_WIFI_MODULE
+#ifdef ZPL_WIFI_MODULE
   { memory_list_wifi,	"WIFI"	},
 #endif
 
@@ -591,21 +614,23 @@ struct mlist mlists[] __attribute__ ((unused)) = {
   { memory_list_port,	"PORT"	},
 
   { memory_list_ssh,	"SSH"	},
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
   { memory_list_voip,	"VOIP"	},
 #endif
 
-#ifdef PL_WEBGUI_MODULE
+#ifdef ZPL_WEBGUI_MODULE
   { memory_list_web,	"WEBGUI"	},
 #endif
 
-#ifdef PL_VIDEO_MODULE
+#ifdef ZPL_VIDEO_MODULE
   { memory_list_video,	"VIDEO"	},
 #endif
 
-#ifdef PL_MQTT_MODULE
+#ifdef ZPL_MQTT_MODULE
   { memory_list_mqtt,	"MQTT"	},
 #endif
+  { memory_list_qosacl,	"Class Map"	},
+
 /* 2016��6��27�� 21:07:44 zhurish: ��չ·��Э�����ӵ��ڴ���Ϣ */
   { NULL, NULL},
 };

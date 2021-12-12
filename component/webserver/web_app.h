@@ -21,27 +21,27 @@ extern int web_updownload_app(void);
  */
 extern int web_admin_app(void);
 
-#ifdef PL_SERVICE_SNTPC
+#ifdef ZPL_SERVICE_SNTPC
 extern int web_sntp_app(void);
-#endif /*PL_SERVICE_SNTPC*/
+#endif /*ZPL_SERVICE_SNTPC*/
 
-#ifdef PL_SERVICE_SYSLOG
+#ifdef ZPL_SERVICE_SYSLOG
 extern int web_syslog_app(void);
-#endif /*PL_SERVICE_SYSLOG*/
+#endif /*ZPL_SERVICE_SYSLOG*/
 
 extern int web_network_app(void);
 extern int web_netservice_app(void);
 
-#ifdef PL_WIFI_MODULE
+#ifdef ZPL_WIFI_MODULE
 extern int web_wireless_app(void);
 #endif
 
 extern int web_sip_app(void);
 
 #ifdef APP_X5BA_MODULE
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 
-#endif /*PL_PJSIP_MODULE*/
+#endif /*ZPL_PJSIP_MODULE*/
 extern int web_factory_app(void);
 extern int web_card_app(void);
 extern int web_switch_app(void);

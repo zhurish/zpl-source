@@ -15,9 +15,9 @@ extern "C" {
 
 #include <endian.h>
 
-typedef ospl_uint8 val_t;
-typedef ospl_uint32 tag_t;
-typedef ospl_uint32 len_t;
+typedef zpl_uint8 val_t;
+typedef zpl_uint32 tag_t;
+typedef zpl_uint32 len_t;
 
 
 //���TLV������ݽṹ
@@ -28,10 +28,10 @@ typedef struct os_tlv_s
 	len_t len;  		//��big_endianģʽ���棬ע����Ҫ�ʵ�ת��
 	union
 	{
-		ospl_uint8 	*pval;
-		ospl_uint8 	val8;
-		ospl_uint16 	val16;
-		ospl_uint32 	val32;
+		zpl_uint8 	*pval;
+		zpl_uint8 	val8;
+		zpl_uint16 	val16;
+		zpl_uint32 	val32;
 		//val_t *val;  	//���ȿɱ�
 	}val;
 } os_tlv_t;
@@ -47,9 +47,9 @@ extern int os_tlv_set_octet(char *input, tag_t tag, len_t len, void * val);
 extern int os_tlv_get(char *input, os_tlv_t *tlv);
 extern int os_tlv_value_get(char *input, os_tlv_t *tlv, len_t len);
 
-extern int os_tlv_get_integer(os_tlv_t *tlv, ospl_uint32 *out);
-extern int os_tlv_get_ospl_int16(os_tlv_t *tlv, ospl_uint16 *out);
-extern int os_tlv_get_byte(os_tlv_t *tlv, ospl_uint8 *out);
+extern int os_tlv_get_integer(os_tlv_t *tlv, zpl_uint32 *out);
+extern int os_tlv_get_zpl_int16(os_tlv_t *tlv, zpl_uint16 *out);
+extern int os_tlv_get_byte(os_tlv_t *tlv, zpl_uint8 *out);
 
 
 #ifdef __cplusplus

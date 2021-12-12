@@ -2478,7 +2478,7 @@ static void checkTimeout(void *arg, int id)
     websRestartEvent(id, delay);
 }
 
-#ifndef PL_WEBGUI_MODULE
+#ifndef ZPL_WEBGUI_MODULE
 static int setLocalHost(void)
 {
     struct in_addr  intaddr;
@@ -2490,14 +2490,14 @@ static int setLocalHost(void)
     }
 #if VXWORKS
     intaddr.s_addr = (ulong) hostGetByName(host);
-    ipaddr = inet_ntoa(intaddr);
+    ipaddr = ipstack_inet_ntoa(intaddr);
     websSetIpAddr(ipaddr);
     websSetHost(ipaddr);
     #if _WRS_VXWORKS_MAJOR < 6
         free(ipaddr);
     #endif
 #elif ECOS
-    ipaddr = inet_ntoa(eth0_bootp_data.bp_yiaddr);
+    ipaddr = ipstack_inet_ntoa(eth0_bootp_data.bp_yiaddr);
     websSetIpAddr(ipaddr);
     websSetHost(ipaddr);
 #elif TIDSP
@@ -2508,7 +2508,7 @@ static int setLocalHost(void)
         return -1;
     }
     memcpy((char*) &intaddr, (char *) hp->h_addr[0], (size_t) hp->h_length);
-    ipaddr = inet_ntoa(intaddr);
+    ipaddr = ipstack_inet_ntoa(intaddr);
     websSetIpAddr(ipaddr);
     websSetHost(ipaddr);
 }
@@ -2522,7 +2522,7 @@ static int setLocalHost(void)
         }
     }
     memcpy((char*) &intaddr, (char *) hp->h_addr_list[0], (size_t) hp->h_length);
-    ipaddr = inet_ntoa(intaddr);
+    ipaddr = ipstack_inet_ntoa(intaddr);
     websSetIpAddr(ipaddr);
     websSetHost(ipaddr);
 }
@@ -2534,7 +2534,7 @@ static int setLocalHost(void)
         return -1;
     }
     memcpy((char*) &intaddr, (char *) hp->h_addr_list[0], (size_t) hp->h_length);
-    ipaddr = inet_ntoa(intaddr);
+    ipaddr = ipstack_inet_ntoa(intaddr);
     websSetIpAddr(ipaddr);
     websSetHost(ipaddr);
 }

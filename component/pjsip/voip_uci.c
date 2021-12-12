@@ -5,18 +5,12 @@
  *      Author: DELL
  */
 
-#include "zebra.h"
-#include "memory.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "linklist.h"
-#include "prefix.h"
-#include "table.h"
-#include "vector.h"
-#include "eloop.h"
-#include "network.h"
-#include "vty.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
+#include "vty_include.h"
+
 
 #include "os_util.h"
 #include "os_socket.h"
@@ -40,31 +34,31 @@
  * iptables -A FORWARD -s 192.168.200.1/24 -p all -i eth1_0 -j DROP
  * iptables -A INPUT -s 192.168.200.1/24 -d 192.168.200.1 -p all -i eth1_0 -j DROP
  */
-ospl_bool voip_global_enabled()
+zpl_bool voip_global_enabled()
 {
 	int enable = 0;
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 	if(os_uci_get_integer("product.global.voip", &enable) != OK)
-		enable = ospl_true;
+		enable = zpl_true;
 #else
-	enable = ospl_true;
+	enable = zpl_true;
 #endif
-	return (ospl_bool)enable;
+	return (zpl_bool)enable;
 }
 
 
 int voip_status_register_api(int reg)
 {
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 	os_uci_set_integer("voipconfig.status.regstate", reg);
 	os_uci_save_config("voipconfig");
 #endif
 	return OK;
 }
 
-int voip_status_register_main_api(ospl_bool reg)
+int voip_status_register_main_api(zpl_bool reg)
 {
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 	if(pl_pjsip_multiuser_get_api())
 		os_uci_set_integer("voipconfig.status.regmain", reg);
 	else
@@ -74,18 +68,18 @@ int voip_status_register_main_api(ospl_bool reg)
 	return OK;
 }
 
-int voip_status_talk_api(ospl_bool reg)
+int voip_status_talk_api(zpl_bool reg)
 {
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 	os_uci_set_integer("voipconfig.status.voiptalk", reg);
 	os_uci_save_config("voipconfig");
 #endif
 	return OK;
 }
 
-int voip_status_enable_api(ospl_bool reg)
+int voip_status_enable_api(zpl_bool reg)
 {
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 	os_uci_set_integer("voipconfig.status.enable", reg);
 	os_uci_save_config("voipconfig");
 #endif
@@ -94,18 +88,18 @@ int voip_status_enable_api(ospl_bool reg)
 
 int voip_status_clear_api()
 {
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 	os_uci_set_integer("voipconfig.testing.callstate", 0);
 	if(pl_pjsip_multiuser_get_api())
 		os_uci_set_integer("voipconfig.status.regmain", 0);
 	os_uci_set_integer("voipconfig.status.voiptalk", 0);
 #endif
-	voip_status_enable_api(ospl_true);
-	voip_status_register_api(ospl_false);
+	voip_status_enable_api(zpl_true);
+	voip_status_register_api(zpl_false);
 	return OK;
 }
 
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 
 static int voip_uci_sip_config_load_address(pl_pjsip_t *sip)
 {
@@ -125,7 +119,7 @@ static int voip_uci_sip_config_load_address(pl_pjsip_t *sip)
 			sip->sip_source_interface = if_ifindex_make("ethernet 0/0/2", NULL);
 			if(sip->sip_source_interface)
 			{
-				ospl_uint32 address = voip_get_address(sip->sip_source_interface);
+				zpl_uint32 address = voip_get_address(sip->sip_source_interface);
 				if(address)
 				{
 					memset(sip->sip_local.sip_address, 0, sizeof(sip->sip_local.sip_address));
@@ -140,7 +134,7 @@ static int voip_uci_sip_config_load_address(pl_pjsip_t *sip)
 			sip->sip_source_interface = if_ifindex_make("brigde 0/0/1", NULL);
 			if(sip->sip_source_interface)
 			{
-				ospl_uint32 address = voip_get_address(sip->sip_source_interface);
+				zpl_uint32 address = voip_get_address(sip->sip_source_interface);
 				if(address)
 				{
 					memset(sip->sip_local.sip_address, 0, sizeof(sip->sip_local.sip_address));
@@ -173,7 +167,7 @@ static int voip_uci_sip_config_load_address(pl_pjsip_t *sip)
 #ifdef OSIP_LOAD_DEBUG
 	zlog_debug(MODULE_VOIP, "sip->sip_port = %d", sip->sip_server.sip_port);
 #endif
-	if(sip->sip_active_standby == ospl_false)
+	if(sip->sip_active_standby == zpl_false)
 		return OK;
 	//sec
 	memset(tmp, 0, sizeof(tmp));
@@ -202,7 +196,7 @@ static int voip_uci_sip_config_load_proxy_address(pl_pjsip_t *sip)
 	int	 value = 0, ret = ERROR;
 	zassert(sip != NULL);
 
-	if(sip->sip_proxy_enable == ospl_false)
+	if(sip->sip_proxy_enable == zpl_false)
 		return OK;
 	memset(tmp, 0, sizeof(tmp));
 
@@ -282,7 +276,7 @@ static int voip_uci_sip_config_load_username(pl_pjsip_t *sip)
 		strncpy(sip->sip_user.sip_password, tmp, MIN(sizeof(sip->sip_user.sip_password), strlen(tmp)));
 	}
 
-	if(sip->sip_multi_user == ospl_false)
+	if(sip->sip_multi_user == zpl_false)
 		return OK;
 
 	memset(tmp, 0, sizeof(tmp));
@@ -379,7 +373,7 @@ static int voip_uci_sip_config_load_misc(pl_pjsip_t *sip)
 	zlog_debug(MODULE_VOIP, "sip->sip_register_interval = %d", sip->sip_expires);
 #endif
 /*
-	if(sip->sip_keepalive == ospl_false)
+	if(sip->sip_keepalive == zpl_false)
 		return OK;
 	ret = os_uci_get_integer("voipconfig.sip.sip_keepalive_interval", &value);
 	if(ret == OK)
@@ -562,7 +556,7 @@ int voip_uci_sip_config_save(void *p)
 static int _voip_stream_config_load(pl_pjsip_t *voip)
 {
 	int	 value = 0,ret = 0;
-	//ospl_float	 floatvalue = 0.0;
+	//zpl_float	 floatvalue = 0.0;
 	zassert(voip != NULL);
 /*
 	os_uci_get_integer("voipconfig.voip.enable", &value);
@@ -578,10 +572,10 @@ static int _voip_stream_config_load(pl_pjsip_t *voip)
 	voip->play_dtmf = value;
 
 	os_uci_get_integer("voipconfig.voip.disbale_rtcp", &value);
-	voip->rtcp = value?ospl_false:ospl_true;
+	voip->rtcp = value?zpl_false:zpl_true;
 
 	os_uci_get_integer("voipconfig.voip.disbale_avpf", &value);
-	voip->avpf = value?ospl_false:ospl_true;
+	voip->avpf = value?zpl_false:zpl_true;
 
 */
 
@@ -654,7 +648,7 @@ static int _voip_stream_config_load(pl_pjsip_t *voip)
 //voipconfig.voip.localport
 int voip_stream_config_save(void *p)
 {
-	ospl_uint8	 volume = 0;
+	zpl_uint8	 volume = 0;
 	pl_pjsip_t *voip = p;
 	zassert(voip != NULL);
 	//os_uci_set_integer("voipconfig.voip.enable", voip->enable);
@@ -761,7 +755,7 @@ static int voip_sip_restart_job(void *p)
 /*
  * call testing
  */
-static int voip_ubus_call_enable(ospl_bool start)
+static int voip_ubus_call_enable(zpl_bool start)
 {
 	int	 ret = ERROR;
 	if(start)
@@ -780,15 +774,15 @@ static int voip_ubus_call_enable(ospl_bool start)
 #ifdef VOIP_STREAM_UNIT_TESTING
 			if(strstr(tmp, "@test"))
 			{
-				x5b_app_A_unit_test_set_api(ospl_true);
+				x5b_app_A_unit_test_set_api(zpl_true);
 				super_system("echo sadadas > /tmp/app/unit-test");
 				sync();
 				x5b_unit_test_init();
 				return OK;
 			}
 #endif
-			ospl_uint8 building = 0, unit = 0;
-			ospl_uint16 room = atoi(tmp);
+			zpl_uint8 building = 0, unit = 0;
+			zpl_uint16 room = atoi(tmp);
 /*			char phonelist[128];
 			memset(phonelist, 0, sizeof(phonelist));*/
 
@@ -836,9 +830,9 @@ static int tcpdump_capture_start(char *name)
 	char ifname[16];
 	char tmp[32];
 	char filler[256];
-	ospl_uint32 ifindex = 0;
+	zpl_uint32 ifindex = 0;
 	pjsip_transport_t proto;
-	ospl_uint16 port = 0;
+	zpl_uint16 port = 0;
 
 	pl_pjsip_source_interface_get_api(&ifindex);
 	memset(ifname, 0, sizeof(ifname));
@@ -892,9 +886,9 @@ static int tcpdump_capture_stop(void)
 	return OK;
 }
 
-static int voip_ubus_capture_enable(ospl_bool start)
+static int voip_ubus_capture_enable(zpl_bool start)
 {
-	static ospl_uint8 capture_enable = 0;
+	static zpl_uint8 capture_enable = 0;
 	static char prefix_filename[32];
 	int	 ret = ERROR;
 	if(start)
@@ -908,7 +902,7 @@ static int voip_ubus_capture_enable(ospl_bool start)
 			int level = 0;
 			struct tm *tm = NULL;
 			char log_filename[128];
-			ospl_time_t ttt = 0;
+			zpl_time_t ttt = 0;
 			capture_enable = 1;
 			ret = os_uci_get_string("voipconfig.testing.log_level", tmp);
 			if(ret == OK && strlen(tmp) >= 1)
@@ -935,7 +929,7 @@ static int voip_ubus_capture_enable(ospl_bool start)
 
 			zlog_testing_file(log_filename);
 			zlog_testing_priority(level);
-			zlog_testing_enable(ospl_true);
+			zlog_testing_enable(zpl_true);
 
 			ret = os_uci_get_integer("voipconfig.testing.log_mod_sip", &value);
 	/*		if(ret == OK && value == 1)
@@ -965,9 +959,9 @@ static int voip_ubus_capture_enable(ospl_bool start)
 			char log_cmd[128];
 			//voip_osip_set_log_level(LOG_WARNING, 1);
 			//voip_app_debug_set_api(0);
-			//voip_stream_debug_set_api(ospl_true, "warning");
+			//voip_stream_debug_set_api(zpl_true, "warning");
 
-			zlog_testing_enable(ospl_false);
+			zlog_testing_enable(zpl_false);
 
 			if(strlen(prefix_filename))
 			{
@@ -1064,15 +1058,15 @@ int voip_ubus_uci_update_cb(void *p, char *buf, int len)
 
 		else if(strstr(buf + 4, "start-call"))
 		{
-			ret = voip_ubus_call_enable(ospl_true);
+			ret = voip_ubus_call_enable(zpl_true);
 		}
 		else if(strstr(buf + 4, "stop-call"))
-			ret = voip_ubus_call_enable(ospl_false);
+			ret = voip_ubus_call_enable(zpl_false);
 
 		else if(strstr(buf + 4, "start-capture"))
-			ret = voip_ubus_capture_enable(ospl_true);
+			ret = voip_ubus_capture_enable(zpl_true);
 		else if(strstr(buf + 4, "stop-capture"))
-			ret = voip_ubus_capture_enable(ospl_false);
+			ret = voip_ubus_capture_enable(zpl_false);
 	}
 	else if(strstr(buf, "dbase"))
 	{

@@ -28,12 +28,12 @@ extern "C" {
  * of bytes.  No alignment or length assumptions are made about
  * the input key.
  */
-extern ospl_uint32 jhash(const void *key, ospl_uint32 length, ospl_uint32 initval);
+extern zpl_uint32 jhash(const void *key, zpl_uint32 length, zpl_uint32 initval);
 
-/* A special optimized version that handles 1 or more of ospl_uint32s.
- * The length parameter here is the number of ospl_uint32s in the key.
+/* A special optimized version that handles 1 or more of zpl_uint32s.
+ * The length parameter here is the number of zpl_uint32s in the key.
  */
-extern ospl_uint32 jhash2(const ospl_uint32 *k, ospl_uint32 length, ospl_uint32 initval);
+extern zpl_uint32 jhash2(const zpl_uint32 *k, zpl_uint32 length, zpl_uint32 initval);
 
 /* A special ultra-optimized versions that knows they are hashing exactly
  * 3, 2 or 1 word(s).
@@ -41,9 +41,9 @@ extern ospl_uint32 jhash2(const ospl_uint32 *k, ospl_uint32 length, ospl_uint32 
  * NOTE: In partilar the "c += length; __jhash_mix(a,b,c);" normally
  *       done at the end is not done here.
  */
-extern ospl_uint32 jhash_3words(ospl_uint32 a, ospl_uint32 b, ospl_uint32 c, ospl_uint32 initval);
-extern ospl_uint32 jhash_2words(ospl_uint32 a, ospl_uint32 b, ospl_uint32 initval);
-extern ospl_uint32 jhash_1word(ospl_uint32 a, ospl_uint32 initval);
+extern zpl_uint32 jhash_3words(zpl_uint32 a, zpl_uint32 b, zpl_uint32 c, zpl_uint32 initval);
+extern zpl_uint32 jhash_2words(zpl_uint32 a, zpl_uint32 b, zpl_uint32 initval);
+extern zpl_uint32 jhash_1word(zpl_uint32 a, zpl_uint32 initval);
  
 #ifdef __cplusplus
 }

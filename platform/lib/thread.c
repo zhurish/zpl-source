@@ -16,33 +16,32 @@
  * You should have received a copy of the GNU General Public License
  * along with GNU Zebra; see the file COPYING.  If not, write to the Free
  * Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
- * 02111-1307, USA.  
+ * 02111-1307, USA.
  */
 
-
-#include <zebra.h>
-#include "thread.h"
-#include "command.h"
-#include "hash.h"
-#include "log.h"
-#include "memory.h"
-#include "pqueue.h"
-#include "sigevent.h"
-
-#include "os_list.h"
-#include "os_time.h"
-#include "os_sem.h"
-
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
 #if defined(__APPLE__)
 #include <mach/mach.h>
 #include <mach/mach_time.h>
 #endif
 
+static zpl_uint32 os_mt_init = 0;
+#ifdef THREAD_MASTER_LIST
+struct thread_master_list
+{
+	struct thread_master *head;
+	struct thread_master *tail;
+	zpl_uint32 count;
+};
 
-static ospl_uint32 os_mt_init = 0;
-struct thread_master * master_thread[MODULE_MAX];
-
+static struct thread_master *_m_thread_current = NULL;
+static struct thread_master_list _master_thread_list;
+#else
+struct thread_master *master_thread[MODULE_MAX];
+#endif
 #if 0
 /* Struct timeval's tv_usec one second value.  */
 #define TIMER_SECOND_MICRO 1000000L
@@ -89,18 +88,140 @@ timeval_cmp (struct timeval a, struct timeval b)
 			? a.tv_usec - b.tv_usec : a.tv_sec - b.tv_sec);
 }
 
-static ospl_ulong
+static zpl_ulong
 timeval_elapsed (struct timeval a, struct timeval b)
 {
 	return (((a.tv_sec - b.tv_sec) * TIMER_SECOND_MICRO)
 			+ (a.tv_usec - b.tv_usec));
 }
 #endif
+
+#ifdef THREAD_MASTER_LIST
+/* Add a new thread to the list.  */
+static void thread_master_list_add(struct thread_master_list *list, struct thread_master *master)
+{
+	master->next = NULL;
+	master->prev = list->tail;
+	if (list->tail)
+		list->tail->next = master;
+	else
+		list->head = master;
+	list->tail = master;
+	list->count++;
+}
+
+/* Delete a thread from the list. */
+static struct thread_master *thread_master_list_delete(struct thread_master_list *list, struct thread_master *master)
+{
+	if (master->next)
+		master->next->prev = master->prev;
+	else
+		list->tail = master->prev;
+	if (master->prev)
+		master->prev->next = master->next;
+	else
+		list->head = master->next;
+	master->next = master->prev = NULL;
+	list->count--;
+	return master;
+}
+
+/* Free all unused thread. */
+/*static void thread_master_list_free(struct thread_master_list *list)
+{
+	struct thread_master *t;
+	struct thread_master *next;
+	for (t = list->head; t; t = next)
+	{
+		next = t->next;
+		XFREE(MTYPE_THREAD_MASTER, t);
+		list->count--;
+	}
+}
+*/
+#if 1
+static int thread_master_add_list(struct thread_master *node)
+{
+	thread_master_list_add(&_master_thread_list, node);
+	return OK;
+}
+
+static int thread_master_del_list(struct thread_master *node)
+{
+	struct thread_master *cutmp = NULL;
+	cutmp = thread_master_list_delete(&_master_thread_list, node);
+	if (cutmp)
+		XFREE(MTYPE_THREAD_MASTER, cutmp);
+	return OK;
+}
+
+static struct thread_master *thread_master_get_list(int mode)
+{
+	struct thread_master *cutmp = NULL;
+	struct thread_master *next = NULL;
+	for (cutmp = _master_thread_list.head; cutmp; cutmp = next)
+	{
+		next = cutmp->next;
+		if (cutmp && cutmp->module == mode)
+		{
+			break;
+		}
+	}
+	return cutmp;
+}
+#else
+static int thread_master_add_list(struct thread_master *node)
+{
+	struct thread_master *next = _master_thread_list;
+	_master_thread_list = node;
+	node->next = next;
+	return OK;
+}
+
+static int thread_master_del_list(struct thread_master *node)
+{
+	struct thread_master *cutmp = NULL;
+	struct thread_master *nexttmp = _master_thread_list;
+	if (_master_thread_list && _master_thread_list == node)
+	{
+		_master_thread_list = _master_thread_list->next;
+		return OK;
+	}
+	cutmp = _master_thread_list;
+	while (cutmp)
+	{
+		nexttmp = _master_thread_list->next;
+		if (nexttmp == node)
+		{
+			cutmp->next = nexttmp->next;
+			break;
+		}
+		cutmp = nexttmp;
+	}
+	return OK;
+}
+
+static struct thread_master *thread_master_get_list(int mode)
+{
+	struct thread_master *cutmp = NULL;
+	cutmp = _master_thread_list;
+	while (cutmp)
+	{
+		if (cutmp && cutmp->module == node)
+		{
+			break;
+		}
+		cutmp = cutmp->next;
+	}
+	return cutmp;
+}
+#endif
+#endif
 /* Public export of recent_relative_time by value */
 /*struct timeval
  recent_relative_time (void)
  {
- ospl_uint32 i = 0;
+ zpl_uint32 i = 0;
  static struct timeval relative_time;
  for(i = 0; i < MODULE_MAX; i++ )
  {
@@ -111,7 +232,7 @@ timeval_elapsed (struct timeval a, struct timeval b)
  return relative_time;
  }*/
 
-static ospl_int thread_timer_cmp(void *a, void *b)
+static zpl_int thread_timer_cmp(void *a, void *b)
 {
 	struct thread *thread_a = a;
 	struct thread *thread_b = b;
@@ -125,7 +246,7 @@ static ospl_int thread_timer_cmp(void *a, void *b)
 	return 0;
 }
 
-static void thread_timer_update(void *node, ospl_uint32 actual_position)
+static void thread_timer_update(void *node, zpl_uint32 actual_position)
 {
 	struct thread *thread = node;
 
@@ -137,75 +258,112 @@ struct thread_master *
 thread_master_create()
 {
 	struct thread_master *rv;
-	//struct rlimit limit;
+	// struct rlimit limit;
 	if (os_mt_init == 0)
 	{
-		ospl_uint32 i = 0;
+#ifndef THREAD_MASTER_LIST
+		zpl_uint32 i = 0;
 		for (i = 0; i < MODULE_MAX; i++)
 		{
 			master_thread[i] = NULL;
 		}
+#else
+		memset(&_master_thread_list, 0, sizeof(_master_thread_list));
+#endif
 		os_mt_init = 1;
 	}
-	//getrlimit(RLIMIT_NOFILE, &limit);
+	// getrlimit(RLIMIT_NOFILE, &limit);
 
 	rv = XCALLOC(MTYPE_THREAD_MASTER, sizeof(struct thread_master));
 	if (rv == NULL)
 	{
 		return NULL;
 	}
-	rv->fd_limit = 0;//(int) limit.rlim_cur;
-/*	rv->read = XCALLOC(MTYPE_THREAD, sizeof(struct thread *) * rv->fd_limit);
-	if (rv->read == NULL)
-	{
-		XFREE(MTYPE_THREAD_MASTER, rv);
-		return NULL;
-	}
+	rv->fd_limit = 0; //(int) limit.rlim_cur;
+					  /*	rv->read = XCALLOC(MTYPE_THREAD, sizeof(struct thread *) * rv->fd_limit);
+						  if (rv->read == NULL)
+						  {
+							  XFREE(MTYPE_THREAD_MASTER, rv);
+							  return NULL;
+						  }
+				  
+						  rv->write = XCALLOC(MTYPE_THREAD, sizeof(struct thread *) * rv->fd_limit);
+						  if (rv->write == NULL)
+						  {
+							  XFREE(MTYPE_THREAD, rv->read);
+							  XFREE(MTYPE_THREAD_MASTER, rv);
+							  return NULL;
+						  }*/
 
-	rv->write = XCALLOC(MTYPE_THREAD, sizeof(struct thread *) * rv->fd_limit);
-	if (rv->write == NULL)
-	{
-		XFREE(MTYPE_THREAD, rv->read);
-		XFREE(MTYPE_THREAD_MASTER, rv);
-		return NULL;
-	}*/
-
-	//rv->ptid = os_task_pthread_self ();
-	rv->bquit = ospl_false;
+	// rv->ptid = os_task_pthread_self ();
+	rv->bquit = zpl_false;
 	/* Initialize the timer queues */
 	rv->timer = pqueue_create();
 	rv->background = pqueue_create();
 	rv->timer->cmp = rv->background->cmp = thread_timer_cmp;
 	rv->timer->update = rv->background->update = thread_timer_update;
 	rv->mutex = os_mutex_init();
+#ifdef THREAD_MASTER_LIST
+	thread_master_add_list(rv);
+#endif
 	return rv;
 }
 
-struct thread_master *thread_master_module_create(ospl_uint32 module)
+struct thread_master *thread_master_module_create(zpl_uint32 module)
 {
-	ospl_uint32 i = 0;
+#ifndef THREAD_MASTER_LIST	
+	zpl_uint32 i = 0;
+#endif	
 	if (os_mt_init == 0)
 	{
+#ifndef THREAD_MASTER_LIST
 		for (i = 0; i < MODULE_MAX; i++)
 		{
 			master_thread[i] = NULL;
 		}
+#else
+		memset(&_master_thread_list, 0, sizeof(_master_thread_list));
+#endif
 		os_mt_init = 1;
 	}
 	if (NOT_INT_MAX_MIN_SPACE(module, MODULE_NONE, (MODULE_MAX - 1)))
 		return NULL;
-
+#ifdef THREAD_MASTER_LIST
+	if (thread_master_get_list(module))
+		return thread_master_get_list(module);
+#else
 	for (i = 0; i < MODULE_MAX; i++)
 	{
-		if (master_thread[i] && master_thread[i]->module == (ospl_uint32)module)
+		if (master_thread[i] && master_thread[i]->module == (zpl_uint32)module)
 			return master_thread[i];
 	}
-	struct thread_master * m = thread_master_create();
+#endif
+	struct thread_master *m = thread_master_create();
 	if (m)
 	{
 		m->module = module;
+#ifdef THREAD_MASTER_LIST
+		// thread_master_add_list(m);
+#endif
 		return m;
 	}
+	return NULL;
+}
+
+struct thread_master *thread_master_module_lookup (zpl_uint32 module)
+{
+	if (NOT_INT_MAX_MIN_SPACE(module, MODULE_NONE, (MODULE_MAX - 1)))
+		return NULL;
+#ifdef THREAD_MASTER_LIST
+	if (thread_master_get_list(module))
+		return thread_master_get_list(module);
+#else
+	for (i = 0; i < MODULE_MAX; i++)
+	{
+		if (master_thread[i] && master_thread[i]->module == (zpl_uint32)module)
+			return master_thread[i];
+	}
+#endif
 	return NULL;
 }
 
@@ -279,7 +437,7 @@ static void thread_list_free(struct thread_master *m, struct thread_list *list)
 		struct thread **thread_array)
 {
 	struct thread *t;
-	ospl_uint32 index;
+	zpl_uint32 index;
 
 	for (index = 0; index < m->fd_limit; ++index)
 	{
@@ -296,7 +454,7 @@ static void thread_list_free(struct thread_master *m, struct thread_list *list)
 
 static void thread_queue_free(struct thread_master *m, struct pqueue *queue)
 {
-	ospl_uint32 i;
+	zpl_uint32 i;
 
 	for (i = 0; i < queue->size; i++)
 		XFREE(MTYPE_THREAD, queue->array[i]);
@@ -317,12 +475,14 @@ void thread_master_free(struct thread_master *m)
 	thread_queue_free(m, m->background);
 	if (m->mutex)
 		os_mutex_exit(m->mutex);
+#ifdef THREAD_MASTER_LIST
+	thread_master_del_list(m);
+#endif
 	XFREE(MTYPE_THREAD_MASTER, m);
-
 }
 
 /* Thread list is empty or not.  */
-static ospl_bool thread_empty(struct thread_list *list)
+static zpl_bool thread_empty(struct thread_list *list)
 {
 	return list->head ? 0 : 1;
 }
@@ -341,7 +501,7 @@ thread_trim_head(struct thread_list *list)
 }
 
 /* Return remain time in second. */
-ospl_ulong thread_timer_remain_second(struct thread *thread)
+zpl_ulong thread_timer_remain_second(struct thread *thread)
 {
 	os_get_monotonic(&thread->master->relative_time);
 
@@ -363,13 +523,13 @@ static int thread_max_fd_update(struct thread_master *m, int fd)
 	return OK;
 }
 
-#define debugargdef  const char *funcname, const char *schedfrom, ospl_uint32 fromln
+#define debugargdef const char *funcname, const char *schedfrom, zpl_uint32 fromln
 #define debugargpass funcname, schedfrom, fromln
 
 /* Get new thread.  */
 static struct thread *
-thread_get(struct thread_master *m, ospl_uchar type, int (*func)(struct thread *),
-		void *arg, debugargdef)
+thread_get(struct thread_master *m, zpl_uchar type, int (*func)(struct thread *),
+		   void *arg, debugargdef)
 {
 	struct thread *thread = thread_trim_head(&m->unuse);
 
@@ -394,18 +554,18 @@ thread_get(struct thread_master *m, ospl_uchar type, int (*func)(struct thread *
 
 #define fd_copy_fd_set(X) (X)
 
-static ospl_int fd_select(ospl_uint32 size, thread_fd_set *read, thread_fd_set *write,
-		thread_fd_set *except, struct timeval *t)
+static zpl_int fd_select(zpl_uint32 size, thread_fd_set *read, thread_fd_set *write,
+						 thread_fd_set *except, struct timeval *t)
 {
 	return (select(size, read, write, except, t));
 }
 
-static ospl_int fd_is_set(int fd, thread_fd_set *fdset)
+static zpl_int fd_is_set(int fd, thread_fd_set *fdset)
 {
 	return FD_ISSET(fd, fdset);
 }
 
-static ospl_int fd_clear_read_write(int fd, thread_fd_set *fdset)
+static zpl_int fd_clear_read_write(int fd, thread_fd_set *fdset)
 {
 	if (!FD_ISSET(fd, fdset))
 		return 0;
@@ -415,9 +575,9 @@ static ospl_int fd_clear_read_write(int fd, thread_fd_set *fdset)
 }
 
 static struct thread *
-funcname_thread_add_read_write(ospl_uint32 dir, struct thread_master *m,
-		int (*func)(struct thread *), void *arg, int fd,
-		debugargdef)
+funcname_thread_add_read_write(zpl_uint32 dir, struct thread_master *m,
+							   int (*func)(struct thread *), void *arg, zpl_socket_t fd,
+							   debugargdef)
 {
 	struct thread *thread = NULL;
 	thread_fd_set *fdset = NULL;
@@ -428,18 +588,17 @@ funcname_thread_add_read_write(ospl_uint32 dir, struct thread_master *m,
 	else
 		fdset = &m->writefd;
 
-	if (FD_ISSET(fd, fdset))
+	if (FD_ISSET(fd._fd, fdset))
 	{
-		zlog(MODULE_DEFAULT, LOG_WARNING, "There is already %s fd [%d]", (dir =
-				THREAD_READ) ? "read" : "write", fd);
+		zlog(MODULE_DEFAULT, LOG_WARNING, "There is already %s fd [%d]", (dir = THREAD_READ) ? "read" : "write", fd);
 		if (m->mutex)
 			os_mutex_unlock(m->mutex);
 		return NULL;
 	}
 
-	FD_SET(fd, fdset);
+	FD_SET(fd._fd, fdset);
 
-	thread_max_fd_update(m, fd);
+	thread_max_fd_update(m, fd._fd);
 
 	thread = thread_get(m, dir, func, arg, debugargpass);
 	thread->u.fd = fd;
@@ -455,28 +614,28 @@ funcname_thread_add_read_write(ospl_uint32 dir, struct thread_master *m,
 /* Add new read thread. */
 struct thread *
 funcname_thread_add_read(struct thread_master *m, int (*func)(struct thread *),
-		void *arg, int fd,
-		debugargdef)
+						 void *arg, zpl_socket_t fd,
+						 debugargdef)
 {
 	return funcname_thread_add_read_write(THREAD_READ, m, func, arg, fd,
-			debugargpass);
+										  debugargpass);
 }
 
 /* Add new write thread. */
 struct thread *
 funcname_thread_add_write(struct thread_master *m, int (*func)(struct thread *),
-		void *arg, int fd,
-		debugargdef)
+						  void *arg, zpl_socket_t fd,
+						  debugargdef)
 {
 	return funcname_thread_add_read_write(THREAD_WRITE, m, func, arg, fd,
-			debugargpass);
+										  debugargpass);
 }
 
 static struct thread *
 funcname_thread_add_timer_timeval(struct thread_master *m,
-		int (*func)(struct thread *), ospl_uint32 type, void *arg,
-		struct timeval *time_relative,
-		debugargdef)
+								  int (*func)(struct thread *), zpl_uint32 type, void *arg,
+								  struct timeval *time_relative,
+								  debugargdef)
 {
 	struct thread *thread;
 	struct pqueue *queue;
@@ -508,8 +667,8 @@ funcname_thread_add_timer_timeval(struct thread_master *m,
 /* Add timer event thread. */
 struct thread *
 funcname_thread_add_timer(struct thread_master *m, int (*func)(struct thread *),
-		void *arg, long timer,
-		debugargdef)
+						  void *arg, long timer,
+						  debugargdef)
 {
 	struct timeval trel;
 
@@ -519,14 +678,14 @@ funcname_thread_add_timer(struct thread_master *m, int (*func)(struct thread *),
 	trel.tv_usec = 0;
 
 	return funcname_thread_add_timer_timeval(m, func, THREAD_TIMER, arg, &trel,
-			debugargpass);
+											 debugargpass);
 }
 
 /* Add timer event thread with "millisecond" resolution */
 struct thread *
 funcname_thread_add_timer_msec(struct thread_master *m,
-		int (*func)(struct thread *), void *arg, long timer,
-		debugargdef)
+							   int (*func)(struct thread *), void *arg, long timer,
+							   debugargdef)
 {
 	struct timeval trel;
 
@@ -536,24 +695,24 @@ funcname_thread_add_timer_msec(struct thread_master *m,
 	trel.tv_usec = 1000 * (timer % 1000);
 
 	return funcname_thread_add_timer_timeval(m, func, THREAD_TIMER, arg, &trel,
-			debugargpass);
+											 debugargpass);
 }
 
 /* Add timer event thread with "millisecond" resolution */
 struct thread *
 funcname_thread_add_timer_tv(struct thread_master *m,
-		int (*func)(struct thread *), void *arg, struct timeval *tv,
-		debugargdef)
+							 int (*func)(struct thread *), void *arg, struct timeval *tv,
+							 debugargdef)
 {
 	return funcname_thread_add_timer_timeval(m, func, THREAD_TIMER, arg, tv,
-			debugargpass);
+											 debugargpass);
 }
 
 /* Add a background thread, with an optional millisec delay */
 struct thread *
 funcname_thread_add_background(struct thread_master *m,
-		int (*func)(struct thread *), void *arg, long delay,
-		debugargdef)
+							   int (*func)(struct thread *), void *arg, long delay,
+							   debugargdef)
 {
 	struct timeval trel;
 
@@ -571,14 +730,14 @@ funcname_thread_add_background(struct thread_master *m,
 	}
 
 	return funcname_thread_add_timer_timeval(m, func, THREAD_BACKGROUND, arg,
-			&trel, debugargpass);
+											 &trel, debugargpass);
 }
 
 /* Add simple event thread. */
 struct thread *
 funcname_thread_add_event(struct thread_master *m, int (*func)(struct thread *),
-		void *arg, int val,
-		debugargdef)
+						  void *arg, int val,
+						  debugargdef)
 {
 	struct thread *thread;
 
@@ -588,7 +747,7 @@ funcname_thread_add_event(struct thread_master *m, int (*func)(struct thread *),
 	thread = thread_get(m, THREAD_EVENT, func, arg, debugargpass);
 	thread->u.val = val;
 	thread_list_add(&m->event, thread);
-//  OS_DEBUG("%s:%s\r\n",__func__,thread->funcname);
+	//  OS_DEBUG("%s:%s\r\n",__func__,thread->funcname);
 	if (m->mutex)
 		os_mutex_unlock(m->mutex);
 	return thread;
@@ -599,21 +758,21 @@ void thread_cancel(struct thread *thread)
 {
 	struct thread_list *list = NULL;
 	struct pqueue *queue = NULL;
-	if(!thread->master)
+	if (!thread->master)
 	{
 		return;
 	}
-	//struct thread **thread_array = NULL;
+	// struct thread **thread_array = NULL;
 	if (thread->master->mutex)
 		os_mutex_lock(thread->master->mutex, OS_WAIT_FOREVER);
 	switch (thread->type)
 	{
 	case THREAD_READ:
-		assert(fd_clear_read_write(thread->u.fd, &thread->master->readfd));
+		assert(fd_clear_read_write(thread->u.fd._fd, &thread->master->readfd));
 		list = &thread->master->read;
 		break;
 	case THREAD_WRITE:
-		assert(fd_clear_read_write(thread->u.fd, &thread->master->writefd));
+		assert(fd_clear_read_write(thread->u.fd._fd, &thread->master->writefd));
 		list = &thread->master->write;
 		break;
 	case THREAD_TIMER:
@@ -646,10 +805,10 @@ void thread_cancel(struct thread *thread)
 	{
 		thread_list_delete(list, thread);
 	}
-/*	else if (thread_array)
-	{
-		thread_delete_fd(thread_array, thread);
-	}*/
+	/*	else if (thread_array)
+		{
+			thread_delete_fd(thread_array, thread);
+		}*/
 	else
 	{
 		if (thread->master->mutex)
@@ -664,9 +823,9 @@ void thread_cancel(struct thread *thread)
 }
 
 /* Delete all events which has argument value arg. */
-ospl_uint32  thread_cancel_event(struct thread_master *m, void *arg)
+zpl_uint32 thread_cancel_event(struct thread_master *m, void *arg)
 {
-	ospl_uint32  ret = 0;
+	zpl_uint32 ret = 0;
 	struct thread *thread;
 	if (m->mutex)
 		os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
@@ -716,7 +875,7 @@ thread_timer_wait(struct pqueue *queue, struct timeval *timer_val)
 	{
 		struct thread *next_timer = queue->array[0];
 		*timer_val = os_timeval_subtract(next_timer->u.sands,
-				next_timer->master->relative_time);
+										 next_timer->master->relative_time);
 		return timer_val;
 	}
 	return NULL;
@@ -725,36 +884,36 @@ thread_timer_wait(struct pqueue *queue, struct timeval *timer_val)
 static struct thread *
 thread_run(struct thread_master *m, struct thread *thread, struct thread *fetch)
 {
-	if (m->mutex)
-		os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
 	*fetch = *thread;
 	thread->type = THREAD_UNUSED;
 	thread_add_unuse(m, thread);
-	if (m->mutex)
-		os_mutex_unlock(m->mutex);
 	return fetch;
 }
 
-static ospl_uint32  thread_process_fds_helper(struct thread_master *m,
-		struct thread_list *list, thread_fd_set *fdset)
+static zpl_uint32 thread_process_fds_helper(struct thread_master *m,
+											struct thread_list *list, thread_fd_set *fdset)
 {
 	thread_fd_set *mfdset = NULL;
 	struct thread *thread;
 	struct thread *next;
-	ospl_uint32  ready = 0;
+	zpl_uint32 ready = 0;
 	if (!list)
 		return 0;
 	for (thread = list->head; thread; thread = next)
 	{
 		next = thread->next;
-		if (fd_is_set(THREAD_FD(thread), fdset))
+		if (fd_is_set(THREAD_FD(thread)._fd, fdset))
 		{
+			/*if(m->debug && thread->type == THREAD_READ)
+			{
+				fprintf(stdout, "====ready read ===fd=%d\r\n", THREAD_FD(thread));
+			}*/
 			if (thread->type == THREAD_READ)
 				mfdset = &m->readfd;
 			else
 				mfdset = &m->writefd;
 
-			fd_clear_read_write(THREAD_FD(thread), mfdset);
+			fd_clear_read_write(THREAD_FD(thread)._fd, mfdset);
 			thread_list_delete(list, thread);
 			thread->type = THREAD_READY;
 			thread_list_add(&thread->master->ready, thread);
@@ -794,28 +953,28 @@ static ospl_uint32  thread_process_fds_helper(struct thread_master *m,
 	return 0;
 }*/
 
-static ospl_uint32 thread_process_fds(struct thread_master *m, thread_fd_set *rset,
-		thread_fd_set *wset, ospl_uint32 num)
+static zpl_uint32 thread_process_fds(struct thread_master *m, thread_fd_set *rset,
+									 thread_fd_set *wset, zpl_uint32 num)
 {
-	ospl_uint32 ready = 0;//, index;
-	if (m->mutex)
-		os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
-	//for (index = 0; index < m->fd_limit && ready < num; ++index)
+	zpl_uint32 ready = 0; //, index;
+	// if (m->mutex)
+	//	os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
+	// for (index = 0; index < m->fd_limit && ready < num; ++index)
 	{
 		ready += thread_process_fds_helper(m, &m->read, rset);
 		ready += thread_process_fds_helper(m, &m->write, wset);
 	}
-	if (m->mutex)
-		os_mutex_unlock(m->mutex);
+	// if (m->mutex)
+	//	os_mutex_unlock(m->mutex);
 	return num - ready;
 }
 
 /* Add all timers that have popped to the ready list. */
-static ospl_uint32  thread_timer_process(struct pqueue *queue,
-		struct timeval *timenow)
+static zpl_uint32 thread_timer_process(struct pqueue *queue,
+									   struct timeval *timenow)
 {
 	struct thread *thread;
-	ospl_uint32  ready = 0;
+	zpl_uint32 ready = 0;
 
 	while (queue->size)
 	{
@@ -833,11 +992,11 @@ static ospl_uint32  thread_timer_process(struct pqueue *queue,
 }
 
 /* process a list en masse, e.g. for event thread lists */
-static ospl_uint32  thread_process(struct thread_list *list)
+static zpl_uint32 thread_process(struct thread_list *list)
 {
 	struct thread *thread;
 	struct thread *next;
-	ospl_uint32  ready = 0;
+	zpl_uint32 ready = 0;
 	for (thread = list->head; thread; thread = next)
 	{
 		next = thread->next;
@@ -849,20 +1008,20 @@ static ospl_uint32  thread_process(struct thread_list *list)
 	return ready;
 }
 
-int thread_fetch_quit (struct thread_master *m)
+int thread_fetch_quit(struct thread_master *m)
 {
-	if(m)
+	if (m)
 	{
-		m->bquit = ospl_true;
+		m->bquit = zpl_true;
 	}
 	return OK;
 }
 
-int thread_wait_quit (struct thread_master *m)
+int thread_wait_quit(struct thread_master *m)
 {
-	if(m)
+	if (m)
 	{
-		while(m->bquit)
+		while (m->bquit)
 		{
 			os_msleep(50);
 		}
@@ -874,29 +1033,21 @@ int thread_wait_quit (struct thread_master *m)
 struct thread *
 thread_fetch(struct thread_master *m, struct thread *fetch)
 {
-	ospl_uint32 num = 0;
+	zpl_uint32 num = 0;
 	struct thread *thread;
 	thread_fd_set readfd;
 	thread_fd_set writefd;
 	thread_fd_set exceptfd;
-	struct timeval timer_val = { .tv_sec = 1, .tv_usec = TIMER_SECOND_MICRO };
+	struct timeval timer_val = {.tv_sec = 1, .tv_usec = TIMER_SECOND_MICRO};
 	struct timeval timer_val_bg;
 	struct timeval *timer_wait = &timer_val;
 	struct timeval *timer_wait_bg;
 
-	/*
-	 extern void * vty_thread_master ();
-	 m->ptid = os_task_pthread_self ();
-	 m->taskId = os_task_id_self ();
-	 */
-
 	while (1)
 	{
-		/* Signals pre-empt everything */
-		//quagga_sigevent_process ();
-		/* Drain the ready queue of already scheduled jobs, before scheduling
-		 * more.
-		 */
+		//if (m->module == MODULE_ZPLMEDIA)
+		//	zlog_warn(MODULE_DEFAULT, " ===============thread_fetch======");
+
 		if (m->mutex)
 			os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
 		thread = thread_trim_head(&m->ready);
@@ -905,10 +1056,10 @@ thread_fetch(struct thread_master *m, struct thread *fetch)
 		if (thread != NULL)
 			return thread_run(m, thread, fetch);
 
-		if(m->bquit)
+		if (m->bquit)
 		{
 			fetch = NULL;
-			m->bquit = ospl_false;
+			m->bquit = zpl_false;
 			return NULL;
 		}
 		/* To be fair to all kinds of threads, and avoid starvation, we
@@ -919,8 +1070,8 @@ thread_fetch(struct thread_master *m, struct thread *fetch)
 			os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
 		/* Normal event are the next highest priority.  */
 		thread_process(&m->event);
-/*		if (m->mutex)
-			os_mutex_unlock(m->mutex);*/
+		/*		if (m->mutex)
+					os_mutex_unlock(m->mutex);*/
 		/* Structure copy.  */
 		readfd = fd_copy_fd_set(m->readfd);
 		writefd = fd_copy_fd_set(m->writefd);
@@ -933,9 +1084,7 @@ thread_fetch(struct thread_master *m, struct thread *fetch)
 			timer_wait = thread_timer_wait(m->timer, &timer_val);
 			timer_wait_bg = thread_timer_wait(m->background, &timer_val_bg);
 
-			if (timer_wait_bg
-					&& (!timer_wait
-							|| (os_timeval_cmp(*timer_wait, *timer_wait_bg) > 0)))
+			if (timer_wait_bg && (!timer_wait || (os_timeval_cmp(*timer_wait, *timer_wait_bg) > 0)))
 				timer_wait = timer_wait_bg;
 		}
 		if (pqueue_empty(m->timer) && pqueue_empty(m->background))
@@ -947,8 +1096,7 @@ thread_fetch(struct thread_master *m, struct thread *fetch)
 			timer_val.tv_usec = TIMER_SECOND_MICRO;
 			timer_wait = &timer_val;
 		}
-		if (timer_wait && (timer_wait->tv_sec = 0)
-				&& (timer_wait->tv_usec == 0))
+		if (timer_wait && (timer_wait->tv_sec = 0) && (timer_wait->tv_usec == 0))
 		{
 			timer_val.tv_sec = 1;
 			timer_val.tv_usec = TIMER_SECOND_MICRO;
@@ -957,27 +1105,16 @@ thread_fetch(struct thread_master *m, struct thread *fetch)
 		if (m->mutex)
 			os_mutex_unlock(m->mutex);
 
-
-		//printf("%s: m->max_fd = %d background.size=%d timer_wait->tv_sec=%d -- %s\r\n", __func__, m->max_fd,
-		//		m->background->size, timer_wait->tv_sec, module2name(m->module));
-		/*      if(m->max_fd < 1)
-		 {
-		 sleep(1);
-		 continue;
-		 }*/
-		//timer_wait->tv_sec >>= 2;
-		//timer_wait->tv_usec >>= 2;
-		//num = select (m->max_fd + 1, &readfd, &writefd, &exceptfd, timer_wait);
-		//if(num <= 0)
+		// timer_wait->tv_sec >>= 2;
+		// timer_wait->tv_usec >>= 2;
+		// num = select (m->max_fd + 1, &readfd, &writefd, &exceptfd, timer_wait);
+		// if(num <= 0)
 		num = fd_select(m->max_fd + 1, &readfd, &writefd, &exceptfd, timer_wait);
-
-		//printf("%s: fd_select-----%s\r\n", __func__, module2name(m->module));
-//      num = fd_select (FD_SETSIZE, &readfd, &writefd, &exceptfd, timer_wait);
 
 		/* Signals should get quick treatment */
 		if (num < 0)
 		{
-			if (errno == EINTR/*  || m->max_fd == 0*/)
+			if (errno == EINTR /*  || m->max_fd == 0*/)
 				continue; /* signal received - process it */
 			zlog_warn(MODULE_DEFAULT, "select() error: %s", safe_strerror(errno));
 			return NULL;
@@ -986,29 +1123,14 @@ thread_fetch(struct thread_master *m, struct thread *fetch)
 			os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
 		os_get_monotonic(&m->relative_time);
 		thread_timer_process(m->timer, &m->relative_time);
-		if (m->mutex)
-			os_mutex_unlock(m->mutex);
+		// if (m->mutex)
+		//	os_mutex_unlock(m->mutex);
 		/* Got IO, process it */
 		if (num > 0)
 			thread_process_fds(m, &readfd, &writefd, num);
 
-#if 0
-		/* If any threads were made ready above (I/O or foreground timer),
-		 perhaps we should avoid adding background timers to the ready
-		 list at this time.  If this is code is uncommented, then background
-		 timer threads will not run unless there is nothing else to do. */
-		if(m->mutex)
-		os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
-		thread = thread_trim_head (&m->ready);
-		if(m->mutex)
-		os_mutex_unlock(m->mutex);
-		if (thread != NULL)
-		//if ((thread = thread_trim_head (&m->ready)) != NULL)
-		return thread_run (m, thread, fetch);
-#endif
-
-		if (m->mutex)
-			os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
+		// if (m->mutex)
+		//	os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
 		/* Background timer/events, lowest priority */
 		thread_timer_process(m->background, &m->relative_time);
 
@@ -1016,18 +1138,181 @@ thread_fetch(struct thread_master *m, struct thread *fetch)
 		if (m->mutex)
 			os_mutex_unlock(m->mutex);
 		if (thread != NULL)
-			//if ((thread = thread_trim_head (&m->ready)) != NULL)
+			// if ((thread = thread_trim_head (&m->ready)) != NULL)
 			return thread_run(m, thread, fetch);
 	}
 }
 
-ospl_ulong thread_consumed_time(struct timeval *now, struct timeval *start,
-		ospl_ulong *cputime)
+struct thread *
+thread_fetch_main(struct thread_master *m)
+{
+#if 1
+	struct thread thread;
+	struct thread *rethread = NULL;
+	while (1)
+	{
+		rethread = thread_fetch((struct thread_master *)m, &thread);
+		if (rethread)
+		{
+			thread_call(&thread);
+			return rethread;
+		}
+		else
+			return NULL;
+		if (m->bquit)
+		{
+			m->bquit = zpl_false;
+			return NULL;
+		}
+	}
+	return NULL;
+#else
+	zpl_uint32 num = 0;
+	struct thread *thread = NULL;
+	thread_fd_set readfd;
+	thread_fd_set writefd;
+	thread_fd_set exceptfd;
+	struct timeval timer_val = {.tv_sec = 1, .tv_usec = TIMER_SECOND_MICRO};
+	struct timeval timer_val_bg;
+	struct timeval *timer_wait = &timer_val;
+	struct timeval *timer_wait_bg;
+
+	/*
+	 extern void * vty_thread_master ();
+	 m->ptid = os_task_pthread_self ();
+	 m->taskId = os_task_id_self ();
+	 */
+
+	while (1)
+	{
+		if (m->mutex)
+			os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
+		thread = thread_trim_head(&m->ready);
+		if (thread != NULL)
+		{
+			if (m->mutex)
+				os_mutex_unlock(m->mutex);
+			thread_call(thread);
+			if (m->mutex)
+				os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
+			thread->type = THREAD_UNUSED;
+			thread_add_unuse(m, thread);
+		}
+		if (m->mutex)
+			os_mutex_unlock(m->mutex);
+		if (thread != NULL)
+			return thread;
+
+		if (m->bquit)
+		{
+			m->bquit = zpl_false;
+			return NULL;
+		}
+		/* To be fair to all kinds of threads, and avoid starvation, we
+		 * need to be careful to consider all thread types for scheduling
+		 * in each quanta. I.e. we should not return early from here on.
+		 */
+		if (m->mutex)
+			os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
+		/* Normal event are the next highest priority.  */
+		thread_process(&m->event);
+		/*		if (m->mutex)
+					os_mutex_unlock(m->mutex);*/
+		/* Structure copy.  */
+		readfd = fd_copy_fd_set(m->readfd);
+		writefd = fd_copy_fd_set(m->writefd);
+		exceptfd = fd_copy_fd_set(m->exceptfd);
+
+		/* Calculate select wait timer if nothing else to do */
+		if (m->ready.count == 0)
+		{
+			os_get_monotonic(&m->relative_time);
+			timer_wait = thread_timer_wait(m->timer, &timer_val);
+			timer_wait_bg = thread_timer_wait(m->background, &timer_val_bg);
+
+			if (timer_wait_bg && (!timer_wait || (os_timeval_cmp(*timer_wait, *timer_wait_bg) > 0)))
+				timer_wait = timer_wait_bg;
+		}
+		if (pqueue_empty(m->timer) && pqueue_empty(m->background))
+			timer_wait = NULL;
+
+		if (timer_wait == NULL)
+		{
+			timer_val.tv_sec = 1;
+			timer_val.tv_usec = TIMER_SECOND_MICRO;
+			timer_wait = &timer_val;
+		}
+		if (timer_wait && (timer_wait->tv_sec = 0) && (timer_wait->tv_usec == 0))
+		{
+			timer_val.tv_sec = 1;
+			timer_val.tv_usec = TIMER_SECOND_MICRO;
+			timer_wait = &timer_val;
+		}
+		if (m->mutex)
+			os_mutex_unlock(m->mutex);
+
+		// printf("%s: m->max_fd = %d background.size=%d timer_wait->tv_sec=%d -- %s\r\n", __func__, m->max_fd,
+		//		m->background->size, timer_wait->tv_sec, module2name(m->module));
+		/*      if(m->max_fd < 1)
+		 {
+		 sleep(1);
+		 continue;
+		 }*/
+		// timer_wait->tv_sec >>= 2;
+		// timer_wait->tv_usec >>= 2;
+		// num = select (m->max_fd + 1, &readfd, &writefd, &exceptfd, timer_wait);
+		// if(num <= 0)
+		num = fd_select(m->max_fd + 1, &readfd, &writefd, &exceptfd, timer_wait);
+
+		// printf("%s: fd_select-----%s\r\n", __func__, module2name(m->module));
+		//      num = fd_select (FD_SETSIZE, &readfd, &writefd, &exceptfd, timer_wait);
+
+		/* Signals should get quick treatment */
+		if (num < 0)
+		{
+			if (errno == EINTR /*  || m->max_fd == 0*/)
+				continue; /* signal received - process it */
+			zlog_warn(MODULE_DEFAULT, "select() error: %s", safe_strerror(errno));
+			return NULL;
+		}
+		if (m->mutex)
+			os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
+		os_get_monotonic(&m->relative_time);
+		thread_timer_process(m->timer, &m->relative_time);
+
+		/* Got IO, process it */
+		if (num > 0)
+			thread_process_fds(m, &readfd, &writefd, num);
+
+		/* Background timer/events, lowest priority */
+		thread_timer_process(m->background, &m->relative_time);
+
+		thread = thread_trim_head(&m->ready);
+		if (thread != NULL)
+		{
+			if (m->mutex)
+				os_mutex_unlock(m->mutex);
+			thread_call(thread);
+			if (m->mutex)
+				os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
+			thread->type = THREAD_UNUSED;
+			thread_add_unuse(m, thread);
+		}
+		if (m->mutex)
+			os_mutex_unlock(m->mutex);
+		if (thread != NULL)
+			return thread;
+	}
+#endif
+}
+
+zpl_ulong thread_consumed_time(struct timeval *now, struct timeval *start,
+							   zpl_ulong *cputime)
 {
 	return os_timeval_elapsed(*now, *start);
 }
 
-/* We should aim to yield after THREAD_YIELD_TIME_SLOT milliseconds. 
+/* We should aim to yield after THREAD_YIELD_TIME_SLOT milliseconds.
  Note: we are using real (wall clock) time for this calculation.
  It could be argued that CPU time may make more sense in certain
  contexts.  The things to consider are whether the thread may have
@@ -1039,8 +1324,8 @@ ospl_ulong thread_consumed_time(struct timeval *now, struct timeval *start,
 int thread_should_yield(struct thread *thread)
 {
 	os_get_monotonic(&thread->master->relative_time);
-	ospl_ulong t = os_timeval_elapsed(thread->master->relative_time,
-			thread->real);
+	zpl_ulong t = os_timeval_elapsed(thread->master->relative_time,
+									 thread->real);
 	return ((t > THREAD_YIELD_TIME_SLOT) ? t : 0);
 }
 
@@ -1051,21 +1336,27 @@ void thread_getrusage(struct timeval *real)
 
 struct thread *thread_current_get()
 {
-	ospl_uint32 module = task_module_self();
+#ifdef THREAD_MASTER_LIST
+	if (_m_thread_current)
+		return _m_thread_current;
+	return NULL;
+#else
+	zpl_uint32 module = task_module_self();
 	return master_thread[module]->thread_current;
-	/*	ospl_uint32 i = 0;
+	/*	zpl_uint32 i = 0;
 	 for(i = 0; i < MODULE_MAX; i++ )
 	 {
 	 if(master_thread[i] && master_thread[i]->ptid == os_task_pthread_self() )
 	 return master_thread[i];
 	 }
 	 return NULL;*/
+#endif
 }
 
-static void * thread_cpu_get_alloc(struct thread_master *m,
-		struct cpu_thread_history *cpu)
+static void *thread_cpu_get_alloc(struct thread_master *m,
+								  struct cpu_thread_history *cpu)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	if (m == NULL)
 		return NULL;
 	for (i = 0; i < OS_THREAD_CPU_MAX; i++)
@@ -1073,12 +1364,12 @@ static void * thread_cpu_get_alloc(struct thread_master *m,
 		if (m->cpu_record[i].key == 0)
 		{
 			m->cpu_record[i].data = XCALLOC(MTYPE_THREAD_STATS,
-					sizeof(struct cpu_thread_history));
+											sizeof(struct cpu_thread_history));
 			if (m->cpu_record[i].data)
 			{
 				struct cpu_thread_history *hist;
-				m->cpu_record[i].key = (ospl_uint32) cpu->func;
-				hist = (struct cpu_thread_history *) m->cpu_record[i].data;
+				m->cpu_record[i].key = (zpl_uint32)cpu->func;
+				hist = (struct cpu_thread_history *)m->cpu_record[i].data;
 				os_memset(hist, 0, sizeof(struct cpu_thread_history));
 				hist->func = cpu->func;
 				hist->funcname = cpu->funcname;
@@ -1088,15 +1379,15 @@ static void * thread_cpu_get_alloc(struct thread_master *m,
 	}
 	return NULL;
 }
-static void * thread_cpu_get(struct thread_master *m,
-		struct cpu_thread_history *cpu)
+static void *thread_cpu_get(struct thread_master *m,
+							struct cpu_thread_history *cpu)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	if (m == NULL)
 		return NULL;
 	for (i = 0; i < OS_THREAD_CPU_MAX; i++)
 	{
-		if (m->cpu_record[i].key && m->cpu_record[i].key == (ospl_uint32) cpu->func)
+		if (m->cpu_record[i].key && m->cpu_record[i].key == (zpl_uint32)cpu->func)
 			return m->cpu_record[i].data;
 	}
 	return thread_cpu_get_alloc(m, cpu);
@@ -1107,7 +1398,7 @@ static void * thread_cpu_get(struct thread_master *m,
  to wall clock time stats from gettimeofday. */
 void thread_call(struct thread *thread)
 {
-	ospl_ulong realtime, cputime;
+	zpl_ulong realtime, cputime;
 	struct timeval before, after;
 
 	/* Cache a pointer to the relevant cpu history thread, if the thread
@@ -1116,10 +1407,10 @@ void thread_call(struct thread *thread)
 	 * Callers submitting 'dummy threads' hence must take care that
 	 * thread->cpu is NULL
 	 */
-	 if(thread == NULL)
-		 return;
+	if (thread == NULL)
+		return;
 	if (thread && thread->add_type == THREAD_EVENT)
-		;      //	  OS_DEBUG("%s:%s\r\n",__func__,thread->funcname);
+		; //	  OS_DEBUG("%s:%s\r\n",__func__,thread->funcname);
 	if (!thread->hist)
 	{
 		struct cpu_thread_history tmp;
@@ -1128,16 +1419,21 @@ void thread_call(struct thread *thread)
 		tmp.funcname = thread->funcname;
 
 		thread->hist = thread_cpu_get(thread->master, &tmp);
-
 	}
 
 	thread_getrusage(&before);
 	thread->real = before;
-
+#ifdef THREAD_MASTER_LIST
+	_m_thread_current = thread;
+#endif
+	zpl_backtrace_symb_set(thread->funcname, thread->schedfrom, thread->schedfrom_line);
 	thread->master->thread_current = thread;
 	(*thread->func)(thread);
+	zpl_backtrace_symb_set(NULL, NULL, 0);
 	thread->master->thread_current = NULL;
-
+#ifdef THREAD_MASTER_LIST
+	_m_thread_current = NULL;
+#endif
 	thread_getrusage(&after);
 
 	realtime = thread_consumed_time(&after, &before, &cputime);
@@ -1157,19 +1453,21 @@ void thread_call(struct thread *thread)
 		 * Whinge about it now, so we're aware this is yet another task
 		 * to fix.
 		 */
-/*		zlog_warn(MODULE_DEFAULT,
-				"SLOW THREAD: task %s (%lx) ran for %lums (cpu time %lums)",
-				thread->funcname, (ospl_ulong) thread->func, realtime / 1000,
-				cputime / 1000);*/
+		/*		zlog_warn(MODULE_DEFAULT,
+						"SLOW THREAD: task %s (%lx) ran for %lums (cpu time %lums)",
+						thread->funcname, (zpl_ulong) thread->func, realtime / 1000,
+						cputime / 1000);*/
 	}
 #endif /* CONSUMED_TIME_CHECK */
+	if (thread && thread->master && thread->add_type != THREAD_EXECUTE)
+		; // thread_add_unuse(thread->master, thread);
 }
 
 /* Ready thread */
 struct thread *
 funcname_thread_ready(struct thread_master *m, int (*func)(struct thread *),
-		void *arg, int val,
-		debugargdef)
+					  void *arg, int val,
+					  debugargdef)
 {
 	struct thread *thread;
 	if (m->mutex)
@@ -1184,17 +1482,17 @@ funcname_thread_ready(struct thread_master *m, int (*func)(struct thread *),
 /* Execute thread */
 struct thread *
 funcname_thread_execute(struct thread_master *m, int (*func)(struct thread *),
-		void *arg, int val,
-		debugargdef)
+						void *arg, int val,
+						debugargdef)
 {
 	struct thread dummy;
 
 	memset(&dummy, 0, sizeof(struct thread));
-	//OS_DEBUG("%s:M=%s",__func__,m? "FULL":"NULL");
+	// OS_DEBUG("%s:M=%s",__func__,m? "FULL":"NULL");
 	dummy.master = m;
 	dummy.type = THREAD_EVENT;
 	dummy.add_type = THREAD_EXECUTE;
-	//dummy.master = NULL;
+	// dummy.master = NULL;
 	dummy.func = func;
 	dummy.arg = arg;
 	dummy.u.val = val;
@@ -1207,11 +1505,11 @@ funcname_thread_execute(struct thread_master *m, int (*func)(struct thread *),
 
 	return NULL;
 }
-
-static int vty_thread_cpu_show_history(struct vty* vty,
-		struct cpu_thread_history *a)
+#ifdef ZPL_SHELL_MODULE
+static int vty_thread_cpu_show_history(struct vty *vty,
+									   struct cpu_thread_history *a)
 {
-	ospl_char type[8];
+	zpl_char type[8];
 	vty_out(vty, "%7ld.%03ld %9d %8ld %9ld", a->real.total / 1000,
 			a->real.total % 1000, a->total_calls,
 			a->real.total / a->total_calls, a->real.max);
@@ -1246,9 +1544,9 @@ static void vty_thread_cpu_show_head(struct vty *vty)
 	vty_out(vty, "  Type  Thread%s", VTY_NEWLINE);
 }
 
-static ospl_bool vty_thread_cpu_get_history(struct thread_master *m)
+static zpl_bool vty_thread_cpu_get_history(struct thread_master *m)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	if (m == NULL)
 		return 0;
 	for (i = 0; i < OS_THREAD_CPU_MAX; i++)
@@ -1257,17 +1555,17 @@ static ospl_bool vty_thread_cpu_get_history(struct thread_master *m)
 		{
 			if (m->cpu_record[i].data)
 			{
-				return ospl_true;
+				return zpl_true;
 			}
 		}
 	}
-	return ospl_false;
+	return zpl_false;
 }
 
 static int vty_thread_cpu_show_detail(struct thread_master *m, struct vty *vty,
-		ospl_bool detail, thread_type type)
+									  zpl_bool detail, thread_type type)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	if (m == NULL)
 		return 0;
 	for (i = 0; i < OS_THREAD_CPU_MAX; i++)
@@ -1277,7 +1575,7 @@ static int vty_thread_cpu_show_detail(struct thread_master *m, struct vty *vty,
 			if (m->cpu_record[i].data)
 			{
 				struct cpu_thread_history *hist;
-				hist = (struct cpu_thread_history *) m->cpu_record[i].data;
+				hist = (struct cpu_thread_history *)m->cpu_record[i].data;
 				if (hist->types & type)
 					vty_thread_cpu_show_history(vty, hist);
 			}
@@ -1287,9 +1585,9 @@ static int vty_thread_cpu_show_detail(struct thread_master *m, struct vty *vty,
 }
 
 static int vty_clear_thread_cpu(struct thread_master *m, struct vty *vty,
-		thread_type type)
+								thread_type type)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	if (m == NULL)
 		return OK;
 	for (i = 0; i < OS_THREAD_CPU_MAX; i++)
@@ -1299,11 +1597,11 @@ static int vty_clear_thread_cpu(struct thread_master *m, struct vty *vty,
 			if (m->cpu_record[i].data)
 			{
 				struct cpu_thread_history *hist;
-				hist = (struct cpu_thread_history *) m->cpu_record[i].data;
+				hist = (struct cpu_thread_history *)m->cpu_record[i].data;
 				if (hist->types & type)
 				{
 					os_memset(hist, 0, sizeof(struct cpu_thread_history));
-					//vty_thread_cpu_show_history(vty, hist);
+					// vty_thread_cpu_show_history(vty, hist);
 				}
 			}
 		}
@@ -1313,8 +1611,8 @@ static int vty_clear_thread_cpu(struct thread_master *m, struct vty *vty,
 
 static thread_type vty_thread_cpu_filter(struct vty *vty, const char *argv)
 {
-	ospl_uint32 i = 0;
-	thread_type filter = (thread_type) -1U;
+	zpl_uint32 i = 0;
+	thread_type filter = (thread_type)-1U;
 	if (argv)
 	{
 		filter = 0;
@@ -1354,8 +1652,9 @@ static thread_type vty_thread_cpu_filter(struct vty *vty, const char *argv)
 		if (filter == 0)
 		{
 			vty_out(vty, "Invalid filter \"%s\" specified,"
-					" must contain at least one of 'RWTEXB'%s", argv,
-			VTY_NEWLINE);
+						 " must contain at least one of 'RWTEXB'%s",
+					argv,
+					VTY_NEWLINE);
 			return 0;
 		}
 	}
@@ -1363,9 +1662,9 @@ static thread_type vty_thread_cpu_filter(struct vty *vty, const char *argv)
 }
 
 #if 0
-static int strncasecmp(const char* s1, const char* s2, ospl_size_t n)
+static int strncasecmp(const char* s1, const char* s2, zpl_size_t n)
 {
-	ospl_char c1, c2;
+	zpl_char c1, c2;
 	if (!n)
 	return 0;
 	do
@@ -1379,16 +1678,20 @@ static int strncasecmp(const char* s1, const char* s2, ospl_size_t n)
 #endif
 
 DEFUN(show_thread_cpu,
-		show_thread_cpu_cmd,
-		"show thread cpu [FILTER]",
-		SHOW_STR
-		"Thread information\n"
-		"Thread CPU usage\n"
-		"Display filter (rwtexb)\n")
+	  show_thread_cpu_cmd,
+	  "show thread cpu [FILTER]",
+	  SHOW_STR
+	  "Thread information\n"
+	  "Thread CPU usage\n"
+	  "Display filter (rwtexb)\n")
 {
-	ospl_uint32 i = 0;
 	thread_type filter = 0xff;
-	//extern const char *zlog_proto_names[];
+#ifdef THREAD_MASTER_LIST
+	struct thread_master *cutmp = NULL;
+	struct thread_master *next = NULL;
+#else
+	zpl_uint32 i = 0;
+#endif
 	if (argc == 1)
 	{
 		filter = vty_thread_cpu_filter(vty, argv[0]);
@@ -1396,6 +1699,21 @@ DEFUN(show_thread_cpu,
 			return CMD_WARNING;
 	}
 	vty_thread_cpu_show_head(vty);
+#ifdef THREAD_MASTER_LIST
+	for (cutmp = _master_thread_list.head; cutmp; cutmp = next)
+	{
+		next = cutmp->next;
+		if (cutmp)
+		{
+			if (vty_thread_cpu_get_history(cutmp))
+			{
+				vty_out(vty, "%s of cpu process:%s", module2name(cutmp->module),
+						VTY_NEWLINE);
+				vty_thread_cpu_show_detail(cutmp, vty, 1, filter);
+			}
+		}
+	}
+#else
 	for (i = 0; i < MODULE_MAX; i++)
 	{
 		if (master_thread[i])
@@ -1403,43 +1721,49 @@ DEFUN(show_thread_cpu,
 			if (vty_thread_cpu_get_history(master_thread[i]))
 			{
 				vty_out(vty, "%s of cpu process:%s", module2name(i),
-				VTY_NEWLINE);
+						VTY_NEWLINE);
 				vty_thread_cpu_show_detail(master_thread[i], vty, 1, filter);
 			}
 		}
 	}
+#endif
 	return CMD_SUCCESS;
 }
 
 #define OS_THREAD_STR_TASK \
-  "(zebra|rip|ripng|ospf|ospf6|isis|bgp|pim|olsr|frp)"
+	"(zebra|rip|ripng|ospf|ospf6|isis|bgp|pim|olsr|frp)"
 #define OS_THREAD_STR_TASK_HELP \
-  "NSM process\n" \
-  "RIP process\n" \
-  "RIPng process\n" \
-  "OSPFv2 process\n" \
-  "OSPFv3 process\n" \
-  "IS-IS process\n" \
-  "BGP process\n" \
-  "PIM process\n" \
-  "OLSR process\n" \
-  "FRP process\n"
+	"NSM process\n"             \
+	"RIP process\n"             \
+	"RIPng process\n"           \
+	"OSPFv2 process\n"          \
+	"OSPFv3 process\n"          \
+	"IS-IS process\n"           \
+	"BGP process\n"             \
+	"PIM process\n"             \
+	"OLSR process\n"            \
+	"FRP process\n"
 
 DEFUN(show_thread_task_cpu,
-		show_thread_task_cpu_cmd,
-		"show thread " OS_THREAD_STR_TASK "cpu [FILTER]",
-		SHOW_STR
-		"Thread information\n"
-		OS_THREAD_STR_TASK_HELP
-		"Thread CPU usage\n"
-		"Display filter (rwtexb)\n")
+	  show_thread_task_cpu_cmd,
+	  "show thread " OS_THREAD_STR_TASK "cpu [FILTER]",
+	  SHOW_STR
+	  "Thread information\n" OS_THREAD_STR_TASK_HELP
+	  "Thread CPU usage\n"
+	  "Display filter (rwtexb)\n")
 {
-	ospl_uint32 i = 0, index = 0;
+	zpl_uint32 index = 0;
 	thread_type filter = 0xff;
+#ifdef THREAD_MASTER_LIST
+	struct thread_master *cutmp = NULL;
+	struct thread_master *next = NULL;
+#else
+	zpl_uint32 i = 0;
+#endif
 	if (argc > 1)
 	{
-		//ospl_char module[16];
-		ospl_char input[16];
+		// zpl_char module[16];
+		zpl_char input[16];
 		if (argc == 2)
 		{
 			filter = vty_thread_cpu_filter(vty, argv[1]);
@@ -1460,15 +1784,38 @@ DEFUN(show_thread_task_cpu,
 		 break;
 		 }
 		 }*/
+#ifdef THREAD_MASTER_LIST
+		for (cutmp = _master_thread_list.head; cutmp; cutmp = next)
+		{
+			next = cutmp->next;
+			if (cutmp && cutmp->module == index)
+			{
+				if (vty_thread_cpu_get_history(cutmp))
+				{
+					vty_out(vty, "%s of cpu process:%s", module2name(index),
+							VTY_NEWLINE);
+					vty_thread_cpu_show_head(vty);
+					vty_thread_cpu_show_detail(cutmp, vty, 1,
+											   filter);
+					return CMD_SUCCESS;
+				}
+			}
+		}
+		{
+			vty_out(vty, "%s of cpu process: no thread use cpu%s",
+					module2name(index),
+					VTY_NEWLINE);
+		}
+#else
 		if (master_thread[index])
 		{
-			if (vty_thread_cpu_get_history(master_thread[i]))
+			if (vty_thread_cpu_get_history(master_thread[index]))
 			{
 				vty_out(vty, "%s of cpu process:%s", module2name(index),
-				VTY_NEWLINE);
+						VTY_NEWLINE);
 				vty_thread_cpu_show_head(vty);
 				vty_thread_cpu_show_detail(master_thread[index], vty, 1,
-						filter);
+										   filter);
 			}
 			else
 			{
@@ -1477,26 +1824,45 @@ DEFUN(show_thread_task_cpu,
 						VTY_NEWLINE);
 			}
 		}
+#endif
 	}
 	return CMD_SUCCESS;
 }
 
 DEFUN(clear_thread_cpu,
-		clear_thread_cpu_cmd,
-		"clear thread cpu [FILTER]",
-		"Clear stored data\n"
-		"Thread information\n"
-		"Thread CPU usage\n"
-		"Display filter (rwtexb)\n")
+	  clear_thread_cpu_cmd,
+	  "clear thread cpu [FILTER]",
+	  "Clear stored data\n"
+	  "Thread information\n"
+	  "Thread CPU usage\n"
+	  "Display filter (rwtexb)\n")
 {
-	ospl_uint32 i = 0;
 	thread_type filter = 0xff;
+#ifdef THREAD_MASTER_LIST
+	struct thread_master *cutmp = NULL;
+	struct thread_master *next = NULL;
+#else
+	zpl_uint32 i = 0;
+#endif
 	if (argc == 1)
 	{
 		filter = vty_thread_cpu_filter(vty, argv[0]);
 		if (filter == 0)
 			return CMD_WARNING;
 	}
+#ifdef THREAD_MASTER_LIST
+	for (cutmp = _master_thread_list.head; cutmp; cutmp = next)
+	{
+		next = cutmp->next;
+		if (cutmp)
+		{
+			if (vty_thread_cpu_get_history(cutmp))
+			{
+				vty_clear_thread_cpu(cutmp, vty, filter);
+			}
+		}
+	}
+#else
 	for (i = 0; i < MODULE_MAX; i++)
 	{
 		if (master_thread[i])
@@ -1507,24 +1873,28 @@ DEFUN(clear_thread_cpu,
 			}
 		}
 	}
+#endif
 	return CMD_SUCCESS;
 }
 
 DEFUN(clear_thread_task_cpu,
-		clear_thread_task_cpu_cmd,
-		"clear thread " OS_THREAD_STR_TASK "cpu [FILTER]",
-		"Clear stored data\n"
-		"Thread information\n"
-		OS_THREAD_STR_TASK_HELP
-		"Thread CPU usage\n"
-		"Display filter (rwtexb)\n")
+	  clear_thread_task_cpu_cmd,
+	  "clear thread " OS_THREAD_STR_TASK "cpu [FILTER]",
+	  "Clear stored data\n"
+	  "Thread information\n" OS_THREAD_STR_TASK_HELP
+	  "Thread CPU usage\n"
+	  "Display filter (rwtexb)\n")
 {
-	ospl_uint32 i = 0, index = 0;
+	zpl_uint32 i = 0, index = 0;
 	thread_type filter = 0xff;
+#ifdef THREAD_MASTER_LIST
+	struct thread_master *cutmp = NULL;
+	struct thread_master *next = NULL;
+#endif
 	if (argc > 1)
 	{
-		//ospl_char module[16];
-		ospl_char input[16];
+		// zpl_char module[16];
+		zpl_char input[16];
 		if (argc == 2)
 		{
 			filter = vty_thread_cpu_filter(vty, argv[1]);
@@ -1545,9 +1915,23 @@ DEFUN(clear_thread_task_cpu,
 		 break;
 		 }
 		 }*/
+#ifdef THREAD_MASTER_LIST
+		for (cutmp = _master_thread_list.head; cutmp; cutmp = next)
+		{
+			next = cutmp->next;
+			if (cutmp && cutmp->module == index)
+			{
+				if (vty_thread_cpu_get_history(cutmp))
+				{
+					vty_clear_thread_cpu(cutmp, vty, filter);
+					return CMD_SUCCESS;
+				}
+			}
+		}
+#else
 		if (master_thread[index])
 		{
-			if (vty_thread_cpu_get_history(master_thread[i]))
+			if (vty_thread_cpu_get_history(master_thread[index]))
 			{
 				vty_clear_thread_cpu(master_thread[index], vty, filter);
 			}
@@ -1558,6 +1942,7 @@ DEFUN(clear_thread_task_cpu,
 						VTY_NEWLINE);
 			}
 		}
+#endif
 	}
 	return CMD_SUCCESS;
 }
@@ -1567,7 +1952,7 @@ static int cpu_thread_read_write_show(struct thread *lst, struct vty *vty)
 {
 	if (lst && lst->funcname)
 	{
-		ospl_char type[24];
+		zpl_char type[24];
 		os_memset(type, 0, sizeof(type));
 		switch (lst->add_type)
 		{
@@ -1589,7 +1974,7 @@ static int cpu_thread_read_write_show(struct thread *lst, struct vty *vty)
 		case THREAD_BACKGROUND:
 			sprintf(type, "%s", "backround");
 			break;
-			//case THREAD_UNUSED:
+			// case THREAD_UNUSED:
 			//	break;
 		case THREAD_EXECUTE:
 			sprintf(type, "%s", "execute");
@@ -1604,18 +1989,17 @@ static int cpu_thread_read_write_show(struct thread *lst, struct vty *vty)
 
 static int cpu_thread_list_show(struct thread_list *m, struct vty *vty)
 {
-	//ospl_uint32  ret = 0;
-	struct thread *thread;
+	struct thread *t = NULL;
+	struct thread *thread = NULL;
 	thread = m->head;
 	while (thread)
 	{
-		struct thread *t;
-		t = thread;
-		thread = t->next;
 		if (thread)
 		{
 			cpu_thread_read_write_show(thread, vty);
 		}
+		t = thread;
+		thread = t->next;
 	}
 	return OK;
 }
@@ -1623,7 +2007,7 @@ static int cpu_thread_list_show(struct thread_list *m, struct vty *vty)
 static int cpu_thread_pqueue_show(struct pqueue *m, struct vty *vty)
 {
 	struct thread *thread;
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for (i = 0; i < m->size; i++)
 	{
 		thread = m->array[i];
@@ -1633,14 +2017,14 @@ static int cpu_thread_pqueue_show(struct pqueue *m, struct vty *vty)
 	return OK;
 }
 
-int cpu_thread_show(struct thread_master *m, struct vty *vty)
+static int cpu_thread_show(struct thread_master *m, struct vty *vty)
 {
-	//ospl_uint32 i = 0;
+	// zpl_uint32 i = 0;
 
-/*	for (i = 0; i < m->fd_limit; i++)
-		cpu_thread_read_write_show(m->read[i], vty);
-	for (i = 0; i < m->fd_limit; i++)
-		cpu_thread_read_write_show(m->write[i], vty);*/
+	/*	for (i = 0; i < m->fd_limit; i++)
+			cpu_thread_read_write_show(m->read[i], vty);
+		for (i = 0; i < m->fd_limit; i++)
+			cpu_thread_read_write_show(m->write[i], vty);*/
 	cpu_thread_list_show(&m->read, vty);
 	cpu_thread_list_show(&m->write, vty);
 	cpu_thread_list_show(&m->event, vty);
@@ -1650,32 +2034,52 @@ int cpu_thread_show(struct thread_master *m, struct vty *vty)
 	return 0;
 }
 
-DEFUN (show_thread_dump,
-		show_thread_dump_cmd,
-		"show thread dump",
-		SHOW_STR
-		"system thread information\n"
-		"thread dump information\n")
+DEFUN(show_thread_dump,
+	  show_thread_dump_cmd,
+	  "show thread dump",
+	  SHOW_STR
+	  "system thread information\n"
+	  "thread dump information\n")
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
+#ifdef THREAD_MASTER_LIST
+	struct thread_master *cutmp = NULL;
+	struct thread_master *next = NULL;
+#endif
+#ifdef THREAD_MASTER_LIST
+	for (cutmp = _master_thread_list.head; cutmp; cutmp = next)
+	{
+		next = cutmp->next;
+		if (cutmp)
+		{
+			vty_out(vty, "%s of cpu process:%s", module2name(cutmp->module), VTY_NEWLINE);
+			cpu_thread_show(cutmp, vty);
+		}
+	}
+#else
 	for (i = 0; i < MODULE_MAX; i++)
 	{
 		if (master_thread[i])
+		{
+			vty_out(vty, "%s of cpu process:%s", module2name(master_thread[i]->module), VTY_NEWLINE);
 			cpu_thread_show(master_thread[i], vty);
+		}
 	}
+#endif
 	return CMD_SUCCESS;
 }
 #endif
 
 int cmd_os_thread_init()
 {
-	install_element(ENABLE_NODE, &show_thread_dump_cmd);
-	install_element(ENABLE_NODE, &show_thread_cpu_cmd);
-	install_element(ENABLE_NODE, &show_thread_task_cpu_cmd);
+	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_thread_dump_cmd);
+	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_thread_cpu_cmd);
+	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_thread_task_cpu_cmd);
 
-	install_element(ENABLE_NODE, &clear_thread_cpu_cmd);
-	install_element(ENABLE_NODE, &clear_thread_task_cpu_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &clear_thread_cpu_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &clear_thread_task_cpu_cmd);
 
 	return 0;
 }
 
+#endif

@@ -19,14 +19,13 @@
  * 02111-1307, USA.  
  */
 
-#include <zebra.h>
-
-#include "vector.h"
-#include "memory.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
 /* Initialize vector : allocate memory and return vector. */
 vector
-vector_init (ospl_uint32  size)
+vector_init (zpl_uint32  size)
 {
   vector v = XCALLOC (MTYPE_VECTOR, sizeof (struct _vector));
 
@@ -62,7 +61,7 @@ vector_free (vector v)
 vector
 vector_copy (vector v)
 {
-  ospl_uint32  size;
+  zpl_uint32  size;
   vector new = XCALLOC (MTYPE_VECTOR, sizeof (struct _vector));
 
   new->active = v->active;
@@ -75,9 +74,9 @@ vector_copy (vector v)
   return new;
 }
 
-/* Check assigned index, and if it runs ospl_int16 ospl_double index pointer */
+/* Check assigned index, and if it runs zpl_int16 zpl_double index pointer */
 void
-vector_ensure (vector v, ospl_uint32  num)
+vector_ensure (vector v, zpl_uint32  num)
 {
   if (v->alloced > num)
     return;
@@ -97,7 +96,7 @@ vector_ensure (vector v, ospl_uint32  num)
 int
 vector_empty_slot (vector v)
 {
-  ospl_uint32  i;
+  zpl_uint32  i;
 
   if (v->active == 0)
     return 0;
@@ -113,7 +112,7 @@ vector_empty_slot (vector v)
 int
 vector_set (vector v, void *val)
 {
-  ospl_uint32  i;
+  zpl_uint32  i;
 
   i = vector_empty_slot (v);
   vector_ensure (v, i);
@@ -128,7 +127,7 @@ vector_set (vector v, void *val)
 
 /* Set value to specified index slot. */
 int
-vector_set_index (vector v, ospl_uint32  i, void *val)
+vector_set_index (vector v, zpl_uint32  i, void *val)
 {
   vector_ensure (v, i);
 
@@ -142,7 +141,7 @@ vector_set_index (vector v, ospl_uint32  i, void *val)
 
 /* Look up vector.  */
 void *
-vector_lookup (vector v, ospl_uint32  i)
+vector_lookup (vector v, zpl_uint32  i)
 {
   if (i >= v->active)
     return NULL;
@@ -151,7 +150,7 @@ vector_lookup (vector v, ospl_uint32  i)
 
 /* Lookup vector, ensure it. */
 void *
-vector_lookup_ensure (vector v, ospl_uint32  i)
+vector_lookup_ensure (vector v, zpl_uint32  i)
 {
   vector_ensure (v, i);
   return v->index[i];
@@ -159,7 +158,7 @@ vector_lookup_ensure (vector v, ospl_uint32  i)
 
 /* Unset value at specified index slot. */
 void
-vector_unset (vector v, ospl_uint32  i)
+vector_unset (vector v, zpl_uint32  i)
 {
   if (i >= v->alloced)
     return;
@@ -175,10 +174,10 @@ vector_unset (vector v, ospl_uint32  i)
 }
 
 /* Count the number of not emplty slot. */
-ospl_uint32 
+zpl_uint32 
 vector_count (vector v)
 {
-  ospl_uint32  i;
+  zpl_uint32  i;
   unsigned count = 0;
 
   for (i = 0; i < v->active; i++) 

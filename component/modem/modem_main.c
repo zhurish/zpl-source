@@ -7,15 +7,10 @@
 
 
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "thread.h"
-#include "os_util.h"
-#include "tty_com.h"
-#include "os_time.h"
-#include "os_ansync.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 
 #include "modem.h"
@@ -35,7 +30,7 @@
 #include "modem_process.h"
 #include "modem_usb_driver.h"
 
-static ospl_uint32 modem_task_id = 0;
+static zpl_uint32 modem_task_id = 0;
 
 os_ansync_lst * modem_ansync_lst = NULL;
 
@@ -97,10 +92,7 @@ static int modem_main_task(void *argv)
 {
 	os_ansync_t *node;
 	os_sleep(5);
-	while(!os_load_config_done())
-	{
-		os_sleep(1);
-	}
+	host_config_load_waitting();
 	while(modem_ansync_lst)
 	{
 		while((node = os_ansync_fetch(modem_ansync_lst)))
@@ -168,7 +160,7 @@ static int modem_timer_thread(void *argv)
 int modem_module_init (void)
 {
 	modem_main_init();
-	modem_ansync_lst = os_ansync_lst_create(PL_MODEM_MODULE, 4);
+	modem_ansync_lst = os_ansync_lst_create(ZPL_MODEM_MODULE, 4);
 	if(modem_ansync_lst)
 	{
 		os_ansync_timeout_api(modem_ansync_lst, OS_ANSYNC_SEC(5));

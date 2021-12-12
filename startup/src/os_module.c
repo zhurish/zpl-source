@@ -4,20 +4,15 @@
  *  Created on: Jun 10, 2017
  *      Author: zhurish
  */
-#include "zebra.h"
-#include "memory.h"
-#include "command.h"
-#include "memory.h"
-#include "prefix.h"
-#include "sigevent.h"
-#include "version.h"
-#include <log.h>
-#include "getopt.h"
-#include "eloop.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
+#include "bmgt.h"
 #include "os_start.h"
 #include "os_module.h"
 #include "module_tbl.h"
-#ifdef PL_APP_MODULE
+#ifdef ZPL_APP_MODULE
 #include "application.h"
 #endif
 
@@ -26,22 +21,20 @@ int console_enable = 0;
 static int telnet_task_id = 0;
 static int console_task_id = 0;
 
+static void *master_eloop_default = NULL;
+
 static int cli_telnet_task(void *argv)
 {
 	module_setup_task(MODULE_TELNET, os_task_id_self());
-	while (!os_load_config_done())
-	{
-		os_sleep(1);
-	}
+	host_config_load_waitting();
 	eloop_start_running(NULL, MODULE_TELNET);
 	return 0;
 }
 
 static int cli_telnet_task_init()
 {
-	if (master_eloop[MODULE_TELNET] == NULL)
-		master_eloop[MODULE_TELNET] = eloop_master_module_create(MODULE_TELNET);
-	//master_thread[MODULE_TELNET] = thread_master_module_create(PL_SERVICE_TELNET);
+	cli_shell.telnet_master = eloop_master_module_create(MODULE_TELNET);
+	//master_thread[MODULE_TELNET] = cli_shell.console_master_module_create(ZPL_SERVICE_TELNET);
 	if (telnet_task_id == 0)
 		telnet_task_id = os_task_create("telnetdTask", OS_TASK_DEFAULT_PRIORITY,
 										0, cli_telnet_task, NULL, OS_TASK_DEFAULT_STACK);
@@ -55,28 +48,24 @@ static int cli_telnet_task_exit()
 	if (telnet_task_id)
 		os_task_destroy(telnet_task_id);
 	telnet_task_id = 0;
-	if (master_eloop[MODULE_TELNET])
-		eloop_master_free(master_eloop[MODULE_TELNET]);
-	master_eloop[MODULE_TELNET] = NULL;
+	if (cli_shell.telnet_master)
+		eloop_master_free(cli_shell.telnet_master);
+	cli_shell.telnet_master = NULL;
 	return OK;
 }
 
 static int cli_console_task(void *argv)
 {
 	module_setup_task(MODULE_CONSOLE, os_task_id_self());
-	while (!os_load_config_done())
-	{
-		os_sleep(1);
-	}
+	host_config_load_waitting();
 	os_start_running(NULL, MODULE_CONSOLE);
 	return 0;
 }
 
 static int cli_console_task_init()
 {
-	if (master_thread[MODULE_CONSOLE] == NULL)
-		master_thread[MODULE_CONSOLE] = thread_master_module_create(MODULE_CONSOLE);
-
+	if (cli_shell.console_master == NULL)
+		cli_shell.console_master = thread_master_module_create(MODULE_CONSOLE);
 	if (console_task_id == 0)
 		console_task_id = os_task_create("consoleTask", OS_TASK_DEFAULT_PRIORITY,
 										 0, cli_console_task, NULL, OS_TASK_DEFAULT_STACK);
@@ -90,9 +79,9 @@ static int cli_console_task_exit()
 	if (console_task_id)
 		os_task_destroy(console_task_id);
 	console_task_id = 0;
-	if (master_thread[MODULE_CONSOLE])
-		thread_master_free(master_thread[MODULE_CONSOLE]);
-	master_thread[MODULE_CONSOLE] = NULL;
+	if (cli_shell.console_master)
+		thread_master_free(cli_shell.console_master);
+	cli_shell.console_master = NULL;
 	return OK;
 }
 
@@ -111,22 +100,25 @@ int os_shell_start(char *shell_path, char *shell_addr, int shell_port, const cha
 static int os_default_start()
 {
 	/* Make master thread emulator. */
-	if (master_eloop[MODULE_TELNET] == NULL)
-		master_eloop[MODULE_TELNET] = eloop_master_module_create(MODULE_TELNET);
+	if (cli_shell.telnet_master == NULL)
+		cli_shell.telnet_master = eloop_master_module_create(MODULE_TELNET);
 
-	if (master_thread[MODULE_CONSOLE] == NULL)
-		master_thread[MODULE_CONSOLE] = thread_master_module_create(MODULE_CONSOLE);
+	if (cli_shell.console_master == NULL)
+		cli_shell.console_master = thread_master_module_create(MODULE_CONSOLE);
 
 	cmd_init(1);
-	vty_init(master_thread[MODULE_CONSOLE], master_eloop[MODULE_TELNET]);
+	vty_init(cli_shell.console_master, cli_shell.telnet_master);
 	vty_user_init();
 	memory_init();
+	cmd_host_init(1);
+	unit_board_init();
+	//qos_access_list_init();
 	return OK;
 }
 
 int os_ip_stack_init(int localport)
 {
-#ifndef USE_IPSTACK_KERNEL
+#ifdef ZPL_IPCOM_STACK_MODULE
 	extern int ipcom_demo_init(int localport);
 	extern void sys_signal_init(void);
 
@@ -136,34 +128,35 @@ int os_ip_stack_init(int localport)
 }
 /*
 extern int pl_module_name_init(const char * name);
-extern int pl_module_init(ospl_uint32 module);
-extern int pl_module_exit(ospl_uint32 module);
+extern int pl_module_init(zpl_uint32 module);
+extern int pl_module_exit(zpl_uint32 module);
 extern int pl_module_task_name_init(const char * name);
-extern int pl_module_task_init(ospl_uint32 module);
-extern int pl_module_task_exit(ospl_uint32 module);
+extern int pl_module_task_init(zpl_uint32 module);
+extern int pl_module_task_exit(zpl_uint32 module);
 extern int pl_module_cmd_name_init(const char * name);
-extern int pl_module_cmd_init(ospl_uint32 module);
+extern int pl_module_cmd_init(zpl_uint32 module);
 */
 int os_module_init(void)
 {
 	os_default_start();
-
+	printf("=======os_default_start");
 	pl_module_name_show();
 
-	if (master_eloop[MODULE_DEFAULT] == NULL)
-		master_eloop[MODULE_DEFAULT] = eloop_master_module_create(MODULE_DEFAULT);
-
+	if (master_eloop_default == NULL)
+		master_eloop_default = eloop_master_module_create(MODULE_DEFAULT);
+printf( "=======pl_def_module_init");
 	pl_def_module_init();
-
-#ifdef PL_SERVICE_SNTPS
-	sntpsInit(master_eloop[MODULE_DEFAULT]);
+printf("=======af pl_def_module_init");
+#ifdef ZPL_SERVICE_SNTPS
+	sntpsInit(master_eloop_default);
 #endif
-#ifdef PL_SERVICE_SNTPC
-	sntpcInit(master_eloop[MODULE_DEFAULT]);
+#ifdef ZPL_SERVICE_SNTPC
+	sntpcInit(master_eloop_default);
 #endif
-#ifdef PL_SERVICE_SYSLOG
-	syslogc_lib_init(master_eloop[MODULE_DEFAULT], NULL);
+#ifdef ZPL_SERVICE_SYSLOG
+	syslogc_lib_init(master_eloop_default, NULL);
 #endif
+	hal_bsp_init();
 
 	sleep(1);
 	return OK;
@@ -172,17 +165,17 @@ int os_module_init(void)
 int os_module_exit(void)
 {
 	/* reverse access_list_init */
-	access_list_add_hook(NULL);
-	access_list_delete_hook(NULL);
+	//access_list_add_hook(NULL);
+	//access_list_delete_hook(NULL);
 	access_list_reset();
 
 	/* reverse prefix_list_init */
-	prefix_list_add_hook(NULL);
-	prefix_list_delete_hook(NULL);
+	//prefix_list_add_hook(NULL);
+	//prefix_list_delete_hook(NULL);
 	prefix_list_reset();
 
 	pl_def_module_exit();
-
+	hal_bsp_exit();
 	return OK;
 }
 
@@ -196,21 +189,23 @@ int os_module_task_init(void)
 	cli_telnet_task_init();
 
 	pl_def_module_task_init();
-
+	hal_bsp_task_init();
 	return OK;
 }
 
 int os_module_task_exit(void)
 {
-#ifdef DOUBLE_PROCESS
+#ifdef ZPL_TOOLS_PROCESS
 	os_process_stop();
 #endif
 
 	pl_def_module_task_exit();
 
-#ifdef PL_NSM_MODULE
+#ifdef ZPL_NSM_MODULE
 	nsm_task_exit ();
 #endif
+
+	hal_bsp_task_exit();
 
 	os_time_exit();
 	os_job_exit();
@@ -225,7 +220,7 @@ int os_module_task_exit(void)
 int os_module_cmd_init(int terminal)
 {
 	//system cmd
-	cmd_host_init(terminal);
+	//cmd_host_init(terminal);
 	cmd_log_init();
 	cmd_os_init();
 	cmd_nvram_env_init();
@@ -235,10 +230,13 @@ int os_module_cmd_init(int terminal)
 	cmd_vty_init();
 	cmd_vty_user_init();
 
-#ifdef PL_NSM_MODULE
+#ifdef ZPL_NSM_MODULE
 	nsm_module_cmd_init();
 #endif
 
+#ifdef ZPL_ZPLMEDIA_MODULE
+	zpl_media_cmd_init();
+#endif
 
 #ifdef OS_START_TEST
 	/*
@@ -246,7 +244,7 @@ int os_module_cmd_init(int terminal)
 	 */
 	extern int os_test();
 	os_test();
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 	hal_test_init();
 #endif
 #endif

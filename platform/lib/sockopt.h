@@ -28,18 +28,18 @@ extern "C" {
 
 #include "sockunion.h"
 
-extern int setsockopt_so_recvbuf (int sock, ospl_uint32 size);
-extern int setsockopt_so_sendbuf (const int sock, ospl_uint32 size);
-extern int getsockopt_so_sendbuf (const int sock);
+extern int setsockopt_so_recvbuf (zpl_socket_t sock, zpl_uint32 size);
+extern int setsockopt_so_sendbuf (const zpl_socket_t sock, zpl_uint32 size);
+extern int getsockopt_so_sendbuf (const zpl_socket_t sock);
 
 #ifdef HAVE_IPV6
-extern int setsockopt_ipv6_pktinfo (int, ospl_uint32);
-extern int setsockopt_ipv6_checksum (int, ospl_uint32);
-extern int setsockopt_ipv6_multicast_hops (int, ospl_uint32);
-extern int setsockopt_ipv6_unicast_hops (int, ospl_uint32);
-extern int setsockopt_ipv6_hoplimit (int, ospl_uint32);
-extern int setsockopt_ipv6_multicast_loop (int, ospl_uint32);
-extern int setsockopt_ipv6_tclass (int, ospl_uint32);
+extern int setsockopt_ipv6_pktinfo (zpl_socket_t, zpl_uint32);
+extern int setsockopt_ipv6_checksum (zpl_socket_t, zpl_uint32);
+extern int setsockopt_ipv6_multicast_hops (zpl_socket_t, zpl_uint32);
+extern int setsockopt_ipv6_unicast_hops (zpl_socket_t, zpl_uint32);
+extern int setsockopt_ipv6_hoplimit (zpl_socket_t, zpl_uint32);
+extern int setsockopt_ipv6_multicast_loop (zpl_socket_t, zpl_uint32);
+extern int setsockopt_ipv6_tclass (zpl_socket_t, zpl_uint32);
 #endif /* HAVE_IPV6 */
 
 /*
@@ -80,34 +80,34 @@ extern int setsockopt_ipv6_tclass (int, ospl_uint32);
 #elif defined (SOPT_SIZE_CMSG_RECVIF_IPV4)
 #define SOPT_SIZE_CMSG_IFINDEX_IPV4() SOPT_SIZE_CMSG_RECVIF_IPV4()
 #else /* Nothing available */
-#define SOPT_SIZE_CMSG_IFINDEX_IPV4() (sizeof (ospl_char *))
+#define SOPT_SIZE_CMSG_IFINDEX_IPV4() (sizeof (zpl_char *))
 #endif /* SOPT_SIZE_CMSG_IFINDEX_IPV4 */
 
 #define SOPT_SIZE_CMSG_IFINDEX(af) \
   (((af) == AF_INET) : SOPT_SIZE_CMSG_IFINDEX_IPV4() \
                     ? SOPT_SIZE_CMSG_PKTINFO_IPV6())
 
-extern int setsockopt_ipv4_multicast_if(int sock, ifindex_t ifindex);
-extern int setsockopt_ipv4_multicast(int sock, ospl_uint32 optname,
-                                     ospl_uint32  mcast_addr,
+extern int setsockopt_ipv4_multicast_if(zpl_socket_t sock, ifindex_t ifindex);
+extern int setsockopt_ipv4_multicast(zpl_socket_t sock, zpl_uint32 optname,
+                                     zpl_uint32  mcast_addr,
 			             ifindex_t ifindex);
-extern int setsockopt_ipv4_tos(int sock, ospl_uint32 tos);
+extern int setsockopt_ipv4_tos(zpl_socket_t sock, zpl_uint32 tos);
 
 /* Ask for, and get, ifindex, by whatever method is supported. */
-extern int setsockopt_ifindex (ospl_family_t family, int, ifindex_t);
-extern ifindex_t getsockopt_ifindex (ospl_family_t family, struct msghdr *);
+extern int setsockopt_ifindex (zpl_family_t family, zpl_socket_t, ifindex_t);
+extern ifindex_t getsockopt_ifindex (zpl_family_t family, struct msghdr *);
 
 /* swab the fields in iph between the host order and system order expected 
  * for IP_HDRINCL.
  */
-extern int setsockopt_ipv4_multicast_loop(int sock, ospl_uint32 opt);
+extern int setsockopt_ipv4_multicast_loop(zpl_socket_t sock, zpl_uint32 opt);
 
 extern void sockopt_iphdrincl_swab_htosys (struct ip *iph);
 extern void sockopt_iphdrincl_swab_systoh (struct ip *iph);
 
-extern int sockopt_tcp_rtt (int);
-#ifdef USE_IPSTACK_KERNEL
-extern int sockopt_tcp_signature(int sock, union sockunion *su,
+extern int sockopt_tcp_rtt (zpl_socket_t);
+#ifdef ZPL_KERNEL_STACK_MODULE
+extern int sockopt_tcp_signature(zpl_socket_t sock, union sockunion *su,
                                  const char *password);
 #endif
 

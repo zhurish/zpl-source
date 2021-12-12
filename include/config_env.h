@@ -12,22 +12,22 @@
 extern "C" {
 #endif
 
-//#define USE_IPSTACK_KERNEL
-	//USE_IPSTACK_KERNEL
+//#define ZPL_KERNEL_STACK_MODULE
+	//ZPL_KERNEL_STACK_MODULE
 //#undef BASE_DIR
 #ifndef BASE_DIR
 #define BASE_DIR	"/tmp/app"
 #endif
 
-#ifdef PL_BUILD_ARCH_X86
+#ifdef ZPL_BUILD_ARCH_X86
 #ifndef SYS_REAL_DIR
-#define SYS_REAL_DIR		"/home/zhurish/workspace/SWPlatform/debug"
+#define SYS_REAL_DIR		"/home/zhurish/workspace/zpl-source/debug"
 #undef BASE_DIR
 #define BASE_DIR	SYS_REAL_DIR"/tmp/app"
 #endif
 #define SYSCONF_REAL_DIR 	SYS_REAL_DIR "/etc"
 #else
-#ifdef PL_BUILD_OS_OPENWRT
+#ifdef ZPL_BUILD_OS_OPENWRT
 #ifndef SYS_REAL_DIR
 #define SYS_REAL_DIR		"/app"
 #endif
@@ -40,7 +40,7 @@ extern "C" {
 #endif
 #endif
 
-//#ifdef PL_BUILD_OS_OPENWRT
+//#ifdef ZPL_BUILD_OS_OPENWRT
 //#define SYSCONFDIR 		"/etc/app"
 //#else
 //#define SYSCONFDIR 		BASE_DIR "/etc"
@@ -79,12 +79,12 @@ extern "C" {
 
 #define CONF_BACKUP_EXT ".sav"
 
-#ifdef PL_BUILD_OS_OPENWRT
+#ifdef ZPL_BUILD_OS_OPENWRT
 #define STARTUP_CONFIG_FILE	SYSCONFDIR "/startup-config.cfg"
 #define DEFAULT_CONFIG_FILE	SYSCONFDIR "/default-config.cfg"
 #define FACTORY_CONFIG_FILE	SYSCONFDIR "/factory-config.cfg"
 #else
-#ifdef PL_BUILD_ARCH_X86
+#ifdef ZPL_BUILD_ARCH_X86
 #define STARTUP_CONFIG_FILE	PLSYSCONFDIR "/startup-config.cfg"
 #define DEFAULT_CONFIG_FILE	PLSYSCONFDIR "/default-config.cfg"
 #define FACTORY_CONFIG_FILE	PLSYSCONFDIR "/factory-config.cfg"

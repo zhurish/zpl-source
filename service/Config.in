@@ -4,92 +4,92 @@
 
 menu "Service Module Config"
 
-config PL_SERVICE_MODULE
+config ZPL_SERVICE_MODULE
 	bool "Service Module"
 	default y
 	help
 	Build Service Module.
 
-config PL_SERVICE_SNTPC
+config ZPL_SERVICE_SNTPC
 	bool "Sntp Client"
-	depends on PL_SERVICE_MODULE
+	depends on ZPL_SERVICE_MODULE
 	default y
 	help
 	Build SNTP Client Module.
 
-config PL_SERVICE_SNTPS
+config ZPL_SERVICE_SNTPS
 	bool "Sntp Server"
-	depends on PL_SERVICE_MODULE
+	depends on ZPL_SERVICE_MODULE
 	default n
 	help
 	Build SNTP Server Module.
 	
-config PL_SERVICE_SYSLOG
+config ZPL_SERVICE_SYSLOG
 	bool "Platform Syslog Client Module"
-	depends on PL_SERVICE_MODULE
+	depends on ZPL_SERVICE_MODULE
 	default y
 	help
 	Build Syslog Client Module.
 	
-config PL_SERVICE_FTPC
+config ZPL_SERVICE_FTPC
 	bool "FTP Client Module"
-	depends on PL_SERVICE_MODULE
+	depends on ZPL_SERVICE_MODULE
 	default n
 	help
 	Build FTP Client Module.
 
-config PL_SERVICE_FTPD
+config ZPL_SERVICE_FTPD
 	bool "FTP Server Module"
-	depends on PL_SERVICE_MODULE
+	depends on ZPL_SERVICE_MODULE
 	default n
 	help
 	Build FTP Server Module.
 
-config PL_SERVICE_TFTPC
+config ZPL_SERVICE_TFTPC
 	bool "TFTP Client Module"
-	depends on PL_SERVICE_MODULE
+	depends on ZPL_SERVICE_MODULE
 	default n
 	help
 	Build TFTP Client Module.
 
-config PL_SERVICE_TFTPD
+config ZPL_SERVICE_TFTPD
 	bool "TFTP Server Module"
-	depends on PL_SERVICE_MODULE
+	depends on ZPL_SERVICE_MODULE
 	default n
 	help
 	Build TFTP Server Module.
 	
-config PL_SERVICE_PING
+config ZPL_SERVICE_PING
 	bool "Ping Module"
-	depends on PL_SERVICE_MODULE
+	depends on ZPL_SERVICE_MODULE
 	default y
 	help
 	Build Ping Module.
 
-config PL_SERVICE_TELNET
+config ZPL_SERVICE_TELNET
 	bool "Telnet Client Module"
-	depends on PL_SERVICE_MODULE
+	depends on ZPL_SERVICE_MODULE
 	default y
 	help
 	Build Telnet Client Module.
 
-config PL_SERVICE_TELENTD
+config ZPL_SERVICE_TELENTD
 	bool "Telnet Server Module"
-	depends on PL_SERVICE_MODULE
+	depends on ZPL_SERVICE_MODULE
 	default n
 	help
 	Build Telnet Server Module.
 
-config PL_SERVICE_TRACEROUTE
+config ZPL_SERVICE_TRACEROUTE
 	bool "Traceroute Module"
-	depends on PL_SERVICE_MODULE
+	depends on ZPL_SERVICE_MODULE
 	default y
 	help
 	Build Traceroute Module.
 
-config PL_SERVICE_UBUS_SYNC
+config ZPL_SERVICE_UBUS_SYNC
 	bool "UBUS Sync Module"
-	depends on PL_SERVICE_MODULE
+	depends on ZPL_SERVICE_MODULE
 	default y
 	help
 	Build UBUS Sync Module.

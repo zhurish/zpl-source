@@ -190,84 +190,84 @@ enum E_CMD_LEN
 #pragma pack(1)
 typedef struct x5b_app_hdr_s
 {
-	ospl_uint8 makr;
-	ospl_uint8 seqnum;
-	ospl_uint8 m_seqnum;
-	ospl_uint32 total_len;
+	zpl_uint8 makr;
+	zpl_uint8 seqnum;
+	zpl_uint8 m_seqnum;
+	zpl_uint32 total_len;
 } x5b_app_hdr_t;
 
 typedef struct x5b_app_room_auth_ack_s
 {
-	ospl_uint8	building;
-	ospl_uint8	unit;
-	ospl_uint8	room_number[4];
-	ospl_uint8	result;
-	ospl_uint8	data[512];
+	zpl_uint8	building;
+	zpl_uint8	unit;
+	zpl_uint8	room_number[4];
+	zpl_uint8	result;
+	zpl_uint8	data[512];
 } x5b_app_room_auth_ack_t;//房间号鉴权应答
 
 typedef struct x5b_app_room_auth_s
 {
-	ospl_uint8	building;
-	ospl_uint8	unit;
-	ospl_uint8	room_number[4];
-	ospl_uint8	result;
-	ospl_uint8	data[512];
+	zpl_uint8	building;
+	zpl_uint8	unit;
+	zpl_uint8	room_number[4];
+	zpl_uint8	result;
+	zpl_uint8	data[512];
 } x5b_app_room_auth_t;// 房间号鉴权
 
 
 typedef struct x5b_app_call_s
 {
-	ospl_uint8	building;
-	ospl_uint8	unit;
-	ospl_uint16	room_number;
+	zpl_uint8	building;
+	zpl_uint8	unit;
+	zpl_uint16	room_number;
 } x5b_app_call_t;//呼叫房间号
 
 typedef struct x5b_app_call_from_s
 {
-	ospl_uint8	building;
-	ospl_uint8	unit;
-	ospl_uint8	room_number[4];
+	zpl_uint8	building;
+	zpl_uint8	unit;
+	zpl_uint8	room_number[4];
 } x5b_app_call_from_t;//呼叫房间号
 
 typedef struct x5b_app_factory_s
 {
-	ospl_uint32 local_address;			//MUST: local IP address/DHCP(0.0.0.0)
-	ospl_uint32 local_netmask;
-	ospl_uint32 local_gateway;
-	ospl_uint32 local_dns;
+	zpl_uint32 local_address;			//MUST: local IP address/DHCP(0.0.0.0)
+	zpl_uint32 local_netmask;
+	zpl_uint32 local_gateway;
+	zpl_uint32 local_dns;
 } x5b_app_factory_t, x5b_app_netinfo_t;//安装工配置网络参数， 网络参数应答上报
 
 
 typedef struct x5b_app_register_ack_s
 {
-	ospl_uint8	reg_state;
+	zpl_uint8	reg_state;
 	char 	phone[32];
 } x5b_app_register_ack_t;//本地号码注册状态
 
 
 typedef struct x5b_app_phone_register_ack_s
 {
-	ospl_uint8 iface;
-	ospl_uint16 l_port;
-	ospl_uint32 sip_address;
-	ospl_uint16 sip_port;
-	ospl_uint32 proxy_address;
-	ospl_uint16 proxy_port;
-	ospl_uint8 proto;
-	ospl_uint8 dtmf;
-	ospl_uint8 codec;
+	zpl_uint8 iface;
+	zpl_uint16 l_port;
+	zpl_uint32 sip_address;
+	zpl_uint16 sip_port;
+	zpl_uint32 proxy_address;
+	zpl_uint16 proxy_port;
+	zpl_uint8 proto;
+	zpl_uint8 dtmf;
+	zpl_uint8 codec;
 } x5b_app_phone_register_ack_t;//本地号码服务信息
 
 typedef struct
 {
-	ospl_uint32 RelayOpenTime;
-	ospl_uint32 RelayOpenWaitOpenDoorTime;
-	ospl_uint32 DoorKeepOpenTime;
-	ospl_uint8 DoorSensorOutPutLevle;
-	ospl_uint8 LockRole;
-	ospl_uint8 TamperAlarm;
-	ospl_uint8 DoorKeepOpentTimeOutAlarm;
-	ospl_uint8 rev;//doorcontact
+	zpl_uint32 RelayOpenTime;
+	zpl_uint32 RelayOpenWaitOpenDoorTime;
+	zpl_uint32 DoorKeepOpenTime;
+	zpl_uint8 DoorSensorOutPutLevle;
+	zpl_uint8 LockRole;
+	zpl_uint8 TamperAlarm;
+	zpl_uint8 DoorKeepOpentTimeOutAlarm;
+	zpl_uint8 rev;//doorcontact
 } ConfiglockType;//A模块开门信息
 
 enum //ID
@@ -278,66 +278,66 @@ enum //ID
 
 typedef struct
 {
-	ospl_uint8 mode;
-	ospl_uint32 len;
+	zpl_uint8 mode;
+	zpl_uint32 len;
 } x5b_app_update_mode_t;//A模块升级模式
 
 /*
 #define X5B_APP_UPDATE_DATA_MAX	1024
 typedef struct
 {
-	ospl_uint8 data[X5B_APP_UPDATE_DATA_MAX];
+	zpl_uint8 data[X5B_APP_UPDATE_DATA_MAX];
 } x5b_app_update_data_t;
 */
 
 
 typedef struct _permiList
 {
-	ospl_uint8     ID[8];
-    ospl_uint32    start_time;
-    ospl_uint32    stop_time;
-    ospl_uint8     status;//1 2
-	ospl_uint8     res[3];
+	zpl_uint8     ID[8];
+    zpl_uint32    start_time;
+    zpl_uint32    stop_time;
+    zpl_uint8     status;//1 2
+	zpl_uint8     res[3];
 }permiListType;
 
 typedef struct
 {
-    ospl_uint8 year;
-    ospl_uint8 mon;
-    ospl_uint8 day;
-    ospl_uint8 hour;
-    ospl_uint8 min;
-    ospl_uint8 sec;
-    ospl_uint8 week;
+    zpl_uint8 year;
+    zpl_uint8 mon;
+    zpl_uint8 day;
+    zpl_uint8 hour;
+    zpl_uint8 min;
+    zpl_uint8 sec;
+    zpl_uint8 week;
 
 } rtcTimeType;
 
 typedef struct cardid_respone
 {
-	ospl_uint8    op_type;
-	ospl_uint8    face_result;
-    ospl_uint8    card_result;//1 2
-	ospl_uint8    clen;
-	ospl_uint8    ID[8];
+	zpl_uint8    op_type;
+	zpl_uint8    face_result;
+    zpl_uint8    card_result;//1 2
+	zpl_uint8    clen;
+	zpl_uint8    ID[8];
 }open_cardid_respone;
 
 
 
 typedef struct global_config_s
 {
-	ospl_uint8 x5cm;//：（1 byte）
-	ospl_uint8 blu;//：（1 byte）
-	ospl_uint8 nfc;//：（1 byte）
-	ospl_uint8 opentype;//：（1 byte）
-	ospl_uint8 custom;//：（1 byte）
-	ospl_uint8 scene;//：（1 byte）
-	ospl_uint8 housing;//：（1 byte）
-	ospl_uint8 devname[X5B_APP_DEVICE_NAME_MAX];//：（64 byte）
-	ospl_uint8 location[X5B_APP_DEVICE_NAME_MAX];//：（64 byte）
-	ospl_uint8 direction;//：（1 byte）
-	ospl_uint8 address1[X5B_APP_DEVICE_IP_MAX];//：（32 byte）
-	ospl_uint8 address2[X5B_APP_DEVICE_IP_MAX];//：（32byte）
-	ospl_uint8 address3[X5B_APP_DEVICE_IP_MAX];//：（32byte
+	zpl_uint8 x5cm;//：（1 byte）
+	zpl_uint8 blu;//：（1 byte）
+	zpl_uint8 nfc;//：（1 byte）
+	zpl_uint8 opentype;//：（1 byte）
+	zpl_uint8 custom;//：（1 byte）
+	zpl_uint8 scene;//：（1 byte）
+	zpl_uint8 housing;//：（1 byte）
+	zpl_uint8 devname[X5B_APP_DEVICE_NAME_MAX];//：（64 byte）
+	zpl_uint8 location[X5B_APP_DEVICE_NAME_MAX];//：（64 byte）
+	zpl_uint8 direction;//：（1 byte）
+	zpl_uint8 address1[X5B_APP_DEVICE_IP_MAX];//：（32 byte）
+	zpl_uint8 address2[X5B_APP_DEVICE_IP_MAX];//：（32byte）
+	zpl_uint8 address3[X5B_APP_DEVICE_IP_MAX];//：（32byte
 }global_config_t;
 
 #pragma pack(0)

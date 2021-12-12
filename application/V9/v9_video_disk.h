@@ -48,23 +48,23 @@ enum
 
 int v9_video_disk_count(void);
 
-char * v9_video_disk_root_dir(ospl_uint32 id);
-char * v9_video_disk_base_dir(ospl_uint32 id);
-char * v9_video_disk_db_dir(ospl_uint32 id);
-char * v9_video_disk_cap_dir(ospl_uint32 id);
-char * v9_video_disk_warn_dir(ospl_uint32 id);
-//char * v9_video_disk_user_dir(ospl_uint32 id);
-char * v9_video_disk_capdb_dir(ospl_uint32 id);
-char * v9_video_disk_recg_dir(ospl_uint32 id);
+char * v9_video_disk_root_dir(zpl_uint32 id);
+char * v9_video_disk_base_dir(zpl_uint32 id);
+char * v9_video_disk_db_dir(zpl_uint32 id);
+char * v9_video_disk_cap_dir(zpl_uint32 id);
+char * v9_video_disk_warn_dir(zpl_uint32 id);
+//char * v9_video_disk_user_dir(zpl_uint32 id);
+char * v9_video_disk_capdb_dir(zpl_uint32 id);
+char * v9_video_disk_recg_dir(zpl_uint32 id);
 
 char * v9_video_disk_urlpath(int id, char *picpath);
 
 int v9_video_disk_dir_init(void);
 
-int v9_video_disk_keep_day_set(ospl_uint32 day);
+int v9_video_disk_keep_day_set(zpl_uint32 day);
 int v9_video_disk_keep_day_get(void);
 
-int v9_video_disk_monitor_start(ospl_bool enable);
+int v9_video_disk_monitor_start(zpl_bool enable);
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,5 @@
-include $(MAKE_DIR)/makelinux.mk
-PREFIX = $(DSTROOTFSDIR)
+include $(ZPL_MAKE_DIR)/makelinux.mk
+PREFIX = $(ZPL_INSTALL_ROOTFS_DIR)
 #export LIBDIR = $(PREFIX)/lib
 #LIBOPENH264_ROOT
 
@@ -14,8 +14,8 @@ vpath %.pc.in $(SRC_PATH)
 
 #OS=$(shell uname | tr A-Z a-z | tr -d \\-0-9. | sed -E 's/^(net|open|free)bsd/bsd/')
 #ARCH=$(shell uname -m)
-OS=$(PL_BUILD_OS)
-ARCH=$(PL_BUILD_ARCH)
+OS=$(ZPL_BUILD_OS)
+ARCH=$(ZPL_BUILD_ARCH)
 
 LIBPREFIX=lib
 LIBSUFFIX=a

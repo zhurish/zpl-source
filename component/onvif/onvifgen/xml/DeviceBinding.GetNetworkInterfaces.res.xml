@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope
+    xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope"
+    xmlns:SOAP-ENC="http://www.w3.org/2003/05/soap-encoding"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing"
+    xmlns:wsdd="http://schemas.xmlsoap.org/ws/2005/04/discovery"
+    xmlns:chan="http://schemas.microsoft.com/ws/2005/02/duplex"
+    xmlns:wsa5="http://www.w3.org/2005/08/addressing"
+    xmlns:xmime="http://tempuri.org/xmime.xsd"
+    xmlns:xop="http://www.w3.org/2004/08/xop/include"
+    xmlns:ns1="http://www.onvif.org/ver20/analytics/humanface"
+    xmlns:ns2="http://www.onvif.org/ver20/analytics/humanbody"
+    xmlns:tt="http://www.onvif.org/ver10/schema"
+    xmlns:wsrfbf="http://docs.oasis-open.org/wsrf/bf-2"
+    xmlns:wstop="http://docs.oasis-open.org/wsn/t-1"
+    xmlns:wsrfr="http://docs.oasis-open.org/wsrf/r-2"
+    xmlns:tad="http://www.onvif.org/ver10/analyticsdevice/wsdl"
+    xmlns:tan="http://www.onvif.org/ver20/analytics/wsdl"
+    xmlns:tdn="http://www.onvif.org/ver10/network/wsdl"
+    xmlns:tds="http://www.onvif.org/ver10/device/wsdl"
+    xmlns:tev="http://www.onvif.org/ver10/events/wsdl"
+    xmlns:wsnt="http://docs.oasis-open.org/wsn/b-2"
+    xmlns:timg="http://www.onvif.org/ver20/imaging/wsdl"
+    xmlns:tls="http://www.onvif.org/ver10/display/wsdl"
+    xmlns:tmd="http://www.onvif.org/ver10/deviceIO/wsdl"
+    xmlns:tptz="http://www.onvif.org/ver20/ptz/wsdl"
+    xmlns:trc="http://www.onvif.org/ver10/recording/wsdl"
+    xmlns:trp="http://www.onvif.org/ver10/replay/wsdl"
+    xmlns:trt="http://www.onvif.org/ver10/media/wsdl"
+    xmlns:trv="http://www.onvif.org/ver10/receiver/wsdl"
+    xmlns:tse="http://www.onvif.org/ver10/search/wsdl">
+ <SOAP-ENV:Body>
+  <tds:GetNetworkInterfacesResponse>
+   <tds:NetworkInterfaces xsi:type="tt:NetworkInterface" token="">
+    <tt:Enabled xsi:type="xsd:boolean">false</tt:Enabled>
+    <tt:Info xsi:type="tt:NetworkInterfaceInfo">
+     <tt:Name xsi:type="xsd:string"></tt:Name>
+     <tt:HwAddress xsi:type="tt:HwAddress"></tt:HwAddress>
+     <tt:MTU xsi:type="xsd:int">0</tt:MTU>
+    </tt:Info>
+    <tt:Link xsi:type="tt:NetworkInterfaceLink">
+     <tt:AdminSettings xsi:type="tt:NetworkInterfaceConnectionSetting">
+      <tt:AutoNegotiation xsi:type="xsd:boolean">false</tt:AutoNegotiation>
+      <tt:Speed xsi:type="xsd:int">0</tt:Speed>
+      <tt:Duplex xsi:type="tt:Duplex">Full</tt:Duplex>
+     </tt:AdminSettings>
+     <tt:OperSettings xsi:type="tt:NetworkInterfaceConnectionSetting">
+      <tt:AutoNegotiation xsi:type="xsd:boolean">false</tt:AutoNegotiation>
+      <tt:Speed xsi:type="xsd:int">0</tt:Speed>
+      <tt:Duplex xsi:type="tt:Duplex">Full</tt:Duplex>
+     </tt:OperSettings>
+     <tt:InterfaceType xsi:type="tt:IANA-IfTypes">0</tt:InterfaceType>
+    </tt:Link>
+    <tt:IPv4 xsi:type="tt:IPv4NetworkInterface">
+     <tt:Enabled xsi:type="xsd:boolean">false</tt:Enabled>
+     <tt:Config xsi:type="tt:IPv4Configuration">
+      <tt:Manual xsi:type="tt:PrefixedIPv4Address">
+       <tt:Address xsi:type="tt:IPv4Address"></tt:Address>
+       <tt:PrefixLength xsi:type="xsd:int">0</tt:PrefixLength>
+      </tt:Manual>
+      <tt:LinkLocal xsi:type="tt:PrefixedIPv4Address">
+       <tt:Address xsi:type="tt:IPv4Address"></tt:Address>
+       <tt:PrefixLength xsi:type="xsd:int">0</tt:PrefixLength>
+      </tt:LinkLocal>
+      <tt:FromDHCP xsi:type="tt:PrefixedIPv4Address">
+       <tt:Address xsi:type="tt:IPv4Address"></tt:Address>
+       <tt:PrefixLength xsi:type="xsd:int">0</tt:PrefixLength>
+      </tt:FromDHCP>
+      <tt:DHCP xsi:type="xsd:boolean">false</tt:DHCP>
+      <!-- extensibility element(s) -->
+
+     </tt:Config>
+    </tt:IPv4>
+    <tt:IPv6 xsi:type="tt:IPv6NetworkInterface">
+     <tt:Enabled xsi:type="xsd:boolean">false</tt:Enabled>
+     <tt:Config xsi:type="tt:IPv6Configuration">
+      <tt:AcceptRouterAdvert xsi:type="xsd:boolean">false</tt:AcceptRouterAdvert>
+      <tt:DHCP xsi:type="tt:IPv6DHCPConfiguration">Auto</tt:DHCP>
+      <tt:Manual xsi:type="tt:PrefixedIPv6Address">
+       <tt:Address xsi:type="tt:IPv6Address"></tt:Address>
+       <tt:PrefixLength xsi:type="xsd:int">0</tt:PrefixLength>
+      </tt:Manual>
+      <tt:LinkLocal xsi:type="tt:PrefixedIPv6Address">
+       <tt:Address xsi:type="tt:IPv6Address"></tt:Address>
+       <tt:PrefixLength xsi:type="xsd:int">0</tt:PrefixLength>
+      </tt:LinkLocal>
+      <tt:FromDHCP xsi:type="tt:PrefixedIPv6Address">
+       <tt:Address xsi:type="tt:IPv6Address"></tt:Address>
+       <tt:PrefixLength xsi:type="xsd:int">0</tt:PrefixLength>
+      </tt:FromDHCP>
+      <tt:FromRA xsi:type="tt:PrefixedIPv6Address">
+       <tt:Address xsi:type="tt:IPv6Address"></tt:Address>
+       <tt:PrefixLength xsi:type="xsd:int">0</tt:PrefixLength>
+      </tt:FromRA>
+      <tt:Extension xsi:type="tt:IPv6ConfigurationExtension">
+       <!-- extensibility element(s) -->
+
+      </tt:Extension>
+     </tt:Config>
+    </tt:IPv6>
+    <tt:Extension xsi:type="tt:NetworkInterfaceExtension">
+     <!-- extensibility element(s) -->
+
+     <tt:InterfaceType xsi:type="tt:IANA-IfTypes">0</tt:InterfaceType>
+     <tt:Dot3 xsi:type="tt:Dot3Configuration">
+      <!-- extensibility element(s) -->
+
+     </tt:Dot3>
+     <tt:Dot11 xsi:type="tt:Dot11Configuration">
+      <tt:SSID xsi:type="tt:Dot11SSIDType"></tt:SSID>
+      <tt:Mode xsi:type="tt:Dot11StationMode">Ad-hoc</tt:Mode>
+      <tt:Alias xsi:type="tt:Name"></tt:Alias>
+      <tt:Priority xsi:type="tt:NetworkInterfaceConfigPriority">0</tt:Priority>
+      <tt:Security xsi:type="tt:Dot11SecurityConfiguration">
+       <tt:Mode xsi:type="tt:Dot11SecurityMode">None</tt:Mode>
+       <tt:Algorithm xsi:type="tt:Dot11Cipher">CCMP</tt:Algorithm>
+       <tt:PSK xsi:type="tt:Dot11PSKSet">
+        <tt:Key xsi:type="tt:Dot11PSK"></tt:Key>
+        <tt:Passphrase xsi:type="tt:Dot11PSKPassphrase"></tt:Passphrase>
+        <tt:Extension xsi:type="tt:Dot11PSKSetExtension">
+        </tt:Extension>
+       </tt:PSK>
+       <tt:Dot1X xsi:type="tt:ReferenceToken"></tt:Dot1X>
+       <tt:Extension xsi:type="tt:Dot11SecurityConfigurationExtension">
+        <!-- extensibility element(s) -->
+
+       </tt:Extension>
+      </tt:Security>
+      <!-- extensibility element(s) -->
+
+     </tt:Dot11>
+     <tt:Extension xsi:type="tt:NetworkInterfaceExtension2">
+      <!-- extensibility element(s) -->
+
+     </tt:Extension>
+    </tt:Extension>
+   </tds:NetworkInterfaces>
+  </tds:GetNetworkInterfacesResponse>
+ </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

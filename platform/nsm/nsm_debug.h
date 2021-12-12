@@ -59,17 +59,17 @@ extern "C" {
 #define IS_ZEBRA_DEBUG_FPM (zebra_debug_fpm & ZEBRA_DEBUG_FPM)
 #define IS_ZEBRA_DEBUG_NHT  (zebra_debug_nht & ZEBRA_DEBUG_NHT)
 
-extern ospl_ulong zebra_debug_event;
-extern ospl_ulong zebra_debug_packet;
-extern ospl_ulong zebra_debug_kernel;
-extern ospl_ulong zebra_debug_rib;
-extern ospl_ulong zebra_debug_fpm;
-extern ospl_ulong zebra_debug_nht;
+extern zpl_ulong zebra_debug_event;
+extern zpl_ulong zebra_debug_packet;
+extern zpl_ulong zebra_debug_kernel;
+extern zpl_ulong zebra_debug_rib;
+extern zpl_ulong zebra_debug_fpm;
+extern zpl_ulong zebra_debug_nht;
 
 extern int cmd_debug_init();
 
-//extern int config_zebra_write_debug (struct vty *vty);
-extern void zebra_debug_init (void);
+
+extern int zebra_debug_init (void);
  
 #ifdef __cplusplus
 }

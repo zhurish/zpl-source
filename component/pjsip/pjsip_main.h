@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-#include "zebra.h"
+
 
 //int pjmain(void *p);
 

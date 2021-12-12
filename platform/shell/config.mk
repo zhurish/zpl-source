@@ -3,10 +3,14 @@
 ###########################################################################
 MODULEDIR = platform/shell
 #shell
-OBJS	+= getopt.o
-OBJS	+= getopt1.o
+#OBJS	+= zplgetopt.o
+#OBJS	+= zplgetopt1.o
 OBJS	+= vty_user.o
 OBJS	+= vty.o
+ifeq ($(strip $(ZPL_SHELL_MODULE)),true)
+OBJS	+= cmd_vty.o
+OBJS	+= cmd_user_vty.o
+endif
 #############################################################################
 # LIB
 ###########################################################################

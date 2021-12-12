@@ -122,28 +122,28 @@ enum
 // 抓拍特征值
 typedef struct
 {
-	int							feature_len;									// 特征值个数，长度=个数*sizoof(ospl_float)
+	int							feature_len;									// 特征值个数，长度=个数*sizoof(zpl_float)
 	union
 	{
 		void*						ckey_data;
-		ospl_float*						feature_data;
+		zpl_float*						feature_data;
 	}feature;																	// 特征值
-	ospl_float						input_value;									// 相似度（输入）
-	ospl_float						output_result;									// 相似度（输出）
-	int							(*feature_memcmp)(ospl_float *, ospl_float *, int,  ospl_float *);
-	ospl_bool						nomem;
+	zpl_float						input_value;									// 相似度（输入）
+	zpl_float						output_result;									// 相似度（输出）
+	int							(*feature_memcmp)(zpl_float *, zpl_float *, int,  zpl_float *);
+	zpl_bool						nomem;
 }sql_snapfea_key;
 
 
-extern int v9_app_snapfea_key_alloc(sql_snapfea_key *key, ospl_bool nomem);
+extern int v9_app_snapfea_key_alloc(sql_snapfea_key *key, zpl_bool nomem);
 extern int v9_app_snapfea_key_free(sql_snapfea_key *key);
-extern char * v9_app_age_string(ospl_uint32 age);
+extern char * v9_app_age_string(zpl_uint32 age);
 
-extern int v9_sqldb_debug_api(ospl_bool enable, ospl_uint32 flag);
-extern int v9_user_debug_api(ospl_bool enable, ospl_uint32 flag);
-extern int v9_video_sdk_debug_api(ospl_bool enable, ospl_uint32 flag);
-extern int v9_serial_debug_api(ospl_bool enable, ospl_uint32 flag);
-extern int v9_video_debug_config(struct vty *vty, ospl_bool detail);
+extern int v9_sqldb_debug_api(zpl_bool enable, zpl_uint32 flag);
+extern int v9_user_debug_api(zpl_bool enable, zpl_uint32 flag);
+extern int v9_video_sdk_debug_api(zpl_bool enable, zpl_uint32 flag);
+extern int v9_serial_debug_api(zpl_bool enable, zpl_uint32 flag);
+extern int v9_video_debug_config(struct vty *vty, zpl_bool detail);
 
 extern int v9_app_module_init();
 extern int v9_app_module_exit();

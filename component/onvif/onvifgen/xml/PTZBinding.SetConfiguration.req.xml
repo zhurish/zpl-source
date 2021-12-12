@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope
+    xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope"
+    xmlns:SOAP-ENC="http://www.w3.org/2003/05/soap-encoding"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing"
+    xmlns:wsdd="http://schemas.xmlsoap.org/ws/2005/04/discovery"
+    xmlns:chan="http://schemas.microsoft.com/ws/2005/02/duplex"
+    xmlns:wsa5="http://www.w3.org/2005/08/addressing"
+    xmlns:xmime="http://tempuri.org/xmime.xsd"
+    xmlns:xop="http://www.w3.org/2004/08/xop/include"
+    xmlns:ns1="http://www.onvif.org/ver20/analytics/humanface"
+    xmlns:ns2="http://www.onvif.org/ver20/analytics/humanbody"
+    xmlns:tt="http://www.onvif.org/ver10/schema"
+    xmlns:wsrfbf="http://docs.oasis-open.org/wsrf/bf-2"
+    xmlns:wstop="http://docs.oasis-open.org/wsn/t-1"
+    xmlns:wsrfr="http://docs.oasis-open.org/wsrf/r-2"
+    xmlns:tad="http://www.onvif.org/ver10/analyticsdevice/wsdl"
+    xmlns:tan="http://www.onvif.org/ver20/analytics/wsdl"
+    xmlns:tdn="http://www.onvif.org/ver10/network/wsdl"
+    xmlns:tds="http://www.onvif.org/ver10/device/wsdl"
+    xmlns:tev="http://www.onvif.org/ver10/events/wsdl"
+    xmlns:wsnt="http://docs.oasis-open.org/wsn/b-2"
+    xmlns:timg="http://www.onvif.org/ver20/imaging/wsdl"
+    xmlns:tls="http://www.onvif.org/ver10/display/wsdl"
+    xmlns:tmd="http://www.onvif.org/ver10/deviceIO/wsdl"
+    xmlns:tptz="http://www.onvif.org/ver20/ptz/wsdl"
+    xmlns:trc="http://www.onvif.org/ver10/recording/wsdl"
+    xmlns:trp="http://www.onvif.org/ver10/replay/wsdl"
+    xmlns:trt="http://www.onvif.org/ver10/media/wsdl"
+    xmlns:trv="http://www.onvif.org/ver10/receiver/wsdl"
+    xmlns:tse="http://www.onvif.org/ver10/search/wsdl">
+ <SOAP-ENV:Body>
+   <tptz:SetConfiguration>
+    <tptz:PTZConfiguration xsi:type="tt:PTZConfiguration" token="" MoveRamp="0" PresetRamp="0" PresetTourRamp="0">
+     <tt:Name xsi:type="tt:Name"></tt:Name>
+     <tt:UseCount xsi:type="xsd:int">0</tt:UseCount>
+     <tt:NodeToken xsi:type="tt:ReferenceToken"></tt:NodeToken>
+     <tt:DefaultAbsolutePantTiltPositionSpace xsi:type="xsd:anyURI">http://www.example.com/schema/anyURI</tt:DefaultAbsolutePantTiltPositionSpace>
+     <tt:DefaultAbsoluteZoomPositionSpace xsi:type="xsd:anyURI">http://www.example.com/schema/anyURI</tt:DefaultAbsoluteZoomPositionSpace>
+     <tt:DefaultRelativePanTiltTranslationSpace xsi:type="xsd:anyURI">http://www.example.com/schema/anyURI</tt:DefaultRelativePanTiltTranslationSpace>
+     <tt:DefaultRelativeZoomTranslationSpace xsi:type="xsd:anyURI">http://www.example.com/schema/anyURI</tt:DefaultRelativeZoomTranslationSpace>
+     <tt:DefaultContinuousPanTiltVelocitySpace xsi:type="xsd:anyURI">http://www.example.com/schema/anyURI</tt:DefaultContinuousPanTiltVelocitySpace>
+     <tt:DefaultContinuousZoomVelocitySpace xsi:type="xsd:anyURI">http://www.example.com/schema/anyURI</tt:DefaultContinuousZoomVelocitySpace>
+     <tt:DefaultPTZSpeed xsi:type="tt:PTZSpeed">
+      <tt:PanTilt xsi:type="tt:Vector2D" x="0.0" y="0.0" space="http://www.example.com/schema/anyURI">
+      </tt:PanTilt>
+      <tt:Zoom xsi:type="tt:Vector1D" x="0.0" space="http://www.example.com/schema/anyURI">
+      </tt:Zoom>
+     </tt:DefaultPTZSpeed>
+     <tt:DefaultPTZTimeout xsi:type="xsd:duration">PT0S</tt:DefaultPTZTimeout>
+     <tt:PanTiltLimits xsi:type="tt:PanTiltLimits">
+      <tt:Range xsi:type="tt:Space2DDescription">
+       <tt:URI xsi:type="xsd:anyURI">http://www.example.com/schema/anyURI</tt:URI>
+       <tt:XRange xsi:type="tt:FloatRange">
+        <tt:Min xsi:type="xsd:float">0.0</tt:Min>
+        <tt:Max xsi:type="xsd:float">0.0</tt:Max>
+       </tt:XRange>
+       <tt:YRange xsi:type="tt:FloatRange">
+        <tt:Min xsi:type="xsd:float">0.0</tt:Min>
+        <tt:Max xsi:type="xsd:float">0.0</tt:Max>
+       </tt:YRange>
+      </tt:Range>
+     </tt:PanTiltLimits>
+     <tt:ZoomLimits xsi:type="tt:ZoomLimits">
+      <tt:Range xsi:type="tt:Space1DDescription">
+       <tt:URI xsi:type="xsd:anyURI">http://www.example.com/schema/anyURI</tt:URI>
+       <tt:XRange xsi:type="tt:FloatRange">
+        <tt:Min xsi:type="xsd:float">0.0</tt:Min>
+        <tt:Max xsi:type="xsd:float">0.0</tt:Max>
+       </tt:XRange>
+      </tt:Range>
+     </tt:ZoomLimits>
+     <tt:Extension xsi:type="tt:PTZConfigurationExtension">
+      <!-- extensibility element(s) -->
+
+      <tt:PTControlDirection xsi:type="tt:PTControlDirection">
+       <tt:EFlip xsi:type="tt:EFlip">
+        <tt:Mode xsi:type="tt:EFlipMode">OFF</tt:Mode>
+        <!-- extensibility element(s) -->
+
+       </tt:EFlip>
+       <tt:Reverse xsi:type="tt:Reverse">
+        <tt:Mode xsi:type="tt:ReverseMode">OFF</tt:Mode>
+        <!-- extensibility element(s) -->
+
+       </tt:Reverse>
+       <tt:Extension xsi:type="tt:PTControlDirectionExtension">
+        <!-- extensibility element(s) -->
+
+       </tt:Extension>
+      </tt:PTControlDirection>
+      <tt:Extension xsi:type="tt:PTZConfigurationExtension2">
+       <!-- extensibility element(s) -->
+
+      </tt:Extension>
+     </tt:Extension>
+    </tptz:PTZConfiguration>
+    <tptz:ForcePersistence xsi:type="xsd:boolean">false</tptz:ForcePersistence>
+   </tptz:SetConfiguration>
+ </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

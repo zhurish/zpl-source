@@ -29,11 +29,11 @@
 
 /* 1. None of the callers expects it to ever fail */
 /* 2. ip was always INADDR_ANY */
-int udhcp_udp_socket(/*ospl_uint32  ip,*/ospl_uint16 port)
+zpl_socket_t udhcp_udp_socket(/*zpl_uint32  ip,*/zpl_uint16 port)
 {
-	int fd = 0;
-	fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (fd)
+	zpl_socket_t fd;
+	fd = ipstack_socket(IPCOM_STACK, AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (ipstack_invalid(fd))
 	{
 		sockopt_reuseaddr(fd);
 		if (sockopt_broadcast(fd) == -1)
@@ -43,39 +43,41 @@ int udhcp_udp_socket(/*ospl_uint32  ip,*/ospl_uint16 port)
 			zlog_err(MODULE_DHCP, "setsockopt_ifindex");
 
 		sockopt_ttl(AF_INET, fd, 1);
-		os_set_nonblocking(fd);
-		if (sock_bind(fd, NULL, port) == OK)
+		ipstack_set_nonblocking(fd);
+		if (ipstack_sock_bind(fd, NULL, port) == OK)
 			return fd;
 		zlog_err(MODULE_DHCP, "sock_bind");
 	}
 	zlog_err(MODULE_DHCP, "udhcp_udp_socket");
-	return ERROR;
+	return fd;
 }
 
-int udhcp_raw_socket(void)
+zpl_socket_t udhcp_raw_socket(void)
 {
-	int fd = 0, onoff = 1;
+	zpl_socket_t fd;
+	int onoff = 1;
+	fd = ipstack_sock_raw_create(IPCOM_STACK, SOCK_DGRAM, (ETH_P_IP));
 	/* Get packet socket to write raw frames on */
-	if ((fd = raw_sock_create(SOCK_DGRAM, (ETH_P_IP))) < 0)
+	if (ipstack_invalid(fd))
 	{
 		zlog_err(MODULE_DHCP, "failed to open raw udp for relay(%s)", strerror(errno));
-		return (-1);
+		return fd;
 	}
-	setsockopt(fd, SOL_SOCKET, SO_BROADCAST, (char *)&onoff, sizeof(onoff));
+	ipstack_setsockopt(fd, SOL_SOCKET, SO_BROADCAST, (char *)&onoff, sizeof(onoff));
 	return fd;
 }
 
 
-int udhcp_client_socket_bind(int fd, ifindex_t ifindex)
+int udhcp_client_socket_bind(zpl_socket_t fd, ifindex_t ifindex)
 {
 	int ret = 0;
 	ifindex_t kifindex = ifindex2ifkernel(ifindex);
 	//zlog_err(MODULE_DHCP, "Can not bind raw socket(%s)", kifindex);
-	ret = raw_sock_bind(fd, PF_PACKET, ETH_P_IP, kifindex);
+	ret = ipstack_sock_raw_bind(fd, PF_PACKET, ETH_P_IP, kifindex);
 	return ret;
 }
 
-int udhcp_client_socket_filter(int fd, ospl_uint16 port)
+int udhcp_client_socket_filter(zpl_socket_t fd, zpl_uint16 port)
 {
 	/* Several users reported breakage when BPF filter is used */
 	{
@@ -122,7 +124,7 @@ int udhcp_client_socket_filter(int fd, ospl_uint16 port)
 		/* casting const away: */
 		.filter = (struct sock_filter *) filter_instr, };
 		/* Ignoring error (kernel may lack support for this) */
-		if (setsockopt(fd, SOL_SOCKET, SO_ATTACH_FILTER, &filter_prog,
+		if (ipstack_setsockopt(fd, SOL_SOCKET, SO_ATTACH_FILTER, &filter_prog,
 				sizeof(filter_prog)) < 0)
 		{
 			zlog_err(MODULE_DHCP, "attached filter to raw socket fail:%s", strerror(errno));

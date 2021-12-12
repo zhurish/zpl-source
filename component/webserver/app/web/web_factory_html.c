@@ -6,7 +6,7 @@
  */
 
 #define HAS_BOOL 1
-#include "zebra.h"
+#include "zpl_include.h"
 #include "vty.h"
 #include "if.h"
 
@@ -30,7 +30,7 @@
 #include "web_app.h"
 #include "web_api.h"
 
-#ifdef PL_APP_MODULE
+#ifdef ZPL_APP_MODULE
 #include "application.h"
 
 #ifdef APP_X5BA_MODULE
@@ -83,9 +83,9 @@ static int web_factory_action(Webs *wp, char *path, char *query)
 		return web_return_text_plain(wp, ERROR);
 	}
 	if(strstr(strval, "X5CM"))
-		glinfo.X5CM = (ospl_true);
+		glinfo.X5CM = (zpl_true);
 	else
-		glinfo.X5CM = (ospl_false);
+		glinfo.X5CM = (zpl_false);
 
 	strval = webs_get_var(wp, T("device"), T(""));
 	if (NULL == strval)
@@ -119,9 +119,9 @@ static int web_factory_action(Webs *wp, char *path, char *query)
 		return web_return_text_plain(wp, ERROR);
 	}
 	if(strstr(strval, "out"))
-		glinfo.out_direction = (ospl_true);
+		glinfo.out_direction = (zpl_true);
 	else
-		glinfo.out_direction = (ospl_false);
+		glinfo.out_direction = (zpl_false);
 
 	strval = webs_get_var(wp, T("server"), T(""));
 	if (NULL == strval)
@@ -132,9 +132,9 @@ static int web_factory_action(Webs *wp, char *path, char *query)
 
 	strval = webs_get_var(wp, T("doorcontact"), T(""));
 	if(strstr(strval, "true"))
-		glinfo.doorcontact = ospl_true;
+		glinfo.doorcontact = zpl_true;
 	else
-		glinfo.doorcontact = ospl_false;
+		glinfo.doorcontact = zpl_false;
 
 	strval = webs_get_var(wp, T("topf"), T(""));
 	if (NULL == strval)
@@ -146,10 +146,10 @@ static int web_factory_action(Webs *wp, char *path, char *query)
 	if(glinfo.doorcontact != x5b_app_global->doorcontact)
 	{
 		x5b_app_global->doorcontact = glinfo.doorcontact;
-		x5b_app_open_option_action(x5b_app_open, ospl_false, ospl_true);
+		x5b_app_open_option_action(x5b_app_open, zpl_false, zpl_true);
 	}
 
-	ret = x5b_app_global_config_action(&glinfo, ospl_true);
+	ret = x5b_app_global_config_action(&glinfo, zpl_true);
 
 	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);
@@ -231,9 +231,9 @@ static int web_openconfig_action(Webs *wp, char *path, char *query)
 		return web_return_text_plain(wp, ERROR);
 	}
 	if(strstr(strval, "true"))
-		openconf.openalarm = ospl_true;
+		openconf.openalarm = zpl_true;
 	else
-		openconf.openalarm = ospl_false;
+		openconf.openalarm = zpl_false;
 
 	if(openconf.openalarm)
 	{
@@ -250,17 +250,17 @@ static int web_openconfig_action(Webs *wp, char *path, char *query)
 		return web_return_text_plain(wp, ERROR);
 	}
 	if(strstr(strval, "true"))
-		openconf.tamperalarm = ospl_true;
+		openconf.tamperalarm = zpl_true;
 	else
-		openconf.tamperalarm = ospl_false;
+		openconf.tamperalarm = zpl_false;
 
 /*	strval = webs_get_var(wp, T("doorcontact"), T(""));
 	if (NULL != strval)
 	{
 		if(strstr(strval, "true"))
-			x5b_app_open.rev = ospl_true;
+			x5b_app_open.rev = zpl_true;
 		else
-			x5b_app_open.rev = ospl_false;
+			x5b_app_open.rev = zpl_false;
 	}*/
 
 	strval = webs_get_var(wp, T("opentype"), T(""));
@@ -276,9 +276,9 @@ static int web_openconfig_action(Webs *wp, char *path, char *query)
 		return web_return_text_plain(wp, ERROR);
 	}
 	if(strstr(strval, "HIGH"))
-		openconf.outrelay = ospl_true;
+		openconf.outrelay = zpl_true;
 	else
-		openconf.outrelay = ospl_false;
+		openconf.outrelay = zpl_false;
 
 	strval = webs_get_var(wp, T("wiggins"), T(""));
 	if (NULL == strval)
@@ -287,7 +287,7 @@ static int web_openconfig_action(Webs *wp, char *path, char *query)
 	}
 	openconf.wiggins = atoi(strval);
 
-	ret = x5b_app_open_option_action(&openconf, ospl_true, ospl_true);
+	ret = x5b_app_open_option_action(&openconf, zpl_true, zpl_true);
 	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);
 	websWriteHeader(wp, "Content-Type", "text/plain");
@@ -334,7 +334,7 @@ static int web_faceconfig_get(Webs *wp, char *path, char *query)
 	strcat(cmdbuf, tmp);
 
 	memset(tmp, 0, sizeof(tmp));
-	sprintf(tmp, "\"succesospl_intervals\":\"%d\",", x5b_app_face->faceOKContinuousTime);
+	sprintf(tmp, "\"succeszpl_intervals\":\"%d\",", x5b_app_face->faceOKContinuousTime);
 	strcat(cmdbuf, tmp);
 
 	memset(tmp, 0, sizeof(tmp));
@@ -404,9 +404,9 @@ static int web_faceconfig_set(Webs *wp, char *path, char *query)
 		return web_return_text_plain(wp, ERROR);
 	}
 	if(strstr(strval, "true"))
-		info.livenessSwitch = ospl_true;
+		info.livenessSwitch = zpl_true;
 	else
-		info.livenessSwitch = ospl_false;
+		info.livenessSwitch = zpl_false;
 
 	//if(info.livenessSwitch)
 	{
@@ -493,7 +493,7 @@ static int web_faceconfig_set(Webs *wp, char *path, char *query)
 	}
 	info.faceRecognizeHeight = atoi(strval);
 
-	strval = webs_get_var(wp, T("succesospl_intervals"), T(""));
+	strval = webs_get_var(wp, T("succeszpl_intervals"), T(""));
 	if (NULL == strval)
 	{
 		return web_return_text_plain(wp, ERROR);
@@ -506,7 +506,7 @@ static int web_faceconfig_set(Webs *wp, char *path, char *query)
 		return web_return_text_plain(wp, ERROR);
 	}
 	info.faceERRContinuousTime = atoi(strval);
-	return x5b_app_face_config_action(&info, ospl_true);
+	return x5b_app_face_config_action(&info, zpl_true);
 /*	if(x5b_app_mgt && x5b_app_mode_X5CM())
 	{
 		if(x5b_app_face_config_json(NULL, &info, E_CMD_TO_C) == OK)
@@ -551,7 +551,7 @@ static int web_faceconfig_action(Webs *wp, char *path, char *query)
 
 int web_factory_app(void)
 {
-#ifdef PL_APP_MODULE
+#ifdef ZPL_APP_MODULE
 #ifdef APP_X5BA_MODULE
 	websFormDefine("factory", web_factory_action);
 	websFormDefine("open", web_openconfig_action);

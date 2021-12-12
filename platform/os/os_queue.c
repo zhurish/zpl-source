@@ -4,14 +4,13 @@
  *  Created on: Jun 9, 2018
  *      Author: zhurish
  */
-#include "zebra.h"
-#include "os_sem.h"
-#include "os_queue.h"
+#include "os_include.h"
+#include "zpl_include.h"
 
 #include <sys/ipc.h>
 #include <sys/msg.h>
 
-static ospl_uint32 _os_msgq_id = -1;
+static zpl_uint32 _os_msgq_id = -1;
 
 
 int os_msgq_init()
@@ -28,7 +27,7 @@ int os_msgq_exit()
 	return OK;
 }
 
-os_queue_t *os_queue_create(ospl_uint32 max, ospl_uint32 size)
+os_queue_t *os_queue_create(zpl_uint32 max, zpl_uint32 size)
 {
 	os_queue_t *queue = os_malloc(sizeof(os_queue_t));
 	if(queue)
@@ -61,7 +60,7 @@ int os_queue_delete(os_queue_t *queue)
 	return OK;
 }
 
-int os_queue_name(os_queue_t *queue, ospl_char *name)
+int os_queue_name(os_queue_t *queue, zpl_char *name)
 {
 	if(!queue)
 		return ERROR;
@@ -74,12 +73,12 @@ int os_queue_name(os_queue_t *queue, ospl_char *name)
 	return OK;
 }
 
-int os_queue_send(os_queue_t *queue, ospl_char *data, ospl_uint32 len, ospl_uint32 op)
+int os_queue_send(os_queue_t *queue, zpl_char *data, zpl_uint32 len, zpl_uint32 op)
 {
-	queue_t *queue_add = NULL;
-	if(!queue || ((ospl_uint32)len > queue->size) || !data)
+	os_queue_data_t *queue_add = NULL;
+	if(!queue || ((zpl_uint32)len > queue->size) || !data)
 		return ERROR;
-	while((ospl_uint32)lstCount(&queue->list) == queue->max)
+	while((zpl_uint32)lstCount(&queue->list) == queue->max)
 	{
 		if(op != OS_WAIT_FOREVER)
 			break;
@@ -89,10 +88,10 @@ int os_queue_send(os_queue_t *queue, ospl_char *data, ospl_uint32 len, ospl_uint
 	queue_add = lstFirst(&queue->ulist);
 	if(queue_add == NULL)
 	{
-		queue_add = os_malloc(sizeof(queue_t));
+		queue_add = os_malloc(sizeof(os_queue_data_t));
 		if(queue_add)
 		{
-			os_memset(queue_add, 0, sizeof(queue_t));
+			os_memset(queue_add, 0, sizeof(os_queue_data_t));
 			queue_add->data = os_malloc(queue->size);
 			if(queue_add->data)
 			{
@@ -130,11 +129,11 @@ int os_queue_send(os_queue_t *queue, ospl_char *data, ospl_uint32 len, ospl_uint
 }
 
 
-int os_queue_recv(os_queue_t *queue, ospl_char *data, ospl_uint32 len, ospl_uint32 timeout)
+int os_queue_recv(os_queue_t *queue, zpl_char *data, zpl_uint32 len, zpl_uint32 timeout)
 {
 	int rlen = 0;
-	queue_t *queue_add = NULL;
-	if(!queue || ((ospl_uint32)len > queue->size) || !data)
+	os_queue_data_t *queue_add = NULL;
+	if(!queue || ((zpl_uint32)len > queue->size) || !data)
 		return ERROR;
 	if(queue->sem)
 		os_sem_take(queue->sem, timeout);

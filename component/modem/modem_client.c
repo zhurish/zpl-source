@@ -5,12 +5,10 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "os_util.h"
-#include "tty_com.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "modem.h"
 #include "modem_client.h"
@@ -51,7 +49,7 @@ int modem_client_exit(void)
 }
 
 
-static modem_client_t * modem_client_lookup_node(ospl_uint32 vendor, ospl_uint32 product)
+static modem_client_t * modem_client_lookup_node(zpl_uint32 vendor, zpl_uint32 product)
 {
 	modem_client_t *pstNode = NULL;
 	NODE index;
@@ -112,7 +110,7 @@ static modem_client_t * modem_client_lookup_node_by_name(char *name)
 	return ERROR;
 }*/
 
-modem_client_t * modem_client_alloc(ospl_uint32 vendor, ospl_uint32 product)
+modem_client_t * modem_client_alloc(zpl_uint32 vendor, zpl_uint32 product)
 {
 	if(modem_client_lookup_node(vendor, product) == NULL )
 	{
@@ -196,7 +194,7 @@ int modem_client_del_api(modem_client_t *client)
 	return ret;
 }
 
-int modem_client_del_by_product_api(ospl_uint32 vendor, ospl_uint32 product)
+int modem_client_del_by_product_api(zpl_uint32 vendor, zpl_uint32 product)
 {
 	int ret = ERROR;
 	modem_client_t *node = NULL;
@@ -283,7 +281,7 @@ int modem_client_register_api(modem_client_t *client)
 	return ret;
 }
 
-modem_client_t * modem_client_lookup_api(ospl_uint32 vendor, ospl_uint32 product)
+modem_client_t * modem_client_lookup_api(zpl_uint32 vendor, zpl_uint32 product)
 {
 	modem_client_t *pstNode = NULL;
 	if(gModemClient.mutex)

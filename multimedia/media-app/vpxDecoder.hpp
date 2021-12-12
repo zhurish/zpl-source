@@ -26,21 +26,21 @@ class vpxDecoder:public videoDecoder {
         vpxDecoder();
         ~vpxDecoder();
         int videoDecoderSetup(const int width, const int height, const int fmt, const int fps);
-        int videoDecoderInput(const ospl_uint8 *frame, const int len);
-        int videoDecoderOutput(ospl_uint8 *frame, const int len);
-        ospl_uint8 * videoDecoderOutput();
+        int videoDecoderInput(const zpl_uint8 *frame, const int len);
+        int videoDecoderOutput(zpl_uint8 *frame, const int len);
+        zpl_uint8 * videoDecoderOutput();
         int videoDecoderOutputSize(const bool clear=true);
         int videoDecoderDestroy();
 
 
     private:
-        int vpx_decode_framed(const ospl_uint8 *packets, const int in_size,
-                                  ospl_uint8 *output, unsigned out_size);
+        int vpx_decode_framed(const zpl_uint8 *packets, const int in_size,
+                                  zpl_uint8 *output, unsigned out_size);
     private:
         /* Decoder */
 
         vpx_codec_ctx_t 		dec;
-        ospl_uint8			*dec_buf;
+        zpl_uint8			*dec_buf;
         unsigned			    dec_buf_size;
 };
 

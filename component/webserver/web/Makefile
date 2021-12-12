@@ -1,4 +1,4 @@
-include $(MAKE_DIR)/makelinux.mk
+include $(ZPL_MAKE_DIR)/makelinux.mk
 
 #
 #
@@ -25,16 +25,16 @@ endif
 #
 ifeq ($(THEME_V9UI),true)
 install: 
-	@install -d $(DSTETCDIR)/web
-	@$(CP) ./auth.txt $(DSTETCDIR)/web/auth.txt
-	@$(CP) ./route.txt $(DSTETCDIR)/web/route.txt
-	@install -d $(DSTWWWDIR)
-	@$(CP) ./theme/build.tar.gz $(DSTWWWDIR)/
+	@install -d $(ZPL_INSTALL_ETC_DIR)/web
+	@$(CP) ./auth.txt $(ZPL_INSTALL_ETC_DIR)/web/auth.txt
+	@$(CP) ./route.txt $(ZPL_INSTALL_ETC_DIR)/web/route.txt
+	@install -d $(ZPL_INSTALL_WWW_DIR)
+	@$(CP) ./theme/build.tar.gz $(ZPL_INSTALL_WWW_DIR)/
 	
 clean:  
-	@$(RM) $(DSTETCDIR)/web/auth.txt
-	@$(RM) $(DSTETCDIR)/web/route.txt
-	@$(RM) -rf $(DSTWWWDIR)/*
+	@$(RM) $(ZPL_INSTALL_ETC_DIR)/web/auth.txt
+	@$(RM) $(ZPL_INSTALL_ETC_DIR)/web/route.txt
+	@$(RM) -rf $(ZPL_INSTALL_WWW_DIR)/*
 	
 .PHONY:	install clean	
 endif
@@ -53,17 +53,17 @@ web_theme_clean:
 #		
 #	
 webinstall: 
-	@install -d $(DSTETCDIR)/web
-	@$(CP) ./auth.txt $(DSTETCDIR)/web/auth.txt
-	@$(CP) ./route.txt $(DSTETCDIR)/web/route.txt
-	#install -d $(DSTWWWDIR)
-	#$(CP) ./theme/build.tar.gz $(DSTWWWDIR)/
+	@install -d $(ZPL_INSTALL_ETC_DIR)/web
+	@$(CP) ./auth.txt $(ZPL_INSTALL_ETC_DIR)/web/auth.txt
+	@$(CP) ./route.txt $(ZPL_INSTALL_ETC_DIR)/web/route.txt
+	#install -d $(ZPL_INSTALL_WWW_DIR)
+	#$(CP) ./theme/build.tar.gz $(ZPL_INSTALL_WWW_DIR)/
 	
 
 webclean: 
-	@$(RM) $(DSTETCDIR)/web/auth.txt
-	@$(RM) $(DSTETCDIR)/web/route.txt
-	@$(RM) -rf $(DSTWWWDIR)/*
+	@$(RM) $(ZPL_INSTALL_ETC_DIR)/web/auth.txt
+	@$(RM) $(ZPL_INSTALL_ETC_DIR)/web/route.txt
+	@$(RM) -rf $(ZPL_INSTALL_WWW_DIR)/*
 #
 #
 install: webinstall web_theme_install
@@ -79,14 +79,14 @@ clean: webclean web_theme_clean
 else
 
 install: 
-	@install -d $(DSTETCDIR)/web
-	@$(CP) ./auth.txt $(DSTETCDIR)/web/auth.txt
-	@$(CP) ./route.txt $(DSTETCDIR)/web/route.txt
+	@install -d $(ZPL_INSTALL_ETC_DIR)/web
+	@$(CP) ./auth.txt $(ZPL_INSTALL_ETC_DIR)/web/auth.txt
+	@$(CP) ./route.txt $(ZPL_INSTALL_ETC_DIR)/web/route.txt
 
 clean:  
-	@$(RM) $(DSTETCDIR)/web/auth.txt
-	@$(RM) $(DSTETCDIR)/web/route.txt
-	@$(RM) -rf $(DSTWWWDIR)/*
+	@$(RM) $(ZPL_INSTALL_ETC_DIR)/web/auth.txt
+	@$(RM) $(ZPL_INSTALL_ETC_DIR)/web/route.txt
+	@$(RM) -rf $(ZPL_INSTALL_WWW_DIR)/*
 	
 .PHONY:	install clean
 

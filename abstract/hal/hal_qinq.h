@@ -15,18 +15,22 @@ extern "C" {
 #include "nsm_vlan.h"
 
 
-typedef struct sdk_qinq_s
+enum hal_qinq_cmd 
 {
-	int (*sdk_qinq_enable_cb) (void *, ospl_bool);
-	int (*sdk_qinq_vlan_ptid_cb) (void *, vlan_t);
-	int (*sdk_qinq_port_enable_cb) (void *, ifindex_t, ospl_bool);
+    HAL_QINQ_CMD_NONE,
+	HAL_QINQ_CMD_TPID,
+	HAL_QINQ_CMD_ENABLE,
+    HAL_QINQ_CMD_MAX,
+};
 
-	void *sdk_driver;
-}sdk_qinq_t;
+typedef struct hal_qinq_param_s
+{
+	zpl_uint32 value;
+}hal_qinq_param_t;
 
-int hal_qinq_enable(ospl_bool enable);
+int hal_qinq_enable(zpl_bool enable);
 int hal_qinq_vlan_tpid(vlan_t tpid);
-int hal_qinq_interface_enable(ifindex_t ifindex, ospl_bool enable);
+int hal_qinq_interface_enable(ifindex_t ifindex, zpl_bool enable);
 
 
 

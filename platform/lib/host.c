@@ -1,30 +1,20 @@
 /*
- * host.c
+ * _global_host.c
  *
  *  Created on: Jan 1, 2018
  *      Author: zhurish
  */
 
-#include "zebra.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
-#include "log.h"
-#include "memory.h"
-#include "thread.h"
-#include "vector.h"
-#include "version.h"
-#include "workqueue.h"
-#include "command.h"
-#include "vty.h"
-#include "host.h"
-#include "prefix.h"
-#include "vty_user.h"
-
-struct host host;
+struct zpl_host _global_host;
 
 
 int host_sysconfig_sync()
 {
-#ifdef PL_BUILD_OS_OPENWRT
+#ifdef ZPL_BUILD_OS_OPENWRT
 #else
 	//cp -arf /app/etc/* /tmp/app/etc/
 	//super_system("cp -a "SYSCONFDIR"/default-config.cfg " SYSCONF_REAL_DIR"/default-config.cfg");
@@ -33,44 +23,75 @@ int host_sysconfig_sync()
 }
 
 
-int host_config_init(ospl_char *motd)
+int host_config_loading(char *config)
 {
-	os_memset(&host, 0, sizeof(host));
+	fprintf(stdout, "==================os_load_config %s\r\n",config);
+	vty_load_config(config);
+	fprintf(stdout, "++++++++++++++++++os_load_config %s\r\n",config);
+	fflush(stdout);
+	//signal_init(NULL, array_size(os_signals), os_signals);
+	//os_task_give_broadcast();
+	return OK;
+}
+
+zpl_bool host_config_load_waitting(void)
+{
+	while(_global_host.load != LOAD_DONE)
+	{
+		os_sleep(1);
+	}
+	return zpl_true;
+}
+
+zpl_bool host_config_load_done(void)
+{
+	if(_global_host.load == LOAD_DONE)
+	{
+		return zpl_true;
+	}
+	return zpl_false;
+}
+
+int host_config_init(zpl_char *motd)
+{
+	os_memset(&_global_host, 0, sizeof(_global_host));
 	/* Default host value settings. */
-	host.name = NULL;
-	host.logfile = NULL;
+	_global_host.name = NULL;
+	_global_host.logfile = NULL;
 	//XFREE (MTYPE_HOST
-	host.config = XSTRDUP(MTYPE_HOST, STARTUP_CONFIG_FILE);
-	host.default_config = XSTRDUP(MTYPE_HOST, DEFAULT_CONFIG_FILE);
-	host.factory_config = XSTRDUP(MTYPE_HOST, FACTORY_CONFIG_FILE);
-	host.lines = -1;
-	host.motd = motd; //default_motd;
-	host.motdfile = NULL;
-	host.vty_timeout_val = VTY_TIMEOUT_DEFAULT;
+	_global_host.config = XSTRDUP(MTYPE_HOST, STARTUP_CONFIG_FILE);
+	_global_host.default_config = XSTRDUP(MTYPE_HOST, DEFAULT_CONFIG_FILE);
+	_global_host.factory_config = XSTRDUP(MTYPE_HOST, FACTORY_CONFIG_FILE);
+	_global_host.lines = -1;
+	_global_host.motd = motd; //default_motd;
+	_global_host.motdfile = NULL;
+	#ifdef ZPL_SHELL_MODULE
+	_global_host.vty_timeout_val = VTY_TIMEOUT_DEFAULT;
+	#endif
 	/* Vty access-class command */
-	host.vty_accesslist_name = NULL;
+	_global_host.vty_accesslist_name = NULL;
 	/* Vty access-calss for IPv6. */
-	host.vty_ipv6_accesslist_name = NULL;
+	_global_host.vty_ipv6_accesslist_name = NULL;
 	/* VTY server thread. */
-	//host.Vvty_serv_thread;
+
 	/* Current directory. */
-	host.vty_cwd = NULL;
+	_global_host.vty_cwd = NULL;
 	/* Configure lock. */
-	host.vty_config = 0;
+	_global_host.vty_config = 0;
 	/* Login password check. */
-	host.no_password_check = 0;
-	host.mutx = os_mutex_init();
-	host.cli_mutx = os_mutex_init();
+	_global_host.no_password_check = 0;
+	_global_host.mutx = os_mutex_init();
+	_global_host.cli_mutx = os_mutex_init();
 	if(access("/etc/.serial_no", F_OK) == 0)
 	{
-		memset(host.serial, '\0', sizeof(host.serial));
-		os_read_file("/etc/.serial_no", host.serial, sizeof(host.serial));
-		host.serial[strlen(host.serial)-1] = '\0';
-		printf("=================%s================:(%s)\r\n", __func__,host.serial);
+		memset(_global_host.serial, '\0', sizeof(_global_host.serial));
+		os_read_file("/etc/.serial_no", _global_host.serial, sizeof(_global_host.serial));
+		_global_host.serial[strlen(_global_host.serial)-1] = '\0';
+		printf("=================%s================:(%s)\r\n", __func__,_global_host.serial);
 	}
 	if(access("/etc/.wan-mac", F_OK) == 0)
 	{
-		ospl_char tmp[64];
+		zpl_char tmp[64];
 		memset(tmp, 0, sizeof(tmp));
 		os_read_file("/etc/.wan-mac", tmp, sizeof(tmp));
 		if(strlen(tmp) && strstr(tmp, ":"))
@@ -85,55 +106,55 @@ int host_config_init(ospl_char *motd)
 
 int host_config_exit(void)
 {
-	if (host.name)
+	if (_global_host.name)
 	{
-		XFREE(MTYPE_HOST, host.name);
-		host.name = NULL;
+		XFREE(MTYPE_HOST, _global_host.name);
+		_global_host.name = NULL;
 	}
-	if (host.vty_accesslist_name)
+	if (_global_host.vty_accesslist_name)
 	{
-		XFREE(MTYPE_VTY, host.vty_accesslist_name);
-		host.vty_accesslist_name = NULL;
+		XFREE(MTYPE_VTY, _global_host.vty_accesslist_name);
+		_global_host.vty_accesslist_name = NULL;
 	}
-	if (host.vty_ipv6_accesslist_name)
+	if (_global_host.vty_ipv6_accesslist_name)
 	{
-		XFREE(MTYPE_VTY, host.vty_ipv6_accesslist_name);
-		host.vty_ipv6_accesslist_name = NULL;
+		XFREE(MTYPE_VTY, _global_host.vty_ipv6_accesslist_name);
+		_global_host.vty_ipv6_accesslist_name = NULL;
 	}
-	if (host.logfile)
+	if (_global_host.logfile)
 	{
-		XFREE(MTYPE_HOST, host.logfile);
-		host.logfile = NULL;
+		XFREE(MTYPE_HOST, _global_host.logfile);
+		_global_host.logfile = NULL;
 	}
-	if (host.motdfile)
+	if (_global_host.motdfile)
 	{
-		XFREE(MTYPE_HOST, host.motdfile);
-		host.motdfile = NULL;
+		XFREE(MTYPE_HOST, _global_host.motdfile);
+		_global_host.motdfile = NULL;
 	}
-	if (host.config)
+	if (_global_host.config)
 	{
-		XFREE(MTYPE_HOST, host.config);
-		host.config = NULL;
+		XFREE(MTYPE_HOST, _global_host.config);
+		_global_host.config = NULL;
 	}
-	if (host.default_config)
+	if (_global_host.default_config)
 	{
-		XFREE(MTYPE_HOST, host.default_config);
-		host.default_config = NULL;
+		XFREE(MTYPE_HOST, _global_host.default_config);
+		_global_host.default_config = NULL;
 	}
-	if (host.factory_config)
+	if (_global_host.factory_config)
 	{
-		XFREE(MTYPE_HOST, host.factory_config);
-		host.factory_config = NULL;
+		XFREE(MTYPE_HOST, _global_host.factory_config);
+		_global_host.factory_config = NULL;
 	}
-	if (host.cli_mutx)
+	if (_global_host.cli_mutx)
 	{
-		os_mutex_exit(host.cli_mutx);
-		host.cli_mutx = NULL;
+		os_mutex_exit(_global_host.cli_mutx);
+		_global_host.cli_mutx = NULL;
 	}
-	if (host.mutx)
+	if (_global_host.mutx)
 	{
-		os_mutex_exit(host.mutx);
-		host.mutx = NULL;
+		os_mutex_exit(_global_host.mutx);
+		_global_host.mutx = NULL;
 	}
 	return OK;
 }
@@ -142,255 +163,255 @@ int host_config_exit(void)
 
 /* Set config filename.  Called from vty.c */
 void
-host_config_set (ospl_char *filename)
+host_config_set (zpl_char *filename)
 {
-	if (host.mutx)
-		os_mutex_lock(host.mutx, OS_WAIT_FOREVER);
-	if (host.config)
-		XFREE(MTYPE_HOST, host.config);
-	host.config = XSTRDUP(MTYPE_HOST, filename);
-	if (host.mutx)
-		os_mutex_unlock(host.mutx);
+	if (_global_host.mutx)
+		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (_global_host.config)
+		XFREE(MTYPE_HOST, _global_host.config);
+	_global_host.config = XSTRDUP(MTYPE_HOST, filename);
+	if (_global_host.mutx)
+		os_mutex_unlock(_global_host.mutx);
 }
 
 const char *
 host_config_get (void)
 {
-	return host.config;
+	return _global_host.config;
 }
 
 const char *
 host_name_get (void)
 {
-	return host.name;
+	return _global_host.name;
 }
 
 int
-host_config_set_api (ospl_uint32 cmd, void *pVoid)
+host_config_set_api (zpl_uint32 cmd, void *pVoid)
 {
 	int ret = ERROR;
-	ospl_char *strValue = (ospl_char *)pVoid;
-	ospl_uint32 *intValue = (ospl_uint32 *)pVoid;
-	if (host.mutx)
-		os_mutex_lock(host.mutx, OS_WAIT_FOREVER);
+	zpl_char *strValue = (zpl_char *)pVoid;
+	zpl_uint32 *intValue = (zpl_uint32 *)pVoid;
+	if (_global_host.mutx)
+		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
 
 	switch(cmd)
 	{
 	case API_SET_HOSTNAME_CMD:
-		if (host.name)
-			XFREE(MTYPE_HOST, host.name);
+		if (_global_host.name)
+			XFREE(MTYPE_HOST, _global_host.name);
 		if(strValue)
-			host.name = XSTRDUP(MTYPE_HOST, strValue);
+			_global_host.name = XSTRDUP(MTYPE_HOST, strValue);
 		else
-			host.name = NULL;
+			_global_host.name = NULL;
 		ret = OK;
 		break;
 	case API_SET_DESC_CMD:
-		if (host.description)
-			XFREE(MTYPE_HOST, host.description);
+		if (_global_host.description)
+			XFREE(MTYPE_HOST, _global_host.description);
 		if(strValue)
-			host.description = XSTRDUP(MTYPE_HOST, strValue);
+			_global_host.description = XSTRDUP(MTYPE_HOST, strValue);
 		else
-			host.description = NULL;
+			_global_host.description = NULL;
 		ret = OK;
 		break;
 	case API_SET_LINES_CMD:
-		host.lines = (ospl_uint32)*intValue;
+		_global_host.lines = (zpl_uint32)*intValue;
 		ret = OK;
 		break;
 	case API_SET_LOGFILE_CMD:
-		if (host.logfile)
-			XFREE(MTYPE_HOST, host.logfile);
+		if (_global_host.logfile)
+			XFREE(MTYPE_HOST, _global_host.logfile);
 		if(strValue)
-			host.logfile = XSTRDUP(MTYPE_HOST, strValue);
+			_global_host.logfile = XSTRDUP(MTYPE_HOST, strValue);
 		else
-			host.logfile = NULL;
+			_global_host.logfile = NULL;
 		ret = OK;
 		break;
 	case API_SET_CONFIGFILE_CMD:
-		if (host.config)
-			XFREE(MTYPE_HOST, host.config);
+		if (_global_host.config)
+			XFREE(MTYPE_HOST, _global_host.config);
 		if(strValue)
-			host.config = XSTRDUP(MTYPE_HOST, strValue);
+			_global_host.config = XSTRDUP(MTYPE_HOST, strValue);
 		else
-			host.config = NULL;
+			_global_host.config = NULL;
 		ret = OK;
 		break;
 	case API_SET_ENCRYPT_CMD:
-		host.encrypt = (ospl_bool)*intValue;
+		_global_host.encrypt = (zpl_bool)*intValue;
 		ret = OK;
 		break;
 	case API_SET_MOTD_CMD:
-		if (host.motd)
-			XFREE(MTYPE_HOST, host.motd);
+		if (_global_host.motd)
+			XFREE(MTYPE_HOST, _global_host.motd);
 		if(strValue)
-			host.motd = XSTRDUP(MTYPE_HOST, strValue);
+			_global_host.motd = XSTRDUP(MTYPE_HOST, strValue);
 		else
-			host.motd = NULL;
+			_global_host.motd = NULL;
 		ret = OK;
 		break;
 	case API_SET_MOTDFILE_CMD:
-		if (host.motdfile)
-			XFREE(MTYPE_HOST, host.motdfile);
+		if (_global_host.motdfile)
+			XFREE(MTYPE_HOST, _global_host.motdfile);
 		if(strValue)
-			host.motdfile = XSTRDUP(MTYPE_HOST, strValue);
+			_global_host.motdfile = XSTRDUP(MTYPE_HOST, strValue);
 		else
-			host.motdfile = NULL;
+			_global_host.motdfile = NULL;
 		ret = OK;
 		break;
 	case API_SET_VTY_TIMEOUT_CMD:
-		host.vty_timeout_val = (ospl_ulong)*intValue;
+		_global_host.vty_timeout_val = (zpl_ulong)*intValue;
 		ret = OK;
 		break;
 	case API_SET_ACCESS_CMD:
-		if (host.vty_accesslist_name)
-			XFREE(MTYPE_HOST, host.vty_accesslist_name);
+		if (_global_host.vty_accesslist_name)
+			XFREE(MTYPE_HOST, _global_host.vty_accesslist_name);
 		if(strValue)
-			host.vty_accesslist_name = XSTRDUP(MTYPE_HOST, strValue);
+			_global_host.vty_accesslist_name = XSTRDUP(MTYPE_HOST, strValue);
 		else
-			host.vty_accesslist_name = NULL;
+			_global_host.vty_accesslist_name = NULL;
 		ret = OK;
 		break;
 	case API_SET_IPV6ACCESS_CMD:
-		if (host.vty_ipv6_accesslist_name)
-			XFREE(MTYPE_HOST, host.vty_ipv6_accesslist_name);
+		if (_global_host.vty_ipv6_accesslist_name)
+			XFREE(MTYPE_HOST, _global_host.vty_ipv6_accesslist_name);
 		if(strValue)
-			host.vty_ipv6_accesslist_name = XSTRDUP(MTYPE_HOST, strValue);
+			_global_host.vty_ipv6_accesslist_name = XSTRDUP(MTYPE_HOST, strValue);
 		else
-			host.vty_ipv6_accesslist_name = NULL;
+			_global_host.vty_ipv6_accesslist_name = NULL;
 		ret = OK;
 		break;
 	case API_SET_NOPASSCHK_CMD:
-		host.no_password_check = (ospl_bool)*intValue;
+		_global_host.no_password_check = (zpl_bool)*intValue;
 		ret = OK;
 		break;
 	case API_SET_SYSMAC_CMD:
-		memcpy(host.sysmac, strValue, 6);
+		memcpy(_global_host.sysmac, strValue, 6);
 		ret = OK;
 		break;
 	case API_SET_SERIAL_CMD:
-		memset(host.serial, 0, sizeof(host.serial));
+		memset(_global_host.serial, 0, sizeof(_global_host.serial));
 		if(strValue)
-			strncpy(host.serial, strValue, MIN(strlen(strValue), sizeof(host.serial)));
+			strncpy(_global_host.serial, strValue, MIN(strlen(strValue), sizeof(_global_host.serial)));
 		ret = OK;
 		break;
 
 	default:
 		break;
 	}
-	if (host.mutx)
-		os_mutex_unlock(host.mutx);
+	if (_global_host.mutx)
+		os_mutex_unlock(_global_host.mutx);
 	return ret;
 }
 
 int
-host_config_get_api (ospl_uint32 cmd, void *pVoid)
+host_config_get_api (zpl_uint32 cmd, void *pVoid)
 {
 	int ret = ERROR;
-	ospl_char *strValue = (ospl_char *)pVoid;
-	ospl_uint32 *intValue = (ospl_uint32 *)pVoid;
-	if (host.mutx)
-		os_mutex_lock(host.mutx, OS_WAIT_FOREVER);
+	zpl_char *strValue = (zpl_char *)pVoid;
+	zpl_uint32 *intValue = (zpl_uint32 *)pVoid;
+	if (_global_host.mutx)
+		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
 
 	switch(cmd)
 	{
 	case API_GET_HOSTNAME_CMD:
-		if (host.name)
+		if (_global_host.name)
 		{
 			if(strValue)
-				os_strcpy(strValue, host.name);
+				os_strcpy(strValue, _global_host.name);
 		}
 		ret = OK;
 		break;
 	case API_GET_DESC_CMD:
-		if (host.description)
+		if (_global_host.description)
 		{
 			if(strValue)
-				os_strcpy(strValue, host.description);
+				os_strcpy(strValue, _global_host.description);
 		}
 		ret = OK;
 		break;
 	case API_GET_LINES_CMD:
 		if(intValue)
-			*intValue = (ospl_uint32)host.lines;
+			*intValue = (zpl_uint32)_global_host.lines;
 		ret = OK;
 		break;
 	case API_GET_LOGFILE_CMD:
-		if (host.logfile)
+		if (_global_host.logfile)
 		{
 			if(strValue)
-				os_strcpy(strValue, host.logfile);
+				os_strcpy(strValue, _global_host.logfile);
 		}
 		ret = OK;
 		break;
 	case API_GET_CONFIGFILE_CMD:
-		if (host.config)
+		if (_global_host.config)
 		{
 			if(strValue)
-				os_strcpy(strValue, host.config);
+				os_strcpy(strValue, _global_host.config);
 		}
 		ret = OK;
 		break;
 	case API_GET_ENCRYPT_CMD:
 		if(intValue)
-			*intValue = (ospl_bool)host.encrypt;
+			*intValue = (zpl_bool)_global_host.encrypt;
 		ret = OK;
 		break;
 	case API_GET_MOTD_CMD:
-		if (host.motd)
+		if (_global_host.motd)
 		{
 			if(strValue)
-				os_strcpy(strValue, host.motd);
+				os_strcpy(strValue, _global_host.motd);
 		}
 		ret = OK;
 		break;
 	case API_GET_MOTDFILE_CMD:
-		if (host.vty_accesslist_name)
+		if (_global_host.vty_accesslist_name)
 		{
 			if(strValue)
-				os_strcpy(strValue, host.vty_accesslist_name);
+				os_strcpy(strValue, _global_host.vty_accesslist_name);
 		}
 		ret = OK;
 		break;
 	case API_GET_VTY_TIMEOUT_CMD:
 		if(intValue)
-			*intValue = (ospl_uint32)host.vty_timeout_val;
+			*intValue = (zpl_uint32)_global_host.vty_timeout_val;
 		ret = OK;
 		break;
 	case API_GET_ACCESS_CMD:
-		if (host.vty_accesslist_name)
+		if (_global_host.vty_accesslist_name)
 		{
 			if(strValue)
-				os_strcpy(strValue, host.vty_accesslist_name);
+				os_strcpy(strValue, _global_host.vty_accesslist_name);
 		}
 		ret = OK;
 		break;
 	case API_GET_IPV6ACCESS_CMD:
-		if (host.vty_ipv6_accesslist_name)
+		if (_global_host.vty_ipv6_accesslist_name)
 		{
 			if(strValue)
-				os_strcpy(strValue, host.vty_ipv6_accesslist_name);
+				os_strcpy(strValue, _global_host.vty_ipv6_accesslist_name);
 		}
 		ret = OK;
 		break;
 	case API_GET_NOPASSCHK_CMD:
 		if(intValue)
-			*intValue = (ospl_bool)host.no_password_check;
+			*intValue = (zpl_bool)_global_host.no_password_check;
 		ret = OK;
 		break;
 	case API_GET_SYSMAC_CMD:
-		if (!str_isempty(host.sysmac, sizeof(host.sysmac)))
+		if (!str_isempty(_global_host.sysmac, sizeof(_global_host.sysmac)))
 		{
 			if(strValue)
-				memcpy(strValue, host.sysmac, 6);
+				memcpy(strValue, _global_host.sysmac, 6);
 		}
 		ret = OK;
 		break;
 	case API_GET_SERIAL_CMD:
-		if (!str_isempty(host.serial, sizeof(host.serial)))
+		if (!str_isempty(_global_host.serial, sizeof(_global_host.serial)))
 		{
 			if(strValue)
-				os_strcpy(strValue, host.serial);
+				os_strcpy(strValue, _global_host.serial);
 		}
 		ret = OK;
 		break;
@@ -398,8 +419,8 @@ host_config_get_api (ospl_uint32 cmd, void *pVoid)
 	default:
 		break;
 	}
-	if (host.mutx)
-		os_mutex_unlock(host.mutx);
+	if (_global_host.mutx)
+		os_mutex_unlock(_global_host.mutx);
 	return ret;
 }
 
@@ -407,11 +428,11 @@ host_config_get_api (ospl_uint32 cmd, void *pVoid)
 static int host_system_cpu_get(struct host_system *host_system)
 {
 	FILE *f = NULL;
-	ospl_char buf[1024];
+	zpl_char buf[1024];
 	f = fopen("/proc/cpuinfo", "r");
 	if (f)
 	{
-		ospl_char *s = NULL;
+		zpl_char *s = NULL;
 		memset(buf, 0, sizeof(buf));
 		while (fgets(buf, sizeof(buf), f))
 		{
@@ -419,7 +440,7 @@ static int host_system_cpu_get(struct host_system *host_system)
 			for (s = buf + strlen(buf); (s > buf) && isspace((int) *(s - 1)); s--)
 				;
 			*s = '\0';
-#ifdef PL_BUILD_ARCH_X86
+#ifdef ZPL_BUILD_ARCH_X86
 			if(strstr(buf, "processor"))
 				host_system->process++;
 
@@ -500,12 +521,12 @@ static int host_system_mem_get(struct host_system *host_system)
 /*	MemTotal:       11831640 kB
 	MemFree:          932640 kB*/
 	FILE *f = NULL;
-	ospl_char buf[1024];
+	zpl_char buf[1024];
 	f = fopen("/proc/meminfo", "r");
 	if (f)
 	{
-		ospl_uint32 off = 0;
-		ospl_char *s = NULL;
+		zpl_uint32 off = 0;
+		zpl_char *s = NULL;
 		memset(buf, 0, sizeof(buf));
 		while (fgets(buf, sizeof(buf), f))
 		{
@@ -541,7 +562,7 @@ static int host_system_information_free(struct host_system *host_system)
 {
 	host_system->process = 0;
 	host_system->freq = 0.0;
-#ifdef PL_BUILD_ARCH_X86
+#ifdef ZPL_BUILD_ARCH_X86
 	if(host_system->model_name)
 	{
 		free(host_system->model_name);
@@ -582,15 +603,15 @@ int host_system_information_get(struct host_system *host_system)
 
 
 #if 0
-static ospl_ullong  scale(struct globals *g, ospl_ulong d)
+static zpl_ullong  scale(struct globals *g, zpl_ulong d)
 {
-	return ((ospl_ullong )d * g->mem_unit) >> G_unit_steps;
+	return ((zpl_ullong )d * g->mem_unit) >> G_unit_steps;
 }
-int free_main(int argc UNUSED_PARAM, ospl_char **argv IF_NOT_DESKTOP(UNUSED_PARAM))
+int free_main(int argc UNUSED_PARAM, zpl_char **argv IF_NOT_DESKTOP(UNUSED_PARAM))
 {
 	struct globals G;
 	struct sysinfo info;
-	ospl_ullong  cached;
+	zpl_ullong  cached;
 
 #if ENABLE_DESKTOP
 	G.unit_steps = 10;
@@ -625,7 +646,7 @@ int free_main(int argc UNUSED_PARAM, ospl_char **argv IF_NOT_DESKTOP(UNUSED_PARA
 	/* Kernels prior to 2.4.x will return info.mem_unit==0, so cope... */
 	G.mem_unit = (info.mem_unit ? info.mem_unit : 1);
 	/* Extract cached from /proc/meminfo and convert to mem_units */
-	cached = ((ospl_ullong ) parse_cached_kb() * 1024) / G.mem_unit;
+	cached = ((zpl_ullong ) parse_cached_kb() * 1024) / G.mem_unit;
 
 #define FIELDS_6 "%11llu%11llu%11llu%11llu%11llu%11llu\n"
 #define FIELDS_3 (FIELDS_6 + 3*6)
@@ -659,10 +680,10 @@ int free_main(int argc UNUSED_PARAM, ospl_char **argv IF_NOT_DESKTOP(UNUSED_PARA
 	return EXIT_SUCCESS;
 }
 #endif
-
+#ifdef ZPL_SHELL_MODULE
 int show_host_system_information(struct host_system *host_system, struct vty *vty)
 {
-#ifdef PL_BUILD_ARCH_X86
+#ifdef ZPL_BUILD_ARCH_X86
 	if(host_system->model_name)
 	{
 		vty_out(vty, " CPU Type      : %s%s", host_system->model_name, VTY_NEWLINE);
@@ -696,7 +717,7 @@ int show_host_system_information(struct host_system *host_system, struct vty *vt
 	vty_out(vty, " MEM Uses      : %d KB%s", host_system->mem_uses, VTY_NEWLINE);
 	return OK;
 }
-
+#endif
 /*
 root@OpenWrt:/tmp/test# cat /proc/cpuinfo
 system type             : MediaTek MT7688 ver:1 eco:2

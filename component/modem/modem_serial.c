@@ -6,12 +6,10 @@
  */
 
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "os_util.h"
-#include "tty_com.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "modem.h"
 #include "modem_attty.h"
@@ -31,7 +29,7 @@
 static modem_serial_main gModemSerialmain;
 
 static int modem_serial_cleanall(void);
-//static ospl_uint8 modem_channel_db[MODEM_CHANNEL_DB_MAX];
+//static zpl_uint8 modem_channel_db[MODEM_CHANNEL_DB_MAX];
 
 int modem_serial_init(void)
 {
@@ -63,7 +61,7 @@ int modem_serial_exit(void)
 }
 
 
-static modem_serial_t * modem_serial_lookup_node(const char *name, ospl_uint8 hw_channel)
+static modem_serial_t * modem_serial_lookup_node(const char *name, zpl_uint8 hw_channel)
 {
 	NODE index;
 	modem_serial_t *pstNode = NULL;
@@ -173,7 +171,7 @@ int modem_serial_del_api(const char *name)
 }
 
 
-int modem_serial_channel_api(const char *name, ospl_uint8 hw_channel)
+int modem_serial_channel_api(const char *name, zpl_uint8 hw_channel)
 {
 	int ret = 0;
 	modem_serial_t *node = NULL;
@@ -189,7 +187,7 @@ int modem_serial_channel_api(const char *name, ospl_uint8 hw_channel)
 	return ret;
 }
 
-int modem_serial_bind_api(const char *name, ospl_uint8 hw_channel, void *client)
+int modem_serial_bind_api(const char *name, zpl_uint8 hw_channel, void *client)
 {
 	int ret = 0;
 	modem_serial_t *node = NULL;
@@ -199,7 +197,7 @@ int modem_serial_bind_api(const char *name, ospl_uint8 hw_channel, void *client)
 	if(node)
 	{
 		node->client = client;
-		node->active = ospl_true;
+		node->active = zpl_true;
 		node->driver = ((modem_client_t *)client)->driver;
 		if(node->modem)
 		{
@@ -222,7 +220,7 @@ int modem_serial_bind_api(const char *name, ospl_uint8 hw_channel, void *client)
 	return ret;
 }
 
-int modem_serial_unbind_api(const char *name, ospl_uint8 hw_channel)
+int modem_serial_unbind_api(const char *name, zpl_uint8 hw_channel)
 {
 	int ret = 0;
 	modem_serial_t *node = NULL;
@@ -244,7 +242,7 @@ int modem_serial_unbind_api(const char *name, ospl_uint8 hw_channel)
 		}
 		node->driver = NULL;
 		node->client = NULL;
-		node->active = ospl_false;
+		node->active = zpl_false;
 	}
 	if(gModemSerialmain.mutex)
 		os_mutex_unlock(gModemSerialmain.mutex);
@@ -296,7 +294,7 @@ int modem_serial_interface_unbind_api(const char *name)
 	return ret;
 }*/
 
-modem_serial_t * modem_serial_lookup_api(const char *name, ospl_uint8 hw_channel)
+modem_serial_t * modem_serial_lookup_api(const char *name, zpl_uint8 hw_channel)
 {
 	modem_serial_t *node = NULL;
 	if(gModemSerialmain.mutex)

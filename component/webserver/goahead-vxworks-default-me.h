@@ -4,9 +4,9 @@
     This header is created by Me during configuration. To change settings, re-run
     configure or define variables in your Makefile to override these default values.
  */
-#ifdef PL_NSM_MODULE
+#ifdef ZPL_NSM_MODULE
 #define HAS_BOOL
-#include "zebra.h"
+#include "zpl_include.h"
 #include "vty.h"
 #include "if.h"
 #include "buffer.h"
@@ -19,9 +19,9 @@
 #define WEB_UPLOAD_BASE ME_GOAHEAD_UPLOAD_DIR
 #endif /* ME_GOAHEAD_UPLOAD_DIR */
 
-//#error " PL_NSM_MODULE && HAS_BOOL "
+//#error " ZPL_NSM_MODULE && HAS_BOOL "
 
-#else /* PL_NSM_MODULE */
+#else /* ZPL_NSM_MODULE */
 
 #define MTYPE_WEB_DATA 1
 #define XMALLOC(mtype, size)       malloc ((size))
@@ -30,7 +30,7 @@
 #define XFREE(mtype, ptr)          free ((ptr))
 #define XSTRDUP(mtype, str)        strdup ((str))
 
-#endif /* PL_NSM_MODULE */
+#endif /* ZPL_NSM_MODULE */
 
 /* Settings */
 #ifndef ME_AUTHOR

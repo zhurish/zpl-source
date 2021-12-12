@@ -1,17 +1,22 @@
-include $(MAKE_DIR)/makelinux.mk
+include $(ZPL_MAKE_DIR)/makelinux.mk
 
 include config.mk
 
 MODBUSBIN = modbus-test
 
-OBJS_DIR = $(BASE_ROOT)/$(OBJDIR)/$(MODULEDIR)
+OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODULEDIR)
 SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
-LIB_DIR = $(BASE_ROOT)/$(LIBDIR)
+LIB_DIR = $(BASE_ROOT)/$(ZPL_LIB_DIR)
 
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
 MODULE_BOBJS  := $(addprefix $(OBJS_DIR)/,$(BOBJS))
+MODULE_OBJS_DEP:=$(MODULE_OBJS:%.o=%.d)
+MODULE_BOBJS_DEP:=$(MODULE_BOBJS:%.o=%.d)
 
-PLLDCLFLAG += $(PLOS_LDLIBS) -L$(BASE_ROOT)/$(ULIBDIR) -L$(LIB_DIR) -L$(DSTROOTFSDIR)/lib
+-include $(MODULE_OBJS_DEP)
+-include $(MODULE_BOBJS_DEP)
+
+ZPLLDCLFLAG += $(ZPLOS_LDLIBS) -L$(BASE_ROOT)/$(ZPL_ULIB_DIR) -L$(LIB_DIR) -L$(ZPL_INSTALL_ROOTFS_DIR)/lib
 
 
 $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
@@ -19,28 +24,30 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(ECHO) CC '$(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) $(PLINCLUDE)' $@
-	@$(CC) -fPIC $(PLCFLAGS) $(PLDEFINE) $(PLDEBUG) $(PLLDFLAGS) -c  $< -o $@ $(PLINCLUDE)
+	@$(ZPL_ECHO_CC) $(ZPL_LIB_COMPILE)
+#
+#@$(ECHO) CC '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) $(ZPLINCLUDE)' $@
+#@$(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
 #
 
 $(LIBS) : $(MODULE_OBJS) 
 	@$(AR) -rs $(LIBS) $(MODULE_OBJS) 
 
 $(MODBUSBIN) : $(MODULE_BOBJS)
-	$(CC) $(MODULE_BOBJS) $(MODULE_OBJS) $(PLCFLAGS) $(PLLDCLFLAG) $(PLLDLIBS) -Xlinker "-(" -los -luci -lmodbus -Xlinker "-)" -o $(MODBUSBIN) 
+	$(CC) $(MODULE_BOBJS) $(MODULE_OBJS) $(ZPLCFLAGS) $(ZPLLDCLFLAG) $(ZPLOS_LDLIBS) -Xlinker "-(" -los -luci -lbase -lshell -lmodbus -Xlinker "-)" -o $(MODBUSBIN) 
  
 
 
 taget: $(MODBUSBIN)
-	@install -d ${DSTSBINDIR}
-	@install -m 755 ${MODBUSBIN} ${DSTSBINDIR} 
-	@$(STRIP) $(DSTSBINDIR)/$(MODBUSBIN)
+	@install -d ${ZPL_INSTALL_SBIN_DIR}
+	@install -m 755 ${MODBUSBIN} ${ZPL_INSTALL_SBIN_DIR} 
+	@$(STRIP) $(ZPL_INSTALL_SBIN_DIR)/$(MODBUSBIN)
 
 
 files = $(patsubst %.o,%.c,$(OBJS))
 make_prepare:
 	@for i in $(files); do	\
-		$(MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
 	done
 
 lib: $(LIBS)
@@ -51,7 +58,7 @@ obj: $(BUILT_SOURCES) $(MODULE_OBJS)
 install: $(LIBS)
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
-	@$(STRIP) $(PLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
+	@$(STRIP) $(ZPLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
 
 clean: objclean
 	@$(RM) $(LIB_DIR)/$(LIBS)
@@ -60,6 +67,6 @@ clean: objclean
 objclean: 
 	@$(RM) $(OBJS_DIR)/*
 
-all: lib install taget
+all: lib install
 
 .PHONY:	obj all lib install objclean clean make_prepare taget

@@ -6,18 +6,12 @@
  */
 
 
-#include "zebra.h"
-#include "memory.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "linklist.h"
-#include "prefix.h"
-#include "table.h"
-#include "vector.h"
-#include "eloop.h"
-#include "network.h"
-#include "vty.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
+#include "vty_include.h"
+
 
 
 #include "voip_log.h"
@@ -71,7 +65,7 @@ int voip_thlog_init()
 	if(thlog_db->thlogfp == NULL)
 		thlog_db->thlogfp = fopen(VOIP_THLOG_FILE, "a+");
 
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 	os_uci_get_integer("product.global.thlog_max", &thlog_db->thlog_max);
 	//os_uci_get_integer("product.global.thlog_index", &thlog_db->thlog_index);
 #endif
@@ -169,7 +163,7 @@ int voip_thlog_log(const char *format, ...)
 	return ERROR;
 }
 
-int voip_thlog_log1(ospl_uint8 building, ospl_uint8 unit, ospl_uint16 room, char *id,
+int voip_thlog_log1(zpl_uint8 building, zpl_uint8 unit, zpl_uint16 room, char *id,
 					char *phone, const char *format, ...)
 {
 	if(!thlog_db)
@@ -255,7 +249,7 @@ int voip_thlog_log3(char *type, char *result, const char *format, ...)
 	return ERROR;
 }
 
-int voip_thlog_log4(const ospl_time_t ti, char *type, char *result, const char *format, ...)
+int voip_thlog_log4(const zpl_time_t ti, char *type, char *result, const char *format, ...)
 {
 	if(!thlog_db)
 		return ERROR;

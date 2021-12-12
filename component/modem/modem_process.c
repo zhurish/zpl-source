@@ -5,12 +5,10 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "os_util.h"
-#include "tty_com.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "modem.h"
 #include "modem_attty.h"
@@ -218,7 +216,7 @@ static int modem_process_clean_api(modem_event event, void *argv)
 	return OK;
 }
 
-int modem_process_add_api(modem_event event, void *argv, ospl_bool lock)
+int modem_process_add_api(modem_event event, void *argv, zpl_bool lock)
 {
 	int ret = 0;
 	NODE index;
@@ -261,7 +259,7 @@ int modem_process_add_api(modem_event event, void *argv, ospl_bool lock)
 }
 
 
-int modem_process_del_api(modem_event event, void *argv, ospl_bool lock)
+int modem_process_del_api(modem_event event, void *argv, zpl_bool lock)
 {
 	int ret = OK;
 	if(lock/*event == MODEM_EV_INSTER || event == MODEM_EV_REMOVE*/)

@@ -5,23 +5,14 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "memory.h"
-#include "command.h"
-#include "memory.h"
-#include "memtypes.h"
-#include "prefix.h"
-#include "if.h"
-#include "nsm_interface.h"
-#include <log.h>
-#include "nsm_client.h"
-#include "os_list.h"
-
-#include "nsm_ppp.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "nsm_include.h"
 
 
 
-int nsm_ppp_interface_redisconnect(nsm_pppd_t *ppp, ospl_bool enable)
+int nsm_ppp_interface_redisconnect(nsm_pppd_t *ppp, zpl_bool enable)
 {
 	if(ppp->enable && !enable)
 	{
@@ -32,7 +23,7 @@ int nsm_ppp_interface_redisconnect(nsm_pppd_t *ppp, ospl_bool enable)
 }
 
 
-int nsm_ppp_interface_enable(struct interface *ifp, ospl_bool enable)
+int nsm_ppp_interface_enable(struct interface *ifp, zpl_bool enable)
 {
 	nsm_pppd_t *ppp = NULL;
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
@@ -60,7 +51,7 @@ int nsm_ppp_interface_enable(struct interface *ifp, ospl_bool enable)
 
 
 
-static int nsm_ppp_add_interface(struct interface *ifp)
+int nsm_ppp_interface_create_api(struct interface *ifp)
 {
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	if(!if_is_serial(ifp))
@@ -73,7 +64,7 @@ static int nsm_ppp_add_interface(struct interface *ifp)
 }
 
 
-static int nsm_ppp_del_interface(struct interface *ifp)
+int nsm_ppp_interface_del_api(struct interface *ifp)
 {
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	if(!if_is_serial(ifp))
@@ -85,13 +76,13 @@ static int nsm_ppp_del_interface(struct interface *ifp)
 }
 
 
-
-static int nsm_ppp_interface_config(struct vty *vty, struct interface *ifp)
+#ifdef ZPL_SHELL_MODULE
+int nsm_ppp_interface_write_config(struct vty *vty, struct interface *ifp)
 {
-	//ospl_uint32 = 0;
+	//zpl_uint32 = 0;
 	//int count = 0;
-	//ospl_char tmp[128];
-	ospl_char tmpcli_str[256];
+	//zpl_char tmp[128];
+	zpl_char tmpcli_str[256];
 	struct nsm_interface *nsm_ifp = NULL;
 	nsm_pppd_t *nsm_ppp = NULL;
 	if(!if_is_serial(ifp))
@@ -104,21 +95,14 @@ static int nsm_ppp_interface_config(struct vty *vty, struct interface *ifp)
 
 	return OK;
 }
-
-int nsm_ppp_client_init()
+#endif
+int nsm_ppp_init()
 {
-	struct nsm_client *nsm = nsm_client_new ();
-	nsm->notify_add_cb = nsm_ppp_add_interface;
-	nsm->notify_delete_cb = nsm_ppp_del_interface;
-	nsm->interface_write_config_cb = nsm_ppp_interface_config;
-	nsm_client_install (nsm, NSM_PPP);
+	nsm_interface_hook_add(NSM_PPP, nsm_ppp_interface_create_api, nsm_ppp_interface_del_api);
 	return OK;
 }
 
-int nsm_ppp_client_exit()
+int nsm_ppp_exit()
 {
-	struct nsm_client *nsm = nsm_client_lookup (NSM_PPP);
-	if(nsm)
-		nsm_client_free (nsm);
 	return OK;
 }

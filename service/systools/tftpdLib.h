@@ -35,7 +35,7 @@ modification history
 extern "C" {
 #endif
 
-#include <plconfig.h>
+#include <os_include.h>
 #include <tftpLib.h>
 
 
@@ -43,15 +43,15 @@ extern "C" {
 
 typedef struct tftpd_config
 {
-	ospl_bool	enable;
+	zpl_bool	enable;
     char	dirName [TFTP_FILENAME_SIZE];
     char    address[TFTP_FILENAME_SIZE];
-    ospl_ushort	port;
+    zpl_ushort	port;
     int 	sock;
     void	*master;
     void	*t_read;
     int 	count;
-    ospl_bool 	tftpdDebug;	/* ospl_true: debugging messages */
+    zpl_bool 	tftpdDebug;	/* zpl_true: debugging messages */
     int tftpdErrorSendTries;
     int tftpdMaxConnections;
 } TFTPD_CONFIG;
@@ -59,10 +59,10 @@ typedef struct tftpd_config
 extern int tftpdInit(void *master, char *basedir);
 extern int tftpdUnInit(void);
 
-extern int tftpdEnable(ospl_bool enable, char *localipaddress, int port);
+extern int tftpdEnable(zpl_bool enable, char *localipaddress, int port);
 
 /*extern int 	tftpdInit (int stackSize, int nDirectories,
-			   char * directoryNames, ospl_bool noControl,
+			   char * directoryNames, zpl_bool noControl,
 			   int maxConnections);*/
 
 

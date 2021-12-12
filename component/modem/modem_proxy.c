@@ -5,14 +5,10 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "os_util.h"
-#include "tty_com.h"
-#include "os_time.h"
-#include "os_ansync.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 
 #include "modem.h"
@@ -27,8 +23,8 @@ typedef struct modem_proxy_s
 {
 	int 	fd;
 	int 	wfd;
-	ospl_bool	bClose;
-	ospl_uint32		offset;
+	zpl_bool	bClose;
+	zpl_uint32		offset;
 	char 	input[512];
 	char 	output[512];
 	modem_t *modem;
@@ -41,7 +37,7 @@ typedef struct modem_proxy_s
 extern os_ansync_lst * modem_ansync_lst;
 
 
-static modem_client_t * modem_client_proxy_lookup(const char *name, ospl_uint8 hw_channel)
+static modem_client_t * modem_client_proxy_lookup(const char *name, zpl_uint8 hw_channel)
 {
 	modem_serial_t * channel = modem_serial_lookup_api(name, hw_channel);
 	if(channel)
@@ -51,7 +47,7 @@ static modem_client_t * modem_client_proxy_lookup(const char *name, ospl_uint8 h
 /*			if(channel->modem)
 			{
 				modem_t *modem = channel->modem;
-				modem->active = ospl_false;
+				modem->active = zpl_false;
 			}*/
 			return (modem_client_t *)channel->client;
 		}
@@ -64,7 +60,7 @@ static int modem_proxy_open(modem_client_t *client)
 	if(client->modem)
 	{
 		modem_t *modem = client->modem;
-		modem->proxy = ospl_true;
+		modem->proxy = zpl_true;
 	}
 	else
 	{
@@ -74,7 +70,7 @@ static int modem_proxy_open(modem_client_t *client)
 		if(client->modem)
 		{
 			modem_t *modem = client->modem;
-			modem->active = ospl_false;
+			modem->active = zpl_false;
 		}
 	}
 	if(client->attty)
@@ -93,12 +89,12 @@ static int modem_proxy_close(modem_client_t *client)
 	{
 		if(client->attty->fd)
 		{
-			if(modem && modem->active == ospl_false && modem->proxy == ospl_true)
+			if(modem && modem->active == zpl_false && modem->proxy == zpl_true)
 				modem_attty_close(client);
 		}
 	}
 
-	if(modem && modem->active == ospl_false && modem->proxy == ospl_true)
+	if(modem && modem->active == zpl_false && modem->proxy == zpl_true)
 	{
 		if(modem->proxy_data)
 			free(modem->proxy_data);
@@ -114,13 +110,13 @@ static int modem_proxy_close(modem_client_t *client)
 
 static int modem_proxy_thread(os_ansync_t *value)
 {
-	ospl_uint8 buf[512];
+	zpl_uint8 buf[512];
 	int i = 0, ret = 0, nbytes = 0;
 	modem_proxy_t *mdproxy = value->pVoid;
 	if(!mdproxy)
 		return ERROR;
 	os_bzero(buf, sizeof(buf));
-	nbytes = ip_read(mdproxy->fd, buf, sizeof(buf));
+	nbytes = ipstack_read(mdproxy->fd, buf, sizeof(buf));
 	if (nbytes < 0)
 	{
 		if (!ERRNO_IO_RETRY(errno))
@@ -130,7 +126,7 @@ static int modem_proxy_thread(os_ansync_t *value)
 			os_ansync_lock(modem_ansync_lst);
 			if (mdproxy->bClose)
 			{
-				ip_close(mdproxy->fd);
+				ipstack_close(mdproxy->fd);
 				mdproxy->fd = 0;
 			}
 			modem_proxy_close(mdproxy->client);
@@ -144,7 +140,7 @@ static int modem_proxy_thread(os_ansync_t *value)
 		os_ansync_lock(modem_ansync_lst);
 		if (mdproxy->bClose)
 		{
-			ip_close(mdproxy->fd);
+			ipstack_close(mdproxy->fd);
 			mdproxy->fd = 0;
 		}
 		modem_proxy_close(mdproxy->client);
@@ -178,7 +174,7 @@ static int modem_proxy_thread(os_ansync_t *value)
 							os_ansync_lock(modem_ansync_lst);
 							if (mdproxy->bClose)
 							{
-								ip_close(mdproxy->fd);
+								ipstack_close(mdproxy->fd);
 								mdproxy->fd = 0;
 							}
 							modem_proxy_close(mdproxy->client);
@@ -193,7 +189,7 @@ static int modem_proxy_thread(os_ansync_t *value)
 					os_ansync_lock(modem_ansync_lst);
 					if (mdproxy->bClose)
 					{
-						ip_close(mdproxy->fd);
+						ipstack_close(mdproxy->fd);
 						mdproxy->fd = 0;
 					}
 					modem_proxy_close(mdproxy->client);
@@ -218,7 +214,7 @@ static int modem_proxy_thread(os_ansync_t *value)
 }
 
 
-int modem_proxy_enable(const char *name, int fd, ospl_bool close)
+int modem_proxy_enable(const char *name, int fd, zpl_bool close)
 {
 	modem_client_t * client = modem_client_proxy_lookup(name, 0);
 	if(client)
@@ -260,7 +256,7 @@ int modem_proxy_disable(const char *name)
 		if(client->modem)
 		{
 			modem_t *modem = client->modem;
-			if(modem->proxy == ospl_true)
+			if(modem->proxy == zpl_true)
 			{
 				modem_proxy_t *mdproxy = modem->proxy_data;
 				if(mdproxy)

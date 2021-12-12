@@ -61,9 +61,9 @@ typedef enum modem_event_s
 }modem_event;
 
 
-extern int modem_event_add_api(modem_t *, modem_event, ospl_bool );
-extern int modem_event_del_api(modem_t *, modem_event, ospl_bool );
-extern int modem_event_reload(modem_t *, modem_event, ospl_bool );
+extern int modem_event_add_api(modem_t *, modem_event, zpl_bool );
+extern int modem_event_del_api(modem_t *, modem_event, zpl_bool );
+extern int modem_event_reload(modem_t *, modem_event, zpl_bool );
 
 
 extern const char *modem_event_string(modem_event );

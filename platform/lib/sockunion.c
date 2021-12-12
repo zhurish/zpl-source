@@ -19,19 +19,13 @@
  * 02111-1307, USA.  
  */
 
-#include <zebra.h>
-
-#include "prefix.h"
-#include "vty.h"
-#include "sockunion.h"
-#include "memory.h"
-#include "str.h"
-#include "log.h"
-#include "jhash.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
 #ifndef HAVE_INET_ATON
 int
-inet_aton (const char *cp, struct in_addr *inaddr)
+ipstack_inet_aton (const char *cp, struct in_addr *inaddr)
 {
   int dots = 0;
   register u_long addr = 0;
@@ -39,7 +33,7 @@ inet_aton (const char *cp, struct in_addr *inaddr)
 
   do
     {
-      register ospl_char c = *cp;
+      register zpl_char c = *cp;
 
       switch (c)
 	{
@@ -72,13 +66,13 @@ inet_aton (const char *cp, struct in_addr *inaddr)
 
 #ifndef HAVE_INET_PTON
 int
-inet_pton (ospl_family_t family, const char *strptr, void *addrptr)
+ipstack_inet_pton (zpl_family_t family, const char *strptr, void *addrptr)
 {
   if (family == AF_INET)
     {
       struct in_addr in_val;
 
-      if (inet_aton (strptr, &in_val))
+      if (ipstack_inet_aton (strptr, &in_val))
 	{
 	  memcpy (addrptr, &in_val, sizeof (struct in_addr));
 	  return 1;
@@ -92,13 +86,13 @@ inet_pton (ospl_family_t family, const char *strptr, void *addrptr)
 
 #ifndef HAVE_INET_NTOP
 const char *
-inet_ntop (ospl_family_t family, const void *addrptr, ospl_char *strptr, ospl_size_t len)
+ipstack_inet_ntop (zpl_family_t family, const void *addrptr, zpl_char *strptr, zpl_size_t len)
 {
-  ospl_uchar *p = (ospl_uchar *) addrptr;
+  zpl_uchar *p = (zpl_uchar *) addrptr;
 
   if (family == AF_INET) 
     {
-      ospl_char temp[INET_ADDRSTRLEN];
+      zpl_char temp[INET_ADDRSTRLEN];
 
       snprintf(temp, sizeof(temp), "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
 
@@ -117,16 +111,16 @@ inet_ntop (ospl_family_t family, const void *addrptr, ospl_char *strptr, ospl_si
 #endif /* ! HAVE_INET_NTOP */
 
 const char *
-inet_sutop (const union sockunion *su, ospl_char *str)
+inet_sutop (const union sockunion *su, zpl_char *str)
 {
   switch (su->sa.sa_family)
     {
     case AF_INET:
-      inet_ntop (AF_INET, &su->sin.sin_addr, str, INET_ADDRSTRLEN);
+      ipstack_inet_ntop (AF_INET, &su->sin.sin_addr, str, INET_ADDRSTRLEN);
       break;
 #ifdef HAVE_IPV6
     case AF_INET6:
-      inet_ntop (AF_INET6, &su->sin6.sin6_addr, str, INET6_ADDRSTRLEN);
+      ipstack_inet_ntop (AF_INET6, &su->sin6.sin6_addr, str, INET6_ADDRSTRLEN);
       break;
 #endif /* HAVE_IPV6 */
     }
@@ -140,7 +134,7 @@ str2sockunion (const char *str, union sockunion *su)
 
   memset (su, 0, sizeof (union sockunion));
 
-  ret = inet_pton (AF_INET, str, &su->sin.sin_addr);
+  ret = ipstack_inet_pton (AF_INET, str, &su->sin.sin_addr);
   if (ret > 0)			/* Valid IPv4 address format. */
     {
       su->sin.sin_family = AF_INET;
@@ -150,7 +144,7 @@ str2sockunion (const char *str, union sockunion *su)
       return 0;
     }
 #ifdef HAVE_IPV6
-  ret = inet_pton (AF_INET6, str, &su->sin6.sin6_addr);
+  ret = ipstack_inet_pton (AF_INET6, str, &su->sin6.sin6_addr);
   if (ret > 0)			/* Valid IPv6 address format. */
     {
       su->sin6.sin6_family = AF_INET6;
@@ -164,7 +158,7 @@ str2sockunion (const char *str, union sockunion *su)
 }
 
 const char *
-sockunion2str (const union sockunion *su, ospl_char *buf, ospl_size_t len)
+sockunion2str (const union sockunion *su, zpl_char *buf, zpl_size_t len)
 {
   switch (sockunion_family(su))
     {
@@ -172,10 +166,10 @@ sockunion2str (const union sockunion *su, ospl_char *buf, ospl_size_t len)
       snprintf (buf, len, "(unspec)");
       return buf;
     case AF_INET:
-      return inet_ntop (AF_INET, &su->sin.sin_addr, buf, len);
+      return ipstack_inet_ntop (AF_INET, &su->sin.sin_addr, buf, len);
 #ifdef HAVE_IPV6
     case AF_INET6:
-      return inet_ntop (AF_INET6, &su->sin6.sin6_addr, buf, len);
+      return ipstack_inet_ntop (AF_INET6, &su->sin6.sin6_addr, buf, len);
 #endif /* HAVE_IPV6 */
     }
   snprintf (buf, len, "(af %d)", sockunion_family(su));
@@ -207,37 +201,37 @@ sockunion_normalise_mapped (union sockunion *su)
       memset (&sin, 0, sizeof (struct sockaddr_in));
       sin.sin_family = AF_INET;
       sin.sin_port = su->sin6.sin6_port;
-      memcpy (&sin.sin_addr, ((ospl_char *)&su->sin6.sin6_addr) + 12, 4);
+      memcpy (&sin.sin_addr, ((zpl_char *)&su->sin6.sin6_addr) + 12, 4);
       memcpy (su, &sin, sizeof (struct sockaddr_in));
     }
 #endif /* HAVE_IPV6 */
 }
 
 /* Return socket of sockunion. */
-int
+zpl_socket_t
 sockunion_socket (const union sockunion *su)
 {
-  int sock;
+  zpl_socket_t sock;
 
-  sock = ip_socket (su->sa.sa_family, SOCK_STREAM, 0);
-  if (sock < 0)
+  sock = ipstack_socket (IPCOM_STACK, su->sa.sa_family, SOCK_STREAM, 0);
+  if (sock._fd < 0)
     {
       zlog (MODULE_DEFAULT,  LOG_WARNING, "Can't make socket : %s", safe_strerror (errno));
-      return -1;
+      return (zpl_socket_t)sock;
     }
 
   return sock;
 }
 
 /* Return accepted new socket file descriptor. */
-int
-sockunion_accept (int sock, union sockunion *su)
+zpl_socket_t
+sockunion_accept (zpl_socket_t sock, union sockunion *su)
 {
   socklen_t len;
-  int client_sock;
+  zpl_socket_t client_sock;
 
   len = sizeof (union sockunion);
-  client_sock = ip_accept (sock, (struct sockaddr *) su, &len);
+  client_sock = ipstack_accept (sock, (struct sockaddr *) su, &len);
   
   sockunion_normalise_mapped (su);
   return client_sock;
@@ -266,16 +260,16 @@ sockunion_sizeof (const union sockunion *su)
 
 /* return sockunion structure : this function should be revised. */
 static const char *
-sockunion_log (const union sockunion *su, ospl_char *buf, ospl_size_t len)
+sockunion_log (const union sockunion *su, zpl_char *buf, zpl_size_t len)
 {
   switch (su->sa.sa_family) 
     {
     case AF_INET:
-      return inet_ntop(AF_INET, &su->sin.sin_addr, buf, len);
+      return ipstack_inet_ntop(AF_INET, &su->sin.sin_addr, buf, len);
 
 #ifdef HAVE_IPV6
     case AF_INET6:
-      return inet_ntop(AF_INET6, &(su->sin6.sin6_addr), buf, len);
+      return ipstack_inet_ntop(AF_INET6, &(su->sin6.sin6_addr), buf, len);
       break;
 #endif /* HAVE_IPV6 */
 
@@ -290,11 +284,11 @@ sockunion_log (const union sockunion *su, ospl_char *buf, ospl_size_t len)
    0 : connect success
    1 : connect is in progress */
 enum connect_result
-sockunion_connect (int fd, const union sockunion *peersu, ospl_ushort port,
+sockunion_connect (zpl_socket_t fd, const union sockunion *peersu, zpl_ushort port,
 		   ifindex_t ifindex)
 {
   int ret;
-  ospl_uint32 val;
+  zpl_uint32 val;
   union sockunion su;
 
   memcpy (&su, peersu, sizeof (union sockunion));
@@ -321,16 +315,16 @@ sockunion_connect (int fd, const union sockunion *peersu, ospl_ushort port,
     }      
 
   /* Make socket non-block. */
-  val = fcntl (fd, F_GETFL, 0);
-  fcntl (fd, F_SETFL, val|O_NONBLOCK);
+  //val = fcntl (fd, F_GETFL, 0);
+  //fcntl (fd, F_SETFL, val|O_NONBLOCK);
 
   /* Call connect function. */
-  ret = ip_connect (fd, (struct sockaddr *) &su, sockunion_sizeof (&su));
+  ret = ipstack_connect (fd, (struct sockaddr *) &su, sockunion_sizeof (&su));
 
   /* Immediate success */
   if (ret == 0)
     {
-      fcntl (fd, F_SETFL, val);
+      //fcntl (fd, F_SETFL, val);
       return connect_success;
     }
 
@@ -339,7 +333,7 @@ sockunion_connect (int fd, const union sockunion *peersu, ospl_ushort port,
     {
       if (errno != EINPROGRESS)
 	{
-	  ospl_char str[SU_ADDRSTRLEN];
+	  zpl_char str[SU_ADDRSTRLEN];
 	  zlog_info (MODULE_DEFAULT, "can't connect to %s fd %d : %s",
 		     sockunion_log (&su, str, sizeof str),
 		     fd, safe_strerror (errno));
@@ -347,23 +341,23 @@ sockunion_connect (int fd, const union sockunion *peersu, ospl_ushort port,
 	}
     }
 
-  fcntl (fd, F_SETFL, val);
+  //fcntl (fd, F_SETFL, val);
 
   return connect_in_progress;
 }
 
 /* Make socket from sockunion union. */
-int
+zpl_socket_t
 sockunion_stream_socket (union sockunion *su)
 {
-  int sock;
+  zpl_socket_t sock;
 
   if (su->sa.sa_family == 0)
     su->sa.sa_family = AF_INET_UNION;
 
-  sock = ip_socket (su->sa.sa_family, SOCK_STREAM, 0);
+  sock = ipstack_socket (IPCOM_STACK, su->sa.sa_family, SOCK_STREAM, 0);
 
-  if (sock < 0)
+  if (sock._fd < 0)
     zlog (MODULE_DEFAULT, LOG_WARNING, "can't make socket sockunion_stream_socket");
 
   return sock;
@@ -371,7 +365,7 @@ sockunion_stream_socket (union sockunion *su)
 
 /* Bind socket to specified address. */
 int
-sockunion_bind (int sock, union sockunion *su, ospl_ushort port, 
+sockunion_bind (zpl_socket_t sock, union sockunion *su, zpl_ushort port, 
 		union sockunion *su_addr)
 {
   int size = 0;
@@ -407,7 +401,7 @@ sockunion_bind (int sock, union sockunion *su, ospl_ushort port,
 #endif /* HAVE_IPV6 */
   
 
-  ret = ip_bind (sock, (struct sockaddr *)su, size);
+  ret = ipstack_bind (sock, (struct sockaddr *)su, size);
   if (ret < 0)
     zlog (MODULE_DEFAULT, LOG_WARNING, "can't bind socket : %s", safe_strerror (errno));
 
@@ -415,12 +409,12 @@ sockunion_bind (int sock, union sockunion *su, ospl_ushort port,
 }
 
 int
-sockopt_reuseaddr (int sock)
+sockopt_reuseaddr (zpl_socket_t sock)
 {
   int ret;
   int on = 1;
 
-  ret = ip_setsockopt (sock, SOL_SOCKET, SO_REUSEADDR,
+  ret = ipstack_setsockopt (sock, SOL_SOCKET, SO_REUSEADDR,
 		    (void *) &on, sizeof (on));
   if (ret < 0)
     {
@@ -432,12 +426,12 @@ sockopt_reuseaddr (int sock)
 
 #ifdef SO_REUSEPORT
 int
-sockopt_reuseport (int sock)
+sockopt_reuseport (zpl_socket_t sock)
 {
   int ret;
   int on = 1;
 
-  ret = ip_setsockopt (sock, SOL_SOCKET, SO_REUSEPORT,
+  ret = ipstack_setsockopt (sock, SOL_SOCKET, SO_REUSEPORT,
 		    (void *) &on, sizeof (on));
   if (ret < 0)
     {
@@ -448,40 +442,40 @@ sockopt_reuseport (int sock)
 }
 #else
 int
-sockopt_reuseport (int sock)
+sockopt_reuseport (zpl_socket_t sock)
 {
   return 0;
 }
 #endif /* 0 */
 
 
-int sockopt_int(int fd, int level, int optname, int optval)
+int sockopt_int(zpl_socket_t fd, int level, int optname, int optval)
 {
-	return ip_setsockopt(fd, level, optname, &optval, sizeof(int));
+	return ipstack_setsockopt(fd, level, optname, &optval, sizeof(int));
 }
 
-static int sockopt_SOL_SOCKET_int(int fd, int optname, int optval)
+static int sockopt_SOL_SOCKET_int(zpl_socket_t fd, int optname, int optval)
 {
 	return sockopt_int(fd, SOL_SOCKET, optname, optval);
 }
 
-static int sockopt_SOL_SOCKET_1(int fd, int optname)
+static int sockopt_SOL_SOCKET_1(zpl_socket_t fd, int optname)
 {
 	return sockopt_SOL_SOCKET_int(fd, optname, 1);
 }
 
-int sockopt_broadcast(int fd)
+int sockopt_broadcast(zpl_socket_t fd)
 {
 	return sockopt_SOL_SOCKET_1(fd, SO_BROADCAST);
 }
 
-int sockopt_keepalive(int fd)
+int sockopt_keepalive(zpl_socket_t fd)
 {
 	return sockopt_SOL_SOCKET_1(fd, SO_KEEPALIVE);
 }
 
 #ifdef SO_BINDTODEVICE
-int sockopt_bindtodevice(int fd, const char *iface)
+int sockopt_bindtodevice(zpl_socket_t fd, const char *iface)
 {
 	int r;
 	struct ifreq ifr;
@@ -489,15 +483,15 @@ int sockopt_bindtodevice(int fd, const char *iface)
 	/* NB: passing (iface, strlen(iface) + 1) does not work!
 	 * (maybe it works on _some_ kernels, but not on 2.6.26)
 	 * Actually, ifr_name is at offset 0, and in practice
-	 * just giving ospl_char[IFNAMSIZ] instead of struct ifreq works too.
+	 * just giving zpl_char[IFNAMSIZ] instead of struct ifreq works too.
 	 * But just in case it's not true on some obscure arch... */
-	r = setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr));
+	r = ipstack_setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr));
 	if (r)
 		zlog (MODULE_DEFAULT, LOG_WARNING, "can't bind to interface %s", iface);
 	return r;
 }
 #else
-int sockopt_bindtodevice(int fd,
+int sockopt_bindtodevice(zpl_socket_t fd,
 		const char *iface)
 {
 	zlog (MODULE_DEFAULT, LOG_WARNING, "SO_BINDTODEVICE is not supported on this system");
@@ -506,14 +500,14 @@ int sockopt_bindtodevice(int fd,
 #endif
 
 int
-sockopt_ttl (ospl_family_t family, int sock, int ttl)
+sockopt_ttl (zpl_family_t family, zpl_socket_t sock, int ttl)
 {
   int ret;
 
 #ifdef IP_TTL
   if (family == AF_INET)
     {
-      ret = ip_setsockopt (sock, IPPROTO_IP, IP_TTL,
+      ret = ipstack_setsockopt (sock, IPPROTO_IP, IP_TTL,
 			(void *) &ttl, sizeof (int));
       if (ret < 0)
 	{
@@ -526,7 +520,7 @@ sockopt_ttl (ospl_family_t family, int sock, int ttl)
 #ifdef HAVE_IPV6
   if (family == AF_INET6)
     {
-      ret = ip_setsockopt (sock, IPPROTO_IPV6, IPV6_UNICAST_HOPS,
+      ret = ipstack_setsockopt (sock, IPPROTO_IPV6, IPV6_UNICAST_HOPS,
 			(void *) &ttl, sizeof (int));
       if (ret < 0)
 	{
@@ -541,22 +535,22 @@ sockopt_ttl (ospl_family_t family, int sock, int ttl)
 }
 
 int
-sockopt_cork (int sock, int onoff)
+sockopt_cork (zpl_socket_t sock, int onoff)
 {
 #ifdef TCP_CORK
-  return ip_setsockopt (sock, IPPROTO_TCP, TCP_CORK, &onoff, sizeof(onoff));
+  return ipstack_setsockopt (sock, IPPROTO_TCP, TCP_CORK, &onoff, sizeof(onoff));
 #else
   return 0;
 #endif
 }
 
 int
-sockopt_minttl (ospl_family_t family, int sock, int minttl)
+sockopt_minttl (zpl_family_t family, zpl_socket_t sock, int minttl)
 {
 #ifdef IP_MINTTL
   if (family == AF_INET)
     {
-      int ret = ip_setsockopt (sock, IPPROTO_IP, IP_MINTTL, &minttl, sizeof(minttl));
+      int ret = ipstack_setsockopt (sock, IPPROTO_IP, IP_MINTTL, &minttl, sizeof(minttl));
       if (ret < 0)
 	  zlog (MODULE_DEFAULT, LOG_WARNING,
 		"can't set sockopt IP_MINTTL to %d on socket %d: %s",
@@ -567,7 +561,7 @@ sockopt_minttl (ospl_family_t family, int sock, int minttl)
 #ifdef IPV6_MINHOPCNT
   if (family == AF_INET6)
     {
-      int ret = ip_setsockopt (sock, IPPROTO_IPV6, IPV6_MINHOPCNT, &minttl, sizeof(minttl));
+      int ret = ipstack_setsockopt (sock, IPPROTO_IPV6, IPV6_MINHOPCNT, &minttl, sizeof(minttl));
       if (ret < 0)
 	  zlog (MODULE_DEFAULT, LOG_WARNING,
 		"can't set sockopt IPV6_MINHOPCNT to %d on socket %d: %s",
@@ -581,7 +575,7 @@ sockopt_minttl (ospl_family_t family, int sock, int minttl)
 }
 
 int
-sockopt_v6only (ospl_family_t family, int sock)
+sockopt_v6only (zpl_family_t family, zpl_socket_t sock)
 {
   int ret, on = 1;
 
@@ -589,7 +583,7 @@ sockopt_v6only (ospl_family_t family, int sock)
 #ifdef IPV6_V6ONLY
   if (family == AF_INET6)
     {
-      ret = ip_setsockopt (sock, IPPROTO_IPV6, IPV6_V6ONLY,
+      ret = ipstack_setsockopt (sock, IPPROTO_IPV6, IPV6_V6ONLY,
 			(void *) &on, sizeof (int));
       if (ret < 0)
 	{
@@ -632,7 +626,7 @@ sockunion_same (const union sockunion *su1, const union sockunion *su2)
     return 0;
 }
 
-ospl_uint32 
+zpl_uint32 
 sockunion_hash (const union sockunion *su)
 {
   switch (sockunion_family(su))
@@ -647,8 +641,8 @@ sockunion_hash (const union sockunion *su)
   return 0;
 }
 
-ospl_size_t
-family2addrsize(ospl_family_t family)
+zpl_size_t
+family2addrsize(zpl_family_t family)
 {
   switch (family)
     {
@@ -662,28 +656,28 @@ family2addrsize(ospl_family_t family)
   return 0;
 }
 
-ospl_size_t
+zpl_size_t
 sockunion_get_addrlen(const union sockunion *su)
 {
   return family2addrsize(sockunion_family(su));
 }
 
-const ospl_uchar *
+const zpl_uchar *
 sockunion_get_addr(const union sockunion *su)
 {
   switch (sockunion_family(su))
     {
     case AF_INET:
-      return (const ospl_uchar *) &su->sin.sin_addr.s_addr;
+      return (const zpl_uchar *) &su->sin.sin_addr.s_addr;
 #ifdef HAVE_IPV6
     case AF_INET6:
-      return (const ospl_uchar *) &su->sin6.sin6_addr;
+      return (const zpl_uchar *) &su->sin6.sin6_addr;
 #endif /* HAVE_IPV6 */
     }
   return NULL;
 }
 
-ospl_ushort
+zpl_ushort
 sockunion_get_port (const union sockunion *su)
 {
   switch (sockunion_family (su))
@@ -699,7 +693,7 @@ sockunion_get_port (const union sockunion *su)
 }
 
 void
-sockunion_set(union sockunion *su, ospl_family_t family, const ospl_uchar *addr, ospl_size_t bytes)
+sockunion_set(union sockunion *su, zpl_family_t family, const zpl_uchar *addr, zpl_size_t bytes)
 {
   if (family2addrsize(family) != bytes)
     return;
@@ -720,7 +714,7 @@ sockunion_set(union sockunion *su, ospl_family_t family, const ospl_uchar *addr,
 
 /* After TCP connection is established.  Get local address and port. */
 union sockunion *
-sockunion_getsockname (int fd)
+sockunion_getsockname (zpl_socket_t fd)
 {
   int ret;
   socklen_t len;
@@ -731,14 +725,14 @@ sockunion_getsockname (int fd)
 #ifdef HAVE_IPV6
     struct sockaddr_in6 sin6;
 #endif /* HAVE_IPV6 */
-    ospl_char tmp_buffer[128];
+    zpl_char tmp_buffer[128];
   } name;
   union sockunion *su;
 
   memset (&name, 0, sizeof name);
   len = sizeof name;
 
-  ret = ip_getsockname (fd, (struct sockaddr *)&name, &len);
+  ret = ipstack_getsockname (fd, (struct sockaddr *)&name, &len);
   if (ret < 0)
     {
       zlog_warn (MODULE_DEFAULT, "Can't get local address and port by getsockname: %s",
@@ -766,7 +760,7 @@ sockunion_getsockname (int fd)
 
 /* After TCP connection is established.  Get remote address and port. */
 union sockunion *
-sockunion_getpeername (int fd)
+sockunion_getpeername (zpl_socket_t fd)
 {
   int ret;
   socklen_t len;
@@ -777,13 +771,13 @@ sockunion_getpeername (int fd)
 #ifdef HAVE_IPV6
     struct sockaddr_in6 sin6;
 #endif /* HAVE_IPV6 */
-    ospl_char tmp_buffer[128];
+    zpl_char tmp_buffer[128];
   } name;
   union sockunion *su;
 
   memset (&name, 0, sizeof name);
   len = sizeof name;
-  ret = ip_getpeername (fd, (struct sockaddr *)&name, &len);
+  ret = ipstack_getpeername (fd, (struct sockaddr *)&name, &len);
   if (ret < 0)
     {
       zlog (MODULE_DEFAULT, LOG_WARNING, "Can't get remote address and port: %s",
@@ -819,14 +813,14 @@ sockunion_print (const union sockunion *su)
   switch (su->sa.sa_family) 
     {
     case AF_INET:
-      printf ("%s\n", inet_ntoa (su->sin.sin_addr));
+      printf ("%s\n", ipstack_inet_ntoa (su->sin.sin_addr));
       break;
 #ifdef HAVE_IPV6
     case AF_INET6:
       {
-	ospl_char buf [SU_ADDRSTRLEN];
+	zpl_char buf [SU_ADDRSTRLEN];
 
-	printf ("%s\n", inet_ntop (AF_INET6, &(su->sin6.sin6_addr),
+	printf ("%s\n", ipstack_inet_ntop (AF_INET6, &(su->sin6.sin6_addr),
 				 buf, sizeof (buf)));
       }
       break;
@@ -852,11 +846,11 @@ sockunion_print (const union sockunion *su)
 static int
 in6addr_cmp (const struct in6_addr *addr1, const struct in6_addr *addr2)
 {
-  ospl_uint32  i;
-  ospl_uchar *p1, *p2;
+  zpl_uint32  i;
+  zpl_uchar *p1, *p2;
 
-  p1 = (ospl_uchar *)addr1;
-  p2 = (ospl_uchar *)addr2;
+  p1 = (zpl_uchar *)addr1;
+  p2 = (zpl_uchar *)addr2;
 
   for (i = 0; i < sizeof (struct in6_addr); i++)
     {

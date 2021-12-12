@@ -6,27 +6,29 @@
  * pp. 86-101, for additional details on computing this checksum.
  */
 
-#include <zebra.h>
+#include "os_include.h"
+#include "zpl_include.h"
+#include "zassert.h"
 #include "checksum.h"
 
 #define POLYNOMIAL          0x1021
 #define INITIAL_REMAINDER   0xFFFF
 #define FINAL_XOR_VALUE     0x0000
 
-typedef ospl_ushort width_t;
+typedef zpl_ushort width_t;
 #define WIDTH (8 * sizeof(width_t))
 #define TOPBIT (1 << (WIDTH - 1))
 
 static width_t crcTable[256];
-static ospl_uint8	crc_table_init = 0;
+static zpl_uint8	crc_table_init = 0;
 
-ospl_uint16			/* return checksum in low-order 16 bits */
-in_cksum(void *parg, ospl_uint32 nbytes)
+zpl_uint16			/* return checksum in low-order 16 bits */
+in_cksum(void *parg, zpl_uint32 nbytes)
 {
-	ospl_ushort *ptr = parg;
+	zpl_ushort *ptr = parg;
 	register long		sum;		/* assumes long == 32 bits */
-	ospl_ushort			oddbyte;
-	register ospl_ushort	answer;		/* assumes ospl_ushort == 16 bits */
+	zpl_ushort			oddbyte;
+	register zpl_ushort	answer;		/* assumes zpl_ushort == 16 bits */
 
 	/*
 	 * Our algorithm is simple, using a 32-bit accumulator (sum),
@@ -43,7 +45,7 @@ in_cksum(void *parg, ospl_uint32 nbytes)
 				/* mop up an odd byte, if necessary */
 	if (nbytes == 1) {
 		oddbyte = 0;		/* make sure top half is zero */
-		*((ospl_uchar *) &oddbyte) = *(ospl_uchar *)ptr;   /* one byte only */
+		*((zpl_uchar *) &oddbyte) = *(zpl_uchar *)ptr;   /* one byte only */
 		sum += oddbyte;
 	}
 
@@ -64,14 +66,14 @@ in_cksum(void *parg, ospl_uint32 nbytes)
    index required in the specification ISO 8473, Annex C.1 */
 /* calling with offset == FLETCHER_CHECKSUM_VALIDATE will validate the checksum
    without modifying the buffer; a valid checksum returns 0 */
-ospl_uint16
-fletcher_checksum(ospl_uchar * buffer, const ospl_size_t len, const ospl_uint16 offset)
+zpl_uint16
+fletcher_checksum(zpl_uchar * buffer, const zpl_size_t len, const zpl_uint16 offset)
 {
-  ospl_uint8 *p;
-  ospl_uint32 x, y, c0, c1;
-  ospl_uint16 checksum;
-  ospl_uint16 *csum;
-  ospl_size_t partial_len, i, left = len;
+  zpl_uint8 *p;
+  zpl_uint32 x, y, c0, c1;
+  zpl_uint16 checksum;
+  zpl_uint16 *csum;
+  zpl_size_t partial_len, i, left = len;
   
   checksum = 0;
 
@@ -80,7 +82,7 @@ fletcher_checksum(ospl_uchar * buffer, const ospl_size_t len, const ospl_uint16 
     /* Zero the csum in the packet. */
     {
       assert (offset < (len - 1)); /* account for two bytes of checksum */
-      csum = (ospl_uint16 *) (buffer + offset);
+      csum = (zpl_uint16 *) (buffer + offset);
       *(csum) = 0;
     }
 
@@ -143,7 +145,7 @@ static void crcInit(void)
 {
     width_t remainder;
     width_t dividend;
-    ospl_uint32 bit;
+    zpl_uint32 bit;
     /* Perform binary long division, a bit at a time. */
     for(dividend = 0; dividend < 256; dividend++)
     {
@@ -175,10 +177,10 @@ static void crcInit(void)
  * @note This function expects that crcInit() has been called
  *       first to initialize the CRC lookup table.
  */
-ospl_uint16 crc_checksum(ospl_uchar * message, ospl_uint32  nBytes)
+zpl_uint16 crc_checksum(zpl_uchar * message, zpl_uint32  nBytes)
 {
-    ospl_uint32  offset;
-    ospl_uchar byte;
+    zpl_uint32  offset;
+    zpl_uchar byte;
     width_t remainder = INITIAL_REMAINDER;
     if(crc_table_init == 0)
     {
@@ -197,7 +199,7 @@ ospl_uint16 crc_checksum(ospl_uchar * message, ospl_uint32  nBytes)
 
 
 /* Table of CRC constants - implements x^16+x^12+x^5+1 */
-static const ospl_uint16 crc16_tab[] = {
+static const zpl_uint16 crc16_tab[] = {
 	0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7,
 	0x8108, 0x9129, 0xa14a, 0xb16b, 0xc18c, 0xd1ad, 0xe1ce, 0xf1ef,
 	0x1231, 0x0210, 0x3273, 0x2252, 0x52b5, 0x4294, 0x72f7, 0x62d6,
@@ -232,10 +234,10 @@ static const ospl_uint16 crc16_tab[] = {
 	0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0,
 };
 
-ospl_uint16 crc16_ccitt(ospl_uint16 crc_start, ospl_uchar *buf, ospl_uint32 len)
+zpl_uint16 crc16_ccitt(zpl_uint16 crc_start, zpl_uchar *buf, zpl_uint32 len)
 {
-	ospl_uint32 i;
-	ospl_uint16 cksum;
+	zpl_uint32 i;
+	zpl_uint16 cksum;
 
 	cksum = crc_start;
 	for (i = 0;  i < len;  i++)
@@ -244,11 +246,11 @@ ospl_uint16 crc16_ccitt(ospl_uint16 crc_start, ospl_uchar *buf, ospl_uint32 len)
 	return cksum;
 }
 /*
-ospl_uint32  crc8(const ospl_uchar *vptr, ospl_uint32 len)
+zpl_uint32  crc8(const zpl_uchar *vptr, zpl_uint32 len)
 {
-	const ospl_uchar *data = vptr;
-	ospl_uint32  crc = 0;
-	ospl_uint32 i, j;
+	const zpl_uchar *data = vptr;
+	zpl_uint32  crc = 0;
+	zpl_uint32 i, j;
 
 	for (j = len; j; j--, data++) {
 		crc ^= (*data << 8);

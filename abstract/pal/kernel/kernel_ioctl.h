@@ -28,26 +28,26 @@ extern "C" {
 #endif
 
 #if 1
-extern void ifreq_set_name (struct ifreq *ifreq, struct interface *ifp);
-extern int if_ioctl (ospl_uint32, caddr_t);
+extern void ifreq_set_name (struct ipstack_ifreq *ifreq, struct interface *ifp);
+extern int if_ioctl (zpl_uint32, caddr_t);
 #ifdef HAVE_IPV6
-extern int if_ioctl_ipv6 (ospl_uint32 request, caddr_t buffer);
+extern int if_ioctl_ipv6 (zpl_uint32 request, caddr_t buffer);
 #endif
 
 extern int ip_arp_stack_init();
 
-#ifdef PL_NSM_VETH
-extern int _ipkernel_linux_create (nsm_veth_t *kifp);
-extern int _ipkernel_linux_destroy (nsm_veth_t *kifp);
-extern int _ipkernel_linux_change (nsm_veth_t *kifp, vlan_t vlan);
+#ifdef ZPL_NSM_VLANETH
+extern int _ipkernel_linux_create (nsm_vlaneth_t *kifp);
+extern int _ipkernel_linux_destroy (nsm_vlaneth_t *kifp);
+extern int _ipkernel_linux_change (nsm_vlaneth_t *kifp, vlan_t vlan);
 #endif
 
-#ifdef PL_NSM_TUNNEL
+#ifdef ZPL_NSM_TUNNEL
 extern int _ipkernel_tunnel_create(nsm_tunnel_t *tunnel);
 extern int _ipkernel_tunnel_delete(nsm_tunnel_t *tunnel);
 extern int _ipkernel_tunnel_change(nsm_tunnel_t *tunnel);
 #endif
-#ifdef PL_NSM_BRIDGE
+#ifdef ZPL_NSM_BRIDGE
 extern int _ipkernel_bridge_create(nsm_bridge_t *br);
 extern int _ipkernel_bridge_delete(nsm_bridge_t *br);
 extern int _ipkernel_bridge_add_interface(nsm_bridge_t *br, ifindex_t ifindex);
@@ -55,7 +55,7 @@ extern int _ipkernel_bridge_del_interface(nsm_bridge_t *br, ifindex_t ifindex);
 extern int _ipkernel_bridge_list_interface(nsm_bridge_t *br, ifindex_t ifindex[]);
 extern int _ipkernel_bridge_check_interface(char *br, ifindex_t ifindex);
 #endif
-#ifdef PL_NSM_TRUNK
+#ifdef ZPL_NSM_TRUNK
 extern int _ipkernel_bond_create(struct interface *ifp);
 extern int _ipkernel_bond_delete(struct interface *ifp);
 #endif

@@ -21,11 +21,10 @@
  * 02111-1307, USA.  
  */
 
-#include <zebra.h>
-
-#include "log.h"
-
-#include "nsm_ipforward.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 
 char proc_net_snmp[] = "/proc/net/snmp";

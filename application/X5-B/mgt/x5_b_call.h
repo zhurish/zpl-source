@@ -15,7 +15,7 @@ extern "C" {
 
 //开门信令
 extern int x5b_app_open_door_api(x5b_app_mgt_t *app, int res, int to);
-extern int x5b_app_open_door_by_cardid_api(x5b_app_mgt_t *app, ospl_uint8 *cardid, int clen, int to);
+extern int x5b_app_open_door_by_cardid_api(x5b_app_mgt_t *app, zpl_uint8 *cardid, int clen, int to);
 
 //呼叫结果上报
 extern int x5b_app_call_result_api(x5b_app_mgt_t *app, int res, int inde, int to);

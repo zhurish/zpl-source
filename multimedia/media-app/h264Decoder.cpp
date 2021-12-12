@@ -32,29 +32,29 @@ int h264Decoder::videoDecoderSetup(const int width, const int height, const int 
     this->m_height = height;
     this->m_fmt = fmt;
     this->m_fps = fps;
-#ifdef PL_OPENH264_MODULE
+#ifdef ZPL_OPENH264_MODULE
     return openh264_decoder_setup(width, height, fmt, fps);
 #endif
 }
 
-int h264Decoder::videoDecoderInput(const ospl_uint8 *frame, const int len)
+int h264Decoder::videoDecoderInput(const zpl_uint8 *frame, const int len)
 {
-#ifdef PL_OPENH264_MODULE
+#ifdef ZPL_OPENH264_MODULE
     return openh264_decoder_input(frame, len);
 #endif
 }
 
-int h264Decoder::videoDecoderOutput(ospl_uint8 *frame, const int len)
+int h264Decoder::videoDecoderOutput(zpl_uint8 *frame, const int len)
 {
-#ifdef PL_OPENH264_MODULE
+#ifdef ZPL_OPENH264_MODULE
     return openh264_decoder_output(frame, len);
 #endif
 }
 
-ospl_uint8 *h264Decoder::videoDecoderOutput()
+zpl_uint8 *h264Decoder::videoDecoderOutput()
 {
-#ifdef PL_OPENH264_MODULE
-    return (ospl_uint8 *)m_out_frame_payload;
+#ifdef ZPL_OPENH264_MODULE
+    return (zpl_uint8 *)m_out_frame_payload;
 #endif
 }
 
@@ -69,13 +69,13 @@ int h264Decoder::videoDecoderOutputSize(const bool clear)
 
 int h264Decoder::videoDecoderDestroy()
 {
-#ifdef PL_OPENH264_MODULE
+#ifdef ZPL_OPENH264_MODULE
     openh264_decoder_destroy();
 #endif
     return 0;
 }
 
-#ifdef PL_OPENH264_MODULE
+#ifdef ZPL_OPENH264_MODULE
 
 int h264Decoder::openh264_decoder_destroy()
 {
@@ -101,7 +101,7 @@ int h264Decoder::openh264_decoder_setup(const int width, const int height, const
     //param.eOutputColorFormat = videoFormatI420;
 #endif
     param.sVideoProperty.size = sizeof(param.sVideoProperty);
-    param.uiTargetDqLayer = (ospl_uint8)-1;
+    param.uiTargetDqLayer = (zpl_uint8)-1;
     param.eEcActiveIdc = ERROR_CON_SLICE_COPY;
     param.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_DEFAULT;
 
@@ -117,18 +117,18 @@ int h264Decoder::openh264_decoder_setup(const int width, const int height, const
     return 0;
 }
 
-int h264Decoder::openh264_write_yuv(ospl_uint8 *buf,
+int h264Decoder::openh264_write_yuv(zpl_uint8 *buf,
                                     const int dst_len,
-                                    const ospl_uint8 *pData[3],
+                                    const zpl_uint8 *pData[3],
                                     const int *iStride,
                                     const int iWidth,
                                     const int iHeight)
 {
     unsigned req_size;
-    ospl_uint8 *dst = buf;
-    ospl_uint8 *max = dst + dst_len;
+    zpl_uint8 *dst = buf;
+    zpl_uint8 *max = dst + dst_len;
     int i;
-    ospl_uint8 *pPtr = NULL;
+    zpl_uint8 *pPtr = NULL;
     int miWidth = 0;
     int miHeight = 0;
     req_size = (iWidth * iHeight) + (iWidth / 2 * iHeight / 2) +
@@ -136,7 +136,7 @@ int h264Decoder::openh264_write_yuv(ospl_uint8 *buf,
     if (dst_len < req_size)
         return -1;
 
-    pPtr = (ospl_uint8 *)pData[0];
+    pPtr = (zpl_uint8 *)pData[0];
     for (i = 0; i < iHeight && (dst + iWidth < max); i++)
     {
         memcpy(dst, pPtr, iWidth);
@@ -149,7 +149,7 @@ int h264Decoder::openh264_write_yuv(ospl_uint8 *buf,
 
     miHeight = iHeight / 2;
     miWidth = iWidth / 2;
-    pPtr = (ospl_uint8 *)pData[1];
+    pPtr = (zpl_uint8 *)pData[1];
     for (i = 0; i < miHeight && (dst + miWidth <= max); i++)
     {
         memcpy(dst, pPtr, miWidth);
@@ -160,7 +160,7 @@ int h264Decoder::openh264_write_yuv(ospl_uint8 *buf,
     if (i < miHeight)
         return -1;
 
-    pPtr = (ospl_uint8 *)pData[2];
+    pPtr = (zpl_uint8 *)pData[2];
     for (i = 0; i < miHeight && (dst + miWidth <= max); i++)
     {
         memcpy(dst, pPtr, miWidth);
@@ -175,15 +175,15 @@ int h264Decoder::openh264_write_yuv(ospl_uint8 *buf,
 }
 
 int h264Decoder::openh264_got_decoded_frame(
-    const ospl_uint8 *pData[3],
+    const zpl_uint8 *pData[3],
     const SBufferInfo *sDstBufInfo,
     uint64_t *timestamp)
 {
-    ospl_uint8 *pDst[3] = {NULL};
+    zpl_uint8 *pDst[3] = {NULL};
 
-    pDst[0] = (ospl_uint8 *)pData[0];
-    pDst[1] = (ospl_uint8 *)pData[1];
-    pDst[2] = (ospl_uint8 *)pData[2];
+    pDst[0] = (zpl_uint8 *)pData[0];
+    pDst[1] = (zpl_uint8 *)pData[1];
+    pDst[2] = (zpl_uint8 *)pData[2];
 
     /* Do not reset size as it may already contain frame
     output->size = 0;
@@ -201,8 +201,8 @@ int h264Decoder::openh264_got_decoded_frame(
     iStride[0] = sDstBufInfo->UsrData.sSystemBuffer.iStride[0];
     iStride[1] = sDstBufInfo->UsrData.sSystemBuffer.iStride[1];
 
-    int len = openh264_write_yuv((ospl_uint8*)m_out_frame_payload, (const int)m_out_size,
-                                 (const ospl_uint8 **)pDst, (const int *)iStride, (const int)iWidth, (const int)iHeight);
+    int len = openh264_write_yuv((zpl_uint8*)m_out_frame_payload, (const int)m_out_size,
+                                 (const zpl_uint8 **)pDst, (const int *)iStride, (const int)iWidth, (const int)iHeight);
     if (len > 0)
     {
         //output->timestamp = *timestamp;
@@ -219,10 +219,10 @@ int h264Decoder::openh264_got_decoded_frame(
     return 0;
 }
 
-int h264Decoder::openh264_decoder_input(const ospl_uint8 *frame, const int len)
+int h264Decoder::openh264_decoder_input(const zpl_uint8 *frame, const int len)
 {
     SBufferInfo info = {0};
-    ospl_uint8 *ptrs[3];
+    zpl_uint8 *ptrs[3];
     int ret, linesize[3];
     DECODING_STATE state;
 
@@ -246,7 +246,7 @@ int h264Decoder::openh264_decoder_input(const ospl_uint8 *frame, const int len)
         // B-frames.
         state = m_decoder->DecodeFrameNoDelay(m_decoder, frame, len, ptrs, &info);
 #else
-        state = m_decoder->DecodeFrame2((const ospl_uint8*)frame, len, ptrs, &info);
+        state = m_decoder->DecodeFrame2((const zpl_uint8*)frame, len, ptrs, &info);
 #endif
     }
     if (state != dsErrorFree)
@@ -263,7 +263,7 @@ int h264Decoder::openh264_decoder_input(const ospl_uint8 *frame, const int len)
     {
         uint64_t ptimestamp;
         /* May overwrite existing frame but that's ok. */
-        int status = openh264_got_decoded_frame((const ospl_uint8**)ptrs,
+        int status = openh264_got_decoded_frame((const zpl_uint8**)ptrs,
                                             (const SBufferInfo *)&info,
                                             (uint64_t *)&ptimestamp);
         if(status > 0)
@@ -273,9 +273,9 @@ int h264Decoder::openh264_decoder_input(const ospl_uint8 *frame, const int len)
     return 0;
 }
 
-int h264Decoder::openh264_decoder_output(ospl_uint8 *frame, const int len)
+int h264Decoder::openh264_decoder_output(zpl_uint8 *frame, const int len)
 {
-    if (m_out_size > 0 && m_out_frame_payload != nullptr)
+    if (m_out_size > 0 && m_out_frame_payload != NULL)
     {
         int ret = (m_out_size > len) ? len : m_out_size;
         memmove(frame, m_out_frame_payload, ret);

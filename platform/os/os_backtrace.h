@@ -12,9 +12,9 @@
 extern "C" {
 #endif
 
-inline ospl_uint32 * __getsp(void)
+inline zpl_uint32 * __getsp(void)
 {
-ospl_uint32 *sp;
+zpl_uint32 *sp;
 __asm__ volatile ("move %0, $29" : "=r"(sp));
 return sp;
 }

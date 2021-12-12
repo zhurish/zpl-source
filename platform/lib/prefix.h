@@ -46,8 +46,8 @@ extern "C" {
  * there isn't a portable ethernet address type. We define our
  * own to simplify internal handling
  */
-struct ethaddr {
-    ospl_uchar octet[ETHER_ADDR_LEN];
+struct ipstack_ethaddr {
+    zpl_uchar octet[ETHER_ADDR_LEN];
 } __packed;
 
 
@@ -72,22 +72,22 @@ struct ethaddr {
 /* IPv4 and IPv6 unified prefix structure. */
 struct prefix
 {
-  ospl_family_t family;
-  ospl_uchar prefixlen;
+  zpl_family_t family;
+  zpl_uchar prefixlen;
   union 
   {
-    ospl_uchar prefix;
-    struct in_addr prefix4;
+    zpl_uchar prefix;
+    struct ipstack_in_addr prefix4;
 #ifdef HAVE_IPV6
-    struct in6_addr prefix6;
+    struct ipstack_in6_addr prefix6;
 #endif /* HAVE_IPV6 */
     struct 
     {
-      struct in_addr id;
-      struct in_addr adv_router;
+      struct ipstack_in_addr id;
+      struct ipstack_in_addr adv_router;
     } lp;
-    struct ethaddr prefix_eth;	/* AF_ETHERNET */
-    ospl_uchar val[8];
+    struct ipstack_ethaddr prefix_eth;	/* AF_ETHERNET */
+    zpl_uchar val[8];
     uintptr_t ptr;
   } u __attribute__ ((aligned (8)));
 };
@@ -95,50 +95,50 @@ struct prefix
 /* IPv4 prefix structure. */
 struct prefix_ipv4
 {
-  ospl_family_t family;
-  ospl_uchar prefixlen;
-  struct in_addr prefix __attribute__ ((aligned (8)));
+  zpl_family_t family;
+  zpl_uchar prefixlen;
+  struct ipstack_in_addr prefix __attribute__ ((aligned (8)));
 };
 
 /* IPv6 prefix structure. */
 #ifdef HAVE_IPV6
 struct prefix_ipv6
 {
-  ospl_family_t family;
-  ospl_uchar prefixlen;
-  struct in6_addr prefix __attribute__ ((aligned (8)));
+  zpl_family_t family;
+  zpl_uchar prefixlen;
+  struct ipstack_in6_addr prefix __attribute__ ((aligned (8)));
 };
 #endif /* HAVE_IPV6 */
 
 struct prefix_ls
 {
-  ospl_family_t family;
-  ospl_uchar prefixlen;
-  struct in_addr id __attribute__ ((aligned (8)));
-  struct in_addr adv_router;
+  zpl_family_t family;
+  zpl_uchar prefixlen;
+  struct ipstack_in_addr id __attribute__ ((aligned (8)));
+  struct ipstack_in_addr adv_router;
 };
 
 /* Prefix for routing distinguisher. */
 struct prefix_rd
 {
-  ospl_family_t family;
-  ospl_uchar prefixlen;
-  ospl_uchar val[8] __attribute__ ((aligned (8)));
+  zpl_family_t family;
+  zpl_uchar prefixlen;
+  zpl_uchar val[8] __attribute__ ((aligned (8)));
 };
 
 /* Prefix for ethernet. */
 struct prefix_eth
 {
-  ospl_family_t family;
-  ospl_uchar prefixlen;
-  struct ethaddr eth_addr __attribute__ ((aligned (8))); /* AF_ETHERNET */
+  zpl_family_t family;
+  zpl_uchar prefixlen;
+  struct ipstack_ethaddr eth_addr __attribute__ ((aligned (8))); /* AF_ETHERNET */
 };
 
 /* Prefix for a generic pointer */
 struct prefix_ptr
 {
-  ospl_family_t family;
-  ospl_uchar prefixlen;
+  zpl_family_t family;
+  zpl_uchar prefixlen;
   uintptr_t prefix __attribute__ ((aligned (8)));
 };
 
@@ -188,10 +188,10 @@ union prefix46constptr
 #define IPV4_ADDR_SAME(D,S)  (memcmp ((D), (S), IPV4_MAX_BYTELEN) == 0)
 #define IPV4_ADDR_COPY(D,S)  memcpy ((D), (S), IPV4_MAX_BYTELEN)
 
-#define IPV4_NET0(a)    ((((ospl_uint32) (a)) & 0xff000000) == 0x00000000)
-#define IPV4_NET127(a)  ((((ospl_uint32) (a)) & 0xff000000) == 0x7f000000)
-#define IPV4_LINKLOCAL(a) ((((ospl_uint32) (a)) & 0xffff0000) == 0xa9fe0000)
-#define IPV4_CLASS_DE(a)  ((((ospl_uint32) (a)) & 0xe0000000) == 0xe0000000)
+#define IPV4_NET0(a)    ((((zpl_uint32) (a)) & 0xff000000) == 0x00000000)
+#define IPV4_NET127(a)  ((((zpl_uint32) (a)) & 0xff000000) == 0x7f000000)
+#define IPV4_LINKLOCAL(a) ((((zpl_uint32) (a)) & 0xffff0000) == 0xa9fe0000)
+#define IPV4_CLASS_DE(a)  ((((zpl_uint32) (a)) & 0xe0000000) == 0xe0000000)
 
 /* Max bit/byte length of IPv6 address. */
 #define IPV6_MAX_BYTELEN    16
@@ -218,23 +218,23 @@ union prefix46constptr
 #endif /*s6_addr32*/
 
 /* Prototypes. */
-extern ospl_family_t str2family(const char *);
-extern ospl_family_t afi2family (afi_t);
-extern afi_t family2afi (ospl_family_t);
+extern zpl_family_t str2family(const char *);
+extern zpl_family_t afi2family (afi_t);
+extern afi_t family2afi (zpl_family_t);
 extern const char *safi2str(safi_t safi);
 extern const char *afi2str(afi_t afi);
 
 /* Check bit of the prefix. */
-extern ospl_uint32  prefix_bit (const ospl_uchar *prefix, const ospl_uchar prefixlen);
-extern ospl_uint32  prefix6_bit (const struct in6_addr *prefix, const ospl_uchar prefixlen);
+extern zpl_uint32  prefix_bit (const zpl_uchar *prefix, const zpl_uchar prefixlen);
+extern zpl_uint32  prefix6_bit (const struct ipstack_in6_addr *prefix, const zpl_uchar prefixlen);
 
 extern struct prefix *prefix_new (void);
 extern void prefix_free (struct prefix *);
 extern const char *prefix_family_str (const struct prefix *);
 extern int prefix_blen (const struct prefix *);
 extern int str2prefix (const char *, struct prefix *);
-extern const char *prefix2str (union prefix46constptr, ospl_char *, ospl_size_t);
-extern const char *prefix_2_address_str (union prefix46constptr , ospl_char *, ospl_size_t );
+extern const char *prefix2str (union prefix46constptr, zpl_char *, zpl_size_t);
+extern const char *prefix_2_address_str (union prefix46constptr , zpl_char *, zpl_size_t );
 extern int prefix_match (const struct prefix *, const struct prefix *);
 extern int prefix_same (const struct prefix *, const struct prefix *);
 extern int prefix_cmp (const struct prefix *, const struct prefix *);
@@ -249,7 +249,7 @@ extern struct prefix *sockunion2hostprefix (const union sockunion *, struct pref
 extern void prefix2sockunion (const struct prefix *, union sockunion *);
 
 extern int str2prefix_eth (const char *, struct prefix_eth *);
-extern int ether_aton_r (const void *addrptr, struct ethaddr *ether);
+extern int ether_aton_r (const void *addrptr, struct ipstack_ethaddr *ether);
 
 extern struct prefix_ipv4 *prefix_ipv4_new (void);
 extern void prefix_ipv4_free (struct prefix_ipv4 *);
@@ -262,17 +262,17 @@ extern void apply_mask_ipv4 (struct prefix_ipv4 *);
 extern int prefix_ipv4_any (const struct prefix_ipv4 *);
 extern void apply_classful_mask_ipv4 (struct prefix_ipv4 *);
 
-extern ospl_uchar ip_masklen (struct in_addr);
-extern void masklen2ip (const int, struct in_addr *);
+extern zpl_uchar ip_masklen (struct ipstack_in_addr);
+extern void masklen2ip (const int, struct ipstack_in_addr *);
 /* returns the network portion of the host address */
-extern in_addr_t ipv4_network_addr (in_addr_t hostaddr, ospl_size_t masklen);
+extern in_addr_t ipv4_network_addr (in_addr_t hostaddr, zpl_size_t masklen);
 /* given the address of a host on a network and the network mask length,
  * calculate the broadcast address for that network;
  * special treatment for /31: returns the address of the other host
  * on the network by flipping the host bit */
-extern in_addr_t ipv4_broadcast_addr (in_addr_t hostaddr, ospl_size_t masklen);
+extern in_addr_t ipv4_broadcast_addr (in_addr_t hostaddr, zpl_size_t masklen);
 
-extern int netmask_str2prefix_str (const char *, const char *, ospl_char *);
+extern int netmask_str2prefix_str (const char *, const char *, zpl_char *);
 
 #ifdef HAVE_IPV6
 extern struct prefix_ipv6 *prefix_ipv6_new (void);
@@ -283,17 +283,17 @@ extern void apply_mask_ipv6 (struct prefix_ipv6 *);
 #define PREFIX_COPY_IPV6(DST, SRC)	\
 	*((struct prefix_ipv6 *)(DST)) = *((const struct prefix_ipv6 *)(SRC));
 
-extern int ip6_masklen (struct in6_addr);
-extern void masklen2ip6 (const int, struct in6_addr *);
+extern int ip6_masklen (struct ipstack_in6_addr);
+extern void masklen2ip6 (const int, struct ipstack_in6_addr *);
 
-extern void str2in6_addr (const char *, struct in6_addr *);
-extern const char *inet6_ntoa (struct in6_addr);
+extern void str2in6_addr (const char *, struct ipstack_in6_addr *);
+extern const char *inet6_ntoa (struct ipstack_in6_addr);
 
 #endif /* HAVE_IPV6 */
 
 extern int all_digit (const char *);
 
-static inline int ipv4_martian (struct in_addr *addr)
+static inline int ipv4_martian (struct ipstack_in_addr *addr)
 {
   in_addr_t ip = addr->s_addr;
 
@@ -304,10 +304,12 @@ static inline int ipv4_martian (struct in_addr *addr)
 }
 
 extern int prefix_check_addr (struct prefix *p);
-extern const char *inet_address(ospl_uint32 ip);
-extern const char *inet_ethernet(ospl_uint8 *mac);
-extern const char *cli_inet_ethernet(ospl_uint8 *mac);
-extern ospl_uint32 get_hostip_byname(ospl_char *hostname);
+extern const char *inet_address(zpl_uint32 ip);
+extern const char *inet_ethernet(zpl_uint8 *mac);
+extern const char *cli_inet_ethernet(zpl_uint8 *mac);
+extern int cli_ethernet_get(const char *macstr, zpl_uint8 *mac);
+extern int cli_ethernet_cmp(zpl_uint8 *smac, zpl_uint8 *dmac);
+extern zpl_uint32 get_hostip_byname(zpl_char *hostname);
  
 #ifdef __cplusplus
 }

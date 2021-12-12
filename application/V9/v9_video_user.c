@@ -84,9 +84,9 @@ static int v9_video_group_init()
 	return OK;
 }
 
-int v9_video_usergroup_add(ospl_uint32 id, const char * groupname)
+int v9_video_usergroup_add(zpl_uint32 id, const char * groupname)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	if(id != APP_BOARD_CALCU_1 &&
 			id != APP_BOARD_CALCU_2 &&
 			id != APP_BOARD_CALCU_3 &&
@@ -125,9 +125,9 @@ int v9_video_usergroup_add(ospl_uint32 id, const char * groupname)
 	return ERROR;
 }
 
-int v9_video_usergroup_del(ospl_uint32 id, const int group)
+int v9_video_usergroup_del(zpl_uint32 id, const int group)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	if(id != APP_BOARD_CALCU_1 &&
 			id != APP_BOARD_CALCU_2 &&
 			id != APP_BOARD_CALCU_3 &&
@@ -170,9 +170,9 @@ int v9_video_usergroup_del(ospl_uint32 id, const int group)
 	return ERROR;
 }
 
-int v9_video_usergroup_rename(ospl_uint32 id, const int group, const char * groupname)
+int v9_video_usergroup_rename(zpl_uint32 id, const int group, const char * groupname)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	if(id != APP_BOARD_CALCU_1 &&
 			id != APP_BOARD_CALCU_2 &&
 			id != APP_BOARD_CALCU_3 &&
@@ -217,9 +217,9 @@ int v9_video_usergroup_rename(ospl_uint32 id, const int group, const char * grou
 }
 
 
-const char * v9_video_usergroup_idtoname(ospl_uint32 id, const int group)
+const char * v9_video_usergroup_idtoname(zpl_uint32 id, const int group)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	if(id != APP_BOARD_CALCU_1 &&
 			id != APP_BOARD_CALCU_2 &&
 			id != APP_BOARD_CALCU_3 &&
@@ -246,9 +246,9 @@ const char * v9_video_usergroup_idtoname(ospl_uint32 id, const int group)
 	return NULL;
 }
 
-ospl_uint32 v9_video_usergroup_nametoid(ospl_uint32 id, const char * groupname)
+zpl_uint32 v9_video_usergroup_nametoid(zpl_uint32 id, const char * groupname)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	if(id != APP_BOARD_CALCU_1 &&
 			id != APP_BOARD_CALCU_2 &&
 			id != APP_BOARD_CALCU_3 &&
@@ -277,9 +277,9 @@ ospl_uint32 v9_video_usergroup_nametoid(ospl_uint32 id, const char * groupname)
 }
 
 
-int v9_video_usergroup_show(ospl_uint32 id, struct vty *vty)
+int v9_video_usergroup_show(zpl_uint32 id, struct vty *vty)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	if(_user_mutex)
 		os_mutex_lock(_user_mutex, OS_WAIT_FOREVER);
 	if(id == APP_BOARD_CALCU_1 ||
@@ -303,7 +303,7 @@ int v9_video_usergroup_show(ospl_uint32 id, struct vty *vty)
 	}
 	else
 	{
-		ospl_uint32 j = 0;
+		zpl_uint32 j = 0;
 		vty_out(vty, "Video User Group List:%s", VTY_NEWLINE);
 		for(j = APP_BOARD_CALCU_1; j <= APP_BOARD_CALCU_4; j++)
 		{
@@ -357,7 +357,7 @@ int v9_video_user_exit()
 }
 
 
-int v9_video_user_count(ospl_uint32 id, int group, int *pValue)
+int v9_video_user_count(zpl_uint32 id, int group, int *pValue)
 {
 	if(_user_mutex)
 		os_mutex_lock(_user_mutex, OS_WAIT_FOREVER);
@@ -378,7 +378,7 @@ int v9_video_user_count(ospl_uint32 id, int group, int *pValue)
 	return ERROR;
 }
 
-int v9_video_user_add_user(ospl_uint32 id, ospl_bool gender, int group, char *user, char *user_id, char *pic, char *text)
+int v9_video_user_add_user(zpl_uint32 id, zpl_bool gender, int group, char *user, char *user_id, char *pic, char *text)
 {
 	if(_user_mutex)
 		os_mutex_lock(_user_mutex, OS_WAIT_FOREVER);
@@ -398,7 +398,7 @@ int v9_video_user_add_user(ospl_uint32 id, ospl_bool gender, int group, char *us
 		}
 
 		if(v9_video_sdk_add_user_api(id, gender, group,
-									 user, user_id, pic, text, ospl_true) != OK)
+									 user, user_id, pic, text, zpl_true) != OK)
 		{
 			if(V9_USER_DEBUG(WARN))
 				zlog_warn(MODULE_APP, "this user(%s(%s)) is can't set hw board.", user, user_id);
@@ -412,7 +412,7 @@ int v9_video_user_add_user(ospl_uint32 id, ospl_bool gender, int group, char *us
 		{
 			sql_snapfea_key key;
 			memset(&key, 0, sizeof(sql_snapfea_key));
-			if(v9_app_snapfea_key_alloc(&key, ospl_false) != OK)
+			if(v9_app_snapfea_key_alloc(&key, zpl_false) != OK)
 			{
 				v9_video_sdk_del_user_api(id, group, user_id);
 				v9_user_sqldb_del(db, id, user_id);
@@ -455,7 +455,7 @@ int v9_video_user_add_user(ospl_uint32 id, ospl_bool gender, int group, char *us
 	return ERROR;
 }
 
-int v9_video_user_update_user(ospl_uint32 id, ospl_bool gender, int group, char *user, char *user_id, char *pic, char *text)
+int v9_video_user_update_user(zpl_uint32 id, zpl_bool gender, int group, char *user, char *user_id, char *pic, char *text)
 {
 	if(_user_mutex)
 		os_mutex_lock(_user_mutex, OS_WAIT_FOREVER);
@@ -475,7 +475,7 @@ int v9_video_user_update_user(ospl_uint32 id, ospl_bool gender, int group, char 
 			return ERROR;
 		}
 		if(v9_video_sdk_add_user_api(id, gender, group,
-									 user, user_id, pic, text, ospl_false) != OK)
+									 user, user_id, pic, text, zpl_false) != OK)
 		{
 			if(V9_USER_DEBUG(WARN))
 				zlog_warn(MODULE_APP, "this user(%s(%s)) is can't update hw board.", user, user_id);
@@ -488,7 +488,7 @@ int v9_video_user_update_user(ospl_uint32 id, ospl_bool gender, int group, char 
 		{
 			sql_snapfea_key key;
 			memset(&key, 0, sizeof(sql_snapfea_key));
-			if(v9_app_snapfea_key_alloc(&key, ospl_false) != OK)
+			if(v9_app_snapfea_key_alloc(&key, zpl_false) != OK)
 			{
 				v9_user_sqldb_close(db, id);
 				if(_user_mutex)
@@ -525,7 +525,7 @@ int v9_video_user_update_user(ospl_uint32 id, ospl_bool gender, int group, char 
 	return ERROR;
 }
 
-int v9_video_user_del_user(ospl_uint32 id, char *user_id)
+int v9_video_user_del_user(zpl_uint32 id, char *user_id)
 {
 	if(_user_mutex)
 		os_mutex_lock(_user_mutex, OS_WAIT_FOREVER);
@@ -567,7 +567,7 @@ int v9_video_user_del_user(ospl_uint32 id, char *user_id)
 	return ERROR;
 }
 
-int v9_video_user_del_group(ospl_uint32 id,  ospl_uint8 group)
+int v9_video_user_del_group(zpl_uint32 id,  zpl_uint8 group)
 {
 	if(_user_mutex)
 		os_mutex_lock(_user_mutex, OS_WAIT_FOREVER);
@@ -598,7 +598,7 @@ int v9_video_user_del_group(ospl_uint32 id,  ospl_uint8 group)
 }
 
 
-int v9_video_user_lookup_user(ospl_uint32 id, char *user_id, v9_video_user_t *user)
+int v9_video_user_lookup_user(zpl_uint32 id, char *user_id, v9_video_user_t *user)
 {
 	if(_user_mutex)
 		os_mutex_lock(_user_mutex, OS_WAIT_FOREVER);
@@ -627,7 +627,7 @@ int v9_video_user_lookup_user(ospl_uint32 id, char *user_id, v9_video_user_t *us
 	return ERROR;
 }
 
-int v9_video_user_lookup_user_url(ospl_uint32 id, char *user_id, v9_video_user_t *user)
+int v9_video_user_lookup_user_url(zpl_uint32 id, char *user_id, v9_video_user_t *user)
 {
 	if(_user_mutex)
 		os_mutex_lock(_user_mutex, OS_WAIT_FOREVER);
@@ -650,7 +650,7 @@ int v9_video_user_lookup_user_url(ospl_uint32 id, char *user_id, v9_video_user_t
 	return ERROR;
 }
 
-int v9_video_user_foreach(ospl_uint32 id, int groupid, v9_vidoe_callback cb, void *pVoid)
+int v9_video_user_foreach(zpl_uint32 id, int groupid, v9_vidoe_callback cb, void *pVoid)
 {
 	if(_user_mutex)
 		os_mutex_lock(_user_mutex, OS_WAIT_FOREVER);
@@ -671,7 +671,7 @@ int v9_video_user_foreach(ospl_uint32 id, int groupid, v9_vidoe_callback cb, voi
 	return ERROR;
 }
 
-int v9_video_user_show(struct vty *vty, ospl_bool detail)
+int v9_video_user_show(struct vty *vty, zpl_bool detail)
 {
 	return OK;
 }
@@ -736,7 +736,7 @@ static int v9_video_filename_split(const char *filename, int *gender, int *group
 	return ret;
 }
 
-static int v9_video_user_add_dir(sqlite3 * db, ospl_uint32 id, ospl_bool gender, int group, char *user,
+static int v9_video_user_add_dir(sqlite3 * db, zpl_uint32 id, zpl_bool gender, int group, char *user,
 								 char *user_id, char *pic, char *text)
 {
 	if(db)
@@ -752,7 +752,7 @@ static int v9_video_user_add_dir(sqlite3 * db, ospl_uint32 id, ospl_bool gender,
 		}
 
 		if(v9_video_sdk_add_user_api(id, gender, group,
-									 user, user_id, pic, text, ospl_true) != OK)
+									 user, user_id, pic, text, zpl_true) != OK)
 		{
 			if(V9_USER_DEBUG(WARN))
 				zlog_warn(MODULE_APP, "this user(%s(%s)) is can't set hw board.", user, user_id);
@@ -763,7 +763,7 @@ static int v9_video_user_add_dir(sqlite3 * db, ospl_uint32 id, ospl_bool gender,
 		{
 			sql_snapfea_key key;
 			memset(&key, 0, sizeof(sql_snapfea_key));
-			if(v9_app_snapfea_key_alloc(&key, ospl_false) != OK)
+			if(v9_app_snapfea_key_alloc(&key, zpl_false) != OK)
 			{
 				v9_video_sdk_del_user_api(id, group, user_id);
 				v9_user_sqldb_del(db, id, user_id);
@@ -809,7 +809,7 @@ static int v9_video_emptydir_clean(const char *dirpath, int flag)
  * rules：是否按规则
  * dirpath：文件所在的绝对路径
  */
-static int v9_video_dirfile(sqlite3 * db, ospl_uint32 id, ospl_bool rules, const char *dirpath)
+static int v9_video_dirfile(sqlite3 * db, zpl_uint32 id, zpl_bool rules, const char *dirpath)
 {
 	DIR *dir = NULL;
 	struct dirent *d = NULL;
@@ -884,7 +884,7 @@ static int v9_video_dirfile(sqlite3 * db, ospl_uint32 id, ospl_bool rules, const
  * id: 板卡ID
  * dirpath：文件所在的绝对路径
  */
-int v9_video_user_dir_add(ospl_uint32 id, const char *dirpath)
+int v9_video_user_dir_add(zpl_uint32 id, const char *dirpath)
 {
 	int ret = 0;
 	if(_user_mutex)

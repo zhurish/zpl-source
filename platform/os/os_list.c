@@ -8,8 +8,8 @@
 
 
 
-#include "zebra.h"
-#include "os_list.h"
+#include "os_include.h"
+#include "zpl_include.h"
 /* lstLib.c - doubly linked list subroutine library */
 
 /* Copyright 1984-2001 Wind River Systems, Inc. */
@@ -221,7 +221,7 @@ void lstConcat
 * The number of nodes in the list.
 */
 
-ospl_uint32 lstCount
+zpl_uint32 lstCount
     (
     LIST *pList         /* pointer to list descriptor */
     )
@@ -276,7 +276,7 @@ void lstExtract
     FAST LIST *pDstList       /* ptr to list where to put extracted list */
     )
     {
-    FAST ospl_uint32 i;
+    FAST zpl_uint32 i;
     FAST NODE *pNode;
 
     /* fix pointers in original list */
@@ -528,7 +528,7 @@ NODE *lstNext
 NODE *lstNth
     (
     FAST LIST *pList,           /* pointer to list descriptor */
-    FAST ospl_uint32 nodenum            /* number of node to be found */
+    FAST zpl_uint32 nodenum            /* number of node to be found */
     )
     {
     FAST NODE *pNode;
@@ -597,10 +597,10 @@ NODE *lstPrevious
 NODE *lstNStep
     (
     FAST NODE *pNode,           /* the known node */
-    ospl_uint32 nStep                   /* number of steps away to find */
+    zpl_uint32 nStep                   /* number of steps away to find */
     )
     {
-    ospl_uint32 i;
+    zpl_uint32 i;
 
     for (i = 0; i < abs (nStep); i++)
 	{

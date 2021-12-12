@@ -30,19 +30,16 @@ extern "C" {
 /* Both readn and writen are deprecated and will be removed.  They are not
    suitable for use with non-blocking file descriptors.
  */
-extern int readn (int, ospl_uchar *, ospl_uint32, ospl_uint32);
-extern int writen (int, const ospl_uchar *, ospl_uint32, ospl_uint32);
+extern int readn (zpl_socket_t, zpl_uchar *, zpl_uint32);
+extern int writen (zpl_socket_t, const zpl_uchar *, zpl_uint32);
 
-/* Set the file descriptor to use non-blocking I/O.  Returns 0 for success,
-   -1 on error. */
-extern int set_nonblocking(int fd);
-extern int set_blocking(int fd);
+
 /* Does the I/O error indicate that the operation should be retried later? */
 #define ERRNO_IO_RETRY(EN) \
 	(((EN) == EAGAIN) || ((EN) == EWOULDBLOCK) || ((EN) == EINTR))
 
-extern ospl_float htonf (ospl_float);
-extern ospl_float ntohf (ospl_float);
+extern zpl_float htonf (zpl_float);
+extern zpl_float ntohf (zpl_float);
  
 #ifdef __cplusplus
 }

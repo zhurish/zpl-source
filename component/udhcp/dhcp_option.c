@@ -5,22 +5,19 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
-#include "if.h"
-#include "memory.h"
-#include "command.h"
-#include "prefix.h"
-#include "log.h"
-#include "eloop.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "dhcp_def.h"
 #include "dhcp_option.h"
 
 
 
-static int dhcp_option_packet_end(char *data, ospl_uint32 len);
-static ospl_uint32 dhcp_option_get_end_padding(char *data, ospl_uint32 len, ospl_bool get);
-static int dhcp_option_overload_get(char *data, ospl_uint32 len);
+static int dhcp_option_packet_end(char *data, zpl_uint32 len);
+static zpl_uint32 dhcp_option_get_end_padding(char *data, zpl_uint32 len, zpl_bool get);
+static int dhcp_option_overload_get(char *data, zpl_uint32 len);
 
 
 static const struct dhcp_optflag dhcp_optflag[] = {
@@ -90,9 +87,9 @@ static const struct dhcp_optflag dhcp_optflag[] = {
 	{ 0, 0 } /* zeroed terminating entry */
 };
 
-static int dhcp_option_idx(ospl_uint8 code)
+static int dhcp_option_idx(zpl_uint8 code)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for (i = 0; i < sizeof(dhcp_optflag) / sizeof(dhcp_optflag[0]); i++)
 	{
 		if (dhcp_optflag[i].code == code)
@@ -101,9 +98,9 @@ static int dhcp_option_idx(ospl_uint8 code)
 	return -1;
 }
 
-int dhcp_option_flags(ospl_uint8 code)
+int dhcp_option_flags(zpl_uint8 code)
 {
-	ospl_uint32 i = 0;
+	zpl_uint32 i = 0;
 	for (i = 0; i < sizeof(dhcp_optflag) / sizeof(dhcp_optflag[0]); i++)
 	{
 		if (dhcp_optflag[i].code == code)
@@ -114,7 +111,7 @@ int dhcp_option_flags(ospl_uint8 code)
 
 static int dhcp_option_strget(const char *const_str, char *out_str)
 {
-	ospl_uint32 len = 0;
+	zpl_uint32 len = 0;
 	char *p = const_str;
 	if(!const_str)
 		return 0;
@@ -136,15 +133,15 @@ static int dhcp_option_strget(const char *const_str, char *out_str)
 
 
 
-int dhcp_option_string_set(dhcp_option_set_t *option_tbl, ospl_uint8 code,
+int dhcp_option_string_set(dhcp_option_set_t *option_tbl, zpl_uint8 code,
 		const char *const_str)
 {
 	struct dhcp_optflag *optflag = NULL;
 	char str[254], *p = NULL;
-	ospl_uint32 retval = 0, length = 0, optlen = 0, offset = 0;
-	ospl_uint8 *val8 = NULL, buffer[512], optindex = 0;
-	ospl_uint16 *val16 = NULL;
-	ospl_uint32  *val32 = NULL;
+	zpl_uint32 retval = 0, length = 0, optlen = 0, offset = 0;
+	zpl_uint8 *val8 = NULL, buffer[512], optindex = 0;
+	zpl_uint16 *val16 = NULL;
+	zpl_uint32  *val32 = NULL;
 	if(!option_tbl || !const_str)
 		return 0;
 	val8 = buffer;
@@ -225,7 +222,7 @@ int dhcp_option_string_set(dhcp_option_set_t *option_tbl, ospl_uint8 code,
 		case OPTION_S16:
 		{
 			val16 = buffer + offset;
-			ospl_uint32  tmp = strtoul(str, NULL, 0);
+			zpl_uint32  tmp = strtoul(str, NULL, 0);
 			*val16 = htons(tmp);
 			length += 2;
 			break;
@@ -234,7 +231,7 @@ int dhcp_option_string_set(dhcp_option_set_t *option_tbl, ospl_uint8 code,
 		case OPTION_S32:
 		{
 			val32 = buffer + offset;
-			ospl_uint32  tmp = strtoul(str, NULL, 0);
+			zpl_uint32  tmp = strtoul(str, NULL, 0);
 			*val32 = htonl(tmp);
 			length += 4;
 			break;
@@ -278,10 +275,10 @@ int dhcp_option_string_set(dhcp_option_set_t *option_tbl, ospl_uint8 code,
 }
 
 
-int dhcp_option_add(dhcp_option_set_t *option_tbl, ospl_uint8 code, const ospl_uint8 *opt, ospl_uint32 len)
+int dhcp_option_add(dhcp_option_set_t *option_tbl, zpl_uint8 code, const zpl_uint8 *opt, zpl_uint32 len)
 {
-	ospl_uint32 inlen = len;
-	ospl_uint32 type = 0;
+	zpl_uint32 inlen = len;
+	zpl_uint32 type = 0;
 	if(code > DHCP_OPTION_MAX)
 		return ERROR;
 	if(!option_tbl || !opt)
@@ -322,11 +319,11 @@ int dhcp_option_add(dhcp_option_set_t *option_tbl, ospl_uint8 code, const ospl_u
 	return ERROR;
 }
 
-int dhcp_option_add_hex(dhcp_option_set_t *option_tbl, ospl_uint8 code, const ospl_uint32  value, ospl_uint32 len)
+int dhcp_option_add_hex(dhcp_option_set_t *option_tbl, zpl_uint8 code, const zpl_uint32  value, zpl_uint32 len)
 {
-	ospl_uint32  invalue32 = value;
-	ospl_uint16 invalue16 = value;
-	ospl_uint8 invalue8 = value;
+	zpl_uint32  invalue32 = value;
+	zpl_uint16 invalue16 = value;
+	zpl_uint8 invalue8 = value;
 	if(code > DHCP_OPTION_MAX)
 		return ERROR;
 	if(!option_tbl)
@@ -348,7 +345,7 @@ int dhcp_option_add_hex(dhcp_option_set_t *option_tbl, ospl_uint8 code, const os
 	return ERROR;
 }
 
-int dhcp_option_del(dhcp_option_set_t *option_tbl, ospl_uint8 code)
+int dhcp_option_del(dhcp_option_set_t *option_tbl, zpl_uint8 code)
 {
 	if(code > DHCP_OPTION_MAX)
 		return ERROR;
@@ -368,7 +365,7 @@ int dhcp_option_del(dhcp_option_set_t *option_tbl, ospl_uint8 code)
 
 int dhcp_option_clean(dhcp_option_set_t *option_tbl)
 {
-	ospl_uint32 code = 0;
+	zpl_uint32 code = 0;
 	if(!option_tbl)
 		return ERROR;
 	for(code = 0; code < DHCP_OPTION_MAX; code++)
@@ -382,7 +379,7 @@ int dhcp_option_clean(dhcp_option_set_t *option_tbl)
 	return OK;
 }
 
-int dhcp_option_lookup(dhcp_option_set_t *option_tbl, ospl_uint8 code)
+int dhcp_option_lookup(dhcp_option_set_t *option_tbl, zpl_uint8 code)
 {
 	if(code > DHCP_OPTION_MAX)
 		return ERROR;
@@ -395,14 +392,14 @@ int dhcp_option_lookup(dhcp_option_set_t *option_tbl, ospl_uint8 code)
 	return ERROR;
 }
 
-int dhcp_option_packet(dhcp_option_set_t *option_tbl, char *data, ospl_uint32 len)
+int dhcp_option_packet(dhcp_option_set_t *option_tbl, char *data, zpl_uint32 len)
 {
-	ospl_uint32 i = 0, offset = 0;//, j = 0;
-	//ospl_uint8 parm_lst[256];
+	zpl_uint32 i = 0, offset = 0;//, j = 0;
+	//zpl_uint8 parm_lst[256];
 	if(!option_tbl || !data)
 		return 0;
 	//offset = udhcp_end_option(data);
-	offset = dhcp_option_get_end_padding(data, len, ospl_false);
+	offset = dhcp_option_get_end_padding(data, len, zpl_false);
 	if(offset < 0)
 		return 0;
 	dhcp_option_hdr_t *msg = (dhcp_option_hdr_t *)(data + offset);
@@ -416,7 +413,7 @@ int dhcp_option_packet(dhcp_option_set_t *option_tbl, char *data, ospl_uint32 le
 			msg->code = option_tbl[i].code;
 			msg->len = option_tbl[i].len;
 			memcpy(msg->val.pval, option_tbl[i].data, option_tbl[i].len);
-			//msg->data = (ospl_uint8 *)(p);
+			//msg->data = (zpl_uint8 *)(p);
 			//memcpy(msg->data, option_tbl[i].data, option_tbl[i].len);
 			offset += OPT_DATA + option_tbl[i].len;
 /*			if(dhcp_option_flags(msg->code) & OPTION_REQ)
@@ -432,7 +429,7 @@ int dhcp_option_packet(dhcp_option_set_t *option_tbl, char *data, ospl_uint32 le
 	return offset;
 }
 
-/*int FAST_FUNC udhcp_end_option(ospl_uint8 *optionptr)
+/*int FAST_FUNC udhcp_end_option(zpl_uint8 *optionptr)
 {
 	int i = 0;
 
@@ -444,9 +441,9 @@ int dhcp_option_packet(dhcp_option_set_t *option_tbl, char *data, ospl_uint32 le
 	return i;
 }*/
 
-static ospl_uint32 dhcp_option_get_end_padding(char *data, ospl_uint32 len, ospl_bool get)
+static zpl_uint32 dhcp_option_get_end_padding(char *data, zpl_uint32 len, zpl_bool get)
 {
-	ospl_uint32 offset = 0;
+	zpl_uint32 offset = 0;
 	dhcp_option_hdr_t *msg = (dhcp_option_hdr_t *)(data + offset);
 	if(!data || len == 0)
 		return -1;
@@ -512,15 +509,15 @@ static ospl_uint32 dhcp_option_get_end_padding(char *data, ospl_uint32 len, ospl
 	return offset;
 }
 
-ospl_uint32 dhcp_option_get_length(char *data)
+zpl_uint32 dhcp_option_get_length(char *data)
 {
 	if(!data)
 		return 0;
-	return dhcp_option_get_end_padding(data, DHCP_OPTIONS_BUFSIZE, ospl_true);
+	return dhcp_option_get_end_padding(data, DHCP_OPTIONS_BUFSIZE, zpl_true);
 }
 
 /* Return the position of the 'end' option (no bounds checking) */
-int udhcp_end_option(ospl_uint8 *optionptr)
+int udhcp_end_option(zpl_uint8 *optionptr)
 {
 	int i = 0;
 	if(!optionptr)
@@ -533,17 +530,17 @@ int udhcp_end_option(ospl_uint8 *optionptr)
 	return i;
 }
 
-int dhcp_option_message_type(char *data, ospl_uint8 code)
+int dhcp_option_message_type(char *data, zpl_uint8 code)
 {
 	if(!data)
 		return 0;
-	ospl_uint32 offset = dhcp_option_get_end_padding(data, DHCP_OPTIONS_BUFSIZE, ospl_false);
+	zpl_uint32 offset = dhcp_option_get_end_padding(data, DHCP_OPTIONS_BUFSIZE, zpl_false);
 	if(offset < 0)
 		return 0;
 	dhcp_option_hdr_t *msg_type = (data + offset);
 	msg_type->code = DHCP_MESSAGE_TYPE;
 	msg_type->len = 1;
-	//msg_type->val.val8 = (ospl_uint8 *)(data + OPT_DATA);
+	//msg_type->val.val8 = (zpl_uint8 *)(data + OPT_DATA);
 	msg_type->val.val8 = code;
 	offset += 3;
 	dhcp_option_packet_end(data + offset, DHCP_OPTIONS_BUFSIZE-offset);
@@ -551,12 +548,12 @@ int dhcp_option_message_type(char *data, ospl_uint8 code)
 }
 
 
-int dhcp_option_packet_set_simple(char *data, ospl_uint32 len, ospl_uint8 code, ospl_uint32  value)
+int dhcp_option_packet_set_simple(char *data, zpl_uint32 len, zpl_uint8 code, zpl_uint32  value)
 {
 	if(!data)
 		return 0;
-	ospl_uint32 offset = 0;//udhcp_end_option(data);
-	offset = dhcp_option_get_end_padding(data, len, ospl_false);
+	zpl_uint32 offset = 0;//udhcp_end_option(data);
+	offset = dhcp_option_get_end_padding(data, len, zpl_false);
 	if(offset < 0)
 		return 0;
 	dhcp_option_hdr_t *msg = (dhcp_option_hdr_t *)(data + offset);
@@ -568,12 +565,12 @@ int dhcp_option_packet_set_simple(char *data, ospl_uint32 len, ospl_uint8 code, 
 	return offset;
 }
 
-int dhcp_option_packet_set_value(char *data, ospl_uint32 len, ospl_uint8 code, ospl_uint32  oplen, ospl_uint8 *opt)
+int dhcp_option_packet_set_value(char *data, zpl_uint32 len, zpl_uint8 code, zpl_uint32  oplen, zpl_uint8 *opt)
 {
 	if(!data || opt)
 		return 0;
-	ospl_uint32 offset = 0;//udhcp_end_option(data);
-	offset = dhcp_option_get_end_padding(data, len, ospl_false);
+	zpl_uint32 offset = 0;//udhcp_end_option(data);
+	offset = dhcp_option_get_end_padding(data, len, zpl_false);
 	if(offset < 0)
 		return 0;
 	dhcp_option_hdr_t *msg = (dhcp_option_hdr_t *)(data + offset);
@@ -585,30 +582,30 @@ int dhcp_option_packet_set_value(char *data, ospl_uint32 len, ospl_uint8 code, o
 	return offset;
 }
 
-int udhcp_add_simple_option(struct dhcp_packet *packet, ospl_uint8 code, ospl_uint32  value)
+int udhcp_add_simple_option(struct dhcp_packet *packet, zpl_uint8 code, zpl_uint32  value)
 {
 	return dhcp_option_packet_set_simple(packet->options, dhcp_option_get_length(packet->options), code, value);
 }
 
-int udhcp_add_simple_option_value(struct dhcp_packet *packet, ospl_uint8 code, ospl_uint32  oplen, ospl_uint8 *opt)
+int udhcp_add_simple_option_value(struct dhcp_packet *packet, zpl_uint8 code, zpl_uint32  oplen, zpl_uint8 *opt)
 {
 	return dhcp_option_packet_set_value(packet->options, dhcp_option_get_length(packet->options), code, oplen, opt);
 }
 
-static int dhcp_option_packet_end(char *data, ospl_uint32 len)
+static int dhcp_option_packet_end(char *data, zpl_uint32 len)
 {
 	if(!data)
 		return 0;
-	ospl_uint32 offset = 0;//udhcp_end_option(data);
+	zpl_uint32 offset = 0;//udhcp_end_option(data);
 	dhcp_option_hdr_t *msg = (dhcp_option_hdr_t *)(data + offset);
 	msg->code = DHCP_END;
 	//msg->len = option_tbl[i].len;
 	return 1;
 }
 
-static int dhcp_option_overload_get(char *data, ospl_uint32 len)
+static int dhcp_option_overload_get(char *data, zpl_uint32 len)
 {
-	ospl_uint32 offset = 0;
+	zpl_uint32 offset = 0;
 	if(!data)
 		return ERROR;
 /*	int len = dhcp_option_get_end_padding(data, DHCP_OPTIONS_BUFSIZE);
@@ -635,9 +632,9 @@ static int dhcp_option_overload_get(char *data, ospl_uint32 len)
 	return ERROR;
 }
 
-ospl_uint8 * dhcp_option_get(char *data, ospl_uint32 len, ospl_uint8 code, ospl_uint8 *optlen)
+zpl_uint8 * dhcp_option_get(char *data, zpl_uint32 len, zpl_uint8 code, zpl_uint8 *optlen)
 {
-	ospl_uint32 /*i = 0, */offset = 0;
+	zpl_uint32 /*i = 0, */offset = 0;
 	if(!data)
 		return NULL;
 	dhcp_option_hdr_t *msg = (dhcp_option_hdr_t *)data;
@@ -687,9 +684,9 @@ ospl_uint8 * dhcp_option_get(char *data, ospl_uint32 len, ospl_uint8 code, ospl_
 
 
 
-int dhcp_option_message_type_get(char *data, ospl_uint32 len)
+int dhcp_option_message_type_get(char *data, zpl_uint32 len)
 {
-	ospl_uint32 /*i = 0, */offset = 0;
+	zpl_uint32 /*i = 0, */offset = 0;
 	if(!data)
 		return 0;
 	dhcp_option_hdr_t *msg = (dhcp_option_hdr_t *)data;
@@ -731,12 +728,12 @@ int dhcp_option_message_type_get(char *data, ospl_uint32 len)
 	return 0;
 }
 
-int dhcp_option_get_simple(const char *data, ospl_uint32 *output, ospl_uint8 code, ospl_uint8 optlen)
+int dhcp_option_get_simple(const char *data, zpl_uint32 *output, zpl_uint8 code, zpl_uint8 optlen)
 {
-	ospl_uint32 /*i = 0, */offset = 0;
+	zpl_uint32 /*i = 0, */offset = 0;
 	if(!data)
 		return ERROR;
-	ospl_uint32 len = dhcp_option_get_end_padding(data, DHCP_OPTIONS_BUFSIZE, ospl_true);
+	zpl_uint32 len = dhcp_option_get_end_padding(data, DHCP_OPTIONS_BUFSIZE, zpl_true);
 	if(!data || len < 0)
 		return ERROR;
 	dhcp_option_hdr_t *msg = (dhcp_option_hdr_t *)data;
@@ -788,16 +785,16 @@ int dhcp_option_get_simple(const char *data, ospl_uint32 *output, ospl_uint8 cod
 	return ERROR;
 }
 
-ospl_uint8* udhcp_get_option(struct dhcp_packet *packet, ospl_uint8 code, ospl_uint32 *optlen)
+zpl_uint8* udhcp_get_option(struct dhcp_packet *packet, zpl_uint8 code, zpl_uint32 *optlen)
 {
-	ospl_uint8 *optionptr = NULL;
-	ospl_uint32 len = 0;
+	zpl_uint8 *optionptr = NULL;
+	zpl_uint32 len = 0;
 	if(!packet)
 		return NULL;
 	/* option bytes: [code][len][data1][data2]..[dataLEN] */
 	optionptr = packet->options;
 	//len = sizeof(packet->options);
-	len = dhcp_option_get_end_padding(optionptr, DHCP_OPTIONS_BUFSIZE, ospl_true);
+	len = dhcp_option_get_end_padding(optionptr, DHCP_OPTIONS_BUFSIZE, zpl_true);
 	if(len < 0)
 		return NULL;
 	return dhcp_option_get(optionptr,  len,  code, optlen);

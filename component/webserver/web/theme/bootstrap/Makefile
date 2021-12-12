@@ -1,4 +1,4 @@
-include $(MAKE_DIR)/makelinux.mk
+include $(ZPL_MAKE_DIR)/makelinux.mk
 
 #
 #
@@ -10,102 +10,102 @@ include $(MAKE_DIR)/makelinux.mk
 #
 #	
 web_js_install:
-	@install -d $(DSTWWWDIR)/js
-	@$(CP) -arf ./js/bootstrap.min.js $(DSTWWWDIR)/js/bootstrap.min.js
-	@$(CP) -arf ./js/bootstrap-switch.min.js $(DSTWWWDIR)/js/bootstrap-switch.min.js
-	@$(CP) -arf ./js/jquery-2.1.1.min.js $(DSTWWWDIR)/js/jquery-2.1.1.min.js
-	@$(CP) -arf ./js/xhr.js $(DSTWWWDIR)/js/xhr.js
-	@$(CP) -arf ./js/data-type.js $(DSTWWWDIR)/js/data-type.js
+	@install -d $(ZPL_INSTALL_WWW_DIR)/js
+	@$(CP) -arf ./js/bootstrap.min.js $(ZPL_INSTALL_WWW_DIR)/js/bootstrap.min.js
+	@$(CP) -arf ./js/bootstrap-switch.min.js $(ZPL_INSTALL_WWW_DIR)/js/bootstrap-switch.min.js
+	@$(CP) -arf ./js/jquery-2.1.1.min.js $(ZPL_INSTALL_WWW_DIR)/js/jquery-2.1.1.min.js
+	@$(CP) -arf ./js/xhr.js $(ZPL_INSTALL_WWW_DIR)/js/xhr.js
+	@$(CP) -arf ./js/data-type.js $(ZPL_INSTALL_WWW_DIR)/js/data-type.js
 	
-	#$(CP) -arf ./js/complex-menu.js $(DSTWWWDIR)/js/complex-menu.js
-	@$(CP) -arf ./js/bootstrap-menu.js $(DSTWWWDIR)/js/bootstrap-menu.js		
+	#$(CP) -arf ./js/complex-menu.js $(ZPL_INSTALL_WWW_DIR)/js/complex-menu.js
+	@$(CP) -arf ./js/bootstrap-menu.js $(ZPL_INSTALL_WWW_DIR)/js/bootstrap-menu.js		
 #
 #
 web_cgi_install: 
-	@install -d $(DSTWWWDIR)/cgi-bin
-	#install -m 755 ./cgi-bin/test.cgi $(DSTWWWDIR)/cgi-bin
+	@install -d $(ZPL_INSTALL_WWW_DIR)/cgi-bin
+	#install -m 755 ./cgi-bin/test.cgi $(ZPL_INSTALL_WWW_DIR)/cgi-bin
 #
 #	
 web_css_install:
-	@install -d $(DSTWWWDIR)/css
-	@$(CP) ./css/bootstrap.min.css $(DSTWWWDIR)/css/bootstrap.min.css
-	@$(CP) ./css/bootstrap-switch.min.css $(DSTWWWDIR)/css/bootstrap-switch.min.css
-	@$(CP) ./css/private.css $(DSTWWWDIR)/css/private.css
-	#$(CP) ./css/login.css $(DSTWWWDIR)/css/login.css
-	#$(CP) ./css/complex-menu.css $(DSTWWWDIR)/css/complex-menu.css		
-	#$(CP) ./css/bootstrap-menu.css $(DSTWWWDIR)/css/bootstrap-menu.css			
+	@install -d $(ZPL_INSTALL_WWW_DIR)/css
+	@$(CP) ./css/bootstrap.min.css $(ZPL_INSTALL_WWW_DIR)/css/bootstrap.min.css
+	@$(CP) ./css/bootstrap-switch.min.css $(ZPL_INSTALL_WWW_DIR)/css/bootstrap-switch.min.css
+	@$(CP) ./css/private.css $(ZPL_INSTALL_WWW_DIR)/css/private.css
+	#$(CP) ./css/login.css $(ZPL_INSTALL_WWW_DIR)/css/login.css
+	#$(CP) ./css/complex-menu.css $(ZPL_INSTALL_WWW_DIR)/css/complex-menu.css		
+	#$(CP) ./css/bootstrap-menu.css $(ZPL_INSTALL_WWW_DIR)/css/bootstrap-menu.css			
 #
 #	
 web_res_install:
-	@install -d $(DSTWWWDIR)/res
-	@$(CP) -arf ./res/user.png $(DSTWWWDIR)/res/
-	@$(CP) -arf ./res/pwd.png $(DSTWWWDIR)/res/
-	@$(CP) -arf ./res/logo.png $(DSTWWWDIR)/res/
-	#$(CP) -arf ./res/login.jpg $(DSTWWWDIR)/res/
-	@$(CP) -arf ./images/face.jpg $(DSTWWWDIR)/res/
+	@install -d $(ZPL_INSTALL_WWW_DIR)/res
+	@$(CP) -arf ./res/user.png $(ZPL_INSTALL_WWW_DIR)/res/
+	@$(CP) -arf ./res/pwd.png $(ZPL_INSTALL_WWW_DIR)/res/
+	@$(CP) -arf ./res/logo.png $(ZPL_INSTALL_WWW_DIR)/res/
+	#$(CP) -arf ./res/login.jpg $(ZPL_INSTALL_WWW_DIR)/res/
+	@$(CP) -arf ./images/face.jpg $(ZPL_INSTALL_WWW_DIR)/res/
 	
-	#install -d $(DSTWWWDIR)/res/cbi
-	@install -d $(DSTWWWDIR)/res/icons
-	@$(CP) -arf ./res/icons/signal-* $(DSTWWWDIR)/res/icons/
-	@$(CP) -arf ./res/icons/port_* $(DSTWWWDIR)/res/icons/
-	@$(CP) -arf ./res/icons/loading.gif $(DSTWWWDIR)/res/icons/
-	#$(CP) -arf ./res/* $(DSTWWWDIR)/res/		
+	#install -d $(ZPL_INSTALL_WWW_DIR)/res/cbi
+	@install -d $(ZPL_INSTALL_WWW_DIR)/res/icons
+	@$(CP) -arf ./res/icons/signal-* $(ZPL_INSTALL_WWW_DIR)/res/icons/
+	@$(CP) -arf ./res/icons/port_* $(ZPL_INSTALL_WWW_DIR)/res/icons/
+	@$(CP) -arf ./res/icons/loading.gif $(ZPL_INSTALL_WWW_DIR)/res/icons/
+	#$(CP) -arf ./res/* $(ZPL_INSTALL_WWW_DIR)/res/		
 #
 #
 web_fonts_install:
-	@install -d $(DSTWWWDIR)/fonts
-	@$(CP) -arf ./fonts/* $(DSTWWWDIR)/fonts/
-	#$(CP) ./css/login.css $(DSTWWWDIR)/css/login.css
-	#$(CP) ./css/login.css $(DSTWWWDIR)/css/login.css
-	#$(CP) ./css/login.css $(DSTWWWDIR)/css/login.css
+	@install -d $(ZPL_INSTALL_WWW_DIR)/fonts
+	@$(CP) -arf ./fonts/* $(ZPL_INSTALL_WWW_DIR)/fonts/
+	#$(CP) ./css/login.css $(ZPL_INSTALL_WWW_DIR)/css/login.css
+	#$(CP) ./css/login.css $(ZPL_INSTALL_WWW_DIR)/css/login.css
+	#$(CP) ./css/login.css $(ZPL_INSTALL_WWW_DIR)/css/login.css
 #
 #
 #				
 #
-ifeq ($(strip $(PL_APP_X5_MODULE)),true)
+ifeq ($(strip $(ZPL_APP_X5_MODULE)),true)
 web_app_html_install:
-	@install -d $(DSTWWWDIR)/html
-	@$(CP) ./html/switch.html $(DSTWWWDIR)/html/switch.html
-	@$(CP) ./html/factory.html $(DSTWWWDIR)/html/factory.html
-	@$(CP) ./html/sip.html $(DSTWWWDIR)/html/sip.html	
-	@$(CP) ./html/wireless.html $(DSTWWWDIR)/html/wireless.html
-	@$(CP) ./html/card.html $(DSTWWWDIR)/html/card.html
-	@$(CP) ./html/bootstrap-x5.html $(DSTWWWDIR)/html/bootstrap.html
+	@install -d $(ZPL_INSTALL_WWW_DIR)/html
+	@$(CP) ./html/switch.html $(ZPL_INSTALL_WWW_DIR)/html/switch.html
+	@$(CP) ./html/factory.html $(ZPL_INSTALL_WWW_DIR)/html/factory.html
+	@$(CP) ./html/sip.html $(ZPL_INSTALL_WWW_DIR)/html/sip.html	
+	@$(CP) ./html/wireless.html $(ZPL_INSTALL_WWW_DIR)/html/wireless.html
+	@$(CP) ./html/card.html $(ZPL_INSTALL_WWW_DIR)/html/card.html
+	@$(CP) ./html/bootstrap-x5.html $(ZPL_INSTALL_WWW_DIR)/html/bootstrap.html
 endif
 
-ifeq ($(strip $(PL_APP_V9_MODULE)),true)
+ifeq ($(strip $(ZPL_APP_V9_MODULE)),true)
 web_app_html_install:
-	@install -d $(DSTWWWDIR)/html
-	@$(CP) ./html/bootstrap-v9.html $(DSTWWWDIR)/html/bootstrap.html
-	@$(CP) ./html/boardcard.html $(DSTWWWDIR)/html/boardcard.html
-	@$(CP) ./html/general.html $(DSTWWWDIR)/html/general.html	
-	@$(CP) ./html/rtsp.html $(DSTWWWDIR)/html/rtsp.html	
-	@$(CP) ./html/algorithm.html $(DSTWWWDIR)/html/algorithm.html	
-	@$(CP) ./html/facelib.html $(DSTWWWDIR)/html/facelib.html	
-	#$(CP) ./html/upload.html $(DSTWWWDIR)/html/upload.html						
+	@install -d $(ZPL_INSTALL_WWW_DIR)/html
+	@$(CP) ./html/bootstrap-v9.html $(ZPL_INSTALL_WWW_DIR)/html/bootstrap.html
+	@$(CP) ./html/boardcard.html $(ZPL_INSTALL_WWW_DIR)/html/boardcard.html
+	@$(CP) ./html/general.html $(ZPL_INSTALL_WWW_DIR)/html/general.html	
+	@$(CP) ./html/rtsp.html $(ZPL_INSTALL_WWW_DIR)/html/rtsp.html	
+	@$(CP) ./html/algorithm.html $(ZPL_INSTALL_WWW_DIR)/html/algorithm.html	
+	@$(CP) ./html/facelib.html $(ZPL_INSTALL_WWW_DIR)/html/facelib.html	
+	#$(CP) ./html/upload.html $(ZPL_INSTALL_WWW_DIR)/html/upload.html						
 endif
 #
 web_html_install:
-	@install -d $(DSTWWWDIR)/html
+	@install -d $(ZPL_INSTALL_WWW_DIR)/html
 
-	@$(CP) ./html/systemview.html $(DSTWWWDIR)/html/systemview.html
-	@$(CP) ./html/system.html $(DSTWWWDIR)/html/system.html	
-	@$(CP) ./html/about.html $(DSTWWWDIR)/html/about.html
-	#$(CP) ./html/admin.html $(DSTWWWDIR)/html/admin.html
-	#$(CP) ./html/dhcp.html $(DSTWWWDIR)/html/dhcp.html		
-	#$(CP) ./html/dns.html $(DSTWWWDIR)/html/dns.html
-	@$(CP) ./html/filesystem.html $(DSTWWWDIR)/html/filesystem.html
-	#$(CP) ./html/firewall.html $(DSTWWWDIR)/html/firewall.html	
-	#$(CP) ./html/nat.html $(DSTWWWDIR)/html/nat.html		
-	#$(CP) ./html/netstatus.html $(DSTWWWDIR)/html/netstatus.html
-	@$(CP) ./html/network.html $(DSTWWWDIR)/html/network.html
-	#$(CP) ./html/route.html $(DSTWWWDIR)/html/route.html
-	#$(CP) ./html/status.html $(DSTWWWDIR)/html/status.html		
-	#$(CP) ./html/switch.html $(DSTWWWDIR)/html/switch.html
-	@$(CP) ./html/syslog.html $(DSTWWWDIR)/html/syslog.html
+	@$(CP) ./html/systemview.html $(ZPL_INSTALL_WWW_DIR)/html/systemview.html
+	@$(CP) ./html/system.html $(ZPL_INSTALL_WWW_DIR)/html/system.html	
+	@$(CP) ./html/about.html $(ZPL_INSTALL_WWW_DIR)/html/about.html
+	#$(CP) ./html/admin.html $(ZPL_INSTALL_WWW_DIR)/html/admin.html
+	#$(CP) ./html/dhcp.html $(ZPL_INSTALL_WWW_DIR)/html/dhcp.html		
+	#$(CP) ./html/dns.html $(ZPL_INSTALL_WWW_DIR)/html/dns.html
+	@$(CP) ./html/filesystem.html $(ZPL_INSTALL_WWW_DIR)/html/filesystem.html
+	#$(CP) ./html/firewall.html $(ZPL_INSTALL_WWW_DIR)/html/firewall.html	
+	#$(CP) ./html/nat.html $(ZPL_INSTALL_WWW_DIR)/html/nat.html		
+	#$(CP) ./html/netstatus.html $(ZPL_INSTALL_WWW_DIR)/html/netstatus.html
+	@$(CP) ./html/network.html $(ZPL_INSTALL_WWW_DIR)/html/network.html
+	#$(CP) ./html/route.html $(ZPL_INSTALL_WWW_DIR)/html/route.html
+	#$(CP) ./html/status.html $(ZPL_INSTALL_WWW_DIR)/html/status.html		
+	#$(CP) ./html/switch.html $(ZPL_INSTALL_WWW_DIR)/html/switch.html
+	@$(CP) ./html/syslog.html $(ZPL_INSTALL_WWW_DIR)/html/syslog.html
 			
-	@$(CP) ./html/login.html $(DSTWWWDIR)/html/login.html
-	@$(CP) ./html/reboot.html $(DSTWWWDIR)/html/reboot.html
+	@$(CP) ./html/login.html $(ZPL_INSTALL_WWW_DIR)/html/login.html
+	@$(CP) ./html/reboot.html $(ZPL_INSTALL_WWW_DIR)/html/reboot.html
 
 
 
@@ -114,12 +114,12 @@ web_html_install:
 #
 #	
 webinstall: 
-	@install -d $(DSTWWWDIR)
-	@$(CP) ./html/index.html $(DSTWWWDIR)/index.html	
+	@install -d $(ZPL_INSTALL_WWW_DIR)
+	@$(CP) ./html/index.html $(ZPL_INSTALL_WWW_DIR)/index.html	
 
 
 webclean:
-	@$(RM) -rf $(DSTWWWDIR)/*
+	@$(RM) -rf $(ZPL_INSTALL_WWW_DIR)/*
 #
 #
 install: webinstall web_cgi_install web_css_install web_res_install web_html_install \

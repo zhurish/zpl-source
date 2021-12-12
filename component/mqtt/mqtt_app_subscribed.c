@@ -4,8 +4,9 @@
  *  Created on: 2020年4月12日
  *      Author: zhurish
  */
-#include "zebra.h"
-#include "memory.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 #include "mqtt-config.h"
 #include <mqtt_protocol.h>
 #include <mosquitto.h>
@@ -25,7 +26,7 @@ void mqtt_sub_message_v5_callback(struct mosquitto *mosq, void *obj,
 		const struct mosquitto_message *message,
 		const mosquitto_property *properties)
 {
-	ospl_uint32 i, /*msg_count = 0,*/last_mid = 0;
+	zpl_uint32 i, /*msg_count = 0,*/last_mid = 0;
 	bool res;
 	zassert(mosq != NULL);
 	zassert(obj != NULL);

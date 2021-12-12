@@ -56,12 +56,12 @@ struct Gl2trunk_s;
 typedef struct l2trunk_s
 {
 	NODE			node;
-	ospl_uint32			trunkId;
+	zpl_uint32			trunkId;
 
 	trunk_type_t	type;
 	trunk_mode_t	mode;
-	ospl_uint32			lacp_port_priority;
-	ospl_uint32			lacp_timeout;
+	zpl_uint32			lacp_port_priority;
+	zpl_uint32			lacp_timeout;
 
 	ifindex_t 		ifindex;
 
@@ -71,9 +71,9 @@ typedef struct l2trunk_s
 typedef struct l2trunk_group_s
 {
 	LIST				*trunkList;
-	ospl_uint32				trunkId;
+	zpl_uint32				trunkId;
 	trunk_type_t		type;
-	ospl_uint32				lacp_system_priority;
+	zpl_uint32				lacp_system_priority;
 	load_balance_t		load_balance;
 	struct Gl2trunk_s 	*global;
 
@@ -84,10 +84,10 @@ typedef struct Gl2trunk_s
 {
 	//l2trunk_group_t	*group[NSM_TRUNK_ID_MAX];
 	l2trunk_group_t	*group;
-	//ospl_uint32			lacp_system_priority;
+	//zpl_uint32			lacp_system_priority;
 	//load_balance_t	load_balance;
 	void		*mutex;
-	ospl_bool		enable;
+	zpl_bool		enable;
 }Gl2trunk_t;
 
 
@@ -98,34 +98,40 @@ extern int nsm_trunk_init();
 extern int nsm_trunk_exit();
 
 extern int nsm_trunk_enable(void);
-extern ospl_bool nsm_trunk_is_enable(void);
+extern zpl_bool nsm_trunk_is_enable(void);
+
+extern int nsm_trunk_interface_create_api(struct interface *ifp);
+extern int nsm_trunk_interface_del_api(struct interface *ifp);
 
 extern l2trunk_group_t * nsm_port_channel_get(struct interface *ifp);
 
-extern ospl_bool l2trunk_lookup_api(ospl_uint32 trunkid);
-extern int l2trunk_lookup_interface_count_api(ospl_uint32 trunkid);
-extern int nsm_trunk_create_api(ospl_uint32 trunkid, trunk_type_t type);
-extern int nsm_trunk_destroy_api(ospl_uint32 trunkid);
+extern zpl_bool l2trunk_lookup_api(zpl_uint32 trunkid);
+extern int l2trunk_lookup_interface_count_api(zpl_uint32 trunkid);
+
+extern int nsm_trunk_create_api(zpl_uint32 trunkid, trunk_type_t type);
+extern int nsm_trunk_destroy_api(zpl_uint32 trunkid);
 
 
-extern ospl_bool l2trunk_lookup_interface_api(ifindex_t ifindex);
-extern int nsm_trunk_get_ID_interface_api(ifindex_t ifindex, ospl_uint32 *trunkId);
+extern zpl_bool l2trunk_lookup_interface_api(ifindex_t ifindex);
+extern int nsm_trunk_get_ID_interface_api(ifindex_t ifindex, zpl_uint32 *trunkId);
 
-extern int nsm_trunk_add_interface_api(ospl_uint32 trunkid, trunk_type_t type, trunk_mode_t mode, struct interface *ifp);
-extern int nsm_trunk_del_interface_api(ospl_uint32 trunkid, struct interface *ifp);
-extern int nsm_trunk_lacp_port_priority_api(ifindex_t ifindex, ospl_uint32 pri);
-extern int nsm_trunk_lacp_timeout_api(ifindex_t ifindex, ospl_uint32 timeout);
+/* 把接口加入trunk组，从trunk组删除 */
+extern int nsm_trunk_add_interface_api(zpl_uint32 trunkid, trunk_type_t type, trunk_mode_t mode, struct interface *ifp);
+extern int nsm_trunk_del_interface_api(zpl_uint32 trunkid, struct interface *ifp);
+extern int nsm_trunk_lacp_port_priority_api(ifindex_t ifindex, zpl_uint32 pri);
+extern int nsm_trunk_lacp_timeout_api(ifindex_t ifindex, zpl_uint32 timeout);
 
-extern int nsm_trunk_load_balance_api(ospl_uint32 trunkid, load_balance_t mode);
-extern int nsm_trunk_lacp_system_priority_api(ospl_uint32 trunkid, ospl_uint32 pri);
+extern int nsm_trunk_load_balance_api(zpl_uint32 trunkid, load_balance_t mode);
+extern int nsm_trunk_lacp_system_priority_api(zpl_uint32 trunkid, zpl_uint32 pri);
 
 extern int nsm_trunk_group_callback_api(l2trunk_group_cb cb, void *pVoid);
 extern int nsm_trunk_callback_api(l2trunk_cb cb, void *pVoid);
 
-
+#ifdef ZPL_SHELL_MODULE
 extern void cmd_trunk_init(void);
+extern int nsm_trunk_interface_write_config(struct vty *vty, struct interface *ifp);
+#endif
 
- 
 #ifdef __cplusplus
 }
 #endif

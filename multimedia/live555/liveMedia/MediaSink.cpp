@@ -14,7 +14,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
 // "liveMedia"
-// Copyright (c) 1996-2020 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2021 Live Networks, Inc.  All rights reserved.
 // Media Sinks
 // Implementation
 
@@ -109,9 +109,11 @@ Boolean MediaSink::isRTPSink() const {
 }
 
 ////////// OutPacketBuffer //////////
-
+#ifdef USE_RTSP_OPT
+unsigned OutPacketBuffer::maxSize = 3000000; // by default
+#else
 unsigned OutPacketBuffer::maxSize = 60000; // by default
-
+#endif
 OutPacketBuffer
 ::OutPacketBuffer(unsigned preferredPacketSize, unsigned maxPacketSize, unsigned maxBufferSize)
   : fPreferred(preferredPacketSize), fMax(maxPacketSize),

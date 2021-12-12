@@ -35,11 +35,11 @@ typedef struct nsm_bridge_s
 {
 	struct interface 	*ifp;
 	bridge_type_t		br_mode;//接口状态，网桥，桥接接口
-	ospl_bool				br_stp;//网桥生成树
+	zpl_bool				br_stp;//网桥生成树
 	stp_state_t			br_stp_state;//生成树状态
-	ospl_uint32 				max_age;
-	ospl_uint32 				hello_time;
-	ospl_uint32 				forward_delay;
+	zpl_uint32 				max_age;
+	zpl_uint32 				hello_time;
+	zpl_uint32 				forward_delay;
 	ifindex_t			member[BRIDGE_MEMBER_MAX];
 
 
@@ -48,6 +48,8 @@ typedef struct nsm_bridge_s
 	int (*get_member_cb)(struct nsm_bridge_s *br, ifindex_t ifindex[]);
 } nsm_bridge_t;
 
+extern int nsm_bridge_interface_create_api(struct interface *ifp);
+extern int nsm_bridge_interface_del_api(struct interface *ifp);
 
 extern nsm_bridge_t * nsm_bridge_get(struct interface *ifp);
 
@@ -55,16 +57,17 @@ extern int nsm_bridge_add_interface_api(struct interface *bridge, struct interfa
 extern int nsm_bridge_del_interface_api(struct interface *bridge, struct interface *ifp);
 extern int nsm_bridge_update_member_api(struct interface *bridge);
 
-extern int nsm_bridge_interface_stp_set_api(struct interface *bridge, ospl_bool stp);
-extern int nsm_bridge_interface_max_age_set_api(struct interface *bridge, ospl_uint32 max_age);
-extern int nsm_bridge_interface_hello_time_set_api(struct interface *bridge, ospl_uint32 hello_time);
-extern int nsm_bridge_interface_forward_delay_set_api(struct interface *bridge, ospl_uint32 forward_delay);
+extern int nsm_bridge_interface_stp_set_api(struct interface *bridge, zpl_bool stp);
+extern int nsm_bridge_interface_max_age_set_api(struct interface *bridge, zpl_uint32 max_age);
+extern int nsm_bridge_interface_hello_time_set_api(struct interface *bridge, zpl_uint32 hello_time);
+extern int nsm_bridge_interface_forward_delay_set_api(struct interface *bridge, zpl_uint32 forward_delay);
 
-extern int nsm_bridge_client_init();
-extern int nsm_bridge_client_exit();
-
+extern int nsm_bridge_init();
+extern int nsm_bridge_exit();
+#ifdef ZPL_SHELL_MODULE
 extern void cmd_bridge_init(void);
- 
+extern int nsm_bridge_interface_write_config(struct vty *vty, struct interface *ifp);
+#endif
 #ifdef __cplusplus
 }
 #endif

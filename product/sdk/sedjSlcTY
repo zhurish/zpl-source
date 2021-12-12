@@ -5,7 +5,7 @@
  *      Author: zhurish
  */
 
-#include <zebra.h>
+#include <zpl_include.h>
 #include "b53_mdio.h"
 #include "b53_regs.h"
 #include "sdk_driver.h"
@@ -13,7 +13,7 @@
 /****************************************************************************************/
 static int b53125_flush_mac_tbl(struct b53125_device *dev, u8 mask)
 {
-	ospl_uint32 i;
+	zpl_uint32 i;
 	b53125_write8(dev, B53_CTRL_PAGE, B53_FAST_AGE_CTRL,
 		   FAST_AGE_DONE | FAST_AGE_DYNAMIC | mask);
 	for (i = 0; i < 1000; i++) {
@@ -72,7 +72,7 @@ static void b53125_mac_tbl_from_entry(u64 *mac_vid, u32 *fwd_entry,
 /* Address Resolution Logic routines */
 static int b53125_mac_tbl_op_wait(struct b53125_device *dev)
 {
-	ospl_uint32 timeout = 1000;
+	zpl_uint32 timeout = 1000;
 	u8 reg;
 
 	do {
@@ -85,7 +85,7 @@ static int b53125_mac_tbl_op_wait(struct b53125_device *dev)
 	return OS_TIMEOUT;
 }
 
-static int b53125_mac_tbl_rw_op(struct b53125_device *dev, ospl_uint32 op)
+static int b53125_mac_tbl_rw_op(struct b53125_device *dev, zpl_uint32 op)
 {
 	u8 reg;
 	if (op > ARLTBL_RW)
@@ -104,7 +104,7 @@ static int b53125_mac_tbl_read(struct b53125_device *dev, u64 mac,
 			u16 vid, struct b53125_mac_arl_entry *ent, u8 *idx,
 			bool is_valid)
 {
-	ospl_uint32 i;
+	zpl_uint32 i;
 	int ret = 0;
 
 	ret = b53125_mac_tbl_op_wait(dev);
@@ -133,7 +133,7 @@ static int b53125_mac_tbl_read(struct b53125_device *dev, u64 mac,
 }
 
 static int b53125_mac_tbl_op(struct b53125_device *dev, int op, int port,
-		      const ospl_uint8 *addr, u16 vid, ospl_bool is_valid)
+		      const zpl_uint8 *addr, u16 vid, zpl_bool is_valid)
 {
 	struct b53125_mac_arl_entry ent;
 	u32 fwd_entry;
@@ -168,7 +168,7 @@ static int b53125_mac_tbl_op(struct b53125_device *dev, int op, int port,
 	ent.port = port;
 	ent.is_valid = is_valid;
 	ent.vid = vid;
-	ent.is_static = ospl_true;
+	ent.is_static = zpl_true;
 	memcpy(ent.mac, addr, ETH_ALEN);
 	b53125_mac_tbl_from_entry(&mac_vid, &fwd_entry, &ent);
 
@@ -181,21 +181,21 @@ static int b53125_mac_tbl_op(struct b53125_device *dev, int op, int port,
 }
 
 int b53125_mac_tbl_add(struct b53125_device *dev, int port,
-		const ospl_uint8 *addr, u16 vid)
+		const zpl_uint8 *addr, u16 vid)
 {
-	return b53125_mac_tbl_op(dev, 0, port, addr, vid, ospl_true);
+	return b53125_mac_tbl_op(dev, 0, port, addr, vid, zpl_true);
 }
 
 
 int b53125_mac_tbl_del(struct b53125_device *dev, int port,
-		const ospl_uint8 *addr, u16 vid)
+		const zpl_uint8 *addr, u16 vid)
 {
-	return b53125_mac_tbl_op(dev, 0, port, addr, vid, ospl_false);
+	return b53125_mac_tbl_op(dev, 0, port, addr, vid, zpl_false);
 }
 
 
 static int b53125_mac_tbl_search_wait(struct b53125_device *dev)
 {
-	ospl_uint32 timeout = 1000;
+	zpl_uint32 timeout = 1000;
 	u8 reg;
 	do {

@@ -6,20 +6,12 @@
  */
 
 
-#include "zebra.h"
-#include "memory.h"
-#include "command.h"
-#include "memory.h"
-#include "memtypes.h"
-#include "prefix.h"
-#include "if.h"
-#include "nsm_interface.h"
-#include <log.h>
-#include "nsm_client.h"
-#include "os_list.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "nsm_include.h"
 
-#include "nsm_dos.h"
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 #include "hal_dos.h"
 #endif
 static Gl2dos_t gdos;
@@ -45,13 +37,13 @@ int nsm_dos_enable(void)
 	int ret = OK;
 	if(gdos.mutex)
 		os_mutex_lock(gdos.mutex, OS_WAIT_FOREVER);
-	gdos.enable = ospl_true;
+	gdos.enable = zpl_true;
 	if(gdos.mutex)
 		os_mutex_unlock(gdos.mutex);
 	return ret;
 }
 
-ospl_bool nsm_dos_is_enable(void)
+zpl_bool nsm_dos_is_enable(void)
 {
 	return gdos.enable;
 }
@@ -61,8 +53,8 @@ int nsm_dos_enable_api(dos_type_en type)
 	int ret = ERROR;
 	if(gdos.mutex)
 		os_mutex_lock(gdos.mutex, OS_WAIT_FOREVER);
-#ifdef PL_HAL_MODULE
-	ret = hal_dos_enable(ospl_true, type);
+#ifdef ZPL_HAL_MODULE
+	ret = hal_dos_enable(zpl_true, type);
 #else
 	ret = OK;
 #endif
@@ -71,43 +63,43 @@ int nsm_dos_enable_api(dos_type_en type)
 		switch(type)
 		{
 		case DOS_IP_LAN_DRIP:
-			gdos.ip_lan_drip = ospl_true;
+			gdos.ip_lan_drip = zpl_true;
 			break;
 		case TCP_BLAT_DROP:
-			gdos.tcp_blat = ospl_true;
+			gdos.tcp_blat = zpl_true;
 			break;
 		case UDP_BLAT_DROP:
-			gdos.udp_blat = ospl_true;
+			gdos.udp_blat = zpl_true;
 			break;
 		case TCP_NULLSCAN_DROP:
-			gdos.tcp_nullscan = ospl_true;
+			gdos.tcp_nullscan = zpl_true;
 			break;
 		case TCP_XMASSCAN_DROP:
-			gdos.tcp_xmasscan = ospl_true;
+			gdos.tcp_xmasscan = zpl_true;
 			break;
 		case TCP_SYNFINSCAN_DROP:
-			gdos.tcp_synfinscan = ospl_true;
+			gdos.tcp_synfinscan = zpl_true;
 			break;
 		case TCP_SYNERROR_DROP:
-			gdos.tcp_synerror = ospl_true;
+			gdos.tcp_synerror = zpl_true;
 			break;
 		case TCP_SHORTHDR_DROP:
-			gdos.tcp_ospl_int16hdr = ospl_true;
+			gdos.tcp_zpl_int16hdr = zpl_true;
 			break;
 		case TCP_FRAGERROR_DROP:
-			gdos.tcp_fragerror = ospl_true;
+			gdos.tcp_fragerror = zpl_true;
 			break;
 		case ICMPv4_FRAGMENT_DROP:
-			gdos.icmpv4_fragment = ospl_true;
+			gdos.icmpv4_fragment = zpl_true;
 			break;
 		case ICMPv6_FRAGMENT_DROP:
-			gdos.icmpv6_fragment = ospl_true;
+			gdos.icmpv6_fragment = zpl_true;
 			break;
 		case ICMPv4_LONGPING_DROP:
-			gdos.icmpv4_longping = ospl_true;
+			gdos.icmpv4_longping = zpl_true;
 			break;
 		case ICMPv6_LONGPING_DROP:
-			gdos.icmpv6_longping = ospl_true;
+			gdos.icmpv6_longping = zpl_true;
 			break;
 		}
 	}
@@ -121,8 +113,8 @@ int nsm_dos_disable_api(dos_type_en type)
 	int ret = ERROR;
 	if(gdos.mutex)
 		os_mutex_lock(gdos.mutex, OS_WAIT_FOREVER);
-#ifdef PL_HAL_MODULE
-	ret = hal_dos_enable(ospl_false, type);
+#ifdef ZPL_HAL_MODULE
+	ret = hal_dos_enable(zpl_false, type);
 #else
 	ret = OK;
 #endif
@@ -131,43 +123,43 @@ int nsm_dos_disable_api(dos_type_en type)
 		switch(type)
 		{
 		case DOS_IP_LAN_DRIP:
-			gdos.ip_lan_drip = ospl_false;
+			gdos.ip_lan_drip = zpl_false;
 			break;
 		case TCP_BLAT_DROP:
-			gdos.tcp_blat = ospl_false;
+			gdos.tcp_blat = zpl_false;
 			break;
 		case UDP_BLAT_DROP:
-			gdos.udp_blat = ospl_false;
+			gdos.udp_blat = zpl_false;
 			break;
 		case TCP_NULLSCAN_DROP:
-			gdos.tcp_nullscan = ospl_false;
+			gdos.tcp_nullscan = zpl_false;
 			break;
 		case TCP_XMASSCAN_DROP:
-			gdos.tcp_xmasscan = ospl_false;
+			gdos.tcp_xmasscan = zpl_false;
 			break;
 		case TCP_SYNFINSCAN_DROP:
-			gdos.tcp_synfinscan = ospl_false;
+			gdos.tcp_synfinscan = zpl_false;
 			break;
 		case TCP_SYNERROR_DROP:
-			gdos.tcp_synerror = ospl_false;
+			gdos.tcp_synerror = zpl_false;
 			break;
 		case TCP_SHORTHDR_DROP:
-			gdos.tcp_ospl_int16hdr = ospl_false;
+			gdos.tcp_zpl_int16hdr = zpl_false;
 			break;
 		case TCP_FRAGERROR_DROP:
-			gdos.tcp_fragerror = ospl_false;
+			gdos.tcp_fragerror = zpl_false;
 			break;
 		case ICMPv4_FRAGMENT_DROP:
-			gdos.icmpv4_fragment = ospl_false;
+			gdos.icmpv4_fragment = zpl_false;
 			break;
 		case ICMPv6_FRAGMENT_DROP:
-			gdos.icmpv6_fragment = ospl_false;
+			gdos.icmpv6_fragment = zpl_false;
 			break;
 		case ICMPv4_LONGPING_DROP:
-			gdos.icmpv4_longping = ospl_false;
+			gdos.icmpv4_longping = zpl_false;
 			break;
 		case ICMPv6_LONGPING_DROP:
-			gdos.icmpv6_longping = ospl_false;
+			gdos.icmpv6_longping = zpl_false;
 			break;
 		}
 	}
@@ -177,12 +169,12 @@ int nsm_dos_disable_api(dos_type_en type)
 }
 
 
-int nsm_dos_tcp_hdr_min(ospl_uint32 size)
+int nsm_dos_tcp_hdr_min(zpl_uint32 size)
 {
 	int ret = OK;
 	if(gdos.mutex)
 		os_mutex_lock(gdos.mutex, OS_WAIT_FOREVER);
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 	if(hal_dos_tcp_hdr_size(size) == OK)
 #endif
 		gdos.tcp_hdr_min = size;
@@ -191,13 +183,13 @@ int nsm_dos_tcp_hdr_min(ospl_uint32 size)
 	return ret;
 }
 
-int nsm_dos_icmpv4_max(ospl_uint32 size)
+int nsm_dos_icmpv4_max(zpl_uint32 size)
 {
 	int ret = OK;
 	if(gdos.mutex)
 		os_mutex_lock(gdos.mutex, OS_WAIT_FOREVER);
-#ifdef PL_HAL_MODULE
-	if(hal_dos_icmp_size(ospl_false, size) == OK)
+#ifdef ZPL_HAL_MODULE
+	if(hal_dos_icmp_size(zpl_false, size) == OK)
 #endif
 		gdos.icmpv4_max = size;
 	if(gdos.mutex)
@@ -205,13 +197,13 @@ int nsm_dos_icmpv4_max(ospl_uint32 size)
 	return ret;
 }
 
-int nsm_dos_icmpv6_max(ospl_uint32 size)
+int nsm_dos_icmpv6_max(zpl_uint32 size)
 {
 	int ret = OK;
 	if(gdos.mutex)
 		os_mutex_lock(gdos.mutex, OS_WAIT_FOREVER);
-#ifdef PL_HAL_MODULE
-	if(hal_dos_icmp_size(ospl_true, size) == OK)
+#ifdef ZPL_HAL_MODULE
+	if(hal_dos_icmp_size(zpl_true, size) == OK)
 #endif
 		gdos.icmpv6_max = size;
 	if(gdos.mutex)

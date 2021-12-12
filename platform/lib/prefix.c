@@ -20,19 +20,15 @@
  * 02111-1307, USA.  
  */
 
-#include <zebra.h>
-
-#include "prefix.h"
-#include "vty.h"
-#include "sockunion.h"
-#include "memory.h"
-#include "log.h"
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
 
 /* Maskbit. */
-static const ospl_uchar maskbit[] = {0x00, 0x80, 0xc0, 0xe0, 0xf0,
+static const zpl_uchar maskbit[] = {0x00, 0x80, 0xc0, 0xe0, 0xf0,
 			         0xf8, 0xfc, 0xfe, 0xff};
 
-static const struct in6_addr maskbytes6[] =
+static const struct ipstack_in6_addr maskbytes6[] =
 {
   /* /0   */ { { { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } } },
   /* /1   */ { { { 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } } },
@@ -172,22 +168,22 @@ static const struct in6_addr maskbytes6[] =
 
 #define MASKBIT(offset)  ((0xff << (PNBBY - (offset))) & 0xff)
 
-ospl_uint32 
-prefix_bit (const ospl_uchar *prefix, const ospl_uchar prefixlen)
+zpl_uint32 
+prefix_bit (const zpl_uchar *prefix, const zpl_uchar prefixlen)
 {
-  ospl_uint32  offset = prefixlen / 8;
-  ospl_uint32  shift  = 7 - (prefixlen % 8);
+  zpl_uint32  offset = prefixlen / 8;
+  zpl_uint32  shift  = 7 - (prefixlen % 8);
   
   return (prefix[offset] >> shift) & 1;
 }
 
-ospl_uint32 
-prefix6_bit (const struct in6_addr *prefix, const ospl_uchar prefixlen)
+zpl_uint32 
+prefix6_bit (const struct ipstack_in6_addr *prefix, const zpl_uchar prefixlen)
 {
-  return prefix_bit((const ospl_uchar *) &prefix->s6_addr, prefixlen);
+  return prefix_bit((const zpl_uchar *) &prefix->s6_addr, prefixlen);
 }
 
-ospl_family_t
+zpl_family_t
 str2family(const char *string)
 {
   if (!strcmp("ipv4", string))
@@ -200,7 +196,7 @@ str2family(const char *string)
 }
 
 /* Address Famiy Identifier to Address Family converter. */
-ospl_family_t
+zpl_family_t
 afi2family (afi_t afi)
 {
   if (afi == AFI_IP)
@@ -215,7 +211,7 @@ afi2family (afi_t afi)
 }
 
 afi_t
-family2afi (ospl_family_t family)
+family2afi (zpl_family_t family)
 {
   if (family == AF_INET)
     return AFI_IP;
@@ -262,17 +258,17 @@ safi2str(safi_t safi)
 int
 prefix_match (const struct prefix *n, const struct prefix *p)
 {
-  ospl_uint32 offset;
+  zpl_uint32 offset;
   int shift;
-  const ospl_uchar *np, *pp;
+  const zpl_uchar *np, *pp;
 
   /* If n's prefix is longer than p's one return 0. */
   if (n->prefixlen > p->prefixlen)
     return 0;
 
   /* Set both prefix's head pointer. */
-  np = (const ospl_uchar *)&n->u.prefix;
-  pp = (const ospl_uchar *)&p->u.prefix;
+  np = (const zpl_uchar *)&n->u.prefix;
+  pp = (const zpl_uchar *)&p->u.prefix;
   
   offset = n->prefixlen / PNBBY;
   shift =  n->prefixlen % PNBBY;
@@ -359,12 +355,12 @@ prefix_same (const struct prefix *p1, const struct prefix *p2)
 int
 prefix_cmp (const struct prefix *p1, const struct prefix *p2)
 {
-  ospl_uint32 offset;
+  zpl_uint32 offset;
   int shift;
 
   /* Set both prefix's head pointer. */
-  const ospl_uchar *pp1 = (const ospl_uchar *)&p1->u.prefix;
-  const ospl_uchar *pp2 = (const ospl_uchar *)&p2->u.prefix;
+  const zpl_uchar *pp1 = (const zpl_uchar *)&p1->u.prefix;
+  const zpl_uchar *pp2 = (const zpl_uchar *)&p2->u.prefix;
 
   if (p1->family != p2->family || p1->prefixlen != p2->prefixlen)
     return 1;
@@ -394,11 +390,11 @@ prefix_common_bits (const struct prefix *p1, const struct prefix *p2)
 {
   int pos, bit;
   int length = 0;
-  ospl_uchar xor;
+  zpl_uchar xor;
 
   /* Set both prefix's head pointer. */
-  const ospl_uchar *pp1 = (const ospl_uchar *)&p1->u.prefix;
-  const ospl_uchar *pp2 = (const ospl_uchar *)&p2->u.prefix;
+  const zpl_uchar *pp1 = (const zpl_uchar *)&p1->u.prefix;
+  const zpl_uchar *pp2 = (const zpl_uchar *)&p2->u.prefix;
 
   if (p1->family == AF_INET)
     length = IPV4_MAX_BYTELEN;
@@ -464,9 +460,9 @@ int
 str2prefix_ipv4 (const char *str, struct prefix_ipv4 *p)
 {
   int ret;
-  ospl_uint32 plen;
-  ospl_char *pnt;
-  ospl_char *cp;
+  zpl_uint32 plen;
+  zpl_char *pnt;
+  zpl_char *cp;
 
   /* Find slash inside string. */
   pnt = strchr (str, '/');
@@ -475,7 +471,7 @@ str2prefix_ipv4 (const char *str, struct prefix_ipv4 *p)
   if (pnt == NULL) 
     {
       /* Convert string to prefix. */
-      ret = inet_aton (str, &p->prefix);
+      ret = ipstack_inet_aton (str, &p->prefix);
       if (ret == 0)
 	return 0;
 
@@ -490,11 +486,11 @@ str2prefix_ipv4 (const char *str, struct prefix_ipv4 *p)
       cp = XMALLOC (MTYPE_TMP, (pnt - str) + 1);
       strncpy (cp, str, pnt - str);
       *(cp + (pnt - str)) = '\0';
-      ret = inet_aton (cp, &p->prefix);
+      ret = ipstack_inet_aton (cp, &p->prefix);
       XFREE (MTYPE_TMP, cp);
 
       /* Get prefix length. */
-      plen = (ospl_uchar) atoi (++pnt);
+      plen = (zpl_uchar) atoi (++pnt);
       if (plen > IPV4_MAX_PREFIXLEN)
 	return 0;
 
@@ -511,10 +507,10 @@ str2prefix_eth (const char *str, struct prefix_eth *p)
 {
   int		ret = 0;
   int		plen = 48;
-  ospl_char		*pnt;
-  ospl_char		*cp = NULL;
+  zpl_char		*pnt;
+  zpl_char		*cp = NULL;
   const char	*str_addr = str;
-  ospl_uint32 	a[6];
+  zpl_uint32 	a[6];
   int		i;
 
   /* Find slash inside string. */
@@ -523,7 +519,7 @@ str2prefix_eth (const char *str, struct prefix_eth *p)
   if (pnt)
     {
       /* Get prefix length. */
-      plen = (ospl_uchar) atoi (++pnt);
+      plen = (zpl_uchar) atoi (++pnt);
       if (plen > 48)
 	{
 	  ret = 0;
@@ -559,9 +555,9 @@ done:
   return ret;
 }
 
-int ether_aton_r (const void *addrptr, struct ethaddr *ether)
+int ether_aton_r (const void *addrptr, struct ipstack_ethaddr *ether)
 {
-	ospl_uint32  a[6], i = 0;
+	zpl_uint32  a[6], i = 0;
 	if (sscanf(addrptr, "%2x:%2x:%2x:%2x:%2x:%2x", a + 0, a + 1, a + 2, a + 3,
 			a + 4, a + 5) != 6)
 	{
@@ -576,7 +572,7 @@ int ether_aton_r (const void *addrptr, struct ethaddr *ether)
 
 /* Convert masklen into IP address's netmask (network byte order). */
 void
-masklen2ip (const int masklen, struct in_addr *netmask)
+masklen2ip (const int masklen, struct ipstack_in_addr *netmask)
 {
   assert (masklen >= 0 && masklen <= IPV4_MAX_BITLEN);
 
@@ -584,7 +580,7 @@ masklen2ip (const int masklen, struct in_addr *netmask)
    * we unconditionally use long long in case the target platform
    * has defined behaviour for << 32 (or has a 64-bit left shift) */
 
-  if (sizeof(ospl_ullong ) > 4)
+  if (sizeof(zpl_ullong ) > 4)
     netmask->s_addr = htonl(0xffffffffULL << (32 - masklen));
   else
     netmask->s_addr = htonl(masklen ? 0xffffffffU << (32 - masklen) : 0);
@@ -592,10 +588,10 @@ masklen2ip (const int masklen, struct in_addr *netmask)
 
 /* Convert IP address's netmask into integer. We assume netmask is
    sequential one. Argument netmask should be network byte order. */
-ospl_uchar
-ip_masklen (struct in_addr netmask)
+zpl_uchar
+ip_masklen (struct ipstack_in_addr netmask)
 {
-  ospl_uint32  tmp = ~ntohl(netmask.s_addr);
+  zpl_uint32  tmp = ~ntohl(netmask.s_addr);
   if (tmp)
     /* clz: count leading zeroes. sadly, the behaviour of this builtin
      * is undefined for a 0 argument, even though most CPUs give 32 */
@@ -608,7 +604,7 @@ ip_masklen (struct in_addr netmask)
 void
 apply_mask_ipv4 (struct prefix_ipv4 *p)
 {
-  struct in_addr mask;
+  struct ipstack_in_addr mask;
   masklen2ip(p->prefixlen, &mask);
   p->prefix.s_addr &= mask.s_addr;
 }
@@ -646,8 +642,8 @@ prefix_ipv6_free (struct prefix_ipv6 *p)
 int
 str2prefix_ipv6 (const char *str, struct prefix_ipv6 *p)
 {
-  ospl_char *pnt;
-  ospl_char *cp;
+  zpl_char *pnt;
+  zpl_char *cp;
   int ret;
 
   pnt = strchr (str, '/');
@@ -655,23 +651,23 @@ str2prefix_ipv6 (const char *str, struct prefix_ipv6 *p)
   /* If string doesn't contain `/' treat it as host route. */
   if (pnt == NULL) 
     {
-      ret = inet_pton (AF_INET6, str, &p->prefix);
+      ret = ipstack_inet_pton (AF_INET6, str, &p->prefix);
       if (ret == 0)
 	return 0;
       p->prefixlen = IPV6_MAX_BITLEN;
     }
   else 
     {
-      ospl_uint32 plen;
+      zpl_uint32 plen;
 
       cp = XMALLOC (MTYPE_TMP, (pnt - str) + 1);
       strncpy (cp, str, pnt - str);
       *(cp + (pnt - str)) = '\0';
-      ret = inet_pton (AF_INET6, cp, &p->prefix);
+      ret = ipstack_inet_pton (AF_INET6, cp, &p->prefix);
       free (cp);
       if (ret == 0)
 	return 0;
-      plen = (ospl_uchar) atoi (++pnt);
+      plen = (zpl_uchar) atoi (++pnt);
       if (plen > IPV6_MAX_BITLEN)
 	return 0;
       p->prefixlen = plen;
@@ -682,15 +678,15 @@ str2prefix_ipv6 (const char *str, struct prefix_ipv6 *p)
 }
 
 /* Convert struct in6_addr netmask into integer.
- * FIXME return ospl_uchar as ip_maskleni() does. */
+ * FIXME return zpl_uchar as ip_maskleni() does. */
 int
-ip6_masklen (struct in6_addr netmask)
+ip6_masklen (struct ipstack_in6_addr netmask)
 {
-  ospl_uint32 len = 0;
-  ospl_uchar val;
-  ospl_uchar *pnt;
+  zpl_uint32 len = 0;
+  zpl_uchar val;
+  zpl_uchar *pnt;
   
-  pnt = (ospl_uchar *) & netmask;
+  pnt = (zpl_uchar *) & netmask;
 
   while ((*pnt == 0xff) && len < IPV6_MAX_BITLEN)
     {
@@ -711,7 +707,7 @@ ip6_masklen (struct in6_addr netmask)
 }
 
 void
-masklen2ip6 (const int masklen, struct in6_addr *netmask)
+masklen2ip6 (const int masklen, struct ipstack_in6_addr *netmask)
 {
   assert (masklen >= 0 && masklen <= IPV6_MAX_BITLEN);
   memcpy (netmask, maskbytes6 + masklen, sizeof (struct in6_addr));
@@ -720,15 +716,15 @@ masklen2ip6 (const int masklen, struct in6_addr *netmask)
 void
 apply_mask_ipv6 (struct prefix_ipv6 *p)
 {
-  ospl_uchar *pnt;
-  ospl_uint32 index;
-  ospl_uint32 offset;
+  zpl_uchar *pnt;
+  zpl_uint32 index;
+  zpl_uint32 offset;
 
   index = p->prefixlen / 8;
 
   if (index < 16)
     {
-      pnt = (ospl_uchar *) &p->prefix;
+      pnt = (zpl_uchar *) &p->prefix;
       offset = p->prefixlen % 8;
 
       pnt[index] &= maskbit[offset];
@@ -740,10 +736,10 @@ apply_mask_ipv6 (struct prefix_ipv6 *p)
 }
 
 void
-str2in6_addr (const char *str, struct in6_addr *addr)
+str2in6_addr (const char *str, struct ipstack_in6_addr *addr)
 {
-  ospl_uint32 i;
-  ospl_uint32  x;
+  zpl_uint32 i;
+  zpl_uint32  x;
 
   /* %x must point to unsinged int */
   for (i = 0; i < 16; i++)
@@ -797,7 +793,7 @@ sockunion2prefix (const union sockunion *dest,
       p = prefix_ipv6_new ();
       p->family = AF_INET6;
       p->prefixlen = ip6_masklen (mask->sin6.sin6_addr);
-      memcpy (&p->prefix, &dest->sin6.sin6_addr, sizeof (struct in6_addr));
+      memcpy (&p->prefix, &dest->sin6.sin6_addr, sizeof (struct ipstack_in6_addr));
       return (struct prefix *) p;
     }
 #endif /* HAVE_IPV6 */
@@ -826,7 +822,7 @@ sockunion2hostprefix (const union sockunion *su, struct prefix *prefix)
       p = prefix ? (struct prefix_ipv6 *) prefix : prefix_ipv6_new ();
       p->family = AF_INET6;
       p->prefixlen = IPV6_MAX_BITLEN;
-      memcpy (&p->prefix, &su->sin6.sin6_addr, sizeof (struct in6_addr));
+      memcpy (&p->prefix, &su->sin6.sin6_addr, sizeof (struct ipstack_in6_addr));
       return (struct prefix *) p;
     }
 #endif /* HAVE_IPV6 */
@@ -843,7 +839,7 @@ prefix2sockunion (const struct prefix *p, union sockunion *su)
     su->sin.sin_addr = p->u.prefix4;
 #ifdef HAVE_IPV6
   if (p->family == AF_INET6)
-    memcpy (&su->sin6.sin6_addr, &p->u.prefix6, sizeof (struct in6_addr));
+    memcpy (&su->sin6.sin6_addr, &p->u.prefix6, sizeof (struct ipstack_in6_addr));
 #endif /* HAVE_IPV6 */
 }
 
@@ -893,14 +889,14 @@ str2prefix (const char *str, struct prefix *p)
 }
 
 const char *
-prefix2str (union prefix46constptr pu, ospl_char *str, ospl_size_t size)
+prefix2str (union prefix46constptr pu, zpl_char *str, zpl_size_t size)
 {
   const struct prefix *p = pu.p;
-  ospl_char buf[INET6_ADDRSTRLEN];
+  zpl_char buf[INET6_ADDRSTRLEN];
 
   if (p->family == AF_ETHERNET) {
-    ospl_size_t		i;
-    ospl_char	*s = str;
+    zpl_size_t		i;
+    zpl_char	*s = str;
 
     assert(size > (3*ETHER_ADDR_LEN) + 1 /* slash */ + 3 /* plen */ );
     for (i = 0; i < ETHER_ADDR_LEN; ++i) {
@@ -916,22 +912,22 @@ prefix2str (union prefix46constptr pu, ospl_char *str, ospl_size_t size)
     return 0;
   }
 
-  inet_ntop (p->family, &p->u.prefix, buf, INET6_ADDRSTRLEN);
+  ipstack_inet_ntop (p->family, &p->u.prefix, buf, INET6_ADDRSTRLEN);
 
   snprintf (str, size, "%s/%d", buf, p->prefixlen);
   return str;
 }
 
 const char *
-prefix_2_address_str (union prefix46constptr pu, ospl_char *str, ospl_size_t size)
+prefix_2_address_str (union prefix46constptr pu, zpl_char *str, zpl_size_t size)
 {
 	const struct prefix *p = pu.p;
-	ospl_char buf[INET6_ADDRSTRLEN];
+	zpl_char buf[INET6_ADDRSTRLEN];
 
 	if (p->family == AF_ETHERNET)
 	{
-		ospl_uint32 i;
-		ospl_char *s = str;
+		zpl_uint32 i;
+		zpl_char *s = str;
 		assert(size > (3*ETHER_ADDR_LEN) + 1 /* slash */+ 3 /* plen */);
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
 		{
@@ -948,7 +944,7 @@ prefix_2_address_str (union prefix46constptr pu, ospl_char *str, ospl_size_t siz
 		}
 		return str;
 	}
-	inet_ntop(p->family, &p->u.prefix, buf, INET6_ADDRSTRLEN);
+	ipstack_inet_ntop(p->family, &p->u.prefix, buf, INET6_ADDRSTRLEN);
 	snprintf(str, size, "%s", buf);
 	return str;
 }
@@ -989,7 +985,7 @@ all_digit (const char *str)
 void apply_classful_mask_ipv4 (struct prefix_ipv4 *p)
 {
 
-  ospl_uint32 destination;
+  zpl_uint32 destination;
   
   destination = ntohl (p->prefix.s_addr);
   
@@ -1013,18 +1009,18 @@ void apply_classful_mask_ipv4 (struct prefix_ipv4 *p)
 }
 
 in_addr_t
-ipv4_network_addr (in_addr_t hostaddr, ospl_size_t masklen)
+ipv4_network_addr (in_addr_t hostaddr, zpl_size_t masklen)
 {
-  struct in_addr mask;
+  struct ipstack_in_addr mask;
 
   masklen2ip (masklen, &mask);
   return hostaddr & mask.s_addr;
 }
 
 in_addr_t
-ipv4_broadcast_addr (in_addr_t hostaddr, ospl_size_t masklen)
+ipv4_broadcast_addr (in_addr_t hostaddr, zpl_size_t masklen)
 {
-  struct in_addr mask;
+  struct ipstack_in_addr mask;
 
   masklen2ip (masklen, &mask);
   return (masklen != IPV4_MAX_PREFIXLEN-1) ?
@@ -1039,21 +1035,21 @@ ipv4_broadcast_addr (in_addr_t hostaddr, ospl_size_t masklen)
    ex.) "1.0.0.0" NULL => "1.0.0.0/8"                   */
 int
 netmask_str2prefix_str (const char *net_str, const char *mask_str,
-			ospl_char *prefix_str)
+			zpl_char *prefix_str)
 {
-  struct in_addr network;
-  struct in_addr mask;
-  ospl_uchar prefixlen;
-  ospl_uint32 destination;
+  struct ipstack_in_addr network;
+  struct ipstack_in_addr mask;
+  zpl_uchar prefixlen;
+  zpl_uint32 destination;
   int ret;
 
-  ret = inet_aton (net_str, &network);
+  ret = ipstack_inet_aton (net_str, &network);
   if (! ret)
     return 0;
 
   if (mask_str)
     {
-      ret = inet_aton (mask_str, &mask);
+      ret = ipstack_inet_aton (mask_str, &mask);
       if (! ret)
         return 0;
 
@@ -1083,11 +1079,11 @@ netmask_str2prefix_str (const char *net_str, const char *mask_str,
 #ifdef HAVE_IPV6
 /* Utility function for making IPv6 address string. */
 const char *
-inet6_ntoa (struct in6_addr addr)
+inet6_ntoa (struct ipstack_in6_addr addr)
 {
-  static ospl_char buf[INET6_ADDRSTRLEN];
+  static zpl_char buf[INET6_ADDRSTRLEN];
 
-  inet_ntop (AF_INET6, &addr, buf, INET6_ADDRSTRLEN);
+  ipstack_inet_ntop (AF_INET6, &addr, buf, INET6_ADDRSTRLEN);
   return buf;
 }
 #endif /* HAVE_IPV6 */
@@ -1097,7 +1093,7 @@ prefix_check_addr (struct prefix *p)
 {
   if (p->family == AF_INET)
     {
-      ospl_uint32 addr;
+      zpl_uint32 addr;
 
       addr = p->u.prefix4.s_addr;
       addr = ntohl (addr);
@@ -1119,41 +1115,52 @@ prefix_check_addr (struct prefix *p)
   return 1;
 }
 
-const char *inet_address(ospl_uint32 ip)
+const char *inet_address(zpl_uint32 ip)
 {
-	static ospl_char buf[64];
+	static zpl_char buf[64];
 	memset(buf, 0, sizeof(buf));
-	struct in_addr address;
+	struct ipstack_in_addr address;
 	address.s_addr = htonl(ip);
-	//return inet_ntoa(address);
-	snprintf(buf, sizeof(buf), "%s", inet_ntoa(address));
+	//return ipstack_inet_ntoa(address);
+	snprintf(buf, sizeof(buf), "%s", ipstack_inet_ntoa(address));
 	return buf;
 }
 
-const char *inet_ethernet(ospl_uint8 *mac)
+const char *inet_ethernet(zpl_uint8 *mac)
 {
-	static ospl_char buf[64];
+	static zpl_char buf[64];
 	memset(buf, 0, sizeof(buf));
 	snprintf(buf, sizeof(buf), "%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 	return buf;
 }
 
-const char *cli_inet_ethernet(ospl_uint8 *mac)
+const char *cli_inet_ethernet(zpl_uint8 *mac)
 {
-	static ospl_char buf[64];
+	static zpl_char buf[64];
 	memset(buf, 0, sizeof(buf));
 	snprintf(buf, sizeof(buf), "%02x%02x-%02x%02x-%02x%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 	return buf;
 }
 
-ospl_uint32 get_hostip_byname(ospl_char *hostname)
+int cli_ethernet_get(const char *macstr, zpl_uint8 *mac)
 {
-	struct in_addr addre;
-	struct hostent *h = NULL;
-	if((h=gethostbyname(hostname))==NULL)
+	sscanf(macstr, "%02x%02x-%02x%02x-%02x%02x", &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]);
+	return 0;
+}
+
+int cli_ethernet_cmp(zpl_uint8 *smac, zpl_uint8 *dmac)
+{
+	return memcmp(smac, dmac, 6);
+}
+
+zpl_uint32 get_hostip_byname(zpl_char *hostname)
+{
+	struct ipstack_in_addr addre;
+	struct ipstack_hostent *h = NULL;
+	if((h=ipstack_gethostbyname(hostname))==NULL)
 	{
 		return ERROR;
 	}
-	addre = *((struct in_addr *)h->h_addr);
+	addre = *((struct ipstack_in_addr *)h->h_addr);
 	return ntohl(addre.s_addr);
 }

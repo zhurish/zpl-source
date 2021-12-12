@@ -37,7 +37,7 @@ int get_connection() {
 
   server_socket_addr.sin_family = AF_INET;
   server_socket_addr.sin_port = htons(PORT);
-  if (inet_pton(AF_INET, HOST, &server_socket_addr.sin_addr) != 1) {
+  if (ipstack_inet_pton(AF_INET, HOST, &server_socket_addr.sin_addr) != 1) {
     goto out;
   }
 

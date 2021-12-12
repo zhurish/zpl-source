@@ -4,7 +4,7 @@
  *  Created on: May 27, 2017
  *      Author: zhurish
  */
-#include "zebra.h"
+#include "zpl_include.h"
 #include "getopt.h"
 #include <log.h>
 //#include "if_name.h"
@@ -17,8 +17,8 @@
 #include "sockunion.h"
 //#include "version.h"
 //#include "nsm_vrf.h"
-//#include "nsm_filter.h"
-//#include "nsm_plist.h"
+//#include "filter.h"
+//#include "plist.h"
 #include "vty.h"
 //#include "nsm_vlan.h"
 
@@ -67,7 +67,7 @@ DEFUN (sdk_test,
        "syslog-debug\n"
 	   "dest")
 {
-#ifdef PL_HAL_MODULE
+#ifdef ZPL_HAL_MODULE
 	ifindex_t ifindex = atoi(argv[0]);
 	int value = atoi(argv[0]);
 	hal_port_speed_set( ifindex,  value);
@@ -116,7 +116,7 @@ DEFUN (bond_test,
 	return CMD_SUCCESS;
 }
 
-#ifdef PL_DHCP_MODULE
+#ifdef ZPL_DHCP_MODULE
 DEFUN (dhcp_test,
 		dhcp_test_cmd,
        "dhcp-test",
@@ -138,7 +138,7 @@ DEFUN (os_process_test,
 	if(memcmp(argv[0], "start", 3) == 0)
 	{
 		char *argve[] = {"call", "file", "/etc/ppp/peers/dial-auto", NULL};
-		taskid = os_process_register(PROCESS_START, "pppd", "pppd", ospl_true, argve);
+		taskid = os_process_register(PROCESS_START, "pppd", "pppd", zpl_true, argve);
 		if(taskid)
 		{
 			vty_out(vty, "pppd task start OK(%d).%s", taskid, VTY_NEWLINE);
@@ -159,7 +159,7 @@ DEFUN (os_process_test,
 	return CMD_SUCCESS;
 }
 
-#ifdef DOUBLE_PROCESS
+#ifdef ZPL_TOOLS_PROCESS
 DEFUN (process_test,
 		process_test_cmd,
        "process_test <1-10>",
@@ -174,28 +174,28 @@ DEFUN (process_test,
 	{
 	case 1:
 		res = os_process_register(PROCESS_START, "dhcpc-eth0",
-					"dhcpc", ospl_false, inargv);
+					"dhcpc", zpl_false, inargv);
 		break;
 	case 2:
 		res = os_process_register(PROCESS_STOP, "dhcpc-eth0",
-					"dhcpc", ospl_false, inargv);
+					"dhcpc", zpl_false, inargv);
 		break;
 	case 3:
 		res = os_process_register(PROCESS_RESTART, "dhcpc-eth0",
-					"dhcpc", ospl_false, inargv);
+					"dhcpc", zpl_false, inargv);
 		break;
 
 	case 4:
 		res = os_process_register(PROCESS_START, "dhcpc-eth1",
-					"dhcpc1", ospl_true, inargv1);
+					"dhcpc1", zpl_true, inargv1);
 		break;
 	case 5:
 		res = os_process_register(PROCESS_STOP, "dhcpc-eth2",
-					"dhcpc1", ospl_true, inargv1);
+					"dhcpc1", zpl_true, inargv1);
 		break;
 	case 6:
 		res = os_process_register(PROCESS_RESTART, "dhcpc-eth2",
-					"dhcpc1", ospl_true, inargv1);
+					"dhcpc1", zpl_true, inargv1);
 		break;
 	}
 	if((res == ERROR))
@@ -248,7 +248,7 @@ ALIAS(timet_test_exit,
 		"once msec\n");
 #endif
 
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 DEFUN (uci_get_test_cmd,
 		uci_get_test_cmd_cmd,
        "uci-test (get-string|get-integer|get-list) NAME",
@@ -357,7 +357,7 @@ int os_test()
 	 fprintf(stderr,"input:%d-%d\r\n", base, end);*/
 	// vlan_listvalue_format(value,  num, NULL);
 /*
-	ospl_uint8 mac[7];
+	zpl_uint8 mac[7];
 	int unit, slot, port, vlan;
 	vty_iusp_format ("1/2", &unit, &slot, &port, &vlan);
 	vty_iusp_format ("3/4.3", &unit, &slot, &port, &vlan);
@@ -386,39 +386,39 @@ int os_test()
 	//syslogcLibInit ("127.0.0.1");
 	//modem_test_init();
 
-	install_element (ENABLE_NODE, &i_iusp_test_cmd);
-	install_element (ENABLE_NODE, &i_mac_test_cmd);
-	install_element (ENABLE_NODE, &syslog_debug_test_cmd);
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &i_iusp_test_cmd);
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &i_mac_test_cmd);
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &syslog_debug_test_cmd);
 
 #if 0
-	install_element (ENABLE_NODE, &wifi_list_cmd);
-	install_element (ENABLE_NODE, &wifi_scan_cmd);
-#ifdef PL_DHCP_MODULE
-	install_element (ENABLE_NODE, &dhcp_test_cmd);
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &wifi_list_cmd);
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &wifi_scan_cmd);
+#ifdef ZPL_DHCP_MODULE
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &dhcp_test_cmd);
 #endif
-	install_element (ENABLE_NODE, &sdk_test_cmd);
-	install_element (ENABLE_NODE, &bond_test_cmd);
-	install_element (ENABLE_NODE, &os_process_test_cmd);
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &sdk_test_cmd);
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &bond_test_cmd);
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &os_process_test_cmd);
 
-#ifdef DOUBLE_PROCESS
-	install_element (ENABLE_NODE, &process_test_cmd);
+#ifdef ZPL_TOOLS_PROCESS
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &process_test_cmd);
 #endif
 #endif
 
 #ifdef OS_TIMER_TEST
-	install_element (ENABLE_NODE, &timet_test_cmd);
-	install_element (ENABLE_NODE, &timet_test_once_cmd);
-	install_element (ENABLE_NODE, &timet_test_exit_cmd);
-	install_element (ENABLE_NODE, &timet_test_exit_once_cmd);
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &timet_test_cmd);
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &timet_test_once_cmd);
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &timet_test_exit_cmd);
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &timet_test_exit_once_cmd);
 #endif
-#ifdef PL_OPENWRT_UCI
-	install_element (ENABLE_NODE, &uci_get_test_cmd_cmd);
-	install_element (ENABLE_NODE, &uci_set_test_cmd_cmd);
-	install_element (ENABLE_NODE, &uci_list_test_cmd_cmd);
-	install_element (ENABLE_NODE, &uci_section_test_cmd_cmd);
-	install_element (ENABLE_NODE, &uci_del_test_cmd_cmd);
-	install_element (ENABLE_NODE, &uci_del_test_vv_cmd);
-	install_element (ENABLE_NODE, &uci_commit_test_cmd_cmd);
+#ifdef ZPL_OPENWRT_UCI
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &uci_get_test_cmd_cmd);
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &uci_set_test_cmd_cmd);
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &uci_list_test_cmd_cmd);
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &uci_section_test_cmd_cmd);
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &uci_del_test_cmd_cmd);
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &uci_del_test_vv_cmd);
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &uci_commit_test_cmd_cmd);
 #endif
 	return 0;
 }

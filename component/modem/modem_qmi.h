@@ -20,8 +20,8 @@ extern int modem_qmi_start(modem_t *modem);
 extern int modem_qmi_stop(modem_t *modem);
 extern int modem_qmi_exit(modem_t *modem);
 
-extern ospl_bool modem_qmi_isconnect(modem_t *modem);
-extern ospl_bool modem_qmi_islinkup(modem_t *modem);
+extern zpl_bool modem_qmi_isconnect(modem_t *modem);
+extern zpl_bool modem_qmi_islinkup(modem_t *modem);
 
 
 #ifdef _MODEM_QMI_DEBUG

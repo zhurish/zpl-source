@@ -62,10 +62,10 @@ typedef struct voip_event_s
 	voip_event_type_t type;
 	int			(*ev_cb)(voip_event_t *);
 	void		*pVoid;
-	ospl_uint8		data[VOIP_EVENT_DATA_MAX];
-	ospl_uint8		dlen;
-	ospl_uint16		interval;
-	ospl_uint32		timer;
+	zpl_uint8		data[VOIP_EVENT_DATA_MAX];
+	zpl_uint8		dlen;
+	zpl_uint16		interval;
+	zpl_uint32		timer;
 	char 		entry_name[VOIP_EVENT_NAME_MAX];
 }voip_event_t;
 
@@ -96,30 +96,30 @@ typedef struct voip_app_s voip_app_t;
 
 typedef struct voip_call_s
 {
-	ospl_bool			active;
-	ospl_uint16			room_number;		//呼叫实例内房间号
+	zpl_bool			active;
+	zpl_uint16			room_number;		//呼叫实例内房间号
 
-	ospl_uint16			num;				//呼叫实例内号码数量
+	zpl_uint16			num;				//呼叫实例内号码数量
 	call_phone_t	phonetab[VOIP_MULTI_CALL_NUMBER_MAX];
-	ospl_uint16			index;				//当前呼叫号码索引
-	ospl_uint32			time_id;			//定时器ID
+	zpl_uint16			index;				//当前呼叫号码索引
+	zpl_uint32			time_id;			//定时器ID
 	int				time_interval;		//定时间隔（多长时间没有人接听）
 #define APP_RINGING_TIME_INTERVAL		50000//15 SEC
 
-	ospl_uint32			start_timer;		//呼叫接通时间
-	ospl_uint32			open_timer;			//呼叫开门时间
-	ospl_uint32			stop_timer;			//呼叫挂断时间
+	zpl_uint32			start_timer;		//呼叫接通时间
+	zpl_uint32			open_timer;			//呼叫开门时间
+	zpl_uint32			stop_timer;			//呼叫挂断时间
 
 	app_call_source_t 	source;			//呼叫来源
 
-	ospl_bool			talking;			//正在通话中
-	ospl_uint8			building;			//楼栋编号
-	ospl_uint8			unit;				//单元编号
+	zpl_bool			talking;			//正在通话中
+	zpl_uint8			building;			//楼栋编号
+	zpl_uint8			unit;				//单元编号
 
 	int				instance;			//呼叫实例编号
 
 	voip_app_t		*app;
-	ospl_bool			local_stop;		//local stop
+	zpl_bool			local_stop;		//local stop
 }voip_call_t;
 
 typedef enum
@@ -135,18 +135,18 @@ typedef enum
 
 typedef struct voip_call_incoming_s
 {
-	ospl_uint16			room_number;		//呼叫实例内房间号
-	ospl_uint8			building;			//楼栋编号
-	ospl_uint8			unit;				//单元编号
+	zpl_uint16			room_number;		//呼叫实例内房间号
+	zpl_uint8			building;			//楼栋编号
+	zpl_uint8			unit;				//单元编号
 
-	ospl_uint32			start_timer;		//呼叫接通时间
-	ospl_uint32			open_timer;			//呼叫开门时间
-	ospl_uint32			stop_timer;			//呼叫挂断时间
+	zpl_uint32			start_timer;		//呼叫接通时间
+	zpl_uint32			open_timer;			//呼叫开门时间
+	zpl_uint32			stop_timer;			//呼叫挂断时间
 
 	call_phone_t 	phone;
 
 	char 			remote_ip[PJSIP_USERNAME_MAX];
-	ospl_uint16 		port;
+	zpl_uint16 		port;
 	char 			remote_proto[PJSIP_USERNAME_MAX];
 }voip_call_incoming_t;
 
@@ -159,14 +159,14 @@ typedef struct voip_app_s
 
 	voip_call_t			*call_session[VOIP_MULTI_CALL_MAX];//呼叫实例
 	voip_call_t			*session;		//当前呼叫实例
-	ospl_uint16				call_index;
-	ospl_bool				stop_and_next;
+	zpl_uint16				call_index;
+	zpl_bool				stop_and_next;
 
 	voip_call_incoming_t			*incoming_session;
 
 	void				*x5b_app;
 
-	ospl_bool				local_stop;		//local stop
+	zpl_bool				local_stop;		//local stop
 
 	int					debug;
 }voip_app_t;
@@ -183,15 +183,15 @@ extern int void_module_exit(pl_pjsip_t *pj);
 extern int void_module_task_init();
 extern int void_module_task_exit();
 
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 extern int pl_pjsip_module_reload();
 #endif
 extern voip_app_state_t voip_app_state_get(voip_app_t *osip);
 extern int voip_app_state_set(voip_app_t *osip, voip_app_state_t state);
 
-extern ospl_bool voip_app_already_call(voip_app_t *app);
+extern zpl_bool voip_app_already_call(voip_app_t *app);
 
-extern int voip_app_sip_register_start(ospl_bool reg);
+extern int voip_app_sip_register_start(zpl_bool reg);
 
 extern voip_call_t * voip_app_call_session_lookup_by_number(voip_app_t *app, char *number);
 extern voip_call_t * voip_app_call_session_lookup_by_instance(voip_app_t *app, int instance);
@@ -201,27 +201,27 @@ extern voip_call_t * voip_app_call_session_lookup_by_instance(voip_app_t *app, i
 
 //int voip_app_call_next_number(void *p);
 
-extern int voip_app_call_make(voip_call_t *call, app_call_source_t source, ospl_uint8 building,
-		ospl_uint8 unit, ospl_uint16 room);
+extern int voip_app_call_make(voip_call_t *call, app_call_source_t source, zpl_uint8 building,
+		zpl_uint8 unit, zpl_uint16 room);
 
 //extern int voip_app_multi_call_next();
 
 
-extern ospl_bool voip_app_call_event_from_cli_web();
-extern ospl_bool voip_app_call_event_from_ui();
+extern zpl_bool voip_app_call_event_from_cli_web();
+extern zpl_bool voip_app_call_event_from_ui();
 
 extern int voip_app_start_call_event_ui(voip_event_t *ev);
 extern int voip_app_stop_call_event_ui(voip_event_t *ev);
 extern int voip_app_start_call_event_ui_phone(voip_event_t *ev);
 extern int voip_app_start_call_event_ui_user(voip_event_t *ev);
 
-extern int voip_app_start_call_event_cli_web(app_call_source_t source, ospl_uint8 building,
-		ospl_uint8 unit, ospl_uint16 room, char *number);
+extern int voip_app_start_call_event_cli_web(app_call_source_t source, zpl_uint8 building,
+		zpl_uint8 unit, zpl_uint16 room, char *number);
 
 extern int voip_app_stop_call_event_cli_web(voip_call_t *call);
 
-/*extern int voip_app_call_spilt_from_web(char *input, ospl_uint8 *building,
-		ospl_uint8 *unit, ospl_uint16 *room, char *phonelist, int len);*/
+/*extern int voip_app_call_spilt_from_web(char *input, zpl_uint8 *building,
+		zpl_uint8 *unit, zpl_uint16 *room, char *phonelist, int len);*/
 
 
 extern void *voip_app_call_event_current();

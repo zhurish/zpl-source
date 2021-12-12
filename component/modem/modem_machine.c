@@ -6,13 +6,10 @@
  */
 
 
-#include "zebra.h"
-#include "log.h"
-#include "memory.h"
-#include "str.h"
-#include "vty.h"
-#include "os_util.h"
-#include "tty_com.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 #include "modem.h"
 #include "modem_client.h"
@@ -125,7 +122,7 @@ int	modem_machine_state_action(modem_t *modem)
 	{
 		modem->delay = MODEM_DELAY_CHK_TIME;
 		modem->dedelay = MODEM_DELAY_CHK_TIME;
-		modem_event_add_api(modem, MODEM_EV_DELAY, ospl_false);
+		modem_event_add_api(modem, MODEM_EV_DELAY, zpl_false);
 	}
 	if(modem->state == MDMS(NETWORK_ACTIVE) && modem->newstate != MDMS(NETWORK_ACTIVE))
 	{
@@ -135,7 +132,7 @@ int	modem_machine_state_action(modem_t *modem)
 
 	if(event != MODEM_EV_NONE)
 	{
-		modem_event_add_api(modem, event, ospl_false);
+		modem_event_add_api(modem, event, zpl_false);
 		//modem->state = modem->newstate;
 
 		MODEM_DEBUG("event > %s",modem_event_string(event));
@@ -201,7 +198,7 @@ int modem_machine_state(modem_t *modem)
 }
 
 
-int modem_machine_state_show(modem_t *modem, struct vty *vty, ospl_bool detail)
+int modem_machine_state_show(modem_t *modem, struct vty *vty, zpl_bool detail)
 {
 	assert(modem);
 	assert(modem->client);

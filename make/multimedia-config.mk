@@ -1,55 +1,191 @@
-#include $(MAKE_DIR)/module-dir.mk
+#include $(ZPL_MAKE_DIR)/module-dir.mk
 
-ifeq ($(strip $(PL_MULTIMEDIA_MODULE)),true)
+ifeq ($(strip $(ZPL_MULTIMEDIA_MODULE)),true)
 
-ifeq ($(strip $(PL_LIVE555_MODULE)),true)
+ifeq ($(strip $(ZPL_LIVE555_MODULE)),true)
 
 LIVE555_ROOT=$(MULTIMEDIA_ROOT)/live555
-PLEX_DIR += $(MULTIMEDIA_ROOT)/live555
-PL_DEFINE += -DPL_LIVE555_MODULE
-PLEX_INCLUDE += -I$(DSTROOTFSDIR)/include
-PLEX_INCLUDE += -I$(DSTROOTFSDIR)/include/liveMedia
-PLEX_INCLUDE += -I$(DSTROOTFSDIR)/include/groupsock
-PLEX_INCLUDE += -I$(DSTROOTFSDIR)/include/UsageEnvironment
-PLEX_INCLUDE += -I$(DSTROOTFSDIR)/include/BasicUsageEnvironment
-#PL_LDLIBS += -lBasicUsageEnvironment  -lgroupsock  -lliveMedia  -lUsageEnvironment
+ZPLEX_DIR += $(MULTIMEDIA_ROOT)/live555
+ZPL_DEFINE += -DZPL_LIVE555_MODULE -DUSE_RTSP_OPT
+#ZPLEX_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include
+#ZPLEX_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include/liveMedia
+#ZPLEX_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include/groupsock
+#ZPLEX_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include/UsageEnvironment
+#ZPLEX_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include/BasicUsageEnvironment
+#ZPLEX_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include/liveMediaUtil
+ZPLEX_INCLUDE += -I$(ZPL_INSTALL_INC_DIR)
+ZPLEX_INCLUDE += -I$(ZPL_INSTALL_INC_DIR)/liveMedia
+ZPLEX_INCLUDE += -I$(ZPL_INSTALL_INC_DIR)/groupsock
+ZPLEX_INCLUDE += -I$(ZPL_INSTALL_INC_DIR)/UsageEnvironment
+ZPLEX_INCLUDE += -I$(ZPL_INSTALL_INC_DIR)/BasicUsageEnvironment
+ZPLEX_INCLUDE += -I$(ZPL_INSTALL_INC_DIR)/liveMediaUtil
+ZPL_LDLIBS += -lBasicUsageEnvironment  -lgroupsock  -lliveMedia  -lUsageEnvironment -lliveMediaUtil
+endif #($(strip $(ZPL_PJSIP_MODULE)),true)
 
-PLPRODS += $(MULTIMEDIA_ROOT)/media-app
-PL_INCLUDE += -I$(MULTIMEDIA_ROOT)/media-app
-	 
-endif #($(strip $(PL_PJSIP_MODULE)),true)
 
-
-ifeq ($(strip $(PL_LIBX264_MODULE)),true)
+ifeq ($(strip $(ZPL_LIBX264_MODULE)),true)
 LIBX264_ROOT=$(MULTIMEDIA_ROOT)/x264
-PLEX_DIR += $(MULTIMEDIA_ROOT)/x264
-PL_DEFINE += -DPL_LIBX264_MODULE
+ZPLEX_DIR += $(MULTIMEDIA_ROOT)/x264
+ZPL_DEFINE += -DZPL_LIBX264_MODULE
 endif
 
-ifeq ($(strip $(PL_OPENH264_MODULE)),true)
+ifeq ($(strip $(ZPL_OPENH264_MODULE)),true)
 LIBOPENH264_ROOT=$(MULTIMEDIA_ROOT)/openh264-2.1.1
-PLEX_DIR += $(MULTIMEDIA_ROOT)/openh264-2.1.1
-PL_DEFINE += -DPL_OPENH264_MODULE
+ZPLEX_DIR += $(MULTIMEDIA_ROOT)/openh264-2.1.1
+ZPL_DEFINE += -DZPL_OPENH264_MODULE
 endif
 
 
-ifeq ($(strip $(PL_LIBVPX_MODULE)),true)
+ifeq ($(strip $(ZPL_LIBVPX_MODULE)),true)
 LIBVPX_ROOT=$(MULTIMEDIA_ROOT)/libvpx-1.9.0
-PLEX_DIR += $(MULTIMEDIA_ROOT)/libvpx-1.9.0
-PL_DEFINE += -DPL_LIBVPX_MODULE
+ZPLEX_DIR += $(MULTIMEDIA_ROOT)/libvpx-1.9.0
+ZPL_DEFINE += -DZPL_LIBVPX_MODULE
 endif
 
-ifeq ($(strip $(PL_FFMPEG_MODULE)),true)
+ifeq ($(strip $(ZPL_FFMPEG_MODULE)),true)
 FFMPEG_ROOT=$(MULTIMEDIA_ROOT)/ffmpeg
-PLEX_DIR += $(MULTIMEDIA_ROOT)/ffmpeg
-PL_DEFINE += -DPL_FFMPEG_MODULE
+ZPLEX_DIR += $(MULTIMEDIA_ROOT)/ffmpeg
+ZPL_DEFINE += -DZPL_FFMPEG_MODULE
 endif
 
-ifeq ($(strip $(PL_EXOSIP_MODULE)),true)
+ifeq ($(strip $(ZPL_EXOSIP_MODULE)),true)
 EXOSIP_ROOT=$(MULTIMEDIA_ROOT)/exosip
-PLEX_DIR += $(MULTIMEDIA_ROOT)/exosip
-PL_DEFINE += -DPL_EXOSIP_MODULE
+ZPLEX_DIR += $(MULTIMEDIA_ROOT)/exosip
+ZPL_DEFINE += -DZPL_EXOSIP_MODULE
 endif
 
-
+ifeq ($(strip $(ZPL_LIBRTMP_MODULE)),true)
+LIBRTMP_ROOT=$(MULTIMEDIA_ROOT)/librtmp-2.3
+ZPLEX_DIR += $(MULTIMEDIA_ROOT)/librtmp-2.3
+ZPL_DEFINE += -DZPL_LIBRTMP_MODULE
 endif
+
+ifeq ($(strip $(ZPL_EXFREETYPE_MODULE)),true)
+#LIBMFREETYPE_ROOT=$(EXTERNSION_ROOT)/freetype-2.10.0
+#ZPLEX_DIR += $(EXTERNSION_ROOT)/freetype-2.10.0
+ZPLEX_INCLUDE += -I$(ZPL_EXFREETYPE_LIB_PATH)/
+ZPLEX_LDFLAGS += -L$(ZPL_EXFREETYPE_INC_PATH)/
+ZPL_DEFINE += -DZPL_FREETYPE_MODULE -DZPL_EXFREETYPE_MODULE
+endif
+
+ifeq ($(strip $(ZPL_LIBMEDIA_MODULE)),true)
+LIBMEDIA_ROOT=$(MULTIMEDIA_ROOT)/libmedia
+ZPLPRODS_LAST += $(MULTIMEDIA_ROOT)/libmedia
+ZPL_DEFINE += -DZPL_LIBMEDIA_MODULE
+endif
+
+ifeq ($(strip $(ZPL_LIBRTSP_MODULE)),true)
+LIBORTP_ROOT=$(MULTIMEDIA_ROOT)/rtsp
+ZPLPRODS_LAST += $(MULTIMEDIA_ROOT)/rtsp
+ZPL_INCLUDE += -I$(MULTIMEDIA_ROOT)/rtsp
+ZPL_DEFINE += -DZPL_LIBRTSP_MODULE
+endif
+
+ifeq ($(strip $(ZPL_LIBORTP_MODULE)),true)
+LIBORTP_ROOT=$(MULTIMEDIA_ROOT)/ortp-5.0
+ZPLPRODS_LAST += $(MULTIMEDIA_ROOT)/ortp-5.0
+ZPL_INCLUDE += -I$(MULTIMEDIA_ROOT)/ortp-5.0
+ZPL_INCLUDE += -I$(MULTIMEDIA_ROOT)/ortp-5.0/include
+ZPL_INCLUDE += -I$(MULTIMEDIA_ROOT)/ortp-5.0/src
+ZPL_INCLUDE += -I$(MULTIMEDIA_ROOT)/ortp-5.0/playload
+ZPL_DEFINE += -DZPL_LIBORTP_MODULE
+#ZPL_LDLIBS += -L/home/zhurish/workspace/working/zpl-source/source/multimedia/ortp-5.0/include/lib -lbcunit  -lbctoolbox
+endif
+
+ifeq ($(strip $(ZPL_LIBJPEG_MODULE)),true)
+LIBORTP_ROOT=$(MULTIMEDIA_ROOT)/libjpeg
+ZPLPRODS_LAST += $(MULTIMEDIA_ROOT)/libjpeg
+ZPL_INCLUDE += -I$(MULTIMEDIA_ROOT)/libjpeg
+ZPL_DEFINE += -DZPL_LIBJPEG_MODULE
+endif
+
+endif # ZPL_MULTIMEDIA_MODULE
+
+
+ifeq ($(strip $(ZPL_MEDIAAPP_MODULE)),true)
+ZPLPRODS_LAST += $(MULTIMEDIA_ROOT)/media-app
+ZPL_INCLUDE += -I$(MULTIMEDIA_ROOT)/media-app
+ZPL_DEFINE += -DZPL_MEDIAAPP_MODULE
+endif	 
+
+ifeq ($(strip $(ZPL_ZPLMEDIA_MODULE)),true)
+ZPLMEDIA_ROOT=$(ZPLBASE)/zplmedia
+ZPLPRODS_LAST += $(ZPLMEDIA_ROOT)
+ZPL_DEFINE += -DZPL_ZPLMEDIA_MODULE
+ZPLEX_INCLUDE += -I$(ZPLMEDIA_ROOT)/include
+ZPLEX_INCLUDE += -I$(ZPLMEDIA_ROOT)/include/hal
+ZPLEX_INCLUDE += -I$(ZPLMEDIA_ROOT)/video/hal
+
+ifeq ($(strip $(ZPL_HISIMPP_MODULE)),true)
+ZPL_DEFINE += -DZPL_HISIMPP_MODULE
+ifeq ($(strip $(ZPL_HISIMPP_HWDEBUG)),true)
+ZPL_DEFINE += -DZPL_HISIMPP_HWDEBUG
+endif
+ZPLEX_INCLUDE += -I$(ZPLMEDIA_ROOT)/hisidir/include
+ZPLEX_LDFLAGS += -L$(ZPLMEDIA_ROOT)/hisidir/lib
+ifeq ($(ZPL_BUILD_ARCH),ARM)
+ZPLEX_LDLIBS += -laaccomm
+ZPLEX_LDLIBS += -lisp
+ZPLEX_LDLIBS += -laacdec
+ZPLEX_LDLIBS += -live
+ZPLEX_LDLIBS += -laacenc
+ZPLEX_LDLIBS += -lmd
+ZPLEX_LDLIBS += -laacsbrdec
+ZPLEX_LDLIBS += -lmpi
+ZPLEX_LDLIBS += -laacsbrenc
+ZPLEX_LDLIBS += -lnnie
+ZPLEX_LDLIBS += -ldnvqe
+ZPLEX_LDLIBS += -lsecurec
+ZPLEX_LDLIBS += -lhdmi
+ZPLEX_LDLIBS += -l_hiae
+ZPLEX_LDLIBS += -l_hiawb_natura
+ZPLEX_LDLIBS += -l_hiawb
+ZPLEX_LDLIBS += -l_hicalcflicker
+ZPLEX_LDLIBS += -lhi_cipher
+ZPLEX_LDLIBS += -l_hidehaze
+#ZPLEX_LDLIBS += -L$(ZPLBASE)/source/debug/lib -l:lib_hidehaze.a -l:libisp.a
+ZPLEX_LDLIBS += -l_hidrc
+ZPLEX_LDLIBS += -lhifisheyecalibrate
+ZPLEX_LDLIBS += -l_hiir_auto
+ZPLEX_LDLIBS += -l_hildci
+ZPLEX_LDLIBS += -lhive_AEC
+ZPLEX_LDLIBS += -lhive_AGC
+ZPLEX_LDLIBS += -lhive_ANR
+ZPLEX_LDLIBS += -lhive_common
+ZPLEX_LDLIBS += -lhive_EQ
+ZPLEX_LDLIBS += -lsvpruntime
+ZPLEX_LDLIBS += -lhive_HPF
+ZPLEX_LDLIBS += -ltde
+ZPLEX_LDLIBS += -lhive_record
+ZPLEX_LDLIBS += -lupvqe
+ZPLEX_LDLIBS += -lhive_RES_ext
+ZPLEX_LDLIBS += -lVoiceEngine
+ZPLEX_LDLIBS += -lhive_RES
+
+ZPLEX_LDLIBS += -lsns_imx335_forcar
+ZPLEX_LDLIBS += -lsns_imx335
+ZPLEX_LDLIBS += -lsns_imx327
+ZPLEX_LDLIBS += -lsns_imx327_2l
+ZPLEX_LDLIBS += -lsns_imx307
+ZPLEX_LDLIBS += -lsns_imx307_2l
+ZPLEX_LDLIBS += -lsns_imx415
+ZPLEX_LDLIBS += -lsns_mn34220
+ZPLEX_LDLIBS += -lsns_imx458
+ZPLEX_LDLIBS += -lsns_os05a
+ZPLEX_LDLIBS += -lsns_os04b10
+ZPLEX_LDLIBS += -lsns_os08a10
+ZPLEX_LDLIBS += -lsns_ov12870
+ZPLEX_LDLIBS += -lsns_sc4210
+ZPLEX_LDLIBS += -lsns_gc2053
+
+SENSOR0_TYPE ?= SONY_IMX327_2L_MIPI_2M_30FPS_12BIT
+SENSOR1_TYPE ?= SONY_IMX327_2L_MIPI_2M_30FPS_12BIT
+ZPLM_CFLAGS += -DSENSOR0_TYPE=$(SENSOR0_TYPE)
+ZPLM_CFLAGS += -DSENSOR1_TYPE=$(SENSOR1_TYPE)
+endif #ZPL_BUILD_ARCH
+endif #ZPL_HISIMPP_MODULE
+
+
+endif #ZPL_ZPLMEDIA_MODULE
+
+

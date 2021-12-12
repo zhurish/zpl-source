@@ -37,7 +37,7 @@ modification history
 extern "C" {
 #endif
 
-#include <zebra.h>
+#include <os_include.h>
 #include <log.h>
 
 /* defines */
@@ -110,13 +110,13 @@ TFTP_ERROR |  05    | ErrorCode | ErrMsg |   0  |
 
 struct	tftpFormat
     {
-    ospl_ushort blockOrError;
+    zpl_ushort blockOrError;
     char data [TFTP_SEGSIZE];
     } TFTP_PACKED;
 
 typedef struct tftp_msg
     {
-    ospl_ushort	th_opcode;                      /* packet op code       */
+    zpl_ushort	th_opcode;                      /* packet op code       */
     union
         {
         char    request [TFTP_REQSIZE];         /* request string 	*/
@@ -167,7 +167,7 @@ typedef struct tftp_errmsg
 typedef struct tftp_desc
     {
     char 	mode [32];                      /* mode                 */
-    ospl_bool	connected;                      /* state                */
+    zpl_bool	connected;                      /* state                */
     char    serverName [128];               /* server ascii name    */
 #ifndef INET6
     struct sockaddr_in serverAddr;          /* server address 	    */
@@ -176,7 +176,7 @@ typedef struct tftp_desc
 #endif
     int     sock;                           /* socket               */
     int     sockFamily;                     /* AF_INET(6)           */
-    ospl_ushort	serverPort;                 /* server port number   */
+    zpl_ushort	serverPort;                 /* server port number   */
     char	fileName [TFTP_FILENAME_SIZE];	/* requested file name  */
     int tftp_size;
     int	tftp_start_time;
@@ -229,7 +229,7 @@ extern int 	tftpErrorCreate (TFTP_MSG * pTftpMsg, int errorNum);
 
 
 
-extern ospl_bool tftpDebug;
+extern zpl_bool tftpDebug;
 
 extern int tftp_download(void *v, char *hostName, int port, char *fileName, char *usr,
 		char *passwd, char *localfileName);

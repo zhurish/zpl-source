@@ -1,4 +1,5 @@
-#include "zebra.h"
+#include "zpl_include.h"
+#include "module.h"
 #include "moduletypes.h"
  
 extern struct module_list module_list_default;
@@ -11,9 +12,11 @@ extern struct module_list module_list_telnet;
 extern struct module_list module_list_utils;
 extern struct module_list module_list_imish;
 extern struct module_list module_list_kernel;
-extern struct module_list module_list_nsmdebug;
+extern struct module_list module_list_nsmdhcp;
 extern struct module_list module_list_nsm;
+extern struct module_list module_list_sdk;
 extern struct module_list module_list_pal;
+extern struct module_list module_list_hal;
  
 struct module_alllist module_lists_tbl[MODULE_MAX] = {
   &module_list_default,
@@ -26,8 +29,10 @@ struct module_alllist module_lists_tbl[MODULE_MAX] = {
   &module_list_utils,
   &module_list_imish,
   &module_list_kernel,
-  &module_list_nsmdebug,
+  &module_list_nsmdhcp,
   &module_list_nsm,
+  &module_list_sdk,
   &module_list_pal,
+  &module_list_hal,
  NULL,
 };

@@ -56,24 +56,24 @@ extern "C" {
 
 //TODO: rename ciaddr/yiaddr/chaddr
 struct dhcp_packet {
-	ospl_uint8 op;      /* BOOTREQUEST or BOOTREPLY */
-	ospl_uint8 htype;   /* hardware address type. 1 = 10mb ethernet */
-	ospl_uint8 hlen;    /* hardware address length */
-	ospl_uint8 hops;    /* used by relay agents only */
-	ospl_uint32  xid;    /* unique id */
-	ospl_uint16 secs;   /* elapsed since client began acquisition/renewal */
-	ospl_uint16 flags;  /* only one flag so far: */
-	ospl_uint32  ciaddr; /* client IP (if client is in BOUND, RENEW or REBINDING state) */
-	ospl_uint32  yiaddr; /* 'your' (client) IP address */
+	zpl_uint8 op;      /* BOOTREQUEST or BOOTREPLY */
+	zpl_uint8 htype;   /* hardware address type. 1 = 10mb ethernet */
+	zpl_uint8 hlen;    /* hardware address length */
+	zpl_uint8 hops;    /* used by relay agents only */
+	zpl_uint32  xid;    /* unique id */
+	zpl_uint16 secs;   /* elapsed since client began acquisition/renewal */
+	zpl_uint16 flags;  /* only one flag so far: */
+	zpl_uint32  ciaddr; /* client IP (if client is in BOUND, RENEW or REBINDING state) */
+	zpl_uint32  yiaddr; /* 'your' (client) IP address */
 	/* IP address of next server to use in bootstrap, returned in DHCPOFFER, DHCPACK by server */
-	ospl_uint32  siaddr_nip; /*若 client 需要透过网络开机，从 server 送出之 DHCP OFFER、DHCPACK、DHCPNACK封包中，
+	zpl_uint32  siaddr_nip; /*若 client 需要透过网络开机，从 server 送出之 DHCP OFFER、DHCPACK、DHCPNACK封包中，
 							此栏填写开机程序代码所在 server 之地址*/
-	ospl_uint32  gateway_nip; /* relay agent IP address */
-	ospl_uint8 chaddr[DHCP_CHADDR_LEN];   /* link-layer client hardware address (MAC) */
-	ospl_uint8 sname[DHCP_SNAME_LEN];    /* server host name (ASCIZ) */
-	ospl_uint8 file[DHCP_FILE_LEN];    /* boot file name (ASCIZ) */
-	ospl_uint32  cookie;      /* fixed first four option bytes (99,130,83,99 dec) */
-	ospl_uint8 options[DHCP_OPTIONS_BUFSIZE + CONFIG_UDHCPC_SLACK_FOR_BUGGY_SERVERS];
+	zpl_uint32  gateway_nip; /* relay agent IP address */
+	zpl_uint8 chaddr[DHCP_CHADDR_LEN];   /* link-layer client hardware address (MAC) */
+	zpl_uint8 sname[DHCP_SNAME_LEN];    /* server host name (ASCIZ) */
+	zpl_uint8 file[DHCP_FILE_LEN];    /* boot file name (ASCIZ) */
+	zpl_uint32  cookie;      /* fixed first four option bytes (99,130,83,99 dec) */
+	zpl_uint8 options[DHCP_OPTIONS_BUFSIZE + CONFIG_UDHCPC_SLACK_FOR_BUGGY_SERVERS];
 } PACKED;
 
 struct ip_udp_dhcp_packet {
@@ -225,13 +225,13 @@ enum {
     0x0002表示后面是DUID*/
 
 struct dhcp_optflag {
-	ospl_uint8 flags;
-	ospl_uint8 code;
+	zpl_uint8 flags;
+	zpl_uint8 code;
 };
 
 /*
 struct option_set {
-	ospl_uint8 *data;
+	zpl_uint8 *data;
 	struct option_set *next;
 };
 */
@@ -266,8 +266,8 @@ struct option_set {
 
 typedef struct dhcp_global_s
 {
-	ospl_uint32		task_id;
-	ospl_bool	init;
+	zpl_uint32		task_id;
+	zpl_bool	init;
 	LIST 	pool_list;
 	LIST 	client_list;
 	LIST 	relay_list;
@@ -275,21 +275,21 @@ typedef struct dhcp_global_s
 	void	*eloop_master;
 	void	*r_thread;
 
-	ospl_uint16 server_port;
-	ospl_uint16 client_port;
+	zpl_uint16 server_port;
+	zpl_uint16 client_port;
 
-	ospl_uint16 server_port_v6;
-	ospl_uint16 client_port_v6;
+	zpl_uint16 server_port_v6;
+	zpl_uint16 client_port_v6;
 
-	int		sock;		//udp socket, just for server
-	int		rawsock;	//raw socket, just for server send MSG to client
+	zpl_socket_t		sock;		//udp socket, just for server
+	zpl_socket_t		rawsock;	//raw socket, just for server send MSG to client
 
-	int		sock_v6;
-	int		rawsock_v6;
+	zpl_socket_t		sock_v6;
+	zpl_socket_t		rawsock_v6;
 
-	int		client_sock;		//udp socket, just for client
-	ospl_uint32		client_cnt;
-	ospl_uint32		client_debug;
+	zpl_socket_t		client_sock;		//udp socket, just for client
+	zpl_uint32		client_cnt;
+	zpl_uint32		client_debug;
 }dhcp_global_t;
 
 extern dhcp_global_t dhcp_global_config;
@@ -301,18 +301,18 @@ extern dhcp_global_t dhcp_global_config;
 //extern const struct dhcp_optflag dhcp_optflags[];
 //extern const char dhcp_option_strings[] ALIGN1;
 #endif
-//extern const ospl_uint8 dhcp_option_lengths[] ALIGN1;
+//extern const zpl_uint8 dhcp_option_lengths[] ALIGN1;
 
 //unsigned FAST_FUNC udhcp_option_idx(const char *name, const char *option_strings);
-//ospl_uint32 FAST_FUNC udhcp_option_idx(const int opc);
+//zpl_uint32 FAST_FUNC udhcp_option_idx(const int opc);
 
 
-//void udhcp_add_binary_option(struct dhcp_packet *packet, ospl_uint8 *addopt) FAST_FUNC;
+//void udhcp_add_binary_option(struct dhcp_packet *packet, zpl_uint8 *addopt) FAST_FUNC;
 #if ENABLE_UDHCPC || ENABLE_UDHCPD
-//void udhcp_add_simple_option(struct dhcp_packet *packet, ospl_uint8 code, ospl_uint32  data) FAST_FUNC;
+//void udhcp_add_simple_option(struct dhcp_packet *packet, zpl_uint8 code, zpl_uint32  data) FAST_FUNC;
 #endif
 
-//struct option_set *udhcp_find_option(struct option_set *opt_list, ospl_uint8 code) FAST_FUNC;
+//struct option_set *udhcp_find_option(struct option_set *opt_list, zpl_uint8 code) FAST_FUNC;
 
 
 // RFC 2131  Table 5: Fields and options used by DHCP clients
@@ -393,8 +393,8 @@ void udhcp_dump_packet(struct dhcp_packet *packet) FAST_FUNC;
 */
 
 struct udhcp_packet_cmd {
-	ospl_uint32  ip;
-	ospl_uint16 port;
+	zpl_uint32  ip;
+	zpl_uint16 port;
 } PACKED;
 
 

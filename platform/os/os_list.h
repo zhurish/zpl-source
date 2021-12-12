@@ -26,7 +26,7 @@ typedef struct node		/* Node of a linked list. */
 typedef struct			/* Header for a linked list. */
     {
     NODE node;			/* Header list node */
-    ospl_uint32 count;			/* Number of nodes in list */
+    zpl_uint32 count;			/* Number of nodes in list */
     int (*free)(void *);
     int (*cmp)(void *, void *);
     } LIST;
@@ -42,11 +42,11 @@ extern void	lstLibInit (void);
 extern NODE *	lstFirst (LIST *pList);
 extern NODE *	lstGet (LIST *pList);
 extern NODE *	lstLast (LIST *pList);
-extern NODE *	lstNStep (NODE *pNode, ospl_uint32 nStep);
+extern NODE *	lstNStep (NODE *pNode, zpl_uint32 nStep);
 extern NODE *	lstNext (NODE *pNode);
-extern NODE *	lstNth (LIST *pList, ospl_uint32 nodenum);
+extern NODE *	lstNth (LIST *pList, zpl_uint32 nodenum);
 extern NODE *	lstPrevious (NODE *pNode);
-extern ospl_uint32 	lstCount (LIST *pList);
+extern zpl_uint32 	lstCount (LIST *pList);
 extern int 	lstFind (LIST *pList, NODE *pNode);
 extern void 	lstAdd (LIST *pList, NODE *pNode);
 extern void 	lstConcat (LIST *pDstList, LIST *pAddList);

@@ -35,12 +35,10 @@
 //usage:	IF_FEATURE_UDHCP_PORT(
 //usage:     "\n	-P N	Use port N (default 67)"
 //usage:	)
-#include "zebra.h"
-#include "memory.h"
-#include "command.h"
-#include "prefix.h"
-#include "log.h"
-#include "eloop.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
 
 
 #include "dhcp_def.h"
@@ -79,7 +77,7 @@ static dhcpd_interface_t * dhcpd_pool_create_interface(ifindex_t ifindex) {
 	return NULL;
 }
 
-ospl_uint32  dhcpd_lookup_address_on_interface(dhcp_pool_t*config, ifindex_t ifindex) {
+zpl_uint32  dhcpd_lookup_address_on_interface(dhcp_pool_t*config, ifindex_t ifindex) {
 	dhcpd_interface_t *pstNode = NULL;
 	NODE index;
 	if (!config)
@@ -120,14 +118,14 @@ int dhcpd_pool_add_interface(dhcp_pool_t*config, ifindex_t ifindex) {
 		//ifter->pool = config;
 		lstAdd(&config->interf, ifter);
 
-		if(config->global->sock == 0)
+		if(ipstack_invalid(config->global->sock))
 			config->global->sock = udhcp_udp_socket(config->global->server_port);
-		if(config->global->rawsock == 0)
+		if(ipstack_invalid(config->global->rawsock))
 			config->global->rawsock = udhcp_raw_socket();
 
 		zlog_debug(MODULE_DHCP, "dhcpd_pool_add_interface -> udhcp_udp_socket udhcp_raw_socket");
 
-		if (config->global->r_thread == NULL && config->global->sock > 0)
+		if (config->global->r_thread == NULL && !ipstack_invalid(config->global->sock))
 		{
 			zlog_debug(MODULE_DHCP, "dhcpd_pool_add_interface");
 			config->global->r_thread = eloop_add_read(
@@ -188,7 +186,7 @@ int dhcpd_interface_clean(dhcp_pool_t*config)
  * If chaddr == NULL, this is a conflict lease.
  */
 /*
- static void dhcpd_clear_leases(dhcp_pool_t *config, const ospl_uint8 *chaddr, ospl_uint32  yiaddr)
+ static void dhcpd_clear_leases(dhcp_pool_t *config, const zpl_uint8 *chaddr, zpl_uint32  yiaddr)
  {
  if (chaddr)
  {
@@ -206,29 +204,29 @@ static int dhcpd_lease_is_expired(struct dyn_lease *lease) {
 
 /* Find the first lease that matches MAC, NULL if no match */
 static struct dyn_lease *dhcpd_find_lease_by_mac(dhcp_pool_t *config,
-		const ospl_uint8 *mac) {
+		const zpl_uint8 *mac) {
 	return dhcp_lease_lookup_by_lease_mac(&config->dhcp_lease_list,
 			LEASE_DYNAMIC, mac);
 }
 
 /* Find the first lease that matches IP, NULL is no match */
-static struct dyn_lease *dhcpd_find_lease_by_nip(dhcp_pool_t *config, ospl_uint32  nip) {
+static struct dyn_lease *dhcpd_find_lease_by_nip(dhcp_pool_t *config, zpl_uint32  nip) {
 	return dhcp_lease_lookup_by_lease_address(&config->dhcp_lease_list,
 			LEASE_DYNAMIC, nip);
 }
 
-static dyn_lease_t * dhcpd_is_nip_reserved(dhcp_pool_t *config, ospl_uint32  nip) {
+static dyn_lease_t * dhcpd_is_nip_reserved(dhcp_pool_t *config, zpl_uint32  nip) {
 	return dhcp_lease_lookup_by_lease_address(&config->dhcp_lease_list,
 			LEASE_STATIC, nip);
 }
-static struct dyn_lease * dhcpd_find_static_lease_by_mac(dhcp_pool_t *config, const ospl_uint8 *mac)
+static struct dyn_lease * dhcpd_find_static_lease_by_mac(dhcp_pool_t *config, const zpl_uint8 *mac)
 {
 	return dhcp_lease_lookup_by_lease_mac(&config->dhcp_lease_list,
 			LEASE_STATIC, mac);
 }
 
 /* Check if the IP is taken; if it is, add it to the lease table */
-static int dhcpd_icmp_echo_request(ospl_uint32  nip, const ospl_uint8 *safe_mac,
+static int dhcpd_icmp_echo_request(zpl_uint32  nip, const zpl_uint8 *safe_mac,
 		unsigned arpping_ms, dhcpd_interface_t *ifter) {
 	struct in_addr temp;
 	int r;
@@ -240,19 +238,19 @@ static int dhcpd_icmp_echo_request(ospl_uint32  nip, const ospl_uint8 *safe_mac,
 		return r;
 	temp.s_addr = nip;
 	zlog_err(MODULE_DHCP, "%s belongs to someone, reserving it for %u seconds",
-			inet_ntoa(temp), (unsigned )ifter->pool->conflict_time);
+			ipstack_inet_ntoa(temp), (unsigned )ifter->pool->conflict_time);
 	//add_lease(ifter->pool, NULL, nip, ifter->pool->conflict_time, NULL, 0);
 	return 0;
 }
 
 /* Find a new usable (we think) address */
-static ospl_uint32  dhcpd_find_free_lease(const ospl_uint8 *safe_mac,
+static zpl_uint32  dhcpd_find_free_lease(const zpl_uint8 *safe_mac,
 		unsigned arpping_ms, dhcp_pool_t *config, dhcpd_interface_t *ifter) {
-	ospl_uint32  addr = 0;
+	zpl_uint32  addr = 0;
 	struct dyn_lease *oldest_lease = NULL;
-	ospl_uint32  server_nip = ifter->ipaddr;
+	zpl_uint32  server_nip = ifter->ipaddr;
 #if ENABLE_FEATURE_UDHCPD_BASE_IP_ON_MAC
-	ospl_uint32  lease_stop;
+	zpl_uint32  lease_stop;
 	unsigned i, hash;
 
 	/* hash hwaddr: use the SDBM hashing algorithm.  Seems to give good
@@ -269,10 +267,10 @@ static ospl_uint32  dhcpd_find_free_lease(const ospl_uint8 *safe_mac,
 #else
 	addr = config->start_ip;
 	//#define lease_stop (config->end_ip + 1)
-	ospl_uint32  lease_stop = config->end_ip + 1;
+	zpl_uint32  lease_stop = config->end_ip + 1;
 #endif
 	do {
-		ospl_uint32  nip;
+		zpl_uint32  nip;
 		struct dyn_lease *lease;
 
 		/* ie, 192.168.55.0 */
@@ -319,12 +317,12 @@ static ospl_uint32  dhcpd_find_free_lease(const ospl_uint8 *safe_mac,
 /* Add a lease into the table, clearing out any old ones.
  * If chaddr == NULL, this is a conflict lease.
  */
-static struct dyn_lease *dhcpd_new_lease(dhcpd_interface_t *inter, ospl_uint8 *chaddr)
+static struct dyn_lease *dhcpd_new_lease(dhcpd_interface_t *inter, zpl_uint8 *chaddr)
 {
 	//char *p_host_name = NULL;
 	//int hostname_len = 0;
 	dyn_lease_t lease;
-	ospl_uint8 empty_chaddr[ETHER_ADDR_LEN] = { 0, 0, 0, 0, 0, 0 };
+	zpl_uint8 empty_chaddr[ETHER_ADDR_LEN] = { 0, 0, 0, 0, 0, 0 };
 	memset(&lease, 0, sizeof(lease));
 	if ((memcmp(chaddr, empty_chaddr, ETHER_ADDR_LEN) == 0))
 		return NULL;
@@ -341,10 +339,10 @@ static struct dyn_lease *dhcpd_new_lease(dhcpd_interface_t *inter, ospl_uint8 *c
 	return dhcp_lease_add(&inter->pool->dhcp_lease_list, &lease);
 }
 static struct dyn_lease *dhcpd_update_lease(dyn_lease_t *lease,
-		ospl_uint32  lease_address, struct dhcp_packet *olddhcp_pkt, ospl_uint32  offer_time)
+		zpl_uint32  lease_address, struct dhcp_packet *olddhcp_pkt, zpl_uint32  offer_time)
 {
 	char *p_host_name = NULL;
-	ospl_uint32 hostname_len = 0;
+	zpl_uint32 hostname_len = 0;
 
 	lease->lease_address = lease_address;//olddhcp_pkt->yiaddr;
 /*	lease->ifindex = inter->ifindex;
@@ -401,11 +399,11 @@ static struct dyn_lease *dhcpd_update_lease(dyn_lease_t *lease,
 /* Send a packet to a specific mac address and ip address by creating our own ip packet */
 static void dhcpd_packet_to_client(struct dhcp_packet *dhcp_pkt,
 		int force_broadcast, dhcp_pool_t *config, dhcpd_interface_t *ifter) {
-	const ospl_uint8 *chaddr;
-	ospl_uint32  ciaddr;
+	const zpl_uint8 *chaddr;
+	zpl_uint32  ciaddr;
 	struct udhcp_packet_cmd source;
 	struct udhcp_packet_cmd dest;
-	//ospl_uint32  server_nip = ifter->ipaddr;
+	//zpl_uint32  server_nip = ifter->ipaddr;
 	// Was:
 	//if (force_broadcast) { /* broadcast */ }
 	//else if (dhcp_pkt->ciaddr) { /* unicast to dhcp_pkt->ciaddr */ }
@@ -459,7 +457,7 @@ static void dhcpd_packet_to_relay(struct dhcp_packet *dhcp_pkt,
 	 dhcp_pkt->gateway_nip, SERVER_PORT);*/
 }
 
-static void dhcpd_send_packet(struct dhcp_packet *dhcp_pkt, ospl_uint32 force_broadcast,
+static void dhcpd_send_packet(struct dhcp_packet *dhcp_pkt, zpl_uint32 force_broadcast,
 		dhcp_pool_t *config, dhcpd_interface_t *ifter) {
 	if (dhcp_pkt->gateway_nip)
 		dhcpd_packet_to_relay(dhcp_pkt, config, ifter);
@@ -468,7 +466,7 @@ static void dhcpd_send_packet(struct dhcp_packet *dhcp_pkt, ospl_uint32 force_br
 }
 
 static void dhcpd_packet_init(struct dhcp_packet *packet,
-		struct dhcp_packet *oldpacket, char type, ospl_uint32 server_nip) {
+		struct dhcp_packet *oldpacket, char type, zpl_uint32 server_nip) {
 	/* Sets op, htype, hlen, cookie fields
 	 * and adds DHCP_MESSAGE_TYPE option */
 	udhcp_header_init(packet, type);
@@ -509,10 +507,10 @@ static void dhcpd_build_options(dhcp_pool_t *config, struct dhcp_packet *packet,
 				sizeof(packet->file) - 1);
 }
 
-static ospl_uint32  dhcpd_select_lease_time(dhcp_pool_t *config,
+static zpl_uint32  dhcpd_select_lease_time(dhcp_pool_t *config,
 		struct dhcp_packet *packet) {
-	ospl_uint32  lease_time_sec = config->max_lease_sec;
-	ospl_uint8 *lease_time_opt = udhcp_get_option(packet, DHCP_LEASE_TIME, NULL);
+	zpl_uint32  lease_time_sec = config->max_lease_sec;
+	zpl_uint8 *lease_time_opt = udhcp_get_option(packet, DHCP_LEASE_TIME, NULL);
 	if (lease_time_opt) {
 		move_from_unaligned32(lease_time_sec, lease_time_opt);
 		lease_time_sec = ntohl(lease_time_sec);
@@ -528,8 +526,8 @@ static ospl_uint32  dhcpd_select_lease_time(dhcp_pool_t *config,
 static int dhcpd_get_lease(struct dhcp_packet *oldpacket, dhcp_pool_t *config,
 		dhcpd_interface_t *ifter)
 {
-	ospl_uint32 arpping_ms = 2000;
-	ospl_uint32  requested_address = 0;
+	zpl_uint32 arpping_ms = 2000;
+	zpl_uint32  requested_address = 0;
 	ifter->state.requested_address = 0;
 	//struct dyn_lease *cu_lease = dhcpd_find_lease_by_mac(config, oldpacket->chaddr);
 
@@ -576,10 +574,10 @@ static void dhcpd_send_offer(struct dhcp_packet *oldpacket, dhcp_pool_t *config,
 		dhcpd_interface_t *ifter, struct dyn_lease *lease)
 {
 	struct dhcp_packet packet;
-	ospl_uint32  lease_time_sec;
+	zpl_uint32  lease_time_sec;
 	struct in_addr addr;
-	ospl_uint8 optlen = 0, *opt_b = NULL;//, i = 0;
-	//ospl_uint32 arpping_ms = 2000;
+	zpl_uint8 optlen = 0, *opt_b = NULL;//, i = 0;
+	//zpl_uint32 arpping_ms = 2000;
 	if (!config)
 		return;
 	dhcpd_packet_init(&packet, oldpacket, DHCPOFFER, ifter->ipaddr/* server ip*/);
@@ -604,7 +602,7 @@ static void dhcpd_send_offer(struct dhcp_packet *oldpacket, dhcp_pool_t *config,
 	//udhcp_add_simple_option(&packet, DHCP_LEASE_TIME, htonl(lease_time_sec));
 
 	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_RENEWAL_TIME, htonl(lease_time_sec>>DHCP_T1));
-	lease_time_sec = (ospl_uint32 )((ospl_float)lease_time_sec * DHCP_T2);
+	lease_time_sec = (zpl_uint32 )((zpl_float)lease_time_sec * DHCP_T2);
 	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_REBINDING_TIME, htonl(lease_time_sec));
 
 	dhcpd_build_options(config, &packet, oldpacket);
@@ -625,7 +623,7 @@ static void dhcpd_send_offer(struct dhcp_packet *oldpacket, dhcp_pool_t *config,
 	}
 
 	addr.s_addr = packet.yiaddr;
-	zlog_err(MODULE_DHCP, "sending OFFER of %s", inet_ntoa(addr));
+	zlog_err(MODULE_DHCP, "sending OFFER of %s", ipstack_inet_ntoa(addr));
 	/* dhcpd_send_packet emits error message itself if it detects failure */
 	dhcpd_send_packet(&packet, /*force_bcast:*/0, config, ifter);
 }
@@ -645,10 +643,10 @@ static void dhcpd_send_nak(struct dhcp_packet *oldpacket, dhcp_pool_t *config,
 static void dhcpd_send_ack(struct dhcp_packet *oldpacket, dhcp_pool_t *config,
 		dhcpd_interface_t *ifter, struct dyn_lease *lease) {
 	struct dhcp_packet packet;
-	ospl_uint32  lease_time_sec;
+	zpl_uint32  lease_time_sec;
 	struct in_addr addr;
 	struct dyn_lease *cu_lease = NULL;
-	ospl_uint8 *opt, optlen = 0;
+	zpl_uint8 *opt, optlen = 0;
 
 	dhcpd_packet_init(&packet, oldpacket, DHCPACK, ifter->ipaddr);
 
@@ -659,13 +657,13 @@ static void dhcpd_send_ack(struct dhcp_packet *oldpacket, dhcp_pool_t *config,
 	//udhcp_add_simple_option(&packet, DHCP_LEASE_TIME, htonl(lease_time_sec));
 	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_LEASE_TIME, htonl(lease_time_sec));
 	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_RENEWAL_TIME, htonl(lease_time_sec>>DHCP_T1));
-	lease_time_sec = (ospl_uint32 )((ospl_float)lease_time_sec * DHCP_T2);
+	lease_time_sec = (zpl_uint32 )((zpl_float)lease_time_sec * DHCP_T2);
 	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_REBINDING_TIME, htonl(lease_time_sec));
 
 	dhcpd_build_options(config, &packet, oldpacket);
 
 	addr.s_addr = lease->lease_address;
-	zlog_err(MODULE_DHCP, "sending ACK to %s", inet_ntoa(addr));
+	zlog_err(MODULE_DHCP, "sending ACK to %s", ipstack_inet_ntoa(addr));
 	dhcpd_send_packet(&packet, /*force_bcast:*/0, config, ifter);
 
 	cu_lease = dhcpd_update_lease(lease,
@@ -720,10 +718,10 @@ static void dhcpd_send_inform(struct dhcp_packet *oldpacket, dhcp_pool_t *config
 	//Better yet: is ciaddr == IP source addr?
 
 	struct dhcp_packet packet;
-	ospl_uint32  lease_time_sec;
+	zpl_uint32  lease_time_sec;
 	struct in_addr addr;
 	struct dyn_lease *cu_lease = NULL;
-	ospl_uint8 *opt, optlen = 0;
+	zpl_uint8 *opt, optlen = 0;
 
 	dhcpd_packet_init(&packet, oldpacket, DHCPACK, ifter->ipaddr);
 
@@ -734,7 +732,7 @@ static void dhcpd_send_inform(struct dhcp_packet *oldpacket, dhcp_pool_t *config
 	//udhcp_add_simple_option(&packet, DHCP_LEASE_TIME, htonl(lease_time_sec));
 	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_LEASE_TIME, htonl(lease_time_sec));
 	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_RENEWAL_TIME, htonl(lease_time_sec>>DHCP_T1));
-	lease_time_sec = (ospl_uint32 )((ospl_float)lease_time_sec * DHCP_T2);
+	lease_time_sec = (zpl_uint32 )((zpl_float)lease_time_sec * DHCP_T2);
 	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_REBINDING_TIME, htonl(lease_time_sec));
 
 	//dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_OPT82, htonl(lease_time_sec));
@@ -742,7 +740,7 @@ static void dhcpd_send_inform(struct dhcp_packet *oldpacket, dhcp_pool_t *config
 	dhcpd_build_options(config, &packet, oldpacket);
 
 	addr.s_addr = lease->lease_address;
-	zlog_err(MODULE_DHCP, "sending ACK to %s", inet_ntoa(addr));
+	zlog_err(MODULE_DHCP, "sending ACK to %s", ipstack_inet_ntoa(addr));
 	dhcpd_send_packet(&packet, /*force_bcast:*/0, config, ifter);
 
 	cu_lease = dhcpd_update_lease(lease,
@@ -967,7 +965,7 @@ static void dhcp_inform(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
 int udhcp_server_handle_thread(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
 		struct dhcp_packet *packet) {
 	//struct dyn_lease *lease = NULL;
-	ospl_uint8 msg_type = 0;
+	zpl_uint8 msg_type = 0;
 
 	if (packet->hlen != 6) {
 		zlog_err(MODULE_DHCP, "MAC length != 6, ignoring packet");
@@ -1047,7 +1045,7 @@ int udhcp_server_handle_thread(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
 int udhcpd_main_a(void *p)
 {
 	int server_socket = -1, retval;
-	ospl_uint8 *state;
+	zpl_uint8 *state;
 	unsigned timeout_end;
 	unsigned num_ips;
 	//unsigned opt;
@@ -1056,7 +1054,7 @@ int udhcpd_main_a(void *p)
 	const char *str_a = "2000";
 	unsigned arpping_ms;
 	//char *str_P;
-	ospl_uint32 ifindex = 0;
+	zpl_uint32 ifindex = 0;
 
 	dhcpd_config_init(&server_config);
 	//setup_common_bufsiz();
@@ -1130,10 +1128,10 @@ int udhcpd_main_a(void *p)
 		struct dhcp_packet packet;
 		int bytes;
 		int tv;
-		ospl_uint8 *server_id_opt;
-		ospl_uint8 *requested_ip_opt;
-		ospl_uint32  requested_nip = requested_nip; /* for compiler */
-		ospl_uint32  static_lease_nip;
+		zpl_uint8 *server_id_opt;
+		zpl_uint8 *requested_ip_opt;
+		zpl_uint32  requested_nip = requested_nip; /* for compiler */
+		zpl_uint32  static_lease_nip;
 		struct dyn_lease *lease, fake_lease;
 
 		if (server_socket < 0)
@@ -1227,9 +1225,9 @@ int udhcpd_main_a(void *p)
 		server_id_opt = udhcp_get_option(&packet, DHCP_SERVER_ID);
 		if (server_id_opt)
 		{
-			ospl_uint32  server_id_network_order;
+			zpl_uint32  server_id_network_order;
 			move_from_unaligned32(server_id_network_order, server_id_opt);
-			ospl_uint32  server_nip = dhcpd_lookup_address_on_interface(
+			zpl_uint32  server_nip = dhcpd_lookup_address_on_interface(
 					&server_config, ifindex);
 			if (server_id_network_order
 					!= server_nip/*config->server_nip*/)
@@ -1446,7 +1444,7 @@ int udhcpd_main_a(void *p)
 int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 {
 	int server_socket = -1, retval;
-	ospl_uint8 *state;
+	zpl_uint8 *state;
 	unsigned timeout_end;
 	unsigned num_ips;
 	unsigned opt;
@@ -1559,10 +1557,10 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 		struct dhcp_packet packet;
 		int bytes;
 		int tv;
-		ospl_uint8 *server_id_opt;
-		ospl_uint8 *requested_ip_opt;
-		ospl_uint32  requested_nip = requested_nip; /* for compiler */
-		ospl_uint32  static_lease_nip;
+		zpl_uint8 *server_id_opt;
+		zpl_uint8 *requested_ip_opt;
+		zpl_uint32  requested_nip = requested_nip; /* for compiler */
+		zpl_uint32  static_lease_nip;
 		struct dyn_lease *lease, fake_lease;
 
 		if (server_socket < 0)
@@ -1651,7 +1649,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 		server_id_opt = udhcp_get_option(&packet, DHCP_SERVER_ID);
 		if (server_id_opt)
 		{
-			ospl_uint32  server_id_network_order;
+			zpl_uint32  server_id_network_order;
 			move_from_unaligned32(server_id_network_order, server_id_opt);
 			if (server_id_network_order != server_config.server_nip)
 			{

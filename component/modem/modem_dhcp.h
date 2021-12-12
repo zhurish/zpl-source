@@ -20,8 +20,8 @@ extern "C" {
 extern int modem_dhcpc_attach(modem_t *modem);
 extern int modem_dhcpc_unattach(modem_t *modem);
 
-extern ospl_bool modem_dhcpc_isconnect(modem_t *modem);
-extern ospl_bool modem_dhcpc_islinkup(modem_t *modem);
+extern zpl_bool modem_dhcpc_isconnect(modem_t *modem);
+extern zpl_bool modem_dhcpc_islinkup(modem_t *modem);
 extern int modem_dhcpc_start(modem_t *modem);
 extern int modem_dhcpc_exit(modem_t *modem);
 

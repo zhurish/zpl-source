@@ -5,30 +5,18 @@
  *      Author: DELL
  */
 
-#include "zebra.h"
-#include "vty.h"
-#include "if.h"
 
-#include "buffer.h"
-#include "command.h"
-#include "if_name.h"
-#include "linklist.h"
-#include "log.h"
-#include "memory.h"
-#include "prefix.h"
-#include "sockunion.h"
-#include "str.h"
-#include "table.h"
-#include "vector.h"
-#include "nsm_vrf.h"
-#include "nsm_interface.h"
-#include "template.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
+#include "vty_include.h"
 
 #include "application.h"
 
 #ifdef APP_X5BA_MODULE
 
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 //extern int x5_b_ubus_uci_update_cb(char *buf, int len);
 #endif
 /*
@@ -48,7 +36,7 @@ DEFUN (app_template,
 		"ESP configure\n")
 {
 	//int ret = ERROR;
-	template_t * temp = nsm_template_lookup_name (ospl_false, "app esp");
+	template_t * temp = nsm_template_lookup_name (zpl_false, "app esp");
 	if(temp)
 	{
 		vty->node = TEMPLATE_NODE;
@@ -58,7 +46,7 @@ DEFUN (app_template,
 	}
 	else
 	{
-		temp = nsm_template_new (ospl_false);
+		temp = nsm_template_new (zpl_false);
 		if(temp)
 		{
 			temp->module = 0;
@@ -85,7 +73,7 @@ DEFUN (no_app_template,
 		"APP configure\n"
 		"ESP configure\n")
 {
-	template_t * temp = nsm_template_lookup_name (ospl_false, "app esp");
+	template_t * temp = nsm_template_lookup_name (zpl_false, "app esp");
 	if(temp)
 	{
 		x5b_app_free();
@@ -384,7 +372,7 @@ DEFUN (x5b_app_reset,
 	c = vty_getc_input(vty);
 	if(c == 'y')
 	{*/
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 		remove("/app/etc/dbase");
 		remove("/app/etc/card");
 		remove("/app/etc/thlog.log");
@@ -394,7 +382,7 @@ DEFUN (x5b_app_reset,
 		c = vty_getc_input(vty);
 		if(c == 'y')*/
 		{
-#ifdef PL_OPENWRT_UCI
+#ifdef ZPL_OPENWRT_UCI
 			//x5_b_ubus_uci_update_cb("reboot -c f", strlen("reboot -c f"));
 #endif
 			//super_system("lua-sync -m reboot -c f");
@@ -424,7 +412,7 @@ DEFUN (x5b_app_cardid_test,
 		"X5-B Mgt A configure\n"
 		"Config Information\n")
 {
-	ospl_uint8     ID[8];
+	zpl_uint8     ID[8];
 	card_id_string_to_hex(argv[0], strlen(((char *)argv[0])), ID);
 	x5b_app_open_door_by_cardid(NULL, ID, strlen(((char *)argv[0]))/2, E_CMD_TO_A);
 	return CMD_SUCCESS;
@@ -514,11 +502,11 @@ void cmd_app_x5b_init(void)
 //	install_default_basic(APP_TEMPLATES_NODE);
 //
 //	reinstall_node(APP_TEMPLATES_NODE, app_write_config);
-#ifdef PL_PJSIP_MODULE
+#ifdef ZPL_PJSIP_MODULE
 	if(voip_global_enabled())
 #endif
 	{
-		template_t * temp = nsm_template_new (ospl_false);
+		template_t * temp = nsm_template_new (zpl_false);
 		if(temp)
 		{
 			temp->module = 0;
@@ -537,67 +525,67 @@ void cmd_app_x5b_init(void)
 		}
 	/*
 		extern void nsm_template_free (template_t *template);
-		extern void nsm_template_install (template_t *template, ospl_uint32 module);
-		extern template_t* nsm_template_lookup (ospl_uint32 module);
+		extern void nsm_template_install (template_t *template, zpl_uint32 module);
+		extern template_t* nsm_template_lookup (zpl_uint32 module);
 		extern template_t* nsm_template_lookup_name (char * name);
 	*/
-		install_element(CONFIG_NODE, &app_template_cmd);
-		install_element(CONFIG_NODE, &no_app_template_cmd);
+		install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &app_template_cmd);
+		install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_app_template_cmd);
 
 	/*
-		install_element(TEMPLATE_NODE, &x5_esp_address_cmd);
-		install_element(TEMPLATE_NODE, &x5_esp_address_port_cmd);
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &x5_esp_address_cmd);
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &x5_esp_address_port_cmd);
 
-		install_element(TEMPLATE_NODE, &no_x5_esp_address_cmd);
-		install_element(TEMPLATE_NODE, &no_x5_esp_address_port_cmd);
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &no_x5_esp_address_cmd);
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &no_x5_esp_address_port_cmd);
 	*/
-		install_element(TEMPLATE_NODE, &x5_esp_address_port_cmd);
-		install_element(TEMPLATE_NODE, &no_x5_esp_address_port_cmd);
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &x5_esp_address_port_cmd);
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &no_x5_esp_address_port_cmd);
 
-		install_element(TEMPLATE_NODE, &x5_esp_keepalive_interval_cmd);
-		install_element(TEMPLATE_NODE, &no_x5_esp_keepalive_interval_cmd);
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &x5_esp_keepalive_interval_cmd);
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &no_x5_esp_keepalive_interval_cmd);
 
 		/*
 		 * local
 		 */
-		install_element(TEMPLATE_NODE, &x5_esp_local_address_cmd);
-		install_element(TEMPLATE_NODE, &x5_esp_local_address_port_cmd);
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &x5_esp_local_address_cmd);
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &x5_esp_local_address_port_cmd);
 
-		install_element(TEMPLATE_NODE, &no_x5_esp_local_address_cmd);
-		install_element(TEMPLATE_NODE, &no_x5_esp_local_address_port_cmd);
-
-
-		install_element(ENABLE_NODE, &debug_x5_esp_cmd);
-		install_element(ENABLE_NODE, &no_debug_x5_esp_cmd);
-
-		install_element(ENABLE_NODE, &show_x5b_app_config_cmd);
-		install_element(CONFIG_NODE, &show_x5b_app_config_cmd);
-		install_element(TEMPLATE_NODE, &show_x5b_app_config_cmd);
-
-		install_element(ENABLE_NODE, &show_x5b_app_param_cmd);
-		install_element(CONFIG_NODE, &show_x5b_app_param_cmd);
-		install_element(TEMPLATE_NODE, &show_x5b_app_param_cmd);
-
-		//install_element(ENABLE_NODE, &x5b_app_update_test_cmd);
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &no_x5_esp_local_address_cmd);
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &no_x5_esp_local_address_port_cmd);
 
 
-		install_element(ENABLE_NODE, &x5b_app_wiggins_test_cmd);
+		install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &debug_x5_esp_cmd);
+		install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &no_debug_x5_esp_cmd);
+
+		install_element(ENABLE_NODE, CMD_VIEW_LEVEL,  &show_x5b_app_config_cmd);
+		install_element(CONFIG_NODE, CMD_VIEW_LEVEL, &show_x5b_app_config_cmd);
+		install_element(TEMPLATE_NODE, CMD_VIEW_LEVEL, &show_x5b_app_config_cmd);
+
+		install_element(ENABLE_NODE, CMD_VIEW_LEVEL,  &show_x5b_app_param_cmd);
+		install_element(CONFIG_NODE, CMD_VIEW_LEVEL, &show_x5b_app_param_cmd);
+		install_element(TEMPLATE_NODE, CMD_VIEW_LEVEL, &show_x5b_app_param_cmd);
+
+		//install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &x5b_app_update_test_cmd);
+
+
+		install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &x5b_app_wiggins_test_cmd);
 #ifdef X5B_APP_DATABASE
-		install_element(ENABLE_NODE, &x5b_app_reset_cmd);
-		install_element(ENABLE_NODE, &x5b_app_face_show_test_cmd);
-		install_element(ENABLE_NODE, &x5b_app_cardid_test_cmd);
-		install_element(ENABLE_NODE, &x5b_app_del_cardid_test_cmd);
+		install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &x5b_app_reset_cmd);
+		install_element(ENABLE_NODE, CMD_VIEW_LEVEL,  &x5b_app_face_show_test_cmd);
+		install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &x5b_app_cardid_test_cmd);
+		install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &x5b_app_del_cardid_test_cmd);
 #endif
 
 		//unit test cmd
-		install_element(ENABLE_NODE, &x5b_app_start_test_cmd);
-		install_element(ENABLE_NODE, &x5b_app_start_test_call_cmd);
-		install_element(ENABLE_NODE, &x5b_app_start_test_call_list_cmd);
+		install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &x5b_app_start_test_cmd);
+		install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &x5b_app_start_test_call_cmd);
+		install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &x5b_app_start_test_call_list_cmd);
 		//debug cmd
 #ifdef X5B_APP_TEST_DEBUG
-		install_element(ENABLE_NODE, &register_ok_test_cmd_cmd);
-		install_element(ENABLE_NODE, &register_ok_test1_cmd_cmd);
-		install_element(ENABLE_NODE, &x5b_app_call_test_cmd);
+		install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &register_ok_test_cmd_cmd);
+		install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &register_ok_test1_cmd_cmd);
+		install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &x5b_app_call_test_cmd);
 #endif
 	}
 }

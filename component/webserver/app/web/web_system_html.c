@@ -12,7 +12,7 @@
  *      Author: zhurish
  */
 
-#include "zebra.h"
+#include "zpl_include.h"
 #include "module.h"
 #include "memory.h"
 #include "zassert.h"
@@ -29,9 +29,9 @@
 #include "web_app.h"
 #include "web_api.h"
 
-#ifdef PL_APP_MODULE
+#ifdef ZPL_APP_MODULE
 #include "application.h"
-#endif/* PL_APP_MODULE */
+#endif/* ZPL_APP_MODULE */
 
 static int web_system_handle(Webs *wp, char *path, char *query)
 {
@@ -46,8 +46,8 @@ static int web_system_handle(Webs *wp, char *path, char *query)
 	}
 	if(strstr(strval, "GET"))
 	{
-		ospl_uint8 sysmac[8];
-		ospl_int8	serial[64];
+		zpl_uint8 sysmac[8];
+		zpl_int8	serial[64];
 		memset(sysmac, 0, sizeof(sysmac));
 		memset(serial, 0, sizeof(serial));
 		host_config_get_api(API_GET_SYSMAC_CMD, sysmac);
@@ -81,8 +81,8 @@ static int web_system_handle(Webs *wp, char *path, char *query)
 
 	if(ret == OK)
 	{
-		ospl_uint8 sysmac[8];
-		ospl_int8	serial[64];
+		zpl_uint8 sysmac[8];
+		zpl_int8	serial[64];
 		memset(sysmac, 0, sizeof(sysmac));
 		memset(serial, 0, sizeof(serial));
 		host_config_get_api(API_GET_SYSMAC_CMD, sysmac);
@@ -115,7 +115,7 @@ static int web_admin_change_password(Webs *wp, char *path, char *query)
 
 	}
 	strcpy(password, strval);
-	if(vty_user_create(NULL, wp->username, password, ospl_false , ospl_true ) == CMD_SUCCESS)
+	if(vty_user_create(NULL, wp->username, password, zpl_false , zpl_true ) == CMD_SUCCESS)
 	{
 		return web_return_text_plain(wp, OK);
 	}
@@ -156,7 +156,7 @@ static int web_webtime_sync(Webs *wp, void *p)
 	}
 	if(value == 0)
 	{
-#ifdef PL_APP_MODULE
+#ifdef ZPL_APP_MODULE
 #ifdef APP_X5BA_MODULE
 		if(x5b_app_mode_X5CM())
 			x5b_app_sync_web_time(NULL, E_CMD_TO_C);
@@ -169,7 +169,7 @@ static int web_webtime_sync(Webs *wp, void *p)
 			v9_serial->timer_sync = 1;
 #endif
 #endif/* APP_V9_MODULE */
-#endif/* PL_APP_MODULE */
+#endif/* ZPL_APP_MODULE */
 		return web_return_text_plain(wp, OK);
 	}
 	else
@@ -190,7 +190,7 @@ static int web_localtime(Webs *wp, char *path, char *query)
 
 
 
-static ospl_uint8 web_reset_flag = 0;
+static zpl_uint8 web_reset_flag = 0;
 
 static int web_system_app_action_job(void *a)
 {
@@ -228,9 +228,9 @@ static int web_system_app_action(Webs *wp, void *p)
 	if(strstr(strval, "reboot"))
 	{
 #ifdef APP_X5BA_MODULE
-		ret = x5b_app_reboot_request(NULL, E_CMD_TO_A, ospl_false);
+		ret = x5b_app_reboot_request(NULL, E_CMD_TO_A, zpl_false);
 		if(x5b_app_mgt && x5b_app_mode_X5CM())
-			ret |= x5b_app_reboot_request(NULL, E_CMD_TO_C, ospl_false);
+			ret |= x5b_app_reboot_request(NULL, E_CMD_TO_C, zpl_false);
 #endif/* APP_X5BA_MODULE */
 		if(ret == OK)
 		{
@@ -242,9 +242,9 @@ static int web_system_app_action(Webs *wp, void *p)
 	{
 		web_reset_flag = 1;
 #ifdef APP_X5BA_MODULE
-		ret = x5b_app_reboot_request(NULL, E_CMD_TO_A, ospl_true);
+		ret = x5b_app_reboot_request(NULL, E_CMD_TO_A, zpl_true);
 		if(x5b_app_mgt && x5b_app_mode_X5CM())
-			ret |= x5b_app_reboot_request(NULL, E_CMD_TO_C, ospl_true);
+			ret |= x5b_app_reboot_request(NULL, E_CMD_TO_C, zpl_true);
 #endif/* APP_X5BA_MODULE */
 		if(ret == OK)
 		{

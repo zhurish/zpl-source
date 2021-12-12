@@ -23,14 +23,14 @@ struct nsm_stream
 struct nsm_pqueue
 {
 	LIST	stream_list;
-	ospl_uint32 	array_max;			//one stream size
+	zpl_uint32 	array_max;			//one stream size
 	void	*mutex;
 	int		(*fetch)(struct stream *);
 };
 
 
 
-struct nsm_pqueue * nsm_pqueue_create (ospl_uint32 num);
+struct nsm_pqueue * nsm_pqueue_create (zpl_uint32 num);
 
 int nsm_pqueue_fetch (struct nsm_pqueue *queue);
 

@@ -6,7 +6,7 @@
  */
 
 #define HAS_BOOL 1
-#include "zebra.h"
+#include "zpl_include.h"
 #include "module.h"
 #include "memory.h"
 #include "zassert.h"
@@ -23,9 +23,9 @@
 #include "web_app.h"
 #include "web_api.h"
 
-#ifdef PL_APP_MODULE
+#ifdef ZPL_APP_MODULE
 #include "application.h"
-#endif /* PL_APP_MODULE */
+#endif /* ZPL_APP_MODULE */
 
 #if 0
 static int web_upgrade_action(Webs *wp, char *path, char *query, char *uploadfile)
@@ -163,7 +163,7 @@ static int web_system_action_clean_job(void *a)
 		if (v9_video_board_isactive (APP_BOARD_CALCU_4))
 			v9_video_sdk_del_vch_api (APP_BOARD_CALCU_4, -1);
 #endif
-//#ifdef PL_APP_MODULE
+//#ifdef ZPL_APP_MODULE
 		sprintf (upgradecmd, "sysupgrade -n %s", file);
 		free (file);
 		super_system (upgradecmd);

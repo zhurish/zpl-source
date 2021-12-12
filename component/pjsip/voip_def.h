@@ -14,10 +14,12 @@ extern "C" {
 #endif
 
 
-#include "plconfig.h"
-#include "zassert.h"
-#include "os_uci.h"
-#include "ubus_sync.h"
+#include "os_include.h"
+#include <zpl_include.h>
+#include "lib_include.h"
+#include "nsm_include.h"
+#include "vty_include.h"
+
 
 #include "pjsip_app_api.h"
 #include "pjsua_app_common.h"
