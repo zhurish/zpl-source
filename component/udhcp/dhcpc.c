@@ -178,7 +178,7 @@ static int udhcpc_raw_packet_bcast(zpl_socket_t sock, struct dhcp_packet *packet
 	source.ip = src_nip;
 	source.port = dhcp_global_config.client_port;
 
-	dest.ip = INADDR_BROADCAST;
+	dest.ip = IPSTACK_INADDR_BROADCAST;
 	dest.port = dhcp_global_config.server_port;
 	return udhcp_send_raw_packet(sock, packet, &source, &dest,
 			DHCP_MAC_BCAST_ADDR, ifindex);
@@ -235,7 +235,7 @@ static int udhcpc_send_discover(client_interface_t *inter, zpl_uint32  requested
 				ifindex2ifname(inter->ifindex));
 	}
 	if (inter->state.mode == DHCP_RAW_MODE)
-		return udhcpc_raw_packet_bcast(inter->sock, &packet, INADDR_ANY,
+		return udhcpc_raw_packet_bcast(inter->sock, &packet, IPSTACK_INADDR_ANY,
 				inter->ifindex);
 	return OK;
 }
@@ -280,7 +280,7 @@ static int udhcpc_send_request(client_interface_t *inter, zpl_uint32  server,
 
 	if (DHCPC_DEBUG_ISON(EVENT))
 	{
-		struct in_addr temp_addr;
+		struct ipstack_in_addr temp_addr;
 		temp_addr.s_addr = requested;
 		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCPREQUEST packet on interface %s",
 				ifindex2ifname(inter->ifindex));
@@ -288,7 +288,7 @@ static int udhcpc_send_request(client_interface_t *inter, zpl_uint32  server,
 				ipstack_inet_ntoa(temp_addr));
 	}
 	if (inter->state.mode == DHCP_RAW_MODE)
-		return udhcpc_raw_packet_bcast(inter->sock, &packet, INADDR_ANY,
+		return udhcpc_raw_packet_bcast(inter->sock, &packet, IPSTACK_INADDR_ANY,
 				inter->ifindex);
 	return ERROR;
 }
@@ -334,7 +334,7 @@ static int udhcpc_send_renew(client_interface_t *inter, zpl_uint32  server,
 
 	if (DHCPC_DEBUG_ISON(EVENT))
 	{
-		struct in_addr temp_addr;
+		struct ipstack_in_addr temp_addr;
 		temp_addr.s_addr = server;
 		char tmpbug[64];
 		memset(tmpbug, 0, sizeof(tmpbug));
@@ -381,7 +381,7 @@ static int udhcpc_send_decline(client_interface_t *inter, zpl_uint32  server,
 
 	if (DHCPC_DEBUG_ISON(EVENT))
 	{
-		struct in_addr temp_addr;
+		struct ipstack_in_addr temp_addr;
 		temp_addr.s_addr = server;
 		char tmpbug[64];
 		memset(tmpbug, 0, sizeof(tmpbug));
@@ -397,7 +397,7 @@ static int udhcpc_send_decline(client_interface_t *inter, zpl_uint32  server,
 	else
 		return udhcpc_packet_bcast_ucast(inter->udp_sock, &packet, requested,
 				server, inter->ifindex);
-	//return udhcpc_raw_packet_bcast(inter->sock, &packet, INADDR_ANY, inter->ifindex);
+	//return udhcpc_raw_packet_bcast(inter->sock, &packet, IPSTACK_INADDR_ANY, inter->ifindex);
 }
 #endif
 
@@ -420,7 +420,7 @@ static int udhcpc_send_release(client_interface_t *inter, zpl_uint32  server,
 	udhcpc_add_client_options(inter, &packet);
 	if (DHCPC_DEBUG_ISON(EVENT))
 	{
-		struct in_addr temp_addr;
+		struct ipstack_in_addr temp_addr;
 		temp_addr.s_addr = server;
 		char tmpbug[64];
 		memset(tmpbug, 0, sizeof(tmpbug));
@@ -463,7 +463,7 @@ static int udhcpc_send_inform(client_interface_t *inter, zpl_uint32  server,
 
 	if (DHCPC_DEBUG_ISON(EVENT))
 	{
-		struct in_addr temp_addr;
+		struct ipstack_in_addr temp_addr;
 		temp_addr.s_addr = server;
 		char tmpbug[64];
 		memset(tmpbug, 0, sizeof(tmpbug));
@@ -493,14 +493,14 @@ static zpl_socket_t udhcpc_client_socket(int ifindex)
 	fd = udhcp_raw_socket();
 	if (!ipstack_invalid(fd))
 	{
-		//setsockopt_ifindex (AF_INET, fd, 1);
+		//setsockopt_ifindex (IPSTACK_AF_INET, fd, 1);
 		if (udhcp_client_socket_bind(fd, ifindex) == OK)
 		{
 			udhcp_client_socket_filter(fd, 68);
 			//zlog_debug(MODULE_DHCP, "created raw socket");
 			return fd;
 		}
-		zlog_err(MODULE_DHCP, "Can not bind raw socket(%s)", strerror(errno));
+		zlog_err(MODULE_DHCP, "Can not bind raw socket(%s)", strerror(ipstack_errno));
 		ipstack_close(fd);
 		return fd;
 	}
@@ -546,7 +546,7 @@ static int udhcp_client_release(client_interface_t * ifter, zpl_uint32  server_a
 	{
 		if (DHCPC_DEBUG_ISON(EVENT))
 		{
-			struct in_addr temp_addr;
+			struct ipstack_in_addr temp_addr;
 			temp_addr.s_addr = server_addr;
 			char tmpbug[64];
 			memset(tmpbug, 0, sizeof(tmpbug));
@@ -1166,7 +1166,7 @@ static int udhcp_recv_raw_packet(struct dhcp_packet *dhcp_pkt, zpl_socket_t fd,
 		bytes = ipstack_recvmsg(fd, &msg, 0);
 		if (bytes < 0)
 		{
-			if (errno == EINTR)
+			if (ipstack_errno == EINTR)
 				continue;
 			zlog_err(MODULE_DHCP, "packet read error, ignoring");
 			/* NB: possible down interface, etc. Caller should pause. */
@@ -1191,7 +1191,7 @@ static int udhcp_recv_raw_packet(struct dhcp_packet *dhcp_pkt, zpl_socket_t fd,
 	bytes = ntohs(packet.ip.tot_len);
 
 	/* make sure its the right packet for us, and that it passes sanity checks */
-	if (packet.ip.protocol != IPPROTO_UDP || packet.ip.version != IPVERSION
+	if (packet.ip.protocol != IPSTACK_IPPROTO_UDP || packet.ip.version != IPVERSION
 			|| packet.ip.ihl != (sizeof(packet.ip) >> 2)
 			|| packet.udp.dest != htons(DHCP_CLIENT_PORT)
 			/* || bytes > (int) sizeof(packet) - can't happen */
@@ -1211,7 +1211,7 @@ static int udhcp_recv_raw_packet(struct dhcp_packet *dhcp_pkt, zpl_socket_t fd,
 	}
 
 	if (ifindex)
-		*ifindex = getsockopt_ifindex(AF_INET, &msg);
+		*ifindex = getsockopt_ifindex(IPSTACK_AF_INET, &msg);
 
 	/* verify UDP checksum. IP header has to be modified for this */
 	memset(&packet.ip, 0, offsetof(struct iphdr, protocol));
@@ -1264,9 +1264,9 @@ static int udhcpc_raw_read_thread(struct eloop *eloop)
 		if (bytes < 0)
 		{
 			/* bytes can also be -2 ("bad packet data") */
-			if (bytes == -1 && errno != EINTR)
+			if (bytes == -1 && ipstack_errno != EINTR)
 			{
-				zlog_err(MODULE_DHCP, "received error %s",strerror(errno));
+				zlog_err(MODULE_DHCP, "received error %s",strerror(ipstack_errno));
 				dhcp_client_lease_unset(ifter);
 				udhcpc_stop(ifter);
 				//ifter->state.mode = DHCP_UDP_MODE;
@@ -1303,7 +1303,7 @@ static int udhcpc_udp_read_thread(struct eloop *eloop)
 	if (bytes < 0)
 	{
 		/* bytes can also be -2 ("bad packet data") */
-		if (bytes == -1 && errno != EINTR)
+		if (bytes == -1 && ipstack_errno != EINTR)
 		{
 			//ifter->r_thread = eloop_add_read(eloop->master, udhcpc_udp_read_thread, ifter, sock);
 			return ERROR;

@@ -125,12 +125,6 @@ struct nsm_interface
   
   void *nsm_client[NSM_MAX];
   
-/*  void	*vlan;
-
-  void	*l2switch;
-
-  void *ipkernel;*/
-
 };
 
 extern void nsm_interface_init(void);

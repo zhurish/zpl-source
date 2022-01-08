@@ -230,7 +230,7 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 	sip->sip_local.state = PJSIP_STATE_CONNECT_LOCAL;
 #endif
 
-	sip->debug_level = LOG_ERR;
+	sip->debug_level = ZLOG_LEVEL_ERR;
 	sip->debug_detail = zpl_false;
 /*
 	pl_pjsip_username(&app_config, "100");//Set authentication username
@@ -3088,22 +3088,22 @@ int pl_pjsip_debug_level_set_api(zpl_uint32 level)
 	case LOG_TRAP:
 		inlevel = 6;
 		break;
-	case LOG_DEBUG:
+	case ZLOG_LEVEL_DEBUG:
 		inlevel = 4;
 		break;
-	case LOG_INFO:
+	case ZLOG_LEVEL_INFO:
 		inlevel = 3;
 		break;
-	case LOG_NOTICE:
+	case ZLOG_LEVEL_NOTICE:
 		inlevel = 5;
 		break;
-	case LOG_WARNING:
+	case ZLOG_LEVEL_WARNING:
 		inlevel = 2;
 		break;
-	case LOG_ERR:
+	case ZLOG_LEVEL_ERR:
 		inlevel = 1;
 		break;
-	//case LOG_CRIT:
+	//case ZLOG_LEVEL_CRIT:
 	default:
 		inlevel = 0;
 		break;
@@ -3122,22 +3122,22 @@ int pl_pjsip_debug_level_get_api(zpl_uint32 *level)
 		outlevel = LOG_TRAP;
 		break;
 	case 4:
-		outlevel = LOG_DEBUG;
+		outlevel = ZLOG_LEVEL_DEBUG;
 		break;
 	case 3:
-		outlevel = LOG_INFO;
+		outlevel = ZLOG_LEVEL_INFO;
 		break;
 	case 5:
-		outlevel = LOG_NOTICE;
+		outlevel = ZLOG_LEVEL_NOTICE;
 		break;
 	case 2:
-		outlevel = LOG_WARNING;
+		outlevel = ZLOG_LEVEL_WARNING;
 		break;
 	case 1:
-		outlevel = LOG_ERR;
+		outlevel = ZLOG_LEVEL_ERR;
 		break;
 	case 0:
-		outlevel = LOG_CRIT;
+		outlevel = ZLOG_LEVEL_CRIT;
 		break;
 	}
 	if(level)

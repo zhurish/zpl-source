@@ -19,8 +19,8 @@
  * 02111-1307, USA.  
  */
 
-#include <zebra.h>
-
+#include <os_include.h>
+#include <lib_include.h>
 #include <sys/un.h>
 #include <setjmp.h>
 #include <sys/wait.h>
@@ -29,13 +29,23 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-#include <lib/version.h>
-#include "getopt.h"
-#include "command.h"
-#include "memory.h"
-
 #include "vtysh/vtysh.h"
-#include "vtysh/vtysh_user.h"
+//#include "vtysh/vtysh_user.h"
+
+struct module_list module_list_imish = 
+{ 
+	.module=MODULE_IMISH, 
+	.name="IMISH", 
+	.module_init=NULL, 
+	.module_exit=NULL, 
+	.module_task_init=NULL, 
+	.module_task_exit=NULL, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+};
 
 /* VTY shell program name. */
 char *progname;
@@ -44,17 +54,6 @@ char *progname;
 char config_default[] = SYSCONFDIR VTYSH_DEFAULT_CONFIG;
 char history_file[MAXPATHLEN];
 
-/* Flag for indicate executing child command. */
-int execute_flag = 0;
-
-/* For sigsetjmp() & siglongjmp(). */
-static sigjmp_buf jmpbuf;
-
-/* Flag for avoid recursive siglongjmp() call. */
-static int jmpflag = 0;
-
-/* A static variable for holding the line. */
-static char *line_read;
 
 /* Master of threads. */
 struct thread_master *master;
@@ -73,27 +72,12 @@ sigtstp (int sig)
   rl_initialize ();
   printf ("\n");
 
-  /* Check jmpflag for duplicate siglongjmp(). */
-  if (! jmpflag)
-    return;
-
-  jmpflag = 0;
-
-  /* Back to main command loop. */
-  siglongjmp (jmpbuf, 1);
 }
 
 /* SIGINT handler.  This function care user's ^Z input.  */
 static void
 sigint (int sig)
 {
-  /* Check this process is not child process. */
-  if (! execute_flag)
-    {
-      rl_initialize ();
-      printf ("\n");
-      rl_forced_update_display ();
-    }
 }
 
 /* Signale wrapper for vtysh. We don't use sigevent because

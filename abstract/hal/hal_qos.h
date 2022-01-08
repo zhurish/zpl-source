@@ -11,7 +11,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "nsm_qos.h"
+//#include "nsm_qos.h"
 
 enum hal_qos_cmd 
 {
@@ -50,7 +50,20 @@ enum hal_qos_cmd
 
 
 
-
+typedef struct hal_qos_param_s
+{
+	zpl_bool enable;
+	zpl_uint32 value;
+	zpl_uint32 limit;
+	zpl_uint32 burst_size;
+	zpl_uint32 mode;
+	zpl_uint32 pri;
+	zpl_uint32 diffserv;
+	zpl_uint32 queue;
+	zpl_uint32 class;
+	zpl_uint32 type;
+	zpl_uint32 weight;
+}hal_qos_param_t;
 
 int hal_qos_enable(zpl_bool enable);
 int hal_qos_ipg_enable(zpl_bool enable);

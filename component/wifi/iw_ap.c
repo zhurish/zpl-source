@@ -58,7 +58,7 @@ static int iw_ap_connect_add_node(iw_ap_t *iw_ap, iw_ap_connect_t *value)
 		os_memset(node, 0, sizeof(iw_ap_connect_t));
 		os_memcpy(node, value, sizeof(iw_ap_connect_t));
 		node->ifindex = iw_ap->ifindex;
-		node->TTL = IW_AP_CONNECT_TTL_DEFAULT;
+		node->IPSTACK_TTL = IW_AP_CONNECT_TTL_DEFAULT;
 		lstAdd(iw_ap->ap_list, (NODE *)node);
 		//lstAdd(iw_ap->ap_list, (NODE *)node);
 		return OK;
@@ -115,9 +115,9 @@ int iw_ap_connect_add_api(iw_ap_t *iw_ap, iw_ap_connect_t *value)
 	{
 		memcpy(&client->ifindex, &value->ifindex, sizeof(iw_ap_connect_t) - sizeof(NODE));
 		client->ifindex = iw_ap->ifindex;
-		client->TTL = IW_AP_CONNECT_TTL_DEFAULT;
+		client->IPSTACK_TTL = IW_AP_CONNECT_TTL_DEFAULT;
 
-		//zlog_debug(MODULE_WIFI, "update TTL ");
+		//zlog_debug(MODULE_WIFI, "update IPSTACK_TTL ");
 		if(iw_ap->ap_mutex)
 			os_mutex_unlock(iw_ap->ap_mutex);
 		return OK;
@@ -157,7 +157,7 @@ int iw_ap_connect_del_api(iw_ap_t *iw_ap, zpl_uint8 *bssid)
 }
 
 
-static int iw_ap_connect_update(iw_ap_t *iw_ap, zpl_uint8 TTL)
+static int iw_ap_connect_update(iw_ap_t *iw_ap, zpl_uint8 IPSTACK_TTL)
 {
 	NODE index;
 	iw_ap_connect_t *client = NULL;
@@ -172,15 +172,15 @@ static int iw_ap_connect_update(iw_ap_t *iw_ap, zpl_uint8 TTL)
 		index = client->node;
 		if(client)
 		{
-			//client->TTL = IW_AP_CONNECT_TTL_DEFAULT;
-			client->TTL--;
+			//client->IPSTACK_TTL = IW_AP_CONNECT_TTL_DEFAULT;
+			client->IPSTACK_TTL--;
 		}
 	}
 	for(client = (iw_ap_connect_t *)lstFirst(iw_ap->ap_list);
 			client != NULL;  client = (iw_ap_connect_t *)lstNext((NODE*)&index))
 	{
 		index = client->node;
-		if(client && client->TTL == 0)
+		if(client && client->IPSTACK_TTL == 0)
 		{
 			lstDelete(iw_ap->ap_list, (NODE *)client);
 			XFREE(MTYPE_WIFI_CLIENT, client);
@@ -1342,16 +1342,9 @@ static int iw_ap_stop(iw_ap_t *iw_ap)
 #ifndef IW_ONCE_TASK
 static int iw_ap_task(iw_ap_t *iw_ap)
 {
-	host_config_load_waitting();
-	while(1)
-	{
-/*		iw_client_connect_process(iw_client);
-		os_sleep(iw_client->connect_delay);*/
-		struct thread thread;
-		//os_log_reopen(MODULE_NSM);
-		while (thread_fetch (iw_ap->master, &thread))
-			thread_call (&thread);
-	}
+	host_waitting_loadconfig();
+	while(thread_mainloop(iw_ap->master))
+		;
 	return OK;
 }
 #endif

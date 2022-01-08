@@ -27884,7 +27884,7 @@ cleanup:
 #ifdef _WIN32_WINNT
 #undef _WIN32_WINNT
 #endif
-/* Enables getaddrinfo() & Co */
+/* Enables ipstack_getaddrinfo() & Co */
 #define _WIN32_WINNT 0x0501
 #include <ws2tcpip.h>
 
@@ -27916,7 +27916,7 @@ static int wsa_init_done = 0;
 #include <signal.h>
 #include <fcntl.h>
 #include <netdb.h>
-#include <errno.h>
+#include <ipstack_errno.h>
 
 #endif /* ( _WIN32 || _WIN32_WCE ) && !EFIX64 && !EFI32 */
 
@@ -27980,11 +27980,11 @@ int mbedtls_net_connect( mbedtls_net_context *ctx, const char *host,
 
     /* Do name resolution with both IPv6 and IPv4 */
     memset( &hints, 0, sizeof( hints ) );
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = proto == MBEDTLS_NET_PROTO_UDP ? SOCK_DGRAM : SOCK_STREAM;
-    hints.ai_protocol = proto == MBEDTLS_NET_PROTO_UDP ? IPPROTO_UDP : IPPROTO_TCP;
+    hints.ai_family = IPSTACK_AF_UNSPEC;
+    hints.ai_socktype = proto == MBEDTLS_NET_PROTO_UDP ? IPSTACK_SOCK_DGRAM : IPSTACK_SOCK_STREAM;
+    hints.ai_protocol = proto == MBEDTLS_NET_PROTO_UDP ? IPSTACK_IPPROTO_UDP : IPSTACK_IPPROTO_TCP;
 
-    if( getaddrinfo( host, port, &hints, &addr_list ) != 0 )
+    if( ipstack_getaddrinfo( host, port, &hints, &addr_list ) != 0 )
         return( MBEDTLS_ERR_NET_UNKNOWN_HOST );
 
     /* Try the sockaddrs until a connection succeeds */
@@ -28009,7 +28009,7 @@ int mbedtls_net_connect( mbedtls_net_context *ctx, const char *host,
         ret = MBEDTLS_ERR_NET_CONNECT_FAILED;
     }
 
-    freeaddrinfo( addr_list );
+    ipstack_freeaddrinfo( addr_list );
 
     return( ret );
 }
@@ -28027,13 +28027,13 @@ int mbedtls_net_bind( mbedtls_net_context *ctx, const char *bind_ip, const char 
 
     /* Bind to IPv6 and/or IPv4, but only in the desired protocol */
     memset( &hints, 0, sizeof( hints ) );
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = proto == MBEDTLS_NET_PROTO_UDP ? SOCK_DGRAM : SOCK_STREAM;
-    hints.ai_protocol = proto == MBEDTLS_NET_PROTO_UDP ? IPPROTO_UDP : IPPROTO_TCP;
+    hints.ai_family = IPSTACK_AF_UNSPEC;
+    hints.ai_socktype = proto == MBEDTLS_NET_PROTO_UDP ? IPSTACK_SOCK_DGRAM : IPSTACK_SOCK_STREAM;
+    hints.ai_protocol = proto == MBEDTLS_NET_PROTO_UDP ? IPSTACK_IPPROTO_UDP : IPSTACK_IPPROTO_TCP;
     if( bind_ip == NULL )
         hints.ai_flags = AI_PASSIVE;
 
-    if( getaddrinfo( bind_ip, port, &hints, &addr_list ) != 0 )
+    if( ipstack_getaddrinfo( bind_ip, port, &hints, &addr_list ) != 0 )
         return( MBEDTLS_ERR_NET_UNKNOWN_HOST );
 
     /* Try the sockaddrs until a binding succeeds */
@@ -28049,7 +28049,7 @@ int mbedtls_net_bind( mbedtls_net_context *ctx, const char *bind_ip, const char 
         }
 
         n = 1;
-        if( setsockopt( ctx->fd, SOL_SOCKET, SO_REUSEADDR,
+        if( setsockopt( ctx->fd, IPSTACK_SOL_SOCKET, IPSTACK_SO_REUSEADDR,
                         (const char *) &n, sizeof( n ) ) != 0 )
         {
             close( ctx->fd );
@@ -28080,7 +28080,7 @@ int mbedtls_net_bind( mbedtls_net_context *ctx, const char *bind_ip, const char 
         break;
     }
 
-    freeaddrinfo( addr_list );
+    ipstack_freeaddrinfo( addr_list );
 
     return( ret );
 
@@ -28106,18 +28106,18 @@ static int net_would_block( const mbedtls_net_context *ctx )
  */
 static int net_would_block( const mbedtls_net_context *ctx )
 {
-    int err = errno;
+    int err = ipstack_errno;
     
     /*
      * Never return 'WOULD BLOCK' on a non-blocking socket
      */
     if( ( fcntl( ctx->fd, F_GETFL ) & O_NONBLOCK ) != O_NONBLOCK )
     {
-        errno = err;
+        ipstack_errno = err;
         return( 0 );
     }
 
-    switch( errno = err )
+    switch( ipstack_errno = err )
     {
 #if defined EAGAIN
         case EAGAIN:
@@ -28141,7 +28141,7 @@ int mbedtls_net_accept( mbedtls_net_context *bind_ctx,
     int ret;
     int type;
 
-    struct sockaddr_storage client_addr;
+    struct ipstack_sockaddr_storage client_addr;
 
 #if defined(__socklen_t_defined) || defined(_SOCKLEN_T) ||  \
     defined(_SOCKLEN_T_DECLARED) || defined(__DEFINED_socklen_t)
@@ -28153,26 +28153,26 @@ int mbedtls_net_accept( mbedtls_net_context *bind_ctx,
 #endif
 
     /* Is this a TCP or UDP socket? */
-    if( getsockopt( bind_ctx->fd, SOL_SOCKET, SO_TYPE,
+    if( getsockopt( bind_ctx->fd, IPSTACK_SOL_SOCKET, IPSTACK_SO_TYPE,
                     (void *) &type, &type_len ) != 0 ||
-        ( type != SOCK_STREAM && type != SOCK_DGRAM ) )
+        ( type != IPSTACK_SOCK_STREAM && type != IPSTACK_SOCK_DGRAM ) )
     {
         return( MBEDTLS_ERR_NET_ACCEPT_FAILED );
     }
 
-    if( type == SOCK_STREAM )
+    if( type == IPSTACK_SOCK_STREAM )
     {
         /* TCP: actual accept() */
         ret = client_ctx->fd = (int) accept( bind_ctx->fd,
-                                             (struct sockaddr *) &client_addr, &n );
+                                             (struct ipstack_sockaddr *) &client_addr, &n );
     }
     else
     {
         /* UDP: wait for a message, but keep it in the queue */
         char buf[1] = { 0 };
 
-        ret = (int) recvfrom( bind_ctx->fd, buf, sizeof( buf ), MSG_PEEK,
-                        (struct sockaddr *) &client_addr, &n );
+        ret = (int) recvfrom( bind_ctx->fd, buf, sizeof( buf ), IPSTACK_MSG_PEEK,
+                        (struct ipstack_sockaddr *) &client_addr, &n );
 
 #if defined(_WIN32)
         if( ret == SOCKET_ERROR &&
@@ -28194,29 +28194,29 @@ int mbedtls_net_accept( mbedtls_net_context *bind_ctx,
 
     /* UDP: hijack the listening socket to communicate with the client,
      * then bind a new socket to accept new connections */
-    if( type != SOCK_STREAM )
+    if( type != IPSTACK_SOCK_STREAM )
     {
-        struct sockaddr_storage local_addr;
+        struct ipstack_sockaddr_storage local_addr;
         int one = 1;
 
-        if( connect( bind_ctx->fd, (struct sockaddr *) &client_addr, n ) != 0 )
+        if( connect( bind_ctx->fd, (struct ipstack_sockaddr *) &client_addr, n ) != 0 )
             return( MBEDTLS_ERR_NET_ACCEPT_FAILED );
 
         client_ctx->fd = bind_ctx->fd;
         bind_ctx->fd   = -1; /* In case we exit early */
 
-        n = sizeof( struct sockaddr_storage );
+        n = sizeof( struct ipstack_sockaddr_storage );
         if( getsockname( client_ctx->fd,
-                         (struct sockaddr *) &local_addr, &n ) != 0 ||
+                         (struct ipstack_sockaddr *) &local_addr, &n ) != 0 ||
             ( bind_ctx->fd = (int) socket( local_addr.ss_family,
-                                           SOCK_DGRAM, IPPROTO_UDP ) ) < 0 ||
-            setsockopt( bind_ctx->fd, SOL_SOCKET, SO_REUSEADDR,
+                                           IPSTACK_SOCK_DGRAM, IPSTACK_IPPROTO_UDP ) ) < 0 ||
+            setsockopt( bind_ctx->fd, IPSTACK_SOL_SOCKET, IPSTACK_SO_REUSEADDR,
                         (const char *) &one, sizeof( one ) ) != 0 )
         {
             return( MBEDTLS_ERR_NET_SOCKET_FAILED );
         }
 
-        if( bind( bind_ctx->fd, (struct sockaddr *) &local_addr, n ) != 0 )
+        if( bind( bind_ctx->fd, (struct ipstack_sockaddr *) &local_addr, n ) != 0 )
         {
             return( MBEDTLS_ERR_NET_BIND_FAILED );
         }
@@ -28224,9 +28224,9 @@ int mbedtls_net_accept( mbedtls_net_context *bind_ctx,
 
     if( client_ip != NULL )
     {
-        if( client_addr.ss_family == AF_INET )
+        if( client_addr.ss_family == IPSTACK_AF_INET )
         {
-            struct sockaddr_in *addr4 = (struct sockaddr_in *) &client_addr;
+            struct ipstack_sockaddr_in *addr4 = (struct ipstack_sockaddr_in *) &client_addr;
             *ip_len = sizeof( addr4->sin_addr.s_addr );
 
             if( buf_size < *ip_len )
@@ -28236,7 +28236,7 @@ int mbedtls_net_accept( mbedtls_net_context *bind_ctx,
         }
         else
         {
-            struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *) &client_addr;
+            struct ipstack_sockaddr_in6 *addr6 = (struct ipstack_sockaddr_in6 *) &client_addr;
             *ip_len = sizeof( addr6->sin6_addr.s6_addr );
 
             if( buf_size < *ip_len )
@@ -28257,7 +28257,7 @@ int mbedtls_net_set_block( mbedtls_net_context *ctx )
 #if ( defined(_WIN32) || defined(_WIN32_WCE) ) && !defined(EFIX64) && \
     !defined(EFI32)
     u_long n = 0;
-    return( ioctlsocket( ctx->fd, FIONBIO, &n ) );
+    return( ioctlsocket( ctx->fd, IPSTACK_FIONBIO, &n ) );
 #else
     return( fcntl( ctx->fd, F_SETFL, fcntl( ctx->fd, F_GETFL ) & ~O_NONBLOCK ) );
 #endif
@@ -28268,7 +28268,7 @@ int mbedtls_net_set_nonblock( mbedtls_net_context *ctx )
 #if ( defined(_WIN32) || defined(_WIN32_WCE) ) && !defined(EFIX64) && \
     !defined(EFI32)
     u_long n = 1;
-    return( ioctlsocket( ctx->fd, FIONBIO, &n ) );
+    return( ioctlsocket( ctx->fd, IPSTACK_FIONBIO, &n ) );
 #else
     return( fcntl( ctx->fd, F_SETFL, fcntl( ctx->fd, F_GETFL ) | O_NONBLOCK ) );
 #endif
@@ -28317,10 +28317,10 @@ int mbedtls_net_recv( void *ctx, unsigned char *buf, size_t len )
         if( WSAGetLastError() == WSAECONNRESET )
             return( MBEDTLS_ERR_NET_CONN_RESET );
 #else
-        if( errno == EPIPE || errno == ECONNRESET )
+        if( ipstack_errno == EPIPE || ipstack_errno == ECONNRESET )
             return( MBEDTLS_ERR_NET_CONN_RESET );
 
-        if( errno == EINTR )
+        if( ipstack_errno == EINTR )
             return( MBEDTLS_ERR_SSL_WANT_READ );
 #endif
 
@@ -28363,7 +28363,7 @@ int mbedtls_net_recv_timeout( void *ctx, unsigned char *buf, size_t len,
         if( WSAGetLastError() == WSAEINTR )
             return( MBEDTLS_ERR_SSL_WANT_READ );
 #else
-        if( errno == EINTR )
+        if( ipstack_errno == EINTR )
             return( MBEDTLS_ERR_SSL_WANT_READ );
 #endif
 
@@ -28397,10 +28397,10 @@ int mbedtls_net_send( void *ctx, const unsigned char *buf, size_t len )
         if( WSAGetLastError() == WSAECONNRESET )
             return( MBEDTLS_ERR_NET_CONN_RESET );
 #else
-        if( errno == EPIPE || errno == ECONNRESET )
+        if( ipstack_errno == EPIPE || ipstack_errno == ECONNRESET )
             return( MBEDTLS_ERR_NET_CONN_RESET );
 
-        if( errno == EINTR )
+        if( ipstack_errno == EINTR )
             return( MBEDTLS_ERR_SSL_WANT_WRITE );
 #endif
 

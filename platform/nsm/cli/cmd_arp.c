@@ -60,7 +60,7 @@ DEFUN (ip_arp_timeout,
 		ip_arp_timeout_cmd,
 		CMD_ARP_STR " timeout <1-65536>" ,
 		CMD_ARP_STR_HELP
-		"Arp Table TTL\n"
+		"Arp Table IPSTACK_TTL\n"
 		SECONDS_STR)
 {
 	int ret = ERROR;
@@ -73,7 +73,7 @@ DEFUN (no_ip_arp_timeout,
 		"no "CMD_ARP_STR " timeout" ,
 		NO_STR
 		CMD_ARP_STR_HELP
-		"Arp Table TTL\n")
+		"Arp Table IPSTACK_TTL\n")
 {
 	int ret = ERROR;
 	ret = nsm_ip_arp_timeout_set_api(0);
@@ -355,7 +355,7 @@ static int show_nsm_ip_arp_table_head(struct vty *vty, struct arp_user *user)
 	vty_out(vty, " Static 	:%d%s",user->iStatic, VTY_NEWLINE);
 	vty_out(vty, " Dynamic	:%d%s",user->dynamic, VTY_NEWLINE);
 	vty_out(vty, "%-8s %-16s %-8s %-16s %-16s %-8s %-16s %s",
-			"Protocol", "Address", "TTL/Age(min)", "Hardware Addr", "Interface", "VLAN", "VRF",VTY_NEWLINE);
+			"Protocol", "Address", "IPSTACK_TTL/Age(min)", "Hardware Addr", "Interface", "VLAN", "VRF",VTY_NEWLINE);
 	return OK;
 }
 
@@ -440,13 +440,17 @@ static int show_nsm_ip_arp_config(struct vty *vty, struct arp_user *user)
 	return OK;
 }
 
-
+static struct cmd_node ip_arp_node =
+{
+	IP_ARP_NODE,
+	"%s(config)# ",
+	1
+};
 
 void cmd_arp_init(void)
 {
-//	install_default(CONFIG_NODE);
-	//reinstall_node(SERVICE_NODE, nsm_ip_arp_config);
-
+	install_node(&ip_arp_node, nsm_ip_arp_config);
+	install_default(IP_ARP_NODE);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &ip_arp_add_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &ip_arp_add_interface_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_ip_arp_add_cmd);

@@ -308,7 +308,7 @@ static int vty_config_write(struct vty *vty)
 	return CMD_SUCCESS;
 }
 
-struct cmd_node vty_node =
+static struct cmd_node vty_node =
 {
 	VTY_NODE,
 	"%s(config-line)# ",

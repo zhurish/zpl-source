@@ -49,8 +49,8 @@ static int v9_app_slipnet_read_eloop(struct eloop *eloop)
 	zpl_uint32 len = 0;
 #ifdef V9_SLIPNET_UDP
 	int sock_len = 0;
-	struct sockaddr_in from;
-	sock_len = sizeof(struct sockaddr_in);
+	struct ipstack_sockaddr_in from;
+	sock_len = sizeof(struct ipstack_sockaddr_in);
 #endif
 	v9_serial_t *mgt = ELOOP_ARG(eloop);
 	zassert(mgt != NULL);
@@ -70,9 +70,9 @@ static int v9_app_slipnet_read_eloop(struct eloop *eloop)
 	{
 		if (len < 0)
 		{
-			if (ERRNO_IO_RETRY(errno))
+			if (IPSTACK_ERRNO_RETRY(ipstack_errno))
 			{
-				zlog_err(MODULE_APP, "RECV mgt on socket (%s)", strerror(errno));
+				zlog_err(MODULE_APP, "RECV mgt on socket (%s)", strerror(ipstack_errno));
 				//mgt->reset_thread = eloop_add_timer_msec(mgt->master, x5b_app_reset_eloop, mgt, 100);
 				if(mgt->mutex)
 					os_mutex_unlock(mgt->mutex);

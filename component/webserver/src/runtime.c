@@ -157,8 +157,8 @@ typedef struct HashTable {              /* Symbol table descriptor */
     int         size;                   /* Size of the table below */
 } HashTable;
 
-#ifndef LOG_ERR
-    #define LOG_ERR 0
+#ifndef ZLOG_LEVEL_ERR
+    #define ZLOG_LEVEL_ERR 0
 #endif
 #if ME_WIN_LIKE
     PUBLIC void syslog(int priority, char *fmt, ...);
@@ -970,7 +970,7 @@ static void defaultLogHandler(int flags, cchar *buf)
             write(logFd, "\n", 1);
 #if ME_WIN_LIKE || ME_UNIX_LIKE
             if (flags & WEBS_ERROR_MSG && websGetBackground()) {
-                syslog(LOG_ERR, "%s", buf);
+                syslog(ZLOG_LEVEL_ERR, "%s", buf);
             }
 #endif
         }

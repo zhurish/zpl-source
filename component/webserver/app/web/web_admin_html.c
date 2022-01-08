@@ -75,11 +75,11 @@ static int web_admin_user(Webs *wp, char *path, char *query)
 	if(vty_user_create(NULL, username, password, zpl_false , zpl_true ) == CMD_SUCCESS)
 	{
 		if(strstr(authlevel, "mana"))
-			ret = vty_user_setting_privilege(NULL, username, ADMIN_LEVEL);
+			ret = vty_user_setting_privilege(NULL, username, CMD_ADMIN_LEVEL);
 		else if(strstr(authlevel, "user"))
-			ret = vty_user_setting_privilege(NULL, username, CONFIG_LEVEL);
+			ret = vty_user_setting_privilege(NULL, username, CMD_CONFIG_LEVEL);
 		else
-			ret = vty_user_setting_privilege(NULL, username, ENABLE_LEVEL);
+			ret = vty_user_setting_privilege(NULL, username, CMD_ENABLE_LEVEL);
 	}
 	else
 	{

@@ -50,12 +50,12 @@ extern int if_uspv_type_setting(struct interface *ifp);
 extern int if_loopback_ifindex_create(if_type_t type, const char *name);
 
 extern const char *if_mac_out_format(zpl_uchar *mac);
-extern int vty_iusp_get (const char *str, zpl_uint32 *uspv);
+extern int vty_iusp_get (const char *str, zpl_uint32 *uspv, zpl_uint32 *end);
 extern int vty_mac_get (const char *str, zpl_uchar *mac);
 
 //extern int serial_kifindex_make(const char *name);
 
-#define VTY_IUSP_GET(s,uspv)	vty_iusp_get(s, &uspv)
+#define VTY_IUSP_GET(s,uspv,end)	vty_iusp_get(s, &uspv, &end)
 #define VTY_IMAC_GET(s,m)		vty_mac_get(s, m)
  
 #ifdef __cplusplus

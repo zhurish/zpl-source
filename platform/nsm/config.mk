@@ -4,7 +4,7 @@
 MODULEDIR = platform/nsm
 #nsm
 ifeq ($(strip $(ZPL_NSM_MODULE)),true)
-
+OBJS	+= moduletable.o
 OBJS	+= nsm_debug.o
 #OBJS	+= nexthop.o
 #OBJS	+= table.o

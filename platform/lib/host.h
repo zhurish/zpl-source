@@ -56,6 +56,8 @@ struct zpl_host
   zpl_int8	serial[64];
 
   zpl_uint8	sysmac[6];
+
+  void *bspinit_sem;
 };
 
 struct host_system
@@ -88,8 +90,12 @@ extern void host_config_set (zpl_char *);
 const char * host_name_get (void);
 
 extern int host_config_loading(char *config);
-extern zpl_bool host_config_load_waitting(void);
-extern zpl_bool host_config_load_done(void);
+extern zpl_bool host_waitting_loadconfig(void);
+extern zpl_bool host_loadconfig_done(void);
+extern int host_loadconfig_stats(int);
+
+extern int host_waitting_bspinit(int);
+extern int host_bspinit_done(void);
 
 enum
 {

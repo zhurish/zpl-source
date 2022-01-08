@@ -33,9 +33,9 @@ extern "C" {
 #endif /* IPTOS_PREC_INTERNETCONTROL */
 
 /* Default protocol, port number. */
-#ifndef IPPROTO_OSPFIGP
-#define IPPROTO_OSPFIGP         89
-#endif /* IPPROTO_OSPFIGP */
+#ifndef IPSTACK_IPPROTO_OSPFIGP
+#define IPSTACK_IPPROTO_OSPFIGP         89
+#endif /* IPSTACK_IPPROTO_OSPFIGP */
 
 /* Architectual Constants */
 #ifdef DEBUG

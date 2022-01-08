@@ -670,14 +670,14 @@ static void v9_video_sdk_test()
 static int v9_video_sdk_task(void *argv)
 {
 	module_setup_task(MODULE_APP_START + 1, os_task_id_self());
-	host_config_load_waitting();
+	host_waitting_loadconfig();
 
 	v9_video_sdk_restart_all();
 #ifdef V9_DEBUGING_TEST
 	V9_SDK_DBGPRF("---------%s---call v9_board_set_ready----", __func__);
 	v9_video_sdk_test();
 #endif
-	eloop_start_running(master_eloop[MODULE_APP_START + 1], MODULE_APP_START + 1);
+	eloop_mainloop(master_eloop[MODULE_APP_START + 1]);
 	return OK;
 }
 

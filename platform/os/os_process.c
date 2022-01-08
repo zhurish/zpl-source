@@ -13,11 +13,11 @@
 int super_system(const zpl_char *cmd)
 {
 	int ret = 0;
-	errno = 0;
+	ipstack_errno = 0;
 	ret = system(cmd);
 	if(ret == -1 || ret == 127)
 	{
-		fprintf (stderr, "%s: execute cmd: %s(%s)\r\n",__func__,cmd,strerror (errno) );
+		fprintf (stderr, "%s: execute cmd: %s(%s)\r\n",__func__,cmd,strerror (ipstack_errno) );
 		return ERROR;
 	}
 /*	if (WIFEXITED(ret))
@@ -60,7 +60,7 @@ int super_output_system(const zpl_char *cmd, zpl_char *output, zpl_uint32 len)
 		pclose(fp);
 		return ERROR;
 	}
-	fprintf (stderr, "%s: execute cmd: %s(%s)",__func__,cmd,strerror (errno) );
+	fprintf (stderr, "%s: execute cmd: %s(%s)",__func__,cmd,strerror (ipstack_errno) );
 	return ERROR;
 }
 
@@ -78,7 +78,7 @@ int super_input_system(const zpl_char *cmd, zpl_char *input)
 		pclose(fp);
 		return ERROR;
 	}
-	fprintf (stderr, "%s: execute cmd: %s(%s)",__func__,cmd,strerror (errno) );
+	fprintf (stderr, "%s: execute cmd: %s(%s)",__func__,cmd,strerror (ipstack_errno) );
 	return ERROR;
 }
 
@@ -182,10 +182,10 @@ int os_process_register(process_action action, zpl_char *name,
 	os_memset(&head, 0, sizeof(head));
 	os_process_split(&head,  action, name,
 			process,  restart, argv);
-	errno = 0;
+	ipstack_errno = 0;
 	ret = write(os_process_sock, &head, sizeof(process_head));
 	//ret = os_stream_head_write(fd, &head, sizeof(process_head));
-	//zlog_debug(MODULE_NSM, "%s:name:%s(%d byte(%s))",__func__, head.name, ret, strerror(errno));
+	//zlog_debug(MODULE_NSM, "%s:name:%s(%d byte(%s))",__func__, head.name, ret, strerror(ipstack_errno));
 	if( ret == sizeof(process_head))
 	{
 		zpl_uint32 num = 0;
@@ -200,8 +200,8 @@ int os_process_register(process_action action, zpl_char *name,
 			{
 				if(read(os_process_sock, &respone, 4) == 4)
 					return respone;
-				if (errno == EPIPE || errno == EBADF || errno == EIO || errno == ECONNRESET
-						|| errno == ECONNABORTED || errno == ENETRESET || errno == ECONNREFUSED)
+				if (ipstack_errno == EPIPE || ipstack_errno == EBADF || ipstack_errno == EIO || ipstack_errno == ECONNRESET
+						|| ipstack_errno == ECONNABORTED || ipstack_errno == ENETRESET || ipstack_errno == ECONNREFUSED)
 				{
 					close(os_process_sock);
 					os_process_sock = 0;
@@ -217,20 +217,20 @@ int os_process_register(process_action action, zpl_char *name,
 		}
 		else
 		{
-			fprintf(stdout,"wait respone timeout (%s)", strerror(errno));
+			fprintf(stdout,"wait respone timeout (%s)", strerror(ipstack_errno));
 			return OK;
 		}
 	}
 	if(ret < 0)
 	{
-		if (errno == EPIPE || errno == EBADF || errno == EIO || errno == ECONNRESET
-				|| errno == ECONNABORTED || errno == ENETRESET || errno == ECONNREFUSED)
+		if (ipstack_errno == EPIPE || ipstack_errno == EBADF || ipstack_errno == EIO || ipstack_errno == ECONNRESET
+				|| ipstack_errno == ECONNABORTED || ipstack_errno == ENETRESET || ipstack_errno == ECONNREFUSED)
 		{
 			close(os_process_sock);
 			os_process_sock = 0;
 		}
 	}
-	fprintf(stdout,"can not write (%s)", strerror(errno));
+	fprintf(stdout,"can not write (%s)", strerror(ipstack_errno));
 	return ret;
 }
 
@@ -248,10 +248,10 @@ int os_process_action(process_action action, zpl_char *name, zpl_uint32 id)
 	os_process_split(&head,  action, name,
 			NULL,  zpl_false, NULL);
 	head.id = id;
-	errno = 0;
+	ipstack_errno = 0;
 	ret = write(os_process_sock, &head, sizeof(process_head));
 	//ret = os_stream_head_write(fd, &head, sizeof(process_head));
-	//zlog_debug(MODULE_NSM, "%s:name:%s(%d byte(%s))",__func__, head.name, ret, strerror(errno));
+	//zlog_debug(MODULE_NSM, "%s:name:%s(%d byte(%s))",__func__, head.name, ret, strerror(ipstack_errno));
 	if( ret == sizeof(process_head))
 	{
 		zpl_uint32 num = 0;
@@ -266,8 +266,8 @@ int os_process_action(process_action action, zpl_char *name, zpl_uint32 id)
 			{
 				if(read(os_process_sock, &respone, 4) == 4)
 					return respone;
-				if (errno == EPIPE || errno == EBADF || errno == EIO || errno == ECONNRESET
-						|| errno == ECONNABORTED || errno == ENETRESET || errno == ECONNREFUSED)
+				if (ipstack_errno == EPIPE || ipstack_errno == EBADF || ipstack_errno == EIO || ipstack_errno == ECONNRESET
+						|| ipstack_errno == ECONNABORTED || ipstack_errno == ENETRESET || ipstack_errno == ECONNREFUSED)
 				{
 					close(os_process_sock);
 					os_process_sock = 0;
@@ -283,20 +283,20 @@ int os_process_action(process_action action, zpl_char *name, zpl_uint32 id)
 		}
 		else
 		{
-			fprintf(stdout,"wait respone timeout (%s)", strerror(errno));
+			fprintf(stdout,"wait respone timeout (%s)", strerror(ipstack_errno));
 			return OK;
 		}
 	}
 	if(ret < 0)
 	{
-		if (errno == EPIPE || errno == EBADF || errno == EIO || errno == ECONNRESET
-				|| errno == ECONNABORTED || errno == ENETRESET || errno == ECONNREFUSED)
+		if (ipstack_errno == EPIPE || ipstack_errno == EBADF || ipstack_errno == EIO || ipstack_errno == ECONNRESET
+				|| ipstack_errno == ECONNABORTED || ipstack_errno == ENETRESET || ipstack_errno == ECONNREFUSED)
 		{
 			close(os_process_sock);
 			os_process_sock = 0;
 		}
 	}
-	fprintf(stdout,"can not write (%s)", strerror(errno));
+	fprintf(stdout,"can not write (%s)", strerror(ipstack_errno));
 	return ret;
 }
 

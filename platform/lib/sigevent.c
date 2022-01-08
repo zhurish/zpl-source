@@ -386,7 +386,7 @@ trap_default_signals(void)
         }
         if (sigaction(sigmap[i].sigs[j], &act, NULL) < 0)
           zlog_warn(MODULE_DEFAULT, "Unable to set signal handler for signal %d: %s",
-                    sigmap[i].sigs[j], safe_strerror(errno));
+                    sigmap[i].sigs[j], ipstack_strerror(ipstack_errno));
       }
     }
   }
@@ -409,7 +409,7 @@ void signal_init(void *m, int sigc,
       if (signal_set(sig->signal) < 0)
       {
         fprintf(stdout, "Unable to set signal handler for signal %d: %s(sdddddd)\r\n",
-                sig->signal, safe_strerror(errno));
+                sig->signal, ipstack_strerror(ipstack_errno));
         // exit (-1);
       }
     i++;

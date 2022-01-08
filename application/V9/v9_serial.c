@@ -183,9 +183,9 @@ static int v9_app_read_eloop(struct eloop *eloop)
 	{
 		if (len < 0)
 		{
-			if (ERRNO_IO_RETRY(errno))
+			if (IPSTACK_ERRNO_RETRY(ipstack_errno))
 			{
-				zlog_err(MODULE_APP, "RECV mgt on socket (%s)", strerror(errno));
+				zlog_err(MODULE_APP, "RECV mgt on socket (%s)", strerror(ipstack_errno));
 				//mgt->reset_thread = eloop_add_timer_msec(mgt->master, x5b_app_reset_eloop, mgt, 100);
 				if(mgt->mutex)
 					os_mutex_unlock(mgt->mutex);
@@ -415,15 +415,13 @@ static int v9_app_mgt_task(void *argv)
 	v9_serial_t *mgt = (v9_serial_t *)argv;
 	zassert(mgt != NULL);
 	module_setup_task(MODULE_APP_START, os_task_id_self());
-	host_config_load_waitting();
+	host_waitting_loadconfig();
 	if(!mgt->enable)
 	{
 		os_sleep(5);
 	}
 
-	//v9_video_sdk_restart_all();
-
-	eloop_start_running(master_eloop[MODULE_APP_START], MODULE_APP_START);
+	eloop_mainloop(master_eloop[MODULE_APP_START]);
 	return OK;
 }
 
@@ -438,7 +436,10 @@ static int v9_app_task_init (v9_serial_t *mgt)
 	mgt->task_id = os_task_create("appTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, v9_app_mgt_task, mgt, OS_TASK_DEFAULT_STACK * 2);
 	if(mgt->task_id)
+	{
+		module_setup_task(MODULE_APP_START, mgt->task_id);
 		return OK;
+	}
 	return ERROR;
 }
 

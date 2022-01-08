@@ -1,9 +1,59 @@
 #!/bin/bash
 
+module_table_src_file=$3/nsm/moduletable.c 
 
-module_node_file=$3/lib/moduletypes.c 
-module_def_file=$3/lib/moduletypes.h
-module_node_tmp=$3/lib/moduletypes.tmp
+module_types_src_file=$3/lib/moduletypes.c 
+module_types_def_file=$3/lib/moduletypes.h
+
+module_table_txt_file=$3/lib/moduletable.txt 
+
+module_table_node_tmp=$3/lib/moduletable.tmp
+module_table_desc_tmp=$3/lib/moduletdesc.tmp
+
+function awk_scanfile() {
+    local scanfile
+    scanfile=$1
+    if test "${scanfile}" = "moduletypes.sh"
+    then
+        return;
+    fi
+    if test "${scanfile}" = "moduletypes.h"
+     then
+        return;
+    fi
+    if test "${scanfile}" = "moduletable.c"
+     then
+        return;
+    fi
+    if test "${scanfile}" = "moduletypes.c"
+    then
+        return;
+    fi
+    if test "${scanfile}" = "module.h"
+    then
+        return;
+    fi
+    if [ -e ${scanfile} ]
+    then
+        check=`grep -m 1 "module_list_" ${scanfile}`
+        if test "${check}xx" != "xx"
+        then
+            if  [ "${scanfile}" = "module.c" ] || [ "${scanfile}" = "vty.c" ]
+            then
+            awk 'BEGIN{ORS=""} /module_list_./ {print "extern struct module_list " $3 ";\n";}' ${scanfile} >> $module_table_src_file
+            awk 'BEGIN{ORS=""} /module_list_./ {print "  &" $3 ",\n";}' ${scanfile} >> $module_table_node_tmp
+            awk 'BEGIN{ORS=""} /.module/&&/=/&&/,/&&/MODULE_/ {print  $0 "\n";}' ${scanfile}  | awk '{match($0, /MODULE_.*/,str); print "  " str[0];}' >> $module_types_def_file
+            awk 'BEGIN{ORS=""} /.module/&&/=/&&/,/&&/MODULE_/ {print  $0 "\n";}' ${scanfile}  | awk '{match($0, /MODULE_.*,/,str); print "" str[0];}'|awk '{sub(/.{1}$/,"")}1'| awk -F "_" '{print "ZPL_MODULE_DESC("$2"),"}' >> $module_table_desc_tmp
+
+            else    
+            awk 'BEGIN{ORS=""} /module_list_./ {print "extern struct module_list " $3 ";\n";exit;}' ${scanfile} >> $module_table_src_file
+            awk 'BEGIN{ORS=""} /module_list_./ {print "  &" $3 ",\n";exit;}' ${scanfile} >> $module_table_node_tmp
+            awk 'BEGIN{ORS=""} /.module/&&/=/&&/,/&&/MODULE_/ {print  $0 "\n";exit;}' ${scanfile}  | awk '{match($0, /MODULE_.*/,str); print "  " str[0];exit;}' >> $module_types_def_file
+            awk 'BEGIN{ORS=""} /.module/&&/=/&&/,/&&/MODULE_/ {print  $0 "\n";exit;}' ${scanfile}  | awk '{match($0, /MODULE_.*,/,str); print "" str[0];exit;}'|awk '{sub(/.{1}$/,"")}1'| awk -F "_" '{print "ZPL_MODULE_DESC("$2"),"}' >> $module_table_desc_tmp
+            fi
+        fi
+    fi 
+}
 
 function awk_scandir() {
     local cur_dir parent_dir workdir
@@ -32,6 +82,10 @@ function awk_scandir() {
             then
                 continue;
             fi
+            if test "${scanfile}" = "moduletable.c"
+            then
+                return;
+            fi
             if test "${dirlist}" = "moduletypes.c"
             then
                 continue;
@@ -40,102 +94,60 @@ function awk_scandir() {
             then
                 continue;
             fi
-
-            #filename=${cur_dir}/${dirlist}
-            #exittype=`echo "${dirlist##*.}"`
-            #echo " ${cur_dir}/${dirlist}  $exittype"
-            if test "${dirlist##*.}" = "c" || "${dirlist##*.}" = "cpp"
-            then
-                if [ -e ${cur_dir}/${dirlist} ]
-                then
-                    check=`grep "module_list_" ${cur_dir}/${dirlist}`
-                    #echo " check  --$check--"
-                    if test "${check}xx" != "xx"
-                    then
-                        #echo "check-----$check--"
-                        eemodule_node=`awk 'BEGIN{ORS=""} /module_list_./ {print "extern struct module_list " $3 ";\n"}' ${cur_dir}/${dirlist}`
-                        module_node=`awk 'BEGIN{ORS=""} /module_list_./ {print "  &" $3 ",\n"}' ${cur_dir}/${dirlist}`
-                        #module_def=`awk 'BEGIN{IGNORECASE=0;ORS=""} /MODULE_[A-Z0-9]/' ${cur_dir}/${dirlist} | awk -F'=' 'BEGIN{ORS=""} {print $2}'`
-                        #module_def=`awk 'BEGIN{IGNORECASE=0;ORS=""} /MODULE_[A-Z0-9]/ {print $2}' ${cur_dir}/${dirlist}`
-                        module_def=`grep =MODULE_ ${cur_dir}/${dirlist} | awk -F'=' 'BEGIN{ORS="\n"}  { if(length($2)>1) print "  " $2 }' >> $module_def_file` 
-                        if test "${module_def}xx" != "xx"
-                        then
-                                #echo "	$module_def" >> $module_def_file
-                                echo "	$module_def"
-                        fi
-                        if test "${module_node}xx" != "xx"
-                        then
-                                echo "${eemodule_node}" >> $module_node_file
-                                echo "${module_node}" >> $module_node_tmp
-                                
-                        fi
-                    fi
-                fi    
-            fi   
+            awk_scanfile ${cur_dir}/${dirlist}
         fi
     done
 }
 
-function awk_scanfile() {
-    local scanfile
-    scanfile=$1
-    if test "${scanfile}" = "moduletypes.sh"
-    then
-        return;
-    fi
-    if test "${scanfile}" = "moduletypes.h"
-     then
-        return;
-    fi
-    if test "${scanfile}" = "moduletypes.c"
-    then
-        return;
-    fi
-    if test "${scanfile}" = "module.h"
-    then
-        return;
-    fi
-    if [ -e ${scanfile} ]
-    then
-        check=`grep "module_list_" ${scanfile}`
-        if test "${check}xx" != "xx"
-        then
-            awk 'BEGIN{ORS=""} /module_list_./ {print "extern struct module_list " $3 ";\n"}' ${scanfile} >> $module_node_file
-            awk 'BEGIN{ORS=""} /module_list_./ {print "  &" $3 ",\n"}' ${scanfile} >> $module_node_tmp
-            #grep MODULE_ ${scanfile} | awk -F'=' 'BEGIN{ORS="\n"}  { if((gsub(" ",$1)==".module") && length($2)>1) print "  " $2 }' >> $module_def_file
-            #awk 'BEGIN{ORS=""} /.module/&&/,/&&/MODULE_/ {print $1 "\n"}' ${scanfile} | awk -F'=' 'BEGIN{ORS="\n"} {if(length($2)>1)print "  " $2}'  >> $module_def_file
-            awk 'BEGIN{ORS=""} /.module/&&/=/&&/,/&&/MODULE_/ {print  $0 "\n"}' ${scanfile}  | awk '{match($0, /MODULE_.*/,str); print "  " str[0]}' >> $module_def_file
-        fi
-    fi 
-}
-
 if test "header" == "$1" ;then
-    rm $module_def_file $module_node_file
+    rm $module_types_def_file $module_types_src_file $module_table_node_tmp
 
-    echo "#ifndef _MODULE_TYPES_H" > $module_def_file
-    echo "#define _MODULE_TYPES_H" >> $module_def_file
-    echo " " >> $module_def_file
-    echo "typedef enum {" >> $module_def_file
-    echo "	MODULE_NONE = 0," >> $module_def_file
-    echo "#include \"os_include.h\"" > $module_node_file
-    echo "#include \"zpl_include.h\"" > $module_node_file
-    echo "#include \"module.h\"" >> $module_node_file
-    echo "#include \"moduletypes.h\"" >> $module_node_file
-    echo " " >> $module_node_file
+    echo "#ifndef _MODULE_TYPES_H" > $module_types_def_file
+    echo "#define _MODULE_TYPES_H" >> $module_types_def_file
+    echo " " >> $module_types_def_file
+    echo "typedef enum {" >> $module_types_def_file
+    echo "	MODULE_NONE = 0," >> $module_types_def_file
+
+    echo "#include \"os_include.h\"" > $module_table_src_file
+    echo "#include \"zpl_include.h\"" > $module_table_src_file
+    echo "#include \"lib_include.h\"" >> $module_table_src_file
+    echo " " >> $module_table_src_file
+
+    echo "#include \"os_include.h\"" > $module_types_src_file
+    echo "#include \"zpl_include.h\"" > $module_types_src_file
+    echo "#include \"module.h\"" >> $module_types_src_file
+    echo "#include \"moduletypes.h\"" >> $module_types_src_file
+    echo " " >> $module_types_src_file
+
+    echo " " >> $module_types_src_file
+    echo "#define ZPL_MODULE_DESC(m)    {(MODULE_ ##m),(#m),0 }" >> $module_types_src_file
+    echo " " >> $module_types_src_file
 fi
 
-if test "tail" == "$1" ;then
-    echo "	MODULE_MAX," >> $module_def_file
-    echo "} module_t;"  >> $module_def_file
-    echo " " >> $module_def_file
-    echo "#endif /* _MODULE_TYPES_H */" >> $module_def_file
 
-    echo " " >> $module_node_file
-    echo "struct module_alllist module_lists_tbl[MODULE_MAX] = {" >> $module_node_file
-    cat $module_node_tmp >> $module_node_file
-    echo " NULL,"  >> $module_node_file
-    echo "};"  >> $module_node_file
-    rm $module_node_tmp
+if test "tail" == "$1" ;then
+    echo "	MODULE_MAX," >> $module_types_def_file
+    echo "} module_t;"  >> $module_types_def_file
+    echo " " >> $module_types_def_file
+    echo "#endif /* _MODULE_TYPES_H */" >> $module_types_def_file
+
+    echo " " >> $module_types_src_file
+    echo "struct module_table module_tbl[MODULE_MAX] = {" >> $module_types_src_file
+    cat $module_table_desc_tmp >> $module_types_src_file
+    echo "};"  >> $module_types_src_file
+    echo "#undef ZPL_MODULE_DESC" >> $module_types_src_file
+    rm $module_table_desc_tmp
+
+    echo " " >> $module_table_src_file
+    echo "struct module_alllist module_lists_tbl[MODULE_MAX] = {" >> $module_table_src_file
+    cat $module_table_node_tmp >> $module_table_src_file
+    echo " NULL,"  >> $module_table_src_file
+    echo "};"  >> $module_table_src_file
+    echo " " >> $module_table_src_file
+    echo " " >> $module_table_src_file
+    cat $module_table_txt_file >> $module_table_src_file
+    echo " " >> $module_table_src_file
+    rm $module_table_node_tmp
 fi
 
 if test "def" == "$1" ;then

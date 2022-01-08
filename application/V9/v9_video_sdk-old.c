@@ -218,7 +218,7 @@ static int v9_video_sdk_open(v9_video_sdk_t *sdk)
 		sdk->login = zpl_false;
 		sdk->getstate = zpl_false;
 		v9_video_board_active(sdk->id, zpl_false);
-		zlog_err(MODULE_APP, " EAIS SDK Login failed on Board ID=%s, errno=%d", sdk->address, sdk->handle);
+		zlog_err(MODULE_APP, " EAIS SDK Login failed on Board ID=%s, ipstack_errno=%d", sdk->address, sdk->handle);
 		return ERROR;
 	}
 	zlog_warn(MODULE_APP,"EAIS_SDK_Login OK");
@@ -325,7 +325,7 @@ static int v9_video_sdk_task(void *argv)
 	v9_video_sdk_t *mgt = (v9_video_sdk_t *)argv;
 	zassert(mgt != NULL);
 	module_setup_task(MODULE_APP_START + 1, os_task_id_self());
-	host_config_load_waitting();
+	host_waitting_loadconfig();
 /*	if(!mgt->enable)
 	{
 		os_sleep(5);

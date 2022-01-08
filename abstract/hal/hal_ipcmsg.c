@@ -213,15 +213,23 @@ int hal_ipcmsg_table_set(ifindex_t ifindex, hal_table_header_t *table)
 
 int hal_ipcmsg_global_get(struct hal_ipcmsg *ipcmsg, hal_global_header_t *glo)
 {
+    hal_ipcmsg_getl(ipcmsg, &glo->vrfid);
     return OK;
 }
 
-int hal_ipcmsg_port_get(struct hal_ipcmsg *ipcmsg, ifindex_t *ifindex)
+int hal_ipcmsg_port_get(struct hal_ipcmsg *ipcmsg, hal_port_header_t *bspport)
 {
+    hal_ipcmsg_getl(ipcmsg, &bspport->ifindex);
+    hal_ipcmsg_getl(ipcmsg, &bspport->vrfid);
+    hal_ipcmsg_getw(ipcmsg, &bspport->vlanid);
+    hal_ipcmsg_getl(ipcmsg, &bspport->phyport);
     return OK;
 }
 
 int hal_ipcmsg_table_get(struct hal_ipcmsg *ipcmsg, hal_table_header_t *table)
 {
+    hal_ipcmsg_getl(ipcmsg, &table->vrfid);
+    hal_ipcmsg_getw(ipcmsg, &table->vlanid);
+    hal_ipcmsg_getl(ipcmsg, &table->table);
     return OK;
 }

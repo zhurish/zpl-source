@@ -29,8 +29,56 @@ extern "C" {
 
 #include "zpl_include.h"
 
+#ifndef ZPL_IPCOM_STACK_MODULE
+#include "thread.h"
+#define eloop_list thread_list
+#define eloop_master thread_master
+#define eloop thread
+#define ELOOP_ARG THREAD_ARG
+#define ELOOP_FD  THREAD_FD
+#define ELOOP_VAL THREAD_VAL
+
+#define ELOOP_READ_ON THREAD_READ_ON
+#define ELOOP_WRITE_ON THREAD_WRITE_ON
+#define ELOOP_TIMER_ON THREAD_TIMER_ON
+#define ELOOP_TIMER_MSEC_ON THREAD_TIMER_MSEC_ON
+#define ELOOP_OFF THREAD_OFF
+#define ELOOP_READ_OFF(eloop)  THREAD_OFF(eloop)
+#define ELOOP_WRITE_OFF(eloop)  THREAD_OFF(eloop)
+#define ELOOP_TIMER_OFF(eloop)  THREAD_OFF(eloop)
+
+#define eloop_add_read  thread_add_read
+#define eloop_add_write thread_add_write
+#define eloop_add_timer thread_add_timer
+#define eloop_add_timer_msec  thread_add_timer_msec
+#define eloop_add_timer_tv  thread_add_timer_tv
+#define eloop_add_event thread_add_event
+#define eloop_execute thread_execute
+#define eloop_add_ready thread_add_ready
+#define eloop_add_background  thread_add_background
+
+#define eloop_master_create  thread_master_create
+#define eloop_master_module_create  thread_master_module_create
+#define eloop_master_module_lookup  thread_master_module_lookup
+#define eloop_master_free  thread_master_free
+#define eloop_cancel  thread_cancel
+
+#define eloop_cancel_event  thread_cancel_event
+#define eloop_fetch  thread_fetch
+#define eloop_mainloop  thread_mainloop
+#define eloop_call  thread_call
+#define eloop_timer_remain_second  thread_timer_remain_second
+
+#define eloop_timer_remain  thread_timer_remain
+#define eloop_should_yield  thread_should_yield
+#define eloop_fetch_quit  thread_fetch_quit
+#define eloop_wait_quit  thread_wait_quit
+#define eloop_getrusage  thread_getrusage
+
+#define eloop_consumed_time  thread_consumed_time
+
+#else
 #define THREAD_MASTER_LIST
-//#define ELOOP_THREAD
 
 
 /* Linked list of eloop. */
@@ -232,8 +280,8 @@ extern struct eloop *funcname_eloop_ready (struct eloop_master *,
 
 extern void eloop_cancel (struct eloop *);
 extern zpl_uint32  eloop_cancel_event (struct eloop_master *, void *);
-extern struct eloop *eloop_fetch (struct eloop_master *, struct eloop *);
-extern struct eloop *eloop_fetch_main (struct eloop_master *);
+extern struct eloop *eloop_fetch (struct eloop_master *);
+extern struct eloop *eloop_mainloop (struct eloop_master *);
 extern void eloop_call (struct eloop *);
 extern zpl_ulong eloop_timer_remain_second (struct eloop *);
 extern struct timeval eloop_timer_remain(struct eloop*);
@@ -249,12 +297,12 @@ extern zpl_ulong eloop_consumed_time(struct timeval *after, struct timeval *befo
 #ifndef THREAD_MASTER_LIST
 extern struct eloop_master * master_eloop[];
 #endif
-extern struct eloop *eloop_current_get();
 //extern struct timeval eloop_recent_relative_time (void);
 #ifdef ZPL_SHELL_MODULE
 //extern int cpu_eloop_show(struct eloop_master *m, struct vty *vty);
 #endif
- 
+
+#endif 
 #ifdef __cplusplus
 }
 #endif

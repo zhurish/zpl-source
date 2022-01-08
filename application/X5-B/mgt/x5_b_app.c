@@ -1774,13 +1774,13 @@ static int x5b_app_mgt_task(void *argv)
 	x5b_app_mgt_t *mgt = (x5b_app_mgt_t *)argv;
 	zassert(mgt != NULL);
 	module_setup_task(MODULE_APP, os_task_id_self());
-	host_config_load_waitting();
+	host_waitting_loadconfig);
 	if(!mgt->enable)
 	{
 		os_sleep(5);
 	}
 	//x5b_app_state_load(mgt);
-	eloop_start_running(mgt->master, MODULE_APP);
+	eloop_mainloop(mgt->master);
 	return OK;
 }
 

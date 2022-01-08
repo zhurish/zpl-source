@@ -240,12 +240,12 @@ route_node_match (const struct route_table *table, const struct prefix *p)
 
 struct route_node *
 route_node_match_ipv4 (const struct route_table *table,
-		       const struct in_addr *addr)
+		       const struct ipstack_in_addr *addr)
 {
   struct prefix_ipv4 p;
 
   memset (&p, 0, sizeof (struct prefix_ipv4));
-  p.family = AF_INET;
+  p.family = IPSTACK_AF_INET;
   p.prefixlen = IPV4_MAX_PREFIXLEN;
   p.prefix = *addr;
 
@@ -255,12 +255,12 @@ route_node_match_ipv4 (const struct route_table *table,
 #ifdef HAVE_IPV6
 struct route_node *
 route_node_match_ipv6 (const struct route_table *table,
-		       const struct in6_addr *addr)
+		       const struct ipstack_in6_addr *addr)
 {
   struct prefix_ipv6 p;
 
   memset (&p, 0, sizeof (struct prefix_ipv6));
-  p.family = AF_INET6;
+  p.family = IPSTACK_AF_INET6;
   p.prefixlen = IPV6_MAX_PREFIXLEN;
   p.prefix = *addr;
 

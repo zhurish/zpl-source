@@ -463,7 +463,7 @@ static int d6_mcast_from_client_config_ifindex(struct d6_packet *packet, zpl_uin
 	return d6_send_raw_packet(
 		packet, (end - (zpl_uint8*) packet),
 		/*src*/ &client6_data.ll_ip6, CLIENT_PORT6,
-		/*dst*/ (struct in6_addr*)FF02__1_2, SERVER_PORT6, MAC_BCAST_ADDR,
+		/*dst*/ (struct ipstack_in6_addr*)FF02__1_2, SERVER_PORT6, MAC_BCAST_ADDR,
 		client_config.ifindex
 	);
 }
@@ -550,7 +550,7 @@ static int d6_mcast_from_client_config_ifindex(struct d6_packet *packet, zpl_uin
       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 /* NOINLINE: limit stack usage in caller */
-static  int send_d6_discover(zpl_uint32  xid, struct in6_addr *requested_ipv6)
+static  int send_d6_discover(zpl_uint32  xid, struct ipstack_in6_addr *requested_ipv6)
 {
 	struct d6_packet packet;
 	zpl_uint8 *opt_ptr;
@@ -683,7 +683,7 @@ static int send_d6_select(zpl_uint32  xid)
  * about parameter values the client would like to have returned.
  */
 /* NOINLINE: limit stack usage in caller */
-static  int send_d6_renew(zpl_uint32  xid, struct in6_addr *server_ipv6, struct in6_addr *our_cur_ipv6)
+static  int send_d6_renew(zpl_uint32  xid, struct ipstack_in6_addr *server_ipv6, struct ipstack_in6_addr *our_cur_ipv6)
 {
 	struct d6_packet packet;
 	zpl_uint8 *opt_ptr;
@@ -713,7 +713,7 @@ static  int send_d6_renew(zpl_uint32  xid, struct in6_addr *server_ipv6, struct 
 }
 
 /* Unicast a DHCP release message */
-static int send_d6_release(struct in6_addr *server_ipv6, struct in6_addr *our_cur_ipv6)
+static int send_d6_release(struct ipstack_in6_addr *server_ipv6, struct ipstack_in6_addr *our_cur_ipv6)
 {
 	struct d6_packet packet;
 	zpl_uint8 *opt_ptr;
@@ -736,7 +736,7 @@ static int send_d6_release(struct in6_addr *server_ipv6, struct in6_addr *our_cu
 
 /* Returns -1 on errors that are fatal for the socket, -2 for those that aren't */
 /* NOINLINE: limit stack usage in caller */
-static  int d6_recv_raw_packet(struct in6_addr *peer_ipv6, struct d6_packet *d6_pkt, int fd)
+static  int d6_recv_raw_packet(struct ipstack_in6_addr *peer_ipv6, struct d6_packet *d6_pkt, int fd)
 {
 	int bytes;
 	struct ip6_udp_d6_packet packet;
@@ -763,7 +763,7 @@ static  int d6_recv_raw_packet(struct in6_addr *peer_ipv6, struct d6_packet *d6_
 	bytes = sizeof(packet.ip6) + ntohs(packet.ip6.ip6_plen);
 
 	/* make sure its the right packet for us, and that it passes sanity checks */
-	if (packet.ip6.ip6_nxt != IPPROTO_UDP
+	if (packet.ip6.ip6_nxt != IPSTACK_IPPROTO_UDP
 	 || (packet.ip6.ip6_vfc >> 4) != 6
 	 || packet.udp.dest != htons(CLIENT_PORT6)
 	/* || bytes > (int) sizeof(packet) - can't happen */
@@ -825,7 +825,7 @@ static int state;
 static int d6_raw_socket(int ifindex)
 {
 	int fd;
-	struct sockaddr_ll sock;
+	struct ipstack_sockaddr_ll sock;
 
 	/*
 	 * Comment:
@@ -852,8 +852,8 @@ static int d6_raw_socket(int ifindex)
 	static const struct sock_filter filter_instr[] = {
 		/* load 9th byte (protocol) */
 		BPF_STMT(BPF_LD|BPF_B|BPF_ABS, 9),
-		/* jump to L1 if it is IPPROTO_UDP, else to L4 */
-		BPF_JUMP(BPF_JMP|BPF_JEQ|BPF_K, IPPROTO_UDP, 0, 6),
+		/* jump to L1 if it is IPSTACK_IPPROTO_UDP, else to L4 */
+		BPF_JUMP(BPF_JMP|BPF_JEQ|BPF_K, IPSTACK_IPPROTO_UDP, 0, 6),
 		/* L1: load halfword from offset 6 (flags and frag offset) */
 		BPF_STMT(BPF_LD|BPF_H|BPF_ABS, 6),
 		/* jump to L4 if any bits in frag offset field are set, else to L2 */
@@ -878,24 +878,24 @@ static int d6_raw_socket(int ifindex)
 
 	zlog_err(MODULE_DHCP,"opening raw socket on ifindex %d", ifindex);
 
-	fd = socket(PF_PACKET, SOCK_DGRAM, htons(ETH_P_IPV6));
+	fd = socket(IPSTACK_PF_PACKET, IPSTACK_SOCK_DGRAM, htons(ETH_P_IPV6));
 	zlog_err(MODULE_DHCP, "got raw socket fd %d", fd);
 
 	memset(&sock, 0, sizeof(sock)); /* let's be deterministic */
-	sock.sll_family = AF_PACKET;
+	sock.sll_family = IPSTACK_AF_PACKET;
 	sock.sll_protocol = htons(ETH_P_IPV6);
 	sock.sll_ifindex = ifindex;
 	/*sock.sll_hatype = ARPHRD_???;*/
 	/*sock.sll_pkttype = PACKET_???;*/
 	/*sock.sll_halen = ???;*/
 	/*sock.sll_addr[8] = ???;*/
-	bind(fd, (struct sockaddr *) &sock, sizeof(sock));
+	bind(fd, (struct ipstack_sockaddr *) &sock, sizeof(sock));
 
 #if 0
 	if (CLIENT_PORT6 == 546) {
 		/* Use only if standard port is in use */
 		/* Ignoring error (kernel may lack support for this) */
-		if (setsockopt(fd, SOL_SOCKET, SO_ATTACH_FILTER, &filter_prog,
+		if (setsockopt(fd, IPSTACK_SOL_SOCKET, SO_ATTACH_FILTER, &filter_prog,
 				sizeof(filter_prog)) >= 0)
 			zlog_err(MODULE_DHCP,"attached filter to raw socket fd %d", fd); // log?
 	}
@@ -920,7 +920,7 @@ static void change_listen_mode(int new_mode)
 		sockfd = -1;
 	}
 	if (new_mode == LISTEN_KERNEL)
-		sockfd = udhcp_listen_socket(/*INADDR_ANY,*/ CLIENT_PORT6, client_config.interface);
+		sockfd = udhcp_listen_socket(/*IPSTACK_INADDR_ANY,*/ CLIENT_PORT6, client_config.interface);
 	else if (new_mode != LISTEN_NONE)
 		sockfd = d6_raw_socket(client_config.ifindex);
 	/* else LISTEN_NONE: sockfd stays closed */
@@ -949,7 +949,7 @@ static void perform_renew(void)
 	}
 }
 
-static void perform_d6_release(struct in6_addr *server_ipv6, struct in6_addr *our_cur_ipv6)
+static void perform_d6_release(struct ipstack_in6_addr *server_ipv6, struct ipstack_in6_addr *our_cur_ipv6)
 {
 	/* send release packet */
 	if (state == BOUND
@@ -1085,9 +1085,9 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 	int tryagain_timeout = 20;
 	int discover_timeout = 3;
 	int discover_retries = 3;
-	struct in6_addr srv6_buf;
-	struct in6_addr ipv6_buf;
-	struct in6_addr *requested_ipv6;
+	struct ipstack_in6_addr srv6_buf;
+	struct ipstack_in6_addr ipv6_buf;
+	struct ipstack_in6_addr *requested_ipv6;
 	zpl_uint32  xid = 0;
 	int packet_num;
 	int timeout; /* must be signed */
@@ -1125,7 +1125,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 #endif
 	requested_ipv6 = NULL;
 	if (opt & OPT_r) {
-		if (ipstack_inet_pton(AF_INET6, str_r, &ipv6_buf) <= 0)
+		if (ipstack_inet_pton(IPSTACK_AF_INET6, str_r, &ipv6_buf) <= 0)
 			zlog_err(MODULE_DHCP,"bad IPv6 address '%s'", str_r);
 		requested_ipv6 = &ipv6_buf;
 	}
@@ -1138,7 +1138,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 	while (list_O) {
 		char *optstr = llist_pop(&list_O);
 		unsigned n = bb_strtou(optstr, NULL, 0);
-		if (errno || n > 254) {
+		if (ipstack_errno || n > 254) {
 			n = udhcp_option_idx(optstr, d6_option_strings);
 			n = d6_optflags[n].code;
 		}
@@ -1249,7 +1249,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 			retval = poll(pfds, 2, tv < INT_MAX/1000 ? tv * 1000 : INT_MAX);
 			if (retval < 0) {
 				/* EINTR? A signal was caught, don't panic */
-				if (errno == EINTR) {
+				if (ipstack_errno == EINTR) {
 					already_waited_sec += (unsigned)monotonic_sec() - timestamp_before_wait;
 					continue;
 				}
@@ -1612,7 +1612,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 				/* Note: the address is sufficiently aligned for cast:
 				 * we _copied_ IA-NA, and copy is always well-aligned.
 				 */
-				requested_ipv6 = (struct in6_addr*) iaaddr->data;
+				requested_ipv6 = (struct ipstack_in6_addr*) iaaddr->data;
 				move_from_unaligned32(lease_seconds, iaaddr->data + 16 + 4);
 				lease_seconds = ntohl(lease_seconds);
 				/* paranoia: must not be too small and not prone to overflows */

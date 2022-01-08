@@ -54,7 +54,7 @@ extern "C" {
 struct sntp_server
 {
 	zpl_bool enable;
-	int sock;
+	zpl_socket_t sock;
 	zpl_uint32 mode;
 
 	zpl_uint8 leap;
@@ -65,7 +65,7 @@ struct sntp_server
 
     zpl_uint32 sntpsInterval;
     zpl_ushort sntpsPort;
-    struct in_addr address;
+    struct ipstack_in_addr address;
     zpl_uint32 sntps_ttl;
 	zpl_uint8 time_debug;
 
@@ -79,9 +79,9 @@ struct sntp_server
 
     void *master;
     void *obuf;
-    struct thread *t_read;	/* read to output socket. */
-    struct thread *t_write;	/* Write to output socket. */
-    struct thread *t_time;	/* Write to output socket. */
+    struct thread *t_read;	/* read to output ipstack_socket. */
+    struct thread *t_write;	/* Write to output ipstack_socket. */
+    struct thread *t_time;	/* Write to output ipstack_socket. */
 
     void *mutex;
 };
@@ -96,6 +96,7 @@ typedef struct sntpsTimeData
 extern int sntps_config(struct vty *);
 extern int sntps_debug_config(struct vty *);
 extern int sntpsInit(void *);
+extern int sntpsDisable(void);
 extern int cmd_sntps_init();
 //#define SNTPS_CLI_ENABLE
 #ifndef SNTPS_CLI_ENABLE

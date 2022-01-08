@@ -71,7 +71,7 @@ extern int vty_user_authorization (struct vty *, zpl_char *);
 extern int vty_user_accounting_start (struct vty *);
 extern int vty_user_accounting_stop (struct vty *);
 
-extern int vty_user_config_write (struct vty *);
+extern int config_write_vty_user (struct vty *);
 
 extern int vty_user_create(struct vty *, zpl_char *, zpl_char *, zpl_bool , zpl_bool );
 extern int vty_user_delete(struct vty *, zpl_char *, zpl_bool , zpl_bool );
@@ -86,7 +86,7 @@ extern zpl_bool md5_encrypt_empty(zpl_uchar *);
 extern int md5_encrypt_password(zpl_char *, zpl_uchar *);
 
 extern int vty_user_init(void);
-
+extern int cmd_vty_user_init();
 
 #ifdef VTY_USER_DEBUG
 #define VTY_USER_DEBUG_LOG	zlog_debug

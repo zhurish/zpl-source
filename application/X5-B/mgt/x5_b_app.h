@@ -135,7 +135,7 @@ typedef struct x5b_app_mgt_s
 	zpl_uint16 wait_timeout;
 	void	*mutex;
 
-	struct sockaddr_in from;
+	struct ipstack_sockaddr_in from;
 
 	zpl_bool	upgrade;		//upgrate A(STM32/ESP32)
 	char	up_buf[16];

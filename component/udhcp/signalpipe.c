@@ -25,11 +25,11 @@ static struct fd_pair signal_pipe;
 
 static void signal_handler(int sig)
 {
-	int sv = errno;
+	int sv = ipstack_errno;
 	zpl_uint8 ch = sig; /* use char, avoid dealing with partial writes */
 	if (write(signal_pipe.wr, &ch, 1) != 1)
 		zlog_err(MODULE_DHCP,"can't send signal");
-	errno = sv;
+	ipstack_errno = sv;
 }
 
 /* Call this before doing anything else. Sets up the socket pair
@@ -67,7 +67,7 @@ void FAST_FUNC udhcp_sp_fd_set(struct pollfd pfds[2], int extra_fd)
 }
 
 /* Read a signal from the signal pipe. Returns 0 if there is
- * no signal, -1 on error (and sets errno appropriately), and
+ * no signal, -1 on error (and sets ipstack_errno appropriately), and
  * your signal on success */
 int FAST_FUNC udhcp_sp_read(void)
 {

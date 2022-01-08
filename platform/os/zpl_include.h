@@ -30,7 +30,7 @@ extern "C" {
 #include "os_file.h"
 #include "os_url.h"
 #include "os_util.h"
-
+#include "os_backtrace.h"
 #include "os_bitmap.h"
 #include "os_process.h"
 #include "libnetpro.h"
@@ -69,8 +69,9 @@ extern "C" {
 #include "rbtree.h"
 
 #define OS_THREAD       1
+#ifdef ZPL_IPCOM_STACK_MODULE
 #define ELOOP_THREAD    1
-
+#endif
 
 
 #ifdef __cplusplus

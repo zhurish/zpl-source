@@ -12,6 +12,7 @@
 #include "nsm_include.h"
 
 #include "kernel_ioctl.h"
+#include "kernel_driver.h"
 #define _LINUX_IP_H
 #include <linux/if_tun.h>
 #include "linux/if_vlan.h"
@@ -24,7 +25,7 @@
 
 static int _ipkernel_vlaneth_create (nsm_vlaneth_t *kifp)
 {
-	struct ifreq ifr;
+	struct ipstack_ifreq ifr;
 	struct interface *ifp;
     zpl_uchar macadd[6] = {0x20,0x5f,0x87,0x65,0x66,0x00};
 	if (!kifp || !kifp->ifp)
@@ -39,21 +40,21 @@ static int _ipkernel_vlaneth_create (nsm_vlaneth_t *kifp)
 	 */
 	if(if_is_serial(ifp))
 	{
-		kifp->fd._fd = open(IPKERNEL_TUN_NAME, O_RDWR);
-		if (kifp->fd._fd < 0)
+		kifp->fd = ipstack_open(IPCOM_STACK, IPKERNEL_TUN_NAME, O_RDWR);
+		if (ipstack_invalid(kifp->fd))
 		{
 			zlog_err(MODULE_PAL, "Unable to open %s to create L3 interface(%s).",
-					IPKERNEL_TUN_NAME, safe_strerror(errno));
+					IPKERNEL_TUN_NAME, ipstack_strerror(ipstack_errno));
 			return ERROR;
 		}
 	}
 	else
 	{
-		kifp->fd._fd = open(IPKERNEL_TAP_NAME, O_RDWR);
-		if (kifp->fd._fd < 0)
+		kifp->fd = ipstack_open(IPCOM_STACK, IPKERNEL_TAP_NAME, O_RDWR);
+		if (ipstack_invalid(kifp->fd))
 		{
 			zlog_err(MODULE_PAL, "Unable to open %s to create L3 interface(%s).",
-					IPKERNEL_TUN_NAME, safe_strerror(errno));
+					IPKERNEL_TUN_NAME, ipstack_strerror(ipstack_errno));
 			return ERROR;
 		}
 	}
@@ -75,11 +76,11 @@ static int _ipkernel_vlaneth_create (nsm_vlaneth_t *kifp)
 	 *and that we provide no additional packet information
 	 */
 
-	if (ioctl(kifp->fd._fd, TUNSETIFF, &ifr) < 0)
+	if (ipstack_ioctl(kifp->fd, IPSTACK_TUNSETIFF, &ifr) < 0)
 	{
 		zlog_err(MODULE_PAL, "Unable to create corresponding L3 interface %s(%s).",
-				ifp->name, safe_strerror(errno));
-		close(kifp->fd._fd);
+				ifp->name, ipstack_strerror(ipstack_errno));
+		ipstack_close(kifp->fd);
 		return ERROR;
 	}
     /*TODO:MAC��ȡ */
@@ -89,11 +90,11 @@ static int _ipkernel_vlaneth_create (nsm_vlaneth_t *kifp)
     if(pal_interface_set_lladdr(ifp, macadd, 6) != OK)
 	{
 		zlog_err(MODULE_PAL, "Unable to set L3 interface  mac %s(%s).",
-				ifp->name, safe_strerror(errno));
-		close(kifp->fd._fd);
+				ifp->name, ipstack_strerror(ipstack_errno));
+		ipstack_close(kifp->fd);
 		return ERROR;
 	}
-	os_set_nonblocking(kifp->fd._fd);
+	ipstack_set_nonblocking(kifp->fd);
 	//ipkernel_register(kifp);
 
 	return OK;
@@ -102,7 +103,7 @@ static int _ipkernel_vlaneth_create (nsm_vlaneth_t *kifp)
 static int _ipkernel_vlaneth_destroy (nsm_vlaneth_t *kifp)
 {
 
-	//struct ifreq ifr;
+	//struct ipstack_ifreq ifr;
 	struct interface *ifp;
 	if(!kifp)
 		return -1;
@@ -111,7 +112,7 @@ static int _ipkernel_vlaneth_destroy (nsm_vlaneth_t *kifp)
 	//TODO unregister this fd
 	//ipkernel_unregister(kifp);
 	pal_interface_down (ifp);
-	close (kifp->fd._fd);
+	ipstack_close (kifp->fd);
 	//TODO to update if kernel index
 	ifp->k_ifindex = 0;
 	return OK;
@@ -128,7 +129,7 @@ static int ip_vlan_create(const char *name, vlan_t vid)
 	v_req.cmd = ADD_VLAN_CMD;
 	strcpy(v_req.device1,name);
 	v_req.u.VID = vid;
-	ret = if_ioctl (SIOCSIFVLAN, &v_req);
+	ret = _ipkernel_if_ioctl (IPSTACK_SIOCSIFVLAN, &v_req);
 	return ret;
 }
 
@@ -140,8 +141,8 @@ static int ip_vlan_delete(const char *name, vlan_t vid)
 	v_req.cmd = DEL_VLAN_CMD;
 	strcpy(v_req.device1,name);
 	v_req.u.VID = vid;
-	ret = if_ioctl (SIOCSIFVLAN, &v_req);
-	//ret = ioctl(vlan_sock_fd, SIOCSIFVLAN, &v_req);
+	ret = _ipkernel_if_ioctl (IPSTACK_SIOCSIFVLAN, &v_req);
+	//ret = ipstack_ioctl(vlan_sock_fd, IPSTACK_SIOCSIFVLAN, &v_req);
 	return ret;
 }
 
@@ -153,7 +154,7 @@ static int ip_vlan_name_type(zpl_uint32 type)
 	memset(&v_req, 0, sizeof(struct vlan_ioctl_args));
 	v_req.cmd = SET_VLAN_NAME_TYPE_CMD;
 	v_req.u.name_type = type;
-	ret = if_ioctl(SIOCSIFVLAN, &v_req);
+	ret = _ipkernel_if_ioctl(SIOCSIFVLAN, &v_req);
 	return ret;
 }
 
@@ -167,7 +168,7 @@ static int ip_vlan_egress(const char *vname, int skb_priority, int vlan_qos)
 	strcpy(v_req.device1,vname);
 	v_req.u.skb_priority = skb_priority;
 	v_req.vlan_qos = vlan_qos;
-	ret = if_ioctl(SIOCSIFVLAN, &v_req);
+	ret = _ipkernel_if_ioctl(SIOCSIFVLAN, &v_req);
 	return ret;
 }
 
@@ -180,7 +181,7 @@ static int ip_vlan_ingress(const char *vname, int skb_priority, int vlan_qos)
 	strcpy(v_req.device1,vname);
 	v_req.u.skb_priority = skb_priority;
 	v_req.vlan_qos = vlan_qos;
-	ret = if_ioctl(SIOCSIFVLAN, &v_req);
+	ret = _ipkernel_if_ioctl(SIOCSIFVLAN, &v_req);
 	return ret;
 }
 #endif

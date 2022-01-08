@@ -12,7 +12,7 @@
 
 PUBLIC WebsSocket   **socketList = NULL;           /* List of open sockets */
 PUBLIC int          socketMax = 0;              /* Maximum size of socket */
-PUBLIC Socket       socketHighestFd = -1;   /* Highest socket fd opened */
+PUBLIC Socket       socketHighestFd;   /* Highest socket fd opened */
 PUBLIC int          socketOpenCount = 0;    /* Number of task using sockets */
 
 static int          hasIPv6 = 0;                /* System supports IPv6 */
@@ -47,8 +47,9 @@ PUBLIC int socketOpen(void)
 #endif
     socketList = NULL;
     socketMax = 0;
-    socketHighestFd = -1;
-    if ((fd = ipstack_socket(IPCOM_STACK, AF_INET6, SOCK_STREAM, 0)) != -1) {
+    //socketHighestFd;
+    fd = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET6, IPSTACK_SOCK_STREAM, 0);
+    if (ipstack_invalid(fd)) {
         hasIPv6 = 1;
         ipstack_closesocket(fd);
     } else {
@@ -95,7 +96,7 @@ PUBLIC bool socketHasIPv6(void)
 PUBLIC int socketListen(cchar *ip, int port, SocketAccept accept, int flags)
 {
     WebsSocket              *sp;
-    struct sockaddr_storage addr;
+    struct ipstack_sockaddr_storage addr;
     Socklen                 addrlen;
     cchar                   *sip;
     int                     family, protocol, sid, enable;
@@ -121,31 +122,32 @@ PUBLIC int socketListen(cchar *ip, int port, SocketAccept accept, int flags)
     if (socketInfo(sip, port, &family, &protocol, &addr, &addrlen) < 0) {
         return -1;
     }
-    if ((sp->sock = ipstack_socket(IPCOM_STACK, family, SOCK_STREAM, protocol)) == SOCKET_ERROR) {
+    sp->sock = ipstack_socket(IPCOM_STACK, family, IPSTACK_SOCK_STREAM, protocol);
+    if (ipstack_invalid(sp->sock)) {
         socketFree(sid);
         return -1;
     }
-    socketHighestFd = max(socketHighestFd, sp->sock);
+    socketHighestFd._fd = max(socketHighestFd._fd, sp->sock._fd);
 
 #if ME_COMPILER_HAS_FCNTL
-    fcntl(sp->sock, F_SETFD, FD_CLOEXEC);
+    //fcntl(sp->sock, F_SETFD, FD_CLOEXEC);
 #endif
     enable = 1;
 #if ME_UNIX_LIKE || VXWORKS
-    if (ipstack_setsockopt(sp->sock, SOL_SOCKET, SO_REUSEADDR, (char*) &enable, sizeof(enable)) != 0) {
-        web_error("Cannot set reuseaddr, errno %s", strerror(errno));
+    if (ipstack_setsockopt(sp->sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_REUSEADDR, (char*) &enable, sizeof(enable)) != 0) {
+        web_error("Cannot set reuseaddr, ipstack_errno %s", strerror(ipstack_errno));
     }
-#if defined(SO_REUSEPORT) && KEEP
+#if defined(IPSTACK_SO_REUSEPORT) && KEEP
     /*
         This permits multiple servers listening on the same endpoint
      */
-    if (ipstack_setsockopt(sp->sock, SOL_SOCKET, SO_REUSEPORT, (char*) &enable, sizeof(enable)) != 0) {
-        web_error("Cannot set reuseport, errno %s", strerror(errno));
+    if (ipstack_setsockopt(sp->sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_REUSEPORT, (char*) &enable, sizeof(enable)) != 0) {
+        web_error("Cannot set reuseport, ipstack_errno %s", strerror(ipstack_errno));
     }
 #endif
 #elif ME_WIN_LIKE && defined(SO_EXCLUSIVEADDRUSE)
-    if (ipstack_setsockopt(sp->sock, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (char*) &enable, sizeof(enable)) != 0) {
-        web_error("Cannot set exclusiveaddruse, errno %d", WSAGetLastError());
+    if (ipstack_setsockopt(sp->sock, IPSTACK_SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (char*) &enable, sizeof(enable)) != 0) {
+        web_error("Cannot set exclusiveaddruse, ipstack_errno %d", WSAGetLastError());
     }
 #endif
 
@@ -157,15 +159,15 @@ PUBLIC int socketListen(cchar *ip, int port, SocketAccept accept, int flags)
     if (hasIPv6) {
         if (ip == 0) {
             enable = 0;
-            ipstack_setsockopt(sp->sock, IPPROTO_IPV6, IPV6_V6ONLY, (char*) &enable, sizeof(enable));
+            ipstack_setsockopt(sp->sock, IPSTACK_IPPROTO_IPV6, IPV6_V6ONLY, (char*) &enable, sizeof(enable));
         } else if (ipv6(ip)) {
             enable = 1;
-            ipstack_setsockopt(sp->sock, IPPROTO_IPV6, IPV6_V6ONLY, (char*) &enable, sizeof(enable));
+            ipstack_setsockopt(sp->sock, IPSTACK_IPPROTO_IPV6, IPV6_V6ONLY, (char*) &enable, sizeof(enable));
         }
     }
 #endif
-    if (ipstack_bind(sp->sock, (struct sockaddr*) &addr, addrlen) == SOCKET_ERROR) {
-        web_error("Cannot bind to address %s:%d, errno %s", ip ? ip : "*", port, strerror(errno));
+    if (ipstack_bind(sp->sock, (struct ipstack_sockaddr*) &addr, addrlen) == SOCKET_ERROR) {
+        web_error("Cannot bind to address %s:%d, ipstack_errno %s", ip ? ip : "*", port, strerror(ipstack_errno));
         socketFree(sid);
         return -1;
     }
@@ -187,7 +189,7 @@ PUBLIC int socketListen(cchar *ip, int port, SocketAccept accept, int flags)
 PUBLIC int socketConnect(char *ip, int port, int flags)
 {
     WebsSocket                *sp;
-    struct sockaddr_storage addr;
+    struct ipstack_sockaddr_storage addr;
     socklen_t               addrlen;
     int                     family, protocol, sid, rc;
 
@@ -203,14 +205,15 @@ PUBLIC int socketConnect(char *ip, int port, int flags)
     if (socketInfo(ip, port, &family, &protocol, &addr, &addrlen) < 0) {
         return -1;
     }
-    if ((sp->sock = ipstack_socket(IPCOM_STACK, AF_INET, SOCK_STREAM, 0)) == SOCKET_ERROR) {
+    sp->sock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+    if (ipstack_invalid(sp->sock)) {
         socketFree(sid);
         return -1;
     }
-    socketHighestFd = max(socketHighestFd, sp->sock);
+    socketHighestFd._fd = max(socketHighestFd._fd, sp->sock._fd);
 
 #if ME_COMPILER_HAS_FCNTL
-    ipstack_fcntl(sp->sock, F_SETFD, FD_CLOEXEC);
+    //ipstack_fcntl(sp->sock, F_SETFD, FD_CLOEXEC);
 #endif
 
     /*
@@ -222,7 +225,7 @@ PUBLIC int socketConnect(char *ip, int port, int flags)
             Set to non-blocking for an async connect
          */
         int flag = 1;
-        if (ip_ioctlsocket(sp->sock, FIONBIO, &flag) == SOCKET_ERROR) {
+        if (ipstack_ioctl(sp->sock, IPSTACK_FIONBIO, &flag) == SOCKET_ERROR) {
             socketFree(sid);
             return -1;
         }
@@ -231,8 +234,8 @@ PUBLIC int socketConnect(char *ip, int port, int flags)
         socketSetBlock(sid, 1);
 #endif
     }
-    if ((rc = ipstack_connect(sp->sock, (struct sockaddr*) &addr, sizeof(addr))) < 0 &&
-        (rc = tryAlternateConnect(sp->sock, (struct sockaddr*) &addr)) < 0) {
+    if ((rc = ipstack_connect(sp->sock, (struct ipstack_sockaddr*) &addr, sizeof(addr))) < 0 &&
+        (rc = tryAlternateConnect(sp->sock, (struct ipstack_sockaddr*) &addr)) < 0) {
 #if ME_WIN_LIKE
         if (socketGetError(sid) != EWOULDBLOCK) {
             socketFree(sid);
@@ -250,18 +253,18 @@ PUBLIC int socketConnect(char *ip, int port, int flags)
 
 
 /*
-    If the connection failed, swap the first two bytes in the sockaddr structure.  This is a kludge due to a change in
+    If the connection failed, swap the first two bytes in the ipstack_sockaddr structure.  This is a kludge due to a change in
     VxWorks between versions 5.3 and 5.4, but we want the product to run on either.
  */
-static int tryAlternateConnect(int sock, struct sockaddr *sockaddr)
+static int tryAlternateConnect(zpl_socket_t sock, struct ipstack_sockaddr *ipstack_sockaddr)
 {
 #if VXWORKS || TIDSP
     char *ptr;
 
-    ptr = (char*) sockaddr;
+    ptr = (char*) ipstack_sockaddr;
     *ptr = *(ptr+1);
     *(ptr+1) = 0;
-    return ipstack_connect(sock, sockaddr, sizeof(struct sockaddr));
+    return ipstack_connect(sock, ipstack_sockaddr, sizeof(struct ipstack_sockaddr));
 #else
     return -1;
 #endif
@@ -285,14 +288,14 @@ PUBLIC void socketCloseConnection(int sid)
  */
 static void socketAccept(WebsSocket *sp)
 {
-    struct sockaddr_storage addrStorage;
-    struct sockaddr         *addr;
+    struct ipstack_sockaddr_storage addrStorage;
+    struct ipstack_sockaddr         *addr;
     WebsSocket              *nsp;
     Socket                  newSock;
     size_t                  len;
     char                    ipbuf[1024];
     int                     port, nid;
-#if defined(SO_RCVTIMEO) || defined(SO_SNDTIMEO)
+#if defined(IPSTACK_SO_RCVTIMEO) || defined(SO_SNDTIMEO)
     //超时时间
     struct timeval timeout;
 #endif
@@ -302,29 +305,30 @@ static void socketAccept(WebsSocket *sp)
         Accept the connection and prevent inheriting by children (F_SETFD)
      */
     len = sizeof(addrStorage);
-    addr = (struct sockaddr*) &addrStorage;
-    if ((newSock = ipstack_accept(sp->sock, addr, (Socklen*) &len)) == SOCKET_ERROR) {
+    addr = (struct ipstack_sockaddr*) &addrStorage;
+    newSock = ipstack_accept(sp->sock, addr, (Socklen*) &len);
+    if (ipstack_invalid(newSock)) {
         return;
     }
 #if ME_COMPILER_HAS_FCNTL
-    fcntl(newSock, F_SETFD, FD_CLOEXEC);
+    //fcntl(newSock, F_SETFD, FD_CLOEXEC);
 #endif
-#ifdef SO_RCVTIMEO
+#ifdef IPSTACK_SO_RCVTIMEO
     //超时时间
     timeout.tv_sec = 5;
     timeout.tv_usec = 0;
-    if (setsockopt(newSock, SOL_SOCKET, SO_RCVTIMEO, (char*) &timeout, sizeof(timeout)) != 0) {
-        web_error("Cannot set SO_RCVTIMEO, errno %s", strerror(errno));
+    if (ipstack_setsockopt(newSock, IPSTACK_SOL_SOCKET, IPSTACK_SO_RCVTIMEO, (char*) &timeout, sizeof(timeout)) != 0) {
+        web_error("Cannot set IPSTACK_SO_RCVTIMEO, ipstack_errno %s", strerror(ipstack_errno));
     }
 #endif
 #ifdef SO_SNDTIMEO
     timeout.tv_sec = 5;
     timeout.tv_usec = 0;
-    if (setsockopt(newSock, SOL_SOCKET, SO_SNDTIMEO, (char*) &timeout, sizeof(timeout)) != 0) {
-        web_error("Cannot set SO_SNDTIMEO, errno %s", strerror(errno));
+    if (ipstack_setsockopt(newSock, IPSTACK_SOL_SOCKET, SO_SNDTIMEO, (char*) &timeout, sizeof(timeout)) != 0) {
+        web_error("Cannot set SO_SNDTIMEO, ipstack_errno %s", strerror(ipstack_errno));
     }
 #endif
-    socketHighestFd = max(socketHighestFd, newSock);
+    socketHighestFd._fd = max(socketHighestFd._fd, newSock._fd);
 
     /*
         Create a socket structure and insert into the socket list
@@ -528,7 +532,7 @@ PUBLIC int socketSelect(int sid, int timeout)
     /*
         Allocate and zero the select masks
      */
-    nwords = (socketHighestFd + NFDBITS) / NFDBITS;
+    nwords = (socketHighestFd._fd + NFDBITS) / NFDBITS;
     len = nwords * sizeof(fd_mask);
 
     readFds = walloc(len);
@@ -563,8 +567,8 @@ PUBLIC int socketSelect(int sid, int timeout)
         /*
             Initialize the ready masks and compute the mask offsets.
          */
-        index = sp->sock / (NBBY * sizeof(fd_mask));
-        bit = 1 << (sp->sock % (NBBY * sizeof(fd_mask)));
+        index = sp->sock._fd / (NBBY * sizeof(fd_mask));
+        bit = 1 << (sp->sock._fd % (NBBY * sizeof(fd_mask)));
         /*
             Set the appropriate bit in the ready masks for the sp->sock.
          */
@@ -588,7 +592,7 @@ PUBLIC int socketSelect(int sid, int timeout)
     /*
         Wait for the event or a timeout
      */
-    nEvents = ipstack_select(IPCOM_STACK, socketHighestFd + 1, (fd_set *) readFds, (fd_set *) writeFds, (fd_set *) exceptFds, &tv);
+    nEvents = ipstack_select(IPCOM_STACK, socketHighestFd._fd + 1, (ipstack_fd_set *) readFds, (ipstack_fd_set *) writeFds, (ipstack_fd_set *) exceptFds, &tv);
     if (all) {
         sid = 0;
     }
@@ -600,8 +604,8 @@ PUBLIC int socketSelect(int sid, int timeout)
                 continue;
             }
         }
-        index = sp->sock / (NBBY * sizeof(fd_mask));
-        bit = 1 << (sp->sock % (NBBY * sizeof(fd_mask)));
+        index = sp->sock._fd / (NBBY * sizeof(fd_mask));
+        bit = 1 << (sp->sock._fd % (NBBY * sizeof(fd_mask)));
 
         if (sp->flags & SOCKET_RESERVICE) {
             if (sp->handlerMask & SOCKET_READABLE) {
@@ -702,41 +706,41 @@ PUBLIC int socketSetBlock(int sid, int on)
     if (sp->flags & SOCKET_BLOCK) {
 #if ME_WIN_LIKE
         ulong flag = !on;
-        ip_ioctlsocket(sp->sock, FIONBIO, &flag);
+        ipstack_ioctl(sp->sock, IPSTACK_FIONBIO, &flag);
 #elif ECOS
         int off;
         off = 0;
-        ipstack_ioctl(sp->sock, FIONBIO, &off);
+        ipstack_ioctl(sp->sock, IPSTACK_FIONBIO, &off);
 #elif VXWORKS
         int iflag = !on;
-        ipstack_ioctl(sp->sock, FIONBIO, (int) &iflag);
+        ipstack_ioctl(sp->sock, IPSTACK_FIONBIO, (int) &iflag);
 #elif TIDSP
-        ipstack_setsockopt((SOCKET)sp->sock, SOL_SOCKET, SO_BLOCKING, &on, sizeof(on));
+        ipstack_setsockopt((SOCKET)sp->sock, IPSTACK_SOL_SOCKET, SO_BLOCKING, &on, sizeof(on));
 #else
-        ipstack_fcntl(sp->sock, F_SETFL, fcntl(sp->sock, F_GETFL) & ~O_NONBLOCK);
+        //ipstack_fcntl(sp->sock, F_SETFL, fcntl(sp->sock, F_GETFL) & ~O_NONBLOCK);
 #endif
 
     } else {
 #if ME_WIN_LIKE
         ulong flag = !on;
-        int rc = ip_ioctlsocket(sp->sock, FIONBIO, &flag);
+        int rc = ipstack_ioctl(sp->sock, IPSTACK_FIONBIO, &flag);
         rc = rc;
 #elif ECOS
         int lon = 1;
-        ipstack_ioctl(sp->sock, FIONBIO, &lon);
+        ipstack_ioctl(sp->sock, IPSTACK_FIONBIO, &lon);
 #elif VXWORKS
         int iflag = !on;
-        ipstack_ioctl(sp->sock, FIONBIO, (int) &iflag);
+        ipstack_ioctl(sp->sock, IPSTACK_FIONBIO, (int) &iflag);
 #elif TIDSP
-        ipstack_setsockopt((SOCKET)sp->sock, SOL_SOCKET, SO_BLOCKING, &on, sizeof(on));
+        ipstack_setsockopt((SOCKET)sp->sock, IPSTACK_SOL_SOCKET, SO_BLOCKING, &on, sizeof(on));
 #else
-        ipstack_fcntl(sp->sock, F_SETFL, fcntl(sp->sock, F_GETFL) | O_NONBLOCK);
+        //ipstack_fcntl(sp->sock, F_SETFL, fcntl(sp->sock, F_GETFL) | O_NONBLOCK);
 #endif
     }
 #if MACOSX
     /* Prevent SIGPIPE when writing to closed socket on OS X */
     int iflag = 1;
-    ipstack_setsockopt(sp->sock, SOL_SOCKET, SO_NOSIGPIPE, (void*) &iflag, sizeof(iflag));
+    ipstack_setsockopt(sp->sock, IPSTACK_SOL_SOCKET, SO_NOSIGPIPE, (void*) &iflag, sizeof(iflag));
 #endif
     return oldBlock;
 }
@@ -764,13 +768,13 @@ PUBLIC int socketSetNoDelay(int sid, bool on)
     {
         BOOL    noDelay;
         noDelay = on ? 1 : 0;
-        ipstack_setsockopt(sp->sock, IPPROTO_TCP, TCP_NODELAY, (FAR char*) &noDelay, sizeof(BOOL));
+        ipstack_setsockopt(sp->sock, IPSTACK_IPPROTO_TCP, IPSTACK_TCP_NODELAY, (FAR char*) &noDelay, sizeof(BOOL));
     }
 #else
     {
         int     noDelay;
         noDelay = on ? 1 : 0;
-        ipstack_setsockopt(sp->sock, IPPROTO_TCP, TCP_NODELAY, (char*) &noDelay, sizeof(int));
+        ipstack_setsockopt(sp->sock, IPSTACK_IPPROTO_TCP, IPSTACK_TCP_NODELAY, (char*) &noDelay, sizeof(int));
     }
 #endif /* ME_WIN_LIKE */
     return oldDelay;
@@ -957,13 +961,13 @@ PUBLIC void socketFree(int sid)
         other end causing problems.
      */
     socketRegisterInterest(sid, 0);
-    if (sp->sock >= 0) {
+    if (sp->sock._fd >= 0) {
         socketSetBlock(sid, 0);
         while (ipstack_recv(sp->sock, buf, sizeof(buf), 0) > 0) {}
-        if (shutdown(sp->sock, SHUT_RDWR) >= 0) {
+        if (ipstack_shutdown(sp->sock, IPSTACK_SHUT_RDWR) >= 0) {
             while (ipstack_recv(sp->sock, buf, sizeof(buf), 0) > 0) {}
         }
-        closesocket(sp->sock);
+        ipstack_close(sp->sock);
     }
     wfree(sp->ip);
     wfree(sp);
@@ -971,12 +975,12 @@ PUBLIC void socketFree(int sid)
     /*
         Calculate the new highest socket number
      */
-    socketHighestFd = -1;
+    socketHighestFd._fd = -1;
     for (i = 0; i < socketMax; i++) {
         if ((sp = socketList[i]) == NULL) {
             continue;
         }
-        socketHighestFd = max(socketHighestFd, sp->sock);
+        socketHighestFd._fd = max(socketHighestFd._fd, sp->sock._fd);
     }
 }
 
@@ -988,7 +992,7 @@ WebsSocket *socketPtr(int sid)
 {
     if (sid < 0 || sid >= socketMax || socketList[sid] == NULL) {
         web_assert(NULL);
-        errno = EBADF;
+        ipstack_errno = EBADF;
         return NULL;
     }
     web_assert(socketList[sid]);
@@ -1017,7 +1021,7 @@ PUBLIC int socketGetError(int sid)
         return EINVAL;
     }
 #else
-    return errno;
+    return ipstack_errno;
 #endif
 }
 
@@ -1027,7 +1031,7 @@ PUBLIC void socketSetError(int error)
 #if ME_WIN_LIKE
     SetLastError(error);
 #elif ME_UNIX_LIKE || VXWORKS
-    errno = error;
+    ipstack_errno = error;
 #endif
 }
 
@@ -1040,7 +1044,9 @@ PUBLIC Socket socketGetHandle(int sid)
     WebsSocket    *sp;
 
     if ((sp = socketPtr(sid)) == NULL) {
-        return -1;
+        Socket tmp;
+        ipstack_bzero(tmp);
+        return tmp;
     }
     return sp->sock;
 }
@@ -1099,12 +1105,12 @@ PUBLIC int socketGetPort(int sid)
 #if ME_UNIX_LIKE || WINDOWS
 /*
     Get a socket address from a host/port combination. If a host provides both IPv4 and IPv6 addresses,
-    prefer the IPv4 address. This routine uses getaddrinfo.
+    prefer the IPv4 address. This routine uses ipstack_getaddrinfo.
     Caller must free addr.
  */
-PUBLIC int socketInfo(cchar *ip, int port, int *family, int *protocol, struct sockaddr_storage *addr, Socklen *addrlen)
+PUBLIC int socketInfo(cchar *ip, int port, int *family, int *protocol, struct ipstack_sockaddr_storage *addr, Socklen *addrlen)
 {
-    struct addrinfo     hints, *res, *r;
+    struct ipstack_addrinfo     hints, *res, *r;
     char                portBuf[16];
     int                 v6;
 
@@ -1120,11 +1126,11 @@ PUBLIC int socketInfo(cchar *ip, int port, int *family, int *protocol, struct so
         hints.ai_flags |= AI_PASSIVE;           /* Bind to 0.0.0.0 and :: */
     }
     v6 = ipv6(ip);
-    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_socktype = IPSTACK_SOCK_STREAM;
     if (ip) {
-        hints.ai_family = v6 ? AF_INET6 : AF_INET;
+        hints.ai_family = v6 ? IPSTACK_AF_INET6 : IPSTACK_AF_INET;
     } else {
-        hints.ai_family = AF_UNSPEC;
+        hints.ai_family = IPSTACK_AF_UNSPEC;
     }
     itosbuf(portBuf, sizeof(portBuf), port, 10);
 
@@ -1140,11 +1146,11 @@ PUBLIC int socketInfo(cchar *ip, int port, int *family, int *protocol, struct so
      */
     for (r = res; r; r = r->ai_next) {
         if (v6) {
-            if (r->ai_family == AF_INET6) {
+            if (r->ai_family == IPSTACK_AF_INET6) {
                 break;
             }
         } else {
-            if (r->ai_family == AF_INET) {
+            if (r->ai_family == IPSTACK_AF_INET) {
                 break;
             }
         }
@@ -1163,20 +1169,20 @@ PUBLIC int socketInfo(cchar *ip, int port, int *family, int *protocol, struct so
 }
 #else
 
-PUBLIC int socketInfo(char *ip, int port, int *family, int *protocol, struct sockaddr_storage *addr, Socklen *addrlen)
+PUBLIC int socketInfo(char *ip, int port, int *family, int *protocol, struct ipstack_sockaddr_storage *addr, Socklen *addrlen)
 {
-    struct sockaddr_in  sa;
+    struct ipstack_sockaddr_in  sa;
 
-    memset((char*) &sa, '\0', sizeof(struct sockaddr_in));
-    sa.sin_family = AF_INET;
+    memset((char*) &sa, '\0', sizeof(struct ipstack_sockaddr_in));
+    sa.sin_family = IPSTACK_AF_INET;
     sa.sin_port = htons((short) (port & 0xFFFF));
 
     if (ip && *ip) {
         sa.sin_addr.s_addr = ipstack_inet_addr((char*) ip);
     } else {
-        sa.sin_addr.s_addr = INADDR_ANY;
+        sa.sin_addr.s_addr = IPSTACK_INADDR_ANY;
     }
-    if (sa.sin_addr.s_addr == INADDR_NONE) {
+    if (sa.sin_addr.s_addr == IPSTACK_INADDR_NONE) {
 #if VXWORKS
         /*
             VxWorks only supports one interface and this code only supports IPv4
@@ -1187,19 +1193,19 @@ PUBLIC int socketInfo(char *ip, int port, int *family, int *protocol, struct soc
             return 0;
         }
 #else
-        struct hostent *hostent;
-        hostent = ipstack_gethostbyname2(ip, AF_INET);
-        if (hostent == 0) {
-            hostent = ipstack_gethostbyname2(ip, AF_INET6);
-            if (hostent == 0) {
+        struct ipstack_hostent *ipstack_hostent;
+        ipstack_hostent = ipstack_gethostbyname2(ip, IPSTACK_AF_INET);
+        if (ipstack_hostent == 0) {
+            ipstack_hostent = ipstack_gethostbyname2(ip, IPSTACK_AF_INET6);
+            if (ipstack_hostent == 0) {
                 return -1;
             }
         }
-        memcpy((char*) &sa.sin_addr, (char*) hostent->h_addr_list[0], (ssize) hostent->h_length);
+        memcpy((char*) &sa.sin_addr, (char*) ipstack_hostent->h_addr_list[0], (ssize) ipstack_hostent->h_length);
 #endif
     }
     memcpy((char*) addr, (char*) &sa, sizeof(sa));
-    *addrlen = sizeof(struct sockaddr_in);
+    *addrlen = sizeof(struct ipstack_sockaddr_in);
     *family = sa.sin_family;
     *protocol = 0;
     return 0;
@@ -1210,18 +1216,18 @@ PUBLIC int socketInfo(char *ip, int port, int *family, int *protocol, struct soc
 /*
     Return a numerical IP address and port for the given socket info
  */
-PUBLIC int socketAddress(struct sockaddr *addr, int addrlen, char *ip, int ipLen, int *port)
+PUBLIC int socketAddress(struct ipstack_sockaddr *addr, int addrlen, char *ip, int ipLen, int *port)
 {
 #if (ME_UNIX_LIKE || ME_WIN_LIKE)
     char    service[NI_MAXSERV];
 
-#if ME_WIN_LIKE || defined(IN6_IS_ADDR_V4MAPPED)
-    if (addr->sa_family == AF_INET6) {
-        struct sockaddr_in6* addr6 = (struct sockaddr_in6*) addr;
-        if (IN6_IS_ADDR_V4MAPPED(&addr6->sin6_addr)) {
-            struct sockaddr_in addr4;
+#if ME_WIN_LIKE || defined(IPSTACK_IN6_IS_ADDR_V4MAPPED)
+    if (addr->sa_family == IPSTACK_AF_INET6) {
+        struct ipstack_sockaddr_in6* addr6 = (struct ipstack_sockaddr_in6*) addr;
+        if (IPSTACK_IN6_IS_ADDR_V4MAPPED(&addr6->sin6_addr)) {
+            struct ipstack_sockaddr_in addr4;
             memset(&addr4, 0, sizeof(addr4));
-            addr4.sin_family = AF_INET;
+            addr4.sin_family = IPSTACK_AF_INET;
             addr4.sin_port = addr6->sin6_port;
             memcpy(&addr4.sin_addr.s_addr, addr6->sin6_addr.s6_addr + 12, sizeof(addr4.sin_addr.s_addr));
             memcpy(addr, &addr4, sizeof(addr4));
@@ -1237,14 +1243,14 @@ PUBLIC int socketAddress(struct sockaddr *addr, int addrlen, char *ip, int ipLen
     }
 
 #else
-    struct sockaddr_in  *sa;
+    struct ipstack_sockaddr_in  *sa;
 
 #if HAVE_NTOA_R
-    sa = (struct sockaddr_in*) addr;
+    sa = (struct ipstack_sockaddr_in*) addr;
     inet_ntoa_r(sa->sin_addr, ip, ipLen);
 #else
     uchar   *cp;
-    sa = (struct sockaddr_in*) addr;
+    sa = (struct ipstack_sockaddr_in*) addr;
     cp = (uchar*) &sa->sin_addr;
     fmt(ip, ipLen, "%d.%d.%d.%d", cp[0], cp[1], cp[2], cp[3]);
 #endif

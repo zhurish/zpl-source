@@ -22,7 +22,7 @@
 #include "vector.h"
 #include "nsm_vrf.h"
 #include "nsm_interface.h"
-#include "nsm_client.h"
+//#include "nsm_client.h"
 
 #ifdef ZPL_WIFI_MODULE
 

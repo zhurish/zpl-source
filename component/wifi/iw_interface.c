@@ -612,8 +612,9 @@ int nsm_iw_debug_write_config(struct vty *vty)
 #ifdef IW_ONCE_TASK
 static int iw_task(void *p)
 {
-	host_config_load_waitting();
-	os_start_running(NULL, MODULE_WIFI);
+	module_setup_task(MODULE_WIFI, os_task_id_self());
+	host_waitting_loadconfig();
+	thread_mainloop(master_thread);
 	return OK;
 }
 
@@ -626,7 +627,10 @@ static int iw_task_start(void)
 		iw_taskid = os_task_create("iwApTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, iw_task, NULL, OS_TASK_DEFAULT_STACK);
 	if(iw_taskid)
+	{
+		module_setup_task(MODULE_WIFI, iw_taskid);
 		return OK;
+	}
 	return ERROR;
 }
 
@@ -661,13 +665,14 @@ struct module_list module_list_wifi =
 { 
 	.module=MODULE_WIFI, 
 	.name="WIFI", 
-	.module_init=NULL, 
-	.module_exit=NULL, 
+	.module_init=nsm_iw_client_init, 
+	.module_exit=nsm_iw_client_exit, 
 	.module_task_init=NULL, 
 	.module_task_exit=NULL, 
-	.module_cmd_init=NULL, 
+	.module_cmd_init=cmd_wireless_init, 
 	.module_write_config=NULL, 
 	.module_show_config=NULL,
 	.module_show_debug=NULL, 
+	.flags = ZPL_MODULE_NEED_INIT,
 	.taskid=0,
 };

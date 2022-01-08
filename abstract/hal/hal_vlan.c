@@ -7,20 +7,12 @@
 
 
 #include "zpl_include.h"
-#include "memory.h"
-#include "command.h"
-#include "memory.h"
-#include "memtypes.h"
-#include "prefix.h"
-#include "if.h"
-#include "nsm_interface.h"
-#include <log.h>
-#include "os_list.h"
-
-#include "nsm_vlan.h"
+#include "nsm_include.h"
+#include "hal_ipccmd.h"
+#include "hal_ipcmsg.h"
 
 #include "hal_vlan.h"
-#include "hal_driver.h"
+
 
 
 int hal_vlan_enable(zpl_bool  enable)
@@ -29,8 +21,9 @@ int hal_vlan_enable(zpl_bool  enable)
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
-	command = IPCCMD_SET(HAL_MODULE_VLAN, enable?HAL_MODULE_CMD_ENABLE:HAL_MODULE_CMD_DISABLE, HAL_VLAN);
-	return hal_ipcmsg_send_message(-1, 
+	hal_ipcmsg_putl(&ipcmsg, enable);
+	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_SET, HAL_VLAN);
+	return hal_ipcmsg_send_message(IF_UNIT_ALL,
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
@@ -42,7 +35,7 @@ int hal_vlan_create(vlan_t vlan)
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_putw(&ipcmsg, vlan);
 	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_ADD, HAL_VLAN_CREATE);
-	return hal_ipcmsg_send_message(-1, 
+	return hal_ipcmsg_send_message(IF_UNIT_ALL,
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
@@ -54,7 +47,7 @@ int hal_vlan_destroy(vlan_t vlan)
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_putw(&ipcmsg, vlan);
 	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_DEL, HAL_VLAN_DELETE);
-	return hal_ipcmsg_send_message(-1, 
+	return hal_ipcmsg_send_message(IF_UNIT_ALL,
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
@@ -68,7 +61,7 @@ int hal_vlan_batch_create(vlan_t *vlan, int num)
 	for(i = 0; i < num; i++)
 		hal_ipcmsg_putw(&ipcmsg, vlan[i]);
 	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_ADD, HAL_VLAN_RANGE_CREATE);
-	return hal_ipcmsg_send_message(-1, 
+	return hal_ipcmsg_send_message(IF_UNIT_ALL,
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
@@ -82,7 +75,7 @@ int hal_vlan_batch_destroy(vlan_t *vlan, int num)
 	for(i = 0; i < num; i++)
 		hal_ipcmsg_putw(&ipcmsg, vlan[i]);
 	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_DEL, HAL_VLAN_RANGE_DELETE);
-	return hal_ipcmsg_send_message(-1, 
+	return hal_ipcmsg_send_message(IF_UNIT_ALL,
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 int hal_vlan_add_untag_port(ifindex_t ifindex, vlan_t vlan)

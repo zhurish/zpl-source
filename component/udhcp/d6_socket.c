@@ -10,7 +10,7 @@
 #include <ifaddrs.h>
 #include <netpacket/packet.h>
 
-int FAST_FUNC d6_read_interface(const char *interface, ifindex_t *ifindex, struct in6_addr *nip6, zpl_uint8 *mac)
+int FAST_FUNC d6_read_interface(const char *interface, ifindex_t *ifindex, struct ipstack_in6_addr *nip6, zpl_uint8 *mac)
 {
 	int retval = 3;
 	struct ifaddrs *ifap, *ifa;
@@ -18,15 +18,15 @@ int FAST_FUNC d6_read_interface(const char *interface, ifindex_t *ifindex, struc
 	getifaddrs(&ifap);
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		struct sockaddr_in6 *sip6;
+		struct ipstack_sockaddr_in6 *sip6;
 
 		if (!ifa->ifa_addr || (strcmp(ifa->ifa_name, interface) != 0))
 			continue;
 
-		sip6 = (struct sockaddr_in6*)(ifa->ifa_addr);
+		sip6 = (struct ipstack_sockaddr_in6*)(ifa->ifa_addr);
 
-		if (ifa->ifa_addr->sa_family == AF_PACKET) {
-			struct sockaddr_ll *sll = (struct sockaddr_ll*)(ifa->ifa_addr);
+		if (ifa->ifa_addr->sa_family == IPSTACK_AF_PACKET) {
+			struct ipstack_sockaddr_ll *sll = (struct ipstack_sockaddr_ll*)(ifa->ifa_addr);
 			memcpy(mac, sll->sll_addr, 6);
 			zlog_err(MODULE_DHCP,"MAC %02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 			zlog_err(MODULE_DHCP,"ifindex %d", sll->sll_ifindex);
@@ -34,13 +34,13 @@ int FAST_FUNC d6_read_interface(const char *interface, ifindex_t *ifindex, struc
 			retval &= (0xf - (1<<0));
 		}
 #if 0
-		if (ifa->ifa_addr->sa_family == AF_INET) {
-			*nip = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
-			log1("IP %s", ipstack_inet_ntoa(((struct sockaddr_in *)ifa->ifa_addr)->sin_addr));
+		if (ifa->ifa_addr->sa_family == IPSTACK_AF_INET) {
+			*nip = ((struct ipstack_sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
+			log1("IP %s", ipstack_inet_ntoa(((struct ipstack_sockaddr_in *)ifa->ifa_addr)->sin_addr));
 		}
 #endif
-		if (ifa->ifa_addr->sa_family == AF_INET6
-		 && IN6_IS_ADDR_LINKLOCAL(&sip6->sin6_addr)
+		if (ifa->ifa_addr->sa_family == IPSTACK_AF_INET6
+		 && IPSTACK_IN6_IS_ADDR_LINK_LOCAL(&sip6->sin6_addr)
 		) {
 			*nip6 = sip6->sin6_addr; /* struct copy */
 			zlog_err(MODULE_DHCP,
@@ -72,24 +72,24 @@ int FAST_FUNC d6_read_interface(const char *interface, ifindex_t *ifindex, struc
 int FAST_FUNC d6_listen_socket(int port, const char *inf)
 {
 	int fd;
-	struct sockaddr_in6 addr;
+	struct ipstack_sockaddr_in6 addr;
 
 	zlog_err(MODULE_DHCP,"opening listen socket on *:%d %s", port, inf);
-	fd = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+	fd = socket(IPSTACK_PF_INET6, IPSTACK_SOCK_DGRAM, IPSTACK_IPPROTO_UDP);
 
 	setsockopt_reuseaddr(fd);
 	if (setsockopt_broadcast(fd) == -1)
-		zlog_err(MODULE_DHCP,"SO_BROADCAST");
+		zlog_err(MODULE_DHCP,"IPSTACK_SO_BROADCAST");
 
 	/* NB: bug 1032 says this doesn't work on ethernet aliases (ethN:M) */
 	if (setsockopt_bindtodevice(fd, inf))
 		;//xfunc_die(); /* warning is already printed */
 
 	memset(&addr, 0, sizeof(addr));
-	addr.sin6_family = AF_INET6;
+	addr.sin6_family = IPSTACK_AF_INET6;
 	addr.sin6_port = htons(port);
 	/* addr.sin6_addr is all-zeros */
-	bind(fd, (struct sockaddr *)&addr, sizeof(addr));
+	bind(fd, (struct ipstack_sockaddr *)&addr, sizeof(addr));
 
 	return fd;
 }

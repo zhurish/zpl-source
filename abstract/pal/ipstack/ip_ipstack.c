@@ -32,13 +32,13 @@
 
 #else
 
-static void ifreq_set_name (struct Ip_ifreq *ifreq, struct interface *ifp)
+static void _ipkernel_ifreq_set_name (struct Ip_ifreq *ipstack_ifreq, struct interface *ifp)
 {
   if(NULL == ifp)
   {
     return;
   }
-  strncpy (ifreq->ifr_name, ifp->k_name, MIN(INTERFACE_NAMSIZ, 16));//IP_IFNAMSIZ
+  strncpy (ipstack_ifreq->ifr_name, ifp->k_name, MIN(INTERFACE_NAMSIZ, 16));//IP_IFNAMSIZ
   return;
 }
 
@@ -48,7 +48,7 @@ static int ip_stack_ioctl(zpl_ulong cmd, void *data, vrf_id_t vrf_id)
 	int fd = ipcom_socket(IP_AF_INET, IP_SOCK_DGRAM, 0);
 	if(fd < 0)
 	{
-		zlog_err(MODULE_PAL,"failed to create socket");
+		zlog_err(MODULE_PAL,"failed to create ipstack_socket");
 		return -1;
 	}
     if(vrf_id > 0)
@@ -58,14 +58,14 @@ static int ip_stack_ioctl(zpl_ulong cmd, void *data, vrf_id_t vrf_id)
         if(ret < 0)
         {
         	ipcom_socketclose (fd);
-        	zlog_err(MODULE_PAL,"failed to set socket to VRF");
+        	zlog_err(MODULE_PAL,"failed to set ipstack_socket to VRF");
             return -1;
         }
     }
 	ret = ipcom_socketioctl(fd, (zpl_ulong)cmd, data);
 	if(fd < 0)
 	{
-		zlog_err(MODULE_PAL,"failed to ioctl socket");
+		zlog_err(MODULE_PAL,"failed to ioctl ipstack_socket");
 		ipcom_socketclose (fd);
 		return -1;
 	}
@@ -76,21 +76,21 @@ static int ip_stack_ioctl(zpl_ulong cmd, void *data, vrf_id_t vrf_id)
 
 static int ip_stack_change_state(struct interface *ifp, zpl_bool if_up)
 {
-    struct Ip_ifreq ifreq;
-    os_memset(&ifreq, 0, sizeof(struct Ip_ifreq));
-    ifreq_set_name(&ifreq, ifp);
+    struct Ip_ifreq ipstack_ifreq;
+    os_memset(&ipstack_ifreq, 0, sizeof(struct Ip_ifreq));
+    _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
 
-    if (ip_stack_ioctl(IP_SIOCGIFFLAGS, &ifreq, ifp->vrf_id) < 0)
+    if (ip_stack_ioctl(IP_SIOCGIFFLAGS, &ipstack_ifreq, ifp->vrf_id) < 0)
     {
         zlog_err(MODULE_PAL, "failed to get interface flags: %s", ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
     }
 
     if (if_up)
-    	SET_FLAG(ifreq.ip_ifr_flags, IP_IFF_UP);
+    	SET_FLAG(ipstack_ifreq.ip_ifr_flags, IP_IFF_UP);
     else
-    	UNSET_FLAG(ifreq.ip_ifr_flags, IP_IFF_UP);
-    if (ip_stack_ioctl(IP_SIOCSIFFLAGS, &ifreq, ifp->vrf_id) < 0)
+    	UNSET_FLAG(ipstack_ifreq.ip_ifr_flags, IP_IFF_UP);
+    if (ip_stack_ioctl(IP_SIOCSIFFLAGS, &ipstack_ifreq, ifp->vrf_id) < 0)
     {
     	zlog_err(MODULE_PAL, "failed to set interface flags: %s", ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
@@ -110,29 +110,29 @@ static int ip_stack_change_down(struct interface *ifp)
 
 static int ip_stack_update_flag(struct interface *ifp)
 {
-    struct Ip_ifreq ifreq;
-    os_memset(&ifreq, 0, sizeof(struct Ip_ifreq));
-    ifreq_set_name(&ifreq, ifp);
+    struct Ip_ifreq ipstack_ifreq;
+    os_memset(&ipstack_ifreq, 0, sizeof(struct Ip_ifreq));
+    _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
 
-    if (ip_stack_ioctl(IP_SIOCGIFFLAGS, &ifreq, ifp->vrf_id) < 0)
+    if (ip_stack_ioctl(IP_SIOCGIFFLAGS, &ipstack_ifreq, ifp->vrf_id) < 0)
     {
         zlog_err(MODULE_PAL, "failed to get interface flags: %s", ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
     }
-    ifp->flags = ifreq.ip_ifr_flags;
+    ifp->flags = ipstack_ifreq.ip_ifr_flags;
 
     return 0;
 }
 
 static int ip_stack_set_vr(struct interface *ifp, vrf_id_t vrf_id)
 {
-    struct Ip_ifreq ifreq;
+    struct Ip_ifreq ipstack_ifreq;
 
-    os_memset(&ifreq, 0, sizeof(struct Ip_ifreq));
-    ifreq_set_name(&ifreq, ifp);
-    ifreq.ip_ifr_vr = (Ip_u16) vrf_id;
+    os_memset(&ipstack_ifreq, 0, sizeof(struct Ip_ifreq));
+    _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
+    ipstack_ifreq.ip_ifr_vr = (Ip_u16) vrf_id;
 
-    if (ip_stack_ioctl(IP_SIOCSIFVR, &ifreq, 0) < 0)
+    if (ip_stack_ioctl(IP_SIOCSIFVR, &ipstack_ifreq, 0) < 0)
     {
     	zlog_err(MODULE_PAL, "set vr failed: %s", ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
@@ -143,12 +143,12 @@ static int ip_stack_set_vr(struct interface *ifp, vrf_id_t vrf_id)
 
 static int ip_stack_set_mtu(struct interface *ifp, int mtu)
 {
-    struct Ip_ifreq ifreq;
-    os_memset(&ifreq, 0, sizeof(struct Ip_ifreq));
-    ifreq_set_name(&ifreq, ifp);
-    ifreq.ip_ifr_mtu = mtu;
+    struct Ip_ifreq ipstack_ifreq;
+    os_memset(&ipstack_ifreq, 0, sizeof(struct Ip_ifreq));
+    _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
+    ipstack_ifreq.ip_ifr_mtu = mtu;
 
-    if (ip_stack_ioctl(IP_SIOCSIFMTU, &ifreq, ifp->vrf_id) < 0)
+    if (ip_stack_ioctl(IP_SIOCSIFMTU, &ipstack_ifreq, ifp->vrf_id) < 0)
     {
     	zlog_err(MODULE_PAL, "set MTU failed: %s" , ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
@@ -160,16 +160,16 @@ static int ip_stack_set_mtu(struct interface *ifp, int mtu)
 
 static int ip_stack_set_lladdr(struct interface *ifp, zpl_uint8 *mac, zpl_uint32 len)
 {
-    struct Ip_ifreq       ifreq;
+    struct Ip_ifreq       ipstack_ifreq;
 
-	os_memset(&ifreq, 0, sizeof(struct Ip_ifreq));
-	ifreq_set_name(&ifreq, ifp);
+	os_memset(&ipstack_ifreq, 0, sizeof(struct Ip_ifreq));
+	_ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
 
-    ifreq.ip_ifr_addr.sa_family = IP_AF_LINK;
-    IPCOM_SA_LEN_SET(&ifreq.ip_ifr_addr, len);
-    os_memcpy(ifreq.ip_ifr_addr.sa_data, mac, len);
+    ipstack_ifreq.ip_ifr_addr.sa_family = IP_AF_LINK;
+    IPCOM_SA_LEN_SET(&ipstack_ifreq.ip_ifr_addr, len);
+    os_memcpy(ipstack_ifreq.ip_ifr_addr.sa_data, mac, len);
 
-    if (ip_stack_ioctl(IP_SIOCSIFLLADDR, &ifreq, ifp->vrf_id) < 0)
+    if (ip_stack_ioctl(IP_SIOCSIFLLADDR, &ipstack_ifreq, ifp->vrf_id) < 0)
     {
     	zlog_err(MODULE_PAL, "Set LLADDR failed: %s" , ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
@@ -179,25 +179,25 @@ static int ip_stack_set_lladdr(struct interface *ifp, zpl_uint8 *mac, zpl_uint32
 
 static int ip_stack_create(struct interface *ifp)
 {
-    struct Ip_ifreq       ifreq;
+    struct Ip_ifreq       ipstack_ifreq;
 
-	os_memset(&ifreq, 0, sizeof(struct Ip_ifreq));
-	ifreq_set_name(&ifreq, ifp);
+	os_memset(&ipstack_ifreq, 0, sizeof(struct Ip_ifreq));
+	_ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
 
-    if (ip_stack_ioctl(IP_SIOCIFCREATE, &ifreq, ifp->vrf_id) < 0)
+    if (ip_stack_ioctl(IP_SIOCIFCREATE, &ipstack_ifreq, ifp->vrf_id) < 0)
     {
-    	zlog_err(MODULE_PAL, "Creating %s failed: %s" , ifreq.ifr_name, ipcom_strerror(ipcom_errno));
+    	zlog_err(MODULE_PAL, "Creating %s failed: %s" , ipstack_ifreq.ifr_name, ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
     }
-	os_memset(&ifreq, 0, sizeof(struct Ip_ifreq));
-	ifreq_set_name(&ifreq, ifp);
-    ifreq.ip_ifr_addr.sa_family = IP_AF_INET;
-    if (ip_stack_ioctl(IP_SIOCGIFINDEX, &ifreq, ifp->vrf_id) < 0)
+	os_memset(&ipstack_ifreq, 0, sizeof(struct Ip_ifreq));
+	_ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
+    ipstack_ifreq.ip_ifr_addr.sa_family = IP_AF_INET;
+    if (ip_stack_ioctl(IP_SIOCGIFINDEX, &ipstack_ifreq, ifp->vrf_id) < 0)
     {
-    	zlog_err(MODULE_PAL, "get ifindex %s failed: %s" , ifreq.ifr_name, ipcom_strerror(ipcom_errno));
+    	zlog_err(MODULE_PAL, "get ifindex %s failed: %s" , ipstack_ifreq.ifr_name, ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
     }
-    ifp->k_ifindex = ifreq.ip_ifr_ifindex;
+    ifp->k_ifindex = ipstack_ifreq.ip_ifr_ifindex;
     ip_stack_change_state(ifp, zpl_true);
     if(ifp->hw_addr_len)
     	ip_stack_set_lladdr(ifp, ifp->hw_addr, ifp->hw_addr_len);
@@ -208,13 +208,13 @@ static int ip_stack_create(struct interface *ifp)
 
 static int ip_stack_destroy(struct interface *ifp)
 {
-    struct Ip_ifreq ifreq;
-	os_memset(&ifreq, 0, sizeof(struct Ip_ifreq));
-	ifreq_set_name(&ifreq, ifp);
+    struct Ip_ifreq ipstack_ifreq;
+	os_memset(&ipstack_ifreq, 0, sizeof(struct Ip_ifreq));
+	_ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
 
-    if (ip_stack_ioctl(IP_SIOCIFDESTROY, &ifreq, ifp->vrf_id) < 0)
+    if (ip_stack_ioctl(IP_SIOCIFDESTROY, &ipstack_ifreq, ifp->vrf_id) < 0)
     {
-    	zlog_err(MODULE_PAL, "Destroying %s failed: %s" , ifreq.ifr_name, ipcom_strerror(ipcom_errno));
+    	zlog_err(MODULE_PAL, "Destroying %s failed: %s" , ipstack_ifreq.ifr_name, ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
     }
     return 0;
@@ -224,20 +224,20 @@ static int ip_stack_destroy(struct interface *ifp)
 
 static int ip_stack_vlan_set(struct interface *ifp, int vlan)
 {
-    struct Ip_ifreq ifreq;
+    struct Ip_ifreq ipstack_ifreq;
     struct Ip_vlanreq vlanreq;
-	os_memset(&ifreq, 0, sizeof(struct Ip_ifreq));
-	ifreq_set_name(&ifreq, ifp);
+	os_memset(&ipstack_ifreq, 0, sizeof(struct Ip_ifreq));
+	_ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
 
-    strcpy (vlanreq.vlr_parent, strtok(ifreq.ifr_name, "."));
+    strcpy (vlanreq.vlr_parent, strtok(ipstack_ifreq.ifr_name, "."));
     ip_stack_change_state(ifp, zpl_false);
     vlanreq.vlr_tag = vlan;
 
-    ifreq.ip_ifr_data = &vlanreq;
-    if (ip_stack_ioctl(IP_SIOCSETVLAN, &ifreq, ifp->vrf_id) < 0)
+    ipstack_ifreq.ip_ifr_data = &vlanreq;
+    if (ip_stack_ioctl(IP_SIOCSETVLAN, &ipstack_ifreq, ifp->vrf_id) < 0)
     {
     	zlog_err(MODULE_PAL, "Setting VLAN parameters for %s failed: %s" ,
-                     ifreq.ifr_name,
+                     ipstack_ifreq.ifr_name,
                      ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
     }
@@ -248,18 +248,18 @@ static int ip_stack_vlan_set(struct interface *ifp, int vlan)
 
 static int ip_stack_vlanpri_set(struct interface *ifp, int pri)
 {
-    struct Ip_ifreq ifreq;
+    struct Ip_ifreq ipstack_ifreq;
     struct Ip_vlanreq vlanreq;
-	os_memset(&ifreq, 0, sizeof(struct Ip_ifreq));
-	ifreq_set_name(&ifreq, ifp);
-    strcpy (vlanreq.vlr_parent, strtok(ifreq.ifr_name, "."));
+	os_memset(&ipstack_ifreq, 0, sizeof(struct Ip_ifreq));
+	_ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
+    strcpy (vlanreq.vlr_parent, strtok(ipstack_ifreq.ifr_name, "."));
     vlanreq.vlr_pri = pri;
     ip_stack_change_state(ifp, zpl_false);
-    ifreq.ip_ifr_data = &vlanreq;
-    if (ip_stack_ioctl(IP_SIOCSETVLANPRI, &ifreq, ifp->vrf_id) < 0)
+    ipstack_ifreq.ip_ifr_data = &vlanreq;
+    if (ip_stack_ioctl(IP_SIOCSETVLANPRI, &ipstack_ifreq, ifp->vrf_id) < 0)
     {
     	zlog_err(MODULE_PAL, "Setting VLAN priority for %s failed: %s" ,
-                     ifreq.ifr_name,
+                     ipstack_ifreq.ifr_name,
                      ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
     }
@@ -269,11 +269,11 @@ static int ip_stack_vlanpri_set(struct interface *ifp, int pri)
 
 static int ip_stack_promisc_link(struct interface *ifp, zpl_bool enable)
 {
-    struct Ip_ifreq ifreq;
-	os_memset(&ifreq, 0, sizeof(struct Ip_ifreq));
-	ifreq_set_name(&ifreq, ifp);
-    ifreq.ifr_ifru.ifru_opt = enable;
-    if (ip_stack_ioctl(IP_SIOCXPROMISC, &ifreq, ifp->vrf_id) < 0)
+    struct Ip_ifreq ipstack_ifreq;
+	os_memset(&ipstack_ifreq, 0, sizeof(struct Ip_ifreq));
+	_ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
+    ipstack_ifreq.ifr_ifru.ifru_opt = enable;
+    if (ip_stack_ioctl(IP_SIOCXPROMISC, &ipstack_ifreq, ifp->vrf_id) < 0)
     {
     	zlog_err(MODULE_PAL, "failed to set interface flags: %s", ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
@@ -285,13 +285,13 @@ static int ip_stack_promisc_link(struct interface *ifp, zpl_bool enable)
 
 static int ip_stack_change_dhcp(struct interface *ifp, zpl_bool enable)
 {
-    struct Ip_ifreq ifreq;
+    struct Ip_ifreq ipstack_ifreq;
 
-	os_memset(&ifreq, 0, sizeof(struct Ip_ifreq));
-	ifreq_set_name(&ifreq, ifp);
+	os_memset(&ipstack_ifreq, 0, sizeof(struct Ip_ifreq));
+	_ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
 
-    ifreq.ifr_ifru.ifru_opt = enable;
-    if (ip_stack_ioctl(IP_SIOCXSDHCPRUNNING, &ifreq, ifp->vrf_id) < 0)
+    ipstack_ifreq.ifr_ifru.ifru_opt = enable;
+    if (ip_stack_ioctl(IP_SIOCXSDHCPRUNNING, &ipstack_ifreq, ifp->vrf_id) < 0)
     {
     	zlog_err(MODULE_PAL, "failed to enable/disabled DHCP: %s", ipcom_strerror(ipcom_errno));
         return -ipcom_errno;
@@ -301,16 +301,16 @@ static int ip_stack_change_dhcp(struct interface *ifp, zpl_bool enable)
 
 static int ip_stack_add_dstaddr(struct interface *ifp, struct connected *ifc)
 {
-	struct Ip_ifreq ifreq;
-	struct Ip_sockaddr_in *in_addr;
-	os_memset(&ifreq, 0, sizeof(struct Ip_ifreq));
-	ifreq_set_name(&ifreq, ifp);
-	in_addr = (struct Ip_sockaddr_in *) &ifreq.ip_ifr_dstaddr;
-	in_addr->sin_family = IP_AF_INET;
-	IPCOM_SA_LEN_SET(in_addr, sizeof(struct Ip_sockaddr_in));
-	in_addr->sin_addr.s_addr = ifc->destination->u.prefix4.s_addr;
+	struct Ip_ifreq ipstack_ifreq;
+	struct Ip_sockaddr_in *ipstack_in_addr;
+	os_memset(&ipstack_ifreq, 0, sizeof(struct Ip_ifreq));
+	_ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
+	ipstack_in_addr = (struct Ip_sockaddr_in *) &ipstack_ifreq.ip_ifr_dstaddr;
+	ipstack_in_addr->sin_family = IP_AF_INET;
+	IPCOM_SA_LEN_SET(ipstack_in_addr, sizeof(struct Ip_sockaddr_in));
+	ipstack_in_addr->sin_addr.s_addr = ifc->destination->u.prefix4.s_addr;
 
-	if (ip_stack_ioctl(IP_SIOCSIFDSTADDR, &ifreq, ifp->vrf_id) < 0) {
+	if (ip_stack_ioctl(IP_SIOCSIFDSTADDR, &ipstack_ifreq, ifp->vrf_id) < 0) {
 		zlog_err(MODULE_PAL, "set destination address failed: %s",
 				ipcom_strerror(ipcom_errno));
 		return -ipcom_errno;
@@ -320,16 +320,16 @@ static int ip_stack_add_dstaddr(struct interface *ifp, struct connected *ifc)
 
 static int ip_stack_del_dstaddr(struct interface *ifp, struct connected *ifc)
 {
-	struct Ip_ifreq ifreq;
-	struct Ip_sockaddr_in *in_addr;
-	os_memset(&ifreq, 0, sizeof(struct Ip_ifreq));
-	ifreq_set_name(&ifreq, ifp);
-	in_addr = (struct Ip_sockaddr_in *) &ifreq.ip_ifr_dstaddr;
-	in_addr->sin_family = IP_AF_INET;
-	IPCOM_SA_LEN_SET(in_addr, sizeof(struct Ip_sockaddr_in));
-	in_addr->sin_addr.s_addr = 0;
+	struct Ip_ifreq ipstack_ifreq;
+	struct Ip_sockaddr_in *ipstack_in_addr;
+	os_memset(&ipstack_ifreq, 0, sizeof(struct Ip_ifreq));
+	_ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
+	ipstack_in_addr = (struct Ip_sockaddr_in *) &ipstack_ifreq.ip_ifr_dstaddr;
+	ipstack_in_addr->sin_family = IP_AF_INET;
+	IPCOM_SA_LEN_SET(ipstack_in_addr, sizeof(struct Ip_sockaddr_in));
+	ipstack_in_addr->sin_addr.s_addr = 0;
 
-	if (ip_stack_ioctl(IP_SIOCSIFDSTADDR, &ifreq, ifp->vrf_id) < 0) {
+	if (ip_stack_ioctl(IP_SIOCSIFDSTADDR, &ipstack_ifreq, ifp->vrf_id) < 0) {
 		zlog_err(MODULE_PAL, "set destination address failed: %s",
 				ipcom_strerror(ipcom_errno));
 		return -ipcom_errno;
@@ -349,7 +349,7 @@ static int ip_stack_ipv4_replace(struct interface *ifp,struct connected *ifc)
     }
 
 	os_memset(&ifr, 0, sizeof(struct Ip_ifreq));
-	ifreq_set_name(&ifr, ifp);
+	_ipkernel_ifreq_set_name(&ifr, ifp);
 
     in = (struct Ip_sockaddr_in *) &ifr.ip_ifr_addr;
     in->sin_family = IP_AF_INET;
@@ -380,7 +380,7 @@ static int ip_stack_ipv4_replace(struct interface *ifp,struct connected *ifc)
 static int ip_stack_ipv4_add(struct interface *ifp,struct connected *ifc)
 {
     struct Ip_ifaliasreq   ifal;
-    struct Ip_sockaddr_in *in_addr;
+    struct Ip_sockaddr_in *ipstack_in_addr;
     struct Ip_sockaddr_in *in_mask;
     char buf[64];
     union prefix46constptr  addrp;
@@ -394,10 +394,10 @@ static int ip_stack_ipv4_add(struct interface *ifp,struct connected *ifc)
     os_strcpy(ifal.ifra_name, ifp->k_name);
 
     /* Adding address and mask. */
-    in_addr = (struct Ip_sockaddr_in *) &ifal.ifra_addr;
-    in_addr->sin_family = IP_AF_INET;
-    IPCOM_SA_LEN_SET(in_addr, sizeof(struct Ip_sockaddr_in));
-    in_addr->sin_addr   = ifc->address->u.prefix4;
+    ipstack_in_addr = (struct Ip_sockaddr_in *) &ifal.ifra_addr;
+    ipstack_in_addr->sin_family = IP_AF_INET;
+    IPCOM_SA_LEN_SET(ipstack_in_addr, sizeof(struct Ip_sockaddr_in));
+    ipstack_in_addr->sin_addr   = ifc->address->u.prefix4;
 
     in_mask = (struct Ip_sockaddr_in *) &ifal.ifra_mask;
     in_mask->sin_family = IP_AF_INET;
@@ -423,7 +423,7 @@ static int ip_stack_ipv4_add(struct interface *ifp,struct connected *ifc)
 static int ip_stack_ipv4_delete(struct interface *ifp,struct connected *ifc)
 {
     struct Ip_ifaliasreq   ifal;
-    struct Ip_sockaddr_in *in_addr;
+    struct Ip_sockaddr_in *ipstack_in_addr;
     struct Ip_sockaddr_in *in_mask;
     char buf[64];
     union prefix46constptr  addrp;
@@ -437,10 +437,10 @@ static int ip_stack_ipv4_delete(struct interface *ifp,struct connected *ifc)
     os_strcpy(ifal.ifra_name, ifp->k_name);
 
     /* Adding address and mask. */
-    in_addr = (struct Ip_sockaddr_in *) &ifal.ifra_addr;
-    in_addr->sin_family = IP_AF_INET;
-    IPCOM_SA_LEN_SET(in_addr, sizeof(struct Ip_sockaddr_in));
-    in_addr->sin_addr   = ifc->address->u.prefix4;
+    ipstack_in_addr = (struct Ip_sockaddr_in *) &ifal.ifra_addr;
+    ipstack_in_addr->sin_family = IP_AF_INET;
+    IPCOM_SA_LEN_SET(ipstack_in_addr, sizeof(struct Ip_sockaddr_in));
+    ipstack_in_addr->sin_addr   = ifc->address->u.prefix4;
 /*
     os_memset (buf, 0, sizeof(buf));
     addrp.p = ifc->address;
@@ -513,16 +513,16 @@ static int ip_stack_ipv6_add(struct interface *ifp,struct connected *ifc)
  */
 static int ip_stack_ipv6_delete(struct interface *ifp,struct connected *ifc)
 {
-    struct Ip_in6_ifreq ifreq;
+    struct Ip_in6_ifreq ipstack_ifreq;
 
-    ipcom_memset(&ifreq, 0, sizeof(ifreq));
+    ipcom_memset(&ipstack_ifreq, 0, sizeof(ipstack_ifreq));
     os_strcpy(ifareq.ifra_name, ifp->k_name);
-    ifreq.ifr_ifru.ifru_addr.sin6_family = IP_AF_INET6;
-    IPCOM_SA_LEN_SET(&ifreq.ifr_ifru.ifru_addr, sizeof(struct Ip_sockaddr_in6));
+    ipstack_ifreq.ifr_ifru.ifru_addr.sin6_family = IP_AF_INET6;
+    IPCOM_SA_LEN_SET(&ipstack_ifreq.ifr_ifru.ifru_addr, sizeof(struct Ip_sockaddr_in6));
 
-    ifreq.ifr_ifru.ifru_addr.sin6_addr   = ifc->address->u.prefix6;
+    ipstack_ifreq.ifr_ifru.ifru_addr.sin6_addr   = ifc->address->u.prefix6;
     if (IP_IN6_IS_ADDR_LINK_LOCAL(&ifc->address->u.prefix6))
-        ifreq.ifr_ifru.ifru_addr.sin6_scope_id = ifp->k_ifindex;
+        ipstack_ifreq.ifr_ifru.ifru_addr.sin6_scope_id = ifp->k_ifindex;
 
     if (ip_stack_ioctl(IP_SIOCDIFADDR_IN6, &ifareq, ifp->vrf_id) < 0)
     {
@@ -538,45 +538,45 @@ static int ip_stack_ipv6_delete(struct interface *ifp,struct connected *ifc)
 static int ip_stack_arp_add(struct interface *ifp, struct prefix *address, zpl_uint8 *mac)
 {
 	int ret = 0;
-    struct Ip_arpreq arpreq;
-    struct Ip_sockaddr_dl *dl = (struct Ip_sockaddr_dl *)&arpreq.arp_ha;
-    ipcom_memset(&arpreq, 0, sizeof(struct Ip_arpreq));
-    arpreq.arp_flags = IP_ATF_PERM;
-    arpreq.arp_ha.sdl_type  = IP_IFT_ETHER;
-    arpreq.arp_ha.sdl_index = (Ip_u16) ifp->k_ifindex;
+    struct Ip_arpreq ipstack_arpreq;
+    struct Ip_sockaddr_dl *dl = (struct Ip_sockaddr_dl *)&ipstack_arpreq.arp_ha;
+    ipcom_memset(&ipstack_arpreq, 0, sizeof(struct Ip_arpreq));
+    ipstack_arpreq.arp_flags = IP_ATF_PERM;
+    ipstack_arpreq.arp_ha.sdl_type  = IP_IFT_ETHER;
+    ipstack_arpreq.arp_ha.sdl_index = (Ip_u16) ifp->k_ifindex;
 
-    if(address->family == AF_INET)
+    if(address->family == IPSTACK_AF_INET)
     {
-        struct Ip_sockaddr_in *addr = (struct Ip_sockaddr_in *) &arpreq.arp_pa;
-    	IPCOM_SA_LEN_SET(&arpreq.arp_pa, sizeof(struct Ip_sockaddr_in));
-    	arpreq.arp_pa.sa_family = IP_AF_INET;
+        struct Ip_sockaddr_in *addr = (struct Ip_sockaddr_in *) &ipstack_arpreq.arp_pa;
+    	IPCOM_SA_LEN_SET(&ipstack_arpreq.arp_pa, sizeof(struct Ip_sockaddr_in));
+    	ipstack_arpreq.arp_pa.sa_family = IP_AF_INET;
     	addr->sin_addr.s_addr = address->u.prefix4.s_addr;
     }
 #ifdef HAVE_IPV6
-    if(address->family == AF_INET6)
+    if(address->family == IPSTACK_AF_INET6)
     {
-        struct Ip_sockaddr_in6 *addr = (struct Ip_sockaddr_in6 *) &arpreq.arp_pa;
-    	IPCOM_SA_LEN_SET(&arpreq.arp_pa, sizeof(struct Ip_sockaddr_in6));
-    	arpreq.arp_pa.sa_family = IP_AF_INET6;
+        struct Ip_sockaddr_in6 *addr = (struct Ip_sockaddr_in6 *) &ipstack_arpreq.arp_pa;
+    	IPCOM_SA_LEN_SET(&ipstack_arpreq.arp_pa, sizeof(struct Ip_sockaddr_in6));
+    	ipstack_arpreq.arp_pa.sa_family = IP_AF_INET6;
     	os_memcpy(&addr->sin6_addr, &address->u.prefix6, IPV6_MAX_BYTELEN);
     }
 #endif
     ipcom_memset(dl, 0, sizeof(struct Ip_sockaddr_dl));
     dl->sdl_family = IP_AF_LINK;
 	os_memcpy(dl->sdl_data, mac, IPNET_ETH_ADDR_SIZE);
-	arpreq.arp_ha.sdl_alen = IPNET_ETH_ADDR_SIZE;
+	ipstack_arpreq.arp_ha.sdl_alen = IPNET_ETH_ADDR_SIZE;
     IPCOM_SA_LEN_SET(dl, (ip_offsetof(struct Ip_sockaddr_dl, sdl_data)
                           + IP_MAX(sizeof(dl->sdl_data), dl->sdl_alen)));
 /*
 
-    ret = ipcom_getsockaddrbyaddr(IP_AF_LINK, mac, (struct Ip_sockaddr *)&arpreq.arp_ha);
-    if (ret < 0 || arpreq.arp_ha.sdl_alen != IPNET_ETH_ADDR_SIZE)
+    ret = ipcom_getsockaddrbyaddr(IP_AF_LINK, mac, (struct Ip_sockaddr *)&ipstack_arpreq.arp_ha);
+    if (ret < 0 || ipstack_arpreq.arp_ha.sdl_alen != IPNET_ETH_ADDR_SIZE)
     {
         return -1;
     }
 */
 
-    if (ip_stack_ioctl(IP_SIOCSARP, &arpreq, ifp->vrf_id) < 0)
+    if (ip_stack_ioctl(IP_SIOCSARP, &ipstack_arpreq, ifp->vrf_id) < 0)
     {
     	zlog_err(MODULE_PAL, "failed to %s arp address: %s" ,
                 "add",
@@ -588,31 +588,31 @@ static int ip_stack_arp_add(struct interface *ifp, struct prefix *address, zpl_u
 
 static int ip_stack_arp_delete(struct interface *ifp,  struct prefix *address)
 {
-    struct Ip_arpreq       arpreq;
+    struct Ip_arpreq       ipstack_arpreq;
     int                    ret;
-    ipcom_memset(&arpreq, 0, sizeof(arpreq));
-    IPCOM_SA_LEN_SET(&arpreq.arp_ha, sizeof(arpreq.arp_ha));
-    arpreq.arp_ha.sdl_family = IP_AF_LINK;
-    arpreq.arp_ha.sdl_type   = IP_IFT_ETHER;
-    arpreq.arp_ha.sdl_index  = (Ip_u16) ifp->k_ifindex;
+    ipcom_memset(&ipstack_arpreq, 0, sizeof(ipstack_arpreq));
+    IPCOM_SA_LEN_SET(&ipstack_arpreq.arp_ha, sizeof(ipstack_arpreq.arp_ha));
+    ipstack_arpreq.arp_ha.sdl_family = IP_AF_LINK;
+    ipstack_arpreq.arp_ha.sdl_type   = IP_IFT_ETHER;
+    ipstack_arpreq.arp_ha.sdl_index  = (Ip_u16) ifp->k_ifindex;
 
-    if(address->family == AF_INET)
+    if(address->family == IPSTACK_AF_INET)
     {
-        struct Ip_sockaddr_in *addr = (struct Ip_sockaddr_in *) &arpreq.arp_pa;
-    	IPCOM_SA_LEN_SET(&arpreq.arp_pa, sizeof(struct Ip_sockaddr_in));
-    	arpreq.arp_pa.sa_family = IP_AF_INET;
+        struct Ip_sockaddr_in *addr = (struct Ip_sockaddr_in *) &ipstack_arpreq.arp_pa;
+    	IPCOM_SA_LEN_SET(&ipstack_arpreq.arp_pa, sizeof(struct Ip_sockaddr_in));
+    	ipstack_arpreq.arp_pa.sa_family = IP_AF_INET;
     	addr->sin_addr.s_addr = address->u.prefix4.s_addr;
     }
 #ifdef HAVE_IPV6
-    if(address->family == AF_INET6)
+    if(address->family == IPSTACK_AF_INET6)
     {
-        struct Ip_sockaddr_in6 *addr = (struct Ip_sockaddr_in6 *) &arpreq.arp_pa;
-    	IPCOM_SA_LEN_SET(&arpreq.arp_pa, sizeof(struct Ip_sockaddr_in6));
-    	arpreq.arp_pa.sa_family = IP_AF_INET6;
+        struct Ip_sockaddr_in6 *addr = (struct Ip_sockaddr_in6 *) &ipstack_arpreq.arp_pa;
+    	IPCOM_SA_LEN_SET(&ipstack_arpreq.arp_pa, sizeof(struct Ip_sockaddr_in6));
+    	ipstack_arpreq.arp_pa.sa_family = IP_AF_INET6;
     	os_memcpy(&addr->sin6_addr, &address->u.prefix6, IPV6_MAX_BYTELEN);
     }
 #endif
-    if (ip_stack_ioctl(IP_SIOCDARP, &arpreq, ifp->vrf_id) < 0)
+    if (ip_stack_ioctl(IP_SIOCDARP, &ipstack_arpreq, ifp->vrf_id) < 0)
     {
     	zlog_err(MODULE_PAL, "failed to %s arp address: %s" ,
                 "add",
@@ -624,31 +624,31 @@ static int ip_stack_arp_delete(struct interface *ifp,  struct prefix *address)
 
 static int ip_stack_arp_request(struct interface *ifp,  struct prefix *address)
 {
-    struct Ip_arpreq       arpreq;
+    struct Ip_arpreq       ipstack_arpreq;
     int                    ret;
-    ipcom_memset(&arpreq, 0, sizeof(arpreq));
-    IPCOM_SA_LEN_SET(&arpreq.arp_ha, sizeof(arpreq.arp_ha));
-    arpreq.arp_ha.sdl_family = IP_AF_LINK;
-    arpreq.arp_ha.sdl_type   = IP_IFT_ETHER;
-    arpreq.arp_ha.sdl_index  = (Ip_u16) ifp->k_ifindex;
+    ipcom_memset(&ipstack_arpreq, 0, sizeof(ipstack_arpreq));
+    IPCOM_SA_LEN_SET(&ipstack_arpreq.arp_ha, sizeof(ipstack_arpreq.arp_ha));
+    ipstack_arpreq.arp_ha.sdl_family = IP_AF_LINK;
+    ipstack_arpreq.arp_ha.sdl_type   = IP_IFT_ETHER;
+    ipstack_arpreq.arp_ha.sdl_index  = (Ip_u16) ifp->k_ifindex;
 
-    if(address->family == AF_INET)
+    if(address->family == IPSTACK_AF_INET)
     {
-        struct Ip_sockaddr_in *addr = (struct Ip_sockaddr_in *) &arpreq.arp_pa;
-    	IPCOM_SA_LEN_SET(&arpreq.arp_pa, sizeof(struct Ip_sockaddr_in));
-    	arpreq.arp_pa.sa_family = IP_AF_INET;
+        struct Ip_sockaddr_in *addr = (struct Ip_sockaddr_in *) &ipstack_arpreq.arp_pa;
+    	IPCOM_SA_LEN_SET(&ipstack_arpreq.arp_pa, sizeof(struct Ip_sockaddr_in));
+    	ipstack_arpreq.arp_pa.sa_family = IP_AF_INET;
     	addr->sin_addr.s_addr = address->u.prefix4.s_addr;
     }
 #ifdef HAVE_IPV6
-    if(address->family == AF_INET6)
+    if(address->family == IPSTACK_AF_INET6)
     {
-        struct Ip_sockaddr_in6 *addr = (struct Ip_sockaddr_in6 *) &arpreq.arp_pa;
-    	IPCOM_SA_LEN_SET(&arpreq.arp_pa, sizeof(struct Ip_sockaddr_in6));
-    	arpreq.arp_pa.sa_family = IP_AF_INET6;
+        struct Ip_sockaddr_in6 *addr = (struct Ip_sockaddr_in6 *) &ipstack_arpreq.arp_pa;
+    	IPCOM_SA_LEN_SET(&ipstack_arpreq.arp_pa, sizeof(struct Ip_sockaddr_in6));
+    	ipstack_arpreq.arp_pa.sa_family = IP_AF_INET6;
     	os_memcpy(&addr->sin6_addr, &address->u.prefix6, IPV6_MAX_BYTELEN);
     }
 #endif
-    if (ip_stack_ioctl(IP_SIOCPARP, &arpreq, ifp->vrf_id) < 0)
+    if (ip_stack_ioctl(IP_SIOCPARP, &ipstack_arpreq, ifp->vrf_id) < 0)
     {
     	zlog_err(MODULE_PAL, "failed to %s arp address: %s" ,
                 "add",
@@ -667,16 +667,16 @@ static int ip_stack_route_ioctl (zpl_ulong request, void * buffer)
 	sock = ipcom_socket(IP_AF_ROUTE, IP_SOCK_RAW, 0);
 	if (sock < 0)
 	{
-		int save_errno = errno;
-		zlog_err(MODULE_PAL, "Cannot create ROUTE RAW socket: %s",
-				safe_strerror(save_errno));
+		int save_errno = ipstack_errno;
+		zlog_err(MODULE_PAL, "Cannot create ROUTE RAW ipstack_socket: %s",
+				ipstack_strerror(save_errno));
 		return -1;
 	}
 	ret = ipcom_socketioctl(sock, (zpl_ulong)request, buffer);
 
 	if (ret < 0)
 	{
-		zlog_err(MODULE_PAL, "failed to ioctl socket");
+		zlog_err(MODULE_PAL, "failed to ioctl ipstack_socket");
 		ipcom_socketclose(sock);
 		return -1;
 	}
@@ -774,7 +774,7 @@ int if_lag_add_mem(struct interface *ifp_lag, const char *ifp_mem_name)
 {
 #ifndef ZPL_BUILD_LINUX
   int ret;
-  struct ifreq ifreq;
+  struct ipstack_ifreq ipstack_ifreq;
   struct Ip_ebondreq ebondreq;
 
   if(NULL == ifp_lag || ifp_mem_name == NULL)
@@ -782,16 +782,16 @@ int if_lag_add_mem(struct interface *ifp_lag, const char *ifp_mem_name)
       return -1;
   }
 
-  memset (&ifreq, 0, sizeof(struct ifreq));
-  ifreq_set_name (&ifreq, ifp_lag);
+  memset (&ipstack_ifreq, 0, sizeof(struct ipstack_ifreq));
+  _ipkernel_ifreq_set_name (&ipstack_ifreq, ifp_lag);
 
-  ifreq.ip_ifr_data = (void *)&ebondreq;
+  ipstack_ifreq.ip_ifr_data = (void *)&ebondreq;
 
   memcpy(ebondreq.mem_name, ifp_mem_name, IP_IFNAMSIZ);
   ebondreq.lag_mode = ifp_lag->trunk_mode;
   ebondreq.lacp_nego_flag = 1;      /*enable*/
 
-  ret = if_ioctl (IP_SIOCSETBONDLAG, (caddr_t) &ifreq, ifp_lag->vrf_id);
+  ret = _ipkernel_if_ioctl (IP_SIOCSETBONDLAG, (caddr_t) &ipstack_ifreq, ifp_lag->vrf_id);
   if (ret < 0)
   {
 	  zlog_err(MODULE_PAL, "%s if_lag_add_mem interface %s",ifp_lag->name, ifp_mem_name);
@@ -807,7 +807,7 @@ int if_lag_delete_mem(struct interface *ifp_lag, const char *ifp_mem_name)
 
 #ifndef ZPL_BUILD_LINUX
   int ret;
-  struct ifreq ifreq;
+  struct ipstack_ifreq ipstack_ifreq;
   struct Ip_ebondreq ebondreq;
 
   if(NULL == ifp_lag || ifp_mem_name == NULL)
@@ -815,14 +815,14 @@ int if_lag_delete_mem(struct interface *ifp_lag, const char *ifp_mem_name)
       return -1;
   }
 
-  memset (&ifreq, 0, sizeof(struct ifreq));
-  ifreq_set_name (&ifreq, ifp_lag);
+  memset (&ipstack_ifreq, 0, sizeof(struct ipstack_ifreq));
+  _ipkernel_ifreq_set_name (&ipstack_ifreq, ifp_lag);
 
-  ifreq.ip_ifr_data = (void *)&ebondreq;
+  ipstack_ifreq.ip_ifr_data = (void *)&ebondreq;
 
   memcpy(ebondreq.mem_name, ifp_mem_name, IP_IFNAMSIZ);
 
-  ret = if_ioctl (IP_SIOCREMOVEBONDLAG, (caddr_t) &ifreq, ifp_lag->vrfid);
+  ret = _ipkernel_if_ioctl (IP_SIOCREMOVEBONDLAG, (caddr_t) &ipstack_ifreq, ifp_lag->vrfid);
   if (ret < 0)
   {
 	  zlog_err(MODULE_PAL, "%s if_lag_delete_mem interface %s",ifp_lag->name, ifp_mem_name);
@@ -840,7 +840,7 @@ int if_lag_set_mem_flag(struct interface *ifp_lag, const char *ifp_mem_name, int
 {
 #ifndef ZPL_BUILD_LINUX
   int ret;
-  struct ifreq ifreq;
+  struct ipstack_ifreq ipstack_ifreq;
   struct Ip_ebondreq ebondreq;
 
   if(NULL == ifp_lag || ifp_mem_name == NULL)
@@ -848,16 +848,16 @@ int if_lag_set_mem_flag(struct interface *ifp_lag, const char *ifp_mem_name, int
       return -1;
   }
 
-  memset (&ifreq, 0, sizeof(struct ifreq));
-  ifreq_set_name (&ifreq, ifp_lag);
+  memset (&ipstack_ifreq, 0, sizeof(struct ipstack_ifreq));
+  _ipkernel_ifreq_set_name (&ipstack_ifreq, ifp_lag);
 
-  ifreq.ip_ifr_data = (void *)&ebondreq;
+  ipstack_ifreq.ip_ifr_data = (void *)&ebondreq;
 
   memcpy(ebondreq.mem_name, ifp_mem_name, IP_IFNAMSIZ);
   ebondreq.lag_mode = ifp_lag->trunk_mode;
   ebondreq.master_slave_flag = master_slave_flag;      /*enable*/
 
-  ret = if_ioctl (IP_SIOCSETBONDMS, (caddr_t) &ifreq, ifp_lag->vrfid);
+  ret = _ipkernel_if_ioctl (IP_SIOCSETBONDMS, (caddr_t) &ipstack_ifreq, ifp_lag->vrfid);
   if (ret < 0)
   {
 	  zlog_err(MODULE_PAL, "%s if_lag_set_mem_flag interface  %s %d",ifp_lag->name, ifp_mem_name, master_slave_flag);

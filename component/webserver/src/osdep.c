@@ -274,7 +274,7 @@ PUBLIC char *basename(char *name)
 #if TIDSP
 static char _inet_result[16];
 
-char *ipstack_inet_ntoa(struct in_addr addr)
+char *ipstack_inet_ntoa(struct ipstack_in_addr addr)
 {
     uchar       *bytes;
 
@@ -284,14 +284,14 @@ char *ipstack_inet_ntoa(struct in_addr addr)
 }
 
 
-struct hostent* gethostbyname(char *name)
+struct ipstack_hostent* ipstack_gethostbyname(char *name)
 {
     static char buffer[ME_MAX_PATH];
 
     if(!DNSGetHostByName(name, buffer, ME_MAX_PATH)) {
         return 0;
     }
-    return (struct hostent*) buffer;
+    return (struct ipstack_hostent*) buffer;
 }
 
 
@@ -299,7 +299,7 @@ ulong hostGetByName(char *name)
 {
     struct _hostent *ent;
 
-    ent = gethostbyname(name);
+    ent = ipstack_gethostbyname(name);
     return ent->h_addr[0];
 }
 

@@ -81,6 +81,17 @@ extern "C" {
 
 #define CMD_USP_STR			"<unit/slot/port>"
 #define CMD_USP_STR_HELP	"specify interface name:<unit/slot/port> (e.g. 0/1/3)\n"
+
+#define CMD_USP_SUB_STR			"<unit/slot/port.id>"
+#define CMD_USP_SUB_STR_HELP	"specify interface name:<unit/slot/port.id> (e.g. 0/1/3.1)\n"
+
+#define CMD_USP_RANGE_STR			"<unit/slot/port-end>"
+#define CMD_USP_RANGE_STR_HELP	"specify interface name:<unit/slot/port> (e.g. 0/1/3-6)\n"
+
+#define CMD_USP_SUB_RANGE_STR			"<unit/slot/port.id-id>"
+#define CMD_USP_SUB_RANGE_STR_HELP	"specify interface name:<unit/slot/port.id-id> (e.g. 0/1/3.1-4)\n"
+
+
 #ifdef CUSTOM_INTERFACE
 #define CMD_IF_MIP_STR		"(modem|wifi)"
 #define CMD_IF_MIP_STR_HELP	"Modem interface\n" "Wifi interface\n"

@@ -42,7 +42,7 @@ DEFUN (router_id,
     return CMD_WARNING;
 
   rid.prefixlen = 32;
-  rid.family = AF_INET;
+  rid.family = IPSTACK_AF_INET;
 
   if (argc > 1)
     VTY_GET_INTEGER ("VRF ID", vrf_id, argv[1]);
@@ -64,7 +64,7 @@ DEFUN (no_router_id,
 
   rid.u.prefix4.s_addr = 0;
   rid.prefixlen = 0;
-  rid.family = AF_INET;
+  rid.family = IPSTACK_AF_INET;
 
   if (argc > 0)
     VTY_GET_INTEGER ("VRF ID", vrf_id, argv[0]);

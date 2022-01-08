@@ -18,6 +18,7 @@
 pal_stack_t pal_stack;
 static zpl_uint32 kernel_task_id = 0;
 static void *master_eloop_kernel = NULL;
+static int pal_module_task_init();
 
 struct module_list module_list_pal = 
 { 
@@ -25,13 +26,14 @@ struct module_list module_list_pal =
 	.name="PAL", 
 	.module_init=pal_module_init, 
 	.module_exit=NULL, 
-	.module_task_init=NULL, 
+	.module_task_init=pal_module_task_init, 
 	.module_task_exit=NULL, 
 	.module_cmd_init=NULL, 
 	.module_write_config=NULL, 
 	.module_show_config=NULL,
 	.module_show_debug=NULL, 
 	.taskid=0,
+	.flags = 0,
 };
 
 int pal_interface_up(struct interface *ifp)
@@ -198,6 +200,13 @@ int pal_interface_ipv6_delete(struct interface *ifp, struct connected *ifc, zpl_
 		return pal_stack.ip_stack_ipv6_delete(ifp, ifc, secondry);
     return OK;
 }
+
+int pal_iproute_rib_action(struct prefix *p, struct rib *old, struct rib *new)
+{
+	if(pal_stack.ip_stack_route_rib && p)
+		return pal_stack.ip_stack_route_rib(p, old, new);
+    return OK;
+}
 #ifdef ZPL_NSM_ARP
 // ip arp
 int pal_interface_arp_add(struct interface *ifp, struct prefix *address, zpl_uint8 *mac)
@@ -264,6 +273,16 @@ int pal_delete_vr(vrf_id_t vrf_id)
     return OK;
 }
 
+zpl_socket_t pal_vrf_socket(int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id_t vrf_id)
+{
+	zpl_socket_t tmp;
+	if(pal_stack.ip_stack_vrf_socket)
+		tmp = pal_stack.ip_stack_vrf_socket(domain, type, protocol, vrf_id);
+    return tmp;
+}
+
+
+
 int pal_interface_update_statistics(struct interface *ifp)
 {
 	if(pal_stack.ip_stack_update_statistics && ifp->k_ifindex)
@@ -271,14 +290,87 @@ int pal_interface_update_statistics(struct interface *ifp)
     return OK;
 }
 
+/*
+ * 端口映射
+ */
+int pal_firewall_portmap_rule_set(firewall_t *rule, zpl_action action)
+{
+	if(pal_stack.ip_stack_firewall_portmap_rule_set)
+		return pal_stack.ip_stack_firewall_portmap_rule_set(rule, action);
+    return OK;
+}
+/*
+ * 端口开放
+ */
+int pal_firewall_port_filter_rule_set(firewall_t *rule, zpl_action action)
+{
+	if(pal_stack.ip_stack_firewall_port_filter_rule_set)
+		return pal_stack.ip_stack_firewall_port_filter_rule_set(rule, action);
+    return OK;
+}
+
+int pal_firewall_mangle_rule_set(firewall_t *rule, zpl_action action)
+{
+	if(pal_stack.ip_stack_firewall_mangle_rule_set)
+		return pal_stack.ip_stack_firewall_mangle_rule_set(rule, action);
+    return OK;
+}
+
+int pal_firewall_raw_rule_set(firewall_t *rule, zpl_action action)
+{
+	if(pal_stack.ip_stack_firewall_raw_rule_set)
+		return pal_stack.ip_stack_firewall_raw_rule_set(rule, action);
+    return OK;
+}
+
+int pal_firewall_snat_rule_set(firewall_t *rule, zpl_action action)
+{
+	if(pal_stack.ip_stack_firewall_snat_rule_set)
+		return pal_stack.ip_stack_firewall_snat_rule_set(rule, action);
+    return OK;
+}
+
+int pal_firewall_dnat_rule_set(firewall_t *rule, zpl_action action)
+{
+	if(pal_stack.ip_stack_firewall_dnat_rule_set)
+		return pal_stack.ip_stack_firewall_dnat_rule_set(rule, action);
+    return OK;
+}
+
+
+int ipforward (void)
+{
+	return _ipkernel_ipforward();
+}
+int ipforward_on (void)
+{
+	return _ipkernel_ipforward_on();
+}
+int ipforward_off (void)
+{
+	return _ipkernel_ipforward_off();
+}
+
+int ipforward_ipv6 (void)
+{
+	return _ipkernel_ipforward_ipv6();
+}
+int ipforward_ipv6_on (void)
+{
+	return _ipkernel_ipforward_ipv6_on();
+}
+int ipforward_ipv6_off (void)
+{
+	return _ipkernel_ipforward_ipv6_off();
+}
 
 /***************************************************************/
 
 static int pal_main_task(void *argv)
 {
 	module_setup_task(MODULE_KERNEL, os_task_id_self());
-	host_config_load_waitting();
-	eloop_start_running(master_eloop_kernel, MODULE_KERNEL);
+	host_waitting_loadconfig();
+	eloop_mainloop(master_eloop_kernel);
 	return OK;
 }
 
@@ -288,10 +380,14 @@ static int kernel_task_init ()
 	if(master_eloop_kernel == NULL)
 		master_eloop_kernel = eloop_master_module_create(MODULE_KERNEL);
 	//master_thread[ZPL_SERVICE_TELNET] = thread_master_module_create(ZPL_SERVICE_TELNET);
-	kernel_task_id = os_task_create("kernelTask", OS_TASK_DEFAULT_PRIORITY,
+	if(kernel_task_id == 0)
+		kernel_task_id = os_task_create("kernelTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, pal_main_task, NULL, OS_TASK_DEFAULT_STACK);
 	if(kernel_task_id)
+	{
+		module_setup_task(MODULE_KERNEL, kernel_task_id);
 		return OK;
+	}
 	return ERROR;
 }
 
@@ -299,11 +395,16 @@ int pal_module_init()
 {
 	if(master_eloop_kernel == NULL)
 		master_eloop_kernel = eloop_master_module_create(MODULE_KERNEL);
-	kernel_task_init ();
+	//kernel_task_init ();
 	ip_ifp_stack_init();
 	#ifdef ZPL_NSM_ARP
 	ip_arp_stack_init();
 	#endif
-	kernel_driver_init();
+	//kernel_driver_init();
 	return 0;//ip_stack_init();
+}
+
+static int pal_module_task_init()
+{
+	return kernel_task_init ();
 }

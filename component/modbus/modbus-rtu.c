@@ -95,7 +95,7 @@ static int _modbus_set_slave(modbus_t *ctx, int slave)
     if (slave >= 0 && slave <= 247) {
         ctx->slave = slave;
     } else {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -254,16 +254,16 @@ static int win32_ser_read(struct win32_ser *ws, uint8_t *p_msg,
 #if HAVE_DECL_TIOCM_RTS
 static void _modbus_rtu_ioctl_rts(modbus_t *ctx, int on)
 {
-    int fd = ctx->s;
+    zpl_socket_t fd = ctx->s;
     int flags;
 
-    ioctl(fd, TIOCMGET, &flags);
+    ipstack_ioctl(fd, TIOCMGET, &flags);
     if (on) {
         flags |= TIOCM_RTS;
     } else {
         flags &= ~TIOCM_RTS;
     }
-    ioctl(fd, TIOCMSET, &flags);
+    ipstack_ioctl(fd, TIOCMSET, &flags);
 }
 #endif
 
@@ -286,7 +286,7 @@ static ssize_t _modbus_rtu_send(modbus_t *ctx, const uint8_t *req, int req_lengt
         ctx_rtu->set_rts(ctx, ctx_rtu->rts == MODBUS_RTU_RTS_UP);
         usleep(ctx_rtu->rts_delay);
 
-        size = write(ctx->s, req, req_length);
+        size = ipstack_write(ctx->s, req, req_length);
 
         usleep(ctx_rtu->onebyte_time * req_length + ctx_rtu->rts_delay);
         ctx_rtu->set_rts(ctx, ctx_rtu->rts != MODBUS_RTU_RTS_UP);
@@ -294,7 +294,7 @@ static ssize_t _modbus_rtu_send(modbus_t *ctx, const uint8_t *req, int req_lengt
         return size;
     } else {
 #endif
-        return write(ctx->s, req, req_length);
+        return ipstack_write(ctx->s, req, req_length);
 #if HAVE_DECL_TIOCM_RTS
     }
 #endif
@@ -329,7 +329,7 @@ static ssize_t _modbus_rtu_recv(modbus_t *ctx, uint8_t *rsp, int rsp_length)
 #if defined(_WIN32)
     return win32_ser_read(&((modbus_rtu_t *)ctx->backend_data)->w_ser, rsp, rsp_length);
 #else
-    return read(ctx->s, rsp, rsp_length);
+    return ipstack_read(ctx->s, rsp, rsp_length);
 #endif
 }
 
@@ -346,7 +346,7 @@ static int _modbus_rtu_pre_check_confirmation(modbus_t *ctx, const uint8_t *req,
                     "The responding slave %d isn't the requested slave %d\n",
                     rsp[0], req[0]);
         }
-        errno = EMBBADSLAVE;
+        ipstack_errno = EMBBADSLAVE;
         return -1;
     } else {
         return 0;
@@ -355,7 +355,7 @@ static int _modbus_rtu_pre_check_confirmation(modbus_t *ctx, const uint8_t *req,
 
 /* The check_crc16 function shall return 0 is the message is ignored and the
    message length if the CRC is valid. Otherwise it shall return -1 and set
-   errno to EMBBADCRC. */
+   ipstack_errno to EMBBADCRC. */
 static int _modbus_rtu_check_integrity(modbus_t *ctx, uint8_t *msg,
                                        const int msg_length)
 {
@@ -388,7 +388,7 @@ static int _modbus_rtu_check_integrity(modbus_t *ctx, uint8_t *msg,
         if (ctx->error_recovery & MODBUS_ERROR_RECOVERY_PROTOCOL) {
             _modbus_rtu_flush(ctx);
         }
-        errno = EMBBADCRC;
+        ipstack_errno = EMBBADCRC;
         return -1;
     }
 }
@@ -588,17 +588,17 @@ static int _modbus_rtu_connect(modbus_t *ctx)
     flags |= O_CLOEXEC;
 #endif
 
-    ctx->s = open(ctx_rtu->device, flags);
-    if (ctx->s == -1) {
+    ctx->s._fd = open(ctx_rtu->device, flags);
+    if (ctx->s._fd == -1) {
         if (ctx->debug) {
             fprintf(stderr, "ERROR Can't open the device %s (%s)\n",
-                    ctx_rtu->device, strerror(errno));
+                    ctx_rtu->device, strerror(ipstack_errno));
         }
         return -1;
     }
-
+    ctx->s.stack = OS_STACK;
     /* Save */
-    tcgetattr(ctx->s, &ctx_rtu->old_tios);
+    tcgetattr(ctx->s._fd, &ctx_rtu->old_tios);
 
     memset(&tios, 0, sizeof(struct termios));
 
@@ -715,8 +715,8 @@ static int _modbus_rtu_connect(modbus_t *ctx)
     /* Set the baud rate */
     if ((cfsetispeed(&tios, speed) < 0) ||
         (cfsetospeed(&tios, speed) < 0)) {
-        close(ctx->s);
-        ctx->s = -1;
+        ipstack_close(ctx->s);
+        //ctx->s._fd = -1;
         return -1;
     }
 
@@ -888,9 +888,9 @@ static int _modbus_rtu_connect(modbus_t *ctx)
     tios.c_cc[VMIN] = 0;
     tios.c_cc[VTIME] = 0;
 
-    if (tcsetattr(ctx->s, TCSANOW, &tios) < 0) {
-        close(ctx->s);
-        ctx->s = -1;
+    if (tcsetattr(ctx->s._fd, TCSANOW, &tios) < 0) {
+        ipstack_close(ctx->s);
+        //ctx->s._fd = -1;
         return -1;
     }
 #endif
@@ -901,7 +901,7 @@ static int _modbus_rtu_connect(modbus_t *ctx)
 int modbus_rtu_set_serial_mode(modbus_t *ctx, int mode)
 {
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -912,12 +912,12 @@ int modbus_rtu_set_serial_mode(modbus_t *ctx, int mode)
 
         if (mode == MODBUS_RTU_RS485) {
             // Get
-            if (ioctl(ctx->s, TIOCGRS485, &rs485conf) < 0) {
+            if (ioctl(ctx->s._fd, TIOCGRS485, &rs485conf) < 0) {
                 return -1;
             }
             // Set
             rs485conf.flags |= SER_RS485_ENABLED;
-            if (ioctl(ctx->s, TIOCSRS485, &rs485conf) < 0) {
+            if (ioctl(ctx->s._fd, TIOCSRS485, &rs485conf) < 0) {
                 return -1;
             }
 
@@ -927,11 +927,11 @@ int modbus_rtu_set_serial_mode(modbus_t *ctx, int mode)
             /* Turn off RS485 mode only if required */
             if (ctx_rtu->serial_mode == MODBUS_RTU_RS485) {
                 /* The ioctl call is avoided because it can fail on some RS232 ports */
-                if (ioctl(ctx->s, TIOCGRS485, &rs485conf) < 0) {
+                if (ioctl(ctx->s._fd, TIOCGRS485, &rs485conf) < 0) {
                     return -1;
                 }
                 rs485conf.flags &= ~SER_RS485_ENABLED;
-                if (ioctl(ctx->s, TIOCSRS485, &rs485conf) < 0) {
+                if (ioctl(ctx->s._fd, TIOCSRS485, &rs485conf) < 0) {
                     return -1;
                 }
             }
@@ -942,20 +942,20 @@ int modbus_rtu_set_serial_mode(modbus_t *ctx, int mode)
         if (ctx->debug) {
             fprintf(stderr, "This function isn't supported on your platform\n");
         }
-        errno = ENOTSUP;
+        ipstack_errno = ENOTSUP;
         return -1;
 #endif
     }
 
     /* Wrong backend and invalid mode specified */
-    errno = EINVAL;
+    ipstack_errno = EINVAL;
     return -1;
 }
 
 int modbus_rtu_get_serial_mode(modbus_t *ctx)
 {
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -967,11 +967,11 @@ int modbus_rtu_get_serial_mode(modbus_t *ctx)
         if (ctx->debug) {
             fprintf(stderr, "This function isn't supported on your platform\n");
         }
-        errno = ENOTSUP;
+        ipstack_errno = ENOTSUP;
         return -1;
 #endif
     } else {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 }
@@ -979,7 +979,7 @@ int modbus_rtu_get_serial_mode(modbus_t *ctx)
 int modbus_rtu_get_rts(modbus_t *ctx)
 {
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -991,11 +991,11 @@ int modbus_rtu_get_rts(modbus_t *ctx)
         if (ctx->debug) {
             fprintf(stderr, "This function isn't supported on your platform\n");
         }
-        errno = ENOTSUP;
+        ipstack_errno = ENOTSUP;
         return -1;
 #endif
     } else {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 }
@@ -1003,7 +1003,7 @@ int modbus_rtu_get_rts(modbus_t *ctx)
 int modbus_rtu_set_rts(modbus_t *ctx, int mode)
 {
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1020,26 +1020,26 @@ int modbus_rtu_set_rts(modbus_t *ctx, int mode)
 
             return 0;
         } else {
-            errno = EINVAL;
+            ipstack_errno = EINVAL;
             return -1;
         }
 #else
         if (ctx->debug) {
             fprintf(stderr, "This function isn't supported on your platform\n");
         }
-        errno = ENOTSUP;
+        ipstack_errno = ENOTSUP;
         return -1;
 #endif
     }
     /* Wrong backend or invalid mode specified */
-    errno = EINVAL;
+    ipstack_errno = EINVAL;
     return -1;
 }
 
 int modbus_rtu_set_custom_rts(modbus_t *ctx, void (*set_rts) (modbus_t *ctx, int on))
 {
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1052,11 +1052,11 @@ int modbus_rtu_set_custom_rts(modbus_t *ctx, void (*set_rts) (modbus_t *ctx, int
         if (ctx->debug) {
             fprintf(stderr, "This function isn't supported on your platform\n");
         }
-        errno = ENOTSUP;
+        ipstack_errno = ENOTSUP;
         return -1;
 #endif
     } else {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 }
@@ -1064,7 +1064,7 @@ int modbus_rtu_set_custom_rts(modbus_t *ctx, void (*set_rts) (modbus_t *ctx, int
 int modbus_rtu_get_rts_delay(modbus_t *ctx)
 {
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1077,11 +1077,11 @@ int modbus_rtu_get_rts_delay(modbus_t *ctx)
         if (ctx->debug) {
             fprintf(stderr, "This function isn't supported on your platform\n");
         }
-        errno = ENOTSUP;
+        ipstack_errno = ENOTSUP;
         return -1;
 #endif
     } else {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 }
@@ -1089,7 +1089,7 @@ int modbus_rtu_get_rts_delay(modbus_t *ctx)
 int modbus_rtu_set_rts_delay(modbus_t *ctx, int us)
 {
     if (ctx == NULL || us < 0) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1103,11 +1103,11 @@ int modbus_rtu_set_rts_delay(modbus_t *ctx, int us)
         if (ctx->debug) {
             fprintf(stderr, "This function isn't supported on your platform\n");
         }
-        errno = ENOTSUP;
+        ipstack_errno = ENOTSUP;
         return -1;
 #endif
     } else {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 }
@@ -1129,10 +1129,10 @@ static void _modbus_rtu_close(modbus_t *ctx)
                 (int)GetLastError());
     }
 #else
-    if (ctx->s != -1) {
-        tcsetattr(ctx->s, TCSANOW, &ctx_rtu->old_tios);
-        close(ctx->s);
-        ctx->s = -1;
+    if (ctx->s._fd != -1) {
+        tcsetattr(ctx->s._fd, TCSANOW, &ctx_rtu->old_tios);
+        ipstack_close(ctx->s);
+        //ctx->s._fd = -1;
     }
 #endif
 }
@@ -1144,7 +1144,7 @@ static int _modbus_rtu_flush(modbus_t *ctx)
     ctx_rtu->w_ser.n_bytes = 0;
     return (PurgeComm(ctx_rtu->w_ser.fd, PURGE_RXCLEAR) == FALSE);
 #else
-    return tcflush(ctx->s, TCIOFLUSH);
+    return tcflush(ctx->s._fd, TCIOFLUSH);
 #endif
 }
 
@@ -1156,7 +1156,7 @@ static int _modbus_rtu_select(modbus_t *ctx, fd_set *rset,
     s_rc = win32_ser_select(&((modbus_rtu_t *)ctx->backend_data)->w_ser,
                             length_to_read, tv);
     if (s_rc == 0) {
-        errno = ETIMEDOUT;
+        ipstack_errno = ETIMEDOUT;
         return -1;
     }
 
@@ -1164,14 +1164,14 @@ static int _modbus_rtu_select(modbus_t *ctx, fd_set *rset,
         return -1;
     }
 #else
-    while ((s_rc = select(ctx->s+1, rset, NULL, NULL, tv)) == -1) {
-        if (errno == EINTR) {
+    while ((s_rc = select(ctx->s._fd+1, rset, NULL, NULL, tv)) == -1) {
+        if (ipstack_errno == EINTR) {
             if (ctx->debug) {
                 fprintf(stderr, "A non blocked signal was caught\n");
             }
             /* Necessary after an error */
             FD_ZERO(rset);
-            FD_SET(ctx->s, rset);
+            FD_SET(ctx->s._fd, rset);
         } else {
             return -1;
         }
@@ -1179,7 +1179,7 @@ static int _modbus_rtu_select(modbus_t *ctx, fd_set *rset,
 
     if (s_rc == 0) {
         /* Timeout */
-        errno = ETIMEDOUT;
+        ipstack_errno = ETIMEDOUT;
         return -1;
     }
 #endif
@@ -1228,14 +1228,14 @@ modbus_t* modbus_new_rtu(const char *device,
     /* Check device argument */
     if (device == NULL || *device == 0) {
         fprintf(stderr, "The device string is empty\n");
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return NULL;
     }
 
     /* Check baud argument */
     if (baud == 0) {
         fprintf(stderr, "The baud rate value must not be zero\n");
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return NULL;
     }
 
@@ -1249,7 +1249,7 @@ modbus_t* modbus_new_rtu(const char *device,
     ctx->backend_data = (modbus_rtu_t *)malloc(sizeof(modbus_rtu_t));
     if (ctx->backend_data == NULL) {
         modbus_free(ctx);
-        errno = ENOMEM;
+        ipstack_errno = ENOMEM;
         return NULL;
     }
     ctx_rtu = (modbus_rtu_t *)ctx->backend_data;
@@ -1258,7 +1258,7 @@ modbus_t* modbus_new_rtu(const char *device,
     ctx_rtu->device = (char *)malloc((strlen(device) + 1) * sizeof(char));
     if (ctx_rtu->device == NULL) {
         modbus_free(ctx);
-        errno = ENOMEM;
+        ipstack_errno = ENOMEM;
         return NULL;
     }
     strcpy(ctx_rtu->device, device);
@@ -1268,7 +1268,7 @@ modbus_t* modbus_new_rtu(const char *device,
         ctx_rtu->parity = parity;
     } else {
         modbus_free(ctx);
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return NULL;
     }
     ctx_rtu->data_bit = data_bit;

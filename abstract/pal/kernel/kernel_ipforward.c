@@ -25,7 +25,9 @@
 #include <zpl_include.h>
 #include "lib_include.h"
 #include "nsm_include.h"
-
+#include "kernel_driver.h"
+#include "kernel_ioctl.h"
+#include "pal_driver.h"
 
 char proc_net_snmp[] = "/proc/net/snmp";
 
@@ -39,7 +41,7 @@ dropline (FILE *fp)
 }
 
 int
-ipforward (void)
+_ipkernel_ipforward (void)
 {
   FILE *fp;
   int ipforwarding = 0;
@@ -71,7 +73,7 @@ ipforward (void)
 char proc_ipv4_forwarding[] = "/proc/sys/net/ipv4/ip_forward";
 
 int
-ipforward_on (void)
+_ipkernel_ipforward_on (void)
 {
   FILE *fp;
   
@@ -85,11 +87,11 @@ ipforward_on (void)
 
   fclose (fp);
 
-  return ipforward ();
+  return _ipkernel_ipforward ();
 }
 
 int
-ipforward_off (void)
+_ipkernel_ipforward_off (void)
 {
   FILE *fp;
 
@@ -103,14 +105,14 @@ ipforward_off (void)
 
   fclose (fp);
 
-  return ipforward ();
+  return _ipkernel_ipforward ();
 }
 #ifdef HAVE_IPV6
 
 char proc_ipv6_forwarding[] = "/proc/sys/net/ipv6/conf/all/forwarding";
 
 int
-ipforward_ipv6 (void)
+_ipkernel_ipforward_ipv6 (void)
 {
   FILE *fp;
   char buf[5];
@@ -129,7 +131,7 @@ ipforward_ipv6 (void)
 }
 
 int
-ipforward_ipv6_on (void)
+_ipkernel_ipforward_ipv6_on (void)
 {
   FILE *fp;
 
@@ -143,11 +145,11 @@ ipforward_ipv6_on (void)
 
   fclose (fp);
 
-  return ipforward_ipv6 ();
+  return _ipkernel_ipforward_ipv6 ();
 }
 
 int
-ipforward_ipv6_off (void)
+_ipkernel_ipforward_ipv6_off (void)
 {
   FILE *fp;
 
@@ -161,6 +163,6 @@ ipforward_ipv6_off (void)
 
   fclose (fp);
 
-  return ipforward_ipv6 ();
+  return _ipkernel_ipforward_ipv6 ();
 }
 #endif /* HAVE_IPV6 */

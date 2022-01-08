@@ -19,6 +19,7 @@
 #include "nsm_include.h"
 
 #include "kernel_ioctl.h"
+#include "kernel_driver.h"
 
 #ifdef ZPL_NSM_BRIDGE
 
@@ -35,32 +36,32 @@ int _ipkernel_bridge_create(nsm_bridge_t *br)
 {
 	int ret;
 #ifdef SIOCBRADDBR
-	ret = if_ioctl(SIOCBRADDBR, br->ifp->k_name);
+	ret = _ipkernel_if_ioctl(IPSTACK_SIOCBRADDBR, br->ifp->k_name);
 	if (ret < 0)
 #endif
 	{
 		char _br[IFNAMSIZ];
 		zpl_ulong arg[3] = { BRCTL_ADD_BRIDGE, (zpl_ulong) _br };
 		strncpy(_br, br->ifp->k_name, IFNAMSIZ);
-		ret = if_ioctl(SIOCSIFBR, (caddr_t)&arg);
+		ret = _ipkernel_if_ioctl(IPSTACK_SIOCSIFBR, (caddr_t)&arg);
 	}
-	return ret < 0 ? errno : 0;
+	return ret < 0 ? ipstack_errno : 0;
 }
 
 int _ipkernel_bridge_delete(nsm_bridge_t *br)
 {
 	int ret = -1;
 #ifdef SIOCBRDELBR
-	ret = if_ioctl(SIOCBRDELBR, br->ifp->k_name);
+	ret = _ipkernel_if_ioctl(IPSTACK_SIOCBRDELBR, br->ifp->k_name);
 	if (ret < 0)
 #endif
 	{
 		char _br[IFNAMSIZ];
 		zpl_ulong arg[3] = { BRCTL_DEL_BRIDGE, (zpl_ulong) _br };
 		strncpy(_br, br->ifp->k_name, IFNAMSIZ);
-		ret = if_ioctl(SIOCSIFBR, arg);
+		ret = _ipkernel_if_ioctl(IPSTACK_SIOCSIFBR, arg);
 	}
-	return  ret < 0 ? errno : 0;
+	return  ret < 0 ? ipstack_errno : 0;
 }
 
 int _ipkernel_bridge_add_interface(nsm_bridge_t *br, ifindex_t ifindex)
@@ -70,15 +71,15 @@ int _ipkernel_bridge_add_interface(nsm_bridge_t *br, ifindex_t ifindex)
 	strncpy(ifr.ifr_name, br->ifp->k_name, IFNAMSIZ);
 #ifdef SIOCBRADDIF
 	ifr.ifr_ifindex = ifindex;
-	err = if_ioctl(SIOCBRADDIF, &ifr);
+	err = _ipkernel_if_ioctl(IPSTACK_SIOCBRADDIF, &ifr);
 	if (err < 0)
 #endif
 	{
 		zpl_ulong args[4] = { BRCTL_ADD_IF, ifindex, 0, 0 };
 		ifr.ifr_data = (char *) args;
-		err = if_ioctl(SIOCDEVPRIVATE, &ifr);
+		err = _ipkernel_if_ioctl(IPSTACK_SIOCDEVPRIVATE, &ifr);
 	}
-	return err < 0 ? errno : 0;
+	return err < 0 ? ipstack_errno : 0;
 }
 
 int _ipkernel_bridge_del_interface(nsm_bridge_t *br, ifindex_t ifindex)
@@ -88,15 +89,15 @@ int _ipkernel_bridge_del_interface(nsm_bridge_t *br, ifindex_t ifindex)
 	strncpy(ifr.ifr_name, br->ifp->k_name, IFNAMSIZ);
 #ifdef SIOCBRDELIF
 	ifr.ifr_ifindex = ifindex;
-	err = if_ioctl(SIOCBRDELIF, &ifr);
+	err = _ipkernel_if_ioctl(IPSTACK_SIOCBRDELIF, &ifr);
 	if (err < 0)
 #endif
 	{
 		zpl_ulong args[4] = { BRCTL_DEL_IF, ifindex, 0, 0 };
 		ifr.ifr_data = (char *) args;
-		err = if_ioctl(SIOCDEVPRIVATE, &ifr);
+		err = _ipkernel_if_ioctl(IPSTACK_SIOCDEVPRIVATE, &ifr);
 	}
-	return err < 0 ? errno : 0;
+	return err < 0 ? ipstack_errno : 0;
 }
 
 
@@ -109,12 +110,12 @@ int _ipkernel_bridge_list_interface(nsm_bridge_t *br, ifindex_t ifindex[])
 	strncpy(ifr.ifr_name, br->ifp->k_name, IFNAMSIZ);
 	ifr.ifr_data = (char *) &args;
 
-	if (if_ioctl(SIOCDEVPRIVATE, &ifr) < 0) {
-	//	zlog_err(MODULE_PAL, "%s: can't get info %s\n",br->ifp->k_name, strerror(errno));
+	if (_ipkernel_if_ioctl(IPSTACK_SIOCDEVPRIVATE, &ifr) < 0) {
+	//	zlog_err(MODULE_PAL, "%s: can't get info %s\n",br->ifp->k_name, strerror(ipstack_errno));
 	//	return CMD_WARNING;
 	}
 	memcpy(ifindex, port_index, sizeof(port_index));
-	return err < 0 ? errno : 0;
+	return err < 0 ? ipstack_errno : 0;
 }
 
 
@@ -132,8 +133,8 @@ int _ipkernel_bridge_check_interface(char *br, ifindex_t ifindex)
 	strcpy(ifr.ifr_name, br);
 	ifr.ifr_data = (char *) &bargs;
 
-	if (if_ioctl(SIOCDEVPRIVATE, &ifr) < 0) {
-	//	zlog_err(MODULE_PAL, "%s: can't get info %s\n",br->ifp->k_name, strerror(errno));
+	if (_ipkernel_if_ioctl(IPSTACK_SIOCDEVPRIVATE, &ifr) < 0) {
+	//	zlog_err(MODULE_PAL, "%s: can't get info %s\n",br->ifp->k_name, strerror(ipstack_errno));
 	//	return CMD_WARNING;
 		return ERROR;
 	}
@@ -183,8 +184,8 @@ struct utilzpl_interface
 	zpl_uint32 tun_mode;//隧道模式
 	zpl_uint32 tun_ttl;//change: ip tunnel change tunnel0 ttl
 	zpl_uint32 tun_mtu;//change: ip link set dev tunnel0 mtu 1400
-    struct in_addr source;//ip tunnel change tunnel1 local 192.168.122.1
-    struct in_addr remote;//change: ip tunnel change tunnel1 remote 19.1.1.1
+    struct ipstack_in_addr source;//ip tunnel change tunnel1 local 192.168.122.1
+    struct ipstack_in_addr remote;//change: ip tunnel change tunnel1 remote 19.1.1.1
     zpl_uint32 active;//隧道接口是否激活
 #define TUNNEL_ACTIVE 1
 #endif
@@ -201,12 +202,12 @@ struct utilzpl_interface
 #ifndef BRCTL_CMD_DEBUG
 #include "linux/if_bridge.h"
 
-static int br_sock_fd = -1;
+static zpl_socket_t br_sock_fd;
 
 static int bridge_sock_init(void)
 {
-	if ((br_sock_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-		return errno;
+	if ((br_sock_fd = ipstack_socket(IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0)) < 0)
+		return ipstack_errno;
 	return br_sock_fd;
 }
 
@@ -214,32 +215,32 @@ static int bridge_create(const char *brname)
 {
 	int ret;
 #ifdef SIOCBRADDBR
-	ret = ioctl(br_sock_fd, SIOCBRADDBR, brname);
+	ret = ipstack_ioctl(br_sock_fd, SIOCBRADDBR, brname);
 	if (ret < 0)
 #endif
 	{
 		char _br[IFNAMSIZ];
 		zpl_ulong arg[3] = { BRCTL_ADD_BRIDGE, (zpl_ulong) _br };
 		strncpy(_br, brname, IFNAMSIZ);
-		ret = ioctl(br_sock_fd, SIOCSIFBR, arg);
+		ret = ipstack_ioctl(br_sock_fd, SIOCSIFBR, arg);
 	}
-	return ret < 0 ? errno : 0;
+	return ret < 0 ? ipstack_errno : 0;
 }
 static int bridge_delete(const char *brname)
 {
 	int ret;
 
 #ifdef SIOCBRDELBR
-	ret = ioctl(br_sock_fd, SIOCBRDELBR, brname);
+	ret = ipstack_ioctl(br_sock_fd, SIOCBRDELBR, brname);
 	if (ret < 0)
 #endif
 	{
 		char _br[IFNAMSIZ];
 		zpl_ulong arg[3] = { BRCTL_DEL_BRIDGE, (zpl_ulong) _br };
 		strncpy(_br, brname, IFNAMSIZ);
-		ret = ioctl(br_sock_fd, SIOCSIFBR, arg);
+		ret = ipstack_ioctl(br_sock_fd, SIOCSIFBR, arg);
 	}
-	return  ret < 0 ? errno : 0;
+	return  ret < 0 ? ipstack_errno : 0;
 }
 static int bridge_updown(struct utilzpl_interface *ifp,  int value)
 {
@@ -248,61 +249,61 @@ static int bridge_updown(struct utilzpl_interface *ifp,  int value)
 
 static int bridge_add_interface(const char *bridge, const char *dev)
 {
-	struct ifreq ifr;
+	struct ipstack_ifreq ifr;
 	int err;
 	ifindex_t ifindex = if_nametoindex(dev);
 	if (ifindex == 0)
-		return ENODEV;
+		return IPSTACK_ERRNO_ENODEV;
 	strncpy(ifr.ifr_name, bridge, IFNAMSIZ);
 #ifdef SIOCBRADDIF
 	ifr.ifr_ifindex = ifindex;
-	err = ioctl(br_sock_fd, SIOCBRADDIF, &ifr);
+	err = ipstack_ioctl(br_sock_fd, SIOCBRADDIF, &ifr);
 	if (err < 0)
 #endif
 	{
 		zpl_ulong args[4] = { BRCTL_ADD_IF, ifindex, 0, 0 };
 		ifr.ifr_data = (char *) args;
-		err = ioctl(br_sock_fd, SIOCDEVPRIVATE, &ifr);
+		err = ipstack_ioctl(br_sock_fd, SIOCDEVPRIVATE, &ifr);
 	}
-	return err < 0 ? errno : 0;
+	return err < 0 ? ipstack_errno : 0;
 }
 
 static int bridge_del_interface(const char *bridge, const char *dev)
 {
-	struct ifreq ifr;
+	struct ipstack_ifreq ifr;
 	int err;
 	ifindex_t ifindex = if_nametoindex(dev);
 	if (ifindex == 0)
-		return ENODEV;
+		return IPSTACK_ERRNO_ENODEV;
 	strncpy(ifr.ifr_name, bridge, IFNAMSIZ);
 #ifdef SIOCBRDELIF
 	ifr.ifr_ifindex = ifindex;
-	err = ioctl(br_sock_fd, SIOCBRDELIF, &ifr);
+	err = ipstack_ioctl(br_sock_fd, SIOCBRDELIF, &ifr);
 	if (err < 0)
 #endif
 	{
 		zpl_ulong args[4] = { BRCTL_DEL_IF, ifindex, 0, 0 };
 		ifr.ifr_data = (char *) args;
-		err = ioctl(br_sock_fd, SIOCDEVPRIVATE, &ifr);
+		err = ipstack_ioctl(br_sock_fd, SIOCDEVPRIVATE, &ifr);
 	}
-	return err < 0 ? errno : 0;
+	return err < 0 ? ipstack_errno : 0;
 }
 static int bridge_option_set(const char *bridge, const char *name,
 		  zpl_ulong value, zpl_ulong oldcode)
 {
 	int ret = -1;
-	struct ifreq ifr;
+	struct ipstack_ifreq ifr;
 	zpl_ulong args[4] = { oldcode, value, 0, 0 };
 	strncpy(ifr.ifr_name, bridge, IFNAMSIZ);
 	ifr.ifr_data = (char *) &args;
-	ret = ioctl(br_sock_fd, SIOCDEVPRIVATE, &ifr);
-	return ret < 0 ? errno : 0;
+	ret = ipstack_ioctl(br_sock_fd, SIOCDEVPRIVATE, &ifr);
+	return ret < 0 ? ipstack_errno : 0;
 }
 static int bridge_cmd_error(struct vty *vty, zpl_uint32 type, const char *bridge, const char *dev,int ret)
 {
 	switch(ret)
 	{
-	case EEXIST:
+	case IPSTACK_ERRNO_EEXIST:
 		if(type == BRCTL_ADD_BRIDGE)
 		{
 			if(vty)
@@ -321,7 +322,7 @@ static int bridge_cmd_error(struct vty *vty, zpl_uint32 type, const char *bridge
 		}
 		break;
 
-	case EBUSY:
+	case IPSTACK_ERRNO_EBUSY:
 		if(type == BRCTL_DEL_BRIDGE)
 		{
 			if(vty)
@@ -338,7 +339,7 @@ static int bridge_cmd_error(struct vty *vty, zpl_uint32 type, const char *bridge
 		}
 		break;
 
-	case ENODEV:
+	case IPSTACK_ERRNO_ENODEV:
 		if(type == BRCTL_ADD_IF)
 		{
 			if(vty)
@@ -365,7 +366,7 @@ static int bridge_cmd_error(struct vty *vty, zpl_uint32 type, const char *bridge
 		}
 		break;
 
-	case EINVAL:
+	case IPSTACK_ERRNO_EINVAL:
 		if(type == BRCTL_DEL_IF)
 		{
 			if(vty)
@@ -447,15 +448,15 @@ static void ip_bridge_jiffies(struct vty *vty, const char *str, zpl_ullong  jiff
 }
 static int ip_bridge_port_get(struct utilzpl_interface *uifp)
 {
-	struct ifreq ifr;
+	struct ipstack_ifreq ifr;
 	ifindex_t port_index[BR_PORT_MAX];
 
 	zpl_ulong args[4] = { BRCTL_GET_PORT_LIST,(zpl_ulong) &port_index, 0, 0 };
 	strncpy(ifr.ifr_name, uifp->name, IFNAMSIZ);
 	ifr.ifr_data = (char *) &args;
 
-	if (ioctl(br_sock_fd, SIOCDEVPRIVATE, &ifr) < 0) {
-		zlog_err(MODULE_PAL, "%s: can't get info %s\n",uifp->name, strerror(errno));
+	if (ipstack_ioctl(br_sock_fd, SIOCDEVPRIVATE, &ifr) < 0) {
+		zlog_err(MODULE_PAL, "%s: can't get info %s\n",uifp->name, strerror(ipstack_errno));
 		return CMD_WARNING;
 	}
 	memcpy(uifp->br_ifindex, port_index, sizeof(port_index));
@@ -463,15 +464,15 @@ static int ip_bridge_port_get(struct utilzpl_interface *uifp)
 }
 static int ip_bridge_port_info_get(struct utilzpl_interface *uifp)
 {
-	struct ifreq ifr;
+	struct ipstack_ifreq ifr;
 	struct __port_info port;
 
 	zpl_ulong args[4] = { BRCTL_GET_PORT_INFO,(zpl_ulong) &port, 0, 0 };
 	strncpy(ifr.ifr_name, uifp->name, IFNAMSIZ);
 	ifr.ifr_data = (char *) &args;
 
-	if (ioctl(br_sock_fd, SIOCDEVPRIVATE, &ifr) < 0) {
-		zlog_err(MODULE_PAL, "%s: can't get info %s\n",uifp->name, strerror(errno));
+	if (ipstack_ioctl(br_sock_fd, SIOCDEVPRIVATE, &ifr) < 0) {
+		zlog_err(MODULE_PAL, "%s: can't get info %s\n",uifp->name, strerror(ipstack_errno));
 		return CMD_WARNING;
 	}
 	uifp->br_stp_state = port.state;
@@ -482,7 +483,7 @@ static int ip_bridge_port_info_get(struct utilzpl_interface *uifp)
 }
 int ip_bridge_startup_config(struct utilzpl_interface *uifp)
 {
-	struct ifreq ifr;
+	struct ipstack_ifreq ifr;
 	struct __bridge_info i;
 
 	zpl_ulong args[4] = { BRCTL_GET_BRIDGE_INFO,(zpl_ulong) &i, 0, 0 };
@@ -492,8 +493,8 @@ int ip_bridge_startup_config(struct utilzpl_interface *uifp)
 	strncpy(ifr.ifr_name, uifp->name, IFNAMSIZ);
 	ifr.ifr_data = (char *) &args;
 
-	if (ioctl(br_sock_fd, SIOCDEVPRIVATE, &ifr) < 0) {
-		zlog_err(MODULE_PAL, "%s: can't get info %s\n",uifp->name, strerror(errno));
+	if (ipstack_ioctl(br_sock_fd, SIOCDEVPRIVATE, &ifr) < 0) {
+		zlog_err(MODULE_PAL, "%s: can't get info %s\n",uifp->name, strerror(ipstack_errno));
 		if(br_sock_fd)
 			close(br_sock_fd);
 		br_sock_fd = -1;
@@ -560,7 +561,7 @@ int ip_bridge_startup_config(struct utilzpl_interface *uifp)
 static int ip_bridge_info(struct vty *vty, const char *bridge)
 {
 	zpl_uint32 j = 0;
-	struct ifreq ifr;
+	struct ipstack_ifreq ifr;
 	struct __bridge_info i;
 	zpl_uint8 *val = NULL;
 	//char val_str[64];
@@ -570,12 +571,12 @@ static int ip_bridge_info(struct vty *vty, const char *bridge)
 	strncpy(ifr.ifr_name, bridge, IFNAMSIZ);
 	ifr.ifr_data = (char *) &args;
 
-	if (ioctl(br_sock_fd, SIOCDEVPRIVATE, &ifr) < 0) {
-		zlog_err(MODULE_PAL, "%s: can't get info %s\n",bridge, strerror(errno));
+	if (ipstack_ioctl(br_sock_fd, SIOCDEVPRIVATE, &ifr) < 0) {
+		zlog_err(MODULE_PAL, "%s: can't get info %s\n",bridge, strerror(ipstack_errno));
 		if(br_sock_fd)
 			close(br_sock_fd);
 		br_sock_fd = -1;
-		return errno;
+		return ipstack_errno;
 	}
 	if(br_sock_fd)
 		close(br_sock_fd);

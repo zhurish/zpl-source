@@ -152,7 +152,7 @@ static int zpl_media_rtsp_logcb(char*fmt,...)
 static int zpl_media_rtsp_task(void* argv)
 {
     //int ret = 0;
-	host_config_load_waitting();
+	host_waitting_loadconfig);
     os_sleep(1);
     return OK;
     #ifdef TEST

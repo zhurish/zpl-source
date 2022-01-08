@@ -130,7 +130,7 @@ int main(int argc, char*argv[])
         UT_INPUT_REGISTERS_ADDRESS, UT_INPUT_REGISTERS_NB);
     if (mb_mapping == NULL) {
         fprintf(stderr, "Failed to allocate the mapping: %s\n",
-                modbus_strerror(errno));
+                modbus_strerror(ipstack_errno));
         modbus_free(ctx);
         return -1;
     }
@@ -163,7 +163,7 @@ int main(int argc, char*argv[])
     } else {
         rc = modbus_connect(ctx);
         if (rc == -1) {
-            fprintf(stderr, "Unable to connect %s\n", modbus_strerror(errno));
+            fprintf(stderr, "Unable to connect %s\n", modbus_strerror(ipstack_errno));
             modbus_free(ctx);
             return -1;
         }
@@ -177,7 +177,7 @@ int main(int argc, char*argv[])
 
         /* The connection is not closed on errors which require on reply such as
            bad CRC in RTU. */
-        if (rc == -1 && errno != EMBBADCRC) {
+        if (rc == -1 && ipstack_errno != EMBBADCRC) {
             /* Quit */
             break;
         }
@@ -245,7 +245,7 @@ int main(int argc, char*argv[])
         }
     }
 
-    printf("Quit the loop: %s\n", modbus_strerror(errno));
+    printf("Quit the loop: %s\n", modbus_strerror(ipstack_errno));
 
     if (use_backend == TCP) {
         if (s != -1) {
@@ -274,14 +274,14 @@ int main(void)
 	mb_mapping = modbus_mapping_new(500, 500, 500, 500);
 	if (mb_mapping == NULL) {
 		fprintf(stderr, "Failed to allocate the mapping: %s\n",
-			modbus_strerror(errno));
+			modbus_strerror(ipstack_errno));
 		modbus_free(ctx);
 		return -1;
 	}
 
 	s = modbus_tcp_listen(ctx, 1);
 	modbus_tcp_accept(ctx, &s);
-	fprintf(stdout, "modbus_tcp_accept %s\n", modbus_strerror(errno));
+	fprintf(stdout, "modbus_tcp_accept %s\n", modbus_strerror(ipstack_errno));
 	for (;;) {
 		uint8_t query[MODBUS_TCP_MAX_ADU_LENGTH];
 
@@ -298,7 +298,7 @@ int main(void)
 		}
 	}
 
-	printf("Quit the loop: %s\n", modbus_strerror(errno));
+	printf("Quit the loop: %s\n", modbus_strerror(ipstack_errno));
 
 	if (s != -1) {
 #ifdef ZPL_BUILD_LINUX

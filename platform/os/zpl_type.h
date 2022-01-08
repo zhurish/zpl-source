@@ -40,11 +40,11 @@ typedef signed int zpl_int32;
 
 typedef unsigned char zpl_uchar;
 typedef unsigned short zpl_ushort;
-typedef unsigned int zpl_uint32;
+typedef unsigned int zpl_uint;
 
-typedef  char zpl_char;
-typedef  short zpl_short;
-typedef  int zpl_int;
+typedef char zpl_char;
+typedef short zpl_short;
+typedef int zpl_int;
 
 
 typedef unsigned long zpl_ulong;
@@ -67,6 +67,7 @@ typedef zpl_int zpl_error_t;
 typedef zpl_uchar mac_t;
 typedef zpl_ushort vlan_t;
 typedef zpl_ushort zpl_vlan_t;
+typedef zpl_uint32 zpl_phyport_t;
 /* VRF ID type. */
 typedef zpl_uint16 vrf_id_t;
 
@@ -149,6 +150,7 @@ typedef struct
 	zpl_ipstack stack;    
 }zpl_socket_t;
 
+typedef zpl_socket_t zpl_fd_t;
 
 typedef time_t zpl_time_t;
 typedef void zpl_void;

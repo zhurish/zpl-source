@@ -270,7 +270,7 @@ os_gettime (enum os_clkid clkid, struct timeval *tv)
     	os_timeval_adjust (*tv);
         return 0;
       default:
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 }
@@ -1093,7 +1093,7 @@ static int os_time_task(void)
 	sigset_t	set;
 #endif
 	os_sleep(10);
-	///host_config_load_waitting();
+	///host_waitting_loadconfig();
 #ifdef OS_SIGNAL_SIGWAIT
 	zpl_uint32 signo_tbl[] = {SIGUSR2};
 	os_task_sigexecute(1, signo_tbl, &set);
@@ -1106,7 +1106,7 @@ static int os_time_task(void)
 		if(err != 0)
 		{
 			zlog_debug(MODULE_DEFAULT, "=========================%s:%s(SIGUSR2=%d, signum=%d)",
-					__func__, strerror(errno),SIGUSR2, signum);
+					__func__, strerror(ipstack_errno),SIGUSR2, signum);
 			continue;
 		}
 		zlog_debug(MODULE_DEFAULT, "=========================%s SIGUSR2=%d, signum=%d",
@@ -1276,7 +1276,7 @@ int os_time_set_api(zpl_uint32 timesp)
 	value = 5;
 	while (value)
 	{
-		errno = 0;
+		ipstack_errno = 0;
 		if (clock_settime(CLOCK_REALTIME, &sntpTime) != 0)//SET SYSTEM LOCAL TIME
 		{
 			value--;
@@ -1883,7 +1883,7 @@ int timer_connect
 
     if (timerid == NULL)
 	{
-	errno = EINVAL;
+	ipstack_errno = EINVAL;
 	return (ERROR);
 	}
 

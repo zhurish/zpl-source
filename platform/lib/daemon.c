@@ -37,7 +37,7 @@ daemon (zpl_bool nochdir, zpl_bool noclose)
   /* In case of fork is error. */
   if (pid < 0)
     {
-      zlog_err (MODULE_DEFAULT, "fork failed: %s", safe_strerror(errno));
+      zlog_err (MODULE_DEFAULT, "fork failed: %s", ipstack_strerror(ipstack_errno));
       return -1;
     }
 
@@ -50,7 +50,7 @@ daemon (zpl_bool nochdir, zpl_bool noclose)
 
   if (pid == -1)
     {
-      zlog_err (MODULE_DEFAULT, "setsid failed: %s", safe_strerror(errno));
+      zlog_err (MODULE_DEFAULT, "setsid failed: %s", ipstack_strerror(ipstack_errno));
       return -1;
     }
 

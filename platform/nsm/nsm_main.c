@@ -23,6 +23,7 @@
 #include "zpl_include.h"
 #include "lib_include.h"
 #include "nsm_include.h"
+#include "nsm_main.h"
 #include "nsm_zserv.h"
 
 static struct nsm_srv_t m_nsm_srv =
@@ -31,22 +32,21 @@ static struct nsm_srv_t m_nsm_srv =
 	.nsm_task_id = 0,
 };
 
-
 static int nsm_main_task(void *argv)
 {
-	os_start_running(nsm_srv->master, MODULE_NSM);
+	module_setup_task(MODULE_NSM, os_task_id_self());
+	host_waitting_loadconfig();
+	thread_mainloop(nsm_srv->master);
 	return 0;
 }
 
-int nsm_module_init()
+int nsm_module_init(void)
 {
 	nsm_srv = &m_nsm_srv;
-	/* Make master thread emulator. */
-	nsm_srv->master = thread_master_module_create(MODULE_NSM);
+	if(nsm_srv->master == NULL)
+		nsm_srv->master = thread_master_module_create(MODULE_NSM);
 
-	printf("=======nsm_module_init nsm_event_init\r\n");
 	nsm_event_init();
-	//if_init();
 
 	if_init();
 	nsm_vrf_init();
@@ -59,14 +59,6 @@ int nsm_module_init()
 
 	rib_init();
 	nsm_interface_init();
-
-#ifdef ZPL_PAL_MODULE
-	pal_module_init();
-#endif
-
-#ifdef ZPL_HAL_MODULE
-	hal_module_init();
-#endif
 
 #ifdef ZPL_NSM_8021X
 	nsm_dot1x_init();
@@ -83,7 +75,6 @@ int nsm_module_init()
 #endif
 #ifdef ZPL_NSM_DOS
 	nsm_dos_init();
-
 #endif
 #ifdef ZPL_NSM_FIREWALLD
 	nsm_firewall_init();
@@ -118,14 +109,15 @@ int nsm_module_init()
 #ifdef ZPL_NSM_VLANETH
 	nsm_vlaneth_init();
 #endif
-	#ifdef ZPL_RTPL_SRV
+
+#ifdef ZPL_RTPL_SRV
 	zserv_init();
-	#endif
+#endif
 	return 0;
 }
 
 
-int nsm_module_exit()
+int nsm_module_exit(void)
 {
 #ifdef ZPL_NSM_MAC
 	nsm_mac_exit();
@@ -179,11 +171,15 @@ int nsm_module_exit()
 #ifdef ZPL_NSM_PPP
 	nsm_ppp_exit();
 #endif
+
+	access_list_reset();
+	prefix_list_reset();
+
 	nsm_event_exit();
 	return OK;
 }
 
-int nsm_module_cmd_init()
+int nsm_module_cmd_init(void)
 {
 	#ifdef ZPL_RTPL_MODULE
 	cmd_router_id_init();
@@ -241,23 +237,24 @@ int nsm_module_cmd_init()
 	return OK;
 }
 
-int nsm_task_init()
+int nsm_task_init(void)
 {
-	hal_module_task_init();
 	if(nsm_srv->nsm_task_id == 0)
 		nsm_srv->nsm_task_id = os_task_create("nsmTask", OS_TASK_DEFAULT_PRIORITY,
 								 0, nsm_main_task, NULL, OS_TASK_DEFAULT_STACK);
 	if (nsm_srv->nsm_task_id)
+	{
+		module_setup_task(MODULE_NSM, nsm_srv->nsm_task_id);
 		return OK;
+	}	
 	return ERROR;
 }
 
-int nsm_task_exit ()
+int nsm_task_exit (void)
 {
 	if(nsm_srv->nsm_task_id)
 		os_task_destroy(nsm_srv->nsm_task_id);
 	nsm_srv->nsm_task_id = 0;
-	hal_module_task_exit();
 	return OK;
 }
 
@@ -274,4 +271,5 @@ struct module_list module_list_nsm = {
 		.module_show_config = NULL,
 		.module_show_debug = NULL,
 		.taskid = 0,
+		.flags=0,
 };

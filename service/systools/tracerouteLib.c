@@ -17,7 +17,7 @@
  01k,14mar99,jdi  doc: removed refs to config.h and/or configAll.h (SPR 25663).
  01j,12mar99,p_m  Fixed SPR 8742 by documentating traceroute() configuration global
  variables.
- 01i,05feb99,dgp  document errno values
+ 01i,05feb99,dgp  document ipstack_errno values
  01h,17mar98,jmb  merge jmb patch of 04apr97 from HPSIM: corrected
  creation/deletion of task delete hook.
  01g,30oct97,cth  changed stack size of tPingTxn from 3000 to 6000 (SPR 8222).
@@ -83,7 +83,7 @@
 
 /* static forward declarations */
 
-static int tracerouteRxPrint(TRACEROUTE_STAT *pPS, int len, struct sockaddr_in *from,
+static int tracerouteRxPrint(TRACEROUTE_STAT *pPS, int len, struct ipstack_sockaddr_in *from,
 		struct timeval now, int cnt);
 static void tracerouteFinish (TRACEROUTE_STAT * pPS);
 
@@ -153,18 +153,18 @@ static void tracerouteFinish (TRACEROUTE_STAT * pPS);
  * RETURNS:
  * OK, or ERROR if the remote host is not reachable.
  *
- * ERRNO: EINVAL, S_tracerouteLib_NOT_INITIALIZED, S_tracerouteLib_TIMEOUT
+ * ERRNO: IPSTACK_ERRNO_EINVAL, S_tracerouteLib_NOT_INITIALIZED, S_tracerouteLib_TIMEOUT
  *
  */
 
 static int traceroute_thread(TRACEROUTE_STAT * pPS)
 {
-	struct sockaddr_in to; /* addr of Tx packet */
-	struct sockaddr_in from; /* addr of Rx packet */
+	struct ipstack_sockaddr_in to; /* addr of Tx packet */
+	struct ipstack_sockaddr_in from; /* addr of Rx packet */
 	int fromlen = sizeof(from);/* size of Rx addr */
 	int ix = 1, ttl = 1; /* bytes read */
 	int status = ERROR; /* return status */
-	fd_set readFd;
+	ipstack_fd_set readFd;
 	struct timeval tracerouteTmo;
 	struct timeval now;
 	int sel = 0, num = 0, seq = rand();
@@ -178,22 +178,22 @@ static int traceroute_thread(TRACEROUTE_STAT * pPS)
 
 	pPS->idRx = os_task_gettid(); //os_task_pthread_self(); /* get own task Id  */
 
-	/* initialize the socket address struct */
+	/* initialize the ipstack_socket address struct */
 
-	to.sin_family = AF_INET;
+	to.sin_family = IPSTACK_AF_INET;
 	to.sin_addr.s_addr = ipstack_inet_addr(pPS->toInetName);
 
 	//strcpy(pPS->toHostName, host); /* save host name */
 
 	pPS->dataLen = pPS->tracerouteTxLen - 8; /* compute size of data */
 
-	/* open raw socket for ICMP communication */
-
-	if ((pPS->tracerouteFd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
+	/* open raw ipstack_socket for ICMP communication */
+	pPS->tracerouteFd = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_RAW, IPSTACK_IPPROTO_ICMP);
+	if (ipstack_invalid(pPS->tracerouteFd))
 		tracerouteError(pPS);
 
 	if (pPS->flags & TRACEROUTE_OPT_DONTROUTE) /* disallow packet routing ? */
-		if (setsockopt(pPS->tracerouteFd, SOL_SOCKET, SO_DONTROUTE,
+		if (ipstack_setsockopt(pPS->tracerouteFd, IPSTACK_SOL_SOCKET, IPSTACK_SO_DONTROUTE,
 				(char *) &ix, sizeof(ix)) == ERROR)
 			tracerouteError(pPS);
 
@@ -228,7 +228,7 @@ send_next:
 
 		//vty_out(vty, " ttl = %d maxttl = %d %s", ttl, pPS->maxttl, VTY_NEWLINE);
 
-		setsockopt(pPS->tracerouteFd, IPPROTO_IP, IP_TTL, &ttl, sizeof(int));
+		ipstack_setsockopt(pPS->tracerouteFd, IPSTACK_IPPROTO_IP, IP_TTL, &ttl, sizeof(int));
 		vty_out(vty, " %d ", ttl);
 
 		ttl++;
@@ -242,9 +242,9 @@ send_next:
 			pPS->pBufIcmp->icmp_cksum = in_cksum((zpl_ushort *) pPS->pBufIcmp,
 					pPS->tracerouteTxLen);
 
-			if ((ix = sendto(pPS->tracerouteFd, (char *) pPS->pBufIcmp,
-					pPS->tracerouteTxLen, 0, (struct sockaddr *) &to,
-					sizeof(struct sockaddr))) != pPS->tracerouteTxLen)
+			if ((ix = ipstack_sendto(pPS->tracerouteFd, (char *) pPS->pBufIcmp,
+					pPS->tracerouteTxLen, 0, (struct ipstack_sockaddr *) &to,
+					sizeof(struct ipstack_sockaddr))) != pPS->tracerouteTxLen)
 			{
 				if (pPS->flags & TRACEROUTE_OPT_DEBUG)
 					vty_out(vty, "%s traceroute: wrote %s %d chars, ret=%d%s",
@@ -252,10 +252,10 @@ send_next:
 							VTY_NEWLINE);
 				if (ix < 0)
 				{
-					if (errno == ENETUNREACH)
+					if (ipstack_errno == IPSTACK_ERRNO_ENETUNREACH)
 						vty_out(vty, "%s traceroute %s Network is unreachable%s",
 								VTY_NEWLINE, pPS->toHostName, VTY_NEWLINE);
-					else if (errno == EHOSTUNREACH)
+					else if (ipstack_errno == IPSTACK_ERRNO_EHOSTUNREACH)
 						vty_out(vty, "%s traceroute %s No route to host%s",
 								VTY_NEWLINE, pPS->toHostName, VTY_NEWLINE);
 					goto release;
@@ -263,14 +263,14 @@ send_next:
 			}
 
 check_fd_again: /* Wait for ICMP reply */
-			FD_ZERO(&readFd);
-			FD_SET(pPS->tracerouteFd, &readFd);
-			FD_SET(vty->fd, &readFd);
-			sel = select(max(pPS->tracerouteFd, vty->fd) + 1, &readFd, NULL,
+			IPSTACK_FD_ZERO(&readFd);
+			IPSTACK_FD_SET(pPS->tracerouteFd._fd, &readFd);
+			IPSTACK_FD_SET(vty->fd._fd, &readFd);
+			sel = ipstack_select(IPCOM_STACK, max(pPS->tracerouteFd._fd, vty->fd._fd) + 1, &readFd, NULL,
 					NULL, &tracerouteTmo);
 			if (sel == ERROR)
 			{
-				if (errno == EINTR)
+				if (ipstack_errno == IPSTACK_ERRNO_EINTR)
 					goto check_fd_again;
 
 				if (!(pPS->flags & TRACEROUTE_OPT_SILENT))
@@ -289,7 +289,7 @@ check_fd_again: /* Wait for ICMP reply */
 				continue;
 			}
 
-			if (FD_ISSET(vty->fd, &readFd))
+			if (IPSTACK_FD_ISSET(vty->fd._fd, &readFd))
 			{
 #ifndef CONTROL
 #define CONTROL(X)  ((X) - '@')
@@ -302,19 +302,19 @@ check_fd_again: /* Wait for ICMP reply */
 				else
 					vty_out(vty, "%s", VTY_NEWLINE);
 			}
-			if (!FD_ISSET(pPS->tracerouteFd, &readFd))
+			if (!IPSTACK_FD_ISSET(pPS->tracerouteFd._fd, &readFd))
 				goto check_fd_again;
 
 			/* the fd is ready - FD_ISSET isn't needed */
-			if ((ix = recvfrom(pPS->tracerouteFd, (char *) pPS->bufRx,
-					pPS->rxmaxlen, 0, (struct sockaddr *) &from, &fromlen))
+			if ((ix = ipstack_recvfrom(pPS->tracerouteFd, (char *) pPS->bufRx,
+					pPS->rxmaxlen, 0, (struct ipstack_sockaddr *) &from, &fromlen))
 					== ERROR)
 			{
-				if (errno == EINTR)
+				if (ipstack_errno == IPSTACK_ERRNO_EINTR)
 					goto check_fd_again;
 				break; /* goto release */
 			}
-			//vty_out(vty, " recvfrom %s%s", ipstack_inet_ntoa(from.sin_addr), VTY_NEWLINE);
+			//vty_out(vty, " ipstack_recvfrom %s%s", ipstack_inet_ntoa(from.sin_addr), VTY_NEWLINE);
 
 			if (tracerouteRxPrint(pPS, ix, &from, now, num) == ERROR)
 				goto check_fd_again;
@@ -331,7 +331,7 @@ release:
 int traceroute(struct vty *vty, char * host, int maxttl, int len, zpl_uint32 options)
 {
 	TRACEROUTE_STAT * pPS = NULL;
-	struct in_addr addr;
+	struct ipstack_in_addr addr;
 
 	pPS = (TRACEROUTE_STAT *)XMALLOC(MTYPE_DATA, sizeof(TRACEROUTE_STAT));
 	if(!pPS)
@@ -367,12 +367,12 @@ int traceroute(struct vty *vty, char * host, int maxttl, int len, zpl_uint32 opt
     pPS->vty = vty;
     if(ipstack_inet_aton (host, &addr) == 0)
 	{
-    	struct hostent * hoste = NULL;
-    	hoste = gethostbyname(host);
+    	struct ipstack_hostent * hoste = NULL;
+    	hoste = ipstack_gethostbyname(host);
     	if (hoste && hoste->h_addr_list[0])
     	{
     		//addr.s_addr = hoste->h_addr_list[0];
-    		addr = *(struct in_addr*)hoste->h_addr_list[0];
+    		addr = *(struct ipstack_in_addr*)hoste->h_addr_list[0];
     		sprintf(pPS->toInetName, "%s", ipstack_inet_ntoa(addr));
 			strcpy(pPS->toHostName, host);
     	}
@@ -412,8 +412,8 @@ int traceroute(struct vty *vty, char * host, int maxttl, int len, zpl_uint32 opt
 
 static int tracerouteRxPrint(TRACEROUTE_STAT * pPS, /* traceroute stats structure */
 		int len, /* Rx message length */
-		struct sockaddr_in *from, /* Rx message address */
-		struct timeval send, int cnt)
+		struct ipstack_sockaddr_in *from, /* Rx message address */
+		struct timeval ipstack_send, int cnt)
 {
 	struct ip * ip = (struct ip *) pPS->bufRx;
 	struct icmp * icp = NULL;
@@ -440,7 +440,7 @@ static int tracerouteRxPrint(TRACEROUTE_STAT * pPS, /* traceroute stats structur
 	{
 		ip = &icp->icmp_ip;
 		hlen = ip->ip_hl << 2;
-		if(ip->ip_p == IPPROTO_ICMP)
+		if(ip->ip_p == IPSTACK_IPPROTO_ICMP)
 		{
 			//struct icmp *hicmp;
 			icp = (struct icmp *)((zpl_uint8 *)ip + hlen);
@@ -453,13 +453,13 @@ static int tracerouteRxPrint(TRACEROUTE_STAT * pPS, /* traceroute stats structur
 				vty_out(vty, " %s", ipstack_inet_ntoa(from->sin_addr));
 				vty_out(vty, " (%s) ", ipstack_inet_ntoa(from->sin_addr));
 			}
-			triptime = os_timeval_elapsed(now, send) / 1000;
+			triptime = os_timeval_elapsed(now, ipstack_send) / 1000;
 			vty_out(vty, " %d ms", triptime);
 			if (cnt == 2)
 				vty_out(vty, " %s", VTY_NEWLINE);
 			return (OK);
 		}
-/*		if(ip->ip_p == IPPROTO_UDP)
+/*		if(ip->ip_p == IPSTACK_IPPROTO_UDP)
 		{
 			icp = (struct icmp *)((zpl_uint8 *)ip + hlen);
 			if (ntohs(icp->icmp_id) != (pPS->idRx & 0xffff))
@@ -497,6 +497,6 @@ static int tracerouteRxPrint(TRACEROUTE_STAT * pPS, /* traceroute stats structur
 static void tracerouteFinish(TRACEROUTE_STAT * pPS /* pointer to task control block */
 )
 {
-	if (pPS->tracerouteFd)
-		(void) close(pPS->tracerouteFd);
+	if (!ipstack_invalid(pPS->tracerouteFd))
+		(void) ipstack_close(pPS->tracerouteFd);
 }

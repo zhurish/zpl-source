@@ -12,13 +12,26 @@
 extern "C" {
 #endif
 
+#define OS_SIGNAL_FILE SYSLOGDIR"/signal.log"
+
 typedef int (*os_signal_handler)(int signo, void *info);
 
-extern void os_signal_default();
-extern int os_signal_add(zpl_int sig, os_signal_handler hander);
-extern int os_signal_handler_action(zpl_int sig, void *info);
-extern int os_signal_process(void);
+struct os_signal_t
+{
+  int signal;                     /* signal number    */
+  os_signal_handler signal_handler;
+  void	*info;
+};
 
+extern void os_signal_default(void *abort_func, void *exit_func);
+extern void os_signal_init(struct os_signal_t *tbl, int num);
+extern int os_signal_add(zpl_int sig, os_signal_handler hander);
+
+extern int os_signal_process(zpl_uint timeout);
+
+#if 0
+extern int os_signal_handler_action(zpl_int sig, void *info);
+#endif
 extern int os_register_signal(zpl_int sig, void (*handler)(zpl_int
 #ifdef SA_SIGINFO
 	     , siginfo_t *siginfo, void *context

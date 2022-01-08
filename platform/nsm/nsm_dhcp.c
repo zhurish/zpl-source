@@ -222,7 +222,7 @@ int nsm_interface_dhcp_config(struct vty *vty, struct interface *ifp)
 #endif
 
 
-int nsm_dhcp_module_init ()
+int nsm_dhcp_module_init (void)
 {
 	//nsm_interface_hook_add(NSM_DHCP, nsm_dhcp_interface_create_api, nsm_dhcp_interface_del_api);
 #ifdef ZPL_DHCPD_MODULE
@@ -236,7 +236,7 @@ int nsm_dhcp_module_init ()
 	return OK;
 }
 
-int nsm_dhcp_task_init ()
+int nsm_dhcp_task_init (void)
 {
 #ifdef ZPL_DHCPC_MODULE
 	udhcp_module_task_init();
@@ -247,7 +247,7 @@ int nsm_dhcp_task_init ()
 	return OK;
 }
 
-int nsm_dhcp_task_exit ()
+int nsm_dhcp_task_exit (void)
 {
 #ifdef ZPL_DHCPC_MODULE
 	udhcp_module_task_exit ();
@@ -258,7 +258,7 @@ int nsm_dhcp_task_exit ()
 	return OK;
 }
 
-int nsm_dhcp_module_exit ()
+int nsm_dhcp_module_exit (void)
 {
 #ifdef ZPL_DHCPC_MODULE
 	udhcp_module_exit();
@@ -278,10 +278,11 @@ struct module_list module_list_nsmdhcp =
 	.module_exit=nsm_dhcp_module_exit, 
 	.module_task_init=nsm_dhcp_task_init, 
 	.module_task_exit=nsm_dhcp_task_exit, 
-	.module_cmd_init=NULL, 
+	.module_cmd_init=cmd_dhcp_init, 
 	.module_write_config=NULL, 
 	.module_show_config=NULL,
 	.module_show_debug=NULL, 
+	.flags = ZPL_MODULE_NEED_INIT,
 	.taskid=0,
 };
 

@@ -14,7 +14,7 @@
 #include "vty_include.h"
 
 /* Debug node. */
-struct cmd_node debug_node =
+static struct cmd_node debug_node =
 {
   DEBUG_NODE,
   "",				/* Debug node has no interface. */

@@ -2127,7 +2127,7 @@ libmosq_EXPORT int mosquitto_string_option(struct mosquitto *mosq, enum mosq_opt
  *	MOSQ_ERR_SUCCESS - on success.
  * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
  */
-libmosq_EXPORT int mosquitto_reconnect_delay_set(struct mosquitto *mosq, unsigned int reconnect_delay, unsigned int reconnect_delay_max, bool reconnect_exponential_backoff);
+//libmosq_EXPORT int mosquitto_reconnect_delay_set(struct mosquitto *mosq, unsigned int reconnect_delay, unsigned int reconnect_delay_max, bool reconnect_exponential_backoff);
 
 
 /* =============================================================================

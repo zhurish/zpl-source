@@ -39,7 +39,7 @@ struct zclient
   /* Buffer of data waiting to be written to zebra. */
   struct buffer *wb;
 
-  /* Read and connect thread. */
+  /* Read and ipstack_connect thread. */
   struct thread *t_read;
   struct thread *t_connect;
 
@@ -98,7 +98,7 @@ struct zapi_ipv4
   safi_t safi;
 
   zpl_uchar nexthop_num;
-  struct in_addr **nexthop;
+  struct ipstack_in_addr **nexthop;
 
   zpl_uchar ifindex_num;
   zpl_uint32  *ifindex;
@@ -128,7 +128,7 @@ extern int zebra_redistribute_send (zpl_uint16 command, struct zclient *, zpl_ui
 /* If state has changed, update state and call zebra_redistribute_send. */
 extern void zclient_redistribute (zpl_uint16 command, struct zclient *, zpl_uint32 type);
 
-/* If state has changed, update state and send the command to zebra. */
+/* If state has changed, update state and ipstack_send the command to zebra. */
 extern void zclient_redistribute_default (zpl_uint16 command, struct zclient *);
 
 /* Send the message in zclient->obuf to the zebra daemon (or enqueue it).
@@ -160,7 +160,7 @@ struct zapi_ipv6
   safi_t safi;
 
   zpl_uchar nexthop_num;
-  struct in6_addr **nexthop;
+  struct ipstack_in6_addr **nexthop;
 
   zpl_uchar ifindex_num;
   zpl_uint32  *ifindex;

@@ -108,29 +108,25 @@ int zpl_media_task_destroy (zpl_media_task_t *t_task)
 static int media_main_task(void *argv)
 {
     zpl_media_task_t *video_task = argv;    
-	struct thread thread;
 	zpl_video_assert(video_task);
 	struct thread_master *master = (struct thread_master *)video_task->t_master;
 	if(master == NULL)
 	{
 		video_task->t_master = thread_master_module_create(MODULE_ZPLMEDIA);
 	}
-	host_config_load_waitting();
+	host_waitting_loadconfig();
 	while(!video_task->t_ready)
 	{
 		os_sleep(1);
 	}
 	//master->debug = 1;
-	//while (thread_fetch_call((struct thread_master *) master));
-	while (thread_fetch((struct thread_master *) master, &thread))
-		thread_call(&thread);
+	thread_mainloop(master);
 	return OK;
 }
 #else
 static int zpl_media_input_task(void *argv)
 {
     zpl_media_task_t *video_task = argv;    
-	struct thread thread;
 	zpl_video_assert(video_task);
 	struct thread_master *master = (struct thread_master *)video_task->t_master;
 	if(master == NULL)
@@ -138,59 +134,54 @@ static int zpl_media_input_task(void *argv)
 		video_task->t_master = thread_master_module_create(ZPL_MEDIA_NODE_INPUT);
 	}
 	
-	host_config_load_waitting();
+	host_waitting_loadconfig();
 	while(!video_task->t_ready)
 	{
 		os_sleep(1);
 	}
 	//master->debug = 1;
 	//while (thread_fetch_call((struct thread_master *) master));
-	while (thread_fetch((struct thread_master *) master, &thread))
-		thread_call(&thread);
+	thread_mainloop(master);
 	return OK;
 }
 
 static int zpl_media_process_task(void *argv)
 {
     zpl_media_task_t *video_task = argv;    
-	struct thread thread;
 	zpl_video_assert(video_task);
 	struct thread_master *master = (struct thread_master *)video_task->t_master;
 	if(master == NULL)
 	{
 		video_task->t_master = thread_master_module_create(ZPL_MEDIA_NODE_PROCESS);
 	}
-	host_config_load_waitting();
+	host_waitting_loadconfig();
 	while(!video_task->t_ready)
 	{
 		os_sleep(1);
 	}
 	//master->debug = 1;
 	//while (thread_fetch_call((struct thread_master *) master));
-	while (thread_fetch((struct thread_master *) master, &thread))
-		thread_call(&thread);
+	thread_mainloop(master);
 	return OK;
 }
 
 static int zpl_media_encode_task(void *argv)
 {
     zpl_media_task_t *video_task = argv;    
-	struct thread thread;
 	zpl_video_assert(video_task);
 	struct thread_master *master = (struct thread_master *)video_task->t_master;
 	if(master == NULL)
 	{
 		video_task->t_master = thread_master_module_create(ZPL_MEDIA_NODE_ENCODE);
 	}
-	host_config_load_waitting();
+	host_waitting_loadconfig();
 	while(!video_task->t_ready)
 	{
 		os_sleep(1);
 	}
 	//master->debug = 1;
 	//while (thread_fetch_call((struct thread_master *) master));
-	while (thread_fetch((struct thread_master *) master, &thread))
-		thread_call(&thread);
+	thread_mainloop(master);
 	return OK;
 }
 #endif

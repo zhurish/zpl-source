@@ -371,7 +371,7 @@ int b53_vlan_filtering(struct dsa_switch *ds, int port, bool vlan_filtering)
 		    br_vlan_enabled(bridge_dev) != vlan_filtering) {
 			netdev_err(bridge_dev,
 				   "VLAN filtering is global to the switch!\n");
-			return -EINVAL;
+			return -IPSTACK_ERRNO_EINVAL;
 		}
 	}
 
@@ -404,7 +404,7 @@ int b53_vlan_prepare(struct dsa_switch *ds, int port,
 	struct b53_device *dev = ds->priv;
 
 	if ((is5325(dev) || is5365(dev)) && vlan->vid_begin == 0)
-		return -EOPNOTSUPP;
+		return -IPSTACK_ERRNO_EOPNOTSUPP;
 
 	if (vlan->vid_end > dev->num_vlans)
 		return -ERANGE;

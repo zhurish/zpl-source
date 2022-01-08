@@ -26,7 +26,7 @@ void FAST_FUNC d6_dump_packet(struct d6_packet *packet)
 }
 #endif
 
-int FAST_FUNC d6_recv_kernel_packet(struct in6_addr *peer_ipv6
+int FAST_FUNC d6_recv_kernel_packet(struct ipstack_in6_addr *peer_ipv6
 	UNUSED_PARAM
 	, struct d6_packet *packet, int fd)
 {
@@ -52,17 +52,17 @@ int FAST_FUNC d6_recv_kernel_packet(struct in6_addr *peer_ipv6
 /* Construct a ipv6+udp header for a packet, send packet */
 int FAST_FUNC d6_send_raw_packet(
 		struct d6_packet *d6_pkt, unsigned d6_pkt_size,
-		struct in6_addr *src_ipv6, zpl_uint16 source_port,
-		struct in6_addr *dst_ipv6, zpl_uint16 dest_port, const zpl_uint8 *dest_arp,
+		struct ipstack_in6_addr *src_ipv6, zpl_uint16 source_port,
+		struct ipstack_in6_addr *dst_ipv6, zpl_uint16 dest_port, const zpl_uint8 *dest_arp,
 		ifindex_t ifindex)
 {
-	struct sockaddr_ll dest_sll;
+	struct ipstack_sockaddr_ll dest_sll;
 	struct ip6_udp_d6_packet packet;
 	int fd;
 	int result = -1;
 	const char *msg;
 
-	fd = socket(PF_PACKET, SOCK_DGRAM, htons(ETH_P_IPV6));
+	fd = socket(IPSTACK_PF_PACKET, IPSTACK_SOCK_DGRAM, htons(ETH_P_IPV6));
 	if (fd < 0) {
 		msg = "socket(%s)";
 		goto ret_msg;
@@ -72,7 +72,7 @@ int FAST_FUNC d6_send_raw_packet(
 	memset(&packet, 0, offsetof(struct ip6_udp_d6_packet, data));
 	packet.data = *d6_pkt; /* struct copy */
 
-	dest_sll.sll_family = AF_PACKET;
+	dest_sll.sll_family = IPSTACK_AF_PACKET;
 	dest_sll.sll_protocol = htons(ETH_P_IPV6);
 	dest_sll.sll_ifindex = ifindex;
 	/*dest_sll.sll_hatype = ARPHRD_???;*/
@@ -80,7 +80,7 @@ int FAST_FUNC d6_send_raw_packet(
 	dest_sll.sll_halen = 6;
 	memcpy(dest_sll.sll_addr, dest_arp, 6);
 
-	if (bind(fd, (struct sockaddr *)&dest_sll, sizeof(dest_sll)) < 0) {
+	if (bind(fd, (struct ipstack_sockaddr *)&dest_sll, sizeof(dest_sll)) < 0) {
 		msg = "bind(%s)";
 		goto ret_close;
 	}
@@ -98,22 +98,22 @@ int FAST_FUNC d6_send_raw_packet(
 	 * Someone was smoking weed (at least) while inventing UDP checksumming:
 	 * UDP checksum skips first four bytes of IPv6 header.
 	 * 'next header' field should be summed as if it is one more byte
-	 * to the right, therefore we write its value (IPPROTO_UDP)
+	 * to the right, therefore we write its value (IPSTACK_IPPROTO_UDP)
 	 * into ip6_hlim, and its 'real' location remains zero-filled for now.
 	 */
-	packet.ip6.ip6_hlim = IPPROTO_UDP;
+	packet.ip6.ip6_hlim = IPSTACK_IPPROTO_UDP;
 	packet.udp.check = inet_cksum(
 				(zpl_uint16 *)&packet + 2,
 				offsetof(struct ip6_udp_d6_packet, data) - 4 + d6_pkt_size
 	);
 	/* fix 'hop limit' and 'next header' after UDP checksumming */
 	packet.ip6.ip6_hlim = 1; /* observed Windows machines to use hlim=1 */
-	packet.ip6.ip6_nxt = IPPROTO_UDP;
+	packet.ip6.ip6_nxt = IPSTACK_IPPROTO_UDP;
 
 	d6_dump_packet(d6_pkt);
 	result = sendto(fd, &packet, offsetof(struct ip6_udp_d6_packet, data) + d6_pkt_size,
 			/*flags:*/ 0,
-			(struct sockaddr *) &dest_sll, sizeof(dest_sll)
+			(struct ipstack_sockaddr *) &dest_sll, sizeof(dest_sll)
 	);
 	msg = "sendto %s";
  ret_close:
@@ -128,16 +128,16 @@ int FAST_FUNC d6_send_raw_packet(
 /* Let the kernel do all the work for packet generation */
 int FAST_FUNC d6_send_kernel_packet(
 		struct d6_packet *d6_pkt, unsigned d6_pkt_size,
-		struct in6_addr *src_ipv6, zpl_uint16 source_port,
-		struct in6_addr *dst_ipv6, zpl_uint16 dest_port,
+		struct ipstack_in6_addr *src_ipv6, zpl_uint16 source_port,
+		struct ipstack_in6_addr *dst_ipv6, zpl_uint16 dest_port,
 		ifindex_t ifindex)
 {
-	struct sockaddr_in6 sa;
+	struct ipstack_sockaddr_in6 sa;
 	int fd;
 	int result = -1;
 	const char *msg;
 
-	fd = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+	fd = socket(IPSTACK_PF_INET6, IPSTACK_SOCK_DGRAM, IPSTACK_IPPROTO_UDP);
 	if (fd < 0) {
 		msg = "socket(%s)";
 		goto ret_msg;
@@ -145,20 +145,20 @@ int FAST_FUNC d6_send_kernel_packet(
 	setsockopt_reuseaddr(fd);
 
 	memset(&sa, 0, sizeof(sa));
-	sa.sin6_family = AF_INET6;
+	sa.sin6_family = IPSTACK_AF_INET6;
 	sa.sin6_port = htons(source_port);
 	sa.sin6_addr = *src_ipv6; /* struct copy */
-	if (bind(fd, (struct sockaddr *)&sa, sizeof(sa)) == -1) {
+	if (bind(fd, (struct ipstack_sockaddr *)&sa, sizeof(sa)) == -1) {
 		msg = "bind(%s)";
 		goto ret_close;
 	}
 
 	memset(&sa, 0, sizeof(sa));
-	sa.sin6_family = AF_INET6;
+	sa.sin6_family = IPSTACK_AF_INET6;
 	sa.sin6_port = htons(dest_port);
 	sa.sin6_addr = *dst_ipv6; /* struct copy */
 	sa.sin6_scope_id = ifindex;
-	if (connect(fd, (struct sockaddr *)&sa, sizeof(sa)) == -1) {
+	if (connect(fd, (struct ipstack_sockaddr *)&sa, sizeof(sa)) == -1) {
 		msg = "connect %s";
 		goto ret_close;
 	}

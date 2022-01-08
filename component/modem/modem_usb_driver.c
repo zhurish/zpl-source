@@ -533,7 +533,7 @@ static int modem_proc_product_load(void)
 	}
 	else
 	{
-		MODEM_DR_DEBUG("%s:%s",__func__, safe_strerror(errno));
+		MODEM_DR_DEBUG("%s:%s",__func__, ipstack_strerror(ipstack_errno));
 	}
 	modem_sys_usb_detection_devname(&driver);
 	modem_usb_driver_commit();
@@ -1028,14 +1028,14 @@ static int usb_event_socket_init()
 	{
 		struct sockaddr_nl client;
 	    os_memset(&client, 0, sizeof(client));
-		usb_event_socket = socket(AF_NETLINK, SOCK_RAW, NETLINK_KOBJECT_UEVENT);
+		usb_event_socket = socket(IPSTACK_AF_NETLINK, IPSTACK_SOCK_RAW, NETLINK_KOBJECT_UEVENT);
 		if(usb_event_socket)
 		{
 			int buffersize = UEVENT_BUFFER_SIZE;
-			client.nl_family = AF_NETLINK;
+			client.nl_family = IPSTACK_AF_NETLINK;
 			client.nl_pid = getpid();
 			client.nl_groups = 1; /* receive broadcast message*/
-			setsockopt(usb_event_socket, SOL_SOCKET, SO_RCVBUF, &buffersize, sizeof(buffersize));
+			setsockopt(usb_event_socket, IPSTACK_SOL_SOCKET, IPSTACK_SO_RCVBUF, &buffersize, sizeof(buffersize));
 			if(bind(usb_event_socket, (struct sockaddr*)&client, sizeof(client)) == 0)
 				return OK;
 			close(usb_event_socket);
@@ -1079,12 +1079,12 @@ static int usb_event_socket_handle(int timeout)
 		ret = select(usb_event_socket + 1, &fds, NULL, NULL, &tv);
 		if (ret < 0)
 		{
-			if ( errno == EPIPE || errno == EBADF || errno == EIO)
+			if ( ipstack_errno == EPIPE || ipstack_errno == EBADF || ipstack_errnock_errno == EIO)
 			{
 				usb_event_socket_exit();
 				return ERROR;
 			}
-			else if(errno == EAGAIN || errno == EBUSY || errno == EINTR)
+			else if(ipstack_errnock_errnock_errnock_errno == EAGAIN || ipstack_errno == EBUSY || ipstack_errno == EINTR)
 			{
 				continue;
 			}
@@ -1120,18 +1120,18 @@ static int usb_event_socket_handle(zpl_uint32 timeout)
 	int sock = 0;
 	struct sockaddr_nl client;
     os_memset(&client, 0, sizeof(client));
-    sock = socket(AF_NETLINK, SOCK_RAW, NETLINK_KOBJECT_UEVENT);
+    sock = socket(IPSTACK_AF_NETLINK, IPSTACK_SOCK_RAW, NETLINK_KOBJECT_UEVENT);
 	if(sock)
 	{
 		zpl_uint32 buffersize = UEVENT_BUFFER_SIZE * 4;
-		client.nl_family = AF_NETLINK;
+		client.nl_family = IPSTACK_AF_NETLINK;
 		client.nl_pid = getpid();
 		client.nl_groups = 1; /* receive broadcast message*/
 
 		if(bind(sock, (struct sockaddr*)&client, sizeof(client)) == 0)
 		{
 			//os_set_nonblocking(sock);
-			setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &buffersize, sizeof(buffersize));
+			setsockopt(sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_RCVBUF, &buffersize, sizeof(buffersize));
 			//return os_ansync_register_api(modem_ansync_lst, OS_ANSYNC_INPUT, usb_event_socket_read, NULL, sock);
 			return modem_ansync_add(usb_event_socket_read, sock, "usb_event_socket_read");
 		}
@@ -1148,7 +1148,7 @@ static int usb_event_socket_read(void *pVoid)
 	char buf[UEVENT_BUFFER_SIZE] = { 0 };
 	int fd = OS_ANSYNC_FD(pVoid);
 try_agent:
-	errno = 0;
+	ipstack_errno = 0;
 	os_memset(buf, 0, sizeof(buf));
 	rcvlen = recv(fd, buf, sizeof(buf), 0);
 	if (rcvlen > 0)
@@ -1164,14 +1164,14 @@ try_agent:
 	}
 	else
 	{
-		if (errno == EINTR)
+		if (ipstack_errno == EINTR)
 			goto try_agent;
-		else if(errno == EAGAIN)
+		else if(ipstack_errno == EAGAIN)
 		{
 			//os_ansync_register_api(modem_ansync_lst, OS_ANSYNC_INPUT, usb_event_socket_read, NULL, fd);
 			return OK;
 		}
-		else if(errno == ENOBUFS)
+		else if(ipstack_errno == ENOBUFS)
 		{
 
 		}
@@ -1182,7 +1182,7 @@ try_agent:
 			usb_event_socket_handle(1);
 		}
 	}
-	//MODEM_DR_DEBUG("usb_event_socket_read(%d)(%s)\n", fd, strerror(errno));
+	//MODEM_DR_DEBUG("usb_event_socket_read(%d)(%s)\n", fd, strerror(ipstack_errno));
 	return ERROR;
 }
 

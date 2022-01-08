@@ -19,7 +19,7 @@ struct arpMsg {
 	zpl_uint16 h_proto;       /* 0c packet type ID field */
 
 	/* ARP packet */
-	zpl_uint16 htype;         /* 0e hardware type (must be ARPHRD_ETHER) */
+	zpl_uint16 htype;         /* 0e hardware type (must be IPSTACK_ARPHRD_ETHER) */
 	zpl_uint16 ptype;         /* 10 protocol type (must be ETH_P_IP) */
 	zpl_uint8  hlen;          /* 12 hardware address length (must be 6) */
 	zpl_uint8  plen;          /* 13 protocol address length (must be 4) */
@@ -52,12 +52,12 @@ int icmp_echo_request(zpl_uint32  test_nip,
 	if (!timeo)
 		return 1;
 
-	pfd = ipstack_socket(IPCOM_STACK, PF_PACKET, SOCK_PACKET, htons(ETH_P_ARP));
+	pfd = ipstack_socket(IPCOM_STACK, IPSTACK_PF_PACKET, IPSTACK_SOCK_PACKET, htons(ETH_P_ARP));
 	if (ipstack_invalid(pfd)) {
 		zlog_err(MODULE_DHCP, "can't create raw socket");
 		return -1;
 	}
-	if (ipstack_setsockopt(pfd, SOL_SOCKET, SO_BROADCAST, &rv, sizeof(int)) == -1) {
+	if (ipstack_setsockopt(pfd, IPSTACK_SOL_SOCKET, IPSTACK_SO_BROADCAST, &rv, sizeof(int)) == -1) {
 		zlog_err(MODULE_DHCP, "can't enable bcast on raw socket");
 		goto ret;
 	}
@@ -67,7 +67,7 @@ int icmp_echo_request(zpl_uint32  test_nip,
 	memset(arp.h_dest, 0xff, 6);                    /* MAC DA */
 	memcpy(arp.h_source, from_mac, 6);              /* MAC SA */
 	arp.h_proto = htons(ETH_P_ARP);                 /* protocol type (Ethernet) */
-	arp.htype = htons(ARPHRD_ETHER);                /* hardware type */
+	arp.htype = htons(IPSTACK_ARPHRD_ETHER);                /* hardware type */
 	arp.ptype = htons(ETH_P_IP);                    /* protocol type (ARP message) */
 	arp.hlen = 6;                                   /* hardware address length */
 	arp.plen = 4;                                   /* protocol address length */
@@ -152,12 +152,12 @@ int icmp_echo_request_mac(zpl_uint32  test_nip,
 	if (!timeo)
 		return 1;
 
-	s = ipstack_socket(IPCOM_STACK, PF_PACKET, SOCK_PACKET, htons(ETH_P_ARP));
+	s = ipstack_socket(IPCOM_STACK, IPSTACK_PF_PACKET, IPSTACK_SOCK_PACKET, htons(ETH_P_ARP));
 	if (ipstack_invalid(s)) {
 		zlog_err(MODULE_DHCP, "can't create raw socket");
 		return -1;
 	}
-	if (ipstack_setsockopt(s, SOL_SOCKET, SO_BROADCAST, &rv, sizeof(int)) == -1) {
+	if (ipstack_setsockopt(s, IPSTACK_SOL_SOCKET, IPSTACK_SO_BROADCAST, &rv, sizeof(int)) == -1) {
 		zlog_err(MODULE_DHCP, "can't enable bcast on raw socket");
 		goto ret;
 	}
@@ -167,7 +167,7 @@ int icmp_echo_request_mac(zpl_uint32  test_nip,
 	memset(arp.h_dest, 0xff, 6);                    /* MAC DA */
 	memcpy(arp.h_source, from_mac, 6);              /* MAC SA */
 	arp.h_proto = htons(ETH_P_ARP);                 /* protocol type (Ethernet) */
-	arp.htype = htons(ARPHRD_ETHER);                /* hardware type */
+	arp.htype = htons(IPSTACK_ARPHRD_ETHER);                /* hardware type */
 	arp.ptype = htons(ETH_P_IP);                    /* protocol type (ARP message) */
 	arp.hlen = 6;                                   /* hardware address length */
 	arp.plen = 4;                                   /* protocol address length */

@@ -31,11 +31,11 @@ extern int systools_printf(const char *format, ...);
 
 extern const char *ftpd_hostname();
 
-extern int systools_task_init ();
-extern int systools_task_exit ();
-extern int systools_module_init ();
-extern int systools_module_exit ();
-extern int systools_cmd_init ();
+extern int systools_task_init (void);
+extern int systools_task_exit (void);
+extern int systools_module_init (void);
+extern int systools_module_exit (void);
+extern int systools_cmd_init (void);
 
 
 #endif /* __SYSTOOLS_H__ */

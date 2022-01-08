@@ -139,10 +139,10 @@ int x5b_app_socket_init(x5b_app_mgt_t *mgt)
 		}
 		else
 		{
-			zlog_err(MODULE_APP, "Can not bind UDP socket(:%s)", strerror(errno));
+			zlog_err(MODULE_APP, "Can not bind UDP socket(:%s)", strerror(ipstack_errno));
 		}
 	}
-	zlog_err(MODULE_APP, "Can not Create UDP socket(:%s)", strerror(errno));
+	zlog_err(MODULE_APP, "Can not Create UDP socket(:%s)", strerror(ipstack_errno));
 	return ERROR;
 }
 
@@ -364,7 +364,7 @@ static int x5b_app_keepalive_eloop(struct eloop *eloop)
 static int x5b_app_read_eloop(struct eloop *eloop)
 {
 	int sock_len, len = 0;
-	//struct sockaddr_in from;
+	//struct ipstack_sockaddr_in from;
 	zassert(eloop != NULL);
 	x5b_app_mgt_t *mgt = ELOOP_ARG(eloop);
 	zassert(mgt != NULL);
@@ -386,7 +386,7 @@ static int x5b_app_read_eloop(struct eloop *eloop)
 	//if(X5_B_ESP32_DEBUG(EVENT))
 	//	zlog_debug(MODULE_APP, "RECV mgt on socket");
 	//memset(&from, 0, sizeof(from));
-	sock_len = sizeof(struct sockaddr_in);
+	sock_len = sizeof(struct ipstack_sockaddr_in);
 	len = recvfrom(sock, mgt->buf, sizeof(mgt->buf), 0, &mgt->from, &sock_len);
 /*	zlog_debug(MODULE_APP, "MSG from %s:%d %d byte", inet_address(ntohl(from.sin_addr.s_addr)),
 			ntohs(from.sin_port), len);*/
@@ -394,10 +394,10 @@ static int x5b_app_read_eloop(struct eloop *eloop)
 	{
 		if (len < 0)
 		{
-			if (ERRNO_IO_RETRY(errno))
+			if (IPSTACK_ERRNO_RETRY(ipstack_errno))
 			{
 				//return 0;
-				zlog_err(MODULE_APP, "RECV mgt on socket (%s)", strerror(errno));
+				zlog_err(MODULE_APP, "RECV mgt on socket (%s)", strerror(ipstack_errno));
 				mgt->reset_thread = eloop_add_timer_msec(mgt->master, x5b_app_reset_eloop, mgt, 100);
 				if(mgt->mutex)
 					os_mutex_unlock(mgt->mutex);
@@ -739,15 +739,15 @@ static int x5b_app_read_msg(int fd, x5b_app_mgt_t *mgt, char *output, int outlen
 	int sock_len, len = 0;
 	zassert(mgt != NULL);
 	memset(mgt->buf, 0, sizeof(mgt->buf));
-	sock_len = sizeof(struct sockaddr_in);
+	sock_len = sizeof(struct ipstack_sockaddr_in);
 
 	len = recvfrom(fd, mgt->buf, sizeof(mgt->buf), 0, &mgt->from, &sock_len);
 	if (len <= 0)
 	{
-		zlog_debug(MODULE_APP, "recvfrom:%s", strerror(errno));
+		zlog_debug(MODULE_APP, "recvfrom:%s", strerror(ipstack_errno));
 		if (len < 0)
 		{
-			if (ERRNO_IO_RETRY(errno))
+			if (IPSTACK_ERRNO_RETRY(ipstack_errno))
 			{
 				return ERROR;
 			}
@@ -838,7 +838,7 @@ try_again:
 		}
         return OS_TIMEOUT;
 	}
-	zlog_debug(MODULE_APP, "wait from %s error:%s", inet_address(mgt->app->address), strerror(errno));
+	zlog_debug(MODULE_APP, "wait from %s error:%s", inet_address(mgt->app->address), strerror(ipstack_errno));
 	return ERROR;
 }
 

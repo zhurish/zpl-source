@@ -55,7 +55,7 @@ static int web_syslog_set(Webs *wp, char *path, char *query)
 				"{\"response\":\"%s\", \"syslog_enable\":%s, \"syslog_address\":\"%s\", \
         		\"syslog_level\":\"%s\" , \"syslog_port\":\"%s\", \"syslog_proto\":\"%s\"}",
 				"OK", syslogc_is_enable() ? "true" : "false", address,
-				(log_level >= LOG_ERR) ?
+				(log_level >= ZLOG_LEVEL_ERR) ?
 						zlog_priority_name(log_level) : "warnings",
 				itoa(port, 10), (mode == SYSLOG_UDP_MODE) ? "UDP" : "TCP");
 		websDone(wp);
@@ -75,8 +75,8 @@ static int web_syslog_set(Webs *wp, char *path, char *query)
 		zlog_set_level(ZLOG_DEST_SYSLOG, ZLOG_DISABLED);
 		return web_return_text_plain(wp, OK);
 	}
-	if (!syslogc_is_enable())
-		syslogc_enable(host.name);
+	//if (!syslogc_is_enable())
+	//	syslogc_enable(host.name);
 
 	syslog_address = webs_get_var(wp, T("syslog_address"), T(""));
 	if (NULL == syslog_address)

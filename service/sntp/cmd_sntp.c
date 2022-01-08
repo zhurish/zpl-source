@@ -84,21 +84,21 @@ DEFUN (no_sntps_server_interval,
 }
 DEFUN (sntps_server_listen_port,
 		sntps_server_listen_port_cmd,
-	    "sntp server listen-port <100-65536>",
+	    "sntp server ipstack_listen-port <100-65536>",
 		"sntp protocol configure\n"
 		"sntp server configure\n"
-		"sntp server listen port configure\n"
+		"sntp server ipstack_listen port configure\n"
 		"sntp server local UDP port\n")
 {
 	return sntp_server_set_api(vty, API_SNTPS_SET_LISTEN, argv[0]);
 }
 DEFUN (no_sntps_server_listen_port,
 		no_sntps_server_listen_port_cmd,
-	    "no sntp server listen-port",
+	    "no sntp server ipstack_listen-port",
 		NO_STR
 		"sntp protocol configure\n"
 		"sntp server configure\n"
-		"sntp server listen port configure\n")
+		"sntp server ipstack_listen port configure\n")
 {
 	return sntp_server_set_api(vty, API_SNTPS_SET_LISTEN, NULL);
 }
@@ -156,8 +156,8 @@ DEFUN (sntps_mutilcast_ttl,
 		"sntp protocol configure\n"
 		"sntp server configure\n"
 		"sntp mutilcast information\n"
-		"mutilcast TTL configure\n"
-		"mutilcast TTL value\n")
+		"mutilcast IPSTACK_TTL configure\n"
+		"mutilcast IPSTACK_TTL value\n")
 {
 	return sntp_server_set_api(vty, API_SNTPS_SET_TTL, argv[0]);
 }
@@ -169,7 +169,7 @@ DEFUN (no_sntps_mutilcast_ttl,
 		"sntp protocol configure\n"
 		"sntp server configure\n"
 		"sntp mutilcast information\n"
-		"mutilcast TTL configure\n")
+		"mutilcast IPSTACK_TTL configure\n")
 {
 	return sntp_server_set_api(vty, API_SNTPS_SET_TTL, NULL);
 }
@@ -252,7 +252,7 @@ ALIAS(sntp_enable,
 		"sntp server dynamics\n"
 		"sntp server port configure\n"
 		"udp port of sntp server\n"
-		"sntp server send request interval\n"
+		"sntp server ipstack_send request interval\n"
 		"time interval of sec\n")
 
 DEFUN (no_sntp_enable,

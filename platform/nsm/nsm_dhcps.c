@@ -979,7 +979,7 @@ int nsm_dhcps_write_config(struct vty *vty)
 		{
 			if(pstNode->start_address.prefixlen)
 			{
-				//struct in_addr netmask;
+				//struct ipstack_in_addr netmask;
 				memset(prefix, 0, sizeof(prefix));
 				pu.p = &pstNode->start_address;
 				prefix_2_address_str (pu, prefix, sizeof(prefix));

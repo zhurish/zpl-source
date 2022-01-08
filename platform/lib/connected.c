@@ -73,10 +73,10 @@ void connected_up_ipv4(struct interface *ifp, struct connected *ifc)
 		return;
 #ifdef ZPL_NSM_MODULE
 	rib_add_ipv4(ZEBRA_ROUTE_CONNECT, 0, &p, NULL, NULL, ifp->ifindex,
-				 ifp->vrf_id, RT_TABLE_MAIN, ifp->metric, 0, 0, SAFI_UNICAST);
+				 ifp->vrf_id, IPSTACK_RT_TABLE_MAIN, ifp->metric, 0, 0, SAFI_UNICAST);
 
 	rib_add_ipv4(ZEBRA_ROUTE_CONNECT, 0, &p, NULL, NULL, ifp->ifindex,
-				 ifp->vrf_id, RT_TABLE_MAIN, ifp->metric, 0, 0, SAFI_MULTICAST);
+				 ifp->vrf_id, IPSTACK_RT_TABLE_MAIN, ifp->metric, 0, 0, SAFI_MULTICAST);
 
 	rib_update(ifp->vrf_id);
 #endif
@@ -129,12 +129,12 @@ void connected_up_ipv6(struct interface *ifp, struct connected *ifc)
 
 #ifndef LINUX
 	/* XXX: It is already done by rib_bogus_ipv6 within rib_add_ipv6 */
-	if (IN6_IS_ADDR_UNSPECIFIED(&p.prefix))
+	if (IPSTACK_IN6_IS_ADDR_UNSPECIFIED(&p.prefix))
 		return;
 #endif
 #ifdef ZPL_NSM_MODULE
 	rib_add_ipv6(ZEBRA_ROUTE_CONNECT, 0, &p, NULL, ifp->ifindex, ifp->vrf_id,
-				 RT_TABLE_MAIN, ifp->metric, 0, 0, SAFI_UNICAST);
+				 IPSTACK_RT_TABLE_MAIN, ifp->metric, 0, 0, SAFI_UNICAST);
 
 	rib_update(ifp->vrf_id);
 #endif
@@ -153,7 +153,7 @@ void connected_down_ipv6(struct interface *ifp, struct connected *ifc)
 
 	apply_mask_ipv6(&p);
 
-	if (IN6_IS_ADDR_UNSPECIFIED(&p.prefix))
+	if (IPSTACK_IN6_IS_ADDR_UNSPECIFIED(&p.prefix))
 		return;
 #ifdef ZPL_NSM_MODULE
 	rib_delete_ipv6(ZEBRA_ROUTE_CONNECT, 0, &p, NULL, ifp->ifindex, ifp->vrf_id,
@@ -166,8 +166,8 @@ void connected_down_ipv6(struct interface *ifp, struct connected *ifc)
 
 #ifdef ZPL_KERNEL_STACK_MODULE
 /* Add connected IPv4 route to the interface. */
-void connected_add_ipv4(struct interface *ifp, zpl_uint32 flags, struct in_addr *addr,
-						zpl_uchar prefixlen, struct in_addr *broad,
+void connected_add_ipv4(struct interface *ifp, zpl_uint32 flags, struct ipstack_in_addr *addr,
+						zpl_uchar prefixlen, struct ipstack_in_addr *broad,
 						const char *label)
 {
 	struct prefix_ipv4 *p;
@@ -187,7 +187,7 @@ void connected_add_ipv4(struct interface *ifp, zpl_uint32 flags, struct in_addr 
 	//SET_FLAG(ifc->conf, ZEBRA_IFC_QUEUED);
 	/* Allocate new connected address. */
 	p = prefix_ipv4_new();
-	p->family = AF_INET;
+	p->family = IPSTACK_AF_INET;
 	p->prefix = *addr;
 	p->prefixlen = prefixlen;
 	if (connected_lookup(ifp, p))
@@ -202,7 +202,7 @@ void connected_add_ipv4(struct interface *ifp, zpl_uint32 flags, struct in_addr 
 	if (broad)
 	{
 		p = prefix_ipv4_new();
-		p->family = AF_INET;
+		p->family = IPSTACK_AF_INET;
 		p->prefix = *broad;
 		p->prefixlen = prefixlen;
 		ifc->destination = (struct prefix *)p;
@@ -219,8 +219,8 @@ void connected_add_ipv4(struct interface *ifp, zpl_uint32 flags, struct in_addr 
 		{
 			if (broad->s_addr != ipv4_broadcast_addr(addr->s_addr, prefixlen))
 			{
-				zpl_char buf[INET_ADDRSTRLEN];
-				struct in_addr bcalc;
+				zpl_char buf[IPSTACK_INET_ADDRSTRLEN];
+				struct ipstack_in_addr bcalc;
 				bcalc.s_addr = ipv4_broadcast_addr(addr->s_addr, prefixlen);
 				memset(buf, 0, sizeof(buf));
 				snprintf(buf, sizeof(buf), "%s", ipstack_inet_ntoa(*broad));
@@ -267,8 +267,8 @@ void connected_add_ipv4(struct interface *ifp, zpl_uint32 flags, struct in_addr 
 }
 /* Delete connected IPv4 route to the interface. */
 
-void connected_delete_ipv4(struct interface *ifp, zpl_uint32 flags, struct in_addr *addr,
-						   zpl_uchar prefixlen, struct in_addr *broad)
+void connected_delete_ipv4(struct interface *ifp, zpl_uint32 flags, struct ipstack_in_addr *addr,
+						   zpl_uchar prefixlen, struct ipstack_in_addr *broad)
 {
 	struct prefix_ipv4 p;
 	struct connected *ifc;
@@ -279,7 +279,7 @@ void connected_delete_ipv4(struct interface *ifp, zpl_uint32 flags, struct in_ad
 		return;
 	}
 	memset(&p, 0, sizeof(struct prefix_ipv4));
-	p.family = AF_INET;
+	p.family = IPSTACK_AF_INET;
 	p.prefix = *addr;
 	p.prefixlen = prefixlen;
 
@@ -294,8 +294,8 @@ void connected_delete_ipv4(struct interface *ifp, zpl_uint32 flags, struct in_ad
 }
 #ifdef HAVE_IPV6
 /* Add connected IPv6 route to the interface. */
-void connected_add_ipv6(struct interface *ifp, zpl_uint32 flags, struct in6_addr *addr,
-						zpl_uchar prefixlen, struct in6_addr *broad,
+void connected_add_ipv6(struct interface *ifp, zpl_uint32 flags, struct ipstack_in6_addr *addr,
+						zpl_uchar prefixlen, struct ipstack_in6_addr *broad,
 						const char *label)
 {
 	struct prefix_ipv6 *p;
@@ -315,7 +315,7 @@ void connected_add_ipv6(struct interface *ifp, zpl_uint32 flags, struct in6_addr
 	//SET_FLAG(ifc->conf, ZEBRA_IFC_QUEUED);
 	/* Allocate new connected address. */
 	p = prefix_ipv6_new();
-	p->family = AF_INET6;
+	p->family = IPSTACK_AF_INET6;
 	IPV6_ADDR_COPY(&p->prefix, addr);
 	p->prefixlen = prefixlen;
 	if (connected_lookup(ifp, p))
@@ -329,14 +329,14 @@ void connected_add_ipv6(struct interface *ifp, zpl_uint32 flags, struct in6_addr
 	/* If there is broadcast or peer address. */
 	if (broad)
 	{
-		if (IN6_IS_ADDR_UNSPECIFIED(broad))
+		if (IPSTACK_IN6_IS_ADDR_UNSPECIFIED(broad))
 			zlog_warn(MODULE_DEFAULT, "warning: %s called for interface %s with unspecified "
 								"destination address; ignoring!",
 					  __func__, ifp->name);
 		else
 		{
 			p = prefix_ipv6_new();
-			p->family = AF_INET6;
+			p->family = IPSTACK_AF_INET6;
 			IPV6_ADDR_COPY(&p->prefix, broad);
 			p->prefixlen = prefixlen;
 			ifc->destination = (struct prefix *)p;
@@ -371,8 +371,8 @@ void connected_add_ipv6(struct interface *ifp, zpl_uint32 flags, struct in6_addr
 	//rib_update(ifp->vrf_id);
 }
 
-void connected_delete_ipv6(struct interface *ifp, struct in6_addr *address,
-						   zpl_uchar prefixlen, struct in6_addr *broad)
+void connected_delete_ipv6(struct interface *ifp, struct ipstack_in6_addr *address,
+						   zpl_uchar prefixlen, struct ipstack_in6_addr *broad)
 {
 	struct prefix_ipv6 p;
 	struct connected *ifc;
@@ -383,8 +383,8 @@ void connected_delete_ipv6(struct interface *ifp, struct in6_addr *address,
 		return;
 	}
 	memset(&p, 0, sizeof(struct prefix_ipv6));
-	p.family = AF_INET6;
-	memcpy(&p.prefix, address, sizeof(struct in6_addr));
+	p.family = IPSTACK_AF_INET6;
+	memcpy(&p.prefix, address, sizeof(struct ipstack_in6_addr));
 	p.prefixlen = prefixlen;
 
 	ifc = connected_check(ifp, (struct prefix *)&p);

@@ -10,6 +10,14 @@ extern "C"
 #include "hal_ipccmd.h"
 #include "hal_ipcmsg.h"
 
+
+#ifdef ZPL_SDK_MODULE
+#define NO_SDK ERROR
+#else
+#define NO_SDK OK
+#endif
+
+
   /* Structure for the zebra client. */
   struct hal_client
   {
@@ -25,7 +33,7 @@ extern "C"
     enum hal_client_state state;
     zpl_uint8 fail;
     zpl_uint32  timeout;
-    /* Read and connect thread. */
+    /* Read and ipstack_connect thread. */
     struct thread *t_read;
     struct thread *t_connect;
     struct thread *t_time;
@@ -33,6 +41,9 @@ extern "C"
     struct hal_ipcmsg ipcmsg;
     struct hal_ipcmsg outmsg;
     zpl_uint32 debug;
+
+    int (*bsp_client_msg_handle)(struct hal_client *, zpl_uint32, void *);
+    void  *bsp_driver;
   };
 
 
@@ -50,6 +61,8 @@ int hal_client_destroy(struct hal_client *hal_client);
 int hal_client_start(struct hal_client *hal_client);
 int hal_client_send_return(struct hal_client *hal_client, int ret, char *fmt,...);
 int hal_client_register(struct hal_client *hal_client, struct hal_ipcmsg_porttbl *porttbl);
+
+int hal_client_callback(struct hal_client *, int (*bsp_handle)(struct hal_client *, zpl_uint32, void *), void *);
 
 int hal_bsp_init(void);
 int hal_bsp_task_init(void);

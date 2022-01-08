@@ -480,7 +480,7 @@ int pub_main(int argc, char *argv[])
 	mosq = mosquitto_new(cfg.id, cfg.clean_session, NULL);
 	if (!mosq)
 	{
-		switch (errno)
+		switch (ipstack_errno)
 		{
 		case ENOMEM:
 			mqtt_err_printf(&cfg, "Error: Out of memory.\n");

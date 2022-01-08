@@ -65,7 +65,7 @@ hal_ipcclient_client_create(struct hal_ipcsrv *ipcsrv, struct ipstack_sockaddr_i
     return 0;
 }
 
-/* Accept code of hal_ipcclient server socket. */
+/* Accept code of hal_ipcclient server ipstack_socket. */
 static int hal_ipcsrv_accept(struct thread *thread)
 {
     zpl_socket_t accept_sock;
@@ -100,11 +100,11 @@ static int hal_ipcsrv_accept(struct thread *thread)
 
     if (ipstack_invalid(client_sock))
     {
-        zlog_warn(MODULE_HAL, "Can't accept hal_ipcclient socket: %s", safe_strerror(errno));
+        zlog_warn(MODULE_HAL, "Can't ipstack_accept hal_ipcclient ipstack_socket: %s", ipstack_strerror(ipstack_errno));
         return -1;
     }
 
-    /* Make client socket non-blocking.  */
+    /* Make client ipstack_socket non-blocking.  */
     ipstack_set_nonblocking(client_sock);
 
     /* Create new hal_ipcclient client. */
@@ -112,7 +112,7 @@ static int hal_ipcsrv_accept(struct thread *thread)
     return 0;
 }
 
-/* hal_ipcclient server UNIX domain socket. */
+/* hal_ipcclient server UNIX domain ipstack_socket. */
 static zpl_socket_t hal_ipcsrv_un(const char *path)
 {
     int ret;
@@ -120,16 +120,16 @@ static zpl_socket_t hal_ipcsrv_un(const char *path)
     zpl_socket_t unixsock;
     struct ipstack_sockaddr_un serv;
 
-    /* Make UNIX domain socket. */
-    unixsock = ipstack_socket(OS_STACK, AF_UNIX, SOCK_STREAM, 0);
+    /* Make UNIX domain ipstack_socket. */
+    unixsock = ipstack_socket(OS_STACK, AF_UNIX, IPSTACK_SOCK_STREAM, 0);
     if (ipstack_invalid(unixsock))
     {
-        zlog_warn(MODULE_HAL, "Can't create zserv unix socket: %s",
-                  safe_strerror(errno));
+        zlog_warn(MODULE_HAL, "Can't create zserv unix ipstack_socket: %s",
+                  ipstack_strerror(ipstack_errno));
         // zlog_warn (MODULE_HAL, "hal_ipcclient can't provide full functionality due to above error");
         return unixsock;
     }
-    /* Make server socket. */
+    /* Make server ipstack_socket. */
     memset(&serv, 0, sizeof(struct ipstack_sockaddr_un));
     serv.sun_family = AF_UNIX;
     strncpy(serv.sun_path, path, strlen(path));
@@ -142,10 +142,10 @@ static zpl_socket_t hal_ipcsrv_un(const char *path)
     ret = ipstack_bind(unixsock, (struct ipstack_sockaddr *)&serv, len);
     if (ret < 0)
     {
-        _OS_ERROR("Can't bind to unix socket %s: %s",
-                  path, safe_strerror(errno));
-        zlog_warn(MODULE_HAL, "Can't bind to unix socket %s: %s",
-                  path, safe_strerror(errno));
+        _OS_ERROR("Can't ipstack_bind to unix ipstack_socket %s: %s",
+                  path, ipstack_strerror(ipstack_errno));
+        zlog_warn(MODULE_HAL, "Can't ipstack_bind to unix ipstack_socket %s: %s",
+                  path, ipstack_strerror(ipstack_errno));
         // zlog_warn (MODULE_HAL, "hal_ipcclient can't provide full functionality due to above error");
         ipstack_close(unixsock);
         return unixsock;
@@ -154,8 +154,8 @@ static zpl_socket_t hal_ipcsrv_un(const char *path)
     ret = ipstack_listen(unixsock, 5);
     if (ret < 0)
     {
-        zlog_warn(MODULE_HAL, "Can't listen to unix socket %s: %s",
-                  path, safe_strerror(errno));
+        zlog_warn(MODULE_HAL, "Can't ipstack_listen to unix ipstack_socket %s: %s",
+                  path, ipstack_strerror(ipstack_errno));
         // zlog_warn (MODULE_HAL, "hal_ipcclient can't provide full functionality due to above error");
         ipstack_close(unixsock);
         return unixsock;
@@ -169,23 +169,23 @@ static zpl_socket_t hal_ipcsrv_socket(int port)
     zpl_socket_t sock;
     struct ipstack_sockaddr_in addr;
 
-    sock = ipstack_socket(OS_STACK, AF_INET, SOCK_STREAM, 0);
+    sock = ipstack_socket(OS_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
 
     if (ipstack_invalid(sock))
     {
-        zlog_warn(MODULE_HAL, "Can't create zserv stream socket: %s",
-                  safe_strerror(errno));
+        zlog_warn(MODULE_HAL, "Can't create zserv stream ipstack_socket: %s",
+                  ipstack_strerror(ipstack_errno));
         // zlog_warn (MODULE_HAL, "hal_ipcclient can't provice full functionality due to above error");
         return sock;
     }
 
     memset(&addr, 0, sizeof(struct ipstack_sockaddr_in));
-    addr.sin_family = AF_INET;
+    addr.sin_family = IPSTACK_AF_INET;
     addr.sin_port = htons(port);
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
-    addr.sin_len = sizeof(struct sockaddr_in);
+    addr.sin_len = sizeof(struct ipstack_sockaddr_in);
 #endif /* HAVE_STRUCT_SOCKADDR_IN_SIN_LEN */
-    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    addr.sin_addr.s_addr = htonl(IPSTACK_INADDR_LOOPBACK);
 
     sockopt_reuseaddr(sock);
     sockopt_reuseport(sock);
@@ -194,10 +194,10 @@ static zpl_socket_t hal_ipcsrv_socket(int port)
                sizeof(struct ipstack_sockaddr_in));
     if (ret < 0)
     {
-        _OS_ERROR("Can't bind to unix socket %d: %s",
-                  port, safe_strerror(errno));
-        zlog_warn(MODULE_HAL, "Can't bind to stream socket: %s",
-                  safe_strerror(errno));
+        _OS_ERROR("Can't ipstack_bind to unix ipstack_socket %d: %s",
+                  port, ipstack_strerror(ipstack_errno));
+        zlog_warn(MODULE_HAL, "Can't ipstack_bind to stream ipstack_socket: %s",
+                  ipstack_strerror(ipstack_errno));
         // zlog_warn (MODULE_HAL, "hal_ipcclient can't provice full functionality due to above error");
         ipstack_close(sock); /* Avoid sd leak. */
         return sock;
@@ -206,8 +206,8 @@ static zpl_socket_t hal_ipcsrv_socket(int port)
     ret = ipstack_listen(sock, 1);
     if (ret < 0)
     {
-        zlog_warn(MODULE_HAL, "Can't listen to stream socket: %s",
-                  safe_strerror(errno));
+        zlog_warn(MODULE_HAL, "Can't ipstack_listen to stream ipstack_socket: %s",
+                  ipstack_strerror(ipstack_errno));
         // zlog_warn (MODULE_HAL, "hal_ipcclient can't provice full functionality due to above error");
         ipstack_close(sock); /* Avoid sd leak. */
         return sock;
@@ -253,12 +253,14 @@ static int hal_ipcsrv_client_read(struct thread *thread)
 {
     zpl_socket_t sock;
     struct hal_ipcclient *client = NULL;
-    struct hal_ipcmsg_header *hdr = (struct hal_ipcmsg_header *)client->ipcsrv->input_msg.buf;
+    struct hal_ipcmsg_header *hdr = NULL;
     /* Get thread data.  Reset reading thread because I'm running. */
     sock = THREAD_FD(thread);
     client = THREAD_ARG(thread);
+    zpl_assert(client);
+    zpl_assert(client->ipcsrv);
     client->t_read = NULL;
-
+    hdr = (struct hal_ipcmsg_header *)client->ipcsrv->input_msg.buf;
     /* Read length and command (if we don't have it already). */
     if (client->ipcsrv->input_msg.setp < HAL_IPCMSG_HEADER_SIZE)
     {
@@ -267,7 +269,7 @@ static int hal_ipcsrv_client_read(struct thread *thread)
         if ((nbyte == 0) || (nbyte == -1))
         {
             if (IS_HAL_IPCMSG_DEBUG_EVENT(client->ipcsrv->debug))
-                zlog_debug(MODULE_HAL, "connection closed socket [%d]", sock);
+                zlog_debug(MODULE_HAL, "connection closed ipstack_socket [%d]", sock);
             hal_ipcclient_client_close(client->ipcsrv, client);
             return -1;
         }
@@ -286,21 +288,21 @@ static int hal_ipcsrv_client_read(struct thread *thread)
 
     if (hdr->marker != HAL_IPCMSG_HEADER_MARKER || hdr->version != HAL_IPCMSG_VERSION)
     {
-        zlog_err(MODULE_HAL, "%s: socket %d version mismatch, marker %d, version %d",
+        zlog_err(MODULE_HAL, "%s: ipstack_socket %d version mismatch, marker %d, version %d",
                  __func__, sock, hdr->marker, hdr->version);
         hal_ipcclient_client_close(client->ipcsrv, client);
         return -1;
     }
     if (hdr->length < HAL_IPCMSG_HEADER_SIZE)
     {
-        zlog_warn(MODULE_HAL, "%s: socket %d message length %u is less than header size %d",
+        zlog_warn(MODULE_HAL, "%s: ipstack_socket %d message length %u is less than header size %d",
                   __func__, sock, hdr->length, HAL_IPCMSG_HEADER_SIZE);
         hal_ipcclient_client_close(client->ipcsrv, client);
         return -1;
     }
     if (hdr->length > client->ipcsrv->input_msg.length_max)
     {
-        zlog_warn(MODULE_HAL, "%s: socket %d message length %u exceeds buffer size %lu",
+        zlog_warn(MODULE_HAL, "%s: ipstack_socket %d message length %u exceeds buffer size %lu",
                   __func__, sock, hdr->length, (u_long)(client->ipcsrv->input_msg.length_max));
         hal_ipcclient_client_close(client->ipcsrv, client);
         return -1;
@@ -331,7 +333,7 @@ static int hal_ipcsrv_client_read(struct thread *thread)
 
     /* Debug packet information. */
     if (IS_HAL_IPCMSG_DEBUG_EVENT(client->ipcsrv->debug))
-        zlog_debug(MODULE_HAL, "zebra message comes from socket [%d]", sock);
+        zlog_debug(MODULE_HAL, "zebra message comes from ipstack_socket [%d]", sock);
 
     if (IS_HAL_IPCMSG_DEBUG_PACKET(client->ipcsrv->debug) && IS_HAL_IPCMSG_DEBUG_RECV(client->ipcsrv->debug))
         zlog_debug(MODULE_HAL, "zebra message received [%s] %d ",
@@ -446,7 +448,7 @@ int hal_ipcsrv_send_message(int unit, zpl_uint32 command, void *msg, int len, in
 
     for (ALL_LIST_ELEMENTS_RO(_ipcsrv.client_list, node, client))
     {
-        if (unit >= 0 && unit == client->unit)
+        if (unit >= 0 && unit != IF_UNIT_ALL && unit == client->unit)
         {
             hal_ipcmsg_hdr_unit_set(&_ipcsrv.output_msg, unit);
             return hal_ipcsrv_send_message_client(client, timeout);

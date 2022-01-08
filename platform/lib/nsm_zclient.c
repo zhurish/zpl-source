@@ -153,24 +153,24 @@ zclient_socket(void)
 {
   zpl_socket_t sock;
   int ret;
-  struct sockaddr_in serv;
+  struct ipstack_sockaddr_in serv;
 
   /* We should think about IPv6 connection. */
-  sock = ipstack_socket (OS_STACK, AF_INET, SOCK_STREAM, 0);
+  sock = ipstack_socket (OS_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
   if (ipstack_invalid(sock))
     return -1;
   
   /* Make server socket. */ 
-  memset (&serv, 0, sizeof (struct sockaddr_in));
-  serv.sin_family = AF_INET;
+  memset (&serv, 0, sizeof (struct ipstack_sockaddr_in));
+  serv.sin_family = IPSTACK_AF_INET;
   serv.sin_port = htons (ZEBRA_PORT);
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
-  serv.sin_len = sizeof (struct sockaddr_in);
+  serv.sin_len = sizeof (struct ipstack_sockaddr_in);
 #endif /* HAVE_STRUCT_SOCKADDR_IN_SIN_LEN */
-  serv.sin_addr.s_addr = htonl (INADDR_LOOPBACK);
+  serv.sin_addr.s_addr = htonl (IPSTACK_INADDR_LOOPBACK);
 
   /* Connect to zebra. */
-  ret = ipstack_connect (sock, (struct sockaddr *) &serv, sizeof (serv));
+  ret = ipstack_connect (sock, (struct ipstack_sockaddr *) &serv, sizeof (serv));
   if (ret < 0)
     {
       ipstack_close (sock);
@@ -181,7 +181,7 @@ zclient_socket(void)
 
 #else
 
-/* For sockaddr_un. */
+/* For ipstack_sockaddr_un. */
 #include <sys/un.h>
 
 static zpl_socket_t
@@ -190,14 +190,14 @@ zclient_socket_un (const char *path)
   int ret = 0;
   zpl_socket_t sock;
   int len = 0;
-  struct sockaddr_un addr;
+  struct ipstack_sockaddr_un addr;
 
-  sock = ipstack_socket (OS_STACK, AF_UNIX, SOCK_STREAM, 0);
+  sock = ipstack_socket (OS_STACK, AF_UNIX, IPSTACK_SOCK_STREAM, 0);
   if (ipstack_invalid(sock))
     return sock;
   
   /* Make server socket. */ 
-  memset (&addr, 0, sizeof (struct sockaddr_un));
+  memset (&addr, 0, sizeof (struct ipstack_sockaddr_un));
   addr.sun_family = AF_UNIX;
   strncpy (addr.sun_path, path, strlen (path));
 #ifdef HAVE_STRUCT_SOCKADDR_UN_SUN_LEN
@@ -206,7 +206,7 @@ zclient_socket_un (const char *path)
   len = sizeof (addr.sun_family) + strlen (addr.sun_path);
 #endif /* HAVE_STRUCT_SOCKADDR_UN_SUN_LEN */
 
-  ret = ipstack_connect (sock, (struct sockaddr *) &addr, len);
+  ret = ipstack_connect (sock, (struct ipstack_sockaddr *) &addr, len);
   if (ret < 0)
     {
       ipstack_close (sock);
@@ -639,7 +639,7 @@ zebra_router_id_update_read (struct stream *s, struct prefix *rid)
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |         bandwidth                                             |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |         sockaddr_dl                                           |
+ * |         ipstack_sockaddr_dl                                           |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 
@@ -664,7 +664,7 @@ zebra_interface_add_read (struct stream *s)
  * Read interface up/down msg (ZEBRA_INTERFACE_UP/ZEBRA_INTERFACE_DOWN)
  * from zebra server.  The format of this message is the same as
  * that sent for ZEBRA_INTERFACE_ADD/ZEBRA_INTERFACE_DELETE (see
- * comments for zebra_interface_add_read), except that no sockaddr_dl
+ * comments for zebra_interface_add_read), except that no ipstack_sockaddr_dl
  * is sent at the tail of the message.
  */
 struct interface *

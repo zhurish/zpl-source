@@ -24,7 +24,7 @@ OBJS	+= memory.o
 OBJS	+= memtypes.o
 OBJS	+= daemon.o
 OBJS	+= pid_output.o
-OBJS	+= sigevent.o
+#OBJS	+= sigevent.o
 OBJS	+= algorithm.o
 
 

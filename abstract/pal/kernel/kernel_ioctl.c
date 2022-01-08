@@ -1,5 +1,5 @@
 /*
- * Common ioctl functions.
+ * Common ipstack_ioctl functions.
  * Copyright (C) 1997, 98 Kunihiro Ishiguro
  *
  * This file is part of GNU Zebra.
@@ -37,6 +37,7 @@
 #include "nsm_bridge.h"
 #endif
 #include "kernel_ioctl.h"
+#include "kernel_driver.h"
 
 #ifdef HAVE_BSD_LINK_DETECT
 #include <net/if_media.h>
@@ -45,28 +46,28 @@
 #include "pal_driver.h"
 
 /* clear and set interface name string */
-void ifreq_set_name(struct ipstack_ifreq *ifreq, struct interface *ifp)
+void _ipkernel_ifreq_set_name(struct ipstack_ifreq *ipstack_ifreq, struct interface *ifp)
 {
-  strncpy(ifreq->ifr_name, ifp->k_name, IFNAMSIZ);
+  strncpy(ipstack_ifreq->ifr_name, ifp->k_name, IFNAMSIZ);
 }
 
-/* call ioctl system call */
-int if_ioctl(zpl_uint32 request, caddr_t buffer)
+/* call ipstack_ioctl system call */
+int _ipkernel_if_ioctl(zpl_uint32 request, caddr_t buffer)
 {
   zpl_socket_t sock;
   int ret = -1;
 
-  sock = ipstack_socket(IPCOM_STACK, AF_INET, SOCK_DGRAM, 0);
+  sock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, 0);
   if (ipstack_invalid(sock))
   {
-    zlog_err(MODULE_PAL, "Cannot create datagram socket: %s",
-             safe_strerror(errno));
+    zlog_err(MODULE_PAL, "Cannot create datagram ipstack_socket: %s",
+             ipstack_strerror(ipstack_errno));
     return ret;
   }
   ret = ipstack_ioctl(sock, request, buffer);
   if (ret < 0)
   {
-    zlog_err(MODULE_PAL, "Cannot ioctl (0x%x) : %s", request, safe_strerror(errno));
+    zlog_err(MODULE_PAL, "Cannot ipstack_ioctl (0x%x) : %s", request, ipstack_strerror(ipstack_errno));
     ipstack_close(sock);
     return ret;
   }
@@ -75,23 +76,23 @@ int if_ioctl(zpl_uint32 request, caddr_t buffer)
 }
 
 #ifdef HAVE_IPV6
-int if_ioctl_ipv6(zpl_uint32 request, caddr_t buffer)
+int _ipkernel_if_ioctl_ipv6(zpl_uint32 request, caddr_t buffer)
 {
   zpl_socket_t sock;
   int ret = -1;
 
-  sock = ipstack_socket(IPCOM_STACK, AF_INET6, SOCK_DGRAM, 0);
+  sock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET6, IPSTACK_SOCK_DGRAM, 0);
   if (ipstack_invalid(sock))
   {
-    zlog_err(MODULE_PAL, "Cannot create IPv6 datagram socket: %s",
-             safe_strerror(errno));
+    zlog_err(MODULE_PAL, "Cannot create IPv6 datagram ipstack_socket: %s",
+             ipstack_strerror(ipstack_errno));
     return ret;
   }
   ret = ipstack_ioctl(sock, request, buffer);
   if (ret < 0)
   {
-    zlog_err(MODULE_PAL, "Cannot ioctl (0x%x) : %s",
-             request, safe_strerror(errno));
+    zlog_err(MODULE_PAL, "Cannot ipstack_ioctl (0x%x) : %s",
+             request, ipstack_strerror(ipstack_errno));
     ipstack_close(sock);
     return ret;
   }
@@ -105,11 +106,11 @@ static int
 if_get_ifindex (char *name)
 {
 #ifdef SIOCGIFINDEX
-  struct ipstack_ifreq ifreq;
-  strncpy (ifreq.ifr_name, name, IFNAMSIZ);
-  if (if_ioctl (SIOCGIFINDEX, (caddr_t) &ifreq) < 0)
+  struct ipstack_ifreq ipstack_ifreq;
+  strncpy (ipstack_ifreq.ifr_name, name, IFNAMSIZ);
+  if (_ipkernel_if_ioctl (SIOCGIFINDEX, (caddr_t) &ipstack_ifreq) < 0)
     return 0;
-  return ifreq.ifr_ifindex;
+  return ipstack_ifreq.ifr_ifindex;
 #else  /* SIOCGIFINDEX */
   return if_nametoindex(name);
 #endif /* SIOCGIFINDEX */
@@ -122,49 +123,48 @@ if_get_ifindex (char *name)
 static int
 if_get_metric(struct interface *ifp)
 {
-#ifdef SIOCGIFMETRIC
-  struct ipstack_ifreq ifreq;
+#ifdef IPSTACK_SIOCGIFMETRIC
+  struct ipstack_ifreq ipstack_ifreq;
 
-  ifreq_set_name(&ifreq, ifp);
+  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
 
-  if (if_ioctl(SIOCGIFMETRIC, (caddr_t)&ifreq) < 0)
+  if (_ipkernel_if_ioctl(IPSTACK_SIOCGIFMETRIC, (caddr_t)&ipstack_ifreq) < 0)
     return -1;
-  ifp->metric = ifreq.ifr_metric;
+  ifp->metric = ipstack_ifreq.ifr_metric;
   if (ifp->metric == 0)
     ifp->metric = 1;
-#else  /* SIOCGIFMETRIC */
+#else  /* IPSTACK_SIOCGIFMETRIC */
   ifp->metric = -1;
-#endif /* SIOCGIFMETRIC */
+#endif /* IPSTACK_SIOCGIFMETRIC */
   return 0;
 }
 
-static int
-if_set_metric(struct interface *ifp, zpl_uint32 metric)
+int _ipkernel_if_set_metric(struct interface *ifp, zpl_uint32 metric)
 {
-#ifdef SIOCGIFMETRIC
-  struct ipstack_ifreq ifreq;
-  ifreq_set_name(&ifreq, ifp);
-  ifreq.ifr_metric = metric;
-  if (if_ioctl(SIOCGIFMETRIC, (caddr_t)&ifreq) < 0)
+#ifdef IPSTACK_SIOCGIFMETRIC
+  struct ipstack_ifreq ipstack_ifreq;
+  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
+  ipstack_ifreq.ifr_metric = metric;
+  if (_ipkernel_if_ioctl(IPSTACK_SIOCGIFMETRIC, (caddr_t)&ipstack_ifreq) < 0)
     return -1;
   return 0;
-#else  /* SIOCGIFMETRIC */
+#else  /* IPSTACK_SIOCGIFMETRIC */
   return 0;
-#endif /* SIOCGIFMETRIC */
+#endif /* IPSTACK_SIOCGIFMETRIC */
 }
 
 /* get interface MTU */
 static int
 if_get_mtu(struct interface *ifp)
 {
-  struct ipstack_ifreq ifreq;
+  struct ipstack_ifreq ipstack_ifreq;
 
-  ifreq_set_name(&ifreq, ifp);
+  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
 
-#if defined(SIOCGIFMTU)
-  if (if_ioctl(SIOCGIFMTU, (caddr_t)&ifreq) < 0)
+#if defined(IPSTACK_SIOCGIFMTU)
+  if (_ipkernel_if_ioctl(IPSTACK_SIOCGIFMTU, (caddr_t)&ipstack_ifreq) < 0)
   {
-    zlog_info(MODULE_PAL, "Can't lookup mtu by ioctl(SIOCGIFMTU)");
+    zlog_info(MODULE_PAL, "Can't lookup mtu by ipstack_ioctl(IPSTACK_SIOCGIFMTU)");
     ifp->mtu6 = ifp->mtu = 1500;
     return -1;
   }
@@ -175,19 +175,19 @@ if_get_mtu(struct interface *ifp)
   return 0;
 }
 
-static int
-if_set_mtu(struct interface *ifp, zpl_uint32 mtu)
+int
+_ipkernel_if_set_mtu(struct interface *ifp, zpl_uint32 mtu)
 {
-  struct ipstack_ifreq ifreq;
+  struct ipstack_ifreq ipstack_ifreq;
 
-  ifreq_set_name(&ifreq, ifp);
+  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
 
-  ifreq.ifr_mtu = mtu;
+  ipstack_ifreq.ifr_mtu = mtu;
 
-#if defined(SIOCSIFMTU)
-  if (if_ioctl(SIOCSIFMTU, (caddr_t)&ifreq) < 0)
+#if defined(IPSTACK_SIOCSIFMTU)
+  if (_ipkernel_if_ioctl(IPSTACK_SIOCSIFMTU, (caddr_t)&ipstack_ifreq) < 0)
   {
-    zlog_info(MODULE_PAL, "Can't lookup mtu by ioctl(SIOCGIFMTU)");
+    zlog_info(MODULE_PAL, "Can't lookup mtu by ipstack_ioctl(IPSTACK_SIOCGIFMTU)");
     ifp->mtu6 = ifp->mtu = -1;
     return -1;
   }
@@ -195,47 +195,47 @@ if_set_mtu(struct interface *ifp, zpl_uint32 mtu)
   return 0;
 }
 
-static int
-if_get_hwaddr(struct interface *ifp)
+int
+_ipkernel_if_get_hwaddr(struct interface *ifp)
 {
-  struct ipstack_ifreq ifreq;
+  struct ipstack_ifreq ipstack_ifreq;
 
-  ifreq_set_name(&ifreq, ifp);
+  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
 
-#if defined(SIOCGIFHWADDR)
-  if (if_ioctl(SIOCGIFHWADDR, (caddr_t)&ifreq) < 0)
+#if defined(IPSTACK_SIOCGIFHWADDR)
+  if (_ipkernel_if_ioctl(IPSTACK_SIOCGIFHWADDR, (caddr_t)&ipstack_ifreq) < 0)
   {
-    zlog_info(MODULE_PAL, "Can't lookup MAC by ioctl(SIOCGIFHWADDR)");
+    zlog_info(MODULE_PAL, "Can't lookup MAC by ipstack_ioctl(IPSTACK_SIOCGIFHWADDR)");
     return -1;
   }
 #endif
   // enum zebra_link_type ll_type;
-  memcpy(ifp->hw_addr, ifreq.ifr_hwaddr.sa_data, IFHWADDRLEN);
+  memcpy(ifp->hw_addr, ipstack_ifreq.ifr_hwaddr.sa_data, IFHWADDRLEN);
   ifp->hw_addr_len = IFHWADDRLEN;
   return 0;
 }
 
 /* get interface flags */
-static int
-if_get_flags(struct interface *ifp)
+int
+_ipkernel_if_get_flags(struct interface *ifp)
 {
   int ret;
-  struct ipstack_ifreq ifreq;
-  ifreq_set_name(&ifreq, ifp);
+  struct ipstack_ifreq ipstack_ifreq;
+  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
 
   if (ifp->k_ifindex == 0)
     ifp->k_ifindex = if_nametoindex(ifp->k_name);
   // ifp->k_ifindex = if_get_ifindex(ifp->k_name);
   if_get_mtu(ifp);
   if_get_metric(ifp);
-  //  if_get_hwaddr(ifp);
-  ret = if_ioctl(SIOCGIFFLAGS, (caddr_t)&ifreq);
+  //  _ipkernel_if_get_hwaddr(ifp);
+  ret = _ipkernel_if_ioctl(IPSTACK_SIOCGIFFLAGS, (caddr_t)&ipstack_ifreq);
   if (ret < 0)
   {
-    zlog_err(MODULE_PAL, "if_ioctl(SIOCGIFFLAGS) failed: %s", safe_strerror(errno));
+    zlog_err(MODULE_PAL, "_ipkernel_if_ioctl(IPSTACK_SIOCGIFFLAGS) failed: %s", ipstack_strerror(ipstack_errno));
     return -1;
   }
-  ifp->flags |= ifreq.ifr_flags;
+  ifp->flags |= ipstack_ifreq.ifr_flags;
   return 0;
 }
 
@@ -244,15 +244,15 @@ static int
 if_set_flags(struct interface *ifp, uint64_t flags)
 {
   int ret;
-  struct ipstack_ifreq ifreq;
+  struct ipstack_ifreq ipstack_ifreq;
 
-  memset(&ifreq, 0, sizeof(struct ipstack_ifreq));
-  ifreq_set_name(&ifreq, ifp);
+  memset(&ipstack_ifreq, 0, sizeof(struct ipstack_ifreq));
+  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
 
-  ifreq.ifr_flags = ifp->flags;
-  ifreq.ifr_flags |= flags;
+  ipstack_ifreq.ifr_flags = ifp->flags;
+  ipstack_ifreq.ifr_flags |= flags;
 
-  ret = if_ioctl(SIOCSIFFLAGS, (caddr_t)&ifreq);
+  ret = _ipkernel_if_ioctl(IPSTACK_SIOCSIFFLAGS, (caddr_t)&ipstack_ifreq);
 
   if (ret < 0)
   {
@@ -267,15 +267,15 @@ static int
 if_unset_flags(struct interface *ifp, uint64_t flags)
 {
   int ret;
-  struct ipstack_ifreq ifreq;
+  struct ipstack_ifreq ipstack_ifreq;
 
-  memset(&ifreq, 0, sizeof(struct ipstack_ifreq));
-  ifreq_set_name(&ifreq, ifp);
+  memset(&ipstack_ifreq, 0, sizeof(struct ipstack_ifreq));
+  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
 
-  ifreq.ifr_flags = ifp->flags;
-  ifreq.ifr_flags &= ~flags;
+  ipstack_ifreq.ifr_flags = ifp->flags;
+  ipstack_ifreq.ifr_flags &= ~flags;
 
-  ret = if_ioctl(SIOCSIFFLAGS, (caddr_t)&ifreq);
+  ret = _ipkernel_if_ioctl(IPSTACK_SIOCSIFFLAGS, (caddr_t)&ipstack_ifreq);
 
   if (ret < 0)
   {
@@ -287,24 +287,21 @@ if_unset_flags(struct interface *ifp, uint64_t flags)
 
 #ifdef HAVE_NETLINK
 /* Interface address setting via netlink interface. */
-static int
-if_set_prefix(struct interface *ifp, struct connected *ifc)
+int _ipkernel_if_set_prefix(struct interface *ifp, struct connected *ifc)
 {
-  return kernel_address_add_ipv4(ifp, ifc);
+  return _netlink_address_add_ipv4(ifp, ifc);
 }
 
 /* Interface address is removed using netlink interface. */
-static int
-if_unset_prefix(struct interface *ifp, struct connected *ifc)
+int _ipkernel_if_unset_prefix(struct interface *ifp, struct connected *ifc)
 {
-  return kernel_address_delete_ipv4(ifp, ifc);
+  return _netlink_address_delete_ipv4(ifp, ifc);
 }
 #else /* ! HAVE_NETLINK */
 #ifdef HAVE_STRUCT_IFALIASREQ
 /* Set up interface's IP address, netmask (and broadcas? ).  *BSD may
    has ifaliasreq structure.  */
-static int
-if_set_prefix(struct interface *ifp, struct connected *ifc)
+int _ipkernel_if_set_prefix(struct interface *ifp, struct connected *ifc)
 {
   int ret;
   struct ifaliasreq addreq;
@@ -333,7 +330,7 @@ if_set_prefix(struct interface *ifp, struct connected *ifc)
 #endif
   memcpy(&addreq.ifra_mask, &mask, sizeof(struct ipstack_sockaddr_in));
 
-  ret = if_ioctl(SIOCAIFADDR, (caddr_t)&addreq);
+  ret = _ipkernel_if_ioctl(IPSTACK_SIOCAIFADDR, (caddr_t)&addreq);
   if (ret < 0)
     return ret;
   return 0;
@@ -341,8 +338,7 @@ if_set_prefix(struct interface *ifp, struct connected *ifc)
 
 /* Set up interface's IP address, netmask (and broadcas? ).  *BSD may
    has ifaliasreq structure.  */
-static int
-if_unset_prefix(struct interface *ifp, struct connected *ifc)
+int _ipkernel_if_unset_prefix(struct interface *ifp, struct connected *ifc)
 {
   int ret;
   struct ipstack_ifaliasreq addreq;
@@ -371,7 +367,7 @@ if_unset_prefix(struct interface *ifp, struct connected *ifc)
 #endif
   memcpy(&addreq.ifra_mask, &mask, sizeof(struct ipstack_sockaddr_in));
 
-  ret = if_ioctl(SIOCDIFADDR, (caddr_t)&addreq);
+  ret = _ipkernel_if_ioctl(IPSTACK_SIOCDIFADDR, (caddr_t)&addreq);
   if (ret < 0)
     return ret;
   return 0;
@@ -379,11 +375,10 @@ if_unset_prefix(struct interface *ifp, struct connected *ifc)
 #else
 /* Set up interface's address, netmask (and broadcas? ).  Linux or
    Solaris uses ifname:number semantics to set IP address aliases. */
-static int
-if_set_prefix(struct interface *ifp, struct connected *ifc)
+int _ipkernel_if_set_prefix(struct interface *ifp, struct connected *ifc)
 {
   int ret;
-  struct ipstack_ifreq ifreq;
+  struct ipstack_ifreq ipstack_ifreq;
   struct ipstack_sockaddr_in addr;
   struct ipstack_sockaddr_in broad;
   struct ipstack_sockaddr_in mask;
@@ -394,12 +389,12 @@ if_set_prefix(struct interface *ifp, struct connected *ifc)
 
   ifaddr = *p;
 
-  ifreq_set_name(&ifreq, ifp);
+  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
 
   addr.sin_addr = p->prefix;
   addr.sin_family = p->family;
-  memcpy(&ifreq.ifr_addr, &addr, sizeof(struct ipstack_sockaddr_in));
-  ret = if_ioctl(SIOCSIFADDR, (caddr_t)&ifreq);
+  memcpy(&ipstack_ifreq.ifr_addr, &addr, sizeof(struct ipstack_sockaddr_in));
+  ret = _ipkernel_if_ioctl(IPSTACK_SIOCSIFADDR, (caddr_t)&ipstack_ifreq);
   if (ret < 0)
     return ret;
 
@@ -414,19 +409,19 @@ if_set_prefix(struct interface *ifp, struct connected *ifc)
     broad.sin_addr.s_addr = (addr.sin_addr.s_addr | ~mask.sin_addr.s_addr);
     broad.sin_family = p->family;
 
-    memcpy(&ifreq.ifr_broadaddr, &broad, sizeof(struct ipstack_sockaddr_in));
-    ret = if_ioctl(SIOCSIFBRDADDR, (caddr_t)&ifreq);
+    memcpy(&ipstack_ifreq.ifr_broadaddr, &broad, sizeof(struct ipstack_sockaddr_in));
+    ret = _ipkernel_if_ioctl(IPSTACK_SIOCSIFBRDADDR, (caddr_t)&ipstack_ifreq);
     if (ret < 0)
       return ret;
   }
 
   mask.sin_family = p->family;
 #ifdef SUNOS_5
-  memcpy(&mask, &ifreq.ifr_addr, sizeof(mask));
+  memcpy(&mask, &ipstack_ifreq.ifr_addr, sizeof(mask));
 #else
-  memcpy(&ifreq.ifr_netmask, &mask, sizeof(struct ipstack_sockaddr_in));
+  memcpy(&ipstack_ifreq.ifr_netmask, &mask, sizeof(struct ipstack_sockaddr_in));
 #endif /* SUNOS5 */
-  ret = if_ioctl(SIOCSIFNETMASK, (caddr_t)&ifreq);
+  ret = _ipkernel_if_ioctl(IPSTACK_SIOCSIFNETMASK, (caddr_t)&ipstack_ifreq);
   if (ret < 0)
     return ret;
 
@@ -435,22 +430,21 @@ if_set_prefix(struct interface *ifp, struct connected *ifc)
 
 /* Set up interface's address, netmask (and broadcas? ).  Linux or
    Solaris uses ifname:number semantics to set IP address aliases. */
-static int
-if_unset_prefix(struct interface *ifp, struct connected *ifc)
+int _ipkernel_if_unset_prefix(struct interface *ifp, struct connected *ifc)
 {
   int ret;
-  struct ipstack_ifreq ifreq;
+  struct ipstack_ifreq ipstack_ifreq;
   struct ipstack_sockaddr_in addr;
   struct prefix_ipv4 *p;
 
   p = (struct prefix_ipv4 *)ifc->address;
 
-  ifreq_set_name(&ifreq, ifp);
+  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
 
   memset(&addr, 0, sizeof(struct ipstack_sockaddr_in));
   addr.sin_family = p->family;
-  memcpy(&ifreq.ifr_addr, &addr, sizeof(struct ipstack_sockaddr_in));
-  ret = if_ioctl(SIOCSIFADDR, (caddr_t)&ifreq);
+  memcpy(&ipstack_ifreq.ifr_addr, &addr, sizeof(struct ipstack_sockaddr_in));
+  ret = _ipkernel_if_ioctl(IPSTACK_SIOCSIFADDR, (caddr_t)&ipstack_ifreq);
   if (ret < 0)
     return ret;
 
@@ -459,22 +453,21 @@ if_unset_prefix(struct interface *ifp, struct connected *ifc)
 #endif /* HAVE_STRUCT_IFALIASREQ */
 #endif /* HAVE_NETLINK */
 
-static int
-if_set_dst_prefix(struct interface *ifp, struct connected *ifc)
+int _ipkernel_if_set_dst_prefix(struct interface *ifp, struct connected *ifc)
 {
   int ret;
-  struct ipstack_ifreq ifreq;
+  struct ipstack_ifreq ipstack_ifreq;
   struct ipstack_sockaddr_in addr;
   struct prefix_ipv4 *p;
 
   p = (struct prefix_ipv4 *)ifc->destination;
 
-  ifreq_set_name(&ifreq, ifp);
+  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
 
   addr.sin_addr = p->prefix;
   addr.sin_family = p->family;
-  memcpy(&ifreq.ifr_addr, &addr, sizeof(struct ipstack_sockaddr_in));
-  ret = if_ioctl(SIOCSIFDSTADDR, (caddr_t)&ifreq);
+  memcpy(&ipstack_ifreq.ifr_addr, &addr, sizeof(struct ipstack_sockaddr_in));
+  ret = _ipkernel_if_ioctl(IPSTACK_SIOCSIFDSTADDR, (caddr_t)&ipstack_ifreq);
   if (ret < 0)
     return ret;
   return 0;
@@ -482,22 +475,21 @@ if_set_dst_prefix(struct interface *ifp, struct connected *ifc)
 
 /* Set up interface's address, netmask (and broadcas? ).  Linux or
    Solaris uses ifname:number semantics to set IP address aliases. */
-static int
-if_unset_dst_prefix(struct interface *ifp, struct connected *ifc)
+int _ipkernel_if_unset_dst_prefix(struct interface *ifp, struct connected *ifc)
 {
   int ret;
-  struct ipstack_ifreq ifreq;
+  struct ipstack_ifreq ipstack_ifreq;
   struct ipstack_sockaddr_in addr;
   struct prefix_ipv4 *p;
 
   p = (struct prefix_ipv4 *)ifc->destination;
 
-  ifreq_set_name(&ifreq, ifp);
+  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
 
   memset(&addr, 0, sizeof(struct ipstack_sockaddr_in));
   addr.sin_family = p->family;
-  memcpy(&ifreq.ifr_addr, &addr, sizeof(struct ipstack_sockaddr_in));
-  ret = if_ioctl(SIOCSIFDSTADDR, (caddr_t)&ifreq);
+  memcpy(&ipstack_ifreq.ifr_addr, &addr, sizeof(struct ipstack_sockaddr_in));
+  ret = _ipkernel_if_ioctl(IPSTACK_SIOCSIFDSTADDR, (caddr_t)&ipstack_ifreq);
   if (ret < 0)
     return ret;
 
@@ -509,7 +501,7 @@ if_unset_dst_prefix(struct interface *ifp, struct connected *ifc)
 #ifdef LINUX_IPV6
 #ifndef _LINUX_IN6_H
 /* linux/include/net/ipv6.h */
-struct in6_ifreq
+struct ipstack_in6_ifreq
 {
   struct ipstack_in6_addr ifr6_addr;
   zpl_uint32 ifr6_prefixlen;
@@ -518,42 +510,40 @@ struct in6_ifreq
 #endif /* _LINUX_IN6_H */
 
 /* Interface's address add/delete functions. */
-static int
-if_prefix_add_ipv6(struct interface *ifp, struct connected *ifc, int sec)
+int _ipkernel_if_prefix_add_ipv6(struct interface *ifp, struct connected *ifc, int sec)
 {
   int ret;
   struct prefix_ipv6 *p;
-  struct ipstack_in6_ifreq ifreq;
+  struct ipstack_in6_ifreq ipstack_ifreq;
 
   p = (struct prefix_ipv6 *)ifc->address;
 
-  memset(&ifreq, 0, sizeof(struct ipstack_in6_ifreq));
+  memset(&ipstack_ifreq, 0, sizeof(struct ipstack_in6_ifreq));
 
-  memcpy(&ifreq.ifr6_addr, &p->prefix, sizeof(struct ipstack_in6_addr));
-  ifreq.ifr6_ifindex = ifp->ifindex;
-  ifreq.ifr6_prefixlen = p->prefixlen;
+  memcpy(&ipstack_ifreq.ifr6_addr, &p->prefix, sizeof(struct ipstack_in6_addr));
+  ipstack_ifreq.ifr6_ifindex = ifp->ifindex;
+  ipstack_ifreq.ifr6_prefixlen = p->prefixlen;
 
-  ret = if_ioctl_ipv6(SIOCSIFADDR, (caddr_t)&ifreq);
+  ret = _ipkernel_if_ioctl_ipv6(IPSTACK_SIOCSIFADDR, (caddr_t)&ipstack_ifreq);
 
   return ret;
 }
 
-static int
-if_prefix_delete_ipv6(struct interface *ifp, struct connected *ifc, int sec)
+int _ipkernel_if_prefix_delete_ipv6(struct interface *ifp, struct connected *ifc, int sec)
 {
   int ret;
   struct prefix_ipv6 *p;
-  struct ipstack_in6_ifreq ifreq;
+  struct ipstack_in6_ifreq ipstack_ifreq;
 
   p = (struct prefix_ipv6 *)ifc->address;
 
-  memset(&ifreq, 0, sizeof(struct ipstack_in6_ifreq));
+  memset(&ipstack_ifreq, 0, sizeof(struct ipstack_in6_ifreq));
 
-  memcpy(&ifreq.ifr6_addr, &p->prefix, sizeof(struct ipstack_in6_addr));
-  ifreq.ifr6_ifindex = ifp->ifindex;
-  ifreq.ifr6_prefixlen = p->prefixlen;
+  memcpy(&ipstack_ifreq.ifr6_addr, &p->prefix, sizeof(struct ipstack_in6_addr));
+  ipstack_ifreq.ifr6_ifindex = ifp->ifindex;
+  ipstack_ifreq.ifr6_prefixlen = p->prefixlen;
 
-  ret = if_ioctl_ipv6(SIOCDIFADDR, (caddr_t)&ifreq);
+  ret = _ipkernel_if_ioctl_ipv6(IPSTACK_SIOCDIFADDR, (caddr_t)&ipstack_ifreq);
 
   return ret;
 }
@@ -562,8 +552,7 @@ if_prefix_delete_ipv6(struct interface *ifp, struct connected *ifc, int sec)
 #ifndef ND6_INFINITE_LIFETIME
 #define ND6_INFINITE_LIFETIME 0xffffffffL
 #endif /* ND6_INFINITE_LIFETIME */
-static int
-if_prefix_add_ipv6(struct interface *ifp, struct connected *ifc)
+int _ipkernel_if_prefix_add_ipv6(struct interface *ifp, struct connected *ifc)
 {
   int ret;
   struct ipstack_in6_aliasreq addreq;
@@ -600,14 +589,13 @@ if_prefix_add_ipv6(struct interface *ifp, struct connected *ifc)
   addreq.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
 #endif
 
-  ret = if_ioctl_ipv6(SIOCAIFADDR_IN6, (caddr_t)&addreq);
+  ret = _ipkernel_if_ioctl_ipv6(IPSTACK_SIOCAIFADDR_IN6, (caddr_t)&addreq);
   if (ret < 0)
     return ret;
   return 0;
 }
 
-static int
-if_prefix_delete_ipv6(struct interface *ifp, struct connected *ifc)
+int _ipkernel_if_prefix_delete_ipv6(struct interface *ifp, struct connected *ifc)
 {
   int ret;
   struct ipstack_in6_aliasreq addreq;
@@ -641,20 +629,18 @@ if_prefix_delete_ipv6(struct interface *ifp, struct connected *ifc)
   addreq.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
 #endif
 
-  ret = if_ioctl_ipv6(SIOCDIFADDR_IN6, (caddr_t)&addreq);
+  ret = _ipkernel_if_ioctl_ipv6(IPSTACK_SIOCDIFADDR_IN6, (caddr_t)&addreq);
   if (ret < 0)
     return ret;
   return 0;
 }
 #else
-static int
-if_prefix_add_ipv6(struct interface *ifp, struct connected *ifc)
+int _ipkernel_if_prefix_add_ipv6(struct interface *ifp, struct connected *ifc)
 {
   return 0;
 }
 
-static int
-if_prefix_delete_ipv6(struct interface *ifp, struct connected *ifc)
+int _ipkernel_if_prefix_delete_ipv6(struct interface *ifp, struct connected *ifc)
 {
   return 0;
 }
@@ -664,16 +650,16 @@ if_prefix_delete_ipv6(struct interface *ifp, struct connected *ifc)
 
 #endif /* HAVE_IPV6 */
 
-static int if_set_mac(struct interface *ifp, zpl_uint8 *mac, zpl_uint32 len)
+int _ipkernel_if_set_mac(struct interface *ifp, zpl_uint8 *mac, zpl_uint32 len)
 {
   int ret;
-  struct ipstack_ifreq ifreq;
+  struct ipstack_ifreq ipstack_ifreq;
 
-  memset(&ifreq, 0, sizeof(struct ipstack_ifreq));
-  ifreq_set_name(&ifreq, ifp);
-  ifreq.ifr_hwaddr.sa_family = ARPHRD_ETHER;
-  memcpy(ifreq.ifr_hwaddr.sa_data, mac, len);
-  ret = if_ioctl(SIOCSIFHWADDR, (caddr_t)&ifreq);
+  memset(&ipstack_ifreq, 0, sizeof(struct ipstack_ifreq));
+  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
+  ipstack_ifreq.ifr_hwaddr.sa_family = IPSTACK_ARPHRD_ETHER;
+  memcpy(ipstack_ifreq.ifr_hwaddr.sa_data, mac, len);
+  ret = _ipkernel_if_ioctl(SIOCSIFHWADDR, (caddr_t)&ipstack_ifreq);
   if (ret < 0)
   {
     zlog_info(MODULE_PAL, "can't unset interface flags");
@@ -682,17 +668,17 @@ static int if_set_mac(struct interface *ifp, zpl_uint8 *mac, zpl_uint32 len)
   return 0;
 }
 
-static int if_set_up(struct interface *ifp)
+int _ipkernel_if_set_up(struct interface *ifp)
 {
-  return if_set_flags(ifp, IFF_UP | IFF_RUNNING);
+  return if_set_flags(ifp, IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING);
 }
 
-static int if_set_down(struct interface *ifp)
+int _ipkernel_if_set_down(struct interface *ifp)
 {
-  return if_unset_flags(ifp, IFF_UP | IFF_RUNNING);
+  return if_unset_flags(ifp, IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING);
 }
 
-static int if_update_flags(struct interface *ifp, uint64_t flag)
+int _ipkernel_if_update_flags(struct interface *ifp, uint64_t flag)
 {
   return if_set_flags(ifp, flag);
 }
@@ -799,7 +785,7 @@ ifstat_update_proc (void)
   if (fp == NULL)
     {
       zlog_warn (MTYPE_INTERFACE, "Can't open proc file %s: %s",
-		 _PATH_PROC_NET_DEV, safe_strerror (errno));
+		 _PATH_PROC_NET_DEV, ipstack_strerror (ipstack_errno));
       return;
     }
 
@@ -832,265 +818,5 @@ ifstat_update_proc (void)
 
 #endif
 
-static int _ipkernel_create(struct interface *ifp)
-{
-  int ret = -1;
-  switch (ifp->if_type)
-  {
-  case IF_SERIAL:
-  case IF_ETHERNET:
-  case IF_GIGABT_ETHERNET:
-#ifdef ZPL_NSM_VLANETH
-  case IF_VLAN:
-  {
-    nsm_vlaneth_t *vlaneth = nsm_vlaneth_get(ifp);
-    if (vlaneth)
-    {
-      ret = _ipkernel_linux_create(vlaneth);
-    }
-  }
-#endif
-  break;
-#ifdef ZPL_NSM_TUNNEL
-  case IF_TUNNEL:
-  {
-    nsm_tunnel_t *tunnel = nsm_tunnel_get(ifp);
-    if (tunnel)
-    {
-      ret = _ipkernel_tunnel_create(tunnel);
-    }
-  }
-  break;
-#endif
-#ifdef ZPL_NSM_TRUNK
-  case IF_LAG:
-    ret = _ipkernel_bond_create(ifp);
-    break;
-#endif
-  case IF_LOOPBACK:
-    break;
-#ifdef ZPL_NSM_BRIDGE
-  case IF_BRIGDE:
-  {
-    nsm_bridge_t *bridge = nsm_bridge_get(ifp);
-    if (bridge)
-    {
-      bridge->add_member_cb = _ipkernel_bridge_add_interface;
-      bridge->del_member_cb = _ipkernel_bridge_del_interface;
-      bridge->get_member_cb = _ipkernel_bridge_list_interface;
-      ret = _ipkernel_bridge_create(bridge);
-    }
-  }
-  break;
-#endif
-  default:
-    break;
-  }
-  return ret;
-}
 
-static int _ipkernel_destroy(struct interface *ifp)
-{
-  int ret = -1;
-  switch (ifp->if_type)
-  {
-  case IF_SERIAL:
-  case IF_ETHERNET:
-  case IF_GIGABT_ETHERNET:
-#ifdef ZPL_NSM_VLANETH
-  case IF_VLAN:
-  {
-    nsm_vlaneth_t *vlaneth = nsm_vlaneth_get(ifp);
-    if (vlaneth)
-    {
-      ret = _ipkernel_linux_destroy(vlaneth);
-    }
-  }
-#endif
-  break;
-#ifdef ZPL_NSM_TUNNEL
-  case IF_TUNNEL:
-  {
-    nsm_tunnel_t *tunnel = nsm_tunnel_get(ifp);
-    if (tunnel)
-    {
-      ret = _ipkernel_tunnel_delete(tunnel);
-    }
-  }
-  break;
-#endif
-#ifdef ZPL_NSM_TRUNK
-  case IF_LAG:
-    ret = _ipkernel_bond_delete(ifp);
-    break;
-#endif
-  case IF_LOOPBACK:
-    break;
-#ifdef ZPL_NSM_BRIDGE
-  case IF_BRIGDE:
-  {
-    nsm_bridge_t *bridge = nsm_bridge_get(ifp);
-    if (bridge)
-    {
-      ret = _ipkernel_bridge_delete(bridge);
-    }
-  }
-  break;
-#endif
-  default:
-    break;
-  }
-  if (ret == 0)
-  {
-    if (pal_interface_up(ifp) != OK)
-    {
-      zlog_err(MODULE_PAL, "Unable to set L3 interface up %s(%s).",
-               ifp->name, safe_strerror(errno));
-      return ERROR;
-    }
 
-    if (pal_interface_refresh_flag(ifp) != OK)
-    {
-      zlog_err(MODULE_PAL, "Unable to get L3 interface  flags %s(%s).",
-               ifp->name, safe_strerror(errno));
-      return ERROR;
-    }
-    if (pal_interface_get_lladdr(ifp) != OK)
-    {
-      zlog_err(MODULE_PAL, "Unable to get L3 interface  mac %s(%s).",
-               ifp->name, safe_strerror(errno));
-      return ERROR;
-    }
-  }
-  return ret;
-}
-
-static int _ipkernel_change(struct interface *ifp)
-{
-  int ret = -1;
-  switch (ifp->if_type)
-  {
-  case IF_SERIAL:
-  case IF_ETHERNET:
-  case IF_GIGABT_ETHERNET:
-  case IF_VLAN:
-    break;
-#ifdef ZPL_NSM_TUNNEL
-  case IF_TUNNEL:
-  {
-    nsm_tunnel_t *tunnel = nsm_tunnel_get(ifp);
-    if (tunnel)
-    {
-      ret = _ipkernel_tunnel_change(tunnel);
-    }
-  }
-  break;
-#endif
-  case IF_LAG:
-    break;
-  case IF_LOOPBACK:
-    break;
-  case IF_BRIGDE:
-    break;
-  default:
-    break;
-  }
-  if (ret == 0)
-  {
-    if (pal_interface_up(ifp) != OK)
-    {
-      zlog_err(MODULE_PAL, "Unable to set L3 interface up %s(%s).",
-               ifp->name, safe_strerror(errno));
-      return ERROR;
-    }
-
-    if (pal_interface_refresh_flag(ifp) != OK)
-    {
-      zlog_err(MODULE_PAL, "Unable to get L3 interface  flags %s(%s).",
-               ifp->name, safe_strerror(errno));
-      return ERROR;
-    }
-    if (pal_interface_get_lladdr(ifp) != OK)
-    {
-      zlog_err(MODULE_PAL, "Unable to get L3 interface  mac %s(%s).",
-               ifp->name, safe_strerror(errno));
-      return ERROR;
-    }
-  }
-  return ret;
-}
-
-static int _ipkernel_set_vlan(struct interface *ifp, vlan_t vlan)
-{
-  if ((if_is_ethernet(ifp) && IF_ID_GET(ifp->ifindex)))
-  {
-#ifdef ZPL_NSM_VLANETH
-    nsm_vlaneth_t *vlaneth = nsm_vlaneth_get(ifp);
-    if (vlaneth)
-    {
-      if (_ipkernel_linux_change(vlaneth, vlan) == 0)
-      {
-        //if(ret == 0)
-        {
-          if (pal_interface_up(ifp) != OK)
-          {
-            zlog_err(MODULE_PAL, "Unable to set L3 interface up %s(%s).",
-                     ifp->name, safe_strerror(errno));
-            return ERROR;
-          }
-
-          if (pal_interface_refresh_flag(ifp) != OK)
-          {
-            zlog_err(MODULE_PAL, "Unable to get L3 interface  flags %s(%s).",
-                     ifp->name, safe_strerror(errno));
-            return ERROR;
-          }
-          if (pal_interface_get_lladdr(ifp) != OK)
-          {
-            zlog_err(MODULE_PAL, "Unable to get L3 interface  mac %s(%s).",
-                     ifp->name, safe_strerror(errno));
-            return ERROR;
-          }
-        }
-      }
-    }
-#endif
-    return ERROR;
-  }
-  return OK;
-}
-
-int ip_ifp_stack_init()
-{
-  //interface
-  pal_stack.ip_stack_up = if_set_up;
-  pal_stack.ip_stack_down = if_set_down;
-  pal_stack.ip_stack_update_flag = if_update_flags;
-  pal_stack.ip_stack_refresh_flag = if_get_flags;
-  pal_stack.ip_stack_ifindex = if_nametoindex; //if_get_ifindex;
-  pal_stack.ip_stack_set_vr = NULL;
-  pal_stack.ip_stack_set_mtu = if_set_mtu;
-  pal_stack.ip_stack_set_lladdr = if_set_mac;
-  pal_stack.ip_stack_get_lladdr = if_get_hwaddr;
-  pal_stack.ip_stack_set_metric = if_set_metric;
-
-  pal_stack.ip_stack_create = _ipkernel_create;
-  pal_stack.ip_stack_destroy = _ipkernel_destroy;
-  pal_stack.ip_stack_change = _ipkernel_change;
-  pal_stack.ip_stack_set_vlan = _ipkernel_set_vlan;
-  pal_stack.ip_stack_set_vlanpri = NULL;
-  pal_stack.ip_stack_promisc = NULL;
-  //ip address
-  pal_stack.ip_stack_dhcp = NULL;
-  pal_stack.ip_stack_ipv4_dstaddr_add = if_set_dst_prefix;
-  pal_stack.ip_stack_ipv4_dstaddr_del = if_unset_dst_prefix;
-  pal_stack.ip_stack_ipv4_replace = NULL;
-  pal_stack.ip_stack_ipv4_add = if_set_prefix;
-  pal_stack.ip_stack_ipv4_delete = if_unset_prefix;
-
-#ifdef HAVE_IPV6
-  pal_stack.ip_stack_ipv6_add = if_prefix_add_ipv6;
-  pal_stack.ip_stack_ipv6_delete = if_prefix_delete_ipv6;
-#endif
-  return OK;
-}

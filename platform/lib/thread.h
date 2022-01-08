@@ -241,8 +241,8 @@ extern struct thread *funcname_thread_ready (struct thread_master *,
 
 extern void thread_cancel (struct thread *);
 extern zpl_uint32  thread_cancel_event (struct thread_master *, void *);
-extern struct thread *thread_fetch (struct thread_master *, struct thread *);
-extern struct thread *thread_fetch_main(struct thread_master *m);
+extern struct thread *thread_fetch (struct thread_master *);
+extern struct thread *thread_mainloop(struct thread_master *);
 extern void thread_call (struct thread *);
 extern zpl_ulong thread_timer_remain_second (struct thread *);
 extern struct timeval thread_timer_remain(struct thread*);
@@ -257,7 +257,6 @@ extern zpl_ulong thread_consumed_time(struct timeval *after, struct timeval *bef
 #ifndef THREAD_MASTER_LIST
 extern struct thread_master * master_thread[];
 #endif
-extern struct thread *thread_current_get();
 //extern struct timeval recent_relative_time (void);
 
 //extern int cpu_thread_show(struct thread_master *m, struct vty *vty);

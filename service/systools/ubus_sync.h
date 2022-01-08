@@ -27,8 +27,8 @@ typedef int	(*ubus_sync_cb)(void *, char *, zpl_uint32);
 
 typedef struct ubus_sync_s
 {
-	int		accept;
-	int		sock;
+	zpl_socket_t		accept;
+	zpl_socket_t		sock;
 	char	buf[UBUS_SYNC_BUF_MAX];
 	zpl_uint32		len;
 	ubus_sync_cb cb[UBUS_SYNC_CB_MAX];

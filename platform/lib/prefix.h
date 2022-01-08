@@ -55,17 +55,17 @@ struct ipstack_ethaddr {
  * A struct prefix contains an address family, a prefix length, and an
  * address.  This can represent either a 'network prefix' as defined
  * by CIDR, where the 'host bits' of the prefix are 0
- * (e.g. AF_INET:10.0.0.0/8), or an address and netmask
- * (e.g. AF_INET:10.0.0.9/8), such as might be configured on an
+ * (e.g. IPSTACK_AF_INET:10.0.0.0/8), or an address and netmask
+ * (e.g. IPSTACK_AF_INET:10.0.0.9/8), such as might be configured on an
  * interface.
  */
 
 /* different OSes use different names */
-#if defined(AF_PACKET)
-#define AF_ETHERNET AF_PACKET
+#if defined(IPSTACK_AF_PACKET)
+#define AF_ETHERNET IPSTACK_AF_PACKET
 #else
-#if defined(AF_LINK)
-#define AF_ETHERNET AF_LINK
+#if defined(IPSTACK_AF_LINK)
+#define AF_ETHERNET IPSTACK_AF_LINK
 #endif
 #endif
 
@@ -161,9 +161,9 @@ union prefix46constptr
   const struct prefix_ipv6 *p6;
 } __attribute__ ((transparent_union));
 
-#ifndef INET_ADDRSTRLEN
-#define INET_ADDRSTRLEN 16
-#endif /* INET_ADDRSTRLEN */
+#ifndef IPSTACK_INET_ADDRSTRLEN
+#define IPSTACK_INET_ADDRSTRLEN 16
+#endif /* IPSTACK_INET_ADDRSTRLEN */
 
 #ifndef INET6_ADDRSTRLEN
 #define INET6_ADDRSTRLEN 46

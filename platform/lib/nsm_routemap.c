@@ -783,7 +783,7 @@ route_map_apply (struct route_map *map, struct prefix *prefix,
 
   if (recursion > RMAP_RECURSION_LIMIT)
     {
-      zlog (NULL, LOG_WARNING,
+      zlog (NULL, ZLOG_LEVEL_WARNING,
             "route-map recursion limit (%d) reached, discarding route",
             RMAP_RECURSION_LIMIT);
       recursion = 0;
@@ -1310,9 +1310,9 @@ route_map_rule_tag_compile (const char *arg)
   zpl_char *endptr;
   route_tag_t *tag;
 
-  errno = 0;
+  ipstack_errno = 0;
   tmp = strtoul(arg, &endptr, 0);
-  if (arg[0] == '\0' || *endptr != '\0' || errno || tmp > ROUTE_TAG_MAX)
+  if (arg[0] == '\0' || *endptr != '\0' || ipstack_errno || tmp > ROUTE_TAG_MAX)
     return NULL;
 
   tag = XMALLOC(MTYPE_ROUTE_MAP_COMPILED, sizeof(*tag));

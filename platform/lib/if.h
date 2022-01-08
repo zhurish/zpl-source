@@ -207,15 +207,17 @@ struct interface
    zpl_uint32  k_name_hash;
    ifindex_t k_ifindex;
 
-   zpl_uint32  phyid;
+   zpl_phyport_t  phyid;
 
    if_type_t if_type;
 
    if_mode_t if_mode;
    if_enca_t if_enca;
    zpl_bool dynamic;
+
+   zpl_bool online;  //板卡在线状态
    /* Zebra internal interface status */
-   zpl_uchar status;
+   zpl_uint32 status;
 #define ZEBRA_INTERFACE_ACTIVE (1 << 0)
 #define ZEBRA_INTERFACE_LINKDETECTION (1 << 2)
 #define ZEBRA_INTERFACE_ATTACH (1 << 3)
@@ -309,6 +311,9 @@ struct connected
    zpl_uint32 raw_status;
 };
 
+
+#define IF_UNIT_ALL (0xAFFFFFFF)
+
 #define IF_TYPE_GET(n) (((n) >> 27) & 0x1F)
 #define IF_UNIT_GET(n) (((n) >> 24) & 0x07)
 #define IF_SLOT_GET(n) (((n) >> 20) & 0x0F)
@@ -364,21 +369,21 @@ struct connected
 #ifndef IFF_NOTRAILERS
 #define IFF_NOTRAILERS 0x0
 #endif /* IFF_NOTRAILERS */
-#ifndef IFF_OACTIVE
-#define IFF_OACTIVE 0x0
-#endif /* IFF_OACTIVE */
-#ifndef IFF_SIMPLEX
-#define IFF_SIMPLEX 0x0
-#endif /* IFF_SIMPLEX */
-#ifndef IFF_LINK0
-#define IFF_LINK0 0x0
-#endif /* IFF_LINK0 */
-#ifndef IFF_LINK1
-#define IFF_LINK1 0x0
-#endif /* IFF_LINK1 */
-#ifndef IFF_LINK2
-#define IFF_LINK2 0x0
-#endif /* IFF_LINK2 */
+#ifndef IPSTACK_IFF_OACTIVE
+#define IPSTACK_IFF_OACTIVE 0x0
+#endif /* IPSTACK_IFF_OACTIVE */
+#ifndef IPSTACK_IFF_SIMPLEX
+#define IPSTACK_IFF_SIMPLEX 0x0
+#endif /* IPSTACK_IFF_SIMPLEX */
+#ifndef IPSTACK_IFF_LINK0
+#define IPSTACK_IFF_LINK0 0x0
+#endif /* IPSTACK_IFF_LINK0 */
+#ifndef IPSTACK_IFF_LINK1
+#define IPSTACK_IFF_LINK1 0x0
+#endif /* IPSTACK_IFF_LINK1 */
+#ifndef IPSTACK_IFF_LINK2
+#define IPSTACK_IFF_LINK2 0x0
+#endif /* IPSTACK_IFF_LINK2 */
 #ifndef IFF_NOXMIT
 #define IFF_NOXMIT 0x0
 #endif /* IFF_NOXMIT */
@@ -404,16 +409,16 @@ extern int if_cmp_func(struct interface *, struct interface *);
 extern struct interface *if_create(const char *name, zpl_uint32 namelen);
 extern struct interface *if_create_dynamic(const char *name, zpl_uint32 namelen);
 extern struct interface *if_lookup_by_index(ifindex_t);
-extern struct interface *if_lookup_exact_address(struct in_addr);
-extern struct interface *if_lookup_address(struct in_addr);
+extern struct interface *if_lookup_exact_address(struct ipstack_in_addr);
+extern struct interface *if_lookup_address(struct ipstack_in_addr);
 extern struct interface *if_lookup_prefix(struct prefix *prefix);
 extern struct interface *if_create_vrf_dynamic(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id);
 extern struct interface *if_create_vrf(const char *name, zpl_uint32 namelen,
                                        vrf_id_t vrf_id);
 extern struct interface *if_lookup_by_index_vrf(ifindex_t, vrf_id_t vrf_id);
-extern struct interface *if_lookup_exact_address_vrf(struct in_addr,
+extern struct interface *if_lookup_exact_address_vrf(struct ipstack_in_addr,
                                                      vrf_id_t vrf_id);
-extern struct interface *if_lookup_address_vrf(struct in_addr,
+extern struct interface *if_lookup_address_vrf(struct ipstack_in_addr,
                                                vrf_id_t vrf_id);
 extern struct interface *if_lookup_prefix_vrf(struct prefix *prefix,
                                               vrf_id_t vrf_id);
@@ -464,6 +469,9 @@ extern zpl_bool if_is_brigde(struct interface *ifp);
 extern zpl_bool if_is_brigde_member(struct interface *ifp);
 extern zpl_bool if_is_loop(struct interface *ifp);
 extern zpl_bool if_is_wireless(struct interface *ifp);
+
+extern zpl_bool if_is_online(struct interface *);
+extern int if_online(struct interface *ifp, zpl_bool enable);
 extern int if_up(struct interface *ifp);
 extern int if_down(struct interface *ifp);
 
@@ -501,8 +509,8 @@ extern ifindex_t ifname2ifindex(const char *ifname);
 extern ifindex_t ifname2ifindex_vrf(const char *ifname, vrf_id_t vrf_id);
 extern zpl_vlan_t  if_ifindex2vlan(ifindex_t ifindex);
 extern ifindex_t if_vlan2ifindex(zpl_vlan_t encavlan);
-extern zpl_uint32  if_ifindex2phy(ifindex_t ifindex);
-extern ifindex_t  if_phy2ifindex(zpl_uint32 phyid);
+extern zpl_phyport_t  if_ifindex2phy(ifindex_t ifindex);
+extern ifindex_t  if_phy2ifindex(zpl_phyport_t phyid);
 extern vrf_id_t  if_ifindex2vrfid(ifindex_t ifindex);
 
 
@@ -518,7 +526,7 @@ extern struct connected *connected_add_by_prefix(struct interface *,
 extern struct connected *connected_delete_by_prefix(struct interface *,
                                                     struct prefix *);
 extern struct connected *connected_lookup_address(struct interface *,
-                                                  struct in_addr);
+                                                  struct ipstack_in_addr);
 extern struct connected *connected_check(struct interface *ifp, struct prefix *p);
 
 extern int if_data_lock(void);

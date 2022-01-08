@@ -28,52 +28,52 @@
 
 
 
-
-/* Interface address modification. AF_UNSPEC */
-static int netlink_ioctl_interface(zpl_uint32 cmd, zpl_family_t family, struct interface *ifp)
+#ifdef ZPL_KERNEL_STACK_NETLINK
+/* Interface address modification. IPSTACK_AF_UNSPEC */
+static int _netlink_ioctl_interface(zpl_uint32 cmd, zpl_family_t family, struct interface *ifp)
 {
 	zpl_bool create = zpl_false;
 	zpl_uint32 flags = 0;
 	struct
 	{
-		struct nlmsghdr n;
-		struct ifinfomsg i;
+		struct ipstack_nlmsghdr n;
+		struct ipstack_ifinfomsg i;
 		char buf[NL_PKT_BUF_SIZE];
 	} req;
-	struct rtattr *linkinfo;
-	if (cmd == RTM_NEWLINK)
-		flags |= NLM_F_CREATE|NLM_F_EXCL;
-	if (cmd == RTM_DELLINK)
+	struct ipstack_rtattr *linkinfo;
+	if (cmd == IPSTACK_RTM_NEWLINK)
+		flags |= IPSTACK_NLM_F_CREATE|NLM_F_EXCL;
+	if (cmd == IPSTACK_RTM_DELLINK)
 		flags |= 0;
-	//if (cmd == RTM_NEWLINK)
-	//	flags |= NLM_F_CREATE|NLM_F_REPLACE;
+	//if (cmd == IPSTACK_RTM_NEWLINK)
+	//	flags |= IPSTACK_NLM_F_CREATE|IPSTACK_NLM_F_REPLACE;
 
 	struct nsm_vrf *zvrf = vrf_info_lookup(ifp->vrf_id);
 
 	memset(&req, 0, sizeof req - NL_PKT_BUF_SIZE);
 
-	//bytelen = (family == AF_INET ? 4 : 16);
+	//bytelen = (family == IPSTACK_AF_INET ? 4 : 16);
 
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST | flags;
+	req.n.nlmsg_len = IPSTACK_NLMSG_LENGTH(sizeof(struct ipstack_ifinfomsg));
+	req.n.nlmsg_flags = IPSTACK_NLM_F_REQUEST | flags;
 	req.n.nlmsg_type = cmd;
 
 	req.i.ifi_family = family;
 	req.i.__ifi_pad = 0;
 	req.i.ifi_type = 0;		/* ARPHRD_* */
-	if(!(flags & NLM_F_CREATE))
+	if(!(flags & IPSTACK_NLM_F_CREATE))
 		req.i.ifi_index = if_nametoindex(ifp->k_name);
 	req.i.ifi_flags = 0;
 	req.i.ifi_change = 0;		/* IFF_* change mask */
 
 	if (os_strlen(ifp->k_name))
 	{
-		addattr_l(&req.n, sizeof(req),
-			  IFLA_IFNAME, ifp->k_name, strlen(ifp->k_name)+1);
+		_netlink_addattr_l(&req.n, sizeof(req),
+			  IPSTACK_IFLA_IFNAME, ifp->k_name, strlen(ifp->k_name)+1);
 	}
 
 
-	linkinfo = addattr_nest(&req.n, sizeof(req), IFLA_LINKINFO);
+	linkinfo = _netlink_addattr_nest(&req.n, sizeof(req), IPSTACK_IFLA_LINKINFO);
 	/*
 	 * TYPE := { vlan | veth | vcan | dummy | ifb | macvlan | macvtap |
           bridge | bond | team | ipoib | ip6tnl | ipip | sit | vxlan |
@@ -91,19 +91,19 @@ static int netlink_ioctl_interface(zpl_uint32 cmd, zpl_family_t family, struct i
 	case IF_GIGABT_ETHERNET:
 		break;
 	case IF_TUNNEL:
-		addattr_l(&req.n, sizeof(req), IFLA_INFO_KIND, "tunnel", strlen("tunnel"));
+		_netlink_addattr_l(&req.n, sizeof(req), IFLA_INFO_KIND, "tunnel", strlen("tunnel"));
 		create = zpl_true;
 		break;
 	case IF_LAG:
-		addattr_l(&req.n, sizeof(req), IFLA_INFO_KIND, "bond", strlen("bond"));
+		_netlink_addattr_l(&req.n, sizeof(req), IFLA_INFO_KIND, "bond", strlen("bond"));
 		create = zpl_true;
 		break;
 	case IF_BRIGDE:		//brigde interface
-		addattr_l(&req.n, sizeof(req), IFLA_INFO_KIND, "bridge", strlen("bridge"));
+		_netlink_addattr_l(&req.n, sizeof(req), IFLA_INFO_KIND, "bridge", strlen("bridge"));
 		create = zpl_true;
 		break;
 	case IF_VLAN:
-		addattr_l(&req.n, sizeof(req), IFLA_INFO_KIND, "vlan", strlen("vlan"));
+		_netlink_addattr_l(&req.n, sizeof(req), IFLA_INFO_KIND, "vlan", strlen("vlan"));
 		create = zpl_true;
 		break;
 #ifdef CUSTOM_INTERFACE
@@ -115,20 +115,20 @@ static int netlink_ioctl_interface(zpl_uint32 cmd, zpl_family_t family, struct i
 	default:
 		break;
 	}
-	addattr_nest_end(&req.n, linkinfo);
+	_netlink_addattr_nest_end(&req.n, linkinfo);
 	if(create == zpl_true)
-		return netlink_talk(&req.n, &zvrf->netlink_cmd, zvrf);
+		return _netlink_talk(&req.n, &zvrf->netlink_cmd, zvrf);
 	return ERROR;
 }
 
 
-int kernel_create_interface(struct interface *ifp)
+int _netlink_create_interface(struct interface *ifp)
 {
-	return netlink_ioctl_interface(RTM_NEWLINK, AF_UNSPEC, ifp);
+	return _netlink_ioctl_interface(IPSTACK_RTM_NEWLINK, IPSTACK_AF_UNSPEC, ifp);
 }
 
-int kernel_destroy_interface(struct interface *ifp)
+int _netlink_destroy_interface(struct interface *ifp)
 {
-	return netlink_ioctl_interface(RTM_DELLINK, AF_UNSPEC, ifp);
+	return _netlink_ioctl_interface(IPSTACK_RTM_DELLINK, IPSTACK_AF_UNSPEC, ifp);
 }
-
+#endif

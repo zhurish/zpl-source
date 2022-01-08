@@ -1018,7 +1018,7 @@ static int iw_client_task(iw_client_t *iw_client)
 		pal_interface_get_lladdr(ifp);
 	}*/
 	os_sleep(5);
-	host_config_load_waitting();
+	host_waitting_loadconfig();
 	while(1)
 	{
 		if(iw_client->scan_enable)

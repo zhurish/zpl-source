@@ -176,6 +176,33 @@ void buffer_put(struct buffer *b, const void *p, zpl_size_t size)
 	}
 }
 
+void *buffer_dataptr(struct buffer *b)
+{
+	struct buffer_data *data = b->tail;
+	return (data->data + data->cp);
+}
+
+void buffer_putemptyeize(struct buffer *b, zpl_size_t len)
+{
+	struct buffer_data *data = b->tail;
+	//const char *ptr = p;
+
+	/* We use even last one byte of data buffer. */
+	while (len)
+	{
+		zpl_size_t chunk;
+
+		/* If there is no data buffer add it. */
+		if (data == NULL || data->cp == b->size)
+			data = buffer_add(b);
+
+		chunk = ((len <= (b->size - data->cp)) ? len : (b->size - data->cp));
+		//memcpy((data->data + data->cp), ptr, chunk);
+		len -= chunk;
+		//ptr += chunk;
+		data->cp += chunk;
+	}
+}
 /* Insert character into the buffer. */
 void buffer_putc(struct buffer *b, zpl_uchar c)
 {
@@ -188,6 +215,17 @@ void buffer_putstr(struct buffer *b, const char *c)
 	buffer_put(b, c, strlen(c));
 }
 
+zpl_uint32 buffer_size(struct buffer *b)
+{
+	struct buffer_data *d = NULL;
+	zpl_size_t nbyte = 0;
+
+	for (d = b->head; d; d = d->next)
+	{
+		nbyte += (d->cp - d->sp);
+	}
+	return nbyte;
+}
 /* Keep flushing data to the fd until the buffer is empty or an error is
  encountered or the operation would block. */
 buffer_status_t buffer_flush_all(struct buffer *b, zpl_socket_t fd)
@@ -202,7 +240,7 @@ buffer_status_t buffer_flush_all(struct buffer *b, zpl_socket_t fd)
 	/* Flush all data. */
 	while ((ret = buffer_flush_available(b, fd)) == BUFFER_PENDING)
 	{
-		if ((b->head == head) && (head_sp == head->sp) && (errno != EINTR))
+		if ((b->head == head) && (head_sp == head->sp) && (ipstack_errno != IPSTACK_ERRNO_EINTR))
 			/* No data was flushed, so kernel buffer must be full. */
 			return ret;
 		head_sp = (head = b->head)->sp;
@@ -219,8 +257,8 @@ buffer_status_t buffer_flush_window(struct buffer *b, zpl_socket_t fd, zpl_uint3
 	zpl_uint32 nbytes;
 	zpl_uint32 iov_alloc;
 	zpl_uint32 iov_index;
-	struct iovec *iov;
-	struct iovec small_iov[3];
+	struct ipstack_iovec *iov;
+	struct ipstack_iovec small_iov[3];
 	zpl_char more[] = " --More-- ";
 	zpl_char erase[] =
 	{ 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, ' ', ' ', ' ',
@@ -333,7 +371,7 @@ buffer_status_t buffer_flush_window(struct buffer *b, zpl_socket_t fd, zpl_uint3
 	/* IOV_MAX are normally defined in <sys/uio.h> , Posix.1g.
 	 example: Solaris2.6 are defined IOV_MAX size at 16.     */
 	{
-		struct iovec *c_iov = iov;
+		struct ipstack_iovec *c_iov = iov;
 		nbytes = 0; /* Make sure it's initialized. */
 
 		while (iov_index > 0)
@@ -345,7 +383,7 @@ buffer_status_t buffer_flush_window(struct buffer *b, zpl_socket_t fd, zpl_uint3
 			if (nbytes < 0)
 			{
 				zlog_warn(MODULE_DEFAULT, "%s: writev to fd %d failed: %s",
-						__func__, fd, safe_strerror(errno));
+						__func__, fd, ipstack_strerror(ipstack_errno));
 				break;
 			}
 
@@ -358,7 +396,7 @@ buffer_status_t buffer_flush_window(struct buffer *b, zpl_socket_t fd, zpl_uint3
 		nbytes = ipstack_writev(fd, iov, iov_index);
 	if (nbytes < 0)
 		zlog_warn(MODULE_DEFAULT, "%s: writev to fd %d failed: %s", __func__, fd,
-				safe_strerror(errno));
+				ipstack_strerror(ipstack_errno));
 #endif /* IOV_MAX */
 
 	/* Free printed buffer data. */
@@ -397,7 +435,7 @@ buffer_status_t buffer_flush_available(struct buffer *b, zpl_socket_t fd)
 
 	struct buffer_data *d = NULL;
 	zpl_size_t written = 0;
-	struct iovec iov[MAX_CHUNKS];
+	struct ipstack_iovec iov[MAX_CHUNKS];
 	zpl_size_t iovcnt = 0;
 	zpl_size_t nbyte = 0;
 
@@ -416,11 +454,11 @@ buffer_status_t buffer_flush_available(struct buffer *b, zpl_socket_t fd)
 	/* only place where written should be sign compared */
 	if (written < 0)
 	{
-		if (ERRNO_IO_RETRY(errno))
+		if (IPSTACK_ERRNO_RETRY(ipstack_errno))
 			/* Calling code should try again later. */
 			return BUFFER_PENDING;
 		zlog_warn(MODULE_DEFAULT, "%s: write error on fd %d: %s", __func__, fd,
-				safe_strerror(errno));
+				ipstack_strerror(ipstack_errno));
 		return BUFFER_ERROR;
 	}
 	if(written > nbyte || written > 0xffff)
@@ -478,12 +516,12 @@ buffer_status_t buffer_write(struct buffer *b, zpl_socket_t fd, const void *p,
 		nbytes = ipstack_writev(fd, p, size);
 		if (nbytes < 0)
 		{
-			if (ERRNO_IO_RETRY(errno))
+			if (IPSTACK_ERRNO_RETRY(ipstack_errno))
 				nbytes = 0;
 			else
 			{
 				zlog_warn(MODULE_DEFAULT, "%s: write error on fd %d: %s",
-						__func__, fd, safe_strerror(errno));
+						__func__, fd, ipstack_strerror(ipstack_errno));
 				return BUFFER_ERROR;
 			}
 		}

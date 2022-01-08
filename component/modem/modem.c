@@ -415,9 +415,9 @@ int modem_interface_update_kernel(modem_t *modem, char *name)
 		//((struct interface *)modem->eth0)->k_ifindex = pal_interface_ifindex(name);
 		nsm_pal_interface_up(modem->eth0);
 		nsm_interface_update_kernel(modem->eth0, name);
-		if(!(ifp->flags & IFF_NOARP))
+		if(!(ifp->flags & IPSTACK_IFF_NOARP))
 		{
-			ifp->flags |= IFF_NOARP;
+			ifp->flags |= IPSTACK_IFF_NOARP;
 			pal_interface_update_flag(ifp, ifp->flags);
 		}
 	}

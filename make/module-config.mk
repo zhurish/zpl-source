@@ -4,6 +4,9 @@ include $(ZPL_MAKE_DIR)/module-dir.mk
 include $(ZPL_MAKE_DIR)/multimedia-config.mk
 include $(ZPL_MAKE_DIR)/pjsip-config.mk
 
+#
+# platform
+#
 ZPLPRODS += $(PLATFORM_ROOT)/os
 ZPLPRODS += $(PLATFORM_ROOT)/lib
 ifeq ($(strip $(ZPL_SHELL_MODULE)),true)
@@ -83,6 +86,9 @@ ZPL_DEFINE	+= -DZPL_NSM_RTPL
 endif
 
 
+#
+# service
+#
 ifeq ($(strip $(ZPL_SERVICE_MODULE)),true)
 ZPLPRODS += $(SERVICE_ROOT)/systools
 ZPL_INCLUDE += -I$(SERVICE_ROOT)/systools
@@ -144,58 +150,9 @@ endif
 endif #($(strip $(ZPL_SERVICE_MODULE)),true)
 
 
-ifeq ($(strip $(ZPL_PRODUCT_MODULE)),true)
-
-ZPLPRODS += $(PRODUCT_ROOT)/bsp
-ZPL_INCLUDE += -I$(PRODUCT_ROOT)/bsp
-ZPL_DEFINE += -DZPL_BSP_MODULE
-
-
-ifeq ($(strip $(ZPL_PRODUCT_SDK_MODULE)),true)
-SW_SDK_ROOT=$(PRODUCT_ROOT)/sdk
-ZPLPRODS += $(PRODUCT_ROOT)/sdk
-ZPL_INCLUDE += -I$(PRODUCT_ROOT)/sdk
-ZPL_DEFINE += -DZPL_SDK_MODULE
-ZPL_DEFINE += -DZPL_SDK_BCM53125
-endif #($(strip $(ZPL_PRODUCT_SDK_MODULE)),true)
-
-endif #($(strip $(ZPL_PRODUCT_MODULE)),true)
-
-
-#ZPL_ABSTRACT_MODULE
-ifeq ($(strip $(ZPL_ABSTRACT_MODULE)),true)
-
-ZPL_DEFINE += -DZPL_PAL_MODULE
-
-ifeq ($(strip $(ZPL_KERNEL_STACK_MODULE)),true)
-ZPLPRODS += $(ABSTRACT_ROOT)/pal/kernel
-ZPL_INCLUDE += -I$(ABSTRACT_ROOT)/pal/kernel
-endif
-ifeq ($(strip $(ZPL_IPCOM_STACK_MODULE)),true)
-ZPLPRODS += $(ABSTRACT_ROOT)/pal/ipstack
-ZPL_INCLUDE += -I$(ABSTRACT_ROOT)/pal/ipstack
-endif
-
-ifeq ($(strip $(ZPL_HAL_MODULE)),true)
-ZPLPRODS += $(ABSTRACT_ROOT)/hal
-ZPL_INCLUDE += -I$(ABSTRACT_ROOT)/hal
-ZPL_DEFINE += -DZPL_HAL_MODULE
-endif #($(strip $(ZPL_HAL_MODULE)),true)
-
-endif #ifeq ($(strip $(ZPL_PAL_MODULE)),true)
-
-ifeq ($(strip $(ZPL_NSM_DHCP)),true)
-DHCP_ROOT=$(COMPONENT_ROOT)/udhcp
-ZPLPRODS += $(DHCP_ROOT)
-ZPL_INCLUDE += -I$(DHCP_ROOT)
-
-ZPL_DEFINE += -DZPL_DHCP_MODULE
-ZPL_DEFINE += -DZPL_DHCPC_MODULE
-ZPL_DEFINE += -DZPL_DHCPD_MODULE
-
-endif
-
-
+#
+# component
+#
 ifeq ($(strip $(ZPL_COMPONENT_MODULE)),true)
 
 ifeq ($(strip $(ZPL_MODEM_MODULE)),true)
@@ -206,55 +163,15 @@ ZPL_DEFINE += -DZPL_MODEM_MODULE
 endif
 
 
+ifeq ($(strip $(ZPL_NSM_DHCP)),true)
+DHCP_ROOT=$(COMPONENT_ROOT)/udhcp
+ZPLPRODS += $(DHCP_ROOT)
+ZPL_INCLUDE += -I$(DHCP_ROOT)
 
-
-ifeq ($(strip $(ZPL_LIBSSH_MODULE)),true)
-LIBSSH_ROOT=$(COMPONENT_ROOT)/ssh
-
-ZPLPRODS += $(LIBSSH_ROOT)
-ZPL_INCLUDE += -I$(LIBSSH_ROOT)
-ZPL_INCLUDE += -I$(LIBSSH_ROOT)/include
-
-ifeq ($(ZPL_BUILD_ARCH),X86_64)
-ZPL_INCLUDE += -I$(LIBSSH_ROOT)/include
-#ZPLOS_LDLIBS += -lutil -lssl -lcrypto -lz
-endif #($(ZPL_BUILD_ARCH),X86_64)
-
-ifeq ($(ZPL_BUILD_ARCH),MIPS)
-ifneq ($(OPENEWRT_BASE),)
-OPENWRT_INCLUDE := -I$(OPENEWRT_BASE)/include -I$(OPENEWRT_BASE)/usr/include
-OPENWRT_LDFLAGS := -L$(OPENEWRT_BASE)/lib -L$(OPENEWRT_BASE)/usr/lib
-else
-ZPLEX_INCLUDE += -I$(EXTERNSION_ROOT)/openssl/mipsl/include
-ZPLEX_LDFLAGS += -L$(EXTERNSION_ROOT)/openssl/mipsl/lib 
-ZPLEX_INCLUDE += -I$(EXTERNSION_ROOT)/zlib/mipsl/zlib/include
-ZPLEX_LDFLAGS += -L$(EXTERNSION_ROOT)/zlib/mipsl/zlib/lib
-endif #($(OPENEWRT_BASE),)
-#ZPLEX_LDLIBS += -lutil -lssl -lcrypto -lz
-endif #($(ZPL_BUILD_ARCH),MIPS)
-
-ZPL_DEFINE += -DZPL_LIBSSH_MODULE
-#ZPLEX_LDLIBS += -lutil -lssl -lcrypto -lz
-
-endif #($(strip $(ZPL_LIBSSH_MODULE)),true)
-
-
-ifeq ($(strip $(ZPL_OPENSSL_MODULE)),true)
-ifneq ($(ZPL_BUILD_ARCH),X86_64)
-ZPLEX_DIR += $(EXTERNSION_ROOT)/openssl/openssl-1.1.1/
-export PLATFORM=linux-armv4
-ZPLEX_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include
-ZPLEX_LDFLAGS += -L$(ZPL_INSTALL_ROOTFS_DIR)/lib
-ZPLEX_LDLIBS += -lutil -lssl -lcrypto
-ZPLEX_DIR += $(EXTERNSION_ROOT)/zlib/zlib-1.2.11/
-ZPL_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include
-ZPLEX_LDFLAGS += -L$(ZPL_INSTALL_ROOTFS_DIR)/lib
-ZPLEX_LDLIBS += -lz
-else 
-ZPLOS_LDLIBS += -lutil -lssl -lcrypto -lz
-endif #($(ZPL_BUILD_ARCH),X86_64)
-ZPL_DEFINE += -DZPL_OPENSSL_MODULE
-endif #($(strip $(ZPL_OPENSSL_MODULE)),true)
+ZPL_DEFINE += -DZPL_DHCP_MODULE
+ZPL_DEFINE += -DZPL_DHCPC_MODULE
+ZPL_DEFINE += -DZPL_DHCPD_MODULE
+endif
 
 
 ifeq ($(strip $(ZPL_SQLITE_MODULE)),true)
@@ -316,14 +233,119 @@ ZPL_DEFINE += -DZPL_ONVIF_SSL -DWITH_OPENSSL
 endif
 endif	
 
+
+
+ifeq ($(strip $(ZPL_LIBSSH_MODULE)),true)
+LIBSSH_ROOT=$(COMPONENT_ROOT)/ssh
+
+ZPLPRODS += $(LIBSSH_ROOT)
+ZPL_INCLUDE += -I$(LIBSSH_ROOT)
+ZPL_INCLUDE += -I$(LIBSSH_ROOT)/include
+
+ifeq ($(ZPL_BUILD_ARCH),X86_64)
+ZPL_INCLUDE += -I$(LIBSSH_ROOT)/include
+#ZPLOS_LDLIBS += -lutil -lssl -lcrypto -lz
+endif #($(ZPL_BUILD_ARCH),X86_64)
+
+ifeq ($(ZPL_BUILD_ARCH),MIPS)
+ifneq ($(OPENEWRT_BASE),)
+OPENWRT_INCLUDE := -I$(OPENEWRT_BASE)/include -I$(OPENEWRT_BASE)/usr/include
+OPENWRT_LDFLAGS := -L$(OPENEWRT_BASE)/lib -L$(OPENEWRT_BASE)/usr/lib
+else
+ZPLEX_INCLUDE += -I$(EXTERNSION_ROOT)/openssl/mipsl/include
+ZPLEX_LDFLAGS += -L$(EXTERNSION_ROOT)/openssl/mipsl/lib 
+ZPLEX_INCLUDE += -I$(EXTERNSION_ROOT)/zlib/mipsl/zlib/include
+ZPLEX_LDFLAGS += -L$(EXTERNSION_ROOT)/zlib/mipsl/zlib/lib
+endif #($(OPENEWRT_BASE),)
+#ZPLEX_LDLIBS += -lutil -lssl -lcrypto -lz
+endif #($(ZPL_BUILD_ARCH),MIPS)
+
+ZPL_DEFINE += -DZPL_LIBSSH_MODULE
+#ZPLEX_LDLIBS += -lutil -lssl -lcrypto -lz
+
+endif #($(strip $(ZPL_LIBSSH_MODULE)),true)
+
 endif#($(strip $(ZPL_COMPONENT_MODULE)),true)
 
+#
+# Externsion openssl
+#
+ifeq ($(strip $(ZPL_OPENSSL_MODULE)),true)
+ifneq ($(ZPL_BUILD_ARCH),X86_64)
+ZPLEX_DIR += $(EXTERNSION_ROOT)/openssl/openssl-1.1.1/
+export PLATFORM=linux-armv4
+ZPLEX_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include
+ZPLEX_LDFLAGS += -L$(ZPL_INSTALL_ROOTFS_DIR)/lib
+ZPLEX_LDLIBS += -lutil -lssl -lcrypto
+ZPLEX_DIR += $(EXTERNSION_ROOT)/zlib/zlib-1.2.11/
+ZPL_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include
+ZPLEX_LDFLAGS += -L$(ZPL_INSTALL_ROOTFS_DIR)/lib
+ZPLEX_LDLIBS += -lz
+else 
+ZPLOS_LDLIBS += -lutil -lssl -lcrypto -lz
+endif #($(ZPL_BUILD_ARCH),X86_64)
+ZPL_DEFINE += -DZPL_OPENSSL_MODULE
+endif #($(strip $(ZPL_OPENSSL_MODULE)),true)
 
+#
+# ABSTRACT HAL PAL
+#
+ifeq ($(strip $(ZPL_ABSTRACT_MODULE)),true)
+
+ifeq ($(strip $(ZPL_HAL_MODULE)),true)
+ZPLPRODS += $(ABSTRACT_ROOT)/hal
+ZPL_INCLUDE += -I$(ABSTRACT_ROOT)/hal
+ZPL_DEFINE += -DZPL_HAL_MODULE
+endif #($(strip $(ZPL_HAL_MODULE)),true)
+
+ZPL_DEFINE += -DZPL_PAL_MODULE
+
+ifeq ($(strip $(ZPL_KERNEL_STACK_MODULE)),true)
+ZPLPRODS += $(ABSTRACT_ROOT)/pal/kernel
+ZPL_INCLUDE += -I$(ABSTRACT_ROOT)/pal/kernel
+ifeq ($(strip $(ZPL_KERNEL_STACK_NETLINK)),true)
+ZPL_DEFINE += -DZPL_KERNEL_STACK_NETLINK
+endif
+ifeq ($(strip $(ZPL_KERNEL_SORF_FORWARDING)),true)
+ZPL_DEFINE += -DZPL_KERNEL_SORF_FORWARDING
+endif
+endif
+
+ifeq ($(strip $(ZPL_IPCOM_STACK_MODULE)),true)
+ZPLPRODS += $(ABSTRACT_ROOT)/pal/ipstack
+ZPL_INCLUDE += -I$(ABSTRACT_ROOT)/pal/ipstack
+endif
+
+endif #ifeq ($(strip $(ZPL_ABSTRACT_MODULE)),true)
+
+#
+# PRODUCT
+#
+ifeq ($(strip $(ZPL_PRODUCT_MODULE)),true)
+
+ZPLPRODS += $(PRODUCT_ROOT)/bsp
+ZPL_INCLUDE += -I$(PRODUCT_ROOT)/bsp
+ZPL_DEFINE += -DZPL_BSP_MODULE
+
+ifeq ($(strip $(ZPL_PRODUCT_SDK_MODULE)),true)
+SW_SDK_ROOT=$(PRODUCT_ROOT)/sdk
+ZPLPRODS += $(PRODUCT_ROOT)/sdk
+ZPL_INCLUDE += -I$(PRODUCT_ROOT)/sdk
+ZPL_DEFINE += -DZPL_SDK_MODULE
+ZPL_DEFINE += -DZPL_SDK_BCM53125
+endif #($(strip $(ZPL_PRODUCT_SDK_MODULE)),true)
+
+endif #($(strip $(ZPL_PRODUCT_MODULE)),true)
+
+
+
+
+#
+#application
+#
 ifeq ($(strip $(ZPL_APPLICATION_MODULE)),true)
 ZPLPRODS += $(APP_ROOT)
-
 ZPL_INCLUDE += -I$(APP_ROOT)
-
 ZPL_DEFINE += -DZPL_APP_MODULE
 
 ifeq ($(strip $(ZPL_APP_X5_MODULE)),true)
@@ -337,7 +359,22 @@ endif
 endif
 
 
+#
+#TOOLS
+#
 ifeq ($(strip $(ZPL_TOOLS_MODULE)),true)
+
+ifeq ($(strip $(ZPL_VTYSH_MODULE)),true)
+ZPLPRODS += $(TOOLS_ROOT)/vtysh
+ZPL_INCLUDE += -I$(TOOLS_ROOT)/vtysh
+ZPL_DEFINE += -DZPL_VTYSH_MODULE
+endif
+
+ifeq ($(strip $(ZPL_WATCHDOG_MODULE)),true)
+ZPLPRODS += $(TOOLS_ROOT)/watchdog
+ZPL_INCLUDE += -I$(TOOLS_ROOT)/watchdog
+ZPL_DEFINE += -DZPL_WATCHDOG_MODULE
+endif
 
 ifeq ($(strip $(ZPL_TOOLS_PROCESS)),true)
 ZPLPRODS += $(TOOLS_ROOT)/process
@@ -353,13 +390,6 @@ endif
 ifeq ($(strip $(ZPL_TOOLS_SYSTEM)),true)
 ZPLPRODS += $(TOOLS_ROOT)/system
 ZPL_INCLUDE += -I$(TOOLS_ROOT)/system
-endif
-
-
-ifeq ($(strip $(ZPL_VTYSH_MODULE)),true)
-ZPLPRODS += $(TOOLS_ROOT)/vtysh
-ZPL_INCLUDE += -I$(TOOLS_ROOT)/vtysh
-ZPL_DEFINE += -DZPL_VTYSH_MODULE
 endif
 
 endif

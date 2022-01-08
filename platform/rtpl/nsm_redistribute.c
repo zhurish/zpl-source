@@ -45,7 +45,7 @@
 int
 zebra_check_addr (struct prefix *p)
 {
-  if (p->family == AF_INET)
+  if (p->family == IPSTACK_AF_INET)
     {
       zpl_uint32 addr;
 
@@ -53,16 +53,16 @@ zebra_check_addr (struct prefix *p)
       addr = ntohl (addr);
 
       if (IPV4_NET127 (addr)
-          || IN_CLASSD (addr)
+          || IPSTACK_IN_CLASSD (addr)
           || IPV4_LINKLOCAL(addr))
 	return 0;
     }
 #ifdef HAVE_IPV6
-  if (p->family == AF_INET6)
+  if (p->family == IPSTACK_AF_INET6)
     {
-      if (IN6_IS_ADDR_LOOPBACK (&p->u.prefix6))
+      if (IPSTACK_IN6_IS_ADDR_LOOPBACK (&p->u.prefix6))
     	  return 0;
-      if (IN6_IS_ADDR_LINKLOCAL(&p->u.prefix6))
+      if (IPSTACK_IN6_IS_ADDR_LINK_LOCAL(&p->u.prefix6))
     	  return 0;
     }
 #endif /* HAVE_IPV6 */
@@ -72,14 +72,14 @@ zebra_check_addr (struct prefix *p)
 int
 is_default (struct prefix *p)
 {
-  if (p->family == AF_INET)
+  if (p->family == IPSTACK_AF_INET)
     if (p->u.prefix4.s_addr == 0 && p->prefixlen == 0)
       return 1;
 #ifdef HAVE_IPV6
 #if 0  /* IPv6 default separation is now pending until protocol daemon
           can handle that. */
-  if (p->family == AF_INET6)
-    if (IN6_IS_ADDR_UNSPECIFIED (&p->u.prefix6) && p->prefixlen == 0)
+  if (p->family == IPSTACK_AF_INET6)
+    if (IPSTACK_IN6_IS_ADDR_UNSPECIFIED (&p->u.prefix6) && p->prefixlen == 0)
       return 1;
 #endif /* 0 */
 #endif /* HAVE_IPV6 */
@@ -100,7 +100,7 @@ zebra_redistribute_default (struct zserv *client, vrf_id_t vrf_id)
 
   /* Lookup default route. */
   memset (&p, 0, sizeof (struct prefix_ipv4));
-  p.family = AF_INET;
+  p.family = IPSTACK_AF_INET;
 
   /* Lookup table.  */
   table = nsm_vrf_table (AFI_IP, SAFI_UNICAST, vrf_id);
@@ -120,7 +120,7 @@ zebra_redistribute_default (struct zserv *client, vrf_id_t vrf_id)
 #ifdef HAVE_IPV6
   /* Lookup default route. */
   memset (&p6, 0, sizeof (struct prefix_ipv6));
-  p6.family = AF_INET6;
+  p6.family = IPSTACK_AF_INET6;
 
   /* Lookup table.  */
   table = nsm_vrf_table (AFI_IP6, SAFI_UNICAST, vrf_id);
@@ -194,12 +194,12 @@ redistribute_add (struct prefix *p, struct rib *rib, struct rib *rib_old)
            vrf_bitmap_check (client->redist_default, rib->vrf_id))
           || vrf_bitmap_check (client->redist[rib->type], rib->vrf_id))
         {
-          if (p->family == AF_INET)
+          if (p->family == IPSTACK_AF_INET)
 	    {
 	      client->redist_v4_add_cnt++;
 	      zsend_route_multipath (ZEBRA_IPV4_ROUTE_ADD, client, p, rib);
 	    }
-          if (p->family == AF_INET6)
+          if (p->family == IPSTACK_AF_INET6)
 	    {
 	      client->redist_v6_add_cnt++;
 	      zsend_route_multipath (ZEBRA_IPV6_ROUTE_ADD, client, p, rib);
@@ -215,9 +215,9 @@ redistribute_add (struct prefix *p, struct rib *rib, struct rib *rib_old)
            * to the client, then we must ensure the old route is explicitly
            * withdrawn.
            */
-          if (p->family == AF_INET)
+          if (p->family == IPSTACK_AF_INET)
             zsend_route_multipath (ZEBRA_IPV4_ROUTE_DELETE, client, p, rib_old);
-          if (p->family == AF_INET6)
+          if (p->family == IPSTACK_AF_INET6)
             zsend_route_multipath (ZEBRA_IPV6_ROUTE_DELETE, client, p, rib_old);
         }
     }
@@ -239,10 +239,10 @@ redistribute_delete (struct prefix *p, struct rib *rib)
            vrf_bitmap_check (client->redist_default, rib->vrf_id))
           || vrf_bitmap_check (client->redist[rib->type], rib->vrf_id))
 	{
-	  if (p->family == AF_INET)
+	  if (p->family == IPSTACK_AF_INET)
 	    zsend_route_multipath (ZEBRA_IPV4_ROUTE_DELETE, client, p, rib);
 #ifdef HAVE_IPV6
-	  if (p->family == AF_INET6)
+	  if (p->family == IPSTACK_AF_INET6)
 	    zsend_route_multipath (ZEBRA_IPV6_ROUTE_DELETE, client, p, rib);
 #endif /* HAVE_IPV6 */
 	}

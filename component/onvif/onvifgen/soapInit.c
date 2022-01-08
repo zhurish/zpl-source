@@ -29,7 +29,7 @@ static int onvif_module_init()
 {
   soap_init1(&soap, SOAP_IO_UDP);
   /* reuse address */
-  soap.bind_flags = SO_REUSEADDR;
+  soap.bind_flags = IPSTACK_SO_REUSEADDR;
   /* bind */
   if (!soap_valid_socket(soap_bind(&soap, NULL, PORT, 100)))
   { soap_print_fault(&soap, stderr);
@@ -43,8 +43,8 @@ int aaamain()
   if (MULTICAST_GROUP)
   { struct ip_mreq mreq;
     mreq.imr_multiaddr.s_addr = ipstack_inet_addr(MULTICAST_GROUP);
-    mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-    if (setsockopt(soap.socket, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0)
+    mreq.imr_interface.s_addr = htonl(IPSTACK_INADDR_ANY);
+    if (setsockopt(soap.socket, IPSTACK_IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0)
       exit(1);
   }
   /* serve requests */

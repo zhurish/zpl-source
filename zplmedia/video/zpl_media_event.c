@@ -201,7 +201,7 @@ int zpl_media_event_scheduler(zpl_media_event_queue_t *queue)
 static int zpl_media_event_task(void *p)
 {
     zpl_media_event_queue_t *queue = p;
-	host_config_load_waitting();
+	host_waitting_loadconfig();
 	while(queue)
 	{
         if(queue->sem)

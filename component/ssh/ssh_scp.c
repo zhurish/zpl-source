@@ -374,7 +374,7 @@ int ssh_scpd_init(sshd_client_t *sshclient, char *cmd)
 	scp->channel = NULL;
 	scp->state = SSH_SCP_NEW;
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, 0, socket) == 0)
+	if (socketpair(AF_UNIX, IPSTACK_SOCK_STREAM, 0, socket) == 0)
 	{
 		sshclient->sock = socket[1];
 	}

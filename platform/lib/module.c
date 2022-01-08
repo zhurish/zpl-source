@@ -9,7 +9,7 @@
 #include "os_include.h"
 #include "zpl_include.h"
 #include "lib_include.h"
-
+#include "os_ansync.h"
 
 
 struct module_list module_list_default = 
@@ -25,6 +25,7 @@ struct module_list module_list_default =
 	.module_show_config=NULL,
 	.module_show_debug=NULL, 
 	.taskid=0,
+	.flags=0,
 };
 
 struct module_list module_list_lib = 
@@ -40,6 +41,7 @@ struct module_list module_list_lib =
 	.module_show_config=NULL,
 	.module_show_debug=NULL, 
 	.taskid=0,
+	.flags=0,
 };
 
 struct module_list module_list_osal = 
@@ -55,6 +57,7 @@ struct module_list module_list_osal =
 	.module_show_config=NULL,
 	.module_show_debug=NULL, 
 	.taskid=0,
+	.flags=0,
 };
 
 struct module_list module_list_timer = 
@@ -70,6 +73,7 @@ struct module_list module_list_timer =
 	.module_show_config=NULL,
 	.module_show_debug=NULL, 
 	.taskid=0,
+	.flags=0,
 };
 struct module_list module_list_job = 
 { 
@@ -84,223 +88,18 @@ struct module_list module_list_job =
 	.module_show_config=NULL,
 	.module_show_debug=NULL, 
 	.taskid=0,
-};
-struct module_list module_list_console = 
-{ 
-	.module=MODULE_CONSOLE, 
-	.name="CONSOLE", 
-	.module_init=NULL, 
-	.module_exit=NULL, 
-	.module_task_init=NULL, 
-	.module_task_exit=NULL, 
-	.module_cmd_init=NULL, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
-	.taskid=0,
+	.flags=0,
 };
 
-struct module_list module_list_telnet = 
-{ 
-	.module=MODULE_TELNET, 
-	.name="TELNET", 
-	.module_init=NULL, 
-	.module_exit=NULL, 
-	.module_task_init=NULL, 
-	.module_task_exit=NULL, 
-	.module_cmd_init=NULL, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
-	.taskid=0,
-};
 
-struct module_list module_list_utils = 
-{ 
-	.module=MODULE_UTILS, 
-	.name="UTILS", 
-	.module_init=NULL, 
-	.module_exit=NULL, 
-	.module_task_init=NULL, 
-	.module_task_exit=NULL, 
-	.module_cmd_init=NULL, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
-	.taskid=0,
-};
-
-struct module_list module_list_imish = 
-{ 
-	.module=MODULE_IMISH, 
-	.name="IMISH", 
-	.module_init=NULL, 
-	.module_exit=NULL, 
-	.module_task_init=NULL, 
-	.module_task_exit=NULL, 
-	.module_cmd_init=NULL, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
-	.taskid=0,
-};
-
-struct module_list module_list_kernel = 
-{ 
-	.module=MODULE_KERNEL, 
-	.name="KERNEL", 
-	.module_init=NULL, 
-	.module_exit=NULL, 
-	.module_task_init=NULL, 
-	.module_task_exit=NULL, 
-	.module_cmd_init=NULL, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
-	.taskid=0,
-};
-
-int pl_module_name_show()
-{
-	zpl_uint32 i = 0;
-	for(i = 0; i < array_size(module_lists_tbl); i++)
-	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->name != NULL)
-		{
-			zlog_force_trap(MODULE_DEFAULT, "module : %s", module_lists_tbl[i].tbl->name);	
-		}	
-	}
-	return -1;
-}
-
-int pl_module_name_init(const char * name)
-{
-	zpl_uint32 i = 0;
-	for(i = 0; i < array_size(module_lists_tbl); i++)
-	{
-		if(module_lists_tbl[i].tbl && os_strcmp(module_lists_tbl[i].tbl->name, name) == 0)
-		{
-			if(module_lists_tbl[i].tbl->module_init)
-				return (module_lists_tbl[i].tbl->module_init)();
-		}	
-	}
-	return -1;
-}
-
-int pl_module_init(zpl_uint32 module)
-{
-	zpl_uint32 i = 0;
-	for(i = 0; i < array_size(module_lists_tbl); i++)
-	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (zpl_uint32)module)
-		{
-			if(module_lists_tbl[i].tbl->module_init)
-				return (module_lists_tbl[i].tbl->module_init)();
-		}	
-	}
-	return -1;
-}
-
-int pl_module_exit(zpl_uint32 module)
-{
-	zpl_uint32 i = 0;
-	for(i = 0; i < array_size(module_lists_tbl); i++)
-	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (zpl_uint32)module)
-		{
-			if(module_lists_tbl[i].tbl->module_exit)
-				return (module_lists_tbl[i].tbl->module_exit)();
-		}	
-	}
-	return -1;
-}
-
-int pl_module_task_name_init(const char * name)
-{
-	zpl_uint32 i = 0;
-	for(i = 0; i < array_size(module_lists_tbl); i++)
-	{
-		if(module_lists_tbl[i].tbl && os_strcmp(module_lists_tbl[i].tbl->name, name) == 0)
-		{
-			if(module_lists_tbl[i].tbl->module_task_init)
-				return (module_lists_tbl[i].tbl->module_task_init)();
-		}	
-	}
-	return -1;
-}
-
-int pl_module_task_init(zpl_uint32 module)
-{
-	zpl_uint32 i = 0;
-	for(i = 0; i < array_size(module_lists_tbl); i++)
-	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (zpl_uint32)module)
-		{
-			if(module_lists_tbl[i].tbl->module_task_init)
-				return (module_lists_tbl[i].tbl->module_task_init)();
-		}	
-	}
-	return -1;
-}
-
-int pl_module_task_exit(zpl_uint32 module)
-{
-	zpl_uint32 i = 0;
-	for(i = 0; i < array_size(module_lists_tbl); i++)
-	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (zpl_uint32)module)
-		{
-			if(module_lists_tbl[i].tbl->module_task_exit)
-				return (module_lists_tbl[i].tbl->module_task_exit)();
-		}	
-	}
-	return -1;
-}
-
-int pl_module_cmd_name_init(const char * name)
-{
-	zpl_uint32 i = 0;
-	for(i = 0; i < array_size(module_lists_tbl); i++)
-	{
-		if(module_lists_tbl[i].tbl && os_strcmp(module_lists_tbl[i].tbl->name, name) == 0)
-		{
-			if(module_lists_tbl[i].tbl->module_cmd_init)
-				return (module_lists_tbl[i].tbl->module_cmd_init)();
-		}	
-	}
-	return -1;
-}
-
-int pl_module_cmd_init(zpl_uint32 module)
-{
-	zpl_uint32 i = 0;
-	for(i = 0; i < array_size(module_lists_tbl); i++)
-	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (zpl_uint32)module)
-		{
-			if(module_lists_tbl[i].tbl->module_cmd_init)
-				return (module_lists_tbl[i].tbl->module_cmd_init)();
-		}	
-	}
-	return -1;
-}
 
 const char * module2name(zpl_uint32 module)
 {
 	zpl_uint32 i = 0;
-	for(i = 0; i < array_size(module_lists_tbl); i++)
+	for(i = 0; i < array_size(module_tbl); i++)
 	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (zpl_uint32)module)
-			return module_lists_tbl[i].tbl->name;
-		else
-		{
-			zpl_uint32 j = 0;
-			for(j = 0; j < ZPL_SUB_MODULE_MAX; j++)
-			{
-				if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->submodule[j].module == (zpl_uint32)module)
-					return module_lists_tbl[i].tbl->submodule[j].name;
-			}
-		}	
+		if(module_tbl[i].module == (zpl_uint32)module)
+			return module_tbl[i].name;	
 	}
 	return "Unknow";
 }
@@ -308,11 +107,11 @@ const char * module2name(zpl_uint32 module)
 zpl_uint32 name2module(const char *name)
 {
 	zpl_uint32 i = 0;
-	for(i = 0; i < array_size(module_lists_tbl); i++)
+	for(i = 0; i < array_size(module_tbl); i++)
 	{
-		if(module_lists_tbl[i].tbl && os_strcmp(module_lists_tbl[i].tbl->name, name) == 0)
-			return module_lists_tbl[i].tbl->module;
-		else
+		if(module_tbl[i].name && os_strcmp(module_tbl[i].name, name) == 0)
+			return module_tbl[i].module;
+		/*else
 		{
 			zpl_uint32 j = 0;
 			for(j = 0; j < ZPL_SUB_MODULE_MAX; j++)
@@ -322,6 +121,7 @@ zpl_uint32 name2module(const char *name)
 					return module_lists_tbl[i].tbl->submodule[j].module;
 			}
 		}
+		*/
 	}
 	return 0;
 }
@@ -329,11 +129,11 @@ zpl_uint32 name2module(const char *name)
 zpl_uint32 module2task(zpl_uint32 module)
 {
 	zpl_uint32 i = 0;
-	for(i = 0; i < array_size(module_lists_tbl); i++)
+	for(i = 0; i < array_size(module_tbl); i++)
 	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (zpl_uint32)module)
-			return module_lists_tbl[i].tbl->taskid;
-		else
+		if(module_tbl[i].module == (zpl_uint32)module)
+			return module_tbl[i].taskid;
+		/*else
 		{
 			zpl_uint32 j = 0;
 			for(j = 0; j < ZPL_SUB_MODULE_MAX; j++)
@@ -342,6 +142,7 @@ zpl_uint32 module2task(zpl_uint32 module)
 					return module_lists_tbl[i].tbl->submodule[j].taskid;
 			}
 		}
+		*/
 	}
 	return 0;
 }
@@ -349,11 +150,11 @@ zpl_uint32 module2task(zpl_uint32 module)
 zpl_uint32 task2module(zpl_uint32 taskid)
 {
 	zpl_uint32 i = 0;
-	for(i = 0; i < array_size(module_lists_tbl); i++)
+	for(i = 0; i < array_size(module_tbl); i++)
 	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->taskid == (zpl_uint32)taskid)
-			return module_lists_tbl[i].tbl->module;
-		else
+		if(module_tbl[i].taskid == (zpl_uint32)taskid)
+			return module_tbl[i].module;
+		/*else
 		{
 			zpl_uint32 j = 0;
 			for(j = 0; j < ZPL_SUB_MODULE_MAX; j++)
@@ -361,7 +162,7 @@ zpl_uint32 task2module(zpl_uint32 taskid)
 				if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->submodule[j].taskid == (zpl_uint32)taskid)
 					return module_lists_tbl[i].tbl->submodule[j].module;
 			}		
-		}
+		}*/
 	}
 	return 0;
 }
@@ -370,11 +171,11 @@ zpl_uint32 task_module_self(void)
 {
 	zpl_uint32 i = 0;
 	zpl_uint32 taskid = os_task_id_self ();
-	for(i = 0; i < array_size(module_lists_tbl); i++)
+	for(i = 0; i < array_size(module_tbl); i++)
 	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->taskid == taskid)
-			return module_lists_tbl[i].tbl->module;
-		else
+		if(module_tbl[i].taskid == taskid)
+			return module_tbl[i].module;
+		/*else
 		{
 			zpl_uint32 j = 0;
 			for(j = 0; j < ZPL_SUB_MODULE_MAX; j++)
@@ -382,7 +183,7 @@ zpl_uint32 task_module_self(void)
 				if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->submodule[j].taskid == (zpl_uint32)taskid)
 					return module_lists_tbl[i].tbl->submodule[j].module;
 			}		
-		}
+		}*/
 	}
 	return 0;
 }
@@ -391,14 +192,14 @@ zpl_uint32 task_module_self(void)
 int module_setup_task(zpl_uint32 module, zpl_uint32 taskid)
 {
 	zpl_uint32 i = 0;
-	for(i = 0; i < array_size(module_lists_tbl); i++)
+	for(i = 0; i < array_size(module_tbl); i++)
 	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (zpl_uint32)module)
+		if(module_tbl[i].module == (zpl_uint32)module)
 		{
-			module_lists_tbl[i].tbl->taskid = (zpl_uint32)taskid;
+			module_tbl[i].taskid = (zpl_uint32)taskid;
 			return 0;
 		}
-		else
+		/*else
 		{
 			zpl_uint32 j = 0;
 			for(j = 0; j < ZPL_SUB_MODULE_MAX; j++)
@@ -409,118 +210,8 @@ int module_setup_task(zpl_uint32 module, zpl_uint32 taskid)
 					return 0;
 				}
 			}
-		}
+		}*/
 	}
 	return 0;
 }
 
-int submodule_setup(zpl_uint32 module, zpl_uint32 submodule, char *name, zpl_uint32 taskid)
-{
-	zpl_uint32 i = 0;
-	for(i = 0; i < array_size(module_lists_tbl); i++)
-	{
-		if(module_lists_tbl[i].tbl && module_lists_tbl[i].tbl->module == (zpl_uint32)module)
-		{
-			if(submodule)
-			{
-				zpl_uint32 j = 0;
-				for(j = 0; j < ZPL_SUB_MODULE_MAX; j++)
-				{
-					if(module_lists_tbl[i].tbl->submodule[j].module == (zpl_uint32)submodule)
-					{
-						module_lists_tbl[i].tbl->submodule[j].taskid = (zpl_uint32)taskid;
-						if(name)
-							module_lists_tbl[i].tbl->submodule[j].name = strdup(name);
-						return 0;
-					}
-				}
-			}
-			else
-			{
-				module_lists_tbl[i].tbl->taskid = (zpl_uint32)taskid;
-				return 0;
-			}
-		}
-	}
-	return 0;
-}
-
-zpl_char *zlog_backtrace_module()
-{
-	static zpl_char backtrace_string[128];
-	os_memset(backtrace_string, 0, sizeof(backtrace_string));
-	os_snprintf(backtrace_string, sizeof(backtrace_string), "%s [%s]",
-			os_task_2_name(os_task_id_self()), module2name(task_module_self()));
-
-	return backtrace_string;
-}
-
-zpl_char *zlog_backtrace_funcname()
-{
-#ifdef OS_THREAD
-	struct thread *thread_current = thread_current_get();
-	if (thread_current)
-		return thread_current->funcname;
-	else
-#endif
-#ifdef ELOOP_THREAD
-	{
-		struct eloop *eloop = eloop_current_get();
-		if (eloop)
-			return eloop->funcname;
-	}
-#endif
-#ifdef OS_ANSYNC_GLOBAL_LIST
-	//os_ansync_lst * gansync = os_ansync_global_lookup(os_task_id_self(), task_module_self());
-	os_ansync_lst * gansync = os_ansync_current_get();
-	if (gansync && gansync->os_ansync)
-		return gansync->os_ansync->entryname;
-#endif
-	return "NULL";
-}
-
-zpl_char *zlog_backtrace_schedfrom()
-{
-#ifdef OS_THREAD
-	struct thread *thread_current = thread_current_get();
-	if (thread_current)
-		return thread_current->schedfrom;
-#endif
-#ifdef ELOOP_THREAD
-	{
-		struct eloop *eloop = eloop_current_get();
-		if (eloop)
-			return eloop->schedfrom;
-	}
-#endif
-#ifdef OS_ANSYNC_GLOBAL_LIST
-	//os_ansync_lst * gansync = os_ansync_global_lookup(os_task_id_self(), task_module_self());
-	os_ansync_lst * gansync = os_ansync_current_get();
-	if (gansync && gansync->os_ansync)
-		return gansync->os_ansync->filename;
-#endif
-	return "NULL";
-}
-
-zpl_uint32 zlog_backtrace_schedfrom_line()
-{
-#ifdef OS_THREAD
-	struct thread *thread_current = thread_current_get();
-	if (thread_current)
-		return thread_current->schedfrom_line;
-#endif
-#ifdef ELOOP_THREAD
-	{
-		struct eloop *eloop = eloop_current_get();
-		if (eloop)
-			return eloop->schedfrom_line;
-	}
-#endif
-#ifdef OS_ANSYNC_GLOBAL_LIST
-	//os_ansync_lst * gansync = os_ansync_global_lookup(os_task_id_self(), task_module_self());
-	os_ansync_lst * gansync = os_ansync_current_get();
-	if (gansync && gansync->os_ansync)
-		return gansync->os_ansync->line;
-#endif
-	return 0;
-}

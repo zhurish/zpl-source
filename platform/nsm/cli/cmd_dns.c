@@ -242,9 +242,20 @@ DEFUN (show_dns_server,
 }
 
 
+static struct cmd_node ip_dns_node =
+{
+	IP_DNS_NODE,
+	"%s(config)# ",
+	1
+};
+
+
+
 
 void cmd_dns_init(void)
 {
+	install_node(&ip_dns_node, nsm_ip_dns_host_config);
+	install_default(IP_DNS_NODE);
 	install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_dns_server_cmd);
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_dns_server_cmd);
 	install_element(CONFIG_NODE, CMD_VIEW_LEVEL, &show_dns_server_cmd);

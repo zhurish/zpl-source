@@ -296,13 +296,13 @@ static void
 get_fwtable_route_node(struct variable *v, oid objid[], zpl_size_t *objid_len, 
 		       int exact, struct route_node **np, struct rib **rib)
 {
-  struct in_addr dest;
+  struct ipstack_in_addr dest;
   struct route_table *table;
   struct route_node *np2;
   struct rib *rib2;
   zpl_proto_t proto;
   zpl_uint32 policy;
-  struct in_addr nexthop;
+  struct ipstack_in_addr nexthop;
   zpl_uchar *pnt;
   zpl_uint32;
 
@@ -447,7 +447,7 @@ ipFwTable (struct variable *v, oid objid[], zpl_size_t *objid_len,
   struct rib *rib;
   static int result;
   static int resarr[2];
-  static struct in_addr netmask;
+  static struct ipstack_in_addr netmask;
   struct nexthop *nexthop;
 
   if (smux_header_table(v, objid, objid_len, exact, val_len, write_method)

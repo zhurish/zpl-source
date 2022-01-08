@@ -18,9 +18,23 @@ extern vector cmdvec;
 extern const char *default_motd;
 
 /* Standard command node structures. */
-static struct cmd_node user_node =
+static struct cmd_node host_node =
 {
-	USER_NODE,
+	HOST_NODE,
+	"%s(config)# ",
+	1
+};
+
+static struct cmd_node hostsrv_node =
+{
+	HOSTSRV_NODE,
+	"%s(config)# ",
+	1
+};
+
+static struct cmd_node login_node =
+{
+	LOGIN_NODE,
 	"username: ",
 };
 static struct cmd_node auth_node =
@@ -35,18 +49,10 @@ static struct cmd_node view_node =
 	"%s> ",
 };
 
-
 static struct cmd_node service_node =
 {
 	SERVICE_NODE,
 	"%s(config)# ",
-	1
-};
-
-static struct cmd_node all_service_node =
-{
-	ALL_SERVICE_NODE,
-	"%s(config-%s)# ",
 	1
 };
 
@@ -69,104 +75,8 @@ static struct cmd_node config_node =
 	1
 };
 
-static struct cmd_node template_node =
-{
-	TEMPLATE_NODE,
-	"%s(config-%s)# ",
-	1
-};
 
 
-struct cmd_node interface_node =
-{
-		INTERFACE_NODE,
-		"%s(config-if)# ",
-		1
-};
-struct cmd_node interface_l3_node =
-{
-		INTERFACE_L3_NODE,
-		"%s(config-if)# ",
-		1
-};
-struct cmd_node interface_wireless_node =
-{
-		WIRELESS_INTERFACE_NODE,
-		"%s(config-if)# ",
-		1
-};
-struct cmd_node tunnel_interface_node =
-{
-		TUNNEL_INTERFACE_NODE,
-		"%s(config-tunnel)# ",
-		1
-};
-struct cmd_node loopback_interface_node =
-{
-		LOOPBACK_INTERFACE_NODE,
-		"%s(config-loopback)# ",
-		1
-};
-struct cmd_node lag_interface_node =
-{
-		LAG_INTERFACE_NODE,
-		"%s(config-port-channel)# ",
-		1
-};
-struct cmd_node lag_interface_l3_node =
-{
-		LAG_INTERFACE_L3_NODE,
-		"%s(config-port-channel)# ",
-		1
-};
-
-struct cmd_node brigde_interface_node =
-{
-		BRIGDE_INTERFACE_NODE,
-		"%s(config-brigde)# ",
-		1
-};
-
-#ifdef CUSTOM_INTERFACE
-struct cmd_node wifi_interface_node =
-{
-		WIFI_INTERFACE_NODE,
-		"%s(config-wifi)# ",
-		1
-};
-struct cmd_node modem_interface_node =
-{
-		MODEM_INTERFACE_NODE,
-		"%s(config-modem)# ",
-		1
-};
-#endif
-
-struct cmd_node trunk_group_node =
-{
-		TRUNK_NODE,
-		"%s(config-trunk-group)# ",
-		1
-};
-struct cmd_node modem_profile_node =
-{
-		MODEM_PROFILE_NODE,
-		"%s(config-modem-profile)# ",
-		1
-};
-struct cmd_node modem_channel_node =
-{
-		MODEM_CHANNEL_NODE,
-		"%s(config-modem-channel)# ",
-		1
-};
-
-struct cmd_node serial_interface_node =
-{
-		SERIAL_INTERFACE_NODE,
-		"%s(config-serial)# ",
-		1
-};
 
 /* Configration from terminal */
 DEFUN (config_terminal,
@@ -509,7 +419,7 @@ DEFUN (config_write_file,
 	if (chmod(config_file, CONFIGFILE_MASK) != 0)
 	{
 		vty_out(vty, "%% Can't chmod configuration file %s: %s (%d)%s",
-				config_file, safe_strerror(errno), errno, VTY_NEWLINE);
+				config_file, ipstack_strerror(ipstack_errno), ipstack_errno, VTY_NEWLINE);
 		return CMD_WARNING;
 	}
 	vty_out(vty, "Configuration saved to %s%s", config_file, VTY_NEWLINE);
@@ -568,6 +478,7 @@ DEFUN (config_write_terminal,
 					vty_out(vty, "!%s", VTY_NEWLINE);
 			}
 		vty_out(vty, "end%s", VTY_NEWLINE);
+		vty_out(vty, "!%s", VTY_NEWLINE);
 	}
 	return CMD_SUCCESS;
 }
@@ -1021,128 +932,20 @@ config_write_host (struct vty *vty)
 			vty_out(vty, "! description:%s%s", _global_host.description, VTY_NEWLINE);
 	}
 	vty_out(vty, "!%s", VTY_NEWLINE);
+
+	if(vty->type != VTY_FILE && vty->username)
+	{
+		vty_out(vty,"! current login user:%s %s", vty->username, VTY_NEWLINE);
+		vty_out(vty,"!%s", VTY_NEWLINE);
+	}
 	if (_global_host.mutx)
 		os_mutex_unlock(_global_host.mutx);
+	return 1;
+}
 
-	vty_user_config_write(vty);
-
-	vty_out(vty, "!%s", VTY_NEWLINE);
-	if (zlog_default->mutex)
-		os_mutex_lock(zlog_default->mutex, OS_WAIT_FOREVER);
-
-
-	if (zlog_default->trap_lvl)
-	{
-		vty_out(vty, "! N.B. The 'log trapping' command is deprecated.%s",VTY_NEWLINE);
-		vty_out(vty, "!%s", VTY_NEWLINE);
-		//vty_out(vty, "log trapping %s%s", zlog_priority_name(zlog_default->trap_lvl), VTY_NEWLINE);
-	}
-	if (vty->trapping)
-		vty_out(vty, "log trapping %s", VTY_NEWLINE);
-
-	if (_global_host.logfile
-			&& (zlog_default->maxlvl[ZLOG_DEST_FILE] != ZLOG_DISABLED)) {
-		vty_out(vty, "log file %s", _global_host.logfile);
-		if (zlog_default->maxlvl[ZLOG_DEST_FILE] != zlog_default->default_lvl[ZLOG_DEST_FILE])
-			vty_out(vty, " %s",
-					zlog_priority_name(zlog_default->maxlvl[ZLOG_DEST_FILE]));
-		vty_out(vty, "%s", VTY_NEWLINE);
-		if(zlog_default->filesize != ZLOG_FILE_SIZE)
-			vty_out(vty, "log file size %d%s", zlog_default->filesize, VTY_NEWLINE);
-	}
-
-	if (zlog_default->maxlvl[ZLOG_DEST_STDOUT] != ZLOG_DISABLED) {
-		vty_out(vty, "log stdout");
-		if (zlog_default->maxlvl[ZLOG_DEST_STDOUT] != zlog_default->default_lvl[ZLOG_DEST_STDOUT])
-			vty_out(vty, " %s",
-					zlog_priority_name(zlog_default->maxlvl[ZLOG_DEST_STDOUT]));
-		vty_out(vty, "%s", VTY_NEWLINE);
-	}
-
-	if (zlog_default->maxlvl[ZLOG_DEST_MONITOR] != ZLOG_DISABLED && vty->type != VTY_FILE)
-	{
-		vty_out(vty, "log monitor");
-		if (zlog_default->maxlvl[ZLOG_DEST_MONITOR] != zlog_default->default_lvl[ZLOG_DEST_MONITOR])
-			vty_out(vty, " %s",
-					zlog_priority_name(zlog_default->maxlvl[ZLOG_DEST_MONITOR]));
-		vty_out(vty, "%s", VTY_NEWLINE);
-	}
-
-	if (zlog_default->maxlvl[ZLOG_DEST_BUFFER] != ZLOG_DISABLED)
-	{
-		vty_out(vty, "log buffer");
-		if (zlog_default->maxlvl[ZLOG_DEST_BUFFER] != zlog_default->default_lvl[ZLOG_DEST_BUFFER])
-			vty_out(vty, " %s",
-					zlog_priority_name(zlog_default->maxlvl[ZLOG_DEST_BUFFER]));
-		vty_out(vty, "%s", VTY_NEWLINE);
-
-		if(zlog_default->log_buffer.max_size != ZLOG_BUFF_SIZE)
-			vty_out(vty, "log buffer size %d%s", zlog_default->log_buffer.max_size, VTY_NEWLINE);
-	}
-	if (zlog_default->maxlvl[ZLOG_DEST_SYSLOG] != ZLOG_DISABLED)
-	{
-		vty_out(vty, "log syslog");
-		if (zlog_default->maxlvl[ZLOG_DEST_SYSLOG] != zlog_default->default_lvl[ZLOG_DEST_SYSLOG])
-			vty_out(vty, " %s",
-					zlog_priority_name(zlog_default->maxlvl[ZLOG_DEST_SYSLOG]));
-		vty_out(vty, "%s", VTY_NEWLINE);
-	}
-#ifdef ZPL_SERVICE_SYSLOG
-		if (syslogc_is_enable()) {
-			int port = 0;
-			char log_host[32];
-			memset(log_host, 0, sizeof(log_host));
-			if (syslogc_host_config_get(log_host, &port, NULL) == 0) {
-				if(syslogc_is_dynamics())
-				{
-					memset(log_host, 0, sizeof(log_host));
-					sprintf(log_host, "dynamics");
-				}
-				if (port == SYSLOGC_DEFAULT_PORT)
-					vty_out(vty, "syslog host %s%s", log_host, VTY_NEWLINE);
-				else
-					vty_out(vty, "syslog host %s port %d%s", log_host, port, VTY_NEWLINE);
-
-				if (syslogc_mode_get(&port) == 0) {
-					if (port == SYSLOG_TCP_MODE)
-						vty_out(vty, "syslog mode tcp%s", VTY_NEWLINE);
-				}
-			}
-		}
-#endif
-
-	if (zlog_default->facility != LOG_DAEMON)
-		vty_out(vty, "log facility %s%s", zlog_facility_name(zlog_default->facility),
-				VTY_NEWLINE);
-
-	if (zlog_default->record_priority == 1)
-		vty_out(vty, "log record-priority%s", VTY_NEWLINE);
-
-	if(zlog_default->timestamp == ZLOG_TIMESTAMP_NONE)
-		vty_out(vty, "log timestamp none%s",VTY_NEWLINE);
-	else if(zlog_default->timestamp == ZLOG_TIMESTAMP_DATE)
-		vty_out(vty, "log timestamp date%s",VTY_NEWLINE);
-	else if(zlog_default->timestamp == ZLOG_TIMESTAMP_SHORT)
-		vty_out(vty, "log timestamp zpl_int16%s",VTY_NEWLINE);
-	else if(zlog_default->timestamp == ZLOG_TIMESTAMP_BSD)
-		vty_out(vty, "log timestamp bsd%s",VTY_NEWLINE);
-	else if(zlog_default->timestamp == ZLOG_TIMESTAMP_ISO)
-		vty_out(vty, "log timestamp iso%s",VTY_NEWLINE);
-	else if(zlog_default->timestamp == ZLOG_TIMESTAMP_RFC3164)
-		vty_out(vty, "log timestamp rfc3164%s",VTY_NEWLINE);
-	else if(zlog_default->timestamp == ZLOG_TIMESTAMP_RFC3339)
-		vty_out(vty, "log timestamp rfc3339%s",VTY_NEWLINE);
-
-/*
-	if (zlog_default->timestamp_precision > 0)
-		vty_out(vty, "log timestamp precision %d%s",
-				zlog_default->timestamp_precision, VTY_NEWLINE);
-*/
-
-	if (zlog_default->mutex)
-		os_mutex_unlock(zlog_default->mutex);
-
-	vty_out(vty, "!%s", VTY_NEWLINE);
+static int
+config_write_hostsrv (struct vty *vty)
+{
 	if (_global_host.mutx)
 		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
 
@@ -1158,71 +961,35 @@ config_write_host (struct vty *vty)
 		vty_out(vty, "no banner motd%s", VTY_NEWLINE);
 	if (_global_host.mutx)
 		os_mutex_unlock(_global_host.mutx);
-	vty_out(vty, "!%s", VTY_NEWLINE);
-	vty_out(vty, "!%s", VTY_NEWLINE);
-#ifdef ZPL_NSM_MODULE
-	//nsm_client_write_config (0, vty);
-#endif
 	return 1;
 }
-
 
 static int
 config_write_service (struct vty *vty)
 {
-	#ifdef ZPL_NSM_MODULE
-	#ifdef ZPL_NSM_ARP
-	nsm_ip_arp_config(vty);
-	vty_out(vty, "!%s", VTY_NEWLINE);
-	#endif
-	#ifdef ZPL_NSM_ARP
-	nsm_ip_dns_host_config(vty);
-	vty_out(vty, "!%s", VTY_NEWLINE);
-	#endif
-	//nsm_client_service_write_config (0, vty);
-	#endif
 	return 1;
 }
 
 
 static int _cmd_host_base_init(zpl_bool terminal)
 {
-	/*  install_node (&restricted_node, NULL);*/
-	install_node(&user_node, NULL);
+	install_node(&host_node, config_write_host);
+	install_node(&hostsrv_node, config_write_hostsrv);
+	install_node(&login_node, NULL);
 	install_node(&view_node, NULL);
 	install_node(&enable_node, NULL);
 	install_node(&auth_node, NULL);
 	install_node(&auth_enable_node, NULL);
+	install_node(&config_node, NULL);
 	install_node(&service_node, config_write_service);
-	install_node(&config_node, config_write_host);
-	install_node(&interface_node, NULL);
-	install_node(&interface_l3_node, NULL);
-	install_node(&tunnel_interface_node, NULL);
-	install_node(&loopback_interface_node, NULL);
-	install_node(&lag_interface_node, NULL);
-	install_node(&lag_interface_l3_node, NULL);
-	install_node(&serial_interface_node, NULL);
-	install_node(&trunk_group_node, NULL);
-	install_node(&brigde_interface_node, NULL);
-	install_node(&interface_wireless_node, NULL);
 
-	install_node(&all_service_node, nsm_template_service_write_config);
-	install_node(&template_node, nsm_template_write_config);
-
-#ifdef CUSTOM_INTERFACE
-	install_node(&wifi_interface_node, NULL);
-	install_node(&modem_interface_node, NULL);
-#endif
-	install_node(&modem_profile_node, NULL);
-	install_node(&modem_channel_node, NULL);
 
 	install_default(VIEW_NODE);
 	install_default(CONFIG_NODE);
 	install_default_basic(VIEW_NODE);
 	install_default_basic(CONFIG_NODE);
 
-	install_default(TEMPLATE_NODE);
-	install_default_basic(TEMPLATE_NODE);
+
 
 	/* Each node's basic commands. */
 	install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_version_cmd);

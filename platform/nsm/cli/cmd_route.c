@@ -49,8 +49,8 @@ zebra_static_ipv4_safi (struct vty *vty, safi_t safi, int add_cmd,
   int ret;
   zpl_uchar distance;
   struct prefix p;
-  struct in_addr gate;
-  struct in_addr mask;
+  struct ipstack_in_addr gate;
+  struct ipstack_in_addr mask;
   const char *ifname;
   zpl_uchar flag = 0;
   route_tag_t tag = 0;
@@ -366,7 +366,7 @@ DEFUN (show_ip_rpf_addr,
        "Display RPF information for multicast source\n"
        "IP multicast source address (e.g. 10.0.0.0)\n")
 {
-  struct in_addr addr;
+  struct ipstack_in_addr addr;
   struct route_node *rn;
   struct rib *rib;
   vrf_id_t vrf_id = VRF_DEFAULT;
@@ -460,7 +460,7 @@ DEFUN (show_ip_rpf_addr_vrf_all,
        "IP multicast source address (e.g. 10.0.0.0)\n"
        VRF_ALL_CMD_HELP_STR)
 {
-  struct in_addr addr;
+  struct ipstack_in_addr addr;
   struct route_node *rn;
   vrf_iter_t iter;
   int ret;
@@ -2218,7 +2218,7 @@ vty_show_ip_route_detail (struct vty *vty, struct route_node *rn, int mcast)
             case NEXTHOP_TYPE_IPV6_IFINDEX:
             case NEXTHOP_TYPE_IPV6_IFNAME:
               vty_out (vty, " %s",
-                       ipstack_inet_ntop (AF_INET6, &nexthop->gate.ipv6, buf, sizeof(buf)));
+                       ipstack_inet_ntop (IPSTACK_AF_INET6, &nexthop->gate.ipv6, buf, sizeof(buf)));
               if (nexthop->type == NEXTHOP_TYPE_IPV6_IFNAME)
                 vty_out (vty, ", %s", nexthop->ifname);
               else if (nexthop->ifindex)
@@ -2255,7 +2255,7 @@ vty_show_ip_route_detail (struct vty *vty, struct route_node *rn, int mcast)
             case NEXTHOP_TYPE_IPV4_IFNAME:
               if (nexthop->src.ipv4.s_addr)
                 {
-                  if (ipstack_inet_ntop(AF_INET, &nexthop->src.ipv4, buf, sizeof buf))
+                  if (ipstack_inet_ntop(IPSTACK_AF_INET, &nexthop->src.ipv4, buf, sizeof buf))
                     vty_out (vty, ", src %s", buf);
                 }
               break;
@@ -2265,7 +2265,7 @@ vty_show_ip_route_detail (struct vty *vty, struct route_node *rn, int mcast)
             case NEXTHOP_TYPE_IPV6_IFNAME:
               if (!IPV6_ADDR_SAME(&nexthop->src.ipv6, &in6addr_any))
                 {
-                  if (ipstack_inet_ntop(AF_INET6, &nexthop->src.ipv6, buf, sizeof buf))
+                  if (ipstack_inet_ntop(IPSTACK_AF_INET6, &nexthop->src.ipv6, buf, sizeof buf))
                     vty_out (vty, ", src %s", buf);
                 }
               break;
@@ -2330,7 +2330,7 @@ vty_show_ip_route (struct vty *vty, struct route_node *rn, struct rib *rib)
         case NEXTHOP_TYPE_IPV6_IFINDEX:
         case NEXTHOP_TYPE_IPV6_IFNAME:
           vty_out (vty, " via %s",
-                   ipstack_inet_ntop (AF_INET6, &nexthop->gate.ipv6, buf, BUFSIZ));
+                   ipstack_inet_ntop (IPSTACK_AF_INET6, &nexthop->gate.ipv6, buf, BUFSIZ));
           if (nexthop->type == NEXTHOP_TYPE_IPV6_IFNAME)
             vty_out (vty, ", %s", nexthop->ifname);
           else if (nexthop->ifindex)
@@ -2367,7 +2367,7 @@ vty_show_ip_route (struct vty *vty, struct route_node *rn, struct rib *rib)
           case NEXTHOP_TYPE_IPV4_IFNAME:
             if (nexthop->src.ipv4.s_addr)
               {
-                if (ipstack_inet_ntop(AF_INET, &nexthop->src.ipv4, buf, sizeof buf))
+                if (ipstack_inet_ntop(IPSTACK_AF_INET, &nexthop->src.ipv4, buf, sizeof buf))
                   vty_out (vty, ", src %s", buf);
               }
             break;
@@ -2377,7 +2377,7 @@ vty_show_ip_route (struct vty *vty, struct route_node *rn, struct rib *rib)
           case NEXTHOP_TYPE_IPV6_IFNAME:
             if (!IPV6_ADDR_SAME(&nexthop->src.ipv6, &in6addr_any))
               {
-                if (ipstack_inet_ntop(AF_INET6, &nexthop->src.ipv6, buf, sizeof buf))
+                if (ipstack_inet_ntop(IPSTACK_AF_INET6, &nexthop->src.ipv6, buf, sizeof buf))
                   vty_out (vty, ", src %s", buf);
               }
             break;
@@ -2493,7 +2493,7 @@ DEFUN (show_ip_nht,
        IP_STR
        "IP nexthop tracking table\n")
 {
-  zebra_print_rnh_table(0, AF_INET, vty);
+  zebra_print_rnh_table(0, IPSTACK_AF_INET, vty);
   return CMD_SUCCESS;
 }
 
@@ -2505,7 +2505,7 @@ DEFUN (show_ipv6_nht,
        IP_STR
        "IPv6 nexthop tracking table\n")
 {
-  zebra_print_rnh_table(0, AF_INET6, vty);
+  zebra_print_rnh_table(0, IPSTACK_AF_INET6, vty);
   return CMD_SUCCESS;
 }
 #endif
@@ -2698,9 +2698,9 @@ DEFUN (show_ip_route_supernets,
       {
 	addr = ntohl (rn->p.u.prefix4.s_addr);
 
-	if ((IN_CLASSC (addr) && rn->p.prefixlen < 24)
-	   || (IN_CLASSB (addr) && rn->p.prefixlen < 16)
-	   || (IN_CLASSA (addr) && rn->p.prefixlen < 8))
+	if ((IPSTACK_IN_CLASSC (addr) && rn->p.prefixlen < 24)
+	   || (IPSTACK_IN_CLASSB (addr) && rn->p.prefixlen < 16)
+	   || (IPSTACK_IN_CLASSA (addr) && rn->p.prefixlen < 8))
 	  {
 	    if (first)
 	      {
@@ -3296,9 +3296,9 @@ DEFUN (show_ip_route_supernets_vrf_all,
           {
             addr = ntohl (rn->p.u.prefix4.s_addr);
 
-            if ((IN_CLASSC (addr) && rn->p.prefixlen < 24)
-               || (IN_CLASSB (addr) && rn->p.prefixlen < 16)
-               || (IN_CLASSA (addr) && rn->p.prefixlen < 8))
+            if ((IPSTACK_IN_CLASSC (addr) && rn->p.prefixlen < 24)
+               || (IPSTACK_IN_CLASSB (addr) && rn->p.prefixlen < 16)
+               || (IPSTACK_IN_CLASSA (addr) && rn->p.prefixlen < 8))
               {
                 if (first)
                   {
@@ -3599,8 +3599,8 @@ static_ipv6_func (struct vty *vty, int add_cmd, const char *dest_str,
   int ret;
   zpl_uchar distance;
   struct prefix p;
-  struct in6_addr *gate = NULL;
-  struct in6_addr gate_addr;
+  struct ipstack_in6_addr *gate = NULL;
+  struct ipstack_in6_addr gate_addr;
   zpl_uchar type = 0;
   vrf_id_t vrf_id = VRF_DEFAULT;
   zpl_uchar flag = 0;
@@ -3650,7 +3650,7 @@ static_ipv6_func (struct vty *vty, int add_cmd, const char *dest_str,
 
   /* When gateway is valid IPv6 addrees, then gate is treated as
      nexthop address other case gate is treated as interface name. */
-  ret = ipstack_inet_pton (AF_INET6, gate_str, &gate_addr);
+  ret = ipstack_inet_pton (IPSTACK_AF_INET6, gate_str, &gate_addr);
 
   if (ifname)
     {
@@ -5612,14 +5612,14 @@ static_config_ipv6 (struct vty *vty)
               {
               case STATIC_IPV6_GATEWAY:
                 vty_out (vty, " %s",
-                         ipstack_inet_ntop (AF_INET6, &si->addr.ipv6, buf, BUFSIZ));
+                         ipstack_inet_ntop (IPSTACK_AF_INET6, &si->addr.ipv6, buf, BUFSIZ));
                 break;
               case STATIC_IPV6_IFNAME:
                 vty_out (vty, " %s", si->ifname);
                 break;
               case STATIC_IPV6_GATEWAY_IFNAME:
                 vty_out (vty, " %s %s",
-                         ipstack_inet_ntop (AF_INET6, &si->addr.ipv6, buf, BUFSIZ),
+                         ipstack_inet_ntop (IPSTACK_AF_INET6, &si->addr.ipv6, buf, BUFSIZ),
                          si->ifname);
                 break;
               }

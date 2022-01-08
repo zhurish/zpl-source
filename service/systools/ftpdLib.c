@@ -14,7 +14,7 @@ modification history
 02p,01dec98,spm  changed reply code for successful DELE command (SPR #20554)
 02o,27mar98,spm  corrected byte-ordering problem in PASV command (SPR #20828)
 02n,27mar98,spm  merged from recovered version 02m of tor1_0_x branch
-02m,10dec97,spm  upgraded server shutdown routine to terminate active 
+02m,10dec97,spm  upgraded server ipstack_shutdown routine to terminate active 
                  sessions (SPR #9906); corrected response for PASV command
                  to include valid IP address (SPR #1318); modified syntax
                  of PASV command (SPR #5627); corrected handling of PORT 
@@ -41,12 +41,12 @@ modification history
                  Changed ftpdWorkTask Command Read Logic, Added error checking
 		 on write calls to the network and file operations.
                  Added case-conversion changes (SPR #2035)
-02d,20aug93,jmm  Changed ioctl.h and socket.h to sys/ioctl.h and sys/socket.h
+02d,20aug93,jmm  Changed ioctl.h and ipstack_socket.h to sys/ioctl.h and sys/ipstack_socket.h
 02c,27feb93,kdl  Removed 01z case-conversion changes (SPR #2035).
 02b,05feb93,jag  Changed call to ipstack_inet_ntoa to inet_ntoa_b. SPR# 1814
 02a,20jan93,jdi  documentation cleanup for 5.1.
 01z,09sep92,jmm  fixed spr 1568, ftpd now recognizes lower case commands
-                 changed errnoGet() to errno to get rid of warning message
+                 changed errnoGet() to ipstack_errno to get rid of warning message
 01y,19aug92,smb  Changed systime.h to sys/times.h.
 01x,16jun92,kdl	 increased slot buffer to hold null terminator; use calloc()
 		 to allocate slot struct (SPR #1509).
@@ -118,7 +118,7 @@ l1 l.
     MODE | - Change file transfer mode.
     ALLO | - Reserver sufficient storage.
     ACCT | - Identify the user's account.
-    PASV | - Make the server listen on a port for data connection.
+    PASV | - Make the server ipstack_listen on a port for data connection.
     NOOP | - Do nothing.
     DELE | - Delete a file
 
@@ -202,12 +202,12 @@ ftpLib, netDrv,
 #define FTPD_FILE_STRUCTURE(slot)	(((slot)->status >> 16)	& 0xff)
 #define FTPD_int(slot)		(((slot)->status >> 24) & 0xff)
 
-/* Well known port definitions -- someday we'll have getservbyname */
+/* Well known port definitions -- someday we'll have ipstack_getservbyname */
 
 #define FTP_DATA_PORT		20
 #define FTP_DAEMON_PORT		21
 
-/* Free socket indicative */
+/* Free ipstack_socket indicative */
 
 #define FTPD_SOCK_FREE		-1
 
@@ -249,11 +249,11 @@ typedef struct
     NODE		node;		/* for link-listing */
     int			status;		/* see various status bits above */
     int			byteCount;	/* bytes transferred */
-    int			cmdSock;	/* command socket */
+    zpl_socket_t			cmdSock;	/* command ipstack_socket */
     int		    cmdSockError;   /* Set to ERROR on write error */
-    int			dataSock;	/* data socket */
-    struct sockaddr_in	peerAddr;	/* address of control connection */
-    struct sockaddr_in 	dataAddr; 	/* address of data connection */
+    zpl_socket_t			dataSock;	/* data ipstack_socket */
+    struct ipstack_sockaddr_in	peerAddr;	/* address of control connection */
+    struct ipstack_sockaddr_in 	dataAddr; 	/* address of data connection */
     char		buf [BUFSIZE]; /* multi-purpose buffer per session */
     char 		curDirName [MAX_DIR_NAME_LEN]; /* active directory */
     char        user [MAX_LOGIN_NAME_LEN+1]; /* current user */
@@ -266,7 +266,7 @@ typedef struct
     {
 	void			*master;
 
-	struct in_addr	address;
+	struct ipstack_in_addr	address;
 	zpl_uint16			port;
 	void			*aceppt_thread;
 	zpl_bool 			init;
@@ -282,7 +282,7 @@ typedef struct
 
 	zpl_bool 			ftpsActive; 	/* Server started? */
 	zpl_bool 			ftpsShutdownFlag; 	/* Server halt requested? */
-	int 			ftpdServerSock;
+	zpl_socket_t 			ftpdServerSock;
 
     }FTPD_CONFIG;
 
@@ -375,12 +375,12 @@ DELE\n";
 static FTPD_SESSION_DATA *ftpdSessionAdd (void);
 static void ftpdSessionDelete (FTPD_SESSION_DATA *);
 static int ftpdWorkTask (FTPD_SESSION_DATA *);
-static int ftpdCmdSend (FTPD_SESSION_DATA *, int, int, const char *format, ...);
+static int ftpdCmdSend (FTPD_SESSION_DATA *, zpl_socket_t, int, const char *format, ...);
 static int ftpdDataConnGet (FTPD_SESSION_DATA *);
 static void ftpdDataStreamSend (FTPD_SESSION_DATA *, FILE *);
 static void ftpdDataStreamReceive (FTPD_SESSION_DATA *, FILE *outStream);
-static void ftpdSockFree (int *);
-static int ftpdDirListGet (int, char *, zpl_bool);
+static void ftpdSockFree (zpl_socket_t *);
+static int ftpdDirListGet (zpl_socket_t, char *, zpl_bool);
 
 static void unImplementedType (FTPD_SESSION_DATA *pSlot);
 static void dataError (FTPD_SESSION_DATA *pSlot);
@@ -403,11 +403,11 @@ static void transferOkay (FTPD_SESSION_DATA *pSlot);
 * ERRNO: N/A
 *
 * INTERNAL:
-* The server task is deleted by the server shutdown routine. Adding a newly
+* The server task is deleted by the server ipstack_shutdown routine. Adding a newly
 * created client session to the list of active clients is performed atomically
-* with respect to the shutdown routine. However, accepting control connections
-* is not a critical section, since closing the initial socket used in the
-* listen() call also closes any later connections which are still open.
+* with respect to the ipstack_shutdown routine. However, accepting control connections
+* is not a critical section, since closing the initial ipstack_socket used in the
+* ipstack_listen() call also closes any later connections which are still open.
 *
 * NOMANUAL
 */
@@ -418,7 +418,7 @@ static void ftpdTask (void)
 	register FTPD_SESSION_DATA *pSlot;
 	int on = 1;
 	int addrLen;
-	struct sockaddr_in addr;
+	struct ipstack_sockaddr_in addr;
 	//char	a_ip_addr [INET_ADDR_LEN];  /* ascii ip address of client */
 
 	ftpdNumTasks = 0;
@@ -429,20 +429,20 @@ static void ftpdTask (void)
 	{
 		/* Wait for a new incoming connection. */
 
-		addrLen = sizeof(struct sockaddr);
+		addrLen = sizeof(struct ipstack_sockaddr);
 
 		systools_debug("waiting for a new client connection...");
 
-		newSock = accept(ftpdServerSock, (struct sockaddr *) &addr, &addrLen);
+		newSock = ipstack_accept(ftpdServerSock, (struct ipstack_sockaddr *) &addr, &addrLen);
 		if (newSock < 0)
 		{
-			systools_debug("cannot accept a new connection");
+			systools_debug("cannot ipstack_accept a new connection");
 			break;
 		}
 
 		/*
 		 * Register a new FTP client session. This process is a critical
-		 * section with the server shutdown routine. If an error occurs,
+		 * section with the server ipstack_shutdown routine. If an error occurs,
 		 * the reply must be sent over the control connection to the peer
 		 * before the semaphore is released. Otherwise, this task could
 		 * be deleted and no response would be sent, possibly causing
@@ -450,7 +450,7 @@ static void ftpdTask (void)
 		 */
 
 		//semTake (ftpsMutexSem, WAIT_FOREVER);
-		setsockopt(newSock, SOL_SOCKET, SO_KEEPALIVE, (char *) &on, sizeof(on));
+		ipstack_setsockopt(newSock, IPSTACK_SOL_SOCKET, IPSTACK_SO_KEEPALIVE, (char *) &on, sizeof(on));
 
 		systools_debug("accepted a new client connection from %s\n",
 				ipstack_inet_ntoa(addr.sin_addr));
@@ -475,9 +475,9 @@ static void ftpdTask (void)
 		/* Save the control address and assign the default data address. */
 
 		bcopy((char *) &addr, (char *) &pSlot->peerAddr,
-				sizeof(struct sockaddr_in));
+				sizeof(struct ipstack_sockaddr_in));
 		bcopy((char *) &addr, (char *) &pSlot->dataAddr,
-				sizeof(struct sockaddr_in));
+				sizeof(struct ipstack_sockaddr_in));
 		pSlot->dataAddr.sin_port = htons(FTP_DATA_PORT);
 
 		/* Create a task name. */
@@ -505,7 +505,7 @@ static void ftpdTask (void)
 #endif
 		systools_debug("done.");
 
-		/* Session added - end of critical section with shutdown routine. */
+		/* Session added - end of critical section with ipstack_shutdown routine. */
 
 		// semGive (ftpsMutexSem);
 	}
@@ -519,24 +519,24 @@ static void ftpdTask (void)
 #else
 static int ftpdTask (struct eloop *thread)
 {
-	int newSock = 0, sock = 0;
+	zpl_socket_t newSock, sock;
 	register FTPD_SESSION_DATA *pSlot;
 	int on = 1;
 	int addrLen = 0;
-	struct sockaddr_in addr;
+	struct ipstack_sockaddr_in addr;
 	char ftpTaskName[64];
 	sock = ELOOP_FD(thread);
-	addrLen = sizeof(struct sockaddr);
+	addrLen = sizeof(struct ipstack_sockaddr);
 
 	((FTPD_CONFIG *)ELOOP_ARG(thread))->aceppt_thread = eloop_add_read(thread->master, ftpdTask, ELOOP_ARG(thread), sock);
 
-	newSock = accept(sock, (struct sockaddr *) &addr, &addrLen);
-	if (newSock < 0)
+	newSock = ipstack_accept(sock, (struct ipstack_sockaddr *) &addr, &addrLen);
+	if (ipstack_invalid(newSock))
 	{
-		systools_error("FTPD cannot accept a new connection");
+		systools_error("FTPD cannot ipstack_accept a new connection");
 		return ERROR;
 	}
-	setsockopt(newSock, SOL_SOCKET, SO_KEEPALIVE, (char *) &on, sizeof(on));
+	ipstack_setsockopt(newSock, IPSTACK_SOL_SOCKET, IPSTACK_SO_KEEPALIVE, (char *) &on, sizeof(on));
 
 	if(FTPD_IS_DEBUG(EVENT))
 		systools_debug("FTPD accepted a new client connection from %s\n",
@@ -551,7 +551,7 @@ static int ftpdTask (struct eloop *thread)
 		ftpdCmdSend(pSlot, newSock, 421,
 				"Session limit reached, closing control connection");
 		systools_error("FTPD cannot get a new connection session");
-		close(newSock);
+		ipstack_close(newSock);
 		return ERROR;
 	}
 
@@ -560,9 +560,9 @@ static int ftpdTask (struct eloop *thread)
 	/* Save the control address and assign the default data address. */
 
 	bcopy((char *) &addr, (char *) &pSlot->peerAddr,
-			sizeof(struct sockaddr_in));
+			sizeof(struct ipstack_sockaddr_in));
 	bcopy((char *) &addr, (char *) &pSlot->dataAddr,
-			sizeof(struct sockaddr_in));
+			sizeof(struct ipstack_sockaddr_in));
 	pSlot->dataAddr.sin_port = htons(FTP_DATA_PORT);
 
 	memset(ftpTaskName, 0, sizeof(ftpTaskName));
@@ -634,7 +634,7 @@ int ftpdEnable(char *address, int port)
 {
 	int restart = 0;
 	int on = 1;
-	struct sockaddr_in ctrlAddr;
+	struct ipstack_sockaddr_in ctrlAddr;
 	if (ftpd_config.ftpsActive)
 	{
 		if(ftpd_config.port != port)
@@ -656,39 +656,39 @@ int ftpdEnable(char *address, int port)
 			eloop_cancel(ftpd_config.aceppt_thread);
 		ftpd_config.aceppt_thread = NULL;
 
-		if(ftpd_config.ftpdServerSock)
-			close(ftpd_config.ftpdServerSock );
-		ftpd_config.ftpdServerSock  = 0;
+		if(!ipstack_invalid(ftpd_config.ftpdServerSock))
+			ipstack_close(ftpd_config.ftpdServerSock );
+		//ftpd_config.ftpdServerSock  = 0;
 	}
-	/* Create the FTP server control socket. */
+	/* Create the FTP server control ipstack_socket. */
 
-	ftpd_config.ftpdServerSock = socket(AF_INET, SOCK_STREAM, 0);
-	if (ftpd_config.ftpdServerSock < 0)
+	ftpd_config.ftpdServerSock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+	if (ipstack_invalid(ftpd_config.ftpdServerSock))
 		return (ERROR);
 
 	/* Setup control connection for client requests. */
 
-	ctrlAddr.sin_family = AF_INET;
-	ctrlAddr.sin_addr.s_addr = ftpd_config.address.s_addr;//INADDR_ANY;
+	ctrlAddr.sin_family = IPSTACK_AF_INET;
+	ctrlAddr.sin_addr.s_addr = ftpd_config.address.s_addr;//IPSTACK_INADDR_ANY;
 	ctrlAddr.sin_port = ftpd_config.port ? htons(ftpd_config.port):htons(FTP_DAEMON_PORT);
 
-	if (setsockopt(ftpd_config.ftpdServerSock, SOL_SOCKET, SO_REUSEADDR, (char *) &on,
+	if (ipstack_setsockopt(ftpd_config.ftpdServerSock, IPSTACK_SOL_SOCKET, IPSTACK_SO_REUSEADDR, (char *) &on,
 			sizeof(on)) < 0)
 	{
-		close(ftpd_config.ftpdServerSock);
+		ipstack_close(ftpd_config.ftpdServerSock);
 		return (ERROR);
 	}
 
-	if (bind(ftpd_config.ftpdServerSock, (struct sockaddr *) &ctrlAddr, sizeof(ctrlAddr))
+	if (ipstack_bind(ftpd_config.ftpdServerSock, (struct ipstack_sockaddr *) &ctrlAddr, sizeof(ctrlAddr))
 			< 0)
 	{
-		close(ftpd_config.ftpdServerSock);
+		ipstack_close(ftpd_config.ftpdServerSock);
 		return (ERROR);
 	}
 
-	if (listen(ftpd_config.ftpdServerSock, 5) < 0)
+	if (ipstack_listen(ftpd_config.ftpdServerSock, 5) < 0)
 	{
-		close(ftpd_config.ftpdServerSock);
+		ipstack_close(ftpd_config.ftpdServerSock);
 		return (ERROR);
 	}
 
@@ -728,7 +728,7 @@ int ftpdDisable(void)
 * executed, the transfers will be aborted, possibly leaving incomplete files
 * on the destination host.
 *
-* RETURNS: OK if shutdown completed, or ERROR otherwise.
+* RETURNS: OK if ipstack_shutdown completed, or ERROR otherwise.
 *
 * ERRNO: N/A
 *
@@ -757,11 +757,11 @@ int ftpdDelete (void)
 		serverActive = zpl_true;
 
 	/*
-	 * Set the shutdown flag so that any secondary server tasks will exit
+	 * Set the ipstack_shutdown flag so that any secondary server tasks will exit
 	 * as soon as possible. Once the FTP server has started, this routine is
 	 * the only writer of the flag and the secondary tasks are the only
 	 * readers. To avoid unnecessary blocking, the secondary tasks do not
-	 * guard access to this flag when checking for a pending shutdown during
+	 * guard access to this flag when checking for a pending ipstack_shutdown during
 	 * normal processing. Those tasks do protect access to this flag during
 	 * their cleanup routine to prevent a race condition which would result
 	 * in incorrect use of the signalling semaphore.
@@ -771,7 +771,7 @@ int ftpdDelete (void)
 
 	/*
 	 * Close the command sockets of any active sessions to prevent further
-	 * activity. If the session is waiting for a command from a socket,
+	 * activity. If the session is waiting for a command from a ipstack_socket,
 	 * the close will trigger the session exit.
 	 */
 
@@ -792,7 +792,7 @@ int ftpdDelete (void)
 	if (serverActive)
 	{
 		/*
-		 * When a shutdown is in progress, the cleanup routine of the last
+		 * When a ipstack_shutdown is in progress, the cleanup routine of the last
 		 * client task to exit gives the signalling semaphore.
 		 */
 		while(ftpd_config.ftpsCurrentClients)
@@ -801,7 +801,7 @@ int ftpdDelete (void)
 	}
 
 	/*
-	 * Remove the original socket - this occurs after all secondary tasks
+	 * Remove the original ipstack_socket - this occurs after all secondary tasks
 	 * have exited to avoid prematurely closing their control sockets.
 	 */
 
@@ -857,8 +857,8 @@ static FTPD_SESSION_DATA *ftpdSessionAdd (void)
 
 	/* initialize key fields in the newly acquired slot */
 
-	pSlot->dataSock = FTPD_SOCK_FREE;
-	pSlot->cmdSock = FTPD_SOCK_FREE;
+	//pSlot->dataSock = FTPD_SOCK_FREE;
+	//pSlot->cmdSock = FTPD_SOCK_FREE;
 	pSlot->cmdSockError = OK;
 	pSlot->status = FTPD_STREAM_MODE | FTPD_ASCII_TYPE | FTPD_NO_RECORD_STRU;
 	pSlot->byteCount = 0;
@@ -891,10 +891,10 @@ static FTPD_SESSION_DATA *ftpdSessionAdd (void)
 *
 * INTERNAL
 * Unless an error occurs, this routine is only called in response to a
-* pending server shutdown, indicated by the shutdown flag. Even if the
-* shutdown flag is not detected and this routine is called because of an
-* error, the appropriate signal will still be sent to any pending shutdown
-* routine. The shutdown routine will only return after any active client
+* pending server ipstack_shutdown, indicated by the ipstack_shutdown flag. Even if the
+* ipstack_shutdown flag is not detected and this routine is called because of an
+* error, the appropriate signal will still be sent to any pending ipstack_shutdown
+* routine. The ipstack_shutdown routine will only return after any active client
 * sessions have exited.
 */
 
@@ -910,8 +910,8 @@ static void ftpdSessionDelete
 	 * The deletion of a session entry must be an atomic operation to support
 	 * an upper limit on the number of simultaneous connections allowed.
 	 * This mutual exclusion also prevents a race condition with the server
-	 * shutdown routine. The last client session will always send an exit
-	 * signal to the shutdown routine, whether or not the shutdown flag was
+	 * ipstack_shutdown routine. The last client session will always ipstack_send an exit
+	 * signal to the ipstack_shutdown routine, whether or not the ipstack_shutdown flag was
 	 * detected during normal processing.
 	 */
 	if(FTPD_IS_DEBUG(EVENT))
@@ -966,7 +966,7 @@ static void ftpdSessionDelete
 * INTERNAL
 * To handle multiple simultaneous connections, this routine and all secondary
 * routines which process client commands must be re-entrant. If the server's
-* halt routine is started, the shutdown flag is set, causing this routine to
+* halt routine is started, the ipstack_shutdown flag is set, causing this routine to
 * exit after completing any operation already in progress.
 */
 
@@ -975,12 +975,12 @@ static int ftpdWorkTask
     FTPD_SESSION_DATA   *pSlot  /* pointer to the active slot to be handled */
     )
 {
-	register int sock = 0; /* command socket descriptor */
+	register zpl_socket_t sock; /* command ipstack_socket descriptor */
 	register char *pBuf = NULL; /* pointer to session specific buffer */
-	struct sockaddr_in passiveAddr; /* socket address in passive mode */
+	struct ipstack_sockaddr_in passiveAddr; /* ipstack_socket address in passive mode */
 	register char *dirName = NULL; /* directory name place holder */
 	register int numRead = 0;
-	int addrLen = sizeof(passiveAddr); /* for getpeername */
+	int addrLen = sizeof(passiveAddr); /* for ipstack_getpeername */
 	int portNum[6]; /* used for "%d,%d,%d,%d,%d,%d" */
 	u_long value = 0;
 	//char *pTail = NULL;
@@ -996,7 +996,7 @@ static int ftpdWorkTask
 
 	if (ftpd_config.ftpsShutdownFlag)
 	{
-		/* Server halt in progress - send abort message to client. */
+		/* Server halt in progress - ipstack_send abort message to client. */
 
 		ftpdCmdSend(pSlot, sock, 421,
 				"Service not available, closing control connection");
@@ -1016,7 +1016,7 @@ static int ftpdWorkTask
 
 		os_msleep(500); /* time share among same priority tasks */
 
-		/* Check error in writting to the control socket */
+		/* Check error in writting to the control ipstack_socket */
 
 		if (pSlot->cmdSockError == ERROR)
 		{
@@ -1026,11 +1026,11 @@ static int ftpdWorkTask
 
 		/*
 		 * Stop processing client requests if a server halt is in progress.
-		 * These tests of the shutdown flag are not protected with the
+		 * These tests of the ipstack_shutdown flag are not protected with the
 		 * mutual exclusion semaphore to prevent unnecessary synchronization
 		 * between client sessions. Because the secondary tasks execute at
 		 * a lower priority than the primary task, the worst case delay
-		 * before ending this session after shutdown has started would only
+		 * before ending this session after ipstack_shutdown has started would only
 		 * allow a single additional command to be performed.
 		 */
 
@@ -1043,13 +1043,13 @@ static int ftpdWorkTask
 		{
 			os_msleep(100); /* time share among same priority tasks */
 
-			if ((numRead = read(sock, pBuf, 1)) <= 0)
+			if ((numRead = ipstack_read(sock, pBuf, 1)) <= 0)
 			{
 				/*
 				 * The primary server task will close the control connection
-				 * when a halt is in progress, causing an error on the socket.
+				 * when a halt is in progress, causing an error on the ipstack_socket.
 				 * In this case, ignore the error and exit the command loop
-				 * to send a termination message to the connected client.
+				 * to ipstack_send a termination message to the connected client.
 				 */
 
 				if (ftpd_config.ftpsShutdownFlag)
@@ -1059,7 +1059,7 @@ static int ftpdWorkTask
 				}
 
 				/*
-				 * Send a final message if the control socket
+				 * Send a final message if the control ipstack_socket
 				 * closed unexpectedly.
 				 */
 
@@ -1094,11 +1094,11 @@ static int ftpdWorkTask
 			*upperCommand = toupper(*upperCommand);
 
 		if(FTPD_IS_DEBUG(CMD))
-			systools_debug("FTPD recv command %s\n", pBuf);
+			systools_debug("FTPD ipstack_recv command %s\n", pBuf);
 
 		/*
 		 * Send an abort message to the client if a server
-		 * shutdown was started while reading the next command.
+		 * ipstack_shutdown was started while reading the next command.
 		 */
 
 		if (ftpd_config.ftpsShutdownFlag)
@@ -1177,7 +1177,7 @@ static int ftpdWorkTask
 		}
 		else if (strncmp(pBuf, "HELP", 4) == 0)
 		{
-			/* send list of supported commands with multiple line response */
+			/* ipstack_send list of supported commands with multiple line response */
 
 			if (ftpdCmdSend(pSlot, sock, FTPD_MULTI_LINE | 214,
 					messages[MSG_COMMAND_LIST_BEGIN])
@@ -1187,7 +1187,7 @@ static int ftpdWorkTask
 				return (ERROR);
 			}
 
-			if (write(pSlot->cmdSock, ftpdCommandList, strlen(ftpdCommandList))
+			if (ipstack_write(pSlot->cmdSock, ftpdCommandList, strlen(ftpdCommandList))
 					<= 0)
 			{
 				ftpdSessionDelete(pSlot);
@@ -1251,7 +1251,7 @@ static int ftpdWorkTask
 
 			//systools_debug("LIST %s\n", dirName);
 
-			/* get a new data socket connection for the transmission of
+			/* get a new data ipstack_socket connection for the transmission of
 			 * the directory listing data
 			 */
 
@@ -1288,7 +1288,7 @@ static int ftpdWorkTask
 				}
 			}
 
-			/* free up the data socket */
+			/* free up the data ipstack_socket */
 
 			ftpdSockFree(&pSlot->dataSock);
 		}
@@ -1567,20 +1567,20 @@ static int ftpdWorkTask
 		}
 		else if (strncmp(pBuf, "PASV", 4) == 0)
 		{
-			/* client wants to connect to us instead of waiting
+			/* client wants to ipstack_connect to us instead of waiting
 			 * for us to make a connection to its data connection
-			 * socket
+			 * ipstack_socket
 			 */
 			if(FTPD_IS_DEBUG(EVENT))
 				systools_debug("FTPD Connect to client (PASV TYPE) on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			ftpdSockFree(&pSlot->dataSock);
 
-			/* we need to open a socket and start listening on it
+			/* we need to open a ipstack_socket and start listening on it
 			 * to accommodate his request.
 			 */
-
-			if ((pSlot->dataSock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+			pSlot->dataSock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+			if (ipstack_invalid(pSlot->dataSock))
 			{
 				if (ftpdCmdSend(pSlot, sock, 425, messages[MSG_PASSIVE_ERROR]) == ERROR)
 
@@ -1598,8 +1598,8 @@ static int ftpdWorkTask
 				int outval5;
 				int outval6;
 
-				if (getsockname(pSlot->cmdSock,
-						(struct sockaddr *) &pSlot->dataAddr, &addrLen) < 0)
+				if (ipstack_getsockname(pSlot->cmdSock,
+						(struct ipstack_sockaddr *) &pSlot->dataAddr, &addrLen) < 0)
 				{
 					/* Couldn't find address for local end of connection. */
 
@@ -1618,13 +1618,13 @@ static int ftpdWorkTask
 				 */
 
 				pSlot->dataAddr.sin_port = htons(0);
-				addrLen = sizeof(struct sockaddr_in);
+				addrLen = sizeof(struct ipstack_sockaddr_in);
 
-				if (bind(pSlot->dataSock, (struct sockaddr *) &pSlot->dataAddr,
-						sizeof(struct sockaddr_in)) < 0
-						|| getsockname(pSlot->dataSock,
-								(struct sockaddr *) &pSlot->dataAddr, &addrLen)
-								< 0 || listen(pSlot->dataSock, 1) < 0)
+				if (ipstack_bind(pSlot->dataSock, (struct ipstack_sockaddr *) &pSlot->dataAddr,
+						sizeof(struct ipstack_sockaddr_in)) < 0
+						|| ipstack_getsockname(pSlot->dataSock,
+								(struct ipstack_sockaddr *) &pSlot->dataAddr, &addrLen)
+								< 0 || ipstack_listen(pSlot->dataSock, 1) < 0)
 				{
 					ftpdSockFree(&pSlot->dataSock);
 					if (ftpdCmdSend(pSlot, sock, 425,
@@ -1652,7 +1652,7 @@ static int ftpdWorkTask
 				outval5 = ((zpl_uchar *) &pSlot->dataAddr.sin_port)[0];
 				outval6 = ((zpl_uchar *) &pSlot->dataAddr.sin_port)[1];
 
-				/* tell the client to which port to connect */
+				/* tell the client to which port to ipstack_connect */
 
 				if (ftpdCmdSend(pSlot, pSlot->cmdSock, 227,
 						messages[MSG_PASSIVE_MODE], outval1, outval2, outval3,
@@ -1726,7 +1726,7 @@ static int ftpdWorkTask
 	}
 
 	/*
-	 * Processing halted due to pending server shutdown.
+	 * Processing halted due to pending server ipstack_shutdown.
 	 * Remove all resources and exit.
 	 */
 
@@ -1736,7 +1736,7 @@ static int ftpdWorkTask
 
 /*******************************************************************************
 *
-* ftpdDataConnGet - get a fresh data connection socket for FTP data transfer
+* ftpdDataConnGet - get a fresh data connection ipstack_socket for FTP data transfer
 *
 * FTP uses upto two connections per session (as described above) at any
 * time.  The command connection (cmdSock) is maintained throughout the
@@ -1750,10 +1750,10 @@ static int ftpdWorkTask
 * Setting up the data connection is performed in two ways.  If the dataSock
 * is already initialized and we're in passive mode (as indicated by the
 * FTPD_PASSIVE bit of the status field in the FTPD_SESSION_SLOT) we need to
-* wait for our client to make a connection to us -- so we just do an accept
+* wait for our client to make a connection to us -- so we just do an ipstack_accept
 * on this already initialized dataSock.  If the dataSock is already
 * initialized and we're not in passive mode, we just use the already
-* existing connection.  Otherwise, we need to initialize a new socket and
+* existing connection.  Otherwise, we need to initialize a new ipstack_socket and
 * make a connection to the the port where client is accepting new
 * connections.  This port number is in general set by "PORT" command (see
 * ftpdWorkTask()).
@@ -1764,35 +1764,34 @@ static int ftpdDataConnGet
     FTPD_SESSION_DATA   *pSlot          /* pointer to the work slot */
     )
 {
-	register int newSock; /* new connection socket */
-	int addrLen; /* to be used with accept */
-	struct sockaddr_in addr; /* to be used with accept */
+	register zpl_socket_t newSock; /* new connection ipstack_socket */
+	int addrLen; /* to be used with ipstack_accept */
+	struct ipstack_sockaddr_in addr; /* to be used with ipstack_accept */
 	int on = 1; /* to be used to turn things on */
 	int retry = 0; /* retry counter initialized to zero */
 
-	/* command socket is invalid, return immediately */
+	/* command ipstack_socket is invalid, return immediately */
 
-	if (pSlot->cmdSock == FTPD_SOCK_FREE)
+	if (!ipstack_invalid(pSlot->cmdSock))
 		return (ERROR);
 
 	pSlot->byteCount = 0;
 
-	if (pSlot->dataSock != FTPD_SOCK_FREE)
+	if (!ipstack_invalid(pSlot->dataSock))
 	{
-		/* data socket is already initialized */
+		/* data ipstack_socket is already initialized */
 
-		/* are we being passive? (should we wait for client to connect
+		/* are we being passive? (should we wait for client to ipstack_connect
 		 * to us rather than connecting to the client?)
 		 */
 
 		if (pSlot->status & FTPD_PASSIVE)
 		{
-			/* we're being passive.  wait for our client to connect to us. */
+			/* we're being passive.  wait for our client to ipstack_connect to us. */
 
-			addrLen = sizeof(struct sockaddr);
-
-			if ((newSock = accept(pSlot->dataSock, (struct sockaddr *) &addr,
-					&addrLen)) < 0)
+			addrLen = sizeof(struct ipstack_sockaddr);
+			newSock = ipstack_accept(pSlot->dataSock, (struct ipstack_sockaddr *) &addr, &addrLen);
+			if (!ipstack_invalid(newSock))
 			{
 				ftpdCmdSend(pSlot, pSlot->cmdSock, 425,
 						"Can't open data connection");
@@ -1811,7 +1810,7 @@ static int ftpdDataConnGet
 			 * from locking the server.
 			 */
 
-			if (setsockopt(newSock, SOL_SOCKET, SO_KEEPALIVE, (char *) &on,
+			if (ipstack_setsockopt(newSock, IPSTACK_SOL_SOCKET, IPSTACK_SO_KEEPALIVE, (char *) &on,
 					sizeof(on)) != 0)
 			{
 				ftpdSockFree(&pSlot->dataSock);
@@ -1825,17 +1824,17 @@ static int ftpdDataConnGet
 
 			/* set the window size  */
 
-			if (setsockopt(newSock, SOL_SOCKET, SO_SNDBUF,
+			if (ipstack_setsockopt(newSock, IPSTACK_SOL_SOCKET, IPSTACK_SO_SNDBUF,
 					(char *) &ftpd_config.ftpdWindowSize, sizeof(ftpd_config.ftpdWindowSize)))
 				printf("Couldn't set the Send Window to 10k\n");
 
-			if (setsockopt(newSock, SOL_SOCKET, SO_RCVBUF,
+			if (ipstack_setsockopt(newSock, IPSTACK_SOL_SOCKET, IPSTACK_SO_RCVBUF,
 					(char *) &ftpd_config.ftpdWindowSize, sizeof(ftpd_config.ftpdWindowSize)))
 				printf("Couldn't set the Send Window to 10k\n");
 
 			/* replace the dataSock with our new connection */
 
-			(void) close(pSlot->dataSock);
+			(void) ipstack_close(pSlot->dataSock);
 			pSlot->dataSock = newSock;
 
 			/* N.B.: we stay passive */
@@ -1846,7 +1845,7 @@ static int ftpdDataConnGet
 							"ASCII" : "BINARY")
 					== ERROR)
 			{
-				(void) close(pSlot->dataSock);
+				(void) ipstack_close(pSlot->dataSock);
 				return (ERROR);
 			}
 
@@ -1870,9 +1869,9 @@ static int ftpdDataConnGet
 	{
 		/* Determine address for local end of connection. */
 
-		addrLen = sizeof(struct sockaddr);
+		addrLen = sizeof(struct ipstack_sockaddr);
 
-		if (getsockname(pSlot->cmdSock, (struct sockaddr *) &addr, &addrLen)
+		if (ipstack_getsockname(pSlot->cmdSock, (struct ipstack_sockaddr *) &addr, &addrLen)
 				< 0)
 		{
 			return (ERROR);
@@ -1882,33 +1881,33 @@ static int ftpdDataConnGet
 
 		addr.sin_port = htons(FTP_DATA_PORT);
 
-		/* open a new data socket */
-
-		if ((pSlot->dataSock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+		/* open a new data ipstack_socket */
+		pSlot->dataSock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+		if (ipstack_invalid(pSlot->dataSock))
 		{
 			return (ERROR);
 		}
 
-		if (setsockopt(pSlot->dataSock, SOL_SOCKET, SO_REUSEADDR, (char *) &on,
+		if (ipstack_setsockopt(pSlot->dataSock, IPSTACK_SOL_SOCKET, IPSTACK_SO_REUSEADDR, (char *) &on,
 				sizeof(on)) < 0
-				|| bind(pSlot->dataSock, (struct sockaddr *) &addr,
+				|| ipstack_bind(pSlot->dataSock, (struct ipstack_sockaddr *) &addr,
 						sizeof(addr)) < 0)
 		{
 			ftpdSockFree(&pSlot->dataSock);
 			return (ERROR);
 		}
 
-		/* Set socket address to PORT command values or default. */
+		/* Set ipstack_socket address to PORT command values or default. */
 
 		bcopy((char *) &pSlot->dataAddr, (char *) &addr,
-				sizeof(struct sockaddr_in));
+				sizeof(struct ipstack_sockaddr_in));
 
 		/* try until we get a connection to the client's port */
 
-		while (connect(pSlot->dataSock, (struct sockaddr *) &addr, sizeof(addr))
+		while (ipstack_connect(pSlot->dataSock, (struct ipstack_sockaddr *) &addr, sizeof(addr))
 				< 0)
 		{
-			if ((errno & 0xffff) == EADDRINUSE && retry < FTPD_WAIT_MAX)
+			if ((ipstack_errno & 0xffff) == IPSTACK_ERRNO_EADDRINUSE && retry < FTPD_WAIT_MAX)
 			{
 				//taskDelay(FTPD_WAIT_INTERVAL * sysClkRateGet());
 				os_sleep(FTPD_WAIT_INTERVAL);
@@ -1928,7 +1927,7 @@ static int ftpdDataConnGet
 		 * from locking the secondary task during file transfers.
 		 */
 
-		if (setsockopt(pSlot->dataSock, SOL_SOCKET, SO_KEEPALIVE, (char *) &on,
+		if (ipstack_setsockopt(pSlot->dataSock, IPSTACK_SOL_SOCKET, IPSTACK_SO_KEEPALIVE, (char *) &on,
 				sizeof(on)) != 0)
 		{
 			ftpdSockFree(&pSlot->dataSock);
@@ -1942,11 +1941,11 @@ static int ftpdDataConnGet
 
 		/* set the window size  */
 
-		if (setsockopt(pSlot->dataSock, SOL_SOCKET, SO_SNDBUF,
+		if (ipstack_setsockopt(pSlot->dataSock, IPSTACK_SOL_SOCKET, IPSTACK_SO_SNDBUF,
 				(char *) &ftpd_config.ftpdWindowSize, sizeof(ftpd_config.ftpdWindowSize)))
 			printf("Couldn't set the Send Window to 10k\n");
 
-		if (setsockopt(pSlot->dataSock, SOL_SOCKET, SO_RCVBUF,
+		if (ipstack_setsockopt(pSlot->dataSock, IPSTACK_SOL_SOCKET, IPSTACK_SO_RCVBUF,
 				(char *) &ftpd_config.ftpdWindowSize, sizeof(ftpd_config.ftpdWindowSize)))
 			printf("Couldn't set the Send Window to 10k\n");
 
@@ -1965,9 +1964,9 @@ static int ftpdDataConnGet
 
 /*******************************************************************************
 *
-* ftpdDataStreamSend - send FTP data over data connection
+* ftpdDataStreamSend - ipstack_send FTP data over data connection
 *
-* When our FTP client does a "RETR" (send me a file) and we find an existing
+* When our FTP client does a "RETR" (ipstack_send me a file) and we find an existing
 * file, ftpdWorkTask() will call us to perform the actual shipment of the
 * file in question over the data connection.
 *
@@ -1989,11 +1988,11 @@ static void ftpdDataStreamSend
     )
 {
 	register char *pBuf; /* pointer to the session buffer */
-	register int netFd; /* output socket */
+	register zpl_socket_t netFd; /* output ipstack_socket */
 	register int fileFd; /* input file descriptor */
 	register char ch; /* character holder */
 	register int cnt; /* number of chars read/written */
-	register FILE *outStream; /* buffered output socket stream */
+	register FILE *outStream; /* buffered output ipstack_socket stream */
 	int retval = 0;
 
 	/* get a fresh connection or reuse the old one */
@@ -2010,9 +2009,9 @@ static void ftpdDataStreamSend
 	{
 		/* ASCII representation */
 
-		/* get a buffered I/O stream for this output data socket */
+		/* get a buffered I/O stream for this output data ipstack_socket */
 
-		if ((outStream = fdopen(pSlot->dataSock, "w")) == NULL)
+		if ((outStream = fdopen(pSlot->dataSock._fd, "w")) == NULL)
 		{
 			dataError(pSlot);
 			return;
@@ -2050,7 +2049,7 @@ static void ftpdDataStreamSend
 				return;
 			}
 
-			/* Abort the file transfer if a shutdown is in progress. */
+			/* Abort the file transfer if a ipstack_shutdown is in progress. */
 
 			if (ch == '\n' && ftpd_config.ftpsShutdownFlag)
 			{
@@ -2100,13 +2099,13 @@ static void ftpdDataStreamSend
 		/* unbuffered block I/O between file and network */
 
 		while ((cnt = read(fileFd, pBuf, BUFSIZE)) > 0
-				&& (retval = write(netFd, pBuf, cnt)) == cnt)
+				&& (retval = ipstack_write(netFd, pBuf, cnt)) == cnt)
 		{
 			pSlot->byteCount += cnt;
 
 			if (ftpd_config.ftpsShutdownFlag)
 			{
-				/* Abort the file transfer if a shutdown is in progress. */
+				/* Abort the file transfer if a ipstack_shutdown is in progress. */
 
 				cnt = 1;
 				break;
@@ -2163,9 +2162,9 @@ static void ftpdDataStreamReceive
 {
 	register char *pBuf; /* pointer to the session buffer */
 	register char ch; /* character holder */
-	register FILE *inStream; /* buffered input file stream for data socket */
+	register FILE *inStream; /* buffered input file stream for data ipstack_socket */
 	register int fileFd; /* output file descriptor */
-	register int netFd; /* network file descriptor */
+	register zpl_socket_t netFd; /* network file descriptor */
 	register zpl_bool dontPutc; /* flag to prevent bogus chars */
 	register int cnt; /* number of chars read/written */
 
@@ -2183,9 +2182,9 @@ static void ftpdDataStreamReceive
 	{
 		/* ASCII representation */
 
-		/* get a buffer I/O stream for the input data socket connection */
+		/* get a buffer I/O stream for the input data ipstack_socket connection */
 
-		if ((inStream = fdopen(pSlot->dataSock, "r")) == NULL)
+		if ((inStream = fdopen(pSlot->dataSock._fd, "r")) == NULL)
 		{
 			dataError(pSlot);
 			return;
@@ -2227,7 +2226,7 @@ static void ftpdDataStreamReceive
 			if (dontPutc == zpl_false)
 				(void) putc(ch, outStream);
 
-			/* Abort file transfer if a shutdown is in progress. */
+			/* Abort file transfer if a ipstack_shutdown is in progress. */
 
 			if (ch == '\n' && ftpd_config.ftpsShutdownFlag)
 			{
@@ -2276,7 +2275,7 @@ static void ftpdDataStreamReceive
 
 		/* perform non-buffered block I/O between network and file */
 
-		while ((cnt = read(netFd, pBuf, BUFSIZE)) > 0)
+		while ((cnt = ipstack_read(netFd, pBuf, BUFSIZE)) > 0)
 		{
 			if (write(fileFd, pBuf, cnt) != cnt)
 			{
@@ -2286,7 +2285,7 @@ static void ftpdDataStreamReceive
 
 			pSlot->byteCount += cnt;
 
-			/* Abort the file transfer if a shutdown is in progress. */
+			/* Abort the file transfer if a ipstack_shutdown is in progress. */
 
 			if (ftpd_config.ftpsShutdownFlag)
 			{
@@ -2314,40 +2313,40 @@ static void ftpdDataStreamReceive
 
 /*******************************************************************************
 *
-* ftpdSockFree - release a socket
+* ftpdSockFree - release a ipstack_socket
 *
-* This function is used to examine whether or not the socket pointed
+* This function is used to examine whether or not the ipstack_socket pointed
 * by pSock is active and release it if it is.
 */
 
 static void ftpdSockFree
     (
-    int *pSock
+    zpl_socket_t *pSock
     )
 {
 
-	if (*pSock != FTPD_SOCK_FREE)
+	if (!ipstack_invalid(*pSock))
 	{
 		int off = 0;
 		struct linger so_linger =
 		{ 1, 0 };
 
-		setsockopt(*pSock, SOL_SOCKET, SO_LINGER, (void *) &so_linger,
+		ipstack_setsockopt(*pSock, IPSTACK_SOL_SOCKET, SO_LINGER, (void *) &so_linger,
 				sizeof(so_linger));
-		setsockopt(*pSock, SOL_SOCKET, SO_KEEPALIVE, (char *) &off,
+		ipstack_setsockopt(*pSock, IPSTACK_SOL_SOCKET, IPSTACK_SO_KEEPALIVE, (char *) &off,
 				sizeof(off));
 
 		/*
 		 * Now that we have said we do not want to keep the PCBs around for 60
 		 * seconds (which is what happens is SO_LINGER is enabled in vxWorks), we
-		 * need to call shutdown to gracefully terminate the connection without
+		 * need to call ipstack_shutdown to gracefully terminate the connection without
 		 * loosing any data.
 		 */
 
-		shutdown(*pSock, 2);
+		ipstack_shutdown(*pSock, 2);
 
-		(void) close(*pSock);
-		*pSock = FTPD_SOCK_FREE;
+		(void) ipstack_close(*pSock);
+		//*pSock = FTPD_SOCK_FREE;
 	}
 }
 
@@ -2383,7 +2382,7 @@ static void ftpdSockFree
 
 static int ftpdDirListGet
     (
-    int         sd,             /* socket descriptor to write on */
+    zpl_socket_t         sd,             /* ipstack_socket descriptor to write on */
     char        *dirName,       /* name of the directory to be listed */
     zpl_bool        doLong          /* if zpl_true, do long listing */
     )
@@ -2410,7 +2409,7 @@ static int ftpdDirListGet
 
 	if ((pDir = opendir(dirName)) == NULL)
 	{
-		fdprintf(sd, "Can't open \"%s\".\n", dirName);
+		fdprintf(sd._fd, "Can't open \"%s\".\n", dirName);
 		return (ERROR);
 	}
 
@@ -2421,7 +2420,7 @@ static int ftpdDirListGet
 
 	do
 	{
-		errno = OK;
+		ipstack_errno = OK;
 
 		pDirEnt = readdir(pDir);
 
@@ -2431,12 +2430,12 @@ static int ftpdDirListGet
 			{
 				if (firstFile)
 				{
-					if (fdprintf(sd,
+					if (fdprintf(sd._fd,
 							"  size          date       time       name\n")
 							== ERROR)
 						return (ERROR | closedir(pDir));
 
-					if (fdprintf(sd,
+					if (fdprintf(sd._fd,
 							"--------       ------     ------    --------\n")
 							== ERROR)
 						return (ERROR | closedir(pDir));
@@ -2465,7 +2464,7 @@ static int ftpdDirListGet
 				else
 					pDirComment = "";
 
-				if (fdprintf(sd,
+				if (fdprintf(sd._fd,
 						"%8d    %s-%02d-%04d  %02d:%02d:%02d   %-16s  %s\n",
 						fileStat.st_size, /* size in bytes */
 						monthNames[fileDate.tm_mon + 1],/* month */
@@ -2481,15 +2480,15 @@ static int ftpdDirListGet
 			}
 			else /* just listing file names */
 			{
-				if (fdprintf(sd, "%s\n", pDirEnt->d_name) == ERROR)
+				if (fdprintf(sd._fd, "%s\n", pDirEnt->d_name) == ERROR)
 					return (ERROR | closedir(pDir));
 			}
 		}
 		else /* readdir returned NULL */
 		{
-			if (errno != OK) /* if real error, not dir end */
+			if (ipstack_errno != OK) /* if real error, not dir end */
 			{
-				if (fdprintf(sd, "error reading entry: %x\n", errno) == ERROR)
+				if (fdprintf(sd._fd, "error reading entry: %x\n", ipstack_errno) == ERROR)
 					return (ERROR | closedir(pDir));
 				status = ERROR;
 			}
@@ -2497,7 +2496,7 @@ static int ftpdDirListGet
 
 	} while (pDirEnt != NULL); /* until end of dir */
 
-	fdprintf(sd, "\n");
+	fdprintf(sd._fd, "\n");
 
 	/* Close dir */
 	status |= closedir(pDir);
@@ -2507,7 +2506,7 @@ static int ftpdDirListGet
 
 /*******************************************************************************
 *
-* unImplementedType - send FTP invalid representation type error reply
+* unImplementedType - ipstack_send FTP invalid representation type error reply
 */
 
 static void unImplementedType
@@ -2522,7 +2521,7 @@ static void unImplementedType
 
 /*******************************************************************************
 *
-* dataError - send FTP data connection error reply
+* dataError - ipstack_send FTP data connection error reply
 *
 * Send the final error message about connection error and delete the session.
 */
@@ -2538,7 +2537,7 @@ static void dataError
 
 /*******************************************************************************
 *
-* fileError - send FTP file I/O error reply
+* fileError - ipstack_send FTP file I/O error reply
 *
 * Send the final error message about file error and delete the session.
 */
@@ -2554,7 +2553,7 @@ static void fileError
 
 /*******************************************************************************
 *
-* transferOkay - send FTP file transfer completion reply
+* transferOkay - ipstack_send FTP file transfer completion reply
 */
 
 static void transferOkay
@@ -2568,16 +2567,16 @@ static void transferOkay
 
 /*******************************************************************************
 *
-* ftpdCmdSend - send a FTP command reply
+* ftpdCmdSend - ipstack_send a FTP command reply
 *
-* In response to a request, we send a reply containing completion
+* In response to a request, we ipstack_send a reply containing completion
 * status, error status, and other information over a command connection.
 */
 
 static int ftpdCmdSend
     (
     FTPD_SESSION_DATA  *pSlot,         /* pointer to the session slot */
-    int 		controlSock, 	/* control socket for reply */
+    zpl_socket_t 		controlSock, 	/* control ipstack_socket for reply */
     int                 code,           /* FTP status code */
 	const char *format, ...
     )
@@ -2592,7 +2591,7 @@ static int ftpdCmdSend
     /*
      * If this routine is called before a session is established, the
      * pointer to session-specific data is NULL. Otherwise, exit with
-     * an error if an earlier attempt to send a control message failed.
+     * an error if an earlier attempt to ipstack_send a control message failed.
      */
 
     if ( (pSlot != NULL) && (pSlot->cmdSockError == ERROR))
@@ -2617,14 +2616,14 @@ static int ftpdCmdSend
 
     (void) sprintf (pBuf, "\r\n");
 
-    /* send it over to our client */
+    /* ipstack_send it over to our client */
 
     buflen = strlen (buf);
 
 	if(FTPD_IS_DEBUG(CMD))
-		systools_debug("FTPD send command %s\n", buf);
+		systools_debug("FTPD ipstack_send command %s\n", buf);
 
-    if ( write (controlSock, buf, buflen) != buflen )
+    if ( ipstack_write (controlSock, buf, buflen) != buflen )
     {
         if (pSlot != NULL)
             pSlot->cmdSockError = ERROR;

@@ -5636,8 +5636,8 @@ struct _tds__SetDynamicDNS {
         enum tt__DynamicDNSType Type;
         /** Optional element 'tds:Name' of XML schema type 'tt:DNSName' */
         char *Name;
-        /** Optional element 'tds:TTL' of XML schema type 'xsd:duration' */
-        char *TTL;
+        /** Optional element 'tds:IPSTACK_TTL' of XML schema type 'xsd:duration' */
+        char *IPSTACK_TTL;
 };
 #endif
 
@@ -7822,8 +7822,8 @@ struct tt__MulticastConfiguration {
         struct tt__IPAddress *Address;
         /** Required element 'tt:Port' of XML schema type 'xsd:int' */
         int Port;
-        /** Required element 'tt:TTL' of XML schema type 'xsd:int' */
-        int TTL;
+        /** Required element 'tt:IPSTACK_TTL' of XML schema type 'xsd:int' */
+        int IPSTACK_TTL;
         /** Required element 'tt:AutoStart' of XML schema type 'xsd:boolean' */
         enum xsd__boolean AutoStart;
         /** Sequence of elements '-any' of XML schema type 'xsd:anyType' stored in dynamic array __any of length __size */
@@ -8269,8 +8269,8 @@ struct tt__DynamicDNSInformation {
         enum tt__DynamicDNSType Type;
         /** Optional element 'tt:Name' of XML schema type 'tt:DNSName' */
         char *Name;
-        /** Optional element 'tt:TTL' of XML schema type 'xsd:duration' */
-        char *TTL;
+        /** Optional element 'tt:IPSTACK_TTL' of XML schema type 'xsd:duration' */
+        char *IPSTACK_TTL;
         /** Optional element 'tt:Extension' of XML schema type 'tt:DynamicDNSInformationExtension' */
         struct tt__DynamicDNSInformationExtension *Extension;
         /** XML DOM attribute list */

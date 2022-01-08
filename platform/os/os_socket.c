@@ -48,7 +48,7 @@ int os_sock_bind(int sock, char *ipaddress, zpl_uint16 port)
 	ret = bind(sock, (struct sockaddr *)&serv, sizeof(serv));
 	if (ret < 0)
 	{
-		_OS_ERROR( "cannot bind(%d) port number %d(%s) \n", sock, port,strerror(errno));
+		_OS_ERROR( "cannot bind(%d) port number %d(%s) \n", sock, port,strerror(ipstack_errno));
 		return ERROR;
 		;
 	}
@@ -62,7 +62,7 @@ int os_sock_listen(int sock, zpl_uint32 listennum)
 	ret = listen(sock, listennum);
 	if (ret < 0)
 	{
-		_OS_ERROR( "cannot listen(%d) %s \n",sock,strerror(errno));
+		_OS_ERROR( "cannot listen(%d) %s \n",sock,strerror(ipstack_errno));
 		return ERROR;
 		;
 	}
@@ -117,7 +117,7 @@ int os_sock_connect(int sock, char *ipaddress, zpl_uint16 port)
 		if (ret < 0)
 		{
 			_OS_ERROR( "cannot connect(%d) to %s:%d(%s) \n", sock, ipaddress, port,
-					strerror(errno));
+					strerror(ipstack_errno));
 			return ERROR;
 			;
 		}
@@ -145,18 +145,18 @@ int os_sock_connect_timeout(int sock, char *ipaddress, zpl_uint16 port, zpl_uint
 		ret = connect(sock, (struct sockaddr *)&serv, sizeof(serv));
 		if (ret < 0)
 		{
-			// unblock mode --> connect return immediately! ret = -1 & errno=EINPROGRESS
-			if (errno != EINPROGRESS)
+			// unblock mode --> connect return immediately! ret = -1 & ipstack_errno=EINPROGRESS
+			if (ipstack_errno != EINPROGRESS)
 			{
 				_OS_ERROR("unblock connect(%d) failed!\n", sock);
 				return ERROR;
 			}
-			else if (errno == EINPROGRESS)
+			else if (ipstack_errno == EINPROGRESS)
 			{
 				_OS_ERROR("unblock mode socket(%d) is connecting...\n",sock);
 			}
 			_OS_ERROR( "cannot connect(%d) to %s:%d(%s) \n", sock,ipaddress, port,
-					strerror(errno));
+					strerror(ipstack_errno));
 			return ERROR;
 			;
 		}
@@ -172,7 +172,7 @@ int os_sock_connect_timeout(int sock, char *ipaddress, zpl_uint16 port, zpl_uint
 		}
 		if (ret < 0)
 		{
-			_OS_ERROR("connect(%d) %s error %s\n", sock, ipaddress, strerror(errno));
+			_OS_ERROR("connect(%d) %s error %s\n", sock, ipaddress, strerror(ipstack_errno));
 			return ERROR;
 		}
 		if (!FD_ISSET(sock, &writefds))
@@ -211,7 +211,7 @@ int os_sock_client_write(int fd, char *ipaddress, zpl_uint16 port, char *buf, zp
 		if (ret < 0)
 		{
 			_OS_ERROR( "cannot sendto(%d) to %s:%d(%s) \n", fd, ipaddress, port,
-					strerror(errno));
+					strerror(ipstack_errno));
 			return ERROR;
 			;
 		}
@@ -225,7 +225,7 @@ int os_sock_raw_create(zpl_int style, zpl_uint16 protocol)
 	int fd = 0;
 	if ((fd = socket(AF_PACKET, style, htons(protocol))) < 0)
 	{
-		_OS_ERROR( "failed to open raw socket (%s)", strerror(errno));
+		_OS_ERROR( "failed to open raw socket (%s)", strerror(ipstack_errno));
 		return (-1);
 	}
 	return fd;
@@ -239,7 +239,7 @@ int os_sock_raw_bind(int fd, zpl_int family, zpl_uint16 protocol, zpl_int ifinde
 	sock.sll_family = family;
 	sock.sll_protocol = htons(protocol);
 	sock.sll_ifindex = ifindex;
-	// zlog_debug(MODULE_DHCP, "Can not bind raw socket(%s)", strerror(errno));
+	// zlog_debug(MODULE_DHCP, "Can not bind raw socket(%s)", strerror(ipstack_errno));
 	/*sock.sll_hatype = ARPHRD_???;*/
 	/*sock.sll_pkttype = PACKET_???;*/
 	/*sock.sll_halen = ???;*/
@@ -306,7 +306,7 @@ int os_sock_unix_server_create(zpl_bool tcp, const char *name)
 	if (sock < 0)
 	{
 		_OS_ERROR( "Cannot create unix stream socket: %s",
-				strerror(errno));
+				strerror(ipstack_errno));
 		return ERROR;
 	}
 
@@ -323,7 +323,7 @@ int os_sock_unix_server_create(zpl_bool tcp, const char *name)
 	ret = bind(sock, (struct sockaddr *)&serv, len);
 	if (ret < 0)
 	{
-		_OS_ERROR( "Cannot bind(%d) path %s: %s", sock, path, strerror(errno));
+		_OS_ERROR( "Cannot bind(%d) path %s: %s", sock, path, strerror(ipstack_errno));
 		close(sock); /* Avoid sd leak. */
 		return ERROR;
 	}
@@ -332,7 +332,7 @@ int os_sock_unix_server_create(zpl_bool tcp, const char *name)
 		ret = listen(sock, 5);
 		if (ret < 0)
 		{
-			_OS_ERROR( "listen(fd %d) failed: %s", sock, strerror(errno));
+			_OS_ERROR( "listen(fd %d) failed: %s", sock, strerror(ipstack_errno));
 			close(sock); /* Avoid sd leak. */
 			return ERROR;
 		}
@@ -375,10 +375,10 @@ int os_sock_unix_client_create(zpl_bool tcp, const char *name)
 
 	/* Stat socket to see if we have permission to access it. */
 	ret = stat(path, &s_stat);
-	if (ret < 0 && errno != ENOENT)
+	if (ret < 0 && ipstack_errno != ENOENT)
 	{
 		_OS_ERROR( "sock(%s): stat = %s\n", path,
-				strerror(errno));
+				strerror(ipstack_errno));
 		return ERROR;
 	}
 
@@ -395,7 +395,7 @@ int os_sock_unix_client_create(zpl_bool tcp, const char *name)
 	if (sock < 0)
 	{
 		_OS_ERROR( "sock(%s): socket = %s\n", path,
-				strerror(errno));
+				strerror(ipstack_errno));
 		return ERROR;
 	}
 
@@ -412,7 +412,7 @@ int os_sock_unix_client_create(zpl_bool tcp, const char *name)
 	if (ret < 0)
 	{
 		_OS_ERROR( "ipstack sock(%d) (%s): connect = %s\n", sock, path,
-				strerror(errno));
+				strerror(ipstack_errno));
 		close(sock);
 		return ERROR;
 	}
@@ -447,7 +447,7 @@ int os_sock_unix_client_write(int fd, char *name, char *buf, zpl_uint32 len)
 		if (ret < 0)
 		{
 			_OS_ERROR( "cannot sendto(%d) to %s(%s) \n", fd, path,
-					strerror(errno));
+					strerror(ipstack_errno));
 			return ERROR;
 			;
 		}
@@ -467,13 +467,13 @@ int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, zpl_uint32 timeout
 		num = select(maxfd, rfdset, wfdset, NULL, timeout_ms ? &timer_wait : NULL);
 		if (num < 0)
 		{
-			// fprintf(stdout, "%s (errno=%d -> %s)", __func__, errno, strerror(errno));
-			if (errno == EINTR || errno == EAGAIN)
+			// fprintf(stdout, "%s (ipstack_errno=%d -> %s)", __func__, ipstack_errno, strerror(ipstack_errno));
+			if (ipstack_errno == EINTR || ipstack_errno == EAGAIN)
 			{
-				// fprintf(stdout, "%s (errno=%d -> %s)", __func__, errno, strerror(errno));
+				// fprintf(stdout, "%s (ipstack_errno=%d -> %s)", __func__, ipstack_errno, strerror(ipstack_errno));
 				continue;
 			}
-			/*			if (errno == EPIPE || errno == EBADF || errno == EIO ECONNRESET ECONNABORTED ENETRESET ECONNREFUSED)
+			/*			if (ipstack_errno == EPIPE || ipstack_errno == EBADF || ipstack_errno == EIO ECONNRESET ECONNABORTED ENETRESET ECONNREFUSED)
 						{
 							return RES_CLOSE;
 						}*/
@@ -502,7 +502,7 @@ int os_write_timeout(int fd, zpl_char *buf, zpl_uint32 len, zpl_uint32 timeout_m
 	}
 	if (ret < 0)
 	{
-		_OS_ERROR("os_select_wait to write(%d) %s\n", fd, strerror(errno));
+		_OS_ERROR("os_select_wait to write(%d) %s\n", fd, strerror(ipstack_errno));
 		return ERROR;
 	}
 	if (!FD_ISSET(fd, &writefds))
@@ -527,7 +527,7 @@ int os_read_timeout(int fd, zpl_char *buf, zpl_uint32 len, zpl_uint32 timeout_ms
 	}
 	if (ret < 0)
 	{
-		_OS_ERROR("os_select_wait to read(%d) %s\n", fd, strerror(errno));
+		_OS_ERROR("os_select_wait to read(%d) %s\n", fd, strerror(ipstack_errno));
 		return ERROR;
 	}
 	if (!FD_ISSET(fd, &readfds))
@@ -547,7 +547,7 @@ int os_write_iov(int fd, int type, struct iovec *iov, int iovcnt)
 	/* only place where written should be sign compared */
 	if (written < 0)
 	{
-		if (!((((errno) == EAGAIN) || ((errno) == EWOULDBLOCK) || ((errno) == EINTR))))
+		if (!((((ipstack_errno) == EAGAIN) || ((ipstack_errno) == EWOULDBLOCK) || ((ipstack_errno) == EINTR))))
 			return ERROR;
 	}
 	return written;
@@ -570,16 +570,16 @@ int os_writemsg(int sock, char *m, int len, char *m1, int len1)
 	msg.msg_flags = 0;
 	error = sendmsg((int)sock, &msg, 0);
 
-	if (error == -1 && (errno == EINVAL || errno == ENETUNREACH || errno == EFAULT))
+	if (error == -1 && (ipstack_errno == EINVAL || ipstack_errno == ENETUNREACH || ipstack_errno == EFAULT))
 	{
-		fprintf(stdout, "============rtp_sendmsg=========%s\r\n", strerror(errno));
+		fprintf(stdout, "============rtp_sendmsg=========%s\r\n", strerror(ipstack_errno));
 		msg.msg_controllen = 0;
 		msg.msg_control = NULL;
 		error = sendmsg((int)sock, &msg, 0);
 	}
-	else if (error < 0 && errno == EAGAIN)
+	else if (error < 0 && ipstack_errno == EAGAIN)
 	{
-		fprintf(stdout, "============rtp_sendmsg====aaa=====%s\r\n", strerror(errno));
+		fprintf(stdout, "============rtp_sendmsg====aaa=====%s\r\n", strerror(ipstack_errno));
 		error = sendmsg((int)sock, &msg, 0);
 	}
 	return error;
@@ -647,7 +647,7 @@ int ipstack_sock_bind(zpl_socket_t sock, char *ipaddress, zpl_uint16 port)
 	if (ret < 0)
 	{
 		_OS_ERROR( "ipstack sock(%d) cannot bind port number %d(%s) \n",sock._fd, port,
-				strerror(errno));
+				strerror(ipstack_errno));
 		return ERROR;
 		;
 	}
@@ -662,7 +662,7 @@ int ipstack_sock_listen(zpl_socket_t sock, zpl_uint32 listennum)
 	if (ret < 0)
 	{
 		_OS_ERROR( "ipstack sock(%d) cannot listen %s \n",sock._fd,
-				strerror(errno));
+				strerror(ipstack_errno));
 		return ERROR;
 		;
 	}
@@ -717,7 +717,7 @@ int ipstack_sock_connect(zpl_socket_t sock, char *ipaddress, zpl_uint16 port)
 		if (ret < 0)
 		{
 			_OS_ERROR( "ipstack sock(%d) cannot connect to %s:%d(%s) \n",sock._fd, ipaddress, port,
-					strerror(errno));
+					strerror(ipstack_errno));
 			return ERROR;
 			;
 		}
@@ -744,18 +744,18 @@ int ipstack_sock_connect_timeout(zpl_socket_t sock, char *ipaddress, zpl_uint16 
 		ret = ipstack_connect(sock, (struct ipstack_sockaddr *)&serv, sizeof(serv));
 		if (ret < 0)
 		{
-			// unblock mode --> connect return immediately! ret = -1 & errno=EINPROGRESS
-			if (errno != EINPROGRESS)
+			// unblock mode --> connect return immediately! ret = -1 & ipstack_errno=EINPROGRESS
+			if (ipstack_errno != EINPROGRESS)
 			{
 				_OS_ERROR("ipstack sock(%d) unblock connect failed!\n",sock._fd);
 				return ERROR;
 			}
-			else if (errno == EINPROGRESS)
+			else if (ipstack_errno == EINPROGRESS)
 			{
 				_OS_ERROR("ipstack sock(%d) unblock mode socket is connecting...\n",sock._fd);
 			}
 			_OS_ERROR( "ipstack sock(%d) cannot connect to %s:%d(%s) \n",sock._fd, ipaddress, port,
-					strerror(errno));
+					strerror(ipstack_errno));
 			return ERROR;
 			;
 		}
@@ -774,7 +774,7 @@ int ipstack_sock_connect_timeout(zpl_socket_t sock, char *ipaddress, zpl_uint16 
 			}
 			if (ret < 0)
 			{
-				_OS_ERROR("ipstack sock(%d) connect %s error %s\n",sock._fd, ipaddress, strerror(errno));
+				_OS_ERROR("ipstack sock(%d) connect %s error %s\n",sock._fd, ipaddress, strerror(ipstack_errno));
 				return ERROR;
 			}
 			if (!FD_ISSET(sock._fd, &writefds))
@@ -808,7 +808,7 @@ int ipstack_sock_connect_timeout(zpl_socket_t sock, char *ipaddress, zpl_uint16 
 			}
 			if (ret < 0)
 			{
-				_OS_ERROR("ipstack sock(%d) connect %s error %s\n",sock._fd, ipaddress, strerror(errno));
+				_OS_ERROR("ipstack sock(%d) connect %s error %s\n",sock._fd, ipaddress, strerror(ipstack_errno));
 				return ERROR;
 			}
 			if (!IPSTACK_FD_ISSET(sock._fd, &writefds))
@@ -847,7 +847,7 @@ int ipstack_sock_client_write(zpl_socket_t fd, char *ipaddress, zpl_uint16 port,
 		if (ret < 0)
 		{
 			_OS_ERROR( "ipstack sock(%d) cannot sendto to %s:%d(%s) \n",fd._fd, ipaddress, port,
-					strerror(errno));
+					strerror(ipstack_errno));
 			return ERROR;
 			;
 		}
@@ -862,7 +862,7 @@ zpl_socket_t ipstack_sock_raw_create(zpl_ipstack stack, zpl_int style, zpl_uint1
 	fd = ipstack_socket(stack, AF_PACKET, style, htons(protocol));
 	if (ipstack_invalid(fd))
 	{
-		_OS_ERROR( "ipstack sock failed to open raw socket(%d) (%s)",fd._fd, strerror(errno));
+		_OS_ERROR( "ipstack sock failed to open raw socket(%d) (%s)",fd._fd, strerror(ipstack_errno));
 		return (fd);
 	}
 	return fd;
@@ -876,7 +876,7 @@ int ipstack_sock_raw_bind(zpl_socket_t fd, zpl_int family, zpl_uint16 protocol, 
 	sock.sll_family = family;
 	sock.sll_protocol = htons(protocol);
 	sock.sll_ifindex = ifindex;
-	// zlog_debug(MODULE_DHCP, "Can not bind raw socket(%s)", strerror(errno));
+	// zlog_debug(MODULE_DHCP, "Can not bind raw socket(%s)", strerror(ipstack_errno));
 	/*sock.sll_hatype = ARPHRD_???;*/
 	/*sock.sll_pkttype = PACKET_???;*/
 	/*sock.sll_halen = ???;*/
@@ -947,7 +947,7 @@ zpl_socket_t ipstack_sock_unix_server_create(zpl_ipstack stack, zpl_bool tcp, co
 	if (ipstack_invalid(sock))
 	{
 		_OS_ERROR( "ipstack sock Cannot create unix stream socket: %s",
-				strerror(errno));
+				strerror(ipstack_errno));
 		return sock;
 	}
 
@@ -964,7 +964,7 @@ zpl_socket_t ipstack_sock_unix_server_create(zpl_ipstack stack, zpl_bool tcp, co
 	ret = ipstack_bind(sock, (struct ipstack_sockaddr *)&serv, len);
 	if (ret < 0)
 	{
-		_OS_ERROR( "ipstack sock Cannot bind path %s: %s", path, strerror(errno));
+		_OS_ERROR( "ipstack sock Cannot bind path %s: %s", path, strerror(ipstack_errno));
 		ipstack_close(sock); /* Avoid sd leak. */
 		return sock;
 	}
@@ -973,7 +973,7 @@ zpl_socket_t ipstack_sock_unix_server_create(zpl_ipstack stack, zpl_bool tcp, co
 		ret = ipstack_listen(sock, 5);
 		if (ret < 0)
 		{
-			_OS_ERROR( "ipstack sock listen(fd %d) failed: %s", sock._fd, strerror(errno));
+			_OS_ERROR( "ipstack sock listen(fd %d) failed: %s", sock._fd, strerror(ipstack_errno));
 			ipstack_close(sock); /* Avoid sd leak. */
 			return sock;
 		}
@@ -1016,10 +1016,10 @@ zpl_socket_t ipstack_sock_unix_client_create(zpl_ipstack stack, zpl_bool tcp, co
 
 	/* Stat socket to see if we have permission to access it. */
 	ret = stat(path, &s_stat);
-	if (ret < 0 && errno != ENOENT)
+	if (ret < 0 && ipstack_errno != ENOENT)
 	{
 		_OS_ERROR( "ipstack sock (%s): stat = %s\n", path,
-				strerror(errno));
+				strerror(ipstack_errno));
 		return sock;
 	}
 
@@ -1035,7 +1035,7 @@ zpl_socket_t ipstack_sock_unix_client_create(zpl_ipstack stack, zpl_bool tcp, co
 	sock = ipstack_socket(stack, AF_UNIX, tcp ? SOCK_STREAM : SOCK_DGRAM, 0 /*tcp ? IPPROTO_TCP:IPPROTO_UDP*/);
 	if (ipstack_invalid(sock))
 	{
-		_OS_ERROR( "ipstack sock(%d) (%s): socket = %s\n",sock._fd, path, strerror(errno));
+		_OS_ERROR( "ipstack sock(%d) (%s): socket = %s\n",sock._fd, path, strerror(ipstack_errno));
 		return sock;
 	}
 
@@ -1052,7 +1052,7 @@ zpl_socket_t ipstack_sock_unix_client_create(zpl_ipstack stack, zpl_bool tcp, co
 	if (ret < 0)
 	{
 		_OS_ERROR( "ipstack sock(%d) (%s): connect = %s\n",sock._fd, path,
-				strerror(errno));
+				strerror(ipstack_errno));
 		ipstack_close(sock);
 		return sock;
 	}
@@ -1087,7 +1087,7 @@ int ipstack_sock_unix_client_write(zpl_socket_t fd, char *name, char *buf, zpl_u
 		if (ret < 0)
 		{
 			_OS_ERROR( "ipstack sock cannot(%d) sendto to %s(%s) \n",fd._fd, path,
-					strerror(errno));
+					strerror(ipstack_errno));
 			return ERROR;
 		}
 		return ret;
@@ -1108,13 +1108,13 @@ int ipstack_select_wait(int maxfd, ipstack_fd_set *rfdset, ipstack_fd_set *wfdse
 		num = ipstack_select(IPCOM_STACK, maxfd, rfdset, wfdset, NULL, timeout_ms ? &timer_wait : NULL);
 		if (num < 0)
 		{
-			// fprintf(stdout, "%s (errno=%d -> %s)", __func__, errno, strerror(errno));
-			if (errno == EINTR || errno == EAGAIN)
+			// fprintf(stdout, "%s (ipstack_errno=%d -> %s)", __func__, ipstack_errno, strerror(ipstack_errno));
+			if (ipstack_errno == EINTR || ipstack_errno == EAGAIN)
 			{
-				// fprintf(stdout, "%s (errno=%d -> %s)", __func__, errno, strerror(errno));
+				// fprintf(stdout, "%s (ipstack_errno=%d -> %s)", __func__, ipstack_errno, strerror(ipstack_errno));
 				continue;
 			}
-			/*			if (errno == EPIPE || errno == EBADF || errno == EIO ECONNRESET ECONNABORTED ENETRESET ECONNREFUSED)
+			/*			if (ipstack_errno == EPIPE || ipstack_errno == EBADF || ipstack_errno == EIO ECONNRESET ECONNABORTED ENETRESET ECONNREFUSED)
 						{
 							return RES_CLOSE;
 						}*/
@@ -1145,7 +1145,7 @@ int ipstack_write_timeout(zpl_socket_t fd, zpl_char *buf, zpl_uint32 len, zpl_ui
 		}
 		if (ret < 0)
 		{
-			_OS_ERROR("os_select_wait to write(%d) error %s\n", fd._fd,strerror(errno));
+			_OS_ERROR("os_select_wait to write(%d) error %s\n", fd._fd,strerror(ipstack_errno));
 			return ERROR;
 		}
 		if (!FD_ISSET(fd._fd, &writefds))
@@ -1167,7 +1167,7 @@ int ipstack_write_timeout(zpl_socket_t fd, zpl_char *buf, zpl_uint32 len, zpl_ui
 		}
 		if (ret < 0)
 		{
-			_OS_ERROR("ipstack_select_wait write(%d) error %s\n",fd._fd, strerror(errno));
+			_OS_ERROR("ipstack_select_wait write(%d) error %s\n",fd._fd, strerror(ipstack_errno));
 			return ERROR;
 		}
 		if (!IPSTACK_FD_ISSET(fd._fd, &writefds))
@@ -1195,7 +1195,7 @@ int ipstack_read_timeout(zpl_socket_t fd, zpl_char *buf, zpl_uint32 len, zpl_uin
 		}
 		if (ret < 0)
 		{
-			_OS_ERROR("os_select_wait read(%d) error %s\n",fd._fd, strerror(errno));
+			_OS_ERROR("os_select_wait read(%d) error %s\n",fd._fd, strerror(ipstack_errno));
 			return ERROR;
 		}
 		if (!FD_ISSET(fd._fd, &readfds))
@@ -1217,7 +1217,7 @@ int ipstack_read_timeout(zpl_socket_t fd, zpl_char *buf, zpl_uint32 len, zpl_uin
 		}
 		if (ret < 0)
 		{
-			_OS_ERROR("ipstack_select_wait read(%d) error %s\n",fd._fd, strerror(errno));
+			_OS_ERROR("ipstack_select_wait read(%d) error %s\n",fd._fd, strerror(ipstack_errno));
 			return ERROR;
 		}
 		if (!IPSTACK_FD_ISSET(fd._fd, &readfds))
@@ -1238,7 +1238,7 @@ int ipstack_write_iov(zpl_socket_t fd, int type, struct iovec *iov, int iovcnt)
 	/* only place where written should be sign compared */
 	if (written < 0)
 	{
-		if (!((((errno) == EAGAIN) || ((errno) == EWOULDBLOCK) || ((errno) == EINTR))))
+		if (!((((ipstack_errno) == EAGAIN) || ((ipstack_errno) == EWOULDBLOCK) || ((ipstack_errno) == EINTR))))
 			return ERROR;
 	}
 	return written;
@@ -1261,16 +1261,16 @@ int ipstack_writemsg(zpl_socket_t sock, char *m, int len, char *m1, int len1)
 	msg.msg_flags = 0;
 	error = ipstack_sendmsg(sock, &msg, 0);
 
-	if (error == -1 && (errno == EINVAL || errno == ENETUNREACH || errno == EFAULT))
+	if (error == -1 && (ipstack_errno == EINVAL || ipstack_errno == ENETUNREACH || ipstack_errno == EFAULT))
 	{
-		fprintf(stdout, "============rtp_sendmsg=========%s\r\n", strerror(errno));
+		fprintf(stdout, "============rtp_sendmsg=========%s\r\n", strerror(ipstack_errno));
 		msg.msg_controllen = 0;
 		msg.msg_control = NULL;
 		error = ipstack_sendmsg(sock, &msg, 0);
 	}
-	else if (error < 0 && errno == EAGAIN)
+	else if (error < 0 && ipstack_errno == EAGAIN)
 	{
-		fprintf(stdout, "============rtp_sendmsg====aaa=====%s\r\n", strerror(errno));
+		fprintf(stdout, "============rtp_sendmsg====aaa=====%s\r\n", strerror(ipstack_errno));
 		error = ipstack_sendmsg(sock, &msg, 0);
 	}
 	return error;

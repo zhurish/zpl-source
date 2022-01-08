@@ -211,10 +211,10 @@ extern void cmd_dhcp_init(void);
 
 
 
-extern int nsm_dhcp_module_init ();
-extern int nsm_dhcp_module_exit ();
-extern int nsm_dhcp_task_init ();
-extern int nsm_dhcp_task_exit ();
+extern int nsm_dhcp_module_init (void);
+extern int nsm_dhcp_module_exit (void);
+extern int nsm_dhcp_task_init (void);
+extern int nsm_dhcp_task_exit (void);
 
 
 #endif

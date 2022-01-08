@@ -615,7 +615,7 @@ int nsm_ip_dns_host_config(struct vty *vty)
 	}
 	if(gIpdns.mutex)
 		os_mutex_unlock(gIpdns.mutex);
-	return OK;
+	return 1;
 }
 
 int nsm_ip_dns_host_show(struct vty *vty)

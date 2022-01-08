@@ -47,7 +47,7 @@ typedef struct tftpd_config
     char	dirName [TFTP_FILENAME_SIZE];
     char    address[TFTP_FILENAME_SIZE];
     zpl_ushort	port;
-    int 	sock;
+    zpl_socket_t 	sock;
     void	*master;
     void	*t_read;
     int 	count;

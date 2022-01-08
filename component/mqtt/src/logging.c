@@ -199,7 +199,7 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 			case MOSQ_LOG_SUBSCRIBE:
 				topic = "$SYS/broker/log/M/subscribe";
 #ifndef WIN32
-				syslog_priority = LOG_NOTICE;
+				syslog_priority = ZLOG_LEVEL_NOTICE;
 #else
 				syslog_priority = EVENTLOG_INFORMATION_TYPE;
 #endif
@@ -207,7 +207,7 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 			case MOSQ_LOG_UNSUBSCRIBE:
 				topic = "$SYS/broker/log/M/unsubscribe";
 #ifndef WIN32
-				syslog_priority = LOG_NOTICE;
+				syslog_priority = ZLOG_LEVEL_NOTICE;
 #else
 				syslog_priority = EVENTLOG_INFORMATION_TYPE;
 #endif
@@ -215,7 +215,7 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 			case MOSQ_LOG_DEBUG:
 				topic = "$SYS/broker/log/D";
 #ifndef WIN32
-				syslog_priority = LOG_DEBUG;
+				syslog_priority = ZLOG_LEVEL_DEBUG;
 #else
 				syslog_priority = EVENTLOG_INFORMATION_TYPE;
 #endif
@@ -223,7 +223,7 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 			case MOSQ_LOG_ERR:
 				topic = "$SYS/broker/log/E";
 #ifndef WIN32
-				syslog_priority = LOG_ERR;
+				syslog_priority = ZLOG_LEVEL_ERR;
 #else
 				syslog_priority = EVENTLOG_ERROR_TYPE;
 #endif
@@ -231,7 +231,7 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 			case MOSQ_LOG_WARNING:
 				topic = "$SYS/broker/log/W";
 #ifndef WIN32
-				syslog_priority = LOG_WARNING;
+				syslog_priority = ZLOG_LEVEL_WARNING;
 #else
 				syslog_priority = EVENTLOG_WARNING_TYPE;
 #endif
@@ -239,7 +239,7 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 			case MOSQ_LOG_NOTICE:
 				topic = "$SYS/broker/log/N";
 #ifndef WIN32
-				syslog_priority = LOG_NOTICE;
+				syslog_priority = ZLOG_LEVEL_NOTICE;
 #else
 				syslog_priority = EVENTLOG_INFORMATION_TYPE;
 #endif
@@ -247,7 +247,7 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 			case MOSQ_LOG_INFO:
 				topic = "$SYS/broker/log/I";
 #ifndef WIN32
-				syslog_priority = LOG_INFO;
+				syslog_priority = ZLOG_LEVEL_INFO;
 #else
 				syslog_priority = EVENTLOG_INFORMATION_TYPE;
 #endif
@@ -256,7 +256,7 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 			case MOSQ_LOG_WEBSOCKETS:
 				topic = "$SYS/broker/log/WS";
 #ifndef WIN32
-				syslog_priority = LOG_DEBUG;
+				syslog_priority = ZLOG_LEVEL_DEBUG;
 #else
 				syslog_priority = EVENTLOG_INFORMATION_TYPE;
 #endif
@@ -265,7 +265,7 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 			default:
 				topic = "$SYS/broker/log/E";
 #ifndef WIN32
-				syslog_priority = LOG_ERR;
+				syslog_priority = ZLOG_LEVEL_ERR;
 #else
 				syslog_priority = EVENTLOG_ERROR_TYPE;
 #endif

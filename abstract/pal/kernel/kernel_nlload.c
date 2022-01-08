@@ -26,43 +26,45 @@
 
 #include "kernel_netlink.h"
 
+#ifdef ZPL_KERNEL_SORF_FORWARDING
+
 /* Called from interface_lookup_netlink().  This function is only used
  during bootstrap. */
-static int netlink_interface_load(struct sockaddr_nl *snl, struct nlmsghdr *h,
+static int _netlink_interface_load(struct ipstack_sockaddr_nl *snl, struct ipstack_nlmsghdr *h,
 		vrf_id_t vrf_id)
 {
 	zpl_uint32 len;
-	struct ifinfomsg *ifi;
-	struct rtattr *tb[IFLA_MAX + 1];
+	struct ipstack_ifinfomsg *ifi;
+	struct ipstack_rtattr *tb[IPSTACK_IFLA_MAX + 1];
 	struct interface *ifp;
 	char *name;
 
-	ifi = NLMSG_DATA(h);
+	ifi = IPSTACK_NLMSG_DATA(h);
 
-	if (h->nlmsg_type != RTM_NEWLINK)
+	if (h->nlmsg_type != IPSTACK_RTM_NEWLINK)
 		return 0;
 
-	len = h->nlmsg_len - NLMSG_LENGTH(sizeof(struct ifinfomsg));
+	len = h->nlmsg_len - IPSTACK_NLMSG_LENGTH(sizeof(struct ipstack_ifinfomsg));
 	if (len < 0)
 		return -1;
 
 	/* Looking up interface name. */
 	memset(tb, 0, sizeof tb);
-	netlink_parse_rtattr(tb, IFLA_MAX, IFLA_RTA(ifi), len);
+	_netlink_parse_rtattr(tb, IPSTACK_IFLA_MAX, IPSTACK_IFLA_RTA(ifi), len);
 
-#ifdef IFLA_WIRELESS
+#ifdef IPSTACK_IFLA_WIRELESS
 	/* check for wireless messages to ignore */
-	if ((tb[IFLA_WIRELESS] != NULL) && (ifi->ifi_change == 0))
+	if ((tb[IPSTACK_IFLA_WIRELESS] != NULL) && (ifi->ifi_change == 0))
 	{
 		if (IS_ZEBRA_DEBUG_KERNEL)
-		zlog_debug (MODULE_PAL, "%s: ignoring IFLA_WIRELESS message", __func__);
+		zlog_debug (MODULE_PAL, "%s: ignoring IPSTACK_IFLA_WIRELESS message", __func__);
 		return 0;
 	}
-#endif /* IFLA_WIRELESS */
+#endif /* IPSTACK_IFLA_WIRELESS */
 
-	if (tb[IFLA_IFNAME] == NULL)
+	if (tb[IPSTACK_IFLA_IFNAME] == NULL)
 		return -1;
-	name = (char *) RTA_DATA(tb[IFLA_IFNAME]);
+	name = (char *) IPSTACK_RTA_DATA(tb[IPSTACK_IFLA_IFNAME]);
 
 	/* Add interface. */
 /*	if (!ifindex_lookup_by_kname(name))
@@ -71,7 +73,7 @@ static int netlink_interface_load(struct sockaddr_nl *snl, struct nlmsghdr *h,
 	if (!if_lookup_by_kernel_name_vrf(name, vrf_id) &&
 			!if_lookup_by_kernel_index_vrf(ifi->ifi_index, vrf_id))
 	{
-		if (h->nlmsg_type == RTM_NEWLINK)
+		if (h->nlmsg_type == IPSTACK_RTM_NEWLINK)
 		{
 			/* Add interface. */
 			return 0;
@@ -88,14 +90,14 @@ static int netlink_interface_load(struct sockaddr_nl *snl, struct nlmsghdr *h,
 	if (ifp)
 	{
 		if_kname_set(ifp, name);
-		set_ifindex(ifp, ifi->ifi_index);
+		_netlink_set_ifindex(ifp, ifi->ifi_index);
 		ifp->flags = ifi->ifi_flags & 0x0000fffff;
-		ifp->mtu6 = ifp->mtu = *(zpl_uint32  *) RTA_DATA(tb[IFLA_MTU]);
+		ifp->mtu6 = ifp->mtu = *(zpl_uint32  *) IPSTACK_RTA_DATA(tb[IPSTACK_IFLA_MTU]);
 		//ifp->metric = 0;
 
 		/* Hardware type and address. */
-		ifp->ll_type = netlink_to_zebra_link_type(ifi->ifi_type);
-		netlink_interface_update_hw_addr(tb, ifp);
+		ifp->ll_type = _netlink_to_zebra_link_type(ifi->ifi_type);
+		_netlink_interface_update_hw_addr(tb, ifp);
 
 		//zhurish if_add_update(ifp);
 	}
@@ -103,31 +105,31 @@ static int netlink_interface_load(struct sockaddr_nl *snl, struct nlmsghdr *h,
 }
 
 /* Lookup interface IPv4/IPv6 address. */
-static int netlink_interface_address_load(struct sockaddr_nl *snl, struct nlmsghdr *h,
+static int _netlink_interface_address_load(struct ipstack_sockaddr_nl *snl, struct ipstack_nlmsghdr *h,
 		vrf_id_t vrf_id)
 {
 	zpl_uint32 len;
-	struct ifaddrmsg *ifa;
-	struct rtattr *tb[IFA_MAX + 1];
+	struct ipstack_ifaddrmsg *ifa;
+	struct ipstack_rtattr *tb[IPSTACK_IFA_MAX + 1];
 	struct interface *ifp;
 	void *addr = NULL;
 	void *broad = NULL;
 	zpl_uchar flags = 0;
 	char *label = NULL;
 
-	ifa = NLMSG_DATA(h);
+	ifa = IPSTACK_NLMSG_DATA(h);
 
-	if (ifa->ifa_family != AF_INET
+	if (ifa->ifa_family != IPSTACK_AF_INET
 #ifdef HAVE_IPV6
-			&& ifa->ifa_family != AF_INET6
+			&& ifa->ifa_family != IPSTACK_AF_INET6
 #endif /* HAVE_IPV6 */
 					)
 		return 0;
 
-	if (h->nlmsg_type != RTM_NEWADDR && h->nlmsg_type != RTM_DELADDR)
+	if (h->nlmsg_type != IPSTACK_RTM_NEWADDR && h->nlmsg_type != IPSTACK_RTM_DELADDR)
 		return 0;
 
-	len = h->nlmsg_len - NLMSG_LENGTH(sizeof(struct ifaddrmsg));
+	len = h->nlmsg_len - IPSTACK_NLMSG_LENGTH(sizeof(struct ipstack_ifaddrmsg));
 	if (len < 0)
 		return -1;
 	if (h->nlmsg_pid == snl->nl_pid)
@@ -138,7 +140,7 @@ static int netlink_interface_address_load(struct sockaddr_nl *snl, struct nlmsgh
 		return 0;
 	}
 	memset(tb, 0, sizeof tb);
-	netlink_parse_rtattr(tb, IFA_MAX, IFA_RTA(ifa), len);
+	_netlink_parse_rtattr(tb, IPSTACK_IFA_MAX, IPSTACK_IFA_RTA(ifa), len);
 
 	ifp = if_lookup_by_kernel_index_vrf(ifa->ifa_index, vrf_id);
 	if (ifp == NULL)
@@ -157,51 +159,51 @@ static int netlink_interface_address_load(struct sockaddr_nl *snl, struct nlmsgh
 	{
 		char buf[BUFSIZ];
 		zlog_debug(MODULE_PAL, "netlink_interface_addr %s %s vrf %u:",
-				nl_msg_type_to_str(h->nlmsg_type), ifp->name, vrf_id);
-		if (tb[IFA_LOCAL])
-			zlog_debug(MODULE_PAL, "  IFA_LOCAL     %s/%d",
-					inet_ntop(ifa->ifa_family, RTA_DATA(tb[IFA_LOCAL]), buf,
+				_netlink_msg_type_to_str(h->nlmsg_type), ifp->name, vrf_id);
+		if (tb[IPSTACK_IFA_LOCAL])
+			zlog_debug(MODULE_PAL, "  IPSTACK_IFA_LOCAL     %s/%d",
+					inet_ntop(ifa->ifa_family, IPSTACK_RTA_DATA(tb[IPSTACK_IFA_LOCAL]), buf,
 							BUFSIZ), ifa->ifa_prefixlen);
-		if (tb[IFA_ADDRESS])
-			zlog_debug(MODULE_PAL, "  IFA_ADDRESS   %s/%d",
-					inet_ntop(ifa->ifa_family, RTA_DATA(tb[IFA_ADDRESS]), buf,
+		if (tb[IPSTACK_IFA_ADDRESS])
+			zlog_debug(MODULE_PAL, "  IPSTACK_IFA_ADDRESS   %s/%d",
+					inet_ntop(ifa->ifa_family, IPSTACK_RTA_DATA(tb[IPSTACK_IFA_ADDRESS]), buf,
 							BUFSIZ), ifa->ifa_prefixlen);
-		if (tb[IFA_BROADCAST])
-			zlog_debug(MODULE_PAL, "  IFA_BROADCAST %s/%d",
-					inet_ntop(ifa->ifa_family, RTA_DATA(tb[IFA_BROADCAST]), buf,
+		if (tb[IPSTACK_IFA_BROADCAST])
+			zlog_debug(MODULE_PAL, "  IPSTACK_IFA_BROADCAST %s/%d",
+					inet_ntop(ifa->ifa_family, IPSTACK_RTA_DATA(tb[IPSTACK_IFA_BROADCAST]), buf,
 							BUFSIZ), ifa->ifa_prefixlen);
-		if (tb[IFA_LABEL] && strcmp(ifp->k_name, RTA_DATA(tb[IFA_LABEL])))
-			zlog_debug(MODULE_PAL, "  IFA_LABEL     %s",
-					(char *) RTA_DATA(tb[IFA_LABEL]));
+		if (tb[IPSTACK_IFA_LABEL] && strcmp(ifp->k_name, IPSTACK_RTA_DATA(tb[IPSTACK_IFA_LABEL])))
+			zlog_debug(MODULE_PAL, "  IPSTACK_IFA_LABEL     %s",
+					(char *) IPSTACK_RTA_DATA(tb[IPSTACK_IFA_LABEL]));
 
-		if (tb[IFA_CACHEINFO])
+		if (tb[IPSTACK_IFA_CACHEINFO])
 		{
-			struct ifa_cacheinfo *ci = RTA_DATA(tb[IFA_CACHEINFO]);
-			zlog_debug(MODULE_PAL, "  IFA_CACHEINFO pref %d, valid %d",
+			struct ipstack_ifa_cacheinfo *ci = IPSTACK_RTA_DATA(tb[IPSTACK_IFA_CACHEINFO]);
+			zlog_debug(MODULE_PAL, "  IPSTACK_IFA_CACHEINFO pref %d, valid %d",
 					ci->ifa_prefered, ci->ifa_valid);
 		}
 	}
 
 	/* logic copied from iproute2/ip/ipaddress.c:print_addrinfo() */
-	if (tb[IFA_LOCAL] == NULL)
-		tb[IFA_LOCAL] = tb[IFA_ADDRESS];
-	if (tb[IFA_ADDRESS] == NULL)
-		tb[IFA_ADDRESS] = tb[IFA_LOCAL];
+	if (tb[IPSTACK_IFA_LOCAL] == NULL)
+		tb[IPSTACK_IFA_LOCAL] = tb[IPSTACK_IFA_ADDRESS];
+	if (tb[IPSTACK_IFA_ADDRESS] == NULL)
+		tb[IPSTACK_IFA_ADDRESS] = tb[IPSTACK_IFA_LOCAL];
 
 	/* local interface address */
-	addr = (tb[IFA_LOCAL] ? RTA_DATA(tb[IFA_LOCAL]) : NULL);
+	addr = (tb[IPSTACK_IFA_LOCAL] ? IPSTACK_RTA_DATA(tb[IPSTACK_IFA_LOCAL]) : NULL);
 
 	/* is there a peer address? */
-	if (tb[IFA_ADDRESS]
-			&& memcmp(RTA_DATA(tb[IFA_ADDRESS]), RTA_DATA(tb[IFA_LOCAL]),
-					RTA_PAYLOAD(tb[IFA_ADDRESS])))
+	if (tb[IPSTACK_IFA_ADDRESS]
+			&& memcmp(IPSTACK_RTA_DATA(tb[IPSTACK_IFA_ADDRESS]), IPSTACK_RTA_DATA(tb[IPSTACK_IFA_LOCAL]),
+					IPSTACK_RTA_PAYLOAD(tb[IPSTACK_IFA_ADDRESS])))
 	{
-		broad = RTA_DATA(tb[IFA_ADDRESS]);
+		broad = IPSTACK_RTA_DATA(tb[IPSTACK_IFA_ADDRESS]);
 		SET_FLAG(flags, ZEBRA_IFA_PEER);
 	}
 	else
 		/* seeking a broadcast address */
-		broad = (tb[IFA_BROADCAST] ? RTA_DATA(tb[IFA_BROADCAST]) : NULL);
+		broad = (tb[IPSTACK_IFA_BROADCAST] ? IPSTACK_RTA_DATA(tb[IPSTACK_IFA_BROADCAST]) : NULL);
 
 	/* addr is primary key, SOL if we don't have one */
 	if (addr == NULL)
@@ -211,37 +213,37 @@ static int netlink_interface_address_load(struct sockaddr_nl *snl, struct nlmsgh
 	}
 
 	/* Flags. */
-	if (ifa->ifa_flags & IFA_F_SECONDARY)
+	if (ifa->ifa_flags & IPSTACK_IFA_F_SECONDARY)
 		SET_FLAG(flags, ZEBRA_IFA_SECONDARY);
 
 	/* Label */
-	if (tb[IFA_LABEL])
-		label = (char *) RTA_DATA(tb[IFA_LABEL]);
+	if (tb[IPSTACK_IFA_LABEL])
+		label = (char *) IPSTACK_RTA_DATA(tb[IPSTACK_IFA_LABEL]);
 
 	if (ifp && label && strcmp(ifp->k_name, label) == 0)
 		label = NULL;
 
 	/* Register interface address to the interface. */
-	if (ifa->ifa_family == AF_INET)
+	if (ifa->ifa_family == IPSTACK_AF_INET)
 	{
-		if (h->nlmsg_type == RTM_NEWADDR)
-			connected_add_ipv4(ifp, flags, (struct in_addr *) addr,
-					ifa->ifa_prefixlen, (struct in_addr *) broad, label);
+		if (h->nlmsg_type == IPSTACK_RTM_NEWADDR)
+			connected_add_ipv4(ifp, flags, (struct ipstack_in_addr *) addr,
+					ifa->ifa_prefixlen, (struct ipstack_in_addr *) broad, label);
 		else
 		{
-			connected_delete_ipv4(ifp, flags, (struct in_addr *) addr,
-					ifa->ifa_prefixlen, (struct in_addr *) broad);
+			connected_delete_ipv4(ifp, flags, (struct ipstack_in_addr *) addr,
+					ifa->ifa_prefixlen, (struct ipstack_in_addr *) broad);
 		}
 	}
 #ifdef HAVE_IPV6
-	if (ifa->ifa_family == AF_INET6)
+	if (ifa->ifa_family == IPSTACK_AF_INET6)
 	{
-		if (h->nlmsg_type == RTM_NEWADDR)
-			connected_add_ipv6(ifp, flags, (struct in6_addr *) addr,
-					ifa->ifa_prefixlen, (struct in6_addr *) broad, label);
+		if (h->nlmsg_type == IPSTACK_RTM_NEWADDR)
+			connected_add_ipv6(ifp, flags, (struct ipstack_in6_addr *) addr,
+					ifa->ifa_prefixlen, (struct ipstack_in6_addr *) broad, label);
 		else
-			connected_delete_ipv6(ifp, (struct in6_addr *) addr,
-					ifa->ifa_prefixlen, (struct in6_addr *) broad);
+			connected_delete_ipv6(ifp, (struct ipstack_in6_addr *) addr,
+					ifa->ifa_prefixlen, (struct ipstack_in6_addr *) broad);
 	}
 #endif /* HAVE_IPV6 */
 
@@ -249,12 +251,12 @@ static int netlink_interface_address_load(struct sockaddr_nl *snl, struct nlmsgh
 }
 
 /* Looking up routing table by netlink interface. */
-static int netlink_routing_table_load(struct sockaddr_nl *snl, struct nlmsghdr *h,
+static int _netlink_routing_table_load(struct ipstack_sockaddr_nl *snl, struct ipstack_nlmsghdr *h,
 		vrf_id_t vrf_id)
 {
 	zpl_uint32 len;
-	struct rtmsg *rtm;
-	struct rtattr *tb[RTA_MAX + 1];
+	struct ipstack_rtmsg *rtm;
+	struct ipstack_rtattr *tb[IPSTACK_RTA_MAX + 1];
 	zpl_uchar flags = 0;
 
 	char anyaddr[16] =
@@ -268,38 +270,38 @@ static int netlink_routing_table_load(struct sockaddr_nl *snl, struct nlmsghdr *
 	void *gate;
 	void *src;
 
-	rtm = NLMSG_DATA(h);
+	rtm = IPSTACK_NLMSG_DATA(h);
 
-	if (h->nlmsg_type != RTM_NEWROUTE)
+	if (h->nlmsg_type != IPSTACK_RTM_NEWROUTE)
 		return 0;
-	if (rtm->rtm_type != RTN_UNICAST)
+	if (rtm->rtm_type != IPSTACK_RTN_UNICAST)
 		return 0;
 
 	table = rtm->rtm_table;
 #if 0                           /* we weed them out later in rib_weed_tables () */
-	if (table != RT_TABLE_MAIN && table != zebrad.rtm_table_default)
+	if (table != IPSTACK_RT_TABLE_MAIN && table != zebrad.rtm_table_default)
 	return 0;
 #endif
 
-	len = h->nlmsg_len - NLMSG_LENGTH(sizeof(struct rtmsg));
+	len = h->nlmsg_len - IPSTACK_NLMSG_LENGTH(sizeof(struct ipstack_rtmsg));
 	if (len < 0)
 		return -1;
 
 	memset(tb, 0, sizeof tb);
-	netlink_parse_rtattr(tb, RTA_MAX, RTM_RTA(rtm), len);
+	_netlink_parse_rtattr(tb, IPSTACK_RTA_MAX, IPSTACK_RTM_RTA(rtm), len);
 
-	if (rtm->rtm_flags & RTM_F_CLONED)
+	if (rtm->rtm_flags & IPSTACK_RTM_F_CLONED)
 		return 0;
-	if (rtm->rtm_protocol == RTPROT_REDIRECT)
+	if (rtm->rtm_protocol == IPSTACK_RTPROT_REDIRECT)
 		return 0;
-	if (rtm->rtm_protocol == RTPROT_KERNEL)
+	if (rtm->rtm_protocol == IPSTACK_RTPROT_KERNEL)
 		return 0;
 
 	if (rtm->rtm_src_len != 0)
 		return 0;
 
 	/* Route which inserted by Zebra. */
-	if (rtm->rtm_protocol == RTPROT_ZEBRA)
+	if (rtm->rtm_protocol == IPSTACK_RTPROT_ZEBRA)
 		flags |= ZEBRA_FLAG_SELFROUTE;
 
 	index = 0;
@@ -307,40 +309,40 @@ static int netlink_routing_table_load(struct sockaddr_nl *snl, struct nlmsghdr *
 	gate = NULL;
 	src = NULL;
 
-	if (tb[RTA_OIF])
-		index = *(int *) RTA_DATA(tb[RTA_OIF]);
+	if (tb[IPSTACK_RTA_OIF])
+		index = *(int *) IPSTACK_RTA_DATA(tb[IPSTACK_RTA_OIF]);
 
-	if (tb[RTA_DST])
-		dest = RTA_DATA(tb[RTA_DST]);
+	if (tb[IPSTACK_RTA_DST])
+		dest = IPSTACK_RTA_DATA(tb[IPSTACK_RTA_DST]);
 	else
 		dest = anyaddr;
 
-	if (tb[RTA_PREFSRC])
-		src = RTA_DATA(tb[RTA_PREFSRC]);
+	if (tb[IPSTACK_RTA_PREFSRC])
+		src = IPSTACK_RTA_DATA(tb[IPSTACK_RTA_PREFSRC]);
 
-	if (tb[RTA_GATEWAY])
-		gate = RTA_DATA(tb[RTA_GATEWAY]);
+	if (tb[IPSTACK_RTA_GATEWAY])
+		gate = IPSTACK_RTA_DATA(tb[IPSTACK_RTA_GATEWAY]);
 
-	if (tb[RTA_METRICS])
+	if (tb[IPSTACK_RTA_METRICS])
 	{
-		struct rtattr *mxrta[RTAX_MAX + 1];
+		struct ipstack_rtattr *mxrta[IPSTACK_RTAX_MAX + 1];
 
 		memset(mxrta, 0, sizeof mxrta);
-		netlink_parse_rtattr(mxrta, RTAX_MAX, RTA_DATA(tb[RTA_METRICS]),
-				RTA_PAYLOAD(tb[RTA_METRICS]));
+		_netlink_parse_rtattr(mxrta, IPSTACK_RTAX_MAX, IPSTACK_RTA_DATA(tb[IPSTACK_RTA_METRICS]),
+				IPSTACK_RTA_PAYLOAD(tb[IPSTACK_RTA_METRICS]));
 
-		if (mxrta[RTAX_MTU])
-			mtu = *(zpl_uint32 *) RTA_DATA(mxrta[RTAX_MTU]);
+		if (mxrta[IPSTACK_RTAX_MTU])
+			mtu = *(zpl_uint32 *) IPSTACK_RTA_DATA(mxrta[IPSTACK_RTAX_MTU]);
 	}
 
-	if (rtm->rtm_family == AF_INET)
+	if (rtm->rtm_family == IPSTACK_AF_INET)
 	{
 		struct prefix_ipv4 p;
-		p.family = AF_INET;
+		p.family = IPSTACK_AF_INET;
 		memcpy(&p.prefix, dest, 4);
 		p.prefixlen = rtm->rtm_dst_len;
 
-		if (!tb[RTA_MULTIPATH])
+		if (!tb[IPSTACK_RTA_MULTIPATH])
 			rib_add_ipv4(ZEBRA_ROUTE_KERNEL, flags, &p, gate, src,
 					ifkernel2ifindex(index), vrf_id, table, 0, mtu, 0,
 					SAFI_UNICAST);
@@ -349,10 +351,10 @@ static int netlink_routing_table_load(struct sockaddr_nl *snl, struct nlmsghdr *
 			/* This is a multipath route */
 
 			struct rib *rib;
-			struct rtnexthop *rtnh = (struct rtnexthop *) RTA_DATA(
-					tb[RTA_MULTIPATH]);
+			struct ipstack_rtnexthop *rtnh = (struct ipstack_rtnexthop *) IPSTACK_RTA_DATA(
+					tb[IPSTACK_RTA_MULTIPATH]);
 
-			len = RTA_PAYLOAD(tb[RTA_MULTIPATH]);
+			len = IPSTACK_RTA_PAYLOAD(tb[IPSTACK_RTA_MULTIPATH]);
 
 			rib = XCALLOC(MTYPE_RIB, sizeof(struct rib));
 			rib->type = ZEBRA_ROUTE_KERNEL;
@@ -375,10 +377,10 @@ static int netlink_routing_table_load(struct sockaddr_nl *snl, struct nlmsghdr *
 				if (rtnh->rtnh_len > sizeof(*rtnh))
 				{
 					memset(tb, 0, sizeof(tb));
-					netlink_parse_rtattr(tb, RTA_MAX, RTNH_DATA(rtnh),
+					_netlink_parse_rtattr(tb, IPSTACK_RTA_MAX, IPSTACK_RTNH_DATA(rtnh),
 							rtnh->rtnh_len - sizeof(*rtnh));
-					if (tb[RTA_GATEWAY])
-						gate = RTA_DATA(tb[RTA_GATEWAY]);
+					if (tb[IPSTACK_RTA_GATEWAY])
+						gate = IPSTACK_RTA_DATA(tb[IPSTACK_RTA_GATEWAY]);
 				}
 
 				if (gate)
@@ -392,8 +394,8 @@ static int netlink_routing_table_load(struct sockaddr_nl *snl, struct nlmsghdr *
 				else
 					rib_nexthop_ifindex_add(rib, ifkernel2ifindex(index));
 
-				len -= NLMSG_ALIGN(rtnh->rtnh_len);
-				rtnh = RTNH_NEXT(rtnh);
+				len -= IPSTACK_NLMSG_ALIGN(rtnh->rtnh_len);
+				rtnh = IPSTACK_RTNH_NEXT(rtnh);
 			}
 
 			if (rib->nexthop_num == 0)
@@ -403,10 +405,10 @@ static int netlink_routing_table_load(struct sockaddr_nl *snl, struct nlmsghdr *
 		}
 	}
 #ifdef HAVE_IPV6
-	if (rtm->rtm_family == AF_INET6)
+	if (rtm->rtm_family == IPSTACK_AF_INET6)
 	{
 		struct prefix_ipv6 p;
-		p.family = AF_INET6;
+		p.family = IPSTACK_AF_INET6;
 		memcpy(&p.prefix, dest, 16);
 		p.prefixlen = rtm->rtm_dst_len;
 
@@ -419,33 +421,33 @@ static int netlink_routing_table_load(struct sockaddr_nl *snl, struct nlmsghdr *
 	return 0;
 }
 
-/* Interface lookup by netlink socket. */
-int kernel_interface_load(struct nsm_vrf *zvrf)
+/* Interface lookup by netlink ipstack_socket. */
+int _netlink_iftbl_load(struct nsm_vrf *zvrf)
 {
 	int ret;
 
 	/* Get interface information. */
-	ret = netlink_request(AF_PACKET, RTM_GETLINK, &zvrf->netlink_cmd);
+	ret = _netlink_request(IPSTACK_AF_PACKET, IPSTACK_RTM_GETLINK, &zvrf->netlink_cmd);
 	if (ret < 0)
 		return ret;
-	ret = netlink_parse_info(netlink_interface_load, &zvrf->netlink_cmd, zvrf);
+	ret = _netlink_parse_info(_netlink_interface_load, &zvrf->netlink_cmd, zvrf);
 	if (ret < 0)
 		return ret;
 
 	/* Get IPv4 address of the interfaces. */
-	ret = netlink_request(AF_INET, RTM_GETADDR, &zvrf->netlink_cmd);
+	ret = _netlink_request(IPSTACK_AF_INET, IPSTACK_RTM_GETADDR, &zvrf->netlink_cmd);
 	if (ret < 0)
 		return ret;
-	ret = netlink_parse_info(netlink_interface_address_load, &zvrf->netlink_cmd, zvrf);
+	ret = _netlink_parse_info(_netlink_interface_address_load, &zvrf->netlink_cmd, zvrf);
 	if (ret < 0)
 		return ret;
 
 #ifdef HAVE_IPV6
 	/* Get IPv6 address of the interfaces. */
-	ret = netlink_request(AF_INET6, RTM_GETADDR, &zvrf->netlink_cmd);
+	ret = _netlink_request(IPSTACK_AF_INET6, IPSTACK_RTM_GETADDR, &zvrf->netlink_cmd);
 	if (ret < 0)
 		return ret;
-	ret = netlink_parse_info(netlink_interface_address_load, &zvrf->netlink_cmd, zvrf);
+	ret = _netlink_parse_info(_netlink_interface_address_load, &zvrf->netlink_cmd, zvrf);
 	if (ret < 0)
 		return ret;
 #endif /* HAVE_IPV6 */
@@ -455,27 +457,29 @@ int kernel_interface_load(struct nsm_vrf *zvrf)
 
 /* Routing table read function using netlink interface.  Only called
  bootstrap time. */
-int kernel_route_table_load(struct nsm_vrf *zvrf)
+int _netlink_rib_load(struct nsm_vrf *zvrf)
 {
 	int ret;
 
 	/* Get IPv4 routing table. */
-	ret = netlink_request(AF_INET, RTM_GETROUTE, &zvrf->netlink_cmd);
+	ret = _netlink_request(IPSTACK_AF_INET, IPSTACK_RTM_GETROUTE, &zvrf->netlink_cmd);
 	if (ret < 0)
 		return ret;
-	ret = netlink_parse_info(netlink_routing_table_load, &zvrf->netlink_cmd, zvrf);
+	ret = _netlink_parse_info(_netlink_routing_table_load, &zvrf->netlink_cmd, zvrf);
 	if (ret < 0)
 		return ret;
 
 #ifdef HAVE_IPV6
 	/* Get IPv6 routing table. */
-	ret = netlink_request(AF_INET6, RTM_GETROUTE, &zvrf->netlink_cmd);
+	ret = _netlink_request(IPSTACK_AF_INET6, IPSTACK_RTM_GETROUTE, &zvrf->netlink_cmd);
 	if (ret < 0)
 		return ret;
-	ret = netlink_parse_info(netlink_routing_table_load, &zvrf->netlink_cmd, zvrf);
+	ret = _netlink_parse_info(_netlink_routing_table_load, &zvrf->netlink_cmd, zvrf);
 	if (ret < 0)
 		return ret;
 #endif /* HAVE_IPV6 */
 
 	return 0;
 }
+
+#endif

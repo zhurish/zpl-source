@@ -167,8 +167,8 @@ extern void nsm_vrf_init (void);
  */
 void cmd_ip_vrf_init (void);
 /* Create a socket serving for the given VRF */
-//extern int vrf_socket (int, int, int, vrf_id_t);
-extern zpl_socket_t vrf_socket(int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id_t vrf_id);
+//extern int pal_vrf_socket (int, int, int, vrf_id_t);
+extern zpl_socket_t pal_vrf_socket(int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id_t vrf_id);
 
  
 #ifdef __cplusplus

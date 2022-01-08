@@ -51,9 +51,12 @@ extern zpl_char * hex_to_str(zpl_uint32 hex);
 
 
 extern int strchr_count(zpl_char *src, const char em);
-
+/*获取字符的数量，返回最后一个的位置*/
 extern int strchr_step(zpl_char *src, const char em, int step);
-extern int strchr_next(zpl_char *src, const char em);
+/*获取字符的偏移位置*/
+extern int strchr_offset(zpl_char *src, const char em);
+/*获取连续两个字符的间隔*/
+extern int strchr_step_num(zpl_char *src, const char em);
 
 extern zpl_char *strstr_last(const char *dest,const char *src);
 

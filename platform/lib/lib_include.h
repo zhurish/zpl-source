@@ -15,11 +15,14 @@ extern "C" {
 
 #include "version.h"
 #include "module.h"
-
+#include "moduletable.h"
 #include "route_types.h"
 #include "rtpl_event.h"
 
 #include "rtpl_def.h"
+
+#include "cli_node.h"
+
 #include "pqueue.h"
 //#include "queue.h"
 //#include "list_tree.h"

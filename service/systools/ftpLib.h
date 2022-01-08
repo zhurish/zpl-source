@@ -163,21 +163,21 @@ extern "C" {
 
 
 extern int ftpLibInit (long timeout);
-extern int ftpLogin (int ctrlSock, char *user, char *passwd, char *account);
+extern int ftpLogin (zpl_socket_t ctrlSock, char *user, char *passwd, char *account);
 extern int ftpLs (char *dirName);
 extern int ftpXfer (char *host, char *user, char *passwd, char *acct,
                        char *cmd, char *dirname, char *filename,
-                       int *pCtrlSock, int *pDataSock);
-extern int ftpCommand (int ctrlSock, const char *format, ...);
-extern int ftpCommandEnhanced (int ctrlSock, char *replyString,
+                       zpl_socket_t *pCtrlSock, zpl_socket_t *pDataSock);
+extern int ftpCommand (zpl_socket_t ctrlSock, const char *format, ...);
+extern int ftpCommandEnhanced (zpl_socket_t ctrlSock, char *replyString,
         				int replyStringLength, const char *format, ...);
-extern int ftpDataConnGet (int dataSock);
-extern int ftpDataConnInit (int ctrlSock);
-extern int ftpDataConnInitPassiveMode (int ctrlSock);
-extern int ftpHookup (char *host);
+extern zpl_socket_t ftpDataConnGet (zpl_socket_t dataSock);
+extern zpl_socket_t ftpDataConnInit (zpl_socket_t ctrlSock);
+extern zpl_socket_t ftpDataConnInitPassiveMode (zpl_socket_t ctrlSock);
+extern zpl_socket_t ftpHookup (char *host);
 extern void ftpLibDebugOptionsSet (zpl_uint32 options);
-extern int ftpReplyGet (int ctrlSock, zpl_bool expecteof);
-extern int ftpReplyGetEnhanced (int ctrlSock, zpl_bool expecteof, char *replyString,
+extern int ftpReplyGet (zpl_socket_t ctrlSock, zpl_bool expecteof);
+extern int ftpReplyGetEnhanced (zpl_socket_t ctrlSock, zpl_bool expecteof, char *replyString,
                                 int replyStringLength);
 extern int ftpTransientConfigSet (zpl_uint32 maxRetryCount, zpl_uint32 retryInterval);
 extern int ftpTransientConfigGet (zpl_uint32 *maxRetryCount, zpl_uint32 *retryInterval);

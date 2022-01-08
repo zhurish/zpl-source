@@ -189,23 +189,23 @@ with a defined binding in the namespace table.
 For UDP multicast, use
 
 @code
-    soap.connect_flags = SO_BROADCAST;
+    soap.connect_flags = IPSTACK_SO_BROADCAST;
 @endcode
 
-and optionally set the interface and TTL settings:
+and optionally set the interface and IPSTACK_TTL settings:
 
 @code
     in_addr_t addr = ipstack_inet_addr("1.2.3.4");
-    soap.ipv4_multicast_if = &addr; // see setsockopt IPPROTO_IP IP_MULTICAST_IF
+    soap.ipv4_multicast_if = &addr; // see setsockopt IPSTACK_IPPROTO_IP IP_MULTICAST_IF
     soap.ipv6_multicast_if = addr; // multicast sin6_scope_id
-    soap.ipv4_multicast_ttl = 1; // see setsockopt IPPROTO_IP, IP_MULTICAST_TTL
+    soap.ipv4_multicast_ttl = 1; // see setsockopt IPSTACK_IPPROTO_IP, IP_MULTICAST_TTL
 @endcode
 
-Please refer to the socket options for `IPPROTO_IP` `IP_MULTICAST_IF` to specify
+Please refer to the socket options for `IPSTACK_IPPROTO_IP` `IP_MULTICAST_IF` to specify
 the default interface for multicast datagrams to be sent from. Otherwise,
 the default interface set by the system administrator will be used (if any).
 
-Please refer to the socket options for `IPPROTO_IP` `IP_MULTICAST_TTL` to limit
+Please refer to the socket options for `IPSTACK_IPPROTO_IP` `IP_MULTICAST_TTL` to limit
 the lifetime of the packet. Multicast datagrams are sent with a default value
 of 1, to prevent them to be forwarded beyond the local network. This parameter
 can be set between 1 to 255.

@@ -24,6 +24,7 @@ Boston, MA 02111-1307, USA.  */
 #include "zpl_include.h"
 #include "memory.h"
 #include "log.h"
+#include "host.h"
 #include "thread.h"
 #include "vector.h"
 #include "vty.h"
@@ -136,10 +137,10 @@ void reinstall_node(enum node_type node,
 vector
 cmd_make_strvec(const char *string)
 {
-  const char *cp, *start;
-  zpl_char *token;
+  const char *cp = NULL, *start = NULL;
+  zpl_char *token = NULL;
   zpl_uint32 strlen;
-  vector strvec;
+  vector strvec = NULL;
 
   if (string == NULL)
     return NULL;
@@ -186,7 +187,7 @@ cmd_make_strvec(const char *string)
 void cmd_free_strvec(vector v)
 {
   zpl_uint32 i;
-  zpl_char *cp;
+  zpl_char *cp = NULL;
 
   if (!v)
     return;
@@ -268,8 +269,8 @@ format_parser_desc_str(struct format_parser_state *state)
 static void
 format_parser_begin_keyword(struct format_parser_state *state)
 {
-  struct cmd_token *token;
-  vector keyword_vect;
+  struct cmd_token *token = NULL;
+  vector keyword_vect = NULL;
 
   if (state->in_keyword || state->in_multiple)
     format_parser_error(state, "Unexpected '{'");
@@ -364,8 +365,8 @@ format_parser_end_multiple(struct format_parser_state *state)
 static void
 format_parser_handle_pipe(struct format_parser_state *state)
 {
-  struct cmd_token *keyword_token;
-  vector keyword_vect;
+  struct cmd_token *keyword_token = NULL;
+  vector keyword_vect = NULL;
 
   if (state->in_multiple)
   {
@@ -422,6 +423,12 @@ format_parser_read_word(struct format_parser_state *state)
   else if (cmd[0] == '.')
     token->terminal = TERMINAL_VARARG;
 
+  else if (strcmp(cmd, CMD_USP_SUB_RANGE_STR) == 0)
+    token->terminal = TERMINAL_IUSPV_SUB_RANGE;
+  else if (strcmp(cmd, CMD_USP_RANGE_STR) == 0)
+    token->terminal = TERMINAL_IUSPV_RANGE;
+  else if (strcmp(cmd, CMD_USP_SUB_STR) == 0)
+    token->terminal = TERMINAL_IUSPV_SUB;
   else if (strcmp(cmd, CMD_USP_STR) == 0)
     token->terminal = TERMINAL_IUSPV;
   else if (strcmp(cmd, CMD_MAC_STR) == 0)
@@ -598,6 +605,9 @@ enum match_type
   ipv6_match,
   range_match,
   iuspv_match,
+  iuspv_sub_match,
+  iuspv_range_match,
+  iuspv_sub_range_match,
   mac_match,
   vararg_match,
   partly_match,
@@ -755,7 +765,7 @@ cmd_ipv4_prefix_match(const char *str)
 static enum match_type
 cmd_ipv6_match(const char *str)
 {
-  struct sockaddr_in6 sin6_dummy;
+  struct ipstack_sockaddr_in6 sin6_dummy;
   int ret;
 
   if (str == NULL)
@@ -768,7 +778,7 @@ cmd_ipv6_match(const char *str)
    * for example ipstack_inet_pton can support the automatic addresses:
    *  ::1.2.3.4
    */
-  ret = ipstack_inet_pton(AF_INET6, str, &sin6_dummy.sin6_addr);
+  ret = ipstack_inet_pton(IPSTACK_AF_INET6, str, &sin6_dummy.sin6_addr);
 
   if (ret == 1)
     return exact_match;
@@ -908,7 +918,7 @@ cmd_ipv6_prefix_match(const char *str)
 #define DECIMAL_STRLEN_MAX 10
 
 static int
-cmd_range_match(const char *range, const char *str)
+cmd_range_match(const char *keystr, const char *str)
 {
   zpl_char *p;
   zpl_char buf[DECIMAL_STRLEN_MAX + 1];
@@ -922,26 +932,26 @@ cmd_range_match(const char *range, const char *str)
   if (*endptr != '\0')
     return 0;
 
-  range++;
-  p = strchr(range, '-');
+  keystr++;
+  p = strchr(keystr, '-');
   if (p == NULL)
     return 0;
-  if (p - range > DECIMAL_STRLEN_MAX)
+  if (p - keystr > DECIMAL_STRLEN_MAX)
     return 0;
-  strncpy(buf, range, p - range);
-  buf[p - range] = '\0';
+  strncpy(buf, keystr, p - keystr);
+  buf[p - keystr] = '\0';
   min = strtoul(buf, &endptr, 10);
   if (*endptr != '\0')
     return 0;
 
-  range = p + 1;
-  p = strchr(range, '>');
+  keystr = p + 1;
+  p = strchr(keystr, '>');
   if (p == NULL)
     return 0;
-  if (p - range > DECIMAL_STRLEN_MAX)
+  if (p - keystr > DECIMAL_STRLEN_MAX)
     return 0;
-  strncpy(buf, range, p - range);
-  buf[p - range] = '\0';
+  strncpy(buf, keystr, p - keystr);
+  buf[p - keystr] = '\0';
   max = strtoul(buf, &endptr, 10);
   if (*endptr != '\0')
     return 0;
@@ -953,17 +963,45 @@ cmd_range_match(const char *range, const char *str)
 }
 
 static int
-cmd_iuspv_match(const char *range, const char *str)
+cmd_iuspv_match(const char *keystr, const char *str)
 {
   // IF_USP_STR
   zpl_uint32 count = 0;
-  zpl_char *base = "0123456789/.";
-  zpl_char *math = (zpl_char *)range;
-  //	fprintf(stdout,"%s:%s -> %s\r\n",__func__,range,str);
-  if (range == NULL)
+  zpl_char *base = "0123456789/.-";
+  zpl_char *math = (zpl_char *)keystr;
+  fprintf(stdout,"%s:%s -> %s\r\n",__func__,keystr,str);
+  if (keystr == NULL)
     return 0;
   if (str == NULL)
     return 1;
+  if (strspn(str, base) == strlen(str))
+  {  
+    if((strchr_count(keystr,'/') == strchr_count(str,'/')) && strchr_step_num(str, '/'))  
+    {
+      if(strchr_count(keystr,'.') && strchr_count(keystr,'-'))
+      {
+        if( (strchr_count(keystr,'.') == strchr_count(str,'.')) &&
+          strchr_count(keystr,'-') == strchr_count(str,'-') )
+          return 1;
+      }
+      else if(strchr_count(keystr,'.') && !strchr_count(keystr,'-'))
+      {
+        if( (strchr_count(keystr,'.') == strchr_count(str,'.')))
+          return 1;
+      }
+      else if(!strchr_count(keystr,'.') && strchr_count(keystr,'-'))
+      {
+        if( (strchr_count(keystr,'-') == strchr_count(str,'-')))
+          return 1;
+      }
+      else if(!strchr_count(keystr,'.') && !strchr_count(keystr,'-'))
+      {
+          return 1;
+      }
+    }
+  }
+  return 0;
+  #if 0
   while (1)
   {
     math = strstr(math, "/");
@@ -997,17 +1035,18 @@ cmd_iuspv_match(const char *range, const char *str)
   }
   //	fprintf(stdout,"%s:count=%d strspn(str,base)=%d strlen(str)=%d",__func__,count,strspn(str,base),strlen(str));
   return 0;
+  #endif
 }
 
 static int
-cmd_mac_match(const char *range, const char *str)
+cmd_mac_match(const char *keystr, const char *str)
 {
   // IF_MAC_STR
   zpl_uint32 count = 0;
   zpl_char *base = "0123456789abcdefABCDEF-";
-  zpl_char *math = (zpl_char *)range;
-  //	fprintf(stdout,"%s:%s -> %s\r\n",__func__,range,str);
-  if (range == NULL)
+  zpl_char *math = (zpl_char *)keystr;
+  //	fprintf(stdout,"%s:%s -> %s\r\n",__func__,keystr,str);
+  if (keystr == NULL)
     return 0;
   if (str == NULL)
     return 1;
@@ -1051,10 +1090,10 @@ cmd_word_match(struct cmd_token *token,
                enum cmd_filter_type filter,
                const char *word)
 {
-  const char *str;
+  const char *keystr;
   enum match_type match_type;
 
-  str = token->cmd;
+  keystr = token->cmd;
 
   if (filter == CMD_FILTER_RELAXED)
     if (!word || !strlen(word))
@@ -1069,16 +1108,27 @@ cmd_word_match(struct cmd_token *token,
     return vararg_match;
 
   case TERMINAL_RANGE:
-    if (cmd_range_match(str, word))
+    if (cmd_range_match(keystr, word))
       return range_match;
     break;
 
   case TERMINAL_IUSPV:
-    if (cmd_iuspv_match(str, word))
+  case TERMINAL_IUSPV_SUB:
+  case TERMINAL_IUSPV_RANGE:
+  case TERMINAL_IUSPV_SUB_RANGE:
+    if (cmd_iuspv_match(keystr, word))
+    {
+      if(strchr_count(keystr,'.') && strchr_count(keystr,'-'))
+        return iuspv_sub_range_match;
+      else if(strchr_count(keystr,'.') && !strchr_count(keystr,'-'))
+        return iuspv_sub_match;
+      else if(!strchr_count(keystr,'.') && strchr_count(keystr,'-'))
+        return iuspv_range_match;
       return iuspv_match;
+    }
     break;
   case TERMINAL_MAC:
-    if (cmd_mac_match(str, word))
+    if (cmd_mac_match(keystr, word))
       return mac_match;
     break;
 #ifdef HAVE_IPV6
@@ -1111,13 +1161,13 @@ cmd_word_match(struct cmd_token *token,
     return extend_match;
 
   case TERMINAL_LITERAL:
-    if (filter == CMD_FILTER_RELAXED && !strncmp(str, word, strlen(word)))
+    if (filter == CMD_FILTER_RELAXED && !strncmp(keystr, word, strlen(word)))
     {
-      if (!strcmp(str, word))
+      if (!strcmp(keystr, word))
         return exact_match;
       return partly_match;
     }
-    if (filter == CMD_FILTER_STRICT && !strcmp(str, word))
+    if (filter == CMD_FILTER_STRICT && !strcmp(keystr, word))
       return exact_match;
     break;
 
@@ -1304,11 +1354,11 @@ cmd_matcher_read_keywords(struct cmd_matcher *matcher,
   zpl_uint32 keyword_found;
   enum match_type keyword_match;
   enum match_type word_match;
-  vector keyword_vector;
-  struct cmd_token *word_token;
-  const char *word;
+  vector keyword_vector = NULL;
+  struct cmd_token *word_token = NULL;
+  const char *word = NULL;
   zpl_uint32 keyword_argc;
-  const char **keyword_argv;
+  const char **keyword_argv = NULL;
   enum matcher_rv rv = MATCHER_NO_MATCH;
 
   keyword_mask = 0;
@@ -1413,10 +1463,10 @@ cmd_matcher_build_keyword_args(struct cmd_matcher *matcher,
                                vector keyword_args_vector)
 {
   zpl_uint32 i, j;
-  const char **keyword_args;
-  vector keyword_vector;
-  struct cmd_token *word_token;
-  const char *arg;
+  const char **keyword_args = NULL;
+  vector keyword_vector = NULL;
+  struct cmd_token *word_token = NULL;
+  const char *arg = NULL;
   enum matcher_rv rv;
 
   rv = MATCHER_OK;
@@ -1481,7 +1531,7 @@ cmd_matcher_match_keyword(struct cmd_matcher *matcher,
                           struct cmd_token *token,
                           zpl_uint32 *argc, const char **argv)
 {
-  vector keyword_args_vector;
+  vector keyword_args_vector = NULL;
   enum matcher_rv reader_rv;
   enum matcher_rv builder_rv;
 
@@ -1724,8 +1774,8 @@ is_cmd_ambiguous(vector cmd_vector,
   zpl_uint32 j;
   const char *str = NULL;
   const char *matched = NULL;
-  vector match_vector;
-  struct cmd_token *cmd_token;
+  vector match_vector = NULL;
+  struct cmd_token *cmd_token = NULL;
 
   if (command == NULL)
     command = "";
@@ -1772,7 +1822,9 @@ is_cmd_ambiguous(vector cmd_vector,
               match++;
             }
             break;
-
+          case iuspv_sub_range_match:
+          case iuspv_range_match:
+          case iuspv_sub_match:
           case iuspv_match:
             if (cmd_iuspv_match(str, command))
             {
@@ -1877,6 +1929,9 @@ cmd_entry_function_desc(const char *src, struct cmd_token *token)
     else
       return NULL;
 
+  case TERMINAL_IUSPV_SUB:
+  case TERMINAL_IUSPV_RANGE:
+  case TERMINAL_IUSPV_SUB_RANGE:
   case TERMINAL_IUSPV:
     if (cmd_iuspv_match(dst, src))
       return dst;
@@ -1944,7 +1999,7 @@ static int
 cmd_unique_string(vector v, const char *str)
 {
   zpl_uint32 i;
-  zpl_char *match;
+  zpl_char *match = NULL;
 
   for (i = 0; i < vector_active(v); i++)
     if ((match = vector_slot(v, i)) != NULL)
@@ -1965,7 +2020,7 @@ static int
 desc_unique_string(vector v, const char *str)
 {
   zpl_uint32 i;
-  struct cmd_token *token;
+  struct cmd_token *token = NULL;
 
   for (i = 0; i < vector_active(v); i++)
     if ((token = vector_slot(v, i)) != NULL)
@@ -1992,7 +2047,7 @@ static void
 cmd_matches_free(vector *matches)
 {
   zpl_uint32 i;
-  vector cmd_matches;
+  vector cmd_matches = NULL;
 
   for (i = 0; i < vector_active(*matches); i++)
     if ((cmd_matches = vector_slot(*matches, i)) != NULL)
@@ -2022,18 +2077,18 @@ static vector
 cmd_describe_command_real(vector vline, struct vty *vty, zpl_uint32 *status)
 {
   zpl_uint32 i;
-  vector cmd_vector;
+  vector cmd_vector = NULL;
 #define INIT_MATCHVEC_SIZE 10
-  vector matchvec;
-  struct cmd_element *cmd_element;
+  vector matchvec = NULL;
+  struct cmd_element *cmd_element = NULL;
   zpl_uint32 index;
   int ret;
   enum match_type match;
-  zpl_char *command;
+  zpl_char *command = NULL;
   vector matches = NULL;
-  vector match_vector;
+  vector match_vector = NULL;
   zpl_uint32 command_found = 0;
-  const char *last_word;
+  const char *last_word = NULL;
 
   /* Set index. */
   if (vector_active(vline) == 0)
@@ -2193,12 +2248,12 @@ cmd_describe_command_real(vector vline, struct vty *vty, zpl_uint32 *status)
 vector
 cmd_describe_command(vector vline, struct vty *vty, zpl_uint32 *status)
 {
-  vector ret;
+  vector ret = NULL;
 
   if (cmd_try_do_shortcut(vty->node, vector_slot(vline, 0)))
   {
     enum node_type onode;
-    vector shifted_vline;
+    vector shifted_vline = NULL;
     zpl_uint32 index;
 
     onode = vty->node;
@@ -2229,7 +2284,7 @@ cmd_lcd(zpl_char **matched)
   zpl_uint32 i;
   zpl_uint32 j;
   zpl_uint32 lcd = -1;
-  zpl_char *s1, *s2;
+  zpl_char *s1 = NULL, *s2 = NULL;
   zpl_char c1, c2;
 
   if (matched[0] == NULL || matched[1] == NULL)
@@ -2287,14 +2342,14 @@ cmd_complete_command_real(vector vline, struct vty *vty, zpl_uint32 *status, zpl
   zpl_uint32 i;
   vector cmd_vector = vector_copy(cmd_node_vector(cmdvec, vty->node));
 #define INIT_MATCHVEC_SIZE 10
-  vector matchvec;
+  vector matchvec = NULL;
   zpl_uint32 index;
-  zpl_char **match_str;
-  struct cmd_token *token;
-  zpl_char *command;
+  zpl_char **match_str = NULL;
+  struct cmd_token *token = NULL;
+  zpl_char *command = NULL;
   zpl_uint32 lcd;
   vector matches = NULL;
-  vector match_vector;
+  vector match_vector = NULL;
 #ifdef HAVE_ROUTE_OPTIMIZE
   struct cmd_element *cmd_element = NULL;
 #endif // HAVE_ROUTE_OPTIMIZE
@@ -2314,7 +2369,7 @@ cmd_complete_command_real(vector vline, struct vty *vty, zpl_uint32 *status, zpl
     enum match_type match;
     int ret;
 
-    if (matches)
+    if (matches != NULL)
       cmd_matches_free(&matches);
 
     /* First try completion match, if there is exactly match return 1 */
@@ -2458,12 +2513,12 @@ cmd_complete_command_real(vector vline, struct vty *vty, zpl_uint32 *status, zpl
 zpl_char **
 cmd_complete_command_lib(vector vline, struct vty *vty, zpl_uint32 *status, zpl_uint32 islib)
 {
-  zpl_char **ret;
+  zpl_char **ret = NULL;
 
   if (cmd_try_do_shortcut(vty->node, vector_slot(vline, 0)))
   {
     enum node_type onode;
-    vector shifted_vline;
+    vector shifted_vline = NULL;
     zpl_uint32 index;
 
     onode = vty->node;
@@ -2504,16 +2559,16 @@ cmd_execute_command_real(vector vline,
 {
   zpl_uint32 i;
   zpl_uint32 index;
-  vector cmd_vector;
-  struct cmd_element *cmd_element;
-  struct cmd_element *matched_element;
+  vector cmd_vector = NULL;
+  struct cmd_element *cmd_element = NULL;
+  struct cmd_element *matched_element = NULL;
   zpl_uint32 matched_count, incomplete_count;
   zpl_uint32 argc;
   const char *argv[CMD_ARGC_MAX];
   enum match_type match = 0;
-  zpl_char *command;
+  zpl_char *command = NULL;
   int ret;
-  vector matches;
+  vector matches = NULL;
 
   /* Make copy of command elements. */
   cmd_vector = vector_copy(cmd_node_vector(cmdvec, vty->node));
@@ -2706,7 +2761,7 @@ int cmd_execute_command_strict(vector vline, struct vty *vty,
  */
 int command_config_read_one_line(struct vty *vty, struct cmd_element **cmd, zpl_uint32 use_daemon)
 {
-  vector vline;
+  vector vline = NULL;
   zpl_uint32 saved_node;
   int ret;
 
@@ -2779,7 +2834,7 @@ void install_default(enum node_type node)
      For all other nodes, we must ensure install_default_basic is
      also called/
    */
-  if (node != VIEW_NODE && node != ENABLE_NODE)
+  if (node != VIEW_NODE && node > ENABLE_NODE)
   {
     install_default_basic(node);
     install_element(node, CMD_VIEW_LEVEL, &config_end_cmd);

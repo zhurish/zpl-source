@@ -37,7 +37,7 @@ typedef struct Gip_arp_s
 {
 	zpl_uint32		ageing_time;
 	zpl_uint32		retry_interval;
-	zpl_uint32		timeout;		//ARP TTL
+	zpl_uint32		timeout;		//ARP IPSTACK_TTL
 	zpl_uint32		arp_proxy;
 	zpl_uint32		arp_proxy_local;
 	zpl_uint32		grat_arp;		//gratuitous arp

@@ -255,7 +255,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 							}
 						}else{
 							len = sizeof(int);
-							if(!getsockopt(context->bridge->primary_retry_sock, SOL_SOCKET, SO_ERROR, (char *)&err, &len)){
+							if(!getsockopt(context->bridge->primary_retry_sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_ERROR, (char *)&err, &len)){
 								if(err == 0){
 									COMPAT_CLOSE(context->bridge->primary_retry_sock);
 									context->bridge->primary_retry_sock = INVALID_SOCKET;
@@ -399,7 +399,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 							}else{
 								/* Need to retry */
 								if(context->adns->ar_result){
-									freeaddrinfo(context->adns->ar_result);
+									ipstack_freeaddrinfo(context->adns->ar_result);
 								}
 								mosquitto__free(context->adns);
 								context->adns = NULL;
@@ -768,7 +768,7 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 #endif
 			if(context->state == mosq_cs_connect_pending){
 				len = sizeof(int);
-				if(!getsockopt(context->sock, SOL_SOCKET, SO_ERROR, (char *)&err, &len)){
+				if(!getsockopt(context->sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_ERROR, (char *)&err, &len)){
 					if(err == 0){
 						mosquitto__set_state(context, mosq_cs_new);
 #if defined(WITH_ADNS) && defined(WITH_BRIDGE)

@@ -265,7 +265,7 @@ static int web_network_address_netmask(struct interface *ifp, char *address_str,
 {
 	struct connected *ifc = NULL;
 	struct prefix *p = NULL;
-	struct in_addr netmask;
+	struct ipstack_in_addr netmask;
 	ifc = (struct connected *)listnode_head(ifp->connected);
 	if(ifc && ifc->address)
 	{

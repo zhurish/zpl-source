@@ -179,11 +179,11 @@ Offset websSeekFile(int fd, Offset offset, int origin)
     wip = &websRomIndex[fd];
 
     if (origin != SEEK_SET && origin != SEEK_CUR && origin != SEEK_END) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
     if (fd < 0) {
-        errno = EBADF;
+        ipstack_errno = EBADF;
         return -1;
     }
     pos = offset;
@@ -198,7 +198,7 @@ Offset websSeekFile(int fd, Offset offset, int origin)
         break;
     }
     if (pos < 0) {
-        errno = EBADF;
+        ipstack_errno = EBADF;
         return -1;
     }
     return (wip->pos = pos);

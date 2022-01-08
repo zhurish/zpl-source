@@ -70,8 +70,8 @@ zserv_delayed_close(struct thread *thread)
 }
 
 /* When client connects, it sends hello message
- * with promise to send zebra routes of specific type.
- * Zebra stores a socket fd of the client into
+ * with promise to ipstack_send zebra routes of specific type.
+ * Zebra stores a ipstack_socket fd of the client into
  * this array. And use it to clean up routes that
  * client didn't remove for some reasons after closing
  * connection.
@@ -190,8 +190,8 @@ zserv_encode_interface(struct stream *s, struct interface *ifp)
  *   from the client.
  * - at startup, when zebra figures out the available interfaces
  * - when an interface is added (where support for
- *   RTM_IFANNOUNCE or AF_NETLINK sockets is available), or when
- *   an interface is marked IFF_UP (i.e., an RTM_IFINFO message is
+ *   RTM_IFANNOUNCE or IPSTACK_AF_NETLINK sockets is available), or when
+ *   an interface is marked IPSTACK_IFF_UP (i.e., an IPSTACK_RTM_IFINFO message is
  *   received)
  */
 int zsend_interface_add(struct zserv *client, struct interface *ifp)
@@ -270,12 +270,12 @@ zsend_interface_link_params (struct zserv *client, struct interface *ifp)
  * - redistribute new address info to all clients in the following situations
  *    - at startup, when zebra figures out the available interfaces
  *    - when an interface is added (where support for
- *      RTM_IFANNOUNCE or AF_NETLINK sockets is available), or when
- *      an interface is marked IFF_UP (i.e., an RTM_IFINFO message is
+ *      RTM_IFANNOUNCE or IPSTACK_AF_NETLINK sockets is available), or when
+ *      an interface is marked IPSTACK_IFF_UP (i.e., an IPSTACK_RTM_IFINFO message is
  *      received)
  *    - for the vty commands "ip address A.B.C.D/M [<secondary>|<label LINE>]"
  *      and "no bandwidth <1-10000000>", "ipv6 address X:X::X:X/M"
- *    - when an RTM_NEWADDR message is received from the kernel,
+ *    - when an IPSTACK_RTM_NEWADDR message is received from the kernel,
  *
  * The call tree that triggers ZEBRA_INTERFACE_ADDRESS_DELETE:
  *
@@ -290,7 +290,7 @@ zsend_interface_link_params (struct zserv *client, struct interface *ifp)
  *         [ipv6_addresss_uninstall]   [connected_delete_ipv6]
  *             ^                        ^
  *             |                        |
- *             |                  RTM_NEWADDR on routing/netlink socket
+ *             |                  IPSTACK_RTM_NEWADDR on routing/netlink ipstack_socket
  *             |
  *         vty commands:
  *     "no ip address A.B.C.D/M [label LINE]"
@@ -325,7 +325,7 @@ int zsend_interface_address(zpl_uint16 cmd, struct zserv *client,
   stream_put(s, &p->u.prefix, blen);
 
   /*
-   * XXX gnu version does not send prefixlen for ZEBRA_INTERFACE_ADDRESS_DELETE
+   * XXX gnu version does not ipstack_send prefixlen for ZEBRA_INTERFACE_ADDRESS_DELETE
    * but zebra_interface_address_delete_read() in the gnu version
    * expects to find it
    */
@@ -351,7 +351,7 @@ int zsend_interface_address(zpl_uint16 cmd, struct zserv *client,
  *
  * The ZEBRA_INTERFACE_UP message is sent from the zebra server to
  * the clients in one of 2 situations:
- *   - an if_up is detected e.g., as a result of an RTM_IFINFO message
+ *   - an if_up is detected e.g., as a result of an IPSTACK_RTM_IFINFO message
  *   - a vty command modifying the bandwidth of an interface is received.
  * The ZEBRA_INTERFACE_DOWN message is sent when an if_down is detected.
  */
@@ -730,8 +730,8 @@ zserv_nexthop_register(struct zserv *client, zpl_socket_t sock, zpl_ushort lengt
 
     zebra_add_rnh_client(rnh, client, vrf_id);
   }
-  zebra_evaluate_rnh_table(0, AF_INET);
-  zebra_evaluate_rnh_table(0, AF_INET6);
+  zebra_evaluate_rnh_table(0, IPSTACK_AF_INET);
+  zebra_evaluate_rnh_table(0, IPSTACK_AF_INET6);
   return 0;
 }
 
@@ -937,7 +937,7 @@ zread_ipv4_add(struct zserv *client, zpl_ushort length, vrf_id_t vrf_id)
 
   /* IPv4 prefix. */
   memset(&p, 0, sizeof(struct prefix_ipv4));
-  p.family = AF_INET;
+  p.family = IPSTACK_AF_INET;
   p.prefixlen = stream_getc(s);
   stream_get(&p.prefix, s, PSIZE(p.prefixlen));
 
@@ -1037,7 +1037,7 @@ zread_ipv4_delete(struct zserv *client, zpl_ushort length, vrf_id_t vrf_id)
 
   /* IPv4 prefix. */
   memset(&p, 0, sizeof(struct prefix_ipv4));
-  p.family = AF_INET;
+  p.family = IPSTACK_AF_INET;
   p.prefixlen = stream_getc(s);
   stream_get(&p.prefix, s, PSIZE(p.prefixlen));
 
@@ -1110,7 +1110,7 @@ zread_ipv4_nexthop_lookup(zpl_uint32 cmd, struct zserv *client, zpl_ushort lengt
   addr.s_addr = stream_get_ipv4(client->ibuf);
   if (IS_ZEBRA_DEBUG_PACKET && IS_ZEBRA_DEBUG_RECV)
     zlog_debug(MODULE_NSM, "%s: looking up %s", __func__,
-               ipstack_inet_ntop(AF_INET, &addr, buf, BUFSIZ));
+               ipstack_inet_ntop(IPSTACK_AF_INET, &addr, buf, BUFSIZ));
 
   return zsend_ipv4_nexthop_lookup(client, addr, cmd, vrf_id);
 }
@@ -1122,7 +1122,7 @@ zread_ipv4_import_lookup(struct zserv *client, zpl_ushort length,
 {
   struct prefix_ipv4 p;
 
-  p.family = AF_INET;
+  p.family = IPSTACK_AF_INET;
   p.prefixlen = stream_getc(client->ibuf);
   p.prefix.s_addr = stream_get_ipv4(client->ibuf);
 
@@ -1164,13 +1164,13 @@ zread_ipv6_add(struct zserv *client, zpl_ushort length, vrf_id_t vrf_id)
 
   /* IPv6 prefix. */
   memset(&p, 0, sizeof(struct prefix_ipv6));
-  p.family = AF_INET6;
+  p.family = IPSTACK_AF_INET6;
   p.prefixlen = stream_getc(s);
   stream_get(&p.prefix, s, PSIZE(p.prefixlen));
 
   /* We need to give nh-addr, nh-ifindex with the same next-hop object
    * to the rib to ensure that IPv6 multipathing works; need to coalesce
-   * these. Clients should send the same number of paired set of
+   * these. Clients should ipstack_send the same number of paired set of
    * next-hop-addr/next-hop-ifindices. */
   if (CHECK_FLAG(message, ZAPI_MESSAGE_NEXTHOP))
   {
@@ -1206,7 +1206,7 @@ zread_ipv6_add(struct zserv *client, zpl_ushort length, vrf_id_t vrf_id)
     max_nh_if = (nh_count > if_count) ? nh_count : if_count;
     for (i = 0; i < max_nh_if; i++)
     {
-      if ((i < nh_count) && !IN6_IS_ADDR_UNSPECIFIED(&nexthops[i]))
+      if ((i < nh_count) && !IPSTACK_IN6_IS_ADDR_UNSPECIFIED(&nexthops[i]))
       {
         if ((i < if_count) && ifindices[i])
           rib_nexthop_ipv6_ifindex_add(rib, &nexthops[i], ifindices[i]);
@@ -1273,7 +1273,7 @@ zread_ipv6_delete(struct zserv *client, zpl_ushort length, vrf_id_t vrf_id)
 
   /* IPv4 prefix. */
   memset(&p, 0, sizeof(struct prefix_ipv6));
-  p.family = AF_INET6;
+  p.family = IPSTACK_AF_INET6;
   p.prefixlen = stream_getc(s);
   stream_get(&p.prefix, s, PSIZE(p.prefixlen));
 
@@ -1317,7 +1317,7 @@ zread_ipv6_delete(struct zserv *client, zpl_ushort length, vrf_id_t vrf_id)
   else
     api.tag = 0;
 
-  if (IN6_IS_ADDR_UNSPECIFIED(&nexthop))
+  if (IPSTACK_IN6_IS_ADDR_UNSPECIFIED(&nexthop))
     rib_delete_ipv6(api.type, api.flags, &p, NULL, ifindex, vrf_id,
                     api.safi);
   else
@@ -1338,7 +1338,7 @@ zread_ipv6_nexthop_lookup(struct zserv *client, zpl_ushort length,
   stream_get(&addr, client->ibuf, 16);
   if (IS_ZEBRA_DEBUG_PACKET && IS_ZEBRA_DEBUG_RECV)
     zlog_debug(MODULE_NSM, "%s: looking up %s", __func__,
-               ipstack_inet_ntop(AF_INET6, &addr, buf, BUFSIZ));
+               ipstack_inet_ntop(IPSTACK_AF_INET6, &addr, buf, BUFSIZ));
 
   return zsend_ipv6_nexthop_lookup(client, &addr, vrf_id);
 }
@@ -1374,7 +1374,7 @@ zread_hello(struct zserv *client)
   zpl_uchar proto;
   proto = stream_getc(client->ibuf);
 
-  /* accept only dynamic routing protocols */
+  /* ipstack_accept only dynamic routing protocols */
   if ((proto < ZEBRA_ROUTE_MAX) && (proto > ZEBRA_ROUTE_STATIC))
   {
     zlog_notice(MODULE_NSM, "client %d says hello and bids fair to announce only %s routes",
@@ -1428,8 +1428,8 @@ zebra_score_rib(zpl_socket_t client_sock)
 static void
 zebra_client_close(struct zserv *client)
 {
-  zebra_cleanup_rnh_client(0, AF_INET, client);
-  zebra_cleanup_rnh_client(0, AF_INET6, client);
+  zebra_cleanup_rnh_client(0, IPSTACK_AF_INET, client);
+  zebra_cleanup_rnh_client(0, IPSTACK_AF_INET6, client);
 
   /* Close file descriptor. */
   if (!ipstack_invalid(client->sock))
@@ -1525,7 +1525,7 @@ zebra_client_read(struct thread *thread)
         (nbyte == -1))
     {
       if (IS_ZEBRA_DEBUG_EVENT)
-        zlog_debug(MODULE_NSM, "connection closed socket [%d]", sock);
+        zlog_debug(MODULE_NSM, "connection closed ipstack_socket [%d]", sock);
       zebra_client_close(client);
       return -1;
     }
@@ -1550,21 +1550,21 @@ zebra_client_read(struct thread *thread)
 
   if (marker != ZEBRA_HEADER_MARKER || version != ZSERV_VERSION)
   {
-    zlog_err(MODULE_NSM, "%s: socket %d version mismatch, marker %d, version %d",
+    zlog_err(MODULE_NSM, "%s: ipstack_socket %d version mismatch, marker %d, version %d",
              __func__, sock, marker, version);
     zebra_client_close(client);
     return -1;
   }
   if (length < ZEBRA_HEADER_SIZE)
   {
-    zlog_warn(MODULE_NSM, "%s: socket %d message length %u is less than header size %d",
+    zlog_warn(MODULE_NSM, "%s: ipstack_socket %d message length %u is less than header size %d",
               __func__, sock, length, ZEBRA_HEADER_SIZE);
     zebra_client_close(client);
     return -1;
   }
   if (length > STREAM_SIZE(client->ibuf))
   {
-    zlog_warn(MODULE_NSM, "%s: socket %d message length %u exceeds buffer size %lu",
+    zlog_warn(MODULE_NSM, "%s: ipstack_socket %d message length %u exceeds buffer size %lu",
               __func__, sock._fd, length, (u_long)STREAM_SIZE(client->ibuf));
     zebra_client_close(client);
     return -1;
@@ -1595,7 +1595,7 @@ zebra_client_read(struct thread *thread)
 
   /* Debug packet information. */
   if (IS_ZEBRA_DEBUG_EVENT)
-    zlog_debug(MODULE_NSM, "zebra message comes from socket [%d]", sock);
+    zlog_debug(MODULE_NSM, "zebra message comes from ipstack_socket [%d]", sock);
 
   if (IS_ZEBRA_DEBUG_PACKET && IS_ZEBRA_DEBUG_RECV)
     zlog_debug(MODULE_NSM, "zebra message received [%s] %d in VRF %u",
@@ -1684,13 +1684,13 @@ zebra_client_read(struct thread *thread)
   return 0;
 }
 
-/* Accept code of zebra server socket. */
+/* Accept code of zebra server ipstack_socket. */
 static int
 zebra_accept(struct thread *thread)
 {
   zpl_socket_t accept_sock;
   zpl_socket_t client_sock;
-  struct sockaddr_in client;
+  struct ipstack_sockaddr_in client;
   socklen_t len;
 
   accept_sock = THREAD_FD(thread);
@@ -1703,11 +1703,11 @@ zebra_accept(struct thread *thread)
 
   if (ipstack_invalid(client_sock))
   {
-    zlog_warn(MODULE_NSM, "Can't accept zebra socket: %s", safe_strerror(errno));
+    zlog_warn(MODULE_NSM, "Can't ipstack_accept zebra ipstack_socket: %s", ipstack_strerror(ipstack_errno));
     return -1;
   }
 
-  /* Make client socket non-blocking.  */
+  /* Make client ipstack_socket non-blocking.  */
   ipstack_set_nonblocking(client_sock);
 
   /* Create new zebra client. */
@@ -1717,7 +1717,7 @@ zebra_accept(struct thread *thread)
 }
 
 #ifdef HAVE_TCP_ZEBRA
-/* Make zebra's server socket. */
+/* Make zebra's server ipstack_socket. */
 static void
 zebra_serv()
 {
@@ -1725,34 +1725,34 @@ zebra_serv()
   zpl_socket_t accept_sock;
   struct ipstack_sockaddr_in addr;
 
-  accept_sock = ipstack_socket(OS_STACK, AF_INET, SOCK_STREAM, 0);
+  accept_sock = ipstack_socket(OS_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
 
   if (ipstack_invalid(accept_sock))
   {
-    zlog_warn(MODULE_NSM, "Can't create zserv stream socket: %s",
-              safe_strerror(errno));
+    zlog_warn(MODULE_NSM, "Can't create zserv stream ipstack_socket: %s",
+              ipstack_strerror(ipstack_errno));
     // zlog_warn (MODULE_NSM, "zebra can't provice full functionality due to above error");
     return;
   }
 
   memset(&route_type_oaths, 0, sizeof(route_type_oaths));
   memset(&addr, 0, sizeof(struct ipstack_sockaddr_in));
-  addr.sin_family = AF_INET;
+  addr.sin_family = IPSTACK_AF_INET;
   addr.sin_port = htons(ZEBRA_PORT);
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
   addr.sin_len = sizeof(struct ipstack_sockaddr_in);
 #endif /* HAVE_STRUCT_SOCKADDR_IN_SIN_LEN */
-  addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  addr.sin_addr.s_addr = htonl(IPSTACK_INADDR_LOOPBACK);
 
   sockopt_reuseaddr(accept_sock);
   sockopt_reuseport(accept_sock);
 
-  ret = ipstack_bind(accept_sock, (struct sockaddr *)&addr,
-             sizeof(struct sockaddr_in));
+  ret = ipstack_bind(accept_sock, (struct ipstack_sockaddr *)&addr,
+             sizeof(struct ipstack_sockaddr_in));
   if (ret < 0)
   {
-    zlog_warn(MODULE_NSM, "Can't bind to stream socket: %s",
-              safe_strerror(errno));
+    zlog_warn(MODULE_NSM, "Can't ipstack_bind to stream ipstack_socket: %s",
+              ipstack_strerror(ipstack_errno));
     // zlog_warn (MODULE_NSM, "zebra can't provice full functionality due to above error");
     ipstack_close(accept_sock); /* Avoid sd leak. */
     return;
@@ -1761,8 +1761,8 @@ zebra_serv()
   ret = ipstack_listen(accept_sock, 1);
   if (ret < 0)
   {
-    zlog_warn(MODULE_NSM, "Can't listen to stream socket: %s",
-              safe_strerror(errno));
+    zlog_warn(MODULE_NSM, "Can't ipstack_listen to stream ipstack_socket: %s",
+              ipstack_strerror(ipstack_errno));
     // zlog_warn (MODULE_NSM, "zebra can't provice full functionality due to above error");
     ipstack_close(accept_sock); /* Avoid sd leak. */
     return;
@@ -1772,10 +1772,10 @@ zebra_serv()
 }
 #else /* HAVE_TCP_ZEBRA */
 
-/* For sockaddr_un. */
+/* For ipstack_sockaddr_un. */
 #include <sys/un.h>
 
-/* zebra server UNIX domain socket. */
+/* zebra server UNIX domain ipstack_socket. */
 static void
 zebra_serv_un(const char *path)
 {
@@ -1785,25 +1785,25 @@ zebra_serv_un(const char *path)
   struct ipstack_sockaddr_un serv;
   mode_t old_mask;
 
-  /* First of all, unlink existing socket */
+  /* First of all, unlink existing ipstack_socket */
   unlink(path);
 
   /* Set umask */
   old_mask = umask(0077);
 
-  /* Make UNIX domain socket. */
-  sock = ipstack_socket(OS_STACK, AF_UNIX, SOCK_STREAM, 0);
+  /* Make UNIX domain ipstack_socket. */
+  sock = ipstack_socket(OS_STACK, AF_UNIX, IPSTACK_SOCK_STREAM, 0);
   if (ipstack_invalid(sock))
   {
-    zlog_warn(MODULE_NSM, "Can't create zserv unix socket: %s",
-              safe_strerror(errno));
+    zlog_warn(MODULE_NSM, "Can't create zserv unix ipstack_socket: %s",
+              ipstack_strerror(ipstack_errno));
     // zlog_warn (MODULE_NSM, "zebra can't provide full functionality due to above error");
     return;
   }
 
   memset(&route_type_oaths, 0, sizeof(route_type_oaths));
 
-  /* Make server socket. */
+  /* Make server ipstack_socket. */
   memset(&serv, 0, sizeof(struct ipstack_sockaddr_un));
   serv.sun_family = AF_UNIX;
   strncpy(serv.sun_path, path, strlen(path));
@@ -1816,8 +1816,8 @@ zebra_serv_un(const char *path)
   ret = ipstack_bind(sock, (struct ipstack_sockaddr *)&serv, len);
   if (ret < 0)
   {
-    zlog_warn(MODULE_NSM, "Can't bind to unix socket %s: %s",
-              path, safe_strerror(errno));
+    zlog_warn(MODULE_NSM, "Can't ipstack_bind to unix ipstack_socket %s: %s",
+              path, ipstack_strerror(ipstack_errno));
     // zlog_warn (MODULE_NSM, "zebra can't provide full functionality due to above error");
     ipstack_close(sock);
     return;
@@ -1826,8 +1826,8 @@ zebra_serv_un(const char *path)
   ret = ipstack_listen(sock, 5);
   if (ret < 0)
   {
-    zlog_warn(MODULE_NSM, "Can't listen to unix socket %s: %s",
-              path, safe_strerror(errno));
+    zlog_warn(MODULE_NSM, "Can't ipstack_listen to unix ipstack_socket %s: %s",
+              path, ipstack_strerror(ipstack_errno));
     // zlog_warn (MODULE_NSM, "zebra can't provide full functionality due to above error");
     ipstack_close(sock);
     return;
@@ -2275,7 +2275,7 @@ void zebra_init(void)
   // zebra_route_map_init ();
 }
 
-/* Make zebra server socket, wiping any existing one (see bug #403). */
+/* Make zebra server ipstack_socket, wiping any existing one (see bug #403). */
 void zserv_init()
 {
 #ifdef HAVE_TCP_ZEBRA

@@ -48,7 +48,8 @@ extern void _zlog_assert_failed (const char *assertion, const char *file,
 
 #undef assert
 #define assert(EX) zassert(EX)
- 
+#define zpl_assert(EX) zassert(EX)
+
 #ifdef __cplusplus
 }
 #endif

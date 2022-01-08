@@ -276,45 +276,45 @@ static const char *soap_strerror(struct soap*);
   #define SOAP_SOCKBLOCK(fd) \
   { \
     u_long blocking = 0; \
-    ioctlsocket(fd, FIONBIO, &blocking); \
+    ioctlsocket(fd, IPSTACK_FIONBIO, &blocking); \
   }
   #define SOAP_SOCKNONBLOCK(fd) \
   { \
     u_long nonblocking = 1; \
-    ioctlsocket(fd, FIONBIO, &nonblocking); \
+    ioctlsocket(fd, IPSTACK_FIONBIO, &nonblocking); \
   }
 #elif defined(VXWORKS)
   #define SOAP_SOCKBLOCK(fd) \
   { \
     u_long blocking = 0; \
-    ioctl(fd, FIONBIO, (int)(&blocking)); \
+    ioctl(fd, IPSTACK_FIONBIO, (int)(&blocking)); \
   }
   #define SOAP_SOCKNONBLOCK(fd) \
   { \
     u_long nonblocking = 1; \
-    ioctl(fd, FIONBIO, (int)(&nonblocking)); \
+    ioctl(fd, IPSTACK_FIONBIO, (int)(&nonblocking)); \
   }
 #elif defined(__VMS)
   #define SOAP_SOCKBLOCK(fd) \
   { \
     int blocking = 0; \
-    ioctl(fd, FIONBIO, &blocking); \
+    ioctl(fd, IPSTACK_FIONBIO, &blocking); \
   }
   #define SOAP_SOCKNONBLOCK(fd) \
   { \
     int nonblocking = 1; \
-    ioctl(fd, FIONBIO, &nonblocking); \
+    ioctl(fd, IPSTACK_FIONBIO, &nonblocking); \
   }
 #elif defined(SYMBIAN)
   #define SOAP_SOCKBLOCK(fd) \
   { \
     long blocking = 0; \
-    ioctl(fd, 0/*FIONBIO*/, &blocking); \
+    ioctl(fd, 0/*IPSTACK_FIONBIO*/, &blocking); \
   }
   #define SOAP_SOCKNONBLOCK(fd) \
   { \
     long nonblocking = 1; \
-    ioctl(fd, 0/*FIONBIO*/, &nonblocking); \
+    ioctl(fd, 0/*IPSTACK_FIONBIO*/, &nonblocking); \
   }
 #else
   #define SOAP_SOCKBLOCK(fd) (void)fcntl(fd, F_SETFL, fcntl(fd, F_GETFL)&~O_NONBLOCK);
@@ -694,7 +694,7 @@ fsend(struct soap *soap, const char *s, size_t n)
         {
           int udp_repeat;
           int udp_delay;
-          if ((soap->connect_flags & SO_BROADCAST))
+          if ((soap->connect_flags & IPSTACK_SO_BROADCAST))
             udp_repeat = 2; /* SOAP-over-UDP MULTICAST_UDP_REPEAT - 1 */
           else
             udp_repeat = 1; /* SOAP-over-UDP UNICAST_UDP_REPEAT - 1 */
@@ -5250,7 +5250,7 @@ tcp_connect(struct soap *soap, const char *endpoint, const char *host, int port)
       if (soap->ipv4_multicast_ttl)
       {
         unsigned char ttl = soap->ipv4_multicast_ttl;
-        if (setsockopt(soap->socket, IPPROTO_IP, IP_MULTICAST_TTL, (char*)&ttl, sizeof(ttl)))
+        if (setsockopt(soap->socket, IPSTACK_IPPROTO_IP, IP_MULTICAST_TTL, (char*)&ttl, sizeof(ttl)))
         {
           soap->errnum = soap_socket_errno;
           (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt IP_MULTICAST_TTL failed in tcp_connect()", SOAP_TCP_ERROR);
@@ -5260,7 +5260,7 @@ tcp_connect(struct soap *soap, const char *endpoint, const char *host, int port)
       }
       if (soap->ipv4_multicast_if && !soap->ipv6_multicast_if)
       {
-        if (setsockopt(soap->socket, IPPROTO_IP, IP_MULTICAST_IF, (char*)soap->ipv4_multicast_if, sizeof(struct in_addr)))
+        if (setsockopt(soap->socket, IPSTACK_IPPROTO_IP, IP_MULTICAST_IF, (char*)soap->ipv4_multicast_if, sizeof(struct in_addr)))
 #ifndef WINDOWS
         {
           soap->errnum = soap_socket_errno;
@@ -5272,7 +5272,7 @@ tcp_connect(struct soap *soap, const char *endpoint, const char *host, int port)
 #ifndef IP_MULTICAST_IF
 #define IP_MULTICAST_IF 2
 #endif
-        if (setsockopt(soap->socket, IPPROTO_IP, IP_MULTICAST_IF, (char*)soap->ipv4_multicast_if, sizeof(struct in_addr)))
+        if (setsockopt(soap->socket, IPSTACK_IPPROTO_IP, IP_MULTICAST_IF, (char*)soap->ipv4_multicast_if, sizeof(struct in_addr)))
         {
           soap->errnum = soap_socket_errno;
           (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt IP_MULTICAST_IF failed in tcp_connect()", SOAP_TCP_ERROR);
@@ -5298,10 +5298,10 @@ tcp_connect(struct soap *soap, const char *endpoint, const char *host, int port)
   hints.ai_family = PF_UNSPEC;
 #ifndef WITH_LEAN
   if ((soap->omode & SOAP_IO_UDP))
-    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_socktype = IPSTACK_SOCK_DGRAM;
   else
 #endif
-    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_socktype = IPSTACK_SOCK_STREAM;
   soap->errmode = 2;
   if (soap->proxy_host)
     err = getaddrinfo(soap->proxy_host, soap_int2s(soap, soap->proxy_port), &hints, &res);
@@ -5323,10 +5323,10 @@ again:
 #endif
 #ifndef WITH_LEAN
   if ((soap->omode & SOAP_IO_UDP))
-    sk = soap->socket = socket(AF_INET, SOCK_DGRAM, 0);
+    sk = soap->socket = socket(IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, 0);
   else
 #endif
-    sk = soap->socket = socket(AF_INET, SOCK_STREAM, 0);
+    sk = soap->socket = socket(IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
 #endif
   if (!soap_valid_socket(sk))
   {
@@ -5360,7 +5360,7 @@ again:
     memset((void*)&linger, 0, sizeof(linger));
     linger.l_onoff = 1;
     linger.l_linger = soap->linger_time;
-    if (setsockopt(sk, SOL_SOCKET, SO_LINGER, (char*)&linger, sizeof(struct linger)))
+    if (setsockopt(sk, IPSTACK_SOL_SOCKET, SO_LINGER, (char*)&linger, sizeof(struct linger)))
     {
       soap->errnum = soap_socket_errno;
       (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt SO_LINGER failed in tcp_connect()", SOAP_TCP_ERROR);
@@ -5371,7 +5371,7 @@ again:
       return soap->socket = SOAP_INVALID_SOCKET;
     }
   }
-  if ((soap->connect_flags & ~SO_LINGER) && setsockopt(sk, SOL_SOCKET, soap->connect_flags & ~SO_LINGER, (char*)&set, sizeof(int)))
+  if ((soap->connect_flags & ~SO_LINGER) && setsockopt(sk, IPSTACK_SOL_SOCKET, soap->connect_flags & ~SO_LINGER, (char*)&set, sizeof(int)))
   {
     soap->errnum = soap_socket_errno;
 #ifdef WITH_IPV6
@@ -5382,38 +5382,38 @@ again:
     return soap->socket = SOAP_INVALID_SOCKET;
   }
 #ifndef UNDER_CE
-  if ((soap->keep_alive || soap->tcp_keep_alive) && setsockopt(sk, SOL_SOCKET, SO_KEEPALIVE, (char*)&set, sizeof(int)))
+  if ((soap->keep_alive || soap->tcp_keep_alive) && setsockopt(sk, IPSTACK_SOL_SOCKET, IPSTACK_SO_KEEPALIVE, (char*)&set, sizeof(int)))
   {
     soap->errnum = soap_socket_errno;
 #ifdef WITH_IPV6
     freeaddrinfo(ressave);
 #endif
-    (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt SO_KEEPALIVE failed in tcp_connect()", SOAP_TCP_ERROR);
+    (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt IPSTACK_SO_KEEPALIVE failed in tcp_connect()", SOAP_TCP_ERROR);
     (void)soap->fclosesocket(soap, sk);
     return soap->socket = SOAP_INVALID_SOCKET;
   }
-  if (soap->sndbuf > 0 && setsockopt(sk, SOL_SOCKET, SO_SNDBUF, (char*)&soap->sndbuf, sizeof(int)))
+  if (soap->sndbuf > 0 && setsockopt(sk, IPSTACK_SOL_SOCKET, IPSTACK_SO_SNDBUF, (char*)&soap->sndbuf, sizeof(int)))
   {
     soap->errnum = soap_socket_errno;
 #ifdef WITH_IPV6
     freeaddrinfo(ressave);
 #endif
-    (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt SO_SNDBUF failed in tcp_connect()", SOAP_TCP_ERROR);
+    (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt IPSTACK_SO_SNDBUF failed in tcp_connect()", SOAP_TCP_ERROR);
     (void)soap->fclosesocket(soap, sk);
     return soap->socket = SOAP_INVALID_SOCKET;
   }
-  if (soap->rcvbuf > 0 && setsockopt(sk, SOL_SOCKET, SO_RCVBUF, (char*)&soap->rcvbuf, sizeof(int)))
+  if (soap->rcvbuf > 0 && setsockopt(sk, IPSTACK_SOL_SOCKET, IPSTACK_SO_RCVBUF, (char*)&soap->rcvbuf, sizeof(int)))
   {
     soap->errnum = soap_socket_errno;
 #ifdef WITH_IPV6
     freeaddrinfo(ressave);
 #endif
-    (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt SO_RCVBUF failed in tcp_connect()", SOAP_TCP_ERROR);
+    (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt IPSTACK_SO_RCVBUF failed in tcp_connect()", SOAP_TCP_ERROR);
     (void)soap->fclosesocket(soap, sk);
     return soap->socket = SOAP_INVALID_SOCKET;
   }
 #ifdef TCP_KEEPIDLE
-  if (soap->tcp_keep_idle && setsockopt(sk, IPPROTO_TCP, TCP_KEEPIDLE, (char*)&(soap->tcp_keep_idle), sizeof(int)))
+  if (soap->tcp_keep_idle && setsockopt(sk, IPSTACK_IPPROTO_TCP, TCP_KEEPIDLE, (char*)&(soap->tcp_keep_idle), sizeof(int)))
   {
     soap->errnum = soap_socket_errno;
 #ifdef WITH_IPV6
@@ -5425,7 +5425,7 @@ again:
   }
 #endif
 #ifdef TCP_KEEPINTVL
-  if (soap->tcp_keep_intvl && setsockopt(sk, IPPROTO_TCP, TCP_KEEPINTVL, (char*)&(soap->tcp_keep_intvl), sizeof(int)))
+  if (soap->tcp_keep_intvl && setsockopt(sk, IPSTACK_IPPROTO_TCP, TCP_KEEPINTVL, (char*)&(soap->tcp_keep_intvl), sizeof(int)))
   {
     soap->errnum = soap_socket_errno;
 #ifdef WITH_IPV6
@@ -5437,7 +5437,7 @@ again:
   }
 #endif
 #ifdef TCP_KEEPCNT
-  if (soap->tcp_keep_cnt && setsockopt(sk, IPPROTO_TCP, TCP_KEEPCNT, (char*)&(soap->tcp_keep_cnt), sizeof(int)))
+  if (soap->tcp_keep_cnt && setsockopt(sk, IPSTACK_IPPROTO_TCP, TCP_KEEPCNT, (char*)&(soap->tcp_keep_cnt), sizeof(int)))
   {
     soap->errnum = soap_socket_errno;
 #ifdef WITH_IPV6
@@ -5448,14 +5448,14 @@ again:
     return soap->socket = SOAP_INVALID_SOCKET;
   }
 #endif
-#ifdef TCP_NODELAY
-  if (!(soap->omode & SOAP_IO_UDP) && setsockopt(sk, IPPROTO_TCP, TCP_NODELAY, (char*)&set, sizeof(int)))
+#ifdef IPSTACK_TCP_NODELAY
+  if (!(soap->omode & SOAP_IO_UDP) && setsockopt(sk, IPSTACK_IPPROTO_TCP, IPSTACK_TCP_NODELAY, (char*)&set, sizeof(int)))
   {
     soap->errnum = soap_socket_errno;
 #ifdef WITH_IPV6
     freeaddrinfo(ressave);
 #endif
-    (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt TCP_NODELAY failed in tcp_connect()", SOAP_TCP_ERROR);
+    (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt IPSTACK_TCP_NODELAY failed in tcp_connect()", SOAP_TCP_ERROR);
     (void)soap->fclosesocket(soap, sk);
     return soap->socket = SOAP_INVALID_SOCKET;
   }
@@ -5474,7 +5474,7 @@ again:
     if (soap->ipv4_multicast_ttl)
     {
       unsigned char ttl = soap->ipv4_multicast_ttl;
-      if (setsockopt(sk, IPPROTO_IP, IP_MULTICAST_TTL, (char*)&ttl, sizeof(ttl)))
+      if (setsockopt(sk, IPSTACK_IPPROTO_IP, IP_MULTICAST_TTL, (char*)&ttl, sizeof(ttl)))
       {
         soap->errnum = soap_socket_errno;
 #ifdef WITH_IPV6
@@ -5487,7 +5487,7 @@ again:
     }
     if ((soap->omode & SOAP_IO_UDP) && soap->ipv4_multicast_if && !soap->ipv6_multicast_if)
     {
-      if (setsockopt(sk, IPPROTO_IP, IP_MULTICAST_IF, (char*)soap->ipv4_multicast_if, sizeof(struct in_addr)))
+      if (setsockopt(sk, IPSTACK_IPPROTO_IP, IP_MULTICAST_IF, (char*)soap->ipv4_multicast_if, sizeof(struct in_addr)))
 #ifndef WINDOWS
       {
         soap->errnum = soap_socket_errno;
@@ -5502,7 +5502,7 @@ again:
 #ifndef IP_MULTICAST_IF
 #define IP_MULTICAST_IF 2
 #endif
-      if (setsockopt(sk, IPPROTO_IP, IP_MULTICAST_IF, (char*)soap->ipv4_multicast_if, sizeof(struct in_addr)))
+      if (setsockopt(sk, IPSTACK_IPPROTO_IP, IP_MULTICAST_IF, (char*)soap->ipv4_multicast_if, sizeof(struct in_addr)))
       {
         soap->errnum = soap_socket_errno;
 #ifdef WITH_IPV6
@@ -5521,16 +5521,16 @@ again:
 #ifndef WITH_IPV6
   soap->peerlen = sizeof(soap->peer.in);
   memset((void*)&soap->peer.in, 0, sizeof(soap->peer.in));
-  soap->peer.in.sin_family = AF_INET;
+  soap->peer.in.sin_family = IPSTACK_AF_INET;
 #ifndef WIN32
   if (soap->client_addr)
   {
     struct sockaddr_in addr;
     memset((void*)&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
+    addr.sin_family = IPSTACK_AF_INET;
     if (soap->client_port >= 0)
       addr.sin_port = htons(soap->client_port);
-    if (ipstack_inet_pton(AF_INET, soap->client_addr, (void*)&addr.sin_addr) != 1 || bind(sk, (struct sockaddr*)&addr, sizeof(addr)))
+    if (ipstack_inet_pton(IPSTACK_AF_INET, soap->client_addr, (void*)&addr.sin_addr) != 1 || bind(sk, (struct sockaddr*)&addr, sizeof(addr)))
     {
       soap->errnum = soap_socket_errno;
       DBGLOG(TEST, SOAP_MESSAGE(fdebug, "Could not bind before connect\n"));
@@ -5549,7 +5549,7 @@ again:
   {
     struct sockaddr_in addr;
     memset((void*)&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
+    addr.sin_family = IPSTACK_AF_INET;
     addr.sin_port = htons(soap->client_port);
     if (bind(sk, (struct sockaddr*)&addr, sizeof(addr)))
     {
@@ -5565,7 +5565,7 @@ again:
 #ifndef WIN32
   if (soap->client_interface)
   {
-    if (ipstack_inet_pton(AF_INET, soap->client_interface, &soap->peer.in.sin_addr) != 1)
+    if (ipstack_inet_pton(IPSTACK_AF_INET, soap->client_interface, &soap->peer.in.sin_addr) != 1)
     {
       soap->errnum = soap_socket_errno;
       (void)soap_set_receiver_error(soap, tcp_error(soap), "ipstack_inet_pton() failed in tcp_connect()", SOAP_TCP_ERROR);
@@ -5608,9 +5608,9 @@ again:
   {
     struct sockaddr_in6 addr;
     memset((void*)&addr, 0, sizeof(addr));
-    addr.sin6_family = AF_INET6;
-    if ((soap->client_addr_ipv6 && res->ai_family == AF_INET6 && ipstack_inet_pton(AF_INET6, soap->client_addr_ipv6, (void*)&addr.sin6_addr.s6_addr) == 1)
-     || (!soap->client_addr_ipv6 && ipstack_inet_pton(AF_INET6, soap->client_addr, (void*)&addr.sin6_addr.s6_addr) == 1)
+    addr.sin6_family = IPSTACK_AF_INET6;
+    if ((soap->client_addr_ipv6 && res->ai_family == IPSTACK_AF_INET6 && ipstack_inet_pton(IPSTACK_AF_INET6, soap->client_addr_ipv6, (void*)&addr.sin6_addr.s6_addr) == 1)
+     || (!soap->client_addr_ipv6 && ipstack_inet_pton(IPSTACK_AF_INET6, soap->client_addr, (void*)&addr.sin6_addr.s6_addr) == 1)
      )
     {
       if (soap->client_port >= 0)
@@ -5632,10 +5632,10 @@ again:
     {
       struct sockaddr_in addr;
       memset((void*)&addr, 0, sizeof(addr));
-      addr.sin_family = AF_INET;
+      addr.sin_family = IPSTACK_AF_INET;
       if (soap->client_port >= 0)
         addr.sin_port = htons(soap->client_port);
-      if (ipstack_inet_pton(AF_INET, soap->client_addr, (void*)&addr.sin_addr) != 1 || bind(sk, (struct sockaddr*)&addr, sizeof(addr)))
+      if (ipstack_inet_pton(IPSTACK_AF_INET, soap->client_addr, (void*)&addr.sin_addr) != 1 || bind(sk, (struct sockaddr*)&addr, sizeof(addr)))
       {
         soap->errnum = soap_socket_errno;
         freeaddrinfo(ressave);
@@ -5658,7 +5658,7 @@ again:
   {
     struct sockaddr_in6 addr;
     memset((void*)&addr, 0, sizeof(addr));
-    addr.sin6_family = AF_INET6;
+    addr.sin6_family = IPSTACK_AF_INET6;
     addr.sin6_port = htons(soap->client_port);
     if (bind(sk, (struct sockaddr*)&addr, sizeof(addr)))
     {
@@ -5675,9 +5675,9 @@ again:
 #ifndef WIN32
   if (soap->client_interface)
   {
-    if (ipstack_inet_pton(AF_INET6, soap->client_interface, res->ai_addr) != 1)
+    if (ipstack_inet_pton(IPSTACK_AF_INET6, soap->client_interface, res->ai_addr) != 1)
     {
-      if (ipstack_inet_pton(AF_INET, soap->client_interface, res->ai_addr) != 1)
+      if (ipstack_inet_pton(IPSTACK_AF_INET, soap->client_interface, res->ai_addr) != 1)
       {
         soap->errnum = soap_socket_errno;
         freeaddrinfo(ressave);
@@ -5788,7 +5788,7 @@ again:
           }
         }
         k = (SOAP_SOCKLEN_T)sizeof(soap->errnum);
-        if (!getsockopt(sk, SOL_SOCKET, SO_ERROR, (char*)&soap->errnum, &k) && !soap->errnum)   /* portability note: see SOAP_SOCKLEN_T definition in stdsoap2.h */
+        if (!getsockopt(sk, IPSTACK_SOL_SOCKET, IPSTACK_SO_ERROR, (char*)&soap->errnum, &k) && !soap->errnum)   /* portability note: see SOAP_SOCKLEN_T definition in stdsoap2.h */
           break;
         DBGLOG(TEST, SOAP_MESSAGE(fdebug, "Could not connect to host\n"));
         if (!soap->errnum)
@@ -6753,13 +6753,13 @@ soap_bind(struct soap *soap, const char *host, int port, int backlog)
   }
 #ifdef WITH_IPV6
   memset((void*)&hints, 0, sizeof(hints));
-  hints.ai_family = soap->bind_inet6 ? AF_INET6 : PF_UNSPEC;
+  hints.ai_family = soap->bind_inet6 ? IPSTACK_AF_INET6 : PF_UNSPEC;
 #ifndef WITH_LEAN
   if ((soap->omode & SOAP_IO_UDP))
-    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_socktype = IPSTACK_SOCK_DGRAM;
   else
 #endif
-    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_socktype = IPSTACK_SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE;
   soap->errmode = 2;
   err = getaddrinfo(host, soap_int2s(soap, port), &hints, &ipstack_addrinfo);
@@ -6785,10 +6785,10 @@ soap_bind(struct soap *soap, const char *host, int port, int backlog)
 #else
 #ifndef WITH_LEAN
   if ((soap->omode & SOAP_IO_UDP))
-    soap->master = (int)socket(AF_INET, SOCK_DGRAM, 0);
+    soap->master = (int)socket(IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, 0);
   else
 #endif
-    soap->master = (int)socket(AF_INET, SOCK_STREAM, 0);
+    soap->master = (int)socket(IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
 #endif
   soap->errmode = 0;
   if (!soap_valid_socket(soap->master))
@@ -6812,41 +6812,41 @@ soap_bind(struct soap *soap, const char *host, int port, int backlog)
 #endif
 #endif
 #ifndef WITH_LEAN
-  if (soap->bind_flags && setsockopt(soap->master, SOL_SOCKET, soap->bind_flags, (char*)&set, sizeof(int)))
+  if (soap->bind_flags && setsockopt(soap->master, IPSTACK_SOL_SOCKET, soap->bind_flags, (char*)&set, sizeof(int)))
   {
     soap->errnum = soap_socket_errno;
     (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt failed in soap_bind()", SOAP_TCP_ERROR);
     return SOAP_INVALID_SOCKET;
   }
 #ifndef UNDER_CE
-  if (((soap->imode | soap->omode) & SOAP_IO_KEEPALIVE) && (!((soap->imode | soap->omode) & SOAP_IO_UDP)) && setsockopt(soap->master, SOL_SOCKET, SO_KEEPALIVE, (char*)&set, sizeof(int)))
+  if (((soap->imode | soap->omode) & SOAP_IO_KEEPALIVE) && (!((soap->imode | soap->omode) & SOAP_IO_UDP)) && setsockopt(soap->master, IPSTACK_SOL_SOCKET, IPSTACK_SO_KEEPALIVE, (char*)&set, sizeof(int)))
   {
     soap->errnum = soap_socket_errno;
-    (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt SO_KEEPALIVE failed in soap_bind()", SOAP_TCP_ERROR);
+    (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt IPSTACK_SO_KEEPALIVE failed in soap_bind()", SOAP_TCP_ERROR);
     return SOAP_INVALID_SOCKET;
   }
-  if (soap->sndbuf > 0 && setsockopt(soap->master, SOL_SOCKET, SO_SNDBUF, (char*)&soap->sndbuf, sizeof(int)))
+  if (soap->sndbuf > 0 && setsockopt(soap->master, IPSTACK_SOL_SOCKET, IPSTACK_SO_SNDBUF, (char*)&soap->sndbuf, sizeof(int)))
   {
     soap->errnum = soap_socket_errno;
-    (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt SO_SNDBUF failed in soap_bind()", SOAP_TCP_ERROR);
+    (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt IPSTACK_SO_SNDBUF failed in soap_bind()", SOAP_TCP_ERROR);
     return SOAP_INVALID_SOCKET;
   }
-  if (soap->rcvbuf > 0 && setsockopt(soap->master, SOL_SOCKET, SO_RCVBUF, (char*)&soap->rcvbuf, sizeof(int)))
+  if (soap->rcvbuf > 0 && setsockopt(soap->master, IPSTACK_SOL_SOCKET, IPSTACK_SO_RCVBUF, (char*)&soap->rcvbuf, sizeof(int)))
   {
     soap->errnum = soap_socket_errno;
-    (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt SO_RCVBUF failed in soap_bind()", SOAP_TCP_ERROR);
+    (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt IPSTACK_SO_RCVBUF failed in soap_bind()", SOAP_TCP_ERROR);
     return SOAP_INVALID_SOCKET;
   }
-#ifdef TCP_NODELAY
-  if (!(soap->omode & SOAP_IO_UDP) && setsockopt(soap->master, IPPROTO_TCP, TCP_NODELAY, (char*)&set, sizeof(int)))
+#ifdef IPSTACK_TCP_NODELAY
+  if (!(soap->omode & SOAP_IO_UDP) && setsockopt(soap->master, IPSTACK_IPPROTO_TCP, IPSTACK_TCP_NODELAY, (char*)&set, sizeof(int)))
   {
     soap->errnum = soap_socket_errno;
-    (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt TCP_NODELAY failed in soap_bind()", SOAP_TCP_ERROR);
+    (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt IPSTACK_TCP_NODELAY failed in soap_bind()", SOAP_TCP_ERROR);
     return SOAP_INVALID_SOCKET;
   }
 #endif
 #ifdef TCP_FASTOPEN
-  if (!(soap->omode & SOAP_IO_UDP) && setsockopt(soap->master, IPPROTO_TCP, TCP_FASTOPEN, (char*)&set, sizeof(int)))
+  if (!(soap->omode & SOAP_IO_UDP) && setsockopt(soap->master, IPSTACK_IPPROTO_TCP, TCP_FASTOPEN, (char*)&set, sizeof(int)))
   {
     /* silently ignore */
     DBGLOG(TEST, SOAP_MESSAGE(fdebug, "setsockopt TCP_FASTOPEN failed in soap_bind()\n"));
@@ -6855,7 +6855,7 @@ soap_bind(struct soap *soap, const char *host, int port, int backlog)
 #endif
 #endif
 #ifdef WITH_IPV6
-  if (res.ai_family == AF_INET6 && setsockopt(soap->master, IPPROTO_IPV6, IPV6_V6ONLY, soap->bind_v6only ? (char*)&set : (char*)&unset, sizeof(int)))
+  if (res.ai_family == IPSTACK_AF_INET6 && setsockopt(soap->master, IPSTACK_IPPROTO_IPV6, IPV6_V6ONLY, soap->bind_v6only ? (char*)&set : (char*)&unset, sizeof(int)))
   {
     soap->errnum = soap_socket_errno;
     (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt IPV6_V6ONLY failed in soap_bind()", SOAP_TCP_ERROR);
@@ -6873,7 +6873,7 @@ soap_bind(struct soap *soap, const char *host, int port, int backlog)
 #else
   soap->peerlen = sizeof(soap->peer.in);
   memset((void*)&soap->peer.in, 0, sizeof(soap->peer.in));
-  soap->peer.in.sin_family = AF_INET;
+  soap->peer.in.sin_family = IPSTACK_AF_INET;
   soap->errmode = 2;
   if (host)
   {
@@ -6885,7 +6885,7 @@ soap_bind(struct soap *soap, const char *host, int port, int backlog)
   }
   else
   {
-    soap->peer.in.sin_addr.s_addr = htonl(INADDR_ANY);
+    soap->peer.in.sin_addr.s_addr = htonl(IPSTACK_INADDR_ANY);
   }
   soap->peer.in.sin_port = htons((short)port);
   soap->errmode = 0;
@@ -6952,7 +6952,7 @@ soap_poll(struct soap *soap)
       if (soap_valid_socket(soap->socket)
        && (r & SOAP_TCP_SELECT_SND)
        && (!(r & SOAP_TCP_SELECT_RCV)
-        || recv(soap->socket, (char*)&t, 1, MSG_PEEK) > 0))
+        || recv(soap->socket, (char*)&t, 1, IPSTACK_MSG_PEEK) > 0))
         return SOAP_OK;
     }
   }
@@ -7000,7 +7000,7 @@ soap_ready(struct soap *soap)
     else
 #endif
     {
-      if (recv(soap->socket, &t, 1, MSG_PEEK) > 0)
+      if (recv(soap->socket, &t, 1, IPSTACK_MSG_PEEK) > 0)
         return SOAP_OK;
     }
   }
@@ -7079,7 +7079,7 @@ soap_accept(struct soap *soap)
       struct ipstack_addrinfo hints;
       memset(&hints, 0, sizeof(struct ipstack_addrinfo));
       hints.ai_family = PF_UNSPEC;
-      hints.ai_socktype = SOCK_STREAM;
+      hints.ai_socktype = IPSTACK_SOCK_STREAM;
       hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;
       getnameinfo(&soap->peer.addr, n, soap->host, sizeof(soap->host), port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV);
       soap->ip = 0;
@@ -7093,7 +7093,7 @@ soap_accept(struct soap *soap)
         memset((void*)&result, 0, sizeof(result));
         (void)soap_memcpy(&result, sizeof(result), res->ai_addr, res->ai_addrlen);
         freeaddrinfo(res);
-        if (result.ss_family == AF_INET6)
+        if (result.ss_family == IPSTACK_AF_INET6)
         {
           struct sockaddr_in6 *addr = (struct sockaddr_in6*)&result;
           struct in6_addr *inaddr = &addr->sin6_addr;
@@ -7101,7 +7101,7 @@ soap_accept(struct soap *soap)
           for (i = 0; i < 16; i++)
             soap->ip6[i/4] = (soap->ip6[i/4] << 8) + inaddr->s6_addr[i];
         }
-        else if (result.ss_family == AF_INET)
+        else if (result.ss_family == IPSTACK_AF_INET)
         {
           struct sockaddr_in *addr = (struct sockaddr_in*)&result;
           soap->ip = ntohl(addr->sin_addr.s_addr);
@@ -7127,7 +7127,7 @@ soap_accept(struct soap *soap)
         memset((void*)&linger, 0, sizeof(linger));
         linger.l_onoff = 1;
         linger.l_linger = soap->linger_time;
-        if (setsockopt(soap->socket, SOL_SOCKET, SO_LINGER, (char*)&linger, sizeof(struct linger)))
+        if (setsockopt(soap->socket, IPSTACK_SOL_SOCKET, SO_LINGER, (char*)&linger, sizeof(struct linger)))
         {
           soap->errnum = soap_socket_errno;
           (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt SO_LINGER failed in soap_accept()", SOAP_TCP_ERROR);
@@ -7135,7 +7135,7 @@ soap_accept(struct soap *soap)
           return SOAP_INVALID_SOCKET;
         }
       }
-      if ((soap->accept_flags & ~SO_LINGER) && setsockopt(soap->socket, SOL_SOCKET, soap->accept_flags & ~SO_LINGER, (char*)&set, sizeof(int)))
+      if ((soap->accept_flags & ~SO_LINGER) && setsockopt(soap->socket, IPSTACK_SOL_SOCKET, soap->accept_flags & ~SO_LINGER, (char*)&set, sizeof(int)))
       {
         soap->errnum = soap_socket_errno;
         (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt failed in soap_accept()", SOAP_TCP_ERROR);
@@ -7143,32 +7143,32 @@ soap_accept(struct soap *soap)
         return SOAP_INVALID_SOCKET;
       }
 #ifndef UNDER_CE
-      if (((soap->imode | soap->omode) & SOAP_IO_KEEPALIVE) && setsockopt(soap->socket, SOL_SOCKET, SO_KEEPALIVE, (char*)&set, sizeof(int)))
+      if (((soap->imode | soap->omode) & SOAP_IO_KEEPALIVE) && setsockopt(soap->socket, IPSTACK_SOL_SOCKET, IPSTACK_SO_KEEPALIVE, (char*)&set, sizeof(int)))
       {
         soap->errnum = soap_socket_errno;
-        (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt SO_KEEPALIVE failed in soap_accept()", SOAP_TCP_ERROR);
+        (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt IPSTACK_SO_KEEPALIVE failed in soap_accept()", SOAP_TCP_ERROR);
         (void)soap_closesock(soap);
         return SOAP_INVALID_SOCKET;
       }
-      if (soap->sndbuf > 0 && setsockopt(soap->socket, SOL_SOCKET, SO_SNDBUF, (char*)&soap->sndbuf, sizeof(int)))
+      if (soap->sndbuf > 0 && setsockopt(soap->socket, IPSTACK_SOL_SOCKET, IPSTACK_SO_SNDBUF, (char*)&soap->sndbuf, sizeof(int)))
       {
         soap->errnum = soap_socket_errno;
-        (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt SO_SNDBUF failed in soap_accept()", SOAP_TCP_ERROR);
+        (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt IPSTACK_SO_SNDBUF failed in soap_accept()", SOAP_TCP_ERROR);
         (void)soap_closesock(soap);
         return SOAP_INVALID_SOCKET;
       }
-      if (soap->rcvbuf > 0 && setsockopt(soap->socket, SOL_SOCKET, SO_RCVBUF, (char*)&soap->rcvbuf, sizeof(int)))
+      if (soap->rcvbuf > 0 && setsockopt(soap->socket, IPSTACK_SOL_SOCKET, IPSTACK_SO_RCVBUF, (char*)&soap->rcvbuf, sizeof(int)))
       {
         soap->errnum = soap_socket_errno;
-        (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt SO_RCVBUF failed in soap_accept()", SOAP_TCP_ERROR);
+        (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt IPSTACK_SO_RCVBUF failed in soap_accept()", SOAP_TCP_ERROR);
         (void)soap_closesock(soap);
         return SOAP_INVALID_SOCKET;
       }
-#ifdef TCP_NODELAY
-      if (setsockopt(soap->socket, IPPROTO_TCP, TCP_NODELAY, (char*)&set, sizeof(int)))
+#ifdef IPSTACK_TCP_NODELAY
+      if (setsockopt(soap->socket, IPSTACK_IPPROTO_TCP, IPSTACK_TCP_NODELAY, (char*)&set, sizeof(int)))
       {
         soap->errnum = soap_socket_errno;
-        (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt TCP_NODELAY failed in soap_accept()", SOAP_TCP_ERROR);
+        (void)soap_set_receiver_error(soap, tcp_error(soap), "setsockopt IPSTACK_TCP_NODELAY failed in soap_accept()", SOAP_TCP_ERROR);
         (void)soap_closesock(soap);
         return SOAP_INVALID_SOCKET;
       }
@@ -22331,7 +22331,7 @@ soap_send_fault(struct soap *soap)
         int t;
         if (!(r & SOAP_TCP_SELECT_SND)
          || ((r & SOAP_TCP_SELECT_RCV)
-          && recv(soap->socket, (char*)&t, 1, MSG_PEEK) < 0))
+          && recv(soap->socket, (char*)&t, 1, IPSTACK_MSG_PEEK) < 0))
           r = 0;
       }
     }

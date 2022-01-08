@@ -90,9 +90,9 @@ static int modem_process_handle(modem_process_t *process, void *pVoid)
 
 static int modem_main_task(void *argv)
 {
-	os_ansync_t *node;
+	os_ansync_t *node = NULL;
 	os_sleep(5);
-	host_config_load_waitting();
+	host_waitting_loadconfig();
 	while(modem_ansync_lst)
 	{
 		while((node = os_ansync_fetch(modem_ansync_lst)))
@@ -182,7 +182,10 @@ int modem_task_init (void)
 		modem_task_id = os_task_create("modemTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, modem_main_task, NULL, OS_TASK_DEFAULT_STACK);
 	if(modem_task_id)
+	{
+		module_setup_task(MODULE_MODEM, modem_task_id);
 		return OK;
+	}
 	return ERROR;
 }
 
@@ -204,9 +207,10 @@ struct module_list module_list_modem =
 	.module_exit=modem_module_exit, 
 	.module_task_init=modem_task_init, 
 	.module_task_exit=modem_task_exit, 
-	.module_cmd_init=NULL, 
+	.module_cmd_init=cmd_modem_init, 
 	.module_write_config=NULL, 
 	.module_show_config=NULL,
 	.module_show_debug=NULL, 
+	.flags = ZPL_MODULE_NEED_INIT,
 	.taskid=0,
 };

@@ -166,7 +166,7 @@ typedef struct rib_dest_t_
 #define RIB_DEST_SENT_TO_FPM   (1 << (ZEBRA_MAX_QINDEX + 1))
 
 /*
- * This flag is set when we need to send an update to the FPM about a
+ * This flag is set when we need to ipstack_send an update to the FPM about a
  * dest.
  */
 #define RIB_DEST_UPDATE_FPM    (1 << (ZEBRA_MAX_QINDEX + 2))
@@ -344,9 +344,11 @@ struct nsm_vrf
 #endif /* HAVE_RTADV */
 
 #ifdef HAVE_NETLINK
-  struct nlsock netlink;     /* kernel messages */
   struct nlsock netlink_cmd; /* command channel */
+#ifdef ZPL_KERNEL_SORF_FORWARDING
+  struct nlsock netlink;     /* kernel messages */
   struct thread *t_netlink;
+#endif  
 #endif
   /* Recursive Nexthop table */
   struct route_table *rnh_table[AFI_MAX];
@@ -408,11 +410,11 @@ extern enum multicast_mode multicast_mode_ipv4_get (void);
 extern struct nexthop *rib_nexthop_ifindex_add (struct rib *, ifindex_t);
 extern struct nexthop *rib_nexthop_ifname_add (struct rib *, zpl_char *);
 extern struct nexthop *rib_nexthop_blackhole_add (struct rib *);
-extern struct nexthop *rib_nexthop_ipv4_add (struct rib *, struct in_addr *,
-					     struct in_addr *);
+extern struct nexthop *rib_nexthop_ipv4_add (struct rib *, struct ipstack_in_addr *,
+					     struct ipstack_in_addr *);
 extern struct nexthop *rib_nexthop_ipv4_ifindex_add (struct rib *,
-						     struct in_addr *,
-						     struct in_addr *,
+						     struct ipstack_in_addr *,
+						     struct ipstack_in_addr *,
 						     ifindex_t);
 
 extern void rib_nexthop_add (struct rib *rib, struct nexthop *nexthop);

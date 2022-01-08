@@ -25,14 +25,14 @@ modification history
 03j,08nov04,syy  Doc changes
 03i,03nov04,ann  changed log level to 0 in the init routine (SPR# 103249)
 03h,30aug04,dlk  Replace LOG_ERROR() with zlog_err(), etc..
-03g,30aug04,ram  SPR#101142 do not pend forever on accept call
+03g,30aug04,ram  SPR#101142 do not pend forever on ipstack_accept call
 03f,24aug04,ram  SPR#87307 & SRP#92986 check buffer limit & cleanup
 03d,23aug04,vvv  merged from COMP_WN_IPV6_BASE6_ITER5_TO_UNIFIED_PRE_MERGE
 03c,08jul04,vvv  fixed warnings
 03b,15jun04,nee  removing the SOCKADDR typedef
 03a,09jun04,spm  merged virtual stack support from Accordion
 02z,25mar04,mcm  Including time.h instead of sys/time.h in user-space
-02y,13jan04,wap  Merge in SO_LINGER and SO_KEEPALIVE fixes (SPR #73874, SPR
+02y,13jan04,wap  Merge in SO_LINGER and IPSTACK_SO_KEEPALIVE fixes (SPR #73874, SPR
                  #31626, SPR #91994)
 02x,08dec03,asr  Updates based on code review comments
 02w,03dec03,asr  Fix compile errors after dinkum libc check-in
@@ -69,8 +69,8 @@ modification history
                  Moved some error message to FTPLDEBUG  (SPR #71496)
                     and removed ftpErrorSuppress in favor ftplDebug
                  Added documentation concerning ftpHookup() and ftpDataConnInit()
-                    socket connections (SPR #62289) (SPR #30556)
-02m,27nov01,ant  added ctrlAddr.sin_len before sys call bind()
+                    ipstack_socket connections (SPR #62289) (SPR #30556)
+02m,27nov01,ant  added ctrlAddr.sin_len before sys call ipstack_bind()
 02j,15oct01,rae  merge from truestack ver 02n, base 02i (SPR #67644)
 02i,22sep99,cno  change FD_ISSET control & data connection tests (SPR27234)
 02h,15mar99,elg  change erroneous example code in ftpXfer() (SPR 9989).
@@ -80,13 +80,13 @@ modification history
                  which do not involve data transfer (SPR #20017)
 02d,05jun95,jag  Changed ftpXfer to handle error 425 at boot time.
 02c,30aug93,jag  Changed ftpCommand to issue a single write (SPR #2492)
-02b,11aug93,jmm  Changed ioctl.h and socket.h to sys/ioctl.h and sys/socket.h
+02b,11aug93,jmm  Changed ioctl.h and ipstack_socket.h to sys/ioctl.h and sys/ipstack_socket.h
 02a,23feb93,jdi  doc: changed ftpCommand() examples to fixed no. of args.
 01z,20jan93,jdi  documentation cleanup for 5.1.
 01y,20sep92,kdl  added ftpLs; moved ftpErrorSuppress to funcBind.c.
 01x,11sep92,jmm  added ftpErrorSuppress for lsOld() (SPR #1257)
 01w,19aug92,smb  Changed systime.h to sys/times.h.
-01v,18jul92,smb  Changed errno.h to errnoLib.h.
+01v,18jul92,smb  Changed ipstack_errno.h to errnoLib.h.
 01u,26may92,rrr  the tree shuffle
 		  -changed includes to have absolute path from h/
 01t,19nov91,rrr  shut up some ansi warnings.
@@ -100,22 +100,22 @@ modification history
 01o,07may90,hjb  added some documentation to ftpXfer routine to issue a "QUIT"
 		 at the end of the file transfer session via FTP.
 01n,22feb90,jdi  documentation cleanup.
-01m,07jun89,gae  changed sockaddr back to "struct sockaddr".
+01m,07jun89,gae  changed ipstack_sockaddr back to "struct ipstack_sockaddr".
 01l,23sep88,gae  documentation touchup.
 01k,30may88,dnw  changed to v4 names.
 01j,28may88,dnw  changed fioStdErr call to STD_ERR.
 01i,05apr88,gae  changed fprintf() call to fdprintf()
 01h,17nov87,ecs  lint: added include of inetLib.h.
 01g,11nov87,jlf  documentation
-01f,06nov87,dnw  fixed bug in use of setsockopt().
+01f,06nov87,dnw  fixed bug in use of ipstack_setsockopt().
 01e,01nov87,llk  changed remInetAddr() to UNIX compatible ipstack_inet_addr().
 01d,01apr87,ecs  hushed lint in ftpGetReply.
 		 changed "VARARGS 2" to "VARARGS2" in ftpCommand
-		 removed extraneous 4th arg from calls to bind, socket, accept,
-		    & connect.
+		 removed extraneous 4th arg from calls to ipstack_bind, ipstack_socket, ipstack_accept,
+		    & ipstack_connect.
 01c,19mar87,dnw  documentation
 		 prepended FTP_ to ftp reply codes.
-01b,14feb87,dnw  changed to use getsockname() instead of using privileged port.
+01b,14feb87,dnw  changed to use ipstack_getsockname() instead of using privileged port.
 01a,07nov86,dnw  written
 */
 
@@ -149,8 +149,8 @@ roughly the same function as ftpXfer().
 
 .CS
 char *host, *user, *passwd, *acct, *dirname, *filename;
-int ctrlSock = ERROR; /@ This is the control socket file descriptor @/
-int dataSock = ERROR; /@ This is the data path socket file descriptor @/
+int ctrlSock = ERROR; /@ This is the control ipstack_socket file descriptor @/
+int dataSock = ERROR; /@ This is the data path ipstack_socket file descriptor @/
 
 if (((ctrlSock = ftpHookup (host)) == ERROR)		                      ||
     (ftpLogin (ctrlSock, user, passwd, acct) == ERROR)	                      ||
@@ -221,7 +221,7 @@ SEE ALSO: netDrv, logLib
 
 /* forward declarations */
 
-typedef struct sockaddr_in SOCKADDR_IN;
+typedef struct ipstack_sockaddr_in SOCKADDR_IN;
 
 
 #define UCA(n)     (((int)(((char *)&dataAddr.sin_addr)[n])) & 0xff)
@@ -313,11 +313,11 @@ int ftpLibInit
 
 /*******************************************************************************
 *
-* ftpCommand - send an FTP command and get the reply 
+* ftpCommand - ipstack_send an FTP command and get the reply 
 *
 * This command has been superceded by ftpCommandEnhanced() 
 *
-* This routine sends the specified command on the specified socket, which
+* This routine sends the specified command on the specified ipstack_socket, which
 * should be a control connection to a remote FTP server.
 * The command is specified as a string in printf() format with up
 * to six arguments.
@@ -349,7 +349,7 @@ int ftpLibInit
 
 int ftpCommand
     (
-    int ctrlSock,       /* fd of control connection socket */
+    zpl_socket_t ctrlSock,       /* fd of control connection ipstack_socket */
 	const char *format, ...
     )
     {
@@ -368,11 +368,11 @@ int ftpCommand
 
 /*******************************************************************************
 *
-* ftpCommandEnhanced - send an FTP command and get the complete RFC reply code
+* ftpCommandEnhanced - ipstack_send an FTP command and get the complete RFC reply code
 *
 * This command supercedes ftpCommand() 
 *
-* This routine sends the specified command on the specified socket, which
+* This routine sends the specified command on the specified ipstack_socket, which
 * should be a control connection to a remote FTP server.
 * The command is specified as a string in printf() format with up
 * to six arguments.
@@ -400,7 +400,7 @@ int ftpCommand
 
 int ftpCommandEnhanced
     (
-    int ctrlSock,       /* fd of control connection socket */
+    zpl_socket_t ctrlSock,       /* fd of control connection ipstack_socket */
     char *replyString, /* storage for the last line of the server response or NULL */
     int replyStringLength,  /* Maximum character length of the replyString */
 	const char *format, ...
@@ -419,7 +419,7 @@ int ftpCommandEnhanced
         va_end(args);
         }
 
-    /* Format Command to send to FTP server */
+    /* Format Command to ipstack_send to FTP server */
     memset(buffer, 0, sizeof(buffer));
     va_start(args, format);
     len = vsnprintf(buffer, (FTP_CMD_BUFFER_LENGTH - 2), format, args);
@@ -439,9 +439,9 @@ int ftpCommandEnhanced
     sprintf(&buffer[len], "%s", "\r\n");
     len = strlen(buffer);
 
-    if (write(ctrlSock, buffer, len) < len)
+    if (ipstack_write(ctrlSock, buffer, len) < len)
         {
-        zlog_err (MODULE_NSM, "FTP writing to control socket");
+        zlog_err (MODULE_NSM, "FTP writing to control ipstack_socket");
         return(ERROR);
         }
 
@@ -479,10 +479,10 @@ int ftpCommandEnhanced
 * After calling this routine, the data can be read or written to the remote
 * server by reading or writing on the file descriptor returned in
 * <pDataSock>.  When all incoming data has been read (as indicated by 
-* an EOF when reading the data socket) and/or all outgoing data has been
-* written, the data socket fd should be closed.  The routine ftpReplyGet()
-* should then be called to receive the final reply on the control socket,
-* after which the control socket should be closed.
+* an EOF when reading the data ipstack_socket) and/or all outgoing data has been
+* written, the data ipstack_socket fd should be closed.  The routine ftpReplyGet()
+* should then be called to receive the final reply on the control ipstack_socket,
+* after which the control ipstack_socket should be closed.
 *
 * If the FTP command does not involve data transfer, <pDataSock> should be 
 * NULL, in which case no data connection will be established. The only 
@@ -528,7 +528,7 @@ int ftpCommandEnhanced
 * .CE
 *
 * RETURNS:
-* OK, or ERROR if any socket cannot be created or if a connection cannot be
+* OK, or ERROR if any ipstack_socket cannot be created or if a connection cannot be
 * made.
 *
 * SEE ALSO: ftpReplyGet()
@@ -540,20 +540,20 @@ int ftpXfer
     char *user,         /* user name for host login */
     char *passwd,       /* password for host login */
     char *acct,         /* account for host login */
-    char *cmd,          /* command to send to host */
+    char *cmd,          /* command to ipstack_send to host */
     char *dirname,      /* directory to 'cd' to before sending command */
-    char *filename,     /* filename to send with command */
-    int *pCtrlSock,     /* where to return control socket fd */
-    int *pDataSock      /* where to return data socket fd, */
+    char *filename,     /* filename to ipstack_send with command */
+    zpl_socket_t *pCtrlSock,     /* where to return control ipstack_socket fd */
+    zpl_socket_t *pDataSock      /* where to return data ipstack_socket fd, */
                         /* (NULL == don't open data connection) */
     )
     {
-    register int ctrlSock = ERROR;
-    register int dataSock = ERROR;
+    register zpl_socket_t ctrlSock;
+    register zpl_socket_t dataSock;
     zpl_uint32 ftpReply   = 0;
     zpl_uint32 retryCount = 0;
     int    cmdResult;      
-    fd_set readFds; /* Used by select for PORT method */
+    ipstack_fd_set readFds; /* Used by select for PORT method */
     int    width;          /* Used by select for PORT method */
     zpl_bool   dataSockPassive = zpl_true;
     char cmdResultErr[512];
@@ -563,8 +563,8 @@ int ftpXfer
     zlog_info (MODULE_NSM, "host:%s user:%s passwd:%s acct:%s cmd:%s dir:%s",
 	      host, user, passwd, acct, cmd, dirname);
 */
-
-    if ((ctrlSock = ftpHookup (host)) == ERROR)
+    ctrlSock = ftpHookup (host);
+    if (ipstack_invalid(ctrlSock))
 	return (ERROR);
 
     if ((ftpLogin (ctrlSock, user, passwd, acct) != OK)    ||
@@ -575,7 +575,7 @@ int ftpXfer
 
         zlog_err (MODULE_NSM, "FTP during command establishment");
 
-        close (ctrlSock);
+        ipstack_close (ctrlSock);
         return (ERROR);
 	}
 
@@ -591,7 +591,7 @@ int ftpXfer
             /* FTP command error. */
             zlog_err (MODULE_NSM, "FTP during command");
 
-            close (ctrlSock);
+            ipstack_close (ctrlSock);
             return (ERROR);
         }
 	    
@@ -605,33 +605,33 @@ int ftpXfer
 
        
     /* 
-     * At this point we are trying to establish the data socket.
+     * At this point we are trying to establish the data ipstack_socket.
      * We will first try using the modern, client-initiated PASV command.   
      * If PASV fails,  then we will fall back to the PORT command. 
      */
 
-    /*  Set up local data port and send the PORT command */
+    /*  Set up local data port and ipstack_send the PORT command */
 
     do 
         {
-
-        if ((dataSock = ftpDataConnInitPassiveMode (ctrlSock)) != ERROR)
+        dataSock = ftpDataConnInitPassiveMode (ctrlSock);
+        if (!ipstack_invalid(dataSock))
             {
             zlog_info (MODULE_NSM, "FTP mode succeeded.");
-            dataSockPassive = zpl_true; /* We need not listen() on the socket */
+            dataSockPassive = zpl_true; /* We need not ipstack_listen() on the ipstack_socket */
             }
         else
             {
-            zlog_info (MODULE_NSM, "FTP PASV mode failed. Trying older PORT connect.");
-
-            if ((dataSock = ftpDataConnInit (ctrlSock)) == ERROR)
+            zlog_info (MODULE_NSM, "FTP PASV mode failed. Trying older PORT ipstack_connect.");
+            dataSock = ftpDataConnInit (ctrlSock);
+            if (!ipstack_invalid(dataSock))
                 {
                 zlog_err (MODULE_NSM, "FTP trying another port");
-                close (ctrlSock);
+                ipstack_close (ctrlSock);
                 return (ERROR);
                 } 
             else
-                dataSockPassive = zpl_false; /* We need to listen() on the socket */
+                dataSockPassive = zpl_false; /* We need to ipstack_listen() on the ipstack_socket */
             }
 
         /* Send the FTP command.  */
@@ -641,10 +641,10 @@ int ftpXfer
         if ((cmdResult/100) != FTP_PRELIM)
             {
             /* 
-             * The command has failed.  Close the data socket and decode the error.
+             * The command has failed.  Close the data ipstack_socket and decode the error.
              */
 
-            close (dataSock);
+            ipstack_close (dataSock);
 
             /* Check if something really bad happened: File not found, etc. */
 
@@ -653,7 +653,7 @@ int ftpXfer
             	if(strlen(cmdResultErr))
             		systools_printf("FTP Server : %s\r\n", cmdResultErr);
                 zlog_err (MODULE_NSM, "FTP response 0x%08x - aborting transfer.", cmdResult);
-                close (ctrlSock);
+                ipstack_close (ctrlSock);
                 return (ERROR);
                 }
 
@@ -667,7 +667,7 @@ int ftpXfer
                 if ((* ftpc_config._func_ftpTransientFatal) (cmdResult) == zpl_true)
                     {
                     zlog_err (MODULE_NSM, "FTP applette says 0x%08x IS fatal", cmdResult);
-                    close (ctrlSock);
+                    ipstack_close (ctrlSock);
                     return (ERROR);
                     }
 
@@ -694,11 +694,11 @@ int ftpXfer
                 {
                 	if(strlen(cmdResultErr))
                 		systools_printf("FTP Server : %s\r\n", cmdResultErr);
-                /* Too many retries,  close socket and return failure */
+                /* Too many retries,  close ipstack_socket and return failure */
                 zlog_err (MODULE_NSM, "reply was %d - FTP_PRELIM - "
                 		"FTP attempt limit (%d) exceeded.",
                            cmdResult, ftpc_config.ftplTransientMaxRetryCount);
-                close (ctrlSock);
+                ipstack_close (ctrlSock);
                 return (ERROR);
                 }
                 }
@@ -706,36 +706,36 @@ int ftpXfer
 
         if ( dataSockPassive == zpl_false)
             {
-            /* At this point do a select on the data & control socket */
+            /* At this point do a select on the data & control ipstack_socket */
 
             zlog_info (MODULE_NSM ,
 		      "FTP cmdResult:%d dataSock:%d ctrlSock:%d",
 		      cmdResult, dataSock, ctrlSock);
 
-            FD_ZERO (&readFds);
-            FD_SET  (ctrlSock, &readFds);
-            FD_SET  (dataSock, &readFds);
-            width = (dataSock > ctrlSock) ? dataSock : ctrlSock;
+            IPSTACK_FD_ZERO (&readFds);
+            IPSTACK_FD_SET  (ctrlSock._fd, &readFds);
+            IPSTACK_FD_SET  (dataSock._fd, &readFds);
+            width = (dataSock._fd > ctrlSock._fd) ? dataSock._fd : ctrlSock._fd;
             width++;
 
-            if (select (width, &readFds, NULL, NULL, NULL) == ERROR)
+            if (ipstack_select (IPCOM_STACK, width, &readFds, NULL, NULL, NULL) == ERROR)
                 {
                 zlog_err (MODULE_NSM, "FTP in select()");
-                close (dataSock);
-                close (ctrlSock);
+                ipstack_close (dataSock);
+                ipstack_close (ctrlSock);
                 return (ERROR);
                 }
 
-            /* If the control socket is ready process it and take a decision,
-             * try again or return error. If the data socket is ready call
+            /* If the control ipstack_socket is ready process it and take a decision,
+             * try again or return error. If the data ipstack_socket is ready call
              * ftpDataConnGet next.
              */
 
-            if (FD_ISSET (ctrlSock, &readFds) && ! FD_ISSET (dataSock, &readFds))
+            if (IPSTACK_FD_ISSET (ctrlSock._fd, &readFds) && ! IPSTACK_FD_ISSET (dataSock._fd, &readFds))
                 {
-                close (dataSock);
+                ipstack_close (dataSock);
 
-                zlog_warn (MODULE_NSM, "FTP Control socket ready but data socket is not");
+                zlog_warn (MODULE_NSM, "FTP Control ipstack_socket ready but data ipstack_socket is not");
 
                 if ((ftpReply = ftpReplyGet (ctrlSock, zpl_false)) == FTP_TRANSIENT)
                     continue; /* Try another port */
@@ -744,26 +744,26 @@ int ftpXfer
 
                 zlog_err (MODULE_NSM, "FTP sending QUIT command to host.");
                 (void) ftpCommand (ctrlSock, "QUIT");
-                close (ctrlSock);
+                ipstack_close (ctrlSock);
                 return (ERROR);
                 }
-            } /* PORT method requires checking for data socket connection */
+            } /* PORT method requires checking for data ipstack_socket connection */
         } while ( ftpReply == FTP_TRANSIENT); /* Try again, we might need a different port */
 
-    /* If we used PASV mode,  then the socket is ready for use */
+    /* If we used PASV mode,  then the ipstack_socket is ready for use */
 
     if (!dataSockPassive)
         {
         /* 
          * We used the PORT method to establish a connection.
-         * The data socket connection is configured. Wait for the FTP server to connect
+         * The data ipstack_socket connection is configured. Wait for the FTP server to ipstack_connect
          * to us.
          */
-
-        if ((dataSock = ftpDataConnGet (dataSock)) == ERROR)
+        dataSock = ftpDataConnGet (dataSock);
+        if (ipstack_invalid(dataSock))
             {
             zlog_err (MODULE_NSM, "FTP in ftpDataConnGet()");
-            close (ctrlSock);
+            ipstack_close (ctrlSock);
             return (ERROR);
             }
         }
@@ -785,7 +785,7 @@ int ftpXfer
 *
 * This routine has been superceded by ftpReplyGetEnhanced()
 *
-* This routine gets a command reply on the specified control socket.
+* This routine gets a command reply on the specified control ipstack_socket.
 *
 * The three-digit reply code from the first line is saved and interpreted.
 * The left-most digit of the reply code identifies the type of code
@@ -795,7 +795,7 @@ int ftpXfer
 * is printed if the ftp error printing is enabled (see the manual
 * entry for ftpLibDebugOptionsSet()).
 *
-* If an EOF is encountered on the specified control socket, but no EOF was
+* If an EOF is encountered on the specified control ipstack_socket, but no EOF was
 * expected (<expecteof> == zpl_false), then ERROR is returned.
 *
 * RETURNS:
@@ -810,7 +810,7 @@ int ftpXfer
 
 int ftpReplyGet
     (
-    int ctrlSock,       /* control socket fd of FTP connection */
+    zpl_socket_t ctrlSock,       /* control ipstack_socket fd of FTP connection */
     zpl_bool expecteof      /* zpl_true = EOF expected, zpl_false = EOF is error */
     )
     {
@@ -824,7 +824,7 @@ int ftpReplyGet
 *
 * This routine supercedes ftpReplyGet()
 *
-* This routine gets a command reply on the specified control socket.
+* This routine gets a command reply on the specified control ipstack_socket.
 *
 * The three-digit reply code from the first line is saved and interpreted.
 * The left-most digit of the reply code identifies the type of code
@@ -838,7 +838,7 @@ int ftpReplyGet
 * in the location specified by replyString. If replyString is NULL
 * the parameter is ignored.
 *
-* If an EOF is encountered on the specified control socket, but no EOF was
+* If an EOF is encountered on the specified control ipstack_socket, but no EOF was
 * expected (<expecteof> == zpl_false), then ERROR is returned.
 *
 * RETURNS:
@@ -849,7 +849,7 @@ int ftpReplyGet
 
 int ftpReplyGetEnhanced
     (
-    int ctrlSock,       /* control socket fd of FTP connection */
+    zpl_socket_t ctrlSock,       /* control ipstack_socket fd of FTP connection */
     zpl_bool expecteof,     /* zpl_true = EOF expected, zpl_false = EOF is error */
     char *replyString,  /* Location to store text of reply, or NULL */
     int  stringLengthMax /* Maximum length of reply (not including NULL) */ 
@@ -864,7 +864,7 @@ int ftpReplyGetEnhanced
     int stringIndex;
     int eof = 0;
     struct timeval      replyTimeOut;           /* retransmission time  */
-    fd_set          readFds;                /* select read fds      */
+    ipstack_fd_set          readFds;                /* select read fds      */
     int         num;            /* temp variable        */
 
     /* read all lines of a reply:
@@ -880,8 +880,8 @@ int ftpReplyGetEnhanced
     bzero ((char *) &replyTimeOut, sizeof (struct timeval));
     replyTimeOut.tv_sec = ftpc_config.ftpReplyTimeout;
 
-    FD_ZERO (&readFds);
-    FD_SET  (ctrlSock, &readFds);
+    IPSTACK_FD_ZERO (&readFds);
+    IPSTACK_FD_SET  (ctrlSock._fd, &readFds);
 
     do
         {
@@ -892,7 +892,7 @@ int ftpReplyGetEnhanced
         stringIndex = 0;
         continuation = zpl_false;
 
-        if ((num = select (ctrlSock +1, &readFds, (fd_set *) NULL,
+        if ((num = ipstack_select (IPCOM_STACK, ctrlSock._fd +1, &readFds, (fd_set *) NULL,
                                 (fd_set *) NULL, &replyTimeOut)) == ERROR)
             return (ERROR);
 
@@ -902,7 +902,7 @@ int ftpReplyGetEnhanced
             return(ERROR);
             }
 	    	    
-        while (((eof = read (ctrlSock, &c, 1)) > 0) && (c != '\n'))
+        while (((eof = ipstack_read (ctrlSock, &c, 1)) > 0) && (c != '\n'))
             {
             /* Store the reply */
 
@@ -961,10 +961,10 @@ int ftpReplyGetEnhanced
     /* while not eof, not error, and not last line of reply */
     while ((eof > 0) && !((dig >= 3) && (code == origCode) && !continuation));
 
-    if (expecteof && eof < 0 && errno == ECONNRESET)
+    if (expecteof && eof < 0 && ipstack_errno == IPSTACK_ERRNO_ECONNRESET)
         {
-        /* Other side send a RST as response to our QUIT, treat this           
-           as a normal shutdown */
+        /* Other side ipstack_send a RST as response to our QUIT, treat this           
+           as a normal ipstack_shutdown */
         eof = 0;
         origCode = FTP_SERVICE_CLOSING;
 	}
@@ -997,19 +997,19 @@ int ftpReplyGetEnhanced
 * FTP server, see the manual entry for ftpXfer().)
 *
 * RETURNS:
-* The file descriptor of the control socket, or ERROR if the Internet
-* address or the host name is invalid, if a socket could not be created, or
+* The file descriptor of the control ipstack_socket, or ERROR if the Internet
+* address or the host name is invalid, if a ipstack_socket could not be created, or
 * if a connection could not be made.
 *
 * SEE ALSO: ftpLogin(), ftpXfer()
 */
 
-int ftpHookup
+zpl_socket_t ftpHookup
     (
     char *host          /* server host name or inet address */
     )
     {
-    register int ctrlSock;
+    register zpl_socket_t ctrlSock;
     register int inetAddr;
     zpl_uint32 retryCount = 0;
     SOCKADDR_IN ctrlAddr;
@@ -1019,85 +1019,85 @@ int ftpHookup
     if (((inetAddr = (int) ipstack_inet_addr (host)) == ERROR)/* &&
         ((inetAddr = hostGetByName (host)) == ERROR)*/)
         {
-        return (ERROR);
+        return (ctrlSock);
         }
 
-    /* make our control socket */
+    /* make our control ipstack_socket */
 
-    ctrlSock = socket (AF_INET, SOCK_STREAM, 0);
-    if (ctrlSock < 0)
+    ctrlSock = ipstack_socket (IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+    if (ipstack_invalid(ctrlSock))
         {
-        zlog_err (MODULE_NSM, "FTP Failed to get socket.");
-        return (ERROR);
+        zlog_err (MODULE_NSM, "FTP Failed to get ipstack_socket.");
+        return (ctrlSock);
         }
 
     /*
-     * set SO_LINGER socket option on ctrlSock so that it closes the
+     * set SO_LINGER ipstack_socket option on ctrlSock so that it closes the
      * connections gracefully, when required to close. Fixes SPR 73874.
      */
 
     optVal.l_onoff = 1;
     optVal.l_linger = 0;
 
-    if (setsockopt (ctrlSock, SOL_SOCKET, SO_LINGER, (char*)&optVal, 
+    if (ipstack_setsockopt (ctrlSock, IPSTACK_SOL_SOCKET, SO_LINGER, (char*)&optVal, 
             sizeof (optVal)) == ERROR)  
         {
-        zlog_err (MODULE_NSM, "FTP setsockopt SO_LINGER");
-        close (ctrlSock);
-        return (ERROR);
+        zlog_err (MODULE_NSM, "FTP ipstack_setsockopt SO_LINGER");
+        ipstack_close (ctrlSock);
+        return (ctrlSock);
         }
 
     /*
-     * Set SO_KEEPALIVE socket option on ctrlSock so that it detects
+     * Set IPSTACK_SO_KEEPALIVE ipstack_socket option on ctrlSock so that it detects
      * dead Connections. Fixes SPR 31626.
      */
 
     ctrlOptval = 1;
 
-    if (setsockopt (ctrlSock, SOL_SOCKET, SO_KEEPALIVE, (char*)&ctrlOptval,
+    if (ipstack_setsockopt (ctrlSock, IPSTACK_SOL_SOCKET, IPSTACK_SO_KEEPALIVE, (char*)&ctrlOptval,
 	            sizeof (ctrlOptval)) == ERROR)
 	{
-        zlog_err (MODULE_NSM , "FTP setsockopt SO_KEEPALIVE");
-	close(ctrlSock);
-	return (ERROR);
+        zlog_err (MODULE_NSM , "FTP ipstack_setsockopt IPSTACK_SO_KEEPALIVE");
+	ipstack_close(ctrlSock);
+	return (ctrlSock);
 	}
 
-    /* bind a name with no inet address and let system pick port;
-     * this is just so we can find our socket address later */
+    /* ipstack_bind a name with no inet address and let system pick port;
+     * this is just so we can find our ipstack_socket address later */
 
-    ctrlAddr.sin_family      = AF_INET;
-    ctrlAddr.sin_addr.s_addr = INADDR_ANY;
+    ctrlAddr.sin_family      = IPSTACK_AF_INET;
+    ctrlAddr.sin_addr.s_addr = IPSTACK_INADDR_ANY;
     ctrlAddr.sin_port        = htons (0);
-   // ctrlAddr.sin_len    = sizeof (struct sockaddr_in);
+   // ctrlAddr.sin_len    = sizeof (struct ipstack_sockaddr_in);
 
-    if (bind (ctrlSock, (struct sockaddr *)&ctrlAddr, sizeof (ctrlAddr)) < 0)
+    if (ipstack_bind (ctrlSock, (struct ipstack_sockaddr *)&ctrlAddr, sizeof (ctrlAddr)) < 0)
         {
-        zlog_err (MODULE_NSM, "FTP in bind()");
-        close (ctrlSock);
-        return (ERROR);
+        zlog_err (MODULE_NSM, "FTP in ipstack_bind()");
+        ipstack_close (ctrlSock);
+        return (ctrlSock);
         }
 
-    /* connect to other side */
+    /* ipstack_connect to other side */
 
     ctrlAddr.sin_addr.s_addr = inetAddr;
     ctrlAddr.sin_port        = htons (FTP_PORT);
 #ifdef OLD_STYLE_FTP
-    if (connect (ctrlSock, (struct sockaddr *)&ctrlAddr, sizeof (ctrlAddr)) < 0)
+    if (ipstack_connect (ctrlSock, (struct ipstack_sockaddr *)&ctrlAddr, sizeof (ctrlAddr)) < 0)
         { 
-        zlog_err (MODULE_NSM, "FTP connect()");
+        zlog_err (MODULE_NSM, "FTP ipstack_connect()");
         close (ctrlSock);
-        return (ERROR);
+        return (ctrlSock);
         }
 #else
     for (;;)
         {
-        if (connect (ctrlSock, (struct sockaddr *)&ctrlAddr, sizeof (ctrlAddr)) < 0)
+        if (ipstack_connect (ctrlSock, (struct ipstack_sockaddr *)&ctrlAddr, sizeof (ctrlAddr)) < 0)
             { 
-            switch (errno)
+            switch (ipstack_errno)
                 {
-                case EHOSTUNREACH:
-                case ENETUNREACH:
-                case ENETDOWN:
+                case IPSTACK_ERRNO_EHOSTUNREACH:
+                case IPSTACK_ERRNO_ENETUNREACH:
+                case IPSTACK_ERRNO_ENETDOWN:
                     /* could be due to DHCP negotiation not complete, retry */
                     if (retryCount++ < ftpc_config.ftpReplyTimeout)
                         {
@@ -1107,9 +1107,9 @@ int ftpHookup
                         }
                     /* else FALLTHROUGH */
                 default:
-                    zlog_err (MODULE_NSM, "FTP connect()");
-                    close (ctrlSock);
-                    return (ERROR);
+                    zlog_err (MODULE_NSM, "FTP ipstack_connect()");
+                    ipstack_close (ctrlSock);
+                    return (ctrlSock);
                 }
             }
 
@@ -1121,8 +1121,8 @@ int ftpHookup
     if (ftpReplyGet (ctrlSock, zpl_false) != FTP_COMPLETE)
         {
         zlog_err (MODULE_NSM, "FTP did not get the expected reply");
-        close (ctrlSock);
-        return (ERROR);
+        ipstack_close (ctrlSock);
+        return (ctrlSock);
         }
 
     /* remember the hostname connected to */
@@ -1149,7 +1149,7 @@ int ftpHookup
 
 int ftpLogin
     (
-    register int ctrlSock,  /* fd of login control socket */
+    register zpl_socket_t ctrlSock,  /* fd of login control ipstack_socket */
     char *user,         /* user name for host login */
     char *passwd,       /* password for host login */
     char *account       /* account for host login */
@@ -1183,13 +1183,13 @@ int ftpLogin
 * ftpDataConnInitPassiveMode - initialize an FTP data connection using PASV mode
 *
 * This routine sets up the client side of a data connection for the
-* specified control connection.  It issues a PASV command and attempts to connect
+* specified control connection.  It issues a PASV command and attempts to ipstack_connect
 * to the host-specified port.  If the host responds that it can not process the
 * PASV command (command not supported) or fails to recognize the command, it will 
 * return ERROR.
 *
 * This routine must be called \f2before\fP the data-transfer command is sent;
-* otherwise, the server's connect may fail.
+* otherwise, the server's ipstack_connect may fail.
 *
 * This routine is called after ftpHookup() and ftpLogin() to establish a
 * connection with a remote FTP server a low level.  (For a
@@ -1200,17 +1200,17 @@ int ftpLogin
 * system suffers from a reboot (2MSL). Using PASV we encourage the host's 
 * selection of a fresh port.
 *
-* RETURNS: The file descriptor of the data socket created, or ERROR.
+* RETURNS: The file descriptor of the data ipstack_socket created, or ERROR.
 *
 * SEE ALSO: ftpHookup(), ftpLogin(), ftpCommandEnhanced(), ftpXfer(), ftpConnInit()
 *
 */
-int ftpDataConnInitPassiveMode
+zpl_socket_t ftpDataConnInitPassiveMode
     (
-    int ctrlSock        /* fd of associated control socket */
+    zpl_socket_t ctrlSock        /* fd of associated control ipstack_socket */
     )
     {
-    register int dataSock;
+    register zpl_socket_t dataSock;
     int result;
     int len;
     zpl_uint32 portMsb;
@@ -1223,15 +1223,15 @@ int ftpDataConnInitPassiveMode
     /* If configured to disable PASV mode, then just return ERROR */
 
     if (ftpc_config.ftplPasvModeDisable)
-        return (ERROR);
+        return (dataSock);
 
     /* find out our inet address */
 
     len = sizeof (ctrlAddr);
-    if (getsockname (ctrlSock, (struct sockaddr *)&ctrlAddr, &len) < 0)
+    if (ipstack_getsockname (ctrlSock, (struct ipstack_sockaddr *)&ctrlAddr, &len) < 0)
         {
-        zlog_err (MODULE_NSM, "FTP in getsockname()");
-        return (ERROR);
+        zlog_err (MODULE_NSM, "FTP in ipstack_getsockname()");
+        return (dataSock);
         }
 
     result = ftpCommandEnhanced (ctrlSock, pasvReplyString, PASV_REPLY_STRING_LENGTH-1, "PASV");
@@ -1244,20 +1244,20 @@ int ftpDataConnInitPassiveMode
         if(ftpPasvReplyParse (pasvReplyString, 0, 0, 0, 0, &portMsb, &portLsb) == ERROR)
             {
             zlog_err (MODULE_NSM, "FTP ftpPasvReplyParse() failed.");
-            return (ERROR);
+            return (dataSock);
             }
 
         /* Convert port number */
 
         hostDataPort = portMsb * 256 + portLsb;
 
-        /* make our data socket */
+        /* make our data ipstack_socket */
 
-        dataSock = socket (AF_INET, SOCK_STREAM, 0);
-        if (dataSock < 0)
+        dataSock = ipstack_socket (IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+        if (ipstack_invalid(dataSock))
             {
-            zlog_err (MODULE_NSM, "FTP socket() failed");
-            return (ERROR);
+            zlog_err (MODULE_NSM, "FTP ipstack_socket() failed");
+            return (dataSock);
             }
 
         bzero ((char *) &dataAddr, sizeof (SOCKADDR_IN));
@@ -1265,33 +1265,33 @@ int ftpDataConnInitPassiveMode
         /* Use the port given to us in the reply of our PASV command */
 
         dataAddr.sin_port        = htons (hostDataPort); 
-        dataAddr.sin_family      = AF_INET;
+        dataAddr.sin_family      = IPSTACK_AF_INET;
 
         len = sizeof (SOCKADDR_IN);
-        if (getpeername (ctrlSock, (struct sockaddr *)&ctrlAddr, &len) < 0)
+        if (ipstack_getpeername (ctrlSock, (struct ipstack_sockaddr *)&ctrlAddr, &len) < 0)
             {
-            zlog_err (MODULE_NSM, "FTP getpeername() failed");
-            close (dataSock);
-            return (ERROR);
+            zlog_err (MODULE_NSM, "FTP ipstack_getpeername() failed");
+            ipstack_close (dataSock);
+            return (dataSock);
             }
 
         dataAddr.sin_addr.s_addr = ctrlAddr.sin_addr.s_addr; 
 
-        /* connect to the host */
+        /* ipstack_connect to the host */
 
-        if (connect (dataSock, (struct sockaddr *)&dataAddr, sizeof (dataAddr)) < 0)
+        if (ipstack_connect (dataSock, (struct ipstack_sockaddr *)&dataAddr, sizeof (dataAddr)) < 0)
             { 
             zlog_err (MODULE_NSM,
-		     "FTP connect() failed. sock:%d sockMsb:%d sockLsb:%d",
+		     "FTP ipstack_connect() failed. sock:%d sockMsb:%d sockLsb:%d",
 		     hostDataPort, portMsb, portLsb);
-            close (dataSock);
-            return (ERROR);
+            ipstack_close (dataSock);
+            return (dataSock);
             }
 
         else 
             {
             zlog_info (MODULE_NSM,
-		      "FTP passive connect to host:%#x port:%d sock:%d",
+		      "FTP passive ipstack_connect to host:%#x port:%d sock:%d",
 		      dataAddr.sin_addr.s_addr, hostDataPort, dataSock);
             return (dataSock);
             }
@@ -1302,7 +1302,7 @@ int ftpDataConnInitPassiveMode
         zlog_err (MODULE_NSM,
 		 "FTP Host failed to respond correctly to PASV command");
 
-        return (ERROR);
+        return (dataSock);
         }
     }
 
@@ -1314,12 +1314,12 @@ int ftpDataConnInitPassiveMode
 * specified control connection using the PORT command.  
 * It creates the data port, informs the
 * remote FTP server of the data port address, and listens
-* on that data port.  The server will then connect to this data port
+* on that data port.  The server will then ipstack_connect to this data port
 * in response to a subsequent data-transfer command sent on the
 * control connection (see the manual entry for ftpCommand()).
 *
 * This routine must be called \f2before\fP the data-transfer command is sent;
-* otherwise, the server's connect may fail.
+* otherwise, the server's ipstack_connect may fail.
 *
 * This routine is called after ftpHookup() and ftpLogin() to establish a
 * connection with a remote FTP server at the lowest level.  (For a
@@ -1328,18 +1328,18 @@ int ftpDataConnInitPassiveMode
 * Please note that ftpDataConnInitPassiveMode() is recommended instead
 * of ftpDataConnInit().
 *
-* RETURNS: The file descriptor of the data socket created, or ERROR.
+* RETURNS: The file descriptor of the data ipstack_socket created, or ERROR.
 *
 * SEE ALSO: ftpDataConnInitPassiveMode(), ftpHookup(), ftpLogin(), 
 *           ftpCommand(), ftpXfer()
 */
 
-int ftpDataConnInit
+zpl_socket_t ftpDataConnInit
     (
-    int ctrlSock        /* fd of associated control socket */
+    zpl_socket_t ctrlSock        /* fd of associated control ipstack_socket */
     )
     {
-    register int dataSock;
+    register zpl_socket_t dataSock;
     int result;
     int len;
     int optval;
@@ -1352,41 +1352,41 @@ int ftpDataConnInit
     /* find out our inet address */
 
     len = sizeof (ctrlAddr);
-    if (getsockname (ctrlSock, (struct sockaddr *)&ctrlAddr, &len) < 0)
+    if (ipstack_getsockname (ctrlSock, (struct ipstack_sockaddr *)&ctrlAddr, &len) < 0)
         {
-	//IF_LOG_ERR (funcName = "getsockname"; line = __LINE__);
+	//IF_LOG_ERR (funcName = "ipstack_getsockname"; line = __LINE__);
 	goto ftpDataConnInit_err;
         }
 
-    /* first try - try to send port */
+    /* first try - try to ipstack_send port */
 
-    dataSock = socket (AF_INET, SOCK_STREAM, 0);
-    if (dataSock < 0)
+    dataSock = ipstack_socket (IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+    if (ipstack_invalid(dataSock))
         {
-	//IF_LOG_ERR (funcName = "socket"; line = __LINE__);
+	//IF_LOG_ERR (funcName = "ipstack_socket"; line = __LINE__);
 	goto ftpDataConnInit_err;
         }
 
     dataAddr = ctrlAddr;    /* set our inet address */
     dataAddr.sin_port = htons (0);    /* let system pick port num */
-    if (bind (dataSock, (struct sockaddr *)&dataAddr, sizeof (dataAddr)) < 0)
+    if (ipstack_bind (dataSock, (struct ipstack_sockaddr *)&dataAddr, sizeof (dataAddr)) < 0)
         {
-	//IF_LOG_ERR (funcName = "bind"; line = __LINE__);
+	//IF_LOG_ERR (funcName = "ipstack_bind"; line = __LINE__);
 	goto ftpDataConnInit_err_close;
         }
 
-    if (listen (dataSock, 1) < 0)
+    if (ipstack_listen (dataSock, 1) < 0)
         {
-	//IF_LOG_ERR (funcName = "listen"; line = __LINE__);
+	//IF_LOG_ERR (funcName = "ipstack_listen"; line = __LINE__);
 	goto ftpDataConnInit_err_close;
         }
 
-    /* try to send socket address to other side */
+    /* try to ipstack_send ipstack_socket address to other side */
 
     len = sizeof (dataAddr);
-    if (getsockname (dataSock, (struct sockaddr *)&dataAddr, &len) < 0)
+    if (ipstack_getsockname (dataSock, (struct ipstack_sockaddr *)&dataAddr, &len) < 0)
         {
-	//IF_LOG_ERR (funcName = "(2) getsockname"; line = __LINE__);
+	//IF_LOG_ERR (funcName = "(2) ipstack_getsockname"; line = __LINE__);
 	goto ftpDataConnInit_err_close;
         }
 
@@ -1404,8 +1404,8 @@ int ftpDataConnInit
             {
             zlog_err (MODULE_NSM,
 		       "FTP reply was %d - not FTP_COMPLETE or FTP_PRELIM.",result);
-            close (dataSock);
-            return (ERROR);
+            ipstack_close (dataSock);
+            return (dataSock);
             }
         else
             {
@@ -1415,40 +1415,40 @@ int ftpDataConnInit
 
     /* second try - try to get port # correct by default */
 
-    close (dataSock);
+    ipstack_close (dataSock);
 
-    dataSock = socket (AF_INET, SOCK_STREAM, 0);
-    if (dataSock < 0)
+    dataSock = ipstack_socket (IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+    if (ipstack_invalid(dataSock))
         {
-	//IF_LOG_ERR (funcName = "2nd try : socket"; line = __LINE__);
+	//IF_LOG_ERR (funcName = "2nd try : ipstack_socket"; line = __LINE__);
 	goto ftpDataConnInit_err;
         }
 
     optval = 1;
-    if ((setsockopt (dataSock, SOL_SOCKET, SO_REUSEADDR,
+    if ((ipstack_setsockopt (dataSock, IPSTACK_SOL_SOCKET, IPSTACK_SO_REUSEADDR,
             (caddr_t) &optval, sizeof (optval)) < 0) ||
-            (bind (dataSock, (struct sockaddr *)&ctrlAddr, sizeof (ctrlAddr)) < 0))
+            (ipstack_bind (dataSock, (struct ipstack_sockaddr *)&ctrlAddr, sizeof (ctrlAddr)) < 0))
         {
-	//IF_LOG_ERR (funcName = "2nd try : setsockopt"; line = __LINE__);
+	//IF_LOG_ERR (funcName = "2nd try : ipstack_setsockopt"; line = __LINE__);
 	goto ftpDataConnInit_err_close;
         }
 
-    if (listen (dataSock, 1) < 0)
+    if (ipstack_listen (dataSock, 1) < 0)
         {
-	//IF_LOG_ERR (funcName = "2nd try : listen"; line = __LINE__);
+	//IF_LOG_ERR (funcName = "2nd try : ipstack_listen"; line = __LINE__);
 	goto ftpDataConnInit_err_close;
         }
 
     return (dataSock);
 
 ftpDataConnInit_err_close:
-    close (dataSock);
+    ipstack_close (dataSock);
 
 ftpDataConnInit_err:
     /* _LOC_UNIT is __FILE__ or __FUNCTION__ or NULL, see applUtilLib.h */
-   // IF_LOG_ERR (_applLog (PRI_CAT (LOG_ERR, MODULE_NSM),
+   // IF_LOG_ERR (_applLog (PRI_CAT (ZLOG_LEVEL_ERR, MODULE_NSM),
 	//		  _LOC_UNIT, line, "in %s()", funcName));
-    return (ERROR);
+    return (dataSock);
     }
 
 /*******************************************************************************
@@ -1456,53 +1456,53 @@ ftpDataConnInit_err:
 * ftpDataConnGet - get a completed FTP data connection
 *
 * This routine completes a data connection initiated by a call to
-* ftpDataConnInit().  It waits for a connection on the specified socket from
-* the remote FTP server.  The specified socket should be the one returned by
-* ftpDataConnInit().  The connection is established on a new socket, whose
+* ftpDataConnInit().  It waits for a connection on the specified ipstack_socket from
+* the remote FTP server.  The specified ipstack_socket should be the one returned by
+* ftpDataConnInit().  The connection is established on a new ipstack_socket, whose
 * file descriptor is returned as the result of this function.  The original 
-* socket, specified in the argument to this routine, is closed.
+* ipstack_socket, specified in the argument to this routine, is closed.
 *
 * Usually this routine is called after ftpDataConnInit() and ftpCommand() to
 * initiate a data transfer from/to the remote FTP server.
 *
 * RETURNS:
-* The file descriptor of the new data socket, or ERROR if the connection
+* The file descriptor of the new data ipstack_socket, or ERROR if the connection
 * failed.
 *
 * SEE ALSO: ftpDataConnInit(), ftpCommand()
 */
 
-int ftpDataConnGet
+zpl_socket_t ftpDataConnGet
     (
-    int dataSock        /* fd of data socket on which to await connection */
+    zpl_socket_t dataSock        /* fd of data ipstack_socket on which to await connection */
     )
     {
-    int newDataSock;
+    zpl_socket_t newDataSock;
     SOCKADDR_IN from;
     int fromlen = sizeof (from);
     struct timeval  replyTime;      /* select timeout     */
-    fd_set          readFds;        /* select read fds    */
+    ipstack_fd_set          readFds;        /* select read fds    */
     int             rc = 0;         /* select return code */
 
     bzero ((char *) &replyTime, sizeof (struct timeval));
     replyTime.tv_sec = ftpc_config.ftpReplyTimeout;
 
-    FD_ZERO (&readFds);
-    FD_SET  (dataSock, &readFds);
+    IPSTACK_FD_ZERO (&readFds);
+    IPSTACK_FD_SET  (dataSock._fd, &readFds);
     
-    if ((rc = select (dataSock+1, &readFds, (fd_set *) NULL,
+    if ((rc = ipstack_select (IPCOM_STACK, dataSock._fd+1, &readFds, (fd_set *) NULL,
                       (fd_set *) NULL, &replyTime)) <= 0)
         {
         if (rc  ==  0)                /* select timed out */
              {
              zlog_err (MODULE_NSM, "FTP select timeout after %lu sec.", replyTime.tv_sec);
              }
-        return (ERROR);
+        return (newDataSock);
         }       
 
-    newDataSock = accept (dataSock, (struct sockaddr *) &from, &fromlen);
+    newDataSock = ipstack_accept (dataSock, (struct ipstack_sockaddr *) &from, &fromlen);
 
-    close (dataSock);
+    ipstack_close (dataSock);
 
     return (newDataSock);
     }
@@ -1526,8 +1526,8 @@ int ftpLs
     char *      dirName         /* name of directory to list */
     )
     {
-    int     dataSock;
-    int     cntrlSock;
+    zpl_socket_t     dataSock;
+    zpl_socket_t     cntrlSock;
     char    buffer [BUFSIZ];
     int     nChars;
 
@@ -1542,7 +1542,7 @@ int ftpLs
 
     /* Write out the listing */
 
-    while ((nChars = read (dataSock, (char *) buffer, BUFSIZ)) > 0)
+    while ((nChars = ipstack_read (dataSock, (char *) buffer, BUFSIZ)) > 0)
       // ;// write (STD_OUT, (char *) buffer, nChars);
     systools_printf("%s",buffer);
     
@@ -1550,20 +1550,20 @@ int ftpLs
 
     if (ftpReplyGet (cntrlSock, zpl_true) != FTP_COMPLETE) 
         {
-        close (cntrlSock);
-        close (dataSock);
+        ipstack_close (cntrlSock);
+        ipstack_close (dataSock);
         return(ERROR);
         }
 
     if (ftpCommand (cntrlSock, "QUIT") != FTP_COMPLETE)
         {
-        close (cntrlSock);
-        close (dataSock);
+        ipstack_close (cntrlSock);
+        ipstack_close (dataSock);
         return(ERROR);
         }
 
-    close (cntrlSock);
-    close (dataSock);
+    ipstack_close (cntrlSock);
+    ipstack_close (dataSock);
 
     return (OK);
     }
@@ -1838,8 +1838,8 @@ int ftp_download(void *v, char *hostName, int port, char *path, char *fileName, 
 		char *passwd, char *localfileName)
 {
 	int 	fd = 0;
-	int     dataSock = 0;
-	int     cntrlSock = 0;
+	zpl_socket_t     dataSock;
+	zpl_socket_t     cntrlSock;
 	char    buffer [BUFSIZ];
 	int     nChars = 0;
 	char    dir[128];
@@ -1876,23 +1876,23 @@ int ftp_download(void *v, char *hostName, int port, char *path, char *fileName, 
 	fd = open(localfileName, O_RDWR | O_CREAT, CONFIGFILE_MASK);
 	if (fd <= 0)
 	{
-		systools_error("FTP transfer failed: %s", strerror(errno));
-	    close (cntrlSock);
-	    close (dataSock);
+		systools_error("FTP transfer failed: %s", strerror(ipstack_errno));
+	    ipstack_close (cntrlSock);
+	    ipstack_close (dataSock);
 	    systools_set(NULL);
 		return (ERROR);
 	}
 	/* Write out the listing */
 
-	while ((nChars = read (dataSock, (char *) buffer, BUFSIZ)) > 0)
+	while ((nChars = ipstack_read (dataSock, (char *) buffer, BUFSIZ)) > 0)
 	    write (fd, (char *) buffer, nChars);
 
 	/* Close the sockets opened by ftpXfer */
 
 	if (ftpReplyGet (cntrlSock, zpl_true) != FTP_COMPLETE)
 	    {
-	    close (cntrlSock);
-	    close (dataSock);
+	    ipstack_close (cntrlSock);
+	    ipstack_close (dataSock);
 	    close(fd);
 	    systools_set(NULL);
 	    return(ERROR);
@@ -1900,15 +1900,15 @@ int ftp_download(void *v, char *hostName, int port, char *path, char *fileName, 
 
 	if (ftpCommand (cntrlSock, "QUIT",0, 0, 0, 0, 0, 0) != FTP_COMPLETE)
 	    {
-	    close (cntrlSock);
-	    close (dataSock);
+	    ipstack_close (cntrlSock);
+	    ipstack_close (dataSock);
 	    close(fd);
 	    systools_set(NULL);
 	    return(ERROR);
 	    }
 
-	close (cntrlSock);
-	close (dataSock);
+	ipstack_close (cntrlSock);
+	ipstack_close (dataSock);
 	close(fd);
 	systools_set(NULL);
 	return (OK);
@@ -1919,8 +1919,8 @@ int ftp_upload(void *v, char *hostName, int port, char *path, char *fileName, ch
 		char *passwd, char *localfileName)
 {
 	int 	fd = 0;
-	int     dataSock = 0;
-	int     cntrlSock = 0;
+	zpl_socket_t     dataSock;
+	zpl_socket_t     cntrlSock;
 	char    buffer [BUFSIZ];
 	int     nChars = 0;
 	char    dir[128];
@@ -1953,9 +1953,9 @@ int ftp_upload(void *v, char *hostName, int port, char *path, char *fileName, ch
 	fd = open(localfileName, O_RDONLY);
 	if (fd <= 0)
 	{
-		systools_printf("FTP transfer failed: %s", strerror(errno));
-		close (cntrlSock);
-		close (dataSock);
+		systools_printf("FTP transfer failed: %s", strerror(ipstack_errno));
+		ipstack_close (cntrlSock);
+		ipstack_close (dataSock);
 		close(fd);
 		systools_set(NULL);
 		return (ERROR);
@@ -1964,14 +1964,14 @@ int ftp_upload(void *v, char *hostName, int port, char *path, char *fileName, ch
 	/* Write out the listing */
 
 	while ((nChars = read (fd, (char *) buffer, BUFSIZ)) > 0)
-	    write (dataSock, (char *) buffer, nChars);
+	    ipstack_write (dataSock, (char *) buffer, nChars);
 
 	/* Close the sockets opened by ftpXfer */
 
 	if (ftpReplyGet (cntrlSock, zpl_true) != FTP_COMPLETE)
 	    {
-	    close (cntrlSock);
-	    close (dataSock);
+	    ipstack_close (cntrlSock);
+	    ipstack_close (dataSock);
 	    close(fd);
 	    systools_set(NULL);
 	    return(ERROR);
@@ -1979,15 +1979,15 @@ int ftp_upload(void *v, char *hostName, int port, char *path, char *fileName, ch
 
 	if (ftpCommand (cntrlSock, "QUIT",0, 0, 0, 0, 0, 0) != FTP_COMPLETE)
 	    {
-	    close (cntrlSock);
-	    close (dataSock);
+	    ipstack_close (cntrlSock);
+	    ipstack_close (dataSock);
 	    close(fd);
 	    systools_set(NULL);
 	    return(ERROR);
 	    }
 
-	close (cntrlSock);
-	close (dataSock);
+	ipstack_close (cntrlSock);
+	ipstack_close (dataSock);
 	close(fd);
 	systools_set(NULL);
 	return (OK);

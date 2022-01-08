@@ -20,6 +20,7 @@ enum hal_vlan_cmd
 	HAL_VLAN_DELETE,
 	HAL_VLAN_RANGE_CREATE,
     HAL_VLAN_RANGE_DELETE,
+    //PORT
     HAL_VLAN_UNTAG,
     HAL_VLAN_TAG,
     HAL_VLAN_NATIVE,
@@ -29,6 +30,13 @@ enum hal_vlan_cmd
     HAL_VLAN_MAX,
 };
 
+typedef struct hal_vlan_param_s
+{
+    zpl_bool set;
+	zpl_bool enable;
+	vlan_t vlan;
+	vlan_t vlan_end;
+}hal_vlan_param_t;
 
 extern int hal_vlan_enable(zpl_bool enable);
 extern int hal_vlan_create(vlan_t vlan);

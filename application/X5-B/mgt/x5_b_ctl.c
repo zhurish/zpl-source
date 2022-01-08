@@ -63,7 +63,7 @@ static int x5b_app_local_address_set(char *address, zpl_uint32 mask)
 	struct interface *ifp = if_lookup_by_name("ethernet 0/0/2");
 	if(ifp && address)
 	{
-		struct in_addr netmask;
+		struct ipstack_in_addr netmask;
 		ret = str2prefix_ipv4 (address, (struct prefix_ipv4 *)&cp);
 		if (ret <= 0)
 		{
@@ -185,17 +185,17 @@ int x5b_app_rtc_tm_set(int timesp)
 	value = 5;
 	while(value)
 	{
-		errno = 0;
+		ipstack_errno = 0;
 		if(clock_settime(CLOCK_REALTIME, &sntpTime)!= 0)//SET SYSTEM LOCAL TIME
 		{
 			if(X5_B_ESP32_DEBUG(TIME))
-				zlog_err(MODULE_APP, "set system realtime by clock_settime is error:%s", strerror(errno));
+				zlog_err(MODULE_APP, "set system realtime by clock_settime is error:%s", strerror(ipstack_errno));
 			value--;
 		}
 		else
 		{
 			if(X5_B_ESP32_DEBUG(TIME))
-				zlog_debug(MODULE_APP, "set system realtime by clock_settime is success:%s", strerror(errno));
+				zlog_debug(MODULE_APP, "set system realtime by clock_settime is success:%s", strerror(ipstack_errno));
 			break;
 		}
 	}
@@ -389,7 +389,7 @@ int x5b_app_local_network_info_get(x5b_app_netinfo_t *info)
 	if(ifp)
 	{
 		struct prefix address;
-		struct in_addr netmask;
+		struct ipstack_in_addr netmask;
 		ret = nsm_interface_address_get_api(ifp, &address);
 		if(ret == OK && info)
 		{

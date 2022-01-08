@@ -85,7 +85,7 @@ typedef struct _modbus_backend {
     int (*connect) (modbus_t *ctx);
     void (*close) (modbus_t *ctx);
     int (*flush) (modbus_t *ctx);
-    int (*select) (modbus_t *ctx, fd_set *rset, struct timeval *tv, int msg_length);
+    int (*select) (modbus_t *ctx, ipstack_fd_set *rset, struct timeval *tv, int msg_length);
     void (*free) (modbus_t *ctx);
 } modbus_backend_t;
 
@@ -93,7 +93,7 @@ struct _modbus {
     /* Slave address */
     int slave;
     /* Socket or file descriptor */
-    int s;
+    zpl_socket_t s;
     int debug;
     int error_recovery;
     struct timeval response_timeout;

@@ -176,7 +176,7 @@ static int pjmain(void *p)
 //	pj_task_cb_init(pl_pjsip_task_add, os_task_del, os_task_refresh_id, pl_pjsip_task_self);
 //	cli_callback_init(0, pl_pjsip_account_set_api);
 
-	host_config_load_waitting();
+	host_waitting_loadconfig);
 
 	cfg.running = PJ_TRUE;
 

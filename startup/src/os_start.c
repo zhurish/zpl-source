@@ -1,5 +1,5 @@
 /*
- * platform_start.c
+ * os_start.c
  *
  *  Created on: Apr 30, 2017
  *      Author: zhurish
@@ -8,15 +8,15 @@
 #include <zpl_include.h>
 #include "lib_include.h"
 #include "nsm_include.h"
-#include "sigevent.h"
-
+//#include "sigevent.h"
+#include "module.h"
 #include "os_module.h"
 #include "os_start.h"
 
 
 
 /* SIGHUP handler. */
-static void os_sighup(void)
+static void os_sighup(int signo, void *p)
 {
 #ifdef APP_V9_MODULE
 	//v9_app_module_exit();
@@ -33,7 +33,7 @@ static void os_sighup(void)
 }
 
 /* SIGINT handler. */
-static void os_sigint(void)
+static void os_sigint(int signo, void *p)
 {
 #ifdef APP_V9_MODULE
 	//v9_app_module_exit();
@@ -49,7 +49,7 @@ static void os_sigint(void)
 }
 
 /* SIGKILL handler. */
-static void os_sigkill(void)
+static void os_sigkill(int signo, void *p)
 {
 #ifdef APP_V9_MODULE
 	//v9_app_module_exit();
@@ -61,7 +61,7 @@ static void os_sigkill(void)
 }
 
 /* SIGUSR1 handler. */
-static void os_sigusr1(void)
+static void os_sigusr1(int signo, void *p)
 {
 	os_log(SYSCONFDIR"/signo.log", "%s:%d",__func__, os_task_gettid());
 	fprintf(stdout, "%s\r\n",__func__);
@@ -69,7 +69,7 @@ static void os_sigusr1(void)
 }
 
 /* SIGCHLD handler. */
-static void os_sighld(void)
+static void os_sighld(int signo, void *p)
 {
 	os_log(SYSCONFDIR"/signo.log", "%s:%d",__func__, os_task_gettid());
 	fprintf(stdout, "%s\r\n",__func__);
@@ -80,40 +80,40 @@ static void os_sighld(void)
 - SIGINT，处理Ctrl-C
 - SIGCHLD，子进程退出
 */
-static struct quagga_signal_t os_signals[] =
+static struct os_signal_t os_signals[] =
 {
 	{
 		.signal = SIGHUP,
-		.handler =&os_sighup,
+		.signal_handler =&os_sighup,
 	},
 	{
 		.signal = SIGUSR1,
-		.handler = &os_sigusr1,
+		.signal_handler = &os_sigusr1,
 	},
 	{
 		.signal = SIGINT,
-		.handler = &os_sigint,
+		.signal_handler = &os_sigint,
 	},
 	{
 		.signal = SIGTERM,
-		.handler = &os_sigint,
+		.signal_handler = &os_sigint,
 	},
 	/*{
 		.signal = SIGKILL,
-	 	.handler = &os_sigkill,
+	 	.signal_handler = &os_sigkill,
 	},*/
 	{
 		.signal = SIGSEGV,
-	 	.handler = &os_sigkill,
+	 	.signal_handler = &os_sigkill,
 	},
 	{
 		.signal = SIGCHLD,
-	 	.handler = &os_sighld,
+	 	.signal_handler = &os_sighld,
 	},
 /*
  {
  .signal = SIGKILL,
- .handler = &os_sigkill,
+ .signal_handler = &os_sigkill,
  },
  */
 };
@@ -217,7 +217,7 @@ static int os_base_dir_load(void)
 }
 
 
-int os_base_init(void)
+int os_base_env_init(void)
 {
 	lstLibInit();
 	os_nvram_env_init();
@@ -225,105 +225,87 @@ int os_base_init(void)
 	return OK;
 }
 
-int os_base_load(void)
+int os_base_env_load(void)
 {
 	os_base_dir_load();
 	return OK;
 }
 
-int os_start_init(char *progname, module_t pro, int daemon_mode, char *tty)
+int os_base_signal_init(int daemon_mode)
 {
 	/* Daemonize. */
 	if (daemon_mode && daemon(0, 0) < 0) {
-		printf("Zebra daemon failed: %s", strerror(errno));
+		printf("Zebra daemon failed: %s", strerror(ipstack_errno));
 		exit(1);
 	}
-
-	/* Make master thread emulator. */
-	//master_thread[pro] = thread_master_module_create(pro);
-
-	/* Vty related initialize. */
-	remove("/app/signo.log");
-	signal_init(NULL, array_size(os_signals), os_signals);
-
-	if (os_task_init() == ERROR)
-		return ERROR;
-
-	openzlog (progname, pro, LOG_LOCAL7, 0);
-	//if(tty)
-		vty_tty_init(tty);
+	os_signal_init(os_signals, array_size(os_signals));
+	//signal_init(NULL, array_size(os_signals), os_signals);
 	return OK;
 }
 
-
-int os_start_early(module_t pro, char *logpipe)
+static int os_ip_stack_init(int localport)
 {
-	//master_thread[pro] = thread_master_module_create(pro);
+#ifdef ZPL_IPCOM_STACK_MODULE
+	extern int ipcom_demo_init(int localport);
+	extern void sys_signal_init(void);
+
+	ipcom_demo_init(localport);
+	os_msleep(100);
+#endif
+	return OK;
+}
+
+int os_base_stack_init(const char *tty)
+{
+	if (os_task_init() == ERROR)
+		return ERROR;
 
 	if (os_time_init() == ERROR)
 		return ERROR;
 
 	if (os_job_init() == ERROR)
 		return ERROR;
-	//nsm_log_init(master_eloop[pro], logpipe);
 
+	memory_init();
+	cmd_init(1);
+	vty_tty_init(tty);
+	vty_user_init();
+
+	cmd_host_init(1);
+	cmd_memory_init();
+	cmd_vty_init();
+	cmd_vty_user_init();
+
+	cmd_log_init();
+	cmd_os_init();
+	cmd_nvram_env_init();
+	cmd_os_thread_init();
+#ifdef ZPL_IPCOM_STACK_MODULE
+	cmd_os_eloop_init();
+#endif
 	return OK;
 }
 
 
-
-
-int os_start_all_module()
+int os_base_zlog_open(char *progname)
 {
-
-	os_ip_stack_init(8899);
-	/*
-	 * all module start:
-	 */
-	os_module_init();
-	os_msleep(500);
-
-	/*
-	 * install all CMD
-	 */
-	os_module_cmd_init(1);
-	os_msleep(500);
-
-	/*
-	 * start all task
-	 */
-	os_module_task_init();
-	os_msleep(500);
-
-#ifdef ZPL_IPCBCBSP_MODULE
-	bsp_usp_module_init();
-#endif
-
-#ifdef ZPL_PAL_MODULE
-#ifdef ZPL_KERNEL_STACK_MODULE
-	kernel_load_all();
-#endif
-#endif
+	openzlog (progname, MODULE_DEFAULT, LOG_LOCAL7, 0);
+	zlog_set_level (ZLOG_DEST_STDOUT, ZLOG_LEVEL_DEBUG);
 	return OK;
 }
 
-
-
-int os_exit_all_module()
+int os_base_shell_start(char *shell_path, char *shell_addr, int shell_port, const char *tty)
 {
-
-	//os_module_task_exit();
-
-	os_module_exit();
-
-
-	os_module_cmd_exit();
-
+	pl_module_init(MODULE_CONSOLE);
+	pl_module_init(MODULE_TELNET);
+	vty_serv_init(shell_addr, shell_port, shell_path, tty);
+	zlog_notice(MODULE_DEFAULT, "Zebra %s starting: vty@%d", OEM_VERSION, shell_port);
+	pl_module_task_init(MODULE_CONSOLE);
+	pl_module_task_init(MODULE_TELNET);
 	return OK;
 }
 
-
-int os_start_pid(int pro, char *pid_file, int *pid)
+int os_base_start_pid(int pro, char *pid_file, int *pid)
 {
 	/* Output pid of zebra. */
 	if (pid_file)
@@ -339,66 +321,58 @@ int os_start_pid(int pro, char *pid_file, int *pid)
 
 
 
-
-static int os_thread_start(void *m, module_t pro)
+int os_base_module_start_all()
 {
-	struct thread thread;
-	struct thread_master *master = (struct thread_master *) m;
-	if (master == NULL)
-		master = thread_master_module_create(pro);
-	if (master == NULL)
-		return ERROR;
-	module_setup_task(master->module, os_task_id_self());
-	host_config_load_waitting();
-	/* Output pid of zebra. */
-//	pid_output (pid_file);
-	/* Needed for BSD routing socket. */
-//	if(pid)
-//		*pid = getpid ();
-	//master->ptid = os_task_pthread_self();
-	//master->taskId = os_task_id_self();
-	//os_log_reopen(master->module);
-//	zlog_notice ("Zebra %s starting pid:%d", QUAGGA_VERSION, getpid ());
 
-	while (thread_fetch((struct thread_master *) master, &thread))
-		thread_call(&thread);
+	os_ip_stack_init(8899);
+
+	/*
+	 * all module start:
+	 */
+	os_module_init();
+	
+
+	/*
+	 * install all CMD
+	 */
+	os_module_cmd_init();
+
+
+	/*
+	 * start all task
+	 */
+	os_module_task_init();
+
+	//设置准备初始化标志
+	host_loadconfig_stats(LOAD_INIT);
+	os_msleep(100);
+
+
+	//等待BSP初始化，最长等待15s时间
+	host_waitting_bspinit(15);
+#ifdef ZPL_IPCBCBSP_MODULE
+	bsp_usp_module_init();
+#endif
+
+#ifdef ZPL_KERNEL_STACK_MODULE
+	_netlink_load_all();
+#endif
+
 	return OK;
 }
 
-int os_start_running(void *master, module_t pro)
+
+
+int os_base_module_exit_all()
 {
-	return os_thread_start(master, pro);
-}
+
+	//os_module_task_exit();
+
+	os_module_exit();
 
 
-static int os_eloop_start(void *m, module_t pro)
-{
-	struct eloop thread;
-	struct eloop_master *master = (struct eloop_master *) m;
-	if (master == NULL)
-		master = eloop_master_module_create(pro);
-	if (master == NULL)
-		return ERROR;
-	module_setup_task(master->module, os_task_id_self());
-	host_config_load_waitting();
-	//master->ptid = os_task_pthread_self();
-	//master->taskId = os_task_id_self();
-	//os_log_reopen(master->module);
+	os_module_cmd_exit();
 
-	while (eloop_fetch((struct eloop_master *) master, &thread))
-		eloop_call(&thread);
 	return OK;
 }
 
-int eloop_start_running(void *master, module_t pro)
-{
-	return os_eloop_start(master, pro);
-}
-
-/*
- int os_zebra_start(void *master, char *pid_file)
- {
- os_log_default[ZLOG_ZEBRA] = os_log_open("ZEBRA", ZLOG_ZEBRA, NULL, 0);
- return OK;
- }
- */

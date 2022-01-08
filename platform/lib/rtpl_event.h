@@ -112,9 +112,9 @@ extern "C" {
 
 
 /* For old definition. */
-#ifndef IN6_ARE_ADDR_EQUAL
-#define IN6_ARE_ADDR_EQUAL IN6_IS_ADDR_EQUAL
-#endif /* IN6_ARE_ADDR_EQUAL */
+#ifndef IPSTACK_IN6_ARE_ADDR_EQUAL
+#define IPSTACK_IN6_ARE_ADDR_EQUAL IN6_IS_ADDR_EQUAL
+#endif /* IPSTACK_IN6_ARE_ADDR_EQUAL */
 
 
 

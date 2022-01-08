@@ -14,6 +14,8 @@ extern "C" {
 
 #include "zpl_type.h"
 
+/* Safe version of strerror -- never returns NULL. */
+extern const char *ipstack_strerror(int errnum);
 
 /* Create a new socket of type TYPE in domain DOMAIN, using
    protocol PROTOCOL.  If PROTOCOL is zero, one is chosen automatically.
@@ -145,40 +147,32 @@ extern int ipstack_writev (zpl_socket_t _sock, struct ipstack_iovec *iov, int io
 extern int ipstack_read (zpl_socket_t _sock, void *buf, int nbytes);
 extern int ipstack_socketselect (zpl_ipstack stack, int width, ipstack_fd_set *rfds, ipstack_fd_set *wfds, ipstack_fd_set *exfds, struct zpl_timeval *tmo);
 
-
+extern zpl_socket_t ipstack_open (zpl_ipstack stack, const char *__path, int __oflag);
 //extern int ip_stack_writev (int fd, void *buf, int nbytes);
 //extern int ip_stack_read (int fd, void *buf, int nbytes);
 
 extern int ipstack_invalid(zpl_socket_t _sock);
 extern int ipstack_bzero(zpl_socket_t _sock);
 extern int ipstack_init(zpl_ipstack stack, zpl_socket_t _sock);
+extern int ipstack_same(zpl_socket_t src, zpl_socket_t dst);
+extern int ipstack_copy(zpl_socket_t src, zpl_socket_t dst);
+extern zpl_socket_t ipstack_max(zpl_socket_t src, zpl_socket_t dst);
+
 extern int ipstack_get_blocking(zpl_socket_t _sock);
 extern int ipstack_set_nonblocking(zpl_socket_t _sock);
 extern int ipstack_set_blocking(zpl_socket_t _sock);
-extern int ipstack_same(zpl_socket_t src, zpl_socket_t dst);
+
 extern char * ipstack_sockstr(zpl_socket_t _sock);
 
-#define ipstack_fd(n) ((n)->sock)
-#define ipstack_type(n) ((n)->sock)
+
+
+
+#define ipstack_fd(n) ((n)._fd)
+#define ipstack_type(n) ((n)._fd)
 
 #define ipstack_closesocket	ipstack_close
 #define ipstack_select	ipstack_socketselect
-#ifdef ZPL_KERNEL_STACK_MODULE
-#define ip_stack_sendmsg	sendmsg
-#define ip_stack_recvmsg	recvmsg
-#define ip_stack_recvfrom	recvfrom
-#define ip_stack_sendto	sendto
-#define ip_stack_close	close
-#define ip_stack_shutdown	   shutdown
-#else
-#define ip_stack_sendmsg	ipcom_sendmsg
-#define ip_stack_recvmsg	ipcom_recvmsg
-#define ip_stack_recvfrom	ipcom_recvfrom
-#define ip_stack_sendto	   ipcom_sendto
-#define ip_stack_close	   ipcom_socketclose
-#define ip_stack_shutdown	   ipcom_shutdown
 
-#endif
 
 #define is_os_stack(n)	      ((n).stack == OS_STACK)
 #define is_ipcom_stack(n)	   ((n).stack == IPCOM_STACK)

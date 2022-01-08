@@ -44,8 +44,8 @@ extern "C" {
  */
 
 /* Set of headers proposed by Dr. Michael Rietz <rietz@mail.amps.de>, 27.3.2 */
-#include <net/if_arp.h>		/* For ARPHRD_ETHER */
-#include <sys/socket.h>		/* For AF_INET & struct sockaddr */
+#include <net/if_arp.h>		/* For IPSTACK_ARPHRD_ETHER */
+#include <sys/socket.h>		/* For IPSTACK_AF_INET & struct sockaddr */
 #include <netinet/in.h>         /* For struct sockaddr_in */
 #include <netinet/if_ether.h>
 
@@ -588,7 +588,7 @@ iw_saether_ntop(const struct sockaddr *sap, char* bufp)
 static inline int
 iw_saether_aton(const char *bufp, struct sockaddr *sap)
 {
-  sap->sa_family = ARPHRD_ETHER;
+  sap->sa_family = IPSTACK_ARPHRD_ETHER;
   return iw_ether_aton(bufp, (struct ether_addr *) sap->sa_data);
 }
 
@@ -599,7 +599,7 @@ iw_saether_aton(const char *bufp, struct sockaddr *sap)
 static inline void
 iw_broad_ether(struct sockaddr *sap)
 {
-  sap->sa_family = ARPHRD_ETHER;
+  sap->sa_family = IPSTACK_ARPHRD_ETHER;
   memset((char *) sap->sa_data, 0xFF, ETH_ALEN);
 }
 
@@ -610,7 +610,7 @@ iw_broad_ether(struct sockaddr *sap)
 static inline void
 iw_null_ether(struct sockaddr *sap)
 {
-  sap->sa_family = ARPHRD_ETHER;
+  sap->sa_family = IPSTACK_ARPHRD_ETHER;
   memset((char *) sap->sa_data, 0x00, ETH_ALEN);
 }
 

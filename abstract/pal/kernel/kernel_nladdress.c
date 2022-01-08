@@ -28,7 +28,7 @@
 
 
 /* Interface address modification. */
-static int netlink_address(zpl_uint32 cmd, zpl_family_t family, struct interface *ifp,
+static int _netlink_address(zpl_uint32 cmd, zpl_family_t family, struct interface *ifp,
 		struct connected *ifc)
 {
 	zpl_uint32 bytelen;
@@ -36,8 +36,8 @@ static int netlink_address(zpl_uint32 cmd, zpl_family_t family, struct interface
 
 	struct
 	{
-		struct nlmsghdr n;
-		struct ifaddrmsg ifa;
+		struct ipstack_nlmsghdr n;
+		struct ipstack_ifaddrmsg ifa;
 		char buf[NL_PKT_BUF_SIZE];
 	} req;
 
@@ -46,48 +46,48 @@ static int netlink_address(zpl_uint32 cmd, zpl_family_t family, struct interface
 	p = ifc->address;
 	memset(&req, 0, sizeof req - NL_PKT_BUF_SIZE);
 
-	bytelen = (family == AF_INET ? 4 : 16);
+	bytelen = (family == IPSTACK_AF_INET ? 4 : 16);
 
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrmsg));
-	req.n.nlmsg_flags = NLM_F_REQUEST;
+	req.n.nlmsg_len = IPSTACK_NLMSG_LENGTH(sizeof(struct ipstack_ifaddrmsg));
+	req.n.nlmsg_flags = IPSTACK_NLM_F_REQUEST;
 	req.n.nlmsg_type = cmd;
 	req.ifa.ifa_family = family;
 
 	req.ifa.ifa_index = ifp->k_ifindex;
 	req.ifa.ifa_prefixlen = p->prefixlen;
 
-	addattr_l(&req.n, sizeof req, IFA_LOCAL, &p->u.prefix, bytelen);
+	_netlink_addattr_l(&req.n, sizeof req, IPSTACK_IFA_LOCAL, &p->u.prefix, bytelen);
 
-	if (family == AF_INET && cmd == RTM_NEWADDR)
+	if (family == IPSTACK_AF_INET && cmd == IPSTACK_RTM_NEWADDR)
 	{
 		if (!CONNECTED_PEER(ifc) && ifc->destination)
 		{
 			p = ifc->destination;
-			addattr_l(&req.n, sizeof req, IFA_BROADCAST, &p->u.prefix, bytelen);
+			_netlink_addattr_l(&req.n, sizeof req, IPSTACK_IFA_BROADCAST, &p->u.prefix, bytelen);
 		}
 	}
 
 	if (CHECK_FLAG(ifc->flags, ZEBRA_IFA_SECONDARY))
-		SET_FLAG(req.ifa.ifa_flags, IFA_F_SECONDARY);
+		SET_FLAG(req.ifa.ifa_flags, IPSTACK_IFA_F_SECONDARY);
 
 	if (IS_ZEBRA_DEBUG_KERNEL)
-		zlog_debug(MODULE_PAL, "netlink %s address on %s(%d)", (cmd == RTM_NEWADDR) ? "add":"del",
+		zlog_debug(MODULE_PAL, "netlink %s address on %s(%d)", (cmd == IPSTACK_RTM_NEWADDR) ? "add":"del",
 				ifp->name, req.ifa.ifa_index);
 	/*
 	 if (ifc->label)
-	 addattr_l (&req.n, sizeof req, IFA_LABEL, ifc->label,
+	 _netlink_addattr_l (&req.n, sizeof req, IPSTACK_IFA_LABEL, ifc->label,
 	 strlen (ifc->label) + 1);
 	 */
-	return netlink_talk(&req.n, &zvrf->netlink_cmd, zvrf);
+	return _netlink_talk(&req.n, &zvrf->netlink_cmd, zvrf);
 }
 
-int kernel_address_add_ipv4(struct interface *ifp, struct connected *ifc)
+int _netlink_address_add_ipv4(struct interface *ifp, struct connected *ifc)
 {
-	return netlink_address(RTM_NEWADDR, AF_INET, ifp, ifc);
+	return _netlink_address(IPSTACK_RTM_NEWADDR, IPSTACK_AF_INET, ifp, ifc);
 }
 
-int kernel_address_delete_ipv4(struct interface *ifp, struct connected *ifc)
+int _netlink_address_delete_ipv4(struct interface *ifp, struct connected *ifc)
 {
-	return netlink_address(RTM_DELADDR, AF_INET, ifp, ifc);
+	return _netlink_address(IPSTACK_RTM_DELADDR, IPSTACK_AF_INET, ifp, ifc);
 }
 

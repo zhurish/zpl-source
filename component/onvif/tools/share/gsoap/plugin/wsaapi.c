@@ -410,7 +410,7 @@ servers. To do so, use the following SSL initialization before `soap_bind`:
       soap_print_fault(soap, stderr);
       ...
     }
-    soap->bind_flags = SO_REUSEADDR;
+    soap->bind_flags = IPSTACK_SO_REUSEADDR;
     if (!soap_valid_socket(soap_bind(soap, NULL, port, 100)))
     {
       soap_print_fault(soap, stderr);

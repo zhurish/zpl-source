@@ -10,39 +10,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <zpl_include.h>
-
-#include "zpl_include.h"
-#include "memory.h"
-#include "command.h"
-#include "memory.h"
-#include "memtypes.h"
-#include "prefix.h"
-#include "if.h"
-#include "nsm_interface.h"
-#include <log.h>
 
 
-#include "nsm_trunk.h"
-#include "nsm_vlan.h"
-#include "nsm_dos.h"
-#include "nsm_mirror.h"
-//#include "nsm_switch.h"
-
-#include "hal_ipccmd.h"
-#include "hal_ipcmsg.h"
-
-#include "hal_8021x.h"
-#include "hal_dos.h"
-#include "hal_mac.h"
-#include "hal_mirror.h"
-#include "hal_misc.h"
-#include "hal_mstp.h"
-#include "hal_port.h"
-#include "hal_qinq.h"
-#include "hal_trunk.h"
-#include "hal_vlan.h"
-//#include "hal_switch.h"
 
 #ifdef ZPL_SDK_MODULE
 #define NO_SDK ERROR
@@ -73,12 +42,13 @@ enum hal_switch_cmd
 	HAL_SWITCH_CPU_FLOW,
 };
 
-int hal_module_init();
-int hal_module_exit();
-int hal_module_task_init();
-int hal_module_task_exit();
+int hal_module_init(void);
+int hal_module_exit(void);
+int hal_module_task_init(void);
+int hal_module_task_exit(void);
 
-int hal_test_init();
+int hal_test_init(void);
+
 /*
  * CPU Port
  */

@@ -6,24 +6,12 @@
  */
 
 #include "zpl_include.h"
-#include "vty.h"
-#include "if.h"
-
-#include "buffer.h"
-#include "command.h"
-#include "if_name.h"
-#include "linklist.h"
-#include "log.h"
-#include "memory.h"
-#include "prefix.h"
-#include "sockunion.h"
-#include "str.h"
-#include "table.h"
-#include "vector.h"
-#include "nsm_vrf.h"
-#include "nsm_interface.h"
+#include "nsm_include.h"
+#include "hal_ipccmd.h"
+#include "hal_ipcmsg.h"
 
 #include "hal_driver.h"
+
 
 
 /*
@@ -483,7 +471,7 @@ extern int hal_port_set_vlan(ifindex_t ifindex, vlan_t vlan);
 extern int hal_port_unset_vlan(ifindex_t ifindex, vlan_t vlan);
 #endif
 
-int hal_test_init()
+int hal_test_init(void)
 {
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &hal_test_manage_mode_cmd);
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &no_hal_test_manage_mode_cmd);

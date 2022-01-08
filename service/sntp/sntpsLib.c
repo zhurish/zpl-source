@@ -110,10 +110,11 @@ struct module_list module_list_sntps =
 	.module_exit=NULL, 
 	.module_task_init=NULL, 
 	.module_task_exit=NULL, 
-	.module_cmd_init=NULL, 
+	.module_cmd_init=cmd_sntps_init, 
 	.module_write_config=NULL, 
 	.module_show_config=NULL,
 	.module_show_debug=NULL, 
+	.flags = ZPL_MODULE_NEED_INIT,
 	.taskid=0,
 };
 /*******************************************************************************
@@ -309,7 +310,7 @@ static STATUS sntpsConfigSet
     void * 	pValue       /* new value for parameter */
     )
 {
-	struct in_addr target;
+	struct ipstack_in_addr target;
 	zpl_int16 interval;
 	int result = OK;
 
@@ -363,7 +364,7 @@ static int sntpsMsgSend (struct sntp_server *server)
 	//zpl_int16 interval;
 	SNTP_TIMESTAMP refTime;
 //	int sntpSocket;
-	struct sockaddr_in dstAddr;
+	struct ipstack_sockaddr_in dstAddr;
 
 	/* Retrieve the current clock ID, precision, and NTP timestamp. */
 	//zlog_debug("%s:1111111111111111111111111",__func__);
@@ -387,15 +388,15 @@ static int sntpsMsgSend (struct sntp_server *server)
 
 	bzero((char *) &dstAddr, sizeof(dstAddr));
 	dstAddr.sin_addr.s_addr = server->address.s_addr;
-	dstAddr.sin_family = AF_INET;
+	dstAddr.sin_family = IPSTACK_AF_INET;
 	dstAddr.sin_port = htons(server->sntpsPort);
 
 //    semGive (sntpsMutexSem);
 
-	/* Enable broadcast option for socket. */
+	/* Enable broadcast option for ipstack_socket. */
 #if 0
 	optval = 1;
-	result = ipstack_setsockopt(server->sock, SOL_SOCKET, SO_BROADCAST, (char *) &optval,
+	result = ipstack_setsockopt(server->sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_BROADCAST, (char *) &optval,
 			sizeof(optval));
 	if (result == ERROR) {
 		close(sntpSocket);
@@ -406,7 +407,7 @@ static int sntpsMsgSend (struct sntp_server *server)
 #endif
 	if(server->mode == SNTPS_MULTICAST)
 	{
-		ipstack_setsockopt(server->sock, IPPROTO_IP, IP_MULTICAST_TTL,
+		ipstack_setsockopt(server->sock, IPSTACK_IPPROTO_IP, IP_MULTICAST_TTL,
 				(void *)&server->sntps_ttl, sizeof(server->sntps_ttl));
 	}
 	/*
@@ -428,7 +429,7 @@ static int sntpsMsgSend (struct sntp_server *server)
 
 	sntpReply.poll = sntpsLog2Get(server->poll);
 
-	/* Set the timestamp fields and send the message. */
+	/* Set the timestamp fields and ipstack_send the message. */
 
 	sntpReply.referenceTimestampSec = htonl(refTime.seconds);
 	sntpReply.referenceTimestampFrac = htonl(refTime.fraction);
@@ -443,10 +444,10 @@ static int sntpsMsgSend (struct sntp_server *server)
 	sntpReply.originateTimestampFrac = sntpReply.referenceTimestampFrac;
 
 	result = ipstack_sendto(server->sock, (caddr_t) & sntpReply, sizeof(sntpReply), 0,
-			(struct sockaddr *) &dstAddr, sizeof(dstAddr));
+			(struct ipstack_sockaddr *) &dstAddr, sizeof(dstAddr));
 
 
-	zlog_debug(MODULE_SNTPS, "%s:send %d byte to %s:%d",__func__, result, ipstack_inet_ntoa(dstAddr.sin_addr),server->sntpsPort);
+	zlog_debug(MODULE_SNTPS, "%s:ipstack_send %d byte to %s:%d",__func__, result, ipstack_inet_ntoa(dstAddr.sin_addr),server->sntpsPort);
 	/* Schedule a new transmission after the broadcast interval. */
 
 	/*    wdStart (sntpsTimer, interval * sysClkRateGet (),
@@ -582,8 +583,8 @@ LOCAL int sntpsRead (struct sntp_server *server)
 	SNTP_PACKET sntpRequest; /* SNTP request received from client */
 	SNTP_PACKET sntpReply; /* buffer for server reply */
 
-//	struct sockaddr_in srcAddr; /* address of requesting SNTP/NTP client */
-	struct sockaddr_in dstAddr; /* target address of transmission */
+//	struct ipstack_sockaddr_in srcAddr; /* address of requesting SNTP/NTP client */
+	struct ipstack_sockaddr_in dstAddr; /* target address of transmission */
 //	int sntpSocket;
 	int result;
 	int addrLen;
@@ -596,17 +597,17 @@ LOCAL int sntpsRead (struct sntp_server *server)
 #if 0
 	bzero((char *) &srcAddr, sizeof(srcAddr));
 	bzero((char *) &dstAddr, sizeof(dstAddr));
-	srcAddr.sin_addr.s_addr = INADDR_ANY;
-	srcAddr.sin_family = AF_INET;
+	srcAddr.sin_addr.s_addr = IPSTACK_INADDR_ANY;
+	srcAddr.sin_family = IPSTACK_AF_INET;
 	srcAddr.sin_port = server->sntpsPort;
 
-	/* Create UDP socket and bind to the SNTP port. */
+	/* Create UDP ipstack_socket and ipstack_bind to the SNTP port. */
 
-	server->sock = ipstack_socket(AF_INET, SOCK_DGRAM, 0);
+	server->sock = ipstack_socket(IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, 0);
 	if (server->sock == -1)
 		return;
 
-	result = ipstack_bind(server->sock, (struct sockaddr *) &srcAddr, sizeof(srcAddr));
+	result = ipstack_bind(server->sock, (struct ipstack_sockaddr *) &srcAddr, sizeof(srcAddr));
 	if (result == -1) {
 		ipstack_close(server->sock);
 		return;
@@ -622,7 +623,7 @@ LOCAL int sntpsRead (struct sntp_server *server)
 	 (FUNCPTR)netJobAdd, (int)sntpsMsgSend);*/
 	//for (;;) {
 		result = ipstack_recvfrom(server->sock, (caddr_t) & sntpRequest,
-				sizeof(sntpRequest), 0, (struct sockaddr *) &dstAddr, &addrLen);
+				sizeof(sntpRequest), 0, (struct ipstack_sockaddr *) &dstAddr, &addrLen);
 		if (result == -1)
 			return -1;
 			//continue;
@@ -684,7 +685,7 @@ LOCAL int sntpsRead (struct sntp_server *server)
 
 		/*
 		 * Leave the root delay and root dispersion fields at zero.
-		 * Set the timestamp fields and send the message.
+		 * Set the timestamp fields and ipstack_send the message.
 		 */
 
 		if (!unsync) {
@@ -705,7 +706,7 @@ LOCAL int sntpsRead (struct sntp_server *server)
 		}
 
 		result = ipstack_sendto(server->sock, (caddr_t) & sntpReply, sizeof(sntpReply), 0,
-				(struct sockaddr *) &dstAddr, sizeof(dstAddr));
+				(struct ipstack_sockaddr *) &dstAddr, sizeof(dstAddr));
 	//}
 	/* Not reached. */
 	//close(server->sock);
@@ -742,7 +743,7 @@ static zpl_bool sntpsClockHookRtn(zpl_uint32 type, void *pVoid)
 		ret = zpl_true;
 		break;
 	}
-	//extern struct in_addr sntpc_server_address(void);
+	//extern struct ipstack_in_addr sntpc_server_address(void);
 	return ret;
 }
 
@@ -758,24 +759,24 @@ static int sntps_read(struct thread *thread)
 
 static int sntps_socket_init(struct sntp_server *server)
 {
-		struct sockaddr_in srcAddr; /* address of requesting SNTP/NTP client */
+		struct ipstack_sockaddr_in srcAddr; /* address of requesting SNTP/NTP client */
 	//	int sntpSocket;
 		int result;
 //		int addrLen;
 //		addrLen = sizeof(srcAddr);
 		/* Set address information. */
 		bzero((char *) &srcAddr, sizeof(srcAddr));
-		srcAddr.sin_addr.s_addr = INADDR_ANY;
-		srcAddr.sin_family = AF_INET;
+		srcAddr.sin_addr.s_addr = IPSTACK_INADDR_ANY;
+		srcAddr.sin_family = IPSTACK_AF_INET;
 		srcAddr.sin_port = server->sntpsPort;
-		/* Create UDP socket and bind to the SNTP port. */
-		server->sock = ipstack_socket(IPCOM_STACK, AF_INET, SOCK_DGRAM, 0);
-		if (server->sock == -1)
+		/* Create UDP ipstack_socket and ipstack_bind to the SNTP port. */
+		server->sock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, 0);
+		if (ipstack_invalid(server->sock))
 			return ERROR;
 
 		if(server->mode == SNTPS_UNICAST)
 		{
-			result = ipstack_bind(server->sock, (struct sockaddr *) &srcAddr, sizeof(srcAddr));
+			result = ipstack_bind(server->sock, (struct ipstack_sockaddr *) &srcAddr, sizeof(srcAddr));
 			if (result == -1) {
 				ipstack_close(server->sock);
 				return ERROR;
@@ -784,7 +785,7 @@ static int sntps_socket_init(struct sntp_server *server)
 		else if(sntp_server->mode == SNTPS_BROADCAST)
 		{
 			int optval = 1;
-			result = ipstack_setsockopt(server->sock, SOL_SOCKET, SO_BROADCAST, (char *) &optval,
+			result = ipstack_setsockopt(server->sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_BROADCAST, (char *) &optval,
 					sizeof(optval));
 			if (result == ERROR) {
 				ipstack_close(server->sock);
@@ -796,16 +797,16 @@ static int sntps_socket_init(struct sntp_server *server)
 		else if(sntp_server->mode == SNTPS_MULTICAST)
 		{
 			/*
-			 //��ʼ��socket,����Ϊ�ಥ���IP��ַ�Ͷ˿ں�
-			    send_socket = ipstack_socket(PF_INET,SOCK_DGRAM,0);
+			 //��ʼ��ipstack_socket,����Ϊ�ಥ���IP��ַ�Ͷ˿ں�
+			    send_socket = ipstack_socket(IPSTACK_PF_INET,IPSTACK_SOCK_DGRAM,0);
 			    memset(&multicast_addr,0,sizeof(multicast_addr));
-			    multicast_addr.sin_family = AF_INET;
+			    multicast_addr.sin_family = IPSTACK_AF_INET;
 			    //��֮ǰ��UDP���÷�ʽһ����ֻ��������Ƕಥ���IP��ַ�Ͷ˿ں�
 			    multicast_addr.sin_addr.s_addr = ipstack_inet_addr(argv[1]);
 			    multicast_addr.sin_port = htons(atoi(argv[2]));
 
 			    //Ϊ�ಥ���ݱ������������ʱ��
-			    ipstack_setsockopt(send_socket,IPPROTO_IP,IP_MULTICAST_TTL,(void *)&live_time,sizeof(live_time));
+			    ipstack_setsockopt(send_socket,IPSTACK_IPPROTO_IP,IP_MULTICAST_TTL,(void *)&live_time,sizeof(live_time));
 		*/
 		}
 		/*
@@ -867,7 +868,7 @@ static int sntpsEnable(zpl_ushort port, zpl_uint32 time_interval, zpl_uint32 ver
     return (ERROR);
 }
 
-static int sntpsDisable(void)
+int sntpsDisable(void)
 {
 	if(sntp_server)
 	{
@@ -878,7 +879,7 @@ static int sntpsDisable(void)
 			thread_cancel(sntp_server->t_read);
 		if(sntp_server->t_write)
 			thread_cancel(sntp_server->t_write);
-		if(sntp_server->sock)
+		if(!ipstack_invalid(sntp_server->sock))
 			ipstack_close (sntp_server->sock);
 		//os_memset(sntp_server, 0, sizeof(struct sntp_client));
 		return (OK);
@@ -1052,10 +1053,10 @@ static int no_sntps_server_interval_cmd()
 #ifdef SNTPS_CLI_ENABLE
 DEFUN (sntps_server_listen_port,
 		sntps_server_listen_port_cmd,
-	    "sntp server listen-port <100-65536>",
+	    "sntp server ipstack_listen-port <100-65536>",
 		"sntp protocol configure\n"
 		"sntp server configure\n"
-		"sntp server listen port configure\n"
+		"sntp server ipstack_listen port configure\n"
 		"sntp server local UDP port\n")
 #else
 static int sntps_server_listen_port_cmd(struct vty *vty, char *argv[])
@@ -1083,11 +1084,11 @@ static int sntps_server_listen_port_cmd(struct vty *vty, char *argv[])
 #ifdef SNTPS_CLI_ENABLE
 DEFUN (no_sntps_server_listen_port,
 		no_sntps_server_listen_port_cmd,
-	    "no sntp server listen-port",
+	    "no sntp server ipstack_listen-port",
 		NO_STR
 		"sntp protocol configure\n"
 		"sntp server configure\n"
-		"sntp server listen port configure\n")
+		"sntp server ipstack_listen port configure\n")
 #else
 static int no_sntps_server_listen_port_cmd()
 #endif
@@ -1194,8 +1195,8 @@ DEFUN (sntps_mutilcast_ttl,
 		"sntp protocol configure\n"
 		"sntp server configure\n"
 		"sntp mutilcast information\n"
-		"mutilcast TTL configure\n"
-		"mutilcast TTL value\n")
+		"mutilcast IPSTACK_TTL configure\n"
+		"mutilcast IPSTACK_TTL value\n")
 #else
 static int sntps_mutilcast_ttl_cmd(struct vty *vty, char *argv[])
 #endif
@@ -1213,7 +1214,7 @@ DEFUN (no_sntps_mutilcast_ttl,
 		"sntp protocol configure\n"
 		"sntp server configure\n"
 		"sntp mutilcast information\n"
-		"mutilcast TTL configure\n")
+		"mutilcast IPSTACK_TTL configure\n")
 #else
 static int no_sntps_mutilcast_ttl_cmd()
 #endif
@@ -1253,7 +1254,7 @@ int vty_show_sntps_server(struct vty *vty)
 	vty_out(vty, "SNTP Server Mode	: %s%s",mode_str[sntp_server->mode-1],VTY_NEWLINE);
 
 	vty_out(vty, "SNTP Server Address	: %s%s",ipstack_inet_ntoa(sntp_server->address),VTY_NEWLINE);
-	vty_out(vty, "SNTP Server TTL		: %d%s",sntp_server->sntps_ttl,VTY_NEWLINE);
+	vty_out(vty, "SNTP Server IPSTACK_TTL		: %d%s",sntp_server->sntps_ttl,VTY_NEWLINE);
 
 	if(sntp_server->mode == SNTPS_UNICAST && sntp_server->sntpsPort)
 	{
@@ -1392,7 +1393,7 @@ int sntps_config(struct vty *vty)
 	vty_out(vty, "sntp server enable%s",VTY_NEWLINE);
 
 	if(sntp_server->sntpsPort != SNTPC_SERVER_PORT)
-		vty_out(vty, "sntp server listen-port %d%s", sntp_server->sntpsPort,VTY_NEWLINE);
+		vty_out(vty, "sntp server ipstack_listen-port %d%s", sntp_server->sntpsPort,VTY_NEWLINE);
 
 	if(sntp_server->mode != SNTPS_UNICAST)
 		vty_out(vty, "sntp server mode %s%s",mode_str[sntp_server->mode],VTY_NEWLINE);
@@ -1472,7 +1473,7 @@ int sntpsInit(void *m)
 }
 /*
  * sntp server enable
- * sntp server listen-port <100-65536>
+ * sntp server ipstack_listen-port <100-65536>
  * sntp server mode (broadcast|unicast|multicast)
  * sntp server interval
  */

@@ -3378,7 +3378,7 @@ DEFUN (no_debug_ip_sip,
 		LOG_LEVEL_DESC)
 {
 	int ret = ERROR;
-	ret = pl_pjsip_debug_level_set_api(LOG_ERR);
+	ret = pl_pjsip_debug_level_set_api(ZLOG_LEVEL_ERR);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 

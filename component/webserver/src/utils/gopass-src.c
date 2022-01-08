@@ -179,7 +179,7 @@ static int writeAuthFile(char *path)
     fclose(fp);
     unlink(path);
     if (rename(tempFile, path) < 0) {
-        web_error("Cannot create new %s from %s errno %d", path, tempFile, errno);
+        web_error("Cannot create new %s from %s ipstack_errno %d", path, tempFile, ipstack_errno);
         return -1;
     }
     return 0;

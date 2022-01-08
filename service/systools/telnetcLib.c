@@ -38,8 +38,8 @@ modification history
 01h,22par04,xli  fix gnu compiler warning
 01g,08mar04,zhr  clean up left over printf and fix doc markups. 
 01e,04mar04,zhr  fix the hang caused by telnetExit() 
-01f,24feb04,zhr  call connectWithTimeout() instead of connect(),
-                 remove 'goto', added LOG_ERR and updated comments for doc.
+01f,24feb04,zhr  call connectWithTimeout() instead of ipstack_connect(),
+                 remove 'goto', added ZLOG_LEVEL_ERR and updated comments for doc.
 01e,21jan04,zhr  ported to the base6 
 01d,18feb02,tjf  restore saved console options instead of OPT_TERMINAL
 01c,04oct00,tjf  added comments saying telnet() on windsh is unsupported
@@ -97,7 +97,7 @@ static int telnetExit(TELNETC_SESSION_DATA *);
 
 /*******************************************************************************
 *
-* telnetCmdSend - send a telnet command to the host
+* telnetCmdSend - ipstack_send a telnet command to the host
 *
 * This routine sends a 2 or 3 byte command sequence to the host.
 *
@@ -131,7 +131,7 @@ static int telnetCmdSend
     else
         bytesToWrite = TELNET_CMD_LEN;
 
-    bytesWritten = write (session->hostFd, pCmdBuf, bytesToWrite);
+    bytesWritten = ipstack_write (session->hostFd, pCmdBuf, bytesToWrite);
 
     if (bytesWritten != bytesToWrite)
         {
@@ -173,7 +173,7 @@ static int telnetHostInputParse
                 {
                 /* pass character to stdout */
 
-                bytesWritten = write (session->loutfd, &ch, 1);
+                bytesWritten = ipstack_write (session->loutfd, &ch, 1);
 
                 if (bytesWritten != 1)
                     {
@@ -194,7 +194,7 @@ static int telnetHostInputParse
                 {
                 /* pass character to stdout */
 
-                bytesWritten = write (session->loutfd, &ch, 1);
+                bytesWritten = ipstack_write (session->loutfd, &ch, 1);
 
                 if (bytesWritten != 1)
                     {
@@ -237,7 +237,7 @@ static int telnetHostInputParse
                     {
                     /* host WON'T echo - echo characters locally */
 
-/*                    if(ioctl (STD_IN, FIOSETOPTIONS, OPT_ECHO) == ERROR)
+/*                    if(ipstack_ioctl (STD_IN, FIOSETOPTIONS, OPT_ECHO) == ERROR)
                          log_err (TELNET_LOG | LOG_ERRNO, "ioctl() failure.");*/
                     }
                 }
@@ -309,12 +309,12 @@ static int telnetHostInputParse
 * Parameters:
 * \is
 * \i hostName
-* The remote host to connect to
+* The remote host to ipstack_connect to
 * \i port
-* The port number to connect to
+* The port number to ipstack_connect to
 * \ie
 *
-* NOTE: Windsh does not send keyboard input to the target until <CR> is
+* NOTE: Windsh does not ipstack_send keyboard input to the target until <CR> is
 * typed.  For this reason, telnet() is NOT supported on windsh.
 *
 * \IFSET_START USER
@@ -346,7 +346,7 @@ static int telnetTask(TELNETC_SESSION_DATA *session)
 	zpl_uint32 i = 0;
 	fd_set readFds;
 	struct vty *vty = session->vty;
-	while(session->connect != zpl_true)
+	while(session->ipstack_connect != zpl_true)
 	{
 		if(session->state == SCTD_EMPTY)
 			return telnetExit(session);
@@ -354,7 +354,7 @@ static int telnetTask(TELNETC_SESSION_DATA *session)
 	}
 	vty_out(vty, "Connected to %s.%s", session->hostname, VTY_NEWLINE);
 	vty_out(vty, "Exit character is '%s'.%s", TELNET_ESC_STRING, VTY_NEWLINE);
-	/* send our DO commands to host */
+	/* ipstack_send our DO commands to host */
 	session->echoIsDone = zpl_false;
 	if (telnetCmdSend((char) DO, (char) TELOPT_ECHO, session) == ERROR)
 	{
@@ -371,14 +371,14 @@ static int telnetTask(TELNETC_SESSION_DATA *session)
 	{
 		if(session->state == SCTD_EMPTY)
 			return telnetExit(session);
-		FD_ZERO(&readFds);
+		IPSTACK_FD_ZERO(&readFds);
 		//if (session->echoIsDone && session->sgaIsDone)
-		FD_SET(session->linfd, &readFds);
-		FD_SET(session->hostFd, &readFds);
-		width = max(session->linfd, session->hostFd) + 1;
+		IPSTACK_FD_SET(session->linfd._fd, &readFds);
+		IPSTACK_FD_SET(session->hostFd._fd, &readFds);
+		width = max(session->linfd._fd, session->hostFd._fd) + 1;
 		/* wait for input */
 		//fprintf(stdout, "%s wait for input\r\n", __func__);
-		if (select(width, &readFds, NULL, NULL, NULL) == ERROR)
+		if (ipstack_select(IPCOM_STACK, width, &readFds, NULL, NULL, NULL) == ERROR)
 		{
 			//log_err (TELNET_LOG | LOG_ERRNO, "select() failure.");
 			return telnetExit(session);
@@ -386,13 +386,13 @@ static int telnetTask(TELNETC_SESSION_DATA *session)
 
 		/* process stdin stream */
 
-		if (FD_ISSET(session->linfd, &readFds))
+		if (IPSTACK_FD_ISSET(session->linfd._fd, &readFds))
 		{
 			/* process stdin stream and get bytes from stdin */
 			if (session->echoIsDone && session->sgaIsDone)
 			{
 				memset(session->pBuf, 0, sizeof(session->pBuf));
-				bytesRead = read(session->linfd, session->pBuf,
+				bytesRead = ipstack_read(session->linfd, session->pBuf,
 						sizeof(session->pBuf));
 			}
 			else
@@ -420,7 +420,7 @@ static int telnetTask(TELNETC_SESSION_DATA *session)
 					return telnetExit(session);
 				}
 
-				bytesWritten = write(session->hostFd, &ch, 1);
+				bytesWritten = ipstack_write(session->hostFd, &ch, 1);
 
 				if (bytesWritten != 1)
 				{
@@ -432,11 +432,11 @@ static int telnetTask(TELNETC_SESSION_DATA *session)
 
 		/* process host stream */
 
-		if (FD_ISSET(session->hostFd, &readFds))
+		if (IPSTACK_FD_ISSET(session->hostFd._fd, &readFds))
 		{
 			/* get bytes from the host */
 			memset(session->pBuf, 0, sizeof(session->pBuf));
-			bytesRead = read(session->hostFd, session->pBuf,
+			bytesRead = ipstack_read(session->hostFd, session->pBuf,
 					sizeof(session->pBuf));
 
 			if (bytesRead == 0)
@@ -469,7 +469,7 @@ int telnet(struct vty *vty, char * pHostName, int port)
 {
 	int status = ERROR;
 	//char pHostIpDottedName[128];
-	struct sockaddr_in hostSockAddr;
+	struct ipstack_sockaddr_in hostSockAddr;
 
 	TELNETC_SESSION_DATA *session = NULL;
 
@@ -493,18 +493,18 @@ int telnet(struct vty *vty, char * pHostName, int port)
 	}
 
 	/* set port to default (23) if zero */
-	bzero ((char *) &hostSockAddr, sizeof (struct sockaddr_in));
+	bzero ((char *) &hostSockAddr, sizeof (struct ipstack_sockaddr_in));
 
 	/* establish TCP/IP connection to host */
 	vty_ansync_enable(vty, zpl_true);
 
 	vty_out(vty, "%sTrying %s...%s", VTY_NEWLINE, session->hostname, VTY_NEWLINE);
 
-	session->hostFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	session->hostFd = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, IPSTACK_IPPROTO_TCP);
 
-	if (session->hostFd == ERROR)
+	if (ipstack_invalid(session->hostFd))
 	{
-		vty_out(vty, "Error creating socket%s", VTY_NEWLINE);
+		vty_out(vty, "Error creating ipstack_socket%s", VTY_NEWLINE);
 		vty_ansync_enable(vty, zpl_false);
 		return telnetExit(session);
 	}
@@ -513,7 +513,7 @@ int telnet(struct vty *vty, char * pHostName, int port)
 	tv.tv_sec = TELNET_CONN_TIMEOUT;
 	tv.tv_usec = 0;
 */
-	hostSockAddr.sin_family = AF_INET;
+	hostSockAddr.sin_family = IPSTACK_AF_INET;
 	hostSockAddr.sin_addr.s_addr = ipstack_inet_addr(session->hostname);
 	if(port)
 		hostSockAddr.sin_port = htons(port);
@@ -529,8 +529,8 @@ int telnet(struct vty *vty, char * pHostName, int port)
 	}
 
 
-	status = connect(session->hostFd, (struct sockaddr *) &hostSockAddr,
-			sizeof(struct sockaddr));
+	status = ipstack_connect(session->hostFd, (struct ipstack_sockaddr *) &hostSockAddr,
+			sizeof(struct ipstack_sockaddr));
 
 	if (status != OK)
 	{
@@ -541,7 +541,7 @@ int telnet(struct vty *vty, char * pHostName, int port)
 	vty_cancel(vty);
 /*	vty_out(vty, "Connected to %s.%s", pHostName, VTY_NEWLINE);
 	vty_out(vty, "Exit character is '%s'.%s", TELNET_ESC_STRING, VTY_NEWLINE);*/
-	session->connect = zpl_true;
+	session->ipstack_connect = zpl_true;
 	return OK;
 	/* NOT REACHED */
 }
@@ -566,20 +566,20 @@ static int telnetExit
     )
     {
     int retVal = OK;
-    if(session->loutfd)
-    	write(session->loutfd, "Connection closed by foreign host.\r\n",
+    if(!ipstack_invalid(session->loutfd))
+    	ipstack_write(session->loutfd, "Connection closed by foreign host.\r\n",
 			strlen("Connection closed by foreign host.\r\n"));
-    if (session->hostFd != ERROR)
+    if (!ipstack_invalid(session->hostFd))
 	{
-    	shutdown (session->hostFd, 2);
-    	close (session->hostFd);
+    	ipstack_shutdown (session->hostFd, 2);
+    	ipstack_close (session->hostFd);
 	}
     if(session->vty)
     {
     	vty_ansync_enable(session->vty, zpl_false);
     	vty_resume(session->vty);
-    	if(session->loutfd)
-    		write(session->loutfd, "\r\n",strlen("\r\n"));
+    	if(!ipstack_invalid(session->loutfd))
+    		ipstack_write(session->loutfd, "\r\n",strlen("\r\n"));
     }
     free(session);
     return (retVal);

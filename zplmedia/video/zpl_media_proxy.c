@@ -166,7 +166,7 @@ static int zpl_proxy_server_accept(struct eloop *t)
 	proxy_server_t *proxy = THREAD_ARG(t);
     if(proxy && proxy->sock)
     {
-        struct sockaddr_in clientaddr;
+        struct ipstack_sockaddr_in clientaddr;
 		if (proxy->mutex)
 			os_mutex_lock(proxy->mutex, OS_WAIT_FOREVER);
         proxy->t_read = NULL;

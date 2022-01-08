@@ -66,6 +66,7 @@ extern "C"
   typedef struct hal_global_header_s
   {
     zpl_uint32 vrfid;
+    zpl_vlan_t vlanid;
   } hal_global_header_t;
 #define HAL_GLOBAL_HDR_SIZE (sizeof(hal_global_header_t))
 
@@ -74,7 +75,7 @@ extern "C"
     zpl_uint32 ifindex;
     zpl_uint32 vrfid;
     zpl_vlan_t vlanid;
-    zpl_uint32 phyport;
+    zpl_phyport_t phyport;
   } hal_port_header_t;
 
 #define HAL_PORT_HDR_SIZE (sizeof(hal_port_header_t))
@@ -148,7 +149,7 @@ extern "C"
   extern int hal_ipcmsg_table_set(ifindex_t ifindex, hal_table_header_t *table);
 
   extern int hal_ipcmsg_global_get(struct hal_ipcmsg *ipcmsg, hal_global_header_t *glo);
-  extern int hal_ipcmsg_port_get(struct hal_ipcmsg *ipcmsg, ifindex_t *ifindex);
+  extern int hal_ipcmsg_port_get(struct hal_ipcmsg *ipcmsg, hal_port_header_t *bspport);
   extern int hal_ipcmsg_table_get(struct hal_ipcmsg *ipcmsg, hal_table_header_t *table);
 
 #ifdef __cplusplus

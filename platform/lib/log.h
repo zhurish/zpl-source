@@ -46,21 +46,33 @@ extern "C" {
 #endif
 /* Here is some guidance on logging levels to use:
  *
- * LOG_DEBUG	- For all messages that are enabled by optional debugging
+ * ZLOG_LEVEL_DEBUG	- For all messages that are enabled by optional debugging
  *		  features, typically preceded by "if (IS...DEBUG...)"
- * LOG_INFO	- Information that may be of interest, but everything seems
+ * ZLOG_LEVEL_INFO	- Information that may be of interest, but everything seems
  *		  to be working properly.
- * LOG_NOTICE	- Only for message pertaining to daemon startup or shutdown.
- * LOG_WARNING	- Warning conditions: unexpected events, but the daemon believes
+ * ZLOG_LEVEL_NOTICE	- Only for message pertaining to daemon startup or shutdown.
+ * ZLOG_LEVEL_WARNING	- Warning conditions: unexpected events, but the daemon believes
  *		  it can continue to operate correctly.
  * LOG_ERR	- Error situations indicating malfunctions.  Probably require
  *		  attention.
  *
- * Note: LOG_CRIT, LOG_ALERT, and LOG_EMERG are currently not used anywhere,
+ * Note: ZLOG_LEVEL_CRIT, ZLOG_LEVEL_ALERT, and ZLOG_LEVEL_EMERG are currently not used anywhere,
  * please use LOG_ERR instead.
  */
-#define LOG_FORCE_TRAP		(LOG_DEBUG+2)
-#define LOG_TRAP		(LOG_DEBUG+1)
+typedef enum
+{
+  ZLOG_LEVEL_EMERG	= 0,	/* system is unusable */
+  ZLOG_LEVEL_ALERT	= 1,	/* action must be taken immediately */
+  ZLOG_LEVEL_CRIT	= 2,	/* critical conditions */
+  ZLOG_LEVEL_ERR		= 3,	/* error conditions */
+  ZLOG_LEVEL_WARNING	= 4,	/* warning conditions */
+  ZLOG_LEVEL_NOTICE	= 5,	/* normal but significant condition */
+  ZLOG_LEVEL_INFO	= 6,	/* informational */
+  ZLOG_LEVEL_DEBUG	= 7,	/* debug-level messages */
+  ZLOG_LEVEL_TRAP		= 8,
+  ZLOG_LEVEL_FORCE_TRAP = 9,
+  ZLOG_LEVEL_MAX,
+}zlog_level_t;
 
 typedef module_t zlog_proto_t;
 
@@ -80,8 +92,7 @@ typedef module_t zlog_proto_t;
 
 /* If maxlvl is set to ZLOG_DISABLED, then no messages will be sent
    to that logging destination. */
-#define ZLOG_DISABLED	(LOG_EMERG)
-//#define ZLOG_DISABLED	0
+#define ZLOG_DISABLED	(ZLOG_LEVEL_EMERG)
 
 typedef enum
 {
@@ -108,7 +119,7 @@ typedef enum
 typedef struct zbuffer_s
 {
 	zpl_uint32 	module;
-	zpl_uint32 	level;
+	zlog_level_t 	level;
 	zpl_uint32		size;
 	zpl_char 	log[LOG_MSG_SIZE];
 }zbuffer_t;
@@ -124,7 +135,7 @@ typedef struct zlog_buffer_s
 typedef struct zlog_testing_s
 {
 	zpl_char 	*filename;
-	zpl_uint32		priority;
+	zlog_level_t		priority;
 	FILE 	*fp;
 	zpl_uint32 	filesize;
 	zpl_uint32 	file_check_interval;
@@ -135,9 +146,9 @@ struct zlog
 {
   const char *ident;	/* daemon name (first arg to openlog) */
   zlog_proto_t protocol;
-  zpl_uint32 maxlvl[ZLOG_NUM_DESTS];	/* maximum priority to send to associated
+  zlog_level_t maxlvl[ZLOG_NUM_DESTS];	/* maximum priority to send to associated
   				   logging destination */
-  zpl_uint32 default_lvl[ZLOG_NUM_DESTS];	/* maxlvl to use if none is specified */
+  zlog_level_t default_lvl[ZLOG_NUM_DESTS];	/* maxlvl to use if none is specified */
   zpl_bool	trap_lvl;
   FILE *fp;
   zpl_char *filename;
@@ -174,20 +185,12 @@ struct zlog
 typedef struct zlog_hdr_s
 {
 	zpl_uint32 	module;
-	zpl_uint32 	priority;
+	zlog_level_t 	priority;
 	zpl_uint32		len;
 	zpl_char 	logbuf[LOG_MSG_SIZE];
 }zlog_hdr_t;
 #endif
 
-struct zpl_backtrace_symb
-{
-  char *funcname;
-  char *schedfrom;
-  zpl_uint32 schedfrom_line;
-};
-
-extern int zpl_backtrace_symb_set(char *funcname, char *schedfrom, zpl_uint32 schedfrom_line);
 
 
 typedef int(*zlog_buffer_cb)(zbuffer_t *, void *pVoid);
@@ -219,10 +222,10 @@ extern void closezlog (struct zlog *zl);
 
 
 
-extern void pl_vzlog(const char *file, const char *func, const zpl_uint32 line, struct zlog *zl, zpl_uint32 module, zpl_uint32 priority, const char *format,
+extern void pl_vzlog(const char *file, const char *func, const zpl_uint32 line, struct zlog *zl, zpl_uint32 module, zlog_level_t priority, const char *format,
 		va_list args);
 /* Generic function for zlog. */
-extern void pl_zlog (const char *file, const char *func, const zpl_uint32 line, zpl_uint32 module, zpl_uint32 priority, const char *format, ...)
+extern void pl_zlog (const char *file, const char *func, const zpl_uint32 line, zpl_uint32 module, zlog_level_t priority, const char *format, ...)
   PRINTF_ATTRIBUTE(6, 7);
 
 /* Handy zlog functions. */
@@ -245,7 +248,8 @@ extern void pl_zlog_trap (const char *file, const char *func, const zpl_uint32 l
 #define zlog_notice(module, format, ...) 			pl_zlog_notice (__FILE__, __FUNCTION__, __LINE__, module, format, ##__VA_ARGS__)
 #define zlog_debug(module, format, ...) 			pl_zlog_debug (__FILE__, __FUNCTION__, __LINE__, module, format, ##__VA_ARGS__)
 #define zlog_trap(module, format, ...) 				pl_zlog_trap (__FILE__, __FUNCTION__, __LINE__, module, format, ##__VA_ARGS__)
-#define zlog_force_trap(module, format, ...) 	pl_zlog (__FILE__, __FUNCTION__, __LINE__, module, LOG_FORCE_TRAP, format, ##__VA_ARGS__)
+#define zlog_force_trap(module, format, ...) 	pl_zlog (__FILE__, __FUNCTION__, __LINE__, module, ZLOG_LEVEL_FORCE_TRAP, format, ##__VA_ARGS__)
+#define liblog_trap(format, ...) 	            pl_zlog_trap (__FILE__, __FUNCTION__, __LINE__, MODULE_LIB, format, ##__VA_ARGS__)
 
 #if 0
 
@@ -269,11 +273,11 @@ extern void zlog_trap (zpl_uint32 module, const char *format, ...) PRINTF_ATTRIB
    argument is ZLOG_DISABLED, then the destination is disabled.
    This function should not be used for file logging (use zlog_set_file
    or zlog_reset_file instead). */
-extern void zlog_set_level (zlog_dest_t, zpl_uint32 log_level);
-extern void zlog_get_level(zlog_dest_t dest, zpl_uint32 *log_level);
+extern void zlog_set_level (zlog_dest_t, zlog_level_t log_level);
+extern void zlog_get_level(zlog_dest_t dest, zlog_level_t *log_level);
 /* Set logging to the given filename at the specified level. */
-extern int zlog_set_file (const char *filename, zpl_uint32 log_level);
-extern int zlog_get_file(const char *filename, zpl_uint32 *log_level);
+extern int zlog_set_file (const char *filename, zlog_level_t log_level);
+extern int zlog_get_file(const char *filename, zlog_level_t *log_level);
 extern int zlog_set_file_size (zpl_uint32 filesize);
 extern int zlog_get_file_size (zpl_uint32 *filesize);
 extern int zlog_reset_file (zpl_bool bOpen);
@@ -284,7 +288,7 @@ extern int zlog_file_save (void);
 extern int zlog_testing_enable (zpl_bool);
 extern zpl_bool zlog_testing_enabled (void);
 extern int zlog_testing_file (zpl_char * file);
-extern int zlog_testing_priority (zpl_uint32 priority);
+extern int zlog_testing_priority (zlog_level_t priority);
 #endif
 extern int zlog_set_buffer_size (zpl_uint32 size);
 extern int zlog_get_buffer_size (zpl_uint32 *size);
@@ -309,8 +313,8 @@ extern void zlog_get_trap(zpl_bool *level);
 
 extern const char *zlog_facility_name(zpl_uint32 facility);
 extern zpl_uint32 zlog_facility_match(const char *str) ;
-extern zpl_uint32 zlog_priority_match(const char *s);
-extern const char *zlog_priority_name(zpl_uint32 level);
+extern zlog_level_t zlog_priority_match(const char *s);
+extern const char *zlog_priority_name(zlog_level_t level);
 
 extern const char * zlog_proto_names(zlog_proto_t module);
 
@@ -323,9 +327,6 @@ extern const char *mes_lookup (const struct message *meslist,
                                zpl_uint32 max, zpl_uint32 index,
                                const char *no_item, const char *mesname);
 
-/* Safe version of strerror -- never returns NULL. */
-extern const char *safe_strerror(int errnum);
-
 /* To be called when a fatal signal is caught. */
 extern void zlog_signal(int signo, const char *action
 #ifdef SA_SIGINFO
@@ -334,13 +335,13 @@ extern void zlog_signal(int signo, const char *action
 		       );
 
 /* Log a backtrace. */
-extern void zlog_backtrace(zpl_uint32 priority);
+extern void zlog_backtrace(zlog_level_t priority);
 
 /* Log a backtrace, but in an async-signal-safe way.  Should not be
    called unless the program is about to exit or abort, since it messes
    up the state of zlog file pointers.  If program_counter is non-NULL,
    that is logged in addition to the current backtrace. */
-extern void zlog_backtrace_sigsafe(zpl_uint32 priority, void *program_counter);
+extern void zlog_backtrace_sigsafe(zlog_level_t priority, void *program_counter);
 
 /* Puts a current timestamp in buf and returns the number of characters
    written (not including the terminating NUL).  The purpose of

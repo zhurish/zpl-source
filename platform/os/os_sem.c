@@ -223,12 +223,12 @@ static int os_mutex_sem_lock(os_mutex_t * mutex, zpl_int32 wait)
 				int ret = 0;
 				struct timespec value;
 				value.tv_sec=time(NULL) + wait;
-				while ((ret = pthread_mutex_timedlock(&mutex->value.mutex, &value)) == -1 && errno == EINTR)
+				while ((ret = pthread_mutex_timedlock(&mutex->value.mutex, &value)) == -1 && ipstack_errno == EINTR)
 					continue;
 				/* Restart if interrupted by handler */
 				if(ret == 0)
 					return OK;
-				else if(errno == ETIMEDOUT)
+				else if(ipstack_errno == ETIMEDOUT)
 					return OS_TIMEOUT;//timeout
 			}
 			return ERROR;
@@ -244,11 +244,11 @@ static int os_mutex_sem_lock(os_mutex_t * mutex, zpl_int32 wait)
 				int ret = 0;
 				struct timespec value;
 				value.tv_sec=time(NULL) + wait;
-				while ((ret = sem_timedwait(&mutex->value.sem, &value)) == -1 && errno == EINTR)
+				while ((ret = sem_timedwait(&mutex->value.sem, &value)) == -1 && ipstack_errno == EINTR)
 					continue;
 				if(ret == 0)
 					return OK;
-				else if(errno == ETIMEDOUT)
+				else if(ipstack_errno == ETIMEDOUT)
 					return OS_TIMEOUT;
 			}
 			return ERROR;
@@ -357,14 +357,14 @@ int os_sem_take(os_sem_t *ossem, zpl_int32 wait)
 		struct timespec value;
 		value.tv_sec=time(NULL) + wait;
 
-		while ((ret = sem_timedwait(&ossem->sem, &value)) == -1 && errno == EINTR)
+		while ((ret = sem_timedwait(&ossem->sem, &value)) == -1 && ipstack_errno == EINTR)
 			continue;
 		/* Restart if interrupted by handler */
 		//if(sem_timedwait (&sem->sem, &value)==0)
 		///	return OK;
 		if(ret == 0)
 			return OK;
-		else if(errno == ETIMEDOUT)
+		else if(ipstack_errno == ETIMEDOUT)
 			return OS_TIMEOUT;
 	}
 	return ERROR;
@@ -421,14 +421,14 @@ int os_mutex_lock(os_mutex_t *osmutex, zpl_int32 wait)
 		struct timespec value;
 		value.tv_sec=time(NULL) + wait;
 
-		while ((ret = pthread_mutex_timedlock(&osmutex->mutex, &value)) == -1 && errno == EINTR)
+		while ((ret = pthread_mutex_timedlock(&osmutex->mutex, &value)) == -1 && ipstack_errno == EINTR)
 			continue;
 		/* Restart if interrupted by handler */
 		//if(sem_timedwait (&sem->sem, &value)==0)
 		///	return OK;
 		if(ret == 0)
 			return OK;
-		else if(errno == ETIMEDOUT)
+		else if(ipstack_errno == ETIMEDOUT)
 			return OS_TIMEOUT;
 	}
 	return ERROR;

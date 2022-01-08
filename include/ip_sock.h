@@ -824,7 +824,7 @@ struct if_nameindex {
 #define ipstack_getservbyport(p,p2)     getservbyport(p,p2)
 
 
-#define ipstack_getaddrinfo(family,addrptr,strptr,len)   getaddrinfo(family,addrptr,strptr,len)
+#define ipstack_getaddrinfo(family,addrptr,strptr,len)   ipstack_getaddrinfo(family,addrptr,strptr,len)
 #define ipstack_freeaddrinfo(pif)            freeaddrinfo(pif)
 #define ipstack_getnameinfo              getnameinfo
 

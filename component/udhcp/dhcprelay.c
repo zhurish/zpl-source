@@ -142,11 +142,11 @@ static int dhcp_relay_get_packet_type(struct dhcp_packet *p)
 	return -1;
 }
 
-static int dhcp_relay_forward(int sock, const void *msg, int msg_len, struct sockaddr_in *to)
+static int dhcp_relay_forward(int sock, const void *msg, int msg_len, struct ipstack_sockaddr_in *to)
 {
 	int err;
-	errno = 0;
-	err = sendto(sock, msg, msg_len, 0, (struct sockaddr*) to, sizeof(*to));
+	ipstack_errno = 0;
+	err = sendto(sock, msg, msg_len, 0, (struct ipstack_sockaddr*) to, sizeof(*to));
 	err -= msg_len;
 	if (err)
 		zlog_err(MODULE_DHCP,"sendto");
@@ -159,7 +159,7 @@ static int dhcp_relay_forward(int sock, const void *msg, int msg_len, struct soc
  * client - number of the client
  */
 static void dhcp_relay_forward_server(dhcp_relay_t * ifter, struct dhcp_packet *p, int packet_len,
-			struct sockaddr_in *client_addr, struct sockaddr_in *server_addr)
+			struct ipstack_sockaddr_in *client_addr, struct ipstack_sockaddr_in *server_addr)
 {
 	zpl_uint32 type;
 	/* check packet_type */
@@ -203,8 +203,8 @@ static void dhcp_relay_forward_client(dhcp_relay_t * ifter, struct dhcp_packet *
 	}
 
 //TODO: also do it if (p->flags & htons(BROADCAST_FLAG)) is set!
-	if (item->ip.sin_addr.s_addr == htonl(INADDR_ANY))
-		item->ip.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+	if (item->ip.sin_addr.s_addr == htonl(IPSTACK_INADDR_ANY))
+		item->ip.sin_addr.s_addr = htonl(IPSTACK_INADDR_BROADCAST);
 
 	if (dhcp_relay_forward(ifter->sock, p, packet_len, &item->ip) != 0) {
 		return; /* send error occurred */
@@ -227,7 +227,7 @@ struct dhcp_relay_xid_item {
 	unsigned timestamp;
 	int client;
 	zpl_uint32  xid;
-	struct sockaddr_in ip;
+	struct ipstack_sockaddr_in ip;
 	struct xid_item *next;
 } FIX_ALIASING;
 
@@ -235,7 +235,7 @@ struct dhcp_relay_xid_item {
 
 #define INIT_G() do { setup_common_bufsiz(); } while (0)
 
-static struct dhcp_relay_xid_item *dhcp_relay_xid_add(zpl_uint32  xid, struct sockaddr_in *ip, int client)
+static struct dhcp_relay_xid_item *dhcp_relay_xid_add(zpl_uint32  xid, struct ipstack_sockaddr_in *ip, int client)
 {
 	struct dhcp_relay_xid_item *item;
 
@@ -348,19 +348,19 @@ static int dhcp_relay_init_sockets(char **iface_list, int num_clients, int *fds)
 
 	n = 0;
 	for (i = 0; i < num_clients; i++) {
-		fds[i] = udhcp_listen_socket(/*INADDR_ANY,*/ DHCP_SERVER_PORT, iface_list[i]);
+		fds[i] = udhcp_listen_socket(/*IPSTACK_INADDR_ANY,*/ DHCP_SERVER_PORT, iface_list[i]);
 		if (n < fds[i])
 			n = fds[i];
 	}
 	return n;
 }
 
-static int dhcp_relay_sendto_ip4(int sock, const void *msg, int msg_len, struct sockaddr_in *to)
+static int dhcp_relay_sendto_ip4(int sock, const void *msg, int msg_len, struct ipstack_sockaddr_in *to)
 {
 	int err;
 
-	errno = 0;
-	err = sendto(sock, msg, msg_len, 0, (struct sockaddr*) to, sizeof(*to));
+	ipstack_errno = 0;
+	err = sendto(sock, msg, msg_len, 0, (struct ipstack_sockaddr*) to, sizeof(*to));
 	err -= msg_len;
 	if (err)
 		zlog_err(MODULE_DHCP,"sendto");
@@ -373,7 +373,7 @@ static int dhcp_relay_sendto_ip4(int sock, const void *msg, int msg_len, struct 
  * client - number of the client
  */
 static void dhcp_relay_pass_to_server(struct dhcp_packet *p, int packet_len, int client, int *fds,
-			struct sockaddr_in *client_addr, struct sockaddr_in *server_addr)
+			struct ipstack_sockaddr_in *client_addr, struct ipstack_sockaddr_in *server_addr)
 {
 	zpl_uint32 type;
 
@@ -419,8 +419,8 @@ static void dhcp_relay_pass_to_client(struct dhcp_packet *p, int packet_len, int
 	}
 
 //TODO: also do it if (p->flags & htons(BROADCAST_FLAG)) is set!
-	if (item->ip.sin_addr.s_addr == htonl(INADDR_ANY))
-		item->ip.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+	if (item->ip.sin_addr.s_addr == htonl(IPSTACK_INADDR_ANY))
+		item->ip.sin_addr.s_addr = htonl(IPSTACK_INADDR_BROADCAST);
 
 	if (dhcp_relay_sendto_ip4(fds[item->client], p, packet_len, &item->ip) != 0) {
 		return; /* send error occurred */
@@ -433,7 +433,7 @@ static void dhcp_relay_pass_to_client(struct dhcp_packet *p, int packet_len, int
 
 int dhcprelay_main(int argc, char **argv)
 {
-	struct sockaddr_in server_addr;
+	struct ipstack_sockaddr_in server_addr;
 	char **iface_list;
 	int *fds;
 	int num_sockets, max_socket;
@@ -441,8 +441,8 @@ int dhcprelay_main(int argc, char **argv)
 
 	//INIT_G();
 
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+	server_addr.sin_family = IPSTACK_AF_INET;
+	server_addr.sin_addr.s_addr = htonl(IPSTACK_INADDR_BROADCAST);
 	server_addr.sin_port = htons(DHCP_SERVER_PORT);
 
 	/* dhcprelay CLIENT_IFACE1[,CLIENT_IFACE2...] SERVER_IFACE [SERVER_IP] */
@@ -491,7 +491,7 @@ int dhcprelay_main(int argc, char **argv)
 
 			/* clients */
 			for (i = 1; i < num_sockets; i++) {
-				struct sockaddr_in client_addr;
+				struct ipstack_sockaddr_in client_addr;
 				socklen_t addr_size;
 
 				if (!FD_ISSET(fds[i], &rfds))
@@ -499,7 +499,7 @@ int dhcprelay_main(int argc, char **argv)
 
 				addr_size = sizeof(client_addr);
 				packlen = recvfrom(fds[i], &dhcp_msg, sizeof(dhcp_msg), 0,
-						(struct sockaddr *)(&client_addr), &addr_size);
+						(struct ipstack_sockaddr *)(&client_addr), &addr_size);
 				if (packlen <= 0)
 					continue;
 

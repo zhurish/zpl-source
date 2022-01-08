@@ -27,75 +27,31 @@
 extern "C" {
 #endif
 
-#if 1
-extern void ifreq_set_name (struct ipstack_ifreq *ifreq, struct interface *ifp);
-extern int if_ioctl (zpl_uint32, caddr_t);
+
+extern void _ipkernel_ifreq_set_name (struct ipstack_ifreq *ipstack_ifreq, struct interface *ifp);
+extern int _ipkernel_if_ioctl (zpl_uint32, caddr_t);
 #ifdef HAVE_IPV6
-extern int if_ioctl_ipv6 (zpl_uint32 request, caddr_t buffer);
+extern int _ipkernel_if_ioctl_ipv6 (zpl_uint32 request, caddr_t buffer);
 #endif
 
-extern int ip_arp_stack_init();
-
-#ifdef ZPL_NSM_VLANETH
-extern int _ipkernel_linux_create (nsm_vlaneth_t *kifp);
-extern int _ipkernel_linux_destroy (nsm_vlaneth_t *kifp);
-extern int _ipkernel_linux_change (nsm_vlaneth_t *kifp, vlan_t vlan);
-#endif
-
-#ifdef ZPL_NSM_TUNNEL
-extern int _ipkernel_tunnel_create(nsm_tunnel_t *tunnel);
-extern int _ipkernel_tunnel_delete(nsm_tunnel_t *tunnel);
-extern int _ipkernel_tunnel_change(nsm_tunnel_t *tunnel);
-#endif
-#ifdef ZPL_NSM_BRIDGE
-extern int _ipkernel_bridge_create(nsm_bridge_t *br);
-extern int _ipkernel_bridge_delete(nsm_bridge_t *br);
-extern int _ipkernel_bridge_add_interface(nsm_bridge_t *br, ifindex_t ifindex);
-extern int _ipkernel_bridge_del_interface(nsm_bridge_t *br, ifindex_t ifindex);
-extern int _ipkernel_bridge_list_interface(nsm_bridge_t *br, ifindex_t ifindex[]);
-extern int _ipkernel_bridge_check_interface(char *br, ifindex_t ifindex);
-#endif
-#ifdef ZPL_NSM_TRUNK
-extern int _ipkernel_bond_create(struct interface *ifp);
-extern int _ipkernel_bond_delete(struct interface *ifp);
-#endif
-
-extern int os_vrf_stack_init();
-
-
-#else
-/* Prototypes. */
-extern void ifreq_set_name (struct ifreq *, struct interface *);
-extern int if_ioctl (u_long, caddr_t);
-
-extern int if_set_flags (struct interface *, uint64_t);
-extern int if_unset_flags (struct interface *, uint64_t);
-extern void if_get_flags (struct interface *);
-
-extern int if_set_prefix (struct interface *, struct connected *);
-extern int if_unset_prefix (struct interface *, struct connected *);
-
-extern void if_get_metric (struct interface *);
-extern void if_get_mtu (struct interface *);
+int _ipkernel_if_set_up(struct interface *ifp);
+int _ipkernel_if_set_down(struct interface *ifp);
+int _ipkernel_if_update_flags(struct interface *ifp, uint64_t flag);
+int _ipkernel_if_get_flags(struct interface *ifp);
+int _ipkernel_if_set_mtu(struct interface *ifp, zpl_uint32 mtu);
+int _ipkernel_if_get_hwaddr(struct interface *ifp);
+int _ipkernel_if_set_mac(struct interface *ifp, zpl_uint8 *mac, zpl_uint32 len);
+int _ipkernel_if_set_metric(struct interface *ifp, zpl_uint32 metric);
+int _ipkernel_if_set_dst_prefix(struct interface *ifp, struct connected *ifc);
+int _ipkernel_if_unset_dst_prefix(struct interface *ifp, struct connected *ifc);
+int _ipkernel_if_set_prefix(struct interface *ifp, struct connected *ifc);
+int _ipkernel_if_unset_prefix(struct interface *ifp, struct connected *ifc);
 
 #ifdef HAVE_IPV6
-extern int if_prefix_add_ipv6 (struct interface *, struct connected *);
-extern int if_prefix_delete_ipv6 (struct interface *, struct connected *);
-#endif /* HAVE_IPV6 */
-
-#ifdef SOLARIS_IPV6
-extern int if_ioctl_ipv6(u_long, caddr_t);
-extern struct connected *if_lookup_linklocal( struct interface *);
-
-#define AF_IOCTL(af, request, buffer) \
-        ((af) == AF_INET? if_ioctl(request, buffer) : \
-                          if_ioctl_ipv6(request, buffer))
-#else /* SOLARIS_IPV6 */
-
-#define AF_IOCTL(af, request, buffer)  if_ioctl(request, buffer)
-
-#endif /* SOLARIS_IPV6 */
+int _ipkernel_if_prefix_add_ipv6(struct interface *ifp, struct connected *ifc, int sec);
+int _ipkernel_if_prefix_delete_ipv6(struct interface *ifp, struct connected *ifc, int sec);
 #endif
+
 
 #ifdef __cplusplus
 }

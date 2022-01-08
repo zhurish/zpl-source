@@ -238,7 +238,7 @@ struct ssh_session_struct {
 
     //zhurish edits
     ssh_session_callbacks session_callbacks;
-	struct sockaddr_in client_address;
+	struct ipstack_sockaddr_in client_address;
     //zhurish edits
 };
 

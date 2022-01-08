@@ -59,7 +59,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
-/* <wspiapi.h> is necessary for getaddrinfo before Windows XP, but it isn't
+/* <wspiapi.h> is necessary for ipstack_getaddrinfo before Windows XP, but it isn't
  * available on some platforms like MinGW. */
 #ifdef HAVE_WSPIAPI_H
 #include <wspiapi.h>
@@ -86,7 +86,7 @@
 #include "libssh/poll.h"
 
 #ifndef HAVE_GETADDRINFO
-#error "Your system must have getaddrinfo()"
+#error "Your system must have ipstack_getaddrinfo()"
 #endif
 
 #ifdef _WIN32
@@ -119,9 +119,9 @@ static int getai(const char *host, int port, struct ipstack_addrinfo **ai)
 
     ZERO_STRUCT(hints);
 
-    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_protocol = IPSTACK_IPPROTO_TCP;
     hints.ai_family = PF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_socktype = IPSTACK_SOCK_STREAM;
 
     if (port == 0) {
         hints.ai_flags = AI_PASSIVE;
@@ -139,7 +139,7 @@ static int getai(const char *host, int port, struct ipstack_addrinfo **ai)
         hints.ai_flags |= AI_NUMERICHOST;
     }
 
-    return getaddrinfo(host, service, &hints, ai);
+    return ipstack_getaddrinfo(host, service, &hints, ai);
 }
 
 static int set_tcp_nodelay(socket_t socket)
@@ -147,8 +147,8 @@ static int set_tcp_nodelay(socket_t socket)
     int opt = 1;
 
     return setsockopt(socket,
-                      IPPROTO_TCP,
-                      TCP_NODELAY,
+                      IPSTACK_IPPROTO_TCP,
+                      IPSTACK_TCP_NODELAY,
                       (void *)&opt,
                       sizeof(opt));
 }
@@ -217,7 +217,7 @@ socket_t ssh_connect_host_nonblocking(ssh_session session, const char *host,
                     break;
                 }
             }
-            freeaddrinfo(bind_ai);
+            ipstack_freeaddrinfo(bind_ai);
 
             /* Cannot bind to any local addresses */
             if (bind_itr == NULL) {
@@ -242,7 +242,7 @@ socket_t ssh_connect_host_nonblocking(ssh_session session, const char *host,
             rc = set_tcp_nodelay(s);
             if (rc < 0) {
                 ssh_set_error(session, SSH_FATAL,
-                              "Failed to set TCP_NODELAY on socket: %s",
+                              "Failed to set IPSTACK_TCP_NODELAY on socket: %s",
                               strerror(errno));
                 ssh_connect_socket_close(s);
                 s = -1;
@@ -263,7 +263,7 @@ socket_t ssh_connect_host_nonblocking(ssh_session session, const char *host,
         break;
     }
 
-    freeaddrinfo(ai);
+    ipstack_freeaddrinfo(ai);
 
     return s;
 }

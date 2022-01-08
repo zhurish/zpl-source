@@ -1,0 +1,203 @@
+/*
+ * bsp_qos.c
+ *
+ *  Created on: 2019年9月10日
+ *      Author: DELL
+ */
+#include "zpl_include.h"
+#include "nsm_include.h"
+#include "hal_include.h"
+
+#include "hal_client.h"
+#include "bsp_qos.h"
+
+
+sdk_qos_t sdk_qos;
+
+static int bsp_qos_enable(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
+{
+	if(driver && sdk_qos.sdk_qos_enable_cb)
+		return sdk_qos.sdk_qos_enable_cb(driver, param->enable);
+	return NO_SDK;
+}
+
+static int bsp_qos_ipg_enable(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
+{
+	if(driver && sdk_qos.sdk_qos_ipg_cb)
+		return sdk_qos.sdk_qos_ipg_cb(driver, zpl_true, param->enable);
+	return NO_SDK;
+}
+
+static int bsp_qos_base_mode(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
+{
+	if(driver && sdk_qos.sdk_qos_base_cb)
+		return sdk_qos.sdk_qos_base_cb(driver, port->phyport, param->enable);
+	return NO_SDK;
+}
+
+static int bsp_qos_8021q_enable(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
+{
+	if(driver && sdk_qos.sdk_qos_8021q_enable_cb)
+		return sdk_qos.sdk_qos_8021q_enable_cb(driver, port->phyport, param->enable);
+	return NO_SDK;
+}
+
+static int bsp_qos_diffserv_enable(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
+{
+	if(driver && sdk_qos.sdk_qos_diffserv_enable_cb)
+		return sdk_qos.sdk_qos_diffserv_enable_cb(driver, port->phyport, param->enable);
+	return NO_SDK;
+}
+
+#ifdef NSM_QOS_CLASS_PRIORITY
+static int bsp_qos_port_map_queue(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
+{
+	if(driver && sdk_qos.sdk_qos_port_map_queue_cb)
+		return sdk_qos.sdk_qos_port_map_queue_cb(driver, port->phyport, param->pri, param->queue);
+	return NO_SDK;
+}
+#endif
+static int bsp_qos_diffserv_map_queue(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
+{
+	if(driver && sdk_qos.sdk_qos_diffserv_map_queue_cb)
+		return sdk_qos.sdk_qos_diffserv_map_queue_cb(driver, port->phyport, param->diffserv, param->queue);
+	return NO_SDK;
+}
+
+#ifdef NSM_QOS_CLASS_PRIORITY
+//队列到class的映射
+static int bsp_qos_queue_class(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
+{
+	if(driver && sdk_qos.sdk_qos_queue_map_class_cb)
+		return sdk_qos.sdk_qos_queue_map_class_cb(driver, port->phyport, param->queue, param->class);
+	return NO_SDK;
+}
+
+static int bsp_qos_queue_scheduling(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
+{
+	if(driver && sdk_qos.sdk_qos_class_scheduling_cb)
+		return sdk_qos.sdk_qos_class_scheduling_cb(driver, param->class, param->type);
+	return NO_SDK;
+}
+
+static int bsp_qos_queue_weight(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
+{
+	if(driver && sdk_qos.sdk_qos_class_weight_cb)
+		return sdk_qos.sdk_qos_class_weight_cb(driver, param->class, param->weight);
+	return NO_SDK;
+}
+#endif
+
+//风暴
+static int bsp_qos_storm_mode(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
+{
+	if(driver && sdk_qos.sdk_qos_storm_enable_cb)
+		return sdk_qos.sdk_qos_storm_enable_cb(driver, port->phyport, param->enable, param->mode);
+	return NO_SDK;
+}
+
+static int bsp_qos_storm_rate_limit(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
+{
+	if(driver && sdk_qos.sdk_qos_storm_rate_cb)
+		return sdk_qos.sdk_qos_storm_rate_cb(driver, port->phyport, param->limit, param->burst_size);
+	return NO_SDK;
+}
+
+
+//端口限速
+static int bsp_qos_egress_rate_limit(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
+{
+	if(driver && sdk_qos.sdk_qos_port_egress_rate_cb)
+		return sdk_qos.sdk_qos_port_egress_rate_cb(driver, port->phyport, param->limit, param->burst_size);
+	return NO_SDK;
+}
+
+static int bsp_qos_ingress_rate_limit(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
+{
+	if(driver && sdk_qos.sdk_qos_port_ingress_rate_cb)
+		return sdk_qos.sdk_qos_port_ingress_rate_cb(driver, port->phyport, param->limit, param->burst_size);
+	return NO_SDK;
+}
+
+//CPU
+static int bsp_qos_cpu_rate_limit(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
+{
+	if(driver && sdk_qos.sdk_qos_cpu_rate_cb)
+		return sdk_qos.sdk_qos_cpu_rate_cb(driver, param->limit, param->burst_size);
+	return NO_SDK;
+}
+
+
+
+static hal_ipcsubcmd_callback_t subcmd_table[] = {
+	HAL_CALLBACK_ENTRY(HAL_QOS_NONE, NULL),
+	HAL_CALLBACK_ENTRY(HAL_QOS_EN, bsp_qos_enable),
+	HAL_CALLBACK_ENTRY(HAL_QOS_IPG, bsp_qos_ipg_enable),
+	HAL_CALLBACK_ENTRY(HAL_QOS_BASE_TRUST, bsp_qos_base_mode),
+	HAL_CALLBACK_ENTRY(HAL_QOS_8021Q, bsp_qos_8021q_enable),
+	HAL_CALLBACK_ENTRY(HAL_QOS_DIFFSERV, bsp_qos_diffserv_enable),
+
+	//CLASS
+	//HAL_CALLBACK_ENTRY(HAL_QOS_QUEUE_MAP_CLASS, bsp_qos_queue_class),
+	HAL_CALLBACK_ENTRY(HAL_QOS_CLASS_SCHED, NULL),
+	HAL_CALLBACK_ENTRY(HAL_QOS_CLASS_WEIGHT, NULL),
+
+
+	//INPUT
+	HAL_CALLBACK_ENTRY(HAL_QOS_8021Q_MAP_QUEUE, NULL),
+	HAL_CALLBACK_ENTRY(HAL_QOS_DIFFSERV_MAP_QUEUE, bsp_qos_diffserv_map_queue),
+	HAL_CALLBACK_ENTRY(HAL_QOS_IPPRE_MAP_QUEUE, NULL),
+	HAL_CALLBACK_ENTRY(HAL_QOS_MPLSEXP_MAP_QUEUE, NULL),
+	//HAL_CALLBACK_ENTRY(HAL_QOS_PORT_MAP_QUEUE, bsp_qos_port_map_queue),
+
+
+	//HAL_CALLBACK_ENTRY(HAL_QOS_QUEUE_SCHED, bsp_qos_queue_scheduling),
+	//HAL_CALLBACK_ENTRY(HAL_QOS_QUEUE_WEIGHT, bsp_qos_queue_weight),
+	HAL_CALLBACK_ENTRY(HAL_QOS_QUEUE_RATELIMIT, NULL),
+	HAL_CALLBACK_ENTRY(HAL_QOS_PRI_REMARK, bsp_qos_storm_rate_limit),
+
+	HAL_CALLBACK_ENTRY(HAL_QOS_STORM_RATELIMIT, bsp_qos_storm_mode),
+	HAL_CALLBACK_ENTRY(HAL_QOS_CPU_RATELIMIT, bsp_qos_cpu_rate_limit),
+	HAL_CALLBACK_ENTRY(HAL_QOS_PORT_INRATELIMIT, bsp_qos_ingress_rate_limit),
+	HAL_CALLBACK_ENTRY(HAL_QOS_PORT_OUTRATELIMIT, bsp_qos_egress_rate_limit),
+};
+
+
+
+int bsp_qos_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 subcmd, void *driver)
+{
+	int ret = OK;
+	hal_qos_param_t	param;
+	hal_port_header_t	bspport;
+	hal_ipcmsg_port_get(&client->ipcmsg, &bspport);
+
+	hal_ipcmsg_getl(&client->ipcmsg, &param.enable);
+	hal_ipcmsg_getl(&client->ipcmsg, &param.value);
+	//hal_ipcmsg_get(&client->ipcmsg, &param.mac, NSM_MAC_MAX);
+
+	if(!(subcmd_table[subcmd].cmd_handle))
+	{
+		return NO_SDK;
+	}
+	switch (cmd)
+	{
+	case HAL_MODULE_CMD_SET:         //设置
+	ret = (subcmd_table[subcmd].cmd_handle)(driver, &bspport, &param);
+	break;
+	case HAL_MODULE_CMD_GET:         //获取
+	ret = (subcmd_table[subcmd].cmd_handle)(driver, &bspport, &param);
+	break;
+	case HAL_MODULE_CMD_ADD:         //添加
+	ret = (subcmd_table[subcmd].cmd_handle)(driver, &bspport, &param);
+	break;
+	case HAL_MODULE_CMD_DEL:         //删除
+	ret = (subcmd_table[subcmd].cmd_handle)(driver, &bspport, &param);
+	break;
+    case HAL_MODULE_CMD_DELALL:      //删除所有
+	ret = (subcmd_table[subcmd].cmd_handle)(driver, &bspport, &param);
+	break;
+	default:
+		break;
+	}
+	return ret;
+}

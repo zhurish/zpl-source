@@ -123,11 +123,11 @@ int mosquitto__verify_certificate_hostname(X509 *cert, const char *hostname)
 	int ipv4_ok;
 
 #ifdef WIN32
-	ipv6_ok = InetPton(AF_INET6, hostname, &ipv6_addr);
-	ipv4_ok = InetPton(AF_INET, hostname, &ipv4_addr);
+	ipv6_ok = InetPton(IPSTACK_AF_INET6, hostname, &ipv6_addr);
+	ipv4_ok = InetPton(IPSTACK_AF_INET, hostname, &ipv4_addr);
 #else
-	ipv6_ok = ipstack_inet_pton(AF_INET6, hostname, &ipv6_addr);
-	ipv4_ok = ipstack_inet_pton(AF_INET, hostname, &ipv4_addr);
+	ipv6_ok = ipstack_inet_pton(IPSTACK_AF_INET6, hostname, &ipv6_addr);
+	ipv4_ok = ipstack_inet_pton(IPSTACK_AF_INET, hostname, &ipv4_addr);
 #endif
 
 	san = X509_get_ext_d2i(cert, NID_subject_alt_name, NULL, NULL);

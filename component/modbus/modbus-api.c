@@ -203,7 +203,7 @@ int modbus_start_api()
 			UT_INPUT_REGISTERS_ADDRESS, UT_INPUT_REGISTERS_NB);
 		if (modbus_config->tab_registers == NULL) {
 			fprintf(stderr, "Failed to allocate the mapping: %s\n",
-					modbus_strerror(errno));
+					modbus_strerror(ipstack_errno));
 			modbus_free(modbus_config->ctx);
 			return ERROR;
 		}
@@ -276,9 +276,9 @@ static DWORD WINAPI modbus_main_task (LPVOID *p)
 static int modbus_main_task(void *p)
 #endif
 {
-    int s = -1;
+    zpl_socket_t s;
     int rc = 0;
-	host_config_load_waitting();
+	host_waitting_loadconfig();
 	while (modbus_config && modbus_config->running == zpl_false)
 #ifdef OS_WIN32
 		Sleep(1000);
@@ -305,7 +305,7 @@ static int modbus_main_task(void *p)
 		{
 			rc = modbus_connect(modbus_config->ctx);
 			if (rc == -1) {
-				fprintf(stderr, "Unable to connect %s\n", modbus_strerror(errno));
+				fprintf(stderr, "Unable to connect %s\n", modbus_strerror(ipstack_errno));
 				modbus_free(modbus_config->ctx);
 				modbus_config->waiting = zpl_false;
 				return -1;
@@ -313,7 +313,8 @@ static int modbus_main_task(void *p)
 		}
 		while (modbus_config->running) 
 		{
-			if(modbus_get_socket(modbus_config->ctx) <= 0)
+			s = modbus_get_socket(modbus_config->ctx);
+			if(ipstack_invalid(s))
 			{
 				if(modbus_config->mode == MODBUS_MODE_SERVER || modbus_config->mode == MODBUS_MODE_SLAVE)
 				{
@@ -327,7 +328,7 @@ static int modbus_main_task(void *p)
 				{
 					rc = modbus_connect(modbus_config->ctx);
 					if (rc == -1) {
-						fprintf(stderr, "Unable to connect %s\n", modbus_strerror(errno));
+						fprintf(stderr, "Unable to connect %s\n", modbus_strerror(ipstack_errno));
 						modbus_free(modbus_config->ctx);
 						modbus_config->waiting = zpl_false;
 						return -1;
@@ -342,7 +343,7 @@ static int modbus_main_task(void *p)
 
 			/* The connection is not closed on errors which require on reply such as
 			bad CRC in RTU. */
-			if (rc == -1 && errno != EMBBADCRC) {
+			if (rc == -1 && ipstack_errno != EMBBADCRC) {
 				modbus_close(modbus_config->ctx);
 				continue;
 			}
@@ -356,11 +357,11 @@ static int modbus_main_task(void *p)
 		//modbus_close(modbus_config->ctx);
 		if (modbus_config->type == MODBUS_TYPE_TCP || modbus_config->type == MODBUS_TYPE_TCP_PI) 
 		{
-			if (s != -1) {
+			if (!ipstack_invalid(s)) {
 		#ifdef OS_WIN32
 				closesocket(s);
 		#else
-				close(s);
+				ipstack_close(s);
 		#endif
 			}
 		}
@@ -403,7 +404,10 @@ int modbus_module_task_init()
 	               0, modbus_main_task, modbus_config, OS_TASK_DEFAULT_STACK*4);
 #endif
 	if(modbus_config->taskid > 0)
+	{
+		module_setup_task(MODULE_MODBUS, modbus_config->taskid);
 		return OK;
+	}
 	return ERROR;
 }
 
@@ -421,3 +425,19 @@ int modbus_module_task_exit()
 	}
 	return OK;
 }
+
+struct module_list module_list_modbus = 
+{ 
+	.module=MODULE_MODBUS, 
+	.name="MODBUS", 
+	.module_init=modbus_module_init, 
+	.module_exit=modbus_module_exit, 
+	.module_task_init=modbus_module_task_init, 
+	.module_task_exit=modbus_module_task_exit, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.flags = ZPL_MODULE_NEED_INIT,
+	.taskid=0,
+};

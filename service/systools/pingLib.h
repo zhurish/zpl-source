@@ -79,7 +79,7 @@ extern "C" {
 
 typedef struct pingStat                         /* PING_STAT */
     {
-    int                 pingFd;                 /* socket file descriptor */
+    zpl_socket_t                 pingFd;                 /* ipstack_socket file descriptor */
     char                toHostName [MAXHOSTNAMELEN + 2];/* name to ping */
     char                toInetName [INET_ADDR_LEN];/* IP addr to ping */
     ifindex_t			ifindex;
@@ -89,7 +89,7 @@ typedef struct pingStat                         /* PING_STAT */
     struct timeval		*pBufTime;               /* ptr to time */
     zpl_uint16				rxmaxlen;
     zpl_uint16             dataLen;                /* size of data portion */
-    int                 numPacket;              /* total # of packets to send */
+    int                 numPacket;              /* total # of packets to ipstack_send */
     zpl_uint32             numTx;                  /* number of packets sent */
     zpl_uint32             numRx;                  /* number of packets received */
     zpl_uint32             idRx;                   /* id of Rx task */

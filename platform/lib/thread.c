@@ -37,7 +37,7 @@ struct thread_master_list
 	zpl_uint32 count;
 };
 
-static struct thread_master *_m_thread_current = NULL;
+//static struct thread_master *_m_thread_current = NULL;
 static struct thread_master_list _master_thread_list;
 #else
 struct thread_master *master_thread[MODULE_MAX];
@@ -590,7 +590,7 @@ funcname_thread_add_read_write(zpl_uint32 dir, struct thread_master *m,
 
 	if (FD_ISSET(fd._fd, fdset))
 	{
-		zlog(MODULE_DEFAULT, LOG_WARNING, "There is already %s fd [%d]", (dir = THREAD_READ) ? "read" : "write", fd);
+		zlog(MODULE_DEFAULT, ZLOG_LEVEL_WARNING, "There is already %s fd [%d]", (dir = THREAD_READ) ? "read" : "write", fd);
 		if (m->mutex)
 			os_mutex_unlock(m->mutex);
 		return NULL;
@@ -881,14 +881,6 @@ thread_timer_wait(struct pqueue *queue, struct timeval *timer_val)
 	return NULL;
 }
 
-static struct thread *
-thread_run(struct thread_master *m, struct thread *thread, struct thread *fetch)
-{
-	*fetch = *thread;
-	thread->type = THREAD_UNUSED;
-	thread_add_unuse(m, thread);
-	return fetch;
-}
 
 static zpl_uint32 thread_process_fds_helper(struct thread_master *m,
 											struct thread_list *list, thread_fd_set *fdset)
@@ -1031,10 +1023,10 @@ int thread_wait_quit(struct thread_master *m)
 
 /* Fetch next ready thread. */
 struct thread *
-thread_fetch(struct thread_master *m, struct thread *fetch)
+thread_fetch(struct thread_master *m)
 {
 	zpl_uint32 num = 0;
-	struct thread *thread;
+	struct thread *thread = NULL;
 	thread_fd_set readfd;
 	thread_fd_set writefd;
 	thread_fd_set exceptfd;
@@ -1054,11 +1046,10 @@ thread_fetch(struct thread_master *m, struct thread *fetch)
 		if (m->mutex)
 			os_mutex_unlock(m->mutex);
 		if (thread != NULL)
-			return thread_run(m, thread, fetch);
+			return thread;
 
 		if (m->bquit)
 		{
-			fetch = NULL;
 			m->bquit = zpl_false;
 			return NULL;
 		}
@@ -1114,9 +1105,9 @@ thread_fetch(struct thread_master *m, struct thread *fetch)
 		/* Signals should get quick treatment */
 		if (num < 0)
 		{
-			if (errno == EINTR /*  || m->max_fd == 0*/)
+			if (ipstack_errno == IPSTACK_ERRNO_EINTR /*  || m->max_fd == 0*/)
 				continue; /* signal received - process it */
-			zlog_warn(MODULE_DEFAULT, "select() error: %s", safe_strerror(errno));
+			zlog_warn(MODULE_DEFAULT, "select() error: %s", ipstack_strerror(ipstack_errno));
 			return NULL;
 		}
 		if (m->mutex)
@@ -1139,23 +1130,20 @@ thread_fetch(struct thread_master *m, struct thread *fetch)
 			os_mutex_unlock(m->mutex);
 		if (thread != NULL)
 			// if ((thread = thread_trim_head (&m->ready)) != NULL)
-			return thread_run(m, thread, fetch);
+			return thread;
 	}
 }
 
 struct thread *
-thread_fetch_main(struct thread_master *m)
+thread_mainloop(struct thread_master *m)
 {
-#if 1
-	struct thread thread;
 	struct thread *rethread = NULL;
 	while (1)
 	{
-		rethread = thread_fetch((struct thread_master *)m, &thread);
+		rethread = thread_fetch((struct thread_master *)m);
 		if (rethread)
 		{
-			thread_call(&thread);
-			return rethread;
+			thread_call(rethread);
 		}
 		else
 			return NULL;
@@ -1166,144 +1154,6 @@ thread_fetch_main(struct thread_master *m)
 		}
 	}
 	return NULL;
-#else
-	zpl_uint32 num = 0;
-	struct thread *thread = NULL;
-	thread_fd_set readfd;
-	thread_fd_set writefd;
-	thread_fd_set exceptfd;
-	struct timeval timer_val = {.tv_sec = 1, .tv_usec = TIMER_SECOND_MICRO};
-	struct timeval timer_val_bg;
-	struct timeval *timer_wait = &timer_val;
-	struct timeval *timer_wait_bg;
-
-	/*
-	 extern void * vty_thread_master ();
-	 m->ptid = os_task_pthread_self ();
-	 m->taskId = os_task_id_self ();
-	 */
-
-	while (1)
-	{
-		if (m->mutex)
-			os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
-		thread = thread_trim_head(&m->ready);
-		if (thread != NULL)
-		{
-			if (m->mutex)
-				os_mutex_unlock(m->mutex);
-			thread_call(thread);
-			if (m->mutex)
-				os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
-			thread->type = THREAD_UNUSED;
-			thread_add_unuse(m, thread);
-		}
-		if (m->mutex)
-			os_mutex_unlock(m->mutex);
-		if (thread != NULL)
-			return thread;
-
-		if (m->bquit)
-		{
-			m->bquit = zpl_false;
-			return NULL;
-		}
-		/* To be fair to all kinds of threads, and avoid starvation, we
-		 * need to be careful to consider all thread types for scheduling
-		 * in each quanta. I.e. we should not return early from here on.
-		 */
-		if (m->mutex)
-			os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
-		/* Normal event are the next highest priority.  */
-		thread_process(&m->event);
-		/*		if (m->mutex)
-					os_mutex_unlock(m->mutex);*/
-		/* Structure copy.  */
-		readfd = fd_copy_fd_set(m->readfd);
-		writefd = fd_copy_fd_set(m->writefd);
-		exceptfd = fd_copy_fd_set(m->exceptfd);
-
-		/* Calculate select wait timer if nothing else to do */
-		if (m->ready.count == 0)
-		{
-			os_get_monotonic(&m->relative_time);
-			timer_wait = thread_timer_wait(m->timer, &timer_val);
-			timer_wait_bg = thread_timer_wait(m->background, &timer_val_bg);
-
-			if (timer_wait_bg && (!timer_wait || (os_timeval_cmp(*timer_wait, *timer_wait_bg) > 0)))
-				timer_wait = timer_wait_bg;
-		}
-		if (pqueue_empty(m->timer) && pqueue_empty(m->background))
-			timer_wait = NULL;
-
-		if (timer_wait == NULL)
-		{
-			timer_val.tv_sec = 1;
-			timer_val.tv_usec = TIMER_SECOND_MICRO;
-			timer_wait = &timer_val;
-		}
-		if (timer_wait && (timer_wait->tv_sec = 0) && (timer_wait->tv_usec == 0))
-		{
-			timer_val.tv_sec = 1;
-			timer_val.tv_usec = TIMER_SECOND_MICRO;
-			timer_wait = &timer_val;
-		}
-		if (m->mutex)
-			os_mutex_unlock(m->mutex);
-
-		// printf("%s: m->max_fd = %d background.size=%d timer_wait->tv_sec=%d -- %s\r\n", __func__, m->max_fd,
-		//		m->background->size, timer_wait->tv_sec, module2name(m->module));
-		/*      if(m->max_fd < 1)
-		 {
-		 sleep(1);
-		 continue;
-		 }*/
-		// timer_wait->tv_sec >>= 2;
-		// timer_wait->tv_usec >>= 2;
-		// num = select (m->max_fd + 1, &readfd, &writefd, &exceptfd, timer_wait);
-		// if(num <= 0)
-		num = fd_select(m->max_fd + 1, &readfd, &writefd, &exceptfd, timer_wait);
-
-		// printf("%s: fd_select-----%s\r\n", __func__, module2name(m->module));
-		//      num = fd_select (FD_SETSIZE, &readfd, &writefd, &exceptfd, timer_wait);
-
-		/* Signals should get quick treatment */
-		if (num < 0)
-		{
-			if (errno == EINTR /*  || m->max_fd == 0*/)
-				continue; /* signal received - process it */
-			zlog_warn(MODULE_DEFAULT, "select() error: %s", safe_strerror(errno));
-			return NULL;
-		}
-		if (m->mutex)
-			os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
-		os_get_monotonic(&m->relative_time);
-		thread_timer_process(m->timer, &m->relative_time);
-
-		/* Got IO, process it */
-		if (num > 0)
-			thread_process_fds(m, &readfd, &writefd, num);
-
-		/* Background timer/events, lowest priority */
-		thread_timer_process(m->background, &m->relative_time);
-
-		thread = thread_trim_head(&m->ready);
-		if (thread != NULL)
-		{
-			if (m->mutex)
-				os_mutex_unlock(m->mutex);
-			thread_call(thread);
-			if (m->mutex)
-				os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
-			thread->type = THREAD_UNUSED;
-			thread_add_unuse(m, thread);
-		}
-		if (m->mutex)
-			os_mutex_unlock(m->mutex);
-		if (thread != NULL)
-			return thread;
-	}
-#endif
 }
 
 zpl_ulong thread_consumed_time(struct timeval *now, struct timeval *start,
@@ -1334,24 +1184,7 @@ void thread_getrusage(struct timeval *real)
 	os_get_monotonic(real);
 }
 
-struct thread *thread_current_get()
-{
-#ifdef THREAD_MASTER_LIST
-	if (_m_thread_current)
-		return _m_thread_current;
-	return NULL;
-#else
-	zpl_uint32 module = task_module_self();
-	return master_thread[module]->thread_current;
-	/*	zpl_uint32 i = 0;
-	 for(i = 0; i < MODULE_MAX; i++ )
-	 {
-	 if(master_thread[i] && master_thread[i]->ptid == os_task_pthread_self() )
-	 return master_thread[i];
-	 }
-	 return NULL;*/
-#endif
-}
+
 
 static void *thread_cpu_get_alloc(struct thread_master *m,
 								  struct cpu_thread_history *cpu)
@@ -1411,7 +1244,7 @@ void thread_call(struct thread *thread)
 		return;
 	if (thread && thread->add_type == THREAD_EVENT)
 		; //	  OS_DEBUG("%s:%s\r\n",__func__,thread->funcname);
-	if (!thread->hist)
+	if (!thread->hist && thread->master)
 	{
 		struct cpu_thread_history tmp;
 
@@ -1424,15 +1257,17 @@ void thread_call(struct thread *thread)
 	thread_getrusage(&before);
 	thread->real = before;
 #ifdef THREAD_MASTER_LIST
-	_m_thread_current = thread;
+	//_m_thread_current = thread;
 #endif
 	zpl_backtrace_symb_set(thread->funcname, thread->schedfrom, thread->schedfrom_line);
-	thread->master->thread_current = thread;
+	if(thread->master)
+		thread->master->thread_current = thread;
 	(*thread->func)(thread);
 	zpl_backtrace_symb_set(NULL, NULL, 0);
-	thread->master->thread_current = NULL;
+	if(thread->master)
+		thread->master->thread_current = NULL;
 #ifdef THREAD_MASTER_LIST
-	_m_thread_current = NULL;
+	//_m_thread_current = NULL;
 #endif
 	thread_getrusage(&after);
 
@@ -1460,7 +1295,10 @@ void thread_call(struct thread *thread)
 	}
 #endif /* CONSUMED_TIME_CHECK */
 	if (thread && thread->master && thread->add_type != THREAD_EXECUTE)
-		; // thread_add_unuse(thread->master, thread);
+	{
+		thread->type = THREAD_UNUSED;
+		thread_add_unuse(thread->master, thread);
+	}
 }
 
 /* Ready thread */
@@ -1489,7 +1327,7 @@ funcname_thread_execute(struct thread_master *m, int (*func)(struct thread *),
 
 	memset(&dummy, 0, sizeof(struct thread));
 	// OS_DEBUG("%s:M=%s",__func__,m? "FULL":"NULL");
-	dummy.master = m;
+	//dummy.master = m;
 	dummy.type = THREAD_EVENT;
 	dummy.add_type = THREAD_EXECUTE;
 	// dummy.master = NULL;

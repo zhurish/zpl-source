@@ -153,7 +153,7 @@ ssize_t FAST_FUNC safe_read(zpl_socket_t fd, void *buf, zpl_uint32 count)
 
 	do {
 		n = ipstack_read(fd, buf, count);
-	} while (n < 0 && errno == EINTR);
+	} while (n < 0 && ipstack_errno == EINTR);
 
 	return n;
 }
@@ -200,13 +200,13 @@ ssize_t FAST_FUNC safe_write(int fd, const void *buf, size_t count)
 
 	for (;;) {
 		n = ipstack_write(fd, buf, count);
-		if (n >= 0 || errno != EINTR)
+		if (n >= 0 || ipstack_errno != EINTR)
 			break;
-		/* Some callers set errno=0, are upset when they see EINTR.
+		/* Some callers set ipstack_errno=0, are upset when they see EINTR.
 		 * Returning EINTR is wrong since we retry write(),
 		 * the "error" was transient.
 		 */
-		errno = 0;
+		ipstack_errno = 0;
 		/* repeat the write() */
 	}
 
@@ -267,9 +267,9 @@ int FAST_FUNC safe_poll(zpl_socket_t ufds, int maxfd, zpl_uint32 timeout)
 			return n;
 		if (timeout > 0)
 			timeout--;
-		if (errno == EINTR)
+		if (ipstack_errno == EINTR)
 			continue;
-		if (errno == ENOMEM)
+		if (ipstack_errno == ENOMEM)
 			continue;
 		return n;
 	}
@@ -282,11 +282,11 @@ int FAST_FUNC safe_poll(zpl_socket_t ufds, int maxfd, zpl_uint32 timeout)
 		if (timeout > 0)
 			timeout--;
 		/* E.g. strace causes poll to return this */
-		if (errno == EINTR)
+		if (ipstack_errno == EINTR)
 			continue;
 		/* Kernel is very low on memory. Retry. */
 		/* I doubt many callers would handle this correctly! */
-		if (errno == ENOMEM)
+		if (ipstack_errno == ENOMEM)
 			continue;
 		//bb_perror_msg("poll");
 		return n;
@@ -295,8 +295,8 @@ int FAST_FUNC safe_poll(zpl_socket_t ufds, int maxfd, zpl_uint32 timeout)
 }
 
 
-#if defined(IPV6_PKTINFO) && !defined(IPV6_RECVPKTINFO)
-# define IPV6_RECVPKTINFO IPV6_PKTINFO
+#if defined(IPSTACK_IPV6_PKTINFO) && !defined(IPSTACK_IPV6_RECVPKTINFO)
+# define IPSTACK_IPV6_RECVPKTINFO IPSTACK_IPV6_PKTINFO
 #endif
 
 
@@ -333,7 +333,7 @@ char* FAST_FUNC bin2hex(char *p, const char *cp, zpl_uint32 count)
 /* Convert "[x]x[:][x]x[:][x]x[:][x]x" hex string to binary, no more than COUNT bytes */
 char* FAST_FUNC hex2bin(char *dst, const char *str, zpl_uint32 count)
 {
-	errno = EINVAL;
+	ipstack_errno = EINVAL;
 	while (*str && count) {
 		zpl_uint8 val;
 		zpl_uint8 c = *str++;
@@ -361,7 +361,7 @@ char* FAST_FUNC hex2bin(char *dst, const char *str, zpl_uint32 count)
 			str++;
 		count--;
 	}
-	errno = (*str ? ERANGE : 0);
+	ipstack_errno = (*str ? ERANGE : 0);
 	return dst;
 }
 
@@ -379,7 +379,7 @@ static int dhcp_client_lease_set_kernel(client_interface_t *ifter, client_lease_
 	int ret = 0;
 	struct interface * ifp = if_lookup_by_index (ifter->ifindex);
 	struct prefix cp;
-	struct in_addr gate;
+	struct ipstack_in_addr gate;
 	struct connected *ifc;
 	char tmp[128], tmp1[128];
 	memset(tmp, 0, sizeof(tmp));
@@ -405,7 +405,7 @@ static int dhcp_client_lease_set_kernel(client_interface_t *ifter, client_lease_
 
 		prefix_copy ((struct prefix *)p1, (struct prefix *)&cp);
 		ifc->address = (struct prefix *) p1;
-		if(p1->family == AF_INET)
+		if(p1->family == IPSTACK_AF_INET)
 		{
 			/* Broadcast. */
 			if (p1->prefixlen <= IPV4_MAX_PREFIXLEN - 2)
@@ -435,7 +435,7 @@ static int dhcp_client_lease_set_kernel(client_interface_t *ifter, client_lease_
 		ip_dns_opt_t dnsopt;
 		memset(&dnscp, 0, sizeof(struct prefix));
 		memset(&dnsopt, 0, sizeof(ip_dns_opt_t));
-		dnscp.family = AF_INET;
+		dnscp.family = IPSTACK_AF_INET;
 		dnscp.prefixlen = IPV4_MAX_PREFIXLEN;
 		dnscp.u.prefix4.s_addr = lease->lease_dns1;
 		dnsopt.ifindex = ifter->ifindex;
@@ -452,7 +452,7 @@ static int dhcp_client_lease_set_kernel(client_interface_t *ifter, client_lease_
 		{
 			memset(&dnscp, 0, sizeof(struct prefix));
 			memset(&dnsopt, 0, sizeof(ip_dns_opt_t));
-			dnscp.family = AF_INET;
+			dnscp.family = IPSTACK_AF_INET;
 			dnscp.prefixlen = IPV4_MAX_PREFIXLEN;
 			dnscp.u.prefix4.s_addr = lease->lease_dns2;
 			dnsopt.ifindex = ifter->ifindex;
@@ -472,7 +472,7 @@ static int dhcp_client_lease_set_kernel(client_interface_t *ifter, client_lease_
 	if(lease->lease_gateway)
 	{
 		memset(&cp, 0, sizeof(struct prefix));
-		cp.family = AF_INET;
+		cp.family = IPSTACK_AF_INET;
 		cp.prefixlen = 0;
 		cp.u.prefix4.s_addr = 0;
 		gate.s_addr = lease->lease_gateway;
@@ -503,14 +503,14 @@ static int dhcp_client_lease_unset_kernel(client_interface_t *ifter, client_leas
 	struct interface * ifp = if_lookup_by_index (ifter->ifindex);
 	struct prefix cp;
 	struct connected *ifc;
-	struct in_addr gate;
+	struct ipstack_in_addr gate;
 	char tmp[128], tmp1[128];
 	memset(tmp, 0, sizeof(tmp));
 	memset(tmp1, 0, sizeof(tmp1));
 	if(lease->lease_gateway)
 	{
 		memset(&cp, 0, sizeof(struct prefix));
-		cp.family = AF_INET;
+		cp.family = IPSTACK_AF_INET;
 		cp.prefixlen = 0;
 		cp.u.prefix4.s_addr = 0;
 		gate.s_addr = lease->lease_gateway;
@@ -536,7 +536,7 @@ static int dhcp_client_lease_unset_kernel(client_interface_t *ifter, client_leas
 		ip_dns_opt_t dnsopt;
 		memset(&dnscp, 0, sizeof(struct prefix));
 		memset(&dnsopt, 0, sizeof(ip_dns_opt_t));
-		dnscp.family = AF_INET;
+		dnscp.family = IPSTACK_AF_INET;
 		dnscp.prefixlen = IPV4_MAX_PREFIXLEN;
 		dnscp.u.prefix4.s_addr = lease->lease_dns1;
 		dnsopt.ifindex = ifter->ifindex;
@@ -551,7 +551,7 @@ static int dhcp_client_lease_unset_kernel(client_interface_t *ifter, client_leas
 		{
 			memset(&dnscp, 0, sizeof(struct prefix));
 			memset(&dnsopt, 0, sizeof(ip_dns_opt_t));
-			dnscp.family = AF_INET;
+			dnscp.family = IPSTACK_AF_INET;
 			dnscp.prefixlen = IPV4_MAX_PREFIXLEN;
 			dnscp.u.prefix4.s_addr = lease->lease_dns2;
 			dnsopt.ifindex = ifter->ifindex;
@@ -582,7 +582,7 @@ static int dhcp_client_lease_unset_kernel(client_interface_t *ifter, client_leas
 
 			prefix_copy ((struct prefix *)p1, (struct prefix *)&cp);
 			ifc->address = (struct prefix *) p1;
-			if(p1->family == AF_INET)
+			if(p1->family == IPSTACK_AF_INET)
 			{
 				/* Broadcast. */
 				if (p1->prefixlen <= IPV4_MAX_PREFIXLEN - 2)
@@ -951,7 +951,7 @@ void udhcp_run_script(void *p, const char *name)
 	pid = child_process_create();
 	if(pid < 0)
 	{
-		  zlog_warn(MODULE_DEFAULT, "Can't create child process (%s), continuing", safe_strerror(errno));
+		  zlog_warn(MODULE_DEFAULT, "Can't create child process (%s), continuing", ipstack_strerror(ipstack_errno));
 		  return ;
 	}
 	else if(pid == 0)
@@ -976,11 +976,11 @@ int nsm_pal_interface_unset_address (struct interface *ifp, struct prefix *cp, i
 extern int nsm_ip_dns_add(struct prefix *address, ip_dns_opt_t *, zpl_bool	secondly, dns_class_t type);
 extern int nsm_ip_dns_del(struct prefix *address, dns_class_t type);
 extern int rib_add_ipv4 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
-			 struct in_addr *gate, struct in_addr *src,
+			 struct ipstack_in_addr *gate, struct ipstack_in_addr *src,
 			 ifindex_t ifindex, vrf_id_t vrf_id, int table_id,
 			 zpl_uint32, zpl_uint32, zpl_uchar, safi_t);
 
 extern int rib_delete_ipv4 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
-		            struct in_addr *gate, ifindex_t ifindex,
+		            struct ipstack_in_addr *gate, ifindex_t ifindex,
 		            vrf_id_t, safi_t safi);
 */

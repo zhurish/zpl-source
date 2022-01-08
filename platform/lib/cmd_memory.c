@@ -63,8 +63,6 @@ ALIAS_HIDDEN(show_system_clock,
 void
 cmd_memory_init (void)
 {
-/*  install_element (RESTRICTED_NODE, &show_memory_cmd);*/
-
   install_element (VIEW_NODE, CMD_VIEW_LEVEL, &show_memory_cmd);
   install_element (VIEW_NODE, CMD_VIEW_LEVEL, &show_system_clock_cmd);
   install_element (VIEW_NODE, CMD_VIEW_LEVEL, &show_system_clock_detal_cmd);

@@ -26,7 +26,7 @@
 #include "lib_include.h"
 
 
-
+#ifdef ZPL_IPCOM_STACK_MODULE
 #if defined(__APPLE__)
 #include <mach/mach.h>
 #include <mach/mach_time.h>
@@ -41,7 +41,7 @@ struct eloop_master_list
 	zpl_uint32 count;
 };
 
-static struct eloop_master *_m_eloop_current = NULL;
+//static struct eloop_master *_m_eloop_current = NULL;
 static struct eloop_master_list _master_eloop_list;
 #else
 struct eloop_master * master_eloop[MODULE_MAX];
@@ -498,7 +498,7 @@ funcname_eloop_add_read_write(zpl_uint32 dir, struct eloop_master *m,
 
 	if (IPSTACK_FD_ISSET(fd._fd, fdset))
 	{
-		zlog(MODULE_DEFAULT, LOG_WARNING, "There is already %s fd [%d]", (dir =
+		zlog(MODULE_DEFAULT, ZLOG_LEVEL_WARNINGWARNING, "There is already %s fd [%d]", (dir =
 				ELOOP_READ) ? "read" : "write", fd);
 		if (m->mutex)
 			os_mutex_unlock(m->mutex);
@@ -840,18 +840,7 @@ eloop_timer_wait(struct eloop_list *list, struct timeval *timer_val)
 	 return NULL;*/
 }
 
-static struct eloop *
-eloop_run(struct eloop_master *m, struct eloop *eloop, struct eloop *fetch)
-{
-	if (m->mutex)
-		os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
-	*fetch = *eloop;
-	eloop->type = ELOOP_UNUSED;
-	eloop_add_unuse(m, eloop);
-	if (m->mutex)
-		os_mutex_unlock(m->mutex);
-	return fetch;
-}
+
 
 static zpl_uint32 eloop_process_fds_helper(struct eloop_master *m, struct eloop_list *list,
 		eloop_fd_set *fdset)
@@ -1005,7 +994,7 @@ int eloop_wait_quit (struct eloop_master *m)
 }
 /* Fetch next ready eloop. */
 struct eloop *
-eloop_fetch(struct eloop_master *m, struct eloop *fetch)
+eloop_fetch(struct eloop_master *m)
 {
 	struct eloop *eloop;
 	eloop_fd_set readfd;
@@ -1029,11 +1018,10 @@ eloop_fetch(struct eloop_master *m, struct eloop *fetch)
 		if (m->mutex)
 			os_mutex_unlock(m->mutex);
 		if (eloop != NULL)
-			return eloop_run(m, eloop, fetch);
+			return eloop;
 
 		if(m->bquit)
 		{
-			fetch = NULL;
 			m->bquit = zpl_false;
 			return NULL;
 		}
@@ -1089,15 +1077,15 @@ eloop_fetch(struct eloop_master *m, struct eloop *fetch)
 */
 		if (m->mutex)
 			os_mutex_unlock(m->mutex);
-		errno = 0;
+		ipstack_errno = 0;
 		num = fd_select(m->max_fd + 1, &readfd, &writefd, &exceptfd, timer_wait);
 		/* Signals should get quick treatment */
 		if (num < 0)
 		{
-			if (errno == EINTR/* || m->max_fd == 0*/)
+			if (ipstack_errno == IPSTACK_ERRNO_EINTR/* || m->max_fd == 0*/)
 				continue; /* signal received - process it */
-			printf("select(max_fd=%d) error: %s\r\n", m->max_fd, safe_strerror(errno));
-			zlog_warn(MODULE_DEFAULT, "select() error: %s", safe_strerror(errno));
+			printf("select(max_fd=%d) error: %s\r\n", m->max_fd, ipstack_strerror(ipstack_errno));
+			zlog_warn(MODULE_DEFAULT, "select() error: %s", ipstack_strerror(ipstack_errno));
 			return NULL;
 		}
 		if (m->mutex)
@@ -1120,12 +1108,12 @@ eloop_fetch(struct eloop_master *m, struct eloop *fetch)
 			os_mutex_unlock(m->mutex);
 		if (eloop != NULL)
 			//if ((eloop = eloop_trim_head (&m->ready)) != NULL)
-			return eloop_run(m, eloop, fetch);
+			return eloop;
 	}
 }
 
 struct eloop *
-eloop_fetch_main(struct eloop_master *m)
+eloop_mainloop(struct eloop_master *m)
 {
 	struct eloop *eloop;
 	eloop_fd_set readfd;
@@ -1135,11 +1123,6 @@ eloop_fetch_main(struct eloop_master *m)
 	struct timeval timer_val_bg;
 	struct timeval *timer_wait = &timer_val;
 	zpl_uint32 num = 0;
-	//struct timeval *timer_wait_bg;
-
-	//extern void * vty_eloop_master ();
-	//m->ptid = os_task_pthread_self ();
-	//m->taskId = os_task_id_self ();
 
 	while (1)
 	{
@@ -1153,8 +1136,8 @@ eloop_fetch_main(struct eloop_master *m)
 			eloop_call(eloop);
 			if (m->mutex)
 				os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
-			eloop->type = ELOOP_UNUSED;
-			eloop_add_unuse(m, eloop);
+			//eloop->type = ELOOP_UNUSED;
+			//eloop_add_unuse(m, eloop);
 		}
 		if (m->mutex)
 			os_mutex_unlock(m->mutex);
@@ -1212,15 +1195,15 @@ eloop_fetch_main(struct eloop_master *m)
 		if (m->mutex)
 			os_mutex_unlock(m->mutex);
 
-		errno = 0;
+		ipstack_errno = 0;
 		num = fd_select(m->max_fd + 1, &readfd, &writefd, &exceptfd, timer_wait);
 		/* Signals should get quick treatment */
 		if (num < 0)
 		{
-			if (errno == EINTR/* || m->max_fd == 0*/)
+			if (ipstack_errno == IPSTACK_ERRNO_EINTR/* || m->max_fd == 0*/)
 				continue; /* signal received - process it */
-			printf("select(max_fd=%d) error: %s\r\n", m->max_fd, safe_strerror(errno));
-			zlog_warn(MODULE_DEFAULT, "select() error: %s", safe_strerror(errno));
+			printf("select(max_fd=%d) error: %s\r\n", m->max_fd, ipstack_strerror(ipstack_errno));
+			zlog_warn(MODULE_DEFAULT, "select() error: %s", ipstack_strerror(ipstack_errno));
 			return NULL;
 		}
 		if (m->mutex)
@@ -1240,8 +1223,8 @@ eloop_fetch_main(struct eloop_master *m)
 			eloop_call(eloop);
 			if (m->mutex)
 				os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
-			eloop->type = ELOOP_UNUSED;
-			eloop_add_unuse(m, eloop);
+			//eloop->type = ELOOP_UNUSED;
+			//eloop_add_unuse(m, eloop);
 		}
 		if (m->mutex)
 			os_mutex_unlock(m->mutex);
@@ -1279,25 +1262,6 @@ void eloop_getrusage(struct timeval *real)
 	os_get_monotonic(real);
 }
 
-struct eloop *eloop_current_get()
-{
-#ifdef THREAD_MASTER_LIST
-	if (_m_eloop_current)
-		return _m_eloop_current;
-	return NULL;
-#else
-	zpl_uint32 module = task_module_self();
-	return master_eloop[module]->eloop_current;
-	/*	zpl_uint32 i = 0;
-	 for(i = 0; i < MODULE_MAX; i++ )
-	 {
-	 if(master_eloop[i] && master_eloop[i]->ptid == os_task_pthread_self() )
-	 return master_eloop[i];
-	 }
-	 return NULL;
-	 */
-#endif 
-}
 
 static void * eloop_cpu_get_alloc(struct eloop_master *m,
 		struct cpu_eloop_history *cpu)
@@ -1357,7 +1321,7 @@ void eloop_call(struct eloop *eloop)
 		 return;
 	if (eloop && eloop->add_type == ELOOP_EVENT)
 		;  //	  OS_DEBUG("%s:%s\r\n",__func__,eloop->funcname);
-	if (!eloop->hist)
+	if (!eloop->hist && eloop->master)
 	{
 		struct cpu_eloop_history tmp;
 
@@ -1371,15 +1335,17 @@ void eloop_call(struct eloop *eloop)
 	eloop_getrusage(&before);
 	eloop->real = before;
 #ifdef THREAD_MASTER_LIST
-	_m_eloop_current = eloop;
+	//_m_eloop_current = eloop;
 #endif
 	zpl_backtrace_symb_set(eloop->funcname, eloop->schedfrom, eloop->schedfrom_line);
-	eloop->master->eloop_current = eloop;
+	if(eloop->master)
+		eloop->master->eloop_current = eloop;
 	(*eloop->func)(eloop);
 	zpl_backtrace_symb_set(NULL, NULL, 0);
-	eloop->master->eloop_current = NULL;
+	if(eloop->master)
+		eloop->master->eloop_current = NULL;
 #ifdef THREAD_MASTER_LIST
-	_m_eloop_current = NULL;
+	//_m_eloop_current = NULL;
 #endif
 	eloop_getrusage(&after);
 
@@ -1406,6 +1372,11 @@ void eloop_call(struct eloop *eloop)
 				cputime / 1000);*/
 	}
 #endif /* CONSUMED_TIME_CHECK */
+	if (eloop && eloop->master && eloop->add_type != ELOOP_EXECUTE)
+	{
+		eloop->type = THREAD_UNUSED;
+		eloop_add_unuse(eloop->master, eloop);
+	}
 }
 
 /* Ready eloop */
@@ -2017,3 +1988,4 @@ int cmd_os_eloop_init()
 	return 0;
 }
 #endif
+#endif /* ZPL_IPCOM_STACK_MODULE */

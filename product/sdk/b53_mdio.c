@@ -31,7 +31,7 @@ static int __mdio_read(struct b53125_device *dev, int addr, u32 regnum)
 	data.len = 2;
 	if(ioctl(dev->fd, B53_IO_R, &data) == 0)
 		return data.value;
-	printf("==============%s\r\n", strerror(errno));
+	printf("==============%s\r\n", strerror(ipstack_errno));
 /*	if(read(dev->fd, &data, sizeof(struct mido_data_b53)) > 0)
 		return data.value;*/
 	return 0;
@@ -46,7 +46,7 @@ static int __mdio_write(struct b53125_device *dev, int addr, u32 regnum, u16 val
 	data.value = val;
 	if(ioctl(dev->fd, B53_IO_W, &data) == 0)
 		return 0;
-	printf("==============%s\r\n", strerror(errno));
+	printf("==============%s\r\n", strerror(ipstack_errno));
 /*	if(write(dev->fd, &data, sizeof(struct mido_data_b53)) > 0)
 		return 0;*/
 	return 1;
@@ -54,14 +54,14 @@ static int __mdio_write(struct b53125_device *dev, int addr, u32 regnum, u16 val
 #else
 static int __mdio_read(struct b53125_device *dev, int addr, u32 regnum)
 {
-	struct ifreq ifr;
+	struct ipstack_ifreq ifr;
 	struct mii_ioctl_data mii_val;
 	memset(&ifr, 0, sizeof(ifr));
 	strncpy(ifr.ifr_name, "eth0", sizeof(ifr.ifr_name)-1);
 	ifr.ifr_data = &mii_val;
 	if(ioctl(dev->fd, SIOCGMIIPHY, &ifr) == -1)
 	{
-		printf("==============%s\r\n", strerror(errno));
+		printf("==============%s\r\n", strerror(ipstack_errno));
 		return -1;
 	}
 	//mii_val->phy_id,
@@ -74,7 +74,7 @@ static int __mdio_read(struct b53125_device *dev, int addr, u32 regnum)
 
 static int __mdio_write(struct b53125_device *dev, int addr, u32 regnum, u16 val)
 {
-	struct ifreq ifr;
+	struct ipstack_ifreq ifr;
 	struct mii_ioctl_data mii_val;
 	memset(&ifr, 0, sizeof(ifr));
 	strncpy(ifr.ifr_name, "eth0", sizeof(ifr.ifr_name)-1);
@@ -398,7 +398,7 @@ struct b53125_device * b53125_mdio_probe()
 		return NULL;
 	}
 	memset(b53_device, 0, sizeof(struct b53125_device));
-	//b53_device->fd = socket(AF_INET, SOCK_DGRAM, 0);
+	//b53_device->fd = ipstack_socket(IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, 0);
 	b53_device->fd = open("/dev/"B53_DEVICE_NAME, O_RDWR);
 	if(b53_device->fd <= 0)
 	{

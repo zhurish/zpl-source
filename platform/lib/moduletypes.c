@@ -2,37 +2,32 @@
 #include "module.h"
 #include "moduletypes.h"
  
-extern struct module_list module_list_default;
-extern struct module_list module_list_lib;
-extern struct module_list module_list_osal;
-extern struct module_list module_list_timer;
-extern struct module_list module_list_job;
-extern struct module_list module_list_console;
-extern struct module_list module_list_telnet;
-extern struct module_list module_list_utils;
-extern struct module_list module_list_imish;
-extern struct module_list module_list_kernel;
-extern struct module_list module_list_nsmdhcp;
-extern struct module_list module_list_nsm;
-extern struct module_list module_list_sdk;
-extern struct module_list module_list_pal;
-extern struct module_list module_list_hal;
  
-struct module_alllist module_lists_tbl[MODULE_MAX] = {
-  &module_list_default,
-  &module_list_lib,
-  &module_list_osal,
-  &module_list_timer,
-  &module_list_job,
-  &module_list_console,
-  &module_list_telnet,
-  &module_list_utils,
-  &module_list_imish,
-  &module_list_kernel,
-  &module_list_nsmdhcp,
-  &module_list_nsm,
-  &module_list_sdk,
-  &module_list_pal,
-  &module_list_hal,
- NULL,
+#define ZPL_MODULE_DESC(m)    {(MODULE_ ##m),(#m),0 }
+ 
+ 
+struct module_table module_tbl[MODULE_MAX] = {
+ZPL_MODULE_DESC(DEFAULT),
+ZPL_MODULE_DESC(LIB),
+ZPL_MODULE_DESC(OSAL),
+ZPL_MODULE_DESC(TIMER),
+ZPL_MODULE_DESC(JOB),
+ZPL_MODULE_DESC(CONSOLE),
+ZPL_MODULE_DESC(TELNET),
+ZPL_MODULE_DESC(DHCP),
+ZPL_MODULE_DESC(NSM),
+ZPL_MODULE_DESC(UTILS),
+ZPL_MODULE_DESC(SNTP),
+ZPL_MODULE_DESC(SNTPS),
+ZPL_MODULE_DESC(MODEM),
+ZPL_MODULE_DESC(WIFI),
+ZPL_MODULE_DESC(MQTT),
+ZPL_MODULE_DESC(WEB),
+ZPL_MODULE_DESC(MODBUS),
+ZPL_MODULE_DESC(HAL),
+ZPL_MODULE_DESC(KERNEL),
+ZPL_MODULE_DESC(PAL),
+ZPL_MODULE_DESC(BSP),
+ZPL_MODULE_DESC(SDK),
 };
+#undef ZPL_MODULE_DESC

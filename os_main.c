@@ -18,10 +18,10 @@
 #include "command.h"
 #include "memory.h"
 #include "prefix.h"
-#include "sigevent.h"
+//#include "sigevent.h"
 #include "thread.h"
-//#include "version.h"
-//#include "nsm_vrf.h"
+#include "host.h"
+#include "module.h"
 #include "os_start.h"
 #include "os_module.h"
 
@@ -223,14 +223,14 @@ static int os_privs_high()
 {
 	if ( os_privs.change (ZPRIVS_RAISE) )
 		fprintf (stdout, "%s: could not raise privs, %s",
-				   __func__,os_strerror (errno) );
+				   __func__,os_strerror (ipstack_errno) );
 	return 0;
 }
 static int os_privs_low()
 {
 	if ( os_privs.change (ZPRIVS_LOWER) )
 		fprintf (stdout, "%s: could not lower privs, %s",
-				   __func__,os_strerror (errno) );
+				   __func__,os_strerror (ipstack_errno) );
 	return 0;
 }*/
 
@@ -269,9 +269,9 @@ int main (int argc, char **argv)
 #ifdef OS_SIGNAL_SIGWAIT
 	os_task_sigmaskall();
 #endif
-	os_base_init();
+	os_base_env_init();
 
-	os_base_load();
+	os_base_env_load();
 
 #ifdef ZPL_TOOLS_PROCESS
 /*	if(name2pid("ProcessMU") <= 0)
@@ -286,27 +286,25 @@ int main (int argc, char **argv)
 
 	
 	if(main_data.tty)
-		console_enable = 1;
-	console_enable = 1;
+		cli_shell.console_enable = 1;
+	cli_shell.console_enable = 1;
 
-	os_signal_default();
+	os_signal_default(zlog_signal, zlog_signal);
 
-	os_start_init(main_data.progname, MODULE_DEFAULT, main_data.daemon_mode, main_data.tty);
+	os_base_signal_init(main_data.daemon_mode);
+	os_base_stack_init(main_data.tty);
+	os_base_zlog_open(main_data.progname);
 
-	zlog_set_level (ZLOG_DEST_STDOUT, LOG_DEBUG);
+	os_base_start_pid(MODULE_DEFAULT, main_data.pid_file, &main_data.pid);
 
-	os_start_early(MODULE_DEFAULT,  NULL);
+	pl_module_name_show();
 
-	os_start_all_module();
-
-	//os_start_module (MODULE_DEFAULT, main_data.config_file, NULL);
-
-	os_start_pid(MODULE_DEFAULT, main_data.pid_file, &main_data.pid);
-
+	os_base_module_start_all();
+	
 	/*
 	 * os shell start
 	 */
-	os_shell_start (main_data.zserv_path, main_data.vty_addr, main_data.vty_port, main_data.tty);
+	os_base_shell_start (main_data.zserv_path, main_data.vty_addr, main_data.vty_port, main_data.tty);
 
 	/*
 	 * load config file
@@ -324,8 +322,8 @@ int main (int argc, char **argv)
 		real_sigevent_process (2);
 #else
 		//rtpmain_test();
-		//os_signal_process();
-		quagga_sigevent_process();
+		os_signal_process(2000);
+		//quagga_sigevent_process();
 		//os_msleep_interrupt(2000);
 		//sleep(2);
 #endif
@@ -378,7 +376,7 @@ int os_main (int argc, char **argv)
 	os_shell_start (main_data.zserv_path, NULL, main_data.vty_port);
 
 
-	os_start_running(NULL, MODULE_NSM);
+	thread_mainloop(NULL);
 
 	return 0;
 }

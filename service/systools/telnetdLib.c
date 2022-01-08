@@ -34,9 +34,9 @@ modification history
                  made telnetdSocket global (SPR #1941).
 		 added logFdFromRlogin (SPR #2212).
 03a,02may94,ms   increased stack size for SIMHPPA.
-02z,11aug93,jmm  Changed ioctl.h and socket.h to sys/ioctl.h and sys/socket.h
+02z,11aug93,jmm  Changed ioctl.h and ipstack_socket.h to sys/ioctl.h and sys/ipstack_socket.h
 02y,01feb93,jdi  documentation cleanup for 5.1.
-02x,18jul92,smb  Changed errno.h to errnoLib.h.
+02x,18jul92,smb  Changed ipstack_errno.h to errnoLib.h.
 02w,26may92,rrr  the tree shuffle
 		  -changed includes to have absolute path from h/
 02v,24apr92,rfs  Fixed flaky shell restart upon connection termination.
@@ -79,7 +79,7 @@ modification history
 		   remote connections.
 01e,17nov87,ecs  lint.
 01d,04nov87,ecs  documentation.
-	     &   fixed bug in use of setsockopt().
+	     &   fixed bug in use of ipstack_setsockopt().
 	    dnw  changed to call shellLogoutInstall() instead of logoutInstall.
 01c,24oct87,gae  changed setOrig{In,Out,Err}Fd() to shellSetOrig{In,Out,Err}().
 		 made telnetdOut() exit on EOF from master pty fd.
@@ -117,7 +117,7 @@ installing a command interpreter is required.
 
 The telnetdInit() routine initializes the telnet service when INCLUDE_TELNET
 is defined. If INCLUDE_SHELL is also defined, the telnetdStart() routine
-automatically starts the server. Client sessions will connect to the shell,
+automatically starts the server. Client sessions will ipstack_connect to the shell,
 which only supports one client at a time.
 
 VXWORKS AE PROTECTION DOMAINS
@@ -194,7 +194,7 @@ int xgetpty(char *line)
 #else
 #include "vxWorks.h"
 #include "sys/types.h"
-#include "sys/socket.h"
+#include "sys/ipstack_socket.h"
 #include "netinet/in.h"
 #include "ioLib.h"
 #include "taskLib.h"
@@ -369,8 +369,8 @@ STATUS telnetdInit
 
     if (staticFlag && (telnetdParserControl == NULL))
         {
-        TELNETD_DEBUG ("telnetd: A shell has not been installed - can't initialize library. errno:%#x\n", 
-                        errno, 0, 0, 0, 0, 0);
+        TELNETD_DEBUG ("telnetd: A shell has not been installed - can't initialize library. ipstack_errno:%#x\n", 
+                        ipstack_errno, 0, 0, 0, 0, 0);
         return (ERROR);
         }
 
@@ -385,8 +385,8 @@ STATUS telnetdInit
 
         if (ptyDrv () == ERROR)
             {
-            TELNETD_DEBUG ("telnetd: Unable to initialize ptyDrv().  errno:%#x\n", 
-                               errno, 0, 0, 0, 0, 0);
+            TELNETD_DEBUG ("telnetd: Unable to initialize ptyDrv().  ipstack_errno:%#x\n", 
+                               ipstack_errno, 0, 0, 0, 0, 0);
             return ERROR;
             }
 
@@ -426,7 +426,7 @@ STATUS telnetdInit
          *  differentiate from taskIdSelf() since 0 is implied as our taskId
          */
 
-        telnetdTaskList[count].pSession->socket         = -1;
+        telnetdTaskList[count].pSession->ipstack_socket         = -1;
         telnetdTaskList[count].pSession->inputFd        = -1;            
         telnetdTaskList[count].pSession->outputFd       = -1;          
         telnetdTaskList[count].pSession->slaveFd        = -1;          
@@ -452,7 +452,7 @@ STATUS telnetdInit
              * 'one-at-a-time', dynamic telnet session entries.  
              * 
              * The spawned tasks will pend on a semaphore which signifies 
-             * the acceptance of a new socket connection.
+             * the acceptance of a new ipstack_socket connection.
              *
              * The session entry will be filled in when the connection 
              * is accepted.
@@ -462,16 +462,16 @@ STATUS telnetdInit
             if ( telnetdSessionPtysCreate (telnetdTaskList[count].pSession) == 
                  ERROR)
                 {
-                TELNETD_DEBUG ("telnetd: Unable to create all sessions in advance. errno:%#x\n", 
-                        errno, 0, 0, 0, 0, 0);
+                TELNETD_DEBUG ("telnetd: Unable to create all sessions in advance. ipstack_errno:%#x\n", 
+                        ipstack_errno, 0, 0, 0, 0, 0);
                 telnetdTaskDelete (count);
                 return ERROR;
                 }
 
             if (telnetdIoTasksCreate (telnetdTaskList[count].pSession) == ERROR)
                 {
-                TELNETD_DEBUG ("telnetd: error spawning i/o tasks - can't initialize library. errno:%#x\n", 
-                               errno, 0, 0, 0, 0, 0);
+                TELNETD_DEBUG ("telnetd: error spawning i/o tasks - can't initialize library. ipstack_errno:%#x\n", 
+                               ipstack_errno, 0, 0, 0, 0, 0);
                 telnetdTaskDelete (count);
                 return ERROR;
                 }
@@ -490,8 +490,8 @@ STATUS telnetdInit
 
             if (result == ERROR) /* No,  must have failed */
                 {
-                TELNETD_DEBUG ("telnetd: error pre-initializing shell. Note:vxWorks shell does not support static initialization! errno:%#x\n", 
-                               errno, 0, 0, 0, 0, 0);
+                TELNETD_DEBUG ("telnetd: error pre-initializing shell. Note:vxWorks shell does not support static initialization! ipstack_errno:%#x\n", 
+                               ipstack_errno, 0, 0, 0, 0, 0);
                 telnetdTaskDelete (count);
                 return ERROR;
                 }
@@ -518,7 +518,7 @@ STATUS telnetdInit
 * This routine provides the ability to handle telnet connections using
 * a custom command interpreter or the default VxWorks shell. It is
 * called automatically during system startup (when the configuration macro
-* INCLUDE_TELNET is defined) to connect clients to the command interpreter
+* INCLUDE_TELNET is defined) to ipstack_connect clients to the command interpreter
 * specified in the TELNETD_PARSER_HOOK parameter. The command interpreter in 
 * use when the telnet server start scan never be changed.
 *
@@ -589,7 +589,7 @@ STATUS telnetdParserSet
 
 /*******************************************************************************
 *
-* telnetdIoTasksCreate  - Create tasks to transferring i/o between socket and fd
+* telnetdIoTasksCreate  - Create tasks to transferring i/o between ipstack_socket and fd
 * 
 * Two tasks are created: An input task and an output task.  The name is based on
 *    the pSlot argument for uniqueness.
@@ -612,7 +612,7 @@ LOCAL STATUS telnetdIoTasksCreate
 
     /*
      * Spawn the input and output tasks which transfer data between
-     * the socket and the i/o file descriptor. 
+     * the ipstack_socket and the i/o file descriptor. 
      *
      * If created in advance (static) the task pend on a semaphore
      */
@@ -627,8 +627,8 @@ LOCAL STATUS telnetdIoTasksCreate
         pSlot->startInput = semBCreate (SEM_Q_FIFO, SEM_EMPTY);
         if ((pSlot->startInput == NULL)  || (pSlot->startInput == NULL))
             {
-            TELNETD_DEBUG ("telnetd: Unable to create semaphore. errno:%#x\n", 
-                           errno, 0, 0, 0, 0, 0);
+            TELNETD_DEBUG ("telnetd: Unable to create semaphore. ipstack_errno:%#x\n", 
+                           ipstack_errno, 0, 0, 0, 0, 0);
             result = ERROR;
             return ERROR;
             }
@@ -644,8 +644,8 @@ LOCAL STATUS telnetdIoTasksCreate
 
     if (pSlot->outputTask == ERROR)
         {
-        TELNETD_DEBUG ("telnetd: Unable to create task. errno:%#x\n", 
-                       errno, 0, 0, 0, 0, 0);
+        TELNETD_DEBUG ("telnetd: Unable to create task. ipstack_errno:%#x\n", 
+                       ipstack_errno, 0, 0, 0, 0, 0);
         result = ERROR;
         return ERROR;
         }
@@ -660,8 +660,8 @@ LOCAL STATUS telnetdIoTasksCreate
 
     if (pSlot->inputTask == ERROR)
         {
-        TELNETD_DEBUG ("telnetd: Unable to create task. errno:%#x\n", 
-                       errno, 0, 0, 0, 0, 0);
+        TELNETD_DEBUG ("telnetd: Unable to create task. ipstack_errno:%#x\n", 
+                       ipstack_errno, 0, 0, 0, 0, 0);
         taskDelete (pSlot->outputTask);
         
         result = ERROR;
@@ -732,7 +732,7 @@ LOCAL STATUS telnetdSessionPtysCreate
 
     /* setup the slave device to act like a terminal */
 
-    (void) ioctl (pSlot->slaveFd, FIOOPTIONS, OPT_TERMINAL);
+    (void) ipstack_ioctl (pSlot->slaveFd, FIOOPTIONS, OPT_TERMINAL);
 
     return OK;
     }
@@ -741,11 +741,11 @@ LOCAL STATUS telnetdSessionPtysCreate
 *
 * telnetdStart - initialize the telnet services
 *
-* Following the telnet server initialization, this routine creates a socket
+* Following the telnet server initialization, this routine creates a ipstack_socket
 * for accepting remote connections and spawns the primary telnet server task.
 * It executes automatically during system startup when the INCLUDE_TELNET
 * configuration macro is defined since a parser control routine is available.
-* The server will not accept connections otherwise.
+* The server will not ipstack_accept connections otherwise.
 *
 * By default, the server will spawn a pair of secondary input and output
 * tasks after each client connection. Changing the TELNETD_TASKFLAG setting
@@ -772,7 +772,7 @@ STATUS telnetdStart
     int port 	/* target port for accepting connections */
     )
     {
-    struct sockaddr_in serverAddr;
+    struct ipstack_sockaddr_in serverAddr;
 
     if (!telnetdInitialized)
         {
@@ -786,18 +786,18 @@ STATUS telnetdStart
 
     /* 
      * At this point (for both static and dynamic task initialization) we 
-     * are ready to create the server socket.
+     * are ready to create the server ipstack_socket.
      */
 
-    telnetdServerSock = socket (AF_INET, SOCK_STREAM, 0);
+    telnetdServerSock = ipstack_socket (IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
     if (telnetdServerSock < 0)
         return (ERROR);
 
     bzero ((char *)&serverAddr, sizeof (serverAddr));
-    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_family = IPSTACK_AF_INET;
     serverAddr.sin_port   = htons (port);
 
-    if (bind (telnetdServerSock, (struct sockaddr *) &serverAddr,
+    if (ipstack_bind (telnetdServerSock, (struct ipstack_sockaddr *) &serverAddr,
               sizeof (serverAddr)) < 0)
         {
         close (telnetdServerSock);
@@ -806,7 +806,7 @@ STATUS telnetdStart
         return (ERROR);
         }
 
-    if (listen (telnetdServerSock, 5) < 0)
+    if (ipstack_listen (telnetdServerSock, 5) < 0)
         {
         close (telnetdServerSock);
         if (telnetdTaskFlag)
@@ -992,7 +992,7 @@ LOCAL TELNETD_SESSION_DATA *telnetdSessionAdd (void)
          * initialized to sane values 
          */
 
-        pSlot->socket         = -1;
+        pSlot->ipstack_socket         = -1;
         pSlot->inputFd        = -1;            
         pSlot->outputFd       = -1;          
         pSlot->slaveFd        = -1;          
@@ -1068,14 +1068,14 @@ LOCAL void telnetdSessionDisconnect
         /* Clear out the i/o descriptors */
 
         if ((pSlot->outputFd) > STD_ERR)
-            ioctl (pSlot->outputFd, FIOFLUSH, 0);
+            ipstack_ioctl (pSlot->outputFd, FIOFLUSH, 0);
         if ((pSlot->slaveFd) > STD_ERR)
-            ioctl (pSlot->slaveFd, FIOFLUSH, 0);
+            ipstack_ioctl (pSlot->slaveFd, FIOFLUSH, 0);
 
-        /* Close the socket connection to the client */
+        /* Close the ipstack_socket connection to the client */
 
-        if ((pSlot->socket) > STD_ERR)
-             close (pSlot->socket);
+        if ((pSlot->ipstack_socket) > STD_ERR)
+             close (pSlot->ipstack_socket);
   
         /* 
          * Re-Initialize some elements of the structure to sane values 
@@ -1083,7 +1083,7 @@ LOCAL void telnetdSessionDisconnect
          * because these resources are just reset and not removed.
          */
 
-        pSlot->socket        = -1;
+        pSlot->ipstack_socket        = -1;
         pSlot->parserControl = telnetdParserControl;
         pSlot->loggedIn      = zpl_false;
         pSlot->busyFlag      = zpl_false;
@@ -1122,14 +1122,14 @@ LOCAL void telnetdSessionDisconnect
 
         (void) ptyDevRemove (pSlot->ptyRemoteName);
 
-        /* Close the socket connection to the client */
+        /* Close the ipstack_socket connection to the client */
 
-        if ((pSlot->socket) > STD_ERR)
-             close (pSlot->socket);
+        if ((pSlot->ipstack_socket) > STD_ERR)
+             close (pSlot->ipstack_socket);
   
         /* Re-Initialize all elements of the structure to sane values */
 
-        pSlot->socket         = -1;
+        pSlot->ipstack_socket         = -1;
         pSlot->inputFd        = -1;            
         pSlot->outputFd       = -1;          
         pSlot->slaveFd        = -1;          
@@ -1245,7 +1245,7 @@ LOCAL void telnetdSessionDisconnectFromRemote (TELNETD_SESSION_DATA *pSlot)
 * It is the entry point for the primary telnet task created during the
 * library initialization.
 *
-* The server will only accept telnet connection requests when a task is
+* The server will only ipstack_accept telnet connection requests when a task is
 * available to handle the input and provide output to the remote user.
 * The default configuration uses the shell for this purpose by redirecting
 * the `stdin', `stdout', and `stderr' file descriptors away from the console.
@@ -1258,7 +1258,7 @@ LOCAL void telnetdSessionDisconnectFromRemote (TELNETD_SESSION_DATA *pSlot)
 */
 void telnetd (void)
     {
-    struct sockaddr_in clientAddr;
+    struct ipstack_sockaddr_in clientAddr;
     int clientAddrLen;
     int newSock;
     int optval;
@@ -1274,12 +1274,12 @@ void telnetd (void)
         result = OK;
         startFlag = zpl_false;
 
-        newSock = accept (telnetdServerSock,
-                          (struct sockaddr *) &clientAddr, &clientAddrLen);
+        newSock = ipstack_accept (telnetdServerSock,
+                          (struct ipstack_sockaddr *) &clientAddr, &clientAddrLen);
 
         if (newSock == ERROR)
             {
-            break;     /* Exit if unable to accept connection. */
+            break;     /* Exit if unable to ipstack_accept connection. */
             }
 
         /* 
@@ -1302,7 +1302,7 @@ void telnetd (void)
             continue;
             }
 
-        pSlot->socket = newSock;
+        pSlot->ipstack_socket = newSock;
 
         /* If we haven't created the pseudo tty device, so so now */
 
@@ -1313,8 +1313,8 @@ void telnetd (void)
 
             if (ptyDrv () == ERROR)
                 {
-                fdprintf (newSock, "\n\ntelnetd: Unable to initialize ptyDrv().  errno:%#x\n", 
-                          errno, 0, 0, 0, 0, 0);
+                fdprintf (newSock, "\n\ntelnetd: Unable to initialize ptyDrv().  ipstack_errno:%#x\n", 
+                          ipstack_errno, 0, 0, 0, 0, 0);
 
                 /* Prevent denial of service attack by waiting 5 seconds */
 
@@ -1345,8 +1345,8 @@ void telnetd (void)
             if (result == ERROR)
                 {
                 fdprintf (newSock, 
-                          "\r\ntelnetd: Sorry, session limit reached. Unable to spawn tasks. errno %#x\r\n", 
-                          errno);
+                          "\r\ntelnetd: Sorry, session limit reached. Unable to spawn tasks. ipstack_errno %#x\r\n", 
+                          ipstack_errno);
 
                 /* Prevent denial of service attack by waiting 5 seconds */
 
@@ -1359,7 +1359,7 @@ void telnetd (void)
 
         /* setup the slave device to act like a terminal */
 
-        (void) ioctl (pSlot->slaveFd, FIOOPTIONS, OPT_TERMINAL);
+        (void) ipstack_ioctl (pSlot->slaveFd, FIOOPTIONS, OPT_TERMINAL);
 
         /* Check if a parser has been installed */
 
@@ -1378,8 +1378,8 @@ void telnetd (void)
 
         /*
          * Spawn (or wake up) the input task which transfers data from
-         * the client socket and the output task which transfers data to
-         * the socket. 
+         * the client ipstack_socket and the output task which transfers data to
+         * the ipstack_socket. 
          */
 
         if (telnetdTaskFlag)
@@ -1391,7 +1391,7 @@ void telnetd (void)
         /* turn on KEEPALIVE so if the client crashes, we'll know about it */
 
         optval = 1;
-        setsockopt (newSock, SOL_SOCKET, SO_KEEPALIVE,
+        ipstack_setsockopt (newSock, IPSTACK_SOL_SOCKET, IPSTACK_SO_KEEPALIVE,
                     (char *) &optval, sizeof (optval));
 
         /* initialize modes and options and offer to do remote echo */
@@ -1472,8 +1472,8 @@ void telnetd (void)
 * 
 * This routine blocks within the read() call until the command interpreter
 * sends a response. When the telnet server creates all input/output tasks
-* during startup (i.e. telnetdTaskFlag is zpl_true), this routine cannot send
-* any data to the socket until the primary server task (telnetd) awakens 
+* during startup (i.e. telnetdTaskFlag is zpl_true), this routine cannot ipstack_send
+* any data to the ipstack_socket until the primary server task (telnetd) awakens 
 * the input routine.
 *
 * NOMANUAL
@@ -1499,19 +1499,19 @@ void telnetOutTask
     if (telnetdTaskFlag)  /* static task creation  */
         semTake (pSlot->startOutput, WAIT_FOREVER);
 
-    sock = pSlot->socket;
+    sock = pSlot->ipstack_socket;
     outputFd = pSlot->outputFd;
 
     /*
      * In the default configuration, the following read loop exits after
      * the connection between the client and server ends because closing
-     * the socket to the remote client causes the input task to close the
+     * the ipstack_socket to the remote client causes the input task to close the
      * output file descriptor.
      *
      * When the server creates the input and output tasks in advance, that
      * operation does not occur. To prevent writing to a non-existent
-     * socket, the input task restarts the output task after using the
-     * FIOFLUSH ioctl to prevent stale data from reaching the next session.
+     * ipstack_socket, the input task restarts the output task after using the
+     * FIOFLUSH ipstack_ioctl to prevent stale data from reaching the next session.
      */
 
     while ((n = read (outputFd, buf, sizeof (buf))) > 0)
@@ -1533,7 +1533,7 @@ void telnetOutTask
 * input/output task. It is deleted when the client disconnects. The
 * <slot> argument has two possible meanings. In the default setup,
 * it provides access to the session data which includes two file
-* descriptors: one for a socket (to the remote client) and another
+* descriptors: one for a ipstack_socket (to the remote client) and another
 * provided by the command interpreter for the connection. That
 * information is not available when the server creates the input/output
 * tasks in advance. 
@@ -1567,11 +1567,11 @@ void telnetInTask
             semTake (pSlot->startInput, WAIT_FOREVER);
 
         /*
-         * Transfer data from the socket to the command interpreter, after
+         * Transfer data from the ipstack_socket to the command interpreter, after
          * filtering out the telnet commands and options.
          */
 
-        sock = pSlot->socket;
+        sock = pSlot->ipstack_socket;
         inputFd = pSlot->inputFd;
         slaveFd = pSlot->slaveFd;
 
@@ -1599,7 +1599,7 @@ void telnetInTask
 * tnInput - process input from remote user
 *
 * This routine transfers input data from a telnet client's <clientSock>
-* socket to the command interpreter through the <inputFd> file descriptor.
+* ipstack_socket to the command interpreter through the <inputFd> file descriptor.
 * The <state> parameter triggers interpretation of the input as raw data or
 * as part of a command sequence or telnet option.
 *
@@ -1612,7 +1612,7 @@ LOCAL int tnInput
     (
     FAST int state,         /* state of telnet session's input handler */
     FAST int slaveFd,       /* local fd, some options adjust it via ioctl */
-    FAST int clientSock,    /* socket connected to telnet client */
+    FAST int clientSock,    /* ipstack_socket connected to telnet client */
     FAST int inputFd,       /* input to command interpreter */
     FAST char *buf,         /* buffer containing client data */
     FAST int n              /* amount of client data in buffer */
@@ -1738,7 +1738,7 @@ LOCAL int tnInput
 *
 * remDoOpt - request/acknowledge remote enable/disable of option
 *
-* This routine will try to accept the remote's enable or disable,
+* This routine will try to ipstack_accept the remote's enable or disable,
 * as specified by "will", of the remote's support for the specified option.
 * If the request is to disable the option, the option will always be disabled.
 * If the request is to enable the option, the option will be enabled, IF we
@@ -1753,7 +1753,7 @@ LOCAL STATUS remDoOpt
     FAST int slaveFd,/* slave fd */
     FAST int opt,    /* option to be enabled/disabled */
     zpl_bool enable,     /* zpl_true = enable option, zpl_false = disable */
-    int clientSock,  /* socket connection to telnet client */
+    int clientSock,  /* ipstack_socket connection to telnet client */
     zpl_bool remFlag     /* zpl_true = request is from remote */
     )
     {
@@ -1814,7 +1814,7 @@ LOCAL STATUS localDoOpt
     FAST int slaveFd,     /* slave fd */
     FAST int opt,    /* option to be enabled/disabled */
     zpl_bool enable,        /* zpl_true = enable option, zpl_false = disable */
-    int clientSock,     /* socket connection to telnet client */
+    int clientSock,     /* ipstack_socket connection to telnet client */
     zpl_bool remFlag     /* zpl_true = request is from remote */
     )
     {
@@ -1890,7 +1890,7 @@ LOCAL void setMode
             }
     }
 
-    (void) ioctl (fd, FIOOPTIONS, ioOptions);
+    (void) ipstack_ioctl (fd, FIOOPTIONS, ioOptions);
     }
 
 /*******************************************************************************

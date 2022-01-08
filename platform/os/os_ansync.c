@@ -849,9 +849,9 @@ os_ansync_t *os_ansync_fetch(os_ansync_lst *lst)
 		num = epoll_wait(lst->epoll_fd, lst->events, lst->max_fd, lst->interval);
 		if (num < 0)
 		{
-			if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
+			if (ipstack_errno == EINTR || ipstack_errno == EAGAIN || ipstack_errno == EWOULDBLOCK)
 				continue;
-			if (errno == EBADF || errno == EFAULT || errno == EINVAL)
+			if (ipstack_errno == EBADF || ipstack_errno == EFAULT || ipstack_errno == EINVAL)
 				return NULL;
 			return NULL;
 		}
@@ -1064,8 +1064,8 @@ int os_ansync_show(os_ansync_lst *lst, int (*show)(void *, zpl_char *fmt,...), v
 
 int os_ansync_main(os_ansync_lst *lst, os_ansync_exe exe)
 {
-	os_ansync_t *node;
-	host_config_load_waitting();
+	os_ansync_t *node = NULL;
+	//host_waitting_loadconfig();
 	while(lst)
 	{
 		while((node = os_ansync_fetch(lst)))

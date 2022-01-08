@@ -168,10 +168,10 @@ int FAST_FUNC udhcp_recv_packet(struct dhcp_packet *packet, zpl_socket_t fd, zpl
 	struct iovec iov;
 	/* Header and data both require alignment. */
 	char buff[CMSG_SPACE(SOPT_SIZE_CMSG_IFINDEX_IPV4())];
-	struct msghdr msgh;
-	struct sockaddr_storage	 ss;
-	struct sockaddr_in	*sin4 = NULL;
-	memset(&msgh, 0, sizeof(struct msghdr));
+	struct ipstack_msghdr msgh;
+	struct ipstack_sockaddr_storage	 ss;
+	struct ipstack_sockaddr_in	*sin4 = NULL;
+	memset(&msgh, 0, sizeof(struct ipstack_msghdr));
 	msgh.msg_name = &ss;
 	msgh.msg_namelen = sizeof(ss);
 	msgh.msg_iov = &iov;
@@ -180,22 +180,22 @@ int FAST_FUNC udhcp_recv_packet(struct dhcp_packet *packet, zpl_socket_t fd, zpl
 	msgh.msg_controllen = sizeof(buff);
 	iov.iov_base = packet;
 	iov.iov_len = sizeof(struct dhcp_packet);
-	bytes = ipstack_recvmsg(fd, &msgh, 0);//MSG_PEEK | MSG_TRUNC
+	bytes = ipstack_recvmsg(fd, &msgh, 0);//IPSTACK_MSG_PEEK | MSG_TRUNC
 	if (bytes < 0)
 	{
 		zlog_err(MODULE_DHCP, "packet read error, ignoring");
 		return bytes; /* returns -1 */
 	}
-	if (ss.ss_family != AF_INET) {
-		zlog_err(MODULE_DHCP, "received DHCP message is not AF_INET");
+	if (ss.ss_family != IPSTACK_AF_INET) {
+		zlog_err(MODULE_DHCP, "received DHCP message is not IPSTACK_AF_INET");
 		return ERROR;
 	}
-	sin4 = (struct sockaddr_in *)&ss;
+	sin4 = (struct ipstack_sockaddr_in *)&ss;
 	//memcpy(&from.iabuf, &sin4->sin_addr, from.len);
 
 	//zlog_err(MODULE_DHCP, "-------------%s", ipstack_inet_ntoa(sin4->sin_addr));
 
-	d_ifindex = getsockopt_ifindex(AF_INET, &msgh);
+	d_ifindex = getsockopt_ifindex(IPSTACK_AF_INET, &msgh);
 	if (ifindex)
 		*ifindex = d_ifindex;
 
@@ -250,7 +250,7 @@ int FAST_FUNC udhcp_send_raw_packet(zpl_socket_t fd, struct dhcp_packet *dhcp_pk
 	struct udhcp_packet_cmd *dest, const zpl_uint8 *dest_arp,
 		ifindex_t ifindex)
 {
-	struct sockaddr_ll dest_sll;
+	struct ipstack_sockaddr_ll dest_sll;
 	struct ip_udp_dhcp_packet packet;
 	unsigned padding;
 	int result = -1;
@@ -260,7 +260,7 @@ int FAST_FUNC udhcp_send_raw_packet(zpl_socket_t fd, struct dhcp_packet *dhcp_pk
 	//packet.data = *dhcp_pkt; /* struct copy */
 	memcpy(&packet.data, dhcp_pkt, sizeof(struct dhcp_packet));
 
-	dest_sll.sll_family = AF_PACKET;
+	dest_sll.sll_family = IPSTACK_AF_PACKET;
 	dest_sll.sll_protocol = htons(ETH_P_IP);
 	dest_sll.sll_ifindex = ifindex2ifkernel(ifindex);
 	/*dest_sll.sll_hatype = ARPHRD_???;*/
@@ -286,7 +286,7 @@ int FAST_FUNC udhcp_send_raw_packet(zpl_socket_t fd, struct dhcp_packet *dhcp_pk
 	if (padding > DHCP_SIZE - 300)
 		padding = DHCP_SIZE - 300;
 
-	packet.ip.protocol = IPPROTO_UDP;
+	packet.ip.protocol = IPSTACK_IPPROTO_UDP;
 	packet.ip.saddr = source->ip;
 	packet.ip.daddr = dest->ip;
 	packet.udp.source = htons(source->port);
@@ -306,7 +306,7 @@ int FAST_FUNC udhcp_send_raw_packet(zpl_socket_t fd, struct dhcp_packet *dhcp_pk
 
 	//_udhcp_dump_packet(dhcp_pkt);
 	result = ipstack_sendto(fd, &packet, IP_UDP_DHCP_SIZE - padding, /*flags:*/ 0,
-			(struct sockaddr *) &dest_sll, sizeof(dest_sll));
+			(struct ipstack_sockaddr *) &dest_sll, sizeof(dest_sll));
 
 	if (DHCPC_DEBUG_ISON(SEND))
 	{
@@ -326,12 +326,12 @@ int FAST_FUNC udhcp_send_udp_packet(zpl_socket_t fd, struct dhcp_packet *dhcp_pk
 	struct udhcp_packet_cmd *source,
 	struct udhcp_packet_cmd *dest)
 {
-	struct sockaddr_in sa;
+	struct ipstack_sockaddr_in sa;
 	unsigned padding;
 	int result = -1;
 
 	memset(&sa, 0, sizeof(sa));
-	sa.sin_family = AF_INET;
+	sa.sin_family = IPSTACK_AF_INET;
 	sa.sin_port = htons(dest->port);
 	sa.sin_addr.s_addr = dest->ip;
 
@@ -340,8 +340,8 @@ int FAST_FUNC udhcp_send_udp_packet(zpl_socket_t fd, struct dhcp_packet *dhcp_pk
 	if (padding > DHCP_SIZE - 300)
 		padding = DHCP_SIZE - 300;
 
-	result = ipstack_sendto(fd, dhcp_pkt, DHCP_SIZE - padding, 0, (struct sockaddr *)&sa,
-		sizeof(struct sockaddr_in));
+	result = ipstack_sendto(fd, dhcp_pkt, DHCP_SIZE - padding, 0, (struct ipstack_sockaddr *)&sa,
+		sizeof(struct ipstack_sockaddr_in));
 
 	if (DHCPC_DEBUG_ISON(SEND))
 	{

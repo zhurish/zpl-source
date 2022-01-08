@@ -86,14 +86,14 @@ extern "C" {
 #define SYSLOGC_static7 	SYSLOGC_LOCAL7
 /* syslog severity code */
 
-#define SYSLOGC_SEVERITY_EMERGENCY         LOG_EMERG
-#define SYSLOGC_SEVERITY_ALERT             LOG_ALERT
-#define SYSLOGC_SEVERITY_CRITICAL          LOG_CRIT
-#define SYSLOGC_SEVERITY_ERROR             LOG_ERR
-#define SYSLOGC_SEVERITY_WARNING           LOG_WARNING
-#define SYSLOGC_SEVERITY_NOTICE            LOG_NOTICE
-#define SYSLOGC_SEVERITY_INFORMATIONAL     LOG_INFO
-#define SYSLOGC_SEVERITY_DEBUG             LOG_DEBUG
+#define SYSLOGC_SEVERITY_EMERGENCY         ZLOG_LEVEL_EMERG
+#define SYSLOGC_SEVERITY_ALERT             ZLOG_LEVEL_ALERT
+#define SYSLOGC_SEVERITY_CRITICAL          ZLOG_LEVEL_CRIT
+#define SYSLOGC_SEVERITY_ERROR             ZLOG_LEVEL_ERR
+#define SYSLOGC_SEVERITY_WARNING           ZLOG_LEVEL_WARNING
+#define SYSLOGC_SEVERITY_NOTICE            ZLOG_LEVEL_NOTICE
+#define SYSLOGC_SEVERITY_INFORMATIONAL     ZLOG_LEVEL_INFO
+#define SYSLOGC_SEVERITY_DEBUG             ZLOG_LEVEL_DEBUG
 #endif
 
 /* misc. */
@@ -135,9 +135,9 @@ struct syslog_client
 {
 	zpl_bool enable;
 	enum { SYSLOG_UDP_MODE, SYSLOG_TCP_MODE } mode;
-	int sock;
+	zpl_socket_t sock;
 	zpl_uint16 port;
-	struct in_addr address;
+	struct ipstack_in_addr address;
 	char  address_string[DFT_HOST_NAME_LEN];
 	zpl_bool		dynamics;
 	char  *hostname;//[DFT_HOST_NAME_LEN];
@@ -145,7 +145,7 @@ struct syslog_client
 
 	zpl_uint32 facility;
 
-	zpl_bool connect;
+	zpl_bool ipstack_connect;
 
 	void *master;
 

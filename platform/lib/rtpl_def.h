@@ -44,19 +44,19 @@ extern "C" {
 
 /* Check that msg_controllen is large enough. */
 #define ZCMSG_FIRSTHDR(mhdr) \
-  (((size_t)((mhdr)->msg_controllen) >= sizeof(struct cmsghdr)) ? \
-   CMSG_FIRSTHDR(mhdr) : (struct cmsghdr *)NULL)
+  (((size_t)((mhdr)->msg_controllen) >= sizeof(struct ipstack_cmsghdr)) ? \
+   IPSTACK_CMSG_FIRSTHDR(mhdr) : (struct ipstack_cmsghdr *)NULL)
 
-#warning "CMSG_FIRSTHDR is broken on this platform, using a workaround"
+#warning "IPSTACK_CMSG_FIRSTHDR is broken on this platform, using a workaround"
 
 #else /* HAVE_BROKEN_CMSG_FIRSTHDR */
-#define ZCMSG_FIRSTHDR(M) CMSG_FIRSTHDR(M)
+#define ZCMSG_FIRSTHDR(M) IPSTACK_CMSG_FIRSTHDR(M)
 #endif /* HAVE_BROKEN_CMSG_FIRSTHDR */
 
 
 
 /* 
- * RFC 3542 defines several macros for using struct cmsghdr.
+ * RFC 3542 defines several macros for using struct ipstack_cmsghdr.
  * Here, we define those that are not present
  */
 
@@ -73,20 +73,20 @@ extern "C" {
 #endif /* _CMSG_HDR_ALIGN */
 
 /*
- * CMSG_SPACE and CMSG_LEN are required in RFC3542, but were new in that
+ * IPSTACK_CMSG_SPACE and IPSTACK_CMSG_LEN are required in RFC3542, but were new in that
  * version.
  */
-#ifndef CMSG_SPACE
-#define CMSG_SPACE(l)       (_CMSG_DATA_ALIGN(sizeof(struct cmsghdr)) + \
+#ifndef IPSTACK_CMSG_SPACE
+#define IPSTACK_CMSG_SPACE(l)       (_CMSG_DATA_ALIGN(sizeof(struct ipstack_cmsghdr)) + \
                               _CMSG_HDR_ALIGN(l))
-#warning "assuming 4-byte alignment for CMSG_SPACE"
-#endif  /* CMSG_SPACE */
+#warning "assuming 4-byte alignment for IPSTACK_CMSG_SPACE"
+#endif  /* IPSTACK_CMSG_SPACE */
 
 
-#ifndef CMSG_LEN
-#define CMSG_LEN(l)         (_CMSG_DATA_ALIGN(sizeof(struct cmsghdr)) + (l))
-#warning "assuming 4-byte alignment for CMSG_LEN"
-#endif /* CMSG_LEN */
+#ifndef IPSTACK_CMSG_LEN
+#define IPSTACK_CMSG_LEN(l)         (_CMSG_DATA_ALIGN(sizeof(struct ipstack_cmsghdr)) + (l))
+#warning "assuming 4-byte alignment for IPSTACK_CMSG_LEN"
+#endif /* IPSTACK_CMSG_LEN */
 
 
 
@@ -126,20 +126,20 @@ extern "C" {
 #endif
 
 
-/*  The definition of struct in_pktinfo is missing in old version of
+/*  The definition of struct ipstack_in_pktinfo is missing in old version of
     GLIBC 2.1 (Redhat 6.1).  */
 #if defined (GNU_LINUX) && (!defined (__USE_MISC) && !defined(__UAPI_DEF_IN_PKTINFO))
-struct in_pktinfo
+struct ipstack_in_pktinfo
 {
   int ipi_ifindex;
-  struct in_addr ipi_spec_dst;
-  struct in_addr ipi_addr;
+  struct ipstack_in_addr ipi_spec_dst;
+  struct ipstack_in_addr ipi_addr;
 };
 #endif
 #if defined (GNU_LINUX) && (!defined (__USE_MISC) && !defined(__UAPI_DEF_IN6_PKTINFO))
-struct in6_pktinfo
+struct ipstack_in6_pktinfo
   {
-    struct in6_addr ipi6_addr;
+    struct ipstack_in6_addr ipi6_addr;
     zpl_uint32 ipi6_ifindex;
   };
 #endif

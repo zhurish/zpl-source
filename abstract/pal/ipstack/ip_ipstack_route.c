@@ -276,7 +276,7 @@ ip_ipstack_route_rib(zpl_uint32 cmd, struct prefix *p, struct rib *rib)
 	else
 	cmd.rt_flags |= IPNET_RTF_DYNAMIC;
 
-	if(p->family == AF_INET)
+	if(p->family == IPSTACK_AF_INET)
 	{
 		cmd.domain = IP_AF_INET;
 		if(p->prefixlen == IPV4_MAX_PREFIXLEN)
@@ -294,7 +294,7 @@ ip_ipstack_route_rib(zpl_uint32 cmd, struct prefix *p, struct rib *rib)
 		masklen2ip (p->prefixlen, &cmd.netmask.sa_in.sin_addr);
 	}
 #ifdef HAVE_IPV6
-	else if(p->family == AF_INET6)
+	else if(p->family == IPSTACK_AF_INET6)
 	{
 		cmd.domain = IP_AF_INET6;
 		if(p->prefixlen == IPV6_MAX_PREFIXLEN)
@@ -304,7 +304,7 @@ ip_ipstack_route_rib(zpl_uint32 cmd, struct prefix *p, struct rib *rib)
 
 		IPCOM_SA_LEN_SET(&cmd.dst.sa, sizeof(union Ipnet_cmd_route_addr));
 		cmd.dst.sa.sa_family = (Ip_sa_family_t) cmd.domain;
-		os_memcpy(&cmd.dst.sa_in6.sin6_addr, &p->u.prefix6, sizeof(struct in6_addr));
+		os_memcpy(&cmd.dst.sa_in6.sin6_addr, &p->u.prefix6, sizeof(struct ipstack_in6_addr));
 
 		IPCOM_SA_LEN_SET(&cmd.netmask.sa, sizeof(union Ipnet_cmd_route_addr));
 		cmd.netmask.sa.sa_family = (Ip_sa_family_t)cmd.domain;
@@ -314,7 +314,7 @@ ip_ipstack_route_rib(zpl_uint32 cmd, struct prefix *p, struct rib *rib)
 
 	if(p->u.prefix4.s_addr == 0
 #ifdef HAVE_IPV6
-			|| os_memcmp(&p->u.prefix6, &tmp.u.prefix6 sizeof(struct in6_addr)) == 0
+			|| os_memcmp(&p->u.prefix6, &tmp.u.prefix6 sizeof(struct ipstack_in6_addr)) == 0
 #endif
 	)
 	{
@@ -333,9 +333,9 @@ ip_ipstack_route_rib(zpl_uint32 cmd, struct prefix *p, struct rib *rib)
 	{
 		if (CHECK_FLAG (nexthop->flags, NEXTHOP_FLAG_RECURSIVE))
 		continue;
-		if (cmd == RTM_NEWROUTE && !CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_ACTIVE))
+		if (cmd == IPSTACK_RTM_NEWROUTE && !CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_ACTIVE))
 		continue;
-		if (cmd == RTM_DELROUTE && !CHECK_FLAG (nexthop->flags, NEXTHOP_FLAG_FIB))
+		if (cmd == IPSTACK_RTM_DELROUTE && !CHECK_FLAG (nexthop->flags, NEXTHOP_FLAG_FIB))
 		continue;
 		if( nexthop->type == NEXTHOP_TYPE_IFINDEX ||
 				nexthop->type == NEXTHOP_TYPE_IFNAME ||
@@ -749,9 +749,9 @@ ipnet_cmd_route_parse_arg(int argc, char **argv, Ipnet_cmd_route *cmd)
 #else
 
 /* Hack for GNU libc version 2. */
-#ifndef MSG_TRUNC
-#define MSG_TRUNC      0x20
-#endif /* MSG_TRUNC */
+#ifndef IPSTACK_MSG_TRUNC
+#define IPSTACK_MSG_TRUNC      0x20
+#endif /* IPSTACK_MSG_TRUNC */
 #define NL_PKT_BUF_SIZE 8192
 #define NL_DEFAULT_ROUTE_METRIC 20
 
@@ -761,7 +761,7 @@ struct nlsock
 	int sock;
 	int seq;
 	int nl_pid;
-	struct sockaddr_nl snl;
+	struct ipstack_sockaddr_nl snl;
 	const char *name;
 } netlink_cmd =
 { -1, 0, 0,
@@ -775,60 +775,60 @@ static struct
 
 static const struct message nlmsg_str[] =
 {
-{ RTM_NEWROUTE, "RTM_NEWROUTE" },
-{ RTM_DELROUTE, "RTM_DELROUTE" },
-{ RTM_GETROUTE, "RTM_GETROUTE" },
-{ RTM_NEWLINK, "RTM_NEWLINK" },
-{ RTM_DELLINK, "RTM_DELLINK" },
-{ RTM_GETLINK, "RTM_GETLINK" },
-{ RTM_NEWADDR, "RTM_NEWADDR" },
-{ RTM_DELADDR, "RTM_DELADDR" },
-{ RTM_GETADDR, "RTM_GETADDR" },
+{ IPSTACK_RTM_NEWROUTE, "IPSTACK_RTM_NEWROUTE" },
+{ IPSTACK_RTM_DELROUTE, "IPSTACK_RTM_DELROUTE" },
+{ IPSTACK_RTM_GETROUTE, "IPSTACK_RTM_GETROUTE" },
+{ IPSTACK_RTM_NEWLINK, "IPSTACK_RTM_NEWLINK" },
+{ IPSTACK_RTM_DELLINK, "IPSTACK_RTM_DELLINK" },
+{ IPSTACK_RTM_GETLINK, "IPSTACK_RTM_GETLINK" },
+{ IPSTACK_RTM_NEWADDR, "IPSTACK_RTM_NEWADDR" },
+{ IPSTACK_RTM_DELADDR, "IPSTACK_RTM_DELADDR" },
+{ IPSTACK_RTM_GETADDR, "IPSTACK_RTM_GETADDR" },
 { 0, NULL } };
 
-static int addattr32(struct nlmsghdr *n, size_t maxlen, zpl_uint32 type, int data);
-static int addattr_l(struct nlmsghdr *n, size_t maxlen, zpl_uint32 type, void *data,
+static int _netlink_addattr32(struct ipstack_nlmsghdr *n, size_t maxlen, zpl_uint32 type, int data);
+static int _netlink_addattr_l(struct ipstack_nlmsghdr *n, size_t maxlen, zpl_uint32 type, void *data,
 		size_t alen);
-static int rta_addattr_l(struct rtattr *rta, size_t maxlen, zpl_uint32 type,
+static int _netlink_rta_addattr_l(struct ipstack_rtattr *rta, size_t maxlen, zpl_uint32 type,
 		void *data, size_t alen);
-static const char * nl_msg_type_to_str(zpl_uint16 msg_type);
-static const char * nl_rtproto_to_str(zpl_uchar rtproto);
+static const char * _netlink_msg_type_to_str(zpl_uint16 msg_type);
+static const char * _netlink_rtproto_to_str(zpl_uchar rtproto);
 
 #ifndef SO_RCVBUFFORCE
 #define SO_RCVBUFFORCE  (33)
 #endif
 
-/* Make socket for Linux netlink interface. */
+/* Make ipstack_socket for Linux netlink interface. */
 static int netlink_socket(struct nlsock *nl, zpl_ulong groups,
 		vrf_id_t vrf_id)
 {
 	int ret;
-	struct sockaddr_nl snl;
+	struct ipstack_sockaddr_nl snl;
 	int sock;
 	int namelen;
 	int save_errno;
-	printf("%s open %s socket\r\n", __func__, nl->name);
-	sock = ip_socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+	printf("%s open %s ipstack_socket\r\n", __func__, nl->name);
+	sock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_NETLINK, IPSTACK_SOCK_RAW, IPSTACK_NETLINK_ROUTE);
 	if (sock < 0)
 	{
-		zlog(MODULE_NSM, LOG_ERR, "Can't open %s socket: %s", nl->name,
+		zlog(MODULE_NSM, ZLOG_LEVEL_ERR, "Can't open %s ipstack_socket: %s", nl->name,
 				ipcom_strerror(ipcom_errno));
-		printf("Can't open %s socket: %s", nl->name,
+		printf("Can't open %s ipstack_socket: %s", nl->name,
 				ipcom_strerror(ipcom_errno));
 		return -1;
 	}
 	nl->nl_pid = getpid();
 #if 1
 	memset(&snl, 0, sizeof snl);
-	snl.nl_family = AF_NETLINK;
+	snl.nl_family = IPSTACK_AF_NETLINK;
 	snl.nl_groups = groups;
 
-	/* Bind the socket to the netlink structure for anything. */
-	ret = ip_bind(sock, (struct sockaddr *) &snl, sizeof snl);
+	/* Bind the ipstack_socket to the netlink structure for anything. */
+	ret = ipstack_bind(sock, (struct ipstack_sockaddr *) &snl, sizeof snl);
 	save_errno = ipcom_errno;
 	if (ret < 0)
 	{
-		zlog(MODULE_NSM, LOG_ERR, "Can't bind %s socket to group 0x%x: %s",
+		zlog(MODULE_NSM, ZLOG_LEVEL_ERR, "Can't ipstack_bind %s ipstack_socket to group 0x%x: %s",
 				nl->name, snl.nl_groups, ipcom_strerror(save_errno));
 		ip_close(sock);
 		return -1;
@@ -836,11 +836,11 @@ static int netlink_socket(struct nlsock *nl, zpl_ulong groups,
 
 	/* multiple netlink sockets will have different nl_pid */
 	namelen = sizeof snl;
-	ret = ip_getsockname(sock, (struct sockaddr *) &snl,
+	ret = ip_getsockname(sock, (struct ipstack_sockaddr *) &snl,
 			(socklen_t *) &namelen);
 	if (ret < 0 || namelen != sizeof snl)
 	{
-		zlog(MODULE_NSM, LOG_ERR, "Can't get %s socket name: %s", nl->name,
+		zlog(MODULE_NSM, ZLOG_LEVEL_ERR, "Can't get %s ipstack_socket name: %s", nl->name,
 				ipcom_strerror(ipcom_errno));
 		ip_close(sock);
 		return -1;
@@ -855,7 +855,7 @@ static int netlink_socket(struct nlsock *nl, zpl_ulong groups,
 /* Receive message from netlink interface and pass those information
  to the given function. */
 static int netlink_parse_info(
-		int (*filter)(struct sockaddr_nl *, struct nlmsghdr *, vrf_id_t),
+		int (*filter)(struct ipstack_sockaddr_nl *, struct ipstack_nlmsghdr *, vrf_id_t),
 		struct nlsock *nl, struct nsm_vrf *zvrf)
 {
 	int status;
@@ -864,50 +864,50 @@ static int netlink_parse_info(
 
 	while (1)
 	{
-		struct iovec iov =
+		struct ipstack_iovec iov =
 		{ .iov_base = nl_rcvbuf.p, .iov_len = nl_rcvbuf.size, };
-		struct sockaddr_nl snl;
-		struct msghdr msg =
+		struct ipstack_sockaddr_nl snl;
+		struct ipstack_msghdr msg =
 		{ .msg_name = (void *) &snl, .msg_namelen = sizeof snl, .msg_iov = &iov,
 				.msg_iovlen = 1 };
-		struct nlmsghdr *h;
+		struct ipstack_nlmsghdr *h;
 
 		status = ip_recvmsg(nl->sock, &msg, 0);
 		if (status < 0)
 		{
-			if (ipcom_errno == EINTR)
+			if (ipcom_errno == IPSTACK_ERRNO_EINTR)
 				continue;
-			if (ipcom_errno == EWOULDBLOCK || errno == EAGAIN)
+			if (ipcom_errno == IPSTACK_ERRNO_EWOULDBLOCK || ipstack_errno == IPSTACK_ERRNO_EAGAIN)
 				break;
-			zlog(MODULE_NSM, LOG_ERR, "%s recvmsg overrun: %s", nl->name,
+			zlog(MODULE_NSM, ZLOG_LEVEL_ERR, "%s ipstack_recvmsg overrun: %s", nl->name,
 					ipcom_strerror(ipcom_errno));
 			continue;
 		}
 
 		if (status == 0) //netlink-cmd EOF
 		{
-			zlog(MODULE_NSM, LOG_ERR, "%s EOF", nl->name);
+			zlog(MODULE_NSM, ZLOG_LEVEL_ERR, "%s EOF", nl->name);
 			return -1;
 		}
 
 		if (msg.msg_namelen != sizeof snl)
 		{
-			zlog(MODULE_NSM, LOG_ERR, "%s sender address length error: length %d",
+			zlog(MODULE_NSM, ZLOG_LEVEL_ERR, "%s sender address length error: length %d",
 					nl->name, msg.msg_namelen);
 			return -1;
 		}
 
-		for (h = (struct nlmsghdr *) nl_rcvbuf.p;
-				NLMSG_OK(h, (zpl_uint32) status); h = NLMSG_NEXT(h, status))
+		for (h = (struct ipstack_nlmsghdr *) nl_rcvbuf.p;
+				IPSTACK_NLMSG_OK(h, (zpl_uint32) status); h = IPSTACK_NLMSG_NEXT(h, status))
 		{
 			/* Finish of reading. */
-			if (h->nlmsg_type == NLMSG_DONE)
+			if (h->nlmsg_type == IPSTACK_NLMSG_DONE)
 				return ret;
 
 			/* Error handling. */
-			if (h->nlmsg_type == NLMSG_ERROR)
+			if (h->nlmsg_type == IPSTACK_NLMSG_ERROR)
 			{
-				struct nlmsgerr *err = (struct nlmsgerr *) NLMSG_DATA(h);
+				struct ipstack_nlmsgerr *err = (struct ipstack_nlmsgerr *) IPSTACK_NLMSG_DATA(h);
 				int errnum = err->error;
 				int msg_type = err->msg.nlmsg_type;
 
@@ -925,26 +925,26 @@ static int netlink_parse_info(
 					}
 
 					/* return if not a multipart message, otherwise continue */
-					if (!(h->nlmsg_flags & NLM_F_MULTI))
+					if (!(h->nlmsg_flags & IPSTACK_NLM_F_MULTI))
 					{
 						return 0;
 					}
 					continue;
 				}
 
-				if (h->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr)))
+				if (h->nlmsg_len < IPSTACK_NLMSG_LENGTH(sizeof(struct ipstack_nlmsgerr)))
 				{
-					zlog(MODULE_NSM, LOG_ERR, "%s error: message truncated",
+					zlog(MODULE_NSM, ZLOG_LEVEL_ERR, "%s error: message truncated",
 							nl->name);
 					return -1;
 				}
 
 				/* Deal with errors that occur because of races in link handling */
 				if (nl == &netlink_cmd
-						&& ((msg_type == RTM_DELROUTE
-								&& (-errnum == ENODEV || -errnum == ESRCH))
-								|| (msg_type == RTM_NEWROUTE
-										&& -errnum == EEXIST)))
+						&& ((msg_type == IPSTACK_RTM_DELROUTE
+								&& (-errnum == IPSTACK_ERRNO_ENODEV || -errnum == IPSTACK_ERRNO_ESRCH))
+								|| (msg_type == IPSTACK_RTM_NEWROUTE
+										&& -errnum == IPSTACK_ERRNO_EEXIST)))
 				{
 					if (IS_ZEBRA_DEBUG_KERNEL)
 						zlog_debug(MODULE_NSM,
@@ -969,14 +969,14 @@ static int netlink_parse_info(
 						nl->name, lookup(nlmsg_str, h->nlmsg_type),
 						h->nlmsg_type, h->nlmsg_seq, h->nlmsg_pid);
 
-			/* skip unsolicited messages originating from command socket
+			/* skip unsolicited messages originating from command ipstack_socket
 			 * linux sets the originators port-id for {NEW|DEL}ADDR messages,
 			 * so this has to be checked here. */
 			if (nl != &netlink_cmd
 					&& h->nlmsg_pid
 							== /*netlink_cmd.nl_pid*/netlink_cmd.snl.nl_pid
-					&& (h->nlmsg_type != RTM_NEWADDR
-							&& h->nlmsg_type != RTM_DELADDR))
+					&& (h->nlmsg_type != IPSTACK_RTM_NEWADDR
+							&& h->nlmsg_type != IPSTACK_RTM_DELADDR))
 			{
 				if (IS_ZEBRA_DEBUG_KERNEL)
 					zlog_debug(MODULE_NSM,
@@ -988,22 +988,22 @@ static int netlink_parse_info(
 			error = (*filter)(&snl, h, zvrf->vrf_id);
 			if (error < 0)
 			{
-				zlog(MODULE_NSM, LOG_ERR, "%s filter function error", nl->name);
+				zlog(MODULE_NSM, ZLOG_LEVEL_ERR, "%s filter function error", nl->name);
 				ret = error;
 			}
 		}
 
 		/* After error care. */
-		if (msg.msg_flags & MSG_TRUNC)
+		if (msg.msg_flags & IPSTACK_MSG_TRUNC)
 		{
-			zlog(MODULE_NSM, LOG_ERR, "%s error: message truncated!", nl->name);
-			zlog(MODULE_NSM, LOG_ERR,
+			zlog(MODULE_NSM, ZLOG_LEVEL_ERR, "%s error: message truncated!", nl->name);
+			zlog(MODULE_NSM, ZLOG_LEVEL_ERR,
 					"Must restart with larger --nl-bufsize value!");
 			continue;
 		}
 		if (status)
 		{
-			zlog(MODULE_NSM, LOG_ERR, "%s error: data remnant size %d", nl->name,
+			zlog(MODULE_NSM, ZLOG_LEVEL_ERR, "%s error: data remnant size %d", nl->name,
 					status);
 			return -1;
 		}
@@ -1013,57 +1013,57 @@ static int netlink_parse_info(
 
 static const struct message rtproto_str[] =
 {
-{ RTPROT_REDIRECT, "redirect" },
-{ RTPROT_KERNEL, "kernel" },
-{ RTPROT_BOOT, "boot" },
-{ RTPROT_STATIC, "static" },
-{ RTPROT_GATED, "GateD" },
-{ RTPROT_RA, "router advertisement" },
-{ RTPROT_MRT, "MRT" },
-{ RTPROT_ZEBRA, "Zebra" },
-#ifdef RTPROT_BIRD
-		{	RTPROT_BIRD, "BIRD"},
-#endif /* RTPROT_BIRD */
+{ IPSTACK_RTPROT_REDIRECT, "redirect" },
+{ IPSTACK_RTPROT_KERNEL, "kernel" },
+{ IPSTACK_RTPROT_BOOT, "boot" },
+{ IPSTACK_RTPROT_STATIC, "static" },
+{ IPSTACK_RTPROT_GATED, "GateD" },
+{ IPSTACK_RTPROT_RA, "router advertisement" },
+{ IPSTACK_RTPROT_MRT, "MRT" },
+{ IPSTACK_RTPROT_ZEBRA, "Zebra" },
+#ifdef IPSTACK_RTPROT_BIRD
+		{	IPSTACK_RTPROT_BIRD, "BIRD"},
+#endif /* IPSTACK_RTPROT_BIRD */
 		{ 0, NULL } };
 
 /* Utility function  comes from iproute2.
  Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru> */
-static int addattr_l(struct nlmsghdr *n, size_t maxlen, zpl_uint32 type, void *data,
+static int _netlink_addattr_l(struct ipstack_nlmsghdr *n, size_t maxlen, zpl_uint32 type, void *data,
 		size_t alen)
 {
 	size_t len;
-	struct rtattr *rta;
+	struct ipstack_rtattr *rta;
 
-	len = RTA_LENGTH(alen);
+	len = IPSTACK_RTA_LENGTH(alen);
 
-	if (NLMSG_ALIGN(n->nlmsg_len) + len > maxlen)
+	if (IPSTACK_NLMSG_ALIGN(n->nlmsg_len) + len > maxlen)
 		return -1;
 
-	rta = (struct rtattr *) (((char *) n) + NLMSG_ALIGN(n->nlmsg_len));
+	rta = (struct ipstack_rtattr *) (((char *) n) + IPSTACK_NLMSG_ALIGN(n->nlmsg_len));
 	rta->rta_type = type;
 	rta->rta_len = len;
-	memcpy(RTA_DATA(rta), data, alen);
-	n->nlmsg_len = NLMSG_ALIGN(n->nlmsg_len) + len;
+	memcpy(IPSTACK_RTA_DATA(rta), data, alen);
+	n->nlmsg_len = IPSTACK_NLMSG_ALIGN(n->nlmsg_len) + len;
 
 	return 0;
 }
 
-static int rta_addattr_l(struct rtattr *rta, size_t maxlen, zpl_uint32 type,
+static int _netlink_rta_addattr_l(struct ipstack_rtattr *rta, size_t maxlen, zpl_uint32 type,
 		void *data, size_t alen)
 {
 	size_t len;
-	struct rtattr *subrta;
+	struct ipstack_rtattr *subrta;
 
-	len = RTA_LENGTH(alen);
+	len = IPSTACK_RTA_LENGTH(alen);
 
-	if (RTA_ALIGN(rta->rta_len) + len > maxlen)
+	if (IPSTACK_RTA_ALIGN(rta->rta_len) + len > maxlen)
 		return -1;
 
-	subrta = (struct rtattr *) (((char *) rta) + RTA_ALIGN(rta->rta_len));
+	subrta = (struct ipstack_rtattr *) (((char *) rta) + IPSTACK_RTA_ALIGN(rta->rta_len));
 	subrta->rta_type = type;
 	subrta->rta_len = len;
-	memcpy(RTA_DATA(subrta), data, alen);
-	rta->rta_len = NLMSG_ALIGN(rta->rta_len) + len;
+	memcpy(IPSTACK_RTA_DATA(subrta), data, alen);
+	rta->rta_len = IPSTACK_NLMSG_ALIGN(rta->rta_len) + len;
 
 	return 0;
 }
@@ -1071,26 +1071,26 @@ static int rta_addattr_l(struct rtattr *rta, size_t maxlen, zpl_uint32 type,
 /* Utility function comes from iproute2.
  Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru> */
 
-static int addattr32(struct nlmsghdr *n, size_t maxlen, zpl_uint32 type, int data)
+static int _netlink_addattr32(struct ipstack_nlmsghdr *n, size_t maxlen, zpl_uint32 type, int data)
 {
 	size_t len;
-	struct rtattr *rta;
+	struct ipstack_rtattr *rta;
 
-	len = RTA_LENGTH(4);
+	len = IPSTACK_RTA_LENGTH(4);
 
-	if (NLMSG_ALIGN(n->nlmsg_len) + len > maxlen)
+	if (IPSTACK_NLMSG_ALIGN(n->nlmsg_len) + len > maxlen)
 		return -1;
 
-	rta = (struct rtattr *) (((char *) n) + NLMSG_ALIGN(n->nlmsg_len));
+	rta = (struct ipstack_rtattr *) (((char *) n) + IPSTACK_NLMSG_ALIGN(n->nlmsg_len));
 	rta->rta_type = type;
 	rta->rta_len = len;
-	memcpy(RTA_DATA(rta), &data, 4);
-	n->nlmsg_len = NLMSG_ALIGN(n->nlmsg_len) + len;
+	memcpy(IPSTACK_RTA_DATA(rta), &data, 4);
+	n->nlmsg_len = IPSTACK_NLMSG_ALIGN(n->nlmsg_len) + len;
 
 	return 0;
 }
 
-static int netlink_talk_filter(struct sockaddr_nl *snl, struct nlmsghdr *h,
+static int netlink_talk_filter(struct ipstack_sockaddr_nl *snl, struct ipstack_nlmsghdr *h,
 		vrf_id_t vrf_id)
 {
 	zlog_warn(MODULE_NSM, "netlink_talk: ignoring message type 0x%04x vrf %u",
@@ -1098,26 +1098,26 @@ static int netlink_talk_filter(struct sockaddr_nl *snl, struct nlmsghdr *h,
 	return 0;
 }
 
-/* sendmsg() to netlink socket then recvmsg(). */
-static int netlink_talk(struct nlmsghdr *n, struct nlsock *nl,
+/* ipstack_sendmsg() to netlink ipstack_socket then ipstack_recvmsg(). */
+static int netlink_talk(struct ipstack_nlmsghdr *n, struct nlsock *nl,
 		struct nsm_vrf *zvrf)
 {
 	int status;
-	struct sockaddr_nl snl;
-	struct iovec iov =
+	struct ipstack_sockaddr_nl snl;
+	struct ipstack_iovec iov =
 	{ .iov_base = (void *) n, .iov_len = n->nlmsg_len };
-	struct msghdr msg =
+	struct ipstack_msghdr msg =
 	{ .msg_name = (void *) &snl, .msg_namelen = sizeof snl, .msg_iov = &iov,
 			.msg_iovlen = 1, };
 	int save_errno;
 
 	memset(&snl, 0, sizeof snl);
-	snl.nl_family = AF_NETLINK;
+	snl.nl_family = IPSTACK_AF_NETLINK;
 
 	n->nlmsg_seq = ++nl->seq;
 
-	/* Request an acknowledgement by setting NLM_F_ACK */
-	n->nlmsg_flags |= NLM_F_ACK;
+	/* Request an acknowledgement by setting IPSTACK_NLM_F_ACK */
+	n->nlmsg_flags |= IPSTACK_NLM_F_ACK;
 
 	if (IS_ZEBRA_DEBUG_KERNEL)
 		zlog_debug(MODULE_NSM, "netlink_talk: %s type %s(%u), seq=%u", nl->name,
@@ -1130,13 +1130,13 @@ static int netlink_talk(struct nlmsghdr *n, struct nlsock *nl,
 
 	if (status < 0)
 	{
-		zlog(MODULE_NSM, LOG_ERR, "netlink_talk sendmsg() error: %s",
+		zlog(MODULE_NSM, ZLOG_LEVEL_ERR, "netlink_talk ipstack_sendmsg() error: %s",
 				ipcom_strerror(save_errno));
 		return -1;
 	}
 
 	/*
-	 * Get reply from netlink socket.
+	 * Get reply from netlink ipstack_socket.
 	 * The reply should either be an acknowlegement or an error.
 	 */
 	return netlink_parse_info(netlink_talk_filter, nl, zvrf);
@@ -1150,21 +1150,21 @@ static int netlink_talk(struct nlmsghdr *n, struct nlsock *nl,
  *                   (direct/recursive, single-/multipath)
  * @param bytelen: Length of addresses in bytes.
  * @param nexthop: Nexthop information
- * @param nlmsg: nlmsghdr structure to fill in.
+ * @param nlmsg: ipstack_nlmsghdr structure to fill in.
  * @param req_size: The size allocated for the message.
  */
 static void _netlink_route_build_singlepath(const char *routedesc, zpl_uint32 bytelen,
-		struct nexthop *nexthop, struct nlmsghdr *nlmsg, struct rtmsg *rtmsg,
+		struct nexthop *nexthop, struct ipstack_nlmsghdr *nlmsg, struct ipstack_rtmsg *ipstack_rtmsg,
 		zpl_size_t req_size)
 {
 	if (CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_ONLINK))
-		rtmsg->rtm_flags |= RTNH_F_ONLINK;
+		ipstack_rtmsg->rtm_flags |= IPSTACK_RTNH_F_ONLINK;
 	if (nexthop->type == NEXTHOP_TYPE_IPV4
 			|| nexthop->type == NEXTHOP_TYPE_IPV4_IFINDEX)
 	{
-		addattr_l(nlmsg, req_size, RTA_GATEWAY, &nexthop->gate.ipv4, bytelen);
+		_netlink_addattr_l(nlmsg, req_size, IPSTACK_RTA_GATEWAY, &nexthop->gate.ipv4, bytelen);
 		if (nexthop->src.ipv4.s_addr)
-			addattr_l(nlmsg, req_size, RTA_PREFSRC, &nexthop->src.ipv4,
+			_netlink_addattr_l(nlmsg, req_size, IPSTACK_RTA_PREFSRC, &nexthop->src.ipv4,
 					bytelen);
 
 		if (IS_ZEBRA_DEBUG_KERNEL)
@@ -1178,7 +1178,7 @@ static void _netlink_route_build_singlepath(const char *routedesc, zpl_uint32 by
 			|| nexthop->type == NEXTHOP_TYPE_IPV6_IFNAME
 			|| nexthop->type == NEXTHOP_TYPE_IPV6_IFINDEX)
 	{
-		addattr_l (nlmsg, req_size, RTA_GATEWAY,
+		_netlink_addattr_l (nlmsg, req_size, IPSTACK_RTA_GATEWAY,
 				&nexthop->gate.ipv6, bytelen);
 
 		if (IS_ZEBRA_DEBUG_KERNEL)
@@ -1193,10 +1193,10 @@ static void _netlink_route_build_singlepath(const char *routedesc, zpl_uint32 by
 			|| nexthop->type == NEXTHOP_TYPE_IFNAME
 			|| nexthop->type == NEXTHOP_TYPE_IPV4_IFINDEX)
 	{
-		addattr32(nlmsg, req_size, RTA_OIF, ifindex2ifkernel(nexthop->ifindex));
+		_netlink_addattr32(nlmsg, req_size, IPSTACK_RTA_OIF, ifindex2ifkernel(nexthop->ifindex));
 
 		if (nexthop->src.ipv4.s_addr)
-			addattr_l(nlmsg, req_size, RTA_PREFSRC, &nexthop->src.ipv4,
+			_netlink_addattr_l(nlmsg, req_size, IPSTACK_RTA_PREFSRC, &nexthop->src.ipv4,
 					bytelen);
 
 		if (IS_ZEBRA_DEBUG_KERNEL)
@@ -1208,7 +1208,7 @@ static void _netlink_route_build_singlepath(const char *routedesc, zpl_uint32 by
 	if (nexthop->type == NEXTHOP_TYPE_IPV6_IFINDEX
 			|| nexthop->type == NEXTHOP_TYPE_IPV6_IFNAME)
 	{
-		addattr32(nlmsg, req_size, RTA_OIF, ifindex2ifkernel(nexthop->ifindex));
+		_netlink_addattr32(nlmsg, req_size, IPSTACK_RTA_OIF, ifindex2ifkernel(nexthop->ifindex));
 
 		if (IS_ZEBRA_DEBUG_KERNEL)
 			zlog_debug(MODULE_NSM, "netlink_route_multipath() (%s): "
@@ -1218,7 +1218,7 @@ static void _netlink_route_build_singlepath(const char *routedesc, zpl_uint32 by
 }
 
 /* This function takes a nexthop as argument and
- * appends to the given rtattr/rtnexthop pair the
+ * appends to the given ipstack_rtattr/ipstack_rtnexthop pair the
  * representation of the nexthop. If the nexthop
  * defines a preferred source, the src parameter
  * will be modified to point to that src, otherwise
@@ -1234,7 +1234,7 @@ static void _netlink_route_build_singlepath(const char *routedesc, zpl_uint32 by
  *             the prefsrc should be stored.
  */
 static void _netlink_route_build_multipath(const char *routedesc, zpl_uint32 bytelen,
-		struct nexthop *nexthop, struct rtattr *rta, struct rtnexthop *rtnh,
+		struct nexthop *nexthop, struct ipstack_rtattr *rta, struct ipstack_rtnexthop *rtnh,
 		union g_addr **src)
 {
 	rtnh->rtnh_len = sizeof(*rtnh);
@@ -1243,14 +1243,14 @@ static void _netlink_route_build_multipath(const char *routedesc, zpl_uint32 byt
 	rta->rta_len += rtnh->rtnh_len;
 
 	if (CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_ONLINK))
-		rtnh->rtnh_flags |= RTNH_F_ONLINK;
+		rtnh->rtnh_flags |= IPSTACK_RTNH_F_ONLINK;
 
 	if (nexthop->type == NEXTHOP_TYPE_IPV4
 			|| nexthop->type == NEXTHOP_TYPE_IPV4_IFINDEX)
 	{
-		rta_addattr_l(rta, NL_PKT_BUF_SIZE, RTA_GATEWAY, &nexthop->gate.ipv4,
+		_netlink_rta_addattr_l(rta, NL_PKT_BUF_SIZE, IPSTACK_RTA_GATEWAY, &nexthop->gate.ipv4,
 				bytelen);
-		rtnh->rtnh_len += sizeof(struct rtattr) + bytelen;
+		rtnh->rtnh_len += sizeof(struct ipstack_rtattr) + bytelen;
 
 		if (nexthop->src.ipv4.s_addr)
 			*src = &nexthop->src;
@@ -1266,9 +1266,9 @@ static void _netlink_route_build_multipath(const char *routedesc, zpl_uint32 byt
 			|| nexthop->type == NEXTHOP_TYPE_IPV6_IFNAME
 			|| nexthop->type == NEXTHOP_TYPE_IPV6_IFINDEX)
 	{
-		rta_addattr_l (rta, NL_PKT_BUF_SIZE, RTA_GATEWAY,
+		_netlink_rta_addattr_l (rta, NL_PKT_BUF_SIZE, IPSTACK_RTA_GATEWAY,
 				&nexthop->gate.ipv6, bytelen);
-		rtnh->rtnh_len += sizeof (struct rtattr) + bytelen;
+		rtnh->rtnh_len += sizeof (struct ipstack_rtattr) + bytelen;
 
 		if (IS_ZEBRA_DEBUG_KERNEL)
 		zlog_debug(MODULE_NSM, "netlink_route_multipath() (%s): "
@@ -1363,7 +1363,7 @@ int kernel_rib_table_debug(struct prefix *p, struct rib *rib)
 static int netlink_route_multipath(zpl_uint32 cmd, struct prefix *p, struct rib *rib)
 {
 	zpl_uint32 bytelen;
-	struct sockaddr_nl snl;
+	struct ipstack_sockaddr_nl snl;
 	struct nexthop *nexthop = NULL, *tnexthop;
 	zpl_uint32 recursing;
 	zpl_uint32 nexthop_num;
@@ -1373,8 +1373,8 @@ static int netlink_route_multipath(zpl_uint32 cmd, struct prefix *p, struct rib 
 
 	struct
 	{
-		struct nlmsghdr n;
-		struct rtmsg r;
+		struct ipstack_nlmsghdr n;
+		struct ipstack_rtmsg r;
 		char buf[NL_PKT_BUF_SIZE];
 	} req;
 
@@ -1385,20 +1385,20 @@ static int netlink_route_multipath(zpl_uint32 cmd, struct prefix *p, struct rib 
 #endif
 	memset(&req, 0, sizeof req - NL_PKT_BUF_SIZE);
 
-	bytelen = (family == AF_INET ? 4 : 16);
+	bytelen = (family == IPSTACK_AF_INET ? 4 : 16);
 
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg));
-	req.n.nlmsg_flags = NLM_F_CREATE | NLM_F_REPLACE | NLM_F_REQUEST;
+	req.n.nlmsg_len = IPSTACK_NLMSG_LENGTH(sizeof(struct ipstack_rtmsg));
+	req.n.nlmsg_flags = IPSTACK_NLM_F_CREATE | IPSTACK_NLM_F_REPLACE | IPSTACK_NLM_F_REQUEST;
 	req.n.nlmsg_type = cmd;
 	req.r.rtm_family = family;
 	req.r.rtm_table = rib->table;
 	req.r.rtm_dst_len = p->prefixlen;
 	if(rib->type <= ZEBRA_ROUTE_STATIC)
-		req.r.rtm_protocol = RTPROT_STATIC;
+		req.r.rtm_protocol = IPSTACK_RTPROT_STATIC;
 	else
-		req.r.rtm_protocol = RTPROT_ZEBRA;
-	req.r.rtm_scope = RT_SCOPE_UNIVERSE; //;
-	req.r.rtm_scope = RT_SCOPE_LINK;
+		req.r.rtm_protocol = IPSTACK_RTPROT_ZEBRA;
+	req.r.rtm_scope = IPSTACK_RT_SCOPE_UNIVERSE; //;
+	req.r.rtm_scope = IPSTACK_RT_SCOPE_LINK;
 
 	printf("%s table=%d\r\n", __func__, req.r.rtm_table);
 	req.r.rtm_table = IPCOM_ROUTE_TABLE_DEFAULT;
@@ -1408,47 +1408,47 @@ static int netlink_route_multipath(zpl_uint32 cmd, struct prefix *p, struct rib 
 	else
 		discard = 0;
 
-	if (cmd == RTM_NEWROUTE)
+	if (cmd == IPSTACK_RTM_NEWROUTE)
 	{
 		if (discard)
 		{
 			if (rib->flags & ZEBRA_FLAG_BLACKHOLE)
-				req.r.rtm_type = RTN_BLACKHOLE;
+				req.r.rtm_type = IPSTACK_RTN_BLACKHOLE;
 			else if (rib->flags & ZEBRA_FLAG_REJECT)
-				req.r.rtm_type = RTN_UNREACHABLE;
+				req.r.rtm_type = IPSTACK_RTN_UNREACHABLE;
 			else
-				assert(RTN_BLACKHOLE != RTN_UNREACHABLE); /* false */
+				assert(IPSTACK_RTN_BLACKHOLE != IPSTACK_RTN_UNREACHABLE); /* false */
 		}
 		else
-			req.r.rtm_type = RTN_UNICAST;
+			req.r.rtm_type = IPSTACK_RTN_UNICAST;
 	}
 
-	addattr_l(&req.n, sizeof req, RTA_DST, &p->u.prefix, bytelen);
+	_netlink_addattr_l(&req.n, sizeof req, IPSTACK_RTA_DST, &p->u.prefix, bytelen);
 
 	/* Metric. */
-	addattr32(&req.n, sizeof req, RTA_PRIORITY, NL_DEFAULT_ROUTE_METRIC);
+	_netlink_addattr32(&req.n, sizeof req, IPSTACK_RTA_PRIORITY, NL_DEFAULT_ROUTE_METRIC);
 
 	//if (req.r.rtm_table == IPCOM_ROUTE_TABLE_DEFAULT)        /*yinwenjun */
 
-	addattr_l(&req.n, sizeof req, RTA_VR, &rib->vrf_id, sizeof(rib->vrf_id));
+	_netlink_addattr_l(&req.n, sizeof req, IPSTACK_RTA_VR, &rib->vrf_id, sizeof(rib->vrf_id));
 
 	if (rib->mtu || rib->nexthop_mtu)
 	{
 		char buf[NL_PKT_BUF_SIZE];
-		struct rtattr *rta = (void *) buf;
+		struct ipstack_rtattr *rta = (void *) buf;
 		zpl_uint32 mtu = rib->mtu;
 		if (!mtu || (rib->nexthop_mtu && rib->nexthop_mtu < mtu))
 			mtu = rib->nexthop_mtu;
-		rta->rta_type = RTA_METRICS;
-		rta->rta_len = RTA_LENGTH(0);
-		rta_addattr_l(rta, NL_PKT_BUF_SIZE, RTAX_MTU, &mtu, sizeof mtu);
-		addattr_l(&req.n, NL_PKT_BUF_SIZE, RTA_METRICS, RTA_DATA(rta),
-				RTA_PAYLOAD(rta));
+		rta->rta_type = IPSTACK_RTA_METRICS;
+		rta->rta_len = IPSTACK_RTA_LENGTH(0);
+		_netlink_rta_addattr_l(rta, NL_PKT_BUF_SIZE, IPSTACK_RTAX_MTU, &mtu, sizeof mtu);
+		_netlink_addattr_l(&req.n, NL_PKT_BUF_SIZE, IPSTACK_RTA_METRICS, IPSTACK_RTA_DATA(rta),
+				IPSTACK_RTA_PAYLOAD(rta));
 	}
 
 	if (discard)
 	{
-		if (cmd == RTM_NEWROUTE)
+		if (cmd == IPSTACK_RTM_NEWROUTE)
 			for (ALL_NEXTHOPS_RO(rib->nexthop, nexthop, tnexthop, recursing))
 			{
 				/* We shouldn't encounter recursive nexthops on discard routes,
@@ -1469,14 +1469,14 @@ static int netlink_route_multipath(zpl_uint32 cmd, struct prefix *p, struct rib 
 		if (CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_RECURSIVE))
 			continue;
 		if (cmd
-				== RTM_NEWROUTE&& !CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_ACTIVE))
+				== IPSTACK_RTM_NEWROUTE&& !CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_ACTIVE))
 			continue;
-		if (cmd == RTM_DELROUTE && !CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_FIB))
+		if (cmd == IPSTACK_RTM_DELROUTE && !CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_FIB))
 			continue;
 
 		if (nexthop->type != NEXTHOP_TYPE_IFINDEX
 				&& nexthop->type != NEXTHOP_TYPE_IFNAME)
-			req.r.rtm_scope = RT_SCOPE_UNIVERSE;
+			req.r.rtm_scope = IPSTACK_RT_SCOPE_UNIVERSE;
 
 		nexthop_num++;
 	}
@@ -1490,9 +1490,9 @@ static int netlink_route_multipath(zpl_uint32 cmd, struct prefix *p, struct rib 
 			if (CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_RECURSIVE))
 				continue;
 
-			if ((cmd == RTM_NEWROUTE
+			if ((cmd == IPSTACK_RTM_NEWROUTE
 					&& CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_ACTIVE))
-					|| (cmd == RTM_DELROUTE
+					|| (cmd == IPSTACK_RTM_DELROUTE
 							&& CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_FIB)))
 			{
 				routedesc = recursing ? "recursive, 1 hop" : "single hop";
@@ -1501,7 +1501,7 @@ static int netlink_route_multipath(zpl_uint32 cmd, struct prefix *p, struct rib 
 				_netlink_route_build_singlepath(routedesc, bytelen, nexthop,
 						&req.n, &req.r, sizeof req);
 
-				if (cmd == RTM_NEWROUTE)
+				if (cmd == IPSTACK_RTM_NEWROUTE)
 					SET_FLAG(nexthop->flags, NEXTHOP_FLAG_FIB);
 
 				nexthop_num++;
@@ -1512,13 +1512,13 @@ static int netlink_route_multipath(zpl_uint32 cmd, struct prefix *p, struct rib 
 	else
 	{
 		char buf[NL_PKT_BUF_SIZE];
-		struct rtattr *rta = (void *) buf;
-		struct rtnexthop *rtnh;
+		struct ipstack_rtattr *rta = (void *) buf;
+		struct ipstack_rtnexthop *rtnh;
 		union g_addr *src = NULL;
 
-		rta->rta_type = RTA_MULTIPATH;
-		rta->rta_len = RTA_LENGTH(0);
-		rtnh = RTA_DATA(rta);
+		rta->rta_type = IPSTACK_RTA_MULTIPATH;
+		rta->rta_len = IPSTACK_RTA_LENGTH(0);
+		rtnh = IPSTACK_RTA_DATA(rta);
 
 		nexthop_num = 0;
 		for (ALL_NEXTHOPS_RO(rib->nexthop, nexthop, tnexthop, recursing))
@@ -1529,9 +1529,9 @@ static int netlink_route_multipath(zpl_uint32 cmd, struct prefix *p, struct rib 
 			if (CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_RECURSIVE))
 				continue;
 
-			if ((cmd == RTM_NEWROUTE
+			if ((cmd == IPSTACK_RTM_NEWROUTE
 					&& CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_ACTIVE))
-					|| (cmd == RTM_DELROUTE
+					|| (cmd == IPSTACK_RTM_DELROUTE
 							&& CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_FIB)))
 			{
 				routedesc = recursing ? "recursive, multihop" : "multihop";
@@ -1540,18 +1540,18 @@ static int netlink_route_multipath(zpl_uint32 cmd, struct prefix *p, struct rib 
 				_netlink_route_debug(cmd, p, nexthop, routedesc, family, zvrf);
 				_netlink_route_build_multipath(routedesc, bytelen, nexthop, rta,
 						rtnh, &src);
-				rtnh = RTNH_NEXT(rtnh);
+				rtnh = IPSTACK_RTNH_NEXT(rtnh);
 
-				if (cmd == RTM_NEWROUTE)
+				if (cmd == IPSTACK_RTM_NEWROUTE)
 					SET_FLAG(nexthop->flags, NEXTHOP_FLAG_FIB);
 			}
 		}
 		if (src)
-			addattr_l(&req.n, sizeof req, RTA_PREFSRC, &src->ipv4, bytelen);
+			_netlink_addattr_l(&req.n, sizeof req, IPSTACK_RTA_PREFSRC, &src->ipv4, bytelen);
 
-		if (rta->rta_len > RTA_LENGTH(0))
-			addattr_l(&req.n, NL_PKT_BUF_SIZE, RTA_MULTIPATH, RTA_DATA(rta),
-					RTA_PAYLOAD(rta));
+		if (rta->rta_len > IPSTACK_RTA_LENGTH(0))
+			_netlink_addattr_l(&req.n, NL_PKT_BUF_SIZE, IPSTACK_RTA_MULTIPATH, IPSTACK_RTA_DATA(rta),
+					IPSTACK_RTA_PAYLOAD(rta));
 	}
 
 	/* If there is no useful nexthop then return. */
@@ -1567,9 +1567,9 @@ static int netlink_route_multipath(zpl_uint32 cmd, struct prefix *p, struct rib 
 
 	/* Destination netlink address. */
 	memset(&snl, 0, sizeof snl);
-	snl.nl_family = AF_NETLINK;
+	snl.nl_family = IPSTACK_AF_NETLINK;
 
-	/* Talk to netlink socket. */
+	/* Talk to netlink ipstack_socket. */
 	return netlink_talk(&req.n, &netlink_cmd, zvrf);
 }
 
@@ -1578,18 +1578,18 @@ int kernel_route_rib(struct prefix *p, struct rib *old, struct rib *new)
 	if (!old && new)
 	{
 		//kernel_rib_table_debug(p, new);
-		return netlink_route_multipath(RTM_NEWROUTE, p, new);
+		return netlink_route_multipath(IPSTACK_RTM_NEWROUTE, p, new);
 	}
 	if (old && !new)
 	{
 		//kernel_rib_table_debug(p, old);
-		return netlink_route_multipath(RTM_DELROUTE, p, old);
+		return netlink_route_multipath(IPSTACK_RTM_DELROUTE, p, old);
 	}
 	/* Replace, can be done atomically if metric does not change;
 	 * netlink uses [prefix, tos, priority] to identify prefix.
 	 * Now metric is not sent to kernel, so we can just do atomic replace. */
 	//kernel_rib_table_debug(p, new);
-	return netlink_route_multipath(RTM_NEWROUTE, p, new);
+	return netlink_route_multipath(IPSTACK_RTM_NEWROUTE, p, new);
 }
 
 /* Exported interface function.  This function simply calls
@@ -1597,10 +1597,10 @@ int kernel_route_rib(struct prefix *p, struct rib *old, struct rib *new)
 void kernel_init(struct nsm_vrf *zvrf)
 {
 
-	/*  int groups = RTMGRP_LINK | RTMGRP_IPV4_ROUTE | RTMGRP_IPV4_IFADDR;
-	 groups |= RTMGRP_IPV6_ROUTE | RTMGRP_IPV6_IFADDR;
+	/*  int groups = IPSTACK_RTMGRP_LINK | IPSTACK_RTMGRP_IPV4_ROUTE | IPSTACK_RTMGRP_IPV4_IFADDR;
+	 groups |= IPSTACK_RTMGRP_IPV6_ROUTE | IPSTACK_RTMGRP_IPV6_IFADDR;
 	 netlink_socket (&zvrf->netlink_cmd, groups, zvrf->vrf_id);*/
-	int groups = 0; //RTMGRP_IPV4_ROUTE | RTMGRP_IPV6_ROUTE;
+	int groups = 0; //IPSTACK_RTMGRP_IPV4_ROUTE | IPSTACK_RTMGRP_IPV6_ROUTE;
 	netlink_socket(&netlink_cmd, groups, 0/*zvrf->vrf_id*/);
 
 	if (netlink_cmd.sock > 0)
@@ -1631,19 +1631,19 @@ void kernel_init(struct nsm_vrf *zvrf)
  */
 
 /*
- * nl_msg_type_to_str
+ * _netlink_msg_type_to_str
  */
 static const char *
-nl_msg_type_to_str(zpl_uint16 msg_type)
+_netlink_msg_type_to_str(zpl_uint16 msg_type)
 {
 	return lookup(nlmsg_str, msg_type);
 }
 
 /*
- * nl_rtproto_to_str
+ * _netlink_rtproto_to_str
  */
 static const char *
-nl_rtproto_to_str(zpl_uchar rtproto)
+_netlink_rtproto_to_str(zpl_uchar rtproto)
 {
 	return lookup(rtproto_str, rtproto);
 }

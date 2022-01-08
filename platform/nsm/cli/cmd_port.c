@@ -139,6 +139,10 @@ void cmd_port_init (void)
 {
 	install_element(INTERFACE_NODE, CMD_CONFIG_LEVEL, &switchport_mode_cmd);
 	install_element(INTERFACE_NODE, CMD_CONFIG_LEVEL, &no_switchport_mode_cmd);
+	
+	install_element(INTERFACE_RANGE_NODE, CMD_CONFIG_LEVEL, &switchport_mode_cmd);
+	install_element(INTERFACE_RANGE_NODE, CMD_CONFIG_LEVEL, &no_switchport_mode_cmd);
+	
 }
 
 

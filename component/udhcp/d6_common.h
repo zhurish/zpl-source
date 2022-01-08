@@ -140,31 +140,31 @@ struct client6_data_t {
 	char **env_ptr;
 	unsigned env_idx;
 	/* link-local IPv6 address */
-	struct in6_addr ll_ip6;
+	struct ipstack_in6_addr ll_ip6;
 };
 
 #define client6_data (*(struct client6_data_t*)(&bb_common_bufsiz1[COMMON_BUFSIZE - sizeof(struct client6_data_t)]))
 
-int FAST_FUNC d6_read_interface(const char *interface, ifindex_t *ifindex, struct in6_addr *nip6, zpl_uint8 *mac);
+int FAST_FUNC d6_read_interface(const char *interface, ifindex_t *ifindex, struct ipstack_in6_addr *nip6, zpl_uint8 *mac);
 
 int FAST_FUNC d6_listen_socket(zpl_uint16 port, const char *inf);
 
 int FAST_FUNC d6_recv_kernel_packet(
-		struct in6_addr *peer_ipv6,
+		struct ipstack_in6_addr *peer_ipv6,
 		struct d6_packet *packet, int fd
 );
 
 int FAST_FUNC d6_send_raw_packet(
 		struct d6_packet *d6_pkt, unsigned d6_pkt_size,
-		struct in6_addr *src_ipv6, zpl_uint16 source_port,
-		struct in6_addr *dst_ipv6, zpl_uint16 dest_port, const zpl_uint8 *dest_arp,
+		struct ipstack_in6_addr *src_ipv6, zpl_uint16 source_port,
+		struct ipstack_in6_addr *dst_ipv6, zpl_uint16 dest_port, const zpl_uint8 *dest_arp,
 		ifindex_t ifindex
 );
 
 int FAST_FUNC d6_send_kernel_packet(
 		struct d6_packet *d6_pkt, unsigned d6_pkt_size,
-		struct in6_addr *src_ipv6, zpl_uint16 source_port,
-		struct in6_addr *dst_ipv6, zpl_uint16 dest_port,
+		struct ipstack_in6_addr *src_ipv6, zpl_uint16 source_port,
+		struct ipstack_in6_addr *dst_ipv6, zpl_uint16 dest_port,
 		ifindex_t ifindex
 );
 

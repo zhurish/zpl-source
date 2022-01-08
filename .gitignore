@@ -46,5 +46,7 @@ bcm/
 hisidir/
 ikayaki/
 rtsp源码/
-zplmedia/bsp
-multimedia/
+zplmedia/bsp/*
+multimedia/*
+component/ssh/test/*
+component/onvif/onvifgen/xml/*

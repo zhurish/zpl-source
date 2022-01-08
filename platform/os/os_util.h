@@ -25,6 +25,7 @@ extern int os_get_blocking(int fd);
 extern int os_set_nonblocking(int fd);
 extern int os_set_blocking(int fd);
 
+
 extern void os_log(zpl_char *file, const zpl_char *format, ...);
 extern void os_vslog(zpl_char *herd, zpl_char *file, int line, const zpl_char *format, ...);
 
@@ -38,7 +39,7 @@ extern zpl_pid_t os_pid_get (const zpl_char *path);
 extern int fdprintf ( int fd, const zpl_char *format, ...);
 
 extern int hostname_ipv4_address(zpl_char *hostname, struct in_addr *addr);
-extern int hostname_ipv6_address(zpl_char *hostname, struct in6_addr *addr);
+extern int hostname_ipv6_address(zpl_char *hostname, struct ipstack_in6_addr *addr);
 
 //#define __OS_DEBUG_ENABLE  
 

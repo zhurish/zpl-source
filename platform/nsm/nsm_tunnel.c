@@ -34,25 +34,25 @@ static int nsm_tunnel_iph_protocol(tunnel_mode mode)
 	{
 	case NSM_TUNNEL_IPIP:
 	case NSM_TUNNEL_IPV4V6:
-		pro = IPPROTO_IPIP;
+		pro = IPSTACK_IPPROTO_IPIP;
 		break;
 	case NSM_TUNNEL_GRE:
-		pro = IPPROTO_GRE;
+		pro = IPSTACK_IPPROTO_GRE;
 		break;
 	case NSM_TUNNEL_VTI:
-		pro = IPPROTO_IPIP;
+		pro = IPSTACK_IPPROTO_IPIP;
 		break;
 	case NSM_TUNNEL_SIT:
-		pro = IPPROTO_IPV6;
+		pro = IPSTACK_IPPROTO_IPV6;
 		break;
 /*	case NSM_TUNNEL_SIT://isatap
-		pro = IPPROTO_IPV6;
+		pro = IPSTACK_IPPROTO_IPV6;
 		break;*/
 	case NSM_TUNNEL_IPIPV6:
-		pro = IPPROTO_IPV6;
+		pro = IPSTACK_IPPROTO_IPV6;
 		break;
 	case NSM_TUNNEL_GREV6:
-		pro = IPPROTO_GRE;
+		pro = IPSTACK_IPPROTO_GRE;
 		break;
 	default:
 		break;
@@ -61,7 +61,7 @@ static int nsm_tunnel_iph_protocol(tunnel_mode mode)
 }
 
 
-int nsm_tunnel_make_iphdr(nsm_tunnel_t *tunnel, struct iphdr *iph)
+int nsm_tunnel_make_iphdr(nsm_tunnel_t *tunnel, struct ipstack_iphdr *iph)
 {
 	struct interface *ifp = NULL;
 	if(!tunnel || !tunnel->ifp)
@@ -404,9 +404,9 @@ int nsm_tunnel_interface_del_api(struct interface *ifp)
 int nsm_tunnel_init()
 {
 	nsm_interface_hook_add(NSM_TUNNEL, nsm_tunnel_interface_create_api, nsm_tunnel_interface_del_api);
-	ipkernel_tunnel_create = _ipkernel_tunnel_create;
-	ipkernel_tunnel_delete = _ipkernel_tunnel_delete;
-	ipkernel_tunnel_change = _ipkernel_tunnel_change;
+	//ipkernel_tunnel_create = _ipkernel_tunnel_create;
+	//ipkernel_tunnel_delete = _ipkernel_tunnel_delete;
+	//ipkernel_tunnel_change = _ipkernel_tunnel_change;
 	return OK;
 }
 

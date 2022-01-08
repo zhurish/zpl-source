@@ -58,7 +58,7 @@ extern "C" {
     typedef int32_t fd_mask;
 #endif
 #if WINDOWS
-    typedef fd_set fd_mask;
+    typedef ipstack_fd_set fd_mask;
 #endif
 
 #if !LINUX
@@ -155,15 +155,15 @@ PUBLIC_DATA int __websLogLevel;
     and type flags. The WEBS_LOG_MASK is used to extract the trace level from a flags word. We expect most apps
     to run with level 2 trace enabled.
 */
-#if defined(LOG_TRAP)||defined(LOG_DEBUG)
-#define WEBS_CRIT		LOG_CRIT
-#define WEBS_ALERT		LOG_ALERT
-#define WEBS_EMERG		LOG_EMERG
-#define WEBS_ERROR      LOG_ERR     /**< Hard error trace level */
-#define WEBS_WARN       LOG_WARNING /**< Soft warning trace level */
-#define WEBS_NOTICE		LOG_NOTICE
-#define WEBS_INFO		LOG_INFO
-#define WEBS_DEBUG		LOG_DEBUG
+#if defined(LOG_TRAP)||defined(ZLOG_LEVEL_DEBUG)
+#define WEBS_CRIT		ZLOG_LEVEL_CRIT
+#define WEBS_ALERT		ZLOG_LEVEL_ALERT
+#define WEBS_EMERG		ZLOG_LEVEL_EMERG
+#define WEBS_ERROR      ZLOG_LEVEL_ERR     /**< Hard error trace level */
+#define WEBS_WARN       ZLOG_LEVEL_WARNING /**< Soft warning trace level */
+#define WEBS_NOTICE		ZLOG_LEVEL_NOTICE
+#define WEBS_INFO		ZLOG_LEVEL_INFO
+#define WEBS_DEBUG		ZLOG_LEVEL_DEBUG
 #define WEBS_TRAP		(WEBS_DEBUG+1)
 
 #define WEBS_CONFIG     (WEBS_DEBUG+2)           /**< Configuration settings trace level. */
@@ -369,23 +369,23 @@ PUBLIC void traceProc(int level, cchar *fmt, ...);
 #if 0//ME_GOAHEAD_TRACING
 #define web_trace(l, fmt, ...) 		if (websGetDebug()) { \
 		if((l)) { \
-				pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, LOG_DEBUG, fmt, ##__VA_ARGS__); \
+				pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, ZLOG_LEVEL_DEBUG, fmt, ##__VA_ARGS__); \
 			} \
 		} else {}
 
 #define web_logmsg(l, fmt, ...) 	if (websGetDebug()) { \
 	if((l)) \
-		pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, LOG_DEBUG, fmt, ##__VA_ARGS__); \
+		pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, ZLOG_LEVEL_DEBUG, fmt, ##__VA_ARGS__); \
 	} else {}
 #else
 #define web_trace(l, fmt, ...) 		if (websGetDebug()) { \
 		if((l)&WEBS_RAW_MSG) { \
 			if(websGetLogLevel() & WEBS_RAW_MSG) { \
-				pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, LOG_DEBUG+1, fmt, ##__VA_ARGS__); \
+				pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, ZLOG_LEVEL_DEBUG+1, fmt, ##__VA_ARGS__); \
 			} \
 		} else if((l)&WEBS_HEADER_MSG) { \
 			if(websGetLogLevel() & WEBS_HEADER_MSG) { \
-				pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, LOG_DEBUG+1, fmt, ##__VA_ARGS__); \
+				pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, ZLOG_LEVEL_DEBUG+1, fmt, ##__VA_ARGS__); \
 			} \
 		} else { \
 			if(websGetLogLevel() & WEBS_TRACE_MSG) { \
@@ -396,9 +396,9 @@ PUBLIC void traceProc(int level, cchar *fmt, ...);
 
 #define web_logmsg(l, fmt, ...) 	if (websGetDebug()) { \
 	if((l)&WEBS_RAW_MSG) \
-		pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, LOG_DEBUG, fmt, ##__VA_ARGS__); \
+		pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, ZLOG_LEVEL_DEBUG, fmt, ##__VA_ARGS__); \
 	else \
-		pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, ((l)&WEBS_LEVEL_MASK) + (LOG_INFO-2), fmt, ##__VA_ARGS__); \
+		pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, ((l)&WEBS_LEVEL_MASK) + (ZLOG_LEVEL_INFO-2), fmt, ##__VA_ARGS__); \
 	} else {}
 #endif
 
@@ -1162,7 +1162,7 @@ typedef struct WebsSocket {
     @ingroup WebsSocket
     @stability Stable
  */
-PUBLIC int socketAddress(struct sockaddr *addr, int addrlen, char *ipbuf, int ipLen, int *port);
+PUBLIC int socketAddress(struct ipstack_sockaddr *addr, int addrlen, char *ipbuf, int ipLen, int *port);
 
 /**
     Determine if an IP address is an IPv6 address.
@@ -1333,7 +1333,7 @@ PUBLIC void socketHiddenData(WebsSocket *sp, ssize len, int dir);
     @ingroup WebsSocket
     @stability Stable
  */
-PUBLIC int socketInfo(cchar *ip, int port, int *family, int *protocol, struct sockaddr_storage *addr, Socklen *addrlen);
+PUBLIC int socketInfo(cchar *ip, int port, int *family, int *protocol, struct ipstack_sockaddr_storage *addr, Socklen *addrlen);
 
 /**
     Determine if a socket is bound to an IPv6 address.

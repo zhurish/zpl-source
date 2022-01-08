@@ -10,50 +10,72 @@ extern "C" {
 /* There are some command levels which called from command node. */
 enum node_type 
 {
-  USER_NODE,
+  HOST_NODE,//只用于show running
+  LOG_NODE,//只用于show running
+  USER_NODE,//只用于show running
+  HOSTSRV_NODE, //只用于show running
+  LOGIN_NODE,
   AUTH_NODE,			/* Authentication mode of vty interface. */
-//  RESTRICTED_NODE,		/* Restricted view mode */
   VIEW_NODE,			/* View node. Default mode of vty interface. */
   AUTH_ENABLE_NODE,		/* Authentication mode for change enable. */
   ENABLE_NODE,			/* Enable node. */
   CONFIG_NODE,			/* Config node. Default mode of config file. */
-  VLAN_DATABASE_NODE,	/* vlan database node*/
-  VLAN_NODE,			/* vlan node */
+
   VRF_NODE,			/* VRF node. */
+  
   SERVICE_NODE, 		/* Service node. */
   ALL_SERVICE_NODE, 		/* Service node. */
 
-/* 2016閿熸枻鎷�6閿熸枻鎷�27閿熸枻鎷� 21:01:23 zhurish: 浣块敓鏂ゆ嫹IMI Module缁熶竴CLI閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鏃堕敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鎵ч敓鏂ゆ嫹linux閿熻妭鏍哥鎷峰厓閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷疯瘶閿燂拷 */
 #ifdef IMISH_IMI_MODULE  
   LINUX_SHELL_NODE,			/* IMI Module protocol node. */
 #endif//IMISH_IMI_MODULE   
-/* 2016閿熸枻鎷�6閿熸枻鎷�27閿熸枻鎷� 21:01:23  zhurish: 浣块敓鏂ゆ嫹IMI Module缁熶竴CLI閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鏃堕敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鎵ч敓鏂ゆ嫹linux閿熻妭鏍哥鎷峰厓閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷疯瘶閿燂拷 */
+
   DEBUG_NODE,			/* Debug node. */
+  
   AAA_NODE,			/* AAA node. */
   KEYCHAIN_NODE,		/* Key-chain node. */
   KEYCHAIN_KEY_NODE,		/* Key-chain key node. */
   DHCPS_NODE,				/* DHDP server*/
 
+  IP_ARP_NODE,				/* ip arp Service*/
+
+  IP_DNS_NODE,				/* ip dns Service*/
+
   TEMPLATE_NODE,				/* templates server*/
+
+  VLAN_DATABASE_NODE,	/* vlan database node*/
+  VLAN_NODE,			/* vlan node */
+
 
   LOOPBACK_INTERFACE_NODE,	/* Loopback Interface mode node. */
 
   SERIAL_INTERFACE_NODE,	/* Serial Interface mode node. */
 
   INTERFACE_NODE,			/* L2 Interface mode node(default). */
-
+  INTERFACE_RANGE_NODE,
   INTERFACE_L3_NODE,		/* Interface mode node. */
+  INTERFACE_L3_RANGE_NODE,
+
   WIRELESS_INTERFACE_NODE,	/* Interface mode node. */
   TUNNEL_INTERFACE_NODE,	/* Tunnel Interface mode node. */
 
   LAG_INTERFACE_NODE,		/* Lag Interface mode node. */
   LAG_INTERFACE_L3_NODE,	/* Lag L3 Interface mode node. */
 
+  E1_INTERFACE_L3_NODE,	/* E1 L3 Interface mode node. */
+  E1_INTERFACE_L3_RANGE_NODE,
+
+  EPON_INTERFACE_NODE,		/* EPON Interface mode node. */
+  EPON_INTERFACE_L3_NODE,	/* EPON L3 Interface mode node. */
+  EPON_INTERFACE_RANGE_NODE,
+  EPON_INTERFACE_L3_RANGE_NODE,
+
   BRIGDE_INTERFACE_NODE,	/* Brigde Interface mode node. */
 #ifdef CUSTOM_INTERFACE
   WIFI_INTERFACE_NODE,	/* Wifi Interface mode node. */
   MODEM_INTERFACE_NODE,		/* Modem Interface mode node. */
 #endif
+  //INTERFACE_RANGE_NODE,
 
   TRUNK_NODE,			/* Trunk group mode node. */
 
@@ -90,6 +112,7 @@ enum node_type
   MASC_NODE,			/* MASC for multicast.  */
   IRDP_NODE,			/* ICMP Router Discovery Protocol mode. */ 
   IP_NODE,			/* Static ip route node. */
+
   ACCESS_NODE,			/* Access list node. */
   PREFIX_NODE,			/* Prefix list node. */
   ACCESS_IPV6_NODE,		/* Access list node. */
@@ -100,6 +123,7 @@ enum node_type
   QOS_CLASS_MAP_NODE,		/* QOS Class map list node. */
   QOS_POLICY_MAP_NODE,		/* QOS Policy list node. */
   QOS_POLICY_CLASS_MAP_NODE,		/* QOS Policy Class list node. */
+
   AS_LIST_NODE,			/* AS list node. */
   COMMUNITY_LIST_NODE,		/* Community list node. */
   RMAP_NODE,			/* Route map node. */

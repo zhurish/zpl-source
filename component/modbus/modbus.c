@@ -18,7 +18,7 @@
 #include <unistd.h>
 #endif
 
-#include <modbus-config.h>
+#include "zpl_include.h"
 
 #include "modbus.h"
 #include "modbus-private.h"
@@ -93,7 +93,7 @@ void modbus_version(char *ver)
 void _error_print(modbus_t *ctx, const char *context)
 {
     if (ctx->debug) {
-        fprintf(stderr, "ERROR %s", modbus_strerror(errno));
+        fprintf(stderr, "ERROR %s", modbus_strerror(ipstack_errno));
         if (context != NULL) {
             fprintf(stderr, ": %s\n", context);
         } else {
@@ -114,7 +114,7 @@ static void _sleep_response_timeout(modbus_t *ctx)
     struct timespec request, remaining;
     request.tv_sec = ctx->response_timeout.tv_sec;
     request.tv_nsec = ((long int)ctx->response_timeout.tv_usec) * 1000;
-    while (nanosleep(&request, &remaining) == -1 && errno == EINTR) {
+    while (nanosleep(&request, &remaining) == -1 && ipstack_errno == EINTR) {
         request = remaining;
     }
 #endif
@@ -125,7 +125,7 @@ int modbus_flush(modbus_t *ctx)
     int rc;
 
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -195,9 +195,9 @@ static int send_msg(modbus_t *ctx, uint8_t *msg, int msg_length)
         if (rc == -1) {
             _error_print(ctx, NULL);
             if (ctx->error_recovery & MODBUS_ERROR_RECOVERY_LINK) {
-                int saved_errno = errno;
+                int saved_errno = ipstack_errno;
 
-                if ((errno == EBADF || errno == ECONNRESET || errno == EPIPE)) {
+                if ((ipstack_errno == EBADF || ipstack_errno == ECONNRESET || ipstack_errno == EPIPE)) {
                     modbus_close(ctx);
                     _sleep_response_timeout(ctx);
                     modbus_connect(ctx);
@@ -205,14 +205,14 @@ static int send_msg(modbus_t *ctx, uint8_t *msg, int msg_length)
                     _sleep_response_timeout(ctx);
                     modbus_flush(ctx);
                 }
-                errno = saved_errno;
+                ipstack_errno = saved_errno;
             }
         }
     } while ((ctx->error_recovery & MODBUS_ERROR_RECOVERY_LINK) &&
              rc == -1);
 
     if (rc > 0 && rc != msg_length) {
-        errno = EMBBADDATA;
+        ipstack_errno = EMBBADDATA;
         return -1;
     }
 
@@ -226,7 +226,7 @@ int modbus_send_raw_request(modbus_t *ctx, const uint8_t *raw_req, int raw_req_l
     int req_length;
 
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -234,7 +234,7 @@ int modbus_send_raw_request(modbus_t *ctx, const uint8_t *raw_req, int raw_req_l
         /* The raw request must contain function and slave at least and
            must not be longer than the maximum pdu length plus the slave
            address. */
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -341,7 +341,7 @@ static int compute_data_length_after_meta(modbus_t *ctx, uint8_t *msg,
 
    The function shall return the number of received characters and the received
    message in an array of uint8_t if successful. Otherwise it shall return -1
-   and errno is set to one of the values defined below:
+   and ipstack_errno is set to one of the values defined below:
    - ECONNRESET
    - EMBBADDATA
    - EMBUNKEXC
@@ -368,8 +368,8 @@ int _modbus_receive_msg(modbus_t *ctx, uint8_t *msg, msg_type_t msg_type)
     }
 
     /* Add a file descriptor to the set */
-    FD_ZERO(&rset);
-    FD_SET(ctx->s, &rset);
+    IPSTACK_FD_ZERO(&rset);
+    IPSTACK_FD_SET(ctx->s._fd, &rset);
 
     /* We need to analyse the message step by step.  At the first step, we want
      * to reach the function code because all packets contain this
@@ -400,36 +400,36 @@ int _modbus_receive_msg(modbus_t *ctx, uint8_t *msg, msg_type_t msg_type)
         if (rc == -1) {
             _error_print(ctx, "select");
             if (ctx->error_recovery & MODBUS_ERROR_RECOVERY_LINK) {
-                int saved_errno = errno;
+                int saved_errno = ipstack_errno;
 
-                if (errno == ETIMEDOUT) {
+                if (ipstack_errno == ETIMEDOUT) {
                     _sleep_response_timeout(ctx);
                     modbus_flush(ctx);
-                } else if (errno == EBADF) {
+                } else if (ipstack_errno == EBADF) {
                     modbus_close(ctx);
                     modbus_connect(ctx);
                 }
-                errno = saved_errno;
+                ipstack_errno = saved_errno;
             }
             return -1;
         }
 
         rc = ctx->backend->recv(ctx, msg + msg_length, length_to_read);
         if (rc == 0) {
-            errno = ECONNRESET;
+            ipstack_errno = ECONNRESET;
             rc = -1;
         }
 
         if (rc == -1) {
             _error_print(ctx, "read");
             if ((ctx->error_recovery & MODBUS_ERROR_RECOVERY_LINK) &&
-                (errno == ECONNRESET || errno == ECONNREFUSED ||
-                 errno == EBADF)) {
-                int saved_errno = errno;
+                (ipstack_errno == ECONNRESET || ipstack_errno == ECONNREFUSED ||
+                 ipstack_errno == EBADF)) {
+                int saved_errno = ipstack_errno;
                 modbus_close(ctx);
                 modbus_connect(ctx);
                 /* Could be removed by previous calls */
-                errno = saved_errno;
+                ipstack_errno = saved_errno;
             }
             return -1;
         }
@@ -461,7 +461,7 @@ int _modbus_receive_msg(modbus_t *ctx, uint8_t *msg, msg_type_t msg_type)
                 length_to_read = compute_data_length_after_meta(
                     ctx, msg, msg_type);
                 if ((msg_length + length_to_read) > (int)ctx->backend->max_adu_length) {
-                    errno = EMBBADDATA;
+                    ipstack_errno = EMBBADDATA;
                     _error_print(ctx, "too many data");
                     return -1;
                 }
@@ -495,7 +495,7 @@ int _modbus_receive_msg(modbus_t *ctx, uint8_t *msg, msg_type_t msg_type)
 int modbus_receive(modbus_t *ctx, uint8_t *req)
 {
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -505,7 +505,7 @@ int modbus_receive(modbus_t *ctx, uint8_t *req)
 /* Receives the confirmation.
 
    The function shall store the read response in rsp and return the number of
-   values (bits or words). Otherwise, its shall return -1 and errno is set.
+   values (bits or words). Otherwise, its shall return -1 and ipstack_errno is set.
 
    The function doesn't check the confirmation is the expected response to the
    initial request.
@@ -513,7 +513,7 @@ int modbus_receive(modbus_t *ctx, uint8_t *req)
 int modbus_receive_confirmation(modbus_t *ctx, uint8_t *rsp)
 {
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -549,14 +549,14 @@ static int check_confirmation(modbus_t *ctx, uint8_t *req,
 
             int exception_code = rsp[offset + 1];
             if (exception_code < MODBUS_EXCEPTION_MAX) {
-                errno = MODBUS_ENOBASE + exception_code;
+                ipstack_errno = MODBUS_ENOBASE + exception_code;
             } else {
-                errno = EMBBADEXC;
+                ipstack_errno = EMBBADEXC;
             }
             _error_print(ctx, NULL);
             return -1;
         } else {
-            errno = EMBBADEXC;
+            ipstack_errno = EMBBADEXC;
             _error_print(ctx, NULL);
             return -1;
         }
@@ -580,7 +580,7 @@ static int check_confirmation(modbus_t *ctx, uint8_t *req,
                 _sleep_response_timeout(ctx);
                 modbus_flush(ctx);
             }
-            errno = EMBBADDATA;
+            ipstack_errno = EMBBADDATA;
             return -1;
         }
 
@@ -631,7 +631,7 @@ static int check_confirmation(modbus_t *ctx, uint8_t *req,
                 modbus_flush(ctx);
             }
 
-            errno = EMBBADDATA;
+            ipstack_errno = EMBBADDATA;
             rc = -1;
         }
     } else {
@@ -644,7 +644,7 @@ static int check_confirmation(modbus_t *ctx, uint8_t *req,
             _sleep_response_timeout(ctx);
             modbus_flush(ctx);
         }
-        errno = EMBBADDATA;
+        ipstack_errno = EMBBADDATA;
         rc = -1;
     }
 
@@ -726,7 +726,7 @@ int modbus_reply(modbus_t *ctx, const uint8_t *req,
     sft_t sft;
 
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -933,7 +933,7 @@ int modbus_reply(modbus_t *ctx, const uint8_t *req,
         if (ctx->debug) {
             fprintf(stderr, "FIXME Not implemented\n");
         }
-        errno = ENOPROTOOPT;
+        ipstack_errno = ENOPROTOOPT;
         return -1;
         break;
     case MODBUS_FC_MASK_WRITE_REGISTER: {
@@ -1026,7 +1026,7 @@ int modbus_reply_exception(modbus_t *ctx, const uint8_t *req,
     sft_t sft;
 
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1044,7 +1044,7 @@ int modbus_reply_exception(modbus_t *ctx, const uint8_t *req,
         rsp[rsp_length++] = exception_code;
         return send_msg(ctx, rsp, rsp_length);
     } else {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 }
@@ -1100,7 +1100,7 @@ int modbus_read_bits(modbus_t *ctx, int addr, int nb, uint8_t *dest)
     int rc;
 
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1110,7 +1110,7 @@ int modbus_read_bits(modbus_t *ctx, int addr, int nb, uint8_t *dest)
                     "ERROR Too many bits requested (%d > %d)\n",
                     nb, MODBUS_MAX_READ_BITS);
         }
-        errno = EMBMDATA;
+        ipstack_errno = EMBMDATA;
         return -1;
     }
 
@@ -1129,7 +1129,7 @@ int modbus_read_input_bits(modbus_t *ctx, int addr, int nb, uint8_t *dest)
     int rc;
 
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1139,7 +1139,7 @@ int modbus_read_input_bits(modbus_t *ctx, int addr, int nb, uint8_t *dest)
                     "ERROR Too many discrete inputs requested (%d > %d)\n",
                     nb, MODBUS_MAX_READ_BITS);
         }
-        errno = EMBMDATA;
+        ipstack_errno = EMBMDATA;
         return -1;
     }
 
@@ -1166,7 +1166,7 @@ static int read_registers(modbus_t *ctx, int function, int addr, int nb,
                     "ERROR Too many registers requested (%d > %d)\n",
                     nb, MODBUS_MAX_READ_REGISTERS);
         }
-        errno = EMBMDATA;
+        ipstack_errno = EMBMDATA;
         return -1;
     }
 
@@ -1204,7 +1204,7 @@ int modbus_read_registers(modbus_t *ctx, int addr, int nb, uint16_t *dest)
     int status;
 
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1214,7 +1214,7 @@ int modbus_read_registers(modbus_t *ctx, int addr, int nb, uint16_t *dest)
                     "ERROR Too many registers requested (%d > %d)\n",
                     nb, MODBUS_MAX_READ_REGISTERS);
         }
-        errno = EMBMDATA;
+        ipstack_errno = EMBMDATA;
         return -1;
     }
 
@@ -1230,7 +1230,7 @@ int modbus_read_input_registers(modbus_t *ctx, int addr, int nb,
     int status;
 
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1238,7 +1238,7 @@ int modbus_read_input_registers(modbus_t *ctx, int addr, int nb,
         fprintf(stderr,
                 "ERROR Too many input registers requested (%d > %d)\n",
                 nb, MODBUS_MAX_READ_REGISTERS);
-        errno = EMBMDATA;
+        ipstack_errno = EMBMDATA;
         return -1;
     }
 
@@ -1257,7 +1257,7 @@ static int write_single(modbus_t *ctx, int function, int addr, const uint16_t va
     uint8_t req[_MIN_REQ_LENGTH];
 
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1282,7 +1282,7 @@ static int write_single(modbus_t *ctx, int function, int addr, const uint16_t va
 int modbus_write_bit(modbus_t *ctx, int addr, int status)
 {
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1294,7 +1294,7 @@ int modbus_write_bit(modbus_t *ctx, int addr, int status)
 int modbus_write_register(modbus_t *ctx, int addr, const uint16_t value)
 {
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1313,7 +1313,7 @@ int modbus_write_bits(modbus_t *ctx, int addr, int nb, const uint8_t *src)
     uint8_t req[MAX_MESSAGE_LENGTH];
 
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1322,7 +1322,7 @@ int modbus_write_bits(modbus_t *ctx, int addr, int nb, const uint8_t *src)
             fprintf(stderr, "ERROR Writing too many bits (%d > %d)\n",
                     nb, MODBUS_MAX_WRITE_BITS);
         }
-        errno = EMBMDATA;
+        ipstack_errno = EMBMDATA;
         return -1;
     }
 
@@ -1374,7 +1374,7 @@ int modbus_write_registers(modbus_t *ctx, int addr, int nb, const uint16_t *src)
     uint8_t req[MAX_MESSAGE_LENGTH];
 
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1384,7 +1384,7 @@ int modbus_write_registers(modbus_t *ctx, int addr, int nb, const uint16_t *src)
                     "ERROR Trying to write to too many registers (%d > %d)\n",
                     nb, MODBUS_MAX_WRITE_REGISTERS);
         }
-        errno = EMBMDATA;
+        ipstack_errno = EMBMDATA;
         return -1;
     }
 
@@ -1466,7 +1466,7 @@ int modbus_write_and_read_registers(modbus_t *ctx,
     uint8_t rsp[MAX_MESSAGE_LENGTH];
 
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1476,7 +1476,7 @@ int modbus_write_and_read_registers(modbus_t *ctx,
                     "ERROR Too many registers to write (%d > %d)\n",
                     write_nb, MODBUS_MAX_WR_WRITE_REGISTERS);
         }
-        errno = EMBMDATA;
+        ipstack_errno = EMBMDATA;
         return -1;
     }
 
@@ -1486,7 +1486,7 @@ int modbus_write_and_read_registers(modbus_t *ctx,
                     "ERROR Too many registers requested (%d > %d)\n",
                     read_nb, MODBUS_MAX_WR_READ_REGISTERS);
         }
-        errno = EMBMDATA;
+        ipstack_errno = EMBMDATA;
         return -1;
     }
     req_length = ctx->backend->build_request_basis(ctx,
@@ -1537,7 +1537,7 @@ int modbus_report_slave_id(modbus_t *ctx, int max_dest, uint8_t *dest)
     uint8_t req[_MIN_REQ_LENGTH];
 
     if (ctx == NULL || max_dest <= 0) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1577,7 +1577,7 @@ void _modbus_init_common(modbus_t *ctx)
 {
     /* Slave and socket are initialized to -1 */
     ctx->slave = -1;
-    ctx->s = -1;
+    //ctx->s = -1;
 
     ctx->debug = FALSE;
     ctx->error_recovery = MODBUS_ERROR_RECOVERY_NONE;
@@ -1596,7 +1596,7 @@ void _modbus_init_common(modbus_t *ctx)
 int modbus_set_slave(modbus_t *ctx, int slave)
 {
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1606,7 +1606,7 @@ int modbus_set_slave(modbus_t *ctx, int slave)
 int modbus_get_slave(modbus_t *ctx)
 {
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1617,7 +1617,7 @@ int modbus_set_error_recovery(modbus_t *ctx,
                               modbus_error_recovery_mode error_recovery)
 {
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1626,10 +1626,10 @@ int modbus_set_error_recovery(modbus_t *ctx,
     return 0;
 }
 
-int modbus_set_socket(modbus_t *ctx, int s)
+int modbus_set_socket(modbus_t *ctx, zpl_socket_t s)
 {
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1637,11 +1637,12 @@ int modbus_set_socket(modbus_t *ctx, int s)
     return 0;
 }
 
-int modbus_get_socket(modbus_t *ctx)
+zpl_socket_t modbus_get_socket(modbus_t *ctx)
 {
     if (ctx == NULL) {
-        errno = EINVAL;
-        return -1;
+        ipstack_errno = EINVAL;
+        zpl_socket_t tmp;
+        return tmp;
     }
 
     return ctx->s;
@@ -1651,7 +1652,7 @@ int modbus_get_socket(modbus_t *ctx)
 int modbus_get_response_timeout(modbus_t *ctx, uint32_t *to_sec, uint32_t *to_usec)
 {
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1664,7 +1665,7 @@ int modbus_set_response_timeout(modbus_t *ctx, uint32_t to_sec, uint32_t to_usec
 {
     if (ctx == NULL ||
         (to_sec == 0 && to_usec == 0) || to_usec > 999999) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1677,7 +1678,7 @@ int modbus_set_response_timeout(modbus_t *ctx, uint32_t to_sec, uint32_t to_usec
 int modbus_get_byte_timeout(modbus_t *ctx, uint32_t *to_sec, uint32_t *to_usec)
 {
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1690,7 +1691,7 @@ int modbus_set_byte_timeout(modbus_t *ctx, uint32_t to_sec, uint32_t to_usec)
 {
     /* Byte timeout can be disabled when both values are zero */
     if (ctx == NULL || to_usec > 999999) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1703,7 +1704,7 @@ int modbus_set_byte_timeout(modbus_t *ctx, uint32_t to_sec, uint32_t to_usec)
 int modbus_get_indication_timeout(modbus_t *ctx, uint32_t *to_sec, uint32_t *to_usec)
 {
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1716,7 +1717,7 @@ int modbus_set_indication_timeout(modbus_t *ctx, uint32_t to_sec, uint32_t to_us
 {
     /* Indication timeout can be disabled when both values are zero */
     if (ctx == NULL || to_usec > 999999) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1728,7 +1729,7 @@ int modbus_set_indication_timeout(modbus_t *ctx, uint32_t to_sec, uint32_t to_us
 int modbus_get_header_length(modbus_t *ctx)
 {
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1738,7 +1739,7 @@ int modbus_get_header_length(modbus_t *ctx)
 int modbus_connect(modbus_t *ctx)
 {
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -1764,7 +1765,7 @@ void modbus_free(modbus_t *ctx)
 int modbus_set_debug(modbus_t *ctx, int flag)
 {
     if (ctx == NULL) {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 

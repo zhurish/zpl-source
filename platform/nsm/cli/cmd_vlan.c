@@ -814,4 +814,15 @@ void cmd_vlan_init (void)
 	install_element(INTERFACE_NODE,CMD_CONFIG_LEVEL, &switchport_trunk_allow_vlan_all_cmd);
 	install_element(INTERFACE_NODE,CMD_CONFIG_LEVEL, &switchport_trunk_allow_vlan_list_cmd);
 
+
+	install_element(INTERFACE_RANGE_NODE,CMD_CONFIG_LEVEL, &switchport_access_vlan_cmd);
+	install_element(INTERFACE_RANGE_NODE,CMD_CONFIG_LEVEL, &no_switchport_access_vlan_cmd);
+
+	install_element(INTERFACE_RANGE_NODE,CMD_CONFIG_LEVEL, &switchport_trunk_vlan_cmd);
+	install_element(INTERFACE_RANGE_NODE,CMD_CONFIG_LEVEL, &no_switchport_trunk_vlan_cmd);
+
+	install_element(INTERFACE_RANGE_NODE,CMD_CONFIG_LEVEL, &switchport_trunk_allow_vlan_cmd);
+	install_element(INTERFACE_RANGE_NODE,CMD_CONFIG_LEVEL, &switchport_trunk_allow_vlan_all_cmd);
+	install_element(INTERFACE_RANGE_NODE,CMD_CONFIG_LEVEL, &switchport_trunk_allow_vlan_list_cmd);
+
 }

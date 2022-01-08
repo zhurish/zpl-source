@@ -28,21 +28,21 @@
 
 
 /* 1. None of the callers expects it to ever fail */
-/* 2. ip was always INADDR_ANY */
+/* 2. ip was always IPSTACK_INADDR_ANY */
 zpl_socket_t udhcp_udp_socket(/*zpl_uint32  ip,*/zpl_uint16 port)
 {
 	zpl_socket_t fd;
-	fd = ipstack_socket(IPCOM_STACK, AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	fd = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, IPSTACK_IPPROTO_UDP);
 	if (ipstack_invalid(fd))
 	{
 		sockopt_reuseaddr(fd);
 		if (sockopt_broadcast(fd) == -1)
-			zlog_err(MODULE_DHCP, "SO_BROADCAST");
+			zlog_err(MODULE_DHCP, "IPSTACK_SO_BROADCAST");
 
-		if (setsockopt_ifindex(AF_INET, fd, 1) == -1)
+		if (setsockopt_ifindex(IPSTACK_AF_INET, fd, 1) == -1)
 			zlog_err(MODULE_DHCP, "setsockopt_ifindex");
 
-		sockopt_ttl(AF_INET, fd, 1);
+		sockopt_ttl(IPSTACK_AF_INET, fd, 1);
 		ipstack_set_nonblocking(fd);
 		if (ipstack_sock_bind(fd, NULL, port) == OK)
 			return fd;
@@ -56,14 +56,14 @@ zpl_socket_t udhcp_raw_socket(void)
 {
 	zpl_socket_t fd;
 	int onoff = 1;
-	fd = ipstack_sock_raw_create(IPCOM_STACK, SOCK_DGRAM, (ETH_P_IP));
+	fd = ipstack_sock_raw_create(IPCOM_STACK, IPSTACK_SOCK_DGRAM, (ETH_P_IP));
 	/* Get packet socket to write raw frames on */
 	if (ipstack_invalid(fd))
 	{
-		zlog_err(MODULE_DHCP, "failed to open raw udp for relay(%s)", strerror(errno));
+		zlog_err(MODULE_DHCP, "failed to open raw udp for relay(%s)", strerror(ipstack_errno));
 		return fd;
 	}
-	ipstack_setsockopt(fd, SOL_SOCKET, SO_BROADCAST, (char *)&onoff, sizeof(onoff));
+	ipstack_setsockopt(fd, IPSTACK_SOL_SOCKET, IPSTACK_SO_BROADCAST, (char *)&onoff, sizeof(onoff));
 	return fd;
 }
 
@@ -73,7 +73,7 @@ int udhcp_client_socket_bind(zpl_socket_t fd, ifindex_t ifindex)
 	int ret = 0;
 	ifindex_t kifindex = ifindex2ifkernel(ifindex);
 	//zlog_err(MODULE_DHCP, "Can not bind raw socket(%s)", kifindex);
-	ret = ipstack_sock_raw_bind(fd, PF_PACKET, ETH_P_IP, kifindex);
+	ret = ipstack_sock_raw_bind(fd, IPSTACK_PF_PACKET, ETH_P_IP, kifindex);
 	return ret;
 }
 
@@ -102,8 +102,8 @@ int udhcp_client_socket_filter(zpl_socket_t fd, zpl_uint16 port)
 		static const struct sock_filter filter_instr[] = {
 		/* load 9th byte (protocol) */
 		BPF_STMT(BPF_LD | BPF_B | BPF_ABS, 9),
-		/* jump to L1 if it is IPPROTO_UDP, else to L4 */
-		BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, IPPROTO_UDP, 0, 6),
+		/* jump to L1 if it is IPSTACK_IPPROTO_UDP, else to L4 */
+		BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, IPSTACK_IPPROTO_UDP, 0, 6),
 		/* L1: load halfword from offset 6 (flags and frag offset) */
 		BPF_STMT(BPF_LD | BPF_H | BPF_ABS, 6),
 		/* jump to L4 if any bits in frag offset field are set, else to L2 */
@@ -124,10 +124,10 @@ int udhcp_client_socket_filter(zpl_socket_t fd, zpl_uint16 port)
 		/* casting const away: */
 		.filter = (struct sock_filter *) filter_instr, };
 		/* Ignoring error (kernel may lack support for this) */
-		if (ipstack_setsockopt(fd, SOL_SOCKET, SO_ATTACH_FILTER, &filter_prog,
+		if (ipstack_setsockopt(fd, IPSTACK_SOL_SOCKET, SO_ATTACH_FILTER, &filter_prog,
 				sizeof(filter_prog)) < 0)
 		{
-			zlog_err(MODULE_DHCP, "attached filter to raw socket fail:%s", strerror(errno));
+			zlog_err(MODULE_DHCP, "attached filter to raw socket fail:%s", strerror(ipstack_errno));
 			return ERROR;
 		}
 	}

@@ -116,17 +116,17 @@ static int modem_proxy_thread(os_ansync_t *value)
 	if(!mdproxy)
 		return ERROR;
 	os_bzero(buf, sizeof(buf));
-	nbytes = ipstack_read(mdproxy->fd, buf, sizeof(buf));
+	nbytes = read(mdproxy->fd, buf, sizeof(buf));
 	if (nbytes < 0)
 	{
-		if (!ERRNO_IO_RETRY(errno))
+		if (!IPSTACK_ERRNO_RETRY(ipstack_errno))
 		{
 			os_ansync_unlock(modem_ansync_lst);
 			os_ansync_unregister_api(modem_ansync_lst, OS_ANSYNC_INPUT, modem_proxy_thread, mdproxy, mdproxy->fd);
 			os_ansync_lock(modem_ansync_lst);
 			if (mdproxy->bClose)
 			{
-				ipstack_close(mdproxy->fd);
+				close(mdproxy->fd);
 				mdproxy->fd = 0;
 			}
 			modem_proxy_close(mdproxy->client);
@@ -140,7 +140,7 @@ static int modem_proxy_thread(os_ansync_t *value)
 		os_ansync_lock(modem_ansync_lst);
 		if (mdproxy->bClose)
 		{
-			ipstack_close(mdproxy->fd);
+			close(mdproxy->fd);
 			mdproxy->fd = 0;
 		}
 		modem_proxy_close(mdproxy->client);
@@ -167,14 +167,14 @@ static int modem_proxy_thread(os_ansync_t *value)
 				{
 					if(write(mdproxy->wfd, mdproxy->output, ret) <= 0)
 					{
-						if (!ERRNO_IO_RETRY(errno))
+						if (!IPSTACK_ERRNO_RETRY(ipstack_errno))
 						{
 							os_ansync_unlock(modem_ansync_lst);
 							os_ansync_unregister_api(modem_ansync_lst, OS_ANSYNC_INPUT, modem_proxy_thread, mdproxy, mdproxy->fd);
 							os_ansync_lock(modem_ansync_lst);
 							if (mdproxy->bClose)
 							{
-								ipstack_close(mdproxy->fd);
+								close(mdproxy->fd);
 								mdproxy->fd = 0;
 							}
 							modem_proxy_close(mdproxy->client);
@@ -189,7 +189,7 @@ static int modem_proxy_thread(os_ansync_t *value)
 					os_ansync_lock(modem_ansync_lst);
 					if (mdproxy->bClose)
 					{
-						ipstack_close(mdproxy->fd);
+						close(mdproxy->fd);
 						mdproxy->fd = 0;
 					}
 					modem_proxy_close(mdproxy->client);

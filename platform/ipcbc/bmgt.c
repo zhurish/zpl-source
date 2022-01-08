@@ -106,6 +106,26 @@ int unit_board_del(zpl_uint8 unit, zpl_uint8 slot)
 	return OK;
 }
 
+unit_board_mgt_t * unit_board_lookup(zpl_uint8 unit, zpl_uint8 slot)
+{
+	NODE node;
+	unit_board_mgt_t *t = NULL;
+	if (unit_board_mgt_mutex)
+		os_mutex_lock(unit_board_mgt_mutex, OS_WAIT_FOREVER);
+
+	for (t = (unit_board_mgt_t *)lstFirst(unit_board_mgt_list); t != NULL; t = (unit_board_mgt_t *)lstNext(&node))
+	{
+		node = t->node;
+		if (t && t->unit == unit && t->slot == slot)
+		{
+			break;
+		}
+	}
+	if (unit_board_mgt_mutex)
+		os_mutex_unlock(unit_board_mgt_mutex);
+	return t;
+}
+
 int unit_board_foreach(int (*func)(unit_board_mgt_t *, void *), void *p)
 {
 	NODE node;

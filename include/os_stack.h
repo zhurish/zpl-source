@@ -13,15 +13,20 @@ extern "C" {
 #endif
 
 #define IPSTACK_AF_UNSPEC     AF_UNSPEC
+#define IPSTACK_AF_UNIX        AF_UNIX
 #define IPSTACK_AF_INET       AF_INET
 #define IPSTACK_AF_NETLINK    AF_NETLINK
 #define IPSTACK_AF_ROUTE      AF_ROUTE
+#ifdef AF_LINK
 #define IPSTACK_AF_LINK       AF_LINK
+#endif
 #define IPSTACK_AF_PACKET     AF_PACKET
 #define IPSTACK_AF_INET6      AF_INET6
 #define IPSTACK_AF_KEY        AF_KEY
+#define IPSTACK_AF_ETHERNET        AF_ETHERNET
 #define IPSTACK_AF_MAX        AF_MAX
 
+#define IPSTACK_PF_UNIX        PF_UNIX
 #define IPSTACK_PF_INET       PF_INET
 #define IPSTACK_PF_NETLINK    PF_NETLINK
 #define IPSTACK_PF_ROUTE      PF_ROUTE
@@ -91,6 +96,9 @@ extern "C" {
 #define IPSTACK_INADDR_UNSPEC_GROUP    INADDR_UNSPEC_GROUP
 #define IPSTACK_INADDR_ALLHOSTS_GROUP  INADDR_ALLHOSTS_GROUP
 
+#define IPSTACK_IPV4_NET127    IPV4_NET127
+#define IPSTACK_IPV4_LINKLOCAL  IPV4_LINKLOCAL
+
 
 /*
  *===========================================================================
@@ -122,10 +130,10 @@ extern "C" {
 #define IPSTACK_IN6_IS_ADDR_V4COMPAT(addr)           IN6_IS_ADDR_V4COMPAT(addr)
 #define IPSTACK_IN6_IS_ADDR_V4MAPPED(addr)           IN6_IS_ADDR_V4MAPPED(addr)
 #define IPSTACK_IN6_IS_ADDR_AGGR_GLOB_UNICAST(addr)  IN6_IS_ADDR_AGGR_GLOB_UNICAST(addr)
-#define IPSTACK_IN6_IS_ADDR_SITE_LOCAL(addr)         IN6_IS_ADDR_SITE_LOCAL(addr)
-#define IPSTACK_IN6_IS_ADDR_LINK_LOCAL(addr)         IN6_IS_ADDR_LINK_LOCAL(addr)
+#define IPSTACK_IN6_IS_ADDR_SITE_LOCAL(addr)         IN6_IS_ADDR_SITELOCAL(addr)
+#define IPSTACK_IN6_IS_ADDR_LINK_LOCAL(addr)         IN6_IS_ADDR_LINKLOCAL(addr)
 #define IPSTACK_IN6_IS_ADDR_MULTICAST(addr)          IN6_IS_ADDR_MULTICAST(addr)
-#define IPSTACK_IN6_IS_ADDR_LINKLOCAL(addr)          IN6_IS_ADDR_LINK_LOCAL(addr)
+#define IPSTACK_IN6_IS_ADDR_LINKLOCAL(addr)          IN6_IS_ADDR_LINKLOCAL(addr)
 
 
 /*
@@ -151,22 +159,33 @@ extern "C" {
 
 /***** IPPROTO_IP level socket options: *****/
 #define IPSTACK_HDRINCL         HDRINCL
-#define IPSTACK_TOS             TOS
-#define IPSTACK_TTL             TTL
-#define IPSTACK_PKTINFO         PKTINFO
-#define IPSTACK_MULTICAST_IF    MULTICAST_IF
-#define IPSTACK_MULTICAST_TTL   MULTICAST_TTL
-#define IPSTACK_MULTICAST_LOOP  MULTICAST_LOOP
-#define IPSTACK_ADD_MEMBERSHIP  ADD_MEMBERSHIP
-#define	IPSTACK_JOIN_GROUP      JOIN_GROUP
-#define IPSTACK_DROP_MEMBERSHIP DROP_MEMBERSHIP
-#define	IPSTACK_LEAVE_GROUP     LEAVE_GROUP
-#define IPSTACK_RECVIF          RECVIF
+
+#define IPSTACK_IP_TOS             IP_TOS
+#define IPSTACK_IP_TTL             IP_TTL
+#define IPSTACK_IPTOS_LOWDELAY  IPTOS_LOWDELAY
+//#define IPSTACK_PKTINFO         PKTINFO
+#define IPSTACK_IP_PKTINFO      IP_PKTINFO
+
+#define IPSTACK_IP_MULTICAST_IF    IP_MULTICAST_IF
+#define IPSTACK_IP_MULTICAST_TTL   IP_MULTICAST_TTL
+#define IPSTACK_IP_MULTICAST_LOOP  IP_MULTICAST_LOOP
+
+
+#define	IPSTACK_IP_ADD_MEMBERSHIP IP_ADD_MEMBERSHIP
+#define	IPSTACK_IP_DROP_MEMBERSHIP  IP_DROP_MEMBERSHIP
+#define	IPSTACK_MCAST_JOIN_GROUP	MCAST_JOIN_GROUP
+#define	IPSTACK_MCAST_LEAVE_GROUP	MCAST_LEAVE_GROUP
+
+#define IPSTACK_IP_RECVIF          IP_RECVIF
 #define IPSTACK_ROUTER_ALERT    ROUTER_ALERT
 #define IPSTACK_DONTFRAG        DONTFRAG
+#define IPSTACK_TCP_INFO        TCP_INFO
+#define IPSTACK_TCP_MD5SIG  TCP_MD5SIG
+#define IPSTACK_TCP_CORK    TCP_CORK
+#define IPSTACK_IP_MINTTL   IP_MINTTL
+#define IPSTACK_IPV6_MINHOPCNT  IPV6_MINHOPCNT
+#define IPSTACK_IPV6_V6ONLY IPV6_V6ONLY
 
-#define	IPSTACK_MCAST_JOIN_GROUP	JOIN_GROUP
-#define	IPSTACK_MCAST_LEAVE_GROUP	LEAVE_GROUP
 
 
 /***** IPPROTO_IPV6 level socket options: *****/
@@ -223,6 +242,8 @@ extern "C" {
 #ifdef IPCOM_ZEROCOPY
 #define IPSTACK_MSG_ZBUF		MSG_ZBUF               /* zbuf */
 #endif
+#define IPSTACK_TCP_NODELAY		TCP_NODELAY
+
 //#endif
 /*
  *===========================================================================
@@ -266,16 +287,38 @@ extern "C" {
 #define IPSTACK_SIOCADDTUNNEL      SIOCADDTUNNEL
 #define IPSTACK_SIOCCHGTUNNEL      SIOCCHGTUNNEL
 #define IPSTACK_SIOCDELTUNNEL      SIOCDELTUNNEL
+#define IPSTACK_SIOCDELTUNNEL      SIOCDELTUNNEL
+#define IPSTACK_TUNSETIFF      TUNSETIFF
+#define IPSTACK_SIOCSIFVLAN     SIOCSIFVLAN
+#define IPSTACK_SIOCBRDELIF SIOCBRDELIF
+#define IPSTACK_SIOCDEVPRIVATE  SIOCDEVPRIVATE
+#define IPSTACK_SIOCBRADDIF SIOCBRADDIF
+#define IPSTACK_SIOCBRDELBR SIOCBRDELBR
+#define IPSTACK_SIOCBRADDBR SIOCBRADDBR
+#define IPSTACK_SIOCSIFBR   SIOCSIFBR
 
 /* arp ioctl. */
 #define IPSTACK_SIOCSARP           SIOCSARP
 #define IPSTACK_SIOCGARP           SIOCGARP
 #define IPSTACK_SIOCDARP           SIOCDARP
+#define IPSTACK_ATF_COM         ATF_COM     //已完成的邻居(成员ha有效，且含有正确的MAC地址)
+#define IPSTACK_ATF_PERM        ATF_PERM    //永久性的邻居(邻居状态有NUD_PERMANENT)
+#define IPSTACK_ATF_PUBL        ATF_PUBL    //发布该邻居
+#define IPSTACK_ATF_USETRAILERS ATF_USETRAILERS //不是非常清楚
+#define IPSTACK_ATF_NETMASK     ATF_NETMASK //仅用于代理ARP
+#define IPSTACK_ATF_DONTPUB     ATF_DONTPUB //不处理该邻居
 
-#define  IPSTACK_SIOCGIFHWADDR          SIOCGIFHWADDR
-#define  IPSTACK_SIOCGIFCONF            SIOCGIFCONF
-#define	 IPSTACK_SIOCGIFTXQLEN          SIOCGIFTXQLEN
+#define IPSTACK_SIOCGIFHWADDR          SIOCGIFHWADDR
+#define IPSTACK_SIOCGIFCONF            SIOCGIFCONF
+#define	IPSTACK_SIOCGIFTXQLEN          SIOCGIFTXQLEN
+#define	IPSTACK_FIONREAD          FIONREAD
 
+#define	IPSTACK_ETH_P_ARP   ETH_P_ARP
+
+#define	IPSTACK_ETHERTYPE_IP   ETHERTYPE_IP
+#define	IPSTACK_ETHERTYPE_ARP   ETHERTYPE_ARP
+#define	IPSTACK_ETH_ALEN        ETH_ALEN
+#define	IPSTACK_ARPOP_REQUEST   ARPOP_REQUEST
 /*
  *===========================================================================
  *                         IFF_X
@@ -290,11 +333,21 @@ extern "C" {
 #define IPSTACK_IFF_NOARP       IFF_NOARP
 #define IPSTACK_IFF_PROMISC     IFF_PROMISC
 #define IPSTACK_IFF_ALLMULTI    IFF_ALLMULTI
+#ifdef IFF_OACTIVE
 #define IPSTACK_IFF_OACTIVE     IFF_OACTIVE
+#endif
+#ifdef IFF_SIMPLEX
 #define IPSTACK_IFF_SIMPLEX     IFF_SIMPLEX
+#endif
+#ifdef IFF_LINK0
 #define IPSTACK_IFF_LINK0       IFF_LINK0
+#endif
+#ifdef IFF_LINK1
 #define IPSTACK_IFF_LINK1       IFF_LINK1
+#endif
+#ifdef IFF_LINK2
 #define IPSTACK_IFF_LINK2       IFF_LINK2
+#endif
 #define IPSTACK_IFF_MULTICAST   IFF_MULTICAST
 
 
@@ -735,8 +788,8 @@ extern "C" {
 /* msg_flags values */
 #define IPSTACK_MSG_TRUNC     MSG_TRUNC
 #define IPSTACK_MSG_CTRUNC    MSG_CTRUNC
-
-
+#define IPSTACK_MSG_NOSIGNAL    MSG_NOSIGNAL
+#define IPSTACK_MSG_INDICATION    MSG_INDICATION
 /*
  *===========================================================================
  *                    cmsghdr
@@ -836,9 +889,6 @@ extern "C" {
 
 
 /* functions used by both sockets & files. */
-
-#define ipstack_fcntl(fd,request,argp)             fcntl((int)fd,request,argp)
-
 
 /*
  *===========================================================================
@@ -950,7 +1000,7 @@ extern "C" {
 #define ipstack_timeval       timeval
 
 
-#define ipstack_strerror   strerror
+//#define ipstack_strerror   strerror
 
 
 
@@ -960,43 +1010,51 @@ extern "C" {
  *                         ERRNO
  *===========================================================================
  */
-#define IPSTACK_EDESTADDRREQ       ERRNO_EDESTADDRREQ
-#define IPSTACK_ENETUNREACH        ERRNO_ENETUNREACH
-#define IPSTACK_ENETRESET          ERRNO_ENETRESET
-#define IPSTACK_ECONNABORTED       ERRNO_ECONNABORTED
-#define IPSTACK_ECONNRESET         ERRNO_ECONNRESET
-#define IPSTACK_ENOBUFS            ERRNO_ENOBUFS
-#define IPSTACK_EISCONN            ERRNO_EISCONN
-#define IPSTACK_ENOTCONN           ERRNO_ENOTCONN
-#define IPSTACK_ESHUTDOWN          ERRNO_ESHUTDOWN
-#define IPSTACK_ETOOMANYREFS       ERRNO_ETOOMANYREFS
-#define IPSTACK_ECONNREFUSED       ERRNO_ECONNREFUSED
-#define IPSTACK_ENETDOWN           ERRNO_ENETDOWN
-#define IPSTACK_EHOSTUNREACH       ERRNO_EHOSTUNREACH
-#define IPSTACK_EINPROGRESS        ERRNO_EINPROGRESS
-#define IPSTACK_EALREADY           ERRNO_EALREADY
-#define IPSTACK_EINVAL             ERRNO_EINVAL
-#define IPSTACK_EHOSTDOWN          ERRNO_EHOSTDOWN
-#define IPSTACK_ETIMEDOUT          ERRNO_ETIMEDOUT
-#define IPSTACK_ETIME              ERRNO_ETIMEDOUT
-#define IPSTACK_EADDRINUSE         ERRNO_EADDRINUSE
-#define IPSTACK_EOPNOTSUPP         ERRNO_EOPNOTSUPP
+#define IPSTACK_ERRNO_EDESTADDRREQ       EDESTADDRREQ
+#define IPSTACK_ERRNO_ENETUNREACH        ENETUNREACH
+#define IPSTACK_ERRNO_ENETRESET          ENETRESET
+#define IPSTACK_ERRNO_ECONNABORTED       ECONNABORTED
+#define IPSTACK_ERRNO_ECONNRESET         ECONNRESET
+#define IPSTACK_ERRNO_ENOBUFS            ENOBUFS
+#define IPSTACK_ERRNO_EISCONN            EISCONN
+#define IPSTACK_ERRNO_ENOTCONN           ENOTCONN
+#define IPSTACK_ERRNO_ESHUTDOWN          ESHUTDOWN
+#define IPSTACK_ERRNO_ETOOMANYREFS       ETOOMANYREFS
+#define IPSTACK_ERRNO_ECONNREFUSED       ECONNREFUSED
+#define IPSTACK_ERRNO_ENETDOWN           ENETDOWN
+#define IPSTACK_ERRNO_EHOSTUNREACH       EHOSTUNREACH
+#define IPSTACK_ERRNO_EINPROGRESS        EINPROGRESS
+#define IPSTACK_ERRNO_EALREADY           EALREADY
+#define IPSTACK_ERRNO_EINVAL             EINVAL
+#define IPSTACK_ERRNO_EHOSTDOWN          EHOSTDOWN
+#define IPSTACK_ERRNO_ETIMEDOUT          ETIMEDOUT
+#define IPSTACK_ERRNO_ETIME              ETIMEDOUT
+#define IPSTACK_ERRNO_EADDRINUSE         EADDRINUSE
+#define IPSTACK_ERRNO_EOPNOTSUPP         EOPNOTSUPP
 
-#define	IPSTACK_EIO                            ERRNO_EIO
-#define IPSTACK_E2BIG                          ERRNO_E2BIG
-#define	IPSTACK_ENOENT                         ERRNO_ENOENT
+#define	IPSTACK_ERRNO_EIO                            EIO
+#define IPSTACK_ERRNO_E2BIG                          E2BIG
+#define	IPSTACK_ERRNO_ENOENT                         ENOENT
 
-#define IPSTACK_EINTR       ERRNO_EINTR
-#define IPSTACK_EWOULDBLOCK ERRNO_EWOULDBLOCK
-#define IPSTACK_EAGAIN      ERRNO_EAGAIN
-#define IPSTACK_ENODEV      ERRNO_ENODEV
-#define IPSTACK_ESRCH       ERRNO_ESRCH
-#define IPSTACK_EEXIST      ERRNO_EEXIST
+#define IPSTACK_ERRNO_EINTR       EINTR
+#define IPSTACK_ERRNO_EWOULDBLOCK EWOULDBLOCK
+#define IPSTACK_ERRNO_EAGAIN      EAGAIN
+#define IPSTACK_ERRNO_ENODEV      ENODEV
+#define IPSTACK_ERRNO_ESRCH       ESRCH
+#define IPSTACK_ERRNO_EEXIST      EEXIST
 
-#define  IPSTACK_ENOMEM     	ERRNO_ENOMEM
-#define  IPSTACK_EBUSY        	ERRNO_EBUSY
-#define  IPSTACK_EFAULT       	ERRNO_EFAULT
+#define IPSTACK_ERRNO_ENOMEM     	ENOMEM
+#define IPSTACK_ERRNO_EBUSY        	EBUSY
+#define IPSTACK_ERRNO_EFAULT       	EFAULT
+#define IPSTACK_ERRNO_EADDRINUSE   EADDRINUSE
+#define IPSTACK_ERRNO_EPIPE       	EPIPE
+#define IPSTACK_ERRNO_EBADF       	EBADF
+//#define IPSTACK_ERRNO_EIO       	EIO
 
+//#define IPSTACK_ERRNO_E2BIG    E2BIG
+//#define IPSTACK_ERRNO_ENOENT   ENOENT
+
+#define  ipstack_errno       	errno
 
 #ifdef __cplusplus
 }

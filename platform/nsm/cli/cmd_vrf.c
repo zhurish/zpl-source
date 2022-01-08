@@ -79,7 +79,7 @@ DEFUN (ip_vrf_set_vrfid,
 		return CMD_WARNING;
 
 	rid.prefixlen = 32;
-	rid.family = AF_INET;
+	rid.family = IPSTACK_AF_INET;
 	if (argc > 1)
 		VTY_GET_INTEGER ("VRF ID", vrf_id, argv[1]);
 

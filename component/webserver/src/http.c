@@ -224,7 +224,7 @@ static char     *validateToken(char *token, char *endToken, int validation);
 
 #if ME_GOAHEAD_ACCESS_LOG
 #if ME_GOAHEAD_EXTLOG
-#define logRequest(wp, code) 	pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, LOG_DEBUG, "%s - %s \"%s %s %s\" %d", \
+#define logRequest(wp, code) 	pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, ZLOG_LEVEL_DEBUG, "%s - %s \"%s %s %s\" %d", \
 		wp->ipaddr, wp->username == NULL ? "-" : wp->username, wp->method, wp->path, wp->protoVersion, code)
 #else /* ME_GOAHEAD_EXTLOG */
 static void     logRequest(Webs *wp, int code);
@@ -719,7 +719,7 @@ PUBLIC int websAccept(int sid, cchar *ipaddr, int port, int listenSid)
 {
     Webs        *wp;
     WebsSocket  *lp;
-    struct sockaddr_storage ifAddr;
+    struct ipstack_sockaddr_storage ifAddr;
     int         wid, len;
 
     web_assert(sid >= 0);
@@ -742,12 +742,12 @@ PUBLIC int websAccept(int sid, cchar *ipaddr, int port, int listenSid)
         Get the ip address of the interface that accept the connection.
      */
     len = sizeof(ifAddr);
-    if (getsockname(socketPtr(sid)->sock, (struct sockaddr*) &ifAddr, (Socklen*) &len) < 0) {
+    if (ipstack_getsockname(socketPtr(sid)->sock, (struct ipstack_sockaddr*) &ifAddr, (Socklen*) &len) < 0) {
         web_error("Cannot get sockname");
         websFree(wp);
         return -1;
     }
-    socketAddress((struct sockaddr*) &ifAddr, (int) len, wp->ifaddr, sizeof(wp->ifaddr), NULL);
+    socketAddress((struct ipstack_sockaddr*) &ifAddr, (int) len, wp->ifaddr, sizeof(wp->ifaddr), NULL);
 
 #if ME_GOAHEAD_LEGACY
     /*
@@ -2481,11 +2481,11 @@ static void checkTimeout(void *arg, int id)
 #ifndef ZPL_WEBGUI_MODULE
 static int setLocalHost(void)
 {
-    struct in_addr  intaddr;
+    struct ipstack_in_addr  intaddr;
     char            host[128], *ipaddr;
 
     if (gethostname(host, sizeof(host)) < 0) {
-        web_error("Cannot get hostname: errno %d", errno);
+        web_error("Cannot get hostname: ipstack_errno %d", ipstack_errno);
         return -1;
     }
 #if VXWORKS
@@ -2502,9 +2502,9 @@ static int setLocalHost(void)
     websSetHost(ipaddr);
 #elif TIDSP
 {
-    struct hostent  *hp;
-    if ((hp = gethostbyname(host)) == NULL) {
-        web_error("Cannot get host address for host %s: errno %d", host, errno);
+    struct ipstack_hostent  *hp;
+    if ((hp = ipstack_gethostbyname(host)) == NULL) {
+        web_error("Cannot get host address for host %s: ipstack_errno %d", host, ipstack_errno);
         return -1;
     }
     memcpy((char*) &intaddr, (char *) hp->h_addr[0], (size_t) hp->h_length);
@@ -2514,10 +2514,10 @@ static int setLocalHost(void)
 }
 #elif MACOSX
 {
-    struct hostent  *hp;
-    if ((hp = gethostbyname(host)) == NULL) {
-        if ((hp = gethostbyname(sfmt("%s.local", host))) == NULL) {
-            web_error("Cannot get host address for host %s: errno %d", host, errno);
+    struct ipstack_hostent  *hp;
+    if ((hp = ipstack_gethostbyname(host)) == NULL) {
+        if ((hp = ipstack_gethostbyname(sfmt("%s.local", host))) == NULL) {
+            web_error("Cannot get host address for host %s: ipstack_errno %d", host, ipstack_errno);
             return -1;
         }
     }
@@ -2528,9 +2528,9 @@ static int setLocalHost(void)
 }
 #else
 {
-    struct hostent  *hp;
-    if ((hp = gethostbyname(host)) == NULL) {
-        web_error("Cannot get host address for host %s: errno %d", host, errno);
+    struct ipstack_hostent  *hp;
+    if ((hp = ipstack_gethostbyname(host)) == NULL) {
+        web_error("Cannot get host address for host %s: ipstack_errno %d", host, ipstack_errno);
         return -1;
     }
     memcpy((char*) &intaddr, (char *) hp->h_addr_list[0], (size_t) hp->h_length);

@@ -29,19 +29,19 @@ void ssh_log_callback_func(zpl_uint32 priority,
 {
 	switch(priority)
 	{
-	case LOG_ERR:
+	case ZLOG_LEVEL_ERR:
 		zlog_err(MODULE_SSH, "SSH %s", buffer);
 		break;
-	case LOG_WARNING:
+	case ZLOG_LEVEL_WARNING:
 		zlog_warn(MODULE_SSH, "SSH %s", buffer);
 		break;
-	case LOG_INFO:
+	case ZLOG_LEVEL_INFO:
 		zlog_info(MODULE_SSH, "SSH %s", buffer);
 		break;
-	case LOG_NOTICE:
+	case ZLOG_LEVEL_NOTICE:
 		zlog_notice(MODULE_SSH, "SSH %s", buffer);
 		break;
-	case LOG_DEBUG:
+	case ZLOG_LEVEL_DEBUG:
 		zlog_debug(MODULE_SSH, "SSH %s", buffer);
 		break;
 	case LOG_TRAP:

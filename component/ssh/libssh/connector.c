@@ -667,11 +667,11 @@ int ssh_connector_remove_event(ssh_connector connector) {
 static bool ssh_connector_fd_is_socket(socket_t s)
 {
 #ifdef _WIN32
-    struct sockaddr_storage ss;
-    int len = sizeof(struct sockaddr_storage);
+    struct ipstack_sockaddr_storage ss;
+    int len = sizeof(struct ipstack_sockaddr_storage);
     int rc;
 
-    rc = getsockname(s, (struct sockaddr *)&ss, &len);
+    rc = getsockname(s, (struct ipstack_sockaddr *)&ss, &len);
     if (rc == 0) {
         return true;
     }

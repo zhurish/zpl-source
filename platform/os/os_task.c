@@ -41,7 +41,7 @@ int os_limit_stack_size(int size)
 	struct rlimit limit;
 	if(getrlimit(RLIMIT_STACK, &limit) != 0)
 	{
-		printf("%s get RLIMIT_STACK :%s\r\n", __func__, strerror(errno));
+		printf("%s get RLIMIT_STACK :%s\r\n", __func__, strerror(ipstack_errno));
 		return ERROR;
 	}
 	if((uint)size < limit.rlim_cur)
@@ -51,7 +51,7 @@ int os_limit_stack_size(int size)
 		limit.rlim_max = size;
 	if(setrlimit(RLIMIT_STACK, &limit) != 0)
 	{
-		printf("%s set RLIMIT_STACK :%s\r\n", __func__, strerror(errno));
+		printf("%s set RLIMIT_STACK :%s\r\n", __func__, strerror(ipstack_errno));
 		return ERROR;
 	}
 	return OK;
@@ -62,7 +62,7 @@ int os_limit_core_size(int size)
 	struct rlimit limit;
 	if(getrlimit(RLIMIT_CORE, &limit) != 0)
 	{
-		printf("%s get RLIMIT_CORE :%s\r\n", __func__, strerror(errno));
+		printf("%s get RLIMIT_CORE :%s\r\n", __func__, strerror(ipstack_errno));
 		return ERROR;
 	}
 	if((uint)size < limit.rlim_cur)
@@ -72,7 +72,7 @@ int os_limit_core_size(int size)
 		limit.rlim_max = size;
 	if(setrlimit(RLIMIT_CORE, &limit) != 0)
 	{
-		printf("%s set RLIMIT_CORE :%s\r\n", __func__, strerror(errno));
+		printf("%s set RLIMIT_CORE :%s\r\n", __func__, strerror(ipstack_errno));
 		return ERROR;
 	}
 	return OK;
@@ -760,7 +760,7 @@ static int os_task_refresh_total_cpu(struct os_task_history *hist)
 		}
 		//else
 		//	zlog_err(MODULE_DEFAULT, "can't read path:%s(%s)\r\n", path,
-		//			strerror(errno));
+		//			strerror(ipstack_errno));
 		fclose(fp);
 	}
 	else
@@ -812,7 +812,7 @@ static int os_task_refresh_cpu(os_task_t *task)
 		}
 		//else
 		//	zlog_err(MODULE_DEFAULT, "can't read path:%s(%s)\r\n", path,
-		//			strerror(errno));
+		//			strerror(ipstack_errno));
 		fclose(fp);
 	}
 	else
@@ -1248,8 +1248,8 @@ zpl_uint32 os_task_entry_create(zpl_char *name, zpl_uint32 pri, zpl_uint32 op, t
 		ret = pthread_setname_np(task->td_thread, task->td_name);
 
 		if (ret != OK)
-			zlog_err(MODULE_DEFAULT, "%s: could not lower privs, %s", __func__,
-					os_strerror(errno));
+			OS_DEBUG("%s: could not lower privs, %s", __func__,
+					os_strerror(ipstack_errno));
 #endif
 
 		OS_DEBUG("\r\ncreate task:%s(%u %u->%u:ret=%d) pid=%d\r\n",task->td_name,

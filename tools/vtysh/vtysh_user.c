@@ -19,7 +19,7 @@
  * 02111-1307, USA.  
  */
 
-#include <zebra.h>
+#include <os_include.h>
 #include <lib/version.h>
 
 #include <pwd.h>
@@ -34,9 +34,7 @@
 #endif
 #endif /* USE_PAM */
 
-#include "memory.h"
-#include "linklist.h"
-#include "command.h"
+
 #include "vtysh_user.h"
 
 #ifdef USE_PAM

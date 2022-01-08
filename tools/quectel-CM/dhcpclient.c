@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <errno.h>
+#include <ipstack_errno.h>
 #include <arpa/inet.h>
 
 #include "QMIThread.h"
@@ -43,10 +43,10 @@ extern void get_dhcp_info(uint32_t *ipaddr, uint32_t *gateway, uint32_t *prefixL
 
 static const char *ipaddr_to_string(in_addr_t addr)
 {
-    struct in_addr in_addr;
+    struct ipstack_in_addr ipstack_in_addr;
 
-    in_addr.s_addr = addr;
-    return inet_ntoa(in_addr);
+    ipstack_in_addr.s_addr = addr;
+    return inet_ntoa(ipstack_in_addr);
 }
 
 void do_dhcp_request(const char *ifname) {
@@ -60,11 +60,11 @@ void do_dhcp_request(const char *ifname) {
     char propKey[128];
 
     if(ifc_init()) {
-        dbg_time("failed to ifc_init(%s): %s\n", ifname, strerror(errno));
+        dbg_time("failed to ifc_init(%s): %s\n", ifname, strerror(ipstack_errno));
     }
 
     if (do_dhcp(ifname) < 0) {
-        dbg_time("failed to do_dhcp(%s): %s\n", ifname, strerror(errno));
+        dbg_time("failed to do_dhcp(%s): %s\n", ifname, strerror(ipstack_errno));
     }
 
     ifc_close();

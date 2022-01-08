@@ -577,7 +577,7 @@ print_nh (struct nexthop *nexthop, struct vty *vty)
     case NEXTHOP_TYPE_IPV6_IFINDEX:
     case NEXTHOP_TYPE_IPV6_IFNAME:
       vty_out (vty, " %s",
-	       ipstack_inet_ntop (AF_INET6, &nexthop->gate.ipv6, buf, BUFSIZ));
+	       ipstack_inet_ntop (IPSTACK_AF_INET6, &nexthop->gate.ipv6, buf, BUFSIZ));
       if (nexthop->type == NEXTHOP_TYPE_IPV6_IFNAME)
 	vty_out (vty, ", %s", nexthop->ifname);
       else if (nexthop->ifindex)

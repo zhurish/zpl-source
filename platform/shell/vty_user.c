@@ -526,19 +526,20 @@ int vty_user_accounting_stop (struct vty *vty)
 
 
 
-int vty_user_config_write (struct vty *vty)
+int config_write_vty_user (struct vty *vty)
 {
-	struct listnode *node;
-	struct vty_user *user;
+	//int flag = 0;
+	struct listnode *node = NULL;
+	struct vty_user *user = NULL;
 	if(vty == NULL || _global_host.userlist == NULL)
 		return 0;
 	if (_global_host.mutx)
 		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
-	if(vty->type != VTY_FILE && vty->username)
+	/*if(vty->type != VTY_FILE && vty->username)
 	{
 		vty_out(vty,"! current login user:%s %s", vty->username, VTY_NEWLINE);
 		vty_out(vty,"!%s", VTY_NEWLINE);
-	}
+	}*/
 	for (ALL_LIST_ELEMENTS_RO (_global_host.userlist, node, user))
 	{
 		if(user)
@@ -562,12 +563,14 @@ int vty_user_config_write (struct vty *vty)
 							user->enable, VTY_NEWLINE);
 			if(user->privilege)
 				vty_out(vty,"username %s privilege %d%s", user->username, user->privilege, VTY_NEWLINE);
-
+		//	flag = 1;
 		}
 	}
+	//if(flag)
+	//	vty_out(vty, "!%s", VTY_NEWLINE);
 	if (_global_host.mutx)
 		os_mutex_unlock(_global_host.mutx);
-	return CMD_SUCCESS;
+	return 1;
 }
 
 int vty_user_create(struct vty *vty, zpl_char *name, zpl_char *password, zpl_bool enable, zpl_bool encrypt)

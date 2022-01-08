@@ -42,7 +42,7 @@ int ssh_module_init()
     ssh_init();
     ssh_set_log_level(7);
     ssh_set_log_callback(ssh_log_callback_func);
-    if(socketpair (AF_UNIX, SOCK_STREAM, 0, socket) == 0)
+    if(socketpair (AF_UNIX, IPSTACK_SOCK_STREAM, 0, socket) == 0)
     {
     	ssh_config.sock = socket[1];
     	ssh_config.ctlfd = socket[0];
@@ -85,7 +85,10 @@ int ssh_module_task_init ()
 		ssh_config.sshd_taskid = os_task_create("sshdTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, sshd_task, &ssh_config, OS_TASK_DEFAULT_STACK);
 	if(ssh_config.sshd_taskid)
+	{
+		module_setup_task(MODULE_SSH, ssh_config.sshd_taskid);
 		return OK;
+	}
 	return ERROR;
 }
 

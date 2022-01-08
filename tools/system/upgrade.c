@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
 
 int main(void)
 {
-    struct sockaddr_nl client;
+    struct ipstack_sockaddr_nl client;
     struct timeval tv;
     int CppLive, rcvlen, ret;
     fd_set fds;
@@ -161,7 +161,7 @@ int main(void)
     client.nl_pid = getpid();
     client.nl_groups = 1; /* receive broadcast message*/
     setsockopt(CppLive, SOL_SOCKET, SO_RCVBUF, &buffersize, sizeof(buffersize));
-    bind(CppLive, (struct sockaddr*)&client, sizeof(client));
+    bind(CppLive, (struct ipstack_sockaddr*)&client, sizeof(client));
     while (1) {
         char buf[UEVENT_BUFFER_SIZE] = { 0 };
         FD_ZERO(&fds);

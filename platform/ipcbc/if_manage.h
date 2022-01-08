@@ -25,11 +25,12 @@ extern "C" {
 #endif
 
 
+/* 动态上线下线板卡 */
+extern int unit_board_dynamic_install(zpl_uint8 unit, zpl_uint8 slot, zpl_bool enable);
 
-//#define VTY_IUSP_DEBUG
-
-//extern int unit_slot_module_init();
+/* 初始化 */
 extern int bsp_usp_module_init();
+
 
 #ifdef ZPL_KERNEL_STACK_MODULE
 extern int if_ktest_init(void);

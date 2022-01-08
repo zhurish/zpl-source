@@ -41,7 +41,6 @@ static int logfile_fd = -1; /* Used in signal handler. */
 
 struct zlog *zlog_default = NULL;
 
-static struct zpl_backtrace_symb  m_backtrace_symb;
 
 
 static const char *zlog_priority[] = { "emergencies", "alerts", "critical", "errors",
@@ -65,7 +64,7 @@ static const struct facility_map {
 
 
 static int zlog_buffer_format(struct zlog *zl, zlog_buffer_t *buffer,
-		zpl_uint32 module, zpl_uint32 level, zpl_char *format, va_list args);
+		zpl_uint32 module, zlog_level_t level, zpl_char *format, va_list args);
 
 static int zlog_check_file (struct zlog *zl);
 #ifdef ZLOG_TESTING_ENABLE
@@ -90,8 +89,8 @@ zpl_uint32 zlog_facility_match(const char *str) {
 	return -1;
 }
 
-zpl_uint32 zlog_priority_match(const char *s) {
-	zpl_uint32 level;
+zlog_level_t zlog_priority_match(const char *s) {
+	zlog_level_t level;
 
 	for (level = 0; zlog_priority[level] != NULL; level++)
 		if (!strncmp(s, zlog_priority[level], 2))
@@ -99,10 +98,9 @@ zpl_uint32 zlog_priority_match(const char *s) {
 	return ZLOG_DISABLED;
 }
 
-const char * zlog_priority_name(zpl_uint32 level) {
-	if(level >= 0 && level <= LOG_TRAP)
+const char * zlog_priority_name(zlog_level_t level) {
+	if(level >= 0 && level <= ZLOG_LEVEL_MAX)
 		return zlog_priority[level];
-	//if(level == ZLOG_DISABLED)
 		return "Unknow";
 }
 
@@ -314,10 +312,10 @@ static int zlog_depth_debug_detail(FILE *fp, zpl_char *buf, zpl_uint32 depth, co
 
 #ifdef ZLOG_TASK_ENABLE
 /* va_list version of zlog. */
-static void vzlog_output(struct zlog *zl, zpl_uint32 module, zpl_uint32 priority, const char *format,
+static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priority, const char *format,
 		va_list args) {
 	zpl_uint16 protocol = 0;
-	int original_errno = errno;
+	int original_errno = ipstack_errno;
 
 	/* If zlog is not specified, use default one. */
 	if (zl == NULL)
@@ -332,7 +330,7 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zpl_uint32 priority
 		fflush(stderr);
 
 		/* In this case we return at here. */
-		errno = original_errno;
+		ipstack_errno = original_errno;
 		return;
 	}
 	
@@ -406,12 +404,11 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zpl_uint32 priority
 	/* Terminal monitor. */
 	if (priority <= zl->maxlvl[ZLOG_DEST_MONITOR])
 	{
-		
 		vty_log((zl->record_priority ? zlog_priority[priority] : NULL),
 				zlog_proto_names(zl->protocol), format, zl->timestamp, args);
 	}
 	//trapping
-	if ((priority == LOG_TRAP || priority == LOG_FORCE_TRAP) && zl->trap_lvl)
+	if ((priority == ZLOG_LEVEL_TRAP || priority == ZLOG_LEVEL_FORCE_TRAP) && zl->trap_lvl)
 	{
 		if(vty_trap_log((zl->record_priority ? zlog_priority[priority] : NULL),
 				zlog_proto_names(zl->protocol), format, zl->timestamp, args) != OK)
@@ -432,12 +429,12 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zpl_uint32 priority
 	if (module != MODULE_NONE) {
 		zl->protocol = protocol;
 	}
-	errno = original_errno;
+	ipstack_errno = original_errno;
 	if (zl->mutex)
 		os_mutex_unlock(zl->mutex);
 }
 
-static void zlog_out(struct zlog *zl, zpl_uint32 module, zpl_uint32 priority, const char *format, ...)
+static void zlog_out(struct zlog *zl, zpl_uint32 module, zlog_level_t priority, const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);
@@ -446,7 +443,7 @@ static void zlog_out(struct zlog *zl, zpl_uint32 module, zpl_uint32 priority, co
 }
 
 void pl_vzlog(const char *file, const char *func, const zpl_uint32 line,
-		struct zlog *zl, zpl_uint32 module, zpl_uint32 priority, const char *format,
+		struct zlog *zl, zpl_uint32 module, zlog_level_t priority, const char *format,
 		va_list args)
 {
 	zpl_uint16 protocol = 0;
@@ -477,7 +474,7 @@ void pl_vzlog(const char *file, const char *func, const zpl_uint32 line,
 			priority <= zl->maxlvl[ZLOG_DEST_BUFFER] ||
 			((priority <= zl->maxlvl[ZLOG_DEST_FILE]) && zl->fp) ||
 			priority <= zl->maxlvl[ZLOG_DEST_MONITOR] ||
-			((priority == LOG_TRAP || priority == LOG_FORCE_TRAP) && zl->trap_lvl) ||
+			((priority == ZLOG_LEVEL_TRAP || priority == ZLOG_LEVEL_FORCE_TRAP) && zl->trap_lvl) ||
 #ifdef ZLOG_TESTING_ENABLE
 			(zl->testing && (priority <= zl->testlog.priority) && zl->testlog.fp) ||
 #endif
@@ -495,7 +492,7 @@ void pl_vzlog(const char *file, const char *func, const zpl_uint32 line,
 		va_copy(ac, args);
 		loghdr.len += vsnprintf(loghdr.logbuf + offset, sizeof(loghdr.logbuf) - offset, format, ac);
 		va_end(ac);
-		if(priority == LOG_FORCE_TRAP)
+		if(priority == ZLOG_LEVEL_FORCE_TRAP)
 		{
 			if (zl->mutex)
 				os_mutex_unlock(zl->mutex);
@@ -574,7 +571,7 @@ static int zlog_task(struct zlog *zl)
 			memset(&loghdr, 0, sizeof(loghdr));
 			if (read(zl->lfd, &loghdr, sizeof(loghdr)) < 0)
 			{
-				if (errno == EPIPE || errno == EBADF || errno == EIO /*ECONNRESET ECONNABORTED ENETRESET ECONNREFUSED*/)
+				if (ipstack_errno == IPSTACK_ERRNO_EPIPE || ipstack_errno == IPSTACK_ERRNO_EBADF || ipstack_errno == IPSTACK_ERRNO_EIO /*IPSTACK_ERRNO_ECONNRESET IPSTACK_ERRNO_ECONNABORTED IPSTACK_ERRNO_ENETRESET IPSTACK_ERRNO_ECONNREFUSED*/)
 				{
 					close(zl->lfd);
 					zl->lfd = os_pipe_create("zlog.p", O_RDWR);
@@ -610,7 +607,7 @@ static int zlog_task_init(struct zlog *zl)
 	if(zl->taskid)
 		return OK;
 	zl->taskid = os_task_create("logTask", OS_TASK_DEFAULT_PRIORITY,
-	               0, zlog_task, zl, OS_TASK_DEFAULT_STACK);
+	               0, zlog_task, zl, OS_TASK_DEFAULT_STACK);   
 	return OK;
 }
 
@@ -631,10 +628,10 @@ static int zlog_task_exit(struct zlog *zl)
 #else
 /* va_list version of zlog. */
 void vzlog(const char *file, const char *func, const zpl_uint32 line,
-		struct zlog *zl, zpl_uint32 module, zpl_uint32 priority, const char *format,
+		struct zlog *zl, zpl_uint32 module, zlog_level_t priority, const char *format,
 		va_list args) {
 	zpl_uint16 protocol = 0;
-	int original_errno = errno;
+	int original_errno = ipstack_errno;
 	/* If zlog is not specified, use default one. */
 	if (zl == NULL)
 		zl = zlog_default;
@@ -654,7 +651,7 @@ void vzlog(const char *file, const char *func, const zpl_uint32 line,
 		fflush(stderr);
 
 		/* In this case we return at here. */
-		errno = original_errno;
+		ipstack_errno = original_errno;
 		if (module != MODULE_NONE) {
 			zl->protocol = protocol;
 		}
@@ -748,14 +745,14 @@ void vzlog(const char *file, const char *func, const zpl_uint32 line,
 				zlog_proto_names(zl->protocol), format, zl->timestamp, args);
 	}
 	//trapping
-	if ((priority == LOG_TRAP) && zl->trap_lvl)
+	if ((priority == ZLOG_LEVEL_TRAP) && zl->trap_lvl)
 		vty_trap_log((zl->record_priority ? zlog_priority[priority] : NULL),
 				zlog_proto_names(zl->protocol), format, zl->timestamp, args);
 	#endif
 	if (module != MODULE_NONE) {
 		zl->protocol = protocol;
 	}
-	errno = original_errno;
+	ipstack_errno = original_errno;
 	if (zl->mutex)
 		os_mutex_unlock(zl->mutex);
 }
@@ -810,9 +807,9 @@ static int syslog_connect(void) {
 #else
 	int fd;
 	zpl_char *s;
-	struct sockaddr_un addr;
+	struct ipstack_sockaddr_un addr;
 
-	if ((fd = socket(AF_UNIX, SOCK_DGRAM, 0)) < 0)
+	if ((fd = socket(AF_UNIX, IPSTACK_SOCK_DGRAM, 0)) < 0)
 		return -1;
 	addr.sun_family = AF_UNIX;
 #ifdef _PATH_LOG
@@ -823,7 +820,7 @@ static int syslog_connect(void) {
 	s = str_append(addr.sun_path, sizeof(addr.sun_path), SYSLOG_SOCKET_PATH);
 #undef SYSLOG_SOCKET_PATH
 	*s = '\0';
-	if (connect(fd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
+	if (connect(fd, (struct ipstack_sockaddr *) &addr, sizeof(addr)) < 0) {
 		close(fd);
 		return -1;
 	}
@@ -831,15 +828,8 @@ static int syslog_connect(void) {
 #endif
 }
 
-int zpl_backtrace_symb_set(char *funcname, char *schedfrom, zpl_uint32 schedfrom_line)
-{
-	m_backtrace_symb.funcname = funcname;
-	m_backtrace_symb.schedfrom = schedfrom;
-	m_backtrace_symb.schedfrom_line = schedfrom_line;
-	return 0;
-}
 
-static void syslog_sigsafe(zpl_uint32 priority, const char *msg, zpl_size_t msglen) {
+static void syslog_sigsafe(zpl_uint32 flags, const char *msg, zpl_size_t msglen) {
 	static int syslog_fd = -1;
 	zpl_char buf[strlen("<1234567890>ripngd[1234567890]: ") + msglen + 50];
 	zpl_char *s;
@@ -850,7 +840,7 @@ static void syslog_sigsafe(zpl_uint32 priority, const char *msg, zpl_size_t msgl
 #define LOC s,buf+sizeof(buf)-s
 	s = buf;
 	s = str_append(LOC, "<");
-	s = num_append(LOC, priority);
+	s = num_append(LOC, flags);
 	s = str_append(LOC, ">");
 	/* forget about the timestamp, too difficult in a signal handler */
 	s = str_append(LOC, zlog_default->ident);
@@ -947,7 +937,7 @@ void zlog_signal(int signo, const char *action
 		*s++ = '\n';
 
 	/* N.B. implicit priority is most severe */
-#define PRI LOG_CRIT
+#define PRI ZLOG_LEVEL_CRIT
 
 #define DUMP(FD) write(FD, buf, s-buf);
 	/* If no file logging configured, try to write to fallback log file. */
@@ -1007,7 +997,7 @@ void zlog_signal(int signo, const char *action
 
 /* Log a backtrace using only async-signal-safe functions.
  Needs to be enhanced to support syslog logging. */
-void zlog_backtrace_sigsafe(zpl_uint32 priority, void *program_counter)
+void zlog_backtrace_sigsafe(zlog_level_t priority, void *program_counter)
 {
 #ifdef HAVE_STACK_TRACE
 	static const char pclabel[] = "Program counter: ";
@@ -1096,7 +1086,7 @@ void zlog_backtrace_sigsafe(zpl_uint32 priority, void *program_counter)
 #endif /* HAVE_STRACK_TRACE */
 }
 
-void zlog_backtrace(zpl_uint32 priority)
+void zlog_backtrace(zlog_level_t priority)
 {
 #ifndef HAVE_GLIBC_BACKTRACE
 	zlog(NULL, priority, "No backtrace available on this platform.");
@@ -1129,7 +1119,7 @@ void zlog_backtrace(zpl_uint32 priority)
 }
 
 
-void pl_zlog(const char *file, const char *func, const zpl_uint32 line, zpl_uint32 module, zpl_uint32 priority, const char *format, ...)
+void pl_zlog(const char *file, const char *func, const zpl_uint32 line, zpl_uint32 module, zlog_level_t priority, const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);
@@ -1147,22 +1137,22 @@ FUNCNAME(const char *file, const char *func, const zpl_uint32 line, zpl_uint32 m
   va_end(args); \
 }
 
-ZLOG_FUNC(pl_zlog_err, LOG_ERR)
+ZLOG_FUNC(pl_zlog_err, ZLOG_LEVEL_ERR)
 
-ZLOG_FUNC(pl_zlog_warn, LOG_WARNING)
+ZLOG_FUNC(pl_zlog_warn, ZLOG_LEVEL_WARNING)
 
-ZLOG_FUNC(pl_zlog_info, LOG_INFO)
+ZLOG_FUNC(pl_zlog_info, ZLOG_LEVEL_INFO)
 
-ZLOG_FUNC(pl_zlog_notice, LOG_NOTICE)
+ZLOG_FUNC(pl_zlog_notice, ZLOG_LEVEL_NOTICE)
 
-ZLOG_FUNC(pl_zlog_debug, LOG_DEBUG)
+ZLOG_FUNC(pl_zlog_debug, ZLOG_LEVEL_DEBUG)
 
-ZLOG_FUNC(pl_zlog_trap, LOG_TRAP)
+ZLOG_FUNC(pl_zlog_trap, ZLOG_LEVEL_TRAP)
 
 #undef ZLOG_FUNC
 
 #if 0
-void pl_zlog(zpl_uint32 module, zpl_uint32 priority, const char *format, ...) {
+void pl_zlog(zpl_uint32 module, zlog_level_t priority, const char *format, ...) {
 	va_list args;
 	va_start(args, format);
 	pl_vzlog(zlog_default, module, priority, format, args);
@@ -1179,15 +1169,15 @@ FUNCNAME(zpl_uint32 module, const char *format, ...) \
   va_end(args); \
 }
 
-ZLOG_FUNC(pl_zlog_err, LOG_ERR)
+ZLOG_FUNC(pl_zlog_err, ZLOG_LEVEL_ERR)
 
-ZLOG_FUNC(pl_zlog_warn, LOG_WARNING)
+ZLOG_FUNC(pl_zlog_warn, ZLOG_LEVEL_WARNING)
 
-ZLOG_FUNC(pl_zlog_info, LOG_INFO)
+ZLOG_FUNC(pl_zlog_info, ZLOG_LEVEL_INFO)
 
-ZLOG_FUNC(pl_zlog_notice, LOG_NOTICE)
+ZLOG_FUNC(pl_zlog_notice, ZLOG_LEVEL_NOTICE)
 
-ZLOG_FUNC(pl_zlog_debug, LOG_DEBUG)
+ZLOG_FUNC(pl_zlog_debug, ZLOG_LEVEL_DEBUG)
 
 ZLOG_FUNC(pl_zlog_trap, LOG_TRAP)
 
@@ -1195,16 +1185,9 @@ ZLOG_FUNC(pl_zlog_trap, LOG_TRAP)
 #endif
 
 
-static void zlog_thread_info(zpl_uint32 log_level)
+static void zlog_thread_info(zlog_level_t log_level)
 {
-	if(m_backtrace_symb.schedfrom_line)
-	{
-		zlog(MODULE_DEFAULT, log_level,
-		"Current thread/eloop function %s, scheduled from "
-				"file %s, line %u", m_backtrace_symb.funcname?m_backtrace_symb.funcname:"?",
-				m_backtrace_symb.schedfrom?m_backtrace_symb.schedfrom:"?", 
-				m_backtrace_symb.schedfrom_line);
-	}
+	zlog(MODULE_DEFAULT, log_level,"Current %s", zpl_backtrace_symb_info());
 }
 
 
@@ -1215,12 +1198,12 @@ void _zlog_assert_failed(const char *assertion, const char *file,
 	if (zlog_default && !zlog_default->fp
 			&& ((logfile_fd = open_crashlog()) >= 0) && ((zlog_default->fp =
 					fdopen(logfile_fd, "w")) != NULL))
-		zlog_default->maxlvl[ZLOG_DEST_FILE] = LOG_ERR;
-	zlog(MODULE_DEFAULT, LOG_CRIT,
+		zlog_default->maxlvl[ZLOG_DEST_FILE] = ZLOG_LEVEL_ERR;
+	zlog(MODULE_DEFAULT, ZLOG_LEVEL_CRIT,
 			"Assertion `%s' failed in file %s, line %u, function %s", assertion,
 			file, line, (function ? function : "?"));
-	zlog_backtrace(LOG_CRIT);
-	zlog_thread_info(LOG_CRIT);
+	zlog_backtrace(ZLOG_LEVEL_CRIT);
+	zlog_thread_info(ZLOG_LEVEL_CRIT);
 	abort();
 }
 
@@ -1247,20 +1230,19 @@ openzlog(const char *progname, zlog_proto_t protocol, zpl_uint32 syslog_flags,
 		zl->default_lvl[i] = ZLOG_DISABLED;
 	}
 
-	zl->default_lvl[ZLOG_DEST_SYSLOG] = LOG_WARNING;
-	zl->default_lvl[ZLOG_DEST_STDOUT] = LOG_ERR;
-	zl->default_lvl[ZLOG_DEST_BUFFER] = LOG_NOTICE;
-	zl->default_lvl[ZLOG_DEST_MONITOR] = LOG_NOTICE;
-	zl->default_lvl[ZLOG_DEST_FILE] = LOG_ERR;
+	zl->default_lvl[ZLOG_DEST_SYSLOG] = ZLOG_LEVEL_WARNING;
+	zl->default_lvl[ZLOG_DEST_STDOUT] = ZLOG_LEVEL_ERR;
+	zl->default_lvl[ZLOG_DEST_BUFFER] = ZLOG_LEVEL_NOTICE;
+	zl->default_lvl[ZLOG_DEST_MONITOR] = ZLOG_LEVEL_NOTICE;
+	zl->default_lvl[ZLOG_DEST_FILE] = ZLOG_LEVEL_ERR;
 
-	zl->trap_lvl = zpl_true;//LOG_TRAP;
+	zl->trap_lvl = zpl_true;//ZLOG_LEVEL_TRAP;
 
 	openlog(progname, syslog_flags, zl->facility);
 #ifdef ZPL_SERVICE_SYSLOG
 	syslogc_lib_init(NULL, progname);
 #endif
 	//zl->maxlvl[ZLOG_DEST_STDOUT] = zl->default_lvl;
-
 	zl->timestamp = ZLOG_TIMESTAMP_DATE;
 	zl->log_buffer.max_size = ZLOG_BUFF_SIZE;
 	zl->log_buffer.start = 0;
@@ -1268,14 +1250,14 @@ openzlog(const char *progname, zlog_proto_t protocol, zpl_uint32 syslog_flags,
 	zlog_default = zl;
 
 	zlog_buffer_reset ();
-	zlog_set_level (ZLOG_DEST_STDOUT, LOG_DEBUG);
+	zlog_set_level (ZLOG_DEST_STDOUT, ZLOG_LEVEL_DEBUG);
 #ifdef ZLOG_TASK_ENABLE
 	zlog_task_init(zlog_default);
 #endif
 	zl->depth_debug = ZLOG_DEPTH_DEBUG_DEFAULT;
 #ifdef ZLOG_TESTING_ENABLE
 	zl->testing = zpl_false;
-	zl->testlog.priority = LOG_WARNING;
+	zl->testlog.priority = ZLOG_LEVEL_WARNING;
 	zl->testlog.fp = NULL;
 	zl->testlog.filesize = 8;
 	zl->testlog.file_check_interval = 0;
@@ -1417,7 +1399,7 @@ void zlog_get_timestamp(zlog_timestamp_t *value)
 		os_mutex_unlock(zlog_default->mutex);
 }
 
-void zlog_set_level(zlog_dest_t dest, zpl_uint32 log_level) {
+void zlog_set_level(zlog_dest_t dest, zlog_level_t log_level) {
 
 	if (zlog_default == NULL)
 		return;
@@ -1429,7 +1411,7 @@ void zlog_set_level(zlog_dest_t dest, zpl_uint32 log_level) {
 }
 
 
-void zlog_get_level(zlog_dest_t dest, zpl_uint32 *log_level)
+void zlog_get_level(zlog_dest_t dest, zlog_level_t *log_level)
 {
 	if (zlog_default == NULL)
 		return;
@@ -1485,7 +1467,7 @@ int zlog_reset_file(zpl_bool bOpen)
 	return OK;
 }
 
-int zlog_set_file(const char *filename, zpl_uint32 log_level)
+int zlog_set_file(const char *filename, zlog_level_t log_level)
 {
 	FILE *fp;
 	mode_t oldumask;
@@ -1541,7 +1523,7 @@ int zlog_set_file(const char *filename, zpl_uint32 log_level)
 	return OK;
 }
 
-int zlog_get_file(const char *filename, zpl_uint32 *log_level)
+int zlog_get_file(const char *filename, zlog_level_t *log_level)
 {
 	if (zlog_default == NULL)
 		return 0;
@@ -1648,7 +1630,7 @@ zpl_bool zlog_testing_enabled (void)
 	return zlog_default->testing;
 }
 
-int zlog_testing_priority (zpl_uint32 priority)
+int zlog_testing_priority (zlog_level_t priority)
 {
 	if (zlog_default == NULL)
 		return 0;
@@ -1878,7 +1860,7 @@ static int zlog_check_file (struct zlog *zl)
 }*/
 
 static int zlog_buffer_format(struct zlog *zl, zlog_buffer_t *buffer,
-		zpl_uint32 module, zpl_uint32 level, zpl_char *format, va_list args)
+		zpl_uint32 module, zlog_level_t level, zpl_char *format, va_list args)
 {
 	va_list ac;
 	zpl_uint32 len;
@@ -2074,13 +2056,13 @@ int zlog_rotate()
 		snprintf (filetmp, sizeof(filetmp), "%s%s", ZLOG_VIRTUAL_PATH, zlog_default->filename);
 		oldumask = umask(0777 & ~LOGFILE_MASK);
 		zlog_default->fp = fopen(filetmp, "a");
-		save_errno = errno;
+		save_errno = ipstack_errno;
 		umask(oldumask);
 		if (zlog_default->fp == NULL)
 		{
 			zlog_err(MODULE_DEFAULT,
 					"Log rotate failed: cannot open file %s for append: %s",
-					zlog_default->filename, safe_strerror(save_errno));
+					zlog_default->filename, ipstack_strerror(save_errno));
 			if (zlog_default->mutex)
 				os_mutex_unlock(zlog_default->mutex);
 			return -1;
@@ -2143,13 +2125,6 @@ mes_lookup(const struct message *meslist, zpl_uint32 max, zpl_uint32 index, cons
 			index, mesname, max);
 	assert(none);
 	return none;
-}
-
-/* Wrapper around strerror to handle case where it returns NULL. */
-const char *
-safe_strerror(int errnum) {
-	const char *s = strerror(errnum);
-	return (s != NULL) ? s : "Unknown error";
 }
 
 

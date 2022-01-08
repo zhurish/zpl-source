@@ -50,7 +50,7 @@ router_id_find_node (struct list *l, struct connected *ifc)
 static int
 router_id_bad_address (struct connected *ifc)
 {
-  if (ifc->address->family != AF_INET)
+  if (ifc->address->family != IPSTACK_AF_INET)
     return 1;
   
   /* non-redistributable addresses shouldn't be used for RIDs either */
@@ -72,7 +72,7 @@ router_id_get (struct prefix *p, vrf_id_t vrf_id)
 	  return;
   }
   p->u.prefix4.s_addr = 0;
-  p->family = AF_INET;
+  p->family = IPSTACK_AF_INET;
   p->prefixlen = 32;
 
   if (zvrf->rid_user_assigned.u.prefix4.s_addr)
@@ -217,6 +217,6 @@ router_id_init (struct nsm_vrf *zvrf)
   zvrf->rid_all_sorted_list->cmp = router_id_cmp;
   zvrf->rid_lo_sorted_list->cmp = router_id_cmp;
 
-  zvrf->rid_user_assigned.family = AF_INET;
+  zvrf->rid_user_assigned.family = IPSTACK_AF_INET;
   zvrf->rid_user_assigned.prefixlen = 32;
 }

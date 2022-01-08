@@ -34,7 +34,7 @@
 # include <ws2tcpip.h>
 
   /*
-   * <wspiapi.h> is necessary for getaddrinfo before Windows XP, but it isn't
+   * <wspiapi.h> is necessary for ipstack_getaddrinfo before Windows XP, but it isn't
    * available on some platforms like MinGW.
    */
 # ifdef HAVE_WSPIAPI_H

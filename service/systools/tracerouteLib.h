@@ -81,7 +81,7 @@ extern "C" {
 
 typedef struct tracerouteStat                         /* TRACEROUTE_STAT */
     {
-    int                 tracerouteFd;                 /* socket file descriptor */
+    zpl_socket_t                 tracerouteFd;                 /* ipstack_socket file descriptor */
     char                toInetName [INET_ADDR_LEN];/* IP addr to traceroute */
     char                toHostName [MAXHOSTNAMELEN];/* IP addr to traceroute */
     ifindex_t			ifindex;

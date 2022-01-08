@@ -16,54 +16,16 @@ extern "C" {
 #include "zpl_include.h"
 #include "moduletypes.h"
 
-/*
-typedef enum
-{
-  MODULE_NONE,
-  MODULE_DEFAULT,		//Default
-  MODULE_TIMER,		//Default
-  MODULE_JOB,		//Default
-  MODULE_CONSOLE,		//Console
-  MODULE_TELNET,		//telnet
-  MODULE_LIBSSH,		//telnet
-  MODULE_NSM,			//route table manage
-  MODULE_MODEM,			//MODEM
-  MODULE_WIFI,			//wifi
-  MODULE_DHCP,			//DHCP
-  MODULE_DHCPD,			//DHCPD
-  MODULE_RIP,
-  MODULE_BGP,
-  MODULE_OSPF,
-  MODULE_RIPNG,
-  MODULE_BABEL,
-  MODULE_OSPF6,
-  MODULE_ISIS,
-  MODULE_PIM,
-  MODULE_MASC,
-  MODULE_NHRP,
-  MODULE_HSLS,
-  MODULE_OLSR,
-  MODULE_VRRP,
-  MODULE_FRP,
-  MODULE_LLDP,
-  MODULE_BFD,
-  MODULE_LDP,
-  MODULE_SNTP,
-  MODULE_IMISH,
-  MODULE_UTILS,
-  MODULE_KERNEL,		//Kernel
-  MODULE_VOIP,
-  MODULE_APP_START,
-  MODULE_APP_STOP = MODULE_APP_START + 16,
-  MODULE_MAX,
-} module_t;
-*/
+#define ZPL_MODULE_NEED_INIT  0x00000001
+#define ZPL_MODULE_IS_INIT    0x00000100
+#define ZPL_MODULE_INIT_TASK  0x00000200
+#define ZPL_MODULE_INIT_CMD   0x00000400
 
 /* For pretty printing of memory allocate information. */
 struct module_list
 {
-  zpl_uint32 module;
-	const char 	*name;
+  zpl_uint32 module;  //模块ID
+	const char 	*name;  //模块名称  
 
   int	(*module_init)(void);
 	int	(*module_exit)(void);
@@ -79,8 +41,10 @@ struct module_list
 	int	(*module_show_config)(void *, void *, zpl_bool);
 	int	(*module_show_debug)(void *, void *, zpl_bool);
 #endif
-  zpl_void		  *master;
-	zpl_uint32		taskid;
+
+  zpl_uint32		flags;//模块是否初始化标志
+  zpl_void		  *master;    
+	zpl_uint32		taskid;       //模块任务ID
   struct submodule
   {
     zpl_uint32 module;
@@ -89,36 +53,26 @@ struct module_list
   }submodule[ZPL_SUB_MODULE_MAX];
 };
 
+struct module_table
+{
+	zpl_uint32 module;  //模块ID
+	const char 	*name;  //模块名称  
+	zpl_uint32	taskid;       //模块任务ID
+};
+
 struct module_alllist
 {
   struct module_list *tbl;
 };
 
+extern struct module_table module_tbl[MODULE_MAX];
 
-extern struct module_alllist module_lists_tbl[MODULE_MAX];
-
-extern int pl_module_name_show();
-extern int pl_module_name_init(const char * name);
-extern int pl_module_init(zpl_uint32 module);
-extern int pl_module_exit(zpl_uint32 module);
-extern int pl_module_task_name_init(const char * name);
-extern int pl_module_task_init(zpl_uint32 module);
-extern int pl_module_task_exit(zpl_uint32 module);
-extern int pl_module_cmd_name_init(const char * name);
-extern int pl_module_cmd_init(zpl_uint32 module);
-
-extern const char * module2name(zpl_uint32 module);
-extern zpl_uint32 name2module(const char *name);
+extern const char * module2name(zpl_uint32 module);//
+extern zpl_uint32 name2module(const char *name);//
 extern zpl_uint32 module2task(zpl_uint32 module);
 extern zpl_uint32 task2module(zpl_uint32 taskid);
 extern zpl_uint32 task_module_self(void);
-extern int module_setup_task(zpl_uint32 module, zpl_uint32 taskid);
-extern int submodule_setup(zpl_uint32 module, zpl_uint32 submodule, char *name, zpl_uint32 taskid);
-
-extern zpl_char *zlog_backtrace_module();
-extern zpl_char *zlog_backtrace_funcname();
-extern zpl_char *zlog_backtrace_schedfrom();
-extern zpl_uint32 zlog_backtrace_schedfrom_line();
+extern int module_setup_task(zpl_uint32 module, zpl_uint32 taskid);//
 
 
  

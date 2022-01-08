@@ -15,7 +15,7 @@ modification history
 -------------------
 02o,11aug06,tkf  Cleanup for IPNET integration.
 02o,20jun06,jpb  Removed I960 check.
-02n,20jan06,dlk  Make telnet session shutdown more graceful & reliable.
+02n,20jan06,dlk  Make telnet session ipstack_shutdown more graceful & reliable.
 02m,05apr05,vvv  added per-session semaphore, removed parserControl
                  (SPR #106456)
 02l,23aug04,rp   merged from COMP_WN_IPV6_BASE6_ITER5_TO_UNIFIED_PRE_MERGE
@@ -61,8 +61,8 @@ extern "C" {
 
 typedef struct
     {
-    int         socket;              /* socket connection */
-    int         ptyFd;             /* input to command interpreter */
+    zpl_socket_t         sock;              /* ipstack_socket connection */
+    zpl_socket_t         ptyFd;             /* input to command interpreter */
 
     zpl_bool        loggedIn;            /* Has shell been started on this slot? */
     zpl_bool        shuttingDown;        /* Is session shutting down? */
@@ -84,12 +84,12 @@ typedef struct
      zpl_uchar state;
 #define SCTD_EMPTY 1
 #define SCTD_USED  2
-     int    loutfd;                 /* local host's socket */
-     int	linfd;
-     int    hostFd;                  /* remote host's socket */
+     zpl_socket_t    loutfd;                 /* local host's ipstack_socket */
+     zpl_socket_t	linfd;
+     zpl_socket_t    hostFd;                  /* remote host's ipstack_socket */
      zpl_bool   echoIsDone;              /* zpl_true when echo transaction complete */
      zpl_bool   sgaIsDone;               /* zpl_true when SGA transaction complete */
-     zpl_bool	connect;
+     zpl_bool	ipstack_connect;
      int    hostStreamState;         /* state of host input stream */
      char   cmd;
      int    saveOpts;
@@ -118,7 +118,7 @@ typedef struct
 #define	AO	245		/* abort output--but let prog finish */
 #define	IP	244		/* interrupt process--permanently */
 #define	BREAK	243		/* break */
-#define	DM	242		/* data mark--for connect. cleaning */
+#define	DM	242		/* data mark--for ipstack_connect. cleaning */
 #define	NOP	241		/* nop */
 #define	SE	240		/* end sub negotiation */
 #define EOR     239             /* end of record (transparent mode) */
@@ -151,7 +151,7 @@ typedef struct
 #define	TELOPT_DET	20	/* data entry terminal */
 #define	TELOPT_SUPDUP	21	/* supdup protocol */
 #define	TELOPT_SUPDUPOUTPUT 22	/* supdup output */
-#define	TELOPT_SNDLOC	23	/* send location */
+#define	TELOPT_SNDLOC	23	/* ipstack_send location */
 #define	TELOPT_TTYPE	24	/* terminal type */
 #define	TELOPT_EOR	25	/* end or record */
 #define	TELOPT_TACACS	26	/* TACACS User Identification */
@@ -188,7 +188,7 @@ typedef struct
 /* sub-option qualifiers */
 
 #define	TELQUAL_IS	0	/* option is... */
-#define	TELQUAL_SEND	1	/* send option */
+#define	TELQUAL_SEND	1	/* ipstack_send option */
 
 /* function declarations */
 

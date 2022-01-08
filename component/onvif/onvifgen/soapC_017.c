@@ -8343,7 +8343,7 @@ SOAP_FMAC3 void SOAP_FMAC4 soap_default__tds__SetDynamicDNS(struct soap *soap, s
 	(void)soap; (void)a; /* appease -Wall -Werror */
 	soap_default_tt__DynamicDNSType(soap, &a->Type);
 	soap_default_tt__DNSName(soap, &a->Name);
-	soap_default_xsd__duration(soap, &a->TTL);
+	soap_default_xsd__duration(soap, &a->IPSTACK_TTL);
 }
 
 SOAP_FMAC3 void SOAP_FMAC4 soap_serialize__tds__SetDynamicDNS(struct soap *soap, const struct _tds__SetDynamicDNS *a)
@@ -8351,7 +8351,7 @@ SOAP_FMAC3 void SOAP_FMAC4 soap_serialize__tds__SetDynamicDNS(struct soap *soap,
 	(void)soap; (void)a; /* appease -Wall -Werror */
 #ifndef WITH_NOIDREF
 	soap_serialize_tt__DNSName(soap, (char*const*)&a->Name);
-	soap_serialize_xsd__duration(soap, (char*const*)&a->TTL);
+	soap_serialize_xsd__duration(soap, (char*const*)&a->IPSTACK_TTL);
 #endif
 }
 
@@ -8364,7 +8364,7 @@ SOAP_FMAC3 int SOAP_FMAC4 soap_out__tds__SetDynamicDNS(struct soap *soap, const 
 		return soap->error;
 	if (soap_out_tt__DNSName(soap, "tds:Name", -1, (char*const*)&a->Name, ""))
 		return soap->error;
-	if (soap_out_xsd__duration(soap, "tds:TTL", -1, (char*const*)&a->TTL, ""))
+	if (soap_out_xsd__duration(soap, "tds:IPSTACK_TTL", -1, (char*const*)&a->IPSTACK_TTL, ""))
 		return soap->error;
 	return soap_element_end_out(soap, tag);
 }
@@ -8398,7 +8398,7 @@ SOAP_FMAC3 struct _tds__SetDynamicDNS * SOAP_FMAC4 soap_in__tds__SetDynamicDNS(s
 				}
 			}
 			if (soap_flag_TTL && (soap->error == SOAP_TAG_MISMATCH || soap->error == SOAP_NO_TAG))
-			{	if (soap_in_xsd__duration(soap, "tds:TTL", (char**)&a->TTL, "xsd:duration"))
+			{	if (soap_in_xsd__duration(soap, "tds:IPSTACK_TTL", (char**)&a->IPSTACK_TTL, "xsd:duration"))
 				{	soap_flag_TTL--;
 					continue;
 				}
@@ -8458,7 +8458,7 @@ SOAP_FMAC3 void SOAP_FMAC4 soap_default_tt__DynamicDNSInformation(struct soap *s
 	(void)soap; (void)a; /* appease -Wall -Werror */
 	soap_default_tt__DynamicDNSType(soap, &a->Type);
 	soap_default_tt__DNSName(soap, &a->Name);
-	soap_default_xsd__duration(soap, &a->TTL);
+	soap_default_xsd__duration(soap, &a->IPSTACK_TTL);
 	a->Extension = NULL;
 	soap_default_xsd__anyAttribute(soap, &a->__anyAttribute);
 }
@@ -8468,7 +8468,7 @@ SOAP_FMAC3 void SOAP_FMAC4 soap_serialize_tt__DynamicDNSInformation(struct soap 
 	(void)soap; (void)a; /* appease -Wall -Werror */
 #ifndef WITH_NOIDREF
 	soap_serialize_tt__DNSName(soap, (char*const*)&a->Name);
-	soap_serialize_xsd__duration(soap, (char*const*)&a->TTL);
+	soap_serialize_xsd__duration(soap, (char*const*)&a->IPSTACK_TTL);
 	soap_serialize_PointerTott__DynamicDNSInformationExtension(soap, &a->Extension);
 #endif
 }
@@ -8484,7 +8484,7 @@ SOAP_FMAC3 int SOAP_FMAC4 soap_out_tt__DynamicDNSInformation(struct soap *soap, 
 		return soap->error;
 	if (soap_out_tt__DNSName(soap, "tt:Name", -1, (char*const*)&a->Name, ""))
 		return soap->error;
-	if (soap_out_xsd__duration(soap, "tt:TTL", -1, (char*const*)&a->TTL, ""))
+	if (soap_out_xsd__duration(soap, "tt:IPSTACK_TTL", -1, (char*const*)&a->IPSTACK_TTL, ""))
 		return soap->error;
 	if (soap_out_PointerTott__DynamicDNSInformationExtension(soap, "tt:Extension", -1, &a->Extension, ""))
 		return soap->error;
@@ -8522,7 +8522,7 @@ SOAP_FMAC3 struct tt__DynamicDNSInformation * SOAP_FMAC4 soap_in_tt__DynamicDNSI
 				}
 			}
 			if (soap_flag_TTL && (soap->error == SOAP_TAG_MISMATCH || soap->error == SOAP_NO_TAG))
-			{	if (soap_in_xsd__duration(soap, "tt:TTL", (char**)&a->TTL, "xsd:duration"))
+			{	if (soap_in_xsd__duration(soap, "tt:IPSTACK_TTL", (char**)&a->IPSTACK_TTL, "xsd:duration"))
 				{	soap_flag_TTL--;
 					continue;
 				}

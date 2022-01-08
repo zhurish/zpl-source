@@ -4,9 +4,9 @@
 RESOLV_CONF="/etc/udhcpc/resolv.conf"
 
 [ -n "$broadcast" ] && BROADCAST="broadcast $broadcast"
-[ -n "$subnet" ] && NETMASK="netmask $subnet"
+[ -n "$subnet" ] && IPSTACK_NETMASK="netmask $subnet"
 
-/sbin/ifconfig $interface $ip $BROADCAST $NETMASK
+/sbin/ifconfig $interface $ip $BROADCAST $IPSTACK_NETMASK
 
 if [ -n "$router" ]
 then

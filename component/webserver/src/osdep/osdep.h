@@ -708,7 +708,7 @@ typedef int64 Offset;
 
 #if DOXYGEN || ME_UNIX_LIKE || VXWORKS
     /** Argument for sockets */
-    typedef int Socket;
+    typedef zpl_socket_t Socket;
     #ifndef SOCKET_ERROR
         #define SOCKET_ERROR -1
     #endif
@@ -1063,12 +1063,12 @@ typedef int64 Ticks;
 #endif
 
 #if SOLARIS
-    #define INADDR_NONE     ((in_addr_t) 0xffffffff)
+    #define IPSTACK_INADDR_NONE     ((in_addr_t) 0xffffffff)
 #endif
 
 #if VXWORKS
-    #ifndef SHUT_RDWR
-        #define SHUT_RDWR 2
+    #ifndef IPSTACK_SHUT_RDWR
+        #define IPSTACK_SHUT_RDWR 2
     #endif
     #define HAVE_SOCKLEN_T
     #if _DIAB_TOOL
@@ -1161,8 +1161,8 @@ typedef int64 Ticks;
         #define EPROTO      134
     #endif
 
-    #undef SHUT_RDWR
-    #define SHUT_RDWR       2
+    #undef IPSTACK_SHUT_RDWR
+    #define IPSTACK_SHUT_RDWR       2
 
     #define TIME_GENESIS UINT64(11644473600000000)
     #ifndef va_copy
@@ -1240,21 +1240,21 @@ typedef int64 Ticks;
 
     #define BUFSIZ   ME_BUFSIZE
     #define PATHSIZE ME_MAX_PATH
-    #define gethostbyname2(a,b) gethostbyname(a)
+    #define gethostbyname2(a,b) ipstack_gethostbyname(a)
     #pragma comment( lib, "ws2.lib" )
 #endif /* WINCE */
 
 #if TIDSP
     #define EINTR   4
     #define EAGAIN  11
-    #define INADDR_NONE 0xFFFFFFFF
+    #define IPSTACK_INADDR_NONE 0xFFFFFFFF
     #define PATHSIZE ME_MAX_PATH
     #define NBBY 8
-    #define hostent _hostent
+    #define ipstack_hostent _hostent
     #define NFDBITS ((int) (sizeof(fd_mask) * NBBY))
     typedef long fd_mask;
     typedef int Socklen;
-    struct sockaddr_storage { char pad[1024]; };
+    struct ipstack_sockaddr_storage { char pad[1024]; };
 #endif /* TIDSP */
 
 #ifndef NBBY
@@ -1268,9 +1268,9 @@ extern "C" {
 #endif
 
 #if LINUX
-    extern int pthread_mutexattr_gettype (__const pthread_mutexattr_t *__restrict __attr, int *__restrict __kind);
-    extern int pthread_mutexattr_settype (pthread_mutexattr_t *__attr, int __kind);
-    extern char **environ;
+    //extern int pthread_mutexattr_gettype (__const pthread_mutexattr_t *__restrict __attr, int *__restrict __kind);
+    //extern int pthread_mutexattr_settype (pthread_mutexattr_t *__attr, int __kind);
+    //extern char **environ;
 #endif
 
 #if VXWORKS
@@ -1284,7 +1284,7 @@ extern "C" {
         #define NI_MAXHOST      128
         extern STATUS access(cchar *path, int mode);
         typedef int     socklen_t;
-        struct sockaddr_storage {
+        struct ipstack_sockaddr_storage {
             char        pad[1024];
         };
     #else

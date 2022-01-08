@@ -12,30 +12,13 @@
 extern "C" {
 #endif
 
-#ifdef ZPL_PJSIP_MODULE
-extern int _pl_pjsip_module_init();
-extern int _pl_pjsip_module_exit();
-extern int _pl_pjsip_module_task_init();
-extern int _pl_pjsip_module_task_exit();
-#endif
+int os_module_init(void);
+int os_module_exit(void);
+int os_module_task_init(void);
+int os_module_task_exit(void);
+int os_module_cmd_init(void);
+int os_module_cmd_exit(void);
 
-extern int console_enable;
-
-
-extern int ospfd_module_init();
-extern int ospfd_task_init ();
-extern int ospfd_module_exit ();
-
-
-extern int os_module_init(void);
-extern int os_module_task_init(void);
-extern int os_module_cmd_init(int terminal);
-
-
-extern int os_module_exit(void);
-extern int os_module_task_exit(void);
-extern int os_module_cmd_exit(void);
- 
 #ifdef __cplusplus
 }
 #endif

@@ -64,7 +64,7 @@ static mosq_sock_t spare_sock = INVALID_SOCKET;
 
 void net__broker_init(void)
 {
-	spare_sock = socket(AF_INET, SOCK_STREAM, 0);
+	spare_sock = socket(IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
 	net__init();
 }
 
@@ -133,7 +133,7 @@ int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 			if(new_sock != INVALID_SOCKET){
 				COMPAT_CLOSE(new_sock);
 			}
-			spare_sock = socket(AF_INET, SOCK_STREAM, 0);
+			spare_sock = socket(IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
 			log__printf(NULL, MOSQ_LOG_WARNING,
 					"Unable to accept new connection, system socket count has been exceeded. Try increasing \"ulimit -n\" or equivalent.");
 		}
@@ -164,8 +164,8 @@ int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 
 	if(db->config->set_tcp_nodelay){
 		int flag = 1;
-		if(setsockopt(new_sock, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int)) != 0){
-			log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Unable to set TCP_NODELAY.");
+		if(setsockopt(new_sock, IPSTACK_IPPROTO_TCP, IPSTACK_TCP_NODELAY, &flag, sizeof(int)) != 0){
+			log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Unable to set IPSTACK_TCP_NODELAY.");
 		}
 	}
 
@@ -573,7 +573,7 @@ int net__socket_listen(struct mosquitto__listener *listener)
 #else
 	char ss_opt = 1;
 #endif
-#ifdef SO_BINDTODEVICE
+#ifdef IPSTACK_SO_BINDTODEVICE
 	struct ifreq ifr;
 #endif
 
@@ -584,12 +584,12 @@ int net__socket_listen(struct mosquitto__listener *listener)
 	if(listener->socket_domain){
 		hints.ai_family = listener->socket_domain;
 	}else{
-		hints.ai_family = AF_UNSPEC;
+		hints.ai_family = IPSTACK_AF_UNSPEC;
 	}
 	hints.ai_flags = AI_PASSIVE;
-	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_socktype = IPSTACK_SOCK_STREAM;
 
-	rc = getaddrinfo(listener->host, service, &hints, &ainfo);
+	rc = ipstack_getaddrinfo(listener->host, service, &hints, &ainfo);
 	if (rc){
 		log__printf(NULL, MOSQ_LOG_ERR, "Error creating listener: %s.", gai_strerror(rc));
 		return INVALID_SOCKET;
@@ -599,10 +599,10 @@ int net__socket_listen(struct mosquitto__listener *listener)
 	listener->socks = NULL;
 
 	for(rp = ainfo; rp; rp = rp->ai_next){
-		if(rp->ai_family == AF_INET){
-			log__printf(NULL, MOSQ_LOG_INFO, "Opening ipv4 listen socket on port %d.", ntohs(((struct sockaddr_in *)rp->ai_addr)->sin_port));
-		}else if(rp->ai_family == AF_INET6){
-			log__printf(NULL, MOSQ_LOG_INFO, "Opening ipv6 listen socket on port %d.", ntohs(((struct sockaddr_in6 *)rp->ai_addr)->sin6_port));
+		if(rp->ai_family == IPSTACK_AF_INET){
+			log__printf(NULL, MOSQ_LOG_INFO, "Opening ipv4 listen socket on port %d.", ntohs(((struct ipstack_sockaddr_in *)rp->ai_addr)->sin_port));
+		}else if(rp->ai_family == IPSTACK_AF_INET6){
+			log__printf(NULL, MOSQ_LOG_INFO, "Opening ipv6 listen socket on port %d.", ntohs(((struct ipstack_sockaddr_in6 *)rp->ai_addr)->sin6_port));
 		}else{
 			continue;
 		}
@@ -616,35 +616,35 @@ int net__socket_listen(struct mosquitto__listener *listener)
 		listener->socks = mosquitto__realloc(listener->socks, sizeof(mosq_sock_t)*listener->sock_count);
 		if(!listener->socks){
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-			freeaddrinfo(ainfo);
+			ipstack_freeaddrinfo(ainfo);
 			return MOSQ_ERR_NOMEM;
 		}
 		listener->socks[listener->sock_count-1] = sock;
 
 #ifndef WIN32
 		ss_opt = 1;
-		setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &ss_opt, sizeof(ss_opt));
+		setsockopt(sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_REUSEADDR, &ss_opt, sizeof(ss_opt));
 #endif
 #ifdef IPV6_V6ONLY
 		ss_opt = 1;
-		setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &ss_opt, sizeof(ss_opt));
+		setsockopt(sock, IPSTACK_IPPROTO_IPV6, IPV6_V6ONLY, &ss_opt, sizeof(ss_opt));
 #endif
 
 		if(net__socket_nonblock(&sock)){
-			freeaddrinfo(ainfo);
+			ipstack_freeaddrinfo(ainfo);
 			return 1;
 		}
 
-#ifdef SO_BINDTODEVICE
+#ifdef IPSTACK_SO_BINDTODEVICE
 		if(listener->bind_interface){
 			memset(&ifr, 0, sizeof(ifr));
 			strncpy(ifr.ifr_name, listener->bind_interface, sizeof(ifr.ifr_name)-1);
 			ifr.ifr_name[sizeof(ifr.ifr_name)-1] = '\0';
 			log__printf(NULL, MOSQ_LOG_INFO, "Binding listener to interface \"%s\".", ifr.ifr_name);
-			if(setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr)) < 0) {
+			if(setsockopt(sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr)) < 0) {
 				net__print_error(MOSQ_LOG_ERR, "Error: %s");
 				COMPAT_CLOSE(sock);
-				freeaddrinfo(ainfo);
+				ipstack_freeaddrinfo(ainfo);
 				return 1;
 			}
 		}
@@ -653,18 +653,18 @@ int net__socket_listen(struct mosquitto__listener *listener)
 		if(bind(sock, rp->ai_addr, rp->ai_addrlen) == -1){
 			net__print_error(MOSQ_LOG_ERR, "Error: %s");
 			COMPAT_CLOSE(sock);
-			freeaddrinfo(ainfo);
+			ipstack_freeaddrinfo(ainfo);
 			return 1;
 		}
 
 		if(listen(sock, 100) == -1){
 			net__print_error(MOSQ_LOG_ERR, "Error: %s");
-			freeaddrinfo(ainfo);
+			ipstack_freeaddrinfo(ainfo);
 			COMPAT_CLOSE(sock);
 			return 1;
 		}
 	}
-	freeaddrinfo(ainfo);
+	ipstack_freeaddrinfo(ainfo);
 
 	/* We need to have at least one working socket. */
 	if(listener->sock_count > 0){
@@ -713,18 +713,18 @@ int net__socket_listen(struct mosquitto__listener *listener)
 
 int net__socket_get_address(mosq_sock_t sock, char *buf, int len)
 {
-	struct sockaddr_storage addr;
+	struct ipstack_sockaddr_storage addr;
 	socklen_t addrlen;
 
-	memset(&addr, 0, sizeof(struct sockaddr_storage));
+	memset(&addr, 0, sizeof(struct ipstack_sockaddr_storage));
 	addrlen = sizeof(addr);
-	if(!getpeername(sock, (struct sockaddr *)&addr, &addrlen)){
-		if(addr.ss_family == AF_INET){
-			if(ipstack_inet_ntop(AF_INET, &((struct sockaddr_in *)&addr)->sin_addr.s_addr, buf, len)){
+	if(!getpeername(sock, (struct ipstack_sockaddr *)&addr, &addrlen)){
+		if(addr.ss_family == IPSTACK_AF_INET){
+			if(ipstack_inet_ntop(IPSTACK_AF_INET, &((struct ipstack_sockaddr_in *)&addr)->sin_addr.s_addr, buf, len)){
 				return 0;
 			}
-		}else if(addr.ss_family == AF_INET6){
-			if(ipstack_inet_ntop(AF_INET6, &((struct sockaddr_in6 *)&addr)->sin6_addr.s6_addr, buf, len)){
+		}else if(addr.ss_family == IPSTACK_AF_INET6){
+			if(ipstack_inet_ntop(IPSTACK_AF_INET6, &((struct ipstack_sockaddr_in6 *)&addr)->sin6_addr.s6_addr, buf, len)){
 				return 0;
 			}
 		}

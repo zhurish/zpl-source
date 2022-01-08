@@ -236,7 +236,7 @@ static int web_firewall_port_map_rule_handle(Webs *wp, void *p)
 		{
 			memset(&rule, 0, sizeof(firewall_t));
 
-			rule.family = AF_INET;
+			rule.family = IPSTACK_AF_INET;
 			strcpy(rule.name, name);
 
 			rule.class = FIREWALL_C_PORT;
@@ -289,7 +289,7 @@ static int web_firewall_port_map_rule_handle(Webs *wp, void *p)
 		{
 			memset(&rule, 0, sizeof(firewall_t));
 
-			rule.family = AF_INET;
+			rule.family = IPSTACK_AF_INET;
 			strcpy(rule.name, name);
 			rule.class = FIREWALL_C_PORT;
 			rule.type = FIREWALL_NAT_PREROUTING;
@@ -366,7 +366,7 @@ static int web_firewall_port_filter_handle(Webs *wp, void *p)
 		{
 			memset(&rule, 0, sizeof(firewall_t));
 
-			rule.family = AF_INET;
+			rule.family = IPSTACK_AF_INET;
 			strcpy(rule.name, name);
 
 			rule.class = FIREWALL_C_FILTER;
@@ -427,7 +427,7 @@ static int web_firewall_port_filter_handle(Webs *wp, void *p)
 		{
 			memset(&rule, 0, sizeof(firewall_t));
 
-			rule.family = AF_INET;
+			rule.family = IPSTACK_AF_INET;
 			strcpy(rule.name, name);
 			rule.class = FIREWALL_C_FILTER;
 			rule.type = FIREWALL_FILTER_INPUT;
@@ -511,7 +511,7 @@ static int web_firewall_snat_handle(Webs *wp, void *p)
 		{
 			memset(&rule, 0, sizeof(firewall_t));
 
-			rule.family = AF_INET;
+			rule.family = IPSTACK_AF_INET;
 			strcpy(rule.name, name);
 
 			rule.class = FIREWALL_C_SNAT;
@@ -561,7 +561,7 @@ static int web_firewall_snat_handle(Webs *wp, void *p)
 		{
 			memset(&rule, 0, sizeof(firewall_t));
 
-			rule.family = AF_INET;
+			rule.family = IPSTACK_AF_INET;
 			strcpy(rule.name, name);
 			rule.class = FIREWALL_C_SNAT;
 			rule.type = FIREWALL_NAT_POSTROUTING;

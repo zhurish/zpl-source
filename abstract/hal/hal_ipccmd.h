@@ -43,22 +43,34 @@ enum hal_module_id
 enum hal_module_cmd 
 {
     HAL_MODULE_CMD_NONE,
-	HAL_MODULE_CMD_SET,
-	HAL_MODULE_CMD_GET,
-	HAL_MODULE_CMD_ADD,
-	HAL_MODULE_CMD_DEL,   
-    HAL_MODULE_CMD_DELALL,
-	HAL_MODULE_CMD_ENABLE,
-	HAL_MODULE_CMD_DISABLE,        
-	HAL_MODULE_CMD_REPORT,
-	HAL_MODULE_CMD_HELLO,
-    HAL_MODULE_CMD_REGISTER,
-    HAL_MODULE_CMD_KEEPALIVE,
-	HAL_MODULE_CMD_ACK,
+	HAL_MODULE_CMD_SET,         //设置
+	HAL_MODULE_CMD_GET,         //获取
+	HAL_MODULE_CMD_ADD,         //添加
+	HAL_MODULE_CMD_DEL,         //删除
+    HAL_MODULE_CMD_DELALL,      //删除所有
+   
+	HAL_MODULE_CMD_REPORT,      //上报
+	HAL_MODULE_CMD_HELLO,       //探测
+    HAL_MODULE_CMD_REGISTER,    //注册
+    HAL_MODULE_CMD_KEEPALIVE,   //心跳
+	HAL_MODULE_CMD_ACK,         //应答
     HAL_MODULE_CMD_MAX,
 };
 
+#define HAL_CALLBACK_ENTRY(m, f) { (m), (f), (#f) }
+typedef struct 
+{
+    int module;
+    int (*module_handle)(void*, zpl_uint32, zpl_uint32, void *);
+    const char *name;
+}hal_ipccmd_callback_t;
 
+typedef struct 
+{
+    int subcmd;
+    int (*cmd_handle)(void *, void *, void *);
+    const char *name;
+}hal_ipcsubcmd_callback_t;
 
 #define IPCCMD_SET(m,s,c)               (((m)&0xff) << 24)|(((s)&0xFF)<<16)|((c)&0xFFFF)
 #define IPCCMD_MODULE_GET(C)            (((C) >> 24)&0xFF)

@@ -78,7 +78,7 @@ int dumpleases_main(int argc UNUSED_PARAM, char **argv)
 		written_at = curr; /* lease file from future! :) */
 
 	while (full_read(fd, &lease, sizeof(lease)) == sizeof(lease)) {
-		struct in_addr addr;
+		struct ipstack_in_addr addr;
 		int64_t expires_abs;
 
 		const char *fmt = ":%02x" + 1;

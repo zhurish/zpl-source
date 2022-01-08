@@ -49,28 +49,28 @@ static PJ_DEF(void) pj_pjsip_log_cb(int level, const char *buffer, int len)
 			zlog_other(MODULE_PJSIP, LOG_TRAP, "%s", buffer);
 			break;
 		case 4:
-			zlog_other(MODULE_PJSIP, LOG_DEBUG, "%s", buffer);
+			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_DEBUG, "%s", buffer);
 			break;
 		case 3:
-			zlog_other(MODULE_PJSIP, LOG_INFO, "%s", buffer);
+			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_INFO, "%s", buffer);
 			break;
 		case 5:
-			zlog_other(MODULE_PJSIP, LOG_NOTICE, "%s", buffer);
+			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_NOTICE, "%s", buffer);
 			break;
 		case 2:
-			zlog_other(MODULE_PJSIP, LOG_WARNING, "%s", buffer);
+			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_WARNING, "%s", buffer);
 			break;
 		case 1:
-			zlog_other(MODULE_PJSIP, LOG_ERR, "%s", buffer);
+			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_ERR, "%s", buffer);
 			break;
 		case 0:
-			zlog_other(MODULE_PJSIP, LOG_CRIT, "%s", buffer);
+			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_CRIT, "%s", buffer);
 			break;
-/*		case LOG_ALERT:
-			zlog_other(MODULE_PJSIP, LOG_ALERT + 1, "%s", buffer);
+/*		case ZLOG_LEVEL_ALERT:
+			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_ALERT + 1, "%s", buffer);
 			break;
-		case LOG_EMERG:
-			zlog_other(MODULE_PJSIP, LOG_EMERG + 1, "%s", buffer);
+		case ZLOG_LEVEL_EMERG:
+			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_EMERG + 1, "%s", buffer);
 			break;*/
 		default:
 			break;
@@ -89,22 +89,22 @@ static PJ_DEF(void) pj_pjsip_log_cb(int level, const char *buffer, int len)
 			zlog_other(MODULE_PJSIP, LOG_TRAP, "%s", buffer);
 			break;
 		case 4:
-			zlog_other(MODULE_PJSIP, LOG_DEBUG, "%s", buffer);
+			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_DEBUG, "%s", buffer);
 			break;
 		case 3:
-			zlog_other(MODULE_PJSIP, LOG_INFO, "%s", buffer);
+			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_INFO, "%s", buffer);
 			break;
 		case 5:
-			zlog_other(MODULE_PJSIP, LOG_NOTICE, "%s", buffer);
+			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_NOTICE, "%s", buffer);
 			break;
 		case 2:
-			zlog_other(MODULE_PJSIP, LOG_WARNING, "%s", buffer);
+			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_WARNING, "%s", buffer);
 			break;
 		case 1:
-			zlog_other(MODULE_PJSIP, LOG_ERR, "%s", buffer);
+			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_ERR, "%s", buffer);
 			break;
 		case 0:
-			zlog_other(MODULE_PJSIP, LOG_CRIT, "%s", buffer);
+			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_CRIT, "%s", buffer);
 			break;
 		default:
 			break;

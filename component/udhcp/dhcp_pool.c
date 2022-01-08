@@ -143,7 +143,7 @@ char * dhcpd_pool_poolid2name(zpl_uint32 poolid)
 
 /*static int FAST_FUNC read_u32(const char *line, void *arg) {
 	*(zpl_uint32 *) arg = strtoul(line, NULL, 10);
-	return errno == 0;
+	return ipstack_errno == 0;
 }*/
 
 #if 0

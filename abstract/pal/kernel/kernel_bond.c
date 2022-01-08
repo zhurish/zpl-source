@@ -11,6 +11,7 @@
 #include "nsm_include.h"
 
 #include "kernel_ioctl.h"
+#include "kernel_driver.h"
 #ifdef ZPL_NSM_TRUNK
 //#include "linux/if_tunnel.h"
 //#include "linux/if_bonding.h"
@@ -28,7 +29,7 @@
 #define BOND_ABI_VERSION 2
 
 /*
- * We can remove these ioctl definitions in 2.5.  People should use the
+ * We can remove these ipstack_ioctl definitions in 2.5.  People should use the
  * SIOC*** versions of them instead
  */
 #define BOND_ENSLAVE_OLD		(SIOCDEVPRIVATE)
@@ -78,7 +79,7 @@ typedef struct ifbond {
 } ifbond;
 
 typedef struct ifslave {
-	__s32 slave_id; /* Used as an IN param to the BOND_SLAVE_INFO_QUERY ioctl */
+	__s32 slave_id; /* Used as an IN param to the BOND_SLAVE_INFO_QUERY ipstack_ioctl */
 	char slave_name[IFNAMSIZ];
 	__s8 link;
 	__s8 state;
@@ -98,7 +99,7 @@ struct ad_info {
 #if 0
 static int _if_bond_add_slave(struct interface *ifp, struct interface *slave)
 {
-	struct ifreq ifr;
+	struct ipstack_ifreq ifr;
 	strcpy (ifr.ifr_name, "bond1212");
 	strcpy (ifr.ifr_slave, "enp0s25");
 /*
@@ -107,7 +108,7 @@ static int _if_bond_add_slave(struct interface *ifp, struct interface *slave)
 	strcpy (ifr.ifr_slave, slave->k_name);
 */
 
-	if (if_ioctl (SIOCBONDENSLAVE, (caddr_t) &ifr) < 0)
+	if (_ipkernel_if_ioctl (SIOCBONDENSLAVE, (caddr_t) &ifr) < 0)
 	    return -1;
 	return 0;
 }
@@ -115,11 +116,11 @@ static int _if_bond_add_slave(struct interface *ifp, struct interface *slave)
 
 static int _if_bond_delete_slave(struct interface *ifp, struct interface *slave)
 {
-	struct ifreq ifr;
+	struct ipstack_ifreq ifr;
 	strcpy (ifr.ifr_name, ifp->k_name);
 	strcpy (ifr.ifr_slave, slave->k_name);
 
-	if (if_ioctl (SIOCBONDRELEASE, (caddr_t) &ifr) < 0)
+	if (_ipkernel_if_ioctl (SIOCBONDRELEASE, (caddr_t) &ifr) < 0)
 	    return -1;
 	return 0;
 }
@@ -128,11 +129,11 @@ static int _if_bond_delete_slave(struct interface *ifp, struct interface *slave)
 
 static int _if_bond_slave_active(struct interface *ifp, struct interface *slave)
 {
-	struct ifreq ifr;
+	struct ipstack_ifreq ifr;
 	strcpy (ifr.ifr_name, ifp->k_name);
 	strcpy (ifr.ifr_slave, slave->k_name);
 
-	if (if_ioctl (SIOCBONDCHANGEACTIVE, (caddr_t) &ifr) < 0)
+	if (_ipkernel_if_ioctl (SIOCBONDCHANGEACTIVE, (caddr_t) &ifr) < 0)
 	    return -1;
 	return 0;
 }
@@ -141,13 +142,13 @@ static int _if_bond_slave_active(struct interface *ifp, struct interface *slave)
 
 int _ipkernel_bond_create(struct interface *ifp)
 {
-	return 	kernel_create_interface(ifp);
+	return 	_netlink_create_interface(ifp);
 }
 
 
 int _ipkernel_bond_delete(struct interface *ifp)
 {
-	return kernel_destroy_interface(ifp);
+	return _netlink_destroy_interface(ifp);
 }
 
 
@@ -166,5 +167,4 @@ int _if_bond_test()
 #endif
 	return 0;
 }
-
 #endif

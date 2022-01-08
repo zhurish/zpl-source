@@ -38,7 +38,7 @@ extern "C" {
 struct sntp_client
 {
 	zpl_uint8 enable;
-	int sock;
+	zpl_socket_t sock;
 	zpl_uint8 type;
 #define SNTP_PASSIVE	1
 	zpl_uint8 leapVerMode;
@@ -49,15 +49,15 @@ struct sntp_client
 
     zpl_ushort sntpcPort;
     zpl_ushort sntpc_interval;
-    struct in_addr address;
+    struct ipstack_in_addr address;
     zpl_bool		dynamics;
 
     struct timespec sntpTime;	/* storage for retrieved time value */
 
     void *master;
-    struct thread *t_read;	/* read to output socket. */
-    struct thread *t_write;	/* Write to output socket. */
-    struct thread *t_time;	/* Write to output socket. */
+    struct thread *t_read;	/* read to output ipstack_socket. */
+    struct thread *t_write;	/* Write to output ipstack_socket. */
+    struct thread *t_time;	/* Write to output ipstack_socket. */
     void *mutex;
 };
 
@@ -77,11 +77,12 @@ IMPORT STATUS mSntpcTimeGet (char *, zpl_uint32, struct timespec *, char *,
 
 
 extern int sntpcInit (void *);
+extern int sntpcDisable(void);
 extern int sntpc_config(struct vty *);
 extern int sntpc_debug_config(struct vty *);
 
 extern int sntpc_is_sync(void);
-extern int sntpc_server_address(struct in_addr *);
+extern int sntpc_server_address(struct ipstack_in_addr *);
 
 extern int sntpc_is_dynamics(void);
 extern int sntpc_dynamics_enable(void);

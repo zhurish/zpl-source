@@ -104,7 +104,7 @@ zpl_uint32 voip_get_address(zpl_uint32 ifindex)
 		if(nsm_interface_address_get_api(ifp, &address) == OK)
 		{
 			//zlog_debug(MODULE_VOIP, "============ %s :%s -> %s = %x", __func__, ifp->name, ifp->k_name, address.u.prefix4.s_addr);
-			if(address.family == AF_INET)
+			if(address.family == IPSTACK_AF_INET)
 				return ntohl(address.u.prefix4.s_addr);
 		}
 		//zlog_debug(MODULE_VOIP, "============ %s :%s -> %s = %x", __func__, ifp->name, ifp->k_name, address.u.prefix4.s_addr);

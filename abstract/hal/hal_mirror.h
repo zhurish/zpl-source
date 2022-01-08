@@ -25,7 +25,7 @@ enum hal_mirror_cmd
 
 typedef struct hal_mirror_param_s
 {
-	zpl_uint8 value;
+	zpl_uint32 value;
 	zpl_uint8 mode;
 	zpl_uint8 dir;
 	zpl_uint8 filter;

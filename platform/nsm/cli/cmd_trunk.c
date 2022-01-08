@@ -358,6 +358,8 @@ int build_trunk_interface_config(struct vty *vty, struct interface *ifp)
 
 */
 
+
+
 static int cmd_trunk_interface_init(int node)
 {
 	install_element(node, CMD_CONFIG_LEVEL, &channel_group_cmd);
@@ -383,10 +385,6 @@ static int cmd_trunk_base_init(int node)
 
 void cmd_trunk_init(void)
 {
-
-//	install_default(CONFIG_NODE);
-	//reinstall_node(LAG_INTERFACE_NODE, build_trunk_global_config);
-
 	cmd_trunk_base_init(LAG_INTERFACE_NODE);
 	cmd_trunk_base_init(LAG_INTERFACE_L3_NODE);
 

@@ -43,24 +43,24 @@ extern int setsockopt_ipv6_tclass (zpl_socket_t, zpl_uint32);
 #endif /* HAVE_IPV6 */
 
 /*
- * It is OK to reference in6_pktinfo here without a protecting #if
- * because this macro will only be used #if HAVE_IPV6, and in6_pktinfo
+ * It is OK to reference ipstack_in6_pktinfo here without a protecting #if
+ * because this macro will only be used #if HAVE_IPV6, and ipstack_in6_pktinfo
  * is not optional for HAVE_IPV6.
  */
-#define SOPT_SIZE_CMSG_PKTINFO_IPV6() (sizeof (struct in6_pktinfo));
+#define SOPT_SIZE_CMSG_PKTINFO_IPV6() (sizeof (struct ipstack_in6_pktinfo));
 
 /*
  * Size defines for control messages used to get ifindex.  We define
  * values for each method, and define a macro that can be used by code
  * that is unaware of which method is in use.
- * These values are without any alignment needed (see CMSG_SPACE in RFC3542).
+ * These values are without any alignment needed (see IPSTACK_CMSG_SPACE in RFC3542).
  */
 #if defined (IP_PKTINFO)
-/* Linux in_pktinfo. */
-#define SOPT_SIZE_CMSG_PKTINFO_IPV4()  (CMSG_SPACE(sizeof (struct in_pktinfo)))
+/* Linux ipstack_in_pktinfo. */
+#define SOPT_SIZE_CMSG_PKTINFO_IPV4()  (IPSTACK_CMSG_SPACE(sizeof (struct ipstack_in_pktinfo)))
 /* XXX This should perhaps be defined even if IP_PKTINFO is not. */
 #define SOPT_SIZE_CMSG_PKTINFO(af) \
-  ((af == AF_INET) ? SOPT_SIZE_CMSG_PKTINFO_IPV4() \
+  ((af == IPSTACK_AF_INET) ? SOPT_SIZE_CMSG_PKTINFO_IPV4() \
                    : SOPT_SIZE_CMSG_PKTINFO_IPV6()
 #endif /* IP_PKTINFO */
 
@@ -70,7 +70,7 @@ extern int setsockopt_ipv6_tclass (zpl_socket_t, zpl_uint32);
 #if defined (SUNOS_5)
 #define SOPT_SIZE_CMSG_RECVIF_IPV4()  (sizeof (uint_t))
 #else
-#define SOPT_SIZE_CMSG_RECVIF_IPV4()	(sizeof (struct sockaddr_dl))
+#define SOPT_SIZE_CMSG_RECVIF_IPV4()	(sizeof (struct ipstack_sockaddr_dl))
 #endif /* SUNOS_5 */
 #endif /* IP_RECVIF */
 
@@ -84,7 +84,7 @@ extern int setsockopt_ipv6_tclass (zpl_socket_t, zpl_uint32);
 #endif /* SOPT_SIZE_CMSG_IFINDEX_IPV4 */
 
 #define SOPT_SIZE_CMSG_IFINDEX(af) \
-  (((af) == AF_INET) : SOPT_SIZE_CMSG_IFINDEX_IPV4() \
+  (((af) == IPSTACK_AF_INET) : SOPT_SIZE_CMSG_IFINDEX_IPV4() \
                     ? SOPT_SIZE_CMSG_PKTINFO_IPV6())
 
 extern int setsockopt_ipv4_multicast_if(zpl_socket_t sock, ifindex_t ifindex);
@@ -95,7 +95,7 @@ extern int setsockopt_ipv4_tos(zpl_socket_t sock, zpl_uint32 tos);
 
 /* Ask for, and get, ifindex, by whatever method is supported. */
 extern int setsockopt_ifindex (zpl_family_t family, zpl_socket_t, ifindex_t);
-extern ifindex_t getsockopt_ifindex (zpl_family_t family, struct msghdr *);
+extern ifindex_t getsockopt_ifindex (zpl_family_t family, struct ipstack_msghdr *);
 
 /* swab the fields in iph between the host order and system order expected 
  * for IP_HDRINCL.

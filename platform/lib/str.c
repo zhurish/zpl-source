@@ -201,7 +201,7 @@ int all_isdigit (const char *str)
   return 1;
 
 }
-
+/*去除头尾空格*/
 const char *str_trim(zpl_char* src)
 {
 	zpl_char *start = NULL, *end = NULL, *temp = NULL;			//定义去除空格后字符串的头尾指针和遍历指针
@@ -284,7 +284,7 @@ zpl_uint8 atoascii(int a)
 }
 
 
-
+/*获取某个字符数量*/
 int strchr_count(zpl_char *src, const char em)
 {
 	zpl_char *p = src;
@@ -299,7 +299,7 @@ int strchr_count(zpl_char *src, const char em)
 	}
 	return j;
 }
-
+/*获取字符的数量，返回最后一个的位置*/
 int strchr_step(zpl_char *src, const char em, int step)
 {
 	zpl_char *p = src;
@@ -316,8 +316,8 @@ int strchr_step(zpl_char *src, const char em, int step)
 	}
 	return (i < count)? i:0;
 }
-
-int strchr_next(zpl_char *src, const char em)
+/*获取字符的偏移位置*/
+int strchr_offset(zpl_char *src, const char em)
 {
 	zpl_char *p = src;
 	assert(src);
@@ -333,7 +333,30 @@ int strchr_next(zpl_char *src, const char em)
 	}
 	return j ? i:0;
 }
-
+/*获取连续两个字符的间隔*/
+int strchr_step_num(zpl_char *src, const char em)
+{
+	zpl_char *p = src;
+	assert(src);
+	zpl_uint32 i = 0, j = 0, n = 0, count = os_strlen(src);
+	for(i = 0; i < count; i++)
+	{
+		if(p[i] == em)
+		{
+			if(j)
+			{
+				return i-n;
+			}
+			else
+			{
+				n = i;
+				j = 1;
+			}
+		}
+	}
+	return 0;
+}
+/*获取在dest中src子串的最后位置*/
 zpl_char *os_strstr_last(const char *dest,const char *src)
 {
 	const char *ret=NULL;
@@ -549,7 +572,7 @@ convert_num(zpl_uchar *buf, zpl_char *str, int base, int size)
 
 
 
-#include "errno.h"
+
 #define INVALID 	1
 #define TOOSMALL 	2
 #define TOOLARGE 	3
@@ -573,27 +596,27 @@ strtonum(const char *numstr, long long minval, long long maxval,
 		int err;
 	} ev[4] = {
 		{ NULL,		0 },
-		{ "invalid",	EINVAL },
+		{ "invalid",	IPSTACK_ERRNO_EINVAL },
 		{ "too small",	ERANGE },
 		{ "too large",	ERANGE },
 	};
 
-	ev[0].err = errno;
-	errno = 0;
+	ev[0].err = ipstack_errno;
+	ipstack_errno = 0;
 	if (minval > maxval)
 		error = INVALID;
 	else {
 		ll = strtoll(numstr, &ep, 10);
 		if (numstr == ep || *ep != '\0')
 			error = INVALID;
-		else if ((ll == LLONG_MIN && errno == ERANGE) || ll < minval)
+		else if ((ll == LLONG_MIN && ipstack_errno == ERANGE) || ll < minval)
 			error = TOOSMALL;
-		else if ((ll == LLONG_MAX && errno == ERANGE) || ll > maxval)
+		else if ((ll == LLONG_MAX && ipstack_errno == ERANGE) || ll > maxval)
 			error = TOOLARGE;
 	}
 	if (errstrp != NULL)
 		*errstrp = ev[error].errstr;
-	errno = ev[error].err;
+	ipstack_errno = ev[error].err;
 	if (error)
 		ll = 0;
 

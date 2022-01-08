@@ -36,6 +36,13 @@ enum hal_port_cmd
 	HAL_PORT_IPADDR,
 };
 
+typedef struct hal_port_param_s
+{
+	zpl_bool enable;
+	zpl_uint32 value;
+	mac_t mac[NSM_MAC_MAX];
+}hal_port_param_t;
+
 
 extern int hal_port_up(ifindex_t ifindex);
 extern int hal_port_down(ifindex_t ifindex);
@@ -66,6 +73,7 @@ extern int hal_port_vrf_set(ifindex_t ifindex, zpl_uint32 value);
 extern int hal_port_mode_set(ifindex_t ifindex, zpl_uint32 value);
 
 extern int hal_port_metric_set(ifindex_t ifindex, zpl_uint32 value);
+
 
 #ifdef __cplusplus
 }

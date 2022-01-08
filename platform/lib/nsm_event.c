@@ -103,14 +103,14 @@ static int nsm_event_read(struct thread *arg)
 	{
 		if (nbytes < 0)
 		{
-			if (ERRNO_IO_RETRY(errno))
+			if (IPSTACK_ERRNO_RETRY(ipstack_errno))
 			{
                 _nsm_event.t_read = thread_add_read(_nsm_event.t_master, nsm_event_read, NULL, fd);
 				return 0;
 			}
 			zlog_warn(MODULE_NSM,
 					"%s: read error on event fd %d, closing: %s", __func__,
-					fd._fd, safe_strerror(errno));
+					fd._fd, ipstack_strerror(ipstack_errno));
             ipstack_close(_nsm_event.w_evfd); 
             ipstack_close(_nsm_event.r_evfd);        
             nsm_event_base_create();  

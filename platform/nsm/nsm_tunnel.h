@@ -65,7 +65,7 @@ struct ip_tunnel_parm {
 	__be16			o_flags;
 	__be32			i_key;
 	__be32			o_key;
-	struct iphdr		iph;
+	struct ipstack_iphdr		iph;
 };
 */
 extern nsm_tunnel_t * nsm_tunnel_get(struct interface *ifp);
@@ -88,7 +88,7 @@ extern int nsm_tunnel_mtu_get_api(struct interface *ifp, zpl_uint32 *mtu);
 extern int nsm_tunnel_tos_set_api(struct interface *ifp, zpl_uint32 tos);
 extern int nsm_tunnel_tos_get_api(struct interface *ifp, zpl_uint32 *tos);
 
-extern int nsm_tunnel_make_iphdr(nsm_tunnel_t *tunnel, struct iphdr *iph);
+extern int nsm_tunnel_make_iphdr(nsm_tunnel_t *tunnel, struct ipstack_iphdr *iph);
 
 extern void cmd_tunnel_init();
 

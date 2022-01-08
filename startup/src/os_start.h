@@ -18,26 +18,18 @@ extern "C" {
 
 extern struct zebra_privs_t os_privs;
 
-extern int os_base_init(void);
-extern int os_base_load(void);
+extern int os_base_env_init(void);
+extern int os_base_env_load(void);
+extern int os_base_signal_init(int daemon_mode);
 
-extern int os_start_init(char *progname, module_t pro, int daemon_mode, char *tty);
-extern int os_ip_stack_init(int localport);
-extern int os_start_early(module_t pro, char *logpipe);
-//extern int os_default_start(zlog_proto_t pro);
-extern int os_start_all_module();
-extern int os_exit_all_module();
-//extern int os_start_module (zlog_proto_t pro, char *config_file, void *argv);
+extern int os_base_stack_init(const char *tty);
+extern int os_base_zlog_open(char *progname);
 
-extern int os_start_pid(int pro, char *pid_file, int *pid);
+extern int os_base_shell_start(char *shell_path, char *shell_addr, int shell_port, const char *);
+extern int os_base_start_pid(int pro, char *pid_file, int *pid);
 
-
-
-extern int os_shell_start(char *shell_path, char *shell_addr, int shell_port, const char *);
-
-extern int os_start_running(void *master, module_t pro);
-
-extern int eloop_start_running(void *master, module_t pro);
+extern int os_base_module_start_all(void);
+extern int os_base_module_exit_all(void);
 
  
 #ifdef __cplusplus

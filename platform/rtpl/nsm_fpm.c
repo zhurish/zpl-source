@@ -39,7 +39,7 @@
 #include "os_time.h"
 #endif
 /*
- * Interval at which we attempt to connect to the FPM.
+ * Interval at which we attempt to ipstack_connect to the FPM.
  */
 #define ZFPM_CONNECT_RETRY_IVL   5
 
@@ -51,7 +51,7 @@
 #define ZFPM_IBUF_SIZE (FPM_MAX_MSG_LEN)
 
 /*
- * The maximum number of times the FPM socket write callback can call
+ * The maximum number of times the FPM ipstack_socket write callback can call
  * 'write' before it yields.
  */
 #define ZFPM_MAX_WRITES_PER_RUN 10
@@ -115,21 +115,21 @@ typedef struct zfpm_stats_t_ {
 typedef enum {
 
   /*
-   * In this state we are not yet ready to connect to the FPM. This
+   * In this state we are not yet ready to ipstack_connect to the FPM. This
    * can happen when this module is disabled, or if we're cleaning up
    * after a connection has gone down.
    */
   ZFPM_STATE_IDLE,
 
   /*
-   * Ready to talk to the FPM and periodically trying to connect to
+   * Ready to talk to the FPM and periodically trying to ipstack_connect to
    * it.
    */
   ZFPM_STATE_ACTIVE,
 
   /*
    * In the middle of bringing up a TCP connection. Specifically,
-   * waiting for a connect() call to complete asynchronously.
+   * waiting for a ipstack_connect() call to complete asynchronously.
    */
   ZFPM_STATE_CONNECTING,
 
@@ -181,7 +181,7 @@ typedef struct zfpm_glob_t_
   TAILQ_HEAD (zfpm_dest_q, rib_dest_t_) dest_q;
 
   /*
-   * Stream socket to the FPM.
+   * Stream ipstack_socket to the FPM.
    */
   zpl_socket_t sock;
 
@@ -347,7 +347,7 @@ zfpm_is_table_for_fpm (struct route_table *table)
   info = rib_table_info (table);
 
   /*
-   * We only send the unicast tables in the main instance to the FPM
+   * We only ipstack_send the unicast tables in the main instance to the FPM
    * at this point.
    */
   if (info->zvrf->vrf_id != 0)
@@ -620,7 +620,7 @@ zfpm_connection_up (const char *detail)
 /*
  * zfpm_connect_check
  *
- * Check if an asynchronous connect() to the FPM is complete.
+ * Check if an asynchronous ipstack_connect() to the FPM is complete.
  */
 static void
 zfpm_connect_check ()
@@ -633,22 +633,22 @@ zfpm_connect_check ()
   zfpm_write_off ();
 
   slen = sizeof (status);
-  ret = ipstack_getsockopt (zfpm_g->sock, SOL_SOCKET, SO_ERROR, (void *) &status,
+  ret = ipstack_getsockopt (zfpm_g->sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_ERROR, (void *) &status,
 		    &slen);
 
   if (ret >= 0 && status == 0)
     {
-      zfpm_connection_up ("async connect complete");
+      zfpm_connection_up ("async ipstack_connect complete");
       return;
     }
 
   /*
-   * getsockopt() failed or indicated an error on the socket.
+   * ipstack_getsockopt() failed or indicated an error on the ipstack_socket.
    */
   ipstack_close (zfpm_g->sock);
   //zfpm_g->sock = -1;
 
-  zfpm_start_connect_timer ("getsockopt() after async connect failed");
+  zfpm_start_connect_timer ("ipstack_getsockopt() after async ipstack_connect failed");
   return;
 }
 
@@ -773,7 +773,7 @@ zfpm_read_cb (struct thread *thread)
   zfpm_g->t_read = NULL;
 
   /*
-   * Check if async connect is now done.
+   * Check if async ipstack_connect is now done.
    */
   if (zfpm_g->state == ZFPM_STATE_CONNECTING)
     {
@@ -794,7 +794,7 @@ zfpm_read_cb (struct thread *thread)
       nbyte = stream_read_try (ibuf, zfpm_g->sock, FPM_MSG_HDR_LEN - already);
       if (nbyte == 0 || nbyte == -1)
 	{
-	  zfpm_connection_down ("closed socket in read");
+	  zfpm_connection_down ("closed ipstack_socket in read");
 	  return 0;
 	}
 
@@ -858,7 +858,7 @@ zfpm_writes_pending (void)
 
   /*
    * Check if there is any data in the outbound buffer that has not
-   * been written to the socket yet.
+   * been written to the ipstack_socket yet.
    */
   if (stream_get_endp (zfpm_g->obuf) - stream_get_getp (zfpm_g->obuf))
     return 1;
@@ -903,7 +903,7 @@ zfpm_encode_route (rib_dest_t *dest, struct rib *rib, zpl_char *in_buf,
   case ZFPM_MSG_FORMAT_NETLINK:
 #ifdef HAVE_NETLINK
     *msg_type = FPM_MSG_TYPE_NETLINK;
-    cmd = rib ? RTM_NEWROUTE : RTM_DELROUTE;
+    cmd = rib ? IPSTACK_RTM_NEWROUTE : IPSTACK_RTM_DELROUTE;
     //len = zfpm_netlink_encode_route (cmd, dest, rib, in_buf, in_buf_len);
     assert(fpm_msg_align(len) == len);
     *msg_type = FPM_MSG_TYPE_NETLINK;
@@ -1060,7 +1060,7 @@ zfpm_write_cb (struct thread *thread)
   zfpm_g->t_write = NULL;
 
   /*
-   * Check if async connect is now done.
+   * Check if async ipstack_connect is now done.
    */
   if (zfpm_g->state == ZFPM_STATE_CONNECTING)
     {
@@ -1097,10 +1097,10 @@ zfpm_write_cb (struct thread *thread)
 
       if (bytes_written < 0)
 	{
-	  if (ERRNO_IO_RETRY (errno))
+	  if (IPSTACK_ERRNO_RETRY (ipstack_errno))
 	    break;
 
-	  zfpm_connection_down ("failed to write to socket");
+	  zfpm_connection_down ("failed to write to ipstack_socket");
 	  return 0;
 	}
 
@@ -1153,25 +1153,25 @@ zfpm_connect_cb (struct thread *t)
   zfpm_g->t_connect = NULL;
   assert (zfpm_g->state == ZFPM_STATE_ACTIVE);
 
-  sock = ipstack_socket (OS_STACK, AF_INET, SOCK_STREAM, 0);
+  sock = ipstack_socket (OS_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
   if (ipstack_invalid(sock))
     {
-      zfpm_debug ("Failed to create socket for connect(): %s", strerror(errno));
+      zfpm_debug ("Failed to create ipstack_socket for ipstack_connect(): %s", strerror(ipstack_errno));
       zfpm_g->stats.connect_no_sock++;
       return 0;
     }
 
   ipstack_set_nonblocking(sock);
 
-  /* Make server socket. */
+  /* Make server ipstack_socket. */
   memset (&serv, 0, sizeof (serv));
-  serv.sin_family = AF_INET;
+  serv.sin_family = IPSTACK_AF_INET;
   serv.sin_port = htons (zfpm_g->fpm_port);
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
-  serv.sin_len = sizeof (struct sockaddr_in);
+  serv.sin_len = sizeof (struct ipstack_sockaddr_in);
 #endif /* HAVE_STRUCT_SOCKADDR_IN_SIN_LEN */
   if (!zfpm_g->fpm_server)
-    serv.sin_addr.s_addr = htonl (INADDR_LOOPBACK);
+    serv.sin_addr.s_addr = htonl (IPSTACK_INADDR_LOOPBACK);
   else 
     serv.sin_addr.s_addr = (zfpm_g->fpm_server);
 
@@ -1186,26 +1186,26 @@ zfpm_connect_cb (struct thread *t)
   if (ret >= 0)
     {
       zfpm_g->sock = sock;
-      zfpm_connection_up ("connect succeeded");
+      zfpm_connection_up ("ipstack_connect succeeded");
       return 1;
     }
 
-  if (errno == EINPROGRESS)
+  if (ipstack_errno == IPSTACK_ERRNO_EINPROGRESS)
     {
       zfpm_g->sock = sock;
       zfpm_read_on ();
       zfpm_write_on ();
-      zfpm_set_state (ZFPM_STATE_CONNECTING, "async connect in progress");
+      zfpm_set_state (ZFPM_STATE_CONNECTING, "async ipstack_connect in progress");
       return 0;
     }
 
-  zlog_info (MODULE_NSM, "can't connect to FPM %d: %s", sock, safe_strerror (errno));
+  zlog_info (MODULE_NSM, "can't ipstack_connect to FPM %d: %s", sock, ipstack_strerror (ipstack_errno));
   ipstack_close (sock);
 
   /*
    * Restart timer for retrying connection.
    */
-  zfpm_start_connect_timer ("connect() failed");
+  zfpm_start_connect_timer ("ipstack_connect() failed");
   return 0;
 }
 
@@ -1272,7 +1272,7 @@ zfpm_calc_connect_delay (void)
   zpl_time_t elapsed;
 
   /*
-   * Return 0 if this is our first attempt to connect.
+   * Return 0 if this is our first attempt to ipstack_connect.
    */
   if (zfpm_g->connect_calls == 0)
     {
@@ -1304,7 +1304,7 @@ zfpm_start_connect_timer (const char *reason)
 	 zfpm_g->state == ZFPM_STATE_CONNECTING);
 
   delay_secs = zfpm_calc_connect_delay();
-  zfpm_debug ("scheduling connect in %ld seconds", delay_secs);
+  zfpm_debug ("scheduling ipstack_connect in %ld seconds", delay_secs);
 
   THREAD_TIMER_ON (zfpm_g->master, zfpm_g->t_connect, zfpm_connect_cb, 0,
 		   delay_secs);
@@ -1342,7 +1342,7 @@ zfpm_conn_is_up (void)
  * zfpm_trigger_update
  *
  * The zebra code invokes this function to indicate that we should
- * send an update to the FPM about the given route_node.
+ * ipstack_send an update to the FPM about the given route_node.
  */
 void
 zfpm_trigger_update (struct route_node *rn, const char *reason)
@@ -1363,7 +1363,7 @@ zfpm_trigger_update (struct route_node *rn, const char *reason)
 
   /*
    * Ignore the trigger if the dest is not in a table that we would
-   * send to the FPM.
+   * ipstack_send to the FPM.
    */
   if (!zfpm_is_table_for_fpm (rib_dest_table (dest)))
     {
@@ -1581,7 +1581,7 @@ DEFUN ( fpm_remote_ip,
    zpl_uint32  port_no;
 
    fpm_server = ipstack_inet_addr (argv[0]);
-   if (fpm_server == INADDR_NONE)
+   if (fpm_server == IPSTACK_INADDR_NONE)
      return CMD_ERR_INCOMPLETE;
 
    port_no = atoi (argv[1]);

@@ -165,12 +165,10 @@ int onvif_soapsrv_dis_cancel(struct onvif_soapsrv *srv)
 static int onvif_soapsrv_main(void *argv)
 {
   struct onvif_soapsrv *srv = argv;    
-	struct thread thread;
 	struct thread_master *master = (struct thread_master *)srv->master;
 	master_thread[MODULE_ONVIF] = master;
-	host_config_load_waitting();
-	while (thread_fetch((struct thread_master *) master, &thread))
-		thread_call(&thread);
+	host_waitting_loadconfig;
+	thread_mainloop(master);
 	return OK;
 }
 /*
@@ -226,8 +224,8 @@ int onvif_soapsrv_init(struct onvif_soapsrv *srv)
   {
     struct ip_mreq mreq;
     mreq.imr_multiaddr.s_addr = ipstack_inet_addr(srv->dis_multicast);
-    mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-    if (setsockopt(srv->dis_soap.master, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0)
+    mreq.imr_interface.s_addr = htonl(IPSTACK_INADDR_ANY);
+    if (setsockopt(srv->dis_soap.master, IPSTACK_IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0)
     {
       zlog_err(MODULE_ONVIF, "join multicast membership error(%s)", strerror(errno));
       return ERROR;
@@ -239,7 +237,7 @@ int onvif_soapsrv_init(struct onvif_soapsrv *srv)
   srv->onvif_client[0].bindport = 5000;
 	srv->onvif_client[0].flag = 1;
   strcpy(srv->onvif_client[0].bindaddress, "192.168.182.129");
-  srv->onvif_client[0].soap.bind_flags = SO_REUSEADDR;
+  srv->onvif_client[0].soap.bind_flags = IPSTACK_SO_REUSEADDR;
   if (!soap_valid_socket(soap_bind(&srv->onvif_client[0].soap, strlen(srv->onvif_client[0].bindaddress) ? srv->onvif_client[0].bindaddress : NULL, srv->onvif_client[0].bindport, 10)))
   {
     memset(logtmp, 0, sizeof(logtmp));

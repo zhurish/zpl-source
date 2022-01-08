@@ -208,24 +208,24 @@ extern int stream_read (struct stream *, zpl_socket_t, zpl_size_t);
      >0: number of bytes read
      0: end-of-file
      -1: fatal error
-     -2: transient error, should retry later (i.e. EAGAIN or EINTR)
+     -2: transient error, should retry later (i.e. IPSTACK_ERRNO_EAGAIN or IPSTACK_ERRNO_EINTR)
    This is suitable for use with non-blocking file descriptors.
  */
 extern ssize_t stream_read_try(struct stream *s, zpl_socket_t fd, zpl_size_t size);
 
-extern ssize_t stream_recvmsg (struct stream *s, zpl_socket_t fd, struct msghdr *,
+extern ssize_t stream_recvmsg (struct stream *s, zpl_socket_t fd, struct ipstack_msghdr *,
                                zpl_uint32 flags, zpl_size_t size);
 extern ssize_t stream_recvfrom (struct stream *s, zpl_socket_t fd, zpl_size_t len, 
-                                zpl_uint32 flags, struct sockaddr *from, 
+                                zpl_uint32 flags, struct ipstack_sockaddr *from, 
                                 socklen_t *fromlen);
 
 extern int stream_writefd (struct stream *, zpl_socket_t, zpl_size_t);
 extern ssize_t stream_write_try(struct stream *s, zpl_socket_t fd, zpl_size_t size);
 
-extern ssize_t stream_sendmsg (struct stream *s, zpl_socket_t fd, struct msghdr *,
+extern ssize_t stream_sendmsg (struct stream *s, zpl_socket_t fd, struct ipstack_msghdr *,
                                zpl_uint32 flags, zpl_size_t size);
 extern ssize_t stream_sendto (struct stream *s, zpl_socket_t fd, zpl_size_t len, 
-                                zpl_uint32 flags, struct sockaddr *to, 
+                                zpl_uint32 flags, struct ipstack_sockaddr *to, 
                                 socklen_t *tolen);
 
 extern zpl_size_t stream_write (struct stream *, const void *, zpl_size_t);

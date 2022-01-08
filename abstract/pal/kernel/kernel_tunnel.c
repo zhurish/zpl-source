@@ -11,6 +11,7 @@
 #include "nsm_include.h"
 #define _LINUX_IP_H
 #include "kernel_ioctl.h"
+#include "kernel_driver.h"
 #include "linux/if_tunnel.h"
 #include "linux/sockios.h"
 
@@ -19,33 +20,33 @@
 
 static int _if_tunnel_create(const char *dev, struct ip_tunnel_parm *p)
 {
-	struct ifreq ifr;
+	struct ipstack_ifreq ifr;
 	os_memset(&ifr, 0, sizeof(ifr));
 	strcpy (ifr.ifr_name, dev);
 	ifr.ifr_ifru.ifru_data = (void*)p;
-	if (if_ioctl (SIOCADDTUNNEL, (caddr_t) &ifr) < 0)
+	if (_ipkernel_if_ioctl (IPSTACK_SIOCADDTUNNEL, (caddr_t) &ifr) < 0)
 	    return -1;
 	return 0;
 }
 
 static int _if_tunnel_delete(const char *dev, struct ip_tunnel_parm *p)
 {
-	struct ifreq ifr;
+	struct ipstack_ifreq ifr;
 	os_memset(&ifr, 0, sizeof(ifr));
 	strcpy (ifr.ifr_name, dev);
 	ifr.ifr_ifru.ifru_data = (void*)p;
-	if (if_ioctl (SIOCDELTUNNEL, (caddr_t) &ifr) < 0)
+	if (_ipkernel_if_ioctl (IPSTACK_SIOCDELTUNNEL, (caddr_t) &ifr) < 0)
 	    return -1;
 	return 0;
 }
 
 static int _if_tunnel_change(const char *dev, struct ip_tunnel_parm *p)
 {
-	struct ifreq ifr;
+	struct ipstack_ifreq ifr;
 	os_memset(&ifr, 0, sizeof(ifr));
 	strcpy (ifr.ifr_name, dev);
 	ifr.ifr_ifru.ifru_data = (void*)p;
-	if (if_ioctl (SIOCCHGTUNNEL, (caddr_t) &ifr) < 0)
+	if (_ipkernel_if_ioctl (IPSTACK_SIOCCHGTUNNEL, (caddr_t) &ifr) < 0)
 	    return -1;
 	return 0;
 }
@@ -83,11 +84,11 @@ int _ipkernel_tunnel_create(nsm_tunnel_t *tunnel)
 	p.o_key;*/
 	//p.i_flags |= GRE_KEY;
 	//p.o_flags |= GRE_KEY;
-	if(p.iph.protocol == IPPROTO_IPIP)
+	if(p.iph.protocol == IPSTACK_IPPROTO_IPIP)
 		return _if_tunnel_create("tunl0", &p);
-	else if(p.iph.protocol == IPPROTO_GRE)
+	else if(p.iph.protocol == IPSTACK_IPPROTO_GRE)
 		return _if_tunnel_create("gre0", &p);
-	else if(p.iph.protocol == IPPROTO_IPV6)
+	else if(p.iph.protocol == IPSTACK_IPPROTO_IPV6)
 		return _if_tunnel_create("sit0", &p);
 	return ERROR;
 }
@@ -100,11 +101,11 @@ int _ipkernel_tunnel_delete(nsm_tunnel_t *tunnel)
 	nsm_tunnel_make_iphdr(tunnel, &p.iph);
 
 	p.link = tunnel->ifp->k_ifindex;
-	if(p.iph.protocol == IPPROTO_IPIP)
+	if(p.iph.protocol == IPSTACK_IPPROTO_IPIP)
 		return _if_tunnel_delete("tunl0", &p);
-	else if(p.iph.protocol == IPPROTO_GRE)
+	else if(p.iph.protocol == IPSTACK_IPPROTO_GRE)
 		return _if_tunnel_delete("gre0", &p);
-	else if(p.iph.protocol == IPPROTO_IPV6)
+	else if(p.iph.protocol == IPSTACK_IPPROTO_IPV6)
 		return _if_tunnel_delete("sit0", &p);
 	return ERROR;
 }
@@ -123,18 +124,18 @@ int _ipkernel_tunnel_change(nsm_tunnel_t *tunnel)
 	p.i_key;
 	p.o_key;
 	if (memcmp(p->name, "vti", 3) == 0)
-	p->iph.protocol = IPPROTO_IPIP;
+	p->iph.protocol = IPSTACK_IPPROTO_IPIP;
 	p->i_flags |= VTI_ISVTI;
 	if (isatap)
 		p->i_flags |= SIT_ISATAP;
 	*/
 	//p.i_flags |= GRE_KEY;
 	//p.o_flags |= GRE_KEY;
-	if(p.iph.protocol == IPPROTO_IPIP)
+	if(p.iph.protocol == IPSTACK_IPPROTO_IPIP)
 		return _if_tunnel_change("tunl0", &p);
-	else if(p.iph.protocol == IPPROTO_GRE)
+	else if(p.iph.protocol == IPSTACK_IPPROTO_GRE)
 		return _if_tunnel_change("gre0", &p);
-	else if(p.iph.protocol == IPPROTO_IPV6)
+	else if(p.iph.protocol == IPSTACK_IPPROTO_IPV6)
 		return _if_tunnel_change("sit0", &p);
 	return ERROR;
 }

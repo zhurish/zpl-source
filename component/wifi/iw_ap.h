@@ -59,7 +59,7 @@ typedef struct iw_ap_connect_s
 	zpl_uint8				period;
 	zpl_uint8				beacon;
 	zpl_uint32				connected_time;
-	zpl_uint8				TTL;
+	zpl_uint8				IPSTACK_TTL;
 }iw_ap_connect_t;
 
 typedef struct iw_ap_mac_s

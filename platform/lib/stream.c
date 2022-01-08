@@ -833,9 +833,9 @@ stream_read_try(struct stream *s, zpl_socket_t fd, zpl_size_t size)
       return nbytes;
     }
   /* Error: was it transient (return -2) or fatal (return -1)? */
-  if (ERRNO_IO_RETRY(errno))
+  if (IPSTACK_ERRNO_RETRY(ipstack_errno))
     return -2;
-  zlog_warn(MODULE_DEFAULT, "%s: read failed on fd %d: %s", __func__, fd, safe_strerror(errno));
+  zlog_warn(MODULE_DEFAULT, "%s: read failed on fd %d: %s", __func__, fd, ipstack_strerror(ipstack_errno));
   return -1;
 }
 
@@ -844,7 +844,7 @@ stream_read_try(struct stream *s, zpl_socket_t fd, zpl_size_t size)
  */
 ssize_t 
 stream_recvfrom (struct stream *s, zpl_socket_t fd, zpl_size_t size, zpl_uint32 flags,
-                 struct sockaddr *from, socklen_t *fromlen)
+                 struct ipstack_sockaddr *from, socklen_t *fromlen)
 {
   ssize_t nbytes;
 
@@ -865,23 +865,23 @@ stream_recvfrom (struct stream *s, zpl_socket_t fd, zpl_size_t size, zpl_uint32 
       return nbytes;
     }
   /* Error: was it transient (return -2) or fatal (return -1)? */
-  if (ERRNO_IO_RETRY(errno))
+  if (IPSTACK_ERRNO_RETRY(ipstack_errno))
     return -2;
-  zlog_warn(MODULE_DEFAULT, "%s: read failed on fd %d: %s", __func__, fd, safe_strerror(errno));
+  zlog_warn(MODULE_DEFAULT, "%s: read failed on fd %d: %s", __func__, fd, ipstack_strerror(ipstack_errno));
   return -1;
 }
 
 /* Read up to smaller of size or SIZE_REMAIN() bytes to the stream, starting
  * from endp.
- * First iovec will be used to receive the data.
+ * First ipstack_iovec will be used to receive the data.
  * Stream need not be empty.
  */
 ssize_t
-stream_recvmsg (struct stream *s, zpl_socket_t fd, struct msghdr *msgh, zpl_uint32 flags, 
+stream_recvmsg (struct stream *s, zpl_socket_t fd, struct ipstack_msghdr *msgh, zpl_uint32 flags, 
                 zpl_size_t size)
 {
   zpl_uint32 nbytes;
-  struct iovec *iov;
+  struct ipstack_iovec *iov;
   
   STREAM_VERIFY_SANE(s);
   assert (msgh->msg_iovlen > 0);  
@@ -926,7 +926,7 @@ stream_write_try(struct stream *s, zpl_socket_t fd, zpl_size_t size)
  */
 ssize_t 
 stream_sendto (struct stream *s, zpl_socket_t fd, zpl_size_t size, zpl_uint32 flags,
-                 struct sockaddr *to, socklen_t *tolen)
+                 struct ipstack_sockaddr *to, socklen_t *tolen)
 {
   ssize_t nbytes;
 
@@ -937,15 +937,15 @@ stream_sendto (struct stream *s, zpl_socket_t fd, zpl_size_t size, zpl_uint32 fl
 
 /* Read up to smaller of size or SIZE_REMAIN() bytes to the stream, starting
  * from endp.
- * First iovec will be used to receive the data.
+ * First ipstack_iovec will be used to receive the data.
  * Stream need not be empty.
  */
 ssize_t
-stream_sendmsg (struct stream *s, zpl_socket_t fd, struct msghdr *msgh, zpl_uint32 flags, 
+stream_sendmsg (struct stream *s, zpl_socket_t fd, struct ipstack_msghdr *msgh, zpl_uint32 flags, 
                 zpl_size_t size)
 {
   zpl_uint32 nbytes;
-  struct iovec *iov;
+  struct ipstack_iovec *iov;
   
   iov = &(msgh->msg_iov[0]);
   iov->iov_base = (s->data + s->getp);

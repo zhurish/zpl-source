@@ -39,7 +39,7 @@ struct if_name_mgt if_name_mgt[] =
 };
 
 
-static int vty_iusp_explain (const char *string, zpl_uint32 *unit, zpl_uint32 *slot, zpl_uint32 *port, zpl_uint32 *id);
+static int vty_iusp_explain (const char *string, zpl_uint32 *unit, zpl_uint32 *slot, zpl_uint32 *port, zpl_uint32 *id, zpl_uint32 *rend);
 
 
 const char *getkernelname(if_type_t	type)
@@ -201,24 +201,26 @@ const char * if_ifname_split(const char *name)
 ifindex_t if_ifindex_make(const char *ifname, const char *uspv)
 {
 	ifindex_t ifindex = 0;
-	zpl_uint32 unit = 0, slot = 0, port = 0, id = 0, iuspv = 0;
+	zpl_uint32 unit = 0, slot = 0, port = 0, id = 0, iuspv = 0, rend = 0;
 	if_type_t type = 0;
 	zpl_char *uspvstring = ifname;
 
 	type = if_iftype_make(ifname);
 	if(uspv)
 	{
-/*		uspvstring = os_strstr(ifname, " ");
-		if(uspvstring)
-			uspvstring++;
-		else*/
-			uspvstring = uspv;
+		uspvstring = uspv;
 	}
 	else
 	{
-		//uspvstring = os_strstr(ifname, " ");
-		//if(uspvstring)
-		//	uspvstring++;
+		char *strb = uspvstring;
+		for (; *strb != '\0'; strb++)
+		{
+			if (isdigit ((int) *strb))
+			{
+				break;
+			}
+		}
+		uspvstring = strb;
 	}
 //printf("========================%s========================type=%d-->%s\r\n", __func__, type, uspvstring);
 	if( type == IF_SERIAL
@@ -233,7 +235,7 @@ ifindex_t if_ifindex_make(const char *ifname, const char *uspv)
 #endif
 			)
 	{
-		if(	vty_iusp_explain (uspvstring, &unit, &slot, &port, &id))
+		if(uspvstring && vty_iusp_explain (uspvstring, &unit, &slot, &port, &id, &rend))
 		{
 			iuspv = IF_TYPE_SET(type) | IF_USPV_SET(unit, slot, port, id);
 			ifindex = IF_IFINDEX_SET(type, iuspv);
@@ -242,7 +244,7 @@ ifindex_t if_ifindex_make(const char *ifname, const char *uspv)
 	}
 	else if(type == IF_VLAN || type == IF_LAG || type == IF_LOOPBACK)
 	{
-		if(all_digit(uspvstring))
+		if(uspvstring && all_digit(uspvstring))
 		{
 			id = os_atoi(uspvstring);
 			iuspv = IF_TYPE_SET(type) | IF_USPV_SET(unit, slot, port, id);
@@ -343,7 +345,7 @@ int if_uspv_type_setting(struct interface *ifp)
 {
 	//int iuspv = 0;
 	zpl_char *str = NULL;
-	zpl_uint32 unit = 0, slot = 0, port = 0, id = 0;
+	zpl_uint32 unit = 0, slot = 0, port = 0, id = 0, rend = 0;
 	if(ifp == NULL || ifp->name == NULL)
 	{
 		zlog_err(MODULE_DEFAULT,"ifp is NULL when setting unit/solt/port code");
@@ -364,7 +366,7 @@ int if_uspv_type_setting(struct interface *ifp)
 			)
 	{
 		str++;
-		if(vty_iusp_explain (str, &unit, &slot, &port, &id))
+		if(vty_iusp_explain (str, &unit, &slot, &port, &id, &rend))
 		{
 			ifp->uspv = IF_TYPE_SET(ifp->if_type) | IF_USPV_SET(unit, slot, port, id);
 			return OK;
@@ -382,15 +384,16 @@ int if_uspv_type_setting(struct interface *ifp)
 
 
 #if 1
-static int vty_iusp_explain (const char *string, zpl_uint32 *unit, zpl_uint32 *slot, zpl_uint32 *port, zpl_uint32 *id)
+static int vty_iusp_explain (const char *string, zpl_uint32 *unit, zpl_uint32 *slot, 
+	zpl_uint32 *port, zpl_uint32 *id, zpl_uint32 *rend)
 {
 	zpl_char *str = NULL;
 	zpl_uint32 ounit = 0, oslot = 0, oport = 0,  oid= 0;
 	zpl_uint32  count = 0;
 #ifdef CMD_IUSPV_SUPPORT
-	zpl_char *base2 = "0123456789/.";
+	zpl_char *base2 = "0123456789/.-";
 #else
-	zpl_char *base2 = "0123456789/";
+	zpl_char *base2 = "0123456789/-";
 #endif
 	if (string == NULL)
 	{
@@ -418,22 +421,31 @@ static int vty_iusp_explain (const char *string, zpl_uint32 *unit, zpl_uint32 *s
 	}
 	if(strchr_count(str, '/') == 2)
 	{
-		if(strstr(str, "."))
+		if(strstr(str, ".") && strchr_count(str, '-'))
 		{
 			//sscanf(str, "%d[^/]/%d[^/]/%d[^.].%d", &ounit, &oslot, &oport, &oid);
-			sscanf(str, "%d/%d/%d.%d", &ounit, &oslot, &oport, &oid);
+			sscanf(str, "%d/%d/%d.%d-%d", &ounit, &oslot, &oport, &oid, rend);
 		}
-		else
+		else if(strstr(str, ".") && !strchr_count(str, '-'))
+			sscanf(str, "%d/%d/%d.%d", &ounit, &oslot, &oport, &oid);
+		else if(!strstr(str, ".") && strchr_count(str, '-'))
+			sscanf(str, "%d/%d/%d-%d", &ounit, &oslot, &oport, rend);
+		else if(!strstr(str, ".") && !strchr_count(str, '-'))
 			sscanf(str, "%d/%d/%d", &ounit, &oslot, &oport);
 			//sscanf(str, "%d[^/]/%d[^/]/%d", &ounit, &oslot, &oport);
 	}
 	else if(strchr_count(str, '/') == 1)
 	{
-		if(strstr(str, "."))
+		if(strstr(str, ".") && strchr_count(str, '-'))
 		{
-			sscanf(str, "%d/%d.%d", &oslot, &oport, &oid);
+			//sscanf(str, "%d[^/]/%d[^/]/%d[^.].%d", &ounit, &oslot, &oport, &oid);
+			sscanf(str, "%d/%d.%d-%d", &oslot, &oport, &oid, rend);
 		}
-		else
+		else if(strstr(str, ".") && !strchr_count(str, '-'))
+			sscanf(str, "%d/%d.%d", &oslot, &oport, &oid);
+		else if(!strstr(str, ".") && strchr_count(str, '-'))
+			sscanf(str, "%d/%d-%d", &oslot, &oport, rend);
+		else if(!strstr(str, ".") && !strchr_count(str, '-'))
 			sscanf(str, "%d/%d", &oslot, &oport);
 	}
 	if(unit)
@@ -456,7 +468,7 @@ static int vty_iusp_explain (const char *string, zpl_uint32 *unit, zpl_uint32 *s
 	return 1;
 }
 
-int vty_iusp_get (const char *str, zpl_uint32 *uspv)
+int vty_iusp_get (const char *str, zpl_uint32 *uspv, zpl_uint32 *end)
 {
 	zpl_uint32 unit = 0, slot = 0, port = 0, id = 0;
 	zpl_char *uspv_str = strstr(str, " ");
@@ -471,7 +483,7 @@ int vty_iusp_get (const char *str, zpl_uint32 *uspv)
 	{
 		if(uspv_str)
 		{
-			if(vty_iusp_explain (uspv_str, &unit, &slot, &port, &id))
+			if(vty_iusp_explain (uspv_str, &unit, &slot, &port, &id, end))
 			{
 				if(uspv)
 				{
@@ -482,7 +494,7 @@ int vty_iusp_get (const char *str, zpl_uint32 *uspv)
 		}
 		else
 		{
-			if(vty_iusp_explain (str, &unit, &slot, &port, &id))
+			if(vty_iusp_explain (str, &unit, &slot, &port, &id, end))
 			{
 				if(uspv)
 				{

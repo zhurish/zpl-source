@@ -36,6 +36,20 @@ config ZPL_KERNEL_STACK_MODULE
 	
 endchoice
 
+config ZPL_KERNEL_STACK_NETLINK
+	bool "Linux Kernel Netlink IO"
+	default y
+	depends on ZPL_KERNEL_STACK_MODULE
+	help
+	Build Linux Kernel Netlink IO to control
+
+config ZPL_KERNEL_SORF_FORWARDING
+	bool "Linux Kernel Soft forwarding"
+	default y
+	depends on ZPL_KERNEL_STACK_MODULE
+	help
+	Build Linux Kernel Soft forwarding
+
 config ZPL_IPCOM_ROOT_PATH
 	string
 	prompt "IPCOM IP/TCP Stack Root Path"

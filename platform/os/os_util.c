@@ -11,6 +11,8 @@
 
 #define PROC_BASE "/proc"
 
+
+
 int os_pipe_create(zpl_char *name, zpl_uint32 mode)
 {
 	int fd = 0;
@@ -28,7 +30,7 @@ int os_pipe_create(zpl_char *name, zpl_uint32 mode)
 	fd = open(path, mode | O_CREAT, 0644);
 	if (fd <= 0)
 	{
-		fprintf(stdout, "can not open file %s(%s)", path, strerror(errno));
+		fprintf(stdout, "can not open file %s(%s)", path, strerror(ipstack_errno));
 		return ERROR;
 	}
 	return fd;
@@ -50,8 +52,8 @@ int os_get_blocking(int fd)
 	 never be negative. */
 	if ((flags = fcntl(fd, F_GETFL)) < 0)
 	{
-		fprintf(stdout, "fcntl(F_GETFL) failed for fd %d get-blocking : %s", fd,
-				strerror(errno));
+		fprintf(stdout, "fcntl(F_GETFL) failed for fd %d get-blocking : %s\r\n", fd,
+				strerror(ipstack_errno));
 		return -1;
 	}
 	if (flags & O_NONBLOCK)
@@ -67,14 +69,14 @@ int os_set_nonblocking(int fd)
 	 never be negative. */
 	if ((flags = fcntl(fd, F_GETFL)) < 0)
 	{
-		fprintf(stdout, "fcntl(F_GETFL) failed for fd %d set-nonblocking: %s", fd,
-				strerror(errno));
+		fprintf(stdout, "fcntl(F_GETFL) failed for fd %d set-nonblocking: %s\r\n", fd,
+				strerror(ipstack_errno));
 		return -1;
 	}
 	if (fcntl(fd, F_SETFL, (flags | O_NONBLOCK)) < 0)
 	{
-		fprintf(stdout, "fcntl failed setting fd %d set-nonblocking: %s", fd,
-				strerror(errno));
+		fprintf(stdout, "fcntl failed setting fd %d set-nonblocking: %s\r\n", fd,
+				strerror(ipstack_errno));
 		return -1;
 	}
 	return 0;
@@ -87,15 +89,15 @@ int os_set_blocking(int fd)
 	 never be negative. */
 	if ((flags = fcntl(fd, F_GETFL)) < 0)
 	{
-		fprintf(stdout, "fcntl(F_GETFL) failed for fd %d set-blocking: %s", fd,
-				strerror(errno));
+		fprintf(stdout, "fcntl(F_GETFL) failed for fd %d set-blocking: %s\r\n", fd,
+				strerror(ipstack_errno));
 		return -1;
 	}
 	flags &= ~O_NONBLOCK;
 	if (fcntl(fd, F_SETFL, (flags)) < 0)
 	{
-		fprintf(stdout, "fcntl failed setting fd %d non-blocking: %s", fd,
-				strerror(errno));
+		fprintf(stdout, "fcntl failed setting fd %d non-blocking: %s\r\n", fd,
+				strerror(ipstack_errno));
 		return -1;
 	}
 	return 0;
@@ -267,7 +269,7 @@ zpl_pid_t os_pid_set (const zpl_char *path)
 	/* XXX Why do we continue instead of exiting?  This seems incompatible
 	 with the behavior of the fcntl version below. */
 	fprintf(stderr, "Can't fopen pid lock file %s (%s), continuing", path,
-			strerror(errno));
+			strerror(ipstack_errno));
 	umask(oldumask);
 	return -1;
 }
@@ -292,7 +294,7 @@ zpl_pid_t os_pid_get (const zpl_char *path)
 		/* XXX Why do we continue instead of exiting?  This seems incompatible
 		 with the behavior of the fcntl version below. */
 		fprintf(stderr, "Can't fopen pid lock file %s (%s), continuing", path,
-				strerror(errno));
+				strerror(ipstack_errno));
 		umask(oldumask);
 	}
 	return -1;
@@ -337,8 +339,8 @@ int hostname_ipv4_address(zpl_char *hostname, struct in_addr *addr)
 		return ERROR;
 	if(ipstack_inet_aton (hostname, addr) == 0)
 	{
-		struct hostent * hoste = NULL;
-		hoste = gethostbyname(hostname);
+		struct ipstack_hostent * hoste = NULL;
+		hoste = ipstack_gethostbyname(hostname);
 		if (hoste && hoste->h_addr_list && hoste->h_addrtype == AF_INET)
 		{
 			memcpy(addr, (struct in_addr*)hoste->h_addr_list[0], sizeof(struct in_addr));
@@ -355,8 +357,8 @@ int hostname_ipv6_address(zpl_char *hostname, struct in6_addr *addr)
 		return ERROR;
 	if(ipstack_inet_pton (AF_INET6, hostname, addr) == 0)
 	{
-		struct hostent * hoste = NULL;
-		hoste = gethostbyname(hostname);
+		struct ipstack_hostent * hoste = NULL;
+		hoste = ipstack_gethostbyname(hostname);
 		if (hoste && hoste->h_addr_list && hoste->h_addrtype == AF_INET)
 		{
 			memcpy(addr, (struct in6_addr*)hoste->h_addr_list[0], sizeof(struct in6_addr));

@@ -38,4 +38,11 @@ config ZPL_VTYSH_MODULE
 	help
 	Build Vtysh Module.
 
+config ZPL_WATCHDOG_MODULE
+	bool "Watchdog Module"
+	depends on ZPL_TOOLS_MODULE
+	default y
+	help
+	Build Watchdog Module.
+
 endmenu

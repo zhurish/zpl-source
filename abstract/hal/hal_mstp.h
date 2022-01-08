@@ -31,7 +31,13 @@ enum hal_mstp_cmd
     HAL_STP_STATE,
 };
 
-
+typedef struct hal_mstp_param_s
+{
+    zpl_bool enable;
+	zpl_uint32 value;
+	zpl_uint32 type;
+	hal_port_stp_state_t state;
+}hal_mstp_param_t;
 
 int hal_mstp_enable(zpl_bool enable);
 int hal_mstp_age(zpl_uint32 age);

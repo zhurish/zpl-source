@@ -293,7 +293,7 @@ static int mbedHandshake(Webs *wp)
             web_error("%s: error -0x%x", ebuf, -rc);
         }
         sp->flags |= SOCKET_EOF;
-        errno = EPROTO;
+        ipstack_errno = EPROTO;
         return -1;
 
     } else if ((vrc = mbedtls_ssl_get_verify_result(&mb->ctx)) != 0) {
@@ -340,7 +340,7 @@ static int mbedHandshake(Webs *wp)
                 web_logmsg(WEBS_DEBUG, "Peer did not provide a certificate");
             }
             sp->flags |= SOCKET_EOF;
-            errno = EPROTO;
+            ipstack_errno = EPROTO;
             return -1;
         }
     }

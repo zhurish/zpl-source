@@ -135,8 +135,18 @@ DEFUN_HIDDEN (vty_user_switch,
 	return vty_user_change(vty, argv[0]);
 }
 
+
+
+static struct cmd_node user_node =
+{
+	USER_NODE,
+	"%s(config)# ",
+	1
+};
+
 int cmd_vty_user_init() {
-	//install_node (&user_node, NULL);
+
+	install_node (&user_node, config_write_vty_user);
 
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &vty_user_switch_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &vty_user_switch_cmd);

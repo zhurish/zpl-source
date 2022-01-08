@@ -168,7 +168,7 @@ static int web_netservice_goform(Webs *wp, char *path, char *query)
 #ifdef ZPL_SERVICE_SYSLOG
 		if (!syslogc_is_enable())
 			syslogc_enable(host.name);
-		zlog_set_level(ZLOG_DEST_SYSLOG, LOG_WARNING);
+		zlog_set_level(ZLOG_DEST_SYSLOG, ZLOG_LEVEL_WARNING);
 		syslogc_mode_set(SYSLOG_UDP_MODE);
 		syslogc_host_config_set(syslog_address, 0, 0);
 #endif

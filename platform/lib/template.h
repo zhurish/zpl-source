@@ -48,6 +48,8 @@ extern int nsm_template_service_show_config (struct vty *vty, zpl_bool detail);
 
 extern int nsm_template_debug_write_config (struct vty *vty);
 extern int nsm_template_debug_show_config (struct vty *vty, zpl_bool detail);
+
+extern int cmd_nsm_template_init(void);
 #endif 
 #ifdef __cplusplus
 }

@@ -802,8 +802,10 @@ int iw_client_dev_connect(struct interface *ifp, iw_client_ap_t *ap, char *ssid,
 		{
 			zlog_debug(MODULE_WIFI, "running connect process on interface %s ",ifp->name);
 		}
+		#ifdef ZPL_TOOLS_PROCESS
 		os_process_register(PROCESS_DEAMON, path, "/usr/sbin/wpa_supplicant", zpl_false, argv);
 		//TODO check if is connect
+		#endif
 		return 0;
 	}
 	return -1;

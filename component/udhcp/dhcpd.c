@@ -228,7 +228,7 @@ static struct dyn_lease * dhcpd_find_static_lease_by_mac(dhcp_pool_t *config, co
 /* Check if the IP is taken; if it is, add it to the lease table */
 static int dhcpd_icmp_echo_request(zpl_uint32  nip, const zpl_uint8 *safe_mac,
 		unsigned arpping_ms, dhcpd_interface_t *ifter) {
-	struct in_addr temp;
+	struct ipstack_in_addr temp;
 	int r;
 
 	r = icmp_echo_request(nip, safe_mac, ifter->ipaddr, ifter->server_mac,
@@ -419,7 +419,7 @@ static void dhcpd_packet_to_client(struct dhcp_packet *dhcp_pkt,
 	if (force_broadcast || (dhcp_pkt->flags & htons(BROADCAST_FLAG))
 			|| dhcp_pkt->ciaddr == 0) {
 		zlog_err(MODULE_DHCP, "broadcasting packet to client");
-		ciaddr = INADDR_BROADCAST;
+		ciaddr = IPSTACK_INADDR_BROADCAST;
 		chaddr = DHCP_MAC_BCAST_ADDR;
 	} else {
 		zlog_err(MODULE_DHCP, "unicasting packet to client ciaddr");
@@ -575,7 +575,7 @@ static void dhcpd_send_offer(struct dhcp_packet *oldpacket, dhcp_pool_t *config,
 {
 	struct dhcp_packet packet;
 	zpl_uint32  lease_time_sec;
-	struct in_addr addr;
+	struct ipstack_in_addr addr;
 	zpl_uint8 optlen = 0, *opt_b = NULL;//, i = 0;
 	//zpl_uint32 arpping_ms = 2000;
 	if (!config)
@@ -644,7 +644,7 @@ static void dhcpd_send_ack(struct dhcp_packet *oldpacket, dhcp_pool_t *config,
 		dhcpd_interface_t *ifter, struct dyn_lease *lease) {
 	struct dhcp_packet packet;
 	zpl_uint32  lease_time_sec;
-	struct in_addr addr;
+	struct ipstack_in_addr addr;
 	struct dyn_lease *cu_lease = NULL;
 	zpl_uint8 *opt, optlen = 0;
 
@@ -719,7 +719,7 @@ static void dhcpd_send_inform(struct dhcp_packet *oldpacket, dhcp_pool_t *config
 
 	struct dhcp_packet packet;
 	zpl_uint32  lease_time_sec;
-	struct in_addr addr;
+	struct ipstack_in_addr addr;
 	struct dyn_lease *cu_lease = NULL;
 	zpl_uint8 *opt, optlen = 0;
 
@@ -1136,7 +1136,7 @@ int udhcpd_main_a(void *p)
 
 		if (server_socket < 0)
 		{
-			server_socket = udhcp_listen_socket(/*INADDR_ANY,*/SERVER_PORT,
+			server_socket = udhcp_listen_socket(/*IPSTACK_INADDR_ANY,*/SERVER_PORT,
 					NULL/*config->interface*/);
 		}
 
@@ -1161,7 +1161,7 @@ int udhcpd_main_a(void *p)
 		{
 			if (retval == 0)
 			goto write_leases;
-			if (errno == EINTR)
+			if (ipstack_errno == EINTR)
 			goto new_tv;
 			/* < 0 and not EINTR: should not happen */
 			//bb_perror_msg_and_die("poll");
@@ -1190,7 +1190,7 @@ int udhcpd_main_a(void *p)
 		if (bytes < 0)
 		{
 			/* bytes can also be -2 ("bad packet data") */
-			if (bytes == -1 && errno != EINTR)
+			if (bytes == -1 && ipstack_errno != EINTR)
 			{
 				zlog_err(MODULE_DHCP,
 						"read error: "STRERROR_FMT", reopening socket" STRERROR_ERRNO);
@@ -1486,7 +1486,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 	}
 	if (opt & 4)
 	{ /* -I */
-		len_and_sockaddr *lsa = xhost_and_af2sockaddr(str_I, 0, AF_INET);
+		len_and_sockaddr *lsa = xhost_and_af2sockaddr(str_I, 0, IPSTACK_AF_INET);
 		server_config.server_nip = lsa->u.sin.sin_addr.s_addr;
 		free(lsa);
 	}
@@ -1565,7 +1565,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 
 		if (server_socket < 0)
 		{
-			server_socket = udhcp_listen_socket(/*INADDR_ANY,*/SERVER_PORT,
+			server_socket = udhcp_listen_socket(/*IPSTACK_INADDR_ANY,*/SERVER_PORT,
 					server_config.interface);
 		}
 
@@ -1591,7 +1591,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 		{
 			if (retval == 0)
 			goto write_leases;
-			if (errno == EINTR)
+			if (ipstack_errno == EINTR)
 			goto new_tv;
 			/* < 0 and not EINTR: should not happen */
 			//bb_perror_msg_and_die("poll");
@@ -1620,7 +1620,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 		if (bytes < 0)
 		{
 			/* bytes can also be -2 ("bad packet data") */
-			if (bytes == -1 && errno != EINTR)
+			if (bytes == -1 && ipstack_errno != EINTR)
 			{
 				zlog_err(MODULE_DHCP,"read error: "STRERROR_FMT", reopening socket" STRERROR_ERRNO);
 				close(server_socket);

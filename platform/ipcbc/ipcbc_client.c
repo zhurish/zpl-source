@@ -89,7 +89,7 @@ zclient_init (struct zclient *zclient, zpl_uint32 redist_default)
   /* Enable zebra client connection by default. */
   zclient->enable = 1;
 
-  /* Set -1 to the default socket value. */
+  /* Set -1 to the default ipstack_socket value. */
   //zclient->sock = -1;
 
   /* Clear redistribution flags. */
@@ -130,7 +130,7 @@ zclient_stop (struct zclient *zclient)
   /* Empty the write buffer. */
   buffer_reset(zclient->wb);
 
-  /* Close socket. */
+  /* Close ipstack_socket. */
   if (!ipstack_invalid(zclient->sock))
     {
       ipstack_close (zclient->sock);
@@ -148,30 +148,30 @@ zclient_reset (struct zclient *zclient)
 
 #ifdef HAVE_TCP_ZEBRA
 
-/* Make socket to zebra daemon. Return zebra socket. */
+/* Make ipstack_socket to zebra daemon. Return zebra ipstack_socket. */
 static zpl_socket_t
 zclient_socket(void)
 {
   zpl_socket_t sock;
   int ret;
-  struct sockaddr_in serv;
+  struct ipstack_sockaddr_in serv;
 
   /* We should think about IPv6 connection. */
-  sock = ipstack_socket (AF_INET, SOCK_STREAM, 0);
+  sock = ipstack_socket (IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
   if (ipstack_invalid(sock))
     return sock;
   
-  /* Make server socket. */ 
-  memset (&serv, 0, sizeof (struct sockaddr_in));
-  serv.sin_family = AF_INET;
+  /* Make server ipstack_socket. */ 
+  memset (&serv, 0, sizeof (struct ipstack_sockaddr_in));
+  serv.sin_family = IPSTACK_AF_INET;
   serv.sin_port = htons (ZEBRA_PORT);
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
-  serv.sin_len = sizeof (struct sockaddr_in);
+  serv.sin_len = sizeof (struct ipstack_sockaddr_in);
 #endif /* HAVE_STRUCT_SOCKADDR_IN_SIN_LEN */
-  serv.sin_addr.s_addr = htonl (INADDR_LOOPBACK);
+  serv.sin_addr.s_addr = htonl (IPSTACK_INADDR_LOOPBACK);
 
   /* Connect to zebra. */
-  ret = ipstack_connect (sock, (struct sockaddr *) &serv, sizeof (serv));
+  ret = ipstack_connect (sock, (struct ipstack_sockaddr *) &serv, sizeof (serv));
   if (ret < 0)
     {
       ipstack_close (sock);
@@ -182,7 +182,7 @@ zclient_socket(void)
 
 #else
 
-/* For sockaddr_un. */
+/* For ipstack_sockaddr_un. */
 #include <sys/un.h>
 
 static zpl_socket_t
@@ -193,12 +193,12 @@ zclient_socket_un (const char *path)
   int len = 0;
   struct ipstack_sockaddr_un addr;
 
-  sock = ipstack_socket (AF_UNIX, SOCK_STREAM, 0);
+  sock = ipstack_socket (AF_UNIX, IPSTACK_SOCK_STREAM, 0);
   if (ipstack_invalid(sock))
     return sock;
   
-  /* Make server socket. */ 
-  memset (&addr, 0, sizeof (struct sockaddr_un));
+  /* Make server ipstack_socket. */ 
+  memset (&addr, 0, sizeof (struct ipstack_sockaddr_un));
   addr.sun_family = AF_UNIX;
   strncpy (addr.sun_path, path, strlen (path));
 #ifdef HAVE_STRUCT_SOCKADDR_UN_SUN_LEN
@@ -207,7 +207,7 @@ zclient_socket_un (const char *path)
   len = sizeof (addr.sun_family) + strlen (addr.sun_path);
 #endif /* HAVE_STRUCT_SOCKADDR_UN_SUN_LEN */
 
-  ret = ipstack_connect (sock, (struct sockaddr *) &addr, len);
+  ret = ipstack_connect (sock, (struct ipstack_sockaddr *) &addr, len);
   if (ret < 0)
     {
       ipstack_close (sock);
@@ -221,7 +221,7 @@ zclient_socket_un (const char *path)
 /**
  * Connect to zebra daemon.
  * @param zclient a pointer to zclient structure
- * @return socket fd just to make sure that connection established
+ * @return ipstack_socket fd just to make sure that connection established
  * @see zclient_init
  * @see zclient_new
  */
@@ -356,7 +356,7 @@ zclient_start (struct zclient *zclient)
   if (!ipstack_invalid(zclient->sock))
     return 0;
 
-  /* Check connect thread. */
+  /* Check ipstack_connect thread. */
   if (zclient->t_connect)
     return 0;
 
@@ -375,7 +375,7 @@ zclient_start (struct zclient *zclient)
   /* Clear fail count. */
   zclient->fail = 0;
   if (zclient_debug)
-    zlog_debug (MODULE_DEFAULT,"zclient connect success with socket [%d]", zclient->sock._fd);
+    zlog_debug (MODULE_DEFAULT,"zclient ipstack_connect success with ipstack_socket [%d]", zclient->sock._fd);
       
   /* Create read thread. */
   zclient_event (ZCLIENT_READ, zclient);
@@ -417,11 +417,11 @@ zclient_connect (struct thread *t)
 }
 
  /* 
-  * "xdr_encode"-like interface that allows daemon (client) to send
+  * "xdr_encode"-like interface that allows daemon (client) to ipstack_send
   * a message to zebra server for a route that needs to be
   * added/deleted to the kernel. Info about the route is specified
   * by the caller in a struct zapi_ipv4. zapi_ipv4_read() then writes
-  * the info down the zclient socket using the stream_* functions.
+  * the info down the zclient ipstack_socket using the stream_* functions.
   * 
   * The corresponding read ("xdr_decode") function on the server
   * side is zread_ipv4_add()/zread_ipv4_delete().
@@ -577,7 +577,7 @@ zapi_ipv6_route (zpl_uint16 cmd, struct zclient *zclient, struct prefix_ipv6 *p,
 #endif /* HAVE_IPV6 */
 
 /* 
- * send a ZEBRA_REDISTRIBUTE_ADD or ZEBRA_REDISTRIBUTE_DELETE
+ * ipstack_send a ZEBRA_REDISTRIBUTE_ADD or ZEBRA_REDISTRIBUTE_DELETE
  * for the route type (ZEBRA_ROUTE_KERNEL etc.). The zebra server will
  * then set/unset redist[type] in the client handle (a struct zserv) for the 
  * sending client
@@ -640,7 +640,7 @@ zebra_router_id_update_read (struct stream *s, struct prefix *rid)
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |         bandwidth                                             |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |         sockaddr_dl                                           |
+ * |         ipstack_sockaddr_dl                                           |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 
@@ -665,7 +665,7 @@ zebra_interface_add_read (struct stream *s)
  * Read interface up/down msg (ZEBRA_INTERFACE_UP/ZEBRA_INTERFACE_DOWN)
  * from zebra server.  The format of this message is the same as
  * that sent for ZEBRA_INTERFACE_ADD/ZEBRA_INTERFACE_DELETE (see
- * comments for zebra_interface_add_read), except that no sockaddr_dl
+ * comments for zebra_interface_add_read), except that no ipstack_sockaddr_dl
  * is sent at the tail of the message.
  */
 struct interface *
@@ -838,7 +838,7 @@ zclient_read (struct thread *thread)
   zpl_uint8 marker, version;
   struct zclient *zclient;
 
-  /* Get socket to zebra. */
+  /* Get ipstack_socket to zebra. */
   zclient = THREAD_ARG (thread);
   zclient->t_read = NULL;
 
@@ -851,7 +851,7 @@ zclient_read (struct thread *thread)
 	  (nbyte == -1))
 	{
 	  if (zclient_debug)
-	   zlog_debug (MODULE_DEFAULT,"zclient connection closed socket [%d].", zclient->sock._fd);
+	   zlog_debug (MODULE_DEFAULT,"zclient connection closed ipstack_socket [%d].", zclient->sock._fd);
 	  return zclient_failed(zclient);
 	}
       if (nbyte != (ssize_t)(ZEBRA_HEADER_SIZE-already))
@@ -874,14 +874,14 @@ zclient_read (struct thread *thread)
   
   if (marker != ZEBRA_HEADER_MARKER || version != ZSERV_VERSION)
     {
-      zlog_err(MODULE_DEFAULT,"%s: socket %d version mismatch, marker %d, version %d",
+      zlog_err(MODULE_DEFAULT,"%s: ipstack_socket %d version mismatch, marker %d, version %d",
                __func__, zclient->sock._fd, marker, version);
       return zclient_failed(zclient);
     }
   
   if (length < ZEBRA_HEADER_SIZE) 
     {
-      zlog_err(MODULE_DEFAULT,"%s: socket %d message length %u is less than %d ",
+      zlog_err(MODULE_DEFAULT,"%s: ipstack_socket %d message length %u is less than %d ",
 	       __func__, zclient->sock._fd, length, ZEBRA_HEADER_SIZE);
       return zclient_failed(zclient);
     }
@@ -907,7 +907,7 @@ zclient_read (struct thread *thread)
 	  (nbyte == -1))
 	{
 	  if (zclient_debug)
-	    zlog_debug(MODULE_DEFAULT,"zclient connection closed socket [%d].", zclient->sock._fd);
+	    zlog_debug(MODULE_DEFAULT,"zclient connection closed ipstack_socket [%d].", zclient->sock._fd);
 	  return zclient_failed(zclient);
 	}
       if (nbyte != (ssize_t)(length-already))
@@ -1041,7 +1041,7 @@ zclient_event (enum event event, struct zclient *zclient)
       if (zclient->fail >= 10)
 	return;
       if (zclient_debug)
-	zlog_debug (MODULE_DEFAULT,"zclient connect schedule interval is %d",
+	zlog_debug (MODULE_DEFAULT,"zclient ipstack_connect schedule interval is %d",
 		   zclient->fail < 3 ? 10 : 60);
       if (! zclient->t_connect)
 	zclient->t_connect = 
@@ -1068,20 +1068,20 @@ zclient_serv_path_set (zpl_char *path)
   /* reset */
   zclient_serv_path = NULL;
 
-  /* test if `path' is socket. don't set it otherwise. */
+  /* test if `path' is ipstack_socket. don't set it otherwise. */
   if (stat(path, &sb) == -1)
     {
-      zlog_warn (MODULE_DEFAULT,"%s: zebra socket `%s' does not exist", __func__, path);
+      zlog_warn (MODULE_DEFAULT,"%s: zebra ipstack_socket `%s' does not exist", __func__, path);
       return;
     }
 
   if ((sb.st_mode & S_IFMT) != S_IFSOCK)
     {
-      zlog_warn (MODULE_DEFAULT,"%s: `%s' is not unix socket, sir", __func__, path);
+      zlog_warn (MODULE_DEFAULT,"%s: `%s' is not unix ipstack_socket, sir", __func__, path);
       return;
     }
 
-  /* it seems that path is unix socket */
+  /* it seems that path is unix ipstack_socket */
   zclient_serv_path = path;
 }
 

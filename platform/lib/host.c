@@ -25,16 +25,26 @@ int host_sysconfig_sync()
 
 int host_config_loading(char *config)
 {
+	_global_host.load = LOADING;
 	fprintf(stdout, "==================os_load_config %s\r\n",config);
 	vty_load_config(config);
 	fprintf(stdout, "++++++++++++++++++os_load_config %s\r\n",config);
 	fflush(stdout);
-	//signal_init(NULL, array_size(os_signals), os_signals);
-	//os_task_give_broadcast();
+
 	return OK;
 }
 
-zpl_bool host_config_load_waitting(void)
+/*
+zpl_bool host_waitting_initialization(void)
+{
+	while(_global_host.load != LOAD_INIT)
+	{
+		os_sleep(1);
+	}
+	return zpl_true;
+}
+*/
+zpl_bool host_waitting_loadconfig(void)
 {
 	while(_global_host.load != LOAD_DONE)
 	{
@@ -43,13 +53,35 @@ zpl_bool host_config_load_waitting(void)
 	return zpl_true;
 }
 
-zpl_bool host_config_load_done(void)
+zpl_bool host_loadconfig_done(void)
 {
 	if(_global_host.load == LOAD_DONE)
-	{
 		return zpl_true;
-	}
 	return zpl_false;
+}
+
+int host_loadconfig_stats(int state)
+{
+	_global_host.load = state;
+	return OK;
+}
+
+int host_waitting_bspinit(int sec)
+{
+	if(_global_host.bspinit_sem)
+	{
+		os_sem_take(_global_host.bspinit_sem, sec);
+	}
+	return OK;
+}
+
+int host_bspinit_done(void)
+{
+	if(_global_host.bspinit_sem)
+	{
+		os_sem_give(_global_host.bspinit_sem);
+	}
+	return OK;
 }
 
 int host_config_init(zpl_char *motd)
@@ -82,6 +114,7 @@ int host_config_init(zpl_char *motd)
 	_global_host.no_password_check = 0;
 	_global_host.mutx = os_mutex_init();
 	_global_host.cli_mutx = os_mutex_init();
+	_global_host.bspinit_sem = os_sem_init();
 	if(access("/etc/.serial_no", F_OK) == 0)
 	{
 		memset(_global_host.serial, '\0', sizeof(_global_host.serial));
@@ -96,7 +129,7 @@ int host_config_init(zpl_char *motd)
 		os_read_file("/etc/.wan-mac", tmp, sizeof(tmp));
 		if(strlen(tmp) && strstr(tmp, ":"))
 		{
-			struct ethaddr ether;
+			struct ipstack_ethaddr ether;
 			ether_aton_r (tmp, &ether);
 			host_config_set_api(API_SET_SYSMAC_CMD, ether.octet);
 		}
@@ -155,6 +188,11 @@ int host_config_exit(void)
 	{
 		os_mutex_exit(_global_host.mutx);
 		_global_host.mutx = NULL;
+	}
+	if (_global_host.bspinit_sem)
+	{
+		os_sem_exit(_global_host.bspinit_sem);
+		_global_host.bspinit_sem = NULL;
 	}
 	return OK;
 }

@@ -39,20 +39,20 @@ extern void connected_down_ipv6 (struct interface *ifp, struct connected *);
 
 #ifdef ZPL_KERNEL_STACK_MODULE
 extern void
-connected_add_ipv4 (struct interface *ifp, zpl_uint32 flags, struct in_addr *addr,
-		    zpl_uchar prefixlen, struct in_addr *broad,
+connected_add_ipv4 (struct interface *ifp, zpl_uint32 flags, struct ipstack_in_addr *addr,
+		    zpl_uchar prefixlen, struct ipstack_in_addr *broad,
 		    const char *label);
 extern void
-connected_delete_ipv4 (struct interface *ifp, zpl_uint32 flags, struct in_addr *addr,
-		       zpl_uchar prefixlen, struct in_addr *broad);
+connected_delete_ipv4 (struct interface *ifp, zpl_uint32 flags, struct ipstack_in_addr *addr,
+		       zpl_uchar prefixlen, struct ipstack_in_addr *broad);
 #ifdef HAVE_IPV6
 extern void
-connected_add_ipv6 (struct interface *ifp, zpl_uint32 flags, struct in6_addr *address,
-		    zpl_uchar prefixlen, struct in6_addr *broad,
+connected_add_ipv6 (struct interface *ifp, zpl_uint32 flags, struct ipstack_in6_addr *address,
+		    zpl_uchar prefixlen, struct ipstack_in6_addr *broad,
 		    const char *label);
 extern void
-connected_delete_ipv6 (struct interface *ifp, struct in6_addr *address,
-		       zpl_uchar prefixlen, struct in6_addr *broad);
+connected_delete_ipv6 (struct interface *ifp, struct ipstack_in6_addr *address,
+		       zpl_uchar prefixlen, struct ipstack_in6_addr *broad);
 #endif /* HAVE_IPV6 */
 #endif
  

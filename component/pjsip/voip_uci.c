@@ -908,16 +908,16 @@ static int voip_ubus_capture_enable(zpl_bool start)
 			if(ret == OK && strlen(tmp) >= 1)
 			{
 				if(strstr(tmp, "Debug"))
-					level = LOG_DEBUG;
+					level = ZLOG_LEVEL_DEBUG;
 				else if(strstr(tmp, "Information"))
-					level = LOG_INFO;
+					level = ZLOG_LEVEL_INFO;
 				else if(strstr(tmp, "Notifications"))
-					level = LOG_NOTICE;
+					level = ZLOG_LEVEL_NOTICE;
 				else if(strstr(tmp, "Warnings"))
-					level = LOG_WARNING;
+					level = ZLOG_LEVEL_WARNING;
 			}
 			else
-				level = LOG_DEBUG;
+				level = ZLOG_LEVEL_DEBUG;
 
 
 			ttt = os_time(NULL);
@@ -957,7 +957,7 @@ static int voip_ubus_capture_enable(zpl_bool start)
 		{
 			capture_enable = 0;
 			char log_cmd[128];
-			//voip_osip_set_log_level(LOG_WARNING, 1);
+			//voip_osip_set_log_level(ZLOG_LEVEL_WARNING, 1);
 			//voip_app_debug_set_api(0);
 			//voip_stream_debug_set_api(zpl_true, "warning");
 

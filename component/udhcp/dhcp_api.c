@@ -215,7 +215,7 @@ static int dhcpc_interface_lease_show_one(struct vty *vty, client_interface_t *p
 		vty_out(vty, "  sip srv        :%s%s", inet_address(ntohl(pstNode->lease.lease_sip1)), VTY_NEWLINE);
 
 	if(pstNode->lease.lease_ttl)
-		vty_out(vty, "  TTL            :%s%s", ((pstNode->lease.lease_ttl)), VTY_NEWLINE);
+		vty_out(vty, "  IPSTACK_TTL            :%s%s", ((pstNode->lease.lease_ttl)), VTY_NEWLINE);
 
 	if(pstNode->lease.lease_mtu)
 		vty_out(vty, "  MTU            :%s%s", (ntohs(pstNode->lease.lease_mtu)), VTY_NEWLINE);

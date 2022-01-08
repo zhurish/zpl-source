@@ -32,27 +32,27 @@ extern "C" {
 #define NL_DEFAULT_ROUTE_METRIC 20
 
 #define NLMSG_TAIL(nmsg) \
-	((struct rtattr *) (((void *) (nmsg)) + NLMSG_ALIGN((nmsg)->nlmsg_len)))
+	((struct ipstack_rtattr *) (((void *) (nmsg)) + IPSTACK_NLMSG_ALIGN((nmsg)->nlmsg_len)))
 
 /*
  * kernel_netlink.c
  */
-extern const char * nl_msg_type_to_str(zpl_uint16 msg_type);
-extern const char * nl_rtproto_to_str(zpl_uchar rtproto);
+extern const char * _netlink_msg_type_to_str(zpl_uint16 msg_type);
+extern const char * _netlink_rtproto_to_str(zpl_uchar rtproto);
 
-extern int addattr_l(struct nlmsghdr *n, size_t maxlen, zpl_uint32 type, void *data,
+extern int _netlink_addattr_l(struct ipstack_nlmsghdr *n, size_t maxlen, zpl_uint32 type, void *data,
 		size_t alen);
-extern int rta_addattr_l(struct rtattr *rta, size_t maxlen, zpl_uint32 type,
+extern int _netlink_rta_addattr_l(struct ipstack_rtattr *rta, size_t maxlen, zpl_uint32 type,
 		void *data, size_t alen);
-extern int addattr32(struct nlmsghdr *n, size_t maxlen, zpl_uint32 type, zpl_uint32 data);
+extern int _netlink_addattr32(struct ipstack_nlmsghdr *n, size_t maxlen, zpl_uint32 type, zpl_uint32 data);
 
-extern struct rtattr *addattr_nest(struct nlmsghdr *n, size_t maxlen, zpl_uint32 type);
-extern int addattr_nest_end(struct nlmsghdr *n, struct rtattr *nest);
+extern struct ipstack_rtattr *_netlink_addattr_nest(struct ipstack_nlmsghdr *n, size_t maxlen, zpl_uint32 type);
+extern int _netlink_addattr_nest_end(struct ipstack_nlmsghdr *n, struct ipstack_rtattr *nest);
 
 
 
-extern void netlink_parse_rtattr(struct rtattr **tb, zpl_uint32 max, struct rtattr *rta, zpl_uint32 len);
-extern void netlink_interface_update_hw_addr(struct rtattr **tb, struct interface *ifp);
+extern void _netlink_parse_rtattr(struct ipstack_rtattr **tb, zpl_uint32 max, struct ipstack_rtattr *rta, zpl_uint32 len);
+extern void _netlink_interface_update_hw_addr(struct ipstack_rtattr **tb, struct interface *ifp);
 
 
 extern void _netlink_route_debug(zpl_uint32 cmd, struct prefix *p,
@@ -60,52 +60,56 @@ extern void _netlink_route_debug(zpl_uint32 cmd, struct prefix *p,
 		struct nsm_vrf *zvrf);
 
 
-extern void set_ifindex(struct interface *ifp, ifindex_t ifi_index);
+extern void _netlink_set_ifindex(struct interface *ifp, ifindex_t ifi_index);
 
-extern int netlink_socket(struct nlsock *nl, zpl_ulong groups, vrf_id_t vrf_id);
+extern int _netlink_socket(struct nlsock *nl, zpl_ulong groups, vrf_id_t vrf_id);
 
-extern int netlink_request(zpl_family_t family, zpl_uint32 type, struct nlsock *nl);
+extern int _netlink_request(zpl_family_t family, zpl_uint32 type, struct nlsock *nl);
 
-extern int netlink_talk(struct nlmsghdr *n, struct nlsock *nl,
+extern int _netlink_talk(struct ipstack_nlmsghdr *n, struct nlsock *nl,
 		struct nsm_vrf *zvrf);
 
-extern int netlink_parse_info(
-		int (*filter)(struct sockaddr_nl *, struct nlmsghdr *, vrf_id_t),
+extern int _netlink_parse_info(
+		int (*filter)(struct ipstack_sockaddr_nl *, struct ipstack_nlmsghdr *, vrf_id_t),
 		struct nlsock *nl, struct nsm_vrf *zvrf);
 
 
-extern void kernel_open(struct nsm_vrf *zvrf);
-extern void kernel_close(struct nsm_vrf *zvrf);
-//extern void kernel_load_all();
-
-
-/*
- * kernel_nllisten.c
- */
-extern int kernel_nllisten(struct nsm_vrf *zvrf);
 
 /*
  * kernel_nliface.c
  */
-extern int kernel_create_interface(struct interface *ifp);
-extern int kernel_destroy_interface(struct interface *ifp);
+extern int _netlink_create_interface(struct interface *ifp);
+extern int _netlink_destroy_interface(struct interface *ifp);
 
 /*
  * kernel_nladdress.c
  */
-extern int kernel_address_add_ipv4 (struct interface *ifp, struct connected *ifc);
-extern int kernel_address_delete_ipv4 (struct interface *ifp, struct connected *ifc);
+extern int _netlink_address_add_ipv4 (struct interface *ifp, struct connected *ifc);
+extern int _netlink_address_delete_ipv4 (struct interface *ifp, struct connected *ifc);
 
 /*
  * kernel_nlroute.c
  */
-extern int kernel_route_rib (struct prefix *p, struct rib *old, struct rib *new);
+extern int _netlink_route_rib (struct prefix *p, struct rib *old, struct rib *new);
+
+
+extern void _netlink_open(struct nsm_vrf *zvrf);
+extern void _netlink_close(struct nsm_vrf *zvrf);
+
+extern void _netlink_load_all();
+
+#ifdef ZPL_KERNEL_SORF_FORWARDING
+/*
+ * kernel_nllisten.c
+ */
+extern int _netlink_listen(struct nsm_vrf *zvrf);
 
 /*
  * kernel_nlload.c
  */
-extern int kernel_route_table_load(struct nsm_vrf *zvrf);
-extern int kernel_interface_load(struct nsm_vrf *zvrf);
+extern int _netlink_rib_load(struct nsm_vrf *zvrf);
+extern int _netlink_iftbl_load(struct nsm_vrf *zvrf);
+#endif
 
 
 #endif /* HAVE_NETLINK */

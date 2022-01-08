@@ -41,6 +41,22 @@ static struct vty *tftp_vty = NULL;
 static int sys_task_id = 0;
 static void *master_eloop = NULL;
 
+struct module_list module_list_utils = 
+{ 
+	.module=MODULE_UTILS, 
+	.name="UTILS", 
+	.module_init=systools_module_init, 
+	.module_exit=systools_module_exit, 
+	.module_task_init=systools_task_init, 
+	.module_task_exit=systools_task_exit, 
+	.module_cmd_init=systools_cmd_init, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+	.flags = ZPL_MODULE_NEED_INIT,
+};
+
 int systools_set(void *vty)
 {
 	tftp_vty = vty;
@@ -85,13 +101,14 @@ static int ftpd_loginVerify(char *user, char *pass)
 
 static int systools_task(void *argv)
 {
+	module_list_utils.taskid = os_task_id_self();
 	module_setup_task(MODULE_UTILS, os_task_id_self());
-	host_config_load_waitting();
-	eloop_start_running(NULL, MODULE_UTILS);
+	host_waitting_loadconfig();
+	eloop_mainloop(master_eloop);
 	return 0;
 }
 
-int systools_task_init ()
+int systools_task_init (void)
 {
 	if(master_eloop == NULL)
 		master_eloop = eloop_master_module_create(MODULE_UTILS);
@@ -100,11 +117,15 @@ int systools_task_init ()
 		sys_task_id = os_task_create("sysTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, systools_task, NULL, OS_TASK_DEFAULT_STACK);
 	if(sys_task_id)
+	{
+		module_list_utils.taskid = sys_task_id;
+		module_setup_task(MODULE_UTILS, sys_task_id);
 		return OK;
+	}
 	return ERROR;
 }
 
-int systools_task_exit ()
+int systools_task_exit (void)
 {
 	if(sys_task_id)
 		os_task_destroy(sys_task_id);
@@ -113,7 +134,7 @@ int systools_task_exit ()
 }
 
 
-int systools_module_init ()
+int systools_module_init (void)
 {
 	if(master_eloop == NULL)
 		master_eloop = eloop_master_module_create(MODULE_UTILS);
@@ -127,6 +148,12 @@ int systools_module_init ()
 #endif
 #ifdef ZPL_SERVICE_FTPD
 	ftpdInit (master_eloop, ftpd_loginVerify);
+#endif
+#ifdef ZPL_SERVICE_SNTPS
+	sntpsInit(master_eloop);
+#endif
+#ifdef ZPL_SERVICE_SNTPC
+	sntpcInit(master_eloop);
 #endif
 #ifdef ZPL_SERVICE_TELNET
 #endif
@@ -143,13 +170,19 @@ int systools_module_init ()
 	return OK;
 }
 
-int systools_module_exit ()
+int systools_module_exit (void)
 {
 #ifdef ZPL_SERVICE_FTPD
 	ftpdDisable();
 #endif
 #ifdef ZPL_SERVICE_TFTPD
 	tftpdUnInit();
+#endif
+#ifdef ZPL_SERVICE_SNTPS
+	sntpsDisable();
+#endif
+#ifdef ZPL_SERVICE_SNTPC
+	sntpcDisable();
 #endif
 #ifdef ZPL_SERVICE_UBUS_SYNC
 	ubus_sync_exit();

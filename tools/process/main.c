@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
 
 	/* Daemonize. */
 	if (domain && daemon(0, 0) < 0) {
-		printf("Process daemon failed: %s", strerror(errno));
+		printf("Process daemon failed: %s", strerror(ipstack_errno));
 		exit(1);
 	}
 	os_pid_set(DAEMON_VTY_DIR"/process.pid");
@@ -278,7 +278,7 @@ int main(int argc, char *argv[])
 		}
 		num = os_select_wait(maxfd + 1, &rfdset, NULL, 0);
 		//num = select(maxfd + 1, &rfdset, NULL, NULL, NULL);
-		//process_log_debug("start os_select_wait(%d) %s", num, strerror(errno));
+		//process_log_debug("start os_select_wait(%d) %s", num, strerror(ipstack_errno));
 		if(num > 0)
 		{
 			//process_log_debug("start os_sock_unix_accept %s", progname);
@@ -311,8 +311,8 @@ int main(int argc, char *argv[])
 				}
 				else
 				{
-					if (errno == EPIPE || errno == EBADF || errno == EIO || errno == ECONNRESET
-								|| errno == ECONNABORTED || errno == ENETRESET || errno == ECONNREFUSED)
+					if (ipstack_errno == EPIPE || ipstack_errno == EBADF || ipstack_errno == EIO || ipstack_errno == ECONNRESET
+								|| ipstack_errno == ECONNABORTED || ipstack_errno == ENETRESET || ipstack_errno == ECONNREFUSED)
 					{
 						continue;
 					}
@@ -337,8 +337,8 @@ int main(int argc, char *argv[])
 							{
 								if(errnum == -1)
 								{
-									if (errno == EPIPE || errno == EBADF || errno == EIO || errno == ECONNRESET
-												|| errno == ECONNABORTED || errno == ENETRESET || errno == ECONNREFUSED)
+									if (ipstack_errno == EPIPE || ipstack_errno == EBADF || ipstack_errno == EIO || ipstack_errno == ECONNRESET
+												|| ipstack_errno == ECONNABORTED || ipstack_errno == ENETRESET || ipstack_errno == ECONNREFUSED)
 									{
 										process_log_err("%s close and reopen pipe %s", progname, PROCESS_MGT_UNIT_NAME);
 										if(fd[i])
@@ -373,8 +373,8 @@ int main(int argc, char *argv[])
 		}
 		else if(num < 0)
 		{
-/*			if (errno == EPIPE || errno == EBADF || errno == EIO || errno == ECONNRESET
-					|| errno == ECONNABORTED || errno == ENETRESET || errno == ECONNREFUSED)
+/*			if (ipstack_errno == EPIPE || ipstack_errno == EBADF || ipstack_errno == EIO || ipstack_errno == ECONNRESET
+					|| ipstack_errno == ECONNABORTED || ipstack_errno == ENETRESET || ipstack_errno == ECONNREFUSED)
 			{
 				if(fd)
 				{

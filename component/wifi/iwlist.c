@@ -887,7 +887,7 @@ int count, iw_user_cb_t *cb) /* Args count */
 			/* Initialise BSSID as needed */
 			if (scanopt.bssid.sa_family == 0)
 			{
-				scanopt.bssid.sa_family = ARPHRD_ETHER;
+				scanopt.bssid.sa_family = IPSTACK_ARPHRD_ETHER;
 				memset(scanopt.bssid.sa_data, 0xff, ETH_ALEN);
 			}
 			/* Scan only this ESSID */
@@ -935,11 +935,11 @@ int count, iw_user_cb_t *cb) /* Args count */
 		/* Initiate Scanning */
 		if (iw_set_ext(skfd, ifname, SIOCSIWSCAN, &wrq) < 0)
 		{
-			if ((errno != EPERM) || (scanflags != 0))
+			if ((ipstack_errno != EPERM) || (scanflags != 0))
 			{
 				fprintf(stderr,
 						"%-8.16s  Interface doesn't support scanning : %s\n\n",
-						ifname, strerror(errno));
+						ifname, strerror(ipstack_errno));
 				return (-1);
 			}
 			/* If we don't have the permission to initiate the scan, we may
@@ -973,7 +973,7 @@ int count, iw_user_cb_t *cb) /* Args count */
 		/* Check if there was an error */
 		if (ret < 0)
 		{
-			if (errno == EAGAIN || errno == EINTR)
+			if (ipstack_errno == EAGAIN || ipstack_errno == EINTR)
 				continue;
 			fprintf(stderr, "Unhandled signal - exiting...\n");
 			return (-1);
@@ -1003,7 +1003,7 @@ int count, iw_user_cb_t *cb) /* Args count */
 			if (iw_get_ext(skfd, ifname, SIOCGIWSCAN, &wrq) < 0)
 			{
 				/* Check if buffer was too small (WE-17 only) */
-				if ((errno == E2BIG) && (range.we_version_compiled > 16)
+				if ((ipstack_errno == E2BIG) && (range.we_version_compiled > 16)
 						&& (buflen < 0xFFFF))
 				{
 					/* Some driver may return very large scan results, either
@@ -1029,7 +1029,7 @@ int count, iw_user_cb_t *cb) /* Args count */
 				}
 
 				/* Check if results not available yet */
-				if (errno == EAGAIN)
+				if (ipstack_errno == EAGAIN)
 				{
 					/* Restart timer for only 100ms*/
 					tv.tv_sec = 0;
@@ -1042,7 +1042,7 @@ int count, iw_user_cb_t *cb) /* Args count */
 				/* Bad error */
 				free(buffer);
 				fprintf(stderr, "%-8.16s  Failed to read scan data : %s\n\n",
-						ifname, strerror(errno));
+						ifname, strerror(ipstack_errno));
 				return (-2);
 			}
 			else
@@ -1402,7 +1402,7 @@ int count, iw_user_cb_t *cb) /* Args count */
 			{
 				fprintf(stderr,
 						"Error reading wireless keys (SIOCGIWENCODE): %s\n",
-						strerror(errno));
+						strerror(ipstack_errno));
 				break;
 			}
 			if ((wrq.u.data.flags & IW_ENCODE_DISABLED)
@@ -2162,7 +2162,7 @@ int count, iw_user_cb_t *cb) /* Args count */
 			{
 				fprintf(stderr,
 						"Error reading wpa keys (SIOCGIWENCODEEXT): %s\n",
-						strerror(errno));
+						strerror(ipstack_errno));
 				break;
 			}
 
@@ -2245,7 +2245,7 @@ int count, iw_user_cb_t *cb) /* Args count */
 
 	if (iw_get_ext(skfd, ifname, SIOCGIWGENIE, &wrq) < 0)
 		fprintf(stderr, "%-8.16s  no generic IE (%s).\n\n", ifname,
-				strerror(errno));
+				strerror(ipstack_errno));
 	else
 	{
 		fprintf(stderr, "%-8.16s\n", kname2ifname(ifname));

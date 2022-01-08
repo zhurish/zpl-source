@@ -8,7 +8,7 @@
 #include "lib_include.h"
 #if defined(_WIN32)
 # define OS_WIN32
-/* ws2_32.dll has getaddrinfo and freeaddrinfo on Windows XP and later.
+/* ws2_32.dll has ipstack_getaddrinfo and ipstack_freeaddrinfo on Windows XP and later.
  * minwg32 headers check WINVER before allowing the use of these */
 # ifndef WINVER
 #   define WINVER 0x0501
@@ -29,7 +29,7 @@
 /* Already set in modbus-tcp.h but it seems order matters in VS2005 */
 # include <winsock2.h>
 # include <ws2tcpip.h>
-# define SHUT_RDWR 2
+# define IPSTACK_SHUT_RDWR 2
 # define close closesocket
 #else
 # include <sys/socket.h>
@@ -69,7 +69,7 @@ static int _modbus_tcp_init_win32(void)
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
         fprintf(stderr, "WSAStartup() returned error code %d\n",
                 (unsigned int)GetLastError());
-        errno = EIO;
+        ipstack_errno = EIO;
         return -1;
     }
     return 0;
@@ -86,7 +86,7 @@ static int _modbus_set_slave(modbus_t *ctx, int slave)
          * restore the default value. */
         ctx->slave = slave;
     } else {
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return -1;
     }
 
@@ -171,11 +171,11 @@ static ssize_t _modbus_tcp_send(modbus_t *ctx, const uint8_t *req, int req_lengt
        Requests not to send SIGPIPE on errors on stream oriented
        sockets when the other end breaks the connection.  The EPIPE
        error is still returned. */
-    return ipstack_send(ctx->s, (const char *)req, req_length, MSG_NOSIGNAL);
+    return ipstack_send(ctx->s, (const char *)req, req_length, IPSTACK_MSG_NOSIGNAL);
 }
 
 static int _modbus_tcp_receive(modbus_t *ctx, uint8_t *req) {
-    return _modbus_receive_msg(ctx, req, MSG_INDICATION);
+    return _modbus_receive_msg(ctx, req, IPSTACK_MSG_INDICATION);
 }
 
 static ssize_t _modbus_tcp_recv(modbus_t *ctx, uint8_t *rsp, int rsp_length) {
@@ -196,7 +196,7 @@ static int _modbus_tcp_pre_check_confirmation(modbus_t *ctx, const uint8_t *req,
             fprintf(stderr, "Invalid transaction ID received 0x%X (not 0x%X)\n",
                     (rsp[0] << 8) + rsp[1], (req[0] << 8) + req[1]);
         }
-        errno = EMBBADDATA;
+        ipstack_errno = EMBBADDATA;
         return -1;
     }
 
@@ -206,40 +206,40 @@ static int _modbus_tcp_pre_check_confirmation(modbus_t *ctx, const uint8_t *req,
             fprintf(stderr, "Invalid protocol ID received 0x%X (not 0x0)\n",
                     (rsp[2] << 8) + rsp[3]);
         }
-        errno = EMBBADDATA;
+        ipstack_errno = EMBBADDATA;
         return -1;
     }
 
     return 0;
 }
 
-static int _modbus_tcp_set_ipv4_options(int s)
+static int _modbus_tcp_set_ipv4_options(zpl_socket_t s)
 {
     int rc;
     int option;
 
     /* Set the TCP no delay flag */
-    /* SOL_TCP = IPPROTO_TCP */
+    /* SOL_TCP = IPSTACK_IPPROTO_TCP */
     option = 1;
-    rc = ipstack_setsockopt(s, IPPROTO_TCP, TCP_NODELAY,
+    rc = ipstack_setsockopt(s, IPSTACK_IPPROTO_TCP, IPSTACK_TCP_NODELAY,
                     (const void *)&option, sizeof(int));
     if (rc == -1) {
         return -1;
     }
 
-    /* If the OS does not offer SOCK_NONBLOCK, fall back to setting FIONBIO to
+    /* If the OS does not offer SOCK_NONBLOCK, fall back to setting IPSTACK_FIONBIO to
      * make sockets non-blocking */
     /* Do not care about the return value, this is optional */
-#if !defined(SOCK_NONBLOCK) && defined(FIONBIO)
+#if !defined(SOCK_NONBLOCK) && defined(IPSTACK_FIONBIO)
 #ifdef OS_WIN32
     {
-        /* Setting FIONBIO expects an unsigned long according to MSDN */
+        /* Setting IPSTACK_FIONBIO expects an unsigned long according to MSDN */
         u_long loption = 1;
-        ipstack_ioctl(s, FIONBIO, &loption);
+        ipstack_ioctl(s, IPSTACK_FIONBIO, &loption);
     }
 #else
     option = 1;
-    ipstack_ioctl(s, FIONBIO, &option);
+    ipstack_ioctl(s, IPSTACK_FIONBIO, &option);
 #endif
 #endif
 
@@ -249,8 +249,8 @@ static int _modbus_tcp_set_ipv4_options(int s)
      * necessary to workaround that problem.
      **/
     /* Set the IP low delay option */
-    option = IPTOS_LOWDELAY;
-    rc = ipstack_setsockopt(s, IPPROTO_IP, IP_TOS,
+    option = IPSTACK_IPTOS_LOWDELAY;
+    rc = ipstack_setsockopt(s, IPSTACK_IPPROTO_IP, IPSTACK_IP_TOS,
                     (const void *)&option, sizeof(int));
     if (rc == -1) {
         return -1;
@@ -260,7 +260,7 @@ static int _modbus_tcp_set_ipv4_options(int s)
     return 0;
 }
 
-static int _connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen,
+static int _connect(zpl_socket_t sockfd, const struct ipstack_sockaddr *addr, socklen_t addrlen,
                     const struct timeval *ro_tv)
 {
     int rc = ipstack_connect(sockfd, addr, addrlen);
@@ -273,28 +273,28 @@ static int _connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen,
 
     if (wsaError == WSAEWOULDBLOCK || wsaError == WSAEINPROGRESS) {
 #else
-    if (rc == -1 && errno == EINPROGRESS) {
+    if (rc == -1 && ipstack_errno == EINPROGRESS) {
 #endif
-        fd_set wset;
+        ipstack_fd_set wset;
         int optval;
         socklen_t optlen = sizeof(optval);
         struct timeval tv = *ro_tv;
 
         /* Wait to be available in writing */
-        FD_ZERO(&wset);
-        FD_SET(sockfd, &wset);
-        rc = ipstack_select(IPCOM_STACK, sockfd + 1, NULL, &wset, NULL, &tv);
+        IPSTACK_FD_ZERO(&wset);
+        IPSTACK_FD_SET(sockfd._fd, &wset);
+        rc = ipstack_select(IPCOM_STACK, sockfd._fd + 1, NULL, &wset, NULL, &tv);
         if (rc <= 0) {
             /* Timeout or fail */
             return -1;
         }
 
-        /* The connection is established if SO_ERROR and optval are set to 0 */
-        rc = ipstack_getsockopt(sockfd, SOL_SOCKET, SO_ERROR, (void *)&optval, &optlen);
+        /* The connection is established if IPSTACK_SO_ERROR and optval are set to 0 */
+        rc = ipstack_getsockopt(sockfd, IPSTACK_SOL_SOCKET, IPSTACK_SO_ERROR, (void *)&optval, &optlen);
         if (rc == 0 && optval == 0) {
             return 0;
         } else {
-            errno = ECONNREFUSED;
+            ipstack_errno = ECONNREFUSED;
             return -1;
         }
     }
@@ -305,10 +305,10 @@ static int _connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen,
 static int _modbus_tcp_connect(modbus_t *ctx)
 {
     int rc;
-    /* Specialized version of sockaddr for Internet socket address (same size) */
-    struct sockaddr_in addr;
+    /* Specialized version of ipstack_sockaddr for Internet socket address (same size) */
+    struct ipstack_sockaddr_in addr;
     modbus_tcp_t *ctx_tcp = ctx->backend_data;
-    int flags = SOCK_STREAM;
+    int flags = IPSTACK_SOCK_STREAM;
 
 #ifdef OS_WIN32
     if (_modbus_tcp_init_win32() == -1) {
@@ -324,15 +324,15 @@ static int _modbus_tcp_connect(modbus_t *ctx)
     flags |= SOCK_NONBLOCK;
 #endif
 
-    ctx->s = ipstack_socket(IPCOM_STACK, PF_INET, flags, 0);
-    if (ctx->s == -1) {
+    ctx->s = ipstack_socket(IPCOM_STACK, IPSTACK_PF_INET, flags, 0);
+    if (ipstack_invalid(ctx->s)) {
         return -1;
     }
 
     rc = _modbus_tcp_set_ipv4_options(ctx->s);
     if (rc == -1) {
         ipstack_close(ctx->s);
-        ctx->s = -1;
+        //ctx->s = -1;
         return -1;
     }
 
@@ -340,13 +340,13 @@ static int _modbus_tcp_connect(modbus_t *ctx)
         printf("Connecting to %s:%d\n", ctx_tcp->ip, ctx_tcp->port);
     }
 
-    addr.sin_family = AF_INET;
+    addr.sin_family = IPSTACK_AF_INET;
     addr.sin_port = htons(ctx_tcp->port);
     addr.sin_addr.s_addr = inet_addr(ctx_tcp->ip);
-    rc = _connect(ctx->s, (struct sockaddr *)&addr, sizeof(addr), &ctx->response_timeout);
+    rc = _connect(ctx->s, (struct ipstack_sockaddr *)&addr, sizeof(addr), &ctx->response_timeout);
     if (rc == -1) {
         ipstack_close(ctx->s);
-        ctx->s = -1;
+        //ctx->s = -1;
         return -1;
     }
 
@@ -357,9 +357,9 @@ static int _modbus_tcp_connect(modbus_t *ctx)
 static int _modbus_tcp_pi_connect(modbus_t *ctx)
 {
     int rc;
-    struct addrinfo *ai_list;
-    struct addrinfo *ai_ptr;
-    struct addrinfo ai_hints;
+    struct ipstack_addrinfo *ai_list;
+    struct ipstack_addrinfo *ai_ptr;
+    struct ipstack_addrinfo ai_hints;
     modbus_tcp_pi_t *ctx_tcp_pi = ctx->backend_data;
 
 #ifdef OS_WIN32
@@ -372,8 +372,8 @@ static int _modbus_tcp_pi_connect(modbus_t *ctx)
 #ifdef AI_ADDRCONFIG
     ai_hints.ai_flags |= AI_ADDRCONFIG;
 #endif
-    ai_hints.ai_family = AF_UNSPEC;
-    ai_hints.ai_socktype = SOCK_STREAM;
+    ai_hints.ai_family = IPSTACK_AF_UNSPEC;
+    ai_hints.ai_socktype = IPSTACK_SOCK_STREAM;
     ai_hints.ai_addr = NULL;
     ai_hints.ai_canonname = NULL;
     ai_hints.ai_next = NULL;
@@ -383,15 +383,15 @@ static int _modbus_tcp_pi_connect(modbus_t *ctx)
                      &ai_hints, &ai_list);
     if (rc != 0) {
         if (ctx->debug) {
-            fprintf(stderr, "Error returned by getaddrinfo: %s\n", gai_strerror(rc));
+            fprintf(stderr, "Error returned by ipstack_getaddrinfo: %s\n", gai_strerror(rc));
         }
-        errno = ECONNREFUSED;
+        ipstack_errno = ECONNREFUSED;
         return -1;
     }
 
     for (ai_ptr = ai_list; ai_ptr != NULL; ai_ptr = ai_ptr->ai_next) {
         int flags = ai_ptr->ai_socktype;
-        int s;
+        zpl_socket_t s;
 
 #ifdef SOCK_CLOEXEC
         flags |= SOCK_CLOEXEC;
@@ -402,10 +402,10 @@ static int _modbus_tcp_pi_connect(modbus_t *ctx)
 #endif
 
         s = ipstack_socket(IPCOM_STACK, ai_ptr->ai_family, flags, ai_ptr->ai_protocol);
-        if (s < 0)
+        if (ipstack_invalid(s))
             continue;
 
-        if (ai_ptr->ai_family == AF_INET)
+        if (ai_ptr->ai_family == IPSTACK_AF_INET)
             _modbus_tcp_set_ipv4_options(s);
 
         if (ctx->debug) {
@@ -422,9 +422,9 @@ static int _modbus_tcp_pi_connect(modbus_t *ctx)
         break;
     }
 
-    freeaddrinfo(ai_list);
+    ipstack_freeaddrinfo(ai_list);
 
-    if (ctx->s < 0) {
+    if (ipstack_invalid(ctx->s)) {
         return -1;
     }
 
@@ -434,10 +434,10 @@ static int _modbus_tcp_pi_connect(modbus_t *ctx)
 /* Closes the network connection and socket in TCP mode */
 static void _modbus_tcp_close(modbus_t *ctx)
 {
-    if (ctx->s != -1) {
-        ipstack_shutdown(ctx->s, SHUT_RDWR);
+    if (!ipstack_invalid(ctx->s)) {
+        ipstack_shutdown(ctx->s, IPSTACK_SHUT_RDWR);
         ipstack_close(ctx->s);
-        ctx->s = -1;
+        //ctx->s = -1;
     }
 }
 
@@ -479,90 +479,90 @@ static int _modbus_tcp_flush(modbus_t *ctx)
 }
 
 /* Listens for any request from one or many modbus masters in TCP */
-int modbus_tcp_listen(modbus_t *ctx, int nb_connection)
+zpl_socket_t modbus_tcp_listen(modbus_t *ctx, int nb_connection)
 {
-    int new_s;
+    zpl_socket_t new_s;
     int enable;
     int flags;
-    struct sockaddr_in addr;
+    struct ipstack_sockaddr_in addr;
     modbus_tcp_t *ctx_tcp;
 
     if (ctx == NULL) {
-        errno = EINVAL;
-        return -1;
+        ipstack_errno = EINVAL;
+        return new_s;
     }
 
     ctx_tcp = ctx->backend_data;
 
 #ifdef OS_WIN32
     if (_modbus_tcp_init_win32() == -1) {
-        return -1;
+        return new_s;
     }
 #endif
 
-    flags = SOCK_STREAM;
+    flags = IPSTACK_SOCK_STREAM;
 
 #ifdef SOCK_CLOEXEC
     flags |= SOCK_CLOEXEC;
 #endif
 
-    new_s = ipstack_socket(IPCOM_STACK, PF_INET, flags, IPPROTO_TCP);
-    if (new_s == -1) {
-        return -1;
+    new_s = ipstack_socket(IPCOM_STACK, IPSTACK_PF_INET, flags, IPSTACK_IPPROTO_TCP);
+    if (ipstack_invalid(new_s)) {
+        return new_s;
     }
 
     enable = 1;
-    if (ipstack_setsockopt(new_s, SOL_SOCKET, SO_REUSEADDR,
+    if (ipstack_setsockopt(new_s, IPSTACK_SOL_SOCKET, IPSTACK_SO_REUSEADDR,
                    (char *)&enable, sizeof(enable)) == -1) {
         ipstack_close(new_s);
-        return -1;
+        return new_s;
     }
 
     memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
+    addr.sin_family = IPSTACK_AF_INET;
     /* If the modbus port is < to 1024, we need the setuid root. */
     addr.sin_port = htons(ctx_tcp->port);
     if (ctx_tcp->ip[0] == '0') {
         /* Listen any addresses */
-        addr.sin_addr.s_addr = htonl(INADDR_ANY);
+        addr.sin_addr.s_addr = htonl(IPSTACK_INADDR_ANY);
     } else {
         /* Listen only specified IP address */
         addr.sin_addr.s_addr = inet_addr(ctx_tcp->ip);
     }
-    if (ipstack_bind(new_s, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
+    if (ipstack_bind(new_s, (struct ipstack_sockaddr *)&addr, sizeof(addr)) == -1) {
         ipstack_close(new_s);
-        return -1;
+        return new_s;
     }
 
     if (ipstack_listen(new_s, nb_connection) == -1) {
         ipstack_close(new_s);
-        return -1;
+        return new_s;
     }
 
     return new_s;
 }
 
-int modbus_tcp_pi_listen(modbus_t *ctx, int nb_connection)
+zpl_socket_t modbus_tcp_pi_listen(modbus_t *ctx, int nb_connection)
 {
     int rc;
-    struct addrinfo *ai_list;
-    struct addrinfo *ai_ptr;
-    struct addrinfo ai_hints;
+    struct ipstack_addrinfo *ai_list;
+    struct ipstack_addrinfo *ai_ptr;
+    struct ipstack_addrinfo ai_hints;
     const char *node;
     const char *service;
-    int new_s;
+    zpl_socket_t new_s;
     modbus_tcp_pi_t *ctx_tcp_pi;
 
     if (ctx == NULL) {
-        errno = EINVAL;
-        return -1;
+        ipstack_errno = EINVAL;
+        return new_s;
     }
 
     ctx_tcp_pi = ctx->backend_data;
 
 #ifdef OS_WIN32
     if (_modbus_tcp_init_win32() == -1) {
-        return -1;
+        return new_s;
     }
 #endif
 
@@ -584,8 +584,8 @@ int modbus_tcp_pi_listen(modbus_t *ctx, int nb_connection)
 #ifdef AI_ADDRCONFIG
     ai_hints.ai_flags |= AI_ADDRCONFIG;
 #endif
-    ai_hints.ai_family = AF_UNSPEC;
-    ai_hints.ai_socktype = SOCK_STREAM;
+    ai_hints.ai_family = IPSTACK_AF_UNSPEC;
+    ai_hints.ai_socktype = IPSTACK_SOCK_STREAM;
     ai_hints.ai_addr = NULL;
     ai_hints.ai_canonname = NULL;
     ai_hints.ai_next = NULL;
@@ -594,30 +594,30 @@ int modbus_tcp_pi_listen(modbus_t *ctx, int nb_connection)
     rc = ipstack_getaddrinfo(node, service, &ai_hints, &ai_list);
     if (rc != 0) {
         if (ctx->debug) {
-            fprintf(stderr, "Error returned by getaddrinfo: %s\n", gai_strerror(rc));
+            fprintf(stderr, "Error returned by ipstack_getaddrinfo: %s\n", gai_strerror(rc));
         }
-        errno = ECONNREFUSED;
-        return -1;
+        ipstack_errno = ECONNREFUSED;
+        return new_s;
     }
 
-    new_s = -1;
+    //new_s = -1;
     for (ai_ptr = ai_list; ai_ptr != NULL; ai_ptr = ai_ptr->ai_next) {
         int flags = ai_ptr->ai_socktype;
-        int s;
+        zpl_socket_t s;
 
 #ifdef SOCK_CLOEXEC
         flags |= SOCK_CLOEXEC;
 #endif
 
         s = ipstack_socket(IPCOM_STACK, ai_ptr->ai_family, flags, ai_ptr->ai_protocol);
-        if (s < 0) {
+        if (ipstack_invalid(s)) {
             if (ctx->debug) {
                 perror("socket");
             }
             continue;
         } else {
             int enable = 1;
-            rc = ipstack_setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
+            rc = ipstack_setsockopt(s, IPSTACK_SOL_SOCKET, IPSTACK_SO_REUSEADDR,
                             (void *)&enable, sizeof (enable));
             if (rc != 0) {
                 ipstack_close(s);
@@ -651,33 +651,33 @@ int modbus_tcp_pi_listen(modbus_t *ctx, int nb_connection)
     }
     ipstack_freeaddrinfo(ai_list);
 
-    if (new_s < 0) {
-        return -1;
+    if (ipstack_invalid(new_s)) {
+        return new_s;
     }
 
     return new_s;
 }
 
-int modbus_tcp_accept(modbus_t *ctx, int *s)
+zpl_socket_t modbus_tcp_accept(modbus_t *ctx, zpl_socket_t *s)
 {
-    struct sockaddr_in addr;
+    struct ipstack_sockaddr_in addr;
     socklen_t addrlen;
-
+    zpl_socket_t    tmp;    
     if (ctx == NULL) {
-        errno = EINVAL;
-        return -1;
+        ipstack_errno = EINVAL;
+        return tmp;
     }
 
     addrlen = sizeof(addr);
 #ifdef HAVE_ACCEPT4
     /* Inherit socket flags and use accept4 call */
-    ctx->s = accept4(*s, (struct sockaddr *)&addr, &addrlen, SOCK_CLOEXEC);
+    ctx->s = accept4(*s, (struct ipstack_sockaddr *)&addr, &addrlen, SOCK_CLOEXEC);
 #else
-    ctx->s = ipstack_accept(*s, (struct sockaddr *)&addr, &addrlen);
+    ctx->s = ipstack_accept(*s, (struct ipstack_sockaddr *)&addr, &addrlen);
 #endif
 
-    if (ctx->s == -1) {
-        return -1;
+    if (ipstack_invalid(ctx->s)) {
+        return tmp;
     }
 
     if (ctx->debug) {
@@ -688,26 +688,26 @@ int modbus_tcp_accept(modbus_t *ctx, int *s)
     return ctx->s;
 }
 
-int modbus_tcp_pi_accept(modbus_t *ctx, int *s)
+zpl_socket_t modbus_tcp_pi_accept(modbus_t *ctx, zpl_socket_t *s)
 {
-    struct sockaddr_storage addr;
+    struct ipstack_sockaddr_storage addr;
     socklen_t addrlen;
-
+    zpl_socket_t tmp;
     if (ctx == NULL) {
-        errno = EINVAL;
-        return -1;
+        ipstack_errno = EINVAL;
+        return tmp;
     }
 
     addrlen = sizeof(addr);
 #ifdef HAVE_ACCEPT4
     /* Inherit socket flags and use accept4 call */
-    ctx->s = accept4(*s, (struct sockaddr *)&addr, &addrlen, SOCK_CLOEXEC);
+    ctx->s = accept4(*s, (struct ipstack_sockaddr *)&addr, &addrlen, SOCK_CLOEXEC);
 #else
-    ctx->s = ipstack_accept(*s, (struct sockaddr *)&addr, &addrlen);
+    ctx->s = ipstack_accept(*s, (struct ipstack_sockaddr *)&addr, &addrlen);
 #endif
 
-    if (ctx->s == -1) {
-        return -1;
+    if (ipstack_invalid(ctx->s)) {
+        return tmp;
     }
 
     if (ctx->debug) {
@@ -717,24 +717,24 @@ int modbus_tcp_pi_accept(modbus_t *ctx, int *s)
     return ctx->s;
 }
 
-static int _modbus_tcp_select(modbus_t *ctx, fd_set *rset, struct timeval *tv, int length_to_read)
+static int _modbus_tcp_select(modbus_t *ctx, ipstack_fd_set *rset, struct timeval *tv, int length_to_read)
 {
     int s_rc;
-    while ((s_rc = ipstack_select(IPCOM_STACK, ctx->s+1, rset, NULL, NULL, tv)) == -1) {
-        if (errno == EINTR) {
+    while ((s_rc = ipstack_select(IPCOM_STACK, ctx->s._fd+1, rset, NULL, NULL, tv)) == -1) {
+        if (ipstack_errno == EINTR) {
             if (ctx->debug) {
                 fprintf(stderr, "A non blocked signal was caught\n");
             }
             /* Necessary after an error */
-            FD_ZERO(rset);
-            FD_SET(ctx->s, rset);
+            IPSTACK_FD_ZERO(rset);
+            IPSTACK_FD_SET(ctx->s._fd, rset);
         } else {
             return -1;
         }
     }
 
     if (s_rc == 0) {
-        errno = ETIMEDOUT;
+        ipstack_errno = ETIMEDOUT;
         return -1;
     }
 
@@ -825,7 +825,7 @@ modbus_t* modbus_new_tcp(const char *ip, int port)
     ctx->backend_data = (modbus_tcp_t *)malloc(sizeof(modbus_tcp_t));
     if (ctx->backend_data == NULL) {
         modbus_free(ctx);
-        errno = ENOMEM;
+        ipstack_errno = ENOMEM;
         return NULL;
     }
     ctx_tcp = (modbus_tcp_t *)ctx->backend_data;
@@ -836,14 +836,14 @@ modbus_t* modbus_new_tcp(const char *ip, int port)
         if (ret_size == 0) {
             fprintf(stderr, "The IP string is empty\n");
             modbus_free(ctx);
-            errno = EINVAL;
+            ipstack_errno = EINVAL;
             return NULL;
         }
 
         if (ret_size >= dest_size) {
             fprintf(stderr, "The IP string has been truncated\n");
             modbus_free(ctx);
-            errno = EINVAL;
+            ipstack_errno = EINVAL;
             return NULL;
         }
     } else {
@@ -877,7 +877,7 @@ modbus_t* modbus_new_tcp_pi(const char *node, const char *service)
     ctx->backend_data = (modbus_tcp_pi_t *)malloc(sizeof(modbus_tcp_pi_t));
     if (ctx->backend_data == NULL) {
         modbus_free(ctx);
-        errno = ENOMEM;
+        ipstack_errno = ENOMEM;
         return NULL;
     }
     ctx_tcp_pi = (modbus_tcp_pi_t *)ctx->backend_data;
@@ -891,14 +891,14 @@ modbus_t* modbus_new_tcp_pi(const char *node, const char *service)
         if (ret_size == 0) {
             fprintf(stderr, "The node string is empty\n");
             modbus_free(ctx);
-            errno = EINVAL;
+            ipstack_errno = EINVAL;
             return NULL;
         }
 
         if (ret_size >= dest_size) {
             fprintf(stderr, "The node string has been truncated\n");
             modbus_free(ctx);
-            errno = EINVAL;
+            ipstack_errno = EINVAL;
             return NULL;
         }
     }
@@ -914,14 +914,14 @@ modbus_t* modbus_new_tcp_pi(const char *node, const char *service)
     if (ret_size == 0) {
         fprintf(stderr, "The service string is empty\n");
         modbus_free(ctx);
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return NULL;
     }
 
     if (ret_size >= dest_size) {
         fprintf(stderr, "The service string has been truncated\n");
         modbus_free(ctx);
-        errno = EINVAL;
+        ipstack_errno = EINVAL;
         return NULL;
     }
 

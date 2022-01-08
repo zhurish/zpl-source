@@ -59,7 +59,7 @@ struct vty
   /* output FD, to support stdin/stdout combination */
   zpl_socket_t wfd;
 
-  /* Is this vty connect to file or not */
+  /* Is this vty ipstack_connect to file or not */
   enum {VTY_TERM, VTY_FILE, VTY_SHELL, VTY_SHELL_SERV} type;
 
   //zpl_int32 fd_type;
@@ -187,21 +187,34 @@ struct vty
   void		*priv;
 };
 
+#ifdef VTYSH
+#pragma pack(1)
+typedef struct vtysh_hdr_s
+{
+    zpl_uint32 retcode;
+    zpl_uint32 retlen;
+}vtysh_hdr_t;
+#endif /* VTYSH */
 /* Master of the threads. */
 typedef struct tty_console_s
 {
 	struct tty_com	ttycom;
 	struct vty *vty;
 	void (*vty_atclose)(void);
-	struct thread *t_wait;
+	void *t_wait;
 }tty_console_t;
 
 typedef struct cli_shell_s
 {
   vector vtyvec;
   vector serv_thread;
-  struct thread_master *console_master;
-  struct eloop_master *telnet_master;
+  void *console_master;
+  void *telnet_master;
+  zpl_uint32 console_taskid;
+#ifdef ZPL_IPCOM_STACK_MODULE
+  zpl_uint32 telnet_taskid;
+#endif
+  zpl_bool  console_enable;
 	tty_console_t *_pvty_console;
   int do_log_commands;
   void (*vty_ctrl_cmd)(zpl_uint32 ctrl, struct vty *vty);
@@ -246,9 +259,9 @@ extern cli_shell_t  cli_shell;
 #define VTY_GET_ULONG(NAME,V,STR) \
 do { \
   zpl_char *endptr = NULL; \
-  errno = 0; \
+  ipstack_errno = 0; \
   (V) = strtoul ((STR), &endptr, 10); \
-  if (*(STR) == '-' || *endptr != '\0' || errno) \
+  if (*(STR) == '-' || *endptr != '\0' || ipstack_errno) \
     { \
       vty_out (vty, "%% Invalid %s value%s", NAME, VTY_NEWLINE); \
       return CMD_WARNING; \
@@ -364,12 +377,13 @@ extern int vty_write_hello(struct vty *vty);
 extern int vty_console_init(const char *tty, void (*atclose)());
 
 
-extern void vty_init (void *, void *);
+extern void vty_init (void);
 extern void vty_tty_init(zpl_char *tty);
 extern void vty_init_vtysh (void);
 extern void vty_terminate (void);
 extern void vty_reset (void);
-
+extern void vty_task_init (void);
+extern void vty_task_exit (void);
 extern void vty_serv_init (const char *, zpl_ushort, const char *, const char *);
 
 
@@ -388,7 +402,7 @@ extern void vty_log_fixed (zpl_char *buf, zpl_size_t len);
 
 extern zpl_char *vty_get_cwd (void);
 
-
+extern int cmd_vty_init();
 
 
 

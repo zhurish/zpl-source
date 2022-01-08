@@ -227,7 +227,7 @@ int if_make_llc_type(struct interface *ifp)
 	case IF_LOOPBACK:
 		ifp->ll_type = ZEBRA_LLT_LOOPBACK;
 		ifp->if_mode = IF_MODE_L3;
-		ifp->flags |= IFF_LOOPBACK;
+		ifp->flags |= IPSTACK_IFF_LOOPBACK;
 		break;
 
 	case IF_BRIGDE:
@@ -329,7 +329,7 @@ if_create_vrf_dynamic(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 #else
 	ifp->if_mode = IF_MODE_ACCESS_L2;
 #endif
-	ifp->flags |= IFF_UP | IFF_RUNNING;
+	ifp->flags |= IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING;
 
 	if_make_llc_type(ifp);
 
@@ -394,7 +394,7 @@ if_create_vrf(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 #else
 	ifp->if_mode = IF_MODE_ACCESS_L2;
 #endif
-	ifp->flags |= IFF_UP | IFF_RUNNING;
+	ifp->flags |= IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING;
 
 	if_make_llc_type(ifp);
 
@@ -665,13 +665,13 @@ ifindex_t if_vlan2ifindex(zpl_vlan_t encavlan)
 	return IFINDEX_INTERNAL;
 }
 
-zpl_uint32  if_ifindex2phy(ifindex_t ifindex)
+zpl_phyport_t  if_ifindex2phy(ifindex_t ifindex)
 {
 	struct interface *ifp = if_lookup_by_index(ifindex);
 	return ifp ? ifp->phyid : IFINDEX_INTERNAL;
 }
 
-ifindex_t  if_phy2ifindex(zpl_uint32 phyid)
+ifindex_t  if_phy2ifindex(zpl_phyport_t phyid)
 {
 	struct listnode *node;
 	struct interface *ifp;
@@ -705,7 +705,7 @@ struct interface *if_lookup_by_encavlan(zpl_ushort encavlan)
 }
 /* Lookup interface by IPv4 address. */
 struct interface *
-if_lookup_exact_address_vrf(struct in_addr src, vrf_id_t vrf_id)
+if_lookup_exact_address_vrf(struct ipstack_in_addr src, vrf_id_t vrf_id)
 {
 	struct listnode *node;
 	struct listnode *cnode;
@@ -721,7 +721,7 @@ if_lookup_exact_address_vrf(struct in_addr src, vrf_id_t vrf_id)
 			{
 				p = c->address;
 
-				if (p && p->family == AF_INET)
+				if (p && p->family == IPSTACK_AF_INET)
 				{
 					if (IPV4_ADDR_SAME(&p->u.prefix4, &src))
 						return ifp;
@@ -733,14 +733,14 @@ if_lookup_exact_address_vrf(struct in_addr src, vrf_id_t vrf_id)
 }
 
 struct interface *
-if_lookup_exact_address(struct in_addr src)
+if_lookup_exact_address(struct ipstack_in_addr src)
 {
 	return if_lookup_exact_address_vrf(src, VRF_DEFAULT);
 }
 
 /* Lookup interface by IPv4 address. */
 struct interface *
-if_lookup_address_vrf(struct in_addr src, vrf_id_t vrf_id)
+if_lookup_address_vrf(struct ipstack_in_addr src, vrf_id_t vrf_id)
 {
 	struct listnode *node;
 	struct prefix addr;
@@ -750,7 +750,7 @@ if_lookup_address_vrf(struct in_addr src, vrf_id_t vrf_id)
 	struct connected *c;
 	struct interface *match;
 
-	addr.family = AF_INET;
+	addr.family = IPSTACK_AF_INET;
 	addr.u.prefix4 = src;
 	addr.prefixlen = IPV4_MAX_BITLEN;
 
@@ -762,7 +762,7 @@ if_lookup_address_vrf(struct in_addr src, vrf_id_t vrf_id)
 		{
 			for (ALL_LIST_ELEMENTS_RO(ifp->connected, cnode, c))
 			{
-				if (c->address && (c->address->family == AF_INET) && prefix_match(CONNECTED_PREFIX(c), &addr) && (c->address->prefixlen > bestlen))
+				if (c->address && (c->address->family == IPSTACK_AF_INET) && prefix_match(CONNECTED_PREFIX(c), &addr) && (c->address->prefixlen > bestlen))
 				{
 					bestlen = c->address->prefixlen;
 					match = ifp;
@@ -774,7 +774,7 @@ if_lookup_address_vrf(struct in_addr src, vrf_id_t vrf_id)
 }
 
 struct interface *
-if_lookup_address(struct in_addr src)
+if_lookup_address(struct ipstack_in_addr src)
 {
 	return if_lookup_address_vrf(src, VRF_DEFAULT);
 }
@@ -843,14 +843,14 @@ int if_up(struct interface *ifp)
 	{
 		p = connected->address;
 
-		if (p->family == AF_INET)
+		if (p->family == IPSTACK_AF_INET)
 			connected_up_ipv4(ifp, connected);
 #ifdef HAVE_IPV6
-		else if (p->family == AF_INET6)
+		else if (p->family == IPSTACK_AF_INET6)
 			connected_up_ipv6(ifp, connected);
 #endif /* HAVE_IPV6 */
 	}
-	ifp->flags |= IFF_UP | IFF_RUNNING;
+	ifp->flags |= IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING;
 /* Examine all static routes. */
 #ifdef ZPL_NSM_MODULE
 	rib_update(ifp->vrf_id);
@@ -871,14 +871,14 @@ int if_down(struct interface *ifp)
 	for (ALL_LIST_ELEMENTS_RO(ifp->connected, node, connected))
 	{
 		p = connected->address;
-		if (p->family == AF_INET)
+		if (p->family == IPSTACK_AF_INET)
 			connected_down_ipv4(ifp, connected);
 #ifdef HAVE_IPV6
-		else if (p->family == AF_INET6)
+		else if (p->family == IPSTACK_AF_INET6)
 			connected_down_ipv6(ifp, connected);
 #endif /* HAVE_IPV6 */
 	}
-	ifp->flags &= ~(IFF_UP | IFF_RUNNING);
+	ifp->flags &= ~(IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING);
 /* Examine all static routes which direct to the interface. */
 #ifdef ZPL_NSM_MODULE
 	rib_update(ifp->vrf_id);
@@ -888,20 +888,20 @@ int if_down(struct interface *ifp)
 /* Does interface up ? */
 zpl_bool if_is_up(struct interface *ifp)
 {
-	return ifp->flags & IFF_UP;
+	return ifp->flags & IPSTACK_IFF_UP;
 }
 
 /* Is interface running? */
 zpl_bool if_is_running(struct interface *ifp)
 {
-	return ifp->flags & IFF_RUNNING;
+	return ifp->flags & IPSTACK_IFF_RUNNING;
 }
 
 /* Is the interface operative, eg. either UP & RUNNING
  or UP & !ZEBRA_INTERFACE_LINK_DETECTION */
 zpl_bool if_is_operative(struct interface *ifp)
 {
-	return ((ifp->flags & IFF_UP) && (ifp->flags & IFF_RUNNING || !CHECK_FLAG(ifp->status, ZEBRA_INTERFACE_LINKDETECTION)));
+	return ((ifp->flags & IPSTACK_IFF_UP) && (ifp->flags & IPSTACK_IFF_RUNNING || !CHECK_FLAG(ifp->status, ZEBRA_INTERFACE_LINKDETECTION)));
 }
 
 /* Is this loopback interface ? */
@@ -910,63 +910,63 @@ zpl_bool if_is_loopback(struct interface *ifp)
 	/* XXX: Do this better, eg what if IFF_WHATEVER means X on platform M
 	 * but Y on platform N?
 	 */
-	return (ifp->flags & (IFF_LOOPBACK | IFF_NOXMIT | IFF_VIRTUAL));
+	return (ifp->flags & (IPSTACK_IFF_LOOPBACK | IFF_NOXMIT | IFF_VIRTUAL));
 }
 
 /* Does this interface support broadcast ? */
 zpl_bool if_is_broadcast(struct interface *ifp)
 {
-	return ifp->flags & IFF_BROADCAST;
+	return ifp->flags & IPSTACK_IFF_BROADCAST;
 }
 
 /* Does this interface support broadcast ? */
 zpl_bool if_is_pointopoint(struct interface *ifp)
 {
-	return ifp->flags & IFF_POINTOPOINT;
+	return ifp->flags & IPSTACK_IFF_POINTOPOINT;
 }
 
 /* Does this interface support multicast ? */
 zpl_bool if_is_multicast(struct interface *ifp)
 {
-	return ifp->flags & IFF_MULTICAST;
+	return ifp->flags & IPSTACK_IFF_MULTICAST;
 }
 
 zpl_bool if_is_serial(struct interface *ifp)
 {
 	if (os_strstr(ifp->name, "serial"))
-		return 1;
+		return zpl_true;
 	if (ifp->if_type == IF_SERIAL)
-		return 1;
+		return zpl_true;
 	/*	if(ifp->zebra_link_type == IF_SERIAL)
 		return 1;*/
-	return 0;
+	return zpl_false;
 }
 
 zpl_bool if_is_ethernet(struct interface *ifp)
 {
 	if (os_strstr(ifp->name, "ethernet"))
-		return 1;
+		return zpl_true;
 	if (ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET)
-		return 1;
-	return 0;
+		return zpl_true;
+	return zpl_false;
 }
 
 zpl_bool if_is_tunnel(struct interface *ifp)
 {
 	if (os_strstr(ifp->name, "tunnel"))
-		return 1;
+		return zpl_true;
 	if (ifp->if_type == IF_TUNNEL)
-		return 1;
-	return 0;
+		return zpl_true;
+	return zpl_false;
 }
 
 zpl_bool if_is_lag(struct interface *ifp)
 {
 	if (os_strstr(ifp->name, "port-channel"))
-		return 1;
+		return zpl_true;
 	if (ifp->if_type == IF_LAG)
-		return 1;
-	return 0;
+		return zpl_true;
+	return zpl_false;
 }
 
 zpl_bool if_is_lag_member(struct interface *ifp)
@@ -977,17 +977,17 @@ zpl_bool if_is_lag_member(struct interface *ifp)
 zpl_bool if_is_vlan(struct interface *ifp)
 {
 	if (os_strstr(ifp->name, "vlan"))
-		return 1;
+		return zpl_true;
 	if (ifp->if_type == IF_VLAN)
-		return 1;
-	return 0;
+		return zpl_true;
+	return zpl_false;
 }
 
 zpl_bool if_is_brigde(struct interface *ifp)
 {
 	if (ifp->if_type == IF_BRIGDE)
-		return 1;
-	return 0;
+		return zpl_true;
+	return zpl_false;
 }
 
 zpl_bool if_is_brigde_member(struct interface *ifp)
@@ -998,17 +998,30 @@ zpl_bool if_is_brigde_member(struct interface *ifp)
 zpl_bool if_is_loop(struct interface *ifp)
 {
 	if (ifp->if_type == IF_LOOPBACK)
-		return 1;
-	return 0;
+		return zpl_true;
+	return zpl_false;
 }
 
 zpl_bool if_is_wireless(struct interface *ifp)
 {
 	if (os_strstr(ifp->name, "wireless"))
-		return 1;
+		return zpl_true;
 	if (ifp->if_type == IF_WIRELESS)
-		return 1;
-	return 0;
+		return zpl_true;
+	return zpl_false;
+}
+
+zpl_bool if_is_online(struct interface *ifp)
+{
+	if (ifp->online)
+		return zpl_true;
+	return zpl_false;
+}
+
+int if_online(struct interface *ifp, zpl_bool enable)
+{
+	ifp->online = enable;
+	return OK;
 }
 
 int if_name_set(struct interface *ifp, const char *str)
@@ -1133,11 +1146,11 @@ static int connected_same_prefix(struct prefix *p1, struct prefix *p2)
 {
 	if (p1->family == p2->family)
 	{
-		if (p1->family == AF_INET &&
+		if (p1->family == IPSTACK_AF_INET &&
 			IPV4_ADDR_SAME(&p1->u.prefix4, &p2->u.prefix4))
 			return 1;
 #ifdef HAVE_IPV6
-		if (p1->family == AF_INET6 &&
+		if (p1->family == IPSTACK_AF_INET6 &&
 			IPV6_ADDR_SAME(&p1->u.prefix6, &p2->u.prefix6))
 			return 1;
 #endif /* HAVE_IPV6 */
@@ -1170,14 +1183,14 @@ connected_delete_by_prefix(struct interface *ifp, struct prefix *p)
 /* Find the IPv4 address on our side that will be used when packets
  are sent to dst. */
 struct connected *
-connected_lookup_address(struct interface *ifp, struct in_addr dst)
+connected_lookup_address(struct interface *ifp, struct ipstack_in_addr dst)
 {
 	struct prefix addr;
 	struct listnode *cnode;
 	struct connected *c;
 	struct connected *match;
 
-	addr.family = AF_INET;
+	addr.family = IPSTACK_AF_INET;
 	addr.u.prefix4 = dst;
 	addr.prefixlen = IPV4_MAX_BITLEN;
 
@@ -1185,7 +1198,7 @@ connected_lookup_address(struct interface *ifp, struct in_addr dst)
 
 	for (ALL_LIST_ELEMENTS_RO(ifp->connected, cnode, c))
 	{
-		if (c->address && (c->address->family == AF_INET) && prefix_match(CONNECTED_PREFIX(c), &addr) && (!match || (c->address->prefixlen > match->address->prefixlen)))
+		if (c->address && (c->address->family == IPSTACK_AF_INET) && prefix_match(CONNECTED_PREFIX(c), &addr) && (!match || (c->address->prefixlen > match->address->prefixlen)))
 			match = c;
 	}
 	return match;
@@ -1274,22 +1287,32 @@ if_flag_dump(zpl_ulong flag)
 	}
 
 	strlcpy(logbuf, "<", BUFSIZ);
-	IFF_OUT_LOG(IFF_UP, "UP");
-	IFF_OUT_LOG(IFF_BROADCAST, "BROADCAST");
-	IFF_OUT_LOG(IFF_DEBUG, "DEBUG");
-	IFF_OUT_LOG(IFF_LOOPBACK, "LOOPBACK");
-	IFF_OUT_LOG(IFF_POINTOPOINT, "POINTOPOINT");
+	IFF_OUT_LOG(IPSTACK_IFF_UP, "UP");
+	IFF_OUT_LOG(IPSTACK_IFF_BROADCAST, "BROADCAST");
+	IFF_OUT_LOG(IPSTACK_IFF_DEBUG, "DEBUG");
+	IFF_OUT_LOG(IPSTACK_IFF_LOOPBACK, "LOOPBACK");
+	IFF_OUT_LOG(IPSTACK_IFF_POINTOPOINT, "POINTOPOINT");
 	IFF_OUT_LOG(IFF_NOTRAILERS, "NOTRAILERS");
-	IFF_OUT_LOG(IFF_RUNNING, "RUNNING");
-	IFF_OUT_LOG(IFF_NOARP, "NOARP");
-	IFF_OUT_LOG(IFF_PROMISC, "PROMISC");
-	IFF_OUT_LOG(IFF_ALLMULTI, "ALLMULTI");
-	IFF_OUT_LOG(IFF_OACTIVE, "OACTIVE");
-	IFF_OUT_LOG(IFF_SIMPLEX, "SIMPLEX");
-	IFF_OUT_LOG(IFF_LINK0, "LINK0");
-	IFF_OUT_LOG(IFF_LINK1, "LINK1");
-	IFF_OUT_LOG(IFF_LINK2, "LINK2");
-	IFF_OUT_LOG(IFF_MULTICAST, "MULTICAST");
+	IFF_OUT_LOG(IPSTACK_IFF_RUNNING, "RUNNING");
+	IFF_OUT_LOG(IPSTACK_IFF_NOARP, "NOARP");
+	IFF_OUT_LOG(IPSTACK_IFF_PROMISC, "PROMISC");
+	IFF_OUT_LOG(IPSTACK_IFF_ALLMULTI, "ALLMULTI");
+	#ifdef IPSTACK_IFF_OACTIVE
+	IFF_OUT_LOG(IPSTACK_IFF_OACTIVE, "OACTIVE");
+	#endif
+	#ifdef IPSTACK_IFF_SIMPLEX
+	IFF_OUT_LOG(IPSTACK_IFF_SIMPLEX, "SIMPLEX");
+	#endif
+	#ifdef IPSTACK_IFF_LINK0
+	IFF_OUT_LOG(IPSTACK_IFF_LINK0, "LINK0");
+	#endif
+	#ifdef IPSTACK_IFF_LINK1
+	IFF_OUT_LOG(IPSTACK_IFF_LINK1, "LINK1");
+	#endif
+	#ifdef IPSTACK_IFF_LINK2
+	IFF_OUT_LOG(IPSTACK_IFF_LINK2, "LINK2");
+	#endif
+	IFF_OUT_LOG(IPSTACK_IFF_MULTICAST, "MULTICAST");
 	IFF_OUT_LOG(IFF_NOXMIT, "NOXMIT");
 	IFF_OUT_LOG(IFF_NORTEXCH, "NORTEXCH");
 	IFF_OUT_LOG(IFF_VIRTUAL, "VIRTUAL");
@@ -1406,7 +1429,7 @@ netlink_to_zebra_link_type(zpl_uint32  hwt)
 {
 	switch (hwt)
 	{
-	case ARPHRD_ETHER:
+	case IPSTACK_ARPHRD_ETHER:
 		return ZEBRA_LLT_ETHER;
 	case ARPHRD_ATM:
 		return ZEBRA_LLT_ATM;

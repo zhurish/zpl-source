@@ -378,7 +378,10 @@ int qos_access_list_destroy(char *name)
         qos_access_filter_list_t *node = _qos_access_list_list_lookup_layer(name);
         if (node)
         {
-            return _qos_access_list_list_del_layer(node);
+            if(node->ref_cnt == 0)
+                return _qos_access_list_list_del_layer(node);
+            else if(node->ref_cnt > 0)
+                return ZPL_ERRNO_EBUSY;    
         }
     }
     return ERROR;
@@ -453,6 +456,8 @@ int qos_class_map_add(qos_class_map_t *node)
 
 int qos_class_map_del(qos_class_map_t *node)
 {
+    if(node->ref_cnt > 0)
+        return ZPL_ERRNO_EBUSY; 
     if (_global_qos_access_list.class_map_mutex)
         os_mutex_lock(_global_qos_access_list.class_map_mutex, OS_WAIT_FOREVER);
     lstDelete(&_global_qos_access_list.class_map_list, (NODE *)node);
@@ -604,6 +609,8 @@ int qos_service_policy_add(qos_service_policy_t *node)
 
 int qos_service_policy_del(qos_service_policy_t *node)
 {
+    if(node->ref_cnt > 0)
+        return ZPL_ERRNO_EBUSY; 
     if (_global_qos_access_list.service_policy_mutex)
         os_mutex_lock(_global_qos_access_list.service_policy_mutex, OS_WAIT_FOREVER);
     if(node->ref_cnt == 0)
@@ -643,6 +650,7 @@ int qos_service_policy_bind_class_map_set(qos_service_policy_t *node, char *name
         os_mutex_unlock(_global_qos_access_list.service_policy_mutex);
     return ret;
 }
+
 char * qos_service_policy_bind_class_map_get(qos_service_policy_t *node)
 {
     if(strlen(node->class_name))

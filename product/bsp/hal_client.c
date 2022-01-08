@@ -4,21 +4,23 @@
 #include "hal_client.h"
 #include <sys/un.h>
 
-static hal_bsp_t  hal_bsp;
+static hal_bsp_t hal_bsp;
 
-struct module_list module_list_sdk = 
-{ 
-	.module=MODULE_SDK, 
-	.name="SDK", 
-	.module_init=NULL, 
-	.module_exit=NULL, 
-	.module_task_init=NULL, 
-	.module_task_exit=NULL, 
-	.module_cmd_init=NULL, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
-	.taskid=0,
+struct module_list module_list_bsp =
+    {
+        .module = MODULE_BSP,
+        .name = "BSP",
+        .module_init = hal_bsp_init,
+        .module_exit = hal_bsp_exit,
+        .module_task_init = hal_bsp_task_init,
+        .module_task_exit = hal_bsp_task_exit,
+        .module_cmd_init = NULL,
+        .module_write_config = NULL,
+        .module_show_config = NULL,
+        .module_show_debug = NULL,
+        .taskid = 0,
+        .master = NULL,
+        .flags = 0,
 };
 /* Zebra client events. */
 enum event
@@ -38,7 +40,7 @@ static struct hal_client *hal_client_new()
   struct hal_client *hal_client;
   hal_client = XCALLOC(MTYPE_HALIPCCLIENT, sizeof(struct hal_client));
   hal_client->ipcmsg.length_max = HAL_IPCMSG_MAX_PACKET_SIZ;
-  hal_client->outmsg.length_max = HAL_IPCMSG_MAX_PACKET_SIZ/2;
+  hal_client->outmsg.length_max = HAL_IPCMSG_MAX_PACKET_SIZ / 2;
   hal_ipcmsg_create(&hal_client->ipcmsg);
   hal_ipcmsg_create(&hal_client->outmsg);
   return hal_client;
@@ -65,10 +67,10 @@ static void hal_client_stop(struct hal_client *hal_client)
   /* Stop threads. */
   THREAD_OFF(hal_client->t_read);
   THREAD_OFF(hal_client->t_connect);
-    hal_ipcmsg_reset(&hal_client->ipcmsg);
+  hal_ipcmsg_reset(&hal_client->ipcmsg);
   hal_ipcmsg_reset(&hal_client->outmsg);
 
-  /* Close socket. */
+  /* Close ipstack_socket. */
   if (!ipstack_invalid(hal_client->sock))
   {
     ipstack_close(hal_client->sock);
@@ -112,7 +114,7 @@ static void hal_client_reset(struct hal_client *hal_client)
   hal_client_stop(hal_client);
   hal_client_event(HAL_EVENT_SCHEDULE, hal_client, 0);
 }
-/* Make socket to zebra daemon. Return zebra socket. */
+/* Make ipstack_socket to zebra daemon. Return zebra ipstack_socket. */
 static zpl_socket_t
 hal_client_socket(int port)
 {
@@ -121,18 +123,18 @@ hal_client_socket(int port)
   struct ipstack_sockaddr_in serv;
 
   /* We should think about IPv6 connection. */
-  sock = ipstack_socket(OS_STACK, AF_INET, SOCK_STREAM, 0);
+  sock = ipstack_socket(OS_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
   if (ipstack_invalid(sock))
     return sock;
 
-  /* Make server socket. */
+  /* Make server ipstack_socket. */
   memset(&serv, 0, sizeof(struct ipstack_sockaddr_in));
-  serv.sin_family = AF_INET;
+  serv.sin_family = IPSTACK_AF_INET;
   serv.sin_port = htons(port);
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
-  serv.sin_len = sizeof(struct sockaddr_in);
+  serv.sin_len = sizeof(struct ipstack_sockaddr_in);
 #endif /* HAVE_STRUCT_SOCKADDR_IN_SIN_LEN */
-  serv.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  serv.sin_addr.s_addr = htonl(IPSTACK_INADDR_LOOPBACK);
 
   /* Connect to zebra. */
   ret = ipstack_connect(sock, (struct ipstack_sockaddr *)&serv, sizeof(serv));
@@ -145,7 +147,7 @@ hal_client_socket(int port)
   return sock;
 }
 
-/* For sockaddr_un. */
+/* For ipstack_sockaddr_un. */
 
 static zpl_socket_t
 hal_client_socket_un(const char *path)
@@ -155,11 +157,11 @@ hal_client_socket_un(const char *path)
   int len = 0;
   struct ipstack_sockaddr_un addr;
 
-  sock = ipstack_socket(OS_STACK, AF_UNIX, SOCK_STREAM, 0);
+  sock = ipstack_socket(OS_STACK, AF_UNIX, IPSTACK_SOCK_STREAM, 0);
   if (ipstack_invalid(sock))
     return sock;
 
-  /* Make server socket. */
+  /* Make server ipstack_socket. */
   memset(&addr, 0, sizeof(struct ipstack_sockaddr_un));
   addr.sun_family = AF_UNIX;
   strncpy(addr.sun_path, path, strlen(path));
@@ -182,7 +184,7 @@ hal_client_socket_un(const char *path)
 /**
  * Connect to zebra daemon.
  * @param hal_client a pointer to hal_client structure
- * @return socket fd just to make sure that connection established
+ * @return ipstack_socket fd just to make sure that connection established
  * @see hal_client_init
  * @see hal_client_new
  */
@@ -193,7 +195,7 @@ hal_client_socket_connect(struct hal_client *hal_client)
     hal_client->sock = hal_client_socket(hal_client->module ? HAL_IPCMSG_EVENT_PORT : HAL_IPCMSG_CMD_PORT);
   else
     hal_client->sock = hal_client_socket_un(hal_client->module ? HAL_IPCMSG_EVENT_PATH : HAL_IPCMSG_CMD_PATH);
-  if(ipstack_invalid(hal_client->sock))
+  if (ipstack_invalid(hal_client->sock))
     return ERROR;
   return OK;
 }
@@ -202,7 +204,7 @@ static int hal_client_send_message(struct hal_client *hal_client, enum hal_ipcms
 {
   int bytes = 0;
   zpl_size_t already = 0;
-  if(ipstack_invalid(hal_client->sock))
+  if (ipstack_invalid(hal_client->sock))
     return ERROR;
   if (hal_client->state != HAL_CLIENT_CONNECT)
   {
@@ -212,7 +214,7 @@ static int hal_client_send_message(struct hal_client *hal_client, enum hal_ipcms
   hal_ipcmsg_msglen_set(&hal_client->outmsg);
   while (1)
   {
-    //bytes = ipstack_write_timeout(hal_client->sock, hal_client->outmsg.buf + already, hal_client->outmsg.setp - already, hal_client->timeout);
+    // bytes = ipstack_write_timeout(hal_client->sock, hal_client->outmsg.buf + already, hal_client->outmsg.setp - already, hal_client->timeout);
     if (bytes == (hal_client->outmsg.setp - already))
       break;
     else if (bytes)
@@ -233,8 +235,7 @@ static int hal_client_hello_send(struct hal_client *hal_client)
   hello->slot = hal_client->slot;
   hello->portnum = hal_client->portnum;
   strcpy(hello->version, hal_client->version);
-  
-  
+
   hal_ipcmsg_create_header(&hal_client->outmsg, IPCCMD_SET(HAL_MODULE_MGT, HAL_MODULE_CMD_HELLO, 0));
   hal_client->outmsg.setp += sizeof(struct hal_ipcmsg_hello);
   return hal_client_send_message(hal_client, 0);
@@ -244,12 +245,12 @@ int hal_client_register(struct hal_client *hal_client, struct hal_ipcmsg_porttbl
 {
   int i = 0;
   hal_ipcmsg_create_header(&hal_client->outmsg, IPCCMD_SET(HAL_MODULE_MGT, HAL_MODULE_CMD_REGISTER, 0));
- 
+
   hal_ipcmsg_putc(&hal_client->outmsg, hal_client->type);
   hal_ipcmsg_putc(&hal_client->outmsg, hal_client->unit);
   hal_ipcmsg_putc(&hal_client->outmsg, hal_client->slot);
   hal_ipcmsg_putc(&hal_client->outmsg, hal_client->portnum);
-  for(i = 0; i < hal_client->portnum; i++)
+  for (i = 0; i < hal_client->portnum; i++)
   {
     hal_ipcmsg_putc(&hal_client->outmsg, porttbl[i].port);
     hal_ipcmsg_putl(&hal_client->outmsg, porttbl[i].phyid);
@@ -257,7 +258,7 @@ int hal_client_register(struct hal_client *hal_client, struct hal_ipcmsg_porttbl
   return hal_client_send_message(hal_client, 0);
 }
 
-int hal_client_send_return(struct hal_client *hal_client, int ret, char *fmt,...)
+int hal_client_send_return(struct hal_client *hal_client, int ret, char *fmt, ...)
 {
   int len = 0;
   va_list args;
@@ -266,12 +267,12 @@ int hal_client_send_return(struct hal_client *hal_client, int ret, char *fmt,...
   hal_ipcmsg_create_header(&hal_client->outmsg, IPCCMD_SET(HAL_MODULE_MGT, HAL_MODULE_CMD_ACK, 0));
   hello->result = htonl(ret);
   hal_client->outmsg.setp += sizeof(struct hal_ipcmsg_result);
-  if(ret != OK)
+  if (ret != OK)
   {
     va_start(args, fmt);
     len = vsnprintf(logbuf, sizeof(logbuf), fmt, args);
     va_end(args);
-    if(len > 0 && len < sizeof(logbuf))
+    if (len > 0 && len < sizeof(logbuf))
       hal_ipcmsg_msg_add(&hal_client->outmsg, logbuf, len);
   }
   return hal_client_send_message(hal_client, 0);
@@ -289,7 +290,7 @@ int hal_client_start(struct hal_client *hal_client)
   if (!ipstack_invalid(hal_client->sock))
     return 0;
 
-  /* Check connect thread. */
+  /* Check ipstack_connect thread. */
   if (hal_client->t_connect)
     return 0;
 
@@ -308,7 +309,7 @@ int hal_client_start(struct hal_client *hal_client)
   /* Clear fail count. */
   hal_client->fail = 0;
   if (hal_client->debug)
-    zlog_debug(MODULE_SDK, "hal_client connect success with socket [%d]", hal_client->sock);
+    zlog_debug(MODULE_SDK, "hal_client ipstack_connect success with ipstack_socket [%d]", hal_client->sock);
 
   hal_client->state = HAL_CLIENT_CONNECT;
   /* Create read thread. */
@@ -351,11 +352,11 @@ hal_client_time(struct thread *thread)
   return OK;
 }
 
-
 /* Zebra client message read function. */
 static int
 hal_client_read(struct thread *thread)
 {
+  int ret = 0;
   zpl_socket_t sock;
   struct hal_client *client = NULL;
   struct hal_ipcmsg_header *hdr = (struct hal_ipcmsg_header *)client->ipcmsg.buf;
@@ -372,7 +373,7 @@ hal_client_read(struct thread *thread)
     if ((nbyte == 0) || (nbyte == -1))
     {
       if (IS_HAL_IPCMSG_DEBUG_EVENT(client->debug))
-        zlog_debug(MODULE_SDK, "connection closed socket [%d]", sock);
+        zlog_debug(MODULE_SDK, "connection closed ipstack_socket [%d]", sock);
       hal_client_reset(client);
       return -1;
     }
@@ -391,19 +392,19 @@ hal_client_read(struct thread *thread)
 
   if (hdr->marker != HAL_IPCMSG_HEADER_MARKER || hdr->version != HAL_IPCMSG_VERSION)
   {
-    zlog_err(MODULE_SDK, "%s: socket %d version mismatch, marker %d, version %d",
+    zlog_err(MODULE_SDK, "%s: ipstack_socket %d version mismatch, marker %d, version %d",
              __func__, sock, hdr->marker, hdr->version);
     return -1;
   }
   if (hdr->length < HAL_IPCMSG_HEADER_SIZE)
   {
-    zlog_warn(MODULE_SDK, "%s: socket %d message length %u is less than header size %d",
+    zlog_warn(MODULE_SDK, "%s: ipstack_socket %d message length %u is less than header size %d",
               __func__, sock, hdr->length, HAL_IPCMSG_HEADER_SIZE);
     return -1;
   }
   if (hdr->length > client->ipcmsg.length_max)
   {
-    zlog_warn(MODULE_SDK, "%s: socket %d message length %u exceeds buffer size %lu",
+    zlog_warn(MODULE_SDK, "%s: ipstack_socket %d message length %u exceeds buffer size %lu",
               __func__, sock, hdr->length, (u_long)(client->ipcmsg.length_max));
     hal_client_reset(client);
     return -1;
@@ -414,7 +415,7 @@ hal_client_read(struct thread *thread)
   {
     ssize_t nbyte;
     if (((nbyte = ipstack_read(sock, client->ipcmsg.buf + client->ipcmsg.setp,
-                       hdr->length - client->ipcmsg.setp)) == 0) ||
+                               hdr->length - client->ipcmsg.setp)) == 0) ||
         (nbyte == -1))
     {
       if (IS_HAL_IPCMSG_DEBUG_EVENT(client->debug))
@@ -434,14 +435,14 @@ hal_client_read(struct thread *thread)
 
   /* Debug packet information. */
   if (IS_HAL_IPCMSG_DEBUG_EVENT(client->debug))
-    zlog_debug(MODULE_SDK, "zebra message comes from socket [%d]", sock);
+    zlog_debug(MODULE_SDK, "zebra message comes from ipstack_socket [%d]", sock);
 
   if (IS_HAL_IPCMSG_DEBUG_PACKET(client->debug) && IS_HAL_IPCMSG_DEBUG_RECV(client->debug))
     zlog_debug(MODULE_SDK, "zebra message received [%s] %d ",
                hal_module_cmd_name(hdr->command), hdr->length);
 
   client->ipcmsg.getp = HAL_IPCMSG_HEADER_SIZE;
-  if(hal_ipcmsg_hdr_unit_get(&client->ipcmsg) == client->unit)
+  if (hal_ipcmsg_hdr_unit_get(&client->ipcmsg) == client->unit)
   {
     switch (IPCCMD_MODULE_GET(hdr->command))
     {
@@ -451,9 +452,21 @@ hal_client_read(struct thread *thread)
         ; // hal_ipcsrv_msg_hello(client, &client->ipcmsg);
       }
       break;
-
+      
     default:
-      zlog_info(MODULE_SDK, "Zebra received unknown command %d", hdr->command);
+      if(IPCCMD_MODULE_GET(hdr->command) <= HAL_MODULE_MGT && 
+        IPCCMD_MODULE_GET(hdr->command) >= HAL_MODULE_MAX)
+      {
+        if(client->bsp_client_msg_handle)
+        {
+          ret = (client->bsp_client_msg_handle)(client, hdr->command, client->bsp_driver);
+          hal_client_send_return(client,  ret, ipstack_strerror(ret));
+        }
+      }
+      else
+      {
+        zlog_info(MODULE_SDK, "Zebra received unknown command %d", hdr->command);
+      }
       break;
     }
   }
@@ -477,7 +490,7 @@ hal_client_event(enum event event, struct hal_client *hal_client, int val)
     if (hal_client->fail >= 10)
       return;
     if (hal_client->debug)
-      zlog_debug(MODULE_SDK, "zclient connect schedule interval is %d", hal_client->fail < 3 ? 10 : 60);
+      zlog_debug(MODULE_SDK, "zclient ipstack_connect schedule interval is %d", hal_client->fail < 3 ? 10 : 60);
     if (!hal_client->t_connect)
       hal_client->t_connect =
           thread_add_timer(hal_client->master, hal_client_connect, hal_client, hal_client->fail < 3 ? 10 : 60);
@@ -491,28 +504,33 @@ hal_client_event(enum event event, struct hal_client *hal_client, int val)
         thread_add_timer(hal_client->master, hal_client_time, hal_client, val);
     break;
   default:
-    break;  
+    break;
   }
 }
 
-
+int hal_client_callback(struct hal_client *hal_client, int (*bsp_handle)(struct hal_client *, zpl_uint32, void *), void *p)
+{
+    hal_client->bsp_client_msg_handle = bsp_handle;
+    hal_client->bsp_driver = p;
+    return OK;
+}
 
 /************************************************************************/
 static int hal_bsp_task(void *p)
 {
-    //int rc = 0;
-	struct thread_master *master = (struct thread_master *)p;
-	module_setup_task(master->module, os_task_id_self());
-	//host_config_load_waitting();
-	while(thread_fetch_main(master))
-		;
-	return OK;
+  // int rc = 0;
+  struct thread_master *master = (struct thread_master *)p;
+  module_setup_task(master->module, os_task_id_self());
+  // host_waitting_loadconfig();
+  while (thread_mainloop(master))
+    ;
+  return OK;
 }
 
 int hal_bsp_init(void)
 {
   struct hal_client *sdk = hal_client_create(MODULE_SDK);
-  if(sdk)
+  if (sdk)
   {
     sdk->debug = 1;
     hal_bsp.halbsp = sdk;
@@ -524,38 +542,42 @@ int hal_bsp_init(void)
   return ERROR;
 }
 
-int hal_bsp_exit()
+int hal_bsp_exit(void)
 {
-	hal_client_destroy(hal_bsp.halbsp);
-	if(hal_bsp.master)
-	{	
-		thread_master_free(hal_bsp.master);	
-		hal_bsp.master = NULL;
-	}
-	return OK;
+  hal_client_destroy(hal_bsp.halbsp);
+  if (hal_bsp.master)
+  {
+    thread_master_free(hal_bsp.master);
+    hal_bsp.master = NULL;
+  }
+  return OK;
 }
 
-int hal_bsp_task_init()
+int hal_bsp_task_init(void)
 {
-	if(!hal_bsp.master)
-	{	
-		hal_bsp.master = thread_master_module_create(MODULE_SDK);
-	}
-	hal_bsp.taskid = os_task_create("sdkTask", OS_TASK_DEFAULT_PRIORITY,
-	               0, hal_bsp_task, hal_bsp.master, OS_TASK_DEFAULT_STACK*4);
-	if(hal_bsp.taskid > 0)
-		return OK;
-	return ERROR;
+  if (!hal_bsp.master)
+  {
+    hal_bsp.master = thread_master_module_create(MODULE_SDK);
+  }
+  if (hal_bsp.taskid <= 0)
+    hal_bsp.taskid = os_task_create("sdkTask", OS_TASK_DEFAULT_PRIORITY,
+                                    0, hal_bsp_task, hal_bsp.master, OS_TASK_DEFAULT_STACK * 4);
+  if (hal_bsp.taskid > 0)
+  {
+    module_setup_task(MODULE_SDK, hal_bsp.taskid);
+    return OK;
+  }
+  return ERROR;
 }
 
-int hal_bsp_task_exit()
+int hal_bsp_task_exit(void)
 {
-	if(hal_bsp.taskid > 0)
-		os_task_destroy(hal_bsp.taskid);
-	if(hal_bsp.master)
-	{	
-		thread_master_free(hal_bsp.master);	
-		hal_bsp.master = NULL;
-	}
-	return OK;
+  if (hal_bsp.taskid > 0)
+    os_task_destroy(hal_bsp.taskid);
+  if (hal_bsp.master)
+  {
+    thread_master_free(hal_bsp.master);
+    hal_bsp.master = NULL;
+  }
+  return OK;
 }

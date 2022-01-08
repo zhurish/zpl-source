@@ -18,6 +18,8 @@
 #include "stdint.h"
 #endif
 
+#include "os_include.h"
+#define HAVE_STRLCPY
 #include "modbus-version.h"
 
 #if defined(_MSC_VER)
@@ -180,8 +182,8 @@ MODBUS_API void modbus_version(char *ver);
 MODBUS_API int modbus_set_slave(modbus_t* ctx, int slave);
 MODBUS_API int modbus_get_slave(modbus_t* ctx);
 MODBUS_API int modbus_set_error_recovery(modbus_t *ctx, modbus_error_recovery_mode error_recovery);
-MODBUS_API int modbus_set_socket(modbus_t *ctx, int s);
-MODBUS_API int modbus_get_socket(modbus_t *ctx);
+MODBUS_API int modbus_set_socket(modbus_t *ctx, zpl_socket_t s);
+MODBUS_API zpl_socket_t modbus_get_socket(modbus_t *ctx);
 
 MODBUS_API int modbus_get_response_timeout(modbus_t *ctx, uint32_t *to_sec, uint32_t *to_usec);
 MODBUS_API int modbus_set_response_timeout(modbus_t *ctx, uint32_t to_sec, uint32_t to_usec);

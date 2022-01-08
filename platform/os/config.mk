@@ -17,7 +17,7 @@ OSOBJ	+= os_file.o
 OSOBJ	+= os_url.o
 OSOBJ	+= os_signal.o
 OSOBJ	+= os_bitmap.o
-
+OSOBJ	+= os_backtrace.o
 ifeq ($(strip $(ZPL_OS_QUEUE)),true)
 OSOBJ	+= os_queue.o			
 endif
@@ -49,6 +49,8 @@ ifeq ($(strip $(ZPL_SHELL_MODULE)),true)
 OSOBJ	+= cmd_os.o
 OSOBJ	+= cmd_nvram_env.o
 endif
+
+OSOBJ	+= os_message.o
 
 OSOBJ	+= libnetpro.o
 OSOBJ	+= osker_list.o

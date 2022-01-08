@@ -262,7 +262,7 @@ static void web_route_one (Webs *wp, struct route_node *rn, struct rib *rib)
 			case NEXTHOP_TYPE_IPV6:
 			case NEXTHOP_TYPE_IPV6_IFINDEX:
 			case NEXTHOP_TYPE_IPV6_IFNAME:
-				snprintf(gateway, sizeof(gateway), "%s", ipstack_inet_ntop (AF_INET6, &nexthop->gate.ipv6, buf, BUFSIZ));
+				snprintf(gateway, sizeof(gateway), "%s", ipstack_inet_ntop (IPSTACK_AF_INET6, &nexthop->gate.ipv6, buf, BUFSIZ));
 			if (nexthop->type == NEXTHOP_TYPE_IPV6_IFNAME)
 			{
 				if(web_type_get() == WEB_TYPE_HOME_WIFI)
@@ -489,8 +489,8 @@ int web_static_ipv4_safi (safi_t safi, int add_cmd,
   int ret;
   zpl_uchar distance;
   struct prefix p;
-  struct in_addr gate;
-  struct in_addr mask;
+  struct ipstack_in_addr gate;
+  struct ipstack_in_addr mask;
   const char *ifname;
   //zpl_uchar flag = 0;
   route_tag_t tag = 0;

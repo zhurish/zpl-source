@@ -840,10 +840,15 @@ int nsm_qos_service_policy_set_api(struct interface *ifp, int input, zpl_char * 
 		{
 			if (service_policy == NULL && qos->service_policy_input.service_policy)
 			{
+				qos_service_policy_reference(qos->service_policy_input.service_policy, zpl_false);
 				free(qos->service_policy_input.service_policy);
+				qos->service_policy_input.service_policy = NULL;
 			}
 			else if (service_policy)
 			{
+				if(qos->service_policy_input.service_policy)
+					free(qos->service_policy_input.service_policy);
+				qos_service_policy_reference(qos->service_policy_input.service_policy, zpl_false);
 				qos->service_policy_input.service_policy = strdup(service_policy);
 			}
 		}
@@ -851,10 +856,15 @@ int nsm_qos_service_policy_set_api(struct interface *ifp, int input, zpl_char * 
 		{
 			if (service_policy == NULL && qos->service_policy_output.service_policy)
 			{
+				qos_service_policy_reference(qos->service_policy_output.service_policy, zpl_false);
 				free(qos->service_policy_output.service_policy);
+				qos->service_policy_output.service_policy = NULL;
 			}
 			else if (service_policy)
 			{
+				if(qos->service_policy_output.service_policy)
+					free(qos->service_policy_output.service_policy);
+				qos_service_policy_reference(qos->service_policy_output.service_policy, zpl_false);
 				qos->service_policy_output.service_policy = strdup(service_policy);
 			}
 		}

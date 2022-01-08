@@ -51,10 +51,13 @@ extern void buffer_putstr (struct buffer *, const char *);
    single NUL-terminated string allocated using XMALLOC(MTYPE_TMP).  Note
    that this function does not alter the state of the buffer, so the data
    is still inside waiting to be flushed. */
-zpl_char *buffer_getstr (struct buffer *);
+extern zpl_char *buffer_getstr (struct buffer *);
 
 /* Returns 1 if there is no pending data in the buffer.  Otherwise returns 0. */
-zpl_bool buffer_empty (struct buffer *);
+extern zpl_bool buffer_empty (struct buffer *);
+extern void *buffer_dataptr(struct buffer *b);
+extern void buffer_putemptyeize(struct buffer *b, zpl_size_t len);
+extern zpl_uint32 buffer_size(struct buffer *b);
 
 typedef enum
   {
@@ -96,7 +99,7 @@ extern buffer_status_t buffer_flush_all (struct buffer *, zpl_socket_t fd);
    If erase is true, then first overwrite the previous " --More-- " message
    with spaces.
 
-   Any write error (including EAGAIN or EINTR) will cause this function
+   Any write error (including IPSTACK_ERRNO_EAGAIN or IPSTACK_ERRNO_EINTR) will cause this function
    to return -1 (because the logic for handling the erase and more features
    is too complicated to retry the write later).
 */

@@ -129,11 +129,11 @@ static int tty_attty_fdopen(struct tty_com *attty)
 	set_blocking(attty->fd);
 	if(attty->fp)
 		return OK;
-	zlog_debug(MODULE_PAL, "fdopen error:%s", safe_strerror(errno));
+	zlog_debug(MODULE_PAL, "fdopen error:%s", ipstack_strerror(ipstack_errno));
 	return ERROR;
 #else
 	assert (attty);
-	set_blocking(attty->fd);
+	os_set_blocking(attty->fd);
 	return OK;
 #endif
 }
@@ -163,20 +163,20 @@ static md_res_en tty_attty_test_close(struct tty_com *attty)
 	assert (attty);
 	//if(len < 0)
 	{
-		if ( errno == EPIPE || errno == EBADF || errno == EIO)
+		if ( ipstack_errno == EPIPE || ipstack_errno == EBADF || ipstack_errno == EIO)
 		{
 			if(tty_com_close(attty) == 0)
 				tty_attty_fclose(attty);
-			MODEM_TTY_DEBUG("-------- %s (%s)",__func__, safe_strerror(errno));
+			MODEM_TTY_DEBUG("-------- %s (%s)",__func__, ipstack_strerror(ipstack_errno));
 			return RES_CLOSE;
 		}
-		else if(errno == EAGAIN || errno == EBUSY || errno == EINTR)
+		else if(ipstack_errno == EAGAIN || ipstack_errno == EBUSY || ipstack_errno == EINTR)
 		{
 			return RES_AGAIN;
 		}
 		if(tty_com_close(attty) == 0)
 			tty_attty_fclose(attty);
-		MODEM_TTY_DEBUG("======= %s (%s)",__func__, safe_strerror(errno));
+		MODEM_TTY_DEBUG("======= %s (%s)",__func__, ipstack_strerror(ipstack_errno));
 		return RES_CLOSE;
 	}
 	return RES_OK;
@@ -198,9 +198,9 @@ static md_res_en tty_attty_select_wait(struct tty_com *attty, int timeout)
 		num = select(attty->fd + 1, &fdset, NULL, NULL, &timer_wait);
 		if (num < 0)
 		{
-			if (errno == EINTR || errno == EAGAIN)
+			if (ipstack_errno == EINTR || ipstack_errno == EAGAIN)
 				continue;
-			if (errno == EPIPE || errno == EBADF || errno == EIO)
+			if (ipstack_errno == EPIPE || ipstack_errno == EBADF || ipstack_errno == EIO)
 			{
 				return RES_CLOSE;
 			}
@@ -231,12 +231,12 @@ static int tty_attty_read(struct tty_com *attty, char *buf, int len)
 	//atcmd_response_t response;
 	if(ioctl(attty->fd, FIONREAD, &bytes) != 0)
 	{
-		if (errno == EPIPE || errno == EBADF || errno == EIO)
+		if (ipstack_errno == EPIPE || ipstack_errno == EBADF || ipstack_errno == EIO)
 		{
-			zlog_err(MODULE_MODEM, " Can not get bytes to read(%s)", safe_strerror(errno));
+			zlog_err(MODULE_MODEM, " Can not get bytes to read(%s)", ipstack_strerror(ipstack_errno));
 			return RES_CLOSE;
 		}
-		zlog_err(MODULE_MODEM, " Can not get bytes to read(%s)", safe_strerror(errno));
+		zlog_err(MODULE_MODEM, " Can not get bytes to read(%s)", ipstack_strerror(ipstack_errno));
 		return RES_ERROR;
 	}
 	if(bytes > 0 && bytes < ATCMD_RESPONSE_MAX)
@@ -260,9 +260,9 @@ static int tty_attty_read(struct tty_com *attty, char *buf, int len)
 			}
 			else
 			{
-				if (errno == EINTR || errno == EAGAIN)
+				if (ipstack_errno == EINTR || ipstack_errno == EAGAIN)
 					continue;
-				else if (errno == EPIPE || errno == EBADF || errno == EIO)
+				else if (ipstack_errno == EPIPE || ipstack_errno == EBADF || ipstack_errno == EIO)
 				{
 					return RES_CLOSE;
 				}
@@ -270,7 +270,7 @@ static int tty_attty_read(struct tty_com *attty, char *buf, int len)
 				{
 					if(ret < 0)
 					{
-						zlog_err(MODULE_MODEM, " Can not read (%s)", safe_strerror(errno));
+						zlog_err(MODULE_MODEM, " Can not read (%s)", ipstack_strerror(ipstack_errno));
 						return RES_ERROR;
 					}
 				}
@@ -305,12 +305,12 @@ try_again:
 	//atcmd_response_t response;
 	if(ioctl(attty->fd, FIONREAD, &bytes) != 0)
 	{
-		if (errno == EPIPE || errno == EBADF || errno == EIO)
+		if (ipstack_errno == EPIPE || ipstack_errno == EBADF || ipstack_errno == EIO)
 		{
-			zlog_err(MODULE_MODEM, " Can not get bytes to read(%s)", safe_strerror(errno));
+			zlog_err(MODULE_MODEM, " Can not get bytes to read(%s)", ipstack_strerror(ipstack_errno));
 			return RES_CLOSE;
 		}
-		zlog_err(MODULE_MODEM, " Can not get bytes to read(%s)", safe_strerror(errno));
+		zlog_err(MODULE_MODEM, " Can not get bytes to read(%s)", ipstack_strerror(ipstack_errno));
 		return RES_ERROR;
 	}
 	if(bytes > 0 && bytes < ATCMD_RESPONSE_MAX)
@@ -363,9 +363,9 @@ try_again:
 			}
 			else
 			{
-				if (errno == EINTR || errno == EAGAIN)
+				if (ipstack_errno == EINTR || ipstack_errno == EAGAIN)
 					continue;
-				else if (errno == EPIPE || errno == EBADF || errno == EIO)
+				else if (ipstack_errno == EPIPE || ipstack_errno == EBADF || ipstack_errno == EIO)
 				{
 					return RES_CLOSE;
 				}
@@ -373,7 +373,7 @@ try_again:
 				{
 					if(ret < 0)
 					{
-						zlog_err(MODULE_MODEM, " Can not read (%s)", safe_strerror(errno));
+						zlog_err(MODULE_MODEM, " Can not read (%s)", ipstack_strerror(ipstack_errno));
 						return RES_ERROR;
 					}
 				}
@@ -419,12 +419,12 @@ static int tty_attty_wait_response(modem_client_t *client, int timeout)
 		//break;
 	case RES_CLOSE:
 		{
-			MODEM_TTY_DEBUG(" AT CMD ERROR and close AT Channel(%s)",safe_strerror(errno));
+			MODEM_TTY_DEBUG(" AT CMD ERROR and close AT Channel(%s)",ipstack_strerror(ipstack_errno));
 			zlog_err(MODULE_MODEM, " AT CMD ERROR and close AT Channel(%s)",
-					safe_strerror(errno));
+					ipstack_strerror(ipstack_errno));
 #ifdef _MODEM_TTY_DEBUG
 			fprintf(stdout, " %s:%d (%s)", __func__, __LINE__,
-					safe_strerror(errno));
+					ipstack_strerror(ipstack_errno));
 #endif
 		}
 		break;

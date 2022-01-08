@@ -119,7 +119,7 @@ struct zapi_ipv4
   safi_t safi;
 
   zpl_uchar nexthop_num;
-  struct in_addr **nexthop;
+  struct ipstack_in_addr **nexthop;
 
   zpl_uchar ifindex_num;
   zpl_uint32  *ifindex;
@@ -181,7 +181,7 @@ struct zapi_ipv6
   safi_t safi;
 
   zpl_uchar nexthop_num;
-  struct in6_addr **nexthop;
+  struct ipstack_in6_addr **nexthop;
 
   zpl_uchar ifindex_num;
   zpl_uint32  *ifindex;

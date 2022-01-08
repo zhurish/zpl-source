@@ -88,12 +88,12 @@ static int conf__attempt_resolve(const char *host, const char *text, int log, co
 	int rc;
 
 	memset(&gai_hints, 0, sizeof(struct ipstack_addrinfo));
-	gai_hints.ai_family = AF_UNSPEC;
-	gai_hints.ai_socktype = SOCK_STREAM;
+	gai_hints.ai_family = IPSTACK_AF_UNSPEC;
+	gai_hints.ai_socktype = IPSTACK_SOCK_STREAM;
 	gai_res = NULL;
-	rc = getaddrinfo(host, NULL, &gai_hints, &gai_res);
+	rc = ipstack_getaddrinfo(host, NULL, &gai_hints, &gai_res);
 	if(gai_res){
-		freeaddrinfo(gai_res);
+		ipstack_freeaddrinfo(gai_res);
 	}
 	if(rc != 0){
 #ifndef WIN32
@@ -945,7 +945,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						return MOSQ_ERR_INVAL;
 					}
 				}else if(!strcmp(token, "bind_interface")){
-#ifdef SO_BINDTODEVICE
+#ifdef IPSTACK_SO_BINDTODEVICE
 					if(reload) continue; // Listeners not valid for reloading.
 					if(conf__parse_string(&token, "bind_interface", &cur_listener->bind_interface, saveptr)) return MOSQ_ERR_INVAL;
 #else
@@ -1877,9 +1877,9 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						if(!strcmp(token, "ipv4")){
-							cur_listener->socket_domain = AF_INET;
+							cur_listener->socket_domain = IPSTACK_AF_INET;
 						}else if(!strcmp(token, "ipv6")){
-							cur_listener->socket_domain = AF_INET6;
+							cur_listener->socket_domain = IPSTACK_AF_INET6;
 						}else{
 							log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid socket_domain value \"%s\" in configuration.", token);
 							return MOSQ_ERR_INVAL;

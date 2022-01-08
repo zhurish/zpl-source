@@ -82,7 +82,7 @@ static void if_addr_wakeup (struct interface *ifp)
 		if (CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED))
 		{
 			/* Address check. */
-			if (p->family == AF_INET)
+			if (p->family == IPSTACK_AF_INET)
 			{
 				if (!if_is_up(ifp))
 				{
@@ -103,18 +103,18 @@ static void if_addr_wakeup (struct interface *ifp)
 					 * XXX: RUNNING is not a settable flag on any system
 					 * I (paulj) am aware of.
 					 */
-					//if_set_flags(ifp, IFF_UP | IFF_RUNNING);
+					//if_set_flags(ifp, IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING);
 					//if_refresh(ifp);
 					nsm_pal_interface_up(ifp);
 					pal_interface_refresh_flag(ifp);
 					//ifp->k_ifindex = pal_interface_ifindex(ifp->k_name);
 				}
 				if(nsm_pal_interface_set_address(ifp, ifc, 0) != OK)
-				//ret = if_set_prefix(ifp, ifc);
+				//ret = _ipkernel_if_set_prefix(ifp, ifc);
 				//if (ret < 0)
 				{
 					zlog_warn(MODULE_NSM, "Can't set interface's address: %s",
-							safe_strerror(errno));
+							ipstack_strerror(ipstack_errno));
 					continue;
 				}
 
@@ -124,23 +124,23 @@ static void if_addr_wakeup (struct interface *ifp)
 				 * It will also be added to the interface's subnet list then. */
 			}
 #ifdef HAVE_IPV6
-			if (p->family == AF_INET6)
+			if (p->family == IPSTACK_AF_INET6)
 			{
 				if (!if_is_up(ifp))
 				{
 					/* See long comment above */
-					//if_set_flags(ifp, IFF_UP | IFF_RUNNING);
+					//if_set_flags(ifp, IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING);
 					//if_refresh(ifp);
 					nsm_pal_interface_up(ifp);
 					pal_interface_refresh_flag(ifp);
 					//ifp->k_ifindex = pal_interface_ifindex(ifp->k_name);
 				}
 				if(nsm_pal_interface_set_address(ifp, ifc, 0) != OK)
-				//ret = if_prefix_add_ipv6(ifp, ifc);
+				//ret = _ipkernel_if_prefix_add_ipv6(ifp, ifc);
 				//if (ret < 0)
 				{
 					zlog_warn(MODULE_NSM,"Can't set interface's address: %s",
-							safe_strerror(errno));
+							ipstack_strerror(ipstack_errno));
 					continue;
 				}
 
@@ -657,7 +657,7 @@ static int nsm_interface_ip_address_install(struct interface *ifp, struct prefix
 				listnode_delete(ifp->connected, ifc);
 				connected_free(ifc);
 				//vty_out(vty, "%% Can't set interface IP address: %s.%s",
-				//		safe_strerror(errno), VTY_NEWLINE);
+				//		ipstack_strerror(ipstack_errno), VTY_NEWLINE);
 				return ERROR;
 			}
 		}
@@ -667,7 +667,7 @@ static int nsm_interface_ip_address_install(struct interface *ifp, struct prefix
 			listnode_delete(ifp->connected, ifc);
 			connected_free(ifc);
 			//vty_out(vty, "%% Can't set interface IP address: %s.%s",
-			//		safe_strerror(errno), VTY_NEWLINE);
+			//		ipstack_strerror(ipstack_errno), VTY_NEWLINE);
 			return ERROR;
 		}
 #endif
@@ -714,7 +714,7 @@ static int nsm_interface_ip_address_uninstall(struct interface *ifp, struct pref
 /*	ret = pal_kernel_if_unset_prefix(ifp, ifc);
 	if (ret < 0) {
 		vty_out(vty, "%% Can't unset interface IP address: %s.%s",
-				safe_strerror(errno), VTY_NEWLINE);
+				ipstack_strerror(ipstack_errno), VTY_NEWLINE);
 		return CMD_WARNING;
 	}*/
 	//nsm_pal_interface_unset_address(ifp, ifc, 0);
@@ -730,7 +730,7 @@ static int nsm_interface_ip_address_uninstall(struct interface *ifp, struct pref
 			{
 				//printf("%s:nsm_pal_interface_unset_address\n",__func__);
 				//vty_out(vty, "%% Can't unset interface IP address: %s.%s",
-				//		safe_strerror(errno), VTY_NEWLINE);
+				//		ipstack_strerror(ipstack_errno), VTY_NEWLINE);
 				return ERROR;
 			}
 		}
@@ -739,7 +739,7 @@ static int nsm_interface_ip_address_uninstall(struct interface *ifp, struct pref
 		{
 			//printf("%s:nsm_pal_interface_unset_address\n",__func__);
 			//vty_out(vty, "%% Can't unset interface IP address: %s.%s",
-			//		safe_strerror(errno), VTY_NEWLINE);
+			//		ipstack_strerror(ipstack_errno), VTY_NEWLINE);
 			return ERROR;
 		}
 #endif
@@ -816,7 +816,7 @@ nsm_interface_ipv6_address_install (struct interface *ifp,
 			if (ret < 0)
 			{
 				//vty_out (vty, "%% Can't set interface IP address: %s.%s",
-				//		safe_strerror(errno), VTY_NEWLINE);
+				//		ipstack_strerror(ipstack_errno), VTY_NEWLINE);
 				listnode_delete(ifp->connected, ifc);
 				connected_free(ifc);
 				return CMD_WARNING;
@@ -827,7 +827,7 @@ nsm_interface_ipv6_address_install (struct interface *ifp,
 		if (ret < 0)
 		{
 			//vty_out (vty, "%% Can't set interface IP address: %s.%s",
-			//		safe_strerror(errno), VTY_NEWLINE);
+			//		ipstack_strerror(ipstack_errno), VTY_NEWLINE);
 			listnode_delete(ifp->connected, ifc);
 			connected_free(ifc);
 			return CMD_WARNING;
@@ -873,7 +873,7 @@ nsm_interface_ipv6_address_uninstall (struct interface *ifp,
 	if (ret < 0)
 	{
 		vty_out (vty, "%% Can't unset interface IP address: %s.%s",
-				safe_strerror(errno), VTY_NEWLINE);
+				ipstack_strerror(ipstack_errno), VTY_NEWLINE);
 		return CMD_WARNING;
 	}*/
 
@@ -888,7 +888,7 @@ nsm_interface_ipv6_address_uninstall (struct interface *ifp,
 			{
 				//printf("%s:nsm_pal_interface_unset_address\n",__func__);
 				//vty_out(vty, "%% Can't unset interface IP address: %s.%s",
-				//		safe_strerror(errno), VTY_NEWLINE);
+				//		ipstack_strerror(ipstack_errno), VTY_NEWLINE);
 				return ERROR;
 			}
 		}
@@ -897,7 +897,7 @@ nsm_interface_ipv6_address_uninstall (struct interface *ifp,
 		{
 			//printf("%s:nsm_pal_interface_unset_address\n",__func__);
 			//vty_out(vty, "%% Can't unset interface IP address: %s.%s",
-			//		safe_strerror(errno), VTY_NEWLINE);
+			//		ipstack_strerror(ipstack_errno), VTY_NEWLINE);
 			return ERROR;
 		}
 #endif
@@ -936,7 +936,7 @@ int nsm_interface_ip_address_add(struct interface *ifp, struct prefix *cp,
 
 		prefix_copy ((struct prefix *)p1, (struct prefix *)cp);
 		ifc->address = (struct prefix *) p1;
-		if(p1->family == AF_INET)
+		if(p1->family == IPSTACK_AF_INET)
 		{
 			/* Broadcast. */
 			if (p1->prefixlen <= IPV4_MAX_PREFIXLEN - 2)
@@ -958,7 +958,7 @@ int nsm_interface_ip_address_add(struct interface *ifp, struct prefix *cp,
 		if (secondary)
 			SET_FLAG (ifc->flags, ZEBRA_IFA_SECONDARY);
 
-		if(cp->family == AF_INET)
+		if(cp->family == IPSTACK_AF_INET)
 			connected_up_ipv4(ifp, ifc);
 #ifdef HAVE_IPV6
 		else
@@ -1001,7 +1001,7 @@ int nsm_interface_ip_address_del(struct interface *ifp, struct prefix *cp,
 #endif
 	//nsm_client_notify_interface_del_ip(ifp, ifc, 0);
 
-	if(cp->family == AF_INET)
+	if(cp->family == IPSTACK_AF_INET)
 		connected_down_ipv4(ifp, ifc);
 #ifdef HAVE_IPV6
 	else
@@ -1246,7 +1246,7 @@ int nsm_interface_address_set_api(struct interface *ifp, struct prefix *cp, zpl_
 	IF_DATA_LOCK();
 	if(cp)
 	{
-		if(cp->family == AF_INET)
+		if(cp->family == IPSTACK_AF_INET)
 			ret = nsm_interface_ip_address_install(ifp, (struct prefix_ipv4 *)cp);
 #ifdef HAVE_IPV6
 		else
@@ -1265,7 +1265,7 @@ int nsm_interface_address_unset_api(struct interface *ifp, struct prefix *cp, zp
 	IF_DATA_LOCK();
 	if(cp)
 	{
-		if(cp->family == AF_INET)
+		if(cp->family == IPSTACK_AF_INET)
 			ret = nsm_interface_ip_address_uninstall(ifp, (struct prefix_ipv4 *)cp);
 #ifdef HAVE_IPV6
 		else

@@ -47,7 +47,7 @@ static int sshd_shell_input(sshd_client_t *client, char *buf, zpl_uint32 len)
 		ret = write(client->sock, buf, len);
 		if(ret < 0)
 		{
-			if (!ERRNO_IO_RETRY(errno))
+			if (!IPSTACK_ERRNO_RETRY(errno))
 			{
 				return SSH_ERROR;
 			}
@@ -212,13 +212,13 @@ static struct vty * sshd_shell_new(int vty_sock)
 static int sshd_shell_create(sshd_client_t *sshclient, ssh_session sseion)
 {
 	//int n = 0;
-	struct sockaddr_in * client_address;
+	struct ipstack_sockaddr_in * client_address;
 	int socket[2] = { 0, 0 };
 
 	if(!sshclient)
 		return SSH_ERROR;
 
-    if(socketpair (AF_UNIX, SOCK_STREAM, 0, socket) == 0)
+    if(socketpair (AF_UNIX, IPSTACK_SOCK_STREAM, 0, socket) == 0)
     {
     	sshclient->sock = socket[1];
     }
@@ -652,7 +652,7 @@ int sshd_task(void *argv)
 	zpl_uint32 waittime = 2;
 
 	ssh_config_t *sshd = argv;
-	host_config_load_waitting();
+	host_waitting_loadconfig
 	while(1)
 	{
 		if(sshd->quit)

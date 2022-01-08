@@ -372,16 +372,16 @@ static int x5b_app_test_read_eloop(struct eloop *eloop)
 	mgt->r_thread = NULL;
 	memset(mgt->buf, 0, sizeof(mgt->buf));
 
-	sock_len = sizeof(struct sockaddr_in);
+	sock_len = sizeof(struct ipstack_sockaddr_in);
 	len = recvfrom(sock, mgt->buf, sizeof(mgt->buf), 0, &mgt->from, &sock_len);
 	if (len <= 0)
 	{
 		if (len < 0)
 		{
-			if (ERRNO_IO_RETRY(errno))
+			if (IPSTACK_ERRNO_RETRY(ipstack_errno))
 			{
 				//return 0;
-				zlog_err(MODULE_APP, "RECV mgt on socket (%s)", strerror(errno));
+				zlog_err(MODULE_APP, "RECV mgt on socket (%s)", strerror(ipstack_errno));
 				if(mgt->mutex)
 					os_mutex_unlock(mgt->mutex);
 				return OK;
@@ -440,10 +440,10 @@ static int x5b_app_test_socket_init()
 		}
 		else
 		{
-			zlog_err(MODULE_APP, "Can not bind UDP socket(:%s)", strerror(errno));
+			zlog_err(MODULE_APP, "Can not bind UDP socket(:%s)", strerror(ipstack_errno));
 		}
 	}
-	zlog_err(MODULE_APP, "Can not Create UDP socket(:%s)", strerror(errno));
+	zlog_err(MODULE_APP, "Can not Create UDP socket(:%s)", strerror(ipstack_errno));
 	return ERROR;
 }
 
@@ -552,13 +552,13 @@ static int x5b_app_test_mgt_task(void *argv)
 	x5b_app_mgt_t *mgt = (x5b_app_mgt_t *)argv;
 	zassert(mgt != NULL);
 	module_setup_task(MODULE_APP + 1, os_task_id_self());
-	host_config_load_waitting();
+	host_waitting_loadconfig);
 	if(!mgt->enable)
 	{
 		os_sleep(5);
 	}
 	//x5b_app_state_load(mgt);
-	eloop_start_running(master_eloop[MODULE_APP + 1], MODULE_APP + 1);
+	eloop_mainloop(master_eloop[MODULE_APP + 1]);
 	return OK;
 }
 

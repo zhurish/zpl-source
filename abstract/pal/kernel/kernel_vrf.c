@@ -32,7 +32,8 @@
 #include <sched.h>
 #endif
 
-
+#include "kernel_ioctl.h"
+#include "kernel_driver.h"
 #include "pal_driver.h"
 #ifndef CLONE_NEWNET
 #define CLONE_NEWNET 0x40000000 /* New network namespace (lo, device, names sockets, etc) */
@@ -45,7 +46,7 @@ static inline int setns(int fd, int nstype)
 #ifdef __NR_setns
 	return syscall(__NR_setns, fd, nstype);
 #else
-	errno = ENOSYS;
+	ipstack_errno = ENOSYS;
 	return -1;
 #endif
 }
@@ -69,14 +70,14 @@ static int have_netns(void)
 #ifdef HAVE_NETNS
 	if (have_netns_enabled < 0)
 	{
-		int fd = open(VRF_DEFAULT_NAME, O_RDONLY);
+		zpl_fd_t fd = ipstack_open(IPCOM_STACK, VRF_DEFAULT_NAME, O_RDONLY);
 
-		if (fd < 0)
+		if (ipstack_invalid(fd))
 			have_netns_enabled = 0;
 		else
 		{
 			have_netns_enabled = 1;
-			close(fd);
+			ipstack_close(fd);
 		}
 	}
 	return have_netns_enabled;
@@ -106,7 +107,7 @@ vrf_netns_pathname(const char *name)
 
 	if (!result)
 	{
-		zlog_err(MODULE_PAL, "Invalid pathname: %s", safe_strerror(errno));
+		zlog_err(MODULE_PAL, "Invalid pathname: %s", ipstack_strerror(ipstack_errno));
 		return NULL;
 	}
 	return pathname;
@@ -115,7 +116,7 @@ vrf_netns_pathname(const char *name)
 /*
  * Check whether the VRF is enabled - that is, whether the VRF
  * is ready to allocate resources. Currently there's only one
- * type of resource: socket.
+ * type of resource: ipstack_socket.
  */
 static int vrf_is_enabled(struct vrf *vrf)
 {
@@ -132,7 +133,7 @@ static int vrf_is_enabled(struct vrf *vrf)
  *
  * RETURN: 1 - enabled successfully; otherwise, 0.
  */
-static int vrf_enable(vrf_id_t vrf_id)
+int _ipkernel_vrf_enable(vrf_id_t vrf_id)
 {
 	struct vrf *vrf = vrf_lookup(vrf_id);
 	char *pathname = vrf_netns_pathname (vrf->name);
@@ -140,19 +141,19 @@ static int vrf_enable(vrf_id_t vrf_id)
 	{
 		if (have_netns())
 		{
-			vrf->fd._fd = open(pathname, O_RDONLY);
+			vrf->fd = ipstack_open(IPCOM_STACK, pathname, O_RDONLY);
 		}
 		else
 		{
-			vrf->fd._fd = -2; /* Remember that vrf_enable_hook has been called */
-			errno = -ENOTSUP;
+			//vrf->fd = -2; /* Remember that vrf_enable_hook has been called */
+			ipstack_errno = -ENOTSUP;
 			return -1;
 		}
 
 		if (!vrf_is_enabled(vrf))
 		{
 			zlog_err(MODULE_PAL, "Can not enable VRF %u: %s!", vrf->vrf_id,
-					safe_strerror(errno));
+					ipstack_strerror(ipstack_errno));
 			return -1;
 		}
 
@@ -170,14 +171,14 @@ static int vrf_enable(vrf_id_t vrf_id)
  * The VRF_DELETE_HOOK callback will be called to inform
  * that they must release the resources in the VRF.
  */
-static int vrf_disable(vrf_id_t vrf_id)
+int _ipkernel_vrf_disable(vrf_id_t vrf_id)
 {
 	struct vrf *vrf = vrf_lookup(vrf_id);
 	if (vrf_is_enabled(vrf))
 	{
 		zlog_info(MODULE_PAL, "VRF %u is to be disabled.", vrf->vrf_id);
 		if (have_netns())
-			close(vrf->fd._fd);
+			ipstack_close(vrf->fd);
 
 		vrf->fd._fd = -1;
 		return 0;
@@ -185,13 +186,7 @@ static int vrf_disable(vrf_id_t vrf_id)
 	return -1;
 }
 
-int os_vrf_stack_init()
-{
-	//route
-	pal_stack.ip_stack_vrf_create = vrf_enable;
-	pal_stack.ip_stack_vrf_delete = vrf_disable;
-	return OK;
-}
+
 
 /*
  DEFUN (vrf_netns,
@@ -352,8 +347,8 @@ int os_vrf_stack_init()
  vrf_table = NULL;
  }*/
 
-/* Create a socket for the VRF. */
-zpl_socket_t vrf_socket(int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id_t vrf_id)
+/* Create a ipstack_socket for the VRF. */
+zpl_socket_t _kernel_vrf_socket(int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id_t vrf_id)
 {
 	struct vrf *vrf = vrf_lookup(vrf_id);
 	int ret = -1;
@@ -361,7 +356,7 @@ zpl_socket_t vrf_socket(int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id
 /*
 	if (!vrf_is_enabled(vrf))
 	{
-		errno = ENOSYS;
+		ipstack_errno = ENOSYS;
 		return -1;
 	}
 */

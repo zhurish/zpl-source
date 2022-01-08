@@ -26,7 +26,7 @@ if INCLUDE_SNTPC is defined at the time the image is built.
 
 USER INTERFACE
 The sntpcTimeGet() routine retrieves the time reported by a remote source and
-converts that value for POSIX-compliant clocks.  The routine will either send a 
+converts that value for POSIX-compliant clocks.  The routine will either ipstack_send a 
 request and extract the time from the reply, or it will wait until a message is
 received from an SNTP/NTP server executing in broadcast mode.
 
@@ -69,6 +69,7 @@ struct module_list module_list_sntpc =
 	.module_write_config=NULL, 
 	.module_show_config=NULL,
 	.module_show_debug=NULL, 
+	.flags = ZPL_MODULE_NEED_INIT,
 	.taskid=0,
 };
 /* forward declarations */
@@ -149,47 +150,47 @@ LOCAL ULONG sntpcFractionToNsec
 static int sntp_socket_init(struct sntp_client *client)
 {
     int result;
-    struct sockaddr_in srcAddr;
+    struct ipstack_sockaddr_in srcAddr;
 
-    client->sock = ipstack_socket (IPCOM_STACK, AF_INET, SOCK_DGRAM, 0);
-    if (client->sock == ERROR)
+    client->sock = ipstack_socket (IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, 0);
+    if (ipstack_invalid(client->sock))
         return (ERROR);
 
     if(client->address.s_addr)
     {
     	int optval;
 		optval = 1;
-		result = ipstack_setsockopt (client->sock, SOL_SOCKET, SO_BROADCAST,
+		result = ipstack_setsockopt (client->sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_BROADCAST,
 							 (char *)&optval, sizeof (optval));
     }
     else
     {
 		/* Initialize source address. */
 		bzero ( (char *)&srcAddr, sizeof (srcAddr));
-		srcAddr.sin_addr.s_addr = INADDR_ANY;
-		srcAddr.sin_family = AF_INET;
+		srcAddr.sin_addr.s_addr = IPSTACK_INADDR_ANY;
+		srcAddr.sin_family = IPSTACK_AF_INET;
 		srcAddr.sin_port = client->sntpcPort;
 
-		result = ipstack_bind (client->sock, (struct sockaddr *)&srcAddr, sizeof (srcAddr));
+		result = ipstack_bind (client->sock, (struct ipstack_sockaddr *)&srcAddr, sizeof (srcAddr));
 		if (result == ERROR)
 		{
 			ipstack_close (client->sock);
 			return (ERROR);
 		}
     }
-    return client->sock;
+    return OK;
 }
 
 static int sntp_socket_close(struct sntp_client *client)
 {
-	if(client->sock)
+	if(!ipstack_invalid(client->sock))
 		ipstack_close (client->sock);
     return OK;
 }
 
 static int sntp_socket_write(struct sntp_client *client)
 {
-    struct sockaddr_in dstAddr;
+    struct ipstack_sockaddr_in dstAddr;
     SNTP_PACKET sntpRequest;     /* sntp request packet for */
     //int servAddrLen = 0;
   
@@ -197,7 +198,7 @@ static int sntp_socket_write(struct sntp_client *client)
   
     bzero ( (char *)&dstAddr, sizeof (dstAddr));
     dstAddr.sin_addr.s_addr = client->address.s_addr;
-    dstAddr.sin_family = AF_INET;
+    dstAddr.sin_family = IPSTACK_AF_INET;
     dstAddr.sin_port = htons(client->sntpcPort);
 
     /* Initialize SNTP message buffers. */
@@ -211,11 +212,11 @@ static int sntp_socket_write(struct sntp_client *client)
   
     /* Transmit SNTP request. */
     if (ipstack_sendto (client->sock, (caddr_t)&sntpRequest, sizeof(sntpRequest), 0,
-                (struct sockaddr *)&dstAddr, sizeof (dstAddr)) == ERROR)
+                (struct ipstack_sockaddr *)&dstAddr, sizeof (dstAddr)) == ERROR)
     {
         //close (client->sock);
         if(client->time_debug)
-        	zlog_err(MODULE_SNTP, "Transmit SNTP equest from %s:%d(%s)",ipstack_inet_ntoa(client->address),client->sntpcPort,safe_strerror(errno));
+        	zlog_err(MODULE_SNTP, "Transmit SNTP equest from %s:%d(%s)",ipstack_inet_ntoa(client->address),client->sntpcPort,ipstack_strerror(ipstack_errno));
         return (ERROR);
     }
     if(client->time_debug)
@@ -225,19 +226,19 @@ static int sntp_socket_write(struct sntp_client *client)
 static int sntp_socket_read(struct sntp_client *client)
 {
     SNTP_PACKET sntpMessage;    /* buffer for message from server */
-    struct sockaddr_in srcAddr;
+    struct ipstack_sockaddr_in srcAddr;
     int result;
     int srcAddrLen;
     char ver[32];
     /* Wait for broadcast message from server. */
-    /* Wait for reply at the ephemeral port selected by the sendto () call. */
+    /* Wait for reply at the ephemeral port selected by the ipstack_sendto () call. */
     result = ipstack_recvfrom (client->sock, (caddr_t) &sntpMessage, sizeof(sntpMessage),
-                       0, (struct sockaddr *) &srcAddr, (socklen_t *)&srcAddrLen);
+                       0, (struct ipstack_sockaddr *) &srcAddr, (socklen_t *)&srcAddrLen);
     if (result == ERROR)
     {
         //close (client->sock);
     	if(client->time_debug)
-    		zlog_err(MODULE_SNTP, "SNTP receive from %s:%d(%s)",ipstack_inet_ntoa(srcAddr.sin_addr),ntohs(srcAddr.sin_port),safe_strerror(errno));
+    		zlog_err(MODULE_SNTP, "SNTP receive from %s:%d(%s)",ipstack_inet_ntoa(srcAddr.sin_addr),ntohs(srcAddr.sin_port),ipstack_strerror(ipstack_errno));
         return (ERROR);
     }
 
@@ -406,7 +407,7 @@ static int sntpcEnable(zpl_ushort port, char *ip, int time_interval, zpl_uint32 
     return (ERROR);
 }
 
-static int sntpcDisable(void)
+int sntpcDisable(void)
 {
 	if(sntp_client)
 	{
@@ -439,7 +440,7 @@ int sntpc_is_sync(void)
 	return sntp_client->sync_clock;
 }
 
-int sntpc_server_address(struct in_addr *address)
+int sntpc_server_address(struct ipstack_in_addr *address)
 {
 	if(sntp_client == NULL)
 		return ERROR;
@@ -486,7 +487,7 @@ DEFUN (sntp_enable,
 	int ret;
 	int port = SNTPC_SERVER_PORT;
 	int time_interval = LOCAL_UPDATE_GMT;
-	struct in_addr host_id;
+	struct ipstack_in_addr host_id;
 	if(sntp_client == NULL)
 		return CMD_WARNING;
 
@@ -543,7 +544,7 @@ ALIAS(sntp_enable,
 		"sntp server ip address format A.B.C.D \n"
 		"sntp server port configure\n"
 		"udp port of sntp server\n"
-		"sntp server send request interval\n"
+		"sntp server ipstack_send request interval\n"
 		"time interval of sec\n")
 
 DEFUN (no_sntp_enable,

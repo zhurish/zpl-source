@@ -7,20 +7,12 @@
 
 
 #include "zpl_include.h"
-#include "memory.h"
-#include "command.h"
-#include "memory.h"
-#include "memtypes.h"
-#include "prefix.h"
-#include "if.h"
-#include "nsm_interface.h"
-#include <log.h>
-
-
-//#include "nsm_client.h"
+#include "nsm_include.h"
+#include "hal_ipccmd.h"
+#include "hal_ipcmsg.h"
 
 #include "hal_port.h"
-#include "hal_driver.h"
+
 
 
 int hal_port_up(ifindex_t ifindex)
@@ -30,7 +22,8 @@ int hal_port_up(ifindex_t ifindex)
 	char buf[512];
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
-	command = IPCCMD_SET(HAL_MODULE_PORT, HAL_MODULE_CMD_ENABLE, HAL_PORT_LINK);
+	hal_ipcmsg_putl(&ipcmsg, 1);
+	command = IPCCMD_SET(HAL_MODULE_PORT, HAL_MODULE_CMD_SET, HAL_PORT_LINK);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -42,7 +35,8 @@ int hal_port_down(ifindex_t ifindex)
 	char buf[512];
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
-	command = IPCCMD_SET(HAL_MODULE_PORT, HAL_MODULE_CMD_DISABLE, HAL_PORT_LINK);
+	hal_ipcmsg_putl(&ipcmsg, 0);
+	command = IPCCMD_SET(HAL_MODULE_PORT, HAL_MODULE_CMD_SET, HAL_PORT_LINK);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -215,7 +209,8 @@ int hal_port_enable_set(ifindex_t ifindex, zpl_bool enable)
 	char buf[512];
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
-	command = IPCCMD_SET(HAL_MODULE_PORT, enable?HAL_MODULE_CMD_ENABLE:HAL_MODULE_CMD_DISABLE, HAL_PORT);
+	hal_ipcmsg_putl(&ipcmsg, enable);
+	command = IPCCMD_SET(HAL_MODULE_PORT, HAL_MODULE_CMD_SET, HAL_PORT);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -276,8 +271,8 @@ int hal_port_learning_set(ifindex_t ifindex, zpl_bool enable)
 	char buf[512];
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
-	//hal_ipcmsg_putl(&ipcmsg, value);
-	command = IPCCMD_SET(HAL_MODULE_PORT, enable?HAL_MODULE_CMD_ENABLE:HAL_MODULE_CMD_DISABLE, HAL_PORT_LEARNING);
+	hal_ipcmsg_putl(&ipcmsg, enable);
+	command = IPCCMD_SET(HAL_MODULE_PORT, HAL_MODULE_CMD_SET, HAL_PORT_LEARNING);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -289,8 +284,8 @@ int hal_port_software_learning_set(ifindex_t ifindex, zpl_bool enable)
 	char buf[512];
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
-	//hal_ipcmsg_putl(&ipcmsg, value);
-	command = IPCCMD_SET(HAL_MODULE_PORT, enable?HAL_MODULE_CMD_ENABLE:HAL_MODULE_CMD_DISABLE, HAL_PORT_SWLEARNING);
+	hal_ipcmsg_putl(&ipcmsg, enable);
+	command = IPCCMD_SET(HAL_MODULE_PORT, HAL_MODULE_CMD_SET, HAL_PORT_SWLEARNING);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -302,8 +297,8 @@ int hal_port_protected_set(ifindex_t ifindex, zpl_bool enable)
 	char buf[512];
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
-	//hal_ipcmsg_putl(&ipcmsg, value);
-	command = IPCCMD_SET(HAL_MODULE_PORT, enable?HAL_MODULE_CMD_ENABLE:HAL_MODULE_CMD_DISABLE, HAL_PORT_PROTECTED);
+	hal_ipcmsg_putl(&ipcmsg, enable);
+	command = IPCCMD_SET(HAL_MODULE_PORT, HAL_MODULE_CMD_SET, HAL_PORT_PROTECTED);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -315,8 +310,8 @@ int hal_port_wan_set(ifindex_t ifindex, zpl_bool enable)
 	char buf[512];
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
-	//hal_ipcmsg_putl(&ipcmsg, value);
-	command = IPCCMD_SET(HAL_MODULE_PORT, enable?HAL_MODULE_CMD_ENABLE:HAL_MODULE_CMD_DISABLE, HAL_PORT_WAN);
+	hal_ipcmsg_putl(&ipcmsg, enable);
+	command = IPCCMD_SET(HAL_MODULE_PORT, HAL_MODULE_CMD_SET, HAL_PORT_WAN);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }

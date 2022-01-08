@@ -5,17 +5,6 @@
  *      Author: zhurish
  */
 
-
-
-/*
- * cmd_routeid.c
- *
- *  Created on: Jan 2, 2018
- *      Author: zhurish
- */
-
-
-
 #include "os_include.h"
 #include <zpl_include.h>
 #include "lib_include.h"
@@ -1851,6 +1840,18 @@ int modem_debug_config(struct vty *vty)
 	return CMD_SUCCESS;
 }
 
+static struct cmd_node modem_profile_node =
+{
+		MODEM_PROFILE_NODE,
+		"%s(config-modem-profile)# ",
+		1
+};
+static struct cmd_node modem_channel_node =
+{
+		MODEM_CHANNEL_NODE,
+		"%s(config-modem-channel)# ",
+		1
+};
 
 static void cmd_modem_set_init (int node)
 {
@@ -1926,8 +1927,8 @@ static void cmd_modem_show_init (int node)
 
 void cmd_modem_init (void)
 {
-	reinstall_node(MODEM_PROFILE_NODE, modem_write_config);
-	reinstall_node(MODEM_CHANNEL_NODE, modem_serial_write_cb);
+	install_node(&modem_profile_node, modem_write_config);
+	install_node(&modem_channel_node, modem_serial_write_cb);
 
 	install_default(MODEM_PROFILE_NODE);
 	install_default_basic(MODEM_PROFILE_NODE);

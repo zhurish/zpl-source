@@ -10,38 +10,32 @@
 #include "lib_include.h"
 #include "nsm_include.h"
 #include "kernel_ioctl.h"
+#include "kernel_driver.h"
 
 #include "pal_driver.h"
 
 #include <netinet/if_ether.h>
 #include <net/if_arp.h>
 #include <linux/if_packet.h>
-/*
-1 #define ATF_COM         0x02    //已完成的邻居(成员ha有效，且含有正确的MAC地址)
-2 #define ATF_PERM        0x04    //永久性的邻居(邻居状态有NUD_PERMANENT)
-3 #define ATF_PUBL        0x08    //发布该邻居
-4 #define ATF_USETRAILERS 0x10    //不是非常清楚
-5 #define ATF_NETMASK     0x20    //仅用于代理ARP
-6 #define ATF_DONTPUB     0x40    //不处理该邻居
- */
+
 
 /* Delete an entry from the ARP cache. */
 static int kernel_arp_del(struct interface *ifp, struct prefix *address)
 {
-	struct ipstack_arpreq arpreq;
+	struct ipstack_arpreq ipstack_arpreq;
 	struct ipstack_sockaddr_in *sin;
 	int rc;
 
 	/*you must add this becasue some system will return "Invlid argument"
 	 because some argument isn't zero */
-	memset(&arpreq, 0, sizeof(struct ipstack_arpreq));
-	sin = (struct ipstack_sockaddr_in *) &arpreq.arp_pa;
+	memset(&ipstack_arpreq, 0, sizeof(struct ipstack_arpreq));
+	sin = (struct ipstack_sockaddr_in *) &ipstack_arpreq.arp_pa;
 	memset(sin, 0, sizeof(struct ipstack_sockaddr_in));
 	sin->sin_family = address->family;
 	memcpy(&sin->sin_addr, (char *) &address->u.prefix4, sizeof(struct ipstack_in_addr));
-	strcpy(arpreq.arp_dev, ifp->k_name);
+	strcpy(ipstack_arpreq.arp_dev, ifp->k_name);
 
-	rc = if_ioctl (SIOCDARP, &arpreq);
+	rc = _ipkernel_if_ioctl (IPSTACK_SIOCDARP, &ipstack_arpreq);
 	if (rc < 0)
 	{
 		return -1;
@@ -52,22 +46,22 @@ static int kernel_arp_del(struct interface *ifp, struct prefix *address)
 /* Set an entry in the ARP cache. */
 static int kernel_arp_set(struct interface *ifp, struct prefix *address, zpl_uint8 *mac)
 {
-	struct ipstack_arpreq arpreq;
+	struct ipstack_arpreq ipstack_arpreq;
 	struct ipstack_sockaddr_in *sin;
 	int rc;
 	/*you must add this becasue some system will return "Invlid argument"
 	 because some argument isn't zero */
-	memset(&arpreq, 0, sizeof(struct ipstack_arpreq));
-	sin = (struct ipstack_sockaddr_in *) &arpreq.arp_pa;
+	memset(&ipstack_arpreq, 0, sizeof(struct ipstack_arpreq));
+	sin = (struct ipstack_sockaddr_in *) &ipstack_arpreq.arp_pa;
 	memset(sin, 0, sizeof(struct ipstack_sockaddr_in));
 	sin->sin_family = address->family;
 	memcpy(&sin->sin_addr, (char *) &address->u.prefix4, sizeof(struct ipstack_in_addr));
-	strcpy(arpreq.arp_dev, ifp->k_name);
-	memcpy((zpl_uint8 *) arpreq.arp_ha.sa_data, mac, 6);
+	strcpy(ipstack_arpreq.arp_dev, ifp->k_name);
+	memcpy((zpl_uint8 *) ipstack_arpreq.arp_ha.sa_data, mac, 6);
 
-	arpreq.arp_flags = ATF_PERM | ATF_COM; //note, must set flag, if not,you will get error
+	ipstack_arpreq.arp_flags = IPSTACK_ATF_PERM | IPSTACK_ATF_COM; //note, must set flag, if not,you will get error
 
-	rc = if_ioctl (SIOCSARP, &arpreq);
+	rc = _ipkernel_if_ioctl (IPSTACK_SIOCSARP, &ipstack_arpreq);
 	if (rc < 0)
 	{
 		return -1;
@@ -77,25 +71,25 @@ static int kernel_arp_set(struct interface *ifp, struct prefix *address, zpl_uin
 
 static int kernel_arp_get(struct interface *ifp, struct prefix *address, zpl_uint8 *mac)
 {
-	struct ipstack_arpreq arpreq;
+	struct ipstack_arpreq ipstack_arpreq;
 	struct ipstack_sockaddr_in *sin;
 	int rc;
 
 	/*you must add this becasue some system will return "Invlid argument"
 	 because some argument isn't zero */
-	memset(&arpreq, 0, sizeof(struct ipstack_arpreq));
-	sin = (struct ipstack_sockaddr_in *) &arpreq.arp_pa;
+	memset(&ipstack_arpreq, 0, sizeof(struct ipstack_arpreq));
+	sin = (struct ipstack_sockaddr_in *) &ipstack_arpreq.arp_pa;
 	memset(sin, 0, sizeof(struct ipstack_sockaddr_in));
 	sin->sin_family = address->family;
 	memcpy(&sin->sin_addr, (char *) &address->u.prefix4, sizeof(struct ipstack_in_addr));
-	strcpy(arpreq.arp_dev, ifp->k_name);
+	strcpy(ipstack_arpreq.arp_dev, ifp->k_name);
 
-	rc = if_ioctl (SIOCGARP, &arpreq);
+	rc = _ipkernel_if_ioctl (IPSTACK_SIOCGARP, &ipstack_arpreq);
 	if (rc < 0)
 	{
 		return -1;
 	}
-	memcpy(mac, (zpl_uint8 *) arpreq.arp_ha.sa_data, 6);
+	memcpy(mac, (zpl_uint8 *) ipstack_arpreq.arp_ha.sa_data, 6);
 	return 0;
 }
 
@@ -106,25 +100,25 @@ static zpl_socket_t kernel_arp_init()
 	zpl_socket_t skfd;
 	int onoff = 1;
 	/*创建原始套接字*/
-	skfd = ipstack_socket(IPCOM_STACK, PF_PACKET, SOCK_RAW, htons(ETH_P_ARP));
+	skfd = ipstack_socket(IPCOM_STACK, IPSTACK_PF_PACKET, IPSTACK_SOCK_RAW, htons(IPSTACK_ETH_P_ARP));
 	if (ipstack_invalid(skfd))
 	{
-		zlog_err(MODULE_PAL, "Can't open %s socket: %s", "arp socket",
-				strerror(errno));
-		//printf("socket() failed! \n");
+		zlog_err(MODULE_PAL, "Can't open %s ipstack_socket: %s", "arp ipstack_socket",
+				strerror(ipstack_errno));
+		//printf("ipstack_socket() failed! \n");
 		return skfd;
 	}
 #ifdef IP_RECVIF
 	onoff = 1;
-	if (ipstack_setsockopt(skfd, IPPROTO_IP, IP_RECVIF, &onoff, sizeof(onoff)) != 0)
-		zlog_warn(MODULE_PAL, "setsocketopt IP_RECVIF failed for udp: %s",
-		    strerror(errno));
+	if (ipstack_setsockopt(skfd, IPSTACK_IPPROTO_IP, IPSTACK_IP_RECVIF, &onoff, sizeof(onoff)) != 0)
+		zlog_warn(MODULE_PAL, "setsocketopt IP_RECVIF failed for packet: %s",
+		    strerror(ipstack_errno));
 #endif
 #if defined (IP_PKTINFO)
 	onoff = 1;
-	if (ipstack_setsockopt (skfd, IPPROTO_IP, IP_PKTINFO, &onoff, sizeof (onoff)) != 0)
-		zlog_warn(MODULE_PAL, "setsocketopt IP_PKTINFO failed for udp: %s",
-		    strerror(errno));
+	if (ipstack_setsockopt (skfd, IPSTACK_IPPROTO_IP, IPSTACK_IP_PKTINFO, &onoff, sizeof (onoff)) != 0)
+		zlog_warn(MODULE_PAL, "setsocketopt IP_PKTINFO failed for packet: %s",
+		    strerror(ipstack_errno));
 #endif
 	return skfd;
 }
@@ -142,7 +136,7 @@ static int kernel_arp_relay_handle(ifindex_t ifindex, struct ipstack_sockaddr_in
 		ip_arp_t arpt;
 		arpt.class = ARP_DYNAMIC;
 		memcpy(&arpt.address.u.prefix4.s_addr, arp->arp_spa, arp->arp_pln);
-		arpt.address.family = AF_INET;
+		arpt.address.family = IPSTACK_AF_INET;
 		memcpy(arpt.mac, eth->ether_shost, NSM_MAC_MAX);
 		arpt.ifindex = ifindex;
 		arpt.vrfid = ifp->vrf_id;
@@ -172,7 +166,6 @@ static int kernel_arp_recv(zpl_socket_t	sock)
 	zpl_uint8		 packetbuf[1024];
 	ifindex_t ifindex = 0;
 
-
 	memset(&ss, 0, sizeof(ss));
 	iov[0].iov_base = packetbuf;
 	iov[0].iov_len = sizeof(packetbuf);
@@ -185,22 +178,22 @@ static int kernel_arp_recv(zpl_socket_t	sock)
 	m.msg_controllen = sizeof(cbuf);
 
 	if ((len = ipstack_recvmsg(sock, &m, 0)) < 0) {
-		zlog_warn(MODULE_PAL, "receiving a ARP message failed: %s", strerror(errno));
+		zlog_warn(MODULE_PAL, "receiving a ARP message failed: %s", strerror(ipstack_errno));
 		return -1;
 	}
-	if (ss.ss_family != AF_INET) {
-		//zlog_warn(MODULE_PAL, "received ARP message is not AF_INET");
+	if (ss.ss_family != IPSTACK_AF_INET) {
+		//zlog_warn(MODULE_PAL, "received ARP message is not IPSTACK_AF_INET");
 		return -1;
 	}
-	for (cm = (struct ipstack_cmsghdr *)CMSG_FIRSTHDR(&m);
+	for (cm = (struct ipstack_cmsghdr *)IPSTACK_CMSG_FIRSTHDR(&m);
 	    m.msg_controllen != 0 && cm;
-	    cm = (struct ipstack_cmsghdr *)CMSG_NXTHDR(&m, cm))
+	    cm = (struct ipstack_cmsghdr *)IPSTACK_CMSG_NXTHDR(&m, cm))
 	{
 #ifdef IP_RECVIF
-		if (cm->cmsg_level == IPPROTO_IP &&
-		    cm->cmsg_type == IP_RECVIF)
+		if (cm->cmsg_level == IPSTACK_IPPROTO_IP &&
+		    cm->cmsg_type == IPSTACK_IP_RECVIF)
 		{
-			sdl = (struct ipstack_sockaddr_dl *)CMSG_DATA(cm);
+			sdl = (struct ipstack_sockaddr_dl *)IPSTACK_CMSG_DATA(cm);
 			if (sdl == NULL) {
 				zlog_warn(MODULE_PAL, "could not get the received interface by IP_RECVIF");
 				return -1;
@@ -210,10 +203,10 @@ static int kernel_arp_recv(zpl_socket_t	sock)
 #endif
 
 #if defined(IP_PKTINFO)
-		if (cm->cmsg_level == IPPROTO_IP &&
-			cm->cmsg_type == IP_PKTINFO)
+		if (cm->cmsg_level == IPSTACK_IPPROTO_IP &&
+			cm->cmsg_type == IPSTACK_IP_PKTINFO)
 		{
-			pktinfo = (struct ipstack_in_pktinfo *)CMSG_DATA(cm);
+			pktinfo = (struct ipstack_in_pktinfo *)IPSTACK_CMSG_DATA(cm);
 			if (pktinfo == NULL) {
 				zlog_warn(MODULE_PAL, "could not get the received interface by IP_PKTINFO");
 				return -1;
@@ -261,32 +254,32 @@ static int kernel_arp_request(struct interface *ifp, struct prefix *address)
 	memset(buf, 0x00, sizeof(buf));
 
 	/* 创建原始套接字 */
-	skfd = ipstack_socket(IPCOM_STACK, PF_PACKET, SOCK_RAW, htons(ETH_P_ARP));
+	skfd = ipstack_socket(IPCOM_STACK, IPSTACK_PF_PACKET, IPSTACK_SOCK_RAW, htons(IPSTACK_ETH_P_ARP));
 	if (ipstack_invalid(skfd))
 	{
-		zlog_err(MODULE_PAL, "Can't open %s socket: %s", "arp socket",
-				strerror(errno));
+		zlog_err(MODULE_PAL, "Can't open %s ipstack_socket: %s", "arp ipstack_socket",
+				strerror(ipstack_errno));
 		return -1;
 	}
 
 	bzero(&sll, sizeof(sll));
 	sll.sll_ifindex	= ifp->k_ifindex;
-	sll.sll_family	= PF_PACKET;
-	sll.sll_protocol = htons(ETH_P_ARP/*ETH_P_ALL*/);
+	sll.sll_family	= IPSTACK_PF_PACKET;
+	sll.sll_protocol = htons(IPSTACK_ETH_P_ARP/*ETH_P_ALL*/);
 
 	/* 构造以太报文 */
 	eth = (struct ipstack_ether_header*)buf;
-	eth->ether_type = htons(ETHERTYPE_ARP);
-	memset(eth->ether_dhost, 0xff, ETH_ALEN);
+	eth->ether_type = htons(IPSTACK_ETHERTYPE_ARP);
+	memset(eth->ether_dhost, 0xff, IPSTACK_ETH_ALEN);
 	memcpy(eth->ether_shost, ifp->hw_addr, ifp->hw_addr_len);
 
 	/* 构造ARP报文 */
 	arp = (struct ipstack_ether_arp*)(buf + sizeof(struct ipstack_ether_header));
-	arp->arp_hrd = htons(ARPHRD_ETHER);
-	arp->arp_pro = htons(ETHERTYPE_IP);
-	arp->arp_hln = ETH_ALEN;
+	arp->arp_hrd = htons(IPSTACK_ARPHRD_ETHER);
+	arp->arp_pro = htons(IPSTACK_ETHERTYPE_IP);
+	arp->arp_hln = IPSTACK_ETH_ALEN;
 	arp->arp_pln = 4;
-	arp->arp_op = htons(ARPOP_REQUEST);
+	arp->arp_op = htons(IPSTACK_ARPOP_REQUEST);
 	memcpy(arp->arp_sha, ifp->hw_addr, ifp->hw_addr_len);
 	memcpy(arp->arp_spa, &saddr.s_addr, 4);
 	/* memcpy(arp->arp_tha, dmac, ETH_ALEN);*/
@@ -297,11 +290,11 @@ static int kernel_arp_request(struct interface *ifp, struct prefix *address)
 	n = ipstack_sendto(skfd, buf, len, 0, (struct ipstack_sockaddr*)&sll, sizeof(struct ipstack_sockaddr_ll));
 	if (n < 0)
 	{
-		zlog_warn(MODULE_PAL, "send a ARP message failed: %s", strerror(errno));
+		zlog_warn(MODULE_PAL, "ipstack_send a ARP message failed: %s", strerror(ipstack_errno));
 	}
 	else
 	{
-		//printf("sendto() n = %d \n", n);
+		//printf("ipstack_sendto() n = %d \n", n);
 	}
 	ipstack_close(skfd);
 	return 0;
@@ -315,10 +308,7 @@ static int kernel_arp_gratuitousarp_enable(int enable)
 
 int ip_arp_stack_init()
 {
-
-	//extern pal_stack_t pal_stack;
-	//arp
-	//
+	zpl_socket_t sock;
 	pal_stack.ip_stack_arp_get = kernel_arp_get;
 	pal_stack.ip_stack_arp_add = kernel_arp_set;
 	pal_stack.ip_stack_arp_delete = kernel_arp_del;
@@ -328,11 +318,9 @@ int ip_arp_stack_init()
 	pal_stack.ip_stack_arp_age_timeout = NULL;
 	pal_stack.ip_stack_arp_retry_interval = NULL;
 
-
- 	zpl_socket_t sock;
 	sock = kernel_arp_init();
 
-	if(eloop_master_module_lookup(MODULE_KERNEL))
+	if(!ipstack_invalid(sock) && eloop_master_module_lookup(MODULE_KERNEL))
 		eloop_add_read(eloop_master_module_lookup(MODULE_KERNEL), kernel_arp_thread, NULL, sock);
 
 	return OK;

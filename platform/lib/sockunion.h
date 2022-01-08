@@ -39,8 +39,8 @@ union sockunion {
     zpl_family_t si_family;
     zpl_ushort si_port;
   } su_si;
-  struct sockaddr_in  su_sin;
-  struct sockaddr_in6 su_sin6;
+  struct ipstack_sockaddr_in  su_sin;
+  struct ipstack_sockaddr_in6 su_sin6;
 };
 #define su_len                su_si.si_len
 #define su_family     su_si.si_family
@@ -49,10 +49,10 @@ union sockunion {
 
 union sockunion 
 {
-  struct sockaddr sa;
-  struct sockaddr_in sin;
+  struct ipstack_sockaddr sa;
+  struct ipstack_sockaddr_in sin;
 #ifdef HAVE_IPV6
-  struct sockaddr_in6 sin6;
+  struct ipstack_sockaddr_in6 sin6;
 #endif /* HAVE_IPV6 */
 };
 
@@ -65,9 +65,9 @@ enum connect_result
 
 /* Default address family. */
 #ifdef HAVE_IPV6
-#define AF_INET_UNION AF_INET6
+#define AF_INET_UNION IPSTACK_AF_INET6
 #else
-#define AF_INET_UNION AF_INET
+#define AF_INET_UNION IPSTACK_AF_INET
 #endif
 
 /* Sockunion address string length.  Same as INET6_ADDRSTRLEN. */
@@ -139,7 +139,7 @@ extern int ipstack_inet_pton (zpl_family_t family, const char *strptr, void *add
 #endif /* HAVE_INET_PTON */
 
 #ifndef HAVE_INET_ATON
-extern int ipstack_inet_aton (const char *cp, struct in_addr *inaddr);
+extern int ipstack_inet_aton (const char *cp, struct ipstack_in_addr *inaddr);
 #endif
  
 #ifdef __cplusplus

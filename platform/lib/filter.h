@@ -83,10 +83,10 @@ struct filter_cisco
 {
   /* Cisco access-list */
   int extended;
-  struct in_addr addr;
-  struct in_addr addr_mask;
-  struct in_addr mask;
-  struct in_addr mask_mask;
+  struct ipstack_in_addr addr;
+  struct ipstack_in_addr addr_mask;
+  struct ipstack_in_addr mask;
+  struct ipstack_in_addr mask_mask;
 };
 
 struct filter_zebra

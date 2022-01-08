@@ -149,7 +149,7 @@ struct b53125_device {
 	u16 enabled_ports;
 	zpl_uint32 cpu_port;
 
-	/* connect specific data */
+	/* ipstack_connect specific data */
 	u8 reg_page;
 
 	/* run time configuration */

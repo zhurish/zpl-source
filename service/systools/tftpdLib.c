@@ -12,9 +12,9 @@ modification history
 01i,09oct97,nbs  modified tftpd to use filename from TFTP_DESC, spr # 9413
 01h,01aug96,sgv  added trunc flag for open call SPR #6839
 01g,21jul95,vin	 applied ntohs for the opcode field. SPR4124.
-01f,11aug93,jmm  Changed ioctl.h and socket.h to sys/ioctl.h and sys/socket.h
+01f,11aug93,jmm  Changed ioctl.h and ipstack_socket.h to sys/ioctl.h and sys/ipstack_socket.h
 01e,21sep92,jdi  documentation cleanup. 
-01d,18jul92,smb  Changed errno.h to errnoLib.h.
+01d,18jul92,smb  Changed ipstack_errno.h to errnoLib.h.
 01c,04jun92,ajm  shut up warnings on mips compiler
 01b,26may92,rrr  the tree shuffle
 		  -changed includes to have absolute path from h/
@@ -91,8 +91,8 @@ static int tftpdFileRead (TFTP_DESC *pReplyDesc);
 static int tftpdFileWrite (TFTP_DESC *pReplyDesc);
 
 static TFTP_DESC *tftpdDescriptorCreate (TFTP_DESC *mode, zpl_bool connected,
-					 int sock, zpl_ushort clientPort,
-					 struct sockaddr_in *pClientAddr);
+					 zpl_socket_t sock, zpl_ushort clientPort,
+					 struct ipstack_sockaddr_in *pClientAddr);
 static int tftpdDescriptorDelete (TFTP_DESC *descriptor);
 static int tftpdDirectoryValidate (char *fileName);
 static int tftpdErrorSend (TFTP_DESC *pReplyDesc, int errorNum);
@@ -122,7 +122,7 @@ static int tftpdTask( struct eloop *thread);
 * If <noControl> is zpl_true, the server will be set up to transfer any
 * file in any location.  Otherwise, it will only transfer files in the
 * directories in '/tftpboot' or the <nDirectories> directories in the
-* <directoryNames> list, and will send an
+* <directoryNames> list, and will ipstack_send an
 * access violation error to clients that attempt to access files outside of
 * these directories.
 *
@@ -141,50 +141,50 @@ static int tftpdTask( struct eloop *thread);
 * RETURNS:
 * OK, or ERROR if a new TFTP task cannot be created.
 */
-static int tftpd_socket_init(TFTPD_CONFIG *config)
+static zpl_socket_t tftpd_socket_init(TFTPD_CONFIG *config)
 {
-	int serverSocket = 0;
+	zpl_socket_t serverSocket;
     int	value;
-	struct sockaddr_in	serverAddr;
+	struct ipstack_sockaddr_in	serverAddr;
     TFTP_MSG 		requestBuffer;
-    serverSocket = socket (AF_INET, SOCK_DGRAM, 0);
-    if(serverSocket <= 0)
-    	return ERROR;
-    bzero ((char *) &serverAddr, sizeof (struct sockaddr_in));
+    serverSocket = ipstack_socket (IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, 0);
+    if(ipstack_invalid(serverSocket))
+    	return serverSocket;
+    bzero ((char *) &serverAddr, sizeof (struct ipstack_sockaddr_in));
 
-    serverAddr.sin_family	= AF_INET;
+    serverAddr.sin_family	= IPSTACK_AF_INET;
     if(config->port)
         serverAddr.sin_port		= htons((zpl_ushort) config->port);
     else
     	serverAddr.sin_port		= htons((zpl_ushort) TFTP_PORT);
 
-    serverAddr.sin_addr.s_addr	= INADDR_ANY;
+    serverAddr.sin_addr.s_addr	= IPSTACK_INADDR_ANY;
 
     if(strlen(config->address))
         serverAddr.sin_addr.s_addr	= ipstack_inet_addr(config->address);
 
-    if (bind (serverSocket, (struct sockaddr *) &serverAddr,
-	      sizeof (struct sockaddr_in)) == ERROR)
+    if (ipstack_bind (serverSocket, (struct ipstack_sockaddr *) &serverAddr,
+	      sizeof (struct ipstack_sockaddr_in)) == ERROR)
 	{
-    	close(serverSocket);
-    	systools_error ("%s: could not bind to TFTP port\n", tftpdErrStr);
-    	return (ERROR);
+    	ipstack_close(serverSocket);
+    	systools_error ("%s: could not ipstack_bind to TFTP port\n", tftpdErrStr);
+    	return (serverSocket);
 	}
     while(1)
 	{
-		if (ioctl (serverSocket, FIONREAD, (int) &value) == ERROR)
+		if (ipstack_ioctl (serverSocket, IPSTACK_FIONREAD, (int) &value) == ERROR)
 		{
-			close(serverSocket);
-			return (ERROR);
+			ipstack_close(serverSocket);
+			return (serverSocket);
 		}
-		if (value == 0)                /* done - socket cleaned out */
+		if (value == 0)                /* done - ipstack_socket cleaned out */
 			break;
 
-		if(recvfrom (serverSocket, (caddr_t) &requestBuffer,
-				sizeof (TFTP_MSG), 0, (struct sockaddr *) NULL, (int *) NULL) <= 0)
+		if(ipstack_recvfrom (serverSocket, (caddr_t) &requestBuffer,
+				sizeof (TFTP_MSG), 0, (struct ipstack_sockaddr *) NULL, (int *) NULL) <= 0)
 		{
-			close(serverSocket);
-			return (ERROR);
+			ipstack_close(serverSocket);
+			return (serverSocket);
 		}
 	}
     return serverSocket;
@@ -245,9 +245,8 @@ int tftpdUnInit(void)
 		if(tftpd_config->t_read)
 			eloop_cancel(tftpd_config->t_read);
 		tftpd_config->t_read = NULL;
-		if(tftpd_config->sock)
-			close(tftpd_config->sock);
-		tftpd_config->sock = 0;
+		if(!ipstack_invalid(tftpd_config->sock))
+			ipstack_close(tftpd_config->sock);
 		free(tftpd_config);
 		tftpd_config = NULL;
 	}
@@ -268,16 +267,15 @@ int tftpdEnable(zpl_bool enable, char *localipaddress, int port)
 			if(tftpd_config->t_read)
 				eloop_cancel(tftpd_config->t_read);
 			tftpd_config->t_read = NULL;
-			if(tftpd_config->sock)
-				close(tftpd_config->sock);
-			tftpd_config->sock = 0;
+			if(!ipstack_invalid(tftpd_config->sock))
+				ipstack_close(tftpd_config->sock);
 		}
 		tftpd_config->port = port;
 		if(localipaddress)
 			strcpy(tftpd_config->address, localipaddress);
 
 		tftpd_config->sock = tftpd_socket_init(tftpd_config);
-		if(tftpd_config->sock > 0)
+		if(!ipstack_invalid(tftpd_config->sock))
 		{
 			tftpd_config->t_read = eloop_add_read(tftpd_config->master, tftpdTask, tftpd_config, tftpd_config->sock);
 			tftpd_config->enable = zpl_true;
@@ -297,9 +295,8 @@ int tftpdEnable(zpl_bool enable, char *localipaddress, int port)
 			if(tftpd_config->t_read)
 				eloop_cancel(tftpd_config->t_read);
 			tftpd_config->t_read = NULL;
-			if(tftpd_config->sock)
-				close(tftpd_config->sock);
-			tftpd_config->sock = 0;
+			if(!ipstack_invalid(tftpd_config->sock))
+				ipstack_close(tftpd_config->sock);
 		}
 		return OK;
 	}
@@ -396,12 +393,12 @@ int tftpdTask
     int		maxConnections		/* max number of simultan. connects */
     )
     {
-    int			serverSocket;	/* socket to use to communicate with
+    int			serverSocket;	/* ipstack_socket to use to communicate with
 					 * the remote process */
-    struct sockaddr_in	clientAddr;	/* process requesting TFTP
+    struct ipstack_sockaddr_in	clientAddr;	/* process requesting TFTP
 					 * connection */
-    struct sockaddr_in	serverAddr;
-    int			clientAddrLength = sizeof (struct sockaddr_in);
+    struct ipstack_sockaddr_in	serverAddr;
+    int			clientAddrLength = sizeof (struct ipstack_sockaddr_in);
     TFTP_MSG 		requestBuffer;
     int			value;
     int			opCode;
@@ -410,21 +407,21 @@ int tftpdTask
     TFTP_DESC		*pReplyDesc;
     int			replySocket;
 
-    serverSocket = socket (AF_INET, SOCK_DGRAM, 0);
+    serverSocket = ipstack_socket (IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, 0);
 
-    bzero ((char *) &serverAddr, sizeof (struct sockaddr_in));
-    bzero ((char *) &clientAddr, sizeof (struct sockaddr_in));
+    bzero ((char *) &serverAddr, sizeof (struct ipstack_sockaddr_in));
+    bzero ((char *) &clientAddr, sizeof (struct ipstack_sockaddr_in));
 
-    serverAddr.sin_family	= AF_INET;
+    serverAddr.sin_family	= IPSTACK_AF_INET;
     serverAddr.sin_port		= htons((zpl_ushort) TFTP_PORT);
 
 
-    serverAddr.sin_addr.s_addr	= INADDR_ANY;
+    serverAddr.sin_addr.s_addr	= IPSTACK_INADDR_ANY;
 
-    if (bind (serverSocket, (SOCKADDR *) &serverAddr,
-	      sizeof (struct sockaddr_in)) == ERROR)
+    if (ipstack_bind (serverSocket, (SOCKADDR *) &serverAddr,
+	      sizeof (struct ipstack_sockaddr_in)) == ERROR)
 	{
-	printErr ("%s: could not bind to TFTP port\n", tftpdErrStr);
+	printErr ("%s: could not ipstack_bind to TFTP port\n", tftpdErrStr);
 	return (ERROR);
 	}
 
@@ -440,13 +437,13 @@ int tftpdTask
 
     while(1)
 	{
-	if (ioctl (serverSocket, FIONREAD, (int) &value) == ERROR)
+	if (ipstack_ioctl (serverSocket, FIONREAD, (int) &value) == ERROR)
 	    return (ERROR);
 
-	if (value == 0)                /* done - socket cleaned out */
+	if (value == 0)                /* done - ipstack_socket cleaned out */
 	    break;
 
-	recvfrom (serverSocket, (caddr_t) &requestBuffer,
+	ipstack_recvfrom (serverSocket, (caddr_t) &requestBuffer,
 		  sizeof (TFTP_MSG), 0, (SOCKADDR *) NULL,
 		  (int *) NULL);
 	}
@@ -463,8 +460,8 @@ int tftpdTask
 	 * Read a message from the TFTP port
 	 */
 
-	value = recvfrom (serverSocket, (char *) &requestBuffer, TFTP_SEGSIZE,
-			  0, (struct sockaddr *) &clientAddr,
+	value = ipstack_recvfrom (serverSocket, (char *) &requestBuffer, TFTP_SEGSIZE,
+			  0, (struct ipstack_sockaddr *) &clientAddr,
 			  &clientAddrLength);
 
 	/*
@@ -480,10 +477,10 @@ int tftpdTask
 	    }
 
 	/*
-	 * Set up a socket to use for a reply, and get a port number for it.
+	 * Set up a ipstack_socket to use for a reply, and get a port number for it.
 	 */
 
-	replySocket = socket (AF_INET, SOCK_DGRAM, 0);
+	replySocket = ipstack_socket (IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, 0);
 	if (replySocket == ERROR)
 	    {
 
@@ -495,8 +492,8 @@ int tftpdTask
 	    }
 
 	serverAddr.sin_port = htons((zpl_ushort) 0);
-	if (bind (replySocket, (SOCKADDR *) &serverAddr,
-		  sizeof (struct sockaddr_in)) == ERROR)
+	if (ipstack_bind (replySocket, (SOCKADDR *) &serverAddr,
+		  sizeof (struct ipstack_sockaddr_in)) == ERROR)
 	    {
 
 	    /*
@@ -611,9 +608,9 @@ int tftpdTask
 
 static int tftpdTask( struct eloop *thread)
 {
-	int serverSocket = 0, clientSocket = 0; /* socket to use to communicate with the remote process */
-	struct sockaddr_in clientAddr; /* process requesting TFTP connection */
-	int clientAddrLength = sizeof(struct sockaddr_in);
+	zpl_socket_t serverSocket, clientSocket; /* ipstack_socket to use to communicate with the remote process */
+	struct ipstack_sockaddr_in clientAddr; /* process requesting TFTP connection */
+	int clientAddrLength = sizeof(struct ipstack_sockaddr_in);
 	TFTP_MSG requestBuffer;
 	int value = 0;
 	int opCode = 0;
@@ -627,8 +624,8 @@ static int tftpdTask( struct eloop *thread)
 	 * Read a message from the TFTP port
 	 */
 	memset(&requestBuffer, 0, sizeof(requestBuffer));
-	value = recvfrom(serverSocket, (char *) &requestBuffer, TFTP_SEGSIZE, 0,
-			(struct sockaddr *) &clientAddr, &clientAddrLength);
+	value = ipstack_recvfrom(serverSocket, (char *) &requestBuffer, TFTP_SEGSIZE, 0,
+			(struct ipstack_sockaddr *) &clientAddr, &clientAddrLength);
 
 	config->t_read = eloop_add_read(config->master, tftpdTask, config, serverSocket);
 	/*
@@ -684,17 +681,17 @@ static int tftpdTask( struct eloop *thread)
 	/*
 	 * Get a reply descriptor.  This will pend until one is available.
 	 */
-	clientSocket = os_sock_create(zpl_false);
-	if(clientSocket <= 0)
+	clientSocket = ipstack_sock_create(IPCOM_STACK, zpl_false);
+	if(ipstack_invalid(clientSocket))
 		return ERROR;
-	os_sock_bind(clientSocket, NULL, 0);
+	ipstack_sock_bind(clientSocket, NULL, 0);
 	pReplyDesc = tftpdDescriptorCreate(&tftpdDesc, zpl_true, clientSocket, clientAddr.sin_port, &clientAddr);
 	if (pReplyDesc == NULL)
 	{
 		/*
 		 * Couldn't create a reply descriptor.
 		 */
-		close(clientSocket);
+		ipstack_close(clientSocket);
 		return ERROR;
 	}
 
@@ -774,7 +771,7 @@ static int tftpdRequestVerify
 		 * requested.
 		 */
 
-		tftpdErrorSend (pReplyDesc, errno);
+		tftpdErrorSend (pReplyDesc, ipstack_errno);
 		return (ERROR);
 	}
 
@@ -848,7 +845,7 @@ static int tftpdRequestDecode
 
 static int tftpdFileRead
     (
-    TFTP_DESC	*pReplyDesc 	/* where to send the file */
+    TFTP_DESC	*pReplyDesc 	/* where to ipstack_send the file */
     )
     {
 	char filepath[TFTP_FILENAME_SIZE * 2];
@@ -868,7 +865,7 @@ static int tftpdFileRead
 	{
 
 		systools_error ("%s: Could not open file %s\n", tftpdErrStr, pReplyDesc->fileName);
-		tftpdErrorSend (pReplyDesc, errno);
+		tftpdErrorSend (pReplyDesc, ipstack_errno);
 	}
     else
 	{
@@ -883,13 +880,13 @@ static int tftpdFileRead
 	}
 
     /*
-     * Close the socket, and delete the
+     * Close the ipstack_socket, and delete the
      * tftpd descriptor.
      */
 
     if (returnValue == ERROR)
 	{
-    	systools_error ("%s:  could not send client file \"%s\"\n", tftpdErrStr,pReplyDesc->fileName);
+    	systools_error ("%s:  could not ipstack_send client file \"%s\"\n", tftpdErrStr,pReplyDesc->fileName);
 	}
 
 
@@ -912,7 +909,7 @@ static int tftpdFileRead
 
 static int tftpdFileWrite
     (
-    TFTP_DESC	*pReplyDesc 	/* where to send the file */
+    TFTP_DESC	*pReplyDesc 	/* where to ipstack_send the file */
     )
     {
 	char filepath[TFTP_FILENAME_SIZE * 2];
@@ -932,7 +929,7 @@ static int tftpdFileWrite
     if (requestFd == ERROR)
 	{
 		systools_error ("%s: Could not open file %s\n", tftpdErrStr, pReplyDesc->fileName);
-		tftpdErrorSend (pReplyDesc, errno);
+		tftpdErrorSend (pReplyDesc, ipstack_errno);
 	}
     else
 	{
@@ -948,13 +945,13 @@ static int tftpdFileWrite
 	}
 
     /*
-     * Close the socket, and delete the
+     * Close the ipstack_socket, and delete the
      * tftpd descriptor.
      */
 
     if (returnValue == ERROR)
 	{
-    	systools_error ("%s:  could not send \"%s\" to client\n", tftpdErrStr, pReplyDesc->fileName);
+    	systools_error ("%s:  could not ipstack_send \"%s\" to client\n", tftpdErrStr, pReplyDesc->fileName);
 	}
 
     tftpdDescriptorDelete (pReplyDesc);
@@ -982,9 +979,9 @@ static TFTP_DESC *tftpdDescriptorCreate
     (
     TFTP_DESC	*desc,			/* mode 		*/
     zpl_bool	connected,		/* state		*/
-    int		sock,			/* socket number	*/
+    zpl_socket_t		sock,			/* ipstack_socket number	*/
     zpl_ushort	clientPort,		/* client port number	*/
-    struct sockaddr_in *pClientAddr 	/* client address	*/
+    struct ipstack_sockaddr_in *pClientAddr 	/* client address	*/
     )
     {
     TFTP_DESC	*pTftpDesc = NULL;		/* pointer to the struct to return */
@@ -1011,7 +1008,7 @@ static TFTP_DESC *tftpdDescriptorCreate
 
     sprintf(pTftpDesc->serverName, "%s", ipstack_inet_ntoa (pClientAddr->sin_addr));
 
-    bcopy ((char *) pClientAddr, (char *) &pTftpDesc->serverAddr, sizeof (struct sockaddr_in));
+    bcopy ((char *) pClientAddr, (char *) &pTftpDesc->serverAddr, sizeof (struct ipstack_sockaddr_in));
     pTftpDesc->sock = sock;
     pTftpDesc->serverPort = clientPort;
 
@@ -1039,8 +1036,8 @@ static int tftpdDescriptorDelete
     {
 	if(descriptor)
 	{
-		if(descriptor->sock)
-			close (descriptor->sock);
+		if(ipstack_invalid(descriptor->sock))
+			ipstack_close (descriptor->sock);
 		free(descriptor);
 	}
     return OK;
@@ -1083,7 +1080,7 @@ static int tftpdDirectoryValidate
 
 /******************************************************************************
 *
-* tftpdErrorSend - send an error to a client
+* tftpdErrorSend - ipstack_send an error to a client
 *
 * Given a client connection and an error number, this routine builds an error
 * packet and sends it to the client.
@@ -1095,8 +1092,8 @@ static int tftpdDirectoryValidate
 
 static int tftpdErrorSend
     (
-    TFTP_DESC	*pReplyDesc,	/* client to send to */
-    int		errorNum		/* error to send */
+    TFTP_DESC	*pReplyDesc,	/* client to ipstack_send to */
+    int		errorNum		/* error to ipstack_send */
     )
     {
     TFTP_MSG	errMsg;
@@ -1107,7 +1104,7 @@ static int tftpdErrorSend
     errSize = tftpErrorCreate (&errMsg, errorNum);
 
     /*
-     * Try to send the error message a few times.
+     * Try to ipstack_send the error message a few times.
      */
 
     while (repeatCount--)

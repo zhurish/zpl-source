@@ -9,6 +9,7 @@ obj:install
 #
 
 make_prepare:
+	echo ""
 #
 config_install:
 	@install -d ${ZPL_INSTALL_ETC_DIR} 
@@ -43,4 +44,4 @@ objclean:
 
 all: lib install
 
-.PHONY:	obj all lib install objclean clean config_clean config_install
+.PHONY:	obj all lib install objclean clean config_clean config_install make_prepare

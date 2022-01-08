@@ -905,7 +905,7 @@ int mqtt_module_commit_api(struct mqtt_app_config *cfg)
 	zassert(cfg != NULL);
 	if(cfg->mutex)
 			os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);
-	if(host_config_load_done ())
+	if(host_loadconfig_done ())
 	{
 		if(cfg->connectd == zpl_true && cfg->mosq)
 		{
@@ -946,7 +946,7 @@ int mqtt_module_init(void)
 	/*
 	 * load config
 	 */
-	mqtt_config->enable = zpl_true;
+	mqtt_config->enable = zpl_false;
 	if (mqtt_client_id_generate(mqtt_config) != MOSQ_ERR_SUCCESS)
 	{
 		_MQTT_DBG_TRAP("------------%s-------------mqtt_client_id_generate",__func__);
@@ -961,7 +961,7 @@ int mqtt_module_init(void)
 		mqtt_config_default_cleanup(mqtt_config);
 		return ERROR;
 	}
-	if(host_config_load_done ())
+	if(host_loadconfig_done ())
 	{
 		if(mosquitto_new_reinit(mqtt_config) == ERROR)
 		{
@@ -997,7 +997,7 @@ static int mqtt_app_task (void *argv)
 	struct mqtt_app_config *cfg = argv;
 	zassert(cfg != NULL);
 
-	host_config_load_waitting();
+	host_waitting_loadconfig();
 	while (!cfg->enable)
 	{
 		os_sleep (1);
@@ -1113,7 +1113,10 @@ int mqtt_module_task_init(void)
 		mqtt_config->taskid = os_task_create("mqttTask", OS_TASK_DEFAULT_PRIORITY, 0,
 				mqtt_app_task, mqtt_config, OS_TASK_DEFAULT_STACK);
 	if (mqtt_config->taskid)
+	{
+		module_setup_task(MODULE_MQTT, mqtt_config->taskid);
 		return OK;
+	}
 	return ERROR;
 }
 
@@ -1139,9 +1142,10 @@ struct module_list module_list_mqtt =
 	.module_exit=mqtt_module_exit, 
 	.module_task_init=mqtt_module_task_init, 
 	.module_task_exit=mqtt_module_task_exit, 
-	.module_cmd_init=NULL, 
+	.module_cmd_init=cmd_mqtt_init, 
 	.module_write_config=NULL, 
 	.module_show_config=NULL,
 	.module_show_debug=NULL, 
+	.flags = ZPL_MODULE_NEED_INIT,
 	.taskid=0,
 };

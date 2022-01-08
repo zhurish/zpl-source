@@ -828,7 +828,7 @@ extern intmax_t __strtoull(const char*, char**, int);
 #  ifdef OS390
 #   include <netinet/tcp_var.h>
 #  else
-#   include <netinet/tcp.h>          /* TCP_NODELAY, TCP_FASTOPEN */
+#   include <netinet/tcp.h>          /* IPSTACK_TCP_NODELAY, TCP_FASTOPEN */
 #  endif
 #  include <arpa/inet.h>
 # endif
@@ -2717,17 +2717,17 @@ struct SOAP_CMAC soap
   int connect_timeout;          /* user-definable, when > 0, sets socket connect() timeout in seconds, < 0 in usec */
   int accept_timeout;           /* user-definable, when > 0, sets socket accept() timeout in seconds, < 0 in usec */
   int socket_flags;             /* user-definable socket recv() and send() flags, e.g. set to MSG_NOSIGNAL to disable sigpipe */
-  int connect_flags;            /* user-definable connect() SOL_SOCKET sockopt flags, e.g. set to SO_DEBUG to debug socket */
+  int connect_flags;            /* user-definable connect() IPSTACK_SOL_SOCKET sockopt flags, e.g. set to SO_DEBUG to debug socket */
   int connect_retry;            /* number of times to retry connecting (exponential backoff), zero by default */
-  int bind_flags;               /* user-definable bind() SOL_SOCKET sockopt flags, e.g. set to SO_REUSEADDR to enable reuse */
-  short bind_inet6;             /* user-definable, when > 0 use AF_INET6 instead of PF_UNSPEC (only with -DWITH_IPV6) */
-  short bind_v6only;            /* user-definable, when > 0 use IPPROTO_IPV6 sockopt IPV6_V6ONLY (only with -DWITH_IPV6) */
-  int accept_flags;             /* user-definable accept() SOL_SOCKET sockopt flags */
+  int bind_flags;               /* user-definable bind() IPSTACK_SOL_SOCKET sockopt flags, e.g. set to IPSTACK_SO_REUSEADDR to enable reuse */
+  short bind_inet6;             /* user-definable, when > 0 use IPSTACK_AF_INET6 instead of PF_UNSPEC (only with -DWITH_IPV6) */
+  short bind_v6only;            /* user-definable, when > 0 use IPSTACK_IPPROTO_IPV6 sockopt IPV6_V6ONLY (only with -DWITH_IPV6) */
+  int accept_flags;             /* user-definable accept() IPSTACK_SOL_SOCKET sockopt flags */
 #ifdef WITH_SELF_PIPE
   int pipe_fd[2];               /* self pipe trick file descriptors used to close the select call from another thread */
 #endif
-  int sndbuf;                   /* user-definable SO_SNDBUF setsockopt value */
-  int rcvbuf;                   /* user-definable SO_RCVBUF setsockopt value */
+  int sndbuf;                   /* user-definable IPSTACK_SO_SNDBUF setsockopt value */
+  int rcvbuf;                   /* user-definable IPSTACK_SO_RCVBUF setsockopt value */
   unsigned short linger_time;   /* user-definable linger time for SO_LINGER option */
   unsigned int maxlevel;        /* user-definable max XML nesting depth levels, initialized to SOAP_MAXLEVEL */
   long maxlength;               /* user-definable max string length, initialized to SOAP_MAXLENGTH, maxlength<=0 is unbounded */
@@ -2937,7 +2937,7 @@ struct SOAP_CMAC soap
   const char *override_host;    /* to override the client-side host name/IP when connecting */
   int override_port;            /* to override client-side port number when connecting */
   int keep_alive;               /* connection should be kept open (-1, 0, or counts down) */
-  int tcp_keep_alive;           /* enable SO_KEEPALIVE */
+  int tcp_keep_alive;           /* enable IPSTACK_SO_KEEPALIVE */
   unsigned int tcp_keep_idle;   /* set TCP_KEEPIDLE */
   unsigned int tcp_keep_intvl;  /* set TCP_KEEPINTVL */
   unsigned int tcp_keep_cnt;    /* set TCP_KEEPCNT */

@@ -283,8 +283,8 @@ int net__try_connect_step1(struct mosquitto *mosq, const char *host)
 		return MOSQ_ERR_NOMEM;
 	}
 
-	hints->ai_family = AF_UNSPEC;
-	hints->ai_socktype = SOCK_STREAM;
+	hints->ai_family = IPSTACK_AF_UNSPEC;
+	hints->ai_socktype = IPSTACK_SOCK_STREAM;
 
 	mosq->adns->ar_name = host;
 	mosq->adns->ar_request = hints;
@@ -315,10 +315,10 @@ int net__try_connect_step2(struct mosquitto *mosq, uint16_t port, mosq_sock_t *s
 		*sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 		if(*sock == INVALID_SOCKET) continue;
 
-		if(rp->ai_family == AF_INET){
-			((struct sockaddr_in *)rp->ai_addr)->sin_port = htons(port);
-		}else if(rp->ai_family == AF_INET6){
-			((struct sockaddr_in6 *)rp->ai_addr)->sin6_port = htons(port);
+		if(rp->ai_family == IPSTACK_AF_INET){
+			((struct ipstack_sockaddr_in *)rp->ai_addr)->sin_port = htons(port);
+		}else if(rp->ai_family == IPSTACK_AF_INET6){
+			((struct ipstack_sockaddr_in6 *)rp->ai_addr)->sin6_port = htons(port);
 		}else{
 			COMPAT_CLOSE(*sock);
 			*sock = INVALID_SOCKET;
@@ -349,7 +349,7 @@ int net__try_connect_step2(struct mosquitto *mosq, uint16_t port, mosq_sock_t *s
 		COMPAT_CLOSE(*sock);
 		*sock = INVALID_SOCKET;
 	}
-	freeaddrinfo(mosq->adns->ar_result);
+	ipstack_freeaddrinfo(mosq->adns->ar_result);
 	mosq->adns->ar_result = NULL;
 
 	mosquitto__free((struct ipstack_addrinfo *)mosq->adns->ar_request);
@@ -423,19 +423,19 @@ int net__try_connect(const char *host, uint16_t port, mosq_sock_t *sock, const c
 
 	*sock = INVALID_SOCKET;
 	memset(&hints, 0, sizeof(struct ipstack_addrinfo));
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_family = IPSTACK_AF_UNSPEC;
+	hints.ai_socktype = IPSTACK_SOCK_STREAM;
 
-	s = getaddrinfo(host, NULL, &hints, &ainfo);
+	s = ipstack_getaddrinfo(host, NULL, &hints, &ainfo);
 	if(s){
 		errno = s;
 		return MOSQ_ERR_EAI;
 	}
 
 	if(bind_address){
-		s = getaddrinfo(bind_address, NULL, &hints, &ainfo_bind);
+		s = ipstack_getaddrinfo(bind_address, NULL, &hints, &ainfo_bind);
 		if(s){
-			freeaddrinfo(ainfo);
+			ipstack_freeaddrinfo(ainfo);
 			errno = s;
 			return MOSQ_ERR_EAI;
 		}
@@ -445,10 +445,10 @@ int net__try_connect(const char *host, uint16_t port, mosq_sock_t *sock, const c
 		*sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 		if(*sock == INVALID_SOCKET) continue;
 
-		if(rp->ai_family == AF_INET){
-			((struct sockaddr_in *)rp->ai_addr)->sin_port = htons(port);
-		}else if(rp->ai_family == AF_INET6){
-			((struct sockaddr_in6 *)rp->ai_addr)->sin6_port = htons(port);
+		if(rp->ai_family == IPSTACK_AF_INET){
+			((struct ipstack_sockaddr_in *)rp->ai_addr)->sin_port = htons(port);
+		}else if(rp->ai_family == IPSTACK_AF_INET6){
+			((struct ipstack_sockaddr_in6 *)rp->ai_addr)->sin6_port = htons(port);
 		}else{
 			COMPAT_CLOSE(*sock);
 			*sock = INVALID_SOCKET;
@@ -496,9 +496,9 @@ int net__try_connect(const char *host, uint16_t port, mosq_sock_t *sock, const c
 		COMPAT_CLOSE(*sock);
 		*sock = INVALID_SOCKET;
 	}
-	freeaddrinfo(ainfo);
+	ipstack_freeaddrinfo(ainfo);
 	if(bind_address){
-		freeaddrinfo(ainfo_bind);
+		ipstack_freeaddrinfo(ainfo_bind);
 	}
 	if(!rp){
 		return MOSQ_ERR_ERRNO;
@@ -1017,7 +1017,7 @@ int net__socket_nonblock(mosq_sock_t *sock)
 #endif
 #else
 	unsigned long opt = 1;
-	if(ioctlsocket(*sock, FIONBIO, &opt)){
+	if(ioctlsocket(*sock, IPSTACK_FIONBIO, &opt)){
 		COMPAT_CLOSE(*sock);
 		*sock = INVALID_SOCKET;
 		return MOSQ_ERR_ERRNO;
@@ -1031,11 +1031,11 @@ int net__socket_nonblock(mosq_sock_t *sock)
 int net__socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 {
 #ifdef WIN32
-	int family[2] = {AF_INET, AF_INET6};
+	int family[2] = {IPSTACK_AF_INET, IPSTACK_AF_INET6};
 	int i;
-	struct sockaddr_storage ss;
-	struct sockaddr_in *sa = (struct sockaddr_in *)&ss;
-	struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)&ss;
+	struct ipstack_sockaddr_storage ss;
+	struct ipstack_sockaddr_in *sa = (struct ipstack_sockaddr_in *)&ss;
+	struct ipstack_sockaddr_in6 *sa6 = (struct ipstack_sockaddr_in6 *)&ss;
 	socklen_t ss_len;
 	mosq_sock_t spR, spW;
 
@@ -1046,26 +1046,26 @@ int net__socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 
 	for(i=0; i<2; i++){
 		memset(&ss, 0, sizeof(ss));
-		if(family[i] == AF_INET){
+		if(family[i] == IPSTACK_AF_INET){
 			sa->sin_family = family[i];
-			sa->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+			sa->sin_addr.s_addr = htonl(IPSTACK_INADDR_LOOPBACK);
 			sa->sin_port = 0;
-			ss_len = sizeof(struct sockaddr_in);
-		}else if(family[i] == AF_INET6){
+			ss_len = sizeof(struct ipstack_sockaddr_in);
+		}else if(family[i] == IPSTACK_AF_INET6){
 			sa6->sin6_family = family[i];
 			sa6->sin6_addr = in6addr_loopback;
 			sa6->sin6_port = 0;
-			ss_len = sizeof(struct sockaddr_in6);
+			ss_len = sizeof(struct ipstack_sockaddr_in6);
 		}else{
 			return MOSQ_ERR_INVAL;
 		}
 
-		listensock = socket(family[i], SOCK_STREAM, IPPROTO_TCP);
+		listensock = socket(family[i], IPSTACK_SOCK_STREAM, IPSTACK_IPPROTO_TCP);
 		if(listensock == -1){
 			continue;
 		}
 
-		if(bind(listensock, (struct sockaddr *)&ss, ss_len) == -1){
+		if(bind(listensock, (struct ipstack_sockaddr *)&ss, ss_len) == -1){
 			COMPAT_CLOSE(listensock);
 			continue;
 		}
@@ -1076,22 +1076,22 @@ int net__socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 		}
 		memset(&ss, 0, sizeof(ss));
 		ss_len = sizeof(ss);
-		if(getsockname(listensock, (struct sockaddr *)&ss, &ss_len) < 0){
+		if(getsockname(listensock, (struct ipstack_sockaddr *)&ss, &ss_len) < 0){
 			COMPAT_CLOSE(listensock);
 			continue;
 		}
 
-		if(family[i] == AF_INET){
+		if(family[i] == IPSTACK_AF_INET){
 			sa->sin_family = family[i];
-			sa->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-			ss_len = sizeof(struct sockaddr_in);
-		}else if(family[i] == AF_INET6){
+			sa->sin_addr.s_addr = htonl(IPSTACK_INADDR_LOOPBACK);
+			ss_len = sizeof(struct ipstack_sockaddr_in);
+		}else if(family[i] == IPSTACK_AF_INET6){
 			sa6->sin6_family = family[i];
 			sa6->sin6_addr = in6addr_loopback;
-			ss_len = sizeof(struct sockaddr_in6);
+			ss_len = sizeof(struct ipstack_sockaddr_in6);
 		}
 
-		spR = socket(family[i], SOCK_STREAM, IPPROTO_TCP);
+		spR = socket(family[i], IPSTACK_SOCK_STREAM, IPSTACK_IPPROTO_TCP);
 		if(spR == -1){
 			COMPAT_CLOSE(listensock);
 			continue;
@@ -1100,7 +1100,7 @@ int net__socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 			COMPAT_CLOSE(listensock);
 			continue;
 		}
-		if(connect(spR, (struct sockaddr *)&ss, ss_len) < 0){
+		if(connect(spR, (struct ipstack_sockaddr *)&ss, ss_len) < 0){
 #ifdef WIN32
 			errno = WSAGetLastError();
 #endif
@@ -1137,7 +1137,7 @@ int net__socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 #else
 	int sv[2];
 
-	if(socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1){
+	if(socketpair(AF_UNIX, IPSTACK_SOCK_STREAM, 0, sv) == -1){
 		return MOSQ_ERR_ERRNO;
 	}
 	if(net__socket_nonblock(&sv[0])){

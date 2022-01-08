@@ -68,7 +68,7 @@ static int web_dhcpd_get_config(Webs *wp, const char *poolname)
 		if(dhcps->address.prefixlen)
 		{
 			zpl_uint32 addr = 0;
-			struct in_addr innetmask;
+			struct ipstack_in_addr innetmask;
 			memset(startip, 0, sizeof(startip));
 			memcpy(&address, &dhcps->address, sizeof(address));
 			addr = ntohl(address.u.prefix4.s_addr);
@@ -92,7 +92,7 @@ static int web_dhcpd_get_config(Webs *wp, const char *poolname)
 		{
 			if(dhcps->start_address.prefixlen)
 			{
-				struct in_addr innetmask;
+				struct ipstack_in_addr innetmask;
 
 				memset(startip, 0, sizeof(startip));
 				pu.p = &dhcps->start_address;

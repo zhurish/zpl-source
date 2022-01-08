@@ -13,7 +13,7 @@
 //#include "if.h"
 #include "memory.h"
 #include "prefix.h"
-#include "sigevent.h"
+//#include "sigevent.h"
 #include "sockunion.h"
 //#include "version.h"
 //#include "nsm_vrf.h"
@@ -56,7 +56,7 @@ DEFUN (syslog_debug_test,
 	char *message;
 	//extern int syslogc_out(int priority, int ffacility, char * pStr, int len);
 	message = argv_concat(argv, argc, 0);
-	//syslogc_out(LOG_DEBUG, 7, message, os_strlen(message));
+	//syslogc_out(ZLOG_LEVEL_DEBUG, 7, message, os_strlen(message));
 	return CMD_SUCCESS;
 }
 
@@ -199,9 +199,9 @@ DEFUN (process_test,
 		break;
 	}
 	if((res == ERROR))
-		vty_out(vty,"res:ERROR(%s)(%d)%s",strerror(errno),sizeof(process_head),VTY_NEWLINE);
+		vty_out(vty,"res:ERROR(%s)(%d)%s",strerror(ipstack_errno),sizeof(process_head),VTY_NEWLINE);
 	else
-		vty_out(vty,"res:%d(%s)(%d)%s",res,strerror(errno),sizeof(process_head),VTY_NEWLINE);
+		vty_out(vty,"res:%d(%s)(%d)%s",res,strerror(ipstack_errno),sizeof(process_head),VTY_NEWLINE);
 	return CMD_SUCCESS;
 }
 #endif

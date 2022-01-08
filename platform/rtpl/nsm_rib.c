@@ -101,9 +101,9 @@ _rnode_zlog(const char *_func, struct route_node *rn, int priority,
 }
 
 #define rnode_debug(node, ...) \
-	_rnode_zlog(__func__, node, LOG_DEBUG, __VA_ARGS__)
+	_rnode_zlog(__func__, node, ZLOG_LEVEL_DEBUG, __VA_ARGS__)
 #define rnode_info(node, ...) \
-	_rnode_zlog(__func__, node, LOG_INFO, __VA_ARGS__)
+	_rnode_zlog(__func__, node, ZLOG_LEVEL_INFO, __VA_ARGS__)
 
 /* Add nexthop to the end of a rib node's nexthop list */
 void rib_nexthop_add(struct rib *rib, struct nexthop *nexthop)
@@ -291,7 +291,7 @@ static int nexthop_active_ipv4(struct rib *rib, struct nexthop *nexthop,
 
 	/* Make lookup prefix. */
 	memset(&p, 0, sizeof(struct prefix_ipv4));
-	p.family = AF_INET;
+	p.family = IPSTACK_AF_INET;
 	p.prefixlen = IPV4_MAX_PREFIXLEN;
 	p.prefix = nexthop->gate.ipv4;
 
@@ -426,7 +426,7 @@ nexthop_active_ipv6 (struct rib *rib, struct nexthop *nexthop, int set,
 
 	/* Make lookup prefix. */
 	memset (&p, 0, sizeof (struct prefix_ipv6));
-	p.family = AF_INET6;
+	p.family = IPSTACK_AF_INET6;
 	p.prefixlen = IPV6_MAX_PREFIXLEN;
 	p.prefix = nexthop->gate.ipv6;
 
@@ -655,7 +655,7 @@ rib_match_ipv4_multicast(struct ipstack_in_addr addr, struct route_node **rn_out
 	if (IS_ZEBRA_DEBUG_RIB)
 	{
 		zpl_char buf[BUFSIZ];
-		ipstack_inet_ntop(AF_INET, &addr, buf, BUFSIZ);
+		ipstack_inet_ntop(IPSTACK_AF_INET, &addr, buf, BUFSIZ);
 
 		zlog_debug(MODULE_NSM, "%s: %s vrf %u: found %s, using %s", __func__, buf,
 				vrf_id,
@@ -786,11 +786,11 @@ int rib_lookup_ipv4_route(struct prefix_ipv4 *p, union sockunion * qgate,
 				return ZEBRA_RIB_FOUND_EXACT;
 			if (IS_ZEBRA_DEBUG_RIB)
 			{
-				zpl_char gate_buf[INET_ADDRSTRLEN], qgate_buf[INET_ADDRSTRLEN];
-				ipstack_inet_ntop(AF_INET, &nexthop->gate.ipv4.s_addr, gate_buf,
-				INET_ADDRSTRLEN);
-				ipstack_inet_ntop(AF_INET, &sockunion2ip(qgate), qgate_buf,
-				INET_ADDRSTRLEN);
+				zpl_char gate_buf[IPSTACK_INET_ADDRSTRLEN], qgate_buf[IPSTACK_INET_ADDRSTRLEN];
+				ipstack_inet_ntop(IPSTACK_AF_INET, &nexthop->gate.ipv4.s_addr, gate_buf,
+				IPSTACK_INET_ADDRSTRLEN);
+				ipstack_inet_ntop(IPSTACK_AF_INET, &sockunion2ip(qgate), qgate_buf,
+				IPSTACK_INET_ADDRSTRLEN);
 				zlog_debug(MODULE_NSM, "%s: qgate == %s, %s == %s", __func__,
 						qgate_buf, recursing ? "rgate" : "gate", gate_buf);
 			}
@@ -819,7 +819,7 @@ rib_match_ipv6 (struct ipstack_in6_addr *addr, vrf_id_t vrf_id)
 	return 0;
 
 	memset (&p, 0, sizeof (struct prefix_ipv6));
-	p.family = AF_INET6;
+	p.family = IPSTACK_AF_INET6;
 	p.prefixlen = IPV6_MAX_PREFIXLEN;
 	IPV6_ADDR_COPY (&p.prefix, addr);
 
@@ -939,7 +939,7 @@ static unsigned nexthop_active_check(struct route_node *rn, struct rib *rib,
 		break;
 	case NEXTHOP_TYPE_IPV6_IFINDEX:
 		family = AFI_IP6;
-		if (IN6_IS_ADDR_LINKLOCAL (&nexthop->gate.ipv6))
+		if (IPSTACK_IN6_IS_ADDR_LINK_LOCAL (&nexthop->gate.ipv6))
 		{
 			ifp = if_lookup_by_index_vrf (nexthop->ifindex, rib->vrf_id);
 			if (ifp && if_is_operative(ifp))
@@ -967,8 +967,8 @@ static unsigned nexthop_active_check(struct route_node *rn, struct rib *rib,
 
 	/* XXX: What exactly do those checks do? Do we support
 	 * e.g. IPv4 routes with IPv6 nexthops or vice versa? */
-	if (RIB_SYSTEM_ROUTE(rib) || (family == AFI_IP && rn->p.family != AF_INET)
-			|| (family == AFI_IP6 && rn->p.family != AF_INET6))
+	if (RIB_SYSTEM_ROUTE(rib) || (family == AFI_IP && rn->p.family != IPSTACK_AF_INET)
+			|| (family == AFI_IP6 && rn->p.family != IPSTACK_AF_INET6))
 		return CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_ACTIVE);
 
 	/* The original code didn't determine the family correctly
@@ -1075,12 +1075,12 @@ static int rib_update_kernel(struct route_node *rn, struct rib *old,
 	}
 
 	/*
-	 * Make sure we update the FPM any time we send new information to
+	 * Make sure we update the FPM any time we ipstack_send new information to
 	 * the kernel.
 	 */
 	; //zfpm_trigger_update (rn, "updating in kernel");
 
-	ret = kernel_route_rib(&rn->p, old, new);
+	ret = pal_iproute_rib_action(&rn->p, old, new);
 
 	/* This condition is never met, if we are using rt_socket.c */
 	if (ret < 0 && new)
@@ -1400,7 +1400,7 @@ static zpl_uint32  process_subq(struct list * subq, zpl_uchar qindex)
 	{
 		zlog_debug (MODULE_NSM, "%s: called for route_node (%p, %d) with no ribs",
 				__func__, rnode, rnode->lock);
-		zlog_backtrace(LOG_DEBUG);
+		zlog_backtrace(ZLOG_LEVEL_DEBUG);
 	}
 #endif
 
@@ -1419,10 +1419,10 @@ static zpl_uint32  process_subq(struct list * subq, zpl_uchar qindex)
 static void meta_queue_process_complete(struct work_queue *dummy)
 {
 	#ifdef ZPL_NSM_RNH
-	zebra_evaluate_rnh_table(0, AF_INET);
+	zebra_evaluate_rnh_table(0, IPSTACK_AF_INET);
 
 #ifdef HAVE_IPV6
-	zebra_evaluate_rnh_table(0, AF_INET6);
+	zebra_evaluate_rnh_table(0, IPSTACK_AF_INET6);
 #endif /* HAVE_IPV6 */
 	#endif
 }
@@ -1506,7 +1506,7 @@ static void rib_queue_add(struct nsm_rib_t *zebra, struct route_node *rn)
 	{
 		zlog_debug(MODULE_NSM, "%s: called for route_node (%p, %d) with no ribs",
 				__func__, (void *) rn, rn->lock);
-		zlog_backtrace(LOG_DEBUG);
+		zlog_backtrace(ZLOG_LEVEL_DEBUG);
 		return;
 	}
 
@@ -1880,7 +1880,7 @@ void rib_lookup_and_dump(struct prefix_ipv4 * p)
 	struct route_table *table;
 	struct route_node *rn;
 	struct rib *rib;
-	zpl_char prefix_buf[INET_ADDRSTRLEN];
+	zpl_char prefix_buf[IPSTACK_INET_ADDRSTRLEN];
 
 	/* Lookup table.  */
 	table = nsm_vrf_table(AFI_IP, SAFI_UNICAST, VRF_DEFAULT);
@@ -2012,7 +2012,7 @@ int rib_delete_ipv4(zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
 	struct nexthop *nexthop, *tnexthop;
 	int recursing;
 	zpl_char buf1[PREFIX_STRLEN];
-	zpl_char buf2[INET_ADDRSTRLEN];
+	zpl_char buf2[IPSTACK_INET_ADDRSTRLEN];
 
 	/* Lookup table.  */
 	table = nsm_vrf_table(AFI_IP, safi, vrf_id);
@@ -2046,7 +2046,7 @@ int rib_delete_ipv4(zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
 				zlog_debug(MODULE_NSM,
 						"route %s vrf %u via %s ifindex %d doesn't exist in rib",
 						prefix2str(p, buf1, sizeof(buf1)), vrf_id,
-						ipstack_inet_ntop(AF_INET, gate, buf2, INET_ADDRSTRLEN),
+						ipstack_inet_ntop(IPSTACK_AF_INET, gate, buf2, IPSTACK_INET_ADDRSTRLEN),
 						ifindex);
 			else
 				zlog_debug(MODULE_NSM,
@@ -2115,7 +2115,7 @@ int rib_delete_ipv4(zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
 			{
 				zlog_debug(MODULE_NSM,
 						"Zebra route %s/%d was deleted by others from kernel",
-						ipstack_inet_ntop(AF_INET, &p->prefix, buf1, INET_ADDRSTRLEN),
+						ipstack_inet_ntop(IPSTACK_AF_INET, &p->prefix, buf1, IPSTACK_INET_ADDRSTRLEN),
 						p->prefixlen);
 			}
 			/* This means someone else, other than Zebra, has deleted
@@ -2131,7 +2131,7 @@ int rib_delete_ipv4(zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
 							"route %s vrf %u via %s ifindex %d type %d "
 									"doesn't exist in rib",
 							prefix2str(p, buf1, sizeof(buf1)), vrf_id,
-							ipstack_inet_ntop(AF_INET, gate, buf2, INET_ADDRSTRLEN),
+							ipstack_inet_ntop(IPSTACK_AF_INET, gate, buf2, IPSTACK_INET_ADDRSTRLEN),
 							ifindex, type);
 				else
 					zlog_debug(MODULE_NSM,
@@ -2772,7 +2772,7 @@ rib_delete_ipv6 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv6 *p,
 			if (gate)
 			zlog_debug (MODULE_NSM, "route %s vrf %u via %s ifindex %d doesn't exist in rib",
 					prefix2str (p, buf1, sizeof(buf1)), vrf_id,
-					ipstack_inet_ntop (AF_INET6, gate, buf2, INET6_ADDRSTRLEN),
+					ipstack_inet_ntop (IPSTACK_AF_INET6, gate, buf2, INET6_ADDRSTRLEN),
 					ifindex);
 			else
 			zlog_debug (MODULE_NSM, "route %s vrf %u ifindex %d doesn't exist in rib",
@@ -2841,7 +2841,7 @@ rib_delete_ipv6 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv6 *p,
 			if (IS_ZEBRA_DEBUG_KERNEL)
 			{
 				zlog_debug (MODULE_NSM, "Zebra route %s/%d was deleted by others from kernel",
-						ipstack_inet_ntop (AF_INET, &p->prefix, buf1, INET_ADDRSTRLEN),
+						ipstack_inet_ntop (IPSTACK_AF_INET, &p->prefix, buf1, IPSTACK_INET_ADDRSTRLEN),
 						p->prefixlen);
 			}
 			/* This means someone else, other than Zebra, has deleted a Zebra
@@ -2856,7 +2856,7 @@ rib_delete_ipv6 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv6 *p,
 				zlog_debug (MODULE_NSM, "route %s vrf %u via %s ifindex %d type %d "
 						"doesn't exist in rib",
 						prefix2str (p, buf1, sizeof(buf1)), vrf_id,
-						ipstack_inet_ntop (AF_INET6, gate, buf2, INET6_ADDRSTRLEN),
+						ipstack_inet_ntop (IPSTACK_AF_INET6, gate, buf2, INET6_ADDRSTRLEN),
 						ifindex,
 						type);
 				else
@@ -3112,7 +3112,7 @@ static void rib_weed_table(struct route_table *table)
 					continue;
 
 				if (rib->table != nsm_ribd->rtm_table_default
-						&& rib->table != RT_TABLE_MAIN)
+						&& rib->table != IPSTACK_RT_TABLE_MAIN)
 					rib_delnode(rn, rib);
 			}
 		}
@@ -3453,7 +3453,7 @@ nsm_vrf_alloc(vrf_id_t vrf_id)
 
 #if 0//def HAVE_NETLINK
   /* Initialize netlink sockets */
-  snprintf (nl_name, 64, "netlink-listen (vrf %u)", vrf_id);
+  snprintf (nl_name, 64, "netlink-ipstack_listen (vrf %u)", vrf_id);
   zvrf->netlink.sock = -1;
   zvrf->netlink.name = XSTRDUP (MTYPE_NETLINK_NAME, nl_name);
 

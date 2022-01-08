@@ -81,6 +81,7 @@ void nsm_template_init (void)
 	if(service_list == NULL)
 		service_list = list_new();
 	service_list->cmp =  NULL;//nsm_template_cmp;
+	cmd_nsm_template_init();
 }
 
 void nsm_template_exit (void)
@@ -199,3 +200,30 @@ int nsm_template_debug_write_config (struct vty *vty)
 	}
 	return ret;
 }
+
+
+static struct cmd_node template_node =
+{
+	TEMPLATE_NODE,
+	"%s(config-%s)# ",
+	1
+};
+static struct cmd_node all_service_node =
+{
+	ALL_SERVICE_NODE,
+	"%s(config-%s)# ",
+	1
+};
+
+
+
+int cmd_nsm_template_init(void)
+{
+	install_node(&all_service_node, nsm_template_service_write_config);
+	install_node(&template_node, nsm_template_write_config);
+	install_default(TEMPLATE_NODE);
+	install_default_basic(TEMPLATE_NODE);
+	install_default(ALL_SERVICE_NODE);
+	install_default_basic(ALL_SERVICE_NODE);
+	return OK;
+}	

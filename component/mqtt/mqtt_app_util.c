@@ -69,11 +69,11 @@ int mqtt_client_connect(struct mqtt_app_config *cfg)
 		if (rc == MOSQ_ERR_ERRNO)
 		{
 #ifndef WIN32
-			err = strerror(errno);
+			err = strerror(ipstack_errno);
 #else
 			FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errno, 0, (LPTSTR)&err, 1024, NULL);
 #endif
-			mqtt_err_printf(cfg, "Error: %s", err);
+			//mqtt_err_printf(cfg, "Error: %s", err);
 		}
 		else
 		{
@@ -444,15 +444,15 @@ void mqtt_log_callback(const zpl_char *file, const zpl_char *func, const zpl_uin
 {
 	zpl_uint32 loglevel = 0;
 	if(level & MOSQ_LOG_ERR)
-		loglevel = LOG_ERR;
+		loglevel = ZLOG_LEVEL_ERR;
 	if(level & MOSQ_LOG_WARNING)
-		loglevel = LOG_WARNING;
+		loglevel = ZLOG_LEVEL_WARNING;
 	if(level & MOSQ_LOG_NOTICE)
-		loglevel = LOG_NOTICE;
+		loglevel = ZLOG_LEVEL_NOTICE;
 	if(level & MOSQ_LOG_INFO)
-		loglevel = LOG_INFO;
+		loglevel = ZLOG_LEVEL_INFO;
 	if(level & MOSQ_LOG_DEBUG)
-		loglevel = LOG_DEBUG;
+		loglevel = ZLOG_LEVEL_DEBUG;
 
 	if(loglevel && mqtt_config && loglevel <= (mqtt_config->loglevel & 0x001f))
 		pl_zlog (file, func, line, MODULE_MQTT, loglevel, "%s", str);

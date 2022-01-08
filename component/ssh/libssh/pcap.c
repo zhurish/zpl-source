@@ -306,11 +306,11 @@ void ssh_pcap_context_set_file(ssh_pcap_context ctx, ssh_pcap_file pcap){
 static int ssh_pcap_context_connect(ssh_pcap_context ctx)
 {
     ssh_session session=ctx->session;
-    struct sockaddr_in local = {
-        .sin_family = AF_UNSPEC,
+    struct ipstack_sockaddr_in local = {
+        .sin_family = IPSTACK_AF_UNSPEC,
     };
-    struct sockaddr_in remote = {
-        .sin_family = AF_UNSPEC,
+    struct ipstack_sockaddr_in remote = {
+        .sin_family = IPSTACK_AF_UNSPEC,
     };
     socket_t fd;
     socklen_t len;
@@ -332,7 +332,7 @@ static int ssh_pcap_context_connect(ssh_pcap_context ctx)
     }
 
     len = sizeof(local);
-    rc = getsockname(fd, (struct sockaddr *)&local, &len);
+    rc = getsockname(fd, (struct ipstack_sockaddr *)&local, &len);
     if (rc < 0) {
         ssh_set_error(session,
                       SSH_REQUEST_DENIED,
@@ -342,7 +342,7 @@ static int ssh_pcap_context_connect(ssh_pcap_context ctx)
     }
 
     len = sizeof(remote);
-    rc = getpeername(fd, (struct sockaddr *)&remote, &len);
+    rc = getpeername(fd, (struct ipstack_sockaddr *)&remote, &len);
     if (rc < 0) {
         ssh_set_error(session,
                       SSH_REQUEST_DENIED,
@@ -351,7 +351,7 @@ static int ssh_pcap_context_connect(ssh_pcap_context ctx)
         return SSH_ERROR;
     }
 
-    if (local.sin_family != AF_INET) {
+    if (local.sin_family != IPSTACK_AF_INET) {
         ssh_set_error(session,
                       SSH_REQUEST_DENIED,
                       "Only IPv4 supported for pcap logging");
@@ -412,7 +412,7 @@ int ssh_pcap_context_write(ssh_pcap_context ctx,
                          origlen + TCPIPHDR_LEN, /* total len */
                          ctx->file->ipsequence,  /* IP id number */
                          0,          /* fragment offset */
-                         64,         /* TTL */
+                         64,         /* IPSTACK_TTL */
                          6,          /* protocol TCP=6 */
                          0);         /* checksum */
 

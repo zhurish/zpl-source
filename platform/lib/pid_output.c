@@ -50,7 +50,7 @@ pid_output (const char *path)
   /* XXX Why do we continue instead of exiting?  This seems incompatible
      with the behavior of the fcntl version below. */
   zlog_warn(MODULE_DEFAULT, "Can't fopen pid lock file %s (%s), continuing",
-	    path, safe_strerror(errno));
+	    path, ipstack_strerror(ipstack_errno));
   umask(oldumask);
   return -1;
 }
@@ -77,7 +77,7 @@ pid_input (const char *path)
   /* XXX Why do we continue instead of exiting?  This seems incompatible
      with the behavior of the fcntl version below. */
   zlog_warn(MODULE_DEFAULT, "Can't fopen pid lock file %s (%s), continuing",
-	    path, safe_strerror(errno));
+	    path, ipstack_strerror(ipstack_errno));
   umask(oldumask);
   return -1;
 }
@@ -100,7 +100,7 @@ pid_output (const char *path)
   if (fd < 0)
     {
       zlog_err(MODULE_DEFAULT, "Can't create pid lock file %s (%s), exiting",
-	       path, safe_strerror(errno));
+	       path, ipstack_strerror(ipstack_errno));
       umask(oldumask);
       exit(1);
     }
@@ -116,7 +116,7 @@ pid_output (const char *path)
 
       if (fcntl(fd, F_SETLK, &lock) < 0)
         {
-          fprintf(stderr,"Could not write pid %d to pid_file (%s)\r\n",pid,strerror(errno));
+          fprintf(stderr,"Could not write pid %d to pid_file (%s)\r\n",pid,strerror(ipstack_errno));
           zlog_err(MODULE_DEFAULT, "Could not lock pid_file %s, exiting", path);
           exit(1);
         }
@@ -125,10 +125,10 @@ pid_output (const char *path)
       pidsize = strlen(buf);
       if ((tmp = write (fd, buf, pidsize)) != (int)pidsize)
         zlog_err(MODULE_DEFAULT, "Could not write pid %d to pid_file %s, rc was %d: %s",
-	         (int)pid,path,tmp,safe_strerror(errno));
+	         (int)pid,path,tmp,ipstack_strerror(ipstack_errno));
       else if (ftruncate(fd, pidsize) < 0)
         zlog_err(MODULE_DEFAULT, "Could not truncate pid_file %s to %u bytes: %s",
-	         path,(zpl_uint32)pidsize,safe_strerror(errno));
+	         path,(zpl_uint32)pidsize,ipstack_strerror(ipstack_errno));
     }
   return pid;
 }

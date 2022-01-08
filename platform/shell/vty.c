@@ -27,13 +27,13 @@
 #include <arpa/telnet.h>
 #include <termios.h>
 
-static void vty_event(enum vtyevent, zpl_socket_t, struct vty *);
-
-/* Extern host structure from command.c */
-//extern struct zpl_host _global_host;
 
 cli_shell_t cli_shell;
 
+static void vty_event(enum vtyevent, zpl_socket_t, struct vty *);
+static int vty_flush_handle(struct vty *vty, zpl_socket_t vty_sock);
+
+/* Extern host structure from command.c */
 static struct tty_com cli_tty_com =
 	{
 		.devname = "/dev/ttyS0",
@@ -44,7 +44,38 @@ static struct tty_com cli_tty_com =
 		.flow_control = FLOW_CTL_NONE,
 };
 
-static int vty_flush_handle(struct vty *vty, zpl_socket_t vty_sock);
+struct module_list module_list_console = 
+{ 
+	.module=MODULE_CONSOLE, 
+	.name="CONSOLE", 
+	.module_init=vty_init, 
+	.module_exit=NULL, 
+	.module_task_init=vty_task_init, 
+	.module_task_exit=vty_task_exit, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+	.flags=0,
+};
+
+struct module_list module_list_telnet = 
+{ 
+	.module=MODULE_TELNET, 
+	.name="TELNET", 
+	.module_init=vty_init, 
+	.module_exit=NULL, 
+	.module_task_init=vty_task_init, 
+	.module_task_exit=vty_task_exit, 
+	.module_cmd_init=NULL, 
+	.module_write_config=NULL, 
+	.module_show_config=NULL,
+	.module_show_debug=NULL, 
+	.taskid=0,
+	.flags=0,
+};
+
 
 static void vty_buf_assert(struct vty *vty)
 {
@@ -177,7 +208,7 @@ int vty_sync_out(struct vty *vty, const char *format, ...)
 			{
 				tcflush(vty->fd._fd, TCIOFLUSH);
 			}
-			write(vty->wfd._fd, p, len);
+			ipstack_write(vty->wfd, p, len);
 			if (cli_shell._pvty_console && cli_shell._pvty_console->vty == vty && !FD_IS_STDOUT(cli_shell._pvty_console->vty->fd._fd))
 			{
 				tcdrain(vty->fd._fd);
@@ -254,7 +285,7 @@ static int vty_log_out(struct vty *vty, const char *level,
 		{
 			tcflush(vty->fd._fd, TCIOFLUSH);
 		}
-		ret = write(vty->wfd._fd, buf, len);
+		ret = ipstack_write(vty->wfd, buf, len);
 		if (cli_shell._pvty_console && cli_shell._pvty_console->vty == vty && !FD_IS_STDOUT(cli_shell._pvty_console->vty->fd._fd))
 		{
 			tcdrain(vty->fd._fd);
@@ -262,7 +293,7 @@ static int vty_log_out(struct vty *vty, const char *level,
 	}
 	if (ret < 0)
 	{
-		if (ERRNO_IO_RETRY(errno))
+		if (IPSTACK_ERRNO_RETRY(ipstack_errno))
 			/* Kernel buffer is full, probably too much debugging output, so just
 			 drop the data and ignore. */
 			return -1;
@@ -270,7 +301,7 @@ static int vty_log_out(struct vty *vty, const char *level,
 		vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
 		zlog_warn(MODULE_DEFAULT,
 				  "%s: write failed to vty client fd %d, closing: %s", __func__,
-				  vty->fd, safe_strerror(errno));
+				  vty->fd, ipstack_strerror(ipstack_errno));
 		if (vty->obuf)
 			buffer_reset(vty->obuf);
 		/* cannot call vty_close, because a parent routine may still try
@@ -289,7 +320,7 @@ void vty_time_print(struct vty *vty, zpl_bool cr)
 
 	if (quagga_timestamp(ZLOG_TIMESTAMP_DATE, buf, sizeof(buf)) == 0)
 	{
-		zlog(MODULE_DEFAULT, LOG_INFO, "quagga_timestamp error");
+		zlog(MODULE_DEFAULT, ZLOG_LEVEL_INFO, "quagga_timestamp error");
 		return;
 	}
 	if (cr)
@@ -344,6 +375,10 @@ static void vty_prompt(struct vty *vty)
 			uname(&names);
 			hostname = names.nodename;
 		}
+		/*if (os_strlen(vty->subprompt))
+		{
+
+		}*/
 		if (os_strlen(vty->prompt))
 			vty_out(vty, cmd_prompt(vty->node), hostname, vty->prompt);
 		else
@@ -426,18 +461,18 @@ static void vty_auth(struct vty *vty, zpl_char *buf)
 	enum node_type next_node = 0;
 	switch (vty->node)
 	{
-	case USER_NODE:
+	case LOGIN_NODE:
 		vty_user_setting(vty, buf);
 		vty->node = AUTH_NODE;
 		return;
 	case AUTH_NODE:
 		if (vty_user_authentication(vty, buf) == CMD_WARNING)
 		{
-			vty->node = USER_NODE;
+			vty->node = LOGIN_NODE;
 			vty->fail++;
 			if (vty->fail >= 3)
 			{
-				// if (vty->node == AUTH_NODE || vty->node == USER_NODE)
+				// if (vty->node == AUTH_NODE || vty->node == LOGIN_NODE)
 				{
 					vty_out(vty, "%% Bad passwords, too many failures!%s",
 							VTY_NEWLINE);
@@ -458,7 +493,7 @@ static void vty_auth(struct vty *vty, zpl_char *buf)
 			vty->fail++;
 			if (vty->fail >= 3)
 			{
-				// if (vty->node == AUTH_NODE || vty->node == USER_NODE)
+				// if (vty->node == AUTH_NODE || vty->node == LOGIN_NODE)
 				{
 					vty->fail = 0;
 					vty_out(vty,
@@ -518,7 +553,7 @@ int vty_command(struct vty *vty, zpl_char *buf)
 				 vty_str);
 
 		/* now log the command */
-		zlog(MODULE_DEFAULT, LOG_ERR, "%s%s", prompt_str, buf);
+		zlog(MODULE_DEFAULT, ZLOG_LEVEL_ERR, "%s%s", prompt_str, buf);
 	}
 
 	if (vty_user_authorization(vty, buf) != CMD_SUCCESS)
@@ -982,7 +1017,7 @@ static void vty_complete_command(struct vty *vty)
 	if (vty->node == AUTH_NODE || vty->node == AUTH_ENABLE_NODE)
 		return;
 
-	if (vty->node == USER_NODE)
+	if (vty->node == LOGIN_NODE)
 		return;
 
 	vline = cmd_make_strvec(vty->buf);
@@ -1330,7 +1365,7 @@ static int vty_telnet_option(struct vty *vty, zpl_uchar *buf, zpl_uint32 nbytes)
 			if (vty->sb_len != TELNET_NAWS_SB_LEN)
 				zlog_warn(MODULE_DEFAULT,
 						  "RFC 1073 violation detected: telnet NAWS option "
-						  "should send %d characters, but we received %lu",
+						  "should ipstack_send %d characters, but we received %lu",
 						  TELNET_NAWS_SB_LEN, (u_long)vty->sb_len);
 			else if (sizeof(vty->sb_buf) < TELNET_NAWS_SB_LEN)
 				zlog_err(MODULE_DEFAULT,
@@ -1368,7 +1403,7 @@ int vty_execute(struct vty *vty)
 
 	switch (vty->node)
 	{
-	case USER_NODE:
+	case LOGIN_NODE:
 	case AUTH_NODE:
 	case AUTH_ENABLE_NODE:
 		vty_auth(vty, vty->buf);
@@ -1543,7 +1578,7 @@ int vty_getc_input(struct vty *vty)
 			{
 				if (nbytes < 0)
 				{
-					if (ERRNO_IO_RETRY(errno))
+					if (IPSTACK_ERRNO_RETRY(ipstack_errno))
 					{
 						// vty_event(VTYSH_READ, vty->fd, vty);
 						continue;
@@ -1551,7 +1586,7 @@ int vty_getc_input(struct vty *vty)
 					vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
 					zlog_warn(MODULE_DEFAULT,
 							  "%s: read failed on vtysh client fd %d, closing: %s",
-							  __func__, vty->fd, safe_strerror(errno));
+							  __func__, vty->fd, ipstack_strerror(ipstack_errno));
 					return -1;
 				}
 			}
@@ -1778,17 +1813,16 @@ static int vty_read(struct eloop *thread)
 	// zpl_uint32 i;
 	zpl_uint32 nbytes;
 	zpl_uchar buf[VTY_READ_BUFSIZ];
-	// int vty_sock = ELOOP_FD(thread);
 	struct vty *vty = ELOOP_ARG(thread);
 	vty->t_read = NULL;
 	os_bzero(buf, sizeof(buf));
 	nbytes = ipstack_read(vty->fd, buf, VTY_READ_BUFSIZ);
-	/* Read raw data from socket */
+	/* Read raw data from ipstack_socket */
 	if (nbytes <= 0)
 	{
 		if (nbytes < 0)
 		{
-			if (ERRNO_IO_RETRY(errno))
+			if (IPSTACK_ERRNO_RETRY(ipstack_errno))
 			{
 				vty_event(VTY_READ, vty->fd /*vty_sock*/, vty);
 				return 0;
@@ -1796,7 +1830,7 @@ static int vty_read(struct eloop *thread)
 			vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
 			zlog_warn(MODULE_DEFAULT,
 					  "%s: read error on vty client fd %d, closing: %s", __func__,
-					  vty->fd, safe_strerror(errno));
+					  vty->fd, ipstack_strerror(ipstack_errno));
 			buffer_reset(vty->obuf);
 		}
 		vty->status = VTY_CLOSE;
@@ -1823,12 +1857,12 @@ static int vty_console_read(struct thread *thread)
 	struct vty *vty = THREAD_ARG(thread);
 	vty->t_read = NULL;
 	nbytes = read(vty->fd._fd, buf, VTY_READ_BUFSIZ);
-	/* Read raw data from socket */
+	/* Read raw data from ipstack_socket */
 	if (nbytes <= 0)
 	{
 		if (nbytes < 0)
 		{
-			if (ERRNO_IO_RETRY(errno))
+			if (IPSTACK_ERRNO_RETRY(ipstack_errno))
 			{
 				vty_event(VTY_READ, vty->fd, vty);
 				return 0;
@@ -1836,7 +1870,7 @@ static int vty_console_read(struct thread *thread)
 			vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
 			zlog_warn(MODULE_DEFAULT,
 					  "%s: read error on vty client fd %d, closing: %s", __func__,
-					  vty->fd, safe_strerror(errno));
+					  vty->fd, ipstack_strerror(ipstack_errno));
 			buffer_reset(vty->obuf);
 		}
 		vty->status = VTY_CLOSE;
@@ -1858,7 +1892,7 @@ static int vty_console_read(struct thread *thread)
 }
 
 #else
-/* Read data via vty socket. */
+/* Read data via vty ipstack_socket. */
 static int
 vty_read(struct thread *thread)
 {
@@ -1873,12 +1907,12 @@ vty_read(struct thread *thread)
 		nbytes = read(vty->fd, buf, VTY_READ_BUFSIZ);
 	else
 		nbytes = ipstack_read(vty->fd, buf, VTY_READ_BUFSIZ);
-	/* Read raw data from socket */
+	/* Read raw data from ipstack_socket */
 	if (nbytes <= 0)
 	{
 		if (nbytes < 0)
 		{
-			if (ERRNO_IO_RETRY(errno))
+			if (IPSTACK_ERRNO_RETRY(ipstack_errno))
 			{
 				vty_event(VTY_READ, vty_sock, vty);
 				return 0;
@@ -1886,7 +1920,7 @@ vty_read(struct thread *thread)
 			vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
 			zlog_warn(MODULE_DEFAULT,
 					  "%s: read error on vty client fd %d, closing: %s", __func__,
-					  vty->fd, safe_strerror(errno));
+					  vty->fd, ipstack_strerror(ipstack_errno));
 			buffer_reset(vty->obuf);
 		}
 		vty->status = VTY_CLOSE;
@@ -2176,9 +2210,7 @@ static int vty_flush(struct eloop *thread)
 	// int erase;
 	// zpl_uint32 type = 0;
 	// buffer_status_t flushrc;
-	//int vty_sock = ELOOP_FD(thread);
 	struct vty *vty = ELOOP_ARG(thread);
-
 	vty->t_write = NULL;
 	vty_flush_handle(vty, vty->wfd);
 #if 0
@@ -2304,7 +2336,7 @@ vty_create(zpl_socket_t vty_sock, union sockunion *su)
 	host_config_get_api(API_GET_VTY_TIMEOUT_CMD, &vty->v_timeout);
 	strcpy(vty->address, buf);
 
-	vty->node = USER_NODE;
+	vty->node = LOGIN_NODE;
 	//vty->fd_type = IPCOM_STACK;
 	if (_global_host.lines >= 0)
 		host_config_get_api(API_GET_LINES_CMD, &vty->lines);
@@ -2501,7 +2533,7 @@ static void vty_console_close(void)
 		if (cli_shell._pvty_console->vty->buf)
 			XFREE(MTYPE_VTY, cli_shell._pvty_console->vty->buf);
 
-		/* Close socket. */
+		/* Close ipstack_socket. */
 
 		if (!FD_IS_STDOUT(cli_shell._pvty_console->vty->fd._fd))
 			tty_com_close(&cli_shell._pvty_console->ttycom);
@@ -2550,7 +2582,7 @@ static void vty_console_reset(struct vty *vty)
 			ttyfd._fd = console->ttycom.fd;
 		else
 		{
-			fprintf(stdout, "vty can not open %s(%s)\r\n", console->ttycom.devname, strerror(errno));
+			fprintf(stdout, "vty can not open %s(%s)\r\n", console->ttycom.devname, strerror(ipstack_errno));
 			return ERROR;
 		}
 		dup2(ttyfd._fd, STDERR_FILENO);
@@ -2574,7 +2606,7 @@ static void vty_console_reset(struct vty *vty)
 		console->vty->wfd.stack = OS_STACK;
 	}
 	console->vty->login_type = strlen(console->ttycom.devname) ? VTY_LOGIN_STDIN : VTY_LOGIN_CONSOLE;
-	console->vty->node = USER_NODE;
+	console->vty->node = LOGIN_NODE;
 	host_config_get_api(API_GET_VTY_TIMEOUT_CMD, &console->vty->v_timeout);
 	if (strlen(console->ttycom.devname))
 		strcpy(console->vty->address, "console");
@@ -2603,14 +2635,6 @@ int vty_console_init(const char *tty, void (*atclose)())
 			zlog_notice(MODULE_CONSOLE, "Shell open '%s' for CLI!\r\n", tty);
 			if (tty_iscom(&cli_shell._pvty_console->ttycom))
 			{
-				/*
-								cli_shell._pvty_console->ttycom.speed		= 115200;		// speed bit
-								cli_shell._pvty_console->ttycom.databit		= DATA_8BIT;	// data bit
-								cli_shell._pvty_console->ttycom.stopbit		= STOP_1BIT;	// stop bit
-								cli_shell._pvty_console->ttycom.parity		= PARITY_NONE;		// parity
-								cli_shell._pvty_console->ttycom.flow_control = FLOW_CTL_NONE;// flow control
-				*/
-
 				cli_shell._pvty_console->ttycom.speed = cli_tty_com.speed;				 // speed bit
 				cli_shell._pvty_console->ttycom.databit = cli_tty_com.databit;			 // data bit
 				cli_shell._pvty_console->ttycom.stopbit = cli_tty_com.stopbit;			 // stop bit
@@ -2622,7 +2646,7 @@ int vty_console_init(const char *tty, void (*atclose)())
 				else
 				{
 					zlog_notice(MODULE_CONSOLE, "Shell can not open '%s' for CLI!\r\n", tty);
-					fprintf(stdout, "vty can not open %s(%s)\r\n", tty, strerror(errno));
+					fprintf(stdout, "vty can not open %s(%s)\r\n", tty, strerror(ipstack_errno));
 					return ERROR;
 				}
 				dup2(ttyfd, STDERR_FILENO);
@@ -2630,7 +2654,7 @@ int vty_console_init(const char *tty, void (*atclose)())
 			}
 			else
 			{
-				fprintf(stdout, "vty can not open %s(%s)\r\n", tty, strerror(errno));
+				fprintf(stdout, "vty can not open %s(%s)\r\n", tty, strerror(ipstack_errno));
 				return ERROR;
 			}
 		}
@@ -2661,7 +2685,7 @@ int vty_console_init(const char *tty, void (*atclose)())
 
 	/* always have console vty in a known _unchangeable_ state, don't want config
 	 * to have any effect here to make sure scripting this works as intended */
-	cli_shell._pvty_console->vty->node = USER_NODE;
+	cli_shell._pvty_console->vty->node = LOGIN_NODE;
 
 	host_config_get_api(API_GET_VTY_TIMEOUT_CMD, &cli_shell._pvty_console->vty->v_timeout);
 
@@ -2670,7 +2694,7 @@ int vty_console_init(const char *tty, void (*atclose)())
 	else
 		strcpy(cli_shell._pvty_console->vty->address, "stdin");
 	vty_event(VTY_STDIO_WAIT, ttytmp, cli_shell._pvty_console->vty);
-	zlog_notice(MODULE_DEFAULT, "vty_console_init waiting");
+	//zlog_notice(MODULE_DEFAULT, "vty_console_init waiting");
 	return OK;
 }
 
@@ -2700,7 +2724,7 @@ void vty_tty_init(zpl_char *tty)
 				ttyfd = cli_shell._pvty_console->ttycom.fd;
 			else
 			{
-				fprintf(stdout, "vty can not open %s(%s)\r\n", tty, strerror(errno));
+				fprintf(stdout, "vty can not open %s(%s)\r\n", tty, strerror(ipstack_errno));
 				return ERROR;
 			}
 			dup2(ttyfd, STDERR_FILENO);
@@ -2719,20 +2743,18 @@ static int vty_accept(struct eloop *thread)
 	struct prefix p;
 	struct access_list *acl = NULL;
 	zpl_char buf[SU_ADDRSTRLEN];
-
 	accept_sock = ELOOP_FD(thread);
-
-	/* We continue hearing vty socket. */
+	/* We continue hearing vty ipstack_socket. */
 	vty_event(VTY_SERV, accept_sock, NULL);
 
 	memset(&su, 0, sizeof(union sockunion));
 
-	/* We can handle IPv4 or IPv6 socket. */
+	/* We can handle IPv4 or IPv6 ipstack_socket. */
 	vty_sock = sockunion_accept(accept_sock, &su);
 	if (vty_sock._fd < 0)
 	{
-		zlog_warn(MODULE_DEFAULT, "can't accept vty socket : %s",
-				  safe_strerror(errno));
+		zlog_warn(MODULE_DEFAULT, "can't ipstack_accept vty ipstack_socket : %s",
+				  ipstack_strerror(ipstack_errno));
 		return -1;
 	}
 	ipstack_set_nonblocking(vty_sock);
@@ -2741,11 +2763,11 @@ static int vty_accept(struct eloop *thread)
 	if (_global_host.mutx)
 		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
 	/* VTY's accesslist apply. */
-	if (p.family == AF_INET && _global_host.vty_accesslist_name)
+	if (p.family == IPSTACK_AF_INET && _global_host.vty_accesslist_name)
 	{
 		if ((acl = access_list_lookup(AFI_IP, _global_host.vty_accesslist_name)) && (access_list_apply(acl, &p) == FILTER_DENY))
 		{
-			zlog(MODULE_DEFAULT, LOG_INFO, "Vty connection refused from %s",
+			zlog(MODULE_DEFAULT, ZLOG_LEVEL_INFO, "Vty connection refused from %s",
 				 sockunion2str(&su, buf, SU_ADDRSTRLEN));
 			ipstack_close(vty_sock);
 			if (_global_host.mutx)
@@ -2758,12 +2780,12 @@ static int vty_accept(struct eloop *thread)
 
 #ifdef HAVE_IPV6
 	/* VTY's ipv6 accesslist apply. */
-	if (p.family == AF_INET6 && _global_host.vty_ipv6_accesslist_name)
+	if (p.family == IPSTACK_AF_INET6 && _global_host.vty_ipv6_accesslist_name)
 	{
 		if ((acl = access_list_lookup(AFI_IP6, _global_host.vty_ipv6_accesslist_name)) &&
 			(access_list_apply(acl, &p) == FILTER_DENY))
 		{
-			zlog(MODULE_DEFAULT, LOG_INFO, "Vty connection refused from %s",
+			zlog(MODULE_DEFAULT, ZLOG_LEVEL_INFO, "Vty connection refused from %s",
 				 sockunion2str(&su, buf, SU_ADDRSTRLEN));
 			ipstack_close(vty_sock);
 			if (_global_host.mutx)
@@ -2778,13 +2800,13 @@ static int vty_accept(struct eloop *thread)
 	if (_global_host.mutx)
 		os_mutex_unlock(_global_host.mutx);
 	on = 1;
-	ret = ipstack_setsockopt(vty_sock, IPPROTO_TCP, TCP_NODELAY, (zpl_char *)&on,
+	ret = ipstack_setsockopt(vty_sock, IPSTACK_IPPROTO_TCP, IPSTACK_TCP_NODELAY, (zpl_char *)&on,
 						sizeof(on));
 	if (ret < 0)
-		zlog(MODULE_DEFAULT, LOG_INFO, "can't set sockopt to vty_sock : %s",
-			 safe_strerror(errno));
+		zlog(MODULE_DEFAULT, ZLOG_LEVEL_INFO, "can't set sockopt to vty_sock : %s",
+			 ipstack_strerror(ipstack_errno));
 
-	zlog(MODULE_DEFAULT, LOG_INFO, "Vty connection from %s",
+	zlog(MODULE_DEFAULT, ZLOG_LEVEL_INFO, "Vty connection from %s",
 		 sockunion2str(&su, buf, SU_ADDRSTRLEN));
 
 	vty_create(vty_sock, &su);
@@ -2792,7 +2814,7 @@ static int vty_accept(struct eloop *thread)
 	return 0;
 }
 
-/* Make vty server socket. */
+/* Make vty server ipstack_socket. */
 static void vty_serv_sock_family(const char *addr, zpl_ushort port,
 								 int family)
 {
@@ -2806,11 +2828,11 @@ static void vty_serv_sock_family(const char *addr, zpl_ushort port,
 	if (addr)
 		switch (family)
 		{
-		case AF_INET:
+		case IPSTACK_AF_INET:
 			naddr = &su.sin.sin_addr;
 			break;
 #ifdef HAVE_IPV6
-		case AF_INET6:
+		case IPSTACK_AF_INET6:
 			naddr = &su.sin6.sin6_addr;
 			break;
 #endif
@@ -2825,11 +2847,11 @@ static void vty_serv_sock_family(const char *addr, zpl_ushort port,
 			break;
 		case 0:
 			zlog_err(MODULE_DEFAULT, "error translating address %s: %s", addr,
-					 safe_strerror(errno));
+					 ipstack_strerror(ipstack_errno));
 			naddr = NULL;
 		}
 
-	/* Make new socket. */
+	/* Make new ipstack_socket. */
 	accept_sock = sockunion_stream_socket(&su);
 	if (accept_sock._fd < 0)
 		return;
@@ -2838,21 +2860,21 @@ static void vty_serv_sock_family(const char *addr, zpl_ushort port,
 	sockopt_reuseaddr(accept_sock);
 	sockopt_reuseport(accept_sock);
 
-	/* Bind socket to universal address and given port. */
+	/* Bind ipstack_socket to universal address and given port. */
 	ret = sockunion_bind(accept_sock, &su, port, naddr);
 	if (ret < 0)
 	{
-		zlog_warn(MODULE_DEFAULT, "can't bind socket");
+		zlog_warn(MODULE_DEFAULT, "can't ipstack_bind ipstack_socket");
 		ipstack_close(accept_sock); /* Avoid sd leak. */
 		return;
 	}
 
-	/* Listen socket under queue 3. */
+	/* Listen ipstack_socket under queue 3. */
 	ret = ipstack_listen(accept_sock, 3);
 	if (ret < 0)
 	{
-		zlog(MODULE_DEFAULT, LOG_WARNING, "can't listen socket(%s)",
-			 safe_strerror(errno));
+		zlog(MODULE_DEFAULT, ZLOG_LEVEL_WARNING, "can't ipstack_listen ipstack_socket(%s)",
+			 ipstack_strerror(ipstack_errno));
 		ipstack_close(accept_sock); /* Avoid sd leak. */
 		return;
 	}
@@ -2862,35 +2884,35 @@ static void vty_serv_sock_family(const char *addr, zpl_ushort port,
 }
 
 #ifdef VTYSH
-/* For sockaddr_un. */
+/* For ipstack_sockaddr_un. */
 #include <sys/un.h>
-/* VTY shell UNIX domain socket. */
+/* VTY shell UNIX domain ipstack_socket. */
 static void
 vty_serv_un(const char *path)
 {
 	int ret;
 	int len;
 	zpl_socket_t sock;
-	struct sockaddr_un serv;
+	struct ipstack_sockaddr_un serv;
 	mode_t old_mask;
 
-	/* First of all, unlink existing socket */
+	/* First of all, unlink existing ipstack_socket */
 	unlink(path);
 
 	/* Set umask */
 	old_mask = umask(0007);
 
-	/* Make UNIX domain socket. */
-	sock = ipstack_socket(OS_STACK, AF_UNIX, SOCK_STREAM, 0);
+	/* Make UNIX domain ipstack_socket. */
+	sock = ipstack_socket(OS_STACK, IPSTACK_AF_UNIX, IPSTACK_SOCK_STREAM, 0);
 	if (sock._fd < 0)
 	{
-		zlog_err(MODULE_DEFAULT, "Cannot create unix stream socket: %s", safe_strerror(errno));
+		zlog_err(MODULE_DEFAULT, "Cannot create unix stream ipstack_socket: %s", ipstack_strerror(ipstack_errno));
 		return;
 	}
 
-	/* Make server socket. */
-	memset(&serv, 0, sizeof(struct sockaddr_un));
-	serv.sun_family = AF_UNIX;
+	/* Make server ipstack_socket. */
+	memset(&serv, 0, sizeof(struct ipstack_sockaddr_un));
+	serv.sun_family = IPSTACK_AF_UNIX;
 	strncpy(serv.sun_path, path, strlen(path));
 #ifdef HAVE_STRUCT_SOCKADDR_UN_SUN_LEN
 	len = serv.sun_len = SUN_LEN(&serv);
@@ -2898,10 +2920,10 @@ vty_serv_un(const char *path)
 	len = sizeof(serv.sun_family) + strlen(serv.sun_path);
 #endif /* HAVE_STRUCT_SOCKADDR_UN_SUN_LEN */
 
-	ret = ipstack_bind(sock, (struct sockaddr *)&serv, len);
+	ret = ipstack_bind(sock, (struct ipstack_sockaddr *)&serv, len);
 	if (ret < 0)
 	{
-		zlog_err(MODULE_DEFAULT, "Cannot bind path %s: %s", path, safe_strerror(errno));
+		zlog_err(MODULE_DEFAULT, "Cannot ipstack_bind path %s: %s", path, ipstack_strerror(ipstack_errno));
 		ipstack_close(sock); /* Avoid sd leak. */
 		return;
 	}
@@ -2909,7 +2931,7 @@ vty_serv_un(const char *path)
 	ret = ipstack_listen(sock, 5);
 	if (ret < 0)
 	{
-		zlog_err(MODULE_DEFAULT, "listen(fd %d) failed: %s", sock, safe_strerror(errno));
+		zlog_err(MODULE_DEFAULT, "ipstack_listen(fd %d) failed: %s", sock, ipstack_strerror(ipstack_errno));
 		ipstack_close(sock); /* Avoid sd leak. */
 		return;
 	}
@@ -2927,36 +2949,36 @@ vtysh_accept(struct thread *thread)
 	zpl_socket_t accept_sock;
 	zpl_socket_t sock;
 	int client_len;
-	struct sockaddr_un client;
+	struct ipstack_sockaddr_un client;
 	struct vty *vty;
 
 	accept_sock = THREAD_FD(thread);
 
 	vty_event(VTYSH_SERV, accept_sock, NULL);
 
-	memset(&client, 0, sizeof(struct sockaddr_un));
-	client_len = sizeof(struct sockaddr_un);
+	memset(&client, 0, sizeof(struct ipstack_sockaddr_un));
+	client_len = sizeof(struct ipstack_sockaddr_un);
 
-	sock = ipstack_accept(accept_sock, (struct sockaddr *)&client,
+	sock = ipstack_accept(accept_sock, (struct ipstack_sockaddr *)&client,
 					 (socklen_t *)&client_len);
 
 	if (sock._fd < 0)
 	{
-		zlog_warn(MODULE_DEFAULT, "can't accept vty socket : %s", safe_strerror(errno));
+		zlog_warn(MODULE_DEFAULT, "can't ipstack_accept vty ipstack_socket : %s", ipstack_strerror(ipstack_errno));
 		return -1;
 	}
 
 	if (ipstack_set_nonblocking(sock) < 0)
 	{
-		zlog_warn(MODULE_DEFAULT, "vtysh_accept: could not set vty socket %d to non-blocking,"
+		zlog_warn(MODULE_DEFAULT, "vtysh_accept: could not set vty ipstack_socket %d to non-blocking,"
 								  " %s, closing",
-				  sock, safe_strerror(errno));
+				  sock, ipstack_strerror(ipstack_errno));
 		ipstack_close(sock);
 		return -1;
 	}
 
 #ifdef VTYSH_DEBUG
-	printf("VTY shell accept\n");
+	printf("VTY shell ipstack_accept\n");
 #endif /* VTYSH_DEBUG */
 
 	vty = vty_new();
@@ -3000,8 +3022,7 @@ vtysh_read(struct thread *thread)
 	struct vty *vty;
 	zpl_uchar buf[VTY_READ_BUFSIZ];
 	zpl_uchar *p;
-	zpl_uchar header[4] =
-		{0, 0, 0, 0};
+	vtysh_hdr_t *header = NULL;
 
 	sock = THREAD_FD(thread);
 	vty = THREAD_ARG(thread);
@@ -3011,14 +3032,14 @@ vtysh_read(struct thread *thread)
 	{
 		if (nbytes < 0)
 		{
-			if (ERRNO_IO_RETRY(errno))
+			if (IPSTACK_ERRNO_RETRY(ipstack_errno))
 			{
 				vty_event(VTYSH_READ, sock, vty);
 				return 0;
 			}
 			vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
 			zlog_warn(MODULE_DEFAULT, "%s: read failed on vtysh client fd %d, closing: %s",
-					  __func__, sock, safe_strerror(errno));
+					  __func__, sock, ipstack_strerror(ipstack_errno));
 		}
 		buffer_reset(vty->obuf);
 		vty_close(vty);
@@ -3046,6 +3067,8 @@ vtysh_read(struct thread *thread)
 		vty->buf[vty->length++] = *p;
 		if (*p == '\0' || *p == '\r' || *p == '\n')
 		{
+			header = (vtysh_hdr_t *)buffer_dataptr(vty->obuf);
+			buffer_putemptyeize(vty->obuf, sizeof(vtysh_hdr_t));
 
 			/* Pass this line to parser. */
 			ret = vty_execute(vty);
@@ -3057,16 +3080,20 @@ vtysh_read(struct thread *thread)
 			printf("result: %d\n", ret);
 			printf("vtysh node: %d\n", vty->node);
 #endif /* VTYSH_DEBUG */
+
+			header->retcode = ret;
+			header->retlen = buffer_size(vty->obuf);
+
 			if (vty->ssh_enable)
 			{
 				/*				if(vty->ssh_write)
 									(vty->ssh_write)(vty, buf, len);*/
 			}
-			else
+			/*else
 			{
 				header[3] = ret;
 				buffer_put(vty->obuf, header, 4);
-			}
+			}*/
 			if (!vty->t_write && (vtysh_flush(vty) < 0))
 				/* Try to flush results; exit if a write error occurs. */
 				return 0;
@@ -3105,14 +3132,14 @@ static int vty_sshd_read(struct thread *thread)
 	{
 		if (nbytes < 0)
 		{
-			if (ERRNO_IO_RETRY(errno))
+			if (IPSTACK_ERRNO_RETRY(ipstack_errno))
 			{
 				vty_event(VTYSH_READ, sock, vty);
 				return 0;
 			}
 			vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
 			zlog_warn(MODULE_DEFAULT, "%s: read failed on vtysh client fd %d, closing: %s",
-					  __func__, sock, safe_strerror(errno));
+					  __func__, sock, ipstack_strerror(ipstack_errno));
 		}
 		buffer_reset(vty->obuf);
 		vty_close(vty);
@@ -3174,17 +3201,17 @@ int vty_sshd_init(int sock, struct vty *vty)
 
 #endif /* VTYSH */
 
-/* Determine address family to bind. */
+/* Determine address family to ipstack_bind. */
 void vty_serv_init(const char *addr, zpl_ushort port, const char *path, const char *tty)
 {
-	/* If port is set to 0, do not listen on TCP/IP at all! */
+	/* If port is set to 0, do not ipstack_listen on TCP/IP at all! */
 	if (port)
 	{
 
 #if 0  // def HAVE_IPV6
 		vty_serv_sock_addrinfo (addr, port);
 #else  /* ! HAVE_IPV6 */
-		vty_serv_sock_family(addr, port, AF_INET);
+		vty_serv_sock_family(addr, port, IPSTACK_AF_INET);
 #endif /* HAVE_IPV6 */
 	}
 
@@ -3289,7 +3316,7 @@ void vty_close(struct vty *vty)
 	// if(vty->type != VTY_FILE)
 	vector_unset(cli_shell.vtyvec, vty->fd._fd);
 
-	/* Close socket. */
+	/* Close ipstack_socket. */
 	if (cli_shell._pvty_console && cli_shell._pvty_console->vty == vty)
 	{
 		if (FD_IS_STDOUT(vty->fd._fd))
@@ -3458,7 +3485,7 @@ static int host_config_default(zpl_char *password, zpl_char *defult_config)
 	{
 		fprintf(stderr,
 				"%s: failed to setting default configuration file :%s\n",
-				__func__, safe_strerror(errno));
+				__func__, ipstack_strerror(ipstack_errno));
 		// exit(0);
 	}
 	if (_global_host.name == NULL) //
@@ -3488,7 +3515,7 @@ static zpl_char *vty_default_config_getting(void)
 void vty_load_config(zpl_char *config_file)
 {
 	FILE *confp = NULL;
-	_global_host.load = LOAD_NONE;
+
 	host_config_default(NULL, config_file);
 
 	if (config_file)
@@ -3502,7 +3529,7 @@ void vty_load_config(zpl_char *config_file)
 		else
 		{
 			fprintf(stderr, "configuration file exits.\n");
-			_global_host.load = LOAD_DONE;
+			host_loadconfig_stats(LOAD_DONE);
 			return;
 		}
 	}
@@ -3510,9 +3537,9 @@ void vty_load_config(zpl_char *config_file)
 	{
 		fprintf(stderr, "%s: failed to open configuration file %s: %s\n",
 				__func__, config_file ? config_file : "null",
-				safe_strerror(errno));
+				ipstack_strerror(ipstack_errno));
 		// host_config_default(NULL, NULL);
-		_global_host.load = LOAD_DONE;
+		host_loadconfig_stats(LOAD_DONE);
 		return;
 	}
 	if (confp)
@@ -3531,7 +3558,7 @@ void vty_load_config(zpl_char *config_file)
 			fclose(confp);
 		}
 	}
-	_global_host.load = LOAD_DONE;
+	host_loadconfig_stats(LOAD_DONE);
 }
 
 /* Small utility function which output log to the VTY. */
@@ -3539,7 +3566,7 @@ void vty_log(const char *level, const char *proto_str, const char *format,
 			 zlog_timestamp_t ctl, va_list va)
 {
 	zpl_uint32 i;
-	struct vty *vty;
+	struct vty *vty = NULL;
 
 	if (!cli_shell.vtyvec)
 		return;
@@ -3606,7 +3633,7 @@ int vty_trap_log(const char *level, const char *proto_str, const char *format,
 /* Async-signal-safe version of vty_log for fixed strings. */
 static void ip_vty_log_fixed(struct vty *vty, zpl_char *buf, zpl_size_t len)
 {
-	struct iovec iov[2];
+	struct ipstack_iovec iov[2];
 	iov[0].iov_base = buf;
 	iov[0].iov_len = len;
 	iov[1].iov_base = (void *)"\r\n";
@@ -3622,10 +3649,10 @@ static void ip_vty_log_fixed(struct vty *vty, zpl_char *buf, zpl_size_t len)
 	}
 }
 
-#undef iovec
+//#undef ipstack_iovec
 static void os_vty_log_fixed(struct vty *vty, zpl_char *buf, zpl_size_t len)
 {
-	struct iovec iov[2];
+	struct ipstack_iovec iov[2];
 	iov[0].iov_base = buf;
 	iov[0].iov_len = len;
 	iov[1].iov_base = (void *)"\r\n";
@@ -3993,10 +4020,22 @@ void *vty_thread_console_master()
 	return cli_shell.console_master;
 }
 /* Install vty's own commands like `who' command. */
-void vty_init(void *m1, void *m2)
+void vty_init(void)
 {
+	if(cli_shell.init != 2)
+	{
+#ifdef ZPL_IPCOM_STACK_MODULE
+	if (cli_shell.telnet_master == NULL)
+		cli_shell.telnet_master = eloop_master_module_create(MODULE_TELNET);
+
+	if (cli_shell.console_master == NULL)
+		cli_shell.console_master = thread_master_module_create(MODULE_CONSOLE);
+#else
+	if (cli_shell.console_master == NULL)
+		cli_shell.telnet_master = cli_shell.console_master = thread_master_module_create(MODULE_CONSOLE);
+#endif
 	/* For further configuration read, preserve current directory. */
-	if (cli_shell._pvty_console == NULL && m1)
+	if (cli_shell._pvty_console == NULL)
 	{
 		cli_shell._pvty_console = XMALLOC(MTYPE_VTY, sizeof(tty_console_t));
 		memset(cli_shell._pvty_console, 0, sizeof(tty_console_t));
@@ -4005,8 +4044,8 @@ void vty_init(void *m1, void *m2)
 
 	cli_shell.vtyvec = vector_init(VECTOR_MIN_SIZE);
 
-	cli_shell.console_master = m1;
-	cli_shell.telnet_master = m2;
+	//cli_shell.console_master = m1;
+	//cli_shell.telnet_master = m2;
 	cli_shell.vty_ctrl_cmd = vty_ctrl_default;
 
 	if (cli_shell._pvty_console)
@@ -4014,6 +4053,8 @@ void vty_init(void *m1, void *m2)
 
 	/* Initilize server thread vector. */
 	cli_shell.serv_thread = vector_init(VECTOR_MIN_SIZE);
+	cli_shell.init = 2;
+	}
 }
 
 void vty_terminate(void)
@@ -4050,4 +4091,110 @@ int vty_execute_shell(const char *cmd)
 	ret = vty_execute(vty);
 	vty_close(vty);
 	return ret;
+}
+
+
+#ifdef ZPL_IPCOM_STACK_MODULE
+static int cli_telnet_task(void *argv)
+{
+	module_setup_task(MODULE_TELNET, os_task_id_self());
+	host_waitting_loadconfig();
+	eloop_mainloop(argv);
+	return 0;
+}
+
+static int cli_telnet_task_init(void)
+{
+	if (cli_shell.telnet_master == NULL)
+		cli_shell.telnet_master = eloop_master_module_create(MODULE_TELNET);
+	//master_thread[MODULE_TELNET] = cli_shell.console_master_module_create(ZPL_SERVICE_TELNET);
+	if (cli_shell.telnet_taskid == 0)
+		cli_shell.telnet_taskid = os_task_create("telnetdTask", OS_TASK_DEFAULT_PRIORITY,
+										0, cli_telnet_task, cli_shell.telnet_master, OS_TASK_DEFAULT_STACK);
+	if (cli_shell.telnet_taskid)
+	{
+		module_setup_task(MODULE_TELNET, cli_shell.telnet_taskid);
+		return OK;
+	}
+	return ERROR;
+}
+
+static int cli_telnet_task_exit(void)
+{
+	if (cli_shell.telnet_taskid)
+		os_task_destroy(cli_shell.telnet_taskid);
+	cli_shell.telnet_taskid = 0;
+	if (cli_shell.telnet_master)
+		eloop_master_free(cli_shell.telnet_master);
+	cli_shell.telnet_master = NULL;
+	return OK;
+}
+#endif
+
+static int cli_console_task(void *argv)
+{
+	module_setup_task(MODULE_CONSOLE, os_task_id_self());
+	host_waitting_loadconfig();
+	thread_mainloop(argv);
+	return 0;
+}
+
+static int cli_console_task_init(void)
+{
+	if (cli_shell.console_master == NULL)
+		cli_shell.console_master = thread_master_module_create(MODULE_CONSOLE);
+	#ifdef ZPL_IPCOM_STACK_MODULE
+	if (cli_shell.console_taskid == 0)
+		cli_shell.console_taskid = os_task_create("consoleTask", OS_TASK_DEFAULT_PRIORITY,
+										 0, cli_console_task, cli_shell.console_master, OS_TASK_DEFAULT_STACK);
+	#else
+	if (cli_shell.console_taskid == 0)
+		cli_shell.console_taskid = os_task_create("shellTask", OS_TASK_DEFAULT_PRIORITY,
+										 0, cli_console_task, cli_shell.console_master, OS_TASK_DEFAULT_STACK);
+	#endif
+	if (cli_shell.console_taskid)
+	{
+		module_setup_task(MODULE_CONSOLE, cli_shell.console_taskid);
+		return OK;
+	}
+	return ERROR;
+}
+
+static int cli_console_task_exit(void)
+{
+	if (cli_shell.console_taskid)
+		os_task_destroy(cli_shell.console_taskid);
+	cli_shell.console_taskid = 0;
+	if (cli_shell.console_master)
+		thread_master_free(cli_shell.console_master);
+	cli_shell.console_master = NULL;
+	#ifndef ZPL_IPCOM_STACK_MODULE
+	cli_shell.telnet_master = NULL;
+	#endif
+	return OK;
+}
+
+void vty_task_init (void)
+{
+	//cli_shell.console_enable;
+	#ifdef ZPL_IPCOM_STACK_MODULE
+	if(cli_shell.console_enable)
+		cli_console_task_init();
+	cli_telnet_task_init();
+	#else
+	cli_console_task_init();
+	#endif
+	return OK;
+}
+
+void vty_task_exit (void)
+{
+	#ifdef ZPL_IPCOM_STACK_MODULE
+	if(cli_shell.console_enable)
+		cli_console_task_exit();
+	cli_telnet_task_exit();
+	#else
+	cli_console_task_exit();
+	#endif
+	return OK;
 }

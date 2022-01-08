@@ -72,12 +72,12 @@ extern "C" {
  *
  * This header file defines a point-to-point interface using which
  * zebra can update the FPM about changes in routes. The communication
- * takes place over a stream socket. The FPM listens on a well-known
+ * takes place over a stream ipstack_socket. The FPM listens on a well-known
  * TCP port, and zebra initiates the connection.
  *
  * All messages sent over the connection start with a zpl_int16 FPM
  * header, fpm_msg_hdr_t. In the case of route add/delete messages,
- * the header is followed by a netlink message. Zebra should send a
+ * the header is followed by a netlink message. Zebra should ipstack_send a
  * complete copy of the forwarding table(s) to the FPM, including
  * routes that it may have picked up from the kernel.
  *
@@ -87,14 +87,14 @@ extern "C" {
  * the information sent in the first message.
  *
  * If the connection to the FPM goes down for some reason, the client
- * (zebra) should send the FPM a complete copy of the forwarding
+ * (zebra) should ipstack_send the FPM a complete copy of the forwarding
  * table(s) when it reconnects.
  */
 
 /*
  * Local host as a default server for fpm connection 
  */
-#define FPM_DEFAULT_IP              (htonl (INADDR_LOOPBACK))
+#define FPM_DEFAULT_IP              (htonl (IPSTACK_INADDR_LOOPBACK))
 
 /*
  * default port for fpm connections

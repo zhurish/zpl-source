@@ -108,7 +108,7 @@ int
 filter_match_cisco(struct filter_cisco *filter, struct prefix *p)
 {
   //struct filter_cisco *filter;
-  struct in_addr mask;
+  struct ipstack_in_addr mask;
   zpl_uint32 check_addr;
   zpl_uint32 check_mask;
 
@@ -731,10 +731,10 @@ int filter_cisco_format(struct vty *vty, const char *addr_str, const char *addr_
                  const char *mask_str, const char *mask_mask_str,
                  int extended, struct filter_cisco *filter)
 {
-  struct in_addr addr;
-  struct in_addr addr_mask;
-  struct in_addr mask;
-  struct in_addr mask_mask;
+  struct ipstack_in_addr addr;
+  struct ipstack_in_addr addr_mask;
+  struct ipstack_in_addr mask;
+  struct ipstack_in_addr mask_mask;
   int ret = 0;
 
   ret = ipstack_inet_aton(addr_str, &addr);
@@ -794,10 +794,10 @@ filter_set_cisco(struct vty *vty, const char *name_str, const char *type_str,
   struct filter_list *mfilter;
   struct filter_cisco *filter;
   struct access_list *access;
-  struct in_addr addr;
-  struct in_addr addr_mask;
-  struct in_addr mask;
-  struct in_addr mask_mask;
+  struct ipstack_in_addr addr;
+  struct ipstack_in_addr addr_mask;
+  struct ipstack_in_addr mask;
+  struct ipstack_in_addr mask_mask;
   int access_num = 0;
   /* Access-list name check. */
   access_num = atoi(name_str);
@@ -923,6 +923,7 @@ filter_set_cisco(struct vty *vty, const char *name_str, const char *type_str,
 DEFUN(access_list_standard,
       access_list_standard_cmd,
       "ip access-list (<1-99>|<1300-1999>) (deny|permit) A.B.C.D A.B.C.D",
+      IP_STR
       "Add an access list entry\n"
       "IP standard access list\n"
       "IP standard access list (expanded range)\n"
@@ -938,6 +939,7 @@ DEFUN(access_list_standard,
 DEFUN(access_list_standard_nomask,
       access_list_standard_nomask_cmd,
       "ip access-list (<1-99>|<1300-1999>) (deny|permit) A.B.C.D",
+      IP_STR
       "Add an access list entry\n"
       "IP standard access list\n"
       "IP standard access list (expanded range)\n"
@@ -952,6 +954,7 @@ DEFUN(access_list_standard_nomask,
 DEFUN(access_list_standard_host,
       access_list_standard_host_cmd,
       "ip access-list (<1-99>|<1300-1999>) (deny|permit) host A.B.C.D",
+      IP_STR
       "Add an access list entry\n"
       "IP standard access list\n"
       "IP standard access list (expanded range)\n"
@@ -967,6 +970,7 @@ DEFUN(access_list_standard_host,
 DEFUN(access_list_standard_any,
       access_list_standard_any_cmd,
       "ip access-list (<1-99>|<1300-1999>) (deny|permit) any",
+      IP_STR
       "Add an access list entry\n"
       "IP standard access list\n"
       "IP standard access list (expanded range)\n"
@@ -982,6 +986,7 @@ DEFUN(no_access_list_standard,
       no_access_list_standard_cmd,
       "no ip access-list (<1-99>|<1300-1999>) (deny|permit) A.B.C.D A.B.C.D",
       NO_STR
+      IP_STR
       "Add an access list entry\n"
       "IP standard access list\n"
       "IP standard access list (expanded range)\n"
@@ -998,6 +1003,7 @@ DEFUN(no_access_list_standard_nomask,
       no_access_list_standard_nomask_cmd,
       "no ip access-list (<1-99>|<1300-1999>) (deny|permit) A.B.C.D",
       NO_STR
+      IP_STR
       "Add an access list entry\n"
       "IP standard access list\n"
       "IP standard access list (expanded range)\n"
@@ -1013,6 +1019,7 @@ DEFUN(no_access_list_standard_host,
       no_access_list_standard_host_cmd,
       "no ip access-list (<1-99>|<1300-1999>) (deny|permit) host A.B.C.D",
       NO_STR
+      IP_STR
       "Add an access list entry\n"
       "IP standard access list\n"
       "IP standard access list (expanded range)\n"
@@ -1029,6 +1036,7 @@ DEFUN(no_access_list_standard_any,
       no_access_list_standard_any_cmd,
       "no ip access-list (<1-99>|<1300-1999>) (deny|permit) any",
       NO_STR
+      IP_STR
       "Add an access list entry\n"
       "IP standard access list\n"
       "IP standard access list (expanded range)\n"
@@ -1044,6 +1052,7 @@ DEFUN(no_access_list_standard_any,
 DEFUN(access_list_extended,
       access_list_extended_cmd,
       "ip access-list (<100-199>|<2000-2699>) (deny|permit) ip A.B.C.D A.B.C.D A.B.C.D A.B.C.D",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access list\n"
       "IP extended access list (expanded range)\n"
@@ -1062,6 +1071,7 @@ DEFUN(access_list_extended,
 DEFUN(access_list_extended_mask_any,
       access_list_extended_mask_any_cmd,
       "ip access-list (<100-199>|<2000-2699>) (deny|permit) ip A.B.C.D A.B.C.D any",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access list\n"
       "IP extended access list (expanded range)\n"
@@ -1080,6 +1090,7 @@ DEFUN(access_list_extended_mask_any,
 DEFUN(access_list_extended_any_mask,
       access_list_extended_any_mask_cmd,
       "ip access-list (<100-199>|<2000-2699>) (deny|permit) ip any A.B.C.D A.B.C.D",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access list\n"
       "IP extended access list (expanded range)\n"
@@ -1098,6 +1109,7 @@ DEFUN(access_list_extended_any_mask,
 DEFUN(access_list_extended_any_any,
       access_list_extended_any_any_cmd,
       "ip access-list (<100-199>|<2000-2699>) (deny|permit) ip any any",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access list\n"
       "IP extended access list (expanded range)\n"
@@ -1115,6 +1127,7 @@ DEFUN(access_list_extended_any_any,
 DEFUN(access_list_extended_mask_host,
       access_list_extended_mask_host_cmd,
       "ip access-list (<100-199>|<2000-2699>) (deny|permit) ip A.B.C.D A.B.C.D host A.B.C.D",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access list\n"
       "IP extended access list (expanded range)\n"
@@ -1134,6 +1147,7 @@ DEFUN(access_list_extended_mask_host,
 DEFUN(access_list_extended_host_mask,
       access_list_extended_host_mask_cmd,
       "ip access-list (<100-199>|<2000-2699>) (deny|permit) ip host A.B.C.D A.B.C.D A.B.C.D",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access list\n"
       "IP extended access list (expanded range)\n"
@@ -1153,6 +1167,7 @@ DEFUN(access_list_extended_host_mask,
 DEFUN(access_list_extended_host_host,
       access_list_extended_host_host_cmd,
       "ip access-list (<100-199>|<2000-2699>) (deny|permit) ip host A.B.C.D host A.B.C.D",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access list\n"
       "IP extended access list (expanded range)\n"
@@ -1172,6 +1187,7 @@ DEFUN(access_list_extended_host_host,
 DEFUN(access_list_extended_any_host,
       access_list_extended_any_host_cmd,
       "ip access-list (<100-199>|<2000-2699>) (deny|permit) ip any host A.B.C.D",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access list\n"
       "IP extended access list (expanded range)\n"
@@ -1190,6 +1206,7 @@ DEFUN(access_list_extended_any_host,
 DEFUN(access_list_extended_host_any,
       access_list_extended_host_any_cmd,
       "ip access-list (<100-199>|<2000-2699>) (deny|permit) ip host A.B.C.D any",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access list\n"
       "IP extended access list (expanded range)\n"
@@ -1209,6 +1226,7 @@ DEFUN(no_access_list_extended,
       no_access_list_extended_cmd,
       "no ip access-list (<100-199>|<2000-2699>) (deny|permit) ip A.B.C.D A.B.C.D A.B.C.D A.B.C.D",
       NO_STR
+      IP_STR
       "Add an access list entry\n"
       "IP extended access list\n"
       "IP extended access list (expanded range)\n"
@@ -1228,6 +1246,7 @@ DEFUN(no_access_list_extended_mask_any,
       no_access_list_extended_mask_any_cmd,
       "no ip access-list (<100-199>|<2000-2699>) (deny|permit) ip A.B.C.D A.B.C.D any",
       NO_STR
+      IP_STR
       "Add an access list entry\n"
       "IP extended access list\n"
       "IP extended access list (expanded range)\n"
@@ -1247,6 +1266,7 @@ DEFUN(no_access_list_extended_any_mask,
       no_access_list_extended_any_mask_cmd,
       "no ip access-list (<100-199>|<2000-2699>) (deny|permit) ip any A.B.C.D A.B.C.D",
       NO_STR
+      IP_STR
       "Add an access list entry\n"
       "IP extended access list\n"
       "IP extended access list (expanded range)\n"
@@ -1266,6 +1286,7 @@ DEFUN(no_access_list_extended_any_any,
       no_access_list_extended_any_any_cmd,
       "no ip access-list (<100-199>|<2000-2699>) (deny|permit) ip any any",
       NO_STR
+      IP_STR
       "Add an access list entry\n"
       "IP extended access list\n"
       "IP extended access list (expanded range)\n"
@@ -1284,6 +1305,7 @@ DEFUN(no_access_list_extended_mask_host,
       no_access_list_extended_mask_host_cmd,
       "no ip access-list (<100-199>|<2000-2699>) (deny|permit) ip A.B.C.D A.B.C.D host A.B.C.D",
       NO_STR
+      IP_STR
       "Add an access list entry\n"
       "IP extended access list\n"
       "IP extended access list (expanded range)\n"
@@ -1304,6 +1326,7 @@ DEFUN(no_access_list_extended_host_mask,
       no_access_list_extended_host_mask_cmd,
       "no ip access-list (<100-199>|<2000-2699>) (deny|permit) ip host A.B.C.D A.B.C.D A.B.C.D",
       NO_STR
+      IP_STR
       "Add an access list entry\n"
       "IP extended access list\n"
       "IP extended access list (expanded range)\n"
@@ -1324,6 +1347,7 @@ DEFUN(no_access_list_extended_host_host,
       no_access_list_extended_host_host_cmd,
       "no ip access-list (<100-199>|<2000-2699>) (deny|permit) ip host A.B.C.D host A.B.C.D",
       NO_STR
+      IP_STR
       "Add an access list entry\n"
       "IP extended access list\n"
       "IP extended access list (expanded range)\n"
@@ -1344,6 +1368,7 @@ DEFUN(no_access_list_extended_any_host,
       no_access_list_extended_any_host_cmd,
       "no ip access-list (<100-199>|<2000-2699>) (deny|permit) ip any host A.B.C.D",
       NO_STR
+      IP_STR
       "Add an access list entry\n"
       "IP extended access list\n"
       "IP extended access list (expanded range)\n"
@@ -1363,6 +1388,7 @@ DEFUN(no_access_list_extended_host_any,
       no_access_list_extended_host_any_cmd,
       "no ip access-list (<100-199>|<2000-2699>) (deny|permit) ip host A.B.C.D any",
       NO_STR
+      IP_STR
       "Add an access list entry\n"
       "IP extended access list\n"
       "IP extended access list (expanded range)\n"
@@ -1502,7 +1528,8 @@ filter_set_zebra(struct vty *vty, const char *name_str, const char *type_str,
 /* Zebra access-list */
 DEFUN(access_list,
       access_list_cmd,
-      "access-list WORD (deny|permit) A.B.C.D/M",
+      "ip access-list WORD (deny|permit) A.B.C.D/M",
+      IP_STR
       "Add an access list entry\n"
       "IP zebra access-list name\n"
       "Specify packets to reject\n"
@@ -1514,7 +1541,8 @@ DEFUN(access_list,
 
 DEFUN(access_list_exact,
       access_list_exact_cmd,
-      "access-list WORD (deny|permit) A.B.C.D/M exact-match",
+      "ip access-list WORD (deny|permit) A.B.C.D/M exact-match",
+      IP_STR
       "Add an access list entry\n"
       "IP zebra access-list name\n"
       "Specify packets to reject\n"
@@ -1527,7 +1555,8 @@ DEFUN(access_list_exact,
 
 DEFUN(access_list_any,
       access_list_any_cmd,
-      "access-list WORD (deny|permit) any",
+      "ip access-list WORD (deny|permit) any",
+      IP_STR
       "Add an access list entry\n"
       "IP zebra access-list name\n"
       "Specify packets to reject\n"
@@ -1539,8 +1568,9 @@ DEFUN(access_list_any,
 
 DEFUN(no_access_list,
       no_access_list_cmd,
-      "no access-list WORD (deny|permit) A.B.C.D/M",
+      "no ip access-list WORD (deny|permit) A.B.C.D/M",
       NO_STR
+      IP_STR
       "Add an access list entry\n"
       "IP zebra access-list name\n"
       "Specify packets to reject\n"
@@ -1552,8 +1582,9 @@ DEFUN(no_access_list,
 
 DEFUN(no_access_list_exact,
       no_access_list_exact_cmd,
-      "no access-list WORD (deny|permit) A.B.C.D/M exact-match",
+      "no ip access-list WORD (deny|permit) A.B.C.D/M exact-match",
       NO_STR
+      IP_STR
       "Add an access list entry\n"
       "IP zebra access-list name\n"
       "Specify packets to reject\n"
@@ -1566,8 +1597,9 @@ DEFUN(no_access_list_exact,
 
 DEFUN(no_access_list_any,
       no_access_list_any_cmd,
-      "no access-list WORD (deny|permit) any",
+      "no ip access-list WORD (deny|permit) any",
       NO_STR
+      IP_STR
       "Add an access list entry\n"
       "IP zebra access-list name\n"
       "Specify packets to reject\n"
@@ -1581,6 +1613,7 @@ DEFUN(no_access_list_all,
       no_access_list_all_cmd,
       "no ip access-list (<1-99>|<100-199>|<1300-1999>|<2000-2699>|WORD)",
       NO_STR
+      IP_STR
       "Add an access list entry\n"
       "IP standard access list\n"
       "IP extended access list\n"
@@ -1616,6 +1649,7 @@ DEFUN(no_access_list_all,
 DEFUN(access_list_remark,
       access_list_remark_cmd,
       "ip access-list (<1-99>|<100-199>|<1300-1999>|<2000-2699>|WORD) remark .LINE",
+      IP_STR
       "Add an access list entry\n"
       "IP standard access list\n"
       "IP extended access list\n"
@@ -1643,6 +1677,7 @@ DEFUN(no_access_list_remark,
       no_access_list_remark_cmd,
       "no ip access-list (<1-99>|<100-199>|<1300-1999>|<2000-2699>|WORD) remark",
       NO_STR
+      IP_STR
       "Add an access list entry\n"
       "IP standard access list\n"
       "IP extended access list\n"
@@ -1658,6 +1693,7 @@ ALIAS(no_access_list_remark,
       no_access_list_remark_arg_cmd,
       "no ip access-list (<1-99>|<100-199>|<1300-1999>|<2000-2699>|WORD) remark .LINE",
       NO_STR
+      IP_STR
       "Add an access list entry\n"
       "IP standard access list\n"
       "IP extended access list\n"
@@ -1845,7 +1881,7 @@ int filter_zebos_ext_format(struct vty *vty, afi_t afi,
   {
     if (!strncmp(sprefix, "a", 1))
     {
-      sp.family = AF_INET;
+      sp.family = IPSTACK_AF_INET;
       sp.prefixlen = 0;
       sp.u.prefix4.s_addr = 0;
     }
@@ -1861,7 +1897,7 @@ int filter_zebos_ext_format(struct vty *vty, afi_t afi,
 
     if (!strncmp(dprefix, "a", 1))
     {
-      dp.family = AF_INET;
+      dp.family = IPSTACK_AF_INET;
       dp.prefixlen = 0;
       dp.u.prefix4.s_addr = 0;
     }
@@ -1882,7 +1918,7 @@ int filter_zebos_ext_format(struct vty *vty, afi_t afi,
     {
       int i;
 
-      sp.family = AF_INET6;
+      sp.family = IPSTACK_AF_INET6;
       sp.prefixlen = 0;
 
       for (i = 0; i < 16; i++)
@@ -1902,7 +1938,7 @@ int filter_zebos_ext_format(struct vty *vty, afi_t afi,
     {
       int i;
 
-      dp.family = AF_INET6;
+      dp.family = IPSTACK_AF_INET6;
       dp.prefixlen = 0;
 
       for (i = 0; i < 16; i++)
@@ -1973,7 +2009,7 @@ static int filter_set_zebos_extended(struct vty *vty, const char *name_str,
   {
     if (!strncmp(sprefix, "a", 1))
     {
-      sp.family = AF_INET;
+      sp.family = IPSTACK_AF_INET;
       sp.prefixlen = 0;
       sp.u.prefix4.s_addr = 0;
     }
@@ -1989,7 +2025,7 @@ static int filter_set_zebos_extended(struct vty *vty, const char *name_str,
 
     if (!strncmp(dprefix, "a", 1))
     {
-      dp.family = AF_INET;
+      dp.family = IPSTACK_AF_INET;
       dp.prefixlen = 0;
       dp.u.prefix4.s_addr = 0;
     }
@@ -2010,7 +2046,7 @@ static int filter_set_zebos_extended(struct vty *vty, const char *name_str,
     {
       int i;
 
-      sp.family = AF_INET6;
+      sp.family = IPSTACK_AF_INET6;
       sp.prefixlen = 0;
 
       for (i = 0; i < 16; i++)
@@ -2030,7 +2066,7 @@ static int filter_set_zebos_extended(struct vty *vty, const char *name_str,
     {
       int i;
 
-      dp.family = AF_INET6;
+      dp.family = IPSTACK_AF_INET6;
       dp.prefixlen = 0;
 
       for (i = 0; i < 16; i++)
@@ -2153,8 +2189,10 @@ access-list  (WORD|<1-2147483646>) (deny|permit) A.B.C.D/M A.B.C.D/M any
 DEFUN(access_list_ip_protocol,
       access_list_ip_protocol_cmd,
       "ip access-list (WORD|<4000-4999>) (deny|permit) (A.B.C.D/M|any) (A.B.C.D/M|any) ("IP_TCPUDP_CMD IP_IPPROTO_CMD")",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 10.0.0.0/8\n"
@@ -2182,8 +2220,10 @@ DEFUN(no_access_list_ip_protocol,
       no_access_list_ip_protocol_cmd,
       "no ip access-list (WORD|<4000-4999>) (deny|permit) (A.B.C.D/M|any) (A.B.C.D/M|any) ("IP_TCPUDP_CMD IP_IPPROTO_CMD")",
       NO_STR
+      IP_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 10.0.0.0/8\n"
@@ -2211,8 +2251,10 @@ DEFUN(no_access_list_ip_tcpudp,
       no_access_list_ip_tcpudp_cmd,
       "no ip access-list (WORD|<4000-4999>) (deny|permit) (A.B.C.D/M|any) (A.B.C.D/M|any) ("IP_TCPUDP_CMD")",
       NO_STR
+      IP_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 10.0.0.0/8\n"
@@ -2258,14 +2300,18 @@ ALIAS(no_access_list_ip_tcpudp,
       no_access_list_ip_tcpudp_name_cmd,
       "no ip access-list (WORD|<4000-4999>)",
       NO_STR
+      IP_STR
       "Add an access list entry\n"
-      "IP extended access-list name\n")
+      "IP extended access-list name\n"
+      "IP extended access list\n")
 
 DEFUN(access_list_ip_tcpudp,
       access_list_ip_tcpudp_cmd,
       "ip access-list (WORD|<4000-4999>) (deny|permit) (A.B.C.D/M|any) (A.B.C.D/M|any) ("IP_TCPUDP_CMD")",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 10.0.0.0/8\n"
@@ -2310,8 +2356,10 @@ DEFUN(access_list_ip_tcpudp,
 ALIAS(access_list_ip_tcpudp,
       access_list_ip_tcpudp_srcport_cmd,
       "ip access-list (WORD|<4000-4999>) (deny|permit) (A.B.C.D/M|any) (A.B.C.D/M|any) ("IP_TCPUDP_CMD") src-port eq <1-65536>",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 10.0.0.0/8\n"
@@ -2325,8 +2373,10 @@ ALIAS(access_list_ip_tcpudp,
 ALIAS(access_list_ip_tcpudp,
       access_list_ip_tcpudp_srcport_range_cmd,
       "ip access-list (WORD|<4000-4999>) (deny|permit) (A.B.C.D/M|any) (A.B.C.D/M|any) ("IP_TCPUDP_CMD") src-port range <1-65536> <1-65536>",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 10.0.0.0/8\n"
@@ -2341,8 +2391,10 @@ ALIAS(access_list_ip_tcpudp,
 ALIAS(access_list_ip_tcpudp,
       access_list_ip_tcpudp_srcport_ng_cmd,
       "ip access-list (WORD|<4000-4999>) (deny|permit) (A.B.C.D/M|any) (A.B.C.D/M|any) ("IP_TCPUDP_CMD") src-port (ne|gt|lt|ge|le) <1-65536>",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 10.0.0.0/8\n"
@@ -2362,8 +2414,10 @@ ALIAS(access_list_ip_tcpudp,
 DEFUN(access_list_ip_tcpudp_dstport,
       access_list_ip_tcpudp_dstport_cmd,
       "ip access-list (WORD|<4000-4999>) (deny|permit) (A.B.C.D/M|any) (A.B.C.D/M|any) ("IP_TCPUDP_CMD") src-port any dest-port eq <1-65536>",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 10.0.0.0/8\n"
@@ -2413,8 +2467,10 @@ DEFUN(access_list_ip_tcpudp_dstport,
 ALIAS(access_list_ip_tcpudp_dstport,
       access_list_ip_tcpudp_dstport_range_cmd,
       "ip access-list (WORD|<4000-4999>) (deny|permit) (A.B.C.D/M|any) (A.B.C.D/M|any) ("IP_TCPUDP_CMD") src-port any dest-port range <1-65536> <1-65536>",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 10.0.0.0/8\n"
@@ -2431,8 +2487,10 @@ ALIAS(access_list_ip_tcpudp_dstport,
 ALIAS(access_list_ip_tcpudp_dstport,
       access_list_ip_tcpudp_dstport_ng_cmd,
       "ip access-list (WORD|<4000-4999>) (deny|permit) (A.B.C.D/M|any) (A.B.C.D/M|any) ("IP_TCPUDP_CMD") src-port any dest-port (ne|gt|lt|ge|le) <1-65536>",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 10.0.0.0/8\n"
@@ -2454,8 +2512,10 @@ ALIAS(access_list_ip_tcpudp_dstport,
 DEFUN(access_list_ip_tcpudp_srcport_dstport,
       access_list_ip_tcpudp_srcport_dstport_cmd,
       "ip access-list (WORD|<4000-4999>) (deny|permit) (A.B.C.D/M|any) (A.B.C.D/M|any) ("IP_TCPUDP_CMD") src-port eq <1-65536> dest-port eq <1-65536>",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 10.0.0.0/8\n"
@@ -2506,8 +2566,10 @@ DEFUN(access_list_ip_tcpudp_srcport_dstport,
 ALIAS(access_list_ip_tcpudp_srcport_dstport,
       access_list_ip_tcpudp_srcport_dstport_range_cmd,
       "ip access-list (WORD|<4000-4999>) (deny|permit) (A.B.C.D/M|any) (A.B.C.D/M|any) ("IP_TCPUDP_CMD") src-port eq <1-65536> dest-port range <1-65536> <1-65536>",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 10.0.0.0/8\n"
@@ -2524,8 +2586,10 @@ ALIAS(access_list_ip_tcpudp_srcport_dstport,
 ALIAS(access_list_ip_tcpudp_srcport_dstport,
       access_list_ip_tcpudp_srcport_dstport_ng_cmd,
       "ip access-list (WORD|<4000-4999>) (deny|permit) (A.B.C.D/M|any) (A.B.C.D/M|any) ("IP_TCPUDP_CMD") src-port eq <1-65536> dest-port (ne|gt|lt|ge|le) <1-65536>",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 10.0.0.0/8\n"
@@ -2547,8 +2611,10 @@ ALIAS(access_list_ip_tcpudp_srcport_dstport,
 DEFUN(access_list_ip_tcpudp_srcport_range_dstport,
       access_list_ip_tcpudp_srcport_range_dstport_cmd,
       "ip access-list (WORD|<4000-4999>) (deny|permit) (A.B.C.D/M|any) (A.B.C.D/M|any) ("IP_TCPUDP_CMD") src-port range <1-65536> <1-65536> dest-port eq <1-65536>",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 10.0.0.0/8\n"
@@ -2600,8 +2666,10 @@ DEFUN(access_list_ip_tcpudp_srcport_range_dstport,
 ALIAS(access_list_ip_tcpudp_srcport_range_dstport,
       access_list_ip_tcpudp_srcport_range_dstport_range_cmd,
       "ip access-list (WORD|<4000-4999>) (deny|permit) (A.B.C.D/M|any) (A.B.C.D/M|any) ("IP_TCPUDP_CMD") src-port range <1-65536> <1-65536> dest-port range <1-65536> <1-65536>",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 10.0.0.0/8\n"
@@ -2619,8 +2687,10 @@ ALIAS(access_list_ip_tcpudp_srcport_range_dstport,
 ALIAS(access_list_ip_tcpudp_srcport_range_dstport,
       access_list_ip_tcpudp_srcport_range_dstport_ng_cmd,
       "ip access-list (WORD|<4000-4999>) (deny|permit) (A.B.C.D/M|any) (A.B.C.D/M|any) ("IP_TCPUDP_CMD") src-port range <1-65536> <1-65536> dest-port (ne|gt|lt|ge|le) <1-65536>",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 10.0.0.0/8\n"
@@ -2643,8 +2713,10 @@ ALIAS(access_list_ip_tcpudp_srcport_range_dstport,
 DEFUN(access_list_ip_tcpudp_srcport_ng_dstport,
       access_list_ip_tcpudp_srcport_ng_dstport_cmd,
       "ip access-list (WORD|<4000-4999>) (deny|permit) (A.B.C.D/M|any) (A.B.C.D/M|any) ("IP_TCPUDP_CMD") src-port (ne|gt|lt|ge|le) <1-65536> dest-port eq <1-65536>",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 10.0.0.0/8\n"
@@ -2700,8 +2772,10 @@ DEFUN(access_list_ip_tcpudp_srcport_ng_dstport,
 ALIAS(access_list_ip_tcpudp_srcport_ng_dstport,
       access_list_ip_tcpudp_srcport_ng_dstport_range_cmd,
       "ip access-list (WORD|<4000-4999>) (deny|permit) (A.B.C.D/M|any) (A.B.C.D/M|any) ("IP_TCPUDP_CMD") src-port (ne|gt|lt|ge|le) <1-65536> dest-port range <1-65536> <1-65536>",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 10.0.0.0/8\n"
@@ -2723,8 +2797,10 @@ ALIAS(access_list_ip_tcpudp_srcport_ng_dstport,
 ALIAS(access_list_ip_tcpudp_srcport_ng_dstport,
       access_list_ip_tcpudp_srcport_ng_dstport_ng_cmd,
       "ip access-list (WORD|<4000-4999>) (deny|permit) (A.B.C.D/M|any) (A.B.C.D/M|any) ("IP_TCPUDP_CMD") src-port (ne|gt|lt|ge|le) <1-65536> dest-port (ne|gt|lt|ge|le) <1-65536>",
+      IP_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 10.0.0.0/8\n"
@@ -2755,6 +2831,7 @@ DEFUN(access_list_ipv6_protocol,
       IPV6_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 3ffe:506::/32\n"
@@ -2785,6 +2862,7 @@ DEFUN(no_access_list_ipv6_protocol,
       IPV6_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 3ffe:506::/32\n"
@@ -2815,6 +2893,7 @@ DEFUN(no_access_list_ipv6_tcpudp,
       IPV6_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 3ffe:506::/32\n"
@@ -2862,7 +2941,8 @@ ALIAS(no_access_list_ipv6_tcpudp,
       NO_STR
       IPV6_STR
       "Add an access list entry\n"
-      "IP extended access-list name\n")
+      "IP extended access-list name\n"
+      "IP extended access list\n")
 
 DEFUN(access_list_ipv6_tcpudp,
       access_list_ipv6_tcpudp_cmd,
@@ -2870,6 +2950,7 @@ DEFUN(access_list_ipv6_tcpudp,
       IPV6_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 3ffe:506::/32\n"
@@ -2917,6 +2998,7 @@ ALIAS(access_list_ipv6_tcpudp,
       IPV6_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 3ffe:506::/32\n"
@@ -2933,6 +3015,7 @@ ALIAS(access_list_ipv6_tcpudp,
       IPV6_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 3ffe:506::/32\n"
@@ -2950,6 +3033,7 @@ ALIAS(access_list_ipv6_tcpudp,
       IPV6_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 3ffe:506::/32\n"
@@ -2972,6 +3056,7 @@ DEFUN(access_list_ipv6_tcpudp_dstport,
       IPV6_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 3ffe:506::/32\n"
@@ -3024,6 +3109,7 @@ ALIAS(access_list_ipv6_tcpudp_dstport,
       IPV6_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 3ffe:506::/32\n"
@@ -3043,6 +3129,7 @@ ALIAS(access_list_ipv6_tcpudp_dstport,
       IPV6_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 3ffe:506::/32\n"
@@ -3067,6 +3154,7 @@ DEFUN(access_list_ipv6_tcpudp_srcport_dstport,
       IPV6_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 3ffe:506::/32\n"
@@ -3120,6 +3208,7 @@ ALIAS(access_list_ipv6_tcpudp_srcport_dstport,
       IPV6_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 3ffe:506::/32\n"
@@ -3139,6 +3228,7 @@ ALIAS(access_list_ipv6_tcpudp_srcport_dstport,
       IPV6_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 3ffe:506::/32\n"
@@ -3163,6 +3253,7 @@ DEFUN(access_list_ipv6_tcpudp_srcport_range_dstport,
       IPV6_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 3ffe:506::/32\n"
@@ -3217,6 +3308,7 @@ ALIAS(access_list_ipv6_tcpudp_srcport_range_dstport,
       IPV6_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 3ffe:506::/32\n"
@@ -3237,6 +3329,7 @@ ALIAS(access_list_ipv6_tcpudp_srcport_range_dstport,
       IPV6_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 3ffe:506::/32\n"
@@ -3262,6 +3355,7 @@ DEFUN(access_list_ipv6_tcpudp_srcport_ng_dstport,
       IPV6_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 3ffe:506::/32\n"
@@ -3320,6 +3414,7 @@ ALIAS(access_list_ipv6_tcpudp_srcport_ng_dstport,
       IPV6_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 3ffe:506::/32\n"
@@ -3344,6 +3439,7 @@ ALIAS(access_list_ipv6_tcpudp_srcport_ng_dstport,
       IPV6_STR
       "Add an access list entry\n"
       "IP extended access-list name\n"
+      "IP extended access list\n"
       "Specify packets to reject\n"
       "Specify packets to forward\n"
       "Specify Source Prefix to match. e.g. 3ffe:506::/32\n"
@@ -5403,7 +5499,7 @@ config_write_access(struct vty *vty, afi_t afi)
     if (access->remark)
     {
       vty_out(vty, "%saccess-list %s remark %s%s",
-              afi == AFI_IP ? "" : "ipv6 ",
+              afi == AFI_IP ? "ip " : "ipv6 ",
               access->name, access->remark,
               VTY_NEWLINE);
       write++;
@@ -5413,7 +5509,7 @@ config_write_access(struct vty *vty, afi_t afi)
     {
       if (mfilter->nodetype == FILTER_COMMON || mfilter->nodetype == FILTER_ZEBOS)
         vty_out(vty, "%saccess-list %s %s",
-                afi == AFI_IP ? "" : "ipv6 ",
+                afi == AFI_IP ? "ip " : "ipv6 ",
                 access->name,
                 filter_type_str(mfilter->type));
 
@@ -5425,7 +5521,7 @@ config_write_access(struct vty *vty, afi_t afi)
       else if (mfilter->nodetype == FILTER_ZEBOS_EXT)
       {
         vty_out(vty, "%saccess-list %s %s",
-                afi == AFI_IP ? "" : "ipv6 ",
+                afi == AFI_IP ? "ip " : "ipv6 ",
                 access->name,
                 filter_type_str(mfilter->type));
         config_write_access_zebos_ext(vty, mfilter);
@@ -5449,7 +5545,7 @@ config_write_access(struct vty *vty, afi_t afi)
     if (access->remark)
     {
       vty_out(vty, "%saccess-list %s remark %s%s",
-              afi == AFI_IP ? "" : "ipv6 ",
+              afi == AFI_IP ? "ip " : "ipv6 ",
               access->name, access->remark,
               VTY_NEWLINE);
       write++;
@@ -5459,7 +5555,7 @@ config_write_access(struct vty *vty, afi_t afi)
     {
       if ((mfilter->nodetype == FILTER_COMMON) || (mfilter->nodetype == FILTER_ZEBOS))
         vty_out(vty, "%saccess-list %s %s",
-                afi == AFI_IP ? "" : "ipv6 ",
+                afi == AFI_IP ? "ip " : "ipv6 ",
                 access->name,
                 filter_type_str(mfilter->type));
 
@@ -5471,7 +5567,7 @@ config_write_access(struct vty *vty, afi_t afi)
       else if (mfilter->nodetype == FILTER_ZEBOS_EXT)
       {
         vty_out(vty, "%saccess-list %s %s",
-                afi == AFI_IP ? "" : "ipv6 ",
+                afi == AFI_IP ? "ip " : "ipv6 ",
                 access->name,
                 filter_type_str(mfilter->type));
         config_write_access_zebos_ext(vty, mfilter);

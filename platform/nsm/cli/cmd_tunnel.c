@@ -378,7 +378,7 @@ static int nsm_interface_tunnel_config_write(struct vty *vty)
 						char buf[INET6_ADDRSTRLEN];
 						p = ifc->address;
 						vty_out(vty, " ip%s address %s",
-									p->family == AF_INET ? "" : "v6",
+									p->family == IPSTACK_AF_INET ? "" : "v6",
 									prefix2str(p, buf, sizeof(buf)));
 						vty_out(vty, "%s", VTY_NEWLINE);
 					}

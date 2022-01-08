@@ -170,12 +170,12 @@ typedef struct tftp_desc
     zpl_bool	connected;                      /* state                */
     char    serverName [128];               /* server ascii name    */
 #ifndef INET6
-    struct sockaddr_in serverAddr;          /* server address 	    */
+    struct ipstack_sockaddr_in serverAddr;          /* server address 	    */
 #else
-    struct sockaddr_in6 serverAddr;
+    struct ipstack_sockaddr_in6 serverAddr;
 #endif
-    int     sock;                           /* socket               */
-    int     sockFamily;                     /* AF_INET(6)           */
+    zpl_socket_t     sock;                           /* ipstack_socket               */
+    int     sockFamily;                     /* IPSTACK_AF_INET(6)           */
     zpl_ushort	serverPort;                 /* server port number   */
     char	fileName [TFTP_FILENAME_SIZE];	/* requested file name  */
     int tftp_size;

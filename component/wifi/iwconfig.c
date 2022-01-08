@@ -55,7 +55,7 @@ static int get_info(int skfd, char * ifname, struct wireless_info * info)
 		struct ifreq ifr;
 
 		strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
-		if (ioctl(skfd, SIOCGIFFLAGS, &ifr) < 0)
+		if (ioctl(skfd, IPSTACK_SIOCGIFFLAGS, &ifr) < 0)
 			return (-ENODEV);
 		else
 			return (-ENOTSUP);
@@ -2303,11 +2303,11 @@ char * ifname, iw_user_cb_t *cb) /* Dev name */
 				break;
 			case IWERR_SET_EXT:
 				fprintf(stderr, "    SET failed on device %-1.16s ; %s.\n",
-						kname2ifname(ifname), strerror(errno));
+						kname2ifname(ifname), strerror(ipstack_errno));
 				break;
 			case IWERR_GET_EXT:
 				fprintf(stderr, "    GET failed on device %-1.16s ; %s.\n",
-						kname2ifname(ifname), strerror(errno));
+						kname2ifname(ifname), strerror(ipstack_errno));
 				break;
 			}
 			/* Stop processing, we don't know if we are in a consistent state

@@ -196,10 +196,10 @@ DEFUN (tftp_server_enable,
 
 ALIAS (tftp_server_enable,
 		tftp_server_address_cmd,
-	    "tftp server bind "CMD_KEY_IPV4,
+	    "tftp server ipstack_bind "CMD_KEY_IPV4,
 		"TFTP configure\n"
 		"Server configure\n"
-		"bind configure\n"
+		"ipstack_bind configure\n"
 		CMD_KEY_IPV4_HELP)
 
 
@@ -248,10 +248,10 @@ DEFUN (ftp_server_enable,
 
 ALIAS (ftp_server_enable,
 		ftp_server_address_cmd,
-	    "ftp server bind "CMD_KEY_IPV4,
+	    "ftp server ipstack_bind "CMD_KEY_IPV4,
 		"FTP configure\n"
 		"Server configure\n"
-		"bind configure\n"
+		"ipstack_bind configure\n"
 		CMD_KEY_IPV4_HELP)
 
 ALIAS (ftp_server_enable,
@@ -291,7 +291,7 @@ DEFUN (telnet_client,
 	}
 	else
 	{
-		struct in_addr addr;
+		struct ipstack_in_addr addr;
   		int ret;
   		ret = ipstack_inet_aton (argv[0], &addr);
 		if(IPV4_NET127(ntohl(addr.s_addr)))
@@ -457,8 +457,8 @@ ALIAS (traceroute_start,
 		"traceroute configure\n"
 		CMD_KEY_IPV4_HELP
 		"Host name\n"
-		"TTL configure\n"
-		"TTL value\n")
+		"IPSTACK_TTL configure\n"
+		"IPSTACK_TTL value\n")
 
 
 DEFUN (traceroute_len_start,
@@ -488,8 +488,8 @@ ALIAS (traceroute_len_start,
 		"Host name\n"
 		"size packet configure\n"
 		"size value\n"
-		"TTL configure\n"
-		"TTL value\n");
+		"IPSTACK_TTL configure\n"
+		"IPSTACK_TTL value\n");
 
 DEFUN (traceroute_ttl_len_start,
 		traceroute_start_ttl_len_cmd,
@@ -497,8 +497,8 @@ DEFUN (traceroute_ttl_len_start,
 		"traceroute configure\n"
 		CMD_KEY_IPV4_HELP
 		"Host name\n"
-		"TTL configure\n"
-		"TTL value\n"
+		"IPSTACK_TTL configure\n"
+		"IPSTACK_TTL value\n"
 		"size packet\n"
 		"size value\n")
 {
@@ -537,7 +537,7 @@ DEFUN_HIDDEN (load_image_xyz_modem,
 	xyz.sequm = 0;
 	xyz.vty = vty;
 	if(argc == 1)
-		xyz.fd = vty->fd;
+		xyz.fd = vty->fd._fd;
 	else
 	{
 		xyz.show_debug = vty_sync_out;

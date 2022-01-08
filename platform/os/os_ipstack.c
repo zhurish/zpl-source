@@ -10,6 +10,12 @@
 #include <log.h>
 #include <sys/un.h>
 
+/* Wrapper around strerror to handle case where it returns NULL. */
+const char *ipstack_strerror(int errnum) {
+	const char *s = strerror(errnum);
+	return (s != NULL) ? s : "Unknown error";
+}
+
 char * ipstack_sockstr(zpl_socket_t _sock)
 {
 	static char buf[64];
@@ -118,7 +124,7 @@ int ipstack_set_blocking(zpl_socket_t fd)
 	else
 	{
 		int a = 1;
-		if (ipcom_socketioctl(fd._fd, IP_FIONBIO, (char *)&a) != 0)
+		if (ipcom_socketioctl(fd._fd, IPSTACK_FIONBIO, (char *)&a) != 0)
 		{
 			return ERROR;
 		}
@@ -136,6 +142,31 @@ int ipstack_same(zpl_socket_t src, zpl_socket_t dst)
 		src.stack == dst.stack && src._fd > 0 && src._fd == dst._fd)
 		return 1;
 	return 0;	
+}
+
+int ipstack_copy(zpl_socket_t src, zpl_socket_t dst)
+{
+	dst._fd = src._fd;
+	dst.stack = src.stack;
+	return OK;
+}
+
+zpl_socket_t ipstack_max(zpl_socket_t src, zpl_socket_t dst)
+{
+	if(dst._fd > src._fd)
+		return dst;
+	else
+		return src;	
+}
+
+zpl_socket_t ipstack_open (zpl_ipstack stack, const char *__path, int __oflag)
+{
+	zpl_socket_t tmp;
+	tmp.stack = stack;
+	tmp._fd = open(__path, __oflag);
+	if(tmp._fd <= 0)
+		tmp.stack = 0;
+	return tmp;
 }
 /* Create a new socket of type TYPE in domain DOMAIN, using
    protocol PROTOCOL.  If PROTOCOL is zero, one is chosen automatically.
@@ -765,3 +796,5 @@ int ipstack_socketselect (zpl_ipstack stack, int width, ipstack_fd_set *rfds, ip
 	return select(width, rfds, wfds, exfds, tmo);
 #endif
 }
+
+

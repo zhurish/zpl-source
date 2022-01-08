@@ -1125,7 +1125,7 @@ int __tds__GetDynamicDNS(struct soap *soap, struct _tds__GetDynamicDNS *tds__Get
 	tds__GetDynamicDNSResponse->DynamicDNSInformation->Type = tt__DynamicDNSType__ClientUpdates;
 	tds__GetDynamicDNSResponse->DynamicDNSInformation->Type = tt__DynamicDNSType__ServerUpdates;
     tds__GetDynamicDNSResponse->DynamicDNSInformation->Name = strdup("www.baidu.com");
-    tds__GetDynamicDNSResponse->DynamicDNSInformation->TTL = strdup("88");
+    tds__GetDynamicDNSResponse->DynamicDNSInformation->IPSTACK_TTL = strdup("88");
 	/* Return response with default data and some values copied from the request */
 	return SOAP_OK;
 }
@@ -1138,7 +1138,7 @@ int __tds__SetDynamicDNS(struct soap *soap, struct _tds__SetDynamicDNS *tds__Set
 
 	ONVIF_DEBUG_MSG("In function: %s Type=%d\n", __FUNCTION__, tds__SetDynamicDNS->Type);
 	ONVIF_DEBUG_MSG("In function: %s Name=%s\n", __FUNCTION__, tds__SetDynamicDNS->Name);
-	ONVIF_DEBUG_MSG("In function: %s TTL=%s\n", __FUNCTION__, tds__SetDynamicDNS->TTL);
+	ONVIF_DEBUG_MSG("In function: %s IPSTACK_TTL=%s\n", __FUNCTION__, tds__SetDynamicDNS->IPSTACK_TTL);
 
 	return SOAP_OK;
 }

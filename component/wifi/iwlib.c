@@ -150,7 +150,7 @@ int iw_ignore_version = 0;
  */
 int iw_sockets_open(void)
 {
-	static const int families[] = { AF_INET, AF_IPX, AF_AX25, AF_APPLETALK };
+	static const int families[] = { IPSTACK_AF_INET, AF_IPX, AF_AX25, AF_APPLETALK };
 	zpl_uint32 i;
 	int sock;
 
@@ -167,7 +167,7 @@ int iw_sockets_open(void)
 	for (i = 0; i < sizeof(families) / sizeof(int); ++i)
 	{
 		/* Try to open the socket, if success returns it */
-		sock = socket(families[i], SOCK_DGRAM, 0);
+		sock = socket(families[i], IPSTACK_SOCK_DGRAM, 0);
 		if (sock >= 0)
 			return sock;
 	}
@@ -219,7 +219,7 @@ char * buf) /* Current position in buffer */
  * Enumerate devices and call specified routine
  * The new way just use /proc/net/wireless, so get all wireless interfaces,
  * whether configured or not. This is the default if available.
- * The old way use SIOCGIFCONF, so get only configured interfaces (wireless
+ * The old way use IPSTACK_SIOCGIFCONF, so get only configured interfaces (wireless
  * or not).
  */
 void iw_enum_devices(int skfd, iw_enum_handler fn, char * args[], int count, iw_user_cb_t *cb)
@@ -281,9 +281,9 @@ void iw_enum_devices(int skfd, iw_enum_handler fn, char * args[], int count, iw_
 		/* Get list of configured devices using "traditional" way */
 		ifc.ifc_len = sizeof(buff);
 		ifc.ifc_buf = buff;
-		if (ioctl(skfd, SIOCGIFCONF, &ifc) < 0)
+		if (ioctl(skfd, IPSTACK_SIOCGIFCONF, &ifc) < 0)
 		{
-			fprintf(stderr, "SIOCGIFCONF: %s\n", strerror(errno));
+			fprintf(stderr, "IPSTACK_SIOCGIFCONF: %s\n", strerror(ipstack_errno));
 			return;
 		}
 		ifr = ifc.ifc_req;
@@ -622,7 +622,7 @@ int iw_get_priv_info(int skfd, const char * ifname, iwprivargs ** ppriv)
 		}
 
 		/* Only E2BIG means the buffer was too small, abort on other errors */
-		if (errno != E2BIG)
+		if (ipstack_errno != E2BIG)
 		{
 			/* Most likely "not supported". Don't barf. */
 			break;
@@ -747,7 +747,7 @@ int iw_set_basic_config(int skfd, const char * ifname, wireless_config * info)
 
 		if (iw_get_ext(skfd, ifname, SIOCSIWMODE, &wrq) < 0)
 		{
-			fprintf(stderr, "SIOCSIWMODE: %s\n", strerror(errno));
+			fprintf(stderr, "SIOCSIWMODE: %s\n", strerror(ipstack_errno));
 			ret = -1;
 		}
 	}
@@ -759,7 +759,7 @@ int iw_set_basic_config(int skfd, const char * ifname, wireless_config * info)
 
 		if (iw_set_ext(skfd, ifname, SIOCSIWFREQ, &wrq) < 0)
 		{
-			fprintf(stderr, "SIOCSIWFREQ: %s\n", strerror(errno));
+			fprintf(stderr, "SIOCSIWFREQ: %s\n", strerror(ipstack_errno));
 			ret = -1;
 		}
 	}
@@ -779,8 +779,8 @@ int iw_set_basic_config(int skfd, const char * ifname, wireless_config * info)
 
 			if (iw_set_ext(skfd, ifname, SIOCSIWENCODE, &wrq) < 0)
 			{
-				fprintf(stderr, "SIOCSIWENCODE(%d): %s\n", errno,
-						strerror(errno));
+				fprintf(stderr, "SIOCSIWENCODE(%d): %s\n", ipstack_errno,
+						strerror(ipstack_errno));
 				ret = -1;
 			}
 		}
@@ -799,7 +799,7 @@ int iw_set_basic_config(int skfd, const char * ifname, wireless_config * info)
 
 		if (iw_set_ext(skfd, ifname, SIOCSIWENCODE, &wrq) < 0)
 		{
-			fprintf(stderr, "SIOCSIWENCODE(%d): %s\n", errno, strerror(errno));
+			fprintf(stderr, "SIOCSIWENCODE(%d): %s\n", ipstack_errno, strerror(ipstack_errno));
 			ret = -1;
 		}
 	}
@@ -812,7 +812,7 @@ int iw_set_basic_config(int skfd, const char * ifname, wireless_config * info)
 
 		if (iw_set_ext(skfd, ifname, SIOCSIWNWID, &wrq) < 0)
 		{
-			fprintf(stderr, "SIOCSIWNWID: %s\n", strerror(errno));
+			fprintf(stderr, "SIOCSIWNWID: %s\n", strerror(ipstack_errno));
 			ret = -1;
 		}
 	}
@@ -835,7 +835,7 @@ int iw_set_basic_config(int skfd, const char * ifname, wireless_config * info)
 
 		if (iw_set_ext(skfd, ifname, SIOCSIWESSID, &wrq) < 0)
 		{
-			fprintf(stderr, "SIOCSIWESSID: %s\n", strerror(errno));
+			fprintf(stderr, "SIOCSIWESSID: %s\n", strerror(ipstack_errno));
 			ret = -1;
 		}
 	}
@@ -1867,8 +1867,8 @@ int iw_check_mac_addr_type(int skfd, const char * ifname)
 
 	/* Get the type of hardware address */
 	strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
-	if ((ioctl(skfd, SIOCGIFHWADDR, &ifr) < 0)
-			|| ((ifr.ifr_hwaddr.sa_family != ARPHRD_ETHER)
+	if ((ioctl(skfd, IPSTACK_SIOCGIFHWADDR, &ifr) < 0)
+			|| ((ifr.ifr_hwaddr.sa_family != IPSTACK_ARPHRD_ETHER)
 					&& (ifr.ifr_hwaddr.sa_family != ARPHRD_IEEE80211)))
 	{
 		/* Deep trouble... */
@@ -1897,8 +1897,8 @@ int iw_check_if_addr_type(int skfd, const char * ifname)
 
 	/* Get the type of interface address */
 	strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
-	if ((ioctl(skfd, SIOCGIFADDR, &ifr) < 0)
-			|| (ifr.ifr_addr.sa_family != AF_INET))
+	if ((ioctl(skfd, IPSTACK_SIOCGIFADDR, &ifr) < 0)
+			|| (ifr.ifr_addr.sa_family != IPSTACK_AF_INET))
 	{
 		/* Deep trouble... */
 		fprintf(stderr, "Interface %s doesn't support IP addresses\n", kname2ifname(ifname));
@@ -1953,7 +1953,7 @@ iw_get_mac_addr(int skfd,
 	strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
 
 	/* Do it */
-	ret = ioctl(skfd, SIOCGIFHWADDR, &ifr);
+	ret = ioctl(skfd, IPSTACK_SIOCGIFHWADDR, &ifr);
 
 	memcpy(eth->ether_addr_octet, ifr.ifr_hwaddr.sa_data, 6);
 	*ptype = ifr.ifr_hwaddr.sa_family;
@@ -2069,7 +2069,7 @@ int iw_mac_aton(const char * orig, zpl_uint8 * mac, int macmax)
 #ifdef DEBUG
 			fprintf(stderr, "iw_mac_aton(%s): trailing junk!\n", orig);
 #endif
-			errno = E2BIG;
+			ipstack_errno = E2BIG;
 			return (0); /* Error -> overflow */
 		}
 
@@ -2083,7 +2083,7 @@ int iw_mac_aton(const char * orig, zpl_uint8 * mac, int macmax)
 #ifdef DEBUG
 	fprintf(stderr, "iw_mac_aton(%s): invalid ether address!\n", orig);
 #endif
-	errno = EINVAL;
+	ipstack_errno = EINVAL;
 	return (0);
 }
 
@@ -2097,7 +2097,7 @@ int iw_ether_aton(const char *orig, struct ether_addr *eth)
 	maclen = iw_mac_aton(orig, (zpl_uint8 *) eth, ETH_ALEN);
 	if ((maclen > 0) && (maclen < ETH_ALEN))
 	{
-		errno = EINVAL;
+		ipstack_errno = EINVAL;
 		maclen = 0;
 	}
 	return (maclen);
@@ -2114,13 +2114,13 @@ int iw_in_inet(char *name, struct sockaddr *sap)
 	struct sockaddr_in *sain = (struct sockaddr_in *) sap;
 
 	/* Grmpf. -FvK */
-	sain->sin_family = AF_INET;
+	sain->sin_family = IPSTACK_AF_INET;
 	sain->sin_port = 0;
 
 	/* Default is special, meaning 0.0.0.0. */
 	if (!strcmp(name, "default"))
 	{
-		sain->sin_addr.s_addr = INADDR_ANY;
+		sain->sin_addr.s_addr = IPSTACK_INADDR_ANY;
 		return (1);
 	}
 
@@ -2135,7 +2135,7 @@ int iw_in_inet(char *name, struct sockaddr *sap)
 	/* Always use the resolver (DNS name + IP addresses) */
 	if ((hp = gethostbyname(name)) == (struct hostent *) NULL)
 	{
-		errno = h_errno;
+		ipstack_errno = h_errno;
 		return (-1);
 	}
 	memcpy((char *) &sain->sin_addr, (char *) hp->h_addr_list[0], hp->h_length);
@@ -2178,12 +2178,12 @@ int iw_in_addr(int skfd, const char * ifname, char * bufp, struct sockaddr *sap)
 		/* The following restrict the search to the interface only */
 		/* For old kernels which complain, just comment it... */
 		strncpy(arp_query.arp_dev, ifname, IFNAMSIZ);
-		if ((ioctl(skfd, SIOCGARP, &arp_query) < 0)
+		if ((ioctl(skfd, IPSTACK_SIOCGARP, &arp_query) < 0)
 				|| !(arp_query.arp_flags & ATF_COM))
 		{
 			fprintf(stderr,
 					"Arp failed for %s on %s... (%d)\nTry to ping the address before setting it.\n",
-					bufp, ifname, errno);
+					bufp, ifname, ipstack_errno);
 			return (-1);
 		}
 
@@ -2845,7 +2845,7 @@ iw_process_scanning_token(struct iw_event * event, struct wireless_scan * wscan)
  * it would block, returning the amount of time the caller should wait
  * before calling again.
  * Return -1 for error, delay to wait for (in ms), or 0 for success.
- * Error code is in errno
+ * Error code is in ipstack_errno
  */
 int iw_process_scan(int skfd, char * ifname, int we_version,
 		wireless_scan_head * context)
@@ -2859,7 +2859,7 @@ int iw_process_scan(int skfd, char * ifname, int we_version,
 	context->retry++;
 	if (context->retry > 150)
 	{
-		errno = ETIME;
+		ipstack_errno = ETIME;
 		return (-1);
 	}
 
@@ -2872,7 +2872,7 @@ int iw_process_scan(int skfd, char * ifname, int we_version,
 		wrq.u.data.length = 0;
 		/* Remember that as non-root, we will get an EPERM here */
 		if ((iw_set_ext(skfd, ifname, SIOCSIWSCAN, &wrq) < 0)
-				&& (errno != EPERM))
+				&& (ipstack_errno != EPERM))
 			return (-1);
 		/* Success : now, just wait for event or results */
 		return (250); /* Wait 250 ms */
@@ -2886,7 +2886,7 @@ int iw_process_scan(int skfd, char * ifname, int we_version,
 		/* man says : If realloc() fails the original block is left untouched */
 		if (buffer)
 			free(buffer);
-		errno = ENOMEM;
+		ipstack_errno = ENOMEM;
 		return (-1);
 	}
 	buffer = newbuf;
@@ -2898,7 +2898,7 @@ int iw_process_scan(int skfd, char * ifname, int we_version,
 	if (iw_get_ext(skfd, ifname, SIOCGIWSCAN, &wrq) < 0)
 	{
 		/* Check if buffer was too small (WE-17 only) */
-		if ((errno == E2BIG) && (we_version > 16))
+		if ((ipstack_errno == E2BIG) && (we_version > 16))
 		{
 			/* Some driver may return very large scan results, either
 			 * because there are many cells, or because they have many
@@ -2919,7 +2919,7 @@ int iw_process_scan(int skfd, char * ifname, int we_version,
 		}
 
 		/* Check if results not available yet */
-		if (errno == EAGAIN)
+		if (ipstack_errno == EAGAIN)
 		{
 			free(buffer);
 			/* Wait for only 100ms from now on */
@@ -2965,7 +2965,7 @@ int iw_process_scan(int skfd, char * ifname, int we_version,
 				if (wscan == NULL)
 				{
 					free(buffer);
-					errno = ENOMEM;
+					ipstack_errno = ENOMEM;
 					return (-1);
 				}
 				/* Save head of list */
@@ -2989,7 +2989,7 @@ int iw_process_scan(int skfd, char * ifname, int we_version,
  * The scan results are given in a linked list of wireless_scan objects.
  * The caller *must* free the result himself (by walking the list).
  * If there is an error, -1 is returned and the error code is available
- * in errno.
+ * in ipstack_errno.
  *
  * The parameter we_version can be extracted from the range structure
  * (range.we_version_compiled - see iw_get_range_info()), or using

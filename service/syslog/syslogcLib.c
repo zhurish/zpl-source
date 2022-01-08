@@ -14,7 +14,7 @@
  DESCRIPTION
 
  This library implements the client side of the BSD syslog protocol RFC 3164.
- This protocol provides a transport to allow a machine to send event
+ This protocol provides a transport to allow a machine to ipstack_send event
  notification messages across IP networks to event message collectors - also
  known as syslog servers.
 
@@ -38,7 +38,7 @@
 static struct syslog_client *syslog_client = NULL;
 
 /*
- static struct in_addr client->address;
+ static struct ipstack_in_addr client->address;
  static char  hostname[DFT_HOST_NAME_LEN];
  static int   client->sock = 0;
  static int  syslogcLibInitDone = zpl_false;
@@ -61,22 +61,22 @@ static char * syslogHostNameStrGet(struct syslog_client *);
  * syslogcLibInit - initialize the syslog client module
  *
  * This routine saves the default syslog server IP address if provided and
- * creates a client side UDP socket binded with the default syslog port.
- * Both the UDP socket and the server IP address will be used in the sending
+ * creates a client side UDP ipstack_socket binded with the default syslog port.
+ * Both the UDP ipstack_socket and the server IP address will be used in the sending
  * routines.
  * default syslog server IP address, NULL terminated
- * RETURNS: socket file descriptor or ERROR if fails
+ * RETURNS: ipstack_socket file descriptor or ERROR if fails
  *
  */
 static int syslogc_socket_init(struct syslog_client *client) {
-	struct sockaddr_in sin;
-	int sFd;
-	zpl_family_t family = SOCK_DGRAM;
+	struct ipstack_sockaddr_in sin;
+	zpl_socket_t sFd;
+	zpl_family_t family = IPSTACK_SOCK_DGRAM;
 	if(!client)
 		return ERROR;
 	if (client && client->enable == zpl_true)
 	{
-		if(client->sock)
+		if(!ipstack_invalid(client->sock))
 			ipstack_close(client->sock);
 	}
 	/* validate the destination parameter */
@@ -85,15 +85,15 @@ static int syslogc_socket_init(struct syslog_client *client) {
 		return ERROR;
 	} else {
 		//hostGetByName
-		struct hostent *hptr;
+		struct ipstack_hostent *hptr;
 		hptr = ipstack_gethostbyname(client->address_string);
 		if (hptr) {
 			char **pptr;
 			char str[32];
 			/* ���ݵ�ַ���ͣ�����ַ����� */
 			switch (hptr->h_addrtype) {
-			case AF_INET:
-			case AF_INET6:
+			case IPSTACK_AF_INET:
+			case IPSTACK_AF_INET6:
 				pptr = hptr->h_addr_list;
 				/* ���ղŵõ������е�ַ������������е�����ipstack_inet_ntop()���� */
 				for (; *pptr != NULL; pptr++) {
@@ -106,47 +106,48 @@ static int syslogc_socket_init(struct syslog_client *client) {
 				break;
 			default:
 		    	fprintf (stdout, "\r\n%s:unknown address type:%s\r\n",
-		                   __func__,os_strerror (errno) );
+		                   __func__,os_strerror (ipstack_errno) );
 				break;
 			}
 		} else {
 			if (((client->address.s_addr = ipstack_inet_addr(client->address_string)) == ERROR)/* &&
-			 ((client->address.s_addr = gethostbyname(pServer)) == ERROR)*/) {
+			 ((client->address.s_addr = ipstack_gethostbyname(pServer)) == ERROR)*/) {
 				client->address.s_addr = 0;
 		    	fprintf (stdout, "\r\n%s:syslogcLibInit,unknown default syslog server name:%s\r\n",
-		                   __func__,os_strerror (errno) );
+		                   __func__,os_strerror (ipstack_errno) );
 		    	fflush(stdout);
 		    	return ERROR;
 			}
 		}
 	}
 
-	/* create the client socket */
+	/* create the client ipstack_socket */
 
 	bzero((char *) &sin, sizeof(sin));
 
 	if(client->mode == SYSLOG_TCP_MODE)
-		family = SOCK_STREAM;
+		family = IPSTACK_SOCK_STREAM;
 	else
-		family = SOCK_DGRAM;
-	if ((sFd = ipstack_socket(IPCOM_STACK, AF_INET, family, 0)) == ERROR) {
-    	fprintf (stdout, "\r\n%s: syslogcLibInit, syslog socket creation fail:%s\r\n",
-                   __func__,os_strerror (errno) );
+		family = IPSTACK_SOCK_DGRAM;
+	sFd = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, family, 0);
+	if (ipstack_invalid(sFd)) {
+    	fprintf (stdout, "\r\n%s: syslogcLibInit, syslog ipstack_socket creation fail:%s\r\n",
+                   __func__,os_strerror (ipstack_errno) );
     	fflush(stdout);
 		return ERROR;
 	}
 
-	/* bind the socket to the default port as recommeded by RFC3164 */
+	/* ipstack_bind the ipstack_socket to the default port as recommeded by RFC3164 */
 
-	sin.sin_family = AF_INET;
+	sin.sin_family = IPSTACK_AF_INET;
 //    sin.sin_len    = sizeof(sin);
 	sin.sin_port = htons(SYSLOGC_DEFAULT_PORT);
-	sin.sin_addr.s_addr = INADDR_ANY;
+	sin.sin_addr.s_addr = IPSTACK_INADDR_ANY;
 
-	if (ipstack_bind(sFd, (struct sockaddr *) &sin, sizeof(sin)) == ERROR) {
-//		perror("\r\nsyslogcLibInit, syslog sokcet bind fail");
-    	fprintf (stdout, "%s: syslogcLibInit bind fail:%s\r\n",
-                   __func__,os_strerror (errno) );
+	if (ipstack_bind(sFd, (struct ipstack_sockaddr *) &sin, sizeof(sin)) == ERROR) {
+//		perror("\r\nsyslogcLibInit, syslog sokcet ipstack_bind fail");
+    	fprintf (stdout, "%s: syslogcLibInit ipstack_bind fail:%s\r\n",
+                   __func__,os_strerror (ipstack_errno) );
     	ipstack_close(sFd);
 		fflush(stdout);
 		return ERROR;
@@ -160,22 +161,22 @@ static int syslogc_socket_init(struct syslog_client *client) {
 	if (gethostname(client->hostname, DFT_HOST_NAME_LEN - 1) == ERROR)
 		strcpy(client->hostname, "Un-defined host name");
 */
-	sin.sin_family = AF_INET;
+	sin.sin_family = IPSTACK_AF_INET;
 	//serverSockAddr.sin_len         = sizeof(serverSockAddr);
 	sin.sin_port = htons(client->port);
 	sin.sin_addr.s_addr = client->address.s_addr;
-	if(ipstack_connect(sFd, (struct sockaddr *) &sin, sizeof(sin)) == ERROR)
+	if(ipstack_connect(sFd, (struct ipstack_sockaddr *) &sin, sizeof(sin)) == ERROR)
 	{
-    	fprintf (stdout, "%s: syslogcLibInit connect fail:%s\r\n",
-                   __func__,os_strerror (errno) );
+    	fprintf (stdout, "%s: syslogcLibInit ipstack_connect fail:%s\r\n",
+                   __func__,os_strerror (ipstack_errno) );
     	ipstack_close(sFd);
 		fflush(stdout);
 		return ERROR;
 	}
 
 	client->sock = sFd;
-	client->connect = zpl_true;
-	return sFd;
+	client->ipstack_connect = zpl_true;
+	return 1;
 }
 
 static int syslogc_reconnect(struct syslog_client *client)
@@ -196,9 +197,9 @@ static int syslogcShutdown(struct syslog_client *client) {
 	if(!client)
 		return ERROR;
 	if (client->enable == zpl_true) {
-		if(client->sock)
+		if(!ipstack_invalid(client->sock))
 			ipstack_close(client->sock);
-		client->connect = zpl_false;
+		client->ipstack_connect = zpl_false;
 		//client->enable = zpl_false;
 		return OK;
 	}
@@ -206,7 +207,7 @@ static int syslogcShutdown(struct syslog_client *client) {
 }
 /******************************************************************************
  *
- * syslogcMdataSend - send the data in mbuf chain to the syslog server
+ * syslogcMdataSend - ipstack_send the data in mbuf chain to the syslog server
  *
  * This routine sends the data in mbuf chain up to the maximum limit per syslog
  * message to the syslog server.
@@ -233,7 +234,7 @@ int syslogcMdataSend
 #endif
 /******************************************************************************
  *
- * syslogcBinDataSend - send a block of binary data to the syslog server
+ * syslogcBinDataSend - ipstack_send a block of binary data to the syslog server
  *
  * This routine sends a block of binary data to the syslog server
  *
@@ -258,7 +259,7 @@ zpl_ulong serverIpAddr /* binary server IP address in network byte order,
 #endif
 /******************************************************************************
  *
- * syslogcStringSend - send a string of character data to the syslog server
+ * syslogcStringSend - ipstack_send a string of character data to the syslog server
  *
  * This routine sends a string of character data to the syslog server
  *
@@ -299,7 +300,7 @@ zpl_ulong serverIpAddr, zpl_uint32 dataType) {
 	zpl_uint32 digit;
 	char * pTmp;
 	zpl_uint32 len;
-//	struct sockaddr_in serverSockAddr;
+//	struct ipstack_sockaddr_in serverSockAddr;
 	zpl_uint8 fCode; /* syslog facility code */
 	zpl_uint8 sCode; /* syslog severity code */
 
@@ -333,7 +334,7 @@ zpl_ulong serverIpAddr, zpl_uint32 dataType) {
 	/* initialize the server address structure */
 
 /*
-	serverSockAddr.sin_family = AF_INET;
+	serverSockAddr.sin_family = IPSTACK_AF_INET;
 	serverSockAddr.sin_len         = sizeof(serverSockAddr);
 	serverSockAddr.sin_port = htons(SYSLOGC_DEFAULT_PORT);
 	serverSockAddr.sin_addr.s_addr = serverIpAddr;
@@ -441,14 +442,14 @@ zpl_ulong serverIpAddr, zpl_uint32 dataType) {
     	fprintf (stdout, "\r\nERROR type 0x%x not supported\r\n", dataType);
 	}
 
-	/* now send the message to the server */
+	/* now ipstack_send the message to the server */
 
-/*	if (sendto(client->sock, (caddr_t) pLogMsg, cnt, 0,
-			(struct sockaddr *) &serverSockAddr, sizeof(serverSockAddr))
+/*	if (ipstack_sendto(client->sock, (caddr_t) pLogMsg, cnt, 0,
+			(struct ipstack_sockaddr *) &serverSockAddr, sizeof(serverSockAddr))
 			== ERROR) {
 		XFREE(MTYPE_ZLOG,pLogMsg);
-    	fprintf (stdout, "\r\n%s: syslogMsgSend sendto fail:%s\r\n",
-                   __func__,os_strerror (errno) );
+    	fprintf (stdout, "\r\n%s: syslogMsgSend ipstack_sendto fail:%s\r\n",
+                   __func__,os_strerror (ipstack_errno) );
     	fflush(stdout);
 		return (ERROR);
 	}*/
@@ -456,8 +457,8 @@ zpl_ulong serverIpAddr, zpl_uint32 dataType) {
 
 		syslogcShutdown(client);
 		return syslogc_reconnect(client);
-	    	fprintf (stdout, "\r\n%s: syslogMsgSend sendto fail:%s\r\n",
-	                   __func__,os_strerror (errno) );
+	    	fprintf (stdout, "\r\n%s: syslogMsgSend ipstack_sendto fail:%s\r\n",
+	                   __func__,os_strerror (ipstack_errno) );
 	    	fflush(stdout);
 			return (ERROR);
 		}
@@ -957,7 +958,7 @@ int syslogc_out(zpl_uint32 priority, zpl_uint32 facility, char * pStr, zpl_uint3
 		return ERROR;
 	if(pStr == NULL)
 		return ERROR;
-	if(syslog_client->connect == zpl_false)
+	if(syslog_client->ipstack_connect == zpl_false)
 		return ERROR;
 	syslog_client->facility = facility;
 	return syslogc_format(syslog_client, priority, pStr, len);

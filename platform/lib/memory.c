@@ -47,13 +47,13 @@ static void __attribute__((noreturn))
 zerror(const char *fname, zpl_uint32 type, zpl_size_t size)
 {
   zlog_err(MODULE_DEFAULT, "%s : can't allocate memory for `%s' size %d: %s\n",
-           fname, lookup(mstr, type), (zpl_uint32)size, safe_strerror(errno));
-  log_memstats(LOG_WARNING);
+           fname, lookup(mstr, type), (zpl_uint32)size, ipstack_strerror(ipstack_errno));
+  log_memstats(ZLOG_LEVEL_WARNING);
   /* N.B. It might be preferable to call zlog_backtrace_sigsafe here, since
      that function should definitely be safe in an OOM condition.  But
      unfortunately zlog_backtrace_sigsafe does not support syslog logging at
      this time... */
-  zlog_backtrace(LOG_WARNING);
+  zlog_backtrace(ZLOG_LEVEL_WARNING);
   abort();
 }
 

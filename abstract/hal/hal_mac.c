@@ -6,20 +6,11 @@
  */
 
 #include "zpl_include.h"
-#include "memory.h"
-#include "command.h"
-#include "memory.h"
-#include "memtypes.h"
-#include "prefix.h"
-#include "if.h"
-#include "nsm_interface.h"
-#include <log.h>
-#include "os_list.h"
-
-//#include "nsm_client.h"
-
+#include "nsm_include.h"
+#include "hal_ipccmd.h"
+#include "hal_ipcmsg.h"
 #include "hal_mac.h"
-#include "hal_driver.h"
+
 
 int hal_mac_age(zpl_uint32 age)
 {
@@ -27,10 +18,11 @@ int hal_mac_age(zpl_uint32 age)
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
-	//hal_ipcmsg_port_set(&ipcmsg, ifindex);
+	hal_ipcmsg_port_set(&ipcmsg, 0);
+	hal_ipcmsg_putw(&ipcmsg, 0);
 	hal_ipcmsg_putl(&ipcmsg, age);
 	command = IPCCMD_SET(HAL_MODULE_MAC, HAL_MODULE_CMD_SET, HAL_MAC_CMD_AGE);
-	return hal_ipcmsg_send_message(-1, 
+	return hal_ipcmsg_send_message(IF_UNIT_ALL, 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 

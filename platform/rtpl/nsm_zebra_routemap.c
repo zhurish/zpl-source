@@ -374,7 +374,7 @@ DEFUN (set_src,
   struct interface *pif = NULL;
   vrf_iter_t iter;
 
-  if (ipstack_inet_pton(AF_INET, argv[0], &src) <= 0)
+  if (ipstack_inet_pton(IPSTACK_AF_INET, argv[0], &src) <= 0)
     {
       vty_out (vty, "%% not a local address%s", VTY_NEWLINE);
       return CMD_WARNING;
@@ -440,7 +440,7 @@ route_match_ip_next_hop (void *rule, struct prefix *prefix,
       case NEXTHOP_TYPE_IPV4_IFINDEX:
       case NEXTHOP_TYPE_IPV4_IFNAME:
       case NEXTHOP_TYPE_IPV4:
-        p.family = AF_INET;
+        p.family = IPSTACK_AF_INET;
         p.prefix = nexthop->gate.ipv4;
         p.prefixlen = IPV4_MAX_BITLEN;
         break;
@@ -504,7 +504,7 @@ route_match_ip_next_hop_prefix_list (void *rule, struct prefix *prefix,
       case NEXTHOP_TYPE_IPV4_IFINDEX:
       case NEXTHOP_TYPE_IPV4_IFNAME:
       case NEXTHOP_TYPE_IPV4:
-        p.family = AF_INET;
+        p.family = IPSTACK_AF_INET;
         p.prefix = nexthop->gate.ipv4;
         p.prefixlen = IPV4_MAX_BITLEN;
         break;
@@ -651,9 +651,9 @@ route_set_src_compile (const char *arg)
 {
   union g_addr src, *psrc;
 
-  if (ipstack_inet_pton(AF_INET, arg, &src.ipv4) != 1
+  if (ipstack_inet_pton(IPSTACK_AF_INET, arg, &src.ipv4) != 1
 #ifdef HAVE_IPV6
-      && ipstack_inet_pton(AF_INET6, arg, &src.ipv6) != 1
+      && ipstack_inet_pton(IPSTACK_AF_INET6, arg, &src.ipv6) != 1
 #endif /* HAVE_IPV6 */
      )
     return NULL;

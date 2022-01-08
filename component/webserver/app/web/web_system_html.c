@@ -144,7 +144,7 @@ static int web_webtime_sync(Webs *wp, void *p)
 	value = 5;
 	while(value)
 	{
-		errno = 0;
+		ipstack_errno = 0;
 		if(clock_settime(CLOCK_REALTIME, &sntpTime)!= 0)//SET SYSTEM LOCAL TIME
 		{
 			value--;

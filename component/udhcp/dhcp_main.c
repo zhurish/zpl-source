@@ -71,7 +71,7 @@ int udhcp_read_thread(struct eloop *eloop)
 	bytes = udhcp_recv_packet(&packet, sock, &ifindex);
 	if (bytes < 0) {
 		/* bytes can also be -2 ("bad packet data") */
-		if (bytes == -1 && errno != EINTR) {
+		if (bytes == -1 && ipstack_errno != EINTR) {
 			zlog_err(MODULE_DHCP,
 					"read error: "STRERROR_FMT", reopening socket" STRERROR_ERRNO);
 			ipstack_close(sock);
@@ -106,7 +106,7 @@ static int udhcp_main_task(void *p)
 	//dhcp_pool_t *pool = NULL;
 	dhcp_global_t *config = (dhcp_global_t *) p;
 	module_setup_task(MODULE_DHCP, os_task_id_self());
-	host_config_load_waitting();
+	host_waitting_loadconfig();
 /*	os_sleep(5);
 	struct interface * ifp = if_lookup_by_name("ethernet 0/0/2");
 	if (ifp) {
@@ -116,7 +116,7 @@ static int udhcp_main_task(void *p)
 	}
 	dhcpd_lease_load();
 	os_sleep(1);*/
-	zlog_debug(MODULE_DHCP, "---------udhcpd_main");
+	//zlog_debug(MODULE_DHCP, "---------udhcpd_main");
 
 	//config->global->sock
 /*	while(1)
@@ -135,7 +135,7 @@ static int udhcp_main_task(void *p)
 			zlog_debug(MODULE_DHCP, "read -> udhcpd_main");
 		}
 	}*/
-	eloop_start_running(config->eloop_master, MODULE_DHCP);
+	eloop_mainloop(config->eloop_master);
 	return 0;
 }
 
@@ -219,7 +219,10 @@ int udhcp_module_task_init()
 			udhcp_main_task, &dhcp_global_config,
 			OS_TASK_DEFAULT_STACK);
 	if(dhcp_global_config.task_id)
+	{
+		module_setup_task(MODULE_DHCP, dhcp_global_config.task_id);
 		return OK;
+	}
 	return ERROR;
 }
 

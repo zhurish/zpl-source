@@ -15,6 +15,8 @@ extern "C" {
 #include "filter.h"
 #include "nsm_qos.h"
 
+#define ZPL_FILTER_NOSEQ
+
 #define NSM_QOS_ACL_NAME_MAX	32
 /*
 typedef enum
@@ -114,7 +116,7 @@ typedef struct global_qos_access_list_s
 }global_qos_access_list_t;
 
 
-
+/* ACL内部的规则 */
 extern qos_access_filter_t *qos_access_filter_alloc();
 extern int qos_access_filter_free(qos_access_filter_t *node);
 extern int qos_access_filter_list_add(qos_access_filter_list_t *acllist, qos_access_filter_t *node);
@@ -123,6 +125,7 @@ extern qos_access_filter_t *qos_access_filter_list_lookup(qos_access_filter_list
 extern int qos_access_filter_list_foreach(qos_access_filter_list_t *acllist, int (*cb)(void *, qos_access_filter_t *), void *pVoid);
 extern enum filter_type qos_access_filter_list_apply(qos_access_filter_list_t *acllist, void *object);
 
+/* ACL */
 extern qos_access_filter_list_t * qos_access_list_create(char *name);
 extern int qos_access_list_add(qos_access_filter_list_t *node);
 extern qos_access_filter_list_t * qos_access_list_lookup(char *name);
@@ -155,6 +158,8 @@ extern int qos_service_policy_bind_class_map_set(qos_service_policy_t *node, cha
 extern char * qos_service_policy_bind_class_map_get(qos_service_policy_t *node);
 extern int qos_service_policy_foreach(int (*cb)(void *, qos_service_policy_t *), void *pVoid);
 extern int qos_service_policy_clean();
+
+//extern int qos_service_policy_bind_ifpset(char *name, zpl_bool enable);
 
 extern int qos_access_list_init();
 extern int qos_access_list_exit();

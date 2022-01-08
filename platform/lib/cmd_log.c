@@ -17,7 +17,7 @@ struct logfilter
 {
 	struct vty *vty;
 	zpl_uint32 module;
-	int priority;
+	zlog_level_t priority;
 	int size;
 	int total;
 };
@@ -29,7 +29,7 @@ DEFUN (config_logmsg,
 		LOG_LEVEL_DESC
 		"The message to send\n")
 {
-	int level;
+	zlog_level_t level;
 	char *message;
 
 	if ((level = zlog_priority_match(argv[0])) == ZLOG_DISABLED)
@@ -49,7 +49,7 @@ DEFUN (config_log_stdout,
 		"Logging control\n"
 		"Set stdout logging level\n")
 {
-	int level = zlog_default->default_lvl[ZLOG_DEST_STDOUT];
+	zlog_level_t level = zlog_default->default_lvl[ZLOG_DEST_STDOUT];
 	if(argc == 1)
 	{
 		if ((level = zlog_priority_match(argv[0])) == ZLOG_DISABLED)
@@ -98,7 +98,7 @@ DEFUN (config_log_monitor,
 		"Logging control\n"
 		"Set terminal line (monitor) logging level\n")
 {
-	int level = zlog_default->default_lvl[ZLOG_DEST_MONITOR];
+	zlog_level_t level = zlog_default->default_lvl[ZLOG_DEST_MONITOR];
 	if(argc == 1)
 	{
 		if ((level = zlog_priority_match(argv[0])) == ZLOG_DISABLED)
@@ -148,7 +148,7 @@ DEFUN (config_log_file,
 		"Logging to file\n"
 		"Logging filename\n")
 {
-	int level = zlog_default->default_lvl[ZLOG_DEST_FILE];
+	zlog_level_t level = zlog_default->default_lvl[ZLOG_DEST_FILE];
 	if(argc == 2)
 	{
 		if ((level = zlog_priority_match(argv[1])) == ZLOG_DISABLED)
@@ -263,7 +263,7 @@ DEFUN (config_log_buffer,
 		"Logging control\n"
 		"Logging to buffer\n")
 {
-	int level = zlog_default->default_lvl[ZLOG_DEST_BUFFER];
+	zlog_level_t level = zlog_default->default_lvl[ZLOG_DEST_BUFFER];
 
 	if(argc == 1)
 	{
@@ -329,7 +329,7 @@ DEFUN (config_log_syslog,
 		"Logging control\n"
 		"Logging to syslog\n")
 {
-	int level = zlog_default->default_lvl[ZLOG_DEST_SYSLOG];
+	zlog_level_t level = zlog_default->default_lvl[ZLOG_DEST_SYSLOG];
 
 	if(argc == 1)
 	{
@@ -529,7 +529,7 @@ DEFUN_DEPRECATED (no_config_log_trap,
 		"Logging control\n"
 		"Set terminal line (trapping) logging\n")
 {
-/*	zlog_set_trap(LOG_DEBUG);*/
+/*	zlog_set_trap(ZLOG_LEVEL_DEBUG);*/
 	vty->trapping = 0;
 	return CMD_SUCCESS;
 }
@@ -614,7 +614,7 @@ DEFUN (config_log_testing,
 		"Logging control\n"
 		"Logging to Testing\n")
 {
-	int level = LOG_DEBUG;
+	zlog_level_t level = ZLOG_LEVEL_DEBUG;
 	if(argc == 1)
 	{
 		if ((level = zlog_priority_match(argv[0])) == ZLOG_DISABLED)
@@ -642,10 +642,10 @@ DEFUN (no_config_log_testing,
 		"Logging to Testing\n")
 {
 	if(argc == 1)
-		zlog_testing_priority(LOG_DEBUG);
+		zlog_testing_priority(ZLOG_LEVEL_DEBUG);
 	else
 	{
-		zlog_testing_priority(LOG_ERR);
+		zlog_testing_priority(ZLOG_LEVEL_ERR);
 		zlog_testing_enable(zpl_false);
 	}
 	return CMD_SUCCESS;
@@ -667,7 +667,7 @@ DEFUN (config_log_testing_file,
 		"Logging to file\n"
 		"Logging filename\n")
 {
-	int level = LOG_DEBUG;
+	zlog_level_t level = ZLOG_LEVEL_DEBUG;
 	if(argc == 2)
 	{
 		if ((level = zlog_priority_match(argv[1])) == ZLOG_DISABLED)
@@ -701,13 +701,13 @@ DEFUN (no_config_log_testing_file,
 	if(argc == 2)
 	{
 		zlog_testing_file(NULL);
-		zlog_testing_priority(LOG_DEBUG);
+		zlog_testing_priority(ZLOG_LEVEL_DEBUG);
 		zlog_testing_enable(zpl_false);
 	}
 	else
 	{
 		zlog_testing_file(NULL);
-		zlog_testing_priority(LOG_DEBUG);
+		zlog_testing_priority(ZLOG_LEVEL_DEBUG);
 		zlog_testing_enable(zpl_false);
 	}
 	return CMD_SUCCESS;
@@ -1007,11 +1007,139 @@ DEFUN (show_config_log_file,
 	return CMD_SUCCESS;
 }
 
+static int config_write_log (struct vty *vty)
+{
+	if (zlog_default->mutex)
+		os_mutex_lock(zlog_default->mutex, OS_WAIT_FOREVER);
 
+	if (zlog_default->trap_lvl)
+	{
+		vty_out(vty, "! N.B. The 'log trapping' command is deprecated.%s",VTY_NEWLINE);
+		vty_out(vty, "!%s", VTY_NEWLINE);
+		//vty_out(vty, "log trapping %s%s", zlog_priority_name(zlog_default->trap_lvl), VTY_NEWLINE);
+	}
+	if (vty->trapping)
+		vty_out(vty, "log trapping %s", VTY_NEWLINE);
 
+	if (_global_host.logfile
+			&& (zlog_default->maxlvl[ZLOG_DEST_FILE] != ZLOG_DISABLED)) {
+		vty_out(vty, "log file %s", _global_host.logfile);
+		if (zlog_default->maxlvl[ZLOG_DEST_FILE] != zlog_default->default_lvl[ZLOG_DEST_FILE])
+			vty_out(vty, " %s",
+					zlog_priority_name(zlog_default->maxlvl[ZLOG_DEST_FILE]));
+		vty_out(vty, "%s", VTY_NEWLINE);
+		if(zlog_default->filesize != ZLOG_FILE_SIZE)
+			vty_out(vty, "log file size %d%s", zlog_default->filesize, VTY_NEWLINE);
+	}
+
+	if (zlog_default->maxlvl[ZLOG_DEST_STDOUT] != ZLOG_DISABLED) {
+		vty_out(vty, "log stdout");
+		if (zlog_default->maxlvl[ZLOG_DEST_STDOUT] != zlog_default->default_lvl[ZLOG_DEST_STDOUT])
+			vty_out(vty, " %s",
+					zlog_priority_name(zlog_default->maxlvl[ZLOG_DEST_STDOUT]));
+		vty_out(vty, "%s", VTY_NEWLINE);
+	}
+
+	if (zlog_default->maxlvl[ZLOG_DEST_MONITOR] != ZLOG_DISABLED && vty->type != VTY_FILE)
+	{
+		vty_out(vty, "log monitor");
+		if (zlog_default->maxlvl[ZLOG_DEST_MONITOR] != zlog_default->default_lvl[ZLOG_DEST_MONITOR])
+			vty_out(vty, " %s",
+					zlog_priority_name(zlog_default->maxlvl[ZLOG_DEST_MONITOR]));
+		vty_out(vty, "%s", VTY_NEWLINE);
+	}
+
+	if (zlog_default->maxlvl[ZLOG_DEST_BUFFER] != ZLOG_DISABLED)
+	{
+		vty_out(vty, "log buffer");
+		if (zlog_default->maxlvl[ZLOG_DEST_BUFFER] != zlog_default->default_lvl[ZLOG_DEST_BUFFER])
+			vty_out(vty, " %s",
+					zlog_priority_name(zlog_default->maxlvl[ZLOG_DEST_BUFFER]));
+		vty_out(vty, "%s", VTY_NEWLINE);
+
+		if(zlog_default->log_buffer.max_size != ZLOG_BUFF_SIZE)
+			vty_out(vty, "log buffer size %d%s", zlog_default->log_buffer.max_size, VTY_NEWLINE);
+	}
+	if (zlog_default->maxlvl[ZLOG_DEST_SYSLOG] != ZLOG_DISABLED)
+	{
+		vty_out(vty, "log syslog");
+		if (zlog_default->maxlvl[ZLOG_DEST_SYSLOG] != zlog_default->default_lvl[ZLOG_DEST_SYSLOG])
+			vty_out(vty, " %s",
+					zlog_priority_name(zlog_default->maxlvl[ZLOG_DEST_SYSLOG]));
+		vty_out(vty, "%s", VTY_NEWLINE);
+	}
+#ifdef ZPL_SERVICE_SYSLOG
+		if (syslogc_is_enable()) {
+			int port = 0;
+			char log_host[32];
+			memset(log_host, 0, sizeof(log_host));
+			if (syslogc_host_config_get(log_host, &port, NULL) == 0) {
+				if(syslogc_is_dynamics())
+				{
+					memset(log_host, 0, sizeof(log_host));
+					sprintf(log_host, "dynamics");
+				}
+				if (port == SYSLOGC_DEFAULT_PORT)
+					vty_out(vty, "syslog host %s%s", log_host, VTY_NEWLINE);
+				else
+					vty_out(vty, "syslog host %s port %d%s", log_host, port, VTY_NEWLINE);
+
+				if (syslogc_mode_get(&port) == 0) {
+					if (port == SYSLOG_TCP_MODE)
+						vty_out(vty, "syslog mode tcp%s", VTY_NEWLINE);
+				}
+			}
+		}
+#endif
+
+	if (zlog_default->facility != LOG_DAEMON)
+		vty_out(vty, "log facility %s%s", zlog_facility_name(zlog_default->facility),
+				VTY_NEWLINE);
+
+	if (zlog_default->record_priority == 1)
+		vty_out(vty, "log record-priority%s", VTY_NEWLINE);
+
+	if(zlog_default->timestamp == ZLOG_TIMESTAMP_NONE)
+		vty_out(vty, "log timestamp none%s",VTY_NEWLINE);
+	else if(zlog_default->timestamp == ZLOG_TIMESTAMP_DATE)
+		vty_out(vty, "log timestamp date%s",VTY_NEWLINE);
+	else if(zlog_default->timestamp == ZLOG_TIMESTAMP_SHORT)
+		vty_out(vty, "log timestamp zpl_int16%s",VTY_NEWLINE);
+	else if(zlog_default->timestamp == ZLOG_TIMESTAMP_BSD)
+		vty_out(vty, "log timestamp bsd%s",VTY_NEWLINE);
+	else if(zlog_default->timestamp == ZLOG_TIMESTAMP_ISO)
+		vty_out(vty, "log timestamp iso%s",VTY_NEWLINE);
+	else if(zlog_default->timestamp == ZLOG_TIMESTAMP_RFC3164)
+		vty_out(vty, "log timestamp rfc3164%s",VTY_NEWLINE);
+	else if(zlog_default->timestamp == ZLOG_TIMESTAMP_RFC3339)
+		vty_out(vty, "log timestamp rfc3339%s",VTY_NEWLINE);
+
+/*
+	if (zlog_default->timestamp_precision > 0)
+		vty_out(vty, "log timestamp precision %d%s",
+				zlog_default->timestamp_precision, VTY_NEWLINE);
+*/
+	//vty_out(vty, "!%s", VTY_NEWLINE);
+
+	if (zlog_default->mutex)
+		os_mutex_unlock(zlog_default->mutex);
+
+	return 1;
+}
+
+static struct cmd_node log_node =
+{
+	LOG_NODE,
+	"%s(config)# ",
+	1
+};
 
 int cmd_log_init()
 {
+	install_node(&log_node, config_write_log);
+	//install_default(LOG_NODE);
+	//install_default_basic(LOG_NODE);
+
 	install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_logging_cmd);
 	install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_config_log_file_cmd);
 	install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_config_log_buffer_cmd);

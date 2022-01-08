@@ -64,8 +64,8 @@ bool flag_tree_print = false;
 int run;
 #ifdef WITH_WRAP
 #include <syslog.h>
-int allow_severity = LOG_INFO;
-int deny_severity = LOG_INFO;
+int allow_severity = ZLOG_LEVEL_INFO;
+int deny_severity = ZLOG_LEVEL_INFO;
 #endif
 
 void handle_sigint(int signal);

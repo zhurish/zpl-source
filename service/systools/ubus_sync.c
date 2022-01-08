@@ -61,8 +61,8 @@ static int ubus_sync_respone(ubus_sync_t *uci, int res)
 	memset(buf, 0, sizeof(buf));
 	*head = htonl(0XAABBCCDD);
 	*respone = htonl(res);
-	if(uci->sock)
-		write(uci->sock, buf, 8);
+	if(!ipstack_invalid(uci->sock))
+		ipstack_write(uci->sock, buf, 8);
 	return OK;
 }
 
@@ -75,12 +75,12 @@ static int ubus_sync_handle(ubus_sync_t *uci)
 		return ERROR;
 	}
 	memset(uci->buf, 0, sizeof(uci->buf));
-	if(uci->sock <= 0)
+	if(ipstack_invalid(uci->sock))
 	{
 		//zlog_debug(MODULE_UTILS, "------------ sock ----------");
 		return ERROR;
 	}
-	uci->len = ret = read(uci->sock, uci->buf, sizeof(uci->buf));
+	uci->len = ret = ipstack_read(uci->sock, uci->buf, sizeof(uci->buf));
 	if(uci->len > 0)
 	{
 		zpl_uint32 i = 0;
@@ -111,10 +111,10 @@ static int ubus_sync_handle(ubus_sync_t *uci)
 	}
 	else
 	{
-		//zlog_debug(MODULE_UTILS, "------------ read %s ----------", strerror(errno));
+		//zlog_debug(MODULE_UTILS, "------------ read %s ----------", strerror(ipstack_errno));
 		if(ret < 0)
 		{
-			if (ERRNO_IO_RETRY(errno))
+			if (IPSTACK_ERRNO_RETRY(ipstack_errno))
 				return OK;
 		}
 		return ERROR;
@@ -138,42 +138,42 @@ static int ubus_sync_read_eloop(struct eloop *thread)
 		}
 		else
 		{
-			//zlog_debug(MODULE_DEFAULT, "--------%s: reset udp socket", __func__);
+			//zlog_debug(MODULE_DEFAULT, "--------%s: reset udp ipstack_socket", __func__);
 			if(ubus->debug & UBUS_SYNC_DEBUG)
-				zlog_debug(MODULE_UTILS, "UCI UBUS socket close");
+				zlog_debug(MODULE_UTILS, "UCI UBUS ipstack_socket close");
 			//ubus_sync_reset();
-			close(ubus->sock);
-			ubus->sock = 0;
+			ipstack_close(ubus->sock);
+			//ubus->sock = 0;
 			return ERROR;
 		}
 	}
-	//zlog_debug(MODULE_UTILS, "-------------UCI UBUS socket close");
-	close(ubus->sock);
-	ubus->sock = 0;
+	//zlog_debug(MODULE_UTILS, "-------------UCI UBUS ipstack_socket close");
+	ipstack_close(ubus->sock);
+	//ubus->sock = 0;
 	return ERROR;
 }
 
 static int ubus_sync_accept_eloop(struct eloop *thread)
 {
-	int sock = 0;
-	int accept = ELOOP_FD(thread);
+	zpl_socket_t sock;
+	zpl_socket_t accept = ELOOP_FD(thread);
 	ubus_sync_t *ubus = ELOOP_ARG(thread);
 	//zlog_debug(MODULE_DEFAULT, "--------%s:", __func__);
-	ubus->t_accept = NULL;//eloop_add_read(ubus_sync_ctx.master, ubus_sync_accept_eloop, ubus, accept);
+	ubus->t_accept = NULL;//eloop_add_read(ubus_sync_ctx.master, ubus_sync_accept_eloop, ubus, ipstack_accept);
 	if(ubus)
 	{
-		sock = os_sock_unix_accept(accept, NULL);
-		if(sock > 0)
+		sock._fd = os_sock_unix_accept(ipstack_accept, NULL);
+		if(sock._fd > 0)
 		{
 			//zlog_debug(MODULE_DEFAULT, "--------%s:%d", __func__, sock);
-			if(ubus->sock > 0)
+			if(ubus->sock._fd > 0)
 			{
-				//ubus->t_accept = eloop_add_read(ubus->master, ubus_sync_accept_eloop, ubus, accept);
+				//ubus->t_accept = eloop_add_read(ubus->master, ubus_sync_accept_eloop, ubus, ipstack_accept);
 				//close(sock);
 				//return ERROR;
-				close(ubus->sock);
+				ipstack_close(ubus->sock);
 			}
-			os_set_nonblocking(sock);
+			os_set_nonblocking(sock._fd);
 			ubus->sock = sock;
 			if(ubus->master)
 			{
@@ -190,12 +190,13 @@ static int ubus_sync_accept_eloop(struct eloop *thread)
 int ubus_sync_init(void *m)
 {
 	zpl_uint32 i = 0;
-	int accept = 0;
+	int iaccept = 0;
 
 	os_uci_init();
 
 	memset(&ubus_sync_ctx, 0, sizeof(ubus_sync_ctx));
-	ubus_sync_ctx.sock = 0;
+	ubus_sync_ctx.sock._fd = 0;
+	ubus_sync_ctx.sock.stack = OS_STACK;
 	ubus_sync_ctx.master = NULL;
 	ubus_sync_ctx.len = 0;
 	memset(ubus_sync_ctx.buf, 0, sizeof(ubus_sync_ctx.buf));
@@ -203,13 +204,14 @@ int ubus_sync_init(void *m)
 	{
 		ubus_sync_ctx.cb[i] = NULL;
 	}
-	accept = os_sock_unix_server_create(zpl_true, "lualuci");
-	if(accept <= 0)
+	iaccept = os_sock_unix_server_create(zpl_true, "lualuci");
+	if(iaccept <= 0)
 		return ERROR;
-	os_set_nonblocking(accept);
-	ubus_sync_ctx.accept = accept;
+	os_set_nonblocking(iaccept);
+	ubus_sync_ctx.accept._fd = iaccept;
+	ubus_sync_ctx.accept.stack = OS_STACK;
 	ubus_sync_ctx.master = m;
-	ubus_sync_ctx.t_accept = eloop_add_read(ubus_sync_ctx.master, ubus_sync_accept_eloop, &ubus_sync_ctx, accept);
+	ubus_sync_ctx.t_accept = eloop_add_read(ubus_sync_ctx.master, ubus_sync_accept_eloop, &ubus_sync_ctx, ubus_sync_ctx.accept);
 	//ubus_sync_debug(zpl_true);
 	return OK;
 }
@@ -217,30 +219,30 @@ int ubus_sync_init(void *m)
 int ubus_sync_reset(void)
 {
 	//zpl_uint32 i = 0;
-	int accept = 0;
+	int iaccept = 0;
 	if(ubus_sync_ctx.t_read)
 	{
 		eloop_cancel(ubus_sync_ctx.t_read);
 		ubus_sync_ctx.t_read = NULL;
 	}
-	if(ubus_sync_ctx.sock > 0)
-		close(ubus_sync_ctx.sock);
-	ubus_sync_ctx.sock = 0;
+	if(ubus_sync_ctx.sock._fd > 0)
+		close(ubus_sync_ctx.sock._fd);
+	ubus_sync_ctx.sock._fd = 0;
 
-	if(ubus_sync_ctx.accept > 0)
-		close(ubus_sync_ctx.accept);
-	ubus_sync_ctx.accept = 0;
+	if(ubus_sync_ctx.accept._fd > 0)
+		close(ubus_sync_ctx.accept._fd);
+	ubus_sync_ctx.accept._fd = 0;
 
 	//ubus_sync_ctx.master = NULL;
 	ubus_sync_ctx.len = 0;
 	memset(ubus_sync_ctx.buf, 0, sizeof(ubus_sync_ctx.buf));
-	accept = os_sock_unix_server_create(zpl_true, "lualuci");
-	if(accept <= 0)
+	iaccept = os_sock_unix_server_create(zpl_true, "lualuci");
+	if(iaccept <= 0)
 		return ERROR;
 	//os_set_nonblocking(sock);
-	ubus_sync_ctx.accept = accept;
+	ubus_sync_ctx.accept._fd = iaccept;
 	//ubus_sync_ctx.master = m;
-	ubus_sync_ctx.t_accept = eloop_add_read(ubus_sync_ctx.master, ubus_sync_accept_eloop, &ubus_sync_ctx, accept);
+	ubus_sync_ctx.t_accept = eloop_add_read(ubus_sync_ctx.master, ubus_sync_accept_eloop, &ubus_sync_ctx, ubus_sync_ctx.accept);
 	return OK;
 }
 
@@ -257,13 +259,13 @@ int ubus_sync_exit(void)
 		eloop_cancel(ubus_sync_ctx.t_accept);
 		ubus_sync_ctx.t_accept = NULL;
 	}
-	if(ubus_sync_ctx.sock > 0)
-		close(ubus_sync_ctx.sock);
-	ubus_sync_ctx.sock = 0;
+	if(ubus_sync_ctx.sock._fd > 0)
+		close(ubus_sync_ctx.sock._fd);
+	ubus_sync_ctx.sock._fd = 0;
 
-	if(ubus_sync_ctx.accept > 0)
-		close(ubus_sync_ctx.accept);
-	ubus_sync_ctx.accept = 0;
+	if(ubus_sync_ctx.accept._fd > 0)
+		close(ubus_sync_ctx.accept._fd);
+	ubus_sync_ctx.accept._fd = 0;
 
 	ubus_sync_ctx.master = NULL;
 	ubus_sync_ctx.len = 0;

@@ -11766,7 +11766,7 @@ SOAP_FMAC3 void SOAP_FMAC4 soap_default_tt__MulticastConfiguration(struct soap *
 	(void)soap; (void)a; /* appease -Wall -Werror */
 	a->Address = NULL;
 	soap_default_int(soap, &a->Port);
-	soap_default_int(soap, &a->TTL);
+	soap_default_int(soap, &a->IPSTACK_TTL);
 	soap_default_xsd__boolean(soap, &a->AutoStart);
 	a->__size = 0;
 	a->__any = NULL;
@@ -11779,7 +11779,7 @@ SOAP_FMAC3 void SOAP_FMAC4 soap_serialize_tt__MulticastConfiguration(struct soap
 #ifndef WITH_NOIDREF
 	soap_serialize_PointerTott__IPAddress(soap, &a->Address);
 	soap_embedded(soap, &a->Port, SOAP_TYPE_int);
-	soap_embedded(soap, &a->TTL, SOAP_TYPE_int);
+	soap_embedded(soap, &a->IPSTACK_TTL, SOAP_TYPE_int);
 	soap_embedded(soap, &a->AutoStart, SOAP_TYPE_xsd__boolean);
 	if (a->__any)
 	{	int i;
@@ -11806,7 +11806,7 @@ SOAP_FMAC3 int SOAP_FMAC4 soap_out_tt__MulticastConfiguration(struct soap *soap,
 		return soap->error;
 	if (soap_out_int(soap, "tt:Port", -1, &a->Port, ""))
 		return soap->error;
-	if (soap_out_int(soap, "tt:TTL", -1, &a->TTL, ""))
+	if (soap_out_int(soap, "tt:IPSTACK_TTL", -1, &a->IPSTACK_TTL, ""))
 		return soap->error;
 	if (soap_out_xsd__boolean(soap, "tt:AutoStart", -1, &a->AutoStart, ""))
 		return soap->error;
@@ -11851,7 +11851,7 @@ SOAP_FMAC3 struct tt__MulticastConfiguration * SOAP_FMAC4 soap_in_tt__MulticastC
 				}
 			}
 			if (soap_flag_TTL && soap->error == SOAP_TAG_MISMATCH)
-			{	if (soap_in_int(soap, "tt:TTL", &a->TTL, "xsd:int"))
+			{	if (soap_in_int(soap, "tt:IPSTACK_TTL", &a->IPSTACK_TTL, "xsd:int"))
 				{	soap_flag_TTL--;
 					continue;
 				}
