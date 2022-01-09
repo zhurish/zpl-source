@@ -141,7 +141,14 @@ config ZPL_SHELL_MODULE
 	default y
 	help
 	Build Shell Module.
-	
+
+config ZPL_SHRL_MODULE
+	bool "Shell readline Module"
+	default n
+	depends on ZPL_SHELL_MODULE
+	help
+	Build Shell readline Module.
+
 comment "NSM Layer Module"
 
 config ZPL_NSM_MODULE

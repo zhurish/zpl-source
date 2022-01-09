@@ -48,6 +48,7 @@ struct zpl_host
   zpl_bool vty_config;
   /* Login password check. */
   zpl_bool no_password_check;
+  zpl_bool console_enable;
 
   enum{LOAD_NONE, LOAD_INIT, LOADING, LOAD_DONE} load;
   void *mutx;

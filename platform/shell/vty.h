@@ -41,14 +41,30 @@ extern "C" {
 /* Vty events */
 enum vtyevent
 {
-	VTY_SERV, VTY_READ, VTY_WRITE, VTY_TIMEOUT_RESET,
+	VTY_SERV, 
+  VTY_READ, 
+  VTY_WRITE, 
+  VTY_TIMEOUT_RESET,
 #ifdef VTYSH
 	VTYSH_SERV,
 	VTYSH_READ,
 	VTYSH_WRITE,
 #endif /* VTYSH */
-	VTY_STDIO_WAIT, VTY_STDIO_ACCEPT,
+	VTY_STDIO_WAIT, 
+  VTY_STDIO_ACCEPT,
 };
+
+  enum vtylogin_type
+  {
+    VTY_LOGIN_NONE,
+	  VTY_LOGIN_STDIO,
+	  VTY_LOGIN_CONSOLE,
+	  VTY_LOGIN_TELNET,
+	  VTY_LOGIN_SSH,
+	  VTY_LOGIN_VTYSH,
+    VTY_LOGIN_VTYSH_STDIO,
+    VTY_LOGIN_MAX
+  } ;
 
 /* VTY struct. */
 struct vty 
@@ -149,6 +165,8 @@ struct vty
   zpl_ulong v_timeout;
 
   void *t_timeout;
+  void *t_wait;
+
   /* What address is this vty comming from. */
   zpl_char address[SU_ADDRSTRLEN];
 
@@ -164,14 +182,7 @@ struct vty
   int	(*ssh_close)(struct vty *);
   void	*ssh;
 
-  enum
-  {
-	  VTY_LOGIN_STDIN,
-	  VTY_LOGIN_CONSOLE,
-	  VTY_LOGIN_TELNET,
-	  VTY_LOGIN_SSH,
-	  VTY_LOGIN_SH
-  } login_type;
+  enum vtylogin_type login_type;
 
   zpl_bool	cancel;
 
@@ -196,26 +207,20 @@ typedef struct vtysh_hdr_s
 }vtysh_hdr_t;
 #endif /* VTYSH */
 /* Master of the threads. */
-typedef struct tty_console_s
-{
-	struct tty_com	ttycom;
-	struct vty *vty;
-	void (*vty_atclose)(void);
-	void *t_wait;
-}tty_console_t;
 
 typedef struct cli_shell_s
 {
   vector vtyvec;
   vector serv_thread;
-  void *console_master;
-  void *telnet_master;
+  void *m_thread_master;
+  void *m_eloop_master;
   zpl_uint32 console_taskid;
 #ifdef ZPL_IPCOM_STACK_MODULE
   zpl_uint32 telnet_taskid;
 #endif
-  zpl_bool  console_enable;
-	tty_console_t *_pvty_console;
+	struct tty_com	ttycom;
+	struct vty *vty;
+
   int do_log_commands;
   void (*vty_ctrl_cmd)(zpl_uint32 ctrl, struct vty *vty);
   int init;
@@ -347,7 +352,7 @@ extern int vty_exec_timeout(struct vty *vty, const char *min_str, const char *se
 
 extern int vty_command(struct vty *vty, zpl_char *buf);
 extern int vty_execute(struct vty *vty);
-extern int vty_execute_shell(const char *cmd);
+extern int vty_execute_shell(void *cli, const char *cmd);
 
 extern int vty_getc_input(struct vty *vty);
 extern int vty_read_handle(struct vty *vty, zpl_uchar *buf, zpl_uint32 len);
@@ -366,15 +371,20 @@ extern void vty_hello (struct vty *);
 extern int vty_ansync_enable(struct vty *vty, zpl_bool enable);
 
 extern void vty_self_insert(struct vty *vty, zpl_char c);
+extern int vty_write_hello(struct vty *vty);
+
 
 extern int vty_shell (struct vty *);
 extern int vty_shell_serv (struct vty *);
-extern int vty_is_console(struct vty *vty);
 
+extern enum vtylogin_type vty_login_type(struct vty *vty);
 
-extern int vty_write_hello(struct vty *vty);
-//extern int vty_stdio_init (const char *, void (*atclose)(void));
-extern int vty_console_init(const char *tty, void (*atclose)());
+extern const char * vty_prompt(struct vty *vty);
+#ifdef ZPL_SHRL_MODULE
+extern int vty_stdio_init(struct vty *vty);
+extern int vty_stdio_start(zpl_bool s);
+#endif /*ZPL_SHRL_MODULE*/
+extern int vty_console_init(const char *tty);
 
 
 extern void vty_init (void);
@@ -407,7 +417,7 @@ extern int cmd_vty_init();
 
 
 #ifdef VTYSH
-extern int vty_sshd_init(int sock, struct vty *vty);
+extern int vty_sshd_init(zpl_socket_t sock, struct vty *vty);
 #endif /* VTYSH */
 
 

@@ -529,7 +529,7 @@ DEFUN_HIDDEN (load_image_xyz_modem,
 	else if(strstr(argv[0], "ymodem"))
 		mode = 2;
 
-	if(!vty_is_console(vty) && argc == 1)
+	if((vty_login_type(vty) != VTY_LOGIN_CONSOLE) && argc == 1)
 	{
 		vty_out(vty, "##This command can only be used on a serial port%s", VTY_NEWLINE);
 		return CMD_WARNING;

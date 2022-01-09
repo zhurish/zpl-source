@@ -179,6 +179,8 @@ void buffer_put(struct buffer *b, const void *p, zpl_size_t size)
 void *buffer_dataptr(struct buffer *b)
 {
 	struct buffer_data *data = b->tail;
+	if(data == NULL)
+		data = buffer_add(b);
 	return (data->data + data->cp);
 }
 

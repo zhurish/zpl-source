@@ -137,6 +137,11 @@ DEFUN(nsm_interface,
 	}
 	return CMD_WARNING;
 }
+ALIAS(nsm_interface,
+	  nsm_interface_sub_cmd,
+	  "interface " CMD_IF_SUB_USPV_STR " " CMD_USP_SUB_STR,
+	  "Select an interface to configure\n" CMD_IF_SUB_USPV_STR_HELP
+		  CMD_USP_SUB_STR_HELP)
 
 static int nsm_interface_other_create(int argc, char *name, char *uspv, struct vty *vty)
 {
@@ -317,20 +322,19 @@ DEFUN_HIDDEN(hidden_no_nsm_interface,
 	return CMD_WARNING;
 }
 
-DEFUN(nsm_interface_range,
+DEFUN_HIDDEN(nsm_interface_range,
 	  nsm_interface_range_cmd,
-	  "interface " CMD_IF_USPV_STR " " CMD_USP_RANGE_STR,
-	  "Select an interface to configure\n" CMD_IF_USPV_STR_HELP
+	  "interface " CMD_IF_SUB_USPV_STR " " CMD_USP_RANGE_STR,
+	  "Select an interface to configure\n" CMD_IF_SUB_USPV_STR_HELP
 		  CMD_USP_RANGE_STR_HELP)
 {
-	int ret = 0, endport = 0;
 	struct interface *ifp = NULL;
-	char ifname[64];
+	zpl_uint32 uspv = 0,endport = 0;
 	ifindex_t ifindex = 0, port_index = 0, port = 0;
-	sscanf(argv[1], "%s-%d", ifname, &endport);
+	VTY_IUSP_GET(argv[1], uspv, endport);
 	if (argv[0] && argv[1])
 	{
-		ifindex = if_ifindex_make(argv[0], ifname);
+		ifindex = IF_IFINDEX_SET(name2type(argv[0]), uspv);
 		port_index = IF_PORT_GET(ifindex);
 		if (endport <= port_index)
 		{
@@ -354,6 +358,41 @@ DEFUN(nsm_interface_range,
 	return CMD_WARNING;
 }
 
+DEFUN_HIDDEN(nsm_interface_sub_range,
+	  nsm_interface_range_sub_cmd,
+	  "interface " CMD_IF_SUB_USPV_STR " " CMD_USP_SUB_RANGE_STR,
+	  "Select an interface to configure\n" CMD_IF_SUB_USPV_STR_HELP
+		  CMD_USP_SUB_RANGE_STR_HELP)
+{
+	struct interface *ifp = NULL;
+	zpl_uint32 uspv = 0,endport = 0;
+	ifindex_t ifindex = 0, port_index = 0, port = 0;
+	VTY_IUSP_GET(argv[1], uspv, endport);
+	if (argv[0] && argv[1])
+	{
+		ifindex = IF_IFINDEX_SET(name2type(argv[0]), uspv);
+		port_index = IF_PORT_GET(ifindex);
+		if (endport <= port_index)
+		{
+			return CMD_WARNING;
+		}
+		for (; port_index < endport; port_index++)
+		{
+			port = IF_USPV_SET(IF_TYPE_GET(ifindex), IF_UNIT_GET(ifindex), IF_SLOT_GET(ifindex), port_index) | IF_ID_GET(ifindex);
+			if (!if_lookup_by_index(port))
+			{
+				return CMD_WARNING;
+			}
+		}
+
+		ifp = if_lookup_by_index(ifindex);
+		vty->index = ifp;
+		vty->index_value = endport;
+		vty->node = nsm_interface_cmd_node_get(ifp, 1);
+		return CMD_SUCCESS;
+	}
+	return CMD_WARNING;
+}
 #ifdef CUSTOM_INTERFACE
 DEFUN(nsm_wifi_interface,
 	  nsm_wifi_interface_cmd,
@@ -1730,11 +1769,13 @@ static void cmd_base_interface_init(int node)
 	install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_shutdown_cmd);
 
 	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_cmd);
+	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_sub_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_vlan_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_loopback_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_trunk_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &hidden_nsm_interface_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_range_cmd);
+	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_range_sub_cmd);
 
 	if (node != INTERFACE_NODE && node != LAG_INTERFACE_NODE)
 	{
@@ -1924,6 +1965,7 @@ void cmd_interface_init(void)
 #endif
 
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &nsm_interface_cmd);
+	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &nsm_interface_sub_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &nsm_interface_vlan_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &nsm_interface_loopback_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &nsm_interface_trunk_cmd);
@@ -1934,7 +1976,7 @@ void cmd_interface_init(void)
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &hidden_nsm_interface_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &hidden_no_nsm_interface_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &nsm_interface_range_cmd);
-
+	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &nsm_interface_range_sub_cmd);
 #ifdef CUSTOM_INTERFACE
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &nsm_wifi_interface_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_nsm_wifi_interface_cmd);

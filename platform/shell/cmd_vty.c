@@ -21,7 +21,6 @@
 //extern int vty_exec_timeout(struct vty *vty, const char *min_str,
 //		const char *sec_str);
 
-
 DEFUN (who,
 		who_cmd,
 		"who",
@@ -262,6 +261,20 @@ DEFUN (log_commands,
 	return CMD_SUCCESS;
 }
 
+DEFUN_HIDDEN (vtysh_rl_stdio,
+		vtysh_rl_stdio_cmd,
+		"login-type (vtysh|stdio)",
+		"Configure a Login Type\n"
+		"vtysh type\n"
+		"stdio type\n")
+{
+	if(strstr(argv[0],"stdio"))
+		vty->login_type = VTY_LOGIN_VTYSH_STDIO;
+	else 
+		vty->login_type = VTY_LOGIN_VTYSH;	
+	return CMD_SUCCESS;
+}
+
 DEFUN_HIDDEN (exit_platform,
 		exit_platform_cmd,
 		"exit-platform",
@@ -348,6 +361,8 @@ int cmd_vty_init()
 	install_element(VTY_NODE, CMD_CONFIG_LEVEL, &no_vty_access_class_cmd);
 	install_element(VTY_NODE, CMD_CONFIG_LEVEL, &vty_login_cmd);
 	install_element(VTY_NODE, CMD_CONFIG_LEVEL, &no_vty_login_cmd);
+
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &vtysh_rl_stdio_cmd);
 
 #ifdef HAVE_IPV6
 	install_element (VTY_NODE, CMD_CONFIG_LEVEL, &vty_ipv6_access_class_cmd);

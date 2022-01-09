@@ -102,39 +102,39 @@ extern "C" {
 
 
 /* bgpd vty socket */
-#define BGP_VTYSH_PATH DAEMON_VTY_DIR "/bgpd.vty"
+#define BGP_VTYSH_PATH DAEMON_VTY_DIR "/bgpd.sock"
 
 /* frpd vty socket */
-#define FRP_VTYSH_PATH DAEMON_VTY_DIR "/frpd.vty"
+#define FRP_VTYSH_PATH DAEMON_VTY_DIR "/frpd.sock"
 
 /* IMI Mdoule socket */
-#define IMISH_UNIX_PATH DAEMON_VTY_DIR "/imi-cli.vty"
+#define IMISH_UNIX_PATH DAEMON_VTY_DIR "/imi-cli.sock"
 /* isisd vty socket */
-#define ISIS_VTYSH_PATH DAEMON_VTY_DIR "/isisd.vty"
+#define ISIS_VTYSH_PATH DAEMON_VTY_DIR "/isisd.sock"
 /* ldpd vty socket */
-#define LDP_VTYSH_PATH DAEMON_VTY_DIR "/ldpd.vty"
+#define LDP_VTYSH_PATH DAEMON_VTY_DIR "/ldpd.sock"
 /* lldpd vty socket */
-#define LLDP_VTYSH_PATH DAEMON_VTY_DIR "/lldpd.vty"
+#define LLDP_VTYSH_PATH DAEMON_VTY_DIR "/lldpd.sock"
 /* olsrd vty socket */
-#define OLSR_VTYSH_PATH DAEMON_VTY_DIR "/olsrd.vty"
+#define OLSR_VTYSH_PATH DAEMON_VTY_DIR "/olsrd.sock"
 /* nhrpd vty socket */
-#define NHRP_VTYSH_PATH DAEMON_VTY_DIR "/nhrpd.vty"
+#define NHRP_VTYSH_PATH DAEMON_VTY_DIR "/nhrpd.sock"
 /* ospf6d vty socket */
-#define OSPF6_VTYSH_PATH DAEMON_VTY_DIR "/ospf6d.vty"
+#define OSPF6_VTYSH_PATH DAEMON_VTY_DIR "/ospf6d.sock"
 /* ospfd vty socket */
-#define OSPF_VTYSH_PATH DAEMON_VTY_DIR "/ospfd.vty"
+#define OSPF_VTYSH_PATH DAEMON_VTY_DIR "/ospfd.sock"
 /* pimd vty socket */
-#define PIM_VTYSH_PATH DAEMON_VTY_DIR "/pimd.vty"
+#define PIM_VTYSH_PATH DAEMON_VTY_DIR "/pimd.sock"
 /* ripng vty socket */
-#define RIPNG_VTYSH_PATH DAEMON_VTY_DIR "/ripngd.vty"
+#define RIPNG_VTYSH_PATH DAEMON_VTY_DIR "/ripngd.sock"
 /* rip vty socket */
-#define RIP_VTYSH_PATH DAEMON_VTY_DIR "/ripd.vty"
+#define RIP_VTYSH_PATH DAEMON_VTY_DIR "/ripd.sock"
 /* utils vty socket */
-#define UTILS_VTYSH_PATH DAEMON_VTY_DIR "/utils.vty"
+#define UTILS_VTYSH_PATH DAEMON_VTY_DIR "/utils.sock"
 /* vrrpd vty socket */
-#define VRRP_VTYSH_PATH DAEMON_VTY_DIR "/vrrpd.vty"
+#define VRRP_VTYSH_PATH DAEMON_VTY_DIR "/vrrpd.sock"
 /* zebra vty socket */
-#define ZEBRA_VTYSH_PATH DAEMON_VTY_DIR "/zebra.vty"
+#define ZEBRA_VTYSH_PATH DAEMON_VTY_DIR "/zebra.sock"
 
 
 

@@ -297,7 +297,7 @@ log_memstats(zpl_uint32 pri)
 
     zlog(MODULE_DEFAULT, pri, "Memory utilization in module %s:", ml->name);
     for (m = ml->list; m->index >= 0; m++)
-      if (m->index && mstat[m->index].alloc)
+      if (m->index && mstat[m->index].alloc && m->format)
         zlog(MODULE_DEFAULT, pri, "  %-30s: %10ld", m->format, mstat[m->index].alloc);
   }
 }
@@ -314,7 +314,7 @@ void log_memstats_stderr(const char *prefix)
     i = 0;
 
     for (m = ml->list; m->index >= 0; m++)
-      if (m->index && mstat[m->index].alloc)
+      if (m->index && mstat[m->index].alloc && m->format)
       {
         if (!i)
           fprintf(stderr,
@@ -363,7 +363,7 @@ show_memory_vty(struct vty *vty, struct memory_list *list)
         needsep = 0;
       }
     }
-    else if (mstat[m->index].alloc)
+    else if (mstat[m->index].alloc && m->format)
     {
       vty_out(vty, "%-30s: %10ld\r\n", m->format, mstat[m->index].alloc);
       needsep = 1;

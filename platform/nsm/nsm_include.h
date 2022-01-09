@@ -16,9 +16,11 @@ extern "C" {
 #include "table.h"
 #include "queue.h"
 #include "nsm_event.h"
+#ifdef ZPL_RTPL_MODULE
 #include "nsm_rib.h"
-#include "nsm_ipforward.h"
 #include "router-id.h"
+#endif
+#include "nsm_ipforward.h"
 #include "nsm_interface.h"
 #include "nsm_pal.h"
 #include "nsm_debug.h"

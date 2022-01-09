@@ -13,6 +13,10 @@ ifeq ($(strip $(ZPL_SHELL_MODULE)),true)
 ZPLPRODS += $(PLATFORM_ROOT)/shell
 ZPL_INCLUDE += -I$(PLATFORM_ROOT)/shell
 ZPL_DEFINE	+= -DZPL_SHELL_MODULE
+ifeq ($(strip $(ZPL_SHRL_MODULE)),true)
+ZPL_DEFINE	+= -DZPL_SHRL_MODULE
+ZPLEX_LDLIBS += -lreadline
+endif
 endif
 ZPL_INCLUDE += -I$(PLATFORM_ROOT)/os
 ZPL_INCLUDE += -I$(PLATFORM_ROOT)/lib

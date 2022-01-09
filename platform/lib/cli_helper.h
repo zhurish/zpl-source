@@ -79,6 +79,10 @@ extern "C" {
 								"Wireless interface\n"\
 								"Tunnel interface\n Brigde interface\n"
 
+#define CMD_IF_SUB_USPV_STR		"(ethernet|gigabitethernet)"
+#define CMD_IF_SUB_USPV_STR_HELP	"Ethernet interface\n" \
+								"GigabitEthernet interface\n"
+
 #define CMD_USP_STR			"<unit/slot/port>"
 #define CMD_USP_STR_HELP	"specify interface name:<unit/slot/port> (e.g. 0/1/3)\n"
 

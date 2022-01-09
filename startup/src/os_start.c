@@ -268,7 +268,7 @@ int os_base_stack_init(const char *tty)
 
 	memory_init();
 	cmd_init(1);
-	vty_tty_init(tty);
+	
 	vty_user_init();
 
 	cmd_host_init(1);
@@ -283,6 +283,8 @@ int os_base_stack_init(const char *tty)
 #ifdef ZPL_IPCOM_STACK_MODULE
 	cmd_os_eloop_init();
 #endif
+	if(tty)
+		_global_host.console_enable = zpl_true;
 	return OK;
 }
 
@@ -298,6 +300,7 @@ int os_base_shell_start(char *shell_path, char *shell_addr, int shell_port, cons
 {
 	pl_module_init(MODULE_CONSOLE);
 	pl_module_init(MODULE_TELNET);
+	vty_tty_init(tty);
 	vty_serv_init(shell_addr, shell_port, shell_path, tty);
 	zlog_notice(MODULE_DEFAULT, "Zebra %s starting: vty@%d", OEM_VERSION, shell_port);
 	pl_module_task_init(MODULE_CONSOLE);

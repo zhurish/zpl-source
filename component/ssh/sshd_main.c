@@ -189,10 +189,11 @@ static void sshd_session_userdata_close(ssh_session session, sshd_client_t *sshc
 static struct vty * sshd_shell_new(int vty_sock)
 {
 	struct vty *vty = NULL;
-	vty = vty_new_init(vty_sock);
-	vty->fd = vty_sock;
-	vty->wfd = vty_sock;
-	vty->fd_type = OS_STACK;
+	zpl_socket_t tmp;
+	vty = vty_new_init(tmp);
+	vty->fd._fd = vty_sock;
+	vty->wfd._fd = vty_sock;
+	vty->fd.stack = vty->wfd.stack = IPCOM_STACK;
 
 	vty->type = VTY_TERM;
 	vty->node = ENABLE_NODE;

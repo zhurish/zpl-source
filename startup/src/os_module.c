@@ -30,7 +30,7 @@ int os_module_init(void)
 	pl_module_allinit();
 
 	
-	pl_module_init(MODULE_SDK);
+	//pl_module_init(MODULE_SDK);
 
 	os_msleep(50);
 	return OK;
@@ -39,7 +39,7 @@ int os_module_init(void)
 int os_module_exit(void)
 {
 	pl_module_allexit();
-	hal_bsp_exit();
+	//hal_bsp_exit();
 	return OK;
 }
 
@@ -51,7 +51,7 @@ int os_module_task_init(void)
 	
 	pl_module_task_allinit();
 
-	pl_module_task_init(MODULE_SDK);
+	//pl_module_task_init(MODULE_SDK);
 	
 	os_msleep(50);
 	//hal_bsp_task_init();

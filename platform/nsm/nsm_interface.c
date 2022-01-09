@@ -434,6 +434,7 @@ zpl_bool nsm_interface_create_check_api(struct vty *vty, const char *ifname, con
 	{
 	case IF_ETHERNET:
 	case IF_GIGABT_ETHERNET:
+	case IF_ETHERNET_SUB:
 	case IF_WIRELESS:
 		if (IF_ID_GET(ifindex))
 		{
