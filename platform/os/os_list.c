@@ -555,7 +555,7 @@ NODE *lstNth
 	nodenum -= pList->count;
 	pNode = pList->TAIL;
 
-	while (nodenum++ < 0)
+	while (nodenum++ < (zpl_uint32)0)
 	    pNode = pNode->previous;
 	}
 

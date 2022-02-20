@@ -15,6 +15,7 @@ enum hal_trunk_cmd
 {
     HAL_TRUNK_CMD_NONE,
 	HAL_TRUNK_CMD_ENABLE,
+	HAL_TRUNK_CMD_CREATE,
 	HAL_TRUNK_CMD_ADDIF,
 	HAL_TRUNK_CMD_DELIF,
 	HAL_TRUNK_CMD_MODE,
@@ -30,8 +31,11 @@ typedef struct hal_trunk_param_s
 
 int hal_trunk_enable(zpl_bool enable);
 int hal_trunk_mode(zpl_uint32 trunkid, zpl_uint32 mode);
-int hal_trunk_interface_enable(ifindex_t ifindex, zpl_uint32 trunkid);
-int hal_trunk_interface_disable(ifindex_t ifindex, zpl_uint32 trunkid);
+int hal_trunk_create(zpl_uint32 trunkid, zpl_bool enable);
+int hal_trunk_add_interface(zpl_uint32 trunkid, ifindex_t ifindex);
+int hal_trunk_del_interface(zpl_uint32 trunkid, ifindex_t ifindex);
+int hal_trunk_mcast_join(zpl_uint32 trunkid, vlan_t vid, mac_t *mac);
+int hal_trunk_mcast_level(zpl_uint32 trunkid, vlan_t vid, mac_t *mac);
 
 int hal_trunkid(zpl_uint32 trunkid);
 

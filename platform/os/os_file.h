@@ -38,7 +38,7 @@ extern int os_read_file(const zpl_char *name, const zpl_char *string, zpl_uint32
 #define MPLS_X_G(n)	(n >> 30)
 
 extern int os_file_size (const zpl_char *filename);
-extern const zpl_char * os_file_size_string(zpl_uint32 len);
+extern const zpl_char * os_file_size_string(zpl_ullong len);
 
 
 

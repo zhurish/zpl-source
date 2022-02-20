@@ -62,8 +62,8 @@ typedef struct Gl2dos_s
 }Gl2dos_t;
 
 
-int nsm_dos_init();
-int nsm_dos_exit();
+int nsm_dos_init(void);
+int nsm_dos_exit(void);
 
 int nsm_dos_enable(void);
 zpl_bool nsm_dos_is_enable(void);

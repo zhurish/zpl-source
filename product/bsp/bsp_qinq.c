@@ -17,23 +17,32 @@ sdk_qinq_t sdk_qinq;
 
 static int bsp_qinq_enable(void *driver, hal_port_header_t *port, hal_qinq_param_t *param)
 {
+	int ret = NO_SDK;
+	SDK_ENTER_FUNC();
 	if(driver  && sdk_qinq.sdk_qinq_enable_cb)
-		return sdk_qinq.sdk_qinq_enable_cb(driver, param->value);
-	return NO_SDK;
+		ret = sdk_qinq.sdk_qinq_enable_cb(driver, param->value);
+	SDK_LEAVE_FUNC();
+	return ret;
 }
 
 static int bsp_qinq_vlan_tpid(void *driver, hal_port_header_t *port, hal_qinq_param_t *param)
 {
+	int ret = NO_SDK;
+	SDK_ENTER_FUNC();
 	if(driver  && sdk_qinq.sdk_qinq_vlan_ptid_cb)
-		return sdk_qinq.sdk_qinq_vlan_ptid_cb(driver, param->value);
-	return NO_SDK;
+		ret = sdk_qinq.sdk_qinq_vlan_ptid_cb(driver, param->value);
+	SDK_LEAVE_FUNC();
+	return ret;
 }
 
 static int bsp_qinq_interface_enable(void *driver, hal_port_header_t *port, hal_qinq_param_t *param)
 {
+	int ret = NO_SDK;
+	SDK_ENTER_FUNC();
 	if(driver && sdk_qinq.sdk_qinq_port_enable_cb)
-		return sdk_qinq.sdk_qinq_port_enable_cb(driver, port->phyport, param->value);
-	return NO_SDK;
+		ret = sdk_qinq.sdk_qinq_port_enable_cb(driver, port->phyport, param->value);
+	SDK_LEAVE_FUNC();
+	return ret;
 }
 
 static hal_ipcsubcmd_callback_t subcmd_table[] = {
@@ -47,6 +56,7 @@ int bsp_qinq_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32
 	int ret = OK;
 	hal_qinq_param_t	param;
 	hal_port_header_t	bspport;
+	SDK_ENTER_FUNC();
 	hal_ipcmsg_port_get(&client->ipcmsg, &bspport);
 
 	hal_ipcmsg_getl(&client->ipcmsg, &param.value);
@@ -54,27 +64,18 @@ int bsp_qinq_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32
 
 	if(!(subcmd_table[subcmd].cmd_handle))
 	{
+		SDK_LEAVE_FUNC();
 		return NO_SDK;
 	}
 	switch (cmd)
 	{
-	case HAL_MODULE_CMD_SET:         //设置
+	case HAL_MODULE_CMD_REQ:         //设置
 	ret = (subcmd_table[subcmd].cmd_handle)(driver, &bspport, &param);
 	break;
-	case HAL_MODULE_CMD_GET:         //获取
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &bspport, &param);
-	break;
-	case HAL_MODULE_CMD_ADD:         //添加
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &bspport, &param);
-	break;
-	case HAL_MODULE_CMD_DEL:         //删除
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &bspport, &param);
-	break;
-    case HAL_MODULE_CMD_DELALL:      //删除所有
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &bspport, &param);
-	break;
+
 	default:
 		break;
 	}
+	SDK_LEAVE_FUNC();
 	return ret;
 }

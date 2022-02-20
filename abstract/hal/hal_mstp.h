@@ -23,11 +23,11 @@ typedef enum hal_port_stp_state_e {
 enum hal_mstp_cmd 
 {
     HAL_MSTP_NONE,
-	HAL_MSTP,
-	HAL_MSTP_AGE,
-	HAL_MSTP_BYPASS,
+	HAL_MSTP_ENABLE,
+    HAL_MSTP_CREATE,
+    HAL_MSTP_ADD_VLAN,
+    HAL_MSTP_DEL_VLAN,
 	HAL_MSTP_STATE,
-	HAL_MSTP_VLAN,
     HAL_STP_STATE,
 };
 
@@ -40,10 +40,12 @@ typedef struct hal_mstp_param_s
 }hal_mstp_param_t;
 
 int hal_mstp_enable(zpl_bool enable);
-int hal_mstp_age(zpl_uint32 age);
-int hal_mstp_bypass(zpl_bool enable, zpl_uint32 type);
-int hal_mstp_state(ifindex_t ifindex, zpl_uint32 mstp, hal_port_stp_state_t state);
-int hal_stp_state(ifindex_t ifindex, hal_port_stp_state_t state);
+int hal_mstp_create(zpl_index_t id);
+int hal_mstp_add_vlan(zpl_index_t id, vlan_t vid);
+int hal_mstp_del_vlan(zpl_index_t id, vlan_t vid);
+int hal_mstp_state(zpl_index_t id, ifindex_t ifindex, hal_port_stp_state_t state);
+int hal_stp_state(zpl_index_t id, ifindex_t ifindex, hal_port_stp_state_t state);
+
 
 #ifdef __cplusplus
 }

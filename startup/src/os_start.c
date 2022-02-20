@@ -292,7 +292,7 @@ int os_base_stack_init(const char *tty)
 int os_base_zlog_open(char *progname)
 {
 	openzlog (progname, MODULE_DEFAULT, LOG_LOCAL7, 0);
-	zlog_set_level (ZLOG_DEST_STDOUT, ZLOG_LEVEL_DEBUG);
+	//zlog_set_level (ZLOG_DEST_STDOUT, ZLOG_LEVEL_DEBUG);
 	return OK;
 }
 
@@ -352,6 +352,11 @@ int os_base_module_start_all()
 
 
 	//等待BSP初始化，最长等待15s时间
+	pl_module_init(MODULE_SDK);
+	pl_module_task_init(MODULE_SDK);
+
+	bsp_module_start();
+	
 	host_waitting_bspinit(15);
 #ifdef ZPL_IPCBCBSP_MODULE
 	bsp_usp_module_init();

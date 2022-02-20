@@ -86,7 +86,7 @@ extern zpl_bool md5_encrypt_empty(zpl_uchar *);
 extern int md5_encrypt_password(zpl_char *, zpl_uchar *);
 
 extern int vty_user_init(void);
-extern int cmd_vty_user_init();
+extern int cmd_vty_user_init(void);
 
 #ifdef VTY_USER_DEBUG
 #define VTY_USER_DEBUG_LOG	zlog_debug

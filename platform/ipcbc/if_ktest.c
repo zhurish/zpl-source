@@ -14,7 +14,7 @@
 
 #ifdef ZPL_KERNEL_STACK_MODULE
 
-static int if_slot_kernel_read()
+static int if_slot_kernel_read(void)
 {
 	struct interface * ifp = NULL;
 	char buf[512];
@@ -26,7 +26,7 @@ static int if_slot_kernel_read()
 	{
 		char *s = NULL;
 		int n = 0;//, *p;
-		printf("========================%s========================open %s\r\n", __func__, SLOT_PORT_CONF);
+		//printf("========================%s========================open %s\r\n", __func__, SLOT_PORT_CONF);
 		os_memset(buf, 0, sizeof(buf));
 		board = unit_board_add(0, 0);
 		while (fgets(buf, sizeof(buf), fp))
@@ -48,7 +48,7 @@ static int if_slot_kernel_read()
 				ifp = if_create (name, strlen(name));
 				//os_msleep(1);
 				ifindex = if_ifindex_make(name, NULL);
-				printf("========================%s========================%s(%d)-->%s\r\n", __func__, name, ifindex, kname);
+				//printf("========================%s========================%s(%d)-->%s\r\n", __func__, name, ifindex, kname);
 				if(ifp && ifindex != 0)
 				{
 					if_kname_set(ifp, kname);
@@ -64,7 +64,7 @@ static int if_slot_kernel_read()
 	}
 	else
 	{
-		printf("========================%s========================can not open %s\r\n", __func__, SLOT_PORT_CONF);
+		//printf("========================%s========================can not open %s\r\n", __func__, SLOT_PORT_CONF);
 	}
 	return 0;
 }

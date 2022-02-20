@@ -902,7 +902,8 @@ int zpl_vidhal_venc_update_fd(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E chann
 #ifdef ZPL_HISIMPP_MODULE
     if(venc->venc_channel >= 0)
     {
-        venc->vencfd = HI_MPI_VENC_GetFd(venc->venc_channel);
+        venc->vencfd.stack = OS_STACK;
+        venc->vencfd._fd = HI_MPI_VENC_GetFd(venc->venc_channel);
 		if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, DETAIL))
 			zpl_media_debugmsg_debug(" video venc channel %d fd %d\n", venc->venc_channel, venc->vencfd);
         return OK;

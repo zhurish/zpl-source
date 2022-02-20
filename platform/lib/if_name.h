@@ -42,6 +42,8 @@ extern ifindex_t if_ifindex_make(const char *ifname, const char *uspv);
 
 extern if_type_t if_iftype_make(const char *str);
 
+extern ifindex_t if_uspv2ifindex(if_type_t, zpl_uint32, zpl_uint32, zpl_uint32, zpl_uint32);
+extern const char * if_uspv2ifname(if_type_t, zpl_uint32, zpl_uint32, zpl_uint32, zpl_uint32);
 
 
 extern int if_uspv_type_setting(struct interface *ifp);

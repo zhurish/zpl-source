@@ -54,7 +54,7 @@ int os_system_time_base(zpl_char *dt)
 	return OK;
 }
 
-int os_system_tick()
+int os_system_tick(void)
 {
 	struct timeval tv;
 	if(os_gettime (OS_CLK_MONOTONIC, &tv) != OK)
@@ -198,7 +198,7 @@ os_get_monotonic (struct timeval *tv)
   return ret;
 }
 
-int os_get_monotonic_msec ()
+int os_get_monotonic_msec (void)
 {
 	struct timeval tv;
 	os_get_monotonic (&tv);
@@ -593,7 +593,7 @@ static int os_time_compar(os_time_t *new, os_time_t *old)
 		return 1;
 }
 
-int os_time_init()
+int os_time_init(void)
 {
 	os_system_time_base("2019-01-01 00:00:00");
 	if(time_list == NULL)
@@ -632,7 +632,7 @@ int os_time_init()
 }
 
 
-int os_time_exit()
+int os_time_exit(void)
 {
 #ifdef OS_TIMER_POSIX
 	if(os_timerid)
@@ -669,7 +669,7 @@ int os_time_exit()
 	return OK;
 }
 
-int os_time_load()
+int os_time_load(void)
 {
 	if(time_task_id)
 		return OK;
@@ -716,7 +716,7 @@ int os_time_clean(zpl_bool all)
 	return t;
 }
 
-static os_time_t * os_time_get_node()
+static os_time_t * os_time_get_node(void)
 {
 	NODE *node;
 	os_time_t *t = NULL;
@@ -876,7 +876,7 @@ static int os_time_interrupt_setting(zpl_uint32 msec)
 }
 
 
-static int os_time_interval_refresh()
+static int os_time_interval_refresh(void)
 {
 #ifdef OS_TIMER_POSIX
 	os_time_t *to = NULL;

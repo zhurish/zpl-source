@@ -24,6 +24,8 @@ extern "C" {
 #include "zpl_type.h"
 #include "os_ipstack.h"
 
+#include <assert.h>
+
 #ifdef __cplusplus
 }
 #endif

@@ -76,7 +76,7 @@ static int dot1x_nsm_client_setup(ifindex_t ifindex, void *p)
 	{
 		struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 		if(nsm)
-			nsm->nsm_client[NSM_DOT1X] = p;
+			nsm->nsm_client[NSM_INTF_DOT1X] = p;
 	}
 	return OK;
 }
@@ -156,7 +156,7 @@ int nsm_dot1x_global_enable(zpl_bool enable)
 	return OK;
 }
 
-zpl_bool nsm_dot1x_global_is_enable()
+zpl_bool nsm_dot1x_global_is_enable(void)
 {
 	zpl_bool enable;
 	if(gDot1x_t.mutex)

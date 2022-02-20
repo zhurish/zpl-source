@@ -129,7 +129,7 @@ ZPLOS_CPPFLAGS += -std=c++11 -Wno-write-strings
 #
 # WANRING
 #	
-ZPLOS_CFLAGS += -s -MMD -MP -Wfatal-errors -Wall -Wextra -Wnested-externs -Wmissing-prototypes \
+ZPLOS_CFLAGS += -MMD -MP -Wfatal-errors -Wall -Wextra -Wnested-externs -Wmissing-prototypes \
 			 -Wredundant-decls -Wcast-align -Wunreachable-code -Wshadow	\
 			 -Wimplicit-function-declaration -Wimplicit	-Wreturn-type -Wunused \
 			 -Wswitch -Wformat -Wuninitialized -Wchar-subscripts  \
@@ -150,11 +150,12 @@ ZPLOS_CFLAGS += -Werror=return-type -Werror=format-extra-args  \
 			  -Werror=overflow  -Werror=format-security -Werror=shadow \
 			  -Werror=unsafe-loop-optimizations -Werror=init-self \
 			  -Werror=unused-function -Werror=redundant-decls \
-			  -Werror=missing-prototypes 
+			  -Werror=missing-prototypes  -Werror=sequence-point -Werror=float-equal \
+			  -Werror=strict-prototypes
 #
 #			  -Werror=float-equal 
 # 
-#			  -Werror=unused-variable
+#			  -Werror=unused-variable -Werror=shift-count-overflow 
 #			  #-Werror=stack-protector  -Werror=unused-but-set-variable  -Werror=unused-but-set-parameter -Werror=nested-externs
 			  #-Werror=suggest-attribute=format -Werror=missing-format-attribute  -Werror=overlength-stringsl
 			  #-Werror=sign-compare 有符号和无符号参数比较

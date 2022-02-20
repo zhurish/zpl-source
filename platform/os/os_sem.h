@@ -48,8 +48,8 @@ typedef struct
 *		1： 超时
 *		-1：失败
 */
-int os_mutex_obj_init();
-int os_mutex_obj_exit();
+int os_mutex_obj_init(void);
+int os_mutex_obj_exit(void);
 
 
 //#define WAIT_FOREVER -1
@@ -106,19 +106,19 @@ typedef struct os_spin_s
 #define OS_WAIT_NO 0
 #define OS_WAIT_FOREVER -1//WAIT_FOREVER
 
-extern os_sem_t * os_sem_init();
+extern os_sem_t * os_sem_init(void);
 extern int os_sem_give(os_sem_t *);
 extern int os_sem_take(os_sem_t *, zpl_int32 wait);
 extern int os_sem_exit(os_sem_t *);
 
 
-extern os_mutex_t * os_mutex_init();
+extern os_mutex_t * os_mutex_init(void);
 extern int os_mutex_lock(os_mutex_t *, zpl_int32 wait);
 extern int os_mutex_unlock(os_mutex_t *);
 extern int os_mutex_exit(os_mutex_t *);
 
 
-extern os_spin_t * os_spin_init();
+extern os_spin_t * os_spin_init(void);
 extern int os_spin_lock(os_spin_t *);
 extern int os_spin_unlock(os_spin_t *);
 extern int os_spin_exit(os_spin_t *);

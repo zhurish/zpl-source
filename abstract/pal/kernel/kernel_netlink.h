@@ -96,7 +96,7 @@ extern int _netlink_route_rib (struct prefix *p, struct rib *old, struct rib *ne
 extern void _netlink_open(struct nsm_vrf *zvrf);
 extern void _netlink_close(struct nsm_vrf *zvrf);
 
-extern void _netlink_load_all();
+extern void _netlink_load_all(void);
 
 #ifdef ZPL_KERNEL_SORF_FORWARDING
 /*

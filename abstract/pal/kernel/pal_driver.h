@@ -83,7 +83,7 @@ typedef struct pal_stack_s
 
 extern pal_stack_t pal_stack;
 
-extern int pal_module_init();
+extern int pal_module_init(void);
 
 //interface
 extern int pal_interface_create(struct interface *ifp);

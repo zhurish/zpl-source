@@ -927,7 +927,7 @@ int zpl_media_hal_vpss_hwbind(zpl_media_channel_t *chn, zpl_bool bind)
     return OK;
 }
 
-int zpl_media_hal_read_stop(ZPL_MEDIA_HARDADAP_E module, zpl_media_channel_t *chn)
+int zpl_media_hal_read_stop(ZPL_MEDIA_NODE_E module, zpl_media_channel_t *chn)
 {
     int ret = -1;
     zpl_video_encode_t *video_encode = NULL;
@@ -988,19 +988,19 @@ int zpl_media_hal_read_stop(ZPL_MEDIA_HARDADAP_E module, zpl_media_channel_t *ch
     } 
     switch(module)
     {
-    case ZPL_MEDIA_HARDADAP_INPUTPIPE:
+    case ZPL_MEDIA_NODE_PIPE:
     ret = zpl_video_input_pipe_read_stop(video_input_pipe);
     break;
-    case ZPL_MEDIA_HARDADAP_INPUT:
+    case ZPL_MEDIA_NODE_INPUT:
     ret = zpl_video_input_channel_read_stop(video_input);
     break;
-    case ZPL_MEDIA_HARDADAP_VPSSGRP:  
+    //case ZPL_MEDIA_NODE_PROCESS:  
     //ret = zpl_video_vpss_channel_read_stop(video_vpss);
-    break;  
-    case ZPL_MEDIA_HARDADAP_VPSS: 
+    //break;  
+    case ZPL_MEDIA_NODE_PROCESS: 
     ret = zpl_video_vpss_channel_read_stop(video_vpss);
     break;
-    case ZPL_MEDIA_HARDADAP_ENCODE:
+    case ZPL_MEDIA_NODE_ENCODE:
     ret = zpl_video_encode_read_stop(video_encode);
     break;
     default:
@@ -1009,7 +1009,7 @@ int zpl_media_hal_read_stop(ZPL_MEDIA_HARDADAP_E module, zpl_media_channel_t *ch
     return ret;
 }
 
-int zpl_media_hal_read_start(ZPL_MEDIA_HARDADAP_E module, zpl_void *master, zpl_media_channel_t *chn)
+int zpl_media_hal_read_start(ZPL_MEDIA_NODE_E module, zpl_void *master, zpl_media_channel_t *chn)
 {
     int ret = -1;
     zpl_video_encode_t *video_encode = NULL;
@@ -1070,25 +1070,25 @@ int zpl_media_hal_read_start(ZPL_MEDIA_HARDADAP_E module, zpl_void *master, zpl_
     } 
     switch(module)
     {
-    case ZPL_MEDIA_HARDADAP_INPUTPIPE:
+    case ZPL_MEDIA_NODE_PIPE:
     if(video_input_pipe->hwbind == zpl_false)
     //if(!VIDHAL_RES_FLAG_CHECK(video_input_pipe->res_flag, SRCBIND))
         ret = zpl_video_input_pipe_read_start(master, video_input_pipe);
     break;
-    case ZPL_MEDIA_HARDADAP_INPUT:
+    case ZPL_MEDIA_NODE_INPUT:
     if(video_input->hwbind == zpl_false)
     //if(!VIDHAL_RES_FLAG_CHECK(video_input->res_flag, SRCBIND))
         ret = zpl_video_input_channel_read_start(master, video_input);
     break;
-    case ZPL_MEDIA_HARDADAP_VPSSGRP:  
+    //case ZPL_MEDIA_HARDADAP_VPSSGRP:  
     //ret = zpl_video_vpss_channel_read_start(master, video_vpss);
-    break;  
-    case ZPL_MEDIA_HARDADAP_VPSS: 
+    //break;  
+    case ZPL_MEDIA_NODE_PROCESS: 
     if(video_vpss->hwbind == zpl_false)
     //if(!VIDHAL_RES_FLAG_CHECK(video_vpss->res_flag, DSTBIND))
         ret = zpl_video_vpss_channel_read_start(master, video_vpss);
     break;
-    case ZPL_MEDIA_HARDADAP_ENCODE:
+    case ZPL_MEDIA_NODE_ENCODE:
     //if(video_encode->hwbind == zpl_false)
         ret = zpl_video_encode_read_start(master, video_encode);
     break;

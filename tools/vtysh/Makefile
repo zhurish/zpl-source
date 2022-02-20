@@ -10,9 +10,27 @@ SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
 
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
 
-LDCLFLAG = $(ZPLOS_LDLIBS) -L$(ZPL_INSTALL_LIB_DIR) -los -lbase -lshell
+LDCLFLAG = $(ZPLOS_LDLIBS) -L$(ZPL_INSTALL_LIB_DIR) -lreadline -Xlinker "-(" -los -lbase -lshell -lsyslog -Xlinker "-)" 
 
+vtysh_cmd_FILES = $(BASE_ROOT)/platform/lib/cmd_host.c $(BASE_ROOT)/platform/lib/cmd_log.c \
+		  $(BASE_ROOT)/platform/lib/cmd_memory.c $(BASE_ROOT)/platform/lib/eloop.c \
+		  $(BASE_ROOT)/platform/lib/distribute.c $(BASE_ROOT)/platform/lib/filter.c \
+		  $(BASE_ROOT)/platform/lib/keychain.c \
+		  $(BASE_ROOT)/platform/lib/nsm_vrf.c $(BASE_ROOT)/platform/lib/plist.c \
+		  $(BASE_ROOT)/platform/nsm/cli/cmd_interface.c \
+		  $(BASE_ROOT)/platform/nsm/cli/cmd_arp.c \
+		  $(BASE_ROOT)/platform/nsm/cli/cmd_debug.c $(BASE_ROOT)/platform/nsm/cli/cmd_dhcpc.c \
+		  $(BASE_ROOT)/platform/nsm/cli/cmd_dhcps.c $(BASE_ROOT)/platform/nsm/cli/cmd_dns.c \
+		  $(BASE_ROOT)/platform/nsm/cli/cmd_dos.c \
+	      $(BASE_ROOT)/platform/nsm/cli/cmd_dot1x.c
 
+vtysh_cmd.c: 
+	./extract.pl $(vtysh_cmd_FILES) > vtysh_cmd.c
+
+perldepends:
+	rm perlinc.txt
+	echo $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLINCLUDE) > perlinc.txt
+	sed -i ':a;N;$!ba;s/\n/;/g' perlinc.txt
 
 $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \
@@ -30,12 +48,12 @@ make_prepare:
 	done
 
 $(VTYSH_TARGET): $(MODULE_OBJS)
-	$(CC) $(MODULE_OBJS) $(ZPLCFLAGS) $(LDCLFLAG) -o $(VTYSH_TARGET) 
+	$(CC) -fPIC $(MODULE_OBJS) $(ZPLCFLAGS) $(LDCLFLAG) -o $(VTYSH_TARGET) 
 
-lib: $(MODULE_OBJS) 
+lib: perldepends vtysh_cmd.c $(MODULE_OBJS) 
 
 
-obj: $(MODULE_OBJS) 
+obj: perldepends vtysh_cmd.c $(MODULE_OBJS) 
 
 
 install: $(VTYSH_TARGET) 
@@ -55,4 +73,4 @@ objclean:
 
 all: obj install 
 
-.PHONY:	obj all lib install objclean clean make_prepare
+.PHONY:	obj all lib install objclean clean make_prepare perldepends

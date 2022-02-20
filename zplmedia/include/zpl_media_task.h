@@ -20,11 +20,8 @@ typedef struct
 	zpl_void*		t_master;
 }zpl_media_task_t;
 
-#ifdef ZPL_MEDIA_PROCESS_ONE
 extern zpl_media_task_t tvideo_task;
-#else
-extern zpl_media_task_t tvideo_task[3];
-#endif
+
 
 int zpl_media_task_create(ZPL_MEDIA_NODE_E module, zpl_media_task_t *t_task);
 int zpl_media_task_destroy (zpl_media_task_t *t_task);

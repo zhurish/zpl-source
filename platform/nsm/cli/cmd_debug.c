@@ -103,7 +103,7 @@ static int config_write_debug (struct vty *vty)
 }
 
 
-int cmd_debug_init()
+int cmd_debug_init(void)
 {
 	install_node (&debug_node, config_write_debug);
 

@@ -4,6 +4,7 @@
 extern "C" {
 #endif
 
+
 #include "os_include.h"
 #include "hal_ipcmsg.h"
 
@@ -11,20 +12,19 @@ extern "C" {
 struct hal_ipcsrv
 {
     zpl_socket_t       sock;
+ 
     zpl_socket_t       unixsock;
-    zpl_socket_t       evt_sock;
-    zpl_socket_t       evt_unixsock;
+
     struct thread_master *master;
     struct list *client_list;
-    struct list *evclient_list;
-    struct thread *t_read;
-    struct thread *u_read;
-    struct thread *et_read;
-    struct thread *eu_read;
 
+    struct thread *t_accept;
+    struct thread *u_accept;
+   
     struct hal_ipcmsg output_msg;
     struct hal_ipcmsg input_msg;
     zpl_uint32  debug;
+    os_mutex_t *mutex;
 };
 
 struct hal_ipcclient
@@ -51,7 +51,10 @@ struct hal_ipcclient
 int hal_ipcsrv_send_message(int unit, zpl_uint32 command, void *msg, int len, int timeout);
 
 int hal_ipcsrv_init(void *m, int port, const char *path, int evport, const char *evpath);
-int hal_ipcsrv_exit();
+int hal_ipcsrv_exit(void);
+#ifdef ZPL_SHELL_MODULE
+int hal_ipcsrv_show(void *pvoid);
+#endif
 
 #ifdef __cplusplus
 }

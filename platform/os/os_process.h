@@ -55,8 +55,8 @@ extern int os_process_register(process_action action, zpl_char *name, zpl_char *
 extern int os_process_action(process_action action, zpl_char *name, zpl_uint32 id);
 extern int os_process_action_respone(int fd, zpl_uint32 respone);
 
-extern int os_process_start();
-extern int os_process_stop();
+extern int os_process_start(void);
+extern int os_process_stop(void);
 
 #endif
 
@@ -68,7 +68,7 @@ extern int super_system_execvp(const zpl_char *cmd, zpl_char **input);
 
 
 
-extern zpl_pid_t child_process_create();
+extern zpl_pid_t child_process_create(void);
 extern int child_process_destroy(zpl_pid_t pid);
 extern int child_process_kill(zpl_pid_t pid);
 extern int child_process_wait(zpl_pid_t pid, zpl_uint32 wait);

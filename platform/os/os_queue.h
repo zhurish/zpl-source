@@ -37,8 +37,8 @@ typedef struct os_queue
 }os_queue_t;
 
 
-extern int os_msgq_init();
-extern int os_msgq_exit();
+extern int os_msgq_init(void);
+extern int os_msgq_exit(void);
 
 
 extern os_queue_t *os_queue_create(zpl_uint32 max, zpl_uint32 size);

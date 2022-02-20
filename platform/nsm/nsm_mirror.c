@@ -75,7 +75,7 @@ static int nsm_mirror_client_setup(ifindex_t ifindex, void *p)
 	{
 		struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 		if(nsm)
-			nsm->nsm_client[NSM_MIRROR] = p;
+			nsm->nsm_client[NSM_INTF_MIRROR] = p;
 	}*/
 	return OK;
 }
@@ -158,7 +158,7 @@ int nsm_mirror_global_enable(zpl_bool enable)
 	return OK;
 }
 
-zpl_bool nsm_mirror_global_is_enable()
+zpl_bool nsm_mirror_global_is_enable(void)
 {
 	zpl_bool enable;
 	if(gMirror.mutex)
@@ -421,7 +421,7 @@ int nsm_mirror_source_get_api(ifindex_t ifindex, zpl_bool *enable, mirror_dir_en
 	return ret;
 }
 
-zpl_bool nsm_mirror_is_source_api()
+zpl_bool nsm_mirror_is_source_api(void)
 {
 	zpl_bool ret = zpl_false;
 	nsm_mirror_t *pstNode = NULL;

@@ -99,6 +99,13 @@ int vty_out(struct vty *vty, const char *format, ...)
 	zpl_char buf[1024];
 	zpl_char *p = NULL;
 	os_bzero(buf, sizeof(buf));
+	if (vty->vty_outputf)
+	{
+		va_start(args, format);
+		len = vty->vty_outputf(vty->p_output, format, args);
+		va_end(args);
+		return len;
+	}
 	if (vty_shell(vty))
 	{
 		va_start(args, format);
@@ -139,15 +146,22 @@ int vty_out(struct vty *vty, const char *format, ...)
 		/* When initial buffer is enough to store all output.  */
 		if (!p)
 			p = buf;
-		if (vty->ansync)
+		if (vty->vty_output)
 		{
-			ipstack_write(vty->wfd, p, len);
+			len = vty->vty_output(vty->p_output, p, len);
 		}
 		else
 		{
-			/* Pointer p must point out buffer. */
-			if (vty->obuf)
-				buffer_put(vty->obuf, (zpl_uchar *)p, len);
+			if (vty->ansync)
+			{
+				ipstack_write(vty->wfd, p, len);
+			}
+			else
+			{
+				/* Pointer p must point out buffer. */
+				if (vty->obuf)
+					buffer_put(vty->obuf, (zpl_uchar *)p, len);
+			}
 		}
 		/* If p is not different with buf, it is allocated buffer.  */
 		if (p != buf)
@@ -164,6 +178,13 @@ int vty_sync_out(struct vty *vty, const char *format, ...)
 	zpl_char buf[1024];
 	zpl_char *p = NULL;
 	os_bzero(buf, sizeof(buf));
+	if (vty->vty_outputf)
+	{
+		va_start(args, format);
+		len = vty->vty_outputf(vty->p_output, format, args);
+		va_end(args);
+		return len;
+	}
 	if (vty_shell(vty))
 	{
 		va_start(args, format);
@@ -199,18 +220,25 @@ int vty_sync_out(struct vty *vty, const char *format, ...)
 		/* When initial buffer is enough to store all output.  */
 		if (!p)
 			p = buf;
-		if (vty_login_type(vty) >= VTY_LOGIN_TELNET)
-			ipstack_write(vty->wfd, p, len);
+		if (vty->vty_output)
+		{
+			len = vty->vty_output(vty->p_output, p, len);
+		}
 		else
 		{
-			if (vty_login_type(vty) <= VTY_LOGIN_CONSOLE)
+			if (vty_login_type(vty) >= VTY_LOGIN_TELNET)
+				ipstack_write(vty->wfd, p, len);
+			else
 			{
-				//tcflush(vty->wfd._fd, TCIOFLUSH);
-			}
-			ipstack_write(vty->wfd, p, len);
-			if (vty_login_type(vty) <= VTY_LOGIN_CONSOLE)
-			{
-				//tcdrain(vty->wfd._fd);
+				if (vty_login_type(vty) <= VTY_LOGIN_CONSOLE)
+				{
+					// tcflush(vty->wfd._fd, TCIOFLUSH);
+				}
+				ipstack_write(vty->wfd, p, len);
+				if (vty_login_type(vty) <= VTY_LOGIN_CONSOLE)
+				{
+					// tcdrain(vty->wfd._fd);
+				}
 			}
 		}
 		if (p != buf)
@@ -276,10 +304,20 @@ static int vty_log_out(struct vty *vty, const char *level,
 	if (vty->type == VTY_TERM)
 		buf[len++] = '\r';
 	buf[len++] = '\n';
+	if (vty->vty_outputf)
+	{
+		len = vty->vty_outputf(vty->p_output, "%s", buf);
+		return 0;
+	}
 	if (vty_shell(vty))
 	{
 		len = fprintf(stdout, "%s", buf);
 		fflush(stdout);
+		return 0;
+	}
+	if (vty->vty_output)
+	{
+		len = vty->vty_output(vty->p_output, buf, len);
 		return 0;
 	}
 	if (vty_login_type(vty) >= VTY_LOGIN_TELNET)
@@ -288,12 +326,12 @@ static int vty_log_out(struct vty *vty, const char *level,
 	{
 		if (vty_login_type(vty) <= VTY_LOGIN_CONSOLE)
 		{
-			//tcflush(vty->wfd._fd, TCIOFLUSH);
+			// tcflush(vty->wfd._fd, TCIOFLUSH);
 		}
 		ret = ipstack_write(vty->wfd, buf, len);
 		if (vty_login_type(vty) <= VTY_LOGIN_CONSOLE)
 		{
-			//tcdrain(vty->wfd._fd);
+			// tcdrain(vty->wfd._fd);
 		}
 	}
 	if (ret < 0)
@@ -389,7 +427,7 @@ const char *vty_prompt(struct vty *vty)
 		snprintf(buf, sizeof buf, cmd_prompt(vty->node), hostname, vty->prompt);
 	else
 		snprintf(buf, sizeof buf, cmd_prompt(vty->node), hostname);
-	if(vty_login_type(vty) != VTY_LOGIN_VTYSH_STDIO)
+	if (vty_login_type(vty) != VTY_LOGIN_VTYSH_STDIO)
 		vty_out(vty, "%s", buf);
 
 	/*
@@ -455,6 +493,9 @@ vty_new()
 	new->max = VTY_BUFSIZ;
 	new->pid = 0;
 	new->pthd = 0;
+	new->trapping = 1;
+	new->monitor = 1;
+	new->cancel = 0;
 	return new;
 }
 
@@ -896,7 +937,7 @@ static void vty_end_config(struct vty *vty)
 	{
 		vty_config_unlock(vty);
 	}
-	vty->node = cmd_end_node(vty->node);
+	vty->node = cmd_end_node(vty);
 	vty_prompt(vty);
 	vty->cp = 0;
 }
@@ -1791,13 +1832,13 @@ int vty_read_handle(struct vty *vty, zpl_uchar *buf, zpl_uint32 len)
 		case '\t':
 			vty_complete_command(vty);
 			break;
-		case '?'://63
+		case '?': // 63
 			if (vty->node == AUTH_NODE || vty->node == AUTH_ENABLE_NODE)
 				vty_self_insert(vty, buf[i]);
 			else
 				vty_describe_command(vty);
 			break;
-		case '\033'://ESC
+		case '\033': // ESC
 			if (i + 1 < nbytes && buf[i + 1] == '[')
 			{
 				vty->escape = VTY_ESCAPE;
@@ -2331,13 +2372,13 @@ static int vty_console_flush(struct thread *thread)
 	struct vty *vty = THREAD_ARG(thread);
 	if (vty_login_type(vty) <= VTY_LOGIN_CONSOLE)
 	{
-		//tcflush(vty->wfd._fd, TCIOFLUSH);
+		// tcflush(vty->wfd._fd, TCIOFLUSH);
 	}
 	vty->t_write = NULL;
 	vty_flush_handle(vty, vty->wfd);
 	if (vty_login_type(vty) <= VTY_LOGIN_CONSOLE)
 	{
-		//tcdrain(vty->wfd._fd);
+		// tcdrain(vty->wfd._fd);
 	}
 	return 0;
 }
@@ -2368,17 +2409,17 @@ static int vty_console_read(struct thread *thread)
 		}
 		vty->status = VTY_CLOSE;
 	}
-/*
-	zpl_uint32 i;
-	for (i = 0; i < nbytes; i++)
-	{
-		//if (buf[i] <= 31)
+	/*
+		zpl_uint32 i;
+		for (i = 0; i < nbytes; i++)
 		{
-			fprintf(stdout, "============0x%02x==========\r\n", buf[i]);
-			fflush(stdout);
+			//if (buf[i] <= 31)
+			{
+				fprintf(stdout, "============0x%02x==========\r\n", buf[i]);
+				fflush(stdout);
+			}
 		}
-	}
-*/
+	*/
 	vty_read_handle(vty, buf, nbytes);
 
 	/* Check status. */
@@ -2451,7 +2492,7 @@ static int vty_console_accept(struct thread *thread)
 		return ERROR;
 	zassert(vty != NULL);
 	vty->t_read = NULL;
-	//vty_ansync_enable(vty, zpl_true);
+	// vty_ansync_enable(vty, zpl_true);
 
 	c = vty_getc_input(vty);
 
@@ -2489,7 +2530,7 @@ static void vty_console_close_cache(struct vty *vty)
 
 		if (vty_login_type(vty) <= VTY_LOGIN_CONSOLE)
 		{
-			//tcflush(vty->wfd._fd, TCIOFLUSH);
+			// tcflush(vty->wfd._fd, TCIOFLUSH);
 		}
 		/* Flush buffer. */
 		if (vty->obuf)
@@ -2497,7 +2538,7 @@ static void vty_console_close_cache(struct vty *vty)
 
 		if (vty_login_type(vty) <= VTY_LOGIN_CONSOLE)
 		{
-			//tcdrain(vty->wfd._fd);
+			// tcdrain(vty->wfd._fd);
 		}
 		/* Free command history. */
 		for (i = 0; i < VTY_MAXHIST; i++)
@@ -2584,34 +2625,34 @@ static int vty_stdio_attribute(void)
 		if (!tcgetattr(cli_shell.vty->fd._fd, &cli_shell.ttycom.old_termios))
 		{
 			memcpy(&cli_shell.ttycom.termios, &cli_shell.ttycom.old_termios, sizeof(struct termios));
-			//cfmakeraw(&cli_shell.ttycom.termios);
-			//cli_shell.ttycom.termios.c_lflag &= ~(ICANON | ECHO | ECHOE | ECHOK | ECHOCTL |
+			// cfmakeraw(&cli_shell.ttycom.termios);
+			// cli_shell.ttycom.termios.c_lflag &= ~(ICANON | ECHO | ECHOE | ECHOK | ECHOCTL |
 			//									 ECHONL | ECHOPRT | ECHOKE | ICRNL);
-			//cli_shell.ttycom.termios.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+			// cli_shell.ttycom.termios.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
 
-			//cli_shell.ttycom.termios.c_oflag &= ~ONLRET;
-			//cli_shell.ttycom.termios.c_cc[VMIN] = 1; /* define the minimum bytes data to be readed*/
+			// cli_shell.ttycom.termios.c_oflag &= ~ONLRET;
+			// cli_shell.ttycom.termios.c_cc[VMIN] = 1; /* define the minimum bytes data to be readed*/
 			/*
 			cli_shell.ttycom.termios.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP
-                           | INLCR | IGNCR | ICRNL | IXON);
-      		cli_shell.ttycom.termios.c_oflag &= ~OPOST;
-      		cli_shell.ttycom.termios.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
-      		cli_shell.ttycom.termios.c_cflag &= ~(CSIZE | PARENB);
-      		cli_shell.ttycom.termios.c_cflag |= CS8;
+						   | INLCR | IGNCR | ICRNL | IXON);
+			cli_shell.ttycom.termios.c_oflag &= ~OPOST;
+			cli_shell.ttycom.termios.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+			cli_shell.ttycom.termios.c_cflag &= ~(CSIZE | PARENB);
+			cli_shell.ttycom.termios.c_cflag |= CS8;
 			*/
 			cfmakeraw(&cli_shell.ttycom.termios);
 			cli_shell.ttycom.termios.c_lflag |= (ISIG);
-			//cli_shell.ttycom.termios.c_lflag &= ~(ECHO | ECHONL | ICANON );
-			//cli_shell.ttycom.termios.c_iflag &= ~(ICRNL);
-			//cli_shell.ttycom.termios.c_lflag &= ~(ECHO | ECHONL | ICANON |ICRNL);
+			// cli_shell.ttycom.termios.c_lflag &= ~(ECHO | ECHONL | ICANON );
+			// cli_shell.ttycom.termios.c_iflag &= ~(ICRNL);
+			// cli_shell.ttycom.termios.c_lflag &= ~(ECHO | ECHONL | ICANON |ICRNL);
 			/*
 			cfmakeraw sets the terminal attributes as follows:
-            termios_p->c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP
-                            |INLCR|IGNCR|ICRNL|IXON);
-            termios_p->c_oflag &= ~OPOST;
-            termios_p->c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
-            termios_p->c_cflag &= ~(CSIZE|PARENB);
-            termios_p->c_cflag |= CS8;
+			termios_p->c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP
+							|INLCR|IGNCR|ICRNL|IXON);
+			termios_p->c_oflag &= ~OPOST;
+			termios_p->c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
+			termios_p->c_cflag &= ~(CSIZE|PARENB);
+			termios_p->c_cflag |= CS8;
 			*/
 			tcsetattr(cli_shell.vty->fd._fd, TCSANOW, &cli_shell.ttycom.termios);
 		}
@@ -2656,7 +2697,8 @@ void vty_tty_init(zpl_char *tty)
 	ipstack_init(OS_STACK, ttyfd);
 	if (tty && _global_host.console_enable)
 	{
-		fprintf(stdout, "VTY Shell open '%s' for CLI!\r\n", tty);
+		//fprintf(stdout, "VTY Shell open '%s' for CLI!\r\n", tty);
+		zlog_notice(MODULE_LIB,"VTY Shell open '%s' for CLI!\r\n", tty);
 		if (cli_shell.ttycom.fd <= 0)
 		{
 			os_memset(&cli_shell.ttycom, 0, sizeof(struct tty_com));
@@ -2672,7 +2714,8 @@ void vty_tty_init(zpl_char *tty)
 				ipstack_init(OS_STACK, ttyfd);
 			else
 			{
-				fprintf(stdout, "vty can not open %s(%s)\r\n", tty, strerror(ipstack_errno));
+				zlog_err(MODULE_LIB,"vty can not open %s(%s)\r\n", tty, strerror(ipstack_errno));
+				//fprintf(stdout, "vty can not open %s(%s)\r\n", tty, strerror(ipstack_errno));
 				return ERROR;
 			}
 		}
@@ -2703,9 +2746,9 @@ void vty_tty_init(zpl_char *tty)
 #else
 				vty_stdio_attribute();
 
-				//cli_shell.vty->node = ENABLE_NODE;
+				// cli_shell.vty->node = ENABLE_NODE;
 
-				if(cli_shell.vty->node >= ENABLE_NODE)
+				if (cli_shell.vty->node >= ENABLE_NODE)
 				{
 					cli_shell.vty->privilege = CMD_CONFIG_LEVEL;
 				}
@@ -2966,6 +3009,7 @@ vtysh_accept(struct thread *thread)
 #endif /* VTYSH_DEBUG */
 
 	vty = vty_new();
+	vty->vtysh_msg = zpl_osmsg_new(VTYSH_BUFSIZ);
 	vty->fd = sock;
 	vty->wfd = sock;
 	vty->type = VTY_SHELL_SERV;
@@ -2997,22 +3041,81 @@ vtysh_flush(struct vty *vty)
 	return 0;
 }
 
-static int
-vtysh_read(struct thread *thread)
+static int vtysh_read(struct thread *thread)
 {
 	int ret;
 	zpl_socket_t sock;
-	zpl_uint32 nbytes;
-	struct vty *vty;
-	zpl_uchar buf[VTY_READ_BUFSIZ];
-	zpl_uchar *p;
-	vtysh_hdr_t *header = NULL;
-
+	zpl_uint32 nbytes = 0, already = 0;
+	struct vty *vty = NULL;
+	zpl_uchar *p = NULL, *buf = NULL;
+	vtysh_result_t *header = NULL;
+	vtysh_msghdr_t msg;
 	sock = THREAD_FD(thread);
 	vty = THREAD_ARG(thread);
 	vty->t_read = NULL;
-	os_bzero(buf, sizeof(buf));
-	if ((nbytes = ipstack_read(sock, buf, VTY_READ_BUFSIZ)) <= 0)
+#if 1
+
+	/* Read length and command (if we don't have it already). */
+	already = zpl_osmsg_get_endp(vty->vtysh_msg);
+	if (already < sizeof(vtysh_msghdr_t))
+	{
+		nbytes = zpl_osmsg_read_try(vty->vtysh_msg, sock, sizeof(vtysh_msghdr_t) - already);
+		if (nbytes == -1)
+		{
+			buffer_reset(vty->obuf);
+			zpl_osmsg_reset(vty->vtysh_msg);
+			vty_close(vty);
+			return -1;
+		}
+		if (nbytes != (ssize_t)(sizeof(vtysh_msghdr_t) - already))
+		{
+			/* Try again later. */
+			vty_event(VTYSH_READ, sock, vty);
+			return 0;
+		}
+		already = sizeof(vtysh_msghdr_t);
+	}
+
+	/* Reset to read from the beginning of the incoming packet. */
+	zpl_osmsg_set_getp(vty->vtysh_msg, 0);
+
+	/* Fetch header values */
+	msg.type = zpl_osmsg_getl(vty->vtysh_msg);
+	msg.msglen = zpl_osmsg_getl(vty->vtysh_msg);
+
+	if (msg.msglen > zpl_osmsg_get_size(vty->vtysh_msg))
+	{
+		zlog_warn(MODULE_DEFAULT, "%s: ipstack_socket %d message length %u exceeds buffer size %lu",
+				  __func__, sock._fd, msg.msglen, zpl_osmsg_get_size(vty->vtysh_msg));
+		buffer_reset(vty->obuf);
+		zpl_osmsg_reset(vty->vtysh_msg);
+		vty_close(vty);
+		return -1;
+	}
+
+	/* Read rest of data. */
+	if (already < msg.msglen)
+	{
+		ssize_t nbyte;
+		if (((nbyte = zpl_osmsg_read_try(vty->vtysh_msg, sock,
+										 msg.msglen - already)) == 0) ||
+			(nbyte == -1))
+		{
+			buffer_reset(vty->obuf);
+			zpl_osmsg_reset(vty->vtysh_msg);
+			vty_close(vty);
+			return -1;
+		}
+		if (nbyte != (ssize_t)(msg.msglen - already))
+		{
+			/* Try again later. */
+			vty_event(VTYSH_READ, sock, vty);
+			return 0;
+		}
+	}
+	buf = zpl_osmsg_pnt(vty->vtysh_msg);
+#else
+	if ((nbytes = ipstack_read(sock, vty->buf, VTY_READ_BUFSIZ)) <= 0)
 	{
 		if (nbytes < 0)
 		{
@@ -3036,57 +3139,94 @@ vtysh_read(struct thread *thread)
 #ifdef VTYSH_DEBUG
 	printf("line: %.*s\n", nbytes, buf);
 #endif /* VTYSH_DEBUG */
-
-	if (vty->length + nbytes >= vty->max)
+#endif
+	if (msg.type == VTYSH_MSG)
 	{
-		/* Clear command line buffer. */
-		vty->cp = vty->length = 0;
-		vty_clear_buf(vty);
-		vty_out(vty, "%% Command is too long.%s", VTY_NEWLINE);
-		goto out;
-	}
-
-	for (p = buf; p < buf + nbytes; p++)
-	{
-		vty->buf[vty->length++] = *p;
-		if (*p == '\0' || *p == '\r' || *p == '\n')
+		zpl_osmsg_reset(vty->vtysh_msg);
+		header = (vtysh_result_t *)buffer_dataptr(vty->obuf);
+		buffer_putemptyeize(vty->obuf, sizeof(vtysh_result_t));
+		buffer_putstr(vty->obuf, "No support\n");
+		header->type = msg.type;
+		header->retcode = -1;
+		header->retlen = buffer_size(vty->obuf);
+		if (vty->ssh_enable)
 		{
-			header = (vtysh_hdr_t *)buffer_dataptr(vty->obuf);
-			buffer_putemptyeize(vty->obuf, sizeof(vtysh_hdr_t));
+			/*if(vty->ssh_write)
+				(vty->ssh_write)(vty, buf, len);*/
+		}
+		if (!vty->t_write && (vtysh_flush(vty) < 0))
+			return 0;
+	}
+	else if (msg.type == VTYSH_CMD)
+	{
+		if (vty->length + nbytes >= vty->max)
+		{
+			/* Clear command line buffer. */
+			vty->cp = vty->length = 0;
+			vty_clear_buf(vty);
+			vty_out(vty, "%% Command is too long.%s", VTY_NEWLINE);
+			goto out;
+		}
 
-			/* Pass this line to parser. */
-			ret = vty_execute(vty);
-			/* Note that vty_execute clears the command buffer and resets
-			 vty->length to 0. */
+		for (p = buf; p < buf + nbytes; p++)
+		{
+			vty->buf[vty->length++] = *p;
+			if (*p == '\0' || *p == '\r' || *p == '\n')
+			{
+				zpl_osmsg_reset(vty->vtysh_msg);
+				header = (vtysh_result_t *)buffer_dataptr(vty->obuf);
+				buffer_putemptyeize(vty->obuf, sizeof(vtysh_result_t));
 
-			/* Return result. */
+				/* Pass this line to parser. */
+				ret = vty_execute(vty);
+				/* Note that vty_execute clears the command buffer and resets
+				vty->length to 0. */
+
+				/* Return result. */
 #ifdef VTYSH_DEBUG
-			printf("result: %d\n", ret);
-			printf("vtysh node: %d\n", vty->node);
+				printf("result: %d\n", ret);
+				printf("vtysh node: %d\n", vty->node);
 #endif /* VTYSH_DEBUG */
 
-			header->retcode = ret;
-			header->retlen = buffer_size(vty->obuf);
+				header->type = msg.type;
+				header->retcode = ret;
+				header->retlen = buffer_size(vty->obuf);
 
-			if (vty->ssh_enable)
-			{
-				/*				if(vty->ssh_write)
-									(vty->ssh_write)(vty, buf, len);*/
+				if (vty->ssh_enable)
+				{
+					/*				if(vty->ssh_write)
+										(vty->ssh_write)(vty, buf, len);*/
+				}
+				/*else
+				{
+					header[3] = ret;
+					buffer_put(vty->obuf, header, 4);
+				}*/
+				if (!vty->t_write && (vtysh_flush(vty) < 0))
+					/* Try to flush results; exit if a write error occurs. */
+					return 0;
 			}
-			/*else
-			{
-				header[3] = ret;
-				buffer_put(vty->obuf, header, 4);
-			}*/
-			if (!vty->t_write && (vtysh_flush(vty) < 0))
-				/* Try to flush results; exit if a write error occurs. */
-				return 0;
 		}
 	}
-
+	else
+	{
+		zpl_osmsg_reset(vty->vtysh_msg);
+		header = (vtysh_result_t *)buffer_dataptr(vty->obuf);
+		buffer_putemptyeize(vty->obuf, sizeof(vtysh_result_t));
+		buffer_putstr(vty->obuf, "No support\n");
+		header->type = msg.type;
+		header->retcode = -1;
+		header->retlen = buffer_size(vty->obuf);
+		if (vty->ssh_enable)
+		{
+			/*if(vty->ssh_write)
+				(vty->ssh_write)(vty, buf, len);*/
+		}
+		if (!vty->t_write && (vtysh_flush(vty) < 0))
+			return 0;
+	}
 out:
 	vty_event(VTYSH_READ, sock, vty);
-
 	return 0;
 }
 
@@ -3198,6 +3338,13 @@ void vty_close(struct vty *vty)
 
 	/* Check configure. */
 	vty_config_unlock(vty);
+#ifdef VTYSH
+	if (vty->vtysh_msg)
+	{
+		zpl_osmsg_free(vty->vtysh_msg);
+		vty->vtysh_msg = NULL;
+	}
+#endif /* VTYSH */
 
 	if (vty_login_type(vty) == VTY_LOGIN_CONSOLE || vty_login_type(vty) == VTY_LOGIN_STDIO)
 	{
@@ -3318,15 +3465,19 @@ static void vty_read_file(FILE *confp)
 		switch (ret)
 		{
 		case CMD_ERR_AMBIGUOUS:
-			fprintf(stderr, "*** Error reading config: Ambiguous command.\n");
+			zlog_err(MODULE_LIB,"*** Error reading config: Ambiguous command.\n");
+			//fprintf(stderr, "*** Error reading config: Ambiguous command.\n");
 			break;
 		case CMD_ERR_NO_MATCH:
-			fprintf(stderr,
-					"*** Error reading config: There is no such command.\n");
+			zlog_err(MODULE_LIB,"*** Error reading config: There is no such command.\n");
+			//fprintf(stderr,
+			//		"*** Error reading config: There is no such command.\n");
 			break;
 		}
-		fprintf(stderr, "*** Error occured processing line %u, below:\n%s\n",
+		zlog_err(MODULE_LIB,"*** Error occured processing line %u, below:\n%s\n",
 				line_num, vty->buf);
+		//fprintf(stderr, "*** Error occured processing line %u, below:\n%s\n",
+		//		line_num, vty->buf);
 		vty_close(vty);
 		exit(1);
 	}
@@ -3339,9 +3490,10 @@ static int host_config_default(zpl_char *password, zpl_char *defult_config)
 		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
 	if (defult_config == NULL)
 	{
-		fprintf(stderr,
-				"%s: failed to setting default configuration file :%s\n",
-				__func__, ipstack_strerror(ipstack_errno));
+		zlog_err(MODULE_LIB,"failed to setting default configuration file :%s\n", ipstack_strerror(ipstack_errno));
+		//fprintf(stderr,
+		//		"%s: failed to setting default configuration file :%s\n",
+		//		__func__, ipstack_strerror(ipstack_errno));
 		// exit(0);
 	}
 	if (_global_host.name == NULL) //
@@ -3384,16 +3536,19 @@ void vty_load_config(zpl_char *config_file)
 		}
 		else
 		{
-			fprintf(stderr, "configuration file exits.\n");
+			//fprintf(stderr, "\r\nconfiguration file exits.\r\n");
+			zlog_err(MODULE_LIB, "configuration file exits.");
 			host_loadconfig_stats(LOAD_DONE);
 			return;
 		}
 	}
 	if (confp == NULL)
 	{
-		fprintf(stderr, "%s: failed to open configuration file %s: %s\n",
-				__func__, config_file ? config_file : "null",
-				ipstack_strerror(ipstack_errno));
+		//fprintf(stderr, "\r\n%s: failed to open configuration file %s: %s\r\n",
+		//		__func__, config_file ? config_file : "null",
+		//		ipstack_strerror(ipstack_errno));
+		zlog_err(MODULE_LIB, "failed to open configuration file %s: %s", config_file ? config_file : "null",
+				ipstack_strerror(ipstack_errno));		
 		// host_config_default(NULL, NULL);
 		host_loadconfig_stats(LOAD_DONE);
 		return;
@@ -3405,7 +3560,8 @@ void vty_load_config(zpl_char *config_file)
 		{
 			fclose(confp);
 			confp = NULL;
-			fprintf(stderr, "configuration file is BACK\n");
+			zlog_err(MODULE_LIB, "configuration file is BACK");
+			//fprintf(stderr, "\r\nconfiguration file is BACK\r\n");
 		}
 		else
 		{
@@ -3496,12 +3652,12 @@ static void ip_vty_log_fixed(struct vty *vty, zpl_char *buf, zpl_size_t len)
 	iov[1].iov_len = 2;
 	if (vty_login_type(vty) <= VTY_LOGIN_CONSOLE)
 	{
-		//tcflush(vty->wfd._fd, TCIOFLUSH);
+		// tcflush(vty->wfd._fd, TCIOFLUSH);
 	}
 	ipstack_writev(vty->wfd, iov, 2);
 	if (vty_login_type(vty) <= VTY_LOGIN_CONSOLE)
 	{
-		//tcdrain(vty->wfd._fd);
+		// tcdrain(vty->wfd._fd);
 	}
 }
 
@@ -3515,12 +3671,12 @@ static void os_vty_log_fixed(struct vty *vty, zpl_char *buf, zpl_size_t len)
 	iov[1].iov_len = 2;
 	if (vty_login_type(vty) <= VTY_LOGIN_CONSOLE)
 	{
-		//tcflush(vty->wfd._fd, TCIOFLUSH);
+		// tcflush(vty->wfd._fd, TCIOFLUSH);
 	}
 	writev(vty->wfd._fd, iov, 2);
 	if (vty_login_type(vty) <= VTY_LOGIN_CONSOLE)
 	{
-		//tcdrain(vty->wfd._fd);
+		// tcdrain(vty->wfd._fd);
 	}
 }
 
@@ -3861,12 +4017,12 @@ enum vtylogin_type vty_login_type(struct vty *vty)
 	return vty->login_type;
 }
 
-void vty_init_vtysh()
+void vty_init_vtysh(void)
 {
 	cli_shell.vtyvec = vector_init(VECTOR_MIN_SIZE);
 }
 
-void *vty_thread_m_thread_master()
+void *vty_thread_master(void)
 {
 	return cli_shell.m_thread_master;
 }
@@ -3904,9 +4060,9 @@ void vty_init(void)
 
 void vty_terminate(void)
 {
-	#ifdef ZPL_SHRL_MODULE
+#ifdef ZPL_SHRL_MODULE
 	vty_stdio_start(zpl_false);
-	#endif
+#endif
 	if (_global_host.vty_cwd)
 		XFREE(MTYPE_TMP, _global_host.vty_cwd);
 
@@ -3922,7 +4078,7 @@ int vty_execute_shell(void *cli, const char *cmd)
 {
 	int ret = 0, vty_cflags = 0;
 	struct vty *vty = (struct vty *)cli;
-	if(vty == NULL)
+	if (vty == NULL)
 	{
 		vty = vty_new();
 		ipstack_init(OS_STACK, vty->fd);
@@ -3937,7 +4093,7 @@ int vty_execute_shell(void *cli, const char *cmd)
 	memset(vty->buf, 0, (VTY_BUFSIZ));
 	strcpy(vty->buf, cmd);
 	ret = vty_execute(vty);
-	if(vty_cflags)
+	if (vty_cflags)
 		vty_close(vty);
 	return ret;
 }

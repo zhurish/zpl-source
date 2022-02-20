@@ -7,7 +7,7 @@
 #include "os_include.h"
 #include "zpl_include.h"
 #include "os_message.h"
-
+#include <assert.h>
 #define IPSTACK_ERRNO_RETRY(EN) \
 	(((EN) == IPSTACK_ERRNO_EAGAIN) || ((EN) == IPSTACK_ERRNO_EWOULDBLOCK) || ((EN) == IPSTACK_ERRNO_EINTR))
 

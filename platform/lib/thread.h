@@ -260,8 +260,10 @@ extern struct thread_master * master_thread[];
 //extern struct timeval recent_relative_time (void);
 
 //extern int cpu_thread_show(struct thread_master *m, struct vty *vty);
+#ifdef ZPL_SHELL_MODULE
+extern int cmd_os_thread_init(void);
+#endif
 
- 
 #ifdef __cplusplus
 }
 #endif

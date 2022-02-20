@@ -12,7 +12,7 @@
 struct zpl_host _global_host;
 
 
-int host_sysconfig_sync()
+int host_sysconfig_sync(void)
 {
 #ifdef ZPL_BUILD_OS_OPENWRT
 #else
@@ -26,10 +26,10 @@ int host_sysconfig_sync()
 int host_config_loading(char *config)
 {
 	_global_host.load = LOADING;
-	fprintf(stdout, "==================os_load_config %s\r\n",config);
+	//fprintf(stdout, "==================os_load_config %s\r\n",config);
 	vty_load_config(config);
-	fprintf(stdout, "++++++++++++++++++os_load_config %s\r\n",config);
-	fflush(stdout);
+	//fprintf(stdout, "++++++++++++++++++os_load_config %s\r\n",config);
+	//fflush(stdout);
 
 	return OK;
 }
@@ -497,7 +497,7 @@ static int host_system_cpu_get(struct host_system *host_system)
 				s++;
 				while(s && isspace((int) *(s)))
 					s++;
-				if(host_system->freq == 0.0 && s)
+				if(double_eq(host_system->freq, 0.0) && s)
 				{
 					sscanf(s, "%lf", &host_system->freq);
 				}
@@ -530,7 +530,7 @@ static int host_system_cpu_get(struct host_system *host_system)
 				s++;
 				while(s && isspace((int) *(s)))
 					s++;
-				if(host_system->freq == 0.0 && s)
+				if(double_eq(host_system->freq, 0.0) && s)
 				{
 					host_system->freq = atof(s);
 					//sscanf(s, "%f", &host_system->freq);

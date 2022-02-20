@@ -140,7 +140,6 @@ extern "C" {
 
 /* IP Multicast control (8 bit) */
 #define B53_IP_MULTICAST_CTRL		0x21
-#define  B53_IPMC_FWD_EN		BIT(1)
 #define  B53_INRANGE_ERR_DIS	BIT(2)
 #define  B53_OUTRANGE_ERR_DIS	BIT(1)
 #define  B53_UC_FWD_EN			BIT(6)
@@ -281,8 +280,7 @@ extern "C" {
 #define B53_GLOBAL_CONFIG		0x00
 #define   GC_RESET_MIB			0x01
 #define   GC_RX_BPDU_EN			0x02
-#define   GC_MIB_AC_HDR_EN		0x10
-#define   GC_MIB_AC_EN			0x20
+
 #define   GC_FRM_MGMT_PORT_M		0xC0
 #define   GC_FRM_MGMT_PORT_04		0x00
 #define   GC_FRM_MGMT_PORT_MII		0x80
@@ -397,6 +395,7 @@ extern "C" {
 /* ARL Table Read/Write Register (8 bit) */
 #define B53_ARLTBL_RW_CTRL		0x00
 #define    ARLTBL_RW			BIT(0)
+#define    ARLTBL_IVL_SVL_SELECT	BIT(6)
 #define    ARLTBL_START_DONE		BIT(7)
 
 /* MAC Address Index Register (48 bit) */
@@ -409,7 +408,7 @@ extern "C" {
  *
  * BCM5325 and BCM5365 share most definitions below
  */
-#define B53_ARLTBL_MAC_VID_ENTRY(n)	(0x10 * (n))
+#define B53_ARLTBL_MAC_VID_ENTRY(n)	(0x10 * (n))+0x10
 #define   ARLTBL_MAC_MASK		0xffffffffffffULL
 #define   ARLTBL_VID_S			48
 #define   ARLTBL_VID_MASK_25		0xff
@@ -421,12 +420,14 @@ extern "C" {
 #define   ARLTBL_VALID_25		BIT(63)
 
 /* ARL Table Data Entry N Registers (32 bit) */
-#define B53_ARLTBL_DATA_ENTRY(n)	((0x10 * (n)) + 0x08)
+#define B53_ARLTBL_DATA_ENTRY(n)	((0x10 * (n)) + 0x18)
 #define   ARLTBL_DATA_PORT_ID_MASK	0x1ff
 #define   ARLTBL_TC(tc)			((3 & tc) << 11)
 #define   ARLTBL_AGE			BIT(14)
 #define   ARLTBL_STATIC			BIT(15)
 #define   ARLTBL_VALID			BIT(16)
+/* Maximum number of bin entries in the ARL for all switches */
+#define B53_ARLTBL_MAX_BIN_ENTRIES	4
 
 /* ARL Search Control Register (8 bit) */
 #define B53_ARL_SRCH_CTL		0x50
@@ -794,6 +795,21 @@ extern "C" {
 
 /* CFP Control Register with ports map (8 bit) */
 #define B53_CFP_CTRL			0x00
+
+
+enum {
+	MLO_PAUSE_NONE,
+	MLO_PAUSE_ASYM = BIT(0),
+	MLO_PAUSE_SYM = BIT(1),
+	MLO_PAUSE_RX = BIT(2),
+	MLO_PAUSE_TX = BIT(3),
+	MLO_PAUSE_TXRX_MASK = MLO_PAUSE_TX | MLO_PAUSE_RX,
+	MLO_PAUSE_AN = BIT(4),
+
+	MLO_AN_PHY = 0,	/* Conventional PHY */
+	MLO_AN_FIXED,	/* Fixed-link mode */
+	MLO_AN_INBAND,	/* In-band protocol */
+};
 
 #endif /* !__B53_REGS_H */
 

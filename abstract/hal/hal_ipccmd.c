@@ -15,6 +15,7 @@ static const struct message hal_module_types[] = {
     DESC_ENTRY(HAL_MODULE_ROUTE),
     DESC_ENTRY(HAL_MODULE_STP),
     DESC_ENTRY(HAL_MODULE_8021X),
+    DESC_ENTRY(HAL_MODULE_IGMP),
     DESC_ENTRY(HAL_MODULE_DOS),
     DESC_ENTRY(HAL_MODULE_MAC),
     DESC_ENTRY(HAL_MODULE_MIRROR),
@@ -45,24 +46,35 @@ static const char * _hal_cmd_namestr(int cmd)
     {
     case HAL_MODULE_CMD_NONE:
     return "NONE";
-	case HAL_MODULE_CMD_SET:
+	case HAL_MODULE_CMD_REQ:
     return "SET";
-	case HAL_MODULE_CMD_GET:
-    return "GET";
+	case HAL_MODULE_CMD_ACK:
+    return "ACK";
 	case HAL_MODULE_CMD_REPORT:
     return "REPORT";
 	case HAL_MODULE_CMD_HELLO:
     return "HELLO";
+	case HAL_MODULE_CMD_REGISTER:
+    return "REGISTER";
+	case HAL_MODULE_CMD_KEEPALIVE:
+    return "KEEPALIVE";
+	case HAL_MODULE_CMD_INIT:
+    return "INIT";
+ 	case HAL_MODULE_CMD_PORTTBL:
+    return "PORTTBL";   
+	case HAL_MODULE_CMD_MAX:
+    return "MAX";
     default:
-    return "unknown";
+    return NULL;//itoa();
     }
-    return "unknown";
+    return NULL;
 }
+
 
 static const char * _hal_module_namestr(int cmd)
 {
     if (cmd >= array_size(hal_module_types)) {
-		return "unknown";
+		return NULL;
 	}
 	return hal_module_types[cmd].str;
 }
@@ -71,9 +83,18 @@ static const char * _hal_module_namestr(int cmd)
 
 const char * hal_module_cmd_name(zpl_uint32 cmd)
 {
+    int n = 0;
     static char bustmp[256];
-    memset(bustmp, 0, sizeof(bustmp));
-    snprintf(bustmp, sizeof(bustmp), "%s %s", _hal_module_namestr(IPCCMD_MODULE_GET(cmd)), _hal_cmd_namestr(IPCCMD_CMD_GET(cmd)));
+    memset(bustmp, 0, sizeof(bustmp));//unknown
+    if(_hal_module_namestr(IPCCMD_MODULE_GET(cmd)))
+        n = snprintf(bustmp, sizeof(bustmp), "%s ", _hal_module_namestr(IPCCMD_MODULE_GET(cmd)));
+    else  
+        n = snprintf(bustmp, sizeof(bustmp), "unknown:%d ", (IPCCMD_MODULE_GET(cmd)));  
+    
+    if(_hal_cmd_namestr(IPCCMD_CMD_GET(cmd)))
+        n = snprintf(bustmp + n, sizeof(bustmp) - n, "%s", _hal_cmd_namestr(IPCCMD_CMD_GET(cmd)));
+    else  
+        n = snprintf(bustmp + n, sizeof(bustmp) - n, "unknown:%d", (IPCCMD_CMD_GET(cmd)));  
     return bustmp;
 }
 

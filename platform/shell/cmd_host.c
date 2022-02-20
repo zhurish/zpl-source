@@ -288,7 +288,7 @@ DEFUN (config_end,
 	{
 		vty_config_unlock(vty);
 	}
-	vty->node = cmd_end_node(vty->node);
+	vty->node = cmd_end_node(vty);
 
 	return CMD_SUCCESS;
 }

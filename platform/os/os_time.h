@@ -29,7 +29,7 @@ extern "C" {
 
 #define os_system_rate()	(100)
 
-extern int os_system_tick();
+extern int os_system_tick(void);
 
 enum os_tmtime_id {
   OS_TMTIME_LOCAL = 0,
@@ -65,7 +65,7 @@ extern int os_timeval_cmp (struct timeval a, struct timeval b);
 extern int os_gettimeofday (struct timeval *tv);
 extern int os_get_realtime (struct timeval *tv);
 extern int os_get_monotonic (struct timeval *tv);
-extern int os_get_monotonic_msec ();
+extern int os_get_monotonic_msec (void);
 
 extern zpl_uint32 os_timeval_elapsed (struct timeval a, struct timeval b);
 
@@ -117,9 +117,9 @@ typedef struct os_time_s
 }os_time_t;
 
 
-extern int os_time_init();
-extern int os_time_exit();
-extern int os_time_load();
+extern int os_time_init(void);
+extern int os_time_exit(void);
+extern int os_time_load(void);
 
 extern int os_time_clean(zpl_bool all);
 extern os_time_t *os_time_lookup(zpl_uint32 id);

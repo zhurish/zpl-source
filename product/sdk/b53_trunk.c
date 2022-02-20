@@ -6,40 +6,53 @@
  */
 
 #include <zpl_include.h>
-#include "b53_mdio.h"
-#include "b53_regs.h"
+#include "hal_driver.h"
+#include "sdk_driver.h"
 #include "b53_driver.h"
 
 /* Trunk Registers */
 /*************************************************************************/
-int b53125_trunk_mac_base_enable(struct b53125_device *dev, zpl_bool enable)
+static int b53125_trunk_enable(sdk_driver_t *dev, zpl_bool enable)
 {
 	int ret = 0;
 	u8 port_ctrl = 0;
-	ret |= b53125_read8(dev, B53_TRUNK_PAGE, B53_TRUNK_CTL, &port_ctrl);
+	ret |= b53125_read8(dev->sdk_device, B53_TRUNK_PAGE, B53_TRUNK_CTL, &port_ctrl);
 	if(enable)
 		port_ctrl |= B53_MAC_BASE_TRNK_EN;
 	else
 		port_ctrl &= ~B53_MAC_BASE_TRNK_EN;
 
-	ret |= b53125_write8(dev, B53_TRUNK_PAGE, B53_TRUNK_CTL, port_ctrl);
+	ret |= b53125_write8(dev->sdk_device, B53_TRUNK_PAGE, B53_TRUNK_CTL, port_ctrl);
 	return ret;
 }
 
-/*************************************************************************/
-int b53125_trunk_mode(struct b53125_device *dev, int mode)
+static int b53125_trunk_create(sdk_driver_t *dev, int id, zpl_bool enable)
 {
 	int ret = 0;
 	u8 port_ctrl = 0;
-	ret |= b53125_read8(dev, B53_TRUNK_PAGE, B53_TRUNK_CTL, &port_ctrl);
+	ret |= b53125_read8(dev->sdk_device, B53_TRUNK_PAGE, B53_TRUNK_CTL, &port_ctrl);
+	if(enable)
+		port_ctrl |= B53_MAC_BASE_TRNK_EN;
+	else
+		port_ctrl &= ~B53_MAC_BASE_TRNK_EN;
+
+	ret |= b53125_write8(dev->sdk_device, B53_TRUNK_PAGE, B53_TRUNK_CTL, port_ctrl);
+	return ret;
+}
+/*************************************************************************/
+static int b53125_trunk_mode(sdk_driver_t *dev, int id, int mode)
+{
+	int ret = 0;
+	u8 port_ctrl = 0;
+	ret |= b53125_read8(dev->sdk_device, B53_TRUNK_PAGE, B53_TRUNK_CTL, &port_ctrl);
 	port_ctrl &= ~B53_TRK_HASH_ILLEGAL;
 	port_ctrl |= mode;
-	ret |= b53125_write8(dev, B53_TRUNK_PAGE, B53_TRUNK_CTL, port_ctrl);
+	ret |= b53125_write8(dev->sdk_device, B53_TRUNK_PAGE, B53_TRUNK_CTL, port_ctrl);
 	return ret;
 }
 
 /*************************************************************************/
-int b53125_trunk_add(struct b53125_device *dev, int id, int port)
+static int b53125_trunk_add(sdk_driver_t *dev, int id, zpl_phyport_t port)
 {
 	int ret = 0;
 	u16 port_ctrl = 0;
@@ -48,13 +61,13 @@ int b53125_trunk_add(struct b53125_device *dev, int id, int port)
 		reg = B53_TRUNK_GROUP0;
 	else
 		reg = B53_TRUNK_GROUP1;
-	ret |= b53125_read16(dev, B53_TRUNK_PAGE, reg, &port_ctrl);
+	ret |= b53125_read16(dev->sdk_device, B53_TRUNK_PAGE, reg, &port_ctrl);
 	port_ctrl |= BIT(port);
-	ret |= b53125_write16(dev, B53_TRUNK_PAGE, reg, port_ctrl);
+	ret |= b53125_write16(dev->sdk_device, B53_TRUNK_PAGE, reg, port_ctrl);
 	return ret;
 }
 
-int b53125_trunk_del(struct b53125_device *dev, int id, int port)
+static int b53125_trunk_del(sdk_driver_t *dev, int id, zpl_phyport_t port)
 {
 	int ret = 0;
 	u16 port_ctrl = 0;
@@ -63,8 +76,17 @@ int b53125_trunk_del(struct b53125_device *dev, int id, int port)
 		reg = B53_TRUNK_GROUP0;
 	else
 		reg = B53_TRUNK_GROUP1;
-	ret |= b53125_read16(dev, B53_TRUNK_PAGE, reg, &port_ctrl);
+	ret |= b53125_read16(dev->sdk_device, B53_TRUNK_PAGE, reg, &port_ctrl);
 	port_ctrl &= ~BIT(port);
-	ret |= b53125_write16(dev, B53_TRUNK_PAGE, reg, port_ctrl);
+	ret |= b53125_write16(dev->sdk_device, B53_TRUNK_PAGE, reg, port_ctrl);
 	return ret;
+}
+int b53_trunk_init(void)
+{
+    sdk_trunk.sdk_trunk_enable_cb = b53125_trunk_enable;
+    sdk_trunk.sdk_trunk_create_cb = b53125_trunk_create;
+    sdk_trunk.sdk_trunk_mode_cb = b53125_trunk_mode;
+    sdk_trunk.sdk_trunk_addif_cb = b53125_trunk_add;
+    sdk_trunk.sdk_trunk_delif_cb = b53125_trunk_del;
+	return OK;
 }

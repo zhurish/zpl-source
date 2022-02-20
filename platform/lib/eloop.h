@@ -301,7 +301,9 @@ extern struct eloop_master * master_eloop[];
 #ifdef ZPL_SHELL_MODULE
 //extern int cpu_eloop_show(struct eloop_master *m, struct vty *vty);
 #endif
-
+#ifdef ZPL_SHELL_MODULE
+extern int cmd_os_eloop_init(void);
+#endif
 #endif 
 #ifdef __cplusplus
 }

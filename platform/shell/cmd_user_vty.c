@@ -144,7 +144,7 @@ static struct cmd_node user_node =
 	1
 };
 
-int cmd_vty_user_init() {
+int cmd_vty_user_init(void) {
 
 	install_node (&user_node, config_write_vty_user);
 

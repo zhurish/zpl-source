@@ -27,6 +27,14 @@ extern "C" {
 #include <semaphore.h>
 //#endif
 
+#ifndef NSM_MAC_MAX
+#define NSM_MAC_MAX	6
+#endif
+
+
+#ifndef VLAN_TABLE_MAX
+#define VLAN_TABLE_MAX 4096
+#endif
 
 
 typedef unsigned char zpl_uint8;
@@ -65,14 +73,24 @@ typedef zpl_ushort zpl_proto_t;
 typedef zpl_uchar zpl_family_t;
 typedef zpl_int zpl_error_t;
 typedef zpl_uchar mac_t;
+typedef zpl_uchar zpl_mac_t[NSM_MAC_MAX];
 typedef zpl_ushort vlan_t;
+typedef zpl_ushort vlan_tpid_t;
 typedef zpl_ushort zpl_vlan_t;
-typedef zpl_uint32 zpl_phyport_t;
-/* VRF ID type. */
+typedef zpl_int32 zpl_phyport_t;
+
+typedef zpl_uint32 zpl_group_t;
+typedef zpl_uint32 zpl_instace_t;
+typedef zpl_uint32 zpl_index_t;
+
 typedef zpl_uint16 vrf_id_t;
+typedef zpl_uint32 zpl_vpn_t;
 
 typedef zpl_uint32  route_tag_t;
-typedef zpl_uint8 safi_t;
+typedef zpl_uint8   safi_t;
+
+typedef zpl_uint32   zpl_ipaddr_t;
+typedef zpl_uchar   zpl_ipv6addr_t[16];
 
 
 typedef enum
@@ -101,7 +119,7 @@ typedef long long           zpl_int64;
 typedef unsigned long long  zpl_uint64;
 #else
 typedef long                 zpl_int64;
-typedef unsigned long        zpl_uint64;
+typedef unsigned long long   zpl_uint64;
 //typedef long int                zpl_int64;
 //typedef unsigned long int       zpl_uint64;
 #endif
@@ -115,11 +133,23 @@ typedef unsigned long long int  zpl_uint64;
 #endif
 #endif
 
-//typedef int64_t zpl_int64;
-//typedef uint64_t zpl_uint64;
+typedef int64_t zpl_int64;
+typedef uint64_t zpl_uint64;
 #endif /* WIN32 */
 
-
+#define double_eq(a,b) (fabs((a)-(b)) < 1e-8)
+#define double_ne(a,b) (fabs((a)-(b)) > 1e-8)
+#define double_gt(a,b) (((a)-(b)) > 1e-8)
+#define double_lt(a,b) (((a)-(b)) < 1e-8)
+/*
+运算符	说明	举例
+-eq	检测两个数是否相等，相等返回 true。	[ $a -eq $b ] 返回 false。
+-ne	检测两个数是否不相等，不相等返回 true。	[ $a -ne $b ] 返回 true。
+-gt	检测左边的数是否大于右边的，如果是，则返回 true。	[ $a -gt $b ] 返回 false。
+-lt	检测左边的数是否小于右边的，如果是，则返回 true。	[ $a -lt $b ] 返回 true。
+-ge	检测左边的数是否大于等于右边的，如果是，则返回 true。	[ $a -ge $b ] 返回 false。
+-le	检测左边的数是否小于等于右边的，如果是，则返回 true。	[ $a -le $b ] 返回 true。
+*/
 
 #ifndef bool
 typedef enum
@@ -193,14 +223,6 @@ typedef zpl_uint16 zebra_command_t;
 
 
 
-#ifndef NSM_MAC_MAX
-#define NSM_MAC_MAX	6
-#endif
-
-
-#ifndef VLAN_TABLE_MAX
-#define VLAN_TABLE_MAX 4096
-#endif
 
 //typedef int socklen_t;
 
@@ -208,7 +230,7 @@ typedef zpl_uint16 zebra_command_t;
 #define ZPL_SUB_MODULE_MAX  8
 #define ZPL_SUB_MODULE_ID(m,n)  ((m)*(ZPL_SUB_MODULE_MAX) + (n))
 
-
+#include "zpl_errno.h"
 
 #ifdef __cplusplus
 }

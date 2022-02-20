@@ -39,6 +39,30 @@ DEFUN (switchport_mode,
 		}
 		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 	}
+	else if(vty->index_range)
+	{
+  		zpl_uint32 i = 0;
+		for(i = 0; i < vty->index_range; i++)
+		{
+			if(vty->vty_range_index[i])
+			{
+				if(nsm_interface_mode_get_api(vty->vty_range_index[i], &mode) == OK)
+				{
+					if(os_memcmp(argv[0], "access", 3) == 0)
+						newmode = IF_MODE_ACCESS_L2;
+					else
+						newmode = IF_MODE_TRUNK_L2;
+					if(newmode !=mode)
+						ret = nsm_interface_mode_set_api(vty->vty_range_index[i], newmode);
+					if(ret != OK)
+						return CMD_WARNING;
+				}
+				else
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
 	return CMD_WARNING;
 }
 
@@ -62,6 +86,27 @@ DEFUN (no_switchport_mode,
 				ret = nsm_interface_mode_set_api(ifp, newmode);
 		}
 		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+	}
+	else if(vty->index_range)
+	{
+  		zpl_uint32 i = 0;
+		for(i = 0; i < vty->index_range; i++)
+		{
+			if(vty->vty_range_index[i])
+			{
+				if(nsm_interface_mode_get_api(vty->vty_range_index[i], &mode) == OK)
+				{
+					newmode = IF_MODE_ACCESS_L2;
+					if(newmode !=mode)
+						ret = nsm_interface_mode_set_api(vty->vty_range_index[i], newmode);
+					if(ret != OK)
+						return CMD_WARNING;
+				}
+				else
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
 	}
 	return CMD_WARNING;
 }
@@ -134,9 +179,21 @@ int nsm_port_interface_config(struct vty *vty, struct interface *ifp)
 	return OK;
 }
 
+DEFUN (show_unit_board_info,
+		show_unit_board_info_cmd,
+		"show unit slot info ",
+		SHOW_STR
+		"Uint\n"
+		"Slot\n"
+		"Information\n")
+{
+	unit_board_show(vty);
+	return CMD_SUCCESS;
+}
 
 void cmd_port_init (void)
 {
+	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_unit_board_info_cmd);
 	install_element(INTERFACE_NODE, CMD_CONFIG_LEVEL, &switchport_mode_cmd);
 	install_element(INTERFACE_NODE, CMD_CONFIG_LEVEL, &no_switchport_mode_cmd);
 	

@@ -18,24 +18,33 @@ sdk_mirror_t sdk_mirror;
 
 static int bsp_mirror_enable(void *driver, hal_port_header_t *bspport, hal_mirror_param_t *mirror)
 {
+	int ret = NO_SDK;
+	SDK_ENTER_FUNC();
 	if(driver && sdk_mirror.sdk_mirror_enable_cb)
-		return sdk_mirror.sdk_mirror_enable_cb(driver, bspport, mirror);
-	return NO_SDK;
+		ret = sdk_mirror.sdk_mirror_enable_cb(driver, bspport->phyport, mirror->value);
+	SDK_LEAVE_FUNC();
+	return ret;
 }
 
 static int bsp_mirror_source_enable(void *driver, hal_port_header_t *bspport, hal_mirror_param_t *mirror)
 {
+	int ret = NO_SDK;
+	SDK_ENTER_FUNC();
 	if(driver && sdk_mirror.sdk_mirror_source_enable_cb)
-		return sdk_mirror.sdk_mirror_source_enable_cb(driver, bspport, mirror);
-	return NO_SDK;
+		ret = sdk_mirror.sdk_mirror_source_enable_cb(driver, bspport->phyport, mirror->value, mirror->mode, mirror->dir);
+	SDK_LEAVE_FUNC();
+	return ret;
 }
 
 
 static int bsp_mirror_source_filter_enable(void *driver, hal_port_header_t *bspport, hal_mirror_param_t *mirror)
 {
+	int ret = NO_SDK;
+	SDK_ENTER_FUNC();
 	if(driver && sdk_mirror.sdk_mirror_source_filter_enable_cb)
-		return sdk_mirror.sdk_mirror_source_filter_enable_cb(driver, bspport, mirror);
-	return NO_SDK;
+		ret = sdk_mirror.sdk_mirror_source_filter_enable_cb(driver, mirror->value, mirror->filter, mirror->dir, mirror->srcmac, mirror->dstmac);
+	SDK_LEAVE_FUNC();
+	return ret;
 }
 
 
@@ -53,31 +62,22 @@ int bsp_mirror_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint
 	int ret = OK;
 	hal_mirror_param_t	mirrorparam;
 	hal_port_header_t	bspport;
+	SDK_ENTER_FUNC();
 	hal_ipcmsg_port_get(&client->ipcmsg, &bspport);
 	//hal_ipcmsg_getc(&client->ipcmsg, &mirrorparam);
 	if(!(subcmd_table[subcmd].cmd_handle))
 	{
+		SDK_LEAVE_FUNC();
 		return NO_SDK;
 	}
 	switch (cmd)
 	{
-	case HAL_MODULE_CMD_SET:         //设置
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &bspport, &mirrorparam);
-	break;
-	case HAL_MODULE_CMD_GET:         //获取
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &bspport, &mirrorparam);
-	break;
-	case HAL_MODULE_CMD_ADD:         //添加
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &bspport, &mirrorparam);
-	break;
-	case HAL_MODULE_CMD_DEL:         //删除
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &bspport, &mirrorparam);
-	break;
-    case HAL_MODULE_CMD_DELALL:      //删除所有
+	case HAL_MODULE_CMD_REQ:         //设置
 	ret = (subcmd_table[subcmd].cmd_handle)(driver, &bspport, &mirrorparam);
 	break;
 	default:
 		break;
 	}
+	SDK_LEAVE_FUNC();
 	return ret;
 }

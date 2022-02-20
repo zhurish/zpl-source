@@ -6,15 +6,13 @@
  */
 
 #include <zpl_include.h>
-
-
-#include "b53_mdio.h"
-#include "b53_regs.h"
+#include "hal_driver.h"
 #include "sdk_driver.h"
+#include "b53_driver.h"
 
 
 /****************************************************************************************/
-int b53125_set_stp_state(struct b53125_device *dev, int port, u8 state)
+static int b53125_set_stp_state(sdk_driver_t *dev, zpl_index_t index, zpl_phyport_t port, zpl_uint32 state)
 {
 	int ret = 0;
 	u8 hw_state;
@@ -41,14 +39,47 @@ int b53125_set_stp_state(struct b53125_device *dev, int port, u8 state)
 		return ERROR;
 	}
 
-	ret |= b53125_read8(dev, B53_CTRL_PAGE, B53_PORT_CTRL(port), &reg);
+	ret |= b53125_read8(dev->sdk_device, B53_CTRL_PAGE, B53_PORT_CTRL(port), &reg);
 	reg &= ~PORT_CTRL_STP_STATE_MASK;
 	reg |= hw_state;
-	ret |= b53125_write8(dev, B53_CTRL_PAGE, B53_PORT_CTRL(port), reg);
+	ret |= b53125_write8(dev->sdk_device, B53_CTRL_PAGE, B53_PORT_CTRL(port), reg);
+	return ret;
+}
+static int b53125_set_mstp_state(sdk_driver_t *dev, zpl_index_t index, zpl_phyport_t port, zpl_uint32 state)
+{
+	int ret = 0;
+	u8 hw_state = 0;
+	u8 reg;
+
+	switch (state) {
+	case STP_DISABLE:
+		hw_state = 1;
+		break;
+	case STP_LISTENING:
+		hw_state = 3;
+		break;
+	case STP_LEARNING:
+		hw_state = 4;
+		break;
+	case STP_FORWARDING:
+		hw_state = 5;
+		break;
+	case STP_BLOCKING:
+		hw_state = 2;
+		break;
+	default:
+		//dev_err(ds->dev, "invalid STP state: %d\n", state);
+		return ERROR;
+	}
+
+	ret |= b53125_read8(dev->sdk_device, B53_MSTP_PAGE, B53_MSTP_TBL_CTL(index), &reg);
+	reg &= ~B53_MSTP_TBL_PORT_MASK(port);
+	reg |= B53_MSTP_TBL_PORT(port, hw_state);
+	ret |= b53125_write8(dev->sdk_device, B53_MSTP_PAGE, B53_MSTP_TBL_CTL(index), reg);
 	return ret;
 }
 /****************************************************************************************/
-int b53125_mstp_enable(struct b53125_device *dev, zpl_bool enable)
+static int b53125_mstp_enable(sdk_driver_t *dev, zpl_bool enable)
 {
 	int ret = 0;
 	u8 reg = 0;
@@ -56,39 +87,56 @@ int b53125_mstp_enable(struct b53125_device *dev, zpl_bool enable)
 		reg |= B53_MSTP_EN;
 	else
 		reg &= ~B53_MSTP_EN;
-	ret |= b53125_write8(dev, B53_MSTP_PAGE, B53_MSTP_CTL, reg);
+	ret |= b53125_write8(dev->sdk_device, B53_MSTP_PAGE, B53_MSTP_CTL, reg);
 	return ret;
 }
+
 /****************************************************************************************/
-int b53125_mstp_aging_time(struct b53125_device *dev, int aging)
+static int b53125_mstp_aging_time(sdk_driver_t *dev, zpl_index_t aging)
 {
 	int ret = 0;
 	u32 reg = 0;
 	reg |= aging & B53_MSTP_AGE_MASK;
-	ret |= b53125_write32(dev, B53_MSTP_PAGE, B53_MSTP_AGE_CTL, reg);
+	ret |= b53125_write32(dev->sdk_device, B53_MSTP_PAGE, B53_MSTP_AGE_CTL, reg);
 	return ret;
 }
-/****************************************************************************************/
-int b53125_mstp_state(struct b53125_device *dev, int id, int port, int state)
+#if 0
+static int b53125_mstp_bypass(sdk_driver_t *dev, zpl_bool enable, int id)
 {
 	int ret = 0;
 	u32 reg = 0;
-	ret |= b53125_read32(dev, B53_MSTP_PAGE, B53_MSTP_TBL_CTL(id), &reg);
-	reg &= ~B53_MSTP_TBL_PORT_MASK(port);
-	reg |= B53_MSTP_TBL_PORT(port, state);
-	ret |= b53125_write32(dev, B53_MSTP_PAGE, B53_MSTP_TBL_CTL(id), reg);
-	return ret;
-}
-
-int b53125_mstp_bypass(struct b53125_device *dev, int id, zpl_bool enable)
-{
-	int ret = 0;
-	u32 reg = 0;
-	ret |= b53125_read16(dev, B53_MSTP_PAGE, B53_MSTP_BYPASS_CTL, &reg);
+	ret |= b53125_read16(dev->sdk_device, B53_MSTP_PAGE, B53_MSTP_BYPASS_CTL, &reg);
 	if(enable)
 		reg |= B53_MSTP_BYPASS_EN(id);
 	else
 		reg &= ~B53_MSTP_BYPASS_EN(id);
-	ret |= b53125_write16(dev, B53_MSTP_PAGE, B53_MSTP_BYPASS_CTL, reg);
+	ret |= b53125_write16(dev->sdk_device, B53_MSTP_PAGE, B53_MSTP_BYPASS_CTL, reg);
 	return ret;
 }
+#endif
+static int sdk_mstp_add_vlan (sdk_driver_t *dev,  zpl_index_t id, vlan_t vid)
+{
+	return b53125_vlan_mstp_id(dev,  vid,  id);
+}
+static int sdk_mstp_del_vlan (sdk_driver_t *dev,  zpl_index_t id, vlan_t vid)
+{
+	return b53125_vlan_mstp_id(dev,  vid,  0);
+}
+static int sdk_mstp_create (sdk_driver_t *dev,  zpl_index_t id)
+{
+	return OK;
+}
+int b53125_mstp_init(void)
+{
+
+	sdk_mstp.sdk_stp_state_cb = b53125_set_stp_state;
+
+	sdk_mstp.sdk_mstp_enable_cb = b53125_mstp_enable;
+	sdk_mstp.sdk_mstp_aging_cb = b53125_mstp_aging_time;
+	sdk_mstp.sdk_mstp_state = b53125_set_mstp_state;
+	sdk_mstp.sdk_mstp_create = sdk_mstp_create;
+	sdk_mstp.sdk_mstp_add_vlan = sdk_mstp_add_vlan;
+	sdk_mstp.sdk_mstp_del_vlan = sdk_mstp_del_vlan;
+	return OK;
+}
+

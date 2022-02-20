@@ -61,7 +61,7 @@ DEFUN (show_ipcom_process,
 }
 #endif
 
-int cmd_os_init()
+int cmd_os_init(void)
 {
 	install_element(ENABLE_NODE,  CMD_VIEW_LEVEL,  &show_process_cmd);
 	install_element(ENABLE_NODE,  CMD_VIEW_LEVEL,  &show_process_detail_cmd);

@@ -50,6 +50,7 @@ int nsm_module_init(void)
 
 	if_init();
 	nsm_vrf_init();
+	nsm_interface_init();
 
 	access_list_init ();
 	prefix_list_init ();
@@ -58,7 +59,6 @@ int nsm_module_init(void)
 	nsm_template_init();
 
 	rib_init();
-	nsm_interface_init();
 
 #ifdef ZPL_NSM_8021X
 	nsm_dot1x_init();

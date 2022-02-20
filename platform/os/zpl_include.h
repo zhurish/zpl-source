@@ -35,6 +35,8 @@ extern "C" {
 #include "os_process.h"
 #include "libnetpro.h"
 
+#include "zpl_skbuffer.h"
+
 #ifdef ZPL_OS_QUEUE	
 #include "os_queue.h"			
 #endif

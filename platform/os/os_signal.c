@@ -302,7 +302,7 @@ os_exit_handler(int signo
 #endif
 )
 {
-  os_log(OS_SIGNAL_FILE,"%s:============+++++++++++++++++++++===========signo=%d\r\n", __func__, signo);
+  //os_log(OS_SIGNAL_FILE,"%s:============+++++++++++++++++++++===========signo=%d\r\n", __func__, signo);
   if(os_sigproc_tbl.os_core_exit)
   	(os_sigproc_tbl.os_core_exit)( signo, "exiting..."
 #ifdef SA_SIGINFO
@@ -321,7 +321,7 @@ os_core_handler(int signo
 #endif
 )
 {
-  os_log(OS_SIGNAL_FILE,"%s:==========+++++++++++++++++++++++++=========signo=%d\r\n", __func__, signo);
+  //os_log(OS_SIGNAL_FILE,"%s:==========+++++++++++++++++++++++++=========signo=%d\r\n", __func__, signo);
   if(os_sigproc_tbl.os_core_abort)
   	(os_sigproc_tbl.os_core_abort)( signo, "aborting..."
 #ifdef SA_SIGINFO

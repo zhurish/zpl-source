@@ -19,7 +19,6 @@ extern "C" {
 #define ZPL_INVALID_VAL	-1
 
 
-#define ZPL_MEDIA_PROCESS_ONE
 
 
 #define ZPL_MEDIA_ISNORMAL_CHANNEL(n)	((n) >= 0)&&((n)<8)
@@ -58,7 +57,8 @@ typedef enum
 
 typedef enum
 {
-    ZPL_MEDIA_NODE_INPUT = ZPL_SUB_MODULE_ID(MODULE_ZPLMEDIA,1),			//输入
+    ZPL_MEDIA_NODE_PIPE = ZPL_SUB_MODULE_ID(MODULE_ZPLMEDIA,1),
+    ZPL_MEDIA_NODE_INPUT,			//输入
     ZPL_MEDIA_NODE_PROCESS,			//处理
     ZPL_MEDIA_NODE_ENCODE,            //编码
     ZPL_MEDIA_NODE_OUTPUT,            //输出

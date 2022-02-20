@@ -50,4 +50,21 @@ config ZPL_ARCH_X86_64
 	bool "X86-64"	
 endchoice
 
+choice
+	prompt "ARM CPU Family"
+	depends on ZPL_ARCH_ARM || ZPL_ARCH_ARM64 || ZPL_ARCH_AARCH64
+	default ZPL_ARM_A7
+
+config ZPL_ARM_A5
+	bool "cortex-a5"
+config ZPL_ARM_A6
+	bool "cortex-a6"
+config ZPL_ARM_A7
+	bool "cortex-a7"
+config ZPL_ARM_A8
+	bool "cortex-a8"
+config ZPL_ARM_A9
+	bool "cortex-a9"	
+endchoice
+
 endmenu

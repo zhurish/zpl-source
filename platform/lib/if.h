@@ -208,7 +208,7 @@ struct interface
    ifindex_t k_ifindex;
 
    zpl_phyport_t  phyid;
-
+#define IFPHYID_INTERNAL -1
    if_type_t if_type;
 
    if_mode_t if_mode;
@@ -312,19 +312,51 @@ struct connected
 };
 
 
-#define IF_UNIT_ALL (0xAFFFFFFF)
+#define IF_UNIT_ALL (0xEFFFFFFF)
 
-#define IF_TYPE_GET(n) (((n) >> 27) & 0x1F)
-#define IF_UNIT_GET(n) (((n) >> 24) & 0x07)
-#define IF_SLOT_GET(n) (((n) >> 20) & 0x0F)
-#define IF_PORT_GET(n) (((n) >> 12) & 0xFF)
-#define IF_ID_GET(n) ((n)&0x0FFF)
+#define IF_PORT_MAX_256 (256) //单板最大同类接口数量
+#define IF_PORT_MAX_128 (128) //单板最大同类接口数量
+#define IF_PORT_MAX_64 (64) //单板最大同类接口数量
+
+#define IF_PORT_MAX  IF_PORT_MAX_64
+
+#if IF_PORT_MAX == IF_PORT_MAX_256
+#define IF_TYPE_GET(n) (((n) >> 27) & 0x1F)  //0-31, 32
+#define IF_UNIT_GET(n) (((n) >> 24) & 0x07)  //0-7, 8
+#define IF_SLOT_GET(n) (((n) >> 20) & 0x0F)  //0-15, 16
+#define IF_PORT_GET(n) (((n) >> 12) & 0xFF)  //0-255, 256
+
+#define IF_TYPE_SET(n) (((n)&0x1F) << 27)
+#define IF_TYPE_CLR(n) (((n)) & 0x07FFFFFF)
+#define IF_USPV_SET(u, s, p, v) (((u)&0x07) << 24) | (((s)&0x0F) << 20) | (((p)&0xFF) << 12) | ((v)&0x0FFF)
+
+#elif IF_PORT_MAX == IF_PORT_MAX_128
+
+#define IF_TYPE_GET(n) (((n) >> 26) & 0x3F)  //0-63, 64
+#define IF_UNIT_GET(n) (((n) >> 23) & 0x07)  //0-7, 8
+#define IF_SLOT_GET(n) (((n) >> 19) & 0x0F)  //0-15, 16
+#define IF_PORT_GET(n) (((n) >> 12) & 0x7F)  //0-127, 128
+
+#define IF_TYPE_SET(n) (((n)&0x3F) << 26)
+#define IF_TYPE_CLR(n) (((n)) & 0x03FFFFFF)
+#define IF_USPV_SET(u, s, p, v) (((u)&0x07) << 23) | (((s)&0x0F) << 19) | (((p)&0x7F) << 12) | ((v)&0x0FFF)
+
+#elif IF_PORT_MAX == IF_PORT_MAX_64
+
+#define IF_TYPE_GET(n) (((n) >> 26) & 0x3F)  //0-63, 64
+#define IF_UNIT_GET(n) (((n) >> 23) & 0x07)  //0-7, 8
+#define IF_SLOT_GET(n) (((n) >> 18) & 0x1F)  //0-31, 32
+#define IF_PORT_GET(n) (((n) >> 12) & 0x3F)  //0-63, 64
+
+#define IF_TYPE_SET(n) (((n)&0x3F) << 26)
+#define IF_TYPE_CLR(n) (((n)) & 0x03FFFFFF)
+#define IF_USPV_SET(u, s, p, v) (((u)&0x07) << 23) | (((s)&0x1F) << 18) | (((p)&0x3F) << 12) | ((v)&0x0FFF)
+#endif
+
+#define IF_ID_GET(n) ((n)&0x00000FFF)
 
 #define IF_VLAN_GET(n) if_ifindex2vlan((n))
 
-#define IF_TYPE_SET(n) (((n)&0x1F) << 27)
-#define IF_TYPE_CLR(n) (((n)) & 0x0FFFFFFF)
-#define IF_USPV_SET(u, s, p, v) (((u)&0x07) << 24) | (((s)&0x0F) << 20) | (((p)&0xFF) << 12) | ((v)&0x0FFF)
 
 #define IF_IFINDEX_TYPE_GET(n) IF_TYPE_GET(n)
 #define IF_IFINDEX_UNIT_GET(n) IF_UNIT_GET(n)
@@ -512,6 +544,9 @@ extern ifindex_t if_vlan2ifindex(zpl_vlan_t encavlan);
 extern zpl_phyport_t  if_ifindex2phy(ifindex_t ifindex);
 extern ifindex_t  if_phy2ifindex(zpl_phyport_t phyid);
 extern vrf_id_t  if_ifindex2vrfid(ifindex_t ifindex);
+
+extern int if_update_phyid(ifindex_t ifindex, zpl_phyport_t phyid);
+extern int if_update_phyid2(struct interface *ifp, zpl_phyport_t phyid);
 
 
 extern int if_list_each(int (*cb)(struct interface *ifp, void *pVoid), void *pVoid);

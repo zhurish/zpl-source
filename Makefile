@@ -96,7 +96,7 @@ ZPLLDLIBS += $(IPLIBC)
 #
 %.o: %.c 
 	$(ZPL_ECHO_CC)
-	@$(CC) -fPIC $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLCFLAGS) -g $(ZPLLDSOLIBS) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
+	@$(CC) -fPIC -D__ARM_PCS_VFP $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLCFLAGS) -g $(ZPLLDSOLIBS) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
 
 
 SOURCES = $(wildcard *.c *.cpp)

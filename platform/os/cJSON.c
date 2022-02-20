@@ -152,7 +152,8 @@ static char *print_number(cJSON *item,printbuffer *p)
 {
 	char *str = NULL;
 	double d=item->valuedouble;
-	if (d==0)
+	//if (d==0)
+	if (double_eq(d-0.0))
 	{
 		if (p)	str=ensure(p,2);
 		else	str=(char*)cJSON_malloc(2);	/* special case for 0. */

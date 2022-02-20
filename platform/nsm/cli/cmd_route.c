@@ -2128,6 +2128,7 @@ vty_show_ip_route_detail (struct vty *vty, struct route_node *rn, int mcast)
 {
   struct rib *rib;
   struct nexthop *nexthop, *tnexthop;
+  union prefix46constptr up;
   int recursing;
   char buf[PREFIX_STRLEN];
 
@@ -2141,8 +2142,9 @@ vty_show_ip_route_detail (struct vty *vty, struct route_node *rn, int mcast)
                        ? " using Multicast RIB"
                        : " using Unicast RIB";
         }
+      up.p = &rn->p;  
       vty_out (vty, "Routing entry for %s%s%s",
-               prefix2str (&rn->p, buf, sizeof(buf)), mcast_info,
+               prefix2str (up, buf, sizeof(buf)), mcast_info,
               VTY_NEWLINE);
       vty_out (vty, "  Known via \"%s\"", zebra_route_string (rib->type));
       vty_out (vty, ", distance %u, metric %u", rib->distance, rib->metric);
@@ -2286,12 +2288,13 @@ vty_show_ip_route (struct vty *vty, struct route_node *rn, struct rib *rib)
   int recursing;
   int len = 0;
   char buf[BUFSIZ];
-
+  union prefix46constptr up;
   /* Nexthop information. */
   for (ALL_NEXTHOPS_RO(rib->nexthop, nexthop, tnexthop, recursing))
     {
       if (nexthop == rib->nexthop)
 	{
+    up.p = &rn->p;
 	  /* Prefix information. */
 	  len = vty_out (vty, "%c%c%c %s",
 			 zebra_route_char (rib->type),
@@ -2299,7 +2302,7 @@ vty_show_ip_route (struct vty *vty, struct route_node *rn, struct rib *rib)
 			 ? '>' : ' ',
 			 CHECK_FLAG (nexthop->flags, NEXTHOP_FLAG_FIB)
 			 ? '*' : ' ',
-			 prefix2str (&rn->p, buf, sizeof buf));
+			 prefix2str (up, buf, sizeof buf));
 		
 	  /* Distance and metric display. */
 	  if (rib->type != ZEBRA_ROUTE_CONNECT 
@@ -5586,7 +5589,7 @@ static_config_ipv6 (struct vty *vty)
   struct route_table *stable;
   struct nsm_vrf *zvrf;
   vrf_iter_t iter;
-
+  union prefix46constptr up;
   write = 0;
 
   for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
@@ -5598,15 +5601,16 @@ static_config_ipv6 (struct vty *vty)
       for (rn = route_top (stable); rn; rn = route_next (rn))
         for (si = rn->info; si; si = si->next)
           {
+            up.p = &rn->p;
         	if (si->vrf_id != VRF_DEFAULT)
         	{
         	   //if(si->vrf_name)
-        	    vty_out (vty, "ipv6 route vrf %s %s", vrf_vrfid2name(si->vrf_id), prefix2str (&rn->p, buf, sizeof buf));
+        	    vty_out (vty, "ipv6 route vrf %s %s", vrf_vrfid2name(si->vrf_id), prefix2str (up, buf, sizeof buf));
 /*        	   else
-        	    vty_out (vty, "ipv6 route vrf %d %s", si->vrf_id, prefix2str (&rn->p, buf, sizeof buf));*/
+        	    vty_out (vty, "ipv6 route vrf %d %s", si->vrf_id, prefix2str (up, buf, sizeof buf));*/
         	}
         	else
-        		vty_out (vty, "ipv6 route %s", prefix2str (&rn->p, buf, sizeof buf));
+        		vty_out (vty, "ipv6 route %s", prefix2str (up, buf, sizeof buf));
 
             switch (si->type)
               {

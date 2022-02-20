@@ -43,7 +43,7 @@ int zpl_media_proxy_buffer_data_distribute(zpl_media_channel_t *mediachn,
             client != NULL; client = (proxy_client_t *)lstNext(&node))
         {
             node = client->node;
-            if (client && client->sock)
+            if (client && !ipstack_invalid(client->sock))
             {
                 hdr.ID = bufdata->ID;                 //ID 通道号
                 hdr.buffer_type = bufdata->buffer_type;        //音频视频
@@ -57,7 +57,7 @@ int zpl_media_proxy_buffer_data_distribute(zpl_media_channel_t *mediachn,
 
                 //bufdata->buffer_data;       //buffer
 
-                os_writemsg(client->sock, &hdr, sizeof(hdr), bufdata->buffer_data, bufdata->buffer_len);
+                ipstack_writemsg(client->sock, &hdr, sizeof(hdr), bufdata->buffer_data, bufdata->buffer_len);
                 //write(client->sock, &hdr, sizeof(hdr));
                 //write(client->sock, bufdata->buffer_data, bufdata->buffer_len);
             }
@@ -75,11 +75,9 @@ static int proxy_server_client_destroy(proxy_client_t * client)
 {
     if(client)
     {
-        if(client->sock)
-        {
-            close(client->sock);
-            client->sock = 0;
-        }
+
+        ipstack_close(client->sock);
+
         client->port = 0;
         if(client->address)
         {
@@ -100,32 +98,30 @@ static int proxy_server_init(void *master, int port)
         proxy_server.port = port;
         proxy_server.mutex = os_mutex_init();
 		lstInitFree(&proxy_server.list, proxy_server_client_destroy);
-        proxy_server.sock = os_sock_create(zpl_true);
+        proxy_server.sock = ipstack_sock_create(IPCOM_STACK, zpl_true);
 
-        if(os_sock_bind(proxy_server.sock, NULL, proxy_server.port) != OK)
+        if(ipstack_sock_bind(proxy_server.sock, NULL, proxy_server.port) != OK)
         {
             if (proxy_server.mutex)
             {
                 if (os_mutex_exit(proxy_server.mutex) == OK)
                     proxy_server.mutex = NULL;
             }
-            if(proxy_server.sock)
-                close(proxy_server.sock);
+            ipstack_close(proxy_server.sock);
             return ERROR;
         }
-        if(os_sock_listen(proxy_server.sock, 5) != OK)
+        if(ipstack_sock_listen(proxy_server.sock, 5) != OK)
         {
             if (proxy_server.mutex)
             {
                 if (os_mutex_exit(proxy_server.mutex) == OK)
                     proxy_server.mutex = NULL;
             }
-            if(proxy_server.sock)
-                close(proxy_server.sock);
+            ipstack_close(proxy_server.sock);
             return ERROR;
         }
-        os_set_nonblocking(proxy_server.sock);
-        if(proxy_server.sock)
+        ipstack_set_nonblocking(proxy_server.sock);
+        if(!ipstack_invalid(proxy_server.sock))
         {
             proxy_server.t_master = master;
             if(proxy_server.t_master)
@@ -152,8 +148,7 @@ static int proxy_server_destroy()
         if (os_mutex_exit(proxy_server.mutex) == OK)
             proxy_server.mutex = NULL;
     }
-    if(proxy_server.sock)
-        close(proxy_server.sock);
+    ipstack_close(proxy_server.sock);
     proxy_server.initalition = 0;
     return OK;
 }
@@ -162,16 +157,16 @@ static int proxy_server_destroy()
 
 static int zpl_proxy_server_accept(struct eloop *t)
 {
-    int sock = 0;
+    zpl_socket_t sock;
 	proxy_server_t *proxy = THREAD_ARG(t);
-    if(proxy && proxy->sock)
+    if(proxy && !ipstack_invalid(proxy->sock))
     {
         struct ipstack_sockaddr_in clientaddr;
 		if (proxy->mutex)
 			os_mutex_lock(proxy->mutex, OS_WAIT_FOREVER);
         proxy->t_read = NULL;
-        sock = os_sock_accept (proxy->sock, &clientaddr);
-        if(sock)
+        sock = ipstack_sock_accept (proxy->sock, &clientaddr);
+        if(!ipstack_invalid(sock))
         {
             proxy_client_t *client = malloc(sizeof(proxy_client_t));
             if(client)
@@ -180,7 +175,7 @@ static int zpl_proxy_server_accept(struct eloop *t)
                 client->address = strdup(inet_ntoa(clientaddr.sin_addr));
                 client->sock = sock;
                 lstAdd(&proxy->list, (NODE *)client);
-                os_set_nonblocking(sock);
+                ipstack_set_nonblocking(sock);
                 if(proxy->t_master)
                     client->t_read  = eloop_add_read(proxy->t_master, zpl_proxy_server_read, client, client->sock);
             }
@@ -200,7 +195,7 @@ static int zpl_proxy_server_read(struct eloop *t)
     {
         char buf[64];
         client->t_read = NULL;
-        if(read(client->sock, buf, sizeof(buf)) == 0)
+        if(ipstack_read(client->sock, buf, sizeof(buf)) == 0)
         {
             if (proxy_server.mutex)
 			    os_mutex_lock(proxy_server.mutex, OS_WAIT_FOREVER);

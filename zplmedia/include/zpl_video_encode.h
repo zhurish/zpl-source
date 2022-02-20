@@ -32,7 +32,7 @@ typedef struct
     NODE                node;
 	
     zpl_int32           venc_channel;       //底层通道号
-    int                 vencfd;             //
+    zpl_socket_t        vencfd;             //
 
 	zpl_video_codec_t   *pCodec;			//指向上层编码参数
 

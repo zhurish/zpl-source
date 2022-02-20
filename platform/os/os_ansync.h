@@ -120,7 +120,7 @@ extern int os_ansync_del_api(os_ansync_lst *lst, os_ansync_t *value);
 extern int os_ansync_timeout_api(os_ansync_lst *lst, zpl_uint32 value);
 
 //extern int os_ansync_wait(os_ansync_lst *lst);
-extern os_ansync_t *os_ansync_current_get();
+extern os_ansync_t *os_ansync_current_get(void);
 extern os_ansync_t *os_ansync_fetch(os_ansync_lst *lst);
 extern int os_ansync_execute(os_ansync_lst *lst, os_ansync_t *value, os_ansync_exe exe);
 

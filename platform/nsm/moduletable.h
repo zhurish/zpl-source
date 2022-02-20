@@ -20,7 +20,7 @@ extern "C" {
 
 extern struct module_alllist module_lists_tbl[MODULE_MAX];
 
-extern int pl_module_name_show();
+extern int pl_module_name_show(void);
 
 extern int pl_module_allinit(void);
 extern int pl_module_allexit(void);

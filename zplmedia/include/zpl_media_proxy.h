@@ -20,7 +20,7 @@ extern "C" {
 typedef struct
 {
     NODE        node;
-    int         sock;
+    zpl_socket_t     sock;
     uint16_t    port;
     char        *address;
     void        *t_read;
@@ -29,7 +29,7 @@ typedef struct
 typedef struct
 {
     uint16_t    port;
-    int         sock;
+    zpl_socket_t         sock;
 
     os_mutex_t	*mutex;
     LIST        list;			//add queue

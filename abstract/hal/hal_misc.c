@@ -21,10 +21,11 @@ int hal_jumbo_size(zpl_uint32 size)
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
+	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	//hal_ipcmsg_port_set(&ipcmsg, ifindex);
 	hal_ipcmsg_putl(&ipcmsg, size);
-	command = IPCCMD_SET(HAL_MODULE_SWITCH, HAL_MODULE_CMD_SET, HAL_MISC_JUMBO_SIZE);
+	command = IPCCMD_SET(HAL_MODULE_SWITCH, HAL_MODULE_CMD_REQ, HAL_MISC_JUMBO_SIZE);
 	return hal_ipcmsg_send_message(IF_UNIT_ALL, 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -34,10 +35,11 @@ int hal_jumbo_interface_enable(ifindex_t ifindex, zpl_bool enable)
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
+	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
 	hal_ipcmsg_putl(&ipcmsg, enable);
-	command = IPCCMD_SET(HAL_MODULE_SWITCH, HAL_MODULE_CMD_SET, HAL_MISC_JUMBO);
+	command = IPCCMD_SET(HAL_MODULE_SWITCH, HAL_MODULE_CMD_REQ, HAL_MISC_JUMBO);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -49,11 +51,12 @@ int hal_snooping_enable (zpl_bool enable, zpl_uint32 mode, zpl_bool ipv6)
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
+	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	//hal_ipcmsg_port_set(&ipcmsg, ifindex);
 	hal_ipcmsg_putl(&ipcmsg, enable);
 	hal_ipcmsg_putc(&ipcmsg, ipv6);
-	command = IPCCMD_SET(HAL_MODULE_SWITCH, HAL_MODULE_CMD_SET, HAL_MISC_DHCP_SNOOP);
+	command = IPCCMD_SET(HAL_MODULE_SWITCH, HAL_MODULE_CMD_REQ, HAL_MISC_DHCP_SNOOP);
 	return hal_ipcmsg_send_message(IF_UNIT_ALL, 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -66,10 +69,11 @@ int hal_eee_enable (ifindex_t ifindex, zpl_bool enable)
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
+	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
 	hal_ipcmsg_putl(&ipcmsg, enable);
-	command = IPCCMD_SET(HAL_MODULE_SWITCH, HAL_MODULE_CMD_SET, HAL_MISC_EEE);
+	command = IPCCMD_SET(HAL_MODULE_SWITCH, HAL_MODULE_CMD_REQ, HAL_MISC_EEE);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -79,10 +83,11 @@ int hal_eee_set (ifindex_t ifindex, void *eee)
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
+	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
 	//hal_ipcmsg_putw(&ipcmsg, vlan);
-	command = IPCCMD_SET(HAL_MODULE_SWITCH, HAL_MODULE_CMD_ADD, HAL_MISC_EEE);
+	command = IPCCMD_SET(HAL_MODULE_SWITCH, HAL_MODULE_CMD_REQ, HAL_MISC_EEE);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -92,10 +97,11 @@ int hal_eee_unset (ifindex_t ifindex, void *eee)
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
+	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
 	//hal_ipcmsg_putw(&ipcmsg, vlan);
-	command = IPCCMD_SET(HAL_MODULE_SWITCH, HAL_MODULE_CMD_DEL, HAL_MISC_EEE);
+	command = IPCCMD_SET(HAL_MODULE_SWITCH, HAL_MODULE_CMD_REQ, HAL_MISC_EEE);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }

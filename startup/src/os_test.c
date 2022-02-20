@@ -345,7 +345,7 @@ DEFUN (uci_commit_test_cmd,
 
 
 
-int os_test()
+int os_test(void)
 {
 	//modem_pppd_test();
 /*	 int num = 0;

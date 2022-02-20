@@ -11,8 +11,9 @@
 
 static LIST *unit_board_mgt_list = NULL;
 static os_mutex_t *unit_board_mgt_mutex = NULL;
+zpl_uint32 _bmgt_debug = 0;
 
-int unit_board_init()
+int unit_board_init(void)
 {
 	if (unit_board_mgt_list == NULL)
 	{
@@ -26,10 +27,11 @@ int unit_board_init()
 	{
 		unit_board_mgt_mutex = os_mutex_init();
 	}
+	_bmgt_debug = BMGT_DEBUG_EVENT|BMGT_DEBUG_DETAIL;
 	return OK;
 }
 
-int unit_board_exit()
+int unit_board_exit(void)
 {
 	if (unit_board_mgt_mutex)
 	{
@@ -54,6 +56,8 @@ unit_board_mgt_t *unit_board_add(zpl_uint8 unit, zpl_uint8 slot)
 		// t->type = (zpl_uint32)type;
 		t->unit = unit;
 		t->slot = slot;
+		if(IS_BMGT_DEBUG_EVENT(_bmgt_debug))
+			zlog_debug(MODULE_LIB, "Unit Board Add unit %d slot %d ", unit, slot);
 		// t->port = port;
 		// t->phyid = phyid;
 		t->port_list = os_malloc(sizeof(LIST));
@@ -86,6 +90,9 @@ int unit_board_del(zpl_uint8 unit, zpl_uint8 slot)
 		node = t->node;
 		if (t && t->unit == unit && t->slot == slot)
 		{
+			if(IS_BMGT_DEBUG_EVENT(_bmgt_debug))
+				zlog_debug(MODULE_LIB, "Unit Board Del unit %d slot %d ", unit, slot);			
+	
 			lstDelete(unit_board_mgt_list, (NODE *)t);
 			if (t->mutex)
 				os_mutex_lock(t->mutex, OS_WAIT_FOREVER);
@@ -146,7 +153,7 @@ int unit_board_foreach(int (*func)(unit_board_mgt_t *, void *), void *p)
 	return OK;
 }
 
-unit_port_mgt_t *unit_board_port_add(unit_board_mgt_t *board, zpl_uint8 type, zpl_uint8 port, zpl_uint32 phyid)
+unit_port_mgt_t *unit_board_port_add(unit_board_mgt_t *board, if_type_t type, zpl_uint8 port, zpl_phyport_t phyid)
 {
 	unit_port_mgt_t *t = NULL;
 	if (t == NULL)
@@ -156,6 +163,8 @@ unit_port_mgt_t *unit_board_port_add(unit_board_mgt_t *board, zpl_uint8 type, zp
 		t->type = (zpl_uint32)type;
 		t->port = port;
 		t->phyid = phyid;
+		if(IS_BMGT_DEBUG_EVENT(_bmgt_debug))
+			zlog_debug(MODULE_LIB, "Unit Board Add Port unit %d slot %d type %d port %d phyid %d", board->unit, board->slot, type, port, phyid);
 		if (board->mutex)
 			os_mutex_lock(board->mutex, OS_WAIT_FOREVER);
 		if (board->port_list)
@@ -167,7 +176,7 @@ unit_port_mgt_t *unit_board_port_add(unit_board_mgt_t *board, zpl_uint8 type, zp
 	return NULL;
 }
 
-int unit_board_port_del(unit_board_mgt_t *board, zpl_uint8 type, zpl_uint8 port, zpl_uint32 phyid)
+int unit_board_port_del(unit_board_mgt_t *board, if_type_t type, zpl_uint8 port, zpl_phyport_t phyid)
 {
 	NODE node;
 	unit_port_mgt_t *t;
@@ -178,6 +187,8 @@ int unit_board_port_del(unit_board_mgt_t *board, zpl_uint8 type, zpl_uint8 port,
 		node = t->node;
 		if (t && t->type == type && t->port == port && t->phyid == phyid)
 		{
+			if(IS_BMGT_DEBUG_EVENT(_bmgt_debug))
+				zlog_debug(MODULE_LIB, "Unit Board Del Port unit %d slot %d type %d port %d phyid %d", board->unit, board->slot, type, port, phyid);
 			lstDelete(board->port_list, (NODE *)t);
 			break;
 		}
@@ -208,12 +219,13 @@ int unit_board_port_foreach(unit_board_mgt_t *board, int (*func)(unit_port_mgt_t
 }
 
 
-
 int unit_board_show(void *pvoid)
 {
-	zpl_uint32 i = 0;
-	NODE *node;
-	unit_board_mgt_t *t;
+	zpl_char datil = 0;
+	NODE *node = NULL;
+	unit_board_mgt_t *t = NULL;
+	zpl_char *state_str[] = {"Init", "Pand", "Acti", "UnAc"};
+
 #ifdef ZPL_SHELL_MODULE
 	struct vty *vty = (struct vty *)pvoid;
 #endif
@@ -222,9 +234,10 @@ int unit_board_show(void *pvoid)
 #ifdef ZPL_SHELL_MODULE
 	if (lstCount(unit_board_mgt_list))
 	{
-		vty_out(vty, "%-4s %-4s %-4s %-4s %-4s %s", "----", "----", "----", "----", "----", VTY_NEWLINE);
-		vty_out(vty, "%-4s %-4s %-4s %-4s %-4s %s", "TYPE", "UNIT", "SLOT", "PORT", "STAT", VTY_NEWLINE);
-		vty_out(vty, "%-4s %-4s %-4s %-4s %-4s %s", "----", "----", "----", "----", "----", VTY_NEWLINE);
+		vty_out(vty, "%-8s %-4s %-4s %-4s %-4s %-4s %-4s%s", "--------", "----", "----", "----", "----", "----", "----",VTY_NEWLINE);
+		vty_out(vty, "%-8s %-4s %-4s %-4s %-4s %-4s %-4s%s", "TYPE", "UNIT", "SLOT", "PORT", "STAT", "PHY", "STUS", VTY_NEWLINE);
+		vty_out(vty, "%-8s %-4s %-4s %-4s %-4s %-4s %-4s%s", "--------", "----", "----", "----", "----", "----", "----",VTY_NEWLINE);
+		datil = 1;
 	}
 	for (node = lstFirst(unit_board_mgt_list); node != NULL; node = lstNext(node))
 	{
@@ -241,19 +254,25 @@ int unit_board_show(void *pvoid)
 				pnode = mgt->node;
 				if (mgt)
 				{
-					vty_out(vty, "%04x  %-4d %-4d %-4d %-4d%s", mgt->type, t->unit, t->slot, mgt->port, t->state, VTY_NEWLINE);
+					vty_out(vty, "%-8s %-4d %-4d %-4d %-4s %-4d %s%s%s", getabstractname(mgt->type), t->unit, t->slot, 
+						mgt->port, state_str[t->state], mgt->phyid, t->online ? "U":"D", t->b_install?"I":"N", VTY_NEWLINE);
 				}
 			}
 			if (t->mutex)
 				os_mutex_unlock(t->mutex);
 		}
+	}
+	if(datil)
+	{
+		vty_out(vty, " STUS: online:U offline:D; install:I Uninstall:N%s", VTY_NEWLINE);
 	}
 #else
 	if (lstCount(unit_board_mgt_list) || lstCount(job_unused_list))
 	{
-		fprintf(stdout, "%-4s %-4s %-4s %-4s %-4s %s", "----", "----", "----", "----", "----", VTY_NEWLINE);
-		fprintf(stdout, "%-4s %-4s %-4s %-4s %-4s %s", "TYPE", "UNIT", "SLOT", "PORT", "STAT", VTY_NEWLINE);
-		fprintf(stdout, "%-4s %-4s %-4s %-4s %-4s %s", "----", "----", "----", "----", "----" VTY_NEWLINE);
+		fprintf(stdout, "%-8s %-4s %-4s %-4s %-4s %-4s %-4s%s", "--------", "----", "----", "----", "----", "----", "----", VTY_NEWLINE);
+		fprintf(stdout, "%-8s %-4s %-4s %-4s %-4s %-4s %-4s%s", "TYPE", "UNIT", "SLOT", "PORT", "STAT", "PHY", "STUS", VTY_NEWLINE);
+		fprintf(stdout, "%-8s %-4s %-4s %-4s %-4s %-4s %-4s%s", "--------", "----", "----", "----", "----" "----", "----", VTY_NEWLINE);
+		datil = 1;
 	}
 	for (node = lstFirst(unit_board_mgt_list); node != NULL; node = lstNext(node))
 	{
@@ -270,12 +289,17 @@ int unit_board_show(void *pvoid)
 				pnode = mgt->node;
 				if (mgt)
 				{
-					fprintf(stdout, "%04x  %-4d %-4d %-4d %-4d%s", mgt->type, t->unit, t->slot, mgt->port, t->state, "\r\n");
+					fprintf(stdout, "%-8s %-4d %-4d %-4d %-4s %-4d  %s%s%s", getabstractname(mgt->type), t->unit, t->slot, 
+						mgt->port, state_str[t->state], mgt->phyid, t->online ? "U":"D", t->b_install?"I":"N", "\r\n");
 				}
 			}
 			if (t->mutex)
 				os_mutex_unlock(t->mutex);
 		}
+	}	
+	if(datil)
+	{
+		fprintf(stdout, " STUS: online:U offline:D; install:I Uninstall:N%s", "\r\n");
 	}
 #endif
 	if (unit_board_mgt_mutex)
@@ -283,7 +307,7 @@ int unit_board_show(void *pvoid)
 	return OK;
 }
 
-int unit_board_waitting()
+int unit_board_waitting(void)
 {
 	os_sleep(10);
 	return OK;

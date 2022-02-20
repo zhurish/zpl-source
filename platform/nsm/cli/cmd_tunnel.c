@@ -335,6 +335,7 @@ static int nsm_interface_tunnel_config_write(struct vty *vty)
 	struct connected *ifc = NULL;
 	struct prefix *p = NULL;
 	nsm_tunnel_t * tunnel = NULL;
+	union prefix46constptr up;
 	IF_DATA_LOCK();
 	if_list = if_list_get();
 	if (if_list)
@@ -377,9 +378,10 @@ static int nsm_interface_tunnel_config_write(struct vty *vty)
 					{
 						char buf[INET6_ADDRSTRLEN];
 						p = ifc->address;
+						up.p = p;
 						vty_out(vty, " ip%s address %s",
 									p->family == IPSTACK_AF_INET ? "" : "v6",
-									prefix2str(p, buf, sizeof(buf)));
+									prefix2str(up, buf, sizeof(buf)));
 						vty_out(vty, "%s", VTY_NEWLINE);
 					}
 				}
@@ -450,7 +452,7 @@ static void cmd_tunnel_interface_init(int node)
 }
 
 
-void cmd_tunnel_init()
+void cmd_tunnel_init(void)
 {
 	reinstall_node(TUNNEL_INTERFACE_NODE, nsm_interface_tunnel_config_write);
 	cmd_tunnel_interface_init(TUNNEL_INTERFACE_NODE);

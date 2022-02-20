@@ -7,6 +7,8 @@ extern "C" {
 
 #ifdef ZPL_SHELL_MODULE
 
+#include "vty.h"
+
 /* There are some command levels which called from command node. */
 enum node_type 
 {
@@ -75,7 +77,6 @@ enum node_type
   WIFI_INTERFACE_NODE,	/* Wifi Interface mode node. */
   MODEM_INTERFACE_NODE,		/* Modem Interface mode node. */
 #endif
-  //INTERFACE_RANGE_NODE,
 
   TRUNK_NODE,			/* Trunk group mode node. */
 
@@ -137,9 +138,9 @@ enum node_type
   CMD_NODE_MAX
 };
 
-extern enum node_type cmd_end_node(enum node_type node);
-extern enum node_type cmd_stop_node(enum node_type node);
-extern enum node_type cmd_exit_node(enum node_type node);
+extern enum node_type cmd_end_node(struct vty *vty);
+extern enum node_type cmd_stop_node(struct vty *vty);
+extern enum node_type cmd_exit_node(struct vty *vty);
 extern enum node_type node_parent(enum node_type node);
 
 #endif /* ZPL_SHELL_MODULE */

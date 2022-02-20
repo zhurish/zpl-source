@@ -22,7 +22,9 @@
 #include "module.h"
 #include "os_start.h"
 #include "os_module.h"
-
+#include "hal_driver.h"
+#include "sdk_driver.h"
+#include "b53_driver.h"
 //#include "platform/nsm/filter.h"
 //#include "platform/nsm/plist.h"
 
@@ -306,6 +308,7 @@ int main(int argc, char **argv)
 	/*
 	 * load config file
 	 */
+	openzlog_start(NULL);
 	host_config_loading(main_data.config_file);
 	zlog_notice(MODULE_DEFAULT, "Zebra host_config_loading");
 

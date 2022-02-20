@@ -96,7 +96,7 @@ int os_task_give_broadcast(void)
 }
 
 
-int os_task_init()
+int os_task_init(void)
 {
 #ifdef OS_TASK_DEBUG_LOG
 	remove(OS_TACK_TMP_LOG);
@@ -126,7 +126,7 @@ int os_task_init()
 }
 
 
-int os_task_exit()
+int os_task_exit(void)
 {
 	if (task_mutex)
 	{
@@ -167,7 +167,7 @@ int os_task_sigexecute(int sigc, int signo[], sigset_t *mask)
 	return pthread_sigmask(SIG_SETMASK, mask, NULL);
 }
 
-int os_task_sigmaskall()
+int os_task_sigmaskall(void)
 {
 	sigset_t mask;
 	sigfillset(&mask);
@@ -1714,7 +1714,7 @@ DEFUN (show_ipcom_process,
 }
 #endif
 
-int cmd_os_init()
+int cmd_os_init(void)
 {
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_process_cmd);
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_process_detail_cmd);

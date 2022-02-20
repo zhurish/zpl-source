@@ -62,13 +62,9 @@ int zpl_media_module_exit()
 int zpl_media_task_init()
 {
 	printf( "=======zpl_media_task_init\r\n");
-	#ifdef ZPL_MEDIA_PROCESS_ONE
+
 	zpl_media_task_create(MODULE_ZPLMEDIA, &tvideo_task);
-	#else
-    zpl_media_task_create(ZPL_MEDIA_NODE_INPUT, &tvideo_task[0]);
-    zpl_media_task_create(ZPL_MEDIA_NODE_PROCESS, &tvideo_task[1]);
-    zpl_media_task_create(ZPL_MEDIA_NODE_ENCODE, &tvideo_task[2]);
-	#endif
+
 	zpl_media_event_start(zpl_media_event_default());
 
 	zpl_media_config_load("./media.json");
@@ -80,13 +76,9 @@ int zpl_media_task_init()
 int zpl_media_task_exit()
 {
 	printf( "=======zpl_media_task_exit\r\n");
-	#ifdef ZPL_MEDIA_PROCESS_ONE
+
 	zpl_media_task_destroy( &tvideo_task);
-	#else
-	zpl_media_task_destroy( &tvideo_task[0]);
-	zpl_media_task_destroy( &tvideo_task[1]);
-	zpl_media_task_destroy( &tvideo_task[2]);
-	#endif
+
 	return OK;
 }
 

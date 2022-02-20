@@ -111,15 +111,6 @@ char ** rl_completion_matches (const char *text, rl_compentry_func_t *entry_func
 
 struct vty_stdio_t
 {
-	/*
-	int sock;                 
-	
-	char *buf;
-	zpl_uint32	bufsize;
-	zpl_uint32	bmaxsize;
-	vtysh_hdr_t hdr;
-	char cmd[256];
-	*/
 	zpl_uint32 rl_taskid;
 	int rl_exit;
 	struct vty *vty;

@@ -26,9 +26,10 @@
 #include "nsm_include.h"
 
 
-static struct nsm_interface_cb nsm_client_cb[NSM_MAX];
+static zpl_bool	_nsm_intf_init = 0;
+static struct nsm_interface_cb nsm_client_cb[NSM_INTF_MAX + 1];
 
-static int nsm_interface_hook_handler(int add, int module, struct interface *ifp);
+static int nsm_interface_hook_handler(zpl_bool add, nsm_submodule_t module, struct interface *ifp);
 
 /* helper only for nsm_interface_linkdetect */
 static void nsm_interface_linkdetect_set_val(struct interface *ifp,
@@ -348,7 +349,7 @@ static int nsm_interface_new_hook(struct interface *ifp)
 {
 	int ret = -1;
 	struct nsm_interface *nsm_interface;
-
+	NSM_ENTER_FUNC();
 	nsm_interface = XCALLOC(MTYPE_IF, sizeof(struct nsm_interface));
 
 	nsm_interface->multicast = IF_ZEBRA_MULTICAST_UNSPEC;
@@ -397,6 +398,7 @@ static int nsm_interface_new_hook(struct interface *ifp)
 
 int nsm_interface_update_kernel(struct interface *ifp, zpl_char *kname)
 {
+	NSM_ENTER_FUNC();
 	if(ifp/* && ifp->dynamic == zpl_false*/)
 	{
 		if_kname_set(ifp, kname);
@@ -413,6 +415,7 @@ int nsm_interface_update_kernel(struct interface *ifp, zpl_char *kname)
 static int nsm_interface_delete_hook(struct interface *ifp)
 {
 	struct nsm_interface *nsm_interface;
+	NSM_ENTER_FUNC();
 	nsm_interface_hook_handler(0, -1, ifp);
 	nsm_pal_interface_delete(ifp);
 	if (ifp->info[MODULE_NSM])
@@ -508,7 +511,7 @@ zpl_bool nsm_interface_create_check_api(struct vty *vty, const char *ifname, con
 	default:
 		break;
 	}
-	vty_out(vty,"Can not Create interface %s %s(unknown error)%s",ifname, uspv, VTY_NEWLINE);
+	vty_out(vty,"Can not Create interface %s %s(unknown error) type=%d%s",ifname, uspv, type, VTY_NEWLINE);
 	return zpl_false;
 }
 #endif
@@ -575,6 +578,7 @@ int nsm_interface_create_api(const char *ifname)
 {
 	int ret = ERROR;
 	struct interface *ifp = NULL;
+	NSM_ENTER_FUNC();
 	IF_DATA_LOCK();
 	ifp = if_create(ifname, os_strlen(ifname));
 	if(ifp)
@@ -1625,16 +1629,18 @@ void nsm_interface_show_api(struct vty *vty, struct interface *ifp)
 		vty_out(vty, "  pseudo interface%s", VTY_NEWLINE);
 		return;
 	} else if (!CHECK_FLAG(ifp->status, ZEBRA_INTERFACE_ACTIVE)) {
-		vty_out(vty, "  index %d inactive interface%s", ifp->ifindex, VTY_NEWLINE);
+		vty_out(vty, "  index 0x%08x inactive interface%s", ifp->ifindex, VTY_NEWLINE);
 		return;
 	}
 
-	vty_out(vty, "  index %d metric %d mtu %d ", ifp->ifindex, ifp->metric,
+	vty_out(vty, "  index 0x%08x metric %d mtu %d ", ifp->ifindex, ifp->metric,
 			ifp->mtu);
 #ifdef HAVE_IPV6
 	if (ifp->mtu6 != ifp->mtu)
 	vty_out (vty, "mtu6 %d ", ifp->mtu6);
 #endif 
+	vty_out(vty, " phyid 0x%08x", ifp->phyid);
+
 	vty_out(vty, "%s  flags: %s%s", VTY_NEWLINE, if_flag_dump(ifp->flags),
 			VTY_NEWLINE);
 
@@ -1781,30 +1787,50 @@ void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, zpl_bo
 }
 #endif
 
+
+
 static int nsm_interface_event_hook(nsm_event_e event, nsm_event_data_t *data)
 {
 	return OK;
 }
 
-int nsm_interface_hook_add(int module, int (*add_cb)(struct interface *), int (*del_cb)(struct interface *))
+int nsm_interface_hook_add(nsm_submodule_t module, int (*add_cb)(struct interface *), int (*del_cb)(struct interface *))
 {
+	if(_nsm_intf_init == 0)
+	{
+		memset(nsm_client_cb, 0, sizeof(nsm_client_cb));
+		_nsm_intf_init = 1;
+	}
+	if(NOT_INT_MAX_MIN_SPACE(module, NSM_INTF_NONE, NSM_INTF_MAX))
+		return ERROR;
+	//zlog_debug(MODULE_DEFAULT, "===========nsm_interface_hook_add module=%d",module);
 	nsm_client_cb[module].nsm_intf_add_cb = add_cb;
 	nsm_client_cb[module].nsm_intf_del_cb = del_cb;
 	return OK;
 }
 
-int nsm_interface_write_hook_add(int module, int (*write_cb)(struct vty *, struct interface *))
+int nsm_interface_write_hook_add(nsm_submodule_t module, int (*write_cb)(struct vty *, struct interface *))
 {
+	if(_nsm_intf_init == 0)
+	{
+		memset(nsm_client_cb, 0, sizeof(nsm_client_cb));
+		_nsm_intf_init = 1;
+	}
+	if(NOT_INT_MAX_MIN_SPACE(module, NSM_INTF_NONE, NSM_INTF_MAX))
+		return ERROR;
+	//zlog_debug(MODULE_DEFAULT, "===========nsm_interface_write_hook_add module=%d",module);
 	nsm_client_cb[module].nsm_intf_write_cb = write_cb;
 	return OK;
 }
 
-static int nsm_interface_hook_handler(int add, int module, struct interface *ifp)
+static int nsm_interface_hook_handler(zpl_bool add, nsm_submodule_t module, struct interface *ifp)
 {
-	if(module == -1)
+	NSM_ENTER_FUNC();
+	//zlog_debug(MODULE_DEFAULT, "===========nsm_interface_hook_handler %d %d %s",add, module, ifp->name);
+	if(module == NSM_INTF_ALL)
 	{
 		int i = 0;
-		for(i = 0; i < NSM_MAX; i++)
+		for(i = NSM_INTF_NONE; i < NSM_INTF_MAX; i++)
 		{
 			if(add && nsm_client_cb[i].nsm_intf_add_cb)
 				(nsm_client_cb[i].nsm_intf_add_cb)(ifp);
@@ -1820,12 +1846,12 @@ static int nsm_interface_hook_handler(int add, int module, struct interface *ifp
 	return OK;
 }
 
-int nsm_interface_write_hook_handler(int module, struct vty *vty, struct interface *ifp)
+int nsm_interface_write_hook_handler(nsm_submodule_t module, struct vty *vty, struct interface *ifp)
 {
-	if(module == -1)
+	if(module == NSM_INTF_ALL)
 	{
 		int i = 0;
-		for(i = 0; i < NSM_MAX; i++)
+		for(i = NSM_INTF_NONE; i < NSM_INTF_MAX; i++)
 		{
 			if(nsm_client_cb[i].nsm_intf_write_cb)
 				(nsm_client_cb[i].nsm_intf_write_cb)(vty, ifp);
@@ -1840,7 +1866,11 @@ int nsm_interface_write_hook_handler(int module, struct vty *vty, struct interfa
 /* Allocate and initialize interface vector. */
 void nsm_interface_init(void)
 {
-	memset(nsm_client_cb, 0, sizeof(nsm_client_cb));
+	if(_nsm_intf_init == 0)
+	{
+		memset(nsm_client_cb, 0, sizeof(nsm_client_cb));
+		_nsm_intf_init = 1;
+	}
 	if_hook_add(nsm_interface_new_hook, nsm_interface_delete_hook);
 	nsm_event_register_api(MODULE_NSM, nsm_interface_event_hook);
 }

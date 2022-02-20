@@ -19,7 +19,7 @@ static int os_nvram_env_update_save(void);
 static int os_nvram_env_loadall(void);
 
 
-int os_nvram_env_init()
+int os_nvram_env_init(void)
 {
 	if (env_mutex == NULL)
 	{
@@ -41,7 +41,7 @@ int os_nvram_env_init()
 }
 
 
-int os_nvram_env_exit()
+int os_nvram_env_exit(void)
 {
 	if (env_mutex)
 	{

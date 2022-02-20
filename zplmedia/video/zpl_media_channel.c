@@ -753,19 +753,10 @@ int zpl_media_channel_handle_all(zpl_uint32 active)
 				{
 					if (zpl_media_hal_start(chn) == OK)
 					{
-						#ifdef ZPL_MEDIA_PROCESS_ONE
-						zpl_media_hal_read_start(ZPL_MEDIA_HARDADAP_INPUT, thread_master_module_lookup(MODULE_ZPLMEDIA), chn);
-						zpl_media_hal_read_start(ZPL_MEDIA_HARDADAP_VPSS, thread_master_module_lookup(MODULE_ZPLMEDIA), chn);
-						zpl_media_hal_read_start(ZPL_MEDIA_HARDADAP_ENCODE, thread_master_module_lookup(MODULE_ZPLMEDIA), chn);
+						zpl_media_hal_read_start(ZPL_MEDIA_NODE_INPUT, thread_master_module_lookup(MODULE_ZPLMEDIA), chn);
+						zpl_media_hal_read_start(ZPL_MEDIA_NODE_PROCESS, thread_master_module_lookup(MODULE_ZPLMEDIA), chn);
+						zpl_media_hal_read_start(ZPL_MEDIA_NODE_ENCODE, thread_master_module_lookup(MODULE_ZPLMEDIA), chn);
 						zpl_media_task_ready(MODULE_ZPLMEDIA);
-						#else
-						zpl_media_hal_read_start(ZPL_MEDIA_HARDADAP_INPUT, thread_master_module_lookup(ZPL_MEDIA_NODE_INPUT), chn);
-						zpl_media_hal_read_start(ZPL_MEDIA_HARDADAP_VPSS, thread_master_module_lookup(ZPL_MEDIA_NODE_PROCESS), chn);
-						zpl_media_hal_read_start(ZPL_MEDIA_HARDADAP_ENCODE, thread_master_module_lookup(ZPL_MEDIA_NODE_ENCODE), chn);
-						zpl_media_task_ready(ZPL_MEDIA_NODE_INPUT);
-						zpl_media_task_ready(ZPL_MEDIA_NODE_PROCESS);
-						zpl_media_task_ready(ZPL_MEDIA_NODE_ENCODE);
-						#endif
 					}
 				}
 				else if (active == 4)
@@ -780,29 +771,7 @@ int zpl_media_channel_handle_all(zpl_uint32 active)
 			}
 			else
 			{
-				/*if(active == 3)
-				{
-					if(!master_thread_input)
-						master_thread_input = thread_master_module_create(MODULE_ZPLMEDIA_INPUT);
-					if(!master_thread[MODULE_ZPLMEDIA_VPSS])
-						master_thread[MODULE_ZPLMEDIA_VPSS] = thread_master_module_create(MODULE_ZPLMEDIA_VPSS);
-					if(!master_thread[MODULE_ZPLMEDIA])
-						master_thread[MODULE_ZPLMEDIA] = thread_master_module_create(MODULE_ZPLMEDIA);
-					zpl_media_hal_read_start(ZPL_MEDIA_HARDADAP_INPUT, master_thread_input, chn);
-					zpl_media_hal_read_start(ZPL_MEDIA_HARDADAP_VPSS, master_thread[MODULE_ZPLMEDIA_VPSS], chn);
-					zpl_media_hal_read_start(ZPL_MEDIA_HARDADAP_ENCODE, master_thread[MODULE_ZPLMEDIA], chn);
-					zpl_media_task_ready(ZPL_MEDIA_HARDADAP_INPUT);
-					zpl_media_task_ready(ZPL_MEDIA_HARDADAP_VPSS);
-					zpl_media_task_ready(ZPL_MEDIA_HARDADAP_ENCODE);
-				}
-				else if(active == 4)
-				{
-					zpl_media_hal_read_stop(ZPL_MEDIA_HARDADAP_INPUT, chn);
-					zpl_media_hal_read_stop(ZPL_MEDIA_HARDADAP_VPSS, chn);
-					zpl_media_hal_read_stop(ZPL_MEDIA_HARDADAP_ENCODE, chn);
-					zpl_media_hal_stop(chn);	
-				}
-				*/
+
 			}
 		}
 	}

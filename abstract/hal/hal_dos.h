@@ -11,7 +11,7 @@
 extern "C" {
 #endif
 
-
+#include "nsm_dos.h"
 
 enum hal_dos_cmd 
 {

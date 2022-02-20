@@ -14,7 +14,12 @@ extern "C" {
 
 #include "os_include.h"
 
- 
+#define BMGT_DEBUG_EVENT  0x10
+#define BMGT_DEBUG_DETAIL 0x08
+
+#define IS_BMGT_DEBUG_EVENT(n) ((n)&BMGT_DEBUG_EVENT)
+#define IS_BMGT_DEBUG_DETAIL(n) ((n)&BMGT_DEBUG_DETAIL)
+
 enum UBMG_STAT
 {
   /* data */
@@ -27,9 +32,9 @@ enum UBMG_STAT
 typedef struct 
 {
   NODE	node;
-  zpl_uint8 type;
+  if_type_t type;
   zpl_uint8 port;
-  zpl_uint32 phyid;
+  zpl_phyport_t phyid;
 }unit_port_mgt_t;
 
 typedef struct 
@@ -46,20 +51,21 @@ typedef struct
 
 }unit_board_mgt_t;
 
+extern zpl_uint32 _bmgt_debug;
 
-int unit_board_init();
-int unit_board_exit();
-int unit_board_waitting();
-int unit_board_foreach(int (*func)(unit_board_mgt_t *, void *), void *p);
-unit_board_mgt_t * unit_board_add(zpl_uint8 unit, zpl_uint8 slot);
-int unit_board_del(zpl_uint8 unit, zpl_uint8 slot);
-unit_board_mgt_t * unit_board_lookup(zpl_uint8 unit, zpl_uint8 slot);
+extern int unit_board_init(void);
+extern int unit_board_exit(void);
+extern int unit_board_waitting(void);
+extern int unit_board_foreach(int (*func)(unit_board_mgt_t *, void *), void *p);
+extern unit_board_mgt_t * unit_board_add(zpl_uint8 unit, zpl_uint8 slot);
+extern int unit_board_del(zpl_uint8 unit, zpl_uint8 slot);
+extern unit_board_mgt_t * unit_board_lookup(zpl_uint8 unit, zpl_uint8 slot);
 
-int unit_board_port_foreach(unit_board_mgt_t*, int (*func)(unit_port_mgt_t *, void *), void *p);
-unit_port_mgt_t * unit_board_port_add(unit_board_mgt_t*, zpl_uint8 type, zpl_uint8 port, zpl_uint32 phyid);
-int unit_board_port_del(unit_board_mgt_t*, zpl_uint8 type, zpl_uint8 port, zpl_uint32 phyid);
+extern int unit_board_port_foreach(unit_board_mgt_t*, int (*func)(unit_port_mgt_t *, void *), void *p);
+extern unit_port_mgt_t * unit_board_port_add(unit_board_mgt_t*, if_type_t type, zpl_uint8 port, zpl_phyport_t phyid);
+extern int unit_board_port_del(unit_board_mgt_t*, if_type_t type, zpl_uint8 port, zpl_phyport_t phyid);
 
-int unit_board_show(void *pvoid);
+extern int unit_board_show(void *pvoid);
 
 
 #ifdef __cplusplus

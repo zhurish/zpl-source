@@ -72,8 +72,8 @@ extern int _ipkernel_vrf_disable(vrf_id_t vrf_id);
 extern zpl_socket_t _kernel_vrf_socket(int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id_t vrf_id);
 
 extern int ip_ifp_stack_init(void);
-extern int ip_arp_stack_init();
-extern int kernel_driver_init();
+extern int ip_arp_stack_init(void);
+extern int kernel_driver_init(void);
 
 
 #ifdef __cplusplus

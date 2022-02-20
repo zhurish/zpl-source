@@ -13,9 +13,9 @@
 extern "C" {
 #endif
 
-extern int os_job_init();
-extern int os_job_exit();
-extern int os_job_load();
+extern int os_job_init(void);
+extern int os_job_exit(void);
+extern int os_job_load(void);
 
 extern int os_job_show(void *);
 

@@ -69,8 +69,8 @@ struct ip_tunnel_parm {
 };
 */
 extern nsm_tunnel_t * nsm_tunnel_get(struct interface *ifp);
-extern int nsm_tunnel_init();
-extern int nsm_tunnel_exit();
+extern int nsm_tunnel_init(void);
+extern int nsm_tunnel_exit(void);
 
 extern int nsm_tunnel_interface_create_api(struct interface *ifp);
 extern int nsm_tunnel_interface_del_api(struct interface *ifp);
@@ -90,7 +90,7 @@ extern int nsm_tunnel_tos_get_api(struct interface *ifp, zpl_uint32 *tos);
 
 extern int nsm_tunnel_make_iphdr(nsm_tunnel_t *tunnel, struct ipstack_iphdr *iph);
 
-extern void cmd_tunnel_init();
+extern void cmd_tunnel_init(void);
 
  
 #ifdef __cplusplus

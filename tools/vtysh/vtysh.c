@@ -19,206 +19,153 @@
  * 02111-1307, USA.
  */
 
-#include <os_include>
-#include <sys/un.h>
-#include <setjmp.h>
-#include <sys/wait.h>
-#include <sys/resource.h>
-#include <sys/stat.h>
+#include "os_include.h"
+#include "zpl_include.h"
+#include "lib_include.h"
+#include "vty_include.h"
 
 #include <readline/readline.h>
 #include <readline/history.h>
+#include "vtysh.h"
 
-/* VTY shell client structure. */
-struct vtysh_client
-{
-  int fd;
-  const char *name;
-  int flag;
-  const char *path;
-  char *pbuf;
-  int plen;
-} vtysh_client =
-    {
-        .fd = -1, .name = "zebra", .flag = 0, .path = ZEBRA_VTYSH_PATH};
+struct vtysh_client vtysh_client;
 
-static void vtysh_client_close(struct vtysh_client *vtysh_client)
-{
-  if (vtysh_client->pbuf)
-  {
-    free(vtysh_client->pbuf);
-    vtysh_client->pbuf = NULL;
-    vtysh_client->plen = 0;
-  }
-  if (vtysh_client->fd >= 0)
-  {
-    fprintf(stderr,
-            "Warning: closing connection to %s because of an I/O error!\n",
-            vtysh_client->name);
-    close(vtysh_client->fd);
-    vtysh_client->fd = -1;
-  }
-}
-
-/* Return true if str begins with prefix, else return false */
-static int vtysh_client_execute(struct vtysh_client *vtysh_client, const char *line, FILE *fp)
-{
-  int ret = 0;
-  int nbytes = 0, rlen = 0;
-  vtysh_hdr_t header;
-
-  os_bzero(&header, sizeof(vtysh_hdr_t));
-
-  if (vtysh_client->fd < 0)
-    return ERROR;
-
-  ret = write(vtysh_client->fd, line, strlen(line) + 1);
-  if (ret <= 0)
-  {
-    vtysh_client_close(vtysh_client);
-    return ERROR;
-  }
-  while (1)
-  {
-    nbytes = read(vtysh_client->fd, &header, sizeof(vtysh_hdr_t));
-    if (nbytes <= 0)
-    {
-      if (ipstack_errno == EINTR)
-        continue;
-
-      fprintf(stderr, "(%u)", ipstack_errno);
-      perror("");
-
-      if (ipstack_errno == EAGAIN || ipstack_errno == EIO)
-        continue;
-
-      vtysh_client_close(vtysh_client);
-      return ERROR;
-    }
-    if (nbytes == sizeof(vtysh_hdr_t))
-    {
-      if (header.retcode == CMD_SUCCESS)
-      {
-        if (!strstr(line, "show"))
-        {
-          return OK;
-        }
-      }
-      if (vtysh_client->pbuf == NULL)
-      {
-        vtysh_client->pbuf = malloc(header.retlen + 8);
-        if (vtysh_client->pbuf)
-          vtysh_client->plen = header.retlen + 8;
-      }
-      else
-      {
-        if ((header.retlen + 8) > vtysh_client->plen)
-        {
-          vtysh_client->pbuf = realloc(vtysh_client->pbuf, header.retlen + 8);
-          if (vtysh_client->pbuf)
-            vtysh_client->plen = header.retlen + 8;
-        }
-      }
-    }
-    rlen = header.retlen - sizeof(vtysh_hdr_t);
-    while (1)
-    {
-      nbytes = read(vtysh_client->fd, vtysh_client->pbuf, rlen);
-      if (nbytes <= 0)
-      {
-        if (ipstack_errno == EINTR)
-          continue;
-
-        fprintf(stderr, "(%u)", ipstack_errno);
-        perror("");
-
-        if (ipstack_errno == EAGAIN || ipstack_errno == EIO)
-          continue;
-
-        vtysh_client_close(vtysh_client);
-        return ERROR;
-      }
-      if (nbytes == rlen)
-      {
-        if (fp)
-        {
-          fputs(vtysh_client->pbuf, fp);
-          fflush(fp);
-        }
-        return OK;
-      }
-      else
-      {
-        if (fp)
-        {
-          fputs(vtysh_client->pbuf, fp);
-          fflush(fp);
-        }
-        rlen = rlen - nbytes;
-      }
-    }
-  }
-  return OK;
-}
-
-int vtysh_execute(const char *line)
-{
-  return vtysh_execute_func(line, 1);
-}
-
-/* Configration make from file. */
-int vtysh_config_from_file(struct vty *vty, FILE *fp)
+/* We don't care about the point of the cursor when '?' is typed. */
+static int vtysh_rl_describe(void)
 {
   int ret;
-  struct cmd_element *cmd;
+  unsigned int i;
+  vector vline;
+  vector describe;
+  int width;
+  struct cmd_token *token;
 
-  while (fgets(vty->buf, vty->max, fp))
+  vline = cmd_make_strvec(rl_line_buffer);
+
+  /* In case of '> ?'. */
+  if (vline == NULL)
   {
-    ret = command_config_read_one_line(vty, &cmd, 1);
-
-    switch (ret)
-    {
-    case CMD_WARNING:
-      if (vty->type == VTY_FILE)
-        fprintf(stdout, "Warning...\n");
-      break;
-    case CMD_ERR_AMBIGUOUS:
-      fprintf(stdout, "%% Ambiguous command.\n");
-      break;
-    case CMD_ERR_NO_MATCH:
-      fprintf(stdout, "%% Unknown command: %s", vty->buf);
-      break;
-    case CMD_ERR_INCOMPLETE:
-      fprintf(stdout, "%% Command incomplete.\n");
-      break;
-    case CMD_SUCCESS_DAEMON:
-    {
-      u_int i;
-      int cmd_stat = CMD_SUCCESS;
-
-      for (i = 0; i < array_size(vtysh_client); i++)
-      {
-        if (cmd->daemon & vtysh_client[i].flag)
-        {
-          cmd_stat = vtysh_client_execute(&vtysh_client[i],
-                                          vty->buf, stdout);
-          if (cmd_stat != CMD_SUCCESS)
-            break;
-        }
-      }
-      if (cmd_stat != CMD_SUCCESS)
-        break;
-
-      if (cmd->func)
-        (*cmd->func)(cmd, vty, 0, NULL);
-    }
-    }
+    vline = vector_init(1);
+    vector_set(vline, NULL);
   }
-  return CMD_SUCCESS;
+  else if (rl_end && isspace((int)rl_line_buffer[rl_end - 1]))
+    vector_set(vline, NULL);
+
+  describe = cmd_describe_command(vline, vtysh_client.vty, &ret);
+
+  fprintf(stdout, "\n");
+
+  /* Ambiguous and no match error. */
+  switch (ret)
+  {
+  case CMD_ERR_AMBIGUOUS:
+    cmd_free_strvec(vline);
+    fprintf(stdout, "%% Ambiguous command.\n");
+    rl_on_new_line();
+    return 0;
+    break;
+  case CMD_ERR_NO_MATCH:
+    cmd_free_strvec(vline);
+    fprintf(stdout, "%% There is no matched command.\n");
+    rl_on_new_line();
+    return 0;
+    break;
+  }
+
+  /* Get width of command string. */
+  width = 0;
+  for (i = 0; i < vector_active(describe); i++)
+    if ((token = vector_slot(describe, i)) != NULL)
+    {
+      int len;
+
+      if (token->cmd[0] == '\0')
+        continue;
+
+      len = strlen(token->cmd);
+      if (token->cmd[0] == '.')
+        len--;
+
+      if (width < len)
+        width = len;
+    }
+
+  for (i = 0; i < vector_active(describe); i++)
+    if ((token = vector_slot(describe, i)) != NULL)
+    {
+      if (token->cmd[0] == '\0')
+        continue;
+
+      if (!token->desc)
+        fprintf(stdout, "  %-s\n",
+                token->cmd[0] == '.' ? token->cmd + 1 : token->cmd);
+      else
+        fprintf(stdout, "  %-*s  %s\n",
+                width,
+                token->cmd[0] == '.' ? token->cmd + 1 : token->cmd,
+                token->desc);
+    }
+
+  cmd_free_strvec(vline);
+  vector_free(describe);
+
+  rl_on_new_line();
+
+  return 0;
+}
+
+/* Result of cmd_complete_command() call will be stored here
+ * and used in new_completion() in order to put the space in
+ * correct places only. */
+static char *command_generator(const char *text, int state)
+{
+  vector vline;
+  static char **matched = NULL;
+  static int index = 0;
+
+  /* First call. */
+  if (!state)
+  {
+    index = 0;
+
+    if (vtysh_client.vty->node == AUTH_NODE || vtysh_client.vty->node == AUTH_ENABLE_NODE)
+      return NULL;
+
+    vline = cmd_make_strvec(rl_line_buffer);
+    if (vline == NULL)
+      return NULL;
+
+    if (rl_end && isspace((int)rl_line_buffer[rl_end - 1]))
+      vector_set(vline, NULL);
+
+    matched = cmd_complete_command(vline, vtysh_client.vty, &vtysh_client.complete_status);
+  }
+
+  if (matched && matched[index])
+    return matched[index++];
+
+  return NULL;
+}
+
+static char **new_completion(char *text, int start, int end)
+{
+  char **matches;
+
+  matches = rl_completion_matches(text, command_generator);
+
+  if (matches)
+  {
+    rl_point = rl_end;
+    if (vtysh_client.complete_status != CMD_COMPLETE_FULL_MATCH)
+      /* only append a space on full match */
+      rl_completion_append_character = '\0';
+  }
+
+  return matches;
 }
 
 /* Making connection to protocol daemon. */
-int vtysh_connect(struct vtysh_client *vclient)
+static int vtysh_connect_node(struct vtysh_client *vclient)
 {
   int ret;
   int sock, len;
@@ -230,7 +177,7 @@ int vtysh_connect(struct vtysh_client *vclient)
   if (ret < 0 && errno != ENOENT)
   {
     fprintf(stderr, "vtysh_connect(%s): stat = %s\n",
-            vclient->path, safe_strerror(errno));
+            vclient->path, strerror(errno));
     exit(1);
   }
 
@@ -249,7 +196,7 @@ int vtysh_connect(struct vtysh_client *vclient)
   {
 #ifdef DEBUG
     fprintf(stderr, "vtysh_connect(%s): socket = %s\n", vclient->path,
-            safe_strerror(errno));
+            strerror(errno));
 #endif /* DEBUG */
     return -1;
   }
@@ -268,12 +215,403 @@ int vtysh_connect(struct vtysh_client *vclient)
   {
 #ifdef DEBUG
     fprintf(stderr, "vtysh_connect(%s): connect = %s\n", vclient->path,
-            safe_strerror(errno));
+            strerror(errno));
 #endif /* DEBUG */
     close(sock);
     return -1;
   }
   vclient->fd = sock;
-
+  vclient->flag = 1;
   return 0;
+}
+
+static int vtysh_read_result(struct vtysh_client *vclient)
+{
+  // int ret;
+  zpl_socket_t sock;
+  zpl_uint32 nbytes = 0, already = 0;
+  zpl_uchar *buf = NULL;
+  vtysh_result_t msg;
+  sock.stack = OS_STACK;
+  sock._fd = vclient->fd;
+  zpl_osmsg_reset(vclient->vty->vtysh_msg);
+  while (1)
+  {
+    already = zpl_osmsg_get_endp(vclient->vty->vtysh_msg);
+    nbytes = zpl_osmsg_read_try(vclient->vty->vtysh_msg, sock, sizeof(vtysh_result_t) - already);
+    if (nbytes == -1)
+    {
+      zpl_osmsg_reset(vclient->vty->vtysh_msg);
+      return -1;
+    }
+    if (nbytes == (ssize_t)(sizeof(vtysh_msghdr_t) - already))
+    {
+      already = sizeof(vtysh_msghdr_t);
+      break;
+    }
+  }
+
+  /* Reset to read from the beginning of the incoming packet. */
+  zpl_osmsg_set_getp(vclient->vty->vtysh_msg, 0);
+
+  /* Fetch header values */
+  msg.type = zpl_osmsg_getl(vclient->vty->vtysh_msg);
+  msg.retcode = zpl_osmsg_getl(vclient->vty->vtysh_msg);
+  msg.retlen = zpl_osmsg_getl(vclient->vty->vtysh_msg);
+
+  if (msg.retlen > zpl_osmsg_get_size(vclient->vty->vtysh_msg))
+  {
+    zpl_osmsg_reset(vclient->vty->vtysh_msg);
+    return -1;
+  }
+
+  /* Read rest of data. */
+  if (already < msg.retlen)
+  {
+    while (1)
+    {
+      ssize_t nbyte;
+      if (((nbyte = zpl_osmsg_read_try(vclient->vty->vtysh_msg, sock,
+                                       msg.retlen - already)) == 0) ||
+          (nbyte == -1))
+      {
+        zpl_osmsg_reset(vclient->vty->vtysh_msg);
+        return -1;
+      }
+      if (nbyte == (ssize_t)(msg.retlen - already))
+      {
+        break;
+      }
+    }
+  }
+  buf = zpl_osmsg_pnt(vclient->vty->vtysh_msg);
+  if (msg.retcode == CMD_SUCCESS)
+    return 0;
+  else
+  {
+    if (strlen(buf))
+    {
+      fprintf(stdout, "%s", buf);
+      fflush(stdout);
+    }
+  }
+  return 0;
+}
+
+static int vtysh_write_cmd(const char *cmd)
+{
+  int rc = 0, mlen = 0, offset = 0;
+  char cmdbuf[1024];
+  vtysh_msghdr_t *vtyshhdr = (vtysh_msghdr_t *)cmdbuf;
+  memset(cmdbuf, 0, sizeof(cmdbuf));
+  vtyshhdr->type = htonl(VTYSH_MSG_CMD);
+  vtyshhdr->msglen = htonl(strlen(cmd));
+  mlen = sizeof(vtysh_msghdr_t) + strlen(cmd);
+  while (vtysh_client.fd)
+  {
+    rc = write(vtysh_client.fd, cmdbuf + offset, mlen - offset);
+    if (rc == mlen)
+    {
+      break;
+    }
+    if (rc <= 0)
+    {
+      break;
+    }
+    else
+      offset += rc;
+  }
+  rc = vtysh_read_result(&vtysh_client);
+  return rc;
+}
+
+int vtysh_connect(const char *daemon_name)
+{
+  int rc = 0;
+  strcpy(vtysh_client.name, "zebra");
+  // vtysh_client.flag;
+  strcpy(vtysh_client.path, daemon_name);
+  rc = vtysh_connect_node(&vtysh_client);
+  return rc;
+}
+
+/* To disable readline's filename completion. */
+static char *
+vtysh_completion_entry_function(const char *ignore, int invoking_key)
+{
+  return NULL;
+}
+
+static void vtysh_readline_init(void)
+{
+  rl_initialize();
+  /* readline related settings. */
+  rl_bind_key('?', (rl_command_func_t *)vtysh_rl_describe);
+  rl_completion_entry_function = vtysh_completion_entry_function;
+  rl_attempted_completion_function = (rl_completion_func_t *)new_completion;
+}
+/*
+extern struct cmd_element config_end_cmd;
+extern struct cmd_element config_exit_cmd;
+extern struct cmd_element config_quit_cmd;
+extern struct cmd_element config_help_cmd;
+extern struct cmd_element config_list_cmd;
+extern struct cmd_element config_end_cmd;
+extern struct cmd_element config_exit_cmd;
+extern struct cmd_element config_quit_cmd;
+extern struct cmd_element config_help_cmd;
+extern struct cmd_element config_list_cmd;
+extern struct cmd_element config_write_terminal_cmd;
+extern struct cmd_element config_write_file_cmd;
+extern struct cmd_element config_write_memory_cmd;
+extern struct cmd_element config_write_cmd;
+extern struct cmd_element show_running_config_cmd;
+*/
+static void
+vtysh_install_default (enum node_type node)
+{
+  install_element (node, CMD_VIEW_LEVEL, &config_list_cmd);
+}
+
+/* Standard command node structures. */
+static struct cmd_node auth_node =
+{
+  AUTH_NODE,
+  "Password: ",
+};
+
+static struct cmd_node view_node =
+{
+  VIEW_NODE,
+  "%s> ",
+};
+
+
+
+static struct cmd_node auth_enable_node =
+{
+  AUTH_ENABLE_NODE,
+  "Password: ",
+};
+
+static struct cmd_node enable_node =
+{
+  ENABLE_NODE,
+  "%s# ",
+};
+
+static struct cmd_node config_node =
+{
+  CONFIG_NODE,
+  "%s(config)# ",
+  1
+};
+static struct cmd_node bgp_node =
+{
+  BGP_NODE,
+  "%s(config-router)# ",
+};
+
+static struct cmd_node rip_node =
+{
+  RIP_NODE,
+  "%s(config-router)# ",
+};
+
+static struct cmd_node isis_node =
+{
+  ISIS_NODE,
+  "%s(config-router)# ",
+};
+
+static struct cmd_node interface_node =
+{
+  INTERFACE_NODE,
+  "%s(config-if)# ",
+};
+
+static struct cmd_node rmap_node =
+{
+  RMAP_NODE,
+  "%s(config-route-map)# "
+};
+
+static struct cmd_node zebra_node =
+{
+  ZEBRA_NODE,
+  "%s(config-router)# "
+};
+
+static struct cmd_node bgp_vpnv4_node =
+{
+  BGP_VPNV4_NODE,
+  "%s(config-router-af)# "
+};
+
+static struct cmd_node bgp_vpnv6_node =
+{
+  BGP_VPNV6_NODE,
+  "%s(config-router-af)# "
+};
+
+static struct cmd_node bgp_encap_node =
+{
+  BGP_ENCAP_NODE,
+  "%s(config-router-af)# "
+};
+
+static struct cmd_node bgp_encapv6_node =
+{
+  BGP_ENCAPV6_NODE,
+  "%s(config-router-af)# "
+};
+
+static struct cmd_node bgp_ipv4_node =
+{
+  BGP_IPV4_NODE,
+  "%s(config-router-af)# "
+};
+
+static struct cmd_node bgp_ipv4m_node =
+{
+  BGP_IPV4M_NODE,
+  "%s(config-router-af)# "
+};
+
+static struct cmd_node bgp_ipv6_node =
+{
+  BGP_IPV6_NODE,
+  "%s(config-router-af)# "
+};
+
+static struct cmd_node bgp_ipv6m_node =
+{
+  BGP_IPV6M_NODE,
+  "%s(config-router-af)# "
+};
+
+static struct cmd_node ospf_node =
+{
+  OSPF_NODE,
+  "%s(config-router)# "
+};
+
+static struct cmd_node ripng_node =
+{
+  RIPNG_NODE,
+  "%s(config-router)# "
+};
+
+static struct cmd_node ospf6_node =
+{
+  OSPF6_NODE,
+  "%s(config-ospf6)# "
+};
+
+static struct cmd_node babel_node =
+{
+  BABEL_NODE,
+  "%s(config-babel)# "
+};
+
+static struct cmd_node keychain_node =
+{
+  KEYCHAIN_NODE,
+  "%s(config-keychain)# "
+};
+
+static struct cmd_node keychain_key_node =
+{
+  KEYCHAIN_KEY_NODE,
+  "%s(config-keychain-key)# "
+};
+
+struct cmd_node link_params_node =
+{
+  LINK_PARAMS_NODE,
+  "%s(config-link-params)# ",
+};
+int vtysh_execute(const char *aa)
+{
+  return vtysh_write_cmd(aa);
+}
+
+void vtysh_init(void)
+{
+  memset(&vtysh_client, 0, sizeof(vtysh_client));
+  vtysh_readline_init();
+  vty_init_vtysh();
+  /* Make vty structure. */
+  vtysh_client.vty = vty_new();
+  vtysh_client.vty->type = VTY_SHELL;
+  vtysh_client.vty->node = VIEW_NODE;
+  vtysh_client.vty->vtysh_msg = zpl_osmsg_new(VTY_BUFSIZ);
+  // vtysh_client.vty->fd = sock;
+  // vtysh_client.vty->wfd = sock;
+  // vtysh_client.vty->type = VTY_SHELL_SERV;
+  // vtysh_client.vty->node = VIEW_NODE;
+  vtysh_client.vty->login_type = VTY_LOGIN_VTYSH;
+  /* Initialize commands. */
+  cmd_init(0);
+
+
+  install_node (&view_node, NULL);
+  install_node (&enable_node, NULL);
+  install_node (&auth_node, NULL);
+  install_node (&auth_enable_node, NULL);
+  //install_node (&restricted_node, NULL);
+  install_node (&config_node, NULL);
+  install_node (&bgp_node, NULL);
+  install_node (&rip_node, NULL);
+  install_node (&interface_node, NULL);
+  install_node (&link_params_node, NULL);
+  install_node (&rmap_node, NULL);
+  install_node (&zebra_node, NULL);
+  install_node (&bgp_vpnv4_node, NULL);
+  install_node (&bgp_vpnv6_node, NULL);
+  install_node (&bgp_encap_node, NULL);
+  install_node (&bgp_encapv6_node, NULL);
+  install_node (&bgp_ipv4_node, NULL);
+  install_node (&bgp_ipv4m_node, NULL);
+/* #ifdef HAVE_IPV6 */
+  install_node (&bgp_ipv6_node, NULL);
+  install_node (&bgp_ipv6m_node, NULL);
+/* #endif */
+  install_node (&ospf_node, NULL);
+/* #ifdef HAVE_IPV6 */
+  install_node (&ripng_node, NULL);
+  install_node (&ospf6_node, NULL);
+/* #endif */
+  install_node (&babel_node, NULL);
+  install_node (&keychain_node, NULL);
+  install_node (&keychain_key_node, NULL);
+  install_node (&isis_node, NULL);
+  //install_node (&vty_node, NULL);
+
+  vtysh_install_default (VIEW_NODE);
+  vtysh_install_default (ENABLE_NODE);
+  vtysh_install_default (CONFIG_NODE);
+  vtysh_install_default (BGP_NODE);
+  vtysh_install_default (RIP_NODE);
+  vtysh_install_default (INTERFACE_NODE);
+  vtysh_install_default (LINK_PARAMS_NODE);
+  vtysh_install_default (RMAP_NODE);
+  vtysh_install_default (ZEBRA_NODE);
+  vtysh_install_default (BGP_VPNV4_NODE);
+  vtysh_install_default (BGP_VPNV6_NODE);
+  vtysh_install_default (BGP_ENCAP_NODE);
+  vtysh_install_default (BGP_ENCAPV6_NODE);
+  vtysh_install_default (BGP_IPV4_NODE);
+  vtysh_install_default (BGP_IPV4M_NODE);
+  vtysh_install_default (BGP_IPV6_NODE);
+  vtysh_install_default (BGP_IPV6M_NODE);
+  vtysh_install_default (OSPF_NODE);
+  vtysh_install_default (RIPNG_NODE);
+  vtysh_install_default (OSPF6_NODE);
+  vtysh_install_default (BABEL_NODE);
+  vtysh_install_default (ISIS_NODE);
+  vtysh_install_default (KEYCHAIN_NODE);
+  vtysh_install_default (KEYCHAIN_KEY_NODE);
+  //vtysh_install_default (VTY_NODE);
+
 }

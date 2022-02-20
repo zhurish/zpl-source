@@ -226,10 +226,12 @@ void _netlink_route_debug(zpl_uint32 cmd, struct prefix *p, struct nexthop *next
 	if (IS_ZEBRA_DEBUG_KERNEL)
 	{
 		char buf[PREFIX_STRLEN];
+		union prefix46constptr up;
+		up.p = p;
 		zlog_debug(MODULE_PAL,
 				"netlink_route_multipath() (%s): %s %s vrf %u type %s",
 				routedesc, lookup(nlmsg_str, cmd),
-				prefix2str(p, buf, sizeof(buf)), zvrf->vrf_id,
+				prefix2str(up, buf, sizeof(buf)), zvrf->vrf_id,
 				nexthop_type_to_str(nexthop->type));
 	}
 }

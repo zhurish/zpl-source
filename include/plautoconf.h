@@ -2,15 +2,15 @@
  * Automatically generated C config: don't edit
  * Busybox version: 
  */
-#define AUTOCONF_TIMESTAMP "2022-01-09 18:24:11 CST"
+#define AUTOCONF_TIMESTAMP "2022-02-19 13:54:12 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
 /*
  * Global Settings
  */
-#define ZPL_RUNNING_BASE_PATH "/home/zhurish/workspace/working/zpl-source/source/debug/app"
-#define ZPL_REAL_SYSCONFIG_PATH "/home/zhurish/workspace/working/zpl-source/source/debug/"
+#define ZPL_RUNNING_BASE_PATH "/tmp/app"
+#define ZPL_REAL_SYSCONFIG_PATH "/home/app"
 #define ZPL_INSTALL_PATH "./_install"
 
 /*
@@ -24,33 +24,45 @@
 #undef ZPL_SYSTEM_MSVC32
 #undef ZPL_SYSTEM_MSVC64
 #define ZPL_ARCH_MODULE 1
-#undef ZPL_ARCH_ARM
+#define ZPL_ARCH_ARM 1
 #undef ZPL_ARCH_ARM64
 #undef ZPL_ARCH_AARCH64
 #undef ZPL_ARCH_X86
-#define ZPL_ARCH_X86_64 1
+#undef ZPL_ARCH_X86_64
+#undef ZPL_ARM_A5
+#undef ZPL_ARM_A6
+#define ZPL_ARM_A7 1
+#undef ZPL_ARM_A8
+#undef ZPL_ARM_A9
 
 /*
  * Toolchain Config
  */
-#define ZPL_HOST_TOOLCHAIN_MODULE 1
-#undef ZPL_EXTERNAL_TOOLCHAIN_MODULE
-#define ZPL_EXTERNAL_TOOLCHAIN_PREFIX ""
-#undef ZPL_EXTERNAL_TOOLCHAIN_GLIBC
+#undef ZPL_HOST_TOOLCHAIN_MODULE
+#define ZPL_EXTERNAL_TOOLCHAIN_MODULE 1
+#define ZPL_EXTERNAL_TOOLCHAIN_PREFIX "arm-linux-gnueabihf-"
+#define ZPL_EXTERNAL_TOOLCHAIN_GLIBC 1
 #undef ZPL_EXTERNAL_TOOLCHAIN_UCLIBC
-#define ZPL_TOOLCHAIN_PATH ""
+#define ZPL_TOOLCHAIN_PATH "/opt/gcc-linaro-7.5.0-arm-linux-gnueabihf"
 #define ZPL_TOOLCHAIN_INC_PATH ""
 #define ZPL_TOOLCHAIN_LIB_PATH ""
 #define ZPL_COMPILE_OPTIONS "-g"
+#define ZPL_FPU_HARD 1
+#undef ZPL_FPU_SOFT
+#undef ZPL_FPU_SOFTFP
+#undef ZPL_FPU_NEON
+#undef ZPL_ARM_VFP
+#undef ZPL_ARM_NEON_VFP
+#define ZPL_TOOLCHAIN_CFLAGS "-D__ARM_PCS_VFP"
 
 /*
  * Product Module Config
  */
-#undef ZPL_PRODUCT_MODULE
-#undef ZPL_PRODUCT_L2SWITCH
-#undef ZPL_PRODUCT_L3ROUTE
-#undef ZPL_PRODUCT_BSP_MODULE
-#undef ZPL_PRODUCT_SDK_MODULE
+#define ZPL_PRODUCT_MODULE 1
+#define ZPL_PRODUCT_L2SWITCH 1
+#define ZPL_PRODUCT_L3ROUTE 1
+#define ZPL_PRODUCT_BSP_MODULE 1
+#define ZPL_PRODUCT_SDK_MODULE 1
 
 /*
  * Platform configuration
@@ -87,7 +99,7 @@
  * Platform Shell Module
  */
 #define ZPL_SHELL_MODULE 1
-#define ZPL_SHRL_MODULE 1
+#undef ZPL_SHRL_MODULE
 
 /*
  * NSM Layer Module
@@ -120,7 +132,7 @@
 #define ZPL_RTPL_MODULE 1
 #define ZPL_RTPL_SRV 1
 #define ZPL_RTPL_RNH 1
-#undef ZPL_RTPL_ROUTEMAP
+#define ZPL_RTPL_ROUTEMAP 1
 #define ZPL_IPCBC_MODULE 1
 #undef ZPL_IPCBUS_MODULE
 

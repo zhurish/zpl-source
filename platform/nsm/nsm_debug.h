@@ -66,7 +66,7 @@ extern zpl_ulong zebra_debug_rib;
 extern zpl_ulong zebra_debug_fpm;
 extern zpl_ulong zebra_debug_nht;
 
-extern int cmd_debug_init();
+extern int cmd_debug_init(void);
 
 
 extern int zebra_debug_init (void);

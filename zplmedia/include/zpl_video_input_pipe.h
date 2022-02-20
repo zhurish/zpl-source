@@ -22,7 +22,7 @@ typedef struct
     NODE                    node;
     zpl_int32               input_dev;                     //底层设备编号
     zpl_int32               input_pipe;                    //底层硬件pipe
-    int                     pipefd;
+    zpl_socket_t                pipefd;
 	zpl_video_size_t		input_size;		 //视频输入大小 
     zpl_video_size_t        sacle_size;      //缩放大小
 

@@ -81,7 +81,7 @@ int nsm_qos_global_enable(zpl_bool enable)
 	return OK;
 }
 
-zpl_bool nsm_qos_global_get()
+zpl_bool nsm_qos_global_get(void)
 {
 	return mGlobalQos.qos_enable;
 }
@@ -92,7 +92,7 @@ int nsm_qos_shaping_global_enable(zpl_bool enable)
 	return OK;
 }
 
-zpl_bool nsm_qos_shaping_global_get()
+zpl_bool nsm_qos_shaping_global_get(void)
 {
 	return mGlobalQos.qos_shaping;
 }
@@ -117,7 +117,7 @@ static nsm_qos_t *_nsm_qos_get(struct interface *ifp)
 	{
 		struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 		if (nsm)
-			return (nsm_qos_t *)(nsm->nsm_client[NSM_QOS]);
+			return (nsm_qos_t *)(nsm->nsm_client[NSM_INTF_QOS]);
 	}
 	return NULL;
 }
@@ -892,8 +892,8 @@ static int nsm_qos_interface_create_api(struct interface *ifp)
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	if (if_is_loop(ifp))
 		return OK;
-	nsm_qos_t *qos = nsm->nsm_client[NSM_QOS] = XMALLOC(MTYPE_QOS, sizeof(nsm_qos_t));
-	os_memset(nsm->nsm_client[NSM_QOS], 0, sizeof(nsm_qos_t));
+	nsm_qos_t *qos = nsm->nsm_client[NSM_INTF_QOS] = XMALLOC(MTYPE_QOS, sizeof(nsm_qos_t));
+	os_memset(nsm->nsm_client[NSM_INTF_QOS], 0, sizeof(nsm_qos_t));
 	qos->ifindex = ifp->ifindex;
 	nsm_qos_interface_default(qos);
 	return OK;
@@ -904,9 +904,9 @@ static int nsm_qos_interface_del_api(struct interface *ifp)
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	if (if_is_loop(ifp))
 		return OK;
-	if (nsm->nsm_client[NSM_QOS])
-		XFREE(MTYPE_QOS, nsm->nsm_client[NSM_QOS]);
-	nsm->nsm_client[NSM_QOS] = NULL;
+	if (nsm->nsm_client[NSM_INTF_QOS])
+		XFREE(MTYPE_QOS, nsm->nsm_client[NSM_INTF_QOS]);
+	nsm->nsm_client[NSM_INTF_QOS] = NULL;
 	return OK;
 }
 
@@ -1384,16 +1384,16 @@ static int nsm_qos_interface_default(nsm_qos_t *intf)
 	return OK;
 }
 
-int nsm_qos_init()
+int nsm_qos_init(void)
 {
 	memset(&mGlobalQos, 0, sizeof(mGlobalQos));
-	nsm_interface_hook_add(NSM_QOS, nsm_qos_interface_create_api, nsm_qos_interface_del_api);
-	nsm_interface_write_hook_add(NSM_QOS, nsm_qos_interface_write_config);
+	nsm_interface_hook_add(NSM_INTF_QOS, nsm_qos_interface_create_api, nsm_qos_interface_del_api);
+	nsm_interface_write_hook_add(NSM_INTF_QOS, nsm_qos_interface_write_config);
 	qos_access_list_init();
 	return OK;
 }
 
-int nsm_qos_exit()
+int nsm_qos_exit(void)
 {
 	return OK;
 }

@@ -34,7 +34,7 @@ static os_mutex_t	*os_local_mutex = NULL;
 static os_mshm_t	*os_local_shm = NULL;
 
 /*************************************************/
-int os_mutex_obj_init()
+int os_mutex_obj_init(void)
 {
 	zpl_uint32 size = sizeof(os_mutex_t)*OS_MUTEX_SEM_MAX + sizeof(os_mshm_t) + 8;
 	zpl_uint32 shmid;
@@ -67,7 +67,7 @@ int os_mutex_obj_init()
 	return ERROR;
 }
 
-int os_mutex_obj_exit()
+int os_mutex_obj_exit(void)
 {
 	if(os_local_shm)
 	{
@@ -109,7 +109,7 @@ static os_mutex_t * os_mutex_sem_lookup(zpl_uint32 key, zpl_uint32 type)
 	return NULL;
 }
 
-static os_mutex_t * os_mutex_sem_get_empty()
+static os_mutex_t * os_mutex_sem_get_empty(void)
 {
 	zpl_uint32 i = 0;
 	if(!os_local_shm || !os_local_mutex)
@@ -320,7 +320,7 @@ int os_sem_give(os_sem_t * sem)
 
 #else
 
-os_sem_t * os_sem_init()
+os_sem_t * os_sem_init(void)
 {
 	os_sem_t *ossem = os_malloc(sizeof(os_sem_t));
 	if(ossem)
@@ -383,7 +383,7 @@ int os_sem_exit(os_sem_t *ossem)
 }
 
 
-os_mutex_t * os_mutex_init()
+os_mutex_t * os_mutex_init(void)
 {
 	os_mutex_t *osmutex = os_malloc(sizeof(os_mutex_t));
 	if(osmutex)
@@ -447,7 +447,7 @@ int os_mutex_exit(os_mutex_t *osmutex)
 }
 
 
-os_spin_t * os_spin_init()
+os_spin_t * os_spin_init(void)
 {
 	os_spin_t *spin = os_malloc(sizeof(os_spin_t));
 	if(spin)

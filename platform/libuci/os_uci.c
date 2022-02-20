@@ -927,7 +927,7 @@ static int uci_main(int uci_argc, char **uci_argv)
 	return ret;
 }
 
-int os_uci_get_errno()
+int os_uci_get_errno(void)
 {
 	return _uci_errno;
 }

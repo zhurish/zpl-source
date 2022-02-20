@@ -269,9 +269,9 @@ typedef struct Global_Qos_s
 
 
 extern int nsm_qos_global_enable(zpl_bool enable);
-extern zpl_bool nsm_qos_global_get();
+extern zpl_bool nsm_qos_global_get(void);
 extern int nsm_qos_shaping_global_enable(zpl_bool enable);
-extern zpl_bool nsm_qos_shaping_global_get();
+extern zpl_bool nsm_qos_shaping_global_get(void);
 /*
 默认的映射关系表：
 COS到内部DSCP的映射关系表
@@ -398,10 +398,10 @@ extern int nsm_qos_service_policy_get_api(struct interface *ifp, int input, zpl_
 
 //extern int nsm_qos_interface_create_api(struct interface *ifp);
 //extern int nsm_qos_interface_del_api(struct interface *ifp);
-extern int nsm_qos_init();
-extern int nsm_qos_exit();
+extern int nsm_qos_init(void);
+extern int nsm_qos_exit(void);
 #ifdef ZPL_SHELL_MODULE
-extern int cmd_qos_init();
+extern int cmd_qos_init(void);
 extern int nsm_qos_interface_write_config(struct vty *vty, struct interface *ifp);
 extern int nsm_qos_interface_show(struct vty *vty, struct interface *ifp);
 #endif 

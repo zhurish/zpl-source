@@ -40,7 +40,7 @@ struct nsm_event
 };
 
 static struct nsm_event _nsm_event;
-static int nsm_event_base_create();
+static int nsm_event_base_create(void);
 
 static struct nsm_event_list * nsm_event_node_new (void)
 {
@@ -122,7 +122,7 @@ static int nsm_event_read(struct thread *arg)
 	return 0;
 }
 
-static int nsm_event_base_create()
+static int nsm_event_base_create(void)
 {
     if(ipstack_unix_sockpair_create(OS_STACK, zpl_false, &_nsm_event.r_evfd, &_nsm_event.w_evfd) == OK)
     {
@@ -186,7 +186,7 @@ int nsm_event_loop_start (void *m)
     return OK;
 }
 
-int nsm_event_loop_stop ()
+int nsm_event_loop_stop (void)
 {
 	if (_nsm_event.t_read)
     {

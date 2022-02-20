@@ -31,33 +31,38 @@ extern "C" {
 #include <lib_include.h>
 //#include "nsm_client.h"
 
-enum
+#define NSM_ENTER_FUNC() zlog_debug(MODULE_NSM, "Into %s line %d", __func__, __LINE__)
+#define NSM_LEAVE_FUNC() zlog_debug(MODULE_NSM, "Leave %s line %d", __func__, __LINE__)
+
+
+typedef enum
 {
-	NSM_NONE = 0,
-	NSM_PORT,
-	NSM_TRUNK,
-	NSM_VLAN,
-	NSM_MAC,
-	NSM_DOT1X,
-	NSM_SEC,	//security
-	NSM_QOS,
-	NSM_ACL,
-	NSM_MIRROR,
-	NSM_PPP,
-	NSM_PPPOE,
-	NSM_SERIAL,
-	//NSM_DHCP,
-	//NSM_DHCPS,
+	NSM_INTF_ALL = -1,
+	NSM_INTF_NONE = 0,
+	NSM_INTF_PORT,
+	NSM_INTF_TRUNK,
+	NSM_INTF_VLAN,
+	NSM_INTF_MAC,
+	NSM_INTF_DOT1X,
+	NSM_INTF_SEC,	//security
+	NSM_INTF_QOS,
+	NSM_INTF_ACL,
+	NSM_INTF_MIRROR,
+	NSM_INTF_PPP,
+	NSM_INTF_PPPOE,
+	NSM_INTF_SERIAL,
+	//NSM_INTF_DHCP,
+	//NSM_INTF_DHCPS,
 
-	NSM_WIFI,
+	NSM_INTF_WIFI,
 
-	NSM_VETH,	// tun/tap interface
-	NSM_TUNNEL,	//tunnel interface
-	NSM_BRIDGE, //bridge interface
+	NSM_INTF_VETH,	// tun/tap interface
+	NSM_INTF_TUNNEL,	//tunnel interface
+	NSM_INTF_BRIDGE, //bridge interface
 
-	NSM_KERENL,
-	NSM_MAX,
-};
+	NSM_INTF_KERENL,
+	NSM_INTF_MAX,
+}nsm_submodule_t;
 
 
 /* For interface multicast configuration. */
@@ -123,15 +128,15 @@ struct nsm_interface
   /* Interface specific link-detect configuration state */
   nsm_linkdetect_en linkdetect;
   
-  void *nsm_client[NSM_MAX];
+  void *nsm_client[NSM_INTF_MAX];
   
 };
 
 extern void nsm_interface_init(void);
 
-extern int nsm_interface_hook_add(int module, int (*add_cb)(struct interface *), int (*del_cb)(struct interface *));
-extern int nsm_interface_write_hook_add(int module, int (*show_cb)(struct vty *, struct interface *));
-extern int nsm_interface_write_hook_handler(int module, struct vty *vty, struct interface *ifp);
+extern int nsm_interface_hook_add(nsm_submodule_t module, int (*add_cb)(struct interface *), int (*del_cb)(struct interface *));
+extern int nsm_interface_write_hook_add(nsm_submodule_t module, int (*show_cb)(struct vty *, struct interface *));
+extern int nsm_interface_write_hook_handler(nsm_submodule_t module, struct vty *vty, struct interface *ifp);
 
 #ifdef ZPL_SHELL_MODULE
 extern zpl_bool nsm_interface_create_check_api(struct vty *vty, const char *ifname, const char *uspv);

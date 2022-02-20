@@ -31,7 +31,7 @@ extern int os_base_start_pid(int pro, char *pid_file, int *pid);
 extern int os_base_module_start_all(void);
 extern int os_base_module_exit_all(void);
 
- 
+ int os_test(void);
 #ifdef __cplusplus
 }
 #endif

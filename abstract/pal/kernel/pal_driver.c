@@ -18,7 +18,7 @@
 pal_stack_t pal_stack;
 static zpl_uint32 kernel_task_id = 0;
 static void *master_eloop_kernel = NULL;
-static int pal_module_task_init();
+static int pal_module_task_init(void);
 
 struct module_list module_list_pal = 
 { 
@@ -375,7 +375,7 @@ static int pal_main_task(void *argv)
 }
 
 
-static int kernel_task_init ()
+static int kernel_task_init (void)
 {
 	if(master_eloop_kernel == NULL)
 		master_eloop_kernel = eloop_master_module_create(MODULE_KERNEL);
@@ -391,7 +391,7 @@ static int kernel_task_init ()
 	return ERROR;
 }
 
-int pal_module_init()
+int pal_module_init(void)
 {
 	if(master_eloop_kernel == NULL)
 		master_eloop_kernel = eloop_master_module_create(MODULE_KERNEL);
@@ -404,7 +404,7 @@ int pal_module_init()
 	return 0;//ip_stack_init();
 }
 
-static int pal_module_task_init()
+static int pal_module_task_init(void)
 {
 	return kernel_task_init ();
 }

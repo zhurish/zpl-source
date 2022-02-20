@@ -19,37 +19,52 @@ sdk_cpu_t sdk_cpu_cb;
  */
 static int bsp_cpu_port_mode(void *driver, hal_global_header_t *global, zpl_bool *enable)
 {
+	int ret = NO_SDK;
+	SDK_ENTER_FUNC();	
 	if(driver && sdk_cpu_cb.sdk_cpu_mode_cb)
-		return sdk_cpu_cb.sdk_cpu_mode_cb(driver, global, *enable);
-	return NO_SDK;
+		ret = sdk_cpu_cb.sdk_cpu_mode_cb(driver, global, *enable);
+	SDK_LEAVE_FUNC();
+	return ret;
 }
 
 static int bsp_cpu_port_enable(void *driver, hal_global_header_t *global, zpl_bool *enable)
 {
+	int ret = NO_SDK;
+	SDK_ENTER_FUNC();	
 	if(driver && sdk_cpu_cb.sdk_cpu_enable_cb)
-		return sdk_cpu_cb.sdk_cpu_enable_cb(driver, global, *enable);
-	return NO_SDK;
+		ret = sdk_cpu_cb.sdk_cpu_enable_cb(driver, global, *enable);
+	SDK_LEAVE_FUNC();
+	return ret;
 }
 
 static int bsp_cpu_port_speed(void *driver, hal_global_header_t *global, zpl_uint32 *value)
 {
+	int ret = NO_SDK;
+	SDK_ENTER_FUNC();	
 	if(driver && sdk_cpu_cb.sdk_cpu_speed_cb)
-		return sdk_cpu_cb.sdk_cpu_speed_cb(driver, global, *value);
-	return NO_SDK;
+		ret = sdk_cpu_cb.sdk_cpu_speed_cb(driver, global, *value);
+	SDK_LEAVE_FUNC();
+	return ret;
 }
 
 static int bsp_cpu_port_duplex(void *driver, hal_global_header_t *global, zpl_uint32 *value)
 {
+	int ret = NO_SDK;
+	SDK_ENTER_FUNC();	
 	if(driver && sdk_cpu_cb.sdk_cpu_duplex_cb)
-		return sdk_cpu_cb.sdk_cpu_duplex_cb(driver, global, *value);
-	return NO_SDK;
+		ret = sdk_cpu_cb.sdk_cpu_duplex_cb(driver, global, *value);
+	SDK_LEAVE_FUNC();
+	return ret;
 }
 
 static int bsp_cpu_port_flow(void *driver, hal_global_header_t *global, zpl_bool *tx)
 {
+	int ret = NO_SDK;
+	SDK_ENTER_FUNC();	
 	if(driver && sdk_cpu_cb.sdk_cpu_flow_cb)
-		return sdk_cpu_cb.sdk_cpu_flow_cb(driver, global, *tx);
-	return NO_SDK;
+		ret = sdk_cpu_cb.sdk_cpu_flow_cb(driver, global, *tx);
+	SDK_LEAVE_FUNC();
+	return ret;
 }
 
 
@@ -58,55 +73,76 @@ static int bsp_cpu_port_flow(void *driver, hal_global_header_t *global, zpl_bool
  */
 static int bsp_switch_mode(void *driver, hal_global_header_t *global, zpl_bool *manage)
 {
+	int ret = NO_SDK;
+	SDK_ENTER_FUNC();	
 	if(driver && sdk_global_cb.sdk_switch_manege_cb)
-		return sdk_global_cb.sdk_switch_manege_cb(driver, global, *manage);
-	return NO_SDK;
+		ret = sdk_global_cb.sdk_switch_manege_cb(driver, global, *manage);
+	SDK_LEAVE_FUNC();
+	return ret;
 }
 
 static int bsp_switch_forward(void *driver, hal_global_header_t *global, zpl_bool *enable)
 {
+	int ret = NO_SDK;
+	SDK_ENTER_FUNC();	
 	if(driver && sdk_global_cb.sdk_switch_forward_cb)
-		return sdk_global_cb.sdk_switch_forward_cb(driver, global, *enable);
-	return NO_SDK;
+		ret = sdk_global_cb.sdk_switch_forward_cb(driver, global, *enable);
+	SDK_LEAVE_FUNC();
+	return ret;
 }
 
 
 static int bsp_multicast_flood(void *driver, hal_global_header_t *global, zpl_bool *enable)
 {
+	int ret = NO_SDK;
+	SDK_ENTER_FUNC();
 	if(driver && sdk_global_cb.sdk_multicast_flood_cb)
-		return sdk_global_cb.sdk_multicast_flood_cb(driver, global, *enable);
-	return NO_SDK;
+		ret = sdk_global_cb.sdk_multicast_flood_cb(driver, global, *enable);
+	SDK_LEAVE_FUNC();
+	return ret;
 }
 
 static int bsp_unicast_flood(void *driver, hal_global_header_t *global, zpl_bool *enable)
 {
+	int ret = NO_SDK;
+	SDK_ENTER_FUNC();	
 	if(driver && sdk_global_cb.sdk_unicast_flood_cb)
-		return sdk_global_cb.sdk_unicast_flood_cb(driver, global, *enable);
-	return NO_SDK;
+		ret = sdk_global_cb.sdk_unicast_flood_cb(driver, global, *enable);
+	SDK_LEAVE_FUNC();
+	return ret;
 }
 
 
 static int bsp_multicast_learning(void *driver, hal_global_header_t *global, zpl_bool *enable)
 {
+	int ret = NO_SDK;
+	SDK_ENTER_FUNC();	
 	if(driver && sdk_global_cb.sdk_multicast_learning_cb)
-		return sdk_global_cb.sdk_multicast_learning_cb(driver, global, *enable);
-	return NO_SDK;
+		ret = sdk_global_cb.sdk_multicast_learning_cb(driver, global, *enable);
+	SDK_LEAVE_FUNC();
+	return ret;
 }
 
 
 static int bsp_global_bpdu_enable(void *driver, hal_global_header_t *global, zpl_bool *enable)
 {
+	int ret = NO_SDK;
+	SDK_ENTER_FUNC();	
 	if(driver && sdk_global_cb.sdk_bpdu_enable_cb)
-		return sdk_global_cb.sdk_bpdu_enable_cb(driver, global, *enable);
-	return NO_SDK;
+		ret = sdk_global_cb.sdk_bpdu_enable_cb(driver, global, *enable);
+	SDK_LEAVE_FUNC();
+	return ret;
 }
 
 
 static int bsp_global_aging_time(void *driver, hal_global_header_t *global, zpl_uint32 *value)
 {
+	int ret = NO_SDK;
+	SDK_ENTER_FUNC();	
 	if(driver && sdk_global_cb.sdk_aging_time_cb)
-		return sdk_global_cb.sdk_aging_time_cb(driver, global, *value);
-	return NO_SDK;
+		ret = sdk_global_cb.sdk_aging_time_cb(driver, global, *value);
+	SDK_LEAVE_FUNC();
+	return ret;
 }
 
 
@@ -132,32 +168,23 @@ int bsp_global_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint
 	int ret = OK;
 	int	value = 0;
 	hal_global_header_t	global;
+	SDK_ENTER_FUNC();
 	hal_ipcmsg_global_get(&client->ipcmsg, &global);
 	hal_ipcmsg_getc(&client->ipcmsg, &value);
 	if(!(subcmd_table[subcmd].cmd_handle))
 	{
+		SDK_LEAVE_FUNC();
 		return NO_SDK;
 	}
 	switch (cmd)
 	{
-	case HAL_MODULE_CMD_SET:         //设置
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &global, &value);
-	break;
-	case HAL_MODULE_CMD_GET:         //获取
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &global, &value);
-	break;
-	case HAL_MODULE_CMD_ADD:         //添加
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &global, &value);
-	break;
-	case HAL_MODULE_CMD_DEL:         //删除
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &global, &value);
-	break;
-    case HAL_MODULE_CMD_DELALL:      //删除所有
+	case HAL_MODULE_CMD_REQ:         //设置
 	ret = (subcmd_table[subcmd].cmd_handle)(driver, &global, &value);
 	break;
 	default:
 		break;
 	}
+	SDK_LEAVE_FUNC();
 	return ret;
 }
 
@@ -166,31 +193,22 @@ int bsp_cpu_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 
 	int ret = OK;
 	int	value = 0;
 	hal_global_header_t	global;
+	SDK_ENTER_FUNC();
 	hal_ipcmsg_global_get(&client->ipcmsg, &global);
 	hal_ipcmsg_getc(&client->ipcmsg, &value);
 	if(!(subcmd_table[subcmd].cmd_handle))
 	{
+		SDK_LEAVE_FUNC();
 		return NO_SDK;
 	}
 	switch (cmd)
 	{
-	case HAL_MODULE_CMD_SET:         //设置
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &global, &value);
-	break;
-	case HAL_MODULE_CMD_GET:         //获取
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &global, &value);
-	break;
-	case HAL_MODULE_CMD_ADD:         //添加
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &global, &value);
-	break;
-	case HAL_MODULE_CMD_DEL:         //删除
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &global, &value);
-	break;
-    case HAL_MODULE_CMD_DELALL:      //删除所有
+	case HAL_MODULE_CMD_REQ:         //设置
 	ret = (subcmd_table[subcmd].cmd_handle)(driver, &global, &value);
 	break;
 	default:
 		break;
 	}
+	SDK_LEAVE_FUNC();
 	return ret;
 }

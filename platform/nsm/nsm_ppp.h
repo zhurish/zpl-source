@@ -184,8 +184,8 @@ int nsm_ppp_interface_create_api(struct interface *ifp);
 int nsm_ppp_interface_del_api(struct interface *ifp);
 int nsm_ppp_interface_redisconnect(nsm_pppd_t *ppp, zpl_bool enable);
 int nsm_ppp_interface_enable(struct interface *ifp, zpl_bool enable);
-int nsm_ppp_init();
-int nsm_ppp_exit();
+int nsm_ppp_init(void);
+int nsm_ppp_exit(void);
 #ifdef ZPL_SHELL_MODULE
 void cmd_ppp_init(void);
 int nsm_ppp_interface_write_config(struct vty *vty, struct interface *ifp);

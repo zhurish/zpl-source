@@ -51,11 +51,11 @@ typedef struct nsm_security_s
 
 
 
-extern int nsm_security_init();
-extern int nsm_security_exit();
+extern int nsm_security_init(void);
+extern int nsm_security_exit(void);
 extern int nsm_security_interface_create_api(struct interface *ifp);
 extern int nsm_security_interface_del_api(struct interface *ifp);
-extern void cmd_security_init();
+extern void cmd_security_init(void);
 #ifdef ZPL_SHELL_MODULE
 extern int nsm_security_interface_write_config(struct vty *vty, struct interface *ifp);
 #endif

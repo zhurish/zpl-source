@@ -17,14 +17,14 @@
 static Gl2dos_t gdos;
 
 
-int nsm_dos_init()
+int nsm_dos_init(void)
 {
 	memset(&gdos, 0, sizeof(gdos));
 	gdos.mutex = os_mutex_init();
 	return OK;
 }
 
-int nsm_dos_exit()
+int nsm_dos_exit(void)
 {
 	if(gdos.mutex)
 		os_mutex_exit(gdos.mutex);

@@ -70,7 +70,7 @@ typedef int (*mirror_cb)(nsm_mirror_t *, void *);
 extern int nsm_mirror_init(void);
 extern int nsm_mirror_exit(void );
 extern int nsm_mirror_global_enable(zpl_bool enable);
-extern zpl_bool nsm_mirror_global_is_enable();
+extern zpl_bool nsm_mirror_global_is_enable(void);
 
 extern zpl_bool nsm_mirror_is_enable_api(ifindex_t ifindex);
 
@@ -88,7 +88,7 @@ int nsm_mirror_source_mac_get_api(zpl_bool *enable, zpl_uchar *mac, mirror_dir_e
 */
 extern int nsm_mirror_source_set_api(ifindex_t ifindex, zpl_bool enable, mirror_dir_en dir);
 extern int nsm_mirror_source_get_api(ifindex_t ifindex, zpl_bool *enable, mirror_dir_en *dir);
-extern zpl_bool nsm_mirror_is_source_api();
+extern zpl_bool nsm_mirror_is_source_api(void);
 
 extern int nsm_mirror_source_mac_filter_set_api(zpl_bool enable, zpl_uchar *mac, zpl_bool dst,  mirror_dir_en dir);
 //extern int nsm_mirror_source_mac_filter_set_api(zpl_bool enable, zpl_uchar *mac, mirror_dir_en dir, zpl_bool dst);

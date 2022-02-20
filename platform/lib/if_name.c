@@ -40,7 +40,7 @@ struct if_name_mgt if_name_mgt[] =
 
 
 static int vty_iusp_explain (const char *string, zpl_uint32 *unit, zpl_uint32 *slot, zpl_uint32 *port, zpl_uint32 *id, zpl_uint32 *rend);
-
+static const char * if_ifname_make_by_ifindex(zpl_bool abstract, ifindex_t ifindex);
 
 const char *getkernelname(if_type_t	type)
 {
@@ -166,6 +166,40 @@ const char * if_ifname_format(const char *ifname, const char *uspv)
 	return _if_name_make_argv(ifname, uspv);
 }
 
+ifindex_t if_uspv2ifindex(if_type_t type, zpl_uint32 unit, zpl_uint32 slot, zpl_uint32 port, zpl_uint32 vid)
+{
+	ifindex_t ifindex = 0;
+	zpl_uint32 iuspv = 0;
+	if( type == IF_SERIAL
+			|| type == IF_ETHERNET
+			|| type == IF_GIGABT_ETHERNET
+			|| type == IF_TUNNEL
+			|| type == IF_BRIGDE
+			|| type == IF_WIRELESS
+#ifdef CUSTOM_INTERFACE
+			|| type == IF_WIFI
+			|| type == IF_MODEM
+#endif
+			)
+	{
+		iuspv = IF_USPV_SET(unit, slot, port, vid);
+		ifindex = IF_IFINDEX_SET(type, iuspv);
+		return ifindex;
+	}
+	else if(type == IF_VLAN || type == IF_LAG || type == IF_LOOPBACK)
+	{
+		iuspv = IF_USPV_SET(unit, slot, port, vid);
+		ifindex = IF_IFINDEX_SET(type, iuspv);
+		return ifindex;
+	}
+	return ifindex;
+}
+
+const char * if_uspv2ifname(if_type_t type, zpl_uint32 unit, zpl_uint32 slot, zpl_uint32 port, zpl_uint32 vid)
+{
+	ifindex_t ifindex = if_uspv2ifindex( type,  unit,  slot,  port,  vid);
+	return if_ifname_make_by_ifindex(zpl_false, ifindex);
+}
 /*
  * interface0/1/2 -> interface 0/1/2
  */
@@ -201,7 +235,7 @@ const char * if_ifname_split(const char *name)
 ifindex_t if_ifindex_make(const char *ifname, const char *uspv)
 {
 	ifindex_t ifindex = 0;
-	zpl_uint32 unit = 0, slot = 0, port = 0, id = 0, iuspv = 0, rend = 0;
+	zpl_uint32 unit = 0, slot = 0, port = 0, id = 0, rend = 0;
 	if_type_t type = 0;
 	zpl_char *uspvstring = ifname;
 
@@ -237,8 +271,7 @@ ifindex_t if_ifindex_make(const char *ifname, const char *uspv)
 	{
 		if(uspvstring && vty_iusp_explain (uspvstring, &unit, &slot, &port, &id, &rend))
 		{
-			iuspv = IF_TYPE_SET(type) | IF_USPV_SET(unit, slot, port, id);
-			ifindex = IF_IFINDEX_SET(type, iuspv);
+			ifindex = if_uspv2ifindex( type,  unit,  slot,  port,  id);
 			return ifindex;
 		}
 	}
@@ -247,8 +280,8 @@ ifindex_t if_ifindex_make(const char *ifname, const char *uspv)
 		if(uspvstring && all_digit(uspvstring))
 		{
 			id = os_atoi(uspvstring);
-			iuspv = IF_TYPE_SET(type) | IF_USPV_SET(unit, slot, port, id);
-			ifindex = IF_IFINDEX_SET(type, iuspv);
+			ifindex = if_uspv2ifindex( type,  unit,  slot,  port,  id);
+			//printf("========================%s========================type=%d-->%d ifindex=0x%08x\r\n", __func__, type, id, ifindex);
 		}
 		return ifindex;
 	}
@@ -265,6 +298,7 @@ static const char * if_ifname_make_by_ifindex(zpl_bool abstract, ifindex_t ifind
 	else
 		type_str = getifpname(IF_TYPE_GET(ifindex));
 	os_memset(buf, 0, sizeof(buf));
+	
 	if(IF_TYPE_GET(ifindex) == IF_SERIAL ||
 			IF_TYPE_GET(ifindex) == IF_ETHERNET ||
 			IF_TYPE_GET(ifindex) == IF_GIGABT_ETHERNET ||
@@ -369,6 +403,11 @@ int if_uspv_type_setting(struct interface *ifp)
 		if(vty_iusp_explain (str, &unit, &slot, &port, &id, &rend))
 		{
 			ifp->uspv = IF_TYPE_SET(ifp->if_type) | IF_USPV_SET(unit, slot, port, id);
+			//ifp->encavlan = 0; //子接口封装的VLAN ID
+			//ifp->k_name[INTERFACE_NAMSIZ + 1];
+			//ifp->k_name_hash;
+			//ifp->k_ifindex;
+			//ifp->phyid = id;
 			return OK;
 		}
 		zlog_err(MODULE_DEFAULT,"format unit/solt/port when setting unit/solt/port code,str=%s",str);

@@ -117,7 +117,7 @@ typedef struct global_qos_access_list_s
 
 
 /* ACL内部的规则 */
-extern qos_access_filter_t *qos_access_filter_alloc();
+extern qos_access_filter_t *qos_access_filter_alloc(void);
 extern int qos_access_filter_free(qos_access_filter_t *node);
 extern int qos_access_filter_list_add(qos_access_filter_list_t *acllist, qos_access_filter_t *node);
 extern int qos_access_filter_list_del(qos_access_filter_list_t *acllist, qos_access_filter_t *node);
@@ -143,7 +143,7 @@ extern int qos_class_map_bind_access_list_set(qos_class_map_t *node, char *name,
 extern char * qos_class_map_bind_access_list_get(qos_class_map_t *node);
 //extern int qos_class_map_del(qos_class_map_t *node);
 extern int qos_class_map_foreach(int (*cb)(void *, qos_class_map_t *), void *pVoid);
-extern int qos_class_map_clean();
+extern int qos_class_map_clean(void);
 extern int qos_class_map_limit_set(qos_class_map_t *node, nsm_qos_limit_t *rate);
 extern int qos_class_map_limit_get(qos_class_map_t *node, nsm_qos_limit_t *rate);
 
@@ -157,13 +157,13 @@ extern int qos_service_policy_reference(char *name, zpl_bool enable);
 extern int qos_service_policy_bind_class_map_set(qos_service_policy_t *node, char *name, zpl_bool enable);
 extern char * qos_service_policy_bind_class_map_get(qos_service_policy_t *node);
 extern int qos_service_policy_foreach(int (*cb)(void *, qos_service_policy_t *), void *pVoid);
-extern int qos_service_policy_clean();
+extern int qos_service_policy_clean(void);
 
 //extern int qos_service_policy_bind_ifpset(char *name, zpl_bool enable);
 
-extern int qos_access_list_init();
-extern int qos_access_list_exit();
-extern int qos_access_list_clean();
+extern int qos_access_list_init(void);
+extern int qos_access_list_exit(void);
+extern int qos_access_list_clean(void);
 
 #ifdef ZPL_SHELL_MODULE
 extern void cmd_qos_acl_init(void);

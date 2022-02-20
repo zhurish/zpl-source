@@ -77,7 +77,7 @@ typedef int (*nsm_event_cb) (nsm_event_e, nsm_event_data_t *);
 int nsm_event_init (void);
 int nsm_event_exit (void);
 int nsm_event_loop_start (void *m);
-int nsm_event_loop_stop ();
+int nsm_event_loop_stop (void);
 int nsm_event_register_api (zpl_uint32 module, nsm_event_cb cb);
 
 int nsm_event_post_data_api (zpl_uint32 module, nsm_event_e event, nsm_event_data_t *data);

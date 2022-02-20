@@ -42,8 +42,8 @@ typedef struct nsm_serial_s
 }nsm_serial_t;
 
 
-extern int nsm_serial_init();
-extern int nsm_serial_exit();
+extern int nsm_serial_init(void);
+extern int nsm_serial_exit(void);
 
 extern zpl_uint32 serial_index_make(const char *sname);
 /* 创建删除一个serial 接口 */

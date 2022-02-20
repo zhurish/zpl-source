@@ -45,7 +45,7 @@ typedef struct
 {
     NODE                node;
     zpl_int32           vpss_channel;   //底层通道号
-    int                 vpssfd;
+    zpl_socket_t         vpssfd;
 	zpl_video_size_t	input_size;		//视频输入大小  
 
     int (*vpss_frame_handle)(void *, zpl_uint32, zpl_video_size_t);//应用层处理回调(添加OSD等)

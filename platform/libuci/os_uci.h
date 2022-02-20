@@ -36,7 +36,7 @@ enum
 };
 #endif
 
-extern int os_uci_get_errno();
+extern int os_uci_get_errno(void);
 extern int os_uci_set_string(char *name, char *value);
 extern int os_uci_set_integer(char *name, int value);
 extern int os_uci_set_float(char *name, char *fmt, float value);
@@ -58,7 +58,7 @@ extern int os_uci_section_add(char *name, char * section);
 extern int os_uci_commit(char *name);
 extern int os_uci_save_config(char *name);
 
-extern int os_uci_init();
+extern int os_uci_init(void);
 
 #endif /* ZPL_OPENWRT_UCI */
 

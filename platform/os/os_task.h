@@ -109,11 +109,11 @@ extern int os_limit_stack_size(zpl_int32 size);
 extern int os_limit_core_size(zpl_int32 size);
 extern int os_task_give_broadcast(void);
 
-extern int os_task_init();
-extern int os_task_exit();
+extern int os_task_init(void);
+extern int os_task_exit(void);
 extern int os_task_sigmask(zpl_int32 sigc, zpl_int32 signo[], sigset_t *mask);
 extern int os_task_sigexecute(zpl_int32 sigc, zpl_int32 signo[], sigset_t *mask);
-extern int os_task_sigmaskall();
+extern int os_task_sigmaskall(void);
 
 extern int os_task_add_start_hook(os_task_hook *cb);
 extern int os_task_add_create_hook(os_task_hook *cb);
@@ -166,7 +166,7 @@ extern zpl_uint32 os_task_entry_add(zpl_char *name, zpl_uint32 pri, zpl_uint32 o
 #define os_task_add_name(n,p,o,f,e,a,s,i)	os_task_entry_add(n,p,o,f,a,e,s,i)
 
 #ifdef ZPL_SHELL_MODULE
-extern int cmd_os_init();
+extern int cmd_os_init(void);
 
 extern int os_task_show(void *vty, zpl_char *task_name, zpl_uint32 detail);
 extern int os_task_cli_hook_set(void *hook);

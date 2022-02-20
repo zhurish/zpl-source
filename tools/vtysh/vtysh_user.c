@@ -19,8 +19,8 @@
  * 02111-1307, USA.  
  */
 
-#include <os_include.h>
-#include <lib/version.h>
+#include <zpl_include.h>
+#include <lib_include.h>
 
 #include <pwd.h>
 
@@ -34,7 +34,7 @@
 #endif
 #endif /* USE_PAM */
 
-
+#include "vtysh.h"
 #include "vtysh_user.h"
 
 #ifdef USE_PAM
@@ -91,13 +91,9 @@ vtysh_pam (const char *user)
 }
 #endif /* USE_PAM */
 
-struct vtysh_user
-{
-  char *name;
-  u_char nopassword;
-};
 
-struct list *userlist;
+
+
 
 static struct vtysh_user *
 user_new ()
@@ -119,7 +115,7 @@ user_lookup (const char *name)
   struct listnode *node, *nnode;
   struct vtysh_user *user;
 
-  for (ALL_LIST_ELEMENTS (userlist, node, nnode, user))
+  for (ALL_LIST_ELEMENTS (vtysh_client.userlist, node, nnode, user))
     {
       if (strcmp (user->name, name) == 0)
 	return user;
@@ -152,7 +148,7 @@ user_get (const char *name)
 
   user = user_new ();
   user->name = strdup (name);
-  listnode_add (userlist, user);
+  listnode_add (vtysh_client.userlist, user);
 
   return user;
 }
@@ -208,6 +204,6 @@ vtysh_get_home (void)
 void
 vtysh_user_init (void)
 {
-  userlist = list_new ();
-  install_element (CONFIG_NODE, &username_nopassword_cmd);
+  vtysh_client.userlist = list_new ();
+  install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &username_nopassword_cmd);
 }

@@ -32,11 +32,19 @@ extern "C" {
 #include "eloop.h"
 #include "vector.h"
 #include "tty_com.h"
+#include "os_message.h"
 
 #define VTY_MAXHIST 20
 #define VTY_BUFSIZ 4096
+#define VTY_RANGE_MAX 64
+
+/* Vty read buffer size. */
+#define VTY_READ_BUFSIZ 512
 
 
+#ifdef VTYSH
+#define VTYSH_BUFSIZ VTY_READ_BUFSIZ
+#endif /* VTYSH */
 
 /* Vty events */
 enum vtyevent
@@ -63,6 +71,7 @@ enum vtyevent
 	  VTY_LOGIN_SSH,
 	  VTY_LOGIN_VTYSH,
     VTY_LOGIN_VTYSH_STDIO,
+    VTY_LOGIN_WATCHDOG,
     VTY_LOGIN_MAX
   } ;
 
@@ -78,20 +87,21 @@ struct vty
   /* Is this vty ipstack_connect to file or not */
   enum {VTY_TERM, VTY_FILE, VTY_SHELL, VTY_SHELL_SERV} type;
 
-  //zpl_int32 fd_type;
+  enum vtylogin_type login_type;
   /* Node status of this vty */
   zpl_int32 node;
 
   /* Failure count */
   zpl_int32 fail;
-  zpl_bool	reload;
 
   /* Output buffer. */
   struct buffer *obuf;
 
   /* Command input buffer */
   zpl_char *buf;
-
+#ifdef VTYSH
+  struct zpl_osmsg * vtysh_msg;
+#endif
   /* Command cursor point */
   zpl_int32 cp;
 
@@ -114,11 +124,13 @@ struct vty
      access-list etc... */
   void *index;
 
-  /* For multiple level index treatment such as key chain and key. */
-  void *index_sub;
-
+  zpl_uint32 index_range;
+  void *vty_range_index[VTY_RANGE_MAX];
   /* */
   zpl_uint32 index_value;
+
+  void *index_sub;
+
 
   /* For escape character. */
   zpl_uchar escape;
@@ -175,18 +187,20 @@ struct vty
   zpl_char *username;
   zpl_uint8 privilege;
 
+  zpl_bool	reload;
+  zpl_bool	cancel;
+  zpl_bool	ansync;
+
+  int	(*vty_output)(void *, const char *, int);
+  int	(*vty_outputf)(void *, const char *,...);
+  void *p_output;
+
   int	(*shell_ctrl_cmd)(struct vty *, int , void *);
   void *ctrl;
 
   zpl_bool	ssh_enable;
   int	(*ssh_close)(struct vty *);
   void	*ssh;
-
-  enum vtylogin_type login_type;
-
-  zpl_bool	cancel;
-
-  zpl_bool	ansync;
 
   zpl_pid_t pid;
   zpl_pthread_t pthd;
@@ -200,11 +214,33 @@ struct vty
 
 #ifdef VTYSH
 #pragma pack(1)
-typedef struct vtysh_hdr_s
+enum vtysh_type
 {
+	VTYSH_NONE, 
+  VTYSH_CMD, 
+  VTYSH_MSG, 
+  VTYSH_MAX,
+};
+enum vtysh_msg
+{
+	VTYSH_MSG_NONE, 
+  VTYSH_MSG_CMD, 
+  VTYSH_MSG_MAX,
+};
+
+typedef struct vtysh_msghdr_s
+{
+    zpl_uint32 type;
+    zpl_uint32 msglen;
+}vtysh_msghdr_t;
+
+typedef struct vtysh_result_s
+{
+    zpl_uint32 type;
     zpl_uint32 retcode;
     zpl_uint32 retlen;
-}vtysh_hdr_t;
+}vtysh_result_t;
+
 #endif /* VTYSH */
 /* Master of the threads. */
 
@@ -241,8 +277,6 @@ extern cli_shell_t  cli_shell;
 /* Default time out value */
 #define VTY_TIMEOUT_DEFAULT 600
 
-/* Vty read buffer size. */
-#define VTY_READ_BUFSIZ 512
 
 /* Directory separator. */
 #ifndef DIRECTORY_SEP
@@ -412,9 +446,9 @@ extern void vty_log_fixed (zpl_char *buf, zpl_size_t len);
 
 extern zpl_char *vty_get_cwd (void);
 
-extern int cmd_vty_init();
+extern int cmd_vty_init(void);
 
-
+extern void *vty_thread_master(void);
 
 #ifdef VTYSH
 extern int vty_sshd_init(zpl_socket_t sock, struct vty *vty);

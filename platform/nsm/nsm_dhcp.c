@@ -224,7 +224,7 @@ int nsm_interface_dhcp_config(struct vty *vty, struct interface *ifp)
 
 int nsm_dhcp_module_init (void)
 {
-	//nsm_interface_hook_add(NSM_DHCP, nsm_dhcp_interface_create_api, nsm_dhcp_interface_del_api);
+	//nsm_interface_hook_add(NSM_INTF_DHCP, nsm_dhcp_interface_create_api, nsm_dhcp_interface_del_api);
 #ifdef ZPL_DHCPD_MODULE
 	nsm_dhcps_init();
 	udhcp_module_init();

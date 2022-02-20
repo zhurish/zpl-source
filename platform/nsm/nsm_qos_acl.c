@@ -45,7 +45,7 @@ static int _qos_access_filter_list_destroy_layer(qos_access_filter_list_t *node)
     return OK;
 }
 
-static qos_access_filter_t *_qos_access_filter_alloc_layer()
+static qos_access_filter_t *_qos_access_filter_alloc_layer(void)
 {
     qos_access_filter_t *node = XMALLOC(MTYPE_QOS_ACL_NODE, sizeof(qos_access_filter_t));
     if (node)
@@ -163,7 +163,7 @@ static int _qos_access_filter_list_foreach_layer(qos_access_filter_list_t *aclli
 }
 
 
-qos_access_filter_t *qos_access_filter_alloc()
+qos_access_filter_t *qos_access_filter_alloc(void)
 {
     return _qos_access_filter_alloc_layer();
 }
@@ -825,7 +825,7 @@ static int _qos_class_free_layer(qos_class_map_t *node)
     return OK;
 }
 
-static int _qos_access_list_list_init_layer()
+static int _qos_access_list_list_init_layer(void)
 {
     _global_qos_access_list.init = 1;
     os_memset(&_global_qos_access_list._qos_alc_t, 0, sizeof(qos_access_list_t));
@@ -864,29 +864,29 @@ static int _qos_access_list_list_cleanup_layer(int d)
     return OK;
 }
 
-int qos_access_list_init()
+int qos_access_list_init(void)
 {
     return _qos_access_list_list_init_layer();
 }
 
-int qos_access_list_exit()
+int qos_access_list_exit(void)
 {
     _global_qos_access_list.init = 0;
     return _qos_access_list_list_cleanup_layer(1);
 }
 
-int qos_access_list_clean()
+int qos_access_list_clean(void)
 {
     return _qos_access_list_list_cleanup_layer(0);
 }
 
-int qos_service_policy_clean()
+int qos_service_policy_clean(void)
 {
     lstFree(&_global_qos_access_list.service_policy_list);
     return OK;
 }
 
-int qos_class_map_clean()
+int qos_class_map_clean(void)
 {
     lstFree(&_global_qos_access_list.class_map_list);
     return OK;

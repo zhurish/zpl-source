@@ -40,6 +40,8 @@ int hal_mac_del(ifindex_t ifindex, vlan_t vlan, mac_t *mac, zpl_uint32 pri);
 int hal_mac_clr(ifindex_t ifindex, vlan_t vlan);
 int hal_mac_read(ifindex_t ifindex, vlan_t vlan);
 
+
+
 #ifdef __cplusplus
 }
 #endif

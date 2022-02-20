@@ -62,4 +62,30 @@ config ZPL_COMPILE_OPTIONS
 	string "Target Compile Optimizations"
 	default "-g"
 
+choice
+	prompt "Float Type"
+	default ZPL_FPU_SOFT
+
+config ZPL_FPU_HARD
+	bool "hard"
+config ZPL_FPU_SOFT
+	bool "soft"
+config ZPL_FPU_SOFTFP
+	bool "softfp"
+config ZPL_FPU_NEON 
+	bool "neon"
+config ZPL_ARM_VFP
+	bool "vfp"
+config ZPL_ARM_NEON_VFP
+	bool "neon-vfp"	
+endchoice
+
+config ZPL_TOOLCHAIN_CFLAGS
+	string
+	prompt "Toolchain CFLAGS"
+	default "-D__ARM_PCS_VFP"
+	help
+		Specify additional directories searched for toolchain binaries.
+
+
 endmenu

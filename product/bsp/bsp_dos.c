@@ -19,30 +19,42 @@ sdk_dos_t sdk_dos;
 
 static int bsp_dos_enable(void *driver, hal_global_header_t *global, zpl_uint32 *value)
 {
+	int ret = NO_SDK;
+	SDK_ENTER_FUNC();	
 	if(driver && sdk_dos.sdk_dos_enable_cb)
-		return sdk_dos.sdk_dos_enable_cb(driver, global, *value);
-	return NO_SDK;
+		ret = sdk_dos.sdk_dos_enable_cb(driver, global->value, *value);
+	SDK_LEAVE_FUNC();
+	return ret;
 }
 
 static int bsp_dos_tcp_hdr_size(void *driver, hal_global_header_t *global, zpl_uint32 *value)
 {
+	int ret = NO_SDK;
+	SDK_ENTER_FUNC();	
 	if(driver && sdk_dos.sdk_dos_tcp_hdr_size_cb)
-		return sdk_dos.sdk_dos_tcp_hdr_size_cb(driver, global, *value);
-	return NO_SDK;
+		ret = sdk_dos.sdk_dos_tcp_hdr_size_cb(driver, global->value, *value);
+	SDK_LEAVE_FUNC();
+	return ret;
 }
 
 static int bsp_dos_icmp_size(void *driver, hal_global_header_t *global, zpl_uint32 *value)
 {
+	int ret = NO_SDK;
+	SDK_ENTER_FUNC();	
 	if(driver && sdk_dos.sdk_dos_icmp_size_cb)
-		return sdk_dos.sdk_dos_icmp_size_cb(driver, global, *value);
-	return NO_SDK;
+		ret = sdk_dos.sdk_dos_icmp_size_cb(driver, global->value, *value);
+	SDK_LEAVE_FUNC();
+	return ret;
 }
 
 static int bsp_dos_icmpv6_size(void *driver, hal_global_header_t *global, zpl_uint32 *value)
 {
+	int ret = NO_SDK;
+	SDK_ENTER_FUNC();	
 	if(driver && sdk_dos.sdk_dos_icmpv6_size_cb)
-		return sdk_dos.sdk_dos_icmpv6_size_cb(driver, global, *value);
-	return NO_SDK;
+		ret = sdk_dos.sdk_dos_icmpv6_size_cb(driver, global->value, *value);
+	SDK_LEAVE_FUNC();
+	return ret;
 }
 
 
@@ -73,31 +85,22 @@ int bsp_dos_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 
 	int ret = OK;
 	hal_dos_param_t	dos;
 	hal_global_header_t	global;
+	SDK_ENTER_FUNC();
 	hal_ipcmsg_global_get(&client->ipcmsg, &global);
 	hal_ipcmsg_getl(&client->ipcmsg, &dos.value);
 	if(!(subcmd_table[subcmd].cmd_handle))
 	{
+		SDK_LEAVE_FUNC();
 		return NO_SDK;
 	}
 	switch (cmd)
 	{
-	case HAL_MODULE_CMD_SET:         //设置
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &global, &dos.value);
-	break;
-	case HAL_MODULE_CMD_GET:         //获取
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &global, &dos.value);
-	break;
-	case HAL_MODULE_CMD_ADD:         //添加
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &global, &dos.value);
-	break;
-	case HAL_MODULE_CMD_DEL:         //删除
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &global, &dos.value);
-	break;
-    case HAL_MODULE_CMD_DELALL:      //删除所有
+	case HAL_MODULE_CMD_REQ:         //设置
 	ret = (subcmd_table[subcmd].cmd_handle)(driver, &global, &dos.value);
 	break;
 	default:
 		break;
 	}
+	SDK_LEAVE_FUNC();
 	return ret;
 }

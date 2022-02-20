@@ -11,7 +11,20 @@
 
 #define PROC_BASE "/proc"
 
-
+int os_loghex(zpl_char *format, zpl_uint32 size, const zpl_uchar *data, zpl_uint32 len)
+{
+	zpl_uint32 i = 0, offset = 0;
+	for(i = 0; i < len; i++)
+	{
+		if((i+1)%16 == 0)
+			offset += snprintf(format + offset, size - offset, "\r\n");
+		if((size >= offset) < 5 )
+			offset += snprintf(format + offset, size - offset, "0x%02x ",data[i]);
+		else
+			return ++i;
+	}
+	return ++i;
+}
 
 int os_pipe_create(zpl_char *name, zpl_uint32 mode)
 {

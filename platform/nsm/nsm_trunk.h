@@ -94,8 +94,8 @@ typedef struct Gl2trunk_s
 typedef int (*l2trunk_group_cb)(l2trunk_group_t *, void *);
 typedef int (*l2trunk_cb)(l2trunk_t *, void *);
 
-extern int nsm_trunk_init();
-extern int nsm_trunk_exit();
+extern int nsm_trunk_init(void);
+extern int nsm_trunk_exit(void);
 
 extern int nsm_trunk_enable(void);
 extern zpl_bool nsm_trunk_is_enable(void);

@@ -28,7 +28,7 @@ static os_mutex_t *job_mutex = NULL;
 static zpl_uint32 job_task_id = 0;
 static int os_job_task(void);
 
-int os_job_init()
+int os_job_init(void)
 {
 	if(job_list == NULL)
 	{
@@ -59,7 +59,7 @@ int os_job_init()
 	return ERROR;
 }
 
-int os_job_exit()
+int os_job_exit(void)
 {
 	if(job_task_id)
 	{
@@ -89,7 +89,7 @@ int os_job_exit()
 	return OK;
 }
 
-int os_job_load()
+int os_job_load(void)
 {
 	if(job_task_id)
 		return OK;

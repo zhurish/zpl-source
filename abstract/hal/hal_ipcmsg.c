@@ -178,6 +178,7 @@ int hal_ipcmsg_msg_add(struct hal_ipcmsg *ipcmsg, void *msg, int len)
 
 int hal_ipcmsg_send_message(int unit, zpl_uint32 command, void *ipcmsg, int len)
 {
+    HAL_ENTER_FUNC();
     return hal_ipcsrv_send_message(unit, command, ipcmsg, len, 30);
 }
 
@@ -195,8 +196,8 @@ int hal_ipcmsg_global_set(ifindex_t ifindex, hal_global_header_t *glo)
     //glo->type = IF_IFINDEX_TYPE_GET(ifindex);
     glo->vrfid = htonl(IF_IFINDEX_VRFID_GET(ifindex));
     //port->ifindex = htonl(ifindex);
-    //port->vlanid = htons(IF_IFINDEX_VLAN_GET(ifindex));
-    //port->phyport = htonl(IF_IFINDEX_PHYID_GET(ifindex));
+    //glo->vlanid = htons(IF_IFINDEX_VLAN_GET(ifindex));
+    //glo->value = htonl(IF_IFINDEX_PHYID_GET(ifindex));
     return OK;
 }
 
@@ -214,6 +215,8 @@ int hal_ipcmsg_table_set(ifindex_t ifindex, hal_table_header_t *table)
 int hal_ipcmsg_global_get(struct hal_ipcmsg *ipcmsg, hal_global_header_t *glo)
 {
     hal_ipcmsg_getl(ipcmsg, &glo->vrfid);
+    hal_ipcmsg_getw(ipcmsg, &glo->vlanid);
+    hal_ipcmsg_getl(ipcmsg, &glo->value);
     return OK;
 }
 
@@ -233,3 +236,96 @@ int hal_ipcmsg_table_get(struct hal_ipcmsg *ipcmsg, hal_table_header_t *table)
     hal_ipcmsg_getl(ipcmsg, &table->table);
     return OK;
 }
+
+
+
+int hal_ipcmsg_hexmsg(struct hal_ipcmsg *ipcmsg, zpl_uint32 len, char *hdr)
+{
+    int ret = 0;
+    zpl_char format[4096];
+    memset(format, 0, sizeof(format));
+    ret = os_loghex(format, sizeof(format), (const zpl_uchar *)ipcmsg->buf,  len);
+    zlog_debug(MODULE_HAL, "%s %d [%d] bytes:\r\n  hex:%s", hdr, len, ret, format);
+    return OK;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

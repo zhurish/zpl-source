@@ -112,22 +112,8 @@ extern "C" {
 #endif
 
 #include "zpl_errno.h"
-/*
-enum
-{
-  OK  = 0,
-  ERROR = -1,
-//#ifndef HAVE_OS_TIMEOUT
-  OS_TIMEOUT  = -2,
-//#endif
-	OS_CLOSE  = -3,
-  OS_TRY_AGAIN  = -4,
-  OS_CTRL_X  = -5,
 
-  OS_EXIST		= -100,
-  OS_NOTEXIST  = -101,
-};
-*/
+
 #ifndef ZPL_SHELL_MODULE
 #define VTY_NEWLINE "\r\n"
 #endif

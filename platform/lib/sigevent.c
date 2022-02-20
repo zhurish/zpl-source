@@ -306,7 +306,7 @@ exit_handler(int signo
 #endif
 )
 {
-  printf("%s:============+++++++++++++++++++++===========signo=%d\r\n", __func__, signo);
+  //printf("%s:============+++++++++++++++++++++===========signo=%d\r\n", __func__, signo);
   zlog_signal(signo, "exiting..."
 #ifdef SA_SIGINFO
               ,
@@ -324,7 +324,7 @@ core_handler(int signo
 #endif
 )
 {
-  printf("%s:==========+++++++++++++++++++++++++=========signo=%d\r\n", __func__, signo);
+  //printf("%s:==========+++++++++++++++++++++++++=========signo=%d\r\n", __func__, signo);
   zlog_signal(signo, "aborting..."
 #ifdef SA_SIGINFO
               ,

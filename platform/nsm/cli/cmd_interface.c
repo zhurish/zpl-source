@@ -30,9 +30,9 @@ static int nsm_interface_cmd_node_get(struct interface *ifp, int range)
 	case IF_ETHERNET:
 	case IF_GIGABT_ETHERNET:
 		if (ifp->if_mode == IF_MODE_L3)
-			node = range?INTERFACE_L3_RANGE_NODE:INTERFACE_L3_NODE;
+			node = range ? INTERFACE_L3_RANGE_NODE : INTERFACE_L3_NODE;
 		else
-			node = range?INTERFACE_RANGE_NODE:INTERFACE_NODE;
+			node = range ? INTERFACE_RANGE_NODE : INTERFACE_NODE;
 		break;
 	case IF_WIRELESS:
 		node = WIRELESS_INTERFACE_NODE;
@@ -53,19 +53,19 @@ static int nsm_interface_cmd_node_get(struct interface *ifp, int range)
 		node = INTERFACE_L3_NODE;
 		break;
 	case IF_E1:
-		node = range?E1_INTERFACE_L3_RANGE_NODE:E1_INTERFACE_L3_NODE;
+		node = range ? E1_INTERFACE_L3_RANGE_NODE : E1_INTERFACE_L3_NODE;
 		break;
 	case IF_EPON:
 		if (ifp->if_mode == IF_MODE_L3)
-			node = range?EPON_INTERFACE_RANGE_NODE:EPON_INTERFACE_L3_NODE;
+			node = range ? EPON_INTERFACE_RANGE_NODE : EPON_INTERFACE_L3_NODE;
 		else
-			node = range?EPON_INTERFACE_L3_RANGE_NODE:EPON_INTERFACE_NODE;
+			node = range ? EPON_INTERFACE_L3_RANGE_NODE : EPON_INTERFACE_NODE;
 		break;
 	case IF_GPON:
 		if (ifp->if_mode == IF_MODE_L3)
-			node = range?EPON_INTERFACE_RANGE_NODE:EPON_INTERFACE_L3_NODE;
+			node = range ? EPON_INTERFACE_RANGE_NODE : EPON_INTERFACE_L3_NODE;
 		else
-			node = range?EPON_INTERFACE_L3_RANGE_NODE:EPON_INTERFACE_NODE;
+			node = range ? EPON_INTERFACE_L3_RANGE_NODE : EPON_INTERFACE_NODE;
 		break;
 	default:
 		break;
@@ -323,14 +323,16 @@ DEFUN_HIDDEN(hidden_no_nsm_interface,
 }
 
 DEFUN_HIDDEN(nsm_interface_range,
-	  nsm_interface_range_cmd,
-	  "interface " CMD_IF_SUB_USPV_STR " " CMD_USP_RANGE_STR,
-	  "Select an interface to configure\n" CMD_IF_SUB_USPV_STR_HELP
-		  CMD_USP_RANGE_STR_HELP)
+			 nsm_interface_range_cmd,
+			 "interface " CMD_IF_SUB_USPV_STR " " CMD_USP_RANGE_STR,
+			 "Select an interface to configure\n" CMD_IF_SUB_USPV_STR_HELP
+				 CMD_USP_RANGE_STR_HELP)
 {
 	struct interface *ifp = NULL;
-	zpl_uint32 uspv = 0,endport = 0;
+	zpl_uint32 uspv = 0, endport = 0, i = 0;
 	ifindex_t ifindex = 0, port_index = 0, port = 0;
+	if_type_t if_type = IF_NONE;
+	if_mode_t if_mode = IF_MODE_NONE;
 	VTY_IUSP_GET(argv[1], uspv, endport);
 	if (argv[0] && argv[1])
 	{
@@ -343,15 +345,26 @@ DEFUN_HIDDEN(nsm_interface_range,
 		for (; port_index < endport; port_index++)
 		{
 			port = IF_USPV_SET(IF_TYPE_GET(ifindex), IF_UNIT_GET(ifindex), IF_SLOT_GET(ifindex), port_index) | IF_ID_GET(ifindex);
-			if (!if_lookup_by_index(port))
+			ifp = if_lookup_by_index(port);
+			if (!ifp)
+			{
+				return CMD_WARNING;
+			}
+			if (if_type == IF_NONE)
+				if_type = ifp->if_type;
+			if (if_mode == IF_MODE_NONE)
+				if_mode = ifp->if_mode;
+
+			if (if_mode == ifp->if_mode && if_type == ifp->if_type)
+				vty->vty_range_index[i++] = ifp;
+			else
 			{
 				return CMD_WARNING;
 			}
 		}
-
+		port_index = IF_PORT_GET(ifindex);
+		vty->index_range = endport - port_index;
 		ifp = if_lookup_by_index(ifindex);
-		vty->index = ifp;
-		vty->index_value = endport;
 		vty->node = nsm_interface_cmd_node_get(ifp, 1);
 		return CMD_SUCCESS;
 	}
@@ -359,14 +372,16 @@ DEFUN_HIDDEN(nsm_interface_range,
 }
 
 DEFUN_HIDDEN(nsm_interface_sub_range,
-	  nsm_interface_range_sub_cmd,
-	  "interface " CMD_IF_SUB_USPV_STR " " CMD_USP_SUB_RANGE_STR,
-	  "Select an interface to configure\n" CMD_IF_SUB_USPV_STR_HELP
-		  CMD_USP_SUB_RANGE_STR_HELP)
+			 nsm_interface_range_sub_cmd,
+			 "interface " CMD_IF_SUB_USPV_STR " " CMD_USP_SUB_RANGE_STR,
+			 "Select an interface to configure\n" CMD_IF_SUB_USPV_STR_HELP
+				 CMD_USP_SUB_RANGE_STR_HELP)
 {
 	struct interface *ifp = NULL;
-	zpl_uint32 uspv = 0,endport = 0;
+	zpl_uint32 uspv = 0, endport = 0, i = 0;
 	ifindex_t ifindex = 0, port_index = 0, port = 0;
+	if_type_t if_type = IF_NONE;
+	if_mode_t if_mode = IF_MODE_NONE;
 	VTY_IUSP_GET(argv[1], uspv, endport);
 	if (argv[0] && argv[1])
 	{
@@ -379,15 +394,26 @@ DEFUN_HIDDEN(nsm_interface_sub_range,
 		for (; port_index < endport; port_index++)
 		{
 			port = IF_USPV_SET(IF_TYPE_GET(ifindex), IF_UNIT_GET(ifindex), IF_SLOT_GET(ifindex), port_index) | IF_ID_GET(ifindex);
-			if (!if_lookup_by_index(port))
+			ifp = if_lookup_by_index(port);
+			if (!ifp)
+			{
+				return CMD_WARNING;
+			}
+			if (if_type == IF_NONE)
+				if_type = ifp->if_type;
+			if (if_mode == IF_MODE_NONE)
+				if_mode = ifp->if_mode;
+
+			if (if_mode == ifp->if_mode && if_type == ifp->if_type)
+				vty->vty_range_index[i++] = ifp;
+			else
 			{
 				return CMD_WARNING;
 			}
 		}
-
+		port_index = IF_PORT_GET(ifindex);
+		vty->index_range = endport - port_index;
 		ifp = if_lookup_by_index(ifindex);
-		vty->index = ifp;
-		vty->index_value = endport;
 		vty->node = nsm_interface_cmd_node_get(ifp, 1);
 		return CMD_SUCCESS;
 	}
@@ -478,6 +504,28 @@ DEFUN(nsm_interface_switchport,
 		else
 			return CMD_SUCCESS;
 	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			ifp = vty->vty_range_index[i];
+			if (ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET || ifp->if_type == IF_LAG)
+			{
+				ret = nsm_interface_mode_set_api(ifp, IF_MODE_ACCESS_L2);
+				if (ret == OK)
+				{
+					if (ifp->if_type == IF_LAG)
+						vty->node = LAG_INTERFACE_NODE;
+					else
+						vty->node = INTERFACE_NODE;
+				}
+				if (ret != OK)
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
 	return CMD_WARNING;
 }
 
@@ -506,6 +554,28 @@ DEFUN(no_nsm_interface_switchport,
 		else
 			return CMD_SUCCESS;
 	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			ifp = vty->vty_range_index[i];
+			if (ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET || ifp->if_type == IF_LAG)
+			{
+				ret = nsm_interface_mode_set_api(ifp, IF_MODE_L3);
+				if (ret == OK)
+				{
+					if (ifp->if_type == IF_LAG)
+						vty->node = LAG_INTERFACE_L3_NODE;
+					else
+						vty->node = INTERFACE_L3_NODE;
+				}
+				if (ret != OK)
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
 	return CMD_WARNING;
 }
 #endif
@@ -521,6 +591,20 @@ DEFUN(nsm_interface_shutdown,
 	{
 		ret = nsm_interface_down_set_api(ifp);
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
+	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			if (vty->vty_range_index[i])
+			{
+				ret = nsm_interface_down_set_api(vty->vty_range_index[i]);
+				if (ret != OK)
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
 	}
 	return CMD_WARNING;
 }
@@ -538,6 +622,20 @@ DEFUN(no_nsm_interface_shutdown,
 		ret = nsm_interface_up_set_api(ifp);
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
 	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			if (vty->vty_range_index[i])
+			{
+				ret = nsm_interface_up_set_api(vty->vty_range_index[i]);
+				if (ret != OK)
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
 	return CMD_WARNING;
 }
 
@@ -553,6 +651,20 @@ DEFUN(nsm_interface_linkdetect,
 	{
 		ret = nsm_interface_linkdetect_set_api(ifp, IF_LINKDETECT_ON);
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
+	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			if (vty->vty_range_index[i])
+			{
+				ret = nsm_interface_linkdetect_set_api(vty->vty_range_index[i], IF_LINKDETECT_ON);
+				if (ret != OK)
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
 	}
 	return CMD_WARNING;
 }
@@ -570,6 +682,20 @@ DEFUN(no_nsm_interface_linkdetect,
 		ret = nsm_interface_linkdetect_set_api(ifp, IF_LINKDETECT_OFF);
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
 	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			if (vty->vty_range_index[i])
+			{
+				ret = nsm_interface_linkdetect_set_api(vty->vty_range_index[i], IF_LINKDETECT_OFF);
+				if (ret != OK)
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
 	return CMD_WARNING;
 }
 
@@ -584,6 +710,20 @@ DEFUN(nsm_interface_multicast,
 	{
 		ret = nsm_interface_multicast_set_api(ifp, zpl_true);
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
+	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			if (vty->vty_range_index[i])
+			{
+				ret = nsm_interface_multicast_set_api(vty->vty_range_index[i], zpl_true);
+				if (ret != OK)
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
 	}
 	return CMD_WARNING;
 }
@@ -600,6 +740,20 @@ DEFUN(no_nsm_interface_multicast,
 	{
 		ret = nsm_interface_multicast_set_api(ifp, zpl_false);
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
+	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			if (vty->vty_range_index[i])
+			{
+				ret = nsm_interface_multicast_set_api(vty->vty_range_index[i], zpl_false);
+				if (ret != OK)
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
 	}
 	return CMD_WARNING;
 }
@@ -627,6 +781,20 @@ DEFUN(nsm_interface_bandwidth,
 		ret = nsm_interface_bandwidth_set_api(ifp, bandwidth);
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
 	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			if (vty->vty_range_index[i])
+			{
+				ret = nsm_interface_bandwidth_set_api(vty->vty_range_index[i], bandwidth);
+				if (ret != OK)
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
 	return CMD_WARNING;
 }
 
@@ -643,6 +811,20 @@ DEFUN(no_nsm_interface_bandwidth,
 	{
 		ret = nsm_interface_bandwidth_set_api(ifp, 0);
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
+	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			if (vty->vty_range_index[i])
+			{
+				ret = nsm_interface_bandwidth_set_api(vty->vty_range_index[i], 0);
+				if (ret != OK)
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
 	}
 	return CMD_WARNING;
 }
@@ -670,6 +852,20 @@ DEFUN(nsm_interface_mtu,
 		ret = nsm_interface_mtu_set_api(ifp, mtu);
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
 	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			if (vty->vty_range_index[i])
+			{
+				ret = nsm_interface_mtu_set_api(vty->vty_range_index[i], mtu);
+				if (ret != OK)
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
 	return CMD_WARNING;
 }
 
@@ -686,6 +882,20 @@ DEFUN(no_nsm_interface_mtu,
 	{
 		ret = nsm_interface_mtu_set_api(ifp, IF_ZEBRA_MTU_DEFAULT);
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
+	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			if (vty->vty_range_index[i])
+			{
+				ret = nsm_interface_mtu_set_api(vty->vty_range_index[i], IF_ZEBRA_MTU_DEFAULT);
+				if (ret != OK)
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
 	}
 	return CMD_WARNING;
 }
@@ -713,6 +923,20 @@ DEFUN(nsm_interface_metric,
 		ret = nsm_interface_metric_set_api(ifp, metric);
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
 	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			if (vty->vty_range_index[i])
+			{
+				ret = nsm_interface_metric_set_api(vty->vty_range_index[i], metric);
+				if (ret != OK)
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
 	return CMD_WARNING;
 }
 
@@ -729,6 +953,20 @@ DEFUN(no_nsm_interface_metric,
 	{
 		ret = nsm_interface_metric_set_api(ifp, 1);
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
+	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			if (vty->vty_range_index[i])
+			{
+				ret = nsm_interface_metric_set_api(vty->vty_range_index[i], 1);
+				if (ret != OK)
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
 	}
 	return CMD_WARNING;
 }
@@ -755,6 +993,20 @@ DEFUN(nsm_interface_duplex,
 		ret = nsm_interface_duplex_set_api(ifp, duplex);
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
 	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			if (vty->vty_range_index[i])
+			{
+				ret = nsm_interface_duplex_set_api(vty->vty_range_index[i], duplex);
+				if (ret != OK)
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
 	return CMD_WARNING;
 }
 
@@ -771,6 +1023,20 @@ DEFUN(no_nsm_interface_duplex,
 	{
 		ret = nsm_interface_duplex_set_api(ifp, NSM_IF_DUPLEX_AUTO);
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
+	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			if (vty->vty_range_index[i])
+			{
+				ret = nsm_interface_duplex_set_api(vty->vty_range_index[i], NSM_IF_DUPLEX_AUTO);
+				if (ret != OK)
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
 	}
 	return CMD_WARNING;
 }
@@ -846,6 +1112,20 @@ DEFUN(nsm_interface_speed,
 		ret = nsm_interface_speed_set_api(ifp, speed);
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
 	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			if (vty->vty_range_index[i])
+			{
+				ret = nsm_interface_speed_set_api(vty->vty_range_index[i], speed);
+				if (ret != OK)
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
 	return CMD_WARNING;
 }
 
@@ -862,6 +1142,20 @@ DEFUN(no_nsm_interface_speed,
 	{
 		ret = nsm_interface_speed_set_api(ifp, NSM_IF_DUPLEX_AUTO);
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
+	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			if (vty->vty_range_index[i])
+			{
+				ret = nsm_interface_speed_set_api(vty->vty_range_index[i], NSM_IF_DUPLEX_AUTO);
+				if (ret != OK)
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
 	}
 	return CMD_WARNING;
 }
@@ -885,6 +1179,20 @@ DEFUN(nsm_interface_ip_vrf,
 		ret = nsm_interface_vrf_set_api(ifp, id);
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
 	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			if (vty->vty_range_index[i])
+			{
+				ret = nsm_interface_vrf_set_api(vty->vty_range_index[i], id);
+				if (ret != OK)
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
 	return CMD_WARNING;
 }
 
@@ -903,6 +1211,20 @@ DEFUN(no_nsm_interface_ip_vrf,
 	{
 		ret = nsm_interface_vrf_set_api(ifp, VRF_DEFAULT);
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
+	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			if (vty->vty_range_index[i])
+			{
+				ret = nsm_interface_vrf_set_api(vty->vty_range_index[i], VRF_DEFAULT);
+				if (ret != OK)
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
 	}
 	return CMD_WARNING;
 }
@@ -1413,6 +1735,7 @@ DEFUN_HIDDEN(show_interface_all_debug,
 			struct listnode *addrnode;
 			struct connected *ifc;
 			struct prefix *p;
+			union prefix46constptr up;
 
 			if_data = ifp->info[MODULE_NSM];
 
@@ -1466,9 +1789,11 @@ DEFUN_HIDDEN(show_interface_all_debug,
 						{
 							char buf[INET6_ADDRSTRLEN];
 							p = ifc->address;
+							
+							up.p = p;
 							vty_out(vty, " ip%s address %s",
 									p->family == IPSTACK_AF_INET ? "" : "v6",
-									prefix2str(p, buf, sizeof(buf)));
+									prefix2str(up, buf, sizeof(buf)));
 
 							vty_out(vty, "%s", VTY_NEWLINE);
 						}
@@ -1505,7 +1830,7 @@ static int nsm_interface_loopback_config_write(struct vty *vty)
 			struct listnode *addrnode;
 			struct connected *ifc;
 			struct prefix *p;
-
+			union prefix46constptr up;
 			if_data = ifp->info[MODULE_NSM];
 			if (ifp->if_type == IF_LOOPBACK)
 			{
@@ -1538,9 +1863,10 @@ static int nsm_interface_loopback_config_write(struct vty *vty)
 						{
 							char buf[INET6_ADDRSTRLEN];
 							p = ifc->address;
+							up.p = p;
 							vty_out(vty, " ip%s address %s",
 									p->family == IPSTACK_AF_INET ? "" : "v6",
-									prefix2str(p, buf, sizeof(buf)));
+									prefix2str(up, buf, sizeof(buf)));
 
 							vty_out(vty, "%s", VTY_NEWLINE);
 						}
@@ -1569,7 +1895,7 @@ static int nsm_interface_config_write(struct vty *vty)
 			struct listnode *addrnode;
 			struct connected *ifc;
 			struct prefix *p;
-
+			union prefix46constptr up;
 			if (if_is_loop(ifp))
 				continue;
 			if (if_is_tunnel(ifp))
@@ -1621,9 +1947,10 @@ static int nsm_interface_config_write(struct vty *vty)
 						{
 							char buf[INET6_ADDRSTRLEN];
 							p = ifc->address;
+							up.p = p;
 							vty_out(vty, " ip%s address %s",
 									p->family == IPSTACK_AF_INET ? "" : "v6",
-									prefix2str(p, buf, sizeof(buf)));
+									prefix2str(up, buf, sizeof(buf)));
 
 							vty_out(vty, "%s", VTY_NEWLINE);
 						}
@@ -1835,41 +2162,30 @@ static void cmd_ethernet_interface_init(int node)
 
 static void cmd_range_interface_init(int node)
 {
+	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_linkdetect_cmd);
+	install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_linkdetect_cmd);
+
+	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_bandwidth_cmd);
+	install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_bandwidth_cmd);
+
+	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_duplex_cmd);
+	install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_duplex_cmd);
+
+	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_speed_cmd);
+	install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_speed_cmd);
 	if (node == INTERFACE_RANGE_NODE)
 	{
-		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_linkdetect_cmd);
-		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_linkdetect_cmd);
-
-		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_bandwidth_cmd);
-		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_bandwidth_cmd);
-
-		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_duplex_cmd);
-		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_duplex_cmd);
-
-		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_speed_cmd);
-		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_speed_cmd);
 #ifdef ZPL_IPCOM_STACK_MODULE
 		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
-		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
+		// install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
 #endif
 	}
 	if (node == INTERFACE_L3_RANGE_NODE)
 	{
 #ifdef ZPL_IPCOM_STACK_MODULE
 		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
-		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
+		// install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
 #endif
-		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_linkdetect_cmd);
-		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_linkdetect_cmd);
-
-		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_bandwidth_cmd);
-		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_bandwidth_cmd);
-
-		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_duplex_cmd);
-		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_duplex_cmd);
-
-		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_speed_cmd);
-		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_speed_cmd);
 		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_multicast_cmd);
 		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_multicast_cmd);
 		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_mtu_cmd);
@@ -1879,19 +2195,20 @@ static void cmd_range_interface_init(int node)
 	}
 	if (node == E1_INTERFACE_L3_RANGE_NODE)
 	{
+		
 	}
 	if (node == EPON_INTERFACE_RANGE_NODE)
 	{
 #ifdef ZPL_IPCOM_STACK_MODULE
-		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
-		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
+		// install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
+		// install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
 #endif
 	}
 	if (node == EPON_INTERFACE_L3_RANGE_NODE)
 	{
 #ifdef ZPL_IPCOM_STACK_MODULE
-		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
-		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
+		// install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
+		// install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
 #endif
 	}
 }
@@ -2033,4 +2350,5 @@ void cmd_interface_init(void)
 	cmd_base_interface_init(EPON_INTERFACE_L3_RANGE_NODE);
 
 	cmd_range_interface_init(INTERFACE_RANGE_NODE);
+	cmd_range_interface_init(INTERFACE_L3_RANGE_NODE);
 }

@@ -86,7 +86,7 @@ DEFUN (os_nvram_env_show_cli,
 	return CMD_SUCCESS;
 }
 
-int cmd_nvram_env_init()
+int cmd_nvram_env_init(void)
 {
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &os_nvram_env_add_cli_cmd);
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &os_nvram_env_del_cli_cmd);

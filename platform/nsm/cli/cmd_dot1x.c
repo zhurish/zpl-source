@@ -622,7 +622,7 @@ static void cmd_dot1x_interface_init(int node)
 }
 
 
-void cmd_dot1x_init()
+void cmd_dot1x_init(void)
 {
 	install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &dot1x_system_auth_ctrl_cmd);
 	install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &no_dot1x_system_auth_ctrl_cmd);

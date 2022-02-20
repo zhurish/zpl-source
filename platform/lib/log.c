@@ -42,9 +42,12 @@ static int logfile_fd = -1; /* Used in signal handler. */
 struct zlog *zlog_default = NULL;
 
 
-
-static const char *zlog_priority[] = { "emergencies", "alerts", "critical", "errors",
-		"warnings", "notifications", "informational", "debugging", "trapping", "ftrapping", NULL, };
+//#define ZLOG_PRI_FMT	"%-12s"
+//static const char *zlog_priority[] = { "emergencies", "alerts", "critical", "errors",
+//		"warnings", "notifications", "informational", "debugging", "trapping", "ftrapping", NULL, };
+#define ZLOG_PRI_FMT	"%-8s"
+static const char *zlog_priority[] = { "emerg", "alert", "crit", "err",
+		"warning", "notice", "info", "debug", "trapping", "focetrap", NULL, };
 
 static const struct facility_map {
 	zpl_uint32 facility;
@@ -225,7 +228,7 @@ void time_print(FILE *fp, zlog_timestamp_t ctl)
 		fprintf(fp, "%s ", data);
 }
 
-static int zlog_depth_debug_detail(FILE *fp, zpl_char *buf, zpl_uint32 depth, const char *file,
+int zlog_depth_debug_detail(FILE *fp, zpl_char *buf, zpl_uint32 depth, const char *file,
 		const char *func, const zpl_uint32 line)
 {
 	if(depth != ZLOG_DEPTH_NONE)
@@ -316,7 +319,6 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 		va_list args) {
 	zpl_uint16 protocol = 0;
 	int original_errno = ipstack_errno;
-
 	/* If zlog is not specified, use default one. */
 	if (zl == NULL)
 		zl = zlog_default;
@@ -324,7 +326,7 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 		/* When zlog_default is also NULL, use stderr for logging. */
 	if (zl == NULL) {
 		time_print(stderr, ZLOG_TIMESTAMP_DATE);
-		fprintf(stderr, "%-12s: ", "unknown");
+		fprintf(stderr, ZLOG_PRI_FMT": ", "unknown");
 		vfprintf(stderr, format, args);
 		fprintf(stderr, "\r\n");
 		fflush(stderr);
@@ -345,7 +347,7 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 	{
 		va_list ac;
 		time_print(zl->testlog.fp, zl->timestamp);
-		fprintf(zl->testlog.fp, "%-12s: ", zlog_priority[priority]);
+		fprintf(zl->testlog.fp, ZLOG_PRI_FMT": ", zlog_priority[priority]);
 		fprintf(zl->testlog.fp, "%-8s: ", zlog_proto_names(zl->protocol));
 		va_copy(ac, args);
 		vfprintf(zl->testlog.fp, format, ac);
@@ -372,7 +374,7 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 		va_list ac;
 		time_print(zl->fp, zl->timestamp);
 		if (zl->record_priority)
-			fprintf(zl->fp, "%-12s: ", zlog_priority[priority]);
+			fprintf(zl->fp, ZLOG_PRI_FMT": ", zlog_priority[priority]);
 		fprintf(zl->fp, "%-8s: ", zlog_proto_names(zl->protocol));
 		va_copy(ac, args);
 		vfprintf(zl->fp, format, ac);
@@ -387,7 +389,7 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 		va_list ac;
 		time_print(stdout, zl->timestamp);
 		if (zl->record_priority)
-			fprintf(stdout, "%-12s: ", zlog_priority[priority]);
+			fprintf(stdout, ZLOG_PRI_FMT": ", zlog_priority[priority]);
 		fprintf(stdout, "%-8s: ", zlog_proto_names(zl->protocol));
 		va_copy(ac, args);
 		vfprintf(stdout, format, ac);
@@ -416,7 +418,7 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 			va_list ac;
 			time_print(stdout, zl->timestamp);
 			if (zl->record_priority)
-				fprintf(stdout, "%-12s: ", zlog_priority[priority]);
+				fprintf(stdout, ZLOG_PRI_FMT": ", zlog_priority[priority]);
 			fprintf(stdout, "%-8s: ", zlog_proto_names(zl->protocol));
 			va_copy(ac, args);
 			vfprintf(stdout, format, ac);
@@ -454,7 +456,7 @@ void pl_vzlog(const char *file, const char *func, const zpl_uint32 line,
 	if (zl == NULL)
 	{
 		time_print(stderr, ZLOG_TIMESTAMP_DATE);
-		fprintf(stderr, "%-12s: ", "unknown");
+		fprintf(stderr, ZLOG_PRI_FMT": ", "unknown");
 		zlog_depth_debug_detail(stderr, NULL, ZLOG_DEPTH_LEVEL2, file, func, line);
 
 		vfprintf(stderr, format, args);
@@ -470,6 +472,7 @@ void pl_vzlog(const char *file, const char *func, const zpl_uint32 line,
 		protocol = zl->protocol;
 		zl->protocol = module;
 	}
+
 	if (priority <= zl->maxlvl[ZLOG_DEST_SYSLOG] ||
 			priority <= zl->maxlvl[ZLOG_DEST_BUFFER] ||
 			((priority <= zl->maxlvl[ZLOG_DEST_FILE]) && zl->fp) ||
@@ -500,8 +503,11 @@ void pl_vzlog(const char *file, const char *func, const zpl_uint32 line,
 			zl->protocol = protocol;
 			return;
 		}
-		if(zl->lfd && zl->taskid)
+
+		if(zl->lfd > 0 && zl->taskid)
+		{
 			write(zl->lfd, &loghdr, sizeof(loghdr));
+		}
 		else
 		{
 			if (zl->mutex)
@@ -523,13 +529,13 @@ static int zlog_task(struct zlog *zl)
 	zpl_uint32 retval = 0;
 	fd_set rfds;
 	zlog_hdr_t loghdr;
-	os_sleep(1);
+	os_msleep(10);
 	memset(&loghdr, 0, sizeof(loghdr));
 	FD_ZERO (&rfds);
 	//FD_SET (zl->lfd, &rfds);
 	while (1)
 	{
-		if(zl->lfd == 0)
+		if(zl->lfd <= 0)
 		{
 			os_sleep(1);
 			continue;
@@ -594,7 +600,7 @@ static int zlog_task(struct zlog *zl)
 
 static int zlog_task_init(struct zlog *zl)
 {
-	if(zl->lfd)
+	if(zl->lfd > 0)
 	{
 		close(zl->lfd);
 		zl->lfd = 0;
@@ -618,7 +624,7 @@ static int zlog_task_exit(struct zlog *zl)
 		os_task_destroy(zl->taskid);
 		zl->taskid = 0;
 	}
-	if(zl->lfd)
+	if(zl->lfd > 0)
 	{
 		close(zl->lfd);
 		zl->lfd = 0;
@@ -644,7 +650,7 @@ void vzlog(const char *file, const char *func, const zpl_uint32 line,
 	/* When zlog_default is also NULL, use stderr for logging. */
 	if (zl == NULL) {
 		time_print(stderr, zl->timestamp);
-		fprintf(stderr, "%-12s: ", "unknown");
+		fprintf(stderr, ZLOG_PRI_FMT": ", "unknown");
 		zlog_depth_debug_detail(stderr, NULL, ZLOG_DEPTH_LEVEL2, file, func, line);
 		vfprintf(stderr, format, args);
 		fprintf(stderr, "\n");
@@ -664,7 +670,7 @@ void vzlog(const char *file, const char *func, const zpl_uint32 line,
 	{
 		va_list ac;
 		time_print(zl->testlog.fp, zl->timestamp);
-		fprintf(zl->testlog.fp, "%-12s: ", zlog_priority[priority]);
+		fprintf(zl->testlog.fp, ZLOG_PRI_FMT": ", zlog_priority[priority]);
 		fprintf(zl->testlog.fp, "%-8s: ", zlog_proto_names(zl->protocol));
 		zlog_depth_debug_detail(zl->testlog.fp, NULL, zl->depth_debug, file, func, line);
 		va_copy(ac, args);
@@ -697,7 +703,7 @@ void vzlog(const char *file, const char *func, const zpl_uint32 line,
 		va_list ac;
 		time_print(zl->fp, zl->timestamp);
 		if (zl->record_priority)
-			fprintf(zl->fp, "%-12s: ", zlog_priority[priority]);
+			fprintf(zl->fp, ZLOG_PRI_FMT": ", zlog_priority[priority]);
 		fprintf(zl->fp, "%-8s: ", zlog_proto_names(zl->protocol));
 		zlog_depth_debug_detail(zl->fp, NULL, zl->depth_debug, file, func, line);
 		va_copy(ac, args);
@@ -1231,9 +1237,9 @@ openzlog(const char *progname, zlog_proto_t protocol, zpl_uint32 syslog_flags,
 	}
 
 	zl->default_lvl[ZLOG_DEST_SYSLOG] = ZLOG_LEVEL_WARNING;
-	zl->default_lvl[ZLOG_DEST_STDOUT] = ZLOG_LEVEL_ERR;
+	zl->default_lvl[ZLOG_DEST_STDOUT] = ZLOG_LEVEL_MAX;
 	zl->default_lvl[ZLOG_DEST_BUFFER] = ZLOG_LEVEL_NOTICE;
-	zl->default_lvl[ZLOG_DEST_MONITOR] = ZLOG_LEVEL_NOTICE;
+	zl->default_lvl[ZLOG_DEST_MONITOR] = ZLOG_LEVEL_MAX;
 	zl->default_lvl[ZLOG_DEST_FILE] = ZLOG_LEVEL_ERR;
 
 	zl->trap_lvl = zpl_true;//ZLOG_LEVEL_TRAP;
@@ -1263,6 +1269,27 @@ openzlog(const char *progname, zlog_proto_t protocol, zpl_uint32 syslog_flags,
 	zl->testlog.file_check_interval = 0;
 #endif
 	return zl;
+}
+
+void openzlog_start(struct zlog *zl)
+{
+	zpl_uint32 i;
+	struct zlog *zlp = zl;
+	if(zlp == NULL)
+		zlp = zlog_default;
+	for (i = 0; i < array_size(zlp->maxlvl); i++)
+	{
+		zlp->maxlvl[i] = ZLOG_DISABLED;
+		zlp->default_lvl[i] = ZLOG_DISABLED;
+	}
+
+	zlp->default_lvl[ZLOG_DEST_SYSLOG] = ZLOG_LEVEL_WARNING;
+	zlp->default_lvl[ZLOG_DEST_STDOUT] = ZLOG_LEVEL_ERR;
+	zlp->default_lvl[ZLOG_DEST_BUFFER] = ZLOG_LEVEL_NOTICE;
+	zlp->default_lvl[ZLOG_DEST_MONITOR] = ZLOG_LEVEL_NOTICE;
+	zlp->default_lvl[ZLOG_DEST_FILE] = ZLOG_LEVEL_ERR;
+	zlp->trap_lvl = zpl_true;//ZLOG_LEVEL_TRAP;
+	return OK;
 }
 
 void closezlog(struct zlog *zl) {
@@ -1542,7 +1569,7 @@ int zlog_get_file(const char *filename, zlog_level_t *log_level)
 	return OK;
 }
 
-int zlog_close_file()
+int zlog_close_file(void)
 {
 
 	//zpl_char filetmp[256];
@@ -2032,7 +2059,7 @@ int zlog_buffer_callback_api (zlog_buffer_cb cb, void *pVoid)
 
 
 /* Reopen log file. */
-int zlog_rotate()
+int zlog_rotate(void)
 {
 	zpl_uint32 level;
 

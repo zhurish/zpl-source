@@ -328,7 +328,7 @@ static struct cmd_node vty_node =
 	1,
 };
 
-int cmd_vty_init()
+int cmd_vty_init(void)
 {
 
 	/* Install bgp top node. */

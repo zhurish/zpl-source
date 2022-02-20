@@ -25,6 +25,15 @@ typedef struct
 	zpl_uint32 taskid;
 }hal_driver_t;
 
+typedef enum hal_core_cmd
+{
+	HAL_CORE_NONE,
+  	HAL_CORE_COPY_TO_CPU,
+	HAL_CORE_REDIRECT_TO_CPU,
+  	HAL_CORE_FORWARED,
+	HAL_CORE_DROP,
+}hal_core_cmd_t;
+
 enum hal_switch_cmd 
 {
     HAL_SWITCH_NONE,
@@ -49,6 +58,7 @@ int hal_module_task_exit(void);
 
 int hal_test_init(void);
 
+
 /*
  * CPU Port
  */
@@ -69,6 +79,9 @@ int hal_multicast_learning(zpl_bool enable);
 //全局使能接收BPDU报文
 int hal_global_bpdu_enable(zpl_bool enable);
 int hal_global_aging_time(zpl_uint32 value);
+
+
+
 
 #ifdef __cplusplus
 }

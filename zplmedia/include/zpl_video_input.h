@@ -21,7 +21,7 @@ typedef struct
 {
     NODE                    node;
     zpl_int32               input_chn;                     //底层通道号
-    int                     chnfd;
+    zpl_socket_t               chnfd;
 	zpl_video_size_t		input_size;		 //视频输出大小 
     zpl_video_size_t        sacle_size;      //缩放大小
 

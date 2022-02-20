@@ -76,7 +76,7 @@ int nsm_dot1x_init(void);
 int nsm_dot1x_exit(void);
 
 int nsm_dot1x_global_enable(zpl_bool enable);
-zpl_bool nsm_dot1x_global_is_enable();
+zpl_bool nsm_dot1x_global_is_enable(void);
 
 int dot1x_callback_api(dot1x_cb cb, void *pVoid);
 
@@ -130,7 +130,7 @@ int nsm_dot1x_max_req_get_api(ifindex_t ifindex, zpl_uint32 *count);
 int nsm_dot1x_reset_api(ifindex_t ifindex);
 
 #ifdef ZPL_SHELL_MODULE
-void cmd_dot1x_init();
+void cmd_dot1x_init(void);
 int build_dot1x_config(struct vty *vty);
 int build_dot1x_interface(struct vty *vty, struct interface *ifp);
 #endif

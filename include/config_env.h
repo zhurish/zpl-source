@@ -14,7 +14,9 @@ extern "C" {
 
 //#define ZPL_KERNEL_STACK_MODULE
 	//ZPL_KERNEL_STACK_MODULE
-//#undef BASE_DIR
+#undef BASE_DIR         //运行时缓存目录
+#undef SYS_REAL_DIR     //flash存储目录
+
 #ifndef BASE_DIR
 #define BASE_DIR	"/tmp/app"
 #endif

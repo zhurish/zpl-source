@@ -1390,7 +1390,7 @@ static int cmd_qos_intf_init(int node)
 	return OK;
 }
 
-int cmd_qos_init()
+int cmd_qos_init(void)
 {
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &qos_global_control_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_qos_global_control_cmd);

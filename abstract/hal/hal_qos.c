@@ -19,9 +19,10 @@ int hal_qos_enable(zpl_bool enable)
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
+	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_putl(&ipcmsg, enable);
-	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_SET, HAL_QOS_EN);
+	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_REQ, HAL_QOS_EN);
 	return hal_ipcmsg_send_message(IF_UNIT_ALL, 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -31,9 +32,10 @@ int hal_qos_ipg_enable(zpl_bool enable)
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
+	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_putl(&ipcmsg, enable);
-	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_SET, HAL_QOS_IPG);
+	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_REQ, HAL_QOS_IPG);
 	return hal_ipcmsg_send_message(IF_UNIT_ALL, 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -43,10 +45,11 @@ int hal_qos_base_mode(ifindex_t ifindex, nsm_qos_trust_e enable)
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
+	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
 	hal_ipcmsg_putl(&ipcmsg, enable);
-	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_SET, HAL_QOS_BASE_TRUST);
+	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_REQ, HAL_QOS_BASE_TRUST);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -56,10 +59,11 @@ int hal_qos_8021q_enable(ifindex_t ifindex, nsm_qos_trust_e enable)
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
+	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
 	hal_ipcmsg_putl(&ipcmsg, enable);
-	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_SET, HAL_QOS_8021Q);
+	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_REQ, HAL_QOS_8021Q);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -69,10 +73,11 @@ int hal_qos_diffserv_enable(ifindex_t ifindex, nsm_qos_trust_e enable)
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
+	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
 	hal_ipcmsg_putl(&ipcmsg, enable);
-	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_SET, HAL_QOS_DIFFSERV);
+	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_REQ, HAL_QOS_DIFFSERV);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -83,11 +88,12 @@ int hal_qos_port_map_queue(ifindex_t ifindex, nsm_qos_priority_e pri, nsm_qos_qu
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
+	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
 	hal_ipcmsg_putc(&ipcmsg, pri);
 	hal_ipcmsg_putc(&ipcmsg, queue);
-	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_SET, HAL_QOS_PORT_MAP_QUEUE);
+	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_REQ, HAL_QOS_PORT_MAP_QUEUE);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -97,11 +103,12 @@ int hal_qos_diffserv_map_queue(ifindex_t ifindex, zpl_uint32 diffserv, nsm_qos_q
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
+	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
 	hal_ipcmsg_putc(&ipcmsg, diffserv);
 	hal_ipcmsg_putc(&ipcmsg, queue);
-	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_SET, HAL_QOS_DIFFSERV_MAP_QUEUE);
+	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_REQ, HAL_QOS_DIFFSERV_MAP_QUEUE);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -113,11 +120,12 @@ int hal_qos_queue_class(ifindex_t ifindex, nsm_qos_queue_e queue, nsm_qos_class_
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
+	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
 	hal_ipcmsg_putc(&ipcmsg, queue);
 	hal_ipcmsg_putc(&ipcmsg, class);
-	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_SET, HAL_QOS_QUEUE_MAP_CLASS);
+	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_REQ, HAL_QOS_QUEUE_MAP_CLASS);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -127,11 +135,12 @@ int hal_qos_queue_scheduling(ifindex_t ifindex,nsm_qos_class_e class, nsm_class_
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
+	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
 	hal_ipcmsg_putc(&ipcmsg, class);
 	hal_ipcmsg_putc(&ipcmsg, type);
-	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_SET, HAL_QOS_CLASS_SCHED);
+	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_REQ, HAL_QOS_CLASS_SCHED);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -141,11 +150,12 @@ int hal_qos_queue_weight(ifindex_t ifindex,nsm_qos_class_e class, zpl_uint32 wei
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
+	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
 	hal_ipcmsg_putc(&ipcmsg, class);
 	hal_ipcmsg_putc(&ipcmsg, weight);
-	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_SET, HAL_QOS_CLASS_WEIGHT);
+	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_REQ, HAL_QOS_CLASS_WEIGHT);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -157,12 +167,13 @@ int hal_qos_storm_rate_limit(ifindex_t ifindex, zpl_uint32 mode, zpl_uint32 limi
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
+	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
 	hal_ipcmsg_putc(&ipcmsg, mode);
 	hal_ipcmsg_putl(&ipcmsg, limit);
 	hal_ipcmsg_putl(&ipcmsg, burst_size);
-	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_SET, HAL_QOS_STORM_RATELIMIT);
+	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_REQ, HAL_QOS_STORM_RATELIMIT);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -175,11 +186,12 @@ int hal_qos_egress_rate_limit(ifindex_t ifindex, zpl_uint32 limit, zpl_uint32 bu
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
+	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
 	hal_ipcmsg_putl(&ipcmsg, limit);
 	hal_ipcmsg_putl(&ipcmsg, burst_size);
-	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_SET, HAL_QOS_PORT_OUTRATELIMIT);
+	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_REQ, HAL_QOS_PORT_OUTRATELIMIT);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -189,11 +201,12 @@ int hal_qos_ingress_rate_limit(ifindex_t ifindex, zpl_uint32 limit, zpl_uint32 b
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
+	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
 	hal_ipcmsg_putl(&ipcmsg, limit);
 	hal_ipcmsg_putl(&ipcmsg, burst_size);
-	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_SET, HAL_QOS_PORT_INRATELIMIT);
+	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_REQ, HAL_QOS_PORT_INRATELIMIT);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -204,11 +217,12 @@ int hal_qos_cpu_rate_limit(zpl_uint32 limit, zpl_uint32 burst_size)
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
+	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	//hal_ipcmsg_port_set(&ipcmsg, ifindex);
 	hal_ipcmsg_putl(&ipcmsg, limit);
 	hal_ipcmsg_putl(&ipcmsg, burst_size);
-	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_SET, HAL_QOS_CPU_RATELIMIT);
+	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_REQ, HAL_QOS_CPU_RATELIMIT);
 	return hal_ipcmsg_send_message(IF_UNIT_ALL, 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }

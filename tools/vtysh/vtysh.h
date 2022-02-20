@@ -23,15 +23,41 @@
 #define VTYSH_H
 
 
+#define VTYSH_ALL	  0xff
+
 /* vtysh local configuration file. */
 #define VTYSH_DEFAULT_CONFIG "vtysh.conf"
 
-void vtysh_init_vty (void);
-void vtysh_init_cmd (void);
-void vtysh_user_init (void);
 
-extern int vtysh_connect (void);
+struct vtysh_user
+{
+  char *name;
+  u_char nopassword;
+};
+
+struct vtysh_client
+{
+  int fd;
+  char name[64];
+  int flag;
+  char path[64];
+
+  int complete_status;
+  struct vty *vty;
+  struct list *userlist;
+};
+
+extern struct vtysh_client vtysh_client;
+
+
+
+extern void vtysh_init (void);
+extern void vtysh_cmd_init (void);
+extern int vtysh_connect (const char *optional_daemon_name);
 extern int vtysh_execute (const char *);
-extern int vtysh_config_from_file (struct vty *, FILE *);
+
+extern char *vtysh_prompt (void);
+
+
 
 #endif /* VTYSH_H */

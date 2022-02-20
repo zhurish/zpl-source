@@ -16,7 +16,7 @@ static nsm_security_t * _nsm_security_get(struct interface *ifp)
 {
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	if(nsm)
-		return (nsm_security_t *)(nsm->nsm_client[NSM_SEC]);
+		return (nsm_security_t *)(nsm->nsm_client[NSM_INTF_SEC]);
 	return NULL;
 }
 
@@ -33,8 +33,8 @@ int nsm_security_interface_create_api(struct interface *ifp)
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	if(if_is_ethernet(ifp))
 	{
-		nsm_security_t *security = nsm->nsm_client[NSM_SEC] = XMALLOC(MTYPE_SECURITY, sizeof(nsm_security_t));
-		os_memset(nsm->nsm_client[NSM_SEC], 0, sizeof(nsm_security_t));
+		nsm_security_t *security = nsm->nsm_client[NSM_INTF_SEC] = XMALLOC(MTYPE_SECURITY, sizeof(nsm_security_t));
+		os_memset(nsm->nsm_client[NSM_INTF_SEC], 0, sizeof(nsm_security_t));
 		security->ifindex = ifp->ifindex;
 	}
 	return OK;
@@ -46,9 +46,9 @@ int nsm_security_interface_del_api(struct interface *ifp)
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	if(if_is_ethernet(ifp))
 	{
-		if(nsm->nsm_client[NSM_SEC])
-			XFREE(MTYPE_SECURITY, nsm->nsm_client[NSM_SEC]);
-		nsm->nsm_client[NSM_SEC] = NULL;
+		if(nsm->nsm_client[NSM_INTF_SEC])
+			XFREE(MTYPE_SECURITY, nsm->nsm_client[NSM_INTF_SEC]);
+		nsm->nsm_client[NSM_INTF_SEC] = NULL;
 	}
 	return OK;
 }
@@ -74,22 +74,22 @@ int nsm_security_interface_write_config(struct vty *vty, struct interface *ifp)
 
 
 
-int nsm_security_init()
+int nsm_security_init(void)
 {
-	nsm_interface_hook_add(NSM_SEC, nsm_security_interface_create_api, nsm_security_interface_del_api);
+	nsm_interface_hook_add(NSM_INTF_SEC, nsm_security_interface_create_api, nsm_security_interface_del_api);
 	//nsm_firewall_init();
 
 	return OK;
 }
 
-int nsm_security_exit()
+int nsm_security_exit(void)
 {
 	//nsm_firewall_exit();
 	return OK;
 }
 
 
-void cmd_security_init()
+void cmd_security_init(void)
 {
 	//cmd_firewall_init ();
 }

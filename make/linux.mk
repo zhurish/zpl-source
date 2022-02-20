@@ -51,8 +51,47 @@ ZPLOS_LDFLAGS += -L$(CROSS_COMPILE_PATH)/lib -L$(CROSS_COMPILE_PATH)/usr/lib
 
 #ifneq ($(findstring $(CROSS_COMPILE), $(hi)), )
 ZPLOS_INCLUDE += -I$(CROSS_COMPILE_PATH)/target/usr/include 
-ZPLOS_CFLAGS += -mcpu=cortex-a7 -mfloat-abi=softfp -mfpu=neon-vfpv4
-ZPLOS_LDFLAGS += -mcpu=cortex-a7 -mfloat-abi=softfp -mfpu=neon-vfpv4
+#ZPLOS_CFLAGS += -mcpu=cortex-a7 -mfloat-abi=softfp -mfpu=neon-vfpv4
+#ZPLOS_LDFLAGS += -mcpu=cortex-a7 -mfloat-abi=softfp -mfpu=neon-vfpv4
+
+ifeq ($(ZPL_ARM_A5),true)
+ZPLOS_MCPU = -mcpu=cortex-a5
+endif
+ifeq ($(ZPL_ARM_A6),true)
+ZPLOS_MCPU = -mcpu=cortex-a6
+endif
+ifeq ($(ZPL_ARM_A7),true)
+ZPLOS_MCPU = -mcpu=cortex-a7
+endif
+ifeq ($(ZPL_ARM_A8),true)
+ZPLOS_MCPU = -mcpu=cortex-a8
+endif
+ifeq ($(ZPL_ARM_A9),true)
+ZPLOS_MCPU = -mcpu=cortex-a9
+endif
+
+ifeq ($(ZPL_FPU_HARD),true)
+ZPLOS_FLOAT = hard
+endif
+ifeq ($(ZPL_FPU_SOFT),true)
+ZPLOS_FLOAT = soft
+endif
+ifeq ($(ZPL_FPU_SOFTFP),true)
+ZPLOS_FLOAT = softfp
+endif
+ifeq ($(ZPL_FPU_NEON),true)
+ZPLOS_FLOAT = neon
+endif
+ifeq ($(ZPL_ARM_VFP),true)
+ZPLOS_FLOAT = vfp
+endif
+ifeq ($(ZPL_ARM_NEON_VFP),true)
+ZPLOS_FLOAT = neon-vfpv4
+endif
+
+ZPLOS_CFLAGS += $(ZPLOS_MCPU) -mfloat-abi=$(ZPLOS_FLOAT) 
+ZPLOS_LDFLAGS += $(ZPLOS_MCPU) -mfloat-abi=$(ZPLOS_FLOAT) 
+
 #endif
 
 #ZPLOS_LDFLAGS += -L$(CROSS_COMPILE_PATH)/lib -L$(CROSS_COMPILE_PATH)/usr/lib

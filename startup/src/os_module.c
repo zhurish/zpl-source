@@ -89,7 +89,6 @@ int os_module_cmd_init(void)
 	/*
 	 * test module
 	 */
-	extern int os_test();
 	os_test();
 #ifdef ZPL_HAL_MODULE
 	hal_test_init();

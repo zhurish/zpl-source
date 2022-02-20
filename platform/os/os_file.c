@@ -172,9 +172,9 @@ int os_file_size (const zpl_char *filename)
 
 #define KB_SIZE_MASK	(0X000003FF)
 
-const zpl_char * os_file_size_string(zpl_uint32 len)
+const zpl_char * os_file_size_string(zpl_ullong len)
 {
-	zpl_uint32 glen = 0, mlen = 0, klen = 0, tlen = 0;
+	zpl_ullong glen = 0, mlen = 0, klen = 0, tlen = 0;
 	static zpl_char buf[64];
 	memset(buf, 0, sizeof(buf));
 	tlen = (len >> 40) & KB_SIZE_MASK;

@@ -1134,7 +1134,7 @@ static struct cmd_node log_node =
 	1
 };
 
-int cmd_log_init()
+int cmd_log_init(void)
 {
 	install_node(&log_node, config_write_log);
 	//install_default(LOG_NODE);

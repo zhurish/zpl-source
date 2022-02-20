@@ -1976,7 +1976,7 @@ DEFUN (show_eloop_dump,
 }
 #endif
 
-int cmd_os_eloop_init()
+int cmd_os_eloop_init(void)
 {
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_eloop_dump_cmd);
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_eloop_cpu_cmd);

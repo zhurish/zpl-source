@@ -85,12 +85,12 @@ int vlan_string_explain(const char *str, vlan_t *value, int num, vlan_t *base, v
 }
 #endif
 
-int nsm_vlan_init()
+int nsm_vlan_init(void)
 {
 	gvlan.vlanList = malloc(sizeof(LIST));
 	gvlan.mutex = os_mutex_init();
 	lstInit(gvlan.vlanList);
-	nsm_interface_hook_add(NSM_VLAN, nsm_vlan_interface_create_api, nsm_vlan_interface_del_api);
+	nsm_interface_hook_add(NSM_INTF_VLAN, nsm_vlan_interface_create_api, nsm_vlan_interface_del_api);
 	//nsm_vlan_client_init();
 	//nsm_vlan_create_api(1);
 	//l2vlan_add_untag_port(1, ifindex_t ifindex);
@@ -126,7 +126,7 @@ static int l2vlan_cleanup(int all)
 	return OK;
 }
 
-int nsm_vlan_exit()
+int nsm_vlan_exit(void)
 {
 	if(lstCount(gvlan.vlanList))
 	{
@@ -806,7 +806,7 @@ int nsm_interface_native_vlan_set_api(struct interface *ifp, vlan_t vlan)
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	nsm_vlan_t *nsm_vlan = (nsm_vlan_t *)nsm->nsm_client[NSM_VLAN];
+	nsm_vlan_t *nsm_vlan = (nsm_vlan_t *)nsm->nsm_client[NSM_INTF_VLAN];
 	zassert(nsm_vlan);
 	IF_DATA_LOCK();
 	if(nsm_vlan_lookup_api(vlan))
@@ -845,7 +845,7 @@ int nsm_interface_native_vlan_set_api(struct interface *ifp, vlan_t vlan)
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	nsm_vlan_t *nsm_vlan = (nsm_vlan_t *)nsm->nsm_client[NSM_VLAN];
+	nsm_vlan_t *nsm_vlan = (nsm_vlan_t *)nsm->nsm_client[NSM_INTF_VLAN];
 	zassert(nsm_vlan);
 	IF_DATA_LOCK();
 	if(nsm_vlan_lookup_api(vlan))
@@ -876,7 +876,7 @@ int nsm_interface_native_vlan_get_api(struct interface *ifp, vlan_t *vlan)
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	nsm_vlan_t *nsm_vlan = (nsm_vlan_t *)nsm->nsm_client[NSM_VLAN];
+	nsm_vlan_t *nsm_vlan = (nsm_vlan_t *)nsm->nsm_client[NSM_INTF_VLAN];
 	zassert(nsm_vlan);
 	IF_DATA_LOCK();
 	if(nsm_vlan)
@@ -894,7 +894,7 @@ int nsm_interface_access_vlan_set_api(struct interface *ifp, vlan_t vlan)
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	nsm_vlan_t *nsm_vlan = (nsm_vlan_t *)nsm->nsm_client[NSM_VLAN];
+	nsm_vlan_t *nsm_vlan = (nsm_vlan_t *)nsm->nsm_client[NSM_INTF_VLAN];
 	zassert(nsm_vlan);
 	IF_DATA_LOCK();
 	if(nsm_vlan_lookup_api(vlan))
@@ -912,7 +912,7 @@ int nsm_interface_access_vlan_unset_api(struct interface *ifp, vlan_t vlan)
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	nsm_vlan_t *nsm_vlan = (nsm_vlan_t *)nsm->nsm_client[NSM_VLAN];
+	nsm_vlan_t *nsm_vlan = (nsm_vlan_t *)nsm->nsm_client[NSM_INTF_VLAN];
 	zassert(nsm_vlan);
 	IF_DATA_LOCK();
 	if(nsm_vlan_lookup_api(vlan))
@@ -930,7 +930,7 @@ int nsm_interface_access_vlan_get_api(struct interface *ifp, vlan_t *vlan)
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	nsm_vlan_t *nsm_vlan = (nsm_vlan_t *)nsm->nsm_client[NSM_VLAN];
+	nsm_vlan_t *nsm_vlan = (nsm_vlan_t *)nsm->nsm_client[NSM_INTF_VLAN];
 	zassert(nsm_vlan);
 	IF_DATA_LOCK();
 	if(nsm_vlan)
@@ -951,7 +951,7 @@ int nsm_interface_trunk_add_allowed_vlan_api(struct interface *ifp, vlan_t vlan)
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	nsm_vlan_t *nsm_vlan = (nsm_vlan_t *)nsm->nsm_client[NSM_VLAN];
+	nsm_vlan_t *nsm_vlan = (nsm_vlan_t *)nsm->nsm_client[NSM_INTF_VLAN];
 	zassert(nsm_vlan);
 	IF_DATA_LOCK();
 	//if(nsm_vlan_lookup_api(vlan))
@@ -990,7 +990,7 @@ int nsm_interface_trunk_del_allowed_vlan_api(struct interface *ifp, vlan_t vlan)
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	nsm_vlan_t *nsm_vlan = (nsm_vlan_t *)nsm->nsm_client[NSM_VLAN];
+	nsm_vlan_t *nsm_vlan = (nsm_vlan_t *)nsm->nsm_client[NSM_INTF_VLAN];
 	zassert(nsm_vlan);
 	IF_DATA_LOCK();
 	//if(nsm_vlan_lookup_api(vlan))
@@ -1032,7 +1032,7 @@ int nsm_interface_trunk_add_allowed_batch_vlan_api(struct interface *ifp, vlan_t
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	nsm_vlan_t *nsm_vlan = (nsm_vlan_t *)nsm->nsm_client[NSM_VLAN];
+	nsm_vlan_t *nsm_vlan = (nsm_vlan_t *)nsm->nsm_client[NSM_INTF_VLAN];
 	zassert(nsm_vlan);
 	IF_DATA_LOCK();
 	for(i = minvlan; i <= maxvlan; i++)
@@ -1066,7 +1066,7 @@ int nsm_interface_trunk_del_allowed_batch_vlan_api(struct interface *ifp, vlan_t
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	nsm_vlan_t *nsm_vlan = (nsm_vlan_t *)nsm->nsm_client[NSM_VLAN];
+	nsm_vlan_t *nsm_vlan = (nsm_vlan_t *)nsm->nsm_client[NSM_INTF_VLAN];
 	zassert(nsm_vlan);
 	IF_DATA_LOCK();
 	for(i = minvlan; i <= maxvlan; i++)
@@ -1182,10 +1182,10 @@ int nsm_vlan_interface_create_api(struct interface *ifp)
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	if(if_is_ethernet(ifp) && !IF_IS_SUBIF_GET(ifp->ifindex))
 	{
-		if(!nsm->nsm_client[NSM_VLAN])
-			nsm->nsm_client[NSM_VLAN] = XMALLOC(MTYPE_VLAN, sizeof(nsm_vlan_t));
-		zassert(nsm->nsm_client[NSM_VLAN]);
-		os_memset(nsm->nsm_client[NSM_VLAN], 0, sizeof(nsm_vlan_t));
+		if(!nsm->nsm_client[NSM_INTF_VLAN])
+			nsm->nsm_client[NSM_INTF_VLAN] = XMALLOC(MTYPE_VLAN, sizeof(nsm_vlan_t));
+		zassert(nsm->nsm_client[NSM_INTF_VLAN]);
+		os_memset(nsm->nsm_client[NSM_INTF_VLAN], 0, sizeof(nsm_vlan_t));
 		nsm_interface_add_untag_vlan_api(1,  ifp);
 		nsm_interface_add_tag_vlan_api(1,  ifp);
 	}
@@ -1200,9 +1200,9 @@ int nsm_vlan_interface_del_api(struct interface *ifp)
 	{
 		nsm_interface_del_untag_vlan_api(1,  ifp);
 		nsm_interface_del_tag_vlan_api(1,  ifp);
-		if(nsm->nsm_client[NSM_VLAN])
-			XFREE(MTYPE_VLAN, nsm->nsm_client[NSM_VLAN]);
-		nsm->nsm_client[NSM_VLAN] = NULL;
+		if(nsm->nsm_client[NSM_INTF_VLAN])
+			XFREE(MTYPE_VLAN, nsm->nsm_client[NSM_INTF_VLAN]);
+		nsm->nsm_client[NSM_INTF_VLAN] = NULL;
 	}
 	return OK;
 }
@@ -1220,7 +1220,7 @@ int nsm_vlan_interface_write_config(struct vty *vty, struct interface *ifp)
 	{
 		memset(tmpcli_str, 0, sizeof(tmpcli_str));
 		nsm_ifp = (struct nsm_interface *)ifp->info[MODULE_NSM];
-		nsm_vlan = (nsm_vlan_t *)nsm_ifp->nsm_client[NSM_VLAN];
+		nsm_vlan = (nsm_vlan_t *)nsm_ifp->nsm_client[NSM_INTF_VLAN];
 		if(!nsm_vlan)
 			return OK;
 #ifdef ZPL_IPCOM_STACK_MODULE
@@ -1295,13 +1295,13 @@ static int nsm_vlan_client_init()
 	nsm->notify_add_cb = nsm_vlan_add_interface;
 	nsm->notify_delete_cb = nsm_vlan_del_interface;
 	nsm->interface_write_config_cb = nsm_vlan_interface_config;
-	nsm_client_install (nsm, NSM_VLAN);
+	nsm_client_install (nsm, NSM_INTF_VLAN);
 	return OK;
 }
 
 static int nsm_vlan_client_exit()
 {
-	struct nsm_client *nsm = nsm_client_lookup (NSM_VLAN);
+	struct nsm_client *nsm = nsm_client_lookup (NSM_INTF_VLAN);
 	if(nsm)
 		nsm_client_free (nsm);
 	return OK;

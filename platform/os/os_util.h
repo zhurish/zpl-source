@@ -41,6 +41,11 @@ extern int fdprintf ( int fd, const zpl_char *format, ...);
 extern int hostname_ipv4_address(zpl_char *hostname, struct in_addr *addr);
 extern int hostname_ipv6_address(zpl_char *hostname, struct ipstack_in6_addr *addr);
 
+
+extern int os_loghex(zpl_char *format, zpl_uint32 size, const zpl_uchar *data, zpl_uint32 len);
+
+
+
 //#define __OS_DEBUG_ENABLE  
 
 

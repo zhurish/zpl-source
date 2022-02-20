@@ -811,7 +811,7 @@ int firewall_zone_foreach_api(int(*cb)(firewall_zone_t *, void *), void *p)
 }
 /***********************************************************************/
 /***********************************************************************/
-static int nsm_firewall_tcpudp_dport_default()
+static int nsm_firewall_tcpudp_dport_default(void)
 {
 	zpl_uint32 i = 0, j = 0;
 	//开放的TCP/UDP目的端口
@@ -844,7 +844,7 @@ static int nsm_firewall_tcpudp_dport_default()
 	return OK;
 }
 /***********************************************************************/
-static int nsm_firewall_action_dport_default()
+static int nsm_firewall_action_dport_default(void)
 {
 	//iptables -t filter -A INPUT -p tcp -m multiport --dport 21,22,23,25,53,67,68,69,80,110,161,443,513,2610,8080 -j ACCEPT
 	zpl_uint32 i = 0, action = 0;

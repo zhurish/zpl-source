@@ -14,10 +14,10 @@ extern "C" {
 
 typedef struct sdk_dos_s
 {
-	int (*sdk_dos_enable_cb) (void *, hal_global_header_t*, zpl_bool);
-	int (*sdk_dos_tcp_hdr_size_cb) (void *, hal_global_header_t*, zpl_uint32);
-	int (*sdk_dos_icmp_size_cb) (void *, hal_global_header_t*, zpl_uint32);
-	int (*sdk_dos_icmpv6_size_cb) (void *, hal_global_header_t*, zpl_uint32);
+	int (*sdk_dos_enable_cb) (void *, zpl_uint32, zpl_bool);
+	int (*sdk_dos_tcp_hdr_size_cb) (void *, zpl_uint32, zpl_uint32);
+	int (*sdk_dos_icmp_size_cb) (void *, zpl_uint32, zpl_uint32);
+	int (*sdk_dos_icmpv6_size_cb) (void *, zpl_uint32, zpl_uint32);
 }sdk_dos_t;
 
 extern sdk_dos_t sdk_dos;

@@ -129,9 +129,10 @@ extern void zebra_zserv_socket_init (zpl_char *path);
 
 extern void hostinfo_get (void);
 //extern void rib_init (void);
+extern void zserv_init(void);
 
 extern void kernel_load(struct nsm_vrf *zvrf);
-extern void kernel_load_all();
+extern void kernel_load_all(void);
 
 
 extern void zebra_route_map_init (void);

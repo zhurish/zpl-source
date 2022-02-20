@@ -266,6 +266,8 @@ static int if_make_ifindex_type(struct interface *ifp)
 
 	ifp->ifindex = IF_IFINDEX_SET(ifp->if_type, ifp->uspv);
 
+	ifp->phyid = IFPHYID_INTERNAL;
+	
 	if (ifp->if_type == IF_VLAN || ifp->if_type == IF_LAG || ifp->if_type == IF_LOOPBACK)
 	{
 		ifp->ifindex |= if_loopback_ifindex_create(ifp->if_type, ifp->name);
@@ -668,7 +670,7 @@ ifindex_t if_vlan2ifindex(zpl_vlan_t encavlan)
 zpl_phyport_t  if_ifindex2phy(ifindex_t ifindex)
 {
 	struct interface *ifp = if_lookup_by_index(ifindex);
-	return ifp ? ifp->phyid : IFINDEX_INTERNAL;
+	return ifp ? ifp->phyid : IFPHYID_INTERNAL;
 }
 
 ifindex_t  if_phy2ifindex(zpl_phyport_t phyid)
@@ -682,6 +684,20 @@ ifindex_t  if_phy2ifindex(zpl_phyport_t phyid)
 			return ifp->ifindex;
 	}
 	return IFINDEX_INTERNAL;
+}
+
+int if_update_phyid(ifindex_t ifindex, zpl_phyport_t phyid)
+{
+	struct interface *ifp = if_lookup_by_index(ifindex);
+	if(ifp)
+		ifp->phyid = phyid;
+	return OK;
+}
+
+int if_update_phyid2(struct interface *ifp, zpl_phyport_t phyid)
+{
+	ifp->phyid = phyid;
+	return OK;
 }
 
 vrf_id_t  if_ifindex2vrfid(ifindex_t ifindex)

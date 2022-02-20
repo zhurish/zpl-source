@@ -10,12 +10,23 @@ extern "C"
 #include "hal_ipccmd.h"
 #include "hal_ipcmsg.h"
 
-
 #ifdef ZPL_SDK_MODULE
 #define NO_SDK ERROR
 #else
 #define NO_SDK OK
 #endif
+
+#define SDK_ENTER_FUNC() zlog_debug(MODULE_BSP, "Into %s line %d", __func__, __LINE__)
+#define SDK_LEAVE_FUNC() zlog_debug(MODULE_BSP, "Leave %s line %d", __func__, __LINE__)
+
+  enum event
+  {
+    HAL_EVENT_SCHEDULE,
+    HAL_EVENT_READ,
+    HAL_EVENT_CONNECT,
+    HAL_EVENT_TIME,
+    HAL_EVENT_REGISTER,
+  };
 
 
   /* Structure for the zebra client. */
@@ -23,51 +34,54 @@ extern "C"
   {
     /* Socket to zebra daemon. */
     zpl_socket_t sock;
-    zpl_int8 type;
+    zpl_uint16 port;  // sock 端口
+    zpl_bool  b_event;
+
+    module_t module; //模块ID
     zpl_int8 unit;
     zpl_int8 slot;
     zpl_int8 portnum;
     char version[128];
-    zpl_uint8 module;
-    zpl_uint16 port;
+ 
     enum hal_client_state state;
     zpl_uint8 fail;
-    zpl_uint32  timeout;
+    zpl_uint32 timeout;
     /* Read and ipstack_connect thread. */
+    
     struct thread *t_read;
     struct thread *t_connect;
     struct thread *t_time;
+ 
     struct thread_master *master;
     struct hal_ipcmsg ipcmsg;
     struct hal_ipcmsg outmsg;
     zpl_uint32 debug;
 
     int (*bsp_client_msg_handle)(struct hal_client *, zpl_uint32, void *);
-    void  *bsp_driver;
+    void *bsp_driver;
   };
 
+ 
 
-typedef struct 
-{
-	zpl_void	*master;
-	zpl_uint32 taskid;
-  zpl_void	*halbsp;
-}hal_bsp_t;
+  /*
+   *   hal client   ------------------- > bsp driver -------------------> sdk driver
+   *
+   */
+  /* Prototypes of zebra client service functions. */
+  extern struct hal_client *hal_client_create(module_t module, zpl_bool event);
+  extern int hal_client_destroy(struct hal_client *hal_client);
+  extern int hal_client_start(struct hal_client *hal_client);
+  extern int hal_client_send_return(struct hal_client *hal_client, int ret, char *fmt, ...);
 
-/* Prototypes of zebra client service functions. */
-struct hal_client *hal_client_create(int module);
-int hal_client_init(struct hal_client *, zpl_int8 module, zpl_int8 unit, zpl_int8 slot, zpl_int8 portnum);
-int hal_client_destroy(struct hal_client *hal_client);
-int hal_client_start(struct hal_client *hal_client);
-int hal_client_send_return(struct hal_client *hal_client, int ret, char *fmt,...);
-int hal_client_register(struct hal_client *hal_client, struct hal_ipcmsg_porttbl *porttbl);
+  extern int hal_client_callback(struct hal_client *, int (*bsp_handle)(struct hal_client *, zpl_uint32, void *), void *);
 
-int hal_client_callback(struct hal_client *, int (*bsp_handle)(struct hal_client *, zpl_uint32, void *), void *);
+  extern void hal_client_event(enum event event, struct hal_client *hal_client, int val);
 
-int hal_bsp_init(void);
-int hal_bsp_task_init(void);
-int hal_bsp_exit(void);
-int hal_bsp_task_exit(void);
+  extern int hal_client_bsp_init(struct hal_client *hal_client, module_t module,
+                                  zpl_int8 unit, zpl_int8 slot, zpl_int8 portnum, zpl_char *version);
+
+  extern int hal_client_bsp_porttbl(struct hal_client *hal_client, zpl_int8 portnum, struct hal_ipcmsg_porttbl *tbl);
+
 
 #ifdef __cplusplus
 }

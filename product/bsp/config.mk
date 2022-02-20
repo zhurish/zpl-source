@@ -35,7 +35,7 @@ endif
 
 OBJS	+= bsp_cpu.o
 OBJS	+= bsp_driver.o
-OBJS	+= bsp_test.o
+
 endif
 #############################################################################
 # LIB

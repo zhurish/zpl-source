@@ -20,8 +20,77 @@ extern "C" {
 #define PHY_PORT_MAX 	PRODUCT_PORT_MAX
 #endif
 
-/* vlan 管理 */
 
+/* VLAN Action definitions. */
+typedef enum nsm_vlan_action_e {
+    NSM_VLAN_ACTION_NONE,      /* Do not modify. */
+    NSM_VLAN_ACTION_ADD,       /* Add VLAN tag. */
+    NSM_VLAN_ACTION_REPLACE,   /* Replace VLAN tag. */
+    NSM_VLAN_ACTION_DELETE,    /* Delete VLAN tag. */
+    NSM_VLAN_ACTION_COPY       /* Copy VLAN tag. */
+} nsm_vlan_action_t;
+/* VLAN Pcp Action definitions. */
+typedef enum nsm_vlan_pcp_action_e {
+    bcmVlanPcpActionNone,               /* Do not modify. */
+    bcmVlanPcpActionMapped,             /* Use TC/DP mapped PCP. */
+    bcmVlanPcpActionIngressInnerPcp,    /* Use incoming packet's CTag PCP. */
+    bcmVlanPcpActionIngressOuterPcp,    /* Use incoming packet's Stag PCP. */
+    bcmVlanPcpActionPortDefault         /* Use port default PCP. */
+} nsm_vlan_pcp_action_t;
+
+/* Initialize a VLAN tag action set structure. */
+typedef struct nsm_vlan_action_set_s {
+    vlan_t new_outer_vlan;          /* New outer VLAN for Add/Replace
+                                           actions. */
+    vlan_t new_inner_vlan;          /* New inner VLAN for Add/Replace
+                                           actions. */
+    zpl_phyport_t ingress_if;                /* L3 Ingress Interface. */
+    int priority;                       /* Internal or packet priority. */
+    nsm_vlan_action_t dt_outer;         /* Outer-tag action for double-tagged
+                                           packets. */
+    nsm_vlan_action_t dt_outer_prio;    /* Outer-priority-tag actionfor
+                                           double-tagged packets. */
+    nsm_vlan_action_t dt_inner;         /* Inner-tag actionfor double-tagged
+                                           packets. */
+    nsm_vlan_action_t dt_inner_prio;    /* Inner-priority-tag action for
+                                           double-tagged packets. */
+    nsm_vlan_action_t ot_outer;         /* Outer-tag action for
+                                           single-outer-tagged packets. */
+    nsm_vlan_action_t ot_outer_prio;    /* Outer-priority-tag action for
+                                           single-outer-tagged packets. */
+    nsm_vlan_action_t ot_inner;         /* Inner-tag action for
+                                           single-outer-tagged packets. */
+    nsm_vlan_action_t it_outer;         /* Outer-tag action for
+                                           single-inner-tagged packets. */
+    nsm_vlan_action_t it_inner;         /* Inner-tag action for
+                                           single-inner-tagged packets. */
+    nsm_vlan_action_t it_inner_prio;    /* Inner-priority-tag action for
+                                           single-inner-tagged packets. */
+    nsm_vlan_action_t ut_outer;         /* Outer-tag action for untagged
+                                           packets. */
+    nsm_vlan_action_t ut_inner;         /* Inner-tag action for untagged
+                                           packets. */
+    nsm_vlan_pcp_action_t outer_pcp;    /* Outer tag's pcp field action of
+                                           outgoing packets. */
+    nsm_vlan_pcp_action_t inner_pcp;    /* Inner tag's pcp field action of
+                                           outgoing packets. */
+} nsm_vlan_action_set_t;
+
+/* Flags for the unified IPv4/IPv6 nsm_vlan_ip_t type. */
+#define NSM_VLAN_SUBNET_IP6     (1 << 14)  
+
+/* Unified IPv4/IPv6 type. */
+typedef struct nsm_vlan_ip_s {
+    zpl_uint32 flags; 
+    zpl_ipaddr_t ip4; 
+    zpl_ipaddr_t mask; 
+    zpl_ipv6addr_t ip6; 
+    int prefix; 
+    vlan_t vid; 
+    int prio; 
+} nsm_vlan_ip_t;
+
+/* vlan 管理 */
 typedef struct trunk_vlan_s
 {
 	vlan_t	vlan;
@@ -78,8 +147,8 @@ typedef struct Gl2vlan_s
 
 typedef int (*l2vlan_cb)(l2vlan_t *, void *);
 
-extern int nsm_vlan_init();
-extern int nsm_vlan_exit();
+extern int nsm_vlan_init(void);
+extern int nsm_vlan_exit(void);
 extern int nsm_vlan_cleanall(void);
 
 extern int nsm_vlan_enable(void);

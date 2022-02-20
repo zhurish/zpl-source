@@ -18,6 +18,8 @@ OSOBJ	+= os_url.o
 OSOBJ	+= os_signal.o
 OSOBJ	+= os_bitmap.o
 OSOBJ	+= os_backtrace.o
+OSOBJ	+= zpl_skbuffer.o
+
 ifeq ($(strip $(ZPL_OS_QUEUE)),true)
 OSOBJ	+= os_queue.o			
 endif

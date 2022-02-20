@@ -19,6 +19,7 @@ enum hal_module_id
     HAL_MODULE_STP,
     HAL_MODULE_MSTP,
     HAL_MODULE_8021X,
+    HAL_MODULE_IGMP,
     HAL_MODULE_DOS,
     HAL_MODULE_MAC,
     HAL_MODULE_MIRROR,
@@ -43,17 +44,15 @@ enum hal_module_id
 enum hal_module_cmd 
 {
     HAL_MODULE_CMD_NONE,
-	HAL_MODULE_CMD_SET,         //设置
-	HAL_MODULE_CMD_GET,         //获取
-	HAL_MODULE_CMD_ADD,         //添加
-	HAL_MODULE_CMD_DEL,         //删除
-    HAL_MODULE_CMD_DELALL,      //删除所有
-   
+	HAL_MODULE_CMD_REQ,         //设置
+	HAL_MODULE_CMD_ACK,         //应答
+ 
 	HAL_MODULE_CMD_REPORT,      //上报
 	HAL_MODULE_CMD_HELLO,       //探测
-    HAL_MODULE_CMD_REGISTER,    //注册
     HAL_MODULE_CMD_KEEPALIVE,   //心跳
-	HAL_MODULE_CMD_ACK,         //应答
+	HAL_MODULE_CMD_INIT,        //初始化
+    HAL_MODULE_CMD_PORTTBL,
+    HAL_MODULE_CMD_REGISTER,    //注册
     HAL_MODULE_CMD_MAX,
 };
 

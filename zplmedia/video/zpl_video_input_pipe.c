@@ -167,7 +167,7 @@ int zpl_video_input_pipe_read_start(zpl_void *master, zpl_video_input_pipe_t *in
 		os_mutex_lock(_input_pipe_mutex, OS_WAIT_FOREVER);
 	zpl_vidhal_input_pipe_update_fd(input);
 	input->t_master = master;
-    if(master && input && input->pipefd)
+    if(master && input && !ipstack_invalid(input->pipefd))
         input->t_read = thread_add_read(master, zpl_video_input_pipe_read, input, input->pipefd);
 	if(_input_pipe_mutex)
 		os_mutex_unlock(_input_pipe_mutex);

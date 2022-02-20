@@ -41,8 +41,8 @@ int zpl_media_hal_inactive(zpl_media_channel_t *chn);
 int zpl_media_hal_encode_hwbind(zpl_media_channel_t *chn, zpl_bool bind);
 int zpl_media_hal_vpss_hwbind(zpl_media_channel_t *chn, zpl_bool bind);
 
-int zpl_media_hal_read_stop(ZPL_MEDIA_HARDADAP_E, zpl_media_channel_t *chn);
-int zpl_media_hal_read_start(ZPL_MEDIA_HARDADAP_E, zpl_void *master, zpl_media_channel_t *chn);
+int zpl_media_hal_read_stop(ZPL_MEDIA_NODE_E, zpl_media_channel_t *chn);
+int zpl_media_hal_read_start(ZPL_MEDIA_NODE_E, zpl_void *master, zpl_media_channel_t *chn);
 
 
 int zpl_media_hal_sys_init();

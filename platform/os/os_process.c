@@ -90,7 +90,7 @@ int super_system_execvp(const zpl_char *cmd, zpl_char **input)
 
 
 
-zpl_pid_t child_process_create()
+zpl_pid_t child_process_create(void)
 {
 	zpl_pid_t pid = 0;
 	pid = fork();
@@ -308,7 +308,7 @@ int os_process_action_respone(int fd, zpl_uint32 respone)
 	return ERROR;
 }
 
-int os_process_start()
+int os_process_start(void)
 {
 	zpl_uint32 os_process_id = 0;
 	os_process_id = child_process_create();
@@ -321,7 +321,7 @@ int os_process_start()
 	return 0;
 }
 
-int os_process_stop()
+int os_process_stop(void)
 {
 	zpl_uint32 os_process_id = os_pid_get(BASE_DIR"/run/process.pid");
 	if(os_process_id > 0)

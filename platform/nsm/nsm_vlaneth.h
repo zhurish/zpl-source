@@ -30,8 +30,8 @@ typedef struct nsm_vlaneth_s
 
 
 extern nsm_vlaneth_t * nsm_vlaneth_get(struct interface *ifp);
-extern int nsm_vlanet_init();
-extern int nsm_vlaneth_exit();
+extern int nsm_vlaneth_init(void);
+extern int nsm_vlaneth_exit(void);
 extern int nsm_vlaneth_interface_create_api(struct interface *ifp);
 extern int nsm_vlaneth_interface_del_api(struct interface *ifp);
 extern int nsm_vlaneth_interface_vid_set_api(struct interface *ifp, vlan_t vlan);

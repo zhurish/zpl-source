@@ -82,7 +82,7 @@ struct host_system
 };
 /* struct host global, ick */
 extern struct zpl_host _global_host;
-extern int host_sysconfig_sync();
+extern int host_sysconfig_sync(void);
 extern int host_config_init(zpl_char *motd);
 extern int host_config_exit(void);
 extern const char *host_config_get (void);

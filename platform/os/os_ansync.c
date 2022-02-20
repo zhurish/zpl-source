@@ -14,7 +14,7 @@ static LIST	*ansyncList = NULL;
 static zpl_uint8	g_ansync_init = 0;
 static os_ansync_t *_m_os_ansync_current = NULL;
 
-static int os_ansync_global_init()
+static int os_ansync_global_init(void)
 {
 	if(g_ansync_init == 0)
 	{
@@ -970,7 +970,7 @@ int os_ansync_execute(os_ansync_lst *lst, os_ansync_t *value, os_ansync_exe exe)
 	return ret;
 }
 
-os_ansync_t *os_ansync_current_get()
+os_ansync_t *os_ansync_current_get(void)
 {
 	return _m_os_ansync_current;
 }

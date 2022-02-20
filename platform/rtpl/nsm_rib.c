@@ -78,7 +78,7 @@ _rnode_zlog(const char *_func, struct route_node *rn, int priority,
 	zpl_char prefix[PREFIX_STRLEN], buf[256];
 	zpl_char msgbuf[512];
 	va_list ap;
-
+	union prefix46constptr up;
 	va_start(ap, msgfmt);
 	vsnprintf(msgbuf, sizeof(msgbuf), msgfmt, ap);
 	va_end(ap);
@@ -86,9 +86,9 @@ _rnode_zlog(const char *_func, struct route_node *rn, int priority,
 	if (rn)
 	{
 		rib_table_info_t *info = rn->table->info;
-
+		up.p = &rn->p;
 		snprintf(buf, sizeof(buf), "%s%s vrf %u",
-				prefix2str(&rn->p, prefix, sizeof(prefix)),
+				prefix2str(up, prefix, sizeof(prefix)),
 				info->safi == SAFI_MULTICAST ? " (MRIB)" : "",
 				info->zvrf->vrf_id);
 	}
@@ -1843,9 +1843,10 @@ void _rib_dump(const char * func, union prefix46constptr pp,
 	zpl_char straddr[PREFIX_STRLEN];
 	struct nexthop *nexthop, *tnexthop;
 	int recursing;
-
+	union prefix46constptr up;
+	up.p = p;
 	zlog_debug(MODULE_NSM, "%s: dumping RIB entry %p for %s vrf %u", func,
-			(void *) rib, prefix2str(p, straddr, sizeof(straddr)), rib->vrf_id);
+			(void *) rib, prefix2str(up, straddr, sizeof(straddr)), rib->vrf_id);
 	zlog_debug(MODULE_NSM,
 			"%s: refcnt == %lu, uptime == %lu, type == %u, table == %d", func,
 			rib->refcnt, (zpl_ulong) rib->uptime, rib->type, rib->table);
@@ -1881,7 +1882,7 @@ void rib_lookup_and_dump(struct prefix_ipv4 * p)
 	struct route_node *rn;
 	struct rib *rib;
 	zpl_char prefix_buf[IPSTACK_INET_ADDRSTRLEN];
-
+	union prefix46constptr up;
 	/* Lookup table.  */
 	table = nsm_vrf_table(AFI_IP, SAFI_UNICAST, VRF_DEFAULT);
 	if (!table)
@@ -1897,8 +1898,9 @@ void rib_lookup_and_dump(struct prefix_ipv4 * p)
 	/* No route for this prefix. */
 	if (!rn)
 	{
+		up.p = p;
 		zlog_debug(MODULE_NSM, "%s: lookup failed for %s", __func__,
-				prefix2str((struct prefix*) p, prefix_buf, sizeof(prefix_buf)));
+				prefix2str(up, prefix_buf, sizeof(prefix_buf)));
 		if(table->mutex)
 			os_mutex_unlock(table->mutex);
 		return;
@@ -1916,7 +1918,7 @@ void rib_lookup_and_dump(struct prefix_ipv4 * p)
 						"removed" : "NOT removed"),
 				(CHECK_FLAG (rib->flags, ZEBRA_FLAG_SELECTED) ?
 						"selected" : "NOT selected"));
-		rib_dump(p, rib);
+		rib_dump(up, rib);
 	}
 	if(table->mutex)
 		os_mutex_unlock(table->mutex);
@@ -1929,7 +1931,8 @@ int rib_add_ipv4_multipath(struct prefix_ipv4 *p, struct rib *rib, safi_t safi)
 	struct rib *same;
 	struct nexthop *nexthop;
 	int ret = 0;
-
+	union prefix46constptr up;
+	up.p4 = p;
 	/* Lookup table.  */
 	table = nsm_vrf_table(AFI_IP, safi, rib->vrf_id);
 	if (!table)
@@ -1977,7 +1980,7 @@ int rib_add_ipv4_multipath(struct prefix_ipv4 *p, struct rib *rib, safi_t safi)
 	{
 		zlog_debug(MODULE_NSM, "%s: called rib_addnode (%p, %p) on new RIB entry",
 				__func__, (void *) rn, (void *) rib);
-		rib_dump(p, rib);
+		rib_dump(up, rib);
 	}
 
 	/* Free implicit route.*/
@@ -1988,7 +1991,7 @@ int rib_add_ipv4_multipath(struct prefix_ipv4 *p, struct rib *rib, safi_t safi)
 			zlog_debug(MODULE_NSM,
 					"%s: calling rib_delnode (%p, %p) on existing RIB entry",
 					__func__, (void *) rn, (void *) same);
-			rib_dump(p, same);
+			rib_dump(up, same);
 		}
 		rib_delnode(rn, same);
 		ret = -1;
@@ -2013,7 +2016,8 @@ int rib_delete_ipv4(zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
 	int recursing;
 	zpl_char buf1[PREFIX_STRLEN];
 	zpl_char buf2[IPSTACK_INET_ADDRSTRLEN];
-
+	union prefix46constptr up;
+	up.p4 = p;
 	/* Lookup table.  */
 	table = nsm_vrf_table(AFI_IP, safi, vrf_id);
 	if (!table)
@@ -2028,12 +2032,12 @@ int rib_delete_ipv4(zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
 		if (gate)
 			zlog_debug(MODULE_NSM,
 					"rib_delete_ipv4(): route delete %s vrf %u via %s ifindex %d",
-					prefix2str(p, buf1, sizeof(buf1)), vrf_id, ipstack_inet_ntoa(*gate),
+					prefix2str(up, buf1, sizeof(buf1)), vrf_id, ipstack_inet_ntoa(*gate),
 					ifindex);
 		else
 			zlog_debug(MODULE_NSM,
 					"rib_delete_ipv4(): route delete %s vrf %u ifindex %d",
-					prefix2str(p, buf1, sizeof(buf1)), vrf_id, ifindex);
+					prefix2str(up, buf1, sizeof(buf1)), vrf_id, ifindex);
 	}
 
 	/* Lookup route node. */
@@ -2045,13 +2049,13 @@ int rib_delete_ipv4(zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
 			if (gate)
 				zlog_debug(MODULE_NSM,
 						"route %s vrf %u via %s ifindex %d doesn't exist in rib",
-						prefix2str(p, buf1, sizeof(buf1)), vrf_id,
+						prefix2str(up, buf1, sizeof(buf1)), vrf_id,
 						ipstack_inet_ntop(IPSTACK_AF_INET, gate, buf2, IPSTACK_INET_ADDRSTRLEN),
 						ifindex);
 			else
 				zlog_debug(MODULE_NSM,
 						"route %s vrf %u ifindex %d doesn't exist in rib",
-						prefix2str(p, buf1, sizeof(buf1)), vrf_id, ifindex);
+						prefix2str(up, buf1, sizeof(buf1)), vrf_id, ifindex);
 		}
 		if(table->mutex)
 			os_mutex_unlock(table->mutex);
@@ -2130,13 +2134,13 @@ int rib_delete_ipv4(zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
 					zlog_debug(MODULE_NSM,
 							"route %s vrf %u via %s ifindex %d type %d "
 									"doesn't exist in rib",
-							prefix2str(p, buf1, sizeof(buf1)), vrf_id,
+							prefix2str(up, buf1, sizeof(buf1)), vrf_id,
 							ipstack_inet_ntop(IPSTACK_AF_INET, gate, buf2, IPSTACK_INET_ADDRSTRLEN),
 							ifindex, type);
 				else
 					zlog_debug(MODULE_NSM,
 							"route %s vrf %u ifindex %d type %d doesn't exist in rib",
-							prefix2str(p, buf1, sizeof(buf1)), vrf_id, ifindex,
+							prefix2str(up, buf1, sizeof(buf1)), vrf_id, ifindex,
 							type);
 			}
 			route_unlock_node(rn);
@@ -2547,7 +2551,8 @@ rib_add_ipv6 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv6 *p,
 	struct route_table *table;
 	struct route_node *rn;
 	struct nexthop *nexthop;
-
+	union prefix46constptr up;
+	up.p6 = p;
 	/* Lookup table.  */
 	table = nsm_vrf_table (AFI_IP6, safi, vrf_id);
 	if (! table)
@@ -2627,7 +2632,7 @@ rib_add_ipv6 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv6 *p,
 	{
 		zlog_debug (MODULE_NSM, "%s: called rib_addnode (%p, %p) on new RIB entry",
 				__func__, (void *)rn, (void *)rib);
-		rib_dump (p, rib);
+		rib_dump (up, rib);
 	}
 
 	/* Free implicit route.*/
@@ -2637,7 +2642,7 @@ rib_add_ipv6 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv6 *p,
 		{
 			zlog_debug (MODULE_NSM, "%s: calling rib_delnode (%p, %p) on existing RIB entry",
 					__func__, (void *)rn, (void *)same);
-			rib_dump (p, same);
+			rib_dump (up, same);
 		}
 		rib_delnode (rn, same);
 	}
@@ -2656,7 +2661,8 @@ rib_add_ipv6_multipath (struct prefix_ipv6 *p, struct rib *rib, safi_t safi)
 	struct rib *same = NULL;
 	struct nexthop *nexthop;
 	int ret = 0;
-
+	union prefix46constptr up;
+	up.p = p;
 	if (!rib)
 	return 0; /* why are we getting called with NULL rib */
 
@@ -2726,7 +2732,7 @@ rib_add_ipv6_multipath (struct prefix_ipv6 *p, struct rib *rib, safi_t safi)
 		{
 			zlog_debug (MODULE_NSM, "%s: calling rib_delnode (%p, %p) on existing RIB entry",
 					__func__, rn, same);
-			rib_dump ((struct prefix *)p, same);
+			rib_dump (up, same);
 		}
 		rib_delnode (rn, same);
 		ret = -1;
@@ -2753,7 +2759,8 @@ rib_delete_ipv6 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv6 *p,
 	int recursing;
 	zpl_char buf1[PREFIX_STRLEN];
 	zpl_char buf2[INET6_ADDRSTRLEN];
-
+	union prefix46constptr up;
+	up.p6 = p;
 	/* Apply mask. */
 	apply_mask_ipv6 (p);
 
@@ -2771,12 +2778,12 @@ rib_delete_ipv6 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv6 *p,
 		{
 			if (gate)
 			zlog_debug (MODULE_NSM, "route %s vrf %u via %s ifindex %d doesn't exist in rib",
-					prefix2str (p, buf1, sizeof(buf1)), vrf_id,
+					prefix2str (up, buf1, sizeof(buf1)), vrf_id,
 					ipstack_inet_ntop (IPSTACK_AF_INET6, gate, buf2, INET6_ADDRSTRLEN),
 					ifindex);
 			else
 			zlog_debug (MODULE_NSM, "route %s vrf %u ifindex %d doesn't exist in rib",
-					prefix2str (p, buf1, sizeof(buf1)), vrf_id,
+					prefix2str (up, buf1, sizeof(buf1)), vrf_id,
 					ifindex);
 		}
 		if(table->mutex)
@@ -2855,13 +2862,13 @@ rib_delete_ipv6 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv6 *p,
 				if (gate)
 				zlog_debug (MODULE_NSM, "route %s vrf %u via %s ifindex %d type %d "
 						"doesn't exist in rib",
-						prefix2str (p, buf1, sizeof(buf1)), vrf_id,
+						prefix2str (up, buf1, sizeof(buf1)), vrf_id,
 						ipstack_inet_ntop (IPSTACK_AF_INET6, gate, buf2, INET6_ADDRSTRLEN),
 						ifindex,
 						type);
 				else
 				zlog_debug (MODULE_NSM, "route %s vrf %u ifindex %d type %d doesn't exist in rib",
-						prefix2str (p, buf1, sizeof(buf1)), vrf_id,
+						prefix2str (up, buf1, sizeof(buf1)), vrf_id,
 						ifindex,
 						type);
 			}

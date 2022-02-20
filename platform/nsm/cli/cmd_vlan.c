@@ -349,6 +349,29 @@ DEFUN (switchport_access_vlan,
 			}
 		}
 	}
+	else if(vty->index_range)
+	{
+  		zpl_uint32 i = 0;
+		for(i = 0; i < vty->index_range; i++)
+		{
+			if(vty->vty_range_index[i])
+			{
+				if(nsm_interface_mode_get_api(ifp, &mode) == OK && mode == IF_MODE_ACCESS_L2)
+				{
+					if(nsm_interface_access_vlan_get_api(ifp, &oldvlan) == OK)
+					{
+						if(oldvlan != vlan)
+							ret = nsm_interface_access_vlan_set_api(ifp, vlan);
+						if(ret != OK)
+							return CMD_WARNING;
+					}
+				}
+				else
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
 	return CMD_WARNING;
 }
 
@@ -378,6 +401,29 @@ DEFUN (no_switchport_access_vlan,
 			}
 		}
 	}
+	else if(vty->index_range)
+	{
+  		zpl_uint32 i = 0;
+		for(i = 0; i < vty->index_range; i++)
+		{
+			if(vty->vty_range_index[i])
+			{
+				if(nsm_interface_mode_get_api(ifp, &mode) == OK && mode == IF_MODE_ACCESS_L2)
+				{
+					if(nsm_interface_access_vlan_get_api(ifp, &oldvlan) == OK)
+					{
+						if(oldvlan != vlan)
+							ret = nsm_interface_access_vlan_set_api(ifp, vlan);
+						if(ret != OK)
+							return CMD_WARNING;
+					}
+				}
+				else
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
 	return CMD_WARNING;
 }
 
@@ -404,6 +450,25 @@ DEFUN (switchport_trunk_vlan,
 			return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 		}
 	}
+	else if(vty->index_range)
+	{
+  		zpl_uint32 i = 0;
+		for(i = 0; i < vty->index_range; i++)
+		{
+			if(vty->vty_range_index[i])
+			{
+				if(nsm_interface_mode_get_api(ifp, &mode) == OK && mode == IF_MODE_TRUNK_L2)
+				{
+					ret = nsm_interface_native_vlan_set_api(ifp, vlan);
+					if(ret != OK)
+						return CMD_WARNING;
+				}
+				else
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
 	return CMD_WARNING;
 }
 
@@ -427,6 +492,25 @@ DEFUN (no_switchport_trunk_vlan,
 			return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 		}
 	}
+	else if(vty->index_range)
+	{
+  		zpl_uint32 i = 0;
+		for(i = 0; i < vty->index_range; i++)
+		{
+			if(vty->vty_range_index[i])
+			{
+				if(nsm_interface_mode_get_api(ifp, &mode) == OK && mode == IF_MODE_TRUNK_L2)
+				{
+					ret = nsm_interface_native_vlan_set_api(ifp, 0);
+					if(ret != OK)
+						return CMD_WARNING;
+				}
+				else
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
 	return CMD_WARNING;
 }
 
@@ -445,44 +529,96 @@ DEFUN (switchport_trunk_allow_vlan,
 	vlan_t vlan = 0;
 	struct interface *ifp = vty->index;
 	int mode = 0;
-	if(nsm_interface_mode_get_api(ifp, &mode) != OK || mode != IF_MODE_TRUNK_L2)
-		return CMD_WARNING;
-	if(argc == 1)
+	if(ifp)
 	{
-		if(ifp)
+		if(nsm_interface_mode_get_api(ifp, &mode) != OK || mode != IF_MODE_TRUNK_L2)
+			return CMD_WARNING;
+		if(argc == 1)
 		{
-			if(os_memcmp(argv[0], "add", 3) == 0)
-				ret = nsm_interface_trunk_add_allowed_vlan_api(ifp, 0);
-			else
-				ret = nsm_interface_trunk_del_allowed_vlan_api(ifp, 0);
-			return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+			if(ifp)
+			{
+				if(os_memcmp(argv[0], "add", 3) == 0)
+					ret = nsm_interface_trunk_add_allowed_vlan_api(ifp, 0);
+				else
+					ret = nsm_interface_trunk_del_allowed_vlan_api(ifp, 0);
+				return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+			}
+		}
+		else if(strstr(argv[1], "-") || strstr(argv[1], ","))
+		{
+			if(ifp)
+			{
+				if(os_memcmp(argv[0], "add", 3) == 0)
+					ret = nsm_interface_trunk_allowed_vlan_list_api(1, ifp, argv[1]);
+				else
+					ret = nsm_interface_trunk_allowed_vlan_list_api(0, ifp, argv[1]);
+				return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+			}
+		}
+		else
+		{
+			VTY_GET_INTEGER ("vlan ID", vlan, argv[1]);
+			if(ifp)
+			{
+				if(os_memcmp(argv[0], "add", 3) == 0)
+					ret = nsm_interface_trunk_add_allowed_vlan_api(ifp, vlan);
+				else
+					ret = nsm_interface_trunk_del_allowed_vlan_api(ifp, vlan);
+				return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+			}
 		}
 	}
-	else if(strstr(argv[1], "-") || strstr(argv[1], ","))
+	else if(vty->index_range)
 	{
-		if(ifp)
+  		zpl_uint32 i = 0;
+		for(i = 0; i < vty->index_range; i++)
 		{
-			if(os_memcmp(argv[0], "add", 3) == 0)
-				ret = nsm_interface_trunk_allowed_vlan_list_api(1, ifp, argv[1]);
-			else
-				ret = nsm_interface_trunk_allowed_vlan_list_api(0, ifp, argv[1]);
+			if(vty->vty_range_index[i])
+			{
+				if(nsm_interface_mode_get_api(vty->vty_range_index[i], &mode) != OK || mode != IF_MODE_TRUNK_L2)
+					return CMD_WARNING;
+				if(argc == 1)
+				{
+					if(vty->vty_range_index[i])
+					{
+						if(os_memcmp(argv[0], "add", 3) == 0)
+							ret = nsm_interface_trunk_add_allowed_vlan_api(vty->vty_range_index[i], 0);
+						else
+							ret = nsm_interface_trunk_del_allowed_vlan_api(vty->vty_range_index[i], 0);
+						if(ret != OK)
+						return CMD_WARNING;
+					}
+				}
+				else if(strstr(argv[1], "-") || strstr(argv[1], ","))
+				{
+					if(vty->vty_range_index[i])
+					{
+						if(os_memcmp(argv[0], "add", 3) == 0)
+							ret = nsm_interface_trunk_allowed_vlan_list_api(1, vty->vty_range_index[i], argv[1]);
+						else
+							ret = nsm_interface_trunk_allowed_vlan_list_api(0, vty->vty_range_index[i], argv[1]);
+						if(ret != OK)
+							return CMD_WARNING;
+					}
+				}
+				else
+				{
+					VTY_GET_INTEGER ("vlan ID", vlan, argv[1]);
+					if(vty->vty_range_index[i])
+					{
+						if(os_memcmp(argv[0], "add", 3) == 0)
+							ret = nsm_interface_trunk_add_allowed_vlan_api(vty->vty_range_index[i], vlan);
+						else
+							ret = nsm_interface_trunk_del_allowed_vlan_api(vty->vty_range_index[i], vlan);
+						if(ret != OK)
+							return CMD_WARNING;
+					}
+				}
+			}
+		}
+		return CMD_SUCCESS;
+	}
 
-
-			return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-		}
-	}
-	else
-	{
-		VTY_GET_INTEGER ("vlan ID", vlan, argv[1]);
-		if(ifp)
-		{
-			if(os_memcmp(argv[0], "add", 3) == 0)
-				ret = nsm_interface_trunk_add_allowed_vlan_api(ifp, vlan);
-			else
-				ret = nsm_interface_trunk_del_allowed_vlan_api(ifp, vlan);
-			return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-		}
-	}
 	return CMD_WARNING;
 }
 

@@ -62,8 +62,8 @@ extern int nsm_bridge_interface_max_age_set_api(struct interface *bridge, zpl_ui
 extern int nsm_bridge_interface_hello_time_set_api(struct interface *bridge, zpl_uint32 hello_time);
 extern int nsm_bridge_interface_forward_delay_set_api(struct interface *bridge, zpl_uint32 forward_delay);
 
-extern int nsm_bridge_init();
-extern int nsm_bridge_exit();
+extern int nsm_bridge_init(void);
+extern int nsm_bridge_exit(void);
 #ifdef ZPL_SHELL_MODULE
 extern void cmd_bridge_init(void);
 extern int nsm_bridge_interface_write_config(struct vty *vty, struct interface *ifp);

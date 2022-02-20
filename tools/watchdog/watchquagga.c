@@ -604,7 +604,7 @@ handle_read(os_ansync_t *t_read)
   struct daemon *dmn = OS_ANSYNC_ARGV(t_read);
   static const char resp[sizeof(PING_TOKEN) + 4] = PING_TOKEN "\n";
   char buf[sizeof(resp) + 100];
-  ssize_t rc;
+  ssize_t rc, rlen = sizeof(vtysh_result_t) + sizeof(resp);
   struct timeval delay;
 
   dmn->t_read = NULL;
@@ -640,12 +640,12 @@ handle_read(os_ansync_t *t_read)
   /* We are expecting an echo response: is there any chance that the
      response would not be returned entirely in the first read?  That
      seems inconceivable... */
-  if ((rc != sizeof(resp)) || memcmp(buf, resp, sizeof(resp)))
+  if ((rc != rlen) || memcmp(buf+sizeof(vtysh_result_t), resp, sizeof(resp)))
   {
     char why[100 + sizeof(buf)];
     snprintf(why, sizeof(why), "read returned bad echo response of %d bytes "
                                "(expecting %u): %.*s",
-             (int)rc, (u_int)sizeof(resp), (int)rc, buf);
+             (int)rc, (u_int)rlen/*sizeof(resp)*/, (int)rc, buf+sizeof(vtysh_result_t));
     daemon_down(dmn, why);
     return 0;
   }
@@ -975,9 +975,24 @@ static int
 wakeup_send_echo(os_ansync_t *t_wakeup)
 {
   static const char echocmd[] = "echo " PING_TOKEN;
-  ssize_t rc;
+  ssize_t rc, mlen = 0;
+  char echobuf[64];
   struct daemon *dmn = OS_ANSYNC_ARGV(t_wakeup);
-
+  vtysh_msghdr_t *vtyshhdr = (vtysh_msghdr_t *)echobuf;
+  vtyshhdr->type = htonl(VTYSH_MSG_CMD);
+  vtyshhdr->msglen = htonl(sizeof(echocmd));
+  memcpy(echobuf+sizeof(vtysh_msghdr_t), echocmd, sizeof(echocmd));
+  mlen = sizeof(vtysh_msghdr_t) + sizeof(echocmd);
+  #if 1
+  if (((rc = ipstack_write(dmn->fd, echobuf, mlen)) < 0) ||
+      ((size_t)rc != mlen))
+  {
+    char why[100 + mlen];
+    snprintf(why, sizeof(why), "write '%s' returned %d instead of %u",
+             echocmd, (int)rc, (u_int)mlen);
+    daemon_down(dmn, why);
+  }
+  #else
   //dmn->t_wakeup = NULL;
   if (((rc = ipstack_write(dmn->fd, echocmd, sizeof(echocmd))) < 0) ||
       ((size_t)rc != sizeof(echocmd)))
@@ -987,6 +1002,7 @@ wakeup_send_echo(os_ansync_t *t_wakeup)
              echocmd, (int)rc, (u_int)sizeof(echocmd));
     daemon_down(dmn, why);
   }
+  #endif
   else
   {
     gettimeofday(&dmn->echo_sent, NULL);
@@ -1374,3 +1390,4 @@ int main(int argc, char **argv)
   /* Not reached. */
   return 0;
 }
+

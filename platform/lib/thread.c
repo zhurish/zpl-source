@@ -1908,7 +1908,7 @@ DEFUN(show_thread_dump,
 }
 #endif
 
-int cmd_os_thread_init()
+int cmd_os_thread_init(void)
 {
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_thread_dump_cmd);
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_thread_cpu_cmd);

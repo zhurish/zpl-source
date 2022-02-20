@@ -95,7 +95,7 @@ static int kernel_arp_get(struct interface *ifp, struct prefix *address, zpl_uin
 
 
 
-static zpl_socket_t kernel_arp_init()
+static zpl_socket_t kernel_arp_init(void)
 {
 	zpl_socket_t skfd;
 	int onoff = 1;

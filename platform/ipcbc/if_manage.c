@@ -11,7 +11,7 @@
 #include "if_manage.h"
 #include "bmgt.h"
 
-static int if_unit_slot_port(zpl_bool online, zpl_uint32 type, int u, int s, int p)
+static int if_unit_slot_port(zpl_bool online, if_type_t type, zpl_uint8 u, zpl_uint8 s, zpl_uint8 p, zpl_phyport_t phyid)
 {
 	struct interface *ifp = NULL;
 	zpl_uint32 i = p;
@@ -46,6 +46,8 @@ static int if_unit_slot_port(zpl_bool online, zpl_uint32 type, int u, int s, int
 
 	if(!online)
 	{
+		if(IS_BMGT_DEBUG_EVENT(_bmgt_debug))
+			zlog_debug(MODULE_LIB, " if_online %s", name);
 		ifp = if_lookup_by_name(name);
 		if(ifp)
 		{
@@ -54,8 +56,12 @@ static int if_unit_slot_port(zpl_bool online, zpl_uint32 type, int u, int s, int
 	}
 	else// if(online)
 	{
+		if(IS_BMGT_DEBUG_EVENT(_bmgt_debug))
+			zlog_debug(MODULE_LIB, " if_create %s", name);
 		if (os_strlen(name) && !if_lookup_by_name(name))
-			if_create(name, strlen(name));
+			ifp = if_create(name, strlen(name));
+		if(ifp)
+			if_update_phyid2(ifp, phyid);
 	}
 	return OK;
 }
@@ -63,15 +69,17 @@ static int if_unit_slot_port(zpl_bool online, zpl_uint32 type, int u, int s, int
 static int unit_board_port_installfunc(unit_port_mgt_t *mgt, void *p)
 {
 	unit_board_mgt_t *board = p;
+	zlog_debug(MODULE_HAL, " unit_board_port_installfunc online=%d %d %d/%d/%d", 
+		board->online, mgt->type, board->unit, board->slot, mgt->port);
 	if (board->state != UBMG_STAT_ACTIVE && board->online)
 	{
-		if (if_unit_slot_port(board->online, mgt->type, board->unit, board->slot, mgt->port) == OK)
-			board->state = UBMG_STAT_ACTIVE;
+		if (if_unit_slot_port(board->online, mgt->type, board->unit, board->slot, mgt->port, mgt->phyid) == OK)
+			;//board->state = UBMG_STAT_ACTIVE;
 	}
 	else if (board->state == UBMG_STAT_ACTIVE && !board->online)
 	{
-		if (if_unit_slot_port(board->online, mgt->type, board->unit, board->slot, mgt->port) == OK)
-			board->state = UBMG_STAT_UNACTIVE;
+		if (if_unit_slot_port(board->online, mgt->type, board->unit, board->slot, mgt->port, mgt->phyid) == OK)
+			;//board->state = UBMG_STAT_UNACTIVE;
 	}
 	return OK;
 }
@@ -86,10 +94,12 @@ static int unit_board_installfunc(unit_board_mgt_t *mgt, void *p)
 		{
 			unit_board_port_foreach(mgt, unit_board_port_installfunc, mgt);
 			mgt->b_install = zpl_true;
+			mgt->state = UBMG_STAT_ACTIVE;
 		}
 		else if (mgt->state == UBMG_STAT_ACTIVE && mgt->b_install)
 		{
 			unit_board_port_foreach(mgt, unit_board_port_installfunc, mgt);
+			mgt->state = UBMG_STAT_ACTIVE;
 		}
 	}
 	return 0;
@@ -101,12 +111,13 @@ int unit_board_dynamic_install(zpl_uint8 unit, zpl_uint8 slot, zpl_bool enable)
 	zpl_bool online = enable;
 	if(mgt)
 	{
+		zlog_debug(MODULE_HAL, " unit_board_dynamic_install %d/%d %d", unit, slot, enable);
 		unit_board_installfunc(mgt, &online);
 	}
 	return OK;
 }
 
-int bsp_usp_module_init()
+int bsp_usp_module_init(void)
 {
 	zpl_bool online = zpl_true;
 #ifdef ZPL_KERNEL_STACK_MODULE

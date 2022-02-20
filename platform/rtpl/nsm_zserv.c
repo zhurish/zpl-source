@@ -2276,7 +2276,7 @@ void zebra_init(void)
 }
 
 /* Make zebra server ipstack_socket, wiping any existing one (see bug #403). */
-void zserv_init()
+void zserv_init(void)
 {
 #ifdef HAVE_TCP_ZEBRA
   zebra_serv();

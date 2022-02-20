@@ -46,8 +46,8 @@ typedef struct os_nvram_env_s
 #pragma pack()
 
 
-extern int os_nvram_env_init();
-extern int os_nvram_env_exit();
+extern int os_nvram_env_init(void);
+extern int os_nvram_env_exit(void);
 extern int os_nvram_env_add(zpl_char *name, zpl_char *value);
 extern int os_nvram_env_add_integer(zpl_char *name, zpl_uint32 len, zpl_uint32 value);
 extern int os_nvram_env_set(zpl_char *name, zpl_char *value);
@@ -60,7 +60,7 @@ extern const zpl_char * os_nvram_env_lookup(const zpl_char *name);
 
 extern int os_nvram_env_show(zpl_char *name, int (*show_cb)(void *, os_nvram_env_t *), void *p);
 
-extern int cmd_nvram_env_init();
+extern int cmd_nvram_env_init(void);
 
 #ifdef __cplusplus
 }

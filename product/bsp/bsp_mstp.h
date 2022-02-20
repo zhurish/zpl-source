@@ -16,11 +16,12 @@ extern "C" {
 typedef struct sdk_mstp_s
 {
 	int (*sdk_mstp_enable_cb) (void *, zpl_bool);
-	int (*sdk_mstp_age_cb) (void *, zpl_uint32);
-	int (*sdk_mstp_bypass_cb) (void *, zpl_bool, zpl_uint32);
-	int (*sdk_mstp_state_cb) (void *, zpl_phyport_t, zpl_uint32, zpl_uint32);
-	int (*sdk_mstp_vlan_cb) (void *, vlan_t,  zpl_uint32);
-	int (*sdk_stp_state_cb) (void *, zpl_phyport_t,  zpl_uint32);
+	int (*sdk_mstp_create) (void *, zpl_index_t);
+	int (*sdk_mstp_add_vlan) (void *, zpl_index_t , vlan_t );
+	int (*sdk_mstp_del_vlan) (void *, zpl_index_t , vlan_t );
+	int (*sdk_mstp_aging_cb) (void *, zpl_index_t );
+	int (*sdk_mstp_state) (void *, zpl_index_t, zpl_phyport_t, zpl_uint32);
+	int (*sdk_stp_state_cb) (void *, zpl_index_t, zpl_phyport_t, zpl_uint32);
 }sdk_mstp_t;
 
 extern sdk_mstp_t sdk_mstp;

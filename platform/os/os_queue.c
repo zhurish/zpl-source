@@ -13,14 +13,14 @@
 static zpl_uint32 _os_msgq_id = -1;
 
 
-int os_msgq_init()
+int os_msgq_init(void)
 {
 	key_t key = ftok(".",100);
 	_os_msgq_id = msgget(key,IPC_CREAT|0600);
 	return OK;
 }
 
-int os_msgq_exit()
+int os_msgq_exit(void)
 {
 	if(_os_msgq_id >= 0)
 		msgctl(_os_msgq_id, IPC_RMID, NULL);

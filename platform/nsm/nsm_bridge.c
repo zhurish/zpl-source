@@ -14,7 +14,7 @@
 nsm_bridge_t * nsm_bridge_get(struct interface *ifp)
 {
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	return (nsm_bridge_t *)nsm->nsm_client[NSM_BRIDGE];
+	return (nsm_bridge_t *)nsm->nsm_client[NSM_INTF_BRIDGE];
 }
 
 static int nsm_bridge_member_lookup(nsm_bridge_t *bridge, ifindex_t ifindex)
@@ -254,11 +254,11 @@ int nsm_bridge_interface_create_api(struct interface *ifp)
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	if(if_is_brigde(ifp))
 	{
-		if(!nsm->nsm_client[NSM_BRIDGE])
-			nsm->nsm_client[NSM_BRIDGE] = XMALLOC(MTYPE_IF, sizeof(nsm_bridge_t));
-		zassert(nsm->nsm_client[NSM_BRIDGE]);
-		os_memset(nsm->nsm_client[NSM_BRIDGE], 0, sizeof(nsm_bridge_t));
-		bridge = nsm->nsm_client[NSM_BRIDGE];
+		if(!nsm->nsm_client[NSM_INTF_BRIDGE])
+			nsm->nsm_client[NSM_INTF_BRIDGE] = XMALLOC(MTYPE_IF, sizeof(nsm_bridge_t));
+		zassert(nsm->nsm_client[NSM_INTF_BRIDGE]);
+		os_memset(nsm->nsm_client[NSM_INTF_BRIDGE], 0, sizeof(nsm_bridge_t));
+		bridge = nsm->nsm_client[NSM_INTF_BRIDGE];
 		bridge->ifp = ifp;
 		//if(if_is_brigde(ifp))
 		bridge->br_mode = BRIDGE_IF;
@@ -277,7 +277,7 @@ int nsm_bridge_interface_del_api(struct interface *ifp)
 			nsm_bridge_member_del_all(bridge);
 			struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 			XFREE(MTYPE_IF, bridge);
-			nsm->nsm_client[NSM_BRIDGE] = NULL;
+			nsm->nsm_client[NSM_INTF_BRIDGE] = NULL;
 		}
 	}
 	return OK;
@@ -313,13 +313,13 @@ int nsm_bridge_interface_write_config(struct vty *vty, struct interface *ifp)
 	return OK;
 }
 #endif
-int nsm_bridge_init()
+int nsm_bridge_init(void)
 {
-	nsm_interface_hook_add(NSM_BRIDGE, nsm_bridge_interface_create_api, nsm_bridge_interface_del_api);
+	nsm_interface_hook_add(NSM_INTF_BRIDGE, nsm_bridge_interface_create_api, nsm_bridge_interface_del_api);
 	return OK;
 }
 
-int nsm_bridge_exit()
+int nsm_bridge_exit(void)
 {
 	return OK;
 }

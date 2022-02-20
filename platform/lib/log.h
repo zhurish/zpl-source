@@ -211,6 +211,7 @@ extern struct zlog *openzlog (const char *progname, zlog_proto_t protocol,
 
 /* Close zlog function. */
 extern void closezlog (struct zlog *zl);
+extern void openzlog_start(struct zlog *zl);
 
 /* GCC have printf type attribute check.  */
 #ifdef __GNUC__
@@ -220,7 +221,8 @@ extern void closezlog (struct zlog *zl);
 #endif /* __GNUC__ */
 
 
-
+extern int zlog_depth_debug_detail(FILE *fp, zpl_char *buf, zpl_uint32 depth, const char *file,
+		const char *func, const zpl_uint32 line);
 
 extern void pl_vzlog(const char *file, const char *func, const zpl_uint32 line, struct zlog *zl, zpl_uint32 module, zlog_level_t priority, const char *format,
 		va_list args);
@@ -281,7 +283,7 @@ extern int zlog_get_file(const char *filename, zlog_level_t *log_level);
 extern int zlog_set_file_size (zpl_uint32 filesize);
 extern int zlog_get_file_size (zpl_uint32 *filesize);
 extern int zlog_reset_file (zpl_bool bOpen);
-extern int zlog_close_file();
+extern int zlog_close_file(void);
 extern int zlog_file_save (void);
 //extern zpl_uint32 zlog_check_file (void);
 #ifdef ZLOG_TESTING_ENABLE
@@ -297,7 +299,7 @@ extern int zlog_buffer_save(void);
 extern int zlog_buffer_callback_api (zlog_buffer_cb cb, void *pVoid);
 
 /* Rotate log. */
-extern int zlog_rotate ();
+extern int zlog_rotate (void);
 
 extern void zlog_set_facility(zpl_uint32 facility);
 extern void zlog_get_facility(zpl_uint32 *facility);
@@ -317,6 +319,8 @@ extern zlog_level_t zlog_priority_match(const char *s);
 extern const char *zlog_priority_name(zlog_level_t level);
 
 extern const char * zlog_proto_names(zlog_proto_t module);
+
+extern int cmd_log_init(void);
 
 /* For hackey message lookup and check */
 #define LOOKUP_DEF(x, y, def) mes_lookup(x, x ## _max, y, def, #x)

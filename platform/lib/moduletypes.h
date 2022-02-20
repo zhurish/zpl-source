@@ -14,6 +14,8 @@ typedef enum {
   MODULE_HAL, 
   MODULE_KERNEL, 
   MODULE_PAL, 
+  MODULE_BSP,
+  MODULE_SDK, 
 	MODULE_MAX,
 } module_t;
  

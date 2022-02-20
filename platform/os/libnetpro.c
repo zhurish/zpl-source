@@ -44,7 +44,9 @@ static struct proto_str_tbl eth_proto_str[] =
         {ETH_P_PUP, "pup"},             //	0x0200		/* Xerox PUP packet		*/
         {ETH_P_PUPAT, "pupat"},         //	0x0201		/* Xerox PUP Addr Trans packet	*/
         {ETH_P_TSN, "tsn"},             //	0x22F0		/* TSN (IEEE 1722) packet	*/
+        #ifdef ETH_P_ERSPAN2
         {ETH_P_ERSPAN2, "erspan2"},     //	0x22EB		/* ERSPAN version 2 (type III)	*/
+        #endif
         {ETH_P_IP, "ip"},               // 0x0800		/* Internet Protocol packet	*/
         {ETH_P_X25, "x25"},             //	0x0805		/* CCITT X.25			*/
         {ETH_P_ARP, "arp"},             //	0x0806		/* Address Resolution packet	*/
@@ -65,7 +67,9 @@ static struct proto_str_tbl eth_proto_str[] =
         {ETH_P_ATALK, "atalk"},         //	0x809B		/* Appletalk DDP		*/
         {ETH_P_AARP, "aarp"},           //	0x80F3		/* Appletalk AARP		*/
         {ETH_P_8021Q, "8021q"},         //	0x8100          /* 802.1Q VLAN Extended Header  */
+        #ifdef ETH_P_ERSPAN
         {ETH_P_ERSPAN, "erspan"},       //	0x88BE		/* ERSPAN type II		*/
+        #endif
         {ETH_P_IPX, "ipx"},             //	0x8137		/* IPX over DIX			*/
         {ETH_P_IPV6, "ipv6"},           //	0x86DD		/* IPv6 over bluebook		*/
         {ETH_P_PAUSE, "pause"},         //	0x8808		/* IEEE Pause frames. See 802.3 31B */
@@ -82,9 +86,13 @@ static struct proto_str_tbl eth_proto_str[] =
         {ETH_P_AOE, "oae"},             //	0x88A2		/* ATA over Ethernet		*/
         {ETH_P_8021AD, "8021ad"},       //	0x88A8          /* 802.1ad Service VLAN		*/
         {ETH_P_802_EX1, "802ex1"},      //	0x88B5		/* 802.1 Local Experimental 1.  */
+        #ifdef ETH_P_PREAUTH
         {ETH_P_PREAUTH, "preauth"},     //	0x88C7		/* 802.11 Preauthentication */
+        #endif
         {ETH_P_TIPC, "tipc"},           //	0x88CA		/* TIPC 			*/
+        #ifdef ETH_P_LLDP
         {ETH_P_LLDP, "lldp"},           //	0x88CC		/* Link Layer Discovery Protocol */
+        #endif
         {ETH_P_MACSEC, "macsec"},       //	0x88E5		/* 802.1ae MACsec */
         {ETH_P_8021AH, "8021ah"},       //	0x88E7          /* 802.1ah Backbone Service Tag */
         {ETH_P_MVRP, "mvrp"},           //	0x88F5          /* 802.1Q MVRP                  */
@@ -92,18 +100,24 @@ static struct proto_str_tbl eth_proto_str[] =
         {ETH_P_NCSI, "ncsi"},           //	0x88F8		/* NCSI protocol		*/
         {ETH_P_PRP, "prp"},             //	0x88FB		/* IEC 62439-3 PRP/HSRv0	*/
         {ETH_P_FCOE, "fcoe"},           //	0x8906		/* Fibre Channel over Ethernet  */
+        #ifdef ETH_P_IBOE
         {ETH_P_IBOE, "iboe"},           //	0x8915		/* Infiniband over Ethernet	*/
+        #endif
         {ETH_P_TDLS, "tdls"},           //	0x890D          /* TDLS */
         {ETH_P_FIP, "fip"},             //	0x8914		/* FCoE Initialization Protocol */
         {ETH_P_80221, "80221"},         //	0x8917		/* IEEE 802.21 Media Independent Handover Protocol */
         {ETH_P_HSR, "hsr"},             //	0x892F		/* IEC 62439-3 HSRv1	*/
+        #ifdef ETH_P_NSH
         {ETH_P_NSH, "nsh"},             //	0x894F		/* Network Service Header */
+        #endif
         {ETH_P_LOOPBACK, "loopback"},   //	0x9000		/* Ethernet loopback packet, per IEEE 802.3 */
         {ETH_P_QINQ1, "qinq1"},         //	0x9100		/* deprecated QinQ VLAN [ NOT AN OFFICIALLY REGISTERED ID ] */
         {ETH_P_QINQ2, "qinq2"},         //	0x9200		/* deprecated QinQ VLAN [ NOT AN OFFICIALLY REGISTERED ID ] */
         {ETH_P_QINQ3, "qinq3"},         //	0x9300		/* deprecated QinQ VLAN [ NOT AN OFFICIALLY REGISTERED ID ] */
         {ETH_P_EDSA, "edsa"},           //	0xDADA		/* Ethertype DSA [ NOT AN OFFICIALLY REGISTERED ID ] */
+        #ifdef ETH_P_IFE
         {ETH_P_IFE, "ife"},             //	0xED3E		/* ForCES inter-FE LFB type */
+        #endif
         {ETH_P_AF_IUCV, "afiucv"},      //   0xFBFB		/* IBM af_iucv [ NOT AN OFFICIALLY REGISTERED ID ] */
 
         {ETH_P_802_3_MIN, "8023min"}, //	0x0600		/* If the value in the ethernet type is less than this value then the frame is Ethernet II. Else it is 802.3 */
@@ -137,7 +151,9 @@ static struct proto_str_tbl eth_proto_str[] =
         {ETH_P_IEEE802154, "ieee802154"}, // 0x00F6		/* IEEE802.15.4 frame		*/
         {ETH_P_CAIF, "caif"},             //	0x00F7		/* ST-Ericsson CAIF protocol	*/
         {ETH_P_XDSA, "xdsa"},             //	0x00F8		/* Multiplexed DSA protocol	*/
+        #ifdef ETH_P_MAP
         {ETH_P_MAP, "map"},               //	0x00F9		/* Qualcomm multiplexing and aggregation protocol */
+        #endif
 };
 /*
 static const char *port_op_str[] =

@@ -223,7 +223,7 @@ static int zpl_video_vpss_channel_read(struct thread *t)
 
         zpl_vidhal_vpss_channel_frame_recvfrom(vpss);
 
-        if(vpss->vpssfd)
+        if(!ipstack_invalid(vpss->vpssfd))
            vpss->t_read = thread_add_read(t->master, zpl_video_vpss_channel_read, vpss, vpss->vpssfd);
     }
 	if(_vpss_channel_mutex)
@@ -241,7 +241,7 @@ int zpl_video_vpss_channel_read_start(zpl_void *master, zpl_video_vpss_channel_t
 	if (_vpss_channel_mutex)
 		os_mutex_lock(_vpss_channel_mutex, OS_WAIT_FOREVER);
 	zpl_vidhal_vpss_channel_update_fd(vpss);	
-    if(master && vpss && vpss->vpssfd)
+    if(master && vpss && !ipstack_invalid(vpss->vpssfd))
 	{
 		vpss->t_master = master;
         vpss->t_read = thread_add_read(master, zpl_video_vpss_channel_read, vpss, vpss->vpssfd);

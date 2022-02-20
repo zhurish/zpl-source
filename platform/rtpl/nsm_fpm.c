@@ -623,7 +623,7 @@ zfpm_connection_up (const char *detail)
  * Check if an asynchronous ipstack_connect() to the FPM is complete.
  */
 static void
-zfpm_connect_check ()
+zfpm_connect_check (void)
 {
   int status;
   socklen_t slen;

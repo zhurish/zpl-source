@@ -38,6 +38,7 @@ int hal_mirror_enable(ifindex_t ifindex, zpl_bool enable);
 int hal_mirror_source_enable(ifindex_t ifindex, zpl_bool enable, mirror_mode_t mode, mirror_dir_en type);
 int hal_mirror_source_filter_enable(zpl_bool enable, mirror_filter_t filter, mirror_dir_en type, mac_t *mac, mac_t *mac1);
 
+
 #ifdef __cplusplus
 }
 #endif

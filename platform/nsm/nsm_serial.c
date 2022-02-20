@@ -40,7 +40,7 @@ zpl_uint32 serial_index_make(const char *sname)
 static nsm_serial_t * nsm_serial_get(struct interface *ifp)
 {
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	return (nsm_serial_t *)nsm->nsm_client[NSM_SERIAL];
+	return (nsm_serial_t *)nsm->nsm_client[NSM_INTF_SERIAL];
 }
 
 
@@ -50,11 +50,11 @@ int nsm_serial_interface_create_api(struct interface *ifp)
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	if(!if_is_serial(ifp))
 		return OK;
-	if(!nsm->nsm_client[NSM_SERIAL])
-		nsm->nsm_client[NSM_SERIAL] = XMALLOC(MTYPE_SERIAL, sizeof(nsm_serial_t));
-	zassert(nsm->nsm_client[NSM_SERIAL]);
-	os_memset(nsm->nsm_client[NSM_SERIAL], 0, sizeof(nsm_serial_t));
-	serial = nsm->nsm_client[NSM_SERIAL];
+	if(!nsm->nsm_client[NSM_INTF_SERIAL])
+		nsm->nsm_client[NSM_INTF_SERIAL] = XMALLOC(MTYPE_SERIAL, sizeof(nsm_serial_t));
+	zassert(nsm->nsm_client[NSM_INTF_SERIAL]);
+	os_memset(nsm->nsm_client[NSM_INTF_SERIAL], 0, sizeof(nsm_serial_t));
+	serial = nsm->nsm_client[NSM_INTF_SERIAL];
 
 	serial->serial.databit = NSM_SERIAL_DATA_DEFAULT;
 	serial->serial.stopbit = NSM_SERIAL_STOP_DEFAULT;
@@ -73,9 +73,9 @@ int nsm_serial_interface_del_api(struct interface *ifp)
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	if(!if_is_serial(ifp))
 		return OK;
-	if(nsm->nsm_client[NSM_SERIAL])
-		XFREE(MTYPE_SERIAL, nsm->nsm_client[NSM_SERIAL]);
-	nsm->nsm_client[NSM_SERIAL] = NULL;
+	if(nsm->nsm_client[NSM_INTF_SERIAL])
+		XFREE(MTYPE_SERIAL, nsm->nsm_client[NSM_INTF_SERIAL]);
+	nsm->nsm_client[NSM_INTF_SERIAL] = NULL;
 	return OK;
 }
 
@@ -252,13 +252,13 @@ int nsm_serial_interface_write_config(struct vty *vty, struct interface *ifp)
 #endif
 
 
-int nsm_serial_init()
+int nsm_serial_init(void)
 {
-	nsm_interface_hook_add(NSM_SERIAL, nsm_serial_interface_create_api, nsm_serial_interface_del_api);
+	nsm_interface_hook_add(NSM_INTF_SERIAL, nsm_serial_interface_create_api, nsm_serial_interface_del_api);
 	return OK;
 }
 
-int nsm_serial_exit()
+int nsm_serial_exit(void)
 {
 	return OK;
 }

@@ -217,7 +217,7 @@ static int zpl_video_encode_read(struct thread *t)
 			zpl_media_buffer_distribute(encode->buffer_queue);
 		}
 #endif /* ZPL_VENC_READ_DEBUG */
-        if(encode->vencfd)
+        if(!ipstack_invalid(encode->vencfd))
            encode->t_read = thread_add_read(t->master, zpl_video_encode_read, encode, encode->vencfd);
 		if (video_encode_mutex)
 			os_mutex_unlock(video_encode_mutex);   
@@ -237,7 +237,7 @@ int zpl_video_encode_read_start(zpl_void *master, zpl_video_encode_t *encode)
 		os_mutex_lock(video_encode_mutex, OS_WAIT_FOREVER);
 	zpl_vidhal_venc_update_fd(((zpl_media_channel_t*)encode->media_channel)->channel, 
 			((zpl_media_channel_t*)encode->media_channel)->channel_index, encode);
-    if(master && encode && encode->vencfd)
+    if(master && encode && !ipstack_invalid(encode->vencfd))
 	{
 		encode->t_master = master;
 		//zpl_media_debugmsg_debug(" =============== encode channel %d read thread  thread_add_read(%d)\n", encode->venc_channel, encode->vencfd);

@@ -131,7 +131,7 @@ static int zpl_video_input_channel_read(struct thread *t)
         input->t_read = NULL;
         zpl_vidhal_input_channel_frame_recvfrom(input);
 
-        if(input->chnfd >= 0)
+        if(!ipstack_invalid(input->chnfd))
             input->t_read = thread_add_read(t->master, zpl_video_input_channel_read, input, input->chnfd);
     }
 	if(video_input_mutex)
@@ -149,7 +149,7 @@ int zpl_video_input_channel_read_start(zpl_void *master, zpl_video_input_channel
 	if (video_input_mutex)
 		os_mutex_lock(video_input_mutex, OS_WAIT_FOREVER);
 	zpl_vidhal_input_channel_update_fd(input);
-    if(master && input && input->chnfd)
+    if(master && input && !ipstack_invalid(input->chnfd))
 	{
 		input->t_master = master;
 		//input->master = master;
