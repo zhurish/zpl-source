@@ -14,14 +14,12 @@ extern "C" {
 
 #include "zpl_type.h"
 
-/* Safe version of strerror -- never returns NULL. */
-extern const char *ipstack_strerror(int errnum);
 
 /* Create a new socket of type TYPE in domain DOMAIN, using
    protocol PROTOCOL.  If PROTOCOL is zero, one is chosen automatically.
    Returns a file descriptor for the new socket, or -1 for errors.  */
 extern zpl_socket_t ipstack_socket (zpl_ipstack stack, int __domain, int __type, int __protocol) ;
-
+extern zpl_socket_t ipstack_socket_vrf(zpl_ipstack stack, int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id_t vrf_id);
 /* Create two new sockets, of type TYPE in domain DOMAIN and using
    protocol PROTOCOL, which are connected to each other, and put file
    descriptors for them in FDS[0] and FDS[1].  If PROTOCOL is zero,

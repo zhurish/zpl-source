@@ -34,7 +34,7 @@ int _ipkernel_firewall_portmap_rule_set(firewall_t *rule, zpl_action action)
 	//iptables -t nat -A PREROUTING -d 192.168.88.134 -p tcp --dport 80 -j DNAT --to 192.168.88.134:8080
 	if (rule && rule->class == FIREWALL_C_PORT)
 	{
-		sprintf(cmd, "iptables -t nat -%s %s %d ", (action==zpl_add) ? "I":"D", firewall_type_string(rule->type), rule->ID);
+		sprintf(cmd, "iptables -t nat -%s %s %d ", (action==zpl_add) ? "I":"D", nsm_firewall_type_string(rule->type), rule->ID);
 
 		if(action == zpl_delete)
 		{
@@ -60,7 +60,7 @@ int _ipkernel_firewall_portmap_rule_set(firewall_t *rule, zpl_action action)
 		{
 			memset(proto, 0, sizeof(proto));
 			strcat(cmd, " -p ");
-			sprintf(proto, "%s", firewall_proto_string(rule->proto));
+			sprintf(proto, "%s", nsm_firewall_proto_string(rule->proto));
 			strcat(cmd, strlwr(proto));
 		}
 
@@ -71,7 +71,7 @@ int _ipkernel_firewall_portmap_rule_set(firewall_t *rule, zpl_action action)
 		}
 
 		strcat(cmd, " -j ");
-		strcat(cmd, firewall_action_string(rule->action));
+		strcat(cmd, nsm_firewall_action_string(rule->action));
 
 		if (rule->destination.family)
 		{
@@ -114,7 +114,7 @@ int _ipkernel_firewall_port_filter_rule_set(firewall_t *rule, zpl_action action)
 	if (rule && rule->class == FIREWALL_C_FILTER)
 	{
 
-		sprintf(cmd, "iptables -t filter -%s %s %d ", (action==zpl_add) ? "I":"D", firewall_type_string(rule->type), rule->ID);
+		sprintf(cmd, "iptables -t filter -%s %s %d ", (action==zpl_add) ? "I":"D", nsm_firewall_type_string(rule->type), rule->ID);
 		if(action == zpl_delete)
 		{
 			printf("---%s---:%s\r\n", __func__, cmd);
@@ -125,7 +125,7 @@ int _ipkernel_firewall_port_filter_rule_set(firewall_t *rule, zpl_action action)
 		{
 			memset(proto, 0, sizeof(proto));
 			strcat(cmd, " -p ");
-			sprintf(proto, "%s", firewall_proto_string(rule->proto));
+			sprintf(proto, "%s", nsm_firewall_proto_string(rule->proto));
 			strcat(cmd, strlwr(proto));
 		}
 
@@ -206,7 +206,7 @@ int _ipkernel_firewall_port_filter_rule_set(firewall_t *rule, zpl_action action)
 
 
 		strcat(cmd, " -j ");
-		strcat(cmd, firewall_action_string(rule->action));
+		strcat(cmd, nsm_firewall_action_string(rule->action));
 
 		printf("---%s---:%s\r\n", __func__, cmd);
 
@@ -292,7 +292,7 @@ int _ipkernel_firewall_snat_rule_set(firewall_t *rule, zpl_action action)
 	memset(cmd, 0, sizeof(cmd));
 	if (rule && rule->class == FIREWALL_C_SNAT)
 	{
-		sprintf(cmd, "iptables -t nat -%s %s %d ", (action==zpl_add) ? "I":"D", firewall_type_string(rule->type), rule->ID);
+		sprintf(cmd, "iptables -t nat -%s %s %d ", (action==zpl_add) ? "I":"D", nsm_firewall_type_string(rule->type), rule->ID);
 		if(action == zpl_delete)
 		{
 			printf("---%s---:%s\r\n", __func__, cmd);
@@ -351,7 +351,7 @@ int _ipkernel_firewall_snat_rule_set(firewall_t *rule, zpl_action action)
 		if (rule->destination.family)
 		{
 			strcat(cmd, " -j ");
-			strcat(cmd, firewall_action_string(rule->action));
+			strcat(cmd, nsm_firewall_action_string(rule->action));
 
 			char tmp[64];
 			union prefix46constptr pa;
@@ -405,7 +405,7 @@ eth1网口传入，且想要使用 port 80 的服务时，将该封包重新传�
 	memset(cmd, 0, sizeof(cmd));
 	if (rule && rule->class == FIREWALL_C_DNAT)
 	{
-		sprintf(cmd, "iptables -t nat -%s %s %d ", (action==zpl_add) ? "I":"D", firewall_type_string(rule->type), rule->ID);
+		sprintf(cmd, "iptables -t nat -%s %s %d ", (action==zpl_add) ? "I":"D", nsm_firewall_type_string(rule->type), rule->ID);
 		if(action == zpl_delete)
 		{
 			printf("---%s---:%s\r\n", __func__, cmd);
@@ -441,7 +441,7 @@ eth1网口传入，且想要使用 port 80 的服务时，将该封包重新传�
 		{
 			memset(proto, 0, sizeof(proto));
 			strcat(cmd, " -p ");
-			sprintf(proto, "%s", firewall_proto_string(rule->proto));
+			sprintf(proto, "%s", nsm_firewall_proto_string(rule->proto));
 			strcat(cmd, strlwr(proto));
 		}
 
@@ -457,7 +457,7 @@ eth1网口传入，且想要使用 port 80 的服务时，将该封包重新传�
 		}
 
 		strcat(cmd, " -j ");
-		strcat(cmd, firewall_action_string(rule->action));
+		strcat(cmd, nsm_firewall_action_string(rule->action));
 
 		if (rule->d_ifindex)
 		{

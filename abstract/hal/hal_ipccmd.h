@@ -44,6 +44,7 @@ enum hal_module_id
 enum hal_module_cmd 
 {
     HAL_MODULE_CMD_NONE,
+    HAL_MODULE_CMD_DATA,        //数据
 	HAL_MODULE_CMD_REQ,         //设置
 	HAL_MODULE_CMD_ACK,         //应答
  

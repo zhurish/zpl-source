@@ -68,7 +68,7 @@ torture_packet(const char *cipher, const char *mac_type,
     ssh_options_set(session, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
     crypto = session->next_crypto;
 
-    rc = socketpair(AF_UNIX, SOCK_STREAM, 0, sockets);
+    rc = socketpair(AF_UNIX, IPSTACK_SOCK_STREAM, 0, sockets);
     assert_int_equal(rc, 0);
 
     crypto->kex_methods[SSH_KEX] = strdup("curve25519-sha256@libssh.org");

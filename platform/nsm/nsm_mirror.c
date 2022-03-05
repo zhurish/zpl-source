@@ -5,7 +5,6 @@
  *      Author: zhurish
  */
 
-
 #include "os_include.h"
 #include "zpl_include.h"
 #include "lib_include.h"
@@ -14,509 +13,383 @@
 static Gmirror_t gMirror;
 
 
-static int mirror_cleanup(ifindex_t ifindex, zpl_bool all);
-
-
-
 int nsm_mirror_init(void)
 {
 	os_memset(&gMirror, 0, sizeof(Gmirror_t));
-	gMirror.mirrorList = malloc(sizeof(LIST));
 	gMirror.mutex = os_mutex_init();
-	lstInit(gMirror.mirrorList);
 	return OK;
 }
 
-
 int nsm_mirror_exit(void)
 {
-	if(lstCount(gMirror.mirrorList))
-	{
-		mirror_cleanup(0, zpl_true);
-		lstFree(gMirror.mirrorList);
-		free(gMirror.mirrorList);
-		gMirror.mirrorList = NULL;
-	}
-	if(gMirror.mutex)
+	if (gMirror.mutex)
 		os_mutex_exit(gMirror.mutex);
 	return OK;
 }
 
-static int mirror_cleanup(ifindex_t ifindex, zpl_bool all)
+int nsm_mirror_destination_set_api(zpl_uint32 id, ifindex_t ifindex, zpl_bool enable)
 {
-	nsm_mirror_t *pstNode = NULL;
-	NODE index;
-	if(gMirror.mutex)
+	int ret = 0;
+	if (gMirror.mutex)
 		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
-	for(pstNode = (nsm_mirror_t *)lstFirst(gMirror.mirrorList);
-			pstNode != NULL;  pstNode = (nsm_mirror_t *)lstNext((NODE*)&index))
+	if (gMirror.mirror_session[id].enable)
 	{
-		index = pstNode->node;
-		if(pstNode && ifindex && pstNode->ifindex == ifindex)
-		{
-			lstDelete(gMirror.mirrorList, (NODE*)pstNode);
-			XFREE(MTYPE_MIRROR, pstNode);
-		}
-		else if(pstNode && all)
-		{
-			lstDelete(gMirror.mirrorList, (NODE*)pstNode);
-			XFREE(MTYPE_MIRROR, pstNode);
-		}
+		if (gMirror.mutex)
+			os_mutex_unlock(gMirror.mutex);
+		return ret;
 	}
-	if(gMirror.mutex)
-		os_mutex_unlock(gMirror.mutex);
-	return OK;
-}
 
-static int nsm_mirror_client_setup(ifindex_t ifindex, void *p)
-{
-/*	struct interface *ifp = if_lookup_by_index(ifindex);
-	if(ifp)
+#ifdef ZPL_HAL_MODULE
+	ret = hal_mirror_enable(ifindex, enable);
+#endif
+	if (ret == OK)
 	{
-		struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-		if(nsm)
-			nsm->nsm_client[NSM_INTF_MIRROR] = p;
-	}*/
-	return OK;
-}
-
-
-static int mirror_add_node(nsm_mirror_t *value)
-{
-	nsm_mirror_t *node = XMALLOC(MTYPE_MIRROR, sizeof(nsm_mirror_t));
-	if(node)
-	{
-		os_memset(node, 0, sizeof(nsm_mirror_t));
-		os_memcpy(node, value, sizeof(nsm_mirror_t));
-		if(node->enable && !node->mirror_dst)
-			node->global = &gMirror;
-		lstAdd(gMirror.mirrorList, (NODE *)node);
-		nsm_mirror_client_setup(node->ifindex, node);
-		return OK;
+		gMirror.mirror_session[id].ifindex = enable ? ifindex : 0;
+		gMirror.mirror_session[id].enable = enable;
 	}
-	return ERROR;
-}
-
-static int mirror_del_node(nsm_mirror_t *node)
-{
-	if(node)
-	{
-		nsm_mirror_client_setup(node->ifindex, NULL);
-		lstDelete(gMirror.mirrorList, (NODE *)node);
-		XFREE(MTYPE_MIRROR, node);
-		return OK;
-	}
-	return ERROR;
-}
-
-static nsm_mirror_t * mirror_lookup_node(ifindex_t ifindex)
-{
-	nsm_mirror_t *pstNode = NULL;
-	NODE index;
-	for(pstNode = (nsm_mirror_t *)lstFirst(gMirror.mirrorList);
-			pstNode != NULL;  pstNode = (nsm_mirror_t *)lstNext((NODE*)&index))
-	{
-		index = pstNode->node;
-		if(pstNode->ifindex == ifindex)
-		{
-			return pstNode;
-		}
-	}
-	return NULL;
-}
-
-int mirror_callback_api(mirror_cb cb, void *pVoid)
-{
-	int ret = OK;
-	nsm_mirror_t *pstNode = NULL;
-	NODE index;
-	if(gMirror.mutex)
-		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
-	for(pstNode = (nsm_mirror_t *)lstFirst(gMirror.mirrorList);
-			pstNode != NULL;  pstNode = (nsm_mirror_t *)lstNext((NODE*)&index))
-	{
-		index = pstNode->node;
-		if(pstNode && cb)
-		{
-			ret = (cb)(pstNode, pVoid);
-			if(ret != OK)
-				break;
-		}
-	}
-	if(gMirror.mutex)
+	if (gMirror.mutex)
 		os_mutex_unlock(gMirror.mutex);
 	return ret;
 }
 
-int nsm_mirror_global_enable(zpl_bool enable)
-{
-	if(gMirror.mutex)
-		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
-	gMirror.enable = enable;
-	if(gMirror.mutex)
-		os_mutex_unlock(gMirror.mutex);
-	return OK;
-}
-
-zpl_bool nsm_mirror_global_is_enable(void)
-{
-	zpl_bool enable;
-	if(gMirror.mutex)
-		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
-	enable = gMirror.enable;
-	if(gMirror.mutex)
-		os_mutex_unlock(gMirror.mutex);
-	return enable;
-}
-
-int nsm_mirror_destination_set_api(ifindex_t ifindex, zpl_bool enable)
+int nsm_mirror_destination_get_api(zpl_uint32 id, ifindex_t *ifindex, zpl_bool *enable)
 {
 	int ret = 0;
-	nsm_mirror_t *mirror = NULL;
-	if(gMirror.mutex)
+	if (gMirror.mutex)
 		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
-	mirror = mirror_lookup_node(ifindex);
-	if(!mirror)
-	{
-		if(enable == zpl_true)
-		{
-			nsm_mirror_t value;
-			os_memset(&value, 0, sizeof(nsm_mirror_t));
-			value.ifindex = ifindex;
-			value.mirror_dst = zpl_true;
-			value.enable = zpl_true;
-#ifdef ZPL_HAL_MODULE
-			if(hal_mirror_enable(ifindex, value.enable) == OK)
-#endif
-				ret = mirror_add_node(&value);
-		}
-		else
-			ret = ERROR;
-	}
-	else
-	{
-		if(enable == zpl_true)
-		{
-			mirror->ifindex = ifindex;
-			mirror->mirror_dst = zpl_true;
-			mirror->enable = zpl_true;
-#ifdef ZPL_HAL_MODULE
-			if(hal_mirror_enable(ifindex, mirror->enable) == OK)
-#endif
-				ret = OK;
-		}
-		else
-		{
-#ifdef ZPL_HAL_MODULE
-			if(hal_mirror_enable(ifindex, zpl_false) == OK)
-#endif
-				ret = mirror_del_node(mirror);
-		}
-	}
-	if(gMirror.mutex)
+	if (enable)
+		*enable = gMirror.mirror_session[id].enable;
+	if (ifindex)
+		*ifindex = gMirror.mirror_session[id].ifindex;
+	ret = OK;
+	if (gMirror.mutex)
 		os_mutex_unlock(gMirror.mutex);
 	return ret;
 }
 
-int nsm_mirror_destination_get_api(ifindex_t ifindex, zpl_bool *enable)
+zpl_bool nsm_mirror_is_destination_api(ifindex_t ifindex, zpl_uint32 *id)
 {
-	int ret = 0;
-	nsm_mirror_t *mirror = NULL;
-	if(gMirror.mutex)
+	int i = 0;
+	zpl_bool ret = zpl_false;
+	if (gMirror.mutex)
 		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
-	mirror = mirror_lookup_node(ifindex);
-	if(!mirror)
+	for (i = 0; i < MIRROR_SESSION_MAX; i++)
+	{
+		if (gMirror.mirror_session[i].ifindex == ifindex)
+		{
+			if (id)
+				*id = i+1;
+			if (gMirror.mutex)
+				os_mutex_unlock(gMirror.mutex);
+			return zpl_true;
+		}
+	}
+	if (gMirror.mutex)
+		os_mutex_unlock(gMirror.mutex);
+	return ret;
+}
+
+int nsm_mirror_source_set_api(zpl_uint32 id, ifindex_t ifindex, zpl_bool enable, mirror_dir_en dir)
+{
+	int ret = 0, i = 0;
+	if (gMirror.mutex)
+		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
+	if (gMirror.mirror_session[id].enable)
+	{
+		if (gMirror.mutex)
+			os_mutex_unlock(gMirror.mutex);
+		return ret;
+	}
+
+#ifdef ZPL_HAL_MODULE
+	if (enable)
+		ret = hal_mirror_source_enable(ifindex, enable, dir);
+#endif
+	if (ret == OK)
+	{
+		gMirror.mirror_session[id].mode = enable ? MIRROR_SOURCE_PORT : 0;
+		for (i = 0; i < MIRROR_SOURCE_MAX; i++)
+		{
+			if (enable)
+			{
+				if (gMirror.mirror_session[id].srcport[i].enable == zpl_false)
+				{
+					gMirror.mirror_session[id].srcport[i].ifindex = ifindex;
+					gMirror.mirror_session[id].srcport[i].dir = dir;
+					gMirror.mirror_session[id].srcport[i].enable = zpl_true;
+				}
+			}
+			else
+			{
+				if (gMirror.mirror_session[id].srcport[i].enable == zpl_true &&
+					gMirror.mirror_session[id].srcport[i].ifindex == ifindex)
+				{
+#ifdef ZPL_HAL_MODULE
+					ret = hal_mirror_source_enable(ifindex, enable, dir);
+#endif
+					if (ret == OK)
+					{
+						gMirror.mirror_session[id].srcport[i].ifindex = 0;
+						gMirror.mirror_session[id].srcport[i].dir = 0;
+						gMirror.mirror_session[id].srcport[i].enable = zpl_false;
+					}
+				}
+			}
+		}
+	}
+	if (gMirror.mutex)
+		os_mutex_unlock(gMirror.mutex);
+	return ret;
+}
+
+int nsm_mirror_source_get_api(zpl_uint32 id, ifindex_t ifindex, zpl_bool *enable, mirror_mode_t *mode, mirror_dir_en *dir)
+{
+	int ret = 0, i = 0;
+	if (gMirror.mutex)
+		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
+
+	for (i = 0; i < MIRROR_SOURCE_MAX; i++)
+	{
+		if (gMirror.mirror_session[id].srcport[i].ifindex == ifindex)
+		{
+			if (mode)
+				*mode = gMirror.mirror_session[id].mode;
+			if (dir)
+				*dir = gMirror.mirror_session[id].srcport[i].dir;
+			if (enable)
+				*enable = gMirror.mirror_session[id].srcport[i].enable;
+		}
+	}
+	if (gMirror.mutex)
+		os_mutex_unlock(gMirror.mutex);
+	return ret;
+}
+
+zpl_bool nsm_mirror_is_source_api(ifindex_t ifindex, zpl_uint32 *id, mirror_mode_t *mode, 
+	mirror_dir_en *dir, mirror_filter_t *filter, zpl_uint32 *index)
+{
+	int i = 0, j = 0;
+	zpl_bool ret = zpl_false;
+	if (gMirror.mutex)
+		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
+	for (i = 0; i < MIRROR_SESSION_MAX; i++)
+	{
+		for (j = 0; j < MIRROR_SOURCE_MAX; j++)
+		{
+			if (gMirror.mirror_session[i].srcport[i].enable && 
+				gMirror.mirror_session[i].srcport[i].ifindex == ifindex)
+			{
+				if(id)
+					*id = i+1;
+				if(mode)
+					*mode = gMirror.mirror_session[i].mode;
+				if(dir)
+					*dir = gMirror.mirror_session[i].srcport[j].dir;
+				if(filter)
+					*filter = 0;
+				if(index)
+					*index = j;
+				ret = zpl_true;	
+				if (gMirror.mutex)
+					os_mutex_unlock(gMirror.mutex);
+				return ret;
+			}
+			if (gMirror.mirror_session[i].ingress_filter[i].enable && 
+				gMirror.mirror_session[i].ingress_filter[i].ifindex == ifindex)
+			{
+				if(id)
+					*id = i+1;
+				if(mode)
+					*mode = gMirror.mirror_session[i].mode;
+				if(dir)
+					*dir = gMirror.mirror_session[i].ingress_filter[j].dir;
+				if(filter)
+					*filter = gMirror.mirror_session[i].ingress_filter[j].filter;
+				if(index)
+					*index = j;
+				ret = zpl_true;	
+				if (gMirror.mutex)
+					os_mutex_unlock(gMirror.mutex);
+				return ret;
+			}
+			if (gMirror.mirror_session[i].egress_filter[i].enable && 
+				gMirror.mirror_session[i].egress_filter[i].ifindex == ifindex)
+			{
+				if(id)
+					*id = i;
+				if(mode)
+					*mode = gMirror.mirror_session[i].mode;
+				if(dir)
+					*dir = gMirror.mirror_session[i].egress_filter[j].dir;
+				if(filter)
+					*filter = gMirror.mirror_session[i].egress_filter[j].filter;
+				if(index)
+					*index = j;
+				ret = zpl_true;	
+				if (gMirror.mutex)
+					os_mutex_unlock(gMirror.mutex);
+				return ret;
+			}
+		}
+	}
+	if (gMirror.mutex)
+		os_mutex_unlock(gMirror.mutex);
+	return ret;
+}
+
+int nsm_mirror_source_mac_filter_set_api(zpl_uint32 id, ifindex_t ifindex, zpl_bool enable,
+	mirror_dir_en dir, mirror_filter_t filter, zpl_uchar *mac)
+{
+	int ret = 0, i = 0;
+	nsm_mirror_source_t	*mirror_filter = NULL;
+	if (gMirror.mutex)
+		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
+	if (gMirror.mirror_session[id].enable)
 	{
 		ret = ERROR;
+		if (gMirror.mutex)
+			os_mutex_unlock(gMirror.mutex);
+		return ret;
 	}
-	else
-	{
-		if(enable)
-			*enable = mirror->enable;
-/*		if(dst)
-			*dst = mirror->mirror_dst;*/
-		ret = OK;
-	}
-	if(gMirror.mutex)
-		os_mutex_unlock(gMirror.mutex);
-	return ret;
-}
-
-zpl_bool nsm_mirror_is_enable_api(ifindex_t ifindex)
-{
-	zpl_bool ret = zpl_false;
-	nsm_mirror_t *mirror = NULL;
-	if(gMirror.mutex)
-		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
-	mirror = mirror_lookup_node(ifindex);
-	if(mirror)
-	{
-		if(mirror->enable)
-			ret = zpl_true;
-	}
-	if(gMirror.mutex)
-		os_mutex_unlock(gMirror.mutex);
-	return ret;
-}
-
-zpl_bool nsm_mirror_is_destination_api(ifindex_t ifindex)
-{
-	zpl_bool ret = zpl_false;
-	nsm_mirror_t *mirror = NULL;
-	if(gMirror.mutex)
-		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
-	mirror = mirror_lookup_node(ifindex);
-	if(mirror)
-	{
-		if(mirror->enable && mirror->mirror_dst)
-			ret = zpl_true;
-	}
-	if(gMirror.mutex)
-		os_mutex_unlock(gMirror.mutex);
-	return ret;
-}
-/*
-int nsm_mirror_mode_set_api(zpl_bool mac)
-{
-	int ret = ERROR;
-
-	if(gMirror.mutex)
-		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
-
-	gMirror.bMac = mac;
-	ret = OK;
-
-	if(gMirror.mutex)
-		os_mutex_unlock(gMirror.mutex);
-	return ret;
-}
-
-int nsm_mirror_mode_get_api(zpl_bool *mac)
-{
-	int ret = ERROR;
-
-	if(gMirror.mutex)
-		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
-	if(mac)
-		*mac = gMirror.bMac;
-	ret = OK;
-
-	if(gMirror.mutex)
-		os_mutex_unlock(gMirror.mutex);
-	return ret;
-}
-
-int nsm_mirror_source_mac_set_api(zpl_bool enable, zpl_uchar *mac, mirror_dir_en dir)
-{
-	int ret = ERROR;
-
-	if(gMirror.mutex)
-		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
-
-	if(mac)
-	{
-		ret = OK;
-		os_memcpy(gMirror.mac, mac, NSM_MAC_MAX);
-		gMirror.dir = dir;
-	}
-
-	if(gMirror.mutex)
-		os_mutex_unlock(gMirror.mutex);
-	return ret;
-}
-
-int nsm_mirror_source_mac_get_api(zpl_bool *enable, zpl_uchar *mac, mirror_dir_en *dir)
-{
-	int ret = ERROR;
-
-	if(gMirror.mutex)
-		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
-	if(mac)
-	{
-		ret = OK;
-		os_memcpy(mac, gMirror.mac, NSM_MAC_MAX);
-		if(dir)
-			*dir = gMirror.dir;
-	}
-	ret = OK;
-
-	if(gMirror.mutex)
-		os_mutex_unlock(gMirror.mutex);
-	return ret;
-}*/
-
-
-int nsm_mirror_source_set_api(ifindex_t ifindex, zpl_bool enable, mirror_dir_en dir)
-{
-	int ret = 0;
-	nsm_mirror_t *mirror = NULL;
-	if(gMirror.mutex)
-		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
-	mirror = mirror_lookup_node(ifindex);
-	if(!mirror)
-	{
-		if(enable == zpl_true)
-		{
-			nsm_mirror_t value;
-			os_memset(&value, 0, sizeof(nsm_mirror_t));
-			value.ifindex = ifindex;
-			value.mirror_dst = zpl_false;
-			value.enable = zpl_true;
-			value.dir = dir;
-#ifdef ZPL_HAL_MODULE
-			if(hal_mirror_source_enable(ifindex, NULL, dir, zpl_true) == OK)
-#endif
-				ret = mirror_add_node(&value);
-		}
-		else
-			ret = ERROR;
-	}
-	else
-	{
-		if(enable == zpl_true)
-		{
-			mirror->ifindex = ifindex;
-			mirror->mirror_dst = zpl_false;
-			mirror->enable = zpl_true;
-			mirror->dir = dir;
-#ifdef ZPL_HAL_MODULE
-			if(hal_mirror_source_enable(ifindex, NULL, dir, zpl_true) == OK)
-#endif
-				ret = OK;
-		}
-		else
-		{
-#ifdef ZPL_HAL_MODULE
-			if(hal_mirror_source_enable(ifindex, NULL, dir, zpl_false) == OK)
-#endif
-				ret = mirror_del_node(mirror);
-		}
-	}
-	if(gMirror.mutex)
-		os_mutex_unlock(gMirror.mutex);
-	return ret;
-}
-
-int nsm_mirror_source_get_api(ifindex_t ifindex, zpl_bool *enable, mirror_dir_en *dir)
-{
-	int ret = 0;
-	nsm_mirror_t *mirror = NULL;
-	if(gMirror.mutex)
-		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
-	mirror = mirror_lookup_node(ifindex);
-	if(!mirror)
+	if (dir != MIRROR_INGRESS && dir != MIRROR_EGRESS)
 	{
 		ret = ERROR;
+		if (gMirror.mutex)
+			os_mutex_unlock(gMirror.mutex);
+		return ret;
 	}
-	else
-	{
-		if(enable)
-			*enable = mirror->enable;
-		if(dir)
-			*dir = mirror->dir;
-		ret = OK;
-	}
-	if(gMirror.mutex)
-		os_mutex_unlock(gMirror.mutex);
-	return ret;
-}
-
-zpl_bool nsm_mirror_is_source_api(void)
-{
-	zpl_bool ret = zpl_false;
-	nsm_mirror_t *pstNode = NULL;
-	NODE index;
-	if(gMirror.mutex)
-		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
-	for(pstNode = (nsm_mirror_t *)lstFirst(gMirror.mirrorList);
-			pstNode != NULL;  pstNode = (nsm_mirror_t *)lstNext((NODE*)&index))
-	{
-		index = pstNode->node;
-		if(pstNode->ifindex && pstNode->enable && pstNode->mirror_dst == zpl_false)
-		{
-			ret = zpl_true;
-			break;
-		}
-	}
-	if(gMirror.mutex)
-		os_mutex_unlock(gMirror.mutex);
-	return ret;
-}
-
-int nsm_mirror_source_mac_filter_set_api(zpl_bool enable, zpl_uchar *mac, zpl_bool dst,  mirror_dir_en dir)
-{
-	int ret = 0;
-	if(gMirror.mutex)
-		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
-	if(enable == zpl_true)
-	{
-		if(mac)
-		{
-			if(dir == MIRROR_INGRESS)
-			{
-				gMirror.in_enable = zpl_true;
-				gMirror.ingress_dst = dst;
-				os_memcpy(gMirror.ingress_mac, mac, NSM_MAC_MAX);
-			}
-			else if(dir == MIRROR_EGRESS)
-			{
-				gMirror.out_enable = zpl_true;
-				gMirror.egress_dst = dst;
-				os_memcpy(gMirror.egress_mac, mac, NSM_MAC_MAX);
-			}
 #ifdef ZPL_HAL_MODULE
-			if(hal_mirror_source_filter_enable(zpl_true, dst, mac, dir) == OK)
+	if (enable)
+		ret = hal_mirror_source_filter_enable(ifindex, enable, dir, filter, mac);
 #endif
-				ret = OK;
-		}
-		else
+	if (ret == OK)
+	{
+		if(dir == MIRROR_INGRESS)
+			mirror_filter = gMirror.mirror_session[id].ingress_filter;
+		else if(dir == MIRROR_EGRESS)
+			mirror_filter = gMirror.mirror_session[id].egress_filter;
+
+		gMirror.mirror_session[id].mode = enable ? MIRROR_SOURCE_MAC : 0;
+		for (i = 0; i < MIRROR_SOURCE_MAX; i++)
 		{
-			if(dir == MIRROR_INGRESS)
+			if (enable)
 			{
-				gMirror.in_enable = zpl_false;
-				gMirror.ingress_dst = zpl_false;
-				os_memset(gMirror.ingress_mac, 0, NSM_MAC_MAX);
+				if (mirror_filter[i].enable == zpl_false)
+				{
+					mirror_filter[i].ifindex = ifindex;
+					mirror_filter[i].dir = dir;
+					mirror_filter[i].enable = zpl_true;
+					mirror_filter[i].filter = filter;
+					os_memcpy(mirror_filter[i].mac, mac, NSM_MAC_MAX);
+				}
 			}
-			else if(dir == MIRROR_EGRESS)
+			else
 			{
-				gMirror.out_enable = zpl_false;
-				gMirror.egress_dst = zpl_false;
-				os_memset(gMirror.egress_mac, 0, NSM_MAC_MAX);
-			}
+				if (mirror_filter[i].enable == zpl_true &&
+					mirror_filter[i].ifindex == ifindex)
+				{
 #ifdef ZPL_HAL_MODULE
-			if(hal_mirror_source_filter_enable(zpl_false, dst, NULL, dir) == OK)
+					ret = hal_mirror_source_filter_enable(ifindex, enable, dir, filter, mac);
 #endif
-				ret = OK;
+					if (ret == OK)
+					{
+						mirror_filter[i].ifindex = 0;
+						mirror_filter[i].dir = 0;
+						mirror_filter[i].enable = zpl_false;
+						mirror_filter[i].filter = 0;
+						os_memset(mirror_filter[i].mac, 0, NSM_MAC_MAX);
+					}
+				}
+			}
 		}
 	}
-	else
-		ret = ERROR;
-	if(gMirror.mutex)
+	if (gMirror.mutex)
 		os_mutex_unlock(gMirror.mutex);
 	return ret;
 }
-int nsm_mirror_source_mac_filter_get_api(mirror_dir_en dir, zpl_bool *enable, zpl_uchar *mac, zpl_bool *dst)
-{
-	int ret = 0;
-	if(gMirror.mutex)
-		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
 
-	if(dir == MIRROR_INGRESS)
+
+
+
+static int bulid_mirror_dest(nsm_mirror_session_t *node, zpl_uint32 index, struct vty *vty)
+{
+	if(node && node->enable)
 	{
-		if(dst)
-			*dst = gMirror.ingress_dst;
-		if(mac)
-			os_memcpy(mac, gMirror.ingress_mac, NSM_MAC_MAX);
+		vty_out(vty, "monitor session %d destination interface %s%s",
+					index, if_ifname_make(node->ifindex), VTY_NEWLINE);
 	}
-	else if(dir == MIRROR_EGRESS)
+	return 0;
+}
+static int bulid_mirror_source_port(nsm_mirror_session_t *node, zpl_uint32 index, struct vty *vty)
+{
+	if(node && node->mode == MIRROR_SOURCE_PORT)
 	{
-		if(dst)
-			*dst = gMirror.egress_dst;
-		if(mac)
-			os_memcpy(mac, gMirror.egress_mac, NSM_MAC_MAX);
+		zpl_uint32 i = 0;
+		const char *both[] = {"none", "ingress", "egress", "both"};
+		for(i = 0; i < MIRROR_SOURCE_MAX; i++)
+		{
+			if(node->srcport[i].enable)
+			{
+				if(node->srcport[i].dir != MIRROR_BOTH)
+					vty_out(vty, "monitor session %d source interface %s %s%s",
+							index, if_ifname_make(node->srcport[i].ifindex), 
+							both[node->srcport[i].dir], VTY_NEWLINE);
+				else
+					vty_out(vty, "monitor session %d source interface %s%s",
+							index, if_ifname_make(node->srcport[i].ifindex), VTY_NEWLINE);
+			}
+		}
 	}
-	ret = OK;
-	if(gMirror.mutex)
+	return 0;
+}
+
+static int bulid_mirror_source_mac(nsm_mirror_session_t *node, zpl_uint32 index, struct vty *vty)
+{
+	if(node && node->mode == MIRROR_SOURCE_MAC)
+	{
+		zpl_uint32 i = 0;
+		const char *both[] = {"none", "ingress", "egress", "both"};
+		const char *filter[] = {"none", "destination", "source", "both"};
+		for(i = 0; i < MIRROR_SOURCE_MAX; i++)
+		{
+			if(node->ingress_filter[i].enable)
+			{
+				vty_out(vty, "monitor session %d source interface %s %s %s %s%s",
+						index, if_ifname_make(node->ingress_filter[i].ifindex), 
+						both[node->ingress_filter[i].dir], 
+						filter[node->ingress_filter[i].filter], 
+						if_mac_out_format(node->ingress_filter[i].mac), VTY_NEWLINE);
+			}
+		}
+		for(i = 0; i < MIRROR_SOURCE_MAX; i++)
+		{
+			if(node->egress_filter[i].enable)
+			{
+				vty_out(vty, "monitor session %d source interface %s %s %s %s%s",
+						index, if_ifname_make(node->egress_filter[i].ifindex), 
+						both[node->egress_filter[i].dir], 
+						filter[node->egress_filter[i].filter], 
+						if_mac_out_format(node->egress_filter[i].mac), VTY_NEWLINE);
+			}
+		}
+	}
+	return 0;
+}
+
+
+
+int bulid_mirror_config(struct vty *vty)
+{
+	int i = 0;
+	if (gMirror.mutex)
+		os_mutex_lock(gMirror.mutex, OS_WAIT_FOREVER);
+	for (i = 0; i < MIRROR_SESSION_MAX; i++)
+	{	
+		bulid_mirror_dest(&gMirror.mirror_session[i], i+1, vty);
+		bulid_mirror_source_port(&gMirror.mirror_session[i], i+1, vty);
+		bulid_mirror_source_mac(&gMirror.mirror_session[i], i+1, vty);
+	}
+	if (gMirror.mutex)
 		os_mutex_unlock(gMirror.mutex);
-	return ret;
+	return 1;
 }

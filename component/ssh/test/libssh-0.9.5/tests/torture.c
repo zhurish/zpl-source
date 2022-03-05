@@ -502,7 +502,7 @@ int torture_server_port(void)
 const char *torture_server_address(int family)
 {
     switch (family) {
-    case AF_INET: {
+    case IPSTACK_AF_INET: {
         const char *ip4 = getenv("TORTURE_SERVER_ADDRESS_IPV4");
 
         if (ip4 != NULL && ip4[0] != '\0') {
@@ -511,7 +511,7 @@ const char *torture_server_address(int family)
 
         return TORTURE_SSHD_SRV_IPV4;
     }
-    case AF_INET6: {
+    case IPSTACK_AF_INET6: {
         const char *ip6 = getenv("TORTURE_SERVER_ADDRESS_IPV6");
 
         if (ip6 != NULL && ip6[0] != '\0') {

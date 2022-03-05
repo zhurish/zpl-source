@@ -22,7 +22,7 @@ OBJS	+= b53_test.o
 OBJS	+= b53_driver.o
 
 OBJS	+= sdk_driver.o
-
+OBJS	+= sdk_netpkt.o
 
 #############################################################################
 # LIB

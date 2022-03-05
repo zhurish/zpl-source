@@ -168,7 +168,7 @@
 /* Define to 1 if you have the `cfmakeraw' function. */
 #cmakedefine HAVE_CFMAKERAW 1
 
-/* Define to 1 if you have the `getaddrinfo' function. */
+/* Define to 1 if you have the `ipstack_getaddrinfo' function. */
 #cmakedefine HAVE_GETADDRINFO 1
 
 /* Define to 1 if you have the `poll' function. */

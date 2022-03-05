@@ -74,7 +74,8 @@ extern zpl_socket_t _kernel_vrf_socket(int domain, zpl_uint32 type, zpl_uint16 p
 extern int ip_ifp_stack_init(void);
 extern int ip_arp_stack_init(void);
 extern int kernel_driver_init(void);
-
+extern int kernel_packet_init(void);
+extern int vrf_socket (int domain, int type, int protocol, vrf_id_t vrf_id);
 
 #ifdef __cplusplus
 }

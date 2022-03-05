@@ -20,22 +20,6 @@
 #include "kernel_netlink.h"
 #include "pal_driver.h"
 
-struct module_list module_list_kernel = 
-{ 
-	.module=MODULE_KERNEL, 
-	.name="KERNEL", 
-	.module_init=NULL, 
-	.module_exit=NULL, 
-	.module_task_init=NULL, 
-	.module_task_exit=NULL, 
-	.module_cmd_init=NULL, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
-	.taskid=0,
-	.flags = 0,
-};
-
 #ifdef ZPL_KERNEL_SORF_FORWARDING
 int _ipkernel_create(struct interface *ifp)
 {
@@ -308,7 +292,6 @@ int ip_ifp_stack_init(void)
 
 	pal_stack.ip_stack_vrf_create = _ipkernel_vrf_enable;
 	pal_stack.ip_stack_vrf_delete = _ipkernel_vrf_disable;
-	pal_stack.ip_stack_vrf_socket = _kernel_vrf_socket;
 
   /*
   * 防火墙

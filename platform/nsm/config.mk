@@ -10,9 +10,9 @@ OBJS	+= nsm_debug.o
 #OBJS	+= table.o
 #OBJS	+= router-id.o
 OBJS	+= nsm_interface.o
-OBJS	+= nsm_pal.o
+OBJS	+= nsm_halpal.o
 #OBJS	+= nsm_client.o
-
+#OBJS	+= nsm_hook.o
 #OBJS	+= nsm_rib.o
 
 

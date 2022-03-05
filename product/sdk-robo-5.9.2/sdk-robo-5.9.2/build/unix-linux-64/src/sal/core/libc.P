@@ -1,0 +1,30 @@
+/home/zhurish/workspace/working/zpl-source/source/product/sdk-robo-5.9.2/sdk-robo-5.9.2/build/unix-linux-64/src/sal/core/libc.o: \
+ /home/zhurish/workspace/working/zpl-source/source/product/sdk-robo-5.9.2/sdk-robo-5.9.2/src/sal/core/libc.c \
+ /usr/include/stdc-predef.h \
+ /home/zhurish/workspace/working/zpl-source/source/product/sdk-robo-5.9.2/sdk-robo-5.9.2/include/sal/core/libc.h \
+ /home/zhurish/workspace/working/zpl-source/source/product/sdk-robo-5.9.2/sdk-robo-5.9.2/include/sal/types.h \
+ /home/zhurish/workspace/working/zpl-source/source/product/sdk-robo-5.9.2/sdk-robo-5.9.2/include/sal/compiler.h \
+ /usr/lib/gcc/x86_64-redhat-linux/8/include/stdarg.h \
+ /usr/include/string.h /usr/include/bits/libc-header-start.h \
+ /usr/include/features.h /usr/include/sys/cdefs.h \
+ /usr/include/bits/wordsize.h /usr/include/bits/long-double.h \
+ /usr/include/gnu/stubs.h /usr/include/gnu/stubs-32.h \
+ /usr/lib/gcc/x86_64-redhat-linux/8/include/stddef.h \
+ /usr/include/bits/types/locale_t.h /usr/include/bits/types/__locale_t.h \
+ /usr/include/strings.h \
+ /home/zhurish/workspace/working/zpl-source/source/product/sdk-robo-5.9.2/sdk-robo-5.9.2/include/sal/core/alloc.h
+
+ /home/zhurish/workspace/working/zpl-source/source/product/sdk-robo-5.9.2/sdk-robo-5.9.2/src/sal/core/libc.c :
+ /usr/include/stdc-predef.h :
+ /home/zhurish/workspace/working/zpl-source/source/product/sdk-robo-5.9.2/sdk-robo-5.9.2/include/sal/core/libc.h :
+ /home/zhurish/workspace/working/zpl-source/source/product/sdk-robo-5.9.2/sdk-robo-5.9.2/include/sal/types.h :
+ /home/zhurish/workspace/working/zpl-source/source/product/sdk-robo-5.9.2/sdk-robo-5.9.2/include/sal/compiler.h :
+ /usr/lib/gcc/x86_64-redhat-linux/8/include/stdarg.h :
+ /usr/include/string.h /usr/include/bits/libc-header-start.h :
+ /usr/include/features.h /usr/include/sys/cdefs.h :
+ /usr/include/bits/wordsize.h /usr/include/bits/long-double.h :
+ /usr/include/gnu/stubs.h /usr/include/gnu/stubs-32.h :
+ /usr/lib/gcc/x86_64-redhat-linux/8/include/stddef.h :
+ /usr/include/bits/types/locale_t.h /usr/include/bits/types/__locale_t.h :
+ /usr/include/strings.h :
+ /home/zhurish/workspace/working/zpl-source/source/product/sdk-robo-5.9.2/sdk-robo-5.9.2/include/sal/core/alloc.h :

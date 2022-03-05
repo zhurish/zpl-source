@@ -106,11 +106,11 @@ static void if_addr_wakeup (struct interface *ifp)
 					 */
 					//if_set_flags(ifp, IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING);
 					//if_refresh(ifp);
-					nsm_pal_interface_up(ifp);
-					pal_interface_refresh_flag(ifp);
-					//ifp->k_ifindex = pal_interface_ifindex(ifp->k_name);
+					nsm_halpal_interface_up(ifp);
+					//nsm_halpal_interface_refresh_flag(ifp);
+					//ifp->k_ifindex = nsm_halpal_interface_ifindex(ifp->k_name);
 				}
-				if(nsm_pal_interface_set_address(ifp, ifc, 0) != OK)
+				if(nsm_halpal_interface_set_address(ifp, ifc, 0) != OK)
 				//ret = _ipkernel_if_set_prefix(ifp, ifc);
 				//if (ret < 0)
 				{
@@ -132,11 +132,11 @@ static void if_addr_wakeup (struct interface *ifp)
 					/* See long comment above */
 					//if_set_flags(ifp, IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING);
 					//if_refresh(ifp);
-					nsm_pal_interface_up(ifp);
-					pal_interface_refresh_flag(ifp);
-					//ifp->k_ifindex = pal_interface_ifindex(ifp->k_name);
+					nsm_halpal_interface_up(ifp);
+					//nsm_halpal_interface_refresh_flag(ifp);
+					//ifp->k_ifindex = nsm_halpal_interface_ifindex(ifp->k_name);
 				}
-				if(nsm_pal_interface_set_address(ifp, ifc, 0) != OK)
+				if(nsm_halpal_interface_set_address(ifp, ifc, 0) != OK)
 				//ret = _ipkernel_if_prefix_add_ipv6(ifp, ifc);
 				//if (ret < 0)
 				{
@@ -348,7 +348,7 @@ static int nsm_interface_kmac_set(struct interface *ifp)
 static int nsm_interface_new_hook(struct interface *ifp)
 {
 	int ret = -1;
-	struct nsm_interface *nsm_interface;
+	struct nsm_interface *nsm_interface = NULL;
 	NSM_ENTER_FUNC();
 	nsm_interface = XCALLOC(MTYPE_IF, sizeof(struct nsm_interface));
 
@@ -365,29 +365,19 @@ static int nsm_interface_new_hook(struct interface *ifp)
 	ifp->info[MODULE_NSM] = nsm_interface;
 
 
-#if 0//def ZPL_KERNEL_STACK_MODULE
-	if(ifp->dynamic == zpl_false && if_kernel_name_lookup(ifp->ifindex))
-	{
-		//zlog_debug(MODULE_NSM, "=====%s: %s -> %s",__func__, ifp->name, if_kernel_name_lookup(ifp->ifindex));
-		if_kname_set(ifp, if_kernel_name_lookup(ifp->ifindex));
-	}
-#endif
-	if(ret > 0/*!os_strlen(ifp->k_name)*/)
+	if(if_have_kernel(ifp))
 	{
 		if(nsm_interface_kname_set(ifp) == OK)
 			nsm_interface_kmac_set(ifp);
 	}
 
-	//nsm_client_notify_interface_add(ifp);
+	ret = nsm_halpal_interface_add(ifp);
 
-	ret = nsm_pal_interface_add(ifp);
-
-	if(ret == OK && os_strlen(ifp->k_name))
+	if(ret == OK && if_have_kernel(ifp) && os_strlen(ifp->k_name))
 	{
 		SET_FLAG(ifp->status, ZEBRA_INTERFACE_ATTACH);
-		ifp->k_ifindex = pal_interface_ifindex(ifp->k_name);
-		pal_interface_refresh_flag(ifp);
-		pal_interface_get_lladdr(ifp);
+		ifp->k_ifindex = nsm_halpal_interface_ifindex(ifp->k_name);
+		//nsm_halpal_interface_refresh_flag(ifp);
 	}
 
 	nsm_interface_hook_handler(1, -1, ifp);
@@ -403,8 +393,8 @@ int nsm_interface_update_kernel(struct interface *ifp, zpl_char *kname)
 	{
 		if_kname_set(ifp, kname);
 		SET_FLAG(ifp->status, ZEBRA_INTERFACE_ATTACH);
-		pal_interface_refresh_flag(ifp);
-		pal_interface_get_lladdr(ifp);
+		nsm_halpal_interface_refresh_flag(ifp);
+		//pal_interface_get_lladdr(ifp);
 		nsm_interface_hw_update_api(ifp);
 		return OK;
 	}
@@ -417,7 +407,7 @@ static int nsm_interface_delete_hook(struct interface *ifp)
 	struct nsm_interface *nsm_interface;
 	NSM_ENTER_FUNC();
 	nsm_interface_hook_handler(0, -1, ifp);
-	nsm_pal_interface_delete(ifp);
+	nsm_halpal_interface_delete(ifp);
 	if (ifp->info[MODULE_NSM])
 	{
 		nsm_interface = ifp->info[MODULE_NSM];
@@ -649,15 +639,14 @@ static int nsm_interface_ip_address_install(struct interface *ifp, struct prefix
 
 		/* Some system need to up the interface to set IP address. */
 		if (!if_is_up(ifp)) {
-			nsm_pal_interface_up(ifp);
-			pal_interface_refresh_flag(ifp);
+			nsm_halpal_interface_up(ifp);
 		}
 #ifdef ZPL_DHCP_MODULE
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
 		else
 		{
-			if(nsm_pal_interface_set_address(ifp, ifc, 0) != OK)
+			if(nsm_halpal_interface_set_address(ifp, ifc, 0) != OK)
 			{
 				listnode_delete(ifp->connected, ifc);
 				connected_free(ifc);
@@ -667,7 +656,7 @@ static int nsm_interface_ip_address_install(struct interface *ifp, struct prefix
 			}
 		}
 #else
-		if(nsm_pal_interface_set_address(ifp, ifc, 0) != OK)
+		if(nsm_halpal_interface_set_address(ifp, ifc, 0) != OK)
 		{
 			listnode_delete(ifp->connected, ifc);
 			connected_free(ifc);
@@ -716,14 +705,6 @@ static int nsm_interface_ip_address_uninstall(struct interface *ifp, struct pref
 	}
 	/* This is real route. */
 
-/*	ret = pal_kernel_if_unset_prefix(ifp, ifc);
-	if (ret < 0) {
-		vty_out(vty, "%% Can't unset interface IP address: %s.%s",
-				ipstack_strerror(ipstack_errno), VTY_NEWLINE);
-		return CMD_WARNING;
-	}*/
-	//nsm_pal_interface_unset_address(ifp, ifc, 0);
-
 	if(ifc->raw_status == 0)
 	{
 #ifdef ZPL_DHCP_MODULE
@@ -731,18 +712,18 @@ static int nsm_interface_ip_address_uninstall(struct interface *ifp, struct pref
 			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
 		else
 		{
-			if(nsm_pal_interface_unset_address(ifp, ifc, 0) != OK)
+			if(nsm_halpal_interface_unset_address(ifp, ifc, 0) != OK)
 			{
-				//printf("%s:nsm_pal_interface_unset_address\n",__func__);
+				//printf("%s:nsm_halpal_interface_unset_address\n",__func__);
 				//vty_out(vty, "%% Can't unset interface IP address: %s.%s",
 				//		ipstack_strerror(ipstack_errno), VTY_NEWLINE);
 				return ERROR;
 			}
 		}
 #else
-		if(nsm_pal_interface_unset_address(ifp, ifc, 0) != OK)
+		if(nsm_halpal_interface_unset_address(ifp, ifc, 0) != OK)
 		{
-			//printf("%s:nsm_pal_interface_unset_address\n",__func__);
+			//printf("%s:nsm_halpal_interface_unset_address\n",__func__);
 			//vty_out(vty, "%% Can't unset interface IP address: %s.%s",
 			//		ipstack_strerror(ipstack_errno), VTY_NEWLINE);
 			return ERROR;
@@ -809,15 +790,14 @@ nsm_interface_ipv6_address_install (struct interface *ifp,
 	{
 		if (! if_is_up (ifp))
 		{
-			nsm_pal_interface_up(ifp);
-			pal_interface_refresh_flag(ifp);
+			nsm_halpal_interface_up(ifp);
 		}
 #ifdef ZPL_DHCP_MODULE
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
 		else
 		{
-			ret = nsm_pal_interface_set_address (ifp, ifc, secondary);
+			ret = nsm_halpal_interface_set_address (ifp, ifc, secondary);
 			if (ret < 0)
 			{
 				//vty_out (vty, "%% Can't set interface IP address: %s.%s",
@@ -828,7 +808,7 @@ nsm_interface_ipv6_address_install (struct interface *ifp,
 			}
 		}
 #else
-		ret = nsm_pal_interface_set_address (ifp, ifc, secondary);
+		ret = nsm_halpal_interface_set_address (ifp, ifc, secondary);
 		if (ret < 0)
 		{
 			//vty_out (vty, "%% Can't set interface IP address: %s.%s",
@@ -874,14 +854,6 @@ nsm_interface_ipv6_address_uninstall (struct interface *ifp,
 		os_msleep(10);
 	}
 	/* This is real route. */
-/*	ret = pal_kernel_if_prefix_delete_ipv6 (ifp, ifc);
-	if (ret < 0)
-	{
-		vty_out (vty, "%% Can't unset interface IP address: %s.%s",
-				ipstack_strerror(ipstack_errno), VTY_NEWLINE);
-		return CMD_WARNING;
-	}*/
-
 	if(ifc->raw_status == 0)
 	{
 #ifdef ZPL_DHCP_MODULE
@@ -889,18 +861,18 @@ nsm_interface_ipv6_address_uninstall (struct interface *ifp,
 			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
 		else
 		{
-			if(nsm_pal_interface_unset_address(ifp, ifc, secondry) != OK)
+			if(nsm_halpal_interface_unset_address(ifp, ifc, secondry) != OK)
 			{
-				//printf("%s:nsm_pal_interface_unset_address\n",__func__);
+				//printf("%s:nsm_halpal_interface_unset_address\n",__func__);
 				//vty_out(vty, "%% Can't unset interface IP address: %s.%s",
 				//		ipstack_strerror(ipstack_errno), VTY_NEWLINE);
 				return ERROR;
 			}
 		}
 #else
-		if(nsm_pal_interface_unset_address(ifp, ifc, secondry) != OK)
+		if(nsm_halpal_interface_unset_address(ifp, ifc, secondry) != OK)
 		{
-			//printf("%s:nsm_pal_interface_unset_address\n",__func__);
+			//printf("%s:nsm_halpal_interface_unset_address\n",__func__);
 			//vty_out(vty, "%% Can't unset interface IP address: %s.%s",
 			//		ipstack_strerror(ipstack_errno), VTY_NEWLINE);
 			return ERROR;
@@ -1047,9 +1019,14 @@ int nsm_interface_mode_set_api(struct interface *ifp, if_mode_t mode)
 	IF_DATA_LOCK();
 	if(ifp->if_mode != mode)
 	{
-		ret = nsm_pal_interface_mode(ifp, mode);
+		ret = nsm_halpal_interface_mode(ifp, mode);
 		if(ret == OK)
 		{
+			if(IF_MODE_L3 == mode)
+			{
+				//创建对应的L3或者获取刷新对应的L3接口数据
+				//if_have_kernel(ifp);
+			}
 			ifp->if_mode = mode;
 			#ifdef ZPL_RTPL_MODULE
 			zebra_interface_mode_update (ifp, mode);
@@ -1101,7 +1078,7 @@ int nsm_interface_enca_set_api(struct interface *ifp, if_enca_t enca, zpl_uint16
 				if_kname_set(ifp, k_name);
 		}
 #endif
-		ret = nsm_pal_interface_enca(ifp, enca, value);
+		ret = nsm_halpal_interface_enca(ifp, enca, value);
 		if(ret == OK)
 		{
 			ifp->if_enca = enca;
@@ -1141,11 +1118,13 @@ int nsm_interface_up_set_api(struct interface *ifp)
 	struct nsm_interface *zif = ifp->info[MODULE_NSM];
 	if(zif->shutdown != IF_ZEBRA_SHUTDOWN_OFF)
 	{
-		ret = nsm_pal_interface_up(ifp);
+		ret = nsm_halpal_interface_up(ifp);
 		if(ret == OK)
 		{
-			if_addr_wakeup(ifp);
-			pal_interface_refresh_flag(ifp);
+			if(if_is_l3intf(ifp))
+			{
+				if_addr_wakeup(ifp);
+			}
 			if_up(ifp);
 			zif->shutdown = IF_ZEBRA_SHUTDOWN_OFF;
 			//nsm_client_notify_interface_up(ifp);
@@ -1169,10 +1148,9 @@ int nsm_interface_down_set_api(struct interface *ifp)
 	struct nsm_interface *zif = ifp->info[MODULE_NSM];
 	if(zif->shutdown != IF_ZEBRA_SHUTDOWN_ON)
 	{
-		ret = nsm_pal_interface_down(ifp);
+		ret = nsm_halpal_interface_down(ifp);
 		if(ret == OK)
 		{
-			pal_interface_refresh_flag(ifp);
 			if_down(ifp);
 			zif->shutdown = IF_ZEBRA_SHUTDOWN_ON;
 			#ifdef ZPL_RTPL_MODULE
@@ -1207,7 +1185,7 @@ int nsm_interface_linkdetect_set_api(struct interface *ifp, nsm_linkdetect_en li
 	IF_DATA_LOCK();
 	if(linkdetect != zif->linkdetect)
 	{
-		ret =  nsm_pal_interface_linkdetect(ifp, linkdetect);
+		ret =  nsm_halpal_interface_linkdetect(ifp, linkdetect);
 		if(ret == OK)
 			ret |= nsm_interface_linkdetect_set(ifp, linkdetect);
 		//if(ret == OK)
@@ -1237,7 +1215,7 @@ int nsm_interface_statistics_get_api(struct interface *ifp, struct if_stats *sta
 	//IF_DATA_LOCK();
 	if(stats)
 	{
-		nsm_pal_interface_get_statistics(ifp);
+		nsm_halpal_interface_get_statistics(ifp);
 		if(stats)
 			os_memcpy((struct if_stats *)stats, &(ifp->stats), sizeof(struct if_stats));
 	}
@@ -1258,7 +1236,7 @@ int nsm_interface_address_set_api(struct interface *ifp, struct prefix *cp, zpl_
 			ret = nsm_interface_ipv6_address_install(ifp, (struct prefix_ipv6 *)cp, secondry);
 #endif
 		//if(ret == OK)
-		//	ret |= nsm_pal_interface_set_address(ifp, cp, secondry);
+		//	ret |= nsm_halpal_interface_set_address(ifp, cp, secondry);
 	}
 	IF_DATA_UNLOCK();
 	return ret;
@@ -1278,7 +1256,7 @@ int nsm_interface_address_unset_api(struct interface *ifp, struct prefix *cp, zp
 #endif
 
 		//if(ret == OK)
-		//	ret |= nsm_pal_interface_unset_address(ifp, cp, secondry);
+		//	ret |= nsm_halpal_interface_unset_address(ifp, cp, secondry);
 	}
 	IF_DATA_UNLOCK();
 	return ret;
@@ -1296,7 +1274,7 @@ int nsm_interface_multicast_set_api(struct interface *ifp, zpl_bool enable)
 	if_data = ifp->info[MODULE_NSM];
 	if(if_data->multicast != multicast)
 	{
-		ret = nsm_pal_interface_multicast(ifp, (zpl_bool)enable);
+		ret = nsm_halpal_interface_multicast(ifp, (zpl_bool)enable);
 		if(ret == OK)
 			if_data->multicast = multicast;
 		//if(ret == OK)
@@ -1336,7 +1314,7 @@ int nsm_interface_bandwidth_set_api(struct interface *ifp, zpl_uint32  bandwidth
 	IF_DATA_LOCK();
 	if(ifp->bandwidth != bandwidth)
 	{
-		ret = nsm_pal_interface_bandwidth(ifp, (zpl_uint32)bandwidth);
+		ret = nsm_halpal_interface_bandwidth(ifp, (zpl_uint32)bandwidth);
 		if(ret == OK)
 			ifp->bandwidth = bandwidth;
 		//if(ret == OK)
@@ -1366,7 +1344,7 @@ int nsm_interface_vrf_set_api(struct interface *ifp, vrf_id_t vrf_id)
 	IF_DATA_LOCK();
 	if(ifp->vrf_id != vrf_id)
 	{
-		ret = nsm_pal_interface_vrf(ifp, (vrf_id_t)vrf_id);
+		ret = nsm_halpal_interface_vrf(ifp, (vrf_id_t)vrf_id);
 		if(ret == OK)
 			ifp->vrf_id = vrf_id;
 		//if(ret == OK)
@@ -1396,7 +1374,7 @@ int nsm_interface_metric_set_api(struct interface *ifp, zpl_uint32 metric)
 	IF_DATA_LOCK();
 	if(ifp->metric != metric)
 	{
-		ret = nsm_pal_interface_metric(ifp, (zpl_uint32)metric);
+		ret = nsm_halpal_interface_metric(ifp, (zpl_uint32)metric);
 		if(ret == OK)
 			ifp->metric = metric;
 		//if(ret == OK)
@@ -1431,7 +1409,7 @@ int nsm_interface_mtu_set_api(struct interface *ifp, zpl_uint32 mtu)
 			ret = nsm_tunnel_mtu_set_api(ifp, (zpl_uint32)mtu);
 		else
 		#endif
-			ret = nsm_pal_interface_mtu(ifp, (zpl_uint32)mtu);
+			ret = nsm_halpal_interface_mtu(ifp, (zpl_uint32)mtu);
 		if(ret == OK)
 			ifp->mtu = mtu;
 		//if(ret == OK)
@@ -1461,7 +1439,7 @@ int nsm_interface_mac_set_api(struct interface *ifp, zpl_uchar *mac, zpl_uint32 
 	IF_DATA_LOCK();
 /*	if(mac == NULL)
 		default mac*/
-	ret = nsm_pal_interface_mac(ifp, mac, MIN(INTERFACE_HWADDR_MAX, maclen));
+	ret = nsm_halpal_interface_mac(ifp, mac, MIN(INTERFACE_HWADDR_MAX, maclen));
 	if(ret == OK)
 	{
 		ifp->hw_addr_len = MIN(INTERFACE_HWADDR_MAX, maclen);
@@ -1496,7 +1474,7 @@ int nsm_interface_duplex_set_api(struct interface *ifp, nsm_duplex_en duplex)
 	{
 		if(if_data->duplex != duplex)
 		{
-			ret = nsm_pal_interface_duplex(ifp, (int)duplex);
+			ret = nsm_halpal_interface_duplex(ifp, (int)duplex);
 			if(ret == OK)
 				if_data->duplex = duplex;
 		}
@@ -1532,7 +1510,7 @@ int nsm_interface_speed_set_api(struct interface *ifp, nsm_speed_en speed)
 	{
 		if(if_data->speed != speed)
 		{
-			ret = nsm_pal_interface_speed(ifp, (int)speed);
+			ret = nsm_halpal_interface_speed(ifp, (int)speed);
 			if(ret == OK)
 				if_data->speed = speed;
 		}

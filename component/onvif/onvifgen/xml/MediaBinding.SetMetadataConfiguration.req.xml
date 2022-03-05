@@ -60,7 +60,7 @@
        <tt:IPv6Address xsi:type="tt:IPv6Address"></tt:IPv6Address>
       </tt:Address>
       <tt:Port xsi:type="xsd:int">0</tt:Port>
-      <tt:TTL xsi:type="xsd:int">0</tt:TTL>
+      <tt:IPSTACK_TTL xsi:type="xsd:int">0</tt:IPSTACK_TTL>
       <tt:AutoStart xsi:type="xsd:boolean">false</tt:AutoStart>
       <!-- extensibility element(s) -->
 

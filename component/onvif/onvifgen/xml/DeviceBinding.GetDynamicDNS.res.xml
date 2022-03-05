@@ -36,7 +36,7 @@
    <tds:DynamicDNSInformation xsi:type="tt:DynamicDNSInformation">
     <tt:Type xsi:type="tt:DynamicDNSType">NoUpdate</tt:Type>
     <tt:Name xsi:type="tt:DNSName"></tt:Name>
-    <tt:TTL xsi:type="xsd:duration">PT0S</tt:TTL>
+    <tt:IPSTACK_TTL xsi:type="xsd:duration">PT0S</tt:IPSTACK_TTL>
     <tt:Extension xsi:type="tt:DynamicDNSInformationExtension">
      <!-- extensibility element(s) -->
 

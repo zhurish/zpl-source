@@ -69,8 +69,9 @@ extern "C" {
 #include <linux/rtnetlink.h>
 #include <linux/filter.h>
 #include <linux/if_packet.h>
+#include <net/if_arp.h>
 
-
+#include <linux/igmp.h>
 #include <arpa/inet.h>
 
 

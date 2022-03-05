@@ -29,104 +29,82 @@ static int b53125_eap_enable(sdk_driver_t *dev, zpl_bool enable)
 		port_ctrl = 0;
 	}
 	ret |= b53125_write8(dev->sdk_device, B53_EAP_PAGE, B53_EAP_GLOBAL, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 
-
-
-int b53125_eap_bypass_ipaddr_set(sdk_driver_t *dev, zpl_uint32 index, u32 address, u32 mask)
-{
-	int ret = 0;
-	u64 port_ctrl = address << 32 | mask;
-	ret |= b53125_read64(dev->sdk_device, B53_EAP_PAGE, index ? B53_EAP_DST_IP_ADDR1:B53_EAP_DST_IP_ADDR0, &port_ctrl);
-	port_ctrl |= B53_EAP_MPORT(address);
-	ret |= b53125_write64(dev->sdk_device, B53_EAP_PAGE, index ? B53_EAP_DST_IP_ADDR1:B53_EAP_DST_IP_ADDR0, port_ctrl);
-	return ret;
-}
-
-static int b53125_eap_mode_set(sdk_driver_t *dev, zpl_phyport_t port)
+static int b53125_eap_mode_set(sdk_driver_t *dev, zpl_phyport_t port, int mode)
 {
 	int ret = 0;
 	u64 port_ctrl = 0;
-	u32 mode = 0x3;
+	u32 val1 = 0, val2 = 0;
+
 	ret |= b53125_read64(dev->sdk_device, B53_EAP_PAGE, B53_EAP_PORT(port), &port_ctrl);
-	port_ctrl &= ~(B53_EAP_MODE_MASK << B53_EAP_MODE);
-	port_ctrl |= ((B53_EAP_MODE_MASK & mode) << B53_EAP_MODE);
+	val2 = port_ctrl & 0xffffffff;
+	val1 = (port_ctrl>>32) & 0xffffffff;
+	val1 &= ~(B53_EAP_MODE_MASK << (B53_EAP_MODE-32));
+	val1 |= ((B53_EAP_MODE_MASK & mode) << (B53_EAP_MODE-32));
+	port_ctrl = val1;
+	port_ctrl =  (port_ctrl<<32) | val2;
 	ret |= b53125_write64(dev->sdk_device, B53_EAP_PAGE, B53_EAP_PORT(port), port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 
-static int b53125_eap_port_enable(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable)
+
+static int b53125_eap_stat_set(sdk_driver_t *dev, zpl_phyport_t port, int stat)
 {
 	int ret = 0;
-	u32 mode = 1;
 	u64 port_ctrl = 0;
-	if(enable)
-		mode = 1;
-	else
-		mode = 0;	
+	u32 val1 = 0, val2 = 0;
+
 	ret |= b53125_read64(dev->sdk_device, B53_EAP_PAGE, B53_EAP_PORT(port), &port_ctrl);
-	port_ctrl &= ~(B53_EAP_BLK_MODE_M << B53_EAP_BLK_MODE);
-	port_ctrl |= ((B53_EAP_BLK_MODE_M & mode) << B53_EAP_BLK_MODE) | B53_EAP_DA_EN;
+	val2 = port_ctrl & 0xffffffff;
+	val1 = (port_ctrl>>32) & 0xffffffff;
+	val1 &= ~(B53_EAP_BLK_MODE_M << (B53_EAP_BLK_MODE-32));
+	val1 |= ((B53_EAP_BLK_MODE_M & stat) << (B53_EAP_BLK_MODE-32));
+	port_ctrl = val1;
+	port_ctrl =  (port_ctrl<<32) | val2;
 	ret |= b53125_write64(dev->sdk_device, B53_EAP_PAGE, B53_EAP_PORT(port), port_ctrl);
-	ret |= b53125_eap_mode_set(dev, port);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 
-DEFUN (b53125_sdk_eap_test,
-		b53125_sdk_eap_test_cmd,
-		"sdk-eap <0-4> (enable|disable)",
-		"sdk vlan\n"
-		"create\n"
-		"enable\n"
-		"vlanid\n")
+static int b53125_eap_dmac_set(sdk_driver_t *dev, zpl_phyport_t port, mac_t *mac)
 {
 	int ret = 0;
-	b53125_eap_enable(__msdkdriver, 1);
-	if(strcmp(argv[1], "enable") == 0)
-	ret = b53125_eap_port_enable(__msdkdriver, atoi(argv[0]), 1);
-	else
-	ret = b53125_eap_port_enable(__msdkdriver, atoi(argv[0]), 0);
-	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-}
+	u64 port_ctrl = 0;
+	u32 val1 = 0, val2 = 0;
+	zpl_uint64 u = 0;
+	zpl_uint32 i;
+	ret |= b53125_read64(dev->sdk_device, B53_EAP_PAGE, B53_EAP_PORT(port), &port_ctrl);
+	val2 = port_ctrl & 0xffffffff;
+	val1 = (port_ctrl>>32) & 0xffffffff;
+	val1 &= ~(1 << (B53_EAP_DA_EN-32));
+	if(mac)
+	{
+		val1 |= ((1) << (B53_EAP_DA_EN-32));
 
-DEFUN (b53125_sdk_eapip_test,
-		b53125_sdk_eapip_test_cmd,
-		"sdk-eap A.B.C.D/M (enable|disable)",
-		"sdk vlan\n"
-		"create\n"
-		"enable\n"
-		"vlanid\n")
-{
-	int ret = 0;
-	zpl_uint32 index;
-	u32 address = 0xc0a86464;
-	u32 mask = 0xffffff00;
-	if(strcmp(argv[1], "enable") == 0)
-	{
-		address = mask = 0;
+		for (i = 0; i < ETH_ALEN; i++)
+			u = u << 8 | mac[i];
 	}
-	else
-	{
-		address = mask = 0;
-	}
-	ret = b53125_eap_bypass_ipaddr_set(__msdkdriver, index, address, mask);
-	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+	val2 = 0;
+	val1 &=	~(0x00007fff);
+	port_ctrl = val1;
+	port_ctrl =  (port_ctrl<<32) | val2;
+	port_ctrl |= u;
+	ret |= b53125_write64(dev->sdk_device, B53_EAP_PAGE, B53_EAP_PORT(port), port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	return ret;
 }
 
 
 int b53125_eap_init(void)
 {
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &b53125_sdk_eap_test_cmd);
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &b53125_sdk_eapip_test_cmd);
 	sdk_8021x_cb.sdk_8021x_enable_cb = b53125_eap_enable;
-	sdk_8021x_cb.sdk_8021x_port_enable_cb = b53125_eap_port_enable;
-	sdk_8021x_cb.sdk_8021x_port_state_cb = NULL;
-	//sdk_8021x_cb.sdk_8021x_port_mode_cb = b53125_eap_blk_mode_set;
-	sdk_8021x_cb.sdk_8021x_auth_bypass_cb = NULL;
-	sdk_8021x_cb.sdk_8021x_port_addmac = NULL;
-	sdk_8021x_cb.sdk_8021x_port_delmac = NULL;
-	sdk_8021x_cb.sdk_8021x_port_delallmac = NULL;
+	sdk_8021x_cb.sdk_8021x_port_state_cb = b53125_eap_stat_set;
+	sdk_8021x_cb.sdk_8021x_port_mode_cb = b53125_eap_mode_set;
+	sdk_8021x_cb.sdk_8021x_auth_dmac_cb = b53125_eap_dmac_set;
 	return OK;
 }
 

@@ -392,7 +392,7 @@ my_fd_data_function(UNUSED_PARAM(socket_t fd),
              "Trying to read from tcp socket fd = %d",
              *event_fd_data->p_fd);
 #ifdef _WIN32
-    struct sockaddr from;
+    struct ipstack_sockaddr from;
     int fromlen = sizeof(from);
     len = recvfrom(*event_fd_data->p_fd, buf, sizeof(buf), 0, &from, &fromlen);
 #else
@@ -428,7 +428,7 @@ my_fd_data_function(UNUSED_PARAM(socket_t fd),
 #ifdef _WIN32
         shutdown(*event_fd_data->p_fd, SD_RECEIVE);
 #else
-        shutdown(*event_fd_data->p_fd, SHUT_RD);
+        shutdown(*event_fd_data->p_fd, IPSTACK_SHUT_RD);
 #endif // _WIN32
     }
     ssh_set_blocking(session, blocking);
@@ -439,13 +439,13 @@ my_fd_data_function(UNUSED_PARAM(socket_t fd),
 static int
 open_tcp_socket(ssh_message msg)
 {
-    struct sockaddr_in sin;
+    struct ipstack_sockaddr_in sin;
     int forwardsock = -1;
-    struct hostent *host;
+    struct ipstack_hostent *host;
     const char *dest_hostname;
     int dest_port;
 
-    forwardsock = socket(AF_INET, SOCK_STREAM, 0);
+    forwardsock = socket(IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
     if (forwardsock < 0) {
         _ssh_log(SSH_LOG_WARNING, "=== open_tcp_socket", "ERROR opening socket: %s", strerror(errno));
         return -1;
@@ -456,7 +456,7 @@ open_tcp_socket(ssh_message msg)
 
     _ssh_log(SSH_LOG_PROTOCOL, "=== open_tcp_socket", "Connecting to %s on port %d", dest_hostname, dest_port);
 
-    host = gethostbyname(dest_hostname);
+    host = ipstack_gethostbyname(dest_hostname);
     if (host == NULL) {
         close(forwardsock);
         _ssh_log(SSH_LOG_WARNING, "=== open_tcp_socket", "ERROR, no such host: %s", dest_hostname);
@@ -464,11 +464,11 @@ open_tcp_socket(ssh_message msg)
     }
 
     memset((char *)&sin, '\0', sizeof(sin));
-    sin.sin_family = AF_INET;
+    sin.sin_family = IPSTACK_AF_INET;
     memcpy((char *)&sin.sin_addr.s_addr, (char *)host->h_addr, host->h_length);
     sin.sin_port = htons(dest_port);
 
-    if (connect(forwardsock, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+    if (connect(forwardsock, (struct ipstack_sockaddr *)&sin, sizeof(sin)) < 0) {
         close(forwardsock);
         _ssh_log(SSH_LOG_WARNING, "=== open_tcp_socket", "ERROR connecting: %s", strerror(errno));
         return -1;

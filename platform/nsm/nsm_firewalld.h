@@ -168,40 +168,40 @@ typedef struct Gfirewall_s
 }Gfirewall_t;
 
 
-extern const char * firewall_type_string(firewall_type_t type);
-extern const char * firewall_action_string(firewall_action_t action);
-extern const char * firewall_proto_string(firewall_proto_t type);
+extern const char * nsm_firewall_type_string(firewall_type_t type);
+extern const char * nsm_firewall_action_string(firewall_action_t action);
+extern const char * nsm_firewall_proto_string(firewall_proto_t type);
 
-extern firewall_t * firewall_rule_lookup_api(firewall_zone_t *zone, firewall_t *value);
-extern int firewall_rule_del_api(firewall_zone_t *zone, firewall_t *value);
-extern int firewall_rule_add_api(firewall_zone_t *zone, firewall_t *value);
+extern firewall_t * nsm_firewall_rule_lookup_api(firewall_zone_t *zone, firewall_t *value);
+extern int nsm_firewall_rule_del_api(firewall_zone_t *zone, firewall_t *value);
+extern int nsm_firewall_rule_add_api(firewall_zone_t *zone, firewall_t *value);
 
-extern int firewall_rule_foreach_api(firewall_zone_t *zone, int(*cb)(firewall_t *, void *), void *);
+extern int nsm_firewall_rule_foreach_api(firewall_zone_t *zone, int(*cb)(firewall_t *, void *), void *);
 
 
 extern int nsm_firewall_zone_del(zpl_int8 	*zonename);
 extern firewall_zone_t * nsm_firewall_zone_lookup(zpl_int8 	*zonename);
 extern firewall_zone_t * nsm_firewall_zone_add(zpl_int8 	*zonename);
-extern int firewall_zone_foreach_api(int(*cb)(firewall_zone_t *, void *), void *p);
+extern int nsm_firewall_zone_foreach_api(int(*cb)(firewall_zone_t *, void *), void *p);
 
 extern int nsm_firewall_init(void);
 extern int nsm_firewall_exit(void);
 
 
 #ifdef ZPL_SHELL_MODULE
-extern int firewall_rule_show_api(struct vty *vty, firewall_zone_t *zone, zpl_char * intype);
+extern int nsm_firewall_rule_show_api(struct vty *vty, firewall_zone_t *zone, zpl_char * intype);
 extern void cmd_firewall_init (void);
 #endif
 
-extern int pal_firewall_portmap_rule_set(firewall_t *rule, zpl_action action);
-extern int pal_firewall_port_filter_rule_set(firewall_t *rule, zpl_action action);
+extern int nsm_halpal_firewall_portmap_rule_set(firewall_t *rule, zpl_action action);
+extern int nsm_halpal_firewall_port_filter_rule_set(firewall_t *rule, zpl_action action);
 
-extern int pal_firewall_mangle_rule_set(firewall_t *rule, zpl_action action);
-extern int pal_firewall_raw_rule_set(firewall_t *rule, zpl_action action);
+extern int nsm_halpal_firewall_mangle_rule_set(firewall_t *rule, zpl_action action);
+extern int nsm_halpal_firewall_raw_rule_set(firewall_t *rule, zpl_action action);
 
 
-extern int pal_firewall_snat_rule_set(firewall_t *rule, zpl_action action);
-extern int pal_firewall_dnat_rule_set(firewall_t *rule, zpl_action action);
+extern int nsm_halpal_firewall_snat_rule_set(firewall_t *rule, zpl_action action);
+extern int nsm_halpal_firewall_dnat_rule_set(firewall_t *rule, zpl_action action);
 
  
 #ifdef __cplusplus

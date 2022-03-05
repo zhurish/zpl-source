@@ -37,10 +37,10 @@ static struct tty_com cli_tty_com =
 	{
 		.devname = "/dev/ttyS0",
 		.speed = 115200,
-		.databit = DATA_8BIT,
-		.stopbit = STOP_1BIT,
-		.parity = PARITY_NONE,
-		.flow_control = FLOW_CTL_NONE,
+		.databit = TTY_DATA_8BIT,
+		.stopbit = TTY_STOP_1BIT,
+		.parity = TTY_PARITY_NONE,
+		.flow_control = TTY_FLOW_CTL_NONE,
 };
 
 struct module_list module_list_console =
@@ -2472,6 +2472,7 @@ static int vty_console_wait(struct thread *thread)
 #endif /*ZPL_SHRL_MODULE*/
 		)
 		{
+			vty->monitor = 1;
 			if (cli_shell.vty->node == LOGIN_NODE)
 				vty_event(VTY_STDIO_ACCEPT, vty->fd, vty);
 			else
@@ -2505,6 +2506,7 @@ static int vty_console_accept(struct thread *thread)
 	vty_event(VTY_WRITE, vty->wfd, vty);
 	vty_event(VTY_READ, vty->fd, vty);
 
+	vty->monitor = 1;
 	// if (vty_login_type(vty) == VTY_LOGIN_CONSOLE)
 	// vty_ansync_enable(vty, zpl_false);
 	return 0;

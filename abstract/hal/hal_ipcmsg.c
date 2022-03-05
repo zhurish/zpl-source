@@ -117,8 +117,12 @@ int hal_ipcmsg_create(struct hal_ipcmsg *ipcmsg)
     if (ipcmsg->buf == NULL)
     {
         ipcmsg->buf = XMALLOC(MTYPE_HALIPCMSG, ipcmsg->length_max);
+        ipcmsg->getp = 0;
+        ipcmsg->setp = 0;
     }
-    return OK;
+    if(ipcmsg->buf)
+        return OK;
+    return ERROR;    
 }
 
 int hal_ipcmsg_destroy(struct hal_ipcmsg *ipcmsg)
@@ -132,6 +136,7 @@ int hal_ipcmsg_reset(struct hal_ipcmsg *ipcmsg)
 {
     ipcmsg->getp = 0;
     ipcmsg->setp = 0;
+    memset(ipcmsg->buf, 0, ipcmsg->length_max);
     return OK;
 }
 
@@ -149,7 +154,7 @@ int hal_ipcmsg_create_header(struct hal_ipcmsg *ipcmsg, zpl_uint32 command)
 int hal_ipcmsg_hdr_unit_set(struct hal_ipcmsg *ipcmsg, zpl_uint32 unit)
 {
     struct hal_ipcmsg_header *hdr = (struct hal_ipcmsg_header *)ipcmsg->buf;
-    hdr->command = htonl(unit);
+    hdr->unit = htonl(unit);
     return OK;
 }
 
@@ -159,28 +164,59 @@ int hal_ipcmsg_hdr_unit_get(struct hal_ipcmsg *ipcmsg)
     return ntohl(hdr->unit);
 }
 
-int hal_ipcmsg_msglen_set(struct hal_ipcmsg *ipcmsg)
+int hal_ipcmsg_hdrlen_set(struct hal_ipcmsg *ipcmsg)
 {
     struct hal_ipcmsg_header *hdr = (struct hal_ipcmsg_header *)ipcmsg->buf;
     hdr->length = htons(ipcmsg->setp);
     return OK;
 }
+
 int hal_ipcmsg_msglen_get(struct hal_ipcmsg *ipcmsg)
+{
+    return hal_ipcmsg_get_setp(ipcmsg);
+}
+int hal_ipcmsg_get_setp(struct hal_ipcmsg *ipcmsg)
 {
     return ipcmsg->setp;
 }
-
-int hal_ipcmsg_msg_add(struct hal_ipcmsg *ipcmsg, void *msg, int len)
+int hal_ipcmsg_get_getp(struct hal_ipcmsg *ipcmsg)
 {
-    memcpy(ipcmsg->buf + ipcmsg->setp, msg, len);
-    return (ipcmsg->setp + len);
+    return ipcmsg->getp;
+}
+
+int hal_ipcmsg_msg_copy(struct hal_ipcmsg *dst_ipcmsg, struct hal_ipcmsg *src_ipcmsg)
+{
+    memcpy(dst_ipcmsg->buf + dst_ipcmsg->setp, src_ipcmsg->buf, src_ipcmsg->setp);
+    dst_ipcmsg->setp += src_ipcmsg->setp;
+    return OK;
+}
+
+int hal_ipcmsg_msg_clone(struct hal_ipcmsg *dst_ipcmsg, struct hal_ipcmsg *src_ipcmsg)
+{
+    memcpy(dst_ipcmsg->buf, src_ipcmsg->buf, src_ipcmsg->setp);
+    dst_ipcmsg->setp = src_ipcmsg->setp;
+    return OK;
 }
 
 int hal_ipcmsg_send_message(int unit, zpl_uint32 command, void *ipcmsg, int len)
 {
     HAL_ENTER_FUNC();
-    return hal_ipcsrv_send_message(unit, command, ipcmsg, len, 30);
+    return hal_ipcsrv_send_message(unit, command, ipcmsg, len);
 }
+
+int hal_ipcmsg_send_cmd(int unit, zpl_uint32 command, struct hal_ipcmsg *src_ipcmsg)
+{
+    HAL_ENTER_FUNC();
+    return hal_ipcsrv_copy_send_ipcmsg(unit, command, src_ipcmsg);
+}
+
+int hal_ipcmsg_send(int unit, struct hal_ipcmsg *src_ipcmsg)
+{
+    HAL_ENTER_FUNC();
+    return hal_ipcsrv_send_ipcmsg(unit, src_ipcmsg);
+}
+
+
 
 int hal_ipcmsg_port_set(struct hal_ipcmsg *ipcmsg, ifindex_t ifindex)
 {
@@ -211,6 +247,26 @@ int hal_ipcmsg_table_set(ifindex_t ifindex, hal_table_header_t *table)
     return OK;
 }
 
+int hal_ipcmsg_data_set(struct hal_ipcmsg *ipcmsg, ifindex_t ifindex, 
+    zpl_vlan_t vlanid, zpl_uint8 pri)
+{
+    hal_ipcmsg_putl(ipcmsg, ifindex);
+    hal_ipcmsg_putl(ipcmsg, IF_IFINDEX_VRFID_GET(ifindex));
+    hal_ipcmsg_putw(ipcmsg, vlanid);
+    hal_ipcmsg_putl(ipcmsg, IF_IFINDEX_PHYID_GET(ifindex));
+    hal_ipcmsg_putc(ipcmsg, pri);
+    return OK;
+}
+
+int hal_ipcmsg_data_get(struct hal_ipcmsg *ipcmsg, hal_data_header_t *datahdr)
+{
+    hal_ipcmsg_getl(ipcmsg, &datahdr->ifindex);
+    hal_ipcmsg_getl(ipcmsg, &datahdr->vrfid);
+    hal_ipcmsg_getw(ipcmsg, &datahdr->vlanid);
+    hal_ipcmsg_getl(ipcmsg, &datahdr->phyport);
+    hal_ipcmsg_getc(ipcmsg, &datahdr->pri);
+    return OK;
+}
 
 int hal_ipcmsg_global_get(struct hal_ipcmsg *ipcmsg, hal_global_header_t *glo)
 {
@@ -245,7 +301,7 @@ int hal_ipcmsg_hexmsg(struct hal_ipcmsg *ipcmsg, zpl_uint32 len, char *hdr)
     zpl_char format[4096];
     memset(format, 0, sizeof(format));
     ret = os_loghex(format, sizeof(format), (const zpl_uchar *)ipcmsg->buf,  len);
-    zlog_debug(MODULE_HAL, "%s %d [%d] bytes:\r\n  hex:%s", hdr, len, ret, format);
+    zlog_debug(MODULE_HAL, "%s %d bytes:\r\n  hex:%s", hdr, len, format);
     return OK;
 }
 

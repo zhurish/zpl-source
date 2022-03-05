@@ -1060,7 +1060,7 @@ zpl_bool modem_pppd_islinkup(modem_t *modem)
 	{
 		if(pppd->taskid)
 		{
-			if(pal_interface_ifindex(ifp->k_name))
+			if(nsm_halpal_interface_ifindex(ifp->k_name))
 			{
 				//MODEM_DEBUG("modem_pppd_islinkup zpl_true");
 				if(pppd->linkup == zpl_false)

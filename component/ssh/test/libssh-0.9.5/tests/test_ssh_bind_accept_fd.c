@@ -26,22 +26,22 @@ const int PORT = 3333;
 
 int get_connection() {
   int rc, server_socket, client_conn = -1;
-  struct sockaddr_in server_socket_addr;
-  struct sockaddr_storage client_conn_addr;
+  struct ipstack_sockaddr_in server_socket_addr;
+  struct ipstack_sockaddr_storage client_conn_addr;
   socklen_t client_conn_addr_size = sizeof(client_conn_addr);
 
-  server_socket = socket(PF_INET, SOCK_STREAM, 0);
+  server_socket = socket(IPSTACK_PF_INET, IPSTACK_SOCK_STREAM, 0);
   if (server_socket < 0) {
     goto out;
   }
 
-  server_socket_addr.sin_family = AF_INET;
+  server_socket_addr.sin_family = IPSTACK_AF_INET;
   server_socket_addr.sin_port = htons(PORT);
-  if (ipstack_inet_pton(AF_INET, HOST, &server_socket_addr.sin_addr) != 1) {
+  if (ipstack_inet_pton(IPSTACK_AF_INET, HOST, &server_socket_addr.sin_addr) != 1) {
     goto out;
   }
 
-  rc = bind(server_socket, (struct sockaddr *)&server_socket_addr,
+  rc = bind(server_socket, (struct ipstack_sockaddr *)&server_socket_addr,
             sizeof(server_socket_addr));
   if (rc < 0) {
     goto out;
@@ -52,7 +52,7 @@ int get_connection() {
   }
 
   client_conn = accept(server_socket,
-                       (struct sockaddr *)&client_conn_addr,
+                       (struct ipstack_sockaddr *)&client_conn_addr,
                        &client_conn_addr_size);
 
  out:

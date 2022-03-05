@@ -14,8 +14,8 @@ extern "C" {
 typedef struct sdk_mirror_s
 {
 	int (*sdk_mirror_enable_cb) (void *, zpl_phyport_t , zpl_bool );
-	int (*sdk_mirror_source_enable_cb) (void *, zpl_phyport_t, zpl_bool , mirror_mode_t , mirror_dir_en );
-	int (*sdk_mirror_source_filter_enable_cb) (void *, zpl_bool enable, mirror_filter_t filter, mirror_dir_en type, mac_t *mac, mac_t *mac1);
+	int (*sdk_mirror_source_enable_cb) (void *, zpl_phyport_t, zpl_bool , mirror_dir_en );
+	int (*sdk_mirror_source_filter_enable_cb) (void *, zpl_phyport_t, zpl_bool , mirror_filter_t , mirror_dir_en , mac_t *);
 
 }sdk_mirror_t;
 

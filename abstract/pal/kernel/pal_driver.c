@@ -273,13 +273,6 @@ int pal_delete_vr(vrf_id_t vrf_id)
     return OK;
 }
 
-zpl_socket_t pal_vrf_socket(int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id_t vrf_id)
-{
-	zpl_socket_t tmp;
-	if(pal_stack.ip_stack_vrf_socket)
-		tmp = pal_stack.ip_stack_vrf_socket(domain, type, protocol, vrf_id);
-    return tmp;
-}
 
 
 
@@ -368,7 +361,7 @@ int ipforward_ipv6_off (void)
 
 static int pal_main_task(void *argv)
 {
-	module_setup_task(MODULE_KERNEL, os_task_id_self());
+	module_setup_task(MODULE_PAL, os_task_id_self());
 	host_waitting_loadconfig();
 	eloop_mainloop(master_eloop_kernel);
 	return OK;
@@ -378,14 +371,14 @@ static int pal_main_task(void *argv)
 static int kernel_task_init (void)
 {
 	if(master_eloop_kernel == NULL)
-		master_eloop_kernel = eloop_master_module_create(MODULE_KERNEL);
+		master_eloop_kernel = eloop_master_module_create(MODULE_PAL);
 	//master_thread[ZPL_SERVICE_TELNET] = thread_master_module_create(ZPL_SERVICE_TELNET);
 	if(kernel_task_id == 0)
 		kernel_task_id = os_task_create("kernelTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, pal_main_task, NULL, OS_TASK_DEFAULT_STACK);
 	if(kernel_task_id)
 	{
-		module_setup_task(MODULE_KERNEL, kernel_task_id);
+		module_setup_task(MODULE_PAL, kernel_task_id);
 		return OK;
 	}
 	return ERROR;
@@ -394,12 +387,13 @@ static int kernel_task_init (void)
 int pal_module_init(void)
 {
 	if(master_eloop_kernel == NULL)
-		master_eloop_kernel = eloop_master_module_create(MODULE_KERNEL);
+		master_eloop_kernel = eloop_master_module_create(MODULE_PAL);
 	//kernel_task_init ();
 	ip_ifp_stack_init();
 	#ifdef ZPL_NSM_ARP
 	ip_arp_stack_init();
 	#endif
+	kernel_packet_init();
 	//kernel_driver_init();
 	return 0;//ip_stack_init();
 }

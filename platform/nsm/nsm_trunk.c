@@ -67,25 +67,7 @@ static int nsm_port_channel_del(struct interface *ifp)
 	return OK;
 }
 
-/*
-static int nsm_port_channel_client_init()
-{
-	struct nsm_client *nsm = nsm_client_new ();
-	nsm->notify_add_cb = nsm_port_channel_add;
-	nsm->notify_delete_cb = nsm_port_channel_del;
-	nsm->interface_write_config_cb = _trunk_interface_show_one;
-	nsm_client_install (nsm, NSM_INTF_TRUNK);
-	return OK;
-}
 
-static int nsm_port_channel_client_exit()
-{
-	struct nsm_client *nsm = nsm_client_lookup (NSM_INTF_TRUNK);
-	if(nsm)
-		nsm_client_free (nsm);
-	return OK;
-}
-*/
 int nsm_trunk_interface_create_api(struct interface *ifp)
 {
 	NSM_ENTER_FUNC();

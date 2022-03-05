@@ -37,13 +37,6 @@ typedef enum hal_core_cmd
 enum hal_switch_cmd 
 {
     HAL_SWITCH_NONE,
-	HAL_SWITCH_MANEGE,
-	HAL_SWITCH_FORWARD,
-	HAL_SWITCH_MULTICAST_FLOOD,
-	HAL_SWITCH_UNICAST_FLOOD,
-	HAL_SWITCH_MULTICAST_LEARNING,
-	HAL_SWITCH_BPDU,
-	HAL_SWITCH_AGINT,
 	HAL_SWITCH_CPU_MODE,
 	HAL_SWITCH_CPU,
 	HAL_SWITCH_CPU_SPEED,
@@ -67,18 +60,6 @@ int hal_cpu_port_enable(zpl_bool enable);
 int hal_cpu_port_speed(zpl_uint32 value);
 int hal_cpu_port_duplex(zpl_uint32 value);
 int hal_cpu_port_flow(zpl_bool rx, zpl_bool tx);
-
-/*
- * Global
- */
-int hal_switch_mode(zpl_bool manage);
-int hal_switch_forward(zpl_bool enable);
-int hal_multicast_flood(zpl_bool enable);
-int hal_unicast_flood(zpl_bool enable);
-int hal_multicast_learning(zpl_bool enable);
-//全局使能接收BPDU报文
-int hal_global_bpdu_enable(zpl_bool enable);
-int hal_global_aging_time(zpl_uint32 value);
 
 
 

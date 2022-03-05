@@ -26,7 +26,7 @@ enum hal_vlan_cmd
     HAL_VLAN_NATIVE,
     HAL_VLAN_ALLOWE,
     HAL_VLAN_RANGE_ALLOWE,
-    HAL_VLAN_PVID,
+    HAL_VLAN_PORT_BASE,
     HAL_VLAN_MAX,
 };
 
@@ -84,11 +84,11 @@ typedef enum hal_vlan_mcast_flood_e {
 
 typedef struct hal_vlan_param_s
 {
-    zpl_bool set;
 	zpl_bool enable;
 	vlan_t vlan;
 	vlan_t vlan_end;
-    zpl_uint32 mstpid;
+    zpl_uint32 num;
+    vlan_t *vlantbl;
 }hal_vlan_param_t;
 
 extern int hal_vlan_enable(zpl_bool enable);
@@ -97,22 +97,23 @@ extern int hal_vlan_destroy(vlan_t vlan);
 
 extern int hal_vlan_batch_create(vlan_t *vlan, int num);
 extern int hal_vlan_batch_destroy(vlan_t *vlan, int num);
-
+/* 在vlan下加入接口 */
 extern int hal_vlan_add_untag_port(ifindex_t ifindex, vlan_t vlan);
 extern int hal_vlan_del_untag_port(ifindex_t ifindex, vlan_t vlan);
 
 extern int hal_vlan_add_tag_port(ifindex_t ifindex, vlan_t vlan);
 extern int hal_vlan_del_tag_port(ifindex_t ifindex, vlan_t vlan);
-
+/* 设置trunk接口的默认vlan */
 extern int hal_port_add_native_vlan(ifindex_t ifindex, vlan_t vlan);
 extern int hal_port_del_native_vlan(ifindex_t ifindex, vlan_t vlan);
-
+/* 设置trunk接口的允许通过vlan */
 extern int hal_port_add_allowed_tag_vlan(ifindex_t ifindex, vlan_t vlan);
 extern int hal_port_del_allowed_tag_vlan(ifindex_t ifindex, vlan_t vlan);
 
 extern int hal_port_add_allowed_tag_batch_vlan(ifindex_t ifindex, vlan_t start, vlan_t end);
 extern int hal_port_del_allowed_tag_batch_vlan(ifindex_t ifindex, vlan_t start, vlan_t end);
 
+/* 设置trunk接口的允许通过vlan */
 extern int hal_port_set_vlan(ifindex_t ifindex, vlan_t vlan);
 extern int hal_port_unset_vlan(ifindex_t ifindex, vlan_t vlan);
 

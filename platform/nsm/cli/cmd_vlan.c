@@ -43,6 +43,8 @@ DEFUN (vlan_database,
 	{
 		if(nsm_vlan_enable() == OK)
 			vty->node = VLAN_DATABASE_NODE;
+		else
+			return CMD_WARNING;	
 	}
 	return CMD_SUCCESS;
 }
@@ -899,6 +901,31 @@ static struct cmd_node vlan_node =
 	1
 };
 
+static void cmd_vlan_attr_init(int node)
+{
+	install_element(node,CMD_CONFIG_LEVEL, &switchport_access_vlan_cmd);
+	install_element(node,CMD_CONFIG_LEVEL, &no_switchport_access_vlan_cmd);
+
+	//install_element(node,CMD_CONFIG_LEVEL, &switchport_access_allow_vlan_cmd);
+	install_element(node,CMD_CONFIG_LEVEL, &switchport_trunk_vlan_cmd);
+	install_element(node,CMD_CONFIG_LEVEL, &no_switchport_trunk_vlan_cmd);
+
+	install_element(node,CMD_CONFIG_LEVEL, &switchport_trunk_allow_vlan_cmd);
+	install_element(node,CMD_CONFIG_LEVEL, &switchport_trunk_allow_vlan_all_cmd);
+	install_element(node,CMD_CONFIG_LEVEL, &switchport_trunk_allow_vlan_list_cmd);
+
+
+	install_element(node,CMD_CONFIG_LEVEL, &switchport_access_vlan_cmd);
+	install_element(node,CMD_CONFIG_LEVEL, &no_switchport_access_vlan_cmd);
+
+	install_element(node,CMD_CONFIG_LEVEL, &switchport_trunk_vlan_cmd);
+	install_element(node,CMD_CONFIG_LEVEL, &no_switchport_trunk_vlan_cmd);
+
+	install_element(node,CMD_CONFIG_LEVEL, &switchport_trunk_allow_vlan_cmd);
+	install_element(node,CMD_CONFIG_LEVEL, &switchport_trunk_allow_vlan_all_cmd);
+	install_element(node,CMD_CONFIG_LEVEL, &switchport_trunk_allow_vlan_list_cmd);
+}
+
 void cmd_vlan_init (void)
 {
 	install_node(&vlan_database_node, nsm_vlan_database_config);
@@ -939,26 +966,9 @@ void cmd_vlan_init (void)
 	install_element(VLAN_NODE,CMD_CONFIG_LEVEL, &no_vlan_add_interface_cmd);
 	install_element(VLAN_NODE,CMD_CONFIG_LEVEL, &no_vlan_add_interface_trunk_cmd);
 
-	install_element(INTERFACE_NODE,CMD_CONFIG_LEVEL, &switchport_access_vlan_cmd);
-	install_element(INTERFACE_NODE,CMD_CONFIG_LEVEL, &no_switchport_access_vlan_cmd);
-
-	//install_element(INTERFACE_NODE,CMD_CONFIG_LEVEL, &switchport_access_allow_vlan_cmd);
-	install_element(INTERFACE_NODE,CMD_CONFIG_LEVEL, &switchport_trunk_vlan_cmd);
-	install_element(INTERFACE_NODE,CMD_CONFIG_LEVEL, &no_switchport_trunk_vlan_cmd);
-
-	install_element(INTERFACE_NODE,CMD_CONFIG_LEVEL, &switchport_trunk_allow_vlan_cmd);
-	install_element(INTERFACE_NODE,CMD_CONFIG_LEVEL, &switchport_trunk_allow_vlan_all_cmd);
-	install_element(INTERFACE_NODE,CMD_CONFIG_LEVEL, &switchport_trunk_allow_vlan_list_cmd);
-
-
-	install_element(INTERFACE_RANGE_NODE,CMD_CONFIG_LEVEL, &switchport_access_vlan_cmd);
-	install_element(INTERFACE_RANGE_NODE,CMD_CONFIG_LEVEL, &no_switchport_access_vlan_cmd);
-
-	install_element(INTERFACE_RANGE_NODE,CMD_CONFIG_LEVEL, &switchport_trunk_vlan_cmd);
-	install_element(INTERFACE_RANGE_NODE,CMD_CONFIG_LEVEL, &no_switchport_trunk_vlan_cmd);
-
-	install_element(INTERFACE_RANGE_NODE,CMD_CONFIG_LEVEL, &switchport_trunk_allow_vlan_cmd);
-	install_element(INTERFACE_RANGE_NODE,CMD_CONFIG_LEVEL, &switchport_trunk_allow_vlan_all_cmd);
-	install_element(INTERFACE_RANGE_NODE,CMD_CONFIG_LEVEL, &switchport_trunk_allow_vlan_list_cmd);
-
+	cmd_vlan_attr_init(INTERFACE_NODE);
+	cmd_vlan_attr_init(INTERFACE_RANGE_NODE);
+	cmd_vlan_attr_init(LAG_INTERFACE_NODE);
+	cmd_vlan_attr_init(EPON_INTERFACE_NODE);
+	cmd_vlan_attr_init(EPON_INTERFACE_RANGE_NODE);
 }

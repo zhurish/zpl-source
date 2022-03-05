@@ -8,7 +8,7 @@
 #include "os_include.h"
 #include "zpl_include.h"
 #include <log.h>
-
+#include <sys/wait.h>
 
 int super_system(const zpl_char *cmd)
 {

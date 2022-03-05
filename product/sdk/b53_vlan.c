@@ -69,6 +69,7 @@ static int b53125_enable_vlan(sdk_driver_t *dev, zpl_bool enable)
 
 	((b53_device_t*)(dev->sdk_device))->vlan_enabled = enable;
 	((b53_device_t*)(dev->sdk_device))->vlan_filtering_enabled = enable_filtering;
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 
@@ -99,6 +100,7 @@ int b53125_vlan_mstp_id(sdk_driver_t *dev, vlan_t vid, int id)
 
 	ret |= b53125_write32(dev->sdk_device, B53_ARLIO_PAGE, ((b53_device_t*)(dev->sdk_device))->vta_regs[2], entry);
 	ret |= b53125_do_vlan_op(dev->sdk_device, VTA_CMD_WRITE);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 
@@ -118,6 +120,7 @@ static int b53125_add_vlan_entry(sdk_driver_t *dev, vlan_t vid)
 	ret |= b53125_do_vlan_op(dev, VTA_CMD_WRITE);
 	//dev_dbg(dev->ds->dev, "VID: %d, members: 0x%04x, untag: 0x%04x\n",
 	//	vid, vlan->members, vlan->untag);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 
@@ -131,6 +134,7 @@ static int b53125_del_vlan_entry(sdk_driver_t *dev, vlan_t vid)
 	fwd = entry & BIT(21);
 	ret |= b53125_write32(dev->sdk_device, B53_ARLIO_PAGE, ((b53_device_t*)(dev->sdk_device))->vta_regs[2], fwd);
 	ret |= b53125_do_vlan_op(dev, VTA_CMD_WRITE);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 
@@ -169,6 +173,7 @@ static int b53125_add_vlan_port(sdk_driver_t *dev, vlan_t vid, zpl_phyport_t por
 	}
 	ret |= b53125_write32(dev->sdk_device, B53_ARLIO_PAGE, ((b53_device_t*)(dev->sdk_device))->vta_regs[2], entry);
 	ret |= b53125_do_vlan_op(dev, VTA_CMD_WRITE);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 
@@ -202,6 +207,7 @@ static int b53125_del_vlan_port(sdk_driver_t *dev, vlan_t vid, zpl_phyport_t por
 	}
 	ret |= b53125_write32(dev->sdk_device, B53_ARLIO_PAGE, ((b53_device_t*)(dev->sdk_device))->vta_regs[2], entry);
 	ret |= b53125_do_vlan_op(dev, VTA_CMD_WRITE);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 
@@ -240,6 +246,7 @@ int b53125_port_vlan(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable)
 	else
 		entry &= ~BIT(port);
 	ret |= b53125_write16(dev->sdk_device, B53_PVLAN_PAGE, 2*(port), entry);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 
@@ -248,6 +255,7 @@ static int b53125_port_pvid(sdk_driver_t *dev, zpl_bool e, zpl_phyport_t port, v
 	int ret = 0;
 	u16 entry = (ARLTBL_VID_MASK & vid) | (0<<13);
 	ret |= b53125_write16(dev->sdk_device, B53_VLAN_PAGE, B53_VLAN_PORT_DEF_TAG(port), entry);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 
@@ -255,6 +263,7 @@ static int b53125_vlan_double_tagging_tpid(sdk_driver_t *dev, u16 tpid)
 {
 	int ret = 0;
 	ret |= b53125_write16(dev->sdk_device, B53_VLAN_PAGE, B53_VLAN_ISP_TPID, tpid);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 
@@ -268,6 +277,7 @@ static int b53125_ISP_port(sdk_driver_t *dev, zpl_bool enable, zpl_phyport_t por
 	else
 		reg &= ~BIT(port);
 	ret |= b53125_write16(dev->sdk_device, B53_VLAN_PAGE, B53_VLAN_ISP_PORT, reg);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 
@@ -329,18 +339,14 @@ int b53_vlan_init(void)
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &b53125_port_adduntagport_test_cmd);
 	sdk_vlan.sdk_vlan_enable = b53125_enable_vlan;
     sdk_vlan.sdk_vlan_create = b53125_vlan_create;
-    sdk_vlan.sdk_vlan_batch_create = NULL;
-
+ 
     sdk_vlan.sdk_vlan_untag_port = b53125_vlan_port_untag;
     sdk_vlan.sdk_vlan_tag_port = b53125_vlan_port_tag;
-    sdk_vlan.sdk_port_native_vlan = NULL;
+    sdk_vlan.sdk_port_native_vlan = b53125_port_pvid;//接口默认VLAN
 
-    sdk_vlan.sdk_port_allowed_tag_vlan = NULL;
-    sdk_vlan.sdk_port_allowed_tag_batch_vlan = NULL;
+    sdk_vlan.sdk_port_allowed_tag_vlan = b53125_vlan_port_tag;
 
     sdk_vlan.sdk_port_pvid_vlan = b53125_port_pvid;
-
-    sdk_vlan.sdk_vlan_stp_state = NULL;
 
     //sdk_vlan.sdk_vlan_stp_instance = NULL;
     sdk_vlan.sdk_vlan_translate = NULL;

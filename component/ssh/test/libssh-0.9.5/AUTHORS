@@ -5,7 +5,7 @@ Andreas Schneider <asn@cryptomilk.org> (developer)
 
 Nick Zitzmann <seiryu (at) comcast (dot) net> (mostly client SFTP stuff)
 
-Norbert Kiesel <nkiesel (at) tbdnetworks (dot) com> (getaddrinfo and other patches)
+Norbert Kiesel <nkiesel (at) tbdnetworks (dot) com> (ipstack_getaddrinfo and other patches)
 
 Jean-Philippe Garcia Ballester <giga (at) le-pec (dot) org> (Port to libgcrypt and configure.in voodoo, debian packaging)
 

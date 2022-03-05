@@ -49,7 +49,7 @@ int hal_qinq_interface_enable(ifindex_t ifindex, zpl_bool enable)
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
 	hal_ipcmsg_putl(&ipcmsg, enable);
-	command = IPCCMD_SET(HAL_MODULE_QINQ, HAL_MODULE_CMD_REQ, HAL_QINQ_CMD_ENABLE);
+	command = IPCCMD_SET(HAL_MODULE_QINQ, HAL_MODULE_CMD_REQ, HAL_QINQ_CMD_IF_ENABLE);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }

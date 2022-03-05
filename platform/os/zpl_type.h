@@ -190,6 +190,7 @@ typedef void zpl_void;
 typedef struct
 {
   zpl_uchar bitmap[16];   //128 bit
+  //zpl_uchar bitnum;
 }zpl_bitmap_t;
 
 #ifdef WIN32

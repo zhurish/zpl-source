@@ -171,22 +171,23 @@ extern void * nsm_vlan_lookup_by_name_api(const char *name);
 
 extern int nsm_vlan_callback_api(l2vlan_cb cb, void *);
 
+/* 在vlan下加入接口 */
 extern int nsm_interface_add_untag_vlan_api(vlan_t vlan, struct interface *ifp);
 extern int nsm_interface_del_untag_vlan_api(vlan_t vlan, struct interface *ifp);
 extern int nsm_interface_lookup_untag_vlan_api(vlan_t vlan, struct interface *ifp);
-
+/* 在vlan下加入接口 */
 extern int nsm_interface_add_tag_vlan_api(vlan_t vlan, struct interface *ifp);
 extern int nsm_interface_del_tag_vlan_api(vlan_t vlan, struct interface *ifp);
 extern int nsm_interface_lookup_tag_vlan_api(vlan_t vlan, struct interface *ifp);
 
-
+/* 设置access接口的vlan */
 extern int nsm_interface_access_vlan_set_api(struct interface *ifp, vlan_t);
 extern int nsm_interface_access_vlan_unset_api(struct interface *ifp, vlan_t);
 extern int nsm_interface_access_vlan_get_api(struct interface *ifp, vlan_t *);
-
+/* 设置trunk接口的默认vlan */
 extern int nsm_interface_native_vlan_set_api(struct interface *ifp, vlan_t);
 extern int nsm_interface_native_vlan_get_api(struct interface *ifp, vlan_t *);
-
+/* 设置trunk接口的允许通过vlan */
 extern int nsm_interface_trunk_add_allowed_vlan_api(struct interface *ifp, vlan_t );
 extern int nsm_interface_trunk_del_allowed_vlan_api(struct interface *ifp, vlan_t );
 extern int nsm_interface_trunk_add_allowed_batch_vlan_api(struct interface *ifp, vlan_t ,vlan_t);

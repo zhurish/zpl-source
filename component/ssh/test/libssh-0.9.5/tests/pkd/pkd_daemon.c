@@ -85,24 +85,24 @@ static int pkd_init_libssh(void)
 static int pkd_init_server_fd(short port) {
     int rc = 0;
     int yes = 1;
-    struct sockaddr_in addr;
+    struct ipstack_sockaddr_in addr;
 
-    int server_fd = socket(PF_INET, SOCK_STREAM, 0);
+    int server_fd = socket(IPSTACK_PF_INET, IPSTACK_SOCK_STREAM, 0);
     if (server_fd < 0) {
         rc = -1;
         goto out;
     }
 
-    rc = setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+    rc = setsockopt(server_fd, IPSTACK_SOL_SOCKET, IPSTACK_SO_REUSEADDR, &yes, sizeof(int));
     if (rc != 0) {
         goto outclose;
     }
 
     memset(&addr, 0x0, sizeof(addr));
-    addr.sin_family = AF_INET;
+    addr.sin_family = IPSTACK_AF_INET;
     addr.sin_port = htons(port);
-    addr.sin_addr.s_addr = INADDR_ANY;
-    rc = bind(server_fd, (struct sockaddr *)&addr, sizeof(addr));
+    addr.sin_addr.s_addr = IPSTACK_INADDR_ANY;
+    rc = bind(server_fd, (struct ipstack_sockaddr *)&addr, sizeof(addr));
     if (rc != 0) {
         goto outclose;
     }
@@ -123,11 +123,11 @@ out:
 static int pkd_accept_fd(void)
 {
     int fd = -1;
-    struct sockaddr_in addr;
+    struct ipstack_sockaddr_in addr;
     socklen_t len = sizeof(addr);
 
     do {
-        fd = accept(pkd_state.server_fd, (struct sockaddr *) &addr, &len);
+        fd = accept(pkd_state.server_fd, (struct ipstack_sockaddr *) &addr, &len);
     } while ((ctx.keep_going != 0) && (fd < 0) && (errno == EINTR));
 
     return fd;

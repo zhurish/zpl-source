@@ -172,7 +172,7 @@ static short bsd_socket_compute_revents(int fd, short events)
     int sock_errno = errno;
     char data[64] = {0};
     short revents = 0;
-    int flags = MSG_PEEK;
+    int flags = IPSTACK_MSG_PEEK;
     int ret;
 
 #ifdef MSG_NOSIGNAL

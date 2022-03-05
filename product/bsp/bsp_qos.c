@@ -17,50 +17,50 @@ sdk_qos_t sdk_qos;
 static int bsp_qos_enable(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_qos.sdk_qos_enable_cb)
 		ret = sdk_qos.sdk_qos_enable_cb(driver, param->enable);
-	SDK_LEAVE_FUNC();	
+	BSP_LEAVE_FUNC();	
 	return ret;
 }
 
 static int bsp_qos_ipg_enable(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_qos.sdk_qos_ipg_cb)
 		ret = sdk_qos.sdk_qos_ipg_cb(driver, zpl_true, param->enable);
-	SDK_LEAVE_FUNC();
+	BSP_LEAVE_FUNC();
 	return ret;
 }
 
 static int bsp_qos_base_mode(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_qos.sdk_qos_base_cb)
 		ret = sdk_qos.sdk_qos_base_cb(driver, port->phyport, param->enable);
-	SDK_LEAVE_FUNC();
+	BSP_LEAVE_FUNC();
 	return ret;
 }
 
 static int bsp_qos_8021q_enable(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_qos.sdk_qos_8021q_enable_cb)
 		ret = sdk_qos.sdk_qos_8021q_enable_cb(driver, port->phyport, param->enable);
-	SDK_LEAVE_FUNC();
+	BSP_LEAVE_FUNC();
 	return ret;
 }
 
 static int bsp_qos_diffserv_enable(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_qos.sdk_qos_diffserv_enable_cb)
 		ret = sdk_qos.sdk_qos_diffserv_enable_cb(driver, port->phyport, param->enable);
-	SDK_LEAVE_FUNC();
+	BSP_LEAVE_FUNC();
 	return ret;
 }
 
@@ -68,20 +68,20 @@ static int bsp_qos_diffserv_enable(void *driver, hal_port_header_t *port, hal_qo
 static int bsp_qos_port_map_queue(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_qos.sdk_qos_port_map_queue_cb)
 		ret = sdk_qos.sdk_qos_port_map_queue_cb(driver, port->phyport, param->pri, param->queue);
-	SDK_LEAVE_FUNC();
+	BSP_LEAVE_FUNC();
 	return ret;
 }
 #endif
 static int bsp_qos_diffserv_map_queue(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_qos.sdk_qos_diffserv_map_queue_cb)
 		ret = sdk_qos.sdk_qos_diffserv_map_queue_cb(driver, port->phyport, param->diffserv, param->queue);
-	SDK_LEAVE_FUNC();
+	BSP_LEAVE_FUNC();
 	return ret;
 }
 
@@ -90,52 +90,43 @@ static int bsp_qos_diffserv_map_queue(void *driver, hal_port_header_t *port, hal
 static int bsp_qos_queue_class(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_qos.sdk_qos_queue_map_class_cb)
 		ret = sdk_qos.sdk_qos_queue_map_class_cb(driver, port->phyport, param->queue, param->class);
-	SDK_LEAVE_FUNC();
+	BSP_LEAVE_FUNC();
 	return ret;
 }
 
 static int bsp_qos_queue_scheduling(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_qos.sdk_qos_class_scheduling_cb)
 		ret = sdk_qos.sdk_qos_class_scheduling_cb(driver, param->class, param->type);
-	SDK_LEAVE_FUNC();
+	BSP_LEAVE_FUNC();
 	return ret;
 }
 
 static int bsp_qos_queue_weight(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_qos.sdk_qos_class_weight_cb)
 		ret = sdk_qos.sdk_qos_class_weight_cb(driver, param->class, param->weight);
-	SDK_LEAVE_FUNC();
+	BSP_LEAVE_FUNC();
 	return ret;
 }
 #endif
 
 //风暴
-static int bsp_qos_storm_mode(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
-{
-	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
-	if(driver && sdk_qos.sdk_qos_storm_enable_cb)
-		ret = sdk_qos.sdk_qos_storm_enable_cb(driver, port->phyport, param->enable, param->mode);
-	SDK_LEAVE_FUNC();
-	return ret;
-}
 
 static int bsp_qos_storm_rate_limit(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_qos.sdk_qos_storm_rate_cb)
 		ret = sdk_qos.sdk_qos_storm_rate_cb(driver, port->phyport, param->limit, param->burst_size);
-	SDK_LEAVE_FUNC();
+	BSP_LEAVE_FUNC();
 	return ret;
 }
 
@@ -144,20 +135,20 @@ static int bsp_qos_storm_rate_limit(void *driver, hal_port_header_t *port, hal_q
 static int bsp_qos_egress_rate_limit(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_qos.sdk_qos_port_egress_rate_cb)
-		ret = sdk_qos.sdk_qos_port_egress_rate_cb(driver, port->phyport, param->limit, param->burst_size);
-	SDK_LEAVE_FUNC();
+		ret = sdk_qos.sdk_qos_port_egress_rate_cb(driver, port->phyport, param->limit);
+	BSP_LEAVE_FUNC();
 	return ret;
 }
 
 static int bsp_qos_ingress_rate_limit(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_qos.sdk_qos_port_ingress_rate_cb)
-		ret = sdk_qos.sdk_qos_port_ingress_rate_cb(driver, port->phyport, param->limit, param->burst_size);
-	SDK_LEAVE_FUNC();
+		ret = sdk_qos.sdk_qos_port_ingress_rate_cb(driver, port->phyport, param->limit);
+	BSP_LEAVE_FUNC();
 	return ret;
 }
 
@@ -165,10 +156,10 @@ static int bsp_qos_ingress_rate_limit(void *driver, hal_port_header_t *port, hal
 static int bsp_qos_cpu_rate_limit(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_qos.sdk_qos_cpu_rate_cb)
 		ret = sdk_qos.sdk_qos_cpu_rate_cb(driver, param->limit, param->burst_size);
-	SDK_LEAVE_FUNC();
+	BSP_LEAVE_FUNC();
 	return ret;
 }
 
@@ -199,9 +190,9 @@ static hal_ipcsubcmd_callback_t subcmd_table[] = {
 	//HAL_CALLBACK_ENTRY(HAL_QOS_QUEUE_SCHED, bsp_qos_queue_scheduling),
 	//HAL_CALLBACK_ENTRY(HAL_QOS_QUEUE_WEIGHT, bsp_qos_queue_weight),
 	HAL_CALLBACK_ENTRY(HAL_QOS_QUEUE_RATELIMIT, NULL),
-	HAL_CALLBACK_ENTRY(HAL_QOS_PRI_REMARK, bsp_qos_storm_rate_limit),
+	HAL_CALLBACK_ENTRY(HAL_QOS_PRI_REMARK, NULL),
 
-	HAL_CALLBACK_ENTRY(HAL_QOS_STORM_RATELIMIT, bsp_qos_storm_mode),
+	HAL_CALLBACK_ENTRY(HAL_QOS_STORM_RATELIMIT, bsp_qos_storm_rate_limit),
 	HAL_CALLBACK_ENTRY(HAL_QOS_CPU_RATELIMIT, bsp_qos_cpu_rate_limit),
 	HAL_CALLBACK_ENTRY(HAL_QOS_PORT_INRATELIMIT, bsp_qos_ingress_rate_limit),
 	HAL_CALLBACK_ENTRY(HAL_QOS_PORT_OUTRATELIMIT, bsp_qos_egress_rate_limit),
@@ -214,7 +205,13 @@ int bsp_qos_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 
 	int ret = OK;
 	hal_qos_param_t	param;
 	hal_port_header_t	bspport;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
+	ret = bsp_driver_module_check(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
+	if(ret == 0)
+	{
+		BSP_LEAVE_FUNC();
+		return NO_SDK;
+	}
 	hal_ipcmsg_port_get(&client->ipcmsg, &bspport);
 
 	hal_ipcmsg_getl(&client->ipcmsg, &param.enable);
@@ -223,7 +220,7 @@ int bsp_qos_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 
 
 	if(!(subcmd_table[subcmd].cmd_handle))
 	{
-		SDK_LEAVE_FUNC();
+		BSP_LEAVE_FUNC();
 		return NO_SDK;
 	}
 	switch (cmd)
@@ -234,6 +231,6 @@ int bsp_qos_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 
 	default:
 		break;
 	}
-	SDK_LEAVE_FUNC();
+	BSP_LEAVE_FUNC();
 	return ret;
 }

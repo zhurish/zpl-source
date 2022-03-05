@@ -64,7 +64,7 @@ static void torture_options_set_proxycommand(void **state)
 {
     struct torture_state *s = *state;
     ssh_session session = s->ssh.session;
-    const char *address = torture_server_address(AF_INET);
+    const char *address = torture_server_address(IPSTACK_AF_INET);
     int port = torture_server_port();
     char command[255] = {0};
     struct stat sb;
@@ -116,7 +116,7 @@ static void torture_options_set_proxycommand_ssh(void **state)
 {
     struct torture_state *s = *state;
     ssh_session session = s->ssh.session;
-    const char *address = torture_server_address(AF_INET);
+    const char *address = torture_server_address(IPSTACK_AF_INET);
     char command[255] = {0};
     int rc;
     socket_t fd;
@@ -140,7 +140,7 @@ static void torture_options_set_proxycommand_ssh_stderr(void **state)
 {
     struct torture_state *s = *state;
     ssh_session session = s->ssh.session;
-    const char *address = torture_server_address(AF_INET);
+    const char *address = torture_server_address(IPSTACK_AF_INET);
     char command[255] = {0};
     int rc;
     socket_t fd;

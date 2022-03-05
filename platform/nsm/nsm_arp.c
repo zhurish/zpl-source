@@ -139,7 +139,7 @@ int nsm_ip_arp_add_api(struct interface *ifp, struct prefix *address, zpl_char *
 		value.class = ARP_STATIC;
 		value.ifindex = ifp->ifindex;
 #ifdef ZPL_HAL_MODULE
-		if(pal_interface_arp_add(ifp, address, mac) == OK)
+		if(nsm_halpal_interface_arp_add(ifp, address, mac) == OK)
 #endif
 		{
 			os_memcpy(value.mac, mac, NSM_MAC_MAX);
@@ -168,7 +168,7 @@ int nsm_ip_arp_del_api(struct interface *ifp, struct prefix *address)
 	if(value && value->class == ARP_STATIC)
 	{
 #ifdef ZPL_HAL_MODULE
-		if(pal_interface_arp_delete(ifp, value->address) == OK)
+		if(nsm_halpal_interface_arp_delete(ifp, &value->address) == OK)
 #endif
 		{
 			ARP_STATIC_SUB(1);
@@ -371,7 +371,7 @@ static int ip_arp_cleanup(arp_class_t type, zpl_bool all, ifindex_t ifindex, vrf
 				if(ifp)
 				{
 #ifdef ZPL_HAL_MODULE
-					if(pal_interface_arp_delete(ifp, pstNode->address) == OK)
+					if(nsm_halpal_interface_arp_delete(ifp, &pstNode->address) == OK)
 #endif
 					{
 						lstDelete(gIparp.arpList, (NODE*)pstNode);
@@ -396,7 +396,7 @@ static int ip_arp_cleanup(arp_class_t type, zpl_bool all, ifindex_t ifindex, vrf
 				if(ifp)
 				{
 #ifdef ZPL_HAL_MODULE
-					if(pal_interface_arp_delete(ifp, pstNode->address) == OK)
+					if(nsm_halpal_interface_arp_delete(ifp, &pstNode->address) == OK)
 #endif
 					{
 						lstDelete(gIparp.arpList, (NODE*)pstNode);
@@ -421,7 +421,7 @@ static int ip_arp_cleanup(arp_class_t type, zpl_bool all, ifindex_t ifindex, vrf
 				if(ifp)
 				{
 #ifdef ZPL_HAL_MODULE
-					if(pal_interface_arp_delete(ifp, pstNode->address) == OK)
+					if(nsm_halpal_interface_arp_delete(ifp, &pstNode->address) == OK)
 #endif
 					{
 						lstDelete(gIparp.arpList, (NODE*)pstNode);
@@ -446,7 +446,7 @@ static int ip_arp_cleanup(arp_class_t type, zpl_bool all, ifindex_t ifindex, vrf
 				if(ifp)
 				{
 #ifdef ZPL_HAL_MODULE
-					if(pal_interface_arp_delete(ifp, pstNode->address) == OK)
+					if(nsm_halpal_interface_arp_delete(ifp, &pstNode->address) == OK)
 #endif
 					{
 						lstDelete(gIparp.arpList, (NODE*)pstNode);

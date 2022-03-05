@@ -36,35 +36,35 @@ extern "C" {
  *
  * Some of the more obviously defunct technologies left out.
  */
-enum zebra_link_type
+enum if_link_type
 {
-   ZEBRA_LLT_UNKNOWN = 0,
-   ZEBRA_LLT_LOOPBACK,
-   ZEBRA_LLT_ETHER,
-   ZEBRA_LLT_GIETHER,
-   ZEBRA_LLT_TUNNEL,
-   ZEBRA_LLT_VLAN,
-   ZEBRA_LLT_LAG,
-   ZEBRA_LLT_SERIAL,
-   ZEBRA_LLT_SLIP,
-   ZEBRA_LLT_CSLIP,
-   ZEBRA_LLT_SLIP6,
-   ZEBRA_LLT_CSLIP6,
+   IF_LLT_UNKNOWN = 0,
+   IF_LLT_LOOPBACK,
+   IF_LLT_ETHER,
+   IF_LLT_GIETHER,
+   IF_LLT_TUNNEL,
+   IF_LLT_VLAN,
+   IF_LLT_LAG,
+   IF_LLT_SERIAL,
+   IF_LLT_SLIP,
+   IF_LLT_CSLIP,
+   IF_LLT_SLIP6,
+   IF_LLT_CSLIP6,
 
-   ZEBRA_LLT_PPP,
-   ZEBRA_LLT_CHDLC,
-   ZEBRA_LLT_RAWHDLC,
-   ZEBRA_LLT_IPIP,
-   ZEBRA_LLT_IPIP6,
-   ZEBRA_LLT_IPGRE,
-   ZEBRA_LLT_IP6GRE,
+   IF_LLT_PPP,
+   IF_LLT_CHDLC,
+   IF_LLT_RAWHDLC,
+   IF_LLT_IPIP,
+   IF_LLT_IPIP6,
+   IF_LLT_IPGRE,
+   IF_LLT_IP6GRE,
 
-   ZEBRA_LLT_ATM,
-   ZEBRA_LLT_SIT,
-   ZEBRA_LLT_BRIGDE,
-   ZEBRA_LLT_WIFI,
-   ZEBRA_LLT_MODEM,
-   ZEBRA_LLT_WIRELESS,
+   IF_LLT_ATM,
+   IF_LLT_SIT,
+   IF_LLT_BRIGDE,
+   IF_LLT_WIFI,
+   IF_LLT_MODEM,
+   IF_LLT_WIRELESS,
 };
 
 /*
@@ -203,11 +203,13 @@ struct interface
    zpl_uint32  uspv;
    zpl_vlan_t encavlan; //子接口封装的VLAN ID
 
+   zpl_bool have_kernel;
    zpl_char k_name[INTERFACE_NAMSIZ + 1];
    zpl_uint32  k_name_hash;
    ifindex_t k_ifindex;
 
-   zpl_phyport_t  phyid;
+   zpl_phyport_t  phyid;   //L2 phy port
+	zpl_phyport_t  l3intfid;//L3 intf id
 #define IFPHYID_INTERNAL -1
    if_type_t if_type;
 
@@ -232,7 +234,7 @@ struct interface
    zpl_uint32  mtu6; /* IPv6 MTU - probably, but not neccessarily same as mtu */
 
    /* Link-layer information and hardware address */
-   enum zebra_link_type ll_type;
+   enum if_link_type ll_type;
    zpl_uchar hw_addr[INTERFACE_HWADDR_MAX];
    zpl_uint32 hw_addr_len;
 
@@ -398,8 +400,8 @@ struct connected
 /* There are some interface flags which are only supported by some
    operating system. */
 
-#ifndef IFF_NOTRAILERS
-#define IFF_NOTRAILERS 0x0
+#ifndef IPSTACK_IFF_NOTRAILERS
+#define IPSTACK_IFF_NOTRAILERS 0x0
 #endif /* IFF_NOTRAILERS */
 #ifndef IPSTACK_IFF_OACTIVE
 #define IPSTACK_IFF_OACTIVE 0x0
@@ -416,20 +418,20 @@ struct connected
 #ifndef IPSTACK_IFF_LINK2
 #define IPSTACK_IFF_LINK2 0x0
 #endif /* IPSTACK_IFF_LINK2 */
-#ifndef IFF_NOXMIT
-#define IFF_NOXMIT 0x0
+#ifndef IPSTACK_IFF_NOXMIT
+#define IPSTACK_IFF_NOXMIT 0x0
 #endif /* IFF_NOXMIT */
-#ifndef IFF_NORTEXCH
-#define IFF_NORTEXCH 0x0
+#ifndef IPSTACK_IFF_NORTEXCH
+#define IPSTACK_IFF_NORTEXCH 0x0
 #endif /* IFF_NORTEXCH */
-#ifndef IFF_IPV4
-#define IFF_IPV4 0x0
+#ifndef IPSTACK_IFF_IPV4
+#define IPSTACK_IFF_IPV4 0x0
 #endif /* IFF_IPV4 */
-#ifndef IFF_IPV6
-#define IFF_IPV6 0x0
+#ifndef IPSTACK_IFF_IPV6
+#define IPSTACK_IFF_IPV6 0x0
 #endif /* IFF_IPV6 */
-#ifndef IFF_VIRTUAL
-#define IFF_VIRTUAL 0x0
+#ifndef IPSTACK_IFF_VIRTUAL
+#define IPSTACK_IFF_VIRTUAL 0x0
 #endif /* IFF_VIRTUAL */
 
 /* Prototypes. */
@@ -501,8 +503,9 @@ extern zpl_bool if_is_brigde(struct interface *ifp);
 extern zpl_bool if_is_brigde_member(struct interface *ifp);
 extern zpl_bool if_is_loop(struct interface *ifp);
 extern zpl_bool if_is_wireless(struct interface *ifp);
-
+extern zpl_bool if_is_l3intf(struct interface *ifp);
 extern zpl_bool if_is_online(struct interface *);
+
 extern int if_online(struct interface *ifp, zpl_bool enable);
 extern int if_up(struct interface *ifp);
 extern int if_down(struct interface *ifp);
@@ -512,7 +515,7 @@ extern void if_terminate(void);
 
 extern void if_dump_all(void);
 extern const char *if_flag_dump(zpl_ulong);
-extern const char *if_link_type_str(enum zebra_link_type);
+extern const char *if_link_type_str(enum if_link_type);
 
 /* Please use ifindex2ifname instead of if_indextoname where possible;
    ifindex2ifname uses internal interface info, whereas if_indextoname must
@@ -545,9 +548,15 @@ extern zpl_phyport_t  if_ifindex2phy(ifindex_t ifindex);
 extern ifindex_t  if_phy2ifindex(zpl_phyport_t phyid);
 extern vrf_id_t  if_ifindex2vrfid(ifindex_t ifindex);
 
+extern zpl_phyport_t  if_ifindex2l3intfid(ifindex_t ifindex);
+extern ifindex_t  if_l3intfid2ifindex(zpl_phyport_t l3intfid);
+
 extern int if_update_phyid(ifindex_t ifindex, zpl_phyport_t phyid);
 extern int if_update_phyid2(struct interface *ifp, zpl_phyport_t phyid);
+extern int if_update_l3intfid(ifindex_t ifindex, zpl_phyport_t phyid);
+extern int if_update_l3intfid2(struct interface *ifp, zpl_phyport_t phyid);
 
+extern zpl_bool if_have_kernel(struct interface *ifp);
 
 extern int if_list_each(int (*cb)(struct interface *ifp, void *pVoid), void *pVoid);
 
@@ -567,7 +576,7 @@ extern struct connected *connected_check(struct interface *ifp, struct prefix *p
 extern int if_data_lock(void);
 extern int if_data_unlock(void);
 
-extern enum zebra_link_type netlink_to_zebra_link_type(zpl_uint32  hwt);
+extern enum if_link_type netlink_to_if_link_type(zpl_uint32  hwt);
  
 #ifdef __cplusplus
 }

@@ -24,7 +24,7 @@ typedef zpl_uint16 u16;
 typedef zpl_uint32 u32;
 typedef zpl_uint64 u64;
 
-#define _SDK_DEBUG_EN
+//#define _SDK_DEBUG_EN
 #if defined( _SDK_DEBUG_EN)
 extern void sdk_log(const char *file, const char *func, const zpl_uint32 line, zpl_uint32 module, zlog_level_t priority, const char *format, ...);
 #define _sdk_debug(format, ...) sdk_log (__FILE__, __FUNCTION__, __LINE__, MODULE_SDK, ZLOG_LEVEL_DEBUG, format, ##__VA_ARGS__)
@@ -56,8 +56,9 @@ typedef struct sdk_driver {
 }sdk_driver_t;
 
 #if defined( _SDK_DEBUG_EN)
-extern sdk_driver_t *__msdkdriver;
+
 #endif
+extern sdk_driver_t *__msdkdriver;
 extern zpl_uint64 ether_addr_to_u64(const zpl_uint8 *addr);
 extern void u64_to_ether_addr(zpl_uint64 u, zpl_uint8 *addr);
 extern bool is_multicast_ether_addr(const u8 *addr);

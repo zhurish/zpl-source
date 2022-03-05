@@ -22,7 +22,7 @@ extern "C" {
 #endif
 #include "nsm_ipforward.h"
 #include "nsm_interface.h"
-#include "nsm_pal.h"
+#include "nsm_halpal.h"
 #include "nsm_debug.h"
 
 

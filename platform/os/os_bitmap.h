@@ -11,35 +11,22 @@ extern "C" {
 #include "zpl_type.h"
 
 
-/*
-#define bitListSet ((n), (b)) bitListSet ((n), (b))
-#define BIT_LST_CLR (d, b) bitListClr (d, b)
-#define BIT_LST_TST (d, b) bitListTst (d, b)
-#define BIT_LST_AND (d, s1,s2, n) bitListAnd (d, s1,s2, n)
-#define BIT_LST_XOR (d, s1,s2, n) bitListXor (d, s1,s2, n)
-#define BIT_LST_OR (d, s1,s2, n) bitListOr (d, s1,s2, n)
-#define BIT_LST_EMPTY (d, n) bitListOr (d, n)
-#define BIT_LST_CMP (s1, s2, n) bitListOr (s1, s2, n)
-#define BIT_LST_COPY (s1, s2, n) bitListOr (s1, s2, n)
-#define BIT_LST_MAX (s1, n) bitListOr (s1, n)
-#define BIT_LST_CNT (s1, n) bitListOr (s1, n)
-*/
+void os_bitmap_set(zpl_bitmap_t bitmap, zpl_uint32  bit, zpl_uint32  wigth);
+void os_bitmap_clr(zpl_bitmap_t bitmap, zpl_uint32  bit, zpl_uint32  wigth);
+int os_bitmap_tst(zpl_bitmap_t bitmap, zpl_uint32  bit, zpl_uint32  wigth);
 
-void  bitListSet(zpl_bitmap_t bitList,zpl_uint32  bit);
-void  bitListClr(zpl_bitmap_t bitList,zpl_uint32  bit);
-zpl_uint32 bitListTst(zpl_bitmap_t bitList,zpl_uint32  bit);
-void  bitListXor(zpl_bitmap_t dst, const zpl_bitmap_t src1,
-			const zpl_bitmap_t src2, zpl_uint32 nbit);
-void  bitListAnd(zpl_bitmap_t dst, const zpl_bitmap_t src1,
-			const zpl_bitmap_t src2, zpl_uint32 nbit);
-void  bitListOr(zpl_bitmap_t dst, const zpl_bitmap_t src1,
-			const zpl_bitmap_t src2, zpl_uint32 nbit);
-zpl_bool bitListEmpty(zpl_bitmap_t src, zpl_uint32 nbit);
-int bitListCmp(const zpl_bitmap_t src1, const zpl_bitmap_t src2, zpl_uint32 nbit);
-void  bitListCopy(const zpl_bitmap_t src, zpl_bitmap_t dst, zpl_uint32 nbit);
-zpl_uint32 bitListMax(zpl_bitmap_t src, zpl_uint32 nbit);
-zpl_uint32 bitListCnt(zpl_bitmap_t src, zpl_uint32 nbit);
+void os_bitmap_and(zpl_bitmap_t dst, const zpl_bitmap_t src1,
+			const zpl_bitmap_t src2);
 
+void os_bitmap_or(zpl_bitmap_t dst, const zpl_bitmap_t src1,
+			const zpl_bitmap_t src2);
+
+int os_bitmap_cmp(const zpl_bitmap_t src1, const zpl_bitmap_t src2);
+void os_bitmap_copy(const zpl_bitmap_t src, zpl_bitmap_t dst);
+
+void os_bit64_set(zpl_uint64 *bitmap, zpl_uint32  bit, zpl_uint32  wigth);
+void os_bit64_clr(zpl_uint64 *bitmap, zpl_uint32  bit, zpl_uint32  wigth);
+int os_bit64_tst(zpl_uint64 *bitmap, zpl_uint32  bit, zpl_uint32  wigth);
  
 #ifdef __cplusplus
 }

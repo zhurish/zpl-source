@@ -23,6 +23,7 @@ extern int os_sock_bind(int sock, char *ipaddress, zpl_uint16 port);
 extern int os_sock_listen(int sock, zpl_uint32 listennum);
 extern int os_sock_accept (int accept_sock, void *p);
 extern int os_sock_connect(int sock, char *ipaddress, zpl_uint16 port);
+extern int os_sock_connect_nonblock(int sock, char *ipaddress, zpl_uint16 port);
 extern int os_sock_connect_timeout(int sock, char *ipaddress, zpl_uint16 port, zpl_uint32 timeout_ms);
 
 
@@ -56,6 +57,7 @@ extern int ipstack_sock_bind(zpl_socket_t sock, char *ipaddress, zpl_uint16 port
 extern int ipstack_sock_listen(zpl_socket_t sock, zpl_uint32 listennum);
 extern zpl_socket_t ipstack_sock_accept (zpl_socket_t accept_sock, void *p);
 extern int ipstack_sock_connect(zpl_socket_t sock, char *ipaddress, zpl_uint16 port);
+extern int ipstack_sock_connect_nonblock(zpl_socket_t sock, char *ipaddress, zpl_uint16 port);
 extern int ipstack_sock_connect_timeout(zpl_socket_t sock, char *ipaddress, zpl_uint16 port, zpl_uint32 timeout_ms);
 
 

@@ -444,7 +444,7 @@ int ssh_options_set_algo(ssh_session session,
  *                gssapi authentication).
  *
  *              - SSH_OPTIONS_NODELAY
- *                Set it to disable Nagle's Algorithm (TCP_NODELAY) on the
+ *                Set it to disable Nagle's Algorithm (IPSTACK_TCP_NODELAY) on the
  *                session socket. (int, 0=false)
  *
  *              - SSH_OPTIONS_PROCESS_CONFIG

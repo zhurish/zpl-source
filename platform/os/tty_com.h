@@ -27,34 +27,34 @@ enum tty_hwmode
 
 enum flow_ctl_mode
 {
-	FLOW_CTL_NONE = 0,
-	FLOW_CTL_SW = 1,
-	FLOW_CTL_HW = 2,
+	TTY_FLOW_CTL_NONE = 0,
+	TTY_FLOW_CTL_SW = 1,
+	TTY_FLOW_CTL_HW = 2,
 };
 
 enum parity_mode
 {
-	PARITY_NONE = 0,
-	PARITY_EVEN,
-	PARITY_ODD,
-	PARITY_MARK,
-	PARITY_SPACE,
+	TTY_PARITY_NONE = 0,
+	TTY_PARITY_EVEN,
+	TTY_PARITY_ODD,
+	TTY_PARITY_MARK,
+	TTY_PARITY_SPACE,
 };
 
 
 enum tty_data_bit
 {
-	DATA_5BIT = 5,
-	DATA_6BIT,
-	DATA_7BIT,
-	DATA_8BIT,
+	TTY_DATA_5BIT = 5,
+	TTY_DATA_6BIT,
+	TTY_DATA_7BIT,
+	TTY_DATA_8BIT,
 };
 
 enum tty_stop_bit
 {
-	STOP_NONE = 0,
-	STOP_1BIT,
-	STOP_2BIT,
+	TTY_STOP_NONE = 0,
+	TTY_STOP_1BIT,
+	TTY_STOP_2BIT,
 };
 
 typedef enum

@@ -1,0 +1,32 @@
+#ifdef BCM_DLIST_ENTRY
+
+
+#ifdef BCM_ROBO_SUPPORT
+BCM_DLIST_ENTRY(robo)
+#endif
+
+#ifdef BCM_ESW_SUPPORT
+BCM_DLIST_ENTRY(esw)
+#endif
+
+#ifdef BCM_SBX_SUPPORT
+BCM_DLIST_ENTRY(sbx)
+#endif
+
+#ifdef BCM_FE2000_SUPPORT
+BCM_DLIST_ENTRY(fe2000)
+#endif
+
+#ifdef BCM_RPC_SUPPORT
+BCM_DLIST_ENTRY(client) 
+#endif
+
+#ifdef BCM_LOOP_SUPPORT
+BCM_DLIST_ENTRY(loop)
+#endif
+
+
+#undef BCM_DLIST_ENTRY
+
+
+#endif /* BCM_DLIST_ENTRY */

@@ -1701,7 +1701,7 @@ static int ipcom_process_printf(const char *format, ...)
 }
 #endif
 
-#ifndef ZPL_KERNEL_STACK_MODULE
+
 DEFUN (show_ipcom_process,
 		show_ipcom_process_cmd,
 		"show ipcom process",
@@ -1712,15 +1712,15 @@ DEFUN (show_ipcom_process,
 	ipcom_process_show(vty_out, vty);
 	return CMD_SUCCESS;
 }
-#endif
+
 
 int cmd_os_init(void)
 {
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_process_cmd);
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_process_detail_cmd);
-#ifndef ZPL_KERNEL_STACK_MODULE
+
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_ipcom_process_cmd);
-#endif
+
 	return 0;
 }
 #endif

@@ -18,8 +18,9 @@
 #endif
 /*************************************************************************/
 /****************************    DOS   ***********************************/
-#if defined( _SDK_DEBUG_EN)
 sdk_driver_t *__msdkdriver;
+#if defined( _SDK_DEBUG_EN)
+
 static const char *sdklog_priority[] = { "emerg", "alert", "crit", "err",
 		"warning", "notice", "info", "debug", "trapping", "focetrap", NULL, };
 
@@ -105,9 +106,9 @@ int sdk_driver_start(struct bsp_driver *bsp, sdk_driver_t *sdkdriver)
 	{
 		if(b53125_config_init(sdkdriver) == OK)
 		{
-#if defined( _SDK_DEBUG_EN)
+//#if defined( _SDK_DEBUG_EN)
 			__msdkdriver = sdkdriver;
-#endif
+//#endif
 		}
 	}
 #endif

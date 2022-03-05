@@ -84,10 +84,10 @@ int if_new_llc_type_mode(zpl_uint32 llc, zpl_uint32 mode)
  */
 int if_cmp_func(struct interface *ifp1, struct interface *ifp2)
 {
-	zpl_uint32  l1, l2;
-	zpl_uint32 x1, x2;
-	zpl_char *p1, *p2;
-	int res;
+	zpl_uint32  l1 = 0, l2 = 0;
+	zpl_uint32 x1 = 0, x2 = 0;
+	zpl_char *p1 = NULL, *p2 = NULL;
+	int res = 0;
 
 	p1 = ifp1->name;
 	p2 = ifp2->name;
@@ -200,47 +200,47 @@ int if_make_llc_type(struct interface *ifp)
 	switch (ifp->if_type)
 	{
 	case IF_SERIAL:
-		ifp->ll_type = ZEBRA_LLT_SERIAL;
+		ifp->ll_type = IF_LLT_SERIAL;
 		break;
 	case IF_ETHERNET:
-		ifp->ll_type = ZEBRA_LLT_ETHER;
+		ifp->ll_type = IF_LLT_ETHER;
 		break;
 	case IF_GIGABT_ETHERNET:
-		ifp->ll_type = ZEBRA_LLT_GIETHER;
+		ifp->ll_type = IF_LLT_GIETHER;
 		break;
 	case IF_WIRELESS:
-		ifp->ll_type = ZEBRA_LLT_WIRELESS;
+		ifp->ll_type = IF_LLT_WIRELESS;
 		ifp->if_mode = IF_MODE_L3;
 		break;
 
 	case IF_TUNNEL:
-		ifp->ll_type = ZEBRA_LLT_TUNNEL;
+		ifp->ll_type = IF_LLT_TUNNEL;
 		ifp->if_mode = IF_MODE_L3;
 		break;
 	case IF_VLAN:
-		ifp->ll_type = ZEBRA_LLT_VLAN;
+		ifp->ll_type = IF_LLT_VLAN;
 		ifp->if_mode = IF_MODE_L3;
 		break;
 	case IF_LAG:
-		ifp->ll_type = ZEBRA_LLT_LAG;
+		ifp->ll_type = IF_LLT_LAG;
 		break;
 	case IF_LOOPBACK:
-		ifp->ll_type = ZEBRA_LLT_LOOPBACK;
+		ifp->ll_type = IF_LLT_LOOPBACK;
 		ifp->if_mode = IF_MODE_L3;
 		ifp->flags |= IPSTACK_IFF_LOOPBACK;
 		break;
 
 	case IF_BRIGDE:
-		ifp->ll_type = ZEBRA_LLT_BRIGDE;
+		ifp->ll_type = IF_LLT_BRIGDE;
 		ifp->if_mode = IF_MODE_L3;
 		break;
 #ifdef CUSTOM_INTERFACE
 	case IF_WIFI:
-		ifp->ll_type = ZEBRA_LLT_WIFI;
+		ifp->ll_type = IF_LLT_WIFI;
 		ifp->if_mode = IF_MODE_L3;
 		break;
 	case IF_MODEM:
-		ifp->ll_type = ZEBRA_LLT_MODEM;
+		ifp->ll_type = IF_LLT_MODEM;
 		ifp->if_mode = IF_MODE_L3;
 		break;
 #endif
@@ -273,6 +273,13 @@ static int if_make_ifindex_type(struct interface *ifp)
 		ifp->ifindex |= if_loopback_ifindex_create(ifp->if_type, ifp->name);
 		//fprintf(stderr, "%s (%s):ifindex=0x%x", __func__,ifp->name, ifp->ifindex);
 	}
+	
+	if (ifp->if_type == IF_VLAN || ifp->if_type == IF_WIRELESS || 
+		ifp->if_type == IF_LOOPBACK || ifp->if_type == IF_SERIAL ||
+		ifp->if_type == IF_TUNNEL )
+	{
+		ifp->have_kernel = zpl_true; 
+	}
 
 	if ((ifp->if_type == IF_ETHERNET ||
 		 ifp->if_type == IF_GIGABT_ETHERNET) &&
@@ -284,7 +291,7 @@ static int if_make_ifindex_type(struct interface *ifp)
 struct interface *
 if_create_vrf_dynamic(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 {
-	struct interface *ifp;
+	struct interface *ifp = NULL;
 	struct list *intf_list = intfList;
 	IF_DATA_LOCK();
 	ifp = XCALLOC(MTYPE_IF, sizeof(struct interface));
@@ -326,11 +333,9 @@ if_create_vrf_dynamic(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 
 	ifp->mtu = IF_MTU_DEFAULT;
 	ifp->mtu6 = IF_MTU_DEFAULT;
-#ifdef ZPL_KERNEL_STACK_MODULE
-	ifp->if_mode = IF_MODE_L3;
-#else
+
 	ifp->if_mode = IF_MODE_ACCESS_L2;
-#endif
+
 	ifp->flags |= IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING;
 
 	if_make_llc_type(ifp);
@@ -351,7 +356,7 @@ if_create_vrf_dynamic(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 struct interface *
 if_create_vrf(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 {
-	struct interface *ifp;
+	struct interface *ifp = NULL;
 	struct list *intf_list = intfList;
 	IF_DATA_LOCK();
 	ifp = XCALLOC(MTYPE_IF, sizeof(struct interface));
@@ -391,11 +396,9 @@ if_create_vrf(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 
 	ifp->mtu = IF_MTU_DEFAULT;
 	ifp->mtu6 = IF_MTU_DEFAULT;
-#ifdef ZPL_KERNEL_STACK_MODULE
-	ifp->if_mode = IF_MODE_L3;
-#else
+
 	ifp->if_mode = IF_MODE_ACCESS_L2;
-#endif
+
 	ifp->flags |= IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING;
 
 	if_make_llc_type(ifp);
@@ -428,7 +431,6 @@ if_create_dynamic(const char *name, zpl_uint32 namelen)
 /* Delete and free interface structure. */
 void if_delete(struct interface *ifp)
 {
-
 	IF_DATA_LOCK();
 	if (if_master.interface_delete_cb)
 		if_master.interface_delete_cb(ifp);
@@ -444,8 +446,8 @@ void if_delete(struct interface *ifp)
 struct interface *
 if_lookup_by_index_vrf(ifindex_t ifindex, vrf_id_t vrf_id)
 {
-	struct listnode *node;
-	struct interface *ifp;
+	struct listnode *node = NULL;
+	struct interface *ifp = NULL;
 
 	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
 	{
@@ -458,8 +460,8 @@ if_lookup_by_index_vrf(ifindex_t ifindex, vrf_id_t vrf_id)
 struct interface *
 if_lookup_by_index(ifindex_t ifindex)
 {
-	struct listnode *node;
-	struct interface *ifp;
+	struct listnode *node = NULL;
+	struct interface *ifp = NULL;
 
 	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
 	{
@@ -472,8 +474,8 @@ if_lookup_by_index(ifindex_t ifindex)
 struct interface *
 if_lookup_by_kernel_name_vrf(const char *name, vrf_id_t vrf_id)
 {
-	struct listnode *node;
-	struct interface *ifp;
+	struct listnode *node = NULL;
+	struct interface *ifp = NULL;
 
 	if (name)
 		for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
@@ -487,8 +489,8 @@ if_lookup_by_kernel_name_vrf(const char *name, vrf_id_t vrf_id)
 struct interface *
 if_lookup_by_kernel_name(const char *name)
 {
-	struct listnode *node;
-	struct interface *ifp;
+	struct listnode *node = NULL;
+	struct interface *ifp = NULL;
 
 	if (name)
 		for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
@@ -503,8 +505,8 @@ if_lookup_by_kernel_name(const char *name)
 struct interface *
 if_lookup_by_kernel_index_vrf(ifindex_t kifindex, vrf_id_t vrf_id)
 {
-	struct listnode *node;
-	struct interface *ifp;
+	struct listnode *node = NULL;
+	struct interface *ifp = NULL;
 	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
 	{
 		if (ifp->k_ifindex && ifp->k_ifindex == kifindex && (ifp->vrf_id == vrf_id))
@@ -516,8 +518,8 @@ if_lookup_by_kernel_index_vrf(ifindex_t kifindex, vrf_id_t vrf_id)
 struct interface *
 if_lookup_by_kernel_index(ifindex_t kifindex)
 {
-	struct listnode *node;
-	struct interface *ifp;
+	struct listnode *node = NULL;
+	struct interface *ifp = NULL;
 	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
 	{
 		if (ifp->k_ifindex && ifp->k_ifindex == kifindex)
@@ -529,52 +531,51 @@ if_lookup_by_kernel_index(ifindex_t kifindex)
 
 const char *ifkernelindex2kernelifname(ifindex_t kifindex)
 {
-	struct interface *ifp;
+	struct interface *ifp = NULL;
 	return ((ifp = if_lookup_by_kernel_index(kifindex)) != NULL) ? ifp->k_name : NULL;
 }
 
 const char *ifkernelindex2kernelifname_vrf(ifindex_t kifindex, vrf_id_t vrf_id)
 {
-	struct interface *ifp;
+	struct interface *ifp = NULL;
 	return ((ifp = if_lookup_by_kernel_index_vrf(kifindex, vrf_id)) != NULL) ? ifp->k_name : NULL;
 }
 
 ifindex_t ifname2kernelifindex(const char *ifname)
 {
-	struct interface *ifp;
+	struct interface *ifp = NULL;
 	return ((ifp = if_lookup_by_kernel_name(ifname)) != NULL) ? ifp->k_ifindex : IFINDEX_INTERNAL;
 }
 
 ifindex_t ifname2kernelifindex_vrf(const char *ifname, vrf_id_t vrf_id)
 {
-	struct interface *ifp;
+	struct interface *ifp = NULL;
 	return ((ifp = if_lookup_by_kernel_name_vrf(ifname, vrf_id)) != NULL) ? ifp->k_ifindex : IFINDEX_INTERNAL;
 }
 
 ifindex_t ifindex2ifkernel(ifindex_t ifindex)
 {
-	struct interface *ifp;
+	struct interface *ifp = NULL;
 	return ((ifp = if_lookup_by_index(ifindex)) != NULL) ? ifp->k_ifindex : IFINDEX_INTERNAL;
 }
 
 ifindex_t ifkernel2ifindex(ifindex_t ifkindex)
 {
-	struct interface *ifp;
+	struct interface *ifp = NULL;
 	return ((ifp = if_lookup_by_kernel_index(ifkindex)) != NULL) ? ifp->ifindex : IFINDEX_INTERNAL;
 }
 
 const char *
 ifindex2ifname_vrf(ifindex_t ifindex, vrf_id_t vrf_id)
 {
-	struct interface *ifp;
-
+	struct interface *ifp = NULL;
 	return ((ifp = if_lookup_by_index_vrf(ifindex, vrf_id)) != NULL) ? ifp->name : "unknown";
 }
 
 const char *
 ifindex2ifname(ifindex_t ifindex)
 {
-	struct interface *ifp;
+	struct interface *ifp = NULL;
 
 	return ((ifp = if_lookup_by_index(ifindex)) != NULL) ? ifp->name : "unknown";
 	//return ifindex2ifname_vrf(ifindex, VRF_DEFAULT);
@@ -582,14 +583,13 @@ ifindex2ifname(ifindex_t ifindex)
 
 ifindex_t ifname2ifindex_vrf(const char *name, vrf_id_t vrf_id)
 {
-	struct interface *ifp;
-
+	struct interface *ifp = NULL;
 	return ((ifp = if_lookup_by_name_vrf(name, vrf_id)) != NULL) ? ifp->ifindex : IFINDEX_INTERNAL;
 }
 
 ifindex_t ifname2ifindex(const char *name)
 {
-	struct interface *ifp;
+	struct interface *ifp = NULL;
 	return ((ifp = if_lookup_by_name(name)) != NULL) ? ifp->ifindex : IFINDEX_INTERNAL;
 }
 
@@ -597,8 +597,8 @@ ifindex_t ifname2ifindex(const char *name)
 struct interface *
 if_lookup_by_name_vrf(const char *name, vrf_id_t vrf_id)
 {
-	struct listnode *node;
-	struct interface *ifp;
+	struct listnode *node = NULL;
+	struct interface *ifp = NULL;
 
 	if (name)
 		for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
@@ -612,8 +612,8 @@ if_lookup_by_name_vrf(const char *name, vrf_id_t vrf_id)
 struct interface *
 if_lookup_by_name(const char *name)
 {
-	struct listnode *node;
-	struct interface *ifp;
+	struct listnode *node = NULL;
+	struct interface *ifp = NULL;
 
 	if (name)
 		for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
@@ -628,8 +628,8 @@ if_lookup_by_name(const char *name)
 struct interface *
 if_lookup_by_name_len_vrf(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 {
-	struct listnode *node;
-	struct interface *ifp;
+	struct listnode *node = NULL;
+	struct interface *ifp = NULL;
 
 	if (namelen > INTERFACE_NAMSIZ)
 		return NULL;
@@ -656,8 +656,8 @@ zpl_vlan_t  if_ifindex2vlan(ifindex_t ifindex)
 
 ifindex_t if_vlan2ifindex(zpl_vlan_t encavlan)
 {
-	struct listnode *node;
-	struct interface *ifp;
+	struct listnode *node = NULL;
+	struct interface *ifp = NULL;
 
 	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
 	{
@@ -675,12 +675,31 @@ zpl_phyport_t  if_ifindex2phy(ifindex_t ifindex)
 
 ifindex_t  if_phy2ifindex(zpl_phyport_t phyid)
 {
-	struct listnode *node;
-	struct interface *ifp;
+	struct listnode *node = NULL;
+	struct interface *ifp = NULL;
 
 	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
 	{
 		if (ifp->phyid && ifp->phyid == phyid)
+			return ifp->ifindex;
+	}
+	return IFINDEX_INTERNAL;
+}
+
+zpl_phyport_t  if_ifindex2l3intfid(ifindex_t ifindex)
+{
+	struct interface *ifp = if_lookup_by_index(ifindex);
+	return ifp ? ifp->l3intfid : IFPHYID_INTERNAL;
+}
+
+ifindex_t  if_l3intfid2ifindex(zpl_phyport_t l3intfid)
+{
+	struct listnode *node = NULL;
+	struct interface *ifp = NULL;
+
+	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+	{
+		if (ifp->l3intfid && ifp->l3intfid == l3intfid)
 			return ifp->ifindex;
 	}
 	return IFINDEX_INTERNAL;
@@ -700,6 +719,20 @@ int if_update_phyid2(struct interface *ifp, zpl_phyport_t phyid)
 	return OK;
 }
 
+int if_update_l3intfid(ifindex_t ifindex, zpl_phyport_t l3intfid)
+{
+	struct interface *ifp = if_lookup_by_index(ifindex);
+	if(ifp)
+		ifp->l3intfid = l3intfid;
+	return OK;
+}
+
+int if_update_l3intfid2(struct interface *ifp, zpl_phyport_t l3intfid)
+{
+	ifp->l3intfid = l3intfid;
+	return OK;
+}
+
 vrf_id_t  if_ifindex2vrfid(ifindex_t ifindex)
 {
 	struct interface *ifp = if_lookup_by_index(ifindex);
@@ -708,8 +741,8 @@ vrf_id_t  if_ifindex2vrfid(ifindex_t ifindex)
 
 struct interface *if_lookup_by_encavlan(zpl_ushort encavlan)
 {
-	struct listnode *node;
-	struct interface *ifp;
+	struct listnode *node = NULL;
+	struct interface *ifp = NULL;
 	if (!encavlan)
 		return NULL;
 	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
@@ -723,11 +756,11 @@ struct interface *if_lookup_by_encavlan(zpl_ushort encavlan)
 struct interface *
 if_lookup_exact_address_vrf(struct ipstack_in_addr src, vrf_id_t vrf_id)
 {
-	struct listnode *node;
-	struct listnode *cnode;
-	struct interface *ifp;
-	struct prefix *p;
-	struct connected *c;
+	struct listnode *node = NULL;
+	struct listnode *cnode = NULL;
+	struct interface *ifp = NULL;
+	struct prefix *p = NULL;
+	struct connected *c = NULL;
 
 	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
 	{
@@ -758,13 +791,13 @@ if_lookup_exact_address(struct ipstack_in_addr src)
 struct interface *
 if_lookup_address_vrf(struct ipstack_in_addr src, vrf_id_t vrf_id)
 {
-	struct listnode *node;
+	struct listnode *node = NULL;
 	struct prefix addr;
 	zpl_uint32 bestlen = 0;
-	struct listnode *cnode;
-	struct interface *ifp;
-	struct connected *c;
-	struct interface *match;
+	struct listnode *cnode = NULL;
+	struct interface *ifp = NULL;
+	struct connected *c = NULL;
+	struct interface *match = NULL;
 
 	addr.family = IPSTACK_AF_INET;
 	addr.u.prefix4 = src;
@@ -800,10 +833,10 @@ struct interface *
 if_lookup_prefix_vrf(struct prefix *prefix, vrf_id_t vrf_id)
 {
 
-	struct listnode *node;
-	struct listnode *cnode;
-	struct interface *ifp;
-	struct connected *c;
+	struct listnode *node = NULL;
+	struct listnode *cnode = NULL;
+	struct interface *ifp = NULL;
+	struct connected *c = NULL;
 
 	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
 	{
@@ -829,9 +862,9 @@ if_lookup_prefix(struct prefix *prefix)
 
 zpl_uint32 if_count_lookup_type(if_type_t type)
 {
-	struct listnode *node;
+	struct listnode *node = NULL;
 	//struct listnode *cnode;
-	struct interface *ifp;
+	struct interface *ifp = NULL;
 	//struct connected *c;
 	int count = 0;
 	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
@@ -847,13 +880,10 @@ zpl_uint32 if_count_lookup_type(if_type_t type)
 
 int if_up(struct interface *ifp)
 {
-	struct connected *connected;
-	struct listnode *node;
-	struct prefix *p;
-#ifdef ZPL_RTPL_MODULE
-	/* Notify the protocol daemons. */
-	zebra_interface_up_update(ifp);
-#endif
+	struct connected *connected = NULL;
+	struct listnode *node = NULL;
+	struct prefix *p = NULL;
+
 	/* Install connected routes to the kernel. */
 	for (ALL_LIST_ELEMENTS_RO(ifp->connected, node, connected))
 	{
@@ -869,20 +899,18 @@ int if_up(struct interface *ifp)
 	ifp->flags |= IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING;
 /* Examine all static routes. */
 #ifdef ZPL_NSM_MODULE
-	rib_update(ifp->vrf_id);
+	if(if_is_l3intf(ifp))
+		rib_update(ifp->vrf_id);
 #endif
 	return OK;
 }
 
 int if_down(struct interface *ifp)
 {
-	struct connected *connected;
-	struct listnode *node;
-	struct prefix *p;
-#ifdef ZPL_RTPL_MODULE
-	/* Notify to the protocol daemons. */
-	zebra_interface_down_update(ifp);
-#endif
+	struct connected *connected = NULL;
+	struct listnode *node = NULL;
+	struct prefix *p = NULL;
+
 	/* Delete connected routes from the kernel. */
 	for (ALL_LIST_ELEMENTS_RO(ifp->connected, node, connected))
 	{
@@ -897,7 +925,8 @@ int if_down(struct interface *ifp)
 	ifp->flags &= ~(IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING);
 /* Examine all static routes which direct to the interface. */
 #ifdef ZPL_NSM_MODULE
-	rib_update(ifp->vrf_id);
+	if(if_is_l3intf(ifp))
+		rib_update(ifp->vrf_id);
 #endif
 	return OK;
 }
@@ -926,7 +955,7 @@ zpl_bool if_is_loopback(struct interface *ifp)
 	/* XXX: Do this better, eg what if IFF_WHATEVER means X on platform M
 	 * but Y on platform N?
 	 */
-	return (ifp->flags & (IPSTACK_IFF_LOOPBACK | IFF_NOXMIT | IFF_VIRTUAL));
+	return (ifp->flags & (IPSTACK_IFF_LOOPBACK | IPSTACK_IFF_NOXMIT | IPSTACK_IFF_VIRTUAL));
 }
 
 /* Does this interface support broadcast ? */
@@ -953,8 +982,6 @@ zpl_bool if_is_serial(struct interface *ifp)
 		return zpl_true;
 	if (ifp->if_type == IF_SERIAL)
 		return zpl_true;
-	/*	if(ifp->zebra_link_type == IF_SERIAL)
-		return 1;*/
 	return zpl_false;
 }
 
@@ -1033,6 +1060,17 @@ zpl_bool if_is_online(struct interface *ifp)
 		return zpl_true;
 	return zpl_false;
 }
+zpl_bool if_is_l3intf(struct interface *ifp)
+{
+	if (ifp->if_mode == IF_MODE_L3)
+		return zpl_true;
+	return zpl_false;
+}
+
+zpl_bool if_have_kernel(struct interface *ifp)
+{
+	return (ifp->have_kernel);
+}
 
 int if_online(struct interface *ifp, zpl_bool enable)
 {
@@ -1059,7 +1097,7 @@ int if_kname_set(struct interface *ifp, const char *str)
 		os_strcpy(ifp->k_name, buf);
 		ifp->k_name_hash = if_name_hash_make(ifp->k_name);
 #ifdef ZPL_PAL_MODULE
-		ifp->k_ifindex = pal_interface_ifindex(ifp->k_name);
+		ifp->k_ifindex = nsm_halpal_interface_ifindex(ifp->k_name);
 #endif
 	}
 	else
@@ -1122,8 +1160,8 @@ const char *if_enca_string(if_enca_t enca)
 
 int if_list_each(int (*cb)(struct interface *ifp, void *pVoid), void *pVoid)
 {
-	struct listnode *node;
-	struct interface *ifp;
+	struct listnode *node = NULL;
+	struct interface *ifp = NULL;
 	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
 	{
 		if (ifp)
@@ -1177,9 +1215,9 @@ static int connected_same_prefix(struct prefix *p1, struct prefix *p2)
 struct connected *
 connected_delete_by_prefix(struct interface *ifp, struct prefix *p)
 {
-	struct listnode *node;
-	struct listnode *next;
-	struct connected *ifc;
+	struct listnode *node = NULL;
+	struct listnode *next = NULL;
+	struct connected *ifc = NULL;
 
 	/* In case of same prefix come, replace it with new one. */
 	for (node = listhead(ifp->connected); node; node = next)
@@ -1202,9 +1240,9 @@ struct connected *
 connected_lookup_address(struct interface *ifp, struct ipstack_in_addr dst)
 {
 	struct prefix addr;
-	struct listnode *cnode;
-	struct connected *c;
-	struct connected *match;
+	struct listnode *cnode = NULL;
+	struct connected *c = NULL;
+	struct connected *match = NULL;
 
 	addr.family = IPSTACK_AF_INET;
 	addr.u.prefix4 = dst;
@@ -1224,7 +1262,7 @@ struct connected *
 connected_add_by_prefix(struct interface *ifp, struct prefix *p,
 						struct prefix *destination)
 {
-	struct connected *ifc;
+	struct connected *ifc = NULL;
 
 	/* Allocate new connected address. */
 	ifc = connected_new();
@@ -1250,8 +1288,8 @@ connected_add_by_prefix(struct interface *ifp, struct prefix *p,
 struct connected *
 connected_check(struct interface *ifp, struct prefix *p)
 {
-	struct connected *ifc;
-	struct listnode *node;
+	struct connected *ifc = NULL;
+	struct listnode *node = NULL;
 
 	for (ALL_LIST_ELEMENTS_RO(ifp->connected, node, ifc))
 		if (prefix_same(ifc->address, p))
@@ -1264,8 +1302,8 @@ connected_check(struct interface *ifp, struct prefix *p)
 static void __attribute__((unused))
 connected_log(struct connected *connected, zpl_char *str)
 {
-	struct prefix *p;
-	struct interface *ifp;
+	struct prefix *p = NULL;
+	struct interface *ifp = NULL;
 	zpl_char logbuf[BUFSIZ];
 	zpl_char buf[BUFSIZ];
 
@@ -1329,11 +1367,11 @@ if_flag_dump(zpl_ulong flag)
 	IFF_OUT_LOG(IPSTACK_IFF_LINK2, "LINK2");
 	#endif
 	IFF_OUT_LOG(IPSTACK_IFF_MULTICAST, "MULTICAST");
-	IFF_OUT_LOG(IFF_NOXMIT, "NOXMIT");
-	IFF_OUT_LOG(IFF_NORTEXCH, "NORTEXCH");
-	IFF_OUT_LOG(IFF_VIRTUAL, "VIRTUAL");
-	IFF_OUT_LOG(IFF_IPV4, "IPv4");
-	IFF_OUT_LOG(IFF_IPV6, "IPv6");
+	IFF_OUT_LOG(IPSTACK_IFF_NOXMIT, "NOXMIT");
+	IFF_OUT_LOG(IPSTACK_IFF_NORTEXCH, "NORTEXCH");
+	IFF_OUT_LOG(IPSTACK_IFF_VIRTUAL, "VIRTUAL");
+	IFF_OUT_LOG(IPSTACK_IFF_IPV4, "IPv4");
+	IFF_OUT_LOG(IPSTACK_IFF_IPV6, "IPv6");
 
 	strlcat(logbuf, ">", BUFSIZ);
 
@@ -1344,7 +1382,7 @@ if_flag_dump(zpl_ulong flag)
 /* For debugging */
 static void if_dump(const struct interface *ifp)
 {
-	struct listnode *node;
+	struct listnode *node = NULL;
 	struct connected *c __attribute__((unused));
 
 	for (ALL_LIST_ELEMENTS_RO(ifp->connected, node, c))
@@ -1364,8 +1402,8 @@ static void if_dump(const struct interface *ifp)
 /* Interface printing for all interface. */
 void if_dump_all(void)
 {
-	struct listnode *node;
-	void *p;
+	struct listnode *node = NULL;
+	void *p = NULL;
 	for (ALL_LIST_ELEMENTS_RO(intfList, node, p))
 		if_dump(p);
 }
@@ -1386,7 +1424,7 @@ void if_terminate(void)
 {
 	for (;;)
 	{
-		struct interface *ifp;
+		struct interface *ifp = NULL;
 
 		ifp = listnode_head(intfList);
 		if (ifp == NULL)
@@ -1400,38 +1438,38 @@ void if_terminate(void)
 }
 
 const char *
-if_link_type_str(enum zebra_link_type llt)
+if_link_type_str(enum if_link_type llt)
 {
 	switch (llt)
 	{
 #define llts(T, S) \
 	case (T):      \
 		return (S)
-		llts(ZEBRA_LLT_UNKNOWN, "Unknown");
-		llts(ZEBRA_LLT_SERIAL, "Serial");
-		llts(ZEBRA_LLT_ETHER, "Ethernet");
-		llts(ZEBRA_LLT_GIETHER, "Gigabt-Ethernet");
-		llts(ZEBRA_LLT_TUNNEL, "Tunnel");
-		llts(ZEBRA_LLT_VLAN, "Vlan");
-		llts(ZEBRA_LLT_LAG, "Lag");
-		llts(ZEBRA_LLT_ATM, "ATM");
-		llts(ZEBRA_LLT_SLIP, "SLIP");
-		llts(ZEBRA_LLT_CSLIP, "Compressed SLIP");
-		llts(ZEBRA_LLT_SLIP6, "SLIPv6");
-		llts(ZEBRA_LLT_CSLIP6, "Compressed SLIPv6");
-		llts(ZEBRA_LLT_PPP, "PPP");
-		llts(ZEBRA_LLT_CHDLC, "Cisco HDLC");
-		llts(ZEBRA_LLT_RAWHDLC, "Raw HDLC");
-		llts(ZEBRA_LLT_IPIP, "IPIP Tunnel");
-		llts(ZEBRA_LLT_IPIP6, "IPIP6 Tunnel");
-		llts(ZEBRA_LLT_LOOPBACK, "Loopback");
-		llts(ZEBRA_LLT_SIT, "IPv6-in-IPv4 SIT");
-		llts(ZEBRA_LLT_IPGRE, "GRE over IP");
-		llts(ZEBRA_LLT_IP6GRE, "GRE over IPV6");
-		llts(ZEBRA_LLT_BRIGDE, "Brigde");
-		llts(ZEBRA_LLT_WIFI, "Wifi");
-		llts(ZEBRA_LLT_MODEM, "Modem");
-		llts(ZEBRA_LLT_WIRELESS, "Wireless");
+		llts(IF_LLT_UNKNOWN, "Unknown");
+		llts(IF_LLT_SERIAL, "Serial");
+		llts(IF_LLT_ETHER, "Ethernet");
+		llts(IF_LLT_GIETHER, "Gigabt-Ethernet");
+		llts(IF_LLT_TUNNEL, "Tunnel");
+		llts(IF_LLT_VLAN, "Vlan");
+		llts(IF_LLT_LAG, "Lag");
+		llts(IF_LLT_ATM, "ATM");
+		llts(IF_LLT_SLIP, "SLIP");
+		llts(IF_LLT_CSLIP, "Compressed SLIP");
+		llts(IF_LLT_SLIP6, "SLIPv6");
+		llts(IF_LLT_CSLIP6, "Compressed SLIPv6");
+		llts(IF_LLT_PPP, "PPP");
+		llts(IF_LLT_CHDLC, "Cisco HDLC");
+		llts(IF_LLT_RAWHDLC, "Raw HDLC");
+		llts(IF_LLT_IPIP, "IPIP Tunnel");
+		llts(IF_LLT_IPIP6, "IPIP6 Tunnel");
+		llts(IF_LLT_LOOPBACK, "Loopback");
+		llts(IF_LLT_SIT, "IPv6-in-IPv4 SIT");
+		llts(IF_LLT_IPGRE, "GRE over IP");
+		llts(IF_LLT_IP6GRE, "GRE over IPV6");
+		llts(IF_LLT_BRIGDE, "Brigde");
+		llts(IF_LLT_WIFI, "Wifi");
+		llts(IF_LLT_MODEM, "Modem");
+		llts(IF_LLT_WIRELESS, "Wireless");
 	default:
 		zlog_warn(MODULE_DEFAULT, "Unknown value %d", llt);
 		return "Unknown type!";
@@ -1440,50 +1478,50 @@ if_link_type_str(enum zebra_link_type llt)
 	return NULL;
 }
 
-enum zebra_link_type
-netlink_to_zebra_link_type(zpl_uint32  hwt)
+enum if_link_type
+netlink_to_if_link_type(zpl_uint32  hwt)
 {
 	switch (hwt)
 	{
 	case IPSTACK_ARPHRD_ETHER:
-		return ZEBRA_LLT_ETHER;
-	case ARPHRD_ATM:
-		return ZEBRA_LLT_ATM;
-	case ARPHRD_SLIP:
-		return ZEBRA_LLT_SLIP;
-	case ARPHRD_CSLIP:
-		return ZEBRA_LLT_CSLIP;
-	case ARPHRD_SLIP6:
-		return ZEBRA_LLT_SLIP6;
-	case ARPHRD_CSLIP6:
-		return ZEBRA_LLT_CSLIP6;
-	case ARPHRD_PPP:
-		return ZEBRA_LLT_PPP;
-	case ARPHRD_CISCO:
-		return ZEBRA_LLT_CHDLC;
-	case ARPHRD_RAWHDLC:
-		return ZEBRA_LLT_RAWHDLC;
-	case ARPHRD_TUNNEL:
-		return ZEBRA_LLT_IPIP;
-	case ARPHRD_TUNNEL6:
-		return ZEBRA_LLT_IPIP6;
-	case ARPHRD_LOOPBACK:
-		return ZEBRA_LLT_LOOPBACK;
-	case ARPHRD_SIT:
-		return ZEBRA_LLT_SIT;
-	case ARPHRD_IPGRE:
-		return ZEBRA_LLT_IPGRE;
+		return IF_LLT_ETHER;
+	case IPSTACK_ARPHRD_ATM:
+		return IF_LLT_ATM;
+	case IPSTACK_ARPHRD_SLIP:
+		return IF_LLT_SLIP;
+	case IPSTACK_ARPHRD_CSLIP:
+		return IF_LLT_CSLIP;
+	case IPSTACK_ARPHRD_SLIP6:
+		return IF_LLT_SLIP6;
+	case IPSTACK_ARPHRD_CSLIP6:
+		return IF_LLT_CSLIP6;
+	case IPSTACK_ARPHRD_PPP:
+		return IF_LLT_PPP;
+	case IPSTACK_ARPHRD_CISCO:
+		return IF_LLT_CHDLC;
+	case IPSTACK_ARPHRD_RAWHDLC:
+		return IF_LLT_RAWHDLC;
+	case IPSTACK_ARPHRD_TUNNEL:
+		return IF_LLT_IPIP;
+	case IPSTACK_ARPHRD_TUNNEL6:
+		return IF_LLT_IPIP6;
+	case IPSTACK_ARPHRD_LOOPBACK:
+		return IF_LLT_LOOPBACK;
+	case IPSTACK_ARPHRD_SIT:
+		return IF_LLT_SIT;
+	case IPSTACK_ARPHRD_IPGRE:
+		return IF_LLT_IPGRE;
 
-		// case ARPHRD_IEEE802: return ZEBRA_LLT_IPGRE;
-	case ARPHRD_IEEE80211:
-		return ZEBRA_LLT_WIRELESS;
-		// case ARPHRD_IEEE802154: return ZEBRA_LLT_ZIGBEE;
+		// case ARPHRD_IEEE802: return IF_LLT_IPGRE;
+	case IPSTACK_ARPHRD_IEEE80211:
+		return IF_LLT_WIRELESS;
+		// case ARPHRD_IEEE802154: return IF_LLT_ZIGBEE;
 
-#ifdef ARPHRD_IP6GRE
-	case ARPHRD_IP6GRE:
-		return ZEBRA_LLT_IP6GRE;
+#ifdef IPSTACK_ARPHRD_IP6GRE
+	case IPSTACK_ARPHRD_IP6GRE:
+		return IF_LLT_IP6GRE;
 #endif
 	default:
-		return ZEBRA_LLT_UNKNOWN;
+		return IF_LLT_UNKNOWN;
 	}
 }

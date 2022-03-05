@@ -12,8 +12,7 @@
 extern "C" {
 #endif
 
-//#define ZPL_KERNEL_STACK_MODULE
-	//ZPL_KERNEL_STACK_MODULE
+
 #undef BASE_DIR         //运行时缓存目录
 #undef SYS_REAL_DIR     //flash存储目录
 

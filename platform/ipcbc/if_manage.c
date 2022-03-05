@@ -47,7 +47,7 @@ static int if_unit_slot_port(zpl_bool online, if_type_t type, zpl_uint8 u, zpl_u
 	if(!online)
 	{
 		if(IS_BMGT_DEBUG_EVENT(_bmgt_debug))
-			zlog_debug(MODULE_LIB, " if_online %s", name);
+			zlog_debug(MODULE_NSM, " if_online %s", name);
 		ifp = if_lookup_by_name(name);
 		if(ifp)
 		{
@@ -57,7 +57,7 @@ static int if_unit_slot_port(zpl_bool online, if_type_t type, zpl_uint8 u, zpl_u
 	else// if(online)
 	{
 		if(IS_BMGT_DEBUG_EVENT(_bmgt_debug))
-			zlog_debug(MODULE_LIB, " if_create %s", name);
+			zlog_debug(MODULE_NSM, " if_create %s", name);
 		if (os_strlen(name) && !if_lookup_by_name(name))
 			ifp = if_create(name, strlen(name));
 		if(ifp)
@@ -69,7 +69,7 @@ static int if_unit_slot_port(zpl_bool online, if_type_t type, zpl_uint8 u, zpl_u
 static int unit_board_port_installfunc(unit_port_mgt_t *mgt, void *p)
 {
 	unit_board_mgt_t *board = p;
-	zlog_debug(MODULE_HAL, " unit_board_port_installfunc online=%d %d %d/%d/%d", 
+	zlog_debug(MODULE_NSM, " unit_board_port_installfunc online=%d %d %d/%d/%d", 
 		board->online, mgt->type, board->unit, board->slot, mgt->port);
 	if (board->state != UBMG_STAT_ACTIVE && board->online)
 	{
@@ -111,7 +111,7 @@ int unit_board_dynamic_install(zpl_uint8 unit, zpl_uint8 slot, zpl_bool enable)
 	zpl_bool online = enable;
 	if(mgt)
 	{
-		zlog_debug(MODULE_HAL, " unit_board_dynamic_install %d/%d %d", unit, slot, enable);
+		zlog_debug(MODULE_NSM, " unit_board_dynamic_install %d/%d %d", unit, slot, enable);
 		unit_board_installfunc(mgt, &online);
 	}
 	return OK;

@@ -52,18 +52,12 @@ enum hal_8021x_cmd
 	HAL_8021X_PORT_MODE,
 	HAL_8021X_PORT_MAC,
 	HAL_8021X_PORT_STATE,
-	HAL_8021X_PORT_BYPASS,
-    HAL_8021X_PORT,
 };
 
 typedef struct hal_8021x_param_s
 {
-	union hal_8021x
-	{
 	zpl_uint32 value;
 	mac_t mac[NSM_MAC_MAX];
-	}u;
-
 }hal_8021x_param_t;
 
 /*全局使能*/
@@ -75,12 +69,8 @@ extern int hal_8021x_interface_mode(ifindex_t ifindex, zpl_uint32 value);
 /*端口认证状态*/
 extern int hal_8021x_interface_state(ifindex_t ifindex, zpl_uint32 value);
 
-/*端口认证模式下通过报文*/
-extern int hal_8021x_auth_bypass(ifindex_t ifindex, zpl_uint32 value);
 
-extern int hal_8021x_interface_addmac(ifindex_t ifindex, mac_t *mac);
-extern int hal_8021x_interface_delmac(ifindex_t ifindex, mac_t *mac);
-extern int hal_8021x_interface_delallmac(ifindex_t ifindex);
+extern int hal_8021x_interface_dmac(ifindex_t ifindex, mac_t *mac);
 
 
 

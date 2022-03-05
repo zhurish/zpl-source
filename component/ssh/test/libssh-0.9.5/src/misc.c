@@ -191,7 +191,7 @@ char *ssh_get_local_username(void) {
 }
 
 int ssh_is_ipaddr_v4(const char *str) {
-    struct sockaddr_storage ss;
+    struct ipstack_sockaddr_storage ss;
     int sslen = sizeof(ss);
     int rc = SOCKET_ERROR;
 
@@ -201,9 +201,9 @@ int ssh_is_ipaddr_v4(const char *str) {
     }
 
     rc = WSAStringToAddressA((LPSTR) str,
-                             AF_INET,
+                             IPSTACK_AF_INET,
                              NULL,
-                             (struct sockaddr*)&ss,
+                             (struct ipstack_sockaddr*)&ss,
                              &sslen);
     if (rc == 0) {
         return 1;
@@ -216,14 +216,14 @@ int ssh_is_ipaddr(const char *str) {
     int rc = SOCKET_ERROR;
 
     if (strchr(str, ':')) {
-        struct sockaddr_storage ss;
+        struct ipstack_sockaddr_storage ss;
         int sslen = sizeof(ss);
 
         /* TODO link-local (IP:v6:addr%ifname). */
         rc = WSAStringToAddressA((LPSTR) str,
-                                 AF_INET6,
+                                 IPSTACK_AF_INET6,
                                  NULL,
-                                 (struct sockaddr*)&ss,
+                                 (struct ipstack_sockaddr*)&ss,
                                  &sslen);
         if (rc == 0) {
             return 1;
@@ -321,9 +321,9 @@ char *ssh_get_local_username(void)
 
 int ssh_is_ipaddr_v4(const char *str) {
     int rc = -1;
-    struct in_addr dest;
+    struct ipstack_in_addr dest;
 
-    rc = ipstack_inet_pton(AF_INET, str, &dest);
+    rc = ipstack_inet_pton(IPSTACK_AF_INET, str, &dest);
     if (rc > 0) {
         return 1;
     }
@@ -335,10 +335,10 @@ int ssh_is_ipaddr(const char *str) {
     int rc = -1;
 
     if (strchr(str, ':')) {
-        struct in6_addr dest6;
+        struct ipstack_in6_addr dest6;
 
         /* TODO link-local (IP:v6:addr%ifname). */
-        rc = ipstack_inet_pton(AF_INET6, str, &dest6);
+        rc = ipstack_inet_pton(IPSTACK_AF_INET6, str, &dest6);
         if (rc > 0) {
             return 1;
         }

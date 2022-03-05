@@ -46,6 +46,8 @@ static const char * _hal_cmd_namestr(int cmd)
     {
     case HAL_MODULE_CMD_NONE:
     return "NONE";
+    case HAL_MODULE_CMD_DATA:
+    return "DATA";    
 	case HAL_MODULE_CMD_REQ:
     return "SET";
 	case HAL_MODULE_CMD_ACK:
@@ -89,12 +91,12 @@ const char * hal_module_cmd_name(zpl_uint32 cmd)
     if(_hal_module_namestr(IPCCMD_MODULE_GET(cmd)))
         n = snprintf(bustmp, sizeof(bustmp), "%s ", _hal_module_namestr(IPCCMD_MODULE_GET(cmd)));
     else  
-        n = snprintf(bustmp, sizeof(bustmp), "unknown:%d ", (IPCCMD_MODULE_GET(cmd)));  
+        n = snprintf(bustmp, sizeof(bustmp), "unknown:0x%x ", (IPCCMD_MODULE_GET(cmd)));  
     
     if(_hal_cmd_namestr(IPCCMD_CMD_GET(cmd)))
         n = snprintf(bustmp + n, sizeof(bustmp) - n, "%s", _hal_cmd_namestr(IPCCMD_CMD_GET(cmd)));
     else  
-        n = snprintf(bustmp + n, sizeof(bustmp) - n, "unknown:%d", (IPCCMD_CMD_GET(cmd)));  
+        n = snprintf(bustmp + n, sizeof(bustmp) - n, "unknown:0x%x", (IPCCMD_CMD_GET(cmd)));  
     return bustmp;
 }
 

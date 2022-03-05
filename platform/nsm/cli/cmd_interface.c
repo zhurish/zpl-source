@@ -12,7 +12,7 @@
 
 static int nsm_interface_cmd_node_get(struct interface *ifp, int range)
 {
-#ifdef ZPL_KERNEL_STACK_MODULE
+#ifndef ZPL_KERNEL_STACK_MODULE
 	int node = INTERFACE_L3_NODE;
 #else
 	int node = INTERFACE_NODE;
@@ -70,6 +70,7 @@ static int nsm_interface_cmd_node_get(struct interface *ifp, int range)
 	default:
 		break;
 	}
+	zlog_debug(MODULE_LIB," nsm_interface_cmd_node_get :node = %d\r\n", node);
 	return node;
 }
 
@@ -479,106 +480,7 @@ DEFUN(no_nsm_wifi_interface,
 }
 #endif
 
-#ifdef ZPL_IPCOM_STACK_MODULE
-DEFUN(nsm_interface_switchport,
-	  nsm_interface_switchport_cmd,
-	  "switchport",
-	  "set this interface Switchport\n")
-{
-	int ret = 0;
-	struct interface *ifp = vty->index;
-	if (ifp)
-	{
-		if (ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET || ifp->if_type == IF_LAG)
-		{
-			ret = nsm_interface_mode_set_api(ifp, IF_MODE_ACCESS_L2);
-			if (ret == OK)
-			{
-				if (ifp->if_type == IF_LAG)
-					vty->node = LAG_INTERFACE_NODE;
-				else
-					vty->node = INTERFACE_NODE;
-			}
-			return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
-		}
-		else
-			return CMD_SUCCESS;
-	}
-	else if (vty->index_range)
-	{
-		zpl_uint32 i = 0;
-		for (i = 0; i < vty->index_range; i++)
-		{
-			ifp = vty->vty_range_index[i];
-			if (ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET || ifp->if_type == IF_LAG)
-			{
-				ret = nsm_interface_mode_set_api(ifp, IF_MODE_ACCESS_L2);
-				if (ret == OK)
-				{
-					if (ifp->if_type == IF_LAG)
-						vty->node = LAG_INTERFACE_NODE;
-					else
-						vty->node = INTERFACE_NODE;
-				}
-				if (ret != OK)
-					return CMD_WARNING;
-			}
-		}
-		return CMD_SUCCESS;
-	}
-	return CMD_WARNING;
-}
 
-DEFUN(no_nsm_interface_switchport,
-	  no_nsm_interface_switchport_cmd,
-	  "no switchport",
-	  NO_STR
-	  "set this interface Switchport\n")
-{
-	int ret = 0;
-	struct interface *ifp = vty->index;
-	if (ifp)
-	{
-		if (ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET || ifp->if_type == IF_LAG)
-		{
-			ret = nsm_interface_mode_set_api(ifp, IF_MODE_L3);
-			if (ret == OK)
-			{
-				if (ifp->if_type == IF_LAG)
-					vty->node = LAG_INTERFACE_L3_NODE;
-				else
-					vty->node = INTERFACE_L3_NODE;
-			}
-			return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
-		}
-		else
-			return CMD_SUCCESS;
-	}
-	else if (vty->index_range)
-	{
-		zpl_uint32 i = 0;
-		for (i = 0; i < vty->index_range; i++)
-		{
-			ifp = vty->vty_range_index[i];
-			if (ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET || ifp->if_type == IF_LAG)
-			{
-				ret = nsm_interface_mode_set_api(ifp, IF_MODE_L3);
-				if (ret == OK)
-				{
-					if (ifp->if_type == IF_LAG)
-						vty->node = LAG_INTERFACE_L3_NODE;
-					else
-						vty->node = INTERFACE_L3_NODE;
-				}
-				if (ret != OK)
-					return CMD_WARNING;
-			}
-		}
-		return CMD_SUCCESS;
-	}
-	return CMD_WARNING;
-}
-#endif
 
 DEFUN(nsm_interface_shutdown,
 	  nsm_interface_shutdown_cmd,
@@ -1910,6 +1812,7 @@ static int nsm_interface_config_write(struct vty *vty)
 			// nsm_client_interface_write_config(0, vty, ifp);
 			// nsm_client_interface_write_config(NSM_VLAN, vty, ifp);
 			// nsm_client_interface_write_config(NSM_PORT, vty, ifp);
+			nsm_interface_write_hook_handler(NSM_INTF_VLAN, vty, ifp);
 
 			if (ifp->if_mode == IF_MODE_L3)
 			{
@@ -1965,7 +1868,7 @@ static int nsm_interface_config_write(struct vty *vty)
 				nsm_interface_dhcp_config(vty, ifp);
 			}
 #endif
-			nsm_interface_write_hook_handler(-1, vty, ifp);
+			//nsm_interface_write_hook_handler(-1, vty, ifp);
 			if (if_data)
 			{
 				if (if_data->shutdown == IF_ZEBRA_SHUTDOWN_ON)
@@ -2175,17 +2078,11 @@ static void cmd_range_interface_init(int node)
 	install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_speed_cmd);
 	if (node == INTERFACE_RANGE_NODE)
 	{
-#ifdef ZPL_IPCOM_STACK_MODULE
-		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
-		// install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
-#endif
+
 	}
 	if (node == INTERFACE_L3_RANGE_NODE)
 	{
-#ifdef ZPL_IPCOM_STACK_MODULE
-		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
-		// install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
-#endif
+
 		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_multicast_cmd);
 		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_multicast_cmd);
 		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_mtu_cmd);
@@ -2199,27 +2096,15 @@ static void cmd_range_interface_init(int node)
 	}
 	if (node == EPON_INTERFACE_RANGE_NODE)
 	{
-#ifdef ZPL_IPCOM_STACK_MODULE
-		// install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
-		// install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
-#endif
+
 	}
 	if (node == EPON_INTERFACE_L3_RANGE_NODE)
 	{
-#ifdef ZPL_IPCOM_STACK_MODULE
-		// install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
-		// install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
-#endif
+
 	}
 }
 
-static void cmd_switchport_interface_init(int node)
-{
-#ifdef ZPL_IPCOM_STACK_MODULE
-	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
-	install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
-#endif
-}
+
 
 #ifdef CUSTOM_INTERFACE
 static void cmd_custom_interface_init(int node)
@@ -2314,11 +2199,6 @@ void cmd_interface_init(void)
 	cmd_ethernet_interface_init(LAG_INTERFACE_NODE);
 	cmd_ethernet_interface_init(LAG_INTERFACE_L3_NODE);
 	cmd_ethernet_interface_init(BRIGDE_INTERFACE_NODE);
-
-	cmd_switchport_interface_init(INTERFACE_NODE);
-	cmd_switchport_interface_init(INTERFACE_L3_NODE);
-	cmd_switchport_interface_init(LAG_INTERFACE_NODE);
-	cmd_switchport_interface_init(LAG_INTERFACE_L3_NODE);
 
 #ifdef CUSTOM_INTERFACE
 	cmd_custom_interface_init(WIFI_INTERFACE_NODE);

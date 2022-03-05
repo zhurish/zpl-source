@@ -18,40 +18,48 @@ sdk_vlan_t sdk_vlan;
 static int bsp_vlan_enable(void *driver, hal_port_header_t *port, hal_vlan_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_vlan.sdk_vlan_enable)
 		ret = sdk_vlan.sdk_vlan_enable(driver, param->enable);
-	SDK_LEAVE_FUNC();	
+	BSP_LEAVE_FUNC();	
 	return ret;
 }
 
 static int bsp_vlan_create(void *driver, hal_port_header_t *port, hal_vlan_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_vlan.sdk_vlan_create)
-		ret = sdk_vlan.sdk_vlan_create(driver, param->set, param->vlan);
-	SDK_LEAVE_FUNC();	
+		ret = sdk_vlan.sdk_vlan_create(driver, param->enable, param->vlan);
+	BSP_LEAVE_FUNC();	
 	return ret;
 }
 
 static int bsp_vlan_batch_create(void *driver, hal_port_header_t *port, hal_vlan_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
-	if(driver && sdk_vlan.sdk_vlan_batch_create)
-		ret = sdk_vlan.sdk_vlan_batch_create(driver, param->set, param->vlan, param->vlan_end);
-	SDK_LEAVE_FUNC();	
+	int i = 0;
+	BSP_ENTER_FUNC();
+	if(driver && sdk_vlan.sdk_vlan_create)
+	{
+		for(i = 0; i < param->num; i++)
+		{
+			ret |= sdk_vlan.sdk_vlan_create(driver, param->enable, param->vlantbl[i]);
+			if(ret != OK)
+				break;
+		}
+	}
+	BSP_LEAVE_FUNC();	
 	return ret;
 }
 
 static int bsp_vlan_untag_port(void *driver, hal_port_header_t *port, hal_vlan_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_vlan.sdk_vlan_untag_port)
-		ret = sdk_vlan.sdk_vlan_untag_port(driver, param->set, port->phyport, param->vlan);
-	SDK_LEAVE_FUNC();	
+		ret = sdk_vlan.sdk_vlan_untag_port(driver, param->enable, port->phyport, param->vlan);
+	BSP_LEAVE_FUNC();	
 	return ret;
 }
 
@@ -59,10 +67,10 @@ static int bsp_vlan_untag_port(void *driver, hal_port_header_t *port, hal_vlan_p
 static int bsp_vlan_tag_port(void *driver, hal_port_header_t *port, hal_vlan_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_vlan.sdk_vlan_tag_port)
-		ret = sdk_vlan.sdk_vlan_tag_port(driver, param->set, port->phyport, param->vlan);
-	SDK_LEAVE_FUNC();	
+		ret = sdk_vlan.sdk_vlan_tag_port(driver, param->enable, port->phyport, param->vlan);
+	BSP_LEAVE_FUNC();	
 	return ret;
 }
 
@@ -71,10 +79,10 @@ static int bsp_vlan_tag_port(void *driver, hal_port_header_t *port, hal_vlan_par
 static int bsp_port_native_vlan(void *driver, hal_port_header_t *port, hal_vlan_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_vlan.sdk_port_native_vlan)
-		ret = sdk_vlan.sdk_port_native_vlan(driver, param->set, port->phyport, param->vlan);
-	SDK_LEAVE_FUNC();	
+		ret = sdk_vlan.sdk_port_native_vlan(driver, param->enable, port->phyport, param->vlan);
+	BSP_LEAVE_FUNC();	
 	return ret;
 }
 
@@ -83,10 +91,10 @@ static int bsp_port_native_vlan(void *driver, hal_port_header_t *port, hal_vlan_
 static int bsp_port_allowed_tag_vlan(void *driver, hal_port_header_t *port, hal_vlan_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_vlan.sdk_port_allowed_tag_vlan)
-		ret = sdk_vlan.sdk_port_allowed_tag_vlan(driver, param->set, port->phyport, param->vlan);
-	SDK_LEAVE_FUNC();	
+		ret = sdk_vlan.sdk_port_allowed_tag_vlan(driver, param->enable, port->phyport, param->vlan);
+	BSP_LEAVE_FUNC();	
 	return ret;
 }
 
@@ -94,10 +102,18 @@ static int bsp_port_allowed_tag_vlan(void *driver, hal_port_header_t *port, hal_
 static int bsp_port_allowed_tag_batch_vlan(void *driver, hal_port_header_t *port, hal_vlan_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
-	if(driver && sdk_vlan.sdk_port_allowed_tag_batch_vlan)
-		ret = sdk_vlan.sdk_port_allowed_tag_batch_vlan(driver, param->set, port->phyport, param->vlan, param->vlan_end);
-	SDK_LEAVE_FUNC();	
+	int i = 0;
+	BSP_ENTER_FUNC();
+	if(driver && sdk_vlan.sdk_port_allowed_tag_vlan)
+	{
+		for(i = 0; i < param->num; i++)
+		{
+			ret |= sdk_vlan.sdk_port_allowed_tag_vlan(driver, param->enable, port->phyport, param->vlantbl[i]);
+			if(ret != OK)
+				break;
+		}
+	}
+	BSP_LEAVE_FUNC();	
 	return ret;
 }
 
@@ -105,14 +121,15 @@ static int bsp_port_allowed_tag_batch_vlan(void *driver, hal_port_header_t *port
 static int bsp_port_set_vlan(void *driver, hal_port_header_t *port, hal_vlan_param_t *param)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
-	if(driver && sdk_vlan.sdk_port_pvid_vlan && param->set)
-		ret = sdk_vlan.sdk_port_pvid_vlan(driver, param->set, port->phyport, param->vlan);
-	SDK_LEAVE_FUNC();	
+	BSP_ENTER_FUNC();
+	if(driver && sdk_vlan.sdk_port_pvid_vlan)
+		ret = sdk_vlan.sdk_port_pvid_vlan(driver, param->enable, port->phyport, param->vlan);
+	BSP_LEAVE_FUNC();	
 	return ret;
 }
 
 static hal_ipcsubcmd_callback_t subcmd_table[] = {
+	HAL_CALLBACK_ENTRY(HAL_VLAN_NONE, NULL),
 	HAL_CALLBACK_ENTRY(HAL_VLAN, bsp_vlan_enable),
 	HAL_CALLBACK_ENTRY(HAL_VLAN_CREATE, bsp_vlan_create),
 	HAL_CALLBACK_ENTRY(HAL_VLAN_RANGE_CREATE, bsp_vlan_batch_create),
@@ -122,27 +139,61 @@ static hal_ipcsubcmd_callback_t subcmd_table[] = {
 	HAL_CALLBACK_ENTRY(HAL_VLAN_NATIVE, bsp_port_native_vlan),
 	HAL_CALLBACK_ENTRY(HAL_VLAN_ALLOWE, bsp_port_allowed_tag_vlan),
 	HAL_CALLBACK_ENTRY(HAL_VLAN_RANGE_ALLOWE, bsp_port_allowed_tag_batch_vlan),
-	HAL_CALLBACK_ENTRY(HAL_VLAN_PVID, bsp_port_set_vlan),
+	HAL_CALLBACK_ENTRY(HAL_VLAN_PORT_BASE, bsp_port_set_vlan),
 };
 
 int bsp_vlan_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 subcmd, void *driver)
 {
-	int ret = OK;
+	int ret = OK, i = 0;
+	vlan_t vlantbl[4096];
 	hal_vlan_param_t	param;
-	//hal_global_header_t	global;
 	hal_port_header_t	bspport;
-	SDK_ENTER_FUNC();
-	//hal_ipcmsg_global_get(&client->ipcmsg, &global);
+	BSP_ENTER_FUNC();
+	ret = bsp_driver_module_check(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
+	if(ret == 0)
+	{
+		BSP_LEAVE_FUNC();
+		return NO_SDK;
+	}
+	param.vlantbl = vlantbl;
+	switch(subcmd)
+	{
+	case HAL_VLAN:
+	case HAL_VLAN_CREATE:
+	case HAL_VLAN_DELETE:
+		hal_ipcmsg_getl(&client->ipcmsg, &param.enable);
+		hal_ipcmsg_getw(&client->ipcmsg, &param.vlan);
+		hal_ipcmsg_getw(&client->ipcmsg, &param.vlan_end);
+	break;
+	case HAL_VLAN_RANGE_CREATE:
+    case HAL_VLAN_RANGE_DELETE:
+	hal_ipcmsg_getl(&client->ipcmsg, &param.num);
+	for(i = 0; i < param.num; i++)
+		hal_ipcmsg_getw(&client->ipcmsg, &vlantbl[i]);
+	break;	
+    //PORT
+    case HAL_VLAN_UNTAG:
+    case HAL_VLAN_TAG:
+    case HAL_VLAN_NATIVE:
+    case HAL_VLAN_ALLOWE:
+	case HAL_VLAN_PORT_BASE:
 	hal_ipcmsg_port_get(&client->ipcmsg, &bspport);
-
-	hal_ipcmsg_getl(&client->ipcmsg, &param.set);
 	hal_ipcmsg_getl(&client->ipcmsg, &param.enable);
 	hal_ipcmsg_getw(&client->ipcmsg, &param.vlan);
 	hal_ipcmsg_getw(&client->ipcmsg, &param.vlan_end);
-	
+	break;
+    case HAL_VLAN_RANGE_ALLOWE:
+	hal_ipcmsg_getl(&client->ipcmsg, &param.enable);
+	hal_ipcmsg_getl(&client->ipcmsg, &param.num);
+	for(i = 0; i < param.num; i++)
+		hal_ipcmsg_getw(&client->ipcmsg, &vlantbl[i]);
+	break;
+    
+	}
+
 	if(!(subcmd_table[subcmd].cmd_handle))
 	{
-		SDK_LEAVE_FUNC();
+		BSP_LEAVE_FUNC();
 		return NO_SDK;
 	}
 	switch (cmd)
@@ -153,6 +204,6 @@ int bsp_vlan_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32
 	default:
 		break;
 	}
-	SDK_LEAVE_FUNC();	
+	BSP_LEAVE_FUNC();	
 	return ret;
 }

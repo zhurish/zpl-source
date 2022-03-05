@@ -133,51 +133,66 @@ ZPLOS_CFLAGS += -MMD -MP -Wfatal-errors -Wall -Wextra -Wnested-externs -Wmissing
 			 -Wredundant-decls -Wcast-align -Wunreachable-code -Wshadow	\
 			 -Wimplicit-function-declaration -Wimplicit	-Wreturn-type -Wunused \
 			 -Wswitch -Wformat -Wuninitialized -Wchar-subscripts  \
-			 -Wpointer-arith -Wwrite-strings -Wstrict-prototypes
+			 -Wpointer-arith -Wwrite-strings -Wstrict-prototypes -Wpointer-arith -Wbad-function-cast
 			 
 ZPLOS_CPPFLAGS += -MMD -MP -Wall -Wextra  \
 			 -Wredundant-decls -Wcast-align -Wunreachable-code -Wshadow	\
 			 -Wreturn-type -Wunused \
 			 -Wswitch -Wformat -Wuninitialized -Wchar-subscripts  \
-			 -Wpointer-arith -Wwrite-strings
+			 -Wpointer-arith -Wwrite-strings 
 		
-# -Werror=implicit-function-declaration 函数没有在头文件（.h）定义  -Werror=switch -Wfatal-errors  Wuninitialized 没有初始化
+
 ZPLOS_CFLAGS += -Werror=return-type -Werror=format-extra-args  \
 			  -Werror=unreachable-code \
 			  -Werror=unused-value -Werror=implicit-int -Werror=missing-parameter-type\
 			  -Werror=parentheses -Werror=char-subscripts   \
 			  -Werror=invalid-memory-model -Werror=sizeof-pointer-memaccess \
-			  -Werror=overflow  -Werror=format-security -Werror=shadow \
+			  -Werror=overflow -Werror=format-security -Werror=shadow \
 			  -Werror=unsafe-loop-optimizations -Werror=init-self \
-			  -Werror=unused-function -Werror=redundant-decls \
-			  -Werror=missing-prototypes  -Werror=sequence-point -Werror=float-equal \
-			  -Werror=strict-prototypes
+			  -Werror=unused-function -Werror=redundant-decls -Werror=unused-value \
+			  -Werror=missing-prototypes -Werror=sequence-point -Werror=float-equal \
+			  -Werror=strict-prototypes -Werror=overlength-strings -Werror=unused-label \
+			  -Werror=shift-count-overflow -Werror=bad-function-cast 
 #
-#			  -Werror=float-equal 
-# 
-#			  -Werror=unused-variable -Werror=shift-count-overflow 
-#			  #-Werror=stack-protector  -Werror=unused-but-set-variable  -Werror=unused-but-set-parameter -Werror=nested-externs
-			  #-Werror=suggest-attribute=format -Werror=missing-format-attribute  -Werror=overlength-stringsl
-			  #-Werror=sign-compare 有符号和无符号参数比较
-			  #-Werror=format-overflow
-			  #-Werror=shift-count-overflow
-			  #-Werror=pointer-arith 
-			  #sequence-point:违反顺序点的代码,比如 a[i] = c[i++];
-			  #-Werror=cast-qual 
-			  #-Werror=type-limits 参数类型限制
-			  #-Werror=float-equal 对浮点数使用等号，这是不安全的
-			  #-Werror=redundant-decls -Werror=format -Werror=missingbraces
-			  #函数声明不是一个原型 [-Wstrict-prototypes]
-			  #-Wdiscarded-qualifiers 需要类型‘char *’，但实参的类型为‘const char *
-#			 -Werror=switch-default -Werror=missing-format-attribute 
-#				-Werror=overlength-strings -Werror=cast-align 
 ZPLOS_CPPFLAGS +=  -Werror=return-type -Werror=unreachable-code -Werror=unused-function \
 				 -Werror=ctor-dtor-privacy  
-#			 -Werror=shadow  -Werror=float-equal
+#			 
 ZPLOS_CFLAGS += -fmessage-length=0 -Wcast-align
 #
-ZPLOS_CFLAGS += -fsigned-char
+ZPLOS_CFLAGS += -fsigned-char -fstack-protector -Wstack-protector 
+#-Werror=stack-protector
 #
+#-Werror=implicit-function-declaration 函数没有在头文件（.h）定义  
+#-Werror=switch -Wfatal-errors  Wuninitialized 没有初始化
+#unused-function: 警告声明但是没有定义的static函数;
+#unused-label: 声明但是未使用的标签;
+#unused-parameter: 警告未使用的函数参数;
+#unused-variable: 声明但 是未使用的本地变量;
+#unused-value: 计算了但是未使用的值;
+#format: printf和scanf这样的函数中的格式字符 串的使用不当;
+#implicit-int: 未指定类型;
+#implicit-function: 函数在声明前使用;
+#char-subscripts: 使用char类作为数组下标(因为char可能是有符号数);
+#missingbraces: 大括号不匹配;
+#parentheses: 圆括号不匹配;
+#return-type: 函数有无返回值以及返回值类型不匹配;
+#sequence-point: 违反顺序点的代码,比如 a[i] =c[i++];
+#switch: switch语句缺少default或者switch使用枚举变量为索引时缺少某个变量的case;
+#strict-aliasing=n: 使用n设置对指针变量指向的对象类型产生警告的限制程度,默认n=3;只有在-fstrict-aliasing设置的情况下有效;
+#unknow-pragmas: 使用未知的#pragma指令;
+#uninitialized: 使用的变量为初始化
+#-Werror=float-equal 
+#-Werror=unused-variable -Werror=shift-count-overflow 
+#-Werror=stack-protector  -Werror=unused-but-set-variable  
+#-Werror=unused-but-set-parameter -Werror=nested-externs
+#-Werror=suggest-attribute=format -Werror=missing-format-attribute  -Werror=overlength-stringsl
+#-Werror=sign-compare 有符号和无符号参数比较
+#sequence-point:违反顺序点的代码,比如 a[i] = c[i++];
+#-Werror=type-limits 参数类型限制
+#-Werror=float-equal 对浮点数使用等号，这是不安全的
+#函数声明不是一个原型 [-Wstrict-prototypes]
+#-Wdiscarded-qualifiers 需要类型‘char *’，但实参的类型为‘const char *
+#cast-align: 当指针进行类型转换后有内存对齐要求更严格时发出警告
 #
 
 ROOTFS_DIR = rootfs_install

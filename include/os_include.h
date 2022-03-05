@@ -15,6 +15,7 @@ extern "C" {
 #include "plconfig.h"
 
 #include "version.h"
+
 #include "os_def.h"
 
 #include "product.h"

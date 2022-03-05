@@ -35,7 +35,7 @@
    <tds:SetDynamicDNS>
     <tds:Type xsi:type="tt:DynamicDNSType">NoUpdate</tds:Type>
     <tds:Name xsi:type="tt:DNSName"></tds:Name>
-    <tds:TTL xsi:type="xsd:duration">PT0S</tds:TTL>
+    <tds:IPSTACK_TTL xsi:type="xsd:duration">PT0S</tds:IPSTACK_TTL>
    </tds:SetDynamicDNS>
  </SOAP-ENV:Body>
 </SOAP-ENV:Envelope>

@@ -848,37 +848,5 @@ int if_loopback_ifindex_create(if_type_t type, const char *name)
 	if(i != 0)
 		return atoi(strc);
 	return 0;
-/*
-	zpl_uint32 i = 0;
-	zpl_char strc[16];
-	memset(strc, 0, sizeof(strc));
-	zpl_char *str = name;
-	while(str)
-	{
-		if(isdigit(*str))
-		{
-			strc[i++] = str;
-			break;
-		}
-		else
-			str++;
-	}
-	if(strc[0]!=0)
-		return atoi(strc);
-	return 0;
-*/
 }
 
-
-/*
-int if_kernel_ifindex_update(struct interface *ifp)
-{
-	//ifp->k_ifindex = 0;
-	//ifp->k_name = 0;
-#ifdef ZPL_PAL_MODULE
-	pal_kernel_update (ifp);
-#endif
-	ifp->k_name_hash = if_name_hash_make(ifp->k_name);
-	return 0;
-}
-*/

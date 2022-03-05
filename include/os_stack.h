@@ -224,8 +224,24 @@ extern "C" {
  */
 #define IPSTACK_IPV6_HOPLIMIT         IPV6_HOPLIMIT
 
-#define	IPSTACK_ARPHRD_ETHER          ARPHRD_ETHER
-
+#define	IPSTACK_ARPHRD_ETHER        ARPHRD_ETHER
+#define	IPSTACK_ARPHRD_ATM          ARPHRD_ATM
+#define	IPSTACK_ARPHRD_SLIP         ARPHRD_SLIP
+#define	IPSTACK_ARPHRD_CSLIP        ARPHRD_CSLIP
+#define	IPSTACK_ARPHRD_SLIP6        ARPHRD_SLIP6
+#define	IPSTACK_ARPHRD_CSLIP6       ARPHRD_CSLIP6
+#define	IPSTACK_ARPHRD_PPP          ARPHRD_PPP
+#define	IPSTACK_ARPHRD_CISCO        ARPHRD_CISCO
+#define	IPSTACK_ARPHRD_RAWHDLC      ARPHRD_RAWHDLC
+#define	IPSTACK_ARPHRD_TUNNEL       ARPHRD_TUNNEL
+#define	IPSTACK_ARPHRD_TUNNEL6      ARPHRD_TUNNEL6
+#define	IPSTACK_ARPHRD_LOOPBACK     ARPHRD_LOOPBACK
+#define	IPSTACK_ARPHRD_SIT          ARPHRD_SIT
+#define	IPSTACK_ARPHRD_IPGRE        ARPHRD_IPGRE
+#define	IPSTACK_ARPHRD_IEEE80211    ARPHRD_IEEE80211
+#ifdef IPSTACK_ARPHRD_IP6GRE
+#define	IPSTACK_ARPHRD_IP6GRE       ARPHRD_IP6GRE
+#endif
 
 #define IPSTACK_MSG_OOB			MSG_OOB                    /* Specify to send/receive out-of-band data */
 #define IPSTACK_MSG_PEEK		MSG_PEEK                   /* Leave the data on the receive buffer (receive only) */
@@ -314,7 +330,7 @@ extern "C" {
 #define	IPSTACK_FIONREAD          FIONREAD
 
 #define	IPSTACK_ETH_P_ARP   ETH_P_ARP
-
+#define	IPSTACK_ETH_P_ALL   ETH_P_ALL
 #define	IPSTACK_ETHERTYPE_IP   ETHERTYPE_IP
 #define	IPSTACK_ETHERTYPE_ARP   ETHERTYPE_ARP
 #define	IPSTACK_ETH_ALEN        ETH_ALEN
@@ -851,8 +867,6 @@ extern "C" {
  */
 #define ipstack_hostent         hostent
 
-#define	IPSTACK_ARPHRD_ETHER             ARPHRD_ETHER
-
 /*
  *===========================================================================
  *                        ifreq
@@ -976,6 +990,29 @@ extern "C" {
 //#define  ifc_req                        ip_ifc_req
 #define  ipstack_iphdr                  iphdr
 #define  ipstack_ip                     iphdr
+#define  ipstack_ip_auth_hdr            ip_auth_hdr
+#define  ipstack_ip_esp_hdr             ip_esp_hdr
+#define  ipstack_ip_comp_hdr            ip_comp_hdr
+#define  ipstack_ip_beet_phdr           ip_beet_phdr
+
+#define  ipstack_ipv6hdr                ipv6hdr
+
+#define  ipstack_ethhdr                 ethhdr
+#define  ipstack_arphdr                 arphdr
+#define  ipstack_icmphdr                icmphdr
+#define  ipstack_icmp6hdr               icmp6hdr
+#define  ipstack_igmphdr                igmphdr
+#define  ipstack_igmpv3_query           igmpv3_query
+#define  ipstack_igmpv3_report          igmpv3_report
+#define  ipstack_igmpv3_grec            igmpv3_grec
+
+#define  ipstack_vxlanhdr                 vxlanhdr
+#define  ipstack_udphdr                 udphdr
+#define  ipstack_tcphdr                tcphdr
+
+#define  ipstack_vlan_hdr                 vlan_hdr
+#define  ipstack_vlan_ethhdr                 vlan_ethhdr
+
 #define  IPSTACK_LLADDR                 SOCKADDR_DL_LLADDR
 
 

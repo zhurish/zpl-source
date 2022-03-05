@@ -20,10 +20,6 @@ typedef int (*bsp_sdk_func)(struct bsp_driver *, zpl_void *);
 
 typedef struct bsp_driver
 {
-    //zpl_uint32 product;
-    //zpl_uint32 id;
-    //char *name;
-    
     zpl_void *master;
     zpl_uint32 taskid;
     zpl_void *hal_client;
@@ -31,6 +27,10 @@ typedef struct bsp_driver
     int (*bsp_sdk_start)(struct bsp_driver *, zpl_void *);
     int (*bsp_sdk_stop)(struct bsp_driver *, zpl_void *);
     int (*bsp_sdk_exit)(struct bsp_driver *, zpl_void *);
+
+    int (*bsp_sdk_unicast)(struct bsp_driver *, zpl_phyport_t, int, zpl_void *, int);
+    int (*bsp_sdk_vlan_flood)(struct bsp_driver *, vlan_t, int, zpl_void *, int);
+
     zpl_void *sdk_driver;
 } bsp_driver_t;
   
@@ -46,7 +46,7 @@ extern int bsp_driver_exit(bsp_driver_t *);
 extern int bsp_driver_task_exit(bsp_driver_t *);
 
 extern int bsp_module_func(bsp_driver_t *, bsp_sdk_func init_func, bsp_sdk_func start_func, bsp_sdk_func stop_func, bsp_sdk_func exit_func);
-
+extern int bsp_driver_module_check(hal_ipccmd_callback_t *cmdtbl, int num, int module);
 
 extern int bsp_module_init(void);
 extern int bsp_module_task_init(void);

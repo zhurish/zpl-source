@@ -53,7 +53,7 @@
 #include <ws2tcpip.h>
 
 /*
- * <wspiapi.h> is necessary for getaddrinfo before Windows XP, but it isn't
+ * <wspiapi.h> is necessary for ipstack_getaddrinfo before Windows XP, but it isn't
  * available on some platforms like MinGW.
  */
 #ifdef HAVE_WSPIAPI_H
@@ -83,10 +83,10 @@ static socket_t bind_socket(ssh_bind sshbind, const char *hostname,
     ZERO_STRUCT(hints);
 
     hints.ai_flags = AI_PASSIVE;
-    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_socktype = IPSTACK_SOCK_STREAM;
 
     snprintf(port_c, 6, "%d", port);
-    rc = getaddrinfo(hostname, port_c, &hints, &ai);
+    rc = ipstack_getaddrinfo(hostname, port_c, &hints, &ai);
     if (rc != 0) {
         ssh_set_error(sshbind,
                       SSH_FATAL,
@@ -99,17 +99,17 @@ static socket_t bind_socket(ssh_bind sshbind, const char *hostname,
                            ai->ai_protocol);
     if (s == SSH_INVALID_SOCKET) {
         ssh_set_error(sshbind, SSH_FATAL, "%s", strerror(errno));
-        freeaddrinfo (ai);
+        ipstack_freeaddrinfo (ai);
         return -1;
     }
 
-    if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
+    if (setsockopt(s, IPSTACK_SOL_SOCKET, IPSTACK_SO_REUSEADDR,
                    (char *)&opt, sizeof(opt)) < 0) {
         ssh_set_error(sshbind,
                       SSH_FATAL,
                       "Setting socket options failed: %s",
                       strerror(errno));
-        freeaddrinfo (ai);
+        ipstack_freeaddrinfo (ai);
         CLOSE_SOCKET(s);
         return -1;
     }
@@ -121,12 +121,12 @@ static socket_t bind_socket(ssh_bind sshbind, const char *hostname,
                       hostname,
                       port,
                       strerror(errno));
-        freeaddrinfo (ai);
+        ipstack_freeaddrinfo (ai);
         CLOSE_SOCKET(s);
         return -1;
     }
 
-    freeaddrinfo (ai);
+    ipstack_freeaddrinfo (ai);
     return s;
 }
 

@@ -109,27 +109,27 @@ struct nsm_interface_cb
 {
 	int (*nsm_intf_add_cb)(struct interface *);
 	int (*nsm_intf_del_cb)(struct interface *);
+	int (*nsm_intf_updown_cb)(struct interface *, zpl_bool);
 	int (*nsm_intf_write_cb)(struct vty *, struct interface *);
 };
 
 /* `zebra' daemon local interface structure. */
 struct nsm_interface
 {
-  struct interface *ifp;
-  /* Shutdown configuration. */
-  zpl_uchar shutdown;
+	struct interface *ifp;
+	/* Shutdown configuration. */
+	zpl_uchar shutdown;
 
-  /* Multicast configuration. */
-  zpl_uchar multicast;
+	/* Multicast configuration. */
+	zpl_uchar multicast;
   
-  nsm_duplex_en	duplex;
-  nsm_speed_en	speed;
+	nsm_duplex_en	duplex;
+	nsm_speed_en	speed;
 
-  /* Interface specific link-detect configuration state */
-  nsm_linkdetect_en linkdetect;
-  
-  void *nsm_client[NSM_INTF_MAX];
-  
+	/* Interface specific link-detect configuration state */
+	nsm_linkdetect_en linkdetect;
+	
+	void *nsm_client[NSM_INTF_MAX];
 };
 
 extern void nsm_interface_init(void);

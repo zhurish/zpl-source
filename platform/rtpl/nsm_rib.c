@@ -1080,7 +1080,7 @@ static int rib_update_kernel(struct route_node *rn, struct rib *old,
 	 */
 	; //zfpm_trigger_update (rn, "updating in kernel");
 
-	ret = pal_iproute_rib_action(&rn->p, old, new);
+	ret = nsm_halpal_iproute_rib_action(&rn->p, old, new);
 
 	/* This condition is never met, if we are using rt_socket.c */
 	if (ret < 0 && new)

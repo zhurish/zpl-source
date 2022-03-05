@@ -91,6 +91,7 @@ int nsm_vlan_init(void)
 	gvlan.mutex = os_mutex_init();
 	lstInit(gvlan.vlanList);
 	nsm_interface_hook_add(NSM_INTF_VLAN, nsm_vlan_interface_create_api, nsm_vlan_interface_del_api);
+	nsm_interface_write_hook_add(NSM_INTF_VLAN, nsm_vlan_interface_write_config);
 	//nsm_vlan_client_init();
 	//nsm_vlan_create_api(1);
 	//l2vlan_add_untag_port(1, ifindex_t ifindex);
@@ -1180,14 +1181,16 @@ int nsm_interface_trunk_allowed_vlan_list_api(int add, struct interface *ifp, co
 int nsm_vlan_interface_create_api(struct interface *ifp)
 {
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	if(if_is_ethernet(ifp) && !IF_IS_SUBIF_GET(ifp->ifindex))
+	NSM_ENTER_FUNC();
+	if(if_is_ethernet(ifp) || if_is_lag(ifp)/*&& !IF_IS_SUBIF_GET(ifp->ifindex)*/)
 	{
+		NSM_ENTER_FUNC();
 		if(!nsm->nsm_client[NSM_INTF_VLAN])
 			nsm->nsm_client[NSM_INTF_VLAN] = XMALLOC(MTYPE_VLAN, sizeof(nsm_vlan_t));
 		zassert(nsm->nsm_client[NSM_INTF_VLAN]);
 		os_memset(nsm->nsm_client[NSM_INTF_VLAN], 0, sizeof(nsm_vlan_t));
-		nsm_interface_add_untag_vlan_api(1,  ifp);
-		nsm_interface_add_tag_vlan_api(1,  ifp);
+		//nsm_interface_add_untag_vlan_api(1,  ifp);
+		//nsm_interface_add_tag_vlan_api(1,  ifp);
 	}
 	return OK;
 }
@@ -1196,7 +1199,8 @@ int nsm_vlan_interface_create_api(struct interface *ifp)
 int nsm_vlan_interface_del_api(struct interface *ifp)
 {
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	if(if_is_ethernet(ifp) && !IF_IS_SUBIF_GET(ifp->ifindex))
+	NSM_ENTER_FUNC();
+	if(if_is_ethernet(ifp) /*&& !IF_IS_SUBIF_GET(ifp->ifindex)*/)
 	{
 		nsm_interface_del_untag_vlan_api(1,  ifp);
 		nsm_interface_del_tag_vlan_api(1,  ifp);
@@ -1216,14 +1220,15 @@ int nsm_vlan_interface_write_config(struct vty *vty, struct interface *ifp)
 	zpl_char tmpcli_str[256];
 	struct nsm_interface *nsm_ifp = NULL;
 	nsm_vlan_t *nsm_vlan = NULL;
-	if(if_is_ethernet(ifp) && !IF_IS_SUBIF_GET(ifp->ifindex))
+	//NSM_ENTER_FUNC();
+	if(if_is_ethernet(ifp)/* && !IF_IS_SUBIF_GET(ifp->ifindex)*/)
 	{
 		memset(tmpcli_str, 0, sizeof(tmpcli_str));
 		nsm_ifp = (struct nsm_interface *)ifp->info[MODULE_NSM];
 		nsm_vlan = (nsm_vlan_t *)nsm_ifp->nsm_client[NSM_INTF_VLAN];
 		if(!nsm_vlan)
 			return OK;
-#ifdef ZPL_IPCOM_STACK_MODULE
+
 		if(ifp->if_mode == IF_MODE_L3)
 			vty_out(vty, " no switchport%s", VTY_NEWLINE);
 		else if(ifp->if_mode == IF_MODE_ACCESS_L2)
@@ -1232,14 +1237,13 @@ int nsm_vlan_interface_write_config(struct vty *vty, struct interface *ifp)
 			if(nsm_vlan->access != 0)
 				vty_out(vty, " switchport access vlan %d%s", nsm_vlan->access, VTY_NEWLINE);
 		}
-#else
-		if(ifp->if_mode == IF_MODE_ACCESS_L2)
+		/*if(ifp->if_mode == IF_MODE_ACCESS_L2)
 		{
 			//vty_out(vty, " switchport access mode%s", VTY_NEWLINE);
 			if(nsm_vlan->access != 0)
 				vty_out(vty, " switchport access vlan %d%s", nsm_vlan->access, VTY_NEWLINE);
-		}
-#endif
+		}*/
+
 		else if(ifp->if_mode == IF_MODE_TRUNK_L2)
 		{
 			vty_out(vty, " switchport trunk mode%s", VTY_NEWLINE);
@@ -1288,22 +1292,3 @@ int nsm_vlan_interface_write_config(struct vty *vty, struct interface *ifp)
 	return OK;
 }
 #endif
-/*
-static int nsm_vlan_client_init()
-{
-	struct nsm_client *nsm = nsm_client_new ();
-	nsm->notify_add_cb = nsm_vlan_add_interface;
-	nsm->notify_delete_cb = nsm_vlan_del_interface;
-	nsm->interface_write_config_cb = nsm_vlan_interface_config;
-	nsm_client_install (nsm, NSM_INTF_VLAN);
-	return OK;
-}
-
-static int nsm_vlan_client_exit()
-{
-	struct nsm_client *nsm = nsm_client_lookup (NSM_INTF_VLAN);
-	if(nsm)
-		nsm_client_free (nsm);
-	return OK;
-}
-*/

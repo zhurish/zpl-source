@@ -159,7 +159,7 @@ static struct vrf *vrf_new_one(vrf_id_t vrf_id, const char *name)
     vrf->name = XSTRDUP(MTYPE_VRF_NAME, name);
 
   /* Initialize interfaces. */
-  zlog_info(MODULE_DEFAULT, "VRF %u is created.", vrf_id);
+  zlog_info(MODULE_NSM, "VRF %u is created.", vrf_id);
   lstAdd(&vrf_list_table, (NODE *)vrf);
   if (vrf_master.vrf_new_hook)
     (*vrf_master.vrf_new_hook)(vrf_id, &vrf->info);
@@ -174,7 +174,7 @@ static struct vrf *vrf_new_one(vrf_id_t vrf_id, const char *name)
 /* Delete a VRF. This is called in vrf_terminate(). */
 static int vrf_del_one(struct vrf *vrf)
 {
-  zlog_info(MODULE_DEFAULT, "VRF %u is to be deleted.", vrf->vrf_id);
+  zlog_info(MODULE_NSM, "VRF %u is to be deleted.", vrf->vrf_id);
   if (vrfMutex)
     os_mutex_lock(vrfMutex, OS_WAIT_FOREVER);
 
@@ -260,7 +260,7 @@ vrf_id_t vrf_name2vrfid(const char *name)
 static int
 vrf_enable(struct vrf *vrf)
 {
-  zlog_info(MODULE_DEFAULT, "VRF %u is enabled.", vrf->vrf_id);
+  zlog_info(MODULE_NSM, "VRF %u is enabled.", vrf->vrf_id);
   if (vrf_master.vrf_enable_hook)
     (*vrf_master.vrf_enable_hook)(vrf->vrf_id, &vrf->info);
   return 1;
@@ -274,7 +274,7 @@ vrf_enable(struct vrf *vrf)
 static int
 vrf_disable(struct vrf *vrf)
 {
-  zlog_info(MODULE_DEFAULT, "VRF %u is to be disabled.", vrf->vrf_id);
+  zlog_info(MODULE_NSM, "VRF %u is to be disabled.", vrf->vrf_id);
   if (vrf_master.vrf_disable_hook)
     (*vrf_master.vrf_disable_hook)(vrf->vrf_id, &vrf->info);
   return OK;
@@ -379,7 +379,7 @@ int nsm_vrf_delete(const char *name)
   vrf = vrf_lookup_by_name(name);
   if (!vrf)
   {
-    zlog_err(MODULE_DEFAULT, "vrf_init: failed to create the default VRF!");
+    zlog_err(MODULE_NSM, "vrf_init: failed to create the default VRF!");
   }
   vrf_del_one(vrf);
   return 0;
@@ -401,7 +401,7 @@ int nsm_vrf_set_vrfid(struct vrf *vrf, vrf_id_t vrf_id)
 #endif
 #ifdef ZPL_PAL_MODULE
     if (vrf_id)
-      pal_create_vr(vrf_id);
+      nsm_halpal_create_vr(vrf_id);
 #endif
     if (vrfMutex)
       os_mutex_unlock(vrfMutex);
@@ -424,7 +424,7 @@ nsm_vrf_new(vrf_id_t vrf_id, void **info)
     router_id_init(zvrf);
     #endif
     if (vrf_id)
-      pal_create_vr(vrf_id);
+      nsm_halpal_create_vr(vrf_id);
   }
 #endif
   return 0;
@@ -456,7 +456,7 @@ nsm_vrf_disable(vrf_id_t vrf_id, void **info)
 
   list_delete_all_node(zvrf->rid_all_sorted_list);
   list_delete_all_node(zvrf->rid_lo_sorted_list);
-  pal_delete_vr(vrf_id);
+  nsm_halpal_delete_vr(vrf_id);
 #endif
   return 0;
 }

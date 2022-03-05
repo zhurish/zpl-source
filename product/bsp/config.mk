@@ -4,11 +4,12 @@
 MODULEDIR = product/bsp
 #OS
 OBJS	+= hal_client.o
+OBJS	+= bsp_global.o
 ifeq ($(strip $(ZPL_HAL_MODULE)),true)
 OBJS	+= bsp_port.o
 OBJS	+= bsp_misc.o
 OBJS	+= bsp_mstp.o
-
+OBJS	+= bsp_netpkt.o
 ifeq ($(strip $(ZPL_NSM_8021X)),true)
 OBJS	+= bsp_8021x.o		
 endif

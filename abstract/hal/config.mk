@@ -6,6 +6,8 @@ ifeq ($(strip $(ZPL_HAL_MODULE)),true)
 OBJS	+= hal_ipcsrv.o
 OBJS	+= hal_ipccmd.o
 OBJS	+= hal_ipcmsg.o
+OBJS	+= hal_global.o
+OBJS	+= hal_netpkt.o
 OBJS	+= hal_port.o
 OBJS	+= hal_misc.o
 OBJS	+= hal_mstp.o
@@ -19,7 +21,7 @@ endif
 
 ifeq ($(strip $(ZPL_NSM_MAC)),true)
 OBJS	+= hal_mac.o
-OBJS	+= hal_l2mc.o		
+#OBJS	+= hal_l2mc.o		
 endif
 ifeq ($(strip $(ZPL_NSM_VLAN)),true)
 OBJS	+= hal_vlan.o	

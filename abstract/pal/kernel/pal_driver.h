@@ -61,7 +61,6 @@ typedef struct pal_stack_s
 	// ip route
 	int (*ip_stack_vrf_create)(vrf_id_t vrf_id);
 	int (*ip_stack_vrf_delete)(vrf_id_t vrf_id);
-	zpl_socket_t (*ip_stack_vrf_socket)(int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id_t vrf_id);
 
 	int (*ip_stack_update_statistics)(struct interface *ifp);
 
@@ -129,7 +128,7 @@ extern int pal_arp_retry_interval(zpl_uint32 interval);
 extern int pal_create_vr(vrf_id_t vrf_id);
 extern int pal_delete_vr(vrf_id_t vrf_id);
 //extern zpl_socket_t pal_vrf_socket(int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id_t vrf_id);
-#if 0
+#if 1
 /*
  * 端口映射
  */

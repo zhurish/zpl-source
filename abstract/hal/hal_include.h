@@ -17,6 +17,7 @@ extern "C" {
 #include "hal_ipccmd.h"
 #include "hal_ipcmsg.h"
 
+#include "hal_global.h"
 #include "hal_8021x.h"
 #include "hal_dos.h"
 #include "hal_mac.h"
@@ -28,11 +29,12 @@ extern "C" {
 #include "hal_qos.h"
 #include "hal_trunk.h"
 #include "hal_vlan.h"
+#include "hal_igmp.h"
+/*
 #include "hal_switch.h"
 #include "hal_oam.h"
 #include "hal_acl.h"
 #include "hal_filter.h"
-#include "hal_igmp.h"
 #include "hal_ipfix.h"
 #include "hal_l2mc.h"
 #include "hal_l3mc.h"
@@ -46,7 +48,7 @@ extern "C" {
 #include "hal_wlan.h"
 #include "hal_tx.h"
 #include "hal_rx.h"
-
+*/
 #include "hal_driver.h"
 
 

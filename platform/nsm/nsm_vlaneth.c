@@ -66,7 +66,7 @@ int nsm_vlaneth_interface_vid_set_api(struct interface *ifp, vlan_t vlan)
 		if(vlaneth)
 		{
 #ifdef ZPL_HAL_MODULE
-			if(pal_interface_vlan_set(ifp, vlan) == OK)
+			if(nsm_halpal_interface_vlan_set(ifp, vlan) == OK)
 #endif
 			{
 				vlaneth->vlanid = vlan;

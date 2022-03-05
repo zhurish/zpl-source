@@ -17,13 +17,11 @@ extern "C" {
 #define NSM_QOS_PORT_QUEUE_NUM	NSM_QOS_PORT_QUEUE_NUM_4
 
 #define NSM_QOS_USERPRI_MAP_PRIORITY //用户优先级到内部优先级映射
-#define NSM_QOS_PRIORITY_MAP_USERPRI  //内部优先级到用户优先级映射
-
-#define NSM_QOS_USERPRI_MAP_QUEUE //用户优先级到队列映射
-#define NSM_QOS_QUEUE_MAP_USERPRI  //队列到用户优先级映射
 
 #define NSM_QOS_PRIORITY_MAP_QUEUE //内部优先级到队列映射
-#define NSM_QOS_QUEUE_MAP_PRIORITY  //队列到内部优先级映射
+
+/* 用户优先级到内部优先级映射    ------->  内部优先级到队列映射  */
+/* 队列的调度    ------->   */
 /*
  * trust pri on input
  */

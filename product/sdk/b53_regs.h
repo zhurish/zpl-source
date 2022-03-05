@@ -473,6 +473,7 @@ extern "C" {
 #define B53_MII_STAT		0x02
 #define 	B53_INTERNAL_LOOPBACK		BIT(14)
 #define 	B53_AUTO_NEGOTIATION		BIT(12)
+#define 	B53_POWERDOWN				BIT(11)
 #define 	B53_DUPLEX_MODE				BIT(8)
 /*************************************************************************
  * 802.1Q Page Registers
@@ -492,23 +493,32 @@ extern "C" {
 
 
 #define B53_PCP_TO_TC_PORT_CTL(n)	(0x10 + ((n) * 4))
-#define 	B53_TC_TO_COS(n)			((n)*3 + 0x00)
-#define 	B53_TC_QUEUE_MASK			7
+#define 	B53_PCP_TO_TC(n)			((n)*3 + 0x00)
+#define 	B53_TC_MASK			7
 
 #define B53_QOS_DIFFSERV_MAP_CTL0	0x30
 #define B53_QOS_DIFFSERV_MAP_CTL1	0x36
 #define B53_QOS_DIFFSERV_MAP_CTL2	0x3C
 #define B53_QOS_DIFFSERV_MAP_CTL3	0x42
-#define 	B53_DIFFSERV_TO_COS(n)			((n)*3 + 0x00)
+#define 	B53_DIFFSERV_TO_TC(n)			((n)*3 + 0x00)
 
-#define B53_QUEUE_TO_CLASS_CTL	0x62
-#define 	B53_QUEUE_TO_CLASS(n)			((n)*2 + 0x00)
-#define 	B53_TC_CLASS_MASK			3
+#define B53_TC_TO_QUEUE_CTL	0x62
+#define 	B53_TC_TO_QUEUE(n)			((n)*2 + 0x00)
+#define 	B53_TC_QUEUE_MASK			3
 #define B53_CPU_TO_QUEUE_CTL	0x64
 
 #define B53_TX_QUEUE_CTL	0x80
 #define B53_TX_QUEUE_WEIGHT(c)	0x81 + (c)
 #define B53_COS4_SERVICE_WEIGHT	0x85
+
+/* Traffic Remarking Register */
+#define B53_TC_REMARK_CTL		0x00
+#define 	B53_PCP_REMARK_EN(p)	(p)<<16
+#define 	B53_CFI_REMARK_EN(p)	BIT(p)
+
+#define B53_TX_TO_PCP_CTL(n)	((n)*8 + 0x10)
+#define 	B53_TC_PCP_MASK			0x0F
+#define 	B53_TC_PCP_PRI(n)			((n)*4)
 /*************************************************************************
  * VLAN Page Registers
  *************************************************************************/
@@ -743,10 +753,6 @@ extern "C" {
 
 
 
-/* Traffic Remarking Register */
-#define B53_TC_REMARK_CTL		0x00
-#define 	B53_PCP_REMARK_EN(p)	(p)<<16
-#define 	B53_CFI_REMARK_EN(p)	BIT(p)
 
 //Egress Non-BroadSync HD Packet TC to PCP Mapping Register
 #define B53_EG_NON_BHD_CTL(n)				0x10 + 8*(n)

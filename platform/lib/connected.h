@@ -37,7 +37,7 @@ extern void connected_up_ipv6 (struct interface *, struct connected *);
 extern void connected_down_ipv6 (struct interface *ifp, struct connected *);
 #endif /* HAVE_IPV6 */
 
-#ifdef ZPL_KERNEL_STACK_MODULE
+
 extern void
 connected_add_ipv4 (struct interface *ifp, zpl_uint32 flags, struct ipstack_in_addr *addr,
 		    zpl_uchar prefixlen, struct ipstack_in_addr *broad,
@@ -54,7 +54,7 @@ extern void
 connected_delete_ipv6 (struct interface *ifp, struct ipstack_in6_addr *address,
 		       zpl_uchar prefixlen, struct ipstack_in6_addr *broad);
 #endif /* HAVE_IPV6 */
-#endif
+
  
 #ifdef __cplusplus
 }

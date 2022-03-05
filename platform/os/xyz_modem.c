@@ -36,7 +36,7 @@
 #include "zpl_include.h"
 #include "xyz_modem.h"
 #include "tty_com.h"
-
+#include "checksum.h"
 
 int xyz_modem_build_hdr(xyz_modem_t*xyz, xyz_modem_hdr_t *hdr, zpl_char *filename, zpl_uint32 filesize)
 {
@@ -810,10 +810,10 @@ int xyz_modem_load(xyz_modem_t *xyz, zpl_uint32 mode, zpl_char *devi)
 		memset(&ttycom_tmp, 0, sizeof(ttycom_tmp));
 		sprintf(ttycom_tmp.devname, "/dev/%s", devi);
 		ttycom_tmp.speed	= 115200;
-		ttycom_tmp.databit = DATA_8BIT;
-		ttycom_tmp.stopbit = STOP_1BIT;
-		ttycom_tmp.parity = PARITY_NONE;
-		ttycom_tmp.flow_control = FLOW_CTL_NONE;
+		ttycom_tmp.databit = TTY_DATA_8BIT;
+		ttycom_tmp.stopbit = TTY_STOP_1BIT;
+		ttycom_tmp.parity = TTY_PARITY_NONE;
+		ttycom_tmp.flow_control = TTY_FLOW_CTL_NONE;
 		if(tty_com_open(&ttycom_tmp) != OK)
 		{
 			return ERROR;

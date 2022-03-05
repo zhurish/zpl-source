@@ -34,7 +34,7 @@
 
 extern void *cjson_malloc (size_t size);
 extern void cjson_free (void *ptr);
-
+#define double_eq(a,b) (fabs((a)-(b)) < 1e-8)
 static const char *ep;
 
 const char *cJSON_GetErrorPtr(void) {return ep;}
@@ -153,7 +153,7 @@ static char *print_number(cJSON *item,printbuffer *p)
 	char *str = NULL;
 	double d=item->valuedouble;
 	//if (d==0)
-	if (double_eq(d-0.0))
+	if (double_eq(d,0.0))
 	{
 		if (p)	str=ensure(p,2);
 		else	str=(char*)cJSON_malloc(2);	/* special case for 0. */

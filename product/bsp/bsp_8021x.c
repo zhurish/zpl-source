@@ -19,52 +19,52 @@
 sdk_8021x_t sdk_8021x_cb;
 
 
-static int bsp_8021x_port_enable(void *driver, hal_port_header_t *bspport, hal_8021x_param_t *bsp8021x)
+static int bsp_8021x_enable(void *driver, hal_port_header_t *bspport, hal_8021x_param_t *bsp8021x)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_8021x_cb.sdk_8021x_enable_cb)
-		ret = sdk_8021x_cb.sdk_8021x_port_enable_cb(driver, bspport, bsp8021x->u.value);
-	SDK_LEAVE_FUNC();
+		ret = sdk_8021x_cb.sdk_8021x_enable_cb(driver, bsp8021x->value);
+	BSP_LEAVE_FUNC();
 	return ret;
 }
 
 static int bsp_8021x_port_state(void *driver, hal_port_header_t *bspport, hal_8021x_param_t *bsp8021x)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_8021x_cb.sdk_8021x_port_state_cb)
-		ret = sdk_8021x_cb.sdk_8021x_port_state_cb(driver, bspport, bsp8021x->u.value);
-	SDK_LEAVE_FUNC();
+		ret = sdk_8021x_cb.sdk_8021x_port_state_cb(driver, bspport->phyport, bsp8021x->value);
+	BSP_LEAVE_FUNC();
 	return ret;
 }
 
 static int bsp_8021x_port_mode(void *driver, hal_port_header_t *bspport, hal_8021x_param_t *bsp8021x)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
 	if(driver && sdk_8021x_cb.sdk_8021x_port_mode_cb)
-		ret = sdk_8021x_cb.sdk_8021x_port_mode_cb(driver, bspport, bsp8021x->u.value);
-	SDK_LEAVE_FUNC();
+		ret = sdk_8021x_cb.sdk_8021x_port_mode_cb(driver, bspport->phyport, bsp8021x->value);
+	BSP_LEAVE_FUNC();
 	return ret;
 }
 
-static int bsp_8021x_auth_bypass(void *driver, hal_port_header_t *bspport, hal_8021x_param_t *bsp8021x)
+static int bsp_8021x_auth_dmac(void *driver, hal_port_header_t *bspport, hal_8021x_param_t *bsp8021x)
 {
 	int ret = NO_SDK;
-	SDK_ENTER_FUNC();
-	if(driver && sdk_8021x_cb.sdk_8021x_auth_bypass_cb)
-		ret = sdk_8021x_cb.sdk_8021x_auth_bypass_cb(driver, bspport, bsp8021x->u.value);
-	SDK_LEAVE_FUNC();
+	BSP_ENTER_FUNC();
+	if(driver && sdk_8021x_cb.sdk_8021x_auth_dmac_cb)
+		ret = sdk_8021x_cb.sdk_8021x_auth_dmac_cb(driver, bspport->phyport, bsp8021x->mac);
+	BSP_LEAVE_FUNC();
 	return ret;
 }
 
 static hal_ipcsubcmd_callback_t subcmd_table[] = {
-	HAL_CALLBACK_ENTRY(HAL_8021X_PORT, bsp_8021x_port_enable),
-	HAL_CALLBACK_ENTRY(HAL_8021X_PORT_MAC, NULL),
-	HAL_CALLBACK_ENTRY(HAL_8021X_PORT_STATE, bsp_8021x_port_state),
+	HAL_CALLBACK_ENTRY(HAL_8021X_NONE, NULL),
+	HAL_CALLBACK_ENTRY(HAL_8021X, bsp_8021x_enable),
 	HAL_CALLBACK_ENTRY(HAL_8021X_PORT_MODE, bsp_8021x_port_mode),
-	HAL_CALLBACK_ENTRY(HAL_8021X_PORT_BYPASS, bsp_8021x_auth_bypass),
+	HAL_CALLBACK_ENTRY(HAL_8021X_PORT_MAC, bsp_8021x_auth_dmac),
+	HAL_CALLBACK_ENTRY(HAL_8021X_PORT_STATE, bsp_8021x_port_state),
 };
 
 int bsp_8021x_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 subcmd, void *driver)
@@ -72,12 +72,29 @@ int bsp_8021x_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint3
 	int ret = OK;
 	hal_8021x_param_t	bsp8021x;
 	hal_port_header_t	bspport;
-	SDK_ENTER_FUNC();
+	BSP_ENTER_FUNC();
+	ret = bsp_driver_module_check(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
+	if(ret == 0)
+	{
+		BSP_LEAVE_FUNC();
+		return NO_SDK;
+	}
+	switch(subcmd)
+	{
+	case HAL_8021X:
+	hal_ipcmsg_getl(&client->ipcmsg, &bsp8021x.value);
+	break;
+	case HAL_TRUNK_CMD_CREATE:
+	case HAL_TRUNK_CMD_MODE:
+	case HAL_TRUNK_CMD_ADDIF:
+	case HAL_TRUNK_CMD_DELIF:
 	hal_ipcmsg_port_get(&client->ipcmsg, &bspport);
-	hal_ipcmsg_getc(&client->ipcmsg, &bsp8021x.u.value);
+	hal_ipcmsg_getl(&client->ipcmsg, &bsp8021x.value);
+	break;
+	}
 	if(!(subcmd_table[subcmd].cmd_handle))
 	{
-		SDK_LEAVE_FUNC();
+		BSP_LEAVE_FUNC();
 		return NO_SDK;
 	}
 	switch (cmd)
@@ -89,7 +106,7 @@ int bsp_8021x_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint3
 		break;
 	}
 	
-	SDK_LEAVE_FUNC();
+	BSP_LEAVE_FUNC();
 	return ret;
 }
 

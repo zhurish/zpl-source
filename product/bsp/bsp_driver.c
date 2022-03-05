@@ -48,6 +48,7 @@ static hal_ipccmd_callback_t moduletable[] = {
     HAL_CALLBACK_ENTRY(HAL_MODULE_STP, NULL),
     HAL_CALLBACK_ENTRY(HAL_MODULE_MSTP, bsp_mstp_module_handle),
     HAL_CALLBACK_ENTRY(HAL_MODULE_8021X, bsp_8021x_module_handle),
+	HAL_CALLBACK_ENTRY(HAL_MODULE_IGMP, NULL),
     HAL_CALLBACK_ENTRY(HAL_MODULE_DOS, bsp_dos_module_handle),
     HAL_CALLBACK_ENTRY(HAL_MODULE_MAC, bsp_mac_module_handle),
     HAL_CALLBACK_ENTRY(HAL_MODULE_MIRROR, bsp_mirror_module_handle),
@@ -68,14 +69,37 @@ static hal_ipccmd_callback_t moduletable[] = {
     HAL_CALLBACK_ENTRY(HAL_MODULE_STATUS, NULL),
 };
 
+int bsp_driver_module_check(hal_ipccmd_callback_t *cmdtbl, int num, int module)
+{
+	int ret = 0;
+	for(ret = 0; ret < num; ret++)
+	{
+		if(cmdtbl[ret].module == module)
+		{
+			if(ret == module)
+				return 1;
+			else
+			{
+				zlog_debug(MODULE_HAL, "Find this module/subcmd:%d, but this module/subcmd call %s", module, cmdtbl[ret].name);
+				return 0;
+			}	
+		}
+	}
+	zlog_debug(MODULE_HAL, "Can not Find this module/subcmd:%d ", module);
+	return 0;
+}
+
 int bsp_driver_msg_handle(struct hal_client *client, zpl_uint32 cmd, void *driver)
 {
 	int ret = 0;
 	int module = IPCCMD_MODULE_GET(cmd);
+	BSP_ENTER_FUNC();
 	if(module > HAL_MODULE_NONE && module < HAL_MODULE_MAX && (moduletable[module].module_handle))
 	{
-		ret = (moduletable[module].module_handle)(client, IPCCMD_CMD_GET(cmd), IPCCMD_SUBCMD_GET(cmd), driver);
+		if(bsp_driver_module_check(moduletable, sizeof(moduletable)/sizeof(moduletable[0]), module))
+			ret = (moduletable[module].module_handle)(client, IPCCMD_CMD_GET(cmd), IPCCMD_SUBCMD_GET(cmd), driver);
 	}
+	BSP_LEAVE_FUNC();
 	return ret;
 }
 
@@ -187,25 +211,25 @@ int bsp_module_start(void)
 	struct hal_ipcmsg_porttbl porttbl[5];
 	memset(porttbl, 0, sizeof(porttbl));
 
-	porttbl[0].type = IF_ETHERNET;
+	porttbl[0].type = IF_ETHERNET;//lan1
 	porttbl[0].port = 1;
-  porttbl[0].phyid = 2;
+  	porttbl[0].phyid = 4;
 
-	porttbl[1].type = IF_ETHERNET;
+	porttbl[1].type = IF_ETHERNET;//lan2
 	porttbl[1].port = 2;
-  porttbl[1].phyid = 0;
+  	porttbl[1].phyid = 0;
 
-	porttbl[2].type = IF_ETHERNET;
+	porttbl[2].type = IF_ETHERNET;//lan3
 	porttbl[2].port = 3;
-  porttbl[2].phyid = 1;
+  	porttbl[2].phyid = 1;
 
-	porttbl[3].type = IF_ETHERNET;
+	porttbl[3].type = IF_ETHERNET;//lan4
 	porttbl[3].port = 4;
-  porttbl[3].phyid = 2;
+  	porttbl[3].phyid = 2;
 
-	porttbl[4].type = IF_ETHERNET;
+	porttbl[4].type = IF_ETHERNET;//wan
 	porttbl[4].port = 5;
-  porttbl[4].phyid = 3;
+  	porttbl[4].phyid = 3;
   /*
 				port0: port@0 {
 					reg = <0>;
@@ -233,22 +257,22 @@ int bsp_module_start(void)
 				};
         */
 	os_sleep(1);
-	zlog_debug(MODULE_SDK, "BSP Init");
+	zlog_debug(MODULE_BSP, "BSP Init");
   	hal_client_bsp_init(bsp_driver.hal_client, 0,
         0, 0, 5, "V0.0.0.1");
 
 	os_sleep(1);
-	zlog_debug(MODULE_SDK, "SDK Init, waitting...");
+	zlog_debug(MODULE_BSP, "SDK Init, waitting...");
 
 	if(bsp_driver.bsp_sdk_start)
 	{
 		(bsp_driver.bsp_sdk_start)(&bsp_driver, bsp_driver.sdk_driver);
 	}
-	zlog_debug(MODULE_SDK, "SDK Register Port Table Info.");
+	zlog_debug(MODULE_BSP, "SDK Register Port Table Info.");
   	hal_client_bsp_porttbl(bsp_driver.hal_client, 5, &porttbl);
 
 	hal_client_event(HAL_EVENT_REGISTER, bsp_driver.hal_client, 1);
-	zlog_debug(MODULE_SDK, "SDK Init, Done.");
+	zlog_debug(MODULE_BSP, "SDK Init, Done.");
 	return OK;
 }
 

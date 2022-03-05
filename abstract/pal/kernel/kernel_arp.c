@@ -229,8 +229,8 @@ static int kernel_arp_thread(struct eloop *eloop)
 {
 	zpl_socket_t sock = ELOOP_FD(eloop);
 
-	if(eloop_master_module_lookup(MODULE_KERNEL))
-		eloop_add_read(eloop_master_module_lookup(MODULE_KERNEL), kernel_arp_thread, NULL, sock);
+	if(eloop_master_module_lookup(MODULE_PAL))
+		eloop_add_read(eloop_master_module_lookup(MODULE_PAL), kernel_arp_thread, NULL, sock);
 
 	return kernel_arp_recv(sock);
 }
@@ -320,8 +320,8 @@ int ip_arp_stack_init()
 
 	sock = kernel_arp_init();
 
-	if(!ipstack_invalid(sock) && eloop_master_module_lookup(MODULE_KERNEL))
-		eloop_add_read(eloop_master_module_lookup(MODULE_KERNEL), kernel_arp_thread, NULL, sock);
+	if(!ipstack_invalid(sock) && eloop_master_module_lookup(MODULE_PAL))
+		eloop_add_read(eloop_master_module_lookup(MODULE_PAL), kernel_arp_thread, NULL, sock);
 
 	return OK;
 }

@@ -10,269 +10,121 @@ static const zpl_uchar bitMask[8] = {
 
 /*****************************************************************************
 *
-* bitListSet - Set a bit in the given byte array.
+* os_bitmap_Set - Set a bit in the given byte array.
 */
-void  bitListSet
+void  os_bitmap_set
     (
-    zpl_bitmap_t bitList,
-    zpl_uint32  bit
+    zpl_bitmap_t bitmap,
+    zpl_uint32  bit,
+	zpl_uint32  wigth
     )
 {
-    bitList.bitmap[bit/8] |= bitMask[bit%8];
-}
-
-/*****************************************************************************
-*
-* bitListClr - Remove a bit in the given byte array.
-*/
- void  bitListClr
-    (
-    zpl_bitmap_t bitList,
-    zpl_uint32  bit
-    )
-{
-    bitList.bitmap[bit/8] &= ~bitMask[bit%8];
-}
-
-/*****************************************************************************
-*
-* bitListTst - Return True if the bit is set, else False.
-*/
-zpl_uint32 bitListTst
-    (
-    zpl_bitmap_t bitList,
-    zpl_uint32  bit
-    )
-{
-    return (bitList.bitmap[bit/8] & bitMask[bit%8])? 1 : 0;
-}
-
-
-/****************************************************************************
-*
-*����nbit������ֵ�����ֵ
-*
-��nbit��1��ʼ
-*/
-
- void  bitListXor(zpl_bitmap_t dst, const zpl_bitmap_t src1,
-			const zpl_bitmap_t src2, zpl_uint32 nbit)
-{
-	int k;
-	zpl_uchar mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
-	int nr = nbit/8;
-	
-	for (k = 0; k < nr; k++)
-		dst.bitmap[k] = src1.bitmap[k] ^ src2.bitmap[k];
-
-	k = (nbit % 8);
-	if(k)
+	int k = 0;
+	for (k = 0; k < wigth; k++)
 	{
-		dst.bitmap[nr] = src1.bitmap[nr] ^ src2.bitmap[nr];
-		dst.bitmap[nr] &= mask[k-1];
+    	bitmap.bitmap[(bit+k)/8] |= bitMask[(bit+k)%8];
 	}
 }
 
-/****************************************************************************
+/*****************************************************************************
 *
-*����nbit������ֵ����ֵ
-*
-��nbit��1��ʼ
+* os_bitmap_clr - Remove a bit in the given byte array.
 */
-
- void  bitListAnd(zpl_bitmap_t dst, const zpl_bitmap_t src1,
-			const zpl_bitmap_t src2, zpl_uint32 nbit)
+ void  os_bitmap_clr
+    (
+    zpl_bitmap_t bitmap,
+    zpl_uint32  bit,
+	zpl_uint32  wigth
+    )
 {
-	int k;
-	zpl_uchar mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
-	int nr = nbit/8;
-	
+	int k = 0;
+	for (k = 0; k < wigth; k++)
+	{
+    	bitmap.bitmap[(bit+k)/8] &= ~bitMask[(bit+k)%8];
+	}	
+}
+
+/*****************************************************************************
+*
+* os_bitmap_tst - Return True if the bit is set, else False.
+*/
+int os_bitmap_tst
+    (
+    zpl_bitmap_t bitmap,
+    zpl_uint32  bit,
+	zpl_uint32  wigth
+    )
+{
+	int k = 0, bittst = 0;
+	for (k = 0; k < wigth; k++)
+	{
+		bittst = (bitmap.bitmap[(bit+k)/8] & bitMask[(bit+k)%8])? 1 : 0;
+		if(bittst == 0)
+			return 0;
+	}	
+    return bittst;
+}
+/*****************************************************************************/
+ void os_bitmap_and(zpl_bitmap_t dst, const zpl_bitmap_t src1,
+			const zpl_bitmap_t src2)
+{
+	int k = 0;
+	int nr = sizeof(src1.bitmap);
 	for (k = 0; k < nr; k++)
 		dst.bitmap[k] = src1.bitmap[k] & src2.bitmap[k];
-
-	k = (nbit % 8);
-	if(k)
-	{
-		dst.bitmap[nr] = src1.bitmap[nr] & src2.bitmap[nr];
-		dst.bitmap[nr] &= mask[k-1];
-	}
 }
-
-/****************************************************************************
-*
-*����nbit������ֵ�Ļ�ֵ
-*
-��nbit��1��ʼ
-*/
-
- void  bitListOr(zpl_bitmap_t dst, const zpl_bitmap_t src1,
-			const zpl_bitmap_t src2, zpl_uint32 nbit)
+/*****************************************************************************/
+ void os_bitmap_or(zpl_bitmap_t dst, const zpl_bitmap_t src1,
+			const zpl_bitmap_t src2)
 {
-	int k;
-	zpl_uchar mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
-	int nr = nbit/8;
-
+	int k = 0;
+	int nr = sizeof(src1.bitmap);
 	for (k = 0; k < nr; k++)
 		dst.bitmap[k] = src1.bitmap[k] | src2.bitmap[k];
-
-	k = (nbit % 8);
-	if(k)
-	{
-		dst.bitmap[nr] = src1.bitmap[nr] | src2.bitmap[nr];
-		dst.bitmap[nr] &= mask[k-1];
-	}
 }
-
-/****************************************************************************
-*
-*���nbit�����ص�ֵ�Ƿ�Ϊ0
-*
-��nbit����1��ʼ
-*/
-zpl_bool bitListEmpty(zpl_bitmap_t src, zpl_uint32 nbit)
+/*****************************************************************************/
+int os_bitmap_cmp(const zpl_bitmap_t src1, const zpl_bitmap_t src2)
 {
-	zpl_uint32 k;
-	zpl_uchar mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
-	zpl_uint32 nr = nbit/8;
-	
-	for (k = 0; k < nr; k++)
-		if(src.bitmap[k] != 0)
-			return 0;
-
-	k = (nbit % 8);
-	if(k)
-		return ((src.bitmap[nr] & mask[k-1]) ==0);
-	else
-		return 1;
+	return memcmp(&src1.bitmap, &src2.bitmap, sizeof(src1.bitmap));
 }
-
-/****************************************************************************
-*
-*�Ƚ�nbit�����ص������ַ�����ֵ�Ƿ����
-*
-��nbit����1��ʼ
-*/
-int bitListCmp(const zpl_bitmap_t src1, const zpl_bitmap_t src2, zpl_uint32 nbit)
+/*****************************************************************************/
+ void  os_bitmap_copy(const zpl_bitmap_t src, zpl_bitmap_t dst)
 {
-	zpl_uint32 k;
-	zpl_uchar mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
-	zpl_uint32 nr = nbit/8;
-	
-	for (k = 0; k < nr; k++)
-	{
-		if(src1.bitmap[k] > src2.bitmap[k])
-			return 1;
-		else if(src1.bitmap[k] < src2.bitmap[k])
-			return -1;
-	}
-
-	k = (nbit % 8);
-	if(k)
-	{
-		if((src1.bitmap[nr] & mask[k-1]) > (src2.bitmap[nr] & mask[k-1]))
-			return 1;
-		else if((src1.bitmap[nr] & mask[k-1]) < (src2.bitmap[nr] & mask[k-1]))
-			return -1;
-		else
-			return 0;
-	}
-	else
-		return 0;
-}
-
-/****************************************************************************
-*
-*�Ƚ�nbit�����ص������ַ�����ֵ�Ƿ����
-*
-��nbit����1��ʼ
-*/
- void  bitListCopy(const zpl_bitmap_t src, zpl_bitmap_t dst, zpl_uint32 nbit)
-{
-	int k;
-	zpl_uchar mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
-	int nr = nbit/8;
-	
-	bcopy(&src.bitmap, &dst.bitmap, nr);
-
-	k = (nbit % 8);
-	if(k)
-	{
-		dst.bitmap[nr] = src.bitmap[nr] & mask[k-1];
-	}
+	memcpy(&dst.bitmap, &src.bitmap, sizeof(dst.bitmap));
 	return;
 }
 
-/****************************************************************************
-*
-*�������ı���λΪ1��ֵ
-*
-��nbit����1��ʼ
-*/
-zpl_uint32 bitListMax(zpl_bitmap_t src, zpl_uint32 nbit)
+/*****************************************************************************/
+/*****************************************************************************/
+void os_bit64_set(zpl_uint64 *bitmap, zpl_uint32  bit, zpl_uint32  wigth)
 {
-	zpl_uint32 i,k;
-	zpl_uchar mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
-	zpl_uchar tmp=0;
-	zpl_uint32 nr = nbit/8;
-
-	k = (nbit % 8);
-	if(k)
+	zpl_uchar *bittbl = (zpl_uchar *)bitmap;
+	int k = 0;
+	for (k = 0; k < wigth; k++)
 	{
-		tmp = (src.bitmap[nr] & mask[k-1]);
-		for(i=0; i < 8; i++)
-			if(tmp & (1<<i))
-				return (nbit - k + (8-i));
+    	bittbl[(bit+k)/8] |= bitMask[(bit+k)%8];
 	}
-
-	for (k = nr-1; k >= 0; k--)
-	{
-		if(src.bitmap[k] == 0)
-			continue;
-		for(i=0; i < 8; i++)
-			if(src.bitmap[k] & (1<<i))
-				return ((k*8) + (8-i));
-	}
-	return 0;
 }
 
-/*
-����bitΪ1�ĸ���
-*/
-
-zpl_uint32 bitListCnt(zpl_bitmap_t src, zpl_uint32 nbit)
+void os_bit64_clr(zpl_uint64 *bitmap, zpl_uint32  bit, zpl_uint32  wigth)
 {
-	zpl_uint32 nr = nbit/8;
-	zpl_uchar mask[8] ={0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
-	zpl_uint32 n,k,count=0;
-
-/*
-	�������㷨�ĺ��ģ�ֻ�����2��������
-	1> ��һ��������1ʱ�������ұߵ��Ǹ�ֵΪ1��Bit����Ϊ0��ͬʱ���ұߵ����е�Bit������1��
-	2>��&=����λ�벢��ֵ������ȥ���Ѿ�����������1��������ֵ�������ø�n.
-
-	����㷨ѭ���Ĵ�����bitλΪһ�ĸ�����Ҳ��˵�м���BitΪ1��ѭ�����Ρ�
-	��BitΪ1�Ƚ�ϡ�������˵�����ܺܺá��磺0x1000 0000, ѭ��һ�ξͿ��ԡ�
-*/
-
-	for (k = 0; k < nr; k++)
+	zpl_uchar *bittbl = (zpl_uchar *)bitmap;
+	int k = 0;
+	for (k = 0; k < wigth; k++)
 	{
-		n = src.bitmap[k];
-		while(n)
-		{
-			count++ ;
-			n &= (n - 1) ;
-		}
+    	bittbl[(bit+k)/8] &= ~bitMask[(bit+k)%8];
 	}
-	k = (nbit % 8);
-	if(k)
+}
+
+int os_bit64_tst(zpl_uint64 *bitmap, zpl_uint32  bit, zpl_uint32  wigth)
+{
+	zpl_uchar *bittbl = (zpl_uchar *)bitmap;
+	int k = 0, bittst = 0;
+	for (k = 0; k < wigth; k++)
 	{
-		n= (src.bitmap[nr] & mask[k-1]);
-		while(n)
-		{
-			count++ ;
-			n &= (n - 1) ;
-		}
-	}
-	
-	return count ;
+		bittst = (bittbl[(bit+k)/8] & bitMask[(bit+k)%8])? 1 : 0;
+		if(bittst == 0)
+			return 0;
+	}	
+    return bittst;
 }

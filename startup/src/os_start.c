@@ -365,7 +365,8 @@ int os_base_module_start_all()
 #ifdef ZPL_KERNEL_STACK_MODULE
 	_netlink_load_all();
 #endif
-
+	//eth_drv_init(0);
+	//eth_drv_start(0);
 	return OK;
 }
 

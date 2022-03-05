@@ -41,13 +41,12 @@ typedef struct sdk_qos_s
 	int (*sdk_qos_class_weight_cb) (void *,  nsm_qos_class_e, zpl_uint32);
 #endif
 	//风暴
-	int (*sdk_qos_storm_enable_cb) (void *, zpl_phyport_t, zpl_bool, zpl_uint32);
 	int (*sdk_qos_storm_rate_cb) (void *, zpl_phyport_t, zpl_uint32 ,
 			zpl_uint32  );
 
 	//端口限速
-	int (*sdk_qos_port_egress_rate_cb) (void *, zpl_phyport_t, zpl_uint32, zpl_uint32);
-	int (*sdk_qos_port_ingress_rate_cb) (void *, zpl_phyport_t, zpl_uint32, zpl_uint32);
+	int (*sdk_qos_port_egress_rate_cb) (void *, zpl_phyport_t, zpl_uint32);
+	int (*sdk_qos_port_ingress_rate_cb) (void *, zpl_phyport_t, zpl_uint32);
 
 
 	//CPU

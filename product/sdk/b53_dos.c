@@ -23,6 +23,7 @@ static int b53125_dos_icmpv6_longping_drop(sdk_driver_t *dev, zpl_bool enable)
 		port_ctrl &= ~B53_ICMP6_LONGPING_DROP_EN;
 
 	ret |= b53125_write32(dev->sdk_device, B53_DOS_PAGE, B53_DOS_CTL, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 /*************************************************************************/
@@ -37,6 +38,7 @@ static int b53125_dos_icmpv4_longping_drop(sdk_driver_t *dev, zpl_bool enable)
 		port_ctrl &= ~B53_ICMP4_LONGPING_DROP_EN;
 
 	ret |= b53125_write32(dev->sdk_device, B53_DOS_PAGE, B53_DOS_CTL, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 /*************************************************************************/
@@ -51,6 +53,7 @@ static int b53125_dos_icmpv6_fragment_drop(sdk_driver_t *dev, zpl_bool enable)
 		port_ctrl &= ~B53_ICMP6_FRAGMENT_DROP_EN;
 
 	ret |= b53125_write32(dev->sdk_device, B53_DOS_PAGE, B53_DOS_CTL, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 /*************************************************************************/
@@ -65,6 +68,7 @@ static int b53125_dos_icmpv4_fragment_drop(sdk_driver_t *dev, zpl_bool enable)
 		port_ctrl &= ~B53_ICMP4_FRAGMENT_DROP_EN;
 
 	ret |= b53125_write32(dev->sdk_device, B53_DOS_PAGE, B53_DOS_CTL, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 
@@ -80,6 +84,7 @@ static int b53125_dos_tcp_fragerror_drop(sdk_driver_t *dev, zpl_bool enable)
 		port_ctrl &= ~B53_TCP_FRAGERROR_DROP_EN;
 
 	ret |= b53125_write32(dev->sdk_device, B53_DOS_PAGE, B53_DOS_CTL, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 /*************************************************************************/
@@ -94,6 +99,7 @@ static int b53125_dos_tcp_shorthdr_drop(sdk_driver_t *dev, zpl_bool enable)
 		port_ctrl &= ~B53_TCP_SHORTHDR_DROP_EN;
 
 	ret |= b53125_write32(dev->sdk_device, B53_DOS_PAGE, B53_DOS_CTL, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 /*************************************************************************/
@@ -108,6 +114,7 @@ static int b53125_dos_tcp_synerror_drop(sdk_driver_t *dev, zpl_bool enable)
 		port_ctrl &= ~B53_TCP_SYNERROR_DROP_EN;
 
 	ret |= b53125_write32(dev->sdk_device, B53_DOS_PAGE, B53_DOS_CTL, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 /*************************************************************************/
@@ -122,6 +129,7 @@ static int b53125_dos_tcp_synfinscan_drop(sdk_driver_t *dev, zpl_bool enable)
 		port_ctrl &= ~B53_TCP_SYNFINSCAN_DROP_EN;
 
 	ret |= b53125_write32(dev->sdk_device, B53_DOS_PAGE, B53_DOS_CTL, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 /*************************************************************************/
@@ -136,6 +144,7 @@ static int b53125_dos_tcp_nullscan_drop(sdk_driver_t *dev, zpl_bool enable)
 		port_ctrl &= ~B53_TCP_NULLSCAN_DROP_EN;
 
 	ret |= b53125_write32(dev->sdk_device, B53_DOS_PAGE, B53_DOS_CTL, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 /*************************************************************************/
@@ -150,6 +159,7 @@ static int b53125_dos_tcp_xmassscan_drop(sdk_driver_t *dev, zpl_bool enable)
 		port_ctrl &= ~B53_TCP_XMASSCAN_DROP_EN;
 
 	ret |= b53125_write32(dev->sdk_device, B53_DOS_PAGE, B53_DOS_CTL, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 /*************************************************************************/
@@ -164,6 +174,7 @@ static int b53125_dos_udp_blat_drop(sdk_driver_t *dev, zpl_bool enable)
 		port_ctrl &= ~B53_UDP_BLAT_DROP_EN;
 
 	ret |= b53125_write32(dev->sdk_device, B53_DOS_PAGE, B53_DOS_CTL, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 /*************************************************************************/
@@ -178,6 +189,7 @@ static int b53125_dos_tcp_blat_drop(sdk_driver_t *dev, zpl_bool enable)
 		port_ctrl &= ~B53_TCP_BLAT_DROP_EN;
 
 	ret |= b53125_write32(dev->sdk_device, B53_DOS_PAGE, B53_DOS_CTL, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 /*************************************************************************/
@@ -192,6 +204,7 @@ static int b53125_dos_ip_lan_drip_drop(sdk_driver_t *dev, zpl_bool enable)
 		port_ctrl &= ~B53_IP_LAN_DRIP_EN;
 
 	ret |= b53125_write32(dev->sdk_device, B53_DOS_PAGE, B53_DOS_CTL, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 
@@ -202,6 +215,7 @@ static int b53125_dos_tcphdr_minsize(sdk_driver_t *dev, int minsize)
 	u8 port_ctrl = 0;
 	port_ctrl = minsize;
 	ret |= b53125_write8(dev->sdk_device, B53_DOS_PAGE, B53_MIN_TCPHDR_SIZE_CTL, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 /*************************************************************************/
@@ -211,6 +225,7 @@ static int b53125_dos_icmp6_maxsize(sdk_driver_t *dev, int minsize)
 	u32 port_ctrl = 0;
 	port_ctrl = minsize;
 	ret |= b53125_write32(dev->sdk_device, B53_DOS_PAGE, B53_MAX_ICMPV6_SIZE_CTL, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 /*************************************************************************/
@@ -220,6 +235,7 @@ static int b53125_dos_icmp4_maxsize(sdk_driver_t *dev, int minsize)
 	u32 port_ctrl = 0;
 	port_ctrl = minsize;
 	ret |= b53125_write32(dev->sdk_device, B53_DOS_PAGE, B53_MAX_ICMPV4_SIZE_CTL, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 /*************************************************************************/
@@ -232,6 +248,7 @@ int b53125_dos_disable_lean(sdk_driver_t *dev, zpl_bool enable)
 	else
 		port_ctrl &= ~BIT(0);
 	ret |= b53125_write8(dev->sdk_device, B53_DOS_PAGE, B53_DOS_DIS_LEARN_CTL, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 

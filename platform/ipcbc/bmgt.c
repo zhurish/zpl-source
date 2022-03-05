@@ -57,7 +57,7 @@ unit_board_mgt_t *unit_board_add(zpl_uint8 unit, zpl_uint8 slot)
 		t->unit = unit;
 		t->slot = slot;
 		if(IS_BMGT_DEBUG_EVENT(_bmgt_debug))
-			zlog_debug(MODULE_LIB, "Unit Board Add unit %d slot %d ", unit, slot);
+			zlog_debug(MODULE_NSM, "Unit Board Add unit %d slot %d ", unit, slot);
 		// t->port = port;
 		// t->phyid = phyid;
 		t->port_list = os_malloc(sizeof(LIST));
@@ -91,7 +91,7 @@ int unit_board_del(zpl_uint8 unit, zpl_uint8 slot)
 		if (t && t->unit == unit && t->slot == slot)
 		{
 			if(IS_BMGT_DEBUG_EVENT(_bmgt_debug))
-				zlog_debug(MODULE_LIB, "Unit Board Del unit %d slot %d ", unit, slot);			
+				zlog_debug(MODULE_NSM, "Unit Board Del unit %d slot %d ", unit, slot);			
 	
 			lstDelete(unit_board_mgt_list, (NODE *)t);
 			if (t->mutex)
@@ -164,7 +164,7 @@ unit_port_mgt_t *unit_board_port_add(unit_board_mgt_t *board, if_type_t type, zp
 		t->port = port;
 		t->phyid = phyid;
 		if(IS_BMGT_DEBUG_EVENT(_bmgt_debug))
-			zlog_debug(MODULE_LIB, "Unit Board Add Port unit %d slot %d type %d port %d phyid %d", board->unit, board->slot, type, port, phyid);
+			zlog_debug(MODULE_NSM, "Unit Board Add Port unit %d slot %d type %d port %d phyid %d", board->unit, board->slot, type, port, phyid);
 		if (board->mutex)
 			os_mutex_lock(board->mutex, OS_WAIT_FOREVER);
 		if (board->port_list)
@@ -188,7 +188,7 @@ int unit_board_port_del(unit_board_mgt_t *board, if_type_t type, zpl_uint8 port,
 		if (t && t->type == type && t->port == port && t->phyid == phyid)
 		{
 			if(IS_BMGT_DEBUG_EVENT(_bmgt_debug))
-				zlog_debug(MODULE_LIB, "Unit Board Del Port unit %d slot %d type %d port %d phyid %d", board->unit, board->slot, type, port, phyid);
+				zlog_debug(MODULE_NSM, "Unit Board Del Port unit %d slot %d type %d port %d phyid %d", board->unit, board->slot, type, port, phyid);
 			lstDelete(board->port_list, (NODE *)t);
 			break;
 		}

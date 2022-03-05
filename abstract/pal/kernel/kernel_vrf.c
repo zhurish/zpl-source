@@ -347,32 +347,32 @@ int _ipkernel_vrf_disable(vrf_id_t vrf_id)
  vrf_table = NULL;
  }*/
 
-/* Create a ipstack_socket for the VRF. */
-zpl_socket_t _kernel_vrf_socket(int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id_t vrf_id)
+/* Create a socket for the VRF. */
+int
+vrf_socket (int domain, int type, int protocol, vrf_id_t vrf_id)
 {
-	struct vrf *vrf = vrf_lookup(vrf_id);
-	int ret = -1;
-	zpl_socket_t sock;
-/*
-	if (!vrf_is_enabled(vrf))
-	{
-		ipstack_errno = ENOSYS;
-		return -1;
-	}
-*/
+  struct vrf *vrf = vrf_lookup (vrf_id);
+  int ret = -1;
 
-	if (have_netns())
-	{
-		ret = (vrf_id != VRF_DEFAULT) ? setns(vrf->fd._fd, CLONE_NEWNET) : 0;
-		if (ret >= 0)
-		{
-			sock = ipstack_socket(IPCOM_STACK, domain, type, protocol);
-			if (vrf_id != VRF_DEFAULT)
-				setns(vrf_lookup(VRF_DEFAULT)->fd._fd, CLONE_NEWNET);
-		}
-	}
-	else
-		sock = ipstack_socket(IPCOM_STACK, domain, type, protocol);
+  if (!vrf_is_enabled (vrf))
+    {
+      errno = ENOSYS;
+      return -1;
+    }
 
-	return sock;
+  if (have_netns())
+    {
+      ret = (vrf_id != VRF_DEFAULT) ? setns (vrf->fd._fd, CLONE_NEWNET) : 0;
+      if (ret >= 0)
+        {
+          ret = socket (domain, type, protocol);
+          if (vrf_id != VRF_DEFAULT)
+            setns (vrf_lookup (VRF_DEFAULT)->fd._fd, CLONE_NEWNET);
+        }
+    }
+  else
+    ret = socket (domain, type, protocol);
+
+  return ret;
 }
+

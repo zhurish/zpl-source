@@ -34,7 +34,7 @@ extern "C"
     zpl_uint32 command;
     zpl_uint32 unit;
   };
-
+ 
 #define HAL_IPCMSG_HEADER_SIZE sizeof(struct hal_ipcmsg_header)
 
   struct hal_ipcmsg_result
@@ -94,6 +94,15 @@ extern "C"
 
 #define HAL_TABLE_HDR_SIZE (sizeof(hal_table_header_t))
 
+  typedef struct hal_data_header_s
+  {
+    zpl_uint32 ifindex;
+    zpl_uint32 vrfid;
+    zpl_vlan_t vlanid;
+    zpl_phyport_t phyport;
+    zpl_uint8 pri;
+  } hal_data_header_t;
+#define HAL_DATA_HDR_SIZE (sizeof(hal_data_header_t))
 #pragma pack(0)
 
 #define HAL_IPCMSG_DEBUG_EVENT  0x10
@@ -115,6 +124,7 @@ enum hal_client_state
     HAL_CLIENT_NONE,
     HAL_CLIENT_CLOSE,
     HAL_CLIENT_CONNECT,
+    HAL_CLIENT_INIT,
     HAL_CLIENT_REGISTER,
 };
 
@@ -147,19 +157,29 @@ extern int hal_ipcmsg_msg_init(struct hal_ipcmsg *ipcmsg, char *buf, int len);
 extern int hal_ipcmsg_create_header(struct hal_ipcmsg *ipcmsg, zpl_uint32 command);
 extern int hal_ipcmsg_hdr_unit_set(struct hal_ipcmsg *ipcmsg, zpl_uint32 unit);
 extern int hal_ipcmsg_hdr_unit_get(struct hal_ipcmsg *ipcmsg);
-extern int hal_ipcmsg_msg_add(struct hal_ipcmsg *ipcmsg, void *msg, int len);
-extern int hal_ipcmsg_msglen_set(struct hal_ipcmsg *ipcmsg);
+extern int hal_ipcmsg_msg_copy(struct hal_ipcmsg *dst_ipcmsg, struct hal_ipcmsg *src_ipcmsg);
+extern int hal_ipcmsg_msg_clone(struct hal_ipcmsg *dst_ipcmsg, struct hal_ipcmsg *src_ipcmsg);
+extern int hal_ipcmsg_hdrlen_set(struct hal_ipcmsg *ipcmsg);
+
 extern int hal_ipcmsg_msglen_get(struct hal_ipcmsg *ipcmsg);
+extern int hal_ipcmsg_get_setp(struct hal_ipcmsg *ipcmsg);
+extern int hal_ipcmsg_get_getp(struct hal_ipcmsg *ipcmsg);
+
 extern int hal_ipcmsg_send_message(int unit, zpl_uint32 command, void *ipcmsg, int len);
+extern int hal_ipcmsg_send_cmd(int unit, zpl_uint32 command, struct hal_ipcmsg *src_ipcmsg);
+extern int hal_ipcmsg_send(int unit, struct hal_ipcmsg *src_ipcmsg);
 
 extern int hal_ipcmsg_hexmsg(struct hal_ipcmsg *ipcmsg, zpl_uint32 len, char *hdr);
 extern int hal_ipcmsg_global_set(ifindex_t ifindex, hal_global_header_t *glo);
 extern int hal_ipcmsg_port_set(struct hal_ipcmsg *ipcmsg, ifindex_t ifindex);
 extern int hal_ipcmsg_table_set(ifindex_t ifindex, hal_table_header_t *table);
+extern int hal_ipcmsg_data_set(struct hal_ipcmsg *ipcmsg, ifindex_t ifindex, 
+    zpl_vlan_t vlanid, zpl_uint8 pri);
 
 extern int hal_ipcmsg_global_get(struct hal_ipcmsg *ipcmsg, hal_global_header_t *glo);
 extern int hal_ipcmsg_port_get(struct hal_ipcmsg *ipcmsg, hal_port_header_t *bspport);
 extern int hal_ipcmsg_table_get(struct hal_ipcmsg *ipcmsg, hal_table_header_t *table);
+extern int hal_ipcmsg_data_get(struct hal_ipcmsg *ipcmsg, hal_data_header_t *datahdr);
 
 #ifdef __cplusplus
 }

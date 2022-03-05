@@ -45,11 +45,11 @@ struct firewall_service_s
 
 static Gfirewall_t gFirewalld;
 
-static int pal_firewall_rule_add_api(firewall_t *value);
-static int pal_firewall_rule_del_api(firewall_t *value);
+static int nsm_halpal_firewall_rule_add_api(firewall_t *value);
+static int nsm_halpal_firewall_rule_del_api(firewall_t *value);
 
 
-const char * firewall_action_string(firewall_action_t action)
+const char * nsm_firewall_action_string(firewall_action_t action)
 {
 	switch (action)
 	{
@@ -86,7 +86,7 @@ const char * firewall_action_string(firewall_action_t action)
 		break;
 	}
 }
-const char * firewall_type_string(firewall_type_t type)
+const char * nsm_firewall_type_string(firewall_type_t type)
 {
 	switch (type)
 	{
@@ -137,7 +137,7 @@ const char * firewall_type_string(firewall_type_t type)
 	}
 }
 
-const char * firewall_proto_string(firewall_proto_t type)
+const char * nsm_firewall_proto_string(firewall_proto_t type)
 {
 	switch (type)
 	{
@@ -159,7 +159,7 @@ const char * firewall_proto_string(firewall_proto_t type)
 	}
 }
 
-static firewall_t * firewall_rule_add_node(firewall_zone_t *zone, firewall_t *value)
+static firewall_t * nsm_firewall_rule_add_node(firewall_zone_t *zone, firewall_t *value)
 {
 	firewall_t *node = XMALLOC(MTYPE_FIREWALL_RULE, sizeof(firewall_t));
 	if(node)
@@ -174,7 +174,7 @@ static firewall_t * firewall_rule_add_node(firewall_zone_t *zone, firewall_t *va
 	return NULL;
 }
 
-static firewall_t * firewall_rule_lookup_node(firewall_zone_t *zone, firewall_t *value)
+static firewall_t * nsm_firewall_rule_lookup_node(firewall_zone_t *zone, firewall_t *value)
 {
 	firewall_t *pstNode = NULL;
 	NODE index;
@@ -196,7 +196,7 @@ static firewall_t * firewall_rule_lookup_node(firewall_zone_t *zone, firewall_t 
 }
 
 
-int firewall_rule_add_api(firewall_zone_t *zone, firewall_t *value)
+int nsm_firewall_rule_add_api(firewall_zone_t *zone, firewall_t *value)
 {
 	int ret = ERROR;
 	firewall_t *node;
@@ -205,7 +205,7 @@ int firewall_rule_add_api(firewall_zone_t *zone, firewall_t *value)
 	if(zone->mutex)
 		os_mutex_lock(zone->mutex, OS_WAIT_FOREVER);
 
-	node = firewall_rule_lookup_node(zone, value);
+	node = nsm_firewall_rule_lookup_node(zone, value);
 	if(node == NULL)
 	{
 #ifdef ZPL_HAL_MODULE
@@ -215,19 +215,19 @@ int firewall_rule_add_api(firewall_zone_t *zone, firewall_t *value)
 #endif
 		
 		value->ID = gFirewalld.rule_id[value->type] + 1;//lstCount(zone->zone_list);
-		ret = pal_firewall_rule_add_api(value);
+		ret = nsm_halpal_firewall_rule_add_api(value);
 
-		if(ret == OK && firewall_rule_add_node(zone, value))
+		if(ret == OK && nsm_firewall_rule_add_node(zone, value))
 			gFirewalld.rule_id[value->type] += 1;	
 		else
-			pal_firewall_rule_del_api(value);
+			nsm_halpal_firewall_rule_del_api(value);
 			
 		/*
 		node = firewall_rule_add_node(zone, value);
 		if(node)
 		{
 			node->ID = gFirewalld.rule_id[value->type] + 1;
-			ret = pal_firewall_rule_add_api(node);
+			ret = nsm_halpal_firewall_rule_add_api(node);
 			if(ret != OK)
 			{
 				gFirewalld.rule_id[node->type] -= 1;
@@ -244,7 +244,7 @@ int firewall_rule_add_api(firewall_zone_t *zone, firewall_t *value)
 }
 
 
-int firewall_rule_del_api(firewall_zone_t *zone, firewall_t *value)
+int nsm_firewall_rule_del_api(firewall_zone_t *zone, firewall_t *value)
 {
 	int ret = ERROR;
 	firewall_t *node;
@@ -253,7 +253,7 @@ int firewall_rule_del_api(firewall_zone_t *zone, firewall_t *value)
 	if(zone->mutex)
 		os_mutex_lock(zone->mutex, OS_WAIT_FOREVER);
 
-	node = firewall_rule_lookup_node(zone, value);
+	node = nsm_firewall_rule_lookup_node(zone, value);
 	if(!node)
 	{
 		ret = ERROR;
@@ -266,7 +266,7 @@ int firewall_rule_del_api(firewall_zone_t *zone, firewall_t *value)
 #else
 
 #endif
-		ret = pal_firewall_rule_del_api(node);
+		ret = nsm_halpal_firewall_rule_del_api(node);
 
 		if(ret == OK)
 		{
@@ -281,7 +281,7 @@ int firewall_rule_del_api(firewall_zone_t *zone, firewall_t *value)
 	return ret;
 }
 
-firewall_t * firewall_rule_lookup_api(firewall_zone_t *zone, firewall_t *value)
+firewall_t * nsm_firewall_rule_lookup_api(firewall_zone_t *zone, firewall_t *value)
 {
 	int ret = ERROR;
 	firewall_t *node;
@@ -289,7 +289,7 @@ firewall_t * firewall_rule_lookup_api(firewall_zone_t *zone, firewall_t *value)
 		return NULL;
 	if(zone->mutex)
 		os_mutex_lock(zone->mutex, OS_WAIT_FOREVER);
-	node = firewall_rule_lookup_node(zone, value);
+	node = nsm_firewall_rule_lookup_node(zone, value);
 	if(!node)
 	{
 		ret = NULL;
@@ -299,7 +299,7 @@ firewall_t * firewall_rule_lookup_api(firewall_zone_t *zone, firewall_t *value)
 	return node;
 }
 #ifdef ZPL_SHELL_MODULE
-int firewall_rule_show_api(struct vty *vty, firewall_zone_t *zone, zpl_char * intype)
+int nsm_firewall_rule_show_api(struct vty *vty, firewall_zone_t *zone, zpl_char * intype)
 {
 	firewall_t *pstNode = NULL;
 	NODE index;
@@ -374,9 +374,9 @@ int firewall_rule_show_api(struct vty *vty, firewall_zone_t *zone, zpl_char * in
 			memset(s_mac, 0, sizeof(s_mac));
 			memset(d_mac, 0, sizeof(d_mac));
 			sprintf(id, "%d", pstNode->ID);
-			sprintf(type, "%s", firewall_type_string(pstNode->type));
-			sprintf(action, "%s", firewall_action_string(pstNode->action));
-			sprintf(proto, "%s", firewall_proto_string(pstNode->proto));
+			sprintf(type, "%s", nsm_firewall_type_string(pstNode->type));
+			sprintf(action, "%s", nsm_firewall_action_string(pstNode->action));
+			sprintf(proto, "%s", nsm_firewall_proto_string(pstNode->proto));
 
 			if(pstNode->source.family)
 			{
@@ -625,7 +625,7 @@ int firewall_rule_show_api(struct vty *vty, firewall_zone_t *zone, zpl_char * in
 }
 #endif
 
-int firewall_rule_foreach_api(firewall_zone_t *zone, int(*cb)(firewall_t *, void *), void *p)
+int nsm_firewall_rule_foreach_api(firewall_zone_t *zone, int(*cb)(firewall_t *, void *), void *p)
 {
 	firewall_t *pstNode = NULL;
 	NODE index;
@@ -644,7 +644,7 @@ int firewall_rule_foreach_api(firewall_zone_t *zone, int(*cb)(firewall_t *, void
 	return OK;
 }
 /***********************************************************************/
-static int firewall_rule_cleanup(firewall_zone_t *zone, firewall_t *value)
+static int nsm_firewall_rule_cleanup(firewall_zone_t *zone, firewall_t *value)
 {
 	firewall_t *pstNode = NULL;
 	NODE index;
@@ -659,14 +659,14 @@ static int firewall_rule_cleanup(firewall_zone_t *zone, firewall_t *value)
 		if(value && pstNode && value->s_ifindex && pstNode->s_ifindex == value->s_ifindex)
 		{
 			gFirewalld.rule_id[pstNode->type] -= 1;
-			pal_firewall_rule_del_api(pstNode);
+			nsm_halpal_firewall_rule_del_api(pstNode);
 			lstDelete(zone->zone_list, (NODE*)pstNode);
 			XFREE(MTYPE_FIREWALL_RULE, pstNode);
 		}
 		else if(value &&  pstNode && value->d_ifindex && pstNode->d_ifindex == value->d_ifindex)
 		{
 			gFirewalld.rule_id[pstNode->type] -= 1;
-			pal_firewall_rule_del_api(pstNode);
+			nsm_halpal_firewall_rule_del_api(pstNode);
 			lstDelete(zone->zone_list, (NODE*)pstNode);
 			XFREE(MTYPE_FIREWALL_RULE, pstNode);
 		}
@@ -674,14 +674,14 @@ static int firewall_rule_cleanup(firewall_zone_t *zone, firewall_t *value)
 		else if(value && pstNode && value->proto && pstNode->proto == value->proto)
 		{
 			gFirewalld.rule_id[pstNode->type] -= 1;
-			pal_firewall_rule_del_api(pstNode);
+			nsm_halpal_firewall_rule_del_api(pstNode);
 			lstDelete(zone->zone_list, (NODE*)pstNode);
 			XFREE(MTYPE_FIREWALL_RULE, pstNode);
 		}
 		else if(pstNode)
 		{
 			gFirewalld.rule_id[pstNode->type] -= 1;
-			pal_firewall_rule_del_api(pstNode);
+			nsm_halpal_firewall_rule_del_api(pstNode);
 			lstDelete(zone->zone_list, (NODE*)pstNode);
 			XFREE(MTYPE_FIREWALL_RULE, pstNode);
 		}
@@ -743,7 +743,7 @@ int nsm_firewall_zone_del(zpl_int8 	*zonename)
 			os_mutex_lock(gFirewalld.mutex, OS_WAIT_FOREVER);
 		lstDelete(gFirewalld.firewall_list, (NODE*)pstNode);
 
-		firewall_rule_cleanup(pstNode, NULL);
+		nsm_firewall_rule_cleanup(pstNode, NULL);
 
 		if(lstCount(pstNode->zone_list))
 		{
@@ -762,7 +762,7 @@ int nsm_firewall_zone_del(zpl_int8 	*zonename)
 	return ERROR;
 }
 
-static int firewall_zone_cleanup(zpl_int8 	*zonename)
+static int nsm_firewall_zone_cleanup(zpl_int8 	*zonename)
 {
 	firewall_zone_t *pstNode = NULL;
 	NODE index;
@@ -779,7 +779,7 @@ static int firewall_zone_cleanup(zpl_int8 	*zonename)
 		if(pstNode)
 		{
 			lstDelete(gFirewalld.firewall_list, (NODE*)pstNode);
-			firewall_rule_cleanup(pstNode, NULL);
+			nsm_firewall_rule_cleanup(pstNode, NULL);
 			XFREE(MTYPE_FIREWALL_ZONE, pstNode);
 		}
 	}
@@ -788,7 +788,7 @@ static int firewall_zone_cleanup(zpl_int8 	*zonename)
 	return OK;
 }
 
-int firewall_zone_foreach_api(int(*cb)(firewall_zone_t *, void *), void *p)
+int nsm_firewall_zone_foreach_api(int(*cb)(firewall_zone_t *, void *), void *p)
 {
 	firewall_zone_t *pstNode = NULL;
 	NODE index;
@@ -973,7 +973,7 @@ static int nsm_firewall_default(void)
 		value.action = FIREWALL_A_ACCEPT;
 		value.proto = FIREWALL_P_TCP;
 		value.d_port = 2610;
-		firewall_rule_add_api(zone, &value);
+		nsm_firewall_rule_add_api(zone, &value);
 
 		memset(&value, 0, sizeof(value));
 		strcpy(value.name, "app");
@@ -982,7 +982,7 @@ static int nsm_firewall_default(void)
 		value.action = FIREWALL_A_ACCEPT;
 		value.proto = FIREWALL_P_UDP;
 		value.d_port = 9527;
-		firewall_rule_add_api(zone, &value);
+		nsm_firewall_rule_add_api(zone, &value);
 	}
 
 	return OK;
@@ -1003,7 +1003,7 @@ int nsm_firewall_exit(void)
 {
 	if(lstCount(gFirewalld.firewall_list))
 	{
-		firewall_zone_cleanup(NULL);
+		nsm_firewall_zone_cleanup(NULL);
 		lstFree(gFirewalld.firewall_list);
 		free(gFirewalld.firewall_list);
 		gFirewalld.firewall_list = NULL;
@@ -1017,33 +1017,33 @@ int nsm_firewall_exit(void)
 
 /***********************************************************************/
 /***********************************************************************/
-static int pal_firewall_rule_add_api(firewall_t *value)
+static int nsm_halpal_firewall_rule_add_api(firewall_t *value)
 {
 	int ret = ERROR;
 
 	if (value->class == FIREWALL_C_PORT)
 	{
-		ret = pal_firewall_portmap_rule_set(value, 1);
+		ret = nsm_halpal_firewall_portmap_rule_set(value, 1);
 	}
 	else if (value->class == FIREWALL_C_FILTER)
 	{
-		ret = pal_firewall_port_filter_rule_set(value, 1);
+		ret = nsm_halpal_firewall_port_filter_rule_set(value, 1);
 	}
 	else if (value->class == FIREWALL_C_DNAT)
 	{
-		ret = pal_firewall_dnat_rule_set(value, 1);
+		ret = nsm_halpal_firewall_dnat_rule_set(value, 1);
 	}
 	else if (value->class == FIREWALL_C_SNAT)
 	{
-		ret = pal_firewall_snat_rule_set(value, 1);
+		ret = nsm_halpal_firewall_snat_rule_set(value, 1);
 	}
 	else if (value->class == FIREWALL_C_MANGLE)
 	{
-		ret = pal_firewall_mangle_rule_set(value, 1);
+		ret = nsm_halpal_firewall_mangle_rule_set(value, 1);
 	}
 	else if (value->class == FIREWALL_C_RAW)
 	{
-		ret = pal_firewall_raw_rule_set(value, 1);
+		ret = nsm_halpal_firewall_raw_rule_set(value, 1);
 	}
 	else
 		ret = ERROR;
@@ -1051,32 +1051,32 @@ static int pal_firewall_rule_add_api(firewall_t *value)
 }
 
 
-static int pal_firewall_rule_del_api(firewall_t *value)
+static int nsm_halpal_firewall_rule_del_api(firewall_t *value)
 {
 	int ret = ERROR;
 	if (value->class == FIREWALL_C_PORT)
 	{
-		ret = pal_firewall_portmap_rule_set(value, 0);
+		ret = nsm_halpal_firewall_portmap_rule_set(value, 0);
 	}
 	else if (value->class == FIREWALL_C_FILTER)
 	{
-		ret = pal_firewall_port_filter_rule_set(value, 0);
+		ret = nsm_halpal_firewall_port_filter_rule_set(value, 0);
 	}
 	else if (value->class == FIREWALL_C_DNAT)
 	{
-		ret = pal_firewall_dnat_rule_set(value, 0);
+		ret = nsm_halpal_firewall_dnat_rule_set(value, 0);
 	}
 	else if (value->class == FIREWALL_C_SNAT)
 	{
-		ret = pal_firewall_snat_rule_set(value, 0);
+		ret = nsm_halpal_firewall_snat_rule_set(value, 0);
 	}
 	else if (value->class == FIREWALL_C_MANGLE)
 	{
-		ret = pal_firewall_mangle_rule_set(value, 0);
+		ret = nsm_halpal_firewall_mangle_rule_set(value, 0);
 	}
 	else if (value->class == FIREWALL_C_RAW)
 	{
-		ret = pal_firewall_raw_rule_set(value, 0);
+		ret = nsm_halpal_firewall_raw_rule_set(value, 0);
 	}
 	else
 		ret = ERROR;

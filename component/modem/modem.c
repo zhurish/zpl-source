@@ -412,13 +412,13 @@ int modem_interface_update_kernel(modem_t *modem, char *name)
 		MODEM_DEBUG("modem update kernel interface %s -> %s", ifp->name, name);
 		modem_interface_system_up(zpl_true, name);
 		if_kname_set(modem->eth0, name);
-		//((struct interface *)modem->eth0)->k_ifindex = pal_interface_ifindex(name);
+		//((struct interface *)modem->eth0)->k_ifindex = nsm_halpal_interface_ifindex(name);
 		nsm_pal_interface_up(modem->eth0);
 		nsm_interface_update_kernel(modem->eth0, name);
 		if(!(ifp->flags & IPSTACK_IFF_NOARP))
 		{
 			ifp->flags |= IPSTACK_IFF_NOARP;
-			pal_interface_update_flag(ifp, ifp->flags);
+			nsm_halpal_interface_update_flag(ifp, ifp->flags);
 		}
 	}
 	return OK;
@@ -431,7 +431,7 @@ int modem_serial_interface_update_kernel(modem_t *modem, char *name)
 		MODEM_DEBUG("modem update kernel interface %s -> %s", ((struct interface *)modem->ppp_serial)->name, name);
 		modem_interface_system_up(zpl_true, name);
 		if_kname_set(modem->ppp_serial, name);
-		//((struct interface *)modem->eth0)->k_ifindex = pal_interface_ifindex(name);
+		//((struct interface *)modem->eth0)->k_ifindex = nsm_halpal_interface_ifindex(name);
 		nsm_pal_interface_up(modem->ppp_serial);
 		nsm_serial_interface_kernel(modem->ppp_serial, name);
 	}

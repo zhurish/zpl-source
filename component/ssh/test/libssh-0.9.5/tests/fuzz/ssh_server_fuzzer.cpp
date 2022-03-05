@@ -59,11 +59,11 @@ static const char kRSAPrivateKeyPEM[] =
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     int socket_fds[2];
-    int res = socketpair(AF_UNIX, SOCK_STREAM, 0, socket_fds);
+    int res = socketpair(AF_UNIX, IPSTACK_SOCK_STREAM, 0, socket_fds);
     assert(res >= 0);
     ssize_t send_res = send(socket_fds[1], data, size, 0);
     assert(send_res == size);
-    res = shutdown(socket_fds[1], SHUT_WR);
+    res = shutdown(socket_fds[1], IPSTACK_SHUT_WR);
     assert(res == 0);
 
     int fd = open("/tmp/libssh_fuzzer_private_key", O_WRONLY | O_CREAT, S_IRWXU);

@@ -23,6 +23,7 @@ static int b53125_trunk_enable(sdk_driver_t *dev, zpl_bool enable)
 		port_ctrl &= ~B53_MAC_BASE_TRNK_EN;
 
 	ret |= b53125_write8(dev->sdk_device, B53_TRUNK_PAGE, B53_TRUNK_CTL, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 
@@ -37,6 +38,7 @@ static int b53125_trunk_create(sdk_driver_t *dev, int id, zpl_bool enable)
 		port_ctrl &= ~B53_MAC_BASE_TRNK_EN;
 
 	ret |= b53125_write8(dev->sdk_device, B53_TRUNK_PAGE, B53_TRUNK_CTL, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 /*************************************************************************/
@@ -48,6 +50,7 @@ static int b53125_trunk_mode(sdk_driver_t *dev, int id, int mode)
 	port_ctrl &= ~B53_TRK_HASH_ILLEGAL;
 	port_ctrl |= mode;
 	ret |= b53125_write8(dev->sdk_device, B53_TRUNK_PAGE, B53_TRUNK_CTL, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 
@@ -64,6 +67,7 @@ static int b53125_trunk_add(sdk_driver_t *dev, int id, zpl_phyport_t port)
 	ret |= b53125_read16(dev->sdk_device, B53_TRUNK_PAGE, reg, &port_ctrl);
 	port_ctrl |= BIT(port);
 	ret |= b53125_write16(dev->sdk_device, B53_TRUNK_PAGE, reg, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 
@@ -79,6 +83,7 @@ static int b53125_trunk_del(sdk_driver_t *dev, int id, zpl_phyport_t port)
 	ret |= b53125_read16(dev->sdk_device, B53_TRUNK_PAGE, reg, &port_ctrl);
 	port_ctrl &= ~BIT(port);
 	ret |= b53125_write16(dev->sdk_device, B53_TRUNK_PAGE, reg, port_ctrl);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 int b53_trunk_init(void)

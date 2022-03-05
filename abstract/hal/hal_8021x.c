@@ -15,16 +15,7 @@
 
 int hal_8021x_enable(zpl_bool enable)
 {
-	zpl_uint32 command = 0;
-	struct hal_ipcmsg ipcmsg;
-	char buf[512];
-	HAL_ENTER_FUNC();
-	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
-	//hal_ipcmsg_port_set(&ipcmsg, ifindex);
-	hal_ipcmsg_putl(&ipcmsg, enable);
-	command = IPCCMD_SET(HAL_MODULE_8021X, HAL_MODULE_CMD_REQ, HAL_8021X);
-	return hal_ipcmsg_send_message(IF_UNIT_ALL, 
-		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
+	return OK;
 }
 
 int hal_8021x_interface_enable(ifindex_t ifindex, zpl_bool enable)
@@ -35,8 +26,8 @@ int hal_8021x_interface_enable(ifindex_t ifindex, zpl_bool enable)
 	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
-	hal_ipcmsg_putl(&ipcmsg, enable);
-	command = IPCCMD_SET(HAL_MODULE_8021X, HAL_MODULE_CMD_REQ, HAL_8021X_PORT);
+	hal_ipcmsg_putl(&ipcmsg, enable?2:0);
+	command = IPCCMD_SET(HAL_MODULE_8021X, HAL_MODULE_CMD_REQ, HAL_8021X_PORT_MODE);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -67,7 +58,8 @@ int hal_8021x_interface_mode(ifindex_t ifindex, zpl_uint32 value)
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
-int hal_8021x_auth_bypass(ifindex_t ifindex, zpl_uint32 value)
+
+int hal_8021x_interface_dmac(ifindex_t ifindex, mac_t *mac)
 {
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
@@ -75,50 +67,11 @@ int hal_8021x_auth_bypass(ifindex_t ifindex, zpl_uint32 value)
 	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
-	hal_ipcmsg_putl(&ipcmsg, value);
-	command = IPCCMD_SET(HAL_MODULE_8021X, HAL_MODULE_CMD_REQ, HAL_8021X_PORT_BYPASS);
-	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
-}
-
-
-int hal_8021x_interface_addmac(ifindex_t ifindex, mac_t *mac)
-{
-	zpl_uint32 command = 0;
-	struct hal_ipcmsg ipcmsg;
-	char buf[512];
-	HAL_ENTER_FUNC();
-	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
-	hal_ipcmsg_port_set(&ipcmsg, ifindex);
+	hal_ipcmsg_putl(&ipcmsg, 0);
 	hal_ipcmsg_put(&ipcmsg, mac, NSM_MAC_MAX);
 	command = IPCCMD_SET(HAL_MODULE_8021X, HAL_MODULE_CMD_REQ, HAL_8021X_PORT_MAC);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
-
-int hal_8021x_interface_delmac(ifindex_t ifindex, mac_t *mac)
-{
-	zpl_uint32 command = 0;
-	struct hal_ipcmsg ipcmsg;
-	char buf[512];
-	HAL_ENTER_FUNC();
-	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
-	hal_ipcmsg_port_set(&ipcmsg, ifindex);
-	hal_ipcmsg_put(&ipcmsg, mac, NSM_MAC_MAX);
-	command = IPCCMD_SET(HAL_MODULE_8021X, HAL_MODULE_CMD_REQ, HAL_8021X_PORT_MAC);
-	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
-}
-
-int hal_8021x_interface_delallmac(ifindex_t ifindex)
-{
-	zpl_uint32 command = 0;
-	struct hal_ipcmsg ipcmsg;
-	char buf[512];
-	HAL_ENTER_FUNC();
-	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
-	hal_ipcmsg_port_set(&ipcmsg, ifindex);
-	//hal_ipcmsg_put(&ipcmsg, mac, NSM_MAC_MAX);
-	command = IPCCMD_SET(HAL_MODULE_8021X, HAL_MODULE_CMD_REQ, HAL_8021X_PORT_MAC);
-	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
-}
 
 

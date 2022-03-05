@@ -10,11 +10,7 @@
 #include <log.h>
 #include <sys/un.h>
 
-/* Wrapper around strerror to handle case where it returns NULL. */
-const char *ipstack_strerror(int errnum) {
-	const char *s = strerror(errnum);
-	return (s != NULL) ? s : "Unknown error";
-}
+
 
 char * ipstack_sockstr(zpl_socket_t _sock)
 {
@@ -193,6 +189,33 @@ zpl_socket_t ipstack_socket (zpl_ipstack stack, int __domain, int __type, int __
 	_OS_DEBUG_DETAIL("socket create: %s" ,ipstack_sockstr(socktmp));
 	return socktmp;
 #endif
+}
+/* Create a ipstack_socket for the VRF. */
+zpl_socket_t ipstack_socket_vrf(zpl_ipstack stack, int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id_t vrf_id)
+{
+	int ret = 0;
+	vrf_id_t vrf = vrf_id;
+	zpl_socket_t socktmp;
+	socktmp = ipstack_socket (stack, domain, type, protocol);
+	if(ipstack_invalid(socktmp))
+		return socktmp;
+#ifdef ZPL_IPCOM_STACK_MODULE
+	if(stack == OS_STACK)
+	{
+    	
+	}
+	else
+	{
+		ret = ipcom_setsockopt (socktmp._fd, IPSTACK_SOL_SOCKET, IP_SO_X_VR, &vrf, sizeof (vrf));
+		if(ret != 0)
+		{
+			ipstack_close(socktmp);
+		}
+	}
+#else
+	//ret = ipcom_setsockopt (socktmp._fd, IPSTACK_SOL_SOCKET, IP_SO_X_VR, &vrf, sizeof (vrf));
+#endif
+	return socktmp;
 }
 
 /* Create two new sockets, of type TYPE in domain DOMAIN and using

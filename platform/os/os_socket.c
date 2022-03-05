@@ -100,7 +100,6 @@ int os_tcp_sock_state(int sock)
 
 	return client.tcpi_state;
 }
-
 int os_sock_connect(int sock, char *ipaddress, zpl_uint16 port)
 {
 	int ret = 0;
@@ -116,10 +115,46 @@ int os_sock_connect(int sock, char *ipaddress, zpl_uint16 port)
 		ret = connect(sock, (struct sockaddr *)&serv, sizeof(serv));
 		if (ret < 0)
 		{
-			_OS_ERROR( "cannot connect(%d) to %s:%d(%s) \n", sock, ipaddress, port,
-					strerror(ipstack_errno));
+			_OS_ERROR("unblock connect(%d) failed!\n", sock);
 			return ERROR;
-			;
+		}
+		return OK;
+	}
+	return ERROR;
+}
+int os_sock_connect_nonblock(int sock, char *ipaddress, zpl_uint16 port)
+{
+	int ret = 0;
+	// _OS_ERROR("----------%s-----------------host=%s\r\n",__func__,ipaddress);
+	if (ipaddress)
+	{
+		struct sockaddr_in serv;
+		/* bind local server port */
+		serv.sin_family = AF_INET;
+		serv.sin_addr.s_addr = ipstack_inet_addr(ipaddress);
+		serv.sin_port = htons(port);
+		if (os_get_blocking(sock) == 1)
+			os_set_nonblocking(sock);
+		ret = connect(sock, (struct sockaddr *)&serv, sizeof(serv));
+		if (ret < 0)
+		{
+			int sockerror = 0;
+			socklen_t length = sizeof(sockerror);
+			if (ipstack_errno != EINPROGRESS)
+			{
+				_OS_ERROR("unblock connect(%d) failed!\n", sock);
+				return ERROR;
+			}
+			if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &sockerror, &length) < 0)
+			{
+				_OS_ERROR("get socket(%d) option failed\n",sock);
+				return ERROR;
+			}
+			if (sockerror != 0)
+			{
+				_OS_ERROR("connection failed (%d) with the error: %d \n", sock, sockerror);
+				return ERROR;
+			}
 		}
 		return OK;
 	}
@@ -151,14 +186,17 @@ int os_sock_connect_timeout(int sock, char *ipaddress, zpl_uint16 port, zpl_uint
 				_OS_ERROR("unblock connect(%d) failed!\n", sock);
 				return ERROR;
 			}
-			else if (ipstack_errno == EINPROGRESS)
+			if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &sockerror, &length) < 0)
 			{
-				_OS_ERROR("unblock mode socket(%d) is connecting...\n",sock);
+				_OS_ERROR("get socket(%d) option failed\n",sock);
+				return ERROR;
 			}
-			_OS_ERROR( "cannot connect(%d) to %s:%d(%s) \n", sock,ipaddress, port,
-					strerror(ipstack_errno));
-			return ERROR;
-			;
+
+			if (sockerror != 0)
+			{
+				_OS_ERROR("connection failed after select(%d) with the error: %d \n", sock, sockerror);
+				return ERROR;
+			}
 		}
 		FD_ZERO(&writefds);
 		FD_SET(sock, &writefds);
@@ -719,7 +757,45 @@ int ipstack_sock_connect(zpl_socket_t sock, char *ipaddress, zpl_uint16 port)
 			_OS_ERROR( "ipstack sock(%d) cannot connect to %s:%d(%s) \n",sock._fd, ipaddress, port,
 					strerror(ipstack_errno));
 			return ERROR;
-			;
+		}
+		return OK;
+	}
+	return ERROR;
+}
+
+int ipstack_sock_connect_nonblock(zpl_socket_t sock, char *ipaddress, zpl_uint16 port)
+{
+	int ret = 0;
+	// _OS_ERROR("----------%s-----------------host=%s\r\n",__func__,ipaddress);
+	if (ipaddress)
+	{
+		struct ipstack_sockaddr_in serv;
+		/* bind local server port */
+		serv.sin_family = AF_INET;
+		serv.sin_addr.s_addr = ipstack_inet_addr(ipaddress);
+		serv.sin_port = htons(port);
+		if (ipstack_get_blocking(sock) == 1)
+			ipstack_set_nonblocking(sock);
+		ret = ipstack_connect(sock, (struct ipstack_sockaddr *)&serv, sizeof(serv));
+		if (ret < 0)
+		{
+			int sockerror = 0;
+			socklen_t length = sizeof(sockerror);
+			if (ipstack_errno != EINPROGRESS)
+			{
+				_OS_ERROR("ipstack sock(%d) unblock connect failed!\n",sock._fd);
+				return ERROR;
+			}
+			if (ipstack_getsockopt(sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_ERROR, &sockerror, &length) < 0)
+			{
+				_OS_ERROR("ipstack sock(%d) get socket option failed\n",sock._fd);
+				return ERROR;
+			}
+			if (sockerror != 0)
+			{
+				_OS_ERROR("ipstack sock(%d) connection failed %d with the error: %d \n",sock._fd, sockerror);
+				return ERROR;
+			}
 		}
 		return OK;
 	}
@@ -750,14 +826,16 @@ int ipstack_sock_connect_timeout(zpl_socket_t sock, char *ipaddress, zpl_uint16 
 				_OS_ERROR("ipstack sock(%d) unblock connect failed!\n",sock._fd);
 				return ERROR;
 			}
-			else if (ipstack_errno == EINPROGRESS)
+			if (ipstack_getsockopt(sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_ERROR, &sockerror, &length) < 0)
 			{
-				_OS_ERROR("ipstack sock(%d) unblock mode socket is connecting...\n",sock._fd);
+				_OS_ERROR("ipstack sock(%d) get socket option failed\n",sock._fd);
+				return ERROR;
 			}
-			_OS_ERROR( "ipstack sock(%d) cannot connect to %s:%d(%s) \n",sock._fd, ipaddress, port,
-					strerror(ipstack_errno));
-			return ERROR;
-			;
+			if (sockerror != 0)
+			{
+				_OS_ERROR("ipstack sock(%d) connection failed after select with the error: %d \n",sock._fd, sockerror);
+				return ERROR;
+			}
 		}
 		if(is_os_stack(sock))
 		{

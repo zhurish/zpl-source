@@ -164,7 +164,7 @@ void connected_down_ipv6(struct interface *ifp, struct connected *ifc)
 }
 #endif
 
-#ifdef ZPL_KERNEL_STACK_MODULE
+
 /* Add connected IPv4 route to the interface. */
 void connected_add_ipv4(struct interface *ifp, zpl_uint32 flags, struct ipstack_in_addr *addr,
 						zpl_uchar prefixlen, struct ipstack_in_addr *broad,
@@ -397,4 +397,4 @@ void connected_delete_ipv6(struct interface *ifp, struct ipstack_in6_addr *addre
 	//rib_update(ifp->vrf_id);
 }
 #endif /* HAVE_IPV6 */
-#endif
+

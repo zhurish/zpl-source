@@ -356,10 +356,10 @@ static int _tty_com_flow_control(struct tty_com *com)
 {
 	switch(com->flow_control)
 	{
-	case FLOW_CTL_SW:
+	case TTY_FLOW_CTL_SW:
 		com->termios.c_iflag |= (IXON|IXOFF);
 		break;
-	case FLOW_CTL_HW:
+	case TTY_FLOW_CTL_HW:
 		com->termios.c_oflag |= (IXON);
 		break;
 	default:
@@ -374,23 +374,23 @@ static int _tty_com_parity(struct tty_com *com)
 	termios = &com->termios;
 	switch(com->parity)
 	{
-	case PARITY_NONE:
+	case TTY_PARITY_NONE:
 		termios->c_cflag &= ~PARENB;
 		break;
-	case PARITY_EVEN:////偶校验
+	case TTY_PARITY_EVEN:////偶校验
 		termios->c_cflag |= PARENB;
 		termios->c_cflag &= ~PARODD;
 		termios->c_iflag |= (INPCK | ISTRIP);
 		break;
-	case PARITY_ODD:////奇校验
+	case TTY_PARITY_ODD:////奇校验
 		termios->c_cflag |= PARENB;
 		termios->c_cflag |= PARODD;
 		termios->c_iflag |= (INPCK | ISTRIP);
 		break;
-	case PARITY_MARK:
+	case TTY_PARITY_MARK:
 		//termios->c_cflag |= CS8;
 		break;
-	case PARITY_SPACE:
+	case TTY_PARITY_SPACE:
 		//termios->c_cflag |= CS8;
 		break;
 	default:
@@ -405,10 +405,10 @@ static int _tty_com_stopbit(struct tty_com *com)
 	termios = &com->termios;
 	switch(com->stopbit)
 	{
-	case STOP_2BIT:
+	case TTY_STOP_2BIT:
 		termios->c_cflag |= (CSTOPB);
 		break;
-	case STOP_1BIT:
+	case TTY_STOP_1BIT:
 		termios->c_cflag &= ~(CSTOPB);
 		break;
 	default:
@@ -423,19 +423,19 @@ static int _tty_com_databit(struct tty_com *com)
 	termios = &com->termios;
 	switch(com->databit)
 	{
-	case DATA_5BIT:
+	case TTY_DATA_5BIT:
 		termios->c_cflag &= ~CSIZE;
 		termios->c_cflag |= CS5;
 		break;
-	case DATA_6BIT:
+	case TTY_DATA_6BIT:
 		termios->c_cflag &= ~CSIZE;
 		termios->c_cflag |= CS6;
 		break;
-	case DATA_7BIT:
+	case TTY_DATA_7BIT:
 		termios->c_cflag &= ~CSIZE;
 		termios->c_cflag |= CS7;
 		break;
-	case DATA_8BIT:
+	case TTY_DATA_8BIT:
 		termios->c_cflag &= ~CSIZE;
 		termios->c_cflag |= CS8;
 		break;

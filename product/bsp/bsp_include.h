@@ -16,6 +16,7 @@ extern "C" {
 #include "hal_client.h"
 #include "bsp_driver.h"
 
+#include "bsp_global.h"
 #include "bsp_8021x.h"
 #include "bsp_dos.h"
 #include "bsp_mac.h"

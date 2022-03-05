@@ -10,6 +10,7 @@
 
 
 
+
 zpl_uint32 zpl_skb_timerstamp(void)
 {
 	zpl_uint32 pts = 0u;
@@ -28,7 +29,7 @@ int zpl_skb_data_free(zpl_skb_data_t *data)
 		if (data->skb_data)
 		{
 			os_free(data->skb_data);
-		}
+		}	
 		os_free(data);
 	}
 	return OK;
@@ -179,7 +180,7 @@ int zpl_skb_queue_distribute(zpl_skb_queue_t *queue, int(*func)(zpl_skb_data_t*,
 
 
 
-zpl_skb_data_t *zpl_skb_data_malloc(zpl_skb_queue_t *queue, zpl_uint32 len)
+static zpl_skb_data_t *zpl_skb_data_malloc_raw(zpl_skb_queue_t *queue, zpl_uint32 len)
 {
 	NODE node;
 	zpl_skb_data_t *bufdata = NULL;
@@ -196,7 +197,7 @@ zpl_skb_data_t *zpl_skb_data_malloc(zpl_skb_queue_t *queue, zpl_uint32 len)
 		 bufdata = (zpl_skb_data_t *)lstNext(&node))
 	{
 		node = bufdata->node;
-		if (bufdata && bufdata->skb_maxsize >= len)
+		if (bufdata && bufdata->skb_maxsize >= (len))
 		{
 			lstDelete(&queue->ulist, (NODE *)bufdata);
 			break;
@@ -209,12 +210,11 @@ zpl_skb_data_t *zpl_skb_data_malloc(zpl_skb_queue_t *queue, zpl_uint32 len)
 		{
 			memset(bufdata, 0, sizeof(zpl_skb_data_t));
 
-			bufdata->skb_maxsize = ZPL_MEDIA_BUF_ALIGN(len); //buffer 的长度
-			bufdata->skb_data = os_malloc(len);				//buffer
-			bufdata->skb_hdr_len = 0;
+			bufdata->skb_maxsize = (len); //buffer 的长度
+			bufdata->skb_data = os_malloc(bufdata->skb_maxsize);				//buffer
+			bufdata->skb_start = ZPL_SKB_START_OFFSET;
 			if (bufdata->skb_data == NULL)
 			{
-				memset(bufdata->skb_data, 0, len);
 				bufdata->skb_maxsize = 0;
 				free(bufdata);
 				bufdata = NULL;
@@ -226,17 +226,22 @@ zpl_skb_data_t *zpl_skb_data_malloc(zpl_skb_queue_t *queue, zpl_uint32 len)
 	return bufdata;
 }
 
+zpl_skb_data_t *zpl_skb_data_malloc(zpl_skb_queue_t *queue, zpl_uint32 len)
+{
+	zpl_skb_data_t *bufdata = zpl_skb_data_malloc_raw(queue, ZPL_SKSIZE_ALIGN(len));
+	return bufdata;
+}
+
 zpl_skb_data_t *zpl_skb_data_clone(zpl_skb_queue_t *queue, zpl_skb_data_t *data)
 {
 	zpl_skb_data_t *bufdata = NULL;
-	bufdata = zpl_skb_data_malloc(queue, data->skb_maxsize);
+	bufdata = zpl_skb_data_malloc_raw(queue, data->skb_maxsize);
 	if (bufdata)
 	{
+		memcpy(&bufdata->skb_header, &data->skb_header, sizeof(data->skb_header));
 		bufdata->skb_timetick = data->skb_timetick; //时间戳 毫秒
-		//bufdata->skb_seq     = data->skb_seq;         //序列号 底层序列号
 		bufdata->skb_len = data->skb_len;			//当前缓存帧的长度
 		bufdata->skb_maxsize = data->skb_maxsize; //buffer 的长度
-		bufdata->skb_hdr_len = data->skb_hdr_len;
 		memset(bufdata->skb_data, 0, bufdata->skb_maxsize);
 		memcpy(bufdata->skb_data, data->skb_data, data->skb_len);
 		return bufdata;
@@ -245,39 +250,35 @@ zpl_skb_data_t *zpl_skb_data_clone(zpl_skb_queue_t *queue, zpl_skb_data_t *data)
 }
 
 
-int zpl_skb_data_copy(zpl_skb_data_t *dst, zpl_skb_data_t *src)
+int zpl_skb_data_push(zpl_skb_data_t *bufdata, uint8_t *data, uint32_t len)
 {
-	if (dst && src && src->skb_data && src->skb_len && (src->skb_len <= src->skb_maxsize))
+	if(bufdata->skb_start > 0 && bufdata->skb_start >= len)
 	{
-		if (dst->skb_data)
-		{
-			if (src->skb_maxsize > dst->skb_maxsize)
-			{
-				dst->skb_data = realloc(dst->skb_data, src->skb_maxsize);
-				dst->skb_maxsize = src->skb_maxsize; //buffer 的长度
-			}
-		}
-		else
-		{
-			dst->skb_data = malloc(src->skb_maxsize); //buffer
-			dst->skb_maxsize = src->skb_maxsize;		//buffer 的长度
-		}
-
-		if (dst->skb_data == NULL)
-		{
-			return 0;
-		}
-
-		dst->skb_timetick = src->skb_timetick; //时间戳 毫秒
-		//dst->skb_seq     = src->skb_seq;         //序列号 底层序列号
-		dst->skb_len = src->skb_len; //当前缓存帧的长度
-		dst->skb_hdr_len = src->skb_hdr_len;
-		memset(dst->skb_data, 0, dst->skb_maxsize);
-		memcpy(dst->skb_data, src->skb_data, src->skb_len);
-		return dst->skb_len;
+		bufdata->skb_start -= len;
+		bufdata->skb_len += len;
+		if(data)
+			memcpy(bufdata->skb_data + bufdata->skb_start, data, len);
+		return  len;
 	}
-	return 0;
+	return -1;
 }
+
+int zpl_skb_data_pull(zpl_skb_data_t *bufdata, uint8_t *data, uint32_t len)
+{
+	if(bufdata->skb_start > 0 && bufdata->skb_len >= len)
+	{
+		if(data)
+		{
+			memcpy(data, bufdata->skb_data + bufdata->skb_start, len);
+		}
+		bufdata->skb_start += len;
+		bufdata->skb_len -= len;
+		return  len;
+	}
+	return -1;
+}
+
+
 
 int zpl_skb_data_append(zpl_skb_data_t *bufdata, uint8_t *data, uint32_t len)
 {
@@ -285,15 +286,18 @@ int zpl_skb_data_append(zpl_skb_data_t *bufdata, uint8_t *data, uint32_t len)
 		return 0;
 	if (bufdata->skb_data == NULL)
 	{
-		bufdata->skb_data = malloc(bufdata->skb_hdr_len + len);
+		bufdata->skb_maxsize = ZPL_SKSIZE_ALIGN(len);
+		bufdata->skb_data = malloc(bufdata->skb_maxsize);
+		bufdata->skb_start = ZPL_SKB_START_OFFSET;
 	}
 	else
 	{
-		if (bufdata->skb_maxsize < (bufdata->skb_len + bufdata->skb_hdr_len + len))
+		if (bufdata->skb_maxsize < (bufdata->skb_len + ZPL_SKBUF_ALIGN(len)))
 		{
-			bufdata->skb_data = realloc(bufdata->skb_data, bufdata->skb_len + bufdata->skb_hdr_len + len);
+			zpl_uint32 skb_maxsize = bufdata->skb_maxsize + ZPL_SKBUF_ALIGN(len);
+			bufdata->skb_data = realloc(bufdata->skb_data, skb_maxsize);
 			if (bufdata->skb_data)
-				bufdata->skb_maxsize = bufdata->skb_len + bufdata->skb_hdr_len + len;
+				bufdata->skb_maxsize = skb_maxsize;
 		}
 	}
 
@@ -306,16 +310,15 @@ int zpl_skb_data_append(zpl_skb_data_t *bufdata, uint8_t *data, uint32_t len)
 	return 0;
 }
 
-int zpl_skb_data_head(zpl_skb_data_t *bufdata, uint8_t *data, uint32_t len)
+int zpl_skb_data_net_header(zpl_skb_data_t *bufdata, zpl_netpkt_hdr_t *data)
 {
-	if (bufdata->skb_data != NULL && bufdata->skb_len >= len)
-	{
-		bufdata->skb_hdr_len = len;
-		memcpy(bufdata->skb_data, data, len);
-		bufdata->skb_len += len;
-		return bufdata->skb_hdr_len;
-	}
-	return 0;
+	memcpy(&bufdata->skb_header.net_header, data, sizeof(zpl_netpkt_hdr_t));
+	return sizeof(zpl_netpkt_hdr_t);
 }
 
-
+/* net pkt */
+zpl_netpkt_hdr_t * zpl_skb_netpkt_hdrget(zpl_skb_data_t *src)
+{
+	zpl_netpkt_hdr_t *netpkt = &src->skb_header.net_header;
+	return netpkt;
+}

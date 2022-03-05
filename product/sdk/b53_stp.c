@@ -43,6 +43,7 @@ static int b53125_set_stp_state(sdk_driver_t *dev, zpl_index_t index, zpl_phypor
 	reg &= ~PORT_CTRL_STP_STATE_MASK;
 	reg |= hw_state;
 	ret |= b53125_write8(dev->sdk_device, B53_CTRL_PAGE, B53_PORT_CTRL(port), reg);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 static int b53125_set_mstp_state(sdk_driver_t *dev, zpl_index_t index, zpl_phyport_t port, zpl_uint32 state)
@@ -76,6 +77,7 @@ static int b53125_set_mstp_state(sdk_driver_t *dev, zpl_index_t index, zpl_phypo
 	reg &= ~B53_MSTP_TBL_PORT_MASK(port);
 	reg |= B53_MSTP_TBL_PORT(port, hw_state);
 	ret |= b53125_write8(dev->sdk_device, B53_MSTP_PAGE, B53_MSTP_TBL_CTL(index), reg);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 /****************************************************************************************/
@@ -88,6 +90,7 @@ static int b53125_mstp_enable(sdk_driver_t *dev, zpl_bool enable)
 	else
 		reg &= ~B53_MSTP_EN;
 	ret |= b53125_write8(dev->sdk_device, B53_MSTP_PAGE, B53_MSTP_CTL, reg);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 
@@ -98,6 +101,7 @@ static int b53125_mstp_aging_time(sdk_driver_t *dev, zpl_index_t aging)
 	u32 reg = 0;
 	reg |= aging & B53_MSTP_AGE_MASK;
 	ret |= b53125_write32(dev->sdk_device, B53_MSTP_PAGE, B53_MSTP_AGE_CTL, reg);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 #if 0

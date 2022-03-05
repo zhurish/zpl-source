@@ -15,8 +15,116 @@
 
 
 
-DEFUN (switchport_mode,
-		switchport_mode_cmd,
+DEFUN(nsm_interface_switchport,
+	  nsm_interface_switchport_cmd,
+	  "switchport",
+	  "set this interface Switchport\n")
+{
+	int ret = 0;
+	struct interface *ifp = vty->index;
+	if (ifp)
+	{
+		if (ifp->if_type == IF_ETHERNET || 
+			ifp->if_type == IF_GIGABT_ETHERNET || 
+			ifp->if_type == IF_LAG)
+		{
+			ret = nsm_interface_mode_set_api(ifp, IF_MODE_ACCESS_L2);
+			if (ret == OK)
+			{
+				if (ifp->if_type == IF_LAG)
+					vty->node = LAG_INTERFACE_NODE;
+				else
+					vty->node = INTERFACE_NODE;
+			}
+			return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
+		}
+		else
+			return CMD_SUCCESS;
+	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			ifp = vty->vty_range_index[i];
+			if (ifp->if_type == IF_ETHERNET || 
+				ifp->if_type == IF_GIGABT_ETHERNET || 
+				ifp->if_type == IF_LAG)
+			{
+				ret = nsm_interface_mode_set_api(ifp, IF_MODE_ACCESS_L2);
+				if (ret == OK)
+				{
+					if (ifp->if_type == IF_LAG)
+						vty->node = LAG_INTERFACE_NODE;
+					else
+						vty->node = INTERFACE_NODE;
+				}
+				if (ret != OK)
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
+	return CMD_WARNING;
+}
+
+DEFUN(no_nsm_interface_switchport,
+	  no_nsm_interface_switchport_cmd,
+	  "no switchport",
+	  NO_STR
+	  "set this interface Switchport\n")
+{
+	int ret = 0;
+	struct interface *ifp = vty->index;
+	if (ifp)
+	{
+		if (ifp->if_type == IF_ETHERNET || 
+			ifp->if_type == IF_GIGABT_ETHERNET || 
+			ifp->if_type == IF_LAG)
+		{
+			ret = nsm_interface_mode_set_api(ifp, IF_MODE_L3);
+			if (ret == OK)
+			{
+				if (ifp->if_type == IF_LAG)
+					vty->node = LAG_INTERFACE_L3_NODE;
+				else
+					vty->node = INTERFACE_L3_NODE;
+			}
+			return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
+		}
+		else
+			return CMD_SUCCESS;
+	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			ifp = vty->vty_range_index[i];
+			if (ifp->if_type == IF_ETHERNET || 
+				ifp->if_type == IF_GIGABT_ETHERNET || 
+				ifp->if_type == IF_LAG)
+			{
+				ret = nsm_interface_mode_set_api(ifp, IF_MODE_L3);
+				if (ret == OK)
+				{
+					if (ifp->if_type == IF_LAG)
+						vty->node = LAG_INTERFACE_L3_NODE;
+					else
+						vty->node = INTERFACE_L3_NODE;
+				}
+				if (ret != OK)
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
+	return CMD_WARNING;
+}
+
+
+DEFUN (nsm_interface_switchport_mode,
+		nsm_interface_switchport_mode_cmd,
 		"switchport mode (access|trunk)",
 		"Switchport interface\n"
 		"Switchport mode\n"
@@ -67,8 +175,8 @@ DEFUN (switchport_mode,
 }
 
 
-DEFUN (no_switchport_mode,
-		no_switchport_mode_cmd,
+DEFUN (no_nsm_interface_switchport_mode,
+		no_nsm_interface_switchport_mode_cmd,
 		"no switchport mode ",
 		NO_STR
 		"Switchport interface\n"
@@ -194,12 +302,47 @@ DEFUN (show_unit_board_info,
 void cmd_port_init (void)
 {
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_unit_board_info_cmd);
-	install_element(INTERFACE_NODE, CMD_CONFIG_LEVEL, &switchport_mode_cmd);
-	install_element(INTERFACE_NODE, CMD_CONFIG_LEVEL, &no_switchport_mode_cmd);
-	
-	install_element(INTERFACE_RANGE_NODE, CMD_CONFIG_LEVEL, &switchport_mode_cmd);
-	install_element(INTERFACE_RANGE_NODE, CMD_CONFIG_LEVEL, &no_switchport_mode_cmd);
-	
+
+
+	install_element(INTERFACE_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
+	install_element(INTERFACE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
+	install_element(INTERFACE_RANGE_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
+	install_element(INTERFACE_RANGE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
+
+	install_element(INTERFACE_L3_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
+	install_element(INTERFACE_L3_RANGE_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
+
+
+	install_element(LAG_INTERFACE_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
+	install_element(LAG_INTERFACE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
+	install_element(LAG_INTERFACE_L3_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
+
+
+	install_element(EPON_INTERFACE_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
+	install_element(EPON_INTERFACE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
+	install_element(EPON_INTERFACE_RANGE_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
+	install_element(EPON_INTERFACE_RANGE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
+
+	install_element(EPON_INTERFACE_L3_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
+	install_element(EPON_INTERFACE_L3_RANGE_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
+
+	install_element(E1_INTERFACE_L3_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
+	install_element(E1_INTERFACE_L3_RANGE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
+
+
+	install_element(INTERFACE_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_mode_cmd);
+	install_element(INTERFACE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_mode_cmd);
+	install_element(INTERFACE_RANGE_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_mode_cmd);
+	install_element(INTERFACE_RANGE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_mode_cmd);
+
+	install_element(LAG_INTERFACE_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_mode_cmd);
+	install_element(LAG_INTERFACE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_mode_cmd);
+
+	install_element(EPON_INTERFACE_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_mode_cmd);
+	install_element(EPON_INTERFACE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_mode_cmd);
+
+	install_element(EPON_INTERFACE_RANGE_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_mode_cmd);
+	install_element(EPON_INTERFACE_RANGE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_mode_cmd);
 }
 
 

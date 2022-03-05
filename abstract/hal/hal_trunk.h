@@ -24,9 +24,9 @@ enum hal_trunk_cmd
 
 typedef struct hal_trunk_param_s
 {
+	zpl_bool enable;
 	zpl_uint32 trunkid;
 	zpl_uint32 mode;
-	zpl_bool enable;
 }hal_trunk_param_t;
 
 int hal_trunk_enable(zpl_bool enable);

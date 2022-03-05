@@ -20,17 +20,14 @@ typedef struct sdk_8021x_s
 	//8021x
 	/*全局使能*/
 	int (*sdk_8021x_enable_cb) (void *, zpl_bool);
-	/*端口使能*/
-	int (*sdk_8021x_port_enable_cb) (void *, hal_port_header_t *, zpl_bool);
+
 	/*端口认证状态*/
-	int (*sdk_8021x_port_state_cb) (void *, hal_port_header_t *, zpl_uint32);
+	int (*sdk_8021x_port_state_cb) (void *, zpl_phyport_t , zpl_int32);
 	/*端口认证模式*/
-	int (*sdk_8021x_port_mode_cb) (void *, hal_port_header_t *, zpl_uint32);
-	/*端口认证模式下通过报文*/
-	int (*sdk_8021x_auth_bypass_cb) (void *, hal_port_header_t *, zpl_uint32);
-	int (*sdk_8021x_port_addmac) (void *, hal_port_header_t *, zpl_uint32);
-	int (*sdk_8021x_port_delmac) (void *, hal_port_header_t *, zpl_uint32);
-	int (*sdk_8021x_port_delallmac) (void *, hal_port_header_t *, zpl_uint32);
+	int (*sdk_8021x_port_mode_cb) (void *, zpl_phyport_t , zpl_int32);
+
+	int (*sdk_8021x_auth_dmac_cb) (void *, zpl_phyport_t *, mac_t);
+
 
 }sdk_8021x_t;
 

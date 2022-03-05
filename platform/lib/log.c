@@ -120,57 +120,6 @@ const char * zlog_proto_names(zlog_proto_t module) {
 
 zpl_size_t quagga_timestamp(zlog_timestamp_t timestamp, zpl_char *buf, zpl_size_t buflen)
 {
-
-#if 0
-	zpl_time_t clock = 0;
-	struct tm tm;
-	struct tm *ptm = NULL;
-	zpl_char data[128];
-	zpl_uint32 len = 0;
-	clock = os_time(NULL);
-	os_memset(data, 0, sizeof(data));
-	switch(timestamp)
-	{
-	case ZLOG_TIMESTAMP_NONE:
-		return 0;
-		break;
-		//UTC :Wed Apr 18 05:19:00 UTC 2018
-	case ZLOG_TIMESTAMP_BSD:
-		localtime_r(&clock, &tm);
-		len = strftime(data, sizeof(data), "%b %e %T", &tm);
-		break;
-	case ZLOG_TIMESTAMP_DATE:
-		localtime_r(&clock, &tm);
-		len = strftime(data, sizeof(data), "%Y/%m/%d %H:%M:%S", &tm);
-		break;
-	case ZLOG_TIMESTAMP_SHORT:
-		localtime_r(&clock, &tm);
-		len = strftime(data, sizeof(data), "%m/%d %H:%M:%S", &tm);
-		break;
-	case ZLOG_TIMESTAMP_ISO:
-		ptm = gmtime(&clock);
-		len = strftime(data, sizeof(data), "%Y-%m-%dT%H:%M:%S+08:00", ptm);
-		break;
-
-	case ZLOG_TIMESTAMP_RFC3164:
-		//Mmm dd hh:mm:ss
-		//Oct 11 22:14:15
-		//1990 Oct 22 10:52:01 TZ-6
-		localtime_r(&clock, &tm);
-		len = strftime(data, sizeof(data), "%b %d %T", &tm);
-		break;
-		//rfc2822
-		//Mon, 07 Aug 2006 12:34:56 -0600
-	case ZLOG_TIMESTAMP_RFC3339:
-		ptm = gmtime(&clock);
-		len = strftime(data, sizeof(data), "%Y-%m-%dT%H:%M:%S-08:00", ptm);
-		break;
-	default:
-		return 0;
-	}
-	//zpl_char * asctime(const struct tm * timeptr);
-	//zpl_char * ctime(const zpl_time_t *timer);
-#else
 	zpl_uint32 len = 0;
 	zpl_char data[128];
 	zpl_time_t clock = os_time(NULL);;
@@ -208,7 +157,7 @@ zpl_size_t quagga_timestamp(zlog_timestamp_t timestamp, zpl_char *buf, zpl_size_
 	default:
 		return 0;
 	}
-#endif
+
 	if(buf)
 	{
 		os_memcpy(buf, data, MIN(buflen, len));
@@ -317,7 +266,7 @@ int zlog_depth_debug_detail(FILE *fp, zpl_char *buf, zpl_uint32 depth, const cha
 /* va_list version of zlog. */
 static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priority, const char *format,
 		va_list args) {
-	zpl_uint16 protocol = 0;
+	//zpl_uint16 protocol = 0;
 	int original_errno = ipstack_errno;
 	/* If zlog is not specified, use default one. */
 	if (zl == NULL)
@@ -336,19 +285,13 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 		return;
 	}
 	
-	if (zl->mutex)
-		os_mutex_lock(zl->mutex, OS_WAIT_FOREVER);
-	if (module != MODULE_NONE) {
-		protocol = zl->protocol;
-		zl->protocol = module;
-	}
 #ifdef ZLOG_TESTING_ENABLE
 	if (zl->testing && (priority <= zl->testlog.priority) && zl->testlog.fp)
 	{
 		va_list ac;
 		time_print(zl->testlog.fp, zl->timestamp);
 		fprintf(zl->testlog.fp, ZLOG_PRI_FMT": ", zlog_priority[priority]);
-		fprintf(zl->testlog.fp, "%-8s: ", zlog_proto_names(zl->protocol));
+		fprintf(zl->testlog.fp, "%-8s: ", zlog_proto_names(module));
 		va_copy(ac, args);
 		vfprintf(zl->testlog.fp, format, ac);
 		va_end(ac);
@@ -375,7 +318,7 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 		time_print(zl->fp, zl->timestamp);
 		if (zl->record_priority)
 			fprintf(zl->fp, ZLOG_PRI_FMT": ", zlog_priority[priority]);
-		fprintf(zl->fp, "%-8s: ", zlog_proto_names(zl->protocol));
+		fprintf(zl->fp, "%-8s: ", zlog_proto_names(module));
 		va_copy(ac, args);
 		vfprintf(zl->fp, format, ac);
 		va_end(ac);
@@ -390,7 +333,7 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 		time_print(stdout, zl->timestamp);
 		if (zl->record_priority)
 			fprintf(stdout, ZLOG_PRI_FMT": ", zlog_priority[priority]);
-		fprintf(stdout, "%-8s: ", zlog_proto_names(zl->protocol));
+		fprintf(stdout, "%-8s: ", zlog_proto_names(module));
 		va_copy(ac, args);
 		vfprintf(stdout, format, ac);
 		va_end(ac);
@@ -407,19 +350,19 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 	if (priority <= zl->maxlvl[ZLOG_DEST_MONITOR])
 	{
 		vty_log((zl->record_priority ? zlog_priority[priority] : NULL),
-				zlog_proto_names(zl->protocol), format, zl->timestamp, args);
+				zlog_proto_names(module), format, zl->timestamp, args);
 	}
 	//trapping
 	if ((priority == ZLOG_LEVEL_TRAP || priority == ZLOG_LEVEL_FORCE_TRAP) && zl->trap_lvl)
 	{
 		if(vty_trap_log((zl->record_priority ? zlog_priority[priority] : NULL),
-				zlog_proto_names(zl->protocol), format, zl->timestamp, args) != OK)
+				zlog_proto_names(module), format, zl->timestamp, args) != OK)
 		{
 			va_list ac;
 			time_print(stdout, zl->timestamp);
 			if (zl->record_priority)
 				fprintf(stdout, ZLOG_PRI_FMT": ", zlog_priority[priority]);
-			fprintf(stdout, "%-8s: ", zlog_proto_names(zl->protocol));
+			fprintf(stdout, "%-8s: ", zlog_proto_names(module));
 			va_copy(ac, args);
 			vfprintf(stdout, format, ac);
 			va_end(ac);
@@ -428,20 +371,22 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 		}
 	}
 	#endif
-	if (module != MODULE_NONE) {
+	/*if (module != MODULE_NONE) {
 		zl->protocol = protocol;
-	}
+	}*/
 	ipstack_errno = original_errno;
-	if (zl->mutex)
-		os_mutex_unlock(zl->mutex);
 }
 
 static void zlog_out(struct zlog *zl, zpl_uint32 module, zlog_level_t priority, const char *format, ...)
 {
 	va_list args;
+	if (zl && zl->mutex)
+		os_mutex_lock(zl->mutex, OS_WAIT_FOREVER);	
 	va_start(args, format);
 	vzlog_output(zl, module, priority, format, args);
 	va_end(args);
+	if (zl && zl->mutex)
+		os_mutex_unlock(zl->mutex);
 }
 
 void pl_vzlog(const char *file, const char *func, const zpl_uint32 line,
@@ -466,13 +411,13 @@ void pl_vzlog(const char *file, const char *func, const zpl_uint32 line,
 	}
 	if (zl->mutex)
 		os_mutex_lock(zl->mutex, OS_WAIT_FOREVER);
-		protocol = zl->protocol;
+/*		protocol = zl->protocol;
 	if (module != MODULE_NONE)
 	{
 		protocol = zl->protocol;
 		zl->protocol = module;
 	}
-
+*/
 	if (priority <= zl->maxlvl[ZLOG_DEST_SYSLOG] ||
 			priority <= zl->maxlvl[ZLOG_DEST_BUFFER] ||
 			((priority <= zl->maxlvl[ZLOG_DEST_FILE]) && zl->fp) ||
@@ -500,7 +445,7 @@ void pl_vzlog(const char *file, const char *func, const zpl_uint32 line,
 			if (zl->mutex)
 				os_mutex_unlock(zl->mutex);
 			zlog_out(zl, loghdr.module, loghdr.priority, loghdr.logbuf);
-			zl->protocol = protocol;
+			//zl->protocol = protocol;
 			return;
 		}
 
@@ -513,13 +458,13 @@ void pl_vzlog(const char *file, const char *func, const zpl_uint32 line,
 			if (zl->mutex)
 				os_mutex_unlock(zl->mutex);
 			zlog_out(zl, loghdr.module, loghdr.priority, loghdr.logbuf);
-			zl->protocol = protocol;
+			//zl->protocol = protocol;
 			return;
 		}
 	}
 	if (zl->mutex)
 		os_mutex_unlock(zl->mutex);
-	zl->protocol = protocol;
+	//zl->protocol = protocol;
 	return ;
 }
 
@@ -1286,7 +1231,7 @@ void openzlog_start(struct zlog *zl)
 	zlp->default_lvl[ZLOG_DEST_SYSLOG] = ZLOG_LEVEL_WARNING;
 	zlp->default_lvl[ZLOG_DEST_STDOUT] = ZLOG_LEVEL_ERR;
 	zlp->default_lvl[ZLOG_DEST_BUFFER] = ZLOG_LEVEL_NOTICE;
-	zlp->default_lvl[ZLOG_DEST_MONITOR] = ZLOG_LEVEL_NOTICE;
+	zlp->default_lvl[ZLOG_DEST_MONITOR] = ZLOG_LEVEL_MAX;
 	zlp->default_lvl[ZLOG_DEST_FILE] = ZLOG_LEVEL_ERR;
 	zlp->trap_lvl = zpl_true;//ZLOG_LEVEL_TRAP;
 	return OK;

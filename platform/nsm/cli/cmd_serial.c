@@ -123,17 +123,17 @@ DEFUN (serial_parity,
 	struct interface *ifp = vty->index;
 	if(ifp)
 	{
-		enum parity_mode mode = PARITY_NONE;
+		enum parity_mode mode = TTY_PARITY_NONE;
 		if(os_memcmp(argv[0], "none", 3) == 0)
-			mode = PARITY_NONE;
+			mode = TTY_PARITY_NONE;
 		else if(os_memcmp(argv[0], "even", 3) == 0)
-			mode = PARITY_EVEN;
+			mode = TTY_PARITY_EVEN;
 		else if(os_memcmp(argv[0], "odd", 3) == 0)
-			mode = PARITY_ODD;
+			mode = TTY_PARITY_ODD;
 		else if(os_memcmp(argv[0], "mark", 3) == 0)
-			mode = PARITY_MARK;
+			mode = TTY_PARITY_MARK;
 		else if(os_memcmp(argv[0], "space", 3) == 0)
-			mode = PARITY_SPACE;
+			mode = TTY_PARITY_SPACE;
 		ret = nsm_serial_interface_parity(ifp, mode);
 	}
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -165,13 +165,13 @@ DEFUN (serial_flow,
 	struct interface *ifp = vty->index;
 	if(ifp)
 	{
-		enum flow_ctl_mode mode = FLOW_CTL_NONE;
+		enum flow_ctl_mode mode = TTY_FLOW_CTL_NONE;
 		if(os_memcmp(argv[0], "none", 3) == 0)
-			mode = FLOW_CTL_NONE;
+			mode = TTY_FLOW_CTL_NONE;
 		else if(os_memcmp(argv[0], "sorfware", 3) == 0)
-			mode = FLOW_CTL_SW;
+			mode = TTY_FLOW_CTL_SW;
 		else if(os_memcmp(argv[0], "hardware", 3) == 0)
-			mode = FLOW_CTL_HW;
+			mode = TTY_FLOW_CTL_HW;
 		ret = nsm_serial_interface_flow_control(ifp, mode);
 	}
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;

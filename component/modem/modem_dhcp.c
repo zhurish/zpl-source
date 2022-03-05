@@ -184,7 +184,7 @@ zpl_bool modem_dhcpc_islinkup(modem_t *modem)
 	{
 		if(modem->pid[modem->dialtype])
 		{
-			if(pal_interface_ifindex(ifp->k_name))
+			if(nsm_halpal_interface_ifindex(ifp->k_name))
 			{
 				if(if_is_running(ifp))
 				{

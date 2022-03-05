@@ -19,6 +19,8 @@ OSOBJ	+= os_signal.o
 OSOBJ	+= os_bitmap.o
 OSOBJ	+= os_backtrace.o
 OSOBJ	+= zpl_skbuffer.o
+OSOBJ	+= netpkt.o
+OSOBJ	+= zpl_errno.o
 
 ifeq ($(strip $(ZPL_OS_QUEUE)),true)
 OSOBJ	+= os_queue.o			

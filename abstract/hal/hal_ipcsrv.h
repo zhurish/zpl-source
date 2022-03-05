@@ -8,6 +8,10 @@ extern "C" {
 #include "os_include.h"
 #include "hal_ipcmsg.h"
 
+//#define HAL_IPCSRV_SEM_ACK
+
+
+#define HAL_IPCSRV_ACK_TIMEOUT  100//MS
 
 struct hal_ipcsrv
 {
@@ -25,6 +29,11 @@ struct hal_ipcsrv
     struct hal_ipcmsg input_msg;
     zpl_uint32  debug;
     os_mutex_t *mutex;
+#ifdef HAL_IPCSRV_SEM_ACK
+    os_sem_t *wait_sem;
+    struct timeval  wait_timeval;
+    struct hal_ipcmsg ack_msg;
+#endif 
 };
 
 struct hal_ipcclient
@@ -48,12 +57,14 @@ struct hal_ipcclient
 };
 
 
-int hal_ipcsrv_send_message(int unit, zpl_uint32 command, void *msg, int len, int timeout);
+extern int hal_ipcsrv_send_message(int unit, zpl_uint32 command, void *msg, int len);
+extern int hal_ipcsrv_copy_send_ipcmsg(int unit, zpl_uint32 command, struct hal_ipcmsg *src_ipcmsg);
+extern int hal_ipcsrv_send_ipcmsg(int unit, struct hal_ipcmsg *src_ipcmsg);
 
-int hal_ipcsrv_init(void *m, int port, const char *path, int evport, const char *evpath);
-int hal_ipcsrv_exit(void);
+extern int hal_ipcsrv_init(void *m, int port, const char *path, int evport, const char *evpath);
+extern int hal_ipcsrv_exit(void);
 #ifdef ZPL_SHELL_MODULE
-int hal_ipcsrv_show(void *pvoid);
+extern int hal_ipcsrv_show(void *pvoid);
 #endif
 
 #ifdef __cplusplus

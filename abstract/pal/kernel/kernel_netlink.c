@@ -575,8 +575,8 @@ int _netlink_socket(struct nlsock *nl, zpl_ulong groups, vrf_id_t vrf_id)
 	zpl_socket_t sock;
 	zpl_uint32 namelen;
 	int save_errno;
-
-	sock = pal_vrf_socket(IPSTACK_AF_NETLINK, IPSTACK_SOCK_RAW, IPSTACK_NETLINK_ROUTE, vrf_id);
+	sock.stack = OS_STACK;
+	sock._fd = vrf_socket(IPSTACK_AF_NETLINK, IPSTACK_SOCK_RAW, IPSTACK_NETLINK_ROUTE, vrf_id);
 	if (ipstack_invalid(sock))
 	{
 		zlog_err(MODULE_PAL, "Can't open %s ipstack_socket: %s", nl->name,

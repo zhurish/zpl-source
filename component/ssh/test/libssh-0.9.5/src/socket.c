@@ -252,7 +252,7 @@ int ssh_socket_pollcallback(struct ssh_poll_handle_struct *p,
         /* Check if we are in a connecting state */
         if (s->state == SSH_SOCKET_CONNECTING) {
             s->state = SSH_SOCKET_ERROR;
-            rc = getsockopt(fd, SOL_SOCKET, SO_ERROR, (char *)&err, &errlen);
+            rc = getsockopt(fd, IPSTACK_SOL_SOCKET, IPSTACK_SO_ERROR, (char *)&err, &errlen);
             if (rc < 0) {
                 err = errno;
             }
@@ -409,15 +409,15 @@ void ssh_socket_free(ssh_socket s)
 #ifndef _WIN32
 int ssh_socket_unix(ssh_socket s, const char *path)
 {
-    struct sockaddr_un sunaddr;
+    struct ipstack_sockaddr_un sunaddr;
     socket_t fd;
     sunaddr.sun_family = AF_UNIX;
     snprintf(sunaddr.sun_path, sizeof(sunaddr.sun_path), "%s", path);
 
-    fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    fd = socket(AF_UNIX, IPSTACK_SOCK_STREAM, 0);
     if (fd == SSH_INVALID_SOCKET) {
         ssh_set_error(s->session, SSH_FATAL,
-                      "Error from socket(AF_UNIX, SOCK_STREAM, 0): %s",
+                      "Error from socket(AF_UNIX, IPSTACK_SOCK_STREAM, 0): %s",
                       strerror(errno));
         return -1;
     }
@@ -430,7 +430,7 @@ int ssh_socket_unix(ssh_socket s, const char *path)
         return -1;
     }
 
-    if (connect(fd, (struct sockaddr *) &sunaddr, sizeof(sunaddr)) < 0) {
+    if (connect(fd, (struct ipstack_sockaddr *) &sunaddr, sizeof(sunaddr)) < 0) {
         ssh_set_error(s->session, SSH_FATAL, "Error from connect(): %s",
                       strerror(errno));
         close(fd);
@@ -801,13 +801,13 @@ int ssh_socket_get_poll_flags(ssh_socket s)
 int ssh_socket_set_nonblocking(socket_t fd)
 {
     u_long nonblocking = 1;
-    return ioctlsocket(fd, FIONBIO, &nonblocking);
+    return ioctlsocket(fd, IPSTACK_FIONBIO, &nonblocking);
 }
 
 int ssh_socket_set_blocking(socket_t fd)
 {
     u_long nonblocking = 0;
-    return ioctlsocket(fd, FIONBIO, &nonblocking);
+    return ioctlsocket(fd, IPSTACK_FIONBIO, &nonblocking);
 }
 
 #else /* _WIN32 */
@@ -909,7 +909,7 @@ ssh_socket_connect_proxycommand(ssh_socket s, const char *command)
         return SSH_ERROR;
     }
 
-    rc = socketpair(PF_UNIX, SOCK_STREAM, 0, pair);
+    rc = socketpair(PF_UNIX, IPSTACK_SOCK_STREAM, 0, pair);
     if (rc < 0) {
         return SSH_ERROR;
     }

@@ -190,7 +190,7 @@ static void sizechanged(void)
         .ws_row = 0,
     };
 
-    ioctl(1, TIOCGWINSZ, &win);
+    ipstack_ioctl(1, TIOCGWINSZ, &win);
     ssh_channel_change_pty_size(chan,win.ws_col, win.ws_row);
     setsignal();
 }

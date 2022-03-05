@@ -4,10 +4,7 @@
  *  Created on: Apr 30, 2017
  *      Author: zhurish
  */
-//#define ZPL_KERNEL_STACK_MODULE
-#ifdef ZPL_KERNEL_STACK_MODULE
 
-#endif
 
 #include "zpl_include.h"
 #include "getopt.h"

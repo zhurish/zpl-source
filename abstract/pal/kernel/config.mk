@@ -3,7 +3,7 @@
 ###########################################################################
 MODULEDIR = abstract/pal/kernel
 ifeq ($(strip $(ZPL_KERNEL_STACK_MODULE)),true)
-
+OBJS	+= kernel_packet.o
 OBJS	+= kernel_ioctl.o
 ifeq ($(strip $(ZPL_NSM_ARP)),true)
 OBJS	+= kernel_arp.o			
