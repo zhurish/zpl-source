@@ -13,9 +13,9 @@ enum hal_module_id
 	HAL_MODULE_GLOBAL,
 	HAL_MODULE_SWITCH,
     HAL_MODULE_CPU,
-	HAL_MODULE_PORT,
-    HAL_MODULE_IFADDR,
-    HAL_MODULE_ROUTE,
+	HAL_MODULE_PORT,//L2
+    HAL_MODULE_L3IF,//L3
+    HAL_MODULE_ROUTE,//Route Table
     HAL_MODULE_STP,
     HAL_MODULE_MSTP,
     HAL_MODULE_8021X,
@@ -47,7 +47,7 @@ enum hal_module_cmd
     HAL_MODULE_CMD_DATA,        //数据
 	HAL_MODULE_CMD_REQ,         //设置
 	HAL_MODULE_CMD_ACK,         //应答
- 
+    HAL_MODULE_CMD_GET,         //获取
 	HAL_MODULE_CMD_REPORT,      //上报
 	HAL_MODULE_CMD_HELLO,       //探测
     HAL_MODULE_CMD_KEEPALIVE,   //心跳

@@ -505,7 +505,24 @@ extern "C" {
 #define B53_TC_TO_QUEUE_CTL	0x62
 #define 	B53_TC_TO_QUEUE(n)			((n)*2 + 0x00)
 #define 	B53_TC_QUEUE_MASK			3
+
 #define B53_CPU_TO_QUEUE_CTL	0x64
+#define 	B53_CPU_TC_TO_QUEUE(n)			((n))
+#define 	B53_CPU_TC_QUEUE_MASK			7
+
+#define 	B53_CPU_TC_PROTO_FLOOD	15
+#define 	B53_CPU_TC_PROTO_SNOOP	12
+#define 	B53_CPU_TC_PROTO_TERM	9
+#define 	B53_CPU_TC_SWITCH		6
+#define 	B53_CPU_TC_SALEARN		3
+#define 	B53_CPU_TC_MIRROR		0
+
+#define 	B53_CPU_PROTO_FLOOD_QUEUE	0
+#define 	B53_CPU_PROTO_SNOOP_QUEUE	3
+#define 	B53_CPU_PROTO_TERM_QUEUE		4
+#define 	B53_CPU_SWITCH_QUEUE			1
+#define 	B53_CPU_SALEARN_QUEUE		2
+#define 	B53_CPU_MIRROR_QUEUE			0
 
 #define B53_TX_QUEUE_CTL	0x80
 #define B53_TX_QUEUE_WEIGHT(c)	0x81 + (c)

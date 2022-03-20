@@ -20,7 +20,7 @@ typedef struct sdk_port_s
 
 	int (*sdk_port_speed_cb)(void *, zpl_phyport_t, zpl_uint32);
 	int (*sdk_port_duplex_cb)(void *, zpl_phyport_t, zpl_uint32);
-	int (*sdk_port_flow_cb)(void *, zpl_phyport_t, zpl_uint32);
+	int (*sdk_port_flow_cb)(void *, zpl_phyport_t, zpl_uint32, zpl_uint32);
 	int (*sdk_port_jumbo_cb)(void *, zpl_phyport_t, zpl_bool);
 
 	zpl_bool (*sdk_port_state_get_cb)(void *, zpl_phyport_t);
@@ -29,20 +29,16 @@ typedef struct sdk_port_s
 
 
 	int (*sdk_port_loop_cb)(void *, zpl_phyport_t, zpl_uint32);
-	int (*sdk_port_8021x_cb)(void *, zpl_phyport_t, zpl_uint32);
 
 	int (*sdk_port_learning_enable_cb)(void *, zpl_phyport_t, zpl_bool);
 	int (*sdk_port_swlearning_enable_cb)(void *, zpl_phyport_t, zpl_bool);
 
 	int (*sdk_port_protected_enable_cb)(void *, zpl_phyport_t, zpl_bool);
-	int (*sdk_port_wan_enable_cb)(void *, zpl_phyport_t, zpl_bool);
 
 	int (*sdk_port_mac_cb)(void *, zpl_phyport_t, zpl_uint8 *, zpl_bool);
-	int (*sdk_port_mtu_cb)(void *, zpl_phyport_t, zpl_uint32);
+
 	int (*sdk_port_vrf_cb)(void *, zpl_phyport_t, zpl_uint32);
-
 	int (*sdk_port_mode_cb)(void *, zpl_phyport_t, zpl_uint32);
-
 	int (*sdk_port_pause_cb)(void *, zpl_phyport_t, zpl_bool, zpl_bool);
 	int (*sdk_port_discard_cb)(void *, zpl_phyport_t, zpl_bool);
 

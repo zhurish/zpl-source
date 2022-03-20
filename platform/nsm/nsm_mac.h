@@ -49,6 +49,7 @@ typedef struct l2mac_s
 	mac_type_t		type;
 	mac_class_t		class;
 	mac_action_t	action;
+	zpl_uint32		ageing_time;
 }l2mac_t;
 
 typedef struct Gl2mac_s
@@ -76,6 +77,9 @@ extern int nsm_mac_add_api(l2mac_t *mac);
 extern int nsm_mac_del_api(l2mac_t *mac);
 extern int nsm_mac_lookup_api(mac_t *mac, vlan_t vlan);
 extern int nsm_mac_get_api(mac_t *mac, vlan_t vlan, l2mac_t *gmac);
+
+extern int nsm_mac_update_api(l2mac_t *mac);
+extern int nsm_mac_reflush_api(void);
 
 extern int nsm_mac_ageing_time_set_api(zpl_uint32 ageing);
 extern int nsm_mac_ageing_time_get_api(zpl_uint32 *ageing);

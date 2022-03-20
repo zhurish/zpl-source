@@ -37,6 +37,7 @@ static int b53125_port_enable(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool en
 		reg |= PORT_CTRL_RX_DISABLE | PORT_CTRL_TX_DISABLE;
 		ret |= b53125_write8(dev->sdk_device, B53_CTRL_PAGE, B53_PORT_CTRL(port), reg);
 	}
+	ret |= b53125_phy_powerdown(dev,  port,  enable);
 	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
@@ -130,7 +131,7 @@ static int b53125_puase_frame_detection(sdk_driver_t *dev, zpl_bool enable)
 	return ret;
 }
 
-int b53125_pasue_transmit_enable(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable)
+static int b53125_pasue_transmit_enable(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable)
 {
 	int ret = 0;
 	u32 reg = 0;
@@ -157,7 +158,7 @@ int b53125_pasue_transmit_enable(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool
 	return ret;
 }
 
-int b53125_pasue_receive_enable(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable)
+static int b53125_pasue_receive_enable(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable)
 {
 	int ret = 0;
 	u32 reg = 0;
@@ -184,6 +185,14 @@ int b53125_pasue_receive_enable(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool 
 	return ret;
 }
 
+static int b53125_pasue_enable(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool tx, zpl_bool rx)
+{
+	int ret = 0;
+	ret |= b53125_pasue_transmit_enable(dev,  port,  tx);
+	ret |= b53125_pasue_receive_enable(dev,  port,  rx);
+	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	return ret;	
+}
 /*************************************************************************/
 //设置MAC地址表查找失败的报文转发的目的端口
 int b53125_unknow_unicast_forward_port(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable)
@@ -269,16 +278,16 @@ int b53125_enable_learning(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enabl
 	if(port == dev->cpu_port)
 	{
 		if(enable)
-			port_ctrl |= BIT(8);
-		else
 			port_ctrl &= ~BIT(8);
+		else
+			port_ctrl |= BIT(8);
 	}
 	else
 	{
 		if(enable)
-			port_ctrl |= BIT(port);
-		else
 			port_ctrl &= ~BIT(port);
+		else
+			port_ctrl |= BIT(port);
 	}
 	ret |= b53125_write16(dev->sdk_device, B53_CTRL_PAGE, B53_DIS_LEARNING, port_ctrl);
 	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
@@ -373,7 +382,7 @@ static int b53125_port_set_duplex(sdk_driver_t *dev, zpl_phyport_t port, int dup
 	return ret;
 }
 
-static int b53125_port_set_flow(sdk_driver_t *dev, zpl_phyport_t port, int flow)
+static int b53125_port_set_flow(sdk_driver_t *dev, zpl_phyport_t port, int tx, int rx)
 {
 	int ret = 0;
 	u8 reg, val, off;
@@ -390,9 +399,9 @@ static int b53125_port_set_flow(sdk_driver_t *dev, zpl_phyport_t port, int flow)
 	ret |= b53125_read8(dev->sdk_device, B53_CTRL_PAGE, off, &reg);
 	reg &= ~(PORT_OVERRIDE_RX_FLOW|PORT_OVERRIDE_TX_FLOW);
 
-	if (flow & MLO_PAUSE_RX)
+	if (rx)
 		reg |= PORT_OVERRIDE_RX_FLOW;
-	if (flow & MLO_PAUSE_TX)
+	if (tx)
 		reg |= PORT_OVERRIDE_TX_FLOW;
 
 	reg |= val;
@@ -459,60 +468,46 @@ static zpl_uint32 b53125_port_get_duplex(sdk_driver_t *dev, zpl_phyport_t port)
 
 
 
-/* Jumbo Frame Control Register */
-int b53125_jumbo_enable(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable)
-{
-	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_JUMBO_PAGE, ((b53_device_t*)(dev->sdk_device))->jumbo_pm_reg, &port_ctrl);
-	if(port == dev->cpu_port)
-	{
-		if(enable)
-			port_ctrl |= BIT(8);
-		else
-			port_ctrl &= ~BIT(8);
-	}
-	else
-	{
-		if(enable)
-			port_ctrl |= BIT(port);
-		else
-			port_ctrl &= ~BIT(port);
-	}
-	ret |= b53125_write32(dev->sdk_device, B53_JUMBO_PAGE, ((b53_device_t*)(dev->sdk_device))->jumbo_pm_reg, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
-	return ret;
-}
 
-int b53125_jumbo_size(sdk_driver_t *dev, int size)
-{
-	u16 max_size = size;
-	int ret = 0;
-	ret |= b53125_write16(dev->sdk_device, B53_JUMBO_PAGE, ((b53_device_t*)(dev->sdk_device))->jumbo_size_reg, max_size);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
-	return ret;
-}
 
-int b53125_port_init(void)
+
+int b53125_port_init(sdk_driver_t *dev)
 {
+	int ret= 0;
 	sdk_port.sdk_port_enable_cb = b53125_port_enable;
 	sdk_port.sdk_port_link_cb = b53125_port_set_link_force;
 	sdk_port.sdk_port_speed_cb = b53125_port_set_speed;
 	sdk_port.sdk_port_duplex_cb = b53125_port_set_duplex;
 	sdk_port.sdk_port_flow_cb = b53125_port_set_flow;
-	sdk_port.sdk_port_jumbo_cb = b53125_jumbo_enable;
+	
 	sdk_port.sdk_port_state_get_cb = b53125_port_get_link;
 	sdk_port.sdk_port_speed_get_cb = b53125_port_get_speed;
 	sdk_port.sdk_port_duplex_get_cb = b53125_port_get_duplex;
 	sdk_port.sdk_port_loop_cb = b53125_phy_loopback;
-	//sdk_port.sdk_port_8021x_cb)(void *, zpl_phyport_t, zpl_uint32);
+
 	sdk_port.sdk_port_learning_enable_cb = b53125_enable_learning;
 	sdk_port.sdk_port_swlearning_enable_cb = b53125_software_learning;
 	sdk_port.sdk_port_protected_enable_cb = b53125_port_protected_enable;
+	sdk_port.sdk_port_pause_cb = b53125_pasue_enable;
+
 	//sdk_port.sdk_port_wan_enable_cb = b53125_port_wan_enable;
 	//sdk_port.sdk_port_mac_cb)(void *, zpl_phyport_t, zpl_uint8 *, zpl_bool);
 	//sdk_port.sdk_port_mtu_cb)(void *, zpl_phyport_t, zpl_uint32);
 	//sdk_port.sdk_port_vrf_cb)(void *, zpl_phyport_t, zpl_uint32);
 	//sdk_port.sdk_port_mode_cb)(void *, zpl_phyport_t, zpl_uint32);
-	return OK;
+	ret |= b53125_enable_learning(dev, ((b53_device_t *)dev->sdk_device)->cpu_port, zpl_true);
+	return ret;
+}
+
+int b53125_port_start(sdk_driver_t *dev)
+{
+	int ret= 0;
+
+	ret |= b53125_enable_learning(dev, 0, zpl_true);
+	ret |= b53125_enable_learning(dev, 1, zpl_true);
+	ret |= b53125_enable_learning(dev, 2, zpl_true);
+	ret |= b53125_enable_learning(dev, 3, zpl_true);
+	ret |= b53125_enable_learning(dev, 4, zpl_true);
+	ret |= b53125_enable_learning(dev, 6, zpl_true);
+	return ret;
 }

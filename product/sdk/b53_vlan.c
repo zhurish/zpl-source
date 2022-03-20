@@ -89,7 +89,7 @@ static int b53125_do_vlan_op(sdk_driver_t *dev, u8 op)
 	return ERROR;
 }
 
-int b53125_vlan_mstp_id(sdk_driver_t *dev, vlan_t vid, int id)
+static int b53125_vlan_mstp_id(sdk_driver_t *dev, vlan_t vid, int id)
 {
 	int ret = 0;
 	u32 entry = 0;
@@ -331,17 +331,31 @@ DEFUN (b53125_port_adduntagport_test,
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
-int b53_vlan_init(void)
+
+static int sdk_mstp_add_vlan (sdk_driver_t *dev,  zpl_index_t id, vlan_t vid)
+{
+	return b53125_vlan_mstp_id(dev,  vid,  id);
+}
+static int sdk_mstp_del_vlan (sdk_driver_t *dev,  zpl_index_t id, vlan_t vid)
+{
+	return b53125_vlan_mstp_id(dev,  vid,  0);
+}
+
+int b53125_vlan_init(sdk_driver_t *dev)
 {
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &b53125_enable_vlan_test_cmd);
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &b53125_create_vlan_test_cmd);
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &b53125_port_addtagport_test_cmd);
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &b53125_port_adduntagport_test_cmd);
+
+	sdk_mstp.sdk_mstp_add_vlan = sdk_mstp_add_vlan;
+	sdk_mstp.sdk_mstp_del_vlan = sdk_mstp_del_vlan;
+
 	sdk_vlan.sdk_vlan_enable = b53125_enable_vlan;
     sdk_vlan.sdk_vlan_create = b53125_vlan_create;
  
-    sdk_vlan.sdk_vlan_untag_port = b53125_vlan_port_untag;
-    sdk_vlan.sdk_vlan_tag_port = b53125_vlan_port_tag;
+    sdk_vlan.sdk_port_access_vlan = b53125_vlan_port_untag;
+
     sdk_vlan.sdk_port_native_vlan = b53125_port_pvid;//接口默认VLAN
 
     sdk_vlan.sdk_port_allowed_tag_vlan = b53125_vlan_port_tag;

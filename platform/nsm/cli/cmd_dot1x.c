@@ -70,10 +70,13 @@ DEFUN (dot1x_port_control,
 		"port-control\n")
 {
 	int ret = ERROR;
-	dot1x_type_en type = 0;
+	dot1x_state_en type = 0;
 	struct interface *ifp = vty->index;
 	if(!nsm_dot1x_global_is_enable())
+	{
+		vty_out (vty, "Error:dot1x system-auth-ctrl is not enable%s", VTY_NEWLINE);
 		return CMD_WARNING;
+	}
 
 	if(argc >= 1)
 	{
@@ -88,12 +91,17 @@ DEFUN (dot1x_port_control,
 		}
 		if(nsm_dot1x_is_enable_api(ifp->ifindex))
 		{
-			ret = nsm_dot1x_auth_type_set_api(ifp->ifindex, type);
+			ret = nsm_dot1x_auth_state_set_api(ifp->ifindex, type);
 		}
 		else
 		{
-			ret = nsm_dot1x_enable_set_api(ifp->ifindex, zpl_true, type);
-			//ret |= nsm_dot1x_port_mode_set_api(ifp->ifindex, zpl_true);
+			ret = nsm_dot1x_enable_set_api(ifp->ifindex, zpl_true);
+			ret |= nsm_dot1x_auth_state_set_api(ifp->ifindex, type);
+		}
+		if(ret != OK)
+		{
+			vty_out (vty, "Error:dot1x enable on this interface%s", VTY_NEWLINE);
+			return CMD_WARNING;
 		}
 	}
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -109,7 +117,9 @@ DEFUN (no_dot1x_port_control,
 	int ret = ERROR;
 	struct interface *ifp = vty->index;
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
-		ret = nsm_dot1x_enable_set_api(ifp->ifindex, zpl_false, DOT1X_NONE);
+		ret = nsm_dot1x_enable_set_api(ifp->ifindex, zpl_false);
+	else 
+		ret = OK;	
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -121,6 +131,16 @@ DEFUN (dot1x_initialize,
 {
 	int ret = ERROR;
 	struct interface *ifp = vty->index;
+	if(!nsm_dot1x_global_is_enable())
+	{
+		vty_out (vty, "Error:dot1x system-auth-ctrl is not enable%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(!nsm_dot1x_is_enable_api(ifp->ifindex))
+	{
+		vty_out (vty, "Error:this interface is not not enable dot1x%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_reset_api(ifp->ifindex);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -139,6 +159,16 @@ DEFUN (dot1x_max_req,
 	zpl_uint32 value = 0;
 	struct interface *ifp = vty->index;
 	value = atoi(argv[0]);
+	if(!nsm_dot1x_global_is_enable())
+	{
+		vty_out (vty, "Error:dot1x system-auth-ctrl is not enable%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(!nsm_dot1x_is_enable_api(ifp->ifindex))
+	{
+		vty_out (vty, "Error:this interface is not not enable dot1x%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_max_req_set_api(ifp->ifindex, value);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -153,8 +183,11 @@ DEFUN (no_dot1x_max_req,
 {
 	int ret = ERROR;
 	struct interface *ifp = vty->index;
+
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_max_req_set_api(ifp->ifindex, 0);
+	else
+		ret = OK;
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -169,6 +202,16 @@ DEFUN (dot1x_protocol_version,
 	zpl_uint32 value = 0;
 	struct interface *ifp = vty->index;
 	value = atoi(argv[0]);
+	if(!nsm_dot1x_global_is_enable())
+	{
+		vty_out (vty, "Error:dot1x system-auth-ctrl is not enable%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(!nsm_dot1x_is_enable_api(ifp->ifindex))
+	{
+		vty_out (vty, "Error:this interface is not not enable dot1x%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_auth_version_set_api(ifp->ifindex, value);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -185,6 +228,8 @@ DEFUN (no_dot1x_protocol_version,
 	struct interface *ifp = vty->index;
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_auth_version_set_api(ifp->ifindex, 0);
+	else
+		ret = OK;
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -196,6 +241,16 @@ DEFUN (dot1x_reauthentication,
 {
 	int ret = ERROR;
 	struct interface *ifp = vty->index;
+	if(!nsm_dot1x_global_is_enable())
+	{
+		vty_out (vty, "Error:dot1x system-auth-ctrl is not enable%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(!nsm_dot1x_is_enable_api(ifp->ifindex))
+	{
+		vty_out (vty, "Error:this interface is not not enable dot1x%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_reauthentication_set_api(ifp->ifindex, zpl_true);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -212,6 +267,8 @@ DEFUN (no_dot1x_reauthentication,
 	struct interface *ifp = vty->index;
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_reauthentication_set_api(ifp->ifindex, zpl_false);
+	else
+		ret = OK;
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -226,6 +283,16 @@ DEFUN (dot1x_guest_vlan,
 	vlan_t value = 0;
 	struct interface *ifp = vty->index;
 	value = atoi(argv[0]);
+	if(!nsm_dot1x_global_is_enable())
+	{
+		vty_out (vty, "Error:dot1x system-auth-ctrl is not enable%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(!nsm_dot1x_is_enable_api(ifp->ifindex))
+	{
+		vty_out (vty, "Error:this interface is not not enable dot1x%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_guest_vlan_set_api(ifp->ifindex, value);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -242,6 +309,8 @@ DEFUN (no_dot1x_guest_vlan,
 	struct interface *ifp = vty->index;
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_guest_vlan_set_api(ifp->ifindex, 0);
+	else
+		ret = OK;
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -254,6 +323,16 @@ DEFUN (dot1x_mac_auth_bypass,
 {
 	int ret = ERROR;
 	struct interface *ifp = vty->index;
+	if(!nsm_dot1x_global_is_enable())
+	{
+		vty_out (vty, "Error:dot1x system-auth-ctrl is not enable%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(!nsm_dot1x_is_enable_api(ifp->ifindex))
+	{
+		vty_out (vty, "Error:this interface is not not enable dot1x%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_mac_auth_bypass_set_api(ifp->ifindex, zpl_true);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -270,6 +349,8 @@ DEFUN (no_dot1x_mac_auth_bypass,
 	struct interface *ifp = vty->index;
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_mac_auth_bypass_set_api(ifp->ifindex, zpl_false);
+	else
+		ret = OK;
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -288,6 +369,16 @@ DEFUN (dot1x_port_mode,
 		mode = zpl_true;
 	else
 		mode = zpl_false;
+	if(!nsm_dot1x_global_is_enable())
+	{
+		vty_out (vty, "Error:dot1x system-auth-ctrl is not enable%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(!nsm_dot1x_is_enable_api(ifp->ifindex))
+	{
+		vty_out (vty, "Error:this interface is not not enable dot1x%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_port_mode_set_api(ifp->ifindex, mode);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -304,6 +395,8 @@ DEFUN (no_dot1x_port_mode,
 	struct interface *ifp = vty->index;
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_port_mode_set_api(ifp->ifindex, zpl_true);
+	else
+		ret = OK;
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -319,6 +412,16 @@ DEFUN (dot1x_max_user,
 	vlan_t value = 0;
 	struct interface *ifp = vty->index;
 	value = atoi(argv[0]);
+	if(!nsm_dot1x_global_is_enable())
+	{
+		vty_out (vty, "Error:dot1x system-auth-ctrl is not enable%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(!nsm_dot1x_is_enable_api(ifp->ifindex))
+	{
+		vty_out (vty, "Error:this interface is not not enable dot1x%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 	{
 		zpl_bool mode = zpl_true;
@@ -343,6 +446,8 @@ DEFUN (no_dot1x_max_user,
 	struct interface *ifp = vty->index;
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_max_user_set_api(ifp->ifindex, 0);
+	else
+		ret = OK;
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -362,6 +467,16 @@ DEFUN (dot1x_timeout_re_auth,
 	vlan_t value = 0;
 	struct interface *ifp = vty->index;
 	value = atoi(argv[0]);
+	if(!nsm_dot1x_global_is_enable())
+	{
+		vty_out (vty, "Error:dot1x system-auth-ctrl is not enable%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(!nsm_dot1x_is_enable_api(ifp->ifindex))
+	{
+		vty_out (vty, "Error:this interface is not not enable dot1x%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_reauth_timeout_set_api(ifp->ifindex, value);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -379,6 +494,8 @@ DEFUN (no_dot1x_timeout_re_auth,
 	struct interface *ifp = vty->index;
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_reauth_timeout_set_api(ifp->ifindex, 0);
+	else
+		ret = OK;
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -394,6 +511,16 @@ DEFUN (dot1x_timeout_server_timeout,
 	vlan_t value = 0;
 	struct interface *ifp = vty->index;
 	value = atoi(argv[0]);
+	if(!nsm_dot1x_global_is_enable())
+	{
+		vty_out (vty, "Error:dot1x system-auth-ctrl is not enable%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(!nsm_dot1x_is_enable_api(ifp->ifindex))
+	{
+		vty_out (vty, "Error:this interface is not not enable dot1x%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_server_timeout_set_api(ifp->ifindex, value);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -411,6 +538,8 @@ DEFUN (no_dot1x_timeout_server_timeout,
 	struct interface *ifp = vty->index;
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_server_timeout_set_api(ifp->ifindex, 0);
+	else
+		ret = OK;
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -426,6 +555,16 @@ DEFUN (dot1x_timeout_supp_timeout,
 	vlan_t value = 0;
 	struct interface *ifp = vty->index;
 	value = atoi(argv[0]);
+	if(!nsm_dot1x_global_is_enable())
+	{
+		vty_out (vty, "Error:dot1x system-auth-ctrl is not enable%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(!nsm_dot1x_is_enable_api(ifp->ifindex))
+	{
+		vty_out (vty, "Error:this interface is not not enable dot1x%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_supp_timeout_set_api(ifp->ifindex, value);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -443,6 +582,8 @@ DEFUN (no_dot1x_timeout_supp_timeout,
 	struct interface *ifp = vty->index;
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_supp_timeout_set_api(ifp->ifindex, 0);
+	else
+		ret = OK;
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -458,6 +599,16 @@ DEFUN (dot1x_timeout_tx_period,
 	vlan_t value = 0;
 	struct interface *ifp = vty->index;
 	value = atoi(argv[0]);
+	if(!nsm_dot1x_global_is_enable())
+	{
+		vty_out (vty, "Error:dot1x system-auth-ctrl is not enable%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(!nsm_dot1x_is_enable_api(ifp->ifindex))
+	{
+		vty_out (vty, "Error:this interface is not not enable dot1x%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_period_timeout_set_api(ifp->ifindex, value);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -475,6 +626,8 @@ DEFUN (no_dot1x_timeout_tx_period,
 	struct interface *ifp = vty->index;
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_period_timeout_set_api(ifp->ifindex, 0);
+	else
+		ret = OK;
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -490,6 +643,16 @@ DEFUN (dot1x_timeout_quiet_period,
 	vlan_t value = 0;
 	struct interface *ifp = vty->index;
 	value = atoi(argv[0]);
+	if(!nsm_dot1x_global_is_enable())
+	{
+		vty_out (vty, "Error:dot1x system-auth-ctrl is not enable%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(!nsm_dot1x_is_enable_api(ifp->ifindex))
+	{
+		vty_out (vty, "Error:this interface is not not enable dot1x%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_quiet_period_timeout_set_api(ifp->ifindex, value);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -507,6 +670,8 @@ DEFUN (no_dot1x_timeout_quiet_period,
 	struct interface *ifp = vty->index;
 	if(nsm_dot1x_global_is_enable() && nsm_dot1x_is_enable_api(ifp->ifindex))
 		ret = nsm_dot1x_quiet_period_timeout_set_api(ifp->ifindex, 0);
+	else
+		ret = OK;	
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -522,7 +687,7 @@ static int _build_dot1x_interface_one(dot1x_t *pstNode, struct dot1x_user *user)
 		//auto | force-authorized | force-unauthorized
 		if(!pstNode->port_mode)
 			vty_out(vty, " dot1x port-mode mac%s", VTY_NEWLINE);
-		vty_out(vty, " dot1x port-control %s%s", type_str[pstNode->type], VTY_NEWLINE);
+		vty_out(vty, " dot1x port-control %s%s", type_str[pstNode->state], VTY_NEWLINE);
 		if(pstNode->eap_version)
 			vty_out(vty, " dot1x protocol-version %d%s", pstNode->eap_version, VTY_NEWLINE);
 
@@ -570,7 +735,7 @@ int build_dot1x_interface(struct vty *vty, struct interface *ifp)
 	return OK;
 }
 
-int build_dot1x_config(struct vty *vty)
+int build_dot1x_config(struct vty *vty, void *p)
 {
 	if(nsm_dot1x_global_is_enable())
 		vty_out(vty, "dot1x system-auth-ctrl%s", VTY_NEWLINE);

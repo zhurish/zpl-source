@@ -29,7 +29,7 @@ extern int systools_set(void *vty);
 
 extern int systools_printf(const char *format, ...);
 
-extern const char *ftpd_hostname();
+extern const char *ftpd_hostname(void);
 
 extern int systools_task_init (void);
 extern int systools_task_exit (void);

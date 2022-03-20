@@ -49,13 +49,6 @@ static struct cmd_node view_node =
 	"%s> ",
 };
 
-static struct cmd_node service_node =
-{
-	SERVICE_NODE,
-	"%s(config)# ",
-	1
-};
-
 static struct cmd_node auth_enable_node =
 {
 	AUTH_ENABLE_NODE,
@@ -964,11 +957,6 @@ config_write_hostsrv (struct vty *vty)
 	return 1;
 }
 
-static int
-config_write_service (struct vty *vty)
-{
-	return 1;
-}
 
 
 static int _cmd_host_base_init(zpl_bool terminal)
@@ -981,14 +969,13 @@ static int _cmd_host_base_init(zpl_bool terminal)
 	install_node(&auth_node, NULL);
 	install_node(&auth_enable_node, NULL);
 	install_node(&config_node, NULL);
-	install_node(&service_node, config_write_service);
+
 
 
 	install_default(VIEW_NODE);
 	install_default(CONFIG_NODE);
 	install_default_basic(VIEW_NODE);
 	install_default_basic(CONFIG_NODE);
-
 
 
 	/* Each node's basic commands. */

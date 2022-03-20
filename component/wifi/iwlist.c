@@ -25,7 +25,7 @@ int iwlist_detail_set(zpl_bool value)
 	return 0;
 }
 
-zpl_bool iwlist_detail_get()
+zpl_bool iwlist_detail_get(void)
 {
 	return iwlist_detail;
 }

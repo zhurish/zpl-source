@@ -16,7 +16,7 @@ Contributors:
 
 #define _GNU_SOURCE
 #include "mqtt-config.h"
-
+#include "os_socket.h"
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>

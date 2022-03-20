@@ -134,28 +134,20 @@ int nsm_halpal_interface_mtu (struct interface *ifp, zpl_uint32 mtu)
 	return ret;
 }
 
-int nsm_halpal_interface_metric (struct interface *ifp, zpl_uint32 metric)
-{
-	int ret = 0;
-#ifdef ZPL_HAL_MODULE
-	//ret = hal_port_metric_set(ifp->ifindex, metric);
-#endif
-	return ret;
-}
 
-int nsm_halpal_interface_vrf (struct interface *ifp, zpl_uint32 vrf)
+int nsm_halpal_interface_vrf (struct interface *ifp, vrf_id_t vrf)
 {
 	int ret = 0;
 	ret = pal_interface_set_vr(ifp, (vrf_id_t)vrf);
 	if(ret != OK)
 		return ret;
 #ifdef ZPL_HAL_MODULE
-	//ret = hal_port_vrf_set(ifp->ifindex, vrf);
+	ret = hal_port_vrf_set(ifp->ifindex, vrf);
 #endif
 	return ret;
 }
 
-int nsm_halpal_interface_multicast (struct interface *ifp, zpl_uint32 multicast)
+int nsm_halpal_interface_multicast (struct interface *ifp, zpl_bool multicast)
 {
 	int ret = 0;
 #ifdef ZPL_HAL_MODULE
@@ -234,7 +226,7 @@ int nsm_halpal_interface_get_statistics (struct interface *ifp)
 	return ret;
 }
 
-int nsm_halpal_interface_speed (struct interface *ifp,  zpl_uint32 speed )
+int nsm_halpal_interface_speed (struct interface *ifp,  nsm_speed_en speed )
 {
 	int ret = 0;
 #ifdef ZPL_HAL_MODULE
@@ -245,11 +237,11 @@ int nsm_halpal_interface_speed (struct interface *ifp,  zpl_uint32 speed )
 
 
 
-int nsm_halpal_interface_mode (struct interface *ifp, zpl_uint32 mode)
+int nsm_halpal_interface_mode (struct interface *ifp, if_mode_t mode)
 {
 	int ret = 0;
 #ifdef ZPL_HAL_MODULE
-	//ret = hal_port_mode_set(ifp->ifindex, mode);
+	ret = hal_port_mode_set(ifp->ifindex, mode);
 #endif
 	return ret;
 }
@@ -277,44 +269,19 @@ int nsm_halpal_interface_enca (struct interface *ifp, zpl_uint32 mode, zpl_uint3
 }
 
 
-int nsm_halpal_interface_linkdetect (struct interface *ifp, zpl_uint32 link)
+
+
+int nsm_halpal_interface_loop (struct interface *ifp,  zpl_bool loop )
 {
 	int ret = 0;
 #ifdef ZPL_HAL_MODULE
-	//ret = hal_port_linkdetect_set(ifp->ifindex, link);
+	ret = hal_port_loop_set(ifp->ifindex, loop);
 #endif
 	return ret;
 }
 
-int nsm_halpal_interface_stp (struct interface *ifp,  zpl_uint32 stp )
-{
-	int ret = 0;
-#ifdef ZPL_HAL_MODULE
-	//ret = hal_port_stp_set(ifp->ifindex, stp);
-	ret = hal_stp_state(ifp->ifindex, stp);
-#endif
-	return ret;
-}
 
-int nsm_halpal_interface_loop (struct interface *ifp,  zpl_uint32 loop )
-{
-	int ret = 0;
-#ifdef ZPL_HAL_MODULE
-	//ret = hal_port_loop_set(ifp->ifindex, loop);
-#endif
-	return ret;
-}
-
-int nsm_halpal_interface_8021x (struct interface *ifp, zpl_uint32 mode)
-{
-	int ret = 0;
-#ifdef ZPL_HAL_MODULE
-	//ret = hal_port_8021x_set(ifp->ifindex, mode);
-#endif
-	return ret;
-}
-
-int nsm_halpal_interface_duplex (struct interface *ifp, zpl_uint32 duplex)
+int nsm_halpal_interface_duplex (struct interface *ifp, nsm_duplex_en duplex)
 {
 	int ret = 0;
 #ifdef ZPL_HAL_MODULE

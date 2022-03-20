@@ -22,8 +22,8 @@
 #include "vty.h"
 //#include "nsm_vlan.h"
 
-#include "os_start.h"
-#include "os_module.h"
+#include "startup_start.h"
+#include "startup_module.h"
 #include "os_util.h"
 
 

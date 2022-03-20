@@ -33,7 +33,7 @@ struct module_alllist module_lists_tbl[MODULE_MAX] = {
  
 
 
-int pl_module_name_show()
+int zplib_module_name_show()
 {
 	zpl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
@@ -46,7 +46,7 @@ int pl_module_name_show()
 	return OK;
 }
 
-int pl_module_name_init(const char * name)
+int zplib_module_name_init(const char * name)
 {
 	zpl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
@@ -66,7 +66,7 @@ int pl_module_name_init(const char * name)
 	return ERROR;
 }
 
-int pl_module_init(zpl_uint32 module)
+int zplib_module_init(zpl_uint32 module)
 {
 	zpl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
@@ -86,7 +86,7 @@ int pl_module_init(zpl_uint32 module)
 	return ERROR;
 }
 
-int pl_module_exit(zpl_uint32 module)
+int zplib_module_exit(zpl_uint32 module)
 {
 	zpl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
@@ -106,7 +106,7 @@ int pl_module_exit(zpl_uint32 module)
 	return ERROR;
 }
 
-int pl_module_task_name_init(const char * name)
+int zplib_module_task_name_init(const char * name)
 {
 	zpl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
@@ -128,7 +128,7 @@ int pl_module_task_name_init(const char * name)
 	return ERROR;
 }
 
-int pl_module_task_init(zpl_uint32 module)
+int zplib_module_task_init(zpl_uint32 module)
 {
 	zpl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
@@ -150,7 +150,7 @@ int pl_module_task_init(zpl_uint32 module)
 	return ERROR;
 }
 
-int pl_module_task_exit(zpl_uint32 module)
+int zplib_module_task_exit(zpl_uint32 module)
 {
 	zpl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
@@ -171,7 +171,7 @@ int pl_module_task_exit(zpl_uint32 module)
 	return ERROR;
 }
 
-int pl_module_cmd_name_init(const char * name)
+int zplib_module_cmd_name_init(const char * name)
 {
 	zpl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
@@ -192,7 +192,7 @@ int pl_module_cmd_name_init(const char * name)
 	return ERROR;
 }
 
-int pl_module_cmd_init(zpl_uint32 module)
+int zplib_module_cmd_init(zpl_uint32 module)
 {
 	zpl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
@@ -213,7 +213,7 @@ int pl_module_cmd_init(zpl_uint32 module)
 	return ERROR;
 }
 
-static int _pl_module_alltable_init(zpl_uint32 type)
+static int _zplib_module_alltable_init(zpl_uint32 type)
 {
 	zpl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)
@@ -291,32 +291,32 @@ static int _pl_module_alltable_init(zpl_uint32 type)
 	return OK;
 }
 
-int pl_module_allinit(void)
+int zplib_module_initall(void)
 {
-	return _pl_module_alltable_init(1);
+	return _zplib_module_alltable_init(1);
 }
 
-int pl_module_allexit(void)
+int zplib_module_exitall(void)
 {
-	return _pl_module_alltable_init(2);
+	return _zplib_module_alltable_init(2);
 }
 
-int pl_module_task_allinit(void)
+int zplib_module_task_startall(void)
 {
-	return _pl_module_alltable_init(3);
+	return _zplib_module_alltable_init(3);
 }
 
-int pl_module_task_allexit(void)
+int zplib_module_task_stopall(void)
 {
-	return _pl_module_alltable_init(4);
+	return _zplib_module_alltable_init(4);
 }
 
-int pl_module_cmd_allinit(void)
+int zplib_module_cmd_all(void)
 {
-	return _pl_module_alltable_init(5);
+	return _zplib_module_alltable_init(5);
 }
 
-struct module_list *pl_module_info(zpl_uint32 module)
+struct module_list *zplib_module_info(zpl_uint32 module)
 {
 	zpl_uint32 i = 0;
 	for(i = 0; i < array_size(module_lists_tbl); i++)

@@ -1901,7 +1901,7 @@ typedef struct WebsUpload {
  */
 PUBLIC void websUploadOpen(void);
 PUBLIC void websUploadSetDir(char *dirb);
-PUBLIC char * websUploadGetDir();
+PUBLIC char * websUploadGetDir(void);
 /**
     Get the hash of uploaded files for the request
     @param wp Webs request object

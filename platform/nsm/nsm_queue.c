@@ -115,9 +115,7 @@ static nsm_qos_t *_nsm_qos_get(struct interface *ifp)
 {
 	if (ifp)
 	{
-		struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-		if (nsm)
-			return (nsm_qos_t *)(nsm->nsm_client[NSM_INTF_QOS]);
+		return (nsm_qos_t *)nsm_intf_module_data(ifp, NSM_INTF_QOS);
 	}
 	return NULL;
 }
@@ -889,24 +887,31 @@ int nsm_qos_service_policy_get_api(struct interface *ifp, int input, zpl_char *s
 
 static int nsm_qos_interface_create_api(struct interface *ifp)
 {
-	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
+	nsm_qos_t *qos = NULL;
 	if (if_is_loop(ifp))
 		return OK;
-	nsm_qos_t *qos = nsm->nsm_client[NSM_INTF_QOS] = XMALLOC(MTYPE_QOS, sizeof(nsm_qos_t));
-	os_memset(nsm->nsm_client[NSM_INTF_QOS], 0, sizeof(nsm_qos_t));
-	qos->ifindex = ifp->ifindex;
-	nsm_qos_interface_default(qos);
+	qos = nsm_intf_module_data(ifp, NSM_INTF_QOS);
+	if(qos == NULL)
+	{
+		 qos = XMALLOC(MTYPE_QOS, sizeof(nsm_qos_t));
+		os_memset(qos, 0, sizeof(nsm_qos_t));
+		qos->ifindex = ifp->ifindex;
+		nsm_intf_module_data_set(ifp, NSM_INTF_QOS, qos);
+		nsm_qos_interface_default(qos);
+	}
 	return OK;
 }
 
 static int nsm_qos_interface_del_api(struct interface *ifp)
 {
-	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
+	nsm_qos_t *qos = NULL;
 	if (if_is_loop(ifp))
 		return OK;
-	if (nsm->nsm_client[NSM_INTF_QOS])
-		XFREE(MTYPE_QOS, nsm->nsm_client[NSM_INTF_QOS]);
-	nsm->nsm_client[NSM_INTF_QOS] = NULL;
+	qos = nsm_intf_module_data(ifp, NSM_INTF_QOS);
+	if (qos)
+		XFREE(MTYPE_QOS, qos);
+	qos = NULL;
+	nsm_intf_module_data_set(ifp, NSM_INTF_QOS, NULL);
 	return OK;
 }
 

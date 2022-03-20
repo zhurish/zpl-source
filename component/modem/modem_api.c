@@ -380,16 +380,16 @@ int modem_bind_interface_api(modem_t *modem, char *name, zpl_uint32 number)
 			case 1:
 				modem->ppp_serial = ifp;
 				ret = modem_pppd_add_api(modem);
-				//ifp->ll_type = ZEBRA_LLT_MODEM;
+				//ifp->ll_type = IF_LLT_MODEM;
 				break;
 			case 2:
 				modem->dial_serial = ifp;
-				//ifp->ll_type = ZEBRA_LLT_MODEM;
+				//ifp->ll_type = IF_LLT_MODEM;
 				ret = OK;
 				break;
 			case 3:
 				modem->test_serial = ifp;
-				//ifp->ll_type = ZEBRA_LLT_MODEM;
+				//ifp->ll_type = IF_LLT_MODEM;
 				ret = OK;
 				break;
 			default:
@@ -402,17 +402,17 @@ int modem_bind_interface_api(modem_t *modem, char *name, zpl_uint32 number)
 			{
 			case 1:
 				modem->eth0 = ifp;
-				ifp->ll_type = ZEBRA_LLT_MODEM;
+				ifp->ll_type = IF_LLT_MODEM;
 				ret = OK;
 				break;
 			case 2:
 				modem->eth1 = ifp;
-				ifp->ll_type = ZEBRA_LLT_MODEM;
+				ifp->ll_type = IF_LLT_MODEM;
 				ret = OK;
 				break;
 			case 3:
 				modem->eth2 = ifp;
-				ifp->ll_type = ZEBRA_LLT_MODEM;
+				ifp->ll_type = IF_LLT_MODEM;
 				ret = OK;
 				break;
 			default:
@@ -511,17 +511,17 @@ int modem_interface_add_api(char *name)
 	//int i = 0;
 	struct interface *ifp = NULL;
 	ifp = if_lookup_by_name(name);
-	if(ifp && ifp->ll_type == ZEBRA_LLT_MODEM)
+	if(ifp && ifp->ll_type == IF_LLT_MODEM)
 		return OK;
-	if(ifp && ifp->ll_type != ZEBRA_LLT_MODEM)
+	if(ifp && ifp->ll_type != IF_LLT_MODEM)
 		return ERROR;
 
-	if_new_llc_type_mode(ZEBRA_LLT_MODEM, IF_MODE_L3);
+	if_new_llc_type_mode(IF_LLT_MODEM, IF_MODE_L3);
 
 	ifp = if_create_dynamic (name, strlen(name));
 	if(ifp)
 	{
-		//ifp->ll_type = ZEBRA_LLT_MODEM;
+		//ifp->ll_type = IF_LLT_MODEM;
 		//ifp->if_mode = IF_MODE_L3;
 		//ifp->dynamic = zpl_true;
 /*		if_manage_kernel_update(ifp);

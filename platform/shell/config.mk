@@ -3,8 +3,6 @@
 ###########################################################################
 MODULEDIR = platform/shell
 #shell
-#OBJS	+= zplgetopt.o
-#OBJS	+= zplgetopt1.o
 OBJS	+= vty_user.o
 OBJS	+= vty.o
 OBJS	+= vty_stdio.o

@@ -28,22 +28,14 @@ static int bsp_qos_ipg_enable(void *driver, hal_port_header_t *port, hal_qos_par
 {
 	int ret = NO_SDK;
 	BSP_ENTER_FUNC();
-	if(driver && sdk_qos.sdk_qos_ipg_cb)
-		ret = sdk_qos.sdk_qos_ipg_cb(driver, zpl_true, param->enable);
+	//if(driver && sdk_qos.sdk_qos_ipg_cb)
+	//	ret = sdk_qos.sdk_qos_ipg_cb(driver, zpl_true, param->enable);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
 
-static int bsp_qos_base_mode(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
-{
-	int ret = NO_SDK;
-	BSP_ENTER_FUNC();
-	if(driver && sdk_qos.sdk_qos_base_cb)
-		ret = sdk_qos.sdk_qos_base_cb(driver, port->phyport, param->enable);
-	BSP_LEAVE_FUNC();
-	return ret;
-}
 
+/*
 static int bsp_qos_8021q_enable(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
 {
 	int ret = NO_SDK;
@@ -64,17 +56,7 @@ static int bsp_qos_diffserv_enable(void *driver, hal_port_header_t *port, hal_qo
 	return ret;
 }
 
-#ifdef NSM_QOS_CLASS_PRIORITY
-static int bsp_qos_port_map_queue(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
-{
-	int ret = NO_SDK;
-	BSP_ENTER_FUNC();
-	if(driver && sdk_qos.sdk_qos_port_map_queue_cb)
-		ret = sdk_qos.sdk_qos_port_map_queue_cb(driver, port->phyport, param->pri, param->queue);
-	BSP_LEAVE_FUNC();
-	return ret;
-}
-#endif
+
 static int bsp_qos_diffserv_map_queue(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
 {
 	int ret = NO_SDK;
@@ -84,39 +66,7 @@ static int bsp_qos_diffserv_map_queue(void *driver, hal_port_header_t *port, hal
 	BSP_LEAVE_FUNC();
 	return ret;
 }
-
-#ifdef NSM_QOS_CLASS_PRIORITY
-//队列到class的映射
-static int bsp_qos_queue_class(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
-{
-	int ret = NO_SDK;
-	BSP_ENTER_FUNC();
-	if(driver && sdk_qos.sdk_qos_queue_map_class_cb)
-		ret = sdk_qos.sdk_qos_queue_map_class_cb(driver, port->phyport, param->queue, param->class);
-	BSP_LEAVE_FUNC();
-	return ret;
-}
-
-static int bsp_qos_queue_scheduling(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
-{
-	int ret = NO_SDK;
-	BSP_ENTER_FUNC();
-	if(driver && sdk_qos.sdk_qos_class_scheduling_cb)
-		ret = sdk_qos.sdk_qos_class_scheduling_cb(driver, param->class, param->type);
-	BSP_LEAVE_FUNC();
-	return ret;
-}
-
-static int bsp_qos_queue_weight(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
-{
-	int ret = NO_SDK;
-	BSP_ENTER_FUNC();
-	if(driver && sdk_qos.sdk_qos_class_weight_cb)
-		ret = sdk_qos.sdk_qos_class_weight_cb(driver, param->class, param->weight);
-	BSP_LEAVE_FUNC();
-	return ret;
-}
-#endif
+*/
 
 //风暴
 
@@ -169,9 +119,9 @@ static hal_ipcsubcmd_callback_t subcmd_table[] = {
 	HAL_CALLBACK_ENTRY(HAL_QOS_NONE, NULL),
 	HAL_CALLBACK_ENTRY(HAL_QOS_EN, bsp_qos_enable),
 	HAL_CALLBACK_ENTRY(HAL_QOS_IPG, bsp_qos_ipg_enable),
-	HAL_CALLBACK_ENTRY(HAL_QOS_BASE_TRUST, bsp_qos_base_mode),
-	HAL_CALLBACK_ENTRY(HAL_QOS_8021Q, bsp_qos_8021q_enable),
-	HAL_CALLBACK_ENTRY(HAL_QOS_DIFFSERV, bsp_qos_diffserv_enable),
+	//HAL_CALLBACK_ENTRY(HAL_QOS_BASE_TRUST, bsp_qos_base_mode),
+	//HAL_CALLBACK_ENTRY(HAL_QOS_8021Q, bsp_qos_8021q_enable),
+	//HAL_CALLBACK_ENTRY(HAL_QOS_DIFFSERV, bsp_qos_diffserv_enable),
 
 	//CLASS
 	//HAL_CALLBACK_ENTRY(HAL_QOS_QUEUE_MAP_CLASS, bsp_qos_queue_class),
@@ -181,7 +131,7 @@ static hal_ipcsubcmd_callback_t subcmd_table[] = {
 
 	//INPUT
 	HAL_CALLBACK_ENTRY(HAL_QOS_8021Q_MAP_QUEUE, NULL),
-	HAL_CALLBACK_ENTRY(HAL_QOS_DIFFSERV_MAP_QUEUE, bsp_qos_diffserv_map_queue),
+	//HAL_CALLBACK_ENTRY(HAL_QOS_DIFFSERV_MAP_QUEUE, bsp_qos_diffserv_map_queue),
 	HAL_CALLBACK_ENTRY(HAL_QOS_IPPRE_MAP_QUEUE, NULL),
 	HAL_CALLBACK_ENTRY(HAL_QOS_MPLSEXP_MAP_QUEUE, NULL),
 	//HAL_CALLBACK_ENTRY(HAL_QOS_PORT_MAP_QUEUE, bsp_qos_port_map_queue),

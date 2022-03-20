@@ -102,8 +102,7 @@ DEFUN (dos_frag_error_enable,
 		"fragment error\n")
 {
 	int ret = ERROR;
-	if (argc < 1)
-		return CMD_WARNING;
+
 	if(!nsm_dos_is_enable())
 		nsm_dos_enable();
 
@@ -121,8 +120,7 @@ DEFUN (no_dos_frag_error_enable,
 		"fragment error\n")
 {
 	int ret = ERROR;
-	if (argc < 1)
-		return CMD_WARNING;
+
 	if(!nsm_dos_is_enable())
 		nsm_dos_enable();
 
@@ -139,8 +137,7 @@ DEFUN (dozpl_zpl_int16_hdr_enable,
 		"short-hdr\n")
 {
 	int ret = ERROR;
-	if (argc < 1)
-		return CMD_WARNING;
+
 	if(!nsm_dos_is_enable())
 		nsm_dos_enable();
 
@@ -158,8 +155,7 @@ DEFUN (no_dozpl_zpl_int16_hdr_enable,
 		"short-hdr\n")
 {
 	int ret = ERROR;
-	if (argc < 1)
-		return CMD_WARNING;
+
 	if(!nsm_dos_is_enable())
 		nsm_dos_enable();
 
@@ -263,8 +259,7 @@ DEFUN (dos_lan_drip_enable,
 		"short-hdr\n")
 {
 	int ret = ERROR;
-	if (argc < 1)
-		return CMD_WARNING;
+
 	if(!nsm_dos_is_enable())
 		nsm_dos_enable();
 
@@ -282,8 +277,7 @@ DEFUN (no_dos_lan_drip_enable,
 		"short-hdr\n")
 {
 	int ret = ERROR;
-	if (argc < 1)
-		return CMD_WARNING;
+
 	if(!nsm_dos_is_enable())
 		nsm_dos_enable();
 
@@ -364,8 +358,7 @@ DEFUN (no_dos_tcp_hdr_size_enable,
 {
 	int ret = ERROR;
 	int value = 0;
-	if (argc < 1)
-		return CMD_WARNING;
+
 	if(!nsm_dos_is_enable())
 		nsm_dos_enable();
 	value = 0;//atoi(argv[1]);

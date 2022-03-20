@@ -84,7 +84,7 @@ extern int process_restart(process_t *process);
 extern int process_stop(process_t *process);
 extern int process_start(process_t *process);
 extern int process_deamon_start(process_t *process);
-extern int process_waitpid_api();
+extern int process_waitpid_api(void);
 
 extern process_t * process_get(process_head *head);
 

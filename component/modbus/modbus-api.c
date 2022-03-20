@@ -44,7 +44,7 @@ MODBUS_API int modbus_mode_set_api(modbus_mode_t mode)
 	return ERROR;
 }
 
-MODBUS_API modbus_mode_t modbus_mode_get_api()
+MODBUS_API modbus_mode_t modbus_mode_get_api(void)
 {
 	if(modbus_config)
 	{
@@ -63,7 +63,7 @@ int modbus_type_set_api(modbus_type_t type)
 	return ERROR;
 }
 
-modbus_type_t modbus_type_get_api()
+modbus_type_t modbus_type_get_api(void)
 {
 	if(modbus_config)
 	{
@@ -82,7 +82,7 @@ int modbus_id_set_api(zpl_uint32 id)
 	return ERROR;
 }
 
-zpl_uint32 modbus_id_get_api()
+zpl_uint32 modbus_id_get_api(void)
 {
 	if(modbus_config)
 	{
@@ -101,7 +101,7 @@ int modbus_port_set_api(zpl_uint16 port)
 	return ERROR;
 }
 
-zpl_uint16 modbus_port_get_api()
+zpl_uint16 modbus_port_get_api(void)
 {
 	if(modbus_config)
 	{
@@ -122,7 +122,7 @@ int modbus_device_set_api(zpl_char *name)
 	return ERROR;
 }
 
-zpl_char* modbus_device_get_api()
+zpl_char* modbus_device_get_api(void)
 {
 	if(modbus_config)
 	{
@@ -141,7 +141,7 @@ int modbus_baudrate_set_api(zpl_uint32 baudrate)
 	return ERROR;
 }
 
-zpl_uint32 modbus_baudrate_get_api()
+zpl_uint32 modbus_baudrate_get_api(void)
 {
 	if(modbus_config)
 	{
@@ -175,7 +175,7 @@ int modbus_input_registers_set_api(zpl_double tempAverage, zpl_double tempMax, z
 	return ERROR;
 }
 
-int modbus_start_api()
+int modbus_start_api(void)
 {
 	if(modbus_config)
 	{
@@ -234,7 +234,7 @@ int modbus_start_api()
 
 
 
-int modbus_stop_api()
+int modbus_stop_api(void)
 {
 	if(modbus_config)
 	{
@@ -372,7 +372,7 @@ static int modbus_main_task(void *p)
 
 
 
-int modbus_module_init()
+int modbus_module_init(void)
 {
 	if(modbus_config == NULL)
 	{
@@ -388,12 +388,12 @@ int modbus_module_init()
 	return OK;
 }
 
-int modbus_module_exit()
+int modbus_module_exit(void)
 {
 	return OK;
 }
 
-int modbus_module_task_init()
+int modbus_module_task_init(void)
 {
 #ifdef OS_WIN32
 	if(modbus_config)
@@ -411,7 +411,7 @@ int modbus_module_task_init()
 	return ERROR;
 }
 
-int modbus_module_task_exit()
+int modbus_module_task_exit(void)
 {
 	if(modbus_config)
 	{

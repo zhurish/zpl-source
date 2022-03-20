@@ -204,6 +204,13 @@ int hal_ipcmsg_send_message(int unit, zpl_uint32 command, void *ipcmsg, int len)
     return hal_ipcsrv_send_message(unit, command, ipcmsg, len);
 }
 
+int hal_ipcmsg_send_andget_message(int unit, zpl_uint32 command, void *ipcmsg, int len,  struct hal_ipcmsg_getval *getvalue)
+{
+    HAL_ENTER_FUNC();
+    return hal_ipcsrv_send_and_get_message(unit, command, ipcmsg, len, getvalue);
+}
+
+
 int hal_ipcmsg_send_cmd(int unit, zpl_uint32 command, struct hal_ipcmsg *src_ipcmsg)
 {
     HAL_ENTER_FUNC();
@@ -216,36 +223,13 @@ int hal_ipcmsg_send(int unit, struct hal_ipcmsg *src_ipcmsg)
     return hal_ipcsrv_send_ipcmsg(unit, src_ipcmsg);
 }
 
-
-
-int hal_ipcmsg_port_set(struct hal_ipcmsg *ipcmsg, ifindex_t ifindex)
+int hal_ipcmsg_getmsg_callback(int unit, zpl_uint32 command, void *ipcmsg, int len, 
+    struct hal_ipcmsg_getval *getvalue, struct hal_ipcmsg_callback *callback)
 {
-    hal_ipcmsg_putl(ipcmsg, ifindex);
-    hal_ipcmsg_putl(ipcmsg, IF_IFINDEX_VRFID_GET(ifindex));
-    hal_ipcmsg_putw(ipcmsg, IF_IFINDEX_VLAN_GET(ifindex));
-    hal_ipcmsg_putl(ipcmsg, IF_IFINDEX_PHYID_GET(ifindex));
-    return OK;
+    HAL_ENTER_FUNC();
+    return hal_ipcsrv_getmsg_callback(unit, command, ipcmsg, len, getvalue, callback);
 }
 
-int hal_ipcmsg_global_set(ifindex_t ifindex, hal_global_header_t *glo)
-{
-    //glo->type = IF_IFINDEX_TYPE_GET(ifindex);
-    glo->vrfid = htonl(IF_IFINDEX_VRFID_GET(ifindex));
-    //port->ifindex = htonl(ifindex);
-    //glo->vlanid = htons(IF_IFINDEX_VLAN_GET(ifindex));
-    //glo->value = htonl(IF_IFINDEX_PHYID_GET(ifindex));
-    return OK;
-}
-
-int hal_ipcmsg_table_set(ifindex_t ifindex, hal_table_header_t *table)
-{
-    //glo->type = IF_IFINDEX_TYPE_GET(ifindex);
-    table->vrfid = htonl(IF_IFINDEX_VRFID_GET(ifindex));
-    //port->ifindex = htonl(ifindex);
-    //port->vlanid = htons(IF_IFINDEX_VLAN_GET(ifindex));
-    //port->phyport = htonl(IF_IFINDEX_PHYID_GET(ifindex));
-    return OK;
-}
 
 int hal_ipcmsg_data_set(struct hal_ipcmsg *ipcmsg, ifindex_t ifindex, 
     zpl_vlan_t vlanid, zpl_uint8 pri)
@@ -258,6 +242,29 @@ int hal_ipcmsg_data_set(struct hal_ipcmsg *ipcmsg, ifindex_t ifindex,
     return OK;
 }
 
+int hal_ipcmsg_getval_set(struct hal_ipcmsg *ipcmsg, struct hal_ipcmsg_getval *val)
+{
+    hal_ipcmsg_putl(ipcmsg, val->vrfid);
+    hal_ipcmsg_putl(ipcmsg, val->l3ifid);
+    hal_ipcmsg_putl(ipcmsg, val->nhid);
+    hal_ipcmsg_putl(ipcmsg, val->routeid);
+    hal_ipcmsg_putl(ipcmsg, val->resource);
+    hal_ipcmsg_putl(ipcmsg, val->state);
+    hal_ipcmsg_putl(ipcmsg, val->value);
+    return OK;  
+}
+
+int hal_ipcmsg_getval_get(struct hal_ipcmsg *ipcmsg, struct hal_ipcmsg_getval *val)
+{
+    hal_ipcmsg_getl(ipcmsg, &val->vrfid);
+    hal_ipcmsg_getl(ipcmsg, &val->l3ifid);
+    hal_ipcmsg_getl(ipcmsg, &val->nhid);
+    hal_ipcmsg_getl(ipcmsg, &val->routeid);
+    hal_ipcmsg_getl(ipcmsg, &val->resource);
+    hal_ipcmsg_getl(ipcmsg, &val->state);
+    hal_ipcmsg_getl(ipcmsg, &val->value);
+    return OK;  
+}
 int hal_ipcmsg_data_get(struct hal_ipcmsg *ipcmsg, hal_data_header_t *datahdr)
 {
     hal_ipcmsg_getl(ipcmsg, &datahdr->ifindex);
@@ -268,28 +275,86 @@ int hal_ipcmsg_data_get(struct hal_ipcmsg *ipcmsg, hal_data_header_t *datahdr)
     return OK;
 }
 
-int hal_ipcmsg_global_get(struct hal_ipcmsg *ipcmsg, hal_global_header_t *glo)
-{
-    hal_ipcmsg_getl(ipcmsg, &glo->vrfid);
-    hal_ipcmsg_getw(ipcmsg, &glo->vlanid);
-    hal_ipcmsg_getl(ipcmsg, &glo->value);
+
+int hal_ipcmsg_port_set(struct hal_ipcmsg *ipcmsg, ifindex_t ifindex)
+{ 
+    hal_ipcmsg_putc(ipcmsg, 1); 
+    hal_ipcmsg_putc(ipcmsg, IF_IFINDEX_TYPE_GET(ifindex));
+    hal_ipcmsg_putw(ipcmsg, IF_IFINDEX_VRFID_GET(ifindex));
+    hal_ipcmsg_putl(ipcmsg, IF_IFINDEX_PHYID_GET(ifindex));
     return OK;
 }
 
 int hal_ipcmsg_port_get(struct hal_ipcmsg *ipcmsg, hal_port_header_t *bspport)
 {
-    hal_ipcmsg_getl(ipcmsg, &bspport->ifindex);
-    hal_ipcmsg_getl(ipcmsg, &bspport->vrfid);
-    hal_ipcmsg_getw(ipcmsg, &bspport->vlanid);
+    hal_ipcmsg_getc(ipcmsg, &bspport->num);
+    hal_ipcmsg_getc(ipcmsg, &bspport->type);
+    hal_ipcmsg_getw(ipcmsg, &bspport->vrfid);
     hal_ipcmsg_getl(ipcmsg, &bspport->phyport);
+    return OK;
+}
+
+int hal_ipcmsg_port_table_set(struct hal_ipcmsg *ipcmsg, zpl_uint8 port_num, hal_port_table_t *table)
+{ 
+    int num = 0;
+    hal_ipcmsg_putc(ipcmsg, port_num); 
+    for(num = 0; num < port_num; num++)
+    {
+        hal_ipcmsg_putc(ipcmsg, &table[num].type);
+        hal_ipcmsg_putw(ipcmsg, &table[num].vrfid);
+        hal_ipcmsg_putl(ipcmsg, &table[num].phyport);
+    }
+    return OK;
+}
+
+int hal_ipcmsg_port_table_get(struct hal_ipcmsg *ipcmsg, zpl_uint8 *port_num, hal_port_table_t *table)
+{
+    int num = 0;
+    hal_ipcmsg_getc(ipcmsg, num);
+    for(num = 0; num < *port_num; num++)
+    {
+        hal_ipcmsg_getc(ipcmsg, &table[num].type);
+        hal_ipcmsg_getw(ipcmsg, &table[num].vrfid);
+        hal_ipcmsg_getl(ipcmsg, &table[num].phyport);
+    }
+    return OK;
+}
+
+int hal_ipcmsg_global_set(struct hal_ipcmsg *ipcmsg, hal_global_header_t *glo)
+{
+    hal_ipcmsg_putl(ipcmsg, &glo->vrfid);
+    hal_ipcmsg_putl(ipcmsg, &glo->value);
+    hal_ipcmsg_putl(ipcmsg, &glo->value1);
+    hal_ipcmsg_putl(ipcmsg, &glo->value2);
+    return OK;
+}
+
+int hal_ipcmsg_global_get(struct hal_ipcmsg *ipcmsg, hal_global_header_t *glo)
+{
+    hal_ipcmsg_getl(ipcmsg, &glo->vrfid);
+    hal_ipcmsg_getl(ipcmsg, &glo->value);
+    hal_ipcmsg_getl(ipcmsg, &glo->value1);
+    hal_ipcmsg_getl(ipcmsg, &glo->value2);
+    return OK;
+}
+
+int hal_ipcmsg_table_set(struct hal_ipcmsg *ipcmsg, hal_table_header_t *table)
+{
+    hal_ipcmsg_putl(ipcmsg, &table->vrfid);
+    hal_ipcmsg_putl(ipcmsg, &table->table);
+    hal_ipcmsg_putl(ipcmsg, &table->value);
+    hal_ipcmsg_putl(ipcmsg, &table->value1);
+    hal_ipcmsg_putl(ipcmsg, &table->value2);
     return OK;
 }
 
 int hal_ipcmsg_table_get(struct hal_ipcmsg *ipcmsg, hal_table_header_t *table)
 {
     hal_ipcmsg_getl(ipcmsg, &table->vrfid);
-    hal_ipcmsg_getw(ipcmsg, &table->vlanid);
     hal_ipcmsg_getl(ipcmsg, &table->table);
+    hal_ipcmsg_getl(ipcmsg, &table->value);
+    hal_ipcmsg_getl(ipcmsg, &table->value1);
+    hal_ipcmsg_getl(ipcmsg, &table->value2);
     return OK;
 }
 

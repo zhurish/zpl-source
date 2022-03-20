@@ -16,8 +16,10 @@ extern "C"
 #define NO_SDK OK
 #endif
 
-#define BSP_ENTER_FUNC() zlog_debug(MODULE_BSP, "Into %s line %d", __func__, __LINE__)
-#define BSP_LEAVE_FUNC() zlog_debug(MODULE_BSP, "Leave %s line %d", __func__, __LINE__)
+//#define BSP_ENTER_FUNC() zlog_debug(MODULE_BSP, "Into %s line %d", __func__, __LINE__)
+//#define BSP_LEAVE_FUNC() zlog_debug(MODULE_BSP, "Leave %s line %d", __func__, __LINE__)
+#define BSP_ENTER_FUNC() 
+#define BSP_LEAVE_FUNC() 
 
   enum event
   {
@@ -72,7 +74,9 @@ extern "C"
   extern int hal_client_destroy(struct hal_client *hal_client);
   extern int hal_client_start(struct hal_client *hal_client);
   extern int hal_client_send_return(struct hal_client *hal_client, int ret, char *fmt, ...);
-
+  extern int hal_client_send_result(struct hal_client *hal_client, int ret, struct hal_ipcmsg_getval *getvalue);
+  extern int hal_client_send_result_msg(struct hal_client *hal_client, int ret, struct hal_ipcmsg_getval *getvalue, 
+    int subcmd, char *msg, int len);
   extern int hal_client_callback(struct hal_client *, int (*bsp_handle)(struct hal_client *, zpl_uint32, void *), void *);
 
   extern void hal_client_event(enum event event, struct hal_client *hal_client, int val);

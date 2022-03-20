@@ -226,16 +226,16 @@ DEFUN (monitor_session_destination,
 		ifindex = if_ifindex_make(argv[1], argv[2]);
 		if(ifindex)
 		{
-			if(!nsm_mirror_is_destination_api( ifindex, &index))
+			if(nsm_mirror_is_destination_api( ifindex, &index))
 			{
-				vty_out(vty, "ERROR: this mirror destination interface is not enable.%s", VTY_NEWLINE);
+				vty_out(vty, "ERROR: this mirror destination interface is already enable.%s", VTY_NEWLINE);
 				return CMD_WARNING;
 			}
 			if(index == atoi(argv[0]))
 			{
 				return CMD_SUCCESS;
 			}
-			else
+			else if(index > 0)
 			{
 				vty_out(vty, "ERROR: this mirror destination interface is enable in anther session.%s", VTY_NEWLINE);
 				return CMD_WARNING;
@@ -295,7 +295,16 @@ DEFUN (no_monitor_session_destination,
 }
 
 
-
+DEFUN(show_monitor_session,
+      show_monitor_session_cmd,
+    "show monitor session",
+    SHOW_STR
+	"Monitor configure\n"
+	"Session configure\n")
+{
+	bulid_mirror_show(vty);
+    return CMD_SUCCESS;
+}
 
 
 void cmd_mirror_init(void)
@@ -312,4 +321,7 @@ void cmd_mirror_init(void)
 
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &monitor_session_destination_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_monitor_session_destination_cmd);
+
+	install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_monitor_session_cmd);
+	install_element(CONFIG_NODE, CMD_VIEW_LEVEL, &show_monitor_session_cmd);
 }

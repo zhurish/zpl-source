@@ -59,9 +59,9 @@ typedef struct sdk_driver {
 
 #endif
 extern sdk_driver_t *__msdkdriver;
-extern zpl_uint64 ether_addr_to_u64(const zpl_uint8 *addr);
-extern void u64_to_ether_addr(zpl_uint64 u, zpl_uint8 *addr);
-extern bool is_multicast_ether_addr(const u8 *addr);
+extern zpl_uint64 sdk_ether_addr_u64(const zpl_uint8 *addr);
+extern void sdk_u64_ether_addr(zpl_uint64 u, zpl_uint8 *addr);
+extern bool sdk_is_multicast_ether_addr(const u8 *addr);
 
 
 extern int sdk_driver_init(struct bsp_driver *, sdk_driver_t *);

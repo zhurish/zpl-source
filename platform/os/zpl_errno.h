@@ -39,6 +39,8 @@ enum zpl_errno
 	ZPL_ERRNO_UNKNOW
 };
 
+extern void zpl_errno_set(int zpl_errno);
+extern int zpl_errno_get(void);
 extern const char *zpl_strerror(int zpl_errno);
 /* Safe version of strerror -- never returns NULL. */
 extern const char *ipstack_strerror(int errnum);

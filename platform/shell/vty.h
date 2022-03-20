@@ -256,7 +256,7 @@ typedef struct cli_shell_s
 #endif
 	struct tty_com	ttycom;
 	struct vty *vty;
-
+  struct vty *cli_shell_vty;
   int do_log_commands;
   void (*vty_ctrl_cmd)(zpl_uint32 ctrl, struct vty *vty);
   int init;
@@ -394,6 +394,8 @@ extern int vty_read_handle(struct vty *vty, zpl_uchar *buf, zpl_uint32 len);
 extern int vty_out (struct vty *, const char *, ...) PRINTF_ATTRIBUTE(2, 3);
 extern int vty_sync_out(struct vty *vty, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
 extern void vty_close (struct vty *);
+
+extern int cli_shell_result (const char *, ...) PRINTF_ATTRIBUTE(1, 2);
 
 extern int vty_config_lock (struct vty *);
 extern int vty_config_unlock (struct vty *);

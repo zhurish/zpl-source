@@ -557,7 +557,7 @@ PUBLIC void websUploadSetDir(char *dirb)
 }
 
 
-PUBLIC char * websUploadGetDir()
+PUBLIC char * websUploadGetDir(void)
 {
 	return _upload_dir;
 }

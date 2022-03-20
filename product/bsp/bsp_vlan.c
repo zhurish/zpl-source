@@ -53,23 +53,15 @@ static int bsp_vlan_batch_create(void *driver, hal_port_header_t *port, hal_vlan
 	return ret;
 }
 
-static int bsp_vlan_untag_port(void *driver, hal_port_header_t *port, hal_vlan_param_t *param)
+
+
+
+static int bsp_port_access_vlan(void *driver, hal_port_header_t *port, hal_vlan_param_t *param)
 {
 	int ret = NO_SDK;
 	BSP_ENTER_FUNC();
-	if(driver && sdk_vlan.sdk_vlan_untag_port)
-		ret = sdk_vlan.sdk_vlan_untag_port(driver, param->enable, port->phyport, param->vlan);
-	BSP_LEAVE_FUNC();	
-	return ret;
-}
-
-
-static int bsp_vlan_tag_port(void *driver, hal_port_header_t *port, hal_vlan_param_t *param)
-{
-	int ret = NO_SDK;
-	BSP_ENTER_FUNC();
-	if(driver && sdk_vlan.sdk_vlan_tag_port)
-		ret = sdk_vlan.sdk_vlan_tag_port(driver, param->enable, port->phyport, param->vlan);
+	if(driver && sdk_vlan.sdk_port_access_vlan)
+		ret = sdk_vlan.sdk_port_access_vlan(driver, param->enable, port->phyport, param->vlan);
 	BSP_LEAVE_FUNC();	
 	return ret;
 }
@@ -132,15 +124,16 @@ static hal_ipcsubcmd_callback_t subcmd_table[] = {
 	HAL_CALLBACK_ENTRY(HAL_VLAN_NONE, NULL),
 	HAL_CALLBACK_ENTRY(HAL_VLAN, bsp_vlan_enable),
 	HAL_CALLBACK_ENTRY(HAL_VLAN_CREATE, bsp_vlan_create),
+	HAL_CALLBACK_ENTRY(HAL_VLAN_DELETE, bsp_vlan_create),
 	HAL_CALLBACK_ENTRY(HAL_VLAN_RANGE_CREATE, bsp_vlan_batch_create),
-
-	HAL_CALLBACK_ENTRY(HAL_VLAN_UNTAG, bsp_vlan_untag_port),
-	HAL_CALLBACK_ENTRY(HAL_VLAN_TAG, bsp_vlan_tag_port),
+	HAL_CALLBACK_ENTRY(HAL_VLAN_RANGE_DELETE, bsp_vlan_batch_create),
+	HAL_CALLBACK_ENTRY(HAL_VLAN_ACCESS, bsp_port_access_vlan),
 	HAL_CALLBACK_ENTRY(HAL_VLAN_NATIVE, bsp_port_native_vlan),
 	HAL_CALLBACK_ENTRY(HAL_VLAN_ALLOWE, bsp_port_allowed_tag_vlan),
 	HAL_CALLBACK_ENTRY(HAL_VLAN_RANGE_ALLOWE, bsp_port_allowed_tag_batch_vlan),
 	HAL_CALLBACK_ENTRY(HAL_VLAN_PORT_BASE, bsp_port_set_vlan),
 };
+
 
 int bsp_vlan_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 subcmd, void *driver)
 {
@@ -167,28 +160,35 @@ int bsp_vlan_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32
 	break;
 	case HAL_VLAN_RANGE_CREATE:
     case HAL_VLAN_RANGE_DELETE:
-	hal_ipcmsg_getl(&client->ipcmsg, &param.num);
-	for(i = 0; i < param.num; i++)
-		hal_ipcmsg_getw(&client->ipcmsg, &vlantbl[i]);
+	{
+		if(HAL_VLAN_RANGE_CREATE == subcmd)
+			param.enable = zpl_true;
+		else
+			param.enable = zpl_false;	
+
+		hal_ipcmsg_getl(&client->ipcmsg, &param.num);
+		for(i = 0; i < param.num; i++)
+			hal_ipcmsg_getw(&client->ipcmsg, &vlantbl[i]);
+	}
 	break;	
     //PORT
-    case HAL_VLAN_UNTAG:
-    case HAL_VLAN_TAG:
+    case HAL_VLAN_ACCESS:
     case HAL_VLAN_NATIVE:
     case HAL_VLAN_ALLOWE:
 	case HAL_VLAN_PORT_BASE:
-	hal_ipcmsg_port_get(&client->ipcmsg, &bspport);
-	hal_ipcmsg_getl(&client->ipcmsg, &param.enable);
-	hal_ipcmsg_getw(&client->ipcmsg, &param.vlan);
-	hal_ipcmsg_getw(&client->ipcmsg, &param.vlan_end);
+		hal_ipcmsg_port_get(&client->ipcmsg, &bspport);
+		hal_ipcmsg_getl(&client->ipcmsg, &param.enable);
+		hal_ipcmsg_getw(&client->ipcmsg, &param.vlan);
+		hal_ipcmsg_getw(&client->ipcmsg, &param.vlan_end);
 	break;
     case HAL_VLAN_RANGE_ALLOWE:
-	hal_ipcmsg_getl(&client->ipcmsg, &param.enable);
-	hal_ipcmsg_getl(&client->ipcmsg, &param.num);
-	for(i = 0; i < param.num; i++)
-		hal_ipcmsg_getw(&client->ipcmsg, &vlantbl[i]);
+		hal_ipcmsg_getl(&client->ipcmsg, &param.enable);
+		hal_ipcmsg_getl(&client->ipcmsg, &param.num);
+		for(i = 0; i < param.num; i++)
+			hal_ipcmsg_getw(&client->ipcmsg, &vlantbl[i]);
 	break;
-    
+	default:
+	break;
 	}
 
 	if(!(subcmd_table[subcmd].cmd_handle))

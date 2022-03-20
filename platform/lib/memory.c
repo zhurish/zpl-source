@@ -461,7 +461,6 @@ int vty_show_memory_cmd(void *p)
 void memory_init(void)
 {
   /*  install_element (RESTRICTED_NODE, CMD_VIEW_LEVEL, &show_memory_cmd);*/
-
   //install_element (VIEW_NODE, CMD_VIEW_LEVEL, &show_memory_cmd);
 }
 

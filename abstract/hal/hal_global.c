@@ -35,7 +35,7 @@ int hal_switch_mode(zpl_bool manage)
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
-	command = IPCCMD_SET(HAL_MODULE_GLOBAL, HAL_MODULE_CMD_REQ, HAL_SWITCH_MANEGE);
+	command = IPCCMD_SET(HAL_MODULE_GLOBAL, HAL_MODULE_CMD_REQ, HAL_GLOBAL_MANEGE);
 	return hal_ipcmsg_send_message(IF_UNIT_ALL, 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -46,7 +46,7 @@ int hal_switch_forward(zpl_bool enable)
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
-	command = IPCCMD_SET(HAL_MODULE_GLOBAL, HAL_MODULE_CMD_REQ, HAL_SWITCH_FORWARD);
+	command = IPCCMD_SET(HAL_MODULE_GLOBAL, HAL_MODULE_CMD_REQ, HAL_GLOBAL_FORWARD);
 	return hal_ipcmsg_send_message(IF_UNIT_ALL, 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -58,7 +58,7 @@ int hal_multicast_flood(zpl_bool enable)
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
-	command = IPCCMD_SET(HAL_MODULE_GLOBAL, HAL_MODULE_CMD_REQ, HAL_SWITCH_MULTICAST_FLOOD);
+	command = IPCCMD_SET(HAL_MODULE_GLOBAL, HAL_MODULE_CMD_REQ, HAL_GLOBAL_MULTICAST_FLOOD);
 	return hal_ipcmsg_send_message(IF_UNIT_ALL, 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -69,7 +69,7 @@ int hal_unicast_flood(zpl_bool enable)
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
-	command = IPCCMD_SET(HAL_MODULE_GLOBAL, HAL_MODULE_CMD_REQ, HAL_SWITCH_UNICAST_FLOOD);
+	command = IPCCMD_SET(HAL_MODULE_GLOBAL, HAL_MODULE_CMD_REQ, HAL_GLOBAL_UNICAST_FLOOD);
 	return hal_ipcmsg_send_message(IF_UNIT_ALL, 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -81,7 +81,7 @@ int hal_multicast_learning(zpl_bool enable)
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
-	command = IPCCMD_SET(HAL_MODULE_GLOBAL, HAL_MODULE_CMD_REQ, HAL_SWITCH_MULTICAST_LEARNING);
+	command = IPCCMD_SET(HAL_MODULE_GLOBAL, HAL_MODULE_CMD_REQ, HAL_GLOBAL_MULTICAST_LEARNING);
 	return hal_ipcmsg_send_message(IF_UNIT_ALL, 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -93,7 +93,7 @@ int hal_global_bpdu_enable(zpl_bool enable)
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
-	command = IPCCMD_SET(HAL_MODULE_GLOBAL, HAL_MODULE_CMD_REQ, HAL_SWITCH_BPDU);
+	command = IPCCMD_SET(HAL_MODULE_GLOBAL, HAL_MODULE_CMD_REQ, HAL_GLOBAL_BPDU);
 	return hal_ipcmsg_send_message(IF_UNIT_ALL, 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
@@ -106,9 +106,22 @@ int hal_global_aging_time(zpl_uint32 value)
 	char buf[512];
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_putl(&ipcmsg, value);
-	command = IPCCMD_SET(HAL_MODULE_GLOBAL, HAL_MODULE_CMD_REQ, HAL_SWITCH_AGINT);
+	command = IPCCMD_SET(HAL_MODULE_GLOBAL, HAL_MODULE_CMD_REQ, HAL_GLOBAL_AGINT);
 	return hal_ipcmsg_send_message(IF_UNIT_ALL, 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
 
+int hal_port_wan_set(ifindex_t ifindex, zpl_bool enable)
+{
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	HAL_ENTER_FUNC();
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	hal_ipcmsg_port_set(&ipcmsg, ifindex);
+	hal_ipcmsg_putl(&ipcmsg, enable);
+	command = IPCCMD_SET(HAL_MODULE_GLOBAL, HAL_MODULE_CMD_REQ, HAL_GLOBAL_WAN_PORT);
+	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
+}

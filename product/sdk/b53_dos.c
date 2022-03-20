@@ -365,7 +365,7 @@ DEFUN (b53125_sdk_dos_test,
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
-int b53125_dos_init(void)
+int b53125_dos_init(sdk_driver_t *dev)
 {
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &b53125_sdk_dos_test_cmd);
 	sdk_dos.sdk_dos_enable_cb = b53125_dos_type_enable;

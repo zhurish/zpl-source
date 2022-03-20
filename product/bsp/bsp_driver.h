@@ -33,7 +33,25 @@ typedef struct bsp_driver
 
     zpl_void *sdk_driver;
 } bsp_driver_t;
-  
+
+#ifndef ZPL_SDK_MODULE
+typedef struct sdk_driver {
+
+	zpl_phyport_t 	cpu_port;
+	zpl_uint32 		num_vlans;
+	zpl_phyport_t 	num_ports;
+
+	void 			*sdk_device;
+}sdk_driver_t;
+
+extern sdk_driver_t *__msdkdriver;
+extern int sdk_driver_init(struct bsp_driver *, sdk_driver_t *);
+extern int sdk_driver_start(struct bsp_driver *, sdk_driver_t *);
+extern int sdk_driver_stop(struct bsp_driver *, sdk_driver_t *);
+extern int sdk_driver_exit(struct bsp_driver *, sdk_driver_t *);
+
+#endif
+
 extern bsp_driver_t bsp_driver;
 
 extern int bsp_driver_msg_handle(struct hal_client *client, zpl_uint32 cmd, void *driver);

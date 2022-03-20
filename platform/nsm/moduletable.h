@@ -5,8 +5,8 @@
  *      Author: zhurish
  */
 
-#ifndef __LIB_MODULE_TABLE_H__
-#define __LIB_MODULE_H__
+#ifndef __ZPLIB_MODULE_TABLE_H__
+#define __ZPLIB_MODULE_TABLE_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -20,23 +20,23 @@ extern "C" {
 
 extern struct module_alllist module_lists_tbl[MODULE_MAX];
 
-extern int pl_module_name_show(void);
+extern int zplib_module_name_show(void);
 
-extern int pl_module_allinit(void);
-extern int pl_module_allexit(void);
-extern int pl_module_task_allinit(void);
-extern int pl_module_task_allexit(void);
-extern int pl_module_cmd_allinit(void);
+extern int zplib_module_initall(void);
+extern int zplib_module_exitall(void);
+extern int zplib_module_task_startall(void);
+extern int zplib_module_task_stopall(void);
+extern int zplib_module_cmd_all(void);
 
-extern int pl_module_name_init(const char * name);
-extern int pl_module_init(zpl_uint32 module);
-extern int pl_module_exit(zpl_uint32 module);
-extern int pl_module_task_name_init(const char * name);
-extern int pl_module_task_init(zpl_uint32 module);
-extern int pl_module_task_exit(zpl_uint32 module);
-extern int pl_module_cmd_name_init(const char * name);
-extern int pl_module_cmd_init(zpl_uint32 module);
-extern struct module_list * pl_module_info(zpl_uint32 module);
+extern int zplib_module_name_init(const char * name);
+extern int zplib_module_init(zpl_uint32 module);
+extern int zplib_module_exit(zpl_uint32 module);
+extern int zplib_module_task_name_init(const char * name);
+extern int zplib_module_task_init(zpl_uint32 module);
+extern int zplib_module_task_exit(zpl_uint32 module);
+extern int zplib_module_cmd_name_init(const char * name);
+extern int zplib_module_cmd_init(zpl_uint32 module);
+extern struct module_list * zplib_module_info(zpl_uint32 module);
 
 extern int submodule_setup(zpl_uint32 module, zpl_uint32 submodule, char *name, zpl_uint32 taskid);
 
@@ -46,4 +46,4 @@ extern int submodule_setup(zpl_uint32 module, zpl_uint32 submodule, char *name, 
 }
 #endif
 
-#endif /* __LIB_MODULE_TABLE_H__ */
+#endif /* __ZPLIB_MODULE_TABLE_H__ */

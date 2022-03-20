@@ -47,6 +47,7 @@ static int hal_main_task(void *p)
 
 int hal_module_init(void)
 {
+	memset(&hal_driver, 0, sizeof(hal_driver_t));
 	hal_driver.master = thread_master_module_create(MODULE_HAL);
 	hal_ipcsrv_init(hal_driver.master, -1, HAL_IPCMSG_CMD_PATH, -1, HAL_IPCMSG_EVENT_PATH);
 	return OK;

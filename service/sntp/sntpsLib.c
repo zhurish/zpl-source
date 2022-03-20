@@ -981,7 +981,7 @@ DEFUN (no_sntps_server_mode,
 		"sntp server configure\n"
 		"enable sntp server\n")
 #else
-static int no_sntps_server_mode_cmd()
+static int no_sntps_server_mode_cmd(void)
 #endif
 {
 	if(sntp_server == NULL)
@@ -1036,7 +1036,7 @@ DEFUN (no_sntps_server_interval,
 		"sntp server configure\n"
 		"poll-interval\n")
 #else
-static int no_sntps_server_interval_cmd()
+static int no_sntps_server_interval_cmd(void)
 #endif
 {
 	if(sntp_server == NULL)
@@ -1090,7 +1090,7 @@ DEFUN (no_sntps_server_listen_port,
 		"sntp server configure\n"
 		"sntp server ipstack_listen port configure\n")
 #else
-static int no_sntps_server_listen_port_cmd()
+static int no_sntps_server_listen_port_cmd(void)
 #endif
 {
 	if(sntp_server == NULL)
@@ -1139,7 +1139,7 @@ DEFUN (no_sntps_version,
 		"sntp server configure\n"
 		"sntp protocol version information\n")
 #else
-static int no_sntps_version_cmd()
+static int no_sntps_version_cmd(void)
 #endif
 {
 	if(sntp_server == NULL)
@@ -1162,7 +1162,7 @@ DEFUN (sntps_debug,
 		"sntp protocol configure\n"
 		"SNTP Server timespec infomation\n")
 #else
-static int sntps_debug_cmd()
+static int sntps_debug_cmd(void)
 #endif
 {
 	if(sntp_server == NULL)
@@ -1179,7 +1179,7 @@ DEFUN (no_sntps_debug,
 		"sntp protocol configure\n"
 		"SNTP Server timespec infomation\n")
 #else
-static int no_sntps_debug_cmd()
+static int no_sntps_debug_cmd(void)
 #endif
 {
 	if(sntp_server == NULL)
@@ -1216,7 +1216,7 @@ DEFUN (no_sntps_mutilcast_ttl,
 		"sntp mutilcast information\n"
 		"mutilcast IPSTACK_TTL configure\n")
 #else
-static int no_sntps_mutilcast_ttl_cmd()
+static int no_sntps_mutilcast_ttl_cmd(void)
 #endif
 {
 	if(sntp_server == NULL)
@@ -1443,7 +1443,7 @@ int sntpsInit(void *m)
 				sntp_server->version, sntp_server->mode);
 	}
 	//sntp_server->
-	//install_default (SERVICE_NODE);
+	//install_default (ALL_SERVICE_NODE);
 #ifdef SNTPS_CLI_ENABLE
 	install_element (ENABLE_NODE, CMD_VIEW_LEVEL, &show_sntps_server_cmd);
 

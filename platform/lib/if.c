@@ -334,7 +334,7 @@ if_create_vrf_dynamic(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 	ifp->mtu = IF_MTU_DEFAULT;
 	ifp->mtu6 = IF_MTU_DEFAULT;
 
-	ifp->if_mode = IF_MODE_ACCESS_L2;
+	ifp->if_mode = IF_MODE_DEFAULT;
 
 	ifp->flags |= IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING;
 
@@ -397,7 +397,7 @@ if_create_vrf(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 	ifp->mtu = IF_MTU_DEFAULT;
 	ifp->mtu6 = IF_MTU_DEFAULT;
 
-	ifp->if_mode = IF_MODE_ACCESS_L2;
+	ifp->if_mode = IF_MODE_DEFAULT;
 
 	ifp->flags |= IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING;
 
@@ -731,6 +731,13 @@ int if_update_l3intfid2(struct interface *ifp, zpl_phyport_t l3intfid)
 {
 	ifp->l3intfid = l3intfid;
 	return OK;
+}
+
+void *if_module_data(struct interface *ifp, module_t mid)
+{
+	if(mid >= MODULE_NONE && mid < MODULE_MAX)
+		return ifp->info[mid];
+	return NULL;	
 }
 
 vrf_id_t  if_ifindex2vrfid(ifindex_t ifindex)

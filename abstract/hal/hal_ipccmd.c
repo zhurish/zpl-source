@@ -11,7 +11,7 @@ static const struct message hal_module_types[] = {
     DESC_ENTRY(HAL_MODULE_GLOBAL),
     DESC_ENTRY(HAL_MODULE_SWITCH),
     DESC_ENTRY(HAL_MODULE_PORT),
-    DESC_ENTRY(HAL_MODULE_IFADDR),
+    DESC_ENTRY(HAL_MODULE_L3IF),
     DESC_ENTRY(HAL_MODULE_ROUTE),
     DESC_ENTRY(HAL_MODULE_STP),
     DESC_ENTRY(HAL_MODULE_8021X),
@@ -52,6 +52,8 @@ static const char * _hal_cmd_namestr(int cmd)
     return "SET";
 	case HAL_MODULE_CMD_ACK:
     return "ACK";
+	case HAL_MODULE_CMD_GET:
+    return "ACK";    
 	case HAL_MODULE_CMD_REPORT:
     return "REPORT";
 	case HAL_MODULE_CMD_HELLO:

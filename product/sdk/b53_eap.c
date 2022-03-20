@@ -97,10 +97,34 @@ static int b53125_eap_dmac_set(sdk_driver_t *dev, zpl_phyport_t port, mac_t *mac
 	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
-
-
-int b53125_eap_init(void)
+DEFUN (b53125_eap_test,
+		b53125_eap_test_cmd,
+		"sdk-eap enable",
+		"sdk eap\n"
+		"enable\n")
 {
+	int ret = 0;
+	ret = b53125_eap_enable(__msdkdriver, 1);
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+DEFUN (b53125_eap_port_test,
+		b53125_eap_port_test_cmd,
+		"sdk-eap port <0-4> stat <0-4>",
+		"sdk eap\n"
+		"port\n"
+		"phyport id\n"
+		"state\n"
+		"state id\n")
+{
+	int ret = 0;
+	ret = b53125_eap_stat_set(__msdkdriver, atoi(argv[0]), atoi(argv[1]));
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+int b53125_eap_init(sdk_driver_t *dev)
+{
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &b53125_eap_test_cmd);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &b53125_eap_port_test_cmd);
 	sdk_8021x_cb.sdk_8021x_enable_cb = b53125_eap_enable;
 	sdk_8021x_cb.sdk_8021x_port_state_cb = b53125_eap_stat_set;
 	sdk_8021x_cb.sdk_8021x_port_mode_cb = b53125_eap_mode_set;

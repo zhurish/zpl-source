@@ -136,8 +136,8 @@ struct web_download_cb
 
 extern const char * web_type_string(web_app_t *wp);
 extern const char * web_os_type_string(web_app_t *wp);
-extern web_type web_type_get();
-extern web_os web_os_get();
+extern web_type web_type_get(void);
+extern web_os web_os_get(void);
 
 extern int _web_app_debug;
 /*

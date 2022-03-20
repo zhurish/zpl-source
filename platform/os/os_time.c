@@ -1334,7 +1334,7 @@ int os_timezone_set_api(zpl_uint32 tizone, zpl_char *timzstr)
 
 struct time_zone
 {
-	zpl_char *time_zone;
+	const zpl_char *time_zone;
 	zpl_uint32	offset;
 }time_zone_tbl[] =
 {

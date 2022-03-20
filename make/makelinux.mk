@@ -152,7 +152,8 @@ ZPLOS_CFLAGS += -Werror=return-type -Werror=format-extra-args  \
 			  -Werror=unused-function -Werror=redundant-decls -Werror=unused-value \
 			  -Werror=missing-prototypes -Werror=sequence-point -Werror=float-equal \
 			  -Werror=strict-prototypes -Werror=overlength-strings -Werror=unused-label \
-			  -Werror=shift-count-overflow -Werror=bad-function-cast 
+			  -Werror=shift-count-overflow 
+#-Werror=bad-function-cast 
 #
 ZPLOS_CPPFLAGS +=  -Werror=return-type -Werror=unreachable-code -Werror=unused-function \
 				 -Werror=ctor-dtor-privacy  

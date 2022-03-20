@@ -44,6 +44,9 @@ enum hal_switch_cmd
 	HAL_SWITCH_CPU_FLOW,
 };
 
+
+
+
 int hal_module_init(void);
 int hal_module_exit(void);
 int hal_module_task_init(void);

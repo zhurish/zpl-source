@@ -1570,10 +1570,6 @@ int dhcp_client_interface_clean(void)
 //usage:     "\n	USR1	Renew lease"
 //usage:     "\n	USR2	Release lease"
 
-int dhcpc_enable_test()
-{
-	return ERROR;
-}
 
 /*
  *

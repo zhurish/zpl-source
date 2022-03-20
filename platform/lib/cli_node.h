@@ -21,20 +21,17 @@ enum node_type
   VIEW_NODE,			/* View node. Default mode of vty interface. */
   AUTH_ENABLE_NODE,		/* Authentication mode for change enable. */
   ENABLE_NODE,			/* Enable node. */
+
+  
   CONFIG_NODE,			/* Config node. Default mode of config file. */
+  DEBUG_NODE,			/* Debug node. */
+  
+  ALL_CONFIG_NODE,			/* */
 
   VRF_NODE,			/* VRF node. */
   
-  SERVICE_NODE, 		/* Service node. */
   ALL_SERVICE_NODE, 		/* Service node. */
 
-#ifdef IMISH_IMI_MODULE  
-  LINUX_SHELL_NODE,			/* IMI Module protocol node. */
-#endif//IMISH_IMI_MODULE   
-
-  DEBUG_NODE,			/* Debug node. */
-  
-  AAA_NODE,			/* AAA node. */
   KEYCHAIN_NODE,		/* Key-chain node. */
   KEYCHAIN_KEY_NODE,		/* Key-chain key node. */
   DHCPS_NODE,				/* DHDP server*/

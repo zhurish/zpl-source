@@ -325,22 +325,22 @@ endif #ifeq ($(strip $(ZPL_ABSTRACT_MODULE)),true)
 #
 # PRODUCT
 #
-ifeq ($(strip $(ZPL_PRODUCT_MODULE)),true)
+ifeq ($(strip $(ZPL_BSP_MODULE)),true)
 
 ZPLPRODS += $(PRODUCT_ROOT)/bsp
 ZPL_INCLUDE += -I$(PRODUCT_ROOT)/bsp
 ZPL_DEFINE += -DZPL_BSP_MODULE
 
-ifeq ($(strip $(ZPL_PRODUCT_SDK_MODULE)),true)
+ifeq ($(strip $(ZPL_SDK_MODULE)),true)
+ZPL_DEFINE += -DZPL_SDK_MODULE
+ifeq ($(strip $(ZPL_SDK_BCM53125)),true)
 SW_SDK_ROOT=$(PRODUCT_ROOT)/sdk
 ZPLPRODS += $(PRODUCT_ROOT)/sdk
 ZPL_INCLUDE += -I$(PRODUCT_ROOT)/sdk
-ZPL_DEFINE += -DZPL_SDK_MODULE -DZPL_PRODUCT_SDK_MODULE
 ZPL_DEFINE += -DZPL_SDK_BCM53125
-endif #($(strip $(ZPL_PRODUCT_SDK_MODULE)),true)
-
-endif #($(strip $(ZPL_PRODUCT_MODULE)),true)
-
+endif #($(strip $(ZPL_SDK_BCM53125)),true)
+endif #($(strip $(ZPL_SDK_MODULE)),true)
+endif #($(strip $(ZPL_BSP_MODULE)),true)
 
 
 

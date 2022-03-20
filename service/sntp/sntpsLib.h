@@ -97,7 +97,7 @@ extern int sntps_config(struct vty *);
 extern int sntps_debug_config(struct vty *);
 extern int sntpsInit(void *);
 extern int sntpsDisable(void);
-extern int cmd_sntps_init();
+extern int cmd_sntps_init(void);
 //#define SNTPS_CLI_ENABLE
 #ifndef SNTPS_CLI_ENABLE
 enum

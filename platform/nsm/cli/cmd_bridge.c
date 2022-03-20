@@ -28,6 +28,8 @@ DEFUN (bridge_add_interface,
 	ifp = if_lookup_by_name (if_ifname_format(argv[0], argv[1]));
 	if(ifp)
 		ret = nsm_bridge_add_interface_api(vty->index, ifp);
+	else
+		vty_out (vty, "Error:Can not get this interface.%s", VTY_NEWLINE);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -46,6 +48,8 @@ DEFUN (no_bridge_add_interface,
 	ifp = if_lookup_by_name (if_ifname_format(argv[0], argv[1]));
 	if(ifp)
 		ret = nsm_bridge_del_interface_api(vty->index, ifp);
+	else
+		vty_out (vty, "Error:Can not get this interface.%s", VTY_NEWLINE);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -61,6 +65,8 @@ DEFUN (bridge_protocol_ieee,
 	struct interface *ifp = vty->index;
 	if(ifp)
 		ret = nsm_bridge_interface_stp_set_api(ifp, zpl_true);
+	else
+		vty_out (vty, "Error:Can not get this interface.%s", VTY_NEWLINE);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -75,6 +81,8 @@ DEFUN (no_bridge_protocol_ieee,
 	struct interface *ifp = vty->index;
 	if(ifp)
 		ret = nsm_bridge_interface_stp_set_api(ifp, zpl_false);
+	else
+		vty_out (vty, "Error:Can not get this interface.%s", VTY_NEWLINE);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -91,6 +99,8 @@ DEFUN (ieee_age_time,
 	int value = atoi(argv[0]);
 	if(ifp)
 		ret = nsm_bridge_interface_max_age_set_api(ifp, value);
+	else
+		vty_out (vty, "Error:Can not get this interface.%s", VTY_NEWLINE);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -105,6 +115,8 @@ DEFUN (no_ieee_age_time,
 	struct interface *ifp = vty->index;
 	if(ifp)
 		ret = nsm_bridge_interface_max_age_set_api(ifp, 0);
+	else
+		vty_out (vty, "Error:Can not get this interface.%s", VTY_NEWLINE);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 

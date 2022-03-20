@@ -38,7 +38,7 @@ void sdk_log(const char *file, const char *func, const zpl_uint32 line, zpl_uint
 }
 #endif
 
-bool is_multicast_ether_addr(const u8 *addr)
+bool sdk_is_multicast_ether_addr(const u8 *addr)
 {
 	return 0x01 & addr[0];
 }
@@ -48,14 +48,15 @@ bool is_multicast_ether_addr(const u8 *addr)
  *
  * Return a u64 value of the address
  */
-zpl_uint64 ether_addr_to_u64(const zpl_uint8 *addr)
+zpl_uint64 sdk_ether_addr_u64(const zpl_uint8 *addr)
 {
 	zpl_uint64 u = 0;
 	zpl_uint32 i;
 
 	for (i = 0; i < ETH_ALEN; i++)
 		u = u << 8 | addr[i];
-
+	if(u != 0)	
+		_sdk_err( " sdk_ether_addr_u64:%llx", u);
 	return u;
 }
 
@@ -64,14 +65,28 @@ zpl_uint64 ether_addr_to_u64(const zpl_uint8 *addr)
  * @u: u64 to convert to an Ethernet MAC address
  * @addr: Pointer to a six-byte array to contain the Ethernet address
  */
-void u64_to_ether_addr(zpl_uint64 u, zpl_uint8 *addr)
+void sdk_u64_ether_addr(zpl_uint64 u, zpl_uint8 *addr)
 {
-	zpl_uint32 i;
+	//zpl_uint32 i;
+	zpl_uint64 uv = u;
+	zpl_uint8 u8val[8];
+	memcpy(u8val, &uv, sizeof(zpl_uint64));
+	if(u != 0)
+		_sdk_err("sdk_u64_ether_addr:%llx -> %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x", 
+			u, u8val[0], u8val[1], u8val[2], u8val[3], u8val[4], u8val[5], u8val[6],
+			u8val[7]);
+	addr[5] = u8val[0];
+	addr[4] = u8val[1];
+	addr[3] = u8val[2];
+	addr[2] = u8val[3];
+	addr[1] = u8val[4];
+	addr[0] = u8val[5];
+	//addr[0] = u8val[0];
 
-	for (i = ETH_ALEN - 1; i >= 0; i--) {
-		addr[i] = u & 0xff;
-		u = u >> 8;
-	}
+	//for (i = ETH_ALEN - 1; i >= 0; i--) {
+	//	addr[i] = u8val[i] & 0xff;
+		//u = u >> 8;
+	//}
 }
 
 
@@ -114,7 +129,7 @@ int sdk_driver_start(struct bsp_driver *bsp, sdk_driver_t *sdkdriver)
 #endif
 	//sdk_vlan_init();
 
-	b53125_mac_address_read(sdkdriver, 0,  0, 0);
+	//b53125_mac_address_read(sdkdriver, 0,  0, 0);
 	return OK;
 }
 

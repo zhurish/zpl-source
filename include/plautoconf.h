@@ -2,15 +2,15 @@
  * Automatically generated C config: don't edit
  * Busybox version: 
  */
-#define AUTOCONF_TIMESTAMP "2022-02-25 23:04:35 CST"
+#define AUTOCONF_TIMESTAMP "2022-03-12 11:37:55 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
 /*
  * Global Settings
  */
-#define ZPL_RUNNING_BASE_PATH "/tmp/app"
-#define ZPL_REAL_SYSCONFIG_PATH "/home/app"
+#define ZPL_RUNNING_BASE_PATH "/home/zhurish/workspace/working/zpl-source/source/debug/app/"
+#define ZPL_REAL_SYSCONFIG_PATH "/home/zhurish/workspace/working/zpl-source/source/debug"
 #define ZPL_INSTALL_PATH "./_install"
 
 /*
@@ -24,26 +24,26 @@
 #undef ZPL_SYSTEM_MSVC32
 #undef ZPL_SYSTEM_MSVC64
 #define ZPL_ARCH_MODULE 1
-#define ZPL_ARCH_ARM 1
+#undef ZPL_ARCH_ARM
 #undef ZPL_ARCH_ARM64
 #undef ZPL_ARCH_AARCH64
 #undef ZPL_ARCH_X86
-#undef ZPL_ARCH_X86_64
+#define ZPL_ARCH_X86_64 1
 #undef ZPL_ARM_A5
 #undef ZPL_ARM_A6
-#define ZPL_ARM_A7 1
+#undef ZPL_ARM_A7
 #undef ZPL_ARM_A8
 #undef ZPL_ARM_A9
 
 /*
  * Toolchain Config
  */
-#undef ZPL_HOST_TOOLCHAIN_MODULE
-#define ZPL_EXTERNAL_TOOLCHAIN_MODULE 1
-#define ZPL_EXTERNAL_TOOLCHAIN_PREFIX "arm-linux-gnueabihf-"
-#define ZPL_EXTERNAL_TOOLCHAIN_GLIBC 1
+#define ZPL_HOST_TOOLCHAIN_MODULE 1
+#undef ZPL_EXTERNAL_TOOLCHAIN_MODULE
+#define ZPL_EXTERNAL_TOOLCHAIN_PREFIX ""
+#undef ZPL_EXTERNAL_TOOLCHAIN_GLIBC
 #undef ZPL_EXTERNAL_TOOLCHAIN_UCLIBC
-#define ZPL_TOOLCHAIN_PATH "/opt/gcc-linaro-7.5.0-arm-linux-gnueabihf"
+#define ZPL_TOOLCHAIN_PATH ""
 #define ZPL_TOOLCHAIN_INC_PATH ""
 #define ZPL_TOOLCHAIN_LIB_PATH ""
 #define ZPL_COMPILE_OPTIONS "-g"
@@ -53,16 +53,7 @@
 #undef ZPL_FPU_NEON
 #undef ZPL_ARM_VFP
 #undef ZPL_ARM_NEON_VFP
-#define ZPL_TOOLCHAIN_CFLAGS "-D__ARM_PCS_VFP"
-
-/*
- * Product Module Config
- */
-#define ZPL_PRODUCT_MODULE 1
-#define ZPL_PRODUCT_L2SWITCH 1
-#define ZPL_PRODUCT_L3ROUTE 1
-#define ZPL_PRODUCT_BSP_MODULE 1
-#define ZPL_PRODUCT_SDK_MODULE 1
+#define ZPL_TOOLCHAIN_CFLAGS ""
 
 /*
  * Platform configuration
@@ -175,16 +166,6 @@
 #undef ZPL_ONVIF_SSL
 
 /*
- * Externsions Module Config
- */
-#undef ZPL_EXTERNSIONS_MODULE
-#undef ZPL_ZLIB_MODULE
-#undef ZPL_OPENSSL_MODULE
-#undef ZPL_EXFREETYPE_MODULE
-#define ZPL_EXFREETYPE_LIB_PATH ""
-#define ZPL_EXFREETYPE_INC_PATH ""
-
-/*
  * HAL/PAL Abstract Module Config
  */
 #define ZPL_ABSTRACT_MODULE 1
@@ -259,6 +240,24 @@
 #undef ZPL_ZPLMEDIA_MODULE
 #undef ZPL_HISIMPP_MODULE
 #undef ZPL_HISIMPP_HWDEBUG
+
+/*
+ * BSP Module Config
+ */
+#define ZPL_BSP_MODULE 1
+#undef ZPL_SDK_MODULE
+#undef ZPL_SDK_BCMX
+#undef ZPL_SDK_BCM53125
+
+/*
+ * Externsions Module Config
+ */
+#undef ZPL_EXTERNSIONS_MODULE
+#undef ZPL_ZLIB_MODULE
+#undef ZPL_OPENSSL_MODULE
+#undef ZPL_EXFREETYPE_MODULE
+#define ZPL_EXFREETYPE_LIB_PATH ""
+#define ZPL_EXFREETYPE_INC_PATH ""
 
 /*
  * Application Module Config

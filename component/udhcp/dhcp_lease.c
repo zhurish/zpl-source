@@ -243,7 +243,7 @@ static int dhcp_lease_save_one(FILE *fp, dhcp_pool_t *config)
 	return OK;
 }
 
-int dhcpd_lease_save()
+int dhcpd_lease_save(void)
 {
 	FILE *fp = NULL;
 	NODE index;
@@ -273,7 +273,7 @@ int dhcpd_lease_save()
 }
 
 
-int dhcpd_lease_load()
+int dhcpd_lease_load(void)
 {
 	FILE *fp = NULL;
 	int len = 0;

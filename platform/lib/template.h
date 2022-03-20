@@ -38,6 +38,7 @@ extern void nsm_template_exit (void);
 extern template_t * nsm_template_new (zpl_bool service);
 extern void nsm_template_free (template_t *template);
 extern void nsm_template_install (template_t *template, zpl_uint32 module);
+extern void nsm_config_list_install (template_t *template, zpl_uint32 module);
 extern template_t* nsm_template_lookup (zpl_bool service, zpl_uint32 module);
 extern template_t* nsm_template_lookup_name (zpl_bool service, zpl_char * name);
 

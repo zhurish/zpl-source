@@ -16,27 +16,26 @@
 
 nsm_vlaneth_t * nsm_vlaneth_get(struct interface *ifp)
 {
-	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	return (nsm_vlaneth_t *)nsm->nsm_client[NSM_INTF_VETH];
+	return (nsm_vlaneth_t *)nsm_intf_module_data(ifp, NSM_INTF_VETH);
 }
 
 
 int nsm_vlaneth_interface_create_api(struct interface *ifp)
 {
-	nsm_vlaneth_t * vlaneth = NULL;
-	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
+	nsm_vlaneth_t * vlaneth = nsm_intf_module_data(ifp, NSM_INTF_VETH);
+
 	if(if_is_serial(ifp) || (if_is_ethernet(ifp) && IF_ID_GET(ifp->ifindex)))
 	{
-		if(!nsm->nsm_client[NSM_INTF_VETH])
-			nsm->nsm_client[NSM_INTF_VETH] = XMALLOC(MTYPE_IF, sizeof(nsm_vlaneth_t));
-		zassert(nsm->nsm_client[NSM_INTF_VETH]);
-		os_memset(nsm->nsm_client[NSM_INTF_VETH], 0, sizeof(nsm_vlaneth_t));
-		vlaneth = nsm->nsm_client[NSM_INTF_VETH];
+		if(!vlaneth)
+			vlaneth = XMALLOC(MTYPE_IF, sizeof(nsm_vlaneth_t));
+		zassert(vlaneth);
+		os_memset(vlaneth, 0, sizeof(nsm_vlaneth_t));
 		vlaneth->ifp = ifp;
 		if(IF_IS_SUBIF_GET(ifp->ifindex))
 		{
 			vlaneth->root = if_lookup_by_index(IF_IFINDEX_ROOT_GET(ifp->ifindex));
 		}
+		nsm_intf_module_data_set(ifp, NSM_INTF_VETH, vlaneth);
 	}
 	return OK;
 }
@@ -51,7 +50,8 @@ int nsm_vlaneth_interface_del_api(struct interface *ifp)
 		{
 			struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 			XFREE(MTYPE_IF, vlaneth);
-			nsm->nsm_client[NSM_INTF_VETH] = NULL;
+			vlaneth = NULL;
+			nsm_intf_module_data_set(ifp, NSM_INTF_VETH, NULL);
 		}
 	}
 	return OK;

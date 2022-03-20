@@ -24,8 +24,8 @@ extern "C" {
 #include "nsm_interface.h"
 #include "nsm_halpal.h"
 #include "nsm_debug.h"
-
-
+#include "nsm_global.h"
+#include "nsm_port.h"
 
 #ifdef ZPL_NSM_MAC
 #include "nsm_mac.h"

@@ -91,7 +91,8 @@ int hal_vlan_batch_destroy(vlan_t *vlan, int num)
 	return hal_ipcmsg_send_message(IF_UNIT_ALL,
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
-int hal_vlan_add_untag_port(ifindex_t ifindex, vlan_t vlan)
+
+int hal_port_add_access_vlan(ifindex_t ifindex, vlan_t vlan)
 {
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
@@ -102,12 +103,12 @@ int hal_vlan_add_untag_port(ifindex_t ifindex, vlan_t vlan)
 	hal_ipcmsg_putl(&ipcmsg, 1);
 	hal_ipcmsg_putw(&ipcmsg, vlan);
 	hal_ipcmsg_putw(&ipcmsg, 0);
-	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_REQ, HAL_VLAN_UNTAG);
+	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_REQ, HAL_VLAN_ACCESS);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
-int hal_vlan_del_untag_port(ifindex_t ifindex, vlan_t vlan)
+int hal_port_del_access_vlan(ifindex_t ifindex, vlan_t vlan)
 {
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
@@ -118,39 +119,7 @@ int hal_vlan_del_untag_port(ifindex_t ifindex, vlan_t vlan)
 	hal_ipcmsg_putl(&ipcmsg, 0);
 	hal_ipcmsg_putw(&ipcmsg, vlan);
 	hal_ipcmsg_putw(&ipcmsg, 0);
-	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_REQ, HAL_VLAN_UNTAG);
-	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
-		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
-}
-
-int hal_vlan_add_tag_port(ifindex_t ifindex, vlan_t vlan)
-{
-	zpl_uint32 command = 0;
-	struct hal_ipcmsg ipcmsg;
-	char buf[512];
-	HAL_ENTER_FUNC();
-	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
-	hal_ipcmsg_port_set(&ipcmsg, ifindex);
-	hal_ipcmsg_putl(&ipcmsg, 1);
-	hal_ipcmsg_putw(&ipcmsg, vlan);
-	hal_ipcmsg_putw(&ipcmsg, 0);
-	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_REQ, HAL_VLAN_TAG);
-	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
-		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
-}
-
-int hal_vlan_del_tag_port(ifindex_t ifindex, vlan_t vlan)
-{
-	zpl_uint32 command = 0;
-	struct hal_ipcmsg ipcmsg;
-	char buf[512];
-	HAL_ENTER_FUNC();
-	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
-	hal_ipcmsg_port_set(&ipcmsg, ifindex);
-	hal_ipcmsg_putl(&ipcmsg, 0);
-	hal_ipcmsg_putw(&ipcmsg, vlan);
-	hal_ipcmsg_putw(&ipcmsg, 0);
-	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_REQ, HAL_VLAN_TAG);
+	command = IPCCMD_SET(HAL_MODULE_VLAN, HAL_MODULE_CMD_REQ, HAL_VLAN_ACCESS);
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }

@@ -17,7 +17,9 @@
 #ifdef ZPL_SDK_MODULE
 #include "sdk_driver.h"
 #endif
-
+#ifndef ZPL_SDK_MODULE
+sdk_driver_t *__msdkdriver = NULL;
+#endif
 bsp_driver_t bsp_driver;
 
 struct module_list module_list_sdk = 
@@ -43,12 +45,12 @@ static hal_ipccmd_callback_t moduletable[] = {
 	HAL_CALLBACK_ENTRY(HAL_MODULE_SWITCH, NULL),
     HAL_CALLBACK_ENTRY(HAL_MODULE_CPU, bsp_cpu_module_handle),
 	HAL_CALLBACK_ENTRY(HAL_MODULE_PORT, bsp_port_module_handle),
-    HAL_CALLBACK_ENTRY(HAL_MODULE_IFADDR, NULL),
+    HAL_CALLBACK_ENTRY(HAL_MODULE_L3IF, NULL),
     HAL_CALLBACK_ENTRY(HAL_MODULE_ROUTE, NULL),
     HAL_CALLBACK_ENTRY(HAL_MODULE_STP, NULL),
     HAL_CALLBACK_ENTRY(HAL_MODULE_MSTP, bsp_mstp_module_handle),
     HAL_CALLBACK_ENTRY(HAL_MODULE_8021X, bsp_8021x_module_handle),
-	HAL_CALLBACK_ENTRY(HAL_MODULE_IGMP, NULL),
+	HAL_CALLBACK_ENTRY(HAL_MODULE_IGMP, bsp_snooping_module_handle),
     HAL_CALLBACK_ENTRY(HAL_MODULE_DOS, bsp_dos_module_handle),
     HAL_CALLBACK_ENTRY(HAL_MODULE_MAC, bsp_mac_module_handle),
     HAL_CALLBACK_ENTRY(HAL_MODULE_MIRROR, bsp_mirror_module_handle),
@@ -80,12 +82,12 @@ int bsp_driver_module_check(hal_ipccmd_callback_t *cmdtbl, int num, int module)
 				return 1;
 			else
 			{
-				zlog_debug(MODULE_HAL, "Find this module/subcmd:%d, but this module/subcmd call %s", module, cmdtbl[ret].name);
+				zlog_warn(MODULE_HAL, "Find this module/subcmd:%d, but this module/subcmd call %s", module, cmdtbl[ret].name);
 				return 0;
 			}	
 		}
 	}
-	zlog_debug(MODULE_HAL, "Can not Find this module/subcmd:%d ", module);
+	zlog_warn(MODULE_HAL, "Can not Find this module/subcmd:%d ", module);
 	return 0;
 }
 
@@ -185,9 +187,9 @@ int bsp_module_init(void)
 {
 	memset(&bsp_driver, 0, sizeof(bsp_driver));
 	bsp_driver_init(&bsp_driver);
-#ifdef ZPL_SDK_MODULE
+//#ifdef ZPL_SDK_MODULE
 	bsp_module_func(&bsp_driver, sdk_driver_init, sdk_driver_start, sdk_driver_stop, sdk_driver_exit);
-#endif	
+//#endif	
 
 	if(bsp_driver.bsp_sdk_init)
 	{
@@ -291,3 +293,44 @@ int bsp_module_task_exit(void)
 		return (bsp_driver.bsp_sdk_exit)(&bsp_driver, bsp_driver.sdk_driver);
 	return OK;
 }
+#ifndef ZPL_SDK_MODULE
+static sdk_driver_t * sdk_driver_malloc(void)
+{
+	return (sdk_driver_t *)malloc(sizeof(sdk_driver_t));
+}
+
+static int sdk_driver_free(sdk_driver_t *sdkdriver)
+{
+	if(sdkdriver)
+		free(sdkdriver);
+	sdkdriver = NULL;
+	return OK;
+}
+
+int sdk_driver_init(struct bsp_driver *bsp, sdk_driver_t *sdkdriver)
+{
+	bsp->sdk_driver = sdk_driver_malloc();
+	if(bsp->sdk_driver)
+		return OK;
+	else
+		return ERROR;	
+}
+
+int sdk_driver_start(struct bsp_driver *bsp, sdk_driver_t *sdkdriver)
+{
+	return OK;
+}
+
+int sdk_driver_stop(struct bsp_driver *bsp, sdk_driver_t *sdkdriver)
+{
+	return OK;
+}
+
+int sdk_driver_exit(struct bsp_driver *bsp, sdk_driver_t *sdkdriver)
+{
+	if(sdkdriver)
+		sdk_driver_free(sdkdriver);
+	return OK;
+}
+
+#endif

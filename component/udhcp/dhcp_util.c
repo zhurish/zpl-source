@@ -422,7 +422,7 @@ static int dhcp_client_lease_set_kernel(client_interface_t *ifter, client_lease_
 			zlog_debug(MODULE_DHCP," dhcp set kernel ip address %s on interface %s", tmp, ifindex2ifname(ifter->ifindex));
 		}
 		SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
-		ret = nsm_pal_interface_set_address (ifp, ifc, 0);
+		ret = nsm_halpal_interface_set_address (ifp, ifc, 0);
 		if(ret != OK)
 			return ERROR;
 	}
@@ -599,7 +599,7 @@ static int dhcp_client_lease_unset_kernel(client_interface_t *ifter, client_leas
 				zlog_debug(MODULE_DHCP," dhcp unset kernel ip address %s on interface %s", tmp, ifindex2ifname(ifter->ifindex));
 			}
 			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
-			ret = nsm_pal_interface_unset_address (ifp, ifc, 0);
+			ret = nsm_halpal_interface_unset_address (ifp, ifc, 0);
 			if(ret != OK)
 				return ERROR;
 		}

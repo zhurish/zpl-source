@@ -16,13 +16,14 @@ enum hal_global_cmd
 {
     HAL_GLOBAL_CMD_NONE,
     HAL_GLOBAL_CMD_JUMBO_SIZE,
-	HAL_SWITCH_MANEGE,
-	HAL_SWITCH_FORWARD,
-	HAL_SWITCH_MULTICAST_FLOOD,
-	HAL_SWITCH_UNICAST_FLOOD,
-	HAL_SWITCH_MULTICAST_LEARNING,
-	HAL_SWITCH_BPDU,
-	HAL_SWITCH_AGINT,    
+	HAL_GLOBAL_MANEGE,
+	HAL_GLOBAL_FORWARD,
+	HAL_GLOBAL_MULTICAST_FLOOD,
+	HAL_GLOBAL_UNICAST_FLOOD,
+	HAL_GLOBAL_MULTICAST_LEARNING,
+	HAL_GLOBAL_BPDU,
+	HAL_GLOBAL_AGINT,  
+	HAL_GLOBAL_WAN_PORT, 
 };
 
 
@@ -39,6 +40,7 @@ int hal_multicast_learning(zpl_bool enable);
 int hal_global_bpdu_enable(zpl_bool enable);
 int hal_global_aging_time(zpl_uint32 value);
 
+extern int hal_port_wan_set(ifindex_t ifindex, zpl_bool enable);
 
 	
     

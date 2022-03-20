@@ -39,22 +39,21 @@ zpl_uint32 serial_index_make(const char *sname)
 
 static nsm_serial_t * nsm_serial_get(struct interface *ifp)
 {
-	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	return (nsm_serial_t *)nsm->nsm_client[NSM_INTF_SERIAL];
+	return (nsm_serial_t *)nsm_intf_module_data(ifp, NSM_INTF_SERIAL);
 }
 
 
 int nsm_serial_interface_create_api(struct interface *ifp)
 {
-	nsm_serial_t * serial = NULL;
-	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
+	nsm_serial_t * serial = (nsm_serial_t *)nsm_intf_module_data(ifp, NSM_INTF_SERIAL);
 	if(!if_is_serial(ifp))
 		return OK;
-	if(!nsm->nsm_client[NSM_INTF_SERIAL])
-		nsm->nsm_client[NSM_INTF_SERIAL] = XMALLOC(MTYPE_SERIAL, sizeof(nsm_serial_t));
-	zassert(nsm->nsm_client[NSM_INTF_SERIAL]);
-	os_memset(nsm->nsm_client[NSM_INTF_SERIAL], 0, sizeof(nsm_serial_t));
-	serial = nsm->nsm_client[NSM_INTF_SERIAL];
+	if(serial == NULL)
+	{
+	serial = XMALLOC(MTYPE_SERIAL, sizeof(nsm_serial_t));
+	zassert(serial);
+	os_memset(serial, 0, sizeof(nsm_serial_t));
+
 
 	serial->serial.databit = NSM_SERIAL_DATA_DEFAULT;
 	serial->serial.stopbit = NSM_SERIAL_STOP_DEFAULT;
@@ -64,18 +63,20 @@ int nsm_serial_interface_create_api(struct interface *ifp)
 
 	serial->ifp = ifp;
 	//serial->serial_index = serial_index_make();
+	nsm_intf_module_data_set(ifp, NSM_INTF_SERIAL, serial);
+	}
 	return OK;
 }
 
 
 int nsm_serial_interface_del_api(struct interface *ifp)
 {
-	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
+	nsm_serial_t * serial = (nsm_serial_t *)nsm_intf_module_data(ifp, NSM_INTF_SERIAL);
 	if(!if_is_serial(ifp))
 		return OK;
-	if(nsm->nsm_client[NSM_INTF_SERIAL])
-		XFREE(MTYPE_SERIAL, nsm->nsm_client[NSM_INTF_SERIAL]);
-	nsm->nsm_client[NSM_INTF_SERIAL] = NULL;
+	if(serial)
+		XFREE(MTYPE_SERIAL, serial);
+	nsm_intf_module_data_set(ifp, NSM_INTF_SERIAL, NULL);
 	return OK;
 }
 
@@ -86,7 +87,7 @@ int nsm_serial_interface_kernel(struct interface *ifp, zpl_char *kname)
 	{
 		if_kname_set(ifp, kname);
 		if(!nsm_halpal_interface_ifindex(ifp->k_name))
-			nsm_pal_interface_add(ifp);
+			nsm_halpal_interface_add(ifp);
 		nsm_halpal_interface_refresh_flag(ifp);
 		ifp->k_ifindex = nsm_halpal_interface_ifindex(ifp->k_name);
 		pal_interface_get_lladdr(ifp);

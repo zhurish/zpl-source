@@ -99,7 +99,7 @@ static int qmidevice_detect(void) {
     kernel_version = KVERSION(osmaj, osmin, ospatch);
 
     if ((pDir = opendir("/dev")) == NULL)  {
-        dbg_time("Cannot open directory: %s, ipstack_errno:%d (%s)", "/dev", ipstack_errno, strerror(ipstack_errno));
+        dbg_time("Cannot open directory: %s, errno:%d (%s)", "/dev", errno, strerror(errno));
         return -ENODEV;
     }
 
@@ -127,7 +127,7 @@ static int qmidevice_detect(void) {
                 dbg_time("Find usbnet_adapter = %s", usbnet_adapter);
                 break;
             } else {
-                dbg_time("Failed to access %s, ipstack_errno:%d (%s)", net_path, ipstack_errno, strerror(ipstack_errno));
+                dbg_time("Failed to access %s, errno:%d (%s)", net_path, errno, strerror(errno));
                 free(qmichannel); qmichannel = NULL;
             }
 
@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
                 const char * filename = argv[i++];
                 logfilefp = fopen(filename, "a+");
                 if (!logfilefp) {
-                    dbg_time("Fail to open %s, ipstack_errno: %d(%s)", filename, ipstack_errno, strerror(ipstack_errno));
+                    dbg_time("Fail to open %s, errno: %d(%s)", filename, errno, strerror(errno));
                  }
             }
         } else if (!strcmp(argv[i], "-v")) {
@@ -232,8 +232,8 @@ int main(int argc, char *argv[])
     }
 
     if (access(qmichannel, R_OK | W_OK)) {
-        dbg_time("Fail to access %s, ipstack_errno: %d (%s)", qmichannel, ipstack_errno, strerror(ipstack_errno));
-        return ipstack_errno;
+        dbg_time("Fail to access %s, errno: %d (%s)", qmichannel, errno, strerror(errno));
+        return errno;
     }
 
     signal(SIGUSR1, ql_sigaction);
@@ -245,36 +245,36 @@ int main(int argc, char *argv[])
     signal(SIGALRM, ql_sigaction);
 
     if (socketpair( AF_LOCAL, SOCK_STREAM, 0, signal_control_fd) < 0 ) {
-        dbg_time("%s Faild to create main_control_fd: %d (%s)", __func__, ipstack_errno, strerror(ipstack_errno));
+        dbg_time("%s Faild to create main_control_fd: %d (%s)", __func__, errno, strerror(errno));
         return -1;
     }
 
     if ( socketpair( AF_LOCAL, SOCK_STREAM, 0, qmidevice_control_fd ) < 0 ) {
-        dbg_time("%s Failed to create thread control socket pair: %d (%s)", __func__, ipstack_errno, strerror(ipstack_errno));
+        dbg_time("%s Failed to create thread control socket pair: %d (%s)", __func__, errno, strerror(errno));
         return 0;
     }
 
     if (!strncmp(qmichannel, "/dev/qcqmi", strlen("/dev/qcqmi"))) {
         if (pthread_create( &gQmiThreadID, 0, GobiNetThread, NULL) != 0) {
-            dbg_time("%s Failed to create GobiNetThread: %d (%s)", __func__, ipstack_errno, strerror(ipstack_errno));
+            dbg_time("%s Failed to create GobiNetThread: %d (%s)", __func__, errno, strerror(errno));
             return 0;
         }
     } else {
         if (pthread_create( &gQmiThreadID, 0, QmiWwanThread, NULL) != 0) {
-            dbg_time("%s Failed to create QmiWwanThread: %d (%s)", __func__, ipstack_errno, strerror(ipstack_errno));
+            dbg_time("%s Failed to create QmiWwanThread: %d (%s)", __func__, errno, strerror(errno));
             return 0;
         }
     }
 
     if ((read(qmidevice_control_fd[0], &triger_event, sizeof(triger_event)) != sizeof(triger_event))
         || (triger_event != RIL_INDICATE_DEVICE_CONNECTED)) {
-        dbg_time("%s Failed to init QMIThread: %d (%s)", __func__, ipstack_errno, strerror(ipstack_errno));
+        dbg_time("%s Failed to init QMIThread: %d (%s)", __func__, errno, strerror(errno));
         return 0;
     }
 
     if (!strncmp(qmichannel, "/dev/cdc-wdm", strlen("/dev/cdc-wdm"))) {
         if (QmiWwanInit()) {
-            dbg_time("%s Failed to QmiWwanInit: %d (%s)", __func__, ipstack_errno, strerror(ipstack_errno));
+            dbg_time("%s Failed to QmiWwanInit: %d (%s)", __func__, errno, strerror(errno));
             return 0;
         }
     }
@@ -314,10 +314,10 @@ int main(int argc, char *argv[])
 
         do {
             ret = poll(pollfds, nevents, -1);
-         } while ((ret < 0) && (ipstack_errno == EINTR));
+         } while ((ret < 0) && (errno == EINTR));
 
         if (ret <= 0) {
-            dbg_time("%s poll=%d, ipstack_errno: %d (%s)", __func__, ret, ipstack_errno, strerror(ipstack_errno));
+            dbg_time("%s poll=%d, errno: %d (%s)", __func__, ret, errno, strerror(errno));
             goto __main_quit;
         }
 
@@ -431,7 +431,7 @@ int main(int argc, char *argv[])
 
 __main_quit:
     if (pthread_join(gQmiThreadID, NULL)) {
-        dbg_time("%s Error joining to listener thread (%s)", __func__, strerror(ipstack_errno));
+        dbg_time("%s Error joining to listener thread (%s)", __func__, strerror(errno));
     }
     close(signal_control_fd[0]);
     close(signal_control_fd[1]);

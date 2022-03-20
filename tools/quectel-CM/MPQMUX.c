@@ -4,7 +4,7 @@ static pthread_mutex_t dumpQMIMutex = PTHREAD_MUTEX_INITIALIZER;
 #undef dbg
 #define dbg( format, arg... ) do {if (strlen(line) < sizeof(line)) snprintf(&line[strlen(line)], sizeof(line) - strlen(line), format, ## arg);} while (0)
 
-PQMI_TLV_HDR GetTLV (PQCQMUX_MSG_HDR pQMUXMsgHdr, int TLVType);
+//PQMI_TLV_HDR GetTLV (PQCQMUX_MSG_HDR pQMUXMsgHdr, int TLVType);
 
 typedef struct {
     UINT type;

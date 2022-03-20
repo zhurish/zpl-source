@@ -61,8 +61,8 @@ extern int dhcp_lease_del(LIST *lst, dyn_lease_t *pstNode);
 extern int dhcp_lease_clean(LIST *lst);
 extern dyn_lease_t *dhcp_lease_lookup_expired_lease(LIST *lst);
 extern int dhcpd_lease_foreach(int(*cb)(dyn_lease_t *, void *p), void *p);
-extern int dhcpd_lease_save();
-extern int dhcpd_lease_load();
+extern int dhcpd_lease_save(void);
+extern int dhcpd_lease_load(void);
 
 extern int dhcp_lease_show(struct vty *vty, char *poolname, ifindex_t ifindex, zpl_bool detail);
 

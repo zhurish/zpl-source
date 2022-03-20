@@ -45,7 +45,7 @@ typedef struct Gl2dos_s
 	zpl_bool		icmpv4_fragment;
 
 	zpl_bool		tcp_fragerror;
-	zpl_bool		tcp_zpl_int16hdr;
+	zpl_bool		tcp_shorthdr;
 	zpl_bool		tcp_synerror;
 	zpl_bool		tcp_synfinscan;
 	zpl_bool		tcp_xmasscan;

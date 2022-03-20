@@ -16,6 +16,9 @@ extern int nsm_module_init (void);
 extern int nsm_module_exit (void);
 extern int nsm_task_init (void);
 extern int nsm_task_exit (void);
+
+extern int nsm_module_start(void);
+
 extern int nsm_module_cmd_init (void);
  
 #ifdef __cplusplus

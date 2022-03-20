@@ -1,5 +1,5 @@
 #include "QMIThread.h"
-extern char *strndup (const char *__string, size_t __n);
+//extern char *strndup (const char *__string, size_t __n);
 
 int clientWDS = -1;
 int clientDMS = -1;

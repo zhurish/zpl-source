@@ -11,7 +11,10 @@
 #include "lib_include.h"
 #include "nsm_include.h"
 #include "vty_include.h"
-
+#ifdef ZPL_HAL_MODULE
+#include "hal_ipcmsg.h"
+#include "hal_mac.h"
+#endif
 
 struct mac_user
 {
@@ -76,8 +79,10 @@ DEFUN (mac_address_table,
 	VTY_IMAC_GET(argv[0], mac.mac);
 
 	mac.ifindex = if_ifindex_make(argv[1], argv[2]);
-
-	VTY_GET_INTEGER ("vlan ID", mac.vlan, argv[3]);
+	if(argc == 4)
+		VTY_GET_INTEGER ("vlan ID", mac.vlan, argv[3]);
+	else	
+		mac.vlan = 1;
 	mac.action = MAC_FORWARD;
 	mac.type = MAC_STATIC;
 	if(nsm_mac_lookup_api(mac.mac, mac.vlan) == OK)
@@ -88,6 +93,17 @@ DEFUN (mac_address_table,
 	ret = nsm_mac_add_api(&mac);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
+
+ALIAS(mac_address_table,
+		mac_address_table_default_cmd,
+		CMD_MAC_ADDRESS_STR " " CMD_MAC_STR " " CMD_FORWARD_STR " "
+			CMD_INTERFACE_STR " " CMD_IF_USPV_STR " " CMD_USP_STR,
+		CMD_MAC_ADDRESS_STR_HELP
+		CMD_MAC_STR_HELP
+		CMD_FORWARD_STR_HELP
+		CMD_INTERFACE_STR_HELP
+		CMD_IF_USPV_STR_HELP
+		CMD_USP_STR_HELP);
 
 DEFUN (no_mac_address_table,
 		no_mac_address_table_cmd,
@@ -107,8 +123,11 @@ DEFUN (no_mac_address_table,
 	VTY_IMAC_GET(argv[0], mac.mac);
 
 	mac.ifindex = if_ifindex_make(argv[1], argv[2]);
+	if(argc == 4)
+		VTY_GET_INTEGER ("vlan ID", mac.vlan, argv[3]);
+	else	
+		mac.vlan = 1;
 
-	VTY_GET_INTEGER ("vlan ID", mac.vlan, argv[3]);
 	mac.action = MAC_FORWARD;
 	mac.type = MAC_STATIC;
 	if(nsm_mac_lookup_api(mac.mac, mac.vlan) == OK)
@@ -120,7 +139,16 @@ DEFUN (no_mac_address_table,
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
-
+ALIAS(no_mac_address_table,
+		no_mac_address_table_default_cmd,
+		"no "CMD_MAC_ADDRESS_STR " " CMD_MAC_STR " " CMD_FORWARD_STR " "
+			CMD_INTERFACE_STR " " CMD_IF_USPV_STR " " CMD_USP_STR,
+		CMD_MAC_ADDRESS_STR_HELP
+		CMD_MAC_STR_HELP
+		CMD_FORWARD_STR_HELP
+		CMD_INTERFACE_STR_HELP
+		CMD_IF_USPV_STR_HELP
+		CMD_USP_STR_HELP);
 
 DEFUN (mac_address_table_discard,
 		mac_address_table_discard_cmd,
@@ -340,7 +368,40 @@ static int show_nsm_mac_address_table_detail(l2mac_t *node, struct mac_user *use
 	}
 	return OK;
 }
-
+#ifdef ZPL_HAL_MODULE
+static int hal_macmsg_callback(zpl_uint8 *buf, zpl_uint32 len, void *pVoid)
+{
+	zpl_uint32 macnum = 0, i = 0;
+	hal_mac_tbl_t *mactbl = (hal_mac_tbl_t *)buf;
+	l2mac_t macnode;
+	macnum = len/sizeof(hal_mac_tbl_t);
+	for(i = 0; i < macnum; i++)
+	{
+		//mactbl->mac[NSM_MAC_MAX];
+		//mactbl->vrfid;
+		//mactbl->is_valid:1;
+		//mactbl->is_age:1;
+		//mactbl->is_static:1;
+		macnode.ifindex = if_phy2ifindex(mactbl->phyport);
+		macnode.vlan = mactbl->vlan;
+		memcpy(macnode.mac, mactbl->mac, NSM_MAC_MAX);
+		macnode.type = MAC_DYNAMIC;
+		if(NSM_MAC_IS_BROADCAST(macnode.mac[0]))
+			macnode.class = MAC_BROADCAST;
+		else if(NSM_MAC_IS_MULTICAST(macnode.mac[0]))
+			macnode.class = MAC_MULTICAST;
+		else
+			macnode.class = MAC_UNICAST;
+		//macnode->class;
+		macnode.action = MAC_FORWARD;
+		//macnode->ageing_time;
+		show_nsm_mac_address_table_detail(&macnode, pVoid);
+		mactbl++;
+	}
+	return 0;
+}
+//int hal_mac_read(ifindex_t ifindex, vlan_t vlan, int (*callback)(zpl_uint8 *, zpl_uint32, void *), void  *pVoid)
+#endif
 static int show_nsm_mac_address_table(struct vty *vty, const char *type)
 {
 	struct mac_user user;
@@ -351,6 +412,9 @@ static int show_nsm_mac_address_table(struct vty *vty, const char *type)
 		user.all = zpl_true;
 		nsm_mac_callback_api((l2mac_cb)nsm_mac_address_table_summary, &user);
 		show_nsm_mac_address_table_head(&user);
+#ifdef ZPL_HAL_MODULE
+		hal_mac_read(0, 0, hal_macmsg_callback, &user);
+#endif
 		nsm_mac_callback_api((l2mac_cb)show_nsm_mac_address_table_detail, &user);
 	}
 	else
@@ -366,6 +430,9 @@ static int show_nsm_mac_address_table(struct vty *vty, const char *type)
 			user.action = MAC_DISCARDED;
 			nsm_mac_callback_api((l2mac_cb)nsm_mac_address_table_summary, &user);
 			show_nsm_mac_address_table_head(&user);
+#ifdef ZPL_HAL_MODULE
+			hal_mac_read(0, 0, hal_macmsg_callback, &user);
+#endif
 			nsm_mac_callback_api((l2mac_cb)show_nsm_mac_address_table_detail, &user);
 		}
 		else if(memcpy(type, "static", 4)==0)
@@ -373,6 +440,9 @@ static int show_nsm_mac_address_table(struct vty *vty, const char *type)
 			user.type = MAC_STATIC;
 			nsm_mac_callback_api((l2mac_cb)nsm_mac_address_table_summary, &user);
 			show_nsm_mac_address_table_head(&user);
+#ifdef ZPL_HAL_MODULE
+			//hal_mac_read(0, 0, hal_macmsg_callback, &user);
+#endif
 			nsm_mac_callback_api((l2mac_cb)show_nsm_mac_address_table_detail, &user);
 		}
 		else if(memcpy(type, "dynamic", 4)==0)
@@ -380,6 +450,9 @@ static int show_nsm_mac_address_table(struct vty *vty, const char *type)
 			user.type = MAC_DYNAMIC;
 			nsm_mac_callback_api((l2mac_cb)nsm_mac_address_table_summary, &user);
 			show_nsm_mac_address_table_head(&user);
+#ifdef ZPL_HAL_MODULE
+			hal_mac_read(0, 0, hal_macmsg_callback, &user);
+#endif
 			nsm_mac_callback_api((l2mac_cb)show_nsm_mac_address_table_detail, &user);
 		}
 	}
@@ -443,6 +516,8 @@ void cmd_mac_init(void)
 
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &mac_address_table_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_mac_address_table_cmd);
+	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &mac_address_table_default_cmd);
+	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_mac_address_table_default_cmd);
 
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &mac_address_table_discard_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_mac_address_table_discard_cmd);

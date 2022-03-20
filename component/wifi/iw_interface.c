@@ -30,8 +30,7 @@ iw_t * nsm_iw_get(struct interface *ifp)
 {
 	if(if_is_wireless(ifp)/* && ifp->ll_type == ZEBRA_LLT_WIRELESS*/)
 	{
-		struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-		return (iw_t *)nsm->nsm_client[NSM_WIFI];
+		return (iw_t *)nsm_intf_module_data(ifp, NSM_INTF_WIFI);
 	}
 	return NULL;
 }
@@ -333,17 +332,16 @@ static int nsm_iw_interface_default(struct interface *ifp, iw_t * iw)
 int nsm_iw_create_interface(struct interface *ifp)
 {
 	//int kmode = 0;
-	iw_t * iw = NULL;
+	iw_t * iw = nsm_intf_module_data(ifp, NSM_INTF_WIFI);
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	if(nsm && if_is_wireless(ifp)/* && ifp->ll_type == ZEBRA_LLT_WIRELESS*/)
 	{
-		if(!nsm->nsm_client[NSM_WIFI])
-			nsm->nsm_client[NSM_WIFI] = XMALLOC(MTYPE_WIFI, sizeof(iw_t));
-		zassert(nsm->nsm_client[NSM_WIFI]);
-		os_memset(nsm->nsm_client[NSM_WIFI], 0, sizeof(iw_t));
-		iw = nsm->nsm_client[NSM_WIFI];
+		if(!iw)
+			iw = XMALLOC(MTYPE_WIFI, sizeof(iw_t));
+		zassert(iw);
+		os_memset(iw, 0, sizeof(iw_t));
 		iw->ifp = ifp;
-
+		nsm_intf_module_data_set(ifp, NSM_INTF_WIFI, iw);
 		if(master_thread)
 			iw->n_thread = thread_add_timer(master_thread, iw_empty_thread, iw, 10);
 #ifdef ZPL_BUILD_OS_OPENWRT
@@ -452,7 +450,6 @@ int nsm_iw_delete_interface(struct interface *ifp)
 		iw_t * iw = nsm_iw_get(ifp);
 		if(iw)
 		{
-			struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 			if(iw->n_thread)
 			{
 				thread_cancel(iw->n_thread);
@@ -467,7 +464,7 @@ int nsm_iw_delete_interface(struct interface *ifp)
 			}
 
 			XFREE(MTYPE_WIFI, iw);
-			nsm->nsm_client[NSM_WIFI] = NULL;
+			nsm_intf_module_data_set(ifp, NSM_INTF_WIFI, NULL);
 		}
 	}
 	return OK;
@@ -647,15 +644,17 @@ static int iw_task_exit(void)
 }
 #endif
 
-int nsm_iw_client_init()
+int nsm_iw_client_init(void)
 {
 #ifdef IW_ONCE_TASK
 	iw_task_start();
 #endif
+	nsm_interface_hook_add(NSM_INTF_WIFI, nsm_iw_create_interface, nsm_iw_delete_interface);
+	nsm_interface_write_hook_add(NSM_INTF_WIFI, nsm_iw_write_config_interface);
 	return OK;
 }
 
-int nsm_iw_client_exit()
+int nsm_iw_client_exit(void)
 {
 	iw_task_exit();
 	return OK;

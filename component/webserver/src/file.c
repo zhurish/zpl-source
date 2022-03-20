@@ -186,7 +186,7 @@ PUBLIC bool websProcessPutData(Webs *wp)
 #endif
 
 
-static void fileClose()
+static void fileClose(void)
 {
     wfree(websIndex);
     websIndex = NULL;

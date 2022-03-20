@@ -22,8 +22,7 @@ static int (*ipkernel_tunnel_change)(nsm_tunnel_t *tunnel);
 
 nsm_tunnel_t * nsm_tunnel_get(struct interface *ifp)
 {
-	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	return (nsm_tunnel_t *)nsm->nsm_client[NSM_INTF_TUNNEL];
+	return (nsm_tunnel_t *)nsm_intf_module_data(ifp, NSM_INTF_TUNNEL);
 }
 
 
@@ -367,22 +366,23 @@ int nsm_tunnel_tos_get_api(struct interface *ifp, zpl_uint32 *tos)
 
 int nsm_tunnel_interface_create_api(struct interface *ifp)
 {
-	nsm_tunnel_t * tunnel = NULL;
-	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
+	nsm_tunnel_t * tunnel = nsm_intf_module_data(ifp, NSM_INTF_TUNNEL);
 	if(!if_is_tunnel(ifp))
 		return OK;
-	if(!nsm->nsm_client[NSM_INTF_TUNNEL])
-		nsm->nsm_client[NSM_INTF_TUNNEL] = XMALLOC(MTYPE_IF, sizeof(nsm_tunnel_t));
-	zassert(nsm->nsm_client[NSM_INTF_TUNNEL]);
-	os_memset(nsm->nsm_client[NSM_INTF_TUNNEL], 0, sizeof(nsm_tunnel_t));
-	tunnel = nsm->nsm_client[NSM_INTF_TUNNEL];
-
+	if(!tunnel)
+	{
+		tunnel = XMALLOC(MTYPE_IF, sizeof(nsm_tunnel_t));
+		zassert(tunnel);
+		os_memset(tunnel, 0, sizeof(nsm_tunnel_t));
+		nsm_intf_module_data_set(ifp, NSM_INTF_TUNNEL, tunnel);
+	}
 	tunnel->ifp = ifp;
 	tunnel->tun_ttl = NSM_TUNNEL_TTL_DEFAULT;		//change: ip tunnel change tunnel0 ttl
 	tunnel->tun_mtu = NSM_TUNNEL_MTU_DEFAULT;		//change: ip link set dev tunnel0 mtu 1400
 
 	tunnel->tun_tos = NSM_TUNNEL_TOS_DEFAULT;
 	//serial->serial_index = serial_index_make();
+	
 	return OK;
 }
 
@@ -395,7 +395,8 @@ int nsm_tunnel_interface_del_api(struct interface *ifp)
 		struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 		nsm_tunnel_ipkernel_destroy(tunnel);
 		XFREE(MTYPE_IF, tunnel);
-		nsm->nsm_client[NSM_INTF_TUNNEL] = NULL;
+		tunnel = NULL;
+		nsm_intf_module_data_set(ifp, NSM_INTF_TUNNEL, NULL);
 	}
 	return OK;
 }

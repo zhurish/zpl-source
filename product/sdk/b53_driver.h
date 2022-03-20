@@ -100,6 +100,7 @@ struct b53125_mac_arl_entry {
 	u8 is_static:1;
 };
 
+typedef int (*mac_arl_entry_cb)(struct b53125_mac_arl_entry *, void *);
 
 #define b53_build_op(type_op_size, val_type)				\
 static inline int b53125_##type_op_size(b53_device_t *dev, u8 page,	\
@@ -141,134 +142,79 @@ extern struct b53125_device * b53125_device_probe(void);
 extern int b53125_config_init(sdk_driver_t *dev);
 
 /*******global *******/
-extern void b53_brcm_hdr_setup(sdk_driver_t *dev, zpl_bool enable, zpl_phyport_t port);
-extern int b53125_switch_manege(sdk_driver_t *dev, zpl_bool manege);
-extern int b53125_switch_forwarding(sdk_driver_t *dev, zpl_bool enable);
-extern int b53125_multicast_flood(sdk_driver_t *dev, zpl_bool enable);
-extern int b53125_unicast_flood(sdk_driver_t *dev, zpl_bool enable);
 extern int b53125_range_error(sdk_driver_t *dev, zpl_bool enable);
-extern int b53125_multicast_learning(sdk_driver_t *dev, zpl_bool enable);
 
-extern int b53125_enable_bpdu(sdk_driver_t *dev, zpl_bool enable);
-extern int b53125_aging_time(sdk_driver_t *dev, int agetime);
 extern int b53125_multicast_forward(sdk_driver_t *dev, u8 *mac, zpl_bool enable);
+extern int b53125_global_init(sdk_driver_t *dev);
+extern int b53125_global_start(sdk_driver_t *dev);
 
-int b53125_mldqry_snoop_enable(sdk_driver_t *dev, zpl_bool enable);
-int b53125_mldqry_proxy_enable(sdk_driver_t *dev, zpl_bool enable);
-
-int b53125_mld_snoop_enable(sdk_driver_t *dev, zpl_bool enable);
-int b53125_mld_proxy_enable(sdk_driver_t *dev, zpl_bool enable);
-
-int b53125_igmpunknow_snoop_enable(sdk_driver_t *dev, zpl_bool enable);
-int b53125_igmpunknow_proxy_enable(sdk_driver_t *dev, zpl_bool enable);
-
-int b53125_igmpqry_snoop_enable(sdk_driver_t *dev, zpl_bool enable);
-int b53125_igmpqry_proxy_enable(sdk_driver_t *dev, zpl_bool enable);
-
-int b53125_igmp_snoop_enable(sdk_driver_t *dev, zpl_bool enable);
-int b53125_igmp_proxy_enable(sdk_driver_t *dev, zpl_bool enable);
+/*******snoop *******/
+extern int b53125_snooping_init(sdk_driver_t *dev);
 
 
-int b53125_igmp_ipcheck_enable(sdk_driver_t *dev, zpl_bool enable);
-
-int b53125_arp_copycpu_enable(sdk_driver_t *dev, zpl_bool enable);
-int b53125_rarp_copycpu_enable(sdk_driver_t *dev, zpl_bool enable);
-int b53125_dhcp_copycpu_enable(sdk_driver_t *dev, zpl_bool enable);
-
-
-int b53125_port_wan_enable(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable);
 /******* IMP PORT *******/
+extern int b53_brcm_hdr_setup(sdk_driver_t *dev, zpl_bool enable, zpl_phyport_t port);
 extern int b53125_imp_enable(sdk_driver_t *dev, zpl_bool enable);
 extern int b53125_imp_speed(sdk_driver_t *dev, int speed);
 extern int b53125_imp_duplex(sdk_driver_t *dev, int duplex);
 extern int b53125_imp_flow(sdk_driver_t *dev, zpl_bool rx, zpl_bool tx);
 extern int b53125_imp_port_enable(sdk_driver_t *dev);
 
+extern int b53125_cpu_init(sdk_driver_t *dev);
+
 /******* PORT *******/
-extern int b53125_pasue_transmit_enable(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable);
-extern int b53125_pasue_receive_enable(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable);
 
 extern int b53125_unknow_unicast_forward_port(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable);
 extern int b53125_unknow_multicast_forward_port(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable);
 extern int b53125_unknow_ipmulticast_forward_port(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable);
 extern int b53125_enable_learning(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable);
-extern int b53125_port_init(void);
-
-extern int b53125_jumbo_enable(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable);
-extern int b53125_jumbo_size(sdk_driver_t *dev, int size);
+extern int b53125_port_init(sdk_driver_t *dev);
+extern int b53125_port_start(sdk_driver_t *dev);
 
 
 
 /******* qos *******/
-extern int b53125_qos_init(void);
-extern int b53125_qos_aggreation_mode(sdk_driver_t *dev, zpl_bool enable);
-extern int b53125_qos_base_port(sdk_driver_t *dev, zpl_bool enable);
-extern int b53125_qos_layer_sel(sdk_driver_t *dev, int sel);
-extern int b53125_qos_8021p(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable);
-extern int b53125_qos_diffserv(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable);
-
-extern int b53125_8021p_map_priority(sdk_driver_t *dev, zpl_phyport_t port, int p, int priority);
-extern int b53125_diffserv_map_priority(sdk_driver_t *dev, int diffserv, int priority);
-extern int b53125_tc_map_queue(sdk_driver_t *dev, int priority, int queue);
-//设置进入CPU报文到队列的映射
-extern int b53125_qos_cpu_map_queue(sdk_driver_t *dev, int traffic, zpl_bool enable);
-//设置queue调度方式
-extern int b53125_queue_scheduling(sdk_driver_t *dev, int mode);
- //设置queue调度权限
-extern int b53125_queue_weight(sdk_driver_t *dev, int queue, int weight);
-
+extern int b53125_qos_init(sdk_driver_t *dev);
 extern int b53125_qos_class4_weight(sdk_driver_t *dev, zpl_bool strict, int weight);
 
-//CPU接口限速
+/******* rate *******/
 extern int b53125_qos_cpu_rate(sdk_driver_t *dev, int rate);
 extern int b53125_rate_default(sdk_driver_t *dev);
 extern int b53125_strom_rate(sdk_driver_t *dev, zpl_phyport_t port,int type, int cnt);
 extern int b53125_ingress_rate(sdk_driver_t *dev, zpl_phyport_t port, int cnt);
 extern int b53125_egress_rate(sdk_driver_t *dev, zpl_phyport_t port, int rate);
 
-extern int b53125_qos_cfi_remarking(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable);
-extern int b53125_qos_pcp_remarking(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable);
-extern int b53125_priority_remarking(sdk_driver_t *dev, zpl_phyport_t port, zpl_uint32 tc, zpl_uint32 priority);
-
 
 /******* STP *******/
-extern int b53125_mstp_init(void);
+extern int b53125_mstp_init(sdk_driver_t *dev);
 
 /******* TRUNK *******/
-extern int b53_trunk_init(void);
+extern int b53125_trunk_init(sdk_driver_t *dev);
 
 
 /******* VLAN *******/
-extern int b53_vlan_init(void);
+extern int b53125_vlan_init(sdk_driver_t *dev);
 extern int b53125_port_vlan(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable);
 
-extern int b53125_vlan_mstp_id(sdk_driver_t *dev, vlan_t vid, int id);
-
 /******* mirror *******/
-extern int b53125_mirror_init(void);
+extern int b53125_mirror_init(sdk_driver_t *dev);
 
 /******* MAC *******/
-int b53125_mac_address_add(sdk_driver_t *dev, zpl_phyport_t phyport, 
-	zpl_vlan_t vlanid, zpl_uint32 vrfid, mac_t *mac, zpl_uint32 pri);
-int b53125_mac_address_del(sdk_driver_t *dev, zpl_phyport_t phyport, 
-	zpl_vlan_t vlanid, zpl_uint32 vrfid, mac_t *mac, zpl_uint32 pri);
-int b53125_mac_address_read(sdk_driver_t *dev, zpl_phyport_t phyport, 
-	zpl_vlan_t vlanid, zpl_uint32 vrfid);
 
+extern int b53125_mac_init(sdk_driver_t *dev);
 
 /******* DOS *******/
 extern int b53125_dos_disable_lean(sdk_driver_t *dev, zpl_bool enable);
-extern int b53125_dos_init(void);
+extern int b53125_dos_init(sdk_driver_t *dev);
 
 
 /******* EAP *******/
-extern int b53125_eap_bypass_ipaddr_set(sdk_driver_t *dev, zpl_uint32 index, u32 address, u32 mask);
-extern int b53125_eap_init(void);
+extern int b53125_eap_init(sdk_driver_t *dev);
 
-
+/******* phy *******/
 extern int b53125_phy_loopback(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable);
 extern int b53125_phy_powerdown(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable);
-extern int b53125_snooping_enable(sdk_driver_t *dev, zpl_uint32 type, zpl_bool enable);
+
 /*********************************************************************************/
 
 

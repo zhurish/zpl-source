@@ -124,13 +124,13 @@ int b53125_rate_default(sdk_driver_t *dev)
 {
 	b53125_qos_ingress_ipg(dev, 1);
 	b53125_qos_buck_type(dev, 0, BIT(0)|BIT(1));
-	b53125_qos_buck_type(dev, 1, BIT(2)|BIT(3)|BIT(4)|BIT(5));
-
+	b53125_qos_buck_type(dev, 1, BIT(2)|BIT(3)|BIT(4)|BIT(5));//广播，多播，未知单播
+/*
 	b53125_qos_ingress_rate_mode(dev, 4,  1, 1);
 	b53125_qos_ingress_rate_mode(dev, 4,  2, 1);
 	b53125_qos_ingress_rate_mode(dev, 4,  3, 1);
 	b53125_qos_ingress_rate_mode(dev, 4,  4, 1);
-	b53125_qos_ingress_rate_mode(dev, 4,  5, 1);
+	b53125_qos_ingress_rate_mode(dev, 4,  5, 1);*/
 	return OK;
 }
 

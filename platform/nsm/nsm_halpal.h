@@ -52,11 +52,11 @@ extern int nsm_halpal_iproute_rib_action(struct prefix *p, struct rib *old, stru
 
 extern int nsm_halpal_interface_mac (struct interface *ifp, zpl_uchar *mac, zpl_uint32 len);
 extern int nsm_halpal_interface_mtu (struct interface *ifp, zpl_uint32 mtu);
-extern int nsm_halpal_interface_vrf (struct interface *ifp, zpl_uint32 vrf);
-extern int nsm_halpal_interface_multicast (struct interface *ifp, zpl_uint32 multicast);
+extern int nsm_halpal_interface_vrf (struct interface *ifp, vrf_id_t vrf);
+extern int nsm_halpal_interface_multicast (struct interface *ifp, zpl_bool multicast);
 
 extern int nsm_halpal_interface_bandwidth (struct interface *ifp, zpl_uint32 bandwidth);
-extern int nsm_halpal_interface_speed (struct interface *ifp, zpl_uint32 );
+extern int nsm_halpal_interface_speed (struct interface *ifp, nsm_speed_en );
 extern int nsm_halpal_interface_get_statistics (struct interface *ifp);
 
 
@@ -66,13 +66,11 @@ extern int nsm_halpal_interface_promisc_link(struct interface *ifp, zpl_bool ena
 
 extern int nsm_halpal_interface_enca (struct interface *ifp, zpl_uint32 mode, zpl_uint32 value);
 extern int nsm_halpal_interface_mode (struct interface *ifp, zpl_uint32 mode);
-extern int nsm_halpal_interface_metric (struct interface *ifp, zpl_uint32 metric);
-extern int nsm_halpal_interface_linkdetect (struct interface *ifp, zpl_uint32 link);
 
-extern int nsm_halpal_interface_stp (struct interface *ifp, zpl_uint32 );
-extern int nsm_halpal_interface_loop (struct interface *ifp, zpl_uint32 );
-extern int nsm_halpal_interface_8021x (struct interface *ifp, zpl_uint32 );
-extern int nsm_halpal_interface_duplex (struct interface *ifp, zpl_uint32 );
+
+extern int nsm_halpal_interface_loop (struct interface *ifp, zpl_bool );
+
+extern int nsm_halpal_interface_duplex (struct interface *ifp, nsm_duplex_en );
 
 
 extern int nsm_halpal_create_vr(vrf_id_t vrf_id);

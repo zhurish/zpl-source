@@ -389,7 +389,7 @@ static int process_waitpid(process_t *process)
 	return 0;
 }
 
-int process_waitpid_api()
+int process_waitpid_api(void)
 {
 	NODE index;
 	process_t *pstNode = NULL;
@@ -539,7 +539,7 @@ process_t * process_get(process_head *head)
 
 
 
-static int process_alloc_id()
+static int process_alloc_id(void)
 {
 	++main_process_id;
 	return main_process_id;

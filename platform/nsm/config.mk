@@ -14,7 +14,8 @@ OBJS	+= nsm_halpal.o
 #OBJS	+= nsm_client.o
 #OBJS	+= nsm_hook.o
 #OBJS	+= nsm_rib.o
-
+OBJS	+= nsm_global.o
+OBJS	+= nsm_port.o
 
 ifeq ($(strip $(ZPL_NSM_8021X)),true)
 OBJS	+= nsm_8021x.o			
@@ -80,6 +81,7 @@ OBJS	+= cmd_vrf.o
 OBJS	+= cmd_port.o
 OBJS	+= cmd_route.o
 OBJS	+= cmd_wireless.o
+OBJS	+= cmd_global.o
 
 ifeq ($(strip $(ZPL_NSM_8021X)),true)
 OBJS	+= cmd_dot1x.o			

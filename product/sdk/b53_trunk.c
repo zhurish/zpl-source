@@ -86,7 +86,7 @@ static int b53125_trunk_del(sdk_driver_t *dev, int id, zpl_phyport_t port)
 	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
-int b53_trunk_init(void)
+int b53125_trunk_init(sdk_driver_t *dev)
 {
     sdk_trunk.sdk_trunk_enable_cb = b53125_trunk_enable;
     sdk_trunk.sdk_trunk_create_cb = b53125_trunk_create;

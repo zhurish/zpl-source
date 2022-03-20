@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-extern int modem_product_init();
+extern int modem_product_init(void);
 
 
 #ifdef __cplusplus

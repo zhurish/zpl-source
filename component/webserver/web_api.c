@@ -32,14 +32,14 @@ struct module_list module_list_webserver =
 };
 
 
-int web_app_quit_api()
+int web_app_quit_api(void)
 {
 	zassert(web_app != NULL);
 	web_app->finished = zpl_true;
 	return OK;
 }
 
-int web_app_reload_api()
+int web_app_reload_api(void)
 {
 	zassert(web_app != NULL);
 	web_app->finished = zpl_true;
@@ -134,7 +134,7 @@ int web_app_proto_set_api(web_proto proto)
 	return OK;
 }
 
-web_proto web_app_proto_get_api()
+web_proto web_app_proto_get_api(void)
 {
 	if(web_app)
 		return web_app->proto;
@@ -305,7 +305,7 @@ int web_app_debug_set_api(zpl_int32 level)
 	return OK;
 }
 
-int web_app_debug_get_api()
+int web_app_debug_get_api(void)
 {
 	return websGetLogLevel();
 }

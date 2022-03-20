@@ -261,6 +261,7 @@ DEFUN (no_qos_storm_control,
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
+#ifdef NSM_QOS_QUEUE_MAP_CLASS
 /*
  * queue map to class
  */
@@ -381,7 +382,7 @@ DEFUN (no_qos_queue_class_sched,
 	ret = nsm_qos_class_sched_set_api(ifp, class, NSM_CLASS_SCHED_PQ, weight);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
-
+#endif
 
 
 /*
@@ -1337,13 +1338,13 @@ static int cmd_qos_intf_init(int node)
 
 	install_element(node, CMD_CONFIG_LEVEL, &qos_shaping_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &no_qos_shaping_cmd);	
-
+#ifdef NSM_QOS_QUEUE_MAP_CLASS
 	install_element(node, CMD_CONFIG_LEVEL, &qos_queue_map_class_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &no_qos_queue_map_class_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &qos_queue_class_sched_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &qos_queue_class_sched_weight_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &no_qos_queue_class_sched_cmd);
-
+#endif
 	install_element(node, CMD_CONFIG_LEVEL, &qos_trust_type_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &no_qos_trust_type_cmd);
 

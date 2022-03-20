@@ -118,19 +118,12 @@ static int b53125_mstp_bypass(sdk_driver_t *dev, zpl_bool enable, int id)
 	return ret;
 }
 #endif
-static int sdk_mstp_add_vlan (sdk_driver_t *dev,  zpl_index_t id, vlan_t vid)
-{
-	return b53125_vlan_mstp_id(dev,  vid,  id);
-}
-static int sdk_mstp_del_vlan (sdk_driver_t *dev,  zpl_index_t id, vlan_t vid)
-{
-	return b53125_vlan_mstp_id(dev,  vid,  0);
-}
+
 static int sdk_mstp_create (sdk_driver_t *dev,  zpl_index_t id)
 {
 	return OK;
 }
-int b53125_mstp_init(void)
+int b53125_mstp_init(sdk_driver_t *dev)
 {
 
 	sdk_mstp.sdk_stp_state_cb = b53125_set_stp_state;
@@ -139,8 +132,7 @@ int b53125_mstp_init(void)
 	sdk_mstp.sdk_mstp_aging_cb = b53125_mstp_aging_time;
 	sdk_mstp.sdk_mstp_state = b53125_set_mstp_state;
 	sdk_mstp.sdk_mstp_create = sdk_mstp_create;
-	sdk_mstp.sdk_mstp_add_vlan = sdk_mstp_add_vlan;
-	sdk_mstp.sdk_mstp_del_vlan = sdk_mstp_del_vlan;
+
 	return OK;
 }
 

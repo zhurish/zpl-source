@@ -24,27 +24,27 @@ extern "C" {
 /* For pretty printing of memory allocate information. */
 struct module_list
 {
-  zpl_uint32 module;  //模块ID
+  	zpl_uint32 module;  //模块ID
 	const char 	*name;  //模块名称  
 
-  int	(*module_init)(void);
+  	int	(*module_init)(void);
 	int	(*module_exit)(void);
 	int	(*module_task_init)(void);
 	int	(*module_task_exit)(void);
 	int	(*module_cmd_init)(void);
 #ifdef ZPL_SHELL_MODULE
-  int	(*module_write_config)(struct vty *, void *);
+  	int	(*module_write_config)(struct vty *, void *);
 	int	(*module_show_config)(struct vty *, void *, zpl_bool);
 	int	(*module_show_debug)(struct vty *, void *, zpl_bool);
 #else
-  int	(*module_write_config)(void *, void *);
+  	int	(*module_write_config)(void *, void *);
 	int	(*module_show_config)(void *, void *, zpl_bool);
 	int	(*module_show_debug)(void *, void *, zpl_bool);
 #endif
 
   zpl_uint32		flags;//模块是否初始化标志
   zpl_void		  *master;    
-	zpl_uint32		taskid;       //模块任务ID
+  zpl_uint32		taskid;       //模块任务ID
   struct submodule
   {
     zpl_uint32 module;

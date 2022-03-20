@@ -113,6 +113,21 @@ typedef unsigned long long zpl_uint64;
 #endif /* __int64 */
 #else /* WIN32 */
 
+
+#ifdef __INT64_TYPE__
+typedef __INT64_TYPE__ zpl_int64;
+#else
+typedef int64_t zpl_int64;
+#endif
+
+#ifdef __UINT64_TYPE__
+typedef __UINT64_TYPE__ zpl_uint64;
+#else
+typedef uint64_t zpl_uint64;
+#endif
+
+
+/*
 #if __WORDSIZE == 64
 #ifdef ZPL_HISIMPP_MODULE 
 typedef long long           zpl_int64;
@@ -120,8 +135,6 @@ typedef unsigned long long  zpl_uint64;
 #else
 typedef long                 zpl_int64;
 typedef unsigned long long   zpl_uint64;
-//typedef long int                zpl_int64;
-//typedef unsigned long int       zpl_uint64;
 #endif
 #else
 #ifdef ZPL_HISIMPP_MODULE 
@@ -132,9 +145,7 @@ typedef long long int           zpl_int64;
 typedef unsigned long long int  zpl_uint64;
 #endif
 #endif
-
-typedef int64_t zpl_int64;
-typedef uint64_t zpl_uint64;
+*/
 #endif /* WIN32 */
 
 #define double_eq(a,b) (fabs((a)-(b)) < 1e-8)

@@ -36,8 +36,8 @@ typedef struct iw_s
 }iw_t;
 
 
-extern int nsm_iw_client_init();
-extern int nsm_iw_client_exit();
+extern int nsm_iw_client_init(void);
+extern int nsm_iw_client_exit(void);
 
 extern iw_t * nsm_iw_get(struct interface *ifp);
 extern int nsm_iw_mode_set_api(struct interface *ifp, iw_mode_t mode);

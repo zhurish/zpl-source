@@ -85,7 +85,8 @@ extern int nsm_mirror_source_mac_filter_set_api(zpl_uint32 id, ifindex_t ifindex
 
 #ifdef ZPL_SHELL_MODULE
 extern void cmd_mirror_init(void);
-extern int bulid_mirror_config(struct vty *vty);
+extern int bulid_mirror_config(struct vty *vty, void *);
+extern int bulid_mirror_show(struct vty *vty);
 #endif
 #ifdef __cplusplus
 }

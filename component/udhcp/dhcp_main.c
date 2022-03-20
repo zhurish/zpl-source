@@ -140,7 +140,7 @@ static int udhcp_main_task(void *p)
 }
 
 
-int udhcp_module_init()
+int udhcp_module_init(void)
 {
 	//int server_socket = 0;
 	//unsigned num_ips = 0;
@@ -207,12 +207,12 @@ int udhcp_module_init()
 	return OK;
 }
 
-int udhcp_module_exit()
+int udhcp_module_exit(void)
 {
 	return dhcpd_config_uninit(&dhcp_global_config);
 }
 
-int udhcp_module_task_init()
+int udhcp_module_task_init(void)
 {
 	if(dhcp_global_config.task_id == 0)
 		dhcp_global_config.task_id = os_task_create("udhcpTask", OS_TASK_DEFAULT_PRIORITY, 0,
@@ -226,7 +226,7 @@ int udhcp_module_task_init()
 	return ERROR;
 }
 
-int udhcp_module_task_exit ()
+int udhcp_module_task_exit (void)
 {
 	if(dhcp_global_config.task_id == 0)
 		return OK;

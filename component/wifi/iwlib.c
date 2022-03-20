@@ -1050,7 +1050,7 @@ int iw_freq_to_channel(double freq, const struct iw_range * range)
 	for (k = 0; k < range->num_frequency; k++)
 	{
 		ref_freq = iw_freq2float(&(range->freq[k]));
-		if (freq == ref_freq)
+		if (double_eq(freq,ref_freq))
 			return (range->freq[k].i);
 	}
 	/* Not found */

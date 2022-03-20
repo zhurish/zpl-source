@@ -2,42 +2,33 @@
 #
 #
 
-menu "Product Module Config"
+menu "BSP Module Config"
 
-config ZPL_PRODUCT_MODULE
-	bool "Product Module"
-	default y
-	help
-	Build Product Module.
-
-config ZPL_PRODUCT_L2SWITCH
-	bool "L2 Switch Module"
-	default n
-	depends on ZPL_PRODUCT_MODULE
-	help
-	Build L2 Switch Module.
-
-config ZPL_PRODUCT_L3ROUTE
-	bool "L3 Route Module"
-	default y
-	depends on ZPL_PRODUCT_MODULE
-	help
-	Build L3 Route Module.
-
-config ZPL_PRODUCT_BSP_MODULE
+config ZPL_BSP_MODULE
 	bool "BSP Module"
-	depends on ZPL_PRODUCT_MODULE
 	default y
 	help
 	Build BSP Module.
 
-config ZPL_PRODUCT_SDK_MODULE
+config ZPL_SDK_MODULE
 	bool "Switch SDK Module"
-	depends on ZPL_PRODUCT_MODULE
-	select ZPL_PRODUCT_L2SWITCH
+	depends on ZPL_BSP_MODULE
 	select ZPL_HAL_MODULE
 	default n
 	help
 	Build Switch SDK Module.
+
+choice
+	prompt "Switch SDK type"
+	depends on ZPL_SDK_MODULE
+	default ZPL_SDK_BCM53125
+
+config ZPL_SDK_BCMX
+	bool "BCMX"
+
+config ZPL_SDK_BCM53125
+	bool "BCM53125"
 	
+endchoice
+
 endmenu

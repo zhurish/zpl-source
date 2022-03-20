@@ -23,10 +23,10 @@ static struct tty_com ec20_attty =
 {
 	.devname = "/dev/ttyUSB2",
 	.speed	= 115200,
-	.databit = DATA_8BIT,
-	.stopbit = STOP_1BIT,
-	.parity = PARITY_NONE,
-	.flow_control = FLOW_CTL_NONE,
+	.databit = TTY_DATA_8BIT,
+	.stopbit = TTY_STOP_1BIT,
+	.parity = TTY_PARITY_NONE,
+	.flow_control = TTY_FLOW_CTL_NONE,
 	.mode = TTY_COM_MODE_RAW,
 };
 
@@ -34,10 +34,10 @@ static struct tty_com ec20_pppd =
 {
 	.devname = "/dev/ttyUSB3",
 	.speed	= 115200,
-	.databit = DATA_8BIT,
-	.stopbit = STOP_1BIT,
-	.parity = PARITY_NONE,
-	.flow_control = FLOW_CTL_NONE,
+	.databit = TTY_DATA_8BIT,
+	.stopbit = TTY_STOP_1BIT,
+	.parity = TTY_PARITY_NONE,
+	.flow_control = TTY_FLOW_CTL_NONE,
 	.mode = TTY_COM_MODE_RAW,
 };
 
@@ -60,7 +60,7 @@ static modem_driver_t ec20_driver =
 
 
 
-int modem_product_init()
+int modem_product_init(void)
 {
 	//zlog_warn(MODULE_MODEM, "----modem-channel profile : %s",modem_serial_channel_name(&ec20_driver));
 	modem_driver_register(&ec20_driver);

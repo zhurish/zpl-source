@@ -311,7 +311,7 @@ extern int iwlist_main(iw_user_cb_t *cb, int argc, char ** argv);
 extern int iw_main(iw_user_cb_t *cb, int argc, char ** argv);
 
 extern int iwlist_detail_set(zpl_bool value);
-extern zpl_bool iwlist_detail_get();
+extern zpl_bool iwlist_detail_get(void);
 /* ---------------------- SOCKET SUBROUTINES -----------------------*/
 extern int
 	iw_sockets_open(void);

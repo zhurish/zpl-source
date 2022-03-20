@@ -14,7 +14,7 @@ extern "C" {
 #endif
 
 
-typedef enum dot1x_type_e
+typedef enum dot1x_state_en
 {
 	//auto | force-authorized | force-unauthorized
 	DOT1X_NONE = 0,
@@ -22,13 +22,6 @@ typedef enum dot1x_type_e
 	DOT1X_FORCE_AUTHORIZED,
 	DOT1X_FORCE_UNAUTHORIZED,
 
-}dot1x_type_en;
-
-typedef enum dot1x_state_e
-{
-	DOT1X_BLK_NONE = 0,
-	DOT1X_BLK_UNACCECT,
-	DOT1X_BLK_ACCECT,
 }dot1x_state_en;
 
 
@@ -37,13 +30,13 @@ typedef struct dot1x_s
 	NODE			node;
 	ifindex_t		ifindex;
 	zpl_bool			enable;		//enable dot1x
-	dot1x_type_en	type;
 
-	dot1x_state_en	state;
+	dot1x_state_en		state;
+	zpl_uint32			hwstate;
 	zpl_bool			reauthentication;
 	zpl_uint32			eap_version;
 	zpl_bool			bypass;
-	vlan_t			guest_vlan;
+	vlan_t				guest_vlan;
 
 	zpl_bool			port_mode;
 	zpl_uint32			max_user;	//base MAC type, max user
@@ -80,12 +73,10 @@ zpl_bool nsm_dot1x_global_is_enable(void);
 
 int dot1x_callback_api(dot1x_cb cb, void *pVoid);
 
-int nsm_dot1x_enable_set_api(ifindex_t ifindex, zpl_bool enable, dot1x_type_en type);
-int nsm_dot1x_enable_get_api(ifindex_t ifindex, zpl_bool *enable, dot1x_type_en *type);
+int nsm_dot1x_enable_set_api(ifindex_t ifindex, zpl_bool enable);
+int nsm_dot1x_enable_get_api(ifindex_t ifindex, zpl_bool *enable);
 zpl_bool nsm_dot1x_is_enable_api(ifindex_t ifindex);
 
-int nsm_dot1x_auth_type_set_api(ifindex_t ifindex, dot1x_type_en type);
-int nsm_dot1x_auth_type_get_api(ifindex_t ifindex, dot1x_type_en *type);
 
 int nsm_dot1x_auth_state_set_api(ifindex_t ifindex, dot1x_state_en state);
 int nsm_dot1x_auth_state_get_api(ifindex_t ifindex, dot1x_state_en *state);
@@ -131,7 +122,7 @@ int nsm_dot1x_reset_api(ifindex_t ifindex);
 
 #ifdef ZPL_SHELL_MODULE
 void cmd_dot1x_init(void);
-int build_dot1x_config(struct vty *vty);
+int build_dot1x_config(struct vty *vty, void *p);
 int build_dot1x_interface(struct vty *vty, struct interface *ifp);
 #endif
 

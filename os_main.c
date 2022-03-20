@@ -17,11 +17,14 @@
 #include "thread.h"
 #include "host.h"
 #include "module.h"
-#include "os_start.h"
-#include "os_module.h"
+
 #include "hal_driver.h"
+#ifdef ZPL_SDK_MODULE
 #include "sdk_driver.h"
-#include "b53_driver.h"
+#endif
+
+#include "startup_start.h"
+#include "startup_module.h"
 //#include "platform/nsm/filter.h"
 //#include "platform/nsm/plist.h"
 
@@ -54,24 +57,6 @@ net.ipv4.tcp_tw_recycle = 1 表示开启TCP连接中TIME-WAIT sockets的快速�
 引用
 /sbin/sysctl -p
  */
-struct os_main_option
-{
-	char *progname;
-	char *config_file;
-	char *pid_file;
-	char *vty_addr;
-	char *zserv_path;
-
-	int vty_port;
-	int daemon_mode;
-	char *user;
-	char *group;
-	char *tty;
-	/* process id. */
-	pid_t pid;
-};
-
-struct os_main_option main_data;
 
 /*
 gdbserver 1.1.1.2:50000 SWP-V0.0.1.bin
@@ -86,7 +71,7 @@ c
 #define BUILD_MAIN
 #endif
 /******************************************************/
-#ifdef BUILD_MAIN
+
 /* Command line options. */
 static struct option zpllongopts[] =
 	{
@@ -150,33 +135,33 @@ static int zplmain_getopt(int argc, char **argv)
 		case 0:
 			break;
 		case 'd':
-			main_data.daemon_mode = 1;
+			startup_option.daemon_mode = 1;
 			break;
 
 		case 'f':
-			// if(main_data.config_file)
-			//	  os_free(main_data.config_file);
-			// main_data.config_file = os_strdup(optarg);
-			main_data.config_file = optarg;
+			// if(startup_option.config_file)
+			//	  os_free(startup_option.config_file);
+			// startup_option.config_file = os_strdup(optarg);
+			startup_option.config_file = optarg;
 			break;
 
 		case 'A':
-			// if(main_data.vty_addr)
-			//   os_free(main_data.vty_addr);
-			// main_data.vty_addr = os_strdup(optarg);
-			main_data.vty_addr = optarg;
+			// if(startup_option.vty_addr)
+			//   os_free(startup_option.vty_addr);
+			// startup_option.vty_addr = os_strdup(optarg);
+			startup_option.vty_addr = optarg;
 			//	    	  vty_addr = optarg;
 			break;
 		case 'i':
-			// if(main_data.pid_file)
-			//   os_free(main_data.pid_file);
-			main_data.pid_file = optarg;
+			// if(startup_option.pid_file)
+			//   os_free(startup_option.pid_file);
+			startup_option.pid_file = optarg;
 			//	          pid_file = optarg;
 			break;
 		case 'z':
-			// if(main_data.zserv_path)
-			//   os_free(main_data.zserv_path);
-			main_data.zserv_path = optarg;
+			// if(startup_option.zserv_path)
+			//   os_free(startup_option.zserv_path);
+			startup_option.zserv_path = optarg;
 			//	    	  zserv_path = optarg;
 			break;
 		case 'P':
@@ -184,59 +169,45 @@ static int zplmain_getopt(int argc, char **argv)
 		   listening on zebra port... */
 			if (strcmp(optarg, "0") == 0)
 			{
-				main_data.vty_port = 0;
+				startup_option.vty_port = 0;
 				break;
 			}
-			main_data.vty_port = atoi(optarg);
-			if (main_data.vty_port <= 0 || main_data.vty_port > 0xffff)
-				main_data.vty_port = ZEBRA_VTY_PORT;
+			startup_option.vty_port = atoi(optarg);
+			if (startup_option.vty_port <= 0 || startup_option.vty_port > 0xffff)
+				startup_option.vty_port = ZEBRA_VTY_PORT;
 			break;
 		case 'u':
-			main_data.user = optarg;
+			startup_option.user = optarg;
 			break;
 		case 'g':
-			main_data.group = optarg;
+			startup_option.group = optarg;
 			break;
 		case 't':
-			if (main_data.tty)
-				free(main_data.tty);
-			// main_data.tty = strdup("/dev/ttyS0");
-			main_data.tty = (optarg);
+			if (startup_option.tty)
+				free(startup_option.tty);
+			// startup_option.tty = strdup("/dev/ttyS0");
+			startup_option.tty = (optarg);
 			break;
 		case 'n':
-			if (main_data.tty)
-				free(main_data.tty);
-			main_data.tty = NULL;
+			if (startup_option.tty)
+				free(startup_option.tty);
+			startup_option.tty = NULL;
 			break;
 		case 'v':
-			print_version(main_data.progname);
+			print_version(startup_option.progname);
 			exit(0);
 			break;
 		case 'h':
-			usage(main_data.progname, 0);
+			usage(startup_option.progname, 0);
 			break;
 		default:
-			usage(main_data.progname, 1);
+			usage(startup_option.progname, 1);
 			break;
 		}
 	}
 	return OK;
 }
-/*
-static int os_privs_high()
-{
-	if ( os_privs.change (ZPRIVS_RAISE) )
-		fprintf (stdout, "%s: could not raise privs, %s",
-				   __func__,os_strerror (ipstack_errno) );
-	return 0;
-}
-static int os_privs_low()
-{
-	if ( os_privs.change (ZPRIVS_LOWER) )
-		fprintf (stdout, "%s: could not lower privs, %s",
-				   __func__,os_strerror (ipstack_errno) );
-	return 0;
-}*/
+
 
 /* Main startup routine. */
 int main(int argc, char **argv)
@@ -250,63 +221,43 @@ int main(int argc, char **argv)
 	/* Set umask before anything for security */
 	umask(0027);
 
-	os_memset(&main_data, 0, sizeof(struct os_main_option));
 
-	main_data.progname = NULL;
-	main_data.config_file = DEFAULT_CONFIG_FILE;
-	main_data.pid_file = PATH_ZEBRA_PID;
-	main_data.vty_addr = NULL;
-	// main_data.zserv_path = "/var/run/ProcessMU.sock";//ZEBRA_VTYSH_PATH;
-	main_data.zserv_path = ZEBRA_VTYSH_PATH;
-	main_data.vty_port = ZEBRA_VTY_PORT;
-	main_data.daemon_mode = 0;
-	main_data.pid = 0;
-	main_data.tty = NULL;
-	/* preserve my name */
-	main_data.progname = ((p = strrchr(argv[0], '/')) ? ++p : argv[0]);
+	startup_option_default();
+	startup_option.progname = ((p = strrchr(argv[0], '/')) ? ++p : argv[0]);
 
 	zplmain_getopt(argc, argv);
 
-	os_limit_stack_size(10240);
+
 #ifdef OS_SIGNAL_SIGWAIT
 	os_task_sigmaskall();
 #endif
-	os_base_env_init();
-
-	os_base_env_load();
-
-#ifdef ZPL_TOOLS_PROCESS
-	/*	if(name2pid("ProcessMU") <= 0)
-			super_system("cd /app;./ProcessMU -D");*/
-
-	// if(name2pid("ProcessMU") <= 0)
-	super_system("killall -9 ProcessMU");
-	super_system("killall -9 ProcessMU");
-	os_msleep(200);
-	super_system("cd /app;./ProcessMU -D");
-#endif
 
 	os_signal_default(zlog_signal, zlog_signal);
+	zpl_base_signal_init(startup_option.daemon_mode);
 
-	os_base_signal_init(main_data.daemon_mode);
-	os_base_stack_init(main_data.tty);
-	os_base_zlog_open(main_data.progname);
+	zpl_stack_init();
+	zpl_stack_start(startup_option.progname, 8890);
+	
+	startup_module_init(1);
 
-	os_base_start_pid(MODULE_DEFAULT, main_data.pid_file, &main_data.pid);
+	startup_module_load();
 
-	pl_module_name_show();
+	startup_module_waitting();
+	//startup_module_stop();
+	//startup_module_exit();
 
-	os_base_module_start_all();
+	zpl_base_start_pid(MODULE_DEFAULT, startup_option.pid_file, &startup_option.pid);
+
 	/*
 	 * os shell start
 	 */
-	os_base_shell_start(main_data.zserv_path, main_data.vty_addr, main_data.vty_port, main_data.tty);
+	zpl_base_shell_start(startup_option.zserv_path, startup_option.vty_addr, startup_option.vty_port, startup_option.tty);
 
 	/*
 	 * load config file
 	 */
 	openzlog_start(NULL);
-	host_config_loading(main_data.config_file);
+	host_config_loading(startup_option.config_file);
 	zlog_notice(MODULE_DEFAULT, "Zebra host_config_loading");
 
 #ifdef OS_SIGNAL_SIGWAIT
@@ -331,48 +282,3 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-#else
-
-int os_main(int argc, char **argv)
-{
-	char *p;
-	/* Set umask before anything for security */
-	umask(0027);
-
-	os_memset(&main_data, 0, sizeof(struct os_main_option));
-
-	main_data.progname = NULL;
-	main_data.config_file = DEFAULT_CONFIG_FILE;
-	main_data.pid_file = PATH_ZEBRA_PID;
-	main_data.vty_addr = NULL;
-	main_data.zserv_path = ZEBRA_VTYSH_PATH;
-	main_data.vty_port = ZEBRA_VTY_PORT;
-	main_data.daemon_mode = 0;
-	main_data.pid = 0;
-
-	/* preserve my name */
-	main_data.progname = ((p = strrchr(argv[0], '/')) ? ++p : argv[0]);
-
-	main_getopt(argc, argv);
-
-	os_start_init(main_data.progname, MODULE_NSM, main_data.daemon_mode);
-
-	os_start_module(MODULE_NSM, main_data.config_file, NULL);
-
-	os_start_pid(MODULE_NSM, main_data.pid_file, &main_data.pid);
-
-	/*
-	 * load config file
-	 */
-	os_load_config(main_data.config_file);
-
-	/*
-	 * os shell start
-	 */
-	os_shell_start(main_data.zserv_path, NULL, main_data.vty_port);
-
-	thread_mainloop(NULL);
-
-	return 0;
-}
-#endif

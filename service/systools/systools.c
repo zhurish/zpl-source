@@ -88,7 +88,7 @@ int systools_printf(const char *format, ...)
 }
 
 #ifdef ZPL_SERVICE_FTPD
-const char *ftpd_hostname()
+const char *ftpd_hostname(void)
 {
 	return "VxWorks 5.5";
 }

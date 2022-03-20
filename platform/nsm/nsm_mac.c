@@ -175,6 +175,72 @@ int nsm_mac_lookup_api(mac_t *mac, vlan_t vlan)
 	return value ? OK:ERROR;
 }
 
+int nsm_mac_update_api(l2mac_t *macnode)
+{
+	l2mac_t *pstNode = NULL;
+	NODE index;
+	if(gMac.mutex)
+		os_mutex_lock(gMac.mutex, OS_WAIT_FOREVER);
+	for(pstNode = (l2mac_t *)lstFirst(gMac.macList);
+			pstNode != NULL;  pstNode = (l2mac_t *)lstNext((NODE*)&index))
+	{
+		index = pstNode->node;
+		if(pstNode)
+		{
+			if(os_memcmp(pstNode->mac, macnode->mac, NSM_MAC_MAX) == 0 && 
+				macnode->vlan == pstNode->vlan && 
+				macnode->type == pstNode->type &&
+				macnode->ifindex == pstNode->ifindex)
+			{
+				pstNode->ageing_time = gMac.ageing_time;
+			}
+		}
+	}
+	for(pstNode = (l2mac_t *)lstFirst(gMac.macList);
+			pstNode != NULL;  pstNode = (l2mac_t *)lstNext((NODE*)&index))
+	{
+		index = pstNode->node;
+		if(pstNode)
+		{
+			if(pstNode->ageing_time == 0)
+			{
+				pstNode->ageing_time = gMac.ageing_time;
+				lstDelete(gMac.macList, (NODE*)pstNode);
+				XFREE(MTYPE_MAC, pstNode);
+			}
+		}
+	}
+	l2mac_add_node(macnode);	
+	if(gMac.mutex)
+		os_mutex_unlock(gMac.mutex);
+	return OK;
+}
+
+int nsm_mac_reflush_api(void)
+{
+	l2mac_t *pstNode = NULL;
+	NODE index;
+	if(gMac.mutex)
+		os_mutex_lock(gMac.mutex, OS_WAIT_FOREVER);
+	for(pstNode = (l2mac_t *)lstFirst(gMac.macList);
+			pstNode != NULL;  pstNode = (l2mac_t *)lstNext((NODE*)&index))
+	{
+		index = pstNode->node;
+		if(pstNode && pstNode->ageing_time == 0)
+		{
+			pstNode->ageing_time = gMac.ageing_time;
+			lstDelete(gMac.macList, (NODE*)pstNode);
+			XFREE(MTYPE_MAC, pstNode);
+		}
+		if(pstNode && pstNode->ageing_time)
+		{
+			pstNode->ageing_time--;
+		}
+	}	
+	if(gMac.mutex)
+		os_mutex_unlock(gMac.mutex);
+	return OK;
+}
 
 int nsm_mac_add_api(l2mac_t *mac)
 {

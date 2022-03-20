@@ -48,7 +48,7 @@ PUBLIC int socketOpen(void)
     socketList = NULL;
     socketMax = 0;
     //socketHighestFd;
-    fd = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET6, IPSTACK_SOCK_STREAM, 0);
+    fd = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
     if (ipstack_invalid(fd)) {
         hasIPv6 = 1;
         ipstack_closesocket(fd);

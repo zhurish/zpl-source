@@ -65,11 +65,6 @@ typedef enum
 }nsm_submodule_t;
 
 
-/* For interface multicast configuration. */
-#define IF_ZEBRA_MULTICAST_UNSPEC 0
-#define IF_ZEBRA_MULTICAST_ON     1
-#define IF_ZEBRA_MULTICAST_OFF    2
-
 /* For interface shutdown configuration. */
 #define IF_ZEBRA_SHUTDOWN_OFF    0
 #define IF_ZEBRA_SHUTDOWN_ON     1
@@ -77,13 +72,6 @@ typedef enum
 
 #define IF_ZEBRA_MTU_DEFAULT	1500
 
-
-/* Global user-configured default for interface link-detect */
-typedef enum {
-  IF_LINKDETECT_UNSPEC = 0,
-  IF_LINKDETECT_ON,
-  IF_LINKDETECT_OFF,
-} nsm_linkdetect_en;
 
 typedef enum {
   NSM_IF_DUPLEX_NONE = 0,
@@ -120,19 +108,17 @@ struct nsm_interface
 	/* Shutdown configuration. */
 	zpl_uchar shutdown;
 
-	/* Multicast configuration. */
-	zpl_uchar multicast;
-  
 	nsm_duplex_en	duplex;
 	nsm_speed_en	speed;
 
-	/* Interface specific link-detect configuration state */
-	nsm_linkdetect_en linkdetect;
-	
-	void *nsm_client[NSM_INTF_MAX];
+
+	void *nsm_intf_data[NSM_INTF_MAX];
 };
 
 extern void nsm_interface_init(void);
+
+extern void *nsm_intf_module_data(struct interface *ifp, nsm_submodule_t mid);
+extern int nsm_intf_module_data_set(struct interface *ifp, nsm_submodule_t mid, void *p);
 
 extern int nsm_interface_hook_add(nsm_submodule_t module, int (*add_cb)(struct interface *), int (*del_cb)(struct interface *));
 extern int nsm_interface_write_hook_add(nsm_submodule_t module, int (*show_cb)(struct vty *, struct interface *));
@@ -152,8 +138,7 @@ extern int nsm_interface_desc_set_api(struct interface *ifp, const char *desc);
 extern int nsm_interface_down_set_api(struct interface *ifp);
 extern int nsm_interface_up_set_api(struct interface *ifp);
 
-extern int nsm_interface_linkdetect_set_api(struct interface *ifp, nsm_linkdetect_en linkdetect);
-extern int nsm_interface_linkdetect_get_api(struct interface *ifp, nsm_linkdetect_en *linkdetect);
+
 extern int nsm_interface_address_set_api(struct interface *ifp, struct prefix *cp, zpl_bool secondry);
 extern int nsm_interface_address_unset_api(struct interface *ifp, struct prefix *cp, zpl_bool secondry);
 extern int nsm_interface_address_get_api(struct interface *ifp, struct prefix *address);
@@ -163,8 +148,7 @@ extern int nsm_interface_ip_address_del(struct interface *ifp, struct prefix *cp
 		zpl_bool secondary, zpl_uint32 value);
 
 extern int nsm_interface_statistics_get_api(struct interface *ifp, struct if_stats *stats);
-extern int nsm_interface_multicast_set_api(struct interface *ifp, zpl_bool enable);
-extern int nsm_interface_multicast_get_api(struct interface *ifp, zpl_bool *enable);
+
 extern int nsm_interface_bandwidth_set_api(struct interface *ifp, zpl_uint32  bandwidth);
 extern int nsm_interface_bandwidth_get_api(struct interface *ifp, zpl_uint32  *bandwidth);
 extern int nsm_interface_vrf_set_api(struct interface *ifp, vrf_id_t vrf_id);
@@ -186,8 +170,6 @@ extern int nsm_interface_hw_update_api(struct interface *ifp);
 #ifdef ZPL_SHELL_MODULE
 extern void nsm_interface_show_api(struct vty *vty, struct interface *ifp);
 extern void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, zpl_bool status, zpl_bool *head);
-extern int nsm_port_interface_config(struct vty *vty, struct interface *ifp);
-extern void cmd_port_init (void);
 extern void cmd_interface_init(void);
 #endif
  

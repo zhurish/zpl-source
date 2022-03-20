@@ -370,7 +370,7 @@ DEFUN (show_sntp_client,
 #endif
 
 
-int cmd_sntpc_init()
+int cmd_sntpc_init(void)
 {
 #ifndef SNTPC_CLI_ENABLE
 	install_element (ENABLE_NODE, CMD_VIEW_LEVEL, &show_sntp_client_cmd);
@@ -397,7 +397,7 @@ int cmd_sntpc_init()
 #endif
 
 #ifdef ZPL_SERVICE_SNTPS
-int cmd_sntps_init()
+int cmd_sntps_init(void)
 {
 #ifndef SNTPS_CLI_ENABLE
 	install_element (ENABLE_NODE, CMD_VIEW_LEVEL, &show_sntps_server_cmd);

@@ -119,6 +119,9 @@ extern "C" {
 #define CMD_MAC_ADDRESS_STR	"mac-address-table"
 #define CMD_MAC_ADDRESS_STR_HELP	"mac-address-table\n"
 
+#define CMD_MAC_ADDRESS_LEARN_STR	"mac-address learning"
+#define CMD_MAC_ADDRESS_LEARN_STR_HELP	"Mac Address\nMac Address Learning\n"
+
 #define CMD_MAC_STR			"HHHH-HHHH-HHHH"
 #define CMD_MAC_STR_HELP	"specify MAC address:HHHH-HHHH-HHHH (e.g. 0012-2234-5631)\n"
 

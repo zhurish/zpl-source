@@ -605,7 +605,7 @@ DEFUN (no_sntp_version,
 		"sntp client configure\n"
 		"sntp protocol version information\n")
 #else
-static int no_sntp_version_cmd()
+static int no_sntp_version_cmd(void)
 #endif
 {
 	if(sntp_client == NULL)
@@ -660,7 +660,7 @@ DEFUN (sntp_passive,
 		"sntp server configure\n"
 		"sntp server passive type\n")
 #else
-static int sntp_passive_cmd()
+static int sntp_passive_cmd(void)
 #endif
 {
 	if(sntp_client == NULL)
@@ -680,7 +680,7 @@ DEFUN (no_sntp_passive,
 		"sntp server configure\n"
 		"sntp server passive type\n")
 #else
-static int no_sntp_passive_cmd()
+static int no_sntp_passive_cmd(void)
 #endif
 {
 	if(sntp_client == NULL)
@@ -1030,7 +1030,7 @@ int sntpcInit(void *m)
 	sntp_client->mutex = os_mutex_init();
 #ifdef SNTPC_CLI_ENABLE
 	install_node (&service_node, sntpc_config);
-	install_default (SERVICE_NODE);
+	install_default (ALL_SERVICE_NODE);
 
 	install_element (ENABLE_NODE, CMD_VIEW_LEVEL, &show_sntp_client_cmd);
 

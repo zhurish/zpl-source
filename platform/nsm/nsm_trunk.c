@@ -27,25 +27,26 @@ int nsm_trunk_interface_write_config(struct vty *vty, struct interface *ifp)
 #endif
 l2trunk_group_t * nsm_port_channel_get(struct interface *ifp)
 {
-	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	NSM_ENTER_FUNC();
-	return (l2trunk_group_t *)nsm->nsm_client[NSM_INTF_TRUNK];
+	return (l2trunk_group_t *)nsm_intf_module_data(ifp, NSM_INTF_TRUNK);
 }
 
 
 static int nsm_port_channel_add(struct interface *ifp)
 {
 	l2trunk_group_t * port_channel = NULL;
-	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	if(!if_is_lag(ifp))
 		return OK;
 	NSM_ENTER_FUNC();
+
 	nsm_trunk_create_api(IF_IFINDEX_ID_GET(ifp->ifindex), TRUNK_STATIC);
 
-	port_channel = nsm->nsm_client[NSM_INTF_TRUNK] = l2trunk_group_lookup_node(IF_IFINDEX_ID_GET(ifp->ifindex));
+	port_channel = l2trunk_group_lookup_node(IF_IFINDEX_ID_GET(ifp->ifindex));
 	if(!port_channel)
 		return ERROR;
 	port_channel->ifp = ifp;
+	nsm_intf_module_data_set(ifp, NSM_INTF_TRUNK, port_channel);
+
 	return OK;
 }
 
@@ -53,19 +54,20 @@ static int nsm_port_channel_add(struct interface *ifp)
 static int nsm_port_channel_del(struct interface *ifp)
 {
 	l2trunk_group_t * port_channel = NULL;
-	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
 	if(!if_is_lag(ifp))
 		return OK;
 	NSM_ENTER_FUNC();
-	port_channel = nsm->nsm_client[NSM_INTF_TRUNK];
+
+	port_channel = nsm_intf_module_data(ifp, NSM_INTF_TRUNK);
 	if(port_channel)
 	{
 		if(nsm_trunk_destroy_api(port_channel->trunkId) == ERROR)
 			return ERROR;
-		nsm->nsm_client[NSM_INTF_TRUNK] = NULL;
+		nsm_intf_module_data_set(ifp, NSM_INTF_TRUNK, NULL);
 	}
 	return OK;
 }
+
 
 
 int nsm_trunk_interface_create_api(struct interface *ifp)
@@ -453,7 +455,7 @@ int nsm_trunk_get_ID_interface_api(ifindex_t ifindex, zpl_uint32 *trunkId)
 	}
 	if(gtrunk.mutex)
 		os_mutex_unlock(gtrunk.mutex);
-	return -1;
+	return ERROR;
 }
 
 int nsm_trunk_add_interface_api(zpl_uint32 trunkid, trunk_type_t type, trunk_mode_t mode, struct interface *ifp)

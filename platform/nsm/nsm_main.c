@@ -60,6 +60,9 @@ int nsm_module_init(void)
 
 	rib_init();
 
+	nsm_global_init();
+	nsm_port_init();
+
 #ifdef ZPL_NSM_8021X
 	nsm_dot1x_init();
 #endif
@@ -171,7 +174,9 @@ int nsm_module_exit(void)
 #ifdef ZPL_NSM_PPP
 	nsm_ppp_exit();
 #endif
-
+	nsm_global_exit();
+	nsm_port_exit();
+	
 	access_list_reset();
 	prefix_list_reset();
 
@@ -189,6 +194,8 @@ int nsm_module_cmd_init(void)
 #ifdef ZPL_IPCOM_STACK_MODULE
 	cmd_ip_vrf_init();
 #endif
+
+	cmd_global_init();
 
 #ifdef ZPL_NSM_MAC
 	cmd_mac_init();
@@ -236,6 +243,16 @@ int nsm_module_cmd_init(void)
 #endif
 	return OK;
 }
+
+
+int nsm_module_start(void)
+{
+	nsm_global_start();
+	nsm_port_start();
+	nsm_vlan_default();
+	return OK;
+}
+
 
 int nsm_task_init(void)
 {

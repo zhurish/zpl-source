@@ -23,7 +23,7 @@ static int ifc_init(void)
     if (ifc_ctl_sock == -1) {
         ifc_ctl_sock = socket(AF_INET, SOCK_DGRAM, 0);
         if (ifc_ctl_sock < 0) {
-            dbg_time("socket() failed: %s\n", strerror(ipstack_errno));
+            dbg_time("socket() failed: %s\n", strerror(errno));
         }
     }
 
@@ -51,9 +51,9 @@ static int ifc_set_flags(const char *name, unsigned set, unsigned clr)
     struct ifreq ifr;
     ifc_init_ifr(name, &ifr);
 
-    if(ipstack_ioctl(ifc_ctl_sock, SIOCGIFFLAGS, &ifr) < 0) return -1;
+    if(ioctl(ifc_ctl_sock, SIOCGIFFLAGS, &ifr) < 0) return -1;
     ifr.ifr_flags = (ifr.ifr_flags & (~clr)) | set;
-    return ipstack_ioctl(ifc_ctl_sock, SIOCSIFFLAGS, &ifr);
+    return ioctl(ifc_ctl_sock, SIOCSIFFLAGS, &ifr);
 }
 
 static int ifc_up(const char *name, int rawIP)
@@ -68,9 +68,9 @@ static int ifc_down(const char *name)
     return ret;
 }
 
-static void init_sockaddr_in(struct ipstack_sockaddr *sa, in_addr_t addr)
+static void init_sockaddr_in(struct sockaddr *sa, in_addr_t addr)
 {
-    struct ipstack_sockaddr_in *sin = (struct ipstack_sockaddr_in *) sa;
+    struct sockaddr_in *sin = (struct sockaddr_in *) sa;
     sin->sin_family = AF_INET;
     sin->sin_port = 0;
     sin->sin_addr.s_addr = addr;
@@ -84,7 +84,7 @@ static int ifc_set_addr(const char *name, in_addr_t addr)
     ifc_init_ifr(name, &ifr);
     init_sockaddr_in(&ifr.ifr_addr, addr);
 
-    ret = ipstack_ioctl(ifc_ctl_sock, SIOCSIFADDR, &ifr);
+    ret = ioctl(ifc_ctl_sock, SIOCSIFADDR, &ifr);
     return ret;
 }
 
@@ -103,7 +103,7 @@ static void* udhcpc_thread_function(void*  arg) {
     char udhcpc_cmd[64];
 
     if (access("/usr/share/udhcpc/default.script", X_OK)) {
-        dbg_time("Fail to access /usr/share/udhcpc/default.script, ipstack_errno: %d (%s)", ipstack_errno, strerror(ipstack_errno));
+        dbg_time("Fail to access /usr/share/udhcpc/default.script, errno: %d (%s)", errno, strerror(errno));
     }
 
     //-f,--foreground	Run in foreground
@@ -131,12 +131,12 @@ static void* udhcpc_thread_function(void*  arg) {
 void udhcpc_start(const char *ifname, int IPType, int rawIP) {
     ifc_init();
     if (ifc_set_addr(ifname, 0)) {
-        dbg_time("failed to set ip addr for %s to 0.0.0.0: %s\n", ifname, strerror(ipstack_errno));
+        dbg_time("failed to set ip addr for %s to 0.0.0.0: %s\n", ifname, strerror(errno));
         return;
     }
 
     if (ifc_up(ifname, rawIP)) {
-        dbg_time("failed to bring up interface %s: %s\n", ifname, strerror(ipstack_errno));
+        dbg_time("failed to bring up interface %s: %s\n", ifname, strerror(errno));
         return;
     }
     ifc_close();
@@ -144,7 +144,7 @@ void udhcpc_start(const char *ifname, int IPType, int rawIP) {
     pthread_attr_init(&udhcpc_thread_attr);
     pthread_attr_setdetachstate(&udhcpc_thread_attr, PTHREAD_CREATE_DETACHED);
     if(pthread_create(&udhcpc_thread_id, &udhcpc_thread_attr, udhcpc_thread_function, (void*)ifname) !=0 ) {
-        dbg_time("failed to create udhcpc_thread for %s: %s\n", ifname, strerror(ipstack_errno));
+        dbg_time("failed to create udhcpc_thread for %s: %s\n", ifname, strerror(errno));
     }
     pthread_attr_destroy(&udhcpc_thread_attr);
 }
@@ -164,10 +164,10 @@ unsigned long ifc_get_addr(const char *ifname) {
     inet_sock = socket(AF_INET, SOCK_DGRAM, 0);
     strcpy(ifr.ifr_name, ifname);
 
-    if (ipstack_ioctl(inet_sock, SIOCGIFADDR, &ifr) < 0) {
+    if (ioctl(inet_sock, SIOCGIFADDR, &ifr) < 0) {
         goto error;
     }
-    addr = ((struct ipstack_sockaddr_in *)&ifr.ifr_addr)->sin_addr.s_addr;
+    addr = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr.s_addr;
 error:
     close(inet_sock);
 

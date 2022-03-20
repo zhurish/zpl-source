@@ -219,73 +219,617 @@ DEFUN (no_nsm_interface_switchport_mode,
 	return CMD_WARNING;
 }
 
-int nsm_port_interface_config(struct vty *vty, struct interface *ifp)
+/* port */
+
+
+DEFUN (mac_address_learn,
+		mac_address_learn_cmd,
+		CMD_MAC_ADDRESS_LEARN_STR" (enable|disable)",
+		CMD_MAC_ADDRESS_LEARN_STR_HELP
+		"Enable\n"
+		"Disable\n")
 {
-	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	if(nsm && if_is_ethernet(ifp))
+	int ret = 0;
+	zpl_bool value = zpl_false;
+	struct interface *ifp = vty->index;	
+	if(ifp)
 	{
-		switch (nsm->duplex)
+		if(nsm_port_learning_get_api(ifp, &value) == OK)
 		{
-		case NSM_IF_DUPLEX_NONE:
-		case NSM_IF_DUPLEX_AUTO:
-			break;
-		case NSM_IF_DUPLEX_FULL:
-			vty_out(vty, " duplex full%s", VTY_NEWLINE);
-			break;
-		case NSM_IF_DUPLEX_HALF:
-			vty_out(vty, " duplex half%s", VTY_NEWLINE);
-			break;
-		default:
-			break;
+			if(os_memcmp(argv[0], "enable", 3) == 0)
+			{
+				if(value)
+					return CMD_SUCCESS;
+				else
+				{
+					ret = nsm_port_learning_set_api(ifp, zpl_true);
+				}	
+			}
+			else
+			{
+				if(!value)
+					return CMD_SUCCESS;
+				else
+				{
+					ret = nsm_port_learning_set_api(ifp, zpl_false);
+				}	
+			}
 		}
-		switch (nsm->speed)
-		{
-		//10|100|1000|10000|auto
-		case NSM_IF_SPEED_NONE:
-		case NSM_IF_SPEED_AUTO:
-			break;
-		case NSM_IF_SPEED_10M:
-			vty_out(vty, " speed 10%s", VTY_NEWLINE);
-			break;
-		case NSM_IF_SPEED_100M:
-			vty_out(vty, " speed 100%s", VTY_NEWLINE);
-			break;
-		case NSM_IF_SPEED_1000M:
-			vty_out(vty, " speed 1000%s", VTY_NEWLINE);
-			break;
-		case NSM_IF_SPEED_10000M:
-			vty_out(vty, " speed 10000%s", VTY_NEWLINE);
-			break;
-		case NSM_IF_SPEED_1000M_B:
-			vty_out(vty, " speed 1000%s", VTY_NEWLINE);
-			break;
-		case NSM_IF_SPEED_1000M_MP:
-			vty_out(vty, " speed 1000%s", VTY_NEWLINE);
-			break;
-		case NSM_IF_SPEED_1000M_MP_NO_FIBER:
-			vty_out(vty, " speed 1000%s", VTY_NEWLINE);
-			break;
-		default:
-			break;
-		}
-		switch (nsm->linkdetect)
-		{
-		case IF_LINKDETECT_ON:
-			vty_out(vty, " link-detect%s", VTY_NEWLINE);
-			break;
-		case IF_LINKDETECT_OFF:
-			vty_out(vty, " no link-detect%s", VTY_NEWLINE);
-			break;
-		default:
-			break;
-		}
-		if (nsm->multicast != IF_ZEBRA_MULTICAST_UNSPEC)
-			vty_out(vty, " %smulticast%s",
-					nsm->multicast == IF_ZEBRA_MULTICAST_ON ?
-							"" : "no ", VTY_NEWLINE);
+		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 	}
-	return OK;
+	else if(vty->index_range)
+	{
+  		zpl_uint32 i = 0;
+		for(i = 0; i < vty->index_range; i++)
+		{
+			if(vty->vty_range_index[i])
+			{
+				if(nsm_port_learning_get_api(vty->vty_range_index[i], &value) == OK)
+				{
+					if(os_memcmp(argv[0], "enable", 3) == 0)
+					{
+						if(value)
+							return CMD_SUCCESS;
+						else
+						{
+							ret = nsm_port_learning_set_api(vty->vty_range_index[i], zpl_true);
+						}	
+					}
+					else
+					{
+						if(!value)
+							return CMD_SUCCESS;
+						else
+						{
+							ret = nsm_port_learning_set_api(vty->vty_range_index[i], zpl_false);
+						}	
+					}
+					if(ret != OK)
+						return CMD_WARNING;
+				}
+				else
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
+	return CMD_WARNING;
 }
+
+DEFUN (mac_address_learn_software,
+		mac_address_learn_software_cmd,
+		CMD_MAC_ADDRESS_LEARN_STR" software (enable|disable)",
+		CMD_MAC_ADDRESS_LEARN_STR_HELP
+		"Software\n"
+		"Enable\n"
+		"Disable\n")
+{
+	int ret = 0;
+	zpl_bool value = zpl_false;
+	struct interface *ifp = vty->index;
+	
+	if(ifp)
+	{
+		if(nsm_port_sw_learning_get_api(ifp, &value) == OK)
+		{
+			if(os_memcmp(argv[0], "enable", 3) == 0)
+			{
+				if(value)
+					return CMD_SUCCESS;
+				else
+				{
+					ret = nsm_port_sw_learning_set_api(ifp, zpl_true);
+				}	
+			}
+			else
+			{
+				if(!value)
+					return CMD_SUCCESS;
+				else
+				{
+					ret = nsm_port_sw_learning_set_api(ifp, zpl_false);
+				}	
+			}
+		}
+		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+	}
+	else if(vty->index_range)
+	{
+  		zpl_uint32 i = 0;
+		for(i = 0; i < vty->index_range; i++)
+		{
+			if(vty->vty_range_index[i])
+			{
+				if(nsm_port_sw_learning_get_api(vty->vty_range_index[i], &value) == OK)
+				{
+					if(os_memcmp(argv[0], "enable", 3) == 0)
+					{
+						if(value)
+							return CMD_SUCCESS;
+						else
+						{
+							ret = nsm_port_sw_learning_set_api(vty->vty_range_index[i], zpl_true);
+						}	
+					}
+					else
+					{
+						if(!value)
+							return CMD_SUCCESS;
+						else
+						{
+							ret = nsm_port_sw_learning_set_api(vty->vty_range_index[i], zpl_false);
+						}	
+					}
+					if(ret != OK)
+						return CMD_WARNING;
+				}
+				else
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
+	return CMD_WARNING;
+}
+
+
+DEFUN (jumboframe_enable,
+		jumboframe_enable_cmd,
+		"jumboframe (enable|disable)",
+		"Jumbo Frame\n"
+		"Enable\n"
+		"Disable\n")
+{
+	int ret = 0;
+	zpl_bool value = zpl_false;
+	struct interface *ifp = vty->index;
+	
+	if(ifp)
+	{
+		if(nsm_port_jumbo_get_api(ifp, &value) == OK)
+		{
+			if(os_memcmp(argv[0], "enable", 3) == 0)
+			{
+				if(value)
+					return CMD_SUCCESS;
+				else
+				{
+					ret = nsm_port_jumbo_set_api(ifp, zpl_true);
+				}	
+			}
+			else
+			{
+				if(!value)
+					return CMD_SUCCESS;
+				else
+				{
+					ret = nsm_port_jumbo_set_api(ifp, zpl_false);
+				}	
+			}
+		}
+		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+	}
+	else if(vty->index_range)
+	{
+  		zpl_uint32 i = 0;
+		for(i = 0; i < vty->index_range; i++)
+		{
+			if(vty->vty_range_index[i])
+			{
+				if(nsm_port_jumbo_get_api(vty->vty_range_index[i], &value) == OK)
+				{
+					if(os_memcmp(argv[0], "enable", 3) == 0)
+					{
+						if(value)
+							return CMD_SUCCESS;
+						else
+						{
+							ret = nsm_port_jumbo_set_api(vty->vty_range_index[i], zpl_true);
+						}	
+					}
+					else
+					{
+						if(!value)
+							return CMD_SUCCESS;
+						else
+						{
+							ret = nsm_port_jumbo_set_api(vty->vty_range_index[i], zpl_false);
+						}	
+					}
+					if(ret != OK)
+						return CMD_WARNING;
+				}
+				else
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
+	return CMD_WARNING;
+}
+
+
+DEFUN (port_loopback,
+		port_loopback_cmd,
+		"port-loopback",
+		"Port Loopback\n")
+{
+	int ret = 0;
+	zpl_bool value = zpl_false;
+	struct interface *ifp = vty->index;
+	
+	if(ifp)
+	{
+		if(nsm_port_loopback_get_api(ifp, &value) == OK)
+		{
+			if(!value)
+			{
+				ret = nsm_port_loopback_set_api(ifp, zpl_true);	
+			}
+			else
+				return CMD_SUCCESS;
+		}
+		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+	}
+	else if(vty->index_range)
+	{
+  		zpl_uint32 i = 0;
+		for(i = 0; i < vty->index_range; i++)
+		{
+			if(vty->vty_range_index[i])
+			{
+				if(nsm_port_loopback_get_api(vty->vty_range_index[i], &value) == OK)
+				{
+					if(!value)
+						ret = nsm_port_loopback_set_api(vty->vty_range_index[i], zpl_true);	
+					if(ret != OK)
+						return CMD_WARNING;
+				}
+				else
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
+	return CMD_WARNING;
+}
+
+DEFUN (no_port_loopback,
+		no_port_loopback_cmd,
+		"no port-loopback",
+		NO_STR
+		"Port Loopback\n")
+{
+	int ret = 0;
+	zpl_bool value = zpl_false;
+	struct interface *ifp = vty->index;
+	
+	if(ifp)
+	{
+		if(nsm_port_loopback_get_api(ifp, &value) == OK)
+		{
+			if(value)
+			{
+				ret = nsm_port_loopback_set_api(ifp, zpl_false);	
+			}
+			else
+				return CMD_SUCCESS;
+		}
+		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+	}
+	else if(vty->index_range)
+	{
+  		zpl_uint32 i = 0;
+		for(i = 0; i < vty->index_range; i++)
+		{
+			if(vty->vty_range_index[i])
+			{
+				if(nsm_port_loopback_get_api(vty->vty_range_index[i], &value) == OK)
+				{
+					if(value)
+						ret = nsm_port_loopback_set_api(vty->vty_range_index[i], zpl_false);	
+					if(ret != OK)
+						return CMD_WARNING;
+				}
+				else
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
+	return CMD_WARNING;
+}
+
+DEFUN (port_protect,
+		port_protect_cmd,
+		"port-protect",
+		"Port protect\n")
+{
+	int ret = 0;
+	zpl_bool value = zpl_false;
+	struct interface *ifp = vty->index;
+	
+	if(ifp)
+	{
+		if(nsm_port_protect_get_api(ifp, &value) == OK)
+		{
+			if(!value)
+			{
+				ret = nsm_port_protect_set_api(ifp, zpl_true);	
+			}
+			else
+				return CMD_SUCCESS;
+		}
+		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+	}
+	else if(vty->index_range)
+	{
+  		zpl_uint32 i = 0;
+		for(i = 0; i < vty->index_range; i++)
+		{
+			if(vty->vty_range_index[i])
+			{
+				if(nsm_port_protect_get_api(vty->vty_range_index[i], &value) == OK)
+				{
+					if(!value)
+						ret = nsm_port_protect_set_api(vty->vty_range_index[i], zpl_true);	
+					if(ret != OK)
+						return CMD_WARNING;
+				}
+				else
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
+	return CMD_WARNING;
+}
+
+DEFUN (no_port_protect,
+		no_port_protect_cmd,
+		"no port-protect",
+		NO_STR
+		"Port protect\n")
+{
+	int ret = 0;
+	zpl_bool value = zpl_false;
+	struct interface *ifp = vty->index;
+	
+	if(ifp)
+	{
+		if(nsm_port_protect_get_api(ifp, &value) == OK)
+		{
+			if(value)
+			{
+				ret = nsm_port_protect_set_api(ifp, zpl_false);	
+			}
+			else
+				return CMD_SUCCESS;
+		}
+		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+	}
+	else if(vty->index_range)
+	{
+  		zpl_uint32 i = 0;
+		for(i = 0; i < vty->index_range; i++)
+		{
+			if(vty->vty_range_index[i])
+			{
+				if(nsm_port_protect_get_api(vty->vty_range_index[i], &value) == OK)
+				{
+					if(value)
+						ret = nsm_port_protect_set_api(vty->vty_range_index[i], zpl_false);	
+					if(ret != OK)
+						return CMD_WARNING;
+				}
+				else
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
+	return CMD_WARNING;
+}
+
+DEFUN (port_pause,
+		port_pause_cmd,
+		"port-pause (transmit|receive)",
+		"Port Pause\n"
+		"Port Pause Transmit Enable\n"
+		"Port Pause Receive Enable\n")
+{
+	int ret = 0;
+	zpl_bool tx = zpl_false, rx = zpl_false;
+	struct interface *ifp = vty->index;
+	
+	if(ifp)
+	{
+		if(nsm_port_pause_get_api(ifp, &tx, &rx) == OK)
+		{
+			if(strncmp(argv[0], "tran", 4) == 0)
+				tx = zpl_true;
+			if(strncmp(argv[0], "receive", 4) == 0)
+				rx = zpl_true;
+			ret = nsm_port_pause_set_api(ifp, tx, rx);	
+		}
+		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+	}
+	else if(vty->index_range)
+	{
+  		zpl_uint32 i = 0;
+		for(i = 0; i < vty->index_range; i++)
+		{
+			if(vty->vty_range_index[i])
+			{
+				if(nsm_port_pause_get_api(vty->vty_range_index[i], &tx, &rx) == OK)
+				{
+					if(strncmp(argv[0], "tran", 4) == 0)
+						tx = zpl_true;
+					if(strncmp(argv[0], "receive", 4) == 0)
+						rx = zpl_true;
+					ret = nsm_port_pause_set_api(vty->vty_range_index[i], tx, rx);	
+					if(ret != OK)
+						return CMD_WARNING;
+				}
+				else
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
+	return CMD_WARNING;
+}
+
+DEFUN (no_port_pause,
+		no_port_pause_cmd,
+		"no port-pause (transmit|receive)",
+		NO_STR
+		"Port Pause\n"
+		"Port Pause Transmit Enable\n"
+		"Port Pause Receive Enable\n")
+{
+	int ret = 0;
+	zpl_bool tx = zpl_false, rx = zpl_false;
+	struct interface *ifp = vty->index;
+	
+	if(ifp)
+	{
+		if(nsm_port_pause_get_api(ifp, &tx, &rx) == OK)
+		{
+			if(strncmp(argv[0], "tran", 4) == 0)
+				tx = zpl_false;
+			if(strncmp(argv[0], "receive", 4) == 0)
+				rx = zpl_false;
+			ret = nsm_port_pause_set_api(ifp, tx, rx);
+		}
+		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+	}
+	else if(vty->index_range)
+	{
+  		zpl_uint32 i = 0;
+		for(i = 0; i < vty->index_range; i++)
+		{
+			if(vty->vty_range_index[i])
+			{
+				if(nsm_port_pause_get_api(vty->vty_range_index[i], &tx, &rx) == OK)
+				{
+					if(strncmp(argv[0], "tran", 4) == 0)
+						tx = zpl_false;
+					if(strncmp(argv[0], "receive", 4) == 0)
+						rx = zpl_false;
+					ret = nsm_port_pause_set_api(vty->vty_range_index[i], tx, rx);	
+					if(ret != OK)
+						return CMD_WARNING;
+				}
+				else
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
+	return CMD_WARNING;
+}
+
+
+DEFUN (port_flowcontrol,
+		port_flowcontrol_cmd,
+		"flowcontrol (transmit|receive)",
+		"Port Flowcontrol\n"
+		"Flowcontrol Transmit Enable\n"
+		"Flowcontrol Receive Enable\n")
+{
+	int ret = 0;
+	zpl_bool tx = zpl_false, rx = zpl_false;
+	struct interface *ifp = vty->index;
+	
+	if(ifp)
+	{
+		if(nsm_port_flowcontrol_get_api(ifp, &tx, &rx) == OK)
+		{
+			if(strncmp(argv[0], "tran", 4) == 0)
+				tx = zpl_true;
+			if(strncmp(argv[0], "receive", 4) == 0)
+				rx = zpl_true;
+			ret = nsm_port_flowcontrol_set_api(ifp, tx, rx);	
+		}
+		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+	}
+	else if(vty->index_range)
+	{
+  		zpl_uint32 i = 0;
+		for(i = 0; i < vty->index_range; i++)
+		{
+			if(vty->vty_range_index[i])
+			{
+				if(nsm_port_flowcontrol_get_api(vty->vty_range_index[i], &tx, &rx) == OK)
+				{
+					if(strncmp(argv[0], "tran", 4) == 0)
+						tx = zpl_true;
+					if(strncmp(argv[0], "receive", 4) == 0)
+						rx = zpl_true;
+					ret = nsm_port_flowcontrol_set_api(vty->vty_range_index[i], tx, rx);	
+					if(ret != OK)
+						return CMD_WARNING;
+				}
+				else
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
+	return CMD_WARNING;
+}
+
+DEFUN (no_port_flowcontrol,
+		no_port_flowcontrol_cmd,
+		"no flowcontrol (transmit|receive)",
+		NO_STR
+		"Port Flowcontrol\n"
+		"Flowcontrol Transmit Enable\n"
+		"Flowcontrol Receive Enable\n")
+{
+	int ret = 0;
+	zpl_bool tx = zpl_false, rx = zpl_false;
+	struct interface *ifp = vty->index;
+	
+	if(ifp)
+	{
+		if(nsm_port_flowcontrol_get_api(ifp, &tx, &rx) == OK)
+		{
+			if(strncmp(argv[0], "tran", 4) == 0)
+				tx = zpl_false;
+			if(strncmp(argv[0], "receive", 4) == 0)
+				rx = zpl_false;
+			ret = nsm_port_flowcontrol_set_api(ifp, tx, rx);
+		}
+		return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+	}
+	else if(vty->index_range)
+	{
+  		zpl_uint32 i = 0;
+		for(i = 0; i < vty->index_range; i++)
+		{
+			if(vty->vty_range_index[i])
+			{
+				if(nsm_port_flowcontrol_get_api(vty->vty_range_index[i], &tx, &rx) == OK)
+				{
+					if(strncmp(argv[0], "tran", 4) == 0)
+						tx = zpl_false;
+					if(strncmp(argv[0], "receive", 4) == 0)
+						rx = zpl_false;
+					ret = nsm_port_flowcontrol_set_api(vty->vty_range_index[i], tx, rx);	
+					if(ret != OK)
+						return CMD_WARNING;
+				}
+				else
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
+	return CMD_WARNING;
+}
+
 
 DEFUN (show_unit_board_info,
 		show_unit_board_info_cmd,
@@ -297,6 +841,22 @@ DEFUN (show_unit_board_info,
 {
 	unit_board_show(vty);
 	return CMD_SUCCESS;
+}
+
+
+static void cmd_port_base_init (int node)
+{
+	install_element(node, CMD_CONFIG_LEVEL, &mac_address_learn_cmd);
+	install_element(node, CMD_CONFIG_LEVEL, &mac_address_learn_software_cmd);
+	install_element(node, CMD_CONFIG_LEVEL, &jumboframe_enable_cmd);
+	install_element(node, CMD_CONFIG_LEVEL, &port_loopback_cmd);
+	install_element(node, CMD_CONFIG_LEVEL, &no_port_loopback_cmd);
+	install_element(node, CMD_CONFIG_LEVEL, &port_protect_cmd);
+	install_element(node, CMD_CONFIG_LEVEL, &no_port_protect_cmd);
+	install_element(node, CMD_CONFIG_LEVEL, &port_pause_cmd);
+	install_element(node, CMD_CONFIG_LEVEL, &no_port_pause_cmd);
+	install_element(node, CMD_CONFIG_LEVEL, &port_flowcontrol_cmd);
+	install_element(node, CMD_CONFIG_LEVEL, &no_port_flowcontrol_cmd);	
 }
 
 void cmd_port_init (void)
@@ -317,7 +877,13 @@ void cmd_port_init (void)
 	install_element(LAG_INTERFACE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
 	install_element(LAG_INTERFACE_L3_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
 
-
+	cmd_port_base_init (INTERFACE_NODE);
+	cmd_port_base_init (INTERFACE_L3_NODE);
+	cmd_port_base_init (INTERFACE_RANGE_NODE);
+	cmd_port_base_init (INTERFACE_L3_RANGE_NODE);	
+	cmd_port_base_init (LAG_INTERFACE_NODE);
+	cmd_port_base_init (LAG_INTERFACE_L3_NODE);	
+/*
 	install_element(EPON_INTERFACE_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
 	install_element(EPON_INTERFACE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
 	install_element(EPON_INTERFACE_RANGE_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
@@ -328,7 +894,7 @@ void cmd_port_init (void)
 
 	install_element(E1_INTERFACE_L3_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
 	install_element(E1_INTERFACE_L3_RANGE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
-
+*/
 
 	install_element(INTERFACE_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_mode_cmd);
 	install_element(INTERFACE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_mode_cmd);
@@ -337,12 +903,13 @@ void cmd_port_init (void)
 
 	install_element(LAG_INTERFACE_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_mode_cmd);
 	install_element(LAG_INTERFACE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_mode_cmd);
-
+/*
 	install_element(EPON_INTERFACE_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_mode_cmd);
 	install_element(EPON_INTERFACE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_mode_cmd);
 
 	install_element(EPON_INTERFACE_RANGE_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_mode_cmd);
 	install_element(EPON_INTERFACE_RANGE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_mode_cmd);
+*/	
 }
 
 

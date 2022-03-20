@@ -12,10 +12,10 @@
 extern "C" {
 #endif
 
-int udhcp_module_init();
-int udhcp_module_exit();
-int udhcp_module_task_init();
-int udhcp_module_task_exit ();
+int udhcp_module_init(void);
+int udhcp_module_exit(void);
+int udhcp_module_task_init(void);
+int udhcp_module_task_exit (void);
 
 int dhcpc_interface_enable_api(struct interface *ifp, zpl_bool enable);
 

@@ -46,11 +46,9 @@ DEFUN (channel_group,
 
 	if(!l2trunk_lookup_api(trunkid))
 	{
-		ret = ERROR;//nsm_trunk_create_api(trunkid, type);
 		vty_out(vty, "interface port-channel%d is not exist.%s",trunkid, VTY_NEWLINE);
+		return CMD_WARNING;
 	}
-	else
-		ret = OK;
 	if(ret == OK)
 	{
 		if(!l2trunk_lookup_interface_api(ifp->ifindex))
@@ -97,11 +95,9 @@ DEFUN (channel_group_static,
 
 	if(!l2trunk_lookup_api(trunkid))
 	{
-		ret = ERROR;//nsm_trunk_create_api(trunkid, type);
 		vty_out(vty, "interface port-channel%d is not exist.%s",trunkid, VTY_NEWLINE);
+		return CMD_WARNING;
 	}
-	else
-		ret = OK;
 	if(ret == OK)
 	{
 		if(!l2trunk_lookup_interface_api(ifp->ifindex))
@@ -139,6 +135,7 @@ DEFUN (no_channel_group_static,
 	struct interface *ifp = vty->index;
 	if(nsm_trunk_get_ID_interface_api(ifp->ifindex, &trunkid) != OK)
 	{
+		vty_out(vty, "this interface is not member of trunk.%s", VTY_NEWLINE);
 		return CMD_WARNING;
 	}
 	ret = nsm_trunk_del_interface_api(trunkid, ifp);
@@ -148,6 +145,7 @@ DEFUN (no_channel_group_static,
 		{
 			ret = nsm_trunk_destroy_api(trunkid);
 		}*/
+		
 	}
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -169,10 +167,20 @@ DEFUN (lacp_port_priority,
 {
 	int ret = ERROR;
 	zpl_uint32  pri;
-	//trunkid = vty->index_value;
-	pri = atoi(argv[1]);
-
 	struct interface *ifp = vty->index;
+	pri = atoi(argv[1]);
+	if(!l2trunk_lookup_interface_api(ifp->ifindex))
+	{
+		vty_out(vty, "this interface is not member of trunk.%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	/*
+	if(nsm_trunk_get_ID_interface_api(ifp->ifindex, &trunkid) != OK)
+	{
+		vty_out(vty, "this interface is not member of trunk.%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	*/
 	ret = nsm_trunk_lacp_port_priority_api(ifp->ifindex, pri);
 
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -191,6 +199,11 @@ DEFUN (no_lacp_port_priority,
 	//trunkid = vty->index_value;
 	pri = 0;
 	struct interface *ifp = vty->index;
+	if(!l2trunk_lookup_interface_api(ifp->ifindex))
+	{
+		vty_out(vty, "this interface is not member of trunk.%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	ret = nsm_trunk_lacp_port_priority_api(ifp->ifindex, pri);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -205,11 +218,9 @@ DEFUN (lacp_system_priority,
 {
 	int ret = ERROR;
 	zpl_uint32  pri;
-	//trunkid = vty->index_value;
+	zpl_uint32 trunkid = vty->index_value;
+	struct interface *ifp = vty->index;
 	pri = atoi(argv[1]);
-	if(!nsm_trunk_is_enable())
-		nsm_trunk_enable();
-	zpl_uint32 trunkid = 1;
 
 	ret = nsm_trunk_lacp_system_priority_api(trunkid, pri);
 
@@ -225,11 +236,9 @@ DEFUN (no_lacp_system_priority,
 {
 	int ret = ERROR;
 	zpl_uint32  pri;
-	//trunkid = vty->index_value;
 	pri = 0;
-	zpl_uint32 trunkid = 1;
-	if(!nsm_trunk_is_enable())
-		nsm_trunk_enable();
+	zpl_uint32 trunkid = vty->index_value;
+
 	ret = nsm_trunk_lacp_system_priority_api(trunkid, pri);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -245,7 +254,11 @@ DEFUN (lacp_timeout,
 	int ret = ERROR;
 	zpl_uint32 value;
 	struct interface *ifp = vty->index;
-	//trunkid = vty->index_value;
+	if(!l2trunk_lookup_interface_api(ifp->ifindex))
+	{
+		vty_out(vty, "this interface is not member of trunk.%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	value = atoi(argv[1]);
 	ret = nsm_trunk_lacp_timeout_api(ifp->ifindex, value);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -261,7 +274,11 @@ DEFUN (no_lacp_timeout,
 	int ret = ERROR;
 	zpl_uint32 value;
 	struct interface *ifp = vty->index;
-	//trunkid = vty->index_value;
+	if(!l2trunk_lookup_interface_api(ifp->ifindex))
+	{
+		vty_out(vty, "this interface is not member of trunk.%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	value = 1;
 	ret = nsm_trunk_lacp_timeout_api(ifp->ifindex, value);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -281,9 +298,14 @@ DEFUN (port_channel_load_balance,
 	int ret = ERROR;
 	zpl_uint32 trunkid = 0;
 	load_balance_t value = TRUNK_LOAD_BALANCE_NONE;
-	trunkid = 1;//vty->index_value;
+	trunkid = vty->index_value;
 	if(!nsm_trunk_is_enable())
 		nsm_trunk_enable();
+	if(!l2trunk_lookup_api(trunkid))
+	{
+		vty_out(vty, "interface port-channel%d is not exist.%s",trunkid, VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	if(os_memcmp(argv[0], "dst-mac", 5) == 0)
 	{
 		value = TRUNK_LOAD_BALANCE_DSTMAC;
@@ -309,9 +331,10 @@ DEFUN (no_port_channel_load_balance,
 {
 	int ret = ERROR;
 	zpl_uint32 trunkid, value;
-	trunkid = 1;//vty->index_value;
+	trunkid = vty->index_value;
 	if(!nsm_trunk_is_enable())
 		nsm_trunk_enable();
+
 	value = TRUNK_LOAD_BALANCE_NONE;
 	ret = nsm_trunk_load_balance_api(trunkid, value);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
@@ -370,6 +393,9 @@ static int cmd_trunk_interface_init(int node)
 
 	install_element(node, CMD_CONFIG_LEVEL, &lacp_port_priority_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &no_lacp_port_priority_cmd);
+
+	install_element(node, CMD_CONFIG_LEVEL, &lacp_timeout_cmd);
+	install_element(node, CMD_CONFIG_LEVEL, &no_lacp_timeout_cmd);
 	return OK;
 }
 
@@ -380,6 +406,7 @@ static int cmd_trunk_base_init(int node)
 
 	install_element(node, CMD_CONFIG_LEVEL, &lacp_system_priority_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &no_lacp_system_priority_cmd);
+
 	return OK;
 }
 

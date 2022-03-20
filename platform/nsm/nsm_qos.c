@@ -17,14 +17,17 @@ static Global_Qos_t mGlobalQos;
 static int nsm_qos_interface_default(nsm_qos_t *intf);
 
 #if NSM_QOS_PORT_QUEUE_NUM == NSM_QOS_PORT_QUEUE_NUM_4
+#ifdef NSM_QOS_QUEUE_MAP_CLASS
 static nsm_qos_class_e _class_queue_map_tbl[NSM_QOS_QUEUE_MAX] =
-	{
+{
 		NSM_QOS_CLASS_NONE,
 		NSM_QOS_CLASS_0,
 		NSM_QOS_CLASS_1,
 		NSM_QOS_CLASS_2,
 		NSM_QOS_CLASS_3,
-		NSM_QOS_CLASS_MAX};
+		NSM_QOS_CLASS_MAX
+};
+#endif
 
 static nsm_qos_queue_e _qos_cosipexp_map_tbl[NSM_QOS_PRI_MAX] =
 	{
@@ -37,7 +40,8 @@ static nsm_qos_queue_e _qos_cosipexp_map_tbl[NSM_QOS_PRI_MAX] =
 		NSM_QOS_QUEUE_2,
 		NSM_QOS_QUEUE_3,
 		NSM_QOS_QUEUE_3,
-		NSM_QOS_QUEUE_NONE};
+		NSM_QOS_QUEUE_NONE
+	};
 
 static nsm_qos_priority_e _qos_cosipexp_mapqueue_tbl[NSM_QOS_QUEUE_MAX] =
 	{
@@ -46,8 +50,10 @@ static nsm_qos_priority_e _qos_cosipexp_mapqueue_tbl[NSM_QOS_QUEUE_MAX] =
 		NSM_QOS_PRI_1,
 		NSM_QOS_PRI_2,
 		NSM_QOS_PRI_3,
-		NSM_QOS_PRI_MAX};
+		NSM_QOS_PRI_MAX
+	};
 #elif NSM_QOS_PORT_QUEUE_NUM == NSM_QOS_PORT_QUEUE_NUM_8
+#ifdef NSM_QOS_QUEUE_MAP_CLASS
 static nsm_qos_class_e _class_queue_map_tbl[NSM_QOS_QUEUE_MAX] =
 	{
 		NSM_QOS_CLASS_NONE,
@@ -59,8 +65,9 @@ static nsm_qos_class_e _class_queue_map_tbl[NSM_QOS_QUEUE_MAX] =
 		NSM_QOS_CLASS_2,
 		NSM_QOS_CLASS_3,
 		NSM_QOS_CLASS_3,
-		NSM_QOS_CLASS_MAX};
-
+		NSM_QOS_CLASS_MAX
+	};
+#endif
 static nsm_qos_priority_e _qos_cosipexp_mapqueue_tbl[NSM_QOS_QUEUE_MAX] =
 	{
 		NSM_QOS_PRI_NONE,
@@ -72,7 +79,8 @@ static nsm_qos_priority_e _qos_cosipexp_mapqueue_tbl[NSM_QOS_QUEUE_MAX] =
 		NSM_QOS_PRI_5,
 		NSM_QOS_PRI_6,
 		NSM_QOS_PRI_7,
-		NSM_QOS_PRI_MAX};
+		NSM_QOS_PRI_MAX
+	};
 #endif
 
 int nsm_qos_global_enable(zpl_bool enable)
@@ -115,9 +123,7 @@ static nsm_qos_t *_nsm_qos_get(struct interface *ifp)
 {
 	if (ifp)
 	{
-		struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-		if (nsm)
-			return (nsm_qos_t *)(nsm->nsm_client[NSM_INTF_QOS]);
+		return (nsm_qos_t *)nsm_intf_module_data(ifp, NSM_INTF_QOS);
 	}
 	return NULL;
 }
@@ -329,6 +335,7 @@ int nsm_qos_queue_sched_mode_set_api(struct interface *ifp, nsm_qos_queue_e queu
 /*
  * queue map to class
  */
+#ifdef NSM_QOS_QUEUE_MAP_CLASS
 int nsm_qos_class_map_set_api(struct interface *ifp, nsm_qos_queue_e queue, nsm_qos_class_e class)
 {
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
@@ -385,6 +392,7 @@ int nsm_qos_class_sched_get_api(struct interface *ifp, nsm_qos_class_e class, ns
 	}
 	return ERROR;
 }
+#endif
 
 /*
  * flow shaping
@@ -889,24 +897,31 @@ int nsm_qos_service_policy_get_api(struct interface *ifp, int input, zpl_char *s
 
 static int nsm_qos_interface_create_api(struct interface *ifp)
 {
-	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
+	nsm_qos_t *qos = NULL;
 	if (if_is_loop(ifp))
 		return OK;
-	nsm_qos_t *qos = nsm->nsm_client[NSM_INTF_QOS] = XMALLOC(MTYPE_QOS, sizeof(nsm_qos_t));
-	os_memset(nsm->nsm_client[NSM_INTF_QOS], 0, sizeof(nsm_qos_t));
-	qos->ifindex = ifp->ifindex;
-	nsm_qos_interface_default(qos);
+	qos = nsm_intf_module_data(ifp, NSM_INTF_QOS);
+	if(qos == NULL)
+	{
+		 qos = XMALLOC(MTYPE_QOS, sizeof(nsm_qos_t));
+		os_memset(qos, 0, sizeof(nsm_qos_t));
+		qos->ifindex = ifp->ifindex;
+		nsm_intf_module_data_set(ifp, NSM_INTF_QOS, qos);
+		nsm_qos_interface_default(qos);
+	}
 	return OK;
 }
 
 static int nsm_qos_interface_del_api(struct interface *ifp)
 {
-	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
+	nsm_qos_t *qos = NULL;
 	if (if_is_loop(ifp))
 		return OK;
-	if (nsm->nsm_client[NSM_INTF_QOS])
-		XFREE(MTYPE_QOS, nsm->nsm_client[NSM_INTF_QOS]);
-	nsm->nsm_client[NSM_INTF_QOS] = NULL;
+	qos = nsm_intf_module_data(ifp, NSM_INTF_QOS);
+	if (qos)
+		XFREE(MTYPE_QOS, qos);
+	qos = NULL;
+	nsm_intf_module_data_set(ifp, NSM_INTF_QOS, NULL);
 	return OK;
 }
 
@@ -1084,7 +1099,7 @@ int nsm_qos_interface_write_config(struct vty *vty, struct interface *ifp)
 			}
 #endif
 		}
-
+#ifdef NSM_QOS_QUEUE_MAP_CLASS
 		// queue map to class
 		if (qos->qos_class_enable)
 		{
@@ -1106,6 +1121,8 @@ int nsm_qos_interface_write_config(struct vty *vty, struct interface *ifp)
 				}
 			}
 		}
+#endif
+#ifdef NSM_QOS_PRIORITY_MAP_QUEUE
 		// priority map to queue
 		// if (qos->qos_priority_enable)
 		{
@@ -1116,6 +1133,7 @@ int nsm_qos_interface_write_config(struct vty *vty, struct interface *ifp)
 							i - NSM_QOS_PRI_0, qos->qos_priority_map_queue[i] - NSM_QOS_QUEUE_0, VTY_NEWLINE);
 			}
 		}
+#endif		
 #ifdef NSM_QOS_QUEUE_MAP_PRIORITY
 		// USER priority map to LOCAL priority
 		// if (qos->qos_map_enable)
@@ -1201,12 +1219,13 @@ int nsm_qos_interface_show(struct vty *vty, struct interface *ifp)
 		vty_out(vty, " Queue Map Table :%s", VTY_NEWLINE);
 		// queue map to class
 		vty_out(vty, " Class Map Queue :");
-
+#ifdef NSM_QOS_QUEUE_MAP_CLASS
 		for (i = NSM_QOS_QUEUE_0; i < NSM_QOS_QUEUE_MAX; i++)
 		{
 			vty_out(vty, "  %d(%d)", qos->qos_class[i] - NSM_QOS_CLASS_0, i - NSM_QOS_QUEUE_0);
 		}
 		vty_out(vty, " %s", VTY_NEWLINE);
+#endif
 
 #ifdef NSM_QOS_USERPRI_MAP_QUEUE
 		vty_out(vty, " Cos Map Queue   :");
@@ -1255,7 +1274,7 @@ static int nsm_qos_interface_default(nsm_qos_t *intf)
 	{
 		intf->qos_queue_sched[i] = intf->qos_queue_sched_default[i] = NSM_QOS_MODE_PQ;
 	}
-
+#ifdef NSM_QOS_QUEUE_MAP_CLASS
 	//队列到class的映射
 	intf->qos_class_enable = zpl_true;
 	// queue map to class
@@ -1267,6 +1286,7 @@ static int nsm_qos_interface_default(nsm_qos_t *intf)
 	{
 		intf->qos_class_sched[i] = intf->qos_class_sched_default[i] = NSM_CLASS_SCHED_PQ;
 	}
+#endif	
 #ifdef NSM_QOS_USERPRI_MAP_QUEUE
 	//各类优先级到queue的映射
 	for (i = NSM_QOS_PRI_0; i <= NSM_QOS_PRI_7; i++)

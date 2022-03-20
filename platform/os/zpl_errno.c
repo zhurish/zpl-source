@@ -44,6 +44,15 @@ struct zpl_errno_msg errno_tbl[] = {
 
 #undef ZPL_ERRNO_DESC
 
+void zpl_errno_set(int zpl_errno)
+{
+	ipstack_errno = zpl_errno;
+}
+
+int zpl_errno_get(void)
+{
+	return ipstack_errno;
+}
 
 const char *zpl_strerror(int errnum)
 {

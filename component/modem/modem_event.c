@@ -254,7 +254,7 @@ modem_event modem_event_inster(modem_t *modem, modem_event event)
 
 	if(MODEM_IS_DEBUG(EVENT))
 		zlog_debug(MODULE_MODEM, "Handle %s event on %s", modem_event_string(event),
-				(const char*)modem_module_name(modem));
+				modem_module_name(modem));
 
 	if(modem_mgtlayer_inster(modem) != OK)
 		nextevent = MODEM_EV_INSTER;

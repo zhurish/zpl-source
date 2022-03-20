@@ -70,7 +70,7 @@ static int nsm_interface_cmd_node_get(struct interface *ifp, int range)
 	default:
 		break;
 	}
-	zlog_debug(MODULE_LIB," nsm_interface_cmd_node_get :node = %d\r\n", node);
+	zlog_debug(MODULE_LIB, " nsm_interface_cmd_node_get :node = %d\r\n", node);
 	return node;
 }
 
@@ -163,6 +163,10 @@ static int nsm_interface_other_create(int argc, char *name, char *uspv, struct v
 				{
 					vty->index = ifp;
 					vty->node = nsm_interface_cmd_node_get(ifp, 0);
+					if(if_is_lag(ifp))
+					{
+						vty->index_value = IF_IFINDEX_ID_GET(ifp->ifindex);
+					}
 					return CMD_SUCCESS;
 				}
 			}
@@ -171,6 +175,10 @@ static int nsm_interface_other_create(int argc, char *name, char *uspv, struct v
 		{
 			vty->index = ifp;
 			vty->node = nsm_interface_cmd_node_get(ifp, 0);
+			if(if_is_lag(ifp))
+			{
+				vty->index_value = IF_IFINDEX_ID_GET(ifp->ifindex);
+			}
 			return CMD_SUCCESS;
 		}
 	}
@@ -289,6 +297,10 @@ DEFUN_HIDDEN(hidden_nsm_interface,
 			{
 				vty->index = ifp;
 				vty->node = nsm_interface_cmd_node_get(ifp, 0);
+				if(if_is_lag(ifp))
+				{
+					vty->index_value = IF_IFINDEX_ID_GET(ifp->ifindex);
+				}
 				return CMD_SUCCESS;
 			}
 		}
@@ -296,6 +308,10 @@ DEFUN_HIDDEN(hidden_nsm_interface,
 		{
 			vty->index = ifp;
 			vty->node = nsm_interface_cmd_node_get(ifp, 0);
+			if(if_is_lag(ifp))
+			{
+				vty->index_value = IF_IFINDEX_ID_GET(ifp->ifindex);
+			}
 			return CMD_SUCCESS;
 		}
 	}
@@ -480,8 +496,6 @@ DEFUN(no_nsm_wifi_interface,
 }
 #endif
 
-
-
 DEFUN(nsm_interface_shutdown,
 	  nsm_interface_shutdown_cmd,
 	  "shutdown",
@@ -541,124 +555,6 @@ DEFUN(no_nsm_interface_shutdown,
 	return CMD_WARNING;
 }
 
-DEFUN(nsm_interface_linkdetect,
-	  nsm_interface_linkdetect_cmd,
-	  "link-detect [default]",
-	  "Enable link detection on interface\n"
-	  "Leave link-detect to the default\n")
-{
-	int ret = 0;
-	struct interface *ifp = vty->index;
-	if (ifp)
-	{
-		ret = nsm_interface_linkdetect_set_api(ifp, IF_LINKDETECT_ON);
-		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
-	}
-	else if (vty->index_range)
-	{
-		zpl_uint32 i = 0;
-		for (i = 0; i < vty->index_range; i++)
-		{
-			if (vty->vty_range_index[i])
-			{
-				ret = nsm_interface_linkdetect_set_api(vty->vty_range_index[i], IF_LINKDETECT_ON);
-				if (ret != OK)
-					return CMD_WARNING;
-			}
-		}
-		return CMD_SUCCESS;
-	}
-	return CMD_WARNING;
-}
-
-DEFUN(no_nsm_interface_linkdetect,
-	  no_nsm_interface_linkdetect_cmd,
-	  "no link-detect",
-	  NO_STR
-	  "Disable link detection on interface\n")
-{
-	int ret = 0;
-	struct interface *ifp = vty->index;
-	if (ifp)
-	{
-		ret = nsm_interface_linkdetect_set_api(ifp, IF_LINKDETECT_OFF);
-		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
-	}
-	else if (vty->index_range)
-	{
-		zpl_uint32 i = 0;
-		for (i = 0; i < vty->index_range; i++)
-		{
-			if (vty->vty_range_index[i])
-			{
-				ret = nsm_interface_linkdetect_set_api(vty->vty_range_index[i], IF_LINKDETECT_OFF);
-				if (ret != OK)
-					return CMD_WARNING;
-			}
-		}
-		return CMD_SUCCESS;
-	}
-	return CMD_WARNING;
-}
-
-DEFUN(nsm_interface_multicast,
-	  nsm_interface_multicast_cmd,
-	  "multicast",
-	  "Set multicast flag to interface\n")
-{
-	int ret = 0;
-	struct interface *ifp = vty->index;
-	if (ifp)
-	{
-		ret = nsm_interface_multicast_set_api(ifp, zpl_true);
-		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
-	}
-	else if (vty->index_range)
-	{
-		zpl_uint32 i = 0;
-		for (i = 0; i < vty->index_range; i++)
-		{
-			if (vty->vty_range_index[i])
-			{
-				ret = nsm_interface_multicast_set_api(vty->vty_range_index[i], zpl_true);
-				if (ret != OK)
-					return CMD_WARNING;
-			}
-		}
-		return CMD_SUCCESS;
-	}
-	return CMD_WARNING;
-}
-
-DEFUN(no_nsm_interface_multicast,
-	  no_nsm_interface_multicast_cmd,
-	  "no multicast",
-	  NO_STR
-	  "Unset multicast flag to interface\n")
-{
-	int ret = 0;
-	struct interface *ifp = vty->index;
-	if (ifp)
-	{
-		ret = nsm_interface_multicast_set_api(ifp, zpl_false);
-		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
-	}
-	else if (vty->index_range)
-	{
-		zpl_uint32 i = 0;
-		for (i = 0; i < vty->index_range; i++)
-		{
-			if (vty->vty_range_index[i])
-			{
-				ret = nsm_interface_multicast_set_api(vty->vty_range_index[i], zpl_false);
-				if (ret != OK)
-					return CMD_WARNING;
-			}
-		}
-		return CMD_SUCCESS;
-	}
-	return CMD_WARNING;
-}
 
 DEFUN(nsm_interface_bandwidth,
 	  nsm_interface_bandwidth_cmd,
@@ -1617,105 +1513,111 @@ ALIAS(show_interface,
 		  CMD_USP_STR_HELP)
 #endif
 
-DEFUN_HIDDEN(show_interface_all_debug,
-			 show_interface_all_debug_cmd,
-			 "show interface-all",
-			 SHOW_STR
-			 "Interface status and configuration\n")
-// static int _nsm_interface_all_debug(struct vty *vty)
+static int nsm_interface_duplexspeed_info_write(struct interface *ifp, struct vty *vty)
 {
-	struct listnode *node;
-	struct interface *ifp;
-	struct list *if_list = NULL;
-	IF_DATA_LOCK();
-	if_list = if_list_get();
-	if (if_list)
+	struct nsm_interface *if_data;
+	if_data = ifp->info[MODULE_NSM];
+	if (if_data)
 	{
-		for (ALL_LIST_ELEMENTS_RO(if_list, node, ifp))
+		switch (if_data->speed)
 		{
-			struct nsm_interface *if_data;
-			struct listnode *addrnode;
-			struct connected *ifc;
-			struct prefix *p;
-			union prefix46constptr up;
-
-			if_data = ifp->info[MODULE_NSM];
-
-			vty_out(vty, "interface %s%s", ifp->name, VTY_NEWLINE);
-
-			if (ifp->desc)
-				vty_out(vty, " description %s%s", ifp->desc, VTY_NEWLINE);
-
-			if (if_data)
-			{
-				if (if_data->shutdown == IF_ZEBRA_SHUTDOWN_ON)
-					vty_out(vty, " shutdown%s", VTY_NEWLINE);
-			}
-
-			// nsm_client_interface_write_config(0, vty, ifp);
-
-			if (ifp->if_mode == IF_MODE_L3)
-			{
-#ifdef ZPL_IPCOM_STACK_MODULE
-				if (ifp->vrf_id != VRF_DEFAULT)
-					vty_out(vty, " ip forward vrf %s%s", vrf_vrfid2name(ifp->vrf_id), VTY_NEWLINE);
-#endif
-				if (ifp->mtu != IF_MTU_DEFAULT)
-					vty_out(vty, " mtu %d%s", ifp->mtu, VTY_NEWLINE);
-				if (ifp->mtu6 != IF_MTU_DEFAULT)
-					vty_out(vty, " mtu6 %d%s", ifp->mtu, VTY_NEWLINE);
-
-				if (ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET)
-				{
-					if (ifp->bandwidth != 0)
-						vty_out(vty, " bandwidth %u%s", ifp->bandwidth, VTY_NEWLINE);
-				}
-				if (ifp->if_type == IF_ETHERNET ||
-					ifp->if_type == IF_GIGABT_ETHERNET ||
-					ifp->if_type == IF_SERIAL)
-				{
-					if (ifp->if_enca != IF_ENCA_NONE)
-						vty_out(vty, " encapsulation %s%s", if_enca_string(ifp->if_enca), VTY_NEWLINE);
-				}
-#ifdef ZPL_DHCP_MODULE
-				if (ifp->dhcp && nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
-				{
-					nsm_interface_dhcp_config(vty, ifp);
-				}
-				else
-#endif
-				{
-					for (ALL_LIST_ELEMENTS_RO(ifp->connected, addrnode, ifc))
-					{
-						if (ifc /*CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED)*/)
-						{
-							char buf[INET6_ADDRSTRLEN];
-							p = ifc->address;
-							
-							up.p = p;
-							vty_out(vty, " ip%s address %s",
-									p->family == IPSTACK_AF_INET ? "" : "v6",
-									prefix2str(up, buf, sizeof(buf)));
-
-							vty_out(vty, "%s", VTY_NEWLINE);
-						}
-					}
-				}
-#ifdef ZPL_DHCP_MODULE
-				if (ifp->dhcp &&
-					nsm_interface_dhcp_mode_get_api(ifp) != DHCP_CLIENT &&
-					nsm_interface_dhcp_mode_get_api(ifp) != DHCP_NONE)
-				{
-					nsm_interface_dhcp_config(vty, ifp);
-				}
-#endif
-			}
-			vty_out(vty, "!%s", VTY_NEWLINE);
+		case NSM_IF_SPEED_10M:
+			vty_out(vty, " speed 10%s", VTY_NEWLINE);
+			break;
+		case NSM_IF_SPEED_100M:
+			vty_out(vty, " speed 100%s", VTY_NEWLINE);
+			break;
+		case NSM_IF_SPEED_1000M:
+			vty_out(vty, " speed 1000%s", VTY_NEWLINE);
+			break;
+		case NSM_IF_SPEED_10000M:
+			vty_out(vty, " speed 10000%s", VTY_NEWLINE);
+			break;
+		case NSM_IF_SPEED_AUTO:
+			//vty_out(vty, " speed auto%s", VTY_NEWLINE);
+			break;
+		default:
+			break;
+		}
+		switch (if_data->duplex)
+		{
+		case NSM_IF_DUPLEX_HALF:
+			vty_out(vty, " duplex half%s", VTY_NEWLINE);
+			break;
+		case NSM_IF_DUPLEX_FULL:
+			vty_out(vty, " duplex full%s", VTY_NEWLINE);
+			break;
+		case NSM_IF_DUPLEX_AUTO:
+			//vty_out(vty, " duplex auto%s", VTY_NEWLINE);
+			break;
+		default:
+			break;
 		}
 	}
-	IF_DATA_UNLOCK();
-	return CMD_SUCCESS;
+	return 0;
 }
+static int nsm_interface_address_info_write(struct interface *ifp, struct vty *vty)
+{
+	struct listnode *addrnode;
+	struct connected *ifc;
+	struct prefix *p;
+	union prefix46constptr up;
+	for (ALL_LIST_ELEMENTS_RO(ifp->connected, addrnode, ifc))
+	{
+		if (CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED))
+		{
+			char buf[INET6_ADDRSTRLEN];
+			p = ifc->address;
+			up.p = p;
+			vty_out(vty, " ip%s address %s",
+					p->family == IPSTACK_AF_INET ? "" : "v6",
+					prefix2str(up, buf, sizeof(buf)));
+
+			vty_out(vty, "%s", VTY_NEWLINE);
+		}
+	}
+	return 0;
+}
+static int nsm_interface_encapsulation_info_write(struct interface *ifp, struct vty *vty)
+{
+	if (ifp->if_type == IF_ETHERNET ||
+		ifp->if_type == IF_GIGABT_ETHERNET ||
+		ifp->if_type == IF_SERIAL)
+	{
+		if (ifp->if_enca != IF_ENCA_NONE)
+			vty_out(vty, " encapsulation %s%s", if_enca_string(ifp->if_enca), VTY_NEWLINE);
+	}
+	return 0;
+}
+static int nsm_interface_bandwidth_info_write(struct interface *ifp, struct vty *vty)
+{
+	if (ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET)
+	{
+		if (ifp->bandwidth != 0)
+			vty_out(vty, " bandwidth %u%s", ifp->bandwidth, VTY_NEWLINE);
+	}
+	return 0;
+}
+
+static int nsm_interface_l3vrfmtu_info_write(struct interface *ifp, struct vty *vty)
+{
+	if (ifp->if_mode == IF_MODE_L3)
+	{
+		vty_out(vty, " mac-address %s%s", if_mac_out_format(ifp->hw_addr), VTY_NEWLINE);
+
+#ifdef ZPL_IPCOM_STACK_MODULE
+		if (ifp->vrf_id != VRF_DEFAULT)
+			vty_out(vty, " ip forward vrf %s%s", vrf_vrfid2name(ifp->vrf_id), VTY_NEWLINE);
+#endif
+		if (ifp->mtu != IF_MTU_DEFAULT)
+			vty_out(vty, " mtu %d%s", ifp->mtu, VTY_NEWLINE);
+		if (ifp->mtu6 != IF_MTU_DEFAULT)
+			vty_out(vty, " mtu6 %d%s", ifp->mtu, VTY_NEWLINE);
+	}
+	return 0;
+}
+
+
 
 static int nsm_interface_loopback_config_write(struct vty *vty)
 {
@@ -1729,10 +1631,7 @@ static int nsm_interface_loopback_config_write(struct vty *vty)
 		for (ALL_LIST_ELEMENTS_RO(if_list, node, ifp))
 		{
 			struct nsm_interface *if_data;
-			struct listnode *addrnode;
-			struct connected *ifc;
-			struct prefix *p;
-			union prefix46constptr up;
+	
 			if_data = ifp->info[MODULE_NSM];
 			if (ifp->if_type == IF_LOOPBACK)
 			{
@@ -1741,38 +1640,19 @@ static int nsm_interface_loopback_config_write(struct vty *vty)
 				if (ifp->desc)
 					vty_out(vty, " description %s%s", ifp->desc, VTY_NEWLINE);
 
-				if (if_data)
-				{
-					if (if_data->shutdown == IF_ZEBRA_SHUTDOWN_ON)
-						vty_out(vty, " shutdown%s", VTY_NEWLINE);
-				}
 
 				// nsm_client_interface_write_config(0, vty, ifp);
 				if (ifp->if_mode == IF_MODE_L3)
 				{
-#ifdef ZPL_IPCOM_STACK_MODULE
-					if (ifp->vrf_id != VRF_DEFAULT)
-						vty_out(vty, " ip forward vrf %s%s", vrf_vrfid2name(ifp->vrf_id), VTY_NEWLINE);
-#endif
-					if (ifp->mtu != IF_MTU_DEFAULT)
-						vty_out(vty, " mtu %d%s", ifp->mtu, VTY_NEWLINE);
-					if (ifp->mtu6 != IF_MTU_DEFAULT)
-						vty_out(vty, " mtu6 %d%s", ifp->mtu, VTY_NEWLINE);
+					nsm_interface_l3vrfmtu_info_write(ifp, vty);
+					//nsm_interface_bandwidth_info_write(ifp, vty);
+					nsm_interface_address_info_write(ifp, vty);
+				}
 
-					for (ALL_LIST_ELEMENTS_RO(ifp->connected, addrnode, ifc))
-					{
-						if (CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED))
-						{
-							char buf[INET6_ADDRSTRLEN];
-							p = ifc->address;
-							up.p = p;
-							vty_out(vty, " ip%s address %s",
-									p->family == IPSTACK_AF_INET ? "" : "v6",
-									prefix2str(up, buf, sizeof(buf)));
-
-							vty_out(vty, "%s", VTY_NEWLINE);
-						}
-					}
+				if (if_data)
+				{
+					if (if_data->shutdown == IF_ZEBRA_SHUTDOWN_ON)
+						vty_out(vty, " shutdown%s", VTY_NEWLINE);
 				}
 				vty_out(vty, "!%s", VTY_NEWLINE);
 			}
@@ -1794,10 +1674,7 @@ static int nsm_interface_config_write(struct vty *vty)
 		for (ALL_LIST_ELEMENTS_RO(if_list, node, ifp))
 		{
 			struct nsm_interface *if_data;
-			struct listnode *addrnode;
-			struct connected *ifc;
-			struct prefix *p;
-			union prefix46constptr up;
+
 			if (if_is_loop(ifp))
 				continue;
 			if (if_is_tunnel(ifp))
@@ -1809,66 +1686,52 @@ static int nsm_interface_config_write(struct vty *vty)
 			if (ifp->desc)
 				vty_out(vty, " description %s%s", ifp->desc, VTY_NEWLINE);
 
-			// nsm_client_interface_write_config(0, vty, ifp);
-			// nsm_client_interface_write_config(NSM_VLAN, vty, ifp);
-			// nsm_client_interface_write_config(NSM_PORT, vty, ifp);
+
 			nsm_interface_write_hook_handler(NSM_INTF_VLAN, vty, ifp);
+
+			nsm_interface_duplexspeed_info_write(ifp, vty);
+			nsm_interface_bandwidth_info_write(ifp, vty);
+			nsm_interface_encapsulation_info_write(ifp, vty);
+
+			nsm_interface_write_hook_handler(NSM_INTF_PORT, vty, ifp);
+			nsm_interface_write_hook_handler(NSM_INTF_MAC, vty, ifp);
+			nsm_interface_write_hook_handler(NSM_INTF_TRUNK, vty, ifp);
+			nsm_interface_write_hook_handler(NSM_INTF_DOT1X, vty, ifp);
+			nsm_interface_write_hook_handler(NSM_INTF_SEC, vty, ifp);
+			nsm_interface_write_hook_handler(NSM_INTF_ACL, vty, ifp);
+			nsm_interface_write_hook_handler(NSM_INTF_QOS, vty, ifp);
+			nsm_interface_write_hook_handler(NSM_INTF_TUNNEL, vty, ifp);
+			nsm_interface_write_hook_handler(NSM_INTF_PPP, vty, ifp);
+			nsm_interface_write_hook_handler(NSM_INTF_PPPOE, vty, ifp);
+			nsm_interface_write_hook_handler(NSM_INTF_SERIAL, vty, ifp);
+
+			nsm_interface_write_hook_handler(NSM_INTF_WIFI, vty, ifp);
+			nsm_interface_write_hook_handler(NSM_INTF_VETH, vty, ifp);
+			nsm_interface_write_hook_handler(NSM_INTF_BRIDGE, vty, ifp);
+			
+			nsm_interface_write_hook_handler(NSM_INTF_MIRROR, vty, ifp);
+
 
 			if (ifp->if_mode == IF_MODE_L3)
 			{
-#ifdef ZPL_IPCOM_STACK_MODULE
-				if (ifp->vrf_id != VRF_DEFAULT)
-					vty_out(vty, " ip forward vrf %s%s", vrf_vrfid2name(ifp->vrf_id), VTY_NEWLINE);
-#endif
-				if (ifp->mtu != IF_MTU_DEFAULT)
-					vty_out(vty, " mtu %d%s", ifp->mtu, VTY_NEWLINE);
-				if (ifp->mtu6 != IF_MTU_DEFAULT)
-					vty_out(vty, " mtu6 %d%s", ifp->mtu, VTY_NEWLINE);
-				if (ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET)
-				{
-					if (ifp->bandwidth != 0)
-						vty_out(vty, " bandwidth %u%s", ifp->bandwidth, VTY_NEWLINE);
-				}
-				if (ifp->if_type == IF_ETHERNET ||
-					ifp->if_type == IF_GIGABT_ETHERNET ||
-					ifp->if_type == IF_SERIAL)
-				{
-					if (ifp->if_enca != IF_ENCA_NONE)
-						vty_out(vty, " encapsulation %s%s", if_enca_string(ifp->if_enca), VTY_NEWLINE);
-				}
+				nsm_interface_l3vrfmtu_info_write(ifp, vty);
 #ifdef ZPL_DHCP_MODULE
+				if (ifp->dhcp &&
+					nsm_interface_dhcp_mode_get_api(ifp) != DHCP_CLIENT &&
+					nsm_interface_dhcp_mode_get_api(ifp) != DHCP_NONE)
+				{
+					nsm_interface_dhcp_config(vty, ifp);
+				}
 				if (ifp->dhcp && nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 				{
 					nsm_interface_dhcp_config(vty, ifp);
 				}
 				else
 #endif
-				{
-					for (ALL_LIST_ELEMENTS_RO(ifp->connected, addrnode, ifc))
-					{
-						if (CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED))
-						{
-							char buf[INET6_ADDRSTRLEN];
-							p = ifc->address;
-							up.p = p;
-							vty_out(vty, " ip%s address %s",
-									p->family == IPSTACK_AF_INET ? "" : "v6",
-									prefix2str(up, buf, sizeof(buf)));
+				nsm_interface_address_info_write(ifp, vty);			
+			}
 
-							vty_out(vty, "%s", VTY_NEWLINE);
-						}
-					}
-				}
-			}
-#ifdef ZPL_DHCP_MODULE
-			if (ifp->dhcp &&
-				nsm_interface_dhcp_mode_get_api(ifp) != DHCP_CLIENT &&
-				nsm_interface_dhcp_mode_get_api(ifp) != DHCP_NONE)
-			{
-				nsm_interface_dhcp_config(vty, ifp);
-			}
-#endif
-			//nsm_interface_write_hook_handler(-1, vty, ifp);
+			// nsm_interface_write_hook_handler(-1, vty, ifp);
 			if (if_data)
 			{
 				if (if_data->shutdown == IF_ZEBRA_SHUTDOWN_ON)
@@ -1984,7 +1847,7 @@ static void cmd_show_interface_init(int node)
 #ifdef CUSTOM_INTERFACE
 	install_element(node, CMD_VIEW_LEVEL, &show_wifi_interface_cmd);
 #endif
-	install_element(node, CMD_VIEW_LEVEL, &show_interface_all_debug_cmd);
+	//install_element(node, CMD_VIEW_LEVEL, &show_interface_all_debug_cmd);
 
 #ifdef ZPL_KERNEL_STACK_MODULE
 	install_element(node, CMD_VIEW_LEVEL, &show_interface_kernel_cmd);
@@ -2034,6 +1897,8 @@ static void cmd_base_interface_init(int node)
 		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_enca_dot1q_cmd);
 		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_enca_pppoe_cmd);
 		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_enca_cmd);
+		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_mac_cmd);
+		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_mac_cmd);
 	}
 
 #ifdef ZPL_KERNEL_STACK_MODULE
@@ -2044,30 +1909,19 @@ static void cmd_base_interface_init(int node)
 
 static void cmd_ethernet_interface_init(int node)
 {
-	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_linkdetect_cmd);
-	install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_linkdetect_cmd);
-
 	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_bandwidth_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_bandwidth_cmd);
 
 	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_duplex_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_duplex_cmd);
 
-	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_mac_cmd);
-	install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_mac_cmd);
 
 	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_speed_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_speed_cmd);
-
-	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_multicast_cmd);
-	install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_multicast_cmd);
 }
 
 static void cmd_range_interface_init(int node)
 {
-	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_linkdetect_cmd);
-	install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_linkdetect_cmd);
-
 	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_bandwidth_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_bandwidth_cmd);
 
@@ -2078,13 +1932,9 @@ static void cmd_range_interface_init(int node)
 	install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_speed_cmd);
 	if (node == INTERFACE_RANGE_NODE)
 	{
-
 	}
 	if (node == INTERFACE_L3_RANGE_NODE)
 	{
-
-		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_multicast_cmd);
-		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_multicast_cmd);
 		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_mtu_cmd);
 		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_mtu_cmd);
 		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_metric_cmd);
@@ -2092,19 +1942,14 @@ static void cmd_range_interface_init(int node)
 	}
 	if (node == E1_INTERFACE_L3_RANGE_NODE)
 	{
-		
 	}
 	if (node == EPON_INTERFACE_RANGE_NODE)
 	{
-
 	}
 	if (node == EPON_INTERFACE_L3_RANGE_NODE)
 	{
-
 	}
 }
-
-
 
 #ifdef CUSTOM_INTERFACE
 static void cmd_custom_interface_init(int node)

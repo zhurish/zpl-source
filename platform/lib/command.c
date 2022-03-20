@@ -969,7 +969,7 @@ cmd_iuspv_match(const char *keystr, const char *str)
   zpl_uint32 count = 0;
   zpl_char *base = "0123456789/.-";
   zpl_char *math = (zpl_char *)keystr;
-  fprintf(stdout,"%s:%s -> %s\r\n",__func__,keystr,str);
+  //fprintf(stdout,"%s:%s -> %s\r\n",__func__,keystr,str);
   if (keystr == NULL)
     return 0;
   if (str == NULL)

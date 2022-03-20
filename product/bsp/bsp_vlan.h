@@ -17,8 +17,7 @@ typedef struct sdk_vlan_s
     int    (*sdk_vlan_enable)(void *, zpl_bool);
     int    (*sdk_vlan_create)(void *, zpl_bool, vlan_t);
 
-    int    (*sdk_vlan_untag_port)(void *, zpl_bool, zpl_phyport_t, vlan_t);
-    int    (*sdk_vlan_tag_port)(void *, zpl_bool, zpl_phyport_t, vlan_t);
+    int    (*sdk_port_access_vlan)(void *, zpl_bool, zpl_phyport_t, vlan_t);
     int    (*sdk_port_native_vlan)(void *, zpl_bool, zpl_phyport_t, vlan_t);
     int    (*sdk_port_allowed_tag_vlan)(void *, zpl_bool, zpl_phyport_t, vlan_t);
 

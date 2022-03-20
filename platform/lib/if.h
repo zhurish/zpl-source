@@ -166,6 +166,8 @@ typedef enum if_mode_s
    IF_MODE_BRIGDE,
 } if_mode_t;
 
+#define IF_MODE_DEFAULT IF_MODE_ACCESS_L2
+
 typedef enum if_enca_s
 {
    IF_ENCA_NONE,
@@ -555,6 +557,8 @@ extern int if_update_phyid(ifindex_t ifindex, zpl_phyport_t phyid);
 extern int if_update_phyid2(struct interface *ifp, zpl_phyport_t phyid);
 extern int if_update_l3intfid(ifindex_t ifindex, zpl_phyport_t phyid);
 extern int if_update_l3intfid2(struct interface *ifp, zpl_phyport_t phyid);
+
+extern void *if_module_data(struct interface *ifp, module_t mid);
 
 extern zpl_bool if_have_kernel(struct interface *ifp);
 

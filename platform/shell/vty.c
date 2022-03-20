@@ -638,9 +638,9 @@ int vty_command(struct vty *vty, zpl_char *buf)
 
 		os_get_monotonic(&before);
 #endif /* CONSUMED_TIME_CHECK */
-
+		cli_shell.cli_shell_vty = vty;
 		ret = cmd_execute_command(vline, vty, NULL, 0);
-
+		cli_shell.cli_shell_vty = NULL;
 		/* Get the name of the protocol if any */
 		if (zlog_default)
 			protocolname = zlog_proto_names(zlog_default->protocol);
@@ -668,7 +668,6 @@ int vty_command(struct vty *vty, zpl_char *buf)
 		switch (ret)
 		{
 		case CMD_WARNING:
-			// if (vty->type == VTY_FILE)
 			vty_out(vty, "Warning...%s", VTY_NEWLINE);
 			break;
 		case CMD_ERR_AMBIGUOUS:
@@ -4098,6 +4097,22 @@ int vty_execute_shell(void *cli, const char *cmd)
 	if (vty_cflags)
 		vty_close(vty);
 	return ret;
+}
+
+int cli_shell_result (const char *format, ...)
+{
+	if(cli_shell.cli_shell_vty)
+	{
+		va_list args;
+		zpl_uint32 len = 0;
+		zpl_char buf[VTY_BUFSIZ];
+		os_bzero(buf, sizeof(buf));
+		va_start(args, format);
+		len = snprintf(buf,sizeof(buf), format, args);
+		va_end(args);
+		vty_out(cli_shell.cli_shell_vty, "%s\r\n", buf);
+	}
+	return OK;	
 }
 
 #ifdef ZPL_IPCOM_STACK_MODULE

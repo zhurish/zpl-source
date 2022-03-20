@@ -194,7 +194,7 @@ int dhcp_option_string_set(dhcp_option_set_t *option_tbl, zpl_uint8 code,
 			break;
 	#if ENABLE_FEATURE_UDHCP_RFC3397
 		case OPTION_DNS_STRING:
-			p = (char *)dname_enc(NULL, 0, str, &optlen);
+			p = dname_enc(NULL, 0, str, &optlen);
 			if(p)
 			{
 				strncpy(buffer + offset, p, optlen);

@@ -149,7 +149,7 @@ static int b53125_mirror_source_mactype_set(sdk_driver_t *dev, zpl_phyport_t por
 		return ret;
 }
 
-int b53125_mirror_init(void)
+int b53125_mirror_init(sdk_driver_t *dev)
 {
 	sdk_mirror.sdk_mirror_enable_cb = b53125_mirror_enable_set;
 	sdk_mirror.sdk_mirror_source_enable_cb = b53125_mirror_source_enable_set;
