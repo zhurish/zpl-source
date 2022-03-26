@@ -8,6 +8,8 @@
 #include "os_include.h"
 #include "zpl_include.h"
 
+#if 1
+
 #ifdef SA_SIGINFO
 #ifdef HAVE_UCONTEXT_H
 #ifdef GNU_LINUX
@@ -20,215 +22,236 @@
 #endif /* HAVE_UCONTEXT_H */
 #endif /* SA_SIGINFO */
 
-
 struct os_signal_process_t
 {
-	int signal_rfd;
-	int signal_wfd;
-	void (*os_core_abort)(zpl_int signo, const char *action
+  int signal_rfd;
+  int signal_wfd;
 #ifdef SA_SIGINFO
-	     , siginfo_t *siginfo, void *context
-#endif
-	);
-	void (*os_core_exit)(zpl_int signo, const char *action
+  void (*os_core_abort)(zpl_int signo, const char *action,
+    siginfo_t *siginfo, void *context);
+  void (*os_core_exit)(zpl_int signo, const char *action,
+    siginfo_t *siginfo, void *context);
+#else
+  void (*os_core_abort)(zpl_int signo, const char *action);
+  void (*os_core_exit)(zpl_int signo, const char *action);
+#endif  
+  struct os_signal_t os_signal_tbl[__SIGRTMAX];
+};
+
+struct sigmap_tbl
+{
+  zpl_uint32 signo;
 #ifdef SA_SIGINFO
-	     , siginfo_t *siginfo, void *context
+  void (*handler)(int signo, siginfo_t *info, void *context);
+#else
+  void (*handler)(int signo);
 #endif
-	);
-	struct os_signal_t os_signal_tbl[__SIGRTMAX];
 };
 
 struct os_signal_process_t os_sigproc_tbl;
-//static int signal_rfd = 0, signal_wfd = 0;
 
-//static struct os_signal_t os_sigproc_tbl.os_signal_tbl[__SIGRTMAX];
 static int os_signal_handler_action(zpl_int sig, void *info);
 
-static void os_signal_default_interrupt(zpl_int signo
-#ifdef SA_SIGINFO
-	     , siginfo_t *siginfo, void *context
-#endif
-);
 
-static void os_exit_handler(int signo
 #ifdef SA_SIGINFO
-             ,
-             siginfo_t *siginfo, void *context
+static void os_signal_default_interrupt(zpl_int signo, siginfo_t *siginfo, void *context);
+#else
+static void os_signal_default_interrupt(zpl_int signo);
 #endif
-);
 
-static void os_core_handler(int signo
+
+#ifndef ZPL_COREDUMP_ENABLE
+
 #ifdef SA_SIGINFO
-             ,
-             siginfo_t *siginfo, void *context
+static void os_core_exit_handler(int signo, siginfo_t *siginfo, void *context);
+static void os_core_abort_handler(int signo, siginfo_t *siginfo, void *context);
+#else
+static void os_core_exit_handler(int signo);
+static void os_core_abort_handler(int signo);
 #endif
-);
+#endif
 
-static const int core_signals[] = {
-    SIGQUIT,
-    SIGILL,
+
+static const struct sigmap_tbl default_signals[] = {
+#ifndef ZPL_COREDUMP_ENABLE
+    { SIGQUIT,    os_core_abort_handler},
+    { SIGILL,    os_core_abort_handler},
 #ifdef SIGEMT
-    SIGEMT,
+    { SIGEMT,    os_core_abort_handler},
 #endif
-    SIGFPE,
-    SIGBUS,
-    SIGSEGV,
+    { SIGFPE,    os_core_abort_handler},
+    { SIGBUS,    os_core_abort_handler},
+    { SIGSEGV,    os_core_abort_handler},
 #ifdef SIGSYS
-    SIGSYS,
+    { SIGSYS,    os_core_abort_handler},
 #endif
 #ifdef SIGXCPU
-    SIGXCPU,
+    { SIGXCPU,    os_core_abort_handler},
 #endif
 #ifdef SIGXFSZ
-    SIGXFSZ,
+    { SIGXFSZ,    os_core_abort_handler},
 #endif
-};
 
-static const int exit_signals[] = {
-    SIGHUP,
-    SIGINT,
-    SIGALRM,
-    SIGTERM,
-    SIGUSR1,
-// SIGUSR2,
+    { SIGHUP,     os_core_exit_handler},//exit_signals
+    { SIGINT,     os_core_exit_handler},
+    { SIGALRM,     os_core_exit_handler},
+    { SIGTERM,     os_core_exit_handler},
+    { SIGUSR1,     os_core_exit_handler},
+// { SIGUSR2,     os_core_exit_handler},
 #ifdef SIGPOLL
-    SIGPOLL,
+    { SIGPOLL,     os_core_exit_handler},
 #endif
 #ifdef SIGVTALRM
-    SIGVTALRM,
+    { SIGVTALRM,     os_core_exit_handler},
 #endif
 #ifdef SIGSTKFLT
-    SIGSTKFLT,
+    { SIGSTKFLT,     os_core_exit_handler},
 #endif
+#endif
+    { SIGPIPE,  NULL},//ignore_signals
+    {0,  NULL},
 };
-static const int ignore_signals[] = {
-    SIGPIPE,
-};
+
 
 int os_signal_add(zpl_int sig, os_signal_handler hander)
 {
-	os_sigproc_tbl.os_signal_tbl[sig].signal = sig;
-	os_sigproc_tbl.os_signal_tbl[sig].signal_handler = hander;
-	os_register_signal(sig, os_signal_default_interrupt);
-	return OK;
+  os_sigproc_tbl.os_signal_tbl[sig].signal = sig;
+  os_sigproc_tbl.os_signal_tbl[sig].signal_handler = hander;
+  os_register_signal(sig, os_signal_default_interrupt);
+  return OK;
 }
 
 void os_signal_init(struct os_signal_t *tbl, int num)
 {
-	uint32_t i = 0;
-	for(i = 0; i < num; i++)
-	{
-		os_signal_add(tbl[i].signal, tbl[i].signal_handler);
-	}
+  uint32_t i = 0;
+  for (i = 0; i < num; i++)
+  {
+    os_signal_add(tbl[i].signal, tbl[i].signal_handler);
+  }
+#ifdef ZPL_COREDUMP_ENABLE
+  super_system("ulimit -c unlimited");
+  super_system("echo 1 > /proc/sys/kernel/core_uses_pid");
+  // core.filename.pid格式的core dump文件：
+  super_system("echo \"./coredump.%e.%p\" > /proc/sys/kernel/core_pattern");
+  // super_system("ulimit -c unlimited");
+  // super_system("ulimit -c unlimited");
+  // super_system("ulimit -c unlimited");
+#endif
 }
 
 static int os_signal_handler_action(zpl_int sig, void *info)
 {
-	int i = 0;
-	for(i = 0; i < __SIGRTMAX; i++)
-	{
-		if(os_sigproc_tbl.os_signal_tbl[i].signal == sig &&
-		 os_sigproc_tbl.os_signal_tbl[i].signal_handler)
-		 return (os_sigproc_tbl.os_signal_tbl[sig].signal_handler)(sig, os_sigproc_tbl.os_signal_tbl[i].info?os_sigproc_tbl.os_signal_tbl[i].info:info);
-	}
-	return OK;
+  int i = 0;
+  for (i = 0; i < __SIGRTMAX; i++)
+  {
+    if (os_sigproc_tbl.os_signal_tbl[i].signal == sig &&
+        os_sigproc_tbl.os_signal_tbl[i].signal_handler)
+      return (os_sigproc_tbl.os_signal_tbl[sig].signal_handler)(sig, os_sigproc_tbl.os_signal_tbl[i].info ? os_sigproc_tbl.os_signal_tbl[i].info : info);
+  }
+  return OK;
 }
 
-static void os_signal_default_interrupt(zpl_int signo
 #ifdef SA_SIGINFO
-	     , siginfo_t *siginfo, void *context
+static void os_signal_default_interrupt(zpl_int signo, siginfo_t *siginfo, void *context)
+#else
+static void os_signal_default_interrupt(zpl_int signo)                                     
 #endif
-)
 {
-	zpl_int wsigno = signo;
-	if(os_sigproc_tbl.signal_wfd)
-		write(os_sigproc_tbl.signal_wfd, &wsigno, 4);
-	return;
+  fprintf(stdout, "======================os_signal_default_interrupt %d\r\n", signo);
+  fflush(stdout);
+  os_log(OS_SIGNAL_FILE, "%s:==========+++++++++++++++++++++++++=========signo=%d\r\n", __func__, signo);
+#ifdef OS_SIGNAL_PIPE  
+  zpl_int wsigno = signo;
+  if (os_sigproc_tbl.signal_wfd)
+    write(os_sigproc_tbl.signal_wfd, &wsigno, 4);
+#else
+  os_signal_handler_action(signo, NULL);
+#endif
+  return;
 }
 
 int os_signal_process(zpl_uint timeout)
 {
-	//extern int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, zpl_uint32 timeout_ms);
-	zpl_int rsigno = 0;
-	if(os_read_timeout(os_sigproc_tbl.signal_rfd, &rsigno, 4, timeout) == 4)
-	{
-		os_signal_handler_action(rsigno, NULL);
-	}
-	return OK;
+#ifdef OS_SIGNAL_PIPE 
+  zpl_int rsigno = 0;
+  if (os_read_timeout(os_sigproc_tbl.signal_rfd, &rsigno, 4, timeout) == 4)
+  {
+    os_signal_handler_action(rsigno, NULL);
+  }
+#else
+  os_msleep(timeout);
+#endif  
+  return OK;
 }
-
 
 static void os_trap_default_signals(void)
 {
-  static const struct
-  {
-    const int *sigs;
-    zpl_uint32 nsigs;
-    void (*handler)(int signo
-#ifdef SA_SIGINFO
-		, siginfo_t *info, void *context
-#endif
-    );
-  } sigmap[] = {
-      {core_signals, array_size(core_signals), os_core_handler},
-      {exit_signals, array_size(exit_signals), os_exit_handler},
-      {ignore_signals, array_size(ignore_signals), NULL},
-  };
   zpl_uint32 i = 0;
 
-  for (i = 0; i < array_size(sigmap); i++)
+  for (i = 0; i < array_size(default_signals); i++)
   {
-    zpl_uint32 j = 0;
-
-    for (j = 0; j < sigmap[i].nsigs; j++)
+    if(default_signals[i].signo)
     {
-		os_register_signal(sigmap[i].sigs[j], sigmap[i].handler);
+      os_register_signal(default_signals[i].signo, default_signals[i].handler);
     }
   }
 }
 
-void os_signal_default(void *abort_func, void *exit_func)
+void os_signal_default(os_signal_abort_cb abort_func, os_signal_exit_cb exit_func)
 {
-	memset(os_sigproc_tbl.os_signal_tbl, 0, sizeof(os_sigproc_tbl.os_signal_tbl));
-	os_sigproc_tbl.os_core_abort = abort_func;
-	os_sigproc_tbl.os_core_exit = exit_func;
-	os_unix_sockpair_create(zpl_false, &os_sigproc_tbl.signal_rfd, &os_sigproc_tbl.signal_wfd);
-	if(os_sigproc_tbl.signal_wfd)
-		os_set_nonblocking(os_sigproc_tbl.signal_wfd);
-	if(os_sigproc_tbl.signal_rfd)	
-		os_set_nonblocking(os_sigproc_tbl.signal_rfd);
-
-	os_trap_default_signals();
+  memset(os_sigproc_tbl.os_signal_tbl, 0, sizeof(os_sigproc_tbl.os_signal_tbl));
+  os_sigproc_tbl.os_core_abort = abort_func;
+  os_sigproc_tbl.os_core_exit = exit_func;
+#ifdef OS_SIGNAL_PIPE 
+  os_unix_sockpair_create(zpl_false, &os_sigproc_tbl.signal_rfd, &os_sigproc_tbl.signal_wfd);
+  if (os_sigproc_tbl.signal_wfd)
+    os_set_nonblocking(os_sigproc_tbl.signal_wfd);
+  if (os_sigproc_tbl.signal_rfd)
+    os_set_nonblocking(os_sigproc_tbl.signal_rfd);
+#endif
+  os_trap_default_signals();
 }
 
-
-
-int os_register_signal(zpl_int sig, void (*handler)(zpl_int
 #ifdef SA_SIGINFO
-	     , siginfo_t *siginfo, void *context
-#endif
-		))
-{
-	struct sigaction sa;//, osa;
-
-	memset(&sa, 0, sizeof(sa));
-	//sa.sa_handler = handler;
-	//sigaction(sig, NULL, &osa);
-    if (handler == NULL)
-    {
-        sa.sa_handler = SIG_DFL;//SIG_IGN;
-        sa.sa_flags = 0;
-    }
-	else
-	{
-#ifdef SA_SIGINFO
-		sa.sa_sigaction = handler;
-		sa.sa_flags = SA_SIGINFO;
+int os_register_signal(zpl_int sig, void (*handler)(zpl_int, siginfo_t *siginfo, void *context))
 #else
-		sa.sa_handler = handler;
-		sa.sa_flags = 0;
+int os_register_signal(zpl_int sig, void (*handler)(zpl_int))                                                 
 #endif
-	}
+{
+  int ret = 0;
+  struct sigaction sa, osa;
+
+  memset(&sa, 0, sizeof(sa));
+  memset(&osa, 0, sizeof(osa));
+
+	ret = sigaction(sig, NULL, &osa);
+  if(ret == 0)
+  {
+    /*if(osa.sa_handler != SIG_DFL)
+    {
+      return (0);
+    }*/
+  }
+  else
+  {
+    return -1;
+  }
+
+  if (handler == NULL)
+  {
+    sa.sa_handler = SIG_DFL; // SIG_IGN;
+    sa.sa_flags = 0;
+  }
+  else
+  {
+#ifdef SA_SIGINFO
+    sa.sa_sigaction = handler;
+    sa.sa_flags = SA_SIGINFO;
+#else
+    sa.sa_handler = handler;
+    sa.sa_flags = 0;
+#endif
+  }
   if (sig == SIGALRM)
   {
 #ifdef SA_INTERRUPT
@@ -241,16 +264,16 @@ int os_register_signal(zpl_int sig, void (*handler)(zpl_int
     sa.sa_flags |= SA_RESTART;
 #endif /* SA_RESTART */
   }
-	if (sigfillset(&sa.sa_mask) != 0 ||
-	    sigaction(sig, &sa, NULL) < 0)
-	{
-		fprintf(stdout, "Unable to set up signal handler for %d", sig);
-		return (-1);
-	}
-	return (0);
+  sigfillset(&sa.sa_mask);
+  if (sigaction(sig, &sa, NULL) < 0)
+  {
+    fprintf(stdout, "Unable to set up signal handler for %d", sig);
+    return (-1);
+  }
+  return (0);
 }
 
-
+#ifndef ZPL_COREDUMP_ENABLE
 #ifdef SA_SIGINFO
 
 /* XXX This function should be enhanced to support more platforms
@@ -294,44 +317,53 @@ os_signal_program_counter(void *context)
 }
 #endif /* SA_SIGINFO */
 
-static void __attribute__((noreturn))
-os_exit_handler(int signo
 #ifdef SA_SIGINFO
-             ,
-             siginfo_t *siginfo, void *context
+static void __attribute__((noreturn)) os_core_exit_handler(int signo, siginfo_t *siginfo, void *context)
+#else
+static void __attribute__((noreturn)) os_core_exit_handler(int signo)        
 #endif
-)
 {
-  //os_log(OS_SIGNAL_FILE,"%s:============+++++++++++++++++++++===========signo=%d\r\n", __func__, signo);
-  if(os_sigproc_tbl.os_core_exit)
-  	(os_sigproc_tbl.os_core_exit)( signo, "exiting..."
+  fprintf(stdout,"%s:============+++++++++++++++++++++===========signo=%d\r\n", __func__, signo);
+  fflush(stdout);
+  os_log(OS_SIGNAL_FILE, "%s:==========+++++++++++++++++++++++++=========signo=%d\r\n", __func__, signo);
+  if (os_sigproc_tbl.os_core_exit)
+    (os_sigproc_tbl.os_core_exit)(signo, "exiting..."
 #ifdef SA_SIGINFO
-              ,
-              siginfo, os_signal_program_counter(context)
+                                  ,
+                                  siginfo, os_signal_program_counter(context)
 #endif
-  );
+    );
   _exit(128 + signo);
 }
 
-static void __attribute__((noreturn))
-os_core_handler(int signo
 #ifdef SA_SIGINFO
-             ,
-             siginfo_t *siginfo, void *context
+static void __attribute__((noreturn)) os_core_abort_handler(int signo, siginfo_t *siginfo, void *context)
+#else
+static void __attribute__((noreturn)) os_core_abort_handler(int signo)        
 #endif
-)
 {
-  //os_log(OS_SIGNAL_FILE,"%s:==========+++++++++++++++++++++++++=========signo=%d\r\n", __func__, signo);
-  if(os_sigproc_tbl.os_core_abort)
-  	(os_sigproc_tbl.os_core_abort)( signo, "aborting..."
+  fprintf(stdout,"%s:==========+++++++++++++++++++++++++=========signo=%d\r\n", __func__, signo);
+  fflush(stdout);
+  os_log(OS_SIGNAL_FILE, "%s:==========+++++++++++++++++++++++++=========signo=%d\r\n", __func__, signo);
+  if (os_sigproc_tbl.os_core_abort)
+    (os_sigproc_tbl.os_core_abort)(signo, "aborting..."
 #ifdef SA_SIGINFO
-              ,
-              siginfo, os_signal_program_counter(context)
+                                   ,
+                                   siginfo, os_signal_program_counter(context)
 #endif
-  );
+    );
   abort();
 }
 
+#endif
 
+int os_signal_reload_test(void)
+{
+  #ifndef ZPL_COREDUMP_ENABLE
+  os_register_signal(SIGSEGV, os_core_abort_handler);
+  os_register_signal(SIGBUS, os_core_abort_handler);
+  #endif
+  return OK;
+}
 
-
+#endif 

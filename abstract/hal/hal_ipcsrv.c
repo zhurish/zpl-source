@@ -961,7 +961,7 @@ int zsend_router_id_update(struct zserv *client, struct prefix *p,
     zpl_uint32 blen;
 
     /* Check this client need interface information. */
-    if (!vrf_bitmap_check(client->ridinfo, vrf_id))
+    if (!ip_vrf_bitmap_check(client->ridinfo, vrf_id))
         return 0;
 
     s = client->obuf;

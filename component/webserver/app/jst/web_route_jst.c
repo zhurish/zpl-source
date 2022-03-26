@@ -19,7 +19,7 @@
 #include "str.h"
 #include "table.h"
 #include "vector.h"
-#include "nsm_vrf.h"
+#include "nsm_ip_vrf.h"
 #include "nsm_interface.h"
 #include "nexthop.h"
 #include "nsm_rib.h"
@@ -224,7 +224,7 @@ static void web_route_one (Webs *wp, struct route_node *rn, struct rib *rib)
 				snprintf(metric, sizeof(metric), "%d", rib->metric);
 
 			if (rib->vrf_id != VRF_DEFAULT)
-				snprintf(vpn, sizeof(vpn), "%s", (vrf_lookup(rib->vrf_id))->name);
+				snprintf(vpn, sizeof(vpn), "%s", (ip_vrf_lookup(rib->vrf_id))->name);
 		}
 		switch (nexthop->type)
 		{

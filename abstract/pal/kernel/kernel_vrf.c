@@ -118,7 +118,7 @@ vrf_netns_pathname(const char *name)
  * is ready to allocate resources. Currently there's only one
  * type of resource: ipstack_socket.
  */
-static int vrf_is_enabled(struct vrf *vrf)
+static int vrf_is_enabled(struct ip_vrf *vrf)
 {
 	if (have_netns())
 		return vrf && vrf->fd._fd >= 0;
@@ -135,7 +135,7 @@ static int vrf_is_enabled(struct vrf *vrf)
  */
 int _ipkernel_vrf_enable(vrf_id_t vrf_id)
 {
-	struct vrf *vrf = vrf_lookup(vrf_id);
+	struct ip_vrf *vrf = ip_vrf_lookup(vrf_id);
 	char *pathname = vrf_netns_pathname (vrf->name);
 	if (!vrf_is_enabled(vrf))
 	{
@@ -173,7 +173,7 @@ int _ipkernel_vrf_enable(vrf_id_t vrf_id)
  */
 int _ipkernel_vrf_disable(vrf_id_t vrf_id)
 {
-	struct vrf *vrf = vrf_lookup(vrf_id);
+	struct ip_vrf *vrf = ip_vrf_lookup(vrf_id);
 	if (vrf_is_enabled(vrf))
 	{
 		zlog_info(MODULE_PAL, "VRF %u is to be disabled.", vrf->vrf_id);
@@ -244,7 +244,7 @@ int _ipkernel_vrf_disable(vrf_id_t vrf_id)
  return CMD_WARNING;
 
  VTY_GET_INTEGER ("VRF ID", vrf_id, argv[0]);
- vrf = vrf_lookup (vrf_id);
+ vrf = ip_vrf_lookup (vrf_id);
 
  if (!vrf)
  {
@@ -334,7 +334,7 @@ int _ipkernel_vrf_disable(vrf_id_t vrf_id)
 
  Terminate VRF module.
  void
- vrf_terminate (void)
+ ip_vrf_terminate (void)
  {
  struct route_node *rn;
  struct vrf *vrf;
@@ -351,7 +351,7 @@ int _ipkernel_vrf_disable(vrf_id_t vrf_id)
 int
 vrf_socket (int domain, int type, int protocol, vrf_id_t vrf_id)
 {
-  struct vrf *vrf = vrf_lookup (vrf_id);
+  struct ip_vrf *vrf = ip_vrf_lookup (vrf_id);
   int ret = -1;
 
   if (!vrf_is_enabled (vrf))
@@ -367,7 +367,7 @@ vrf_socket (int domain, int type, int protocol, vrf_id_t vrf_id)
         {
           ret = socket (domain, type, protocol);
           if (vrf_id != VRF_DEFAULT)
-            setns (vrf_lookup (VRF_DEFAULT)->fd._fd, CLONE_NEWNET);
+            setns (ip_vrf_lookup (VRF_DEFAULT)->fd._fd, CLONE_NEWNET);
         }
     }
   else

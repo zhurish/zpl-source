@@ -191,8 +191,8 @@ redistribute_add (struct prefix *p, struct rib *rib, struct rib *rib_old)
   for (ALL_LIST_ELEMENTS (nsm_srv->client_list, node, nnode, client))
     {
       if ((is_default (p) &&
-           vrf_bitmap_check (client->redist_default, rib->vrf_id))
-          || vrf_bitmap_check (client->redist[rib->type], rib->vrf_id))
+           ip_vrf_bitmap_check (client->redist_default, rib->vrf_id))
+          || ip_vrf_bitmap_check (client->redist[rib->type], rib->vrf_id))
         {
           if (p->family == IPSTACK_AF_INET)
 	    {
@@ -205,7 +205,7 @@ redistribute_add (struct prefix *p, struct rib *rib, struct rib *rib_old)
 	      zsend_route_multipath (ZEBRA_IPV6_ROUTE_ADD, client, p, rib);
 	    }
         }
-      else if (rib_old && vrf_bitmap_check (client->redist[rib_old->type], 
+      else if (rib_old && ip_vrf_bitmap_check (client->redist[rib_old->type], 
                                             rib_old->vrf_id))
         {
           /* redistribute_add has implicit withdraw semantics, so there
@@ -236,8 +236,8 @@ redistribute_delete (struct prefix *p, struct rib *rib)
   for (ALL_LIST_ELEMENTS (nsm_srv->client_list, node, nnode, client))
     {
       if ((is_default (p) &&
-           vrf_bitmap_check (client->redist_default, rib->vrf_id))
-          || vrf_bitmap_check (client->redist[rib->type], rib->vrf_id))
+           ip_vrf_bitmap_check (client->redist_default, rib->vrf_id))
+          || ip_vrf_bitmap_check (client->redist[rib->type], rib->vrf_id))
 	{
 	  if (p->family == IPSTACK_AF_INET)
 	    zsend_route_multipath (ZEBRA_IPV4_ROUTE_DELETE, client, p, rib);
@@ -260,9 +260,9 @@ zebra_redistribute_add (zpl_uint16 command, struct zserv *client, zpl_size_t len
   if (type == 0 || type >= ZEBRA_ROUTE_MAX)
     return;
 
-  if (! vrf_bitmap_check (client->redist[type], vrf_id))
+  if (! ip_vrf_bitmap_check (client->redist[type], vrf_id))
     {
-      vrf_bitmap_set (client->redist[type], vrf_id);
+      ip_vrf_bitmap_set (client->redist[type], vrf_id);
       zebra_redistribute (client, type, vrf_id);
     }
 }
@@ -278,14 +278,14 @@ zebra_redistribute_delete (zpl_uint16 command, struct zserv *client, zpl_size_t 
   if (type == 0 || type >= ZEBRA_ROUTE_MAX)
     return;
 
-  vrf_bitmap_unset (client->redist[type], vrf_id);
+  ip_vrf_bitmap_unset (client->redist[type], vrf_id);
 }
 
 void
 zebra_redistribute_default_add (zpl_uint16 command, struct zserv *client, zpl_size_t length,
     vrf_id_t vrf_id)
 {
-  vrf_bitmap_set (client->redist_default, vrf_id);
+  ip_vrf_bitmap_set (client->redist_default, vrf_id);
   zebra_redistribute_default (client, vrf_id);
 }     
 
@@ -293,7 +293,7 @@ void
 zebra_redistribute_default_delete (zpl_uint16 command, struct zserv *client,
     zpl_size_t length, vrf_id_t vrf_id)
 {
-  vrf_bitmap_unset (client->redist_default, vrf_id);
+  ip_vrf_bitmap_unset (client->redist_default, vrf_id);
 }     
 
 /* Interface up information. */

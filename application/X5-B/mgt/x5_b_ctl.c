@@ -177,7 +177,7 @@ int x5b_app_rtc_tm_set(int timesp)
 			super_system("/etc/init.d/sysntpd restart");
 		return OK;
 	}
-#ifdef ZPL_BUILD_ARCH_X86
+#if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
 	return OK;
 #endif
 	sntpTime.tv_sec = timesp;

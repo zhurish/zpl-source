@@ -48,7 +48,7 @@ static int _netlink_ioctl_interface(zpl_uint32 cmd, zpl_family_t family, struct 
 	//if (cmd == IPSTACK_RTM_NEWLINK)
 	//	flags |= IPSTACK_NLM_F_CREATE|IPSTACK_NLM_F_REPLACE;
 
-	struct nsm_vrf *zvrf = vrf_info_lookup(ifp->vrf_id);
+	struct nsm_ip_vrf *zvrf = ip_vrf_info_lookup(ifp->vrf_id);
 
 	memset(&req, 0, sizeof req - NL_PKT_BUF_SIZE);
 

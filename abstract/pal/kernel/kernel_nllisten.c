@@ -614,7 +614,7 @@ static int _netlink_information_fetch(struct ipstack_sockaddr_nl *snl,
 /* Kernel route reflection. */
 static int _kernel_netlink_listen(struct thread *thread)
 {
-	struct nsm_vrf *zvrf = (struct nsm_vrf *) THREAD_ARG(thread);
+	struct nsm_ip_vrf *zvrf = (struct nsm_ip_vrf *) THREAD_ARG(thread);
 	_netlink_parse_info(_netlink_information_fetch, &zvrf->netlink, zvrf);
 	zvrf->t_netlink = thread_add_read(nsm_srv->master, _kernel_netlink_listen, zvrf,
 			zvrf->netlink.sock);
@@ -622,7 +622,7 @@ static int _kernel_netlink_listen(struct thread *thread)
 	return 0;
 }
 
-int _netlink_listen(struct nsm_vrf *zvrf)
+int _netlink_listen(struct nsm_ip_vrf *zvrf)
 {
 	if(zvrf->netlink.snl.nl_pid == 0)
 		zvrf->netlink.snl.nl_pid = getpid();

@@ -65,10 +65,10 @@ router_id_get (struct prefix *p, vrf_id_t vrf_id)
 {
   struct listnode *node;
   struct connected *c;
-  struct nsm_vrf *zvrf = vrf_info_lookup (vrf_id);
+  struct nsm_ip_vrf *zvrf = ip_vrf_info_lookup (vrf_id);
   if(!zvrf)
   {
-	  zlog_err(MODULE_NSM,"vrf_info_lookup NULL\r\n");
+	  zlog_err(MODULE_NSM,"ip_vrf_info_lookup NULL\r\n");
 	  return;
   }
   p->u.prefix4.s_addr = 0;
@@ -99,11 +99,11 @@ router_id_set (struct prefix *p, vrf_id_t vrf_id)
   struct listnode *node;
   struct zserv *client;
   #endif
-  struct nsm_vrf *zvrf;
+  struct nsm_ip_vrf *zvrf;
 
   //if (p->u.prefix4.s_addr == 0) /* unset */
     {
-      zvrf = vrf_info_lookup (vrf_id);
+      zvrf = ip_vrf_info_lookup (vrf_id);
       if (! zvrf)
         return;
     }
@@ -129,7 +129,7 @@ router_id_add_address (struct connected *ifc)
   struct listnode *node;
   struct zserv *client;
   #endif
-  struct nsm_vrf *zvrf = vrf_info_lookup (ifc->ifp->vrf_id);
+  struct nsm_ip_vrf *zvrf = ip_vrf_info_lookup (ifc->ifp->vrf_id);
   if(!zvrf)
 	  return;
   if (router_id_bad_address (ifc))
@@ -167,7 +167,7 @@ router_id_del_address (struct connected *ifc)
   struct listnode *node;
   struct zserv *client;
   #endif
-  struct nsm_vrf *zvrf = vrf_info_lookup (ifc->ifp->vrf_id);
+  struct nsm_ip_vrf *zvrf = ip_vrf_info_lookup (ifc->ifp->vrf_id);
   if(!zvrf)
 	  return;
   if (router_id_bad_address (ifc))
@@ -205,7 +205,7 @@ router_id_cmp (void *a, void *b)
 
 
 void
-router_id_init (struct nsm_vrf *zvrf)
+router_id_init (struct nsm_ip_vrf *zvrf)
 {
   zvrf->rid_all_sorted_list = &zvrf->_rid_all_sorted_list;
   zvrf->rid_lo_sorted_list = &zvrf->_rid_lo_sorted_list;

@@ -49,7 +49,8 @@ int nsm_module_init(void)
 	lib_event_init();
 
 	if_init();
-	nsm_vrf_init();
+	rib_init();
+
 	nsm_interface_init();
 
 	access_list_init ();
@@ -58,7 +59,6 @@ int nsm_module_init(void)
 
 	nsm_template_init();
 
-	rib_init();
 
 	nsm_global_init();
 	nsm_port_init();
@@ -113,9 +113,12 @@ int nsm_module_init(void)
 	nsm_vlaneth_init();
 #endif
 
-#ifdef ZPL_RTPL_SRV
-	zserv_init();
+
+#ifdef ZPL_VRF_MODULE
+	ip_vrf_init();
 #endif
+	zserv_init();
+
 	return 0;
 }
 
@@ -193,7 +196,8 @@ int nsm_module_cmd_init(void)
 #ifdef ZPL_NSM_L3MODULE
 	cmd_route_init();
 #endif
-#ifdef ZPL_IPCOM_STACK_MODULE
+
+#ifdef ZPL_VRF_MODULE
 	cmd_ip_vrf_init();
 #endif
 

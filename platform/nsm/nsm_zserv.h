@@ -133,7 +133,7 @@ extern void hostinfo_get (void);
 //extern void rib_init (void);
 extern void zserv_init(void);
 
-extern void kernel_load(struct nsm_vrf *zvrf);
+extern void kernel_load(struct nsm_ip_vrf *zvrf);
 extern void kernel_load_all(void);
 
 

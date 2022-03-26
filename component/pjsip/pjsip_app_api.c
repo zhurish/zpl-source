@@ -221,7 +221,7 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 	pl_pjsip_discodec_add_api("speex-wb");
 	pl_pjsip_discodec_add_api("ilbc");
 
-#ifdef ZPL_BUILD_ARCH_X86
+#if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
 	strcpy(sip->sip_user.sip_user, "100");
 	strcpy(sip->sip_user.sip_password, "100");
 	strcpy(sip->sip_server.sip_address, "192.168.0.103");

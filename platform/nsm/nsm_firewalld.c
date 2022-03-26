@@ -927,7 +927,7 @@ static int nsm_firewall_default(void)
 	iptables -t filter -N wan_input	//创建一条新的链
 	iptables -t filter -A INPUT -j wan_input	//把INPUT链过滤的转到 wan_input 链
 	*/
-#ifdef ZPL_BUILD_ARCH_X86
+#if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
 	return OK;
 #endif
 

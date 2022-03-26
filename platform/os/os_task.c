@@ -1110,7 +1110,7 @@ static int os_task_entry_start(os_task_t *task)
 #endif
 	printf("\r\ncreate task:%s(%lu->LWP=%u)\r\n", task->td_name, task->td_thread,
 			(pid_t) syscall(SYS_gettid));
-	os_task_sigmaskall();
+	//os_task_sigmaskall();
 	task->td_tid = os_task_gettid();
 	_os_task_start_callback(task);
 

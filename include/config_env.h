@@ -17,12 +17,12 @@ extern "C" {
 #undef SYS_REAL_DIR     //flash存储目录
 
 #ifndef BASE_DIR
-#define BASE_DIR	"/tmp/app"
+#define BASE_DIR	"/home/zhurish/workspace/working/zpl-source/source/debug/app"
 #endif
 
-#ifdef ZPL_BUILD_ARCH_X86
+#if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
 #ifndef SYS_REAL_DIR
-#define SYS_REAL_DIR		"/home/zhurish/workspace/zpl-source/debug"
+#define SYS_REAL_DIR		"/home/zhurish/workspace/working/zpl-source/source/debug"
 #undef BASE_DIR
 #define BASE_DIR	SYS_REAL_DIR"/tmp/app"
 #endif
@@ -85,7 +85,7 @@ extern "C" {
 #define DEFAULT_CONFIG_FILE	SYSCONFDIR "/default-config.cfg"
 #define FACTORY_CONFIG_FILE	SYSCONFDIR "/factory-config.cfg"
 #else
-#ifdef ZPL_BUILD_ARCH_X86
+#if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
 #define STARTUP_CONFIG_FILE	PLSYSCONFDIR "/startup-config.cfg"
 #define DEFAULT_CONFIG_FILE	PLSYSCONFDIR "/default-config.cfg"
 #define FACTORY_CONFIG_FILE	PLSYSCONFDIR "/factory-config.cfg"

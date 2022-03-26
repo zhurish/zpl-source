@@ -17,8 +17,9 @@
 #include "thread.h"
 #include "host.h"
 #include "module.h"
-
+#ifdef ZPL_HAL_MODULE
 #include "hal_driver.h"
+#endif
 #ifdef ZPL_SDK_MODULE
 #include "sdk_driver.h"
 #endif
@@ -229,7 +230,7 @@ int main(int argc, char **argv)
 
 
 #ifdef OS_SIGNAL_SIGWAIT
-	os_task_sigmaskall();
+	//os_task_sigmaskall();
 #endif
 
 	os_signal_default(zlog_signal, zlog_signal);
@@ -243,8 +244,7 @@ int main(int argc, char **argv)
 	startup_module_load();
 
 	startup_module_waitting();
-	//startup_module_stop();
-	//startup_module_exit();
+
 
 	zpl_base_start_pid(MODULE_DEFAULT, startup_option.pid_file, &startup_option.pid);
 
@@ -258,23 +258,15 @@ int main(int argc, char **argv)
 	 */
 	openzlog_start(NULL);
 	host_config_loading(startup_option.config_file);
+	//zpl_base_signal_reload();
 	zlog_notice(MODULE_DEFAULT, "Zebra host_config_loading");
 
-#ifdef OS_SIGNAL_SIGWAIT
-	os_task_sigmask(1, signo, &mask);
-#endif
+  	//os_signal_reload_test();
+
 
 	while (1)
 	{
-#ifdef QUAGGA_SIGNAL_REAL_TIMER
-		real_sigevent_process(2);
-#else
-		// rtpmain_test();
-		// os_signal_process(2000);
-		// quagga_sigevent_process();
-		// os_msleep_interrupt(2000);
-		sleep(2);
-#endif
+		os_signal_process(2000);
 	}
 #ifdef ZPL_TOOLS_PROCESS
 	os_process_stop();

@@ -20,7 +20,7 @@
 #include "str.h"
 #include "table.h"
 #include "vector.h"
-#include "nsm_vrf.h"
+#include "nsm_ip_vrf.h"
 #include "nsm_interface.h"
 //#include "nsm_client.h"
 

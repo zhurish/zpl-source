@@ -50,6 +50,7 @@ static void os_sigint(int signo, void *p)
 }
 
 /* SIGKILL handler. */
+/*
 static void os_sigkill(int signo, void *p)
 {
 #ifdef APP_V9_MODULE
@@ -60,7 +61,7 @@ static void os_sigkill(int signo, void *p)
 	vty_terminate();
 	exit(0);
 }
-
+*/
 /* SIGUSR1 handler. */
 static void os_sigusr1(int signo, void *p)
 {
@@ -102,21 +103,15 @@ static struct os_signal_t os_signals[] =
 	/*{
 		.signal = SIGKILL,
 	 	.signal_handler = &os_sigkill,
-	},*/
+	},
 	{
 		.signal = SIGSEGV,
 	 	.signal_handler = &os_sigkill,
-	},
+	},*/
 	{
 		.signal = SIGCHLD,
 	 	.signal_handler = &os_sighld,
 	},
-/*
- {
- .signal = SIGKILL,
- .signal_handler = &os_sigkill,
- },
- */
 };
 
 
@@ -128,11 +123,15 @@ int zpl_base_signal_init(int daemon_mode)
 		exit(1);
 	}
 	os_signal_init(os_signals, array_size(os_signals));
-	//signal_init(NULL, array_size(os_signals), os_signals);
+	//signal_init( array_size(os_signals), os_signals);
 	return OK;
 }
 
-
+int zpl_base_signal_reload(void)
+{
+	//signal_init( array_size(os_signals), os_signals);
+	return OK;
+}
 
 int startup_option_default(void)
 {

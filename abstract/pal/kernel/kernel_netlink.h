@@ -57,7 +57,7 @@ extern void _netlink_interface_update_hw_addr(struct ipstack_rtattr **tb, struct
 
 extern void _netlink_route_debug(zpl_uint32 cmd, struct prefix *p,
 		struct nexthop *nexthop, const char *routedesc, zpl_family_t family,
-		struct nsm_vrf *zvrf);
+		struct nsm_ip_vrf *zvrf);
 
 
 extern void _netlink_set_ifindex(struct interface *ifp, ifindex_t ifi_index);
@@ -67,11 +67,11 @@ extern int _netlink_socket(struct nlsock *nl, zpl_ulong groups, vrf_id_t vrf_id)
 extern int _netlink_request(zpl_family_t family, zpl_uint32 type, struct nlsock *nl);
 
 extern int _netlink_talk(struct ipstack_nlmsghdr *n, struct nlsock *nl,
-		struct nsm_vrf *zvrf);
+		struct nsm_ip_vrf *zvrf);
 
 extern int _netlink_parse_info(
 		int (*filter)(struct ipstack_sockaddr_nl *, struct ipstack_nlmsghdr *, vrf_id_t),
-		struct nlsock *nl, struct nsm_vrf *zvrf);
+		struct nlsock *nl, struct nsm_ip_vrf *zvrf);
 
 
 
@@ -93,8 +93,8 @@ extern int _netlink_address_delete_ipv4 (struct interface *ifp, struct connected
 extern int _netlink_route_rib (struct prefix *p, struct rib *old, struct rib *new);
 
 
-extern void _netlink_open(struct nsm_vrf *zvrf);
-extern void _netlink_close(struct nsm_vrf *zvrf);
+extern void _netlink_open(struct nsm_ip_vrf *zvrf);
+extern void _netlink_close(struct nsm_ip_vrf *zvrf);
 
 extern void _netlink_load_all(void);
 
@@ -102,13 +102,13 @@ extern void _netlink_load_all(void);
 /*
  * kernel_nllisten.c
  */
-extern int _netlink_listen(struct nsm_vrf *zvrf);
+extern int _netlink_listen(struct nsm_ip_vrf *zvrf);
 
 /*
  * kernel_nlload.c
  */
-extern int _netlink_rib_load(struct nsm_vrf *zvrf);
-extern int _netlink_iftbl_load(struct nsm_vrf *zvrf);
+extern int _netlink_rib_load(struct nsm_ip_vrf *zvrf);
+extern int _netlink_iftbl_load(struct nsm_ip_vrf *zvrf);
 #endif
 
 

@@ -48,7 +48,7 @@
 
 #define lookup_rnh_table(v, f)		         \
 ({						 \
-  struct nsm_vrf *zvrf;                        \
+  struct nsm_ip_vrf *zvrf;                        \
   struct route_table *t = NULL;                  \
   zvrf = nsm_vrf_lookup(v);                    \
   if (zvrf)                                      \

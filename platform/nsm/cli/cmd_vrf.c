@@ -15,24 +15,24 @@
 
 
 
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_VRF_MODULE
 
-DEFUN (ip_vrf_create,
-		ip_vrf_create_cmd,
+DEFUN (ip_vrf_cli_create,
+		ip_vrf_cli_create_cmd,
        "ip vrf NAME",
 	   IP_STR
        "Specify the VRF\n"
        "Specify the VRF name\n")
 {
-	struct vrf *vrf = NULL;
-	vrf = vrf_lookup_by_name(argv[0]);
+	struct ip_vrf *vrf = NULL;
+	vrf = ip_vrf_lookup_by_name(argv[0]);
 	if(vrf)
 	{
 		vty->index = vrf;
 		vty->node = VRF_NODE;
 		return CMD_SUCCESS;
 	}
-	vrf = nsm_vrf_create (argv[0]);
+	vrf = ip_vrf_create (argv[0]);
 	if(vrf)
 	{
 		vty->index = vrf;
@@ -43,8 +43,8 @@ DEFUN (ip_vrf_create,
 	return CMD_WARNING;
 }
 
-DEFUN (ip_vrf_delete,
-	ip_vrf_delete_cmd,
+DEFUN (ip_vrf_cli_delete,
+	ip_vrf_cli_delete_cmd,
     "no ip vrf NAME",
 	NO_STR
 	IP_STR
@@ -52,26 +52,26 @@ DEFUN (ip_vrf_delete,
 	"Specify the VRF name\n")
 {
 	int ret = 0;
-	struct vrf *vrf = NULL;
-	vrf = vrf_lookup_by_name(argv[0]);
+	struct ip_vrf *vrf = NULL;
+	vrf = ip_vrf_lookup_by_name(argv[0]);
 	if(!vrf)
 	{
 		vty_out(vty, "Can not find VRF by VRF name%s",VTY_NEWLINE);
 		return CMD_WARNING;
 	}
-	ret = nsm_vrf_delete(argv[0]);
+	ret = ip_vrf_delete(argv[0]);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
 
-DEFUN (ip_vrf_set_vrfid,
-		ip_vrf_set_vrfid_cmd,
+DEFUN (ip_vrf_cli_set_vrfid,
+		ip_vrf_cli_set_vrfid_cmd,
        "rd A.B.C.D <0-65535>",
 	   "Route Distinguisher\n"
        "Specify Route ID the VRF\n"
        "The VRF ID\n")
 {
-	struct vrf *vrf = NULL;
+	struct ip_vrf *vrf = NULL;
 	vrf_id_t vrf_id = 0;
 	struct prefix rid;
 	rid.u.prefix4.s_addr = ipstack_inet_addr (argv[0]);
@@ -83,18 +83,18 @@ DEFUN (ip_vrf_set_vrfid,
 	if (argc > 1)
 		VTY_GET_INTEGER ("VRF ID", vrf_id, argv[1]);
 
-	nsm_vrf_set_vrfid(vty->index, vrf_id);
+	ip_vrf_set_vrfid(vty->index, vrf_id);
 
 	router_id_set (&rid, vrf_id);
 
 	return CMD_SUCCESS;
 }
 
-static int ip_vrf_show_one (struct vty *vty, struct nsm_vrf *zvrf)
+static int ip_vrf_show_one (struct vty *vty, struct nsm_ip_vrf *zvrf)
 {
 	//rd A.B.C.D <0-65535>
 	struct prefix p;
-	struct vrf *vrf = vrf_lookup(zvrf->vrf_id);
+	struct ip_vrf *vrf = ip_vrf_lookup(zvrf->vrf_id);
 	router_id_get (&p, zvrf->vrf_id);
 	if(vrf)
 	{
@@ -110,12 +110,12 @@ static int ip_vrf_show_one (struct vty *vty, struct nsm_vrf *zvrf)
 static int ip_vrf_write (struct vty *vty)
 {
   int ret = 0;
-  struct nsm_vrf *zvrf;
+  struct nsm_ip_vrf *zvrf;
   vrf_iter_t iter;
 
-  for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
+  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
   {
-    if ((zvrf = vrf_iter2info (iter)) != NULL)
+    if ((zvrf = ip_vrf_iter2info (iter)) != NULL)
     {
     	if(zvrf->vrf_id != VRF_DEFAULT)
     	{
@@ -143,10 +143,10 @@ void cmd_ip_vrf_init (void)
 	install_default(VRF_NODE);
 	install_default_basic(VRF_NODE);
 
-	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &ip_vrf_create_cmd);
-	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &ip_vrf_delete_cmd);
+	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &ip_vrf_cli_create_cmd);
+	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &ip_vrf_cli_delete_cmd);
 
-	install_element(VRF_NODE, CMD_CONFIG_LEVEL, &ip_vrf_set_vrfid_cmd);
+	install_element(VRF_NODE, CMD_CONFIG_LEVEL, &ip_vrf_cli_set_vrfid_cmd);
 }
 #endif
 

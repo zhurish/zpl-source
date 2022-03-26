@@ -2,7 +2,7 @@
  * Automatically generated C config: don't edit
  * Busybox version: 
  */
-#define AUTOCONF_TIMESTAMP "2022-03-26 10:51:40 CST"
+#define AUTOCONF_TIMESTAMP "2022-03-26 19:21:54 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
@@ -47,6 +47,7 @@
 #define ZPL_TOOLCHAIN_INC_PATH ""
 #define ZPL_TOOLCHAIN_LIB_PATH ""
 #define ZPL_COMPILE_OPTIONS "-g"
+#define ZPL_COREDUMP_ENABLE 1
 #define ZPL_FPU_HARD 1
 #undef ZPL_FPU_SOFT
 #undef ZPL_FPU_SOFTFP
@@ -77,42 +78,42 @@
 #undef ZPL_LIBEVENT_MODULE
 #undef ZPL_LIBEVENT_SIGNAL
 #undef ZPL_LIBMXML_MODULE
-#define ZPL_IP_FILTER 1
-#define ZPL_IP_PLIST 1
-#define ZPL_WORKQUEUE 1
+#undef ZPL_IP_FILTER
+#undef ZPL_IP_PLIST
+#undef ZPL_WORKQUEUE
 #define ZPL_SHELL_MODULE 1
 #undef ZPL_SHRL_MODULE
-#define ZPL_NSM_MODULE 1
-#define ZPL_VRF_MODULE 1
-#define ZPL_KEYCHAIN 1
-#define ZPL_DISTRIBUTE 1
-#define ZPL_NSM_L3MODULE 1
-#define ZPL_NSM_NEXTHOP 1
-#define ZPL_NSM_ROUTEMAP 1
-#define ZPL_NSM_8021X 1
-#define ZPL_NSM_ARP 1
-#define ZPL_NSM_BRIDGE 1
+#undef ZPL_NSM_MODULE
+#undef ZPL_VRF_MODULE
+#undef ZPL_KEYCHAIN
+#undef ZPL_DISTRIBUTE
+#undef ZPL_NSM_L3MODULE
+#undef ZPL_NSM_NEXTHOP
+#undef ZPL_NSM_ROUTEMAP
+#undef ZPL_NSM_8021X
+#undef ZPL_NSM_ARP
+#undef ZPL_NSM_BRIDGE
 #undef ZPL_NSM_DHCP
 #undef ZPL_DHCPS_MODULE
 #undef ZPL_DHCPC_MODULE
 #undef ZPL_DHCPR_MODULE
-#define ZPL_NSM_DNS 1
-#define ZPL_NSM_DOS 1
-#define ZPL_NSM_FIREWALLD 1
-#define ZPL_NSM_MAC 1
-#define ZPL_NSM_MIRROR 1
-#define ZPL_NSM_PPP 1
-#define ZPL_NSM_QOS 1
-#define ZPL_NSM_SERIAL 1
-#define ZPL_NSM_TRUNK 1
-#define ZPL_NSM_TUNNEL 1
-#define ZPL_NSM_VLAN 1
-#define ZPL_NSM_IGMP 1
-#define ZPL_NSM_MSTP 1
-#define ZPL_NSM_PORT 1
-#define ZPL_NSM_VLANETH 1
-#define ZPL_NSM_SECURITY 1
-#define ZPL_IPCBC_MODULE 1
+#undef ZPL_NSM_DNS
+#undef ZPL_NSM_DOS
+#undef ZPL_NSM_FIREWALLD
+#undef ZPL_NSM_MAC
+#undef ZPL_NSM_MIRROR
+#undef ZPL_NSM_PPP
+#undef ZPL_NSM_QOS
+#undef ZPL_NSM_SERIAL
+#undef ZPL_NSM_TRUNK
+#undef ZPL_NSM_TUNNEL
+#undef ZPL_NSM_VLAN
+#undef ZPL_NSM_IGMP
+#undef ZPL_NSM_MSTP
+#undef ZPL_NSM_PORT
+#undef ZPL_NSM_VLANETH
+#undef ZPL_NSM_SECURITY
+#undef ZPL_IPCBC_MODULE
 #undef ZPL_IPCBUS_MODULE
 
 /*
@@ -156,13 +157,13 @@
 /*
  * HAL/PAL Abstract Module Config
  */
-#define ZPL_ABSTRACT_MODULE 1
-#define ZPL_HAL_MODULE 1
-#define ZPL_PAL_MODULE 1
+#undef ZPL_ABSTRACT_MODULE
+#undef ZPL_HAL_MODULE
+#undef ZPL_PAL_MODULE
 #undef ZPL_IPCOM_STACK_MODULE
-#define ZPL_KERNEL_STACK_MODULE 1
-#define ZPL_KERNEL_STACK_NETLINK 1
-#define ZPL_KERNEL_SORF_FORWARDING 1
+#undef ZPL_KERNEL_STACK_MODULE
+#undef ZPL_KERNEL_STACK_NETLINK
+#undef ZPL_KERNEL_SORF_FORWARDING
 #define ZPL_IPCOM_ROOT_PATH ""
 
 /*
@@ -232,7 +233,7 @@
 /*
  * BSP Module Config
  */
-#define ZPL_BSP_MODULE 1
+#undef ZPL_BSP_MODULE
 #undef ZPL_SDK_MODULE
 #undef ZPL_SDK_BCMX
 #undef ZPL_SDK_BCM53125

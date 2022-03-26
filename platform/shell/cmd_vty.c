@@ -281,7 +281,7 @@ DEFUN_HIDDEN (exit_platform,
 		"exit platform\n")
 {
 	/*	vty_terminate ();
-	 vrf_terminate ();
+	 ip_vrf_terminate ();
 	 //	cmd_terminate ();
 	 exit(0);*/
 	kill(getpid(), SIGTERM);

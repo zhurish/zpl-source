@@ -422,7 +422,7 @@ static int _netlink_routing_table_load(struct ipstack_sockaddr_nl *snl, struct i
 }
 
 /* Interface lookup by netlink ipstack_socket. */
-int _netlink_iftbl_load(struct nsm_vrf *zvrf)
+int _netlink_iftbl_load(struct nsm_ip_vrf *zvrf)
 {
 	int ret;
 
@@ -457,7 +457,7 @@ int _netlink_iftbl_load(struct nsm_vrf *zvrf)
 
 /* Routing table read function using netlink interface.  Only called
  bootstrap time. */
-int _netlink_rib_load(struct nsm_vrf *zvrf)
+int _netlink_rib_load(struct nsm_ip_vrf *zvrf)
 {
 	int ret;
 

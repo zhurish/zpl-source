@@ -388,7 +388,7 @@ zpl_uint8 *       digest;			/* caller digest to be filled in */
     OS_MD5Final(digest, &context);	/* finish up 2nd pass */
 }
 
-#ifndef ZPL_KERNEL_STACK_MODULE
+#if 0//def ZPL_KERNEL_STACK_MODULE
 zpl_uchar cleanse_ctr = 0;
 
 void OPENSSL_cleanse(void *ptr, zpl_size_t len)

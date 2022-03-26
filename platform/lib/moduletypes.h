@@ -10,11 +10,6 @@ typedef enum {
   MODULE_JOB, 
   MODULE_CONSOLE,
   MODULE_TELNET,
-  MODULE_NSM,
-  MODULE_HAL, 
-  MODULE_PAL, 
-  MODULE_BSP,
-  MODULE_SDK, 
 	MODULE_MAX,
 } module_t;
  

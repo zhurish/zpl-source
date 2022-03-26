@@ -96,9 +96,9 @@ zebra_static_ipv4_safi (struct vty *vty, safi_t safi, int add_cmd,
 		  VTY_GET_INTEGER ("VRF ID", vrf_id, vrf_id_str);
 	  else
 	  {
-		  struct vrf *vrf = vrf_lookup_by_name (vrf_id_str);
-		  if(vrf)
-			  vrf_id = vrf->vrf_id;
+		  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name (vrf_id_str);
+		  if(ip_vrf)
+			  vrf_id = ip_vrf->vrf_id;
 		  //vrf_name = 1;
 	  }
   }
@@ -342,9 +342,9 @@ DEFUN (show_ip_rpf,
 		 VTY_GET_INTEGER ("VRF ID", vrf_id, argv[0]);
 	else
 	{
-		  struct vrf *vrf = vrf_lookup_by_name (argv[0]);
-		  if(vrf)
-			  vrf_id = vrf->vrf_id;
+		  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name (argv[0]);
+		  if(ip_vrf)
+			  vrf_id = ip_vrf->vrf_id;
 	}
   }
   VTY_WARN_EXPERIMENTAL();
@@ -379,9 +379,9 @@ DEFUN (show_ip_rpf_addr,
 		 VTY_GET_INTEGER ("VRF ID", vrf_id, argv[1]);
 	else
 	{
-		  struct vrf *vrf = vrf_lookup_by_name (argv[1]);
-		  if(vrf)
-			  vrf_id = vrf->vrf_id;
+		  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name (argv[1]);
+		  if(ip_vrf)
+			  vrf_id = ip_vrf->vrf_id;
 	}
   }
   VTY_WARN_EXPERIMENTAL();
@@ -421,7 +421,7 @@ DEFUN (show_ip_rpf_vrf_all,
        "Display RPF information for multicast source\n"
        VRF_ALL_CMD_HELP_STR)
 {
-  struct nsm_vrf *zvrf;
+  struct nsm_ip_vrf *zvrf;
   struct route_table *table;
   struct route_node *rn;
   struct rib *rib;
@@ -430,9 +430,9 @@ DEFUN (show_ip_rpf_vrf_all,
 
   VTY_WARN_EXPERIMENTAL();
 
-  for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
+  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
     {
-      if ((zvrf = vrf_iter2info (iter)) == NULL ||
+      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
           (table = zvrf->table[AFI_IP][SAFI_MULTICAST]) == NULL)
         continue;
 
@@ -475,7 +475,7 @@ DEFUN (show_ip_rpf_addr_vrf_all,
       return CMD_WARNING;
     }
 
-  for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
+  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
     {
       if (rib_match_ipv4_multicast (addr, &rn, vrf_iter2id (iter)))
         vty_show_ip_route_detail (vty, rn, 1);
@@ -2152,7 +2152,7 @@ vty_show_ip_route_detail (struct vty *vty, struct route_node *rn, int mcast)
       if (rib->mtu)
         vty_out (vty, ", mtu %u", rib->mtu);
       vty_out (vty, ", tag %d", rib->tag);
-      vty_out (vty, ", vrf %u, name %s", rib->vrf_id, (vrf_lookup(rib->vrf_id))->name);
+      vty_out (vty, ", ip_vrf %u, name %s", rib->vrf_id, (ip_vrf_lookup(rib->vrf_id))->name);
       if (CHECK_FLAG (rib->flags, ZEBRA_FLAG_SELECTED))
         vty_out (vty, ", best");
       if (CHECK_FLAG (rib->flags, ZEBRA_FLAG_FIB_OVERRIDE))
@@ -2312,7 +2312,7 @@ vty_show_ip_route (struct vty *vty, struct route_node *rn, struct rib *rib)
 			    rib->metric);
 
           if (rib->vrf_id != VRF_DEFAULT)
-            len += vty_out (vty, " [vrf %u, name %s]", rib->vrf_id,(vrf_lookup(rib->vrf_id))->name);
+            len += vty_out (vty, " [ip_vrf %u, name %s]", rib->vrf_id,(ip_vrf_lookup(rib->vrf_id))->name);
 	}
       else
 	vty_out (vty, "  %c%*c",
@@ -2444,9 +2444,9 @@ DEFUN (show_ip_route,
 		  VTY_GET_INTEGER ("VRF ID", vrf_id, argv[0]);
 	  else
 	  {
-		  struct vrf *vrf = vrf_lookup_by_name (argv[0]);
-		  if(vrf)
-			  vrf_id = vrf->vrf_id;
+		  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name (argv[0]);
+		  if(ip_vrf)
+			  vrf_id = ip_vrf->vrf_id;
 		  else
 		  {
 
@@ -2541,9 +2541,9 @@ DEFUN (show_ip_route_tag,
 		  VTY_GET_INTEGER ("VRF ID", vrf_id, argv[0]);
 	  else
 	  {
-		  struct vrf *vrf = vrf_lookup_by_name (argv[0]);
-		  if(vrf)
-			  vrf_id = vrf->vrf_id;
+		  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name (argv[0]);
+		  if(ip_vrf)
+			  vrf_id = ip_vrf->vrf_id;
 		  else
 		  {
 
@@ -2606,9 +2606,9 @@ DEFUN (show_ip_route_prefix_longer,
 		  VTY_GET_INTEGER ("VRF ID", vrf_id, argv[0]);
 	  else
 	  {
-		  struct vrf *vrf = vrf_lookup_by_name (argv[0]);
-		  if(vrf)
-			  vrf_id = vrf->vrf_id;
+		  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name (argv[0]);
+		  if(ip_vrf)
+			  vrf_id = ip_vrf->vrf_id;
 		  else
 		  {
 
@@ -2683,9 +2683,9 @@ DEFUN (show_ip_route_supernets,
 		  VTY_GET_INTEGER ("VRF ID", vrf_id, argv[0]);
 	  else
 	  {
-		  struct vrf *vrf = vrf_lookup_by_name (argv[0]);
-		  if(vrf)
-			  vrf_id = vrf->vrf_id;
+		  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name (argv[0]);
+		  if(ip_vrf)
+			  vrf_id = ip_vrf->vrf_id;
 		  else
 		  {
 
@@ -2747,9 +2747,9 @@ DEFUN (show_ip_route_protocol,
 		  VTY_GET_INTEGER ("VRF ID", vrf_id, argv[0]);
 	  else
 	  {
-		  struct vrf *vrf = vrf_lookup_by_name (argv[0]);
-		  if(vrf)
-			  vrf_id = vrf->vrf_id;
+		  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name (argv[0]);
+		  if(ip_vrf)
+			  vrf_id = ip_vrf->vrf_id;
 		  else
 		  {
 
@@ -2819,9 +2819,9 @@ DEFUN (show_ip_route_addr,
 		  VTY_GET_INTEGER ("VRF ID", vrf_id, argv[0]);
 	  else
 	  {
-		  struct vrf *vrf = vrf_lookup_by_name (argv[0]);
-		  if(vrf)
-			  vrf_id = vrf->vrf_id;
+		  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name (argv[0]);
+		  if(ip_vrf)
+			  vrf_id = ip_vrf->vrf_id;
 		  else
 		  {
 
@@ -2890,9 +2890,9 @@ DEFUN (show_ip_route_prefix,
 		  VTY_GET_INTEGER ("VRF ID", vrf_id, argv[0]);
 	  else
 	  {
-		  struct vrf *vrf = vrf_lookup_by_name (argv[0]);
-		  if(vrf)
-			  vrf_id = vrf->vrf_id;
+		  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name (argv[0]);
+		  if(ip_vrf)
+			  vrf_id = ip_vrf->vrf_id;
 		  else
 		  {
 
@@ -2979,7 +2979,7 @@ vty_show_ip_route_summary (struct vty *vty, struct route_table *table)
 	    }
 	}
 
-  vty_out (vty, "%-20s %-20s %s  (vrf %u)%s",
+  vty_out (vty, "%-20s %-20s %s  (ip_vrf %u)%s",
            "Route Source", "Routes", "FIB",
            ((rib_table_info_t *)table->info)->zvrf->vrf_id,
            VTY_NEWLINE);
@@ -3060,7 +3060,7 @@ vty_show_ip_route_summary_prefix (struct vty *vty, struct route_table *table)
 	     }
       }
 
-  vty_out (vty, "%-20s %-20s %s  (vrf %u)%s",
+  vty_out (vty, "%-20s %-20s %s  (ip_vrf %u)%s",
            "Route Source", "Prefix Routes", "FIB",
            ((rib_table_info_t *)table->info)->zvrf->vrf_id,
            VTY_NEWLINE);
@@ -3109,9 +3109,9 @@ DEFUN (show_ip_route_summary,
 		  VTY_GET_INTEGER ("VRF ID", vrf_id, argv[0]);
 	  else
 	  {
-		  struct vrf *vrf = vrf_lookup_by_name (argv[0]);
-		  if(vrf)
-			  vrf_id = vrf->vrf_id;
+		  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name (argv[0]);
+		  if(ip_vrf)
+			  vrf_id = ip_vrf->vrf_id;
 		  else
 		  {
 
@@ -3155,9 +3155,9 @@ DEFUN (show_ip_route_summary_prefix,
 		  VTY_GET_INTEGER ("VRF ID", vrf_id, argv[0]);
 	  else
 	  {
-		  struct vrf *vrf = vrf_lookup_by_name (argv[0]);
-		  if(vrf)
-			  vrf_id = vrf->vrf_id;
+		  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name (argv[0]);
+		  if(ip_vrf)
+			  vrf_id = ip_vrf->vrf_id;
 		  else
 		  {
 
@@ -3196,13 +3196,13 @@ DEFUN (show_ip_route_vrf_all,
   struct route_table *table;
   struct route_node *rn;
   struct rib *rib;
-  struct nsm_vrf *zvrf;
+  struct nsm_ip_vrf *zvrf;
   vrf_iter_t iter;
   int first = 1;
 
-  for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
+  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
     {
-      if ((zvrf = vrf_iter2info (iter)) == NULL ||
+      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
           (table = zvrf->table[AFI_IP][SAFI_UNICAST]) == NULL)
         continue;
 
@@ -3236,7 +3236,7 @@ DEFUN (show_ip_route_prefix_longer_vrf_all,
   struct route_node *rn;
   struct rib *rib;
   struct prefix p;
-  struct nsm_vrf *zvrf;
+  struct nsm_ip_vrf *zvrf;
   vrf_iter_t iter;
   int ret;
   int first = 1;
@@ -3248,9 +3248,9 @@ DEFUN (show_ip_route_prefix_longer_vrf_all,
       return CMD_WARNING;
     }
 
-  for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
+  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
     {
-      if ((zvrf = vrf_iter2info (iter)) == NULL ||
+      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
           (table = zvrf->table[AFI_IP][SAFI_UNICAST]) == NULL)
         continue;
 
@@ -3283,14 +3283,14 @@ DEFUN (show_ip_route_supernets_vrf_all,
   struct route_table *table;
   struct route_node *rn;
   struct rib *rib;
-  struct nsm_vrf *zvrf;
+  struct nsm_ip_vrf *zvrf;
   vrf_iter_t iter;
   zpl_uint32 addr;
   int first = 1;
 
-  for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
+  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
     {
-      if ((zvrf = vrf_iter2info (iter)) == NULL ||
+      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
           (table = zvrf->table[AFI_IP][SAFI_UNICAST]) == NULL)
         continue;
 
@@ -3330,7 +3330,7 @@ DEFUN (show_ip_route_protocol_vrf_all,
   struct route_table *table;
   struct route_node *rn;
   struct rib *rib;
-  struct nsm_vrf *zvrf;
+  struct nsm_ip_vrf *zvrf;
   vrf_iter_t iter;
   int first = 1;
 
@@ -3341,9 +3341,9 @@ DEFUN (show_ip_route_protocol_vrf_all,
       return CMD_WARNING;
     }
 
-  for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
+  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
     {
-      if ((zvrf = vrf_iter2info (iter)) == NULL ||
+      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
           (table = zvrf->table[AFI_IP][SAFI_UNICAST]) == NULL)
         continue;
 
@@ -3377,7 +3377,7 @@ DEFUN (show_ip_route_addr_vrf_all,
   struct prefix_ipv4 p;
   struct route_table *table;
   struct route_node *rn;
-  struct nsm_vrf *zvrf;
+  struct nsm_ip_vrf *zvrf;
   vrf_iter_t iter;
 
   ret = str2prefix_ipv4 (argv[0], &p);
@@ -3387,9 +3387,9 @@ DEFUN (show_ip_route_addr_vrf_all,
       return CMD_WARNING;
     }
 
-  for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
+  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
     {
-      if ((zvrf = vrf_iter2info (iter)) == NULL ||
+      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
           (table = zvrf->table[AFI_IP][SAFI_UNICAST]) == NULL)
         continue;
 
@@ -3418,7 +3418,7 @@ DEFUN (show_ip_route_prefix_vrf_all,
   struct prefix_ipv4 p;
   struct route_table *table;
   struct route_node *rn;
-  struct nsm_vrf *zvrf;
+  struct nsm_ip_vrf *zvrf;
   vrf_iter_t iter;
 
   ret = str2prefix_ipv4 (argv[0], &p);
@@ -3428,9 +3428,9 @@ DEFUN (show_ip_route_prefix_vrf_all,
       return CMD_WARNING;
     }
 
-  for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
+  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
     {
-      if ((zvrf = vrf_iter2info (iter)) == NULL ||
+      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
           (table = zvrf->table[AFI_IP][SAFI_UNICAST]) == NULL)
         continue;
 
@@ -3460,11 +3460,11 @@ DEFUN (show_ip_route_summary_vrf_all,
        "Summary of all routes\n"
        VRF_ALL_CMD_HELP_STR)
 {
-  struct nsm_vrf *zvrf;
+  struct nsm_ip_vrf *zvrf;
   vrf_iter_t iter;
 
-  for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
-    if ((zvrf = vrf_iter2info (iter)) != NULL)
+  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
+    if ((zvrf = ip_vrf_iter2info (iter)) != NULL)
       vty_show_ip_route_summary (vty, zvrf->table[AFI_IP][SAFI_UNICAST]);
 
   return CMD_SUCCESS;
@@ -3480,11 +3480,11 @@ DEFUN (show_ip_route_summary_prefix_vrf_all,
        "Prefix routes\n"
        VRF_ALL_CMD_HELP_STR)
 {
-  struct nsm_vrf *zvrf;
+  struct nsm_ip_vrf *zvrf;
   vrf_iter_t iter;
 
-  for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
-    if ((zvrf = vrf_iter2info (iter)) != NULL)
+  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
+    if ((zvrf = ip_vrf_iter2info (iter)) != NULL)
       vty_show_ip_route_summary_prefix (vty, zvrf->table[AFI_IP][SAFI_UNICAST]);
 
   return CMD_SUCCESS;
@@ -3498,15 +3498,15 @@ static_config_ipv4 (struct vty *vty, safi_t safi, const char *cmd)
   struct route_node *rn;
   struct static_route *si;  
   struct route_table *stable;
-  struct nsm_vrf *zvrf;
+  struct nsm_ip_vrf *zvrf;
   vrf_iter_t iter;
   int write;
 
   write = 0;
 
-  for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
+  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
     {
-      if ((zvrf = vrf_iter2info (iter)) == NULL ||
+      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
           (stable = zvrf->stable[AFI_IP][safi]) == NULL)
         continue;
 
@@ -3516,10 +3516,10 @@ static_config_ipv4 (struct vty *vty, safi_t safi, const char *cmd)
             if (si->vrf_id != VRF_DEFAULT)
             {
               //if(si->vrf_name)
-            	  vty_out (vty, "%s vrf %s %s/%d", cmd, vrf_vrfid2name(si->vrf_id), ipstack_inet_ntoa (rn->p.u.prefix4),
+            	  vty_out (vty, "%s ip_vrf %s %s/%d", cmd, ip_vrf_vrfid2name(si->vrf_id), ipstack_inet_ntoa (rn->p.u.prefix4),
             			  rn->p.prefixlen);
      /*         else
-            	  vty_out (vty, "%s vrf %d %s/%d", cmd, si->vrf_id, ipstack_inet_ntoa (rn->p.u.prefix4),
+            	  vty_out (vty, "%s ip_vrf %d %s/%d", cmd, si->vrf_id, ipstack_inet_ntoa (rn->p.u.prefix4),
             			  rn->p.prefixlen);*/
             }
             else
@@ -3689,9 +3689,9 @@ static_ipv6_func (struct vty *vty, int add_cmd, const char *dest_str,
 		  VTY_GET_INTEGER ("VRF ID", vrf_id, vrf_id_str);
 	  else
 	  {
-		  struct vrf *vrf = vrf_lookup_by_name (vrf_id_str);
-		  if(vrf)
-			  vrf_id = vrf->vrf_id;
+		  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name (vrf_id_str);
+		  if(ip_vrf)
+			  vrf_id = ip_vrf->vrf_id;
 		  //vrf_name = 1;
 	  }
   }
@@ -4722,9 +4722,9 @@ DEFUN (show_ipv6_route,
 		  VTY_GET_INTEGER ("VRF ID", vrf_id, argv[0]);
 	  else
 	  {
-		  struct vrf *vrf = vrf_lookup_by_name (argv[0]);
-		  if(vrf)
-			  vrf_id = vrf->vrf_id;
+		  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name (argv[0]);
+		  if(ip_vrf)
+			  vrf_id = ip_vrf->vrf_id;
 		  else
 		  {
 
@@ -4779,9 +4779,9 @@ DEFUN (show_ipv6_route_tag,
 		  VTY_GET_INTEGER ("VRF ID", vrf_id, argv[0]);
 	  else
 	  {
-		  struct vrf *vrf = vrf_lookup_by_name (argv[0]);
-		  if(vrf)
-			  vrf_id = vrf->vrf_id;
+		  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name (argv[0]);
+		  if(ip_vrf)
+			  vrf_id = ip_vrf->vrf_id;
 		  else
 		  {
 
@@ -4849,9 +4849,9 @@ DEFUN (show_ipv6_route_prefix_longer,
 		  VTY_GET_INTEGER ("VRF ID", vrf_id, argv[0]);
 	  else
 	  {
-		  struct vrf *vrf = vrf_lookup_by_name (argv[0]);
-		  if(vrf)
-			  vrf_id = vrf->vrf_id;
+		  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name (argv[0]);
+		  if(ip_vrf)
+			  vrf_id = ip_vrf->vrf_id;
 		  else
 		  {
 
@@ -4924,9 +4924,9 @@ DEFUN (show_ipv6_route_protocol,
 		  VTY_GET_INTEGER ("VRF ID", vrf_id, argv[0]);
 	  else
 	  {
-		  struct vrf *vrf = vrf_lookup_by_name (argv[0]);
-		  if(vrf)
-			  vrf_id = vrf->vrf_id;
+		  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name (argv[0]);
+		  if(ip_vrf)
+			  vrf_id = ip_vrf->vrf_id;
 		  else
 		  {
 
@@ -4997,9 +4997,9 @@ DEFUN (show_ipv6_route_addr,
 		  VTY_GET_INTEGER ("VRF ID", vrf_id, argv[0]);
 	  else
 	  {
-		  struct vrf *vrf = vrf_lookup_by_name (argv[0]);
-		  if(vrf)
-			  vrf_id = vrf->vrf_id;
+		  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name (argv[0]);
+		  if(ip_vrf)
+			  vrf_id = ip_vrf->vrf_id;
 		  else
 		  {
 
@@ -5069,9 +5069,9 @@ DEFUN (show_ipv6_route_prefix,
 		  VTY_GET_INTEGER ("VRF ID", vrf_id, argv[0]);
 	  else
 	  {
-		  struct vrf *vrf = vrf_lookup_by_name (argv[0]);
-		  if(vrf)
-			  vrf_id = vrf->vrf_id;
+		  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name (argv[0]);
+		  if(ip_vrf)
+			  vrf_id = ip_vrf->vrf_id;
 		  else
 		  {
 
@@ -5142,9 +5142,9 @@ DEFUN (show_ipv6_route_summary,
 		  VTY_GET_INTEGER ("VRF ID", vrf_id, argv[0]);
 	  else
 	  {
-		  struct vrf *vrf = vrf_lookup_by_name (argv[0]);
-		  if(vrf)
-			  vrf_id = vrf->vrf_id;
+		  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name (argv[0]);
+		  if(ip_vrf)
+			  vrf_id = ip_vrf->vrf_id;
 		  else
 		  {
 
@@ -5189,9 +5189,9 @@ DEFUN (show_ipv6_route_summary_prefix,
 		  VTY_GET_INTEGER ("VRF ID", vrf_id, argv[0]);
 	  else
 	  {
-		  struct vrf *vrf = vrf_lookup_by_name (argv[0]);
-		  if(vrf)
-			  vrf_id = vrf->vrf_id;
+		  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name (argv[0]);
+		  if(ip_vrf)
+			  vrf_id = ip_vrf->vrf_id;
 		  else
 		  {
 
@@ -5242,9 +5242,9 @@ DEFUN (show_ipv6_mroute,
 		  VTY_GET_INTEGER ("VRF ID", vrf_id, argv[0]);
 	  else
 	  {
-		  struct vrf *vrf = vrf_lookup_by_name (argv[0]);
-		  if(vrf)
-			  vrf_id = vrf->vrf_id;
+		  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name (argv[0]);
+		  if(ip_vrf)
+			  vrf_id = ip_vrf->vrf_id;
 		  else
 		  {
 
@@ -5292,13 +5292,13 @@ DEFUN (show_ipv6_route_vrf_all,
   struct route_table *table;
   struct route_node *rn;
   struct rib *rib;
-  struct nsm_vrf *zvrf;
+  struct nsm_ip_vrf *zvrf;
   vrf_iter_t iter;
   int first = 1;
 
-  for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
+  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
     {
-      if ((zvrf = vrf_iter2info (iter)) == NULL ||
+      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
           (table = zvrf->table[AFI_IP6][SAFI_UNICAST]) == NULL)
         continue;
 
@@ -5332,7 +5332,7 @@ DEFUN (show_ipv6_route_prefix_longer_vrf_all,
   struct route_node *rn;
   struct rib *rib;
   struct prefix p;
-  struct nsm_vrf *zvrf;
+  struct nsm_ip_vrf *zvrf;
   vrf_iter_t iter;
   int ret;
   int first = 1;
@@ -5344,9 +5344,9 @@ DEFUN (show_ipv6_route_prefix_longer_vrf_all,
       return CMD_WARNING;
     }
 
-  for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
+  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
     {
-      if ((zvrf = vrf_iter2info (iter)) == NULL ||
+      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
           (table = zvrf->table[AFI_IP6][SAFI_UNICAST]) == NULL)
         continue;
 
@@ -5380,7 +5380,7 @@ DEFUN (show_ipv6_route_protocol_vrf_all,
   struct route_table *table;
   struct route_node *rn;
   struct rib *rib;
-  struct nsm_vrf *zvrf;
+  struct nsm_ip_vrf *zvrf;
   vrf_iter_t iter;
   int first = 1;
 
@@ -5391,9 +5391,9 @@ DEFUN (show_ipv6_route_protocol_vrf_all,
       return CMD_WARNING;
     }
 
-  for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
+  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
     {
-      if ((zvrf = vrf_iter2info (iter)) == NULL ||
+      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
           (table = zvrf->table[AFI_IP6][SAFI_UNICAST]) == NULL)
         continue;
 
@@ -5427,7 +5427,7 @@ DEFUN (show_ipv6_route_addr_vrf_all,
   struct prefix_ipv6 p;
   struct route_table *table;
   struct route_node *rn;
-  struct nsm_vrf *zvrf;
+  struct nsm_ip_vrf *zvrf;
   vrf_iter_t iter;
 
   ret = str2prefix_ipv6 (argv[0], &p);
@@ -5437,9 +5437,9 @@ DEFUN (show_ipv6_route_addr_vrf_all,
       return CMD_WARNING;
     }
 
-  for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
+  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
     {
-      if ((zvrf = vrf_iter2info (iter)) == NULL ||
+      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
           (table = zvrf->table[AFI_IP6][SAFI_UNICAST]) == NULL)
         continue;
 
@@ -5468,7 +5468,7 @@ DEFUN (show_ipv6_route_prefix_vrf_all,
   struct prefix_ipv6 p;
   struct route_table *table;
   struct route_node *rn;
-  struct nsm_vrf *zvrf;
+  struct nsm_ip_vrf *zvrf;
   vrf_iter_t iter;
 
   ret = str2prefix_ipv6 (argv[0], &p);
@@ -5478,9 +5478,9 @@ DEFUN (show_ipv6_route_prefix_vrf_all,
       return CMD_WARNING;
     }
 
-  for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
+  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
     {
-      if ((zvrf = vrf_iter2info (iter)) == NULL ||
+      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
           (table = zvrf->table[AFI_IP6][SAFI_UNICAST]) == NULL)
         continue;
 
@@ -5511,11 +5511,11 @@ DEFUN (show_ipv6_route_summary_vrf_all,
        "Summary of all IPv6 routes\n"
        VRF_ALL_CMD_HELP_STR)
 {
-  struct nsm_vrf *zvrf;
+  struct nsm_ip_vrf *zvrf;
   vrf_iter_t iter;
 
-  for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
-    if ((zvrf = vrf_iter2info (iter)) != NULL)
+  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
+    if ((zvrf = ip_vrf_iter2info (iter)) != NULL)
       vty_show_ip_route_summary (vty, zvrf->table[AFI_IP6][SAFI_UNICAST]);
 
   return CMD_SUCCESS;
@@ -5532,13 +5532,13 @@ DEFUN (show_ipv6_mroute_vrf_all,
   struct route_table *table;
   struct route_node *rn;
   struct rib *rib;
-  struct nsm_vrf *zvrf;
+  struct nsm_ip_vrf *zvrf;
   vrf_iter_t iter;
   int first = 1;
 
-  for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
+  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
     {
-      if ((zvrf = vrf_iter2info (iter)) == NULL ||
+      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
           (table = zvrf->table[AFI_IP6][SAFI_UNICAST]) == NULL)
         continue;
 
@@ -5567,11 +5567,11 @@ DEFUN (show_ipv6_route_summary_prefix_vrf_all,
        "Prefix routes\n"
        VRF_ALL_CMD_HELP_STR)
 {
-  struct nsm_vrf *zvrf;
+  struct nsm_ip_vrf *zvrf;
   vrf_iter_t iter;
 
-  for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
-    if ((zvrf = vrf_iter2info (iter)) != NULL)
+  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
+    if ((zvrf = ip_vrf_iter2info (iter)) != NULL)
       vty_show_ip_route_summary_prefix (vty, zvrf->table[AFI_IP6][SAFI_UNICAST]);
 
   return CMD_SUCCESS;
@@ -5588,14 +5588,14 @@ static_config_ipv6 (struct vty *vty)
   int write;
   char buf[BUFSIZ];
   struct route_table *stable;
-  struct nsm_vrf *zvrf;
+  struct nsm_ip_vrf *zvrf;
   vrf_iter_t iter;
   union prefix46constptr up;
   write = 0;
 
-  for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
+  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
     {
-      if ((zvrf = vrf_iter2info (iter)) == NULL ||
+      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
           (stable = zvrf->stable[AFI_IP6][SAFI_UNICAST]) == NULL)
         continue;
 
@@ -5606,9 +5606,9 @@ static_config_ipv6 (struct vty *vty)
         	if (si->vrf_id != VRF_DEFAULT)
         	{
         	   //if(si->vrf_name)
-        	    vty_out (vty, "ipv6 route vrf %s %s", vrf_vrfid2name(si->vrf_id), prefix2str (up, buf, sizeof buf));
+        	    vty_out (vty, "ipv6 route ip_vrf %s %s", ip_vrf_vrfid2name(si->vrf_id), prefix2str (up, buf, sizeof buf));
 /*        	   else
-        	    vty_out (vty, "ipv6 route vrf %d %s", si->vrf_id, prefix2str (up, buf, sizeof buf));*/
+        	    vty_out (vty, "ipv6 route ip_vrf %d %s", si->vrf_id, prefix2str (up, buf, sizeof buf));*/
         	}
         	else
         		vty_out (vty, "ipv6 route %s", prefix2str (up, buf, sizeof buf));
@@ -5650,8 +5650,7 @@ static_config_ipv6 (struct vty *vty)
 }
 #endif
 /* Static ip route configuration write function. */
-static int
-zebra_ip_config (struct vty *vty)
+static int nsm_ip_route_config_write (struct vty *vty)
 {
   int write = 0;
 
@@ -5700,7 +5699,7 @@ static struct cmd_node ip_node = { IP_NODE,  "",  1 };
 /* Route VTY.  */
 void cmd_route_init (void)
 {
-  install_node (&ip_node, zebra_ip_config);
+  install_node (&ip_node, nsm_ip_route_config_write);
   install_node (&protocol_node, config_write_vty);
 
   install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &ip_mroute_cmd);

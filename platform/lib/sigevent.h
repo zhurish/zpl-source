@@ -24,22 +24,14 @@
 #ifndef _QUAGGA_SIGNAL_H
 #define _QUAGGA_SIGNAL_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <thread.h>
 
-
-
-
-//#define QUAGGA_SIGNAL_TIMER_INTERVAL 2L
-
-//#define QUAGGA_SIGNAL_SIGWAIT
-
+typedef int (*os_signal_handler)(int signo, void *info);
 struct quagga_signal_t
 {
   int signal;                     /* signal number    */
-  void (*handler) (void);         /* handler to call  */
-  void (*signal_handler) (int signo);
+  os_signal_handler signal_handler;
+  void	*info;
   volatile sig_atomic_t caught;   /* private member   */
 };
 
@@ -50,17 +42,10 @@ struct quagga_signal_t
  * - array of quagga_signal_t's describing signals to handle
  *   and handlers to use for each signal
  */
-extern void signal_init (void *m, int sigc,
+extern void signal_init (int sigc, 
                          struct quagga_signal_t *signals);
-
-//extern int os_task_sigmask(int sigc, int signo[]);
 
 /* check whether there are signals to handle, process any found */
 extern int quagga_sigevent_process (void);
-
- 
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* _QUAGGA_SIGNAL_H */

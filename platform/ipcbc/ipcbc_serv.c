@@ -35,7 +35,7 @@
 #include "nsm_zclient.h"
 #include "network.h"
 #include "buffer.h"
-#include "nsm_vrf.h"
+#include "nsm_ip_vrf.h"
 #include "nexthop.h"
 
 #include "nsm_zserv.h"
@@ -199,7 +199,7 @@ int zsend_interface_add(struct zserv *client, struct interface *ifp)
   struct stream *s;
 
   /* Check this client need interface information. */
-  if (!vrf_bitmap_check(client->ifinfo, ifp->vrf_id))
+  if (!ip_vrf_bitmap_check(client->ifinfo, ifp->vrf_id))
     return 0;
 
   s = client->obuf;
@@ -218,7 +218,7 @@ int zsend_interface_delete(struct zserv *client, struct interface *ifp)
   struct stream *s;
 
   /* Check this client need interface information. */
-  if (!vrf_bitmap_check(client->ifinfo, ifp->vrf_id))
+  if (!ip_vrf_bitmap_check(client->ifinfo, ifp->vrf_id))
     return 0;
 
   s = client->obuf;
@@ -306,7 +306,7 @@ int zsend_interface_address(zpl_uint16 cmd, struct zserv *client,
   struct prefix *p;
 
   /* Check this client need interface information. */
-  if (!vrf_bitmap_check(client->ifinfo, ifp->vrf_id))
+  if (!ip_vrf_bitmap_check(client->ifinfo, ifp->vrf_id))
     return 0;
 
   s = client->obuf;
@@ -360,7 +360,7 @@ int zsend_interface_state(zpl_uint16 cmd, struct zserv *client, struct interface
   struct stream *s;
 
   /* Check this client need interface information. */
-  if (!vrf_bitmap_check(client->ifinfo, ifp->vrf_id))
+  if (!ip_vrf_bitmap_check(client->ifinfo, ifp->vrf_id))
     return 0;
 
   s = client->obuf;
@@ -382,7 +382,7 @@ int zsend_interface_mode(struct zserv *client, struct interface *ifp, zpl_uint32
   struct stream *s;
 
   /* Check this client need interface information. */
-  if (!vrf_bitmap_check(client->ifinfo, ifp->vrf_id))
+  if (!ip_vrf_bitmap_check(client->ifinfo, ifp->vrf_id))
     return 0;
 
   s = client->obuf;
@@ -426,9 +426,9 @@ int zsend_route_multipath(zpl_uint16 cmd, struct zserv *client, struct prefix *p
   zpl_uchar zapi_flags = 0;
 
   /* Check this client need this route. */
-  if (!vrf_bitmap_check(client->redist[rib->type], rib->vrf_id) &&
+  if (!ip_vrf_bitmap_check(client->redist[rib->type], rib->vrf_id) &&
       !(is_default(p) &&
-        vrf_bitmap_check(client->redist_default, rib->vrf_id)))
+        ip_vrf_bitmap_check(client->redist_default, rib->vrf_id)))
     return 0;
 
   s = client->obuf;
@@ -839,7 +839,7 @@ int zsend_router_id_update(struct zserv *client, struct prefix *p,
   zpl_uint32 blen;
 
   /* Check this client need interface information. */
-  if (!vrf_bitmap_check(client->ridinfo, vrf_id))
+  if (!ip_vrf_bitmap_check(client->ridinfo, vrf_id))
     return 0;
 
   s = client->obuf;
@@ -871,7 +871,7 @@ zread_interface_add(struct zserv *client, zpl_ushort length, vrf_id_t vrf_id)
   struct connected *c;
 
   /* Interface information is needed. */
-  vrf_bitmap_set(client->ifinfo, vrf_id);
+  ip_vrf_bitmap_set(client->ifinfo, vrf_id);
 
   for (ALL_LIST_ELEMENTS(if_list_get(), ifnode, ifnnode, ifp))
   {
@@ -897,7 +897,7 @@ zread_interface_add(struct zserv *client, zpl_ushort length, vrf_id_t vrf_id)
 static int
 zread_interface_delete(struct zserv *client, zpl_ushort length, vrf_id_t vrf_id)
 {
-  vrf_bitmap_unset(client->ifinfo, vrf_id);
+  ip_vrf_bitmap_unset(client->ifinfo, vrf_id);
   return 0;
 }
 
@@ -1351,7 +1351,7 @@ zread_router_id_add(struct zserv *client, zpl_ushort length, vrf_id_t vrf_id)
   struct prefix p;
 
   /* Router-id information is needed. */
-  vrf_bitmap_set(client->ridinfo, vrf_id);
+  ip_vrf_bitmap_set(client->ridinfo, vrf_id);
 
   router_id_get(&p, vrf_id);
 
@@ -1362,7 +1362,7 @@ zread_router_id_add(struct zserv *client, zpl_ushort length, vrf_id_t vrf_id)
 static int
 zread_router_id_delete(struct zserv *client, zpl_ushort length, vrf_id_t vrf_id)
 {
-  vrf_bitmap_unset(client->ridinfo, vrf_id);
+  ip_vrf_bitmap_unset(client->ridinfo, vrf_id);
   return 0;
 }
 
@@ -1398,10 +1398,10 @@ zread_vrf_unregister(struct zserv *client, zpl_ushort length, vrf_id_t vrf_id)
   zpl_uint32 i = 0;
 
   for (i = 0; i < ZEBRA_ROUTE_MAX; i++)
-    vrf_bitmap_unset(client->redist[i], vrf_id);
-  vrf_bitmap_unset(client->redist_default, vrf_id);
-  vrf_bitmap_unset(client->ifinfo, vrf_id);
-  vrf_bitmap_unset(client->ridinfo, vrf_id);
+    ip_vrf_bitmap_unset(client->redist[i], vrf_id);
+  ip_vrf_bitmap_unset(client->redist_default, vrf_id);
+  ip_vrf_bitmap_unset(client->ifinfo, vrf_id);
+  ip_vrf_bitmap_unset(client->ridinfo, vrf_id);
 
   return 0;
 }
@@ -1480,10 +1480,10 @@ zebra_client_create(int sock)
 
   /* Initialize flags */
   for (i = 0; i < ZEBRA_ROUTE_MAX; i++)
-    client->redist[i] = vrf_bitmap_init();
-  client->redist_default = vrf_bitmap_init();
-  client->ifinfo = vrf_bitmap_init();
-  client->ridinfo = vrf_bitmap_init();
+    client->redist[i] = ip_vrf_bitmap_init();
+  client->redist_default = ip_vrf_bitmap_init();
+  client->ifinfo = ip_vrf_bitmap_init();
+  client->ridinfo = ip_vrf_bitmap_init();
   client->connect_time = quagga_time(NULL);
 
   /* Add this client to linked list. */

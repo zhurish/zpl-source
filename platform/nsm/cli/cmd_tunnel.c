@@ -357,7 +357,7 @@ static int nsm_interface_tunnel_config_write(struct vty *vty)
 /*
 #ifdef ZPL_IPCOM_STACK_MODULE
 				if (ifp->vrf_id != VRF_DEFAULT)
-				vty_out(vty, " ip forward vrf %s%s", vrf_vrfid2name(ifp->vrf_id), VTY_NEWLINE);
+				vty_out(vty, " ip forward vrf %s%s", ip_vrf_vrfid2name(ifp->vrf_id), VTY_NEWLINE);
 #endif
 				if (ifp->mtu != IF_MTU_DEFAULT)
 					vty_out(vty, " mtu %d%s", ifp->mtu, VTY_NEWLINE);

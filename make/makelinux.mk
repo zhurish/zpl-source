@@ -233,8 +233,8 @@ endif
 #
 #
 ifeq ($(ZPL_BUILD_DEBUG),YES)
-ZPLOS_CFLAGS += -g -ggdb
-ZPLOS_CPPFLAGS += -g
+ZPLOS_CFLAGS += -g3 -ggdb3
+ZPLOS_CPPFLAGS += -g3 -ggdb3
 else
 ZPLOS_CFLAGS += -O1
 ZPLOS_CPPFLAGS += -O1

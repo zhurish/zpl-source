@@ -27,11 +27,14 @@ extern "C" {
 
 #define array_size(ar) (sizeof(ar) / sizeof(ar[0]))
 
+#define MEMLIST_NAME_LEN  32
+
 /* For pretty printing of memory allocate information. */
 struct memory_list
 {
-  zpl_uint32 index;
-  const char *format;
+  zpl_int32 index;
+  //const char *format;
+  const char format[MEMLIST_NAME_LEN];
 };
 
 struct mlist {
@@ -39,9 +42,33 @@ struct mlist {
   const char *name;
 };
  
+#ifdef MEMORY_LOG
+struct mstat
+{
+  const char *name;
+  long alloc;
+  zpl_ulong t_malloc;
+  zpl_ulong c_malloc;
+  zpl_ulong t_calloc;
+  zpl_ulong c_calloc;
+  zpl_ulong t_realloc;
+  zpl_ulong t_free;
+  zpl_ulong c_strdup;
+};
+#else 
+struct mstat
+{
+  zpl_char *name;
+  long alloc;
+};
+#endif
+
+
+
 #include "memtypes.h"
 
 extern struct mlist mlists[];
+extern struct mstat mstat[MTYPE_MAX];
 
 /* #define MEMORY_LOG */
 #ifdef MEMORY_LOG
@@ -102,7 +129,7 @@ extern zpl_ulong mtype_stats_alloc (zpl_uint32);
 extern const char *mtype_memstr (zpl_char *, zpl_size_t, zpl_ulong);
 
 extern void cmd_memory_init (void);
-extern int vty_show_memory_cmd(void *vty);
+
  
 #ifdef __cplusplus
 }

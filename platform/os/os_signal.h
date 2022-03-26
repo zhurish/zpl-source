@@ -14,31 +14,42 @@ extern "C" {
 
 #define OS_SIGNAL_FILE SYSLOGDIR"/signal.log"
 
+//#define OS_SIGNAL_PIPE
+
 typedef int (*os_signal_handler)(int signo, void *info);
+
+#ifdef SA_SIGINFO
+typedef void (*os_signal_abort_cb)(zpl_int signo, const char *action,
+    siginfo_t *siginfo, void *context);
+typedef void (*os_signal_exit_cb)(zpl_int signo, const char *action,
+    siginfo_t *siginfo, void *context);
+#else
+typedef void (*os_signal_abort_cb)(zpl_int signo, const char *action);
+typedef void (*os_signal_exit_cb)(zpl_int signo, const char *action);
+#endif  
 
 struct os_signal_t
 {
   int signal;                     /* signal number    */
   os_signal_handler signal_handler;
   void	*info;
+  volatile sig_atomic_t caught;   /* private member   */  
 };
 
-extern void os_signal_default(void *abort_func, void *exit_func);
+extern void os_signal_default(os_signal_abort_cb abort_func, os_signal_exit_cb exit_func);
 extern void os_signal_init(struct os_signal_t *tbl, int num);
 extern int os_signal_add(zpl_int sig, os_signal_handler hander);
 
 extern int os_signal_process(zpl_uint timeout);
 
-#if 0
-extern int os_signal_handler_action(zpl_int sig, void *info);
-#endif
-extern int os_register_signal(zpl_int sig, void (*handler)(zpl_int
+
 #ifdef SA_SIGINFO
-	     , siginfo_t *siginfo, void *context
+extern int os_register_signal(zpl_int , void (*handler)(zpl_int, siginfo_t *, void *));
+#else
+extern int os_register_signal(zpl_int , void (*handler)(zpl_int));                                            
 #endif
-		));
 
-
+extern int os_signal_reload_test(void);
 
 #ifdef __cplusplus
 }

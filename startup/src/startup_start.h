@@ -37,7 +37,7 @@ extern struct startup_option startup_option;
 
 
 extern int zpl_base_signal_init(int daemon_mode);
-
+extern int zpl_base_signal_reload(void);
 extern int startup_option_default(void);
 
 

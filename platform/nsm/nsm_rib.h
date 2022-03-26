@@ -310,7 +310,7 @@ struct nlsock
 #endif
 
 /* Routing table instance.  */
-struct nsm_vrf
+struct nsm_ip_vrf
 {
   /* Identifier. */
   vrf_id_t vrf_id;
@@ -364,9 +364,9 @@ typedef struct rib_table_info_t_
 {
 
   /*
-   * Back pointer to nsm_vrf.
+   * Back pointer to nsm_ip_vrf.
    */
-  struct nsm_vrf *zvrf;
+  struct nsm_ip_vrf *zvrf;
   afi_t afi;
   safi_t safi;
 
@@ -437,8 +437,8 @@ extern struct nexthop *rib_nexthop_ipv6_ifindex_add (struct rib *,
                                                      struct ipstack_in6_addr *,
                                                      ifindex_t);
 
-extern struct nsm_vrf *nsm_vrf_lookup (vrf_id_t vrf_id);
-extern struct nsm_vrf *nsm_vrf_alloc (vrf_id_t);
+extern struct nsm_ip_vrf *nsm_vrf_lookup (vrf_id_t vrf_id);
+extern struct nsm_ip_vrf *nsm_vrf_alloc (vrf_id_t);
 extern struct route_table *nsm_vrf_table (afi_t, safi_t, vrf_id_t);
 extern struct route_table *nsm_vrf_static_table (afi_t, safi_t, vrf_id_t);
 
@@ -588,7 +588,7 @@ rib_dest_table (rib_dest_t *dest)
 /*
  * rib_dest_vrf
  */
-static inline struct nsm_vrf *
+static inline struct nsm_ip_vrf *
 rib_dest_vrf (rib_dest_t *dest)
 {
   return rib_table_info (rib_dest_table (dest))->zvrf;

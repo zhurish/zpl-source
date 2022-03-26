@@ -49,10 +49,10 @@ struct vrf_master
 static LIST vrf_list_table;
 static void *vrfMutex = NULL;
 /*
-static int vrf_is_enabled (struct vrf *vrf);
+static int vrf_is_enabled (struct ip_vrf *ip_vrf);
 */
-static int vrf_enable(struct vrf *vrf);
-static int vrf_disable(struct vrf *vrf);
+static int ip_vrf_enable(struct ip_vrf *ip_vrf);
+static int ip_vrf_disable(struct ip_vrf *ip_vrf);
 
 /*
  * VRF bit-map
@@ -74,20 +74,20 @@ static int vrf_disable(struct vrf *vrf);
 #define VRF_BITMAP_FLAG(_bit_offset) \
   (((zpl_uchar)1) << ((_bit_offset) % CHAR_BIT))
 
-struct vrf_bitmap
+struct vrf_bitmap_table
 {
   zpl_uchar *groups[VRF_BITMAP_NUM_OF_GROUPS];
 };
 
 vrf_bitmap_t
-vrf_bitmap_init(void)
+ip_vrf_bitmap_init(void)
 {
-  return (vrf_bitmap_t)XCALLOC(MTYPE_VRF_BITMAP, sizeof(struct vrf_bitmap));
+  return (vrf_bitmap_t)XCALLOC(MTYPE_VRF_BITMAP, sizeof(struct vrf_bitmap_table));
 }
 
-void vrf_bitmap_free(vrf_bitmap_t bmap)
+void ip_vrf_bitmap_free(vrf_bitmap_t bmap)
 {
-  struct vrf_bitmap *bm = (struct vrf_bitmap *)bmap;
+  struct vrf_bitmap_table *bm = (struct vrf_bitmap_table *)bmap;
   zpl_uint32 i;
 
   if (bmap == VRF_BITMAP_NULL)
@@ -100,9 +100,9 @@ void vrf_bitmap_free(vrf_bitmap_t bmap)
   XFREE(MTYPE_VRF_BITMAP, bm);
 }
 
-void vrf_bitmap_set(vrf_bitmap_t bmap, vrf_id_t vrf_id)
+void ip_vrf_bitmap_set(vrf_bitmap_t bmap, vrf_id_t vrf_id)
 {
-  struct vrf_bitmap *bm = (struct vrf_bitmap *)bmap;
+  struct vrf_bitmap_table *bm = (struct vrf_bitmap_table *)bmap;
   zpl_uchar group = VRF_BITMAP_GROUP(vrf_id);
   zpl_uchar offset = VRF_BITMAP_BIT_OFFSET(vrf_id);
 
@@ -117,9 +117,9 @@ void vrf_bitmap_set(vrf_bitmap_t bmap, vrf_id_t vrf_id)
            VRF_BITMAP_FLAG(offset));
 }
 
-void vrf_bitmap_unset(vrf_bitmap_t bmap, vrf_id_t vrf_id)
+void ip_vrf_bitmap_unset(vrf_bitmap_t bmap, vrf_id_t vrf_id)
 {
-  struct vrf_bitmap *bm = (struct vrf_bitmap *)bmap;
+  struct vrf_bitmap_table *bm = (struct vrf_bitmap_table *)bmap;
   zpl_uchar group = VRF_BITMAP_GROUP(vrf_id);
   zpl_uchar offset = VRF_BITMAP_BIT_OFFSET(vrf_id);
 
@@ -130,9 +130,9 @@ void vrf_bitmap_unset(vrf_bitmap_t bmap, vrf_id_t vrf_id)
              VRF_BITMAP_FLAG(offset));
 }
 
-zpl_bool vrf_bitmap_check(vrf_bitmap_t bmap, vrf_id_t vrf_id)
+zpl_bool ip_vrf_bitmap_check(vrf_bitmap_t bmap, vrf_id_t vrf_id)
 {
-  struct vrf_bitmap *bm = (struct vrf_bitmap *)bmap;
+  struct vrf_bitmap_table *bm = (struct vrf_bitmap_table *)bmap;
   zpl_uchar group = VRF_BITMAP_GROUP(vrf_id);
   zpl_uchar offset = VRF_BITMAP_BIT_OFFSET(vrf_id);
 
@@ -148,48 +148,48 @@ zpl_bool vrf_bitmap_check(vrf_bitmap_t bmap, vrf_id_t vrf_id)
 /***********************************************************************/
 
 /* Get a VRF. If not found, create one. */
-static struct vrf *vrf_new_one(vrf_id_t vrf_id, const char *name)
+static struct ip_vrf *ip_vrf_new_one(vrf_id_t vrf_id, const char *name)
 {
-  struct vrf *vrf;
+  struct ip_vrf *ip_vrf;
   if (vrfMutex)
     os_mutex_lock(vrfMutex, OS_WAIT_FOREVER);
 
-  vrf = XCALLOC(MTYPE_VRF, sizeof(struct vrf));
-  vrf->vrf_id = vrf_id;
+  ip_vrf = XCALLOC(MTYPE_VRF, sizeof(struct ip_vrf));
+  ip_vrf->vrf_id = vrf_id;
   if (name)
-    vrf->name = XSTRDUP(MTYPE_VRF_NAME, name);
+    ip_vrf->name = XSTRDUP(MTYPE_VRF_NAME, name);
 
   /* Initialize interfaces. */
   zlog_info(MODULE_NSM, "VRF %u is created.", vrf_id);
-  lstAdd(&vrf_list_table, (NODE *)vrf);
+  lstAdd(&vrf_list_table, (NODE *)ip_vrf);
   if (vrf_master.vrf_new_hook)
-    (*vrf_master.vrf_new_hook)(vrf_id, &vrf->info);
+    (*vrf_master.vrf_new_hook)(vrf_id, &ip_vrf->info);
 
-  vrf_enable(vrf);
+  ip_vrf_enable(ip_vrf);
 
   if (vrfMutex)
     os_mutex_unlock(vrfMutex);
-  return vrf;
+  return ip_vrf;
 }
 
-/* Delete a VRF. This is called in vrf_terminate(). */
-static int vrf_del_one(struct vrf *vrf)
+/* Delete a VRF. This is called in ip_vrf_terminate(). */
+static int ip_vrf_del_one(struct ip_vrf *ip_vrf)
 {
-  zlog_info(MODULE_NSM, "VRF %u is to be deleted.", vrf->vrf_id);
+  zlog_info(MODULE_NSM, "VRF %u is to be deleted.", ip_vrf->vrf_id);
   if (vrfMutex)
     os_mutex_lock(vrfMutex, OS_WAIT_FOREVER);
 
-  vrf_disable(vrf);
+  ip_vrf_disable(ip_vrf);
 
   if (vrf_master.vrf_delete_hook)
-    (*vrf_master.vrf_delete_hook)(vrf->vrf_id, &vrf->info);
+    (*vrf_master.vrf_delete_hook)(ip_vrf->vrf_id, &ip_vrf->info);
 
-  if (vrf->name)
-    XFREE(MTYPE_VRF_NAME, vrf->name);
+  if (ip_vrf->name)
+    XFREE(MTYPE_VRF_NAME, ip_vrf->name);
 
-  lstDelete(&vrf_list_table, (NODE *)vrf);
+  lstDelete(&vrf_list_table, (NODE *)ip_vrf);
 
-  XFREE(MTYPE_VRF, vrf);
+  XFREE(MTYPE_VRF, ip_vrf);
 
   if (vrfMutex)
     os_mutex_unlock(vrfMutex);
@@ -197,58 +197,56 @@ static int vrf_del_one(struct vrf *vrf)
 }
 
 /* Look up a VRF by identifier. */
-struct vrf *
-vrf_lookup(vrf_id_t vrf_id)
+struct ip_vrf * ip_vrf_lookup(vrf_id_t vrf_id)
 {
-  struct vrf *vrf = NULL;
-  vrf = lstFirst(&vrf_list_table);
-  while (vrf)
+  struct ip_vrf *ip_vrf = NULL;
+  ip_vrf = lstFirst(&vrf_list_table);
+  while (ip_vrf)
   {
-    if (vrf)
+    if (ip_vrf)
     {
-      if (vrf->vrf_id == vrf_id)
+      if (ip_vrf->vrf_id == vrf_id)
       {
-        return vrf;
+        return ip_vrf;
       }
     }
-    vrf = lstNext((NODE *)vrf);
+    ip_vrf = lstNext((NODE *)ip_vrf);
   }
   return NULL;
 }
 
 /* Look up a VRF by identifier. */
-struct vrf *
-vrf_lookup_by_name(const char *name)
+struct ip_vrf * ip_vrf_lookup_by_name(const char *name)
 {
-  struct vrf *vrf = NULL;
-  vrf = lstFirst(&vrf_list_table);
-  while (vrf)
+  struct ip_vrf *ip_vrf = NULL;
+  ip_vrf = lstFirst(&vrf_list_table);
+  while (ip_vrf)
   {
-    if (vrf && vrf->name)
+    if (ip_vrf && ip_vrf->name)
     {
-      if (strcmp(vrf->name, name) == 0)
+      if (strcmp(ip_vrf->name, name) == 0)
       {
-        return vrf;
+        return ip_vrf;
       }
     }
-    vrf = lstNext((NODE *)vrf);
+    ip_vrf = lstNext((NODE *)ip_vrf);
   }
   return NULL;
 }
 
-zpl_char *vrf_vrfid2name(vrf_id_t vrf_id)
+zpl_char *ip_vrf_vrfid2name(vrf_id_t vrf_id)
 {
-  struct vrf *vrf = vrf_lookup(vrf_id);
-  if (vrf)
-    return vrf->name;
+  struct ip_vrf *ip_vrf = ip_vrf_lookup(vrf_id);
+  if (ip_vrf)
+    return ip_vrf->name;
   return NULL;
 }
 
-vrf_id_t vrf_name2vrfid(const char *name)
+vrf_id_t ip_vrf_name2vrfid(const char *name)
 {
-  struct vrf *vrf = vrf_lookup_by_name(name);
-  if (vrf)
-    return vrf->vrf_id;
+  struct ip_vrf *ip_vrf = ip_vrf_lookup_by_name(name);
+  if (ip_vrf)
+    return ip_vrf->vrf_id;
   return 0;
 }
 /*
@@ -258,12 +256,11 @@ vrf_id_t vrf_name2vrfid(const char *name)
  *
  * RETURN: 1 - enabled successfully; otherwise, 0.
  */
-static int
-vrf_enable(struct vrf *vrf)
+static int ip_vrf_enable(struct ip_vrf *ip_vrf)
 {
-  zlog_info(MODULE_NSM, "VRF %u is enabled.", vrf->vrf_id);
+  zlog_info(MODULE_NSM, "VRF %u is enabled.", ip_vrf->vrf_id);
   if (vrf_master.vrf_enable_hook)
-    (*vrf_master.vrf_enable_hook)(vrf->vrf_id, &vrf->info);
+    (*vrf_master.vrf_enable_hook)(ip_vrf->vrf_id, &ip_vrf->info);
   return 1;
 }
 
@@ -272,17 +269,16 @@ vrf_enable(struct vrf *vrf)
  * The VRF_DELETE_HOOK callback will be called to inform
  * that they must release the resources in the VRF.
  */
-static int
-vrf_disable(struct vrf *vrf)
+static int ip_vrf_disable(struct ip_vrf *ip_vrf)
 {
-  zlog_info(MODULE_NSM, "VRF %u is to be disabled.", vrf->vrf_id);
+  zlog_info(MODULE_NSM, "VRF %u is to be disabled.", ip_vrf->vrf_id);
   if (vrf_master.vrf_disable_hook)
-    (*vrf_master.vrf_disable_hook)(vrf->vrf_id, &vrf->info);
+    (*vrf_master.vrf_disable_hook)(ip_vrf->vrf_id, &ip_vrf->info);
   return OK;
 }
 
 /* Add a VRF hook. Please add hooks before calling vrf_init(). */
-void vrf_add_hook(zpl_uint32 type, int (*func)(vrf_id_t, void **))
+void ip_vrf_add_hook(zpl_uint32 type, int (*func)(vrf_id_t, void **))
 {
   switch (type)
   {
@@ -305,18 +301,18 @@ void vrf_add_hook(zpl_uint32 type, int (*func)(vrf_id_t, void **))
 
 /* Return the iterator of the first VRF. */
 vrf_iter_t
-vrf_first(void)
+ip_vrf_first(void)
 {
-  struct vrf *rn;
+  struct ip_vrf *rn;
   rn = lstFirst(&vrf_list_table);
   return rn ? (vrf_iter_t)rn : VRF_ITER_INVALID;
 }
 
 /* Return the next VRF iterator to the given iterator. */
 vrf_iter_t
-vrf_next(vrf_iter_t iter)
+ip_vrf_next(vrf_iter_t iter)
 {
-  struct vrf *rn = NULL;
+  struct ip_vrf *rn = NULL;
 
   rn = lstNext((NODE *)iter);
   return rn ? (vrf_iter_t)rn : VRF_ITER_INVALID;
@@ -325,25 +321,25 @@ vrf_next(vrf_iter_t iter)
 /* Return the VRF iterator of the given VRF ID. If it does not exist,
  * the iterator of the next existing VRF is returned. */
 vrf_iter_t
-vrf_iterator(vrf_id_t vrf_id)
+ip_vrf_iterator(vrf_id_t vrf_id)
 {
-  struct vrf *vrf = vrf_lookup(vrf_id);
-  return (vrf) ? (vrf_iter_t)vrf : VRF_ITER_INVALID;
+  struct ip_vrf *ip_vrf = ip_vrf_lookup(vrf_id);
+  return (ip_vrf) ? (vrf_iter_t)ip_vrf : VRF_ITER_INVALID;
 }
 
 /* Obtain the VRF ID from the given VRF iterator. */
 vrf_id_t
-vrf_iter2id(vrf_iter_t iter)
+ip_vrf_iter2id(vrf_iter_t iter)
 {
-  struct vrf *rn = (struct vrf *)iter;
+  struct ip_vrf *rn = (struct ip_vrf *)iter;
   return (rn) ? rn->vrf_id : VRF_DEFAULT;
 }
 
 /* Obtain the data pointer from the given VRF iterator. */
 void *
-vrf_iter2info(vrf_iter_t iter)
+ip_vrf_iter2info(vrf_iter_t iter)
 {
-  struct vrf *rn = (struct vrf *)iter;
+  struct ip_vrf *rn = (struct ip_vrf *)iter;
   return (rn && rn->info) ? (rn->info) : NULL;
 }
 
@@ -351,51 +347,52 @@ vrf_iter2info(vrf_iter_t iter)
 
 /* Look up the data pointer of the specified VRF. */
 void *
-vrf_info_lookup(vrf_id_t vrf_id)
+ip_vrf_info_lookup(vrf_id_t vrf_id)
 {
-  struct vrf *vrf = vrf_lookup(vrf_id);
-  return vrf ? vrf->info : NULL;
+  struct ip_vrf *ip_vrf = ip_vrf_lookup(vrf_id);
+  return ip_vrf ? ip_vrf->info : NULL;
 }
 
 /* Initialize VRF module. */
 static int
-vrf_init(void)
+_ip_vrf_init(void)
 {
   lstInit(&vrf_list_table);
-  vrf_new_one(VRF_DEFAULT, "Default-IP-Routing-Table");
+  ip_vrf_new_one(VRF_DEFAULT, "Default-IP-Routing-Table");
   return OK;
 }
 
-struct vrf *nsm_vrf_create(const char *name)
+struct ip_vrf *ip_vrf_create(const char *name)
 {
-  struct vrf *vrf;
-  vrf = vrf_new_one(VRF_DEFAULT, name);
-  return vrf;
+  struct ip_vrf *ip_vrf;
+  ip_vrf = ip_vrf_new_one(VRF_DEFAULT, name);
+  return ip_vrf;
 }
 
-int nsm_vrf_delete(const char *name)
+int ip_vrf_delete(const char *name)
 {
-  struct vrf *vrf;
+  struct ip_vrf *ip_vrf;
   /* The default VRF always exists. */
-  vrf = vrf_lookup_by_name(name);
-  if (!vrf)
+  ip_vrf = ip_vrf_lookup_by_name(name);
+  if (!ip_vrf)
   {
     zlog_err(MODULE_NSM, "vrf_init: failed to create the default VRF!");
+    return ERROR;
   }
-  vrf_del_one(vrf);
+  ip_vrf_del_one(ip_vrf);
   return 0;
 }
 
-int nsm_vrf_set_vrfid(struct vrf *vrf, vrf_id_t vrf_id)
+int ip_vrf_set_vrfid(struct ip_vrf *ip_vrf, vrf_id_t vrf_id)
 {
-  if (vrf)
+  if (ip_vrf)
   {
-    struct nsm_vrf *zvrf;
+    struct nsm_ip_vrf *zvrf;
     if (vrfMutex)
       os_mutex_lock(vrfMutex, OS_WAIT_FOREVER);
-    vrf->vrf_id = vrf_id;
+    ip_vrf->vrf_id = vrf_id;
 
-    zvrf = vrf->info;
+    zvrf = ip_vrf->info;
     zvrf->vrf_id = vrf_id;
 
 #ifdef ZPL_PAL_MODULE
@@ -411,16 +408,16 @@ int nsm_vrf_set_vrfid(struct vrf *vrf, vrf_id_t vrf_id)
 
 /* Callback upon creating a new VRF. */
 static int
-nsm_vrf_new(vrf_id_t vrf_id, void **info)
+nsm_ip_vrf_new(vrf_id_t vrf_id, void **info)
 {
-  struct nsm_vrf *zvrf = *info;
+  struct nsm_ip_vrf *zvrf = *info;
   if (!zvrf)
   {
     zvrf = nsm_vrf_alloc(vrf_id);
     *info = (void *)zvrf;
-    #ifdef ZPL_NSM_RTPL
+
     router_id_init(zvrf);
-    #endif
+ 
     if (vrf_id)
       nsm_halpal_create_vr(vrf_id);
   }
@@ -429,19 +426,25 @@ nsm_vrf_new(vrf_id_t vrf_id, void **info)
 
 /* Callback upon enabling a VRF. */
 static int
-nsm_vrf_enable(vrf_id_t vrf_id, void **info)
+nsm_ip_vrf_enable(vrf_id_t vrf_id, void **info)
 {
-  struct nsm_vrf *zvrf = (struct nsm_vrf *)(*info);
-
+  struct nsm_ip_vrf *zvrf = (struct nsm_ip_vrf *)(*info);
   assert(zvrf);
+#if defined (HAVE_RTADV)
+  rtadv_init (zvrf);
+#endif
+  _netlink_open (zvrf);
+  //interface_list (zvrf);
+  //route_read (zvrf);
+
   return 0;
 }
 
 /* Callback upon disabling a VRF. */
 static int
-nsm_vrf_disable(vrf_id_t vrf_id, void **info)
+nsm_ip_vrf_disable(vrf_id_t vrf_id, void **info)
 {
-  struct nsm_vrf *zvrf = (struct nsm_vrf *)(*info);
+  struct nsm_ip_vrf *zvrf = (struct nsm_ip_vrf *)(*info);
 
   assert(zvrf);
 
@@ -455,28 +458,28 @@ nsm_vrf_disable(vrf_id_t vrf_id, void **info)
 }
 
 /* Zebra VRF initialization. */
-void nsm_vrf_init(void)
+void ip_vrf_init(void)
 {
-  vrf_add_hook(VRF_NEW_HOOK, nsm_vrf_new);
-  vrf_add_hook(VRF_ENABLE_HOOK, nsm_vrf_enable);
-  vrf_add_hook(VRF_DISABLE_HOOK, nsm_vrf_disable);
-  vrf_init();
+  ip_vrf_add_hook(VRF_NEW_HOOK, nsm_ip_vrf_new);
+  ip_vrf_add_hook(VRF_ENABLE_HOOK, nsm_ip_vrf_enable);
+  ip_vrf_add_hook(VRF_DISABLE_HOOK, nsm_ip_vrf_disable);
+  _ip_vrf_init();
 }
 
 /* Terminate VRF module. */
-void vrf_terminate(void)
+void ip_vrf_terminate(void)
 {
-  struct vrf *vrf;
+  struct ip_vrf *ip_vrf;
   NODE index;
   if (lstCount(&vrf_list_table) == 0)
     return;
-  for (vrf = (struct vrf *)lstFirst(&vrf_list_table);
-       vrf != NULL; vrf = (struct vrf *)lstNext((NODE *)&index))
+  for (ip_vrf = (struct ip_vrf *)lstFirst(&vrf_list_table);
+       ip_vrf != NULL; ip_vrf = (struct ip_vrf *)lstNext((NODE *)&index))
   {
-    index = vrf->node;
-    if (vrf)
+    index = ip_vrf->node;
+    if (ip_vrf)
     {
-      vrf_del_one(vrf);
+      ip_vrf_del_one(ip_vrf);
     }
   }
   return;

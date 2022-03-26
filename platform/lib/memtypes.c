@@ -132,7 +132,6 @@ struct memory_list memory_list_bgp[] =
   { MTYPE_AS_SEG,		"BGP aspath seg"		},
   { MTYPE_AS_SEG_DATA,		"BGP aspath segment data"	},
   { MTYPE_AS_STR,		"BGP aspath str"		},
-  { 0, NULL },
   { MTYPE_BGP_TABLE,		"BGP table"			},
   { MTYPE_BGP_NODE,		"BGP node"			},
   { MTYPE_BGP_ROUTE,		"BGP route"			},
@@ -145,34 +144,33 @@ struct memory_list memory_list_bgp[] =
   { MTYPE_BGP_ADJ_IN,		"BGP adj in"			},
   { MTYPE_BGP_ADJ_OUT,		"BGP adj out"			},
   { MTYPE_BGP_MPATH_INFO,	"BGP multipath info"		},
-  { 0, NULL },
   { MTYPE_AS_LIST,		"BGP AS list"			},
   { MTYPE_AS_FILTER,		"BGP AS filter"			},
   { MTYPE_AS_FILTER_STR,	"BGP AS filter str"		},
-  { 0, NULL },
+
   { MTYPE_COMMUNITY,		"community"			},
   { MTYPE_COMMUNITY_VAL,	"community val"			},
   { MTYPE_COMMUNITY_STR,	"community str"			},
-  { 0, NULL },
+
   { MTYPE_ECOMMUNITY,		"extcommunity"			},
   { MTYPE_ECOMMUNITY_VAL,	"extcommunity val"		},
   { MTYPE_ECOMMUNITY_STR,	"extcommunity str"		},
-  { 0, NULL },
+
   { MTYPE_COMMUNITY_LIST,	"community-list"		},
   { MTYPE_COMMUNITY_LIST_NAME,	"community-list name"		},
   { MTYPE_COMMUNITY_LIST_ENTRY,	"community-list entry"		},
   { MTYPE_COMMUNITY_LIST_CONFIG,  "community-list config"	},
   { MTYPE_COMMUNITY_LIST_HANDLER, "community-list handler"	},
-  { 0, NULL },
+
   { MTYPE_CLUSTER,		"Cluster list"			},
   { MTYPE_CLUSTER_VAL,		"Cluster list val"		},
-  { 0, NULL },
+
   { MTYPE_BGP_PROCESS_QUEUE,	"BGP Process queue"		},
   { MTYPE_BGP_CLEAR_NODE_QUEUE, "BGP node clear queue"		},
-  { 0, NULL },
+
   { MTYPE_TRANSIT,		"BGP transit attr"		},
   { MTYPE_TRANSIT_VAL,		"BGP transit val"		},
-  { 0, NULL },
+
   { MTYPE_BGP_DISTANCE,		"BGP distance"			},
   { MTYPE_BGP_NEXTHOP_CACHE,	"BGP nexthop"			},
   { MTYPE_BGP_CONFED_LIST,	"BGP confed list"		},
@@ -509,7 +507,6 @@ struct memory_list memory_list_voip[] =
   { MTYPE_VOIP_TMP,			"VOIP Tmp information"	},
   { -1, NULL },
 };
-
 #endif
 
 #ifdef ZPL_WEBGUI_MODULE
@@ -587,7 +584,7 @@ struct mlist mlists[] __attribute__ ((unused)) = {
   { memory_list_bgp,	"BGP"	},
   { memory_list_pim,	"PIM"	},
   { memory_list_nhrp,	"NHRP"	},
-/* 2016��6��27�� 21:07:44 zhurish: ��չ·��Э�����ӵ��ڴ���Ϣ */  
+
 #ifdef ZEBRA_ROUTE_OLSR 
   { memory_list_olsr,	"OLSR"	},
 #endif  
@@ -631,6 +628,5 @@ struct mlist mlists[] __attribute__ ((unused)) = {
 #endif
   { memory_list_qosacl,	"Class Map"	},
 
-/* 2016��6��27�� 21:07:44 zhurish: ��չ·��Э�����ӵ��ڴ���Ϣ */
   { NULL, NULL},
 };

@@ -34,7 +34,7 @@ OBJS	+= stream.o
 
 OBJS	+= lib_event.o
 OBJS	+= lib_pqueue.o
-
+OBJS	+= sigevent.o
 
 ifeq ($(strip $(ZPL_IP_FILTER)),true)
 OBJS	+= filter.o		

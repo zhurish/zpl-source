@@ -22,7 +22,7 @@
 #include "nsm_arp.h"
 #include "nsm_rib.h"
 #include "thread.h"
-#include "nsm_vrf.h"
+#include "nsm_ip_vrf.h"
 #include "nexthop.h"
 #include "nsm_zserv.h"
 #include "nsm_redistribute.h"
@@ -856,7 +856,7 @@ static int netlink_socket(struct nlsock *nl, zpl_ulong groups,
  to the given function. */
 static int netlink_parse_info(
 		int (*filter)(struct ipstack_sockaddr_nl *, struct ipstack_nlmsghdr *, vrf_id_t),
-		struct nlsock *nl, struct nsm_vrf *zvrf)
+		struct nlsock *nl, struct nsm_ip_vrf *zvrf)
 {
 	int status;
 	int ret = 0;
@@ -1100,7 +1100,7 @@ static int netlink_talk_filter(struct ipstack_sockaddr_nl *snl, struct ipstack_n
 
 /* ipstack_sendmsg() to netlink ipstack_socket then ipstack_recvmsg(). */
 static int netlink_talk(struct ipstack_nlmsghdr *n, struct nlsock *nl,
-		struct nsm_vrf *zvrf)
+		struct nsm_ip_vrf *zvrf)
 {
 	int status;
 	struct ipstack_sockaddr_nl snl;
@@ -1319,7 +1319,7 @@ static void _netlink_route_build_multipath(const char *routedesc, zpl_uint32 byt
  */
 static void _netlink_route_debug(zpl_uint32 cmd, struct prefix *p,
 		struct nexthop *nexthop, const char *routedesc, zpl_family_t family,
-		struct nsm_vrf *zvrf)
+		struct nsm_ip_vrf *zvrf)
 {
 	if (IS_ZEBRA_DEBUG_KERNEL)
 	{
@@ -1378,7 +1378,7 @@ static int netlink_route_multipath(zpl_uint32 cmd, struct prefix *p, struct rib 
 		char buf[NL_PKT_BUF_SIZE];
 	} req;
 
-	struct nsm_vrf *zvrf = vrf_info_lookup(rib->vrf_id);
+	struct nsm_ip_vrf *zvrf = ip_vrf_info_lookup(rib->vrf_id);
 
 #ifdef IP_STACK_DEBUG
 	kernel_rib_table_debug(p, rib);
@@ -1594,7 +1594,7 @@ int kernel_route_rib(struct prefix *p, struct rib *old, struct rib *new)
 
 /* Exported interface function.  This function simply calls
  netlink_socket (). */
-void kernel_init(struct nsm_vrf *zvrf)
+void kernel_init(struct nsm_ip_vrf *zvrf)
 {
 
 	/*  int groups = IPSTACK_RTMGRP_LINK | IPSTACK_RTMGRP_IPV4_ROUTE | IPSTACK_RTMGRP_IPV4_IFADDR;
@@ -1612,7 +1612,7 @@ void kernel_init(struct nsm_vrf *zvrf)
 
 /*
  void
- kernel_terminate (struct nsm_vrf *zvrf)
+ kernel_terminate (struct nsm_ip_vrf *zvrf)
  {
  //  THREAD_READ_OFF (zvrf->t_netlink);
 

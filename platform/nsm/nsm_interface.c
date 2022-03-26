@@ -1523,7 +1523,7 @@ void nsm_interface_show_api(struct vty *vty, struct interface *ifp)
 	}
 
 	if (ifp->vrf_id != VRF_DEFAULT)
-		vty_out(vty, "  ip forward vrf: %s%s", vrf_vrfid2name(ifp->vrf_id), VTY_NEWLINE);
+		vty_out(vty, "  ip forward vrf: %s%s", ip_vrf_vrfid2name(ifp->vrf_id), VTY_NEWLINE);
 
 	if (ifp->desc)
 		vty_out(vty, "  Description: %s%s", ifp->desc, VTY_NEWLINE);
@@ -1682,7 +1682,7 @@ void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, zpl_bo
 			vty_out(vty, " %-18s", pstatus);
 		}
 		if (ifp->vrf_id != VRF_DEFAULT)
-			vty_out(vty, " %-16s%s", vrf_vrfid2name(ifp->vrf_id), VTY_NEWLINE);
+			vty_out(vty, " %-16s%s", ip_vrf_vrfid2name(ifp->vrf_id), VTY_NEWLINE);
 		else
 		{
 			os_memset(pstatus, 0, sizeof(pstatus));

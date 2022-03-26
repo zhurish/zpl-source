@@ -180,18 +180,7 @@ zstrdup(zpl_uint32 type, const char *str)
 }
 
 #ifdef MEMORY_LOG
-static struct
-{
-  const char *name;
-  long alloc;
-  zpl_ulong t_malloc;
-  zpl_ulong c_malloc;
-  zpl_ulong t_calloc;
-  zpl_ulong c_calloc;
-  zpl_ulong t_realloc;
-  zpl_ulong t_free;
-  zpl_ulong c_strdup;
-} mstat[MTYPE_MAX];
+struct mstat mstat[MTYPE_MAX];
 
 static void
 mtype_log(zpl_char *func, void *memory, const char *file, zpl_uint32 line, zpl_uint32 type)
@@ -266,11 +255,7 @@ mtype_zstrdup(const char *file, zpl_uint32 line, zpl_uint32 type, const char *st
   return memory;
 }
 #else
-static struct
-{
-  zpl_char *name;
-  long alloc;
-} mstat[MTYPE_MAX];
+struct mstat mstat[MTYPE_MAX];
 #endif /* MEMORY_LOG */
 
 /* Increment allocation counter. */
@@ -344,127 +329,11 @@ void log_memstats_stderr(const char *prefix)
             "%s: memstats: No remaining tracked memory utilization.\r\n",
             prefix);
 }
-#ifdef ZPL_SHELL_MODULE
-static void
-show_separator(struct vty *vty)
-{
-  vty_out(vty, "-----------------------------\r\n");
-}
 
-static int
-show_memory_vty(struct vty *vty, struct memory_list *list)
-{
-  struct memory_list *m;
-  zpl_uint32 needsep = 0;
-
-  for (m = list; m->index >= 0; m++)
-    if (m->index == 0)
-    {
-      if (needsep)
-      {
-        show_separator(vty);
-        needsep = 0;
-      }
-    }
-    else if (mstat[m->index].alloc && m->format)
-    {
-      vty_out(vty, "%-30s: %10ld\r\n", m->format, mstat[m->index].alloc);
-      needsep = 1;
-    }
-  return needsep;
-}
-
-#ifdef HAVE_MALLINFO
-static int
-show_memory_mallinfo(struct vty *vty)
-{
-  struct mallinfo minfo = mallinfo();
-  zpl_char buf[MTYPE_MEMSTR_LEN];
-
-  vty_out(vty, "System allocator statistics:%s", VTY_NEWLINE);
-  vty_out(vty, "  Total heap allocated:  %s%s",
-          mtype_memstr(buf, MTYPE_MEMSTR_LEN, minfo.arena),
-          VTY_NEWLINE);
-  vty_out(vty, "  Holding block headers: %s%s",
-          mtype_memstr(buf, MTYPE_MEMSTR_LEN, minfo.hblkhd),
-          VTY_NEWLINE);
-  vty_out(vty, "  Used small blocks:     %s%s",
-          mtype_memstr(buf, MTYPE_MEMSTR_LEN, minfo.usmblks),
-          VTY_NEWLINE);
-  vty_out(vty, "  Used ordinary blocks:  %s%s",
-          mtype_memstr(buf, MTYPE_MEMSTR_LEN, minfo.uordblks),
-          VTY_NEWLINE);
-  vty_out(vty, "  Free small blocks:     %s%s",
-          mtype_memstr(buf, MTYPE_MEMSTR_LEN, minfo.fsmblks),
-          VTY_NEWLINE);
-  vty_out(vty, "  Free ordinary blocks:  %s%s",
-          mtype_memstr(buf, MTYPE_MEMSTR_LEN, minfo.fordblks),
-          VTY_NEWLINE);
-  vty_out(vty, "  Ordinary blocks:       %ld%s",
-          (zpl_ulong)minfo.ordblks,
-          VTY_NEWLINE);
-  vty_out(vty, "  Small blocks:          %ld%s",
-          (zpl_ulong)minfo.smblks,
-          VTY_NEWLINE);
-  vty_out(vty, "  Holding blocks:        %ld%s",
-          (zpl_ulong)minfo.hblks,
-          VTY_NEWLINE);
-  vty_out(vty, "(see system documentation for 'mallinfo' for meaning)%s",
-          VTY_NEWLINE);
-  return 1;
-}
-#endif /* HAVE_MALLINFO */
-
-#if 0
-DEFUN (show_memory,
-       show_memory_cmd,
-       "show memory",
-       "Show running system information\n"
-       "Memory statistics\n")
-{
-  struct mlist *ml;
-  zpl_uint32 needsep = 0;
-
-#ifdef HAVE_MALLINFO
-  needsep = show_memory_mallinfo (vty);
-#endif /* HAVE_MALLINFO */
-  
-  for (ml = mlists; ml->list; ml++)
-    {
-      if (needsep)
-	show_separator (vty);
-      needsep = show_memory_vty (vty, ml->list);
-    }
-
-  return CMD_SUCCESS;
-}
-#endif
-
-int vty_show_memory_cmd(void *p)
-{
-  struct vty *vty = (struct vty *)p;
-  struct mlist *ml;
-  zpl_uint32 needsep = 0;
-
-#ifdef HAVE_MALLINFO
-  needsep = show_memory_mallinfo(vty);
-#endif /* HAVE_MALLINFO */
-
-  for (ml = mlists; ml->list; ml++)
-  {
-    if (needsep)
-      show_separator(vty);
-    needsep = show_memory_vty(vty, ml->list);
-  }
-
-  return CMD_SUCCESS;
-}
-#endif
 
 void memory_init(void)
 {
-  /*  install_element (RESTRICTED_NODE, CMD_VIEW_LEVEL, &show_memory_cmd);*/
-  //install_element (VIEW_NODE, CMD_VIEW_LEVEL, &show_memory_cmd);
+  memset(mstat, 0, sizeof(mstat));
 }
 
 /* Stats querying from users */

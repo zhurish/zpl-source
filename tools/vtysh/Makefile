@@ -16,7 +16,7 @@ vtysh_cmd_FILES = $(BASE_ROOT)/platform/lib/cmd_host.c $(BASE_ROOT)/platform/lib
 		  $(BASE_ROOT)/platform/lib/cmd_memory.c $(BASE_ROOT)/platform/lib/eloop.c \
 		  $(BASE_ROOT)/platform/lib/distribute.c $(BASE_ROOT)/platform/lib/filter.c \
 		  $(BASE_ROOT)/platform/lib/keychain.c \
-		  $(BASE_ROOT)/platform/lib/nsm_vrf.c $(BASE_ROOT)/platform/lib/plist.c \
+		  $(BASE_ROOT)/platform/lib/nsm_ip_vrf.c $(BASE_ROOT)/platform/lib/plist.c \
 		  $(BASE_ROOT)/platform/nsm/cli/cmd_interface.c \
 		  $(BASE_ROOT)/platform/nsm/cli/cmd_arp.c \
 		  $(BASE_ROOT)/platform/nsm/cli/cmd_debug.c $(BASE_ROOT)/platform/nsm/cli/cmd_dhcpc.c \

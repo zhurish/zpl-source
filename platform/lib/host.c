@@ -475,7 +475,7 @@ static int host_system_cpu_get(struct host_system *host_system)
 			for (s = buf + strlen(buf); (s > buf) && isspace((int) *(s - 1)); s--)
 				;
 			*s = '\0';
-#ifdef ZPL_BUILD_ARCH_X86
+#if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
 			if(strstr(buf, "processor"))
 				host_system->process++;
 
@@ -597,7 +597,7 @@ static int host_system_information_free(struct host_system *host_system)
 {
 	host_system->process = 0;
 	host_system->freq = 0.0;
-#ifdef ZPL_BUILD_ARCH_X86
+#if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
 	if(host_system->model_name)
 	{
 		free(host_system->model_name);
@@ -718,7 +718,7 @@ int free_main(int argc UNUSED_PARAM, zpl_char **argv IF_NOT_DESKTOP(UNUSED_PARAM
 #ifdef ZPL_SHELL_MODULE
 int show_host_system_information(struct host_system *host_system, struct vty *vty)
 {
-#ifdef ZPL_BUILD_ARCH_X86
+#if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
 	if(host_system->model_name)
 	{
 		vty_out(vty, " CPU Type      : %s%s", host_system->model_name, VTY_NEWLINE);

@@ -34,7 +34,7 @@ int zpl_stack_init(void)
 	zpl_base_env_load();
 	
 	zplib_module_install(module_lists_tbl);
-	
+
 	return OK;
 }
 
@@ -176,7 +176,7 @@ int startup_module_stop(void)
 int startup_module_exit(void)
 {
 	#ifdef ZPL_VRF_MODULE
-	vrf_terminate();
+	ip_vrf_terminate();
 	#endif
 	vty_terminate();
 	cmd_terminate();

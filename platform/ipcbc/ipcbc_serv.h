@@ -8,7 +8,7 @@ extern "C" {
 #include "nsm_rib.h"
 #include "if.h"
 #include "workqueue.h"
-#include "nsm_vrf.h"
+#include "nsm_ip_vrf.h"
 #include "route_types.h"
 /* Default port information. */
 //#define ZEBRA_VTY_PORT                2610
@@ -108,7 +108,7 @@ extern void zebra_zserv_socket_init (zpl_char *path);
 extern void hostinfo_get (void);
 extern void rib_init (void);
 
-extern void kernel_load(struct nsm_vrf *zvrf);
+extern void kernel_load(struct nsm_ip_vrf *zvrf);
 extern void kernel_load_all();
 
 

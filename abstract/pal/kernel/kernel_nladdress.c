@@ -41,7 +41,7 @@ static int _netlink_address(zpl_uint32 cmd, zpl_family_t family, struct interfac
 		char buf[NL_PKT_BUF_SIZE];
 	} req;
 
-	struct nsm_vrf *zvrf = vrf_info_lookup(ifp->vrf_id);
+	struct nsm_ip_vrf *zvrf = ip_vrf_info_lookup(ifp->vrf_id);
 
 	p = ifc->address;
 	memset(&req, 0, sizeof req - NL_PKT_BUF_SIZE);

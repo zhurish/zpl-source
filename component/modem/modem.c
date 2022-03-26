@@ -492,7 +492,7 @@ int modem_main_init(void)
 
 #if 1//def __MODEM_DEBUG
 	modem_serial_add_api("quectelec20");
-#ifdef ZPL_BUILD_ARCH_X86
+#if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
 	modem_serial_channel_api("quectelec20", 5);
 #else
 	modem_serial_channel_api("quectelec20", 1);

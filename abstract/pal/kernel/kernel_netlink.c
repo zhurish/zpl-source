@@ -221,7 +221,7 @@ void _netlink_interface_update_hw_addr(struct ipstack_rtattr **tb, struct interf
  * @param family: Address family which the change concerns
  */
 void _netlink_route_debug(zpl_uint32 cmd, struct prefix *p, struct nexthop *nexthop,
-		const char *routedesc, zpl_family_t family, struct nsm_vrf *zvrf)
+		const char *routedesc, zpl_family_t family, struct nsm_ip_vrf *zvrf)
 {
 	if (IS_ZEBRA_DEBUG_KERNEL)
 	{
@@ -314,7 +314,7 @@ int _netlink_request(zpl_family_t family, zpl_uint32 type, struct nlsock *nl)
  to the given function. */
 int _netlink_parse_info(
 		int (*filter)(struct ipstack_sockaddr_nl *, struct ipstack_nlmsghdr *, vrf_id_t),
-		struct nlsock *nl, struct nsm_vrf *zvrf)
+		struct nlsock *nl, struct nsm_ip_vrf *zvrf)
 {
 	zpl_uint32 status;
 	int ret = 0;
@@ -503,7 +503,7 @@ static int netlink_talk_filter(struct ipstack_sockaddr_nl *snl, struct ipstack_n
 */
 
 /* ipstack_sendmsg() to netlink ipstack_socket then ipstack_recvmsg(). */
-int _netlink_talk(struct ipstack_nlmsghdr *n, struct nlsock *nl, struct nsm_vrf *zvrf)
+int _netlink_talk(struct ipstack_nlmsghdr *n, struct nlsock *nl, struct nsm_ip_vrf *zvrf)
 {
 	zpl_uint32 status;
 	struct ipstack_sockaddr_nl snl;
@@ -659,7 +659,7 @@ static void _netlink_install_filter(zpl_socket_t sock, __u32 pid)
 #endif
 /* Exported interface function.  This function simply calls
  netlink_socket (). */
-static void _kernel_nl_open(struct nsm_vrf *zvrf)
+static void _kernel_nl_open(struct nsm_ip_vrf *zvrf)
 {
 	zpl_ulong groups;
 
@@ -686,7 +686,7 @@ static void _kernel_nl_open(struct nsm_vrf *zvrf)
 	_netlink_socket(&zvrf->netlink_cmd, 0, zvrf->vrf_id);
 }
 
-void _netlink_close(struct nsm_vrf *zvrf)
+void _netlink_close(struct nsm_ip_vrf *zvrf)
 {
 #ifdef ZPL_KERNEL_SORF_FORWARDING
 	if (zvrf->t_netlink)
@@ -717,7 +717,7 @@ void _netlink_close(struct nsm_vrf *zvrf)
 	zvrf->netlink_cmd.snl.nl_pid = 0;
 }
 
-void _netlink_open(struct nsm_vrf *zvrf)
+void _netlink_open(struct nsm_ip_vrf *zvrf)
 {
 	char nl_name[64];
 	/* Initialize netlink sockets */
@@ -739,12 +739,12 @@ void _netlink_open(struct nsm_vrf *zvrf)
 void _netlink_load_all()
 {
 	//int ret = 0;
-	struct nsm_vrf *zvrf = NULL;
+	struct nsm_ip_vrf *zvrf = NULL;
 	vrf_iter_t iter;
 
-	for (iter = vrf_first(); iter != VRF_ITER_INVALID; iter = vrf_next(iter))
+	for (iter = ip_vrf_first(); iter != VRF_ITER_INVALID; iter = ip_vrf_next(iter))
 	{
-		if ((zvrf = vrf_iter2info(iter)) != NULL)
+		if ((zvrf = ip_vrf_iter2info(iter)) != NULL)
 		{
 			_netlink_open(zvrf);
 

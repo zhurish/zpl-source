@@ -43,7 +43,7 @@ extern "C" {
 
 #include "zpl_include.h"
 
-#ifdef ZPL_BUILD_ARCH_X86
+#if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
 #define KEYS_FOLDER 		"/home/zhurish/.ssh/"
 #define USER 				"zhurish"
 #define PASS 				"centos"

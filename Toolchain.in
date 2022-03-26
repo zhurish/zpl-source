@@ -62,6 +62,12 @@ config ZPL_COMPILE_OPTIONS
 	string "Target Compile Optimizations"
 	default "-g"
 
+
+config ZPL_COREDUMP_ENABLE
+	bool "Target Coredump"
+	default y
+	help
+	Build OS Coredump.
 choice
 	prompt "Float Type"
 	default ZPL_FPU_SOFT

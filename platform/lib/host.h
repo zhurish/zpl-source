@@ -65,7 +65,7 @@ struct host_system
 {
 	zpl_uint8		process;
 	zpl_double		freq;
-#ifdef ZPL_BUILD_ARCH_X86
+#if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
 	zpl_char		*model_name;
 #else
 #ifdef ZPL_BUILD_ARCH_MIPS

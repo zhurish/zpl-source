@@ -206,7 +206,7 @@ static int _netlink_route_multipath(zpl_uint32 cmd, struct prefix *p, struct rib
 		char buf[NL_PKT_BUF_SIZE];
 	} req;
 
-	struct nsm_vrf *zvrf = vrf_info_lookup(rib->vrf_id);
+	struct nsm_ip_vrf *zvrf = ip_vrf_info_lookup(rib->vrf_id);
 
 	memset(&req, 0, sizeof req - NL_PKT_BUF_SIZE);
 

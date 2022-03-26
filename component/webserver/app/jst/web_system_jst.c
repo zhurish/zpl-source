@@ -318,7 +318,7 @@ static int jst_arch(int eid, webs_t wp, int argc, char **argv)
 	struct host_system host_system;
 	memset(&host_system, 0, sizeof(struct host_system));
 	host_system_information_get(&host_system);
-#ifdef ZPL_BUILD_ARCH_X86
+#if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
 	if(host_system.model_name)
 	{
 		websWrite(wp, "%s", host_system.model_name);
@@ -337,7 +337,7 @@ static int jst_platform(int eid, webs_t wp, int argc, char **argv)
 	struct host_system host_system;
 	memset(&host_system, 0, sizeof(struct host_system));
 	host_system_information_get(&host_system);
-#ifdef ZPL_BUILD_ARCH_X86
+#if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
 	if(host_system.model_name)
 	{
 	    websWrite(wp, "%s", host_system.model_name);
@@ -633,7 +633,7 @@ static int jst_systeminfo(Webs *wp, char *path, char *query)
 	//websWrite(wp, "%s", "[");
 
 	//websWrite(wp, "%s", host_name_get());
-#ifdef ZPL_BUILD_ARCH_X86
+#if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
 	if(host_system.model_name)
 	{
 		 sprintf (buf, "{\"devname\":\"%s\", \"platfrom\":\"%s\",", host_name_get(), host_system.model_name);

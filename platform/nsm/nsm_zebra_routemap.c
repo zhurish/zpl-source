@@ -383,7 +383,7 @@ DEFUN (set_src,
       return CMD_WARNING;
     }
 
-  for (iter = vrf_first (); iter != VRF_ITER_INVALID; iter = vrf_next (iter))
+  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
     if ((pif = if_lookup_exact_address_vrf (src, vrf_iter2id (iter))) != NULL)
       break;
 

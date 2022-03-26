@@ -100,9 +100,7 @@ extern "C" {
 
 
 
-#ifdef ZPL_KERNEL_STACK_MODULE
-#include "os_stack.h"
-#endif
+
 
 #ifdef ZPL_IPCOM_STACK_MODULE
 #include "ipnet_config.h"
@@ -114,6 +112,8 @@ extern "C" {
 #include  "ipcom_netif.h"
 #define RT_TABLE_MAIN 0
 #include "ipcom_stack.h"
+#else
+#include "os_stack.h"
 #endif /* ZPL_KERNEL_STACK_MODULE */
 
 

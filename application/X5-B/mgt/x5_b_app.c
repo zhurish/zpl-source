@@ -1739,7 +1739,7 @@ int x5b_app_module_init(char *local, zpl_uint16 port)
 #ifdef X5B_APP_DATABASE
 	x5b_user_load();
 #endif
-#ifdef ZPL_BUILD_ARCH_X86
+#if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
 	x5b_app_global->X5CM = zpl_true;
 	x5b_app_global->opentype = OPEN_FACE_AND_CARD;
 	x5b_app_global->customizer = CUSTOMIZER_SECOM;

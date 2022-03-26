@@ -62,7 +62,7 @@ static int zpl_base_dir_load(void)
 	if(access(DEFAULT_CONFIG_FILE, F_OK) != 0)
 		super_system("cp -af " SYSCONF_REAL_DIR"/default-config.cfg  " DEFAULT_CONFIG_FILE);
 #else
-#ifdef ZPL_BUILD_ARCH_X86
+#if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
 	if(access(DEFAULT_CONFIG_FILE, F_OK) != 0)
 		super_system("cp -af " SYSCONFDIR"/default-config.cfg  " DEFAULT_CONFIG_FILE);
 	super_system("cp -arf " SYSCONFDIR"/*" " " PLSYSCONFDIR"/");
