@@ -110,6 +110,7 @@ DEFUN (no_hal_test_bpdu,
 /*
  * dos
  */
+#ifdef ZPL_NSM_DOS
 DEFUN (hal_test_icmp_size,
 		hal_test_icmp_size_cmd,
 		"sdk icmp-size <64-65530>",
@@ -210,7 +211,7 @@ DEFUN (no_hal_test_dos_enable,
 	ret = hal_dos_enable(zpl_false, type);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
-
+#endif
 /*
  * MAC
  */
@@ -225,7 +226,7 @@ int hal_mac_read(ifindex_t ifindex, vlan_t vlan);
 /*
  * mirror
  */
-
+#ifdef ZPL_NSM_MIRROR
 DEFUN (hal_test_mirror_enable,
 		hal_test_mirror_enable_cmd,
 		"sdk mirror interface " CMD_IF_USPV_STR " "CMD_USP_STR,
@@ -269,7 +270,7 @@ DEFUN (no_hal_test_mirror_src_enable,
 	ret = hal_mirror_source_enable(if_ifindex_make(argv[0], argv[1]), zpl_false, MIRROR_SOURCE_PORT, MIRROR_BOTH);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
-
+#endif
 /*
  * PORT
  */
@@ -481,18 +482,21 @@ int hal_test_init(void)
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &no_hal_test_multicast_learning_cmd);
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &hal_test_bpdu_cmd);
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &no_hal_test_bpdu_cmd);
+
+#ifdef ZPL_NSM_DOS
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &hal_test_icmp_size_cmd);
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &hal_test_tcp_hdr_size_cmd);
 
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &hal_test_dos_enable_cmd);
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &no_hal_test_dos_enable_cmd);
-
+#endif
+#ifdef ZPL_NSM_MIRROR
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &hal_test_mirror_enable_cmd);
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &no_hal_test_mirror_enable_cmd);
 
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &hal_test_mirror_src_enable_cmd);
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &no_hal_test_mirror_src_enable_cmd);
-
+#endif
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &hal_test_interface_up_cmd);
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &hal_test_interface_down_cmd);
 

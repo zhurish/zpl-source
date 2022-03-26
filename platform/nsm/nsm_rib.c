@@ -21,16 +21,21 @@
 
 #include "os_include.h"
 #include "zpl_include.h"
-#include "lib_include.h"
-#include "nsm_include.h"
+#include "route_types.h"
+#include "zebra_event.h"
+#include "if.h"
+#include "if.h"
+#include "vrf.h"
+#include "memory.h"
+#include "nexthop.h"
 #include "nsm_rib.h"
-#ifdef ZPL_RTPL_MODULE
+#ifdef ZPL_NSM_MODULE
 #include "nsm_zserv.h"
 #include "nsm_redistribute.h"
-#include "nsm_routemap.h"
+#include "routemap.h"
 #include "nsm_rnh.h"
 #endif
-
+#include "nsm_debug.h"
 
 static struct nsm_rib_t m_nsm_ribd =
 {
@@ -886,7 +891,7 @@ static unsigned nexthop_active_check(struct route_node *rn, struct rib *rib,
 {
 	rib_table_info_t *info = rn->table->info;
 	struct interface *ifp;
-	#ifdef ZPL_RTPL_MODULE
+	#ifdef ZPL_NSM_MODULE
 	route_map_result_t ret = RMAP_MATCH;
 	#endif
 	zpl_family_t family;
@@ -990,7 +995,7 @@ static unsigned nexthop_active_check(struct route_node *rn, struct rib *rib,
 	 struct nexthop_vrfid nh_vrf = {nexthop, rib->vrf_id};
 	 ret = route_map_apply(rmap, &rn->p, RMAP_ZEBRA, &nh_vrf);
 	 }*/
-#ifdef ZPL_RTPL_MODULE
+#ifdef ZPL_NSM_MODULE
 	if (ret == RMAP_DENYMATCH)
 		UNSET_FLAG(nexthop->flags, NEXTHOP_FLAG_ACTIVE);
 #endif
@@ -1106,7 +1111,7 @@ static void rib_uninstall(struct route_node *rn, struct rib *rib)
 	{
 		if (info->safi == SAFI_UNICAST)
 			; //zfpm_trigger_update (rn, "rib_uninstall");
-#ifdef ZPL_RTPL_MODULE
+#ifdef ZPL_NSM_MODULE
 		redistribute_delete(&rn->p, rib);
 #endif
 		if (!RIB_SYSTEM_ROUTE(rib))
@@ -1333,7 +1338,7 @@ static void rib_process(struct route_node *rn)
     {
       if (old_selected)
         {
-			#ifdef ZPL_RTPL_MODULE
+			#ifdef ZPL_NSM_MODULE
           if (! new_selected)
             redistribute_delete (&rn->p, old_selected);
 			#endif
@@ -1345,7 +1350,7 @@ static void rib_process(struct route_node *rn)
         {
           /* Install new or replace existing redistributed entry */
           SET_FLAG (new_selected->flags, ZEBRA_FLAG_SELECTED);
-		  #ifdef ZPL_RTPL_MODULE
+		  #ifdef ZPL_NSM_MODULE
           redistribute_add (&rn->p, new_selected, old_selected);
 		  #endif
         }

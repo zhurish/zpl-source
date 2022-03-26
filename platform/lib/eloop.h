@@ -27,7 +27,7 @@ extern "C" {
 #endif
 
 
-#include "zpl_include.h"
+#include "os_include.h"
 
 #ifndef ZPL_IPCOM_STACK_MODULE
 #include "thread.h"
@@ -78,7 +78,7 @@ extern "C" {
 #define eloop_consumed_time  thread_consumed_time
 
 #else
-#define THREAD_MASTER_LIST
+#define ELOOP_MASTER_LIST
 
 
 /* Linked list of eloop. */
@@ -108,7 +108,7 @@ struct eloop_cpu
 /* Master of the theads. */
 struct eloop_master
 {
-  #ifdef THREAD_MASTER_LIST
+  #ifdef ELOOP_MASTER_LIST
   struct eloop_master *next;		/* next pointer of the thread */   
   struct eloop_master *prev;		/* previous pointer of the thread */
   #endif
@@ -294,7 +294,7 @@ extern void eloop_getrusage (struct timeval *);
 /* Returns elapsed real (wall clock) time. */
 extern zpl_ulong eloop_consumed_time(struct timeval *after, struct timeval *before,
 					  zpl_ulong *cpu_time_elapsed);
-#ifndef THREAD_MASTER_LIST
+#ifndef ELOOP_MASTER_LIST
 extern struct eloop_master * master_eloop[];
 #endif
 //extern struct timeval eloop_recent_relative_time (void);

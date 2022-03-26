@@ -46,7 +46,7 @@ int nsm_module_init(void)
 	if(nsm_srv->master == NULL)
 		nsm_srv->master = thread_master_module_create(MODULE_NSM);
 
-	nsm_event_init();
+	lib_event_init();
 
 	if_init();
 	nsm_vrf_init();
@@ -180,17 +180,19 @@ int nsm_module_exit(void)
 	access_list_reset();
 	prefix_list_reset();
 
-	nsm_event_exit();
+	lib_event_exit();
 	return OK;
 }
 
 int nsm_module_cmd_init(void)
 {
-	#ifdef ZPL_RTPL_MODULE
+
 	cmd_router_id_init();
-	#endif
+
 	cmd_interface_init();
+#ifdef ZPL_NSM_L3MODULE
 	cmd_route_init();
+#endif
 #ifdef ZPL_IPCOM_STACK_MODULE
 	cmd_ip_vrf_init();
 #endif
@@ -249,7 +251,9 @@ int nsm_module_start(void)
 {
 	nsm_global_start();
 	nsm_port_start();
+#ifdef ZPL_NSM_VLAN	
 	nsm_vlan_default();
+#endif
 	return OK;
 }
 

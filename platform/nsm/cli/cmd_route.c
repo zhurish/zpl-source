@@ -25,11 +25,12 @@
 #include "lib_include.h"
 #include "nsm_include.h"
 #include "vty_include.h"
-#ifdef ZPL_RTPL_MODULE
+
 #include "nsm_zserv.h"
 #include "nsm_rnh.h"
-#endif
 
+
+#ifdef ZPL_NSM_L3MODULE
 
 char *proto_rm[AFI_MAX][ZEBRA_ROUTE_MAX+1];	/* "any" == ZEBRA_ROUTE_MAX */
 static int do_show_ip_route(struct vty *vty, safi_t safi, vrf_id_t vrf_id);
@@ -5958,3 +5959,4 @@ void cmd_route_init (void)
   //install_element (ENABLE_NODE, CMD_VIEW_LEVEL, &show_ipv6_mroute_vrf_all_cmd);
 #endif
 }
+#endif

@@ -21,8 +21,11 @@
 
 #include "os_include.h"
 #include "zpl_include.h"
-#include "lib_include.h"
-
+#include "thread.h"
+#include "log.h"
+#include "memory.h"
+#include "command.h"
+#include "pqueue.h"
 #if defined(__APPLE__)
 #include <mach/mach.h>
 #include <mach/mach_time.h>
@@ -39,6 +42,7 @@ struct thread_master_list
 
 //static struct thread_master *_m_thread_current = NULL;
 static struct thread_master_list _master_thread_list;
+static void *_master_mutex = NULL;
 #else
 struct thread_master *master_thread[MODULE_MAX];
 #endif
@@ -142,16 +146,24 @@ static struct thread_master *thread_master_list_delete(struct thread_master_list
 #if 1
 static int thread_master_add_list(struct thread_master *node)
 {
+	if (_master_mutex)
+		os_mutex_lock(_master_mutex, OS_WAIT_FOREVER);	
 	thread_master_list_add(&_master_thread_list, node);
+	if (_master_mutex)
+		os_mutex_unlock(_master_mutex);	
 	return OK;
 }
 
 static int thread_master_del_list(struct thread_master *node)
 {
 	struct thread_master *cutmp = NULL;
+	if (_master_mutex)
+		os_mutex_lock(_master_mutex, OS_WAIT_FOREVER);	
 	cutmp = thread_master_list_delete(&_master_thread_list, node);
 	if (cutmp)
 		XFREE(MTYPE_THREAD_MASTER, cutmp);
+	if (_master_mutex)
+		os_mutex_unlock(_master_mutex);	
 	return OK;
 }
 
@@ -159,6 +171,8 @@ static struct thread_master *thread_master_get_list(int mode)
 {
 	struct thread_master *cutmp = NULL;
 	struct thread_master *next = NULL;
+	if (_master_mutex)
+		os_mutex_lock(_master_mutex, OS_WAIT_FOREVER);		
 	for (cutmp = _master_thread_list.head; cutmp; cutmp = next)
 	{
 		next = cutmp->next;
@@ -167,6 +181,8 @@ static struct thread_master *thread_master_get_list(int mode)
 			break;
 		}
 	}
+	if (_master_mutex)
+		os_mutex_unlock(_master_mutex);	
 	return cutmp;
 }
 #else
@@ -269,6 +285,7 @@ thread_master_create()
 		}
 #else
 		memset(&_master_thread_list, 0, sizeof(_master_thread_list));
+		_master_mutex = os_mutex_init();
 #endif
 		os_mt_init = 1;
 	}

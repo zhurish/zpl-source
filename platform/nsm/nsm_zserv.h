@@ -29,7 +29,9 @@ extern "C" {
 #include "nsm_rib.h"
 #include "if.h"
 #include "workqueue.h"
-#include "nsm_vrf.h"
+#ifdef ZPL_VRF_MODULE
+#include "vrf.h"
+#endif
 #include "route_types.h"
 /* Default port information. */
 //#define ZEBRA_VTY_PORT                2610
@@ -59,10 +61,10 @@ struct zserv
 
   /* default routing table this client munges */
   zpl_uint32 rtm_table;
-
+#ifdef ZPL_VRF_MODULE
   /* This client's redistribute flag. */
   vrf_bitmap_t redist[ZEBRA_ROUTE_MAX];
-
+#endif
   /* Redistribute default route flag. */
   vrf_bitmap_t redist_default;
 

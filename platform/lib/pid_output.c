@@ -23,8 +23,8 @@
 
 #include "os_include.h"
 #include "zpl_include.h"
-#include "lib_include.h"
-
+#include "daemon.h"
+#include "log.h"
 
 #define PIDFILE_MASK 0644
 #if 1//ndef HAVE_FCNTL

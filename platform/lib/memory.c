@@ -22,7 +22,10 @@
 
 #include "os_include.h"
 #include "zpl_include.h"
-#include "lib_include.h"
+#include "memory.h"
+#include "memtypes.h"
+#include "log.h"
+#include "command.h"
 /* malloc.h is generally obsolete, however GNU Libc mallinfo wants it. */
 #if !defined(HAVE_STDLIB_H) || (defined(GNU_LINUX) && defined(HAVE_MALLINFO))
 #include <malloc.h>

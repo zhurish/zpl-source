@@ -2,7 +2,7 @@
  * Automatically generated C config: don't edit
  * Busybox version: 
  */
-#define AUTOCONF_TIMESTAMP "2022-03-12 11:37:55 CST"
+#define AUTOCONF_TIMESTAMP "2022-03-26 10:51:40 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
@@ -14,7 +14,7 @@
 #define ZPL_INSTALL_PATH "./_install"
 
 /*
- * Platform Arch Config
+ * Arch Config
  */
 #define ZPL_SYSTEM_MODULE 1
 #define ZPL_SYSTEM_LINUX 1
@@ -73,29 +73,22 @@
 #define ZPL_OS_TTYCOM 1
 #define ZPL_OS_XYZ_MODEM 1
 #define ZPL_OS_CPPJSON 1
-
-/*
- * Platform Lib Module
- */
-#define ZPL_WORKQUEUE 1
-#define ZPL_KEYCHAIN 1
-#define ZPL_DISTRIBUTE 1
-#define ZPL_IP_FILTER 1
-#define ZPL_IP_PLIST 1
+#define ZPL_LIB_MODULE 1
 #undef ZPL_LIBEVENT_MODULE
 #undef ZPL_LIBEVENT_SIGNAL
 #undef ZPL_LIBMXML_MODULE
-
-/*
- * Platform Shell Module
- */
+#define ZPL_IP_FILTER 1
+#define ZPL_IP_PLIST 1
+#define ZPL_WORKQUEUE 1
 #define ZPL_SHELL_MODULE 1
 #undef ZPL_SHRL_MODULE
-
-/*
- * NSM Layer Module
- */
 #define ZPL_NSM_MODULE 1
+#define ZPL_VRF_MODULE 1
+#define ZPL_KEYCHAIN 1
+#define ZPL_DISTRIBUTE 1
+#define ZPL_NSM_L3MODULE 1
+#define ZPL_NSM_NEXTHOP 1
+#define ZPL_NSM_ROUTEMAP 1
 #define ZPL_NSM_8021X 1
 #define ZPL_NSM_ARP 1
 #define ZPL_NSM_BRIDGE 1
@@ -114,16 +107,11 @@
 #define ZPL_NSM_TRUNK 1
 #define ZPL_NSM_TUNNEL 1
 #define ZPL_NSM_VLAN 1
+#define ZPL_NSM_IGMP 1
+#define ZPL_NSM_MSTP 1
+#define ZPL_NSM_PORT 1
 #define ZPL_NSM_VLANETH 1
 #define ZPL_NSM_SECURITY 1
-
-/*
- * RTPL Layer Module
- */
-#define ZPL_RTPL_MODULE 1
-#define ZPL_RTPL_SRV 1
-#define ZPL_RTPL_RNH 1
-#define ZPL_RTPL_ROUTEMAP 1
 #define ZPL_IPCBC_MODULE 1
 #undef ZPL_IPCBUS_MODULE
 
@@ -174,7 +162,7 @@
 #undef ZPL_IPCOM_STACK_MODULE
 #define ZPL_KERNEL_STACK_MODULE 1
 #define ZPL_KERNEL_STACK_NETLINK 1
-#undef ZPL_KERNEL_SORF_FORWARDING
+#define ZPL_KERNEL_SORF_FORWARDING 1
 #define ZPL_IPCOM_ROOT_PATH ""
 
 /*

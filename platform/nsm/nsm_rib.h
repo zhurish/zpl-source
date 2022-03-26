@@ -92,7 +92,7 @@ struct rib
   zpl_uchar distance;
 
   /* Flags of this route.
-   * This flag's definition is in lib/zpl_include.h ZEBRA_FLAG_* and is exposed
+   * This flag's definition is in lib/os_include.h ZEBRA_FLAG_* and is exposed
    * to clients via Zserv
    */
   zpl_uchar flags;

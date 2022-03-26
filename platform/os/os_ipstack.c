@@ -202,7 +202,11 @@ zpl_socket_t ipstack_socket_vrf(zpl_ipstack stack, int domain, zpl_uint32 type, 
 #ifdef ZPL_IPCOM_STACK_MODULE
 	if(stack == OS_STACK)
 	{
-    	
+		ret = setsockopt (socktmp._fd, IPSTACK_SOL_SOCKET, IPSTACK_SO_MARK, &vrf, sizeof (vrf));
+		if(ret != 0)
+		{
+			ipstack_close(socktmp);
+		}
 	}
 	else
 	{
@@ -213,7 +217,7 @@ zpl_socket_t ipstack_socket_vrf(zpl_ipstack stack, int domain, zpl_uint32 type, 
 		}
 	}
 #else
-	//ret = ipcom_setsockopt (socktmp._fd, IPSTACK_SOL_SOCKET, IP_SO_X_VR, &vrf, sizeof (vrf));
+	ret = setsockopt (socktmp._fd, IPSTACK_SOL_SOCKET, IPSTACK_SO_MARK, &vrf, sizeof (vrf));
 #endif
 	return socktmp;
 }

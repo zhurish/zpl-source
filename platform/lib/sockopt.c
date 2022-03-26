@@ -21,8 +21,8 @@
 
 #include "os_include.h"
 #include "zpl_include.h"
-#include "lib_include.h"
-
+#include "sockopt.h"
+#include "log.h"
 int
 setsockopt_so_recvbuf (zpl_socket_t sock, zpl_uint32 size)
 {

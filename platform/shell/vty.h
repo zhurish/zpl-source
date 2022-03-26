@@ -25,7 +25,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 extern "C" {
 #endif
 
-#include "zpl_include.h"
+#include "os_include.h"
 #include "log.h"
 #include "sockunion.h"
 #include "thread.h"
@@ -420,7 +420,7 @@ extern const char * vty_prompt(struct vty *vty);
 extern int vty_stdio_init(struct vty *vty);
 extern int vty_stdio_start(zpl_bool s);
 #endif /*ZPL_SHRL_MODULE*/
-extern int vty_console_init(const char *tty);
+//extern int vty_console_init(const char *tty);
 
 
 extern void vty_init (void);

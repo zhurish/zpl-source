@@ -29,7 +29,9 @@ extern "C" {
 /* For struct zapi_ipv{4,6}. */
 #include "if.h"
 #include "prefix.h"
-#include "nsm_vrf.h"
+#ifdef ZPL_VRF_MODULE
+#include "vrf.h"
+#endif
 
 
 extern int nsm_halpal_interface_add(struct interface *ifp);
@@ -77,7 +79,7 @@ extern int nsm_halpal_create_vr(vrf_id_t vrf_id);
 extern int nsm_halpal_delete_vr(vrf_id_t vrf_id);
 
 
-//ip arp
+#ifdef ZPL_NSM_ARP
 extern int nsm_halpal_interface_arp_add(struct interface *ifp, struct prefix *address, zpl_uint8 *mac);
 extern int nsm_halpal_interface_arp_delete(struct interface *ifp, struct prefix *address);
 extern int nsm_halpal_interface_arp_request(struct interface *ifp, struct prefix *address);
@@ -85,7 +87,7 @@ extern int nsm_halpal_arp_gratuitousarp_enable(zpl_bool enable);
 extern int nsm_halpal_arp_ttl(zpl_uint32 ttl);
 extern int nsm_halpal_arp_age_timeout(zpl_uint32 timeout);
 extern int nsm_halpal_arp_retry_interval(zpl_uint32 interval);
-
+#endif
 
 
 #ifdef __cplusplus

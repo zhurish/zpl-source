@@ -21,8 +21,9 @@
 
 #include "os_include.h"
 #include "zpl_include.h"
-#include "lib_include.h"
-
+#include "vector.h"
+#include "memory.h"
+#include "log.h"
 /* Initialize vector : allocate memory and return vector. */
 vector
 vector_init (zpl_uint32  size)

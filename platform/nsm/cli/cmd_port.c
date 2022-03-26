@@ -67,7 +67,7 @@ DEFUN(nsm_interface_switchport,
 	}
 	return CMD_WARNING;
 }
-
+#ifdef ZPL_NSM_L3MODULE
 DEFUN(no_nsm_interface_switchport,
 	  no_nsm_interface_switchport_cmd,
 	  "no switchport",
@@ -121,7 +121,7 @@ DEFUN(no_nsm_interface_switchport,
 	}
 	return CMD_WARNING;
 }
-
+#endif
 
 DEFUN (nsm_interface_switchport_mode,
 		nsm_interface_switchport_mode_cmd,
@@ -221,7 +221,7 @@ DEFUN (no_nsm_interface_switchport_mode,
 
 /* port */
 
-
+#ifdef ZPL_NSM_MAC
 DEFUN (mac_address_learn,
 		mac_address_learn_cmd,
 		CMD_MAC_ADDRESS_LEARN_STR" (enable|disable)",
@@ -371,7 +371,7 @@ DEFUN (mac_address_learn_software,
 	}
 	return CMD_WARNING;
 }
-
+#endif
 
 DEFUN (jumboframe_enable,
 		jumboframe_enable_cmd,
@@ -846,8 +846,10 @@ DEFUN (show_unit_board_info,
 
 static void cmd_port_base_init (int node)
 {
+#ifdef ZPL_NSM_MAC	
 	install_element(node, CMD_CONFIG_LEVEL, &mac_address_learn_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &mac_address_learn_software_cmd);
+#endif	
 	install_element(node, CMD_CONFIG_LEVEL, &jumboframe_enable_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &port_loopback_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &no_port_loopback_cmd);
@@ -865,16 +867,18 @@ void cmd_port_init (void)
 
 
 	install_element(INTERFACE_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
-	install_element(INTERFACE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
 	install_element(INTERFACE_RANGE_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
+#ifdef ZPL_NSM_L3MODULE	
+	install_element(INTERFACE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
 	install_element(INTERFACE_RANGE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
+	install_element(LAG_INTERFACE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
+#endif
 
 	install_element(INTERFACE_L3_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
 	install_element(INTERFACE_L3_RANGE_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
 
 
 	install_element(LAG_INTERFACE_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
-	install_element(LAG_INTERFACE_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_switchport_cmd);
 	install_element(LAG_INTERFACE_L3_NODE, CMD_CONFIG_LEVEL, &nsm_interface_switchport_cmd);
 
 	cmd_port_base_init (INTERFACE_NODE);

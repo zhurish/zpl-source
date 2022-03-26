@@ -24,7 +24,7 @@
 #include "zpl_include.h"
 #include "lib_include.h"
 #include "nsm_include.h"
-
+#include "nsm_rib.h"
 #ifdef HAVE_NETNS
 #undef _GNU_SOURCE
 #define _GNU_SOURCE

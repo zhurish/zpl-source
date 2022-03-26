@@ -19,8 +19,10 @@
  * 02111-1307, USA.
  */
 
+#include <os_include.h>
 #include <zpl_include.h>
-
+#include "route_types.h"
+#include "zebra_event.h"
 #include "prefix.h"
 #include "table.h"
 #include "memory.h"
@@ -37,12 +39,12 @@
 #include "nexthop.h"
 
 #include "nsm_rib.h"
-#include "rtpl_event.h"
+#include "zebra_event.h"
 #include "nsm_zserv.h"
 #include "nsm_redistribute.h"
 #include "nsm_debug.h"
 #include "nsm_rnh.h"
-#include "nsm_routemap.h"
+#include "routemap.h"
 
 #define lookup_rnh_table(v, f)		         \
 ({						 \

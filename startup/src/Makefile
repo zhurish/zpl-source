@@ -34,6 +34,8 @@ make_prepare:
 		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); 	\
 	done
 
+#
+#	
 lib: $(LIBS)
 
 

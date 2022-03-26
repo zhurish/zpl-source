@@ -22,8 +22,12 @@
 
 #include "os_include.h"
 #include "zpl_include.h"
-#include "lib_include.h"
-#include "nsm_include.h"
+#include "zebra_event.h"
+#include "route_types.h"
+#include "if.h"
+#include "prefix.h"
+#include "connected.h"
+
 
 struct connected *
 connected_lookup(struct interface *ifp, struct prefix *p)

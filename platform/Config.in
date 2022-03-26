@@ -82,41 +82,16 @@ config ZPL_OS_CPPJSON
 	help
 	Build CPPJSON Module.
 
-comment "Platform Lib Module"
-
-config ZPL_WORKQUEUE
-	bool "Library Workqueue Module"
+config ZPL_LIB_MODULE
+	bool "Platform Lib Module"
 	default y
 	help
-	Build Workqueue Module.
-
-config ZPL_KEYCHAIN
-	bool "Library Keychain Module"
-	default y
-	help
-	Build Keychain Module.
-
-config ZPL_DISTRIBUTE
-	bool "Library Distribute Module"
-	default y
-	help
-	Build Distribute Module.
-
-config ZPL_IP_FILTER
-	bool "Library Filter Module"
-	default y
-	help
-	Build IP Filter Module.
-
-config ZPL_IP_PLIST
-	bool "Library IP Plist Module"
-	default y
-	help
-	Build IP Plist Module.
+	Build Platform Lib Module.
 
 config ZPL_LIBEVENT_MODULE
 	bool "Libevent Module"
 	default y
+	depends on ZPL_LIB_MODULE
 	help
 	Build Libevent Module.
 
@@ -130,14 +105,34 @@ config ZPL_LIBEVENT_SIGNAL
 config ZPL_LIBMXML_MODULE
 	bool "Libmxml Module"
 	default n
+	depends on ZPL_LIB_MODULE
 	help
 	Build Libmxml Module.
 
-comment "Platform Shell Module"
+config ZPL_IP_FILTER
+	bool "Library Filter Module"
+	default y
+	depends on ZPL_LIB_MODULE
+	help
+	Build IP Filter Module.
+
+config ZPL_IP_PLIST
+	bool "Library IP Plist Module"
+	default y
+	depends on ZPL_LIB_MODULE
+	help
+	Build IP Plist Module.
+
+config ZPL_WORKQUEUE
+	bool "Library Workqueue Module"
+	default y
+	depends on ZPL_LIB_MODULE
+	help
+	Build Workqueue Module.
 
 config ZPL_SHELL_MODULE
 	bool "Platform Shell Module" 
-	depends on ZPL_OS_MODULE
+	depends on ZPL_LIB_MODULE
 	default y
 	help
 	Build Shell Module.
@@ -149,39 +144,80 @@ config ZPL_SHRL_MODULE
 	help
 	Build Shell readline Module.
 
-comment "NSM Layer Module"
-
 config ZPL_NSM_MODULE
 	bool "Network Service Module"
 	default y
+	depends on ZPL_LIB_MODULE
 	help
 	Build Network Service Module.
 
+config ZPL_VRF_MODULE
+	bool "Library VRF Module"
+	default y
+	depends on ZPL_NSM_MODULE
+	help
+	Build VRF Module.
+
+config ZPL_KEYCHAIN
+	bool "Library Keychain Module"
+	default y
+	depends on ZPL_NSM_MODULE
+	help
+	Build Keychain Module.
+
+config ZPL_DISTRIBUTE
+	bool "Library Distribute Module"
+	default y
+	depends on ZPL_NSM_MODULE
+	help
+	Build Distribute Module.
+
+config ZPL_NSM_L3MODULE
+	bool "L3 Network Layer Module"
+	default n
+	depends on ZPL_NSM_MODULE
+	help
+	Build L3 Network Layer Module.
+
+config ZPL_NSM_NEXTHOP
+	bool "Router nexthop Module"
+	default n
+	depends on ZPL_NSM_L3MODULE
+	help
+	Build Router nexthop Module.
+
+config ZPL_NSM_ROUTEMAP
+	bool "Router Routemap Module"
+	default n
+	depends on ZPL_NSM_L3MODULE
+	help
+	Build Router Routemap Module.
+
 config ZPL_NSM_8021X
-	bool "Platform NSM 8021x Module"
+	bool "NSM 8021x Module"
 	default n
 	depends on ZPL_NSM_MODULE
 	help
 	Build NSM 8021x Module.
 	
 config ZPL_NSM_ARP
-	bool "Platform NSM ARP Module"
+	bool "NSM ARP Module"
 	default y
-	depends on ZPL_NSM_MODULE
+	depends on ZPL_NSM_L3MODULE
 	help
 	Build NSM ARP Module.
 	
 config ZPL_NSM_BRIDGE
-	bool "Platform NSM Bridge Module"
+	bool "NSM Bridge Module"
 	default n
-	depends on ZPL_NSM_MODULE
+	depends on ZPL_NSM_L3MODULE
 	help
 	Build NSM Bridge Module.
 	
 config ZPL_NSM_DHCP
-	bool "Platform NSM Dhcp Module"
+	bool "NSM Dhcp Module"
 	default y
-	depends on ZPL_NSM_MODULE
+	depends on ZPL_NSM_L3MODULE
 	help
 	Build NSM Dhcp Module.
 
@@ -207,134 +243,128 @@ config ZPL_DHCPR_MODULE
 	Build DHCP Relay Module.
 
 config ZPL_NSM_DNS
-	bool "Platform NSM Dns Module"
+	bool "NSM Dns Module"
 	default y
-	depends on ZPL_NSM_MODULE
+	depends on ZPL_NSM_L3MODULE
 	help
 	Build NSM Dns Module.
 	
 config ZPL_NSM_DOS
-	bool "Platform NSM Dos Module"
+	bool "NSM Dos Module"
 	default n
 	depends on ZPL_NSM_MODULE
 	help
 	Build NSM Dos Module.
 	
 config ZPL_NSM_FIREWALLD
-	bool "Platform NSM Firewalld Module"
+	bool "NSM Firewalld Module"
 	default y
 	depends on ZPL_NSM_MODULE
 	help
 	Build NSM Firewalld Module.
 	
 config ZPL_NSM_MAC
-	bool "Platform NSM MAC Module"
+	bool "NSM MAC Module"
 	default y
 	depends on ZPL_NSM_MODULE
 	help
 	Build NSM MAC Module.
 	
 config ZPL_NSM_MIRROR
-	bool "Platform NSM Mirror Module"
+	bool "NSM Mirror Module"
 	default n
 	depends on ZPL_NSM_MODULE
 	help
 	Build NSM Mirror Module.
 	
 config ZPL_NSM_PPP
-	bool "Platform NSM PPP Module"
+	bool "NSM PPP Module"
 	default y
-	depends on ZPL_NSM_MODULE
+	depends on ZPL_NSM_L3MODULE
 	help
 	Build NSM PPP Module.
 	
 config ZPL_NSM_QOS
-	bool "Platform NSM QOS Module"
+	bool "NSM QOS Module"
 	default n
 	depends on ZPL_NSM_MODULE
 	help
 	Build NSM QOS Module.
 	
 config ZPL_NSM_SERIAL
-	bool "Platform NSM Serial Module"
+	bool "NSM Serial Module"
 	default y
-	depends on ZPL_NSM_MODULE
+	depends on ZPL_NSM_L3MODULE
 	help
 	Build NSM Serial Module.
 	
 config ZPL_NSM_TRUNK
-	bool "Platform NSM Trunk Module"
+	bool "NSM Trunk Module"
 	default n
 	depends on ZPL_NSM_MODULE
 	help
 	Build NSM Trunk Module.
 
 config ZPL_NSM_TUNNEL
-	bool "Platform NSM Tunnel Module"
+	bool "NSM Tunnel Module"
 	default y
-	depends on ZPL_NSM_MODULE
+	depends on ZPL_NSM_L3MODULE
 	help
 	Build NSM Tunnel Module.
 	
 config ZPL_NSM_VLAN
-	bool "Platform NSM VLAN Module"
+	bool "NSM VLAN Module"
 	default n
 	depends on ZPL_NSM_MODULE
 	help
 	Build NSM VLAN Module.
-	
-config ZPL_NSM_VLANETH
-	bool "Platform NSM Veth Module"
+
+config ZPL_NSM_IGMP
+	bool "NSM IGMP Module"
+	default n
+	depends on ZPL_NSM_MODULE
+	help
+	Build NSM IGMP Module.
+
+config ZPL_NSM_MSTP
+	bool "NSM MSTP Module"
+	default n
+	depends on ZPL_NSM_MODULE
+	help
+	Build NSM MSTP Module.
+
+config ZPL_NSM_PORT
+	bool "NSM PORT Module"
 	default y
 	depends on ZPL_NSM_MODULE
+	help
+	Build NSM PORT Module.
+
+config ZPL_NSM_VLANETH
+	bool "NSM Veth Module"
+	default y
+	depends on ZPL_NSM_L3MODULE
 	help
 	Build NSM VLAN eth Module.
 	
 config ZPL_NSM_SECURITY
-	bool "Platform NSM Security Module"
+	bool "NSM Security Module"
 	default n
 	depends on ZPL_NSM_MODULE
 	help
 	Build NSM Security Module.
 
-comment "RTPL Layer Module"
-
-config ZPL_RTPL_MODULE
-	bool "Router Platform Module"
-	default y
-	help
-	Build Router Platform Module.
-
-config ZPL_RTPL_SRV
-	bool "Router Server Service Module"
-	default n
-	depends on ZPL_RTPL_MODULE
-	help
-	Build Router Server Service Module.
-
-config ZPL_RTPL_RNH
-	bool "Router rnh Module"
-	default n
-	depends on ZPL_RTPL_MODULE
-	help
-	Build Router rnh Module.
-
-config ZPL_RTPL_ROUTEMAP
-	bool "Router Routemap Module"
-	default n
-	depends on ZPL_RTPL_MODULE
-	help
-	Build Router Routemap Module.
-
 config ZPL_IPCBC_MODULE
 	bool "IPC BoardCard Module"
 	default y
+	depends on ZPL_LIB_MODULE
 	help
 	Build IPC BoardCard Module.
 
 config ZPL_IPCBUS_MODULE
 	bool "IPC Bus Module"
 	default y
+	depends on ZPL_LIB_MODULE
 	help
 	Build IPC Bus Module.
 

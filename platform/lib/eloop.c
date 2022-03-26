@@ -23,7 +23,7 @@
 
 #include "os_include.h"
 #include "zpl_include.h"
-#include "lib_include.h"
+#include "eloop.h"
 
 
 #ifdef ZPL_IPCOM_STACK_MODULE
@@ -33,7 +33,7 @@
 #endif
 
 static zpl_uint32 os_mt_init = 0;
-#ifdef THREAD_MASTER_LIST
+#ifdef ELOOP_MASTER_LIST
 struct eloop_master_list
 {
 	struct eloop_master *head;
@@ -43,11 +43,12 @@ struct eloop_master_list
 
 //static struct eloop_master *_m_eloop_current = NULL;
 static struct eloop_master_list _master_eloop_list;
+static void *_master_mutex = NULL;
 #else
 struct eloop_master * master_eloop[MODULE_MAX];
 #endif
 
-#ifdef THREAD_MASTER_LIST
+#ifdef ELOOP_MASTER_LIST
 /* Add a new thread to the list.  */
 static void eloop_master_list_add(struct eloop_master_list *list, struct eloop_master *master)
 {
@@ -95,23 +96,33 @@ static struct eloop_master *eloop_master_list_delete(struct eloop_master_list *l
 #if 1
 static int eloop_master_add_list(struct eloop_master *node)
 {
+	if (_master_mutex)
+		os_mutex_lock(_master_mutex, OS_WAIT_FOREVER);	
 	eloop_master_list_add(&_master_eloop_list, node);
+	if (_master_mutex)
+		os_mutex_unlock(_master_mutex);	
 	return OK;
 }
-/*
+
 static int eloop_master_del_list(struct eloop_master *node)
 {
 	struct eloop_master *cutmp = NULL;
+	if (_master_mutex)
+		os_mutex_lock(_master_mutex, OS_WAIT_FOREVER);	
 	cutmp = eloop_master_list_delete(&_master_eloop_list, node);
 	if (cutmp)
 		XFREE(MTYPE_THREAD_MASTER, cutmp);
+	if (_master_mutex)
+		os_mutex_unlock(_master_mutex);	
 	return OK;
 }
-*/
+
 static struct eloop_master *eloop_master_get_list(int mode)
 {
 	struct eloop_master *cutmp = NULL;
 	struct eloop_master *next = NULL;
+	if (_master_mutex)
+		os_mutex_lock(_master_mutex, OS_WAIT_FOREVER);	
 	for (cutmp = _master_eloop_list.head; cutmp; cutmp = next)
 	{
 		next = cutmp->next;
@@ -120,6 +131,8 @@ static struct eloop_master *eloop_master_get_list(int mode)
 			break;
 		}
 	}
+	if (_master_mutex)
+		os_mutex_unlock(_master_mutex);	
 	return cutmp;
 }
 #else
@@ -216,7 +229,7 @@ eloop_master_create()
 	struct eloop_master *rv;
 	if (os_mt_init == 0)
 	{
-#ifndef THREAD_MASTER_LIST
+#ifndef ELOOP_MASTER_LIST
 		zpl_uint32 i = 0;
 		for (i = 0; i < MODULE_MAX; i++)
 		{
@@ -224,6 +237,7 @@ eloop_master_create()
 		}
 #else
 		memset(&_master_eloop_list, 0, sizeof(_master_eloop_list));
+		_master_mutex = os_mutex_init();		
 #endif
 		os_mt_init = 1;
 	}
@@ -257,7 +271,7 @@ eloop_master_create()
 	//rv->timer->cmp = rv->background->cmp = eloop_timer_cmp;
 	//rv->timer->update = rv->background->update = eloop_timer_update;
 	rv->mutex = os_mutex_init();
-#ifdef THREAD_MASTER_LIST
+#ifdef ELOOP_MASTER_LIST
 	eloop_master_add_list(rv);
 #endif
 	return rv;
@@ -268,7 +282,7 @@ struct eloop_master *eloop_master_module_create(zpl_uint32 module)
 	zpl_uint32 i = 0;
 	if (os_mt_init == 0)
 	{
-#ifndef THREAD_MASTER_LIST
+#ifndef ELOOP_MASTER_LIST
 		for (i = 0; i < MODULE_MAX; i++)
 		{
 			master_eloop[i] = NULL;
@@ -280,7 +294,7 @@ struct eloop_master *eloop_master_module_create(zpl_uint32 module)
 	}
 	if (NOT_INT_MAX_MIN_SPACE(module, MODULE_NONE, (MODULE_MAX - 1)))
 		return NULL;
-#ifdef THREAD_MASTER_LIST
+#ifdef ELOOP_MASTER_LIST
 	if (eloop_master_get_list(module))
 		return eloop_master_get_list(module);
 #else
@@ -294,7 +308,7 @@ struct eloop_master *eloop_master_module_create(zpl_uint32 module)
 	if (m)
 	{
 		m->module = module;
-#ifdef THREAD_MASTER_LIST
+#ifdef ELOOP_MASTER_LIST
 		// eloop_master_add_list(m);
 #endif
 		return m;
@@ -306,7 +320,7 @@ struct eloop_master *eloop_master_module_lookup (zpl_uint32 module)
 {
 	if (NOT_INT_MAX_MIN_SPACE(module, MODULE_NONE, (MODULE_MAX - 1)))
 		return NULL;
-#ifdef THREAD_MASTER_LIST
+#ifdef ELOOP_MASTER_LIST
 	if (eloop_master_get_list(module))
 		return eloop_master_get_list(module);
 #else
@@ -383,6 +397,9 @@ void eloop_master_free(struct eloop_master *m)
 	eloop_list_free(m, &m->event);
 	eloop_list_free(m, &m->ready);
 	eloop_list_free(m, &m->unuse);
+#ifdef ELOOP_MASTER_LIST
+	thread_master_del_list(m);
+#endif
 	if (m->mutex)
 		os_mutex_exit(m->mutex);
 	XFREE(MTYPE_THREAD_MASTER, m);
@@ -1334,7 +1351,7 @@ void eloop_call(struct eloop *eloop)
 
 	eloop_getrusage(&before);
 	eloop->real = before;
-#ifdef THREAD_MASTER_LIST
+#ifdef ELOOP_MASTER_LIST
 	//_m_eloop_current = eloop;
 #endif
 	zpl_backtrace_symb_set(eloop->funcname, eloop->schedfrom, eloop->schedfrom_line);
@@ -1344,7 +1361,7 @@ void eloop_call(struct eloop *eloop)
 	zpl_backtrace_symb_set(NULL, NULL, 0);
 	if(eloop->master)
 		eloop->master->eloop_current = NULL;
-#ifdef THREAD_MASTER_LIST
+#ifdef ELOOP_MASTER_LIST
 	//_m_eloop_current = NULL;
 #endif
 	eloop_getrusage(&after);
@@ -1602,7 +1619,7 @@ DEFUN(show_eloop_cpu,
 {
 	zpl_uint32 i = 0;
 	eloop_type filter = 0xff;
-#ifdef THREAD_MASTER_LIST
+#ifdef ELOOP_MASTER_LIST
 	struct eloop_master *cutmp = NULL;
 	struct eloop_master *next = NULL;
 #endif
@@ -1613,7 +1630,7 @@ DEFUN(show_eloop_cpu,
 			return CMD_WARNING;
 	}
 	vty_eloop_cpu_show_head(vty);
-#ifdef THREAD_MASTER_LIST
+#ifdef ELOOP_MASTER_LIST
 	for (cutmp = _master_eloop_list.head; cutmp; cutmp = next)
 	{
 		next = cutmp->next;
@@ -1669,7 +1686,7 @@ DEFUN(show_eloop_task_cpu,
 {
 	zpl_uint32 i = 0, index = 0;
 	eloop_type filter = 0xff;
-#ifdef THREAD_MASTER_LIST
+#ifdef ELOOP_MASTER_LIST
 	struct eloop_master *cutmp = NULL;
 	struct eloop_master *next = NULL;
 #endif
@@ -1697,7 +1714,7 @@ DEFUN(show_eloop_task_cpu,
 		 break;
 		 }
 		 }*/
-#ifdef THREAD_MASTER_LIST
+#ifdef ELOOP_MASTER_LIST
 		for (cutmp = _master_eloop_list.head; cutmp; cutmp = next)
 		{
 			next = cutmp->next;
@@ -1751,7 +1768,7 @@ DEFUN(clear_eloop_cpu,
 {
 	zpl_uint32 i = 0;
 	eloop_type filter = 0xff;
-#ifdef THREAD_MASTER_LIST
+#ifdef ELOOP_MASTER_LIST
 	struct eloop_master *cutmp = NULL;
 	struct eloop_master *next = NULL;
 #endif
@@ -1761,7 +1778,7 @@ DEFUN(clear_eloop_cpu,
 		if (filter == 0)
 			return CMD_WARNING;
 	}
-#ifdef THREAD_MASTER_LIST
+#ifdef ELOOP_MASTER_LIST
 	for (cutmp = _master_eloop_list.head; cutmp; cutmp = next)
 	{
 		next = cutmp->next;
@@ -1799,7 +1816,7 @@ DEFUN(clear_eloop_task_cpu,
 {
 	zpl_uint32 i = 0, index = 0;
 	eloop_type filter = 0xff;
-#ifdef THREAD_MASTER_LIST
+#ifdef ELOOP_MASTER_LIST
 	struct eloop_master *cutmp = NULL;
 	struct eloop_master *next = NULL;
 #endif
@@ -1827,7 +1844,7 @@ DEFUN(clear_eloop_task_cpu,
 		 break;
 		 }
 		 }*/
-#ifdef THREAD_MASTER_LIST
+#ifdef ELOOP_MASTER_LIST
 		for (cutmp = _master_eloop_list.head; cutmp; cutmp = next)
 		{
 			next = cutmp->next;
@@ -1951,11 +1968,11 @@ DEFUN (show_eloop_dump,
 		"eloop dump information\n")
 {
 	zpl_uint32 i = 0;
-#ifdef THREAD_MASTER_LIST
+#ifdef ELOOP_MASTER_LIST
 	struct eloop_master *cutmp = NULL;
 	struct eloop_master *next = NULL;
 #endif
-#ifdef THREAD_MASTER_LIST
+#ifdef ELOOP_MASTER_LIST
 	for (cutmp = _master_eloop_list.head; cutmp; cutmp = next)
 	{
 		next = cutmp->next;

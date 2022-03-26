@@ -292,7 +292,7 @@ int ip_ifp_stack_init(void)
 
 	pal_stack.ip_stack_vrf_create = _ipkernel_vrf_enable;
 	pal_stack.ip_stack_vrf_delete = _ipkernel_vrf_disable;
-
+#ifdef ZPL_NSM_FIREWALLD
   /*
   * 防火墙
   */
@@ -302,6 +302,6 @@ int ip_ifp_stack_init(void)
   pal_stack.ip_stack_firewall_raw_rule_set = _ipkernel_firewall_raw_rule_set;
   pal_stack.ip_stack_firewall_snat_rule_set = _ipkernel_firewall_snat_rule_set;
   pal_stack.ip_stack_firewall_dnat_rule_set = _ipkernel_firewall_dnat_rule_set;
-
+#endif
   return OK;
 }

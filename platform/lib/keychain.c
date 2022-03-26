@@ -22,7 +22,11 @@ Boston, MA 02111-1307, USA.  */
 
 #include "os_include.h"
 #include "zpl_include.h"
-#include "lib_include.h"
+#include "memory.h"
+#include "keychain.h"
+#include "linklist.h"
+#include "vty.h"
+#include "command.h"
 
 /* Master list of key chain. */
 struct list *keychain_list;

@@ -22,10 +22,12 @@
 
 #define QUAGGA_DEFINE_DESC_TABLE
 
-#include "os_include.h"
 #include "zpl_include.h"
-#include "lib_include.h"
-
+#include "memory.h"
+#include "log.h"
+#include "host.h"
+#include "route_types.h"
+#include "zebra_event.h"
 #ifndef SUNOS_5
 #include <sys/un.h>
 #endif

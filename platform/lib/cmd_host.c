@@ -8,9 +8,13 @@
 
 #include "os_include.h"
 #include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-#include "vty_include.h"
+#include "cli_node.h"
+#include "memory.h"
+#include "vector.h"
+#include "command.h"
+#include "vty.h"
+#include "host.h"
+#include "workqueue.h"
 
 #define CMD_HOST_DEBUG
 
@@ -1024,8 +1028,9 @@ static int _cmd_host_base_init(zpl_bool terminal)
 	install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &no_banner_motd_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &service_terminal_length_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_service_terminal_length_cmd);
-
+#ifdef ZPL_WORKQUEUE
 	install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_work_queues_cmd);
+#endif	
 	install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_time_queues_cmd);
 
 	install_element(CONFIG_NODE, CMD_VIEW_LEVEL, &show_commandtree_cmd);

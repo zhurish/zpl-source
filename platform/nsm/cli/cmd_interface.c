@@ -217,7 +217,7 @@ DEFUN(no_nsm_interface_loopback,
 {
 	return nsm_interface_other_destory(2, "loopback", argv[0], vty);
 }
-
+#ifdef ZPL_NSM_VLAN	
 DEFUN(nsm_interface_vlan,
 	  nsm_interface_vlan_cmd,
 	  "interface " CMD_IF_VLAN_STR,
@@ -234,7 +234,8 @@ DEFUN(no_nsm_interface_vlan,
 {
 	return nsm_interface_other_destory(2, "loopback", argv[0], vty);
 }
-
+#endif
+#ifdef ZPL_NSM_TRUNK
 DEFUN(nsm_interface_trunk,
 	  nsm_interface_trunk_cmd,
 	  "interface " CMD_IF_TRUNK_STR,
@@ -251,6 +252,7 @@ DEFUN(no_nsm_interface_trunk,
 {
 	return nsm_interface_other_destory(2, "loopback", argv[0], vty);
 }
+#endif
 
 DEFUN(no_nsm_interface,
 	  no_nsm_interface_cmd,
@@ -1485,7 +1487,7 @@ DEFUN(show_interface_loopback,
 {
 	return _show_interface_info(2, "loopback", argv[0], vty);
 }
-
+#ifdef ZPL_NSM_VLAN
 DEFUN(show_interface_vlan,
 	  show_interface_vlan_cmd,
 	  "show interface " CMD_IF_VLAN_STR,
@@ -1494,7 +1496,8 @@ DEFUN(show_interface_vlan,
 {
 	return _show_interface_info(2, "vlan", argv[0], vty);
 }
-
+#endif
+#ifdef ZPL_NSM_TRUNK
 DEFUN(show_interface_trunk,
 	  show_interface_trunk_cmd,
 	  "show interface " CMD_IF_TRUNK_STR,
@@ -1503,7 +1506,7 @@ DEFUN(show_interface_trunk,
 {
 	return _show_interface_info(2, "port-channel", argv[0], vty);
 }
-
+#endif
 #ifdef CUSTOM_INTERFACE
 ALIAS(show_interface,
 	  show_wifi_interface_cmd,
@@ -1769,6 +1772,7 @@ static struct cmd_node loopback_interface_node =
 		LOOPBACK_INTERFACE_NODE,
 		"%s(config-loopback)# ",
 		1};
+
 static struct cmd_node lag_interface_node =
 	{
 		LAG_INTERFACE_NODE,
@@ -1842,8 +1846,12 @@ static void cmd_show_interface_init(int node)
 	install_element(node, CMD_VIEW_LEVEL, &show_interface_cmd);
 	install_element(node, CMD_VIEW_LEVEL, &show_interface_brief_cmd);
 	install_element(node, CMD_VIEW_LEVEL, &show_interface_loopback_cmd);
+#ifdef ZPL_NSM_VLAN
 	install_element(node, CMD_VIEW_LEVEL, &show_interface_vlan_cmd);
+#endif
+#ifdef ZPL_NSM_TRUNK
 	install_element(node, CMD_VIEW_LEVEL, &show_interface_trunk_cmd);
+#endif	
 #ifdef CUSTOM_INTERFACE
 	install_element(node, CMD_VIEW_LEVEL, &show_wifi_interface_cmd);
 #endif
@@ -1863,9 +1871,13 @@ static void cmd_base_interface_init(int node)
 
 	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_sub_cmd);
+#ifdef ZPL_NSM_VLAN	
 	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_vlan_cmd);
+#endif
 	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_loopback_cmd);
+#ifdef ZPL_NSM_TRUNK
 	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_trunk_cmd);
+#endif	
 	install_element(node, CMD_CONFIG_LEVEL, &hidden_nsm_interface_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_range_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_range_sub_cmd);
@@ -2013,13 +2025,17 @@ void cmd_interface_init(void)
 
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &nsm_interface_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &nsm_interface_sub_cmd);
+#ifdef ZPL_NSM_VLAN	
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &nsm_interface_vlan_cmd);
-	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &nsm_interface_loopback_cmd);
-	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &nsm_interface_trunk_cmd);
-	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_vlan_cmd);
-	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_loopback_cmd);
+#endif	
+#ifdef ZPL_NSM_TRUNK	
+	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &nsm_interface_trunk_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_trunk_cmd);
+#endif
+	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &nsm_interface_loopback_cmd);
+	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_cmd);
+	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_nsm_interface_loopback_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &hidden_nsm_interface_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &hidden_no_nsm_interface_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &nsm_interface_range_cmd);
@@ -2033,16 +2049,20 @@ void cmd_interface_init(void)
 	cmd_base_interface_init(INTERFACE_L3_NODE);
 	cmd_base_interface_init(TUNNEL_INTERFACE_NODE);
 	cmd_base_interface_init(LOOPBACK_INTERFACE_NODE);
+
 	cmd_base_interface_init(LAG_INTERFACE_NODE);
 	cmd_base_interface_init(LAG_INTERFACE_L3_NODE);
+
 	cmd_base_interface_init(BRIGDE_INTERFACE_NODE);
 	cmd_base_interface_init(SERIAL_INTERFACE_NODE);
 	cmd_base_interface_init(WIRELESS_INTERFACE_NODE);
 
 	cmd_ethernet_interface_init(INTERFACE_NODE);
 	cmd_ethernet_interface_init(INTERFACE_L3_NODE);
+
 	cmd_ethernet_interface_init(LAG_INTERFACE_NODE);
 	cmd_ethernet_interface_init(LAG_INTERFACE_L3_NODE);
+
 	cmd_ethernet_interface_init(BRIGDE_INTERFACE_NODE);
 
 #ifdef CUSTOM_INTERFACE
@@ -2056,8 +2076,10 @@ void cmd_interface_init(void)
 	cmd_show_interface_init(INTERFACE_L3_NODE);
 	cmd_show_interface_init(TUNNEL_INTERFACE_NODE);
 	cmd_show_interface_init(LOOPBACK_INTERFACE_NODE);
+
 	cmd_show_interface_init(LAG_INTERFACE_NODE);
 	cmd_show_interface_init(LAG_INTERFACE_L3_NODE);
+
 	cmd_show_interface_init(BRIGDE_INTERFACE_NODE);
 	cmd_show_interface_init(SERIAL_INTERFACE_NODE);
 	cmd_show_interface_init(WIRELESS_INTERFACE_NODE);

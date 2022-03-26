@@ -26,9 +26,8 @@
 extern "C" {
 #endif
 
-#include <zpl_include.h>
+#include <os_include.h>
 #include "filter.h"
-#include "if.h"
 
 /* Disctirubte list types. */
 enum distribute_type

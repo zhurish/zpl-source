@@ -37,7 +37,9 @@
 
 #include "os_include.h"
 #include "zpl_include.h"
-#include "lib_include.h"
+#include "str.h"
+#include "zassert.h"
+
 #ifndef HAVE_SNPRINTF
 /*
  * snprint() is a real basic wrapper around the standard sprintf()

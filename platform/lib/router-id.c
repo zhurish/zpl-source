@@ -25,10 +25,10 @@
 
 #include "os_include.h"
 #include "zpl_include.h"
-#include "lib_include.h"
-#include "nsm_include.h"
-
-#ifdef ZPL_RTPL_MODULE
+#include "router-id.h"
+#include "if.h"
+#include "connected.h"
+#ifdef ZPL_NSM_MODULE
 #include "nsm_zserv.h"
 #endif
 /* master zebra server structure */
@@ -95,7 +95,7 @@ void
 router_id_set (struct prefix *p, vrf_id_t vrf_id)
 {
   struct prefix p2;
-  #ifdef ZPL_RTPL_MODULE
+  #ifdef ZPL_NSM_MODULE
   struct listnode *node;
   struct zserv *client;
   #endif
@@ -113,7 +113,7 @@ router_id_set (struct prefix *p, vrf_id_t vrf_id)
   zvrf->rid_user_assigned.u.prefix4.s_addr = p->u.prefix4.s_addr;
 
   router_id_get (&p2, vrf_id);
-#ifdef ZPL_RTPL_MODULE
+#ifdef ZPL_NSM_MODULE
   for (ALL_LIST_ELEMENTS_RO (nsm_srv->client_list, node, client))
     zsend_router_id_update (client, &p2, vrf_id);
 #endif
@@ -125,7 +125,7 @@ router_id_add_address (struct connected *ifc)
   struct list *l = NULL;
   struct prefix before;
   struct prefix after;
-  #ifdef ZPL_RTPL_MODULE
+  #ifdef ZPL_NSM_MODULE
   struct listnode *node;
   struct zserv *client;
   #endif
@@ -150,7 +150,7 @@ router_id_add_address (struct connected *ifc)
 
   if (prefix_same (&before, &after))
     return;
-#ifdef ZPL_RTPL_MODULE
+#ifdef ZPL_NSM_MODULE
   for (ALL_LIST_ELEMENTS_RO (nsm_srv->client_list, node, client))
     zsend_router_id_update (client, &after, zvrf->vrf_id);
 #endif
@@ -163,7 +163,7 @@ router_id_del_address (struct connected *ifc)
   struct list *l;
   struct prefix after;
   struct prefix before;
-  #ifdef ZPL_RTPL_MODULE
+  #ifdef ZPL_NSM_MODULE
   struct listnode *node;
   struct zserv *client;
   #endif
@@ -188,7 +188,7 @@ router_id_del_address (struct connected *ifc)
 
   if (prefix_same (&before, &after))
     return;
-#ifdef ZPL_RTPL_MODULE
+#ifdef ZPL_NSM_MODULE
   for (ALL_LIST_ELEMENTS_RO (nsm_srv->client_list, node, client))
     zsend_router_id_update (client, &after, zvrf->vrf_id);
 #endif

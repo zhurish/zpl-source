@@ -27,7 +27,6 @@
 extern "C" {
 #endif
 
-#include "if.h"
 #include "prefix.h"
 #include "libnetpro.h"
 /*

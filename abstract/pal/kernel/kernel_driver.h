@@ -36,7 +36,7 @@ extern int _ipkernel_bridge_check_interface(char *br, ifindex_t ifindex);
 #ifdef ZPL_NSM_TRUNK
 extern int _ipkernel_bond_create(struct interface *ifp);
 extern int _ipkernel_bond_delete(struct interface *ifp);
-int _if_bond_test();
+int _if_bond_test(void);
 #endif
 
 int _ipkernel_create(struct interface *ifp);
@@ -53,7 +53,7 @@ int _ipkernel_ipforward_ipv6 (void);
 int _ipkernel_ipforward_ipv6_on (void);
 int _ipkernel_ipforward_ipv6_off (void);
 
-
+#ifdef ZPL_NSM_FIREWALLD
 /*
  * 端口映射
  */
@@ -66,13 +66,16 @@ extern int _ipkernel_firewall_mangle_rule_set(firewall_t *rule, zpl_action actio
 extern int _ipkernel_firewall_raw_rule_set(firewall_t *rule, zpl_action action);
 extern int _ipkernel_firewall_snat_rule_set(firewall_t *rule, zpl_action action);
 extern int _ipkernel_firewall_dnat_rule_set(firewall_t *rule, zpl_action action);
+#endif
 
 extern int _ipkernel_vrf_enable(vrf_id_t vrf_id);
 extern int _ipkernel_vrf_disable(vrf_id_t vrf_id);
 extern zpl_socket_t _kernel_vrf_socket(int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id_t vrf_id);
 
 extern int ip_ifp_stack_init(void);
+#ifdef ZPL_NSM_ARP
 extern int ip_arp_stack_init(void);
+#endif
 extern int kernel_driver_init(void);
 extern int kernel_packet_init(void);
 extern int vrf_socket (int domain, int type, int protocol, vrf_id_t vrf_id);

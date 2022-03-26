@@ -2662,7 +2662,7 @@ static int vty_stdio_attribute(void)
 }
 #endif
 
-int vty_console_init(const char *tty)
+static int vty_console_init(const char *tty)
 {
 	if (cli_shell.init == 1)
 	{

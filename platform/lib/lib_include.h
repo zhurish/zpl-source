@@ -14,49 +14,37 @@ extern "C" {
 
 
 #include "version.h"
-#include "module.h"
-#include "moduletable.h"
 #include "route_types.h"
-#include "rtpl_event.h"
 
-#include "rtpl_def.h"
-
-#include "cli_node.h"
-
-#include "pqueue.h"
-//#include "queue.h"
-//#include "list_tree.h"
-//#include "dlst.h"
-#include "fifo.h"
-#include "linklist.h"
-//#include "list.h"
+#include "module.h"
 #include "hash.h"
 #include "jhash.h"
-//#include "rbtree.h"
-//#include "bitmap.h"
-
+#include "linklist.h"
 #include "checksum.h"
 #include "daemon.h"
 #include "memory.h"
 #include "memtypes.h"
 #include "md5.h"
-#include "log.h"
-#include "zassert.h"
 #include "stream.h"
-#include "str.h"
-#include "prefix.h"
-#ifdef ZPL_WORKQUEUE
-#include "workqueue.h"	
-#endif
+
 #ifdef ZPL_SHELL_MODULE
+#include "cli_node.h"
 #include "buffer.h"
 #include "vector.h"
 #include "command.h"
 #endif
+
+#include "log.h"
+#include "zassert.h"
+
+#include "str.h"
+#include "prefix.h"
+#include "workqueue.h"	
 #include "host.h"
 #include "if_name.h"
 #include "if.h"
-
+#include "pqueue.h"
+#include "fifo.h"
 #include "network.h"
 #include "sockunion.h"
 #include "sockopt.h"
@@ -65,12 +53,20 @@ extern "C" {
 #include "thread.h"
 
 #include "template.h"
-#include "nsm_event.h"
+#include "lib_event.h"
+#include "lib_pqueue.h"
+
+
+#include "zebra_event.h"
+
+
+#ifdef ZPL_NSM_MODULE
 
 #include "connected.h"
-#include "nsm_pqueue.h"
-#include "nsm_vrf.h"
 
+#ifdef ZPL_VRF_MODULE
+#include "vrf.h"
+#endif
 #ifdef ZPL_KEYCHAIN
 #include "keychain.h"
 #endif
@@ -85,7 +81,17 @@ extern "C" {
 #include "plist_int.h"
 #endif
 
-//#include "access_list.h"
+#include "if_rmap.h"
+#include "nexthop.h"
+#include "routemap.h"
+#include "nsm_redistribute.h"
+#include "nsm_rib.h"
+#include "nsm_rnh.h"
+#include "nsm_zclient.h"
+#include "nsm_fpm.h"
+#include "nsm_zserv.h"
+#endif
+
 
 #ifdef __cplusplus
 }

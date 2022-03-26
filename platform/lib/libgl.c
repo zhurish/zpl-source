@@ -1,7 +1,7 @@
 
 #include "os_include.h"
 #include "zpl_include.h"
-#include "lib_include.h"
+#include "libgl.h"
 
 /*
 static struct lib_global * lib_global_new (void)

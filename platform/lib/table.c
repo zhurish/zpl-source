@@ -22,9 +22,7 @@
 
 #include "os_include.h"
 #include "zpl_include.h"
-#include "lib_include.h"
-#include "nsm_include.h"
-
+#include "zassert.h"
 #include "prefix.h"
 #include "table.h"
 #include "memory.h"

@@ -2,7 +2,7 @@
 #
 #
 
-menu "Platform Arch Config"
+menu "Arch Config"
 
 config ZPL_SYSTEM_MODULE
 	bool "OS systems type"

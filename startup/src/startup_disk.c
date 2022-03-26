@@ -6,8 +6,6 @@
  */
 #include "os_include.h"
 #include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
 #include "module.h"
 #include "startup_disk.h"
 

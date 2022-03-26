@@ -4,11 +4,17 @@
 MODULEDIR = platform/nsm
 #nsm
 ifeq ($(strip $(ZPL_NSM_MODULE)),true)
-OBJS	+= moduletable.o
+
 OBJS	+= nsm_debug.o
-#OBJS	+= nexthop.o
-#OBJS	+= table.o
-#OBJS	+= router-id.o
+OBJS	+= nsm_redistribute.o
+OBJS	+= nsm_rib.o
+
+OBJS	+= nsm_zebra_routemap.o
+OBJS	+= nsm_rnh.o
+OBJS	+= nsm_fpm.o
+OBJS	+= nsm_zclient.o
+OBJS	+= nsm_zserv.o
+
 OBJS	+= nsm_interface.o
 OBJS	+= nsm_halpal.o
 #OBJS	+= nsm_client.o
@@ -16,6 +22,8 @@ OBJS	+= nsm_halpal.o
 #OBJS	+= nsm_rib.o
 OBJS	+= nsm_global.o
 OBJS	+= nsm_port.o
+
+#OBJS	+= moduletable.o
 
 ifeq ($(strip $(ZPL_NSM_8021X)),true)
 OBJS	+= nsm_8021x.o			

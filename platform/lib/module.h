@@ -12,8 +12,7 @@
 extern "C" {
 #endif
 
-#include "os_include.h"
-#include "zpl_include.h"
+
 #include "moduletypes.h"
 
 #define ZPL_MODULE_NEED_INIT  0x00000001
@@ -53,19 +52,10 @@ struct module_list
   }submodule[ZPL_SUB_MODULE_MAX];
 };
 
-struct module_table
-{
-	zpl_uint32 module;  //模块ID
-	const char 	*name;  //模块名称  
-	zpl_uint32	taskid;       //模块任务ID
-};
-
 struct module_alllist
 {
   struct module_list *tbl;
 };
-
-extern struct module_table module_tbl[MODULE_MAX];
 
 extern const char * module2name(zpl_uint32 module);//
 extern zpl_uint32 name2module(const char *name);//
@@ -73,6 +63,27 @@ extern zpl_uint32 module2task(zpl_uint32 module);
 extern zpl_uint32 task2module(zpl_uint32 taskid);
 extern zpl_uint32 task_module_self(void);
 extern int module_setup_task(zpl_uint32 module, zpl_uint32 taskid);//
+
+extern int zplib_module_install(struct module_alllist *_m_table);
+extern int zplib_module_name_show(void);
+
+extern int zplib_module_initall(void);
+extern int zplib_module_exitall(void);
+extern int zplib_module_task_startall(void);
+extern int zplib_module_task_stopall(void);
+extern int zplib_module_cmd_all(void);
+
+extern int zplib_module_name_init(const char * name);
+extern int zplib_module_init(zpl_uint32 module);
+extern int zplib_module_exit(zpl_uint32 module);
+extern int zplib_module_task_name_init(const char * name);
+extern int zplib_module_task_init(zpl_uint32 module);
+extern int zplib_module_task_exit(zpl_uint32 module);
+extern int zplib_module_cmd_name_init(const char * name);
+extern int zplib_module_cmd_init(zpl_uint32 module);
+extern struct module_list * zplib_module_info(zpl_uint32 module);
+
+extern int submodule_setup(zpl_uint32 module, zpl_uint32 submodule, char *name, zpl_uint32 taskid);
 
 
  

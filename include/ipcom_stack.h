@@ -148,7 +148,12 @@ extern "C" {
 #define IPSTACK_SO_ERROR           IP_SO_ERROR
 #define IPSTACK_SO_TYPE            IP_SO_TYPE
 #define IPSTACK_SO_BINDTODEVICE    IP_SO_BINDTODEVICE
-
+#ifdef SO_MARK
+#define IPSTACK_SO_MARK             IP_SO_MARK
+#endif
+#ifdef IP_SO_X_VR
+#define IPSTACK_SO_X_VR            IP_SO_X_VR
+#endif
 /***** IP_IPPROTO_IP level socket options: *****/
 #define IPSTACK_IP_HDRINCL         IP_IP_HDRINCL
 #define IPSTACK_IP_TOS             IP_IP_TOS

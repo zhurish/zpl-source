@@ -8,10 +8,10 @@
 
 #include "os_include.h"
 #include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-#include "vty_include.h"
-
+#include "vty.h"
+#include "command.h"
+#include "log.h"
+#include "host.h"
 #include <arpa/telnet.h>
 #include <termios.h>
 

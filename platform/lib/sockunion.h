@@ -27,11 +27,7 @@
 extern "C" {
 #endif
 
-#ifdef ZPL_NSM_MODULE
-#include "if.h"
-#else
-typedef zpl_uint32  ifindex_t;
-#endif
+
 #if 0
 union sockunion {
   struct sockinet {

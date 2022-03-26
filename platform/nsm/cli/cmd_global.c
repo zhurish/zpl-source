@@ -11,6 +11,7 @@
 #include "nsm_include.h"
 #include "vty_include.h"
 
+#ifdef ZPL_NSM_VLAN	
 DEFUN(global_dot1q_tpid,
 	  global_dot1q_tpid_cmd,
 	  "system dot1q-tpid <1-ffff>",
@@ -47,6 +48,7 @@ DEFUN(no_global_dot1q_tpid,
 	}
 	return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
 }
+#endif
 
 DEFUN(global_jumboframe_size,
 	  global_jumboframe_size_cmd,
@@ -297,7 +299,7 @@ DEFUN(no_global_l2bpdu_enable,
 	}
 	return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
 }
-
+#ifdef ZPL_NSM_IGMP
 DEFUN(global_igmp_enable,
 	  global_igmp_enable_cmd,
 	  "igmp (snooping|proxy) enable",
@@ -755,12 +757,14 @@ DEFUN(no_global_iparpdhcp_enable,
 	}
 	return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
 }
+#endif
 
 void cmd_global_init(void)
 {
+#ifdef ZPL_NSM_VLAN	
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &global_dot1q_tpid_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_global_dot1q_tpid_cmd);
-
+#endif
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &global_switch_forward_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_global_switch_forward_cmd);
 
@@ -777,7 +781,7 @@ void cmd_global_init(void)
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_global_multicast_learning_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &global_l2bpdu_enable_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_global_l2bpdu_enable_cmd);
-
+#ifdef ZPL_NSM_IGMP
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &global_igmp_enable_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_global_igmp_enable_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &global_igmpqry_enable_cmd);
@@ -791,4 +795,5 @@ void cmd_global_init(void)
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_global_mldqry_enable_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &global_iparpdhcp_enable_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_global_iparpdhcp_enable_cmd);
+#endif	
 }

@@ -19,6 +19,7 @@
  * Boston, MA 02111-1307, USA.
  */
 
+#include <os_include.h>
 #include <zpl_include.h>
 
 #include "prefix.h"
@@ -35,7 +36,9 @@
 #include "nsm_zclient.h"
 #include "network.h"
 #include "buffer.h"
-#include "nsm_vrf.h"
+#ifdef ZPL_VRF_MODULE
+#include "vrf.h"
+#endif
 #include "nexthop.h"
 
 #include "nsm_zserv.h"
@@ -1370,7 +1373,7 @@ zread_router_id_delete(struct zserv *client, zpl_ushort length, vrf_id_t vrf_id)
 static void
 zread_hello(struct zserv *client)
 {
-  /* type of protocol (lib/zpl_include.h) */
+  /* type of protocol (lib/os_include.h) */
   zpl_uchar proto;
   proto = stream_getc(client->ibuf);
 

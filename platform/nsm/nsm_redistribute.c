@@ -19,7 +19,7 @@
  * 02111-1307, USA.  
  */
 
-#include <zpl_include.h>
+#include <os_include.h>
 
 #include "vector.h"
 #include "vty.h"
@@ -29,7 +29,7 @@
 #include "stream.h"
 #include "linklist.h"
 #include "log.h"
-#include "nsm_vrf.h"
+#include "vrf.h"
 
 #include "nsm_rib.h"
 #include "nsm_zserv.h"

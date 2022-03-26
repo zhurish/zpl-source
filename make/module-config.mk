@@ -9,6 +9,9 @@ include $(ZPL_MAKE_DIR)/pjsip-config.mk
 #
 ZPLPRODS += $(PLATFORM_ROOT)/os
 ZPLPRODS += $(PLATFORM_ROOT)/lib
+ZPL_INCLUDE += -I$(PLATFORM_ROOT)/os
+ZPL_INCLUDE += -I$(PLATFORM_ROOT)/lib
+
 ifeq ($(strip $(ZPL_SHELL_MODULE)),true)
 ZPLPRODS += $(PLATFORM_ROOT)/shell
 ZPL_INCLUDE += -I$(PLATFORM_ROOT)/shell
@@ -18,9 +21,6 @@ ZPL_DEFINE	+= -DZPL_SHRL_MODULE
 ZPLEX_LDLIBS += -lreadline
 endif
 endif
-ZPL_INCLUDE += -I$(PLATFORM_ROOT)/os
-ZPL_INCLUDE += -I$(PLATFORM_ROOT)/lib
-
 
 ifeq ($(strip $(ZPL_OS_CPPJSON)),true)
 JSONCPP_ROOT=$(PLATFORM_ROOT)/jsoncpp
@@ -77,16 +77,28 @@ endif
 
 
 ifeq ($(strip $(ZPL_NSM_MODULE)),true)
-
 ZPLPRODS += $(PLATFORM_ROOT)/nsm
 ZPL_INCLUDE += -I$(PLATFORM_ROOT)/nsm
 ZPL_DEFINE	+= -DZPL_NSM_MODULE
+
+ifeq ($(strip $(ZPL_NSM_L3MODULE)),true)
+ZPL_DEFINE	+= -DZPL_NSM_L3MODULE
+endif
+ifeq ($(strip $(ZPL_VRF_MODULE)),true)
+ZPL_DEFINE	+= -DZPL_VRF_MODULE
 endif
 
-ifeq ($(strip $(ZPL_RTPL_MODULE)),true)
-ZPLPRODS += $(PLATFORM_ROOT)/rtpl
-ZPL_INCLUDE += -I$(PLATFORM_ROOT)/rtpl
-ZPL_DEFINE	+= -DZPL_NSM_RTPL
+ifeq ($(strip $(ZPL_VRF_MODULE)),true)
+ZPL_DEFINE	+= -DZPL_VRF_MODULE
+endif
+
+ifeq ($(strip $(ZPL_NSM_NEXTHOP)),true)
+ZPL_DEFINE	+= -DZPL_NSM_NEXTHOP
+endif
+ifeq ($(strip $(ZPL_NSM_ROUTEMAP)),true)
+ZPL_DEFINE	+= -DZPL_NSM_ROUTEMAP
+endif
+
 endif
 
 

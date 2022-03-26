@@ -6,9 +6,8 @@
  */
 #include "os_include.h"
 #include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-//#include "sigevent.h"
+#include "host.h"
+#include "log.h"
 #include "module.h"
 #include "startup_module.h"
 #include "startup_start.h"
@@ -133,6 +132,8 @@ int zpl_base_signal_init(int daemon_mode)
 	return OK;
 }
 
+extern struct module_alllist module_lists_tbl[MODULE_MAX];
+
 int startup_option_default(void)
 {
 	os_memset(&startup_option, 0, sizeof(struct startup_option));
@@ -146,6 +147,7 @@ int startup_option_default(void)
 	startup_option.daemon_mode = 0;
 	startup_option.pid = 0;
 	startup_option.tty = NULL;
+	zplib_module_install(module_lists_tbl);
 	return OK;
 }
 

@@ -23,8 +23,11 @@
 
 #include "os_include.h"
 #include "zpl_include.h"
-#include "lib_include.h"
-
+#include "linklist.h"
+#include "workqueue.h"
+#include "memory.h"
+#include "log.h"
+#include "command.h"
 /* master list of work_queues */
 static struct list _work_queues;
 /* pointer primarily to avoid an otherwise harmless warning on

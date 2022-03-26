@@ -21,7 +21,13 @@
  */
 #include "os_include.h"
 #include "zpl_include.h"
-#include "lib_include.h"
+#include "memory.h"
+#include "prefix.h"
+#include "if_name.h"
+#include "if.h"
+#ifdef ZPL_VRF_MODULE
+#include "vrf.h"
+#endif
 #include <net/if_arp.h>
 
 static void *ifMutex = NULL;

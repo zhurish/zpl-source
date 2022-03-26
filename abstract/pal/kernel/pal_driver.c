@@ -282,7 +282,7 @@ int pal_interface_update_statistics(struct interface *ifp)
 		return pal_stack.ip_stack_update_statistics(ifp);
     return OK;
 }
-
+#ifdef ZPL_NSM_FIREWALLD
 /*
  * 端口映射
  */
@@ -329,7 +329,7 @@ int pal_firewall_dnat_rule_set(firewall_t *rule, zpl_action action)
 		return pal_stack.ip_stack_firewall_dnat_rule_set(rule, action);
     return OK;
 }
-
+#endif
 
 int ipforward (void)
 {

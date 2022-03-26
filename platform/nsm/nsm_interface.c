@@ -234,12 +234,14 @@ static int nsm_interface_kname_set(struct interface *ifp)
 	os_memset(k_name, 0, sizeof(k_name));
 	switch (ifp->if_type)
 	{
+#if defined(ZPL_NSM_TUNNEL)||defined(ZPL_NSM_SERIAL)||defined(ZPL_NSM_BRIGDE)		
 	case IF_SERIAL:
 	case IF_TUNNEL:
-	case IF_BRIGDE:
+	case IF_BRIGDE:	
 		sprintf(k_name, "%s%d%d", getkernelname(ifp->if_type),
 				IF_IFINDEX_SLOT_GET(ifp->ifindex), IF_IFINDEX_PORT_GET(ifp->ifindex));
 		break;
+#endif		
 	case IF_ETHERNET:
 	case IF_GIGABT_ETHERNET:
 	case IF_WIRELESS:
@@ -265,8 +267,9 @@ static int nsm_interface_kname_set(struct interface *ifp)
 		// nsm_interface.hw_update_api(ifp);
 		break;
 	case IF_LOOPBACK:
-	case IF_VLAN:
+	case IF_VLAN:	
 	case IF_LAG:
+#if defined(ZPL_NSM_TRUNK)||defined(ZPL_NSM_VLAN)
 		if (IF_IFINDEX_ID_GET(ifp->ifindex))
 			sprintf(k_name, "%s%d", getkernelname(ifp->if_type),
 					IF_IFINDEX_ID_GET(ifp->ifindex));
@@ -274,6 +277,7 @@ static int nsm_interface_kname_set(struct interface *ifp)
 			sprintf(k_name, "%s%d", getkernelname(ifp->if_type),
 					IF_IFINDEX_PORT_GET(ifp->ifindex));
 		break;
+#endif
 	default:
 		break;
 	}
@@ -290,6 +294,7 @@ static int nsm_interface_kmac_set(struct interface *ifp)
 #endif
 	switch (ifp->if_type)
 	{
+#if defined(ZPL_NSM_TUNNEL)||defined(ZPL_NSM_SERIAL)
 	case IF_SERIAL:
 	case IF_TUNNEL:
 		if (!IF_IFINDEX_ID_GET(ifp->ifindex))
@@ -305,6 +310,7 @@ static int nsm_interface_kmac_set(struct interface *ifp)
 			os_memcpy(ifp->hw_addr, kmac, ifp->hw_addr_len);
 		}
 		break;
+#endif
 	case IF_ETHERNET:
 	case IF_GIGABT_ETHERNET:
 	case IF_BRIGDE:
@@ -322,13 +328,15 @@ static int nsm_interface_kmac_set(struct interface *ifp)
 		break;
 	case IF_LOOPBACK:
 		break;
+#if defined(ZPL_NSM_TRUNK)||defined(ZPL_NSM_VLAN)
+	case IF_VLAN:	
 	case IF_LAG:
-	case IF_VLAN:
 		if (!IF_IFINDEX_ID_GET(ifp->ifindex))
 			kmac[5] = IF_IFINDEX_PORT_GET(ifp->ifindex);
 		ifp->hw_addr_len = NSM_MAC_MAX;
 		os_memcpy(ifp->hw_addr, kmac, ifp->hw_addr_len);
 		break;
+#endif		
 	default:
 		break;
 	}
@@ -426,7 +434,7 @@ zpl_bool nsm_interface_create_check_api(struct vty *vty, const char *ifname, con
 			return zpl_false;
 		}
 		break;
-
+#ifdef ZPL_NSM_BRIGDE
 	case IF_BRIGDE:
 		if (IF_BRIGDE_MAX > if_count_lookup_type(IF_BRIGDE))
 		{
@@ -434,16 +442,20 @@ zpl_bool nsm_interface_create_check_api(struct vty *vty, const char *ifname, con
 		}
 		vty_out(vty, "Too much brigde interface%s", VTY_NEWLINE);
 		break;
+#endif
+#ifdef ZPL_NSM_SERIAL
 	case IF_SERIAL:
 		vty_out(vty, "Can not create serial interface%s", VTY_NEWLINE);
 		return zpl_false;
 		break;
+#endif		
 #ifdef CUSTOM_INTERFACE
 	case IF_WIFI:
 	case IF_MODEM:
 		return zpl_false;
 		break;
 #endif
+#ifdef ZPL_NSM_TUNNEL
 	case IF_TUNNEL:
 		if (IF_SLOT_GET(ifindex) != IF_TUNNEL_SLOT)
 		{
@@ -462,6 +474,7 @@ zpl_bool nsm_interface_create_check_api(struct vty *vty, const char *ifname, con
 		}
 		return zpl_true;
 		break;
+#endif
 	case IF_LOOPBACK:
 		if (IF_LOOPBACK_MAX > if_count_lookup_type(IF_LOOPBACK))
 		{
@@ -469,7 +482,7 @@ zpl_bool nsm_interface_create_check_api(struct vty *vty, const char *ifname, con
 		}
 		vty_out(vty, "Too much loopback interface%s", VTY_NEWLINE);
 		break;
-
+#ifdef ZPL_NSM_VLAN
 	case IF_VLAN:
 		if (IF_VLAN_MAX > if_count_lookup_type(IF_VLAN))
 		{
@@ -477,7 +490,8 @@ zpl_bool nsm_interface_create_check_api(struct vty *vty, const char *ifname, con
 		}
 		vty_out(vty, "Too much vlan interface%s", VTY_NEWLINE);
 		break;
-
+#endif
+#ifdef ZPL_NSM_TRUNK	
 	case IF_LAG:
 		if (IF_LAG_MAX > if_count_lookup_type(IF_LAG))
 		{
@@ -485,6 +499,7 @@ zpl_bool nsm_interface_create_check_api(struct vty *vty, const char *ifname, con
 		}
 		vty_out(vty, "Too much lag interface%s", VTY_NEWLINE);
 		break;
+#endif
 	default:
 		break;
 	}
@@ -526,7 +541,7 @@ static int nsm_interface_delete(struct interface *ifp)
 	}
 	if (delete)
 	{
-#ifdef ZPL_RTPL_MODULE
+#ifdef ZPL_NSM_MODULE
 		zebra_interface_delete_update(ifp);
 #endif
 		// nsm_client_notify_interface_delete(ifp);
@@ -554,7 +569,7 @@ int nsm_interface_create_api(const char *ifname)
 	ifp = if_create(ifname, os_strlen(ifname));
 	if (ifp)
 	{
-#ifdef ZPL_RTPL_MODULE
+#ifdef ZPL_NSM_MODULE
 		if (ifp->dynamic == zpl_false)
 			zebra_interface_add_update(ifp);
 #endif
@@ -648,7 +663,7 @@ static int nsm_interface_ip_address_install(struct interface *ifp, struct prefix
 #endif
 		connected_up_ipv4(ifp, ifc);
 // nsm_client_notify_interface_add_ip(ifp, ifc, 0);
-#ifdef ZPL_RTPL_MODULE
+#ifdef ZPL_NSM_MODULE
 		zebra_interface_address_add_update(ifp, ifc);
 #endif
 		return OK;
@@ -676,7 +691,7 @@ static int nsm_interface_ip_address_uninstall(struct interface *ifp, struct pref
 	if (!CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED))
 		UNSET_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED);
 		// return ERROR;
-#ifdef ZPL_RTPL_MODULE
+#ifdef ZPL_NSM_MODULE
 	zebra_interface_address_delete_update(ifp, ifc);
 #endif
 	// nsm_client_notify_interface_del_ip(ifp, ifc, 0);
@@ -710,7 +725,7 @@ static int nsm_interface_ip_address_uninstall(struct interface *ifp, struct pref
 			return ERROR;
 		}
 #endif
-#ifdef ZPL_RTPL_MODULE
+#ifdef ZPL_NSM_MODULE
 // zebra_interface_address_delete_update(ifp, ifc);
 #endif
 		connected_down_ipv4(ifp, ifc);
@@ -800,7 +815,7 @@ nsm_interface_ipv6_address_install(struct interface *ifp,
 #endif
 		connected_up_ipv6(ifp, ifc);
 // nsm_client_notify_interface_add_ip(ifp, ifc, secondary);
-#ifdef ZPL_RTPL_MODULE
+#ifdef ZPL_NSM_MODULE
 		zebra_interface_address_add_update(ifp, ifc);
 #endif
 		return OK;
@@ -824,7 +839,7 @@ nsm_interface_ipv6_address_uninstall(struct interface *ifp,
 	if (!CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED))
 		return ERROR;
 
-#ifdef ZPL_RTPL_MODULE
+#ifdef ZPL_NSM_MODULE
 	zebra_interface_address_delete_update(ifp, ifc);
 #endif
 	// nsm_client_notify_interface_del_ip(ifp, ifc, secondry);
@@ -923,7 +938,7 @@ int nsm_interface_ip_address_add(struct interface *ifp, struct prefix *cp,
 			connected_up_ipv6(ifp, ifc);
 #endif
 // nsm_client_notify_interface_add_ip(ifp, ifc, 0);
-#ifdef ZPL_RTPL_MODULE
+#ifdef ZPL_NSM_MODULE
 		zebra_interface_address_add_update(ifp, ifc);
 #endif
 		/* Add to linked list. */
@@ -954,7 +969,7 @@ int nsm_interface_ip_address_del(struct interface *ifp, struct prefix *cp,
 	/* This is not configured address. */
 	if (!CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED))
 		UNSET_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED);
-#ifdef ZPL_RTPL_MODULE
+#ifdef ZPL_NSM_MODULE
 	zebra_interface_address_delete_update(ifp, ifc);
 #endif
 	// nsm_client_notify_interface_del_ip(ifp, ifc, 0);
@@ -1009,7 +1024,7 @@ int nsm_interface_mode_set_api(struct interface *ifp, if_mode_t mode)
 				// if_have_kernel(ifp);
 			}
 			ifp->if_mode = mode;
-#ifdef ZPL_RTPL_MODULE
+#ifdef ZPL_NSM_MODULE
 			zebra_interface_mode_update(ifp, mode);
 #endif
 		}
@@ -1064,7 +1079,7 @@ int nsm_interface_enca_set_api(struct interface *ifp, if_enca_t enca, zpl_uint16
 		{
 			ifp->if_enca = enca;
 			ifp->encavlan = value;
-#ifdef ZPL_RTPL_MODULE
+#ifdef ZPL_NSM_MODULE
 // zebra_interface_mode_update (ifp, enca);
 #endif
 		}
@@ -1109,7 +1124,7 @@ int nsm_interface_up_set_api(struct interface *ifp)
 			if_up(ifp);
 			zif->shutdown = IF_ZEBRA_SHUTDOWN_OFF;
 // nsm_client_notify_interface_up(ifp);
-#ifdef ZPL_RTPL_MODULE
+#ifdef ZPL_NSM_MODULE
 			zebra_interface_up_update(ifp);
 #endif
 		}
@@ -1134,7 +1149,7 @@ int nsm_interface_down_set_api(struct interface *ifp)
 		{
 			if_down(ifp);
 			zif->shutdown = IF_ZEBRA_SHUTDOWN_ON;
-#ifdef ZPL_RTPL_MODULE
+#ifdef ZPL_NSM_MODULE
 			zebra_interface_down_update(ifp);
 #endif
 			// nsm_client_notify_interface_down(ifp);
@@ -1678,7 +1693,7 @@ void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, zpl_bo
 }
 #endif
 
-static int nsm_interface_event_hook(nsm_event_e event, nsm_event_data_t *data)
+static int nsm_interface_event_hook(lib_event_e event, lib_event_data_t *data)
 {
 	return OK;
 }
@@ -1761,5 +1776,5 @@ void nsm_interface_init(void)
 		_nsm_intf_init = 1;
 	}
 	if_hook_add(nsm_interface_new_hook, nsm_interface_delete_hook);
-	nsm_event_register_api(MODULE_NSM, nsm_interface_event_hook);
+	lib_event_register_api(MODULE_NSM, nsm_interface_event_hook);
 }

@@ -205,7 +205,7 @@ int _ipkernel_linux_create (nsm_vlaneth_t *kifp)
 {
 	if(if_is_serial(kifp->ifp))
 	{
-		if(kifp->ifp->ll_type != ZEBRA_LLT_MODEM)
+		if(kifp->ifp->ll_type != IF_LLT_MODEM)
 			return _ipkernel_vlaneth_create(kifp);
 		return OK;
 	}
@@ -213,7 +213,7 @@ int _ipkernel_linux_create (nsm_vlaneth_t *kifp)
 			IF_ID_GET(kifp->ifp->ifindex) &&
 			IF_VLAN_GET(kifp->ifp->ifindex))
 	{
-		if(kifp->ifp->ll_type != ZEBRA_LLT_MODEM)
+		if(kifp->ifp->ll_type != IF_LLT_MODEM)
 			return _ipkernel_vlan_create(kifp);
 		return OK;
 	}
@@ -224,14 +224,14 @@ int _ipkernel_linux_destroy (nsm_vlaneth_t *kifp)
 {
 	if(if_is_serial(kifp->ifp))
 	{
-		if(kifp->ifp->ll_type != ZEBRA_LLT_MODEM)
+		if(kifp->ifp->ll_type != IF_LLT_MODEM)
 			return _ipkernel_vlaneth_destroy(kifp);
 		return OK;
 	}
 	if(if_is_ethernet(kifp->ifp) && kifp->root && IF_ID_GET(kifp->ifp->ifindex) &&
 			IF_VLAN_GET(kifp->ifp->ifindex) && kifp->active)
 	{
-		if(kifp->ifp->ll_type != ZEBRA_LLT_MODEM)
+		if(kifp->ifp->ll_type != IF_LLT_MODEM)
 			return _ipkernel_vlan_destroy(kifp);
 		return OK;
 	}
@@ -242,7 +242,7 @@ int _ipkernel_linux_change (nsm_vlaneth_t *kifp, vlan_t vlan)
 {
 	if(if_is_ethernet(kifp->ifp) && kifp->root && IF_ID_GET(kifp->ifp->ifindex))
 	{
-		if(kifp->ifp->ll_type == ZEBRA_LLT_MODEM)
+		if(kifp->ifp->ll_type == IF_LLT_MODEM)
 			return OK;
 		if(kifp->active)
 			_ipkernel_vlan_destroy(kifp);

@@ -8,9 +8,11 @@
 
 #include "os_include.h"
 #include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-#include "vty_include.h"
+#include "vty.h"
+#include "vty_user.h"
+#include "command.h"
+#include "log.h"
+#include "host.h"
 
 DEFUN (username,
 		username_cmd,

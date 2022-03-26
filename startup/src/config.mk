@@ -3,6 +3,7 @@
 ###########################################################################
 MODULEDIR = startup/src
 #OS
+OBJS	+= moduletable.o
 OBJS	+= startup_disk.o
 OBJS	+= startup_module.o
 OBJS	+= startup_start.o

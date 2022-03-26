@@ -8,10 +8,16 @@ OBJS	+= hal_ipccmd.o
 OBJS	+= hal_ipcmsg.o
 OBJS	+= hal_global.o
 OBJS	+= hal_netpkt.o
-OBJS	+= hal_port.o
 OBJS	+= hal_misc.o
-OBJS	+= hal_mstp.o
-OBJS	+= hal_igmp.o
+
+OBJS	+= hal_port.o		
+
+ifeq ($(strip $(ZPL_NSM_MSTP)),true)
+OBJS	+= hal_mstp.o		
+endif
+ifeq ($(strip $(ZPL_NSM_IGMP)),true)
+OBJS	+= hal_igmp.o	
+endif
 ifeq ($(strip $(ZPL_NSM_8021X)),true)
 OBJS	+= hal_8021x.o		
 endif

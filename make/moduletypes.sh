@@ -1,14 +1,11 @@
 #!/bin/bash
 
-module_table_src_file=$3/nsm/moduletable.c 
+module_table_src_file=$3/moduletable.c 
 
-module_types_src_file=$3/lib/moduletypes.c 
 module_types_def_file=$3/lib/moduletypes.h
 
-module_table_txt_file=$3/lib/moduletable.txt 
-
 module_table_node_tmp=$3/lib/moduletable.tmp
-module_table_desc_tmp=$3/lib/moduletdesc.tmp
+
 
 function awk_scanfile() {
     local scanfile
@@ -43,13 +40,13 @@ function awk_scanfile() {
             awk 'BEGIN{ORS=""} /module_list_./ {print "extern struct module_list " $3 ";\n";}' ${scanfile} >> $module_table_src_file
             awk 'BEGIN{ORS=""} /module_list_./ {print "  &" $3 ",\n";}' ${scanfile} >> $module_table_node_tmp
             awk 'BEGIN{ORS=""} /.module/&&/=/&&/,/&&/MODULE_/ {print  $0 "\n";}' ${scanfile}  | awk '{match($0, /MODULE_.*/,str); print "  " str[0];}' >> $module_types_def_file
-            awk 'BEGIN{ORS=""} /.module/&&/=/&&/,/&&/MODULE_/ {print  $0 "\n";}' ${scanfile}  | awk '{match($0, /MODULE_.*,/,str); print "" str[0];}'|awk '{sub(/.{1}$/,"")}1'| awk -F "_" '{print "ZPL_MODULE_DESC("$2"),"}' >> $module_table_desc_tmp
+            #awk 'BEGIN{ORS=""} /.module/&&/=/&&/,/&&/MODULE_/ {print  $0 "\n";}' ${scanfile}  | awk '{match($0, /MODULE_.*,/,str); print "" str[0];}'|awk '{sub(/.{1}$/,"")}1'| awk -F "_" '{print "ZPL_MODULE_DESC("$2"),"}' >> $module_table_desc_tmp
 
             else    
             awk 'BEGIN{ORS=""} /module_list_./ {print "extern struct module_list " $3 ";\n";exit;}' ${scanfile} >> $module_table_src_file
             awk 'BEGIN{ORS=""} /module_list_./ {print "  &" $3 ",\n";exit;}' ${scanfile} >> $module_table_node_tmp
             awk 'BEGIN{ORS=""} /.module/&&/=/&&/,/&&/MODULE_/ {print  $0 "\n";exit;}' ${scanfile}  | awk '{match($0, /MODULE_.*/,str); print "  " str[0];exit;}' >> $module_types_def_file
-            awk 'BEGIN{ORS=""} /.module/&&/=/&&/,/&&/MODULE_/ {print  $0 "\n";exit;}' ${scanfile}  | awk '{match($0, /MODULE_.*,/,str); print "" str[0];exit;}'|awk '{sub(/.{1}$/,"")}1'| awk -F "_" '{print "ZPL_MODULE_DESC("$2"),"}' >> $module_table_desc_tmp
+            #awk 'BEGIN{ORS=""} /.module/&&/=/&&/,/&&/MODULE_/ {print  $0 "\n";exit;}' ${scanfile}  | awk '{match($0, /MODULE_.*,/,str); print "" str[0];exit;}'|awk '{sub(/.{1}$/,"")}1'| awk -F "_" '{print "ZPL_MODULE_DESC("$2"),"}' >> $module_table_desc_tmp
             fi
         fi
     fi 
@@ -100,7 +97,7 @@ function awk_scandir() {
 }
 
 if test "header" == "$1" ;then
-    rm $module_types_def_file $module_types_src_file $module_table_node_tmp
+    rm $module_types_def_file  $module_table_node_tmp
 
     echo "#ifndef _MODULE_TYPES_H" > $module_types_def_file
     echo "#define _MODULE_TYPES_H" >> $module_types_def_file
@@ -113,15 +110,6 @@ if test "header" == "$1" ;then
     echo "#include \"lib_include.h\"" >> $module_table_src_file
     echo " " >> $module_table_src_file
 
-    echo "#include \"os_include.h\"" > $module_types_src_file
-    echo "#include \"zpl_include.h\"" > $module_types_src_file
-    echo "#include \"module.h\"" >> $module_types_src_file
-    echo "#include \"moduletypes.h\"" >> $module_types_src_file
-    echo " " >> $module_types_src_file
-
-    echo " " >> $module_types_src_file
-    echo "#define ZPL_MODULE_DESC(m)    {(MODULE_ ##m),(#m),0 }" >> $module_types_src_file
-    echo " " >> $module_types_src_file
 fi
 
 
@@ -131,12 +119,6 @@ if test "tail" == "$1" ;then
     echo " " >> $module_types_def_file
     echo "#endif /* _MODULE_TYPES_H */" >> $module_types_def_file
 
-    echo " " >> $module_types_src_file
-    echo "struct module_table module_tbl[MODULE_MAX] = {" >> $module_types_src_file
-    cat $module_table_desc_tmp >> $module_types_src_file
-    echo "};"  >> $module_types_src_file
-    echo "#undef ZPL_MODULE_DESC" >> $module_types_src_file
-    rm $module_table_desc_tmp
 
     echo " " >> $module_table_src_file
     echo "struct module_alllist module_lists_tbl[MODULE_MAX] = {" >> $module_table_src_file
@@ -145,7 +127,6 @@ if test "tail" == "$1" ;then
     echo "};"  >> $module_table_src_file
     echo " " >> $module_table_src_file
     echo " " >> $module_table_src_file
-    cat $module_table_txt_file >> $module_table_src_file
     echo " " >> $module_table_src_file
     rm $module_table_node_tmp
 fi

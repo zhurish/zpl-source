@@ -337,7 +337,7 @@ int nsm_halpal_delete_vr(vrf_id_t vrf_id)
 	return ret;
 }
 
-
+#ifdef ZPL_NSM_ARP
 int nsm_halpal_interface_arp_add(struct interface *ifp, struct prefix *address, zpl_uint8 *mac)
 {
 	int ret = 0;
@@ -386,9 +386,9 @@ int nsm_halpal_arp_retry_interval(zpl_uint32 interval)
 	ret = pal_arp_retry_interval(interval);
 	return ret;
 }
+#endif
 
-
-
+#ifdef ZPL_NSM_FIREWALLD
 int nsm_halpal_firewall_portmap_rule_set(firewall_t *rule, zpl_action action)
 {
 	int ret = 0;
@@ -428,3 +428,4 @@ int nsm_halpal_firewall_dnat_rule_set(firewall_t *rule, zpl_action action)
 	ret = pal_firewall_dnat_rule_set(rule, action);
 	return ret;
 }
+#endif

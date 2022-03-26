@@ -1,9 +1,8 @@
 #include "os_include.h"
 #include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-#include "vty_include.h"
 #include "cli_node.h"
+#include "vty.h"
+
 
 static enum node_type vty_issubnode(enum node_type node)
 {

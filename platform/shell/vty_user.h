@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-#include "zpl_include.h"
+#include "os_include.h"
 #include "vty.h"
 #include "md5.h"
 #include "command.h"

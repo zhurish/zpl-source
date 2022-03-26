@@ -543,11 +543,11 @@ static int _netlink_link_change(struct ipstack_sockaddr_nl *snl, struct ipstack_
 				ifp->flags = ifi->ifi_flags & 0x0000fffff;
 				if (!if_is_operative(ifp))
 					if_down(ifp);
-					#ifdef ZPL_RTPL_MODULE
+					
 				else
 					/* Must notify client daemons of new interface status. */
 					zebra_interface_up_update(ifp);
-					#endif
+					
 			}
 			else
 			{

@@ -14,7 +14,7 @@ extern "C" {
 #define NSM_GLOBAL_MULTICAST_LEARNING_DEFAULT	zpl_false
 #define NSM_GLOBAL_BPDU_DEFAULT	                zpl_false
 
-
+#ifdef ZPL_NSM_IGMP
 enum nsm_proto_action
 {
 	NSM_PKT_PROXY,
@@ -50,7 +50,7 @@ typedef struct nsm_snoop_proto_s
     zpl_bool        rarp_snoop;
     zpl_bool        dhcp_snoop;
 }nsm_snoop_proto_t;
-
+#endif
 typedef struct nsm_global_s
 {
     void	        *mutex;
@@ -62,9 +62,9 @@ typedef struct nsm_global_s
     zpl_bool        multicast_flood;
     zpl_bool        multicast_learning;
     zpl_bool        bpdu_enable;
-
+#ifdef ZPL_NSM_IGMP
     nsm_snoop_proto_t snoop_proto;
-
+#endif
 }nsm_global_t;
 
 
@@ -88,10 +88,10 @@ extern int nsm_global_multicast_learning_get(zpl_bool *value);
 extern int nsm_global_bpdu_set(zpl_bool value);
 extern int nsm_global_bpdu_get(zpl_bool *value);
 
-
+#ifdef ZPL_NSM_IGMP
 extern int nsm_snooping_proto_set(enum nsm_snoop_proto_type, enum nsm_proto_action, zpl_bool value);
 extern int nsm_snooping_proto_get(enum nsm_snoop_proto_type, enum nsm_proto_action, zpl_bool *value);
-
+#endif
 
 extern int nsm_global_init(void);
 extern int nsm_global_exit(void);

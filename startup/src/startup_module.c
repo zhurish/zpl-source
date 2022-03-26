@@ -6,10 +6,9 @@
  */
 #include "os_include.h"
 #include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-#include "bmgt.h"
 #include "module.h"
+#include "host.h"
+#include "log.h"
 #include "startup_module.h"
 
 
@@ -85,37 +84,50 @@ int zpl_stack_start(const char* progname, int localport)
 int startup_module_init(int console_enable)
 {
 	zplib_module_name_show();
-	
+	#ifdef ZPL_NSM_MODULE
 	unit_board_init();
+	#endif
 	_global_host.console_enable = console_enable;
 	//设置准备初始化标志
 	host_loadconfig_stats(LOAD_INIT);
-	
+	#ifdef ZPL_HAL_MODULE
 	zplib_module_init(MODULE_HAL);
+	#endif
+	#ifdef ZPL_PAL_MODULE
 	zplib_module_init(MODULE_PAL);
+	#endif
 	os_msleep(50);
-
+	#ifdef ZPL_HAL_MODULE
 	zplib_module_task_init(MODULE_HAL);
+	#endif
+	#ifdef ZPL_PAL_MODULE
 	zplib_module_task_init(MODULE_PAL);
+	#endif
 
 	//等待BSP初始化，最长等待15s时间
+	#ifdef ZPL_BSP_MODULE
 	zplib_module_init(MODULE_SDK);
 	zplib_module_task_init(MODULE_SDK);
-
+	#endif
 	os_msleep(50);
 	return OK;
 }
 
 int startup_module_load(void)
 {
+	#ifdef ZPL_BSP_MODULE
 	bsp_module_start();
+	#endif	
+	
 	os_msleep(50);
-
+	#ifdef ZPL_NSM_MODULE
 	zplib_module_init(MODULE_NSM);
+	#endif
 	zplib_module_initall();
 	os_msleep(50);
-
+	#ifdef ZPL_NSM_MODULE
 	zplib_module_task_init(MODULE_NSM);
+	#endif
 	zplib_module_task_startall();
 
 	os_msleep(50);
@@ -133,15 +145,16 @@ int startup_module_waitting(void)
 	os_msleep(2000);
 
 	host_waitting_bspinit(15);
-	
+	//printf("==============================================\r\n");
+#ifdef ZPL_NSM_MODULE
 	nsm_module_start();
-
+#endif
 #ifdef ZPL_IPCBCBSP_MODULE
 	bsp_usp_module_init();
 #endif
 
 #ifdef ZPL_KERNEL_STACK_MODULE
-	_netlink_load_all();
+	//_netlink_load_all();
 #endif
 	//eth_drv_init(0);
 	//eth_drv_start(0);
@@ -159,7 +172,9 @@ int startup_module_stop(void)
 
 int startup_module_exit(void)
 {
+	#ifdef ZPL_VRF_MODULE
 	vrf_terminate();
+	#endif
 	vty_terminate();
 	cmd_terminate();
 
@@ -182,8 +197,11 @@ int zpl_base_shell_start(char *shell_path, char *shell_addr, int shell_port, con
 	vty_tty_init(tty);
 	vty_serv_init(shell_addr, shell_port, shell_path, tty);
 	zlog_notice(MODULE_DEFAULT, "Zebra %s starting: vty@%d", OEM_VERSION, shell_port);
+	//vty_task_init ();
+	//vty_task_exit (void);
 	zplib_module_task_init(MODULE_CONSOLE);
 	zplib_module_task_init(MODULE_TELNET);
+	zlog_notice(MODULE_DEFAULT, "zpl_base_shell_start %s starting: vty@%d", OEM_VERSION, shell_port);
 	return OK;
 }
 

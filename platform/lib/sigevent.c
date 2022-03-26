@@ -21,7 +21,7 @@
 
 #include "os_include.h"
 #include "zpl_include.h"
-#include "lib_include.h"
+#include "log.h"
 
 #include "sigevent.h"
 

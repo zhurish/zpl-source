@@ -5,8 +5,8 @@
  *      Author: zhurish
  */
 
-#ifndef PLATFORM_LIB_HOST_H_
-#define PLATFORM_LIB_HOST_H_
+#ifndef __LIB_HOST_H__
+#define __LIB_HOST_H__
 
 
 #ifdef __cplusplus
@@ -16,49 +16,50 @@ extern "C" {
 /* Host configuration variable */
 struct zpl_host
 {
-  /* Host name of this router. */
-  zpl_char *name;
-  zpl_char *description;
-  struct list *userlist;
+	/* Host name of this router. */
+	zpl_char *name;
+	zpl_char *description;
+	struct list *userlist;
 
-  /* System wide terminal lines. */
-  zpl_int32 lines;
-  /* Log filename. */
-  zpl_char *logfile;
-  /* config file name of this host */
-  zpl_char *config;
-  zpl_char *default_config;
-  zpl_char *factory_config;
-  /* Flags for services */
+	/* System wide terminal lines. */
+	zpl_int32 lines;
+	/* Log filename. */
+	zpl_char *logfile;
+	/* config file name of this host */
+	zpl_char *config;
+	zpl_char *default_config;
+	zpl_char *factory_config;
+	/* Flags for services */
 
-  zpl_bool encrypt;
-  /* Banner configuration. */
-  const char *motd;
-  zpl_char *motdfile;
+	zpl_bool encrypt;
+	/* Banner configuration. */
+	const char *motd;
+	zpl_char *motdfile;
 
-  zpl_ulong vty_timeout_val;
-  /* Vty access-class command */
-  zpl_char *vty_accesslist_name;
-  /* Vty access-calss for IPv6. */
-  zpl_char *vty_ipv6_accesslist_name;
+	zpl_ulong vty_timeout_val;
+	/* Vty access-class command */
+	zpl_char *vty_accesslist_name;
+	/* Vty access-calss for IPv6. */
+	zpl_char *vty_ipv6_accesslist_name;
 
-  /* Current directory. */
-  zpl_char *vty_cwd;
-  /* Configure lock. */
-  zpl_bool vty_config;
-  /* Login password check. */
-  zpl_bool no_password_check;
-  zpl_bool console_enable;
+	/* Current directory. */
+	zpl_char *vty_cwd;
+	/* Configure lock. */
+	zpl_bool vty_config;
+	/* Login password check. */
+	zpl_bool no_password_check;
+	zpl_bool console_enable;
 
-  enum{LOAD_NONE, LOAD_INIT, LOADING, LOAD_DONE} load;
-  void *mutx;
-  void *cli_mutx;
+	void *mutx;
+	void *cli_mutx;
 
-  zpl_int8	serial[64];
+	zpl_int8	serial[64];
 
-  zpl_uint8	sysmac[6];
+	zpl_uint8	sysmac[6];
 
-  void *bspinit_sem;
+	void *bspinit_sem;
+
+	enum{LOAD_NONE, LOAD_INIT, LOADING, LOAD_DONE} load;
 };
 
 struct host_system
@@ -146,4 +147,4 @@ extern int show_host_system_information(struct host_system *host_system, struct 
 }
 #endif
 
-#endif /* PLATFORM_LIB_HOST_H_ */
+#endif /* __LIB_HOST_H__ */

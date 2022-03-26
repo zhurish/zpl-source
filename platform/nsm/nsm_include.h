@@ -15,10 +15,11 @@ extern "C" {
 #include "nexthop.h"
 #include "table.h"
 #include "queue.h"
-#include "nsm_event.h"
-#ifdef ZPL_RTPL_MODULE
+#ifdef ZPL_NSM_MODULE
 #include "nsm_rib.h"
 #include "router-id.h"
+#include "routemap.h"
+//#include "routemap.h"
 #endif
 #include "nsm_ipforward.h"
 #include "nsm_interface.h"

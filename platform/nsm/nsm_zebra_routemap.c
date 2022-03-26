@@ -19,17 +19,20 @@
  * 02111-1307, USA.  
  */
 
+#include <os_include.h>
 #include <zpl_include.h>
-
+#include <zebra_event.h>
 #include "memory.h"
 #include "prefix.h"
 #include "nsm_rib.h"
 #include "command.h"
 #include "filter.h"
-#include "nsm_vrf.h"
+#ifdef ZPL_VRF_MODULE
+#include "vrf.h"
+#endif
 #include "nexthop.h"
 #include "plist.h"
-#include "nsm_routemap.h"
+#include "routemap.h"
 
 #include "nsm_zserv.h"
 

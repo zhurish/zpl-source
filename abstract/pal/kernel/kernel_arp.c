@@ -18,7 +18,7 @@
 #include <net/if_arp.h>
 #include <linux/if_packet.h>
 
-
+#ifdef ZPL_NSM_ARP
 /* Delete an entry from the ARP cache. */
 static int kernel_arp_del(struct interface *ifp, struct prefix *address)
 {
@@ -326,3 +326,4 @@ int ip_arp_stack_init()
 	return OK;
 }
 
+#endif

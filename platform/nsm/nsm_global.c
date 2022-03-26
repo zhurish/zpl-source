@@ -12,6 +12,7 @@ static nsm_global_t nsm_global;
 #define NSM_GLOBAL_MULTICAST_FLOOD_DEFAULT	    zpl_false
 #define NSM_GLOBAL_MULTICAST_LEARNING_DEFAULT	zpl_false
 #define NSM_GLOBAL_BPDU_DEFAULT	                zpl_false
+
 static int bulid_global_config(struct vty *vty, void *p)
 {
 	if(nsm_global.mutex)
@@ -56,7 +57,7 @@ static int bulid_global_config(struct vty *vty, void *p)
     else
       vty_out(vty, "no system l2 bpdu enable%s", VTY_NEWLINE);
   }
-
+#ifdef ZPL_NSM_IGMP
   if(nsm_global.snoop_proto.igmp_snoop)
 		vty_out(vty, "igmp snooping enable%s", VTY_NEWLINE);
   if(nsm_global.snoop_proto.igmp_proxy)
@@ -84,7 +85,7 @@ static int bulid_global_config(struct vty *vty, void *p)
 		vty_out(vty, "ip rarp snooping enable%s", VTY_NEWLINE);
   if(nsm_global.snoop_proto.dhcp_snoop)
 		vty_out(vty, "ip dhcp snooping enable%s", VTY_NEWLINE);
-
+#endif
 	if(nsm_global.mutex)
 		os_mutex_unlock(nsm_global.mutex);
 	return 0;
@@ -296,7 +297,7 @@ int nsm_global_bpdu_get(zpl_bool *value)
 }
 
 
-
+#ifdef ZPL_NSM_IGMP
 int nsm_snooping_proto_set(enum nsm_snoop_proto_type type, enum nsm_proto_action action, zpl_bool value)
 {
 	int ret = ERROR;
@@ -494,5 +495,5 @@ int nsm_snooping_proto_get(enum nsm_snoop_proto_type type, enum nsm_proto_action
 	return ret;
 }
 
-
+#endif
 

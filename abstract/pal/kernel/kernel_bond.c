@@ -152,7 +152,7 @@ int _ipkernel_bond_delete(struct interface *ifp)
 }
 
 
-int _if_bond_test()
+int _if_bond_test(void)
 {
 	struct interface ifp;
 	memset(&ifp, 0, sizeof(ifp));

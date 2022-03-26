@@ -7,7 +7,12 @@
 
 #include "os_include.h"
 #include "zpl_include.h"
-#include "lib_include.h"
+#include "linklist.h"
+#include "memory.h"
+#include "log.h"
+#include "command.h"
+#include "vty.h"
+#include "template.h"
 
 static struct list *template_list = NULL;
 static struct list *service_list = NULL;

@@ -12,13 +12,13 @@
 #include "lib_include.h"
 #include "nsm_include.h"
 #include "vty_include.h"
-#ifdef ZPL_RTPL_MODULE
+
 #include "nsm_zserv.h"
 #include "nsm_redistribute.h"
-#endif
 
 
-#ifdef ZPL_RTPL_MODULE
+
+
 void router_id_write (struct vty *vty)
 {
 	struct prefix p;
@@ -83,5 +83,5 @@ void cmd_router_id_init (void)
   //install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &no_router_id_vrf_cmd);
 }
 
-#endif
+
 

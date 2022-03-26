@@ -22,7 +22,7 @@
  * 02111-1307, USA.
  */
 
-#include <zpl_include.h>
+#include <os_include.h>
 
 #include "log.h"
 #include "stream.h"

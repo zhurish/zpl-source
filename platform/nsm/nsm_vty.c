@@ -21,8 +21,12 @@
 
 #include "os_include.h"
 #include "zpl_include.h"
-#include "lib_include.h"
-#include "nsm_include.h"
+#include "if.h"
+#include "vty.h"
+#include "vrf.h"
+#include "nsm_rib.h"
+#include "table.h"
+
 
 #ifdef ZPL_SHELL_MODULE
 static int do_show_ip_route(struct vty *vty, safi_t safi, vrf_id_t vrf_id);

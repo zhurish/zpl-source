@@ -47,7 +47,7 @@ typedef struct pal_stack_s
 
 	int (*ip_stack_route_rib)(struct prefix *p, struct rib *old, struct rib *new);
 
-
+#ifdef ZPL_NSM_ARP
 	//ip arp
 	int (*ip_stack_arp_get)(struct interface *ifp, struct prefix *address, zpl_uint8 *mac);
 	int (*ip_stack_arp_add)(struct interface *ifp, struct prefix *address, zpl_uint8 *mac);
@@ -57,7 +57,7 @@ typedef struct pal_stack_s
 	int (*ip_stack_arp_ttl)(zpl_uint32 ttl);
 	int (*ip_stack_arp_age_timeout)(zpl_uint32 timeout);
 	int (*ip_stack_arp_retry_interval)(zpl_uint32 interval);
-
+#endif
 	// ip route
 	int (*ip_stack_vrf_create)(vrf_id_t vrf_id);
 	int (*ip_stack_vrf_delete)(vrf_id_t vrf_id);
@@ -68,6 +68,7 @@ typedef struct pal_stack_s
 /*
  * 端口映射
  */
+#ifdef ZPL_NSM_FIREWALLD
 	int (*ip_stack_firewall_portmap_rule_set)(firewall_t *rule, zpl_action action);
 /*
  * 端口开放
@@ -77,7 +78,7 @@ typedef struct pal_stack_s
 	int (*ip_stack_firewall_raw_rule_set)(firewall_t *rule, zpl_action action);
 	int (*ip_stack_firewall_snat_rule_set)(firewall_t *rule, zpl_action action);
 	int (*ip_stack_firewall_dnat_rule_set)(firewall_t *rule, zpl_action action);
-
+#endif
 }pal_stack_t;
 
 extern pal_stack_t pal_stack;
@@ -116,6 +117,7 @@ extern int pal_interface_ipv6_delete(struct interface *ifp, struct connected *if
 extern int pal_iproute_rib_action(struct prefix *p, struct rib *old, struct rib *new);
 
 //ip arp
+#ifdef ZPL_NSM_ARP
 extern int pal_interface_arp_add(struct interface *ifp, struct prefix *address, zpl_uint8 *mac);
 extern int pal_interface_arp_delete(struct interface *ifp, struct prefix *address);
 extern int pal_interface_arp_request(struct interface *ifp, struct prefix *address);
@@ -123,12 +125,12 @@ extern int pal_arp_gratuitousarp_enable(zpl_bool enable);
 extern int pal_arp_ttl(zpl_uint32 ttl);
 extern int pal_arp_age_timeout(zpl_uint32 timeout);
 extern int pal_arp_retry_interval(zpl_uint32 interval);
-
+#endif
 //route
 extern int pal_create_vr(vrf_id_t vrf_id);
 extern int pal_delete_vr(vrf_id_t vrf_id);
 //extern zpl_socket_t pal_vrf_socket(int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id_t vrf_id);
-#if 1
+#ifdef ZPL_NSM_FIREWALLD
 /*
  * 端口映射
  */
