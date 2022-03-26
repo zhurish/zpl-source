@@ -22,15 +22,49 @@
 
 #include "os_include.h"
 #include "zpl_include.h"
-#include "lib_include.h"
-#include "vty_include.h"
+//#include "lib_include.h"
+#include "module.h"
+#include "memory.h"
+#include "memtypes.h"
+
+#ifdef ZPL_SHELL_MODULE
+#include "cli_node.h"
+#include "buffer.h"
+#include "vector.h"
+#include "command.h"
+#endif
+#include "log.h"
+#include "zassert.h"
+#include "str.h"
+#include "prefix.h"
+#include "host.h"
+#include "network.h"
+#include "sockunion.h"
+#include "sockopt.h"
+
+#include "eloop.h"
+#include "thread.h"
+#ifdef ZPL_IP_FILTER
+#include "filter.h"	
+#endif
+#include "vty.h"
+#include "vty_user.h"
+
 #include <arpa/telnet.h>
 #include <termios.h>
 
-cli_shell_t cli_shell;
+
+
 
 static void vty_event(enum vtyevent, zpl_socket_t, struct vty *);
 static int vty_flush_handle(struct vty *vty, zpl_socket_t vty_sock);
+#ifdef ZPL_IPCOM_STACK_MODULE
+static int cli_telnet_task_init(void);
+static int cli_telnet_task_exit(void);
+#endif
+
+static int cli_console_task_init(void);
+static int cli_console_task_exit(void);
 
 /* Extern host structure from command.c */
 static struct tty_com cli_tty_com =
@@ -44,13 +78,13 @@ static struct tty_com cli_tty_com =
 };
 
 struct module_list module_list_console =
-	{
+{
 		.module = MODULE_CONSOLE,
 		.name = "CONSOLE",
 		.module_init = vty_init,
 		.module_exit = NULL,
-		.module_task_init = vty_task_init,
-		.module_task_exit = vty_task_exit,
+		.module_task_init = cli_console_task_init,
+		.module_task_exit = cli_console_task_exit,
 		.module_cmd_init = NULL,
 		.module_write_config = NULL,
 		.module_show_config = NULL,
@@ -65,8 +99,13 @@ struct module_list module_list_telnet =
 		.name = "TELNET",
 		.module_init = vty_init,
 		.module_exit = NULL,
-		.module_task_init = vty_task_init,
-		.module_task_exit = vty_task_exit,
+#ifdef ZPL_IPCOM_STACK_MODULE
+		.module_task_init = cli_telnet_task_init,
+		.module_task_exit = cli_telnet_task_exit,
+#else
+		.module_task_init = NULL,
+		.module_task_exit = NULL,
+#endif	
 		.module_cmd_init = NULL,
 		.module_write_config = NULL,
 		.module_show_config = NULL,
@@ -74,7 +113,10 @@ struct module_list module_list_telnet =
 		.taskid = 0,
 		.flags = 0,
 };
-
+/*******************************************************************************/
+cli_shell_t cli_shell;
+/*******************************************************************************/
+/*******************************************************************************/
 static void vty_buf_assert(struct vty *vty)
 {
 	assert(vty->cp <= vty->length);
@@ -2769,7 +2811,9 @@ static int vty_accept(struct eloop *thread)
 	zpl_uint32 on;
 	zpl_socket_t accept_sock;
 	struct prefix p;
+	#ifdef ZPL_IP_FILTER
 	struct access_list *acl = NULL;
+	#endif
 	zpl_char buf[SU_ADDRSTRLEN];
 	accept_sock = ELOOP_FD(thread);
 	/* We continue hearing vty ipstack_socket. */
@@ -2790,6 +2834,7 @@ static int vty_accept(struct eloop *thread)
 	sockunion2hostprefix(&su, &p);
 	if (_global_host.mutx)
 		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	#ifdef ZPL_IP_FILTER	
 	/* VTY's accesslist apply. */
 	if (p.family == IPSTACK_AF_INET && _global_host.vty_accesslist_name)
 	{
@@ -2825,6 +2870,7 @@ static int vty_accept(struct eloop *thread)
 		}
 	}
 #endif /* HAVE_IPV6 */
+	#endif
 	if (_global_host.mutx)
 		os_mutex_unlock(_global_host.mutx);
 	on = 1;
@@ -4027,13 +4073,15 @@ void *vty_thread_master(void)
 {
 	return cli_shell.m_thread_master;
 }
+
 /* Install vty's own commands like `who' command. */
 void vty_init(void)
 {
-	memset(&cli_shell, 0, sizeof(cli_shell_t));
-	cli_shell.init = 1;
-	// if (cli_shell.init != 2)
+	if(cli_shell.init == 0)
 	{
+		memset(&cli_shell, 0, sizeof(cli_shell_t));
+		cli_shell.init = 1;
+
 #ifdef ZPL_IPCOM_STACK_MODULE
 		if (cli_shell.m_eloop_master == NULL)
 			cli_shell.m_eloop_master = eloop_master_module_create(MODULE_TELNET);
@@ -4189,9 +4237,6 @@ static int cli_console_task_exit(void)
 	if (cli_shell.m_thread_master)
 		thread_master_free(cli_shell.m_thread_master);
 	cli_shell.m_thread_master = NULL;
-#ifndef ZPL_IPCOM_STACK_MODULE
-	cli_shell.m_eloop_master = NULL;
-#endif
 	return OK;
 }
 

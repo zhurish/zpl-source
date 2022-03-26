@@ -132,7 +132,7 @@ int zpl_base_signal_init(int daemon_mode)
 	return OK;
 }
 
-extern struct module_alllist module_lists_tbl[MODULE_MAX];
+
 
 int startup_option_default(void)
 {
@@ -147,7 +147,7 @@ int startup_option_default(void)
 	startup_option.daemon_mode = 0;
 	startup_option.pid = 0;
 	startup_option.tty = NULL;
-	zplib_module_install(module_lists_tbl);
+
 	return OK;
 }
 

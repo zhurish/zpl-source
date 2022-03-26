@@ -53,6 +53,9 @@ ZPLOS_LDFLAGS += -L$(CROSS_COMPILE_PATH)/lib -L$(CROSS_COMPILE_PATH)/usr/lib
 ZPLOS_INCLUDE += -I$(CROSS_COMPILE_PATH)/target/usr/include 
 #ZPLOS_CFLAGS += -mcpu=cortex-a7 -mfloat-abi=softfp -mfpu=neon-vfpv4
 #ZPLOS_LDFLAGS += -mcpu=cortex-a7 -mfloat-abi=softfp -mfpu=neon-vfpv4
+endif
+
+ifneq ($(strip $(ZPL_BUILD_ARCH)),$(filter $(ZPL_BUILD_ARCH),X86_64 X86))
 
 ifeq ($(ZPL_ARM_A5),true)
 ZPLOS_MCPU = -mcpu=cortex-a5
@@ -69,7 +72,6 @@ endif
 ifeq ($(ZPL_ARM_A9),true)
 ZPLOS_MCPU = -mcpu=cortex-a9
 endif
-
 ifeq ($(ZPL_FPU_HARD),true)
 ZPLOS_FLOAT = hard
 endif
@@ -92,16 +94,14 @@ endif
 ZPLOS_CFLAGS += $(ZPLOS_MCPU) -mfloat-abi=$(ZPLOS_FLOAT) 
 ZPLOS_LDFLAGS += $(ZPLOS_MCPU) -mfloat-abi=$(ZPLOS_FLOAT) 
 
-#endif
+endif
 
 #ZPLOS_LDFLAGS += -L$(CROSS_COMPILE_PATH)/lib -L$(CROSS_COMPILE_PATH)/usr/lib
-endif
+
 #
 #
 #
-ifeq ($(ZPL_BUILD_ARCH),X86_64)
-ZPLOS_CFLAGS += -m64
-else ifeq ($(ZPL_BUILD_ARCH),AARCH64)
+ifeq ($(strip $(ZPL_BUILD_ARCH)),$(filter $(ZPL_BUILD_ARCH),X86_64 AARCH64))
 ZPLOS_CFLAGS += -m64
 endif
 #

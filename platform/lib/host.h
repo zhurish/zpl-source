@@ -50,8 +50,8 @@ struct zpl_host
 	zpl_bool no_password_check;
 	zpl_bool console_enable;
 
-	void *mutx;
-	void *cli_mutx;
+	os_mutex_t *mutx;
+	os_mutex_t *cli_mutx;
 
 	zpl_int8	serial[64];
 
@@ -81,8 +81,12 @@ struct host_system
 	zpl_uint32		mem_uses;
 	struct sysinfo s_info;
 };
+
+
 /* struct host global, ick */
 extern struct zpl_host _global_host;
+
+
 extern int host_sysconfig_sync(void);
 extern int host_config_init(zpl_char *motd);
 extern int host_config_exit(void);

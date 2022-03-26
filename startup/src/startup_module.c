@@ -12,6 +12,7 @@
 #include "startup_module.h"
 
 
+extern struct module_alllist module_lists_tbl[MODULE_MAX];
 
 static int ipcom_stack_init(int localport)
 {
@@ -31,6 +32,8 @@ int zpl_stack_init(void)
 
 	zpl_base_env_init();
 	zpl_base_env_load();
+	
+	zplib_module_install(module_lists_tbl);
 	
 	return OK;
 }

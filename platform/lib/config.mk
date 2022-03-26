@@ -12,7 +12,6 @@ OBJS	+= str.o
 OBJS	+= thread.o
 OBJS	+= eloop.o
 
-#OBJS	+= moduletypes.o
 OBJS	+= module.o
 
 OBJS	+= network.o
