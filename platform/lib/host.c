@@ -114,8 +114,7 @@ int host_config_init(zpl_char *motd)
 	_global_host.vty_config = 0;
 	/* Login password check. */
 	_global_host.no_password_check = 0;
-	_global_host.mutx = os_mutex_init();
-	_global_host.cli_mutx = os_mutex_init();
+	_global_host.mutex = os_mutex_init();
 	_global_host.bspinit_sem = os_sem_init();
 	if(access("/etc/.serial_no", F_OK) == 0)
 	{
@@ -181,15 +180,11 @@ int host_config_exit(void)
 		XFREE(MTYPE_HOST, _global_host.factory_config);
 		_global_host.factory_config = NULL;
 	}
-	if (_global_host.cli_mutx)
+
+	if (_global_host.mutex)
 	{
-		os_mutex_exit(_global_host.cli_mutx);
-		_global_host.cli_mutx = NULL;
-	}
-	if (_global_host.mutx)
-	{
-		os_mutex_exit(_global_host.mutx);
-		_global_host.mutx = NULL;
+		os_mutex_exit(_global_host.mutex);
+		_global_host.mutex = NULL;
 	}
 	if (_global_host.bspinit_sem)
 	{
@@ -205,13 +200,13 @@ int host_config_exit(void)
 void
 host_config_set (zpl_char *filename)
 {
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (_global_host.mutex)
+		os_mutex_lock(_global_host.mutex, OS_WAIT_FOREVER);
 	if (_global_host.config)
 		XFREE(MTYPE_HOST, _global_host.config);
 	_global_host.config = XSTRDUP(MTYPE_HOST, filename);
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (_global_host.mutex)
+		os_mutex_unlock(_global_host.mutex);
 }
 
 const char *
@@ -232,8 +227,8 @@ host_config_set_api (zpl_uint32 cmd, void *pVoid)
 	int ret = ERROR;
 	zpl_char *strValue = (zpl_char *)pVoid;
 	zpl_uint32 *intValue = (zpl_uint32 *)pVoid;
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (_global_host.mutex)
+		os_mutex_lock(_global_host.mutex, OS_WAIT_FOREVER);
 
 	switch(cmd)
 	{
@@ -339,8 +334,8 @@ host_config_set_api (zpl_uint32 cmd, void *pVoid)
 	default:
 		break;
 	}
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (_global_host.mutex)
+		os_mutex_unlock(_global_host.mutex);
 	return ret;
 }
 
@@ -350,8 +345,8 @@ host_config_get_api (zpl_uint32 cmd, void *pVoid)
 	int ret = ERROR;
 	zpl_char *strValue = (zpl_char *)pVoid;
 	zpl_uint32 *intValue = (zpl_uint32 *)pVoid;
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (_global_host.mutex)
+		os_mutex_lock(_global_host.mutex, OS_WAIT_FOREVER);
 
 	switch(cmd)
 	{
@@ -459,8 +454,8 @@ host_config_get_api (zpl_uint32 cmd, void *pVoid)
 	default:
 		break;
 	}
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (_global_host.mutex)
+		os_mutex_unlock(_global_host.mutex);
 	return ret;
 }
 

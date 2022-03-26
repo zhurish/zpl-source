@@ -50,8 +50,7 @@ struct zpl_host
 	zpl_bool no_password_check;
 	zpl_bool console_enable;
 
-	os_mutex_t *mutx;
-	os_mutex_t *cli_mutx;
+	os_mutex_t *mutex;
 
 	zpl_int8	serial[64];
 

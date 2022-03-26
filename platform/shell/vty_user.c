@@ -180,8 +180,8 @@ int vty_user_encrypt_enable (zpl_bool encrypt)
 	struct vty_user *user = NULL;
 	if(_global_host.userlist == NULL)
 		return 0;
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (_global_host.mutex)
+		os_mutex_lock(_global_host.mutex, OS_WAIT_FOREVER);
 	for (ALL_LIST_ELEMENTS_RO (_global_host.userlist, node, user))
 	{
 		if(user)
@@ -208,16 +208,16 @@ int vty_user_encrypt_enable (zpl_bool encrypt)
 			}
 		}
 	}
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (_global_host.mutex)
+		os_mutex_unlock(_global_host.mutex);
 	return 0;
 }
 
 zpl_bool vty_user_enable_password (struct vty *vty, const char *name)
 {
 	zpl_bool ret = zpl_false;
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (_global_host.mutex)
+		os_mutex_lock(_global_host.mutex, OS_WAIT_FOREVER);
 	if(name)
 	{
 		zpl_char lname[VTY_USERNAME_MAX];
@@ -229,21 +229,21 @@ zpl_bool vty_user_enable_password (struct vty *vty, const char *name)
 		{
 			if(user->enable && !md5_encrypt_empty(user->enable_encrypt))
 				ret = zpl_true;
-			if (_global_host.mutx)
-				os_mutex_unlock(_global_host.mutx);
+			if (_global_host.mutex)
+				os_mutex_unlock(_global_host.mutex);
 			return ret;
 		}
 	}
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (_global_host.mutex)
+		os_mutex_unlock(_global_host.mutex);
 	return zpl_false;
 }
 
 
 enum cmd_privilege vty_user_getting_privilege (struct vty *vty, zpl_char *name)
 {
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (_global_host.mutex)
+		os_mutex_lock(_global_host.mutex, OS_WAIT_FOREVER);
 	if(name)
 	{
 		zpl_char lname[VTY_USERNAME_MAX];
@@ -254,30 +254,30 @@ enum cmd_privilege vty_user_getting_privilege (struct vty *vty, zpl_char *name)
 		if(user)
 		{
 			//vty_out(vty, "%s 0:%s %s",__func__,lname, VTY_NEWLINE);
-			if (_global_host.mutx)
-				os_mutex_unlock(_global_host.mutx);
+			if (_global_host.mutex)
+				os_mutex_unlock(_global_host.mutex);
 			return user->privilege;
 		}
 	}
 /*
 	if(vty->user)
 	{
-		if (_global_host.mutx)
-			os_mutex_unlock(_global_host.mutx);
+		if (_global_host.mutex)
+			os_mutex_unlock(_global_host.mutex);
 		return vty->user->privilege;
 	}
 */
 
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (_global_host.mutex)
+		os_mutex_unlock(_global_host.mutex);
 	//vty_out(vty, "%s:vty->user is NULL %s",__func__, VTY_NEWLINE);
 	return CMD_ENABLE_LEVEL;
 }
 
 int vty_user_setting_privilege (struct vty *vty, zpl_char *name, enum cmd_privilege privilege)
 {
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (_global_host.mutex)
+		os_mutex_lock(_global_host.mutex, OS_WAIT_FOREVER);
 	if(name)
 	{
 		zpl_char lname[VTY_USERNAME_MAX];
@@ -290,8 +290,8 @@ int vty_user_setting_privilege (struct vty *vty, zpl_char *name, enum cmd_privil
 			if(privilege >= CMD_VIEW_LEVEL && privilege <= CMD_ADMIN_LEVEL)
 			{
 				user->privilege = privilege;
-				if (_global_host.mutx)
-					os_mutex_unlock(_global_host.mutx);
+				if (_global_host.mutex)
+					os_mutex_unlock(_global_host.mutex);
 				return CMD_SUCCESS;
 			}
 		}
@@ -301,13 +301,13 @@ int vty_user_setting_privilege (struct vty *vty, zpl_char *name, enum cmd_privil
 		if(privilege >= VIEW_LEVEL && privilege <= ADMIN_LEVEL)
 		{
 			vty->user->privilege = privilege;
-			if (_global_host.mutx)
-				os_mutex_unlock(_global_host.mutx);
+			if (_global_host.mutex)
+				os_mutex_unlock(_global_host.mutex);
 			return CMD_SUCCESS;
 		}
 	}*/
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (_global_host.mutex)
+		os_mutex_unlock(_global_host.mutex);
 	if(vty)
 		vty_out(vty,"%s:Can't find user '%s'%s",__func__,name,VTY_NEWLINE);
 	return CMD_WARNING;
@@ -315,8 +315,8 @@ int vty_user_setting_privilege (struct vty *vty, zpl_char *name, enum cmd_privil
 
 enum vty_authen_type vty_user_getting_authen_type (struct vty *vty, zpl_char *name)
 {
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (_global_host.mutex)
+		os_mutex_lock(_global_host.mutex, OS_WAIT_FOREVER);
 	if(name)
 	{
 		zpl_char lname[VTY_USERNAME_MAX];
@@ -328,28 +328,28 @@ enum vty_authen_type vty_user_getting_authen_type (struct vty *vty, zpl_char *na
 		{
 			if(vty)
 				vty_out(vty, "%s 0:%s %s",__func__,name, VTY_NEWLINE);
-			if (_global_host.mutx)
-				os_mutex_unlock(_global_host.mutx);
+			if (_global_host.mutex)
+				os_mutex_unlock(_global_host.mutex);
 			return user->authen_type;
 		}
 	}
 /*	if(vty->user)
 	{
-		if (_global_host.mutx)
-			os_mutex_unlock(_global_host.mutx);
+		if (_global_host.mutex)
+			os_mutex_unlock(_global_host.mutex);
 		return vty->user->authen_type;
 	}*/
 	if(vty)
 		vty_out(vty, "%s:vty->user is NULL %s",__func__, VTY_NEWLINE);
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (_global_host.mutex)
+		os_mutex_unlock(_global_host.mutex);
 	return CMD_ENABLE_LEVEL;
 }
 
 int vty_user_setting_authen_type (struct vty *vty, zpl_char *name, enum vty_authen_type authen_type)
 {
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (_global_host.mutex)
+		os_mutex_lock(_global_host.mutex, OS_WAIT_FOREVER);
 	if(name)
 	{
 		zpl_char lname[VTY_USERNAME_MAX];
@@ -362,8 +362,8 @@ int vty_user_setting_authen_type (struct vty *vty, zpl_char *name, enum vty_auth
 			if(authen_type >= AUTHEN_LOCAL && authen_type <= AUTHEN_TACACS)
 			{
 				user->authen_type = authen_type;
-				if (_global_host.mutx)
-					os_mutex_unlock(_global_host.mutx);
+				if (_global_host.mutex)
+					os_mutex_unlock(_global_host.mutex);
 				return CMD_SUCCESS;
 			}
 		}
@@ -373,13 +373,13 @@ int vty_user_setting_authen_type (struct vty *vty, zpl_char *name, enum vty_auth
 		if(authen_type >= AUTHEN_LOCAL && authen_type <= AUTHEN_TACACS)
 		{
 			vty->user->authen_type = authen_type;
-			if (_global_host.mutx)
-				os_mutex_unlock(_global_host.mutx);
+			if (_global_host.mutex)
+				os_mutex_unlock(_global_host.mutex);
 			return CMD_SUCCESS;
 		}
 	}*/
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (_global_host.mutex)
+		os_mutex_unlock(_global_host.mutex);
 	if(vty)
 		vty_out(vty,"%s:Can't find user '%s'%s",__func__,name,VTY_NEWLINE);
 	return CMD_WARNING;
@@ -392,8 +392,8 @@ int vty_user_authentication (struct vty *vty, zpl_char *password)
 	int fail = 1;
 	zpl_uchar encrypt[VTY_PASSWORD_MAX];
 	struct vty_user * user = NULL;
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (_global_host.mutex)
+		os_mutex_lock(_global_host.mutex, OS_WAIT_FOREVER);
 	user = vty_user_lookup (vty->username);
 	if(user)
 	{
@@ -424,8 +424,8 @@ int vty_user_authentication (struct vty *vty, zpl_char *password)
 				}
 				break;
 			default:
-				if (_global_host.mutx)
-					os_mutex_unlock(_global_host.mutx);
+				if (_global_host.mutex)
+					os_mutex_unlock(_global_host.mutex);
 				return CMD_WARNING;
 				break;
 		}
@@ -443,8 +443,8 @@ int vty_user_authentication (struct vty *vty, zpl_char *password)
 			}
 			else
 			{
-				if (_global_host.mutx)
-					os_mutex_unlock(_global_host.mutx);
+				if (_global_host.mutex)
+					os_mutex_unlock(_global_host.mutex);
 				return CMD_WARNING;
 			}
 			if(fail == 0)
@@ -452,21 +452,21 @@ int vty_user_authentication (struct vty *vty, zpl_char *password)
 				//vty_user_getting_privilege (struct vty *vty, zpl_char *name)
 				//vty->user = user;//vty_user_lookup (vty->username);
 				vty->privilege = user->privilege;
-				if (_global_host.mutx)
-					os_mutex_unlock(_global_host.mutx);
+				if (_global_host.mutex)
+					os_mutex_unlock(_global_host.mutex);
 				//vty_out(vty, "%s:vty->user %s %s",__func__, user->username,VTY_NEWLINE);
 				return CMD_SUCCESS;
 			}
 			else
 			{
-				if (_global_host.mutx)
-					os_mutex_unlock(_global_host.mutx);
+				if (_global_host.mutex)
+					os_mutex_unlock(_global_host.mutex);
 				return CMD_WARNING;
 			}
 		}
 	}
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (_global_host.mutex)
+		os_mutex_unlock(_global_host.mutex);
 	return CMD_WARNING;
 }
 
@@ -476,8 +476,8 @@ int user_authentication (zpl_char *username, zpl_char *password)
 	int fail = ERROR;
 	zpl_uchar encrypt[VTY_PASSWORD_MAX];
 	struct vty_user * user = NULL;
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (_global_host.mutex)
+		os_mutex_lock(_global_host.mutex, OS_WAIT_FOREVER);
 	user = vty_user_lookup (username);
 	if(user)
 	{
@@ -498,13 +498,13 @@ int user_authentication (zpl_char *username, zpl_char *password)
 		}
 		else
 		{
-			if (_global_host.mutx)
-				os_mutex_unlock(_global_host.mutx);
+			if (_global_host.mutex)
+				os_mutex_unlock(_global_host.mutex);
 			return ERROR;
 		}
 	}
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (_global_host.mutex)
+		os_mutex_unlock(_global_host.mutex);
 	return fail;
 }
 
@@ -533,8 +533,8 @@ int config_write_vty_user (struct vty *vty)
 	struct vty_user *user = NULL;
 	if(vty == NULL || _global_host.userlist == NULL)
 		return 0;
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (_global_host.mutex)
+		os_mutex_lock(_global_host.mutex, OS_WAIT_FOREVER);
 	/*if(vty->type != VTY_FILE && vty->username)
 	{
 		vty_out(vty,"! current login user:%s %s", vty->username, VTY_NEWLINE);
@@ -568,8 +568,8 @@ int config_write_vty_user (struct vty *vty)
 	}
 	//if(flag)
 	//	vty_out(vty, "!%s", VTY_NEWLINE);
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (_global_host.mutex)
+		os_mutex_unlock(_global_host.mutex);
 	return 1;
 }
 
@@ -577,8 +577,8 @@ int vty_user_create(struct vty *vty, zpl_char *name, zpl_char *password, zpl_boo
 {
 	zpl_char lname[VTY_USERNAME_MAX];
 	struct vty_user * user = NULL;
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (_global_host.mutex)
+		os_mutex_lock(_global_host.mutex, OS_WAIT_FOREVER);
 
 	os_memset(lname, 0, VTY_USERNAME_MAX);
 	os_memcpy(lname, name, MIN(os_strlen(name), VTY_USERNAME_MAX));
@@ -587,8 +587,8 @@ int vty_user_create(struct vty *vty, zpl_char *name, zpl_char *password, zpl_boo
 	{
 		if(user)
 		{
-			if (_global_host.mutx)
-				os_mutex_unlock(_global_host.mutx);
+			if (_global_host.mutex)
+				os_mutex_unlock(_global_host.mutex);
 			if(vty)
 				vty_out(vty,"user '%s' is already exist%s",password,VTY_NEWLINE);
 			return CMD_WARNING;
@@ -599,8 +599,8 @@ int vty_user_create(struct vty *vty, zpl_char *name, zpl_char *password, zpl_boo
 		user = user_new (lname);
 		user->privilege = CMD_ENABLE_LEVEL;
 		vty_user_add (user);
-		if (_global_host.mutx)
-			os_mutex_unlock(_global_host.mutx);
+		if (_global_host.mutex)
+			os_mutex_unlock(_global_host.mutex);
 		return CMD_SUCCESS;
 	}
 	else if(password)
@@ -646,8 +646,8 @@ int vty_user_create(struct vty *vty, zpl_char *name, zpl_char *password, zpl_boo
 					md5_encrypt_password(password, user->password_encrypt);
 					//user->password_encrypt = XSTRDUP (MTYPE_HOST, vty_user_crypt(password));
 			}
-			if (_global_host.mutx)
-				os_mutex_unlock(_global_host.mutx);
+			if (_global_host.mutex)
+				os_mutex_unlock(_global_host.mutex);
 			return CMD_SUCCESS;
 		}
 		/*
@@ -693,12 +693,12 @@ int vty_user_create(struct vty *vty, zpl_char *name, zpl_char *password, zpl_boo
 				md5_encrypt_password(password, user->password_encrypt);
 		}
 		vty_user_add (user);
-		if (_global_host.mutx)
-			os_mutex_unlock(_global_host.mutx);
+		if (_global_host.mutex)
+			os_mutex_unlock(_global_host.mutex);
 		return CMD_SUCCESS;
 	}
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (_global_host.mutex)
+		os_mutex_unlock(_global_host.mutex);
 	if(vty)
 		vty_out(vty,"%s:Can't find user '%s'%s",__func__,name,VTY_NEWLINE);
 	return CMD_WARNING;
@@ -708,8 +708,8 @@ int vty_user_delete(struct vty *vty, zpl_char *name, zpl_bool password, zpl_bool
 {
 	zpl_char lname[VTY_USERNAME_MAX];
 	struct vty_user * user = NULL;
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (_global_host.mutex)
+		os_mutex_lock(_global_host.mutex, OS_WAIT_FOREVER);
 
 	os_memset(lname, 0, VTY_USERNAME_MAX);
 	os_memcpy(lname, name, MIN(os_strlen(name), VTY_USERNAME_MAX));
@@ -764,12 +764,12 @@ int vty_user_delete(struct vty *vty, zpl_char *name, zpl_bool password, zpl_bool
 					//XFREE (MTYPE_HOST, user->password_encrypt);
 			}
 		}
-		if (_global_host.mutx)
-			os_mutex_unlock(_global_host.mutx);
+		if (_global_host.mutex)
+			os_mutex_unlock(_global_host.mutex);
 		return CMD_SUCCESS;
 	}
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (_global_host.mutex)
+		os_mutex_unlock(_global_host.mutex);
 	if(vty)
 		vty_out(vty,"%s:Can't find user '%s'%s",__func__,lname,VTY_NEWLINE);
 	return CMD_WARNING;
@@ -779,8 +779,8 @@ int vty_user_change(struct vty *vty, zpl_char *name)
 {
 	zpl_char lname[VTY_USERNAME_MAX];
 	struct vty_user * user = NULL;
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (_global_host.mutex)
+		os_mutex_lock(_global_host.mutex, OS_WAIT_FOREVER);
 
 	os_memset(lname, 0, VTY_USERNAME_MAX);
 	os_memcpy(lname, name, MIN(os_strlen(name), VTY_USERNAME_MAX));
@@ -789,12 +789,12 @@ int vty_user_change(struct vty *vty, zpl_char *name)
 	if (user) {
 		vty_user_setting(vty, name);
 		//vty_userticated (vty);
-		if (_global_host.mutx)
-			os_mutex_unlock(_global_host.mutx);
+		if (_global_host.mutex)
+			os_mutex_unlock(_global_host.mutex);
 		return CMD_SUCCESS;
 	}
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (_global_host.mutex)
+		os_mutex_unlock(_global_host.mutex);
 	if(vty)
 		vty_out(vty, "Can't find user '%s'%s", name, VTY_NEWLINE);
 	return CMD_WARNING;
@@ -807,8 +807,8 @@ int vty_user_foreach (int (*cb)(void *user, void *p), void *p)
 	struct vty_user *user;
 	if(_global_host.userlist == NULL)
 		return 0;
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (_global_host.mutex)
+		os_mutex_lock(_global_host.mutex, OS_WAIT_FOREVER);
 
 	for (ALL_LIST_ELEMENTS_RO (_global_host.userlist, node, user))
 	{
@@ -838,8 +838,8 @@ int vty_user_foreach (int (*cb)(void *user, void *p), void *p)
 
 		}
 	}
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (_global_host.mutex)
+		os_mutex_unlock(_global_host.mutex);
 	return CMD_SUCCESS;
 }
 
@@ -856,8 +856,8 @@ zpl_char * vty_user_get(struct vty *vty)
 int vty_user_init(void)
 {
 	struct vty_user * user = NULL;
-	if(_global_host.mutx == NULL)
-		_global_host.mutx = os_mutex_init();
+	if(_global_host.mutex == NULL)
+		_global_host.mutex = os_mutex_init();
 	if(_global_host.userlist == NULL)
 		_global_host.userlist = list_new ();
 	user = user_new (VTY_USERNAME_DEFAULT);

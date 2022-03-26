@@ -248,6 +248,9 @@ typedef struct cli_shell_s
 {
   vector vtyvec;
   vector serv_thread;
+  
+  os_mutex_t *mutex;
+
   void *m_thread_master;
   void *m_eloop_master;
   zpl_uint32 console_taskid;

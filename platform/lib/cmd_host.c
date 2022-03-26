@@ -917,8 +917,8 @@ DEFUN (show_time_queues,
 static int
 config_write_host (struct vty *vty)
 {
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (_global_host.mutex)
+		os_mutex_lock(_global_host.mutex, OS_WAIT_FOREVER);
 	if (_global_host.name)
 		vty_out(vty, "hostname %s%s", _global_host.name, VTY_NEWLINE);
 
@@ -935,16 +935,16 @@ config_write_host (struct vty *vty)
 		vty_out(vty,"! current login user:%s %s", vty->username, VTY_NEWLINE);
 		vty_out(vty,"!%s", VTY_NEWLINE);
 	}
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (_global_host.mutex)
+		os_mutex_unlock(_global_host.mutex);
 	return 1;
 }
 
 static int
 config_write_hostsrv (struct vty *vty)
 {
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (_global_host.mutex)
+		os_mutex_lock(_global_host.mutex, OS_WAIT_FOREVER);
 
 	if (_global_host.encrypt)
 		vty_out(vty, "service password-encryption%s", VTY_NEWLINE);
@@ -956,8 +956,8 @@ config_write_hostsrv (struct vty *vty)
 		vty_out(vty, "banner motd file %s%s", _global_host.motdfile, VTY_NEWLINE);
 	else if (!_global_host.motd)
 		vty_out(vty, "no banner motd%s", VTY_NEWLINE);
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (_global_host.mutex)
+		os_mutex_unlock(_global_host.mutex);
 	return 1;
 }
 

@@ -95,14 +95,14 @@ DEFUN (no_vty_access_class,
 		"Filter connections based on an IP access list\n"
 		"IP access list\n")
 {
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (_global_host.mutex)
+		os_mutex_lock(_global_host.mutex, OS_WAIT_FOREVER);
 	if (!_global_host.vty_accesslist_name
 			|| (argc && strcmp(_global_host.vty_accesslist_name, argv[0])))
 	{
 		vty_out(vty, "Access-class is not currently applied to vty%s",VTY_NEWLINE);
-		if (_global_host.mutx)
-			os_mutex_unlock(_global_host.mutx);
+		if (_global_host.mutex)
+			os_mutex_unlock(_global_host.mutex);
 		return CMD_WARNING;
 	}
 
@@ -134,15 +134,15 @@ DEFUN (no_vty_ipv6_access_class,
 		"Filter connections based on an IP access list\n"
 		"IPv6 access list\n")
 {
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (_global_host.mutex)
+		os_mutex_lock(_global_host.mutex, OS_WAIT_FOREVER);
 	if (! _global_host.vty_ipv6_accesslist_name ||
 			(argc && strcmp(_global_host.vty_ipv6_accesslist_name, argv[0])))
 	{
 		vty_out (vty, "IPv6 access-class is not currently applied to vty%s",
 				VTY_NEWLINE);
-		if (_global_host.mutx)
-			os_mutex_unlock(_global_host.mutx);
+		if (_global_host.mutex)
+			os_mutex_unlock(_global_host.mutex);
 		return CMD_WARNING;
 	}
 
@@ -291,8 +291,8 @@ DEFUN_HIDDEN (exit_platform,
 /* Display current configuration. */
 static int vty_config_write(struct vty *vty)
 {
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (_global_host.mutex)
+		os_mutex_lock(_global_host.mutex, OS_WAIT_FOREVER);
 	vty_out(vty, "line vty%s", VTY_NEWLINE);
 
 	if (_global_host.vty_accesslist_name)
@@ -316,8 +316,8 @@ static int vty_config_write(struct vty *vty)
 		vty_out(vty, "log commands%s", VTY_NEWLINE);
 
 	vty_out(vty, "!%s", VTY_NEWLINE);
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (_global_host.mutex)
+		os_mutex_unlock(_global_host.mutex);
 	return CMD_SUCCESS;
 }
 

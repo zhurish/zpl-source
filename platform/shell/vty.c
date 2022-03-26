@@ -22,7 +22,7 @@
 
 #include "os_include.h"
 #include "zpl_include.h"
-//#include "lib_include.h"
+
 #include "module.h"
 #include "memory.h"
 #include "memtypes.h"
@@ -114,7 +114,11 @@ struct module_list module_list_telnet =
 		.flags = 0,
 };
 /*******************************************************************************/
-cli_shell_t cli_shell;
+cli_shell_t cli_shell = 
+{
+	.init = 0,
+	.mutex = NULL,
+};	
 /*******************************************************************************/
 /*******************************************************************************/
 static void vty_buf_assert(struct vty *vty)
@@ -616,8 +620,8 @@ int vty_command(struct vty *vty, zpl_char *buf)
 	vector vline;
 	const char *protocolname;
 	zpl_char *cp = NULL;
-	if (_global_host.cli_mutx)
-		os_mutex_lock(_global_host.cli_mutx, -1);
+	if (cli_shell.mutex)
+		os_mutex_lock(cli_shell.mutex, OS_WAIT_FOREVER);
 	/*
 	 * Log non empty command lines
 	 */
@@ -658,8 +662,8 @@ int vty_command(struct vty *vty, zpl_char *buf)
 	{
 		vty_out(vty, "%% %s not authorization for %s %s", buf, vty->username,
 				VTY_NEWLINE);
-		if (_global_host.cli_mutx)
-			os_mutex_unlock(_global_host.cli_mutx);
+		if (cli_shell.mutex)
+			os_mutex_unlock(cli_shell.mutex);
 		return CMD_WARNING;
 	}
 
@@ -668,8 +672,8 @@ int vty_command(struct vty *vty, zpl_char *buf)
 
 	if (vline == NULL)
 	{
-		if (_global_host.cli_mutx)
-			os_mutex_unlock(_global_host.cli_mutx);
+		if (cli_shell.mutex)
+			os_mutex_unlock(cli_shell.mutex);
 		return CMD_SUCCESS;
 	}
 #ifdef CONSUMED_TIME_CHECK
@@ -724,8 +728,8 @@ int vty_command(struct vty *vty, zpl_char *buf)
 			break;
 		}
 	cmd_free_strvec(vline);
-	if (_global_host.cli_mutx)
-		os_mutex_unlock(_global_host.cli_mutx);
+	if (cli_shell.mutex)
+		os_mutex_unlock(cli_shell.mutex);
 	return ret;
 }
 
@@ -2832,8 +2836,8 @@ static int vty_accept(struct eloop *thread)
 	ipstack_set_nonblocking(vty_sock);
 
 	sockunion2hostprefix(&su, &p);
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (cli_shell.mutex)
+		os_mutex_lock(cli_shell.mutex, OS_WAIT_FOREVER);
 	#ifdef ZPL_IP_FILTER	
 	/* VTY's accesslist apply. */
 	if (p.family == IPSTACK_AF_INET && _global_host.vty_accesslist_name)
@@ -2843,8 +2847,8 @@ static int vty_accept(struct eloop *thread)
 			zlog(MODULE_DEFAULT, ZLOG_LEVEL_INFO, "Vty connection refused from %s",
 				 sockunion2str(&su, buf, SU_ADDRSTRLEN));
 			ipstack_close(vty_sock);
-			if (_global_host.mutx)
-				os_mutex_unlock(_global_host.mutx);
+			if (cli_shell.mutex)
+				os_mutex_unlock(cli_shell.mutex);
 			/* continue accepting connections */
 			vty_event(VTY_SERV, accept_sock, NULL);
 			return 0;
@@ -2861,8 +2865,8 @@ static int vty_accept(struct eloop *thread)
 			zlog(MODULE_DEFAULT, ZLOG_LEVEL_INFO, "Vty connection refused from %s",
 				 sockunion2str(&su, buf, SU_ADDRSTRLEN));
 			ipstack_close(vty_sock);
-			if (_global_host.mutx)
-				os_mutex_unlock(_global_host.mutx);
+			if (cli_shell.mutex)
+				os_mutex_unlock(cli_shell.mutex);
 			/* continue accepting connections */
 			vty_event(VTY_SERV, accept_sock, NULL);
 
@@ -2871,8 +2875,8 @@ static int vty_accept(struct eloop *thread)
 	}
 #endif /* HAVE_IPV6 */
 	#endif
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (cli_shell.mutex)
+		os_mutex_unlock(cli_shell.mutex);
 	on = 1;
 	ret = ipstack_setsockopt(vty_sock, IPSTACK_IPPROTO_TCP, IPSTACK_TCP_NODELAY, (zpl_char *)&on,
 							 sizeof(on));
@@ -3533,8 +3537,8 @@ static void vty_read_file(FILE *confp)
 
 static int host_config_default(zpl_char *password, zpl_char *defult_config)
 {
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (cli_shell.mutex)
+		os_mutex_lock(cli_shell.mutex, OS_WAIT_FOREVER);
 	if (defult_config == NULL)
 	{
 		zlog_err(MODULE_LIB,"failed to setting default configuration file :%s\n", ipstack_strerror(ipstack_errno));
@@ -3545,8 +3549,8 @@ static int host_config_default(zpl_char *password, zpl_char *defult_config)
 	}
 	if (_global_host.name == NULL) //
 		_global_host.name = XSTRDUP(MTYPE_HOST, OEM_PROGNAME);
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (cli_shell.mutex)
+		os_mutex_unlock(cli_shell.mutex);
 
 	if (defult_config)
 		host_config_set(defult_config);
@@ -3886,8 +3890,8 @@ int vty_exec_timeout(struct vty *vty, const char *min_str, const char *sec_str)
 {
 	zpl_socket_t tmp;
 	zpl_ulong timeout = 0;
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (cli_shell.mutex)
+		os_mutex_lock(cli_shell.mutex, OS_WAIT_FOREVER);
 	/* min_str and sec_str are already checked by parser.  So it must be
 	 all digit string. */
 	if (min_str)
@@ -3901,8 +3905,8 @@ int vty_exec_timeout(struct vty *vty, const char *min_str, const char *sec_str)
 	// _global_host.vty_timeout_val = timeout;
 	vty->v_timeout = timeout;
 	vty_event(VTY_TIMEOUT_RESET, tmp, vty);
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (cli_shell.mutex)
+		os_mutex_unlock(cli_shell.mutex);
 
 	return CMD_SUCCESS;
 }
@@ -3933,8 +3937,8 @@ void vty_reset()
 			vector_slot(cli_shell.serv_thread, i) = NULL;
 			close(i);
 		}
-	if (_global_host.mutx)
-		os_mutex_lock(_global_host.mutx, OS_WAIT_FOREVER);
+	if (cli_shell.mutex)
+		os_mutex_lock(cli_shell.mutex, OS_WAIT_FOREVER);
 	_global_host.vty_timeout_val = VTY_TIMEOUT_DEFAULT;
 
 	if (_global_host.vty_accesslist_name)
@@ -3948,8 +3952,8 @@ void vty_reset()
 		XFREE(MTYPE_VTY, _global_host.vty_ipv6_accesslist_name);
 		_global_host.vty_ipv6_accesslist_name = NULL;
 	}
-	if (_global_host.mutx)
-		os_mutex_unlock(_global_host.mutx);
+	if (cli_shell.mutex)
+		os_mutex_unlock(cli_shell.mutex);
 }
 
 int vty_cancel(struct vty *vty)
@@ -4081,7 +4085,7 @@ void vty_init(void)
 	{
 		memset(&cli_shell, 0, sizeof(cli_shell_t));
 		cli_shell.init = 1;
-
+		cli_shell.mutex = os_mutex_init();
 #ifdef ZPL_IPCOM_STACK_MODULE
 		if (cli_shell.m_eloop_master == NULL)
 			cli_shell.m_eloop_master = eloop_master_module_create(MODULE_TELNET);
@@ -4112,6 +4116,12 @@ void vty_terminate(void)
 #ifdef ZPL_SHRL_MODULE
 	vty_stdio_start(zpl_false);
 #endif
+	if (cli_shell.mutex)
+	{
+		os_mutex_exit(cli_shell.mutex);
+		cli_shell.mutex = NULL;
+	}
+
 	if (_global_host.vty_cwd)
 		XFREE(MTYPE_TMP, _global_host.vty_cwd);
 
