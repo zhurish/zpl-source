@@ -31,7 +31,7 @@
 #include "log.h"
 #include "thread.h"
 #include "nsm_zclient.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "table.h"
 
 

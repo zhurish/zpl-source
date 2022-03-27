@@ -8,9 +8,9 @@
 
 #define IPCOM_USE_HOOK
 #include "zpl_include.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "command.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "memtypes.h"
 #include "prefix.h"
 #include "linklist.h"

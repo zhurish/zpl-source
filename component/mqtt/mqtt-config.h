@@ -134,12 +134,12 @@ typedef enum {
 
 #ifndef WITH_BROKER
 #include "zpl_include.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "vty.h"
 #include "buffer.h"
 #include "command.h"
 #include "log.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "prefix.h"
 #include "sockunion.h"
 #include "str.h"

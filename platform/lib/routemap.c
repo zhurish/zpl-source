@@ -23,7 +23,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include <os_include.h>
 #include <zpl_include.h>
 #include "linklist.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "vector.h"
 #include "prefix.h"
 #include "routemap.h"

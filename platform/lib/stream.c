@@ -23,7 +23,7 @@
 #include "os_include.h"
 #include "zpl_include.h"
 #include "stream.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "log.h"
 #include "network.h"
 

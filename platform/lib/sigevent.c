@@ -23,7 +23,7 @@
 #include "zpl_include.h"
 #include <sigevent.h>
 #include <log.h>
-#include <memory.h>
+#include <zmemory.h>
 
 #ifdef SA_SIGINFO
 #ifdef HAVE_UCONTEXT_H

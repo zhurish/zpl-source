@@ -22,7 +22,7 @@
 #include "os_include.h"
 #include "zpl_include.h"
 #include "vector.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "log.h"
 /* Initialize vector : allocate memory and return vector. */
 vector

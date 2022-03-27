@@ -8,7 +8,7 @@
 #include "os_include.h"
 #include "zpl_include.h"
 #include "linklist.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "log.h"
 #include "command.h"
 #include "vty.h"

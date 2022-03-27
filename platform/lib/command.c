@@ -22,7 +22,7 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 #include "os_include.h"
 #include "zpl_include.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "log.h"
 #include "host.h"
 #include "thread.h"
@@ -115,6 +115,22 @@ cmd_hash_cmp(const void *a, const void *b)
 }
 
 /* Install top node of command vector. */
+#ifdef ZPL_BUILD_DEBUG
+void funcname_install_node (struct cmd_node *node, int (*func) (struct vty *), const char *funcname)
+{
+  vector_set_index(cmdvec, node->node, node);
+  node->func = func;
+  node->cmd_vector = vector_init(VECTOR_MIN_SIZE);
+  node->cmd_hash = hash_create(cmd_hash_key, cmd_hash_cmp);
+  node->funcname = funcname;
+}
+void funcname_reinstall_node (enum node_type node, int (*func) (struct vty *), const char *funcname)
+{
+  struct cmd_node *pNode = vector_lookup(cmdvec, node);
+  pNode->func = func;
+  pNode->funcname = funcname;
+}
+#else
 void install_node(struct cmd_node *node,
                   int (*func)(struct vty *))
 {
@@ -130,7 +146,7 @@ void reinstall_node(enum node_type node,
   struct cmd_node *pNode = vector_lookup(cmdvec, node);
   pNode->func = func;
 }
-
+#endif
 /* Breaking up string into each command piece. I assume given
    character is separated by a space character. Return value is a
    vector which includes zpl_char ** data element. */
@@ -2653,7 +2669,10 @@ cmd_execute_command_real(vector vline,
 
   if (matched_element->daemon)
     return CMD_SUCCESS_DAEMON;
-
+#ifdef ZPL_BUILD_DEBUG
+  if(vty->type != VTY_FILE)
+  zpl_backtrace_symb_set(matched_element->sfuncname, NULL, 1);
+#endif
   /* Execute matched command. */
   return (*matched_element->func)(matched_element, vty, argc, argv);
 }

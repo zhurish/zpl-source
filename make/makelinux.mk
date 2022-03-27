@@ -119,12 +119,21 @@ endif
 #
 #
 #
+ifeq ($(ZPL_BUILD_DEBUG),YES)
+ZPLOS_CFLAGS += -g3 -ggdb
+ZPLOS_CPPFLAGS += -g3 -ggdb
+else
+ZPLOS_CFLAGS += -O2
+ZPLOS_CPPFLAGS += -O2
+endif
 #
-#ZPLOS_LDLIBS += -std=c99 
-ZPLOS_CFLAGS += -std=gnu99 -fgnu89-inline
+#
+#
+##ZPLOS_LDLIBS += -std=c99 
+#ZPLOS_CFLAGS += -std=gnu99 -fgnu89-inline
+##ZPLOS_CPPFLAGS += -std=c++11 -Wno-write-strings
 #ZPLOS_CPPFLAGS += -std=c++11 -Wno-write-strings
-ZPLOS_CPPFLAGS += -std=c++11 -Wno-write-strings
-# -D_GLIBCXX_USE_CXX11_ABI=0
+## -D_GLIBCXX_USE_CXX11_ABI=0
 # 
 #
 # WANRING
@@ -132,35 +141,36 @@ ZPLOS_CPPFLAGS += -std=c++11 -Wno-write-strings
 ZPLOS_CFLAGS += -MMD -MP -Wfatal-errors -Wall -Wextra -Wnested-externs -Wmissing-prototypes \
 			 -Wredundant-decls -Wcast-align -Wunreachable-code -Wshadow	\
 			 -Wimplicit-function-declaration -Wimplicit	-Wreturn-type -Wunused \
-			 -Wswitch -Wformat -Wuninitialized -Wchar-subscripts  \
+			 -Wswitch -Wformat -Wuninitialized -Wchar-subscripts \
 			 -Wpointer-arith -Wwrite-strings -Wstrict-prototypes -Wpointer-arith -Wbad-function-cast
 			 
-ZPLOS_CPPFLAGS += -MMD -MP -Wall -Wextra  \
+ZPLOS_CPPFLAGS += -MMD -MP -Wall -Wextra \
 			 -Wredundant-decls -Wcast-align -Wunreachable-code -Wshadow	\
 			 -Wreturn-type -Wunused \
-			 -Wswitch -Wformat -Wuninitialized -Wchar-subscripts  \
+			 -Wswitch -Wformat -Wuninitialized -Wchar-subscripts \
 			 -Wpointer-arith -Wwrite-strings 
 		
 
-ZPLOS_CFLAGS += -Werror=return-type -Werror=format-extra-args  \
+ZPLOS_CFLAGS += -Werror=return-type -Werror=format-extra-args \
 			  -Werror=unreachable-code \
-			  -Werror=unused-value -Werror=implicit-int -Werror=missing-parameter-type\
-			  -Werror=parentheses -Werror=char-subscripts   \
+			  -Werror=unused-value -Werror=implicit-int -Werror=missing-parameter-type \
+			  -Werror=parentheses -Werror=char-subscripts \
 			  -Werror=invalid-memory-model -Werror=sizeof-pointer-memaccess \
 			  -Werror=overflow -Werror=format-security -Werror=shadow \
 			  -Werror=unsafe-loop-optimizations -Werror=init-self \
 			  -Werror=unused-function -Werror=redundant-decls -Werror=unused-value \
-			  -Werror=missing-prototypes -Werror=sequence-point -Werror=float-equal \
+			   -Werror=sequence-point -Werror=float-equal \
 			  -Werror=strict-prototypes -Werror=overlength-strings -Werror=unused-label \
 			  -Werror=shift-count-overflow 
-#-Werror=bad-function-cast 
+#-Werror=bad-function-cast  -Werror=missing-prototypes
 #
 ZPLOS_CPPFLAGS +=  -Werror=return-type -Werror=unreachable-code -Werror=unused-function \
 				 -Werror=ctor-dtor-privacy  
 #			 
 ZPLOS_CFLAGS += -fmessage-length=0 -Wcast-align
 #
-ZPLOS_CFLAGS += -fsigned-char -fstack-protector -Wstack-protector 
+ZPLOS_CFLAGS += -fsigned-char 
+#-fstack-protector -Wstack-protector 
 #-Werror=stack-protector
 #
 #-Werror=implicit-function-declaration 函数没有在头文件（.h）定义  
@@ -232,15 +242,6 @@ ZPLOS_CFLAGS += -D__UCLIBC__
 endif
 #
 #
-ifeq ($(ZPL_BUILD_DEBUG),YES)
-ZPLOS_CFLAGS += -g3 -ggdb3
-ZPLOS_CPPFLAGS += -g3 -ggdb3
-else
-ZPLOS_CFLAGS += -O1
-ZPLOS_CPPFLAGS += -O1
-endif
-#
-#
 ZPLOS_DEFINE += -DZPL_BUILD_ARCH_$(ZPL_BUILD_ARCH)
 ZPLOS_DEFINE += -DZPL_BUILD_OS_$(ZPL_BUILD_OS)
 #
@@ -259,6 +260,7 @@ ZPL_BUILD_TIME=$(shell date "+%Y%m%d%H%M%S")
 #
 ifeq ($(ZPL_BUILD_DEBUG),YES)
 ZPLVER = $(VERSION).bin
+ZPL_DEFINE += -DZPL_BUILD_DEBUG
 else
 ZPLVER = $(VERSION)-$(ZPL_BUILD_TIME).bin
 endif
@@ -334,12 +336,12 @@ export ZPLSTRIP_CFLAGS= --strip-unneeded
 #
 ifneq ($(strip $(V)),)
 ZPL_ECHO_CC = $(ECHO) "building " $@   '$(ZPLDEFINE) $(ZPLDEBUG) $(ZPLCFLAGS) $(ZPLLDFLAGS)';
-ZPL_ECHO_CXX = $(ECHO) "building " $@   '$(ZPLDEFINE) $(ZPLDEBUG) $(ZPLCFLAGS) $(ZPLLDFLAGS)';
-ZPL_ECHO_AS = $(ECHO) "building " $@   '$(ZPLDEFINE) $(ZPLDEBUG) $(ZPLCFLAGS) $(ZPLLDFLAGS)';
+ZPL_ECHO_CXX = $(ECHO) "building " $@   '$(ZPLDEFINE) $(ZPLDEBUG) $(ZPLCPPFLAGS) $(ZPLLDFLAGS)';
+ZPL_ECHO_AS = $(ECHO) "building " $@   '$(ZPLDEFINE) $(ZPLDEBUG) $(ZPLASFLAGS) $(ZPLLDFLAGS)';
 else
-ZPL_ECHO_CC = $(ECHO) "building " $@   '$(ZPLDEFINE) $(ZPLDEBUG)';
-ZPL_ECHO_CXX = $(ECHO) "building " $@   '$(ZPLDEFINE) $(ZPLDEBUG)';
-ZPL_ECHO_AS = $(ECHO) "building " $@   '$(ZPLDEFINE) $(ZPLDEBUG)';
+ZPL_ECHO_CC = $(ECHO) "building " $@   '$(ZPLDEFINE) $(ZPLDEBUG) $(ZPLCFLAGS)';
+ZPL_ECHO_CXX = $(ECHO) "building " $@   '$(ZPLDEFINE) $(ZPLDEBUG) $(ZPLCPPFLAGS)';
+ZPL_ECHO_AS = $(ECHO) "building " $@   '$(ZPLDEFINE) $(ZPLDEBUG) $(ZPLASFLAGS)';
 endif
 #
 #

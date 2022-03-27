@@ -28,7 +28,7 @@
 #include "filter.h"
 #include "command.h"
 #include "distribute.h"
-#include "memory.h"
+#include "zmemory.h"
 
 /* Hash of distribute list. */
 //struct hash *disthash;

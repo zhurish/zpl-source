@@ -14,7 +14,7 @@
 #define HAS_BOOL 1
 #include "zpl_include.h"
 #include "module.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "zassert.h"
 #include "command.h"
 #include "prefix.h"

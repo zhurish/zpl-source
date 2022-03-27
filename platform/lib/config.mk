@@ -19,7 +19,7 @@ OBJS	+= sockopt.o
 OBJS	+= sockunion.o
 OBJS	+= prefix.o
 
-OBJS	+= memory.o
+OBJS	+= zmemory.o
 OBJS	+= memtypes.o
 OBJS	+= daemon.o
 OBJS	+= pid_output.o

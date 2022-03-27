@@ -61,6 +61,9 @@ struct cmd_node
   
   /* Hashed index of command node list, for de-dupping primarily */
   struct hash *cmd_hash;
+  #ifdef ZPL_BUILD_DEBUG
+  const char *funcname;
+  #endif
 };
 
 enum
@@ -87,6 +90,9 @@ struct cmd_element
   vector tokens;		/* Vector of cmd_tokens */
   zpl_uchar attr;			/* Command attributes */
   enum cmd_privilege privilege;
+  #ifdef ZPL_BUILD_DEBUG
+  const char *sfuncname;
+  #endif
 };
 
 
@@ -156,6 +162,7 @@ struct cmd_token
 #ifndef VTYSH_EXTRACT_PL  
 
 /* helper defines for end-user DEFUN* macros */
+#ifdef ZPL_BUILD_DEBUG
 #define DEFUN_CMD_ELEMENT(funcname, cmdname, cmdstr, helpstr, attrs, dnum) \
   struct cmd_element cmdname = \
   { \
@@ -164,8 +171,19 @@ struct cmd_token
     .doc = helpstr, \
     .attr = attrs, \
     .daemon = dnum, \
+    .sfuncname = #funcname, \
   };
-
+#else 
+#define DEFUN_CMD_ELEMENT(funcname, cmdname, cmdstr, helpstr, attrs, dnum) \
+  struct cmd_element cmdname = \
+  { \
+    .string = cmdstr, \
+    .func = funcname, \
+    .doc = helpstr, \
+    .attr = attrs, \
+    .daemon = dnum, \
+  }; 
+#endif
 #define DEFUN_CMD_FUNC_DECL(funcname) \
   static int funcname (struct cmd_element *, struct vty *, int, const char *[]);
 
@@ -421,8 +439,15 @@ struct cmd_token
 
 
 /* Prototypes. */
+#ifdef ZPL_BUILD_DEBUG
+#define install_node(c,f) funcname_install_node(c,f,#f)
+#define reinstall_node(n,f) funcname_reinstall_node(n,f,#f)
+extern void funcname_install_node (struct cmd_node *, int (*) (struct vty *), const char *);
+extern void funcname_reinstall_node (enum node_type node, int (*func) (struct vty *), const char *);
+#else
 extern void install_node (struct cmd_node *, int (*) (struct vty *));
 extern void reinstall_node (enum node_type node, int (*func) (struct vty *));
+#endif
 extern void install_default (enum node_type);
 extern void install_element (enum node_type, enum cmd_privilege privilege, struct cmd_element *);
 

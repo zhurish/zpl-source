@@ -13,7 +13,7 @@
 #include "sockunion.h"
 #include "prefix.h"
 #include "command.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "log.h"
 #include "nsm_ip_vrf.h"
 #include "command.h"

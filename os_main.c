@@ -11,7 +11,7 @@
 #include <log.h>
 
 #include "command.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "prefix.h"
 //#include "sigevent.h"
 #include "thread.h"

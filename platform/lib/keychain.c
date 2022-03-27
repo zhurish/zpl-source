@@ -22,7 +22,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "os_include.h"
 #include "zpl_include.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "keychain.h"
 #include "linklist.h"
 #include "vty.h"

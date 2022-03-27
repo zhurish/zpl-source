@@ -11,7 +11,7 @@
 //#include "nsm_zclient.h"
 #include "command.h"
 //#include "if.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "prefix.h"
 //#include "sigevent.h"
 #include "sockunion.h"

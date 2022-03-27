@@ -9,9 +9,15 @@
 
 #include "os_include.h"
 #include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-#include "vty_include.h"
+#include "route_types.h"
+#include "zebra_event.h"
+#include "zmemory.h"
+#include "if.h"
+#include "vrf.h"
+#include "prefix.h"
+#include "command.h"
+#include "table.h"
+#include "nsm_rib.h"
 
 
 
@@ -90,42 +96,31 @@ DEFUN (ip_vrf_cli_set_vrfid,
 	return CMD_SUCCESS;
 }
 
-static int ip_vrf_show_one (struct vty *vty, struct nsm_ip_vrf *zvrf)
+static int ip_vrf_show_one (struct ip_vrf *vrf, void *pVoid)
 {
 	//rd A.B.C.D <0-65535>
 	struct prefix p;
-	struct ip_vrf *vrf = ip_vrf_lookup(zvrf->vrf_id);
-	router_id_get (&p, zvrf->vrf_id);
-	if(vrf)
+	struct vty *vty = pVoid;
+	struct nsm_ip_vrf *zvrf = vrf->info;
+	if(vrf && zvrf)
 	{
-		vty_out (vty, "ip vrf %s%s", vrf->name, VTY_NEWLINE);
+		fprintf(stdout, "=========%s\r\n", __func__);
+		router_id_get (&p, zvrf->vrf_id);
+		if(vrf->name)
+			vty_out (vty, "ip vrf %s%s", vrf->name, VTY_NEWLINE);
 		if(p.u.prefix4.s_addr)
 			vty_out (vty, " rd %s %d%s",
 					ipstack_inet_ntoa (p.u.prefix4), zvrf->vrf_id, VTY_NEWLINE);
+		vty_out (vty, "exit%s", VTY_NEWLINE);			
 	}
-	return 1;
+	return 0;
 }
 
 
 static int ip_vrf_write (struct vty *vty)
 {
-  int ret = 0;
-  struct nsm_ip_vrf *zvrf;
-  vrf_iter_t iter;
-
-  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
-  {
-    if ((zvrf = ip_vrf_iter2info (iter)) != NULL)
-    {
-    	if(zvrf->vrf_id != VRF_DEFAULT)
-    	{
-			ret = ip_vrf_show_one(vty, zvrf);
-			if(ret)
-				vty_out (vty, "exit%s", VTY_NEWLINE);
-    	}
-    }
-  }
-  return 1;
+	ip_vrf_foreach(ip_vrf_show_one, vty);
+	return 1;
 }
 
 

@@ -25,7 +25,7 @@
 #include "zpl_include.h"
 #include "linklist.h"
 #include "workqueue.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "log.h"
 #include "command.h"
 /* master list of work_queues */

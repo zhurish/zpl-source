@@ -21,7 +21,7 @@
  */
 #include "os_include.h"
 #include "zpl_include.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "prefix.h"
 #include "if_name.h"
 #include "if.h"

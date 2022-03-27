@@ -6,7 +6,7 @@
  */
 
 #include "os_include.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "vty.h"
 #include "host.h"
 #include "prefix.h"

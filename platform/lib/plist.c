@@ -23,7 +23,7 @@
 #include "zpl_include.h"
 #include "prefix.h"
 #include "command.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "plist.h"
 #include "sockunion.h"
 #include "buffer.h"

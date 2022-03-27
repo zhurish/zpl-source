@@ -24,7 +24,7 @@
 #include "zpl_include.h"
 
 #include "module.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "memtypes.h"
 
 #ifdef ZPL_SHELL_MODULE

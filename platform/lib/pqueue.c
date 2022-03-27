@@ -21,7 +21,7 @@ Boston, MA 02111-1307, USA.  */
 #include "os_include.h"
 #include "zpl_include.h"
 #include "pqueue.h"
-#include "memory.h"
+#include "zmemory.h"
 
 /* priority queue using heap sort */
 

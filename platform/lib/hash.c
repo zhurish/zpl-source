@@ -21,7 +21,7 @@
 #include "os_include.h"
 #include "hash.h"
 
-#include "memory.h"
+#include "zmemory.h"
 #include "zassert.h"
 
 /* Allocate a new hash.  */

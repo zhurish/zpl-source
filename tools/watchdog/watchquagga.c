@@ -25,7 +25,7 @@
 #include <getopt.h>
 #include <sys/un.h>
 #include <sys/wait.h>
-#include <memory.h>
+#include <zmemory.h>
 
 #ifndef MIN
 #define MIN(X, Y) (((X) <= (Y)) ? (X) : (Y))

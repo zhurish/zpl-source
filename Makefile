@@ -39,7 +39,7 @@ TAGET=SWP-$(ZPLVER)
 #PLOS_MAP = -Wl,-Map,target-app.map
 ifneq ($(ZPLOS_MAP),)
 TAGETMAP=SWP-$(ZPLVER).map
-ZPLOS_MAP = -Wl,-Map,$(TAGETMAP)
+ZPLOS_MAP = -Wl,-Map=$(TAGETMAP)
 endif
 #
 #
@@ -96,7 +96,9 @@ ZPLLDLIBS += $(IPLIBC)
 #
 %.o: %.c 
 	$(ZPL_ECHO_CC)
-	@$(CC) -fPIC -D__ARM_PCS_VFP $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLCFLAGS) -g $(ZPLLDSOLIBS) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
+	$(ZPL_LIB_COMPILE)
+#	
+#@$(CC) -fPIC $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLCFLAGS) $(ZPLLDSOLIBS) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
 
 
 SOURCES = $(wildcard *.c *.cpp)
@@ -118,7 +120,7 @@ OBJS = $(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(SOURCES)))
 #
 ifeq ($(ZPL_BUILD_DEBUG),YES)
 target : $(OBJS) $(BASE_ROOT)/$(ZPL_LIB_DIR)/*.a 
-	$(CC) -o $(TAGET) $(OBJS) -Xlinker "-(" $(ZPLLSLIBS) -Xlinker "-)" $(ZPLOS_MAP) $(ZPLLDFLAGS) $(ZPLLDSOLIBS)
+	$(CC) -o $(TAGET) $(OBJS) -Xlinker "-(" $(ZPLLSLIBS) -Xlinker "-)" $(ZPLLDFLAGS) $(ZPLLDSOLIBS)
 	$(CHMOD) a+x $(TAGET)
 else
 target : $(OBJS) $(BASE_ROOT)/$(ZPL_LIB_DIR)/*.a 

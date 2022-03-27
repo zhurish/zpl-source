@@ -22,7 +22,7 @@
 #include <os_include.h>
 #include <zpl_include.h>
 #include <zebra_event.h>
-#include "memory.h"
+#include "zmemory.h"
 #include "prefix.h"
 #include "nsm_rib.h"
 #include "command.h"
@@ -366,6 +366,7 @@ ALIAS (no_match_ip_address_prefix_list,
 
 /* set functions */
 
+
 DEFUN (set_src,
        set_src_cmd,
        "set src A.B.C.D",
@@ -375,7 +376,9 @@ DEFUN (set_src,
 {
   struct ipstack_in_addr src;
   struct interface *pif = NULL;
-  vrf_iter_t iter;
+  LIST * vrf_list = ip_vrf_list ();
+	struct ip_vrf *pstNode = NULL;
+	NODE index;
 
   if (ipstack_inet_pton(IPSTACK_AF_INET, argv[0], &src) <= 0)
     {
@@ -383,10 +386,17 @@ DEFUN (set_src,
       return CMD_WARNING;
     }
 
-  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
-    if ((pif = if_lookup_exact_address_vrf (src, vrf_iter2id (iter))) != NULL)
-      break;
 
+	for(pstNode = (struct ip_vrf *)lstFirst(vrf_list);
+			pstNode != NULL;  pstNode = (struct ip_vrf *)lstNext((NODE*)&index))
+    {
+      index = pstNode->node;
+      if(pstNode && pstNode->info)
+      {
+        if ((pif = if_lookup_exact_address_vrf (src, pstNode->vrf_id)) != NULL)
+          break;
+      }
+    }
   if (!pif)
     {
       vty_out (vty, "%% not a local address%s", VTY_NEWLINE);

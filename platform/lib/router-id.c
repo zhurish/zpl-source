@@ -209,7 +209,7 @@ router_id_init (struct nsm_ip_vrf *zvrf)
 {
   zvrf->rid_all_sorted_list = &zvrf->_rid_all_sorted_list;
   zvrf->rid_lo_sorted_list = &zvrf->_rid_lo_sorted_list;
-
+  fprintf(stdout, "=========%s\r\n", __func__);
   memset (zvrf->rid_all_sorted_list, 0, sizeof (zvrf->_rid_all_sorted_list));
   memset (zvrf->rid_lo_sorted_list, 0, sizeof (zvrf->_rid_lo_sorted_list));
   memset (&zvrf->rid_user_assigned, 0, sizeof (zvrf->rid_user_assigned));

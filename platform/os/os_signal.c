@@ -132,7 +132,7 @@ void os_signal_init(struct os_signal_t *tbl, int num)
   super_system("ulimit -c unlimited");
   super_system("echo 1 > /proc/sys/kernel/core_uses_pid");
   // core.filename.pid格式的core dump文件：
-  super_system("echo \"./coredump.%e.%p\" > /proc/sys/kernel/core_pattern");
+  super_system("echo \""SYSTMPDIR"/coredump.%e.%p\" > /proc/sys/kernel/core_pattern");
   // super_system("ulimit -c unlimited");
   // super_system("ulimit -c unlimited");
   // super_system("ulimit -c unlimited");

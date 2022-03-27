@@ -27,7 +27,7 @@
 #include "if.h"
 #include "thread.h"
 #include "stream.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "table.h"
 #include "nsm_rib.h"
 #include "network.h"

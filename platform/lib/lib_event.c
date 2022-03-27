@@ -21,7 +21,7 @@
  */
 
 #include "os_include.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "module.h"
 #include "lib_event.h"
 #include "linklist.h"

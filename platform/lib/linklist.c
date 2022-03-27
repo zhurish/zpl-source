@@ -21,7 +21,7 @@
 
 #include "os_include.h"
 #include "linklist.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "zassert.h"
 
 /* Allocate new list. */

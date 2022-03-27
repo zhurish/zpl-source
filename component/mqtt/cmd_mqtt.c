@@ -6,7 +6,7 @@
  */
 
 #include "zpl_include.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "vty.h"
 #include "buffer.h"
 #include "command.h"
@@ -16,7 +16,7 @@
 
 #ifdef ZPL_MQTT_MODULE
 #include "zpl_include.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "mqtt-config.h"
 #include <mqtt_protocol.h>
 #include <mosquitto.h>

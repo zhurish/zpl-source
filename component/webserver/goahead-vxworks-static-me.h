@@ -11,7 +11,7 @@
 #include "if.h"
 #include "buffer.h"
 #include "log.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "cJSON.h"
 #undef ME_GOAHEAD_UPLOAD_DIR
 #ifndef ME_GOAHEAD_UPLOAD_DIR

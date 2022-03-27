@@ -14,7 +14,7 @@
 #include "if_name.h"
 #include "linklist.h"
 #include "log.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "prefix.h"
 #include "str.h"
 #include "table.h"

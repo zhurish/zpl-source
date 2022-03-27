@@ -23,7 +23,7 @@
 #include "zpl_include.h"
 #include "command.h"
 #include "filter.h"
-#include "memory.h"
+#include "zmemory.h"
 
 /* Static structure for IPv4 access_list's master. */
 static struct access_master access_master_ipv4 =

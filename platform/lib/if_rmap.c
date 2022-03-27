@@ -22,7 +22,7 @@
 #include <os_include.h>
 #include "hash.h"
 #include "command.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "if.h"
 #include "if_rmap.h"
 

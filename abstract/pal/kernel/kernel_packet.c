@@ -82,7 +82,7 @@ static int kernel_packet_hexmsg(zpl_uint8 *buf, zpl_uint32 len, char *hdr)
     zpl_char format[4096];
     memset(format, 0, sizeof(format));
     ret = os_loghex(format, sizeof(format), (const zpl_uchar *)buf,  len);
-    zlog_debug(MODULE_HAL, "%s %d bytes:\r\n  hex:%s", hdr, len, format);
+    zlog_debug(MODULE_PAL, "%s %d bytes:\r\n  hex:%s", hdr, len, format);
     return OK;
 }
 

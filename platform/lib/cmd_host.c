@@ -9,7 +9,7 @@
 #include "os_include.h"
 #include <zpl_include.h>
 #include "cli_node.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "vector.h"
 #include "command.h"
 #include "vty.h"
@@ -407,6 +407,9 @@ DEFUN (config_write_file,
 	for (i = 0; i < vector_active(cmdvec); i++)
 		if ((node = vector_slot(cmdvec, i)) && node->func)
 		{
+#ifdef ZPL_BUILD_DEBUG
+  			zpl_backtrace_symb_set(node->funcname, NULL, 1);
+#endif
 			if ((*node->func)(file_vty))
 				vty_out(file_vty, "!\n");
 		}
@@ -458,6 +461,9 @@ DEFUN (config_write_terminal,
 		for (i = 0; i < vector_active(cmdvec); i++)
 			if ((node = vector_slot(cmdvec, i)) && node->func && node->vtysh)
 			{
+#ifdef ZPL_BUILD_DEBUG
+  				zpl_backtrace_symb_set(node->funcname, NULL, 1);
+#endif
 				if ((*node->func)(vty))
 					vty_out(vty, "!%s", VTY_NEWLINE);
 			}
@@ -471,6 +477,9 @@ DEFUN (config_write_terminal,
 		for (i = 0; i < vector_active(cmdvec); i++)
 			if ((node = vector_slot(cmdvec, i)) && node->func)
 			{
+#ifdef ZPL_BUILD_DEBUG
+  				zpl_backtrace_symb_set(node->funcname, NULL, 1);
+#endif
 				if ((*node->func)(vty))
 					vty_out(vty, "!%s", VTY_NEWLINE);
 			}

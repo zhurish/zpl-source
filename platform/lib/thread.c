@@ -23,7 +23,7 @@
 #include "zpl_include.h"
 #include "thread.h"
 #include "log.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "command.h"
 #include "pqueue.h"
 #if defined(__APPLE__)

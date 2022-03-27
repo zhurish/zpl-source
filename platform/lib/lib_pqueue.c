@@ -6,7 +6,7 @@
  */
 #include "os_include.h"
 #include "zpl_include.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "lib_pqueue.h"
 
 static int lib_pqueue_add_stream (struct lib_pqueue *queue, struct stream *s)

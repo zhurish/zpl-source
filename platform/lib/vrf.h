@@ -20,8 +20,8 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef _ZEBRA_VRF_H
-#define _ZEBRA_VRF_H
+#ifndef __IP_VRF_H__
+#define __IP_VRF_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,6 +58,9 @@ extern "C" {
 #define VRF_ENABLE_HOOK     2   /* a VRF is ready to use */
 #define VRF_DISABLE_HOOK    3   /* a VRF is to be unusable */
 
+
+
+
 struct ip_vrf
 {
   NODE node;
@@ -71,6 +74,32 @@ struct ip_vrf
   void *info;
 };
 
+struct ip_vrf_master
+{
+  LIST *ip_vrf_list;
+  void *vrf_mutex;  
+  int (*vrf_new_hook)(vrf_id_t, struct ip_vrf *);
+  int (*vrf_delete_hook)(vrf_id_t, struct ip_vrf *);
+  int (*vrf_enable_hook)(vrf_id_t, struct ip_vrf *);
+  int (*vrf_disable_hook)(vrf_id_t, struct ip_vrf *);
+};
+
+
+struct ip_vrf_temp
+{
+	  zpl_uchar proto;
+    vrf_id_t vrf_id;
+    zpl_socket_t fd;
+    zpl_char *name;
+    zpl_uint32 value;
+		zpl_ulong cnt;
+    void    *p;
+};
+
+typedef int (*ip_vrf_call)(struct ip_vrf *, void *);
+
+
+extern struct ip_vrf_master _ip_vrf_master;
 /*
  * Add a specific hook to VRF module.
  * @param1: hook type
@@ -79,40 +108,7 @@ struct ip_vrf
  *          - param 2: the address of the user data pointer (the user data
  *                     can be stored in or freed from there)
  */
-extern void ip_vrf_add_hook (zpl_uint32, int (*)(vrf_id_t, void **));
-
-/*
- * VRF iteration
- */
-
-typedef void *              vrf_iter_t;
-#define VRF_ITER_INVALID    NULL    /* invalid value of the iterator */
-
-/*
- * VRF iteration utilities. Example for the usage:
- *
- *   vrf_iter_t iter = ip_vrf_first();
- *   for (; iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
- *
- * or
- *
- *   vrf_iter_t iter = ip_vrf_iterator (<a given VRF ID>);
- *   for (; iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
- */
-
-/* Return the iterator of the first VRF. */
-extern vrf_iter_t ip_vrf_first (void);
-/* Return the next VRF iterator to the given iterator. */
-extern vrf_iter_t ip_vrf_next (vrf_iter_t);
-/* Return the VRF iterator of the given VRF ID. If it does not exist,
- * the iterator of the next existing VRF is returned. */
-extern vrf_iter_t ip_vrf_iterator (vrf_id_t);
-
-/*
- * VRF iterator to properties
- */
-extern vrf_id_t ip_vrf_iter2id (vrf_iter_t);
-extern void *ip_vrf_iter2info (vrf_iter_t);
+extern void ip_vrf_add_hook (zpl_uint32, int (*)(vrf_id_t, struct ip_vrf *));
 
 
 /*
@@ -127,6 +123,8 @@ struct ip_vrf * ip_vrf_lookup_by_name (const char *name);
 
 zpl_char * ip_vrf_vrfid2name (vrf_id_t vrf_id);
 vrf_id_t ip_vrf_name2vrfid (const char *name);
+
+extern void *ip_vrf_list (void);
 /*
  * Utilities to obtain the interface list
  */
@@ -155,6 +153,7 @@ extern zpl_bool ip_vrf_bitmap_check (vrf_bitmap_t, vrf_id_t);
 extern struct ip_vrf * ip_vrf_create (const char *name);
 extern int ip_vrf_delete (const char *name);
 extern int ip_vrf_set_vrfid (struct ip_vrf *ip_vrf, vrf_id_t vrf_id);
+extern int ip_vrf_foreach(ip_vrf_call func, void *pVoid);
 
 extern void ip_vrf_terminate (void);
 
@@ -173,5 +172,5 @@ void cmd_ip_vrf_init (void);
 }
 #endif
 
-#endif /*_ZEBRA_VRF_H*/
+#endif /*__IP_VRF_H__*/
 

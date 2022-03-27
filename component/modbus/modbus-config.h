@@ -59,7 +59,7 @@
 /* Define to 1 if you have the <linux/serial.h> header file. */
 /* #undef HAVE_LINUX_SERIAL_H */
 
-/* Define to 1 if you have the <memory.h> header file. */
+/* Define to 1 if you have the <zmemory.h> header file. */
 #define HAVE_MEMORY_H 1
 
 /* Define to 1 if you have the <netdb.h> header file. */

@@ -25,7 +25,7 @@
 #include "zebra_event.h"
 #include "prefix.h"
 #include "table.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "str.h"
 #include "command.h"
 #include "if.h"

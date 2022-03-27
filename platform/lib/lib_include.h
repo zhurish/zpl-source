@@ -22,7 +22,7 @@ extern "C" {
 #include "linklist.h"
 #include "checksum.h"
 #include "daemon.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "memtypes.h"
 #include "md5.h"
 #include "stream.h"

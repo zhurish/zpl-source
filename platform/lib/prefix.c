@@ -23,7 +23,7 @@
 #include "os_include.h"
 #include "zpl_include.h"
 #include "prefix.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "log.h"
 /* Maskbit. */
 static const zpl_uchar maskbit[] = {0x00, 0x80, 0xc0, 0xe0, 0xf0,

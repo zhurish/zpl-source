@@ -21,7 +21,7 @@
 #include "os_include.h"
 #include "zpl_include.h"
 #include "nexthop.h"
-#include "memory.h"
+#include "zmemory.h"
 
 /* check if nexthops are same, non-recursive */
 int

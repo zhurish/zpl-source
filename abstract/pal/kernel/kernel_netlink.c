@@ -736,21 +736,18 @@ void _netlink_open(struct nsm_ip_vrf *zvrf)
 	 netlink_route_read(zvrf);*/
 }
 
+static int _netlink_load_all_one (struct ip_vrf *vrf, void *p)
+{
+	struct nsm_ip_vrf *zvrf = vrf->info;
+	_netlink_open(zvrf);
+
+	//kernel_interface_load(zvrf);
+	//kernel_route_table_load(zvrf);
+	return 0;			
+}
+
 void _netlink_load_all()
 {
-	//int ret = 0;
-	struct nsm_ip_vrf *zvrf = NULL;
-	vrf_iter_t iter;
-
-	for (iter = ip_vrf_first(); iter != VRF_ITER_INVALID; iter = ip_vrf_next(iter))
-	{
-		if ((zvrf = ip_vrf_iter2info(iter)) != NULL)
-		{
-			_netlink_open(zvrf);
-
-			//kernel_interface_load(zvrf);
-			//kernel_route_table_load(zvrf);
-		}
-	}
+	ip_vrf_foreach(_netlink_load_all_one, NULL);
 	return;
 }

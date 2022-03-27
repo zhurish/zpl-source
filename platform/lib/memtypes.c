@@ -8,7 +8,7 @@
  */
 #include "os_include.h"
 #include "zpl_include.h"
-#include "memory.h"
+#include "zmemory.h"
 
 
 

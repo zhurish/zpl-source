@@ -23,7 +23,7 @@
 #define QUAGGA_DEFINE_DESC_TABLE
 
 #include "zpl_include.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "log.h"
 #include "host.h"
 #include "route_types.h"
@@ -886,9 +886,11 @@ void zlog_signal(int signo, const char *action
 	s = str_append(LOC, "; ");
 #endif /* SA_SIGINFO */
 	s = str_append(LOC, action);
+	s = str_append(LOC, "Current:");
+	s = str_append(LOC, zpl_backtrace_symb_info());
 	if (s < buf + sizeof(buf))
 		*s++ = '\n';
-
+		
 	/* N.B. implicit priority is most severe */
 #define PRI ZLOG_LEVEL_CRIT
 

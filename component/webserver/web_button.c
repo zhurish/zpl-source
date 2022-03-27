@@ -1,7 +1,7 @@
 //#include "zpl_include.h"
 #include "zpl_include.h"
 #include "module.h"
-#include "memory.h"
+#include "zmemory.hh"
 #include "zassert.h"
 #include "command.h"
 #include "prefix.h"

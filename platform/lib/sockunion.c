@@ -23,7 +23,7 @@
 #include "zpl_include.h"
 #include "sockunion.h"
 #include "log.h"
-#include "memory.h"
+#include "zmemory.h"
 #ifndef HAVE_INET_ATON
 int
 ipstack_inet_aton (const char *cp, struct ipstack_in_addr *inaddr)

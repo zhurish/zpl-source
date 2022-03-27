@@ -8,9 +8,9 @@
 
 
 #include "zebra.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "command.h"
-#include "memory.h"
+#include "zmemory.h"
 #include "memtypes.h"
 #include "prefix.h"
 #include "if.h"

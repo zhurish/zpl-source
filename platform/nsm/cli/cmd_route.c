@@ -22,14 +22,20 @@
 
 #include "os_include.h"
 #include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-#include "vty_include.h"
-
+#include "route_types.h"
+#include "zebra_event.h"
+#include "zmemory.h"
+#include "if.h"
+#include "vrf.h"
+#include "prefix.h"
+#include "command.h"
+#include "table.h"
+#include "nsm_rib.h"
+#include "nexthop.h"
 #include "nsm_zserv.h"
 #include "nsm_rnh.h"
 
-
+//#define RLSTATIC 
 #ifdef ZPL_NSM_L3MODULE
 
 char *proto_rm[AFI_MAX][ZEBRA_ROUTE_MAX+1];	/* "any" == ZEBRA_ROUTE_MAX */
@@ -3492,74 +3498,87 @@ DEFUN (show_ip_route_summary_prefix_vrf_all,
 #endif
 
 /* Write IPv4 static route configuration. */
-static int
-static_config_ipv4 (struct vty *vty, safi_t safi, const char *cmd)
+static int static_config_ipv4_one(struct vty *vty, struct route_table *stable, const char *cmd)
 {
-  struct route_node *rn;
-  struct static_route *si;  
-  struct route_table *stable;
-  struct nsm_ip_vrf *zvrf;
-  vrf_iter_t iter;
   int write;
-
-  write = 0;
-
-  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
+  struct route_node *rn = NULL;
+  struct static_route *si = NULL;
+  if(stable == NULL)
+    return 0;
+  for (rn = route_top(stable); rn; rn = route_next(rn))
+  {
+    for (si = rn->info; si; si = si->next)
     {
-      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
-          (stable = zvrf->stable[AFI_IP][safi]) == NULL)
-        continue;
+      if (si->vrf_id != VRF_DEFAULT)
+      {
+        // if(si->vrf_name)
+        vty_out(vty, "%s ip_vrf %s %s/%d", cmd, ip_vrf_vrfid2name(si->vrf_id), ipstack_inet_ntoa(rn->p.u.prefix4),
+                rn->p.prefixlen);
+        /*         else
+                   vty_out (vty, "%s ip_vrf %d %s/%d", cmd, si->vrf_id, ipstack_inet_ntoa (rn->p.u.prefix4),
+                       rn->p.prefixlen);*/
+      }
+      else
+        vty_out(vty, "%s %s/%d", cmd, ipstack_inet_ntoa(rn->p.u.prefix4),
+                rn->p.prefixlen);
 
-      for (rn = route_top (stable); rn; rn = route_next (rn))
-        for (si = rn->info; si; si = si->next)
-          {
-            if (si->vrf_id != VRF_DEFAULT)
-            {
-              //if(si->vrf_name)
-            	  vty_out (vty, "%s ip_vrf %s %s/%d", cmd, ip_vrf_vrfid2name(si->vrf_id), ipstack_inet_ntoa (rn->p.u.prefix4),
-            			  rn->p.prefixlen);
-     /*         else
-            	  vty_out (vty, "%s ip_vrf %d %s/%d", cmd, si->vrf_id, ipstack_inet_ntoa (rn->p.u.prefix4),
-            			  rn->p.prefixlen);*/
-            }
-            else
-            	vty_out (vty, "%s %s/%d", cmd, ipstack_inet_ntoa (rn->p.u.prefix4),
-                     rn->p.prefixlen);
+      switch (si->type)
+      {
+      case STATIC_IPV4_GATEWAY:
+        vty_out(vty, " %s", ipstack_inet_ntoa(si->addr.ipv4));
+        break;
+      case STATIC_IPV4_IFNAME:
+        vty_out(vty, " %s", si->ifname);
+        break;
+      case STATIC_IPV4_BLACKHOLE:
+        vty_out(vty, " Null0");
+        break;
+      }
 
-            switch (si->type)
-              {
-                case STATIC_IPV4_GATEWAY:
-                  vty_out (vty, " %s", ipstack_inet_ntoa (si->addr.ipv4));
-                  break;
-                case STATIC_IPV4_IFNAME:
-                  vty_out (vty, " %s", si->ifname);
-                  break;
-                case STATIC_IPV4_BLACKHOLE:
-                  vty_out (vty, " Null0");
-                  break;
-              }
+      /* flags are incompatible with STATIC_IPV4_BLACKHOLE */
+      if (si->type != STATIC_IPV4_BLACKHOLE)
+      {
+        if (CHECK_FLAG(si->flags, ZEBRA_FLAG_REJECT))
+          vty_out(vty, " %s", "reject");
 
-            /* flags are incompatible with STATIC_IPV4_BLACKHOLE */
-            if (si->type != STATIC_IPV4_BLACKHOLE)
-              {
-                if (CHECK_FLAG(si->flags, ZEBRA_FLAG_REJECT))
-                  vty_out (vty, " %s", "reject");
+        if (CHECK_FLAG(si->flags, ZEBRA_FLAG_BLACKHOLE))
+          vty_out(vty, " %s", "blackhole");
+      }
 
-                if (CHECK_FLAG(si->flags, ZEBRA_FLAG_BLACKHOLE))
-                  vty_out (vty, " %s", "blackhole");
-              }
+      if (si->tag)
+        vty_out(vty, " tag %d", si->tag);
 
-	    if (si->tag)
-	      vty_out (vty, " tag %d", si->tag);
+      if (si->distance != ZEBRA_STATIC_DISTANCE_DEFAULT)
+        vty_out(vty, " %d", si->distance);
 
-            if (si->distance != ZEBRA_STATIC_DISTANCE_DEFAULT)
-              vty_out (vty, " %d", si->distance);
-
-            vty_out (vty, "%s", VTY_NEWLINE);
-
-            write = 1;
-          }
+      vty_out(vty, "%s", VTY_NEWLINE);
+      write = 1;
     }
+  }
+  return write;
+}
+static int static_config_ipv4_vrf_one(struct ip_vrf *ip_vrf, struct ip_vrf_temp *temp)
+{
+  struct route_table *stable = NULL;
+  struct nsm_ip_vrf *zvrf = ip_vrf->info;
+  if(zvrf)
+  {
+    stable = zvrf->stable[AFI_IP][temp->value];   
+    if (stable == NULL)  
+      temp->cnt = static_config_ipv4_one(temp->p, stable, temp->name);
+  }
+  return OK;
+}
+
+static int static_config_ipv4 (struct vty *vty, safi_t safi, const char *cmd)
+{
+  int write = 0;
+  struct ip_vrf_temp temp;
+  temp.name = cmd;
+  temp.p = vty;
+  temp.value = safi;
+  ip_vrf_foreach(static_config_ipv4_vrf_one, &temp);
+  write = temp.cnt;
   return write;
 }
 
@@ -5580,77 +5599,100 @@ DEFUN (show_ipv6_route_summary_prefix_vrf_all,
 
 #ifdef HAVE_IPV6
 /* Write IPv6 static route configuration. */
-static int
-static_config_ipv6 (struct vty *vty)
+static int static_config_ipv6_one (struct vty *vty, struct route_table *stable)
 {
-  struct route_node *rn;
-  struct static_route *si;  
+  struct route_node *rn = NULL;
+  struct static_route *si = NULL;
   int write;
   char buf[BUFSIZ];
-  struct route_table *stable;
-  struct nsm_ip_vrf *zvrf;
-  vrf_iter_t iter;
   union prefix46constptr up;
   write = 0;
 
-  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
+  if (stable == NULL)
+    return 0;
+
+  for (rn = route_top(stable); rn; rn = route_next(rn))
+  {
+    for (si = rn->info; si; si = si->next)
     {
-      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
-          (stable = zvrf->stable[AFI_IP6][SAFI_UNICAST]) == NULL)
-        continue;
+      up.p = &rn->p;
+      if (si->vrf_id != VRF_DEFAULT)
+      {
+        // if(si->vrf_name)
+        vty_out(vty, "ipv6 route ip_vrf %s %s", ip_vrf_vrfid2name(si->vrf_id), prefix2str(up, buf, sizeof buf));
+        /*        	   else
+                      vty_out (vty, "ipv6 route ip_vrf %d %s", si->vrf_id, prefix2str (up, buf, sizeof buf));*/
+      }
+      else
+        vty_out(vty, "ipv6 route %s", prefix2str(up, buf, sizeof buf));
 
-      for (rn = route_top (stable); rn; rn = route_next (rn))
-        for (si = rn->info; si; si = si->next)
-          {
-            up.p = &rn->p;
-        	if (si->vrf_id != VRF_DEFAULT)
-        	{
-        	   //if(si->vrf_name)
-        	    vty_out (vty, "ipv6 route ip_vrf %s %s", ip_vrf_vrfid2name(si->vrf_id), prefix2str (up, buf, sizeof buf));
-/*        	   else
-        	    vty_out (vty, "ipv6 route ip_vrf %d %s", si->vrf_id, prefix2str (up, buf, sizeof buf));*/
-        	}
-        	else
-        		vty_out (vty, "ipv6 route %s", prefix2str (up, buf, sizeof buf));
+      switch (si->type)
+      {
+      case STATIC_IPV6_GATEWAY:
+        vty_out(vty, " %s",
+                ipstack_inet_ntop(IPSTACK_AF_INET6, &si->addr.ipv6, buf, BUFSIZ));
+        break;
+      case STATIC_IPV6_IFNAME:
+        vty_out(vty, " %s", si->ifname);
+        break;
+      case STATIC_IPV6_GATEWAY_IFNAME:
+        vty_out(vty, " %s %s",
+                ipstack_inet_ntop(IPSTACK_AF_INET6, &si->addr.ipv6, buf, BUFSIZ),
+                si->ifname);
+        break;
+      }
 
-            switch (si->type)
-              {
-              case STATIC_IPV6_GATEWAY:
-                vty_out (vty, " %s",
-                         ipstack_inet_ntop (IPSTACK_AF_INET6, &si->addr.ipv6, buf, BUFSIZ));
-                break;
-              case STATIC_IPV6_IFNAME:
-                vty_out (vty, " %s", si->ifname);
-                break;
-              case STATIC_IPV6_GATEWAY_IFNAME:
-                vty_out (vty, " %s %s",
-                         ipstack_inet_ntop (IPSTACK_AF_INET6, &si->addr.ipv6, buf, BUFSIZ),
-                         si->ifname);
-                break;
-              }
+      if (CHECK_FLAG(si->flags, ZEBRA_FLAG_REJECT))
+        vty_out(vty, " %s", "reject");
 
-            if (CHECK_FLAG(si->flags, ZEBRA_FLAG_REJECT))
-              vty_out (vty, " %s", "reject");
+      if (CHECK_FLAG(si->flags, ZEBRA_FLAG_BLACKHOLE))
+        vty_out(vty, " %s", "blackhole");
 
-            if (CHECK_FLAG(si->flags, ZEBRA_FLAG_BLACKHOLE))
-              vty_out (vty, " %s", "blackhole");
+      if (si->tag)
+        vty_out(vty, " tag %d", si->tag);
 
-	    if (si->tag)
-	      vty_out (vty, " tag %d", si->tag);
+      if (si->distance != ZEBRA_STATIC_DISTANCE_DEFAULT)
+        vty_out(vty, " %d", si->distance);
 
-            if (si->distance != ZEBRA_STATIC_DISTANCE_DEFAULT)
-              vty_out (vty, " %d", si->distance);
+      vty_out(vty, "%s", VTY_NEWLINE);
 
-            vty_out (vty, "%s", VTY_NEWLINE);
-
-            write = 1;
-          }
+      write = 1;
     }
+  }
+  return write;
+}
+
+
+static int static_config_ipv6_vrf_one(struct ip_vrf *ip_vrf, struct ip_vrf_temp *temp)
+{
+  struct route_table *stable = NULL;
+  struct nsm_ip_vrf *zvrf = ip_vrf->info;
+  if(zvrf)
+  {
+    stable = zvrf->stable[AFI_IP6][temp->value];   
+    //stable = nsm_vrf_static_table(AFI_IP6,  SAFI_UNICAST, zvrf->vrf_id);
+    if (stable == NULL)  
+      temp->cnt = static_config_ipv6_one(temp->p, stable);
+  }
+  return OK;
+}
+
+
+
+static int static_config_ipv6 (struct vty *vty)
+{ 
+  int write = 0;
+  struct ip_vrf_temp temp;
+  temp.name = NULL;
+  temp.p = vty;
+  temp.value = SAFI_UNICAST;
+  ip_vrf_foreach(static_config_ipv6_vrf_one, &temp);
+  write = temp.cnt;
   return write;
 }
 #endif
 /* Static ip route configuration write function. */
-static int nsm_ip_route_config_write (struct vty *vty)
+int nsm_ip_route_config_write (struct vty *vty)
 {
   int write = 0;
 
