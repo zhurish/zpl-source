@@ -1,8 +1,0 @@
-/home/zhurish/workspace/working/zpl-source/source/product/sdk-robo-5.9.2/sdk-robo-5.9.2/build/unix-linux-64/src/shared/error.o: \
- /home/zhurish/workspace/working/zpl-source/source/product/sdk-robo-5.9.2/sdk-robo-5.9.2/src/shared/error.c \
- /usr/include/stdc-predef.h \
- /home/zhurish/workspace/working/zpl-source/source/product/sdk-robo-5.9.2/sdk-robo-5.9.2/include/shared/error.h
-
- /home/zhurish/workspace/working/zpl-source/source/product/sdk-robo-5.9.2/sdk-robo-5.9.2/src/shared/error.c :
- /usr/include/stdc-predef.h :
- /home/zhurish/workspace/working/zpl-source/source/product/sdk-robo-5.9.2/sdk-robo-5.9.2/include/shared/error.h :

@@ -1,6 +1,0 @@
-/home/zhurish/workspace/working/zpl-source/source/product/sdk-robo-5.9.2/sdk-robo-5.9.2/build/unix-linux-64/src/sal/appl/editline/sysvxworks.o: \
- /home/zhurish/workspace/working/zpl-source/source/product/sdk-robo-5.9.2/sdk-robo-5.9.2/src/sal/appl/editline/sysvxworks.c \
- /usr/include/stdc-predef.h
-
- /home/zhurish/workspace/working/zpl-source/source/product/sdk-robo-5.9.2/sdk-robo-5.9.2/src/sal/appl/editline/sysvxworks.c :
- /usr/include/stdc-predef.h :

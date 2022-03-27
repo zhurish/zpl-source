@@ -1,1 +1,0 @@
-config:x86:x86_64:generic:linux:gcc 8 (GCC):--prefix=/home/zhurish/workspace/SWPlatform/source/multimedia/_install --enable-libx264 --enable-gpl --enable-ffplay
