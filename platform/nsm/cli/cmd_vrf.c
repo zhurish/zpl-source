@@ -102,9 +102,9 @@ static int ip_vrf_show_one (struct ip_vrf *vrf, void *pVoid)
 	struct prefix p;
 	struct vty *vty = pVoid;
 	struct nsm_ip_vrf *zvrf = vrf->info;
-	if(vrf && zvrf)
+	if(vrf && zvrf && vrf->vrf_id != VRF_DEFAULT)
 	{
-		fprintf(stdout, "=========%s\r\n", __func__);
+		//fprintf(stdout, "=========%s\r\n", __func__);
 		router_id_get (&p, zvrf->vrf_id);
 		if(vrf->name)
 			vty_out (vty, "ip vrf %s%s", vrf->name, VTY_NEWLINE);
